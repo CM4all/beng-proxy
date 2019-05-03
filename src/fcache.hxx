@@ -56,17 +56,17 @@ filter_cache_new(struct pool *pool, size_t max_size,
                  ResourceLoader &resource_loader);
 
 void
-filter_cache_close(FilterCache *cache);
+filter_cache_close(FilterCache *cache) noexcept;
 
 void
-filter_cache_fork_cow(FilterCache &cache, bool inherit);
+filter_cache_fork_cow(FilterCache &cache, bool inherit) noexcept;
 
 gcc_pure
 AllocatorStats
-filter_cache_get_stats(const FilterCache &cache);
+filter_cache_get_stats(const FilterCache &cache) noexcept;
 
 void
-filter_cache_flush(FilterCache &cache);
+filter_cache_flush(FilterCache &cache) noexcept;
 
 void
 filter_cache_flush_tag(FilterCache &cache, const char *tag) noexcept;
@@ -86,6 +86,6 @@ filter_cache_request(FilterCache &cache,
                      http_status_t status, StringMap &&headers,
                      UnusedIstreamPtr body,
                      HttpResponseHandler &handler,
-                     CancellablePointer &cancel_ptr);
+                     CancellablePointer &cancel_ptr) noexcept;
 
 #endif

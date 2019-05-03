@@ -251,13 +251,13 @@ public:
     FilterCache(struct pool &_pool, size_t max_size,
                 EventLoop &_event_loop, ResourceLoader &_resource_loader);
 
-    ~FilterCache();
+    ~FilterCache() noexcept;
 
     auto &GetEventLoop() const noexcept {
         return compress_timer.GetEventLoop();
     }
 
-    void ForkCow(bool inherit) {
+    void ForkCow(bool inherit) noexcept {
         rubber.ForkCow(inherit);
         slice_pool.ForkCow(inherit);
     }
@@ -266,7 +266,7 @@ public:
         return slice_pool.GetStats() + rubber.GetStats();
     }
 
-    void Flush() {
+    void Flush() noexcept {
         cache.Flush();
         Compress();
     }
@@ -280,11 +280,11 @@ public:
              http_status_t status, StringMap &&headers,
              UnusedIstreamPtr body,
              HttpResponseHandler &handler,
-             CancellablePointer &cancel_ptr);
+             CancellablePointer &cancel_ptr) noexcept;
 
     void Put(const FilterCacheInfo &info,
              http_status_t status, const StringMap &headers,
-             RubberAllocation &&a, size_t size);
+             RubberAllocation &&a, size_t size) noexcept;
 
 private:
     void Miss(struct pool &caller_pool,
@@ -293,15 +293,15 @@ private:
               http_status_t status, StringMap &&headers,
               UnusedIstreamPtr body, const char *body_etag,
               HttpResponseHandler &_handler,
-              CancellablePointer &cancel_ptr);
+              CancellablePointer &cancel_ptr) noexcept;
 
     void Serve(FilterCacheItem &item,
                struct pool &caller_pool,
-               HttpResponseHandler &handler);
+               HttpResponseHandler &handler) noexcept;
 
     void Hit(FilterCacheItem &item,
              struct pool &caller_pool,
-             HttpResponseHandler &handler);
+             HttpResponseHandler &handler) noexcept;
 
     void Compress() noexcept {
         rubber.Compress();
@@ -368,7 +368,7 @@ filter_cache_request_evaluate(struct pool &pool,
 void
 FilterCache::Put(const FilterCacheInfo &info,
                  http_status_t status, const StringMap &headers,
-                 RubberAllocation &&a, size_t size)
+                 RubberAllocation &&a, size_t size) noexcept
 {
     LogConcat(4, "FilterCache", "put ", info.key);
 
@@ -390,7 +390,8 @@ FilterCache::Put(const FilterCacheInfo &info,
 }
 
 static std::chrono::system_clock::time_point
-parse_translate_time(const char *p, std::chrono::system_clock::duration offset)
+parse_translate_time(const char *p,
+                     std::chrono::system_clock::duration offset) noexcept
 {
     if (p == nullptr)
         return std::chrono::system_clock::from_time_t(-1);
@@ -406,7 +407,7 @@ parse_translate_time(const char *p, std::chrono::system_clock::duration offset)
 static bool
 filter_cache_response_evaluate(EventLoop &event_loop, FilterCacheInfo &info,
                                http_status_t status, const StringMap &headers,
-                               off_t body_available)
+                               off_t body_available) noexcept
 {
     const char *p;
 
@@ -614,7 +615,7 @@ filter_cache_new(struct pool *pool, size_t max_size,
                            event_loop, resource_loader);
 }
 
-inline FilterCache::~FilterCache()
+inline FilterCache::~FilterCache() noexcept
 {
     requests.clear_and_dispose([](FilterCacheRequest *r){ r->CancelStore(); });
 
@@ -622,25 +623,25 @@ inline FilterCache::~FilterCache()
 }
 
 void
-filter_cache_close(FilterCache *cache)
+filter_cache_close(FilterCache *cache) noexcept
 {
     delete cache;
 }
 
 void
-filter_cache_fork_cow(FilterCache &cache, bool inherit)
+filter_cache_fork_cow(FilterCache &cache, bool inherit) noexcept
 {
     cache.ForkCow(inherit);
 }
 
 AllocatorStats
-filter_cache_get_stats(const FilterCache &cache)
+filter_cache_get_stats(const FilterCache &cache) noexcept
 {
     return cache.GetStats();
 }
 
 void
-filter_cache_flush(FilterCache &cache)
+filter_cache_flush(FilterCache &cache) noexcept
 {
     cache.Flush();
 }
@@ -668,7 +669,7 @@ FilterCache::Miss(struct pool &caller_pool,
                   http_status_t status, StringMap &&headers,
                   UnusedIstreamPtr body, const char *body_etag,
                   HttpResponseHandler &_handler,
-                  CancellablePointer &cancel_ptr)
+                  CancellablePointer &cancel_ptr) noexcept
 {
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache->pool */
@@ -690,7 +691,7 @@ FilterCache::Miss(struct pool &caller_pool,
 void
 FilterCache::Serve(FilterCacheItem &item,
                    struct pool &caller_pool,
-                   HttpResponseHandler &handler)
+                   HttpResponseHandler &handler) noexcept
 {
     LogConcat(4, "FilterCache", "serve ", item.info.key);
 
@@ -713,7 +714,7 @@ FilterCache::Serve(FilterCacheItem &item,
 void
 FilterCache::Hit(FilterCacheItem &item,
                  struct pool &caller_pool,
-                 HttpResponseHandler &handler)
+                 HttpResponseHandler &handler) noexcept
 {
     Serve(item, caller_pool, handler);
 }
@@ -726,7 +727,7 @@ FilterCache::Get(struct pool &caller_pool,
                  http_status_t status, StringMap &&headers,
                  UnusedIstreamPtr body,
                  HttpResponseHandler &handler,
-                 CancellablePointer &cancel_ptr)
+                 CancellablePointer &cancel_ptr) noexcept
 {
     auto *info = filter_cache_request_evaluate(caller_pool, cache_tag, address,
                                                source_id, headers);
@@ -761,7 +762,7 @@ filter_cache_request(FilterCache &cache,
                      http_status_t status, StringMap &&headers,
                      UnusedIstreamPtr body,
                      HttpResponseHandler &handler,
-                     CancellablePointer &cancel_ptr)
+                     CancellablePointer &cancel_ptr) noexcept
 {
     cache.Get(pool, cache_tag, address, source_id,
               status, std::move(headers),
