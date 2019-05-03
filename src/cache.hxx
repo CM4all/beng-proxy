@@ -110,6 +110,11 @@ struct CacheItem {
 
     void Unlock() noexcept;
 
+    gcc_pure
+    bool Validate(std::chrono::steady_clock::time_point now) const noexcept {
+        return now < expires && Validate();
+    }
+
     virtual bool Validate() const noexcept {
         return true;
     }

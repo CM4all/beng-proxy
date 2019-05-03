@@ -125,13 +125,6 @@ Cache::Flush() noexcept
     items.clear_and_dispose(Cache::ItemRemover(*this));
 }
 
-static bool
-cache_item_validate(CacheItem *item,
-                    std::chrono::steady_clock::time_point now) noexcept
-{
-    return now < item->expires && item->Validate();
-}
-
 void
 Cache::RefreshItem(CacheItem &item,
                    std::chrono::steady_clock::time_point now) noexcept
@@ -163,7 +156,7 @@ Cache::Get(const char *key) noexcept
 
     const auto now = SteadyNow();
 
-    if (!cache_item_validate(item, now)) {
+    if (!item->Validate(now)) {
         RemoveItem(*item);
         return nullptr;
     }
@@ -184,7 +177,7 @@ Cache::GetMatch(const char *key,
     for (auto i = r.first, end = r.second; i != end;) {
         CacheItem *item = &*i++;
 
-        if (!cache_item_validate(item, now)) {
+        if (!item->Validate(now)) {
             /* expired cache item: delete it, and re-start the
                search */
 
