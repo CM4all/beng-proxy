@@ -120,8 +120,6 @@ struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
      */
     PerTagHook per_tag_siblings;
 
-    const FilterCacheInfo info;
-
     const http_status_t status;
     StringMap headers;
 
@@ -132,16 +130,16 @@ struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
     FilterCacheItem(PoolPtr &&_pool,
                     std::chrono::steady_clock::time_point now,
                     std::chrono::system_clock::time_point system_now,
-                    const FilterCacheInfo &_info,
                     http_status_t _status, const StringMap &_headers,
                     size_t _size, RubberAllocation &&_body,
                     std::chrono::system_clock::time_point _expires) noexcept
         :PoolHolder(std::move(_pool)),
          CacheItem(now, system_now, _expires, pool_netto_size(pool) + _size),
-         info(pool, _info),
          status(_status), headers(pool, _headers),
          size(_size), body(std::move(_body)) {
     }
+
+    using PoolHolder::GetPool;
 
     /* virtual methods from class CacheItem */
     void Destroy() noexcept override {
@@ -405,15 +403,14 @@ FilterCache::Put(const FilterCacheInfo &info,
     auto item = NewFromPool<FilterCacheItem>(pool_new_slice(&pool, "FilterCacheItem", &slice_pool),
                                              cache.SteadyNow(),
                                              cache.SystemNow(),
-                                             info,
                                              status, headers, size,
                                              std::move(a),
                                              expires);
 
-    if (item->info.tag != nullptr)
-        per_tag[item->info.tag].push_back(*item);
+    if (info.tag != nullptr)
+        per_tag[info.tag].push_back(*item);
 
-    cache.Put(item->info.key, *item);
+    cache.Put(p_strdup(item->GetPool(), info.key), *item);
 }
 
 static std::chrono::system_clock::time_point
