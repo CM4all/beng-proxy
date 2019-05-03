@@ -66,12 +66,12 @@ struct HttpCacheResponseInfo {
 
     HttpCacheResponseInfo() = default;
     HttpCacheResponseInfo(struct pool &pool,
-                          const HttpCacheResponseInfo &src);
+                          const HttpCacheResponseInfo &src) noexcept;
 
     HttpCacheResponseInfo(const HttpCacheResponseInfo &) = delete;
     HttpCacheResponseInfo &operator=(const HttpCacheResponseInfo &) = delete;
 
-    void MoveToPool(struct pool &pool);
+    void MoveToPool(struct pool &pool) noexcept;
 };
 
 #endif

@@ -56,21 +56,21 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
                             http_method_t method,
                             const ResourceAddress &address,
                             const StringMap &headers,
-                            bool has_request_body);
+                            bool has_request_body) noexcept;
 
 gcc_pure
 bool
-http_cache_vary_fits(const StringMap &vary, const StringMap *headers);
+http_cache_vary_fits(const StringMap &vary, const StringMap *headers) noexcept;
 
 gcc_pure
 bool
-http_cache_vary_fits(const StringMap *vary, const StringMap *headers);
+http_cache_vary_fits(const StringMap *vary, const StringMap *headers) noexcept;
 
 /**
  * Check whether the request should invalidate the existing cache.
  */
 bool
-http_cache_request_invalidate(http_method_t method);
+http_cache_request_invalidate(http_method_t method) noexcept;
 
 /**
  * Check whether the HTTP response should be put into the cache.
@@ -79,7 +79,7 @@ bool
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
                              HttpCacheResponseInfo &info,
                              http_status_t status, const StringMap &headers,
-                             off_t body_available);
+                             off_t body_available) noexcept;
 
 /**
  * Copy all request headers mentioned in the Vary response header to a
@@ -87,7 +87,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
  */
 void
 http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
-                     const StringMap &request_headers);
+                     const StringMap &request_headers) noexcept;
 
 /**
  * The server sent us a non-"Not Modified" response.  Check if we want
@@ -95,6 +95,6 @@ http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
  */
 bool
 http_cache_prefer_cached(const HttpCacheDocument &document,
-                         const StringMap &response_headers);
+                         const StringMap &response_headers) noexcept;
 
 #endif

@@ -71,7 +71,7 @@ struct HttpCacheItem final : PoolHolder, HttpCacheDocument, CacheItem {
 
     using PoolHolder::GetPool;
 
-    UnusedIstreamPtr OpenStream(struct pool &_pool) {
+    UnusedIstreamPtr OpenStream(struct pool &_pool) noexcept {
         return istream_rubber_new(_pool, body.GetRubber(), body.GetId(),
                                   0, size, false);
     }
@@ -84,7 +84,7 @@ struct HttpCacheItem final : PoolHolder, HttpCacheDocument, CacheItem {
 };
 
 static bool
-http_cache_item_match(const CacheItem *_item, void *ctx)
+http_cache_item_match(const CacheItem *_item, void *ctx) noexcept
 {
     const auto &item = *(const HttpCacheItem *)_item;
     const StringMap *headers = (const StringMap *)ctx;
@@ -93,7 +93,7 @@ http_cache_item_match(const CacheItem *_item, void *ctx)
 }
 
 HttpCacheDocument *
-HttpCacheHeap::Get(const char *uri, StringMap &request_headers)
+HttpCacheHeap::Get(const char *uri, StringMap &request_headers) noexcept
 {
     return (HttpCacheItem *)cache.GetMatch(uri,
                                            http_cache_item_match,
@@ -106,7 +106,7 @@ HttpCacheHeap::Put(const char *url,
                    StringMap &request_headers,
                    http_status_t status,
                    const StringMap &response_headers,
-                   RubberAllocation &&a, size_t size)
+                   RubberAllocation &&a, size_t size) noexcept
 {
     auto item = NewFromPool<HttpCacheItem>(pool_new_slice(&pool, "http_cache_item", &slice_pool),
                                            cache.SteadyNow(),
@@ -121,7 +121,7 @@ HttpCacheHeap::Put(const char *url,
 }
 
 void
-HttpCacheHeap::Remove(HttpCacheDocument &document)
+HttpCacheHeap::Remove(HttpCacheDocument &document) noexcept
 {
     auto &item = (HttpCacheItem &)document;
 
@@ -130,27 +130,27 @@ HttpCacheHeap::Remove(HttpCacheDocument &document)
 }
 
 void
-HttpCacheHeap::RemoveURL(const char *url, StringMap &headers)
+HttpCacheHeap::RemoveURL(const char *url, StringMap &headers) noexcept
 {
     cache.RemoveMatch(url, http_cache_item_match, &headers);
 }
 
 void
-HttpCacheHeap::ForkCow(bool inherit)
+HttpCacheHeap::ForkCow(bool inherit) noexcept
 {
     slice_pool.ForkCow(inherit);
     rubber.ForkCow(inherit);
 }
 
 void
-HttpCacheHeap::Compress()
+HttpCacheHeap::Compress() noexcept
 {
     slice_pool.Compress();
     rubber.Compress();
 }
 
 void
-HttpCacheHeap::Flush()
+HttpCacheHeap::Flush() noexcept
 {
     cache.Flush();
     slice_pool.Compress();
@@ -158,7 +158,7 @@ HttpCacheHeap::Flush()
 }
 
 void
-HttpCacheHeap::Lock(HttpCacheDocument &document)
+HttpCacheHeap::Lock(HttpCacheDocument &document) noexcept
 {
     auto &item = (HttpCacheItem &)document;
 
@@ -166,7 +166,7 @@ HttpCacheHeap::Lock(HttpCacheDocument &document)
 }
 
 void
-HttpCacheHeap::Unlock(HttpCacheDocument &document)
+HttpCacheHeap::Unlock(HttpCacheDocument &document) noexcept
 {
     auto &item = (HttpCacheItem &)document;
 
@@ -174,7 +174,8 @@ HttpCacheHeap::Unlock(HttpCacheDocument &document)
 }
 
 UnusedIstreamPtr
-HttpCacheHeap::OpenStream(struct pool &_pool, HttpCacheDocument &document)
+HttpCacheHeap::OpenStream(struct pool &_pool,
+                          HttpCacheDocument &document) noexcept
 {
     auto &item = (HttpCacheItem &)document;
 

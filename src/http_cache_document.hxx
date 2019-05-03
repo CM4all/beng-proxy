@@ -46,14 +46,14 @@ struct HttpCacheDocument {
     http_status_t status;
     StringMap response_headers;
 
-    explicit HttpCacheDocument(struct pool &pool)
+    explicit HttpCacheDocument(struct pool &pool) noexcept
         :vary(pool), response_headers(pool) {}
 
     HttpCacheDocument(struct pool &pool,
                       const HttpCacheResponseInfo &_info,
                       const StringMap &request_headers,
                       http_status_t _status,
-                      const StringMap &response_headers);
+                      const StringMap &response_headers) noexcept;
 
     HttpCacheDocument(const HttpCacheDocument &) = delete;
     HttpCacheDocument &operator=(const HttpCacheDocument &) = delete;
@@ -63,7 +63,7 @@ struct HttpCacheDocument {
      * This is not true if the Vary headers mismatch.
      */
     gcc_pure
-    bool VaryFits(const StringMap *request_headers) const;
+    bool VaryFits(const StringMap *request_headers) const noexcept;
 };
 
 #endif

@@ -55,20 +55,21 @@ class CancellablePointer;
  */
 HttpCache *
 http_cache_new(struct pool &pool, size_t max_size,
-               EventLoop &event_loop, ResourceLoader &resource_loader);
+               EventLoop &event_loop,
+               ResourceLoader &resource_loader);
 
 void
-http_cache_close(HttpCache *cache);
+http_cache_close(HttpCache *cache) noexcept;
 
 void
-http_cache_fork_cow(HttpCache &cache, bool inherit);
+http_cache_fork_cow(HttpCache &cache, bool inherit) noexcept;
 
 gcc_pure
 AllocatorStats
-http_cache_get_stats(const HttpCache &cache);
+http_cache_get_stats(const HttpCache &cache) noexcept;
 
 void
-http_cache_flush(HttpCache &cache);
+http_cache_flush(HttpCache &cache) noexcept;
 
 /**
  * @param session_sticky a portion of the session id that is used to
@@ -83,6 +84,6 @@ http_cache_request(HttpCache &cache,
                    const ResourceAddress &address,
                    StringMap &&headers, UnusedIstreamPtr body,
                    HttpResponseHandler &handler,
-                   CancellablePointer &cancel_ptr);
+                   CancellablePointer &cancel_ptr) noexcept;
 
 #endif

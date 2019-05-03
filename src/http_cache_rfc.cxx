@@ -55,7 +55,7 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
                             http_method_t method,
                             const ResourceAddress &address,
                             const StringMap &headers,
-                            bool has_request_body)
+                            bool has_request_body) noexcept
 {
     if (method != HTTP_METHOD_GET || has_request_body)
         /* RFC 2616 13.11 "Write-Through Mandatory" */
@@ -100,9 +100,8 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
     return true;
 }
 
-gcc_pure
 bool
-http_cache_vary_fits(const StringMap &vary, const StringMap *headers)
+http_cache_vary_fits(const StringMap &vary, const StringMap *headers) noexcept
 {
     for (const auto &i : vary) {
         const char *value = strmap_get_checked(headers, i.key);
@@ -117,23 +116,24 @@ http_cache_vary_fits(const StringMap &vary, const StringMap *headers)
     return true;
 }
 
-gcc_pure
 bool
-http_cache_vary_fits(const StringMap *vary, const StringMap *headers)
+http_cache_vary_fits(const StringMap *vary, const StringMap *headers) noexcept
 {
     return vary == nullptr || http_cache_vary_fits(*vary, headers);
 }
 
 bool
-http_cache_request_invalidate(http_method_t method)
+http_cache_request_invalidate(http_method_t method) noexcept
 {
     /* RFC 2616 13.10 "Invalidation After Updates or Deletions" */
     return method == HTTP_METHOD_PUT || method == HTTP_METHOD_DELETE ||
         method == HTTP_METHOD_POST;
 }
 
+gcc_pure
 static std::chrono::system_clock::time_point
-parse_translate_time(const char *p, std::chrono::system_clock::duration offset)
+parse_translate_time(const char *p,
+                     std::chrono::system_clock::duration offset) noexcept
 {
     if (p == nullptr)
         return std::chrono::system_clock::from_time_t(-1);
@@ -148,8 +148,8 @@ parse_translate_time(const char *p, std::chrono::system_clock::duration offset)
 /**
  * RFC 2616 13.4
  */
-static bool
-http_status_cacheable(http_status_t status)
+static constexpr bool
+http_status_cacheable(http_status_t status) noexcept
 {
     return status == HTTP_STATUS_OK ||
         status == HTTP_STATUS_NON_AUTHORITATIVE_INFORMATION ||
@@ -161,7 +161,7 @@ http_status_cacheable(http_status_t status)
 
 gcc_pure
 static const char *
-strmap_get_non_empty(const StringMap &map, const char *key)
+strmap_get_non_empty(const StringMap &map, const char *key) noexcept
 {
     const char *value = map.Get(key);
     if (value != nullptr && *value == 0)
@@ -198,7 +198,7 @@ bool
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
                              HttpCacheResponseInfo &info,
                              http_status_t status, const StringMap &headers,
-                             off_t body_available)
+                             off_t body_available) noexcept
 {
     const char *p;
 
@@ -284,7 +284,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 
 void
 http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
-                     const StringMap &request_headers)
+                     const StringMap &request_headers) noexcept
 {
     for (char **list = http_list_split(pool, vary);
          *list != nullptr; ++list) {
@@ -300,7 +300,7 @@ http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
 
 bool
 http_cache_prefer_cached(const HttpCacheDocument &document,
-                         const StringMap &response_headers)
+                         const StringMap &response_headers) noexcept
 {
     if (document.info.etag == nullptr)
         return false;

@@ -47,6 +47,6 @@ class StringMap;
 gcc_pure
 std::chrono::system_clock::time_point
 http_cache_calc_expires(const HttpCacheResponseInfo &info,
-                        const StringMap &vary);
+                        const StringMap &vary) noexcept;
 
 #endif

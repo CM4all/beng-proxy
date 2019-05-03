@@ -34,7 +34,7 @@
 #include "pool/pool.hxx"
 
 HttpCacheResponseInfo::HttpCacheResponseInfo(struct pool &pool,
-                                             const HttpCacheResponseInfo &src)
+                                             const HttpCacheResponseInfo &src) noexcept
     :expires(src.expires),
      last_modified(p_strdup_checked(&pool, src.last_modified)),
      etag(p_strdup_checked(&pool, src.etag)),
@@ -43,7 +43,7 @@ HttpCacheResponseInfo::HttpCacheResponseInfo(struct pool &pool,
 }
 
 void
-HttpCacheResponseInfo::MoveToPool(struct pool &pool)
+HttpCacheResponseInfo::MoveToPool(struct pool &pool) noexcept
 {
     last_modified = p_strdup_checked(&pool, last_modified);
     etag = p_strdup_checked(&pool, etag);

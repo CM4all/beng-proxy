@@ -139,7 +139,7 @@ public:
                      const StringMap &_headers,
                      HttpResponseHandler &_handler,
                      HttpCacheRequestInfo &_info,
-                     CancellablePointer &_cancel_ptr);
+                     CancellablePointer &_cancel_ptr) noexcept;
 
     HttpCacheRequest(const HttpCacheRequest &) = delete;
     HttpCacheRequest &operator=(const HttpCacheRequest &) = delete;
@@ -154,7 +154,7 @@ public:
      * Storing the response body in the rubber allocator has finished
      * (but may have failed).
      */
-    void RubberStoreFinished();
+    void RubberStoreFinished() noexcept;
 
     /**
      * Abort storing the response body in the rubber allocator.
@@ -162,10 +162,10 @@ public:
      * This will not remove the request from the HttpCache, because
      * this method is supposed to be used as a "disposer".
      */
-    void AbortRubberStore();
+    void AbortRubberStore() noexcept;
 
 private:
-    void Destroy() {
+    void Destroy() noexcept {
         DeleteFromPool(pool, this);
     }
 
@@ -215,7 +215,7 @@ public:
     HttpCache(const HttpCache &) = delete;
     HttpCache &operator=(const HttpCache &) = delete;
 
-    ~HttpCache();
+    ~HttpCache() noexcept;
 
     EventLoop &GetEventLoop() const noexcept {
         return event_loop;
@@ -369,7 +369,7 @@ private:
 };
 
 static void
-UpdateHeader(StringMap &dest, const StringMap &src, const char *name)
+UpdateHeader(StringMap &dest, const StringMap &src, const char *name) noexcept
 {
     const char *value = src.Get(name);
     if (value != nullptr)
@@ -377,7 +377,7 @@ UpdateHeader(StringMap &dest, const StringMap &src, const char *name)
 }
 
 static const char *
-http_cache_key(struct pool &pool, const ResourceAddress &address)
+http_cache_key(struct pool &pool, const ResourceAddress &address) noexcept
 {
     switch (address.type) {
     case ResourceAddress::Type::NONE:
@@ -622,7 +622,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
                                    const StringMap &_headers,
                                    HttpResponseHandler &_handler,
                                    HttpCacheRequestInfo &_request_info,
-                                   CancellablePointer &_cancel_ptr)
+                                   CancellablePointer &_cancel_ptr) noexcept
     :PoolLeakDetector(_pool),
      pool(_pool), caller_pool(_caller_pool),
      session_sticky(_session_sticky), site_name(_site_name),
@@ -663,7 +663,7 @@ http_cache_new(struct pool &pool, size_t max_size,
 }
 
 void
-HttpCacheRequest::RubberStoreFinished()
+HttpCacheRequest::RubberStoreFinished() noexcept
 {
     assert(cancel_ptr);
 
@@ -672,7 +672,7 @@ HttpCacheRequest::RubberStoreFinished()
 }
 
 void
-HttpCacheRequest::AbortRubberStore()
+HttpCacheRequest::AbortRubberStore() noexcept
 {
     CancellablePointer _cancel_ptr(std::move(cancel_ptr));
     Destroy();
@@ -680,7 +680,7 @@ HttpCacheRequest::AbortRubberStore()
 }
 
 inline
-HttpCache::~HttpCache()
+HttpCache::~HttpCache() noexcept
 {
     requests.clear_and_dispose(std::mem_fn(&HttpCacheRequest::AbortRubberStore));
 
@@ -690,25 +690,25 @@ HttpCache::~HttpCache()
 }
 
 void
-http_cache_close(HttpCache *cache)
+http_cache_close(HttpCache *cache) noexcept
 {
     delete cache;
 }
 
 void
-http_cache_fork_cow(HttpCache &cache, bool inherit)
+http_cache_fork_cow(HttpCache &cache, bool inherit) noexcept
 {
     cache.ForkCow(inherit);
 }
 
 AllocatorStats
-http_cache_get_stats(const HttpCache &cache)
+http_cache_get_stats(const HttpCache &cache) noexcept
 {
     return cache.GetStats();
 }
 
 void
-http_cache_flush(HttpCache &cache)
+http_cache_flush(HttpCache &cache) noexcept
 {
     cache.Flush();
 }
@@ -771,7 +771,7 @@ CheckETagList(const char *list, const StringMap &response_headers) noexcept
 
 static void
 DispatchNotModified(struct pool &pool, const HttpCacheDocument &document,
-                    HttpResponseHandler &handler)
+                    HttpResponseHandler &handler) noexcept
 {
     handler.InvokeResponse(HTTP_STATUS_NOT_MODIFIED,
                            StringMap(pool, document.response_headers),
@@ -781,7 +781,7 @@ DispatchNotModified(struct pool &pool, const HttpCacheDocument &document,
 static bool
 CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
                   const HttpCacheDocument &document,
-                  HttpResponseHandler &handler)
+                  HttpResponseHandler &handler) noexcept
 {
     bool ignore_if_modified_since = false;
 
@@ -925,7 +925,7 @@ HttpCache::Revalidate(struct pool &caller_pool,
 static bool
 http_cache_may_serve(EventLoop &event_loop,
                      HttpCacheRequestInfo &info,
-                     const HttpCacheDocument &document)
+                     const HttpCacheDocument &document) noexcept
 {
     return info.only_if_cached ||
         document.info.expires >= event_loop.SystemNow();
@@ -1040,7 +1040,7 @@ http_cache_request(HttpCache &cache,
                    const ResourceAddress &address,
                    StringMap &&headers, UnusedIstreamPtr body,
                    HttpResponseHandler &handler,
-                   CancellablePointer &cancel_ptr)
+                   CancellablePointer &cancel_ptr) noexcept
 {
     cache.Start(pool, session_sticky, cache_tag, site_name,
                 method, address, std::move(headers), std::move(body),

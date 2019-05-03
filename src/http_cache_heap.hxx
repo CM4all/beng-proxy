@@ -71,31 +71,32 @@ public:
         return rubber;
     }
 
-    void ForkCow(bool inherit);
+    void ForkCow(bool inherit) noexcept;
 
     gcc_pure
     AllocatorStats GetStats() const noexcept;
 
-    HttpCacheDocument *Get(const char *uri, StringMap &request_headers);
+    HttpCacheDocument *Get(const char *uri,
+                           StringMap &request_headers) noexcept;
 
     void Put(const char *url,
              const HttpCacheResponseInfo &info,
              StringMap &request_headers,
              http_status_t status,
              const StringMap &response_headers,
-             RubberAllocation &&a, size_t size);
+             RubberAllocation &&a, size_t size) noexcept;
 
-    void Remove(HttpCacheDocument &document);
-    void RemoveURL(const char *url, StringMap &headers);
+    void Remove(HttpCacheDocument &document) noexcept;
+    void RemoveURL(const char *url, StringMap &headers) noexcept;
 
-    void Compress();
-    void Flush();
+    void Compress() noexcept;
+    void Flush() noexcept;
 
-    static void Lock(HttpCacheDocument &document);
-    void Unlock(HttpCacheDocument &document);
+    static void Lock(HttpCacheDocument &document) noexcept;
+    void Unlock(HttpCacheDocument &document) noexcept;
 
     UnusedIstreamPtr OpenStream(struct pool &_pool,
-                                HttpCacheDocument &document);
+                                HttpCacheDocument &document) noexcept;
 };
 
 #endif
