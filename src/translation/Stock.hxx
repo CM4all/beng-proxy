@@ -41,6 +41,9 @@ struct TranslateHandler;
 struct TranslateRequest;
 
 class TranslationStock final : public TranslationService, StockClass {
+    class Connection;
+    class Request;
+
     Stock stock;
 
     const AllocatedSocketAddress address;

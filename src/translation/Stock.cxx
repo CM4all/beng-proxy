@@ -48,13 +48,13 @@
 #include <string.h>
 #include <errno.h>
 
-class TranslateConnection final : public StockItem {
+class TranslationStock::Connection final : public StockItem {
     UniqueSocketDescriptor s;
 
     SocketEvent event;
 
 public:
-    explicit TranslateConnection(CreateStockItem c) noexcept
+    explicit Connection(CreateStockItem c) noexcept
         :StockItem(c),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
 
@@ -113,13 +113,13 @@ public:
     }
 };
 
-class TranslateStockRequest final
+class TranslationStock::Request final
     : Cancellable, StockGetHandler, Lease, PoolLeakDetector
 {
     struct pool &pool;
 
     TranslationStock &stock;
-    TranslateConnection *item;
+    Connection *item;
 
     const TranslateRequest &request;
 
@@ -130,7 +130,7 @@ class TranslateStockRequest final
     CancellablePointer cancel_ptr;
 
 public:
-    TranslateStockRequest(TranslationStock &_stock, struct pool &_pool,
+    Request(TranslationStock &_stock, struct pool &_pool,
                           const TranslateRequest &_request,
                           const TranslateHandler &_handler, void *_ctx,
                           CancellablePointer &_cancel_ptr) noexcept
@@ -149,7 +149,7 @@ public:
 
 private:
     void Destroy() noexcept {
-        this->~TranslateStockRequest();
+        this->~Request();
     }
 
     /* virtual methods from class Cancellable */
@@ -179,9 +179,9 @@ private:
  */
 
 void
-TranslateStockRequest::OnStockItemReady(StockItem &_item) noexcept
+TranslationStock::Request::OnStockItemReady(StockItem &_item) noexcept
 {
-    item = &(TranslateConnection &)_item;
+    item = &(Connection &)_item;
 
     /* cancellation will not be handled by this class from here on;
        instead, we pass the caller's CancellablePointer to
@@ -195,7 +195,7 @@ TranslateStockRequest::OnStockItemReady(StockItem &_item) noexcept
 }
 
 void
-TranslateStockRequest::OnStockItemError(std::exception_ptr ep) noexcept
+TranslationStock::Request::OnStockItemError(std::exception_ptr ep) noexcept
 {
     auto &_handler = handler;
     auto *_handler_ctx = handler_ctx;
@@ -207,7 +207,7 @@ void
 TranslationStock::Create(CreateStockItem c, void *, struct pool &,
                          CancellablePointer &)
 {
-    auto *connection = new TranslateConnection(c);
+    auto *connection = new Connection(c);
     connection->CreateAndConnectAndFinish(address);
 }
 
@@ -217,7 +217,7 @@ TranslationStock::SendRequest(struct pool &pool,
                               const TranslateHandler &handler, void *ctx,
                               CancellablePointer &cancel_ptr) noexcept
 {
-    auto r = NewFromPool<TranslateStockRequest>(pool, *this, pool, request,
-                                                handler, ctx, cancel_ptr);
+    auto r = NewFromPool<Request>(pool, *this, pool, request,
+                                  handler, ctx, cancel_ptr);
     r->Start();
 }
