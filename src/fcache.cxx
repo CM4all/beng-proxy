@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -63,6 +63,8 @@
 
 #include <boost/intrusive/list.hpp>
 
+#include <unordered_map>
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -109,6 +111,15 @@ struct FilterCacheInfo {
 };
 
 struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
+    using AutoUnlink =
+        boost::intrusive::link_mode<boost::intrusive::auto_unlink>;
+    using PerTagHook = boost::intrusive::list_member_hook<AutoUnlink>;
+
+    /**
+     * A doubly linked list of cache items with the same cache tag.
+     */
+    PerTagHook per_tag_siblings;
+
     const FilterCacheInfo info;
 
     const http_status_t status;
@@ -231,6 +242,19 @@ class FilterCache final : LeakDetector {
     SlicePool slice_pool;
     Rubber rubber;
     Cache cache;
+
+    using PerTagHook =
+        boost::intrusive::member_hook<FilterCacheItem,
+                                      FilterCacheItem::PerTagHook,
+                                      &FilterCacheItem::per_tag_siblings>;
+    using PerTagList =
+        boost::intrusive::list<FilterCacheItem, PerTagHook,
+                               boost::intrusive::constant_time_size<false>>;
+
+    /**
+     * Lookup table to speed up FlushTag().
+     */
+    std::unordered_map<std::string, PerTagList> per_tag;
 
     TimerEvent compress_timer;
 
@@ -385,6 +409,9 @@ FilterCache::Put(const FilterCacheInfo &info,
                                              status, headers, size,
                                              std::move(a),
                                              expires);
+
+    if (item->info.tag != nullptr)
+        per_tag[item->info.tag].push_back(*item);
 
     cache.Put(item->info.key, *item);
 }
@@ -647,13 +674,15 @@ filter_cache_flush(FilterCache &cache) noexcept
 }
 
 void
-FilterCache::FlushTag(const char *_tag) noexcept
+FilterCache::FlushTag(const char *tag) noexcept
 {
-    cache.RemoveAllMatch([](const CacheItem *_item, void *ctx){
-        const auto &item = *(const FilterCacheItem *)_item;
-        const char *tag = (const char *)ctx;
-        return item.info.tag != nullptr && strcmp(item.info.tag, tag) == 0;
-    }, const_cast<char *>(_tag));
+    auto i = per_tag.find(tag);
+    if (i == per_tag.end())
+        return;
+
+    auto &list = i->second;
+    while (!list.empty())
+        cache.Remove(list.front());
 }
 
 void
