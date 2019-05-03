@@ -54,7 +54,7 @@ class RubberIstream final : public Istream {
 public:
     RubberIstream(struct pool &p, Rubber &_rubber, unsigned _id,
                   size_t start, size_t _end,
-                  bool _auto_remove)
+                  bool _auto_remove) noexcept
         :Istream(p), rubber(_rubber), id(_id), auto_remove(_auto_remove),
          position(start), end(_end) {}
 
@@ -119,7 +119,7 @@ public:
 UnusedIstreamPtr
 istream_rubber_new(struct pool &pool, Rubber &rubber,
                    unsigned id, size_t start, size_t end,
-                   bool auto_remove)
+                   bool auto_remove) noexcept
 {
     assert(id > 0);
     assert(start <= end);

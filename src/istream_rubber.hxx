@@ -48,6 +48,6 @@ class Rubber;
 UnusedIstreamPtr
 istream_rubber_new(struct pool &pool, Rubber &rubber,
                    unsigned id, size_t start, size_t end,
-                   bool auto_remove);
+                   bool auto_remove) noexcept;
 
 #endif
