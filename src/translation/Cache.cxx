@@ -329,9 +329,9 @@ struct TranslateCachePerSite
 
 struct tcache {
     const PoolPtr pool;
-    SlicePool *const slice_pool;
+    SlicePool slice_pool;
 
-    Cache *const cache;
+    Cache cache;
 
     /**
      * This hash table maps each host name to a
@@ -375,7 +375,7 @@ struct tcache {
            bool handshake_cacheable);
     tcache(struct tcache &) = delete;
 
-    ~tcache();
+    ~tcache() = default;
 
     TranslateCachePerHost &MakePerHost(const char *host);
     TranslateCachePerSite &MakePerSite(const char *site);
@@ -974,12 +974,10 @@ static TranslateCacheItem *
 tcache_get(struct tcache &tcache, const TranslateRequest &request,
            const char *key, bool find_base)
 {
-    assert(tcache.cache != nullptr);
-
     TranslateCacheRequest match_ctx(request, find_base);
 
     return (TranslateCacheItem *)
-        tcache.cache->GetMatch(key, tcache_item_match, &match_ctx);
+        tcache.cache.GetMatch(key, tcache_item_match, &match_ctx);
 }
 
 static TranslateCacheItem *
@@ -1057,8 +1055,6 @@ inline unsigned
 TranslateCachePerHost::Invalidate(const TranslateRequest &request,
                                   ConstBuffer<TranslationCommand> vary)
 {
-    assert(tcache.cache != nullptr);
-
     unsigned n_removed = 0;
 
     items.remove_and_dispose_if([&request, vary](const TranslateCacheItem &item){
@@ -1068,7 +1064,7 @@ TranslateCachePerHost::Invalidate(const TranslateRequest &request,
             assert(item->per_host == this);
             item->per_host = nullptr;
 
-            tcache.cache->Remove(*item);
+            tcache.cache.Remove(*item);
             ++n_removed;
         });
 
@@ -1100,8 +1096,6 @@ inline unsigned
 TranslateCachePerSite::Invalidate(const TranslateRequest &request,
                                   ConstBuffer<TranslationCommand> vary)
 {
-    assert(tcache.cache != nullptr);
-
     unsigned n_removed = 0;
 
     items.remove_and_dispose_if([&request, vary](const TranslateCacheItem &item){
@@ -1111,7 +1105,7 @@ TranslateCachePerSite::Invalidate(const TranslateRequest &request,
             assert(item->per_site == this);
             item->per_site = nullptr;
 
-            tcache.cache->Remove(*item);
+            tcache.cache.Remove(*item);
             ++n_removed;
         });
 
@@ -1126,9 +1120,6 @@ tcache::Invalidate(const TranslateRequest &request,
                    ConstBuffer<TranslationCommand> vary,
                    const char *site) noexcept
 {
-    if (cache == nullptr)
-        return;
-
     struct tcache_invalidate_data data = {
         .request = &request,
         .vary = vary,
@@ -1140,7 +1131,7 @@ tcache::Invalidate(const TranslateRequest &request,
         ? InvalidateSite(request, vary, site)
         : (vary.Contains(TranslationCommand::HOST)
            ? InvalidateHost(request, vary)
-           : cache->RemoveAllMatch(tcache_invalidate_match, &data));
+           : cache.RemoveAllMatch(tcache_invalidate_match, &data));
     LogConcat(4, "TranslationCache", "invalidated ", removed, " cache items");
 }
 
@@ -1158,9 +1149,6 @@ TranslationCache::Invalidate(const TranslateRequest &request,
 static const TranslateCacheItem *
 tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 {
-    assert(tcr.tcache->slice_pool != nullptr);
-    assert(tcr.tcache->cache != nullptr);
-
     auto max_age = response.max_age;
     constexpr std::chrono::seconds max_max_age = std::chrono::hours(24);
     if (max_age < std::chrono::seconds::zero() || max_age > max_max_age)
@@ -1168,8 +1156,8 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
         max_age = max_max_age;
 
     auto item = NewFromPool<TranslateCacheItem>(pool_new_slice(tcr.tcache->pool, "tcache_item",
-                                                               tcr.tcache->slice_pool),
-                                                tcr.tcache->cache->SteadyNow(),
+                                                               &tcr.tcache->slice_pool),
+                                                tcr.tcache->cache.SteadyNow(),
                                                 max_age);
 
     auto &pool = item->GetPool();
@@ -1266,7 +1254,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
     if (response.site != nullptr)
         tcache_add_per_site(*tcr.tcache, item);
 
-    tcr.tcache->cache->PutMatch(key, *item, tcache_item_match, &tcr);
+    tcr.tcache->cache.PutMatch(key, *item, tcache_item_match, &tcr);
     return item;
 }
 
@@ -1484,20 +1472,13 @@ tcache::tcache(struct pool &_pool, EventLoop &event_loop,
                TranslationService &_next, unsigned max_size,
                bool handshake_cacheable)
     :pool(PoolPtr::donate, *pool_new_libc(&_pool, "translate_cache")),
-     slice_pool(new SlicePool(4096, 32768)),
-     cache(new Cache(event_loop, 65521, max_size)),
+     slice_pool(4096, 32768),
+     cache(event_loop, 65521, max_size),
      per_host(PerHostSet::bucket_traits(per_host_buckets, N_BUCKETS)),
      per_site(PerSiteSet::bucket_traits(per_site_buckets, N_BUCKETS)),
      next(_next), active(handshake_cacheable)
 {
     assert(max_size > 0);
-}
-
-inline
-tcache::~tcache()
-{
-    delete cache;
-    delete slice_pool;
 }
 
 TranslationCache::TranslationCache(struct pool &pool, EventLoop &event_loop,
@@ -1514,8 +1495,7 @@ TranslationCache::~TranslationCache() noexcept = default;
 void
 TranslationCache::ForkCow(bool inherit) noexcept
 {
-    if (cache->slice_pool != nullptr)
-        cache->slice_pool->ForkCow(inherit);
+    cache->slice_pool.ForkCow(inherit);
 }
 
 AllocatorStats
@@ -1527,10 +1507,8 @@ TranslationCache::GetStats() const noexcept
 void
 TranslationCache::Flush() noexcept
 {
-    if (cache->cache != nullptr)
-        cache->cache->Flush();
-    if (cache->slice_pool != nullptr)
-        cache->slice_pool->Compress();
+    cache->cache.Flush();
+    cache->slice_pool.Compress();
 }
 
 
@@ -1545,8 +1523,7 @@ TranslationCache::SendRequest(struct pool &pool,
                               const TranslateHandler &handler, void *ctx,
                               CancellablePointer &cancel_ptr) noexcept
 {
-    const bool cacheable = cache->cache != nullptr &&
-        cache->active && tcache_request_evaluate(request);
+    const bool cacheable = cache->active && tcache_request_evaluate(request);
     const char *key = tcache_request_key(pool, request);
     TranslateCacheItem *item = cacheable
         ? tcache_lookup(pool, *cache, request, key)
