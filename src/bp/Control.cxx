@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -59,9 +59,12 @@ using namespace BengProxy;
 static void
 control_tcache_invalidate(BpInstance *instance, ConstBuffer<void> payload)
 {
+    if (instance->translation_cache == nullptr)
+        return;
+
     if (payload.empty()) {
         /* flush the translation cache if the payload is empty */
-        translate_cache_flush(*instance->translate_cache);
+        instance->translation_cache->Flush();
         return;
     }
 
@@ -79,10 +82,10 @@ control_tcache_invalidate(BpInstance *instance, ConstBuffer<void> payload)
         return;
     }
 
-    translate_cache_invalidate(*instance->translate_cache, request,
-                               ConstBuffer<TranslationCommand>(request.commands.raw(),
-                                                               request.commands.size()),
-                               request.site);
+    instance->translation_cache->Invalidate(request,
+                                            ConstBuffer<TranslationCommand>(request.commands.raw(),
+                                                                            request.commands.size()),
+                                            request.site);
 }
 
 static void

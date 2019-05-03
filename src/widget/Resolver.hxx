@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,14 +30,13 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_WIDGET_RESOLVER_HXX
-#define BENG_PROXY_WIDGET_RESOLVER_HXX
+#pragma once
 
 #include "util/BindMethod.hxx"
 
 struct pool;
 class Widget;
-struct tcache;
+class TranslationService;
 class CancellablePointer;
 
 typedef BoundMethod<void() noexcept> WidgetResolverCallback;
@@ -50,8 +49,6 @@ typedef BoundMethod<void() noexcept> WidgetResolverCallback;
 void
 ResolveWidget(struct pool &pool,
               Widget &widget,
-              struct tcache &translate_cache,
+              TranslationService &service,
               WidgetResolverCallback callback,
               CancellablePointer &cancel_ptr) noexcept;
-
-#endif

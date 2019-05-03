@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -53,25 +53,30 @@
 
 #include <string.h>
 
+class MyTranslationService final : public TranslationService {
+public:
+    /* virtual methods from class TranslationService */
+    void SendRequest(struct pool &pool,
+                     const TranslateRequest &request,
+                     const TranslateHandler &handler, void *ctx,
+                     CancellablePointer &cancel_ptr) noexcept override;
+};
+
 struct Instance : PInstance {
-    struct tcache *cache;
+    MyTranslationService ts;
+    TranslationCache cache;
 
     Instance()
-        :cache(translate_cache_new(root_pool, event_loop,
-                                   *(TranslateStock *)0x1, 1024)) {}
-
-    ~Instance() {
-        translate_cache_close(cache);
-    }
+        :cache(root_pool, event_loop, ts, 1024) {}
 };
 
 const TranslateResponse *next_response, *expected_response;
 
 void
-tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
-                 gcc_unused const TranslateRequest &request,
-                 const TranslateHandler &handler, void *ctx,
-                 gcc_unused CancellablePointer &cancel_ptr) noexcept
+MyTranslationService::SendRequest(struct pool &pool,
+                                  gcc_unused const TranslateRequest &request,
+                                  const TranslateHandler &handler, void *ctx,
+                                  gcc_unused CancellablePointer &cancel_ptr) noexcept
 {
     if (next_response != nullptr) {
         auto response = NewFromPool<MakeResponse>(pool, pool, *next_response);
@@ -237,7 +242,7 @@ transformation_equals(const Transformation *a,
 
 static bool
 transformation_chain_equals(const Transformation *a,
-                  const Transformation *b)
+                            const Transformation *b)
 {
     while (a != nullptr && b != nullptr) {
         if (!transformation_equals(a, b))
@@ -312,65 +317,65 @@ my_translate_error(gcc_unused std::exception_ptr ep, gcc_unused void *ctx)
 }
 
 static constexpr TranslateHandler my_translate_handler = {
-    .response = my_translate_response,
-    .error = my_translate_error,
+                                                          .response = my_translate_response,
+                                                          .error = my_translate_error,
 };
 
 TEST(TranslationCache, Basic)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/");
     const auto response1 = MakeResponse().File("/var/www/index.html");
     next_response = expected_response = &response1;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     next_response = nullptr;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/foo/bar.html");
     const auto response2 = MakeResponse().Base("/foo/").File("/srv/foo/bar.html");
     next_response = expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/foo/index.html");
     const auto response3 = MakeResponse().Base("/foo/").File("/srv/foo/index.html");
     next_response = nullptr;
     expected_response = &response3;
-    translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request3,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request4 = MakeRequest("/foo/");
     const auto response4 = MakeResponse().Base("/foo/").File("/srv/foo/");
     expected_response = &response4;
-    translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request4,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request5 = MakeRequest("/foo");
     expected_response = nullptr;
-    translate_cache(*pool, *cache, request5,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request5,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request10 = MakeRequest("/foo//bar");
     const auto response10 = MakeResponse().Base("/foo/").File("/srv/foo//bar");
     expected_response = &response10;
-    translate_cache(*pool, *cache, request10,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request10,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request6 = MakeRequest("/cgi1/foo");
     const auto response6 = MakeResponse().Base("/cgi1/")
         .Cgi("/usr/lib/cgi-bin/cgi.pl", "/cgi1/foo", "x/foo");
 
     next_response = expected_response = &response6;
-    translate_cache(*pool, *cache, request6,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request6,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request7 = MakeRequest("/cgi1/a/b/c");
     const auto response7 = MakeResponse().Base("/cgi1/")
@@ -378,16 +383,16 @@ TEST(TranslationCache, Basic)
 
     next_response = nullptr;
     expected_response = &response7;
-    translate_cache(*pool, *cache, request7,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request7,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request8 = MakeRequest("/cgi2/foo");
     const auto response8 = MakeResponse().Base("/cgi2/")
         .Cgi("/usr/lib/cgi-bin/cgi.pl", "/cgi2/foo", "foo");
 
     next_response = expected_response = &response8;
-    translate_cache(*pool, *cache, request8,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request8,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request9 = MakeRequest("/cgi2/a/b/c");
     const auto response9 = MakeResponse().Base("/cgi2/")
@@ -395,8 +400,8 @@ TEST(TranslationCache, Basic)
 
     next_response = nullptr;
     expected_response = &response9;
-    translate_cache(*pool, *cache, request9,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request9,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -407,29 +412,29 @@ TEST(TranslationCache, BaseRoot)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
     const auto request1 = MakeRequest("/base_root/");
     const auto response1 = MakeResponse().Base("/base_root/").File("/var/www/");
     next_response = expected_response = &response1;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/base_root/hansi");
     const auto response2 = MakeResponse().Base("/base_root/").File("/var/www/hansi");
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 TEST(TranslationCache, BaseMismatch)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -438,8 +443,8 @@ TEST(TranslationCache, BaseMismatch)
 
     next_response = &response1;
     expected_response = nullptr;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -449,7 +454,7 @@ TEST(TranslationCache, BaseUri)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -459,8 +464,8 @@ TEST(TranslationCache, BaseUri)
         .Uri("/modified/foo");
 
     next_response = expected_response = &response1;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/base_uri/hansi");
     const auto response2 = MakeResponse().Base("/base_uri/")
@@ -469,8 +474,8 @@ TEST(TranslationCache, BaseUri)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -480,7 +485,7 @@ TEST(TranslationCache, BaseRedirect)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ref;
 
@@ -490,8 +495,8 @@ TEST(TranslationCache, BaseRedirect)
         .Redirect("http://modified/foo");
 
     next_response = expected_response = &response1;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ref);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ref);
 
     const auto request2 = MakeRequest("/base_redirect/hansi");
     const auto response2 = MakeResponse().Base("/base_redirect/")
@@ -500,8 +505,8 @@ TEST(TranslationCache, BaseRedirect)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ref);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ref);
 }
 
 /**
@@ -511,7 +516,7 @@ TEST(TranslationCache, BaseTestPath)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -521,8 +526,8 @@ TEST(TranslationCache, BaseTestPath)
         .TestPath("/modified/foo");
 
     next_response = expected_response = &response1;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/base_test_path/hansi");
     const auto response2 = MakeResponse().Base("/base_test_path/")
@@ -531,15 +536,15 @@ TEST(TranslationCache, BaseTestPath)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 TEST(TranslationCache, EasyBase)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     const auto request1 = MakeRequest("/easy/bar.html");
 
@@ -550,19 +555,19 @@ TEST(TranslationCache, EasyBase)
 
     next_response = &response1;
     expected_response = &response1b;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     next_response = nullptr;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/easy/index.html");
     const auto response2 = MakeResponse().EasyBase("/easy/")
         .File("/var/www/index.html");
     expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -572,7 +577,7 @@ TEST(TranslationCache, EasyBaseUri)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -586,8 +591,8 @@ TEST(TranslationCache, EasyBaseUri)
 
     next_response = &response1;
     expected_response = &response1b;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/easy_base_uri/hansi");
     const auto response2 = MakeResponse().EasyBase("/easy_base_uri/")
@@ -596,8 +601,8 @@ TEST(TranslationCache, EasyBaseUri)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -607,7 +612,7 @@ TEST(TranslationCache, EasyBaseTestPath)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -621,8 +626,8 @@ TEST(TranslationCache, EasyBaseTestPath)
 
     next_response = &response1;
     expected_response = &response1b;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/easy_base_test_path/hansi");
     const auto response2 = MakeResponse().EasyBase("/easy_base_test_path/")
@@ -631,22 +636,22 @@ TEST(TranslationCache, EasyBaseTestPath)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 TEST(TranslationCache, VaryInvalidate)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     static const TranslationCommand response5_vary[] = {
-        TranslationCommand::QUERY_STRING,
+                                                        TranslationCommand::QUERY_STRING,
     };
 
     static const TranslationCommand response5_invalidate[] = {
-        TranslationCommand::QUERY_STRING,
+                                                              TranslationCommand::QUERY_STRING,
     };
 
     const auto response5c = MakeResponse().File("/srv/qs3")
@@ -658,54 +663,54 @@ TEST(TranslationCache, VaryInvalidate)
     const auto response5a = MakeResponse().File("/srv/qs1")
         .Vary(response5_vary);
     next_response = expected_response = &response5a;
-    translate_cache(*pool, *cache, request6,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request6,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request7 = MakeRequest("/qs").QueryString("xyz");
     const auto response5b = MakeResponse().File("/srv/qs2")
         .Vary(response5_vary);
     next_response = expected_response = &response5b;
-    translate_cache(*pool, *cache, request7,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request7,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     next_response = nullptr;
     expected_response = &response5a;
-    translate_cache(*pool, *cache, request6,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request6,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     next_response = nullptr;
     expected_response = &response5b;
-    translate_cache(*pool, *cache, request7,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request7,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request8 = MakeRequest("/qs/").QueryString("xyz");
     next_response = expected_response = &response5c;
-    translate_cache(*pool, *cache, request8,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request8,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     next_response = nullptr;
     expected_response = &response5a;
-    translate_cache(*pool, *cache, request6,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request6,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     next_response = expected_response = &response5c;
-    translate_cache(*pool, *cache, request7,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request7,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     next_response = expected_response = &response5c;
-    translate_cache(*pool, *cache, request8,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request8,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     expected_response = &response5c;
-    translate_cache(*pool, *cache, request7,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request7,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 TEST(TranslationCache, InvalidateUri)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -715,21 +720,21 @@ TEST(TranslationCache, InvalidateUri)
     const auto response1 = MakeResponse().File("/var/www/invalidate/uri");
 
     next_response = expected_response = &response1;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/invalidate/uri").Check("x");
     const auto response2 = MakeResponse().File("/var/www/invalidate/uri");
     next_response = expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/invalidate/uri")
         .ErrorDocumentStatus(HTTP_STATUS_INTERNAL_SERVER_ERROR);
     const auto response3 = MakeResponse().File("/var/www/500/invalidate/uri");
     next_response = expected_response = &response3;
-    translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request3,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request4 = MakeRequest("/invalidate/uri")
         .ErrorDocumentStatus(HTTP_STATUS_INTERNAL_SERVER_ERROR)
@@ -737,8 +742,8 @@ TEST(TranslationCache, InvalidateUri)
     const auto response4 = MakeResponse().File("/var/www/500/check/invalidate/uri");
 
     next_response = expected_response = &response4;
-    translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request4,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request4b = MakeRequest("/invalidate/uri")
         .ErrorDocumentStatus(HTTP_STATUS_INTERNAL_SERVER_ERROR)
@@ -746,68 +751,68 @@ TEST(TranslationCache, InvalidateUri)
         .WantFullUri({ "a\0/b", 4 });
     const auto response4b = MakeResponse().File("/var/www/500/check/wfu/invalidate/uri");
     next_response = expected_response = &response4b;
-    translate_cache(*pool, *cache, request4b,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request4b,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* verify the cache items */
 
     next_response = nullptr;
 
     expected_response = &response1;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     expected_response = &response3;
-    translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request3,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     expected_response = &response4;
-    translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request4,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     expected_response = &response4b;
-    translate_cache(*pool, *cache, request4b,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request4b,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* invalidate all cache items */
 
     const auto request5 = MakeRequest("/invalidate/uri")
         .ErrorDocumentStatus(HTTP_STATUS_NOT_FOUND);
     static const TranslationCommand response5_invalidate[] = {
-        TranslationCommand::URI,
+                                                              TranslationCommand::URI,
     };
     const auto response5 = MakeResponse().File("/var/www/404/invalidate/uri")
         .Invalidate(response5_invalidate);
 
     next_response = expected_response = &response5;
-    translate_cache(*pool, *cache, request5,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request5,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* check if all cache items have really been deleted */
 
     next_response = expected_response = nullptr;
 
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
-    translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, cancel_ptr);
-    translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, cancel_ptr);
-    translate_cache(*pool, *cache, request4b,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request3,
+                      my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request4,
+                      my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request4b,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 TEST(TranslationCache, Regex)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -816,24 +821,24 @@ TEST(TranslationCache, Regex)
     const auto response_i1 = MakeResponse().File("/var/www/regex/other/foo")
         .Base("/regex/").InverseRegex("\\.(jpg|html)$");
     next_response = expected_response = &response_i1;
-    translate_cache(*pool, *cache, request_i1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request_i1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* fill the cache */
     const auto request1 = MakeRequest("/regex/a/foo.jpg");
     const auto response1 = MakeResponse().File("/var/www/regex/images/a/foo.jpg")
         .Base("/regex/").Regex("\\.jpg$");
     next_response = expected_response = &response1;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* regex mismatch */
     const auto request2 = MakeRequest("/regex/b/foo.html");
     const auto response2 = MakeResponse().File("/var/www/regex/html/b/foo.html")
         .Base("/regex/").Regex("\\.html$");
     next_response = expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* regex match */
     const auto request3 = MakeRequest("/regex/c/bar.jpg");
@@ -841,8 +846,8 @@ TEST(TranslationCache, Regex)
         .Base("/regex/").Regex("\\.jpg$");
     next_response = nullptr;
     expected_response = &response3;
-    translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request3,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* second regex match */
     const auto request4 = MakeRequest("/regex/d/bar.html");
@@ -850,8 +855,8 @@ TEST(TranslationCache, Regex)
         .Base("/regex/").Regex("\\.html$");
     next_response = nullptr;
     expected_response = &response4;
-    translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request4,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* see if the "inverse_regex" cache item is still there */
     const auto request_i2 = MakeRequest("/regex/bar");
@@ -859,15 +864,15 @@ TEST(TranslationCache, Regex)
         .Base("/regex/").InverseRegex("\\.(jpg|html)$");
     next_response = nullptr;
     expected_response = &response_i2;
-    translate_cache(*pool, *cache, request_i2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request_i2,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 TEST(TranslationCache, RegexError)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     const auto request = MakeRequest("/regex-error");
     const auto response = MakeResponse().File("/error")
@@ -878,15 +883,15 @@ TEST(TranslationCache, RegexError)
     /* this must fail */
     next_response = &response;
     expected_response = nullptr;
-    translate_cache(*pool, *cache, request,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 TEST(TranslationCache, RegexTail)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -894,34 +899,34 @@ TEST(TranslationCache, RegexTail)
     const auto response1 = MakeResponse().File("/var/www/regex/images/a/foo.jpg")
         .Base("/regex_tail/").RegexTail("^a/");
     next_response = expected_response = &response1;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/regex_tail/b/foo.html");
     next_response = expected_response = nullptr;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/regex_tail/a/bar.jpg");
     const auto response3 = MakeResponse().File("/var/www/regex/images/a/bar.jpg")
         .Base("/regex_tail/").RegexTail("^a/");
     next_response = nullptr;
     expected_response = &response3;
-    translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request3,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request4 = MakeRequest("/regex_tail/%61/escaped.html");
 
     next_response = expected_response = nullptr;
-    translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request4,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 TEST(TranslationCache, RegexTailUnescape)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -930,14 +935,14 @@ TEST(TranslationCache, RegexTailUnescape)
         .Base("/regex_unescape/").RegexTailUnescape("^a/");
 
     next_response = expected_response = &response1;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/regex_unescape/b/foo.html");
 
     next_response = expected_response = nullptr;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/regex_unescape/a/bar.jpg");
     const auto response3 = MakeResponse().File("/var/www/regex/images/a/bar.jpg")
@@ -945,23 +950,23 @@ TEST(TranslationCache, RegexTailUnescape)
 
     next_response = nullptr;
     expected_response = &response3;
-    translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request3,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request4 = MakeRequest("/regex_unescape/%61/escaped.html");
     const auto response4 = MakeResponse().File("/var/www/regex/images/a/escaped.html")
         .Base("/regex_unescape/").RegexTailUnescape("^a/");
     next_response = nullptr;
     expected_response = &response4;
-    translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request4,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 TEST(TranslationCache, Expand)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -979,8 +984,8 @@ TEST(TranslationCache, Expand)
 
     next_response = &response1n;
     expected_response = &response1e;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* check match */
 
@@ -992,15 +997,15 @@ TEST(TranslationCache, Expand)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 TEST(TranslationCache, ExpandLocal)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -1019,8 +1024,8 @@ TEST(TranslationCache, ExpandLocal)
 
     next_response = &response1n;
     expected_response = &response1e;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* check match */
 
@@ -1032,15 +1037,15 @@ TEST(TranslationCache, ExpandLocal)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 TEST(TranslationCache, ExpandLocalFilter)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -1063,8 +1068,8 @@ TEST(TranslationCache, ExpandLocalFilter)
 
     next_response = &response1n;
     expected_response = &response1e;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* check match */
 
@@ -1078,15 +1083,15 @@ TEST(TranslationCache, ExpandLocalFilter)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 TEST(TranslationCache, ExpandUri)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -1104,8 +1109,8 @@ TEST(TranslationCache, ExpandUri)
 
     next_response = &response1n;
     expected_response = &response1e;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* check match */
 
@@ -1117,15 +1122,15 @@ TEST(TranslationCache, ExpandUri)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 TEST(TranslationCache, AutoBase)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -1137,8 +1142,8 @@ TEST(TranslationCache, AutoBase)
         .Cgi("/usr/lib/cgi-bin/foo.cgi", "/auto-base/foo.cgi/bar", "/bar");
 
     next_response = expected_response = &response1;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* check if BASE was auto-detected */
 
@@ -1149,8 +1154,8 @@ TEST(TranslationCache, AutoBase)
 
     next_response = nullptr;
     expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -1160,7 +1165,7 @@ TEST(TranslationCache, BaseCheck)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -1170,24 +1175,24 @@ TEST(TranslationCache, BaseCheck)
     const auto response1 = MakeResponse().Base("/a/").Check("x");
 
     next_response = expected_response = &response1;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/a/b/c.html").Check("x");
     const auto response2 = MakeResponse().Base("/a/b/")
         .File("/var/www/vol0/a/b/c.html");
 
     next_response = expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/a/d/e.html").Check("x");
     const auto response3 = MakeResponse().Base("/a/d/")
         .File("/var/www/vol1/a/d/e.html");
 
     next_response = expected_response = &response3;
-    translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request3,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* now check whether the translate cache matches the BASE
        correctly */
@@ -1198,37 +1203,37 @@ TEST(TranslationCache, BaseCheck)
     const auto response4 = MakeResponse().Base("/a/").Check("x");
 
     expected_response = &response4;
-    translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request4,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request5 = MakeRequest("/a/b/0/1.html");
 
-    translate_cache(*pool, *cache, request5,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request5,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request6 = MakeRequest("/a/b/0/1.html").Check("x");
     const auto response6 = MakeResponse().Base("/a/b/")
         .File("/var/www/vol0/a/b/0/1.html");
 
     expected_response = &response6;
-    translate_cache(*pool, *cache, request6,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request6,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request7 = MakeRequest("/a/d/2/3.html").Check("x");
     const auto response7 = MakeResponse().Base("/a/d/")
         .File("/var/www/vol1/a/d/2/3.html");
 
     expected_response = &response7;
-    translate_cache(*pool, *cache, request7,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request7,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* expect cache misses */
 
     expected_response = nullptr;
 
     const auto miss1 = MakeRequest("/a/f/g.html").Check("y");
-    translate_cache(*pool, *cache, miss1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, miss1,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -1238,7 +1243,7 @@ TEST(TranslationCache, BaseWantFullUri)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -1248,24 +1253,24 @@ TEST(TranslationCache, BaseWantFullUri)
     const auto response1 = MakeResponse().Base("/wfu/a/").WantFullUri("x");
 
     next_response = expected_response = &response1;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/wfu/a/b/c.html").WantFullUri("x");
     const auto response2 = MakeResponse().Base("/wfu/a/b/")
         .File("/var/www/vol0/a/b/c.html");
 
     next_response = expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/wfu/a/d/e.html").WantFullUri("x");
     const auto response3 = MakeResponse().Base("/wfu/a/d/")
         .File("/var/www/vol1/a/d/e.html");
 
     next_response = expected_response = &response3;
-    translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request3,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* now check whether the translate cache matches the BASE
        correctly */
@@ -1276,36 +1281,36 @@ TEST(TranslationCache, BaseWantFullUri)
     const auto response4 = MakeResponse().Base("/wfu/a/").WantFullUri("x");
 
     expected_response = &response4;
-    translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request4,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request5 = MakeRequest("/wfu/a/b/0/1.html");
 
-    translate_cache(*pool, *cache, request5,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request5,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request6 = MakeRequest("/wfu/a/b/0/1.html").WantFullUri("x");
     const auto response6 = MakeResponse().Base("/wfu/a/b/")
         .File("/var/www/vol0/a/b/0/1.html");
 
     expected_response = &response6;
-    translate_cache(*pool, *cache, request6,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request6,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request7 = MakeRequest("/wfu/a/d/2/3.html").WantFullUri("x");
     const auto response7 = MakeResponse().Base("/wfu/a/d/")
         .File("/var/www/vol1/a/d/2/3.html");
 
     expected_response = &response7;
-    translate_cache(*pool, *cache, request7,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request7,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* expect cache misses */
 
     const auto miss1 = MakeRequest("/wfu/a/f/g.html").WantFullUri("y");
     expected_response = nullptr;
-    translate_cache(*pool, *cache, miss1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, miss1,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -1315,7 +1320,7 @@ TEST(TranslationCache, UnsafeBase)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -1325,24 +1330,24 @@ TEST(TranslationCache, UnsafeBase)
         .File("/var/www/foo");
 
     next_response = expected_response = &response1;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/unsafe_base2/foo");
     const auto response2 = MakeResponse().UnsafeBase("/unsafe_base2/")
         .File("/var/www/foo");
 
     next_response = expected_response = &response2;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* fail (no UNSAFE_BASE) */
 
     const auto request3 = MakeRequest("/unsafe_base1/../x");
 
     next_response = expected_response = nullptr;
-    translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request3,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* success (with UNSAFE_BASE) */
 
@@ -1352,8 +1357,8 @@ TEST(TranslationCache, UnsafeBase)
 
     next_response = nullptr;
     expected_response = &response4;
-    translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request4,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 /**
@@ -1363,7 +1368,7 @@ TEST(TranslationCache, ExpandUnsafeBase)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -1379,8 +1384,8 @@ TEST(TranslationCache, ExpandUnsafeBase)
 
     next_response = &response1;
     expected_response = &response1e;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/expand_unsafe_base2/foo");
     const auto response2 = MakeResponse().UnsafeBase("/expand_unsafe_base2/")
@@ -1392,16 +1397,16 @@ TEST(TranslationCache, ExpandUnsafeBase)
 
     next_response = &response2;
     expected_response = &response2e;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* fail (no UNSAFE_BASE) */
 
     const auto request3 = MakeRequest("/expand_unsafe_base1/../x");
 
     next_response = expected_response = nullptr;
-    translate_cache(*pool, *cache, request3,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request3,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     /* success (with UNSAFE_BASE) */
 
@@ -1412,15 +1417,15 @@ TEST(TranslationCache, ExpandUnsafeBase)
 
     next_response = nullptr;
     expected_response = &response4;
-    translate_cache(*pool, *cache, request4,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request4,
+                      my_translate_handler, nullptr, cancel_ptr);
 }
 
 TEST(TranslationCache, ExpandBindMount)
 {
     Instance instance;
     struct pool *pool = instance.root_pool;
-    auto *cache = instance.cache;
+    auto &cache = instance.cache;
 
     CancellablePointer cancel_ptr;
 
@@ -1442,8 +1447,8 @@ TEST(TranslationCache, ExpandBindMount)
 
     next_response = &response1n;
     expected_response = &response1e;
-    translate_cache(*pool, *cache, request1,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request1,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/expand_bind_mount/bar");
     const auto response2e = MakeResponse().Base("/expand_bind_mount/")
@@ -1454,6 +1459,6 @@ TEST(TranslationCache, ExpandBindMount)
 
     next_response = nullptr;
     expected_response = &response2e;
-    translate_cache(*pool, *cache, request2,
-                    my_translate_handler, nullptr, cancel_ptr);
+    cache.SendRequest(*pool, request2,
+                      my_translate_handler, nullptr, cancel_ptr);
 }

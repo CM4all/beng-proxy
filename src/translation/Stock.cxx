@@ -241,31 +241,20 @@ TranslateStockRequest::OnStockItemError(std::exception_ptr ep) noexcept
     _handler.error(ep, _handler_ctx);
 }
 
-/*
- * constructor
- *
- */
+TranslationStock::TranslationStock(EventLoop &event_loop,
+                                   SocketAddress address,
+                                   unsigned limit) noexcept
+    :stock(new TranslateStock(event_loop, address, limit)) {}
 
-TranslateStock *
-tstock_new(EventLoop &event_loop, SocketAddress address,
-           unsigned limit) noexcept
-{
-    return new TranslateStock(event_loop, address, limit);
-}
+TranslationStock::~TranslationStock() noexcept = default;
 
 void
-tstock_free(TranslateStock *stock) noexcept
+TranslationStock::SendRequest(struct pool &pool,
+                              const TranslateRequest &request,
+                              const TranslateHandler &handler, void *ctx,
+                              CancellablePointer &cancel_ptr) noexcept
 {
-    delete stock;
-}
-
-void
-tstock_translate(TranslateStock &stock, struct pool &pool,
-                 const TranslateRequest &request,
-                 const TranslateHandler &handler, void *ctx,
-                 CancellablePointer &cancel_ptr) noexcept
-{
-    auto r = NewFromPool<TranslateStockRequest>(pool, stock, pool, request,
+    auto r = NewFromPool<TranslateStockRequest>(pool, *stock, pool, request,
                                                 handler, ctx, cancel_ptr);
     r->Start();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -357,7 +357,7 @@ struct tcache {
                                         boost::intrusive::constant_time_size<false>>;
     PerSiteSet per_site;
 
-    TranslateStock &stock;
+    TranslationService &next;
 
     /**
      * This flag may be set to false when initializing the translation
@@ -371,7 +371,7 @@ struct tcache {
     PerSiteSet::bucket_type per_site_buckets[N_BUCKETS];
 
     tcache(struct pool &_pool, EventLoop &event_loop,
-           TranslateStock &_stock, unsigned max_size,
+           TranslationService &_next, unsigned max_size,
            bool handshake_cacheable);
     tcache(struct tcache &) = delete;
 
@@ -1145,12 +1145,11 @@ tcache::Invalidate(const TranslateRequest &request,
 }
 
 void
-translate_cache_invalidate(struct tcache &tcache,
-                           const TranslateRequest &request,
-                           ConstBuffer<TranslationCommand> vary,
-                           const char *site)
+TranslationCache::Invalidate(const TranslateRequest &request,
+                             ConstBuffer<TranslationCommand> vary,
+                             const char *site) noexcept
 {
-    tcache.Invalidate(request, vary, site);
+    cache->Invalidate(request, vary, site);
 }
 
 /**
@@ -1399,8 +1398,7 @@ tcache_miss(struct pool &pool, struct tcache &tcache,
     if (cacheable)
         LogConcat(4, "TranslationCache", "miss ", key);
 
-    tstock_translate(tcache.stock, pool,
-                     request, tcache_handler, tcr, cancel_ptr);
+    tcache.next.SendRequest(pool, request, tcache_handler, tcr, cancel_ptr);
 }
 
 gcc_pure
@@ -1483,7 +1481,7 @@ TranslateCacheItem::Destroy() noexcept
 
 inline
 tcache::tcache(struct pool &_pool, EventLoop &event_loop,
-               TranslateStock &_stock, unsigned max_size,
+               TranslationService &_next, unsigned max_size,
                bool handshake_cacheable)
     :pool(*pool_new_libc(&_pool, "translate_cache")),
      slice_pool(max_size > 0
@@ -1494,7 +1492,7 @@ tcache::tcache(struct pool &_pool, EventLoop &event_loop,
            : nullptr),
      per_host(PerHostSet::bucket_traits(per_host_buckets, N_BUCKETS)),
      per_site(PerSiteSet::bucket_traits(per_site_buckets, N_BUCKETS)),
-     stock(_stock), active(handshake_cacheable) {}
+     next(_next), active(handshake_cacheable) {}
 
 inline
 tcache::~tcache()
@@ -1504,42 +1502,37 @@ tcache::~tcache()
     pool_unref(&pool);
 }
 
-struct tcache *
-translate_cache_new(struct pool &pool, EventLoop &event_loop,
-                    TranslateStock &stock,
-                    unsigned max_size, bool handshake_cacheable)
+TranslationCache::TranslationCache(struct pool &pool, EventLoop &event_loop,
+                                   TranslationService &next,
+                                   unsigned max_size,
+                                   bool handshake_cacheable)
+    :cache(new tcache(pool, event_loop, next, max_size,
+                      handshake_cacheable))
 {
-    return new tcache(pool, event_loop, stock, max_size, handshake_cacheable);
 }
 
-void
-translate_cache_close(struct tcache *tcache)
-{
-    assert(tcache != nullptr);
-
-    delete tcache;
-}
+TranslationCache::~TranslationCache() noexcept = default;
 
 void
-translate_cache_fork_cow(struct tcache &cache, bool inherit)
+TranslationCache::ForkCow(bool inherit) noexcept
 {
-    if (cache.slice_pool != nullptr)
-        cache.slice_pool->ForkCow(inherit);
+    if (cache->slice_pool != nullptr)
+        cache->slice_pool->ForkCow(inherit);
 }
 
 AllocatorStats
-translate_cache_get_stats(const struct tcache &tcache)
+TranslationCache::GetStats() const noexcept
 {
-    return pool_children_stats(tcache.pool);
+    return pool_children_stats(cache->pool);
 }
 
 void
-translate_cache_flush(struct tcache &tcache)
+TranslationCache::Flush() noexcept
 {
-    if (tcache.cache != nullptr)
-        tcache.cache->Flush();
-    if (tcache.slice_pool != nullptr)
-        tcache.slice_pool->Compress();
+    if (cache->cache != nullptr)
+        cache->cache->Flush();
+    if (cache->slice_pool != nullptr)
+        cache->slice_pool->Compress();
 }
 
 
@@ -1549,21 +1542,21 @@ translate_cache_flush(struct tcache &tcache)
  */
 
 void
-translate_cache(struct pool &pool, struct tcache &tcache,
-                const TranslateRequest &request,
-                const TranslateHandler &handler, void *ctx,
-                CancellablePointer &cancel_ptr)
+TranslationCache::SendRequest(struct pool &pool,
+                              const TranslateRequest &request,
+                              const TranslateHandler &handler, void *ctx,
+                              CancellablePointer &cancel_ptr) noexcept
 {
-    const bool cacheable = tcache.cache != nullptr &&
-        tcache.active && tcache_request_evaluate(request);
+    const bool cacheable = cache->cache != nullptr &&
+        cache->active && tcache_request_evaluate(request);
     const char *key = tcache_request_key(pool, request);
     TranslateCacheItem *item = cacheable
-        ? tcache_lookup(pool, tcache, request, key)
+        ? tcache_lookup(pool, *cache, request, key)
         : nullptr;
     if (item != nullptr)
         tcache_hit(pool, request.uri, request.host, request.user, key,
                    *item, handler, ctx);
     else
-        tcache_miss(pool, tcache, request, key, cacheable,
+        tcache_miss(pool, *cache, request, key, cacheable,
                     handler, ctx, cancel_ptr);
 }

@@ -116,7 +116,7 @@ static constexpr CssParserHandler css_rewrite_parser_handler = {
 UnusedIstreamPtr
 css_rewrite_block_uris(struct pool &pool,
                        struct processor_env &env,
-                       struct tcache &translate_cache,
+                       TranslationService &service,
                        Widget &widget,
                        const StringView block,
                        const struct escape_class *escape) noexcept
@@ -150,7 +150,7 @@ css_rewrite_block_uris(struct pool &pool,
         const struct css_url *url = &rewrite.urls[i];
 
         auto value =
-            rewrite_widget_uri(pool, env, translate_cache,
+            rewrite_widget_uri(pool, env, service,
                                widget,
                                {block.data + url->start, url->end - url->start},
                                RewriteUriMode::PARTIAL, false, nullptr,

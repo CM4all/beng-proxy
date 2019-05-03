@@ -38,7 +38,7 @@ struct processor_env;
 struct StringView;
 struct escape_class;
 class Widget;
-struct tcache;
+class TranslationService;
 
 /**
  * Rewrite URLs in CSS.
@@ -48,7 +48,7 @@ struct tcache;
 UnusedIstreamPtr
 css_rewrite_block_uris(struct pool &pool,
                        struct processor_env &env,
-                       struct tcache &translate_cache,
+                       TranslationService &service,
                        Widget &widget,
                        StringView block,
                        const struct escape_class *escape) noexcept;

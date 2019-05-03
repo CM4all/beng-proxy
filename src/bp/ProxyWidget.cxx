@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -274,7 +274,7 @@ ProxyWidget::WidgetFound(Widget &_widget) noexcept
 
     if (widget->cls == nullptr) {
         ResolveWidget(request.pool, *widget,
-                      *global_translate_cache,
+                      *global_translation_service,
                       BIND_THIS_METHOD(ResolverCallback),
                       cancel_ptr);
         return;

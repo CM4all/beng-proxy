@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,6 +32,6 @@
 
 #include "Global.hxx"
 
-struct tcache *global_translate_cache;
+TranslationService *global_translation_service;
 
 PipeStock *global_pipe_stock;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -88,7 +88,7 @@ static constexpr TranslateHandler suffix_translate_handler = {
 
 void
 suffix_registry_lookup(struct pool &pool,
-                       struct tcache &tcache,
+                       TranslationService &service,
                        ConstBuffer<void> payload,
                        const char *suffix,
                        SuffixRegistryHandler &handler,
@@ -98,6 +98,6 @@ suffix_registry_lookup(struct pool &pool,
                                                     payload, suffix,
                                                     handler);
 
-    translate_cache(pool, tcache, lookup->request,
-                    suffix_translate_handler, lookup, cancel_ptr);
+    service.SendRequest(pool, lookup->request,
+                        suffix_translate_handler, lookup, cancel_ptr);
 }

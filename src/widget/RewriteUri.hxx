@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,14 +34,13 @@
  * Rewrite URIs in templates.
  */
 
-#ifndef __BENG_REWRITE_URI_H
-#define __BENG_REWRITE_URI_H
+#pragma once
 
 #include "util/Compiler.h"
 
 struct pool;
 class UnusedIstreamPtr;
-struct tcache;
+class TranslationService;
 struct parsed_uri;
 class StringMap;
 class Widget;
@@ -74,11 +73,9 @@ parse_uri_mode(StringView s) noexcept;
 UnusedIstreamPtr
 rewrite_widget_uri(struct pool &pool,
                    struct processor_env &env,
-                   struct tcache &translate_cache,
+                   TranslationService &service,
                    Widget &widget,
                    StringView value,
                    RewriteUriMode mode, bool stateful,
                    const char *view,
                    const struct escape_class *escape) noexcept;
-
-#endif

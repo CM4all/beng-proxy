@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -57,7 +57,7 @@ const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
 void
 widget_class_lookup(gcc_unused struct pool &pool,
                     gcc_unused struct pool &widget_pool,
-                    gcc_unused struct tcache &translate_cache,
+                    gcc_unused TranslationService &service,
                     gcc_unused const char *widget_type,
                     WidgetRegistryCallback callback,
                     gcc_unused CancellablePointer &cancel_ptr)
@@ -90,7 +90,7 @@ public:
     UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
                                 UnusedIstreamPtr input) const noexcept {
         /* HACK, processor.c will ignore c:widget otherwise */
-        global_translate_cache = (struct tcache *)(size_t)1;
+        global_translation_service = (TranslationService *)(size_t)1;
 
         auto *widget = NewFromPool<Widget>(pool, pool, &root_widget_class);
 

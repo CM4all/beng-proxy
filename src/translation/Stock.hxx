@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,32 +30,30 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Connection pooling for the translation server.
- */
+#pragma once
 
-#ifndef BENG_PROXY_TSTOCK_HXX
-#define BENG_PROXY_TSTOCK_HXX
+#include "Service.hxx"
 
-struct pool;
+#include <memory>
+
 class EventLoop;
 class TranslateStock;
 class SocketAddress;
-struct TranslateHandler;
-struct TranslateRequest;
-class CancellablePointer;
 
-TranslateStock *
-tstock_new(EventLoop &event_loop, SocketAddress address,
-           unsigned limit) noexcept;
+/**
+ * Connection pooling for the translation server.
+ */
+class TranslationStock final : public TranslationService {
+    std::unique_ptr<TranslateStock> stock;
 
-void
-tstock_free(TranslateStock *stock) noexcept;
+public:
+    explicit TranslationStock(EventLoop &event_loop, SocketAddress address,
+                              unsigned limit) noexcept;
+    ~TranslationStock() noexcept;
 
-void
-tstock_translate(TranslateStock &stock, struct pool &pool,
-                 const TranslateRequest &request,
-                 const TranslateHandler &handler, void *ctx,
-                 CancellablePointer &cancel_ptr) noexcept;
-
-#endif
+    /* virtual methods from class TranslationService */
+    void SendRequest(struct pool &pool,
+                     const TranslateRequest &request,
+                     const TranslateHandler &handler, void *ctx,
+                     CancellablePointer &cancel_ptr) noexcept override;
+};

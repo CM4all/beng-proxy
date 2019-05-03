@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,12 +30,11 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ADDRESS_SUFFIX_REGISTRY_HXX
-#define BENG_PROXY_ADDRESS_SUFFIX_REGISTRY_HXX
+#pragma once
 
 struct pool;
-struct tcache;
 struct ResourceAddress;
+class TranslationService;
 class SuffixRegistryHandler;
 class CancellablePointer;
 
@@ -43,9 +42,7 @@ class CancellablePointer;
  * Interface for Content-Types managed by the translation server.
  */
 bool
-suffix_registry_lookup(struct pool &pool, struct tcache &translate_cache,
+suffix_registry_lookup(struct pool &pool, TranslationService &service,
                        const ResourceAddress &address,
                        SuffixRegistryHandler &handler,
                        CancellablePointer &cancel_ptr);
-
-#endif

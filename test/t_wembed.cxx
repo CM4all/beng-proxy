@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -127,7 +127,7 @@ struct TestOperation final : Cancellable {
 void
 ResolveWidget(struct pool &pool,
               gcc_unused Widget &widget,
-              gcc_unused struct tcache &translate_cache,
+              gcc_unused TranslationService &service,
               gcc_unused WidgetResolverCallback callback,
               CancellablePointer &cancel_ptr) noexcept
 {

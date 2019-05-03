@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -89,7 +89,7 @@ GetAddressSuffixInfo(const ResourceAddress &address)
 }
 
 bool
-suffix_registry_lookup(struct pool &pool, struct tcache &translate_cache,
+suffix_registry_lookup(struct pool &pool, TranslationService &service,
                        const ResourceAddress &address,
                        SuffixRegistryHandler &handler,
                        CancellablePointer &cancel_ptr)
@@ -119,7 +119,7 @@ suffix_registry_lookup(struct pool &pool, struct tcache &translate_cache,
             return false;
     }
 
-    suffix_registry_lookup(pool, translate_cache,
+    suffix_registry_lookup(pool, service,
                            info.content_type_lookup, buffer,
                            handler, cancel_ptr);
     return true;

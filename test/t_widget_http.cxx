@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -136,7 +136,7 @@ text_processor(gcc_unused struct pool &pool, UnusedIstreamPtr stream,
 
 bool
 suffix_registry_lookup(gcc_unused struct pool &pool,
-                       gcc_unused struct tcache &translate_cache,
+                       gcc_unused TranslationService &service,
                        gcc_unused const ResourceAddress &address,
                        gcc_unused SuffixRegistryHandler &handler,
                        gcc_unused CancellablePointer &cancel_ptr)
@@ -144,7 +144,7 @@ suffix_registry_lookup(gcc_unused struct pool &pool,
     return false;
 }
 
-struct tcache *global_translate_cache;
+TranslationService *global_translation_service;
 
 class PipeStock;
 PipeStock *global_pipe_stock;

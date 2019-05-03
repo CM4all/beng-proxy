@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
 #include "http_address.hxx"
-#include "translation/Cache.hxx"
-#include "translation/Stock.hxx"
+#include "translation/Service.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
@@ -49,9 +48,15 @@
 
 #include <string.h>
 
-class TranslateStock final : public Cancellable {
+class MyTranslationService final : public TranslationService, Cancellable {
 public:
     bool aborted = false;
+
+    /* virtual methods from class TranslationService */
+    void SendRequest(struct pool &pool,
+                     const TranslateRequest &request,
+                     const TranslateHandler &handler, void *ctx,
+                     CancellablePointer &cancel_ptr) noexcept override;
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
@@ -75,10 +80,10 @@ struct Context : PInstance {
  */
 
 void
-tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
-                 const TranslateRequest &request,
-                 const TranslateHandler &handler, void *ctx,
-                 CancellablePointer &cancel_ptr) noexcept
+MyTranslationService::SendRequest(struct pool &pool,
+                                  const TranslateRequest &request,
+                                  const TranslateHandler &handler, void *ctx,
+                                  CancellablePointer &cancel_ptr) noexcept
 {
     assert(request.remote_host == NULL);
     assert(request.host == NULL);
@@ -94,7 +99,7 @@ tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
         response->views->address = {ShallowCopy(), response->address};
         handler.response(*response, ctx);
     } else if (strcmp(request.widget_type, "block") == 0) {
-        cancel_ptr = stock;
+        cancel_ptr = *this;
     } else
         assert(0);
 }
@@ -107,19 +112,16 @@ tstock_translate(gcc_unused TranslateStock &stock, struct pool &pool,
 
 TEST(WidgetRegistry, Normal)
 {
-    TranslateStock translate_stock;
+    MyTranslationService ts;
     Context data;
     CancellablePointer cancel_ptr;
 
     auto *pool = pool_new_linear(data.root_pool, "test", 8192);
 
-    auto *tcache = translate_cache_new(*pool, data.event_loop,
-                                       translate_stock, 1024);
-
-    widget_class_lookup(*pool, *pool, *tcache, "sync",
+    widget_class_lookup(*pool, *pool, ts, "sync",
                         BIND_METHOD(data, &Context::RegistryCallback),
                         cancel_ptr);
-    ASSERT_FALSE(translate_stock.aborted);
+    ASSERT_FALSE(ts.aborted);
     ASSERT_TRUE(data.got_class);
     ASSERT_NE(data.cls, nullptr);
     ASSERT_EQ(data.cls->views.address.type, ResourceAddress::Type::HTTP);
@@ -129,29 +131,23 @@ TEST(WidgetRegistry, Normal)
     ASSERT_EQ(data.cls->views.transformation, nullptr);
 
     pool_unref(pool);
-
-    translate_cache_close(tcache);
-
     pool_commit();
 }
 
 /** caller aborts */
 TEST(WidgetRegistry, Abort)
 {
-    TranslateStock translate_stock;
+    MyTranslationService ts;
     Context data;
     CancellablePointer cancel_ptr;
 
     auto *pool = pool_new_linear(data.root_pool, "test", 8192);
 
-    auto *tcache = translate_cache_new(*pool, data.event_loop,
-                                       translate_stock, 1024);
-
-    widget_class_lookup(*pool, *pool, *tcache,  "block",
+    widget_class_lookup(*pool, *pool, ts,  "block",
                         BIND_METHOD(data, &Context::RegistryCallback),
                         cancel_ptr);
     ASSERT_FALSE(data.got_class);
-    ASSERT_FALSE(translate_stock.aborted);
+    ASSERT_FALSE(ts.aborted);
 
     cancel_ptr.Cancel();
 
@@ -160,10 +156,8 @@ TEST(WidgetRegistry, Abort)
        pool */
     pool_unref(pool);
 
-    ASSERT_TRUE(translate_stock.aborted);
+    ASSERT_TRUE(ts.aborted);
     ASSERT_FALSE(data.got_class);
-
-    translate_cache_close(tcache);
 
     pool_commit();
 }

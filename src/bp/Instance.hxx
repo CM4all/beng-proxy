@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_INSTANCE_HXX
-#define BENG_PROXY_INSTANCE_HXX
+#pragma once
 
 #include "PInstance.hxx"
 #include "CommandLine.hxx"
@@ -64,7 +63,9 @@ class ControlDistribute;
 class ControlServer;
 class LocalControl;
 class SpawnServerClient;
-class TranslateStock;
+class TranslationStock;
+class TranslationCache;
+class TranslationService;
 class LhttpStock;
 struct FcgiStock;
 struct NfsStock;
@@ -138,8 +139,9 @@ struct BpInstance final : PInstance, ControlHandler {
 
     /* stock */
     FailureManager failure_manager;
-    TranslateStock *translate_stock = nullptr;
-    struct tcache *translate_cache = nullptr;
+    TranslationStock *translation_stock = nullptr;
+    TranslationCache *translation_cache = nullptr;
+    TranslationService *translation_service = nullptr;
     TcpStock *tcp_stock = nullptr;
     TcpBalancer *tcp_balancer = nullptr;
 
@@ -231,5 +233,3 @@ private:
 
     void FreeStocksAndCaches() noexcept;
 };
-
-#endif

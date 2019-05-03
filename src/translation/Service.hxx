@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,27 +30,17 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_WIDGET_REGISTRY_HXX
-#define BENG_PROXY_WIDGET_REGISTRY_HXX
-
-#include "util/BindMethod.hxx"
+#pragma once
 
 struct pool;
-class TranslationService;
+struct TranslateRequest;
+struct TranslateHandler;
 class CancellablePointer;
-struct WidgetClass;
 
-typedef BoundMethod<void(const WidgetClass *cls) noexcept> WidgetRegistryCallback;
-
-/**
- * Interface for the widget registry managed by the translation
- * server.
- */
-void
-widget_class_lookup(struct pool &pool, struct pool &widget_pool,
-                    TranslationService &service,
-                    const char *widget_type,
-                    WidgetRegistryCallback callback,
-                    CancellablePointer &cancel_ptr);
-
-#endif
+class TranslationService {
+public:
+    virtual void SendRequest(struct pool &pool,
+                             const TranslateRequest &request,
+                             const TranslateHandler &handler, void *ctx,
+                             CancellablePointer &cancel_ptr) noexcept = 0;
+};

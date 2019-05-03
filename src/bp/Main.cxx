@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -175,7 +175,7 @@ BpInstance::ReloadEventCallback(int) noexcept
 
     FadeChildren();
 
-    translate_cache_flush(*translate_cache);
+    translation_cache->Flush();
 
     if (http_cache != nullptr)
         http_cache_flush(*http_cache);
@@ -356,16 +356,19 @@ try {
                                                       instance.failure_manager);
 
     if (instance.config.translation_socket != nullptr) {
-        instance.translate_stock =
-            tstock_new(instance.event_loop,
-                       instance.config.translation_socket,
-                       instance.config.translate_stock_limit);
+        instance.translation_stock =
+            new TranslationStock(instance.event_loop,
+                                 instance.config.translation_socket,
+                                 instance.config.translate_stock_limit);
 
-        instance.translate_cache = translate_cache_new(instance.root_pool,
-                                                       instance.event_loop,
-                                                       *instance.translate_stock,
-                                                       instance.config.translate_cache_size,
-                                                       false);
+        instance.translation_cache =
+            new TranslationCache(instance.root_pool,
+                                 instance.event_loop,
+                                 *instance.translation_stock,
+                                 instance.config.translate_cache_size,
+                                 false);
+
+        instance.translation_service = instance.translation_cache;
     }
 
     instance.lhttp_stock = lhttp_stock_new(0, 16, instance.event_loop,
@@ -433,7 +436,7 @@ try {
                                    *instance.filter_resource_loader,
                                    instance.pipe_stock);
 
-    global_translate_cache = instance.translate_cache;
+    global_translation_service = instance.translation_service;
     global_pipe_stock = instance.pipe_stock;
 
     /* daemonize II */

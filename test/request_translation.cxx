@@ -175,12 +175,12 @@ int main(int argc, char **argv) {
     AllocatedSocketAddress translation_socket;
     translation_socket.SetLocal("@translation");
 
-    auto *translate_stock = tstock_new(instance.event_loop,
-                                       translation_socket, 0);
+    TranslationStock stock(instance.event_loop,
+                           translation_socket, 0);
 
     CancellablePointer cancel_ptr;
-    tstock_translate(*translate_stock, instance.root_pool,
-                     request, my_translate_handler, nullptr, cancel_ptr);
+    stock.SendRequest(instance.root_pool,
+                      request, my_translate_handler, nullptr, cancel_ptr);
 
     instance.event_loop.Dispatch();
 }

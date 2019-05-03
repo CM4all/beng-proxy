@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -103,7 +103,7 @@ embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
 void
 ResolveWidget(gcc_unused struct pool &pool,
               Widget &widget,
-              gcc_unused struct tcache &translate_cache,
+              gcc_unused TranslationService &service,
               WidgetResolverCallback callback,
               gcc_unused CancellablePointer &cancel_ptr) noexcept
 {
@@ -204,7 +204,7 @@ assert_rewrite_check4(EventLoop &event_loop,
                              nullptr, session_id, "foo",
                              nullptr);
 
-    auto istream = rewrite_widget_uri(*pool, env, *(struct tcache *)0x1,
+    auto istream = rewrite_widget_uri(*pool, env, *(TranslationService *)0x1,
                                       *widget,
                                       value2,
                                       mode, stateful, view, &html_escape_class);

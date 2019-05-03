@@ -220,7 +220,7 @@ css_processor_parser_url(const CssParserValue *url, void *ctx)
     auto istream =
         rewrite_widget_uri(processor->pool,
                            processor->env,
-                           *global_translate_cache,
+                           *global_translation_service,
                            processor->container,
                            url->value,
                            processor->uri_rewrite.mode, false,
@@ -243,7 +243,7 @@ css_processor_parser_import(const CssParserValue *url, void *ctx)
     auto istream =
         rewrite_widget_uri(processor->pool,
                            processor->env,
-                           *global_translate_cache,
+                           *global_translation_service,
                            processor->container,
                            url->value,
                            RewriteUriMode::PARTIAL, false, nullptr,

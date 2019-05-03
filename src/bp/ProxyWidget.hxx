@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Handle proxying of widget contents.
  */
 
-#ifndef BENG_PROXY_PROXY_WIDGET_HXX
-#define BENG_PROXY_PROXY_WIDGET_HXX
+#pragma once
 
 #include "http/Status.h"
 
@@ -49,5 +48,3 @@ proxy_widget(Request &request2,
              UnusedIstreamPtr body,
              Widget &widget, const struct widget_ref *proxy_ref,
              unsigned options);
-
-#endif

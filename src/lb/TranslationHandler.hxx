@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,10 +30,10 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_LB_TRANSLATION_HANDLER_HXX
-#define BENG_LB_TRANSLATION_HANDLER_HXX
+#pragma once
 
 #include "Goto.hxx"
+#include "translation/Stock.hxx"
 #include "util/StringLess.hxx"
 #include "util/Compiler.h"
 
@@ -44,9 +44,7 @@ struct LbTranslationHandlerConfig;
 class LbGotoMap;
 struct HttpServerRequest;
 struct TranslationInvalidateRequest;
-struct TranslateHandler;
 struct TranslateResponse;
-class TranslateStock;
 class EventLoop;
 class CancellablePointer;
 class LbTranslationCache;
@@ -54,7 +52,7 @@ class LbTranslationCache;
 class LbTranslationHandler final {
     const char *const name;
 
-    TranslateStock *const stock;
+    TranslationStock stock;
 
     const std::map<const char *, LbGoto, StringLess> destinations;
 
@@ -63,7 +61,7 @@ class LbTranslationHandler final {
 public:
     LbTranslationHandler(EventLoop &event_loop, LbGotoMap &goto_map,
                          const LbTranslationHandlerConfig &_config);
-    ~LbTranslationHandler();
+    ~LbTranslationHandler() noexcept;
 
     gcc_pure
     size_t GetAllocatedCacheMemory() const noexcept;
@@ -87,5 +85,3 @@ public:
                   const char *listener_tag,
                   const TranslateResponse &response);
 };
-
-#endif

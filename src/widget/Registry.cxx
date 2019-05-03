@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,7 +32,7 @@
 
 #include "Registry.hxx"
 #include "Class.hxx"
-#include "translation/Cache.hxx"
+#include "translation/Service.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
@@ -43,7 +43,7 @@
 
 static void
 widget_registry_lookup(struct pool &pool,
-                       struct tcache &tcache,
+                       TranslationService &service,
                        const char *widget_type,
                        const TranslateHandler &handler, void *ctx,
                        CancellablePointer &cancel_ptr)
@@ -52,8 +52,7 @@ widget_registry_lookup(struct pool &pool,
 
     request->widget_type = widget_type;
 
-    translate_cache(pool, tcache, *request,
-                    handler, ctx, cancel_ptr);
+    service.SendRequest(pool, *request, handler, ctx, cancel_ptr);
 }
 
 struct WidgetRegistryLookup {
@@ -117,7 +116,7 @@ static constexpr TranslateHandler widget_translate_handler = {
 
 void
 widget_class_lookup(struct pool &pool, struct pool &widget_pool,
-                    struct tcache &tcache,
+                    TranslationService &service,
                     const char *widget_type,
                     WidgetRegistryCallback callback,
                     CancellablePointer &cancel_ptr)
@@ -126,7 +125,7 @@ widget_class_lookup(struct pool &pool, struct pool &widget_pool,
 
     auto lookup = NewFromPool<WidgetRegistryLookup>(pool, widget_pool,
                                                     callback);
-    widget_registry_lookup(pool, tcache, widget_type,
+    widget_registry_lookup(pool, service, widget_type,
                            widget_translate_handler, lookup,
                            cancel_ptr);
 }

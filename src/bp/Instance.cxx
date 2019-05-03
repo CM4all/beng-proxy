@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -92,15 +92,9 @@ BpInstance::~BpInstance() noexcept
 void
 BpInstance::FreeStocksAndCaches() noexcept
 {
-    if (translate_cache != nullptr) {
-        translate_cache_close(translate_cache);
-        translate_cache = nullptr;
-    }
-
-    if (translate_stock != nullptr) {
-        tstock_free(translate_stock);
-        translate_stock = nullptr;
-    }
+    translation_service = nullptr;
+    delete std::exchange(translation_cache, nullptr);
+    delete std::exchange(translation_stock, nullptr);
 
     if (http_cache != nullptr) {
         delete (CachedResourceLoader *)cached_resource_loader;
@@ -161,8 +155,8 @@ BpInstance::ForkCow(bool inherit) noexcept
 {
     fb_pool_fork_cow(inherit);
 
-    if (translate_cache != nullptr)
-        translate_cache_fork_cow(*translate_cache, inherit);
+    if (translation_cache != nullptr)
+        translation_cache->ForkCow(inherit);
 
     if (http_cache != nullptr)
         http_cache_fork_cow(*http_cache, inherit);

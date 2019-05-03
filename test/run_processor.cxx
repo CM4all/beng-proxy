@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -50,7 +50,7 @@
  *
  */
 
-struct tcache *global_translate_cache;
+TranslationService *global_translation_service;
 
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool,
@@ -81,7 +81,7 @@ parse_uri_mode(gcc_unused StringView s) noexcept
 UnusedIstreamPtr
 rewrite_widget_uri(gcc_unused struct pool &pool,
                    gcc_unused struct processor_env &env,
-                   gcc_unused struct tcache &translate_cache,
+                   gcc_unused TranslationService &service,
                    gcc_unused Widget &widget,
                    gcc_unused StringView value,
                    gcc_unused RewriteUriMode mode,

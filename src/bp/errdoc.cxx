@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,7 +36,7 @@
 #include "http_server/Request.hxx"
 #include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"
-#include "translation/Cache.hxx"
+#include "translation/Service.hxx"
 #include "translation/Handler.hxx"
 #include "ResourceLoader.hxx"
 #include "istream/istream.hxx"
@@ -200,7 +200,7 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
 
     auto *instance = &request2.instance;
 
-    assert(instance->translate_cache != nullptr);
+    assert(instance->translation_service != nullptr);
 
     auto *er = NewFromPool<ErrorResponseLoader>(request2.pool, request2,
                                                 status, std::move(headers),
@@ -211,8 +211,8 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
     fill_translate_request(&er->translate_request,
                            &request2.translate.request,
                            error_document, status);
-    translate_cache(request2.pool, *instance->translate_cache,
-                    er->translate_request,
-                    errdoc_translate_handler, er,
-                    er->cancel_ptr);
+    instance->translation_service->SendRequest(request2.pool,
+                                               er->translate_request,
+                                               errdoc_translate_handler, er,
+                                               er->cancel_ptr);
 }

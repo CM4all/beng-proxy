@@ -34,7 +34,6 @@
 #include "TranslationCache.hxx"
 #include "GotoConfig.hxx"
 #include "GotoMap.hxx"
-#include "translation/Stock.hxx"
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
 #include "translation/Handler.hxx"
@@ -56,15 +55,12 @@ LbTranslationHandler::LbTranslationHandler(EventLoop &event_loop,
                                            LbGotoMap &goto_map,
                                            const LbTranslationHandlerConfig &config)
     :name(config.name.c_str()),
-     stock(tstock_new(event_loop, config.address, 0)),
+     stock(event_loop, config.address, 0),
      destinations(ToInstance(goto_map, config))
 {
 }
 
-LbTranslationHandler::~LbTranslationHandler()
-{
-    tstock_free(stock);
-}
+LbTranslationHandler::~LbTranslationHandler() noexcept = default;
 
 size_t
 LbTranslationHandler::GetAllocatedCacheMemory() const noexcept
@@ -170,8 +166,8 @@ LbTranslationHandler::Pick(struct pool &pool, const HttpServerRequest &request,
                                                      *this, name, listener_tag,
                                                      request,
                                                      handler, ctx);
-    tstock_translate(*stock, pool, r->request,
-                     lbth_translate_handler, r, cancel_ptr);
+    stock.SendRequest(pool, r->request,
+                      lbth_translate_handler, r, cancel_ptr);
 }
 
 void

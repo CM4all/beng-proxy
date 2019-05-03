@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -100,10 +100,10 @@ struct WidgetResolver {
         this->~WidgetResolver();
     }
 
-    void Start(struct tcache &translate_cache) {
+    void Start(TranslationService &service) {
         /* use the widget pool because the listener pool may be
            aborted, while the others still run */
-        widget_class_lookup(widget.pool, widget.pool, translate_cache,
+        widget_class_lookup(widget.pool, widget.pool, service,
                             widget.class_name,
                             BIND_THIS_METHOD(RegistryCallback),
                             cancel_ptr);
@@ -243,7 +243,7 @@ widget_resolver_alloc(Widget &widget) noexcept
 void
 ResolveWidget(struct pool &pool,
               Widget &widget,
-              struct tcache &translate_cache,
+              TranslationService &service,
               WidgetResolverCallback callback,
               CancellablePointer &cancel_ptr) noexcept
 {
@@ -285,5 +285,5 @@ ResolveWidget(struct pool &pool,
     /* finally send request to the widget registry */
 
     if (is_new)
-        resolver->Start(translate_cache);
+        resolver->Start(service);
 }

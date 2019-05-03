@@ -59,7 +59,7 @@
 #include "RedirectHttps.hxx"
 #include "strmap.hxx"
 #include "istream/istream.hxx"
-#include "translation/Cache.hxx"
+#include "translation/Service.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Transformation.hxx"
 #include "translation/Protocol.hxx"
@@ -359,7 +359,7 @@ do_content_type_lookup(Request &request,
                        const ResourceAddress &address)
 {
     return suffix_registry_lookup(request.pool,
-                                  *request.instance.translate_cache,
+                                  *request.instance.translation_service,
                                   address,
                                   request, request.cancel_ptr);
 }
@@ -773,11 +773,10 @@ static constexpr TranslateHandler handler_translate_handler = {
 void
 Request::SubmitTranslateRequest()
 {
-    translate_cache(pool,
-                    *instance.translate_cache,
-                    translate.request,
-                    handler_translate_handler, this,
-                    cancel_ptr);
+    instance.translation_service->SendRequest(pool,
+                                              translate.request,
+                                              handler_translate_handler, this,
+                                              cancel_ptr);
 }
 
 static bool
@@ -931,7 +930,7 @@ handle_http_request(BpConnection &connection,
     request2->ParseArgs();
     request2->DetermineSession();
 
-    if (request2->instance.translate_cache == nullptr)
+    if (request2->instance.translation_service == nullptr)
         serve_document_root_file(*request2, connection.config);
     else
         ask_translation_server(*request2);

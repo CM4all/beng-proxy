@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Query a widget and embed its HTML text after processing.
  */
 
-#ifndef BENG_PROXY_INLINE_WIDGET_HXX
-#define BENG_PROXY_INLINE_WIDGET_HXX
+#pragma once
 
 #include "event/Chrono.hxx"
 
@@ -59,5 +58,3 @@ UnusedIstreamPtr
 embed_inline_widget(struct pool &pool, struct processor_env &env,
                     bool plain_text,
                     Widget &widget) noexcept;
-
-#endif

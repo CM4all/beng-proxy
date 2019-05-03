@@ -315,11 +315,11 @@ public:
          escape(_escape),
          delayed(_delayed) {}
 
-    UnusedIstreamPtr Start(struct tcache &translate_cache,
+    UnusedIstreamPtr Start(TranslationService &service,
                            UnusedIstreamPtr input) noexcept {
         ResolveWidget(pool,
                       widget,
-                      translate_cache,
+                      service,
                       BIND_THIS_METHOD(ResolverCallback),
                       delayed.cancel_ptr);
 
@@ -390,7 +390,7 @@ UriRewriter::ResolverCallback() noexcept
 UnusedIstreamPtr
 rewrite_widget_uri(struct pool &pool,
                    struct processor_env &env,
-                   struct tcache &translate_cache,
+                   TranslationService &service,
                    Widget &widget,
                    StringView value,
                    RewriteUriMode mode, bool stateful,
@@ -447,6 +447,6 @@ rewrite_widget_uri(struct pool &pool,
                                             value, mode, stateful,
                                             view, escape, delayed.second);
 
-        return rwu->Start(translate_cache, std::move(delayed.first));
+        return rwu->Start(service, std::move(delayed.first));
     }
 }

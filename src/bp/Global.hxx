@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,8 +36,9 @@
 
 #pragma once
 
+class TranslationService;
 class PipeStock;
 
-extern struct tcache *global_translate_cache;
+extern TranslationService *global_translation_service;
 
 extern PipeStock *global_pipe_stock;

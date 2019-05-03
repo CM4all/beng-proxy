@@ -736,7 +736,7 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag) noexcept
 
     if (xml_tag.name.Equals("c:widget")) {
         if ((options & PROCESSOR_CONTAINER) == 0 ||
-            global_translate_cache == nullptr)
+            global_translation_service == nullptr)
             return false;
 
         if (xml_tag.type == XmlParserTagType::CLOSE) {
@@ -876,7 +876,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 
     auto istream =
         rewrite_widget_uri(pool, env,
-                           *global_translate_cache,
+                           *global_translation_service,
                            *target_widget,
                            value, mode, target_widget == &container,
                            view,
@@ -1091,7 +1091,7 @@ XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr) noexcept
 {
     auto result =
         css_rewrite_block_uris(pool, env,
-                               *global_translate_cache,
+                               *global_translation_service,
                                container,
                                attr.value,
                                &html_escape_class);

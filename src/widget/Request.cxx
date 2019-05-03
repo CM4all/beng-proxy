@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -734,7 +734,7 @@ WidgetRequest::OnSuffixRegistryError(std::exception_ptr ep)
 bool
 WidgetRequest::ContentTypeLookup()
 {
-    return suffix_registry_lookup(pool, *global_translate_cache,
+    return suffix_registry_lookup(pool, *global_translation_service,
                                   *widget.GetAddress(),
                                   *this, cancel_ptr);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -112,7 +112,7 @@ Context::ResolverCallback2() noexcept
 void
 widget_class_lookup(gcc_unused struct pool &pool,
                     gcc_unused struct pool &widget_pool,
-                    gcc_unused struct tcache &translate_cache,
+                    gcc_unused TranslationService &service,
                     gcc_unused const char *widget_type,
                     WidgetRegistryCallback callback,
                     CancellablePointer &cancel_ptr)
@@ -158,7 +158,7 @@ TEST(WidgetResolver, Normal)
     widget->class_name = "foo";
 
     ResolveWidget(*pool, *widget,
-                  *(struct tcache *)(size_t)0x1,
+                  *(TranslationService *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.cancel_ptr);
 
@@ -190,7 +190,7 @@ TEST(WidgetResolver, Abort)
     widget->class_name = "foo";
 
     ResolveWidget(*pool, *widget,
-                  *(struct tcache *)(size_t)0x1,
+                  *(TranslationService *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.cancel_ptr);
 
@@ -222,12 +222,12 @@ TEST(WidgetResolver, TwoClients)
     widget->class_name = "foo";
 
     ResolveWidget(*pool, *widget,
-                  *(struct tcache *)(size_t)0x1,
+                  *(TranslationService *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.cancel_ptr);
 
     ResolveWidget(*pool, *widget,
-                  *(struct tcache *)(size_t)0x1,
+                  *(TranslationService *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback2),
                   data.second.cancel_ptr);
 
@@ -260,12 +260,12 @@ TEST(WidgetResolver, TwoAbort)
     widget->class_name = "foo";
 
     ResolveWidget(*pool, *widget,
-                  *(struct tcache *)(size_t)0x1,
+                  *(TranslationService *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.cancel_ptr);
 
     ResolveWidget(*pool, *widget,
-                  *(struct tcache *)(size_t)0x1,
+                  *(TranslationService *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback2),
                   data.second.cancel_ptr);
 
