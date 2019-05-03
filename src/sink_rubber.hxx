@@ -46,10 +46,10 @@ class CancellablePointer;
 
 class RubberSinkHandler {
 public:
-    virtual void RubberDone(RubberAllocation &&a, size_t size) = 0;
-    virtual void RubberOutOfMemory() = 0;
-    virtual void RubberTooLarge() = 0;
-    virtual void RubberError(std::exception_ptr ep) = 0;
+    virtual void RubberDone(RubberAllocation &&a, size_t size) noexcept = 0;
+    virtual void RubberOutOfMemory() noexcept = 0;
+    virtual void RubberTooLarge() noexcept = 0;
+    virtual void RubberError(std::exception_ptr ep) noexcept = 0;
 };
 
 /**
@@ -59,7 +59,7 @@ RubberSink *
 sink_rubber_new(struct pool &pool, UnusedIstreamPtr input,
                 Rubber &rubber, size_t max_size,
                 RubberSinkHandler &handler,
-                CancellablePointer &cancel_ptr);
+                CancellablePointer &cancel_ptr) noexcept;
 
 void
 sink_rubber_read(RubberSink &sink) noexcept;

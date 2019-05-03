@@ -67,17 +67,17 @@ struct Data final : RubberSinkHandler {
 
     CancellablePointer cancel_ptr;
 
-    explicit Data(Rubber &_r):result(NONE), r(_r) {}
+    explicit Data(Rubber &_r) noexcept:result(NONE), r(_r) {}
 
     /* virtual methods from class RubberSinkHandler */
-    void RubberDone(RubberAllocation &&a, size_t size) override;
-    void RubberOutOfMemory() override;
-    void RubberTooLarge() override;
-    void RubberError(std::exception_ptr ep) override;
+    void RubberDone(RubberAllocation &&a, size_t size) noexcept override;
+    void RubberOutOfMemory() noexcept override;
+    void RubberTooLarge() noexcept override;
+    void RubberError(std::exception_ptr ep) noexcept override;
 };
 
 void
-Data::RubberDone(RubberAllocation &&a, size_t _size)
+Data::RubberDone(RubberAllocation &&a, size_t _size) noexcept
 {
     assert(result == NONE);
 
@@ -87,7 +87,7 @@ Data::RubberDone(RubberAllocation &&a, size_t _size)
 }
 
 void
-Data::RubberOutOfMemory()
+Data::RubberOutOfMemory() noexcept
 {
     assert(result == NONE);
 
@@ -95,7 +95,7 @@ Data::RubberOutOfMemory()
 }
 
 void
-Data::RubberTooLarge()
+Data::RubberTooLarge() noexcept
 {
     assert(result == NONE);
 
@@ -103,7 +103,7 @@ Data::RubberTooLarge()
 }
 
 void
-Data::RubberError(std::exception_ptr ep)
+Data::RubberError(std::exception_ptr ep) noexcept
 {
     assert(result == NONE);
 

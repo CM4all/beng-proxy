@@ -57,7 +57,7 @@ public:
     RubberSink(struct pool &_pool, RubberAllocation &&_a, size_t _max_size,
                RubberSinkHandler &_handler,
                I &&_input,
-               CancellablePointer &cancel_ptr)
+               CancellablePointer &cancel_ptr) noexcept
         :IstreamSink(std::forward<I>(_input), FD_ANY),
          PoolLeakDetector(_pool),
          allocation(std::move(_a)),
@@ -71,12 +71,12 @@ public:
     }
 
 private:
-    void Destroy() {
+    void Destroy() noexcept {
         this->~RubberSink();
     }
 
-    void FailTooLarge();
-    void InvokeEof();
+    void FailTooLarge() noexcept;
+    void InvokeEof() noexcept;
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override;
@@ -89,7 +89,7 @@ private:
 };
 
 static ssize_t
-fd_read(FdType type, int fd, void *p, size_t size)
+fd_read(FdType type, int fd, void *p, size_t size) noexcept
 {
     return IsAnySocket(type)
         ? recv(fd, p, size, MSG_DONTWAIT)
@@ -97,7 +97,7 @@ fd_read(FdType type, int fd, void *p, size_t size)
 }
 
 void
-RubberSink::FailTooLarge()
+RubberSink::FailTooLarge() noexcept
 {
     allocation = {};
 
@@ -108,7 +108,7 @@ RubberSink::FailTooLarge()
 }
 
 void
-RubberSink::InvokeEof()
+RubberSink::InvokeEof() noexcept
 {
     if (input.IsDefined())
         input.ClearAndClose();
@@ -233,7 +233,7 @@ RubberSink *
 sink_rubber_new(struct pool &pool, UnusedIstreamPtr input,
                 Rubber &rubber, size_t max_size,
                 RubberSinkHandler &handler,
-                CancellablePointer &cancel_ptr)
+                CancellablePointer &cancel_ptr) noexcept
 {
     const off_t available = input.GetAvailable(true);
     if (available > (off_t)max_size) {

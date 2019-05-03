@@ -178,10 +178,10 @@ private:
     void OnHttpError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class RubberSinkHandler */
-    void RubberDone(RubberAllocation &&a, size_t size) override;
-    void RubberOutOfMemory() override;
-    void RubberTooLarge() override;
-    void RubberError(std::exception_ptr ep) override;
+    void RubberDone(RubberAllocation &&a, size_t size) noexcept override;
+    void RubberOutOfMemory() noexcept override;
+    void RubberTooLarge() noexcept override;
+    void RubberError(std::exception_ptr ep) noexcept override;
 };
 
 class HttpCache {
@@ -420,7 +420,7 @@ HttpCacheRequest::Put(RubberAllocation &&a, size_t size) noexcept
  */
 
 void
-HttpCacheRequest::RubberDone(RubberAllocation &&a, size_t size)
+HttpCacheRequest::RubberDone(RubberAllocation &&a, size_t size) noexcept
 {
     RubberStoreFinished();
 
@@ -431,7 +431,7 @@ HttpCacheRequest::RubberDone(RubberAllocation &&a, size_t size)
 }
 
 void
-HttpCacheRequest::RubberOutOfMemory()
+HttpCacheRequest::RubberOutOfMemory() noexcept
 {
     LogConcat(4, "HttpCache", "nocache oom ", key);
 
@@ -440,7 +440,7 @@ HttpCacheRequest::RubberOutOfMemory()
 }
 
 void
-HttpCacheRequest::RubberTooLarge()
+HttpCacheRequest::RubberTooLarge() noexcept
 {
     LogConcat(4, "HttpCache", "nocache too large ", key);
 
@@ -449,7 +449,7 @@ HttpCacheRequest::RubberTooLarge()
 }
 
 void
-HttpCacheRequest::RubberError(std::exception_ptr ep)
+HttpCacheRequest::RubberError(std::exception_ptr ep) noexcept
 {
     LogConcat(4, "HttpCache", "body_abort ", key, ": ", ep);
 

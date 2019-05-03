@@ -218,10 +218,10 @@ private:
     void OnHttpError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class RubberSinkHandler */
-    void RubberDone(RubberAllocation &&a, size_t size) override;
-    void RubberOutOfMemory() override;
-    void RubberTooLarge() override;
-    void RubberError(std::exception_ptr ep) override;
+    void RubberDone(RubberAllocation &&a, size_t size) noexcept override;
+    void RubberOutOfMemory() noexcept override;
+    void RubberTooLarge() noexcept override;
+    void RubberError(std::exception_ptr ep) noexcept override;
 };
 
 class FilterCache final : LeakDetector {
@@ -461,7 +461,7 @@ FilterCacheRequest::OnTimeout() noexcept
  */
 
 void
-FilterCacheRequest::RubberDone(RubberAllocation &&a, size_t size)
+FilterCacheRequest::RubberDone(RubberAllocation &&a, size_t size) noexcept
 {
     response.cancel_ptr = nullptr;
 
@@ -473,7 +473,7 @@ FilterCacheRequest::RubberDone(RubberAllocation &&a, size_t size)
 }
 
 void
-FilterCacheRequest::RubberOutOfMemory()
+FilterCacheRequest::RubberOutOfMemory() noexcept
 {
     response.cancel_ptr = nullptr;
 
@@ -482,7 +482,7 @@ FilterCacheRequest::RubberOutOfMemory()
 }
 
 void
-FilterCacheRequest::RubberTooLarge()
+FilterCacheRequest::RubberTooLarge() noexcept
 {
     response.cancel_ptr = nullptr;
 
@@ -491,7 +491,7 @@ FilterCacheRequest::RubberTooLarge()
 }
 
 void
-FilterCacheRequest::RubberError(std::exception_ptr ep)
+FilterCacheRequest::RubberError(std::exception_ptr ep) noexcept
 {
     response.cancel_ptr = nullptr;
 
