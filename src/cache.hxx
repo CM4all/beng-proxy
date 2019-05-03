@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -48,10 +48,10 @@
 class EventLoop;
 
 struct CacheItem {
-    static constexpr auto link_mode = boost::intrusive::normal_link;
-    typedef boost::intrusive::link_mode<link_mode> LinkMode;
-    typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
-    typedef boost::intrusive::unordered_set_member_hook<LinkMode> SetHook;
+    using LinkMode =
+        boost::intrusive::link_mode<boost::intrusive::normal_link>;
+    using SiblingsHook = boost::intrusive::list_member_hook<LinkMode>;
+    using SetHook = boost::intrusive::unordered_set_member_hook<LinkMode>;
 
     /**
      * This item's siblings, sorted by #last_accessed.
@@ -147,13 +147,14 @@ class Cache {
     const size_t max_size;
     size_t size = 0;
 
-    typedef boost::intrusive::unordered_multiset<CacheItem,
-                                                 boost::intrusive::member_hook<CacheItem,
-                                                                               CacheItem::SetHook,
-                                                                               &CacheItem::set_hook>,
-                                                 boost::intrusive::hash<CacheItem::Hash>,
-                                                 boost::intrusive::equal<CacheItem::Equal>,
-                                                 boost::intrusive::constant_time_size<false>> ItemSet;
+    using ItemSet =
+        boost::intrusive::unordered_multiset<CacheItem,
+                                             boost::intrusive::member_hook<CacheItem,
+                                                                           CacheItem::SetHook,
+                                                                           &CacheItem::set_hook>,
+                                             boost::intrusive::hash<CacheItem::Hash>,
+                                             boost::intrusive::equal<CacheItem::Equal>,
+                                             boost::intrusive::constant_time_size<false>>;
 
     std::unique_ptr<ItemSet::bucket_type[]> buckets;
 
