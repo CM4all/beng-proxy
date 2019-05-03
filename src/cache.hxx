@@ -71,8 +71,7 @@ class CacheItem {
 
     const size_t size;
 
-    std::chrono::steady_clock::time_point last_accessed =
-        std::chrono::steady_clock::time_point();
+    std::chrono::steady_clock::time_point last_accessed{};
 
     /**
      * If non-zero, then this item has been locked by somebody, and
