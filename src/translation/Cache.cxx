@@ -78,8 +78,9 @@ struct TranslateCachePerHost;
 struct TranslateCachePerSite;
 
 struct TranslateCacheItem final : PoolHolder, CacheItem {
-    static constexpr auto link_mode = boost::intrusive::normal_link;
-    typedef boost::intrusive::link_mode<link_mode> LinkMode;
+    using LinkMode =
+        boost::intrusive::link_mode<boost::intrusive::normal_link>;
+    using SiblingsHook = boost::intrusive::list_member_hook<LinkMode>;
 
     /**
      * A doubly linked list of cache items with the same HOST request
@@ -87,7 +88,6 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
      * added to the list.  Check per_host!=nullptr to check whether
      * this item lives in such a list.
      */
-    typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
     SiblingsHook per_host_siblings;
     TranslateCachePerHost *per_host = nullptr;
 
@@ -185,11 +185,13 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 
 struct TranslateCachePerHost
     : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-    typedef boost::intrusive::member_hook<TranslateCacheItem,
-                                          TranslateCacheItem::SiblingsHook,
-                                          &TranslateCacheItem::per_host_siblings> MemberHook;
-    typedef boost::intrusive::list<TranslateCacheItem, MemberHook,
-                                   boost::intrusive::constant_time_size<false>> ItemList;
+    using MemberHook =
+        boost::intrusive::member_hook<TranslateCacheItem,
+                                      TranslateCacheItem::SiblingsHook,
+                                      &TranslateCacheItem::per_host_siblings>;
+    using ItemList =
+        boost::intrusive::list<TranslateCacheItem, MemberHook,
+                               boost::intrusive::constant_time_size<false>>;
 
     /**
      * A double-linked list of #TranslateCacheItems (by its attribute
@@ -255,11 +257,13 @@ struct TranslateCachePerHost
 
 struct TranslateCachePerSite
     : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-    typedef boost::intrusive::member_hook<TranslateCacheItem,
-                                          TranslateCacheItem::SiblingsHook,
-                                          &TranslateCacheItem::per_site_siblings> MemberHook;
-    typedef boost::intrusive::list<TranslateCacheItem, MemberHook,
-                                   boost::intrusive::constant_time_size<false>> ItemList;
+    using MemberHook =
+        boost::intrusive::member_hook<TranslateCacheItem,
+                                      TranslateCacheItem::SiblingsHook,
+                                      &TranslateCacheItem::per_site_siblings> ;
+    using ItemList =
+        boost::intrusive::list<TranslateCacheItem, MemberHook,
+                               boost::intrusive::constant_time_size<false>>;
 
     /**
      * A double-linked list of #TranslateCacheItems (by its attribute
@@ -334,10 +338,11 @@ struct tcache {
      * #TranslateCachePerHost.  This is used to optimize the common
      * INVALIDATE=HOST response, to avoid traversing the whole cache.
      */
-    typedef boost::intrusive::unordered_set<TranslateCachePerHost,
-                                            boost::intrusive::hash<TranslateCachePerHost::Hash>,
-                                            boost::intrusive::equal<TranslateCachePerHost::Equal>,
-                                            boost::intrusive::constant_time_size<false>> PerHostSet;
+    using PerHostSet =
+        boost::intrusive::unordered_set<TranslateCachePerHost,
+                                        boost::intrusive::hash<TranslateCachePerHost::Hash>,
+                                        boost::intrusive::equal<TranslateCachePerHost::Equal>,
+                                        boost::intrusive::constant_time_size<false>>;
     PerHostSet per_host;
 
     /**
@@ -345,10 +350,11 @@ struct tcache {
      * #TranslateCachePerSite.  This is used to optimize the common
      * INVALIDATE=SITE response, to avoid traversing the whole cache.
      */
-    typedef boost::intrusive::unordered_set<TranslateCachePerSite,
-                                            boost::intrusive::hash<TranslateCachePerSite::Hash>,
-                                            boost::intrusive::equal<TranslateCachePerSite::Equal>,
-                                            boost::intrusive::constant_time_size<false>> PerSiteSet;
+    using PerSiteSet =
+        boost::intrusive::unordered_set<TranslateCachePerSite,
+                                        boost::intrusive::hash<TranslateCachePerSite::Hash>,
+                                        boost::intrusive::equal<TranslateCachePerSite::Equal>,
+                                        boost::intrusive::constant_time_size<false>>;
     PerSiteSet per_site;
 
     TranslateStock &stock;
