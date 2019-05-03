@@ -47,7 +47,9 @@
 
 class EventLoop;
 
-struct CacheItem {
+class CacheItem {
+    friend class Cache;
+
     using LinkMode =
         boost::intrusive::link_mode<boost::intrusive::normal_link>;
     using SiblingsHook = boost::intrusive::list_member_hook<LinkMode>;
@@ -84,6 +86,7 @@ struct CacheItem {
      */
     bool removed = false;
 
+public:
     CacheItem(std::chrono::steady_clock::time_point _expires,
               size_t _size) noexcept
         :expires(_expires), size(_size) {}
@@ -109,6 +112,14 @@ struct CacheItem {
     }
 
     void Unlock() noexcept;
+
+    const char *GetKey() const noexcept {
+        return key;
+    }
+
+    size_t GetSize() const noexcept {
+        return size;
+    }
 
     gcc_pure
     bool Validate(std::chrono::steady_clock::time_point now) const noexcept {

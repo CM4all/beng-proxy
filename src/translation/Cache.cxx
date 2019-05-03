@@ -873,7 +873,7 @@ TranslateCacheItem::VaryMatch(const TranslateRequest &other_request,
 {
     switch (command) {
     case TranslationCommand::URI:
-        return tcache_uri_match(key,
+        return tcache_uri_match(GetKey(),
                                 other_request.uri, strict);
 
     case TranslationCommand::PARAM:
@@ -1448,7 +1448,7 @@ tcache_validate_mtime(const TranslateResponse &response,
 bool
 TranslateCacheItem::Validate() const noexcept
 {
-    return tcache_validate_mtime(response, key);
+    return tcache_validate_mtime(response, GetKey());
 }
 
 void

@@ -726,7 +726,7 @@ FilterCache::Serve(FilterCacheItem &item,
 
     /* XXX hold reference on item */
 
-    assert(!item.body || ((CacheItem &)item).size >= item.size);
+    assert(!item.body || ((CacheItem &)item).GetSize() >= item.size);
 
     auto response_body = item.body
         ? istream_rubber_new(caller_pool, rubber, item.body.GetId(),

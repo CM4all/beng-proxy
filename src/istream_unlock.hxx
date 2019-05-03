@@ -35,7 +35,7 @@
 
 struct pool;
 class UnusedIstreamPtr;
-struct CacheItem;
+class CacheItem;
 
 /**
  * An istream facade which unlocks a cache item after it has been
