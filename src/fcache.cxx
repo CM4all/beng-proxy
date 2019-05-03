@@ -722,7 +722,7 @@ FilterCache::Serve(FilterCacheItem &item,
                    struct pool &caller_pool,
                    HttpResponseHandler &handler) noexcept
 {
-    LogConcat(4, "FilterCache", "serve ", item.info.key);
+    LogConcat(4, "FilterCache", "serve ", item.GetKey());
 
     /* XXX hold reference on item */
 
