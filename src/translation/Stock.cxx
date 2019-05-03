@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,15 +33,12 @@
 #include "Stock.hxx"
 #include "translation/Handler.hxx"
 #include "Client.hxx"
-#include "stock/Stock.hxx"
-#include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "stock/GetHandler.hxx"
 #include "lease.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "system/Error.hxx"
-#include "net/AllocatedSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 #include "io/Logger.hxx"
@@ -116,46 +113,12 @@ public:
     }
 };
 
-class TranslateStock final : StockClass {
-    Stock stock;
-
-    const AllocatedSocketAddress address;
-
-public:
-    TranslateStock(EventLoop &event_loop, SocketAddress _address,
-                   unsigned limit) noexcept
-        :stock(event_loop, *this, "translation", limit, 8),
-         address(_address) {
-    }
-
-    EventLoop &GetEventLoop() noexcept {
-        return stock.GetEventLoop();
-    }
-
-    void Get(struct pool &pool, StockGetHandler &handler,
-             CancellablePointer &cancel_ptr) noexcept {
-        stock.Get(pool, nullptr, handler, cancel_ptr);
-    }
-
-    void Put(StockItem &item, bool destroy) noexcept {
-        stock.Put(item, destroy);
-    }
-
-private:
-    /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, void *, struct pool &,
-                CancellablePointer &) override {
-        auto *connection = new TranslateConnection(c);
-        connection->CreateAndConnectAndFinish(address);
-    }
-};
-
 class TranslateStockRequest final
     : Cancellable, StockGetHandler, Lease, PoolLeakDetector
 {
     struct pool &pool;
 
-    TranslateStock &stock;
+    TranslationStock &stock;
     TranslateConnection *item;
 
     const TranslateRequest &request;
@@ -167,7 +130,7 @@ class TranslateStockRequest final
     CancellablePointer cancel_ptr;
 
 public:
-    TranslateStockRequest(TranslateStock &_stock, struct pool &_pool,
+    TranslateStockRequest(TranslationStock &_stock, struct pool &_pool,
                           const TranslateRequest &_request,
                           const TranslateHandler &_handler, void *_ctx,
                           CancellablePointer &_cancel_ptr) noexcept
@@ -191,7 +154,7 @@ private:
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
-        /* this cancels only the TranslateStock::Get() call initiated
+        /* this cancels only the TranslationStock::Get() call initiated
            from Start() */
 
         CancellablePointer c(std::move(cancel_ptr));
@@ -209,7 +172,6 @@ private:
         Destroy();
     }
 };
-
 
 /*
  * stock callback
@@ -241,12 +203,13 @@ TranslateStockRequest::OnStockItemError(std::exception_ptr ep) noexcept
     _handler.error(ep, _handler_ctx);
 }
 
-TranslationStock::TranslationStock(EventLoop &event_loop,
-                                   SocketAddress address,
-                                   unsigned limit) noexcept
-    :stock(new TranslateStock(event_loop, address, limit)) {}
-
-TranslationStock::~TranslationStock() noexcept = default;
+void
+TranslationStock::Create(CreateStockItem c, void *, struct pool &,
+                         CancellablePointer &)
+{
+    auto *connection = new TranslateConnection(c);
+    connection->CreateAndConnectAndFinish(address);
+}
 
 void
 TranslationStock::SendRequest(struct pool &pool,
@@ -254,7 +217,7 @@ TranslationStock::SendRequest(struct pool &pool,
                               const TranslateHandler &handler, void *ctx,
                               CancellablePointer &cancel_ptr) noexcept
 {
-    auto r = NewFromPool<TranslateStockRequest>(pool, *stock, pool, request,
+    auto r = NewFromPool<TranslateStockRequest>(pool, *this, pool, request,
                                                 handler, ctx, cancel_ptr);
     r->Start();
 }

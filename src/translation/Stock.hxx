@@ -33,27 +33,47 @@
 #pragma once
 
 #include "Service.hxx"
+#include "stock/Stock.hxx"
+#include "stock/Class.hxx"
+#include "net/AllocatedSocketAddress.hxx"
 
-#include <memory>
+struct TranslateHandler;
+struct TranslateRequest;
 
-class EventLoop;
-class TranslateStock;
-class SocketAddress;
+class TranslationStock final : public TranslationService, StockClass {
+    Stock stock;
 
-/**
- * Connection pooling for the translation server.
- */
-class TranslationStock final : public TranslationService {
-    std::unique_ptr<TranslateStock> stock;
+    const AllocatedSocketAddress address;
 
 public:
-    explicit TranslationStock(EventLoop &event_loop, SocketAddress address,
-                              unsigned limit) noexcept;
-    ~TranslationStock() noexcept;
+    TranslationStock(EventLoop &event_loop, SocketAddress _address,
+                     unsigned limit) noexcept
+        :stock(event_loop, *this, "translation", limit, 8),
+         address(_address)
+    {
+    }
+
+    auto &GetEventLoop() const noexcept {
+        return stock.GetEventLoop();
+    }
+
+    void Get(struct pool &pool, StockGetHandler &handler,
+             CancellablePointer &cancel_ptr) noexcept {
+        stock.Get(pool, nullptr, handler, cancel_ptr);
+    }
+
+    void Put(StockItem &item, bool destroy) noexcept {
+        stock.Put(item, destroy);
+    }
 
     /* virtual methods from class TranslationService */
     void SendRequest(struct pool &pool,
                      const TranslateRequest &request,
                      const TranslateHandler &handler, void *ctx,
                      CancellablePointer &cancel_ptr) noexcept override;
+
+private:
+    /* virtual methods from class StockClass */
+    void Create(CreateStockItem c, void *, struct pool &,
+                CancellablePointer &) override;
 };
