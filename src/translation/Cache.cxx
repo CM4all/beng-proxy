@@ -386,6 +386,10 @@ struct tcache {
     unsigned InvalidateSite(const TranslateRequest &request,
                             ConstBuffer<TranslationCommand> vary,
                             const char *site);
+
+    void Invalidate(const TranslateRequest &request,
+                    ConstBuffer<TranslationCommand> vary,
+                    const char *site) noexcept;
 };
 
 struct TranslateCacheRequest {
@@ -1118,12 +1122,11 @@ TranslateCachePerSite::Invalidate(const TranslateRequest &request,
 }
 
 void
-translate_cache_invalidate(struct tcache &tcache,
-                           const TranslateRequest &request,
-                           ConstBuffer<TranslationCommand> vary,
-                           const char *site)
+tcache::Invalidate(const TranslateRequest &request,
+                   ConstBuffer<TranslationCommand> vary,
+                   const char *site) noexcept
 {
-    if (tcache.cache == nullptr)
+    if (cache == nullptr)
         return;
 
     struct tcache_invalidate_data data = {
@@ -1134,11 +1137,20 @@ translate_cache_invalidate(struct tcache &tcache,
 
     gcc_unused
     unsigned removed = site != nullptr
-        ? tcache.InvalidateSite(request, vary, site)
+        ? InvalidateSite(request, vary, site)
         : (vary.Contains(TranslationCommand::HOST)
-           ? tcache.InvalidateHost(request, vary)
-           : tcache.cache->RemoveAllMatch(tcache_invalidate_match, &data));
+           ? InvalidateHost(request, vary)
+           : cache->RemoveAllMatch(tcache_invalidate_match, &data));
     LogConcat(4, "TranslationCache", "invalidated ", removed, " cache items");
+}
+
+void
+translate_cache_invalidate(struct tcache &tcache,
+                           const TranslateRequest &request,
+                           ConstBuffer<TranslationCommand> vary,
+                           const char *site)
+{
+    tcache.Invalidate(request, vary, site);
 }
 
 /**
@@ -1271,9 +1283,9 @@ tcache_handler_response(TranslateResponse &response, void *ctx)
     tcr.tcache->active = true;
 
     if (!response.invalidate.empty())
-        translate_cache_invalidate(*tcr.tcache, tcr.request,
-                                   response.invalidate,
-                                   nullptr);
+        tcr.tcache->Invalidate(tcr.request,
+                               response.invalidate,
+                               nullptr);
 
     RegexPointer regex;
 
