@@ -49,7 +49,7 @@ class FilteredSocketLease final : BufferedSocketHandler {
 
     BufferedSocketHandler &handler;
 
-    std::array<SliceFifoBuffer, 2> input;
+    std::array<SliceFifoBuffer, 4> input;
 
 public:
     FilteredSocketLease(FilteredSocket &_socket, Lease &lease,
