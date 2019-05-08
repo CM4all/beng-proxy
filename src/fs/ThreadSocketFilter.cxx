@@ -335,7 +335,8 @@ ThreadSocketFilter::Done() noexcept
 
     if (postponed_end && encrypted_input.empty()) {
         if (postponed_remaining) {
-            if (!decrypted_input.empty()) {
+            if (!decrypted_input.empty() ||
+                !unprotected_decrypted_input.empty()) {
                 /* before we actually deliver the "remaining" event,
                    we should give the handler a chance to process the
                    data */
