@@ -2,7 +2,7 @@ cm4all-beng-proxy (15.18) unstable; urgency=low
 
   * http_client: fix assertion failure
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 08 May 2019 11:45:05 +0200
 
 cm4all-beng-proxy (15.17) unstable; urgency=low
 
