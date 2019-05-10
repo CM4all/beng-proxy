@@ -40,6 +40,8 @@
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/set.hpp>
 
+#include <string>
+
 #include <string.h>
 
 struct NfsStockConnection;
@@ -73,7 +75,7 @@ struct NfsStockConnection final
 
     struct pool &pool;
 
-    const char *key;
+    const std::string key;
 
     NfsClient *client;
 
@@ -97,15 +99,15 @@ struct NfsStockConnection final
 
     struct Compare {
         bool operator()(const NfsStockConnection &a, const NfsStockConnection &b) const {
-            return strcmp(a.key, b.key) < 0;
+            return a.key < b.key;
         }
 
         bool operator()(const NfsStockConnection &a, const char *b) const {
-            return strcmp(a.key, b) < 0;
+            return a.key < b;
         }
 
         bool operator()(const char *a, const NfsStockConnection &b) const {
-            return strcmp(a, b.key) < 0;
+            return a < b.key;
         }
     };
 };
@@ -175,7 +177,7 @@ NfsStockConnection::OnNfsClientClosed(std::exception_ptr ep)
     assert(requests.empty());
     assert(!stock.connections.empty());
 
-    LogConcat(1, key, "NFS connection closed: ", ep);
+    LogConcat(1, key.c_str(), "NFS connection closed: ", ep);
 
     stock.Remove(*this);
     DeleteUnrefTrashPool(pool, this);
@@ -243,8 +245,7 @@ NfsStock::Get(struct pool &caller_pool,
     if (is_new) {
         struct pool *c_pool = pool_new_libc(&pool, "nfs_stock_connection");
         connection =
-            NewFromPool<NfsStockConnection>(*c_pool, *this, *c_pool,
-                                            p_strdup(c_pool, key));
+            NewFromPool<NfsStockConnection>(*c_pool, *this, *c_pool, key);
 
         connections.insert_commit(*connection, hint);
     } else {
