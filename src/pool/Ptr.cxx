@@ -71,7 +71,7 @@ PoolPtr::reset() noexcept
 }
 
 void *
-PoolPtr::Allocate(size_t size) noexcept
+PoolPtr::Allocate(size_t size) const noexcept
 {
     return p_malloc(value, size);
 }

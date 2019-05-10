@@ -95,7 +95,7 @@ public:
         return std::exchange(value, nullptr);
     }
 
-    void *Allocate(size_t size) noexcept;
+    void *Allocate(size_t size) const noexcept;
 };
 
 /**
