@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -48,7 +48,7 @@ class EventLoop;
 
 void
 nfs_client_new(EventLoop &event_loop,
-               struct pool &pool, const char *server, const char *root,
+               const char *server, const char *root,
                NfsClientHandler &handler,
                CancellablePointer &cancel_ptr);
 

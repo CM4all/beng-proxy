@@ -265,13 +265,14 @@ int main(int argc, char **argv) {
 
     /* open NFS connection */
 
-    nfs_client_new(ctx.event_loop, *ctx.pool, server, _export,
+    nfs_client_new(ctx.event_loop, server, _export,
                    ctx, ctx.cancel_ptr);
-    pool_unref(ctx.pool);
 
     /* run */
 
     ctx.event_loop.Dispatch();
+
+    pool_unref(ctx.pool);
 
     assert(ctx.aborted || ctx.failed || ctx.connected);
 

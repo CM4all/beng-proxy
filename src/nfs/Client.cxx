@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,7 +34,6 @@
 #include "Error.hxx"
 #include "Handler.hxx"
 #include "pool/pool.hxx"
-#include "pool/Holder.hxx"
 #include "system/Error.hxx"
 #include "io/FileDescriptor.hxx"
 #include "event/SocketEvent.hxx"
@@ -348,7 +347,7 @@ public:
     };
 };
 
-class NfsClient final : PoolHolder, Cancellable, LeakDetector {
+class NfsClient final : Cancellable, LeakDetector {
     NfsClientHandler &handler;
 
     struct nfs_context *context;
@@ -409,17 +408,16 @@ class NfsClient final : PoolHolder, Cancellable, LeakDetector {
     bool mount_finished = false;
 
 public:
-    NfsClient(EventLoop &event_loop, struct pool &_pool,
+    NfsClient(EventLoop &event_loop,
               NfsClientHandler &_handler,
               struct nfs_context &_context)
-        :PoolHolder(_pool),
-         handler(_handler), context(&_context),
+        :handler(_handler), context(&_context),
          event(event_loop, BIND_THIS_METHOD(SocketEventCallback)),
          timeout_event(event_loop, BIND_THIS_METHOD(TimeoutCallback)) {
     }
 
     void Destroy() {
-        this->~NfsClient();
+        delete this;
     }
 
     EventLoop &GetEventLoop() {
@@ -1047,7 +1045,7 @@ NfsClient::FstatAsync(struct nfsfh *nfsfh, nfs_cb cb, void *private_data)
  */
 
 void
-nfs_client_new(EventLoop &event_loop, struct pool &pool,
+nfs_client_new(EventLoop &event_loop,
                const char *server, const char *root,
                NfsClientHandler &handler,
                CancellablePointer &cancel_ptr)
@@ -1061,8 +1059,7 @@ nfs_client_new(EventLoop &event_loop, struct pool &pool,
         return;
     }
 
-    auto client = NewFromPool<NfsClient>(pool, event_loop, pool,
-                                         handler, *context);
+    auto client = new NfsClient(event_loop, handler, *context);
     client->Mount(server, root, cancel_ptr);
 }
 

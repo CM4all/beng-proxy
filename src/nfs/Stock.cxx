@@ -262,7 +262,7 @@ NfsStock::Get(struct pool &caller_pool,
     connection->requests.push_front(*request);
 
     if (is_new)
-        nfs_client_new(connection->stock.event_loop, connection->pool,
+        nfs_client_new(connection->stock.event_loop,
                        server, export_name,
                        *connection, connection->cancel_ptr);
 }
