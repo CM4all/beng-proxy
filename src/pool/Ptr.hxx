@@ -61,6 +61,8 @@ public:
     PoolPtr(Donate, struct pool &_value) noexcept
         :value(&_value) {}
 
+    PoolPtr(Donate, const PoolPtr &_value) noexcept = delete;
+
     PoolPtr(PoolPtr &&src) noexcept
         :value(std::exchange(src.value, nullptr)) {}
 
