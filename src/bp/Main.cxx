@@ -175,7 +175,8 @@ BpInstance::ReloadEventCallback(int) noexcept
 
     FadeChildren();
 
-    translation_cache->Flush();
+    if (translation_cache != nullptr)
+        translation_cache->Flush();
 
     if (http_cache != nullptr)
         http_cache_flush(*http_cache);
@@ -360,15 +361,17 @@ try {
             new TranslationStock(instance.event_loop,
                                  instance.config.translation_socket,
                                  instance.config.translate_stock_limit);
+        instance.translation_service = instance.translation_stock;
 
-        instance.translation_cache =
-            new TranslationCache(instance.root_pool,
-                                 instance.event_loop,
-                                 *instance.translation_stock,
-                                 instance.config.translate_cache_size,
-                                 false);
-
-        instance.translation_service = instance.translation_cache;
+        if (instance.config.translate_cache_size > 0) {
+            instance.translation_cache =
+                new TranslationCache(instance.root_pool,
+                                     instance.event_loop,
+                                     *instance.translation_stock,
+                                     instance.config.translate_cache_size,
+                                     false);
+            instance.translation_service = instance.translation_cache;
+        }
     }
 
     instance.lhttp_stock = lhttp_stock_new(0, 16, instance.event_loop,
