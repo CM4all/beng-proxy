@@ -63,7 +63,7 @@
 #include "istream/istream_string.hxx"
 #include "istream/istream_tee.hxx"
 #include "pool/pool.hxx"
-#include "pool/LeakDetector.hxx"
+#include "pool/Holder.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Macros.hxx"
 #include "util/RuntimeError.hxx"
@@ -88,7 +88,7 @@ struct uri_rewrite {
     char view[64];
 };
 
-struct XmlProcessor final : XmlParserHandler, Cancellable, PoolLeakDetector {
+struct XmlProcessor final : PoolHolder, XmlParserHandler, Cancellable {
     class CdataIstream final : public Istream {
         friend struct XmlProcessor;
         XmlProcessor &processor;
@@ -102,7 +102,7 @@ struct XmlProcessor final : XmlParserHandler, Cancellable, PoolLeakDetector {
         void _Close() noexcept override;
     };
 
-    struct pool &pool, &caller_pool;
+    struct pool &caller_pool;
 
     Widget &container;
     const char *lookup_id;
@@ -228,17 +228,21 @@ struct XmlProcessor final : XmlParserHandler, Cancellable, PoolLeakDetector {
 
     CancellablePointer *cancel_ptr;
 
-    XmlProcessor(struct pool &_pool, struct pool &_caller_pool,
+    XmlProcessor(PoolPtr &&_pool, struct pool &_caller_pool,
                  Widget &_widget, struct processor_env &_env,
                  unsigned _options) noexcept
-        :PoolLeakDetector(_pool),
-         pool(_pool), caller_pool(_caller_pool),
+        :PoolHolder(std::move(_pool)),
+         caller_pool(_caller_pool),
          container(_widget),
          env(_env), options(_options),
          buffer(pool, 128, 2048),
          postponed_rewrite(pool),
          widget(_widget.pool, pool) {
         pool_ref(&container.pool);
+    }
+
+    struct pool &GetPool() const noexcept {
+        return pool;
     }
 
     void InitParser(UnusedIstreamPtr input) noexcept {
@@ -441,9 +445,10 @@ processor_new(struct pool &caller_pool,
               struct processor_env &env,
               unsigned options) noexcept
 {
-    struct pool *pool = pool_new_linear(&caller_pool, "processor", 32768);
+    PoolPtr pool(PoolPtr::donate,
+                 *pool_new_linear(&caller_pool, "processor", 32768));
 
-    return NewFromPool<XmlProcessor>(*pool, *pool, caller_pool, widget,
+    return NewFromPool<XmlProcessor>(std::move(pool), caller_pool, widget,
                                      env, options);
 }
 
@@ -457,19 +462,18 @@ processor_process(struct pool &caller_pool, UnusedIstreamPtr input,
     processor->lookup_id = nullptr;
 
     /* the text processor will expand entities */
-    auto tee = istream_tee_new(processor->pool,
-                               text_processor(processor->pool,
+    auto tee = istream_tee_new(processor->GetPool(),
+                               text_processor(processor->GetPool(),
                                               std::move(input),
                                               widget, env),
                                *env.event_loop,
                                true, true);
 
-    auto r = istream_replace_new(*env.event_loop, processor->pool,
+    auto r = istream_replace_new(*env.event_loop, processor->GetPool(),
                                  std::move(tee.first));
 
     processor->replace = std::move(r.second);
     processor->InitParser(std::move(tee.second));
-    pool_unref(&processor->pool);
 
     if (processor->HasOptionRewriteUrl()) {
         processor->default_uri_rewrite.base = URI_BASE_TEMPLATE;
@@ -517,13 +521,9 @@ processor_lookup_widget(struct pool &caller_pool,
     cancel_ptr = *processor;
     processor->cancel_ptr = &cancel_ptr;
 
-    auto &pool = processor->pool;
-
     do {
         processor->had_input = false;
     } while (parser_read(processor->parser) && processor->had_input);
-
-    pool_unref(&pool);
 }
 
 void
@@ -1334,7 +1334,7 @@ XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
     auto istream = embed_inline_widget(pool, env, false,
                                        child_widget);
     if (istream)
-        istream = istream_catch_new(&pool, std::move(istream),
+        istream = istream_catch_new(pool, std::move(istream),
                                     widget_catch_callback, &child_widget);
 
     return istream;
