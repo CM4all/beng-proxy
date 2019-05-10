@@ -823,8 +823,6 @@ NfsClient::SocketEventCallback(unsigned events) noexcept
 
     event.Cancel(); // TODO: take advantage of EV_PERSIST
 
-    const ScopePoolRef ref(pool TRACE_ARGS);
-
     const bool was_mounted = mount_finished;
 
     assert(!in_event);
@@ -845,6 +843,8 @@ NfsClient::SocketEventCallback(unsigned events) noexcept
            nfs_service() */
         DestroyContext();
         CleanupFiles();
+        Destroy();
+        return;
     } else if (!was_mounted && mount_finished) {
         if (postponed_mount_error)
             MountError(postponed_mount_error);
@@ -1076,9 +1076,8 @@ NfsClient::Free()
     } else {
         DestroyContext();
         CleanupFiles();
+        Destroy();
     }
-
-    Destroy();
 }
 
 void
