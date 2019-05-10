@@ -51,7 +51,7 @@ public:
  * NFS connection manager.
  */
 NfsStock *
-nfs_stock_new(EventLoop &event_loop, struct pool &pool);
+nfs_stock_new(EventLoop &event_loop) noexcept;
 
 void
 nfs_stock_free(NfsStock *stock);

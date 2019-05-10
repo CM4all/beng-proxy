@@ -393,8 +393,7 @@ try {
     instance.delegate_stock = delegate_stock_new(instance.event_loop,
                                                  *instance.spawn_service);
 
-    instance.nfs_stock = nfs_stock_new(instance.event_loop,
-                                       instance.root_pool);
+    instance.nfs_stock = nfs_stock_new(instance.event_loop);
     instance.nfs_cache = nfs_cache_new(instance.root_pool,
                                        instance.config.nfs_cache_size,
                                        *instance.nfs_stock,

@@ -111,7 +111,6 @@ struct NfsStockConnection final
 
 struct NfsStock final {
     EventLoop &event_loop;
-    struct pool &pool;
 
     /**
      * Maps server name to #NfsStockConnection.
@@ -121,8 +120,8 @@ struct NfsStock final {
                                   boost::intrusive::constant_time_size<false>> ConnectionMap;
     ConnectionMap connections;
 
-    NfsStock(EventLoop &_event_loop, struct pool &_pool)
-        :event_loop(_event_loop), pool(_pool) {}
+    explicit NfsStock(EventLoop &_event_loop) noexcept
+        :event_loop(_event_loop) {}
 
     ~NfsStock();
 
@@ -200,9 +199,9 @@ NfsStockRequest::Cancel() noexcept
  */
 
 NfsStock *
-nfs_stock_new(EventLoop &event_loop, struct pool &pool)
+nfs_stock_new(EventLoop &event_loop) noexcept
 {
-    return new NfsStock(event_loop, pool);
+    return new NfsStock(event_loop);
 }
 
 NfsStock::~NfsStock()
