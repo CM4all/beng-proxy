@@ -42,6 +42,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"
 #include "pool/pool.hxx"
+#include "pool/Holder.hxx"
 #include "stopwatch.hxx"
 #include "io/FileDescriptor.hxx"
 #include "util/Cast.hxx"
@@ -59,12 +60,12 @@
 #include <sys/socket.h>
 
 struct WasClient final
-    : WasControlHandler, WasOutputHandler, WasInputHandler,
+    : PoolHolder,
+      WasControlHandler, WasOutputHandler, WasInputHandler,
       DestructAnchor,
       Cancellable
 {
-
-    struct pool &pool, &caller_pool;
+    struct pool &caller_pool;
 
     Stopwatch *const stopwatch;
 
@@ -136,7 +137,7 @@ struct WasClient final
      */
     bool ignore_control_errors = false;
 
-    WasClient(struct pool &_pool, struct pool &_caller_pool,
+    WasClient(PoolPtr &&_pool, struct pool &_caller_pool,
               EventLoop &event_loop,
               Stopwatch *_stopwatch,
               SocketDescriptor control_fd,
@@ -152,7 +153,7 @@ struct WasClient final
     }
 
     void Destroy() {
-        DeleteUnrefPool(pool, this);
+        this->~WasClient();
     }
 
     /**
@@ -445,9 +446,9 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
             return false;
         }
 
-        response.headers.Add(p_strndup_lower(&pool, (const char *)payload.data,
+        response.headers.Add(p_strndup_lower(pool, (const char *)payload.data,
                                              p - (const char *)payload.data),
-                             p_strndup(&pool, p + 1,
+                             p_strndup(pool, p + 1,
                                        (const char *)payload.data + payload.size - p - 1));
         break;
 
@@ -751,7 +752,7 @@ WasClient::WasInputError() noexcept
  */
 
 inline
-WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
+WasClient::WasClient(PoolPtr &&_pool, struct pool &_caller_pool,
                      EventLoop &event_loop,
                      Stopwatch *_stopwatch,
                      SocketDescriptor control_fd,
@@ -760,7 +761,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
                      http_method_t method, UnusedIstreamPtr body,
                      HttpResponseHandler &_handler,
                      CancellablePointer &cancel_ptr)
-    :pool(_pool), caller_pool(_caller_pool),
+    :PoolHolder(_pool), caller_pool(_caller_pool),
      stopwatch(_stopwatch),
      lease(_lease),
      control(event_loop, control_fd, *this),
@@ -824,8 +825,9 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
     assert(http_method_is_valid(method));
     assert(uri != nullptr);
 
-    struct pool *pool = pool_new_linear(&caller_pool, "was_client_request", 32768);
-    auto client = NewFromPool<WasClient>(*pool, *pool, caller_pool,
+    PoolPtr pool(PoolPtr::donate,
+                 *pool_new_linear(&caller_pool, "was_client_request", 32768));
+    auto client = NewFromPool<WasClient>(std::move(pool), caller_pool,
                                          event_loop, stopwatch,
                                          control_fd, input_fd, output_fd,
                                          lease, method, std::move(body),
