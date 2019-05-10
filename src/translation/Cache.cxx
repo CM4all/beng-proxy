@@ -328,7 +328,7 @@ struct TranslateCachePerSite
 };
 
 struct tcache {
-    struct pool &pool;
+    const PoolPtr pool;
     SlicePool *const slice_pool;
 
     Cache *const cache;
@@ -437,7 +437,7 @@ tcache::MakePerHost(const char *host)
         return *result.first;
 
     auto ph = NewFromPool<TranslateCachePerHost>(pool, *this,
-                                                 p_strdup(&pool, host));
+                                                 p_strdup(pool, host));
     per_host.insert_commit(*ph, commit_data);
 
     return *ph;
@@ -464,7 +464,7 @@ TranslateCachePerHost::Dispose()
 
     tcache.per_host.erase(tcache.per_host.iterator_to(*this));
 
-    p_free(&tcache.pool, host);
+    p_free(tcache.pool, host);
     DeleteFromPool(tcache.pool, this);
 }
 
@@ -493,7 +493,7 @@ tcache::MakePerSite(const char *site)
         return *result.first;
 
     auto ph = NewFromPool<TranslateCachePerSite>(pool, *this,
-                                                 p_strdup(&pool, site));
+                                                 p_strdup(pool, site));
     per_site.insert_commit(*ph, commit_data);
 
     return *ph;
@@ -517,7 +517,7 @@ TranslateCachePerSite::Dispose()
 
     tcache.per_site.erase(tcache.per_site.iterator_to(*this));
 
-    p_free(&tcache.pool, site);
+    p_free(tcache.pool, site);
     DeleteFromPool(tcache.pool, this);
 }
 
@@ -1167,7 +1167,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
         /* limit to one day */
         max_age = max_max_age;
 
-    auto item = NewFromPool<TranslateCacheItem>(pool_new_slice(&tcr.tcache->pool, "tcache_item",
+    auto item = NewFromPool<TranslateCacheItem>(pool_new_slice(tcr.tcache->pool, "tcache_item",
                                                                tcr.tcache->slice_pool),
                                                 tcr.tcache->cache->SteadyNow(),
                                                 max_age);
@@ -1483,7 +1483,7 @@ inline
 tcache::tcache(struct pool &_pool, EventLoop &event_loop,
                TranslationService &_next, unsigned max_size,
                bool handshake_cacheable)
-    :pool(*pool_new_libc(&_pool, "translate_cache")),
+    :pool(PoolPtr::donate, *pool_new_libc(&_pool, "translate_cache")),
      slice_pool(new SlicePool(4096, 32768)),
      cache(new Cache(event_loop, 65521, max_size)),
      per_host(PerHostSet::bucket_traits(per_host_buckets, N_BUCKETS)),
@@ -1498,7 +1498,6 @@ tcache::~tcache()
 {
     delete cache;
     delete slice_pool;
-    pool_unref(&pool);
 }
 
 TranslationCache::TranslationCache(struct pool &pool, EventLoop &event_loop,
