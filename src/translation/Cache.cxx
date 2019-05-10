@@ -1484,15 +1484,14 @@ tcache::tcache(struct pool &_pool, EventLoop &event_loop,
                TranslationService &_next, unsigned max_size,
                bool handshake_cacheable)
     :pool(*pool_new_libc(&_pool, "translate_cache")),
-     slice_pool(max_size > 0
-                ? new SlicePool(4096, 32768)
-                : nullptr),
-     cache(max_size > 0
-           ? new Cache(event_loop, 65521, max_size)
-           : nullptr),
+     slice_pool(new SlicePool(4096, 32768)),
+     cache(new Cache(event_loop, 65521, max_size)),
      per_host(PerHostSet::bucket_traits(per_host_buckets, N_BUCKETS)),
      per_site(PerSiteSet::bucket_traits(per_site_buckets, N_BUCKETS)),
-     next(_next), active(handshake_cacheable) {}
+     next(_next), active(handshake_cacheable)
+{
+    assert(max_size > 0);
+}
 
 inline
 tcache::~tcache()
