@@ -185,7 +185,7 @@ private:
 };
 
 class HttpCache {
-    struct pool &pool;
+    const PoolPtr pool;
 
     EventLoop &event_loop;
 
@@ -640,7 +640,7 @@ inline
 HttpCache::HttpCache(struct pool &_pool, size_t max_size,
                      EventLoop &_event_loop,
                      ResourceLoader &_resource_loader)
-    :pool(*pool_new_libc(&_pool, "http_cache")),
+    :pool(PoolPtr::donate, *pool_new_libc(&_pool, "http_cache")),
      event_loop(_event_loop),
      compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      heap(pool, event_loop, max_size),
@@ -685,8 +685,6 @@ HttpCache::~HttpCache() noexcept
     requests.clear_and_dispose(std::mem_fn(&HttpCacheRequest::AbortRubberStore));
 
     background.AbortAll();
-
-    pool_unref(&pool);
 }
 
 void
@@ -733,7 +731,7 @@ HttpCache::Miss(struct pool &caller_pool,
 
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache.pool */
-    auto *request_pool = pool_new_linear(&pool, "HttpCacheRequest", 8192);
+    auto *request_pool = pool_new_linear(pool, "HttpCacheRequest", 8192);
 
     auto request =
         NewFromPool<HttpCacheRequest>(*request_pool,
@@ -889,7 +887,7 @@ HttpCache::Revalidate(struct pool &caller_pool,
 {
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache.pool */
-    auto *request_pool = pool_new_linear(&pool, "HttpCacheRequest", 8192);
+    auto *request_pool = pool_new_linear(pool, "HttpCacheRequest", 8192);
 
     auto request =
         NewFromPool<HttpCacheRequest>(*request_pool, *request_pool, caller_pool,
