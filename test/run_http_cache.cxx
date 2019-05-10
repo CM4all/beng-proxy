@@ -33,6 +33,7 @@
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
 #include "pool/tpool.hxx"
+#include "pool/Ptr.hxx"
 #include "cache.hxx"
 #include "http_cache_heap.hxx"
 #include "http_cache_info.hxx"
@@ -102,7 +103,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     PInstance instance;
 
-    struct pool *pool2 = pool_new_libc(instance.root_pool, "cache");
+    auto pool2 = pool_new_libc(instance.root_pool, "cache");
 
     HttpCacheHeap cache(*pool2, instance.event_loop, max_size);
 
@@ -113,8 +114,6 @@ main(gcc_unused int argc, gcc_unused char **argv)
     printf("netto=%zu brutto=%zu ratio=%f\n",
            stats.netto_size, stats.brutto_size,
            (double)stats.netto_size / stats.brutto_size);
-
-    pool_unref(pool2);
 
     return EXIT_SUCCESS;
 }

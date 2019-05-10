@@ -131,7 +131,7 @@ TEST(Processor, Abort)
 {
     PInstance instance;
 
-    auto *pool = pool_new_libc(instance.root_pool, "test");
+    auto pool = pool_new_libc(instance.root_pool, "test");
 
     Widget widget(*pool, &root_widget_class);
 
@@ -157,7 +157,7 @@ TEST(Processor, Abort)
                             widget, "foo", env, PROCESSOR_CONTAINER,
                             handler, cancel_ptr);
 
-    pool_unref(pool);
+    pool.reset();
 
     cancel_ptr.Cancel();
 

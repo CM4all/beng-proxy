@@ -53,7 +53,7 @@
 #include <sys/stat.h>
 
 struct Context final : PInstance, NfsClientHandler, NfsClientOpenFileHandler {
-    struct pool *pool;
+    PoolPtr pool;
 
     const char *path;
 
@@ -271,8 +271,6 @@ int main(int argc, char **argv) {
     /* run */
 
     ctx.event_loop.Dispatch();
-
-    pool_unref(ctx.pool);
 
     assert(ctx.aborted || ctx.failed || ctx.connected);
 

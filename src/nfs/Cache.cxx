@@ -290,9 +290,8 @@ NfsCacheStore::Put(RubberAllocation &&a) noexcept
 {
     LogConcat(4, "NfsCache", "put ", key);
 
-    const auto item = NewFromPool<NfsCacheItem>(PoolPtr(PoolPtr::donate,
-                                                        *pool_new_libc(cache.GetPool(),
-                                                                       "NfsCacheItem")),
+    const auto item = NewFromPool<NfsCacheItem>(pool_new_libc(cache.GetPool(),
+                                                              "NfsCacheItem"),
                                                 cache.GetEventLoop().SteadyNow(),
                                                 *this,
                                                 std::move(a));
@@ -394,7 +393,7 @@ NfsCacheRequest::OnNfsStockError(std::exception_ptr ep)
 inline
 NfsCache::NfsCache(struct pool &_pool, size_t max_size,
                    NfsStock &_stock, EventLoop &_event_loop)
-    :pool(PoolPtr::donate, *pool_new_libc(&_pool, "nfs_cache")),
+    :pool(pool_new_libc(&_pool, "nfs_cache")),
      stock(_stock),
      event_loop(_event_loop),
      rubber(max_size),

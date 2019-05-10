@@ -134,8 +134,6 @@ test_block1(EventLoop &event_loop)
                                buffer_callback, (Context *)&ctx, cancel_ptr);
     assert(ctx.value.empty());
 
-    pool_unref(pool);
-
     /* the input (istream_delayed) blocks */
     ReadStringSink(sink);
     assert(ctx.value.empty());
@@ -157,16 +155,17 @@ test_block1(EventLoop &event_loop)
     assert(ctx.error == nullptr && !ctx.eof);
     assert(strcmp(ctx.value.c_str(), "foo") == 0);
 
+    pool.reset();
     pool_commit();
 }
 
 static void
-test_close_data(EventLoop &event_loop, struct pool *pool)
+test_close_data(EventLoop &event_loop, struct pool *_pool)
 {
     Context ctx;
     CancellablePointer cancel_ptr;
 
-    pool = pool_new_libc(nullptr, "test");
+    auto pool = pool_new_libc(_pool, "test");
     auto tee =
         istream_tee_new(*pool, istream_string_new(*pool, "foo"),
                         event_loop, false, false);
@@ -177,7 +176,7 @@ test_close_data(EventLoop &event_loop, struct pool *pool)
                                buffer_callback, &ctx, cancel_ptr);
     assert(ctx.value.empty());
 
-    pool_unref(pool);
+    pool.reset();
 
     ReadStringSink(sink);
 
@@ -195,19 +194,19 @@ test_close_data(EventLoop &event_loop, struct pool *pool)
  * obeyed properly.
  */
 static void
-test_close_skipped(EventLoop &event_loop, struct pool *pool)
+test_close_skipped(EventLoop &event_loop, struct pool *_pool)
 {
     Context ctx;
     CancellablePointer cancel_ptr;
 
-    pool = pool_new_libc(nullptr, "test");
+    auto pool = pool_new_libc(_pool, "test");
     auto tee = istream_tee_new(*pool, istream_string_new(*pool, "foo"),
                                event_loop, false, false);
     auto &sink = NewStringSink(*pool, std::move(tee.first),
                                buffer_callback, &ctx, cancel_ptr);
 
     sink_close_new(*pool, std::move(tee.second));
-    pool_unref(pool);
+    pool.reset();
 
     assert(ctx.value.empty());
 
@@ -219,17 +218,17 @@ test_close_skipped(EventLoop &event_loop, struct pool *pool)
 }
 
 static void
-test_error(EventLoop &event_loop, struct pool *pool,
+test_error(EventLoop &event_loop, struct pool *_pool,
            bool close_first, bool close_second,
            bool read_first)
 {
-    pool = pool_new_libc(nullptr, "test");
+    auto pool = pool_new_libc(_pool, "test");
     auto tee =
         istream_tee_new(*pool, istream_fail_new(*pool,
                                                 std::make_exception_ptr(std::runtime_error("error"))),
                         event_loop,
                         false, false);
-    pool_unref(pool);
+    pool.reset();
 
     auto first = !close_first
         ? std::make_unique<StatsIstreamSink>(std::move(tee.first))
@@ -264,17 +263,17 @@ test_error(EventLoop &event_loop, struct pool *pool,
 }
 
 static void
-test_bucket_error(EventLoop &event_loop, struct pool *pool,
+test_bucket_error(EventLoop &event_loop, struct pool *_pool,
                   bool close_second_early,
                   bool close_second_late)
 {
-    pool = pool_new_libc(nullptr, "test");
+    auto pool = pool_new_libc(_pool, "test");
     auto tee =
         istream_tee_new(*pool, istream_fail_new(*pool,
                                                 std::make_exception_ptr(std::runtime_error("error"))),
                         event_loop,
                         false, false);
-    pool_unref(pool);
+    pool.reset();
 
     StatsIstreamSink first(std::move(tee.first));
 

@@ -640,7 +640,7 @@ inline
 HttpCache::HttpCache(struct pool &_pool, size_t max_size,
                      EventLoop &_event_loop,
                      ResourceLoader &_resource_loader)
-    :pool(PoolPtr::donate, *pool_new_libc(&_pool, "http_cache")),
+    :pool(pool_new_libc(&_pool, "http_cache")),
      event_loop(_event_loop),
      compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      heap(pool, event_loop, max_size),

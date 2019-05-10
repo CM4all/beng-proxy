@@ -256,7 +256,7 @@ private:
 };
 
 Server::Server(struct pool &_pool, EventLoop &event_loop)
-    :pool(pool_new_libc(&_pool, "catch")),
+    :pool(pool_new_libc(&_pool, "catch").release()),
      client_fs(event_loop)
 {
     UniqueSocketDescriptor client_socket, server_socket;

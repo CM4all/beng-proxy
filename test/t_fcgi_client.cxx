@@ -346,10 +346,10 @@ Connection::New(EventLoop &event_loop, void (*f)(struct pool *pool))
         server_socket.Close();
         client_socket.Close();
 
-        struct pool *pool = pool_new_libc(nullptr, "f");
+        auto pool = pool_new_libc(nullptr, "f");
         f(pool);
         shutdown(0, SHUT_RDWR);
-        pool_unref(pool);
+        pool.reset();
         _exit(EXIT_SUCCESS);
     }
 

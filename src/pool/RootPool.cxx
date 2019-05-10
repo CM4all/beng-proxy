@@ -31,13 +31,14 @@
  */
 
 #include "RootPool.hxx"
+#include "Ptr.hxx"
 #include "pool.hxx"
 #include "tpool.hxx"
 
 #include <assert.h>
 
 RootPool::RootPool()
-    :p(*pool_new_libc(nullptr, "root")) {
+    :p(*pool_new_libc(nullptr, "root").release()) {
     tpool_init(&p);
 }
 

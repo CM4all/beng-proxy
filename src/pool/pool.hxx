@@ -90,8 +90,7 @@ struct StringView;
 void
 pool_recycler_clear() noexcept;
 
-gcc_malloc gcc_returns_nonnull
-struct pool *
+PoolPtr
 pool_new_libc(struct pool *parent, const char *name) noexcept;
 
 gcc_malloc gcc_returns_nonnull

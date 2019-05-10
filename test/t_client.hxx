@@ -80,9 +80,9 @@ static constexpr size_t HEAD_SIZE = 16384;
 static struct pool *
 NewMajorPool(struct pool &parent, const char *name)
 {
-    auto *pool = pool_new_libc(&parent, name);
+    auto pool = pool_new_libc(&parent, name);
     pool_set_major(pool);
-    return pool;
+    return pool.release();
 }
 
 template<class Connection>

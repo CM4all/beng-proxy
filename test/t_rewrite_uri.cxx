@@ -180,7 +180,7 @@ assert_rewrite_check4(EventLoop &event_loop,
                       const char *view,
                       const char *result)
 {
-    struct pool *pool = pool_new_libc(widget_pool, "rewrite");
+    auto pool = pool_new_libc(widget_pool, "rewrite");
 
     StringView value2 = value;
     if (!value2.IsNull())
@@ -212,8 +212,6 @@ assert_rewrite_check4(EventLoop &event_loop,
         ASSERT_FALSE(istream);
     else
         assert_istream_equals(pool, std::move(istream), result);
-
-    pool_unref(pool);
 }
 
 static void
@@ -259,7 +257,7 @@ TEST(RewriteUriTest, Basic)
     PInstance instance;
     auto &event_loop = instance.event_loop;
 
-    auto *pool = pool_new_libc(instance.root_pool, "pool");
+    const auto pool = pool_new_libc(instance.root_pool, "pool");
 
     /* set up input objects */
 
@@ -512,8 +510,4 @@ TEST(RewriteUriTest, Basic)
                               "/1/123", RewriteUriMode::FOCUS, false,
                               nullptr, "//mysite_urss/index.html;focus=urss_id&path=123");
     }
-
-    /* cleanup */
-
-    pool_unref(pool);
 }

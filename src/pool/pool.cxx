@@ -409,12 +409,12 @@ pool_new(struct pool *parent, const char *name) noexcept
     return pool;
 }
 
-struct pool *
+PoolPtr
 pool_new_libc(struct pool *parent, const char *name) noexcept
 {
     struct pool *pool = pool_new(parent, name);
     pool->type = POOL_LIBC;
-    return pool;
+    return PoolPtr(PoolPtr::donate, *pool);
 }
 
 gcc_malloc
@@ -475,7 +475,7 @@ pool_new_linear(struct pool *parent, const char *name,
 #ifdef POOL_LIBC_ONLY
     (void)initial_size;
 
-    return pool_new_libc(parent, name);
+    return pool_new_libc(parent, name).release();
 #else
 
 #ifdef VALGRIND
@@ -483,7 +483,7 @@ pool_new_linear(struct pool *parent, const char *name,
         /* Valgrind cannot verify allocations and memory accesses with
            this library; therefore use the "libc" pool when running on
            valgrind */
-        return pool_new_libc(parent, name);
+        return pool_new_libc(parent, name).release();
 #endif
 
     struct pool *pool = pool_new(parent, name);
@@ -508,7 +508,7 @@ pool_new_slice(struct pool *parent, const char *name,
 #ifdef POOL_LIBC_ONLY
     (void)slice_pool;
 
-    return PoolPtr(PoolPtr::donate, *pool_new_libc(parent, name));
+    return pool_new_libc(parent, name);
 #else
 
 #ifdef VALGRIND
@@ -516,7 +516,7 @@ pool_new_slice(struct pool *parent, const char *name,
         /* Valgrind cannot verify allocations and memory accesses with
            this library; therefore use the "libc" pool when running on
            valgrind */
-        return PoolPtr(PoolPtr::donate, *pool_new_libc(parent, name));
+        return pool_new_libc(parent, name);
 #endif
 
     struct pool *pool = pool_new(parent, name);
