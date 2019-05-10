@@ -146,9 +146,12 @@ struct WasClient final
               HttpResponseHandler &_handler,
               CancellablePointer &cancel_ptr);
 
-    void Destroy() {
+    ~WasClient() noexcept {
         stopwatch_dump(stopwatch);
         pool_unref(&caller_pool);
+    }
+
+    void Destroy() {
         DeleteUnrefPool(pool, this);
     }
 
