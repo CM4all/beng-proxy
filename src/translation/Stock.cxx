@@ -59,16 +59,16 @@ public:
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
 
 private:
-    bool CreateAndConnect(SocketAddress address) noexcept {
+    bool CreateAndConnect(SocketAddress a) noexcept {
         assert(!s.IsDefined());
 
         return s.CreateNonBlock(AF_LOCAL, SOCK_STREAM, 0) &&
-            s.Connect(address);
+            s.Connect(a);
     }
 
 public:
-    void CreateAndConnectAndFinish(SocketAddress address) noexcept {
-        if (CreateAndConnect(address)) {
+    void CreateAndConnectAndFinish(SocketAddress a) noexcept {
+        if (CreateAndConnect(a)) {
             event.Open(s);
             InvokeCreateSuccess();
         } else {
