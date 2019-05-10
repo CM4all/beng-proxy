@@ -58,7 +58,7 @@ public:
      * will not create another reference, but will unreference it in
      * its destructor.
      */
-    explicit PoolPtr(Donate, struct pool &_value) noexcept
+    PoolPtr(Donate, struct pool &_value) noexcept
         :value(&_value) {}
 
     PoolPtr(PoolPtr &&src) noexcept
