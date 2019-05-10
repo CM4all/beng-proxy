@@ -849,6 +849,7 @@ executable(
   'src/bp/FileHeaders.cxx',
   'src/bp/FileHandler.cxx',
   'src/bp/EmulateModAuthEasy.cxx',
+  'src/bp/AprMd5.cxx',
   'src/bp/ProxyHandler.cxx',
   'src/bp/Global.cxx',
   'src/bp/Handler.cxx',

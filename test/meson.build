@@ -782,6 +782,20 @@ test('t_growing_buffer', executable('t_growing_buffer',
     t_istream_filter_deps,
   ]))
 
+test(
+  'TestAprMd5',
+  executable(
+    'TestAprMd5',
+    'TestAprMd5.cxx',
+    '../src/bp/AprMd5.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      libssl,
+    ],
+  ),
+)
+
 executable('RunNameCache',
   'RunNameCache.cxx',
   include_directories: inc,

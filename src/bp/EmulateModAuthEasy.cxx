@@ -31,6 +31,7 @@
  */
 
 #include "EmulateModAuthEasy.hxx"
+#include "AprMd5.hxx"
 #include "FileHeaders.hxx"
 #include "Request.hxx"
 #include "file_address.hxx"
@@ -154,6 +155,11 @@ static bool
 VerifyPassword(const char *crypted_password,
                const char *given_password) noexcept
 {
+    if (IsAprMd5(crypted_password)) {
+        const auto result = AprMd5(given_password, crypted_password);
+        return strcmp(crypted_password, result.c_str()) == 0;
+    }
+
     char *p = crypt(given_password, crypted_password);
     if (p == nullptr)
         return false;
