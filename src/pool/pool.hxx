@@ -126,6 +126,14 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL) noexcept;
 #define pool_unref(pool) pool_unref_impl(pool TRACE_ARGS)
 #define pool_unref_fwd(pool) pool_unref_impl(pool TRACE_ARGS_FWD)
 
+/* not implemented - just here to detect bugs */
+void
+pool_ref_impl(const PoolPtr &pool TRACE_ARGS_DECL) noexcept;
+
+/* not implemented - just here to detect bugs */
+void
+pool_unref_impl(const PoolPtr &pool TRACE_ARGS_DECL) noexcept;
+
 class LinearPool {
     struct pool &p;
 
