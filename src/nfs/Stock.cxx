@@ -73,8 +73,6 @@ struct NfsStockConnection final
 
     NfsStock &stock;
 
-    struct pool &pool;
-
     const std::string key;
 
     NfsClient *client;
@@ -84,9 +82,8 @@ struct NfsStockConnection final
     boost::intrusive::list<NfsStockRequest,
                            boost::intrusive::constant_time_size<false>> requests;
 
-    NfsStockConnection(NfsStock &_stock, struct pool &_pool,
-                       const char *_key)
-        :stock(_stock), pool(_pool), key(_key), client(nullptr) {}
+    NfsStockConnection(NfsStock &_stock, const char *_key)
+        :stock(_stock), key(_key), client(nullptr) {}
 
     void Remove(NfsStockRequest &r) {
         requests.erase(requests.iterator_to(r));
@@ -168,7 +165,7 @@ NfsStockConnection::OnNfsMountError(std::exception_ptr ep)
         });
 
     stock.Remove(*this);
-    DeleteUnrefTrashPool(pool, this);
+    delete this;
 }
 
 void
@@ -180,7 +177,7 @@ NfsStockConnection::OnNfsClientClosed(std::exception_ptr ep)
     LogConcat(1, key.c_str(), "NFS connection closed: ", ep);
 
     stock.Remove(*this);
-    DeleteUnrefTrashPool(pool, this);
+    delete this;
 }
 
 /*
@@ -217,7 +214,7 @@ NfsStock::~NfsStock()
             connection->cancel_ptr.Cancel();
 
         assert(connection->requests.empty());
-        DeleteUnrefTrashPool(connection->pool, connection);
+        delete connection;
         });
 }
 
@@ -243,9 +240,7 @@ NfsStock::Get(struct pool &caller_pool,
     const bool is_new = result.second;
     NfsStockConnection *connection;
     if (is_new) {
-        struct pool *c_pool = pool_new_libc(&pool, "nfs_stock_connection");
-        connection =
-            NewFromPool<NfsStockConnection>(*c_pool, *this, *c_pool, key);
+        connection = new NfsStockConnection(*this, key);
 
         connections.insert_commit(*connection, hint);
     } else {
