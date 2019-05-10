@@ -51,6 +51,7 @@
 #include "sink_rubber.hxx"
 #include "AllocatorStats.hxx"
 #include "pool/pool.hxx"
+#include "pool/Ptr.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/Loop.hxx"
 #include "io/Logger.hxx"
@@ -160,7 +161,7 @@ public:
     SiblingsHook siblings;
 
 private:
-    PoolPtr caller_pool;
+    const PoolPtr caller_pool;
     FilterCache &cache;
     HttpResponseHandler &handler;
 
@@ -236,7 +237,7 @@ private:
 class FilterCache final : LeakDetector {
     friend class FilterCacheRequest;
 
-    struct pool &pool;
+    PoolPtr pool;
     SlicePool slice_pool;
     Rubber rubber;
     Cache cache;
@@ -400,7 +401,7 @@ FilterCache::Put(const FilterCacheInfo &info,
     else
         expires = info.expires;
 
-    auto item = NewFromPool<FilterCacheItem>(pool_new_slice(&pool, "FilterCacheItem", &slice_pool),
+    auto item = NewFromPool<FilterCacheItem>(pool_new_slice(pool, "FilterCacheItem", &slice_pool),
                                              cache.SteadyNow(),
                                              cache.SystemNow(),
                                              status, headers, size,
@@ -616,7 +617,7 @@ FilterCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
 FilterCache::FilterCache(struct pool &_pool, size_t max_size,
                          EventLoop &_event_loop,
                          ResourceLoader &_resource_loader)
-    :pool(*pool_new_libc(&_pool, "filter_cache")),
+    :pool(PoolPtr::donate, *pool_new_libc(&_pool, "filter_cache")),
      slice_pool(1024, 65536),
      rubber(max_size),
      /* leave 12.5% of the rubber allocator empty, to increase the
@@ -642,8 +643,6 @@ filter_cache_new(struct pool *pool, size_t max_size,
 inline FilterCache::~FilterCache() noexcept
 {
     requests.clear_and_dispose([](FilterCacheRequest *r){ r->CancelStore(); });
-
-    pool_unref(&pool);
 }
 
 void
@@ -700,7 +699,7 @@ FilterCache::Miss(struct pool &caller_pool,
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache->pool */
     PoolPtr request_pool(PoolPtr::donate,
-                         *pool_new_linear(&pool, "filter_cache_request", 8192));
+                         *pool_new_linear(pool, "filter_cache_request", 8192));
 
     auto request = NewFromPool<FilterCacheRequest>(std::move(request_pool),
                                                    caller_pool,
