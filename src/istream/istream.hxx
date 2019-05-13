@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -77,8 +77,9 @@ class Istream : PoolHolder, LeakDetector {
 #endif
 
 protected:
-    explicit Istream(struct pool &_pool) noexcept
-        :PoolHolder(_pool) {}
+    template<typename P>
+    explicit Istream(P &&_pool) noexcept
+        :PoolHolder(std::forward<P>(_pool)) {}
 
     Istream(const Istream &) = delete;
     Istream &operator=(const Istream &) = delete;
