@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -47,12 +47,11 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "istream/istream_tee.hxx"
-#include "pool/Ptr.hxx"
+#include "pool/Holder.hxx"
 #include "AllocatorPtr.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/Loop.hxx"
 #include "io/Logger.hxx"
-#include "pool/LeakDetector.hxx"
 #include "util/Background.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
@@ -71,16 +70,15 @@
 
 static constexpr Event::Duration http_cache_compress_interval = std::chrono::minutes(10);
 
-class HttpCacheRequest final : public HttpResponseHandler,
+class HttpCacheRequest final : PoolHolder,
+                               public HttpResponseHandler,
                                public RubberSinkHandler,
-                               Cancellable, PoolLeakDetector {
+                               Cancellable {
 public:
     static constexpr auto link_mode = boost::intrusive::normal_link;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
     typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
     SiblingsHook siblings;
-
-    struct pool &pool;
 
     PoolPtr caller_pool;
 
@@ -129,7 +127,7 @@ public:
 
     CancellablePointer cancel_ptr;
 
-    HttpCacheRequest(struct pool &_pool, struct pool &_caller_pool,
+    HttpCacheRequest(PoolPtr &&_pool, struct pool &_caller_pool,
                      sticky_hash_t _session_sticky,
                      const char *_site_name,
                      HttpCache &_cache,
@@ -142,6 +140,8 @@ public:
 
     HttpCacheRequest(const HttpCacheRequest &) = delete;
     HttpCacheRequest &operator=(const HttpCacheRequest &) = delete;
+
+    using PoolHolder::GetPool;
 
     EventLoop &GetEventLoop() const noexcept;
 
@@ -527,7 +527,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
     }
 
     response.status = status;
-    response.headers = strmap_dup(&pool, &_headers);
+    response.headers = strmap_dup(pool, &_headers);
 
     /* move the caller_pool reference to the stack to ensure it gets
        unreferenced at the end of this method - not earlier and not
@@ -546,7 +546,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         /* this->info was allocated from the caller pool; duplicate
            it to keep it alive even after the caller pool is
            destroyed */
-        key = p_strdup(&pool, key);
+        key = p_strdup(pool, key);
         info.MoveToPool(pool);
 
         /* tee the body: one goes to our client, and one goes into the
@@ -610,7 +610,7 @@ HttpCacheRequest::Cancel() noexcept
  *
  */
 
-HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
+HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
                                    struct pool &_caller_pool,
                                    sticky_hash_t _session_sticky,
                                    const char *_site_name,
@@ -621,14 +621,13 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
                                    HttpResponseHandler &_handler,
                                    HttpCacheRequestInfo &_request_info,
                                    CancellablePointer &_cancel_ptr) noexcept
-    :PoolLeakDetector(_pool),
-     pool(_pool), caller_pool(_caller_pool),
+    :PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
      session_sticky(_session_sticky), site_name(_site_name),
      cache(_cache),
      method(_method),
-     address(_pool, _address),
+     address((AllocatorPtr)pool, _address),
      key(http_cache_key(pool, address)),
-     headers(_pool, _headers),
+     headers(pool, _headers),
      handler(_handler),
      request_info(_request_info) {
     _cancel_ptr = *this;
@@ -729,11 +728,10 @@ HttpCache::Miss(struct pool &caller_pool,
 
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache.pool */
-    auto *request_pool = pool_new_linear(pool, "HttpCacheRequest", 8192);
+    PoolPtr request_pool(PoolPtr::donate, *pool_new_linear(pool, "HttpCacheRequest", 8192));
 
     auto request =
-        NewFromPool<HttpCacheRequest>(*request_pool,
-                                      *request_pool, caller_pool,
+        NewFromPool<HttpCacheRequest>(std::move(request_pool), caller_pool,
                                       session_sticky, site_name, *this,
                                       method, address,
                                       headers,
@@ -742,13 +740,12 @@ HttpCache::Miss(struct pool &caller_pool,
 
     LogConcat(4, "HttpCache", "miss ", request->key);
 
-    resource_loader.SendRequest(*request_pool, session_sticky,
+    resource_loader.SendRequest(request->GetPool(), session_sticky,
                                 cache_tag, site_name,
                                 method, address,
                                 HTTP_STATUS_OK, std::move(headers),
                                 nullptr, nullptr,
                                 *request, request->cancel_ptr);
-    pool_unref(request_pool);
 }
 
 gcc_pure
@@ -884,10 +881,10 @@ HttpCache::Revalidate(struct pool &caller_pool,
 {
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache.pool */
-    auto *request_pool = pool_new_linear(pool, "HttpCacheRequest", 8192);
+    PoolPtr request_pool(PoolPtr::donate, *pool_new_linear(pool, "HttpCacheRequest", 8192));
 
     auto request =
-        NewFromPool<HttpCacheRequest>(*request_pool, *request_pool, caller_pool,
+        NewFromPool<HttpCacheRequest>(std::move(request_pool), caller_pool,
                                       session_sticky, site_name, *this,
                                       method, address,
                                       headers,
@@ -905,15 +902,13 @@ HttpCache::Revalidate(struct pool &caller_pool,
     if (document.info.etag != nullptr)
         headers.Set("if-none-match", document.info.etag);
 
-    resource_loader.SendRequest(request->pool, session_sticky,
+    resource_loader.SendRequest(request->GetPool(), session_sticky,
                                 cache_tag, site_name,
                                 method, address,
                                 HTTP_STATUS_OK, std::move(headers),
                                 nullptr, nullptr,
                                 *request,
                                 request->cancel_ptr);
-
-    pool_unref(request_pool);
 }
 
 static bool
