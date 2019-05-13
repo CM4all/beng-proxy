@@ -210,7 +210,7 @@ Context::OnHttpError(std::exception_ptr ep) noexcept
  */
 
 static void
-test_normal(struct pool *pool, Context *c)
+test_normal(PoolPtr pool, Context *c)
 {
     const char *path;
 
@@ -229,7 +229,7 @@ test_normal(struct pool *pool, Context *c)
             nullptr, StringMap(*pool), nullptr,
             *c, c->cancel_ptr);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     c->event_loop.Dispatch();
@@ -241,7 +241,7 @@ test_normal(struct pool *pool, Context *c)
 }
 
 static void
-test_tiny(struct pool *pool, Context *c)
+test_tiny(PoolPtr pool, Context *c)
 {
     const char *path;
 
@@ -260,7 +260,7 @@ test_tiny(struct pool *pool, Context *c)
             nullptr, StringMap(*pool), nullptr,
             *c, c->cancel_ptr);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     c->event_loop.Dispatch();
@@ -272,7 +272,7 @@ test_tiny(struct pool *pool, Context *c)
 }
 
 static void
-test_close_early(struct pool *pool, Context *c)
+test_close_early(PoolPtr pool, Context *c)
 {
     const char *path;
 
@@ -293,7 +293,7 @@ test_close_early(struct pool *pool, Context *c)
             nullptr, StringMap(*pool), nullptr,
             *c, c->cancel_ptr);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     c->event_loop.Dispatch();
@@ -305,7 +305,7 @@ test_close_early(struct pool *pool, Context *c)
 }
 
 static void
-test_close_late(struct pool *pool, Context *c)
+test_close_late(PoolPtr pool, Context *c)
 {
     const char *path;
 
@@ -326,7 +326,7 @@ test_close_late(struct pool *pool, Context *c)
             nullptr, StringMap(*pool), nullptr,
             *c, c->cancel_ptr);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     c->event_loop.Dispatch();
@@ -338,7 +338,7 @@ test_close_late(struct pool *pool, Context *c)
 }
 
 static void
-test_close_data(struct pool *pool, Context *c)
+test_close_data(PoolPtr pool, Context *c)
 {
     const char *path;
 
@@ -358,7 +358,7 @@ test_close_data(struct pool *pool, Context *c)
             nullptr, StringMap(*pool), nullptr,
             *c, c->cancel_ptr);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     c->event_loop.Dispatch();
@@ -370,7 +370,7 @@ test_close_data(struct pool *pool, Context *c)
 }
 
 static void
-test_post(struct pool *pool, Context *c)
+test_post(PoolPtr pool, Context *c)
 {
     const char *path;
 
@@ -393,7 +393,7 @@ test_post(struct pool *pool, Context *c)
                                               "build.ninja", 8192)),
             *c, c->cancel_ptr);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     c->event_loop.Dispatch();
@@ -405,7 +405,7 @@ test_post(struct pool *pool, Context *c)
 }
 
 static void
-test_status(struct pool *pool, Context *c)
+test_status(PoolPtr pool, Context *c)
 {
     const char *path;
 
@@ -426,7 +426,7 @@ test_status(struct pool *pool, Context *c)
             nullptr, StringMap(*pool), nullptr,
             *c, c->cancel_ptr);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     c->event_loop.Dispatch();
@@ -438,7 +438,7 @@ test_status(struct pool *pool, Context *c)
 }
 
 static void
-test_no_content(struct pool *pool, Context *c)
+test_no_content(PoolPtr pool, Context *c)
 {
     const char *path;
 
@@ -459,7 +459,7 @@ test_no_content(struct pool *pool, Context *c)
             nullptr, StringMap(*pool), nullptr,
             *c, c->cancel_ptr);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     c->event_loop.Dispatch();
@@ -471,7 +471,7 @@ test_no_content(struct pool *pool, Context *c)
 }
 
 static void
-test_no_length(struct pool *pool, Context *c)
+test_no_length(PoolPtr pool, Context *c)
 {
     const char *path;
 
@@ -490,7 +490,7 @@ test_no_length(struct pool *pool, Context *c)
             nullptr, StringMap(*pool), nullptr,
             *c, c->cancel_ptr);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     c->event_loop.Dispatch();
@@ -500,7 +500,7 @@ test_no_length(struct pool *pool, Context *c)
 }
 
 static void
-test_length_ok(struct pool *pool, Context *c)
+test_length_ok(PoolPtr pool, Context *c)
 {
     const char *path;
 
@@ -519,7 +519,7 @@ test_length_ok(struct pool *pool, Context *c)
             nullptr, StringMap(*pool), nullptr,
             *c, c->cancel_ptr);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     c->event_loop.Dispatch();
@@ -529,7 +529,7 @@ test_length_ok(struct pool *pool, Context *c)
 }
 
 static void
-test_length_ok_large(struct pool *pool, Context *c)
+test_length_ok_large(PoolPtr pool, Context *c)
 {
     const char *path;
 
@@ -550,7 +550,7 @@ test_length_ok_large(struct pool *pool, Context *c)
             nullptr, StringMap(*pool), nullptr,
             *c, c->cancel_ptr);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     c->event_loop.Dispatch();
@@ -560,7 +560,7 @@ test_length_ok_large(struct pool *pool, Context *c)
 }
 
 static void
-test_length_too_small(struct pool *pool, Context *c)
+test_length_too_small(PoolPtr pool, Context *c)
 {
     const char *path;
 
@@ -579,7 +579,7 @@ test_length_too_small(struct pool *pool, Context *c)
             nullptr, StringMap(*pool), nullptr,
             *c, c->cancel_ptr);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     c->event_loop.Dispatch();
@@ -588,7 +588,7 @@ test_length_too_small(struct pool *pool, Context *c)
 }
 
 static void
-test_length_too_big(struct pool *pool, Context *c)
+test_length_too_big(PoolPtr pool, Context *c)
 {
     const char *path;
 
@@ -607,7 +607,7 @@ test_length_too_big(struct pool *pool, Context *c)
             nullptr, StringMap(*pool), nullptr,
             *c, c->cancel_ptr);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     c->event_loop.Dispatch();
@@ -617,7 +617,7 @@ test_length_too_big(struct pool *pool, Context *c)
 }
 
 static void
-test_length_too_small_late(struct pool *pool, Context *c)
+test_length_too_small_late(PoolPtr pool, Context *c)
 {
     const char *path;
 
@@ -636,7 +636,7 @@ test_length_too_small_late(struct pool *pool, Context *c)
             nullptr, StringMap(*pool), nullptr,
             *c, c->cancel_ptr);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     c->event_loop.Dispatch();
@@ -649,7 +649,7 @@ test_length_too_small_late(struct pool *pool, Context *c)
  * Test a response header that is too large for the buffer.
  */
 static void
-test_large_header(struct pool *pool, Context *c)
+test_large_header(PoolPtr pool, Context *c)
 {
     const char *path;
 
@@ -668,7 +668,7 @@ test_large_header(struct pool *pool, Context *c)
             nullptr, StringMap(*pool), nullptr,
             *c, c->cancel_ptr);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     c->event_loop.Dispatch();
@@ -684,12 +684,11 @@ test_large_header(struct pool *pool, Context *c)
  */
 
 static void
-run_test(void (*test)(struct pool *pool, Context *c))
+run_test(void (*test)(PoolPtr pool, Context *c))
 {
     Context c;
 
-    auto pool = pool_new_linear(c.root_pool, "test", 16384);
-    test(pool, &c);
+    test(PoolPtr(PoolPtr::donate, *pool_new_linear(c.root_pool, "test", 16384)), &c);
 }
 
 static void
