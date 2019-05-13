@@ -106,8 +106,9 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
     };
 
     struct ResponseBodyReader final : HttpBodyReader {
-        explicit ResponseBodyReader(struct pool &_pool)
-            :HttpBodyReader(_pool) {}
+        template<typename P>
+        explicit ResponseBodyReader(P &&_pool) noexcept
+            :HttpBodyReader(std::forward<P>(_pool)) {}
 
         HttpClient &GetClient() noexcept {
             return ContainerCast(*this, &HttpClient::response_body_reader);
