@@ -97,7 +97,7 @@ static constexpr off_t EXPECT_100_THRESHOLD = 1024;
 
 static constexpr auto http_client_timeout = std::chrono::seconds(30);
 
-struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, DestructAnchor {
+struct HttpClient final : PoolHolder, BufferedSocketHandler, IstreamHandler, Cancellable, DestructAnchor {
     enum class BucketResult {
         MORE,
         BLOCKING,
@@ -218,7 +218,7 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
     /* connection settings */
     bool keep_alive;
 
-    HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
+    HttpClient(PoolPtr &&_pool, PoolPtr &&_caller_pool,
                FilteredSocket &_socket, Lease &lease,
                const char *_peer_name,
                http_method_t method, const char *uri,
@@ -232,10 +232,6 @@ struct HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, De
 
         if (!socket.IsReleased())
             ReleaseSocket(false, false);
-    }
-
-    struct pool &GetPool() {
-        return response_body_reader.GetPool();
     }
 
     /**
@@ -1250,7 +1246,7 @@ HttpClient::Cancel() noexcept
  */
 
 inline
-HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
+HttpClient::HttpClient(PoolPtr &&_pool, PoolPtr &&_caller_pool,
                        FilteredSocket &_socket, Lease &lease,
                        const char *_peer_name,
                        http_method_t method, const char *uri,
@@ -1258,16 +1254,16 @@ HttpClient::HttpClient(PoolPtr &&_caller_pool, struct pool &_pool,
                        UnusedIstreamPtr body, bool expect_100,
                        HttpResponseHandler &handler,
                        CancellablePointer &cancel_ptr)
-    :caller_pool(std::move(_caller_pool)),
+    :PoolHolder(std::move(_pool)), caller_pool(std::move(_caller_pool)),
      peer_name(_peer_name),
-     stopwatch(stopwatch_new(&_pool, peer_name, uri)),
+     stopwatch(stopwatch_new(pool, peer_name, uri)),
      event_loop(_socket.GetEventLoop()),
      socket(_socket, lease,
             Event::Duration(-1), http_client_timeout,
             *this),
      request(handler),
      response(caller_pool),
-     response_body_reader(_pool)
+     response_body_reader(pool)
 {
     response.state = HttpClient::Response::State::STATUS;
     response.no_body = http_method_is_empty(method);
@@ -1374,15 +1370,12 @@ http_client_request(struct pool &_caller_pool,
         return;
     }
 
-    struct pool *pool =
-        pool_new_linear(caller_pool, "http_client_request", 4096);
-
-    NewFromPool<HttpClient>(*pool, std::move(caller_pool), *pool,
+    NewFromPool<HttpClient>(PoolPtr(PoolPtr::donate, *pool_new_linear(caller_pool, "http_client_request", 4096)),
+                            std::move(caller_pool),
                             socket,
                             lease,
                             peer_name,
                             method, uri,
                             std::move(headers), std::move(body), expect_100,
                             handler, cancel_ptr);
-    pool_unref(pool); // response_body_reader holds the reference
 }
