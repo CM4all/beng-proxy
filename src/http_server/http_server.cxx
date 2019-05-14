@@ -320,8 +320,6 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
      remote_host(address_to_host_string(*pool, _remote_address)),
      date_header(_date_header)
 {
-    pool_ref(pool);
-
     socket.Init(fd.Release(), fd_type,
                 Event::Duration(-1), http_server_write_timeout,
                 std::move(filter),
@@ -339,7 +337,6 @@ void
 HttpServerConnection::Delete() noexcept
 {
     this->~HttpServerConnection();
-    pool_unref(pool);
 }
 
 HttpServerConnection *
@@ -424,9 +421,9 @@ HttpServerConnection::Done() noexcept
     auto *_handler = handler;
     handler = nullptr;
 
-    _handler->HttpConnectionClosed();
-
     Delete();
+
+    _handler->HttpConnectionClosed();
 }
 
 void
@@ -441,12 +438,12 @@ HttpServerConnection::Cancel() noexcept
     if (request.read_state != Request::START)
         CloseRequest();
 
-    if (handler != nullptr) {
-        handler->HttpConnectionClosed();
-        handler = nullptr;
-    }
+    auto *_handler = std::exchange(handler, nullptr);
 
     Delete();
+
+    if (_handler != nullptr)
+        _handler->HttpConnectionClosed();
 }
 
 void
@@ -461,13 +458,12 @@ HttpServerConnection::Error(std::exception_ptr e) noexcept
     if (request.read_state != Request::START)
         CloseRequest();
 
-    if (handler != nullptr) {
-        auto *_handler = handler;
-        handler = nullptr;
-        _handler->HttpConnectionError(e);
-    }
+    auto *_handler = std::exchange(handler, nullptr);
 
     Delete();
+
+    if (_handler != nullptr)
+        _handler->HttpConnectionError(e);
 }
 
 void
