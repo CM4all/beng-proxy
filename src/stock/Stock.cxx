@@ -46,14 +46,12 @@ Stock::Waiting::Waiting(Stock &_stock, struct pool &_pool, void *_info,
      handler(_handler),
      cancel_ptr(_cancel_ptr)
 {
-    pool_ref(&pool);
     cancel_ptr = *this;
 }
 
 inline void
 Stock::Waiting::Destroy() noexcept
 {
-    pool_unref(&pool);
     delete this;
 }
 
