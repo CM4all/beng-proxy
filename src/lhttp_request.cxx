@@ -112,11 +112,6 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
     try {
         address.options.Check();
     } catch (...) {
-        /* need to hold this pool reference because it is guaranteed
-           that the pool stays alive while the HttpResponseHandler
-           runs, even if all other pool references are removed */
-        const ScopePoolRef ref(pool TRACE_ARGS);
-
         body.Clear();
 
         handler.InvokeError(std::current_exception());
@@ -128,11 +123,6 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
     try {
         stock_item = lhttp_stock_get(&lhttp_stock, &address);
     } catch (...) {
-        /* need to hold this pool reference because it is guaranteed
-           that the pool stays alive while the HttpResponseHandler
-           runs, even if all other pool references are removed */
-        const ScopePoolRef ref(pool TRACE_ARGS);
-
         body.Clear();
 
         handler.InvokeError(std::current_exception());
