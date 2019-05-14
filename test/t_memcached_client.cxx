@@ -89,8 +89,6 @@ connect_fake_server()
 }
 
 struct Context final : PInstance, Lease, IstreamHandler {
-    struct pool *pool;
-
     unsigned data_blocking = 0;
     bool close_value_early = false;
     bool close_value_late = false;
@@ -422,7 +420,7 @@ test_request_value(struct pool *pool, Context *c)
 
     c->fd = connect_fake_server();
 
-    value = request_value_new(c->pool, false, false);
+    value = request_value_new(pool, false, false);
 
     memcached_client_invoke(pool, c->event_loop,
                             c->fd, FdType::FD_SOCKET, *c,
@@ -453,7 +451,7 @@ test_request_value_close(struct pool *pool, Context *c)
 
     c->fd = connect_fake_server();
 
-    value = request_value_new(c->pool, true, false);
+    value = request_value_new(pool, true, false);
 
     memcached_client_invoke(pool, c->event_loop,
                             c->fd, FdType::FD_SOCKET, *c,
@@ -480,7 +478,7 @@ test_request_value_abort(struct pool *pool, Context *c)
 
     c->fd = connect_fake_server();
 
-    value = request_value_new(c->pool, false, true);
+    value = request_value_new(pool, false, true);
 
     memcached_client_invoke(pool, c->event_loop,
                             c->fd, FdType::FD_SOCKET, *c,
@@ -510,8 +508,8 @@ run_test(void (*test)(struct pool *pool, Context *c))
 {
     Context c;
 
-    c.pool = pool_new_linear(c.root_pool, "test", 16384).release();
-    test(c.pool, &c);
+    struct pool *pool = pool_new_linear(c.root_pool, "test", 16384).release();
+    test(pool, &c);
     pool_commit();
 }
 
