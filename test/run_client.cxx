@@ -128,11 +128,11 @@ GetHostWithoutPort(struct pool &pool, const struct parsed_url &url) noexcept
 struct Context final
     : PInstance, ConnectSocketHandler, Lease, HttpResponseHandler {
 
-    struct pool *pool;
-
     struct parsed_url url;
 
     ShutdownListener shutdown_listener;
+
+    PoolPtr pool;
 
     CancellablePointer cancel_ptr;
 
@@ -150,6 +150,7 @@ struct Context final
 
     Context()
         :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
+         pool(pool_new_linear(root_pool, "test", 8192)),
          fs(event_loop) {}
 
     void ShutdownCallback() noexcept;
@@ -387,9 +388,6 @@ try {
 
     ctx.shutdown_listener.Enable();
 
-    struct pool *pool = pool_new_linear(ctx.root_pool, "test", 8192).release();
-    ctx.pool = pool;
-
     /* open request body */
 
     if (argc >= 3) {
@@ -403,7 +401,7 @@ try {
 
         ctx.method = HTTP_METHOD_POST;
 
-        ctx.request_body = UnusedIstreamPtr(istream_file_new(ctx.event_loop, *pool,
+        ctx.request_body = UnusedIstreamPtr(istream_file_new(ctx.event_loop, ctx.pool,
                                                              argv[2], st.st_size));
     } else {
         ctx.method = HTTP_METHOD_GET;
@@ -426,7 +424,7 @@ try {
 
     /* cleanup */
 
-    pool_unref(pool);
+    ctx.pool.reset();
     pool_commit();
 
     ssl_client_deinit();
