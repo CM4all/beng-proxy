@@ -149,7 +149,6 @@ struct WasClient final
 
     ~WasClient() noexcept {
         stopwatch_dump(stopwatch);
-        pool_unref(&caller_pool);
     }
 
     void Destroy() {
@@ -385,8 +384,6 @@ WasClient::SubmitPendingResponse()
     response.pending = false;
 
     response.receiving_metadata = false;
-
-    const ScopePoolRef caller_ref(caller_pool TRACE_ARGS);
 
     if (response.released) {
         was_input_free_unused_p(&response.body);
@@ -775,8 +772,6 @@ WasClient::WasClient(PoolPtr &&_pool, struct pool &_caller_pool,
               ? nullptr
               : was_input_new(pool, event_loop, input_fd, *this))
 {
-    pool_ref(&caller_pool);
-
     cancel_ptr = *this;
 }
 
