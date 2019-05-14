@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,6 +38,7 @@
 #include "strmap.hxx"
 #include "widget/Widget.hxx"
 #include "widget/RewriteUri.hxx"
+#include "pool/Holder.hxx"
 #include "pool/tpool.hxx"
 #include "escape_css.hxx"
 #include "istream/istream.hxx"
@@ -49,9 +50,7 @@
 #include <assert.h>
 #include <string.h>
 
-struct CssProcessor {
-    struct pool &pool;
-
+struct CssProcessor final : PoolHolder {
     Widget &container;
     struct processor_env &env;
     const unsigned options;
@@ -69,7 +68,7 @@ struct CssProcessor {
 
     UriRewrite uri_rewrite;
 
-    CssProcessor(struct pool &_pool,
+    CssProcessor(PoolPtr &&_pool,
                  UnusedIstreamPtr input,
                  SharedPoolPtr<ReplaceIstreamControl> _replace,
                  Widget &_container,
@@ -79,6 +78,8 @@ struct CssProcessor {
     void Destroy() noexcept {
         DeleteFromPool(pool, this);
     }
+
+    using PoolHolder::GetPool;
 };
 
 static inline bool
@@ -131,7 +132,7 @@ css_processor_parser_class_name(const CssParserValue *name, void *ctx)
             return;
 
         css_processor_replace_add(processor, name->start, name->start + 3,
-                                  istream_string_new(processor->pool, prefix));
+                                  istream_string_new(processor->GetPool(), prefix));
     } else if (n == 2) {
         /* double underscore: add class name prefix */
 
@@ -140,7 +141,7 @@ css_processor_parser_class_name(const CssParserValue *name, void *ctx)
             return;
 
         css_processor_replace_add(processor, name->start, name->start + 2,
-                                  istream_string_new(processor->pool,
+                                  istream_string_new(processor->GetPool(),
                                                      class_name));
     }
 }
@@ -164,7 +165,7 @@ css_processor_parser_xml_id(const CssParserValue *name, void *ctx)
             return;
 
         css_processor_replace_add(processor, name->start, name->start + 3,
-                                  istream_string_new(processor->pool,
+                                  istream_string_new(processor->GetPool(),
                                                      prefix));
     } else if (n == 2) {
         /* double underscore: add class name prefix */
@@ -174,7 +175,7 @@ css_processor_parser_xml_id(const CssParserValue *name, void *ctx)
             return;
 
         css_processor_replace_add(processor, name->start, name->start + 1,
-                                  istream_string_new(processor->pool,
+                                  istream_string_new(processor->GetPool(),
                                                      class_name));
     }
 }
@@ -218,7 +219,7 @@ css_processor_parser_url(const CssParserValue *url, void *ctx)
         return;
 
     auto istream =
-        rewrite_widget_uri(processor->pool,
+        rewrite_widget_uri(processor->GetPool(),
                            processor->env,
                            *global_translation_service,
                            processor->container,
@@ -241,7 +242,7 @@ css_processor_parser_import(const CssParserValue *url, void *ctx)
         return;
 
     auto istream =
-        rewrite_widget_uri(processor->pool,
+        rewrite_widget_uri(processor->GetPool(),
                            processor->env,
                            *global_translation_service,
                            processor->container,
@@ -295,13 +296,13 @@ static constexpr CssParserHandler css_processor_parser_handler = {
  */
 
 inline
-CssProcessor::CssProcessor(struct pool &_pool,
+CssProcessor::CssProcessor(PoolPtr &&_pool,
                            UnusedIstreamPtr input,
                            SharedPoolPtr<ReplaceIstreamControl> _replace,
                            Widget &_container,
                            struct processor_env &_env,
                            unsigned _options)
-    :pool(_pool),
+    :PoolHolder(std::move(_pool)),
      container(_container), env(_env),
      options(_options),
      replace(std::move(_replace)),
@@ -314,21 +315,20 @@ css_processor(struct pool &caller_pool, UnusedIstreamPtr input,
               struct processor_env &env,
               unsigned options)
 {
-    struct pool *pool = pool_new_linear(&caller_pool, "css_processor", 32768);
+    PoolPtr pool(PoolPtr::donate, *pool_new_linear(&caller_pool, "css_processor", 32768));
 
-    auto tee = istream_tee_new(*pool, std::move(input),
+    auto tee = istream_tee_new(pool, std::move(input),
                                *env.event_loop,
                                true, true);
 
-    auto replace = istream_replace_new(*env.event_loop, *pool,
+    auto replace = istream_replace_new(*env.event_loop, pool,
                                        std::move(tee.second));
 
-    NewFromPool<CssProcessor>(*pool, *pool,
+    NewFromPool<CssProcessor>(std::move(pool),
                               std::move(tee.first),
                               std::move(replace.second),
                               widget, env,
                               options);
-    pool_unref(pool);
 
     return std::move(replace.first);
 }
