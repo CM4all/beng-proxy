@@ -113,14 +113,8 @@ widget_http_request(gcc_unused struct pool &pool,
 }
 
 struct TestOperation final : Cancellable {
-    struct pool *pool;
-
-    TestOperation(struct pool &_pool):pool(&_pool) {
-    }
-
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
-        pool_unref(pool);
     }
 };
 
@@ -131,9 +125,8 @@ ResolveWidget(struct pool &pool,
               gcc_unused WidgetResolverCallback callback,
               CancellablePointer &cancel_ptr) noexcept
 {
-    auto to = NewFromPool<TestOperation>(pool, pool);
+    auto to = NewFromPool<TestOperation>(pool);
     cancel_ptr = *to;
-    pool_ref(&pool);
 }
 
 static void
