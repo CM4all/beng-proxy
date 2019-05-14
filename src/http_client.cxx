@@ -97,7 +97,7 @@ static constexpr off_t EXPECT_100_THRESHOLD = 1024;
 
 static constexpr auto http_client_timeout = std::chrono::seconds(30);
 
-struct HttpClient final : PoolHolder, BufferedSocketHandler, IstreamHandler, Cancellable, DestructAnchor {
+class HttpClient final : PoolHolder, BufferedSocketHandler, IstreamHandler, Cancellable, DestructAnchor {
     enum class BucketResult {
         MORE,
         BLOCKING,
@@ -218,6 +218,7 @@ struct HttpClient final : PoolHolder, BufferedSocketHandler, IstreamHandler, Can
     /* connection settings */
     bool keep_alive;
 
+public:
     HttpClient(PoolPtr &&_pool, PoolPtr &&_caller_pool,
                FilteredSocket &_socket, Lease &lease,
                const char *_peer_name,
@@ -234,6 +235,7 @@ struct HttpClient final : PoolHolder, BufferedSocketHandler, IstreamHandler, Can
             ReleaseSocket(false, false);
     }
 
+private:
     /**
      * @return false if the #HttpClient has released the socket
      */
