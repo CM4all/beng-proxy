@@ -45,19 +45,19 @@
 #include "util/Exception.hxx"
 
 class ExternalSessionRefresh final
-    : public LinkedBackgroundJob, HttpResponseHandler {
+    : PoolHolder, public LinkedBackgroundJob, HttpResponseHandler {
 
     const HttpAddress address;
 
 public:
-    ExternalSessionRefresh(struct pool &pool,
+    ExternalSessionRefresh(PoolPtr &&_pool,
                            BackgroundManager &_manager,
                            const HttpAddress &_address)
-        :LinkedBackgroundJob(_manager),
-         address(pool, _address) {}
+        :PoolHolder(std::move(_pool)),
+         LinkedBackgroundJob(_manager),
+         address(GetPool(), _address) {}
 
-    void SendRequest(struct pool &pool, BpInstance &instance,
-                     const SessionId session_id) {
+    void SendRequest(BpInstance &instance, const SessionId session_id) {
         http_request(pool, instance.event_loop, *instance.fs_balancer,
                      session_id.GetClusterHash(),
                      nullptr,
@@ -104,14 +104,13 @@ RefreshExternalSession(BpInstance &instance, Session &session)
 
     session.next_external_keepalive = now + session.external_keepalive;
 
-    struct pool *pool = pool_new_linear(instance.root_pool,
-                                        "external_session_refresh", 4096);
+    PoolPtr pool(PoolPtr::donate, *pool_new_linear(instance.root_pool,
+                                                   "external_session_refresh", 4096));
 
-    auto *refresh = NewFromPool<ExternalSessionRefresh>(*pool, *pool,
+    auto *refresh = NewFromPool<ExternalSessionRefresh>(std::move(pool),
                                                         instance.background_manager,
                                                         *session.external_manager);
     instance.background_manager.Add(*refresh);
 
-    refresh->SendRequest(*pool, instance, session.id);
-    pool_unref(pool);
+    refresh->SendRequest(instance, session.id);
 }
