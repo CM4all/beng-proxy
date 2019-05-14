@@ -282,8 +282,6 @@ test_basic(struct pool *pool, Context *c)
                             NULL,
                             &my_mcd_handler, c,
                             c->cancel_ptr);
-    pool_unref(pool);
-    pool_commit();
 
     c->event_loop.Dispatch();
 
@@ -310,8 +308,6 @@ test_close_early(struct pool *pool, Context *c)
                             NULL,
                             &my_mcd_handler, c,
                             c->cancel_ptr);
-    pool_unref(pool);
-    pool_commit();
 
     c->event_loop.Dispatch();
 
@@ -339,8 +335,6 @@ test_close_late(struct pool *pool, Context *c)
                             NULL,
                             &my_mcd_handler, c,
                             c->cancel_ptr);
-    pool_unref(pool);
-    pool_commit();
 
     c->event_loop.Dispatch();
 
@@ -369,8 +363,6 @@ test_close_data(struct pool *pool, Context *c)
                             NULL,
                             &my_mcd_handler, c,
                             c->cancel_ptr);
-    pool_unref(pool);
-    pool_commit();
 
     c->event_loop.Dispatch();
 
@@ -399,8 +391,6 @@ test_abort(struct pool *pool, Context *c)
                             NULL,
                             &my_mcd_handler, c,
                             c->cancel_ptr);
-    pool_unref(pool);
-    pool_commit();
 
     c->cancel_ptr.Cancel();
 
@@ -430,8 +420,6 @@ test_request_value(struct pool *pool, Context *c)
                             UnusedIstreamPtr(value),
                             &my_mcd_handler, c,
                             request_value_cancel_ptr(*value));
-    pool_unref(pool);
-    pool_commit();
 
     c->event_loop.Dispatch();
 
@@ -461,8 +449,6 @@ test_request_value_close(struct pool *pool, Context *c)
                             UnusedIstreamPtr(value),
                             &my_mcd_handler, c,
                             request_value_cancel_ptr(*value));
-    pool_unref(pool);
-    pool_commit();
 
     c->event_loop.Dispatch();
 
@@ -488,8 +474,6 @@ test_request_value_abort(struct pool *pool, Context *c)
                             UnusedIstreamPtr(value),
                             &my_mcd_handler, c,
                             request_value_cancel_ptr(*value));
-    pool_unref(pool);
-    pool_commit();
 
     c->event_loop.Dispatch();
 
@@ -508,8 +492,7 @@ run_test(void (*test)(struct pool *pool, Context *c))
 {
     Context c;
 
-    struct pool *pool = pool_new_linear(c.root_pool, "test", 16384).release();
-    test(pool, &c);
+    test(pool_new_linear(c.root_pool, "test", 16384), &c);
     pool_commit();
 }
 
