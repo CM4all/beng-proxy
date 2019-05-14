@@ -59,11 +59,12 @@
 
 #include <assert.h>
 
-LbHttpConnection::LbHttpConnection(struct pool &_pool, LbInstance &_instance,
+inline
+LbHttpConnection::LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
                                    const LbListenerConfig &_listener,
                                    const LbGoto &_destination,
                                    SocketAddress _client_address)
-    :pool(_pool), instance(_instance), listener(_listener),
+    :PoolHolder(std::move(_pool)), instance(_instance), listener(_listener),
      initial_destination(_destination),
      client_address(address_to_string(pool, _client_address)),
      logger(*this)
@@ -130,19 +131,19 @@ NewLbHttpConnection(LbInstance &instance,
                                             &ssl_filter_get_handler(*ssl_filter)));
     }
 
-    struct pool *pool = pool_new_linear(instance.root_pool,
-                                        "http_connection",
-                                        2048);
-    pool_set_major(pool);
+    PoolPtr pool(PoolPtr::Donate(),
+                 *pool_new_linear(instance.root_pool, "http_connection",
+                                  2048));
 
-    auto *connection = NewFromPool<LbHttpConnection>(*pool, *pool, instance,
+    auto *connection = NewFromPool<LbHttpConnection>(std::move(pool), instance,
                                                      listener, destination,
                                                      address);
     connection->ssl_filter = ssl_filter;
 
     instance.http_connections.push_back(*connection);
 
-    connection->http = http_server_connection_new(pool, instance.event_loop,
+    connection->http = http_server_connection_new(&connection->GetPool(),
+                                                  instance.event_loop,
                                                   std::move(fd), fd_type,
                                                   std::move(filter),
                                                   local_address.IsDefined()
@@ -162,7 +163,7 @@ LbHttpConnection::Destroy()
     auto &connections = instance.http_connections;
     connections.erase(connections.iterator_to(*this));
 
-    DeleteUnrefTrashPool(pool, this);
+    this->~LbHttpConnection();
 }
 
 void

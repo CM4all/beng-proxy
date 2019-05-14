@@ -34,6 +34,7 @@
 #define BENG_PROXY_LB_HTTP_CONNECTION_HXX
 
 #include "http_server/Handler.hxx"
+#include "pool/Holder.hxx"
 #include "io/Logger.hxx"
 
 #include <boost/intrusive/list.hpp>
@@ -42,7 +43,6 @@
 
 #include <stdint.h>
 
-struct pool;
 struct SslFactory;
 struct SslFilter;
 class UniqueSocketDescriptor;
@@ -57,10 +57,8 @@ class LbTranslationHandler;
 struct LbInstance;
 
 struct LbHttpConnection final
-    : HttpServerConnectionHandler, LoggerDomainFactory,
+    : PoolHolder, HttpServerConnectionHandler, LoggerDomainFactory,
       boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-
-    struct pool &pool;
 
     LbInstance &instance;
 
@@ -150,13 +148,15 @@ struct LbHttpConnection final
         }
     } per_request;
 
-    LbHttpConnection(struct pool &_pool, LbInstance &_instance,
+    LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
                      const LbListenerConfig &_listener,
                      const LbGoto &_destination,
                      SocketAddress _client_address);
 
     void Destroy();
     void CloseAndDestroy();
+
+    using PoolHolder::GetPool;
 
     bool IsEncrypted() const {
         return ssl_filter != nullptr;
