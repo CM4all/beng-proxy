@@ -61,10 +61,8 @@
 #include <stdlib.h>
 
 class Server final
-    : HttpServerConnectionHandler, Lease, BufferedSocketHandler
+    : PoolHolder, HttpServerConnectionHandler, Lease, BufferedSocketHandler
 {
-    struct pool *pool;
-
     HttpServerConnection *connection = nullptr;
 
     std::function<void(HttpServerRequest &request,
@@ -82,9 +80,7 @@ public:
         CheckCloseConnection();
     }
 
-    struct pool &GetPool() noexcept {
-        return *pool;
-    }
+    using PoolHolder::GetPool;
 
     auto &GetEventLoop() noexcept {
         return client_fs.GetEventLoop();
@@ -256,7 +252,7 @@ private:
 };
 
 Server::Server(struct pool &_pool, EventLoop &event_loop)
-    :pool(pool_new_libc(&_pool, "catch").release()),
+    :PoolHolder(pool_new_libc(&_pool, "catch")),
      client_fs(event_loop)
 {
     UniqueSocketDescriptor client_socket, server_socket;
@@ -272,8 +268,6 @@ Server::Server(struct pool &_pool, EventLoop &event_loop)
                                             true, *this);
 
     client_fs.InitDummy(client_socket.Release(), FdType::FD_SOCKET);
-
-    pool_unref(pool);
 }
 
 void
