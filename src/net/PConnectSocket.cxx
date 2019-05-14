@@ -116,8 +116,10 @@ PConnectSocket::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
     stopwatch_dump(&stopwatch);
 #endif
 
-    handler.OnSocketConnectSuccess(std::move(fd));
+    auto &_handler = handler;
     Delete();
+
+    _handler.OnSocketConnectSuccess(std::move(fd));
 }
 
 void
@@ -128,8 +130,10 @@ PConnectSocket::OnSocketConnectTimeout() noexcept
     stopwatch_dump(&stopwatch);
 #endif
 
-    handler.OnSocketConnectTimeout();
+    auto &_handler = handler;
     Delete();
+
+    _handler.OnSocketConnectTimeout();
 }
 
 void
@@ -140,8 +144,10 @@ PConnectSocket::OnSocketConnectError(std::exception_ptr ep) noexcept
     stopwatch_dump(&stopwatch);
 #endif
 
-    handler.OnSocketConnectError(ep);
+    auto &_handler = handler;
     Delete();
+
+    _handler.OnSocketConnectError(ep);
 }
 
 /*
