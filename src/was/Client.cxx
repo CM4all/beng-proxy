@@ -825,8 +825,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
     assert(http_method_is_valid(method));
     assert(uri != nullptr);
 
-    PoolPtr pool(PoolPtr::donate,
-                 *pool_new_linear(&caller_pool, "was_client_request", 32768));
+    auto pool = pool_new_linear(&caller_pool, "was_client_request", 32768);
     auto client = NewFromPool<WasClient>(std::move(pool), caller_pool,
                                          event_loop, stopwatch,
                                          control_fd, input_fd, output_fd,

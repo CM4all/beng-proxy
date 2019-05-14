@@ -70,7 +70,7 @@ struct MyCacheItem final : PoolHolder, CacheItem {
 static MyCacheItem *
 my_cache_item_new(struct pool *_pool, int match, int value)
 {
-    PoolPtr pool(PoolPtr::donate, *pool_new_linear(_pool, "my_cache_item", 1024));
+    auto pool = pool_new_linear(_pool, "my_cache_item", 1024);
     auto i = NewFromPool<MyCacheItem>(std::move(pool), match, value);
     return i;
 }

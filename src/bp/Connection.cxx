@@ -218,8 +218,7 @@ new_connection(BpInstance &instance,
     /* determine the local socket address */
     const StaticSocketAddress local_address = fd.GetLocalAddress();
 
-    PoolPtr pool(PoolPtr::Donate(),
-                 *pool_new_linear(instance.root_pool, "connection", 2048));
+    auto pool = pool_new_linear(instance.root_pool, "connection", 2048);
     pool_set_major(pool);
 
     auto *connection = NewFromPool<BpConnection>(std::move(pool), instance,

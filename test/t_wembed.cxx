@@ -146,7 +146,7 @@ test_abort_resolver()
     struct processor_env env;
     env.event_loop = &instance.event_loop;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test", 4096);
+    auto pool = pool_new_linear(instance.root_pool, "test", 4096);
 
     uri = "/beng.html";
     ret = dissected_uri.Parse(uri);
@@ -155,10 +155,9 @@ test_abort_resolver()
         exit(2);
     }
 
-    Widget widget(*pool, nullptr);
+    Widget widget(pool, nullptr);
 
     auto istream = embed_inline_widget(*pool, env, false, widget);
-    pool_unref(pool);
 }
 
 int main(int argc, char **argv) {

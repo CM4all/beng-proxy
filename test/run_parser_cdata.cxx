@@ -36,6 +36,7 @@
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
 #include "pool/pool.hxx"
+#include "pool/Ptr.hxx"
 #include "util/Exception.hxx"
 #include "util/PrintException.hxx"
 
@@ -77,7 +78,6 @@ public:
 int
 main(int argc, char **argv)
 try {
-    struct pool *pool;
     Istream *istream;
 
     (void)argc;
@@ -86,18 +86,16 @@ try {
     const ScopeFbPoolInit fb_pool_init;
     PInstance instance;
 
-    pool = pool_new_linear(instance.root_pool, "test", 8192);
+    const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    istream = istream_file_new(instance.event_loop, *pool,
+    istream = istream_file_new(instance.event_loop, pool,
                                "/dev/stdin", (off_t)-1);
 
     MyXmlParserHandler handler;
-    auto *parser = parser_new(*pool, UnusedIstreamPtr(istream), handler);
+    auto *parser = parser_new(pool, UnusedIstreamPtr(istream), handler);
 
     while (!should_exit)
         parser_read(parser);
-
-    pool_unref(pool);
 } catch (...) {
     PrintException(std::current_exception());
     return EXIT_FAILURE;

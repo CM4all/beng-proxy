@@ -41,6 +41,7 @@
 #include "event/ShutdownListener.hxx"
 #include "fb_pool.hxx"
 #include "pool/pool.hxx"
+#include "pool/Ptr.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/RConnectSocket.hxx"
 #include "system/SetupProcess.hxx"
@@ -255,7 +256,7 @@ int main(int argc, char **argv) {
 
     ctx.shutdown_listener.Enable();
 
-    ctx.pool = pool = pool_new_linear(ctx.root_pool, "test", 8192);
+    ctx.pool = pool = pool_new_linear(ctx.root_pool, "test", 8192).release();
 
     /* run test */
 

@@ -137,7 +137,7 @@ try {
     const ScopeFbPoolInit fb_pool_init;
 
     PInstance instance;
-    const PoolPtr pool(PoolPtr::donate, *pool_new_linear(instance.root_pool, "test", 8192));
+    const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
     Istream *istream = istream_file_new(instance.event_loop, *pool,
                                         "/dev/stdin", (off_t)-1);

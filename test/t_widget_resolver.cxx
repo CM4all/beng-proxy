@@ -35,6 +35,7 @@
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
 #include "pool/pool.hxx"
+#include "pool/Ptr.hxx"
 #include "pool/RootPool.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
@@ -152,12 +153,12 @@ TEST(WidgetResolver, Normal)
 {
     Context data;
 
-    auto *pool = pool_new_linear(data.root_pool, "test", 8192);
+    auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
-    auto widget = NewFromPool<Widget>(*pool, *pool, nullptr);
+    auto widget = NewFromPool<Widget>(pool, pool, nullptr);
     widget->class_name = "foo";
 
-    ResolveWidget(*pool, *widget,
+    ResolveWidget(pool, *widget,
                   *(TranslationService *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.cancel_ptr);
@@ -176,7 +177,7 @@ TEST(WidgetResolver, Normal)
     ASSERT_TRUE(data.registry.finished);
     ASSERT_FALSE(data.registry.aborted);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 }
 
@@ -184,12 +185,12 @@ TEST(WidgetResolver, Abort)
 {
     Context data;
 
-    auto *pool = pool_new_linear(data.root_pool, "test", 8192);
+    auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
-    auto widget = NewFromPool<Widget>(*pool, *pool, nullptr);
+    auto widget = NewFromPool<Widget>(pool, pool, nullptr);
     widget->class_name = "foo";
 
-    ResolveWidget(*pool, *widget,
+    ResolveWidget(pool, *widget,
                   *(TranslationService *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.cancel_ptr);
@@ -208,7 +209,7 @@ TEST(WidgetResolver, Abort)
     ASSERT_FALSE(data.registry.finished);
     ASSERT_TRUE(data.registry.aborted);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 }
 
@@ -216,17 +217,17 @@ TEST(WidgetResolver, TwoClients)
 {
     Context data;
 
-    auto *pool = pool_new_linear(data.root_pool, "test", 8192);
+    auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
-    auto widget = NewFromPool<Widget>(*pool, *pool, nullptr);
+    auto widget = NewFromPool<Widget>(pool, pool, nullptr);
     widget->class_name = "foo";
 
-    ResolveWidget(*pool, *widget,
+    ResolveWidget(pool, *widget,
                   *(TranslationService *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.cancel_ptr);
 
-    ResolveWidget(*pool, *widget,
+    ResolveWidget(pool, *widget,
                   *(TranslationService *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback2),
                   data.second.cancel_ptr);
@@ -245,7 +246,7 @@ TEST(WidgetResolver, TwoClients)
     ASSERT_TRUE(data.registry.finished);
     ASSERT_FALSE(data.registry.aborted);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 }
 
@@ -254,17 +255,17 @@ TEST(WidgetResolver, TwoAbort)
     Context data;
     data.first.abort = true;
 
-    auto *pool = pool_new_linear(data.root_pool, "test", 8192);
+    auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
-    auto widget = NewFromPool<Widget>(*pool, *pool, nullptr);
+    auto widget = NewFromPool<Widget>(pool, pool, nullptr);
     widget->class_name = "foo";
 
-    ResolveWidget(*pool, *widget,
+    ResolveWidget(pool, *widget,
                   *(TranslationService *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.cancel_ptr);
 
-    ResolveWidget(*pool, *widget,
+    ResolveWidget(pool, *widget,
                   *(TranslationService *)(size_t)0x1,
                   BIND_METHOD(data, &Context::ResolverCallback2),
                   data.second.cancel_ptr);
@@ -283,6 +284,6 @@ TEST(WidgetResolver, TwoAbort)
     ASSERT_TRUE(data.registry.finished);
     ASSERT_FALSE(data.registry.aborted);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 }

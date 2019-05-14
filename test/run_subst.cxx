@@ -49,12 +49,12 @@ try {
     const ScopeFbPoolInit fb_pool_init;
     PInstance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test", 8192);
+    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
     SubstTree tree;
 
     for (i = 1; i <= argc - 2; i += 2) {
-        tree.Add(*pool, argv[i], argv[i + 1]);
+        tree.Add(pool, argv[i], argv[i + 1]);
     }
 
     if (i < argc) {
@@ -63,11 +63,11 @@ try {
     }
 
     StdioSink sink(istream_subst_new(pool,
-                                     UnusedIstreamPtr(istream_file_new(instance.event_loop, *pool,
+                                     UnusedIstreamPtr(istream_file_new(instance.event_loop, pool,
                                                                        "/dev/stdin", (off_t)-1)),
                                      std::move(tree)));
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 
     sink.LoopRead();

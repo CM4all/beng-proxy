@@ -688,7 +688,7 @@ run_test(void (*test)(PoolPtr pool, Context *c))
 {
     Context c;
 
-    test(PoolPtr(PoolPtr::donate, *pool_new_linear(c.root_pool, "test", 16384)), &c);
+    test(pool_new_linear(c.root_pool, "test", 16384), &c);
 }
 
 static void

@@ -67,7 +67,7 @@ try {
     }
 
     PInstance instance;
-    const PoolPtr pool(PoolPtr::donate, *pool_new_linear(instance.root_pool, "test", 8192));
+    const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
     const auto address = ParseSocketAddress(argv[1], 0, false);
 

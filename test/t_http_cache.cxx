@@ -280,7 +280,7 @@ static void
 run_cache_test(struct pool *root_pool, unsigned num, bool cached)
 {
     const Request *request = &requests[num];
-    struct pool *pool = pool_new_linear(root_pool, "t_http_cache", 8192);
+    auto pool = pool_new_linear(root_pool, "t_http_cache", 8192);
     const auto uwa = MakeHttpAddress(request->uri).Host("foo");
     const ResourceAddress address(uwa);
 
@@ -288,23 +288,22 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
 
     current_request = num;
 
-    StringMap headers(*pool);
+    StringMap headers(pool);
     if (request->request_headers != NULL) {
         GrowingBuffer gb;
         gb.Write(request->request_headers);
 
-        header_parse_buffer(*pool, headers, std::move(gb));
+        header_parse_buffer(pool, headers, std::move(gb));
     }
 
     got_request = cached;
     got_response = false;
 
-    Context context(*pool);
-    http_cache_request(*cache, *pool, 0, nullptr, nullptr,
+    Context context(pool);
+    http_cache_request(*cache, pool, 0, nullptr, nullptr,
                        request->method, address,
                        std::move(headers), nullptr,
                        context, cancel_ptr);
-    pool_unref(pool);
 
     ASSERT_TRUE(got_request);
     ASSERT_TRUE(got_response);

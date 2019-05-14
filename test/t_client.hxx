@@ -141,7 +141,7 @@ struct Context final
 
     Context()
         :parent_pool(NewMajorPool(root_pool, "parent")),
-         pool(pool_new_linear(parent_pool, "test", 16384)),
+         pool(pool_new_linear(parent_pool, "test", 16384).release()),
          body(nullptr),
          defer_event(event_loop, BIND_THIS_METHOD(OnDeferred)) {
     }

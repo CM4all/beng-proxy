@@ -1370,7 +1370,7 @@ http_client_request(struct pool &_caller_pool,
         return;
     }
 
-    NewFromPool<HttpClient>(PoolPtr(PoolPtr::donate, *pool_new_linear(caller_pool, "http_client_request", 4096)),
+    NewFromPool<HttpClient>(pool_new_linear(caller_pool, "http_client_request", 4096),
                             std::move(caller_pool),
                             socket,
                             lease,

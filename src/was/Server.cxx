@@ -378,7 +378,7 @@ WasServer::OnWasControlPacket(enum was_command cmd,
             return false;
         }
 
-        request.pool = pool_new_linear(&pool, "was_server_request", 32768);
+        request.pool = pool_new_linear(&pool, "was_server_request", 32768).release();
         request.method = HTTP_METHOD_GET;
         request.uri = nullptr;
         request.headers = strmap_new(request.pool);

@@ -315,7 +315,7 @@ css_processor(struct pool &caller_pool, UnusedIstreamPtr input,
               struct processor_env &env,
               unsigned options)
 {
-    PoolPtr pool(PoolPtr::donate, *pool_new_linear(&caller_pool, "css_processor", 32768));
+    auto pool = pool_new_linear(&caller_pool, "css_processor", 32768);
 
     auto tee = istream_tee_new(pool, std::move(input),
                                *env.event_loop,

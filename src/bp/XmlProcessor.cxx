@@ -445,8 +445,7 @@ processor_new(struct pool &caller_pool,
               struct processor_env &env,
               unsigned options) noexcept
 {
-    PoolPtr pool(PoolPtr::donate,
-                 *pool_new_linear(&caller_pool, "processor", 32768));
+    auto pool = pool_new_linear(&caller_pool, "processor", 32768);
 
     return NewFromPool<XmlProcessor>(std::move(pool), caller_pool, widget,
                                      env, options);

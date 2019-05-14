@@ -510,7 +510,7 @@ run_test(void (*test)(struct pool *pool, Context *c))
 {
     Context c;
 
-    c.pool = pool_new_linear(c.root_pool, "test", 16384);
+    c.pool = pool_new_linear(c.root_pool, "test", 16384).release();
     test(c.pool, &c);
     pool_commit();
 }

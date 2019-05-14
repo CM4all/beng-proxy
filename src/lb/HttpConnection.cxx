@@ -131,9 +131,7 @@ NewLbHttpConnection(LbInstance &instance,
                                             &ssl_filter_get_handler(*ssl_filter)));
     }
 
-    PoolPtr pool(PoolPtr::Donate(),
-                 *pool_new_linear(instance.root_pool, "http_connection",
-                                  2048));
+    auto pool = pool_new_linear(instance.root_pool, "http_connection", 2048);
 
     auto *connection = NewFromPool<LbHttpConnection>(std::move(pool), instance,
                                                      listener, destination,

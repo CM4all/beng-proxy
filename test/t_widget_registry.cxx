@@ -41,6 +41,7 @@
 #include "translation/Transformation.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool/pool.hxx"
+#include "pool/Ptr.hxx"
 #include "PInstance.hxx"
 #include "util/Cancellable.hxx"
 
@@ -116,9 +117,9 @@ TEST(WidgetRegistry, Normal)
     Context data;
     CancellablePointer cancel_ptr;
 
-    auto *pool = pool_new_linear(data.root_pool, "test", 8192);
+    auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
-    widget_class_lookup(*pool, *pool, ts, "sync",
+    widget_class_lookup(pool, pool, ts, "sync",
                         BIND_METHOD(data, &Context::RegistryCallback),
                         cancel_ptr);
     ASSERT_FALSE(ts.aborted);
@@ -130,7 +131,7 @@ TEST(WidgetRegistry, Normal)
     ASSERT_EQ(data.cls->views.next, nullptr);
     ASSERT_EQ(data.cls->views.transformation, nullptr);
 
-    pool_unref(pool);
+    pool.reset();
     pool_commit();
 }
 
@@ -141,9 +142,9 @@ TEST(WidgetRegistry, Abort)
     Context data;
     CancellablePointer cancel_ptr;
 
-    auto *pool = pool_new_linear(data.root_pool, "test", 8192);
+    auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
-    widget_class_lookup(*pool, *pool, ts,  "block",
+    widget_class_lookup(pool, pool, ts,  "block",
                         BIND_METHOD(data, &Context::RegistryCallback),
                         cancel_ptr);
     ASSERT_FALSE(data.got_class);
@@ -151,13 +152,9 @@ TEST(WidgetRegistry, Abort)
 
     cancel_ptr.Cancel();
 
-    /* need to unref the pool after aborted(), because our fake
-       tstock_translate() implementation does not reference the
-       pool */
-    pool_unref(pool);
-
     ASSERT_TRUE(ts.aborted);
     ASSERT_FALSE(data.got_class);
 
+    pool.reset();
     pool_commit();
 }

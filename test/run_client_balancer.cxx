@@ -101,7 +101,7 @@ try {
 
     Context ctx;
 
-    const PoolPtr pool(PoolPtr::donate, *pool_new_linear(ctx.root_pool, "test", 8192));
+    const auto pool = pool_new_linear(ctx.root_pool, "test", 8192);
     AllocatorPtr alloc(pool);
 
     AddressList address_list;

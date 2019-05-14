@@ -93,8 +93,7 @@ pool_recycler_clear() noexcept;
 PoolPtr
 pool_new_libc(struct pool *parent, const char *name) noexcept;
 
-gcc_malloc gcc_returns_nonnull
-struct pool *
+PoolPtr
 pool_new_linear(struct pool *parent, const char *name,
                 size_t initial_size) noexcept;
 

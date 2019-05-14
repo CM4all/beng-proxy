@@ -468,14 +468,14 @@ pool_get_linear_area(struct linear_pool_area *prev, size_t size) noexcept
     return area;
 }
 
-struct pool *
+PoolPtr
 pool_new_linear(struct pool *parent, const char *name,
                 size_t initial_size) noexcept
 {
 #ifdef POOL_LIBC_ONLY
     (void)initial_size;
 
-    return pool_new_libc(parent, name).release();
+    return pool_new_libc(parent, name);
 #else
 
 #ifdef VALGRIND
@@ -483,7 +483,7 @@ pool_new_linear(struct pool *parent, const char *name,
         /* Valgrind cannot verify allocations and memory accesses with
            this library; therefore use the "libc" pool when running on
            valgrind */
-        return pool_new_libc(parent, name).release();
+        return pool_new_libc(parent, name);
 #endif
 
     struct pool *pool = pool_new(parent, name);
@@ -494,7 +494,7 @@ pool_new_linear(struct pool *parent, const char *name,
 
     assert(parent != nullptr);
 
-    return pool;
+    return PoolPtr(PoolPtr::donate, *pool);
 #endif
 }
 

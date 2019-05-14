@@ -387,7 +387,7 @@ try {
 
     ctx.shutdown_listener.Enable();
 
-    struct pool *pool = pool_new_linear(ctx.root_pool, "test", 8192);
+    struct pool *pool = pool_new_linear(ctx.root_pool, "test", 8192).release();
     ctx.pool = pool;
 
     /* open request body */

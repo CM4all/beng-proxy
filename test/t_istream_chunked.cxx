@@ -94,15 +94,15 @@ TEST(IstreamChunkedTest, Custom)
     };
 
     PInstance instance;
-    auto &pool = *pool_new_linear(instance.root_pool, "test", 8192);
+    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
     auto *ctx = NewFromPool<Custom>(pool, pool);
 
     auto *chunked = istream_chunked_new(pool, UnusedIstreamPtr(ctx)).Steal();
     chunked->SetHandler(*ctx);
-    pool_unref(&pool);
 
     chunked->Read();
     chunked->Close();
 
+    pool.reset();
     pool_commit();
 }

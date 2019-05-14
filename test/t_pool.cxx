@@ -71,7 +71,7 @@ TEST(PoolTest, Libc)
 TEST(PoolTest, Linear)
 {
     RootPool root_pool;
-    const PoolPtr pool(PoolPtr::donate, *pool_new_linear(root_pool, "foo", 64));
+    const auto pool = pool_new_linear(root_pool, "foo", 64);
 #ifdef NDEBUG
     ASSERT_EQ(size_t(0), pool_brutto_size(pool));
 #endif

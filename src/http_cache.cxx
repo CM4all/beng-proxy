@@ -728,7 +728,7 @@ HttpCache::Miss(struct pool &caller_pool,
 
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache.pool */
-    PoolPtr request_pool(PoolPtr::donate, *pool_new_linear(pool, "HttpCacheRequest", 8192));
+    auto request_pool = pool_new_linear(pool, "HttpCacheRequest", 8192);
 
     auto request =
         NewFromPool<HttpCacheRequest>(std::move(request_pool), caller_pool,
@@ -881,7 +881,7 @@ HttpCache::Revalidate(struct pool &caller_pool,
 {
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache.pool */
-    PoolPtr request_pool(PoolPtr::donate, *pool_new_linear(pool, "HttpCacheRequest", 8192));
+    auto request_pool = pool_new_linear(pool, "HttpCacheRequest", 8192);
 
     auto request =
         NewFromPool<HttpCacheRequest>(std::move(request_pool), caller_pool,

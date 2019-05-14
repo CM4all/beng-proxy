@@ -31,6 +31,7 @@
  */
 
 #include "tpool.hxx"
+#include "Ptr.hxx"
 
 #include <assert.h>
 
@@ -41,7 +42,7 @@ tpool_init(struct pool *parent)
 {
     assert(tpool == nullptr);
 
-    tpool = pool_new_linear(parent, "temporary_pool", 32768);
+    tpool = pool_new_linear(parent, "temporary_pool", 32768).release();
 }
 
 void

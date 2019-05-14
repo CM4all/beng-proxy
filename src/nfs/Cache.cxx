@@ -514,8 +514,7 @@ NfsCache::OpenFile(struct pool &caller_pool,
     /* move all this stuff to a new pool, so istream_tee's second head
        can continue to fill the cache even if our caller gave up on
        it */
-    auto store = NewFromPool<NfsCacheStore>(PoolPtr(PoolPtr::donate,
-                                                    *pool_new_linear(pool, "nfs_cache_tee", 1024)),
+    auto store = NewFromPool<NfsCacheStore>(pool_new_linear(pool, "nfs_cache_tee", 1024),
                                             *this,
                                             key, st);
 

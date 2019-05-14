@@ -698,8 +698,7 @@ FilterCache::Miss(struct pool &caller_pool,
 {
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache->pool */
-    PoolPtr request_pool(PoolPtr::donate,
-                         *pool_new_linear(pool, "filter_cache_request", 8192));
+    auto request_pool = pool_new_linear(pool, "filter_cache_request", 8192);
 
     auto request = NewFromPool<FilterCacheRequest>(std::move(request_pool),
                                                    caller_pool,

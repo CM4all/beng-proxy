@@ -253,7 +253,7 @@ TYPED_TEST_P(IstreamFilterTest, Normal)
     TypeParam traits;
     Instance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_normal", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     auto istream = traits.CreateTest(instance.event_loop, *pool, traits.CreateInput(*pool));
     ASSERT_TRUE(!!istream);
@@ -267,7 +267,7 @@ TYPED_TEST_P(IstreamFilterTest, Bucket)
     TypeParam traits;
     Instance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_normal", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     auto istream = traits.CreateTest(instance.event_loop, *pool, traits.CreateInput(*pool));
     ASSERT_TRUE(!!istream);
@@ -290,7 +290,7 @@ TYPED_TEST_P(IstreamFilterTest, SmallBucket)
     TypeParam traits;
     Instance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_normal", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     auto istream = traits.CreateTest(instance.event_loop, *pool, traits.CreateInput(*pool));
     ASSERT_TRUE(!!istream);
@@ -316,7 +316,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketError)
     TypeParam traits;
     Instance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_normal", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     const std::runtime_error error("test_fail");
     auto istream = traits.CreateTest(instance.event_loop, *pool,
@@ -347,7 +347,7 @@ TYPED_TEST_P(IstreamFilterTest, Skip)
     TypeParam traits;
     Instance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_skip", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     auto istream = traits.CreateTest(instance.event_loop, *pool, traits.CreateInput(*pool));
     ASSERT_TRUE(!!istream);
@@ -369,7 +369,7 @@ TYPED_TEST_P(IstreamFilterTest, Block)
     Instance instance;
 
     for (int n = 0; n < 8; ++n) {
-        auto *pool = pool_new_linear(instance.root_pool, "test_block", 8192);
+        auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
         auto istream = traits.CreateTest(instance.event_loop, *pool,
                                    traits.CreateInput(*pool));
@@ -388,7 +388,7 @@ TYPED_TEST_P(IstreamFilterTest, Byte)
 
     Instance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_byte", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     auto istream =
         traits.CreateTest(instance.event_loop, *pool,
@@ -405,7 +405,7 @@ TYPED_TEST_P(IstreamFilterTest, BlockByte)
 
     Instance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_byte", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     Context ctx(instance,
                 traits.expected_result,
@@ -428,7 +428,7 @@ TYPED_TEST_P(IstreamFilterTest, BlockInject)
 
     Instance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_block", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     auto inject = istream_inject_new(*pool, traits.CreateInput(*pool));
 
@@ -457,7 +457,7 @@ TYPED_TEST_P(IstreamFilterTest, Half)
     ctx.record = true;
 #endif
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_half", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     run_istream_ctx(traits, ctx, pool);
 }
@@ -468,7 +468,7 @@ TYPED_TEST_P(IstreamFilterTest, Fail)
     TypeParam traits;
     Instance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_fail", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     const std::runtime_error error("test_fail");
     auto istream = traits.CreateTest(instance.event_loop, *pool,
@@ -482,7 +482,7 @@ TYPED_TEST_P(IstreamFilterTest, FailAfterFirstByte)
     TypeParam traits;
     Instance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_fail_1byte", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     const std::runtime_error error("test_fail");
     auto istream =
@@ -500,7 +500,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortWithoutHandler)
     TypeParam traits;
     Instance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_abort_without_handler", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     auto istream = traits.CreateTest(instance.event_loop, *pool, traits.CreateInput(*pool));
     pool_unref(pool);
@@ -520,7 +520,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandler)
 
     Instance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_abort_in_handler", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     auto inject = istream_inject_new(*pool, traits.CreateInput(*pool));
     auto istream = traits.CreateTest(instance.event_loop, *pool, std::move(inject.first));
@@ -552,7 +552,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandlerHalf)
 
     Instance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_abort_in_handler_half", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     auto inject = istream_inject_new(*pool, istream_four_new(pool, traits.CreateInput(*pool)));
     auto istream = traits.CreateTest(instance.event_loop, *pool,
@@ -583,7 +583,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortAfter1Byte)
     TypeParam traits;
     Instance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_abort_1byte", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     auto istream = istream_head_new(*pool,
                                     traits.CreateTest(instance.event_loop, *pool,
@@ -598,7 +598,7 @@ TYPED_TEST_P(IstreamFilterTest, Later)
     TypeParam traits;
     Instance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_later", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     auto istream =
         traits.CreateTest(instance.event_loop, *pool,
@@ -616,7 +616,7 @@ TYPED_TEST_P(IstreamFilterTest, BigHold)
 
     Instance instance;
 
-    auto *pool = pool_new_linear(instance.root_pool, "test_big_hold", 8192);
+    auto *pool = pool_new_linear(instance.root_pool, "test", 8192).release();
 
     auto istream = traits.CreateInput(*pool);
     for (unsigned i = 0; i < 1024; ++i)
