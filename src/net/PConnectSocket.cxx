@@ -34,7 +34,6 @@
 #include "net/SocketAddress.hxx"
 #include "stopwatch.hxx"
 #include "pool/pool.hxx"
-#include "pool/Holder.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 
@@ -46,7 +45,7 @@
 #include <string.h>
 #include <unistd.h>
 
-class PConnectSocket final : PoolHolder, Cancellable, ConnectSocketHandler {
+class PConnectSocket final : Cancellable, ConnectSocketHandler {
     ConnectSocket connect;
 
 #ifdef ENABLE_STOPWATCH
@@ -56,15 +55,14 @@ class PConnectSocket final : PoolHolder, Cancellable, ConnectSocketHandler {
     ConnectSocketHandler &handler;
 
 public:
-    PConnectSocket(EventLoop &event_loop, PoolPtr &&_pool,
+    PConnectSocket(EventLoop &event_loop,
                    UniqueSocketDescriptor &&_fd, Event::Duration timeout,
 #ifdef ENABLE_STOPWATCH
                    Stopwatch &_stopwatch,
 #endif
                    ConnectSocketHandler &_handler,
                    CancellablePointer &cancel_ptr)
-        :PoolHolder(std::move(_pool)),
-         connect(event_loop, *this),
+        :connect(event_loop, *this),
 #ifdef ENABLE_STOPWATCH
          stopwatch(_stopwatch),
 #endif
@@ -152,7 +150,7 @@ PConnectSocket::OnSocketConnectError(std::exception_ptr ep) noexcept
  */
 
 void
-client_socket_new(EventLoop &event_loop, struct pool &_pool,
+client_socket_new(EventLoop &event_loop, struct pool &pool,
                   int domain, int type, int protocol,
                   bool ip_transparent,
                   const SocketAddress bind_address,
@@ -162,8 +160,6 @@ client_socket_new(EventLoop &event_loop, struct pool &_pool,
                   CancellablePointer &cancel_ptr)
 {
     assert(!address.IsNull());
-
-    PoolPtr pool(_pool);
 
     UniqueSocketDescriptor fd;
     if (!fd.CreateNonBlock(domain, type, protocol)) {
@@ -192,7 +188,7 @@ client_socket_new(EventLoop &event_loop, struct pool &_pool,
     }
 
 #ifdef ENABLE_STOPWATCH
-    Stopwatch *stopwatch = stopwatch_new(pool, address, nullptr);
+    Stopwatch *stopwatch = stopwatch_new(&pool, address, nullptr);
 #endif
 
     if (fd.Connect(address)) {
@@ -203,7 +199,7 @@ client_socket_new(EventLoop &event_loop, struct pool &_pool,
 
         handler.OnSocketConnectSuccess(std::move(fd));
     } else if (errno == EINPROGRESS) {
-        NewFromPool<PConnectSocket>(pool, event_loop, std::move(pool),
+        NewFromPool<PConnectSocket>(pool, event_loop,
                                     std::move(fd), timeout,
 #ifdef ENABLE_STOPWATCH
                                     *stopwatch,
