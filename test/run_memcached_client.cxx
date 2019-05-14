@@ -57,9 +57,10 @@
 #include <string.h>
 
 struct Context final : PInstance, Lease {
-    struct pool *pool;
-
     ShutdownListener shutdown_listener;
+
+    PoolPtr pool;
+
     CancellablePointer cancel_ptr;
 
     UniqueSocketDescriptor s;
@@ -70,7 +71,8 @@ struct Context final : PInstance, Lease {
     bool value_eof = false, value_abort = false, value_closed = false;
 
     Context()
-        :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)) {}
+        :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
+         pool(pool_new_linear(root_pool, "test", 8192)) {}
 
     void ShutdownCallback() noexcept;
 
@@ -205,7 +207,6 @@ static const struct memcached_client_handler my_mcd_handler = {
  */
 
 int main(int argc, char **argv) {
-    struct pool *pool;
     enum memcached_opcode opcode;
     const char *key, *value;
     const void *extras;
@@ -256,16 +257,14 @@ int main(int argc, char **argv) {
 
     ctx.shutdown_listener.Enable();
 
-    ctx.pool = pool = pool_new_linear(ctx.root_pool, "test", 8192).release();
-
     /* run test */
 
-    memcached_client_invoke(pool, ctx.event_loop, ctx.s, FdType::FD_TCP,
+    memcached_client_invoke(ctx.pool, ctx.event_loop, ctx.s, FdType::FD_TCP,
                             ctx,
                             opcode,
                             extras, extras_length,
                             key, key != NULL ? strlen(key) : 0,
-                            value != nullptr ? istream_string_new(*pool, value) : nullptr,
+                            value != nullptr ? istream_string_new(ctx.pool, value) : nullptr,
                             &my_mcd_handler, &ctx,
                             ctx.cancel_ptr);
 
@@ -275,7 +274,7 @@ int main(int argc, char **argv) {
 
     /* cleanup */
 
-    pool_unref(pool);
+    ctx.pool.reset();
     pool_commit();
 
     return ctx.value_eof ? 0 : 2;
