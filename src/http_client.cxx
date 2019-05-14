@@ -141,7 +141,7 @@ class HttpClient final : PoolHolder, BufferedSocketHandler, IstreamHandler, Canc
         }
     };
 
-    const PoolPtr caller_pool;
+    struct pool &caller_pool;
 
     const char *const peer_name;
 
@@ -219,7 +219,7 @@ class HttpClient final : PoolHolder, BufferedSocketHandler, IstreamHandler, Canc
     bool keep_alive;
 
 public:
-    HttpClient(PoolPtr &&_pool, PoolPtr &&_caller_pool,
+    HttpClient(PoolPtr &&_pool, struct pool &_caller_pool,
                FilteredSocket &_socket, Lease &lease,
                const char *_peer_name,
                http_method_t method, const char *uri,
@@ -909,7 +909,6 @@ HttpClient::FeedHeaders(ConstBuffer<void> b)
         ReleaseSocket(true, keep_alive);
 
     const DestructObserver destructed(*this);
-    const ScopePoolRef caller_ref(caller_pool TRACE_ARGS);
 
     if (!response.body && !response.no_body)
         response.body = istream_null_new(caller_pool);
@@ -1248,7 +1247,7 @@ HttpClient::Cancel() noexcept
  */
 
 inline
-HttpClient::HttpClient(PoolPtr &&_pool, PoolPtr &&_caller_pool,
+HttpClient::HttpClient(PoolPtr &&_pool, struct pool &_caller_pool,
                        FilteredSocket &_socket, Lease &lease,
                        const char *_peer_name,
                        http_method_t method, const char *uri,
@@ -1256,7 +1255,7 @@ HttpClient::HttpClient(PoolPtr &&_pool, PoolPtr &&_caller_pool,
                        UnusedIstreamPtr body, bool expect_100,
                        HttpResponseHandler &handler,
                        CancellablePointer &cancel_ptr)
-    :PoolHolder(std::move(_pool)), caller_pool(std::move(_caller_pool)),
+    :PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
      peer_name(_peer_name),
      stopwatch(stopwatch_new(pool, peer_name, uri)),
      event_loop(_socket.GetEventLoop()),
@@ -1350,7 +1349,7 @@ HttpClient::HttpClient(PoolPtr &&_pool, PoolPtr &&_caller_pool,
 }
 
 void
-http_client_request(struct pool &_caller_pool,
+http_client_request(struct pool &caller_pool,
                     FilteredSocket &socket, Lease &lease,
                     const char *peer_name,
                     http_method_t method, const char *uri,
@@ -1361,8 +1360,6 @@ http_client_request(struct pool &_caller_pool,
 {
     assert(http_method_is_valid(method));
 
-    PoolPtr caller_pool(_caller_pool);
-
     if (!uri_path_verify_quick(uri)) {
         lease.ReleaseLease(true);
         body.Clear();
@@ -1372,8 +1369,8 @@ http_client_request(struct pool &_caller_pool,
         return;
     }
 
-    NewFromPool<HttpClient>(pool_new_linear(caller_pool, "http_client_request", 4096),
-                            std::move(caller_pool),
+    NewFromPool<HttpClient>(pool_new_linear(&caller_pool, "http_client_request", 4096),
+                            caller_pool,
                             socket,
                             lease,
                             peer_name,
