@@ -32,6 +32,7 @@
 
 #include "cache.hxx"
 #include "pool/pool.hxx"
+#include "pool/Holder.hxx"
 #include "PInstance.hxx"
 
 #include <assert.h>
@@ -49,31 +50,28 @@ ptr_to_match(void *p)
     return (int)(long)p;
 }
 
-struct MyCacheItem final : CacheItem {
-    struct pool *const pool;
+struct MyCacheItem final : PoolHolder, CacheItem {
     const int match;
     const int value;
 
-    MyCacheItem(struct pool &_pool, int _match, int _value)
-        :CacheItem(std::chrono::steady_clock::now(),
+    MyCacheItem(PoolPtr &&_pool, int _match, int _value) noexcept
+        :PoolHolder(std::move(_pool)),
+         CacheItem(std::chrono::steady_clock::now(),
                    std::chrono::hours(1), 1),
-         pool(&_pool), match(_match), value(_value) {
+         match(_match), value(_value) {
     }
 
     /* virtual methods from class CacheItem */
     void Destroy() noexcept override {
-        struct pool *_pool = pool;
-
-        p_free(_pool, this);
-        pool_unref(_pool);
+        this->~MyCacheItem();
     }
 };
 
 static MyCacheItem *
-my_cache_item_new(struct pool *pool, int match, int value)
+my_cache_item_new(struct pool *_pool, int match, int value)
 {
-    pool = pool_new_linear(pool, "my_cache_item", 1024);
-    auto i = NewFromPool<MyCacheItem>(*pool, *pool, match, value);
+    PoolPtr pool(PoolPtr::donate, *pool_new_linear(_pool, "my_cache_item", 1024));
+    auto i = NewFromPool<MyCacheItem>(std::move(pool), match, value);
     return i;
 }
 
