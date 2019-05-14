@@ -59,7 +59,6 @@ struct TranslateClient final : BufferedSocketHandler, Cancellable {
     BufferedSocket socket;
     struct lease_ref lease_ref;
 
-
     /** the marshalled translate request */
     GrowingBufferReader request;
 
@@ -77,11 +76,9 @@ struct TranslateClient final : BufferedSocketHandler, Cancellable {
 
     void Destroy() {
         this->~TranslateClient();
-        pool_unref(&pool);
     }
 
     void ReleaseSocket(bool reuse);
-    void Release(bool reuse);
 
     void Fail(std::exception_ptr ep);
 
@@ -112,7 +109,8 @@ struct TranslateClient final : BufferedSocketHandler, Cancellable {
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
         stopwatch_event(stopwatch, "cancel");
-        Release(false);
+        ReleaseSocket(false);
+        Destroy();
     }
 };
 
@@ -132,17 +130,6 @@ TranslateClient::ReleaseSocket(bool reuse)
     p_lease_release(lease_ref, reuse, pool);
 }
 
-/**
- * Release resources held by this object: the event object, the socket
- * lease, and the pool reference.
- */
-void
-TranslateClient::Release(bool reuse)
-{
-    ReleaseSocket(reuse);
-    DeleteUnrefPool(pool, this);
-}
-
 void
 TranslateClient::Fail(std::exception_ptr ep)
 {
@@ -150,8 +137,12 @@ TranslateClient::Fail(std::exception_ptr ep)
 
     ReleaseSocket(false);
 
-    handler.error(ep, handler_ctx);
+    auto _handler = handler;
+    auto _handler_ctx = handler_ctx;
+
     Destroy();
+
+    _handler.error(ep, _handler_ctx);
 }
 
 /*
@@ -179,8 +170,15 @@ try {
 
         case TranslateParser::Result::DONE:
             ReleaseSocket(true);
-            handler.response(parser.GetResponse(), handler_ctx);
-            Destroy();
+
+            {
+                /* this pool reference allows calling our destructor
+                   after the handler has released the pool */
+                const ScopePoolRef ref(pool TRACE_ARGS);
+                handler.response(parser.GetResponse(), handler_ctx);
+                Destroy();
+            }
+
             return BufferedResult::CLOSED;
         }
     }
@@ -276,7 +274,6 @@ try {
                                                 request, std::move(gb),
                                                 handler, ctx, cancel_ptr);
 
-    pool_ref(&client->pool);
     client->TryWrite();
 } catch (...) {
     lease.ReleaseLease(true);
