@@ -133,34 +133,6 @@ pool_ref_impl(const PoolPtr &pool TRACE_ARGS_DECL) noexcept;
 void
 pool_unref_impl(const PoolPtr &pool TRACE_ARGS_DECL) noexcept;
 
-class LinearPool {
-    struct pool &p;
-
-public:
-    LinearPool(struct pool &parent, const char *name,
-               size_t initial_size) noexcept
-        :p(*pool_new_linear(&parent, name, initial_size)) {}
-
-    ~LinearPool() noexcept {
-        gcc_unused auto ref = pool_unref(&p);
-#ifndef NDEBUG
-        assert(ref == 0);
-#endif
-    }
-
-    struct pool &get() noexcept {
-        return p;
-    }
-
-    operator struct pool &() noexcept {
-        return p;
-    }
-
-    operator struct pool *() noexcept {
-        return &p;
-    }
-};
-
 /**
  * Returns the total size of all allocations in this pool.
  */

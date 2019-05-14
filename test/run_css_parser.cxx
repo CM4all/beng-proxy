@@ -36,6 +36,7 @@
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
 #include "pool/pool.hxx"
+#include "pool/Ptr.hxx"
 #include "util/Exception.hxx"
 #include "util/PrintException.hxx"
 
@@ -136,7 +137,7 @@ try {
     const ScopeFbPoolInit fb_pool_init;
 
     PInstance instance;
-    LinearPool pool(instance.root_pool, "test", 8192);
+    const PoolPtr pool(PoolPtr::donate, *pool_new_linear(instance.root_pool, "test", 8192));
 
     Istream *istream = istream_file_new(instance.event_loop, *pool,
                                         "/dev/stdin", (off_t)-1);

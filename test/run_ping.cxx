@@ -32,6 +32,7 @@
 
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
+#include "pool/Ptr.hxx"
 #include "net/Ping.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/Parser.hxx"
@@ -66,7 +67,7 @@ try {
     }
 
     PInstance instance;
-    LinearPool pool(instance.root_pool, "test", 8192);
+    const PoolPtr pool(PoolPtr::donate, *pool_new_linear(instance.root_pool, "test", 8192));
 
     const auto address = ParseSocketAddress(argv[1], 0, false);
 

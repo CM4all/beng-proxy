@@ -41,6 +41,7 @@
 #include "event/DeferEvent.hxx"
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
+#include "pool/Ptr.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
@@ -92,7 +93,7 @@ int main(int argc, char **argv)
     LocalSpawnService spawn_service(spawn_config, child_process_registry);
 
     delegate_stock = delegate_stock_new(instance.event_loop, spawn_service);
-    LinearPool pool(instance.root_pool, "test", 8192);
+    const PoolPtr pool(PoolPtr::donate, *pool_new_linear(instance.root_pool, "test", 8192));
 
     ChildOptions child_options;
 

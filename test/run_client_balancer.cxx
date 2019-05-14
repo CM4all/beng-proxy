@@ -38,6 +38,7 @@
 #include "net/FailureManager.hxx"
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
+#include "pool/Ptr.hxx"
 #include "AllocatorPtr.hxx"
 #include "address_list.hxx"
 #include "net/Resolver.hxx"
@@ -100,7 +101,7 @@ try {
 
     Context ctx;
 
-    LinearPool pool(ctx.root_pool, "test", 8192);
+    const PoolPtr pool(PoolPtr::donate, *pool_new_linear(ctx.root_pool, "test", 8192));
     AllocatorPtr alloc(pool);
 
     AddressList address_list;

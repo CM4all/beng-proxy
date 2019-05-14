@@ -31,6 +31,7 @@
  */
 
 #include "pool/pool.hxx"
+#include "pool/Ptr.hxx"
 #include "pool/RootPool.hxx"
 #include "util/Compiler.h"
 
@@ -70,7 +71,7 @@ TEST(PoolTest, Libc)
 TEST(PoolTest, Linear)
 {
     RootPool root_pool;
-    LinearPool pool(root_pool, "foo", 64);
+    const PoolPtr pool(PoolPtr::donate, *pool_new_linear(root_pool, "foo", 64));
 #ifdef NDEBUG
     ASSERT_EQ(size_t(0), pool_brutto_size(pool));
 #endif
