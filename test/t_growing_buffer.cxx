@@ -48,12 +48,13 @@
 #include <stdio.h>
 
 struct Context final : IstreamHandler {
-    struct pool *pool;
+    PoolPtr pool;
     bool got_data = false, eof = false, abort = false, closed = false;
     IstreamPointer abort_istream;
 
-    explicit Context(struct pool &_pool)
-        :pool(&_pool), abort_istream(nullptr) {}
+    template<typename P>
+    explicit Context(P &&_pool) noexcept
+        :pool(std::forward<P>(_pool)), abort_istream(nullptr) {}
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) noexcept override;
@@ -74,7 +75,7 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
     if (abort_istream.IsDefined()) {
         closed = true;
         abort_istream.ClearAndClose();
-        pool_unref(pool);
+        pool.reset();
         return 0;
     }
 
@@ -86,7 +87,7 @@ Context::OnEof() noexcept
 {
     eof = true;
 
-    pool_unref(pool);
+    pool.reset();
 }
 
 void
@@ -94,7 +95,7 @@ Context::OnError(std::exception_ptr) noexcept
 {
     abort = true;
 
-    pool_unref(pool);
+    pool.reset();
 }
 
 /*
@@ -114,7 +115,7 @@ istream_read_expect(Context *ctx, IstreamPointer &istream)
 }
 
 static void
-run_istream_ctx(Context *ctx, struct pool *pool, UnusedIstreamPtr _istream)
+run_istream_ctx(Context *ctx, PoolPtr pool, UnusedIstreamPtr _istream)
 {
     gcc_unused off_t a1 = _istream.GetAvailable(false);
     gcc_unused off_t a2 = _istream.GetAvailable(true);
@@ -134,17 +135,17 @@ run_istream_ctx(Context *ctx, struct pool *pool, UnusedIstreamPtr _istream)
 
     if (!ctx->eof) {
         pool_trash(pool);
-        pool_unref(pool);
+        pool.reset();
     }
 
     pool_commit();
 }
 
 static void
-run_istream(struct pool *pool, UnusedIstreamPtr istream)
+run_istream(PoolPtr pool, UnusedIstreamPtr istream)
 {
-    Context ctx(*pool);
-    run_istream_ctx(&ctx, pool, std::move(istream));
+    Context ctx(pool);
+    run_istream_ctx(&ctx, std::move(pool), std::move(istream));
 }
 
 static UnusedIstreamPtr
@@ -181,7 +182,7 @@ TEST(GrowingBufferTest, Normal)
     TestPool pool;
 
     auto istream = create_test(pool);
-    run_istream(&pool.Steal(), std::move(istream));
+    run_istream(pool.Steal(), std::move(istream));
 }
 
 /** empty input */
@@ -191,7 +192,7 @@ TEST(GrowingBufferTest, Empty)
     TestPool pool;
 
     auto istream = create_empty(pool);
-    run_istream(&pool.Steal(), std::move(istream));
+    run_istream(pool.Steal(), std::move(istream));
 }
 
 /** first buffer is too small, empty */
@@ -325,7 +326,7 @@ TEST(GrowingBufferTest, AbortWithHandler)
     istream->SetHandler(ctx);
 
     istream->Close();
-    pool_unref(ctx.pool);
+    ctx.pool.reset();
 
     ASSERT_FALSE(ctx.abort);
 }

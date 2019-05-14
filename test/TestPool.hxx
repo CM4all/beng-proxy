@@ -62,10 +62,10 @@ public:
         return the_pool;
     }
 
-    struct pool &Steal() {
+    PoolPtr Steal() noexcept {
         assert(the_pool);
 
-        return *the_pool.release();
+        return std::move(the_pool);
     }
 };
 
