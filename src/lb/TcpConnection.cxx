@@ -483,13 +483,14 @@ LbTcpConnection::Inbound::Inbound(EventLoop &event_loop,
 }
 
 inline
-LbTcpConnection::LbTcpConnection(struct pool &_pool, LbInstance &_instance,
+LbTcpConnection::LbTcpConnection(PoolPtr &&_pool, LbInstance &_instance,
                                  const LbListenerConfig &_listener,
                                  LbCluster &_cluster,
                                  UniqueSocketDescriptor &&fd, FdType fd_type,
                                  SocketFilterPtr &&filter,
                                  SocketAddress _client_address)
-    :pool(_pool), instance(_instance), listener(_listener), cluster(_cluster),
+    :PoolHolder(std::move(_pool)),
+     instance(_instance), listener(_listener), cluster(_cluster),
      client_address(address_to_string(pool, _client_address)),
      session_sticky(lb_tcp_sticky(cluster.GetConfig().sticky_mode,
                                   _client_address)),
@@ -541,12 +542,12 @@ LbTcpConnection::New(LbInstance &instance,
                                             &ssl_filter_get_handler(*ssl_filter)));
     }
 
-    struct pool *pool = pool_new_linear(instance.root_pool,
-                                        "client_connection",
-                                        2048);
+    PoolPtr pool(PoolPtr::donate, *pool_new_linear(instance.root_pool,
+                                                   "client_connection",
+                                                   2048));
     pool_set_major(pool);
 
-    return NewFromPool<LbTcpConnection>(*pool, *pool, instance,
+    return NewFromPool<LbTcpConnection>(std::move(pool), instance,
                                         listener, cluster,
                                         std::move(fd), fd_type,
                                         std::move(filter),
@@ -559,5 +560,5 @@ LbTcpConnection::Destroy()
     assert(!instance.tcp_connections.empty());
     assert(listener.destination.GetProtocol() == LbProtocol::TCP);
 
-    DeleteUnrefTrashPool(pool, this);
+    this->~LbTcpConnection();
 }

@@ -35,6 +35,7 @@
 
 #include "fs/FilteredSocket.hxx"
 #include "StickyHash.hxx"
+#include "pool/Holder.hxx"
 #include "event/DeferEvent.hxx"
 #include "io/Logger.hxx"
 #include "net/StaticSocketAddress.hxx"
@@ -49,7 +50,6 @@
 
 #include <stdint.h>
 
-struct pool;
 struct SslFactory;
 struct SslFilter;
 class UniqueSocketDescriptor;
@@ -60,10 +60,8 @@ struct LbGoto;
 struct LbInstance;
 
 class LbTcpConnection final
-    : LoggerDomainFactory, ConnectSocketHandler,
+    : PoolHolder, LoggerDomainFactory, ConnectSocketHandler,
       public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-
-    struct pool &pool;
 
     LbInstance &instance;
 
@@ -146,7 +144,7 @@ public:
 
     bool got_inbound_data, got_outbound_data;
 
-    LbTcpConnection(struct pool &_pool, LbInstance &_instance,
+    LbTcpConnection(PoolPtr &&pool, LbInstance &_instance,
                     const LbListenerConfig &_listener,
                     LbCluster &_cluster,
                     UniqueSocketDescriptor &&fd, FdType fd_type,
