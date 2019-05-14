@@ -226,7 +226,6 @@ test_no_keepalive(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
     pool_commit();
 
     c.WaitForResponse();

@@ -77,19 +77,21 @@
 static constexpr size_t HEAD_SIZE = 16384;
 #endif
 
-static struct pool *
+static PoolPtr
 NewMajorPool(struct pool &parent, const char *name)
 {
     auto pool = pool_new_libc(&parent, name);
     pool_set_major(pool);
-    return pool.release();
+    return pool;
 }
 
 template<class Connection>
 struct Context final
     : PInstance, Cancellable, Lease, HttpResponseHandler, IstreamHandler {
 
-    struct pool *const parent_pool, *const pool;
+    PoolPtr parent_pool;
+
+    const PoolPtr pool;
 
     unsigned data_blocking = 0;
 
@@ -141,15 +143,14 @@ struct Context final
 
     Context()
         :parent_pool(NewMajorPool(root_pool, "parent")),
-         pool(pool_new_linear(parent_pool, "test", 16384).release()),
+         pool(pool_new_linear(parent_pool, "test", 16384)),
          body(nullptr),
          defer_event(event_loop, BIND_THIS_METHOD(OnDeferred)) {
     }
 
     ~Context() {
         free(content_length);
-        pool_unref(parent_pool);
-        pool_commit();
+        parent_pool.reset();
     }
 
     bool WaitingForResponse() const {
@@ -433,7 +434,6 @@ test_empty(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
     pool_commit();
 
     c.event_loop.Dispatch();
@@ -461,8 +461,6 @@ test_body(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.WaitForResponse();
 
@@ -497,8 +495,6 @@ test_read_body(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -531,8 +527,6 @@ test_huge(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -560,8 +554,6 @@ test_close_response_body_early(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -590,8 +582,6 @@ test_close_response_body_late(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -620,8 +610,6 @@ test_close_response_body_data(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.WaitForResponse();
 
@@ -677,9 +665,6 @@ test_close_request_body_early(Context<Connection> &c)
     const std::runtime_error error("fail_request_body_early");
     c.request_body->SetError(std::make_exception_ptr(error));
 
-    pool_unref(c.pool);
-    pool_commit();
-
     c.event_loop.Dispatch();
 
     assert(c.released);
@@ -712,8 +697,6 @@ test_close_request_body_fail(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -756,8 +739,6 @@ test_data_blocking(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     while (c.data_blocking > 0) {
         if (c.body.IsDefined()) {
@@ -817,8 +798,6 @@ test_data_blocking2(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.WaitForResponse();
 
@@ -874,8 +853,6 @@ test_body_fail(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -903,8 +880,6 @@ test_head(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -936,8 +911,6 @@ test_head_discard(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -966,8 +939,6 @@ test_head_discard2(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -997,8 +968,6 @@ test_ignored_body(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -1031,8 +1000,6 @@ test_close_ignored_request_body(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -1064,8 +1031,6 @@ test_head_close_ignored_request_body(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -1096,8 +1061,6 @@ test_close_request_body_eor(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -1128,8 +1091,6 @@ test_close_request_body_eor2(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -1162,8 +1123,6 @@ test_bogus_100(Context<Connection> &c)
                           nullptr, false,
                           c, c.cancel_ptr);
 
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -1200,9 +1159,6 @@ test_twice_100(Context<Connection> &c)
                           false,
                           c, c.cancel_ptr);
 
-    pool_unref(c.pool);
-    pool_commit();
-
     c.event_loop.Dispatch();
 
     assert(c.released);
@@ -1236,9 +1192,6 @@ test_close_100(Context<Connection> &c)
                           std::move(request_body.first), true,
                           c, c.cancel_ptr);
 
-    pool_unref(c.pool);
-    pool_commit();
-
     c.event_loop.Dispatch();
 
     assert(c.released);
@@ -1267,9 +1220,6 @@ test_no_body_while_sending(Context<Connection> &c)
 #endif
                           c, c.cancel_ptr);
 
-    pool_unref(c.pool);
-    pool_commit();
-
     c.event_loop.Dispatch();
 
     assert(c.released);
@@ -1293,9 +1243,6 @@ test_hold(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -1327,9 +1274,6 @@ test_premature_close_headers(Context<Connection> &c)
 #endif
                           c, c.cancel_ptr);
 
-    pool_unref(c.pool);
-    pool_commit();
-
     c.event_loop.Dispatch();
 
     assert(c.released);
@@ -1360,9 +1304,6 @@ test_premature_close_body(Context<Connection> &c)
 #endif
                           c, c.cancel_ptr);
 
-    pool_unref(c.pool);
-    pool_commit();
-
     c.event_loop.Dispatch();
 
     assert(c.released);
@@ -1390,8 +1331,6 @@ test_post_empty(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.WaitForResponse();
 
@@ -1432,8 +1371,6 @@ test_buckets(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -1464,8 +1401,6 @@ test_buckets_close(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -1498,8 +1433,6 @@ test_premature_end(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
@@ -1528,8 +1461,6 @@ test_excess_data(Context<Connection> &c)
                           false,
 #endif
                           c, c.cancel_ptr);
-    pool_unref(c.pool);
-    pool_commit();
 
     c.event_loop.Dispatch();
 
