@@ -283,9 +283,8 @@ private:
     }
 
     void Close() noexcept {
-        auto *parser2 = parser;
+        parser_close(parser);
         Destroy();
-        parser_close(parser2);
     }
 
     void Replace(off_t start, off_t end, UnusedIstreamPtr istream) noexcept {

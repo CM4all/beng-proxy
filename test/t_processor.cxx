@@ -157,9 +157,8 @@ TEST(Processor, Abort)
                             widget, "foo", env, PROCESSOR_CONTAINER,
                             handler, cancel_ptr);
 
-    pool.reset();
-
     cancel_ptr.Cancel();
 
+    pool.reset();
     pool_commit();
 }

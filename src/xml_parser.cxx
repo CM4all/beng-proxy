@@ -126,11 +126,10 @@ public:
         :IstreamSink(std::move(_input)), pool(&_pool),
          attr_value(*pool, 512, 8192),
          handler(_handler) {
-        pool_ref(pool);
     }
 
     void Destroy() noexcept {
-        DeleteUnrefPool(*pool, this);
+        this->~XmlParser();
     }
 
     void Close() noexcept {
