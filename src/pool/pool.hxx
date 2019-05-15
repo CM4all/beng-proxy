@@ -437,22 +437,6 @@ public:
     }
 };
 
-template<typename T>
-void
-DeleteUnrefPool(struct pool &pool, T *t) noexcept
-{
-    DeleteFromPool(pool, t);
-    pool_unref(&pool);
-}
-
-template<typename T>
-void
-DeleteUnrefTrashPool(struct pool &pool, T *t) noexcept
-{
-    pool_trash(&pool);
-    DeleteUnrefPool(pool, t);
-}
-
 gcc_malloc gcc_returns_nonnull
 char *
 p_strdup_impl(struct pool &pool, StringView src TRACE_ARGS_DECL) noexcept;
