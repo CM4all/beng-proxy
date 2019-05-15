@@ -195,9 +195,6 @@ run_istream_ctx(const Traits &traits, Context &ctx, PoolPtr pool)
         gcc_unused off_t a2 = ctx.input.GetAvailable(true);
     }
 
-    pool.reset();
-    pool_commit();
-
     if (traits.got_data_assert) {
         while (!ctx.eof)
             ctx.ReadExpect();
@@ -215,6 +212,7 @@ run_istream_ctx(const Traits &traits, Context &ctx, PoolPtr pool)
                   0);
     }
 
+    pool.reset();
     pool_commit();
 }
 
@@ -498,11 +496,9 @@ TYPED_TEST_P(IstreamFilterTest, AbortWithoutHandler)
     auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
     auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
-    pool.reset();
-    pool_commit();
-
     istream.Clear();
 
+    pool.reset();
     pool_commit();
 }
 
@@ -519,8 +515,6 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandler)
 
     auto inject = istream_inject_new(pool, traits.CreateInput(pool));
     auto istream = traits.CreateTest(instance.event_loop, pool, std::move(inject.first));
-    pool.reset();
-    pool_commit();
 
     Context ctx(instance,
                 traits.expected_result,
@@ -535,6 +529,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandler)
 
     ASSERT_EQ(ctx.abort_istream, nullptr);
 
+    pool.reset();
     pool_commit();
 }
 
@@ -552,8 +547,6 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandlerHalf)
     auto inject = istream_inject_new(pool, istream_four_new(pool, traits.CreateInput(pool)));
     auto istream = traits.CreateTest(instance.event_loop, pool,
                                istream_byte_new(pool, std::move(inject.first)));
-    pool.reset();
-    pool_commit();
 
     Context ctx(instance,
                 traits.expected_result,
@@ -569,6 +562,7 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandlerHalf)
 
     ASSERT_TRUE(ctx.abort_istream == nullptr || ctx.abort_after >= 0);
 
+    pool.reset();
     pool_commit();
 }
 
@@ -627,7 +621,6 @@ TYPED_TEST_P(IstreamFilterTest, BigHold)
     hold.Clear();
 
     pool.reset();
-
     pool_commit();
 }
 
