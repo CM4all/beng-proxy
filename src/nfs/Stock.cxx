@@ -51,16 +51,18 @@ struct NfsStockRequest final
       Cancellable {
     NfsStockConnection &connection;
 
-    struct pool &pool;
     NfsStockGetHandler &handler;
 
-    NfsStockRequest(NfsStockConnection &_connection, struct pool &_pool,
+    NfsStockRequest(NfsStockConnection &_connection,
                     NfsStockGetHandler &_handler,
                     CancellablePointer &cancel_ptr)
-        :connection(_connection), pool(_pool),
+        :connection(_connection),
          handler(_handler) {
-        pool_ref(&pool);
         cancel_ptr = *this;
+    }
+
+    void Destroy() noexcept {
+        this->~NfsStockRequest();
     }
 
     /* virtual methods from class Cancellable */
@@ -148,9 +150,9 @@ NfsStockConnection::OnNfsClientReady(NfsClient &_client) noexcept
     client = &_client;
 
     requests.clear_and_dispose([&_client](NfsStockRequest *request){
-            request->handler.OnNfsStockReady(_client);
-            DeleteUnrefPool(request->pool, request);
-        });
+        request->handler.OnNfsStockReady(_client);
+        request->Destroy();
+    });
 }
 
 void
@@ -159,9 +161,9 @@ NfsStockConnection::OnNfsMountError(std::exception_ptr ep) noexcept
     assert(!stock.connections.empty());
 
     requests.clear_and_dispose([&ep](NfsStockRequest *request){
-            request->handler.OnNfsStockError(ep);
-            DeleteUnrefPool(request->pool, request);
-        });
+        request->handler.OnNfsStockError(ep);
+        request->Destroy();
+    });
 
     stock.Remove(*this);
     delete this;
@@ -188,7 +190,7 @@ void
 NfsStockRequest::Cancel() noexcept
 {
     connection.Remove(*this);
-    DeleteUnrefPool(pool, this);
+    Destroy();
 
     // TODO: abort client if all requests are gone?
 }
@@ -252,7 +254,7 @@ NfsStock::Get(struct pool &caller_pool,
     }
 
     auto request = NewFromPool<NfsStockRequest>(caller_pool, *connection,
-                                                caller_pool, handler,
+                                                handler,
                                                 cancel_ptr);
     connection->requests.push_front(*request);
 
