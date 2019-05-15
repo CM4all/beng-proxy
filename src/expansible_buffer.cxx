@@ -39,7 +39,8 @@
 #include <string.h>
 
 ExpansibleBuffer::ExpansibleBuffer(struct pool &_pool,
-                                   size_t initial_size, size_t _hard_limit)
+                                   size_t initial_size,
+                                   size_t _hard_limit) noexcept
     :pool(_pool),
      buffer((char *)p_malloc(&pool, initial_size)),
      hard_limit(_hard_limit),
@@ -49,7 +50,7 @@ ExpansibleBuffer::ExpansibleBuffer(struct pool &_pool,
 }
 
 void
-ExpansibleBuffer::Clear()
+ExpansibleBuffer::Clear() noexcept
 {
     PoisonUndefined(buffer, max_size);
 
@@ -57,7 +58,7 @@ ExpansibleBuffer::Clear()
 }
 
 bool
-ExpansibleBuffer::Resize(size_t new_max_size)
+ExpansibleBuffer::Resize(size_t new_max_size) noexcept
 {
     assert(new_max_size > max_size);
 
@@ -75,7 +76,7 @@ ExpansibleBuffer::Resize(size_t new_max_size)
 }
 
 void *
-ExpansibleBuffer::Write(size_t length)
+ExpansibleBuffer::Write(size_t length) noexcept
 {
     size_t new_size = size + length;
     if (new_size > max_size &&
@@ -89,7 +90,7 @@ ExpansibleBuffer::Write(size_t length)
 }
 
 bool
-ExpansibleBuffer::Write(const void *p, size_t length)
+ExpansibleBuffer::Write(const void *p, size_t length) noexcept
 {
     void *q = Write(length);
     if (q == nullptr)
@@ -100,13 +101,13 @@ ExpansibleBuffer::Write(const void *p, size_t length)
 }
 
 bool
-ExpansibleBuffer::Write(const char *p)
+ExpansibleBuffer::Write(const char *p) noexcept
 {
     return Write(p, strlen(p));
 }
 
 bool
-ExpansibleBuffer::Set(const void *p, size_t new_size)
+ExpansibleBuffer::Set(const void *p, size_t new_size) noexcept
 {
     if (new_size > max_size && !Resize(((new_size - 1) | 0x3ff) + 1))
         return false;
@@ -117,19 +118,19 @@ ExpansibleBuffer::Set(const void *p, size_t new_size)
 }
 
 bool
-ExpansibleBuffer::Set(StringView p)
+ExpansibleBuffer::Set(StringView p) noexcept
 {
     return Set(p.data, p.size);
 }
 
 ConstBuffer<void>
-ExpansibleBuffer::Read() const
+ExpansibleBuffer::Read() const noexcept
 {
     return {buffer, size};
 }
 
 const char *
-ExpansibleBuffer::ReadString()
+ExpansibleBuffer::ReadString() noexcept
 {
     if (size == 0 || buffer[size - 1] != 0)
         /* append a null terminator */
@@ -141,19 +142,19 @@ ExpansibleBuffer::ReadString()
 }
 
 StringView
-ExpansibleBuffer::ReadStringView() const
+ExpansibleBuffer::ReadStringView() const noexcept
 {
     return { (const char *)buffer, size };
 }
 
 void *
-ExpansibleBuffer::Dup(struct pool &_pool) const
+ExpansibleBuffer::Dup(struct pool &_pool) const noexcept
 {
     return p_memdup(&_pool, buffer, size);
 }
 
 char *
-ExpansibleBuffer::StringDup(struct pool &_pool) const
+ExpansibleBuffer::StringDup(struct pool &_pool) const noexcept
 {
     char *p = (char *)p_malloc(&_pool, size + 1);
     memcpy(p, buffer, size);
