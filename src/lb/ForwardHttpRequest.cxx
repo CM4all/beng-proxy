@@ -186,16 +186,9 @@ private:
     void Cancel() noexcept override {
         assert(!response_sent);
 
-        /* this pool reference is necessary because
-           cancel_ptr.Cancel() may release the only remaining
-           reference on the pool */
-        const ScopePoolRef ref(pool TRACE_ARGS);
-
-        body.Clear();
-        cancel_ptr.Cancel();
-
-        assert(stock_item == nullptr);
+        CancellablePointer c(std::move(cancel_ptr));
         Destroy();
+        c.Cancel();
     }
 
     /* virtual methods from class StockGetHandler */
@@ -522,12 +515,11 @@ LbRequest::Start() noexcept
         auto *member = cluster.Pick(GetEventLoop().SteadyNow(),
                                     GetStickyHash());
         if (member == nullptr) {
-            const ScopePoolRef ref(pool TRACE_ARGS);
-            body.Clear();
-            http_server_send_message(&request,
+            auto &_request = request;
+            Destroy();
+            http_server_send_message(&_request,
                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                      "Zeroconf cluster is empty");
-            Destroy();
             return;
         }
 

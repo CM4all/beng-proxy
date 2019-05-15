@@ -151,16 +151,9 @@ private:
     void Cancel() noexcept override {
         assert(!response_sent);
 
-        /* this pool reference is necessary because
-           cancel_ptr.Cancel() may release the only remaining
-           reference on the pool */
-        const ScopePoolRef ref(pool TRACE_ARGS);
-
-        body.Clear();
-        cancel_ptr.Cancel();
-
-        assert(stock_item == nullptr);
+        CancellablePointer c(std::move(cancel_ptr));
         Destroy();
+        c.Cancel();
     }
 
     /* virtual methods from class StockGetHandler */
