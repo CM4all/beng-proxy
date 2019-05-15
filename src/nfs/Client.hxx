@@ -56,7 +56,7 @@ void
 nfs_client_free(NfsClient *client);
 
 void
-nfs_client_open_file(NfsClient &client, struct pool &pool,
+nfs_client_open_file(NfsClient &client,
                      const char *path,
                      NfsClientOpenFileHandler &handler,
                      CancellablePointer &cancel_ptr);

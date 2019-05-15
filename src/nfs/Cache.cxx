@@ -375,7 +375,7 @@ NfsCacheRequest::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
 void
 NfsCacheRequest::OnNfsStockReady(NfsClient &client)
 {
-    nfs_client_open_file(client, pool, path,
+    nfs_client_open_file(client, path,
                          *this, cancel_ptr);
 }
 

@@ -69,12 +69,6 @@ class NfsFileHandle final
 
     NfsFile &file;
 
-    /**
-     * The pool provided by the caller.  It must be referenced until
-     * the response has been delivered.
-     */
-    struct pool &caller_pool;
-
     enum {
         /**
          * Waiting for the file to be opened.  The
@@ -112,8 +106,8 @@ class NfsFileHandle final
     NfsClientReadFileHandler *read_handler;
 
 public:
-    NfsFileHandle(NfsFile &_file, struct pool &_caller_pool)
-        :file(_file), caller_pool(_caller_pool) {}
+    explicit NfsFileHandle(NfsFile &_file) noexcept
+        :file(_file) {}
 
     void Destroy() {
         delete this;
@@ -123,9 +117,7 @@ public:
         assert(state == WAITING);
         state = IDLE;
 
-        struct pool &cp = caller_pool;
         open_handler->OnNfsOpen(this, &st);
-        pool_unref(&cp);
     }
 
     void Continue(NfsClientOpenFileHandler &_handler,
@@ -141,8 +133,6 @@ public:
         state = WAITING;
         open_handler = &_handler;
         cancel_ptr = *this;
-
-        pool_ref(&caller_pool);
     }
 
     /**
@@ -294,8 +284,8 @@ public:
      */
     void Release();
 
-    NfsFileHandle *NewHandle(struct pool &caller_pool) {
-        auto *handle = new NfsFileHandle(*this, caller_pool);
+    NfsFileHandle *NewHandle() noexcept {
+        auto *handle = new NfsFileHandle(*this);
         handles.push_front(*handle);
         ++n_active_handles;
 
@@ -446,8 +436,7 @@ public:
     void SocketEventCallback(unsigned events) noexcept;
     void TimeoutCallback() noexcept;
 
-    void OpenFile(struct pool &caller_pool,
-                  const char *path,
+    void OpenFile(const char *path,
                   NfsClientOpenFileHandler &handler,
                   CancellablePointer &cancel_ptr);
 
@@ -605,7 +594,6 @@ NfsFileHandle::Abort(std::exception_ptr ep)
 
     open_handler->OnNfsOpenError(ep);
 
-    pool_unref(&caller_pool);
     Destroy();
 }
 
@@ -770,8 +758,6 @@ NfsFile::ReadAsync(uint64_t offset, uint64_t count,
 void
 NfsFileHandle::Cancel() noexcept
 {
-    pool_unref(&caller_pool);
-
     Deactivate();
     Release();
 }
@@ -1086,8 +1072,7 @@ nfs_client_free(NfsClient *client)
 }
 
 inline void
-NfsClient::OpenFile(struct pool &caller_pool,
-                    const char *path,
+NfsClient::OpenFile(const char *path,
                     NfsClientOpenFileHandler &_handler,
                     CancellablePointer &cancel_ptr)
 {
@@ -1117,7 +1102,7 @@ NfsClient::OpenFile(struct pool &caller_pool,
 
     const bool was_active = file->HasActiveHandles();
 
-    auto handle = file->NewHandle(caller_pool);
+    auto handle = file->NewHandle();
 
     if (!was_active) {
         /* file has just got the first active handle */
@@ -1139,12 +1124,12 @@ NfsClient::OpenFile(struct pool &caller_pool,
 }
 
 void
-nfs_client_open_file(NfsClient &client, struct pool &caller_pool,
+nfs_client_open_file(NfsClient &client,
                      const char *path,
                      NfsClientOpenFileHandler &handler,
                      CancellablePointer &cancel_ptr)
 {
-    client.OpenFile(caller_pool, path, handler, cancel_ptr);
+    client.OpenFile(path, handler, cancel_ptr);
 }
 
 inline void
