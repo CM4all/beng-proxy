@@ -90,9 +90,9 @@ struct NfsStockConnection final
     }
 
     /* virtual methods from NfsClientHandler */
-    void OnNfsClientReady(NfsClient &client) override;
-    void OnNfsMountError(std::exception_ptr ep) override;
-    void OnNfsClientClosed(std::exception_ptr ep) override;
+    void OnNfsClientReady(NfsClient &client) noexcept override;
+    void OnNfsMountError(std::exception_ptr ep) noexcept override;
+    void OnNfsClientClosed(std::exception_ptr ep) noexcept override;
 
     struct Compare {
         bool operator()(const NfsStockConnection &a, const NfsStockConnection &b) const {
@@ -141,7 +141,7 @@ struct NfsStock final {
  */
 
 void
-NfsStockConnection::OnNfsClientReady(NfsClient &_client)
+NfsStockConnection::OnNfsClientReady(NfsClient &_client) noexcept
 {
     assert(client == nullptr);
 
@@ -154,7 +154,7 @@ NfsStockConnection::OnNfsClientReady(NfsClient &_client)
 }
 
 void
-NfsStockConnection::OnNfsMountError(std::exception_ptr ep)
+NfsStockConnection::OnNfsMountError(std::exception_ptr ep) noexcept
 {
     assert(!stock.connections.empty());
 
@@ -168,7 +168,7 @@ NfsStockConnection::OnNfsMountError(std::exception_ptr ep)
 }
 
 void
-NfsStockConnection::OnNfsClientClosed(std::exception_ptr ep)
+NfsStockConnection::OnNfsClientClosed(std::exception_ptr ep) noexcept
 {
     assert(requests.empty());
     assert(!stock.connections.empty());

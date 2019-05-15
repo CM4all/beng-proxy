@@ -210,12 +210,13 @@ struct NfsCacheRequest final : NfsStockGetHandler, NfsClientOpenFileHandler {
     }
 
     /* virtual methods from class NfsStockGetHandler */
-    void OnNfsStockReady(NfsClient &client) override;
-    void OnNfsStockError(std::exception_ptr ep) override;
+    void OnNfsStockReady(NfsClient &client) noexcept override;
+    void OnNfsStockError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class NfsClientOpenFileHandler */
-    void OnNfsOpen(NfsFileHandle *handle, const struct stat *st) override;
-    void OnNfsOpenError(std::exception_ptr ep) override {
+    void OnNfsOpen(NfsFileHandle *handle,
+                   const struct stat *st) noexcept override;
+    void OnNfsOpenError(std::exception_ptr ep) noexcept override {
         Error(ep);
     }
 };
@@ -351,7 +352,8 @@ NfsCacheStore::RubberError(std::exception_ptr ep) noexcept
  */
 
 void
-NfsCacheRequest::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
+NfsCacheRequest::OnNfsOpen(NfsFileHandle *handle,
+                           const struct stat *st) noexcept
 {
     NfsCacheHandle handle2 = {
         .cache = cache,
@@ -373,14 +375,14 @@ NfsCacheRequest::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
  */
 
 void
-NfsCacheRequest::OnNfsStockReady(NfsClient &client)
+NfsCacheRequest::OnNfsStockReady(NfsClient &client) noexcept
 {
     nfs_client_open_file(client, path,
                          *this, cancel_ptr);
 }
 
 void
-NfsCacheRequest::OnNfsStockError(std::exception_ptr ep)
+NfsCacheRequest::OnNfsStockError(std::exception_ptr ep) noexcept
 {
     Error(ep);
 }

@@ -73,13 +73,14 @@ struct Context final : PInstance, NfsClientHandler, NfsClientOpenFileHandler {
     void ShutdownCallback() noexcept;
 
     /* virtual methods from NfsClientHandler */
-    void OnNfsClientReady(NfsClient &client) override;
-    void OnNfsMountError(std::exception_ptr ep) override;
-    void OnNfsClientClosed(std::exception_ptr ep) override;
+    void OnNfsClientReady(NfsClient &client) noexcept override;
+    void OnNfsMountError(std::exception_ptr ep) noexcept override;
+    void OnNfsClientClosed(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class NfsClientOpenFileHandler */
-    void OnNfsOpen(NfsFileHandle *handle, const struct stat *st) override;
-    void OnNfsOpenError(std::exception_ptr ep) override;
+    void OnNfsOpen(NfsFileHandle *handle,
+                   const struct stat *st) noexcept override;
+    void OnNfsOpenError(std::exception_ptr ep) noexcept override;
 };
 
 void
@@ -156,7 +157,7 @@ static constexpr SinkFdHandler my_sink_fd_handler = {
  */
 
 void
-Context::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
+Context::OnNfsOpen(NfsFileHandle *handle, const struct stat *st) noexcept
 {
     assert(!aborted);
     assert(!failed);
@@ -174,7 +175,7 @@ Context::OnNfsOpen(NfsFileHandle *handle, const struct stat *st)
 }
 
 void
-Context::OnNfsOpenError(std::exception_ptr ep)
+Context::OnNfsOpenError(std::exception_ptr ep) noexcept
 {
     assert(!aborted);
     assert(!failed);
@@ -194,7 +195,7 @@ Context::OnNfsOpenError(std::exception_ptr ep)
  */
 
 void
-Context::OnNfsClientReady(NfsClient &_client)
+Context::OnNfsClientReady(NfsClient &_client) noexcept
 {
     assert(!aborted);
     assert(!failed);
@@ -209,7 +210,7 @@ Context::OnNfsClientReady(NfsClient &_client)
 }
 
 void
-Context::OnNfsMountError(std::exception_ptr ep)
+Context::OnNfsMountError(std::exception_ptr ep) noexcept
 {
     assert(!aborted);
     assert(!failed);
@@ -224,7 +225,7 @@ Context::OnNfsMountError(std::exception_ptr ep)
 }
 
 void
-Context::OnNfsClientClosed(std::exception_ptr ep)
+Context::OnNfsClientClosed(std::exception_ptr ep) noexcept
 {
     assert(!aborted);
     assert(!failed);

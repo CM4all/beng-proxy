@@ -119,8 +119,8 @@ private:
     }
 
     /* virtual methods from class NfsClientReadFileHandler */
-    void OnNfsRead(const void *data, size_t length) override;
-    void OnNfsReadError(std::exception_ptr ep) override;
+    void OnNfsRead(const void *data, size_t length) noexcept override;
+    void OnNfsReadError(std::exception_ptr ep) noexcept override;
 };
 
 void
@@ -180,7 +180,7 @@ NfsIstream::ReadFromBuffer()
  */
 
 void
-NfsIstream::OnNfsRead(const void *data, size_t _length)
+NfsIstream::OnNfsRead(const void *data, size_t _length) noexcept
 {
     assert(pending_read > 0);
     assert(discard_read <= pending_read);
@@ -203,7 +203,7 @@ NfsIstream::OnNfsRead(const void *data, size_t _length)
 }
 
 void
-NfsIstream::OnNfsReadError(std::exception_ptr ep)
+NfsIstream::OnNfsReadError(std::exception_ptr ep) noexcept
 {
     assert(pending_read > 0);
 
