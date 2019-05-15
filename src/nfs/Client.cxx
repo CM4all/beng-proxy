@@ -109,11 +109,11 @@ public:
     explicit NfsFileHandle(NfsFile &_file) noexcept
         :file(_file) {}
 
-    void Destroy() {
+    void Destroy() noexcept {
         delete this;
     }
 
-    void Continue(const struct stat &st) {
+    void Continue(const struct stat &st) noexcept {
         assert(state == WAITING);
         state = IDLE;
 
@@ -121,7 +121,7 @@ public:
     }
 
     void Continue(NfsClientOpenFileHandler &_handler,
-                  const struct stat &st) {
+                  const struct stat &st) noexcept {
         assert(state == WAITING);
         state = IDLE;
 
@@ -129,7 +129,7 @@ public:
     }
 
     void Wait(NfsClientOpenFileHandler &_handler,
-              CancellablePointer &cancel_ptr) {
+              CancellablePointer &cancel_ptr) noexcept {
         state = WAITING;
         open_handler = &_handler;
         cancel_ptr = *this;
@@ -139,21 +139,22 @@ public:
      * Mark this object "inactive".  Call Release() after all
      * references by libnfs have been cleared.
      */
-    void Deactivate();
+    void Deactivate() noexcept;
 
     /**
      * Release an "inactive" handle.  Must have called Deactivate()
      * prior to this.
      */
-    void Release();
+    void Release() noexcept;
 
-    void Abort(std::exception_ptr ep);
+    void Abort(std::exception_ptr ep) noexcept;
 
-    void Close();
+    void Close() noexcept;
     void Read(uint64_t offset, size_t length,
-              NfsClientReadFileHandler &handler);
+              NfsClientReadFileHandler &handler) noexcept;
 
-    void ReadCallback(int status, struct nfs_context *nfs, void *data);
+    void ReadCallback(int status, struct nfs_context *nfs,
+                      void *data) noexcept;
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override;
@@ -226,7 +227,7 @@ class NfsFile final
 
 public:
     NfsFile(EventLoop &event_loop,
-            NfsClient &_client, const char *_path)
+            NfsClient &_client, const char *_path) noexcept
         :client(_client),
          path(_path),
          expire_event(event_loop, BIND_THIS_METHOD(ExpireCallback)) {}
@@ -236,7 +237,7 @@ public:
      */
     void Open(struct nfs_context *context);
 
-    void Destroy() {
+    void Destroy() noexcept {
         delete this;
     }
 
@@ -244,23 +245,23 @@ public:
      * Is the object ready for reading?
      */
     gcc_pure
-    bool IsReady() const;
+    bool IsReady() const noexcept;
 
-    bool IsExpired() const {
+    bool IsExpired() const noexcept {
         return state == EXPIRED;
     }
 
-    const struct stat &GetStat() const {
+    const auto &GetStat() const noexcept {
         assert(IsReady());
 
         return stat;
     }
 
-    bool HasHandles() const {
+    bool HasHandles() const noexcept {
         return !handles.empty();
     }
 
-    bool HasActiveHandles() const {
+    bool HasActiveHandles() const noexcept {
         return n_active_handles > 0;
     }
 
@@ -268,9 +269,9 @@ public:
      * Make the #NfsFile "inactive".  It must be active prior to
      * calling this function.
      */
-    void Deactivate();
+    void Deactivate() noexcept;
 
-    void Unreference() {
+    void Unreference() noexcept {
         assert(n_active_handles > 0);
         --n_active_handles;
 
@@ -282,7 +283,7 @@ public:
      * Release an "inactive" file.  Must have called Deactivate()
      * prior to this.
      */
-    void Release();
+    void Release() noexcept;
 
     NfsFileHandle *NewHandle() noexcept {
         auto *handle = new NfsFileHandle(*this);
@@ -292,7 +293,7 @@ public:
         return handle;
     }
 
-    void RemoveHandle(NfsFileHandle &h) {
+    void RemoveHandle(NfsFileHandle &h) noexcept {
         assert(!handles.empty());
 
         handles.erase(handles.iterator_to(h));
@@ -301,15 +302,15 @@ public:
             Release();
     }
 
-    void AbortHandles(std::exception_ptr ep);
+    void AbortHandles(std::exception_ptr ep) noexcept;
 
     /**
      * Opening this file has failed.  Remove it from the client and notify
      * all waiting #http_response_handler instances.
      */
-    void Abort(std::exception_ptr ep);
+    void Abort(std::exception_ptr ep) noexcept;
 
-    void Continue();
+    void Continue() noexcept;
 
     /**
      * Throws exception on error.
@@ -319,19 +320,21 @@ public:
 
     void ExpireCallback() noexcept;
 
-    void FstatCallback(int status, struct nfs_context *nfs, void *data);
-    void OpenCallback(int status, struct nfs_context *nfs, void *data);
+    void FstatCallback(int status, struct nfs_context *nfs,
+                       void *data) noexcept;
+    void OpenCallback(int status, struct nfs_context *nfs,
+                      void *data) noexcept;
 
     struct Compare {
-        bool operator()(const NfsFile &a, const NfsFile &b) const {
+        bool operator()(const NfsFile &a, const NfsFile &b) const noexcept {
             return a.path < b.path;
         }
 
-        bool operator()(const NfsFile &a, const char *b) const {
+        bool operator()(const NfsFile &a, const char *b) const noexcept {
             return a.path < b;
         }
 
-        bool operator()(const char *a, const NfsFile &b) const {
+        bool operator()(const char *a, const NfsFile &b) const noexcept {
             return a < b.path;
         }
     };
@@ -400,53 +403,54 @@ class NfsClient final : Cancellable, LeakDetector {
 public:
     NfsClient(EventLoop &event_loop,
               NfsClientHandler &_handler,
-              struct nfs_context &_context)
+              struct nfs_context &_context) noexcept
         :handler(_handler), context(&_context),
          event(event_loop, BIND_THIS_METHOD(SocketEventCallback)),
          timeout_event(event_loop, BIND_THIS_METHOD(TimeoutCallback)) {
     }
 
-    void Destroy() {
+    void Destroy() noexcept {
         delete this;
     }
 
-    EventLoop &GetEventLoop() {
+    auto &GetEventLoop() const noexcept {
         return event.GetEventLoop();
     }
 
     bool Mount(const char *server, const char *exportname,
-               CancellablePointer &cancel_ptr);
+               CancellablePointer &cancel_ptr) noexcept;
 
-    void DestroyContext();
-    void Free();
+    void DestroyContext() noexcept;
+    void Free() noexcept;
 
     /**
      * Mounting has failed.  Destroy the #NfsClientHandler object and
      * report the error to the handler.
      */
-    void MountError(std::exception_ptr ep);
-    void MountCallback(int status, struct nfs_context *nfs, void *data);
+    void MountError(std::exception_ptr ep) noexcept;
+    void MountCallback(int status, struct nfs_context *nfs,
+                       void *data) noexcept;
 
-    void CleanupFiles();
-    void AbortAllFiles(std::exception_ptr ep);
-    void Error(std::exception_ptr ep);
+    void CleanupFiles() noexcept;
+    void AbortAllFiles(std::exception_ptr ep) noexcept;
+    void Error(std::exception_ptr ep) noexcept;
 
-    void AddEvent();
-    void UpdateEvent();
+    void AddEvent() noexcept;
+    void UpdateEvent() noexcept;
     void SocketEventCallback(unsigned events) noexcept;
     void TimeoutCallback() noexcept;
 
     void OpenFile(const char *path,
                   NfsClientOpenFileHandler &handler,
-                  CancellablePointer &cancel_ptr);
+                  CancellablePointer &cancel_ptr) noexcept;
 
-    void DeactivateFile();
+    void DeactivateFile() noexcept;
 
-    void ExpireFile(NfsFile &file) {
+    void ExpireFile(NfsFile &file) noexcept {
         file_map.erase(file_map.iterator_to(file));
     }
 
-    void RemoveFile(NfsFile &file) {
+    void RemoveFile(NfsFile &file) noexcept {
         if (!file.IsExpired())
             file_map.erase(file_map.iterator_to(file));
 
@@ -482,13 +486,13 @@ static constexpr Event::Duration nfs_file_expiry = std::chrono::minutes(1);
 
 static std::exception_ptr
 nfs_client_new_error(int status, struct nfs_context *nfs, void *data,
-                     const char *msg)
+                     const char *msg) noexcept
 {
     return std::make_exception_ptr(NfsClientError(status, nfs, data, msg));
 }
 
-static int
-libnfs_to_libevent(int i)
+static constexpr int
+libnfs_to_libevent(int i) noexcept
 {
     int o = 0;
 
@@ -501,8 +505,8 @@ libnfs_to_libevent(int i)
     return o;
 }
 
-static int
-libevent_to_libnfs(int i)
+static constexpr int
+libevent_to_libnfs(int i) noexcept
 {
     int o = 0;
 
@@ -516,7 +520,7 @@ libevent_to_libnfs(int i)
 }
 
 inline bool
-NfsFile::IsReady() const
+NfsFile::IsReady() const noexcept
 {
     switch (state) {
     case PENDING_OPEN:
@@ -536,7 +540,7 @@ NfsFile::IsReady() const
 }
 
 inline void
-NfsClient::DeactivateFile()
+NfsClient::DeactivateFile() noexcept
 {
     assert(n_active_files > 0);
     --n_active_files;
@@ -547,13 +551,13 @@ NfsClient::DeactivateFile()
 }
 
 inline void
-NfsFile::Deactivate()
+NfsFile::Deactivate() noexcept
 {
     client.DeactivateFile();
 }
 
 void
-NfsFile::Release()
+NfsFile::Release() noexcept
 {
     assert(handles.empty());
     assert(n_active_handles == 0);
@@ -569,13 +573,13 @@ NfsFile::Release()
 }
 
 void
-NfsFileHandle::Deactivate()
+NfsFileHandle::Deactivate() noexcept
 {
     file.Unreference();
 }
 
 void
-NfsFileHandle::Release()
+NfsFileHandle::Release() noexcept
 {
     assert(state == WAITING || state == IDLE);
 
@@ -588,7 +592,7 @@ NfsFileHandle::Release()
 }
 
 void
-NfsFileHandle::Abort(std::exception_ptr ep)
+NfsFileHandle::Abort(std::exception_ptr ep) noexcept
 {
     Deactivate();
 
@@ -598,7 +602,7 @@ NfsFileHandle::Abort(std::exception_ptr ep)
 }
 
 inline void
-NfsFile::AbortHandles(std::exception_ptr ep)
+NfsFile::AbortHandles(std::exception_ptr ep) noexcept
 {
     handles.clear_and_dispose([&ep](NfsFileHandle *handle){
             handle->Abort(ep);
@@ -608,14 +612,14 @@ NfsFile::AbortHandles(std::exception_ptr ep)
 }
 
 void
-NfsFile::Abort(std::exception_ptr ep)
+NfsFile::Abort(std::exception_ptr ep) noexcept
 {
     AbortHandles(ep);
     Release();
 }
 
 void
-NfsClient::DestroyContext()
+NfsClient::DestroyContext() noexcept
 {
     assert(context != nullptr);
     assert(!in_service);
@@ -626,7 +630,7 @@ NfsClient::DestroyContext()
 }
 
 void
-NfsClient::MountError(std::exception_ptr ep)
+NfsClient::MountError(std::exception_ptr ep) noexcept
 {
     assert(context != nullptr);
     assert(!in_service);
@@ -640,7 +644,7 @@ NfsClient::MountError(std::exception_ptr ep)
 }
 
 void
-NfsClient::CleanupFiles()
+NfsClient::CleanupFiles() noexcept
 {
     for (auto file = file_list.begin(), end = file_list.end(); file != end;) {
         auto next = std::next(file);
@@ -653,7 +657,7 @@ NfsClient::CleanupFiles()
 }
 
 inline void
-NfsClient::AbortAllFiles(std::exception_ptr ep)
+NfsClient::AbortAllFiles(std::exception_ptr ep) noexcept
 {
     file_list.clear_and_dispose([&ep](NfsFile *file){
             file->Abort(ep);
@@ -661,7 +665,7 @@ NfsClient::AbortAllFiles(std::exception_ptr ep)
 }
 
 inline void
-NfsClient::Error(std::exception_ptr ep)
+NfsClient::Error(std::exception_ptr ep) noexcept
 {
     if (mount_finished) {
         timeout_event.Cancel();
@@ -677,14 +681,14 @@ NfsClient::Error(std::exception_ptr ep)
 }
 
 void
-NfsClient::AddEvent()
+NfsClient::AddEvent() noexcept
 {
     event.Open(SocketDescriptor(nfs_get_fd(context)));
     event.Schedule(libnfs_to_libevent(nfs_which_events(context)));
 }
 
 void
-NfsClient::UpdateEvent()
+NfsClient::UpdateEvent() noexcept
 {
     if (in_event)
         return;
@@ -694,7 +698,8 @@ NfsClient::UpdateEvent()
 }
 
 inline void
-NfsFileHandle::ReadCallback(int status, struct nfs_context *nfs, void *data)
+NfsFileHandle::ReadCallback(int status, struct nfs_context *nfs,
+                            void *data) noexcept
 {
     assert(state == PENDING || state == PENDING_CLOSED);
 
@@ -717,7 +722,7 @@ NfsFileHandle::ReadCallback(int status, struct nfs_context *nfs, void *data)
 
 static void
 nfs_read_cb(int status, struct nfs_context *nfs,
-            void *data, void *private_data)
+            void *data, void *private_data) noexcept
 {
     auto &handle = *(NfsFileHandle *)private_data;
     handle.ReadCallback(status, nfs, data);
@@ -729,7 +734,7 @@ nfs_read_cb(int status, struct nfs_context *nfs,
  */
 
 inline void
-NfsFile::Continue()
+NfsFile::Continue() noexcept
 {
     assert(IsReady());
 
@@ -878,7 +883,8 @@ NfsClient::TimeoutCallback() noexcept
  */
 
 inline void
-NfsClient::MountCallback(int status, struct nfs_context *nfs, void *data)
+NfsClient::MountCallback(int status, struct nfs_context *nfs,
+                         void *data) noexcept
 {
     mount_finished = true;
 
@@ -895,7 +901,7 @@ NfsClient::MountCallback(int status, struct nfs_context *nfs, void *data)
 
 static void
 nfs_mount_cb(int status, struct nfs_context *nfs, void *data,
-             void *private_data)
+             void *private_data) noexcept
 {
     auto &client = *(NfsClient *)private_data;
     client.MountCallback(status, nfs, data);
@@ -903,7 +909,7 @@ nfs_mount_cb(int status, struct nfs_context *nfs, void *data,
 
 bool
 NfsClient::Mount(const char *server, const char *exportname,
-                 CancellablePointer &cancel_ptr)
+                 CancellablePointer &cancel_ptr) noexcept
 {
     assert(context != nullptr);
     assert(!in_service);
@@ -927,7 +933,8 @@ NfsClient::Mount(const char *server, const char *exportname,
 }
 
 inline void
-NfsFile::FstatCallback(int status, struct nfs_context *nfs, void *data)
+NfsFile::FstatCallback(int status, struct nfs_context *nfs,
+                       void *data) noexcept
 {
     assert(state == NfsFile::PENDING_FSTAT);
 
@@ -953,14 +960,14 @@ NfsFile::FstatCallback(int status, struct nfs_context *nfs, void *data)
 
 static void
 nfs_fstat_cb(int status, struct nfs_context *nfs,
-             void *data, void *private_data)
+             void *data, void *private_data) noexcept
 {
     NfsFile *const file = (NfsFile *)private_data;
     file->FstatCallback(status, nfs, data);
 }
 
 inline void
-NfsFile::OpenCallback(int status, struct nfs_context *nfs, void *data)
+NfsFile::OpenCallback(int status, struct nfs_context *nfs, void *data) noexcept
 {
     assert(state == NfsFile::PENDING_OPEN);
 
@@ -983,7 +990,7 @@ NfsFile::OpenCallback(int status, struct nfs_context *nfs, void *data)
 
 static void
 nfs_open_cb(int status, gcc_unused struct nfs_context *nfs,
-            void *data, void *private_data)
+            void *data, void *private_data) noexcept
 {
     NfsFile *const file = (NfsFile *)private_data;
     file->OpenCallback(status, nfs, data);
@@ -1034,7 +1041,7 @@ void
 nfs_client_new(EventLoop &event_loop,
                const char *server, const char *root,
                NfsClientHandler &handler,
-               CancellablePointer &cancel_ptr)
+               CancellablePointer &cancel_ptr) noexcept
 {
     assert(server != nullptr);
     assert(root != nullptr);
@@ -1050,7 +1057,7 @@ nfs_client_new(EventLoop &event_loop,
 }
 
 inline void
-NfsClient::Free()
+NfsClient::Free() noexcept
 {
     assert(n_active_files == 0);
 
@@ -1064,7 +1071,7 @@ NfsClient::Free()
 }
 
 void
-nfs_client_free(NfsClient *client)
+nfs_client_free(NfsClient *client) noexcept
 {
     assert(client != nullptr);
 
@@ -1074,7 +1081,7 @@ nfs_client_free(NfsClient *client)
 inline void
 NfsClient::OpenFile(const char *path,
                     NfsClientOpenFileHandler &_handler,
-                    CancellablePointer &cancel_ptr)
+                    CancellablePointer &cancel_ptr) noexcept
 {
     assert(context != nullptr);
 
@@ -1127,13 +1134,13 @@ void
 nfs_client_open_file(NfsClient &client,
                      const char *path,
                      NfsClientOpenFileHandler &handler,
-                     CancellablePointer &cancel_ptr)
+                     CancellablePointer &cancel_ptr) noexcept
 {
     client.OpenFile(path, handler, cancel_ptr);
 }
 
 inline void
-NfsFileHandle::Close()
+NfsFileHandle::Close() noexcept
 {
     assert(file.IsReady());
 
@@ -1159,14 +1166,14 @@ NfsFileHandle::Close()
 }
 
 void
-nfs_client_close_file(NfsFileHandle &handle)
+nfs_client_close_file(NfsFileHandle &handle) noexcept
 {
     handle.Close();
 }
 
 inline void
 NfsFileHandle::Read(uint64_t offset, size_t length,
-                    NfsClientReadFileHandler &handler)
+                    NfsClientReadFileHandler &handler) noexcept
 {
     assert(state == IDLE);
 
@@ -1184,7 +1191,7 @@ NfsFileHandle::Read(uint64_t offset, size_t length,
 void
 nfs_client_read_file(NfsFileHandle &handle,
                      uint64_t offset, size_t length,
-                     NfsClientReadFileHandler &handler)
+                     NfsClientReadFileHandler &handler) noexcept
 {
     return handle.Read(offset, length, handler);
 }
