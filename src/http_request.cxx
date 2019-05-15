@@ -143,8 +143,9 @@ private:
 
     void Failed(std::exception_ptr ep) {
         body.Clear();
-        handler.InvokeError(ep);
+        auto &_handler = handler;
         ResponseSent();
+        _handler.InvokeError(ep);
     }
 
     /* virtual methods from class Cancellable */
@@ -182,8 +183,9 @@ HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
     failure->UnsetProtocol();
 
-    handler.InvokeResponse(status, std::move(_headers), std::move(_body));
+    auto &_handler = handler;
     ResponseSent();
+    _handler.InvokeResponse(status, std::move(_headers), std::move(_body));
 }
 
 static bool
