@@ -51,7 +51,7 @@
 
 static const uint8_t PROTOCOL_VERSION = 3;
 
-struct TranslateClient final : BufferedSocketHandler, Cancellable {
+class TranslateClient final : BufferedSocketHandler, Cancellable {
     struct pool &pool;
 
     Stopwatch *const stopwatch;
@@ -67,6 +67,7 @@ struct TranslateClient final : BufferedSocketHandler, Cancellable {
 
     TranslateParser parser;
 
+public:
     TranslateClient(struct pool &p, EventLoop &event_loop,
                     SocketDescriptor fd, Lease &lease,
                     const TranslateRequest &request2,
@@ -74,6 +75,9 @@ struct TranslateClient final : BufferedSocketHandler, Cancellable {
                     const TranslateHandler &_handler, void *_ctx,
                     CancellablePointer &cancel_ptr);
 
+    bool TryWrite();
+
+private:
     void Destroy() {
         this->~TranslateClient();
     }
@@ -83,7 +87,6 @@ struct TranslateClient final : BufferedSocketHandler, Cancellable {
     void Fail(std::exception_ptr ep);
 
     BufferedResult Feed(const uint8_t *data, size_t length);
-    bool TryWrite();
 
     /* virtual methods from class BufferedSocketHandler */
     BufferedResult OnBufferedData() override {
