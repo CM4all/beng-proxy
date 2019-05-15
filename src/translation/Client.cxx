@@ -73,20 +73,20 @@ public:
                     const TranslateRequest &request2,
                     GrowingBuffer &&_request,
                     const TranslateHandler &_handler, void *_ctx,
-                    CancellablePointer &cancel_ptr);
+                    CancellablePointer &cancel_ptr) noexcept;
 
-    bool TryWrite();
+    bool TryWrite() noexcept;
 
 private:
-    void Destroy() {
+    void Destroy() noexcept {
         this->~TranslateClient();
     }
 
-    void ReleaseSocket(bool reuse);
+    void ReleaseSocket(bool reuse) noexcept;
 
-    void Fail(std::exception_ptr ep);
+    void Fail(std::exception_ptr ep) noexcept;
 
-    BufferedResult Feed(const uint8_t *data, size_t length);
+    BufferedResult Feed(const uint8_t *data, size_t length) noexcept;
 
     /* virtual methods from class BufferedSocketHandler */
     BufferedResult OnBufferedData() override {
@@ -121,7 +121,7 @@ static constexpr auto translate_read_timeout = std::chrono::minutes(1);
 static constexpr auto translate_write_timeout = std::chrono::seconds(10);
 
 void
-TranslateClient::ReleaseSocket(bool reuse)
+TranslateClient::ReleaseSocket(bool reuse) noexcept
 {
     assert(socket.IsConnected());
 
@@ -134,7 +134,7 @@ TranslateClient::ReleaseSocket(bool reuse)
 }
 
 void
-TranslateClient::Fail(std::exception_ptr ep)
+TranslateClient::Fail(std::exception_ptr ep) noexcept
 {
     stopwatch_event(stopwatch, "error");
 
@@ -154,7 +154,7 @@ TranslateClient::Fail(std::exception_ptr ep)
  */
 
 inline BufferedResult
-TranslateClient::Feed(const uint8_t *data, size_t length)
+TranslateClient::Feed(const uint8_t *data, size_t length) noexcept
 try {
     size_t consumed = 0;
     while (consumed < length) {
@@ -198,7 +198,7 @@ try {
  */
 
 bool
-TranslateClient::TryWrite()
+TranslateClient::TryWrite() noexcept
 {
     auto src = request.Read();
     assert(!src.IsNull());
@@ -237,7 +237,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
                                  const TranslateRequest &request2,
                                  GrowingBuffer &&_request,
                                  const TranslateHandler &_handler, void *_ctx,
-                                 CancellablePointer &cancel_ptr)
+                                 CancellablePointer &cancel_ptr) noexcept
     :pool(p),
      stopwatch(stopwatch_new(&p, fd, request2.GetDiagnosticName())),
      socket(event_loop),
@@ -259,7 +259,7 @@ translate(struct pool &pool, EventLoop &event_loop,
           SocketDescriptor fd, Lease &lease,
           const TranslateRequest &request,
           const TranslateHandler &handler, void *ctx,
-          CancellablePointer &cancel_ptr)
+          CancellablePointer &cancel_ptr) noexcept
 try {
     assert(fd.IsDefined());
     assert(request.uri != nullptr || request.widget_type != nullptr ||

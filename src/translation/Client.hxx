@@ -49,6 +49,6 @@ translate(struct pool &pool, EventLoop &event_loop,
           SocketDescriptor fd, Lease &lease,
           const TranslateRequest &request,
           const TranslateHandler &handler, void *ctx,
-          CancellablePointer &cancel_ptr);
+          CancellablePointer &cancel_ptr) noexcept;
 
 #endif
