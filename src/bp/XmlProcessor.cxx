@@ -102,8 +102,6 @@ struct XmlProcessor final : PoolHolder, XmlParserHandler, Cancellable {
         void _Close() noexcept override;
     };
 
-    struct pool &caller_pool;
-
     Widget &container;
     const char *lookup_id;
     struct processor_env &env;
@@ -228,17 +226,15 @@ struct XmlProcessor final : PoolHolder, XmlParserHandler, Cancellable {
 
     CancellablePointer *cancel_ptr;
 
-    XmlProcessor(PoolPtr &&_pool, struct pool &_caller_pool,
+    XmlProcessor(PoolPtr &&_pool,
                  Widget &_widget, struct processor_env &_env,
                  unsigned _options) noexcept
         :PoolHolder(std::move(_pool)),
-         caller_pool(_caller_pool),
          container(_widget),
          env(_env), options(_options),
          buffer(pool, 128, 2048),
          postponed_rewrite(pool),
          widget(_widget.pool, pool) {
-        pool_ref(&container.pool);
     }
 
     struct pool &GetPool() const noexcept {
@@ -427,9 +423,6 @@ XmlProcessor::Cancel() noexcept
        dispose it now */
     container.DiscardForFocused();
 
-    pool_unref(&container.pool);
-    pool_unref(&caller_pool);
-
     Close();
 }
 
@@ -446,8 +439,7 @@ processor_new(struct pool &caller_pool,
 {
     auto pool = pool_new_linear(&caller_pool, "processor", 32768);
 
-    return NewFromPool<XmlProcessor>(std::move(pool), caller_pool, widget,
-                                     env, options);
+    return NewFromPool<XmlProcessor>(std::move(pool), widget, env, options);
 }
 
 UnusedIstreamPtr
@@ -513,8 +505,6 @@ processor_lookup_widget(struct pool &caller_pool,
     processor->InitParser(std::move(istream));
 
     processor->handler = &handler;
-
-    pool_ref(&caller_pool);
 
     cancel_ptr = *processor;
     processor->cancel_ptr = &cancel_ptr;
@@ -1359,7 +1349,6 @@ XmlProcessor::FoundWidget(Widget &child_widget) noexcept
     assert(child_widget.parent == &container);
     assert(!replace);
 
-    auto &_caller_pool = caller_pool, &widget_pool = container.pool;
     auto &handler2 = *handler;
 
     try {
@@ -1374,9 +1363,6 @@ XmlProcessor::FoundWidget(Widget &child_widget) noexcept
         child_widget.Cancel();
         handler2.WidgetLookupError(std::current_exception());
     }
-
-    pool_unref(&_caller_pool);
-    pool_unref(&widget_pool);
 }
 
 inline bool
@@ -1563,8 +1549,6 @@ XmlProcessor::OnXmlCdata(const char *p gcc_unused, size_t length,
 void
 XmlProcessor::OnXmlEof(gcc_unused off_t length) noexcept
 {
-    auto &widget_pool = container.pool;
-
     assert(parser != nullptr);
 
     StopCdataIstream();
@@ -1580,10 +1564,7 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length) noexcept
         /* widget was not found */
 
         handler->WidgetNotFound();
-        pool_unref(&caller_pool);
     }
-
-    pool_unref(&widget_pool);
 
     Destroy();
 }
@@ -1591,8 +1572,6 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length) noexcept
 void
 XmlProcessor::OnXmlError(std::exception_ptr ep) noexcept
 {
-    auto &widget_pool = container.pool;
-
     assert(parser != nullptr);
 
     StopCdataIstream();
@@ -1603,10 +1582,7 @@ XmlProcessor::OnXmlError(std::exception_ptr ep) noexcept
 
     if (lookup_id != nullptr) {
         handler->WidgetLookupError(ep);
-        pool_unref(&caller_pool);
     }
-
-    pool_unref(&widget_pool);
 
     Destroy();
 }
