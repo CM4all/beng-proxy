@@ -488,7 +488,6 @@ FcgiClient::SubmitResponse()
             response.available = l;
     }
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
     const DestructObserver destructed(*this);
 
     response.in_handler = true;
