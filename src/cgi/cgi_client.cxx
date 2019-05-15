@@ -159,7 +159,6 @@ CGIClient::ReturnResponse()
         stopwatch_event(stopwatch, "headers");
 
         const DestructObserver destructed(*this);
-        const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
         in_response_callback = true;
         handler.InvokeResponse(status, std::move(headers),

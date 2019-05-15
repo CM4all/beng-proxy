@@ -102,11 +102,6 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
             http_status_t status, StringMap &&headers, UnusedIstreamPtr body,
             HttpResponseHandler &handler)
 {
-    /* need to hold this pool reference because it is guaranteed that
-       the pool stays alive while the HttpResponseHandler runs, even
-       if all other pool references are removed */
-    const ScopePoolRef ref(*pool TRACE_ARGS);
-
     const char *etag;
 
     if (!body) {
