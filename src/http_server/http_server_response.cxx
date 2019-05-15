@@ -184,7 +184,7 @@ HttpServerConnection::ResponseIstreamFinished()
             return false;
     }
 
-    DeleteUnrefTrashPool(request.request->pool, request.request);
+    request.request->Destroy();
     request.request = nullptr;
     request.bytes_received = 0;
     response.bytes_sent = 0;

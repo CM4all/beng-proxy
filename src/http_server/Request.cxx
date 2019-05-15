@@ -39,7 +39,7 @@
 #include "istream/istream.hxx"
 #include "util/StringView.hxx"
 
-HttpServerRequest::HttpServerRequest(struct pool &_pool,
+HttpServerRequest::HttpServerRequest(PoolPtr &&_pool,
                                      HttpServerConnection &_connection,
                                      SocketAddress _local_address,
                                      SocketAddress _remote_address,
@@ -47,7 +47,7 @@ HttpServerRequest::HttpServerRequest(struct pool &_pool,
                                      const char *_remote_host,
                                      http_method_t _method,
                                      StringView _uri)
-    :pool(_pool), connection(_connection),
+    :pool(std::move(_pool)), connection(_connection),
      local_address(_local_address),
      remote_address(_remote_address),
      local_host_and_port(_local_host_and_port),
@@ -55,3 +55,10 @@ HttpServerRequest::HttpServerRequest(struct pool &_pool,
      method(_method),
      uri(p_strdup(pool, _uri)),
      headers(pool) {}
+
+void
+HttpServerRequest::Destroy() noexcept
+{
+    pool_trash(pool);
+    this->~HttpServerRequest();
+}

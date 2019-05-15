@@ -90,7 +90,7 @@ request_absolute_uri(const HttpServerRequest &request,
     if (host == nullptr || !hostname_is_well_formed(host))
         return nullptr;
 
-    return p_strcat(&request.pool,
+    return p_strcat(request.pool,
                     scheme, "://",
                     host,
                     uri,

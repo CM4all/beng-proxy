@@ -40,6 +40,7 @@
 #include "strmap.hxx"
 #include "net/SocketAddress.hxx"
 #include "http/Method.h"
+#include "pool/Ptr.hxx"
 #include "istream/UnusedPtr.hxx"
 
 struct pool;
@@ -49,7 +50,8 @@ class Istream;
 struct HttpServerConnection;
 
 struct HttpServerRequest {
-    struct pool &pool;
+    const PoolPtr pool;
+
     HttpServerConnection &connection;
 
     const SocketAddress local_address, remote_address;
@@ -75,7 +77,7 @@ struct HttpServerRequest {
      */
     UnusedIstreamPtr body;
 
-    HttpServerRequest(struct pool &_pool, HttpServerConnection &_connection,
+    HttpServerRequest(PoolPtr &&_pool, HttpServerConnection &_connection,
                       SocketAddress _local_address,
                       SocketAddress _remote_address,
                       const char *_local_host_and_port,
@@ -85,6 +87,8 @@ struct HttpServerRequest {
 
     HttpServerRequest(const HttpServerRequest &) = delete;
     HttpServerRequest &operator=(const HttpServerRequest &) = delete;
+
+    void Destroy() noexcept;
 
     bool HasBody() const {
         return body;
