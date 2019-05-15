@@ -92,10 +92,6 @@ struct WidgetResolver {
     explicit WidgetResolver(Widget &_widget)
         :widget(_widget) {}
 
-    ~WidgetResolver() noexcept {
-        pool_unref(&widget.pool);
-    }
-
     void Destroy() noexcept {
         this->~WidgetResolver();
     }
@@ -233,11 +229,7 @@ WidgetResolver::RegistryCallback(const WidgetClass *cls) noexcept
 static WidgetResolver *
 widget_resolver_alloc(Widget &widget) noexcept
 {
-    auto &pool = widget.pool;
-
-    pool_ref(&pool);
-
-    return widget.resolver = NewFromPool<WidgetResolver>(pool, widget);
+    return widget.resolver = NewFromPool<WidgetResolver>(widget.pool, widget);
 }
 
 void
