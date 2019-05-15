@@ -48,7 +48,7 @@
 #include <map>
 
 class AccessLogGlue;
-class Stock;
+class PipeStock;
 class BalancerMap;
 class FilteredSocketStock;
 class FilteredSocketBalancer;
@@ -105,7 +105,7 @@ struct LbInstance final : PInstance {
     FilteredSocketStock *fs_stock = nullptr;
     FilteredSocketBalancer *fs_balancer = nullptr;
 
-    Stock *pipe_stock;
+    PipeStock *pipe_stock;
 
     explicit LbInstance(const LbConfig &_config) noexcept;
     ~LbInstance() noexcept;
