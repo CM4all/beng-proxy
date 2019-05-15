@@ -44,8 +44,6 @@
 #include <string.h>
 
 class XmlParser final : IstreamSink, DestructAnchor {
-    struct pool *pool;
-
     off_t position = 0;
 
     /* internal state */
@@ -121,10 +119,10 @@ class XmlParser final : IstreamSink, DestructAnchor {
     XmlParserHandler &handler;
 
 public:
-    XmlParser(struct pool &_pool, UnusedIstreamPtr _input,
+    XmlParser(struct pool &pool, UnusedIstreamPtr _input,
               XmlParserHandler &_handler) noexcept
-        :IstreamSink(std::move(_input)), pool(&_pool),
-         attr_value(*pool, 512, 8192),
+        :IstreamSink(std::move(_input)),
+         attr_value(pool, 512, 8192),
          handler(_handler) {
     }
 
