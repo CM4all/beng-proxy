@@ -436,7 +436,7 @@ tcache::MakePerHost(const char *host)
     if (!result.second)
         return *result.first;
 
-    auto ph = NewFromPool<TranslateCachePerHost>(pool, *this, host);
+    auto ph = new TranslateCachePerHost(*this, host);
     per_host.insert_commit(*ph, commit_data);
 
     return *ph;
@@ -463,7 +463,7 @@ TranslateCachePerHost::Dispose()
 
     tcache.per_host.erase(tcache.per_host.iterator_to(*this));
 
-    DeleteFromPool(tcache.pool, this);
+    delete this;
 }
 
 void
@@ -490,7 +490,7 @@ tcache::MakePerSite(const char *site)
     if (!result.second)
         return *result.first;
 
-    auto ph = NewFromPool<TranslateCachePerSite>(pool, *this, site);
+    auto ph = new TranslateCachePerSite(*this, site);
     per_site.insert_commit(*ph, commit_data);
 
     return *ph;
@@ -514,7 +514,7 @@ TranslateCachePerSite::Dispose()
 
     tcache.per_site.erase(tcache.per_site.iterator_to(*this));
 
-    DeleteFromPool(tcache.pool, this);
+    delete this;
 }
 
 void
