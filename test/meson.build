@@ -608,10 +608,11 @@ test('t_widget_registry', executable('t_widget_registry',
 test('t_widget_resolver', executable('t_widget_resolver',
   't_widget_resolver.cxx',
   '../src/widget/Resolver.cxx',
+  '../src/widget/Init.cxx',
   include_directories: inc,
   dependencies: [
     gtest,
-    widget_dep,
+    putil_dep,
   ]))
 
 test('t_wembed', executable('t_wembed',
