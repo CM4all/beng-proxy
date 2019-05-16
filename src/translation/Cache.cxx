@@ -206,7 +206,7 @@ struct TranslateCachePerHost
     /**
      * A pointer to the hashmap key, for use with p_free().
      */
-    const char *const host;
+    const std::string host;
 
     TranslateCachePerHost(struct tcache &_tcache, const char *_host)
         :tcache(_tcache), host(_host) {
@@ -229,14 +229,14 @@ struct TranslateCachePerHost
 
     gcc_pure
     static size_t ValueHasher(const TranslateCachePerHost &value) {
-        return KeyHasher(value.host);
+        return KeyHasher(value.host.c_str());
     }
 
     gcc_pure
     static bool KeyValueEqual(const char *a, const TranslateCachePerHost &b) {
         assert(a != nullptr);
 
-        return strcmp(a, b.host) == 0;
+        return a == b.host;
     }
 
     struct Hash {
@@ -250,7 +250,7 @@ struct TranslateCachePerHost
         gcc_pure
         bool operator()(const TranslateCachePerHost &a,
                         const TranslateCachePerHost &b) const {
-            return KeyValueEqual(a.host, b);
+            return KeyValueEqual(a.host.c_str(), b);
         }
     };
 };
@@ -278,7 +278,7 @@ struct TranslateCachePerSite
     /**
      * A pointer to the hashmap key, for use with p_free().
      */
-    const char *const site;
+    const std::string site;
 
     TranslateCachePerSite(struct tcache &_tcache, const char *_site)
         :tcache(_tcache), site(_site) {
@@ -301,14 +301,14 @@ struct TranslateCachePerSite
 
     gcc_pure
     static size_t ValueHasher(const TranslateCachePerSite &value) {
-        return KeyHasher(value.site);
+        return KeyHasher(value.site.c_str());
     }
 
     gcc_pure
     static bool KeyValueEqual(const char *a, const TranslateCachePerSite &b) {
         assert(a != nullptr);
 
-        return strcmp(a, b.site) == 0;
+        return a == b.site;
     }
 
     struct Hash {
@@ -322,7 +322,7 @@ struct TranslateCachePerSite
         gcc_pure
         bool operator()(const TranslateCachePerSite &a,
                         const TranslateCachePerSite &b) const {
-            return KeyValueEqual(a.site, b);
+            return KeyValueEqual(a.site.c_str(), b);
         }
     };
 };
@@ -436,8 +436,7 @@ tcache::MakePerHost(const char *host)
     if (!result.second)
         return *result.first;
 
-    auto ph = NewFromPool<TranslateCachePerHost>(pool, *this,
-                                                 p_strdup(pool, host));
+    auto ph = NewFromPool<TranslateCachePerHost>(pool, *this, host);
     per_host.insert_commit(*ph, commit_data);
 
     return *ph;
@@ -464,7 +463,6 @@ TranslateCachePerHost::Dispose()
 
     tcache.per_host.erase(tcache.per_host.iterator_to(*this));
 
-    p_free(tcache.pool, host);
     DeleteFromPool(tcache.pool, this);
 }
 
@@ -492,8 +490,7 @@ tcache::MakePerSite(const char *site)
     if (!result.second)
         return *result.first;
 
-    auto ph = NewFromPool<TranslateCachePerSite>(pool, *this,
-                                                 p_strdup(pool, site));
+    auto ph = NewFromPool<TranslateCachePerSite>(pool, *this, site);
     per_site.insert_commit(*ph, commit_data);
 
     return *ph;
@@ -517,7 +514,6 @@ TranslateCachePerSite::Dispose()
 
     tcache.per_site.erase(tcache.per_site.iterator_to(*this));
 
-    p_free(tcache.pool, site);
     DeleteFromPool(tcache.pool, this);
 }
 
@@ -1046,7 +1042,7 @@ tcache::InvalidateHost(const TranslateRequest &request,
         return 0;
 
     assert(&ph->tcache == this);
-    assert(strcmp(ph->host, host) == 0);
+    assert(ph->host == host);
 
     return ph->Invalidate(request, vary);
 }
@@ -1087,7 +1083,7 @@ tcache::InvalidateSite(const TranslateRequest &request,
         return 0;
 
     assert(&ph->tcache == this);
-    assert(strcmp(ph->site, site) == 0);
+    assert(ph->site == site);
 
     return ph->Invalidate(request, vary);
 }
