@@ -76,7 +76,7 @@ struct CssProcessor final : PoolHolder {
                  unsigned _options);
 
     void Destroy() noexcept {
-        DeleteFromPool(pool, this);
+        this->~CssProcessor();
     }
 
     using PoolHolder::GetPool;

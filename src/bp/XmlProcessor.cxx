@@ -275,7 +275,7 @@ private:
     }
 
     void Destroy() noexcept {
-        DeleteFromPool(pool, this);
+        this->~XmlProcessor();
     }
 
     void Close() noexcept {

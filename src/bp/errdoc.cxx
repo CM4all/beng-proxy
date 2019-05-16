@@ -62,7 +62,7 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
          body(_request.pool, std::move(_body)) {}
 
     void Destroy() {
-        DeleteFromPool(request2->pool, this);
+        this->~ErrorResponseLoader();
     }
 
     /* virtual methods from class Cancellable */

@@ -130,7 +130,7 @@ private:
     void Destroy() {
         assert(stock_item == nullptr);
 
-        DeleteFromPool(pool, this);
+        this->~HttpRequest();
     }
 
     void ResponseSent() {

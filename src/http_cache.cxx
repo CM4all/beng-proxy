@@ -165,7 +165,7 @@ public:
 
 private:
     void Destroy() noexcept {
-        DeleteFromPool(pool, this);
+        this->~HttpCacheRequest();
     }
 
     /* virtual methods from class Cancellable */

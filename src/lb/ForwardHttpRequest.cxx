@@ -153,7 +153,7 @@ private:
     void Destroy() noexcept {
         assert(stock_item == nullptr);
 
-        DeleteFromPool(pool, this);
+        this->~LbRequest();
     }
 
     void SetForwardedTo() noexcept {

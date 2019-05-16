@@ -112,7 +112,7 @@ public:
 
 private:
     void Destroy() {
-        DeleteFromPool(pool, this);
+        this->~FcgiRequest();
     }
 
     /* virtual methods from class Cancellable */

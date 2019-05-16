@@ -106,7 +106,7 @@ public:
     }
 
     void Destroy() {
-        DeleteFromPool(pool, this);
+        this->~WasRequest();
     }
 
     void Start(StockMap &was_stock, const ChildOptions &options,

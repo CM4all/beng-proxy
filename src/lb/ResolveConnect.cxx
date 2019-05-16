@@ -95,7 +95,7 @@ private:
     void Destroy() {
         assert(lease_state == LeaseState::NONE);
 
-        DeleteFromPool(pool, this);
+        this->~LbResolveConnectRequest();
     }
 
     void DoRelease() {

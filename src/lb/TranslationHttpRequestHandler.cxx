@@ -75,7 +75,7 @@ struct LbHttpRequest final : private Cancellable, private LeakDetector {
     }
 
     void Destroy() {
-        DeleteFromPool(pool,  this);
+        this->~LbHttpRequest();
     }
 
 private:
