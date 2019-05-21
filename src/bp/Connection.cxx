@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -59,8 +59,8 @@ BpConnection::BpConnection(PoolPtr &&_pool, BpInstance &_instance,
                            const char *_listener_tag,
                            bool _auth_alt_host,
                            SocketAddress remote_address) noexcept
-    :instance(_instance),
-     pool(std::move(_pool)),
+    :PoolHolder(std::move(_pool)),
+     instance(_instance),
      config(_instance.config),
      listener_tag(_listener_tag),
      auth_alt_host(_auth_alt_host),
@@ -227,7 +227,7 @@ new_connection(BpInstance &instance,
     instance.connections.push_front(*connection);
 
     connection->http =
-        http_server_connection_new(connection->pool,
+        http_server_connection_new(&connection->GetPool(),
                                    instance.event_loop,
                                    std::move(fd), FdType::FD_TCP,
                                    std::move(filter),

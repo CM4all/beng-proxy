@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,7 +35,7 @@
 
 #include "http_server/Handler.hxx"
 #include "io/Logger.hxx"
-#include "pool/Ptr.hxx"
+#include "pool/Holder.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -54,11 +54,10 @@ struct HttpServerConnection;
  * A connection from a HTTP client.
  */
 struct BpConnection final
-    : HttpServerConnectionHandler,
+    : PoolHolder, HttpServerConnectionHandler,
       boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     BpInstance &instance;
-    PoolPtr pool;
     const BpConfig &config;
 
     const char *const listener_tag;
@@ -105,6 +104,8 @@ struct BpConnection final
                  const char *_listener_tag, bool _auth_alt_host,
                  SocketAddress remote_address) noexcept;
     ~BpConnection() noexcept;
+
+    using PoolHolder::GetPool;
 
     struct Disposer {
         void operator()(BpConnection *c) noexcept;
