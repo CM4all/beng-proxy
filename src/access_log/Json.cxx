@@ -39,11 +39,10 @@
 #include "net/ToString.hxx"
 #include "net/log/String.hxx"
 #include "time/Cast.hxx"
-#include "time/Convert.hxx"
+#include "time/ISO8601.hxx"
+#include "util/StringBuffer.hxx"
 
 #include <functional>
-
-#include <time.h>
 
 static void
 Dump(JsonWriter::Sink sink, const ReceivedAccessLogDatagram &d)
@@ -59,10 +58,7 @@ Dump(JsonWriter::Sink sink, const ReceivedAccessLogDatagram &d)
 
     if (d.HasTimestamp()) {
         try {
-            const auto tm = GmTime(Net::Log::ToSystem(d.timestamp));
-            char buffer[64];
-            strftime(buffer, sizeof(buffer), "%FT%TZ", &tm);
-            o.AddMember("time", buffer);
+            o.AddMember("time", FormatISO8601(d.timestamp).c_str());
         } catch (...) {
             /* just in case GmTime() throws */
         }
