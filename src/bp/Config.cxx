@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,12 +31,11 @@
  */
 
 #include "Config.hxx"
-#include "avahi/Check.hxx"
 #include "net/Parser.hxx"
 #include "util/StringView.hxx"
 #include "util/StringParser.hxx"
 
-#include <string.h>
+#include <stdexcept>
 
 void
 BpConfig::HandleSet(StringView name, const char *value)
