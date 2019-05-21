@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -45,6 +45,7 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/log/String.hxx"
 #include "system/Error.hxx"
+#include "time/Cast.hxx"
 #include "util/PrintException.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/ScopeExit.hxx"
@@ -142,7 +143,7 @@ try {
 
     if (d.HasTimestamp())
         Lua::SetTable(L, -3, "timestamp",
-                      std::chrono::duration_cast<std::chrono::duration<double>>(d.timestamp.time_since_epoch()).count());
+                      ToFloatSeconds(d.timestamp.time_since_epoch()));
 
     if (d.remote_host != nullptr)
         Lua::SetTable(L, -3, "remote_host", d.remote_host);
@@ -183,8 +184,7 @@ try {
     }
 
     if (d.valid_duration)
-        Lua::SetTable(L, -3, "duration",
-                      std::chrono::duration_cast<std::chrono::duration<double>>(d.duration).count());
+        Lua::SetTable(L, -3, "duration", ToFloatSeconds(d.duration));
 
     if (const char *type = TypeToString(d.type))
         Lua::SetTable(L, -3, "type", type);

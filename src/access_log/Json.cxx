@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,6 +38,7 @@
 #include "Server.hxx"
 #include "net/ToString.hxx"
 #include "net/log/String.hxx"
+#include "time/Cast.hxx"
 #include "time/Convert.hxx"
 
 #include <functional>
@@ -107,7 +108,7 @@ Dump(JsonWriter::Sink sink, const ReceivedAccessLogDatagram &d)
     }
 
     if (d.valid_duration)
-        o.AddMember("duration", std::chrono::duration_cast<std::chrono::duration<double>>(d.duration).count());
+        o.AddMember("duration", ToFloatSeconds(d.duration));
 
     if (d.type != Net::Log::Type::UNSPECIFIED) {
         const char *type = ToString(d.type);
