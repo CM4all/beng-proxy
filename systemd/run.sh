@@ -3,7 +3,6 @@
 # work around the boost::locale::facet::_S_create_c_locale exception
 export LC_ALL=C
 
-RUNDIR=/var/run/cm4all
 DAEMON_USER=cm4all-beng-proxy
 DAEMON_GROUP=
 ALLOW_USER=
@@ -42,7 +41,6 @@ if test -n "$VERBOSE_RESPONSE"; then
     OPTIONS="$OPTIONS --set verbose_response=$VERBOSE_RESPONSE"
 fi
 
-install -d -m 0711 $RUNDIR
 exec /usr/sbin/cm4all-beng-proxy \
     --user "$DAEMON_USER" \
     --allow-user "$ALLOW_USER" \
