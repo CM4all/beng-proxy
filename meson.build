@@ -833,6 +833,7 @@ executable(
   'libcommon/src/spawn/Launch.cxx',
   'libcommon/src/spawn/Client.cxx',
   'libcommon/src/spawn/Glue.cxx',
+  'libcommon/src/pg/Interval.cxx',
   'src/child_socket.cxx',
   'src/child_stock.cxx',
   'src/bp/CommandLine.cxx',

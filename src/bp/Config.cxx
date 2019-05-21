@@ -31,6 +31,7 @@
  */
 
 #include "Config.hxx"
+#include "pg/Interval.hxx"
 #include "net/Parser.hxx"
 #include "util/StringView.hxx"
 #include "util/StringParser.hxx"
@@ -77,7 +78,7 @@ BpConfig::HandleSet(StringView name, const char *value)
     } else if (name.Equals("dynamic_session_cookie")) {
         dynamic_session_cookie = ParseBool(value);
     } else if (name.Equals("session_idle_timeout")) {
-        session_idle_timeout = ParsePositiveDuration(value);
+        session_idle_timeout = Pg::ParseIntervalS(value);
     } else if (name.Equals("session_save_path")) {
         session_save_path = value;
     } else

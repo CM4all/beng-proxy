@@ -260,8 +260,8 @@ The following settings are available:
   are known to ignore the ``Domain`` cookie attribute. It is not
   guaranteed to be collision-free.
 
-- ``session_idle_timeout``: After this duration (in seconds), a session
-  expires, unless it gets refreshed by a request.
+- ``session_idle_timeout``: After this duration, a session expires,
+  unless it gets refreshed by a request.  Example: :samp:`30 minutes`.
 
 - ``max_connections``: The maximum number of incoming HTTP connections.
 
