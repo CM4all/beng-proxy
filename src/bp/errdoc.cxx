@@ -92,7 +92,7 @@ ErrorResponseLoader::OnHttpResponse(http_status_t _status, StringMap &&_headers,
 {
     if (http_status_is_success(_status)) {
         /* close the original (error) response body */
-        _body.Clear();
+        body.Clear();
 
         request2->InvokeResponse(status, std::move(_headers), std::move(_body));
     } else {
