@@ -47,7 +47,7 @@
 struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
     CancellablePointer cancel_ptr;
 
-    Request *request2;
+    Request &request;
 
     http_status_t status;
     HttpHeaders headers;
@@ -57,7 +57,7 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
 
     ErrorResponseLoader(Request &_request, http_status_t _status,
                         HttpHeaders &&_headers, UnusedIstreamPtr _body)
-        :request2(&_request), status(_status),
+        :request(_request), status(_status),
          headers(std::move(_headers)),
          body(_request.pool, std::move(_body)) {}
 
@@ -77,8 +77,8 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
 static void
 errdoc_resubmit(ErrorResponseLoader &er)
 {
-    er.request2->DispatchResponse(er.status, std::move(er.headers),
-                                  std::move(er.body));
+    er.request.DispatchResponse(er.status, std::move(er.headers),
+                                std::move(er.body));
 }
 
 /*
@@ -94,7 +94,7 @@ ErrorResponseLoader::OnHttpResponse(http_status_t _status, StringMap &&_headers,
         /* close the original (error) response body */
         body.Clear();
 
-        request2->InvokeResponse(status, std::move(_headers), std::move(_body));
+        request.InvokeResponse(status, std::move(_headers), std::move(_body));
     } else {
         /* close the original (error) response body */
         _body.Clear();
@@ -108,7 +108,7 @@ ErrorResponseLoader::OnHttpResponse(http_status_t _status, StringMap &&_headers,
 void
 ErrorResponseLoader::OnHttpError(std::exception_ptr ep) noexcept
 {
-    LogConcat(2, request2->request.uri, "error on error document: ", ep);
+    LogConcat(2, request.request.uri, "error on error document: ", ep);
 
     errdoc_resubmit(*this);
 
@@ -128,15 +128,14 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
     if ((response.status == (http_status_t)0 ||
          http_status_is_success(response.status)) &&
         response.address.IsDefined()) {
-        Request *request2 = er.request2;
-        auto *instance = &request2->instance;
+        auto &request = er.request;
 
-        instance->cached_resource_loader
-            ->SendRequest(request2->pool, 0, nullptr, nullptr,
+        request.instance.cached_resource_loader
+            ->SendRequest(request.pool, 0, nullptr, nullptr,
                           HTTP_METHOD_GET,
                           response.address, HTTP_STATUS_OK,
-                          StringMap(request2->pool), nullptr, nullptr,
-                          er, request2->cancel_ptr);
+                          StringMap(request.pool), nullptr, nullptr,
+                          er, request.cancel_ptr);
     } else {
         errdoc_resubmit(er);
         er.Destroy();
@@ -148,7 +147,7 @@ errdoc_translate_error(std::exception_ptr ep, void *ctx)
 {
     auto &er = *(ErrorResponseLoader *)ctx;
 
-    LogConcat(2, er.request2->request.uri,
+    LogConcat(2, er.request.request.uri,
               "error document translation error: ", ep);
 
     errdoc_resubmit(er);
@@ -198,9 +197,9 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
 {
     assert(!error_document.IsNull());
 
-    auto *instance = &request2.instance;
+    auto &instance = request2.instance;
 
-    assert(instance->translation_service != nullptr);
+    assert(instance.translation_service != nullptr);
 
     auto *er = NewFromPool<ErrorResponseLoader>(request2.pool, request2,
                                                 status, std::move(headers),
@@ -211,8 +210,8 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
     fill_translate_request(&er->translate_request,
                            &request2.translate.request,
                            error_document, status);
-    instance->translation_service->SendRequest(request2.pool,
-                                               er->translate_request,
-                                               errdoc_translate_handler, er,
-                                               er->cancel_ptr);
+    instance.translation_service->SendRequest(request2.pool,
+                                              er->translate_request,
+                                              errdoc_translate_handler, er,
+                                              er->cancel_ptr);
 }
