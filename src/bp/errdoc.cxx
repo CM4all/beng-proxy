@@ -84,8 +84,11 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
     }
 
     void ResubmitAndDestroy() noexcept {
-        Resubmit();
+        auto &_request = request;
+        OriginalResponse _response(std::move(original_response));
+
         Destroy();
+        _response.Resubmit(_request);
     }
 
     /* virtual methods from class Cancellable */
@@ -107,12 +110,10 @@ ErrorResponseLoader::OnHttpResponse(http_status_t _status, StringMap &&_headers,
                                     UnusedIstreamPtr _body) noexcept
 {
     if (http_status_is_success(_status)) {
-        /* close the original (error) response body */
-        original_response.body.Clear();
-
-        request.InvokeResponse(original_response.status, std::move(_headers),
-                               std::move(_body));
+        auto &_request = request;
+        const auto status = original_response.status;
         Destroy();
+        _request.InvokeResponse(status, std::move(_headers), std::move(_body));
     } else {
         /* close the new response body */
         _body.Clear();
