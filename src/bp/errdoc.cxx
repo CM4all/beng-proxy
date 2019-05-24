@@ -69,6 +69,11 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
         request.DispatchResponse(status, std::move(headers), std::move(body));
     }
 
+    void ResubmitAndDestroy() noexcept {
+        Resubmit();
+        Destroy();
+    }
+
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override;
 
@@ -92,14 +97,13 @@ ErrorResponseLoader::OnHttpResponse(http_status_t _status, StringMap &&_headers,
         body.Clear();
 
         request.InvokeResponse(status, std::move(_headers), std::move(_body));
+        Destroy();
     } else {
-        /* close the original (error) response body */
+        /* close the new response body */
         _body.Clear();
 
-        Resubmit();
+        ResubmitAndDestroy();
     }
-
-    Destroy();
 }
 
 void
@@ -107,9 +111,7 @@ ErrorResponseLoader::OnHttpError(std::exception_ptr ep) noexcept
 {
     LogConcat(2, request.request.uri, "error on error document: ", ep);
 
-    Resubmit();
-
-    Destroy();
+    ResubmitAndDestroy();
 }
 
 /*
@@ -134,8 +136,7 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
                           StringMap(request.pool), nullptr, nullptr,
                           er, request.cancel_ptr);
     } else {
-        er.Resubmit();
-        er.Destroy();
+        er.ResubmitAndDestroy();
     }
 }
 
@@ -147,8 +148,7 @@ errdoc_translate_error(std::exception_ptr ep, void *ctx)
     LogConcat(2, er.request.request.uri,
               "error document translation error: ", ep);
 
-    er.Resubmit();
-    er.Destroy();
+    er.ResubmitAndDestroy();
 }
 
 static constexpr TranslateHandler errdoc_translate_handler = {
