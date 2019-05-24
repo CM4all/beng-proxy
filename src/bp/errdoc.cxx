@@ -178,8 +178,6 @@ fill_translate_request(TranslateRequest *t,
 void
 ErrorResponseLoader::Cancel() noexcept
 {
-    body.Clear();
-
     CancellablePointer c(std::move(cancel_ptr));
     Destroy();
     c.Cancel();
