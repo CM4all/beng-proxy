@@ -49,24 +49,38 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
 
     Request &request;
 
-    http_status_t status;
-    HttpHeaders headers;
-    UnusedHoldIstreamPtr body;
+    struct OriginalResponse {
+        http_status_t status;
+        HttpHeaders headers;
+        UnusedHoldIstreamPtr body;
+
+        OriginalResponse(Request &r,
+                         http_status_t _status, HttpHeaders &&_headers,
+                         UnusedIstreamPtr _body) noexcept
+            :status(_status), headers(std::move(_headers)),
+             body(r.pool, std::move(_body)) {}
+
+        void Resubmit(Request &r) noexcept {
+            r.DispatchResponse(status, std::move(headers), std::move(body));
+        }
+    };
+
+    OriginalResponse original_response;
 
     TranslateRequest translate_request;
 
     ErrorResponseLoader(Request &_request, http_status_t _status,
                         HttpHeaders &&_headers, UnusedIstreamPtr _body)
-        :request(_request), status(_status),
-         headers(std::move(_headers)),
-         body(_request.pool, std::move(_body)) {}
+        :request(_request),
+         original_response(request, _status, std::move(_headers),
+                           std::move(_body)) {}
 
     void Destroy() {
         this->~ErrorResponseLoader();
     }
 
     void Resubmit() noexcept {
-        request.DispatchResponse(status, std::move(headers), std::move(body));
+        original_response.Resubmit(request);
     }
 
     void ResubmitAndDestroy() noexcept {
@@ -94,9 +108,10 @@ ErrorResponseLoader::OnHttpResponse(http_status_t _status, StringMap &&_headers,
 {
     if (http_status_is_success(_status)) {
         /* close the original (error) response body */
-        body.Clear();
+        original_response.body.Clear();
 
-        request.InvokeResponse(status, std::move(_headers), std::move(_body));
+        request.InvokeResponse(original_response.status, std::move(_headers),
+                               std::move(_body));
         Destroy();
     } else {
         /* close the new response body */
