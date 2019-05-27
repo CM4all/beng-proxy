@@ -46,10 +46,9 @@
 
 class ChunkedIstream final : public FacadeIstream {
     /**
-     * This flag is true while writing the buffer inside
-     * istream_chunked_read().  chunked_input_data() will check it,
-     * and refuse to accept more data from the input.  This avoids
-     * writing the buffer recursively.
+     * This flag is true while writing the buffer inside _Read().
+     * OnData() will check it, and refuse to accept more data from the
+     * input.  This avoids writing the buffer recursively.
      */
     bool writing_buffer = false;
 
@@ -111,7 +110,7 @@ private:
 
     /**
      * Wrapper for SendBuffer() that sets and clears the
-     * writing_buffer flag.  This requires acquiring a pool reference
+     * #writing_buffer flag.  This requires acquiring a pool reference
      * to do that safely.
      *
      * @return true if the buffer is consumed.
@@ -246,8 +245,7 @@ size_t
 ChunkedIstream::OnData(const void *data, size_t length) noexcept
 {
     if (writing_buffer)
-        /* this is a recursive call from istream_chunked_read(): bail
-           out */
+        /* this is a recursive call from _Read(): bail out */
         return 0;
 
     const ScopePoolRef ref(GetPool() TRACE_ARGS);
