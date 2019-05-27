@@ -88,18 +88,13 @@ public:
 
     ~DeflateIstream() {
         defer.Cancel();
-    }
-
-    bool InitZlib() noexcept;
-
-    void DeinitZlib() noexcept {
         if (z_initialized)
             deflateEnd(&z);
     }
 
-    void Abort(std::exception_ptr ep) noexcept {
-        DeinitZlib();
+    bool InitZlib() noexcept;
 
+    void Abort(std::exception_ptr ep) noexcept {
         if (HasInput())
             ClearAndCloseInput();
 
@@ -155,8 +150,6 @@ public:
     }
 
     void _Close() noexcept override {
-        DeinitZlib();
-
         if (HasInput())
             input.Close();
 
@@ -231,7 +224,6 @@ DeflateIstream::TryWrite() noexcept
     buffer.FreeIfEmpty();
 
     if (nbytes == r.size && !HasInput() && z_stream_end) {
-        DeinitZlib();
         DestroyEof();
         return 0;
     }
@@ -323,7 +315,6 @@ DeflateIstream::TryFinish() noexcept
     buffer.Append(w.size - (size_t)z.avail_out);
 
     if (z_stream_end && buffer.empty()) {
-        DeinitZlib();
         DestroyEof();
     } else
         TryWrite();
@@ -410,8 +401,6 @@ void
 DeflateIstream::OnError(std::exception_ptr ep) noexcept
 {
     ClearInput();
-
-    DeinitZlib();
 
     DestroyError(ep);
 }
