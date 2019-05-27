@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,11 +36,12 @@
 #include "istream/New.hxx"
 #include "escape_class.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/DestructObserver.hxx"
 
 #include <assert.h>
 #include <string.h>
 
-class EscapeIstream final : public FacadeIstream {
+class EscapeIstream final : public FacadeIstream, DestructAnchor {
     const struct escape_class &cls;
 
     ConstBuffer<char> escaped;
@@ -130,7 +131,7 @@ EscapeIstream::OnData(const void *data0, size_t length) noexcept
 
     size_t total = 0;
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    const DestructObserver destructed(*this);
 
     do {
         /* find the next control character */
@@ -138,10 +139,10 @@ EscapeIstream::OnData(const void *data0, size_t length) noexcept
         if (control == nullptr) {
             /* none found - just forward the data block to our sink */
             size_t nbytes = InvokeData(data, length);
-            if (nbytes == 0 && !HasInput())
-                total = 0;
-            else
-                total += nbytes;
+            if (destructed)
+                return 0;
+
+            total += nbytes;
             break;
         }
 
@@ -149,10 +150,8 @@ EscapeIstream::OnData(const void *data0, size_t length) noexcept
             /* forward the portion before the control character */
             const size_t n = control - data;
             size_t nbytes = InvokeData(data, n);
-            if (nbytes == 0 && !HasInput()) {
-                total = 0;
-                break;
-            }
+            if (destructed)
+                return 0;
 
             total += nbytes;
             if (nbytes < n)
@@ -171,8 +170,8 @@ EscapeIstream::OnData(const void *data0, size_t length) noexcept
         escaped.size = strlen(escaped.data);
 
         if (!SendEscaped()) {
-            if (!HasInput())
-                total = 0;
+            if (destructed)
+                return 0;
             break;
         }
     } while (length > 0);
