@@ -37,20 +37,18 @@
 #include "util/Cancellable.hxx"
 
 class StringSink final : IstreamSink, Cancellable {
-    struct pool &pool;
-
     std::string value;
 
     void (*callback)(std::string &&value, std::exception_ptr error, void *ctx);
     void *callback_ctx;
 
 public:
-    StringSink(struct pool &_pool, UnusedIstreamPtr &&_input,
+    StringSink(UnusedIstreamPtr &&_input,
                 void (*_callback)(std::string &&value, std::exception_ptr error,
                                   void *ctx),
                 void *_ctx,
                 CancellablePointer &cancel_ptr)
-        :IstreamSink(std::move(_input), FD_ANY), pool(_pool),
+        :IstreamSink(std::move(_input), FD_ANY),
          callback(_callback), callback_ctx(_ctx) {
         cancel_ptr = *this;
     }
@@ -66,7 +64,6 @@ private:
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
-        const ScopePoolRef ref(pool TRACE_ARGS);
         input.Close();
         Destroy();
     }
@@ -100,7 +97,7 @@ NewStringSink(struct pool &pool, UnusedIstreamPtr input,
                                void *ctx),
               void *ctx, CancellablePointer &cancel_ptr)
 {
-    return *NewFromPool<StringSink>(pool, pool, std::move(input),
+    return *NewFromPool<StringSink>(pool, std::move(input),
                                     callback, ctx, cancel_ptr);
 }
 
