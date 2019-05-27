@@ -37,19 +37,20 @@
 #include "http/ChunkParser.hxx"
 #include "pool/pool.hxx"
 #include "event/DeferEvent.hxx"
+#include "util/DestructObserver.hxx"
 
 #include <algorithm>
 
 #include <assert.h>
 #include <string.h>
 
-class DechunkIstream final : public FacadeIstream {
+class DechunkIstream final : public FacadeIstream, DestructAnchor {
     /* DeferEvent is used to defer an
        DechunkHandler::OnDechunkEnd() call */
 
     HttpChunkParser parser;
 
-    bool eof = false, closed = false;
+    bool eof = false;
 
     bool had_input, had_output;
 
@@ -238,6 +239,8 @@ DechunkIstream::Feed(const void *data0, size_t length) noexcept
     assert(!IsEofPending());
     assert(!verbatim || !eof_verbatim);
 
+    const DestructObserver destructed(*this);
+
     had_input = true;
 
     const auto src_begin = (const uint8_t *)data0;
@@ -282,12 +285,11 @@ DechunkIstream::Feed(const void *data0, size_t length) noexcept
                 nbytes = InvokeData(src, data.size);
                 assert(nbytes <= data.size);
 
-                if (nbytes == 0) {
-                    if (closed)
-                        return 0;
-                    else
-                        break;
-                }
+                if (destructed)
+                    return 0;
+
+                if (nbytes == 0)
+                    break;
             }
 
             src += nbytes;
@@ -307,7 +309,7 @@ DechunkIstream::Feed(const void *data0, size_t length) noexcept
         /* send all chunks in one big block */
         had_output = true;
         size_t nbytes = InvokeData(src_begin, position);
-        if (closed)
+        if (destructed)
             return 0;
 
         /* postpone the rest that was not handled; it will not be
@@ -372,7 +374,6 @@ DechunkIstream::OnData(const void *data, size_t length) noexcept
         return nbytes;
     }
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
     return Feed(data, length);
 }
 
@@ -448,9 +449,7 @@ void
 DechunkIstream::_Close() noexcept
 {
     assert(!eof);
-    assert(!closed);
 
-    closed = true;
     defer_eof_event.Cancel();
 
     if (input.IsDefined())
