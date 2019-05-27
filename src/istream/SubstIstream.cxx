@@ -609,7 +609,6 @@ SubstIstream::OnData(const void *data, size_t length) noexcept
     if (!mismatch.empty() && FeedMismatch())
         return 0;
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
     return Feed(data, length);
 }
 
