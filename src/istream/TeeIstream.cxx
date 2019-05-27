@@ -49,7 +49,7 @@ struct TeeIstream final : IstreamHandler {
          * "strong" outputs have been closed - it will not keep up the
          * istream_tee object alone.
          */
-        bool weak;
+        const bool weak;
 
         bool enabled = true;
 
