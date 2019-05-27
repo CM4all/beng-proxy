@@ -583,9 +583,9 @@ socket_dep = declare_dependency(link_with: socket,
                                dependencies: [event_net_dep])
 
 memcached_client = static_library('memcached_client',
-  'src/memcached/memcached_client.cxx',
-  'src/memcached/memcached_stock.cxx',
-  'src/memcached/memcached_packet.cxx',
+  'src/memcached/Client.cxx',
+  'src/memcached/Stock.cxx',
+  'src/memcached/Packet.cxx',
   include_directories: inc,
 )
 memcached_client_dep = declare_dependency(

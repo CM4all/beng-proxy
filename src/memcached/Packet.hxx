@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,51 +30,35 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "memcached_packet.hxx"
-#include "istream/ConcatIstream.hxx"
-#include "istream/istream_memory.hxx"
-#include "istream/istream_null.hxx"
-#include "istream/UnusedPtr.hxx"
-#include "pool/pool.hxx"
-#include "util/ByteOrder.hxx"
+/*
+ * Serializing memcached request packets.
+ */
 
-#include <string.h>
+#pragma once
 
+#include "Protocol.hxx"
+
+#include <stddef.h>
+
+struct pool;
+class UnusedIstreamPtr;
+
+/**
+ * Serialize a memcached request packet, and return it as an
+ * istream.
+ *
+ * @param pool the memory pool used to allocate the packet
+ * @param opcode the opcode of the memcached method
+ * @param extras optional extra data for the request
+ * @param extras_length the length of the extra data
+ * @param key key for the request
+ * @param key_length the length of the key
+ * @param value an optional request value
+ * @param message_id the id of the message
+ */
 UnusedIstreamPtr
 memcached_request_packet(struct pool &pool, enum memcached_opcode opcode,
                          const void *extras, size_t extras_length,
                          const void *key, size_t key_length,
                          UnusedIstreamPtr value,
-                         uint32_t message_id)
-{
-    off_t value_length = value
-        ? value.GetAvailable(false)
-        : 0;
-    if (value_length == -1 || value_length >= 0x10000000)
-        return nullptr;
-
-    auto header = NewFromPool<memcached_request_header>(pool);
-    header->magic = MEMCACHED_MAGIC_REQUEST;
-    header->opcode = opcode;
-    header->key_length = ToBE16(key_length);
-    header->extras_length = extras_length;
-    header->data_type = 0;
-    header->reserved = 0;
-    header->body_length =
-        ToBE32(extras_length + key_length + value_length);
-    header->message_id = message_id;
-    memset(header->cas, 0, sizeof(header->cas));
-
-    auto header_stream =
-        istream_memory_new(pool, header, sizeof(*header));
-    auto extras_stream = extras_length > 0
-        ? istream_memory_new(pool, extras, extras_length)
-        : nullptr;
-
-    return istream_cat_new(pool, std::move(header_stream),
-                           std::move(extras_stream),
-                           key_length == 0
-                           ? nullptr
-                           : istream_memory_new(pool, key, key_length),
-                           std::move(value));
-}
+                         uint32_t message_id);

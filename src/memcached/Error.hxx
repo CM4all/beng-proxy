@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MEMCACHED_ERROR_HXX
-#define MEMCACHED_ERROR_HXX
+#pragma once
 
 #include <stdexcept>
 
@@ -40,5 +39,3 @@ public:
     explicit MemcachedClientError(const char *_msg)
         :std::runtime_error(_msg) {}
 };
-
-#endif

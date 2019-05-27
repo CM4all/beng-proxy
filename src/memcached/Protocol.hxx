@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * memcached (binary) protocol specific declarations.
  */
 
-#ifndef MEMCACHED_PROTOCOL_HXX
-#define MEMCACHED_PROTOCOL_HXX
+#pragma once
 
 #include <stdint.h>
 
@@ -95,5 +94,3 @@ struct memcached_set_extras {
     uint32_t flags;
     uint32_t expiration;
 };
-
-#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,10 +34,9 @@
  * Stock of connections to a memcached server.
  */
 
-#ifndef MEMCACHED_STOCK_HXX
-#define MEMCACHED_STOCK_HXX
+#pragma once
 
-#include "memcached_protocol.hxx"
+#include "Protocol.hxx"
 
 #include <stddef.h>
 
@@ -71,5 +70,3 @@ memcached_stock_invoke(struct pool &pool, MemachedStock &stock,
                        const struct memcached_client_handler &handler,
                        void *handler_ctx,
                        CancellablePointer &cancel_ptr);
-
-#endif

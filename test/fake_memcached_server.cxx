@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "memcached/memcached_protocol.hxx"
+#include "memcached/Protocol.hxx"
 #include "fb_pool.hxx"
 #include "util/ByteOrder.hxx"
 
