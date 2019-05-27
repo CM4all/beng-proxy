@@ -67,6 +67,15 @@ check_escape(const char *p, const char *q)
     ASSERT_EQ(memcmp(buffer, q, l), 0);
 }
 
+static void
+check_escape_char(char p, StringView q)
+{
+    const auto result = escape_char(&css_escape_class, p);
+    ASSERT_FALSE(result.IsNull());
+    ASSERT_EQ(result.size, q.size);
+    ASSERT_EQ(memcmp(result.data, q.data, result.size), 0);
+}
+
 TEST(CssEscape, Basic)
 {
     assert(unescape_find(&css_escape_class, "foobar123") == NULL);
@@ -78,8 +87,8 @@ TEST(CssEscape, Basic)
     check_escape_find("foo\\bar", 3);
     check_escape_find("foo\"bar", 3);
 
-    ASSERT_STREQ(escape_char(&css_escape_class, '\''), "\\'");
-    ASSERT_STREQ(escape_char(&css_escape_class, '\\'), "\\\\");
+    check_escape_char('\'', "\\'");
+    check_escape_char('\\', "\\\\");
 
     check_escape("foobar", "foobar");
     check_escape("foo\\bar", "foo\\\\bar");

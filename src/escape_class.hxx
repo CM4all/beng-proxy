@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -62,7 +62,7 @@ struct escape_class {
     /**
      * Returns the escape string for the specified character.
      */
-    const char *(*escape_char)(char ch) noexcept;
+    StringView (*escape_char)(char ch) noexcept;
 
     /**
      * Measure the minimum buffer size for escaping the given string.
@@ -134,14 +134,14 @@ escape_size(const struct escape_class *cls, StringView p) noexcept
 }
 
 gcc_pure
-static inline const char *
+static inline StringView
 escape_char(const struct escape_class *cls, char ch) noexcept
 {
     assert(cls != nullptr);
     assert(cls->escape_char != nullptr);
 
-    const char *q = cls->escape_char(ch);
-    assert(q != nullptr);
+    const auto q = cls->escape_char(ch);
+    assert(!q.IsNull());
     return q;
 }
 

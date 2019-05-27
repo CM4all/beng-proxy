@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -155,7 +155,7 @@ html_escape_find(StringView _p) noexcept
     return nullptr;
 }
 
-static const char *
+static StringView
 html_escape_char(char ch) noexcept
 {
     switch (ch) {

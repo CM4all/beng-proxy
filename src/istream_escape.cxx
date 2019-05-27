@@ -39,7 +39,6 @@
 #include "util/DestructObserver.hxx"
 
 #include <assert.h>
-#include <string.h>
 
 class EscapeIstream final : public FacadeIstream, DestructAnchor {
     const struct escape_class &cls;
@@ -166,8 +165,7 @@ EscapeIstream::OnData(const void *data0, size_t length) noexcept
 
         /* insert the entity into the stream */
 
-        escaped.data = escape_char(&cls, *control);
-        escaped.size = strlen(escaped.data);
+        escaped = escape_char(&cls, *control);
 
         if (!SendEscaped()) {
             if (destructed)
