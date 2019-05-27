@@ -37,19 +37,19 @@
 #include <string.h>
 
 static const char *
-css_unescape_find(StringView p)
+css_unescape_find(StringView p) noexcept
 {
     return p.Find('\\');
 }
 
 static constexpr bool
-need_simple_escape(char ch)
+need_simple_escape(char ch) noexcept
 {
     return ch == '\\' || ch == '"' || ch == '\'';
 }
 
 static size_t
-css_unescape(StringView _p, char *q)
+css_unescape(StringView _p, char *q) noexcept
 {
     const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
 
@@ -74,7 +74,7 @@ css_unescape(StringView _p, char *q)
 }
 
 static size_t
-css_escape_size(StringView _p)
+css_escape_size(StringView _p) noexcept
 {
     const char *p = _p.begin(), *const end = _p.end();
 
@@ -91,7 +91,7 @@ css_escape_size(StringView _p)
 }
 
 static const char *
-css_escape_find(StringView _p)
+css_escape_find(StringView _p) noexcept
 {
     const char *p = _p.begin(), *const end = _p.end();
 
@@ -106,7 +106,7 @@ css_escape_find(StringView _p)
 }
 
 static const char *
-css_escape_char(char ch)
+css_escape_char(char ch) noexcept
 {
     switch (ch) {
     case '\\':
@@ -125,7 +125,7 @@ css_escape_char(char ch)
 }
 
 static size_t
-css_escape(StringView _p, char *q)
+css_escape(StringView _p, char *q) noexcept
 {
     const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
 

@@ -45,41 +45,41 @@ struct escape_class {
      * Find the first character that must be unescaped.  Returns nullptr
      * when the string can be used as-is without unescaping.
      */
-    const char *(*unescape_find)(StringView p);
+    const char *(*unescape_find)(StringView p) noexcept;
 
     /**
      * Unescape the given string into the output buffer.  Returns the
      * number of characters in the output buffer.
      */
-    size_t (*unescape)(StringView p, char *q);
+    size_t (*unescape)(StringView p, char *q) noexcept;
 
     /**
      * Find the first character that must be escaped.  Returns nullptr
      * when there are no such characters.
      */
-    const char *(*escape_find)(StringView p);
+    const char *(*escape_find)(StringView p) noexcept;
 
     /**
      * Returns the escape string for the specified character.
      */
-    const char *(*escape_char)(char ch);
+    const char *(*escape_char)(char ch) noexcept;
 
     /**
      * Measure the minimum buffer size for escaping the given string.
      * Returns 0 when no escaping is needed.
      */
-    size_t (*escape_size)(StringView p);
+    size_t (*escape_size)(StringView p) noexcept;
 
     /**
      * Escape the given string into the output buffer.  Returns the
      * number of characters in the output buffer.
      */
-    size_t (*escape)(StringView p, char *q);
+    size_t (*escape)(StringView p, char *q) noexcept;
 };
 
 gcc_pure
 static inline const char *
-unescape_find(const struct escape_class *cls, StringView p)
+unescape_find(const struct escape_class *cls, StringView p) noexcept
 {
     assert(cls != nullptr);
     assert(cls->unescape_find != nullptr);
@@ -88,7 +88,7 @@ unescape_find(const struct escape_class *cls, StringView p)
 }
 
 static inline size_t
-unescape_buffer(const struct escape_class *cls, StringView p, char *q)
+unescape_buffer(const struct escape_class *cls, StringView p, char *q) noexcept
 {
     assert(cls != nullptr);
     assert(cls->unescape != nullptr);
@@ -101,7 +101,8 @@ unescape_buffer(const struct escape_class *cls, StringView p, char *q)
 }
 
 static inline size_t
-unescape_inplace(const struct escape_class *cls, char *p, size_t length)
+unescape_inplace(const struct escape_class *cls,
+                 char *p, size_t length) noexcept
 {
     assert(cls != nullptr);
     assert(cls->unescape != nullptr);
@@ -114,7 +115,7 @@ unescape_inplace(const struct escape_class *cls, char *p, size_t length)
 
 gcc_pure
 static inline const char *
-escape_find(const struct escape_class *cls, StringView p)
+escape_find(const struct escape_class *cls, StringView p) noexcept
 {
     assert(cls != nullptr);
     assert(cls->escape_find != nullptr);
@@ -124,7 +125,7 @@ escape_find(const struct escape_class *cls, StringView p)
 
 gcc_pure
 static inline size_t
-escape_size(const struct escape_class *cls, StringView p)
+escape_size(const struct escape_class *cls, StringView p) noexcept
 {
     assert(cls != nullptr);
     assert(cls->escape_size != nullptr);
@@ -134,7 +135,7 @@ escape_size(const struct escape_class *cls, StringView p)
 
 gcc_pure
 static inline const char *
-escape_char(const struct escape_class *cls, char ch)
+escape_char(const struct escape_class *cls, char ch) noexcept
 {
     assert(cls != nullptr);
     assert(cls->escape_char != nullptr);
@@ -145,7 +146,7 @@ escape_char(const struct escape_class *cls, char ch)
 }
 
 static inline size_t
-escape_buffer(const struct escape_class *cls, StringView p, char *q)
+escape_buffer(const struct escape_class *cls, StringView p, char *q) noexcept
 {
     assert(cls != nullptr);
     assert(cls->escape != nullptr);

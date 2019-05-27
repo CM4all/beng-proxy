@@ -40,14 +40,14 @@
 
 gcc_pure
 static const char *
-html_unescape_find(StringView p)
+html_unescape_find(StringView p) noexcept
 {
     return p.Find('&');
 }
 
 gcc_pure
 static const char *
-find_semicolon(const char *p, const char *end)
+find_semicolon(const char *p, const char *end) noexcept
 {
     while (p < end) {
         if (*p == ';')
@@ -62,7 +62,7 @@ find_semicolon(const char *p, const char *end)
 }
 
 static size_t
-html_unescape(StringView _p, char *q)
+html_unescape(StringView _p, char *q) noexcept
 {
     const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
 
@@ -104,7 +104,7 @@ html_unescape(StringView _p, char *q)
 }
 
 static size_t
-html_escape_size(StringView _p)
+html_escape_size(StringView _p) noexcept
 {
     const char *p = _p.begin(), *const end = _p.end();
 
@@ -134,7 +134,7 @@ html_escape_size(StringView _p)
 }
 
 static const char *
-html_escape_find(StringView _p)
+html_escape_find(StringView _p) noexcept
 {
     const char *p = _p.begin(), *const end = _p.end();
 
@@ -156,7 +156,7 @@ html_escape_find(StringView _p)
 }
 
 static const char *
-html_escape_char(char ch)
+html_escape_char(char ch) noexcept
 {
     switch (ch) {
     case '&':
@@ -181,7 +181,7 @@ html_escape_char(char ch)
 }
 
 static size_t
-html_escape(StringView _p, char *q)
+html_escape(StringView _p, char *q) noexcept
 {
     const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
 
