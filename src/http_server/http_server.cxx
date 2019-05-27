@@ -433,8 +433,6 @@ HttpServerConnection::Cancel() noexcept
 
     DestroySocket();
 
-    const ScopePoolRef ref(*pool TRACE_ARGS);
-
     if (request.read_state != Request::START)
         CloseRequest();
 
@@ -452,8 +450,6 @@ HttpServerConnection::Error(std::exception_ptr e) noexcept
     assert(handler != nullptr);
 
     DestroySocket();
-
-    const ScopePoolRef ref(*pool TRACE_ARGS);
 
     if (request.read_state != Request::START)
         CloseRequest();

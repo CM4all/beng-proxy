@@ -378,7 +378,6 @@ HttpServerConnection::SubmitRequest()
            we're processing the request */
         socket.ScheduleReadNoTimeout(false);
 
-    const ScopePoolRef ref(*pool TRACE_ARGS);
     const DestructObserver destructed(*this);
 
     if (request.expect_failed) {
