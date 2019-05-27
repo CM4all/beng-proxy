@@ -130,7 +130,6 @@ BufferSink::OnError(std::exception_ptr ep) noexcept
 void
 BufferSink::Cancel() noexcept
 {
-    const ScopePoolRef ref(*pool TRACE_ARGS);
     input.Close();
 }
 
