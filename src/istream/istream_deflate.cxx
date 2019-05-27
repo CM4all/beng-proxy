@@ -209,7 +209,7 @@ DeflateIstream::InitZlib() noexcept
                            Z_DEFLATED, GetWindowBits(), 8,
                            Z_DEFAULT_STRATEGY);
     if (err != Z_OK) {
-        Abort(err, "deflateInit(Z_FINISH) failed");
+        Abort(err, "deflateInit2() failed");
         return false;
     }
 
