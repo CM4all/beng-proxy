@@ -66,7 +66,7 @@ class DeflateIstream final : public FacadeIstream, DestructAnchor {
     bool z_initialized = false, z_stream_end = false;
     z_stream z;
     bool had_input, had_output;
-    bool reading;
+    bool reading = false;
     SliceFifoBuffer buffer;
 
     /**
@@ -81,7 +81,6 @@ public:
                    EventLoop &event_loop, bool _gzip)
         :FacadeIstream(_pool, std::move(_input)),
          gzip(_gzip),
-         reading(false),
          defer(event_loop, BIND_THIS_METHOD(OnDeferred))
     {
     }
