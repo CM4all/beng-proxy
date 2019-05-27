@@ -434,14 +434,14 @@ DechunkIstream::_Read() noexcept
     if (IsEofPending())
         return;
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    const DestructObserver destructed(*this);
 
     had_output = false;
 
     do {
         had_input = false;
         input.Read();
-    } while (input.IsDefined() && had_input && !had_output &&
+    } while (!destructed && input.IsDefined() && had_input && !had_output &&
              !IsEofPending());
 }
 
