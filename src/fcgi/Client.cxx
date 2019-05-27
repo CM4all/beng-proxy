@@ -85,7 +85,7 @@ struct FcgiClient final
     const uint16_t id;
 
     struct Request {
-        IstreamPointer input;
+        IstreamPointer input{nullptr};
 
         /**
          * This flag is set when the request istream has submitted
@@ -93,8 +93,6 @@ struct FcgiClient final
          * unavailable, to unschedule the socket write event.
          */
         bool got_data;
-
-        Request():input(nullptr) {}
     } request;
 
     struct Response {
