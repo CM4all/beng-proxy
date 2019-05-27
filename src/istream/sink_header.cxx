@@ -36,6 +36,7 @@
 #include "New.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/DestructObserver.hxx"
 
 #include <stdexcept>
 
@@ -43,7 +44,7 @@
 #include <string.h>
 #include <stdint.h>
 
-class HeaderSink final : public ForwardIstream, Cancellable {
+class HeaderSink final : public ForwardIstream, Cancellable, DestructAnchor {
     enum {
         SIZE, HEADER, CALLBACK, DATA
     } state = SIZE;
@@ -113,7 +114,7 @@ HeaderSink::InvokeCallback(size_t consumed)
 {
     assert(state == SIZE || state == HEADER);
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    const DestructObserver destructed(*this);
 
     /* the base value has been set by sink_header_input_data() */
     pending += consumed;
@@ -123,12 +124,11 @@ HeaderSink::InvokeCallback(size_t consumed)
                   UnusedIstreamPtr(this),
                   handler_ctx);
 
-    if (input.IsDefined()) {
-        state = DATA;
-        input.SetDirect(GetHandlerDirect());
-    } else
-        /* we have been closed meanwhile; bail out */
-        consumed = 0;
+    if (destructed)
+        return 0;
+
+    state = DATA;
+    input.SetDirect(GetHandlerDirect());
 
     return consumed;
 }
@@ -240,13 +240,13 @@ HeaderSink::OnData(const void *data0, size_t length) noexcept
     assert(consumed > 0);
 
     if (state == DATA && length > 0) {
-        const ScopePoolRef ref(GetPool() TRACE_ARGS);
+        const DestructObserver destructed(*this);
 
         nbytes = InvokeData(data, length);
-        if (nbytes == 0 && !input.IsDefined())
-            consumed = 0;
-        else
-            consumed += nbytes;
+        if (destructed)
+            return 0;
+
+        consumed += nbytes;
     }
 
     return consumed;
