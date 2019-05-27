@@ -210,10 +210,6 @@ struct TeeIstream final : IstreamHandler {
             DeferRead();
     }
 
-    static TeeIstream &CastFromFirst(Istream &first) noexcept {
-        return ContainerCast((FirstOutput &)first, &TeeIstream::first_output);
-    }
-
     struct pool &GetPool() noexcept {
         return first_output.GetPool();
     }
