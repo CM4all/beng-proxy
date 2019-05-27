@@ -522,25 +522,25 @@ NfsCache::OpenFile(struct pool &caller_pool,
 
     /* tee the body: one goes to our client, and one goes into the
        cache */
-    auto tee = istream_tee_new(store->GetPool(), std::move(body),
-                               event_loop,
-                               false, true,
-                               /* just in case our handler closes the
-                                  body without looking at it: defer
-                                  an Istream::Read() call for the
-                                  Rubber sink */
-                               true);
+    auto tee = NewTeeIstream(store->GetPool(), std::move(body),
+                             event_loop,
+                             false,
+                             /* just in case our handler closes the
+                                body without looking at it: defer an
+                                Istream::Read() call for the Rubber
+                                sink */
+                             true);
 
     requests.push_back(*store);
 
     store->timeout_event.Schedule(nfs_cache_timeout);
 
-    sink_rubber_new(store->GetPool(), std::move(tee.second),
+    sink_rubber_new(store->GetPool(), AddTeeIstream(tee, true),
                     rubber, cacheable_size_limit,
                     *store,
                     store->cancel_ptr);
 
-    return std::move(tee.first);
+    return tee;
 }
 
 UnusedIstreamPtr

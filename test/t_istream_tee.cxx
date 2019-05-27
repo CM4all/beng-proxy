@@ -125,12 +125,13 @@ test_block1(EventLoop &event_loop)
     auto pool = pool_new_libc(nullptr, "test");
 
     auto delayed = istream_delayed_new(*pool, event_loop);
-    auto tee = istream_tee_new(*pool, std::move(delayed.first),
-                               event_loop, false, false);
+    auto tee1 = NewTeeIstream(*pool, std::move(delayed.first),
+                              event_loop, false);
+    auto tee2 = AddTeeIstream(tee1, false);
 
-    BlockContext ctx(std::move(tee.first));
+    BlockContext ctx(std::move(tee1));
 
-    auto &sink = NewStringSink(*pool, std::move(tee.second),
+    auto &sink = NewStringSink(*pool, std::move(tee2),
                                buffer_callback, (Context *)&ctx, cancel_ptr);
     assert(ctx.value.empty());
 
@@ -166,13 +167,13 @@ test_close_data(EventLoop &event_loop, struct pool *_pool)
     CancellablePointer cancel_ptr;
 
     auto pool = pool_new_libc(_pool, "test");
-    auto tee =
-        istream_tee_new(*pool, istream_string_new(*pool, "foo"),
-                        event_loop, false, false);
+    auto tee1 = NewTeeIstream(*pool, istream_string_new(*pool, "foo"),
+                              event_loop, false);
+    auto tee2 = AddTeeIstream(tee1, false);
 
-    sink_close_new(*pool, std::move(tee.first));
+    sink_close_new(*pool, std::move(tee1));
 
-    auto &sink = NewStringSink(*pool, std::move(tee.second),
+    auto &sink = NewStringSink(*pool, std::move(tee2),
                                buffer_callback, &ctx, cancel_ptr);
     assert(ctx.value.empty());
 
@@ -200,12 +201,13 @@ test_close_skipped(EventLoop &event_loop, struct pool *_pool)
     CancellablePointer cancel_ptr;
 
     auto pool = pool_new_libc(_pool, "test");
-    auto tee = istream_tee_new(*pool, istream_string_new(*pool, "foo"),
-                               event_loop, false, false);
-    auto &sink = NewStringSink(*pool, std::move(tee.first),
+    auto tee1 = NewTeeIstream(*pool, istream_string_new(*pool, "foo"),
+                              event_loop, false);
+    auto tee2 = AddTeeIstream(tee1, false);
+    auto &sink = NewStringSink(*pool, std::move(tee1),
                                buffer_callback, &ctx, cancel_ptr);
 
-    sink_close_new(*pool, std::move(tee.second));
+    sink_close_new(*pool, std::move(tee2));
     pool.reset();
 
     assert(ctx.value.empty());
@@ -223,24 +225,25 @@ test_error(EventLoop &event_loop, struct pool *_pool,
            bool read_first)
 {
     auto pool = pool_new_libc(_pool, "test");
-    auto tee =
-        istream_tee_new(*pool, istream_fail_new(*pool,
-                                                std::make_exception_ptr(std::runtime_error("error"))),
-                        event_loop,
-                        false, false);
+    auto tee1 =
+        NewTeeIstream(*pool, istream_fail_new(*pool,
+                                              std::make_exception_ptr(std::runtime_error("error"))),
+                      event_loop,
+                      false);
+    auto tee2 = AddTeeIstream(tee1, false);
     pool.reset();
 
     auto first = !close_first
-        ? std::make_unique<StatsIstreamSink>(std::move(tee.first))
+        ? std::make_unique<StatsIstreamSink>(std::move(tee1))
         : nullptr;
     if (close_first)
-        tee.first.Clear();
+        tee1.Clear();
 
     auto second = !close_second
-        ? std::make_unique<StatsIstreamSink>(std::move(tee.second))
+        ? std::make_unique<StatsIstreamSink>(std::move(tee2))
         : nullptr;
     if (close_second)
-        tee.second.Clear();
+        tee2.Clear();
 
     if (read_first)
         first->Read();
@@ -268,23 +271,24 @@ test_bucket_error(EventLoop &event_loop, struct pool *_pool,
                   bool close_second_late)
 {
     auto pool = pool_new_libc(_pool, "test");
-    auto tee =
-        istream_tee_new(*pool, istream_fail_new(*pool,
-                                                std::make_exception_ptr(std::runtime_error("error"))),
-                        event_loop,
-                        false, false);
+    auto tee1 =
+        NewTeeIstream(*pool, istream_fail_new(*pool,
+                                              std::make_exception_ptr(std::runtime_error("error"))),
+                      event_loop,
+                      false);
+    auto tee2 = AddTeeIstream(tee1, false);
     pool.reset();
 
-    StatsIstreamSink first(std::move(tee.first));
+    StatsIstreamSink first(std::move(tee1));
 
     auto second = !close_second_late
-        ? std::make_unique<StatsIstreamSink>(std::move(tee.second))
+        ? std::make_unique<StatsIstreamSink>(std::move(tee2))
         : nullptr;
     if (close_second_early) {
         if (second)
             second->ClearAndCloseInput();
         else
-            tee.second.Clear();
+            tee2.Clear();
     }
 
     IstreamBucketList list;
@@ -298,7 +302,7 @@ test_bucket_error(EventLoop &event_loop, struct pool *_pool,
     }
 
     if (close_second_late)
-        tee.second.Clear();
+        tee2.Clear();
 
     if (!close_second_early && !close_second_late) {
         second->Read();

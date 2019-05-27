@@ -317,15 +317,15 @@ css_processor(struct pool &caller_pool, UnusedIstreamPtr input,
 {
     auto pool = pool_new_linear(&caller_pool, "css_processor", 32768);
 
-    auto tee = istream_tee_new(pool, std::move(input),
-                               *env.event_loop,
-                               true, true);
+    auto tee = NewTeeIstream(pool, std::move(input),
+                             *env.event_loop,
+                             true);
 
     auto replace = istream_replace_new(*env.event_loop, pool,
-                                       std::move(tee.second));
+                                       AddTeeIstream(tee, true));
 
     NewFromPool<CssProcessor>(std::move(pool),
-                              std::move(tee.first),
+                              std::move(tee),
                               std::move(replace.second),
                               widget, env,
                               options);

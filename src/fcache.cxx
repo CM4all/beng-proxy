@@ -566,21 +566,23 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
     } else {
         /* tee the body: one goes to our client, and one goes into the
            cache */
-        auto tee = istream_tee_new(pool, std::move(body),
-                                   cache.GetEventLoop(),
-                                   false,
-                                   /* the second one must be weak
-                                      because closing the first one
-                                      may imply invalidating our input
-                                      (because its pool is going to be
-                                      trashed), triggering the pool
-                                      leak detector */
-                                   true,
-                                   /* just in case our handler closes
-                                      the body without looking at it:
-                                      defer an Istream::Read() call
-                                      for the Rubber sink */
-                                   true);
+        auto tee1 = NewTeeIstream(pool, std::move(body),
+                                  cache.GetEventLoop(),
+                                  false,
+                                  /* just in case our handler closes
+                                     the body without looking at it:
+                                     defer an Istream::Read() call for
+                                     the Rubber sink */
+                                  true);
+
+        auto tee2 = AddTeeIstream(tee1,
+                                  /* the second one must be weak
+                                     because closing the first one may
+                                     imply invalidating our input
+                                     (because its pool is going to be
+                                     trashed), triggering the pool
+                                     leak detector */
+                                  true);
 
         response.status = status;
         response.headers = strmap_dup(pool, &headers);
@@ -589,12 +591,12 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 
         timeout_event.Schedule(fcache_request_timeout);
 
-        sink_rubber_new(pool, std::move(tee.second),
+        sink_rubber_new(pool, std::move(tee2),
                         cache.rubber, cacheable_size_limit,
                         *this,
                         response.cancel_ptr);
 
-        body = std::move(tee.first);
+        body = std::move(tee1);
     }
 
     _handler.InvokeResponse(status, std::move(headers), std::move(body));

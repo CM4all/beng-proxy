@@ -32,29 +32,32 @@
 
 #pragma once
 
-#include <utility>
-
 struct pool;
 class UnusedIstreamPtr;
 class Istream;
 class EventLoop;
 
 /**
- * Create two new streams fed from one input.
+ * An #Istream implementation which copies its input to one or more
+ * outputs.
  *
- * Data gets delivered to the first output, then to the second output.
- * Destruction (eof / abort) goes the reverse order: the second output
- * gets destructed first.
+ * Data gets delivered to the first output, then to the second output
+ * and so on.  Destruction (eof / abort) goes the reverse order: the
+ * last output gets destructed first.
  *
  * @param input the istream which is duplicated
- * @param first_weak if true, closes the whole object if only the
- * first output remains
- * @param second_weak if true, closes the whole object if only the
- * second output remains
+ * @param weak if true, closes the whole object if only this output
+ * (and possibly other "weak" outputs) remains
  * @param defer_read schedule a deferred Istream::Read() call
  */
-std::pair<UnusedIstreamPtr, UnusedIstreamPtr>
-istream_tee_new(struct pool &pool, UnusedIstreamPtr input,
-                EventLoop &event_loop,
-                bool first_weak, bool second_weak,
-                bool defer_read=false);
+UnusedIstreamPtr
+NewTeeIstream(struct pool &pool, UnusedIstreamPtr input,
+              EventLoop &event_loop,
+              bool weak,
+              bool defer_read=false) noexcept;
+
+/**
+ * Create another output for the given #TeeIstream.
+ */
+UnusedIstreamPtr
+AddTeeIstream(UnusedIstreamPtr &tee, bool weak) noexcept;

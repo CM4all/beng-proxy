@@ -35,15 +35,39 @@
 #include "Pointer.hxx"
 #include "Bucket.hxx"
 #include "Handler.hxx"
+#include "New.hxx"
 #include "pool/pool.hxx"
 #include "event/DeferEvent.hxx"
 #include "util/Cast.hxx"
+#include "util/DestructObserver.hxx"
+
+#include <boost/intrusive/list.hpp>
 
 #include <assert.h>
 
-struct TeeIstream final : IstreamHandler {
+namespace bi = boost::intrusive;
 
-    struct Output : Istream {
+struct TeeIstream final : IstreamHandler, DestructAnchor {
+
+    struct Output
+        : bi::list_base_hook<bi::link_mode<bi::normal_link>>,
+          Istream, DestructAnchor
+    {
+        TeeIstream &parent;
+
+        /**
+         * The number of bytes to skip for this output.  This output
+         * has already consumed this many bytes, but the following
+         * outputs blocked.
+         */
+        size_t skip = 0;
+
+        /**
+         * The number of bytes provided by _FillBucketList().  This is
+         * a kludge that is explained in _ConsumeBucketList().
+         */
+        size_t bucket_list_size;
+
         /**
          * A weak output is one which is closed automatically when all
          * "strong" outputs have been closed - it will not keep up the
@@ -51,58 +75,52 @@ struct TeeIstream final : IstreamHandler {
          */
         const bool weak;
 
-        bool enabled = true;
+        Output(struct pool &p, TeeIstream &_parent, bool _weak) noexcept
+            :Istream(p), parent(_parent), weak(_weak) {}
 
-        Output(struct pool &p, bool _weak) noexcept:Istream(p), weak(_weak) {}
+        ~Output() noexcept override {
+            parent.Remove(*this);
+        }
 
         Output(const Output &) = delete;
         Output &operator=(const Output &) = delete;
 
-        friend struct TeeIstream;
-    };
+        size_t Feed(const char *data, size_t length) noexcept;
 
-    struct FirstOutput : Output {
-        /**
-         * The number of bytes provided by _FillBucketList().  This is
-         * a kludge that is explained in _ConsumeBucketList().
-         */
-        size_t bucket_list_size;
-
-        explicit FirstOutput(struct pool &p, bool _weak) noexcept
-            :Output(p, _weak) {}
-
-        TeeIstream &GetParent() noexcept {
-            return ContainerCast(*this, &TeeIstream::first_output);
+        void Consumed(size_t nbytes) noexcept {
+            assert(nbytes <= skip);
+            skip -= nbytes;
         }
 
+        friend struct TeeIstream;
+
+        /* virtual methods from class Istream */
+
         off_t _GetAvailable(bool partial) noexcept override {
-            assert(enabled);
-
-            TeeIstream &tee = GetParent();
-
-            auto available = tee.input.GetAvailable(partial);
+            auto available = parent.input.GetAvailable(partial);
             if (available >= 0) {
-                assert(available >= (off_t)tee.skip);
-                available -= tee.skip;
+                assert(available >= (off_t)skip);
+                available -= skip;
             }
 
             return available;
         }
 
-        //off_t Skip(off_t length) noexcept override;
-
         void _Read() noexcept override {
-            TeeIstream &tee = GetParent();
-
-            assert(enabled);
-
-            tee.ReadInput();
+            parent.ReadInput();
         }
 
         void _FillBucketList(IstreamBucketList &list) override {
-            TeeIstream &tee = GetParent();
+            if (!parent.IsFirst(*this)) {
+                /* (for now) allow only the first output to read
+                   buckets, because implementing it for the other
+                   outputs is rather complicated */
+                list.SetMore();
+                bucket_list_size = 0;
+                return;
+            }
 
-            if (tee.skip > 0) {
+            if (skip > 0) {
                 /* TODO: this can be optimized by skipping data from
                    new buckets */
                 list.SetMore();
@@ -113,11 +131,9 @@ struct TeeIstream final : IstreamHandler {
             IstreamBucketList sub;
 
             try {
-                tee.input.FillBucketList(sub);
+                parent.input.FillBucketList(sub);
             } catch (...) {
-                tee.defer_event.Cancel();
-                enabled = false;
-                tee.PostponeErrorCopyForSecond(std::current_exception());
+                parent.PostponeError(std::current_exception());
                 Destroy();
                 throw;
             }
@@ -126,9 +142,7 @@ struct TeeIstream final : IstreamHandler {
         }
 
         size_t _ConsumeBucketList(size_t nbytes) noexcept override {
-            TeeIstream &tee = GetParent();
-
-            assert(tee.skip == 0);
+            assert(skip == 0);
 
             /* we must not call tee.input.ConsumeBucketList() because
                that would discard data which must still be sent to the
@@ -138,52 +152,23 @@ struct TeeIstream final : IstreamHandler {
 
             size_t consumed = std::min(nbytes, bucket_list_size);
             Consumed(consumed);
-            tee.skip += consumed;
+            skip += consumed;
             return consumed;
         }
 
         void _Close() noexcept override;
     };
 
-    struct SecondOutput : Output {
-        /**
-         * Postponed by PostponeErrorCopyForSecond().
-         */
-        std::exception_ptr postponed_error;
+    using OutputList =
+        bi::list<Output,
+                 bi::base_hook<bi::list_base_hook<bi::link_mode<bi::normal_link>>>,
+                 bi::constant_time_size<false>>;
 
-        explicit SecondOutput(struct pool &p, bool _weak) noexcept
-            :Output(p, _weak) {}
+    OutputList outputs;
 
-        ~SecondOutput() noexcept override {
-            if (postponed_error)
-                GetParent().defer_event.Cancel();
-        }
+    OutputList::iterator next_output = outputs.end();
 
-        TeeIstream &GetParent() noexcept {
-            return ContainerCast(*this, &TeeIstream::second_output);
-        }
-
-        off_t _GetAvailable(bool partial) noexcept override {
-            assert(enabled);
-
-            return GetParent().input.GetAvailable(partial);
-        }
-
-        //off_t Skip(off_t length) noexcept override;
-
-        void _Read() noexcept override {
-            TeeIstream &tee = GetParent();
-
-            assert(enabled);
-
-            tee.ReadInput();
-        }
-
-        void _Close() noexcept override;
-    };
-
-    FirstOutput first_output;
-    SecondOutput second_output;
+    unsigned n_strong = 0;
 
     IstreamPointer input;
 
@@ -193,63 +178,80 @@ struct TeeIstream final : IstreamHandler {
     DeferEvent defer_event;
 
     /**
-     * The number of bytes to skip for output 0.  The first output has
-     * already consumed this many bytes, but the second output
-     * blocked.
+     * Caught by Output::_FillBucketList().
      */
-    size_t skip = 0;
+    std::exception_ptr postponed_error;
 
-    TeeIstream(struct pool &p, UnusedIstreamPtr _input, EventLoop &event_loop,
-               bool first_weak, bool second_weak, bool defer_read) noexcept
-        :first_output(p, first_weak),
-         second_output(p, second_weak),
-         input(std::move(_input), *this),
+    TeeIstream(UnusedIstreamPtr _input, EventLoop &event_loop,
+               bool defer_read) noexcept
+        :input(std::move(_input), *this),
          defer_event(event_loop, BIND_THIS_METHOD(ReadInput))
     {
         if (defer_read)
             DeferRead();
     }
 
+    void Destroy() noexcept {
+        this->~TeeIstream();
+    }
+
     struct pool &GetPool() noexcept {
-        return first_output.GetPool();
+        assert(!outputs.empty());
+
+        return outputs.front().GetPool();
+    }
+
+    UnusedIstreamPtr CreateOutput(struct pool &p, bool weak) noexcept {
+        assert(outputs.empty() || &p == &outputs.front().GetPool());
+
+        auto *output = NewIstream<Output>(p, *this, weak);
+        outputs.push_back(*output);
+        return UnusedIstreamPtr(output);
+    }
+
+    UnusedIstreamPtr CreateOutput(bool weak) noexcept {
+        return CreateOutput(GetPool(), weak);
     }
 
     void ReadInput() noexcept {
-        if (second_output.enabled &&
-            second_output.postponed_error != nullptr) {
+        assert(!outputs.empty());
+
+        if (postponed_error) {
             assert(!input.IsDefined());
-            assert(!first_output.enabled);
 
             defer_event.Cancel();
 
-            second_output.DestroyError(std::exchange(second_output.postponed_error,
-                                                     std::exception_ptr()));
+            const DestructObserver destructed(*this);
+            while (!outputs.empty()) {
+                outputs.front().DestroyError(postponed_error);
+                if (destructed)
+                    return;
+            }
+
             return;
         }
 
         input.Read();
     }
 
-    size_t Feed0(const char *data, size_t length) noexcept;
-    size_t Feed1(const void *data, size_t length) noexcept;
-    size_t Feed(const void *data, size_t length) noexcept;
-
     void DeferRead() noexcept {
-        assert(input.IsDefined() || second_output.postponed_error);
+        assert(input.IsDefined() || postponed_error);
 
         defer_event.Schedule();
     }
 
-    void PostponeErrorCopyForSecond(std::exception_ptr e) noexcept {
-        assert(!first_output.enabled);
-
-        if (!second_output.enabled)
-            return;
-
-        assert(!second_output.postponed_error);
-        second_output.postponed_error = e;
+    void PostponeError(std::exception_ptr e) noexcept {
+        assert(!postponed_error);
+        postponed_error = std::move(e);
         DeferRead();
     }
+
+    bool IsFirst(const Output &output) const noexcept {
+        assert(!outputs.empty());
+        return &output == &outputs.front();
+    }
+
+    void Remove(Output &output) noexcept;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) noexcept override;
@@ -258,69 +260,80 @@ struct TeeIstream final : IstreamHandler {
 };
 
 inline size_t
-TeeIstream::Feed0(const char *data, size_t length) noexcept
+TeeIstream::Output::Feed(const char *data, size_t length) noexcept
 {
-    if (!first_output.enabled)
-        return length;
-
     if (length <= skip)
-        /* all of this has already been sent to the first input, but
-           the second one didn't accept it yet */
+        /* all of this has already been sent to this output, but
+           following outputs one didn't accept it yet */
         return length;
 
     /* skip the part which was already sent */
     data += skip;
     length -= skip;
 
-    size_t nbytes = first_output.InvokeData(data, length);
-    if (nbytes > 0) {
-        skip += nbytes;
-        return skip;
+    const DestructObserver destructed(*this);
+
+    size_t nbytes = InvokeData(data, length);
+    if (destructed) {
+        /* this output has been closed, so pretend everything was
+           consumed */
+        assert(nbytes == 0);
+        return length;
     }
 
-    if (first_output.enabled || !second_output.enabled)
-        /* first output is blocking, or both closed: give up */
-        return 0;
-
-    /* the first output has been closed inside the data() callback,
-       but the second is still alive: continue with the second
-       output */
-    return length;
+    skip += nbytes;
+    return skip;
 }
 
-inline size_t
-TeeIstream::Feed1(const void *data, size_t length) noexcept
+void
+TeeIstream::Output::_Close() noexcept
 {
-    if (!second_output.enabled)
-        return length;
-
-    size_t nbytes = second_output.InvokeData(data, length);
-    if (nbytes == 0 && !second_output.enabled &&
-        first_output.enabled)
-        /* during the data callback, second_output has been closed,
-           but first_output continues; instead of returning 0 here,
-           use first_output's result */
-        return length;
-
-    return nbytes;
+    Destroy();
 }
 
-inline size_t
-TeeIstream::Feed(const void *data, size_t length) noexcept
+void
+TeeIstream::Remove(Output &output) noexcept
 {
-    size_t nbytes0 = Feed0((const char *)data, length);
-    if (nbytes0 == 0)
-        return 0;
+    auto i = outputs.iterator_to(output);
+    if (next_output == i)
+        ++next_output;
+    outputs.erase(i);
 
-    size_t nbytes1 = Feed1(data, nbytes0);
-    if (nbytes1 > 0 && first_output.enabled) {
-        assert(nbytes1 <= skip);
-        skip -= nbytes1;
+    if (!output.weak)
+        --n_strong;
+
+    if (!input.IsDefined()) {
+        /* this can happen during OnEof() or OnError(); and over
+           there, this #TeeIstream and its remaining outputs will be
+           destructed properly, so we can just do nothing here */
+        if (outputs.empty())
+            Destroy();
+        return;
     }
 
-    return nbytes1;
-}
+    if (n_strong > 0) {
+        assert(!outputs.empty());
 
+        DeferRead();
+        return;
+    }
+
+    input.ClearAndClose();
+    defer_event.Cancel();
+
+    if (outputs.empty()) {
+        Destroy();
+        return;
+    }
+
+    const DestructObserver destructed(*this);
+
+    while (!outputs.empty()) {
+        outputs.front().DestroyError(std::make_exception_ptr(std::runtime_error("closing the weak second output")));
+        if (destructed)
+            return;
+    }
+}
 
 /*
  * istream handler
@@ -332,8 +345,21 @@ TeeIstream::OnData(const void *data, size_t length) noexcept
 {
     assert(input.IsDefined());
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
-    return Feed(data, length);
+    for (auto i = outputs.begin(); i != outputs.end(); i = next_output) {
+        next_output = std::next(i);
+
+        size_t nbytes = i->Feed((const char *)data, length);
+        if (nbytes == 0)
+            return 0;
+
+        if (nbytes < length)
+            length = nbytes;
+    }
+
+    for (auto &i : outputs)
+        i.Consumed(length);
+
+    return length;
 }
 
 void
@@ -343,18 +369,14 @@ TeeIstream::OnEof() noexcept
     input.Clear();
     defer_event.Cancel();
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    const DestructObserver destructed(*this);
 
     /* clean up in reverse order */
 
-    if (second_output.enabled) {
-        second_output.enabled = false;
-        second_output.DestroyEof();
-    }
-
-    if (first_output.enabled) {
-        first_output.enabled = false;
-        first_output.DestroyEof();
+    while (!outputs.empty()) {
+        outputs.back().DestroyEof();
+        if (destructed)
+            return;
     }
 }
 
@@ -365,97 +387,15 @@ TeeIstream::OnError(std::exception_ptr ep) noexcept
     input.Clear();
     defer_event.Cancel();
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    const DestructObserver destructed(*this);
 
     /* clean up in reverse order */
 
-    if (second_output.enabled) {
-        second_output.enabled = false;
-        second_output.DestroyError(ep);
+    while (!outputs.empty()) {
+        outputs.back().DestroyError(ep);
+        if (destructed)
+            return;
     }
-
-    if (first_output.enabled) {
-        first_output.enabled = false;
-        first_output.DestroyError(ep);
-    }
-}
-
-/*
- * istream implementation 0
- *
- */
-
-void
-TeeIstream::FirstOutput::_Close() noexcept
-{
-    TeeIstream &tee = GetParent();
-
-    assert(enabled);
-
-    enabled = false;
-
-    if (tee.input.IsDefined()) {
-        if (!tee.second_output.enabled) {
-            tee.input.ClearAndClose();
-            tee.defer_event.Cancel();
-        } else if (tee.second_output.weak) {
-            const ScopePoolRef ref(GetPool() TRACE_ARGS);
-
-            tee.input.ClearAndClose();
-            tee.defer_event.Cancel();
-
-            if (tee.second_output.enabled) {
-                tee.second_output.enabled = false;
-
-                tee.second_output.DestroyError(std::make_exception_ptr(std::runtime_error("closing the weak second output")));
-            }
-        }
-    }
-
-    if (tee.input.IsDefined() && tee.second_output.enabled &&
-        tee.second_output.HasHandler())
-        tee.DeferRead();
-
-    Destroy();
-}
-
-/*
- * istream implementation 2
- *
- */
-
-void
-TeeIstream::SecondOutput::_Close() noexcept
-{
-    TeeIstream &tee = GetParent();
-
-    assert(enabled);
-
-    enabled = false;
-
-    if (tee.input.IsDefined()) {
-        if (!tee.first_output.enabled) {
-            tee.input.ClearAndClose();
-            tee.defer_event.Cancel();
-        } else if (tee.first_output.weak) {
-            const ScopePoolRef ref(tee.GetPool() TRACE_ARGS);
-
-            tee.input.ClearAndClose();
-            tee.defer_event.Cancel();
-
-            if (tee.first_output.enabled) {
-                tee.first_output.enabled = false;
-
-                tee.first_output.DestroyError(std::make_exception_ptr(std::runtime_error("closing the weak first output")));
-            }
-        }
-    }
-
-    if (tee.input.IsDefined() && tee.first_output.enabled &&
-        tee.first_output.HasHandler())
-        tee.DeferRead();
-
-    Destroy();
 }
 
 /*
@@ -463,16 +403,22 @@ TeeIstream::SecondOutput::_Close() noexcept
  *
  */
 
-std::pair<UnusedIstreamPtr, UnusedIstreamPtr>
-istream_tee_new(struct pool &pool, UnusedIstreamPtr input,
-                EventLoop &event_loop,
-                bool first_weak, bool second_weak,
-                bool defer_read)
+UnusedIstreamPtr
+NewTeeIstream(struct pool &pool, UnusedIstreamPtr input,
+              EventLoop &event_loop,
+              bool weak,
+              bool defer_read) noexcept
 {
-    auto tee = NewFromPool<TeeIstream>(pool, pool, std::move(input),
+    auto tee = NewFromPool<TeeIstream>(pool, std::move(input),
                                        event_loop,
-                                       first_weak, second_weak,
                                        defer_read);
-    return std::make_pair(UnusedIstreamPtr(&tee->first_output),
-                          UnusedIstreamPtr(&tee->second_output));
+    return tee->CreateOutput(pool, weak);
+}
+
+UnusedIstreamPtr
+AddTeeIstream(UnusedIstreamPtr &_tee, bool weak) noexcept
+{
+    auto &tee = _tee.StaticCast<TeeIstream::Output>();
+
+    return tee.parent.CreateOutput(weak);
 }
