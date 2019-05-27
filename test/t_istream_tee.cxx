@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,7 +33,7 @@
 #include "PInstance.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/Sink.hxx"
-#include "istream/istream_tee.hxx"
+#include "istream/TeeIstream.hxx"
 #include "istream/DelayedIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/FailIstream.hxx"

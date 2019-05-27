@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -44,7 +44,7 @@
 #include "istream_rubber.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
-#include "istream/istream_tee.hxx"
+#include "istream/TeeIstream.hxx"
 #include "AllocatorStats.hxx"
 #include "cache.hxx"
 #include "event/TimerEvent.hxx"

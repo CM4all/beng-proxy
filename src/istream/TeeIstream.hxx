@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_TEE_HXX
-#define BENG_PROXY_ISTREAM_TEE_HXX
+#pragma once
 
 #include <utility>
 
@@ -59,5 +58,3 @@ istream_tee_new(struct pool &pool, UnusedIstreamPtr input,
                 EventLoop &event_loop,
                 bool first_weak, bool second_weak,
                 bool defer_read=false);
-
-#endif

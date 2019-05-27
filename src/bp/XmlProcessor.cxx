@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -61,7 +61,7 @@
 #include "istream/istream_catch.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/istream_tee.hxx"
+#include "istream/TeeIstream.hxx"
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
 #include "util/CharUtil.hxx"

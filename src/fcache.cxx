@@ -43,7 +43,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
-#include "istream/istream_tee.hxx"
+#include "istream/TeeIstream.hxx"
 #include "istream_unlock.hxx"
 #include "istream_rubber.hxx"
 #include "rubber.hxx"

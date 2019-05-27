@@ -44,7 +44,7 @@
 #include "istream/istream.hxx"
 #include "istream/ReplaceIstream.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/istream_tee.hxx"
+#include "istream/TeeIstream.hxx"
 #include "pool/pool.hxx"
 
 #include <assert.h>

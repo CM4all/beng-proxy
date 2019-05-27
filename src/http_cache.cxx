@@ -46,7 +46,7 @@
 #include "istream_rubber.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/UnusedHoldPtr.hxx"
-#include "istream/istream_tee.hxx"
+#include "istream/TeeIstream.hxx"
 #include "pool/Holder.hxx"
 #include "AllocatorPtr.hxx"
 #include "event/TimerEvent.hxx"
