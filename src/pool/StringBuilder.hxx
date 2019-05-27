@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,7 +32,6 @@
 
 #pragma once
 
-#include "pool.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/StaticArray.hxx"
 #include "util/StringView.hxx"
