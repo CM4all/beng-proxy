@@ -35,7 +35,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/New.hxx"
 #include "escape_class.hxx"
-#include "util/ConstBuffer.hxx"
+#include "util/StringView.hxx"
 #include "util/DestructObserver.hxx"
 
 #include <assert.h>
@@ -44,7 +44,7 @@
 class EscapeIstream final : public FacadeIstream, DestructAnchor {
     const struct escape_class &cls;
 
-    ConstBuffer<char> escaped;
+    StringView escaped;
 
 public:
     EscapeIstream(struct pool &_pool, UnusedIstreamPtr _input,
