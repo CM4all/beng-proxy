@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,13 +35,14 @@
 #include "Bucket.hxx"
 #include "UnusedPtr.hxx"
 #include "pool/pool.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/WritableBuffer.hxx"
 
 #include <boost/intrusive/slist.hpp>
 
 #include <assert.h>
 
-class CatIstream final : public Istream {
+class CatIstream final : public Istream, DestructAnchor {
     struct Input final
         : IstreamSink,
           boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
@@ -239,7 +240,7 @@ CatIstream::_Read() noexcept
         return;
     }
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    const DestructObserver destructed(*this);
 
     reading = true;
 
@@ -247,6 +248,8 @@ CatIstream::_Read() noexcept
     do {
         prev = inputs.begin();
         GetCurrent().Read(GetHandlerDirect());
+        if (destructed)
+            return;
     } while (!IsEOF() && inputs.begin() != prev);
 
     reading = false;
