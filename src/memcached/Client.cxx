@@ -68,16 +68,14 @@ struct MemcachedClient final
 
     /* request */
     struct Request {
-        const struct memcached_client_handler *handler;
-        void *handler_ctx;
+        MemcachedResponseHandler &handler;
 
         IstreamPointer istream;
 
         Request(UnusedIstreamPtr _istream,
                 IstreamHandler &i_handler,
-                const struct memcached_client_handler &_handler,
-                void *_handler_ctx)
-            :handler(&_handler), handler_ctx(_handler_ctx),
+                MemcachedResponseHandler &_handler) noexcept
+            :handler(_handler),
              istream(std::move(_istream), i_handler) {}
 
     } request;
@@ -115,8 +113,7 @@ struct MemcachedClient final
                     SocketDescriptor fd, FdType fd_type,
                     Lease &lease,
                     UnusedIstreamPtr _request,
-                    const struct memcached_client_handler &_handler,
-                    void *_handler_ctx,
+                    MemcachedResponseHandler &handler,
                     CancellablePointer &cancel_ptr);
 
     using Istream::GetPool;
@@ -210,7 +207,7 @@ MemcachedClient::AbortResponseHeaders(std::exception_ptr ep)
     if (socket.IsValid())
         DestroySocket(false);
 
-    request.handler->error(ep, request.handler_ctx);
+    request.handler.OnMemcachedError(ep);
     response.read_state = ReadState::END;
 
     if (request.istream.IsDefined())
@@ -321,12 +318,12 @@ MemcachedClient::SubmitResponse()
         const ScopePoolRef ref(GetPool() TRACE_ARGS);
 
         response.in_handler = true;
-        request.handler->response((memcached_response_status)FromBE16(response.header.status),
-                                  response.extras,
-                                  response.header.extras_length,
-                                  response.key.buffer,
-                                  FromBE16(response.header.key_length),
-                                  UnusedIstreamPtr(this), request.handler_ctx);
+        request.handler.OnMemcachedResponse((memcached_response_status)FromBE16(response.header.status),
+                                            response.extras,
+                                            response.header.extras_length,
+                                            response.key.buffer,
+                                            FromBE16(response.header.key_length),
+                                            UnusedIstreamPtr(this));
         response.in_handler = false;
 
         /* check if the callback has closed the value istream */
@@ -345,12 +342,12 @@ MemcachedClient::SubmitResponse()
 
         response.read_state = ReadState::END;
 
-        request.handler->response((memcached_response_status)FromBE16(response.header.status),
-                                  response.extras,
-                                  response.header.extras_length,
-                                  response.key.buffer,
-                                  FromBE16(response.header.key_length),
-                                  nullptr, request.handler_ctx);
+        request.handler.OnMemcachedResponse((memcached_response_status)FromBE16(response.header.status),
+                                            response.extras,
+                                            response.header.extras_length,
+                                            response.key.buffer,
+                                            FromBE16(response.header.key_length),
+                                            nullptr);
 
         Release(false);
         return BufferedResult::CLOSED;
@@ -692,12 +689,11 @@ MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
                                  SocketDescriptor fd, FdType fd_type,
                                  Lease &lease,
                                  UnusedIstreamPtr _request,
-                                 const struct memcached_client_handler &_handler,
-                                 void *_handler_ctx,
+                                 MemcachedResponseHandler &handler,
                                  CancellablePointer &cancel_ptr)
     :Istream(_pool),
      socket(event_loop),
-     request(std::move(_request), *this, _handler, _handler_ctx)
+     request(std::move(_request), *this, handler)
 {
     socket.Init(fd, fd_type,
                 Event::Duration(-1), memcached_client_timeout,
@@ -720,8 +716,7 @@ memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
                         const void *extras, size_t extras_length,
                         const void *key, size_t key_length,
                         UnusedIstreamPtr value,
-                        const struct memcached_client_handler *handler,
-                        void *handler_ctx,
+                        MemcachedResponseHandler &handler,
                         CancellablePointer &cancel_ptr)
 {
     assert(extras_length <= MEMCACHED_EXTRAS_MAX);
@@ -734,13 +729,12 @@ memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
     if (!request) {
         lease.ReleaseLease(true);
 
-        handler->error(std::make_exception_ptr(MemcachedClientError("failed to generate memcached request packet")),
-                       handler_ctx);
+        handler.OnMemcachedError(std::make_exception_ptr(MemcachedClientError("failed to generate memcached request packet")));
         return;
     }
 
     NewFromPool<MemcachedClient>(*pool, *pool, event_loop,
                                  fd, fd_type, lease,
                                  std::move(request),
-                                 *handler, handler_ctx, cancel_ptr);
+                                 handler, cancel_ptr);
 }

@@ -92,8 +92,7 @@ struct MemcachedStockRequest final : public StockGetHandler, Lease {
 
     UnusedHoldIstreamPtr value;
 
-    const struct memcached_client_handler &handler;
-    void *const handler_ctx;
+    MemcachedResponseHandler &handler;
 
     CancellablePointer &cancel_ptr;
 
@@ -102,15 +101,14 @@ struct MemcachedStockRequest final : public StockGetHandler, Lease {
                           const void *_extras, size_t _extras_length,
                           const void *_key, size_t _key_length,
                           UnusedIstreamPtr _value,
-                          const struct memcached_client_handler &_handler,
-                          void *_handler_ctx,
+                          MemcachedResponseHandler &_handler,
                           CancellablePointer &_cancel_ptr)
         :pool(_pool), event_loop(_event_loop),
          opcode(_opcode),
          extras(_extras), extras_length(_extras_length),
          key(_key), key_length(_key_length),
          value(pool, std::move(_value)),
-         handler(_handler), handler_ctx(_handler_ctx),
+         handler(_handler),
          cancel_ptr(_cancel_ptr) {}
 
     /* virtual methods from class StockGetHandler */
@@ -142,14 +140,13 @@ MemcachedStockRequest::OnStockItemReady(StockItem &_item) noexcept
                             extras, extras_length,
                             key, key_length,
                             std::move(value),
-                            &handler, handler_ctx,
-                            cancel_ptr);
+                            handler, cancel_ptr);
 }
 
 void
 MemcachedStockRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
-    handler.error(ep, handler_ctx);
+    handler.OnMemcachedError(ep);
 
     value.Clear();
 }
@@ -160,8 +157,7 @@ memcached_stock_invoke(struct pool &pool, MemachedStock &stock,
                        const void *extras, size_t extras_length,
                        const void *key, size_t key_length,
                        UnusedIstreamPtr value,
-                       const struct memcached_client_handler &handler,
-                       void *handler_ctx,
+                       MemcachedResponseHandler &handler,
                        CancellablePointer &cancel_ptr)
 {
     assert(extras_length <= MEMCACHED_EXTRAS_MAX);
@@ -173,8 +169,7 @@ memcached_stock_invoke(struct pool &pool, MemachedStock &stock,
                                                       extras, extras_length,
                                                       key, key_length,
                                                       std::move(value),
-                                                      handler, handler_ctx,
-                                                      cancel_ptr);
+                                                      handler, cancel_ptr);
 
     stock.tcp_balancer.Get(pool,
                            false, SocketAddress::Null(),

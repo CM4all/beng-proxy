@@ -46,7 +46,7 @@ class UnusedIstreamPtr;
 class SocketDescriptor;
 class Lease;
 class CancellablePointer;
-struct memcached_client_handler;
+class MemcachedResponseHandler;
 
 /**
  * Invoke a call to the memcached server.  The result will be
@@ -62,7 +62,6 @@ struct memcached_client_handler;
  * @param key_length the length of the key
  * @param value an optional request value
  * @param handler a callback function which receives the response
- * @param handler_ctx a context pointer for the callback function
  * @param cancel_ptr a handle which may be used to abort the operation
  */
 void
@@ -73,6 +72,5 @@ memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
                         const void *extras, size_t extras_length,
                         const void *key, size_t key_length,
                         UnusedIstreamPtr value,
-                        const struct memcached_client_handler *handler,
-                        void *handler_ctx,
+                        MemcachedResponseHandler &handler,
                         CancellablePointer &cancel_ptr);

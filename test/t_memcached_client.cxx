@@ -89,7 +89,7 @@ connect_fake_server()
     return client_socket;
 }
 
-struct Context final : PInstance, Lease, IstreamHandler {
+struct Context final : PInstance, Lease, MemcachedResponseHandler, IstreamHandler {
     unsigned data_blocking = 0;
     bool close_value_early = false;
     bool close_value_late = false;
@@ -104,6 +104,13 @@ struct Context final : PInstance, Lease, IstreamHandler {
     bool value_eof = false, value_abort = false, value_closed = false;
 
     Context():value(nullptr) {}
+
+    /* virtual methods from class MemcachedResponseHandler */
+    void OnMemcachedResponse(enum memcached_response_status status,
+                             const void *extras, size_t extras_length,
+                             const void *key, size_t key_length,
+                             UnusedIstreamPtr value) noexcept override;
+    void OnMemcachedError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class IstreamHandler */
     size_t OnData(const void *data, size_t length) noexcept override;
@@ -222,48 +229,36 @@ Context::OnError(std::exception_ptr) noexcept
  *
  */
 
-static void
-my_mcd_response(enum memcached_response_status status,
-                gcc_unused const void *extras,
-                gcc_unused size_t extras_length,
-                gcc_unused const void *key,
-                gcc_unused size_t key_length,
-                UnusedIstreamPtr value, void *ctx)
+void
+Context::OnMemcachedResponse(enum memcached_response_status _status,
+                             const void *, size_t,
+                             const void *, size_t,
+                             UnusedIstreamPtr _value) noexcept
 {
-    auto *c = (Context *)ctx;
+    assert(!got_response);
 
-    assert(!c->got_response);
+    got_response = true;
+    status = _status;
 
-    c->got_response = true;
-    c->status = status;
+    if (close_value_early)
+        _value.Clear();
+    else if (_value)
+        value.Set(std::move(_value), *this);
 
-    if (c->close_value_early)
-        value.Clear();
-    else if (value)
-        c->value.Set(std::move(value), *c);
-
-    if (c->close_value_late) {
-        c->value_closed = true;
-        c->value.ClearAndClose();
+    if (close_value_late) {
+        value_closed = true;
+        value.ClearAndClose();
     }
 }
 
-static void
-my_mcd_error(std::exception_ptr, gcc_unused void *ctx)
+void
+Context::OnMemcachedError(std::exception_ptr) noexcept
 {
-    auto *c = (Context *)ctx;
+    assert(!got_response);
 
-    assert(!c->got_response);
-
-    c->got_response = true;
-    c->status = (memcached_response_status)-1;
+    got_response = true;
+    status = (memcached_response_status)-1;
 }
-
-static const struct memcached_client_handler my_mcd_handler = {
-    .response = my_mcd_response,
-    .error = my_mcd_error,
-};
-
 
 /*
  * tests
@@ -281,8 +276,7 @@ test_basic(struct pool *pool, Context *c)
                             NULL, 0,
                             "foo", 3,
                             NULL,
-                            &my_mcd_handler, c,
-                            c->cancel_ptr);
+                            *c, c->cancel_ptr);
 
     c->event_loop.Dispatch();
 
@@ -307,8 +301,7 @@ test_close_early(struct pool *pool, Context *c)
                             NULL, 0,
                             "foo", 3,
                             NULL,
-                            &my_mcd_handler, c,
-                            c->cancel_ptr);
+                            *c, c->cancel_ptr);
 
     c->event_loop.Dispatch();
 
@@ -334,8 +327,7 @@ test_close_late(struct pool *pool, Context *c)
                             NULL, 0,
                             "foo", 3,
                             NULL,
-                            &my_mcd_handler, c,
-                            c->cancel_ptr);
+                            *c, c->cancel_ptr);
 
     c->event_loop.Dispatch();
 
@@ -362,8 +354,7 @@ test_close_data(struct pool *pool, Context *c)
                             NULL, 0,
                             "foo", 3,
                             NULL,
-                            &my_mcd_handler, c,
-                            c->cancel_ptr);
+                            *c, c->cancel_ptr);
 
     c->event_loop.Dispatch();
 
@@ -390,8 +381,7 @@ test_abort(struct pool *pool, Context *c)
                             NULL, 0,
                             "foo", 3,
                             NULL,
-                            &my_mcd_handler, c,
-                            c->cancel_ptr);
+                            *c, c->cancel_ptr);
 
     c->cancel_ptr.Cancel();
 
@@ -419,8 +409,7 @@ test_request_value(struct pool *pool, Context *c)
                             NULL, 0,
                             "foo", 3,
                             UnusedIstreamPtr(value),
-                            &my_mcd_handler, c,
-                            request_value_cancel_ptr(*value));
+                            *c, request_value_cancel_ptr(*value));
 
     c->event_loop.Dispatch();
 
@@ -448,8 +437,7 @@ test_request_value_close(struct pool *pool, Context *c)
                             NULL, 0,
                             "foo", 3,
                             UnusedIstreamPtr(value),
-                            &my_mcd_handler, c,
-                            request_value_cancel_ptr(*value));
+                            *c, request_value_cancel_ptr(*value));
 
     c->event_loop.Dispatch();
 
@@ -473,8 +461,7 @@ test_request_value_abort(struct pool *pool, Context *c)
                             NULL, 0,
                             "foo", 3,
                             UnusedIstreamPtr(value),
-                            &my_mcd_handler, c,
-                            request_value_cancel_ptr(*value));
+                            *c, request_value_cancel_ptr(*value));
 
     c->event_loop.Dispatch();
 

@@ -57,7 +57,7 @@
 #include <errno.h>
 #include <string.h>
 
-struct Context final : PInstance, Lease {
+struct Context final : PInstance, Lease, MemcachedResponseHandler {
     ShutdownListener shutdown_listener;
 
     PoolPtr pool;
@@ -87,6 +87,13 @@ struct Context final : PInstance, Lease {
 
         s.Close();
     }
+
+    /* virtual methods from class MemcachedResponseHandler */
+    void OnMemcachedResponse(enum memcached_response_status status,
+                             const void *extras, size_t extras_length,
+                             const void *key, size_t key_length,
+                             UnusedIstreamPtr value) noexcept override;
+    void OnMemcachedError(std::exception_ptr ep) noexcept override;
 };
 
 void
@@ -157,50 +164,39 @@ static constexpr SinkFdHandler my_sink_fd_handler = {
  *
  */
 
-static void
-my_mcd_response(enum memcached_response_status status,
-                gcc_unused const void *extras,
-                gcc_unused size_t extras_length,
-                gcc_unused const void *key,
-                gcc_unused size_t key_length,
-                UnusedIstreamPtr value, void *ctx)
+void
+Context::OnMemcachedResponse(enum memcached_response_status _status,
+                             const void *, size_t,
+                             const void *, size_t,
+                             UnusedIstreamPtr _value) noexcept
 {
-    auto *c = (Context *)ctx;
+    fprintf(stderr, "status=%d\n", _status);
 
-    fprintf(stderr, "status=%d\n", status);
+    status = _status;
 
-    c->status = status;
-
-    if (value) {
-        c->value = sink_fd_new(c->event_loop, *c->pool,
-                               NewAutoPipeIstream(c->pool, std::move(value),
-                                                  nullptr),
-                               FileDescriptor(STDOUT_FILENO),
-                               guess_fd_type(STDOUT_FILENO),
-                               my_sink_fd_handler, c);
+    if (_value) {
+        value = sink_fd_new(event_loop, *pool,
+                            NewAutoPipeIstream(pool, std::move(_value),
+                                               nullptr),
+                            FileDescriptor(STDOUT_FILENO),
+                            guess_fd_type(STDOUT_FILENO),
+                            my_sink_fd_handler, this);
     } else {
-        c->value_eof = true;
-        c->shutdown_listener.Disable();
+        value_eof = true;
+        shutdown_listener.Disable();
     }
 }
 
-static void
-my_mcd_error(std::exception_ptr ep, void *ctx)
+void
+Context::OnMemcachedError(std::exception_ptr ep) noexcept
 {
-    auto *c = (Context *)ctx;
-
     PrintException(ep);
 
-    c->status = (memcached_response_status)-1;
-    c->value_eof = true;
+    status = (memcached_response_status)-1;
+    value_eof = true;
 
-    c->shutdown_listener.Disable();
+    shutdown_listener.Disable();
 }
-
-static const struct memcached_client_handler my_mcd_handler = {
-    .response = my_mcd_response,
-    .error = my_mcd_error,
-};
 
 /*
  * main
@@ -266,8 +262,7 @@ int main(int argc, char **argv) {
                             extras, extras_length,
                             key, key != NULL ? strlen(key) : 0,
                             value != nullptr ? istream_string_new(ctx.pool, value) : nullptr,
-                            &my_mcd_handler, &ctx,
-                            ctx.cancel_ptr);
+                            ctx, ctx.cancel_ptr);
 
     ctx.event_loop.Dispatch();
 

@@ -40,11 +40,12 @@
 
 class UnusedIstreamPtr;
 
-struct memcached_client_handler {
-    void (*response)(enum memcached_response_status status,
-                     const void *extras, size_t extras_length,
-                     const void *key, size_t key_length,
-                     UnusedIstreamPtr value, void *ctx);
+class MemcachedResponseHandler {
+public:
+    virtual void OnMemcachedResponse(enum memcached_response_status status,
+                                     const void *extras, size_t extras_length,
+                                     const void *key, size_t key_length,
+                                     UnusedIstreamPtr value) noexcept = 0;
 
-    void (*error)(std::exception_ptr ep, void *ctx);
+    virtual void OnMemcachedError(std::exception_ptr ep) noexcept = 0;
 };
