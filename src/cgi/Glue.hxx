@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_CGI_GLUE_HXX
-#define BENG_PROXY_CGI_GLUE_HXX
+#pragma once
 
 #include "http/Method.h"
 
@@ -55,5 +54,3 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
         const StringMap &headers, UnusedIstreamPtr body,
         HttpResponseHandler &_handler,
         CancellablePointer &cancel_ptr);
-
-#endif

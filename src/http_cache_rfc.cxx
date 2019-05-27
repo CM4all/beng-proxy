@@ -36,7 +36,6 @@
 #include "http_address.hxx"
 #include "strmap.hxx"
 #include "ResourceAddress.hxx"
-#include "cgi_address.hxx"
 #include "lhttp_address.hxx"
 #include "pool/pool.hxx"
 #include "io/Logger.hxx"

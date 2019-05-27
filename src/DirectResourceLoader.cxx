@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,8 +41,8 @@
 #include "lhttp_request.hxx"
 #include "http_address.hxx"
 #include "http/Headers.hxx"
-#include "cgi/cgi_glue.hxx"
-#include "cgi_address.hxx"
+#include "cgi/Glue.hxx"
+#include "cgi/Address.hxx"
 #include "fcgi/Request.hxx"
 #include "fcgi/Remote.hxx"
 #include "was/Glue.hxx"

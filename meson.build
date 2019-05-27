@@ -456,7 +456,7 @@ istream_spawn_dep = declare_dependency(
 
 raddress = static_library('raddress',
   'src/regex.cxx',
-  'src/cgi_address.cxx',
+  'src/cgi/Address.cxx',
   'src/file_address.cxx',
   'src/delegate/Address.cxx',
   'src/nfs/Address.cxx',
@@ -688,10 +688,10 @@ http_cache_dep = declare_dependency(
 )
 
 cgi = static_library('cgi',
-  'src/cgi/cgi_glue.cxx',
-  'src/cgi/cgi_parser.cxx',
-  'src/cgi/cgi_client.cxx',
-  'src/cgi/cgi_launch.cxx',
+  'src/cgi/Glue.cxx',
+  'src/cgi/Parser.cxx',
+  'src/cgi/Client.cxx',
+  'src/cgi/Launch.cxx',
   include_directories: inc,
 )
 cgi_dep = declare_dependency(

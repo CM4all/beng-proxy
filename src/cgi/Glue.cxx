@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,10 +30,10 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "cgi_glue.hxx"
-#include "cgi_address.hxx"
-#include "cgi_client.hxx"
-#include "cgi_launch.hxx"
+#include "Glue.hxx"
+#include "Address.hxx"
+#include "Client.hxx"
+#include "Launch.hxx"
 #include "abort_flag.hxx"
 #include "stopwatch.hxx"
 #include "HttpResponseHandler.hxx"

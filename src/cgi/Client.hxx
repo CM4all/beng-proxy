@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,28 +30,23 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_CGI_LAUNCH_HXX
-#define BENG_PROXY_CGI_LAUNCH_HXX
+#pragma once
 
 #include "http/Method.h"
 
 struct pool;
-class EventLoop;
+struct Stopwatch;
 class UnusedIstreamPtr;
-class SpawnService;
-struct CgiAddress;
-class StringMap;
+class HttpResponseHandler;
+class CancellablePointer;
 
 /**
- * Launch a CGI script.
+ * Communicate with a CGI script.
  *
- * Throws std::runtime_error on error.
+ * @param input the stream received from the child process
  */
-UnusedIstreamPtr
-cgi_launch(EventLoop &event_loop, struct pool *pool, http_method_t method,
-           const CgiAddress *address,
-           const char *remote_addr,
-           const StringMap &headers, UnusedIstreamPtr body,
-           SpawnService &spawn_service);
-
-#endif
+void
+cgi_client_new(struct pool &pool, Stopwatch *stopwatch,
+               UnusedIstreamPtr input,
+               HttpResponseHandler &handler,
+               CancellablePointer &cancel_ptr);

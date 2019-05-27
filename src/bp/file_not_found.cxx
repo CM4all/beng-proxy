@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,7 +34,7 @@
 #include "Request.hxx"
 #include "translation/Response.hxx"
 #include "file_address.hxx"
-#include "cgi_address.hxx"
+#include "cgi/Address.hxx"
 #include "lhttp_address.hxx"
 
 #include <assert.h>

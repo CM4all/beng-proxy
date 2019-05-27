@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -43,7 +43,7 @@
 #include "HttpResponseHandler.hxx"
 #include "http_server/Request.hxx"
 #include "http_address.hxx"
-#include "cgi_address.hxx"
+#include "cgi/Address.hxx"
 #include "uri/Extract.hxx"
 #include "istream/AutoPipeIstream.hxx"
 #include "lhttp_address.hxx"

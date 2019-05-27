@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "cgi_launch.hxx"
-#include "cgi_address.hxx"
+#include "Launch.hxx"
+#include "Address.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"

@@ -42,7 +42,7 @@
 #include "http_address.hxx"
 #include "file_address.hxx"
 #include "delegate/Address.hxx"
-#include "cgi_address.hxx"
+#include "cgi/Address.hxx"
 #include "spawn/MountList.hxx"
 #include "spawn/NamespaceOptions.hxx"
 #include "pool/pool.hxx"

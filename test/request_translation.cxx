@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,7 +42,7 @@
 #include "lhttp_address.hxx"
 #include "http_address.hxx"
 #include "file_address.hxx"
-#include "cgi_address.hxx"
+#include "cgi/Address.hxx"
 #include "nfs/Address.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "util/Cancellable.hxx"

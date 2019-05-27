@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,8 +31,8 @@
  */
 
 #include "tconstruct.hxx"
-#include "cgi/cgi_glue.hxx"
-#include "cgi_address.hxx"
+#include "cgi/Glue.hxx"
+#include "cgi/Address.hxx"
 #include "HttpResponseHandler.hxx"
 #include "direct.hxx"
 #include "crash.hxx"
