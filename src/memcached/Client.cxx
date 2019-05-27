@@ -45,6 +45,7 @@
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
 
 #include <errno.h>
@@ -52,7 +53,7 @@
 #include <string.h>
 
 struct MemcachedClient final
-    : BufferedSocketHandler, Istream, IstreamHandler, Cancellable {
+    : BufferedSocketHandler, Istream, IstreamHandler, Cancellable, DestructAnchor {
 
     enum class ReadState {
         HEADER,
@@ -117,10 +118,6 @@ struct MemcachedClient final
                     CancellablePointer &cancel_ptr);
 
     using Istream::GetPool;
-
-    bool IsValid() const {
-        return socket.IsValid();
-    }
 
     bool CheckDirect() const {
         assert(socket.IsConnected());
@@ -311,11 +308,10 @@ MemcachedClient::SubmitResponse()
     if (response.remaining > 0) {
         /* there's a value: pass it to the callback, continue
            reading */
-        bool valid;
 
         response.read_state = ReadState::VALUE;
 
-        const ScopePoolRef ref(GetPool() TRACE_ARGS);
+        const DestructObserver destructed(*this);
 
         response.in_handler = true;
         request.handler.OnMemcachedResponse((memcached_response_status)FromBE16(response.header.status),
@@ -324,17 +320,15 @@ MemcachedClient::SubmitResponse()
                                             response.key.buffer,
                                             FromBE16(response.header.key_length),
                                             UnusedIstreamPtr(this));
+        if (destructed)
+            return BufferedResult::CLOSED;
+
         response.in_handler = false;
 
-        /* check if the callback has closed the value istream */
-        valid = IsValid();
-
-        if (valid && socket.IsConnected())
+        if (socket.IsConnected())
             socket.SetDirect(CheckDirect());
 
-        return valid
-            ? BufferedResult::AGAIN_EXPECT
-            : BufferedResult::CLOSED;
+        return BufferedResult::AGAIN_EXPECT;
     } else {
         /* no value: invoke the callback, quit */
 
@@ -463,11 +457,13 @@ MemcachedClient::FeedValue(const void *data, size_t length)
     if (length > response.remaining)
         length = response.remaining;
 
+    const DestructObserver destructed(*this);
+
     size_t nbytes = InvokeData(data, length);
     if (nbytes == 0)
-        return IsValid()
-            ? BufferedResult::BLOCKING
-            : BufferedResult::CLOSED;
+        return destructed
+            ? BufferedResult::CLOSED
+            : BufferedResult::BLOCKING;
 
     socket.DisposeConsumed(nbytes);
 
@@ -549,11 +545,11 @@ MemcachedClient::OnBufferedWrite()
 {
     assert(response.read_state != ReadState::END);
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    const DestructObserver destructed(*this);
 
     request.istream.Read();
 
-    return socket.IsValid() && socket.IsConnected();
+    return !destructed && socket.IsConnected();
 }
 
 BufferedResult
@@ -564,7 +560,6 @@ MemcachedClient::OnBufferedData()
     const auto r = socket.ReadBuffer();
     assert(!r.empty());
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
     return Feed(r.data, r.size);
 }
 
