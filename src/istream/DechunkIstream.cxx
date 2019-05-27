@@ -450,8 +450,6 @@ DechunkIstream::_Close() noexcept
 {
     assert(!eof);
 
-    defer_eof_event.Cancel();
-
     if (input.IsDefined())
         input.ClearAndClose();
     Destroy();
