@@ -86,7 +86,6 @@ public:
     }
 
     ~DeflateIstream() {
-        defer.Cancel();
         if (z_initialized)
             deflateEnd(&z);
     }
