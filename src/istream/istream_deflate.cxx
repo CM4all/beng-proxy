@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,6 +40,7 @@
 #include "event/DeferEvent.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/WritableBuffer.hxx"
 
 #include <zlib.h>
@@ -60,7 +61,7 @@ public:
     }
 };
 
-class DeflateIstream final : public FacadeIstream {
+class DeflateIstream final : public FacadeIstream, DestructAnchor {
     const bool gzip;
     bool z_initialized = false, z_stream_end = false;
     z_stream z;
@@ -92,10 +93,8 @@ public:
     bool InitZlib() noexcept;
 
     void DeinitZlib() noexcept {
-        if (z_initialized) {
-            z_initialized = false;
+        if (z_initialized)
             deflateEnd(&z);
-        }
     }
 
     void Abort(std::exception_ptr ep) noexcept {
@@ -272,7 +271,7 @@ DeflateIstream::ForceRead() noexcept
 {
     assert(!reading);
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    const DestructObserver destructed(*this);
 
     bool had_input2 = false;
     had_output = false;
@@ -281,6 +280,9 @@ DeflateIstream::ForceRead() noexcept
         had_input = false;
         reading = true;
         input.Read();
+        if (destructed)
+            return;
+
         reading = false;
         if (!HasInput() || had_output)
             return;
@@ -368,10 +370,9 @@ DeflateIstream::OnData(const void *data, size_t length) noexcept
             had_output = true;
             buffer.Append(nbytes);
 
-            const ScopePoolRef ref(GetPool() TRACE_ARGS);
+            const DestructObserver destructed(*this);
             TryWrite();
-
-            if (!z_initialized)
+            if (destructed)
                 return 0;
         } else
             break;
@@ -426,4 +427,5 @@ istream_deflate_new(struct pool &pool, UnusedIstreamPtr input,
 {
     return NewIstreamPtr<DeflateIstream>(pool, std::move(input),
                                          event_loop, gzip);
+
 }
