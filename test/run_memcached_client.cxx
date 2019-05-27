@@ -31,6 +31,7 @@
  */
 
 #include "memcached/Client.hxx"
+#include "memcached/Handler.hxx"
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/AutoPipeIstream.hxx"

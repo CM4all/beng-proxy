@@ -35,8 +35,6 @@
 #include "io/FdType.hxx"
 #include "Protocol.hxx"
 
-#include <exception>
-
 #include <stddef.h>
 
 static constexpr size_t MEMCACHED_EXTRAS_MAX = 0xff;
@@ -47,18 +45,8 @@ class EventLoop;
 class UnusedIstreamPtr;
 class SocketDescriptor;
 class Lease;
-class HttpResponseHandler;
-class StringMap;
 class CancellablePointer;
-
-struct memcached_client_handler {
-    void (*response)(enum memcached_response_status status,
-                     const void *extras, size_t extras_length,
-                     const void *key, size_t key_length,
-                     UnusedIstreamPtr value, void *ctx);
-
-    void (*error)(std::exception_ptr ep, void *ctx);
-};
+struct memcached_client_handler;
 
 /**
  * Invoke a call to the memcached server.  The result will be

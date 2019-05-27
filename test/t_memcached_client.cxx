@@ -31,6 +31,7 @@
  */
 
 #include "memcached/Client.hxx"
+#include "memcached/Handler.hxx"
 #include "HttpResponseHandler.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"

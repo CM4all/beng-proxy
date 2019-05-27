@@ -32,6 +32,7 @@
 
 #include "Stock.hxx"
 #include "Client.hxx"
+#include "Handler.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 #include "cluster/TcpBalancer.hxx"

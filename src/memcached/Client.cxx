@@ -31,6 +31,7 @@
  */
 
 #include "Client.hxx"
+#include "Handler.hxx"
 #include "Packet.hxx"
 #include "Error.hxx"
 #include "please.hxx"
