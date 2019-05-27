@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,6 +36,7 @@
 #include "New.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
+#include "util/DestructObserver.hxx"
 
 #include <iconv.h>
 
@@ -44,8 +45,8 @@
 #include <assert.h>
 #include <errno.h>
 
-class IconvIstream final : public FacadeIstream {
-    iconv_t iconv;
+class IconvIstream final : public FacadeIstream, DestructAnchor {
+    const iconv_t iconv;
     SliceFifoBuffer buffer;
 
 public:
@@ -58,11 +59,6 @@ public:
 
     ~IconvIstream() noexcept {
         iconv_close(iconv);
-        iconv = (iconv_t)-1;
-    }
-
-    bool IsOpen() const noexcept {
-        return iconv != (iconv_t)-1;
     }
 
     /* virtual methods from class Istream */
@@ -82,9 +78,6 @@ public:
     size_t OnData(const void *data, size_t length) noexcept override;
     void OnEof() noexcept override;
     void OnError(std::exception_ptr ep) noexcept override;
-
-private:
-    size_t Feed(const char *data, size_t length) noexcept;
 };
 
 static inline size_t
@@ -96,12 +89,21 @@ deconst_iconv(iconv_t cd,
     return iconv(cd, inbuf2, inbytesleft, outbuf, outbytesleft);
 }
 
+/*
+ * istream handler
+ *
+ */
+
 size_t
-IconvIstream::Feed(const char *data, size_t length) noexcept
+IconvIstream::OnData(const void *_data, size_t length) noexcept
 {
+    assert(input.IsDefined());
+
+    const DestructObserver destructed(*this);
+
     buffer.AllocateIfNull(fb_pool_get());
 
-    const char *src = data;
+    const char *data = (const char *)_data, *src = data;
 
     do {
         auto w = buffer.Write();
@@ -110,12 +112,12 @@ IconvIstream::Feed(const char *data, size_t length) noexcept
 
             size_t nbytes = SendFromBuffer(buffer);
             if (nbytes == 0) {
-                if (!IsOpen())
+                if (destructed)
                     return 0;
                 break;
             }
 
-            assert(IsOpen());
+            assert(!destructed);
 
             continue;
         }
@@ -159,7 +161,7 @@ IconvIstream::Feed(const char *data, size_t length) noexcept
                 /* output buffer is full: flush dest */
                 nbytes = SendFromBuffer(buffer);
                 if (nbytes == 0) {
-                    if (!IsOpen())
+                    if (destructed)
                         return 0;
 
                     /* reset length to 0, to make the loop quit
@@ -169,34 +171,19 @@ IconvIstream::Feed(const char *data, size_t length) noexcept
                     break;
                 }
 
-                assert(IsOpen());
+                assert(!destructed);
                 break;
             }
         }
     } while (length > 0);
 
     SendFromBuffer(buffer);
-    if (!IsOpen())
+    if (destructed)
         return 0;
 
     buffer.FreeIfEmpty();
 
     return src - data;
-}
-
-
-/*
- * istream handler
- *
- */
-
-size_t
-IconvIstream::OnData(const void *data, size_t length) noexcept
-{
-    assert(input.IsDefined());
-
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
-    return Feed((const char *)data, length);
 }
 
 void
