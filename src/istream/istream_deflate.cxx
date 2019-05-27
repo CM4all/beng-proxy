@@ -85,7 +85,7 @@ public:
     {
     }
 
-    ~DeflateIstream() noexcept {
+    ~DeflateIstream() noexcept override {
         if (z_initialized)
             deflateEnd(&z);
     }
