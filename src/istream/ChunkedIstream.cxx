@@ -37,6 +37,7 @@
 #include "UnusedPtr.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cast.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/HexFormat.h"
 
 #include <algorithm>
@@ -44,7 +45,7 @@
 #include <assert.h>
 #include <string.h>
 
-class ChunkedIstream final : public FacadeIstream {
+class ChunkedIstream final : public FacadeIstream, DestructAnchor {
     /**
      * This flag is true while writing the buffer inside _Read().
      * OnData() will check it, and refuse to accept more data from the
@@ -178,19 +179,22 @@ ChunkedIstream::SendBuffer() noexcept
 bool
 ChunkedIstream::SendBuffer2() noexcept
 {
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
+    const DestructObserver destructed(*this);
 
     assert(!writing_buffer);
     writing_buffer = true;
 
     const bool result = SendBuffer();
-    writing_buffer = false;
+    if (!destructed)
+        writing_buffer = false;
     return result;
 }
 
 inline size_t
 ChunkedIstream::Feed(const char *data, size_t length) noexcept
 {
+    const DestructObserver destructed(*this);
+
     size_t total = 0, rest, nbytes;
 
     assert(input.IsDefined());
@@ -202,7 +206,7 @@ ChunkedIstream::Feed(const char *data, size_t length) noexcept
             StartChunk(length - total);
 
         if (!SendBuffer())
-            return input.IsDefined() ? total : 0;
+            return destructed ? 0 : total;
 
         assert(IsBufferEmpty());
 
@@ -219,7 +223,7 @@ ChunkedIstream::Feed(const char *data, size_t length) noexcept
 
         nbytes = InvokeData(data + total, rest);
         if (nbytes == 0)
-            return input.IsDefined() ? total : 0;
+            return destructed ? 0 : total;
 
         total += nbytes;
 
@@ -248,7 +252,6 @@ ChunkedIstream::OnData(const void *data, size_t length) noexcept
         /* this is a recursive call from _Read(): bail out */
         return 0;
 
-    const ScopePoolRef ref(GetPool() TRACE_ARGS);
     return Feed((const char*)data, length);
 }
 
