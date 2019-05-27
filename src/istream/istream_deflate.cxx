@@ -78,14 +78,14 @@ class DeflateIstream final : public FacadeIstream, DestructAnchor {
 
 public:
     DeflateIstream(struct pool &_pool, UnusedIstreamPtr _input,
-                   EventLoop &event_loop, bool _gzip)
+                   EventLoop &event_loop, bool _gzip) noexcept
         :FacadeIstream(_pool, std::move(_input)),
          gzip(_gzip),
          defer(event_loop, BIND_THIS_METHOD(OnDeferred))
     {
     }
 
-    ~DeflateIstream() {
+    ~DeflateIstream() noexcept {
         if (z_initialized)
             deflateEnd(&z);
     }
