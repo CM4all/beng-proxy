@@ -37,6 +37,7 @@
 
 #include <utility>
 
+#include <assert.h>
 #include <sys/types.h>
 
 class Istream;
@@ -85,6 +86,16 @@ public:
     template<typename T>
     T *DynamicCast() noexcept {
         return dynamic_cast<T *>(stream);
+    }
+
+    /**
+     * Like DynamicCast(), but omits the RTTI check.
+     */
+    template<typename T>
+    T &StaticCast() noexcept {
+        assert(DynamicCast<T>() != nullptr);
+
+        return *static_cast<T *>(stream);
     }
 
     void Clear() noexcept {
