@@ -684,11 +684,11 @@ MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
                                  SocketDescriptor fd, FdType fd_type,
                                  Lease &lease,
                                  UnusedIstreamPtr _request,
-                                 MemcachedResponseHandler &handler,
+                                 MemcachedResponseHandler &_handler,
                                  CancellablePointer &cancel_ptr)
     :Istream(_pool),
      socket(event_loop),
-     request(std::move(_request), *this, handler)
+     request(std::move(_request), *this, _handler)
 {
     socket.Init(fd, fd_type,
                 Event::Duration(-1), memcached_client_timeout,
