@@ -389,8 +389,7 @@ HttpServerConnection::CloseRequest() noexcept
     if (response.status != http_status_t(0))
         Log();
 
-    request.request->Destroy();
-    request.request = nullptr;
+    auto *_request = std::exchange(request.request, nullptr);
 
     if ((request.read_state == Request::BODY ||
          request.read_state == Request::END)) {
@@ -401,6 +400,8 @@ HttpServerConnection::CloseRequest() noexcept
                _response_stream_abort() */
             request.cancel_ptr.Cancel();
     }
+
+    _request->Destroy();
 
     /* the handler must have closed the request body */
     assert(request.read_state != Request::BODY);
