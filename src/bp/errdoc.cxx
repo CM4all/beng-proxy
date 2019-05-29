@@ -191,9 +191,8 @@ fill_translate_request(TranslateRequest *t,
 void
 ErrorResponseLoader::Cancel() noexcept
 {
-    CancellablePointer c(std::move(cancel_ptr));
+    cancel_ptr.Cancel();
     Destroy();
-    c.Cancel();
 }
 
 /*

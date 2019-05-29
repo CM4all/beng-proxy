@@ -157,9 +157,8 @@ private:
         /* this cancels only the TranslationStock::Get() call initiated
            from Start() */
 
-        CancellablePointer c(std::move(cancel_ptr));
+        cancel_ptr.Cancel();
         Destroy();
-        c.Cancel();
     }
 
     /* virtual methods from class StockGetHandler */

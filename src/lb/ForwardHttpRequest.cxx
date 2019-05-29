@@ -186,9 +186,8 @@ private:
     void Cancel() noexcept override {
         assert(!response_sent);
 
-        CancellablePointer c(std::move(cancel_ptr));
+        cancel_ptr.Cancel();
         Destroy();
-        c.Cancel();
     }
 
     /* virtual methods from class StockGetHandler */
