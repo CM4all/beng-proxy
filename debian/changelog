@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.19) unstable; urgency=low
 
-  * 
+  * systemd: raise TasksMax to 50%
 
  --   
 
