@@ -124,8 +124,9 @@ private:
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
-        stock_cancel_ptr.Cancel();
-        body.Clear();
+        auto c = std::move(stock_cancel_ptr);
+        Destroy();
+        c.Cancel();
     }
 
     /* virtual methods from class WasLease */
