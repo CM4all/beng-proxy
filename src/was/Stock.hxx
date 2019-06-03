@@ -38,6 +38,7 @@
 #include <stdint.h>
 
 struct pool;
+struct ChildErrorLogOptions;
 class StockMap;
 struct StockItem;
 class StockGetHandler;
@@ -55,7 +56,8 @@ class SocketDescriptor;
 StockMap *
 was_stock_new(unsigned limit, unsigned max_idle,
               EventLoop &event_loop, SpawnService &spawn_service,
-              SocketDescriptor log_socket) noexcept;
+              SocketDescriptor log_socket,
+              const ChildErrorLogOptions &log_options) noexcept;
 
 void
 was_stock_free(StockMap *stock) noexcept;

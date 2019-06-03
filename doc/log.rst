@@ -85,6 +85,10 @@ The following ``access_logger`` options are available:
 - ``forward_child_errors``: “yes” forwards error messages from child
   processes (``stderr``) to the logger (and not to the local journal).
 
+- ``child_error_rate_limit``: Limit the rate of error messages from
+  child processes.  Expects two values: the number of lines per
+  second, and the burst count.
+
 Child Erorr Logger
 ~~~~~~~~~~~~~~~~~~
 
@@ -98,6 +102,9 @@ instead::
 
 This section contains either ``send_to`` or ``shell``, as described in
 the previous section.
+
+The option ``child_error_rate_limit`` must be called just
+``rate_limit`` in this section.
 
 Included Loggers
 ----------------

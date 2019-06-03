@@ -91,7 +91,8 @@ public:
 
     void Spawn(ChildStockClass &cls, void *info,
                int backlog,
-               SocketDescriptor log_socket);
+               SocketDescriptor log_socket,
+               const ChildErrorLogOptions &log_options);
 
     gcc_pure
     const char *GetTag() const {
@@ -157,7 +158,8 @@ private:
 void
 ChildStockItem::Spawn(ChildStockClass &cls, void *info,
                       int backlog,
-                      SocketDescriptor log_socket)
+                      SocketDescriptor log_socket,
+                      const ChildErrorLogOptions &log_options)
 {
     int socket_type = cls.GetChildSocketType(info);
 
@@ -165,7 +167,7 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
     cls.PrepareChild(info, socket.Create(socket_type, backlog), p);
 
     if (log_socket.IsDefined() && p.stderr_fd < 0)
-        log.EnableClient(p, GetEventLoop(), log_socket);
+        log.EnableClient(p, GetEventLoop(), log_socket, log_options);
 
     pid = spawn_service.SpawnChildProcess(GetStockName(), std::move(p), this);
 }
@@ -192,7 +194,7 @@ ChildStock::Create(CreateStockItem c, void *info,
                                     cls.GetChildTag(info));
 
     try {
-        item->Spawn(cls, info, backlog, log_socket);
+        item->Spawn(cls, info, backlog, log_socket, log_options);
     } catch (...) {
         delete item;
         throw;
@@ -219,11 +221,13 @@ ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
                        ChildStockClass &_cls,
                        int _backlog,
                        SocketDescriptor _log_socket,
+                       const ChildErrorLogOptions &_log_options,
                        unsigned _limit, unsigned _max_idle) noexcept
     :map(event_loop, *this, _limit, _max_idle),
      spawn_service(_spawn_service), cls(_cls),
      backlog(_backlog),
-     log_socket(_log_socket)
+     log_socket(_log_socket),
+     log_options(_log_options)
 {
 }
 

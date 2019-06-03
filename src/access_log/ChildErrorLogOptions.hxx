@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,62 +30,11 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_LHTTP_STOCK_HXX
-#define BENG_PROXY_LHTTP_STOCK_HXX
-
-#include "io/FdType.hxx"
-
-#include "util/Compiler.h"
-
-struct pool;
-struct ChildErrorLogOptions;
-class LhttpStock;
-struct StockItem;
-struct LhttpAddress;
-class SocketDescriptor;
-class EventLoop;
-class SpawnService;
+#pragma once
 
 /**
- * Launch and manage "Local HTTP" child processes.
+ * Run-time options for #ChildErrorLog.
  */
-LhttpStock *
-lhttp_stock_new(unsigned limit, unsigned max_idle,
-                EventLoop &event_loop, SpawnService &spawn_service,
-                SocketDescriptor log_socket,
-                const ChildErrorLogOptions &log_options) noexcept;
-
-void
-lhttp_stock_free(LhttpStock *lhttp_stock) noexcept;
-
-void
-lhttp_stock_fade_all(LhttpStock &ls) noexcept;
-
-void
-lhttp_stock_fade_tag(LhttpStock &ls, const char *tag) noexcept;
-
-/**
- * Throws exception on error.
- */
-StockItem *
-lhttp_stock_get(LhttpStock *lhttp_stock,
-                const LhttpAddress *address);
-
-/**
- * Returns the socket descriptor of the specified stock item.
- */
-gcc_pure
-SocketDescriptor
-lhttp_stock_item_get_socket(const StockItem &item) noexcept;
-
-gcc_pure
-FdType
-lhttp_stock_item_get_type(const StockItem &item) noexcept;
-
-void
-lhttp_stock_item_set_site(StockItem &item, const char *site) noexcept;
-
-void
-lhttp_stock_item_set_uri(StockItem &item, const char *uri) noexcept;
-
-#endif
+struct ChildErrorLogOptions {
+    double rate_limit = -1, burst = -1;
+};

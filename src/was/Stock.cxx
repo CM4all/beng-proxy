@@ -37,6 +37,7 @@
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "access_log/ChildErrorLog.hxx"
+#include "access_log/ChildErrorLogOptions.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
@@ -134,13 +135,15 @@ public:
     /**
      * Throws on error.
      */
-    void Launch(const WasChildParams &params, SocketDescriptor log_socket) {
+    void Launch(const WasChildParams &params, SocketDescriptor log_socket,
+                const ChildErrorLogOptions &log_options) {
         process = was_launch(spawn_service,
                              GetStockName(),
                              params.executable_path,
                              params.args,
                              params.options,
-                             log.EnableClient(GetEventLoop(), log_socket),
+                             log.EnableClient(GetEventLoop(),
+                                              log_socket, log_options),
                              this);
         event.Open(process.control);
     }
@@ -419,14 +422,16 @@ WasChild::OnIdleTimeout() noexcept
 class WasStock final : StockClass {
     SpawnService &spawn_service;
     const SocketDescriptor log_socket;
+    const ChildErrorLogOptions log_options;
     StockMap stock;
 
 public:
     explicit WasStock(EventLoop &event_loop, SpawnService &_spawn_service,
                       const SocketDescriptor _log_socket,
+                      const ChildErrorLogOptions &_log_options,
                       unsigned limit, unsigned max_idle) noexcept
         :spawn_service(_spawn_service),
-         log_socket(_log_socket),
+         log_socket(_log_socket), log_options(_log_options),
          stock(event_loop, *this, limit, max_idle) {}
 
     StockMap &GetStock() noexcept {
@@ -460,7 +465,7 @@ WasStock::Create(CreateStockItem c,
     auto *child = new WasChild(c, spawn_service, params->options.tag);
 
     try {
-        child->Launch(*params, log_socket);
+        child->Launch(*params, log_socket, log_options);
     } catch (...) {
         delete child;
         throw;
@@ -483,9 +488,11 @@ WasChild::~WasChild() noexcept
 StockMap *
 was_stock_new(unsigned limit, unsigned max_idle,
               EventLoop &event_loop, SpawnService &spawn_service,
-              SocketDescriptor log_socket) noexcept
+              SocketDescriptor log_socket,
+              const ChildErrorLogOptions &log_options) noexcept
 {
-    auto *stock = new WasStock(event_loop, spawn_service, log_socket,
+    auto *stock = new WasStock(event_loop, spawn_service,
+                               log_socket, log_options,
                                limit, max_idle);
     return &stock->GetStock();
 }

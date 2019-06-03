@@ -33,6 +33,7 @@
 #ifndef BENG_PROXY_FCGI_STOCK_HXX
 #define BENG_PROXY_FCGI_STOCK_HXX
 
+struct ChildErrorLogOptions;
 struct StockItem;
 class FcgiStock;
 struct ChildOptions;
@@ -49,13 +50,17 @@ class SocketDescriptor;
 FcgiStock *
 fcgi_stock_new(unsigned limit, unsigned max_idle,
                EventLoop &event_loop, SpawnService &spawn_service,
-               SocketDescriptor log_socket) noexcept;
+               SocketDescriptor log_socket,
+               const ChildErrorLogOptions &log_options) noexcept;
 
 void
 fcgi_stock_free(FcgiStock *fcgi_stock) noexcept;
 
 SocketDescriptor
 fcgi_stock_get_log_socket(const FcgiStock &fs) noexcept;
+
+const ChildErrorLogOptions &
+fcgi_stock_get_log_options(const FcgiStock &fs) noexcept;
 
 void
 fcgi_stock_fade_all(FcgiStock &fs) noexcept;

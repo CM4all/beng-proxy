@@ -66,6 +66,17 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
                !is_child_error_logger) {
         config.forward_child_errors = line.NextBool();
         line.ExpectEnd();
+    } else if (strcmp(word, is_child_error_logger ? "rate_limit" : "child_error_rate_limit") == 0) {
+        if (!is_child_error_logger && !config.forward_child_errors)
+            throw LineParser::Error("Requires forward_child_errors");
+
+        config.child_error_options.rate_limit = line.NextPositiveInteger();
+        config.child_error_options.burst = line.NextPositiveInteger();
+
+        if (config.child_error_options.burst < config.child_error_options.rate_limit)
+            throw LineParser::Error("Burst must not be smaller than the rate");
+
+        line.ExpectEnd();
     } else
         throw LineParser::Error("Unknown option");
 }

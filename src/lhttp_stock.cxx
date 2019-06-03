@@ -63,7 +63,8 @@ class LhttpStock final : StockClass, ChildStockClass {
 public:
     LhttpStock(unsigned limit, unsigned max_idle,
                EventLoop &event_loop, SpawnService &spawn_service,
-               SocketDescriptor log_socket) noexcept;
+               SocketDescriptor log_socket,
+               const ChildErrorLogOptions &log_options) noexcept;
 
     void FadeAll() noexcept {
         hstock.FadeAll();
@@ -290,11 +291,12 @@ LhttpConnection::~LhttpConnection() noexcept
 inline
 LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
                        EventLoop &event_loop, SpawnService &spawn_service,
-                       SocketDescriptor log_socket) noexcept
+                       SocketDescriptor log_socket,
+                       const ChildErrorLogOptions &log_options) noexcept
     :child_stock(event_loop, spawn_service,
                  *this,
                  64,
-                 log_socket,
+                 log_socket, log_options,
                  limit, max_idle),
      mchild_stock(child_stock.GetStockMap()),
      hstock(event_loop, *this, limit, max_idle) {}
@@ -321,10 +323,11 @@ LhttpStock::FadeTag(const char *tag) noexcept
 LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle,
                 EventLoop &event_loop, SpawnService &spawn_service,
-                SocketDescriptor log_socket) noexcept
+                SocketDescriptor log_socket,
+                const ChildErrorLogOptions &log_options) noexcept
 {
     return new LhttpStock(limit, max_idle, event_loop, spawn_service,
-                          log_socket);
+                          log_socket, log_options);
 }
 
 void

@@ -39,6 +39,7 @@
 
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
+#include "access_log/ChildErrorLogOptions.hxx"
 #include "io/FdType.hxx"
 #include "net/SocketDescriptor.hxx"
 
@@ -85,11 +86,14 @@ class ChildStock final : StockClass {
 
     const SocketDescriptor log_socket;
 
+    const ChildErrorLogOptions log_options;
+
 public:
     ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
                ChildStockClass &_cls,
                int _backlog,
                SocketDescriptor _log_socket,
+               const ChildErrorLogOptions &_log_options,
                unsigned _limit, unsigned _max_idle) noexcept;
 
     StockMap &GetStockMap() noexcept {
@@ -98,6 +102,10 @@ public:
 
     SocketDescriptor GetLogSocket() const noexcept {
         return log_socket;
+    }
+
+    const auto &GetLogOptions() const noexcept {
+        return log_options;
     }
 
     /**

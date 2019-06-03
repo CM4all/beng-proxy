@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,6 +35,7 @@
 #include <memory>
 #include <string>
 
+struct ChildErrorLogOptions;
 struct PreparedChildProcess;
 class EventLoop;
 class SocketDescriptor;
@@ -59,7 +60,8 @@ public:
      * Throws on error.
      */
     ChildErrorLog(PreparedChildProcess &p,
-                  EventLoop &event_loop, SocketDescriptor socket);
+                  EventLoop &event_loop, SocketDescriptor socket,
+                  const ChildErrorLogOptions &options);
 
     ~ChildErrorLog() noexcept;
 
@@ -82,11 +84,13 @@ public:
      * Throws on error.
      */
     UniqueFileDescriptor EnableClient(EventLoop &event_loop,
-                                      SocketDescriptor socket);
+                                      SocketDescriptor socket,
+                                      const ChildErrorLogOptions &options);
 
     /**
      * Throws on error.
      */
     void EnableClient(PreparedChildProcess &p,
-                      EventLoop &event_loop, SocketDescriptor socket);
+                      EventLoop &event_loop, SocketDescriptor socket,
+                      const ChildErrorLogOptions &log_options);
 };

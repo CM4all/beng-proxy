@@ -33,6 +33,7 @@
 #ifndef ACCESS_LOG_CONFIG_HXX
 #define ACCESS_LOG_CONFIG_HXX
 
+#include "ChildErrorLogOptions.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 
 #include <string>
@@ -75,6 +76,8 @@ struct AccessLogConfig {
      * trusted.
      */
     std::set<std::string> trust_xff;
+
+    ChildErrorLogOptions child_error_options;
 
     /**
      * Forward error messages printed by child processes into their

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,6 +31,7 @@
  */
 
 #include "ChildErrorLog.hxx"
+#include "ChildErrorLogOptions.hxx"
 #include "spawn/Prepared.hxx"
 #include "event/net/log/PipeAdapter.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -43,14 +44,16 @@ ChildErrorLog::~ChildErrorLog() noexcept = default;
 ChildErrorLog &ChildErrorLog::operator=(ChildErrorLog &&) = default;
 
 ChildErrorLog::ChildErrorLog(PreparedChildProcess &p,
-                             EventLoop &event_loop, SocketDescriptor socket)
+                             EventLoop &event_loop, SocketDescriptor socket,
+                             const ChildErrorLogOptions &options)
 {
     if (socket.IsDefined())
-        EnableClient(p, event_loop, socket);
+        EnableClient(p, event_loop, socket, options);
 }
 
 UniqueFileDescriptor
-ChildErrorLog::EnableClient(EventLoop &event_loop, SocketDescriptor socket)
+ChildErrorLog::EnableClient(EventLoop &event_loop, SocketDescriptor socket,
+                            const ChildErrorLogOptions &options)
 {
     assert(!adapter);
 
@@ -63,12 +66,15 @@ ChildErrorLog::EnableClient(EventLoop &event_loop, SocketDescriptor socket)
 
     adapter = std::make_unique<Net::Log::PipeAdapter>(event_loop, std::move(r),
                                                       socket);
+    if (options.rate_limit > 0)
+        adapter->SetRateLimit(options.rate_limit, options.burst);
     return w;
 }
 
 void
 ChildErrorLog::EnableClient(PreparedChildProcess &p,
-                            EventLoop &event_loop, SocketDescriptor socket)
+                            EventLoop &event_loop, SocketDescriptor socket,
+                            const ChildErrorLogOptions &options)
 {
     assert(!adapter);
 
@@ -76,7 +82,7 @@ ChildErrorLog::EnableClient(PreparedChildProcess &p,
         /* already set */
         return;
 
-    auto w = EnableClient(event_loop, socket);
+    auto w = EnableClient(event_loop, socket, options);
     if (w.IsDefined())
         p.SetStderr(std::move(w));
 }

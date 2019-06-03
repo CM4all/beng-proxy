@@ -74,7 +74,8 @@ class FcgiStock final : StockClass, ChildStockClass {
 public:
     FcgiStock(unsigned limit, unsigned max_idle,
               EventLoop &event_loop, SpawnService &spawn_service,
-              SocketDescriptor _log_socket) noexcept;
+              SocketDescriptor _log_socket,
+              const ChildErrorLogOptions &_log_options) noexcept;
 
     ~FcgiStock() noexcept {
         /* this one must be cleared before #child_stock; FadeAll()
@@ -89,6 +90,10 @@ public:
 
     SocketDescriptor GetLogSocket() const noexcept {
         return child_stock.GetLogSocket();
+    }
+
+    const auto &GetLogOptions() const noexcept {
+        return child_stock.GetLogOptions();
     }
 
     StockItem *Get(const ChildOptions &options,
@@ -386,12 +391,13 @@ FcgiConnection::~FcgiConnection() noexcept
 inline
 FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
                      EventLoop &event_loop, SpawnService &spawn_service,
-                     SocketDescriptor _log_socket) noexcept
+                     SocketDescriptor _log_socket,
+                     const ChildErrorLogOptions &_log_options) noexcept
     :hstock(event_loop, *this, limit, max_idle),
      child_stock(event_loop, spawn_service,
                  *this,
                  4,
-                 _log_socket,
+                 _log_socket, _log_options,
                  limit, max_idle) {}
 
 void
@@ -411,10 +417,11 @@ FcgiStock::FadeTag(const char *tag) noexcept
 FcgiStock *
 fcgi_stock_new(unsigned limit, unsigned max_idle,
                EventLoop &event_loop, SpawnService &spawn_service,
-               SocketDescriptor log_socket) noexcept
+               SocketDescriptor log_socket,
+               const ChildErrorLogOptions &log_options) noexcept
 {
     return new FcgiStock(limit, max_idle, event_loop, spawn_service,
-                         log_socket);
+                         log_socket, log_options);
 }
 
 void
@@ -427,6 +434,12 @@ SocketDescriptor
 fcgi_stock_get_log_socket(const FcgiStock &fs) noexcept
 {
     return fs.GetLogSocket();
+}
+
+const ChildErrorLogOptions &
+fcgi_stock_get_log_options(const FcgiStock &fs) noexcept
+{
+    return fs.GetLogOptions();
 }
 
 void
