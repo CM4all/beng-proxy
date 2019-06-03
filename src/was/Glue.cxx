@@ -171,8 +171,6 @@ WasRequest::OnStockItemReady(StockItem &item) noexcept
 void
 WasRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
-    body.Clear();
-
     auto &_handler = handler;
     Destroy();
     _handler.InvokeError(ep);
