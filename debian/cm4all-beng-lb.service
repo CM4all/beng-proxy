@@ -15,5 +15,7 @@ LimitCORE=infinity
 
 LimitNOFILE=262144
 
+TasksMax=32
+
 [Install]
 WantedBy=multi-user.target

@@ -16,5 +16,8 @@ LimitCORE=infinity
 
 LimitNOFILE=262144
 
+# systemd's default is only 15% which can be too low
+TasksMax=50%
+
 [Install]
 WantedBy=multi-user.target

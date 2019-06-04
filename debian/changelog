@@ -12,6 +12,12 @@ cm4all-beng-proxy (16.0.1) unstable; urgency=low
 
  --   
 
+cm4all-beng-proxy (15.19) unstable; urgency=low
+
+  * systemd: raise TasksMax to 50%
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 04 Jun 2019 13:36:31 +0200
+
 cm4all-beng-proxy (15.18) unstable; urgency=low
 
   * http_client: fix assertion failure
