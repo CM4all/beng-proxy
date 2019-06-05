@@ -110,7 +110,7 @@ class WasChild final : public StockItem, ExitListener {
 
 public:
     explicit WasChild(CreateStockItem c, SpawnService &_spawn_service,
-                      const char *_tag, SocketDescriptor _log_socket)
+                      const char *_tag, SocketDescriptor _log_socket) noexcept
         :StockItem(c), logger(GetStockName()), spawn_service(_spawn_service),
          tag(_tag != nullptr ? _tag : ""),
          log_socket(_log_socket),
@@ -123,16 +123,19 @@ public:
         process.pid = -1;
     }
 
-    ~WasChild() override;
+    ~WasChild() noexcept override;
 
-    EventLoop &GetEventLoop() {
+    auto &GetEventLoop() noexcept {
         return event.GetEventLoop();
     }
 
-    bool IsTag(const char *other_tag) const {
+    bool IsTag(const char *other_tag) const noexcept {
         return tag == other_tag;
     }
 
+    /**
+     * Throws on error.
+     */
     void Launch(const WasChildParams &params) {
         process = was_launch(spawn_service,
                              GetStockName(),
@@ -152,7 +155,7 @@ public:
         log.SetUri(_uri);
     }
 
-    const WasProcess &GetProcess() const {
+    const WasProcess &GetProcess() const noexcept {
         return process;
     }
 
@@ -172,28 +175,28 @@ private:
     /**
      * Receive data on the control channel.
      */
-    ReceiveResult ReceiveControl(void *p, size_t size);
+    ReceiveResult ReceiveControl(void *p, size_t size) noexcept;
 
     /**
      * Receive and discard data on the control channel.
      *
      * @return true on success
      */
-    bool DiscardControl(size_t size);
+    bool DiscardControl(size_t size) noexcept;
 
     /**
      * Discard the given amount of data from the input pipe.
      *
      * @return true on success
      */
-    bool DiscardInput(uint64_t remaining);
+    bool DiscardInput(uint64_t remaining) noexcept;
 
     /**
      * Attempt to recover after the WAS client sent STOP to the
      * application.  This method waits for PREMATURE and discards
      * excess data from the pipe.
      */
-    void RecoverStop();
+    void RecoverStop() noexcept;
 
     void EventCallback(unsigned events) noexcept;
     void OnIdleTimeout() noexcept;
@@ -250,7 +253,7 @@ WasChildParams::GetStockKey(struct pool &pool) const noexcept
 }
 
 WasChild::ReceiveResult
-WasChild::ReceiveControl(void *p, size_t size)
+WasChild::ReceiveControl(void *p, size_t size) noexcept
 {
     ssize_t nbytes = recv(process.control.Get(), p, size, MSG_DONTWAIT);
     if (nbytes == (ssize_t)size)
@@ -270,7 +273,7 @@ WasChild::ReceiveControl(void *p, size_t size)
 }
 
 bool
-WasChild::DiscardControl(size_t size)
+WasChild::DiscardControl(size_t size) noexcept
 {
     while (size > 0) {
         char buffer[1024];
@@ -287,7 +290,7 @@ WasChild::DiscardControl(size_t size)
 }
 
 inline bool
-WasChild::DiscardInput(uint64_t remaining)
+WasChild::DiscardInput(uint64_t remaining) noexcept
 {
     while (remaining > 0) {
         uint8_t buffer[16384];
@@ -303,7 +306,7 @@ WasChild::DiscardInput(uint64_t remaining)
 }
 
 inline void
-WasChild::RecoverStop()
+WasChild::RecoverStop() noexcept
 {
     uint64_t premature;
 
@@ -469,7 +472,7 @@ WasStock::Create(CreateStockItem c,
     child->InvokeCreateSuccess();
 }
 
-WasChild::~WasChild()
+WasChild::~WasChild() noexcept
 {
     if (process.pid >= 0)
         spawn_service.KillChildProcess(process.pid);
