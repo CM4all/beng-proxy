@@ -465,8 +465,8 @@ WasStock::Create(CreateStockItem c,
     try {
         child->Launch(*params);
     } catch (...) {
-        child->InvokeCreateError(std::current_exception());
-        return;
+        delete child;
+        throw;
     }
 
     child->InvokeCreateSuccess();
