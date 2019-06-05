@@ -69,6 +69,6 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
              ConstBuffer<const char *> params,
              UniqueFileDescriptor &&stderr_fd,
              HttpResponseHandler &handler,
-             CancellablePointer &cancel_ptr);
+             CancellablePointer &cancel_ptr) noexcept;
 
 #endif

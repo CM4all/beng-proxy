@@ -61,7 +61,7 @@ class FcgiRequest final : Lease, Cancellable, PoolLeakDetector {
     CancellablePointer cancel_ptr;
 
 public:
-    FcgiRequest(struct pool &_pool, StockItem &_stock_item)
+    FcgiRequest(struct pool &_pool, StockItem &_stock_item) noexcept
         :PoolLeakDetector(_pool),
          pool(_pool), stock_item(&_stock_item)
     {
@@ -111,7 +111,7 @@ public:
     }
 
 private:
-    void Destroy() {
+    void Destroy() noexcept {
         this->~FcgiRequest();
     }
 
@@ -148,7 +148,7 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
              ConstBuffer<const char *> params,
              UniqueFileDescriptor &&stderr_fd,
              HttpResponseHandler &handler,
-             CancellablePointer &cancel_ptr)
+             CancellablePointer &cancel_ptr) noexcept
 {
     if (action == nullptr)
         action = path;
