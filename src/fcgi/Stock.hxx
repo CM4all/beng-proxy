@@ -34,7 +34,7 @@
 #define BENG_PROXY_FCGI_STOCK_HXX
 
 struct StockItem;
-struct FcgiStock;
+class FcgiStock;
 struct ChildOptions;
 class SocketDescriptor;
 template<typename T> struct ConstBuffer;

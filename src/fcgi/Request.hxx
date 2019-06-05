@@ -38,7 +38,7 @@
 struct pool;
 class EventLoop;
 class UnusedIstreamPtr;
-struct FcgiStock;
+class FcgiStock;
 class StringMap;
 class HttpResponseHandler;
 class CancellablePointer;

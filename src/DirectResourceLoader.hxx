@@ -39,7 +39,7 @@ class EventLoop;
 class SpawnService;
 class StockMap;
 class LhttpStock;
-struct FcgiStock;
+class FcgiStock;
 class NfsCache;
 class TcpBalancer;
 class FilteredSocketBalancer;

@@ -67,10 +67,11 @@
 #include <sched.h>
 #endif
 
-struct FcgiStock final : StockClass, ChildStockClass {
+class FcgiStock final : StockClass, ChildStockClass {
     StockMap hstock;
     ChildStock child_stock;
 
+public:
     FcgiStock(unsigned limit, unsigned max_idle,
               EventLoop &event_loop, SpawnService &spawn_service,
               SocketDescriptor _log_socket) noexcept;
@@ -90,6 +91,10 @@ struct FcgiStock final : StockClass, ChildStockClass {
         return child_stock.GetLogSocket();
     }
 
+    StockItem *Get(const ChildOptions &options,
+                   const char *executable_path,
+                   ConstBuffer<const char *> args);
+
     void FadeAll() {
         hstock.FadeAll();
         child_stock.GetStockMap().FadeAll();
@@ -97,6 +102,7 @@ struct FcgiStock final : StockClass, ChildStockClass {
 
     void FadeTag(const char *tag);
 
+private:
     /* virtual methods from class StockClass */
     void Create(CreateStockItem c, void *info, struct pool &caller_pool,
                 CancellablePointer &cancel_ptr) override;
@@ -435,9 +441,8 @@ fcgi_stock_fade_tag(FcgiStock &fs, const char *tag)
     fs.FadeTag(tag);
 }
 
-StockItem *
-fcgi_stock_get(FcgiStock *fcgi_stock,
-               const ChildOptions &options,
+inline StockItem *
+FcgiStock::Get(const ChildOptions &options,
                const char *executable_path,
                ConstBuffer<const char *> args)
 {
@@ -446,8 +451,16 @@ fcgi_stock_get(FcgiStock *fcgi_stock,
     auto params = NewFromPool<FcgiChildParams>(*tpool, executable_path,
                                                args, options);
 
-    return fcgi_stock->hstock.GetNow(*tpool,
-                                     params->GetStockKey(*tpool), params);
+    return hstock.GetNow(*tpool, params->GetStockKey(*tpool), params);
+}
+
+StockItem *
+fcgi_stock_get(FcgiStock *fcgi_stock,
+               const ChildOptions &options,
+               const char *executable_path,
+               ConstBuffer<const char *> args)
+{
+    return fcgi_stock->Get(options, executable_path, args);
 }
 
 int

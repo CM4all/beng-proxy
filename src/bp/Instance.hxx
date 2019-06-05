@@ -67,7 +67,7 @@ class TranslationStock;
 class TranslationCache;
 class TranslationService;
 class LhttpStock;
-struct FcgiStock;
+class FcgiStock;
 struct NfsStock;
 class NfsCache;
 class HttpCache;
