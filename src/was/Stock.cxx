@@ -90,7 +90,6 @@ class WasChild final : public StockItem, ExitListener {
 
     const std::string tag;
 
-    const SocketDescriptor log_socket;
     ChildErrorLog log;
 
     WasProcess process;
@@ -110,10 +109,9 @@ class WasChild final : public StockItem, ExitListener {
 
 public:
     explicit WasChild(CreateStockItem c, SpawnService &_spawn_service,
-                      const char *_tag, SocketDescriptor _log_socket) noexcept
+                      const char *_tag) noexcept
         :StockItem(c), logger(GetStockName()), spawn_service(_spawn_service),
          tag(_tag != nullptr ? _tag : ""),
-         log_socket(_log_socket),
          event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)),
          idle_timeout_event(c.stock.GetEventLoop(),
                             BIND_THIS_METHOD(OnIdleTimeout))
@@ -136,7 +134,7 @@ public:
     /**
      * Throws on error.
      */
-    void Launch(const WasChildParams &params) {
+    void Launch(const WasChildParams &params, SocketDescriptor log_socket) {
         process = was_launch(spawn_service,
                              GetStockName(),
                              params.executable_path,
@@ -459,11 +457,10 @@ WasStock::Create(CreateStockItem c,
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
-    auto *child = new WasChild(c, spawn_service, params->options.tag,
-                               log_socket);
+    auto *child = new WasChild(c, spawn_service, params->options.tag);
 
     try {
-        child->Launch(*params);
+        child->Launch(*params, log_socket);
     } catch (...) {
         delete child;
         throw;
