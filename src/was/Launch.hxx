@@ -46,7 +46,7 @@ struct WasProcess {
     UniqueSocketDescriptor control;
     UniqueFileDescriptor input, output;
 
-    void Close() {
+    void Close() noexcept {
         control.Close();
         input.Close();
         output.Close();
