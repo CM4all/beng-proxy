@@ -76,14 +76,14 @@ public:
               EventLoop &event_loop, SpawnService &spawn_service,
               SocketDescriptor _log_socket) noexcept;
 
-    ~FcgiStock() {
+    ~FcgiStock() noexcept {
         /* this one must be cleared before #child_stock; FadeAll()
            calls ClearIdle(), so this method is the best match for
            what we want to do (though a kludge) */
         hstock.FadeAll();
     }
 
-    EventLoop &GetEventLoop() {
+    EventLoop &GetEventLoop() noexcept {
         return hstock.GetEventLoop();
     }
 
@@ -95,12 +95,12 @@ public:
                    const char *executable_path,
                    ConstBuffer<const char *> args);
 
-    void FadeAll() {
+    void FadeAll() noexcept {
         hstock.FadeAll();
         child_stock.GetStockMap().FadeAll();
     }
 
-    void FadeTag(const char *tag);
+    void FadeTag(const char *tag) noexcept;
 
 private:
     /* virtual methods from class StockClass */
@@ -122,11 +122,11 @@ struct FcgiChildParams {
 
     FcgiChildParams(const char *_executable_path,
                     ConstBuffer<const char *> _args,
-                    const ChildOptions &_options)
+                    const ChildOptions &_options) noexcept
         :executable_path(_executable_path), args(_args),
          options(_options) {}
 
-    const char *GetStockKey(struct pool &pool) const;
+    const char *GetStockKey(struct pool &pool) const noexcept;
 };
 
 struct FcgiConnection final : StockItem {
@@ -166,7 +166,7 @@ struct FcgiConnection final : StockItem {
     ~FcgiConnection() noexcept override;
 
     gcc_pure
-    const char *GetTag() const {
+    const char *GetTag() const noexcept {
         assert(child != nullptr);
 
         return child_stock_item_get_tag(*child);
@@ -190,7 +190,7 @@ private:
 };
 
 const char *
-FcgiChildParams::GetStockKey(struct pool &pool) const
+FcgiChildParams::GetStockKey(struct pool &pool) const noexcept
 {
     PoolStringBuilder<256> b;
     b.push_back(executable_path);
@@ -395,7 +395,7 @@ FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
                  limit, max_idle) {}
 
 void
-FcgiStock::FadeTag(const char *tag)
+FcgiStock::FadeTag(const char *tag) noexcept
 {
     assert(tag != nullptr);
 
@@ -411,14 +411,14 @@ FcgiStock::FadeTag(const char *tag)
 FcgiStock *
 fcgi_stock_new(unsigned limit, unsigned max_idle,
                EventLoop &event_loop, SpawnService &spawn_service,
-               SocketDescriptor log_socket)
+               SocketDescriptor log_socket) noexcept
 {
     return new FcgiStock(limit, max_idle, event_loop, spawn_service,
                          log_socket);
 }
 
 void
-fcgi_stock_free(FcgiStock *fcgi_stock)
+fcgi_stock_free(FcgiStock *fcgi_stock) noexcept
 {
     delete fcgi_stock;
 }
@@ -430,13 +430,13 @@ fcgi_stock_get_log_socket(const FcgiStock &fs) noexcept
 }
 
 void
-fcgi_stock_fade_all(FcgiStock &fs)
+fcgi_stock_fade_all(FcgiStock &fs) noexcept
 {
     fs.FadeAll();
 }
 
 void
-fcgi_stock_fade_tag(FcgiStock &fs, const char *tag)
+fcgi_stock_fade_tag(FcgiStock &fs, const char *tag) noexcept
 {
     fs.FadeTag(tag);
 }
@@ -464,7 +464,7 @@ fcgi_stock_get(FcgiStock *fcgi_stock,
 }
 
 int
-fcgi_stock_item_get_domain(gcc_unused const StockItem &item)
+fcgi_stock_item_get_domain(gcc_unused const StockItem &item) noexcept
 {
     return AF_LOCAL;
 }
@@ -484,7 +484,7 @@ fcgi_stock_item_set_uri(StockItem &item, const char *uri) noexcept
 }
 
 SocketDescriptor
-fcgi_stock_item_get(const StockItem &item)
+fcgi_stock_item_get(const StockItem &item) noexcept
 {
     const auto *connection = (const FcgiConnection *)&item;
 
@@ -495,7 +495,7 @@ fcgi_stock_item_get(const StockItem &item)
 
 const char *
 fcgi_stock_translate_path(const StockItem &item,
-                          const char *path, AllocatorPtr alloc)
+                          const char *path, AllocatorPtr alloc) noexcept
 {
     const auto *connection = (const FcgiConnection *)&item;
 
@@ -511,7 +511,7 @@ fcgi_stock_translate_path(const StockItem &item,
 }
 
 void
-fcgi_stock_aborted(StockItem &item)
+fcgi_stock_aborted(StockItem &item) noexcept
 {
     auto *connection = (FcgiConnection *)&item;
 
