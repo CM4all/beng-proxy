@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -55,7 +55,7 @@ struct NfsStockRequest final
 
     NfsStockRequest(NfsStockConnection &_connection,
                     NfsStockGetHandler &_handler,
-                    CancellablePointer &cancel_ptr)
+                    CancellablePointer &cancel_ptr) noexcept
         :connection(_connection),
          handler(_handler) {
         cancel_ptr = *this;
@@ -84,10 +84,10 @@ struct NfsStockConnection final
     boost::intrusive::list<NfsStockRequest,
                            boost::intrusive::constant_time_size<false>> requests;
 
-    NfsStockConnection(NfsStock &_stock, const char *_key)
+    NfsStockConnection(NfsStock &_stock, const char *_key) noexcept
         :stock(_stock), key(_key), client(nullptr) {}
 
-    void Remove(NfsStockRequest &r) {
+    void Remove(NfsStockRequest &r) noexcept {
         requests.erase(requests.iterator_to(r));
     }
 
@@ -97,15 +97,15 @@ struct NfsStockConnection final
     void OnNfsClientClosed(std::exception_ptr ep) noexcept override;
 
     struct Compare {
-        bool operator()(const NfsStockConnection &a, const NfsStockConnection &b) const {
+        bool operator()(const NfsStockConnection &a, const NfsStockConnection &b) const noexcept {
             return a.key < b.key;
         }
 
-        bool operator()(const NfsStockConnection &a, const char *b) const {
+        bool operator()(const NfsStockConnection &a, const char *b) const noexcept {
             return a.key < b;
         }
 
-        bool operator()(const char *a, const NfsStockConnection &b) const {
+        bool operator()(const char *a, const NfsStockConnection &b) const noexcept {
             return a < b.key;
         }
     };
@@ -125,14 +125,14 @@ struct NfsStock final {
     explicit NfsStock(EventLoop &_event_loop) noexcept
         :event_loop(_event_loop) {}
 
-    ~NfsStock();
+    ~NfsStock() noexcept;
 
     void Get(struct pool &pool,
              const char *server, const char *export_name,
              NfsStockGetHandler &handler,
-             CancellablePointer &cancel_ptr);
+             CancellablePointer &cancel_ptr) noexcept;
 
-    void Remove(NfsStockConnection &c) {
+    void Remove(NfsStockConnection &c) noexcept {
         connections.erase(connections.iterator_to(c));
     }
 };
@@ -206,7 +206,7 @@ nfs_stock_new(EventLoop &event_loop) noexcept
     return new NfsStock(event_loop);
 }
 
-NfsStock::~NfsStock()
+NfsStock::~NfsStock() noexcept
 {
     connections.clear_and_dispose([](NfsStockConnection *connection){
         if (connection->client != nullptr)
@@ -220,7 +220,7 @@ NfsStock::~NfsStock()
 }
 
 void
-nfs_stock_free(NfsStock *stock)
+nfs_stock_free(NfsStock *stock) noexcept
 {
     delete stock;
 }
@@ -229,7 +229,7 @@ inline void
 NfsStock::Get(struct pool &caller_pool,
               const char *server, const char *export_name,
               NfsStockGetHandler &handler,
-              CancellablePointer &cancel_ptr)
+              CancellablePointer &cancel_ptr) noexcept
 {
     const char *key = p_strcat(&caller_pool, server, ":", export_name,
                                nullptr);
@@ -268,7 +268,7 @@ void
 nfs_stock_get(NfsStock *stock, struct pool *pool,
               const char *server, const char *export_name,
               NfsStockGetHandler &handler,
-              CancellablePointer &cancel_ptr)
+              CancellablePointer &cancel_ptr) noexcept
 {
     stock->Get(*pool, server, export_name, handler, cancel_ptr);
 }

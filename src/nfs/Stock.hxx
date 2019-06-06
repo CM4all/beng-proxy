@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_NFS_STOCK_HXX
-#define BENG_PROXY_NFS_STOCK_HXX
+#pragma once
 
 #include <exception>
 
@@ -43,8 +42,8 @@ class EventLoop;
 
 class NfsStockGetHandler {
 public:
-    virtual void OnNfsStockReady(NfsClient &client) = 0;
-    virtual void OnNfsStockError(std::exception_ptr ep) = 0;
+    virtual void OnNfsStockReady(NfsClient &client) noexcept = 0;
+    virtual void OnNfsStockError(std::exception_ptr ep) noexcept = 0;
 };
 
 /**
@@ -54,12 +53,10 @@ NfsStock *
 nfs_stock_new(EventLoop &event_loop) noexcept;
 
 void
-nfs_stock_free(NfsStock *stock);
+nfs_stock_free(NfsStock *stock) noexcept;
 
 void
 nfs_stock_get(NfsStock *stock, struct pool *pool,
               const char *server, const char *export_name,
               NfsStockGetHandler &handler,
-              CancellablePointer &cancel_ptr);
-
-#endif
+              CancellablePointer &cancel_ptr) noexcept;
