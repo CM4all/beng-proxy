@@ -35,7 +35,7 @@
 #include <exception>
 
 struct pool;
-struct NfsStock;
+class NfsStock;
 class NfsClient;
 class CancellablePointer;
 class EventLoop;

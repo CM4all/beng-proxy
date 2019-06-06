@@ -68,7 +68,7 @@ class TranslationCache;
 class TranslationService;
 class LhttpStock;
 class FcgiStock;
-struct NfsStock;
+class NfsStock;
 class NfsCache;
 class HttpCache;
 class FilterCache;

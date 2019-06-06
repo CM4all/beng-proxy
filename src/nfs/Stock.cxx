@@ -88,6 +88,8 @@ struct NfsStockConnection final
         :stock(_stock), key(_key), client(nullptr) {}
 
     void Remove(NfsStockRequest &r) noexcept {
+        assert(!requests.empty());
+
         requests.erase(requests.iterator_to(r));
     }
 
@@ -111,7 +113,7 @@ struct NfsStockConnection final
     };
 };
 
-struct NfsStock final {
+class NfsStock final {
     EventLoop &event_loop;
 
     /**
@@ -122,6 +124,7 @@ struct NfsStock final {
                                   boost::intrusive::constant_time_size<false>> ConnectionMap;
     ConnectionMap connections;
 
+public:
     explicit NfsStock(EventLoop &_event_loop) noexcept
         :event_loop(_event_loop) {}
 
@@ -133,6 +136,8 @@ struct NfsStock final {
              CancellablePointer &cancel_ptr) noexcept;
 
     void Remove(NfsStockConnection &c) noexcept {
+        assert(!connections.empty());
+
         connections.erase(connections.iterator_to(c));
     }
 };
@@ -158,8 +163,6 @@ NfsStockConnection::OnNfsClientReady(NfsClient &_client) noexcept
 void
 NfsStockConnection::OnNfsMountError(std::exception_ptr ep) noexcept
 {
-    assert(!stock.connections.empty());
-
     requests.clear_and_dispose([&ep](NfsStockRequest *request){
         request->handler.OnNfsStockError(ep);
         request->Destroy();
@@ -173,7 +176,6 @@ void
 NfsStockConnection::OnNfsClientClosed(std::exception_ptr ep) noexcept
 {
     assert(requests.empty());
-    assert(!stock.connections.empty());
 
     LogConcat(1, key.c_str(), "NFS connection closed: ", ep);
 
