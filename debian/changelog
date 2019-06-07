@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.20) unstable; urgency=low
 
-  * 
+  * was: fix memory leak
 
  --   
 
