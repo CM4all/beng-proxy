@@ -42,7 +42,7 @@
 #include <string.h>
 #include <stdio.h>
 
-static UserAgentClassList *ua_classes;
+UserAgentClassList *ua_classes;
 
 static bool
 parse_line(UserAgentClass &cls, char *line)

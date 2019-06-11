@@ -45,6 +45,8 @@ struct UserAgentClass {
 
 typedef std::forward_list<UserAgentClass> UserAgentClassList;
 
+extern UserAgentClassList *ua_classes;
+
 /**
  * Throws std::runtime_error on error.
  */
