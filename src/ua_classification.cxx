@@ -85,10 +85,11 @@ parse_line(UserAgentClass &cls, char *line)
     return true;
 }
 
-static void
-ua_classification_init(UserAgentClassList &list, FILE *file)
+static std::forward_list<UserAgentClass>
+ua_classification_init(FILE *file)
 {
-    auto tail = ua_classes->before_begin();
+    std::forward_list<UserAgentClass> list;
+    auto tail = list.before_begin();
 
     char line[1024];
     while (fgets(line, sizeof(line), file) != nullptr) {
@@ -102,6 +103,8 @@ ua_classification_init(UserAgentClassList &list, FILE *file)
 
         tail = list.emplace_after(tail, std::move(cls));
     }
+
+    return list;
 }
 
 void
@@ -116,13 +119,7 @@ ua_classification_init(const char *path)
 
     AtScopeExit(file) { fclose(file); };
 
-    ua_classes = new UserAgentClassList();
-    try {
-        ua_classification_init(*ua_classes, file);
-    } catch (...) {
-        ua_classification_deinit();
-        throw;
-    }
+    ua_classes = new UserAgentClassList(ua_classification_init(file));
 }
 
 void
@@ -135,6 +132,18 @@ ua_classification_deinit() noexcept
     ua_classes = nullptr;
 }
 
+const char *
+UserAgentClassList::Lookup(const char *user_agent) const noexcept
+{
+    assert(user_agent != nullptr);
+
+    for (const auto &i : list)
+        if (i.regex.Match(user_agent))
+            return i.name.c_str();
+
+    return nullptr;
+}
+
 gcc_pure
 const char *
 ua_classification_lookup(const char *user_agent) noexcept
@@ -144,9 +153,5 @@ ua_classification_lookup(const char *user_agent) noexcept
     if (ua_classes == nullptr)
         return nullptr;
 
-    for (const auto &i : *ua_classes)
-        if (i.regex.Match(user_agent))
-            return i.name.c_str();
-
-    return nullptr;
+    return ua_classes->Lookup(user_agent);
 }

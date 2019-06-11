@@ -43,7 +43,16 @@ struct UserAgentClass {
     std::string name;
 };
 
-typedef std::forward_list<UserAgentClass> UserAgentClassList;
+class UserAgentClassList {
+    std::forward_list<UserAgentClass> list;
+
+public:
+    explicit UserAgentClassList(std::forward_list<UserAgentClass> &&_list) noexcept
+        :list(std::move(_list)) {}
+
+    gcc_pure
+    const char *Lookup(const char *user_agent) const noexcept;
+};
 
 extern UserAgentClassList *ua_classes;
 
