@@ -52,6 +52,7 @@
 #include "AllocatorStats.hxx"
 #include "pool/pool.hxx"
 #include "pool/Ptr.hxx"
+#include "pool/Holder.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/Loop.hxx"
 #include "io/Logger.hxx"

@@ -40,6 +40,7 @@
 #include "direct.hxx"
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
+#include "pool/Holder.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "istream/HeadIstream.hxx"

@@ -56,6 +56,7 @@
 #include "strmap.hxx"
 #include "fs/Lease.hxx"
 #include "pool/pool.hxx"
+#include "pool/Holder.hxx"
 #include "system/Error.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"

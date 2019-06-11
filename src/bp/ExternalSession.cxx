@@ -40,6 +40,7 @@
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "AllocatorPtr.hxx"
+#include "pool/Holder.hxx"
 #include "io/Logger.hxx"
 #include "util/Background.hxx"
 #include "util/Exception.hxx"
