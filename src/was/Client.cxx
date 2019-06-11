@@ -599,8 +599,10 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
             }
             return false;
         } else {
-            if (!was_input_premature(response.body, *length_p))
+            if (!was_input_premature(response.body, *length_p)) {
+                WasInputError();
                 return false;
+            }
         }
 
         response.body = nullptr;
