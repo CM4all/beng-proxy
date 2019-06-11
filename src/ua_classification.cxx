@@ -37,14 +37,10 @@
 #include "util/ScopeExit.hxx"
 
 #include <stdexcept>
-#include <forward_list>
 
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
-#include <errno.h>
-
-typedef std::forward_list<UserAgentClass> UserAgentClassList;
 
 static UserAgentClassList *ua_classes;
 

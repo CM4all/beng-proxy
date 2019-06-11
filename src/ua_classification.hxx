@@ -35,12 +35,15 @@
 #include "util/Compiler.h"
 #include "regex.hxx"
 
+#include <forward_list>
 #include <string>
 
 struct UserAgentClass {
     UniqueRegex regex;
     std::string name;
 };
+
+typedef std::forward_list<UserAgentClass> UserAgentClassList;
 
 /**
  * Throws std::runtime_error on error.
