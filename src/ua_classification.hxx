@@ -42,10 +42,10 @@ void
 ua_classification_init(const char *path);
 
 void
-ua_classification_deinit();
+ua_classification_deinit() noexcept;
 
 gcc_pure
 const char *
-ua_classification_lookup(const char *user_agent);
+ua_classification_lookup(const char *user_agent) noexcept;
 
 #endif

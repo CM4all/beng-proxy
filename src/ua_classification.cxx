@@ -137,7 +137,7 @@ ua_classification_init(const char *path)
 }
 
 void
-ua_classification_deinit()
+ua_classification_deinit() noexcept
 {
     if (ua_classes == nullptr)
         return;
@@ -148,7 +148,7 @@ ua_classification_deinit()
 
 gcc_pure
 const char *
-ua_classification_lookup(const char *user_agent)
+ua_classification_lookup(const char *user_agent) noexcept
 {
     assert(user_agent != nullptr);
 
