@@ -42,8 +42,6 @@
 #include <string.h>
 #include <stdio.h>
 
-UserAgentClassList *ua_classes;
-
 static bool
 parse_line(UserAgentClass &cls, char *line)
 {
@@ -107,29 +105,16 @@ ua_classification_init(FILE *file)
     return list;
 }
 
-void
+UserAgentClassList
 ua_classification_init(const char *path)
 {
-    if (path == nullptr)
-        return;
-
     FILE *file = fopen(path, "r");
     if (file == nullptr)
         throw FormatErrno("Failed to open %s", path);
 
     AtScopeExit(file) { fclose(file); };
 
-    ua_classes = new UserAgentClassList(ua_classification_init(file));
-}
-
-void
-ua_classification_deinit() noexcept
-{
-    if (ua_classes == nullptr)
-        return;
-
-    delete ua_classes;
-    ua_classes = nullptr;
+    return UserAgentClassList(ua_classification_init(file));
 }
 
 const char *
@@ -142,16 +127,4 @@ UserAgentClassList::Lookup(const char *user_agent) const noexcept
             return i.name.c_str();
 
     return nullptr;
-}
-
-gcc_pure
-const char *
-ua_classification_lookup(const char *user_agent) noexcept
-{
-    assert(user_agent != nullptr);
-
-    if (ua_classes == nullptr)
-        return nullptr;
-
-    return ua_classes->Lookup(user_agent);
 }

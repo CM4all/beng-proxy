@@ -438,12 +438,16 @@ fill_translate_request_user_agent(TranslateRequest &t,
 
 static void
 fill_translate_request_ua_class(TranslateRequest &t,
+                                const BpInstance &instance,
                                 const StringMap &headers)
 {
+    if (!instance.ua_classification)
+        return;
+
     const char *user_agent = headers.Get("user-agent");
 
     t.ua_class = user_agent != nullptr
-        ? ua_classification_lookup(user_agent)
+        ? instance.ua_classification->Lookup(user_agent)
         : nullptr;
 }
 
@@ -555,6 +559,7 @@ repeat_translation(Request &request, const TranslateResponse &response)
 
         if (response.Wants(TranslationCommand::UA_CLASS))
             fill_translate_request_ua_class(request.translate.request,
+                                            request.instance,
                                             request.request.headers);
 
         if (response.Wants(TranslationCommand::LANGUAGE))
@@ -806,6 +811,7 @@ request_uri_parse(Request &request2, DissectedUri &dest)
 
 static void
 fill_translate_request(TranslateRequest &t,
+                       const BpInstance &instance,
                        const HttpServerRequest &request,
                        const DissectedUri &uri,
                        const StringMap &args,
@@ -830,7 +836,7 @@ fill_translate_request(TranslateRequest &t,
         fill_translate_request_local_address(t, request);
         fill_translate_request_remote_host(t, remote_host_and_port);
         fill_translate_request_user_agent(t, request.headers);
-        fill_translate_request_ua_class(t, request.headers);
+        fill_translate_request_ua_class(t, instance, request.headers);
         fill_translate_request_language(t, request.headers);
         fill_translate_request_args(t, request.pool, args);
         fill_translate_request_query_string(t, request.pool, uri);
@@ -854,7 +860,9 @@ ask_translation_server(Request &request2)
     request2.translate.enotdir_uri = nullptr;
     request2.translate.enotdir_path_info = nullptr;
 
-    fill_translate_request(request2.translate.request, request2.request,
+    fill_translate_request(request2.translate.request,
+                           request2.instance,
+                           request2.request,
                            request2.dissected_uri, request2.args,
                            request2.connection.listener_tag,
                            request2.connection.remote_host_and_port);

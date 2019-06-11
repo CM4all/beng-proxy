@@ -440,7 +440,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             break;
 
         case 'a':
-            ua_classification_init(optarg);
+            cmdline.ua_classification_file = optarg;
             break;
 
         case 's':

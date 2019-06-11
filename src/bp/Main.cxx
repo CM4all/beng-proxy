@@ -272,6 +272,9 @@ try {
 
     SetupProcess();
 
+    if (instance.cmdline.ua_classification_file != nullptr)
+        instance.ua_classification = std::make_unique<UserAgentClassList>(ua_classification_init(instance.cmdline.ua_classification_file));
+
     const ScopeSslGlobalInit ssl_init;
     ssl_client_init(instance.config.ssl_client);
 
@@ -487,8 +490,6 @@ try {
     thread_pool_deinit();
 
     ssl_client_deinit();
-
-    ua_classification_deinit();
 } catch (...) {
     PrintException(std::current_exception());
     return EXIT_FAILURE;

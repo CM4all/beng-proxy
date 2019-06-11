@@ -60,6 +60,7 @@
 #include "nfs/Cache.hxx"
 #include "spawn/Client.hxx"
 #include "access_log/Glue.hxx"
+#include "ua_classification.hxx"
 
 #include <sys/signal.h>
 

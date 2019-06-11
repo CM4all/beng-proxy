@@ -44,15 +44,14 @@ try {
         return EXIT_FAILURE;
     }
 
-    ua_classification_init(argv[1]);
+    const auto ua_classification = ua_classification_init(argv[1]);
 
     for (int i = 2; i < argc; ++i) {
         const char *ua = argv[i];
-        const char *cls = ua_classification_lookup(ua);
+        const char *cls = ua_classification.Lookup(ua);
         printf("'%s' -> %s\n", ua, cls);
     }
 
-    ua_classification_deinit();
     return EXIT_SUCCESS;
 } catch (...) {
     PrintException(std::current_exception());

@@ -72,6 +72,7 @@ class NfsStock;
 class NfsCache;
 class HttpCache;
 class FilterCache;
+class UserAgentClassList;
 struct BpWorker;
 class BPListener;
 struct BpConnection;
@@ -83,6 +84,8 @@ struct BpInstance final : PInstance, ControlHandler {
     uint64_t http_request_counter = 0;
     uint64_t http_traffic_received_counter = 0;
     uint64_t http_traffic_sent_counter = 0;
+
+    std::unique_ptr<UserAgentClassList> ua_classification;
 
     std::forward_list<BPListener> listeners;
 

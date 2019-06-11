@@ -52,6 +52,8 @@ struct BpCmdLine {
     UidGid logger_user;
 
     const char *config_file = "/etc/cm4all/beng/proxy/beng-proxy.conf";
+
+    const char *ua_classification_file = nullptr;
 };
 
 void

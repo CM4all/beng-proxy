@@ -54,17 +54,8 @@ public:
     const char *Lookup(const char *user_agent) const noexcept;
 };
 
-extern UserAgentClassList *ua_classes;
-
 /**
  * Throws std::runtime_error on error.
  */
-void
+UserAgentClassList
 ua_classification_init(const char *path);
-
-void
-ua_classification_deinit() noexcept;
-
-gcc_pure
-const char *
-ua_classification_lookup(const char *user_agent) noexcept;
