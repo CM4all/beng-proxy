@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,10 +30,17 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_UA_CLASSIFICATION_HXX
-#define BENG_PROXY_UA_CLASSIFICATION_HXX
+#pragma once
 
 #include "util/Compiler.h"
+#include "regex.hxx"
+
+#include <string>
+
+struct UserAgentClass {
+    UniqueRegex regex;
+    std::string name;
+};
 
 /**
  * Throws std::runtime_error on error.
@@ -47,5 +54,3 @@ ua_classification_deinit() noexcept;
 gcc_pure
 const char *
 ua_classification_lookup(const char *user_agent) noexcept;
-
-#endif

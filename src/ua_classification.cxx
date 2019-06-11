@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,7 +31,6 @@
  */
 
 #include "ua_classification.hxx"
-#include "regex.hxx"
 #include "system/Error.hxx"
 #include "util/StringStrip.hxx"
 #include "util/CharUtil.hxx"
@@ -39,17 +38,11 @@
 
 #include <stdexcept>
 #include <forward_list>
-#include <string>
 
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-
-struct UserAgentClass {
-    UniqueRegex regex;
-    std::string name;
-};
 
 typedef std::forward_list<UserAgentClass> UserAgentClassList;
 
