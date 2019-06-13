@@ -24,7 +24,7 @@ def is_null(p):
     return str(p) == '0x0'
 
 def assert_gdb_type(value, expected_type):
-    actual_type = loop.type.unqualified()
+    actual_type = value.type.unqualified()
     expected_type = expected_type.unqualified()
     if str(actual_type) != str(expected_type):
         raise gdb.GdbError("Expected '%s', got '%s'" % (expected_type, actual_type))
