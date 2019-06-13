@@ -23,108 +23,6 @@ except ImportError:
 def is_null(p):
     return str(p) == '0x0'
 
-def for_each_hashmap(h):
-    if h.type != gdb.lookup_type('struct hashmap'):
-        print("not a hashmap")
-        return
-
-    capacity = h['capacity']
-    slots = h['slots']
-    for i in range(capacity):
-        slot = slots[i]
-        if not slot['pair']['key']:
-            continue
-
-        while slot:
-            pair = slot['pair']
-            yield i, pair['key'].string(), pair['value']
-            slot = slot['next']
-
-class DumpHashmapSlot(gdb.Command):
-    def __init__(self):
-        gdb.Command.__init__(self, "bp_dump_hashmap_slot", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
-
-    def invoke(self, arg, from_tty):
-        arg_list = gdb.string_to_argv(arg)
-        if len(arg_list) != 2:
-            print("usage: bp_dump_hashmap ptr i")
-            return
-
-        h = gdb.parse_and_eval(arg_list[0])
-        if h.type != gdb.lookup_type('struct hashmap').pointer():
-            print("%s is not a hashmap*") % arg_list[0]
-            return
-
-        i = int(arg_list[1])
-        slot = h['slots'][i]
-
-        if not slot['pair']['key']:
-            print("empty")
-            return
-
-        while slot:
-            print(slot['pair']['key'].string())
-            slot = slot['next']
-
-class DumpHashmap(gdb.Command):
-    def __init__(self):
-        gdb.Command.__init__(self, "bp_dump_hashmap", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
-
-    def invoke(self, arg, from_tty):
-        h = gdb.parse_and_eval(arg)
-        if h.type != gdb.lookup_type('struct hashmap').pointer():
-            print("%s is not a hashmap*" % arg)
-            return
-
-        n_slots = 0
-        n_total = 0
-        biggest_slot = 0
-        i_biggest_slot = -1
-
-        capacity = h['capacity']
-        for i in range(capacity):
-            slot = h['slots'][i]
-            if slot['pair']['key']:
-                s = slot['next']
-                n = 1
-                while s:
-                    n += 1
-                    s = s['next']
-                if n > biggest_slot:
-                    biggest_slot = n
-                    i_biggest_slot = i
-                if n > 1000:
-                    print("big", i, n)
-                n_total += n
-                n_slots += 1
-                #print(n, slot['pair']['key'])
-                if n_slots % 256 == 0:
-                    print(n_slots, n_total, biggest_slot, i_biggest_slot)
-        print(n_slots, n_total, biggest_slot, i_biggest_slot)
-
-class DumpHashmap2(gdb.Command):
-    def __init__(self):
-        gdb.Command.__init__(self, "bp_dump_hashmap2", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
-
-    def invoke(self, arg, from_tty):
-        h = gdb.parse_and_eval(arg)
-        for i, key, value in for_each_hashmap(h.dereference()):
-            print(i, key, value)
-
-class DumpStrmap(gdb.Command):
-    def __init__(self):
-        gdb.Command.__init__(self, "bp_dump_strmap", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
-
-    def invoke(self, arg, from_tty):
-        h = gdb.parse_and_eval(arg)
-        if h.type != gdb.lookup_type('StringMap').pointer():
-            print("%s is not a strmap*" % arg)
-            return
-
-        string_type = gdb.lookup_type('char').pointer()
-        for i, key, value in for_each_hashmap(h['hashmap'].dereference()):
-            print(key, '=', value.cast(string_type).string())
-
 def pool_size(pool):
     return int(pool['netto_size'])
 
@@ -577,6 +475,7 @@ class FindChildStockClient(gdb.Command):
         fcgi_stock = gdb.parse_and_eval('global_fcgi_stock')
         h = fcgi_stock['hstock']['stocks']
 
+        # TODO: reimplement
         for i, key, value in for_each_hashmap(h.dereference()):
             stock = value.cast(stock_type)
 
@@ -650,10 +549,6 @@ class LbStats(gdb.Command):
         print("n_tcp", n_tcp)
         print("n_buffers", n_buffers)
 
-DumpHashmapSlot()
-DumpHashmap()
-DumpHashmap2()
-DumpStrmap()
 PoolTree()
 DumpPoolStats()
 DumpPoolRefs()
