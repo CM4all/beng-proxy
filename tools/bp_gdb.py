@@ -23,6 +23,17 @@ except ImportError:
 def is_null(p):
     return str(p) == '0x0'
 
+def assert_gdb_type(value, expected_type):
+    actual_type = loop.type.unqualified()
+    expected_type = expected_type.unqualified()
+    if str(actual_type) != str(expected_type):
+        raise gdb.GdbError("Expected '%s', got '%s'" % (expected_type, actual_type))
+
+def parse_and_eval_assert_type(s, expected_type):
+    value = gdb.parse_and_eval(s)
+    assert_gdb_type(value, expected_type)
+    return value
+
 def pool_size(pool):
     return int(pool['netto_size'])
 
@@ -215,10 +226,8 @@ class DumpPoolRefs(gdb.Command):
             print('%4u %s:%u' % (r['count'], r['file'].string().replace('../', ''), r['line']))
 
     def invoke(self, arg, from_tty):
-        pool = gdb.parse_and_eval(arg)
-        if pool.type != gdb.lookup_type('struct pool').pointer():
-            print("%s is not a pool*" % arg)
-            return
+        pool = parse_and_eval_assert_type(arg_list[0],
+                                          gdb.lookup_type('struct pool').pointer())
 
         for i in ('refs', 'unrefs'):
             self._dump_refs(pool, i, pool[i])
@@ -228,10 +237,8 @@ class DumpPoolAllocations(gdb.Command):
         gdb.Command.__init__(self, "bp_dump_pool_allocations", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
 
     def invoke(self, arg, from_tty):
-        pool = gdb.parse_and_eval(arg)
-        if pool.type != gdb.lookup_type('struct pool').pointer():
-            print("%s is not a pool*" % arg)
-            return
+        pool = parse_and_eval_assert_type(arg_list[0],
+                                          gdb.lookup_type('struct pool').pointer())
 
         for a in for_each_intrusive_list_item_reverse(pool['allocations'], member_hook='siblings'):
             if 'file' in a.type:
@@ -291,8 +298,7 @@ class DumpLeaks(gdb.Command):
 
 class SliceArea:
     def __init__(self, pool, area):
-        if area.type != gdb.lookup_type('SliceArea').pointer():
-            raise ValueError("SliceArea* expected")
+        assert_gdb_type(area, gdb.lookup_type('SliceArea').pointer())
 
         self.pool = pool
         self.area = area
@@ -309,8 +315,7 @@ class SliceArea:
 
 class SlicePool:
     def __init__(self, pool):
-        if pool.type != gdb.lookup_type('SlicePool').pointer():
-            raise ValueError("SlicePool* expected")
+        assert_gdb_type(pool, gdb.lookup_type('SlicePool').pointer())
 
         self.pool = pool
         self.page_size = 4096
@@ -392,10 +397,8 @@ class LbStats(gdb.Command):
         gdb.Command.__init__(self, "lb_stats", gdb.COMMAND_DATA, gdb.COMPLETE_NONE, True)
 
     def invoke(self, arg, from_tty):
-        instance = gdb.parse_and_eval(arg)
-        if instance.type != gdb.lookup_type('LbInstance').pointer():
-            print("not a lb_instance")
-            return None
+        instance = parse_and_eval_assert_type(arg_list[0],
+                                              gdb.lookup_type('LbInstance').pointer())
 
         print("n_connections", instance['connections']['data_']['root_plus_size_']['size_'])
 
