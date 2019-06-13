@@ -39,34 +39,6 @@ def pool_sizes(pool):
         brutto_size = netto_size
     return brutto_size, netto_size
 
-def for_each_list_head(head):
-    item = head['next']
-    head_address = head.address
-    while item != head_address:
-        yield item
-        item = item['next']
-
-def for_each_list_item(head, cast):
-    item = head['next']
-    head_address = head.address
-    while item != head_address:
-        yield item.cast(cast)
-        item = item['next']
-
-def for_each_list_head_reverse(head):
-    item = head['prev']
-    head_address = head.address
-    while item != head_address:
-        yield item
-        item = item['prev']
-
-def for_each_list_item_reverse(head, cast):
-    item = head['prev']
-    head_address = head.address
-    while item != head_address:
-        yield item.cast(cast)
-        item = item['prev']
-
 class IntrusiveContainerType:
     def __init__(self, list_type, member_hook=None):
         self.list_type = get_basic_type(list_type)
@@ -415,74 +387,6 @@ class FindSliceFifoBuffer(gdb.Command):
                 print(x)
                 break
 
-class FindChild(gdb.Command):
-    def __init__(self):
-        gdb.Command.__init__(self, "bp_find_child", gdb.COMMAND_DATA, gdb.COMPLETE_NONE, True)
-
-    def _find_child_by_pid(self, pid):
-        lh = gdb.parse_and_eval('children')
-        if lh.type != gdb.lookup_type('struct list_head'):
-            print("not a list_head")
-            return None
-
-        child_pointer = gdb.lookup_type('struct child').pointer()
-        for child in for_each_list_item(lh, child_pointer):
-            if child['pid'] == pid:
-                return child
-
-        return None
-
-    def invoke(self, arg, from_tty):
-        pid = gdb.parse_and_eval(arg)
-        child = self._find_child_by_pid(pid)
-        if child is None:
-            print("Not found")
-        else:
-            print(child, child.dereference())
-
-class FindChildStockClient(gdb.Command):
-    def __init__(self):
-        gdb.Command.__init__(self, "bp_find_child_stock_client", gdb.COMMAND_DATA, gdb.COMPLETE_NONE, True)
-
-    def _find_child_by_pid(self, pid):
-        lh = gdb.parse_and_eval('children')
-        if lh.type != gdb.lookup_type('struct list_head'):
-            print("not a list_head")
-            return None
-
-        child_pointer = gdb.lookup_type('struct child').pointer()
-        for child in for_each_list_item(lh, child_pointer):
-            if child['pid'] == pid:
-                return child
-
-        return None
-
-    def invoke(self, arg, from_tty):
-        pid = gdb.parse_and_eval(arg)
-        child = self._find_child_by_pid(pid)
-        if child is None:
-            print("Not found")
-            return
-
-        stock_type = gdb.lookup_type('struct Stock').pointer()
-        child_stock_item_type = gdb.lookup_type('struct child_stock_item').pointer()
-        child_stock_item = child['callback_ctx'].cast(child_stock_item_type)
-
-        string_type = gdb.lookup_type('char').pointer()
-        fcgi_connection_type = gdb.lookup_type('struct fcgi_connection').pointer()
-
-        fcgi_stock = gdb.parse_and_eval('global_fcgi_stock')
-        h = fcgi_stock['hstock']['stocks']
-
-        # TODO: reimplement
-        for i, key, value in for_each_hashmap(h.dereference()):
-            stock = value.cast(stock_type)
-
-            for x in ('idle', 'busy'):
-                for c in for_each_list_item(stock[x], fcgi_connection_type):
-                    if c['child'] == child_stock_item:
-                        print(key, c, c.dereference())
-
 class LbStats(gdb.Command):
     def __init__(self):
         gdb.Command.__init__(self, "lb_stats", gdb.COMMAND_DATA, gdb.COMPLETE_NONE, True)
@@ -557,8 +461,6 @@ DumpPoolRecycler()
 DumpLeaks()
 DumpSlicePoolAreas()
 FindSliceFifoBuffer()
-FindChild()
-FindChildStockClient()
 LbStats()
 
 class StringViewPrinter:
