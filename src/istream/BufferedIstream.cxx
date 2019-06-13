@@ -119,7 +119,6 @@ private:
     void DeferredReady() noexcept;
 
     void InvokeError(std::exception_ptr e) noexcept {
-        defer_ready.Cancel();
         handler.OnBufferedIstreamError(std::move(e));
         Destroy();
     }

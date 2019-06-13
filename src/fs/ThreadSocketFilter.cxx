@@ -58,9 +58,6 @@ ThreadSocketFilter::~ThreadSocketFilter() noexcept
 {
     delete handler;
 
-    defer_event.Cancel();
-    handshake_timeout_event.Cancel();
-
     unprotected_decrypted_input.FreeIfDefined();
 }
 

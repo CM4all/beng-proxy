@@ -212,10 +212,6 @@ struct HttpServerConnection final
                          bool _date_header,
                          HttpServerConnectionHandler &_handler);
 
-    ~HttpServerConnection() {
-        defer_read.Cancel();
-    }
-
     void Delete() noexcept;
 
     EventLoop &GetEventLoop() {

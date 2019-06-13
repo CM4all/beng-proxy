@@ -66,8 +66,6 @@ public:
     }
 
     void _Close() noexcept override {
-        defer_event.Cancel();
-
         /* input can only be nullptr during the eof callback delay */
         if (HasInput())
             input.Close();
@@ -83,7 +81,6 @@ public:
     }
 
     void OnError(std::exception_ptr ep) noexcept override {
-        defer_event.Cancel();
         ForwardIstream::OnError(ep);
     }
 
