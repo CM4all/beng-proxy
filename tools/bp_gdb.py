@@ -400,7 +400,8 @@ class LbStats(gdb.Command):
         instance = parse_and_eval_assert_type(arg,
                                               gdb.lookup_type('LbInstance').pointer())
 
-        print("n_connections", instance['connections']['data_']['root_plus_size_']['size_'])
+        print("n_http_connections", instance['http_connections']['data_']['root_plus_size_']['size_'])
+        print("n_tcp_connections", instance['tcp_connections']['data_']['root_plus_size_']['size_'])
 
         n = 0
         n_ssl = 0
@@ -410,7 +411,8 @@ class LbStats(gdb.Command):
 
         void_ptr_type = gdb.lookup_type('void').pointer()
         long_type = gdb.lookup_type('long')
-        for c in for_each_intrusive_list_item(instance['connections']):
+
+        for c in for_each_intrusive_list_item(instance['http_connections']):
             n += 1
 
             if not is_null(c['ssl_filter']):
@@ -425,9 +427,8 @@ class LbStats(gdb.Command):
                 if not is_null(ssl_filter['encrypted_output']['data'].cast(void_ptr_type)):
                     n_buffers += 1
 
-            if not is_null(c['thread_socket_filter']):
-                n_ssl += 1
-                f = c['thread_socket_filter']
+            f = c['http']['socket']['filter']['_M_t']['_M_head_impl']
+            if not is_null(f):
                 if not is_null(f['encrypted_input']['data'].cast(void_ptr_type)):
                     n_buffers += 1
                 if not is_null(f['decrypted_input']['data'].cast(void_ptr_type)):
@@ -437,17 +438,40 @@ class LbStats(gdb.Command):
                 if not is_null(f['encrypted_output']['data'].cast(void_ptr_type)):
                     n_buffers += 1
 
-            protocol = str(lb_listener_get_any_cluster(c['listener'])['protocol'])
-            if protocol == 'HTTP':
-                n_http += 1
+            n_http += 1
+            n_buffers += 1
+
+        for c in for_each_intrusive_list_item(instance['tcp_connections']):
+            n += 1
+
+            f = c['inbound']['socket']['filter']['_M_t']['_M_head_impl']
+            if not is_null(f):
+                if not is_null(f['encrypted_input']['data'].cast(void_ptr_type)):
+                    n_buffers += 1
+                if not is_null(f['decrypted_input']['data'].cast(void_ptr_type)):
+                    n_buffers += 1
+                if not is_null(f['plain_output']['data'].cast(void_ptr_type)):
+                    n_buffers += 1
+                if not is_null(f['encrypted_output']['data'].cast(void_ptr_type)):
+                    n_buffers += 1
+
+                ssl_filter = f['handler']
+                if not is_null(ssl_filter):
+                    n_ssl += 1
+                    if not is_null(ssl_filter['encrypted_input']['data'].cast(void_ptr_type)):
+                        n_buffers += 1
+                    if not is_null(ssl_filter['decrypted_input']['data'].cast(void_ptr_type)):
+                        n_buffers += 1
+                    if not is_null(ssl_filter['plain_output']['data'].cast(void_ptr_type)):
+                        n_buffers += 1
+                    if not is_null(ssl_filter['encrypted_output']['data'].cast(void_ptr_type)):
+                        n_buffers += 1
+
+            n_tcp += 1
+            if not is_null(c['outbound']['input']['data'].cast(void_ptr_type)):
                 n_buffers += 1
-            elif protocol == 'TCP':
-                n_tcp += 1
-                tcp = c['tcp']
-                if not is_null(tcp['outbound']['input']['data'].cast(void_ptr_type)):
-                    n_buffers += 1
-                if not is_null(tcp['inbound']['base']['input']['data'].cast(void_ptr_type)):
-                    n_buffers += 1
+            if not is_null(c['inbound']['base']['input']['data'].cast(void_ptr_type)):
+                n_buffers += 1
 
         print("n_connections", n)
         print("n_ssl", n_ssl)
