@@ -527,6 +527,13 @@ class PoolHolderPrinter:
         else:
             return 'PoolHolder{nullptr}'
 
+class PoolAllocationInfoPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return '{%s, %u}' % (self.val.address + 1, self.val['size'])
+
 class LeakDetectorPrinter:
     def __init__(self, val):
         self.val = val
@@ -549,6 +556,7 @@ def build_pretty_printer():
     pp.add_printer('StringView', '^StringView$', StringViewPrinter)
     pp.add_printer('PoolPtr', '^PoolPtr$', PoolPtrPrinter)
     pp.add_printer('PoolHolder', '^PoolHolder$', PoolHolderPrinter)
+    pp.add_printer('allocation_info', '^allocation_info$', PoolAllocationInfoPrinter)
     pp.add_printer('LeakDetector', '^LeakDetector$', LeakDetectorPrinter)
     pp.add_printer('SocketEvent', '^SocketEvent$', SocketEventPrinter)
     return pp
