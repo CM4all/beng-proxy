@@ -534,6 +534,13 @@ class LeakDetectorPrinter:
     def to_string(self):
         return 'LeakDetector'
 
+class SocketEventPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'SocketEvent{%d, scheduled=0x%x}' % (self.val['fd']['fd'], self.val['scheduled_flags'])
+
 import gdb.printing
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter("cm4all-beng-proxy")
@@ -543,6 +550,7 @@ def build_pretty_printer():
     pp.add_printer('PoolPtr', '^PoolPtr$', PoolPtrPrinter)
     pp.add_printer('PoolHolder', '^PoolHolder$', PoolHolderPrinter)
     pp.add_printer('LeakDetector', '^LeakDetector$', LeakDetectorPrinter)
+    pp.add_printer('SocketEvent', '^SocketEvent$', SocketEventPrinter)
     return pp
 
 gdb.printing.register_pretty_printer(gdb.current_objfile(), build_pretty_printer(), replace=True)
