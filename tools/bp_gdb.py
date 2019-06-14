@@ -397,7 +397,7 @@ class LbStats(gdb.Command):
         gdb.Command.__init__(self, "lb_stats", gdb.COMMAND_DATA, gdb.COMPLETE_NONE, True)
 
     def invoke(self, arg, from_tty):
-        instance = parse_and_eval_assert_type(arg_list[0],
+        instance = parse_and_eval_assert_type(arg,
                                               gdb.lookup_type('LbInstance').pointer())
 
         print("n_connections", instance['connections']['data_']['root_plus_size_']['size_'])
