@@ -1605,6 +1605,66 @@ TestCancelWithFailedSocketPost(Context<Connection> &c)
     assert(c.released);
 }
 
+template<class Connection>
+static void
+TestCloseWithFailedSocketGet(Context<Connection> &c)
+{
+    c.connection = Connection::NewHold(*c.pool, c.event_loop);
+    c.connection->Request(c.pool, c,
+                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          nullptr,
+#ifdef HAVE_EXPECT_100
+                          false,
+#endif
+                          c, c.cancel_ptr);
+    pool_unref(c.pool);
+    pool_commit();
+
+    c.WaitForResponse();
+
+    assert(!c.released);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.body.IsDefined());
+
+    c.connection->InjectSocketFailure();
+    c.body.ClearAndClose();
+    c.defer_event.Cancel();
+
+    c.event_loop.Dispatch();
+
+    assert(c.released);
+}
+
+template<class Connection>
+static void
+TestCloseWithFailedSocketPost(Context<Connection> &c)
+{
+    c.connection = Connection::NewHold(*c.pool, c.event_loop);
+    c.connection->Request(c.pool, c,
+                          HTTP_METHOD_POST, "/foo", StringMap(*c.pool),
+                          istream_null_new(*c.pool),
+#ifdef HAVE_EXPECT_100
+                          false,
+#endif
+                          c, c.cancel_ptr);
+    pool_unref(c.pool);
+    pool_commit();
+
+    c.WaitForResponse();
+
+    assert(!c.released);
+    assert(c.status == HTTP_STATUS_OK);
+    assert(c.body.IsDefined());
+
+    c.connection->InjectSocketFailure();
+    c.body.ClearAndClose();
+    c.defer_event.Cancel();
+
+    c.event_loop.Dispatch();
+
+    assert(c.released);
+}
+
 
 /*
  * main
@@ -1699,4 +1759,6 @@ run_all_tests()
     run_test(test_post_empty<Connection>);
     run_test_and_buckets(TestCancelWithFailedSocketGet<Connection>);
     run_test_and_buckets(TestCancelWithFailedSocketPost<Connection>);
+    run_test_and_buckets(TestCloseWithFailedSocketGet<Connection>);
+    run_test_and_buckets(TestCloseWithFailedSocketPost<Connection>);
 }
