@@ -226,7 +226,7 @@ class DumpPoolRefs(gdb.Command):
             print('%4u %s:%u' % (r['count'], r['file'].string().replace('../', ''), r['line']))
 
     def invoke(self, arg, from_tty):
-        pool = parse_and_eval_assert_type(arg_list[0],
+        pool = parse_and_eval_assert_type(arg,
                                           gdb.lookup_type('struct pool').pointer())
 
         for i in ('refs', 'unrefs'):
@@ -237,7 +237,7 @@ class DumpPoolAllocations(gdb.Command):
         gdb.Command.__init__(self, "bp_dump_pool_allocations", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
 
     def invoke(self, arg, from_tty):
-        pool = parse_and_eval_assert_type(arg_list[0],
+        pool = parse_and_eval_assert_type(arg,
                                           gdb.lookup_type('struct pool').pointer())
 
         for a in for_each_intrusive_list_item_reverse(pool['allocations'], member_hook='siblings'):
