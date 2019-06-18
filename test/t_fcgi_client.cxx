@@ -284,6 +284,10 @@ struct Connection {
                             handler, cancel_ptr);
     }
 
+    void InjectSocketFailure() noexcept {
+        fd.Shutdown();
+    }
+
     static Connection *NewMirror(struct pool &, EventLoop &event_loop) {
         return New(event_loop, fcgi_server_mirror);
     }

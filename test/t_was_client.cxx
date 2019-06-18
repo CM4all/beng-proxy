@@ -193,6 +193,10 @@ public:
                            handler, cancel_ptr);
     }
 
+    void InjectSocketFailure() noexcept {
+        control_fd.Shutdown();
+    }
+
     /* virtual methods from class WasServerHandler */
 
     void OnWasRequest(struct pool &pool, http_method_t method,

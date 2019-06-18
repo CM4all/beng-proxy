@@ -1563,6 +1563,27 @@ TestCancelNop(Context<Connection> &c)
     assert(c.released);
 }
 
+template<class Connection>
+static void
+TestCancelWithFailedSocket(Context<Connection> &c)
+{
+    c.connection = Connection::NewNop(*c.pool, c.event_loop);
+    c.connection->Request(c.pool, c,
+                          HTTP_METHOD_POST, "/foo", StringMap(*c.pool),
+                          istream_null_new(*c.pool),
+#ifdef HAVE_EXPECT_100
+                          false,
+#endif
+                          c, c.cancel_ptr);
+    pool_unref(c.pool);
+    pool_commit();
+
+    c.connection->InjectSocketFailure();
+    c.cancel_ptr.Cancel();
+
+    assert(c.released);
+}
+
 
 /*
  * main
@@ -1655,4 +1676,5 @@ run_all_tests()
     run_test_and_buckets(test_excess_data<Connection>);
 #endif
     run_test(test_post_empty<Connection>);
+    run_test_and_buckets(TestCancelWithFailedSocket<Connection>);
 }
