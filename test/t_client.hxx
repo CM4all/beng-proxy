@@ -1543,6 +1543,26 @@ test_excess_data(Context<Connection> &c)
 
 #endif
 
+template<class Connection>
+static void
+TestCancelNop(Context<Connection> &c)
+{
+    c.connection = Connection::NewNop(*c.pool, c.event_loop);
+    c.connection->Request(c.pool, c,
+                          HTTP_METHOD_POST, "/foo", StringMap(*c.pool),
+                          istream_null_new(*c.pool),
+#ifdef HAVE_EXPECT_100
+                          false,
+#endif
+                          c, c.cancel_ptr);
+    pool_unref(c.pool);
+    pool_commit();
+
+    c.cancel_ptr.Cancel();
+
+    assert(c.released);
+}
+
 
 /*
  * main
@@ -1592,6 +1612,7 @@ run_all_tests()
 #ifdef ENABLE_HUGE_BODY
     run_test_and_buckets(test_huge<Connection>);
 #endif
+    run_test(TestCancelNop<Connection>);
     run_test(test_close_response_body_early<Connection>);
     run_test(test_close_response_body_late<Connection>);
     run_test(test_close_response_body_data<Connection>);

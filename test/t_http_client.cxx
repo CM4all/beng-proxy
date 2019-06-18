@@ -117,6 +117,10 @@ struct Connection {
     static Connection *NewHold(struct pool &, EventLoop &event_loop) {
         return New(event_loop, "./test/run_http_server", "hold");
     }
+
+    static auto *NewNop(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, "./test/run_http_server", "nop");
+    }
 };
 
 Connection::~Connection()

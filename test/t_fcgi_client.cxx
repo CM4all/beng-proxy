@@ -249,6 +249,13 @@ fcgi_server_excess_data(struct pool *pool)
     write_fcgi_end(&request);
 }
 
+static void
+fcgi_server_nop(struct pool *pool)
+{
+    FcgiRequest request;
+    read_fcgi_request(pool, &request);
+}
+
 struct Connection {
     EventLoop &event_loop;
     const pid_t pid;
@@ -321,6 +328,10 @@ struct Connection {
 
     static Connection *NewExcessData(struct pool &, EventLoop &event_loop) {
         return New(event_loop, fcgi_server_excess_data);
+    }
+
+    static Connection *NewNop(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, fcgi_server_nop);
     }
 };
 
