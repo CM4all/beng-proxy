@@ -187,12 +187,15 @@ struct WasClient final
         lease.ReleaseWas(reuse);
     }
 
-    void ReleaseControlStop(uint64_t received) {
+    /**
+     * @return false on error (OnWasControlError() has been called).
+     */
+    bool ReleaseControlStop(uint64_t received) {
         assert(response.body == nullptr);
 
         if (!control.IsDefined())
             /* already released */
-            return;
+            return true;
 
         request.ClearBody();
 
@@ -202,12 +205,14 @@ struct WasClient final
 
         if (!control.SendEmpty(WAS_COMMAND_STOP)) {
             lease.ReleaseWas(false);
-            return;
+            return false;
         }
 
         control.ReleaseSocket();
 
         lease.ReleaseWasStop(received);
+
+        return true;
     }
 
     /**
