@@ -156,12 +156,12 @@ class IntrusiveSetType:
 
     def get_left_node(self, node):
         result = node['left_'].dereference()
-        if result.address == node.address: return None
+        if is_null(result.address) or result.address == node.address: return None
         return result
 
     def get_right_node(self, node):
         result = node['right_'].dereference()
-        if result.address == node.address: return None
+        if is_null(result.address) or result.address == node.address: return None
         return result
 
     def _iter_nodes(self, node):
