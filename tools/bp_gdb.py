@@ -490,6 +490,13 @@ DumpSlicePoolAreas()
 FindSliceFifoBuffer()
 LbStats()
 
+class StdArrayPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return str(self.val['_M_elems'])
+
 class StringViewPrinter:
     def __init__(self, val):
         self.val = val
@@ -551,6 +558,7 @@ class SocketEventPrinter:
 import gdb.printing
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter("cm4all-beng-proxy")
+    pp.add_printer('std::array', '^std::array<', StdArrayPrinter)
     pp.add_printer('boost::intrusive::list', 'boost::intrusive::s?list<', IntrusiveListPrinter)
     pp.add_printer('StringView', '^BasicStringView<char>$', StringViewPrinter)
     pp.add_printer('StringView', '^StringView$', StringViewPrinter)
