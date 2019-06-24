@@ -594,7 +594,7 @@ class IntrusiveUnorderedSetPrinter:
         return 'array'
 
     def children(self):
-        return [('', i) for i in self.t.iter_values(self.val)]
+        return [('', i.dereference()) for i in self.t.iter_values(self.val)]
 
     def to_string(self):
         return str(self.val.type.strip_typedefs())
