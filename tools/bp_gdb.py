@@ -555,6 +555,26 @@ class SocketEventPrinter:
     def to_string(self):
         return 'SocketEvent{%d, scheduled=0x%x}' % (self.val['fd']['fd'], self.val['scheduled_flags'])
 
+class SliceAllocationPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        val = self.val
+        if is_null(val['data']):
+            return "nullptr"
+        return "SliceAllocation{%s, %s}" % (val['data'], val['size'])
+
+class SliceFifoBufferPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        val = self.val
+        if is_null(val['allocation']['data']):
+            return "nullptr"
+        return "SliceFifoBuffer{%s, %s}" % (val['data'] + val['head'], val['tail'] - val['head'])
+
 import gdb.printing
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter("cm4all-beng-proxy")
@@ -567,6 +587,8 @@ def build_pretty_printer():
     pp.add_printer('allocation_info', '^allocation_info$', PoolAllocationInfoPrinter)
     pp.add_printer('LeakDetector', '^LeakDetector$', LeakDetectorPrinter)
     pp.add_printer('SocketEvent', '^SocketEvent$', SocketEventPrinter)
+    pp.add_printer('SliceAllocation', '^SliceAllocation$', SliceAllocationPrinter)
+    pp.add_printer('SliceFifoBuffer', '^SliceFifoBuffer$', SliceFifoBufferPrinter)
     return pp
 
 gdb.printing.register_pretty_printer(gdb.current_objfile(), build_pretty_printer(), replace=True)
