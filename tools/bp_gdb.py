@@ -703,7 +703,7 @@ class StockPrinter:
         self.val = val
 
     def to_string(self):
-        return 'Stock{%s, %s}' % (self.val['cls'].referenced_value().dynamic_type, self.val['name'])
+        return 'Stock{%s, %s, idle=%s, busy=%s}' % (self.val['cls'].referenced_value().dynamic_type, self.val['name'], self.val['idle'], self.val['busy'])
 
 class StockItemPrinter:
     def __init__(self, val):
