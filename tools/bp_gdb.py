@@ -698,6 +698,13 @@ class SliceFifoBufferPrinter:
             return "nullptr"
         return "SliceFifoBuffer{%s, %s}" % (val['data'] + val['head'], val['tail'] - val['head'])
 
+class StockPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'Stock{%s, %s}' % (self.val['cls'].referenced_value().dynamic_type, self.val['name'])
+
 class StockMapPrinter:
     def __init__(self, val):
         self.val = val
@@ -723,6 +730,7 @@ def build_pretty_printer():
     pp.add_printer('SocketEvent', '^SocketEvent$', SocketEventPrinter)
     pp.add_printer('SliceAllocation', '^SliceAllocation$', SliceAllocationPrinter)
     pp.add_printer('SliceFifoBuffer', '^SliceFifoBuffer$', SliceFifoBufferPrinter)
+    pp.add_printer('Stock', '^Stock$', StockPrinter)
     pp.add_printer('StockMap', '^StockMap$', StockMapPrinter)
     return pp
 
