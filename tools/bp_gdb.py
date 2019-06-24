@@ -712,6 +712,13 @@ class StockMapPrinter:
     def to_string(self):
         return 'StockMap{%s, %s}' % (self.val['cls'].referenced_value().dynamic_type, self.val['map'])
 
+class StockMapItemPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return self.val['stock']
+
 import gdb.printing
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter("cm4all-beng-proxy")
@@ -732,6 +739,7 @@ def build_pretty_printer():
     pp.add_printer('SliceFifoBuffer', '^SliceFifoBuffer$', SliceFifoBufferPrinter)
     pp.add_printer('Stock', '^Stock$', StockPrinter)
     pp.add_printer('StockMap', '^StockMap$', StockMapPrinter)
+    pp.add_printer('StockMap::Item', '^StockMap::Item$', StockMapItemPrinter)
     return pp
 
 gdb.printing.register_pretty_printer(gdb.current_objfile(), build_pretty_printer(), replace=True)
