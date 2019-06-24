@@ -688,6 +688,13 @@ class SocketEventPrinter:
     def to_string(self):
         return 'SocketEvent{%d, scheduled=0x%x}' % (self.val['fd']['fd'], self.val['scheduled_flags'])
 
+class TimerEventPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'TimerEvent{scheduled=%s}' % (not is_null(self.val['left_']))
+
 class SliceAllocationPrinter:
     def __init__(self, val):
         self.val = val
@@ -752,6 +759,7 @@ def build_pretty_printer():
     pp.add_printer('FileDescriptor', '^(Unique)?FileDescriptor$', FileDescriptorPrinter)
     pp.add_printer('SocketDescriptor', '^(Unique)?SocketDescriptor$', SocketDescriptorPrinter)
     pp.add_printer('SocketEvent', '^SocketEvent$', SocketEventPrinter)
+    pp.add_printer('TimerEvent', '^TimerEvent$', TimerEventPrinter)
     pp.add_printer('SliceAllocation', '^SliceAllocation$', SliceAllocationPrinter)
     pp.add_printer('SliceFifoBuffer', '^SliceFifoBuffer$', SliceFifoBufferPrinter)
     pp.add_printer('Stock', '^Stock$', StockPrinter)
