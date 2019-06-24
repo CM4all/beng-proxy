@@ -181,6 +181,40 @@ class IntrusiveSetType:
         if right is not None:
             yield from self._iter_nodes(right)
 
+class IntrusiveUnorderedSetType:
+    def __init__(self, list_type, member_hook=None):
+        self.list_type = get_basic_type(list_type)
+        self.value_type = list_type.template_argument(0)
+        self.value_pointer_type = self.value_type.pointer()
+
+        self.member_hook = None
+        if member_hook is not None:
+            self.member_hook = self.value_type[member_hook]
+
+    def node_to_value(self, node):
+        if self.member_hook is None:
+            return node.cast(self.value_pointer_type)
+        else:
+            return (node.dereference().address - self.member_hook.bitpos // 8).cast(self.value_pointer_type)
+
+    def iter_nodes(self, s):
+        bucket_traits = s['data']['bucket_traits_']
+        buckets = bucket_traits['buckets_']
+        n_buckets = int(bucket_traits['buckets_len_'])
+        for i in range(n_buckets):
+            l = buckets[i]
+            root = l['data_']['root_plus_size_']['header_holder_']
+            root_address = root.address
+            while True:
+                node = root['next_']
+                if node.address == root_address:
+                    break
+                yield node
+
+    def iter_values(self, s):
+        for node in self.iter_nodes(s):
+            yield self.node_to_value(node)
+
 def for_each_recursive_pool(pool):
     yield pool
 
@@ -550,6 +584,20 @@ class IntrusiveSetPrinter:
     def to_string(self):
         return str(self.val.type.strip_typedefs())
 
+class IntrusiveUnorderedSetPrinter:
+    def __init__(self, val):
+        self.t = IntrusiveUnorderedSetType(val.type)
+        self.val = val
+
+    def display_hint(self):
+        return 'array'
+
+    def children(self):
+        return list(self.t.iter_values(self.val))
+
+    def to_string(self):
+        return str(self.val.type.strip_typedefs())
+
 class StdArrayPrinter:
     def __init__(self, val):
         self.val = val
@@ -641,6 +689,7 @@ def build_pretty_printer():
     pp.add_printer('std::array', '^std::array<', StdArrayPrinter)
     pp.add_printer('boost::intrusive::list', 'boost::intrusive::s?list<', IntrusiveListPrinter)
     pp.add_printer('boost::intrusive::set', 'boost::intrusive::(multi)?set<', IntrusiveSetPrinter)
+    pp.add_printer('boost::intrusive::unordered_set', 'boost::intrusive::unordered_(multi)?set<', IntrusiveUnorderedSetPrinter)
     pp.add_printer('StringView', '^BasicStringView<char>$', StringViewPrinter)
     pp.add_printer('StringView', '^StringView$', StringViewPrinter)
     pp.add_printer('PoolPtr', '^PoolPtr$', PoolPtrPrinter)
