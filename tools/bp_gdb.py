@@ -205,9 +205,10 @@ class IntrusiveUnorderedSetType:
             l = buckets[i]
             root = l['data_']['root_plus_size_']['header_holder_']
             root_address = root.address
+            node = root
             while True:
-                node = root['next_']
-                if node.address == root_address:
+                node = node['next_']
+                if node.dereference().address == root_address:
                     break
                 yield node
 
