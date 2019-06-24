@@ -135,6 +135,52 @@ class IntrusiveListPrinter:
     def to_string(self):
         return str(self.val.type.strip_typedefs())
 
+class IntrusiveSetType:
+    def __init__(self, list_type, member_hook=None):
+        self.list_type = get_basic_type(list_type)
+        self.value_type = list_type.template_argument(0)
+        self.value_pointer_type = self.value_type.pointer()
+
+        self.member_hook = None
+        if member_hook is not None:
+            self.member_hook = self.value_type[member_hook]
+
+    def get_header(self, s):
+        return s['holder']['root']
+
+    def node_to_value(self, node):
+        if self.member_hook is None:
+            return node.cast(self.value_pointer_type)
+        else:
+            return (node.dereference().address - self.member_hook.bitpos // 8).cast(self.value_pointer_type)
+
+    def get_left_node(self, node):
+        result = node['left_'].dereference()
+        if result.address == node.address: return None
+        return result
+
+    def get_right_node(self, node):
+        result = node['right_'].dereference()
+        if result.address == node.address: return None
+        return result
+
+    def _iter_nodes(self, node):
+        left = self.get_left_node(node)
+        if left is not None:
+            yield from self._iter_nodes(left)
+        yield node
+        right = self.get_right_node(node)
+        if right is not None:
+            yield from self._iter_nodes(right)
+
+    def iter_nodes(self, s):
+        left = self.get_left_node(s)
+        if left is not None:
+            yield from self._iter_nodes(left)
+        right = self.get_right_node(s)
+        if right is not None:
+            yield from self._iter_nodes(right)
+
 def for_each_recursive_pool(pool):
     yield pool
 
@@ -490,6 +536,20 @@ DumpSlicePoolAreas()
 FindSliceFifoBuffer()
 LbStats()
 
+class IntrusiveSetPrinter:
+    def __init__(self, val):
+        self.t = IntrusiveSetType(val.type)
+        self.val = val
+
+    def display_hint(self):
+        return 'array'
+
+    def children(self):
+        return list(self.t.iter_nodes(self.t.get_header(self.val)))
+
+    def to_string(self):
+        return str(self.val.type.strip_typedefs())
+
 class StdArrayPrinter:
     def __init__(self, val):
         self.val = val
@@ -580,6 +640,7 @@ def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter("cm4all-beng-proxy")
     pp.add_printer('std::array', '^std::array<', StdArrayPrinter)
     pp.add_printer('boost::intrusive::list', 'boost::intrusive::s?list<', IntrusiveListPrinter)
+    pp.add_printer('boost::intrusive::set', 'boost::intrusive::(multi)?set<', IntrusiveSetPrinter)
     pp.add_printer('StringView', '^BasicStringView<char>$', StringViewPrinter)
     pp.add_printer('StringView', '^StringView$', StringViewPrinter)
     pp.add_printer('PoolPtr', '^PoolPtr$', PoolPtrPrinter)
