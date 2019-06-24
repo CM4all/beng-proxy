@@ -181,6 +181,11 @@ class IntrusiveSetType:
         if right is not None:
             yield from self._iter_nodes(right)
 
+def for_each_intrusive_set_item(s, member_hook=None):
+    t = IntrusiveSetType(s.type, member_hook=member_hook)
+    for node in t.iter_nodes(s):
+        yield t.node_to_value(node).dereference()
+
 class IntrusiveUnorderedSetType:
     def __init__(self, list_type, member_hook=None):
         self.list_type = get_basic_type(list_type)
@@ -215,6 +220,11 @@ class IntrusiveUnorderedSetType:
     def iter_values(self, s):
         for node in self.iter_nodes(s):
             yield self.node_to_value(node)
+
+def for_each_intrusive_unordered_set_item(s, member_hook=None):
+    t = IntrusiveUnorderedSetType(s.type, member_hook=member_hook)
+    for value in t.iter_values(s):
+        yield value.dereference()
 
 def for_each_recursive_pool(pool):
     yield pool
