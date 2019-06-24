@@ -174,6 +174,7 @@ class IntrusiveSetType:
             yield from self._iter_nodes(right)
 
     def iter_nodes(self, s):
+        s = self.get_header(s)
         left = self.get_left_node(s)
         if left is not None:
             yield from self._iter_nodes(left)
@@ -590,7 +591,7 @@ class IntrusiveSetPrinter:
         return 'array'
 
     def children(self):
-        return [('', i) for i in self.t.iter_nodes(self.t.get_header(self.val))]
+        return [('', i) for i in for_each_intrusive_set_item(self.val)]
 
     def to_string(self):
         return str(self.val.type.strip_typedefs())
