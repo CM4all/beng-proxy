@@ -656,6 +656,20 @@ class LeakDetectorPrinter:
     def to_string(self):
         return 'LeakDetector'
 
+class FileDescriptorPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'fd{%d}' % self.val['fd']
+
+class SocketDescriptorPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'sd{%d}' % self.val['fd']
+
 class SocketEventPrinter:
     def __init__(self, val):
         self.val = val
@@ -703,6 +717,8 @@ def build_pretty_printer():
     pp.add_printer('PoolHolder', '^PoolHolder$', PoolHolderPrinter)
     pp.add_printer('allocation_info', '^allocation_info$', PoolAllocationInfoPrinter)
     pp.add_printer('LeakDetector', '^LeakDetector$', LeakDetectorPrinter)
+    pp.add_printer('FileDescriptor', '^(Unique)?FileDescriptor$', FileDescriptorPrinter)
+    pp.add_printer('SocketDescriptor', '^(Unique)?SocketDescriptor$', SocketDescriptorPrinter)
     pp.add_printer('SocketEvent', '^SocketEvent$', SocketEventPrinter)
     pp.add_printer('SliceAllocation', '^SliceAllocation$', SliceAllocationPrinter)
     pp.add_printer('SliceFifoBuffer', '^SliceFifoBuffer$', SliceFifoBufferPrinter)
