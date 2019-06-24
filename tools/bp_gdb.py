@@ -705,6 +705,13 @@ class StockPrinter:
     def to_string(self):
         return 'Stock{%s, %s}' % (self.val['cls'].referenced_value().dynamic_type, self.val['name'])
 
+class StockItemPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'StockItem{%s}' % self.val.dynamic_type
+
 class StockMapPrinter:
     def __init__(self, val):
         self.val = val
@@ -738,6 +745,7 @@ def build_pretty_printer():
     pp.add_printer('SliceAllocation', '^SliceAllocation$', SliceAllocationPrinter)
     pp.add_printer('SliceFifoBuffer', '^SliceFifoBuffer$', SliceFifoBufferPrinter)
     pp.add_printer('Stock', '^Stock$', StockPrinter)
+    pp.add_printer('StockItem', '^StockItem$', StockItemPrinter)
     pp.add_printer('StockMap', '^StockMap$', StockMapPrinter)
     pp.add_printer('StockMap::Item', '^StockMap::Item$', StockMapItemPrinter)
     return pp
