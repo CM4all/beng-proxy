@@ -580,7 +580,7 @@ class IntrusiveSetPrinter:
         return 'array'
 
     def children(self):
-        return list(self.t.iter_nodes(self.t.get_header(self.val)))
+        return [('', i) for i in self.t.iter_nodes(self.t.get_header(self.val))]
 
     def to_string(self):
         return str(self.val.type.strip_typedefs())
@@ -594,7 +594,7 @@ class IntrusiveUnorderedSetPrinter:
         return 'array'
 
     def children(self):
-        return list(self.t.iter_values(self.val))
+        return [('', i) for i in self.t.iter_values(self.val)]
 
     def to_string(self):
         return str(self.val.type.strip_typedefs())
