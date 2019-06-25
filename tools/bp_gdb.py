@@ -640,6 +640,18 @@ class BoundMethodPrinter:
         function = re.sub(r'^.*BindMethodDetail::BindMethodWrapperGenerator.*, &(.+?),.*$', r'\1', function)
         return "BoundMethod{%s, %s}" % (function, instance)
 
+class CancellablePointerPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        c = self.val['cancellable']
+        if is_null(c):
+            return 'nullptr'
+        t = c.dynamic_type
+        c = c.cast(t)
+        return '%s{0x%x}' % (t.target(), c)
+
 class PoolPtrPrinter:
     def __init__(self, val):
         self.val = val
@@ -766,6 +778,7 @@ def build_pretty_printer():
     pp.add_printer('StringView', '^BasicStringView<char>$', StringViewPrinter)
     pp.add_printer('StringView', '^StringView$', StringViewPrinter)
     pp.add_printer('BoundMethod', '^BoundMethod<', BoundMethodPrinter)
+    pp.add_printer('CancellablePointer', '^CancellablePointer$', CancellablePointerPrinter)
     pp.add_printer('PoolPtr', '^PoolPtr$', PoolPtrPrinter)
     pp.add_printer('PoolHolder', '^PoolHolder$', PoolHolderPrinter)
     pp.add_printer('allocation_info', '^allocation_info$', PoolAllocationInfoPrinter)
