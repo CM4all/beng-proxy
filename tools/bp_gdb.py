@@ -628,6 +628,18 @@ class StringViewPrinter:
 
         return '"%s"' % data.string(length=self.val['size'])
 
+class BoundMethodPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        instance = self.val['instance_']
+        if is_null(instance): return 'nullptr'
+        function = str(self.val['function'].dereference())
+        import re
+        function = re.sub(r'^.*BindMethodDetail::BindMethodWrapperGenerator.*, &(.+?),.*$', r'\1', function)
+        return "BoundMethod{%s, %s}" % (function, instance)
+
 class PoolPtrPrinter:
     def __init__(self, val):
         self.val = val
@@ -753,6 +765,7 @@ def build_pretty_printer():
     pp.add_printer('boost::intrusive::unordered_set', 'boost::intrusive::unordered_(multi)?set<', IntrusiveUnorderedSetPrinter)
     pp.add_printer('StringView', '^BasicStringView<char>$', StringViewPrinter)
     pp.add_printer('StringView', '^StringView$', StringViewPrinter)
+    pp.add_printer('BoundMethod', '^BoundMethod<', BoundMethodPrinter)
     pp.add_printer('PoolPtr', '^PoolPtr$', PoolPtrPrinter)
     pp.add_printer('PoolHolder', '^PoolHolder$', PoolHolderPrinter)
     pp.add_printer('allocation_info', '^allocation_info$', PoolAllocationInfoPrinter)
