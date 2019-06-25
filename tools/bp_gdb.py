@@ -154,33 +154,33 @@ class IntrusiveSetType:
         else:
             return (node.dereference().address - self.member_hook.bitpos // 8).cast(self.value_pointer_type)
 
-    def get_left_node(self, node):
-        result = node['left_'].dereference()
-        if is_null(result.address) or result.address == node.address: return None
-        return result
+    def _minimum(self, node):
+        while True:
+            left = node['left_'].dereference()
+            if is_null(left.address):
+                return node
+            node = left
 
-    def get_right_node(self, node):
-        result = node['right_'].dereference()
-        if is_null(result.address) or result.address == node.address: return None
-        return result
+    def _next_node(self, node):
+        right = node['right_'].dereference()
+        if not is_null(right.address):
+            return self._minimum(right)
 
-    def _iter_nodes(self, node):
-        left = self.get_left_node(node)
-        if left is not None:
-            yield from self._iter_nodes(left)
-        yield node
-        right = self.get_right_node(node)
-        if right is not None:
-            yield from self._iter_nodes(right)
+        while True:
+            parent = node['parent_'].dereference()
+            if node.address != parent['right_'].dereference().address: break
+            node = parent
+        if node['right_'].dereference().address == parent.address:
+            return node
+        else:
+            return parent
 
     def iter_nodes(self, s):
-        s = self.get_header(s)
-        left = self.get_left_node(s)
-        if left is not None:
-            yield from self._iter_nodes(left)
-        right = self.get_right_node(s)
-        if right is not None:
-            yield from self._iter_nodes(right)
+        header = self.get_header(s)
+        i = header['left_'].dereference()
+        while i.address != header.address:
+            yield i
+            i = self._next_node(i)
 
 def for_each_intrusive_set_item(s, member_hook=None):
     t = IntrusiveSetType(s.type, member_hook=member_hook)
