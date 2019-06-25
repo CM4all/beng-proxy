@@ -780,6 +780,13 @@ class IstreamPointerPrinter:
         c = c.cast(t)
         return '%s{0x%x}' % (t.target(), c)
 
+class CatIstreamInputPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return self.val['input']
+
 import gdb.printing
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter("cm4all-beng-proxy")
@@ -806,6 +813,7 @@ def build_pretty_printer():
     pp.add_printer('StockMap', '^StockMap$', StockMapPrinter)
     pp.add_printer('StockMap::Item', '^StockMap::Item$', StockMapItemPrinter)
     pp.add_printer('IstreamPointer', '^IstreamPointer$', IstreamPointerPrinter)
+    pp.add_printer('CatIstream::Input', '^CatIstream::Input$', CatIstreamInputPrinter)
     return pp
 
 gdb.printing.register_pretty_printer(gdb.current_objfile(), build_pretty_printer(), replace=True)
