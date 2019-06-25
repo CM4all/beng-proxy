@@ -768,6 +768,18 @@ class StockMapItemPrinter:
     def to_string(self):
         return self.val['stock']
 
+class IstreamPointerPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        c = self.val['stream']
+        if is_null(c):
+            return 'nullptr'
+        t = c.dynamic_type
+        c = c.cast(t)
+        return '%s{0x%x}' % (t.target(), c)
+
 import gdb.printing
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter("cm4all-beng-proxy")
@@ -793,6 +805,7 @@ def build_pretty_printer():
     pp.add_printer('StockItem', '^StockItem$', StockItemPrinter)
     pp.add_printer('StockMap', '^StockMap$', StockMapPrinter)
     pp.add_printer('StockMap::Item', '^StockMap::Item$', StockMapItemPrinter)
+    pp.add_printer('IstreamPointer', '^IstreamPointer$', IstreamPointerPrinter)
     return pp
 
 gdb.printing.register_pretty_printer(gdb.current_objfile(), build_pretty_printer(), replace=True)
