@@ -185,7 +185,7 @@ class IntrusiveSetType:
 def for_each_intrusive_set_item(s, member_hook=None):
     t = IntrusiveSetType(s.type, member_hook=member_hook)
     for node in t.iter_nodes(s):
-        yield t.node_to_value(node).dereference()
+        yield t.node_to_value(node.address).dereference()
 
 class IntrusiveUnorderedSetType:
     def __init__(self, list_type, member_hook=None):
