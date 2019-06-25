@@ -699,14 +699,14 @@ class SocketEventPrinter:
         self.val = val
 
     def to_string(self):
-        return 'SocketEvent{%d, scheduled=0x%x}' % (self.val['fd']['fd'], self.val['scheduled_flags'])
+        return 'SocketEvent{%d, scheduled=0x%x, callback=%s}' % (self.val['fd']['fd'], self.val['scheduled_flags'], self.val['callback'])
 
 class TimerEventPrinter:
     def __init__(self, val):
         self.val = val
 
     def to_string(self):
-        return 'TimerEvent{scheduled=%s}' % (not is_null(self.val['parent_']))
+        return 'TimerEvent{scheduled=%s, callback=%s}' % (not is_null(self.val['parent_']), self.val['callback'])
 
 class SliceAllocationPrinter:
     def __init__(self, val):
