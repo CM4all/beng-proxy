@@ -694,7 +694,7 @@ class TimerEventPrinter:
         self.val = val
 
     def to_string(self):
-        return 'TimerEvent{scheduled=%s}' % (not is_null(self.val['left_']))
+        return 'TimerEvent{scheduled=%s}' % (not is_null(self.val['parent_']))
 
 class SliceAllocationPrinter:
     def __init__(self, val):
