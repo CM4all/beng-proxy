@@ -720,6 +720,13 @@ class TimerEventPrinter:
     def to_string(self):
         return 'TimerEvent{scheduled=%s, callback=%s}' % (not is_null(self.val['parent_']), self.val['callback'])
 
+class DeferEventPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'DeferEvent{scheduled=%s, callback=%s}' % (not is_null(self.val['prev_']), self.val['callback'])
+
 class SliceAllocationPrinter:
     def __init__(self, val):
         self.val = val
@@ -806,6 +813,7 @@ def build_pretty_printer():
     pp.add_printer('SocketDescriptor', '^(Unique)?SocketDescriptor$', SocketDescriptorPrinter)
     pp.add_printer('SocketEvent', '^SocketEvent$', SocketEventPrinter)
     pp.add_printer('TimerEvent', '^TimerEvent$', TimerEventPrinter)
+    pp.add_printer('DeferEvent', '^DeferEvent$', DeferEventPrinter)
     pp.add_printer('SliceAllocation', '^SliceAllocation$', SliceAllocationPrinter)
     pp.add_printer('SliceFifoBuffer', '^SliceFifoBuffer$', SliceFifoBufferPrinter)
     pp.add_printer('Stock', '^Stock$', StockPrinter)
