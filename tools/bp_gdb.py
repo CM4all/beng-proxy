@@ -133,7 +133,7 @@ class IntrusiveListPrinter:
         return self.Iterator(self.t, self.t.get_header(self.val))
 
     def to_string(self):
-        return str(self.val.type.strip_typedefs())
+        return "bi::list<%s>" % self.t.value_type
 
 class IntrusiveSetType:
     def __init__(self, list_type, member_hook=None):
@@ -594,7 +594,7 @@ class IntrusiveSetPrinter:
         return [('', i) for i in for_each_intrusive_set_item(self.val)]
 
     def to_string(self):
-        return str(self.val.type.strip_typedefs())
+        return "bi::set<%s>" % self.t.value_type
 
 class IntrusiveUnorderedSetPrinter:
     def __init__(self, val):
@@ -608,7 +608,7 @@ class IntrusiveUnorderedSetPrinter:
         return [('', i.dereference()) for i in self.t.iter_values(self.val)]
 
     def to_string(self):
-        return str(self.val.type.strip_typedefs())
+        return "bi::unorderede_set<%s>" % self.t.value_type
 
 class StdArrayPrinter:
     def __init__(self, val):
