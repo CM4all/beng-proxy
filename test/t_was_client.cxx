@@ -105,6 +105,14 @@ RunHold(WasServer &server, struct pool &pool,
 }
 
 static void
+RunNop(WasServer &, struct pool &,
+       http_method_t ,
+       const char *, StringMap &&,
+       UnusedIstreamPtr) noexcept
+{
+}
+
+static void
 RunMirror(WasServer &server, gcc_unused struct pool &pool,
           gcc_unused http_method_t method,
           gcc_unused const char *uri, StringMap &&headers,
@@ -185,6 +193,10 @@ public:
                            handler, cancel_ptr);
     }
 
+    void InjectSocketFailure() noexcept {
+        control_fd.Shutdown();
+    }
+
     /* virtual methods from class WasServerHandler */
 
     void OnWasRequest(struct pool &pool, http_method_t method,
@@ -226,6 +238,10 @@ public:
 
     static WasConnection *NewHold(struct pool &pool, EventLoop &event_loop) {
         return new WasConnection(pool, event_loop, RunHold);
+    }
+
+    static WasConnection *NewNop(struct pool &pool, EventLoop &event_loop) {
+        return new WasConnection(pool, event_loop, RunNop);
     }
 
 private:

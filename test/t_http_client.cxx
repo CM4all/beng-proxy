@@ -80,6 +80,10 @@ struct Connection {
                             handler, cancel_ptr);
     }
 
+    void InjectSocketFailure() noexcept {
+        socket.Shutdown();
+    }
+
     static Connection *NewMirror(struct pool &, EventLoop &event_loop) {
         return New(event_loop, "./test/run_http_server", "mirror");
     }
@@ -116,6 +120,10 @@ struct Connection {
 
     static Connection *NewHold(struct pool &, EventLoop &event_loop) {
         return New(event_loop, "./test/run_http_server", "hold");
+    }
+
+    static auto *NewNop(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, "./test/run_http_server", "nop");
     }
 };
 

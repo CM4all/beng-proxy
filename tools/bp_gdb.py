@@ -23,107 +23,16 @@ except ImportError:
 def is_null(p):
     return str(p) == '0x0'
 
-def for_each_hashmap(h):
-    if h.type != gdb.lookup_type('struct hashmap'):
-        print("not a hashmap")
-        return
+def assert_gdb_type(value, expected_type):
+    actual_type = value.type.unqualified()
+    expected_type = expected_type.unqualified()
+    if str(actual_type) != str(expected_type):
+        raise gdb.GdbError("Expected '%s', got '%s'" % (expected_type, actual_type))
 
-    capacity = h['capacity']
-    slots = h['slots']
-    for i in range(capacity):
-        slot = slots[i]
-        if not slot['pair']['key']:
-            continue
-
-        while slot:
-            pair = slot['pair']
-            yield i, pair['key'].string(), pair['value']
-            slot = slot['next']
-
-class DumpHashmapSlot(gdb.Command):
-    def __init__(self):
-        gdb.Command.__init__(self, "bp_dump_hashmap_slot", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
-
-    def invoke(self, arg, from_tty):
-        arg_list = gdb.string_to_argv(arg)
-        if len(arg_list) != 2:
-            print("usage: bp_dump_hashmap ptr i")
-            return
-
-        h = gdb.parse_and_eval(arg_list[0])
-        if h.type != gdb.lookup_type('struct hashmap').pointer():
-            print("%s is not a hashmap*") % arg_list[0]
-            return
-
-        i = int(arg_list[1])
-        slot = h['slots'][i]
-
-        if not slot['pair']['key']:
-            print("empty")
-            return
-
-        while slot:
-            print(slot['pair']['key'].string())
-            slot = slot['next']
-
-class DumpHashmap(gdb.Command):
-    def __init__(self):
-        gdb.Command.__init__(self, "bp_dump_hashmap", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
-
-    def invoke(self, arg, from_tty):
-        h = gdb.parse_and_eval(arg)
-        if h.type != gdb.lookup_type('struct hashmap').pointer():
-            print("%s is not a hashmap*" % arg)
-            return
-
-        n_slots = 0
-        n_total = 0
-        biggest_slot = 0
-        i_biggest_slot = -1
-
-        capacity = h['capacity']
-        for i in range(capacity):
-            slot = h['slots'][i]
-            if slot['pair']['key']:
-                s = slot['next']
-                n = 1
-                while s:
-                    n += 1
-                    s = s['next']
-                if n > biggest_slot:
-                    biggest_slot = n
-                    i_biggest_slot = i
-                if n > 1000:
-                    print("big", i, n)
-                n_total += n
-                n_slots += 1
-                #print(n, slot['pair']['key'])
-                if n_slots % 256 == 0:
-                    print(n_slots, n_total, biggest_slot, i_biggest_slot)
-        print(n_slots, n_total, biggest_slot, i_biggest_slot)
-
-class DumpHashmap2(gdb.Command):
-    def __init__(self):
-        gdb.Command.__init__(self, "bp_dump_hashmap2", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
-
-    def invoke(self, arg, from_tty):
-        h = gdb.parse_and_eval(arg)
-        for i, key, value in for_each_hashmap(h.dereference()):
-            print(i, key, value)
-
-class DumpStrmap(gdb.Command):
-    def __init__(self):
-        gdb.Command.__init__(self, "bp_dump_strmap", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
-
-    def invoke(self, arg, from_tty):
-        h = gdb.parse_and_eval(arg)
-        if h.type != gdb.lookup_type('StringMap').pointer():
-            print("%s is not a strmap*" % arg)
-            return
-
-        string_type = gdb.lookup_type('char').pointer()
-        for i, key, value in for_each_hashmap(h['hashmap'].dereference()):
-            print(key, '=', value.cast(string_type).string())
+def parse_and_eval_assert_type(s, expected_type):
+    value = gdb.parse_and_eval(s)
+    assert_gdb_type(value, expected_type)
+    return value
 
 def pool_size(pool):
     return int(pool['netto_size'])
@@ -140,34 +49,6 @@ def pool_sizes(pool):
     else:
         brutto_size = netto_size
     return brutto_size, netto_size
-
-def for_each_list_head(head):
-    item = head['next']
-    head_address = head.address
-    while item != head_address:
-        yield item
-        item = item['next']
-
-def for_each_list_item(head, cast):
-    item = head['next']
-    head_address = head.address
-    while item != head_address:
-        yield item.cast(cast)
-        item = item['next']
-
-def for_each_list_head_reverse(head):
-    item = head['prev']
-    head_address = head.address
-    while item != head_address:
-        yield item
-        item = item['prev']
-
-def for_each_list_item_reverse(head, cast):
-    item = head['prev']
-    head_address = head.address
-    while item != head_address:
-        yield item.cast(cast)
-        item = item['prev']
 
 class IntrusiveContainerType:
     def __init__(self, list_type, member_hook=None):
@@ -217,12 +98,12 @@ class IntrusiveContainerType:
 def for_each_intrusive_list_item(l, member_hook=None):
     t = IntrusiveContainerType(l.type, member_hook=member_hook)
     for node in t.iter_nodes(l):
-        yield t.node_to_value(node)
+        yield t.node_to_value(node).dereference()
 
 def for_each_intrusive_list_item_reverse(l, member_hook=None):
     t = IntrusiveContainerType(l.type, member_hook=member_hook)
     for node in t.iter_nodes_reverse(l):
-        yield t.node_to_value(node)
+        yield t.node_to_value(node).dereference()
 
 class IntrusiveListPrinter:
     class Iterator:
@@ -252,7 +133,99 @@ class IntrusiveListPrinter:
         return self.Iterator(self.t, self.t.get_header(self.val))
 
     def to_string(self):
-        return str(self.val.type.strip_typedefs())
+        return "bi::list<%s>" % self.t.value_type
+
+class IntrusiveSetType:
+    def __init__(self, list_type, member_hook=None):
+        self.list_type = get_basic_type(list_type)
+        self.value_type = list_type.template_argument(0)
+        self.value_pointer_type = self.value_type.pointer()
+
+        self.member_hook = None
+        if member_hook is not None:
+            self.member_hook = self.value_type[member_hook]
+
+    def get_header(self, s):
+        return s['holder']['root']
+
+    def node_to_value(self, node):
+        if self.member_hook is None:
+            return node.cast(self.value_pointer_type)
+        else:
+            return (node.dereference().address - self.member_hook.bitpos // 8).cast(self.value_pointer_type)
+
+    def _minimum(self, node):
+        while True:
+            left = node['left_'].dereference()
+            if is_null(left.address):
+                return node
+            node = left
+
+    def _next_node(self, node):
+        right = node['right_'].dereference()
+        if not is_null(right.address):
+            return self._minimum(right)
+
+        while True:
+            parent = node['parent_'].dereference()
+            if node.address != parent['right_'].dereference().address: break
+            node = parent
+        if node['right_'].dereference().address == parent.address:
+            return node
+        else:
+            return parent
+
+    def iter_nodes(self, s):
+        header = self.get_header(s)
+        i = header['left_'].dereference()
+        while i.address != header.address:
+            yield i
+            i = self._next_node(i)
+
+def for_each_intrusive_set_item(s, member_hook=None):
+    t = IntrusiveSetType(s.type, member_hook=member_hook)
+    for node in t.iter_nodes(s):
+        yield t.node_to_value(node.address).dereference()
+
+class IntrusiveUnorderedSetType:
+    def __init__(self, list_type, member_hook=None):
+        self.list_type = get_basic_type(list_type)
+        self.value_type = list_type.template_argument(0)
+        self.value_pointer_type = self.value_type.pointer()
+
+        self.member_hook = None
+        if member_hook is not None:
+            self.member_hook = self.value_type[member_hook]
+
+    def node_to_value(self, node):
+        if self.member_hook is None:
+            return node.cast(self.value_pointer_type)
+        else:
+            return (node.dereference().address - self.member_hook.bitpos // 8).cast(self.value_pointer_type)
+
+    def iter_nodes(self, s):
+        bucket_traits = s['data']['bucket_traits_']
+        buckets = bucket_traits['buckets_']
+        n_buckets = int(bucket_traits['buckets_len_'])
+        for i in range(n_buckets):
+            l = buckets[i]
+            root = l['data_']['root_plus_size_']['header_holder_']
+            root_address = root.address
+            node = root
+            while True:
+                node = node['next_']
+                if node.dereference().address == root_address:
+                    break
+                yield node
+
+    def iter_values(self, s):
+        for node in self.iter_nodes(s):
+            yield self.node_to_value(node)
+
+def for_each_intrusive_unordered_set_item(s, member_hook=None):
+    t = IntrusiveUnorderedSetType(s.type, member_hook=member_hook)
+    for value in t.iter_values(s):
+        yield value.dereference()
 
 def for_each_recursive_pool(pool):
     yield pool
@@ -321,10 +294,9 @@ class DumpPoolStats(gdb.Command):
             print("slice_pool", pool.address)
             for x in ('slice_size', 'area_size', 'slices_per_area'):
                 print(x, pool[x])
-            area_pointer = gdb.lookup_type('class SliceArea').pointer()
             brutto_size = netto_size = 0
             n_allocated = 0
-            for area in for_each_list_item(pool['areas'], area_pointer):
+            for area in for_each_intrusive_list_item(pool['areas']):
                 print("area", area.address, "allocated=", area['allocated_count'])
                 n_allocated += area['allocated_count']
                 brutto_size += pool['area_size']
@@ -346,10 +318,8 @@ class DumpPoolRefs(gdb.Command):
             print('%4u %s:%u' % (r['count'], r['file'].string().replace('../', ''), r['line']))
 
     def invoke(self, arg, from_tty):
-        pool = gdb.parse_and_eval(arg)
-        if pool.type != gdb.lookup_type('struct pool').pointer():
-            print("%s is not a pool*" % arg)
-            return
+        pool = parse_and_eval_assert_type(arg,
+                                          gdb.lookup_type('struct pool').pointer())
 
         for i in ('refs', 'unrefs'):
             self._dump_refs(pool, i, pool[i])
@@ -359,16 +329,21 @@ class DumpPoolAllocations(gdb.Command):
         gdb.Command.__init__(self, "bp_dump_pool_allocations", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
 
     def invoke(self, arg, from_tty):
-        pool = gdb.parse_and_eval(arg)
-        if pool.type != gdb.lookup_type('struct pool').pointer():
-            print("%s is not a pool*" % arg)
-            return
+        pool = parse_and_eval_assert_type(arg,
+                                          gdb.lookup_type('struct pool').pointer())
 
         for a in for_each_intrusive_list_item_reverse(pool['allocations'], member_hook='siblings'):
+            columns = [str(a.address + 1), '%8u' % a['size']]
+
+            if 'type' in a.type:
+                t = a['type']
+                if not is_null(t):
+                    columns.append(t.string())
+
             if 'file' in a.type:
-                print('%s %8u %s:%u' % (a + 1, a['size'], a['file'].string().replace('../', ''), a['line']))
-            else:
-                print('%s %8u' % (a + 1, a['size'],))
+                columns.append('%s:%u' % (a['file'].string().replace('../', ''), a['line']))
+
+            print(*columns)
 
 class FindPool(gdb.Command):
     def __init__(self):
@@ -422,8 +397,7 @@ class DumpLeaks(gdb.Command):
 
 class SliceArea:
     def __init__(self, pool, area):
-        if area.type != gdb.lookup_type('SliceArea').pointer():
-            raise ValueError("SliceArea* expected")
+        assert_gdb_type(area, gdb.lookup_type('SliceArea').pointer())
 
         self.pool = pool
         self.area = area
@@ -440,8 +414,7 @@ class SliceArea:
 
 class SlicePool:
     def __init__(self, pool):
-        if pool.type != gdb.lookup_type('SlicePool').pointer():
-            raise ValueError("SlicePool* expected")
+        assert_gdb_type(pool, gdb.lookup_type('SlicePool').pointer())
 
         self.pool = pool
         self.page_size = 4096
@@ -518,84 +491,16 @@ class FindSliceFifoBuffer(gdb.Command):
                 print(x)
                 break
 
-class FindChild(gdb.Command):
-    def __init__(self):
-        gdb.Command.__init__(self, "bp_find_child", gdb.COMMAND_DATA, gdb.COMPLETE_NONE, True)
-
-    def _find_child_by_pid(self, pid):
-        lh = gdb.parse_and_eval('children')
-        if lh.type != gdb.lookup_type('struct list_head'):
-            print("not a list_head")
-            return None
-
-        child_pointer = gdb.lookup_type('struct child').pointer()
-        for child in for_each_list_item(lh, child_pointer):
-            if child['pid'] == pid:
-                return child
-
-        return None
-
-    def invoke(self, arg, from_tty):
-        pid = gdb.parse_and_eval(arg)
-        child = self._find_child_by_pid(pid)
-        if child is None:
-            print("Not found")
-        else:
-            print(child, child.dereference())
-
-class FindChildStockClient(gdb.Command):
-    def __init__(self):
-        gdb.Command.__init__(self, "bp_find_child_stock_client", gdb.COMMAND_DATA, gdb.COMPLETE_NONE, True)
-
-    def _find_child_by_pid(self, pid):
-        lh = gdb.parse_and_eval('children')
-        if lh.type != gdb.lookup_type('struct list_head'):
-            print("not a list_head")
-            return None
-
-        child_pointer = gdb.lookup_type('struct child').pointer()
-        for child in for_each_list_item(lh, child_pointer):
-            if child['pid'] == pid:
-                return child
-
-        return None
-
-    def invoke(self, arg, from_tty):
-        pid = gdb.parse_and_eval(arg)
-        child = self._find_child_by_pid(pid)
-        if child is None:
-            print("Not found")
-            return
-
-        stock_type = gdb.lookup_type('struct Stock').pointer()
-        child_stock_item_type = gdb.lookup_type('struct child_stock_item').pointer()
-        child_stock_item = child['callback_ctx'].cast(child_stock_item_type)
-
-        string_type = gdb.lookup_type('char').pointer()
-        fcgi_connection_type = gdb.lookup_type('struct fcgi_connection').pointer()
-
-        fcgi_stock = gdb.parse_and_eval('global_fcgi_stock')
-        h = fcgi_stock['hstock']['stocks']
-
-        for i, key, value in for_each_hashmap(h.dereference()):
-            stock = value.cast(stock_type)
-
-            for x in ('idle', 'busy'):
-                for c in for_each_list_item(stock[x], fcgi_connection_type):
-                    if c['child'] == child_stock_item:
-                        print(key, c, c.dereference())
-
 class LbStats(gdb.Command):
     def __init__(self):
         gdb.Command.__init__(self, "lb_stats", gdb.COMMAND_DATA, gdb.COMPLETE_NONE, True)
 
     def invoke(self, arg, from_tty):
-        instance = gdb.parse_and_eval(arg)
-        if instance.type != gdb.lookup_type('LbInstance').pointer():
-            print("not a lb_instance")
-            return None
+        instance = parse_and_eval_assert_type(arg,
+                                              gdb.lookup_type('LbInstance').pointer())
 
-        print("n_connections", instance['connections']['data_']['root_plus_size_']['size_'])
+        print("n_http_connections", instance['http_connections']['data_']['root_plus_size_']['size_'])
+        print("n_tcp_connections", instance['tcp_connections']['data_']['root_plus_size_']['size_'])
 
         n = 0
         n_ssl = 0
@@ -605,7 +510,8 @@ class LbStats(gdb.Command):
 
         void_ptr_type = gdb.lookup_type('void').pointer()
         long_type = gdb.lookup_type('long')
-        for c in for_each_intrusive_list_item(instance['connections']):
+
+        for c in for_each_intrusive_list_item(instance['http_connections']):
             n += 1
 
             if not is_null(c['ssl_filter']):
@@ -620,9 +526,8 @@ class LbStats(gdb.Command):
                 if not is_null(ssl_filter['encrypted_output']['data'].cast(void_ptr_type)):
                     n_buffers += 1
 
-            if not is_null(c['thread_socket_filter']):
-                n_ssl += 1
-                f = c['thread_socket_filter']
+            f = c['http']['socket']['filter']['_M_t']['_M_head_impl']
+            if not is_null(f):
                 if not is_null(f['encrypted_input']['data'].cast(void_ptr_type)):
                     n_buffers += 1
                 if not is_null(f['decrypted_input']['data'].cast(void_ptr_type)):
@@ -632,17 +537,40 @@ class LbStats(gdb.Command):
                 if not is_null(f['encrypted_output']['data'].cast(void_ptr_type)):
                     n_buffers += 1
 
-            protocol = str(lb_listener_get_any_cluster(c['listener'])['protocol'])
-            if protocol == 'HTTP':
-                n_http += 1
+            n_http += 1
+            n_buffers += 1
+
+        for c in for_each_intrusive_list_item(instance['tcp_connections']):
+            n += 1
+
+            f = c['inbound']['socket']['filter']['_M_t']['_M_head_impl']
+            if not is_null(f):
+                if not is_null(f['encrypted_input']['data'].cast(void_ptr_type)):
+                    n_buffers += 1
+                if not is_null(f['decrypted_input']['data'].cast(void_ptr_type)):
+                    n_buffers += 1
+                if not is_null(f['plain_output']['data'].cast(void_ptr_type)):
+                    n_buffers += 1
+                if not is_null(f['encrypted_output']['data'].cast(void_ptr_type)):
+                    n_buffers += 1
+
+                ssl_filter = f['handler']
+                if not is_null(ssl_filter):
+                    n_ssl += 1
+                    if not is_null(ssl_filter['encrypted_input']['data'].cast(void_ptr_type)):
+                        n_buffers += 1
+                    if not is_null(ssl_filter['decrypted_input']['data'].cast(void_ptr_type)):
+                        n_buffers += 1
+                    if not is_null(ssl_filter['plain_output']['data'].cast(void_ptr_type)):
+                        n_buffers += 1
+                    if not is_null(ssl_filter['encrypted_output']['data'].cast(void_ptr_type)):
+                        n_buffers += 1
+
+            n_tcp += 1
+            if not is_null(c['outbound']['input']['data'].cast(void_ptr_type)):
                 n_buffers += 1
-            elif protocol == 'TCP':
-                n_tcp += 1
-                tcp = c['tcp']
-                if not is_null(tcp['outbound']['input']['data'].cast(void_ptr_type)):
-                    n_buffers += 1
-                if not is_null(tcp['inbound']['base']['input']['data'].cast(void_ptr_type)):
-                    n_buffers += 1
+            if not is_null(c['inbound']['base']['input']['data'].cast(void_ptr_type)):
+                n_buffers += 1
 
         print("n_connections", n)
         print("n_ssl", n_ssl)
@@ -650,10 +578,6 @@ class LbStats(gdb.Command):
         print("n_tcp", n_tcp)
         print("n_buffers", n_buffers)
 
-DumpHashmapSlot()
-DumpHashmap()
-DumpHashmap2()
-DumpStrmap()
 PoolTree()
 DumpPoolStats()
 DumpPoolRefs()
@@ -663,9 +587,42 @@ DumpPoolRecycler()
 DumpLeaks()
 DumpSlicePoolAreas()
 FindSliceFifoBuffer()
-FindChild()
-FindChildStockClient()
 LbStats()
+
+class IntrusiveSetPrinter:
+    def __init__(self, val):
+        self.t = IntrusiveSetType(val.type)
+        self.val = val
+
+    def display_hint(self):
+        return 'array'
+
+    def children(self):
+        return [('', i) for i in for_each_intrusive_set_item(self.val)]
+
+    def to_string(self):
+        return "bi::set<%s>" % self.t.value_type
+
+class IntrusiveUnorderedSetPrinter:
+    def __init__(self, val):
+        self.t = IntrusiveUnorderedSetType(val.type)
+        self.val = val
+
+    def display_hint(self):
+        return 'array'
+
+    def children(self):
+        return [('', i.dereference()) for i in self.t.iter_values(self.val)]
+
+    def to_string(self):
+        return "bi::unorderede_set<%s>" % self.t.value_type
+
+class StdArrayPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return str(self.val['_M_elems'])
 
 class StringViewPrinter:
     def __init__(self, val):
@@ -677,6 +634,30 @@ class StringViewPrinter:
             return "nullptr"
 
         return '"%s"' % data.string(length=self.val['size'])
+
+class BoundMethodPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        instance = self.val['instance_']
+        if is_null(instance): return 'nullptr'
+        function = str(self.val['function'].dereference())
+        import re
+        function = re.sub(r'^.*BindMethodDetail::BindMethodWrapperGenerator.*, &(.+?),.*$', r'\1', function)
+        return "BoundMethod{%s, %s}" % (function, instance)
+
+class CancellablePointerPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        c = self.val['cancellable']
+        if is_null(c):
+            return 'nullptr'
+        t = c.dynamic_type
+        c = c.cast(t)
+        return '%s{0x%x}' % (t.target(), c)
 
 class PoolPtrPrinter:
     def __init__(self, val):
@@ -704,6 +685,13 @@ class PoolHolderPrinter:
         else:
             return 'PoolHolder{nullptr}'
 
+class PoolAllocationInfoPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return '{%s, %u}' % (self.val.address + 1, self.val['size'])
+
 class LeakDetectorPrinter:
     def __init__(self, val):
         self.val = val
@@ -711,15 +699,136 @@ class LeakDetectorPrinter:
     def to_string(self):
         return 'LeakDetector'
 
+class FileDescriptorPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'fd{%d}' % self.val['fd']
+
+class SocketDescriptorPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'sd{%d}' % self.val['fd']
+
+class SocketEventPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'SocketEvent{%d, scheduled=0x%x, callback=%s}' % (self.val['fd']['fd'], self.val['scheduled_flags'], self.val['callback'])
+
+class TimerEventPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'TimerEvent{scheduled=%s, callback=%s}' % (not is_null(self.val['parent_']), self.val['callback'])
+
+class DeferEventPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'DeferEvent{scheduled=%s, callback=%s}' % (not is_null(self.val['prev_']), self.val['callback'])
+
+class SliceAllocationPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        val = self.val
+        if is_null(val['data']):
+            return "nullptr"
+        return "SliceAllocation{%s, %s}" % (val['data'], val['size'])
+
+class SliceFifoBufferPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        val = self.val
+        if is_null(val['allocation']['data']):
+            return "nullptr"
+        return "SliceFifoBuffer{%s, %s}" % (val['data'] + val['head'], val['tail'] - val['head'])
+
+class StockPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'Stock{%s, %s, idle=%s, busy=%s}' % (self.val['cls'].referenced_value().dynamic_type, self.val['name'], self.val['idle'], self.val['busy'])
+
+class StockItemPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'StockItem{%s}' % self.val.dynamic_type
+
+class StockMapPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return 'StockMap{%s, %s}' % (self.val['cls'].referenced_value().dynamic_type, self.val['map'])
+
+class StockMapItemPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return self.val['stock']
+
+class IstreamPointerPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        c = self.val['stream']
+        if is_null(c):
+            return 'nullptr'
+        t = c.dynamic_type
+        c = c.cast(t)
+        return '%s{0x%x}' % (t.target(), c)
+
+class CatIstreamInputPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return self.val['input']
+
 import gdb.printing
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter("cm4all-beng-proxy")
+    pp.add_printer('std::array', '^std::array<', StdArrayPrinter)
     pp.add_printer('boost::intrusive::list', 'boost::intrusive::s?list<', IntrusiveListPrinter)
+    pp.add_printer('boost::intrusive::set', 'boost::intrusive::(multi)?set<', IntrusiveSetPrinter)
+    pp.add_printer('boost::intrusive::unordered_set', 'boost::intrusive::unordered_(multi)?set<', IntrusiveUnorderedSetPrinter)
     pp.add_printer('StringView', '^BasicStringView<char>$', StringViewPrinter)
     pp.add_printer('StringView', '^StringView$', StringViewPrinter)
+    pp.add_printer('BoundMethod', '^BoundMethod<', BoundMethodPrinter)
+    pp.add_printer('CancellablePointer', '^CancellablePointer$', CancellablePointerPrinter)
     pp.add_printer('PoolPtr', '^PoolPtr$', PoolPtrPrinter)
     pp.add_printer('PoolHolder', '^PoolHolder$', PoolHolderPrinter)
+    pp.add_printer('allocation_info', '^allocation_info$', PoolAllocationInfoPrinter)
     pp.add_printer('LeakDetector', '^LeakDetector$', LeakDetectorPrinter)
+    pp.add_printer('FileDescriptor', '^(Unique)?FileDescriptor$', FileDescriptorPrinter)
+    pp.add_printer('SocketDescriptor', '^(Unique)?SocketDescriptor$', SocketDescriptorPrinter)
+    pp.add_printer('SocketEvent', '^SocketEvent$', SocketEventPrinter)
+    pp.add_printer('TimerEvent', '^TimerEvent$', TimerEventPrinter)
+    pp.add_printer('DeferEvent', '^DeferEvent$', DeferEventPrinter)
+    pp.add_printer('SliceAllocation', '^SliceAllocation$', SliceAllocationPrinter)
+    pp.add_printer('SliceFifoBuffer', '^SliceFifoBuffer$', SliceFifoBufferPrinter)
+    pp.add_printer('Stock', '^Stock$', StockPrinter)
+    pp.add_printer('StockItem', '^StockItem$', StockItemPrinter)
+    pp.add_printer('StockMap', '^StockMap$', StockMapPrinter)
+    pp.add_printer('StockMap::Item', '^StockMap::Item$', StockMapItemPrinter)
+    pp.add_printer('IstreamPointer', '^IstreamPointer$', IstreamPointerPrinter)
+    pp.add_printer('CatIstream::Input', '^CatIstream::Input$', CatIstreamInputPrinter)
     return pp
 
 gdb.printing.register_pretty_printer(gdb.current_objfile(), build_pretty_printer(), replace=True)

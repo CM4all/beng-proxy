@@ -191,12 +191,15 @@ struct WasClient final
         lease.ReleaseWas(reuse);
     }
 
-    void ReleaseControlStop(uint64_t received) {
+    /**
+     * @return false on error (OnWasControlError() has been called).
+     */
+    bool ReleaseControlStop(uint64_t received) {
         assert(response.body == nullptr);
 
         if (!control.IsDefined())
             /* already released */
-            return;
+            return true;
 
         request.ClearBody();
 
@@ -204,14 +207,14 @@ struct WasClient final
            handler - he's not interested anymore */
         ignore_control_errors = true;
 
-        if (!control.SendEmpty(WAS_COMMAND_STOP)) {
-            lease.ReleaseWas(false);
-            return;
-        }
+        if (!control.SendEmpty(WAS_COMMAND_STOP))
+            return false;
 
         control.ReleaseSocket();
 
         lease.ReleaseWasStop(received);
+
+        return true;
     }
 
     /**
@@ -328,12 +331,15 @@ struct WasClient final
            to our handler - he's not interested anymore */
         ignore_control_errors = true;
 
-        CancelRequestBody();
+        if (!CancelRequestBody())
+            return;
 
         if (response.body != nullptr)
             was_input_free_unused_p(&response.body);
 
-        ReleaseControlStop(0);
+        if (!ReleaseControlStop(0))
+            return;
+
         Destroy();
     }
 
@@ -351,8 +357,11 @@ struct WasClient final
     void OnWasControlError(std::exception_ptr ep) noexcept override {
         assert(!control.IsDefined());
 
-        if (ignore_control_errors)
+        if (ignore_control_errors) {
+            ClearUnused();
+            Destroy();
             return;
+        }
 
         stopwatch_event(stopwatch, "control_error");
 
@@ -692,9 +701,10 @@ WasClient::WasInputClose(uint64_t received) noexcept
        to our handler - he's not interested anymore */
     ignore_control_errors = true;
 
-    CancelRequestBody();
+    if (!CancelRequestBody() ||
+        !ReleaseControlStop(received))
+        return;
 
-    ReleaseControlStop(received);
     Destroy();
 }
 

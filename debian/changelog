@@ -13,6 +13,12 @@ cm4all-beng-proxy (16.0.1) unstable; urgency=low
 
  --   
 
+cm4all-beng-proxy (15.21) unstable; urgency=low
+
+  * was: fix memory leak
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 26 Jun 2019 13:04:13 +0200
+
 cm4all-beng-proxy (15.20) unstable; urgency=low
 
   * was: fix memory leak

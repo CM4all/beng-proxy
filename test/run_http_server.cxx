@@ -76,6 +76,7 @@ enum class Mode {
     FIXED,
     HUGE_,
     HOLD,
+    NOP,
 };
 
 class Connection final
@@ -182,7 +183,7 @@ Instance::OnConnectionClosed() noexcept
 
 void
 Connection::HandleHttpRequest(HttpServerRequest &request,
-                              gcc_unused CancellablePointer &cancel_ptr) noexcept
+                              CancellablePointer &cancel_ptr) noexcept
 {
     switch (instance.mode) {
         http_status_t status;
@@ -264,6 +265,10 @@ Connection::HandleHttpRequest(HttpServerRequest &request,
 
         timer.Schedule(std::chrono::seconds(0));
         break;
+
+    case Mode::NOP:
+        cancel_ptr = *this;
+        break;
     }
 }
 
@@ -330,6 +335,8 @@ try {
         instance.mode = Mode::HUGE_;
     else if (strcmp(mode, "hold") == 0)
         instance.mode = Mode::HOLD;
+    else if (strcmp(mode, "nop") == 0)
+        instance.mode = Mode::NOP;
     else {
         fprintf(stderr, "Unknown mode: %s\n", mode);
         return EXIT_FAILURE;
