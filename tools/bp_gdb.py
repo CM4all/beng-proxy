@@ -98,12 +98,12 @@ class IntrusiveContainerType:
 def for_each_intrusive_list_item(l, member_hook=None):
     t = IntrusiveContainerType(l.type, member_hook=member_hook)
     for node in t.iter_nodes(l):
-        yield t.node_to_value(node)
+        yield t.node_to_value(node).dereference()
 
 def for_each_intrusive_list_item_reverse(l, member_hook=None):
     t = IntrusiveContainerType(l.type, member_hook=member_hook)
     for node in t.iter_nodes_reverse(l):
-        yield t.node_to_value(node)
+        yield t.node_to_value(node).dereference()
 
 class IntrusiveListPrinter:
     class Iterator:
@@ -333,7 +333,7 @@ class DumpPoolAllocations(gdb.Command):
                                           gdb.lookup_type('struct pool').pointer())
 
         for a in for_each_intrusive_list_item_reverse(pool['allocations'], member_hook='siblings'):
-            columns = [str(a + 1), '%8u' % a['size']]
+            columns = [str(a.address + 1), '%8u' % a['size']]
 
             if 'file' in a.type:
                 columns.append('%s:%u' % (a['file'].string().replace('../', ''), a['line']))
