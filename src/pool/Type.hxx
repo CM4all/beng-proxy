@@ -37,7 +37,7 @@
 #define TYPE_ARG_DECL
 #define TYPE_ARG_FWD
 #define TYPE_ARG_NULL
-#define TYPE_ARG
+#define TYPE_ARG(T)
 
 #else
 
