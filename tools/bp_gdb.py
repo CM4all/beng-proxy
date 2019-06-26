@@ -335,6 +335,11 @@ class DumpPoolAllocations(gdb.Command):
         for a in for_each_intrusive_list_item_reverse(pool['allocations'], member_hook='siblings'):
             columns = [str(a.address + 1), '%8u' % a['size']]
 
+            if 'type' in a.type:
+                t = a['type']
+                if not is_null(t):
+                    columns.append(t.string())
+
             if 'file' in a.type:
                 columns.append('%s:%u' % (a['file'].string().replace('../', ''), a['line']))
 

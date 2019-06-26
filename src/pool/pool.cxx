@@ -81,6 +81,8 @@ struct allocation_info {
 
     size_t size;
 
+    const char *type;
+
 #ifdef TRACE
     const char *file;
     unsigned line;
@@ -1057,7 +1059,7 @@ pool_rewind(struct pool *pool, const struct pool_mark_state *mark) noexcept
 }
 
 static void *
-p_malloc_libc(struct pool *pool, size_t size TRACE_ARGS_DECL) noexcept
+p_malloc_libc(struct pool *pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DECL) noexcept
 {
     const size_t aligned_size = align_size(size);
     struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)
@@ -1065,6 +1067,7 @@ p_malloc_libc(struct pool *pool, size_t size TRACE_ARGS_DECL) noexcept
 
 #ifndef NDEBUG
     pool->allocations.push_back(chunk->info);
+    chunk->info.type = type;
 #ifdef TRACE
     chunk->info.file = file;
     chunk->info.line = line;
@@ -1096,7 +1099,7 @@ pool_dump_allocations(const struct pool &pool) noexcept
 
 static void *
 p_malloc_linear(struct pool *pool, const size_t original_size
-                TRACE_ARGS_DECL) noexcept
+                TYPE_ARG_DECL TRACE_ARGS_DECL) noexcept
 {
     auto &logger = pool->logger;
     struct linear_pool_area *area = pool->current_area.linear;
@@ -1153,6 +1156,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 
 #ifndef NDEBUG
     struct allocation_info *info = (struct allocation_info *)p;
+    info->type = type;
 #ifdef TRACE
     info->file = file;
     info->line = line;
@@ -1165,23 +1169,23 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 }
 
 static void *
-internal_malloc(struct pool *pool, size_t size TRACE_ARGS_DECL) noexcept
+internal_malloc(struct pool *pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DECL) noexcept
 {
     assert(pool != nullptr);
 
     pool->netto_size += size;
 
     if (gcc_likely(pool->type == POOL_LINEAR))
-        return p_malloc_linear(pool, size TRACE_ARGS_FWD);
+        return p_malloc_linear(pool, size TYPE_ARG_FWD TRACE_ARGS_FWD);
 
     assert(pool->type == POOL_LIBC);
-    return p_malloc_libc(pool, size TRACE_ARGS_FWD);
+    return p_malloc_libc(pool, size TYPE_ARG_FWD TRACE_ARGS_FWD);
 }
 
 void *
-p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL) noexcept
+p_malloc_impl(struct pool *pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DECL) noexcept
 {
-    return internal_malloc(pool, size TRACE_ARGS_FWD);
+    return internal_malloc(pool, size TYPE_ARG_FWD TRACE_ARGS_FWD);
 }
 
 static void

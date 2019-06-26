@@ -37,8 +37,8 @@
 #ifndef BENG_PROXY_POOL_HXX
 #define BENG_PROXY_POOL_HXX
 
+#include "Type.hxx"
 #include "trace.h"
-
 #include "util/Compiler.h"
 
 #include <type_traits>
@@ -331,7 +331,25 @@ public:
 
 gcc_malloc gcc_returns_nonnull
 void *
-p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL) noexcept;
+p_malloc_impl(struct pool *pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DECL) noexcept;
+
+gcc_malloc gcc_returns_nonnull
+static inline void *
+p_malloc_type(struct pool &pool, size_t size TYPE_ARG_DECL) noexcept
+{
+    return p_malloc_impl(&pool, size TYPE_ARG_FWD TRACE_ARGS);
+}
+
+#ifndef NDEBUG
+
+gcc_malloc gcc_returns_nonnull
+static inline void *
+p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL) noexcept
+{
+    return p_malloc_impl(pool, size TYPE_ARG_NULL TRACE_ARGS_FWD);
+}
+
+#endif
 
 #define p_malloc(pool, size) p_malloc_impl(pool, size TRACE_ARGS)
 #define p_malloc_fwd(pool, size) p_malloc_impl(pool, size TRACE_ARGS_FWD)
@@ -404,7 +422,7 @@ PoolAlloc(pool &p) noexcept
     static_assert(std::is_trivially_default_constructible<T>::value,
                   "Must be trivially constructible");
 
-    return (T *)p_malloc(&p, sizeof(T));
+    return (T *)p_malloc_type(p, sizeof(T) TYPE_ARG(T));
 }
 
 template<typename T>
@@ -415,7 +433,7 @@ PoolAlloc(pool &p, size_t n) noexcept
     static_assert(std::is_trivially_default_constructible<T>::value,
                   "Must be trivially constructible");
 
-    return (T *)p_malloc(&p, sizeof(T) * n);
+    return (T *)p_malloc_type(p, sizeof(T) * n TYPE_ARG(T));
 }
 
 template<>
@@ -431,7 +449,7 @@ gcc_malloc gcc_returns_nonnull
 T *
 NewFromPool(pool &p, Args&&... args)
 {
-    void *t = p_malloc(&p, sizeof(T));
+    void *t = p_malloc_type(p, sizeof(T) TYPE_ARG(T));
     return ::new(t) T(std::forward<Args>(args)...);
 }
 
