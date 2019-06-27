@@ -617,6 +617,8 @@ http_server_dep = declare_dependency(
   ],
 )
 
+subdir('src/nghttp2')
+
 http_cache = static_library('http_cache',
   'src/http_cache.cxx',
   'src/http_cache_document.cxx',

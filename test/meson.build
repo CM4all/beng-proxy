@@ -109,6 +109,18 @@ executable('run_http_server',
     system_dep,
   ])
 
+executable(
+  'RunNgHttp2Server',
+  'RunNgHttp2Server.cxx',
+  '../src/address_string.cxx',
+  '../src/http/IncomingRequest.cxx',
+  '../src/nghttp2/Server.cxx',
+  include_directories: inc,
+  dependencies: [
+    nghttp2_dep,
+    putil_dep,
+  ])
+
 executable('run_memcached_client',
   'run_memcached_client.cxx',
   '../src/PInstance.cxx',
