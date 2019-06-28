@@ -40,6 +40,7 @@
 #include "stock/Item.hxx"
 #include "address_list.hxx"
 #include "pool/pool.hxx"
+#include "pool/LeakDetector.hxx"
 #include "strmap.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "net/SocketDescriptor.hxx"
@@ -53,7 +54,7 @@
 #include <string.h>
 #include <unistd.h>
 
-class FcgiRemoteRequest final : StockGetHandler, Cancellable, Lease {
+class FcgiRemoteRequest final : StockGetHandler, Cancellable, Lease, PoolLeakDetector {
     struct pool &pool;
     EventLoop &event_loop;
 
@@ -93,7 +94,8 @@ public:
                       UniqueFileDescriptor &&_stderr_fd,
                       HttpResponseHandler &_handler,
                       CancellablePointer &_cancel_ptr)
-        :pool(_pool), event_loop(_event_loop),
+        :PoolLeakDetector(_pool),
+         pool(_pool), event_loop(_event_loop),
          method(_method), uri(_uri),
          script_filename(_script_filename), script_name(_script_name),
          path_info(_path_info), query_string(_query_string),
@@ -116,6 +118,10 @@ public:
     }
 
 private:
+    void Destroy() {
+        this->~FcgiRemoteRequest();
+    }
+
     /* virtual methods from class StockGetHandler */
     void OnStockItemReady(StockItem &item) noexcept override;
     void OnStockItemError(std::exception_ptr ep) noexcept override;
@@ -123,12 +129,13 @@ private:
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
         connect_cancel_ptr.Cancel();
-        body.Clear();
+        Destroy();
     }
 
     /* virtual methods from class Lease */
     void ReleaseLease(bool reuse) noexcept override {
         stock_item->Put(!reuse);
+        Destroy();
     }
 };
 
@@ -166,7 +173,9 @@ FcgiRemoteRequest::OnStockItemError(std::exception_ptr ep) noexcept
     if (stderr_fd.IsDefined())
         stderr_fd.Close();
 
-    handler.InvokeError(ep);
+    auto &_handler = handler;
+    Destroy();
+    _handler.InvokeError(ep);
 }
 
 /*
