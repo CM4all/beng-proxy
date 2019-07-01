@@ -209,9 +209,9 @@ SendResponse(HttpServerRequest &request,
 {
     assert(response.IsDefined());
 
-    http_server_simple_response(request, response.status,
-                                response.location.empty() ? nullptr : response.location.c_str(),
-                                response.message.empty() ? nullptr : response.message.c_str());
+    request.SendSimpleResponse(response.status,
+                               response.location.empty() ? nullptr : response.location.c_str(),
+                               response.message.empty() ? nullptr : response.message.c_str());
 }
 
 static bool
@@ -358,8 +358,7 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         headers.Write("set-cookie", buffer);
     }
 
-    http_server_response(&request, status, std::move(headers),
-                         std::move(response_body));
+    request.SendResponse(status, std::move(headers), std::move(response_body));
     ResponseSent();
 }
 
@@ -516,9 +515,8 @@ LbRequest::Start() noexcept
         if (member == nullptr) {
             auto &_request = request;
             Destroy();
-            http_server_send_message(&_request,
-                                     HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                     "Zeroconf cluster is empty");
+            _request.SendMessage(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                 "Zeroconf cluster is empty");
             return;
         }
 

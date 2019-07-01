@@ -182,7 +182,7 @@ LbHttpConnection::SendError(HttpServerRequest &request, std::exception_ptr ep)
         ? p_strdup(request.pool, GetFullMessage(ep).c_str())
         : "Bad gateway";
 
-    http_server_send_message(&request, HTTP_STATUS_BAD_GATEWAY, msg);
+    request.SendMessage(HTTP_STATUS_BAD_GATEWAY, msg);
 }
 
 void
@@ -199,9 +199,9 @@ SendResponse(HttpServerRequest &request,
 {
     assert(response.IsDefined());
 
-    http_server_simple_response(request, response.status,
-                                response.location.empty() ? nullptr : response.location.c_str(),
-                                response.message.empty() ? nullptr : response.message.c_str());
+    request.SendSimpleResponse(response.status,
+                               response.location.empty() ? nullptr : response.location.c_str(),
+                               response.message.empty() ? nullptr : response.message.c_str());
 }
 
 /*
@@ -237,8 +237,7 @@ LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
 {
     if (!uri_path_verify_quick(request.uri)) {
         request.body.Clear();
-        http_server_send_message(&request, HTTP_STATUS_BAD_REQUEST,
-                                 "Malformed request URI");
+        request.SendMessage(HTTP_STATUS_BAD_REQUEST, "Malformed request URI");
         return;
     }
 
@@ -248,11 +247,11 @@ LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
         request.body.Clear();
 
         if (instance.config.global_http_check->Check())
-            http_server_send_message(&request, HTTP_STATUS_OK,
-                                     instance.config.global_http_check->success_message.c_str());
+            request.SendMessage(HTTP_STATUS_OK,
+                                instance.config.global_http_check->success_message.c_str());
         else
-            http_server_simple_response(request, HTTP_STATUS_NOT_FOUND,
-                                        nullptr, nullptr);
+            request.SendSimpleResponse(HTTP_STATUS_NOT_FOUND,
+                                       nullptr, nullptr);
 
         return;
     }

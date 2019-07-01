@@ -102,16 +102,15 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
 
         const char *host = c.per_request.host;
         if (host == nullptr) {
-            http_server_send_message(&request, HTTP_STATUS_BAD_REQUEST,
-                                     "No Host header");
+            request.SendMessage(HTTP_STATUS_BAD_REQUEST, "No Host header");
             return;
         }
 
-        http_server_send_redirect(&request, HTTP_STATUS_MOVED_PERMANENTLY,
-                                  MakeHttpsRedirect(request.pool, host,
-                                                    response.https_only,
-                                                    request.uri),
-                                  "This page requires \"https\"");
+        request.SendRedirect(HTTP_STATUS_MOVED_PERMANENTLY,
+                             MakeHttpsRedirect(request.pool, host,
+                                               response.https_only,
+                                               request.uri),
+                             "This page requires \"https\"");
     } else if (response.status != http_status_t(0) ||
                response.redirect != nullptr ||
                response.message != nullptr) {
@@ -125,9 +124,7 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
         if (body == nullptr)
             body = http_status_to_string(status);
 
-        http_server_simple_response(request, status,
-                                    response.redirect,
-                                    body);
+        request.SendSimpleResponse(status, response.redirect, body);
     } else if (response.pool != nullptr) {
         auto *destination = r.handler.FindDestination(response.pool);
         if (destination == nullptr) {

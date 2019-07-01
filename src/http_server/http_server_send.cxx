@@ -186,21 +186,20 @@ HttpServerConnection::SubmitResponse(http_status_t status,
 }
 
 void
-http_server_response(const HttpServerRequest *request,
-                     http_status_t status,
-                     HttpHeaders &&headers,
-                     UnusedIstreamPtr body) noexcept
+HttpServerRequest::SendResponse(http_status_t status,
+                                HttpHeaders &&response_headers,
+                                UnusedIstreamPtr response_body) const noexcept
 {
-    auto &connection = request->connection;
-    assert(connection.request.request == request);
+    assert(connection.request.request == this);
 
-    connection.SubmitResponse(status, std::move(headers), std::move(body));
+    connection.SubmitResponse(status, std::move(response_headers),
+                              std::move(response_body));
 }
 
 void
-http_server_simple_response(const HttpServerRequest &request,
-                            http_status_t status, const char *location,
-                            const char *msg) noexcept
+HttpServerRequest::SendSimpleResponse(http_status_t status,
+                                      const char *location,
+                                      const char *msg) const noexcept
 {
     assert(unsigned(status) >= 200 && unsigned(status) < 600);
 
@@ -209,62 +208,64 @@ http_server_simple_response(const HttpServerRequest &request,
     else if (msg == nullptr)
         msg = http_status_to_string(status);
 
-    HttpHeaders headers(request.pool);
+    HttpHeaders response_headers(pool);
 
 #ifndef NO_DATE_HEADER
-    headers.Write("date", http_date_format(request.connection.GetEventLoop().SystemNow()));
+    response_headers.Write("date",
+                           http_date_format(connection.GetEventLoop().SystemNow()));
 #endif
 
     if (location != nullptr)
-        headers.Write("location", location);
+        response_headers.Write("location", location);
 
-    UnusedIstreamPtr body;
+    UnusedIstreamPtr response_body;
     if (msg != nullptr) {
-        headers.Write("content-type", "text/plain");
-        body = istream_string_new(request.pool, msg);
+        response_headers.Write("content-type", "text/plain");
+        response_body = istream_string_new(pool, msg);
     }
 
-    http_server_response(&request, status, std::move(headers),
-                         std::move(body));
+    SendResponse(status, std::move(response_headers),
+                 std::move(response_body));
 }
 
 void
-http_server_send_message(const HttpServerRequest *request,
-                         http_status_t status, const char *msg) noexcept
+HttpServerRequest::SendMessage(http_status_t status, const char *msg) const noexcept
 {
-    HttpHeaders headers(request->pool);
+    HttpHeaders response_headers(pool);
 
-    headers.Write("content-type", "text/plain");
+    response_headers.Write("content-type", "text/plain");
 
 #ifndef NO_DATE_HEADER
-    headers.Write("date", http_date_format(request->connection.GetEventLoop().SystemNow()));
+    response_headers.Write("date",
+                           http_date_format(connection.GetEventLoop().SystemNow()));
 #endif
 
-    http_server_response(request, status, std::move(headers),
-                         istream_string_new(request->pool, msg));
+    SendResponse(status, std::move(response_headers),
+                 istream_string_new(pool, msg));
 }
 
 void
-http_server_send_redirect(const HttpServerRequest *request,
-                          http_status_t status, const char *location,
-                          const char *msg) noexcept
+HttpServerRequest::SendRedirect(http_status_t status, const char *location,
+                                const char *msg) const noexcept
 {
-    assert(request != nullptr);
     assert(status >= 300 && status < 400);
     assert(location != nullptr);
 
-    if (msg == nullptr)
-        msg = "redirection";
+    if (http_status_is_empty(status))
+        msg = nullptr;
+    else if (msg == nullptr)
+        msg = http_status_to_string(status);
 
-    HttpHeaders headers(request->pool);
+    HttpHeaders response_headers(pool);
 
-    headers.Write("content-type", "text/plain");
-    headers.Write("location", location);
+    response_headers.Write("content-type", "text/plain");
+    response_headers.Write("location", location);
 
 #ifndef NO_DATE_HEADER
-    headers.Write("date", http_date_format(request->connection.GetEventLoop().SystemNow()));
+    response_headers.Write("date",
+                           http_date_format(connection.GetEventLoop().SystemNow()));
 #endif
 
-    http_server_response(request, status, std::move(headers),
-                         istream_string_new(request->pool, msg));
+    SendResponse(status, std::move(response_headers),
+                 istream_string_new(pool, msg));
 }

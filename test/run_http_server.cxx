@@ -193,16 +193,15 @@ Connection::HandleHttpRequest(HttpServerRequest &request,
         if (request.body)
             sink_null_new(request.pool, std::move(request.body));
 
-        http_server_response(&request, HTTP_STATUS_NO_CONTENT,
-                             HttpHeaders(request.pool), nullptr);
+        request.SendResponse(HTTP_STATUS_NO_CONTENT, HttpHeaders(request.pool),
+                             nullptr);
         break;
 
     case Mode::MIRROR:
         status = request.body
             ? HTTP_STATUS_OK
             : HTTP_STATUS_NO_CONTENT;
-        http_server_response(&request, status,
-                             HttpHeaders(request.pool),
+        request.SendResponse(status, HttpHeaders(request.pool),
                              std::move(request.body));
         break;
 
@@ -222,7 +221,7 @@ Connection::HandleHttpRequest(HttpServerRequest &request,
                                          256, false);
             body = istream_byte_new(request.pool, std::move(body));
 
-            http_server_response(&request, HTTP_STATUS_OK,
+            request.SendResponse(HTTP_STATUS_OK,
                                  HttpHeaders(request.pool),
                                  std::move(body));
         }
@@ -233,7 +232,7 @@ Connection::HandleHttpRequest(HttpServerRequest &request,
         if (request.body)
             sink_null_new(request.pool, std::move(request.body));
 
-        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
+        request.SendResponse(HTTP_STATUS_OK, HttpHeaders(request.pool),
                              istream_memory_new(request.pool,
                                                 data, sizeof(data)));
         break;
@@ -242,7 +241,7 @@ Connection::HandleHttpRequest(HttpServerRequest &request,
         if (request.body)
             sink_null_new(request.pool, std::move(request.body));
 
-        http_server_response(&request, HTTP_STATUS_OK,
+        request.SendResponse(HTTP_STATUS_OK,
                              HttpHeaders(request.pool),
                              istream_head_new(request.pool,
                                               istream_zero_new(request.pool),
@@ -258,7 +257,7 @@ Connection::HandleHttpRequest(HttpServerRequest &request,
                                                instance.event_loop);
             delayed.second.cancel_ptr = *this;
 
-            http_server_response(&request, HTTP_STATUS_OK,
+            request.SendResponse(HTTP_STATUS_OK,
                                  HttpHeaders(request.pool),
                                  std::move(delayed.first));
         }

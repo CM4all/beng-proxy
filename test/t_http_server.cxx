@@ -296,7 +296,7 @@ static void
 TestSimple(Server &server)
 {
     server.SetRequestHandler([](HttpServerRequest &request, CancellablePointer &) noexcept {
-        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
+        request.SendResponse(HTTP_STATUS_OK, HttpHeaders(request.pool),
                              istream_string_new(request.pool, "foo"));
     });
 
@@ -311,7 +311,7 @@ static void
 TestMirror(Server &server)
 {
     server.SetRequestHandler([](HttpServerRequest &request, CancellablePointer &) noexcept {
-        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
+        request.SendResponse(HTTP_STATUS_OK, HttpHeaders(request.pool),
                              std::move(request.body));
     });
 
@@ -327,7 +327,7 @@ TestDiscardTinyRequestBody(Server &server)
 {
     server.SetRequestHandler([](HttpServerRequest &request, CancellablePointer &) noexcept {
         request.body.Clear();
-        http_server_response(&request, HTTP_STATUS_OK, HttpHeaders(request.pool),
+        request.SendResponse(HTTP_STATUS_OK, HttpHeaders(request.pool),
                              istream_string_new(request.pool, "foo"));
     });
 
@@ -367,8 +367,8 @@ TestDiscardedHugeRequestBody(Server &server)
     private:
         void OnTimer() noexcept {
             body.Clear();
-            http_server_response(request, HTTP_STATUS_OK, HttpHeaders(request->pool),
-                                 istream_string_new(request->pool, "foo"));
+            request->SendResponse(HTTP_STATUS_OK, HttpHeaders(request->pool),
+                                  istream_string_new(request->pool, "foo"));
         }
     } respond_later(server.GetEventLoop());
 

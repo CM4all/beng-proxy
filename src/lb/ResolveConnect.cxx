@@ -216,8 +216,7 @@ LbResolveConnectRequest::OnHttpResponse(http_status_t status, StringMap &&_heade
            (RFC 2616 14.13) */
         headers.MoveToBuffer("content-length");
 
-    http_server_response(&request, status, std::move(headers),
-                         std::move(response_body));
+    request.SendResponse(status, std::move(headers), std::move(response_body));
     ResponseSent();
 }
 

@@ -75,8 +75,7 @@ LbLuaResponseHandler::OnHttpResponse(http_status_t status,
            (RFC 2616 14.13) */
         headers.MoveToBuffer("content-length");
 
-    http_server_response(&request, status, std::move(headers),
-                         std::move(response_body));
+    request.SendResponse(status, std::move(headers), std::move(response_body));
 }
 
 void
@@ -110,8 +109,8 @@ LbHttpConnection::InvokeLua(LbLuaHandler &handler,
 
     if (g == nullptr) {
         request.body.Clear();
-        http_server_send_message(&request, HTTP_STATUS_BAD_GATEWAY,
-                                 "No response from Lua handler");
+        request.SendMessage(HTTP_STATUS_BAD_GATEWAY,
+                            "No response from Lua handler");
         return;
     }
 

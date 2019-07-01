@@ -40,12 +40,14 @@
 #include "strmap.hxx"
 #include "net/SocketAddress.hxx"
 #include "http/Method.h"
+#include "http/Status.h"
 #include "pool/Ptr.hxx"
 #include "istream/UnusedPtr.hxx"
 
 struct pool;
 struct StringView;
 class StringMap;
+class HttpHeaders;
 class Istream;
 struct HttpServerConnection;
 
@@ -93,6 +95,22 @@ struct HttpServerRequest {
     bool HasBody() const {
         return body;
     }
+
+    void SendResponse(http_status_t status,
+                      HttpHeaders &&response_headers,
+                      UnusedIstreamPtr response_body) const noexcept;
+
+    /**
+     * Generate a "simple" response with an optional plain-text body and
+     * an optional "Location" redirect header.
+     */
+    void SendSimpleResponse(http_status_t status, const char *location,
+                            const char *msg) const noexcept;
+
+    void SendMessage(http_status_t status, const char *msg) const noexcept;
+
+    void SendRedirect(http_status_t status, const char *location,
+                      const char *msg) const noexcept;
 };
 
 #endif

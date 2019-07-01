@@ -382,9 +382,8 @@ HttpServerConnection::SubmitRequest()
 
     if (request.expect_failed) {
         request.request->body.Clear();
-        http_server_send_message(request.request,
-                                 HTTP_STATUS_EXPECTATION_FAILED,
-                                 "Unrecognized expectation");
+        request.request->SendMessage(HTTP_STATUS_EXPECTATION_FAILED,
+                                     "Unrecognized expectation");
         if (destructed)
             return false;
     } else {

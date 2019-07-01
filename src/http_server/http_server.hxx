@@ -98,28 +98,4 @@ http_server_connection_graceful(HttpServerConnection *connection) noexcept;
 enum http_server_score
 http_server_connection_score(const HttpServerConnection *connection) noexcept;
 
-void
-http_server_response(const HttpServerRequest *request,
-                     http_status_t status,
-                     HttpHeaders &&headers,
-                     UnusedIstreamPtr body) noexcept;
-
-/**
- * Generate a "simple" response with an optional plain-text body and
- * an optional "Location" redirect header.
- */
-void
-http_server_simple_response(const HttpServerRequest &request,
-                            http_status_t status, const char *location,
-                            const char *msg) noexcept;
-
-void
-http_server_send_message(const HttpServerRequest *request,
-                         http_status_t status, const char *msg) noexcept;
-
-void
-http_server_send_redirect(const HttpServerRequest *request,
-                          http_status_t status, const char *location,
-                          const char *msg) noexcept;
-
 #endif
