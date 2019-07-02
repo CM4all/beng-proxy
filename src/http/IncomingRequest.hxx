@@ -71,6 +71,7 @@ struct IncomingHttpRequest {
      */
     UnusedIstreamPtr body;
 
+protected:
     IncomingHttpRequest(PoolPtr &&_pool,
                         SocketAddress _local_address,
                         SocketAddress _remote_address,
@@ -79,9 +80,12 @@ struct IncomingHttpRequest {
                         http_method_t _method,
                         StringView _uri) noexcept;
 
+    ~IncomingHttpRequest() noexcept = default;
+
     IncomingHttpRequest(const IncomingHttpRequest &) = delete;
     IncomingHttpRequest &operator=(const IncomingHttpRequest &) = delete;
 
+public:
     bool HasBody() const noexcept {
         return body;
     }
