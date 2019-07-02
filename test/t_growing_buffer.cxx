@@ -262,14 +262,14 @@ TEST(GrowingBufferTest, Skip)
     ASSERT_EQ(x.size, buffer_size - 8);
 
     reader.Skip(buffer_size);
-    ASSERT_EQ(reader.Available(), 8);
+    ASSERT_EQ(reader.Available(), 8u);
 
     x = reader.Read();
     ASSERT_FALSE(x.IsNull());
     ASSERT_EQ(x.size, 8u);
 
     reader.Skip(8);
-    ASSERT_EQ(reader.Available(), 0);
+    ASSERT_EQ(reader.Available(), 0u);
 
     x = reader.Read();
     ASSERT_TRUE(x.IsNull());
