@@ -32,7 +32,7 @@
 
 #include "TranslationCache.hxx"
 #include "TranslationHandler.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "translation/InvalidateParser.hxx"
 #include "translation/Response.hxx"
 #include "translation/Protocol.hxx"
@@ -78,7 +78,7 @@ class LbTranslationCacheKeyIterator {
 
 public:
     LbTranslationCacheKeyIterator(LbTranslationCache::Vary vary,
-                                  const HttpServerRequest &request,
+                                  const IncomingHttpRequest &request,
                                   const char *_listener_tag)
         :host(vary.host
               ? WithVary(request.headers.Get("host"), vary.host)
@@ -247,7 +247,7 @@ LbTranslationCache::Invalidate(const TranslationInvalidateRequest &request)
 }
 
 const LbTranslationCache::Item *
-LbTranslationCache::Get(const HttpServerRequest &request,
+LbTranslationCache::Get(const IncomingHttpRequest &request,
                         const char *listener_tag)
 {
     LbTranslationCacheKeyIterator ki(seen_vary, request, listener_tag);
@@ -265,7 +265,7 @@ LbTranslationCache::Get(const HttpServerRequest &request,
 }
 
 void
-LbTranslationCache::Put(const HttpServerRequest &request,
+LbTranslationCache::Put(const IncomingHttpRequest &request,
                         const char *listener_tag,
                         const TranslateResponse &response)
 {

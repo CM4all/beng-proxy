@@ -44,7 +44,7 @@
 #include "address_sticky.hxx"
 #include "address_string.hxx"
 #include "http_server/http_server.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "http_server/Handler.hxx"
 #include "http_client.hxx"
 #include "fs/Stock.hxx"
@@ -82,7 +82,7 @@ class LbRequest final
 
     FilteredSocketBalancer &balancer;
 
-    HttpServerRequest &request;
+    IncomingHttpRequest &request;
 
     /**
      * The request body.
@@ -114,7 +114,7 @@ class LbRequest final
 public:
     LbRequest(LbHttpConnection &_connection, LbCluster &_cluster,
               FilteredSocketBalancer &_balancer,
-              HttpServerRequest &_request,
+              IncomingHttpRequest &_request,
               CancellablePointer &_cancel_ptr) noexcept
         :pool(_request.pool), connection(_connection), cluster(_cluster),
          cluster_config(cluster.GetConfig()),
@@ -204,7 +204,7 @@ private:
 };
 
 static void
-SendResponse(HttpServerRequest &request,
+SendResponse(IncomingHttpRequest &request,
              const LbSimpleHttpResponse &response) noexcept
 {
     assert(response.IsDefined());
@@ -215,7 +215,7 @@ SendResponse(HttpServerRequest &request,
 }
 
 static bool
-send_fallback(HttpServerRequest &request,
+send_fallback(IncomingHttpRequest &request,
               const LbSimpleHttpResponse &fallback) noexcept
 {
     if (!fallback.IsDefined())
@@ -546,7 +546,7 @@ LbRequest::Start() noexcept
 
 void
 ForwardHttpRequest(LbHttpConnection &connection,
-                   HttpServerRequest &request,
+                   IncomingHttpRequest &request,
                    LbCluster &cluster,
                    CancellablePointer &cancel_ptr) noexcept
 {

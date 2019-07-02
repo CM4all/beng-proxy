@@ -51,7 +51,7 @@
 #include "http/HeaderWriter.hxx"
 #include "pool/pbuffer.hxx"
 #include "http/Headers.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "AllocatorPtr.hxx"
 #include "puri_edit.hxx"
 #include "puri_escape.hxx"
@@ -417,7 +417,7 @@ fill_translate_request_listener_tag(TranslateRequest &t,
 
 static void
 fill_translate_request_local_address(TranslateRequest &t,
-                                     const HttpServerRequest &r)
+                                     const IncomingHttpRequest &r)
 {
     t.local_address = r.local_address;
 }
@@ -812,7 +812,7 @@ request_uri_parse(Request &request2, DissectedUri &dest)
 static void
 fill_translate_request(TranslateRequest &t,
                        const BpInstance &instance,
-                       const HttpServerRequest &request,
+                       const IncomingHttpRequest &request,
                        const DissectedUri &uri,
                        const StringMap &args,
                        const char *listener_tag,
@@ -917,7 +917,7 @@ serve_document_root_file(Request &request2, const BpConfig &config)
 
 void
 handle_http_request(BpConnection &connection,
-                    HttpServerRequest &request,
+                    IncomingHttpRequest &request,
                     CancellablePointer &cancel_ptr)
 {
     auto *request2 = NewFromPool<Request>(request.pool,

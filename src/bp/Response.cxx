@@ -39,7 +39,7 @@
 #include "ProxyWidget.hxx"
 #include "Instance.hxx"
 #include "http_server/http_server.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "http/PHeaderUtil.hxx"
 #include "http/HeaderWriter.hxx"
@@ -75,7 +75,7 @@
 #include "FilterStatus.hxx"
 
 static const char *
-request_absolute_uri(const HttpServerRequest &request,
+request_absolute_uri(const IncomingHttpRequest &request,
                      const char *scheme, const char *host, const char *uri)
 {
     assert(uri != nullptr);

@@ -31,7 +31,7 @@
  */
 
 #include "http_server/http_server.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "http_server/Handler.hxx"
 #include "http_client.hxx"
 #include "http/Headers.hxx"
@@ -66,7 +66,7 @@ class Server final
 {
     HttpServerConnection *connection = nullptr;
 
-    std::function<void(HttpServerRequest &request,
+    std::function<void(IncomingHttpRequest &request,
                        CancellablePointer &cancel_ptr)> request_handler;
 
     FilteredSocket client_fs;
@@ -123,10 +123,10 @@ public:
 
 private:
     /* virtual methods from class HttpServerConnectionHandler */
-    void HandleHttpRequest(HttpServerRequest &request,
+    void HandleHttpRequest(IncomingHttpRequest &request,
                            CancellablePointer &cancel_ptr) noexcept override;
 
-    void LogHttpRequest(HttpServerRequest &,
+    void LogHttpRequest(IncomingHttpRequest &,
                         http_status_t, int64_t,
                         uint64_t, uint64_t) noexcept override {}
 
@@ -272,8 +272,8 @@ Server::Server(struct pool &_pool, EventLoop &event_loop)
 }
 
 void
-Server::HandleHttpRequest(HttpServerRequest &request,
-                            CancellablePointer &cancel_ptr) noexcept
+Server::HandleHttpRequest(IncomingHttpRequest &request,
+                          CancellablePointer &cancel_ptr) noexcept
 {
     request_handler(request, cancel_ptr);
 }
@@ -295,7 +295,7 @@ Server::HttpConnectionClosed() noexcept
 static void
 TestSimple(Server &server)
 {
-    server.SetRequestHandler([](HttpServerRequest &request, CancellablePointer &) noexcept {
+    server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
         request.SendResponse(HTTP_STATUS_OK, HttpHeaders(request.pool),
                              istream_string_new(request.pool, "foo"));
     });
@@ -310,7 +310,7 @@ TestSimple(Server &server)
 static void
 TestMirror(Server &server)
 {
-    server.SetRequestHandler([](HttpServerRequest &request, CancellablePointer &) noexcept {
+    server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
         request.SendResponse(HTTP_STATUS_OK, HttpHeaders(request.pool),
                              std::move(request.body));
     });
@@ -325,7 +325,7 @@ TestMirror(Server &server)
 static void
 TestDiscardTinyRequestBody(Server &server)
 {
-    server.SetRequestHandler([](HttpServerRequest &request, CancellablePointer &) noexcept {
+    server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
         request.body.Clear();
         request.SendResponse(HTTP_STATUS_OK, HttpHeaders(request.pool),
                              istream_string_new(request.pool, "foo"));
@@ -349,7 +349,7 @@ TestDiscardedHugeRequestBody(Server &server)
     class RespondLater {
         TimerEvent timer;
 
-        HttpServerRequest *request;
+        IncomingHttpRequest *request;
 
         UnusedHoldIstreamPtr body;
 
@@ -357,7 +357,7 @@ TestDiscardedHugeRequestBody(Server &server)
         explicit RespondLater(EventLoop &event_loop) noexcept
             :timer(event_loop, BIND_THIS_METHOD(OnTimer)) {}
 
-        void Schedule(HttpServerRequest &_request) noexcept {
+        void Schedule(IncomingHttpRequest &_request) noexcept {
             request = &_request;
             body = UnusedHoldIstreamPtr(request->pool, std::move(request->body));
 
@@ -372,7 +372,7 @@ TestDiscardedHugeRequestBody(Server &server)
         }
     } respond_later(server.GetEventLoop());
 
-    server.SetRequestHandler([&respond_later](HttpServerRequest &request, CancellablePointer &) noexcept {
+    server.SetRequestHandler([&respond_later](IncomingHttpRequest &request, CancellablePointer &) noexcept {
         respond_later.Schedule(request);
     });
 

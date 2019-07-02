@@ -42,7 +42,7 @@
 
 struct LbTranslationHandlerConfig;
 class LbGotoMap;
-struct HttpServerRequest;
+struct IncomingHttpRequest;
 struct TranslationInvalidateRequest;
 struct TranslateResponse;
 class EventLoop;
@@ -76,12 +76,12 @@ public:
             : nullptr;
     }
 
-    void Pick(struct pool &pool, const HttpServerRequest &request,
+    void Pick(struct pool &pool, const IncomingHttpRequest &request,
               const char *listener_tag,
               const TranslateHandler &handler, void *ctx,
               CancellablePointer &cancel_ptr);
 
-    void PutCache(const HttpServerRequest &request,
+    void PutCache(const IncomingHttpRequest &request,
                   const char *listener_tag,
                   const TranslateResponse &response);
 };

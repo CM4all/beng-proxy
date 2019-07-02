@@ -650,6 +650,7 @@ http_client_dep = declare_dependency(
 )
 
 http_server = static_library('http_server',
+  'src/http/IncomingRequest.cxx',
   'src/http_server/Request.cxx',
   'src/http_server/http_server.cxx',
   'src/http_server/http_server_send.cxx',

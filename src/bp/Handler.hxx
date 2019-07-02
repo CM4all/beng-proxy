@@ -39,7 +39,7 @@
 
 struct Request;
 struct BpConnection;
-struct HttpServerRequest;
+struct IncomingHttpRequest;
 struct DelegateAddress;
 class CancellablePointer;
 
@@ -58,7 +58,7 @@ proxy_handler(Request &request);
 
 void
 handle_http_request(BpConnection &connection,
-                    HttpServerRequest &request,
+                    IncomingHttpRequest &request,
                     CancellablePointer &cancel_ptr);
 
 #endif

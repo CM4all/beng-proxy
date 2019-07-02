@@ -39,7 +39,7 @@
 
 #include <string>
 
-struct HttpServerRequest;
+struct IncomingHttpRequest;
 struct TranslationInvalidateRequest;
 struct TranslateResponse;
 
@@ -100,10 +100,10 @@ public:
     void Clear();
     void Invalidate(const TranslationInvalidateRequest &request);
 
-    const Item *Get(const HttpServerRequest &request,
+    const Item *Get(const IncomingHttpRequest &request,
                     const char *listener_tag);
 
-    void Put(const HttpServerRequest &request,
+    void Put(const IncomingHttpRequest &request,
              const char *listener_tag,
              const TranslateResponse &response);
 };

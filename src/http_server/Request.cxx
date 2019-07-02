@@ -36,9 +36,6 @@
 
 #include "Request.hxx"
 #include "pool/pool.hxx"
-#include "istream/istream.hxx"
-#include "istream/istream_string.hxx"
-#include "http/Headers.hxx"
 #include "util/StringView.hxx"
 
 HttpServerRequest::HttpServerRequest(PoolPtr &&_pool,
@@ -49,80 +46,15 @@ HttpServerRequest::HttpServerRequest(PoolPtr &&_pool,
                                      const char *_remote_host,
                                      http_method_t _method,
                                      StringView _uri) noexcept
-    :pool(std::move(_pool)), connection(_connection),
-     local_address(_local_address),
-     remote_address(_remote_address),
-     local_host_and_port(_local_host_and_port),
-     remote_host(_remote_host),
-     method(_method),
-     uri(p_strdup(pool, _uri)),
-     headers(pool) {}
+    :IncomingHttpRequest(std::move(_pool),
+                         _local_address, _remote_address,
+                         _local_host_and_port, _remote_host,
+                         _method, _uri),
+     connection(_connection) {}
 
 void
 HttpServerRequest::Destroy() noexcept
 {
     pool_trash(pool);
     this->~HttpServerRequest();
-}
-
-void
-HttpServerRequest::SendSimpleResponse(http_status_t status,
-                                      const char *location,
-                                      const char *msg) const noexcept
-{
-    assert(unsigned(status) >= 200 && unsigned(status) < 600);
-
-    if (http_status_is_empty(status))
-        msg = nullptr;
-    else if (msg == nullptr)
-        msg = http_status_to_string(status);
-
-    HttpHeaders response_headers(pool);
-    response_headers.generate_date_header = true;
-
-    if (location != nullptr)
-        response_headers.Write("location", location);
-
-    UnusedIstreamPtr response_body;
-    if (msg != nullptr) {
-        response_headers.Write("content-type", "text/plain");
-        response_body = istream_string_new(pool, msg);
-    }
-
-    SendResponse(status, std::move(response_headers),
-                 std::move(response_body));
-}
-
-void
-HttpServerRequest::SendMessage(http_status_t status, const char *msg) const noexcept
-{
-    HttpHeaders response_headers(pool);
-    response_headers.generate_date_header = true;
-
-    response_headers.Write("content-type", "text/plain");
-
-    SendResponse(status, std::move(response_headers),
-                 istream_string_new(pool, msg));
-}
-
-void
-HttpServerRequest::SendRedirect(http_status_t status, const char *location,
-                                const char *msg) const noexcept
-{
-    assert(status >= 300 && status < 400);
-    assert(location != nullptr);
-
-    if (http_status_is_empty(status))
-        msg = nullptr;
-    else if (msg == nullptr)
-        msg = http_status_to_string(status);
-
-    HttpHeaders response_headers(pool);
-    response_headers.generate_date_header = true;
-
-    response_headers.Write("content-type", "text/plain");
-    response_headers.Write("location", location);
-
-    SendResponse(status, std::move(response_headers),
-                 istream_string_new(pool, msg));
 }

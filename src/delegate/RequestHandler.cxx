@@ -39,7 +39,7 @@
 #include "bp/Request.hxx"
 #include "bp/Instance.hxx"
 #include "file_address.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "HttpResponseHandler.hxx"
 #include "istream/FileIstream.hxx"
 

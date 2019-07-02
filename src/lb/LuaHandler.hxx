@@ -38,7 +38,7 @@
 
 struct LbGoto;
 struct LbLuaHandlerConfig;
-struct HttpServerRequest;
+struct IncomingHttpRequest;
 class HttpResponseHandler;
 class LuaInitHook;
 
@@ -56,7 +56,7 @@ public:
         return config;
     }
 
-    const LbGoto *HandleRequest(HttpServerRequest &request,
+    const LbGoto *HandleRequest(IncomingHttpRequest &request,
                                 HttpResponseHandler &handler);
 };
 

@@ -33,7 +33,7 @@
 #include "errdoc.hxx"
 #include "Request.hxx"
 #include "Instance.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"
 #include "translation/Service.hxx"

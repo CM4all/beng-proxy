@@ -50,7 +50,7 @@
 struct UidGid;
 struct AccessLogConfig;
 namespace Net { namespace Log { struct Datagram; }}
-struct HttpServerRequest;
+struct IncomingHttpRequest;
 class SocketDescriptor;
 class LogClient;
 
@@ -81,7 +81,7 @@ public:
      * overhead such as chunk headers)
      */
     void Log(std::chrono::system_clock::time_point now,
-             const HttpServerRequest &request, const char *site,
+             const IncomingHttpRequest &request, const char *site,
              const char *forwarded_to,
              const char *host, const char *x_forwarded_for,
              const char *referer, const char *user_agent,
@@ -90,7 +90,7 @@ public:
              std::chrono::steady_clock::duration duration) noexcept;
 
     void Log(std::chrono::system_clock::time_point now,
-             const HttpServerRequest &request, const char *site,
+             const IncomingHttpRequest &request, const char *site,
              const char *forwarded_to,
              const char *referer, const char *user_agent,
              http_status_t status, int64_t length,

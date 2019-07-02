@@ -42,7 +42,7 @@
 #include "widget/Frame.hxx"
 #include "http/HeaderWriter.hxx"
 #include "ForwardHeaders.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"
 #include "XmlProcessor.hxx"

@@ -81,7 +81,7 @@ struct LbHttpConnection final
     /**
      * Attributes which are specific to the current request.  They are
      * only valid while a request is being handled (i.e. during the
-     * lifetime of the #HttpServerRequest instance).  Strings are
+     * lifetime of the #IncomingHttpRequest instance).  Strings are
      * allocated from the request pool.
      *
      * The request header pointers are here because our
@@ -134,7 +134,7 @@ struct LbHttpConnection final
          */
         const char *forwarded_to;
 
-        void Begin(const HttpServerRequest &request,
+        void Begin(const IncomingHttpRequest &request,
                    std::chrono::steady_clock::time_point now);
 
         constexpr const char *GetCanonicalHost() const {
@@ -162,15 +162,15 @@ struct LbHttpConnection final
         return ssl_filter != nullptr;
     }
 
-    void SendError(HttpServerRequest &request, std::exception_ptr ep);
-    void LogSendError(HttpServerRequest &request, std::exception_ptr ep);
+    void SendError(IncomingHttpRequest &request, std::exception_ptr ep);
+    void LogSendError(IncomingHttpRequest &request, std::exception_ptr ep);
 
     /* virtual methods from class HttpServerConnectionHandler */
-    void RequestHeadersFinished(const HttpServerRequest &request) noexcept override;
-    void HandleHttpRequest(HttpServerRequest &request,
+    void RequestHeadersFinished(const IncomingHttpRequest &request) noexcept override;
+    void HandleHttpRequest(IncomingHttpRequest &request,
                            CancellablePointer &cancel_ptr) noexcept override;
 
-    void LogHttpRequest(HttpServerRequest &request,
+    void LogHttpRequest(IncomingHttpRequest &request,
                         http_status_t status, off_t length,
                         uint64_t bytes_received,
                         uint64_t bytes_sent) noexcept override;
@@ -180,24 +180,24 @@ struct LbHttpConnection final
 
 public:
     void HandleHttpRequest(const LbGoto &destination,
-                           HttpServerRequest &request,
+                           IncomingHttpRequest &request,
                            CancellablePointer &cancel_ptr);
 
 private:
     void ForwardHttpRequest(LbCluster &cluster,
-                            HttpServerRequest &request,
+                            IncomingHttpRequest &request,
                             CancellablePointer &cancel_ptr);
 
     void InvokeLua(LbLuaHandler &handler,
-                   HttpServerRequest &request,
+                   IncomingHttpRequest &request,
                    CancellablePointer &cancel_ptr);
 
     void AskTranslationServer(LbTranslationHandler &handler,
-                              HttpServerRequest &request,
+                              IncomingHttpRequest &request,
                               CancellablePointer &cancel_ptr);
 
     void ResolveConnect(const char *host,
-                        HttpServerRequest &request,
+                        IncomingHttpRequest &request,
                         CancellablePointer &cancel_ptr);
 
 protected:

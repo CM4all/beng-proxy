@@ -35,7 +35,7 @@
 #include "static_headers.hxx"
 #include "GrowingBuffer.hxx"
 #include "http/HeaderWriter.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "translation/Vary.hxx"
 #include "http/List.hxx"

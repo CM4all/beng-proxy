@@ -32,12 +32,12 @@
 
 #include "Request.hxx"
 #include "Connection.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "args.hxx"
 #include "strmap.hxx"
 
 Request::Request(BpInstance &_instance, BpConnection &_connection,
-                 HttpServerRequest &_request)
+                 IncomingHttpRequest &_request) noexcept
     :pool(_request.pool),
      instance(_instance),
      connection(_connection),

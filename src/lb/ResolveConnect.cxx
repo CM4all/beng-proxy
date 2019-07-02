@@ -37,7 +37,7 @@
 #include "lease.hxx"
 #include "HttpResponseHandler.hxx"
 #include "http_server/http_server.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "http_client.hxx"
 #include "http/Headers.hxx"
 #include "ssl/Filter.hxx"
@@ -60,7 +60,7 @@ class LbResolveConnectRequest final
 
     LbHttpConnection &connection;
 
-    HttpServerRequest &request;
+    IncomingHttpRequest &request;
 
     /**
      * The request body.
@@ -81,7 +81,7 @@ class LbResolveConnectRequest final
 
 public:
     LbResolveConnectRequest(LbHttpConnection &_connection,
-                            HttpServerRequest &_request,
+                            IncomingHttpRequest &_request,
                             CancellablePointer &_cancel_ptr)
         :pool(_request.pool), connection(_connection),
          request(_request),
@@ -245,7 +245,7 @@ LbResolveConnectRequest::Start(const char *name, SocketAddress address)
 
 void
 LbHttpConnection::ResolveConnect(const char *host,
-                                 HttpServerRequest &request,
+                                 IncomingHttpRequest &request,
                                  CancellablePointer &cancel_ptr)
 {
     per_request.forwarded_to = host;

@@ -34,13 +34,13 @@
 #define BENG_LB_FORWARD_HTTP_REQUEST_HXX
 
 struct LbHttpConnection;
-struct HttpServerRequest;
+struct IncomingHttpRequest;
 class LbCluster;
 class CancellablePointer;
 
 void
 ForwardHttpRequest(LbHttpConnection &connection,
-                   HttpServerRequest &request,
+                   IncomingHttpRequest &request,
                    LbCluster &cluster,
                    CancellablePointer &cancel_ptr) noexcept;
 

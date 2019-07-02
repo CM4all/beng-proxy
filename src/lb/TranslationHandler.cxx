@@ -37,7 +37,7 @@
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
 #include "translation/Handler.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "pool/pool.hxx"
 
 static std::map<const char *, LbGoto, StringLess>
@@ -84,7 +84,7 @@ LbTranslationHandler::InvalidateCache(const TranslationInvalidateRequest &reques
 static void
 Fill(TranslateRequest &t, const char *name,
      const char *listener_tag,
-     const HttpServerRequest &request)
+     const IncomingHttpRequest &request)
 {
     t.pool = name;
     t.listener_tag = listener_tag;
@@ -94,7 +94,7 @@ Fill(TranslateRequest &t, const char *name,
 struct LbTranslateHandlerRequest {
     LbTranslationHandler &th;
 
-    const HttpServerRequest &http_request;
+    const IncomingHttpRequest &http_request;
     const char *const listener_tag;
 
     TranslateRequest request;
@@ -105,7 +105,7 @@ struct LbTranslateHandlerRequest {
     LbTranslateHandlerRequest(LbTranslationHandler &_th,
                               const char *name,
                               const char *_listener_tag,
-                              const HttpServerRequest &_request,
+                              const IncomingHttpRequest &_request,
                               const TranslateHandler &_handler, void *_ctx)
         :th(_th), http_request(_request), listener_tag(_listener_tag),
          handler(_handler), handler_ctx(_ctx)
@@ -137,7 +137,7 @@ static constexpr TranslateHandler lbth_translate_handler = {
 };
 
 void
-LbTranslationHandler::Pick(struct pool &pool, const HttpServerRequest &request,
+LbTranslationHandler::Pick(struct pool &pool, const IncomingHttpRequest &request,
                            const char *listener_tag,
                            const TranslateHandler &handler, void *ctx,
                            CancellablePointer &cancel_ptr)
@@ -171,7 +171,7 @@ LbTranslationHandler::Pick(struct pool &pool, const HttpServerRequest &request,
 }
 
 void
-LbTranslationHandler::PutCache(const HttpServerRequest &request,
+LbTranslationHandler::PutCache(const IncomingHttpRequest &request,
                                const char *listener_tag,
                                const TranslateResponse &response)
 {

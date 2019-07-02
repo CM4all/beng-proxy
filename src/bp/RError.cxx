@@ -45,7 +45,7 @@
 #include "widget/Error.hxx"
 #include "HttpResponseHandler.hxx"
 #include "http_server/http_server.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "http/MessageHttpResponse.hxx"
 #include "HttpMessageResponse.hxx"
 #include "pool/pool.hxx"

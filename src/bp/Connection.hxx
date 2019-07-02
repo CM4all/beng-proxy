@@ -76,7 +76,7 @@ struct BpConnection final
     /**
      * Attributes which are specific to the current request.  They are
      * only valid while a request is being handled (i.e. during the
-     * lifetime of the #HttpServerRequest instance).  Strings are
+     * lifetime of the #IncomingHttpRequest instance).  Strings are
      * allocated from the request pool.
      */
     struct PerRequest {
@@ -112,11 +112,11 @@ struct BpConnection final
     };
 
     /* virtual methods from class HttpServerConnectionHandler */
-    void RequestHeadersFinished(const HttpServerRequest &request) noexcept override;
-    void HandleHttpRequest(HttpServerRequest &request,
+    void RequestHeadersFinished(const IncomingHttpRequest &request) noexcept override;
+    void HandleHttpRequest(IncomingHttpRequest &request,
                            CancellablePointer &cancel_ptr) noexcept override;
 
-    void LogHttpRequest(HttpServerRequest &request,
+    void LogHttpRequest(IncomingHttpRequest &request,
                         http_status_t status, off_t length,
                         uint64_t bytes_received,
                         uint64_t bytes_sent) noexcept override;

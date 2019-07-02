@@ -41,7 +41,7 @@
 #include "bp/GenerateResponse.hxx"
 #include "bp/Instance.hxx"
 #include "http/Headers.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "pool/pool.hxx"
 
 #include <assert.h>

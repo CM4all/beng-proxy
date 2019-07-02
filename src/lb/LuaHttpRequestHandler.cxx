@@ -35,20 +35,20 @@
 #include "ListenerConfig.hxx"
 #include "HttpResponseHandler.hxx"
 #include "http_server/http_server.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"
 
 class LbLuaResponseHandler final : public HttpResponseHandler {
     LbHttpConnection &connection;
 
-    HttpServerRequest &request;
+    IncomingHttpRequest &request;
 
     bool finished = false;
 
 public:
     LbLuaResponseHandler(LbHttpConnection &_connection,
-                         HttpServerRequest &_request)
+                         IncomingHttpRequest &_request)
         :connection(_connection), request(_request) {}
 
     bool IsFinished() const {
@@ -88,7 +88,7 @@ LbLuaResponseHandler::OnHttpError(std::exception_ptr ep) noexcept
 
 void
 LbHttpConnection::InvokeLua(LbLuaHandler &handler,
-                            HttpServerRequest &request,
+                            IncomingHttpRequest &request,
                             CancellablePointer &cancel_ptr)
 {
     LbLuaResponseHandler response_handler(*this, request);

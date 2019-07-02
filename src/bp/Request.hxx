@@ -56,7 +56,7 @@ class HttpHeaders;
 class GrowingBuffer;
 struct BpInstance;
 struct BpConnection;
-struct HttpServerRequest;
+struct IncomingHttpRequest;
 struct FilterTransformation;
 
 /*
@@ -73,7 +73,7 @@ struct Request final : HttpResponseHandler, DelegateHandler,
 
     const LLogger logger;
 
-    HttpServerRequest &request;
+    IncomingHttpRequest &request;
     DissectedUri dissected_uri;
 
     StringMap args;
@@ -266,7 +266,7 @@ struct Request final : HttpResponseHandler, DelegateHandler,
     CancellablePointer cancel_ptr;
 
     Request(BpInstance &_instance, BpConnection &_connection,
-            HttpServerRequest &_request);
+            IncomingHttpRequest &_request) noexcept;
 
     void ParseArgs();
 

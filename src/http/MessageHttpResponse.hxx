@@ -45,7 +45,7 @@ struct MessageHttpResponse {
      * The response body.  This string must either be a literal or the
      * entity which constructs this object must ensure that it will be
      * valid until sending the response has finished (e.g. by
-     * allocating on the #HttpServerRequest pool).
+     * allocating on the #IncomingHttpRequest pool).
      */
     const char *message;
 };

@@ -35,7 +35,7 @@
 #include "Instance.hxx"
 #include "strmap.hxx"
 #include "http_server/http_server.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "http_server/Handler.hxx"
 #include "http_server/Error.hxx"
 #include "access_log/Glue.hxx"
@@ -135,7 +135,7 @@ BpConnection::PerRequest::Begin(std::chrono::steady_clock::time_point now) noexc
 }
 
 void
-BpConnection::RequestHeadersFinished(const HttpServerRequest &) noexcept
+BpConnection::RequestHeadersFinished(const IncomingHttpRequest &) noexcept
 {
     ++instance.http_request_counter;
 
@@ -143,14 +143,14 @@ BpConnection::RequestHeadersFinished(const HttpServerRequest &) noexcept
 }
 
 void
-BpConnection::HandleHttpRequest(HttpServerRequest &request,
+BpConnection::HandleHttpRequest(IncomingHttpRequest &request,
                                 CancellablePointer &cancel_ptr) noexcept
 {
     handle_http_request(*this, request, cancel_ptr);
 }
 
 void
-BpConnection::LogHttpRequest(HttpServerRequest &request,
+BpConnection::LogHttpRequest(IncomingHttpRequest &request,
                              http_status_t status, int64_t length,
                              uint64_t bytes_received, uint64_t bytes_sent) noexcept
 {

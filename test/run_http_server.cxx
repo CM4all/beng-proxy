@@ -31,7 +31,7 @@
  */
 
 #include "http_server/http_server.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "http_server/Handler.hxx"
 #include "http/Headers.hxx"
 #include "duplex.hxx"
@@ -112,10 +112,10 @@ private:
     }
 
     /* virtual methods from class HttpServerConnectionHandler */
-    void HandleHttpRequest(HttpServerRequest &request,
+    void HandleHttpRequest(IncomingHttpRequest &request,
                            CancellablePointer &cancel_ptr) noexcept override;
 
-    void LogHttpRequest(HttpServerRequest &,
+    void LogHttpRequest(IncomingHttpRequest &,
                         http_status_t, int64_t,
                         uint64_t, uint64_t) noexcept override {}
 
@@ -182,7 +182,7 @@ Instance::OnConnectionClosed() noexcept
  */
 
 void
-Connection::HandleHttpRequest(HttpServerRequest &request,
+Connection::HandleHttpRequest(IncomingHttpRequest &request,
                               CancellablePointer &cancel_ptr) noexcept
 {
     switch (instance.mode) {
@@ -207,7 +207,7 @@ Connection::HandleHttpRequest(HttpServerRequest &request,
 
     case Mode::CLOSE:
         /* disable keep-alive */
-        http_server_connection_graceful(&request.connection);
+        http_server_connection_graceful(connection);
 
         /* fall through */
 

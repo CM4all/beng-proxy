@@ -37,47 +37,12 @@
 #ifndef BENG_HTTP_SERVER_REQUEST_HXX
 #define BENG_HTTP_SERVER_REQUEST_HXX
 
-#include "strmap.hxx"
-#include "net/SocketAddress.hxx"
-#include "http/Method.h"
-#include "http/Status.h"
-#include "pool/Ptr.hxx"
-#include "istream/UnusedPtr.hxx"
+#include "http/IncomingRequest.hxx"
 
-struct pool;
-struct StringView;
-class StringMap;
-class HttpHeaders;
-class Istream;
 struct HttpServerConnection;
 
-struct HttpServerRequest {
-    const PoolPtr pool;
-
+struct HttpServerRequest final : public IncomingHttpRequest {
     HttpServerConnection &connection;
-
-    const SocketAddress local_address, remote_address;
-
-    /**
-     * The local address (host and port) that was connected to.
-     */
-    const char *const local_host_and_port;
-
-    /**
-     * The address of the client, without the port number.
-     */
-    const char *const remote_host;
-
-    /* request metadata */
-    const http_method_t method;
-    char *const uri;
-    StringMap headers;
-
-    /**
-     * The request body.  The handler is responsible for closing this
-     * istream.
-     */
-    UnusedIstreamPtr body;
 
     HttpServerRequest(PoolPtr &&_pool, HttpServerConnection &_connection,
                       SocketAddress _local_address,
@@ -87,30 +52,12 @@ struct HttpServerRequest {
                       http_method_t _method,
                       StringView _uri) noexcept;
 
-    HttpServerRequest(const HttpServerRequest &) = delete;
-    HttpServerRequest &operator=(const HttpServerRequest &) = delete;
-
     void Destroy() noexcept;
 
-    bool HasBody() const noexcept {
-        return body;
-    }
-
+    /* virtual methods from class IncomingHttpRequest */
     void SendResponse(http_status_t status,
                       HttpHeaders &&response_headers,
-                      UnusedIstreamPtr response_body) const noexcept;
-
-    /**
-     * Generate a "simple" response with an optional plain-text body and
-     * an optional "Location" redirect header.
-     */
-    void SendSimpleResponse(http_status_t status, const char *location,
-                            const char *msg) const noexcept;
-
-    void SendMessage(http_status_t status, const char *msg) const noexcept;
-
-    void SendRedirect(http_status_t status, const char *location,
-                      const char *msg) const noexcept;
+                      UnusedIstreamPtr response_body) const noexcept override;
 };
 
 #endif

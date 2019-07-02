@@ -36,7 +36,7 @@
 #include "Request.hxx"
 #include "file_address.hxx"
 #include "http/Headers.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "translation/Vary.hxx"
 #include "istream/istream.hxx"
 #include "istream/FileIstream.hxx"

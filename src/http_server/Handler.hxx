@@ -39,7 +39,7 @@
 
 #include <stdint.h>
 
-struct HttpServerRequest;
+struct IncomingHttpRequest;
 class CancellablePointer;
 
 class HttpServerConnectionHandler {
@@ -50,9 +50,9 @@ public:
      * headers; but not the body).  This can be used to collect
      * metadata for LogHttpRequest().
      */
-    virtual void RequestHeadersFinished(const HttpServerRequest &) noexcept {};
+    virtual void RequestHeadersFinished(const IncomingHttpRequest &) noexcept {};
 
-    virtual void HandleHttpRequest(HttpServerRequest &request,
+    virtual void HandleHttpRequest(IncomingHttpRequest &request,
                                    CancellablePointer &cancel_ptr) noexcept = 0;
 
     /**
@@ -65,7 +65,7 @@ public:
      * client (which includes status line, headers and transport
      * encoding overhead such as chunk headers)
      */
-    virtual void LogHttpRequest(HttpServerRequest &request,
+    virtual void LogHttpRequest(IncomingHttpRequest &request,
                                 http_status_t status, int64_t length,
                                 uint64_t bytes_received, uint64_t bytes_sent) noexcept = 0;
 

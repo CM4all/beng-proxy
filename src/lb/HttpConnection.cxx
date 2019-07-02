@@ -41,7 +41,7 @@
 #include "Instance.hxx"
 #include "Cookie.hxx"
 #include "http_server/http_server.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "http_server/Handler.hxx"
 #include "http_server/Error.hxx"
 #include "access_log/Glue.hxx"
@@ -176,7 +176,7 @@ LbHttpConnection::CloseAndDestroy()
 }
 
 void
-LbHttpConnection::SendError(HttpServerRequest &request, std::exception_ptr ep)
+LbHttpConnection::SendError(IncomingHttpRequest &request, std::exception_ptr ep)
 {
     const char *msg = listener.verbose_response
         ? p_strdup(request.pool, GetFullMessage(ep).c_str())
@@ -186,7 +186,7 @@ LbHttpConnection::SendError(HttpServerRequest &request, std::exception_ptr ep)
 }
 
 void
-LbHttpConnection::LogSendError(HttpServerRequest &request,
+LbHttpConnection::LogSendError(IncomingHttpRequest &request,
                                std::exception_ptr ep)
 {
     logger(2, ep);
@@ -194,7 +194,7 @@ LbHttpConnection::LogSendError(HttpServerRequest &request,
 }
 
 static void
-SendResponse(HttpServerRequest &request,
+SendResponse(IncomingHttpRequest &request,
              const LbSimpleHttpResponse &response)
 {
     assert(response.IsDefined());
@@ -210,7 +210,7 @@ SendResponse(HttpServerRequest &request,
  */
 
 inline void
-LbHttpConnection::PerRequest::Begin(const HttpServerRequest &request,
+LbHttpConnection::PerRequest::Begin(const IncomingHttpRequest &request,
                                     std::chrono::steady_clock::time_point now)
 {
     start_time = now;
@@ -224,7 +224,7 @@ LbHttpConnection::PerRequest::Begin(const HttpServerRequest &request,
 }
 
 void
-LbHttpConnection::RequestHeadersFinished(const HttpServerRequest &request) noexcept
+LbHttpConnection::RequestHeadersFinished(const IncomingHttpRequest &request) noexcept
 {
     ++instance.http_request_counter;
 
@@ -232,7 +232,7 @@ LbHttpConnection::RequestHeadersFinished(const HttpServerRequest &request) noexc
 }
 
 void
-LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
+LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
                                     CancellablePointer &cancel_ptr) noexcept
 {
     if (!uri_path_verify_quick(request.uri)) {
@@ -261,7 +261,7 @@ LbHttpConnection::HandleHttpRequest(HttpServerRequest &request,
 
 void
 LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
-                                    HttpServerRequest &request,
+                                    IncomingHttpRequest &request,
                                     CancellablePointer &cancel_ptr)
 {
     const auto &goto_ = destination.FindRequestLeaf(request);
@@ -292,14 +292,14 @@ LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
 
 void
 LbHttpConnection::ForwardHttpRequest(LbCluster &cluster,
-                                     HttpServerRequest &request,
+                                     IncomingHttpRequest &request,
                                      CancellablePointer &cancel_ptr)
 {
     ::ForwardHttpRequest(*this, request, cluster, cancel_ptr);
 }
 
 void
-LbHttpConnection::LogHttpRequest(HttpServerRequest &request,
+LbHttpConnection::LogHttpRequest(IncomingHttpRequest &request,
                                  http_status_t status, int64_t length,
                                  uint64_t bytes_received, uint64_t bytes_sent) noexcept
 {

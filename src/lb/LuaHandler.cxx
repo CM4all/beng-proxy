@@ -34,7 +34,7 @@
 #include "LuaGoto.hxx"
 #include "GotoConfig.hxx"
 #include "Goto.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "HttpResponseHandler.hxx"
 #include "pool/pool.hxx"
 #include "lua/RunFile.hxx"
@@ -52,11 +52,11 @@ extern "C" {
 }
 
 struct LbLuaRequestData {
-    HttpServerRequest &request;
+    IncomingHttpRequest &request;
     HttpResponseHandler &handler;
     bool stale = false;
 
-    explicit LbLuaRequestData(HttpServerRequest &_request,
+    explicit LbLuaRequestData(IncomingHttpRequest &_request,
                               HttpResponseHandler &_handler)
         :request(_request), handler(_handler) {}
 };
@@ -65,7 +65,7 @@ static constexpr char lua_request_class[] = "lb.http_request";
 typedef Lua::Class<LbLuaRequestData, lua_request_class> LbLuaRequest;
 
 static LbLuaRequestData *
-NewLuaRequest(lua_State *L, HttpServerRequest &request,
+NewLuaRequest(lua_State *L, IncomingHttpRequest &request,
               HttpResponseHandler &handler)
 {
     return LbLuaRequest::New(L, request, handler);
@@ -243,7 +243,7 @@ LbLuaHandler::~LbLuaHandler()
 }
 
 const LbGoto *
-LbLuaHandler::HandleRequest(HttpServerRequest &request,
+LbLuaHandler::HandleRequest(IncomingHttpRequest &request,
                             HttpResponseHandler &handler)
 {
     auto *L = state.get();

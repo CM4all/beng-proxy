@@ -41,7 +41,7 @@
 #include "ForwardRequest.hxx"
 #include "ResourceLoader.hxx"
 #include "HttpResponseHandler.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "http_address.hxx"
 #include "cgi/Address.hxx"
 #include "uri/Extract.hxx"

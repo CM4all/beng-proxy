@@ -32,7 +32,7 @@
 
 #include "ForwardRequest.hxx"
 #include "Request.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "ForwardHeaders.hxx"
 
 ForwardRequest

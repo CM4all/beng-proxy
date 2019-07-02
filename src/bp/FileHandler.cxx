@@ -41,7 +41,7 @@
 #include "http/PHeaderUtil.hxx"
 #include "http/Date.hxx"
 #include "http/Headers.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "istream/FileIstream.hxx"
 #include "istream/istream.hxx"
 #include "pool/pool.hxx"

@@ -35,7 +35,7 @@
 #include "TranslationHandler.hxx"
 #include "Config.hxx"
 #include "http_server/http_server.hxx"
-#include "http_server/Request.hxx"
+#include "http/IncomingRequest.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Response.hxx"
 #include "pool/pool.hxx"
@@ -53,7 +53,7 @@ struct LbHttpRequest final : private Cancellable, private LeakDetector {
     struct pool &pool;
     LbHttpConnection &connection;
     LbTranslationHandler &handler;
-    HttpServerRequest &request;
+    IncomingHttpRequest &request;
 
     /**
      * This object temporarily holds the request body
@@ -65,7 +65,7 @@ struct LbHttpRequest final : private Cancellable, private LeakDetector {
 
     LbHttpRequest(LbHttpConnection &_connection,
                   LbTranslationHandler &_handler,
-                  HttpServerRequest &_request,
+                  IncomingHttpRequest &_request,
                   CancellablePointer &_cancel_ptr)
         :pool(_request.pool), connection(_connection), handler(_handler),
          request(_request),
@@ -176,7 +176,7 @@ static constexpr TranslateHandler lb_http_translate_handler = {
 
 void
 LbHttpConnection::AskTranslationServer(LbTranslationHandler &handler,
-                                       HttpServerRequest &request,
+                                       IncomingHttpRequest &request,
                                        CancellablePointer &cancel_ptr)
 {
     auto *r = NewFromPool<LbHttpRequest>(request.pool, *this, handler, request,
