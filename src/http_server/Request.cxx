@@ -48,7 +48,7 @@ HttpServerRequest::HttpServerRequest(PoolPtr &&_pool,
                                      const char *_local_host_and_port,
                                      const char *_remote_host,
                                      http_method_t _method,
-                                     StringView _uri)
+                                     StringView _uri) noexcept
     :pool(std::move(_pool)), connection(_connection),
      local_address(_local_address),
      remote_address(_remote_address),

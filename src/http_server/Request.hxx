@@ -85,14 +85,14 @@ struct HttpServerRequest {
                       const char *_local_host_and_port,
                       const char *_remote_host,
                       http_method_t _method,
-                      StringView _uri);
+                      StringView _uri) noexcept;
 
     HttpServerRequest(const HttpServerRequest &) = delete;
     HttpServerRequest &operator=(const HttpServerRequest &) = delete;
 
     void Destroy() noexcept;
 
-    bool HasBody() const {
+    bool HasBody() const noexcept {
         return body;
     }
 
