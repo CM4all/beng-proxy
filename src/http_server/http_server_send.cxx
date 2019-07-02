@@ -218,11 +218,7 @@ HttpServerRequest::SendSimpleResponse(http_status_t status,
         msg = http_status_to_string(status);
 
     HttpHeaders response_headers(pool);
-
-#ifndef NO_DATE_HEADER
-    response_headers.Write("date",
-                           http_date_format(connection.GetEventLoop().SystemNow()));
-#endif
+    response_headers.generate_date_header = true;
 
     if (location != nullptr)
         response_headers.Write("location", location);
@@ -243,11 +239,7 @@ HttpServerRequest::SendMessage(http_status_t status, const char *msg) const noex
     HttpHeaders response_headers(pool);
 
     response_headers.Write("content-type", "text/plain");
-
-#ifndef NO_DATE_HEADER
-    response_headers.Write("date",
-                           http_date_format(connection.GetEventLoop().SystemNow()));
-#endif
+    response_headers.generate_date_header = true;
 
     SendResponse(status, std::move(response_headers),
                  istream_string_new(pool, msg));
@@ -266,14 +258,10 @@ HttpServerRequest::SendRedirect(http_status_t status, const char *location,
         msg = http_status_to_string(status);
 
     HttpHeaders response_headers(pool);
+    response_headers.generate_date_header = true;
 
     response_headers.Write("content-type", "text/plain");
     response_headers.Write("location", location);
-
-#ifndef NO_DATE_HEADER
-    response_headers.Write("date",
-                           http_date_format(connection.GetEventLoop().SystemNow()));
-#endif
 
     SendResponse(status, std::move(response_headers),
                  istream_string_new(pool, msg));
