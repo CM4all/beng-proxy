@@ -771,8 +771,9 @@ test('t_istream_processor', executable('t_istream_processor',
 test('t_istream_tee', executable('t_istream_tee',
   't_istream_tee.cxx',
   '../src/istream/sink_close.cxx',
+  '../src/PInstance.cxx',
   include_directories: inc,
-  dependencies: t_istream_filter_deps))
+  dependencies: istream_dep))
 
 test('t_growing_buffer', executable('t_growing_buffer',
   't_growing_buffer.cxx',
