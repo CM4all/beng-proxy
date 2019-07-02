@@ -70,7 +70,6 @@
 #include "translation/Vary.hxx"
 #include "translation/Transformation.hxx"
 #include "http/Date.hxx"
-#include "product.h"
 #include "http_address.hxx"
 #include "relocate_uri.hxx"
 #include "FilterStatus.hxx"
@@ -492,15 +491,17 @@ inline void
 Request::MoreResponseHeaders(HttpHeaders &headers) const noexcept
 {
     /* RFC 2616 3.8: Product Tokens */
-    headers.Write("server", product_token != nullptr
-                  ? product_token
-                  : BRIEF_PRODUCT_TOKEN);
+    if (product_token != nullptr)
+        headers.Write("server", product_token);
+    else
+        headers.generate_server_header = true;
 
-#ifndef NO_DATE_HEADER
     /* RFC 2616 14.18: Date */
-    headers.Write("date", date != nullptr
-                  ? date
-                  : http_date_format(instance.event_loop.SystemNow()));
+    if (date != nullptr)
+        headers.Write("date", date);
+#ifndef NO_DATE_HEADER
+    else
+        headers.generate_date_header = true;
 #endif
 
     translation_response_headers(headers, *translate.response);
