@@ -49,6 +49,22 @@ class HttpHeaders {
     GrowingBuffer buffer;
 
 public:
+    /**
+     * Shall the HTTP server library generate a "Date" response
+     * header?
+     *
+     * @see RFC 2616 14.18
+     */
+    bool generate_date_header = false;
+
+    /**
+     * Shall the HTTP server library generate a "Server" response
+     * header?
+     *
+     * @see RFC 2616 3.8
+     */
+    bool generate_server_header = false;
+
     explicit HttpHeaders(struct pool &pool) noexcept
         :map(pool) {}
 

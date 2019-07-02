@@ -46,6 +46,7 @@
 #include "http/Date.hxx"
 #include "event/Loop.hxx"
 #include "util/DecimalFormat.h"
+#include "product.h"
 
 #include <string.h>
 
@@ -167,6 +168,14 @@ HttpServerConnection::SubmitResponse(http_status_t status,
         headers.MoveToBuffer("upgrade");
     } else if (!keep_alive)
         headers.Write("connection", "close");
+
+    if (headers.generate_date_header)
+        /* RFC 2616 14.18: Date */
+        headers.Write("date", http_date_format(GetEventLoop().SystemNow()));
+
+    if (headers.generate_server_header)
+        /* RFC 2616 3.8: Product Tokens */
+        headers.Write("server", BRIEF_PRODUCT_TOKEN);
 
     GrowingBuffer headers3 = headers.ToBuffer();
     headers3.Write("\r\n", 2);
