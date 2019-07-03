@@ -61,8 +61,8 @@ struct IncomingHttpRequest {
     const char *const remote_host;
 
     /* request metadata */
-    const http_method_t method;
-    char *const uri;
+    http_method_t method;
+    char *uri;
     StringMap headers;
 
     /**
@@ -72,6 +72,12 @@ struct IncomingHttpRequest {
     UnusedIstreamPtr body;
 
 protected:
+    IncomingHttpRequest(PoolPtr &&_pool,
+                        SocketAddress _local_address,
+                        SocketAddress _remote_address,
+                        const char *_local_host_and_port,
+                        const char *_remote_host) noexcept;
+
     IncomingHttpRequest(PoolPtr &&_pool,
                         SocketAddress _local_address,
                         SocketAddress _remote_address,
