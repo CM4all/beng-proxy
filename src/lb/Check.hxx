@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,6 +35,7 @@
 #include "net/MaskedSocketAddress.hxx"
 #include "util/Compiler.h"
 
+#include <algorithm>
 #include <string>
 #include <forward_list>
 
