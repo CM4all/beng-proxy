@@ -781,7 +781,7 @@ test('t_growing_buffer', executable('t_growing_buffer',
   include_directories: inc,
   dependencies: [
     gtest,
-    istream_dep,
+    istream_api_dep,
   ]))
 
 test(
