@@ -65,6 +65,7 @@ istream = static_library(
   'DechunkIstream.cxx',
   'DelayedIstream.cxx',
   'FifoBufferIstream.cxx',
+  'FifoBufferSink.cxx',
   'FileIstream.cxx',
   'PipeLeaseIstream.cxx',
   'ReplaceIstream.cxx',
