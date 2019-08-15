@@ -58,25 +58,32 @@ istream_basic_dep = declare_dependency(
 
 istream = static_library(
   'istream',
-  'TimeoutIstream.cxx',
-  'istream_pause.cxx',
-  'SliceIstream.cxx',
-  'FileIstream.cxx',
-  'PipeLeaseIstream.cxx',
+
+  # Istream implementations
+  'BufferedIstream.cxx',
   'ChunkedIstream.cxx',
   'DechunkIstream.cxx',
-  'AutoPipeIstream.cxx',
   'DelayedIstream.cxx',
-  'istream_deflate.cxx',
-  'YamlSubstIstream.cxx',
-  'BufferedIstream.cxx',
-  'istream_iconv.cxx',
-  'istream_later.cxx',
-  'TeeIstream.cxx',
+  'FileIstream.cxx',
+  'PipeLeaseIstream.cxx',
   'ReplaceIstream.cxx',
-  'sink_fd.cxx',
+  'SliceIstream.cxx',
+  'TeeIstream.cxx',
+  'TimeoutIstream.cxx',
+  'YamlSubstIstream.cxx',
+  'AutoPipeIstream.cxx',
+
   'ToBucketIstream.cxx',
   'FromBucketIstream.cxx',
+
+  'istream_deflate.cxx',
+  'istream_iconv.cxx',
+  'istream_later.cxx',
+  'istream_pause.cxx',
+
+  # IstreamSink implementations
+  'sink_fd.cxx',
+
   include_directories: inc,
   dependencies: [
     zlib,
