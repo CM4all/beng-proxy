@@ -66,6 +66,10 @@ public:
         swap(allocation, other.allocation);
     }
 
+    friend void swap(SliceFifoBuffer &a, SliceFifoBuffer &b) noexcept {
+        a.swap(b);
+    }
+
     void Allocate(SlicePool &pool) noexcept;
     void Free() noexcept;
 
