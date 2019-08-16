@@ -60,9 +60,9 @@ public:
         src.SetNull();
     }
 
-    void Swap(SliceFifoBuffer &other) noexcept {
+    void swap(SliceFifoBuffer &other) noexcept {
         using std::swap;
-        ForeignFifoBuffer<uint8_t>::Swap(other);
+        ForeignFifoBuffer<uint8_t>::swap(other);
         swap(allocation, other.allocation);
     }
 
@@ -109,7 +109,7 @@ public:
         if (empty() && !IsNull() && !src.IsNull())
             /* optimized special case: swap buffer pointers instead of
                copying data */
-            Swap(src);
+            swap(src);
         else
             ForeignFifoBuffer<uint8_t>::MoveFrom(src);
     }
@@ -122,7 +122,7 @@ public:
         if (empty() && (!src.empty() || !IsNull()))
             /* optimized special case: swap buffer pointers instead of
                copying data */
-            Swap(src);
+            swap(src);
         else
             ForeignFifoBuffer<uint8_t>::MoveFrom(src);
     }
@@ -135,7 +135,7 @@ public:
         if (empty() && (!src.empty() || IsNull()))
             /* optimized special case: swap buffer pointers instead of
                copying data */
-            Swap(src);
+            swap(src);
         else
             ForeignFifoBuffer<uint8_t>::MoveFrom(src);
     }
@@ -147,7 +147,7 @@ public:
         if (empty())
             /* optimized special case: swap buffer pointers instead of
                copying data */
-            Swap(src);
+            swap(src);
         else
             ForeignFifoBuffer<uint8_t>::MoveFrom(src);
     }
@@ -158,7 +158,7 @@ public:
      */
     void SwapIfNull(SliceFifoBuffer &src) noexcept {
         if (src.IsNull() && empty() && !IsNull())
-            Swap(src);
+            swap(src);
     }
 };
 
