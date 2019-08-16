@@ -103,6 +103,8 @@ public:
         }
     }
 
+    using ForeignFifoBuffer<uint8_t>::MoveFrom;
+
     /**
      * Move as much data as possible from the specified buffer.  If
      * the destination buffer is empty, the buffers are swapped.  Care
