@@ -1056,7 +1056,7 @@ if __name__ == '__main__':
         coma_was = os.path.join(src_dir, 'cgi-coma/build/coma-was')
         coma_demo = os.path.join(src_dir, 'cgi-coma/demo')
         image_processor_path = os.path.join(src_dir, 'image-processor/src')
-        ticket_fastcgi_dir = os.path.join(src_dir, 'mod_ticket/src')
+        ticket_fastcgi_dir = os.path.join(src_dir, 'ticket/output/debug')
         xslt_fastcgi = os.path.join(src_dir, 'filters/build/xslt')
         xmlstrip = os.path.join(src_dir, 'filters/build/xmlstrip')
         clear_html = os.path.join(src_dir, 'filters/build/clear-html')
