@@ -37,6 +37,7 @@
 struct pool;
 struct SslConfig;
 struct SslFactory;
+template<typename T> struct ConstBuffer;
 class SslSniCallback;
 
 SslFactory *
@@ -45,6 +46,15 @@ ssl_factory_new_server(const SslConfig &config,
 
 void
 ssl_factory_free(SslFactory *factory);
+
+/**
+ * Wrapper for SSL_CTX_set_session_id_context().
+ *
+ * Throws on error.
+ */
+void
+ssl_factory_set_session_id_context(SslFactory &factory,
+                                   ConstBuffer<void> sid_ctx);
 
 UniqueSSL
 ssl_factory_make(SslFactory &factory);

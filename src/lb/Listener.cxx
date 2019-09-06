@@ -98,6 +98,11 @@ LbListener::Setup()
 
         ssl_factory = ssl_factory_new_server(config.ssl_config,
                                              std::move(sni_callback));
+
+        /* we use the listener name as OpenSSL session_id_context,
+           because listener names are unique, so I hope this should be
+           good enough */
+        ssl_factory_set_session_id_context(*ssl_factory, {config.name.data(), config.name.size()});
     }
 
     Listen(config.Create(SOCK_STREAM));
