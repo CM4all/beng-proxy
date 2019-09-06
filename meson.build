@@ -123,26 +123,6 @@ libnfs = dependency('libnfs')
 zlib = dependency('zlib')
 libcrypt = compiler.find_library('crypt')
 
-gtest_compile_args = [
-  '-Wno-undef',
-]
-
-if compiler.get_id() == 'gcc'
-  gtest_compile_args += [
-    '-Wno-suggest-attribute=format',
-    '-Wno-suggest-attribute=noreturn',
-    '-Wno-missing-declarations',
-
-    # needed on Jessie for gtest's IsNullLiteralHelper
-    '-Wno-conversion-null',
-  ]
-endif
-
-gtest = declare_dependency(
-  dependencies: [dependency('gtest', main: true)],
-  compile_args: gtest_compile_args,
-)
-
 libwas = dependency('libcm4all-was-protocol', version: '>= 1.0')
 
 inc = include_directories('src', 'include', 'libcommon/src')
