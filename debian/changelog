@@ -2,7 +2,7 @@ cm4all-beng-proxy (15.22) unstable; urgency=low
 
   * lb: fix TLS session resumption with client certificate
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 06 Sep 2019 13:40:53 +0200
 
 cm4all-beng-proxy (15.21) unstable; urgency=low
 
