@@ -10,6 +10,13 @@ if compiler.get_id() == 'gcc'
   ]
 endif
 
+if compiler.get_id() == 'clang'
+  gtest_compile_args += [
+    # TYPED_TEST_CASE_P got deprecated in GTest 1.9.0
+    '-Wno-deprecated-declarations',
+  ]
+endif
+
 gtest = declare_dependency(
   dependencies: [dependency('gtest', main: true)],
   compile_args: gtest_compile_args,
