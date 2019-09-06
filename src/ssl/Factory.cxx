@@ -42,6 +42,7 @@
 #include "ssl/AltName.hxx"
 #include "ssl/Key.hxx"
 #include "util/AllocatedString.hxx"
+#include "util/ConstBuffer.hxx"
 #include "util/StringView.hxx"
 #include "util/PrintException.hxx"
 
@@ -101,6 +102,15 @@ struct SslFactoryCertKey {
     gcc_pure
     bool MatchCommonName(StringView host_name) const;
 
+    void SetSessionIdContext(ConstBuffer<void> _sid_ctx) {
+        auto sid_ctx = ConstBuffer<unsigned char>::FromVoid(_sid_ctx);
+        int result = SSL_CTX_set_session_id_context(ssl_ctx.get(),
+                                                    sid_ctx.data,
+                                                    sid_ctx.size);
+        if (result == 0)
+            throw SslError("SSL_CTX_set_session_id_context() failed");
+    }
+
     UniqueSSL Make() const {
         UniqueSSL ssl(SSL_new(ssl_ctx.get()));
         if (!ssl)
@@ -130,6 +140,11 @@ struct SslFactory {
     const SslFactoryCertKey *FindCommonName(StringView host_name) const;
 
     void EnableSNI();
+
+    void SetSessionIdContext(ConstBuffer<void> sid_ctx) {
+        for (auto &i : cert_key)
+            i.SetSessionIdContext(sid_ctx);
+    }
 
     UniqueSSL Make();
 
@@ -317,6 +332,13 @@ void
 ssl_factory_free(SslFactory *factory)
 {
     delete factory;
+}
+
+void
+ssl_factory_set_session_id_context(SslFactory &factory,
+                                   ConstBuffer<void> sid_ctx)
+{
+    factory.SetSessionIdContext(sid_ctx);
 }
 
 UniqueSSL
