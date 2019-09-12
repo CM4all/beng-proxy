@@ -51,11 +51,16 @@ struct HttpCacheDocument;
 struct HttpCacheRequestInfo;
 struct HttpCacheResponseInfo;
 
+/**
+ * @param obey_no_cache if false, then "no-cache" requests will be
+ * ignored
+ */
 bool
 http_cache_request_evaluate(HttpCacheRequestInfo &info,
                             http_method_t method,
                             const ResourceAddress &address,
                             const StringMap &headers,
+                            bool obey_no_cache,
                             bool has_request_body) noexcept;
 
 gcc_pure

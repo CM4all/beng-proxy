@@ -54,6 +54,7 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
                             http_method_t method,
                             const ResourceAddress &address,
                             const StringMap &headers,
+                            bool obey_no_cache,
                             bool has_request_body) noexcept
 {
     if (method != HTTP_METHOD_GET || has_request_body)
@@ -76,13 +77,14 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
         for (auto s : IterableSplitString(p, ',')) {
             s.Strip();
 
-            if (s.Equals("no-cache") || s.Equals("no-store"))
+            if (obey_no_cache &&
+                (s.Equals("no-cache") || s.Equals("no-store")))
                 return false;
 
             if (s.Equals("only-if-cached"))
                 info.only_if_cached = true;
         }
-    } else {
+    } else if (obey_no_cache) {
         p = headers.Get("pragma");
         if (p != nullptr && strcmp(p, "no-cache") == 0)
             return false;

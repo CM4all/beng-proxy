@@ -997,7 +997,8 @@ HttpCache::Start(struct pool &caller_pool, sticky_hash_t session_sticky,
     }
 
     HttpCacheRequestInfo info;
-    if (http_cache_request_evaluate(info, method, address, headers, body)) {
+    if (http_cache_request_evaluate(info, method, address, headers,
+                                    true, body)) {
         assert(!body);
 
         Use(caller_pool, session_sticky, cache_tag, site_name,
