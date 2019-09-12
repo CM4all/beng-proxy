@@ -206,8 +206,11 @@ class HttpCache {
 
     BackgroundManager background;
 
+    const bool obey_no_cache;
+
 public:
     HttpCache(struct pool &_pool, size_t max_size,
+              bool obey_no_cache,
               EventLoop &event_loop,
               ResourceLoader &_resource_loader);
 
@@ -634,13 +637,15 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 
 inline
 HttpCache::HttpCache(struct pool &_pool, size_t max_size,
+                     bool _obey_no_cache,
                      EventLoop &_event_loop,
                      ResourceLoader &_resource_loader)
     :pool(pool_new_libc(&_pool, "http_cache")),
      event_loop(_event_loop),
      compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      heap(pool, event_loop, max_size),
-     resource_loader(_resource_loader)
+     resource_loader(_resource_loader),
+     obey_no_cache(_obey_no_cache)
 {
     assert(max_size > 0);
 
@@ -649,12 +654,13 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
 
 HttpCache *
 http_cache_new(struct pool &pool, size_t max_size,
+               bool obey_no_cache,
                EventLoop &event_loop,
                ResourceLoader &resource_loader)
 {
     assert(max_size > 0);
 
-    return new HttpCache(pool, max_size,
+    return new HttpCache(pool, max_size, obey_no_cache,
                          event_loop, resource_loader);
 }
 
@@ -998,7 +1004,7 @@ HttpCache::Start(struct pool &caller_pool, sticky_hash_t session_sticky,
 
     HttpCacheRequestInfo info;
     if (http_cache_request_evaluate(info, method, address, headers,
-                                    true, body)) {
+                                    obey_no_cache, body)) {
         assert(!body);
 
         Use(caller_pool, session_sticky, cache_tag, site_name,

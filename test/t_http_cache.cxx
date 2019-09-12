@@ -316,7 +316,7 @@ TEST(HttpCache, Basic)
 
     MyResourceLoader resource_loader;
 
-    cache = http_cache_new(instance.root_pool, 1024 * 1024,
+    cache = http_cache_new(instance.root_pool, 1024 * 1024, true,
                            instance.event_loop, resource_loader);
 
     /* request one resource, cold and warm cache */

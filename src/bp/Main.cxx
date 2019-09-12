@@ -421,6 +421,7 @@ try {
     if (instance.config.http_cache_size > 0) {
         instance.http_cache = http_cache_new(instance.root_pool,
                                              instance.config.http_cache_size,
+                                             true,
                                              instance.event_loop,
                                              *instance.direct_resource_loader);
 

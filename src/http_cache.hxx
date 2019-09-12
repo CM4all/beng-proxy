@@ -55,6 +55,7 @@ class CancellablePointer;
  */
 HttpCache *
 http_cache_new(struct pool &pool, size_t max_size,
+               bool obey_no_cache,
                EventLoop &event_loop,
                ResourceLoader &resource_loader);
 
