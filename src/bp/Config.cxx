@@ -55,6 +55,8 @@ BpConfig::HandleSet(StringView name, const char *value)
         was_stock_max_idle = ParseUnsignedLong(value);
     } else if (name.Equals("http_cache_size")) {
         http_cache_size = ParseSize(value);
+    } else if (name.Equals("http_cache_obey_no_cache")) {
+        http_cache_obey_no_cache = ParseBool(value);
     } else if (name.Equals("filter_cache_size")) {
         filter_cache_size = ParseSize(value);
     } else if (name.Equals("nfs_cache_size")) {

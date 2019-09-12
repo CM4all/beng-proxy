@@ -143,6 +143,8 @@ struct BpConfig {
 
     bool emulate_mod_auth_easy = false;
 
+    bool http_cache_obey_no_cache = true;
+
     SpawnConfig spawn;
 
     SslClientConfig ssl_client;

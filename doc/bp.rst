@@ -286,6 +286,9 @@ The following settings are available:
 - ``http_cache_size``: The maximum amount of memory used by the HTTP
   cache. Set to 0 to disable the HTTP cache.
 
+- ``http_cache_obey_no_cache``: Set to ``no`` to ignore ``no-cache``
+  specifications in ``Pragma`` and ``Cache-Control`` request headers.
+
 - ``filter_cache_size``: The maximum amount of memory used by the
   filter cache. Set to 0 to disable the filter cache.
 
