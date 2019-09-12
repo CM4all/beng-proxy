@@ -133,11 +133,6 @@ struct BpConfig {
     bool dynamic_session_cookie = false;
 
     /**
-     * Was #http_cache_size configured explicitly?
-     */
-    bool http_cache_size_set = false;
-
-    /**
      * Dump widget trees to the log file?
      */
     bool dump_widget_tree = false;
