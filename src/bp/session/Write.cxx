@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,11 +34,18 @@
 #include "File.hxx"
 #include "Session.hxx"
 
+#include <stdexcept>
+
 #include <stdint.h>
 
 namespace {
 
-class SessionSerializerError {};
+class SessionSerializerError final : public std::runtime_error {
+public:
+    template<typename W>
+    SessionSerializerError(W &&_what) noexcept
+        :std::runtime_error(std::forward<W>(_what)) {}
+};
 
 class FileWriter {
     FILE *const file;
@@ -48,7 +55,7 @@ public:
 
     void WriteBuffer(const void *buffer, size_t size) {
         if (fwrite(buffer, 1, size, file) != size)
-            throw SessionSerializerError();
+            throw SessionSerializerError("Write error");
     }
 
     template<typename T>
@@ -84,7 +91,7 @@ public:
 
         uint32_t length = strlen(s);
         if (length >= (uint16_t)-1)
-            throw SessionSerializerError();
+            throw SessionSerializerError("String is too long");
 
         Write16(length);
         WriteBuffer(s, length);
@@ -97,7 +104,7 @@ public:
         }
 
         if (buffer.size >= (uint16_t)-1)
-            throw SessionSerializerError();
+            throw SessionSerializerError("Buffer is too long");
 
         Write16(buffer.size);
         WriteBuffer(buffer.data, buffer.size);
