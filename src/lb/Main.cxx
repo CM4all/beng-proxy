@@ -52,7 +52,6 @@
 #include "system/Isolate.hxx"
 #include "system/SetupProcess.hxx"
 #include "util/PrintException.hxx"
-#include "util/Macros.hxx"
 
 #include <systemd/sd-daemon.h>
 #include <postgresql/libpq-fe.h>
@@ -228,7 +227,7 @@ try {
         isolate_from_filesystem(config.HasZeroConf());
 
     if (!cmdline.user.IsEmpty())
-        capabilities_post_setuid(cap_keep_list, ARRAY_SIZE(cap_keep_list));
+        capabilities_post_setuid(cap_keep_list, std::size(cap_keep_list));
 
 #ifdef __linux
     prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);

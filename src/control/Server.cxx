@@ -37,7 +37,6 @@
 #include "util/ByteOrder.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
-#include "util/Macros.hxx"
 
 #include <stdexcept>
 
@@ -148,7 +147,7 @@ ControlServer::Reply(SocketAddress address,
     };
 
     SendMessage(socket.GetSocket(),
-                MessageHeader(ConstBuffer<struct iovec>(v, ARRAY_SIZE(v)))
+                MessageHeader(ConstBuffer<struct iovec>(v, std::size(v)))
                 .SetAddress(address),
                 MSG_DONTWAIT|MSG_NOSIGNAL);
 }

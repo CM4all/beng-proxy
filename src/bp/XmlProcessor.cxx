@@ -65,7 +65,6 @@
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
 #include "util/CharUtil.hxx"
-#include "util/Macros.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
@@ -558,7 +557,7 @@ XmlProcessor::DeleteUriRewrite(off_t start, off_t end) noexcept
     unsigned i = 0;
     while (postponed_rewrite.delete_[i].start > 0) {
         ++i;
-        if (i >= ARRAY_SIZE(postponed_rewrite.delete_))
+        if (i >= std::size(postponed_rewrite.delete_))
             /* no more room in the array */
             return;
     }

@@ -34,7 +34,6 @@
 #define BENG_PROXY_RUBBER_HXX
 
 #include "system/LargeObject.hxx"
-#include "util/Macros.hxx"
 #include "util/Compiler.h"
 
 #include <boost/intrusive/list.hpp>
@@ -81,7 +80,7 @@ class Rubber {
                 return i;
     }
 
-    static constexpr size_t N_HOLE_THRESHOLDS = ARRAY_SIZE(HOLE_THRESHOLDS);
+    static constexpr size_t N_HOLE_THRESHOLDS = std::size(HOLE_THRESHOLDS);
 
     struct Hole final
         : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {

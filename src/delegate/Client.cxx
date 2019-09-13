@@ -42,7 +42,6 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
-#include "util/Macros.hxx"
 
 #include <stdexcept>
 
@@ -235,7 +234,7 @@ SendDelegatePacket(SocketDescriptor s, DelegateRequestCommand cmd,
     };
 
     auto nbytes = SendMessage(s,
-                              ConstBuffer<struct iovec>(v, ARRAY_SIZE(v)),
+                              ConstBuffer<struct iovec>(v, std::size(v)),
                               MSG_DONTWAIT);
     if (nbytes != sizeof(header) + length)
         throw std::runtime_error("Short send to delegate");

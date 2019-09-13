@@ -83,7 +83,6 @@
 #include "net/StaticSocketAddress.hxx"
 #include "net/FailureManager.hxx"
 #include "io/Logger.hxx"
-#include "util/Macros.hxx"
 #include "util/PrintException.hxx"
 
 #include <systemd/sd-daemon.h>
@@ -465,7 +464,7 @@ try {
 #endif
 
     if (!instance.cmdline.user.IsEmpty())
-        capabilities_post_setuid(cap_keep_list, ARRAY_SIZE(cap_keep_list));
+        capabilities_post_setuid(cap_keep_list, std::size(cap_keep_list));
 
     /* create worker processes */
 

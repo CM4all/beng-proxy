@@ -35,7 +35,6 @@
 #include "Instance.hxx"
 #include "http_server/http_server.hxx"
 #include "io/Logger.hxx"
-#include "util/Macros.hxx"
 
 #include <limits>
 
@@ -63,11 +62,11 @@ drop_some_connections(BpInstance *instance)
         }
 
         if (score == min_score &&
-            num_connections < ARRAY_SIZE(connections)) {
+            num_connections < std::size(connections)) {
             connections[num_connections++] = &c;
 
             if (score == HTTP_SERVER_NEW &&
-                num_connections >= ARRAY_SIZE(connections))
+                num_connections >= std::size(connections))
                 break;
         }
     }
