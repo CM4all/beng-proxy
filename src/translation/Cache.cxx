@@ -331,8 +331,6 @@ struct tcache {
     const PoolPtr pool;
     SlicePool slice_pool;
 
-    Cache cache;
-
     /**
      * This hash table maps each host name to a
      * #TranslateCachePerHost.  This is used to optimize the common
@@ -356,6 +354,8 @@ struct tcache {
                                         boost::intrusive::equal<TranslateCachePerSite::Equal>,
                                         boost::intrusive::constant_time_size<false>>;
     PerSiteSet per_site;
+
+    Cache cache;
 
     TranslationService &next;
 
@@ -1469,9 +1469,9 @@ tcache::tcache(struct pool &_pool, EventLoop &event_loop,
                bool handshake_cacheable)
     :pool(pool_new_libc(&_pool, "translate_cache")),
      slice_pool(4096, 32768),
-     cache(event_loop, 65521, max_size),
      per_host(PerHostSet::bucket_traits(per_host_buckets, N_BUCKETS)),
      per_site(PerSiteSet::bucket_traits(per_site_buckets, N_BUCKETS)),
+     cache(event_loop, 65521, max_size),
      next(_next), active(handshake_cacheable)
 {
     assert(max_size > 0);
