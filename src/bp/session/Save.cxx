@@ -59,7 +59,7 @@ static void
 session_manager_save(BufferedOutputStream &file)
 {
     session_write_file_header(file);
-    session_manager_visit(session_save_callback, &file);
+    session_manager->Visit(session_save_callback, &file);
     session_write_file_tail(file);
 }
 
@@ -79,7 +79,7 @@ session_manager_load(FILE *file)
         else if (magic != MAGIC_SESSION)
             return false;
 
-        struct dpool *pool = session_manager_new_dpool();
+        struct dpool *pool = session_manager->NewDpool();
         if (pool == nullptr)
             return false;
 
@@ -103,7 +103,7 @@ session_manager_load(FILE *file)
             continue;
         }
 
-        session_manager_add(*session);
+        session_manager->Insert(*session);
         ++num_added;
     }
 

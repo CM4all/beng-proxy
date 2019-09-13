@@ -36,7 +36,6 @@
 #include "shm/dpool.hxx"
 #include "random.hxx"
 #include "crash.hxx"
-#include "event/TimerEvent.hxx"
 #include "io/Logger.hxx"
 #include "util/StaticArray.hxx"
 #include "util/RefCount.hxx"
@@ -200,9 +199,6 @@ static constexpr size_t SHM_PAGE_SIZE = 4096;
 static constexpr unsigned SHM_NUM_PAGES = 65536;
 static constexpr unsigned SM_PAGES = (sizeof(SessionContainer) + SHM_PAGE_SIZE - 1) / SHM_PAGE_SIZE;
 
-/** clean up expired sessions every 60 seconds */
-static constexpr Event::Duration cleanup_interval = std::chrono::minutes(1);
-
 #ifndef NDEBUG
 /**
  * A process must not lock more than one session at a time, or it will
@@ -212,140 +208,7 @@ static constexpr Event::Duration cleanup_interval = std::chrono::minutes(1);
 static const Session *locked_session;
 #endif
 
-class SessionManager {
-    const unsigned cluster_size, cluster_node;
-
-    struct shm *shm;
-
-    SessionContainer *container;
-
-    TimerEvent cleanup_timer;
-
-public:
-    SessionManager(EventLoop &event_loop, std::chrono::seconds idle_timeout,
-                   unsigned _cluster_size, unsigned _cluster_node) noexcept
-        :cluster_size(_cluster_size), cluster_node(_cluster_node),
-         shm(shm_new(SHM_PAGE_SIZE, SHM_NUM_PAGES)),
-         container(NewFromShm<SessionContainer>(shm, SM_PAGES, idle_timeout)),
-         cleanup_timer(event_loop, BIND_THIS_METHOD(Cleanup)) {}
-
-    ~SessionManager() noexcept {
-        if (container != nullptr)
-            container->Unref();
-
-        if (shm != nullptr)
-            shm_close(shm);
-    }
-
-    void EnableEvents() {
-        cleanup_timer.Schedule(cleanup_interval);
-    }
-
-    void DisableEvents() {
-        cleanup_timer.Cancel();
-    }
-
-    void Ref() {
-        assert(container != nullptr);
-        assert(shm != nullptr);
-
-        container->Ref();
-        shm_ref(shm);
-    }
-
-    void Abandon() {
-        assert(container != nullptr);
-        assert(shm != nullptr);
-
-        container->Abandon();
-    }
-
-    bool IsAbandoned() const {
-        return container == nullptr || container->abandoned;
-    }
-
-    void AdjustNewSessionId(SessionId &id) {
-        if (cluster_size > 0)
-            id.SetClusterNode(cluster_size, cluster_node);
-    }
-
-    unsigned Count() {
-        assert(container != nullptr);
-
-        return container->Count();
-    }
-
-    unsigned LockCount() {
-        assert(container != nullptr);
-
-        return container->LockCount();
-    }
-
-    bool Visit(bool (*callback)(const Session *session,
-                                void *ctx), void *ctx) {
-        assert(container != nullptr);
-
-        return container->Visit(callback, ctx);
-    }
-
-    Session *Find(SessionId id) {
-        assert(container != nullptr);
-
-        return container->Find(id);
-    }
-
-    Session *LockFind(SessionId id) {
-        assert(container != nullptr);
-
-        return container->LockFind(id);
-    }
-
-    void Insert(Session &session) {
-        container->LockInsert(session);
-
-        if (!cleanup_timer.IsPending())
-            cleanup_timer.Schedule(cleanup_interval);
-    }
-
-    void EraseAndDispose(SessionId id) {
-        assert(container != nullptr);
-
-        container->LockEraseAndDispose(id);
-    }
-
-    void ReplaceAndDispose(Session &old_session, Session &new_session) {
-        container->ReplaceAndDispose(old_session, new_session);
-    }
-
-    void Defragment(SessionId id) {
-        assert(container != nullptr);
-        assert(shm != nullptr);
-
-        container->LockDefragment(id, *shm);
-    }
-
-    bool Purge() noexcept {
-        return container->Purge();
-    }
-
-    void Cleanup() noexcept;
-
-    struct dpool *NewDpool() {
-        return dpool_new(*shm);
-    }
-
-    struct dpool *NewDpoolHarder() {
-        auto *pool = NewDpool();
-        if (pool == nullptr && Purge())
-            /* at least one session has been purged: try again */
-            pool = NewDpool();
-
-        return pool;
-    }
-};
-
-/** the one and only session manager instance */
-static SessionManager *session_manager;
+SessionManager *session_manager;
 
 void
 SessionContainer::EraseAndDispose(Session &session)
@@ -380,6 +243,136 @@ SessionContainer::Cleanup() noexcept
     return !sessions.empty();
 }
 
+SessionManager::SessionManager(EventLoop &event_loop,
+                               std::chrono::seconds idle_timeout,
+                               unsigned _cluster_size,
+                               unsigned _cluster_node) noexcept
+    :cluster_size(_cluster_size), cluster_node(_cluster_node),
+     shm(shm_new(SHM_PAGE_SIZE, SHM_NUM_PAGES)),
+     container(NewFromShm<SessionContainer>(shm, SM_PAGES, idle_timeout)),
+     cleanup_timer(event_loop, BIND_THIS_METHOD(Cleanup)) {}
+
+SessionManager::~SessionManager() noexcept
+{
+    if (container != nullptr)
+        container->Unref();
+
+    if (shm != nullptr)
+        shm_close(shm);
+}
+
+void
+SessionManager::Ref() noexcept
+{
+    assert(container != nullptr);
+    assert(shm != nullptr);
+
+    container->Ref();
+    shm_ref(shm);
+}
+
+void
+SessionManager::Abandon() noexcept
+{
+    assert(container != nullptr);
+    assert(shm != nullptr);
+
+    container->Abandon();
+}
+
+bool
+SessionManager::IsAbandoned() const noexcept
+{
+    return container == nullptr || container->abandoned;
+}
+
+void
+SessionManager::AdjustNewSessionId(SessionId &id) noexcept
+{
+    if (cluster_size > 0)
+        id.SetClusterNode(cluster_size, cluster_node);
+}
+
+unsigned
+SessionManager::Count() noexcept
+{
+    assert(container != nullptr);
+
+    return container->Count();
+}
+
+unsigned
+SessionManager::LockCount() noexcept
+{
+    assert(container != nullptr);
+
+    return container->LockCount();
+}
+
+bool
+SessionManager::Visit(bool (*callback)(const Session *session,
+                                       void *ctx), void *ctx)
+{
+    assert(container != nullptr);
+
+    return container->Visit(callback, ctx);
+}
+
+Session *
+SessionManager::Find(SessionId id) noexcept
+{
+    assert(container != nullptr);
+
+    return container->Find(id);
+}
+
+Session *
+SessionManager::LockFind(SessionId id) noexcept
+{
+    assert(container != nullptr);
+
+    return container->LockFind(id);
+}
+
+void
+SessionManager::Insert(Session &session) noexcept
+{
+    container->LockInsert(session);
+
+    if (!cleanup_timer.IsPending())
+        cleanup_timer.Schedule(cleanup_interval);
+}
+
+void
+SessionManager::EraseAndDispose(SessionId id) noexcept
+{
+    assert(container != nullptr);
+
+    container->LockEraseAndDispose(id);
+}
+
+void
+SessionManager::ReplaceAndDispose(Session &old_session,
+                                  Session &new_session) noexcept
+{
+    container->ReplaceAndDispose(old_session, new_session);
+}
+
+void
+SessionManager::Defragment(SessionId id) noexcept
+{
+    assert(container != nullptr);
+    assert(shm != nullptr);
+
+    container->LockDefragment(id, *shm);
+}
+
+bool
+SessionManager::Purge() noexcept
+{
+    return container->Purge();
+}
+
 void
 SessionManager::Cleanup() noexcept
 {
@@ -387,6 +380,12 @@ SessionManager::Cleanup() noexcept
         cleanup_timer.Schedule(cleanup_interval);
 
     assert(!crash_in_unsafe());
+}
+
+struct dpool *
+SessionManager::NewDpool() noexcept
+{
+    return dpool_new(*shm);
 }
 
 void
@@ -433,30 +432,6 @@ session_manager_abandon()
     session_manager->Abandon();
     delete session_manager;
     session_manager = nullptr;
-}
-
-void
-session_manager_event_add()
-{
-    session_manager->EnableEvents();
-}
-
-void
-session_manager_event_del()
-{
-    session_manager->DisableEvents();
-}
-
-unsigned
-session_manager_get_count()
-{
-    return session_manager->LockCount();
-}
-
-struct dpool *
-session_manager_new_dpool()
-{
-    return session_manager->NewDpool();
 }
 
 bool
@@ -513,12 +488,6 @@ SessionContainer::Purge() noexcept
         Purge();
 
     return true;
-}
-
-void
-session_manager_add(Session &session)
-{
-    session_manager->Insert(session);
 }
 
 static SessionId
@@ -744,11 +713,4 @@ SessionContainer::Visit(bool (*callback)(const Session *session,
     }
 
     return true;
-}
-
-bool
-session_manager_visit(bool (*callback)(const Session *session,
-                                       void *ctx), void *ctx)
-{
-    return session_manager->Visit(callback, ctx);
 }

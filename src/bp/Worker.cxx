@@ -158,7 +158,7 @@ BpInstance::SpawnWorker() noexcept
         workers.clear_and_dispose(DeleteDisposer());
 
         child_process_registry.Clear();
-        session_manager_event_del();
+        session_manager->DisableEvents();
 
         session_manager_init(event_loop,
                              config.session_idle_timeout,
