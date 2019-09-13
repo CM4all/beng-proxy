@@ -193,7 +193,7 @@ struct SessionContainer {
     bool Purge() noexcept;
 
     bool Visit(bool (*callback)(const Session *session,
-                                void *ctx), void *ctx) noexcept;
+                                void *ctx), void *ctx);
 };
 
 static constexpr size_t SHM_PAGE_SIZE = 4096;
@@ -721,7 +721,7 @@ session_delete(SessionId id)
 
 inline bool
 SessionContainer::Visit(bool (*callback)(const Session *session,
-                                         void *ctx), void *ctx) noexcept
+                                         void *ctx), void *ctx)
 {
     const ScopeCrashUnsafe crash_unsafe;
     boost::interprocess::sharable_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
