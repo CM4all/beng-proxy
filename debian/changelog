@@ -14,6 +14,12 @@ cm4all-beng-proxy (16.0.1) unstable; urgency=low
 
  --   
 
+cm4all-beng-proxy (15.23) unstable; urgency=low
+
+  * certdb: fix path vulnerability in ACME "http-01" implementation
+
+ --   
+
 cm4all-beng-proxy (15.22) unstable; urgency=low
 
   * lb: fix TLS session resumption with client certificate

@@ -65,10 +65,21 @@ CreateFile(const char *path, const std::string &contents)
     CreateFile(path, ConstBuffer<void>(contents.data(), contents.length()));
 }
 
+gcc_pure
+static bool
+IsValidAcmeChallengeToken(const std::string &token) noexcept
+{
+    return !token.empty() && token.front() != '.' &&
+        token.find('/') == token.npos;
+}
+
 std::string
 MakeHttp01File(const char *directory, const AcmeChallenge &challenge,
                EVP_PKEY &account_key)
 {
+    if (!IsValidAcmeChallengeToken(challenge.token))
+        throw std::runtime_error("Malformed ACME challenge token");
+
     std::string path = std::string(directory) + "/" + challenge.token;
     CreateFile(path.c_str(), MakeHttp01(challenge, account_key));
     return path;
