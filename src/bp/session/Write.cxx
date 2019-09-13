@@ -114,32 +114,25 @@ public:
 
 }
 
-bool
+void
 session_write_magic(FILE *_file, uint32_t magic)
-try {
+{
     FileWriter file(_file);
     file.Write32(magic);
-    return true;
-} catch (SessionSerializerError) {
-    return false;
 }
 
-bool
+void
 session_write_file_header(FILE *_file)
-try {
+{
     FileWriter file(_file);
-
     file.Write32(MAGIC_FILE);
     file.Write32(sizeof(Session));
-    return true;
-} catch (SessionSerializerError) {
-    return false;
 }
 
-bool
+void
 session_write_file_tail(FILE *file)
 {
-    return session_write_magic(file, MAGIC_END_OF_LIST);
+    session_write_magic(file, MAGIC_END_OF_LIST);
 }
 
 static void
@@ -200,9 +193,9 @@ WriteRealmSession(FileWriter &file, const RealmSession &session)
     file.Write32(MAGIC_END_OF_RECORD);
 }
 
-bool
+void
 session_write(FILE *_file, const Session *session)
-try {
+{
     FileWriter file(_file);
 
     file.WriteT(session->id);
@@ -221,8 +214,4 @@ try {
 
     file.Write32(MAGIC_END_OF_LIST);
     file.Write32(MAGIC_END_OF_RECORD);
-
-    return true;
-} catch (SessionSerializerError) {
-    return false;
 }

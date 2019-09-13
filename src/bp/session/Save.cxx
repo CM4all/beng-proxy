@@ -51,16 +51,17 @@ static bool
 session_save_callback(const Session *session, void *ctx)
 {
     FILE *file = (FILE *)ctx;
-    return session_write_magic(file, MAGIC_SESSION) &&
-        session_write(file, session);
+    session_write_magic(file, MAGIC_SESSION);
+    session_write(file, session);
+    return true;
 }
 
-static bool
+static void
 session_manager_save(FILE *file)
 {
-    return session_write_file_header(file) &&
-        session_manager_visit(session_save_callback, file) &&
-        session_write_file_tail(file);
+    session_write_file_header(file);
+    session_manager_visit(session_save_callback, file);
+    session_write_file_tail(file);
 }
 
 static bool
@@ -134,8 +135,11 @@ session_save()
         return;
     }
 
-    if (!session_manager_save(file)) {
-        LogConcat(2, "SessionManager", "Failed to save sessions");
+    try {
+        session_manager_save(file);
+    } catch (...) {
+        LogConcat(2, "SessionManager", "Failed to save sessions",
+                  std::current_exception());
         fclose(file);
         unlink(path);
         return;

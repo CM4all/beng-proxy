@@ -42,16 +42,28 @@
 
 struct Session;
 
-bool
+/**
+ * Throws on error.
+ */
+void
 session_write_magic(FILE *file, uint32_t magic);
 
-bool
+/**
+ * Throws on error.
+ */
+void
 session_write_file_header(FILE *file);
 
-bool
+/**
+ * Throws on error.
+ */
+void
 session_write_file_tail(FILE *file);
 
-bool
+/**
+ * Throws on error.
+ */
+void
 session_write(FILE *file, const Session *session);
 
 #endif
