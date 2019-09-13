@@ -33,6 +33,7 @@
 #include "Write.hxx"
 #include "File.hxx"
 #include "Session.hxx"
+#include "io/BufferedOutputStream.hxx"
 
 #include <stdexcept>
 
@@ -48,19 +49,19 @@ public:
 };
 
 class FileWriter {
-    FILE *const file;
+    BufferedOutputStream &os;
 
 public:
-    explicit FileWriter(FILE *_file):file(_file) {}
+    explicit FileWriter(BufferedOutputStream &_os) noexcept
+        :os(_os) {}
 
     void WriteBuffer(const void *buffer, size_t size) {
-        if (fwrite(buffer, 1, size, file) != size)
-            throw SessionSerializerError("Write error");
+        os.Write(buffer, size);
     }
 
     template<typename T>
     void WriteT(T &value) {
-        WriteBuffer(&value, sizeof(value));
+        os.WriteT<T>(value);
     }
 
     void WriteBool(const bool &value) {
@@ -122,22 +123,22 @@ public:
 }
 
 void
-session_write_magic(FILE *_file, uint32_t magic)
+session_write_magic(BufferedOutputStream &os, uint32_t magic)
 {
-    FileWriter file(_file);
+    FileWriter file(os);
     file.Write32(magic);
 }
 
 void
-session_write_file_header(FILE *_file)
+session_write_file_header(BufferedOutputStream &os)
 {
-    FileWriter file(_file);
+    FileWriter file(os);
     file.Write32(MAGIC_FILE);
     file.Write32(sizeof(Session));
 }
 
 void
-session_write_file_tail(FILE *file)
+session_write_file_tail(BufferedOutputStream &file)
 {
     session_write_magic(file, MAGIC_END_OF_LIST);
 }
@@ -201,9 +202,9 @@ WriteRealmSession(FileWriter &file, const RealmSession &session)
 }
 
 void
-session_write(FILE *_file, const Session *session)
+session_write(BufferedOutputStream &os, const Session *session)
 {
-    FileWriter file(_file);
+    FileWriter file(os);
 
     file.WriteT(session->id);
     file.Write(session->expires);

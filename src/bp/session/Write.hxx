@@ -41,29 +41,30 @@
 #include <stdio.h>
 
 struct Session;
+class BufferedOutputStream;
 
 /**
  * Throws on error.
  */
 void
-session_write_magic(FILE *file, uint32_t magic);
+session_write_magic(BufferedOutputStream &os, uint32_t magic);
 
 /**
  * Throws on error.
  */
 void
-session_write_file_header(FILE *file);
+session_write_file_header(BufferedOutputStream &os);
 
 /**
  * Throws on error.
  */
 void
-session_write_file_tail(FILE *file);
+session_write_file_tail(BufferedOutputStream &os);
 
 /**
  * Throws on error.
  */
 void
-session_write(FILE *file, const Session *session);
+session_write(BufferedOutputStream &os, const Session *session);
 
 #endif

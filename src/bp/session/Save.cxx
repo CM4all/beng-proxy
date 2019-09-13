@@ -37,30 +37,29 @@
 #include "Manager.hxx"
 #include "Session.hxx"
 #include "shm/dpool.hxx"
+#include "io/BufferedOutputStream.hxx"
+#include "io/FdOutputStream.hxx"
+#include "io/FileWriter.hxx"
 #include "io/Logger.hxx"
 
 #include <assert.h>
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
 
 static const char *session_save_path;
 
 static bool
 session_save_callback(const Session *session, void *ctx)
 {
-    FILE *file = (FILE *)ctx;
+    auto &file = *(BufferedOutputStream *)ctx;
     session_write_magic(file, MAGIC_SESSION);
     session_write(file, session);
     return true;
 }
 
 static void
-session_manager_save(FILE *file)
+session_manager_save(BufferedOutputStream &file)
 {
     session_write_file_header(file);
-    session_manager_visit(session_save_callback, file);
+    session_manager_visit(session_save_callback, &file);
     session_write_file_tail(file);
 }
 
@@ -116,43 +115,23 @@ session_manager_load(FILE *file)
 
 void
 session_save()
-{
+try {
     LogConcat(5, "SessionManager", "saving sessions to ", session_save_path);
 
-    size_t length = strlen(session_save_path);
-    char path[length + 5];
-    memcpy(path, session_save_path, length);
-    memcpy(path + length, ".tmp", 5);
+    FileWriter fw(session_save_path);
+    FdOutputStream fos(fw.GetFileDescriptor());
 
-    if (unlink(path) < 0 && errno != ENOENT) {
-        LogConcat(2, "SessionManager", "Failed to delete ", path, ": ", strerror(errno));
-        return;
+    {
+        BufferedOutputStream bos(fos);
+        session_manager_save(bos);
+        bos.Flush();
     }
 
-    FILE *file = fopen(path, "wb");
-    if (file == nullptr) {
-        LogConcat(2, "SessionManager", "Failed to create ", path, ": ", strerror(errno));
-        return;
-    }
-
-    try {
-        session_manager_save(file);
-    } catch (...) {
-        LogConcat(2, "SessionManager", "Failed to save sessions",
-                  std::current_exception());
-        fclose(file);
-        unlink(path);
-        return;
-    }
-
-    fclose(file);
-
-    if (rename(path, session_save_path) < 0) {
-        LogConcat(2, "SessionManager",
-                  "Failed to rename ", path, " to ", session_save_path,
-                  ": ", strerror(errno));
-        unlink(path);
-   }
+    fw.Commit();
+} catch (...) {
+    LogConcat(2, "SessionManager", "Failed to save sessions",
+              std::current_exception());
+    return;
 }
 
 void
