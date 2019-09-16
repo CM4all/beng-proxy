@@ -107,6 +107,8 @@ public:
     gcc_pure
     Session *LockFind(SessionId id) noexcept;
 
+    void Put(Session &session) noexcept;
+
     /**
      * Add an initialized #Session object to the session manager.  Its
      * #dpool will be destroyed automatically when the session

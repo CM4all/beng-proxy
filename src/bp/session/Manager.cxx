@@ -611,6 +611,28 @@ session_put_internal(Session *session)
 }
 
 void
+SessionManager::Put(Session &session) noexcept
+{
+    assert(crash_in_unsafe());
+
+    SessionId defragment;
+
+    if ((session.counter % 1024) == 0 &&
+        dpool_is_fragmented(session.pool))
+        defragment = session.id;
+    else
+        defragment.Clear();
+
+    session_put_internal(&session);
+
+    if (defragment.IsDefined())
+        /* the shared memory pool has become too fragmented;
+           defragment the session by duplicating it into a new shared
+           memory pool */
+        Defragment(defragment);
+}
+
+void
 SessionContainer::Defragment(SessionId id, struct shm &shm)
 {
     assert(crash_in_unsafe());
@@ -632,22 +654,7 @@ SessionContainer::Defragment(SessionId id, struct shm &shm)
 void
 session_put(Session *session)
 {
-    SessionId defragment;
-
-    if ((session->counter % 1024) == 0 &&
-        dpool_is_fragmented(session->pool))
-        defragment = session->id;
-    else
-        defragment.Clear();
-
-    session_put_internal(session);
-
-    if (defragment.IsDefined())
-        /* the shared memory pool has become too fragmented;
-           defragment the session by duplicating it into a new shared
-           memory pool */
-        session_manager->Defragment(defragment);
-
+    session_manager->Put(*session);
     crash_unsafe_leave();
 }
 
