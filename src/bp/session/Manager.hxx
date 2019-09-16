@@ -95,9 +95,6 @@ public:
      * Returns the number of sessions.
      */
     gcc_pure
-    unsigned Count() noexcept;
-
-    gcc_pure
     unsigned LockCount() noexcept;
 
     /**
@@ -106,9 +103,6 @@ public:
      */
     bool Visit(bool (*callback)(const Session *session,
                                 void *ctx), void *ctx);
-
-    gcc_pure
-    Session *Find(SessionId id) noexcept;
 
     gcc_pure
     Session *LockFind(SessionId id) noexcept;

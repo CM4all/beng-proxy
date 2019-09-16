@@ -294,14 +294,6 @@ SessionManager::AdjustNewSessionId(SessionId &id) noexcept
 }
 
 unsigned
-SessionManager::Count() noexcept
-{
-    assert(container != nullptr);
-
-    return container->Count();
-}
-
-unsigned
 SessionManager::LockCount() noexcept
 {
     assert(container != nullptr);
@@ -316,14 +308,6 @@ SessionManager::Visit(bool (*callback)(const Session *session,
     assert(container != nullptr);
 
     return container->Visit(callback, ctx);
-}
-
-Session *
-SessionManager::Find(SessionId id) noexcept
-{
-    assert(container != nullptr);
-
-    return container->Find(id);
 }
 
 Session *
@@ -480,7 +464,7 @@ SessionContainer::Purge() noexcept
        which would lead to calling this (very expensive) function too
        often */
     bool again = purge_sessions.size() < 16 &&
-        session_manager->Count() > SHM_NUM_PAGES - 256;
+        Count() > SHM_NUM_PAGES - 256;
 
     lock.unlock();
 
@@ -675,7 +659,7 @@ SessionContainer::LockEraseAndDispose(SessionId id)
     const ScopeCrashUnsafe crash_unsafe;
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
-    Session *session = session_manager->Find(id);
+    Session *session = Find(id);
     if (session != nullptr) {
         session_put_internal(session);
         EraseAndDispose(*session);
