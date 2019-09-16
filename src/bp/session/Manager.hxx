@@ -89,7 +89,7 @@ public:
     gcc_pure
     bool IsAbandoned() const noexcept;
 
-    void AdjustNewSessionId(SessionId &id) noexcept;
+    void AdjustNewSessionId(SessionId &id) const noexcept;
 
     /**
      * Returns the number of sessions.
@@ -121,6 +121,8 @@ public:
     void ReplaceAndDispose(Session &old_session,
                            Session &new_session) noexcept;
 
+    Session *CreateSession() noexcept;
+
     void Defragment(SessionId id) noexcept;
 
     bool Purge() noexcept;
@@ -142,6 +144,9 @@ public:
 
         return pool;
     }
+
+private:
+    SessionId GenerateSessionId() const noexcept;
 };
 
 /** the one and only session manager instance */

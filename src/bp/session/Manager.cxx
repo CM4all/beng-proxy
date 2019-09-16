@@ -289,7 +289,7 @@ SessionManager::IsAbandoned() const noexcept
 }
 
 void
-SessionManager::AdjustNewSessionId(SessionId &id) noexcept
+SessionManager::AdjustNewSessionId(SessionId &id) const noexcept
 {
     if (cluster_size > 0)
         id.SetClusterNode(cluster_size, cluster_node);
@@ -476,28 +476,25 @@ SessionContainer::Purge() noexcept
     return true;
 }
 
-static SessionId
-GenerateSessionId()
+inline SessionId
+SessionManager::GenerateSessionId() const noexcept
 {
     SessionId id;
     id.Generate();
-
-    if (session_manager != nullptr)
-        session_manager->AdjustNewSessionId(id);
-
+    AdjustNewSessionId(id);
     return id;
 }
 
-static Session *
-session_new_unsafe()
+Session *
+SessionManager::CreateSession() noexcept
 {
     assert(crash_in_unsafe());
     assert(locked_session == nullptr);
 
-    if (session_manager->IsAbandoned())
+    if (IsAbandoned())
         return nullptr;
 
-    struct dpool *pool = session_manager->NewDpoolHarder();
+    struct dpool *pool = NewDpoolHarder();
     if (pool == nullptr)
         return nullptr;
 
@@ -515,7 +512,7 @@ session_new_unsafe()
 #endif
     session->mutex.lock();
 
-    session_manager->Insert(*session);
+    Insert(*session);
 
     return session;
 }
@@ -524,7 +521,7 @@ Session *
 session_new()
 {
     crash_unsafe_enter();
-    Session *session = session_new_unsafe();
+    Session *session = session_manager->CreateSession();
     if (session == nullptr)
         crash_unsafe_leave();
     return session;
