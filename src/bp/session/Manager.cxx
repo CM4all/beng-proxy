@@ -156,6 +156,8 @@ struct SessionContainer {
         return Find(id);
     }
 
+    void Put(Session &session) noexcept;
+
     void Insert(Session &session) {
         sessions.insert(session);
     }
@@ -597,13 +599,13 @@ session_get(SessionId id)
     return session;
 }
 
-static void
-session_put_internal(Session *session)
+void
+SessionContainer::Put(Session &session) noexcept
 {
     assert(crash_in_unsafe());
-    assert(session == locked_session);
+    assert(&session == locked_session);
 
-    session->mutex.unlock();
+    session.mutex.unlock();
 
 #ifndef NDEBUG
     locked_session = nullptr;
@@ -623,7 +625,7 @@ SessionManager::Put(Session &session) noexcept
     else
         defragment.Clear();
 
-    session_put_internal(&session);
+    container->Put(session);
 
     if (defragment.IsDefined())
         /* the shared memory pool has become too fragmented;
@@ -646,7 +648,7 @@ SessionContainer::Defragment(SessionId id, struct shm &shm)
        SessionContainer::EraseAndDispose() expects the session to be
        unlocked.  This is ok, because we're holding the session
        manager lock at this point. */
-    session_put_internal(session);
+    Put(*session);
 
     Defragment(*session, shm);
 }
@@ -668,7 +670,7 @@ SessionContainer::LockEraseAndDispose(SessionId id)
 
     Session *session = Find(id);
     if (session != nullptr) {
-        session_put_internal(session);
+        Put(*session);
         EraseAndDispose(*session);
     }
 }
