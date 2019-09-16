@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,12 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Session management.
- */
-
-#ifndef BENG_PROXY_SESSION_MANAGER_HXX
-#define BENG_PROXY_SESSION_MANAGER_HXX
+#pragma once
 
 #include "event/TimerEvent.hxx"
 #include "util/Compiler.h"
@@ -148,58 +143,3 @@ public:
 private:
     SessionId GenerateSessionId() const noexcept;
 };
-
-/** the one and only session manager instance */
-extern SessionManager *session_manager;
-
-/**
- * Initialize the global session manager or increase the reference
- * counter.
- *
- * @param idle_timeout the idle timeout of sessions
- * @param cluster_size the number of nodes in the cluster
- * @param cluster_node the index of this node in the cluster
- */
-void
-session_manager_init(EventLoop &event_loop, std::chrono::seconds idle_timeout,
-                     unsigned cluster_size, unsigned cluster_node);
-
-/**
- * Decrease the reference counter and destroy the global session
- * manager if it has become zero.
- */
-void
-session_manager_deinit();
-
-/**
- * Release the session manager and try not to access the shared
- * memory, because we assume it may be corrupted.
- */
-void
-session_manager_abandon();
-
-/**
- * Create a new session with a random session id.
- *
- * The returned session object is locked and must be unlocked with
- * session_put().
- */
-Session * gcc_malloc
-session_new();
-
-class ScopeSessionManagerInit {
-public:
-    template<typename... Args>
-    ScopeSessionManagerInit(Args&&... args) {
-        session_manager_init(std::forward<Args>(args)...);
-    }
-
-    ~ScopeSessionManagerInit() noexcept {
-        session_manager_deinit();
-    }
-
-    ScopeSessionManagerInit(const ScopeSessionManagerInit &) = delete;
-    ScopeSessionManagerInit &operator=(const ScopeSessionManagerInit &) = delete;
-};
-
-#endif

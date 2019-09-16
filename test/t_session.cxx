@@ -31,7 +31,7 @@
  */
 
 #include "bp/session/Session.hxx"
-#include "bp/session/Manager.hxx"
+#include "bp/session/Glue.hxx"
 #include "shm/dpool.hxx"
 #include "crash.hxx"
 #include "event/Loop.hxx"

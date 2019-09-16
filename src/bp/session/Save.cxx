@@ -35,6 +35,7 @@
 #include "Read.hxx"
 #include "File.hxx"
 #include "Manager.hxx"
+#include "Glue.hxx"
 #include "Session.hxx"
 #include "shm/dpool.hxx"
 #include "io/BufferedOutputStream.hxx"

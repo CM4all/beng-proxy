@@ -36,6 +36,7 @@
 #include "Instance.hxx"
 #include "http_server/http_server.hxx"
 #include "session/Manager.hxx"
+#include "session/Glue.hxx"
 #include "spawn/Client.hxx"
 #include "event/net/ServerSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"

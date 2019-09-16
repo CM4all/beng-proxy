@@ -39,7 +39,7 @@
 #include "widget/Class.hxx"
 #include "bp/XmlProcessor.hxx"
 #include "penv.hxx"
-#include "bp/session/Manager.hxx"
+#include "bp/session/Glue.hxx"
 #include "bp/session/Session.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Registry.hxx"

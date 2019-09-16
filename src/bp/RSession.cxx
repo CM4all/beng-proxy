@@ -34,7 +34,7 @@
 #include "Connection.hxx"
 #include "Instance.hxx"
 #include "session/Session.hxx"
-#include "session/Manager.hxx"
+#include "session/Glue.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/CookieServer.hxx"
 #include "bot.h"

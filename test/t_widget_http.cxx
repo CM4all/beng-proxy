@@ -52,7 +52,7 @@
 #include "istream/istream_null.hxx"
 #include "istream/AutoPipeIstream.hxx"
 #include "bp/session/Session.hxx"
-#include "bp/session/Manager.hxx"
+#include "bp/session/Glue.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
 #include "util/Cancellable.hxx"

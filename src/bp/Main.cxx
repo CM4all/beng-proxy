@@ -40,7 +40,7 @@
 #include "crash.hxx"
 #include "pool/pool.hxx"
 #include "fb_pool.hxx"
-#include "session/Manager.hxx"
+#include "session/Glue.hxx"
 #include "session/Save.hxx"
 #include "tcp_stock.hxx"
 #include "translation/Stock.hxx"

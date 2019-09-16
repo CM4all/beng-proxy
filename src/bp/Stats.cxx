@@ -42,6 +42,7 @@
 #include "fcache.hxx"
 #include "nfs/Cache.hxx"
 #include "session/Manager.hxx"
+#include "session/Glue.hxx"
 #include "AllocatorStats.hxx"
 #include "beng-proxy/Control.hxx"
 #include "util/ByteOrder.hxx"

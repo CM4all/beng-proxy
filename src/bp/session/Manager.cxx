@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -210,8 +210,6 @@ static constexpr unsigned SM_PAGES = (sizeof(SessionContainer) + SHM_PAGE_SIZE -
 static const Session *locked_session;
 #endif
 
-SessionManager *session_manager;
-
 void
 SessionContainer::EraseAndDispose(Session &session)
 {
@@ -374,23 +372,6 @@ SessionManager::NewDpool() noexcept
     return dpool_new(*shm);
 }
 
-void
-session_manager_init(EventLoop &event_loop, std::chrono::seconds idle_timeout,
-                     unsigned cluster_size, unsigned cluster_node)
-{
-    assert((cluster_size == 0 && cluster_node == 0) ||
-           cluster_node < cluster_size);
-
-    random_seed();
-
-    if (session_manager == nullptr) {
-        session_manager = new SessionManager(event_loop, idle_timeout,
-                                             cluster_size, cluster_node);
-    } else {
-        session_manager->Ref();
-    }
-}
-
 inline
 SessionContainer::~SessionContainer()
 {
@@ -398,26 +379,6 @@ SessionContainer::~SessionContainer()
     boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
     sessions.clear_and_dispose(Session::Disposer());
-}
-
-void
-session_manager_deinit()
-{
-    assert(session_manager != nullptr);
-    assert(locked_session == nullptr);
-
-    delete session_manager;
-    session_manager = nullptr;
-}
-
-void
-session_manager_abandon()
-{
-    assert(session_manager != nullptr);
-
-    session_manager->Abandon();
-    delete session_manager;
-    session_manager = nullptr;
 }
 
 bool
@@ -517,16 +478,6 @@ SessionManager::CreateSession() noexcept
     return session;
 }
 
-Session *
-session_new()
-{
-    crash_unsafe_enter();
-    Session *session = session_manager->CreateSession();
-    if (session == nullptr)
-        crash_unsafe_leave();
-    return session;
-}
-
 /**
  * After a while the dpool may have fragmentations, and memory is
  * wasted.  This function duplicates the session into a fresh dpool,
@@ -576,24 +527,6 @@ SessionContainer::Find(SessionId id)
     session.expires.Touch(idle_timeout);
     ++session.counter;
     return &session;
-}
-
-Session *
-session_get(SessionId id)
-{
-    assert(locked_session == nullptr);
-
-    if (!id.IsDefined())
-        return nullptr;
-
-    crash_unsafe_enter();
-
-    Session *session = session_manager->LockFind(id);
-
-    if (session == nullptr)
-        crash_unsafe_leave();
-
-    return session;
 }
 
 void
@@ -651,13 +584,6 @@ SessionContainer::Defragment(SessionId id, struct shm &shm)
 }
 
 void
-session_put(Session *session)
-{
-    session_manager->Put(*session);
-    crash_unsafe_leave();
-}
-
-void
 SessionContainer::LockEraseAndDispose(SessionId id)
 {
     assert(locked_session == nullptr);
@@ -670,12 +596,6 @@ SessionContainer::LockEraseAndDispose(SessionId id)
         Put(*session);
         EraseAndDispose(*session);
     }
-}
-
-void
-session_delete(SessionId id)
-{
-    session_manager->EraseAndDispose(id);
 }
 
 inline bool
