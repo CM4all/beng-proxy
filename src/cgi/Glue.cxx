@@ -49,7 +49,7 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
         HttpResponseHandler &handler,
         CancellablePointer &cancel_ptr)
 {
-    auto *stopwatch = stopwatch_new(*pool, address->path);
+    StopwatchPtr stopwatch(*pool, address->path);
 
     AbortFlag abort_flag(cancel_ptr);
 
@@ -70,7 +70,8 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
         return;
     }
 
-    stopwatch_event(stopwatch, "fork");
+    stopwatch.RecordEvent("fork");
 
-    cgi_client_new(*pool, stopwatch, std::move(input), handler, cancel_ptr);
+    cgi_client_new(*pool, std::move(stopwatch),
+                   std::move(input), handler, cancel_ptr);
 }

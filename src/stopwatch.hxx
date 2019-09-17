@@ -34,7 +34,7 @@
 
 #include "util/Compiler.h"
 
-#include <stddef.h>
+#include <utility>
 
 struct AllocatorPtr;
 struct Stopwatch;
@@ -43,6 +43,34 @@ class SocketDescriptor;
 
 #ifdef ENABLE_STOPWATCH
 
+class StopwatchPtr {
+    Stopwatch *stopwatch = nullptr;
+
+public:
+    StopwatchPtr() = default;
+    StopwatchPtr(std::nullptr_t) noexcept {}
+
+    StopwatchPtr(AllocatorPtr alloc, const char *name,
+                 const char *suffix=nullptr) noexcept;
+
+    StopwatchPtr(AllocatorPtr alloc, SocketAddress address,
+                 const char *suffix=nullptr) noexcept;
+
+    StopwatchPtr(AllocatorPtr alloc, SocketDescriptor fd,
+                 const char *suffix=nullptr) noexcept;
+
+    StopwatchPtr(StopwatchPtr &&src) noexcept
+        :stopwatch(std::exchange(src.stopwatch, nullptr)) {}
+
+    operator bool() const noexcept {
+        return stopwatch != nullptr;
+    }
+
+    void RecordEvent(const char *name) const noexcept;
+
+    void Dump() const noexcept;
+};
+
 void
 stopwatch_enable();
 
@@ -50,26 +78,27 @@ gcc_const
 bool
 stopwatch_is_enabled();
 
-Stopwatch *
-stopwatch_new(AllocatorPtr alloc, const char *name, const char *suffix=nullptr);
-
-Stopwatch *
-stopwatch_new(AllocatorPtr alloc, SocketAddress address, const char *suffix);
-
-Stopwatch *
-stopwatch_new(AllocatorPtr alloc, SocketDescriptor fd, const char *suffix);
-
-void
-stopwatch_event(Stopwatch *stopwatch, const char *name);
-
-void
-stopwatch_dump(const Stopwatch *stopwatch);
-
 #else
 
 #include "AllocatorPtr.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
+
+class StopwatchPtr {
+public:
+    StopwatchPtr() = default;
+    StopwatchPtr(std::nullptr_t) noexcept {}
+
+    template<typename N>
+    StopwatchPtr(AllocatorPtr, N &&, const char *=nullptr) noexcept {}
+
+    operator bool() const noexcept {
+        return false;
+    }
+
+    void RecordEvent(const char *) const noexcept {}
+    void Dump() const noexcept {}
+};
 
 static inline void
 stopwatch_enable()
@@ -80,47 +109,6 @@ static inline bool
 stopwatch_is_enabled()
 {
     return false;
-}
-
-static inline Stopwatch *
-stopwatch_new(AllocatorPtr alloc, const char *name, const char *suffix=nullptr)
-{
-    (void)pool;
-    (void)name;
-    (void)suffix;
-
-    return nullptr;
-}
-
-static inline Stopwatch *
-stopwatch_new(AllocatorPtr alloc, SocketAddress, const char *suffix)
-{
-    (void)pool;
-    (void)suffix;
-
-    return nullptr;
-}
-
-static inline Stopwatch *
-stopwatch_new(AllocatorPtr alloc, SocketDescriptor, const char *suffix)
-{
-    (void)pool;
-    (void)suffix;
-
-    return nullptr;
-}
-
-static inline void
-stopwatch_event(Stopwatch *stopwatch, const char *name)
-{
-    (void)stopwatch;
-    (void)name;
-}
-
-static inline void
-stopwatch_dump(const Stopwatch *stopwatch)
-{
-    (void)stopwatch;
 }
 
 #endif

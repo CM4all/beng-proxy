@@ -59,7 +59,7 @@
 class WasRequest final : StockGetHandler, Cancellable, WasLease, PoolLeakDetector {
     struct pool &pool;
 
-    Stopwatch *const stopwatch;
+    StopwatchPtr stopwatch;
 
     const char *const site_name;
 
@@ -81,7 +81,7 @@ class WasRequest final : StockGetHandler, Cancellable, WasLease, PoolLeakDetecto
 
 public:
     WasRequest(struct pool &_pool,
-               Stopwatch *_stopwatch,
+               StopwatchPtr &&_stopwatch,
                const char *_site_name,
                http_method_t _method, const char *_uri,
                const char *_script_name, const char *_path_info,
@@ -93,7 +93,7 @@ public:
                CancellablePointer &_cancel_ptr)
         :PoolLeakDetector(_pool),
          pool(_pool),
-         stopwatch(_stopwatch),
+         stopwatch(std::move(_stopwatch)),
          site_name(_site_name),
          method(_method),
          uri(_uri), script_name(_script_name),
@@ -157,7 +157,7 @@ WasRequest::OnStockItemReady(StockItem &item) noexcept
 
     const auto &process = was_stock_item_get(item);
 
-    was_client_request(pool, item.stock.GetEventLoop(), stopwatch,
+    was_client_request(pool, item.stock.GetEventLoop(), std::move(stopwatch),
                        process.control,
                        process.input, process.output,
                        *this,
@@ -195,7 +195,7 @@ GetComaClass(ConstBuffer<const char *> parameters)
     return nullptr;
 }
 
-static Stopwatch *
+static StopwatchPtr
 stopwatch_new_was(struct pool &pool, const char *path, const char *uri,
                   const char *path_info,
                   ConstBuffer<const char *> parameters)
@@ -218,7 +218,7 @@ stopwatch_new_was(struct pool &pool, const char *path, const char *uri,
     if (path_info != nullptr && *path_info != 0)
         uri = path_info;
 
-    return stopwatch_new(pool, p_strcat(&pool, path, " ", uri, nullptr));
+    return StopwatchPtr(pool, p_strcat(&pool, path, " ", uri, nullptr));
 }
 
 void

@@ -33,6 +33,7 @@
 #include "was/Client.hxx"
 #include "was/Launch.hxx"
 #include "was/Lease.hxx"
+#include "stopwatch.hxx"
 #include "lease.hxx"
 #include "HttpResponseHandler.hxx"
 #include "direct.hxx"

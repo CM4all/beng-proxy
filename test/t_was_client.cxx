@@ -36,6 +36,7 @@
 
 #include "t_client.hxx"
 #include "tio.hxx"
+#include "stopwatch.hxx"
 #include "was/Client.hxx"
 #include "was/Server.hxx"
 #include "was/Lease.hxx"

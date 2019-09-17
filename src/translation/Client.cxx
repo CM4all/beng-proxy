@@ -54,7 +54,7 @@ static const uint8_t PROTOCOL_VERSION = 3;
 class TranslateClient final : BufferedSocketHandler, Cancellable {
     struct pool &pool;
 
-    Stopwatch *const stopwatch;
+    const StopwatchPtr stopwatch;
 
     BufferedSocket socket;
     struct lease_ref lease_ref;
@@ -111,7 +111,7 @@ private:
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
-        stopwatch_event(stopwatch, "cancel");
+        stopwatch.RecordEvent("cancel");
         ReleaseSocket(false);
         Destroy();
     }
@@ -125,7 +125,7 @@ TranslateClient::ReleaseSocket(bool reuse) noexcept
 {
     assert(socket.IsConnected());
 
-    stopwatch_dump(stopwatch);
+    stopwatch.Dump();
 
     socket.Abandon();
     socket.Destroy();
@@ -136,7 +136,7 @@ TranslateClient::ReleaseSocket(bool reuse) noexcept
 void
 TranslateClient::Fail(std::exception_ptr ep) noexcept
 {
-    stopwatch_event(stopwatch, "error");
+    stopwatch.RecordEvent("error");
 
     ReleaseSocket(false);
 
@@ -216,7 +216,7 @@ TranslateClient::TryWrite() noexcept
     if (request.IsEOF()) {
         /* the buffer is empty, i.e. the request has been sent */
 
-        stopwatch_event(stopwatch, "request");
+        stopwatch.RecordEvent("request");
 
         socket.UnscheduleWrite();
         return socket.Read(true);
@@ -239,7 +239,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
                                  const TranslateHandler &_handler, void *_ctx,
                                  CancellablePointer &cancel_ptr) noexcept
     :pool(p),
-     stopwatch(stopwatch_new(p, fd, request2.GetDiagnosticName())),
+     stopwatch(p, fd, request2.GetDiagnosticName()),
      socket(event_loop),
      request(std::move(_request)),
      handler(_handler), handler_ctx(_ctx),

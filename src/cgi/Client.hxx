@@ -35,7 +35,7 @@
 #include "http/Method.h"
 
 struct pool;
-struct Stopwatch;
+class StopwatchPtr;
 class UnusedIstreamPtr;
 class HttpResponseHandler;
 class CancellablePointer;
@@ -46,7 +46,7 @@ class CancellablePointer;
  * @param input the stream received from the child process
  */
 void
-cgi_client_new(struct pool &pool, Stopwatch *stopwatch,
+cgi_client_new(struct pool &pool, StopwatchPtr stopwatch,
                UnusedIstreamPtr input,
                HttpResponseHandler &handler,
                CancellablePointer &cancel_ptr);

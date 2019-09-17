@@ -37,13 +37,13 @@
 #include "stopwatch.hxx"
 
 class StopwatchIstream final : public ForwardIstream {
-    Stopwatch &stopwatch;
+    const StopwatchPtr stopwatch;
 
 public:
     StopwatchIstream(struct pool &p, UnusedIstreamPtr _input,
-                     Stopwatch &_stopwatch)
+                     StopwatchPtr &&_stopwatch)
         :ForwardIstream(p, std::move(_input)),
-         stopwatch(_stopwatch) {}
+         stopwatch(std::move(_stopwatch)) {}
 
     /* virtual methods from class Istream */
 
@@ -63,8 +63,8 @@ public:
 void
 StopwatchIstream::OnEof() noexcept
 {
-    stopwatch_event(&stopwatch, "end");
-    stopwatch_dump(&stopwatch);
+    stopwatch.RecordEvent("end");
+    stopwatch.Dump();
 
     ForwardIstream::OnEof();
 }
@@ -72,8 +72,8 @@ StopwatchIstream::OnEof() noexcept
 void
 StopwatchIstream::OnError(std::exception_ptr ep) noexcept
 {
-    stopwatch_event(&stopwatch, "abort");
-    stopwatch_dump(&stopwatch);
+    stopwatch.RecordEvent("abort");
+    stopwatch.Dump();
 
     ForwardIstream::OnError(ep);
 }
@@ -88,8 +88,8 @@ StopwatchIstream::_AsFd() noexcept
 {
     int fd = input.AsFd();
     if (fd >= 0) {
-        stopwatch_event(&stopwatch, "as_fd");
-        stopwatch_dump(&stopwatch);
+        stopwatch.RecordEvent("as_fd");
+        stopwatch.Dump();
         Destroy();
     }
 
@@ -103,11 +103,11 @@ StopwatchIstream::_AsFd() noexcept
 
 UnusedIstreamPtr
 istream_stopwatch_new(struct pool &pool, UnusedIstreamPtr input,
-                      Stopwatch *_stopwatch)
+                      StopwatchPtr stopwatch)
 {
-    if (_stopwatch == nullptr)
+    if (!stopwatch)
         return input;
 
     return NewIstreamPtr<StopwatchIstream>(pool, std::move(input),
-                                           *_stopwatch);
+                                           std::move(stopwatch));
 }

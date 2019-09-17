@@ -49,7 +49,7 @@ class PConnectSocket final : Cancellable, ConnectSocketHandler {
     ConnectSocket connect;
 
 #ifdef ENABLE_STOPWATCH
-    Stopwatch &stopwatch;
+    const StopwatchPtr stopwatch;
 #endif
 
     ConnectSocketHandler &handler;
@@ -58,13 +58,13 @@ public:
     PConnectSocket(EventLoop &event_loop,
                    UniqueSocketDescriptor &&_fd, Event::Duration timeout,
 #ifdef ENABLE_STOPWATCH
-                   Stopwatch &_stopwatch,
+                   StopwatchPtr &&_stopwatch,
 #endif
                    ConnectSocketHandler &_handler,
                    CancellablePointer &cancel_ptr)
         :connect(event_loop, *this),
 #ifdef ENABLE_STOPWATCH
-         stopwatch(_stopwatch),
+         stopwatch(std::move(_stopwatch)),
 #endif
          handler(_handler) {
         cancel_ptr = *this;
@@ -112,8 +112,8 @@ void
 PConnectSocket::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
 {
 #ifdef ENABLE_STOPWATCH
-    stopwatch_event(&stopwatch, "connect");
-    stopwatch_dump(&stopwatch);
+    stopwatch.RecordEvent("connect");
+    stopwatch.Dump();
 #endif
 
     auto &_handler = handler;
@@ -126,8 +126,8 @@ void
 PConnectSocket::OnSocketConnectTimeout() noexcept
 {
 #ifdef ENABLE_STOPWATCH
-    stopwatch_event(&stopwatch, "timeout");
-    stopwatch_dump(&stopwatch);
+    stopwatch.RecordEvent("timeout");
+    stopwatch.Dump();
 #endif
 
     auto &_handler = handler;
@@ -140,8 +140,8 @@ void
 PConnectSocket::OnSocketConnectError(std::exception_ptr ep) noexcept
 {
 #ifdef ENABLE_STOPWATCH
-    stopwatch_event(&stopwatch, "error");
-    stopwatch_dump(&stopwatch);
+    stopwatch.RecordEvent("timeout");
+    stopwatch.Dump();
 #endif
 
     auto &_handler = handler;
@@ -194,13 +194,13 @@ client_socket_new(EventLoop &event_loop, AllocatorPtr alloc,
     }
 
 #ifdef ENABLE_STOPWATCH
-    Stopwatch *stopwatch = stopwatch_new(alloc, address, nullptr);
+    StopwatchPtr stopwatch(alloc, address);
 #endif
 
     if (fd.Connect(address)) {
 #ifdef ENABLE_STOPWATCH
-        stopwatch_event(stopwatch, "connect");
-        stopwatch_dump(stopwatch);
+        stopwatch.RecordEvent("connect");
+        stopwatch.Dump();
 #endif
 
         handler.OnSocketConnectSuccess(std::move(fd));
@@ -208,7 +208,7 @@ client_socket_new(EventLoop &event_loop, AllocatorPtr alloc,
         alloc.New<PConnectSocket>(event_loop,
                                   std::move(fd), timeout,
 #ifdef ENABLE_STOPWATCH
-                                  *stopwatch,
+                                  std::move(stopwatch),
 #endif
                                   handler, cancel_ptr);
     } else {

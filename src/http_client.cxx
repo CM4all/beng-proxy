@@ -146,7 +146,7 @@ class HttpClient final : PoolHolder, BufferedSocketHandler, IstreamHandler, Canc
 
     const char *const peer_name;
 
-    Stopwatch *const stopwatch;
+    const StopwatchPtr stopwatch;
 
     EventLoop &event_loop;
 
@@ -230,7 +230,7 @@ public:
                CancellablePointer &cancel_ptr);
 
     ~HttpClient() noexcept {
-        stopwatch_dump(stopwatch);
+        stopwatch.Dump();
 
         if (!socket.IsReleased())
             ReleaseSocket(false, false);
@@ -501,7 +501,7 @@ HttpClient::Close()
 {
     assert(response.state == Response::State::BODY);
 
-    stopwatch_event(stopwatch, "close");
+    stopwatch.RecordEvent("close");
 
     if (request.istream.IsDefined())
         request.istream.Close();
@@ -549,7 +549,7 @@ HttpClient::TryWriteBuckets2()
 
         int _errno = errno;
 
-        stopwatch_event(stopwatch, "error");
+        stopwatch.RecordEvent("error");
 
         throw HttpClientError(HttpClientErrorCode::IO,
                               StringFormat<64>("write error (%s)",
@@ -573,7 +573,7 @@ HttpClient::TryWriteBuckets()
         result = TryWriteBuckets2();
     } catch (...) {
         assert(!request.istream.IsDefined());
-        stopwatch_event(stopwatch, "error");
+        stopwatch.RecordEvent("error");
         AbortResponse(std::current_exception());
         return BucketResult::DESTROYED;
     }
@@ -609,7 +609,7 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
     const char *space;
     if (length < 10 || memcmp(line, "HTTP/", 5) != 0 ||
         (space = (const char *)memchr(line + 6, ' ', length - 6)) == nullptr) {
-        stopwatch_event(stopwatch, "malformed");
+        stopwatch.RecordEvent("malformed");
 
         throw HttpClientError(HttpClientErrorCode::GARBAGE,
                               "malformed HTTP status line");
@@ -620,7 +620,7 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
 
     if (gcc_unlikely(length < 3 || !IsDigitASCII(line[0]) ||
                      !IsDigitASCII(line[1]) || !IsDigitASCII(line[2]))) {
-        stopwatch_event(stopwatch, "malformed");
+        stopwatch.RecordEvent("malformed");
 
         throw HttpClientError(HttpClientErrorCode::GARBAGE,
                               "no HTTP status found");
@@ -628,7 +628,7 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
 
     response.status = (http_status_t)(((line[0] - '0') * 10 + line[1] - '0') * 10 + line[2] - '0');
     if (gcc_unlikely(!http_status_is_valid(response.status))) {
-        stopwatch_event(stopwatch, "malformed");
+        stopwatch.RecordEvent("malformed");
 
         throw HttpClientError(HttpClientErrorCode::GARBAGE,
                               StringFormat<64>("invalid HTTP status %d",
@@ -641,7 +641,7 @@ HttpClient::ParseStatusLine(const char *line, size_t length)
 inline void
 HttpClient::HeadersFinished()
 {
-    stopwatch_event(stopwatch, "headers");
+    stopwatch.RecordEvent("headers");
 
     auto &response_headers = response.headers;
 
@@ -683,7 +683,7 @@ HttpClient::HeadersFinished()
 
         if (gcc_unlikely(content_length_string == nullptr)) {
             if (keep_alive) {
-                stopwatch_event(stopwatch, "malformed");
+                stopwatch.RecordEvent("malformed");
 
                 throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
                                       "no Content-Length response header");
@@ -695,7 +695,7 @@ HttpClient::HeadersFinished()
                                              &endptr, 10);
             if (gcc_unlikely(endptr == content_length_string || *endptr != 0 ||
                              content_length < 0)) {
-                stopwatch_event(stopwatch, "malformed");
+                stopwatch.RecordEvent("malformed");
 
                 throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
                                       "invalid Content-Length header in response");
@@ -743,7 +743,7 @@ HttpClient::ResponseFinished() noexcept
 {
     assert(response.state == Response::State::END);
 
-    stopwatch_event(stopwatch, "end");
+    stopwatch.RecordEvent("end");
 
     if (!socket.IsEmpty()) {
         LogConcat(2, peer_name, "excess data after HTTP response");
@@ -1021,7 +1021,7 @@ HttpClient::OnBufferedDirect(SocketDescriptor fd, FdType fd_type)
 bool
 HttpClient::OnBufferedClosed() noexcept
 {
-    stopwatch_event(stopwatch, "end");
+    stopwatch.RecordEvent("end");
 
     if (request.istream.IsDefined())
         request.istream.ClearAndClose();
@@ -1114,7 +1114,7 @@ HttpClient::OnBufferedBroken() noexcept
 void
 HttpClient::OnBufferedError(std::exception_ptr ep) noexcept
 {
-    stopwatch_event(stopwatch, "error");
+    stopwatch.RecordEvent("error");
     AbortResponse(NestException(ep,
                                 HttpClientError(HttpClientErrorCode::IO,
                                                 "HTTP client socket error")));
@@ -1144,7 +1144,7 @@ HttpClient::OnData(const void *data, size_t length) noexcept
 
     int _errno = errno;
 
-    stopwatch_event(stopwatch, "error");
+    stopwatch.RecordEvent("error");
 
     AbortResponse(NestException(std::make_exception_ptr(MakeErrno(_errno,
                                                                   "Write error")),
@@ -1180,7 +1180,7 @@ HttpClient::OnDirect(FdType type, int fd, size_t max_length) noexcept
 void
 HttpClient::OnEof() noexcept
 {
-    stopwatch_event(stopwatch, "request");
+    stopwatch.RecordEvent("request");
 
     assert(request.istream.IsDefined());
     request.istream.Clear();
@@ -1197,7 +1197,7 @@ HttpClient::OnError(std::exception_ptr ep) noexcept
            response.state == Response::State::BODY ||
            response.state == Response::State::END);
 
-    stopwatch_event(stopwatch, "abort");
+    stopwatch.RecordEvent("abort");
 
     assert(request.istream.IsDefined());
     request.istream.Clear();
@@ -1225,7 +1225,7 @@ HttpClient::OnError(std::exception_ptr ep) noexcept
 inline void
 HttpClient::Cancel() noexcept
 {
-    stopwatch_event(stopwatch, "abort");
+    stopwatch.RecordEvent("abort");
 
     /* Cancellable::Cancel() can only be used before the response was
        delivered to our callback */
@@ -1254,7 +1254,7 @@ HttpClient::HttpClient(PoolPtr &&_pool, struct pool &_caller_pool,
                        CancellablePointer &cancel_ptr)
     :PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
      peer_name(_peer_name),
-     stopwatch(stopwatch_new(*pool, peer_name, uri)),
+     stopwatch(*pool, peer_name, uri),
      event_loop(_socket.GetEventLoop()),
      socket(_socket, lease,
             Event::Duration(-1), http_client_timeout,

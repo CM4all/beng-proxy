@@ -113,7 +113,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 
     assert(!http_status_is_empty(status));
 
-    auto *stopwatch = stopwatch_new(*pool, path);
+    StopwatchPtr stopwatch(*pool, path);
 
     PreparedChildProcess p;
     p.Append(path);
@@ -132,7 +132,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
         return;
     }
 
-    stopwatch_event(stopwatch, "fork");
+    stopwatch.RecordEvent("fork");
 
     etag = headers.Remove("etag");
     if (etag != nullptr) {
@@ -148,7 +148,8 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
         headers.Add("etag", etag);
     }
 
-    response = istream_stopwatch_new(*pool, std::move(response), stopwatch);
+    response = istream_stopwatch_new(*pool, std::move(response),
+                                     std::move(stopwatch));
 
     handler.InvokeResponse(status, std::move(headers), std::move(response));
 }

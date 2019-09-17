@@ -67,7 +67,7 @@ struct WasClient final
 {
     struct pool &caller_pool;
 
-    Stopwatch *const stopwatch;
+    const StopwatchPtr stopwatch;
 
     WasLease &lease;
 
@@ -139,7 +139,7 @@ struct WasClient final
 
     WasClient(PoolPtr &&_pool, struct pool &_caller_pool,
               EventLoop &event_loop,
-              Stopwatch *_stopwatch,
+              StopwatchPtr &&_stopwatch,
               SocketDescriptor control_fd,
               FileDescriptor input_fd, FileDescriptor output_fd,
               WasLease &_lease,
@@ -148,7 +148,7 @@ struct WasClient final
               CancellablePointer &cancel_ptr);
 
     ~WasClient() noexcept {
-        stopwatch_dump(stopwatch);
+        stopwatch.Dump();
     }
 
     void Destroy() {
@@ -325,7 +325,7 @@ struct WasClient final
            response was delivered to our callback */
         assert(!response.WasSubmitted());
 
-        stopwatch_event(stopwatch, "cancel");
+        stopwatch.RecordEvent("cancel");
 
         /* if an error occurs while sending PREMATURE, don't pass it
            to our handler - he's not interested anymore */
@@ -363,7 +363,7 @@ struct WasClient final
             return;
         }
 
-        stopwatch_event(stopwatch, "control_error");
+        stopwatch.RecordEvent("control_error");
 
         AbortResponse(NestException(ep,
                                     std::runtime_error("Error on WAS control channel")));
@@ -388,7 +388,7 @@ WasClient::SubmitPendingResponse()
     assert(response.pending);
     assert(!response.WasSubmitted());
 
-    stopwatch_event(stopwatch, "headers");
+    stopwatch.RecordEvent("headers");
 
     response.pending = false;
 
@@ -434,20 +434,20 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
     case WAS_COMMAND_PATH_INFO:
     case WAS_COMMAND_QUERY_STRING:
     case WAS_COMMAND_PARAMETER:
-        stopwatch_event(stopwatch, "control_error");
+        stopwatch.RecordEvent("control_error");
         AbortResponse(std::make_exception_ptr(WasProtocolError(StringFormat<64>("Unexpected WAS packet %d", cmd))));
         return false;
 
     case WAS_COMMAND_HEADER:
         if (!response.IsReceivingMetadata()) {
-            stopwatch_event(stopwatch, "control_error");
+            stopwatch.RecordEvent("control_error");
             AbortResponse(std::make_exception_ptr(WasProtocolError("response header was too late")));
             return false;
         }
 
         p = (const char *)memchr(payload.data, '=', payload.size);
         if (p == nullptr || p == payload.data) {
-            stopwatch_event(stopwatch, "control_error");
+            stopwatch.RecordEvent("control_error");
             AbortResponse(std::make_exception_ptr(WasProtocolError("Malformed WAS HEADER packet")));
             return false;
         }
@@ -460,7 +460,7 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
 
     case WAS_COMMAND_STATUS:
         if (!response.IsReceivingMetadata()) {
-            stopwatch_event(stopwatch, "control_error");
+            stopwatch.RecordEvent("control_error");
             /* note: using AbortResponse() instead of
                AbortResponseBody() because the response may be still
                "pending" */
@@ -476,13 +476,13 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
         else if (payload.size == sizeof(*status16_r))
             status = (http_status_t)*status16_r;
         else {
-            stopwatch_event(stopwatch, "control_error");
+            stopwatch.RecordEvent("control_error");
             AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("malformed STATUS")));
             return false;
         }
 
         if (!http_status_is_valid(status)) {
-            stopwatch_event(stopwatch, "control_error");
+            stopwatch.RecordEvent("control_error");
             AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("malformed STATUS")));
             return false;
         }
@@ -499,7 +499,7 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
 
     case WAS_COMMAND_NO_DATA:
         if (!response.IsReceivingMetadata()) {
-            stopwatch_event(stopwatch, "control_error");
+            stopwatch.RecordEvent("control_error");
             AbortResponseBody(std::make_exception_ptr(WasProtocolError("NO_DATA after body start")));
             return false;
         }
@@ -522,13 +522,13 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
 
     case WAS_COMMAND_DATA:
         if (!response.IsReceivingMetadata()) {
-            stopwatch_event(stopwatch, "control_error");
+            stopwatch.RecordEvent("control_error");
             AbortResponseBody(std::make_exception_ptr(WasProtocolError("DATA after body start")));
             return false;
         }
 
         if (response.body == nullptr) {
-            stopwatch_event(stopwatch, "control_error");
+            stopwatch.RecordEvent("control_error");
             AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("no response body allowed")));
             return false;
         }
@@ -538,20 +538,20 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
 
     case WAS_COMMAND_LENGTH:
         if (response.IsReceivingMetadata()) {
-            stopwatch_event(stopwatch, "control_error");
+            stopwatch.RecordEvent("control_error");
             AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("LENGTH before DATA")));
             return false;
         }
 
         if (response.body == nullptr) {
-            stopwatch_event(stopwatch, "control_error");
+            stopwatch.RecordEvent("control_error");
             AbortResponseBody(std::make_exception_ptr(WasProtocolError("LENGTH after NO_DATA")));
             return false;
         }
 
         length_p = (const uint64_t *)payload.data;
         if (payload.size != sizeof(*length_p)) {
-            stopwatch_event(stopwatch, "control_error");
+            stopwatch.RecordEvent("control_error");
             AbortResponseBody(std::make_exception_ptr(WasProtocolError("malformed LENGTH packet")));
             return false;
         }
@@ -581,14 +581,14 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
 
     case WAS_COMMAND_PREMATURE:
         if (response.IsReceivingMetadata()) {
-            stopwatch_event(stopwatch, "control_error");
+            stopwatch.RecordEvent("control_error");
             AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("PREMATURE before DATA")));
             return false;
         }
 
         length_p = (const uint64_t *)payload.data;
         if (payload.size != sizeof(*length_p)) {
-            stopwatch_event(stopwatch, "control_error");
+            stopwatch.RecordEvent("control_error");
             AbortResponseBody(std::make_exception_ptr(WasProtocolError("malformed PREMATURE packet")));
             return false;
         }
@@ -650,7 +650,7 @@ WasClient::WasOutputPremature(uint64_t length, std::exception_ptr ep)
     assert(control.IsDefined());
     assert(request.body != nullptr);
 
-    stopwatch_event(stopwatch, "request_error");
+    stopwatch.RecordEvent("request_error");
 
     request.body = nullptr;
 
@@ -666,7 +666,7 @@ WasClient::WasOutputEof()
 {
     assert(request.body != nullptr);
 
-    stopwatch_event(stopwatch, "request_eof");
+    stopwatch.RecordEvent("request_eof");
 
     request.body = nullptr;
 }
@@ -676,7 +676,7 @@ WasClient::WasOutputError(std::exception_ptr ep)
 {
     assert(request.body != nullptr);
 
-    stopwatch_event(stopwatch, "send_error");
+    stopwatch.RecordEvent("send_error");
 
     request.body = nullptr;
 
@@ -693,7 +693,7 @@ WasClient::WasInputClose(uint64_t received) noexcept
     assert(response.WasSubmitted());
     assert(response.body != nullptr);
 
-    stopwatch_event(stopwatch, "close");
+    stopwatch.RecordEvent("close");
 
     response.body = nullptr;
 
@@ -714,7 +714,7 @@ WasClient::WasInputRelease() noexcept
     assert(response.body != nullptr);
     assert(!response.released);
 
-    stopwatch_event(stopwatch, "eof");
+    stopwatch.RecordEvent("eof");
 
     response.released = true;
 
@@ -743,7 +743,7 @@ WasClient::WasInputError() noexcept
     assert(response.WasSubmitted());
     assert(response.body != nullptr);
 
-    stopwatch_event(stopwatch, "error");
+    stopwatch.RecordEvent("error");
 
     response.body = nullptr;
 
@@ -763,7 +763,7 @@ WasClient::WasInputError() noexcept
 inline
 WasClient::WasClient(PoolPtr &&_pool, struct pool &_caller_pool,
                      EventLoop &event_loop,
-                     Stopwatch *_stopwatch,
+                     StopwatchPtr &&_stopwatch,
                      SocketDescriptor control_fd,
                      FileDescriptor input_fd, FileDescriptor output_fd,
                      WasLease &_lease,
@@ -771,7 +771,7 @@ WasClient::WasClient(PoolPtr &&_pool, struct pool &_caller_pool,
                      HttpResponseHandler &_handler,
                      CancellablePointer &cancel_ptr)
     :PoolHolder(_pool), caller_pool(_caller_pool),
-     stopwatch(_stopwatch),
+     stopwatch(std::move(_stopwatch)),
      lease(_lease),
      control(event_loop, control_fd, *this),
      handler(_handler),
@@ -817,7 +817,7 @@ SendRequest(WasControl &control,
 
 void
 was_client_request(struct pool &caller_pool, EventLoop &event_loop,
-                   Stopwatch *stopwatch,
+                   StopwatchPtr stopwatch,
                    SocketDescriptor control_fd,
                    FileDescriptor input_fd, FileDescriptor output_fd,
                    WasLease &lease,
@@ -834,7 +834,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
 
     auto pool = pool_new_linear(&caller_pool, "was_client_request", 32768);
     auto client = NewFromPool<WasClient>(std::move(pool), caller_pool,
-                                         event_loop, stopwatch,
+                                         event_loop, std::move(stopwatch),
                                          control_fd, input_fd, output_fd,
                                          lease, method, std::move(body),
                                          handler, cancel_ptr);

@@ -101,7 +101,7 @@ stopwatch_is_enabled()
     return stopwatch_enabled && CheckLogLevel(STOPWATCH_VERBOSE);
 }
 
-Stopwatch *
+static Stopwatch *
 stopwatch_new(AllocatorPtr alloc, const char *name, const char *suffix)
 {
     if (!stopwatch_is_enabled())
@@ -119,7 +119,7 @@ stopwatch_new(AllocatorPtr alloc, const char *name, const char *suffix)
     return alloc.New<Stopwatch>(alloc, name);
 }
 
-Stopwatch *
+static Stopwatch *
 stopwatch_new(AllocatorPtr alloc, SocketAddress address, const char *suffix)
 {
     char buffer[1024];
@@ -131,7 +131,7 @@ stopwatch_new(AllocatorPtr alloc, SocketAddress address, const char *suffix)
     return stopwatch_new(alloc, name, suffix);
 }
 
-Stopwatch *
+static Stopwatch *
 stopwatch_new(AllocatorPtr alloc, SocketDescriptor fd, const char *suffix)
 {
     if (!stopwatch_is_enabled())
@@ -142,6 +142,18 @@ stopwatch_new(AllocatorPtr alloc, SocketDescriptor fd, const char *suffix)
         ? stopwatch_new(alloc, address, suffix)
         : stopwatch_new(alloc, "unknown", suffix);
 }
+
+StopwatchPtr::StopwatchPtr(AllocatorPtr alloc,
+                           const char *name, const char *suffix) noexcept
+    :stopwatch(stopwatch_new(alloc, name, suffix)) {}
+
+StopwatchPtr::StopwatchPtr(AllocatorPtr alloc,
+                           SocketAddress address, const char *suffix) noexcept
+    :stopwatch(stopwatch_new(alloc, address, suffix)) {}
+
+StopwatchPtr::StopwatchPtr(AllocatorPtr alloc,
+                           SocketDescriptor fd, const char *suffix) noexcept
+    :stopwatch(stopwatch_new(alloc, fd, suffix)) {}
 
 inline void
 Stopwatch::RecordEvent(const char *event_name) noexcept
@@ -154,7 +166,7 @@ Stopwatch::RecordEvent(const char *event_name) noexcept
 }
 
 void
-stopwatch_event(Stopwatch *stopwatch, const char *name)
+StopwatchPtr::RecordEvent(const char *name) const noexcept
 {
     if (stopwatch != nullptr)
         stopwatch->RecordEvent(name);
@@ -213,7 +225,7 @@ Stopwatch::Dump() const noexcept
 }
 
 void
-stopwatch_dump(const Stopwatch *stopwatch)
+StopwatchPtr::Dump() const noexcept
 {
     if (stopwatch != nullptr)
         stopwatch->Dump();

@@ -53,7 +53,7 @@
 #include <stdlib.h>
 
 class CGIClient final : Istream, IstreamHandler, Cancellable, DestructAnchor {
-    Stopwatch *const stopwatch;
+    const StopwatchPtr stopwatch;
 
     IstreamPointer input;
     SliceFifoBuffer buffer;
@@ -73,7 +73,7 @@ class CGIClient final : Istream, IstreamHandler, Cancellable, DestructAnchor {
     HttpResponseHandler &handler;
 
 public:
-    CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
+    CGIClient(struct pool &_pool, StopwatchPtr &&_stopwatch,
               UnusedIstreamPtr _input,
               HttpResponseHandler &_handler,
               CancellablePointer &cancel_ptr);
@@ -135,8 +135,8 @@ CGIClient::ReturnResponse()
         /* this response does not have a response body, as indicated
            by the HTTP status code */
 
-        stopwatch_event(stopwatch, "empty");
-        stopwatch_dump(stopwatch);
+        stopwatch.RecordEvent("empty");
+        stopwatch.Dump();
 
         buffer.Free();
         input.ClearAndClose();
@@ -146,8 +146,8 @@ CGIClient::ReturnResponse()
     } else if (parser.IsEOF()) {
         /* the response body is empty */
 
-        stopwatch_event(stopwatch, "empty");
-        stopwatch_dump(stopwatch);
+        stopwatch.RecordEvent("empty");
+        stopwatch.Dump();
 
         buffer.Free();
         input.ClearAndClose();
@@ -156,7 +156,7 @@ CGIClient::ReturnResponse()
         Destroy();
         return false;
     } else {
-        stopwatch_event(stopwatch, "headers");
+        stopwatch.RecordEvent("headers");
 
         const DestructObserver destructed(*this);
 
@@ -260,8 +260,8 @@ inline size_t
 CGIClient::FeedBody(const char *data, size_t length)
 {
     if (parser.IsTooMuch(length)) {
-        stopwatch_event(stopwatch, "malformed");
-        stopwatch_dump(stopwatch);
+        stopwatch.RecordEvent("malformed");
+        stopwatch.Dump();
 
         buffer.Free();
         input.ClearAndClose();
@@ -274,8 +274,8 @@ CGIClient::FeedBody(const char *data, size_t length)
 
     size_t nbytes = InvokeData(data, length);
     if (nbytes > 0 && parser.BodyConsumed(nbytes)) {
-        stopwatch_event(stopwatch, "end");
-        stopwatch_dump(stopwatch);
+        stopwatch.RecordEvent("end");
+        stopwatch.Dump();
 
         buffer.Free();
         input.ClearAndClose();
@@ -336,8 +336,8 @@ CGIClient::OnDirect(FdType type, int fd, size_t max_length) noexcept
 
     ssize_t nbytes = InvokeDirect(type, fd, max_length);
     if (nbytes > 0 && parser.BodyConsumed(nbytes)) {
-        stopwatch_event(stopwatch, "end");
-        stopwatch_dump(stopwatch);
+        stopwatch.RecordEvent("end");
+        stopwatch.Dump();
 
         buffer.Free();
         input.Close();
@@ -354,8 +354,8 @@ CGIClient::OnEof() noexcept
     input.Clear();
 
     if (!parser.AreHeadersFinished()) {
-        stopwatch_event(stopwatch, "malformed");
-        stopwatch_dump(stopwatch);
+        stopwatch.RecordEvent("malformed");
+        stopwatch.Dump();
 
         assert(!HasHandler());
 
@@ -364,15 +364,15 @@ CGIClient::OnEof() noexcept
         handler.InvokeError(std::make_exception_ptr(CgiError("premature end of headers from CGI script")));
         Destroy();
     } else if (parser.DoesRequireMore()) {
-        stopwatch_event(stopwatch, "malformed");
-        stopwatch_dump(stopwatch);
+        stopwatch.RecordEvent("malformed");
+        stopwatch.Dump();
 
         buffer.Free();
 
         DestroyError(std::make_exception_ptr(CgiError("premature end of response body from CGI script")));
     } else {
-        stopwatch_event(stopwatch, "end");
-        stopwatch_dump(stopwatch);
+        stopwatch.RecordEvent("end");
+        stopwatch.Dump();
 
         buffer.Free();
         DestroyEof();
@@ -382,8 +382,8 @@ CGIClient::OnEof() noexcept
 void
 CGIClient::OnError(std::exception_ptr ep) noexcept
 {
-    stopwatch_event(stopwatch, "abort");
-    stopwatch_dump(stopwatch);
+    stopwatch.RecordEvent("abort");
+    stopwatch.Dump();
 
     input.Clear();
 
@@ -483,12 +483,12 @@ CGIClient::Cancel() noexcept
  */
 
 inline
-CGIClient::CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
+CGIClient::CGIClient(struct pool &_pool, StopwatchPtr &&_stopwatch,
                      UnusedIstreamPtr _input,
                      HttpResponseHandler &_handler,
                      CancellablePointer &cancel_ptr)
     :Istream(_pool),
-     stopwatch(_stopwatch),
+     stopwatch(std::move(_stopwatch)),
      input(std::move(_input), *this),
      buffer(fb_pool_get()),
      parser(_pool),
@@ -500,11 +500,12 @@ CGIClient::CGIClient(struct pool &_pool, Stopwatch *_stopwatch,
 }
 
 void
-cgi_client_new(struct pool &pool, Stopwatch *stopwatch,
+cgi_client_new(struct pool &pool, StopwatchPtr stopwatch,
                UnusedIstreamPtr input,
                HttpResponseHandler &handler,
                CancellablePointer &cancel_ptr)
 {
-    NewFromPool<CGIClient>(pool, pool, stopwatch, std::move(input),
+    NewFromPool<CGIClient>(pool, pool, std::move(stopwatch),
+                           std::move(input),
                            handler, cancel_ptr);
 }

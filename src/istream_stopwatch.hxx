@@ -35,7 +35,7 @@
 
 struct pool;
 class UnusedIstreamPtr;
-struct Stopwatch;
+class StopwatchPtr;
 
 #ifdef ENABLE_STOPWATCH
 
@@ -44,13 +44,13 @@ struct Stopwatch;
  */
 UnusedIstreamPtr
 istream_stopwatch_new(struct pool &pool, UnusedIstreamPtr input,
-                      Stopwatch *_stopwatch);
+                      StopwatchPtr stopwatch);
 
 #else /* !ENABLE_STOPWATCH */
 
 static inline UnusedIstreamPtr &&
 istream_stopwatch_new(struct pool &pool, UnusedIstreamPtr &&input,
-                      Stopwatch *_stopwatch)
+                      StopwatchPtr &&_stopwatch)
 {
     (void)pool;
     (void)_stopwatch;

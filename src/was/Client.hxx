@@ -36,7 +36,7 @@
 #include "http/Method.h"
 
 struct pool;
-struct Stopwatch;
+class StopwatchPtr;
 class FileDescriptor;
 class SocketDescriptor;
 class EventLoop;
@@ -72,7 +72,7 @@ template<typename T> struct ConstBuffer;
  */
 void
 was_client_request(struct pool &pool, EventLoop &event_loop,
-                   Stopwatch *stopwatch,
+                   StopwatchPtr stopwatch,
                    SocketDescriptor control_fd,
                    FileDescriptor input_fd, FileDescriptor output_fd,
                    WasLease &lease,
