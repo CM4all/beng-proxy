@@ -36,8 +36,9 @@
 #include "net/StaticSocketAddress.hxx"
 #include "net/ToString.hxx"
 #include "io/Logger.hxx"
-#include "util/StaticArray.hxx"
 #include "util/WritableBuffer.hxx"
+
+#include <boost/container/static_vector.hpp>
 
 #include <chrono>
 
@@ -66,7 +67,7 @@ struct Stopwatch {
 
     const char *const name;
 
-    StaticArray<StopwatchEvent, 16> events;
+    boost::container::static_vector<StopwatchEvent, 16> events;
 
     /**
      * Our own resource usage, measured when the stopwatch was
@@ -76,7 +77,7 @@ struct Stopwatch {
 
     Stopwatch(AllocatorPtr _alloc, const char *_name)
         :alloc(_alloc), name(_name) {
-        events.append().Init(name);
+        events.emplace_back().Init(name);
 
         getrusage(RUSAGE_SELF, &self);
     }
@@ -149,11 +150,11 @@ stopwatch_event(Stopwatch *stopwatch, const char *name)
     assert(stopwatch != nullptr);
     assert(name != nullptr);
 
-    if (stopwatch->events.full())
+    if (stopwatch->events.size() >= stopwatch->events.capacity())
         /* array is full, do not record any more events */
         return;
 
-    stopwatch->events.append().Init(name);
+    stopwatch->events.emplace_back().Init(name);
 }
 
 static constexpr long
