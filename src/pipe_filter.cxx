@@ -35,7 +35,7 @@
 #include "stopwatch.hxx"
 #include "istream_stopwatch.hxx"
 #include "strmap.hxx"
-#include "pool/pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/IstreamSpawn.hxx"
@@ -113,7 +113,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 
     assert(!http_status_is_empty(status));
 
-    auto *stopwatch = stopwatch_new(pool, path);
+    auto *stopwatch = stopwatch_new(*pool, path);
 
     PreparedChildProcess p;
     p.Append(path);

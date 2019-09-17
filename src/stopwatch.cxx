@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,7 +31,7 @@
  */
 
 #include "stopwatch.hxx"
-#include "pool/pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/ToString.hxx"
@@ -62,7 +62,7 @@ struct StopwatchEvent {
 };
 
 struct Stopwatch {
-    struct pool *pool;
+    AllocatorPtr alloc;
 
     const char *const name;
 
@@ -74,8 +74,8 @@ struct Stopwatch {
      */
     struct rusage self;
 
-    Stopwatch(struct pool &_pool, const char *_name)
-        :pool(&_pool), name(_name) {
+    Stopwatch(AllocatorPtr _alloc, const char *_name)
+        :alloc(_alloc), name(_name) {
         events.append().Init(name);
 
         getrusage(RUSAGE_SELF, &self);
@@ -99,25 +99,25 @@ stopwatch_is_enabled()
 }
 
 Stopwatch *
-stopwatch_new(struct pool *pool, const char *name, const char *suffix)
+stopwatch_new(AllocatorPtr alloc, const char *name, const char *suffix)
 {
     if (!stopwatch_is_enabled())
         return nullptr;
 
     if (suffix == nullptr)
-        name = p_strdup(pool, name);
+        name = alloc.Dup(name);
     else
-        name = p_strcat(pool, name, suffix, nullptr);
+        name = alloc.Concat(name, suffix);
 
     constexpr size_t MAX_NAME = 96;
     if (strlen(name) > MAX_NAME)
-        name = p_strndup(pool, name, MAX_NAME);
+        name = alloc.DupZ({name, MAX_NAME});
 
-    return NewFromPool<Stopwatch>(*pool, *pool, name);
+    return alloc.New<Stopwatch>(alloc, name);
 }
 
 Stopwatch *
-stopwatch_new(struct pool *pool, SocketAddress address, const char *suffix)
+stopwatch_new(AllocatorPtr alloc, SocketAddress address, const char *suffix)
 {
     char buffer[1024];
 
@@ -125,19 +125,19 @@ stopwatch_new(struct pool *pool, SocketAddress address, const char *suffix)
         return nullptr;
 
     const char *name = ToString(buffer, sizeof(buffer), address, "unknown");
-    return stopwatch_new(pool, name, suffix);
+    return stopwatch_new(alloc, name, suffix);
 }
 
 Stopwatch *
-stopwatch_new(struct pool *pool, SocketDescriptor fd, const char *suffix)
+stopwatch_new(AllocatorPtr alloc, SocketDescriptor fd, const char *suffix)
 {
     if (!stopwatch_is_enabled())
         return nullptr;
 
     const auto address = fd.GetPeerAddress();
     return address.IsDefined()
-        ? stopwatch_new(pool, address, suffix)
-        : stopwatch_new(pool, "unknown", suffix);
+        ? stopwatch_new(alloc, address, suffix)
+        : stopwatch_new(alloc, "unknown", suffix);
 }
 
 void

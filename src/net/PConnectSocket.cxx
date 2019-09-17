@@ -33,7 +33,7 @@
 #include "PConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "stopwatch.hxx"
-#include "pool/pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 
@@ -194,7 +194,7 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
     }
 
 #ifdef ENABLE_STOPWATCH
-    Stopwatch *stopwatch = stopwatch_new(&pool, address, nullptr);
+    Stopwatch *stopwatch = stopwatch_new(pool, address, nullptr);
 #endif
 
     if (fd.Connect(address)) {

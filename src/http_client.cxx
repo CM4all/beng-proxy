@@ -55,7 +55,7 @@
 #include "stopwatch.hxx"
 #include "strmap.hxx"
 #include "fs/Lease.hxx"
-#include "pool/pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "pool/Holder.hxx"
 #include "system/Error.hxx"
 #include "io/Logger.hxx"
@@ -1254,7 +1254,7 @@ HttpClient::HttpClient(PoolPtr &&_pool, struct pool &_caller_pool,
                        CancellablePointer &cancel_ptr)
     :PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
      peer_name(_peer_name),
-     stopwatch(stopwatch_new(pool, peer_name, uri)),
+     stopwatch(stopwatch_new(*pool, peer_name, uri)),
      event_loop(_socket.GetEventLoop()),
      socket(_socket, lease,
             Event::Duration(-1), http_client_timeout,

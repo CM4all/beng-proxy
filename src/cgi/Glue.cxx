@@ -31,6 +31,7 @@
  */
 
 #include "Glue.hxx"
+#include "AllocatorPtr.hxx"
 #include "Address.hxx"
 #include "Client.hxx"
 #include "Launch.hxx"
@@ -48,7 +49,7 @@ cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
         HttpResponseHandler &handler,
         CancellablePointer &cancel_ptr)
 {
-    auto *stopwatch = stopwatch_new(pool, address->path);
+    auto *stopwatch = stopwatch_new(*pool, address->path);
 
     AbortFlag abort_flag(cancel_ptr);
 

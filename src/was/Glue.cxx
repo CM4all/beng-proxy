@@ -43,7 +43,7 @@
 #include "spawn/ChildOptions.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
-#include "pool/pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "pool/LeakDetector.hxx"
 #include "stopwatch.hxx"
 #include "util/Cancellable.hxx"
@@ -218,7 +218,7 @@ stopwatch_new_was(struct pool &pool, const char *path, const char *uri,
     if (path_info != nullptr && *path_info != 0)
         uri = path_info;
 
-    return stopwatch_new(&pool, p_strcat(&pool, path, " ", uri, nullptr));
+    return stopwatch_new(pool, p_strcat(&pool, path, " ", uri, nullptr));
 }
 
 void

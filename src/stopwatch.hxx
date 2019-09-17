@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,14 +30,13 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_STOPWATCH_HXX
-#define BENG_PROXY_STOPWATCH_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
 #include <stddef.h>
 
-struct pool;
+struct AllocatorPtr;
 struct Stopwatch;
 class SocketAddress;
 class SocketDescriptor;
@@ -52,13 +51,13 @@ bool
 stopwatch_is_enabled();
 
 Stopwatch *
-stopwatch_new(struct pool *pool, const char *name, const char *suffix=nullptr);
+stopwatch_new(AllocatorPtr alloc, const char *name, const char *suffix=nullptr);
 
 Stopwatch *
-stopwatch_new(struct pool *pool, SocketAddress address, const char *suffix);
+stopwatch_new(AllocatorPtr alloc, SocketAddress address, const char *suffix);
 
 Stopwatch *
-stopwatch_new(struct pool *pool, SocketDescriptor fd, const char *suffix);
+stopwatch_new(AllocatorPtr alloc, SocketDescriptor fd, const char *suffix);
 
 void
 stopwatch_event(Stopwatch *stopwatch, const char *name);
@@ -68,6 +67,7 @@ stopwatch_dump(const Stopwatch *stopwatch);
 
 #else
 
+#include "AllocatorPtr.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
 
@@ -83,7 +83,7 @@ stopwatch_is_enabled()
 }
 
 static inline Stopwatch *
-stopwatch_new(struct pool *pool, const char *name, const char *suffix=nullptr)
+stopwatch_new(AllocatorPtr alloc, const char *name, const char *suffix=nullptr)
 {
     (void)pool;
     (void)name;
@@ -93,7 +93,7 @@ stopwatch_new(struct pool *pool, const char *name, const char *suffix=nullptr)
 }
 
 static inline Stopwatch *
-stopwatch_new(struct pool *pool, SocketAddress, const char *suffix)
+stopwatch_new(AllocatorPtr alloc, SocketAddress, const char *suffix)
 {
     (void)pool;
     (void)suffix;
@@ -102,7 +102,7 @@ stopwatch_new(struct pool *pool, SocketAddress, const char *suffix)
 }
 
 static inline Stopwatch *
-stopwatch_new(struct pool *pool, SocketDescriptor, const char *suffix)
+stopwatch_new(AllocatorPtr alloc, SocketDescriptor, const char *suffix)
 {
     (void)pool;
     (void)suffix;
@@ -122,7 +122,5 @@ stopwatch_dump(const Stopwatch *stopwatch)
 {
     (void)stopwatch;
 }
-
-#endif
 
 #endif
