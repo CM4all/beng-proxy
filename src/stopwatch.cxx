@@ -79,6 +79,10 @@ struct Stopwatch {
 
         getrusage(RUSAGE_SELF, &self);
     }
+
+    void RecordEvent(const char *name) noexcept;
+
+    void Dump() const noexcept;
 };
 
 static bool stopwatch_enabled;
@@ -139,20 +143,21 @@ stopwatch_new(AllocatorPtr alloc, SocketDescriptor fd, const char *suffix)
         : stopwatch_new(alloc, "unknown", suffix);
 }
 
-void
-stopwatch_event(Stopwatch *stopwatch, const char *name)
+inline void
+Stopwatch::RecordEvent(const char *event_name) noexcept
 {
-    if (!stopwatch_is_enabled())
-        return;
-
-    assert(stopwatch != nullptr);
-    assert(name != nullptr);
-
-    if (stopwatch->events.size() >= stopwatch->events.capacity())
+    if (events.size() >= events.capacity())
         /* array is full, do not record any more events */
         return;
 
-    stopwatch->events.emplace_back(name);
+    events.emplace_back(event_name);
+}
+
+void
+stopwatch_event(Stopwatch *stopwatch, const char *name)
+{
+    if (stopwatch != nullptr)
+        stopwatch->RecordEvent(name);
 }
 
 static constexpr long
@@ -177,39 +182,39 @@ AppendFormat(WritableBuffer<char> &buffer, const char *fmt, Args&&... args)
         buffer.skip_front(std::min(size_t(r), buffer.size - 1));
 }
 
-void
-stopwatch_dump(const Stopwatch *stopwatch)
+inline void
+Stopwatch::Dump() const noexcept
 {
-    struct rusage self;
+    assert(!events.empty());
 
-    if (!stopwatch_is_enabled())
-        return;
-
-    assert(stopwatch != nullptr);
-    assert(!stopwatch->events.empty());
-
-    if (stopwatch->events.size() < 2)
+    if (events.size() < 2)
         /* nothing was recorded (except for the initial event) */
         return;
 
     char domain[128];
-    snprintf(domain, sizeof(domain), "stopwatch %s", stopwatch->name);
+    snprintf(domain, sizeof(domain), "stopwatch %s", name);
 
     char message[1024];
 
     WritableBuffer<char> b(message, sizeof(message));
 
-    for (const auto &i : stopwatch->events)
+    for (const auto &i : events)
         AppendFormat(b, " %s=%ldms",
                      i.name,
-                     ToLongMs(i.time - stopwatch->events.front().time));
+                     ToLongMs(i.time - events.front().time));
 
-    getrusage(RUSAGE_SELF, &self);
+    struct rusage new_self;
+    getrusage(RUSAGE_SELF, &new_self);
     AppendFormat(b, " (beng-proxy=%ld+%ldms)",
-                 timeval_diff_ms(&self.ru_utime,
-                                 &stopwatch->self.ru_utime),
-                 timeval_diff_ms(&self.ru_stime,
-                                 &stopwatch->self.ru_stime));
+                 timeval_diff_ms(&new_self.ru_utime, &self.ru_utime),
+                 timeval_diff_ms(&new_self.ru_stime, &self.ru_stime));
 
     LogConcat(STOPWATCH_VERBOSE, domain, message);
+}
+
+void
+stopwatch_dump(const Stopwatch *stopwatch)
+{
+    if (stopwatch != nullptr)
+        stopwatch->Dump();
 }
