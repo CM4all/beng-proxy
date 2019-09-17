@@ -112,8 +112,7 @@ void
 PConnectSocket::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
 {
 #ifdef ENABLE_STOPWATCH
-    stopwatch.RecordEvent("connect");
-    stopwatch.Dump();
+    stopwatch.Finish("connect");
 #endif
 
     auto &_handler = handler;
@@ -126,8 +125,7 @@ void
 PConnectSocket::OnSocketConnectTimeout() noexcept
 {
 #ifdef ENABLE_STOPWATCH
-    stopwatch.RecordEvent("timeout");
-    stopwatch.Dump();
+    stopwatch.Finish("timeout");
 #endif
 
     auto &_handler = handler;
@@ -140,8 +138,7 @@ void
 PConnectSocket::OnSocketConnectError(std::exception_ptr ep) noexcept
 {
 #ifdef ENABLE_STOPWATCH
-    stopwatch.RecordEvent("timeout");
-    stopwatch.Dump();
+    stopwatch.Finish("timeout");
 #endif
 
     auto &_handler = handler;
@@ -199,8 +196,7 @@ client_socket_new(EventLoop &event_loop, AllocatorPtr alloc,
 
     if (fd.Connect(address)) {
 #ifdef ENABLE_STOPWATCH
-        stopwatch.RecordEvent("connect");
-        stopwatch.Dump();
+        stopwatch.Finish("connect");
 #endif
 
         handler.OnSocketConnectSuccess(std::move(fd));

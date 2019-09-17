@@ -135,8 +135,7 @@ CGIClient::ReturnResponse()
         /* this response does not have a response body, as indicated
            by the HTTP status code */
 
-        stopwatch.RecordEvent("empty");
-        stopwatch.Dump();
+        stopwatch.Finish("empty");
 
         buffer.Free();
         input.ClearAndClose();
@@ -146,8 +145,7 @@ CGIClient::ReturnResponse()
     } else if (parser.IsEOF()) {
         /* the response body is empty */
 
-        stopwatch.RecordEvent("empty");
-        stopwatch.Dump();
+        stopwatch.Finish("empty");
 
         buffer.Free();
         input.ClearAndClose();
@@ -260,8 +258,7 @@ inline size_t
 CGIClient::FeedBody(const char *data, size_t length)
 {
     if (parser.IsTooMuch(length)) {
-        stopwatch.RecordEvent("malformed");
-        stopwatch.Dump();
+        stopwatch.Finish("malformed");
 
         buffer.Free();
         input.ClearAndClose();
@@ -274,8 +271,7 @@ CGIClient::FeedBody(const char *data, size_t length)
 
     size_t nbytes = InvokeData(data, length);
     if (nbytes > 0 && parser.BodyConsumed(nbytes)) {
-        stopwatch.RecordEvent("end");
-        stopwatch.Dump();
+        stopwatch.Finish("end");
 
         buffer.Free();
         input.ClearAndClose();
@@ -336,8 +332,7 @@ CGIClient::OnDirect(FdType type, int fd, size_t max_length) noexcept
 
     ssize_t nbytes = InvokeDirect(type, fd, max_length);
     if (nbytes > 0 && parser.BodyConsumed(nbytes)) {
-        stopwatch.RecordEvent("end");
-        stopwatch.Dump();
+        stopwatch.Finish("end");
 
         buffer.Free();
         input.Close();
@@ -354,8 +349,7 @@ CGIClient::OnEof() noexcept
     input.Clear();
 
     if (!parser.AreHeadersFinished()) {
-        stopwatch.RecordEvent("malformed");
-        stopwatch.Dump();
+        stopwatch.Finish("malformed");
 
         assert(!HasHandler());
 
@@ -364,15 +358,13 @@ CGIClient::OnEof() noexcept
         handler.InvokeError(std::make_exception_ptr(CgiError("premature end of headers from CGI script")));
         Destroy();
     } else if (parser.DoesRequireMore()) {
-        stopwatch.RecordEvent("malformed");
-        stopwatch.Dump();
+        stopwatch.Finish("malformed");
 
         buffer.Free();
 
         DestroyError(std::make_exception_ptr(CgiError("premature end of response body from CGI script")));
     } else {
-        stopwatch.RecordEvent("end");
-        stopwatch.Dump();
+        stopwatch.Finish("end");
 
         buffer.Free();
         DestroyEof();
@@ -382,8 +374,7 @@ CGIClient::OnEof() noexcept
 void
 CGIClient::OnError(std::exception_ptr ep) noexcept
 {
-    stopwatch.RecordEvent("abort");
-    stopwatch.Dump();
+    stopwatch.Finish("abort");
 
     input.Clear();
 

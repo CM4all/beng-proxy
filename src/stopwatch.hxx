@@ -69,6 +69,11 @@ public:
     void RecordEvent(const char *name) const noexcept;
 
     void Dump() const noexcept;
+
+    void Finish(const char *name) const noexcept {
+        RecordEvent(name);
+        Dump();
+    }
 };
 
 void
@@ -98,6 +103,7 @@ public:
 
     void RecordEvent(const char *) const noexcept {}
     void Dump() const noexcept {}
+    void Finish(const char *) const noexcept {}
 };
 
 static inline void

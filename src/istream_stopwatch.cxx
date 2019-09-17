@@ -63,8 +63,7 @@ public:
 void
 StopwatchIstream::OnEof() noexcept
 {
-    stopwatch.RecordEvent("end");
-    stopwatch.Dump();
+    stopwatch.Finish("end");
 
     ForwardIstream::OnEof();
 }
@@ -72,8 +71,7 @@ StopwatchIstream::OnEof() noexcept
 void
 StopwatchIstream::OnError(std::exception_ptr ep) noexcept
 {
-    stopwatch.RecordEvent("abort");
-    stopwatch.Dump();
+    stopwatch.Finish("abort");
 
     ForwardIstream::OnError(ep);
 }
@@ -88,8 +86,7 @@ StopwatchIstream::_AsFd() noexcept
 {
     int fd = input.AsFd();
     if (fd >= 0) {
-        stopwatch.RecordEvent("as_fd");
-        stopwatch.Dump();
+        stopwatch.Finish("as_fd");
         Destroy();
     }
 
