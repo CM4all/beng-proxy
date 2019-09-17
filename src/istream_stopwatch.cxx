@@ -71,7 +71,7 @@ StopwatchIstream::OnEof() noexcept
 void
 StopwatchIstream::OnError(std::exception_ptr ep) noexcept
 {
-    stopwatch.Finish("abort");
+    stopwatch.Finish("input_error");
 
     ForwardIstream::OnError(ep);
 }

@@ -547,13 +547,9 @@ HttpClient::TryWriteBuckets2()
         if (nbytes == WRITE_DESTROYED)
             return BucketResult::DESTROYED;
 
-        int _errno = errno;
-
-        stopwatch.RecordEvent("error");
-
         throw HttpClientError(HttpClientErrorCode::IO,
                               StringFormat<64>("write error (%s)",
-                                               strerror(_errno)));
+                                               strerror(errno)));
     }
 
     size_t consumed = request.istream.ConsumeBucketList(nbytes);
@@ -573,7 +569,7 @@ HttpClient::TryWriteBuckets()
         result = TryWriteBuckets2();
     } catch (...) {
         assert(!request.istream.IsDefined());
-        stopwatch.RecordEvent("error");
+        stopwatch.RecordEvent("send_error");
         AbortResponse(std::current_exception());
         return BucketResult::DESTROYED;
     }
@@ -1114,7 +1110,7 @@ HttpClient::OnBufferedBroken() noexcept
 void
 HttpClient::OnBufferedError(std::exception_ptr ep) noexcept
 {
-    stopwatch.RecordEvent("error");
+    stopwatch.RecordEvent("recv_error");
     AbortResponse(NestException(ep,
                                 HttpClientError(HttpClientErrorCode::IO,
                                                 "HTTP client socket error")));
@@ -1144,7 +1140,7 @@ HttpClient::OnData(const void *data, size_t length) noexcept
 
     int _errno = errno;
 
-    stopwatch.RecordEvent("error");
+    stopwatch.RecordEvent("send_error");
 
     AbortResponse(NestException(std::make_exception_ptr(MakeErrno(_errno,
                                                                   "Write error")),
@@ -1180,7 +1176,7 @@ HttpClient::OnDirect(FdType type, int fd, size_t max_length) noexcept
 void
 HttpClient::OnEof() noexcept
 {
-    stopwatch.RecordEvent("request");
+    stopwatch.RecordEvent("request_end");
 
     assert(request.istream.IsDefined());
     request.istream.Clear();
@@ -1197,7 +1193,7 @@ HttpClient::OnError(std::exception_ptr ep) noexcept
            response.state == Response::State::BODY ||
            response.state == Response::State::END);
 
-    stopwatch.RecordEvent("abort");
+    stopwatch.RecordEvent("request_error");
 
     assert(request.istream.IsDefined());
     request.istream.Clear();
@@ -1225,7 +1221,7 @@ HttpClient::OnError(std::exception_ptr ep) noexcept
 inline void
 HttpClient::Cancel() noexcept
 {
-    stopwatch.RecordEvent("abort");
+    stopwatch.RecordEvent("cancel");
 
     /* Cancellable::Cancel() can only be used before the response was
        delivered to our callback */

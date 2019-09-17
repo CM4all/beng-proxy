@@ -374,7 +374,7 @@ CGIClient::OnEof() noexcept
 void
 CGIClient::OnError(std::exception_ptr ep) noexcept
 {
-    stopwatch.Finish("abort");
+    stopwatch.Finish("error");
 
     input.Clear();
 

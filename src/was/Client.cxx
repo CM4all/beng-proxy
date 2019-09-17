@@ -666,7 +666,7 @@ WasClient::WasOutputEof()
 {
     assert(request.body != nullptr);
 
-    stopwatch.RecordEvent("request_eof");
+    stopwatch.RecordEvent("request_end");
 
     request.body = nullptr;
 }

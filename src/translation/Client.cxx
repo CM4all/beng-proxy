@@ -216,7 +216,7 @@ TranslateClient::TryWrite() noexcept
     if (request.IsEOF()) {
         /* the buffer is empty, i.e. the request has been sent */
 
-        stopwatch.RecordEvent("request");
+        stopwatch.RecordEvent("request_end");
 
         socket.UnscheduleWrite();
         return socket.Read(true);
