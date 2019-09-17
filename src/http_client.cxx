@@ -230,8 +230,6 @@ public:
                CancellablePointer &cancel_ptr);
 
     ~HttpClient() noexcept {
-        stopwatch.Dump();
-
         if (!socket.IsReleased())
             ReleaseSocket(false, false);
     }

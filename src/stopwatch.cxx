@@ -80,6 +80,10 @@ struct Stopwatch {
         getrusage(RUSAGE_SELF, &self);
     }
 
+    ~Stopwatch() noexcept {
+        Dump();
+    }
+
     void RecordEvent(const char *name) noexcept;
 
     void Dump() const noexcept;
@@ -228,11 +232,4 @@ Stopwatch::Dump() const noexcept
                  timeval_diff_ms(&new_self.ru_stime, &self.ru_stime));
 
     LogConcat(STOPWATCH_VERBOSE, domain, message);
-}
-
-void
-StopwatchPtr::Dump() const noexcept
-{
-    if (stopwatch != nullptr)
-        stopwatch->Dump();
 }

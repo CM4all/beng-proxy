@@ -73,13 +73,6 @@ public:
 
     void RecordEvent(const char *name) const noexcept;
 
-    void Dump() const noexcept;
-
-    void Finish(const char *name) const noexcept {
-        RecordEvent(name);
-        Dump();
-    }
-
 private:
     static void Destruct(Stopwatch &stopwatch) noexcept;
 };

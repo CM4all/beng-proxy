@@ -125,8 +125,6 @@ TranslateClient::ReleaseSocket(bool reuse) noexcept
 {
     assert(socket.IsConnected());
 
-    stopwatch.Dump();
-
     socket.Abandon();
     socket.Destroy();
 

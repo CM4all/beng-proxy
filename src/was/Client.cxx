@@ -147,10 +147,6 @@ struct WasClient final
               HttpResponseHandler &_handler,
               CancellablePointer &cancel_ptr);
 
-    ~WasClient() noexcept {
-        stopwatch.Dump();
-    }
-
     void Destroy() {
         this->~WasClient();
     }
