@@ -55,7 +55,7 @@
 #include <sys/socket.h>
 
 struct TcpStockRequest {
-    struct pool &caller_pool;
+    AllocatorPtr alloc;
 
     const bool ip_transparent;
 
@@ -63,10 +63,10 @@ struct TcpStockRequest {
 
     const Event::Duration timeout;
 
-    TcpStockRequest(struct pool &_caller_pool,
+    TcpStockRequest(AllocatorPtr _alloc,
                     bool _ip_transparent, SocketAddress _bind_address,
                     SocketAddress _address, Event::Duration _timeout) noexcept
-        :caller_pool(_caller_pool),
+        :alloc(_alloc),
          ip_transparent(_ip_transparent), bind_address(_bind_address),
          address(_address), timeout(_timeout) {}
 };
@@ -205,7 +205,7 @@ TcpStock::Create(CreateStockItem c,
                                               request->address,
                                               cancel_ptr);
 
-    client_socket_new(c.stock.GetEventLoop(), request->caller_pool,
+    client_socket_new(c.stock.GetEventLoop(), request->alloc,
                       request->address.GetFamily(), SOCK_STREAM, 0,
                       request->ip_transparent,
                       request->bind_address,
@@ -231,7 +231,7 @@ TcpStockConnection::~TcpStockConnection() noexcept
  */
 
 void
-TcpStock::Get(struct pool &pool, const char *name,
+TcpStock::Get(AllocatorPtr alloc, const char *name,
               bool ip_transparent,
               SocketAddress bind_address,
               SocketAddress address,
@@ -241,9 +241,9 @@ TcpStock::Get(struct pool &pool, const char *name,
 {
     assert(!address.IsNull());
 
-    auto request = NewFromPool<TcpStockRequest>(pool, pool, ip_transparent,
-                                                bind_address, address,
-                                                timeout);
+    auto request = alloc.New<TcpStockRequest>(alloc, ip_transparent,
+                                              bind_address, address,
+                                              timeout);
 
     if (name == nullptr) {
         char buffer[1024];
@@ -254,9 +254,9 @@ TcpStock::Get(struct pool &pool, const char *name,
             char bind_buffer[1024];
             if (!ToString(bind_buffer, sizeof(bind_buffer), bind_address))
                 bind_buffer[0] = 0;
-            name = p_strcat(&pool, bind_buffer, ">", buffer, nullptr);
+            name = alloc.Concat(bind_buffer, ">", buffer);
         } else
-            name = p_strdup(&pool, buffer);
+            name = alloc.Dup(buffer);
     }
 
     stock.Get(name, request, handler, cancel_ptr);

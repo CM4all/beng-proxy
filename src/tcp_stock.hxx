@@ -42,7 +42,7 @@
 #include "event/Chrono.hxx"
 #include "util/Compiler.h"
 
-struct pool;
+class AllocatorPtr;
 class SocketDescriptor;
 class CancellablePointer;
 class SocketAddress;
@@ -76,7 +76,7 @@ public:
      * #address if nullptr is passed here
      * @param timeout the connect timeout in seconds
      */
-    void Get(struct pool &pool, const char *name,
+    void Get(AllocatorPtr alloc, const char *name,
              bool ip_transparent,
              SocketAddress bind_address,
              SocketAddress address,
