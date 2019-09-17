@@ -56,10 +56,8 @@ struct StopwatchEvent {
 
     std::chrono::steady_clock::time_point time;
 
-    void Init(const char *_name) {
-        name = _name;
-        time = std::chrono::steady_clock::now();
-    }
+    explicit StopwatchEvent(const char *_name) noexcept
+        :name(_name), time(std::chrono::steady_clock::now()) {}
 };
 
 struct Stopwatch {
@@ -77,7 +75,7 @@ struct Stopwatch {
 
     Stopwatch(AllocatorPtr _alloc, const char *_name)
         :alloc(_alloc), name(_name) {
-        events.emplace_back().Init(name);
+        events.emplace_back(name);
 
         getrusage(RUSAGE_SELF, &self);
     }
@@ -154,7 +152,7 @@ stopwatch_event(Stopwatch *stopwatch, const char *name)
         /* array is full, do not record any more events */
         return;
 
-    stopwatch->events.emplace_back().Init(name);
+    stopwatch->events.emplace_back(name);
 }
 
 static constexpr long
