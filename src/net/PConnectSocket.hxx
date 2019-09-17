@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,12 +30,11 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_CONNECT_SOCKET_HXX
-#define BENG_PROXY_CONNECT_SOCKET_HXX
+#pragma once
 
 #include "event/net/ConnectSocket.hxx"
 
-struct pool;
+class AllocatorPtr;
 class EventLoop;
 class SocketAddress;
 class UniqueSocketDescriptor;
@@ -48,7 +47,7 @@ class CancellablePointer;
  * @param timeout the connect timeout in seconds
  */
 void
-client_socket_new(EventLoop &event_loop, struct pool &pool,
+client_socket_new(EventLoop &event_loop, AllocatorPtr alloc,
                   int domain, int type, int protocol,
                   bool ip_transparent,
                   const SocketAddress bind_address,
@@ -56,5 +55,3 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
                   Event::Duration timeout,
                   ConnectSocketHandler &handler,
                   CancellablePointer &cancel_ptr);
-
-#endif

@@ -156,7 +156,7 @@ PConnectSocket::OnSocketConnectError(std::exception_ptr ep) noexcept
  */
 
 void
-client_socket_new(EventLoop &event_loop, struct pool &pool,
+client_socket_new(EventLoop &event_loop, AllocatorPtr alloc,
                   int domain, int type, int protocol,
                   bool ip_transparent,
                   const SocketAddress bind_address,
@@ -194,7 +194,7 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
     }
 
 #ifdef ENABLE_STOPWATCH
-    Stopwatch *stopwatch = stopwatch_new(pool, address, nullptr);
+    Stopwatch *stopwatch = stopwatch_new(alloc, address, nullptr);
 #endif
 
     if (fd.Connect(address)) {
@@ -205,12 +205,12 @@ client_socket_new(EventLoop &event_loop, struct pool &pool,
 
         handler.OnSocketConnectSuccess(std::move(fd));
     } else if (errno == EINPROGRESS) {
-        NewFromPool<PConnectSocket>(pool, event_loop,
-                                    std::move(fd), timeout,
+        alloc.New<PConnectSocket>(event_loop,
+                                  std::move(fd), timeout,
 #ifdef ENABLE_STOPWATCH
-                                    *stopwatch,
+                                  *stopwatch,
 #endif
-                                    handler, cancel_ptr);
+                                  handler, cancel_ptr);
     } else {
         handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to connect")));
     }

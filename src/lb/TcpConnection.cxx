@@ -35,10 +35,10 @@
 #include "ClusterConfig.hxx"
 #include "ListenerConfig.hxx"
 #include "Instance.hxx"
+#include "AllocatorPtr.hxx"
 #include "cluster/ConnectBalancer.hxx"
 #include "address_sticky.hxx"
 #include "ssl/Filter.hxx"
-#include "pool/pool.hxx"
 #include "fs/ThreadSocketFilter.hxx"
 #include "thread_pool.hxx"
 #include "net/SocketAddress.hxx"
@@ -439,7 +439,7 @@ LbTcpConnection::ConnectOutbound()
         const auto address = member->GetAddress();
         assert(address.IsDefined());
 
-        client_socket_new(GetEventLoop(), pool,
+        client_socket_new(GetEventLoop(), *pool,
                           address.GetFamily(), SOCK_STREAM, 0,
                           cluster_config.transparent_source, bind_address,
                           address,

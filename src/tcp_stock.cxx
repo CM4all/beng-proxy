@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,11 +31,11 @@
  */
 
 #include "tcp_stock.hxx"
+#include "AllocatorPtr.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
 #include "stock/LoggerDomain.hxx"
 #include "address_list.hxx"
-#include "pool/pool.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "net/PConnectSocket.hxx"
