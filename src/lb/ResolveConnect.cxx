@@ -265,7 +265,7 @@ LbHttpConnection::ResolveConnect(const char *host,
         };
 
         /* TODO: make this lookup non-blocking */
-        address = DupAddress(request.pool,
+        address = DupAddress(*request.pool,
                              Resolve(host, 80, &hints).front());
     } catch (...) {
         SendError(request, std::current_exception());

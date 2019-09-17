@@ -32,18 +32,18 @@
 
 #pragma once
 
-#include "pool/pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "net/SocketAddress.hxx"
 
 /**
  * Allocating struct SocketAddress from memory pool.
  */
 static inline SocketAddress
-DupAddress(struct pool &pool, SocketAddress src)
+DupAddress(AllocatorPtr alloc, SocketAddress src) noexcept
 {
     return src.IsNull()
         ? src
         : SocketAddress((const struct sockaddr *)
-                        p_memdup(&pool, src.GetAddress(), src.GetSize()),
+                        alloc.Dup(ConstBuffer<void>(src.GetAddress(), src.GetSize())).data,
                         src.GetSize());
 }
