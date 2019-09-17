@@ -62,6 +62,11 @@ public:
     StopwatchPtr(StopwatchPtr &&src) noexcept
         :stopwatch(std::exchange(src.stopwatch, nullptr)) {}
 
+    ~StopwatchPtr() noexcept {
+        if (stopwatch != nullptr)
+            Destruct(*stopwatch);
+    }
+
     operator bool() const noexcept {
         return stopwatch != nullptr;
     }
@@ -74,6 +79,9 @@ public:
         RecordEvent(name);
         Dump();
     }
+
+private:
+    static void Destruct(Stopwatch &stopwatch) noexcept;
 };
 
 void

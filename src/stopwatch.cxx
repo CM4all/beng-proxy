@@ -155,6 +155,12 @@ StopwatchPtr::StopwatchPtr(AllocatorPtr alloc,
                            SocketDescriptor fd, const char *suffix) noexcept
     :stopwatch(stopwatch_new(alloc, fd, suffix)) {}
 
+void
+StopwatchPtr::Destruct(Stopwatch &stopwatch) noexcept
+{
+    stopwatch.~Stopwatch();
+}
+
 inline void
 Stopwatch::RecordEvent(const char *event_name) noexcept
 {
