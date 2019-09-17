@@ -43,6 +43,7 @@
 #include "istream/UnusedHoldPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
+#include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
 #include <assert.h>

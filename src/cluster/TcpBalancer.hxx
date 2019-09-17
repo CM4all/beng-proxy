@@ -36,7 +36,7 @@
 #include "BalancerMap.hxx"
 #include "event/Chrono.hxx"
 
-struct pool;
+class AllocatorPtr;
 struct AddressList;
 class TcpStock;
 class StockGetHandler;
@@ -74,7 +74,7 @@ public:
      * select the worker; 0 means disable stickiness
      * @param timeout the connect timeout for each attempt
      */
-    void Get(struct pool &pool, const StopwatchPtr &parent_stopwatch,
+    void Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
              bool ip_transparent,
              SocketAddress bind_address,
              sticky_hash_t session_sticky,

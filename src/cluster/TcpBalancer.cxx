@@ -126,7 +126,7 @@ TcpBalancerRequest::OnStockItemError(std::exception_ptr ep) noexcept
  */
 
 void
-TcpBalancer::Get(struct pool &pool, const StopwatchPtr &parent_stopwatch,
+TcpBalancer::Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
                  bool ip_transparent,
                  SocketAddress bind_address,
                  sticky_hash_t session_sticky,
@@ -135,7 +135,7 @@ TcpBalancer::Get(struct pool &pool, const StopwatchPtr &parent_stopwatch,
                  StockGetHandler &handler,
                  CancellablePointer &cancel_ptr)
 {
-    BalancerRequest<TcpBalancerRequest>::Start(pool, GetEventLoop().SteadyNow(),
+    BalancerRequest<TcpBalancerRequest>::Start(alloc, GetEventLoop().SteadyNow(),
                                                balancer,
                                                address_list, cancel_ptr,
                                                session_sticky,

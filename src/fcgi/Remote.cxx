@@ -48,6 +48,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
+#include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
 #include <sys/socket.h>
