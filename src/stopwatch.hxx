@@ -96,7 +96,7 @@ public:
     StopwatchPtr(std::nullptr_t) noexcept {}
 
     template<typename N>
-    StopwatchPtr(AllocatorPtr, N &&, const char *=nullptr) noexcept {}
+    StopwatchPtr(AllocatorPtr, N &&, const char * =nullptr) noexcept {}
 
     operator bool() const noexcept {
         return false;
