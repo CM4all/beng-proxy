@@ -1180,7 +1180,8 @@ HttpClient::OnEof() noexcept
     request.istream.Clear();
 
     socket.UnscheduleWrite();
-    socket.ScheduleReadNoTimeout(response_body_reader.RequireMore());
+    socket.ScheduleReadNoTimeout(response.state == Response::State::BODY &&
+                                 response_body_reader.RequireMore());
 }
 
 void
