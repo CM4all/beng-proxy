@@ -147,6 +147,12 @@ struct WasClient final
               HttpResponseHandler &_handler,
               CancellablePointer &cancel_ptr);
 
+    void SendRequest(http_method_t method, const char *uri,
+                     const char *script_name, const char *path_info,
+                     const char *query_string,
+                     const StringMap &headers,
+                     ConstBuffer<const char *> params) noexcept;
+
     void Destroy() {
         this->~WasClient();
     }
@@ -811,6 +817,24 @@ SendRequest(WasControl &control,
         (request_body == nullptr || was_output_check_length(*request_body));
 }
 
+inline void
+WasClient::SendRequest(http_method_t method, const char *uri,
+                       const char *script_name, const char *path_info,
+                       const char *query_string,
+                       const StringMap &headers,
+                       ConstBuffer<const char *> params) noexcept
+{
+    control.BulkOn();
+
+    if (!::SendRequest(control,
+                       method, uri, script_name, path_info,
+                       query_string, headers, request.body,
+                       params))
+        return;
+
+    control.BulkOff();
+}
+
 void
 was_client_request(struct pool &caller_pool, EventLoop &event_loop,
                    StopwatchPtr stopwatch,
@@ -834,14 +858,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
                                          control_fd, input_fd, output_fd,
                                          lease, method, std::move(body),
                                          handler, cancel_ptr);
-
-    client->control.BulkOn();
-
-    if (!SendRequest(client->control,
-                     method, uri, script_name, path_info,
-                     query_string, headers, client->request.body,
-                     params))
-        return;
-
-    client->control.BulkOff();
+    client->SendRequest(method, uri, script_name, path_info,
+                        query_string, headers,
+                        params);
 }
