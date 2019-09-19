@@ -59,7 +59,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct WasClient final
+class WasClient final
     : PoolHolder,
       WasControlHandler, WasOutputHandler, WasInputHandler,
       DestructAnchor,
@@ -137,6 +137,7 @@ struct WasClient final
      */
     bool ignore_control_errors = false;
 
+public:
     WasClient(PoolPtr &&_pool, struct pool &_caller_pool,
               EventLoop &event_loop,
               StopwatchPtr &&_stopwatch,
@@ -153,6 +154,7 @@ struct WasClient final
                      const StringMap &headers,
                      ConstBuffer<const char *> params) noexcept;
 
+private:
     void Destroy() {
         this->~WasClient();
     }
