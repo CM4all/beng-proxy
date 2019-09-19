@@ -273,6 +273,12 @@ private:
         this->~HttpClient();
     }
 
+    void DestroyInvokeError(std::exception_ptr ep) noexcept {
+        auto &_handler = request.handler;
+        Destroy();
+        _handler.InvokeError(ep);
+    }
+
     std::exception_ptr PrefixError(std::exception_ptr ep) const {
         return NestException(ep,
                              FormatRuntimeError("error on HTTP connection to '%s'",
@@ -368,8 +374,7 @@ HttpClient::AbortResponseHeaders(std::exception_ptr ep)
     if (request.istream.IsDefined())
         request.istream.Close();
 
-    request.handler.InvokeError(PrefixError(ep));
-    Destroy();
+    DestroyInvokeError(PrefixError(ep));
 }
 
 /**
