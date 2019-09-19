@@ -57,6 +57,7 @@
 #include "istream/AutoPipeIstream.hxx"
 #include "istream/YamlSubstIstream.hxx"
 #include "pool/pool.hxx"
+#include "pool/LeakDetector.hxx"
 #include "AllocatorPtr.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
@@ -67,7 +68,9 @@
 #include <assert.h>
 #include <string.h>
 
-class WidgetRequest final : HttpResponseHandler, SuffixRegistryHandler, Cancellable {
+class WidgetRequest final
+    : PoolLeakDetector, HttpResponseHandler, SuffixRegistryHandler, Cancellable
+{
     struct pool &pool;
 
     unsigned num_redirects = 0;
@@ -114,7 +117,8 @@ public:
                   struct processor_env &_env,
                   HttpResponseHandler &_handler,
                   CancellablePointer &_cancel_ptr)
-        :pool(_pool), widget(_widget), env(_env), http_handler(&_handler) {
+        :PoolLeakDetector(_pool),
+         pool(_pool), widget(_widget), env(_env), http_handler(&_handler) {
         _cancel_ptr = *this;
     }
 
@@ -123,7 +127,8 @@ public:
                   const char *_lookup_id,
                   WidgetLookupHandler &_handler,
                   CancellablePointer &_cancel_ptr)
-        :pool(_pool), widget(_widget),
+        :PoolLeakDetector(_pool),
+         pool(_pool), widget(_widget),
          lookup_id(_lookup_id),
          env(_env),
          lookup_handler(&_handler) {
