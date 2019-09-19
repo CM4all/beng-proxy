@@ -78,11 +78,11 @@ private:
 };
 
 void
-stopwatch_enable();
+stopwatch_enable() noexcept;
 
 gcc_const
 bool
-stopwatch_is_enabled();
+stopwatch_is_enabled() noexcept;
 
 #else
 
@@ -108,12 +108,12 @@ public:
 };
 
 static inline void
-stopwatch_enable()
+stopwatch_enable() noexcept
 {
 }
 
 static inline bool
-stopwatch_is_enabled()
+stopwatch_is_enabled() noexcept
 {
     return false;
 }

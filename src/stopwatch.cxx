@@ -76,7 +76,7 @@ class Stopwatch final : LeakDetector {
     struct rusage self;
 
 public:
-    Stopwatch(AllocatorPtr _alloc, const char *_name)
+    Stopwatch(AllocatorPtr _alloc, const char *_name) noexcept
         :alloc(_alloc), name(_name) {
         events.emplace_back(name);
 
@@ -95,7 +95,7 @@ public:
 static bool stopwatch_enabled;
 
 void
-stopwatch_enable()
+stopwatch_enable() noexcept
 {
     assert(!stopwatch_enabled);
 
@@ -103,13 +103,13 @@ stopwatch_enable()
 }
 
 bool
-stopwatch_is_enabled()
+stopwatch_is_enabled() noexcept
 {
     return stopwatch_enabled && CheckLogLevel(STOPWATCH_VERBOSE);
 }
 
 static Stopwatch *
-stopwatch_new(AllocatorPtr alloc, const char *name, const char *suffix)
+stopwatch_new(AllocatorPtr alloc, const char *name, const char *suffix) noexcept
 {
     if (!stopwatch_is_enabled())
         return nullptr;
@@ -127,7 +127,8 @@ stopwatch_new(AllocatorPtr alloc, const char *name, const char *suffix)
 }
 
 static Stopwatch *
-stopwatch_new(AllocatorPtr alloc, SocketAddress address, const char *suffix)
+stopwatch_new(AllocatorPtr alloc,
+              SocketAddress address, const char *suffix) noexcept
 {
     char buffer[1024];
 
@@ -139,7 +140,8 @@ stopwatch_new(AllocatorPtr alloc, SocketAddress address, const char *suffix)
 }
 
 static Stopwatch *
-stopwatch_new(AllocatorPtr alloc, SocketDescriptor fd, const char *suffix)
+stopwatch_new(AllocatorPtr alloc,
+              SocketDescriptor fd, const char *suffix) noexcept
 {
     if (!stopwatch_is_enabled())
         return nullptr;
@@ -186,13 +188,13 @@ StopwatchPtr::RecordEvent(const char *name) const noexcept
 }
 
 static constexpr long
-ToLongMs(std::chrono::steady_clock::duration d)
+ToLongMs(std::chrono::steady_clock::duration d) noexcept
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
 }
 
 static long
-timeval_diff_ms(const struct timeval *a, const struct timeval *b)
+timeval_diff_ms(const struct timeval *a, const struct timeval *b) noexcept
 {
     return (a->tv_sec - b->tv_sec) * 1000 +
         (a->tv_usec - b->tv_usec) / 1000;
