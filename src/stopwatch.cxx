@@ -40,6 +40,7 @@
 #include "util/StringBuilder.hxx"
 
 #include <boost/container/static_vector.hpp>
+#include <boost/intrusive/slist.hpp>
 
 #include <chrono>
 
@@ -62,10 +63,16 @@ struct StopwatchEvent {
         :name(_name), time(std::chrono::steady_clock::now()) {}
 };
 
-class Stopwatch final : LeakDetector {
+class Stopwatch final : LeakDetector,
+                        public boost::intrusive::slist_base_hook<>
+{
     AllocatorPtr alloc;
 
     const char *const name;
+
+    boost::intrusive::slist<Stopwatch,
+                            boost::intrusive::constant_time_size<false>,
+                            boost::intrusive::cache_last<true>> children;
 
     boost::container::static_vector<StopwatchEvent, 16> events;
 
@@ -75,21 +82,43 @@ class Stopwatch final : LeakDetector {
      */
     struct rusage self;
 
+    const bool dump;
+
 public:
-    Stopwatch(AllocatorPtr _alloc, const char *_name) noexcept
-        :alloc(_alloc), name(_name) {
+    Stopwatch(Stopwatch *parent, AllocatorPtr _alloc,
+              const char *_name) noexcept
+        :alloc(_alloc), name(_name), dump(parent == nullptr)
+    {
         events.emplace_back(name);
 
         getrusage(RUSAGE_SELF, &self);
     }
 
+    Stopwatch(AllocatorPtr _alloc, const char *_name) noexcept
+        :Stopwatch(nullptr, _alloc, _name) {}
+
+    Stopwatch(Stopwatch &parent, const char *_name) noexcept
+        :Stopwatch(&parent, parent.alloc, _name)
+    {
+        parent.children.push_back(*this);
+    }
+
     ~Stopwatch() noexcept {
-        Dump();
+        assert(!is_linked());
+
+        if (dump)
+            Dump(0);
+
+        assert(children.empty());
+    }
+
+    AllocatorPtr GetAllocator() const noexcept {
+        return alloc;
     }
 
     void RecordEvent(const char *name) noexcept;
 
-    void Dump() const noexcept;
+    void Dump(size_t indent) noexcept;
 };
 
 static bool stopwatch_enabled;
@@ -172,10 +201,22 @@ StopwatchPtr::StopwatchPtr(AllocatorPtr alloc,
                            SocketDescriptor fd, const char *suffix) noexcept
     :stopwatch(stopwatch_new(alloc, fd, suffix)) {}
 
+StopwatchPtr::StopwatchPtr(Stopwatch *parent, const char *name,
+                           const char *suffix) noexcept
+{
+    if (parent != nullptr) {
+        const auto alloc = parent->GetAllocator();
+        stopwatch = alloc.New<Stopwatch>(*parent,
+                                         MakeStopwatchName(alloc,
+                                                           name, suffix));
+    }
+}
+
 void
 StopwatchPtr::Destruct(Stopwatch &stopwatch) noexcept
 {
-    stopwatch.~Stopwatch();
+    if (!stopwatch.is_linked())
+        stopwatch.~Stopwatch();
 }
 
 inline void
@@ -186,6 +227,14 @@ Stopwatch::RecordEvent(const char *event_name) noexcept
         return;
 
     events.emplace_back(event_name);
+}
+
+AllocatorPtr
+StopwatchPtr::GetAllocator() const noexcept
+{
+    assert(stopwatch != nullptr);
+
+    return stopwatch->GetAllocator();
 }
 
 void
@@ -220,19 +269,16 @@ AppendFormat(StringBuilder<> &b, const char *fmt, Args&&... args)
 }
 
 inline void
-Stopwatch::Dump() const noexcept
+Stopwatch::Dump(size_t indent) noexcept
 try {
     assert(!events.empty());
 
-    if (events.size() < 2)
-        /* nothing was recorded (except for the initial event) */
-        return;
-
-    char domain[128];
-    snprintf(domain, sizeof(domain), "stopwatch %s", name);
-
     char message[1024];
     StringBuilder<> b(message, sizeof(message));
+
+    b.CheckAppend(indent);
+    std::fill_n(b.GetTail(), indent, ' ');
+    b.Extend(indent);
 
     for (const auto &i : events)
         AppendFormat(b, " %s=%ldms",
@@ -245,6 +291,12 @@ try {
                  timeval_diff_ms(&new_self.ru_utime, &self.ru_utime),
                  timeval_diff_ms(&new_self.ru_stime, &self.ru_stime));
 
-    LogConcat(STOPWATCH_VERBOSE, domain, message);
+    LogConcat(STOPWATCH_VERBOSE, "stopwatch", message);
+
+    indent += 2;
+    children.clear_and_dispose([indent](Stopwatch *child){
+        child->Dump(indent);
+        child->~Stopwatch();
+    });
 } catch (StringBuilder<>::Overflow) {
 }

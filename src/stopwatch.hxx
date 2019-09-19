@@ -59,6 +59,13 @@ public:
     StopwatchPtr(AllocatorPtr alloc, SocketDescriptor fd,
                  const char *suffix=nullptr) noexcept;
 
+    StopwatchPtr(Stopwatch *parent, const char *name,
+                 const char *suffix=nullptr) noexcept;
+
+    StopwatchPtr(const StopwatchPtr &parent, const char *name,
+                 const char *suffix=nullptr) noexcept
+        :StopwatchPtr(parent.stopwatch, name, suffix) {}
+
     StopwatchPtr(StopwatchPtr &&src) noexcept
         :stopwatch(std::exchange(src.stopwatch, nullptr)) {}
 
@@ -70,6 +77,8 @@ public:
     operator bool() const noexcept {
         return stopwatch != nullptr;
     }
+
+    AllocatorPtr GetAllocator() const noexcept;
 
     void RecordEvent(const char *name) const noexcept;
 
@@ -97,6 +106,9 @@ public:
 
     template<typename N>
     StopwatchPtr(AllocatorPtr, N &&, const char * =nullptr) noexcept {}
+
+    template<typename N>
+    StopwatchPtr(const StopwatchPtr &, N &&, const char * =nullptr) noexcept {}
 
     operator bool() const noexcept {
         return false;

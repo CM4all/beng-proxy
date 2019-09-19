@@ -5,6 +5,7 @@ cm4all-beng-proxy (16.0.1) unstable; urgency=low
   * bp: support time units in session_idle_timeout
   * bp: add setting "http_cache_obey_no_cache"
   * bp: write the session file atomically
+  * bp: structured stopwatch output
   * control: add packet FLUSH_FILTER_CACHE
   * control: new control client
   * translation: add packet CACHE_TAG
