@@ -130,6 +130,10 @@ public:
         _cancel_ptr = *this;
     }
 
+    void Destroy() noexcept {
+        this->~WidgetRequest();
+    }
+
     bool ContentTypeLookup();
     void SendRequest();
 
@@ -207,6 +211,7 @@ private:
     void Cancel() noexcept override {
         widget.Cancel();
         cancel_ptr.Cancel();
+        Destroy();
     }
 
     /* virtual methods from class HttpResponseHandler */
@@ -321,6 +326,8 @@ WidgetRequest::DispatchError(std::exception_ptr ep)
         lookup_handler->WidgetLookupError(ep);
     else
         http_handler->InvokeError(ep);
+
+    Destroy();
 }
 
 void
@@ -537,12 +544,14 @@ WidgetRequest::DispatchResponse(http_status_t status, StringMap &&headers,
         WidgetError error(WidgetErrorCode::NOT_A_CONTAINER,
                           "Cannot process container widget response");
         lookup_handler->WidgetLookupError(std::make_exception_ptr(error));
+        Destroy();
     } else {
         /* no transformation left */
 
         /* finally pass the response to our handler */
         http_handler->InvokeResponse(status, std::move(headers),
                                      std::move(body));
+        Destroy();
     }
 }
 
