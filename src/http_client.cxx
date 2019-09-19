@@ -98,7 +98,7 @@ static constexpr off_t EXPECT_100_THRESHOLD = 1024;
 
 static constexpr auto http_client_timeout = std::chrono::seconds(30);
 
-class HttpClient final : PoolHolder, BufferedSocketHandler, IstreamHandler, Cancellable, DestructAnchor {
+class HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, DestructAnchor {
     enum class BucketResult {
         MORE,
         BLOCKING,
@@ -142,6 +142,7 @@ class HttpClient final : PoolHolder, BufferedSocketHandler, IstreamHandler, Canc
         }
     };
 
+    struct pool &pool;
     struct pool &caller_pool;
 
     const char *const peer_name;
@@ -220,7 +221,7 @@ class HttpClient final : PoolHolder, BufferedSocketHandler, IstreamHandler, Canc
     bool keep_alive;
 
 public:
-    HttpClient(PoolPtr &&_pool, struct pool &_caller_pool,
+    HttpClient(struct pool &_pool, struct pool &_caller_pool,
                FilteredSocket &_socket, Lease &lease,
                const char *_peer_name,
                http_method_t method, const char *uri,
@@ -235,6 +236,10 @@ public:
     }
 
 private:
+    struct pool &GetPool() const noexcept {
+        return pool;
+    }
+
     /**
      * @return false if the #HttpClient has released the socket
      */
@@ -1239,7 +1244,7 @@ HttpClient::Cancel() noexcept
  */
 
 inline
-HttpClient::HttpClient(PoolPtr &&_pool, struct pool &_caller_pool,
+HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
                        FilteredSocket &_socket, Lease &lease,
                        const char *_peer_name,
                        http_method_t method, const char *uri,
@@ -1247,9 +1252,9 @@ HttpClient::HttpClient(PoolPtr &&_pool, struct pool &_caller_pool,
                        UnusedIstreamPtr body, bool expect_100,
                        HttpResponseHandler &handler,
                        CancellablePointer &cancel_ptr)
-    :PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
+    :pool(_pool), caller_pool(_caller_pool),
      peer_name(_peer_name),
-     stopwatch(*pool, peer_name, uri),
+     stopwatch(pool, peer_name, uri),
      event_loop(_socket.GetEventLoop()),
      socket(_socket, lease,
             Event::Duration(-1), http_client_timeout,
@@ -1361,8 +1366,7 @@ http_client_request(struct pool &caller_pool,
         return;
     }
 
-    NewFromPool<HttpClient>(pool_new_linear(&caller_pool, "http_client_request", 4096),
-                            caller_pool,
+    NewFromPool<HttpClient>(caller_pool, caller_pool, caller_pool,
                             socket,
                             lease,
                             peer_name,

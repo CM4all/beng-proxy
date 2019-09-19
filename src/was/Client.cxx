@@ -60,11 +60,11 @@
 #include <sys/socket.h>
 
 class WasClient final
-    : PoolHolder,
-      WasControlHandler, WasOutputHandler, WasInputHandler,
+    : WasControlHandler, WasOutputHandler, WasInputHandler,
       DestructAnchor,
       Cancellable
 {
+    struct pool &pool;
     struct pool &caller_pool;
 
     const StopwatchPtr stopwatch;
@@ -138,7 +138,7 @@ class WasClient final
     bool ignore_control_errors = false;
 
 public:
-    WasClient(PoolPtr &&_pool, struct pool &_caller_pool,
+    WasClient(struct pool &_pool, struct pool &_caller_pool,
               EventLoop &event_loop,
               StopwatchPtr &&_stopwatch,
               SocketDescriptor control_fd,
@@ -456,9 +456,9 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
             return false;
         }
 
-        response.headers.Add(p_strndup_lower(pool, (const char *)payload.data,
+        response.headers.Add(p_strndup_lower(&pool, (const char *)payload.data,
                                              p - (const char *)payload.data),
-                             p_strndup(pool, p + 1,
+                             p_strndup(&pool, p + 1,
                                        (const char *)payload.data + payload.size - p - 1));
         break;
 
@@ -765,7 +765,7 @@ WasClient::WasInputError() noexcept
  */
 
 inline
-WasClient::WasClient(PoolPtr &&_pool, struct pool &_caller_pool,
+WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
                      EventLoop &event_loop,
                      StopwatchPtr &&_stopwatch,
                      SocketDescriptor control_fd,
@@ -774,7 +774,7 @@ WasClient::WasClient(PoolPtr &&_pool, struct pool &_caller_pool,
                      http_method_t method, UnusedIstreamPtr body,
                      HttpResponseHandler &_handler,
                      CancellablePointer &cancel_ptr)
-    :PoolHolder(_pool), caller_pool(_caller_pool),
+    :pool(_pool), caller_pool(_caller_pool),
      stopwatch(std::move(_stopwatch)),
      lease(_lease),
      control(event_loop, control_fd, *this),
@@ -854,8 +854,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
     assert(http_method_is_valid(method));
     assert(uri != nullptr);
 
-    auto pool = pool_new_linear(&caller_pool, "was_client_request", 32768);
-    auto client = NewFromPool<WasClient>(std::move(pool), caller_pool,
+    auto client = NewFromPool<WasClient>(caller_pool, caller_pool, caller_pool,
                                          event_loop, std::move(stopwatch),
                                          control_fd, input_fd, output_fd,
                                          lease, method, std::move(body),
