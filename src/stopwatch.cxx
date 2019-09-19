@@ -36,6 +36,7 @@
 #include "net/StaticSocketAddress.hxx"
 #include "net/ToString.hxx"
 #include "io/Logger.hxx"
+#include "util/LeakDetector.hxx"
 #include "util/WritableBuffer.hxx"
 
 #include <boost/container/static_vector.hpp>
@@ -60,7 +61,7 @@ struct StopwatchEvent {
         :name(_name), time(std::chrono::steady_clock::now()) {}
 };
 
-class Stopwatch {
+class Stopwatch final : LeakDetector {
     AllocatorPtr alloc;
 
     const char *const name;
