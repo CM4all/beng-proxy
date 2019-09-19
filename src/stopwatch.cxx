@@ -60,7 +60,7 @@ struct StopwatchEvent {
         :name(_name), time(std::chrono::steady_clock::now()) {}
 };
 
-struct Stopwatch {
+class Stopwatch {
     AllocatorPtr alloc;
 
     const char *const name;
@@ -73,6 +73,7 @@ struct Stopwatch {
      */
     struct rusage self;
 
+public:
     Stopwatch(AllocatorPtr _alloc, const char *_name)
         :alloc(_alloc), name(_name) {
         events.emplace_back(name);
