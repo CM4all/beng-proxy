@@ -159,6 +159,21 @@ private:
         this->~WasClient();
     }
 
+    template<typename B>
+    void DestroyInvokeResponse(http_status_t status, StringMap headers,
+                               B &&body) noexcept {
+        auto &_handler = handler;
+        Destroy();
+        _handler.InvokeResponse(status, std::move(headers),
+                                std::forward<B>(body));
+    }
+
+    void DestroyInvokeError(std::exception_ptr ep) noexcept {
+        auto &_handler = handler;
+        Destroy();
+        _handler.InvokeError(ep);
+    }
+
     /**
      * Cancel the request body by sending #WAS_COMMAND_PREMATURE to
      * the WAS child process.
@@ -261,8 +276,7 @@ private:
 
         ClearUnused();
 
-        handler.InvokeError(ep);
-        Destroy();
+        DestroyInvokeError(ep);
     }
 
     /**
@@ -300,8 +314,7 @@ private:
 
         ClearUnused();
 
-        handler.InvokeError(ep);
-        Destroy();
+        DestroyInvokeError(ep);
     }
 
     /**
@@ -402,9 +415,8 @@ WasClient::SubmitPendingResponse()
         was_input_free_unused_p(&response.body);
         ReleaseControl();
 
-        handler.InvokeResponse(response.status, std::move(response.headers),
-                               istream_null_new(caller_pool));
-        Destroy();
+        DestroyInvokeResponse(response.status, std::move(response.headers),
+                              istream_null_new(caller_pool));
         return false;
     } else {
         const DestructObserver destructed(*this);
@@ -518,10 +530,8 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
 
         ReleaseControl();
 
-        handler.InvokeResponse(response.status, std::move(response.headers),
-                               UnusedIstreamPtr());
-
-        Destroy();
+        DestroyInvokeResponse(response.status, std::move(response.headers),
+                              UnusedIstreamPtr());
         return false;
 
     case WAS_COMMAND_DATA:
