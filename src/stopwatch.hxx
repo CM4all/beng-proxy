@@ -36,7 +36,7 @@
 
 #include <utility>
 
-struct AllocatorPtr;
+class AllocatorPtr;
 struct Stopwatch;
 class SocketAddress;
 class SocketDescriptor;
