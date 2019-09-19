@@ -37,7 +37,7 @@
 #include "net/ToString.hxx"
 #include "io/Logger.hxx"
 #include "util/LeakDetector.hxx"
-#include "util/WritableBuffer.hxx"
+#include "util/StringBuilder.hxx"
 
 #include <boost/container/static_vector.hpp>
 
@@ -45,6 +45,7 @@
 
 #include <time.h>
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/resource.h>
 
@@ -198,17 +199,19 @@ timeval_diff_ms(const struct timeval *a, const struct timeval *b)
 }
 
 template<typename... Args>
-static void
-AppendFormat(WritableBuffer<char> &buffer, const char *fmt, Args&&... args)
+static inline void
+AppendFormat(StringBuilder<> &b, const char *fmt, Args&&... args)
 {
-    int r = snprintf(buffer.data, buffer.size, fmt, args...);
-    if (r > 0)
-        buffer.skip_front(std::min(size_t(r), buffer.size - 1));
+    size_t size = b.GetRemainingSize();
+    size_t n = snprintf(b.GetTail(), size, fmt, args...);
+    if (n >= size - 1)
+        throw StringBuilder<>::Overflow();
+    b.Extend(n);
 }
 
 inline void
 Stopwatch::Dump() const noexcept
-{
+try {
     assert(!events.empty());
 
     if (events.size() < 2)
@@ -219,8 +222,7 @@ Stopwatch::Dump() const noexcept
     snprintf(domain, sizeof(domain), "stopwatch %s", name);
 
     char message[1024];
-
-    WritableBuffer<char> b(message, sizeof(message));
+    StringBuilder<> b(message, sizeof(message));
 
     for (const auto &i : events)
         AppendFormat(b, " %s=%ldms",
@@ -234,4 +236,5 @@ Stopwatch::Dump() const noexcept
                  timeval_diff_ms(&new_self.ru_stime, &self.ru_stime));
 
     LogConcat(STOPWATCH_VERBOSE, domain, message);
+} catch (StringBuilder<>::Overflow) {
 }
