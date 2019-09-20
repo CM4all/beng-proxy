@@ -43,7 +43,8 @@ Request::Request(BpInstance &_instance, BpConnection &_connection,
      connection(_connection),
      logger(connection.logger),
      request(_request),
-     args(pool)
+     args(pool),
+     request_body(pool, std::move(request.body))
 {
     session_id.Clear();
 }

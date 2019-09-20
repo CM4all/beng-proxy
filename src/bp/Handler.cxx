@@ -904,9 +904,6 @@ handle_http_request(BpConnection &connection,
                                           connection.instance,
                                           connection, request);
 
-    request2->request_body = UnusedHoldIstreamPtr(request.pool,
-                                                  std::move(request.body));
-
     cancel_ptr = *request2;
 
     if (!request2->ParseRequestUri())
