@@ -41,7 +41,6 @@
 #include "FileHandler.hxx"
 #include "file_address.hxx"
 #include "nfs/Address.hxx"
-#include "nfs/RequestHandler.hxx"
 #include "Request.hxx"
 #include "args.hxx"
 #include "session/Session.hxx"
@@ -135,7 +134,7 @@ Request::HandleAddress(const ResourceAddress &address)
         break;
 
     case ResourceAddress::Type::NFS:
-        nfs_handler(*this);
+        HandleNfsAddress();
         break;
 
     default:

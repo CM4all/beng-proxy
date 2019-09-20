@@ -338,6 +338,8 @@ struct Request final : HttpResponseHandler, DelegateHandler,
     void HandleDelegateAddress(const DelegateAddress &address,
                                const char *path) noexcept;
 
+    void HandleNfsAddress() noexcept;
+
     /**
      * Handle the request by forwarding it to the given address.
      */

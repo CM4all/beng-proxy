@@ -30,7 +30,6 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RequestHandler.hxx"
 #include "Cache.hxx"
 #include "Address.hxx"
 #include "translation/Vary.hxx"
@@ -134,12 +133,9 @@ Request::OnNfsCacheError(std::exception_ptr ep) noexcept
  */
 
 void
-nfs_handler(Request &request2) noexcept
+Request::HandleNfsAddress() noexcept
 {
-    const auto &request = request2.request;
-    struct pool &pool = request2.pool;
-
-    const auto &address = request2.translate.address.GetNfs();
+    const auto &address = translate.address.GetNfs();
     assert(address.server != NULL);
     assert(address.export_name != NULL);
     assert(address.path != NULL);
@@ -148,14 +144,14 @@ nfs_handler(Request &request2) noexcept
 
     if (request.method != HTTP_METHOD_HEAD &&
         request.method != HTTP_METHOD_GET &&
-        !request2.processor_focus) {
-        method_not_allowed(request2, "GET, HEAD");
+        !processor_focus) {
+        method_not_allowed(*this, "GET, HEAD");
         return;
     }
 
     /* run the delegate helper */
 
-    nfs_cache_request(pool, *request2.instance.nfs_cache,
+    nfs_cache_request(pool, *instance.nfs_cache,
                       address.server, address.export_name, address.path,
-                      request2, request2.cancel_ptr);
+                      *this, cancel_ptr);
 }
