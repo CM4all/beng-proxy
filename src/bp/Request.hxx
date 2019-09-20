@@ -335,6 +335,11 @@ struct Request final : HttpResponseHandler, DelegateHandler,
     /**
      * Handle the request by forwarding it to the given address.
      */
+    void HandleProxyAddress() noexcept;
+
+    /**
+     * Handle the request by forwarding it to the given address.
+     */
     void HandleAddress(const ResourceAddress &address);
 
     /**

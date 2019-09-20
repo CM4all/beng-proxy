@@ -86,64 +86,62 @@ ForwardURI(const Request &r)
 }
 
 void
-proxy_handler(Request &request2)
+Request::HandleProxyAddress() noexcept
 {
-    struct pool &pool = request2.pool;
-    const TranslateResponse &tr = *request2.translate.response;
-    ResourceAddress address(ShallowCopy(), request2.translate.address);
+    const TranslateResponse &tr = *translate.response;
+    ResourceAddress address(ShallowCopy(), translate.address);
 
     assert(address.type == ResourceAddress::Type::HTTP ||
            address.type == ResourceAddress::Type::LHTTP ||
            address.type == ResourceAddress::Type::NFS ||
            address.IsCgiAlike());
 
-    if (request2.translate.response->transparent &&
-        (!request2.dissected_uri.args.IsNull() ||
-         !request2.dissected_uri.path_info.empty()))
+    if (translate.response->transparent &&
+        (!dissected_uri.args.IsNull() || !dissected_uri.path_info.empty()))
         address = address.WithArgs(pool,
-                                   request2.dissected_uri.args,
-                                   request2.dissected_uri.path_info);
+                                   dissected_uri.args,
+                                   dissected_uri.path_info);
 
-    if (!request2.processor_focus)
+    if (!processor_focus)
         /* forward query string */
-        address = address.WithQueryStringFrom(pool, request2.request.uri);
+        address = address.WithQueryStringFrom(pool, request.uri);
 
     if (address.IsCgiAlike() &&
         address.GetCgi().script_name == nullptr &&
         address.GetCgi().uri == nullptr)
         /* pass the "real" request URI to the CGI (but without the
            "args", unless the request is "transparent") */
-        address.GetCgi().uri = ForwardURI(request2);
+        address.GetCgi().uri = ForwardURI(*this);
 
-    request2.cookie_uri = address.GetUriPath();
+    cookie_uri = address.GetUriPath();
 
-    auto forward = request_forward(request2,
+    auto forward = request_forward(*this,
                                    tr.request_header_forward,
-                                   request2.GetCookieHost(),
-                                   request2.GetCookieURI(),
+                                   GetCookieHost(),
+                                   GetCookieURI(),
                                    address.IsAnyHttp());
 
 #ifdef SPLICE
     if (forward.body)
         forward.body = NewAutoPipeIstream(&pool, std::move(forward.body),
-                                          request2.instance.pipe_stock);
+                                          instance.pipe_stock);
 #endif
 
     for (const auto &i : tr.request_headers)
         forward.headers.SecureSet(i.key, i.value);
 
-    request2.collect_cookies = true;
+    collect_cookies = true;
 
     auto &rl = tr.uncached
-        ? *request2.instance.direct_resource_loader
-        : *request2.instance.cached_resource_loader;
+        ? *instance.direct_resource_loader
+        : *instance.cached_resource_loader;
 
     rl.SendRequest(pool,
-                   request2.session_id.GetClusterHash(),
+                   session_id.GetClusterHash(),
                    nullptr, tr.site,
                    forward.method, address, HTTP_STATUS_OK,
                    std::move(forward.headers),
                    std::move(forward.body),
                    nullptr,
-                   request2, request2.cancel_ptr);
+                   *this, cancel_ptr);
 }

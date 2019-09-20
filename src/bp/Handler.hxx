@@ -54,9 +54,6 @@ void
 fcgi_handler(Request &request2);
 
 void
-proxy_handler(Request &request);
-
-void
 handle_http_request(BpConnection &connection,
                     IncomingHttpRequest &request,
                     CancellablePointer &cancel_ptr);

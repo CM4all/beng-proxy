@@ -139,7 +139,7 @@ Request::HandleAddress(const ResourceAddress &address)
         break;
 
     default:
-        proxy_handler(*this);
+        HandleProxyAddress();
     }
 }
 
