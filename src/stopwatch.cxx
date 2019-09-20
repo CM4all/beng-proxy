@@ -108,12 +108,10 @@ stopwatch_is_enabled() noexcept
     return stopwatch_enabled && CheckLogLevel(STOPWATCH_VERBOSE);
 }
 
-static Stopwatch *
-stopwatch_new(AllocatorPtr alloc, const char *name, const char *suffix) noexcept
+static const char *
+MakeStopwatchName(AllocatorPtr alloc,
+                  const char *name, const char *suffix) noexcept
 {
-    if (!stopwatch_is_enabled())
-        return nullptr;
-
     if (suffix == nullptr)
         name = alloc.Dup(name);
     else
@@ -123,7 +121,16 @@ stopwatch_new(AllocatorPtr alloc, const char *name, const char *suffix) noexcept
     if (strlen(name) > MAX_NAME)
         name = alloc.DupZ({name, MAX_NAME});
 
-    return alloc.New<Stopwatch>(alloc, name);
+    return name;
+}
+
+static Stopwatch *
+stopwatch_new(AllocatorPtr alloc, const char *name, const char *suffix) noexcept
+{
+    if (!stopwatch_is_enabled())
+        return nullptr;
+
+    return alloc.New<Stopwatch>(alloc, MakeStopwatchName(alloc, name, suffix));
 }
 
 static Stopwatch *
