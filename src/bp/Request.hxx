@@ -269,6 +269,8 @@ struct Request final : HttpResponseHandler, DelegateHandler,
     Request(BpInstance &_instance, BpConnection &_connection,
             IncomingHttpRequest &_request) noexcept;
 
+    void HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept;
+
     void ParseArgs();
 
     void RepeatTranslation(const TranslateResponse &response) noexcept;

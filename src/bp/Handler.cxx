@@ -890,10 +890,25 @@ Request::ServeDocumentRootFile(const BpConfig &config) noexcept
     file_callback(*this, *fa);
 }
 
-/*
- * constructor
- *
- */
+void
+Request::HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept
+{
+    caller_cancel_ptr = *this;
+
+    if (!ParseRequestUri())
+        return;
+
+    assert(!dissected_uri.base.empty());
+    assert(dissected_uri.base.front() == '/');
+
+    ParseArgs();
+    DetermineSession();
+
+    if (instance.translation_service == nullptr)
+        ServeDocumentRootFile(connection.config);
+    else
+        AskTranslationServer();
+}
 
 void
 handle_http_request(BpConnection &connection,
@@ -903,20 +918,5 @@ handle_http_request(BpConnection &connection,
     auto *request2 = NewFromPool<Request>(request.pool,
                                           connection.instance,
                                           connection, request);
-
-    cancel_ptr = *request2;
-
-    if (!request2->ParseRequestUri())
-        return;
-
-    assert(!request2->dissected_uri.base.empty());
-    assert(request2->dissected_uri.base.front() == '/');
-
-    request2->ParseArgs();
-    request2->DetermineSession();
-
-    if (request2->instance.translation_service == nullptr)
-        request2->ServeDocumentRootFile(connection.config);
-    else
-        request2->AskTranslationServer();
+    request2->HandleHttpRequest(cancel_ptr);
 }
