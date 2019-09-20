@@ -97,28 +97,26 @@ Request::OnDelegateError(std::exception_ptr ep)
  */
 
 void
-delegate_handler(Request &request2, const DelegateAddress &address,
-                 const char *path)
+Request::HandleDelegateAddress(const DelegateAddress &address,
+                               const char *path) noexcept
 {
-    auto &request = request2.request;
-
     assert(path != nullptr);
 
     /* check request */
 
     if (request.method != HTTP_METHOD_HEAD &&
         request.method != HTTP_METHOD_GET &&
-        !request2.processor_focus) {
-        method_not_allowed(request2, "GET, HEAD");
+        !processor_focus) {
+        method_not_allowed(*this, "GET, HEAD");
         return;
     }
 
     /* run the delegate helper */
 
-    request2.handler.delegate.path = path;
+    handler.delegate.path = path;
 
-    delegate_stock_open(request2.instance.delegate_stock, request.pool,
+    delegate_stock_open(instance.delegate_stock, request.pool,
                         address.delegate, address.child_options,
                         path,
-                        request2, request2.cancel_ptr);
+                        *this, cancel_ptr);
 }

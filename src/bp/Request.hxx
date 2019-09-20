@@ -59,6 +59,7 @@ struct BpConfig;
 struct BpConnection;
 struct IncomingHttpRequest;
 struct FilterTransformation;
+struct DelegateAddress;
 
 /*
  * The BENG request struct.  This is only used by the handlers
@@ -333,6 +334,9 @@ struct Request final : HttpResponseHandler, DelegateHandler,
      * Handle #TRANSLATE_AUTH.
      */
     void HandleAuth(const TranslateResponse &response);
+
+    void HandleDelegateAddress(const DelegateAddress &address,
+                               const char *path) noexcept;
 
     /**
      * Handle the request by forwarding it to the given address.

@@ -128,8 +128,8 @@ Request::HandleAddress(const ResourceAddress &address)
     switch (address.type) {
     case ResourceAddress::Type::LOCAL:
         if (address.GetFile().delegate != nullptr)
-            delegate_handler(*this, *address.GetFile().delegate,
-                             address.GetFile().path);
+            HandleDelegateAddress(*address.GetFile().delegate,
+                                  address.GetFile().path);
         else
             file_callback(*this, address.GetFile());
         break;

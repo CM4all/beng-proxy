@@ -40,12 +40,7 @@
 struct Request;
 struct BpConnection;
 struct IncomingHttpRequest;
-struct DelegateAddress;
 class CancellablePointer;
-
-void
-delegate_handler(Request &request, const DelegateAddress &address,
-                 const char *path);
 
 void
 cgi_handler(Request &request2);
