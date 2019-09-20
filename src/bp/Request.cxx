@@ -36,10 +36,10 @@
 #include "args.hxx"
 #include "strmap.hxx"
 
-Request::Request(BpInstance &_instance, BpConnection &_connection,
+Request::Request(BpConnection &_connection,
                  IncomingHttpRequest &_request) noexcept
     :pool(_request.pool),
-     instance(_instance),
+     instance(_connection.instance),
      connection(_connection),
      logger(connection.logger),
      request(_request),

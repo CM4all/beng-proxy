@@ -916,7 +916,6 @@ handle_http_request(BpConnection &connection,
                     CancellablePointer &cancel_ptr)
 {
     auto *request2 = NewFromPool<Request>(request.pool,
-                                          connection.instance,
                                           connection, request);
     request2->HandleHttpRequest(cancel_ptr);
 }

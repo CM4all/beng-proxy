@@ -266,7 +266,7 @@ struct Request final : HttpResponseHandler, DelegateHandler,
 
     CancellablePointer cancel_ptr;
 
-    Request(BpInstance &_instance, BpConnection &_connection,
+    Request(BpConnection &_connection,
             IncomingHttpRequest &_request) noexcept;
 
     void HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept;
