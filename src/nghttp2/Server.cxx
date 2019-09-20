@@ -49,6 +49,7 @@
 #include "util/StringView.hxx"
 #include "address_string.hxx"
 #include "fb_pool.hxx"
+#include "stopwatch.hxx"
 
 #include <nghttp2/nghttp2.h>
 
@@ -286,7 +287,11 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
         std::tie(body, request_body_control) = NewFifoBufferIstream(pool,
                                                                     *this);
 
-    connection.handler.HandleHttpRequest(*this, cancel_ptr);
+    StopwatchPtr stopwatch; // TODO
+
+    connection.handler.HandleHttpRequest(*this,
+                                         stopwatch,
+                                         cancel_ptr);
 
     return 0;
 }

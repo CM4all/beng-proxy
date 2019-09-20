@@ -56,6 +56,7 @@ public:
 
     /* virtual methods from class HttpServerConnectionHandler */
     void HandleHttpRequest(IncomingHttpRequest &request,
+                           const StopwatchPtr &,
                            CancellablePointer &cancel_ptr) noexcept override {
         (void)cancel_ptr;
         // TODO

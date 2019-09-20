@@ -113,6 +113,7 @@ private:
 
     /* virtual methods from class HttpServerConnectionHandler */
     void HandleHttpRequest(IncomingHttpRequest &request,
+                           const StopwatchPtr &parent_stopwatch,
                            CancellablePointer &cancel_ptr) noexcept override;
 
     void LogHttpRequest(IncomingHttpRequest &,
@@ -183,6 +184,7 @@ Instance::OnConnectionClosed() noexcept
 
 void
 Connection::HandleHttpRequest(IncomingHttpRequest &request,
+                              const StopwatchPtr &,
                               CancellablePointer &cancel_ptr) noexcept
 {
     switch (instance.mode) {

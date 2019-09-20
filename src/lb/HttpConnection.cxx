@@ -233,6 +233,7 @@ LbHttpConnection::RequestHeadersFinished(const IncomingHttpRequest &request) noe
 
 void
 LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
+                                    const StopwatchPtr &,
                                     CancellablePointer &cancel_ptr) noexcept
 {
     if (!uri_path_verify_quick(request.uri)) {

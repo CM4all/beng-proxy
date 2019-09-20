@@ -168,6 +168,7 @@ struct LbHttpConnection final
     /* virtual methods from class HttpServerConnectionHandler */
     void RequestHeadersFinished(const IncomingHttpRequest &request) noexcept override;
     void HandleHttpRequest(IncomingHttpRequest &request,
+                           const StopwatchPtr &parent_stopwatch,
                            CancellablePointer &cancel_ptr) noexcept override;
 
     void LogHttpRequest(IncomingHttpRequest &request,

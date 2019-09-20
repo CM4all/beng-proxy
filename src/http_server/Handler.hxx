@@ -41,6 +41,7 @@
 
 struct IncomingHttpRequest;
 class CancellablePointer;
+class StopwatchPtr;
 
 class HttpServerConnectionHandler {
 public:
@@ -53,6 +54,7 @@ public:
     virtual void RequestHeadersFinished(const IncomingHttpRequest &) noexcept {};
 
     virtual void HandleHttpRequest(IncomingHttpRequest &request,
+                                   const StopwatchPtr &parent_stopwatch,
                                    CancellablePointer &cancel_ptr) noexcept = 0;
 
     /**

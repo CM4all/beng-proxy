@@ -144,8 +144,11 @@ BpConnection::RequestHeadersFinished(const IncomingHttpRequest &) noexcept
 
 void
 BpConnection::HandleHttpRequest(IncomingHttpRequest &request,
+                                const StopwatchPtr &parent_stopwatch,
                                 CancellablePointer &cancel_ptr) noexcept
 {
+    (void)parent_stopwatch; // TODO
+
     handle_http_request(*this, request, cancel_ptr);
 }
 

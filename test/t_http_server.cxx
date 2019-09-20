@@ -124,6 +124,7 @@ public:
 private:
     /* virtual methods from class HttpServerConnectionHandler */
     void HandleHttpRequest(IncomingHttpRequest &request,
+                           const StopwatchPtr &parent_stopwatch,
                            CancellablePointer &cancel_ptr) noexcept override;
 
     void LogHttpRequest(IncomingHttpRequest &,
@@ -273,6 +274,7 @@ Server::Server(struct pool &_pool, EventLoop &event_loop)
 
 void
 Server::HandleHttpRequest(IncomingHttpRequest &request,
+                          const StopwatchPtr &,
                           CancellablePointer &cancel_ptr) noexcept
 {
     request_handler(request, cancel_ptr);
