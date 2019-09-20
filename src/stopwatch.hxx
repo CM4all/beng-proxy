@@ -103,8 +103,6 @@ public:
     }
 
     void RecordEvent(const char *) const noexcept {}
-    void Dump() const noexcept {}
-    void Finish(const char *) const noexcept {}
 };
 
 static inline void
