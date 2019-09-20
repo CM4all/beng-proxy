@@ -106,19 +106,18 @@ bounce_uri(struct pool &pool, const Request &request,
  * Apply session-specific data from the #TranslateResponse.  Returns
  * the session object or nullptr.
  */
-static RealmSessionLease
-apply_translate_response_session(Request &request,
-                                 const TranslateResponse &response)
+RealmSessionLease
+Request::ApplyTranslateResponseSession(const TranslateResponse &response) noexcept
 {
-    request.ApplyTranslateRealm(response, nullptr);
+    ApplyTranslateRealm(response, nullptr);
 
     if (response.transparent) {
-        request.MakeStateless();
-        request.args.Clear();
+        MakeStateless();
+        args.Clear();
     } else if (response.discard_session)
-        request.DiscardSession();
+        DiscardSession();
 
-    return request.ApplyTranslateSession(response);
+    return ApplyTranslateSession(response);
 }
 
 void
@@ -144,17 +143,12 @@ Request::HandleAddress(const ResourceAddress &address)
     }
 }
 
-/**
- * Called by handle_translated_request() with the #TranslateResponse
- * copy.
- */
-static void
-handle_translated_request2(Request &request,
-                           const TranslateResponse &response)
+void
+Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 {
-    const ResourceAddress address(ShallowCopy(), request.translate.address);
+    const ResourceAddress address(ShallowCopy(), translate.address);
 
-    request.translate.transformation = response.views != nullptr
+    translate.transformation = response.views != nullptr
         ? response.views->transformation
         : nullptr;
 
@@ -165,43 +159,43 @@ handle_translated_request2(Request &request,
          response.response_header_forward[HeaderGroup::COOKIE] != HeaderForwardMode::BOTH)) {
         /* disable session management if cookies are not mangled by
            beng-proxy */
-        request.MakeStateless();
+        MakeStateless();
     }
 
     if (response.site != nullptr)
-        request.connection.per_request.site_name = response.site;
+        connection.per_request.site_name = response.site;
 
     {
-        auto session = apply_translate_response_session(request, response);
+        auto session = ApplyTranslateResponseSession(response);
 
         /* always enforce sessions when the processor is enabled */
-        if (request.IsProcessorEnabled() && !session)
-            session = request.MakeRealmSession();
+        if (IsProcessorEnabled() && !session)
+            session = MakeRealmSession();
 
         if (session)
-            RefreshExternalSession(request.connection.instance,
+            RefreshExternalSession(connection.instance,
                                    session->parent);
     }
 
-    request.resource_tag = address.GetId(request.pool);
+    resource_tag = address.GetId(pool);
 
-    request.processor_focus =
+    processor_focus =
         /* the IsProcessorEnabled() check was disabled because the
            response may include a X-CM4all-View header that enables
            the processor; with this check, the request body would be
            consumed already */
-        //request.IsProcessorEnabled() &&
-        request.args.Get("focus") != nullptr;
+        //IsProcessorEnabled() &&
+        args.Get("focus") != nullptr;
 
     if (address.IsDefined()) {
-        request.HandleAddress(address);
-    } else if (request.CheckHandleRedirectBounceStatus(response)) {
+        HandleAddress(address);
+    } else if (CheckHandleRedirectBounceStatus(response)) {
         /* done */
     } else if (response.www_authenticate != nullptr) {
-        request.DispatchResponse(HTTP_STATUS_UNAUTHORIZED, "Unauthorized");
+        DispatchResponse(HTTP_STATUS_UNAUTHORIZED, "Unauthorized");
     } else {
-        request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                                 "Empty response from translation server", 1);
+        LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                         "Empty response from translation server", 1);
     }
 }
 
@@ -343,7 +337,7 @@ Request::OnSuffixRegistrySuccess(const char *content_type,
     translate.content_type = content_type;
     translate.suffix_transformation = transformations;
 
-    handle_translated_request2(*this, *translate.response);
+    HandleTranslatedRequest2(*translate.response);
 }
 
 void
@@ -354,28 +348,27 @@ Request::OnSuffixRegistryError(std::exception_ptr ep)
                      ep, 1);
 }
 
-static bool
-do_content_type_lookup(Request &request,
-                       const ResourceAddress &address)
+bool
+Request::DoContentTypeLookup(const ResourceAddress &address) noexcept
 {
-    return suffix_registry_lookup(request.pool,
-                                  *request.instance.translation_service,
+    return suffix_registry_lookup(pool,
+                                  *instance.translation_service,
                                   address,
-                                  request, request.cancel_ptr);
+                                  *this, cancel_ptr);
 }
 
-static void
-handle_translated_request(Request &request, const TranslateResponse &response)
+void
+Request::HandleTranslatedRequest(const TranslateResponse &response) noexcept
 {
-    request.translate.response = &response;
-    request.translate.address = {ShallowCopy(), response.address};
-    request.translate.transformation = nullptr;
+    translate.response = &response;
+    translate.address = {ShallowCopy(), response.address};
+    translate.transformation = nullptr;
 
-    apply_file_enotdir(request);
+    apply_file_enotdir(*this);
 
-    if (!do_content_type_lookup(request, response.address)) {
-        request.translate.suffix_transformation = nullptr;
-        handle_translated_request2(request, response);
+    if (!DoContentTypeLookup(response.address)) {
+        translate.suffix_transformation = nullptr;
+        HandleTranslatedRequest2(response);
     }
 }
 
@@ -491,21 +484,21 @@ fill_translate_request_user(Request &request,
     }
 }
 
-static void
-repeat_translation(Request &request, const TranslateResponse &response)
+inline void
+Request::RepeatTranslation(const TranslateResponse &response) noexcept
 {
     if (!response.check.IsNull()) {
         /* repeat request with CHECK set */
 
-        if (++request.translate.n_checks > 4) {
-            request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                                     "Too many consecutive CHECK packets",
-                                     1);
+        if (++translate.n_checks > 4) {
+            LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                             "Too many consecutive CHECK packets",
+                             1);
             return;
         }
 
-        request.translate.previous = &response;
-        request.translate.request.check = response.check;
+        translate.previous = &response;
+        translate.request.check = response.check;
     }
 
     if (!response.internal_redirect.IsNull()) {
@@ -513,79 +506,72 @@ repeat_translation(Request &request, const TranslateResponse &response)
 
         assert(response.want_full_uri == nullptr);
 
-        if (++request.translate.n_internal_redirects > 4) {
-            request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                                     "Too many consecutive INTERNAL_REDIRECT packets",
-                                     1);
+        if (++translate.n_internal_redirects > 4) {
+            LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                             "Too many consecutive INTERNAL_REDIRECT packets",
+                             1);
             return;
         }
 
-        request.translate.previous = &response;
-        request.translate.request.internal_redirect = response.internal_redirect;
+        translate.previous = &response;
+        translate.request.internal_redirect = response.internal_redirect;
 
         assert(response.uri != nullptr);
-        request.translate.request.uri = response.uri;
+        translate.request.uri = response.uri;
     }
 
     if (response.protocol_version >= 1) {
         /* handle WANT */
 
         if (!response.want.IsNull())
-            request.translate.request.want = response.want;
+            translate.request.want = response.want;
 
         if (response.Wants(TranslationCommand::LISTENER_TAG)) {
             if (response.protocol_version >= 2) {
-                request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                                         "Translation protocol 2 doesn't allow WANT/LISTENER_TAG",
-                                         1);
+                LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                                 "Translation protocol 2 doesn't allow WANT/LISTENER_TAG",
+                                 1);
                 return;
             }
 
-            fill_translate_request_listener_tag(request.translate.request,
-                                                request);
+            fill_translate_request_listener_tag(translate.request, *this);
         }
 
         if (response.Wants(TranslationCommand::LOCAL_ADDRESS))
-            fill_translate_request_local_address(request.translate.request,
-                                                 request.request);
+            fill_translate_request_local_address(translate.request, request);
 
         if (response.Wants(TranslationCommand::REMOTE_HOST))
-            fill_translate_request_remote_host(request.translate.request,
-                                               request.connection.remote_host_and_port);
+            fill_translate_request_remote_host(translate.request,
+                                               connection.remote_host_and_port);
 
         if (response.Wants(TranslationCommand::USER_AGENT))
-            fill_translate_request_user_agent(request.translate.request,
-                                              request.request.headers);
+            fill_translate_request_user_agent(translate.request,
+                                              request.headers);
 
         if (response.Wants(TranslationCommand::UA_CLASS))
-            fill_translate_request_ua_class(request.translate.request,
-                                            request.instance,
-                                            request.request.headers);
+            fill_translate_request_ua_class(translate.request,
+                                            instance,
+                                            request.headers);
 
         if (response.Wants(TranslationCommand::LANGUAGE))
-            fill_translate_request_language(request.translate.request,
-                                            request.request.headers);
+            fill_translate_request_language(translate.request,
+                                            request.headers);
 
         if (response.Wants(TranslationCommand::ARGS) &&
-            request.translate.request.args == nullptr)
-            fill_translate_request_args(request.translate.request,
-                                        request.pool, request.args);
+            translate.request.args == nullptr)
+            fill_translate_request_args(translate.request, pool, args);
 
         if (response.Wants(TranslationCommand::QUERY_STRING))
-            fill_translate_request_query_string(request.translate.request,
-                                                request.pool,
-                                                request.dissected_uri);
+            fill_translate_request_query_string(translate.request, pool,
+                                                dissected_uri);
 
         if (response.Wants(TranslationCommand::QUERY_STRING))
-            fill_translate_request_query_string(request.translate.request,
-                                                request.pool,
-                                                request.dissected_uri);
+            fill_translate_request_query_string(translate.request, pool,
+                                                dissected_uri);
 
-        if (response.Wants(TranslationCommand::USER) ||
-            request.translate.want_user) {
-            request.translate.want_user = true;
-            fill_translate_request_user(request, request.translate.request,
-                                        request.pool);
+        if (response.Wants(TranslationCommand::USER) || translate.want_user) {
+            translate.want_user = true;
+            fill_translate_request_user(*this, translate.request, pool);
         }
     }
 
@@ -593,23 +579,21 @@ repeat_translation(Request &request, const TranslateResponse &response)
         /* repeat request with full URI */
 
         /* echo the server's WANT_FULL_URI packet */
-        request.translate.request.want_full_uri = response.want_full_uri;
+        translate.request.want_full_uri = response.want_full_uri;
 
         /* send the full URI this time */
-        request.translate.request.uri =
-            uri_without_query_string(request.pool,
-                                     request.request.uri);
+        translate.request.uri = uri_without_query_string(pool, request.uri);
 
         /* undo the uri_parse() call (but leave the query_string) */
 
-        request.dissected_uri.base = request.translate.request.uri;
-        request.dissected_uri.args = nullptr;
-        request.dissected_uri.path_info = nullptr;
+        dissected_uri.base = translate.request.uri;
+        dissected_uri.args = nullptr;
+        dissected_uri.path_info = nullptr;
     }
 
     /* resend the modified request */
 
-    request.SubmitTranslateRequest();
+    SubmitTranslateRequest();
 }
 
 inline void
@@ -644,7 +628,7 @@ Request::OnTranslateResponse(const TranslateResponse &response)
     if (response.protocol_version > translation_protocol_version)
         translation_protocol_version = response.protocol_version;
 
-    /* just in case we error out before handle_translated_request()
+    /* just in case we error out before HandleTranslatedRequest()
        assigns the real response */
     install_error_response(*this);
 
@@ -669,7 +653,7 @@ Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
            once */
         translate.user_modified = false;
 
-        repeat_translation(*this, response);
+        RepeatTranslation(response);
         return;
     }
 
@@ -690,7 +674,7 @@ Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 
         /* apply changes from this response, then resume the
            "previous" response */
-        apply_translate_response_session(*this, response);
+        ApplyTranslateResponseSession(response);
 
         OnTranslateResponse2(*translate.previous);
     } else
@@ -720,7 +704,7 @@ Request::OnTranslateResponse2(const TranslateResponse &response)
         !check_directory_index(*this, response))
         return;
 
-    handle_translated_request(*this, response);
+    HandleTranslatedRequest(response);
 }
 
 inline bool
@@ -784,25 +768,23 @@ Request::SubmitTranslateRequest()
                                               cancel_ptr);
 }
 
-static bool
-request_uri_parse(Request &request2, DissectedUri &dest)
+bool
+Request::ParseRequestUri() noexcept
 {
-    const auto &request = request2.request;
-
     if (!uri_path_verify_quick(request.uri) ||
-        !dest.Parse(request.uri)) {
+        !dissected_uri.Parse(request.uri)) {
         /* DispatchRedirect() assumes that we have a translation
            response, and will dereference it - at this point, the
            translation server hasn't been queried yet, so we just
            insert an empty response here */
-        install_error_response(request2);
+        install_error_response(*this);
 
         /* enable the "stateless" flag because we're at a very early
            stage, before request_determine_session(), and the
            session-related attributes have not been initialized yet */
-        request2.stateless = true;
+        stateless = true;
 
-        request2.DispatchResponse(HTTP_STATUS_BAD_REQUEST, "Malformed URI");
+        DispatchResponse(HTTP_STATUS_BAD_REQUEST, "Malformed URI");
         return false;
     }
 
@@ -847,67 +829,65 @@ fill_translate_request(TranslateRequest &t,
         t.listener_tag = listener_tag;
 }
 
-static void
-ask_translation_server(Request &request2)
+inline void
+Request::AskTranslationServer() noexcept
 {
-    request2.translate.previous = nullptr;
-    request2.translate.n_checks = 0;
-    request2.translate.n_internal_redirects = 0;
-    request2.translate.n_file_not_found = 0;
-    request2.translate.n_directory_index = 0;
-    request2.translate.n_probe_path_suffixes = 0;
-    request2.translate.n_read_file = 0;
-    request2.translate.enotdir_uri = nullptr;
-    request2.translate.enotdir_path_info = nullptr;
+    translate.previous = nullptr;
+    translate.n_checks = 0;
+    translate.n_internal_redirects = 0;
+    translate.n_file_not_found = 0;
+    translate.n_directory_index = 0;
+    translate.n_probe_path_suffixes = 0;
+    translate.n_read_file = 0;
+    translate.enotdir_uri = nullptr;
+    translate.enotdir_path_info = nullptr;
 
-    fill_translate_request(request2.translate.request,
-                           request2.instance,
-                           request2.request,
-                           request2.dissected_uri, request2.args,
-                           request2.connection.listener_tag,
-                           request2.connection.remote_host_and_port);
-    request2.SubmitTranslateRequest();
+    fill_translate_request(translate.request,
+                           instance,
+                           request,
+                           dissected_uri, args,
+                           connection.listener_tag,
+                           connection.remote_host_and_port);
+    SubmitTranslateRequest();
 }
 
-static void
-serve_document_root_file(Request &request2, const BpConfig &config)
+inline void
+Request::ServeDocumentRootFile(const BpConfig &config) noexcept
 {
-    auto *uri = &request2.dissected_uri;
-
-    auto tr = NewFromPool<TranslateResponse>(request2.pool);
+    auto tr = NewFromPool<TranslateResponse>(pool);
     tr->Clear();
-    request2.translate.response = tr;
+    translate.response = tr;
 
     const char *index_file = nullptr;
-    if (uri->base.back() == '/')
+    if (dissected_uri.base.back() == '/')
         index_file = "index.html";
 
-    auto view = NewFromPool<WidgetView>(request2.pool, nullptr);
+    auto view = NewFromPool<WidgetView>(pool, nullptr);
 
     tr->views = view;
     tr->transparent = true;
 
-    request2.translate.transformation = tr->views->transformation;
-    request2.translate.suffix_transformation = nullptr;
+    translate.transformation = tr->views->transformation;
+    translate.suffix_transformation = nullptr;
 
-    const char *path = p_strncat(&request2.pool,
+    const char *path = p_strncat(&pool,
                                  config.document_root,
                                  strlen(config.document_root),
-                                 uri->base.data, uri->base.size,
+                                 dissected_uri.base.data, dissected_uri.base.size,
                                  index_file, (size_t)10,
                                  nullptr);
-    auto *fa = NewFromPool<FileAddress>(request2.pool, path);
+    auto *fa = NewFromPool<FileAddress>(pool, path);
     tr->address = *fa;
 
-    request2.translate.address = {ShallowCopy(), tr->address};
+    translate.address = {ShallowCopy(), tr->address};
 
     using namespace BengProxy;
     tr->request_header_forward = HeaderForwardSettings::MakeDefaultRequest();
     tr->response_header_forward = HeaderForwardSettings::MakeDefaultResponse();
 
-    request2.resource_tag = request2.translate.address.GetFile().path;
+    resource_tag = translate.address.GetFile().path;
 
-    file_callback(request2, *fa);
+    file_callback(*this, *fa);
 }
 
 /*
@@ -929,7 +909,7 @@ handle_http_request(BpConnection &connection,
 
     cancel_ptr = *request2;
 
-    if (!request_uri_parse(*request2, request2->dissected_uri))
+    if (!request2->ParseRequestUri())
         return;
 
     assert(!request2->dissected_uri.base.empty());
@@ -939,7 +919,7 @@ handle_http_request(BpConnection &connection,
     request2->DetermineSession();
 
     if (request2->instance.translation_service == nullptr)
-        serve_document_root_file(*request2, connection.config);
+        request2->ServeDocumentRootFile(connection.config);
     else
-        ask_translation_server(*request2);
+        request2->AskTranslationServer();
 }

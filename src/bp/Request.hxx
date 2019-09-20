@@ -55,6 +55,7 @@ class Istream;
 class HttpHeaders;
 class GrowingBuffer;
 struct BpInstance;
+struct BpConfig;
 struct BpConnection;
 struct IncomingHttpRequest;
 struct FilterTransformation;
@@ -270,10 +271,17 @@ struct Request final : HttpResponseHandler, DelegateHandler,
 
     void ParseArgs();
 
+    void RepeatTranslation(const TranslateResponse &response) noexcept;
+
     /**
      * Submit the #TranslateResponse to the translation cache.
      */
     void SubmitTranslateRequest();
+
+    void AskTranslationServer() noexcept;
+    void ServeDocumentRootFile(const BpConfig &config) noexcept;
+
+    bool ParseRequestUri() noexcept;
 
     void OnTranslateResponse(const TranslateResponse &response);
     void OnTranslateResponseAfterAuth(const TranslateResponse &response);
@@ -303,6 +311,12 @@ struct Request final : HttpResponseHandler, DelegateHandler,
      */
     RealmSessionLease ApplyTranslateSession(const TranslateResponse &response);
 
+    /**
+     * Apply session-specific data from the #TranslateResponse.  Returns
+     * the session object or nullptr.
+     */
+    RealmSessionLease ApplyTranslateResponseSession(const TranslateResponse &response) noexcept;
+
     bool CheckHandleReadFile(const TranslateResponse &response);
     bool CheckHandleProbePathSuffixes(const TranslateResponse &response);
     bool CheckHandleRedirect(const TranslateResponse &response);
@@ -310,6 +324,8 @@ struct Request final : HttpResponseHandler, DelegateHandler,
     bool CheckHandleStatus(const TranslateResponse &response);
     bool CheckHandleMessage(const TranslateResponse &response);
     bool CheckHandleRedirectBounceStatus(const TranslateResponse &response);
+
+    bool DoContentTypeLookup(const ResourceAddress &address) noexcept;
 
     /**
      * Handle #TRANSLATE_AUTH.
@@ -320,6 +336,14 @@ struct Request final : HttpResponseHandler, DelegateHandler,
      * Handle the request by forwarding it to the given address.
      */
     void HandleAddress(const ResourceAddress &address);
+
+    /**
+     * Called by HandleTranslatedRequest() with the #TranslateResponse
+     * copy.
+     */
+    void HandleTranslatedRequest2(const TranslateResponse &response) noexcept;
+
+    void HandleTranslatedRequest(const TranslateResponse &response) noexcept;
 
     bool IsTransformationEnabled() const {
         return translate.response->views->transformation != nullptr;
