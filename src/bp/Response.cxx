@@ -771,11 +771,8 @@ Request::DispatchRedirect(http_status_t status,
     DispatchResponse(status, std::move(headers), msg);
 }
 
-/**
- * Callback for forward_response_headers().
- */
-static const char *
-RelocateCallback(const char *const uri, void *ctx)
+const char *
+Request::RelocateCallback(const char *const uri, void *ctx) noexcept
 {
     auto &request = *(Request *)ctx;
     auto &tr = *request.translate.response;

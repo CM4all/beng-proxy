@@ -482,6 +482,12 @@ private:
                              const Transformation &transformation);
 
     /**
+     * Callback for forward_response_headers().
+     */
+    static const char *RelocateCallback(const char *const uri,
+                                        void *ctx) noexcept;
+
+    /**
      * Generate additional response headers as needed.
      */
     void MoreResponseHeaders(HttpHeaders &headers) const noexcept;
