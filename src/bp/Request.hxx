@@ -51,6 +51,7 @@
 
 #include <exception>
 
+class FileDescriptor;
 class Istream;
 class HttpHeaders;
 class GrowingBuffer;
@@ -334,6 +335,34 @@ struct Request final : HttpResponseHandler, DelegateHandler,
      * Handle #TRANSLATE_AUTH.
      */
     void HandleAuth(const TranslateResponse &response);
+
+    bool EvaluateFileRequest(FileDescriptor fd, const struct stat &st,
+                             struct file_request &file_request) noexcept;
+
+    void DispatchFile(const struct stat &st,
+                      const struct file_request &file_request,
+                      Istream *body) noexcept;
+
+    bool DispatchCompressedFile(const struct stat &st,
+                                Istream &body, const char *encoding,
+                                const char *path);
+
+    bool CheckCompressedFile(const struct stat &st,
+                             Istream &body, const char *encoding,
+                             const char *path) noexcept;
+
+    bool CheckAutoCompressedFile(const struct stat &st,
+                                 Istream &body, const char *encoding,
+                                 const char *path,
+                                 const char *suffix) noexcept;
+
+    bool EmulateModAuthEasy(const FileAddress &address,
+                            const struct stat &st, Istream *body) noexcept;
+
+    bool MaybeEmulateModAuthEasy(const FileAddress &address,
+                                 const struct stat &st, Istream *body) noexcept;
+
+    void HandleFileAddress(const FileAddress &address) noexcept;
 
     void HandleDelegateAddress(const DelegateAddress &address,
                                const char *path) noexcept;

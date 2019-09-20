@@ -38,7 +38,6 @@
 #include "file_not_found.hxx"
 #include "file_enotdir.hxx"
 #include "file_directory_index.hxx"
-#include "FileHandler.hxx"
 #include "file_address.hxx"
 #include "nfs/Address.hxx"
 #include "Request.hxx"
@@ -130,7 +129,7 @@ Request::HandleAddress(const ResourceAddress &address)
             HandleDelegateAddress(*address.GetFile().delegate,
                                   address.GetFile().path);
         else
-            file_callback(*this, address.GetFile());
+            HandleFileAddress(address.GetFile());
         break;
 
     case ResourceAddress::Type::NFS:
@@ -886,7 +885,7 @@ Request::ServeDocumentRootFile(const BpConfig &config) noexcept
 
     resource_tag = translate.address.GetFile().path;
 
-    file_callback(*this, *fa);
+    HandleFileAddress(*fa);
 }
 
 void

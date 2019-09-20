@@ -165,17 +165,15 @@ DispatchNotModified(Request &request2, const TranslateResponse &tr,
 }
 
 bool
-file_evaluate_request(Request &request2,
-                      FileDescriptor fd, const struct stat &st,
-                      struct file_request &file_request)
+Request::EvaluateFileRequest(FileDescriptor fd, const struct stat &st,
+                             struct file_request &file_request) noexcept
 {
-    const auto &request = request2.request;
     const auto &request_headers = request.headers;
-    const auto &tr = *request2.translate.response;
+    const auto &tr = *translate.response;
     bool ignore_if_modified_since = false;
 
     if (tr.status == 0 && request.method == HTTP_METHOD_GET &&
-        !request2.IsTransformationEnabled()) {
+        !IsTransformationEnabled()) {
         const char *p = request_headers.Get("range");
 
         if (p != nullptr &&
@@ -183,18 +181,18 @@ file_evaluate_request(Request &request2,
             file_request.range.ParseRangeHeader(p);
     }
 
-    if (!request2.IsTransformationEnabled()) {
+    if (!IsTransformationEnabled()) {
         const char *p = request_headers.Get("if-match");
         if (p != nullptr && !CheckETagList(p, fd, st)) {
-            request2.DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
-                                      HttpHeaders(request2.pool), nullptr);
+            DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
+                             HttpHeaders(pool), nullptr);
             return false;
         }
 
         p = request_headers.Get("if-none-match");
         if (p != nullptr) {
             if (CheckETagList(p, fd, st)) {
-                DispatchNotModified(request2, tr, fd, st);
+                DispatchNotModified(*this, tr, fd, st);
                 return false;
             }
 
@@ -207,7 +205,7 @@ file_evaluate_request(Request &request2,
         }
     }
 
-    if (!request2.IsProcessorEnabled()) {
+    if (!IsProcessorEnabled()) {
         const char *p = ignore_if_modified_since
             ? nullptr
             : request_headers.Get("if-modified-since");
@@ -215,7 +213,7 @@ file_evaluate_request(Request &request2,
             const auto t = http_date_parse(p);
             if (t != std::chrono::system_clock::from_time_t(-1) &&
                 std::chrono::system_clock::from_time_t(st.st_mtime) <= t) {
-                DispatchNotModified(request2, tr, fd, st);
+                DispatchNotModified(*this, tr, fd, st);
                 return false;
             }
         }
@@ -225,8 +223,8 @@ file_evaluate_request(Request &request2,
             const auto t = http_date_parse(p);
             if (t != std::chrono::system_clock::from_time_t(-1) &&
                 std::chrono::system_clock::from_time_t(st.st_mtime) > t) {
-                request2.DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
-                                          HttpHeaders(request2.pool), nullptr);
+                DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
+                                 HttpHeaders(pool), nullptr);
                 return false;
             }
         }

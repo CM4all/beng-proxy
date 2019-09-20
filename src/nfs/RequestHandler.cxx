@@ -59,8 +59,7 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle,
     const TranslateResponse *const tr = translate.response;
 
     struct file_request file_request(st.st_size);
-    if (!file_evaluate_request(*this, FileDescriptor::Undefined(),
-                               st, file_request))
+    if (!EvaluateFileRequest(FileDescriptor::Undefined(), st, file_request))
         return;
 
     const char *override_content_type = translate.content_type;

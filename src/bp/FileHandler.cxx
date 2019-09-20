@@ -30,11 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "FileHandler.hxx"
 #include "FileHeaders.hxx"
 #include "file_address.hxx"
 #include "Request.hxx"
-#include "EmulateModAuthEasy.hxx"
 #include "Instance.hxx"
 #include "GenerateResponse.hxx"
 #include "http/HeaderWriter.hxx"
@@ -55,23 +53,23 @@
 #include <stdlib.h>
 
 void
-file_dispatch(Request &request2, const struct stat &st,
-              const struct file_request &file_request,
-              Istream *body)
+Request::DispatchFile(const struct stat &st,
+                      const struct file_request &file_request,
+                      Istream *body) noexcept
 {
-    const TranslateResponse &tr = *request2.translate.response;
-    const auto &address = *request2.handler.file.address;
+    const TranslateResponse &tr = *translate.response;
+    const auto &address = *handler.file.address;
 
-    const char *override_content_type = request2.translate.content_type;
+    const char *override_content_type = translate.content_type;
     if (override_content_type == nullptr)
         override_content_type = address.content_type;
 
-    HttpHeaders headers(request2.pool);
+    HttpHeaders headers(pool);
     GrowingBuffer &headers2 = headers.GetBuffer();
     file_response_headers(headers2, override_content_type,
                           istream_file_fd(*body), st,
                           tr.expires_relative,
-                          request2.IsProcessorFirst());
+                          IsProcessorFirst());
     write_translation_vary_header(headers2, tr);
 
     http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
@@ -94,7 +92,7 @@ file_dispatch(Request &request2, const struct stat &st,
         status = HTTP_STATUS_PARTIAL_CONTENT;
 
         header_write(headers2, "content-range",
-                     p_sprintf(&request2.pool, "bytes %lu-%lu/%lu",
+                     p_sprintf(&pool, "bytes %lu-%lu/%lu",
                                (unsigned long)file_request.range.skip,
                                (unsigned long)(file_request.range.size - 1),
                                (unsigned long)st.st_size));
@@ -104,7 +102,7 @@ file_dispatch(Request &request2, const struct stat &st,
         status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
 
         header_write(headers2, "content-range",
-                     p_sprintf(&request2.pool, "bytes */%lu",
+                     p_sprintf(&pool, "bytes */%lu",
                                (unsigned long)st.st_size));
 
         body->CloseUnused();
@@ -114,17 +112,17 @@ file_dispatch(Request &request2, const struct stat &st,
 
     /* finished, dispatch this response */
 
-    request2.DispatchResponse(status, std::move(headers),
-                              UnusedIstreamPtr(body));
+    DispatchResponse(status, std::move(headers),
+                     UnusedIstreamPtr(body));
 }
 
-static bool
-file_dispatch_compressed(Request &request2, const struct stat &st,
-                         Istream &body, const char *encoding,
-                         const char *path)
+bool
+Request::DispatchCompressedFile(const struct stat &st,
+                                Istream &body, const char *encoding,
+                                const char *path)
 {
-    const TranslateResponse &tr = *request2.translate.response;
-    const auto &address = *request2.handler.file.address;
+    const TranslateResponse &tr = *translate.response;
+    const auto &address = *handler.file.address;
 
     /* open compressed file */
 
@@ -132,7 +130,8 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
     UnusedIstreamPtr compressed_body;
 
     try {
-        compressed_body = UnusedIstreamPtr(istream_file_stat_new(request2.instance.event_loop, request2.pool,
+        compressed_body = UnusedIstreamPtr(istream_file_stat_new(instance.event_loop,
+                                                                 pool,
                                                                  path, st2));
     } catch (...) {
         return false;
@@ -143,16 +142,16 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
 
     /* response headers with information from uncompressed file */
 
-    const char *override_content_type = request2.translate.content_type;
+    const char *override_content_type = translate.content_type;
     if (override_content_type == nullptr)
         override_content_type = address.content_type;
 
-    HttpHeaders headers(request2.pool);
+    HttpHeaders headers(pool);
     GrowingBuffer &headers2 = headers.GetBuffer();
     file_response_headers(headers2, override_content_type,
                           istream_file_fd(body), st,
                           tr.expires_relative,
-                          request2.IsProcessorFirst());
+                          IsProcessorFirst());
     write_translation_vary_header(headers2, tr);
 
     header_write(headers2, "content-encoding", encoding);
@@ -164,30 +163,28 @@ file_dispatch_compressed(Request &request2, const struct stat &st,
 
     /* finished, dispatch this response */
 
-    request2.compressed = true;
+    compressed = true;
 
     http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
-    request2.DispatchResponse(status, std::move(headers),
-                              std::move(compressed_body));
+    DispatchResponse(status, std::move(headers),
+                     std::move(compressed_body));
     return true;
 }
 
-static bool
-file_check_compressed(Request &request2, const struct stat &st,
-                      Istream &body, const char *encoding,
-                      const char *path)
+bool
+Request::CheckCompressedFile(const struct stat &st,
+                             Istream &body, const char *encoding,
+                             const char *path) noexcept
 {
-    const auto &request = request2.request;
-
     return path != nullptr &&
         http_client_accepts_encoding(request.headers, encoding) &&
-        file_dispatch_compressed(request2, st, body, encoding, path);
+        DispatchCompressedFile(st, body, encoding, path);
 }
 
-static bool
-file_check_auto_compressed(Request &request2, const struct stat &st,
-                           Istream &body, const char *encoding,
-                           const char *path, const char *suffix)
+bool
+Request::CheckAutoCompressedFile(const struct stat &st,
+                                 Istream &body, const char *encoding,
+                                 const char *path, const char *suffix) noexcept
 {
     assert(encoding != nullptr);
     assert(path != nullptr);
@@ -195,26 +192,21 @@ file_check_auto_compressed(Request &request2, const struct stat &st,
     assert(*suffix == '.');
     assert(suffix[1] != 0);
 
-    const auto &request = request2.request;
-
     if (!http_client_accepts_encoding(request.headers, encoding))
         return false;
 
-    const char *compressed_path = p_strcat(&request2.pool, path, suffix,
-                                           nullptr);
-
-    return file_dispatch_compressed(request2, st, body, encoding,
-                                    compressed_path);
+    const char *compressed_path = p_strcat(&pool, path, suffix, nullptr);
+    return DispatchCompressedFile(st, body, encoding, compressed_path);
 }
 
-static bool
-MaybeEmulateModAuthEasy(Request &request2, const FileAddress &address,
-                        const struct stat &st, Istream *body) noexcept
+inline bool
+Request::MaybeEmulateModAuthEasy(const FileAddress &address,
+                                 const struct stat &st, Istream *body) noexcept
 {
-    if (!request2.instance.config.emulate_mod_auth_easy)
+    if (!instance.config.emulate_mod_auth_easy)
         return false;
 
-    if (request2.IsTransformationEnabled())
+    if (IsTransformationEnabled())
         return false;
 
     if (!S_ISREG(st.st_mode))
@@ -226,15 +218,13 @@ MaybeEmulateModAuthEasy(Request &request2, const FileAddress &address,
     if (strstr(address.path, "/pr_0001/public_html/") == nullptr)
         return false;
 
-    return EmulateModAuthEasy(request2, address, st, body);
+    return EmulateModAuthEasy(address, st, body);
 }
 
 void
-file_callback(Request &request2, const FileAddress &address)
+Request::HandleFileAddress(const FileAddress &address) noexcept
 {
-    request2.handler.file.address = &address;
-
-    const auto &request = request2.request;
+    handler.file.address = &address;
 
     assert(address.path != nullptr);
     assert(address.delegate == nullptr);
@@ -245,8 +235,8 @@ file_callback(Request &request2, const FileAddress &address)
 
     if (request.method != HTTP_METHOD_HEAD &&
         request.method != HTTP_METHOD_GET &&
-        !request2.processor_focus) {
-        method_not_allowed(request2, "GET, HEAD");
+        !processor_focus) {
+        method_not_allowed(*this, "GET, HEAD");
         return;
     }
 
@@ -256,30 +246,28 @@ file_callback(Request &request2, const FileAddress &address)
     Istream *body;
 
     try {
-        body = istream_file_stat_new(request2.instance.event_loop,
-                                     request2.pool,
-                                     path, st);
+        body = istream_file_stat_new(instance.event_loop, pool, path, st);
     } catch (...) {
-        request2.LogDispatchError(std::current_exception());
+        LogDispatchError(std::current_exception());
         return;
     }
 
-    if (MaybeEmulateModAuthEasy(request2, address, st, body))
+    if (MaybeEmulateModAuthEasy(address, st, body))
         return;
 
     /* check file type */
 
     if (S_ISCHR(st.st_mode)) {
         /* allow character devices, but skip range etc. */
-        request2.DispatchResponse(HTTP_STATUS_OK, HttpHeaders(request2.pool),
-                                  UnusedIstreamPtr(body));
+        DispatchResponse(HTTP_STATUS_OK, HttpHeaders(pool),
+                         UnusedIstreamPtr(body));
         return;
     }
 
     if (!S_ISREG(st.st_mode)) {
         body->CloseUnused();
-        request2.DispatchResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                  "Not a regular file");
+        DispatchResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                         "Not a regular file");
         return;
     }
 
@@ -287,27 +275,23 @@ file_callback(Request &request2, const FileAddress &address)
 
     /* request options */
 
-    if (!file_evaluate_request(request2, istream_file_fd(*body), st,
-                               file_request)) {
+    if (!EvaluateFileRequest(istream_file_fd(*body), st, file_request)) {
         body->CloseUnused();
         return;
     }
 
     /* precompressed? */
 
-    if (!request2.compressed &&
+    if (!compressed &&
         file_request.range.type == HttpRangeRequest::Type::NONE &&
-        !request2.IsTransformationEnabled() &&
-        (file_check_compressed(request2, st, *body, "deflate",
-                               address.deflated) ||
+        !IsTransformationEnabled() &&
+        (CheckCompressedFile(st, *body, "deflate", address.deflated) ||
          (address.auto_gzipped &&
-          file_check_auto_compressed(request2, st, *body, "gzip",
-                                     address.path, ".gz")) ||
-         file_check_compressed(request2, st, *body, "gzip",
-                               address.gzipped)))
+          CheckAutoCompressedFile(st, *body, "gzip", address.path, ".gz")) ||
+         CheckCompressedFile(st, *body, "gzip", address.gzipped)))
         return;
 
     /* build the response */
 
-    file_dispatch(request2, st, file_request, body);
+    DispatchFile(st, file_request, body);
 }

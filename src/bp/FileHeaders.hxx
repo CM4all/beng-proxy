@@ -45,7 +45,6 @@
 
 class FileDescriptor;
 class GrowingBuffer;
-struct Request;
 struct stat;
 
 struct file_request {
@@ -53,11 +52,6 @@ struct file_request {
 
     explicit file_request(off_t _size):range(_size) {}
 };
-
-bool
-file_evaluate_request(Request &request2,
-                      FileDescriptor fd, const struct stat &st,
-                      struct file_request &file_request);
 
 void
 file_response_headers(GrowingBuffer &headers,

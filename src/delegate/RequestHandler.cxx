@@ -34,7 +34,6 @@
 #include "Address.hxx"
 #include "Glue.hxx"
 #include "bp/FileHeaders.hxx"
-#include "bp/FileHandler.hxx"
 #include "bp/GenerateResponse.hxx"
 #include "bp/Request.hxx"
 #include "bp/Instance.hxx"
@@ -72,17 +71,17 @@ Request::OnDelegateSuccess(UniqueFileDescriptor fd)
     /* request options */
 
     struct file_request file_request(st.st_size);
-    if (!file_evaluate_request(*this, fd, st, file_request)) {
+    if (!EvaluateFileRequest(fd, st, file_request)) {
         return;
     }
 
     /* build the response */
 
-    file_dispatch(*this, st, file_request,
-                  istream_file_fd_new(instance.event_loop, pool,
-                                      handler.delegate.path,
-                                      std::move(fd), FdType::FD_FILE,
-                                      file_request.range.size));
+    DispatchFile(st, file_request,
+                 istream_file_fd_new(instance.event_loop, pool,
+                                     handler.delegate.path,
+                                     std::move(fd), FdType::FD_FILE,
+                                     file_request.range.size));
 }
 
 void

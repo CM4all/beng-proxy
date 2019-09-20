@@ -30,10 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "EmulateModAuthEasy.hxx"
+#include "Request.hxx"
 #include "AprMd5.hxx"
 #include "FileHeaders.hxx"
-#include "Request.hxx"
 #include "file_address.hxx"
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
@@ -183,7 +182,7 @@ OpenSiblingFile(const char *path, const char *sibling_name)
 }
 
 static bool
-CheckAccessFileFor(Request &request2, const char *html_path)
+CheckAccessFileFor(const StringMap &request_headers, const char *html_path)
 {
     FILE *file = OpenSiblingFile(html_path, ".access");
     if (file == nullptr)
@@ -191,7 +190,7 @@ CheckAccessFileFor(Request &request2, const char *html_path)
 
     AtScopeExit(file) { fclose(file); };
 
-    const char *authorization = request2.request.headers.Get("authorization");
+    const char *authorization = request_headers.Get("authorization");
     if (authorization == nullptr)
         return false;
 
@@ -214,11 +213,11 @@ CheckAccessFileFor(Request &request2, const char *html_path)
 }
 
 bool
-EmulateModAuthEasy(Request &request2, const FileAddress &address,
-                   const struct stat &st, Istream *body) noexcept
+Request::EmulateModAuthEasy(const FileAddress &address,
+                            const struct stat &st, Istream *body) noexcept
 {
-    if (!CheckAccessFileFor(request2, address.path)) {
-        DispatchUnauthorized(request2);
+    if (!CheckAccessFileFor(request.headers, address.path)) {
+        DispatchUnauthorized(*this);
         body->Close();
         return true;
     }
@@ -244,16 +243,16 @@ EmulateModAuthEasy(Request &request2, const FileAddress &address,
     if (!IsWhitespaceNotNull(*s))
         return false;
 
-    const char *authorization = request2.request.headers.Get("authorization");
+    const char *authorization = request.headers.Get("authorization");
     if (authorization == nullptr) {
-        DispatchUnauthorized(request2);
+        DispatchUnauthorized(*this);
         body->Close();
         return true;
     }
 
     const auto basic_auth = ParseBasicAuth(authorization);
     if (basic_auth.first.empty()) {
-        DispatchUnauthorized(request2);
+        DispatchUnauthorized(*this);
         body->Close();
         return true;
     }
@@ -262,29 +261,29 @@ EmulateModAuthEasy(Request &request2, const FileAddress &address,
         FindUserPassword(s, basic_auth.first.c_str());
     if (password == nullptr ||
         !VerifyPassword(password, basic_auth.second.c_str())) {
-        DispatchUnauthorized(request2);
+        DispatchUnauthorized(*this);
         body->Close();
         return true;
     }
 
-    const TranslateResponse &tr = *request2.translate.response;
+    const TranslateResponse &tr = *translate.response;
 
-    const char *override_content_type = request2.translate.content_type;
+    const char *override_content_type = translate.content_type;
     if (override_content_type == nullptr)
         override_content_type = address.content_type;
 
-    HttpHeaders headers(request2.pool);
+    HttpHeaders headers(pool);
     GrowingBuffer &headers2 = headers.GetBuffer();
     file_response_headers(headers2, override_content_type,
                           istream_file_fd(*body), st,
                           tr.expires_relative,
-                          request2.IsProcessorFirst());
+                          IsProcessorFirst());
     write_translation_vary_header(headers2, tr);
 
     http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
 
-    request2.DispatchResponse(status, std::move(headers),
-                              UnusedIstreamPtr(body));
+    DispatchResponse(status, std::move(headers),
+                     UnusedIstreamPtr(body));
 
     return true;
 }
