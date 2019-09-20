@@ -112,16 +112,17 @@ static const char *
 MakeStopwatchName(AllocatorPtr alloc,
                   const char *name, const char *suffix) noexcept
 {
+    char *result;
     if (suffix == nullptr)
-        name = alloc.Dup(name);
+        result = alloc.Dup(name);
     else
-        name = alloc.Concat(name, suffix);
+        result = alloc.Concat(name, suffix);
 
     constexpr size_t MAX_NAME = 96;
-    if (strlen(name) > MAX_NAME)
-        name = alloc.DupZ({name, MAX_NAME});
+    if (strlen(result) > MAX_NAME)
+        result[MAX_NAME] = 0;
 
-    return name;
+    return result;
 }
 
 static Stopwatch *
