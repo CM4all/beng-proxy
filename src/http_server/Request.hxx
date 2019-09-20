@@ -37,12 +37,15 @@
 #ifndef BENG_HTTP_SERVER_REQUEST_HXX
 #define BENG_HTTP_SERVER_REQUEST_HXX
 
+#include "stopwatch.hxx"
 #include "http/IncomingRequest.hxx"
 
 struct HttpServerConnection;
 
 struct HttpServerRequest final : public IncomingHttpRequest {
     HttpServerConnection &connection;
+
+    StopwatchPtr stopwatch;
 
     HttpServerRequest(PoolPtr &&_pool, HttpServerConnection &_connection,
                       SocketAddress _local_address,

@@ -594,6 +594,7 @@ http_server_dep = declare_dependency(
     http_common_dep,
     putil_dep,
     socket_dep,
+    stopwatch_dep,
   ],
 )
 

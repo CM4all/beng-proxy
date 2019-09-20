@@ -63,6 +63,8 @@ HttpServerConnection::FeedRequestBody(const void *data, size_t length)
            we're processing the request */
         socket.ScheduleReadNoTimeout(false);
 
+        request.request->stopwatch.RecordEvent("request_end");
+
         request_body_reader->DestroyEof();
         if (destructed)
             return BufferedResult::CLOSED;
@@ -144,6 +146,9 @@ HttpServerConnection::RequestBodyReader::_Close() noexcept
 {
     if (connection.request.read_state == Request::END)
         return;
+
+    if (connection.request.request != nullptr)
+        connection.request.request->stopwatch.RecordEvent("close");
 
     connection.DiscardRequestBody();
 

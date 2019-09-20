@@ -199,6 +199,7 @@ HttpServerConnection::HeadersFinished()
     assert(request.body_state == Request::BodyState::START);
 
     auto &r = *request.request;
+    r.stopwatch.RecordEvent("request_headers");
 
     handler->RequestHeadersFinished(r);
 

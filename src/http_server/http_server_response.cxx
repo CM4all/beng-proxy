@@ -184,6 +184,7 @@ HttpServerConnection::ResponseIstreamFinished()
             return false;
     }
 
+    request.request->stopwatch.RecordEvent("response_end");
     request.request->Destroy();
     request.request = nullptr;
     request.bytes_received = 0;
