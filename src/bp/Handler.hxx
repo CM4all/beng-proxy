@@ -37,7 +37,7 @@
 #ifndef BENG_PROXY_HANDLER_HXX
 #define BENG_PROXY_HANDLER_HXX
 
-struct Request;
+class Request;
 struct BpConnection;
 struct IncomingHttpRequest;
 class StopwatchPtr;

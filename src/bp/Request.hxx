@@ -69,31 +69,38 @@ struct WidgetContext;
  * The BENG request struct.  This is only used by the handlers
  * (handler.c, file-handler.c etc.).
  */
-struct Request final : HttpResponseHandler, DelegateHandler,
+class Request final : public HttpResponseHandler, DelegateHandler,
     TranslateHandler,
     NfsCacheHandler, SuffixRegistryHandler, Cancellable, PoolLeakDetector {
 
+public:
     struct pool &pool;
 
     BpInstance &instance;
     BpConnection &connection;
 
+private:
     const LLogger logger;
 
+public:
     StopwatchPtr stopwatch;
 
     IncomingHttpRequest &request;
+
     DissectedUri dissected_uri;
 
     StringMap args;
 
+private:
     StringMap *cookies = nullptr;
 
+public:
     /**
      * The name of the session cookie.
      */
     const char *session_cookie;
 
+private:
     SessionId session_id;
     StringBuffer<sizeof(SessionId) * 2 + 1> session_id_string;
     bool send_session_cookie = false;
@@ -116,6 +123,7 @@ struct Request final : HttpResponseHandler, DelegateHandler,
      */
     bool stateless;
 
+public:
     struct {
         TranslateRequest request;
         const TranslateResponse *response;
@@ -189,6 +197,7 @@ struct Request final : HttpResponseHandler, DelegateHandler,
         bool user_modified = false;
     } translate;
 
+private:
     /**
      * Area for handler-specific state variables.  This is a union to
      * save memory.
@@ -209,12 +218,14 @@ struct Request final : HttpResponseHandler, DelegateHandler,
      */
     const char *cookie_uri;
 
+public:
     /**
      * The product token (RFC 2616 3.8) being forwarded; nullptr if
      * beng-proxy shall generate one.
      */
     const char *product_token = nullptr;
 
+private:
 #ifndef NO_DATE_HEADER
     /**
      * The "date" response header (RFC 2616 14.18) being forwarded;
@@ -276,6 +287,7 @@ public:
 
     CancellablePointer cancel_ptr;
 
+public:
     Request(BpConnection &_connection,
             IncomingHttpRequest &_request,
             const StopwatchPtr &parent_stopwatch) noexcept;
@@ -288,15 +300,18 @@ private:
 public:
     void HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept;
 
+private:
     void ParseArgs();
 
     void RepeatTranslation(const TranslateResponse &response) noexcept;
 
+public:
     /**
      * Submit the #TranslateResponse to the translation cache.
      */
     void SubmitTranslateRequest();
 
+private:
     /**
      * Install a fake #TranslateResponse.  This is sometimes necessary
      * when we don't have a "real" response (yet), because much of the
@@ -310,6 +325,7 @@ public:
 
     bool ParseRequestUri() noexcept;
 
+public:
     void OnTranslateResponseAfterAuth(const TranslateResponse &response);
     void OnTranslateResponse2(const TranslateResponse &response);
 
@@ -595,6 +611,7 @@ public:
     void LogDispatchError(http_status_t status, const char *msg,
                           std::exception_ptr ep, unsigned log_level=2);
 
+private:
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
         DiscardRequestBody();

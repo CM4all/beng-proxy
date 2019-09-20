@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_FILE_DIRECTORY_INDEX_HXX
 #define BENG_PROXY_FILE_DIRECTORY_INDEX_HXX
 
-struct Request;
+class Request;
 struct TranslateResponse;
 
 /**

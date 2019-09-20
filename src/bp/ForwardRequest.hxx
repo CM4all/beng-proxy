@@ -43,7 +43,7 @@
 
 class StringMap;
 struct HeaderForwardSettings;
-struct Request;
+class Request;
 class Istream;
 
 struct ForwardRequest {

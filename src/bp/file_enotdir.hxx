@@ -37,7 +37,7 @@
 #ifndef BENG_PROXY_ENOTDIR_HXX
 #define BENG_PROXY_ENOTDIR_HXX
 
-struct Request;
+class Request;
 struct TranslateResponse;
 
 /**

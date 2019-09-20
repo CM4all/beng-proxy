@@ -37,7 +37,7 @@
 #ifndef BENG_PROXY_CUSTOM_RESPONSE_HXX
 #define BENG_PROXY_CUSTOM_RESPONSE_HXX
 
-struct Request;
+class Request;
 
 void
 method_not_allowed(Request &request, const char *allow);

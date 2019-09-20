@@ -39,7 +39,7 @@
 #include "http/Status.h"
 
 class UnusedIstreamPtr;
-struct Request;
+class Request;
 class Widget;
 struct widget_ref;
 

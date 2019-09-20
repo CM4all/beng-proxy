@@ -35,7 +35,7 @@
 
 #include "http/Status.h"
 
-struct Request;
+class Request;
 class UnusedIstreamPtr;
 class HttpHeaders;
 template<typename T> struct ConstBuffer;
