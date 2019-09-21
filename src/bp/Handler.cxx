@@ -371,21 +371,16 @@ Request::HandleTranslatedRequest(const TranslateResponse &response) noexcept
     }
 }
 
-/**
- * Install a fake #TranslateResponse.  This is sometimes necessary
- * when we don't have a "real" response (yet), because much of the
- * code in response.c dereferences the #TranslateResponse pointer.
- */
-static void
-install_error_response(Request &request)
+void
+Request::InstallErrorTranslateResponse() noexcept
 {
     static TranslateResponse error_response;
     error_response.status = (http_status_t)-1;
 
-    request.translate.response = &error_response;
-    request.translate.address = {ShallowCopy(), error_response.address};
-    request.translate.transformation = nullptr;
-    request.translate.suffix_transformation = nullptr;
+    translate.response = &error_response;
+    translate.address = {ShallowCopy(), error_response.address};
+    translate.transformation = nullptr;
+    translate.suffix_transformation = nullptr;
 }
 
 static const char *
@@ -629,7 +624,7 @@ Request::OnTranslateResponse(const TranslateResponse &response)
 
     /* just in case we error out before HandleTranslatedRequest()
        assigns the real response */
-    install_error_response(*this);
+    InstallErrorTranslateResponse();
 
     if (response.HasAuth())
         HandleAuth(response);
@@ -747,8 +742,7 @@ handler_translate_error(std::exception_ptr ep, void *ctx)
 {
     auto &request = *(Request *)ctx;
 
-    install_error_response(request);
-
+    request.InstallErrorTranslateResponse();
     request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
                              "Configuration server failed", ep, 1);
 }
@@ -776,7 +770,7 @@ Request::ParseRequestUri() noexcept
            response, and will dereference it - at this point, the
            translation server hasn't been queried yet, so we just
            insert an empty response here */
-        install_error_response(*this);
+        InstallErrorTranslateResponse();
 
         /* enable the "stateless" flag because we're at a very early
            stage, before request_determine_session(), and the
