@@ -45,19 +45,17 @@
 #include "load_file.hxx"
 #include "util/Exception.hxx"
 
-static void
-auth_translate_response(TranslateResponse &response, void *ctx)
+inline void
+Request::OnAuthTranslateResponse(const TranslateResponse &response) noexcept
 {
-    auto &request = *(Request *)ctx;
-
     bool is_authenticated = false;
     {
-        auto session = request.ApplyTranslateSession(response);
+        auto session = ApplyTranslateSession(response);
         if (session)
             is_authenticated = session->user != nullptr;
     }
 
-    if (request.CheckHandleRedirectBounceStatus(response))
+    if (CheckHandleRedirectBounceStatus(response))
         return;
 
     if (!is_authenticated) {
@@ -65,22 +63,34 @@ auth_translate_response(TranslateResponse &response, void *ctx)
            REDIRECT/BOUNCE/STATUS, but we still don't have a user -
            this should not happen; bail out, don't dare to accept the
            client */
-        request.DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
+        DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
         return;
     }
 
-    request.translate.user_modified = response.user != nullptr;
+    translate.user_modified = response.user != nullptr;
 
-    request.OnTranslateResponseAfterAuth(*request.translate.previous);
+    OnTranslateResponseAfterAuth(*translate.previous);
+}
+
+static void
+auth_translate_response(TranslateResponse &response, void *ctx)
+{
+    auto &request = *(Request *)ctx;
+    request.OnAuthTranslateResponse(response);
+}
+
+inline void
+Request::OnAuthTranslateError(std::exception_ptr ep) noexcept
+{
+    LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                     "Configuration server failed", ep, 1);
 }
 
 static void
 auth_translate_error(std::exception_ptr ep, void *ctx)
 {
     auto &request = *(Request *)ctx;
-
-    request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                             "Configuration server failed", ep, 1);
+    request.OnAuthTranslateError(std::move(ep));
 }
 
 static constexpr TranslateHandler auth_translate_handler = {

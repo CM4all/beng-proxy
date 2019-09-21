@@ -339,6 +339,9 @@ struct Request final : HttpResponseHandler, DelegateHandler,
 
     bool DoContentTypeLookup(const ResourceAddress &address) noexcept;
 
+    void OnAuthTranslateResponse(const TranslateResponse &response) noexcept;
+    void OnAuthTranslateError(std::exception_ptr ep) noexcept;
+
     /**
      * Handle #TRANSLATE_AUTH.
      */
