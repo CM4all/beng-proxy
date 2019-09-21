@@ -35,7 +35,6 @@
 #include "Config.hxx"
 #include "Instance.hxx"
 #include "load_file.hxx"
-#include "file_not_found.hxx"
 #include "file_enotdir.hxx"
 #include "file_directory_index.hxx"
 #include "file_address.hxx"
@@ -690,7 +689,7 @@ Request::OnTranslateResponse2(const TranslateResponse &response)
 
     /* check if the file exists */
     if (!response.file_not_found.IsNull() &&
-        !check_file_not_found(*this, response))
+        !CheckFileNotFound(response))
         return;
 
     /* check if it's a directory */

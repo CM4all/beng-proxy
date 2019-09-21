@@ -329,6 +329,8 @@ struct Request final : HttpResponseHandler, DelegateHandler,
      */
     RealmSessionLease ApplyTranslateResponseSession(const TranslateResponse &response) noexcept;
 
+    bool CheckFileNotFound(const TranslateResponse &response) noexcept;
+
     bool CheckHandleReadFile(const TranslateResponse &response);
     bool CheckHandleProbePathSuffixes(const TranslateResponse &response);
     bool CheckHandleRedirect(const TranslateResponse &response);
