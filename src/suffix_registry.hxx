@@ -36,6 +36,7 @@
 
 struct pool;
 class TranslationService;
+class StopwatchPtr;
 class CancellablePointer;
 template<typename T> struct ConstBuffer;
 struct Transformation;
@@ -60,5 +61,6 @@ suffix_registry_lookup(struct pool &pool,
                        TranslationService &service,
                        ConstBuffer<void> payload,
                        const char *suffix,
+                       const StopwatchPtr &parent_stopwatch,
                        SuffixRegistryHandler &handler,
                        CancellablePointer &cancel_ptr);

@@ -38,6 +38,7 @@ class EventLoop;
 class Lease;
 class CancellablePointer;
 class SocketDescriptor;
+class StopwatchPtr;
 struct TranslateRequest;
 struct TranslateHandler;
 
@@ -46,6 +47,7 @@ struct TranslateHandler;
  */
 void
 translate(struct pool &pool, EventLoop &event_loop,
+          StopwatchPtr stopwatch,
           SocketDescriptor fd, Lease &lease,
           const TranslateRequest &request,
           const TranslateHandler &handler, void *ctx,

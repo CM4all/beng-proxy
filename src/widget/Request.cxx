@@ -64,6 +64,7 @@
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StringFormat.hxx"
+#include "stopwatch.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -750,6 +751,7 @@ WidgetRequest::ContentTypeLookup()
 {
     return suffix_registry_lookup(pool, *global_translation_service,
                                   *widget.GetAddress(),
+                                  nullptr, // TODO
                                   *this, cancel_ptr);
 }
 

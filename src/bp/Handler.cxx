@@ -352,6 +352,7 @@ Request::DoContentTypeLookup(const ResourceAddress &address) noexcept
     return suffix_registry_lookup(pool,
                                   *instance.translation_service,
                                   address,
+                                  stopwatch,
                                   *this, cancel_ptr);
 }
 
@@ -756,6 +757,7 @@ Request::SubmitTranslateRequest()
 {
     instance.translation_service->SendRequest(pool,
                                               translate.request,
+                                              stopwatch,
                                               handler_translate_handler, this,
                                               cancel_ptr);
 }

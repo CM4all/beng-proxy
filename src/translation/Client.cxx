@@ -69,6 +69,7 @@ class TranslateClient final : BufferedSocketHandler, Cancellable {
 
 public:
     TranslateClient(struct pool &p, EventLoop &event_loop,
+                    StopwatchPtr &&_stopwatch,
                     SocketDescriptor fd, Lease &lease,
                     const TranslateRequest &request2,
                     GrowingBuffer &&_request,
@@ -231,13 +232,14 @@ TranslateClient::TryWrite() noexcept
 
 inline
 TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
+                                 StopwatchPtr &&_stopwatch,
                                  SocketDescriptor fd, Lease &lease,
                                  const TranslateRequest &request2,
                                  GrowingBuffer &&_request,
                                  const TranslateHandler &_handler, void *_ctx,
                                  CancellablePointer &cancel_ptr) noexcept
     :pool(p),
-     stopwatch(p, fd, request2.GetDiagnosticName()),
+     stopwatch(std::move(_stopwatch)),
      socket(event_loop),
      request(std::move(_request)),
      handler(_handler), handler_ctx(_ctx),
@@ -254,6 +256,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
 
 void
 translate(struct pool &pool, EventLoop &event_loop,
+          StopwatchPtr stopwatch,
           SocketDescriptor fd, Lease &lease,
           const TranslateRequest &request,
           const TranslateHandler &handler, void *ctx,
@@ -271,6 +274,7 @@ try {
                                                request);
 
     auto *client = NewFromPool<TranslateClient>(pool, pool, event_loop,
+                                                std::move(stopwatch),
                                                 fd, lease,
                                                 request, std::move(gb),
                                                 handler, ctx, cancel_ptr);

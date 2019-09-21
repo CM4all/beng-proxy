@@ -222,6 +222,7 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
                            error_document, status);
     instance.translation_service->SendRequest(request2.pool,
                                               er->translate_request,
+                                              request2.stopwatch,
                                               errdoc_translate_handler, er,
                                               er->cancel_ptr);
 }

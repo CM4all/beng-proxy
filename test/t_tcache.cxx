@@ -48,6 +48,7 @@
 #include "pool/pool.hxx"
 #include "PInstance.hxx"
 #include "util/Cancellable.hxx"
+#include "stopwatch.hxx"
 
 #include <gtest/gtest.h>
 
@@ -58,6 +59,7 @@ public:
     /* virtual methods from class TranslationService */
     void SendRequest(struct pool &pool,
                      const TranslateRequest &request,
+                     const StopwatchPtr &parent_stopwatch,
                      const TranslateHandler &handler, void *ctx,
                      CancellablePointer &cancel_ptr) noexcept override;
 };
@@ -75,6 +77,7 @@ const TranslateResponse *next_response, *expected_response;
 void
 MyTranslationService::SendRequest(struct pool &pool,
                                   gcc_unused const TranslateRequest &request,
+                                  const StopwatchPtr &,
                                   const TranslateHandler &handler, void *ctx,
                                   gcc_unused CancellablePointer &cancel_ptr) noexcept
 {
@@ -332,41 +335,41 @@ TEST(TranslationCache, Basic)
     const auto request1 = MakeRequest("/");
     const auto response1 = MakeResponse().File("/var/www/index.html");
     next_response = expected_response = &response1;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     next_response = nullptr;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/foo/bar.html");
     const auto response2 = MakeResponse().Base("/foo/").File("/srv/foo/bar.html");
     next_response = expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/foo/index.html");
     const auto response3 = MakeResponse().Base("/foo/").File("/srv/foo/index.html");
     next_response = nullptr;
     expected_response = &response3;
-    cache.SendRequest(*pool, request3,
+    cache.SendRequest(*pool, request3, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request4 = MakeRequest("/foo/");
     const auto response4 = MakeResponse().Base("/foo/").File("/srv/foo/");
     expected_response = &response4;
-    cache.SendRequest(*pool, request4,
+    cache.SendRequest(*pool, request4, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request5 = MakeRequest("/foo");
     expected_response = nullptr;
-    cache.SendRequest(*pool, request5,
+    cache.SendRequest(*pool, request5, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request10 = MakeRequest("/foo//bar");
     const auto response10 = MakeResponse().Base("/foo/").File("/srv/foo//bar");
     expected_response = &response10;
-    cache.SendRequest(*pool, request10,
+    cache.SendRequest(*pool, request10, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request6 = MakeRequest("/cgi1/foo");
@@ -374,7 +377,7 @@ TEST(TranslationCache, Basic)
         .Cgi("/usr/lib/cgi-bin/cgi.pl", "/cgi1/foo", "x/foo");
 
     next_response = expected_response = &response6;
-    cache.SendRequest(*pool, request6,
+    cache.SendRequest(*pool, request6, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request7 = MakeRequest("/cgi1/a/b/c");
@@ -383,7 +386,7 @@ TEST(TranslationCache, Basic)
 
     next_response = nullptr;
     expected_response = &response7;
-    cache.SendRequest(*pool, request7,
+    cache.SendRequest(*pool, request7, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request8 = MakeRequest("/cgi2/foo");
@@ -391,7 +394,7 @@ TEST(TranslationCache, Basic)
         .Cgi("/usr/lib/cgi-bin/cgi.pl", "/cgi2/foo", "foo");
 
     next_response = expected_response = &response8;
-    cache.SendRequest(*pool, request8,
+    cache.SendRequest(*pool, request8, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request9 = MakeRequest("/cgi2/a/b/c");
@@ -400,7 +403,7 @@ TEST(TranslationCache, Basic)
 
     next_response = nullptr;
     expected_response = &response9;
-    cache.SendRequest(*pool, request9,
+    cache.SendRequest(*pool, request9, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -419,14 +422,14 @@ TEST(TranslationCache, BaseRoot)
     const auto request1 = MakeRequest("/base_root/");
     const auto response1 = MakeResponse().Base("/base_root/").File("/var/www/");
     next_response = expected_response = &response1;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/base_root/hansi");
     const auto response2 = MakeResponse().Base("/base_root/").File("/var/www/hansi");
     next_response = nullptr;
     expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -443,7 +446,7 @@ TEST(TranslationCache, BaseMismatch)
 
     next_response = &response1;
     expected_response = nullptr;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -464,7 +467,7 @@ TEST(TranslationCache, BaseUri)
         .Uri("/modified/foo");
 
     next_response = expected_response = &response1;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/base_uri/hansi");
@@ -474,7 +477,7 @@ TEST(TranslationCache, BaseUri)
 
     next_response = nullptr;
     expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -495,7 +498,7 @@ TEST(TranslationCache, BaseRedirect)
         .Redirect("http://modified/foo");
 
     next_response = expected_response = &response1;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ref);
 
     const auto request2 = MakeRequest("/base_redirect/hansi");
@@ -505,7 +508,7 @@ TEST(TranslationCache, BaseRedirect)
 
     next_response = nullptr;
     expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ref);
 }
 
@@ -526,7 +529,7 @@ TEST(TranslationCache, BaseTestPath)
         .TestPath("/modified/foo");
 
     next_response = expected_response = &response1;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/base_test_path/hansi");
@@ -536,7 +539,7 @@ TEST(TranslationCache, BaseTestPath)
 
     next_response = nullptr;
     expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -555,18 +558,18 @@ TEST(TranslationCache, EasyBase)
 
     next_response = &response1;
     expected_response = &response1b;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     next_response = nullptr;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/easy/index.html");
     const auto response2 = MakeResponse().EasyBase("/easy/")
         .File("/var/www/index.html");
     expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -591,7 +594,7 @@ TEST(TranslationCache, EasyBaseUri)
 
     next_response = &response1;
     expected_response = &response1b;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/easy_base_uri/hansi");
@@ -601,7 +604,7 @@ TEST(TranslationCache, EasyBaseUri)
 
     next_response = nullptr;
     expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -626,7 +629,7 @@ TEST(TranslationCache, EasyBaseTestPath)
 
     next_response = &response1;
     expected_response = &response1b;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/easy_base_test_path/hansi");
@@ -636,7 +639,7 @@ TEST(TranslationCache, EasyBaseTestPath)
 
     next_response = nullptr;
     expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -663,46 +666,46 @@ TEST(TranslationCache, VaryInvalidate)
     const auto response5a = MakeResponse().File("/srv/qs1")
         .Vary(response5_vary);
     next_response = expected_response = &response5a;
-    cache.SendRequest(*pool, request6,
+    cache.SendRequest(*pool, request6, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request7 = MakeRequest("/qs").QueryString("xyz");
     const auto response5b = MakeResponse().File("/srv/qs2")
         .Vary(response5_vary);
     next_response = expected_response = &response5b;
-    cache.SendRequest(*pool, request7,
+    cache.SendRequest(*pool, request7, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     next_response = nullptr;
     expected_response = &response5a;
-    cache.SendRequest(*pool, request6,
+    cache.SendRequest(*pool, request6, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     next_response = nullptr;
     expected_response = &response5b;
-    cache.SendRequest(*pool, request7,
+    cache.SendRequest(*pool, request7, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request8 = MakeRequest("/qs/").QueryString("xyz");
     next_response = expected_response = &response5c;
-    cache.SendRequest(*pool, request8,
+    cache.SendRequest(*pool, request8, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     next_response = nullptr;
     expected_response = &response5a;
-    cache.SendRequest(*pool, request6,
+    cache.SendRequest(*pool, request6, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     next_response = expected_response = &response5c;
-    cache.SendRequest(*pool, request7,
+    cache.SendRequest(*pool, request7, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     next_response = expected_response = &response5c;
-    cache.SendRequest(*pool, request8,
+    cache.SendRequest(*pool, request8, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     expected_response = &response5c;
-    cache.SendRequest(*pool, request7,
+    cache.SendRequest(*pool, request7, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -720,20 +723,20 @@ TEST(TranslationCache, InvalidateUri)
     const auto response1 = MakeResponse().File("/var/www/invalidate/uri");
 
     next_response = expected_response = &response1;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/invalidate/uri").Check("x");
     const auto response2 = MakeResponse().File("/var/www/invalidate/uri");
     next_response = expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/invalidate/uri")
         .ErrorDocumentStatus(HTTP_STATUS_INTERNAL_SERVER_ERROR);
     const auto response3 = MakeResponse().File("/var/www/500/invalidate/uri");
     next_response = expected_response = &response3;
-    cache.SendRequest(*pool, request3,
+    cache.SendRequest(*pool, request3, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request4 = MakeRequest("/invalidate/uri")
@@ -742,7 +745,7 @@ TEST(TranslationCache, InvalidateUri)
     const auto response4 = MakeResponse().File("/var/www/500/check/invalidate/uri");
 
     next_response = expected_response = &response4;
-    cache.SendRequest(*pool, request4,
+    cache.SendRequest(*pool, request4, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request4b = MakeRequest("/invalidate/uri")
@@ -751,7 +754,7 @@ TEST(TranslationCache, InvalidateUri)
         .WantFullUri({ "a\0/b", 4 });
     const auto response4b = MakeResponse().File("/var/www/500/check/wfu/invalidate/uri");
     next_response = expected_response = &response4b;
-    cache.SendRequest(*pool, request4b,
+    cache.SendRequest(*pool, request4b, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* verify the cache items */
@@ -759,23 +762,23 @@ TEST(TranslationCache, InvalidateUri)
     next_response = nullptr;
 
     expected_response = &response1;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     expected_response = &response3;
-    cache.SendRequest(*pool, request3,
+    cache.SendRequest(*pool, request3, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     expected_response = &response4;
-    cache.SendRequest(*pool, request4,
+    cache.SendRequest(*pool, request4, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     expected_response = &response4b;
-    cache.SendRequest(*pool, request4b,
+    cache.SendRequest(*pool, request4b, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* invalidate all cache items */
@@ -789,22 +792,22 @@ TEST(TranslationCache, InvalidateUri)
         .Invalidate(response5_invalidate);
 
     next_response = expected_response = &response5;
-    cache.SendRequest(*pool, request5,
+    cache.SendRequest(*pool, request5, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* check if all cache items have really been deleted */
 
     next_response = expected_response = nullptr;
 
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
-    cache.SendRequest(*pool, request3,
+    cache.SendRequest(*pool, request3, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
-    cache.SendRequest(*pool, request4,
+    cache.SendRequest(*pool, request4, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
-    cache.SendRequest(*pool, request4b,
+    cache.SendRequest(*pool, request4b, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -821,7 +824,7 @@ TEST(TranslationCache, Regex)
     const auto response_i1 = MakeResponse().File("/var/www/regex/other/foo")
         .Base("/regex/").InverseRegex("\\.(jpg|html)$");
     next_response = expected_response = &response_i1;
-    cache.SendRequest(*pool, request_i1,
+    cache.SendRequest(*pool, request_i1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* fill the cache */
@@ -829,7 +832,7 @@ TEST(TranslationCache, Regex)
     const auto response1 = MakeResponse().File("/var/www/regex/images/a/foo.jpg")
         .Base("/regex/").Regex("\\.jpg$");
     next_response = expected_response = &response1;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* regex mismatch */
@@ -837,7 +840,7 @@ TEST(TranslationCache, Regex)
     const auto response2 = MakeResponse().File("/var/www/regex/html/b/foo.html")
         .Base("/regex/").Regex("\\.html$");
     next_response = expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* regex match */
@@ -846,7 +849,7 @@ TEST(TranslationCache, Regex)
         .Base("/regex/").Regex("\\.jpg$");
     next_response = nullptr;
     expected_response = &response3;
-    cache.SendRequest(*pool, request3,
+    cache.SendRequest(*pool, request3, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* second regex match */
@@ -855,7 +858,7 @@ TEST(TranslationCache, Regex)
         .Base("/regex/").Regex("\\.html$");
     next_response = nullptr;
     expected_response = &response4;
-    cache.SendRequest(*pool, request4,
+    cache.SendRequest(*pool, request4, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* see if the "inverse_regex" cache item is still there */
@@ -864,7 +867,7 @@ TEST(TranslationCache, Regex)
         .Base("/regex/").InverseRegex("\\.(jpg|html)$");
     next_response = nullptr;
     expected_response = &response_i2;
-    cache.SendRequest(*pool, request_i2,
+    cache.SendRequest(*pool, request_i2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -883,7 +886,7 @@ TEST(TranslationCache, RegexError)
     /* this must fail */
     next_response = &response;
     expected_response = nullptr;
-    cache.SendRequest(*pool, request,
+    cache.SendRequest(*pool, request, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -899,12 +902,12 @@ TEST(TranslationCache, RegexTail)
     const auto response1 = MakeResponse().File("/var/www/regex/images/a/foo.jpg")
         .Base("/regex_tail/").RegexTail("^a/");
     next_response = expected_response = &response1;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/regex_tail/b/foo.html");
     next_response = expected_response = nullptr;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/regex_tail/a/bar.jpg");
@@ -912,13 +915,13 @@ TEST(TranslationCache, RegexTail)
         .Base("/regex_tail/").RegexTail("^a/");
     next_response = nullptr;
     expected_response = &response3;
-    cache.SendRequest(*pool, request3,
+    cache.SendRequest(*pool, request3, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request4 = MakeRequest("/regex_tail/%61/escaped.html");
 
     next_response = expected_response = nullptr;
-    cache.SendRequest(*pool, request4,
+    cache.SendRequest(*pool, request4, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -935,13 +938,13 @@ TEST(TranslationCache, RegexTailUnescape)
         .Base("/regex_unescape/").RegexTailUnescape("^a/");
 
     next_response = expected_response = &response1;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/regex_unescape/b/foo.html");
 
     next_response = expected_response = nullptr;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/regex_unescape/a/bar.jpg");
@@ -950,7 +953,7 @@ TEST(TranslationCache, RegexTailUnescape)
 
     next_response = nullptr;
     expected_response = &response3;
-    cache.SendRequest(*pool, request3,
+    cache.SendRequest(*pool, request3, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request4 = MakeRequest("/regex_unescape/%61/escaped.html");
@@ -958,7 +961,7 @@ TEST(TranslationCache, RegexTailUnescape)
         .Base("/regex_unescape/").RegexTailUnescape("^a/");
     next_response = nullptr;
     expected_response = &response4;
-    cache.SendRequest(*pool, request4,
+    cache.SendRequest(*pool, request4, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -984,7 +987,7 @@ TEST(TranslationCache, Expand)
 
     next_response = &response1n;
     expected_response = &response1e;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* check match */
@@ -997,7 +1000,7 @@ TEST(TranslationCache, Expand)
 
     next_response = nullptr;
     expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -1024,7 +1027,7 @@ TEST(TranslationCache, ExpandLocal)
 
     next_response = &response1n;
     expected_response = &response1e;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* check match */
@@ -1037,7 +1040,7 @@ TEST(TranslationCache, ExpandLocal)
 
     next_response = nullptr;
     expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -1068,7 +1071,7 @@ TEST(TranslationCache, ExpandLocalFilter)
 
     next_response = &response1n;
     expected_response = &response1e;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* check match */
@@ -1083,7 +1086,7 @@ TEST(TranslationCache, ExpandLocalFilter)
 
     next_response = nullptr;
     expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -1109,7 +1112,7 @@ TEST(TranslationCache, ExpandUri)
 
     next_response = &response1n;
     expected_response = &response1e;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* check match */
@@ -1122,7 +1125,7 @@ TEST(TranslationCache, ExpandUri)
 
     next_response = nullptr;
     expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -1142,7 +1145,7 @@ TEST(TranslationCache, AutoBase)
         .Cgi("/usr/lib/cgi-bin/foo.cgi", "/auto-base/foo.cgi/bar", "/bar");
 
     next_response = expected_response = &response1;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* check if BASE was auto-detected */
@@ -1154,7 +1157,7 @@ TEST(TranslationCache, AutoBase)
 
     next_response = nullptr;
     expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -1175,7 +1178,7 @@ TEST(TranslationCache, BaseCheck)
     const auto response1 = MakeResponse().Base("/a/").Check("x");
 
     next_response = expected_response = &response1;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/a/b/c.html").Check("x");
@@ -1183,7 +1186,7 @@ TEST(TranslationCache, BaseCheck)
         .File("/var/www/vol0/a/b/c.html");
 
     next_response = expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/a/d/e.html").Check("x");
@@ -1191,7 +1194,7 @@ TEST(TranslationCache, BaseCheck)
         .File("/var/www/vol1/a/d/e.html");
 
     next_response = expected_response = &response3;
-    cache.SendRequest(*pool, request3,
+    cache.SendRequest(*pool, request3, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* now check whether the translate cache matches the BASE
@@ -1203,12 +1206,12 @@ TEST(TranslationCache, BaseCheck)
     const auto response4 = MakeResponse().Base("/a/").Check("x");
 
     expected_response = &response4;
-    cache.SendRequest(*pool, request4,
+    cache.SendRequest(*pool, request4, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request5 = MakeRequest("/a/b/0/1.html");
 
-    cache.SendRequest(*pool, request5,
+    cache.SendRequest(*pool, request5, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request6 = MakeRequest("/a/b/0/1.html").Check("x");
@@ -1216,7 +1219,7 @@ TEST(TranslationCache, BaseCheck)
         .File("/var/www/vol0/a/b/0/1.html");
 
     expected_response = &response6;
-    cache.SendRequest(*pool, request6,
+    cache.SendRequest(*pool, request6, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request7 = MakeRequest("/a/d/2/3.html").Check("x");
@@ -1224,7 +1227,7 @@ TEST(TranslationCache, BaseCheck)
         .File("/var/www/vol1/a/d/2/3.html");
 
     expected_response = &response7;
-    cache.SendRequest(*pool, request7,
+    cache.SendRequest(*pool, request7, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* expect cache misses */
@@ -1232,7 +1235,7 @@ TEST(TranslationCache, BaseCheck)
     expected_response = nullptr;
 
     const auto miss1 = MakeRequest("/a/f/g.html").Check("y");
-    cache.SendRequest(*pool, miss1,
+    cache.SendRequest(*pool, miss1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -1253,7 +1256,7 @@ TEST(TranslationCache, BaseWantFullUri)
     const auto response1 = MakeResponse().Base("/wfu/a/").WantFullUri("x");
 
     next_response = expected_response = &response1;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/wfu/a/b/c.html").WantFullUri("x");
@@ -1261,7 +1264,7 @@ TEST(TranslationCache, BaseWantFullUri)
         .File("/var/www/vol0/a/b/c.html");
 
     next_response = expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request3 = MakeRequest("/wfu/a/d/e.html").WantFullUri("x");
@@ -1269,7 +1272,7 @@ TEST(TranslationCache, BaseWantFullUri)
         .File("/var/www/vol1/a/d/e.html");
 
     next_response = expected_response = &response3;
-    cache.SendRequest(*pool, request3,
+    cache.SendRequest(*pool, request3, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* now check whether the translate cache matches the BASE
@@ -1281,12 +1284,12 @@ TEST(TranslationCache, BaseWantFullUri)
     const auto response4 = MakeResponse().Base("/wfu/a/").WantFullUri("x");
 
     expected_response = &response4;
-    cache.SendRequest(*pool, request4,
+    cache.SendRequest(*pool, request4, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request5 = MakeRequest("/wfu/a/b/0/1.html");
 
-    cache.SendRequest(*pool, request5,
+    cache.SendRequest(*pool, request5, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request6 = MakeRequest("/wfu/a/b/0/1.html").WantFullUri("x");
@@ -1294,7 +1297,7 @@ TEST(TranslationCache, BaseWantFullUri)
         .File("/var/www/vol0/a/b/0/1.html");
 
     expected_response = &response6;
-    cache.SendRequest(*pool, request6,
+    cache.SendRequest(*pool, request6, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request7 = MakeRequest("/wfu/a/d/2/3.html").WantFullUri("x");
@@ -1302,14 +1305,14 @@ TEST(TranslationCache, BaseWantFullUri)
         .File("/var/www/vol1/a/d/2/3.html");
 
     expected_response = &response7;
-    cache.SendRequest(*pool, request7,
+    cache.SendRequest(*pool, request7, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* expect cache misses */
 
     const auto miss1 = MakeRequest("/wfu/a/f/g.html").WantFullUri("y");
     expected_response = nullptr;
-    cache.SendRequest(*pool, miss1,
+    cache.SendRequest(*pool, miss1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -1330,7 +1333,7 @@ TEST(TranslationCache, UnsafeBase)
         .File("/var/www/foo");
 
     next_response = expected_response = &response1;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/unsafe_base2/foo");
@@ -1338,7 +1341,7 @@ TEST(TranslationCache, UnsafeBase)
         .File("/var/www/foo");
 
     next_response = expected_response = &response2;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* fail (no UNSAFE_BASE) */
@@ -1346,7 +1349,7 @@ TEST(TranslationCache, UnsafeBase)
     const auto request3 = MakeRequest("/unsafe_base1/../x");
 
     next_response = expected_response = nullptr;
-    cache.SendRequest(*pool, request3,
+    cache.SendRequest(*pool, request3, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* success (with UNSAFE_BASE) */
@@ -1357,7 +1360,7 @@ TEST(TranslationCache, UnsafeBase)
 
     next_response = nullptr;
     expected_response = &response4;
-    cache.SendRequest(*pool, request4,
+    cache.SendRequest(*pool, request4, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -1384,7 +1387,7 @@ TEST(TranslationCache, ExpandUnsafeBase)
 
     next_response = &response1;
     expected_response = &response1e;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/expand_unsafe_base2/foo");
@@ -1397,7 +1400,7 @@ TEST(TranslationCache, ExpandUnsafeBase)
 
     next_response = &response2;
     expected_response = &response2e;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* fail (no UNSAFE_BASE) */
@@ -1405,7 +1408,7 @@ TEST(TranslationCache, ExpandUnsafeBase)
     const auto request3 = MakeRequest("/expand_unsafe_base1/../x");
 
     next_response = expected_response = nullptr;
-    cache.SendRequest(*pool, request3,
+    cache.SendRequest(*pool, request3, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     /* success (with UNSAFE_BASE) */
@@ -1417,7 +1420,7 @@ TEST(TranslationCache, ExpandUnsafeBase)
 
     next_response = nullptr;
     expected_response = &response4;
-    cache.SendRequest(*pool, request4,
+    cache.SendRequest(*pool, request4, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }
 
@@ -1447,7 +1450,7 @@ TEST(TranslationCache, ExpandBindMount)
 
     next_response = &response1n;
     expected_response = &response1e;
-    cache.SendRequest(*pool, request1,
+    cache.SendRequest(*pool, request1, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 
     const auto request2 = MakeRequest("/expand_bind_mount/bar");
@@ -1459,6 +1462,6 @@ TEST(TranslationCache, ExpandBindMount)
 
     next_response = nullptr;
     expected_response = &response2e;
-    cache.SendRequest(*pool, request2,
+    cache.SendRequest(*pool, request2, nullptr,
                       my_translate_handler, nullptr, cancel_ptr);
 }

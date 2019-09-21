@@ -47,6 +47,7 @@
 #include "net/AllocatedSocketAddress.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
+#include "stopwatch.hxx"
 
 #include <stdio.h>
 
@@ -180,7 +181,8 @@ int main(int argc, char **argv) {
 
     CancellablePointer cancel_ptr;
     stock.SendRequest(instance.root_pool,
-                      request, my_translate_handler, nullptr, cancel_ptr);
+                      request, nullptr,
+                      my_translate_handler, nullptr, cancel_ptr);
 
     instance.event_loop.Dispatch();
 }

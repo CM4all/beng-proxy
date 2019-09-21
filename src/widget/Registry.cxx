@@ -40,6 +40,7 @@
 #include "AllocatorPtr.hxx"
 #include "io/Logger.hxx"
 #include "util/Exception.hxx"
+#include "stopwatch.hxx"
 
 static void
 widget_registry_lookup(struct pool &pool,
@@ -52,7 +53,9 @@ widget_registry_lookup(struct pool &pool,
 
     request->widget_type = widget_type;
 
-    service.SendRequest(pool, *request, handler, ctx, cancel_ptr);
+    service.SendRequest(pool, *request,
+                        nullptr, // TODO
+                        handler, ctx, cancel_ptr);
 }
 
 struct WidgetRegistryLookup {

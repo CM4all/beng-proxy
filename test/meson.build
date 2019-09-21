@@ -343,6 +343,7 @@ test('t_tcache', executable('t_tcache',
     libcommon_translation_dep,
     eutil_dep,
     raddress_dep,
+    stopwatch_dep,
   ]))
 
 test('t_regex', executable('t_regex',

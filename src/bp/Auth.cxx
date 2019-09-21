@@ -159,6 +159,7 @@ Request::HandleAuth(const TranslateResponse &response)
     translate.previous = &response;
 
     instance.translation_service->SendRequest(pool, *t,
+                                              stopwatch,
                                               auth_translate_handler, this,
                                               cancel_ptr);
 }

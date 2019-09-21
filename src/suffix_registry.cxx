@@ -91,6 +91,7 @@ suffix_registry_lookup(struct pool &pool,
                        TranslationService &service,
                        ConstBuffer<void> payload,
                        const char *suffix,
+                       const StopwatchPtr &parent_stopwatch,
                        SuffixRegistryHandler &handler,
                        CancellablePointer &cancel_ptr)
 {
@@ -98,6 +99,6 @@ suffix_registry_lookup(struct pool &pool,
                                                     payload, suffix,
                                                     handler);
 
-    service.SendRequest(pool, lookup->request,
+    service.SendRequest(pool, lookup->request, parent_stopwatch,
                         suffix_translate_handler, lookup, cancel_ptr);
 }

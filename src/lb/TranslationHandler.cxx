@@ -39,6 +39,7 @@
 #include "translation/Handler.hxx"
 #include "http/IncomingRequest.hxx"
 #include "pool/pool.hxx"
+#include "stopwatch.hxx"
 
 static std::map<const char *, LbGoto, StringLess>
 ToInstance(LbGotoMap &goto_map, const LbTranslationHandlerConfig &config)
@@ -167,6 +168,7 @@ LbTranslationHandler::Pick(struct pool &pool, const IncomingHttpRequest &request
                                                      request,
                                                      handler, ctx);
     stock.SendRequest(pool, r->request,
+                      nullptr,
                       lbth_translate_handler, r, cancel_ptr);
 }
 

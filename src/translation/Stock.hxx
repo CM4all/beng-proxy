@@ -72,6 +72,7 @@ public:
     /* virtual methods from class TranslationService */
     void SendRequest(struct pool &pool,
                      const TranslateRequest &request,
+                     const StopwatchPtr &parent_stopwatch,
                      const TranslateHandler &handler, void *ctx,
                      CancellablePointer &cancel_ptr) noexcept override;
 

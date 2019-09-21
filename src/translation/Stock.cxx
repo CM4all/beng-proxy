@@ -32,6 +32,7 @@
 
 #include "Stock.hxx"
 #include "translation/Handler.hxx"
+#include "translation/Request.hxx"
 #include "Client.hxx"
 #include "stock/Item.hxx"
 #include "stock/GetHandler.hxx"
@@ -42,6 +43,7 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 #include "io/Logger.hxx"
+#include "stopwatch.hxx"
 
 #include <stdexcept>
 
@@ -118,6 +120,8 @@ class TranslationStock::Request final
 {
     struct pool &pool;
 
+    StopwatchPtr stopwatch;
+
     TranslationStock &stock;
     Connection *item;
 
@@ -131,11 +135,15 @@ class TranslationStock::Request final
 
 public:
     Request(TranslationStock &_stock, struct pool &_pool,
-                          const TranslateRequest &_request,
-                          const TranslateHandler &_handler, void *_ctx,
-                          CancellablePointer &_cancel_ptr) noexcept
+            const TranslateRequest &_request,
+            const StopwatchPtr &parent_stopwatch,
+            const TranslateHandler &_handler, void *_ctx,
+            CancellablePointer &_cancel_ptr) noexcept
         :PoolLeakDetector(_pool),
-         pool(_pool), stock(_stock),
+         pool(_pool),
+         stopwatch(parent_stopwatch, "translate",
+                   _request.GetDiagnosticName()),
+         stock(_stock),
          request(_request),
          handler(_handler), handler_ctx(_ctx),
          caller_cancel_ptr(_cancel_ptr)
@@ -185,7 +193,8 @@ TranslationStock::Request::OnStockItemReady(StockItem &_item) noexcept
     /* cancellation will not be handled by this class from here on;
        instead, we pass the caller's CancellablePointer to
        translate() */
-    translate(pool, stock.GetEventLoop(), item->GetSocket(),
+    translate(pool, stock.GetEventLoop(), std::move(stopwatch),
+              item->GetSocket(),
               *this,
               request, handler, handler_ctx,
               caller_cancel_ptr);
@@ -213,10 +222,12 @@ TranslationStock::Create(CreateStockItem c, void *,
 void
 TranslationStock::SendRequest(struct pool &pool,
                               const TranslateRequest &request,
+                              const StopwatchPtr &parent_stopwatch,
                               const TranslateHandler &handler, void *ctx,
                               CancellablePointer &cancel_ptr) noexcept
 {
     auto r = NewFromPool<Request>(pool, *this, pool, request,
+                                  parent_stopwatch,
                                   handler, ctx, cancel_ptr);
     r->Start();
 }

@@ -44,6 +44,7 @@
 #include "pool/Ptr.hxx"
 #include "PInstance.hxx"
 #include "util/Cancellable.hxx"
+#include "stopwatch.hxx"
 
 #include <gtest/gtest.h>
 
@@ -56,6 +57,7 @@ public:
     /* virtual methods from class TranslationService */
     void SendRequest(struct pool &pool,
                      const TranslateRequest &request,
+                     const StopwatchPtr &parent_stopwatch,
                      const TranslateHandler &handler, void *ctx,
                      CancellablePointer &cancel_ptr) noexcept override;
 
@@ -83,6 +85,7 @@ struct Context : PInstance {
 void
 MyTranslationService::SendRequest(struct pool &pool,
                                   const TranslateRequest &request,
+                                  const StopwatchPtr &,
                                   const TranslateHandler &handler, void *ctx,
                                   CancellablePointer &cancel_ptr) noexcept
 {

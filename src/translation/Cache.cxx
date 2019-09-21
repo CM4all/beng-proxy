@@ -1371,6 +1371,7 @@ static void
 tcache_miss(struct pool &pool, struct tcache &tcache,
             const TranslateRequest &request, const char *key,
             bool cacheable,
+            const StopwatchPtr &parent_stopwatch,
             const TranslateHandler &handler, void *ctx,
             CancellablePointer &cancel_ptr)
 {
@@ -1382,7 +1383,8 @@ tcache_miss(struct pool &pool, struct tcache &tcache,
     if (cacheable)
         LogConcat(4, "TranslationCache", "miss ", key);
 
-    tcache.next.SendRequest(pool, request, tcache_handler, tcr, cancel_ptr);
+    tcache.next.SendRequest(pool, request, parent_stopwatch,
+                            tcache_handler, tcr, cancel_ptr);
 }
 
 gcc_pure
@@ -1516,6 +1518,7 @@ TranslationCache::Flush() noexcept
 void
 TranslationCache::SendRequest(struct pool &pool,
                               const TranslateRequest &request,
+                              const StopwatchPtr &parent_stopwatch,
                               const TranslateHandler &handler, void *ctx,
                               CancellablePointer &cancel_ptr) noexcept
 {
@@ -1529,5 +1532,6 @@ TranslationCache::SendRequest(struct pool &pool,
                    *item, handler, ctx);
     else
         tcache_miss(pool, *cache, request, key, cacheable,
+                    parent_stopwatch,
                     handler, ctx, cancel_ptr);
 }
