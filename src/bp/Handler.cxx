@@ -72,25 +72,26 @@ static unsigned translation_protocol_version;
 static bool translation_protocol_version_received = false;
 
 static const char *
-bounce_uri(struct pool &pool, const Request &request,
-           const TranslateResponse &response)
+GetBounceUri(struct pool &pool, const IncomingHttpRequest &request,
+             const DissectedUri &dissected_uri,
+             const TranslateResponse &response) noexcept
 {
     const char *scheme = response.scheme != nullptr
         ? response.scheme : "http";
     const char *host = response.host != nullptr
         ? response.host
-        : request.request.headers.Get("host");
+        : request.headers.Get("host");
     if (host == nullptr)
         host = "localhost";
 
     const char *uri_path = response.uri != nullptr
         ? p_strncat(&pool, response.uri, strlen(response.uri),
-                    ";", request.dissected_uri.args == nullptr ? (size_t)0 : 1,
-                    request.dissected_uri.args.data, request.dissected_uri.args.size,
-                    "?", request.dissected_uri.query == nullptr ? (size_t)0 : 1,
-                    request.dissected_uri.query.data, request.dissected_uri.query.size,
+                    ";", dissected_uri.args == nullptr ? (size_t)0 : 1,
+                    dissected_uri.args.data, dissected_uri.args.size,
+                    "?", dissected_uri.query == nullptr ? (size_t)0 : 1,
+                    dissected_uri.query.data, dissected_uri.query.size,
                     nullptr)
-        : request.request.uri;
+        : request.uri;
 
     const char *current_uri = p_strcat(&pool, scheme, "://", host, uri_path,
                                        nullptr);
@@ -231,7 +232,7 @@ Request::CheckHandleBounce(const TranslateResponse &response)
         return false;
 
     DispatchRedirect(HTTP_STATUS_SEE_OTHER,
-                     bounce_uri(pool, *this, response),
+                     GetBounceUri(pool, request, dissected_uri, response),
                      nullptr);
     return true;
 }
