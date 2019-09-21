@@ -67,22 +67,16 @@ ForwardURI(struct pool &pool, const DissectedUri &uri)
                          nullptr);
 }
 
-/**
- * Return a copy of the original request URI for forwarding to the
- * next server.  This omits the beng-proxy request "arguments" (unless
- * the translation server declared the "transparent" mode).
- */
-gcc_pure
-static const char *
-ForwardURI(const Request &r)
+inline const char *
+Request::ForwardURI() const noexcept
 {
-    const TranslateResponse &t = *r.translate.response;
-    if (t.transparent || r.dissected_uri.args == nullptr)
+    const TranslateResponse &t = *translate.response;
+    if (t.transparent || dissected_uri.args == nullptr)
         /* transparent or no args: return the full URI as-is */
-        return r.request.uri;
+        return request.uri;
     else
         /* remove the "args" part */
-        return ForwardURI(r.pool, r.dissected_uri);
+        return ::ForwardURI(pool, dissected_uri);
 }
 
 void
@@ -111,7 +105,7 @@ Request::HandleProxyAddress() noexcept
         address.GetCgi().uri == nullptr)
         /* pass the "real" request URI to the CGI (but without the
            "args", unless the request is "transparent") */
-        address.GetCgi().uri = ForwardURI(*this);
+        address.GetCgi().uri = ForwardURI();
 
     cookie_uri = address.GetUriPath();
 

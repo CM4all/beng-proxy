@@ -370,6 +370,15 @@ struct Request final : HttpResponseHandler, DelegateHandler,
     void HandleNfsAddress() noexcept;
 
     /**
+     * Return a copy of the original request URI for forwarding to the
+     * next server.  This omits the beng-proxy request "arguments"
+     * (unless the translation server declared the "transparent"
+     * mode).
+     */
+    gcc_pure
+    const char *ForwardURI() const noexcept;
+
+    /**
      * Handle the request by forwarding it to the given address.
      */
     void HandleProxyAddress() noexcept;
