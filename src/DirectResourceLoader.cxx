@@ -260,7 +260,9 @@ try {
             filter_factory = nullptr;
         }
 
-        http_request(pool, event_loop, fs_balancer, session_sticky,
+        http_request(pool, event_loop, fs_balancer,
+                     parent_stopwatch,
+                     session_sticky,
                      filter_factory,
                      method, address.GetHttp(),
                      HttpHeaders(std::move(headers)), std::move(body),
@@ -269,6 +271,7 @@ try {
 
     case ResourceAddress::Type::LHTTP:
         lhttp_request(pool, event_loop, *lhttp_stock,
+                      parent_stopwatch,
                       site_name,
                       address.GetLhttp(),
                       method, HttpHeaders(std::move(headers)),

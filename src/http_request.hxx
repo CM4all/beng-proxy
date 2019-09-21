@@ -38,6 +38,7 @@
 
 struct pool;
 class EventLoop;
+class StopwatchPtr;
 class UnusedIstreamPtr;
 class FilteredSocketBalancer;
 class SocketFilterFactory;
@@ -55,6 +56,7 @@ class HttpHeaders;
 void
 http_request(struct pool &pool, EventLoop &event_loop,
              FilteredSocketBalancer &fs_balancer,
+             const StopwatchPtr &parent_stopwatch,
              sticky_hash_t session_sticky,
              SocketFilterFactory *filter_factory,
              http_method_t method,

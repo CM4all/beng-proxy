@@ -55,6 +55,7 @@
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "util/Compiler.h"
+#include "stopwatch.hxx"
 
 #include <string.h>
 
@@ -69,6 +70,8 @@ class HttpRequest final
     EventLoop &event_loop;
 
     FilteredSocketBalancer &fs_balancer;
+
+    StopwatchPtr stopwatch;
 
     const sticky_hash_t session_sticky;
 
@@ -92,6 +95,7 @@ class HttpRequest final
 public:
     HttpRequest(struct pool &_pool, EventLoop &_event_loop,
                 FilteredSocketBalancer &_fs_balancer,
+                const StopwatchPtr &parent_stopwatch,
                 sticky_hash_t _session_sticky,
                 SocketFilterFactory *_filter_factory,
                 http_method_t _method,
@@ -102,6 +106,7 @@ public:
                 CancellablePointer &_cancel_ptr)
         :PoolLeakDetector(_pool),
          pool(_pool), event_loop(_event_loop), fs_balancer(_fs_balancer),
+         stopwatch(parent_stopwatch, _address.path),
          session_sticky(_session_sticky),
          filter_factory(_filter_factory),
          method(_method), address(_address),
@@ -233,12 +238,14 @@ HttpRequest::OnStockItemReady(StockItem &item) noexcept
     assert(stock_item == nullptr);
     assert(!response_sent);
 
+    stopwatch.RecordEvent("connect");
+
     stock_item = &item;
 
     failure = fs_balancer.GetFailureManager()
         .Make(fs_stock_item_get_address(*stock_item));
 
-    http_client_request(pool,
+    http_client_request(pool, std::move(stopwatch),
                         fs_stock_item_get(item),
                         *this,
                         item.GetStockName(),
@@ -252,6 +259,8 @@ HttpRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
     assert(stock_item == nullptr);
     assert(!response_sent);
+
+    stopwatch.RecordEvent("connect_error");
 
     Failed(ep);
 }
@@ -282,6 +291,7 @@ HttpRequest::ReleaseLease(bool reuse) noexcept
 void
 http_request(struct pool &pool, EventLoop &event_loop,
              FilteredSocketBalancer &fs_balancer,
+             const StopwatchPtr &parent_stopwatch,
              sticky_hash_t session_sticky,
              SocketFilterFactory *filter_factory,
              http_method_t method,
@@ -295,6 +305,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
     assert(uwa.path != nullptr);
 
     auto hr = NewFromPool<HttpRequest>(pool, pool, event_loop, fs_balancer,
+                                       parent_stopwatch,
                                        session_sticky,
                                        filter_factory,
                                        method, uwa,

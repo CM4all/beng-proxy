@@ -42,6 +42,7 @@
 #include <stdexcept>
 
 struct pool;
+class StopwatchPtr;
 class UnusedIstreamPtr;
 struct FilteredSocket;
 class Lease;
@@ -120,6 +121,7 @@ IsHttpClientServerFailure(std::exception_ptr ep);
  */
 void
 http_client_request(struct pool &pool,
+                    StopwatchPtr stopwatch,
                     FilteredSocket &socket, Lease &lease,
                     const char *peer_name,
                     http_method_t method, const char *uri,

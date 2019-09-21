@@ -37,6 +37,7 @@
 
 struct pool;
 class EventLoop;
+class StopwatchPtr;
 class UnusedIstreamPtr;
 class LhttpStock;
 struct LhttpAddress;
@@ -50,6 +51,7 @@ class HttpHeaders;
 void
 lhttp_request(struct pool &pool, EventLoop &event_loop,
               LhttpStock &lhttp_stock,
+              const StopwatchPtr &parent_stopwatch,
               const char *site_name,
               const LhttpAddress &address,
               http_method_t method,

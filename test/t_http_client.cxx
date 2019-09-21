@@ -46,6 +46,7 @@
 #include "direct.hxx"
 #include "fb_pool.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "stopwatch.hxx"
 
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -73,7 +74,8 @@ struct Connection {
                  bool expect_100,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr) {
-        http_client_request(*pool, socket, lease,
+        http_client_request(*pool, nullptr,
+                            socket, lease,
                             "localhost",
                             method, uri, HttpHeaders(std::move(headers)),
                             std::move(body), expect_100,

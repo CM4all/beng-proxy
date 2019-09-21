@@ -55,6 +55,7 @@
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 #include "util/RuntimeError.hxx"
+#include "stopwatch.hxx"
 
 #include <functional>
 
@@ -107,7 +108,7 @@ public:
                      UnusedIstreamPtr body, bool expect_100,
                      HttpResponseHandler &handler,
                      CancellablePointer &cancel_ptr) noexcept {
-        http_client_request(*pool, client_fs, *this,
+        http_client_request(*pool, nullptr, client_fs, *this,
                             "foo",
                             method, uri, std::move(headers),
                             std::move(body), expect_100,

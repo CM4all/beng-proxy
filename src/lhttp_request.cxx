@@ -44,6 +44,7 @@
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "stopwatch.hxx"
 
 #include <stdexcept>
 
@@ -63,12 +64,13 @@ public:
     }
 
     void Start(struct pool &pool,
+               StopwatchPtr &&stopwatch,
                const LhttpAddress &address,
                http_method_t method, HttpHeaders &&headers,
                UnusedIstreamPtr body,
                HttpResponseHandler &handler,
                CancellablePointer &cancel_ptr) noexcept {
-        http_client_request(pool,
+        http_client_request(pool, std::move(stopwatch),
                             socket,
                             *this,
                             stock_item.GetStockName(),
@@ -102,6 +104,7 @@ private:
 void
 lhttp_request(struct pool &pool, EventLoop &event_loop,
               LhttpStock &lhttp_stock,
+              const StopwatchPtr &parent_stopwatch,
               const char *site_name,
               const LhttpAddress &address,
               http_method_t method, HttpHeaders &&headers,
@@ -109,9 +112,13 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
               HttpResponseHandler &handler,
               CancellablePointer &cancel_ptr) noexcept
 {
+    StopwatchPtr stopwatch(parent_stopwatch, address.uri);
+
     try {
         address.options.Check();
     } catch (...) {
+        stopwatch.RecordEvent("error");
+
         body.Clear();
 
         handler.InvokeError(std::current_exception());
@@ -123,11 +130,15 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
     try {
         stock_item = lhttp_stock_get(&lhttp_stock, &address);
     } catch (...) {
+        stopwatch.RecordEvent("launch_error");
+
         body.Clear();
 
         handler.InvokeError(std::current_exception());
         return;
     }
+
+    stopwatch.RecordEvent("launch");
 
     lhttp_stock_item_set_site(*stock_item, site_name);
     lhttp_stock_item_set_uri(*stock_item, address.uri);
@@ -138,7 +149,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
     if (address.host_and_port != nullptr)
         headers.Write("host", address.host_and_port);
 
-    request->Start(pool, address,
+    request->Start(pool, std::move(stopwatch), address,
                    method, std::move(headers),
                    std::move(body),
                    handler, cancel_ptr);

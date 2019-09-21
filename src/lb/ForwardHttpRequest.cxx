@@ -67,6 +67,7 @@
 #include "util/Cancellable.hxx"
 #include "util/LeakDetector.hxx"
 #include "util/FNVHash.hxx"
+#include "stopwatch.hxx"
 
 static constexpr Event::Duration LB_HTTP_CONNECT_TIMEOUT =
     std::chrono::seconds(20);
@@ -418,7 +419,7 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
                                peer_subject, peer_issuer_subject,
                                cluster_config.mangle_via);
 
-    http_client_request(pool,
+    http_client_request(pool, nullptr,
                         fs_stock_item_get(item),
                         *this,
                         item.GetStockName(),

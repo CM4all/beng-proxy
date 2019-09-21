@@ -222,6 +222,7 @@ class HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, Des
 
 public:
     HttpClient(struct pool &_pool, struct pool &_caller_pool,
+               StopwatchPtr &&_stopwatch,
                FilteredSocket &_socket, Lease &lease,
                const char *_peer_name,
                http_method_t method, const char *uri,
@@ -1250,6 +1251,7 @@ HttpClient::Cancel() noexcept
 
 inline
 HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
+                       StopwatchPtr &&_stopwatch,
                        FilteredSocket &_socket, Lease &lease,
                        const char *_peer_name,
                        http_method_t method, const char *uri,
@@ -1259,7 +1261,7 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
                        CancellablePointer &cancel_ptr)
     :pool(_pool), caller_pool(_caller_pool),
      peer_name(_peer_name),
-     stopwatch(pool, peer_name, uri),
+     stopwatch(std::move(_stopwatch)),
      event_loop(_socket.GetEventLoop()),
      socket(_socket, lease,
             Event::Duration(-1), http_client_timeout,
@@ -1352,6 +1354,7 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 
 void
 http_client_request(struct pool &caller_pool,
+                    StopwatchPtr stopwatch,
                     FilteredSocket &socket, Lease &lease,
                     const char *peer_name,
                     http_method_t method, const char *uri,
@@ -1372,6 +1375,7 @@ http_client_request(struct pool &caller_pool,
     }
 
     NewFromPool<HttpClient>(caller_pool, caller_pool, caller_pool,
+                            std::move(stopwatch),
                             socket,
                             lease,
                             peer_name,

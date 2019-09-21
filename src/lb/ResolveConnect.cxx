@@ -49,6 +49,7 @@
 #include "net/AddressInfo.hxx"
 #include "util/Cancellable.hxx"
 #include "util/LeakDetector.hxx"
+#include "stopwatch.hxx"
 
 static constexpr Event::Duration LB_HTTP_CONNECT_TIMEOUT =
     std::chrono::seconds(20);
@@ -165,7 +166,7 @@ LbResolveConnectRequest::OnStockItemReady(StockItem &item) noexcept
                                peer_subject, peer_issuer_subject,
                                false);
 
-    http_client_request(pool,
+    http_client_request(pool, nullptr,
                         fs_stock_item_get(item),
                         *this,
                         item.GetStockName(),

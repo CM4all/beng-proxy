@@ -44,6 +44,7 @@
 #include "io/Logger.hxx"
 #include "util/Background.hxx"
 #include "util/Exception.hxx"
+#include "stopwatch.hxx"
 
 class ExternalSessionRefresh final
     : PoolHolder, public LinkedBackgroundJob, HttpResponseHandler {
@@ -60,6 +61,7 @@ public:
 
     void SendRequest(BpInstance &instance, const SessionId session_id) {
         http_request(pool, instance.event_loop, *instance.fs_balancer,
+                     nullptr,
                      session_id.GetClusterHash(),
                      nullptr,
                      HTTP_METHOD_GET, address,

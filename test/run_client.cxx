@@ -60,8 +60,8 @@
 #include "event/ShutdownListener.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
-
 #include "util/Compiler.h"
+#include "stopwatch.hxx"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -303,7 +303,7 @@ try {
     case parsed_url::HTTP:
         fs.InitDummy(fd.Release(), FdType::FD_TCP);
 
-        http_client_request(*pool, fs,
+        http_client_request(*pool, nullptr, fs,
                             *this,
                             "localhost",
                             method, url.uri,
@@ -319,7 +319,7 @@ try {
                                        GetHostWithoutPort(*pool, url),
                                        nullptr));
 
-        http_client_request(*pool, fs,
+        http_client_request(*pool, nullptr, fs,
                             *this,
                             "localhost",
                             method, url.uri,
