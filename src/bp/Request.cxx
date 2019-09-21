@@ -37,11 +37,13 @@
 #include "strmap.hxx"
 
 Request::Request(BpConnection &_connection,
-                 IncomingHttpRequest &_request) noexcept
+                 IncomingHttpRequest &_request,
+                 const StopwatchPtr &parent_stopwatch) noexcept
     :pool(_request.pool),
      instance(_connection.instance),
      connection(_connection),
      logger(connection.logger),
+     stopwatch(parent_stopwatch, "handler"),
      request(_request),
      args(pool),
      request_body(pool, std::move(request.body))

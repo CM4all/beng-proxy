@@ -40,6 +40,7 @@
 struct Request;
 struct BpConnection;
 struct IncomingHttpRequest;
+class StopwatchPtr;
 class CancellablePointer;
 
 void
@@ -51,6 +52,7 @@ fcgi_handler(Request &request2);
 void
 handle_http_request(BpConnection &connection,
                     IncomingHttpRequest &request,
+                    const StopwatchPtr &parent_stopwatch,
                     CancellablePointer &cancel_ptr);
 
 #endif

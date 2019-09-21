@@ -905,9 +905,11 @@ Request::HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept
 void
 handle_http_request(BpConnection &connection,
                     IncomingHttpRequest &request,
+                    const StopwatchPtr &parent_stopwatch,
                     CancellablePointer &cancel_ptr)
 {
     auto *request2 = NewFromPool<Request>(request.pool,
-                                          connection, request);
+                                          connection, request,
+                                          parent_stopwatch);
     request2->HandleHttpRequest(cancel_ptr);
 }

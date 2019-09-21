@@ -48,6 +48,7 @@
 #include "HttpResponseHandler.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
+#include "stopwatch.hxx"
 
 #include <exception>
 
@@ -75,6 +76,8 @@ struct Request final : HttpResponseHandler, DelegateHandler,
     BpConnection &connection;
 
     const LLogger logger;
+
+    StopwatchPtr stopwatch;
 
     IncomingHttpRequest &request;
     DissectedUri dissected_uri;
@@ -269,7 +272,8 @@ struct Request final : HttpResponseHandler, DelegateHandler,
     CancellablePointer cancel_ptr;
 
     Request(BpConnection &_connection,
-            IncomingHttpRequest &_request) noexcept;
+            IncomingHttpRequest &_request,
+            const StopwatchPtr &parent_stopwatch) noexcept;
 
     void HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept;
 
