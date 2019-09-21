@@ -62,6 +62,7 @@
 #include "util/InstanceList.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
+#include "stopwatch.hxx"
 
 #include <sys/socket.h>
 #include <string.h>
@@ -79,6 +80,8 @@ struct FcgiClient final
     struct lease_ref lease_ref;
 
     UniqueFileDescriptor stderr_fd;
+
+    const StopwatchPtr stopwatch;
 
     HttpResponseHandler &handler;
 
@@ -146,6 +149,7 @@ struct FcgiClient final
     size_t content_length = 0, skip_length = 0;
 
     FcgiClient(struct pool &_pool, EventLoop &event_loop,
+               StopwatchPtr &&_stopwatch,
                SocketDescriptor fd, FdType fd_type, Lease &lease,
                UniqueFileDescriptor &&_stderr_fd,
                uint16_t _id, http_method_t method,
@@ -323,6 +327,8 @@ FcgiClient::_Close() noexcept
 {
     assert(response.read_state == Response::READ_BODY);
 
+    stopwatch.RecordEvent("close");
+
     if (socket.IsConnected())
         ReleaseSocket(false);
 
@@ -380,6 +386,8 @@ FcgiClient::HandleLine(const char *line, size_t length)
         header_parse_line(GetPool(), response.headers, {line, length});
         return false;
     } else {
+        stopwatch.RecordEvent("response_headers");
+
         response.read_state = Response::READ_BODY;
         response.stderr = false;
         return true;
@@ -468,6 +476,8 @@ FcgiClient::SubmitResponse()
     }
 
     if (http_status_is_empty(status) || response.no_body) {
+        stopwatch.RecordEvent("response_no_body");
+
         response.read_state = Response::READ_NO_BODY;
         response.status = status;
 
@@ -503,6 +513,8 @@ inline void
 FcgiClient::HandleEnd()
 {
     assert(!socket.IsConnected());
+
+    stopwatch.RecordEvent("end");
 
     if (response.read_state == FcgiClient::Response::READ_HEADERS) {
         AbortResponseHeaders(std::make_exception_ptr(FcgiClientError("premature end of headers "
@@ -714,6 +726,8 @@ void
 FcgiClient::OnEof() noexcept
 {
     assert(request.input.IsDefined());
+
+    stopwatch.RecordEvent("request_end");
 
     request.input.Clear();
 
@@ -955,6 +969,8 @@ FcgiClient::OnBufferedData()
 bool
 FcgiClient::OnBufferedClosed() noexcept
 {
+    stopwatch.RecordEvent("socket_closed");
+
     /* the rest of the response may already be in the input buffer */
     ReleaseSocket(false);
     return true;
@@ -992,6 +1008,8 @@ FcgiClient::OnBufferedWrite()
 bool
 FcgiClient::OnBufferedTimeout() noexcept
 {
+    stopwatch.RecordEvent("timeout");
+
     AbortResponse(std::make_exception_ptr(FcgiClientError("timeout")));
     return false;
 }
@@ -999,6 +1017,8 @@ FcgiClient::OnBufferedTimeout() noexcept
 void
 FcgiClient::OnBufferedError(std::exception_ptr ep) noexcept
 {
+    stopwatch.RecordEvent("socket_error");
+
     AbortResponse(NestException(ep, FcgiClientError("FastCGI socket error")));
 }
 
@@ -1016,6 +1036,8 @@ FcgiClient::Cancel() noexcept
            response.read_state == Response::READ_NO_BODY);
     assert(socket.IsConnected());
 
+    stopwatch.RecordEvent("cancel");
+
     ReleaseSocket(false);
 
     if (request.input.IsDefined())
@@ -1031,6 +1053,7 @@ FcgiClient::Cancel() noexcept
 
 inline
 FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
+                       StopwatchPtr &&_stopwatch,
                        SocketDescriptor fd, FdType fd_type, Lease &lease,
                        UniqueFileDescriptor &&_stderr_fd,
                        uint16_t _id, http_method_t method,
@@ -1039,6 +1062,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
     :Istream(_pool),
      socket(event_loop),
      stderr_fd(std::move(_stderr_fd)),
+     stopwatch(std::move(_stopwatch)),
      handler(_handler),
      id(_id),
      response(GetPool(), http_method_is_empty(method))
@@ -1054,6 +1078,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
 
 void
 fcgi_client_request(struct pool *pool, EventLoop &event_loop,
+                    StopwatchPtr stopwatch,
                     SocketDescriptor fd, FdType fd_type, Lease &lease,
                     http_method_t method, const char *uri,
                     const char *script_filename,
@@ -1086,6 +1111,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
     assert(http_method_is_valid(method));
 
     auto client = NewFromPool<FcgiClient>(*pool, *pool, event_loop,
+                                          std::move(stopwatch),
                                           fd, fd_type, lease,
                                           std::move(stderr_fd),
                                           header.request_id, method,

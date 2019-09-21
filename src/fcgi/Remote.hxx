@@ -44,6 +44,7 @@ class StringMap;
 class HttpResponseHandler;
 class CancellablePointer;
 class UniqueFileDescriptor;
+class StopwatchPtr;
 template<typename T> struct ConstBuffer;
 
 /**
@@ -52,6 +53,7 @@ template<typename T> struct ConstBuffer;
 void
 fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
                     TcpBalancer *tcp_balancer,
+                    const StopwatchPtr &parent_stopwatch,
                     const AddressList *address_list,
                     const char *path,
                     http_method_t method, const char *uri,

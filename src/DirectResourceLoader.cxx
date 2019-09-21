@@ -200,7 +200,7 @@ try {
         }
 
         if (cgi->address_list.IsEmpty())
-            fcgi_request(&pool, event_loop, fcgi_stock,
+            fcgi_request(&pool, event_loop, fcgi_stock, parent_stopwatch,
                          site_name,
                          cgi->options,
                          cgi->action,
@@ -218,6 +218,7 @@ try {
                          handler, cancel_ptr);
         else
             fcgi_remote_request(&pool, event_loop, tcp_balancer,
+                                parent_stopwatch,
                                 &cgi->address_list,
                                 cgi->path,
                                 method, cgi->GetURI(&pool),

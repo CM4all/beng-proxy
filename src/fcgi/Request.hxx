@@ -43,6 +43,7 @@ class StringMap;
 class HttpResponseHandler;
 class CancellablePointer;
 class UniqueFileDescriptor;
+class StopwatchPtr;
 struct ChildOptions;
 template<typename T> struct ConstBuffer;
 
@@ -55,6 +56,7 @@ template<typename T> struct ConstBuffer;
 void
 fcgi_request(struct pool *pool, EventLoop &event_loop,
              FcgiStock *fcgi_stock,
+             const StopwatchPtr &parent_stopwatch,
              const char *site_name,
              const ChildOptions &options,
              const char *action,

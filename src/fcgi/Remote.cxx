@@ -48,6 +48,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
+#include "stopwatch.hxx"
 
 #include <sys/socket.h>
 #include <errno.h>
@@ -57,6 +58,8 @@
 class FcgiRemoteRequest final : StockGetHandler, Cancellable, Lease, PoolLeakDetector {
     struct pool &pool;
     EventLoop &event_loop;
+
+    StopwatchPtr stopwatch;
 
     StockItem *stock_item;
 
@@ -82,6 +85,7 @@ class FcgiRemoteRequest final : StockGetHandler, Cancellable, Lease, PoolLeakDet
 
 public:
     FcgiRemoteRequest(struct pool &_pool, EventLoop &_event_loop,
+                      const StopwatchPtr &parent_stopwatch,
                       http_method_t _method, const char *_uri,
                       const char *_script_filename,
                       const char *_script_name, const char *_path_info,
@@ -96,6 +100,7 @@ public:
                       CancellablePointer &_cancel_ptr)
         :PoolLeakDetector(_pool),
          pool(_pool), event_loop(_event_loop),
+         stopwatch(parent_stopwatch, "fcgi", _uri),
          method(_method), uri(_uri),
          script_filename(_script_filename), script_name(_script_name),
          path_info(_path_info), query_string(_query_string),
@@ -149,7 +154,7 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item) noexcept
 {
     stock_item = &item;
 
-    fcgi_client_request(&pool, event_loop,
+    fcgi_client_request(&pool, event_loop, std::move(stopwatch),
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? FdType::FD_SOCKET : FdType::FD_TCP,
@@ -170,6 +175,8 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item) noexcept
 void
 FcgiRemoteRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
+    stopwatch.RecordEvent("connect_error");
+
     if (stderr_fd.IsDefined())
         stderr_fd.Close();
 
@@ -186,6 +193,7 @@ FcgiRemoteRequest::OnStockItemError(std::exception_ptr ep) noexcept
 void
 fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
                     TcpBalancer *tcp_balancer,
+                    const StopwatchPtr &parent_stopwatch,
                     const AddressList *address_list,
                     const char *path,
                     http_method_t method, const char *uri,
@@ -202,6 +210,7 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
     CancellablePointer *cancel_ptr = &_cancel_ptr;
 
     auto request = NewFromPool<FcgiRemoteRequest>(*pool, *pool, event_loop,
+                                                  parent_stopwatch,
                                                   method, uri, path,
                                                   script_name, path_info,
                                                   query_string, document_root,

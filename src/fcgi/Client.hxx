@@ -45,6 +45,7 @@ class UniqueFileDescriptor;
 class StringMap;
 class HttpResponseHandler;
 class CancellablePointer;
+class StopwatchPtr;
 template<typename T> struct ConstBuffer;
 
 /**
@@ -72,6 +73,7 @@ template<typename T> struct ConstBuffer;
  */
 void
 fcgi_client_request(struct pool *pool, EventLoop &event_loop,
+                    StopwatchPtr stopwatch,
                     SocketDescriptor fd, FdType fd_type, Lease &lease,
                     http_method_t method, const char *uri,
                     const char *script_filename,

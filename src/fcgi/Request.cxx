@@ -47,6 +47,7 @@
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
+#include "stopwatch.hxx"
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -67,7 +68,8 @@ public:
     {
     }
 
-    void Start(EventLoop &event_loop, const char *site_name,
+    void Start(EventLoop &event_loop, StopwatchPtr &&stopwatch,
+               const char *site_name,
                const char *path,
                http_method_t method, const char *uri,
                const char *script_name, const char *path_info,
@@ -94,7 +96,7 @@ public:
         document_root = fcgi_stock_translate_path(*stock_item, document_root,
                                                   pool);
 
-        fcgi_client_request(&pool, event_loop,
+        fcgi_client_request(&pool, event_loop, std::move(stopwatch),
                             fcgi_stock_item_get(*stock_item),
                             fcgi_stock_item_get_domain(*stock_item) == AF_LOCAL
                             ? FdType::FD_SOCKET : FdType::FD_TCP,
@@ -135,6 +137,7 @@ private:
 void
 fcgi_request(struct pool *pool, EventLoop &event_loop,
              FcgiStock *fcgi_stock,
+             const StopwatchPtr &parent_stopwatch,
              const char *site_name,
              const ChildOptions &options,
              const char *action,
@@ -154,21 +157,26 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
     if (action == nullptr)
         action = path;
 
+    StopwatchPtr stopwatch(parent_stopwatch, "fcgi", action);
+
     StockItem *stock_item;
     try {
         stock_item = fcgi_stock_get(fcgi_stock, options,
                                     action,
                                     args);
     } catch (...) {
+        stopwatch.RecordEvent("launch_error");
         body.Clear();
         handler.InvokeError(std::current_exception());
         return;
     }
 
+    stopwatch.RecordEvent("fork");
+
     auto request = NewFromPool<FcgiRequest>(*pool, *pool, *stock_item);
 
-
-    request->Start(event_loop, site_name, path, method, uri,
+    request->Start(event_loop, std::move(stopwatch),
+                   site_name, path, method, uri,
                    script_name, path_info,
                    query_string, document_root, remote_addr,
                    headers, std::move(body), params, std::move(stderr_fd),

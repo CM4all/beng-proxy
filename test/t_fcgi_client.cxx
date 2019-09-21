@@ -51,8 +51,8 @@
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
 #include "fcgi_server.hxx"
-
 #include "util/Compiler.h"
+#include "stopwatch.hxx"
 
 #include <sys/wait.h>
 
@@ -274,7 +274,8 @@ struct Connection {
                  StringMap &&headers, UnusedIstreamPtr body,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr) {
-        fcgi_client_request(pool, event_loop, fd, FdType::FD_SOCKET,
+        fcgi_client_request(pool, event_loop, nullptr,
+                            fd, FdType::FD_SOCKET,
                             lease,
                             method, uri, uri, nullptr, nullptr, nullptr,
                             nullptr, "192.168.1.100",

@@ -652,6 +652,7 @@ fcgi_client_dep = declare_dependency(
     putil_dep,
     istream_dep,
     http_util_dep,
+    stopwatch_dep,
   ],
 )
 
