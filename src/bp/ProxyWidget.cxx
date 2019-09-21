@@ -204,6 +204,7 @@ ProxyWidget::Continue()
         frame_parent_widget(request.pool, *widget,
                             ref->id,
                             request.env,
+                            request.stopwatch,
                             *this, cancel_ptr);
     } else {
         if (view_name != nullptr) {
@@ -240,6 +241,7 @@ ProxyWidget::Continue()
 
         frame_top_widget(request.pool, *widget,
                          request.env,
+                         request.stopwatch,
                          *this,
                          cancel_ptr);
     }
@@ -339,7 +341,8 @@ proxy_widget(Request &request2,
 
     request2.cancel_ptr = *proxy;
 
-    processor_lookup_widget(request2.pool, std::move(body),
+    processor_lookup_widget(request2.pool, request2.stopwatch,
+                            std::move(body),
                             widget, proxy_ref->id,
                             request2.env, options,
                             *proxy, proxy->cancel_ptr);

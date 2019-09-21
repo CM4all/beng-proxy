@@ -52,6 +52,7 @@
 #include "pool/pbuffer.hxx"
 #include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
+#include "stopwatch.hxx"
 
 RewriteUriMode
 parse_uri_mode(const StringView s) noexcept
@@ -402,7 +403,9 @@ rewrite_widget_uri(struct pool &pool,
         return nullptr;
 
     if (mode == RewriteUriMode::RESPONSE) {
-        auto istream = embed_inline_widget(pool, env, true, widget);
+        auto istream = embed_inline_widget(pool, env,
+                                           nullptr, // TODO
+                                           true, widget);
         if (escape != nullptr)
             istream = istream_escape_new(pool, std::move(istream), *escape);
         return istream;

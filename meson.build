@@ -737,8 +737,14 @@ processor = static_library('processor',
   'src/esession.cxx',
   include_directories: inc,
 )
-processor_dep = declare_dependency(link_with: processor,
-                                   dependencies: [istream_dep, putil_dep])
+processor_dep = declare_dependency(
+  link_with: processor,
+  dependencies: [
+    istream_dep,
+    putil_dep,
+    stopwatch_dep,
+  ],
+)
 
 control_server = static_library('control_server',
   'src/control/Server.cxx',

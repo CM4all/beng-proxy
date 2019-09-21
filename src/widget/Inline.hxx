@@ -41,6 +41,7 @@
 struct pool;
 class UnusedIstreamPtr;
 class Widget;
+class StopwatchPtr;
 struct processor_env;
 
 extern const Event::Duration inline_widget_body_timeout;
@@ -56,5 +57,6 @@ extern const Event::Duration inline_widget_body_timeout;
  */
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool, struct processor_env &env,
+                    const StopwatchPtr &parent_stopwatch,
                     bool plain_text,
                     Widget &widget) noexcept;

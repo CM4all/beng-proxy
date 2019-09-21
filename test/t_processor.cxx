@@ -45,6 +45,7 @@
 #include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
+#include "stopwatch.hxx"
 
 #include <gtest/gtest.h>
 
@@ -64,6 +65,7 @@ TranslationService *global_translation_service;
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool,
                     gcc_unused struct processor_env &env,
+                    const StopwatchPtr &,
                     gcc_unused bool plain_text,
                     Widget &widget) noexcept
 {
@@ -153,7 +155,7 @@ TEST(Processor, Abort)
 
     CancellablePointer cancel_ptr;
     MyWidgetLookupHandler handler;
-    processor_lookup_widget(*pool, istream_block_new(*pool),
+    processor_lookup_widget(*pool, nullptr, istream_block_new(*pool),
                             widget, "foo", env, PROCESSOR_CONTAINER,
                             handler, cancel_ptr);
 

@@ -74,6 +74,8 @@ class WidgetRequest final
 {
     struct pool &pool;
 
+    const StopwatchPtr &parent_stopwatch;
+
     unsigned num_redirects = 0;
 
     /**
@@ -116,20 +118,26 @@ class WidgetRequest final
 public:
     WidgetRequest(struct pool &_pool, Widget &_widget,
                   struct processor_env &_env,
+                  const StopwatchPtr &_parent_stopwatch,
                   HttpResponseHandler &_handler,
                   CancellablePointer &_cancel_ptr)
         :PoolLeakDetector(_pool),
-         pool(_pool), widget(_widget), env(_env), http_handler(&_handler) {
+         pool(_pool),
+         parent_stopwatch(_parent_stopwatch),
+         widget(_widget), env(_env), http_handler(&_handler) {
         _cancel_ptr = *this;
     }
 
     WidgetRequest(struct pool &_pool, Widget &_widget,
                   struct processor_env &_env,
                   const char *_lookup_id,
+                  const StopwatchPtr &_parent_stopwatch,
                   WidgetLookupHandler &_handler,
                   CancellablePointer &_cancel_ptr)
         :PoolLeakDetector(_pool),
-         pool(_pool), widget(_widget),
+         pool(_pool),
+         parent_stopwatch(_parent_stopwatch),
+         widget(_widget),
          lookup_id(_lookup_id),
          env(_env),
          lookup_handler(&_handler) {
@@ -312,7 +320,7 @@ WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body)
     assert(t_view != nullptr);
 
     env.resource_loader->SendRequest(pool,
-                                     nullptr, // TODO
+                                     parent_stopwatch,
                                      env.session_id.GetClusterHash(),
                                      nullptr,
                                      env.site_name,
@@ -358,14 +366,15 @@ WidgetRequest::ProcessResponse(http_status_t status,
     }
 
     if (lookup_id != nullptr)
-        processor_lookup_widget(pool, std::move(body),
+        processor_lookup_widget(pool, parent_stopwatch, std::move(body),
                                 widget, lookup_id,
                                 env, options,
                                 *lookup_handler,
                                 cancel_ptr);
     else
         DispatchResponse(status, processor_header_forward(pool, headers),
-                         processor_process(pool, std::move(body),
+                         processor_process(pool, parent_stopwatch,
+                                           std::move(body),
                                            widget, env, options));
 }
 
@@ -445,7 +454,7 @@ WidgetRequest::FilterResponse(http_status_t status,
 
     env.filter_resource_loader
         ->SendRequest(pool,
-                      nullptr, // TODO
+                      parent_stopwatch,
                       env.session_id.GetClusterHash(),
                       filter.cache_tag,
                       env.site_name,
@@ -724,8 +733,7 @@ WidgetRequest::SendRequest()
             widget.logger(4, "  ", i.key, ": ", i.value);
     }
 
-    env.resource_loader->SendRequest(pool,
-                                     nullptr, // TODO
+    env.resource_loader->SendRequest(pool, parent_stopwatch,
                                      env.session_id.GetClusterHash(),
                                      nullptr,
                                      env.site_name,
@@ -757,7 +765,7 @@ WidgetRequest::ContentTypeLookup()
 {
     return suffix_registry_lookup(pool, *global_translation_service,
                                   *widget.GetAddress(),
-                                  nullptr, // TODO
+                                  parent_stopwatch,
                                   *this, cancel_ptr);
 }
 
@@ -769,12 +777,14 @@ WidgetRequest::ContentTypeLookup()
 void
 widget_http_request(struct pool &pool, Widget &widget,
                     struct processor_env &env,
+                    const StopwatchPtr &parent_stopwatch,
                     HttpResponseHandler &handler,
                     CancellablePointer &cancel_ptr)
 {
     assert(widget.cls != nullptr);
 
     auto embed = NewFromPool<WidgetRequest>(pool, pool, widget, env,
+                                            parent_stopwatch,
                                             handler, cancel_ptr);
 
     if (!embed->ContentTypeLookup())
@@ -784,6 +794,7 @@ widget_http_request(struct pool &pool, Widget &widget,
 void
 widget_http_lookup(struct pool &pool, Widget &widget, const char *id,
                    struct processor_env &env,
+                   const StopwatchPtr &parent_stopwatch,
                    WidgetLookupHandler &handler,
                    CancellablePointer &cancel_ptr)
 {
@@ -791,6 +802,7 @@ widget_http_lookup(struct pool &pool, Widget &widget, const char *id,
     assert(id != nullptr);
 
     auto embed = NewFromPool<WidgetRequest>(pool, pool, widget, env, id,
+                                            parent_stopwatch,
                                             handler, cancel_ptr);
 
     if (!embed->ContentTypeLookup())

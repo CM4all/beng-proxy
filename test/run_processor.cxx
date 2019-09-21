@@ -44,6 +44,7 @@
 #include "istream/istream_string.hxx"
 #include "util/StringView.hxx"
 #include "util/PrintException.hxx"
+#include "stopwatch.hxx"
 
 /*
  * emulate missing libraries
@@ -55,6 +56,7 @@ TranslationService *global_translation_service;
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool,
                     gcc_unused struct processor_env &env,
+                    const StopwatchPtr &,
                     gcc_unused bool plain_text,
                     Widget &widget) noexcept
 {
@@ -121,7 +123,7 @@ try {
                              nullptr);
 
     auto result =
-        processor_process(instance.root_pool,
+        processor_process(instance.root_pool, nullptr,
                           UnusedIstreamPtr(istream_file_new(instance.event_loop,
                                                             instance.root_pool,
                                                             "/dev/stdin", (off_t)-1)),

@@ -65,6 +65,7 @@ enum processor_options {
 };
 
 struct pool;
+class StopwatchPtr;
 class UnusedIstreamPtr;
 struct parsed_uri;
 class Widget;
@@ -83,7 +84,9 @@ processable(const StringMap &headers);
  * @param widget the widget that represents the template
  */
 UnusedIstreamPtr
-processor_process(struct pool &pool, UnusedIstreamPtr istream,
+processor_process(struct pool &pool,
+                  const StopwatchPtr &parent_stopwatch,
+                  UnusedIstreamPtr istream,
                   Widget &widget,
                   struct processor_env &env,
                   unsigned options);
@@ -95,7 +98,9 @@ processor_process(struct pool &pool, UnusedIstreamPtr istream,
  * @param id the id of the widget to be looked up
  */
 void
-processor_lookup_widget(struct pool &pool, UnusedIstreamPtr istream,
+processor_lookup_widget(struct pool &pool,
+                        const StopwatchPtr &parent_stopwatch,
+                        UnusedIstreamPtr istream,
                         Widget &widget, const char *id,
                         struct processor_env &env,
                         unsigned options,

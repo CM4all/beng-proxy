@@ -40,6 +40,7 @@
 struct pool;
 class Widget;
 struct processor_env;
+class StopwatchPtr;
 class HttpResponseHandler;
 class CancellablePointer;
 class WidgetLookupHandler;
@@ -51,6 +52,7 @@ class WidgetLookupHandler;
 void
 widget_http_request(struct pool &pool, Widget &widget,
                     struct processor_env &env,
+                    const StopwatchPtr &parent_stopwatch,
                     HttpResponseHandler &handler,
                     CancellablePointer &cancel_ptr);
 
@@ -64,6 +66,7 @@ widget_http_request(struct pool &pool, Widget &widget,
 void
 widget_http_lookup(struct pool &pool, Widget &widget, const char *id,
                    struct processor_env &env,
+                   const StopwatchPtr &parent_stopwatch,
                    WidgetLookupHandler &handler,
                    CancellablePointer &cancel_ptr);
 

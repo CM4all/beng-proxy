@@ -69,6 +69,7 @@
 #include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ScopeExit.hxx"
+#include "stopwatch.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -100,6 +101,8 @@ struct XmlProcessor final : PoolHolder, XmlParserHandler, Cancellable {
         void _Read() noexcept override;
         void _Close() noexcept override;
     };
+
+    const StopwatchPtr stopwatch;
 
     Widget &container;
     const char *lookup_id;
@@ -225,10 +228,11 @@ struct XmlProcessor final : PoolHolder, XmlParserHandler, Cancellable {
 
     CancellablePointer *cancel_ptr;
 
-    XmlProcessor(PoolPtr &&_pool,
+    XmlProcessor(PoolPtr &&_pool, const StopwatchPtr &parent_stopwatch,
                  Widget &_widget, struct processor_env &_env,
                  unsigned _options) noexcept
         :PoolHolder(std::move(_pool)),
+         stopwatch(parent_stopwatch, "XmlProcessor"),
          container(_widget),
          env(_env), options(_options),
          buffer(pool, 128, 2048),
@@ -432,22 +436,27 @@ XmlProcessor::Cancel() noexcept
 
 static XmlProcessor *
 processor_new(struct pool &caller_pool,
+              const StopwatchPtr &parent_stopwatch,
               Widget &widget,
               struct processor_env &env,
               unsigned options) noexcept
 {
     auto pool = pool_new_linear(&caller_pool, "processor", 32768);
 
-    return NewFromPool<XmlProcessor>(std::move(pool), widget, env, options);
+    return NewFromPool<XmlProcessor>(std::move(pool), parent_stopwatch,
+                                     widget, env, options);
 }
 
 UnusedIstreamPtr
-processor_process(struct pool &caller_pool, UnusedIstreamPtr input,
+processor_process(struct pool &caller_pool,
+                  const StopwatchPtr &parent_stopwatch,
+                  UnusedIstreamPtr input,
                   Widget &widget,
                   struct processor_env &env,
                   unsigned options)
 {
-    auto *processor = processor_new(caller_pool, widget, env, options);
+    auto *processor = processor_new(caller_pool, parent_stopwatch,
+                                    widget, env, options);
     processor->lookup_id = nullptr;
 
     /* the text processor will expand entities */
@@ -483,6 +492,7 @@ processor_process(struct pool &caller_pool, UnusedIstreamPtr input,
 
 void
 processor_lookup_widget(struct pool &caller_pool,
+                        const StopwatchPtr &parent_stopwatch,
                         UnusedIstreamPtr istream,
                         Widget &widget, const char *id,
                         struct processor_env &env,
@@ -499,7 +509,8 @@ processor_lookup_widget(struct pool &caller_pool,
         return;
     }
 
-    auto *processor = processor_new(caller_pool, widget, env, options);
+    auto *processor = processor_new(caller_pool, parent_stopwatch,
+                                    widget, env, options);
 
     processor->lookup_id = id;
 
@@ -1320,8 +1331,8 @@ XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
         return nullptr;
     }
 
-    auto istream = embed_inline_widget(pool, env, false,
-                                       child_widget);
+    auto istream = embed_inline_widget(pool, env, stopwatch,
+                                       false, child_widget);
     if (istream)
         istream = istream_catch_new(pool, std::move(istream),
                                     widget_catch_callback, &child_widget);

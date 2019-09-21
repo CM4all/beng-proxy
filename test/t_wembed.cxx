@@ -44,6 +44,7 @@
 #include "PInstance.hxx"
 #include "bp/session/Session.hxx"
 #include "util/Cancellable.hxx"
+#include "stopwatch.hxx"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -106,6 +107,7 @@ void
 widget_http_request(gcc_unused struct pool &pool,
                     gcc_unused Widget &widget,
                     gcc_unused struct processor_env &env,
+                    const StopwatchPtr &,
                     HttpResponseHandler &handler,
                     gcc_unused CancellablePointer &cancel_ptr)
 {
@@ -150,7 +152,7 @@ test_abort_resolver()
 
     Widget widget(pool, nullptr);
 
-    auto istream = embed_inline_widget(*pool, env, false, widget);
+    auto istream = embed_inline_widget(*pool, env, nullptr, false, widget);
 }
 
 int main(int argc, char **argv) {

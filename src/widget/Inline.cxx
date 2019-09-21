@@ -67,6 +67,7 @@ const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
 class InlineWidget final : HttpResponseHandler, Cancellable {
     struct pool &pool;
     struct processor_env &env;
+    const StopwatchPtr &parent_stopwatch;
     const bool plain_text;
     Widget &widget;
 
@@ -78,10 +79,11 @@ class InlineWidget final : HttpResponseHandler, Cancellable {
 
 public:
     InlineWidget(struct pool &_pool, struct processor_env &_env,
+                 const StopwatchPtr &_parent_stopwatch,
                  bool _plain_text,
                  Widget &_widget,
                  DelayedIstreamControl &_delayed) noexcept
-        :pool(_pool), env(_env),
+        :pool(_pool), env(_env), parent_stopwatch(_parent_stopwatch),
          plain_text(_plain_text),
          widget(_widget),
          header_timeout_event(*env.event_loop,
@@ -297,6 +299,7 @@ InlineWidget::SendRequest() noexcept
 
     header_timeout_event.Schedule(inline_widget_header_timeout);
     widget_http_request(pool, widget, env,
+                        parent_stopwatch,
                         *this, cancel_ptr);
 }
 
@@ -338,6 +341,7 @@ InlineWidget::Start() noexcept
 
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool, struct processor_env &env,
+                    const StopwatchPtr &parent_stopwatch,
                     bool plain_text,
                     Widget &widget) noexcept
 {
@@ -358,7 +362,8 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
 
     auto delayed = istream_delayed_new(pool, *env.event_loop);
 
-    auto iw = NewFromPool<InlineWidget>(pool, pool, env, plain_text, widget,
+    auto iw = NewFromPool<InlineWidget>(pool, pool, env, parent_stopwatch,
+                                        plain_text, widget,
                                         delayed.second);
 
     UnusedHoldIstreamPtr hold(pool, iw->MakeResponse(std::move(delayed.first)));

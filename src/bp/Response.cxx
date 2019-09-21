@@ -289,7 +289,8 @@ Request::InvokeXmlProcessor(http_status_t status,
                      *widget, proxy_ref, transformation.u.processor.options);
     } else {
         /* the client requests the whole template */
-        response_body = processor_process(pool, std::move(response_body),
+        response_body = processor_process(pool, stopwatch,
+                                          std::move(response_body),
                                           *widget, env,
                                           transformation.u.processor.options);
         assert(response_body);

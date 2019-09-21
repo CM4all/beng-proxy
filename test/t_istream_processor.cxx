@@ -46,6 +46,7 @@
 #include "bp/Global.hxx"
 #include "crash.hxx"
 #include "util/ScopeExit.hxx"
+#include "stopwatch.hxx"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -67,6 +68,7 @@ widget_class_lookup(gcc_unused struct pool &pool,
 
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
+                    const StopwatchPtr &,
                     gcc_unused bool plain_text,
                     Widget &widget) noexcept
 {
@@ -116,7 +118,8 @@ public:
                             nullptr);
         session_put(session);
 
-        return processor_process(pool, std::move(input), *widget, env, PROCESSOR_CONTAINER);
+        return processor_process(pool, nullptr,
+                                 std::move(input), *widget, env, PROCESSOR_CONTAINER);
     }
 };
 

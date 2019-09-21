@@ -58,6 +58,7 @@
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 #include "util/Compiler.h"
+#include "stopwatch.hxx"
 
 #include <gtest/gtest.h>
 
@@ -90,7 +91,9 @@ processable(gcc_unused const StringMap &headers)
 }
 
 UnusedIstreamPtr
-processor_process(gcc_unused struct pool &pool, UnusedIstreamPtr istream,
+processor_process(gcc_unused struct pool &pool,
+                  const StopwatchPtr &,
+                  UnusedIstreamPtr istream,
                   gcc_unused Widget &widget,
                   gcc_unused struct processor_env &env,
                   gcc_unused unsigned options)
@@ -100,6 +103,7 @@ processor_process(gcc_unused struct pool &pool, UnusedIstreamPtr istream,
 
 void
 processor_lookup_widget(gcc_unused struct pool &pool,
+                        const StopwatchPtr &,
                         gcc_unused UnusedIstreamPtr istream,
                         gcc_unused Widget &widget,
                         gcc_unused const char *id,
@@ -305,6 +309,7 @@ TEST(WidgetHttpTest, CookieClient)
 
         Context context;
         widget_http_request(*pool, widget, env,
+                            nullptr,
                             context, cancel_ptr);
 
         assert(got_request);
