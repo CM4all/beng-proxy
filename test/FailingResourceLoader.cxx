@@ -38,6 +38,7 @@
 
 void
 FailingResourceLoader::SendRequest(struct pool &,
+                                   const StopwatchPtr &,
                                    sticky_hash_t,
                                    const char *,
                                    const char *,

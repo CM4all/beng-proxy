@@ -48,6 +48,7 @@
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 #include "util/Compiler.h"
+#include "stopwatch.hxx"
 
 #include <gtest/gtest.h>
 
@@ -165,6 +166,7 @@ class MyResourceLoader final : public ResourceLoader {
 public:
     /* virtual methods from class ResourceLoader */
     void SendRequest(struct pool &pool,
+                     const StopwatchPtr &parent_stopwatch,
                      sticky_hash_t sticky_hash,
                      const char *cache_tag,
                      const char *site_name,
@@ -178,6 +180,7 @@ public:
 
 void
 MyResourceLoader::SendRequest(struct pool &pool,
+                              const StopwatchPtr &,
                               sticky_hash_t,
                               gcc_unused const char *cache_tag,
                               gcc_unused const char *site_name,
@@ -300,7 +303,8 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
     got_response = false;
 
     Context context(pool);
-    http_cache_request(*cache, pool, 0, nullptr, nullptr,
+    http_cache_request(*cache, pool, nullptr,
+                       0, nullptr, nullptr,
                        request->method, address,
                        std::move(headers), nullptr,
                        context, cancel_ptr);

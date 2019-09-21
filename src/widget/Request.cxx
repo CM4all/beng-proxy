@@ -311,7 +311,9 @@ WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body)
     const WidgetView *t_view = widget.GetTransformationView();
     assert(t_view != nullptr);
 
-    env.resource_loader->SendRequest(pool, env.session_id.GetClusterHash(),
+    env.resource_loader->SendRequest(pool,
+                                     nullptr, // TODO
+                                     env.session_id.GetClusterHash(),
                                      nullptr,
                                      env.site_name,
                                      HTTP_METHOD_GET, address, HTTP_STATUS_OK,
@@ -442,7 +444,9 @@ WidgetRequest::FilterResponse(http_status_t status,
 #endif
 
     env.filter_resource_loader
-        ->SendRequest(pool, env.session_id.GetClusterHash(),
+        ->SendRequest(pool,
+                      nullptr, // TODO
+                      env.session_id.GetClusterHash(),
                       filter.cache_tag,
                       env.site_name,
                       HTTP_METHOD_POST, filter.address, status,
@@ -720,7 +724,9 @@ WidgetRequest::SendRequest()
             widget.logger(4, "  ", i.key, ": ", i.value);
     }
 
-    env.resource_loader->SendRequest(pool, env.session_id.GetClusterHash(),
+    env.resource_loader->SendRequest(pool,
+                                     nullptr, // TODO
+                                     env.session_id.GetClusterHash(),
                                      nullptr,
                                      env.site_name,
                                      widget.from_request.method,

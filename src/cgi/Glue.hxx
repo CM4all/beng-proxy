@@ -36,6 +36,7 @@
 
 struct pool;
 struct CgiAddress;
+class StopwatchPtr;
 class EventLoop;
 class UnusedIstreamPtr;
 class SpawnService;
@@ -48,7 +49,9 @@ class CancellablePointer;
  */
 void
 cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
-        struct pool *pool, http_method_t method,
+        struct pool *pool,
+        const StopwatchPtr &parent_stopwatch,
+        http_method_t method,
         const CgiAddress *address,
         const char *remote_addr,
         const StringMap &headers, UnusedIstreamPtr body,

@@ -521,6 +521,7 @@ test('t_fcache', executable('t_fcache',
     istream_dep,
     raddress_dep,
     http_dep,
+    stopwatch_dep,
   ]))
 
 test('t_cookie_client', executable('t_cookie_client',

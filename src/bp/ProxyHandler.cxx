@@ -130,7 +130,7 @@ Request::HandleProxyAddress() noexcept
         ? *instance.direct_resource_loader
         : *instance.cached_resource_loader;
 
-    rl.SendRequest(pool,
+    rl.SendRequest(pool, stopwatch,
                    session_id.GetClusterHash(),
                    nullptr, tr.site,
                    forward.method, address, HTTP_STATUS_OK,

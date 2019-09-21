@@ -194,12 +194,14 @@ public:
                        const FilterCacheInfo &_info) noexcept;
 
     void Start(ResourceLoader &resource_loader,
+               const StopwatchPtr &parent_stopwatch,
                const ResourceAddress &address,
                http_status_t status, StringMap &&headers,
                UnusedIstreamPtr body, const char *body_etag,
                CancellablePointer &caller_cancel_ptr) noexcept {
         caller_cancel_ptr = *this;
-        resource_loader.SendRequest(pool, 0, nullptr, nullptr,
+        resource_loader.SendRequest(pool, parent_stopwatch,
+                                    0, nullptr, nullptr,
                                     HTTP_METHOD_POST, address,
                                     status, std::move(headers),
                                     std::move(body), body_etag,
@@ -298,6 +300,7 @@ public:
     void FlushTag(const char *tag) noexcept;
 
     void Get(struct pool &caller_pool,
+             const StopwatchPtr &parent_stopwatch,
              const char *cache_tag,
              const ResourceAddress &address,
              const char *source_id,
@@ -312,6 +315,7 @@ public:
 
 private:
     void Miss(struct pool &caller_pool,
+              const StopwatchPtr &parent_stopwatch,
               FilterCacheInfo &&info,
               const ResourceAddress &address,
               http_status_t status, StringMap &&headers,
@@ -692,6 +696,7 @@ filter_cache_flush_tag(FilterCache &cache, const char *tag) noexcept
 
 void
 FilterCache::Miss(struct pool &caller_pool,
+                  const StopwatchPtr &parent_stopwatch,
                   FilterCacheInfo &&info,
                   const ResourceAddress &address,
                   http_status_t status, StringMap &&headers,
@@ -709,7 +714,7 @@ FilterCache::Miss(struct pool &caller_pool,
 
     LogConcat(4, "FilterCache", "miss ", info.key);
 
-    request->Start(resource_loader, address,
+    request->Start(resource_loader, parent_stopwatch, address,
                    status, std::move(headers),
                    std::move(body), body_etag,
                    cancel_ptr);
@@ -748,6 +753,7 @@ FilterCache::Hit(FilterCacheItem &item,
 
 void
 FilterCache::Get(struct pool &caller_pool,
+                 const StopwatchPtr &parent_stopwatch,
                  const char *cache_tag,
                  const ResourceAddress &address,
                  const char *source_id,
@@ -763,7 +769,8 @@ FilterCache::Get(struct pool &caller_pool,
             = (FilterCacheItem *)cache.Get(info->key);
 
         if (item == nullptr)
-            Miss(caller_pool, std::move(*info),
+            Miss(caller_pool, parent_stopwatch,
+                 std::move(*info),
                  address, status, std::move(headers),
                  std::move(body), source_id,
                  handler, cancel_ptr);
@@ -772,7 +779,8 @@ FilterCache::Get(struct pool &caller_pool,
             Hit(*item, caller_pool, handler);
         }
     } else {
-        resource_loader.SendRequest(caller_pool, 0, cache_tag, nullptr,
+        resource_loader.SendRequest(caller_pool, parent_stopwatch,
+                                    0, cache_tag, nullptr,
                                     HTTP_METHOD_POST, address,
                                     status, std::move(headers),
                                     std::move(body), source_id,
@@ -783,6 +791,7 @@ FilterCache::Get(struct pool &caller_pool,
 void
 filter_cache_request(FilterCache &cache,
                      struct pool &pool,
+                     const StopwatchPtr &parent_stopwatch,
                      const char *cache_tag,
                      const ResourceAddress &address,
                      const char *source_id,
@@ -791,7 +800,8 @@ filter_cache_request(FilterCache &cache,
                      HttpResponseHandler &handler,
                      CancellablePointer &cancel_ptr) noexcept
 {
-    cache.Get(pool, cache_tag, address, source_id,
+    cache.Get(pool, parent_stopwatch,
+              cache_tag, address, source_id,
               status, std::move(headers),
               std::move(body), handler, cancel_ptr);
 }

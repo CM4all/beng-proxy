@@ -616,6 +616,7 @@ http_cache_dep = declare_dependency(
     http_util_dep,
     istream_dep,
     raddress_dep,
+    stopwatch_dep,
   ],
 )
 

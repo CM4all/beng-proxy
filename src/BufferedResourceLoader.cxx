@@ -43,6 +43,7 @@ class BufferedResourceLoader::Request final
 {
     struct pool &pool;
     ResourceLoader &next;
+    const StopwatchPtr &parent_stopwatch;
     const sticky_hash_t session_sticky;
     const char *const cache_tag;
     const char *const site_name;
@@ -57,6 +58,7 @@ class BufferedResourceLoader::Request final
 
 public:
     Request(struct pool &_pool, ResourceLoader &_next,
+            const StopwatchPtr &_parent_stopwatch,
             sticky_hash_t _session_sticky,
             const char *_cache_tag,
             const char *_site_name,
@@ -65,7 +67,7 @@ public:
             const char *_body_etag,
             HttpResponseHandler &_handler,
             CancellablePointer &_cancel_ptr) noexcept
-        :pool(_pool), next(_next),
+        :pool(_pool), next(_next), parent_stopwatch(_parent_stopwatch),
          session_sticky(_session_sticky),
          cache_tag(_cache_tag),
          site_name(_site_name),
@@ -101,7 +103,8 @@ private:
 
     /* virtual methods from class BufferedIstreamHandler */
     void OnBufferedIstreamReady(UnusedIstreamPtr i) noexcept override {
-        next.SendRequest(pool, session_sticky, cache_tag, site_name,
+        next.SendRequest(pool, parent_stopwatch,
+                         session_sticky, cache_tag, site_name,
                          method, address, status, std::move(headers),
                          std::move(i), body_etag,
                          handler, cancel_ptr);
@@ -114,6 +117,7 @@ private:
 
 void
 BufferedResourceLoader::SendRequest(struct pool &pool,
+                                    const StopwatchPtr &parent_stopwatch,
                                     sticky_hash_t session_sticky,
                                     const char *cache_tag,
                                     const char *site_name,
@@ -125,7 +129,7 @@ BufferedResourceLoader::SendRequest(struct pool &pool,
                                     CancellablePointer &cancel_ptr) noexcept
 {
     if (body) {
-        auto *request = NewFromPool<Request>(pool, pool, next,
+        auto *request = NewFromPool<Request>(pool, pool, next, parent_stopwatch,
                                              session_sticky,
                                              cache_tag, site_name,
                                              method, address,
@@ -133,7 +137,8 @@ BufferedResourceLoader::SendRequest(struct pool &pool,
                                              body_etag, handler, cancel_ptr);
         request->Start(event_loop, pipe_stock, std::move(body));
     } else {
-        next.SendRequest(pool, session_sticky, cache_tag, site_name,
+        next.SendRequest(pool, parent_stopwatch,
+                         session_sticky, cache_tag, site_name,
                          method, address, status, std::move(headers),
                          std::move(body), body_etag,
                          handler, cancel_ptr);

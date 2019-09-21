@@ -117,6 +117,7 @@ GetHostWithoutPort(struct pool &pool, const HttpAddress &address) noexcept
 
 void
 DirectResourceLoader::SendRequest(struct pool &pool,
+                                  const StopwatchPtr &parent_stopwatch,
                                   sticky_hash_t session_sticky,
                                   gcc_unused const char *cache_tag,
                                   const char *site_name,
@@ -183,7 +184,7 @@ try {
         return;
 
     case ResourceAddress::Type::CGI:
-        cgi_new(spawn_service, event_loop, &pool,
+        cgi_new(spawn_service, event_loop, &pool, parent_stopwatch,
                 method, &address.GetCgi(),
                 extract_remote_ip(&pool, &headers),
                 headers, std::move(body),
@@ -234,7 +235,8 @@ try {
 
     case ResourceAddress::Type::WAS:
         cgi = &address.GetCgi();
-        was_request(pool, *was_stock, site_name,
+        was_request(pool, *was_stock, parent_stopwatch,
+                    site_name,
                     cgi->options,
                     cgi->action,
                     cgi->path,

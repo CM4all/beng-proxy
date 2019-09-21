@@ -633,7 +633,8 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
 #endif
 
     instance.buffered_filter_resource_loader
-        ->SendRequest(pool, session_id.GetClusterHash(),
+        ->SendRequest(pool, stopwatch,
+                      session_id.GetClusterHash(),
                       filter.cache_tag,
                       translate.response->site,
                       HTTP_METHOD_POST, filter.address,

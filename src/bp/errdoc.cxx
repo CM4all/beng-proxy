@@ -146,7 +146,8 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
         auto &request = er.request;
 
         request.instance.cached_resource_loader
-            ->SendRequest(request.pool, 0, nullptr, nullptr,
+            ->SendRequest(request.pool, request.stopwatch,
+                          0, nullptr, nullptr,
                           HTTP_METHOD_GET,
                           response.address, HTTP_STATUS_OK,
                           StringMap(request.pool), nullptr, nullptr,

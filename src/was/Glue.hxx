@@ -36,6 +36,7 @@
 #include "http/Method.h"
 
 struct pool;
+class StopwatchPtr;
 class UnusedIstreamPtr;
 struct was_stock;
 class StockMap;
@@ -53,6 +54,7 @@ template<typename T> struct ConstBuffer;
  */
 void
 was_request(struct pool &pool, StockMap &was_stock,
+            const StopwatchPtr &parent_stopwatch,
             const char *site_name,
             const ChildOptions &options,
             const char *action,

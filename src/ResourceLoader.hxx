@@ -38,6 +38,7 @@
 #include "http/Status.h"
 
 struct pool;
+class StopwatchPtr;
 class UnusedIstreamPtr;
 struct ResourceAddress;
 class StringMap;
@@ -68,6 +69,7 @@ public:
      * not nullptr, it may be used to cache POST requests
      */
     virtual void SendRequest(struct pool &pool,
+                             const StopwatchPtr &parent_stopwatch,
                              sticky_hash_t session_sticky,
                              const char *cache_tag,
                              const char *site_name,

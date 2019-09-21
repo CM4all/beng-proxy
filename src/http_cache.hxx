@@ -40,6 +40,7 @@
 #include <stddef.h>
 
 struct pool;
+class StopwatchPtr;
 class UnusedIstreamPtr;
 class EventLoop;
 class ResourceLoader;
@@ -78,7 +79,9 @@ http_cache_flush(HttpCache &cache) noexcept;
  */
 void
 http_cache_request(HttpCache &cache,
-                   struct pool &pool, sticky_hash_t session_sticky,
+                   struct pool &pool,
+                   const StopwatchPtr &parent_stopwatch,
+                   sticky_hash_t session_sticky,
                    const char *cache_tag,
                    const char *site_name,
                    http_method_t method,

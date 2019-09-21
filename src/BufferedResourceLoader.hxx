@@ -57,6 +57,7 @@ public:
 
     /* virtual methods from class ResourceLoader */
     void SendRequest(struct pool &pool,
+                     const StopwatchPtr &parent_stopwatch,
                      sticky_hash_t session_sticky,
                      const char *cache_tag,
                      const char *site_name,

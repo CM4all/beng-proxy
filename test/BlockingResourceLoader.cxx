@@ -58,6 +58,7 @@ private:
 
 void
 BlockingResourceLoader::SendRequest(struct pool &pool,
+                                    const StopwatchPtr &,
                                     sticky_hash_t,
                                     const char *,
                                     const char *,

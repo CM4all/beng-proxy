@@ -37,6 +37,7 @@
 #include "util/Compiler.h"
 
 struct pool;
+class StopwatchPtr;
 class UnusedIstreamPtr;
 class EventLoop;
 class ResourceLoader;
@@ -80,6 +81,7 @@ filter_cache_flush_tag(FilterCache &cache, const char *tag) noexcept;
 void
 filter_cache_request(FilterCache &cache,
                      struct pool &pool,
+                     const StopwatchPtr &parent_stopwatch,
                      const char *cache_tag,
                      const ResourceAddress &address,
                      const char *source_id,

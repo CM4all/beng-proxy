@@ -182,6 +182,8 @@ WasRequest::OnStockItemError(std::exception_ptr ep) noexcept
  *
  */
 
+#ifdef ENABLE_STOPWATCH
+
 gcc_pure
 static const char *
 GetComaClass(ConstBuffer<const char *> parameters)
@@ -195,11 +197,15 @@ GetComaClass(ConstBuffer<const char *> parameters)
     return nullptr;
 }
 
+#endif
+
 static StopwatchPtr
-stopwatch_new_was(struct pool &pool, const char *path, const char *uri,
+stopwatch_new_was(const StopwatchPtr &parent_stopwatch,
+                  const char *path, const char *uri,
                   const char *path_info,
                   ConstBuffer<const char *> parameters)
 {
+#ifdef ENABLE_STOPWATCH
     assert(path != nullptr);
     assert(uri != nullptr);
 
@@ -218,11 +224,21 @@ stopwatch_new_was(struct pool &pool, const char *path, const char *uri,
     if (path_info != nullptr && *path_info != 0)
         uri = path_info;
 
-    return StopwatchPtr(pool, p_strcat(&pool, path, " ", uri, nullptr));
+    return StopwatchPtr(parent_stopwatch,
+                        parent_stopwatch.GetAllocator().Concat(path, " ", uri));
+#else
+    (void)parent_stopwatch;
+    (void)path;
+    (void)uri;
+    (void)path_info;
+    (void)parameters;
+    return nullptr;
+#endif
 }
 
 void
 was_request(struct pool &pool, StockMap &was_stock,
+            const StopwatchPtr &parent_stopwatch,
             const char *site_name,
             const ChildOptions &options,
             const char *action,
@@ -240,7 +256,8 @@ was_request(struct pool &pool, StockMap &was_stock,
         action = path;
 
     auto request = NewFromPool<WasRequest>(pool, pool,
-                                           stopwatch_new_was(pool, path, uri,
+                                           stopwatch_new_was(parent_stopwatch,
+                                                             path, uri,
                                                              path_info,
                                                              parameters),
                                            site_name,
