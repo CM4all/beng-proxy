@@ -51,6 +51,7 @@
 #include "util/Exception.hxx"
 #include "util/Macros.hxx"
 #include "util/WritableBuffer.hxx"
+#include "stopwatch.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -110,11 +111,21 @@ query_stats(BpInstance *instance, ControlServer *server,
     }
 }
 
+static void
+HandleStopwatch(ConstBuffer<void> payload,
+                WritableBuffer<UniqueFileDescriptor> fds)
+{
+    if (!payload.empty() || fds.size != 1)
+        throw std::runtime_error("Malformed STOPWATCH packet");
+
+    stopwatch_enable(std::move(fds.front()));
+}
+
 void
 BpInstance::OnControlPacket(ControlServer &control_server,
                             BengProxy::ControlCommand command,
                             ConstBuffer<void> payload,
-                            WritableBuffer<UniqueFileDescriptor>,
+                            WritableBuffer<UniqueFileDescriptor> fds,
                             SocketAddress address)
 {
     LogConcat(5, "control", "command=", int(command),
@@ -188,6 +199,10 @@ BpInstance::OnControlPacket(ControlServer &control_server,
                                                    payload.size).c_str());
         }
 
+        break;
+
+    case ControlCommand::STOPWATCH:
+        HandleStopwatch(payload, fds);
         break;
     }
 }

@@ -139,8 +139,6 @@ struct BpConfig {
 
     bool verbose_response = false;
 
-    bool stopwatch = false;
-
     bool emulate_mod_auth_easy = false;
 
     bool http_cache_obey_no_cache = true;

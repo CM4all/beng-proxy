@@ -132,6 +132,11 @@ enum class ControlCommand {
      * tag will be flushed.
      */
     FLUSH_FILTER_CACHE = 12,
+
+    /**
+     * Read the stopwatch.
+     */
+    STOPWATCH = 13,
 };
 
 struct ControlStats {

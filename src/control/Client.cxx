@@ -35,6 +35,8 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/RConnectSocket.hxx"
 #include "net/SendMessage.hxx"
+#include "net/ScmRightsBuilder.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/ConstBuffer.hxx"
@@ -65,7 +67,8 @@ public:
         socket.AutoBind();
     }
 
-    void Send(BengProxy::ControlCommand cmd, ConstBuffer<void> payload=nullptr);
+    void Send(BengProxy::ControlCommand cmd, ConstBuffer<void> payload=nullptr,
+              ConstBuffer<FileDescriptor> fds=nullptr);
 
     std::pair<BengProxy::ControlCommand, std::string> Receive();
 };
@@ -78,7 +81,8 @@ PaddingSize(size_t size) noexcept
 
 void
 BengControlClient::Send(BengProxy::ControlCommand cmd,
-                        ConstBuffer<void> payload)
+                        ConstBuffer<void> payload,
+                        ConstBuffer<FileDescriptor> fds)
 {
     static constexpr uint32_t magic = ToBE32(BengProxy::control_magic);
     const BengProxy::ControlHeader header{ToBE16(payload.size), ToBE16(uint16_t(cmd))};
@@ -92,7 +96,14 @@ BengControlClient::Send(BengProxy::ControlCommand cmd,
         { const_cast<uint8_t *>(padding), PaddingSize(payload.size) },
     };
 
-    SendMessage(socket, ConstBuffer<struct iovec>(v), 0);
+    MessageHeader msg = ConstBuffer<struct iovec>(v);
+
+    ScmRightsBuilder<1> b(msg);
+    for (const auto &i : fds)
+        b.push_back(i.Get());
+    b.Finish(msg);
+
+    SendMessage(socket, msg, 0);
 }
 
 std::pair<BengProxy::ControlCommand, std::string>
@@ -390,6 +401,34 @@ FlushFilterCache(const char *server, ConstBuffer<const char *> args)
     client.Send(BengProxy::ControlCommand::FLUSH_FILTER_CACHE, tag.ToVoid());
 }
 
+static void
+Stopwatch(const char *server, ConstBuffer<const char *> args)
+{
+    if (!args.empty())
+        throw Usage{"Too many arguments"};
+
+    UniqueFileDescriptor r, w;
+    if (!UniqueFileDescriptor::CreatePipe(r, w))
+        throw MakeErrno("pipe() failed");
+
+    FileDescriptor fds[] = { w };
+
+    BengControlClient client(server);
+    client.Send(BengProxy::ControlCommand::STOPWATCH, nullptr, fds);
+
+    w.Close();
+
+    while (true) {
+        char buffer[8192];
+        ssize_t nbytes = r.Read(buffer, sizeof(buffer));
+        if (nbytes <= 0)
+            break;
+
+        if (write(STDOUT_FILENO, buffer, nbytes) < 0)
+            break;
+    }
+}
+
 int
 main(int argc, char **argv)
 try {
@@ -452,6 +491,9 @@ try {
     } else if (StringIsEqual(command, "flush-filter-cache")) {
         FlushFilterCache(server, args);
         return EXIT_SUCCESS;
+    } else if (StringIsEqual(command, "stopwatch")) {
+        Stopwatch(server, args);
+        return EXIT_SUCCESS;
     } else
         throw Usage{"Unknown command"};
  } catch (const Usage &u) {
@@ -472,6 +514,7 @@ try {
             "  enable-zeroconf\n"
             "  flush-nfs-cache\n"
             "  flush-filter-cache [TAG]\n"
+            "  stopwatch\n"
             "\n"
             "Names for tcache-invalidate:\n",
             argv[0]);

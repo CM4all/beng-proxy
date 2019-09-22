@@ -39,6 +39,7 @@
 class Stopwatch;
 class SocketAddress;
 class SocketDescriptor;
+class UniqueFileDescriptor;
 
 #ifdef ENABLE_STOPWATCH
 
@@ -89,9 +90,9 @@ public:
 };
 
 void
-stopwatch_enable() noexcept;
+stopwatch_enable(UniqueFileDescriptor fd) noexcept;
 
-gcc_const
+gcc_pure
 bool
 stopwatch_is_enabled() noexcept;
 

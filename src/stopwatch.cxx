@@ -34,7 +34,7 @@
 #include "net/SocketDescriptor.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/ToString.hxx"
-#include "io/Logger.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/LeakDetector.hxx"
 #include "util/StringBuilder.hxx"
 
@@ -51,9 +51,7 @@
 #include <string.h>
 #include <sys/resource.h>
 
-enum {
-    STOPWATCH_VERBOSE = 3,
-};
+static UniqueFileDescriptor stopwatch_fd;
 
 struct StopwatchEvent {
     std::string name;
@@ -110,20 +108,18 @@ public:
     void Dump(size_t indent) noexcept;
 };
 
-static bool stopwatch_enabled;
-
 void
-stopwatch_enable() noexcept
+stopwatch_enable(UniqueFileDescriptor fd) noexcept
 {
-    assert(!stopwatch_enabled);
+    assert(fd.IsDefined());
 
-    stopwatch_enabled = true;
+    stopwatch_fd = std::move(fd);
 }
 
 bool
 stopwatch_is_enabled() noexcept
 {
-    return stopwatch_enabled && CheckLogLevel(STOPWATCH_VERBOSE);
+    return stopwatch_fd.IsDefined();
 }
 
 static std::string
@@ -239,6 +235,9 @@ Stopwatch::Dump(size_t indent) noexcept
 try {
     assert(!events.empty());
 
+    if (!stopwatch_fd.IsDefined())
+        return;
+
     char message[1024];
     StringBuilder<> b(message, sizeof(message));
 
@@ -257,7 +256,12 @@ try {
                  timeval_diff_ms(&new_self.ru_utime, &self.ru_utime),
                  timeval_diff_ms(&new_self.ru_stime, &self.ru_stime));
 
-    LogConcat(STOPWATCH_VERBOSE, "stopwatch", message);
+    b.Append('\n');
+
+    if (stopwatch_fd.Write(message, strlen(message)) < 0) {
+        stopwatch_fd.Close();
+        return;
+    }
 
     indent += 2;
 

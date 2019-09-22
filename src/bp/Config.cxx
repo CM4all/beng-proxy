@@ -66,7 +66,7 @@ BpConfig::HandleSet(StringView name, const char *value)
     } else if (name.Equals("translate_stock_limit")) {
         translate_stock_limit = ParseUnsignedLong(value);
     } else if (name.Equals("stopwatch")) {
-        stopwatch = ParseBool(value);
+        /* deprecated */
     } else if (name.Equals("dump_widget_tree")) {
         dump_widget_tree = ParseBool(value);
     } else if (name.Equals("verbose_response")) {

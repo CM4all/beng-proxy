@@ -59,11 +59,6 @@ ControlDistribute::OnControlPacket(ControlServer &control_server,
                                    WritableBuffer<UniqueFileDescriptor> fds,
                                    SocketAddress address)
 {
-    if (!fds.empty())
-        /* don't distribute control packets with a file descriptor; we
-           don't know how to copy those */
-        return;
-
     return next_handler.OnControlPacket(control_server, command,
                                         payload, fds, address);
 }

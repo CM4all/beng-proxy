@@ -56,7 +56,6 @@
 #include "delegate/Stock.hxx"
 #include "fcache.hxx"
 #include "thread_pool.hxx"
-#include "stopwatch.hxx"
 #include "pipe_stock.hxx"
 #include "nfs/Stock.hxx"
 #include "nfs/Cache.hxx"
@@ -265,9 +264,6 @@ try {
         instance.config.ports.push_back(debug_mode ? 8080 : 80);
 
     /* initialize */
-
-    if (instance.config.stopwatch)
-        stopwatch_enable();
 
     SetupProcess();
 
