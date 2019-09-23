@@ -91,7 +91,7 @@ struct Context final
 
     PoolPtr parent_pool;
 
-    const PoolPtr pool;
+    PoolPtr pool;
 
     unsigned data_blocking = 0;
 
@@ -404,6 +404,8 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
         delayed->Set(istream_fail_new(*pool, std::make_exception_ptr(error)));
     }
 
+    pool.reset();
+
     fb_pool_compress();
 }
 
@@ -415,6 +417,8 @@ Context<Connection>::OnHttpError(std::exception_ptr ep) noexcept
     request_error = ep;
 
     aborted = true;
+
+    pool.reset();
 }
 
 /*
