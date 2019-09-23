@@ -1331,7 +1331,10 @@ XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
         return nullptr;
     }
 
-    auto istream = embed_inline_widget(pool, env, stopwatch,
+    StopwatchPtr widget_stopwatch(stopwatch, "widget ",
+                                  child_widget.class_name);
+
+    auto istream = embed_inline_widget(pool, env, widget_stopwatch,
                                        false, child_widget);
     if (istream)
         istream = istream_catch_new(pool, std::move(istream),
