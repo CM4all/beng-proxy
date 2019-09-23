@@ -58,6 +58,7 @@
 #include "util/StringCompare.hxx"
 #include "util/StringFormat.hxx"
 #include "util/Exception.hxx"
+#include "stopwatch.hxx"
 
 #include <assert.h>
 
@@ -67,7 +68,7 @@ const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
 class InlineWidget final : HttpResponseHandler, Cancellable {
     struct pool &pool;
     struct processor_env &env;
-    const StopwatchPtr &parent_stopwatch;
+    const StopwatchPtr parent_stopwatch;
     const bool plain_text;
     Widget &widget;
 

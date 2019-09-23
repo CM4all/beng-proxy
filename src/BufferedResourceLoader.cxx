@@ -37,13 +37,14 @@
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
+#include "stopwatch.hxx"
 
 class BufferedResourceLoader::Request final
     : Cancellable, BufferedIstreamHandler
 {
     struct pool &pool;
     ResourceLoader &next;
-    const StopwatchPtr &parent_stopwatch;
+    const StopwatchPtr parent_stopwatch;
     const sticky_hash_t session_sticky;
     const char *const cache_tag;
     const char *const site_name;

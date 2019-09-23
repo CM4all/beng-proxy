@@ -74,7 +74,7 @@ class WidgetRequest final
 {
     struct pool &pool;
 
-    const StopwatchPtr &parent_stopwatch;
+    const StopwatchPtr parent_stopwatch;
 
     unsigned num_redirects = 0;
 
