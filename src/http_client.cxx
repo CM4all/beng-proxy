@@ -98,7 +98,7 @@ static constexpr off_t EXPECT_100_THRESHOLD = 1024;
 
 static constexpr auto http_client_timeout = std::chrono::seconds(30);
 
-class HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, DestructAnchor {
+class HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, DestructAnchor, PoolLeakDetector {
     enum class BucketResult {
         MORE,
         BLOCKING,
@@ -1259,7 +1259,8 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
                        UnusedIstreamPtr body, bool expect_100,
                        HttpResponseHandler &handler,
                        CancellablePointer &cancel_ptr)
-    :pool(_pool), caller_pool(_caller_pool),
+    :PoolLeakDetector(_pool),
+     pool(_pool), caller_pool(_caller_pool),
      peer_name(_peer_name),
      stopwatch(std::move(_stopwatch)),
      event_loop(_socket.GetEventLoop()),
