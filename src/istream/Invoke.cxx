@@ -139,8 +139,8 @@ Istream::InvokeDirect(FdType type, int fd, size_t max_length) noexcept
     return nbytes;
 }
 
-void
-Istream::InvokeEof() noexcept
+IstreamHandler &
+Istream::PrepareEof() noexcept
 {
     assert(!destroyed);
     assert(!eof);
@@ -154,21 +154,34 @@ Istream::InvokeEof() noexcept
     eof = true;
 #endif
 
-    handler->OnEof();
+    return *handler;
 }
 
 void
-Istream::InvokeError(std::exception_ptr ep) noexcept
+Istream::InvokeEof() noexcept
+{
+    PrepareEof().OnEof();
+}
+
+IstreamHandler &
+Istream::PrepareError() noexcept
 {
     assert(!destroyed);
     assert(!eof);
     assert(!closing);
     assert(handler != nullptr);
-    assert(ep);
 
 #ifndef NDEBUG
     eof = true;
 #endif
 
-    handler->OnError(ep);
+    return *handler;
+}
+
+void
+Istream::InvokeError(std::exception_ptr ep) noexcept
+{
+    assert(ep);
+
+    PrepareError().OnError(ep);
 }

@@ -123,6 +123,18 @@ protected:
     void InvokeEof() noexcept;
     void InvokeError(std::exception_ptr ep) noexcept;
 
+    /**
+     * Prepare a call to IstreamHandler::OnEof(); the caller is
+     * response for actually calling it.
+     */
+    IstreamHandler &PrepareEof() noexcept;
+
+    /**
+     * Prepare a call to IstreamHandler::OnError(); the caller is
+     * response for actually calling it.
+     */
+    IstreamHandler &PrepareError() noexcept;
+
     void Destroy() noexcept {
         this->~Istream();
         /* no need to free memory from the pool */
