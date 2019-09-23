@@ -191,7 +191,7 @@ client_socket_new(EventLoop &event_loop, AllocatorPtr alloc,
     }
 
 #ifdef ENABLE_STOPWATCH
-    RootStopwatchPtr stopwatch(alloc, address);
+    RootStopwatchPtr stopwatch(address);
 #endif
 
     if (fd.Connect(address)) {

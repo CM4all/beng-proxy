@@ -36,7 +36,6 @@
 
 #include <utility>
 
-class AllocatorPtr;
 class Stopwatch;
 class SocketAddress;
 class SocketDescriptor;
@@ -52,13 +51,13 @@ public:
     StopwatchPtr(std::nullptr_t) noexcept {}
 
 protected:
-    StopwatchPtr(AllocatorPtr alloc, const char *name,
+    StopwatchPtr(const char *name,
                  const char *suffix=nullptr) noexcept;
 
-    StopwatchPtr(AllocatorPtr alloc, SocketAddress address,
+    StopwatchPtr(SocketAddress address,
                  const char *suffix=nullptr) noexcept;
 
-    StopwatchPtr(AllocatorPtr alloc, SocketDescriptor fd,
+    StopwatchPtr(SocketDescriptor fd,
                  const char *suffix=nullptr) noexcept;
 
 public:
@@ -76,28 +75,24 @@ public:
         return stopwatch != nullptr;
     }
 
-    AllocatorPtr GetAllocator() const noexcept;
-
     void RecordEvent(const char *name) const noexcept;
 };
 
 class RootStopwatchPtr : public StopwatchPtr {
 public:
-    template<typename A, typename N>
-    RootStopwatchPtr(A &&alloc, N &&name,
-                     const char *suffix=nullptr) noexcept
-        :StopwatchPtr(std::forward<A>(alloc), std::forward<N>(name),
-                      suffix) {}
+    template<typename N>
+    RootStopwatchPtr(N &&name, const char *suffix=nullptr) noexcept
+        :StopwatchPtr(std::forward<N>(name), suffix) {}
 
     RootStopwatchPtr(RootStopwatchPtr &&) = default;
 
     ~RootStopwatchPtr() noexcept {
         if (stopwatch != nullptr)
-            Destruct(*stopwatch);
+            Destruct(stopwatch);
     }
 
 private:
-    static void Destruct(Stopwatch &stopwatch) noexcept;
+    static void Destruct(Stopwatch *stopwatch) noexcept;
 };
 
 void
@@ -109,7 +104,6 @@ stopwatch_is_enabled() noexcept;
 
 #else
 
-#include "AllocatorPtr.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
 
@@ -119,7 +113,7 @@ public:
     StopwatchPtr(std::nullptr_t) noexcept {}
 
     template<typename N>
-    StopwatchPtr(AllocatorPtr, N &&, const char * =nullptr) noexcept {}
+    StopwatchPtr(N &&, const char * =nullptr) noexcept {}
 
     template<typename N>
     StopwatchPtr(const StopwatchPtr &, N &&, const char * =nullptr) noexcept {}

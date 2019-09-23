@@ -224,8 +224,11 @@ stopwatch_new_was(const StopwatchPtr &parent_stopwatch,
     if (path_info != nullptr && *path_info != 0)
         uri = path_info;
 
-    return StopwatchPtr(parent_stopwatch,
-                        parent_stopwatch.GetAllocator().Concat(path, " ", uri));
+    std::string name = path;
+    name.push_back(' ');
+    name += uri;
+
+    return StopwatchPtr(parent_stopwatch, name.c_str());
 #else
     (void)parent_stopwatch;
     (void)path;

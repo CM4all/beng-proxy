@@ -52,7 +52,7 @@ HttpServerRequest::HttpServerRequest(PoolPtr &&_pool,
                          _local_host_and_port, _remote_host,
                          _method, _uri),
      connection(_connection),
-     stopwatch(*pool, uri) {}
+     stopwatch(uri) {}
 
 void
 HttpServerRequest::Destroy() noexcept

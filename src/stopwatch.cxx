@@ -31,7 +31,6 @@
  */
 
 #include "stopwatch.hxx"
-#include "AllocatorPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/ToString.hxx"
@@ -68,8 +67,6 @@ struct StopwatchEvent {
 class Stopwatch final : LeakDetector,
                         public boost::intrusive::slist_base_hook<>
 {
-    AllocatorPtr alloc;
-
     const std::string name;
 
     boost::intrusive::slist<Stopwatch,
@@ -88,9 +85,9 @@ class Stopwatch final : LeakDetector,
 
 public:
     template<typename N>
-    Stopwatch(Stopwatch *parent, AllocatorPtr _alloc,
+    Stopwatch(Stopwatch *parent,
               N &&_name) noexcept
-        :alloc(_alloc), name(std::forward<N>(_name)),
+        :name(std::forward<N>(_name)),
          dump(parent == nullptr)
     {
         events.emplace_back(name);
@@ -99,12 +96,12 @@ public:
     }
 
     template<typename N>
-    Stopwatch(AllocatorPtr _alloc, N &&_name) noexcept
-        :Stopwatch(nullptr, _alloc, std::forward<N>(_name)) {}
+    Stopwatch(N &&_name) noexcept
+        :Stopwatch(nullptr, std::forward<N>(_name)) {}
 
     template<typename N>
     Stopwatch(Stopwatch &parent, N &&_name) noexcept
-        :Stopwatch(&parent, parent.alloc, std::forward<N>(_name))
+        :Stopwatch(&parent, std::forward<N>(_name))
     {
         parent.children.push_back(*this);
     }
@@ -116,10 +113,6 @@ public:
             Dump(0);
 
         assert(children.empty());
-    }
-
-    AllocatorPtr GetAllocator() const noexcept {
-        return alloc;
     }
 
     void RecordEvent(const char *name) noexcept;
@@ -157,17 +150,16 @@ MakeStopwatchName(std::string name, const char *suffix) noexcept
 }
 
 static Stopwatch *
-stopwatch_new(AllocatorPtr alloc, const char *name, const char *suffix) noexcept
+stopwatch_new(const char *name, const char *suffix) noexcept
 {
     if (!stopwatch_is_enabled())
         return nullptr;
 
-    return alloc.New<Stopwatch>(alloc, MakeStopwatchName(name, suffix));
+    return new Stopwatch(MakeStopwatchName(name, suffix));
 }
 
 static Stopwatch *
-stopwatch_new(AllocatorPtr alloc,
-              SocketAddress address, const char *suffix) noexcept
+stopwatch_new(SocketAddress address, const char *suffix) noexcept
 {
     char buffer[1024];
 
@@ -175,49 +167,43 @@ stopwatch_new(AllocatorPtr alloc,
         return nullptr;
 
     const char *name = ToString(buffer, sizeof(buffer), address, "unknown");
-    return stopwatch_new(alloc, name, suffix);
+    return stopwatch_new(name, suffix);
 }
 
 static Stopwatch *
-stopwatch_new(AllocatorPtr alloc,
-              SocketDescriptor fd, const char *suffix) noexcept
+stopwatch_new(SocketDescriptor fd, const char *suffix) noexcept
 {
     if (!stopwatch_is_enabled())
         return nullptr;
 
     const auto address = fd.GetPeerAddress();
     return address.IsDefined()
-        ? stopwatch_new(alloc, address, suffix)
-        : stopwatch_new(alloc, "unknown", suffix);
+        ? stopwatch_new(address, suffix)
+        : stopwatch_new("unknown", suffix);
 }
 
-StopwatchPtr::StopwatchPtr(AllocatorPtr alloc,
-                           const char *name, const char *suffix) noexcept
-    :stopwatch(stopwatch_new(alloc, name, suffix)) {}
+StopwatchPtr::StopwatchPtr(const char *name, const char *suffix) noexcept
+    :stopwatch(stopwatch_new(name, suffix)) {}
 
-StopwatchPtr::StopwatchPtr(AllocatorPtr alloc,
-                           SocketAddress address, const char *suffix) noexcept
-    :stopwatch(stopwatch_new(alloc, address, suffix)) {}
+StopwatchPtr::StopwatchPtr(SocketAddress address, const char *suffix) noexcept
+    :stopwatch(stopwatch_new(address, suffix)) {}
 
-StopwatchPtr::StopwatchPtr(AllocatorPtr alloc,
-                           SocketDescriptor fd, const char *suffix) noexcept
-    :stopwatch(stopwatch_new(alloc, fd, suffix)) {}
+StopwatchPtr::StopwatchPtr(SocketDescriptor fd, const char *suffix) noexcept
+    :stopwatch(stopwatch_new(fd, suffix)) {}
 
 StopwatchPtr::StopwatchPtr(Stopwatch *parent, const char *name,
                            const char *suffix) noexcept
 {
-    if (parent != nullptr) {
-        const auto alloc = parent->GetAllocator();
-        stopwatch = alloc.New<Stopwatch>(*parent,
-                                         MakeStopwatchName(name, suffix));
-    }
+    if (parent != nullptr)
+        stopwatch = new Stopwatch(*parent,
+                                  MakeStopwatchName(name, suffix));
 }
 
 void
-RootStopwatchPtr::Destruct(Stopwatch &stopwatch) noexcept
+RootStopwatchPtr::Destruct(Stopwatch *stopwatch) noexcept
 {
-    if (!stopwatch.is_linked())
-        stopwatch.~Stopwatch();
+    if (!stopwatch->is_linked())
+        delete stopwatch;
 }
 
 inline void
@@ -228,14 +214,6 @@ Stopwatch::RecordEvent(const char *event_name) noexcept
         return;
 
     events.emplace_back(event_name);
-}
-
-AllocatorPtr
-StopwatchPtr::GetAllocator() const noexcept
-{
-    assert(stopwatch != nullptr);
-
-    return stopwatch->GetAllocator();
 }
 
 void
