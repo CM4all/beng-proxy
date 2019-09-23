@@ -49,7 +49,7 @@ class PConnectSocket final : Cancellable, ConnectSocketHandler {
     ConnectSocket connect;
 
 #ifdef ENABLE_STOPWATCH
-    const StopwatchPtr stopwatch;
+    const RootStopwatchPtr stopwatch;
 #endif
 
     ConnectSocketHandler &handler;
@@ -58,7 +58,7 @@ public:
     PConnectSocket(EventLoop &event_loop,
                    UniqueSocketDescriptor &&_fd, Event::Duration timeout,
 #ifdef ENABLE_STOPWATCH
-                   StopwatchPtr &&_stopwatch,
+                   RootStopwatchPtr &&_stopwatch,
 #endif
                    ConnectSocketHandler &_handler,
                    CancellablePointer &cancel_ptr)
@@ -191,7 +191,7 @@ client_socket_new(EventLoop &event_loop, AllocatorPtr alloc,
     }
 
 #ifdef ENABLE_STOPWATCH
-    StopwatchPtr stopwatch(alloc, address);
+    RootStopwatchPtr stopwatch(alloc, address);
 #endif
 
     if (fd.Connect(address)) {

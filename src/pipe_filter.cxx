@@ -113,7 +113,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 
     assert(!http_status_is_empty(status));
 
-    StopwatchPtr stopwatch(*pool, path);
+    RootStopwatchPtr stopwatch(*pool, path);
 
     PreparedChildProcess p;
     p.Append(path);

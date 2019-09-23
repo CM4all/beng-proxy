@@ -44,12 +44,14 @@ class SocketDescriptor;
 #ifdef ENABLE_STOPWATCH
 
 class StopwatchPtr {
+protected:
     Stopwatch *stopwatch = nullptr;
 
 public:
     StopwatchPtr() = default;
     StopwatchPtr(std::nullptr_t) noexcept {}
 
+protected:
     StopwatchPtr(AllocatorPtr alloc, const char *name,
                  const char *suffix=nullptr) noexcept;
 
@@ -59,6 +61,7 @@ public:
     StopwatchPtr(AllocatorPtr alloc, SocketDescriptor fd,
                  const char *suffix=nullptr) noexcept;
 
+public:
     StopwatchPtr(Stopwatch *parent, const char *name,
                  const char *suffix=nullptr) noexcept;
 
@@ -69,11 +72,6 @@ public:
     StopwatchPtr(StopwatchPtr &&src) noexcept
         :stopwatch(std::exchange(src.stopwatch, nullptr)) {}
 
-    ~StopwatchPtr() noexcept {
-        if (stopwatch != nullptr)
-            Destruct(*stopwatch);
-    }
-
     operator bool() const noexcept {
         return stopwatch != nullptr;
     }
@@ -81,6 +79,22 @@ public:
     AllocatorPtr GetAllocator() const noexcept;
 
     void RecordEvent(const char *name) const noexcept;
+};
+
+class RootStopwatchPtr : public StopwatchPtr {
+public:
+    template<typename A, typename N>
+    RootStopwatchPtr(A &&alloc, N &&name,
+                     const char *suffix=nullptr) noexcept
+        :StopwatchPtr(std::forward<A>(alloc), std::forward<N>(name),
+                      suffix) {}
+
+    RootStopwatchPtr(RootStopwatchPtr &&) = default;
+
+    ~RootStopwatchPtr() noexcept {
+        if (stopwatch != nullptr)
+            Destruct(*stopwatch);
+    }
 
 private:
     static void Destruct(Stopwatch &stopwatch) noexcept;

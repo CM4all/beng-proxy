@@ -213,7 +213,7 @@ StopwatchPtr::StopwatchPtr(Stopwatch *parent, const char *name,
 }
 
 void
-StopwatchPtr::Destruct(Stopwatch &stopwatch) noexcept
+RootStopwatchPtr::Destruct(Stopwatch &stopwatch) noexcept
 {
     if (!stopwatch.is_linked())
         stopwatch.~Stopwatch();

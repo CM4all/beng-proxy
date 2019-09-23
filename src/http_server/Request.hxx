@@ -45,7 +45,7 @@ struct HttpServerConnection;
 struct HttpServerRequest final : public IncomingHttpRequest {
     HttpServerConnection &connection;
 
-    StopwatchPtr stopwatch;
+    RootStopwatchPtr stopwatch;
 
     HttpServerRequest(PoolPtr &&_pool, HttpServerConnection &_connection,
                       SocketAddress _local_address,
