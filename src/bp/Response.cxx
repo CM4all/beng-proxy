@@ -609,7 +609,9 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
     response_sent = true;
 #endif
 
-    request.SendResponse(status, std::move(headers), std::move(body));
+    auto &_request = request;
+    Destroy();
+    _request.SendResponse(status, std::move(headers), std::move(body));
 }
 
 inline void

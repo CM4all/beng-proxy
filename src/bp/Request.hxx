@@ -276,6 +276,12 @@ struct Request final : HttpResponseHandler, DelegateHandler,
             IncomingHttpRequest &_request,
             const StopwatchPtr &parent_stopwatch) noexcept;
 
+private:
+    void Destroy() noexcept {
+        this->~Request();
+    }
+
+public:
     void HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept;
 
     void ParseArgs();
@@ -577,6 +583,8 @@ public:
 
         /* forward the abort to the http_server library */
         cancel_ptr.Cancel();
+
+        Destroy();
     }
 
     /* virtual methods from class HttpResponseHandler */
