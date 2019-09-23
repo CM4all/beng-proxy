@@ -107,8 +107,9 @@ FilteredSocketBalancerRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
     auto &base = BR::Cast(*this);
     if (!base.ConnectFailure(stock.GetEventLoop().SteadyNow())) {
-        handler.OnStockItemError(ep);
+        auto &_handler = handler;
         base.Destroy();
+        _handler.OnStockItemError(ep);
     }
 }
 
