@@ -176,7 +176,7 @@ try {
 
     case ResourceAddress::Type::PIPE:
         cgi = &address.GetCgi();
-        pipe_filter(spawn_service, event_loop, &pool,
+        pipe_filter(spawn_service, event_loop, &pool, parent_stopwatch,
                     cgi->path, cgi->args.ToArray(pool),
                     cgi->options,
                     status, std::move(headers), std::move(body),

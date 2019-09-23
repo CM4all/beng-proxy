@@ -96,7 +96,9 @@ make_pipe_etag(struct pool *pool, const char *in,
 
 void
 pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
-            struct pool *pool, const char *path,
+            struct pool *pool,
+            const StopwatchPtr &parent_stopwatch,
+            const char *path,
             ConstBuffer<const char *> args,
             const ChildOptions &options,
             http_status_t status, StringMap &&headers, UnusedIstreamPtr body,
@@ -113,7 +115,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 
     assert(!http_status_is_empty(status));
 
-    RootStopwatchPtr stopwatch(*pool, path);
+    StopwatchPtr stopwatch(parent_stopwatch, path);
 
     PreparedChildProcess p;
     p.Append(path);

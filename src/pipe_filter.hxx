@@ -41,6 +41,7 @@ class EventLoop;
 class SpawnService;
 class StringMap;
 class HttpResponseHandler;
+class StopwatchPtr;
 struct ChildOptions;
 template<typename T> struct ConstBuffer;
 
@@ -52,7 +53,9 @@ template<typename T> struct ConstBuffer;
  */
 void
 pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
-            struct pool *pool, const char *path,
+            struct pool *pool,
+            const StopwatchPtr &parent_stopwatch,
+            const char *path,
             ConstBuffer<const char *> args,
             const ChildOptions &options,
             http_status_t status, StringMap &&headers, UnusedIstreamPtr body,
