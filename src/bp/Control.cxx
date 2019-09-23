@@ -50,6 +50,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/Exception.hxx"
 #include "util/Macros.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -113,6 +114,7 @@ void
 BpInstance::OnControlPacket(ControlServer &control_server,
                             BengProxy::ControlCommand command,
                             ConstBuffer<void> payload,
+                            WritableBuffer<UniqueFileDescriptor>,
                             SocketAddress address)
 {
     LogConcat(5, "control", "command=", int(command),

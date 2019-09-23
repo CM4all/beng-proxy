@@ -34,6 +34,7 @@
 #include "Server.hxx"
 #include "net/SocketConfig.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -56,10 +57,11 @@ void
 LocalControl::OnControlPacket(ControlServer &control_server,
                               BengProxy::ControlCommand command,
                               ConstBuffer<void> payload,
+                              WritableBuffer<UniqueFileDescriptor> fds,
                               SocketAddress address)
 {
     handler.OnControlPacket(control_server, command,
-                            payload, address);
+                            payload, fds, address);
 }
 
 void

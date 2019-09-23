@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,6 +37,7 @@
 #include "util/ByteOrder.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <stdexcept>
 
@@ -59,6 +60,7 @@ ControlServer::ControlServer(EventLoop &event_loop, ControlHandler &_handler,
 static void
 control_server_decode(ControlServer &control_server,
                       const void *data, size_t length,
+                      WritableBuffer<UniqueFileDescriptor> fds,
                       SocketAddress address,
                       ControlHandler &handler)
 {
@@ -107,6 +109,7 @@ control_server_decode(ControlServer &control_server,
 
         handler.OnControlPacket(control_server, command,
                                 {payload_length > 0 ? payload : nullptr, payload_length},
+                                fds,
                                 address);
 
         payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */
@@ -117,14 +120,16 @@ control_server_decode(ControlServer &control_server,
 }
 
 bool
-ControlServer::OnUdpDatagram(const void *data, size_t length,
+ControlServer::OnUdpDatagram(ConstBuffer<void> payload,
+                             WritableBuffer<UniqueFileDescriptor> fds,
                              SocketAddress address, int uid)
 {
-    if (!handler.OnControlRaw({data, length}, address, uid))
+    if (!handler.OnControlRaw(payload, address, uid))
         /* discard datagram if raw() returns false */
         return true;
 
-    control_server_decode(*this, data, length, address, handler);
+    control_server_decode(*this, payload.data, payload.size,
+                          fds, address, handler);
     return true;
 }
 

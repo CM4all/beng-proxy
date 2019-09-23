@@ -33,6 +33,7 @@
 #include "Distribute.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/WritableBuffer.hxx"
 
 ControlDistribute::ControlDistribute(EventLoop &event_loop,
                                      ControlHandler &_next_handler)
@@ -55,10 +56,16 @@ void
 ControlDistribute::OnControlPacket(ControlServer &control_server,
                                    BengProxy::ControlCommand command,
                                    ConstBuffer<void> payload,
+                                   WritableBuffer<UniqueFileDescriptor> fds,
                                    SocketAddress address)
 {
+    if (!fds.empty())
+        /* don't distribute control packets with a file descriptor; we
+           don't know how to copy those */
+        return;
+
     return next_handler.OnControlPacket(control_server, command,
-                                        payload, address);
+                                        payload, fds, address);
 }
 
 void

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,7 +35,7 @@
 
 #include "beng-proxy/Control.hxx"
 #include "Handler.hxx"
-#include "event/net/UdpHandler.hxx"
+#include "event/net/FullUdpHandler.hxx"
 #include "event/net/UdpListener.hxx"
 
 #include <stddef.h>
@@ -49,7 +49,7 @@ struct SocketConfig;
 /**
  * Server side part of the "control" protocol.
  */
-class ControlServer final : UdpHandler {
+class ControlServer final : FullUdpHandler {
     ControlHandler &handler;
 
     UdpListener socket;
@@ -82,7 +82,8 @@ public:
 
 private:
     /* virtual methods from class UdpHandler */
-    bool OnUdpDatagram(const void *data, size_t length,
+    bool OnUdpDatagram(ConstBuffer<void> payload,
+                       WritableBuffer<UniqueFileDescriptor> fds,
                        SocketAddress address, int uid) override;
     void OnUdpError(std::exception_ptr ep) noexcept override;
 };

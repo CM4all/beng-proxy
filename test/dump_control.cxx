@@ -38,6 +38,7 @@
 #include "io/Logger.hxx"
 #include "util/PrintException.hxx"
 #include "util/Compiler.h"
+#include "util/WritableBuffer.hxx"
 
 #include <stdio.h>
 
@@ -48,6 +49,7 @@ public:
     void OnControlPacket(gcc_unused ControlServer &control_server,
                          BengProxy::ControlCommand command,
                          ConstBuffer<void> payload,
+                         WritableBuffer<UniqueFileDescriptor>,
                          gcc_unused SocketAddress address) override {
         printf("packet command=%u length=%zu\n",
                unsigned(command), payload.size);

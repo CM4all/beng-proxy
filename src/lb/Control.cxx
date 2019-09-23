@@ -39,6 +39,7 @@
 #include "net/ToString.hxx"
 #include "net/FailureManager.hxx"
 #include "util/Exception.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <systemd/sd-journal.h>
 
@@ -279,6 +280,7 @@ void
 LbControl::OnControlPacket(ControlServer &control_server,
                            BengProxy::ControlCommand command,
                            ConstBuffer<void> payload,
+                           WritableBuffer<UniqueFileDescriptor>,
                            SocketAddress address)
 {
     /* only local clients are allowed to use most commands */

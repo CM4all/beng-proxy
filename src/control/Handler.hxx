@@ -40,6 +40,8 @@
 #include <stddef.h>
 
 template<typename T> struct ConstBuffer;
+template<typename T> struct WritableBuffer;
+class UniqueFileDescriptor;
 class SocketAddress;
 class ControlServer;
 
@@ -55,6 +57,7 @@ public:
     virtual void OnControlPacket(ControlServer &control_server,
                                  BengProxy::ControlCommand command,
                                  ConstBuffer<void> payload,
+                                 WritableBuffer<UniqueFileDescriptor> fds,
                                  SocketAddress address) = 0;
 
     virtual void OnControlError(std::exception_ptr ep) noexcept = 0;
