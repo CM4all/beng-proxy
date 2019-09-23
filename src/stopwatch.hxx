@@ -42,9 +42,11 @@ class SocketDescriptor;
 
 #ifdef ENABLE_STOPWATCH
 
+#include <memory>
+
 class StopwatchPtr {
 protected:
-    Stopwatch *stopwatch = nullptr;
+    std::shared_ptr<Stopwatch> stopwatch;
 
 public:
     StopwatchPtr() = default;
@@ -66,10 +68,9 @@ public:
 
     StopwatchPtr(const StopwatchPtr &parent, const char *name,
                  const char *suffix=nullptr) noexcept
-        :StopwatchPtr(parent.stopwatch, name, suffix) {}
+        :StopwatchPtr(parent.stopwatch.get(), name, suffix) {}
 
-    StopwatchPtr(StopwatchPtr &&src) noexcept
-        :stopwatch(std::exchange(src.stopwatch, nullptr)) {}
+    ~StopwatchPtr() noexcept;
 
     operator bool() const noexcept {
         return stopwatch != nullptr;
@@ -85,14 +86,6 @@ public:
         :StopwatchPtr(std::forward<N>(name), suffix) {}
 
     RootStopwatchPtr(RootStopwatchPtr &&) = default;
-
-    ~RootStopwatchPtr() noexcept {
-        if (stopwatch != nullptr)
-            Destruct(stopwatch);
-    }
-
-private:
-    static void Destruct(Stopwatch *stopwatch) noexcept;
 };
 
 void

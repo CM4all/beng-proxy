@@ -42,6 +42,7 @@
 #include <boost/intrusive/slist.hpp>
 
 #include <chrono>
+#include <list>
 #include <string>
 
 #include <time.h>
@@ -69,9 +70,7 @@ class Stopwatch final : LeakDetector,
 {
     const std::string name;
 
-    boost::intrusive::slist<Stopwatch,
-                            boost::intrusive::constant_time_size<false>,
-                            boost::intrusive::cache_last<true>> children;
+    std::list<std::shared_ptr<Stopwatch>> children;
 
     boost::container::static_vector<StopwatchEvent, 16> events;
 
@@ -85,25 +84,13 @@ class Stopwatch final : LeakDetector,
 
 public:
     template<typename N>
-    Stopwatch(Stopwatch *parent,
-              N &&_name) noexcept
+    Stopwatch(N &&_name, bool _dump) noexcept
         :name(std::forward<N>(_name)),
-         dump(parent == nullptr)
+         dump(_dump)
     {
         events.emplace_back(name);
 
         getrusage(RUSAGE_SELF, &self);
-    }
-
-    template<typename N>
-    Stopwatch(N &&_name) noexcept
-        :Stopwatch(nullptr, std::forward<N>(_name)) {}
-
-    template<typename N>
-    Stopwatch(Stopwatch &parent, N &&_name) noexcept
-        :Stopwatch(&parent, std::forward<N>(_name))
-    {
-        parent.children.push_back(*this);
     }
 
     ~Stopwatch() noexcept {
@@ -111,8 +98,11 @@ public:
 
         if (dump)
             Dump(0);
+    }
 
-        assert(children.empty());
+    template<typename C>
+    void AddChild(C &&child) noexcept {
+        children.emplace_back(std::forward<C>(child));
     }
 
     void RecordEvent(const char *name) noexcept;
@@ -149,16 +139,16 @@ MakeStopwatchName(std::string name, const char *suffix) noexcept
     return name;
 }
 
-static Stopwatch *
+static std::shared_ptr<Stopwatch>
 stopwatch_new(const char *name, const char *suffix) noexcept
 {
     if (!stopwatch_is_enabled())
         return nullptr;
 
-    return new Stopwatch(MakeStopwatchName(name, suffix));
+    return std::make_shared<Stopwatch>(MakeStopwatchName(name, suffix), true);
 }
 
-static Stopwatch *
+static std::shared_ptr<Stopwatch>
 stopwatch_new(SocketAddress address, const char *suffix) noexcept
 {
     char buffer[1024];
@@ -167,10 +157,10 @@ stopwatch_new(SocketAddress address, const char *suffix) noexcept
         return nullptr;
 
     const char *name = ToString(buffer, sizeof(buffer), address, "unknown");
-    return stopwatch_new(name, suffix);
+    return std::make_shared<Stopwatch>(MakeStopwatchName(name, suffix), true);
 }
 
-static Stopwatch *
+static std::shared_ptr<Stopwatch>
 stopwatch_new(SocketDescriptor fd, const char *suffix) noexcept
 {
     if (!stopwatch_is_enabled())
@@ -194,17 +184,14 @@ StopwatchPtr::StopwatchPtr(SocketDescriptor fd, const char *suffix) noexcept
 StopwatchPtr::StopwatchPtr(Stopwatch *parent, const char *name,
                            const char *suffix) noexcept
 {
-    if (parent != nullptr)
-        stopwatch = new Stopwatch(*parent,
-                                  MakeStopwatchName(name, suffix));
+    if (parent != nullptr) {
+        stopwatch = std::make_shared<Stopwatch>(MakeStopwatchName(name, suffix),
+                                                false);
+        parent->AddChild(stopwatch);
+    }
 }
 
-void
-RootStopwatchPtr::Destruct(Stopwatch *stopwatch) noexcept
-{
-    if (!stopwatch->is_linked())
-        delete stopwatch;
-}
+StopwatchPtr::~StopwatchPtr() = default;
 
 inline void
 Stopwatch::RecordEvent(const char *event_name) noexcept
@@ -273,9 +260,8 @@ try {
     LogConcat(STOPWATCH_VERBOSE, "stopwatch", message);
 
     indent += 2;
-    children.clear_and_dispose([indent](Stopwatch *child){
+
+    for (const auto &child : children)
         child->Dump(indent);
-        child->~Stopwatch();
-    });
 } catch (StringBuilder<>::Overflow) {
 }
