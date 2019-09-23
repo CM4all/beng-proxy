@@ -918,6 +918,17 @@ HttpClient::FeedHeaders(ConstBuffer<void> b)
     if (!response.body && !response.no_body)
         response.body = istream_null_new(caller_pool);
 
+    if (response.state == Response::State::END) {
+        auto &handler = request.handler;
+        auto headers = std::move(response.headers);
+        auto body = std::move(response.body);
+
+        ResponseFinished();
+        handler.InvokeResponse(response.status, std::move(headers),
+                               std::move(body));
+        return BufferedResult::CLOSED;
+    }
+
     response.in_handler = true;
     request.handler.InvokeResponse(response.status,
                                    std::move(response.headers),
@@ -926,11 +937,6 @@ HttpClient::FeedHeaders(ConstBuffer<void> b)
         return BufferedResult::CLOSED;
 
     response.in_handler = false;
-
-    if (response.state == Response::State::END) {
-        ResponseFinished();
-        return BufferedResult::CLOSED;
-    }
 
     if (response_body_reader.IsEOF()) {
         ResponseBodyEOF();
