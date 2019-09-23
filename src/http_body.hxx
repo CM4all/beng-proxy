@@ -87,13 +87,12 @@ public:
     using Istream::GetPool;
     using Istream::Destroy;
 
-    void InvokeEof() {
-        assert(IsEOF());
-
+    IstreamHandler *PrepareEof() {
         /* suppress InvokeEof() if rest==REST_EOF_CHUNK because in
            that case, the dechunker has already emitted that event */
-        if (rest == 0)
-            Istream::InvokeEof();
+        return rest == 0
+            ? &Istream::PrepareEof()
+            : nullptr;
     }
 
     void DestroyEof() {

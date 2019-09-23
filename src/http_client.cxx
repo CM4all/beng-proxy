@@ -808,9 +808,12 @@ HttpClient::ResponseBodyEOF()
 
     response.state = Response::State::END;
 
-    response_body_reader.InvokeEof();
+    auto *handler = response_body_reader.PrepareEof();
 
     ResponseFinished();
+
+    if (handler != nullptr)
+        handler->OnEof();
 }
 
 inline BufferedResult
