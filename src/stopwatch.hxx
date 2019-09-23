@@ -131,6 +131,8 @@ public:
     void RecordEvent(const char *) const noexcept {}
 };
 
+using RootStopwatchPtr = StopwatchPtr;
+
 static inline void
 stopwatch_enable() noexcept
 {
