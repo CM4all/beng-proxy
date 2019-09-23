@@ -47,6 +47,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "istream/TeeIstream.hxx"
+#include "istream/RefIstream.hxx"
 #include "pool/Holder.hxx"
 #include "AllocatorPtr.hxx"
 #include "event/TimerEvent.hxx"
@@ -530,6 +531,9 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
                                       status, _headers, available)) {
         /* don't cache response */
         LogConcat(4, "HttpCache", "nocache ", key);
+
+        if (body)
+            body = NewRefIstream(pool, std::move(body));
 
         handler.InvokeResponse(status, std::move(_headers), std::move(body));
         Destroy();

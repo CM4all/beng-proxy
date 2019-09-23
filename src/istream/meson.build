@@ -30,6 +30,7 @@ istream_basic = static_library(
   'InjectIstream.cxx',
   'MemoryIstream.cxx',
   'OptionalIstream.cxx',
+  'RefIstream.cxx',
   'SubstIstream.cxx',
   'ZeroIstream.cxx',
   'istream_catch.cxx',

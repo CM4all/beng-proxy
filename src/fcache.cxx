@@ -44,6 +44,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/TeeIstream.hxx"
+#include "istream/RefIstream.hxx"
 #include "istream_unlock.hxx"
 #include "istream_rubber.hxx"
 #include "rubber.hxx"
@@ -554,6 +555,9 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
                                         status, headers, available)) {
         /* don't cache response */
         LogConcat(4, "FilterCache", "nocache ", info.key);
+
+        if (body)
+            body = NewRefIstream(pool, std::move(body));
 
         handler.InvokeResponse(status, std::move(headers), std::move(body));
         Destroy();
