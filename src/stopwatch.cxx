@@ -43,6 +43,7 @@
 #include <boost/intrusive/slist.hpp>
 
 #include <chrono>
+#include <string>
 
 #include <time.h>
 #include <assert.h>
@@ -55,12 +56,13 @@ enum {
 };
 
 struct StopwatchEvent {
-    const char *name;
+    std::string name;
 
     std::chrono::steady_clock::time_point time;
 
-    explicit StopwatchEvent(const char *_name) noexcept
-        :name(_name), time(std::chrono::steady_clock::now()) {}
+    template<typename N>
+    explicit StopwatchEvent(N &&_name) noexcept
+        :name(std::forward<N>(_name)), time(std::chrono::steady_clock::now()) {}
 };
 
 class Stopwatch final : LeakDetector,
@@ -68,7 +70,7 @@ class Stopwatch final : LeakDetector,
 {
     AllocatorPtr alloc;
 
-    const char *const name;
+    const std::string name;
 
     boost::intrusive::slist<Stopwatch,
                             boost::intrusive::constant_time_size<false>,
@@ -85,20 +87,24 @@ class Stopwatch final : LeakDetector,
     const bool dump;
 
 public:
+    template<typename N>
     Stopwatch(Stopwatch *parent, AllocatorPtr _alloc,
-              const char *_name) noexcept
-        :alloc(_alloc), name(_name), dump(parent == nullptr)
+              N &&_name) noexcept
+        :alloc(_alloc), name(std::forward<N>(_name)),
+         dump(parent == nullptr)
     {
         events.emplace_back(name);
 
         getrusage(RUSAGE_SELF, &self);
     }
 
-    Stopwatch(AllocatorPtr _alloc, const char *_name) noexcept
-        :Stopwatch(nullptr, _alloc, _name) {}
+    template<typename N>
+    Stopwatch(AllocatorPtr _alloc, N &&_name) noexcept
+        :Stopwatch(nullptr, _alloc, std::forward<N>(_name)) {}
 
-    Stopwatch(Stopwatch &parent, const char *_name) noexcept
-        :Stopwatch(&parent, parent.alloc, _name)
+    template<typename N>
+    Stopwatch(Stopwatch &parent, N &&_name) noexcept
+        :Stopwatch(&parent, parent.alloc, std::forward<N>(_name))
     {
         parent.children.push_back(*this);
     }
@@ -137,21 +143,17 @@ stopwatch_is_enabled() noexcept
     return stopwatch_enabled && CheckLogLevel(STOPWATCH_VERBOSE);
 }
 
-static const char *
-MakeStopwatchName(AllocatorPtr alloc,
-                  const char *name, const char *suffix) noexcept
+static std::string
+MakeStopwatchName(std::string name, const char *suffix) noexcept
 {
-    char *result;
-    if (suffix == nullptr)
-        result = alloc.Dup(name);
-    else
-        result = alloc.Concat(name, suffix);
+    if (suffix != nullptr)
+        name += suffix;
 
     constexpr size_t MAX_NAME = 96;
-    if (strlen(result) > MAX_NAME)
-        result[MAX_NAME] = 0;
+    if (name.length() > MAX_NAME)
+        name.resize(MAX_NAME);
 
-    return result;
+    return name;
 }
 
 static Stopwatch *
@@ -160,7 +162,7 @@ stopwatch_new(AllocatorPtr alloc, const char *name, const char *suffix) noexcept
     if (!stopwatch_is_enabled())
         return nullptr;
 
-    return alloc.New<Stopwatch>(alloc, MakeStopwatchName(alloc, name, suffix));
+    return alloc.New<Stopwatch>(alloc, MakeStopwatchName(name, suffix));
 }
 
 static Stopwatch *
@@ -207,8 +209,7 @@ StopwatchPtr::StopwatchPtr(Stopwatch *parent, const char *name,
     if (parent != nullptr) {
         const auto alloc = parent->GetAllocator();
         stopwatch = alloc.New<Stopwatch>(*parent,
-                                         MakeStopwatchName(alloc,
-                                                           name, suffix));
+                                         MakeStopwatchName(name, suffix));
     }
 }
 
@@ -282,7 +283,7 @@ try {
 
     for (const auto &i : events)
         AppendFormat(b, " %s=%ldms",
-                     i.name,
+                     i.name.c_str(),
                      ToLongMs(i.time - events.front().time));
 
     struct rusage new_self;
