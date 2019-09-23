@@ -49,7 +49,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+
+#if 0
 #include <sys/resource.h>
+#endif
 
 static UniqueFileDescriptor stopwatch_fd;
 
@@ -72,11 +75,13 @@ class Stopwatch final : LeakDetector,
 
     boost::container::static_vector<StopwatchEvent, 16> events;
 
+#if 0
     /**
      * Our own resource usage, measured when the stopwatch was
      * started.
      */
     struct rusage self;
+#endif
 
     const bool dump;
 
@@ -88,7 +93,9 @@ public:
     {
         events.emplace_back(name);
 
+#if 0
         getrusage(RUSAGE_SELF, &self);
+#endif
     }
 
     ~Stopwatch() noexcept {
@@ -212,12 +219,16 @@ ToLongMs(std::chrono::steady_clock::duration d) noexcept
     return std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
 }
 
+#if 0
+
 static long
 timeval_diff_ms(const struct timeval *a, const struct timeval *b) noexcept
 {
     return (a->tv_sec - b->tv_sec) * 1000 +
         (a->tv_usec - b->tv_usec) / 1000;
 }
+
+#endif
 
 template<typename... Args>
 static inline void
@@ -250,11 +261,13 @@ try {
                      i.name.c_str(),
                      ToLongMs(i.time - events.front().time));
 
+#if 0
     struct rusage new_self;
     getrusage(RUSAGE_SELF, &new_self);
     AppendFormat(b, " (beng-proxy=%ld+%ldms)",
                  timeval_diff_ms(&new_self.ru_utime, &self.ru_utime),
                  timeval_diff_ms(&new_self.ru_stime, &self.ru_stime));
+#endif
 
     b.Append('\n');
 
