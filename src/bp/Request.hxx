@@ -34,6 +34,7 @@
 #define BENG_PROXY_REQUEST_HXX
 
 #include "uri/Dissect.hxx"
+#include "pool/LeakDetector.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
@@ -68,7 +69,7 @@ struct DelegateAddress;
  * (handler.c, file-handler.c etc.).
  */
 struct Request final : HttpResponseHandler, DelegateHandler,
-    NfsCacheHandler, SuffixRegistryHandler, Cancellable {
+    NfsCacheHandler, SuffixRegistryHandler, Cancellable, PoolLeakDetector {
 
     struct pool &pool;
 

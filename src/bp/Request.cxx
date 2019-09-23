@@ -39,7 +39,7 @@
 Request::Request(BpConnection &_connection,
                  IncomingHttpRequest &_request,
                  const StopwatchPtr &parent_stopwatch) noexcept
-    :pool(_request.pool),
+    :PoolLeakDetector(_request.pool), pool(_request.pool),
      instance(_connection.instance),
      connection(_connection),
      logger(connection.logger),
