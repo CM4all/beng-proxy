@@ -167,7 +167,7 @@ Istream::InvokeError(std::exception_ptr ep) noexcept
     assert(ep);
 
 #ifndef NDEBUG
-    eof = false;
+    eof = true;
 #endif
 
     handler->OnError(ep);
