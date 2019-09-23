@@ -59,11 +59,12 @@ static UniqueFileDescriptor stopwatch_fd;
 struct StopwatchEvent {
     std::string name;
 
-    std::chrono::steady_clock::time_point time;
+    std::chrono::steady_clock::time_point time =
+        std::chrono::steady_clock::now();
 
     template<typename N>
     explicit StopwatchEvent(N &&_name) noexcept
-        :name(std::forward<N>(_name)), time(std::chrono::steady_clock::now()) {}
+        :name(std::forward<N>(_name)) {}
 };
 
 class Stopwatch final : LeakDetector,
