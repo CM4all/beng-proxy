@@ -72,6 +72,9 @@ class Stopwatch final : LeakDetector,
 {
     const std::string name;
 
+    const std::chrono::steady_clock::time_point time =
+        std::chrono::steady_clock::now();
+
     std::list<std::shared_ptr<Stopwatch>> children;
 
     boost::container::static_vector<StopwatchEvent, 16> events;
@@ -92,8 +95,6 @@ public:
         :name(std::forward<N>(_name)),
          dump(_dump)
     {
-        events.emplace_back(name);
-
 #if 0
         getrusage(RUSAGE_SELF, &self);
 #endif
@@ -245,8 +246,6 @@ AppendFormat(StringBuilder<> &b, const char *fmt, Args&&... args)
 inline void
 Stopwatch::Dump(size_t indent) noexcept
 try {
-    assert(!events.empty());
-
     if (!stopwatch_fd.IsDefined())
         return;
 
@@ -257,10 +256,12 @@ try {
     std::fill_n(b.GetTail(), indent, ' ');
     b.Extend(indent);
 
+    b.Append(name.c_str());
+
     for (const auto &i : events)
         AppendFormat(b, " %s=%ldms",
                      i.name.c_str(),
-                     ToLongMs(i.time - events.front().time));
+                     ToLongMs(i.time - time));
 
 #if 0
     struct rusage new_self;
