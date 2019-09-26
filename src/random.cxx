@@ -59,7 +59,7 @@ random_seed()
 }
 
 uint64_t
-random_uint64()
+random_uint64() noexcept
 {
     return prng();
 }

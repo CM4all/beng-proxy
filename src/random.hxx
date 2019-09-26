@@ -49,6 +49,6 @@ random_seed();
  * Generate a new pseudo-random 64 bit integer.
  */
 uint64_t
-random_uint64();
+random_uint64() noexcept;
 
 #endif
