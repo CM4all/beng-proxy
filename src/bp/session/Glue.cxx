@@ -69,7 +69,7 @@ session_manager_init(EventLoop &event_loop, std::chrono::seconds idle_timeout,
 }
 
 void
-session_manager_deinit()
+session_manager_deinit() noexcept
 {
     assert(session_manager != nullptr);
 
@@ -78,7 +78,7 @@ session_manager_deinit()
 }
 
 void
-session_manager_abandon()
+session_manager_abandon() noexcept
 {
     assert(session_manager != nullptr);
 
@@ -88,7 +88,7 @@ session_manager_abandon()
 }
 
 Session *
-session_new()
+session_new() noexcept
 {
     crash_unsafe_enter();
     Session *session = session_manager->CreateSession();
@@ -98,7 +98,7 @@ session_new()
 }
 
 Session *
-session_get(SessionId id)
+session_get(SessionId id) noexcept
 {
     if (!id.IsDefined())
         return nullptr;
@@ -114,14 +114,14 @@ session_get(SessionId id)
 }
 
 void
-session_put(Session *session)
+session_put(Session *session) noexcept
 {
     session_manager->Put(*session);
     crash_unsafe_leave();
 }
 
 void
-session_delete(SessionId id)
+session_delete(SessionId id) noexcept
 {
     session_manager->EraseAndDispose(id);
 }

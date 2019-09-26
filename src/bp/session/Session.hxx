@@ -297,28 +297,28 @@ struct Session {
  * locked, and must be unlocked with session_put().
  */
 Session *
-session_get(SessionId id);
+session_get(SessionId id) noexcept;
 
 /**
  * Unlocks the specified session.
  */
 void
-session_put(Session *session);
+session_put(Session *session) noexcept;
 
 static inline void
-session_put(RealmSession &session)
+session_put(RealmSession &session) noexcept
 {
     session_put(&session.parent);
 }
 
 static inline void
-session_put(RealmSession *session)
+session_put(RealmSession *session) noexcept
 {
     session_put(&session->parent);
 }
 
 inline RealmSession *
-session_get_realm(SessionId id, const char *realm)
+session_get_realm(SessionId id, const char *realm) noexcept
 {
     auto *session = session_get(id);
     if (session == nullptr)
@@ -336,7 +336,7 @@ session_get_realm(SessionId id, const char *realm)
  * must not hold a sssion lock.
  */
 void
-session_delete(SessionId id);
+session_delete(SessionId id) noexcept;
 
 class SessionLease {
     friend class RealmSessionLease;
@@ -344,43 +344,43 @@ class SessionLease {
     Session *session;
 
 public:
-    SessionLease():session(nullptr) {}
-    SessionLease(std::nullptr_t):session(nullptr) {}
+    SessionLease() noexcept:session(nullptr) {}
+    SessionLease(std::nullptr_t) noexcept:session(nullptr) {}
 
-    explicit SessionLease(SessionId id)
+    explicit SessionLease(SessionId id) noexcept
         :session(session_get(id)) {}
 
-    explicit SessionLease(Session *_session)
+    explicit SessionLease(Session *_session) noexcept
         :session(_session) {}
 
-    SessionLease(SessionLease &&src)
+    SessionLease(SessionLease &&src) noexcept
         :session(src.session) {
         src.session = nullptr;
     }
 
-    ~SessionLease() {
+    ~SessionLease() noexcept {
         if (session != nullptr)
             session_put(session);
     }
 
-    SessionLease &operator=(SessionLease &&src) {
+    SessionLease &operator=(SessionLease &&src) noexcept {
         std::swap(session, src.session);
         return *this;
     }
 
-    operator bool() const {
+    operator bool() const noexcept {
         return session != nullptr;
     }
 
-    Session &operator *() {
+    Session &operator *() noexcept {
         return *session;
     }
 
-    Session *operator->() {
+    Session *operator->() noexcept {
         return session;
     }
 
-    Session *get() {
+    Session *get() noexcept {
         return session;
     }
 };
@@ -389,10 +389,10 @@ class RealmSessionLease {
     RealmSession *session;
 
 public:
-    RealmSessionLease():session(nullptr) {}
-    RealmSessionLease(std::nullptr_t):session(nullptr) {}
+    RealmSessionLease() noexcept:session(nullptr) {}
+    RealmSessionLease(std::nullptr_t) noexcept:session(nullptr) {}
 
-    RealmSessionLease(SessionLease &&src, const char *realm)
+    RealmSessionLease(SessionLease &&src, const char *realm) noexcept
         :session(src.session != nullptr
                  ? src.session->GetRealm(realm)
                  : nullptr) {
@@ -400,7 +400,7 @@ public:
             src.session = nullptr;
     }
 
-    RealmSessionLease(SessionId id, const char *realm)
+    RealmSessionLease(SessionId id, const char *realm) noexcept
         :session(nullptr) {
         SessionLease parent(id);
         if (!parent)
@@ -411,37 +411,37 @@ public:
             parent.session = nullptr;
     }
 
-    explicit RealmSessionLease(RealmSession *_session)
+    explicit RealmSessionLease(RealmSession *_session) noexcept
         :session(_session) {}
 
-    RealmSessionLease(RealmSessionLease &&src)
+    RealmSessionLease(RealmSessionLease &&src) noexcept
         :session(src.session) {
         src.session = nullptr;
     }
 
-    ~RealmSessionLease() {
+    ~RealmSessionLease() noexcept {
         if (session != nullptr)
             session_put(&session->parent);
     }
 
-    RealmSessionLease &operator=(RealmSessionLease &&src) {
+    RealmSessionLease &operator=(RealmSessionLease &&src) noexcept {
         std::swap(session, src.session);
         return *this;
     }
 
-    operator bool() const {
+    operator bool() const noexcept {
         return session != nullptr;
     }
 
-    RealmSession &operator *() {
+    RealmSession &operator *() noexcept {
         return *session;
     }
 
-    RealmSession *operator->() {
+    RealmSession *operator->() noexcept {
         return session;
     }
 
-    RealmSession *get() {
+    RealmSession *get() noexcept {
         return session;
     }
 };

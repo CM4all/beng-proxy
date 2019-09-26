@@ -72,13 +72,13 @@ Session::GetRealm(const char *)
 }
 
 Session *
-session_get(gcc_unused SessionId id)
+session_get(gcc_unused SessionId id) noexcept
 {
     return NULL;
 }
 
 void
-session_put(gcc_unused Session *session)
+session_put(gcc_unused Session *session) noexcept
 {
 }
 

@@ -94,7 +94,7 @@ processor_env::GetRealmSession() const
 }
 
 void
-session_put(Session *session gcc_unused)
+session_put(Session *session gcc_unused) noexcept
 {
 }
 

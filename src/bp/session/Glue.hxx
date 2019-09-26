@@ -63,14 +63,14 @@ session_manager_init(EventLoop &event_loop, std::chrono::seconds idle_timeout,
  * manager if it has become zero.
  */
 void
-session_manager_deinit();
+session_manager_deinit() noexcept;
 
 /**
  * Release the session manager and try not to access the shared
  * memory, because we assume it may be corrupted.
  */
 void
-session_manager_abandon();
+session_manager_abandon() noexcept;
 
 /**
  * Create a new session with a random session id.
@@ -79,7 +79,7 @@ session_manager_abandon();
  * session_put().
  */
 Session * gcc_malloc
-session_new();
+session_new() noexcept;
 
 class ScopeSessionManagerInit {
 public:
