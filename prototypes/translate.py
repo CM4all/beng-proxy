@@ -1061,8 +1061,8 @@ if __name__ == '__main__':
         xmlstrip = os.path.join(src_dir, 'filters/build/xmlstrip')
         clear_html = os.path.join(src_dir, 'filters/build/clear-html')
         sed_fastcgi = os.path.join(src_dir, 'sed/sed/fsed')
-        davos_plain = os.path.join(src_dir, 'davos/build/davos-plain')
-        davos_od = os.path.join(src_dir, 'davos/build/davos-od')
+        davos_plain = os.path.join(src_dir, 'davos/output/debug/davos-plain')
+        davos_od = os.path.join(src_dir, 'davos/output/debug/davos-od')
         od_conf = '/home/max/people/cmag/od/od.conf'
         od_section = 'test'
 
