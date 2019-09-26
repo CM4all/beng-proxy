@@ -1269,6 +1269,37 @@ is empty, or if the error document itself fails, :program:`beng-proxy`
 forwards the original error document (or generates one). The error
 document cannot be filtered or processed.
 
+CSRF Protection
+---------------
+
+To help applications fix cross-site request forgery vulnerabilities,
+:program:`beng-proxy` implements the ``X-CM4all-CSRF-Token`` header.
+This feature needs to be enabled explicitly with the following
+packets:
+
+- ``REQUIRE_CSRF_TOKEN`` requires a valid token request header for
+  modifying requests (``POST``, ``PUT`` etc.).  This option is not
+  only supported for regular HTTP requests, but also for widgets (for
+  modifying requests to widgets).
+
+- ``SEND_CSRF_TOKEN`` adds a valid token header to successful
+  responses.  This option is not supported for widgets.
+
+Covert cross-site requests don't have this header and will be denied,
+effectively avoiding this kind of vulnerability.
+
+Clients can obtain a token by inspecting the response header of a
+request to a location with ``SEND_CSRF_TOKEN`` enabled.  They may then
+use this token in subsequent modifying requests to
+``REQUIRE_CSRF_TOKEN`` locations.
+
+This token is specific to the session and expires after a while
+(currently an hour).  It can be reused until it expires.
+
+Since this is implemented as a header, this cannot be used for plain
+``HTML FORM`` requests.  If the client is a browser, it is necessary
+to use the ``XMLHttpRequest`` API which allows sending custom headers.
+
 .. _registry:
 
 Widget registry

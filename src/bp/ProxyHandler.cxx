@@ -39,6 +39,7 @@
 #include "Instance.hxx"
 #include "Request.hxx"
 #include "ForwardRequest.hxx"
+#include "CsrfProtection.hxx"
 #include "ResourceLoader.hxx"
 #include "HttpResponseHandler.hxx"
 #include "http/IncomingRequest.hxx"
@@ -114,6 +115,11 @@ Request::HandleProxyAddress() noexcept
                                    GetCookieHost(),
                                    GetCookieURI(),
                                    address.IsAnyHttp());
+
+    if (tr.require_csrf_token &&
+        MethodNeedsCsrfProtection(forward.method) &&
+        !CheckCsrfToken())
+        return;
 
 #ifdef SPLICE
     if (forward.body)

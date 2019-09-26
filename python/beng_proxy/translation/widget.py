@@ -149,6 +149,8 @@ class _Lookup:
             response.packet(TRANSLATE_DIRECT_ADDRESSING)
         elif line == 'stateful':
             response.packet(TRANSLATE_STATEFUL)
+        elif line == 'require_csrf_token':
+            response.packet(TRANSLATE_REQUIRE_CSRF_TOKEN)
         elif line == 'filter':
             response.packet(TRANSLATE_FILTER)
         elif line == 'filter_4xx':

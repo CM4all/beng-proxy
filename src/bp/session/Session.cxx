@@ -97,6 +97,7 @@ Session::Session(struct dpool &_pool, SessionId _id)
      id(_id),
      expires(Expiry::Touched(SESSION_TTL_NEW))
 {
+    csrf_salt.Generate();
 }
 
 Session::Session(struct dpool &_pool, const Session &src)

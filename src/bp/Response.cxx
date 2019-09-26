@@ -600,6 +600,10 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
     if (!stateless)
         GenerateSetCookie(headers.GetBuffer());
 
+    if (translate.response->send_csrf_token &&
+        http_status_is_success(status))
+        WriteCsrfToken(headers);
+
 #ifdef SPLICE
     if (body)
         body = NewAutoPipeIstream(&pool, std::move(body), instance.pipe_stock);

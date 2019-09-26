@@ -206,6 +206,9 @@ struct Session {
     /** identification number of this session */
     const SessionId id;
 
+    /** a secret used to generate CSRF tokens */
+    SessionId csrf_salt;
+
     /** when will this session expire? */
     Expiry expires;
 

@@ -106,6 +106,11 @@ struct WidgetClass {
     bool stateful = false;
 
     /**
+     * @see #TranslationCommand::REQUIRE_CSRF_TOKEN
+     */
+    bool require_csrf_token = false;
+
+    /**
      * Absolute URI paths are considered relative to the base URI of
      * the widget.
      */

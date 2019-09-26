@@ -32,6 +32,7 @@
 
 #include "ProxyWidget.hxx"
 #include "Request.hxx"
+#include "CsrfProtection.hxx"
 #include "Global.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Ref.hxx"
@@ -207,6 +208,11 @@ ProxyWidget::Continue()
                             request.stopwatch,
                             *this, cancel_ptr);
     } else {
+        if (widget->cls->require_csrf_token &&
+            MethodNeedsCsrfProtection(widget->from_request.method) &&
+            !request.CheckCsrfToken())
+            return;
+
         if (view_name != nullptr) {
             /* the client can select the view; he can never explicitly
                select the default view */

@@ -319,6 +319,17 @@ public:
         stateless = true;
     }
 
+    gcc_pure
+    bool HasValidCsrfToken() noexcept;
+
+    /**
+     * @return false if there is no valid token (an error response has
+     * already been sent then)
+     */
+    bool CheckCsrfToken() noexcept;
+
+    void WriteCsrfToken(HttpHeaders &headers) noexcept;
+
     /**
      * Apply and verify #TRANSLATE_REALM.
      */

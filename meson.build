@@ -815,6 +815,8 @@ executable(
   'src/bp/Request.cxx',
   'src/bp/RSession.cxx',
   'src/bp/CollectCookies.cxx',
+  'src/bp/CsrfProtection.cxx',
+  'src/bp/CsrfToken.cxx',
   'src/bp/RError.cxx',
   'src/bp/Response.cxx',
   'src/bp/GenerateResponse.cxx',

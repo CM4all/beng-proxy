@@ -94,6 +94,7 @@ widget_translate_response(TranslateResponse &response, void *ctx)
     cls->container_groups = std::move(response.container_groups);
     cls->direct_addressing = response.direct_addressing;
     cls->stateful = response.stateful;
+    cls->require_csrf_token = response.require_csrf_token;
     cls->anchor_absolute = response.anchor_absolute;
     cls->info_headers = response.widget_info;
     cls->dump_headers = response.dump_headers;
