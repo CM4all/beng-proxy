@@ -372,15 +372,15 @@ public:
         return session != nullptr;
     }
 
-    Session &operator *() noexcept {
+    Session &operator *() const noexcept {
         return *session;
     }
 
-    Session *operator->() noexcept {
+    Session *operator->() const noexcept {
         return session;
     }
 
-    Session *get() noexcept {
+    Session *get() const noexcept {
         return session;
     }
 };
@@ -433,15 +433,15 @@ public:
         return session != nullptr;
     }
 
-    RealmSession &operator *() noexcept {
+    RealmSession &operator *() const noexcept {
         return *session;
     }
 
-    RealmSession *operator->() noexcept {
+    RealmSession *operator->() const noexcept {
         return session;
     }
 
-    RealmSession *get() noexcept {
+    RealmSession *get() const noexcept {
         return session;
     }
 };
