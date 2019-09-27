@@ -1298,7 +1298,8 @@ This token is specific to the session and expires after a while
 
 Since this is implemented as a header, this cannot be used for plain
 ``HTML FORM`` requests.  If the client is a browser, it is necessary
-to use the ``XMLHttpRequest`` API which allows sending custom headers.
+to use the ``XMLHttpRequest`` or ``Fetch`` API which allows sending
+custom headers.
 
 .. _registry:
 
