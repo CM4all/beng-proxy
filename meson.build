@@ -15,12 +15,7 @@ pkg_mod.generate(version: meson.project_version(),
                  description: 'CM4all BENG proxy library',
                  install_dir: join_paths(get_option('datadir'), 'pkgconfig'))
 
-# TODO: use get_option('b_ndebug'), but that doesn't work with Meson 0.37.1
-if get_option('buildtype') == 'debug'
-  debug = true
-else
-  debug = false
-endif
+debug = get_option('b_ndebug') != 'true'
 
 common_flags = [
   '-D_REENTRANT', '-D_GNU_SOURCE',
