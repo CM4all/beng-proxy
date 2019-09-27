@@ -39,6 +39,7 @@ class EventLoop;
 class SocketAddress;
 class UniqueSocketDescriptor;
 class CancellablePointer;
+class StopwatchPtr;
 
 /**
  * TCP client socket with asynchronous connect.
@@ -48,6 +49,7 @@ class CancellablePointer;
  */
 void
 client_socket_new(EventLoop &event_loop, AllocatorPtr alloc,
+                  StopwatchPtr stopwatch,
                   int domain, int type, int protocol,
                   bool ip_transparent,
                   const SocketAddress bind_address,

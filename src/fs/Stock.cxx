@@ -46,6 +46,7 @@
 #include "util/Cancellable.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/Exception.hxx"
+#include "stopwatch.hxx"
 
 #include <assert.h>
 #include <errno.h>
@@ -238,6 +239,7 @@ FilteredSocketStock::Create(CreateStockItem c, void *info,
                                                          cancel_ptr);
 
     client_socket_new(c.stock.GetEventLoop(), request.caller_pool,
+                      nullptr, // TODO: stopwatch support
                       address_family, SOCK_STREAM, 0,
                       request.ip_transparent,
                       request.bind_address,

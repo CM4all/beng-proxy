@@ -44,6 +44,7 @@
 #include "net/SocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "address_string.hxx"
+#include "stopwatch.hxx"
 
 #include <assert.h>
 
@@ -439,7 +440,7 @@ LbTcpConnection::ConnectOutbound()
         const auto address = member->GetAddress();
         assert(address.IsDefined());
 
-        client_socket_new(GetEventLoop(), *pool,
+        client_socket_new(GetEventLoop(), *pool, nullptr,
                           address.GetFamily(), SOCK_STREAM, 0,
                           cluster_config.transparent_source, bind_address,
                           address,

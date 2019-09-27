@@ -46,6 +46,7 @@
 #include "util/Cancellable.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/Exception.hxx"
+#include "stopwatch.hxx"
 
 #include <assert.h>
 #include <errno.h>
@@ -206,6 +207,7 @@ TcpStock::Create(CreateStockItem c,
                                               cancel_ptr);
 
     client_socket_new(c.stock.GetEventLoop(), request->alloc,
+                      nullptr, // TODO: stopwatch support
                       request->address.GetFamily(), SOCK_STREAM, 0,
                       request->ip_transparent,
                       request->bind_address,

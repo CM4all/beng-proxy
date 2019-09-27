@@ -36,6 +36,7 @@
 #include "address_list.hxx"
 #include "event/Loop.hxx"
 #include "net/StaticSocketAddress.hxx"
+#include "stopwatch.hxx"
 
 struct ClientBalancerRequest : ConnectSocketHandler {
     EventLoop &event_loop;
@@ -76,7 +77,7 @@ inline void
 ClientBalancerRequest::Send(struct pool &pool, SocketAddress address,
                             CancellablePointer &cancel_ptr)
 {
-    client_socket_new(event_loop, pool,
+    client_socket_new(event_loop, pool, nullptr,
                       address.GetFamily(), SOCK_STREAM, 0,
                       ip_transparent,
                       bind_address,
