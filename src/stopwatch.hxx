@@ -111,7 +111,7 @@ public:
 using RootStopwatchPtr = StopwatchPtr;
 
 static inline void
-stopwatch_enable() noexcept
+stopwatch_enable(UniqueFileDescriptor &&) noexcept
 {
 }
 
