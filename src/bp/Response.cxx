@@ -601,8 +601,19 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
         GenerateSetCookie(headers.GetBuffer());
 
     if (translate.response->send_csrf_token &&
-        http_status_is_success(status))
+        http_status_is_success(status)) {
+        if (headers.Get("access-control-allow-origin") != nullptr) {
+            /* if this CORS header indicates that other origins may
+               send requests, then this undermindes our CSRF
+               protection; thus, enabling both CORS headers and
+               SEND_CSRF_TOKEN is a bug */
+            DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
+                             "Conflicting CSRF/CORS configuration");
+            return;
+        }
+
         WriteCsrfToken(headers);
+    }
 
 #ifdef SPLICE
     if (body)
