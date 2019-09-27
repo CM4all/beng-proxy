@@ -57,12 +57,6 @@ protected:
     StopwatchPtr(const char *name,
                  const char *suffix=nullptr) noexcept;
 
-    StopwatchPtr(SocketAddress address,
-                 const char *suffix=nullptr) noexcept;
-
-    StopwatchPtr(SocketDescriptor fd,
-                 const char *suffix=nullptr) noexcept;
-
 public:
     StopwatchPtr(Stopwatch *parent, const char *name,
                  const char *suffix=nullptr) noexcept;
@@ -82,9 +76,8 @@ public:
 
 class RootStopwatchPtr : public StopwatchPtr {
 public:
-    template<typename N>
-    RootStopwatchPtr(N &&name, const char *suffix=nullptr) noexcept
-        :StopwatchPtr(std::forward<N>(name), suffix) {}
+    RootStopwatchPtr(const char *name, const char *suffix=nullptr) noexcept
+        :StopwatchPtr(name, suffix) {}
 
     RootStopwatchPtr(RootStopwatchPtr &&) = default;
 };
@@ -98,19 +91,15 @@ stopwatch_is_enabled() noexcept;
 
 #else
 
-#include "net/SocketAddress.hxx"
-#include "net/SocketDescriptor.hxx"
-
 class StopwatchPtr {
 public:
     StopwatchPtr() = default;
     StopwatchPtr(std::nullptr_t) noexcept {}
 
-    template<typename N>
-    StopwatchPtr(N &&, const char * =nullptr) noexcept {}
+    StopwatchPtr(const char *, const char * =nullptr) noexcept {}
 
-    template<typename N>
-    StopwatchPtr(const StopwatchPtr &, N &&, const char * =nullptr) noexcept {}
+    StopwatchPtr(const StopwatchPtr &, const char *,
+                 const char * =nullptr) noexcept {}
 
     operator bool() const noexcept {
         return false;

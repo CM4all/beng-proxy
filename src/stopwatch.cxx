@@ -31,9 +31,6 @@
  */
 
 #include "stopwatch.hxx"
-#include "net/SocketDescriptor.hxx"
-#include "net/StaticSocketAddress.hxx"
-#include "net/ToString.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/LeakDetector.hxx"
 #include "util/StringBuilder.hxx"
@@ -153,38 +150,8 @@ stopwatch_new(const char *name, const char *suffix) noexcept
     return std::make_shared<Stopwatch>(MakeStopwatchName(name, suffix), true);
 }
 
-static std::shared_ptr<Stopwatch>
-stopwatch_new(SocketAddress address, const char *suffix) noexcept
-{
-    char buffer[1024];
-
-    if (!stopwatch_is_enabled())
-        return nullptr;
-
-    const char *name = ToString(buffer, sizeof(buffer), address, "unknown");
-    return std::make_shared<Stopwatch>(MakeStopwatchName(name, suffix), true);
-}
-
-static std::shared_ptr<Stopwatch>
-stopwatch_new(SocketDescriptor fd, const char *suffix) noexcept
-{
-    if (!stopwatch_is_enabled())
-        return nullptr;
-
-    const auto address = fd.GetPeerAddress();
-    return address.IsDefined()
-        ? stopwatch_new(address, suffix)
-        : stopwatch_new("unknown", suffix);
-}
-
 StopwatchPtr::StopwatchPtr(const char *name, const char *suffix) noexcept
     :stopwatch(stopwatch_new(name, suffix)) {}
-
-StopwatchPtr::StopwatchPtr(SocketAddress address, const char *suffix) noexcept
-    :stopwatch(stopwatch_new(address, suffix)) {}
-
-StopwatchPtr::StopwatchPtr(SocketDescriptor fd, const char *suffix) noexcept
-    :stopwatch(stopwatch_new(fd, suffix)) {}
 
 StopwatchPtr::StopwatchPtr(Stopwatch *parent, const char *name,
                            const char *suffix) noexcept
