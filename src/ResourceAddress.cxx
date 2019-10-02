@@ -88,13 +88,13 @@ ResourceAddress::CopyFrom(AllocatorPtr alloc, const ResourceAddress &src)
 }
 
 ResourceAddress *
-ResourceAddress::Dup(struct pool &pool) const
+ResourceAddress::Dup(AllocatorPtr alloc) const
 {
-    return NewFromPool<ResourceAddress>(pool, pool, *this);
+    return alloc.New<ResourceAddress>(alloc, *this);
 }
 
 ResourceAddress
-ResourceAddress::WithPath(struct pool &pool, const char *path) const
+ResourceAddress::WithPath(AllocatorPtr alloc, const char *path) const
 {
     switch (type) {
     case Type::NONE:
@@ -107,11 +107,10 @@ ResourceAddress::WithPath(struct pool &pool, const char *path) const
         break;
 
     case Type::HTTP:
-        return *NewFromPool<HttpAddress>(pool, ShallowCopy(), GetHttp(), path);
+        return *alloc.New<HttpAddress>(ShallowCopy(), GetHttp(), path);
 
     case Type::LHTTP:
-        return *NewFromPool<LhttpAddress>(pool, ShallowCopy(),
-                                          GetLhttp(), path);
+        return *alloc.New<LhttpAddress>(ShallowCopy(), GetLhttp(), path);
     }
 
     assert(false);
@@ -119,7 +118,7 @@ ResourceAddress::WithPath(struct pool &pool, const char *path) const
 }
 
 ResourceAddress
-ResourceAddress::WithQueryStringFrom(struct pool &pool, const char *uri) const
+ResourceAddress::WithQueryStringFrom(AllocatorPtr alloc, const char *uri) const
 {
     const char *query_string;
 
@@ -141,7 +140,7 @@ ResourceAddress::WithQueryStringFrom(struct pool &pool, const char *uri) const
             /* no query string in URI */
             return {ShallowCopy(), *this};
 
-        return *u.http->InsertQueryString(pool, query_string);
+        return *u.http->InsertQueryString(alloc, query_string);
 
     case Type::LHTTP:
         assert(u.lhttp != nullptr);
@@ -151,7 +150,7 @@ ResourceAddress::WithQueryStringFrom(struct pool &pool, const char *uri) const
             /* no query string in URI */
             return {ShallowCopy(), *this};
 
-        return *u.lhttp->InsertQueryString(pool, query_string);
+        return *u.lhttp->InsertQueryString(alloc, query_string);
 
     case Type::CGI:
     case Type::FASTCGI:
@@ -163,8 +162,8 @@ ResourceAddress::WithQueryStringFrom(struct pool &pool, const char *uri) const
             /* no query string in URI */
             return {ShallowCopy(), *this};
 
-        cgi = NewFromPool<CgiAddress>(pool, ShallowCopy(), GetCgi());
-        cgi->InsertQueryString(pool, query_string);
+        cgi = alloc.New<CgiAddress>(ShallowCopy(), GetCgi());
+        cgi->InsertQueryString(alloc, query_string);
         return ResourceAddress(type, *cgi);
     }
 
@@ -173,7 +172,7 @@ ResourceAddress::WithQueryStringFrom(struct pool &pool, const char *uri) const
 }
 
 ResourceAddress
-ResourceAddress::WithArgs(struct pool &pool,
+ResourceAddress::WithArgs(AllocatorPtr alloc,
                           StringView args, StringView path) const
 {
     switch (type) {
@@ -189,12 +188,12 @@ ResourceAddress::WithArgs(struct pool &pool,
     case Type::HTTP:
         assert(u.http != nullptr);
 
-        return *GetHttp().InsertArgs(pool, args, path);
+        return *GetHttp().InsertArgs(alloc, args, path);
 
     case Type::LHTTP:
         assert(u.lhttp != nullptr);
 
-        return *GetLhttp().InsertArgs(pool, args, path);
+        return *GetLhttp().InsertArgs(alloc, args, path);
 
     case Type::CGI:
     case Type::FASTCGI:
@@ -204,8 +203,8 @@ ResourceAddress::WithArgs(struct pool &pool,
         if (u.cgi->uri == nullptr && u.cgi->path_info == nullptr)
             return {ShallowCopy(), *this};
 
-        cgi = NewFromPool<CgiAddress>(pool, ShallowCopy(), GetCgi());
-        cgi->InsertArgs(pool, args, path);
+        cgi = alloc.New<CgiAddress>(ShallowCopy(), GetCgi());
+        cgi->InsertArgs(alloc, args, path);
         return ResourceAddress(type, *cgi);
     }
 
@@ -423,7 +422,7 @@ ResourceAddress::CacheLoad(AllocatorPtr alloc, const ResourceAddress &src,
 }
 
 ResourceAddress
-ResourceAddress::Apply(struct pool &pool, StringView relative) const
+ResourceAddress::Apply(AllocatorPtr alloc, StringView relative) const
 {
     const HttpAddress *uwa;
     const CgiAddress *cgi;
@@ -439,14 +438,14 @@ ResourceAddress::Apply(struct pool &pool, StringView relative) const
         return {ShallowCopy(), *this};
 
     case Type::HTTP:
-        uwa = u.http->Apply(pool, relative);
+        uwa = u.http->Apply(alloc, relative);
         if (uwa == nullptr)
             return nullptr;
 
         return *uwa;
 
     case Type::LHTTP:
-        lhttp = u.lhttp->Apply(pool, relative);
+        lhttp = u.lhttp->Apply(alloc, relative);
         if (lhttp == nullptr)
             return nullptr;
 
@@ -455,7 +454,7 @@ ResourceAddress::Apply(struct pool &pool, StringView relative) const
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        cgi = u.cgi->Apply(pool, relative);
+        cgi = u.cgi->Apply(alloc, relative);
         if (cgi == nullptr)
             return nullptr;
 

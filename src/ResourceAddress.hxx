@@ -34,7 +34,6 @@
 #define BENG_PROXY_RESOURCE_ADDRESS_HXX
 
 #include "util/ShallowCopy.hxx"
-
 #include "util/Compiler.h"
 
 #include <cstddef>
@@ -251,7 +250,7 @@ public:
     void CopyFrom(AllocatorPtr alloc, const ResourceAddress &src);
 
     gcc_malloc
-    ResourceAddress *Dup(struct pool &pool) const;
+    ResourceAddress *Dup(AllocatorPtr alloc) const;
 
     /**
      * Construct a copy of this object with a different HTTP URI
@@ -261,7 +260,7 @@ public:
      * instance contains pointers to the this instance and to the
      * given path parameter.
      */
-    ResourceAddress WithPath(struct pool &pool, const char *path) const;
+    ResourceAddress WithPath(AllocatorPtr alloc, const char *path) const;
 
     /**
      * Construct a copy of this object and insert the query string
@@ -273,7 +272,7 @@ public:
      * instance contains pointers to the this instance and to the
      * given path parameter.
      */
-    ResourceAddress WithQueryStringFrom(struct pool &pool,
+    ResourceAddress WithQueryStringFrom(AllocatorPtr alloc,
                                         const char *uri) const;
 
     /**
@@ -286,7 +285,7 @@ public:
      * instance contains pointers to the this instance and to the
      * given path parameter.
      */
-    ResourceAddress WithArgs(struct pool &pool,
+    ResourceAddress WithArgs(AllocatorPtr alloc,
                              StringView args, StringView path) const;
 
     /**
@@ -343,7 +342,7 @@ public:
                    bool unsafe_base, bool expandable);
 
     gcc_pure
-    ResourceAddress Apply(struct pool &pool, StringView relative) const;
+    ResourceAddress Apply(AllocatorPtr alloc, StringView relative) const;
 
     gcc_pure
     StringView RelativeTo(const ResourceAddress &base) const;
