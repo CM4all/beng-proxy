@@ -38,6 +38,7 @@
 #include "ssl/Factory.hxx"
 #include "ssl/DbSniCallback.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/RuntimeError.hxx"
 
 void
 LbListener::OnAccept(UniqueSocketDescriptor &&new_fd,
@@ -84,7 +85,7 @@ LbListener::LbListener(LbInstance &_instance,
 
 void
 LbListener::Setup()
-{
+try {
     assert(ssl_factory == nullptr);
 
     if (config.ssl) {
@@ -106,6 +107,9 @@ LbListener::Setup()
     }
 
     Listen(config.Create(SOCK_STREAM));
+} catch (...) {
+    std::throw_with_nested(FormatRuntimeError("Failed to set up listener '%s'",
+                                              config.name.c_str()));
 }
 
 void
