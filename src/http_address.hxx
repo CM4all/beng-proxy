@@ -145,7 +145,7 @@ struct HttpAddress {
      * query string into the URI.
      */
     gcc_malloc
-    HttpAddress *InsertQueryString(struct pool &pool,
+    HttpAddress *InsertQueryString(AllocatorPtr alloc,
                                    const char *query_string) const;
 
     /**
@@ -153,7 +153,7 @@ struct HttpAddress {
      * arguments into the URI.
      */
     gcc_malloc
-    HttpAddress *InsertArgs(struct pool &pool,
+    HttpAddress *InsertArgs(AllocatorPtr alloc,
                             StringView args, StringView path_info) const;
 
     gcc_pure

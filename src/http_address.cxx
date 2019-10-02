@@ -195,20 +195,20 @@ HttpAddress::HasQueryString() const
 }
 
 HttpAddress *
-HttpAddress::InsertQueryString(struct pool &pool,
+HttpAddress::InsertQueryString(AllocatorPtr alloc,
                                const char *query_string) const
 {
-    return http_address_with_path(pool, this,
-                                  uri_insert_query_string(pool, path,
+    return http_address_with_path(alloc, this,
+                                  uri_insert_query_string(alloc, path,
                                                           query_string));
 }
 
 HttpAddress *
-HttpAddress::InsertArgs(struct pool &pool,
+HttpAddress::InsertArgs(AllocatorPtr alloc,
                         StringView args, StringView path_info) const
 {
-    return http_address_with_path(pool, this,
-                                  uri_insert_args(pool, path,
+    return http_address_with_path(alloc, this,
+                                  uri_insert_args(alloc, path,
                                                   args, path_info));
 }
 
