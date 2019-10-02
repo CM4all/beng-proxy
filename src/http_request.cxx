@@ -122,7 +122,7 @@ public:
     }
 
     void BeginConnect() {
-        fs_balancer.Get(pool,
+        fs_balancer.Get(pool, stopwatch,
                         false, SocketAddress::Null(),
                         session_sticky,
                         address.addresses,

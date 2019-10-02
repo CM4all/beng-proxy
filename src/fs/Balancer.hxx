@@ -45,6 +45,7 @@ class CancellablePointer;
 class SocketAddress;
 class SocketFilterFactory;
 class FilteredSocketStock;
+class StopwatchPtr;
 
 /*
  * Wrapper for the #FilteredSocketStock class to support load
@@ -75,6 +76,7 @@ public:
      * @param timeout the connect timeout for each attempt [seconds]
      */
     void Get(struct pool &pool,
+             const StopwatchPtr &parent_stopwatch,
              bool ip_transparent,
              SocketAddress bind_address,
              unsigned session_sticky,

@@ -41,6 +41,8 @@
 class FilteredSocketBalancerRequest : public StockGetHandler {
     FilteredSocketStock &stock;
 
+    const StopwatchPtr &parent_stopwatch;
+
     const bool ip_transparent;
     const SocketAddress bind_address;
 
@@ -52,12 +54,14 @@ class FilteredSocketBalancerRequest : public StockGetHandler {
 
 public:
     FilteredSocketBalancerRequest(FilteredSocketStock &_stock,
+                                  const StopwatchPtr &_parent_stopwatch,
                                   bool _ip_transparent,
                                   SocketAddress _bind_address,
                                   Event::Duration _timeout,
                                   SocketFilterFactory *_filter_factory,
                                   StockGetHandler &_handler) noexcept
         :stock(_stock),
+         parent_stopwatch(_parent_stopwatch),
          ip_transparent(_ip_transparent),
          bind_address(_bind_address),
          timeout(_timeout),
@@ -80,7 +84,7 @@ FilteredSocketBalancerRequest::Send(struct pool &pool, SocketAddress address,
                                     CancellablePointer &cancel_ptr) noexcept
 {
     stock.Get(pool,
-              nullptr, // TODO: stopwatch support
+              StopwatchPtr(parent_stopwatch, "connect"),
               nullptr,
               ip_transparent, bind_address, address,
               timeout,
@@ -128,6 +132,7 @@ FilteredSocketBalancer::GetEventLoop() noexcept
 
 void
 FilteredSocketBalancer::Get(struct pool &pool,
+                            const StopwatchPtr &parent_stopwatch,
                             bool ip_transparent,
                             SocketAddress bind_address,
                             sticky_hash_t session_sticky,
@@ -140,7 +145,7 @@ FilteredSocketBalancer::Get(struct pool &pool,
     BR::Start(pool, GetEventLoop().SteadyNow(), balancer,
               address_list, cancel_ptr,
               session_sticky,
-              stock,
+              stock, parent_stopwatch,
               ip_transparent,
               bind_address, timeout,
               filter_factory,

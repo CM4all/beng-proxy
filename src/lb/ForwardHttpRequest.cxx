@@ -536,7 +536,7 @@ LbRequest::Start() noexcept
         return;
     }
 
-    balancer.Get(pool,
+    balancer.Get(pool, nullptr,
                  cluster_config.transparent_source,
                  bind_address,
                  GetStickyHash(),
