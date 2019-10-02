@@ -49,6 +49,7 @@ class SocketFilterFactory;
 struct FilteredSocket;
 class EventLoop;
 class SocketAddress;
+class StopwatchPtr;
 
 /**
  * A stock for TCP connections wrapped with #FilteredSocket.
@@ -76,7 +77,9 @@ public:
      * #address if nullptr is passed here
      * @param timeout the connect timeout in seconds
      */
-    void Get(struct pool &pool, const char *name,
+    void Get(struct pool &pool,
+             StopwatchPtr stopwatch,
+             const char *name,
              bool ip_transparent,
              SocketAddress bind_address,
              SocketAddress address,

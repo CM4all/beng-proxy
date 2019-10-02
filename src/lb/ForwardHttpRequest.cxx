@@ -524,6 +524,7 @@ LbRequest::Start() noexcept
         current_member = *member;
 
         connection.instance.fs_stock->Get(pool,
+                                          nullptr,
                                           member->GetLogName(),
                                           cluster_config.transparent_source,
                                           bind_address,

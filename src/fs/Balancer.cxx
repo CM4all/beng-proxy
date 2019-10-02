@@ -36,6 +36,7 @@
 #include "stock/Stock.hxx"
 #include "stock/GetHandler.hxx"
 #include "event/Loop.hxx"
+#include "stopwatch.hxx"
 
 class FilteredSocketBalancerRequest : public StockGetHandler {
     FilteredSocketStock &stock;
@@ -79,6 +80,7 @@ FilteredSocketBalancerRequest::Send(struct pool &pool, SocketAddress address,
                                     CancellablePointer &cancel_ptr) noexcept
 {
     stock.Get(pool,
+              nullptr, // TODO: stopwatch support
               nullptr,
               ip_transparent, bind_address, address,
               timeout,

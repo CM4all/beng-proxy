@@ -236,7 +236,8 @@ LbResolveConnectRequest::OnHttpError(std::exception_ptr ep) noexcept
 inline void
 LbResolveConnectRequest::Start(const char *name, SocketAddress address)
 {
-    connection.instance.fs_stock->Get(pool, name, false, nullptr,
+    connection.instance.fs_stock->Get(pool, nullptr,
+                                      name, false, nullptr,
                                       address,
                                       LB_HTTP_CONNECT_TIMEOUT,
                                       nullptr,

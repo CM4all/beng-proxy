@@ -59,6 +59,8 @@
 struct FilteredSocketStockRequest {
     struct pool &caller_pool;
 
+    StopwatchPtr stopwatch;
+
     const bool ip_transparent;
 
     const SocketAddress bind_address, address;
@@ -68,12 +70,14 @@ struct FilteredSocketStockRequest {
     SocketFilterFactory *const filter_factory;
 
     FilteredSocketStockRequest(struct pool &_caller_pool,
+                               StopwatchPtr &&_stopwatch,
                                bool _ip_transparent,
                                SocketAddress _bind_address,
                                SocketAddress _address,
                                Event::Duration _timeout,
                                SocketFilterFactory *_filter_factory)
         :caller_pool(_caller_pool),
+         stopwatch(std::move(_stopwatch)),
          ip_transparent(_ip_transparent),
          bind_address(_bind_address), address(_address),
          timeout(_timeout),
@@ -227,7 +231,7 @@ void
 FilteredSocketStock::Create(CreateStockItem c, StockRequest _request,
                             CancellablePointer &cancel_ptr)
 {
-    const auto &request = *(const FilteredSocketStockRequest *)_request.get();
+    auto &request = *(FilteredSocketStockRequest *)_request.get();
 
     const int address_family = request.address.GetFamily();
     const FdType type = address_family == AF_LOCAL
@@ -240,7 +244,7 @@ FilteredSocketStock::Create(CreateStockItem c, StockRequest _request,
                                                          cancel_ptr);
 
     client_socket_new(c.stock.GetEventLoop(), request.caller_pool,
-                      nullptr, // TODO: stopwatch support
+                      std::move(request.stopwatch),
                       address_family, SOCK_STREAM, 0,
                       request.ip_transparent,
                       request.bind_address,
@@ -275,7 +279,9 @@ FilteredSocketStockConnection::Release() noexcept
  */
 
 void
-FilteredSocketStock::Get(struct pool &pool, const char *name,
+FilteredSocketStock::Get(struct pool &pool,
+                         StopwatchPtr stopwatch,
+                         const char *name,
                          bool ip_transparent,
                          SocketAddress bind_address,
                          SocketAddress address,
@@ -288,6 +294,7 @@ FilteredSocketStock::Get(struct pool &pool, const char *name,
 
     auto request =
         NewDisposablePointer<FilteredSocketStockRequest>(pool, pool,
+                                                std::move(stopwatch),
                                                          ip_transparent,
                                                          bind_address, address,
                                                          timeout,
