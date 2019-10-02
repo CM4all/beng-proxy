@@ -101,6 +101,11 @@ private:
     }
 
     template<typename... Args>
+    static size_t ConcatLength(char, Args... args) noexcept {
+        return 1 + ConcatLength(args...);
+    }
+
+    template<typename... Args>
     static constexpr size_t ConcatLength(StringView s, Args... args) noexcept {
         return s.size + ConcatLength(args...);
     }
@@ -121,6 +126,12 @@ private:
     template<typename... Args>
     static char *ConcatCopy(char *p, const char *s, Args... args) noexcept {
         return ConcatCopy(stpcpy(p, s), args...);
+    }
+
+    template<typename... Args>
+    static char *ConcatCopy(char *p, char ch, Args... args) noexcept {
+        *p++ = ch;
+        return ConcatCopy(p, args...);
     }
 
     template<typename... Args>
