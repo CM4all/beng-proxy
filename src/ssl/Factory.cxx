@@ -179,6 +179,11 @@ ApplyServerConfig(SSL_CTX *ssl_ctx, const SslCertKeyConfig &cert_key)
                                            cert_key.cert_file.c_str()) != 1)
         throw SslError("Failed to load certificate file " +
                        cert_key.cert_file);
+
+    if (SSL_CTX_check_private_key(ssl_ctx) != 1)
+        throw SslError("Key '" + cert_key.key_file +
+                       "' does not match certificate '" +
+                       cert_key.cert_file + "'");
 }
 
 inline bool
@@ -305,6 +310,8 @@ SslFactoryCertKey::LoadServer(const SslConfig &parent_config,
         throw SslError("No certificate in SSL_CTX");
 
     if (!MatchModulus(*cert, *key))
+        /* this shouldn't ever fail because
+           SSL_CTX_check_private_key() was successful */
         throw SslError("Key '" + config.key_file +
                        "' does not match certificate '" +
                        config.cert_file + "'");

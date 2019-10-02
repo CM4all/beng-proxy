@@ -1,6 +1,7 @@
 cm4all-beng-proxy (15.24) unstable; urgency=low
 
   * lb: show listener name in SSL setup errors
+  * lb: check if configured SSL certificate matches the key
 
  --   
 
