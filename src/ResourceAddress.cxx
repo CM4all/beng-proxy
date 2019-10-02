@@ -455,7 +455,7 @@ ResourceAddress::Apply(struct pool &pool, StringView relative) const
     case Type::CGI:
     case Type::FASTCGI:
     case Type::WAS:
-        cgi = u.cgi->Apply(&pool, relative);
+        cgi = u.cgi->Apply(pool, relative);
         if (cgi == nullptr)
             return nullptr;
 

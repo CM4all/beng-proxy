@@ -82,7 +82,7 @@ HasTrailingSlash(const char *p)
 }
 
 const char *
-CgiAddress::GetURI(struct pool *pool) const
+CgiAddress::GetURI(AllocatorPtr alloc) const
 {
     if (uri != nullptr)
         return uri;
@@ -92,7 +92,7 @@ CgiAddress::GetURI(struct pool *pool) const
         sn = "/";
 
     const char *pi = path_info;
-    const char *qm = nullptr;
+    const char *qm = "";
     const char *qs = query_string;
 
     if (pi == nullptr) {
@@ -104,13 +104,15 @@ CgiAddress::GetURI(struct pool *pool) const
 
     if (qs != nullptr)
         qm = "?";
+    else
+        qs = "";
 
     if (*pi == '/' && HasTrailingSlash(sn))
         /* avoid generating a double slash when concatenating
            script_name and path_info */
         ++pi;
 
-    return p_strcat(pool, sn, pi, qm, qs, nullptr);
+    return alloc.Concat(sn, pi, qm, qs);
 }
 
 const char *
@@ -176,27 +178,24 @@ CgiAddress::Clone(AllocatorPtr alloc) const
 }
 
 void
-CgiAddress::InsertQueryString(struct pool &pool, const char *new_query_string)
+CgiAddress::InsertQueryString(AllocatorPtr alloc, const char *new_query_string)
 {
     if (query_string != nullptr)
-        query_string = p_strcat(&pool, new_query_string, "&",
-                                query_string, nullptr);
+        query_string = alloc.Concat(new_query_string, "&", query_string);
     else
-        query_string = p_strdup(&pool, new_query_string);
+        query_string = alloc.Dup(new_query_string);
 }
 
 void
-CgiAddress::InsertArgs(struct pool &pool, StringView new_args,
+CgiAddress::InsertArgs(AllocatorPtr alloc, StringView new_args,
                        StringView new_path_info)
 {
-    uri = uri_insert_args(pool, uri, new_args, new_path_info);
+    uri = uri_insert_args(alloc, uri, new_args, new_path_info);
 
     if (path_info != nullptr)
-        path_info = p_strncat(&pool,
-                              path_info, strlen(path_info),
-                              ";", (size_t)1, new_args.data, new_args.size,
-                              new_path_info.data, new_path_info.size,
-                              nullptr);
+        path_info = alloc.Concat(path_info,
+                                 ';', new_args,
+                                 new_path_info);
 }
 
 bool
@@ -273,7 +272,7 @@ CgiAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 }
 
 const CgiAddress *
-CgiAddress::Apply(struct pool *pool,
+CgiAddress::Apply(AllocatorPtr alloc,
                   StringView relative) const
 {
     if (relative.empty())
@@ -293,8 +292,8 @@ CgiAddress::Apply(struct pool *pool,
 
     const char *new_path_info = path_info != nullptr ? path_info : "";
 
-    auto *dest = NewFromPool<CgiAddress>(*pool, ShallowCopy(), *this);
-    dest->path_info = uri_absolute(*pool, new_path_info,
+    auto *dest = alloc.New<CgiAddress>(ShallowCopy(), *this);
+    dest->path_info = uri_absolute(alloc, new_path_info,
                                    {unescaped, unescaped_length});
     assert(dest->path_info != nullptr);
     return dest;

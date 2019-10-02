@@ -106,7 +106,7 @@ struct CgiAddress {
     CgiAddress &operator=(const CgiAddress &) = delete;
 
     gcc_pure
-    const char *GetURI(struct pool *pool) const;
+    const char *GetURI(AllocatorPtr alloc) const;
 
     /**
      * Generates a string identifying the address.  This can be used as a
@@ -125,9 +125,9 @@ struct CgiAddress {
         return query_string != nullptr && *query_string != 0;
     }
 
-    void InsertQueryString(struct pool &pool, const char *new_query_string);
+    void InsertQueryString(AllocatorPtr alloc, const char *new_query_string);
 
-    void InsertArgs(struct pool &pool, StringView new_args,
+    void InsertArgs(AllocatorPtr alloc, StringView new_args,
                     StringView new_path_info);
 
     CgiAddress *Clone(AllocatorPtr alloc) const;
@@ -145,7 +145,7 @@ struct CgiAddress {
      * @return a new object on success, src if no change is needed,
      * nullptr on error
      */
-    const CgiAddress *Apply(struct pool *pool, StringView relative) const;
+    const CgiAddress *Apply(AllocatorPtr alloc, StringView relative) const;
 
     /**
      * Does this address need to be expanded with Expand()?

@@ -31,6 +31,7 @@
  */
 
 #include "cgi/Address.hxx"
+#include "AllocatorPtr.hxx"
 #include "TestPool.hxx"
 
 #include <gtest/gtest.h>
@@ -38,59 +39,61 @@
 TEST(CgiAddressTest, Uri)
 {
     TestPool pool;
+    AllocatorPtr alloc(pool);
 
     CgiAddress a("/usr/bin/cgi");
     ASSERT_EQ(false, a.IsExpandable());
-    ASSERT_STREQ(a.GetURI(pool), "/");
+    ASSERT_STREQ(a.GetURI(alloc), "/");
 
     a.script_name = "/";
-    ASSERT_STREQ(a.GetURI(pool), "/");
+    ASSERT_STREQ(a.GetURI(alloc), "/");
 
     a.path_info = "foo";
-    ASSERT_STREQ(a.GetURI(pool), "/foo");
+    ASSERT_STREQ(a.GetURI(alloc), "/foo");
 
     a.query_string = "";
-    ASSERT_STREQ(a.GetURI(pool), "/foo?");
+    ASSERT_STREQ(a.GetURI(alloc), "/foo?");
 
     a.query_string = "a=b";
-    ASSERT_STREQ(a.GetURI(pool), "/foo?a=b");
+    ASSERT_STREQ(a.GetURI(alloc), "/foo?a=b");
 
     a.path_info = "";
-    ASSERT_STREQ(a.GetURI(pool), "/?a=b");
+    ASSERT_STREQ(a.GetURI(alloc), "/?a=b");
 
     a.path_info = nullptr;
-    ASSERT_STREQ(a.GetURI(pool), "/?a=b");
+    ASSERT_STREQ(a.GetURI(alloc), "/?a=b");
 
     a.script_name = "/test.cgi";
     a.path_info = nullptr;
     a.query_string = nullptr;
-    ASSERT_STREQ(a.GetURI(pool), "/test.cgi");
+    ASSERT_STREQ(a.GetURI(alloc), "/test.cgi");
 
     a.path_info = "/foo";
-    ASSERT_STREQ(a.GetURI(pool), "/test.cgi/foo");
+    ASSERT_STREQ(a.GetURI(alloc), "/test.cgi/foo");
 
     a.script_name = "/bar/";
-    ASSERT_STREQ(a.GetURI(pool), "/bar/foo");
+    ASSERT_STREQ(a.GetURI(alloc), "/bar/foo");
 
     a.script_name = "/";
-    ASSERT_STREQ(a.GetURI(pool), "/foo");
+    ASSERT_STREQ(a.GetURI(alloc), "/foo");
 
     a.script_name = nullptr;
-    ASSERT_STREQ(a.GetURI(pool), "/foo");
+    ASSERT_STREQ(a.GetURI(alloc), "/foo");
 }
 
 TEST(CgiAddressTest, Apply)
 {
     TestPool pool;
+    AllocatorPtr alloc(pool);
 
     CgiAddress a("/usr/bin/cgi");
     a.script_name = "/test.pl";
     a.path_info = "/foo";
 
-    auto b = a.Apply(pool, "");
+    auto b = a.Apply(alloc, "");
     ASSERT_EQ((const CgiAddress *)&a, b);
 
-    b = a.Apply(pool, "bar");
+    b = a.Apply(alloc, "bar");
     ASSERT_NE(b, nullptr);
     ASSERT_NE(b, &a);
     ASSERT_EQ(false, b->IsValidBase());
@@ -101,7 +104,7 @@ TEST(CgiAddressTest, Apply)
     a.path_info = "/foo/";
     ASSERT_EQ(true, a.IsValidBase());
 
-    b = a.Apply(pool, "bar");
+    b = a.Apply(alloc, "bar");
     ASSERT_NE(b, nullptr);
     ASSERT_NE(b, &a);
     ASSERT_EQ(false, b->IsValidBase());
@@ -109,7 +112,7 @@ TEST(CgiAddressTest, Apply)
     ASSERT_STREQ(b->script_name, a.script_name);
     ASSERT_STREQ(b->path_info, "/foo/bar");
 
-    b = a.Apply(pool, "/bar");
+    b = a.Apply(alloc, "/bar");
     ASSERT_NE(b, nullptr);
     ASSERT_NE(b, &a);
     ASSERT_EQ(false, b->IsValidBase());

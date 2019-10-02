@@ -41,6 +41,7 @@
 #include "spawn/Prepared.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/CharUtil.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <sys/wait.h>
 #include <string.h>
@@ -84,7 +85,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
     p.SetEnv("REQUEST_METHOD", http_method_to_string(method));
     p.SetEnv("SCRIPT_FILENAME", path);
     p.SetEnv("PATH_TRANSLATED", path);
-    p.SetEnv("REQUEST_URI", address.GetURI(&pool));
+    p.SetEnv("REQUEST_URI", address.GetURI(pool));
     p.SetEnv("SCRIPT_NAME", StringFallback(address.script_name, ""));
     p.SetEnv("PATH_INFO", StringFallback(address.path_info, ""));
     p.SetEnv("QUERY_STRING", StringFallback(address.query_string, ""));
