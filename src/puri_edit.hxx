@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,12 +39,12 @@
 
 #include "util/Compiler.h"
 
-struct pool;
+class AllocatorPtr;
 struct StringView;
 
 gcc_pure
 const char *
-uri_insert_query_string(struct pool *pool, const char *uri,
+uri_insert_query_string(AllocatorPtr alloc, const char *uri,
                         const char *query_string);
 
 /**
@@ -53,17 +53,17 @@ uri_insert_query_string(struct pool *pool, const char *uri,
  */
 gcc_pure
 const char *
-uri_append_query_string_n(struct pool *pool, const char *uri,
+uri_append_query_string_n(AllocatorPtr alloc, const char *uri,
                           StringView query_string);
 
 gcc_pure
 const char *
-uri_delete_query_string(struct pool *pool, const char *uri,
+uri_delete_query_string(AllocatorPtr alloc, const char *uri,
                         StringView needle);
 
 gcc_pure
 const char *
-uri_insert_args(struct pool *pool, const char *uri,
+uri_insert_args(AllocatorPtr alloc, const char *uri,
                 StringView args, StringView path);
 
 #endif

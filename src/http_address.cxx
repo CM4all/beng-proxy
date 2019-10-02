@@ -199,7 +199,7 @@ HttpAddress::InsertQueryString(struct pool &pool,
                                const char *query_string) const
 {
     return http_address_with_path(pool, this,
-                                  uri_insert_query_string(&pool, path,
+                                  uri_insert_query_string(pool, path,
                                                           query_string));
 }
 
@@ -208,7 +208,7 @@ HttpAddress::InsertArgs(struct pool &pool,
                         StringView args, StringView path_info) const
 {
     return http_address_with_path(pool, this,
-                                  uri_insert_args(&pool, path,
+                                  uri_insert_args(pool, path,
                                                   args, path_info));
 }
 

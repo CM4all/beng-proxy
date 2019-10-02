@@ -217,7 +217,7 @@ Request::CheckHandleRedirect(const TranslateResponse &response)
                                  nullptr);
 
     if (response.redirect_query_string && !dissected_uri.query.IsNull())
-        redirect_uri = uri_append_query_string_n(&pool, redirect_uri,
+        redirect_uri = uri_append_query_string_n(pool, redirect_uri,
                                                  dissected_uri.query);
 
     DispatchRedirect(status, redirect_uri, response.message);

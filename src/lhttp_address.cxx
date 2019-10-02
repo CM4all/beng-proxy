@@ -130,7 +130,7 @@ LhttpAddress::InsertQueryString(struct pool &pool,
                                 const char *query_string) const noexcept
 {
     return NewFromPool<LhttpAddress>(pool, ShallowCopy(), *this,
-                                     uri_insert_query_string(&pool, uri, query_string));
+                                     uri_insert_query_string(pool, uri, query_string));
 }
 
 LhttpAddress *
@@ -139,7 +139,7 @@ LhttpAddress::InsertArgs(struct pool &pool,
                          StringView path_info) const noexcept
 {
     return NewFromPool<LhttpAddress>(pool, ShallowCopy(), *this,
-                                     uri_insert_args(&pool, uri,
+                                     uri_insert_args(pool, uri,
                                                      new_args, path_info));
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,7 +31,7 @@
  */
 
 #include "puri_edit.hxx"
-#include "pool/pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringView.hxx"
 
@@ -39,10 +39,9 @@
 #include <string.h>
 
 const char *
-uri_insert_query_string(struct pool *pool, const char *uri,
+uri_insert_query_string(AllocatorPtr alloc, const char *uri,
                         const char *query_string)
 {
-    assert(pool != nullptr);
     assert(uri != nullptr);
     assert(query_string != nullptr);
 
@@ -50,27 +49,24 @@ uri_insert_query_string(struct pool *pool, const char *uri,
 
     if (qmark != nullptr) {
         ++qmark;
-        return p_strncat(pool, uri, qmark - uri,
-                         query_string, strlen(query_string),
-                         "&", (size_t)1,
-                         qmark, strlen(qmark),
-                         nullptr);
+        return alloc.Concat(StringView(uri, qmark),
+                            query_string,
+                            '&',
+                            qmark);
     } else
-        return p_strcat(pool, uri, "?", query_string, nullptr);
+        return alloc.Concat(uri, '?', query_string);
 }
 
 const char *
-uri_append_query_string_n(struct pool *pool, const char *uri,
+uri_append_query_string_n(AllocatorPtr alloc, const char *uri,
                           StringView query_string)
 {
-    assert(pool != nullptr);
     assert(uri != nullptr);
     assert(!query_string.IsNull());
 
-    return p_strncat(pool, uri, strlen(uri),
-                     strchr(uri, '?') == nullptr ? "?" : "&", (size_t)1,
-                     query_string.data, query_string.size,
-                     nullptr);
+    return alloc.Concat(uri,
+                        strchr(uri, '?') == nullptr ? '?' : '&',
+                        query_string);
 }
 
 static size_t
@@ -92,10 +88,9 @@ query_string_begins_with(const char *query_string, StringView needle)
 }
 
 const char *
-uri_delete_query_string(struct pool *pool, const char *uri,
+uri_delete_query_string(AllocatorPtr alloc, const char *uri,
                         StringView needle)
 {
-    assert(pool != nullptr);
     assert(uri != nullptr);
     assert(!needle.IsNull());
 
@@ -116,22 +111,18 @@ uri_delete_query_string(struct pool *pool, const char *uri,
         ++delete_length;
     }
 
-    return p_strncat(pool, uri, p - uri,
-                     p + delete_length, strlen(p + delete_length),
-                     nullptr);
+    return alloc.Concat(StringView(uri, p),
+                        StringView(p + delete_length));
 }
 
 const char *
-uri_insert_args(struct pool *pool, const char *uri,
+uri_insert_args(AllocatorPtr alloc, const char *uri,
                 StringView args, StringView path)
 {
     const char *q = strchr(uri, '?');
     if (q == nullptr)
         q = uri + strlen(uri);
 
-    return p_strncat(pool, uri, q - uri,
-                     ";", (size_t)1, args.data, args.size,
-                     path.data, path.size,
-                     q, strlen(q),
-                     nullptr);
+    return alloc.Concat(StringView(uri, q),
+                        ';', args, path, q);
 }

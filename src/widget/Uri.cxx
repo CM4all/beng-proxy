@@ -62,11 +62,11 @@ Widget::GetBaseAddress(struct pool &_pool, bool stateful) const
     const auto &src_http = src->GetHttp();
     const char *const src_path = src_http.path;
 
-    const char *uri = uri_delete_query_string(&_pool, src_path,
+    const char *uri = uri_delete_query_string(_pool, src_path,
                                               from_template.query_string);
 
     if (!from_request.query_string.empty())
-        uri = uri_delete_query_string(&_pool, src_path,
+        uri = uri_delete_query_string(_pool, src_path,
                                       from_request.query_string);
 
     if (uri == src_path)
@@ -136,11 +136,11 @@ Widget::DetermineAddress(bool stateful) const
         }
 
         if (from_template.query_string != nullptr)
-            uri = uri_insert_query_string(&pool, uri,
+            uri = uri_insert_query_string(pool, uri,
                                           from_template.query_string);
 
         if (stateful && !from_request.query_string.IsNull())
-            uri = uri_append_query_string_n(&pool, uri,
+            uri = uri_append_query_string_n(pool, uri,
                                             from_request.query_string);
 
         return NewFromPool<ResourceAddress>(pool, original_address->WithPath(pool, uri));
@@ -160,11 +160,11 @@ Widget::DetermineAddress(bool stateful) const
         }
 
         if (from_template.query_string != nullptr)
-            uri = uri_insert_query_string(&pool, uri,
+            uri = uri_insert_query_string(pool, uri,
                                           from_template.query_string);
 
         if (stateful && !from_request.query_string.IsNull())
-            uri = uri_append_query_string_n(&pool, uri,
+            uri = uri_append_query_string_n(pool, uri,
                                             from_request.query_string);
 
         return NewFromPool<ResourceAddress>(pool, original_address->WithPath(pool, uri));
@@ -229,7 +229,7 @@ Widget::AbsoluteUri(struct pool &_pool, bool stateful,
         /* the relative_uri is non-empty, and uri_absolute() has
            removed the query string: re-add the configured query
            string */
-        uri = uri_insert_query_string(&_pool, uri,
+        uri = uri_insert_query_string(_pool, uri,
                                       from_template.query_string);
 
     return uwa->GetAbsoluteURI(AllocatorPtr(_pool), uri);
@@ -310,7 +310,7 @@ Widget::ExternalUri(struct pool &_pool,
         /* no query string in relative_uri: if there is one in the new
            URI, check it and remove the configured parameters */
         const char *uri =
-            uri_delete_query_string(tpool, p_strdup(*tpool, p),
+            uri_delete_query_string(*tpool, p_strdup(*tpool, p),
                                     from_template.query_string);
         p = uri;
     }

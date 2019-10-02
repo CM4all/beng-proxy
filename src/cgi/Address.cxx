@@ -189,7 +189,7 @@ void
 CgiAddress::InsertArgs(struct pool &pool, StringView new_args,
                        StringView new_path_info)
 {
-    uri = uri_insert_args(&pool, uri, new_args, new_path_info);
+    uri = uri_insert_args(pool, uri, new_args, new_path_info);
 
     if (path_info != nullptr)
         path_info = p_strncat(&pool,
