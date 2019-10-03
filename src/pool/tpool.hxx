@@ -41,9 +41,9 @@
 extern struct pool *tpool;
 
 void
-tpool_init(struct pool *parent);
+tpool_init(struct pool *parent) noexcept;
 
 void
-tpool_deinit();
+tpool_deinit() noexcept;
 
 #endif

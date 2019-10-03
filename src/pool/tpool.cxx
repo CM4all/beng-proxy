@@ -38,7 +38,7 @@
 struct pool *tpool;
 
 void
-tpool_init(struct pool *parent)
+tpool_init(struct pool *parent) noexcept
 {
     assert(tpool == nullptr);
 
@@ -46,7 +46,7 @@ tpool_init(struct pool *parent)
 }
 
 void
-tpool_deinit()
+tpool_deinit() noexcept
 {
     gcc_unused unsigned ref;
     ref = pool_unref(tpool);
