@@ -73,12 +73,12 @@ LbControl::InvalidateTranslationCache(ConstBuffer<void> payload,
         return;
     }
 
-    const AutoRewindPool auto_rewind(*tpool);
+    const TempPoolLease tpool;
 
     TranslationInvalidateRequest request;
 
     try {
-        request = ParseTranslationInvalidateRequest(*tpool, payload.data,
+        request = ParseTranslationInvalidateRequest(tpool, payload.data,
                                                     payload.size);
     } catch (...) {
         logger(2, "malformed TCACHE_INVALIDATE control packet: ",
@@ -106,7 +106,7 @@ LbControl::EnableNode(const char *payload, size_t length)
         return;
     }
 
-    const AutoRewindPool auto_rewind(*tpool);
+    const TempPoolLease tpool;
 
     char *node_name = p_strndup(tpool, payload, length);
     char *port_string = node_name + (colon - payload);
@@ -144,7 +144,7 @@ LbControl::FadeNode(const char *payload, size_t length)
         return;
     }
 
-    const AutoRewindPool auto_rewind(*tpool);
+    const TempPoolLease tpool;
 
     char *node_name = p_strndup(tpool, payload, length);
     char *port_string = node_name + (colon - payload);
@@ -197,13 +197,14 @@ failure_status_to_string(FailureStatus status)
 
 static void
 node_status_response(ControlServer *server,
+                     struct pool &pool,
                      SocketAddress address,
                      StringView payload, const char *status)
 {
     size_t status_length = strlen(status);
 
     size_t response_length = payload.size + 1 + status_length;
-    char *response = PoolAlloc<char>(*tpool, response_length);
+    char *response = PoolAlloc<char>(pool, response_length);
     memcpy(response, payload.data, payload.size);
     response[payload.size] = 0;
     memcpy(response + payload.size + 1, status, status_length);
@@ -222,24 +223,24 @@ try {
         return;
     }
 
+    const TempPoolLease tpool;
+
     const char *colon = payload.Find(':');
     if (colon == nullptr || colon == payload.data || colon == payload.data + payload.size - 1) {
         logger(3, "malformed NODE_STATUS control packet: no port");
-        node_status_response(&control_server, address,
+        node_status_response(&control_server, tpool, address,
                              payload, "malformed");
         return;
     }
 
-    const AutoRewindPool auto_rewind(*tpool);
-
-    char *node_name = p_strdup(*tpool, payload);
+    char *node_name = p_strdup(tpool, payload);
     char *port_string = node_name + (colon - payload.data);
     *port_string++ = 0;
 
     const auto *node = instance.config.FindNode(node_name);
     if (node == nullptr) {
         logger(3, "unknown node in NODE_STATUS control packet");
-        node_status_response(&control_server, address,
+        node_status_response(&control_server, tpool, address,
                              payload, "unknown");
         return;
     }
@@ -248,7 +249,7 @@ try {
     unsigned port = strtoul(port_string, &endptr, 10);
     if (port == 0 || *endptr != 0) {
         logger(3, "malformed NODE_STATUS control packet: port is not a number");
-        node_status_response(&control_server, address,
+        node_status_response(&control_server, tpool, address,
                              payload, "malformed");
         return;
     }
@@ -259,7 +260,7 @@ try {
                                                with_port);
     const char *s = failure_status_to_string(status);
 
-    node_status_response(&control_server, address,
+    node_status_response(&control_server, tpool, address,
                          payload, s);
 } catch (...) {
     logger(3, std::current_exception());

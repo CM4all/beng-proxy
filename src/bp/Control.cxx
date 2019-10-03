@@ -70,7 +70,7 @@ control_tcache_invalidate(BpInstance *instance, ConstBuffer<void> payload)
         return;
     }
 
-    const AutoRewindPool auto_rewind(*tpool);
+    const TempPoolLease tpool;
 
     TranslationInvalidateRequest request;
 

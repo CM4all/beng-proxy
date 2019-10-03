@@ -257,7 +257,7 @@ CgiAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 {
     assert(suffix != nullptr);
 
-    const AutoRewindPool auto_rewind(*tpool);
+    const TempPoolLease tpool;
 
     char *unescaped = uri_unescape_dup(*tpool, suffix);
     if (unescaped == nullptr)
@@ -282,7 +282,7 @@ CgiAddress::Apply(struct pool *pool,
     if (uri_has_authority(relative))
         return nullptr;
 
-    const AutoRewindPool auto_rewind(*tpool, *pool);
+    const TempPoolLease tpool;
 
     char *unescaped = (char *)p_malloc(tpool, relative.size);
     char *unescaped_end = uri_unescape(unescaped, relative);

@@ -296,7 +296,7 @@ Widget::ExternalUri(struct pool &_pool,
         cls == &root_widget_class)
         return nullptr;
 
-    const AutoRewindPool auto_rewind(*tpool, _pool);
+    const TempPoolLease tpool;
 
     if (!relative_uri.IsNull()) {
         p = RelativeUri(*tpool, stateful, relative_uri);

@@ -48,7 +48,7 @@
 static void
 put_random(HttpCacheHeap *cache)
 {
-    const AutoRewindPool auto_rewind(*tpool);
+    const TempPoolLease tpool;
 
     char uri[8];
     uri[0] = '0' + random() % 10;

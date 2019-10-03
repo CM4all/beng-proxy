@@ -348,10 +348,9 @@ UriRewriter::ResolverCallback() noexcept
                 widget.session_sync_pending = false;
         }
 
-        struct pool_mark_state mark;
+        const TempPoolLease tpool;
         bool is_unescaped = value.Find('&') != nullptr;
         if (is_unescaped) {
-            pool_mark(tpool, &mark);
             char *unescaped = (char *)p_memdup(tpool, value.data, value.size);
             value.size = unescape_inplace(escape, unescaped, value.size);
             value.data = unescaped;
@@ -360,10 +359,6 @@ UriRewriter::ResolverCallback() noexcept
         uri = do_rewrite_widget_uri(pool, env, widget,
                                     value, mode, stateful,
                                     view);
-
-        if (is_unescaped)
-            pool_rewind(tpool, &mark);
-
         if (uri != nullptr) {
             value = uri;
             escape_flag = true;
@@ -419,22 +414,16 @@ rewrite_widget_uri(struct pool &pool,
                specified */
             return nullptr;
 
-        struct pool_mark_state mark;
-        bool is_unescaped = false;
+        const TempPoolLease tpool;
         if (escape != nullptr && !value.IsNull() &&
             unescape_find(escape, value) != nullptr) {
-            pool_mark(tpool, &mark);
             char *unescaped = (char *)p_memdup(tpool, value.data, value.size);
             value.size = unescape_inplace(escape, unescaped, value.size);
             value.data = unescaped;
-            is_unescaped = true;
         }
 
         uri = do_rewrite_widget_uri(pool, env, widget, value, mode, stateful,
                                     view);
-        if (is_unescaped)
-            pool_rewind(tpool, &mark);
-
         if (uri == nullptr)
             return nullptr;
 

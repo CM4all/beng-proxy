@@ -88,10 +88,10 @@ cookie_list_delete_match(struct dpool &dpool, L &list,
 }
 
 static Cookie *
-parse_next_cookie(struct dpool &pool, StringView &input)
+parse_next_cookie(struct dpool &pool, struct pool &tpool, StringView &input)
 {
     StringView name, value;
-    cookie_next_name_value(*tpool, input, name, value, false);
+    cookie_next_name_value(tpool, input, name, value, false);
     if (name.empty())
         return nullptr;
 
@@ -101,7 +101,7 @@ parse_next_cookie(struct dpool &pool, StringView &input)
     while (!input.empty() && input.front() == ';') {
         input.pop_front();
 
-        http_next_name_value(*tpool, input, name, value);
+        http_next_name_value(tpool, input, name, value);
         if (name.EqualsIgnoreCase("domain"))
             cookie->domain = d_strdup(pool, value);
         else if (name.EqualsIgnoreCase("path"))
@@ -110,7 +110,7 @@ parse_next_cookie(struct dpool &pool, StringView &input)
             unsigned long seconds;
             char *endptr;
 
-            seconds = strtoul(p_strdup(*tpool, value), &endptr, 10);
+            seconds = strtoul(p_strdup(tpool, value), &endptr, 10);
             if (*endptr == 0) {
                 if (seconds == 0)
                     cookie->expires = Expiry::AlreadyExpired();
@@ -126,12 +126,12 @@ parse_next_cookie(struct dpool &pool, StringView &input)
 }
 
 static bool
-apply_next_cookie(CookieJar &jar, StringView &input,
+apply_next_cookie(CookieJar &jar, struct pool &tpool, StringView &input,
                   const char *domain, const char *path)
 {
     assert(domain != nullptr);
 
-    auto *cookie = parse_next_cookie(jar.pool, input);
+    auto *cookie = parse_next_cookie(jar.pool, tpool, input);
     if (cookie == nullptr)
         return false;
 
@@ -170,11 +170,11 @@ void
 cookie_jar_set_cookie2(CookieJar &jar, const char *value,
                        const char *domain, const char *path)
 try {
-    const AutoRewindPool auto_rewind(*tpool);
+    const TempPoolLease tpool;
 
     StringView input = value;
     while (1) {
-        if (!apply_next_cookie(jar, input, domain, path))
+        if (!apply_next_cookie(jar, tpool, input, domain, path))
             break;
 
         if (input.empty())
@@ -204,7 +204,7 @@ cookie_jar_http_header_value(const CookieJar &jar,
     if (jar.cookies.empty())
         return nullptr;
 
-    const AutoRewindPool auto_rewind(*tpool, pool);
+    const TempPoolLease tpool;
 
     char *buffer = (char *)p_malloc(tpool, buffer_size);
 

@@ -733,7 +733,7 @@ tcache_expand_response(AllocatorPtr alloc, TranslateResponse &response,
     assert(response.regex != nullptr);
     assert(response.base != nullptr);
 
-    const AutoRewindPool auto_rewind(*tpool);
+    const TempPoolLease tpool;
 
     if (response.regex_on_host_uri && strchr(host, '/') != nullptr)
         throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
@@ -946,7 +946,7 @@ tcache_item_match(const CacheItem *_item, void *ctx)
            a "BASE" packet */
         return false;
 
-    const AutoRewindPool auto_rewind(*tpool);
+    const TempPoolLease tpool;
 
     if (item.response.base != nullptr && item.inverse_regex.IsDefined()) {
         auto input = tcache_regex_input(tpool, request.uri, request.host,

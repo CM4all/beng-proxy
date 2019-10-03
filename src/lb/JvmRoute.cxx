@@ -45,7 +45,7 @@ sticky_hash_t
 lb_jvm_route_get(const StringMap &request_headers,
                  const LbClusterConfig &cluster)
 {
-    const AutoRewindPool auto_rewind(*tpool);
+    const TempPoolLease tpool;
 
     const char *cookie = request_headers.Get("cookie");
     if (cookie == NULL)

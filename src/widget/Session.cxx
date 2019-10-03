@@ -55,7 +55,7 @@ Widget::GetSession(RealmSession &session, bool create) noexcept
             if (parent_session == nullptr)
                 return nullptr;
 
-            const AutoRewindPool auto_rewind(*tpool);
+            const TempPoolLease tpool;
             return parent_session->GetChild(id, create);
         }
 
@@ -65,7 +65,7 @@ Widget::GetSession(RealmSession &session, bool create) noexcept
            specific) */
 
         {
-            const AutoRewindPool auto_rewind(*tpool);
+            const TempPoolLease tpool;
             return session.GetWidget(id, create);
         }
     }

@@ -518,7 +518,7 @@ was_stock_get(StockMap *hstock, struct pool *pool,
               StockGetHandler &handler,
               CancellablePointer &cancel_ptr) noexcept
 {
-    const AutoRewindPool auto_rewind(*tpool);
+    const TempPoolLease tpool;
 
     auto params = NewFromPool<WasChildParams>(*pool, executable_path, args,
                                               options);

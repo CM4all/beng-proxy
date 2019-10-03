@@ -35,21 +35,22 @@
 
 #include <assert.h>
 
-struct pool *tpool;
+struct pool *tpool_singleton;
+unsigned tpool_users;
 
 void
 tpool_init(struct pool *parent) noexcept
 {
-    assert(tpool == nullptr);
+    assert(tpool_singleton == nullptr);
 
-    tpool = pool_new_linear(parent, "temporary_pool", 32768).release();
+    tpool_singleton = pool_new_linear(parent, "temporary_pool", 32768).release();
 }
 
 void
 tpool_deinit() noexcept
 {
     gcc_unused unsigned ref;
-    ref = pool_unref(tpool);
+    ref = pool_unref(tpool_singleton);
     assert(ref == 0);
-    tpool = nullptr;
+    tpool_singleton = nullptr;
 }

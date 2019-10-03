@@ -1426,9 +1426,10 @@ header_name_valid(const char *name, size_t length) noexcept
 
 static void
 expansible_buffer_append_uri_escaped(ExpansibleBuffer &buffer,
+                                     struct pool &tpool,
                                      StringView value) noexcept
 {
-    char *escaped = (char *)p_malloc(tpool, value.size * 3);
+    char *escaped = (char *)p_malloc(&tpool, value.size * 3);
     size_t length = uri_escape(escaped, StringView(value.data, value.size));
     buffer.Write(escaped, length);
 }
@@ -1462,7 +1463,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
         if (widget.param.name.IsEmpty())
             return true;
 
-        const AutoRewindPool auto_rewind(*tpool);
+        const TempPoolLease tpool;
 
         auto value = widget.param.value.ReadStringView();
         if (value.Find('&') != nullptr) {
@@ -1475,11 +1476,11 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
             widget.params.Write("&", 1);
 
         const auto name = widget.param.name.ReadStringView();
-        expansible_buffer_append_uri_escaped(widget.params, name);
+        expansible_buffer_append_uri_escaped(widget.params, tpool, name);
 
         widget.params.Write("=", 1);
 
-        expansible_buffer_append_uri_escaped(widget.params, value);
+        expansible_buffer_append_uri_escaped(widget.params, tpool, value);
     } else if (tag == Tag::WIDGET_HEADER) {
         assert(widget.widget != nullptr);
 

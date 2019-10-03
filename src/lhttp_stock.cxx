@@ -359,8 +359,7 @@ lhttp_stock_get(LhttpStock *lhttp_stock,
         void *out;
     } deconst = { .in = address };
 
-    const AutoRewindPool auto_rewind(*tpool);
-
+    const TempPoolLease tpool;
     return lhttp_stock->GetConnectionStock().GetNow(lhttp_stock_key(tpool, address),
                                                     deconst.out);
 }

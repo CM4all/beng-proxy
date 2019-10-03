@@ -458,7 +458,7 @@ FcgiStock::Get(const ChildOptions &options,
                const char *executable_path,
                ConstBuffer<const char *> args)
 {
-    const AutoRewindPool auto_rewind(*tpool);
+    const TempPoolLease tpool;
 
     auto params = NewFromPool<FcgiChildParams>(*tpool, executable_path,
                                                args, options);

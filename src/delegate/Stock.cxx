@@ -212,7 +212,7 @@ delegate_stock_get(StockMap *delegate_stock,
                    const char *helper,
                    const ChildOptions &options)
 {
-    const AutoRewindPool auto_rewind(*tpool);
+    const TempPoolLease tpool;
     DelegateArgs args(helper, options);
     return delegate_stock->GetNow(args.GetStockKey(*tpool), &args);
 }

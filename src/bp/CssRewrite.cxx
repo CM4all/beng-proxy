@@ -123,7 +123,7 @@ css_rewrite_block_uris(struct pool &pool,
     struct css_rewrite rewrite;
 
     {
-        const AutoRewindPool auto_rewind(*tpool);
+        const TempPoolLease tpool;
 
         rewrite.parser = css_parser_new(*tpool,
                                         istream_memory_new(*tpool, block.data,

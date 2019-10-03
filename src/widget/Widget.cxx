@@ -125,7 +125,7 @@ Widget::SetId(const StringView _id)
 
     p = parent->GetPrefix();
     if (p != nullptr) {
-        const AutoRewindPool auto_rewind(*tpool);
+        const TempPoolLease tpool;
         prefix = p_strcat(&pool, p, quote_prefix(tpool, id), "__", nullptr);
     }
 }
