@@ -58,32 +58,6 @@ struct AllocatorStats;
 class PoolPtr;
 class PoolLeakDetector;
 
-struct pool_mark_state {
-    /**
-     * The area that was current when the mark was set.
-     */
-    struct linear_pool_area *area;
-
-    /**
-     * The area before #area.  This is used to dispose areas that were
-     * inserted before the current area due to a large allocation.
-     */
-    struct linear_pool_area *prev;
-
-    /**
-     * The position within the current area when the mark was set.
-     */
-    size_t position;
-
-#ifndef NDEBUG
-    /**
-     * Used in an assertion: if the pool was empty before pool_mark(),
-     * it must be empty again after pool_rewind().
-     */
-    bool was_empty;
-#endif
-};
-
 template<typename T> struct ConstBuffer;
 struct StringView;
 
@@ -278,40 +252,6 @@ pool_detach(struct pool *pool, const void *p) noexcept;
  */
 void
 pool_clear(struct pool &pool) noexcept;
-
-void
-pool_mark(struct pool *pool, struct pool_mark_state *mark) noexcept;
-
-void
-pool_rewind(struct pool *pool, const struct pool_mark_state *mark) noexcept;
-
-class AutoRewindPool {
-    struct pool *const pool;
-    pool_mark_state mark;
-
-public:
-    AutoRewindPool(struct pool &_pool) noexcept:pool(&_pool) {
-        pool_mark(pool, &mark);
-    }
-
-    /**
-     * @param result_pool the pool where the caller's result will be
-     * put, and it must outlive this object; therefore, if it is the
-     * same pool as #_pool, this class is a no-op
-     */
-    AutoRewindPool(struct pool &_pool, struct pool &result_pool) noexcept
-        :pool(&_pool != &result_pool ? &_pool : nullptr) {
-        if (pool != nullptr)
-            pool_mark(pool, &mark);
-    }
-
-    AutoRewindPool(const AutoRewindPool &) = delete;
-
-    ~AutoRewindPool() noexcept {
-        if (pool != nullptr)
-            pool_rewind(pool, &mark);
-    }
-};
 
 gcc_malloc gcc_returns_nonnull
 void *
