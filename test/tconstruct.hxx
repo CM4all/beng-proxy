@@ -41,7 +41,6 @@
 #include "spawn/NamespaceOptions.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool/pool.hxx"
-#include "pool/tpool.hxx"
 
 #include <string.h>
 
@@ -77,21 +76,24 @@ struct MakeRequest : TranslateRequest {
 };
 
 struct MakeResponse : TranslateResponse {
-    MakeResponse() {
+    struct pool &pool;
+
+    explicit MakeResponse(struct pool &_pool) noexcept
+        :pool(_pool)
+    {
         Clear();
     }
 
-    MakeResponse(const MakeResponse &src):TranslateResponse() {
-        FullCopyFrom(*tpool, src);
+    MakeResponse(struct pool &_pool, const TranslateResponse &src)
+        :pool(_pool)
+    {
+        FullCopyFrom(pool, src);
     }
 
-    MakeResponse(struct pool &p, const TranslateResponse &src) {
-        FullCopyFrom(p, src);
-    }
-
-    explicit MakeResponse(const ResourceAddress &_address,
+    explicit MakeResponse(struct pool &_pool,
+                          const ResourceAddress &_address,
                           const char *_base=nullptr)
-        :MakeResponse()
+        :MakeResponse(_pool)
     {
         address = {ShallowCopy(), _address};
         base = _base;
@@ -167,12 +169,11 @@ struct MakeResponse : TranslateResponse {
     }
 
     MakeResponse &&File(FileAddress &&_file) {
-        return File(*NewFromPool<FileAddress>(*tpool, *tpool, _file));
+        return File(*NewFromPool<FileAddress>(pool, pool, _file));
     }
 
     MakeResponse &&File(const char *_path) {
-        struct pool &p = *tpool;
-        auto f = NewFromPool<FileAddress>(p, _path);
+        auto f = NewFromPool<FileAddress>(pool, _path);
         address = *f;
         return std::move(*this);
     }
@@ -183,7 +184,7 @@ struct MakeResponse : TranslateResponse {
     }
 
     MakeResponse &&Http(struct HttpAddress &&_http) {
-        return Http(*NewFromPool<HttpAddress>(*tpool, *tpool, _http));
+        return Http(*NewFromPool<HttpAddress>(pool, pool, _http));
     }
 
     MakeResponse &&Cgi(const CgiAddress &_cgi) {
@@ -192,23 +193,20 @@ struct MakeResponse : TranslateResponse {
     }
 
     MakeResponse &&Cgi(CgiAddress &&_cgi) {
-        return Cgi(*_cgi.Clone(*tpool));
+        return Cgi(*_cgi.Clone(pool));
     }
 
     MakeResponse &&Cgi(const char *_path, const char *_uri=nullptr,
                        const char *_path_info=nullptr) {
-        struct pool &p = *tpool;
-        auto cgi = NewFromPool<CgiAddress>(p, _path);
+        auto cgi = NewFromPool<CgiAddress>(pool, _path);
         cgi->uri = _uri;
         cgi->path_info = _path_info;
         return Cgi(*cgi);
     }
 
     void AppendTransformation(Transformation *t) {
-        struct pool &p = *tpool;
-
         if (views == nullptr) {
-            views = NewFromPool<WidgetView>(p, nullptr);
+            views = NewFromPool<WidgetView>(pool, nullptr);
         }
 
         Transformation **tail = &views->transformation;
@@ -219,15 +217,14 @@ struct MakeResponse : TranslateResponse {
     }
 
     MakeResponse &&Filter(const CgiAddress &_cgi) {
-        struct pool &p = *tpool;
-        auto t = NewFromPool<Transformation>(p, FilterTransformation{});
+        auto t = NewFromPool<Transformation>(pool, FilterTransformation{});
         t->u.filter.address = ResourceAddress(ResourceAddress::Type::CGI, _cgi);
         AppendTransformation(t);
         return std::move(*this);
     }
 
     MakeResponse &&Filter(CgiAddress &&_cgi) {
-        return Filter(*_cgi.Clone(*tpool));
+        return Filter(*_cgi.Clone(pool));
     }
 
     template<size_t n>
@@ -280,9 +277,13 @@ struct MakeHttpAddress : HttpAddress {
 };
 
 struct MakeCgiAddress : CgiAddress {
-    explicit MakeCgiAddress(const char *_path, const char *_uri=nullptr,
+    struct pool &pool;
+
+    explicit MakeCgiAddress(struct pool &_pool,
+                            const char *_path, const char *_uri=nullptr,
                             const char *_path_info=nullptr)
-        :CgiAddress(_path) {
+        :CgiAddress(_path), pool(_pool)
+    {
         uri = _uri;
         path_info = _path_info;
     }
@@ -306,8 +307,7 @@ struct MakeCgiAddress : CgiAddress {
     MakeCgiAddress &&BindMount(const char *_source, const char *_target,
                                bool _expand_source=false,
                                bool _writable=false) {
-        auto &p = *tpool;
-        auto *m = NewFromPool<MountList>(p, _source, _target,
+        auto *m = NewFromPool<MountList>(pool, _source, _target,
                                          _expand_source, _writable);
         m->next = options.ns.mount.mounts;
         options.ns.mount.mounts = m;

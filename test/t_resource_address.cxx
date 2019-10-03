@@ -46,21 +46,21 @@ TEST(ResourceAddressTest, AutoBase)
     TestPool pool;
 
     static const auto cgi0 =
-        MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, "/");
+        MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.pl", nullptr, "/");
     static constexpr ResourceAddress ra0(ResourceAddress::Type::CGI, cgi0);
 
     ASSERT_EQ(ra0.AutoBase(*pool, "/"), nullptr);
     ASSERT_EQ(ra0.AutoBase(*pool, "/foo"), nullptr);
 
     static const auto cgi1 =
-        MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, "foo/bar");
+        MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.pl", nullptr, "foo/bar");
     static constexpr ResourceAddress ra1(ResourceAddress::Type::CGI, cgi1);
 
     ASSERT_EQ(ra1.AutoBase(*pool, "/"), nullptr);
     ASSERT_EQ(ra1.AutoBase(*pool, "/foo/bar"), nullptr);
 
     static const auto cgi2 =
-        MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, "/bar/baz");
+        MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.pl", nullptr, "/bar/baz");
     static constexpr ResourceAddress ra2(ResourceAddress::Type::CGI, cgi2);
 
     ASSERT_EQ(ra2.AutoBase(*pool, "/"), nullptr);
@@ -75,7 +75,7 @@ TEST(ResourceAddressTest, BaseNoPathInfo)
 {
     TestPool pool;
 
-    static const auto cgi0 = MakeCgiAddress("/usr/lib/cgi-bin/foo.pl");
+    static const auto cgi0 = MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.pl");
     static constexpr ResourceAddress ra0(ResourceAddress::Type::CGI, cgi0);
 
     auto dest = ra0.SaveBase(*pool, "");
@@ -97,7 +97,7 @@ TEST(ResourceAddressTest, CgiApply)
     TestPool pool;
 
     static const auto cgi0 =
-        MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, "/foo/");
+        MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.pl", nullptr, "/foo/");
     static constexpr ResourceAddress ra0(ResourceAddress::Type::CGI, cgi0);
 
     auto result = ra0.Apply(*pool, "");
@@ -119,6 +119,8 @@ TEST(ResourceAddressTest, CgiApply)
 
 TEST(ResourceAddressTest, Basic)
 {
+    TestPool pool;
+
     static const FileAddress file1("/var/www/foo/bar.html");
     static constexpr ResourceAddress ra1(file1);
 
@@ -126,12 +128,10 @@ TEST(ResourceAddressTest, Basic)
     static constexpr ResourceAddress ra2(file2);
 
     static const auto cgi3 =
-        MakeCgiAddress("/usr/lib/cgi-bin/foo.pl",
+        MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.pl",
                        "/foo/bar/baz",
                        "/bar/baz");
     static constexpr ResourceAddress ra3(ResourceAddress::Type::CGI, cgi3);
-
-    TestPool pool;
 
     auto a = ra1.SaveBase(*pool, "bar.html");
     ASSERT_TRUE(a.IsDefined());
