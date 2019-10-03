@@ -938,7 +938,9 @@ pool_clear(struct pool &pool) noexcept
     assert(pool.leaks.empty());
     assert(pool.attachments.empty());
 
+#ifndef NDEBUG
     pool.allocations.clear();
+#endif
 
     switch (pool.type) {
     case POOL_LIBC:
