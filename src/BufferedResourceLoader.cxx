@@ -111,10 +111,15 @@ private:
                          method, address, status, std::move(headers),
                          std::move(i), body_etag,
                          handler, cancel_ptr);
+
+        // TODO: destruct before invoking next.SendRequest()
+        Destroy();
     }
 
     void OnBufferedIstreamError(std::exception_ptr e) noexcept override {
-        handler.InvokeError(std::move(e));
+        auto &_handler = handler;
+        Destroy();
+        _handler.InvokeError(std::move(e));
     }
 };
 
