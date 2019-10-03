@@ -36,11 +36,12 @@
 #include "istream/BufferedIstream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
+#include "pool/LeakDetector.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
 
 class BufferedResourceLoader::Request final
-    : Cancellable, BufferedIstreamHandler
+    : PoolLeakDetector, Cancellable, BufferedIstreamHandler
 {
     struct pool &pool;
     ResourceLoader &next;
@@ -68,7 +69,8 @@ public:
             const char *_body_etag,
             HttpResponseHandler &_handler,
             CancellablePointer &_cancel_ptr) noexcept
-        :pool(_pool), next(_next), parent_stopwatch(_parent_stopwatch),
+        :PoolLeakDetector(_pool), pool(_pool),
+         next(_next), parent_stopwatch(_parent_stopwatch),
          session_sticky(_session_sticky),
          cache_tag(_cache_tag),
          site_name(_site_name),
