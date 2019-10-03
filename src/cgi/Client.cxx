@@ -140,8 +140,10 @@ CGIClient::ReturnResponse()
 
         buffer.Free();
         input.ClearAndClose();
-        handler.InvokeResponse(status, std::move(headers), UnusedIstreamPtr());
+
+        auto &_handler = handler;
         Destroy();
+        _handler.InvokeResponse(status, std::move(headers), UnusedIstreamPtr());
         return false;
     } else if (parser.IsEOF()) {
         /* the response body is empty */
@@ -150,9 +152,10 @@ CGIClient::ReturnResponse()
 
         buffer.Free();
         input.ClearAndClose();
-        handler.InvokeResponse(status, std::move(headers),
-                               istream_null_new(GetPool()));
+        auto &_handler = handler;
         Destroy();
+        _handler.InvokeResponse(status, std::move(headers),
+                                istream_null_new(GetPool()));
         return false;
     } else {
         stopwatch.RecordEvent("headers");
@@ -214,8 +217,9 @@ try {
 } catch (...) {
     buffer.Free();
     input.ClearAndClose();
-    handler.InvokeError(std::current_exception());
+    auto &_handler = handler;
     Destroy();
+    _handler.InvokeError(std::current_exception());
     return 0;
 }
 
@@ -356,8 +360,9 @@ CGIClient::OnEof() noexcept
 
         buffer.Free();
 
-        handler.InvokeError(std::make_exception_ptr(CgiError("premature end of headers from CGI script")));
+        auto &_handler = handler;
         Destroy();
+        _handler.InvokeError(std::make_exception_ptr(CgiError("premature end of headers from CGI script")));
     } else if (parser.DoesRequireMore()) {
         stopwatch.RecordEvent("malformed");
 
@@ -386,9 +391,10 @@ CGIClient::OnError(std::exception_ptr ep) noexcept
 
         buffer.Free();
 
-        handler.InvokeError(NestException(ep,
-                                          std::runtime_error("CGI request body failed")));
+        auto &_handler = handler;
         Destroy();
+        _handler.InvokeError(NestException(ep,
+                                           std::runtime_error("CGI request body failed")));
     } else {
         /* response has been sent: abort only the output stream */
         buffer.Free();
