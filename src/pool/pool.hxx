@@ -273,6 +273,12 @@ pool_detach(struct pool *pool, const void *p) noexcept;
 
 #endif
 
+/**
+ * Free all allocations.
+ */
+void
+pool_clear(struct pool &pool) noexcept;
+
 void
 pool_mark(struct pool *pool, struct pool_mark_state *mark) noexcept;
 

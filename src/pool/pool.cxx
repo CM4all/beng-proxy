@@ -659,19 +659,7 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
     pool->unrefs.clear();
 #endif
 
-    switch (pool->type) {
-    case POOL_LIBC:
-        pool->current_area.libc.clear_and_dispose(libc_pool_chunk::Disposer());
-        break;
-
-    case POOL_LINEAR:
-        while (pool->current_area.linear != nullptr) {
-            struct linear_pool_area *area = pool->current_area.linear;
-            pool->current_area.linear = area->prev;
-            pool_dispose_linear_area(pool, area);
-        }
-        break;
-    }
+    pool_clear(*pool);
 
     recycler.pools.Put(pool);
 }
@@ -943,6 +931,29 @@ pool_contains(const struct pool &pool, const void *ptr, size_t size) noexcept
 }
 
 #endif
+
+void
+pool_clear(struct pool &pool) noexcept
+{
+    assert(pool.leaks.empty());
+    assert(pool.attachments.empty());
+
+    pool.allocations.clear();
+
+    switch (pool.type) {
+    case POOL_LIBC:
+        pool.current_area.libc.clear_and_dispose(libc_pool_chunk::Disposer());
+        break;
+
+    case POOL_LINEAR:
+        while (pool.current_area.linear != nullptr) {
+            struct linear_pool_area *area = pool.current_area.linear;
+            pool.current_area.linear = area->prev;
+            pool_dispose_linear_area(&pool, area);
+        }
+        break;
+    }
+}
 
 void
 pool_mark(struct pool *pool, struct pool_mark_state *mark) noexcept
