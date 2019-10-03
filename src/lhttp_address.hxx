@@ -142,7 +142,7 @@ struct LhttpAddress {
      * query string into the URI.
      */
     gcc_malloc
-    LhttpAddress *InsertQueryString(struct pool &pool,
+    LhttpAddress *InsertQueryString(AllocatorPtr alloc,
                                     const char *query_string) const noexcept;
 
     /**
@@ -150,7 +150,7 @@ struct LhttpAddress {
      * arguments into the URI.
      */
     gcc_malloc
-    LhttpAddress *InsertArgs(struct pool &pool,
+    LhttpAddress *InsertArgs(AllocatorPtr alloc,
                              StringView new_args,
                              StringView path_info) const noexcept;
 
@@ -167,7 +167,7 @@ struct LhttpAddress {
      * @return a new object on success, src if no change is needed, nullptr
      * on error
      */
-    const LhttpAddress *Apply(struct pool *pool,
+    const LhttpAddress *Apply(AllocatorPtr alloc,
                               StringView relative) const noexcept;
 
     gcc_pure

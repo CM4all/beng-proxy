@@ -126,21 +126,22 @@ LhttpAddress::HasQueryString() const noexcept
 }
 
 LhttpAddress *
-LhttpAddress::InsertQueryString(struct pool &pool,
+LhttpAddress::InsertQueryString(AllocatorPtr alloc,
                                 const char *query_string) const noexcept
 {
-    return NewFromPool<LhttpAddress>(pool, ShallowCopy(), *this,
-                                     uri_insert_query_string(pool, uri, query_string));
+    return alloc.New<LhttpAddress>(ShallowCopy(), *this,
+                                   uri_insert_query_string(alloc, uri,
+                                                           query_string));
 }
 
 LhttpAddress *
-LhttpAddress::InsertArgs(struct pool &pool,
+LhttpAddress::InsertArgs(AllocatorPtr alloc,
                          StringView new_args,
                          StringView path_info) const noexcept
 {
-    return NewFromPool<LhttpAddress>(pool, ShallowCopy(), *this,
-                                     uri_insert_args(pool, uri,
-                                                     new_args, path_info));
+    return alloc.New<LhttpAddress>(ShallowCopy(), *this,
+                                   uri_insert_args(alloc, uri,
+                                                   new_args, path_info));
 }
 
 bool
@@ -174,7 +175,7 @@ LhttpAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const noexcept
 }
 
 const LhttpAddress *
-LhttpAddress::Apply(struct pool *pool, StringView relative) const noexcept
+LhttpAddress::Apply(AllocatorPtr alloc, StringView relative) const noexcept
 {
     if (relative.empty())
         return this;
@@ -182,10 +183,10 @@ LhttpAddress::Apply(struct pool *pool, StringView relative) const noexcept
     if (uri_has_authority(relative))
         return nullptr;
 
-    const char *p = uri_absolute(*pool, path, relative);
+    const char *p = uri_absolute(alloc, path, relative);
     assert(p != nullptr);
 
-    return NewFromPool<LhttpAddress>(*pool, ShallowCopy(), *this, p);
+    return alloc.New<LhttpAddress>(ShallowCopy(), *this, p);
 }
 
 StringView

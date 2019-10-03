@@ -446,7 +446,7 @@ ResourceAddress::Apply(struct pool &pool, StringView relative) const
         return *uwa;
 
     case Type::LHTTP:
-        lhttp = u.lhttp->Apply(&pool, relative);
+        lhttp = u.lhttp->Apply(pool, relative);
         if (lhttp == nullptr)
             return nullptr;
 

@@ -49,6 +49,7 @@
 #include "istream/AutoPipeIstream.hxx"
 #include "lhttp_address.hxx"
 #include "pool/pool.hxx"
+#include "AllocatorPtr.hxx"
 
 /**
  * Return a copy of the URI for forwarding to the next server.  This
