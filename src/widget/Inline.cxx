@@ -53,6 +53,7 @@
 #include "istream/TimeoutIstream.hxx"
 #include "bp/session/Session.hxx"
 #include "pool/pool.hxx"
+#include "pool/LeakDetector.hxx"
 #include "event/TimerEvent.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StringCompare.hxx"
@@ -65,7 +66,7 @@
 static constexpr Event::Duration inline_widget_header_timeout = std::chrono::seconds(5);
 const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
 
-class InlineWidget final : HttpResponseHandler, Cancellable {
+class InlineWidget final : PoolLeakDetector, HttpResponseHandler, Cancellable {
     struct pool &pool;
     struct processor_env &env;
     const StopwatchPtr parent_stopwatch;
@@ -84,7 +85,8 @@ public:
                  bool _plain_text,
                  Widget &_widget,
                  DelayedIstreamControl &_delayed) noexcept
-        :pool(_pool), env(_env), parent_stopwatch(_parent_stopwatch),
+        :PoolLeakDetector(_pool),
+         pool(_pool), env(_env), parent_stopwatch(_parent_stopwatch),
          plain_text(_plain_text),
          widget(_widget),
          header_timeout_event(*env.event_loop,
@@ -102,15 +104,22 @@ public:
     void Start() noexcept;
 
 private:
+    void Destroy() noexcept {
+        this->~InlineWidget();
+    }
+
     void Fail(std::exception_ptr ep) noexcept {
-        delayed.SetError(ep);
+        auto &_delayed = delayed;
+        Destroy();
+        _delayed.SetError(ep);
     }
 
     void SendRequest() noexcept;
     void ResolverCallback() noexcept;
 
     void OnHeaderTimeout() noexcept {
-        Cancel();
+        widget.Cancel();
+        cancel_ptr.Cancel();
         Fail(std::make_exception_ptr(std::runtime_error("Header timeout")));
     }
 
@@ -232,7 +241,9 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
     } else
         body = istream_null_new(pool);
 
-    delayed.Set(std::move(body));
+    auto &_delayed = delayed;
+    Destroy();
+    _delayed.Set(std::move(body));
 }
 
 void
@@ -253,6 +264,8 @@ InlineWidget::Cancel() noexcept
     widget.Cancel();
 
     cancel_ptr.Cancel();
+
+    Destroy();
 }
 
 /*
