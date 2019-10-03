@@ -33,6 +33,8 @@
 #ifndef BENG_PROXY_STOCK_CLASS_HXX
 #define BENG_PROXY_STOCK_CLASS_HXX
 
+#include "Request.hxx"
+
 class CancellablePointer;
 struct CreateStockItem;
 
@@ -42,7 +44,7 @@ public:
      * May throw exception instead of calling InvokeCreateError().
      */
     virtual void Create(CreateStockItem c,
-                        void *info,
+                        StockRequest request,
                         CancellablePointer &cancel_ptr) = 0;
 };
 

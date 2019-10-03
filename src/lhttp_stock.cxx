@@ -80,7 +80,7 @@ public:
 
 private:
     /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, void *info,
+    void Create(CreateStockItem c, StockRequest request,
                 CancellablePointer &cancel_ptr) override;
 
     /* virtual methods from class ChildStockClass */
@@ -112,7 +112,7 @@ public:
     ~LhttpConnection() noexcept override;
 
     void Connect(MultiStock &child_stock,
-                 const char *key, void *info,
+                 const char *key, StockRequest &&request,
                  unsigned concurrency);
 
     SocketDescriptor GetSocket() const noexcept {
@@ -158,13 +158,13 @@ private:
     }
 };
 
-void
+inline void
 LhttpConnection::Connect(MultiStock &child_stock,
-                         const char *key, void *info,
+                         const char *key, StockRequest &&request,
                          unsigned concurrency)
 {
     try {
-        child = child_stock.GetNow(key, info, concurrency,
+        child = child_stock.GetNow(key, std::move(request), concurrency,
                                    lease_ref);
     } catch (...) {
         delete this;
@@ -255,10 +255,10 @@ LhttpStock::PrepareChild(void *info, UniqueSocketDescriptor &&fd,
  */
 
 void
-LhttpStock::Create(CreateStockItem c, void *info,
+LhttpStock::Create(CreateStockItem c, StockRequest request,
                    gcc_unused CancellablePointer &cancel_ptr)
 {
-    const auto *address = (const LhttpAddress *)info;
+    const auto *address = (const LhttpAddress *)request.get();
 
     assert(address != nullptr);
     assert(address->path != nullptr);
@@ -266,7 +266,8 @@ LhttpStock::Create(CreateStockItem c, void *info,
     auto *connection = new LhttpConnection(c);
 
     connection->Connect(mchild_stock,
-                        c.GetStockName(), info, address->concurrency);
+                        c.GetStockName(), std::move(request),
+                        address->concurrency);
 }
 
 LhttpConnection::~LhttpConnection() noexcept
@@ -361,7 +362,7 @@ lhttp_stock_get(LhttpStock *lhttp_stock,
 
     const TempPoolLease tpool;
     return lhttp_stock->GetConnectionStock().GetNow(lhttp_stock_key(tpool, address),
-                                                    deconst.out);
+                                                    ToNopPointer(deconst.out));
 }
 
 SocketDescriptor

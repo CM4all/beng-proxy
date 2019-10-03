@@ -33,9 +33,10 @@
 #ifndef BENG_PROXY_MULTI_STOCK_HXX
 #define BENG_PROXY_MULTI_STOCK_HXX
 
+#include "Request.hxx"
 #include "lease.hxx"
-#include "util/DeleteDisposer.hxx"
 #include "util/Compiler.h"
+#include "util/DeleteDisposer.hxx"
 
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive/list.hpp>
@@ -195,12 +196,12 @@ public:
      *
      * @param max_leases the maximum number of leases per stock_item
      */
-    StockItem *GetNow(const char *uri, void *info,
+    StockItem *GetNow(const char *uri, StockRequest request,
                       unsigned max_leases,
                       struct lease_ref &lease_ref);
 
 private:
-    Item &MakeItem(const char *uri, void *info,
+    Item &MakeItem(const char *uri, StockRequest request,
                    unsigned max_leases);
 };
 

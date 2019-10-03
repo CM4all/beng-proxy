@@ -41,6 +41,7 @@
 #include "spawn/ChildOptions.hxx"
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
+#include "pool/DisposablePointer.hxx"
 #include "pool/tpool.hxx"
 #include "pool/StringBuilder.hxx"
 #include "event/SocketEvent.hxx"
@@ -447,16 +448,15 @@ public:
 
 private:
     /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, void *info,
+    void Create(CreateStockItem c, StockRequest request,
                 CancellablePointer &cancel_ptr) override;
 };
 
 void
-WasStock::Create(CreateStockItem c,
-                 void *info,
+WasStock::Create(CreateStockItem c, StockRequest _request,
                  gcc_unused CancellablePointer &cancel_ptr)
 {
-    WasChildParams *params = (WasChildParams *)info;
+    WasChildParams *params = (WasChildParams *)_request.get();
 
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
@@ -520,10 +520,11 @@ was_stock_get(StockMap *hstock, struct pool *pool,
 {
     const TempPoolLease tpool;
 
-    auto params = NewFromPool<WasChildParams>(*pool, executable_path, args,
-                                              options);
+    auto r = NewDisposablePointer<WasChildParams>(*pool, executable_path,
+                                                  args, options);
+    const char *key = r->GetStockKey(*tpool);
 
-    hstock->Get(params->GetStockKey(*tpool), params,
+    hstock->Get(key, std::move(r),
                 handler, cancel_ptr);
 }
 

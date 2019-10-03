@@ -87,7 +87,7 @@ public:
 
 private:
     /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, void *info,
+    void Create(CreateStockItem c, StockRequest request,
                 CancellablePointer &cancel_ptr) override;
 };
 

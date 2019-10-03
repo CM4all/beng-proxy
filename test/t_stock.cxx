@@ -49,7 +49,7 @@ static bool got_item;
 static StockItem *last_item;
 
 struct MyStockItem final : StockItem {
-    void *info;
+    StockRequest request;
 
     explicit MyStockItem(CreateStockItem c)
         :StockItem(c) {}
@@ -78,18 +78,17 @@ struct MyStockItem final : StockItem {
 class MyStockClass final : public StockClass {
 public:
     /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, void *info,
+    void Create(CreateStockItem c, StockRequest request,
                 CancellablePointer &cancel_ptr) override;
 };
 
 void
 MyStockClass::Create(CreateStockItem c,
-                     void *info,
+                     StockRequest request,
                      gcc_unused CancellablePointer &cancel_ptr)
 {
     auto *item = new MyStockItem(c);
-
-    item->info = info;
+    item->request = std::move(request);
 
     if (next_fail) {
         ++num_fail;

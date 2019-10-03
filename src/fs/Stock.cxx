@@ -34,6 +34,7 @@
 #include "Factory.hxx"
 #include "FilteredSocket.hxx"
 #include "AllocatorPtr.hxx"
+#include "pool/DisposablePointer.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/LoggerDomain.hxx"
@@ -223,10 +224,10 @@ FilteredSocketStockConnection::OnSocketConnectError(std::exception_ptr ep) noexc
  */
 
 void
-FilteredSocketStock::Create(CreateStockItem c, void *info,
+FilteredSocketStock::Create(CreateStockItem c, StockRequest _request,
                             CancellablePointer &cancel_ptr)
 {
-    const auto &request = *(const FilteredSocketStockRequest *)info;
+    const auto &request = *(const FilteredSocketStockRequest *)_request.get();
 
     const int address_family = request.address.GetFamily();
     const FdType type = address_family == AF_LOCAL
@@ -286,9 +287,11 @@ FilteredSocketStock::Get(struct pool &pool, const char *name,
     assert(!address.IsNull());
 
     auto request =
-        NewFromPool<FilteredSocketStockRequest>(pool, pool, ip_transparent,
-                                                bind_address, address,
-                                                timeout, filter_factory);
+        NewDisposablePointer<FilteredSocketStockRequest>(pool, pool,
+                                                         ip_transparent,
+                                                         bind_address, address,
+                                                         timeout,
+                                                         filter_factory);
 
     if (name == nullptr) {
         char buffer[1024];
@@ -308,7 +311,7 @@ FilteredSocketStock::Get(struct pool &pool, const char *name,
         name = p_strcat(&pool, name, "|", filter_factory->GetFilterId(),
                         nullptr);
 
-    stock.Get(name, request, handler, cancel_ptr);
+    stock.Get(name, std::move(request), handler, cancel_ptr);
 }
 
 FilteredSocket &

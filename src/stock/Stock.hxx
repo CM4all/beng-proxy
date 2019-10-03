@@ -34,13 +34,14 @@
 #define BENG_PROXY_STOCK_HXX
 
 #include "Item.hxx"
+#include "Request.hxx"
 #include "Stats.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
-#include "util/DeleteDisposer.hxx"
 #include "util/Compiler.h"
+#include "util/DeleteDisposer.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -121,13 +122,13 @@ class Stock {
 
         Stock &stock;
 
-        void *const info;
+        StockRequest request;
 
         StockGetHandler &handler;
 
         CancellablePointer &cancel_ptr;
 
-        Waiting(Stock &_stock, void *_info,
+        Waiting(Stock &_stock, StockRequest &&_request,
                 StockGetHandler &_handler,
                 CancellablePointer &_cancel_ptr) noexcept;
 
@@ -234,12 +235,12 @@ private:
     }
 
     bool GetIdle(StockGetHandler &handler) noexcept;
-    void GetCreate(void *info,
+    void GetCreate(StockRequest request,
                    StockGetHandler &get_handler,
                    CancellablePointer &cancel_ptr) noexcept;
 
 public:
-    void Get(void *info,
+    void Get(StockRequest request,
              StockGetHandler &get_handler,
              CancellablePointer &cancel_ptr) noexcept;
 
@@ -250,7 +251,7 @@ public:
      *
      * Throws exception on error.
      */
-    StockItem *GetNow(void *info);
+    StockItem *GetNow(StockRequest request);
 
     void Put(StockItem &item, bool destroy) noexcept;
 

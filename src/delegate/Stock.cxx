@@ -42,6 +42,7 @@
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "AllocatorPtr.hxx"
+#include "pool/DisposablePointer.hxx"
 #include "pool/tpool.hxx"
 #include "io/Logger.hxx"
 
@@ -129,7 +130,7 @@ public:
 
 private:
     /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, void *info,
+    void Create(CreateStockItem c, StockRequest request,
                 CancellablePointer &cancel_ptr) override;
 };
 
@@ -164,10 +165,10 @@ DelegateProcess::OnIdleTimeout() noexcept
 
 void
 DelegateStock::Create(CreateStockItem c,
-                      void *_info,
+                      StockRequest request,
                       gcc_unused CancellablePointer &cancel_ptr)
 {
-    auto &info = *(DelegateArgs *)_info;
+    auto &info = *(DelegateArgs *)request.get();
 
     PreparedChildProcess p;
     p.Append(info.executable_path);
@@ -213,8 +214,10 @@ delegate_stock_get(StockMap *delegate_stock,
                    const ChildOptions &options)
 {
     const TempPoolLease tpool;
-    DelegateArgs args(helper, options);
-    return delegate_stock->GetNow(args.GetStockKey(*tpool), &args);
+    const AllocatorPtr alloc(tpool);
+    auto r = NewDisposablePointer<DelegateArgs>(alloc, helper, options);
+    const char *key = r->GetStockKey(*tpool);
+    return delegate_stock->GetNow(key, std::move(r));
 }
 
 SocketDescriptor

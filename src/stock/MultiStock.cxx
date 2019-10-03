@@ -78,7 +78,7 @@ MultiStock::Item::DeleteLease(Lease *lease, bool _reuse)
 }
 
 MultiStock::Item &
-MultiStock::MakeItem(const char *uri, void *info,
+MultiStock::MakeItem(const char *uri, StockRequest request,
                      unsigned max_leases)
 {
     auto i = items.lower_bound(uri, items.key_comp());
@@ -86,7 +86,7 @@ MultiStock::MakeItem(const char *uri, void *info,
         if (i->CanUse())
             return *i;
 
-    auto *stock_item = hstock.GetNow(uri, info);
+    auto *stock_item = hstock.GetNow(uri, std::move(request));
     assert(stock_item != nullptr);
 
     auto *item = new Item(max_leases, *stock_item);
@@ -95,9 +95,9 @@ MultiStock::MakeItem(const char *uri, void *info,
 }
 
 StockItem *
-MultiStock::GetNow(const char *uri, void *info,
+MultiStock::GetNow(const char *uri, StockRequest request,
                    unsigned max_leases,
                    struct lease_ref &lease_ref)
 {
-    return MakeItem(uri, info, max_leases).AddLease(lease_ref);
+    return MakeItem(uri, std::move(request), max_leases).AddLease(lease_ref);
 }

@@ -187,13 +187,14 @@ ChildStockItem::OnChildProcessExit(gcc_unused int status) noexcept
  */
 
 void
-ChildStock::Create(CreateStockItem c, void *info, CancellablePointer &)
+ChildStock::Create(CreateStockItem c, StockRequest request,
+                   CancellablePointer &)
 {
     auto *item = new ChildStockItem(c, spawn_service,
-                                    cls.GetChildTag(info));
+                                    cls.GetChildTag(request.get()));
 
     try {
-        item->Spawn(cls, info, backlog, log_socket, log_options);
+        item->Spawn(cls, request.get(), backlog, log_socket, log_options);
     } catch (...) {
         delete item;
         throw;

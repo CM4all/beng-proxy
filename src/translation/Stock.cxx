@@ -212,7 +212,7 @@ TranslationStock::Request::OnStockItemError(std::exception_ptr ep) noexcept
 }
 
 void
-TranslationStock::Create(CreateStockItem c, void *,
+TranslationStock::Create(CreateStockItem c, StockRequest,
                          CancellablePointer &)
 {
     auto *connection = new Connection(c);

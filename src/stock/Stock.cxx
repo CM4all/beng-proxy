@@ -38,10 +38,10 @@
 #include <assert.h>
 
 inline
-Stock::Waiting::Waiting(Stock &_stock, void *_info,
+Stock::Waiting::Waiting(Stock &_stock, StockRequest &&_request,
                         StockGetHandler &_handler,
                         CancellablePointer &_cancel_ptr) noexcept
-    :stock(_stock), info(_info),
+    :stock(_stock), request(std::move(_request)),
      handler(_handler),
      cancel_ptr(_cancel_ptr)
 {
@@ -157,7 +157,7 @@ Stock::RetryWaiting() noexcept
         auto &w = waiting.front();
         waiting.pop_front();
 
-        GetCreate(w.info,
+        GetCreate(std::move(w.request),
                   w.handler,
                   w.cancel_ptr);
         w.Destroy();
@@ -285,7 +285,7 @@ Stock::GetIdle(StockGetHandler &get_handler) noexcept
 }
 
 void
-Stock::GetCreate(void *info,
+Stock::GetCreate(StockRequest request,
                  StockGetHandler &get_handler,
                  CancellablePointer &cancel_ptr) noexcept
 {
@@ -293,14 +293,14 @@ Stock::GetCreate(void *info,
 
     try {
         cls.Create({*this, get_handler},
-                   info, cancel_ptr);
+                   std::move(request), cancel_ptr);
     } catch (...) {
         ItemCreateError(get_handler, std::current_exception());
     }
 }
 
 void
-Stock::Get(void *info,
+Stock::Get(StockRequest request,
            StockGetHandler &get_handler,
            CancellablePointer &cancel_ptr) noexcept
 {
@@ -311,17 +311,17 @@ Stock::Get(void *info,
 
     if (limit > 0 && busy.size() + num_create >= limit) {
         /* item limit reached: wait for an item to return */
-        auto w = new Waiting(*this, info,
+        auto w = new Waiting(*this, std::move(request),
                              get_handler, cancel_ptr);
         waiting.push_front(*w);
         return;
     }
 
-    GetCreate(info, get_handler, cancel_ptr);
+    GetCreate(std::move(request), get_handler, cancel_ptr);
 }
 
 StockItem *
-Stock::GetNow(void *info)
+Stock::GetNow(StockRequest request)
 {
     struct NowRequest final : public StockGetHandler {
 #ifndef NDEBUG
@@ -354,7 +354,7 @@ Stock::GetNow(void *info)
     /* cannot call this on a limited stock */
     assert(limit == 0);
 
-    Get(info, data, cancel_ptr);
+    Get(std::move(request), data, cancel_ptr);
     assert(data.created);
 
     if (data.error)

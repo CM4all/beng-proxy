@@ -32,40 +32,12 @@
 
 #pragma once
 
-#include "util/Disposable.hxx"
+#include "util/DisposablePointer.hxx"
 #include "AllocatorPtr.hxx"
 
-template<typename T>
-class PoolDisposable final : public Disposable {
-    T value;
-
-public:
-    template<typename... Args>
-    PoolDisposable(Args&&... args)
-        :value(std::forward<Args>(args)...) {}
-
-    T &get() noexcept {
-        return value;
-    }
-
-protected:
-    /* virtual methods from Disposable */
-    void Dispose() noexcept override {
-        this->~PoolDisposable();
-    }
-};
-
 template<typename T, typename... Args>
-std::pair<DisposablePtr, T &>
-NewDisposablePair(AllocatorPtr alloc, Args&&... args) noexcept
+auto
+NewDisposablePointer(AllocatorPtr alloc, Args&&... args) noexcept
 {
-    auto *d = alloc.New<PoolDisposable<T>>(std::forward<Args>(args)...);
-    return std::pair<DisposablePtr, T &>(DisposablePtr(d), d->get());
-}
-
-template<typename T, typename... Args>
-DisposablePtr
-NewDisposable(AllocatorPtr alloc, Args&&... args) noexcept
-{
-    return NewDisposablePair<T>(alloc, std::forward<Args>(args)...).first;
+    return ToDestructPointer(alloc.New<T>(std::forward<Args>(args)...));
 }

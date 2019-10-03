@@ -41,6 +41,7 @@
 #include "spawn/ChildOptions.hxx"
 #include "spawn/JailParams.hxx"
 #include "spawn/JailConfig.hxx"
+#include "pool/DisposablePointer.hxx"
 #include "pool/tpool.hxx"
 #include "pool/StringBuilder.hxx"
 #include "AllocatorPtr.hxx"
@@ -109,7 +110,7 @@ public:
 
 private:
     /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, void *info,
+    void Create(CreateStockItem c, StockRequest request,
                 CancellablePointer &cancel_ptr) override;
 
     /* virtual methods from class ChildStockClass */
@@ -285,10 +286,10 @@ FcgiStock::PrepareChild(void *info, UniqueSocketDescriptor &&fd,
  */
 
 void
-FcgiStock::Create(CreateStockItem c, void *info,
+FcgiStock::Create(CreateStockItem c, StockRequest request,
                   gcc_unused CancellablePointer &cancel_ptr)
 {
-    FcgiChildParams *params = (FcgiChildParams *)info;
+    auto *params = (FcgiChildParams *)request.get();
 
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
@@ -308,7 +309,8 @@ FcgiStock::Create(CreateStockItem c, void *info,
     const char *key = c.GetStockName();
 
     try {
-        connection->child = child_stock.GetStockMap().GetNow(key, params);
+        connection->child = child_stock.GetStockMap().GetNow(key,
+                                                             std::move(request));
     } catch (...) {
         delete connection;
         std::throw_with_nested(FcgiClientError(StringFormat<256>("Failed to start FastCGI server '%s'",
@@ -460,10 +462,10 @@ FcgiStock::Get(const ChildOptions &options,
 {
     const TempPoolLease tpool;
 
-    auto params = NewFromPool<FcgiChildParams>(*tpool, executable_path,
-                                               args, options);
-
-    return hstock.GetNow(params->GetStockKey(*tpool), params);
+    auto r = NewDisposablePointer<FcgiChildParams>(*tpool, executable_path,
+                                                   args, options);
+    const char *key = r->GetStockKey(*tpool);
+    return hstock.GetNow(key, std::move(r));
 }
 
 StockItem *

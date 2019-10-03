@@ -32,6 +32,7 @@
 
 #include "tcp_stock.hxx"
 #include "AllocatorPtr.hxx"
+#include "pool/DisposablePointer.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
 #include "stock/LoggerDomain.hxx"
@@ -197,10 +198,10 @@ TcpStockConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
 
 void
 TcpStock::Create(CreateStockItem c,
-                 void *info,
+                 StockRequest _request,
                  CancellablePointer &cancel_ptr)
 {
-    TcpStockRequest *request = (TcpStockRequest *)info;
+    TcpStockRequest *request = (TcpStockRequest *)_request.get();
 
     auto *connection = new TcpStockConnection(c,
                                               request->address,
@@ -243,9 +244,10 @@ TcpStock::Get(AllocatorPtr alloc, const char *name,
 {
     assert(!address.IsNull());
 
-    auto request = alloc.New<TcpStockRequest>(alloc, ip_transparent,
-                                              bind_address, address,
-                                              timeout);
+    auto request = NewDisposablePointer<TcpStockRequest>(alloc, alloc,
+                                                         ip_transparent,
+                                                         bind_address, address,
+                                                         timeout);
 
     if (name == nullptr) {
         char buffer[1024];
@@ -261,7 +263,7 @@ TcpStock::Get(AllocatorPtr alloc, const char *name,
             name = alloc.Dup(buffer);
     }
 
-    stock.Get(name, request, handler, cancel_ptr);
+    stock.Get(name, std::move(request), handler, cancel_ptr);
 }
 
 SocketDescriptor
