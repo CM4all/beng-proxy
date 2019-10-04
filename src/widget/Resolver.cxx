@@ -87,7 +87,6 @@ class WidgetResolver {
     bool finished = false;
 
 #ifndef NDEBUG
-    bool running = false;
     bool aborted = false;
 #endif
 
@@ -131,7 +130,6 @@ WidgetResolver::RemoveListener(WidgetResolverListener &listener) noexcept
 {
     assert(widget.resolver == this);
     assert(!listeners.empty());
-    assert(!finished || running);
     assert(!aborted);
 
     listeners.erase(listeners.iterator_to(listener));
@@ -204,14 +202,9 @@ WidgetResolver::RegistryCallback(const WidgetClass *cls) noexcept
     assert(widget.resolver == this);
     assert(!listeners.empty());
     assert(!finished);
-    assert(!running);
     assert(!aborted);
 
     finished = true;
-
-#ifndef NDEBUG
-    running = true;
-#endif
 
     widget.cls = cls;
 
@@ -228,10 +221,6 @@ WidgetResolver::RegistryCallback(const WidgetClass *cls) noexcept
         listeners.pop_front();
         l.Finish();
     } while (!listeners.empty());
-
-#ifndef NDEBUG
-    running = false;
-#endif
 
     Destroy();
 }
