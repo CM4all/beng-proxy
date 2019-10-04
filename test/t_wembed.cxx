@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "FailingResourceLoader.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Request.hxx"
@@ -138,8 +139,20 @@ test_abort_resolver()
     const char *uri;
     bool ret;
     DissectedUri dissected_uri;
-    WidgetContext ctx;
-    ctx.event_loop = &instance.event_loop;
+
+    FailingResourceLoader resource_loader;
+    WidgetContext ctx(instance.event_loop,
+                      resource_loader, resource_loader,
+                      nullptr, nullptr,
+                      "localhost:8080",
+                      "localhost:8080",
+                      "/beng.html",
+                      "http://localhost:8080/beng.html",
+                      "/beng.html",
+                      nullptr,
+                      nullptr,
+                      {}, "foo",
+                      nullptr);
 
     auto pool = pool_new_linear(instance.root_pool, "test", 4096);
 

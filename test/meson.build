@@ -653,6 +653,7 @@ test('t_widget_resolver', executable('t_widget_resolver',
 
 test('t_wembed', executable('t_wembed',
   't_wembed.cxx',
+  'FailingResourceLoader.cxx',
   '../src/PInstance.cxx',
   '../src/widget/Inline.cxx',
   '../src/istream_html_escape.cxx',

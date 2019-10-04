@@ -292,13 +292,17 @@ TEST(WidgetHttpTest, CookieClient)
     auto *session = session_new();
 
     MyResourceLoader resource_loader;
-    WidgetContext ctx;
-    ctx.resource_loader = &resource_loader;
-    ctx.local_host = "localhost";
-    ctx.remote_host = "localhost";
-    ctx.request_headers = strmap_new(pool);
-    ctx.session_id = session->id;
-    ctx.realm = "foo";
+    WidgetContext ctx(instance.event_loop,
+                      resource_loader, resource_loader,
+                      nullptr, nullptr,
+                      "localhost", "localhost",
+                      nullptr, nullptr,
+                      nullptr,
+                      nullptr,
+                      nullptr,
+                      session->id,
+                      "foo",
+                      strmap_new(pool));
     session_put(session);
 
     Widget widget(*pool, &cls);
