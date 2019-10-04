@@ -42,7 +42,7 @@
 
 struct WidgetResolver;
 
-struct WidgetResolverListener final
+class WidgetResolverListener final
     : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
       PoolHolder,
       Cancellable {
@@ -55,6 +55,7 @@ struct WidgetResolverListener final
     bool finished = false, aborted = false;
 #endif
 
+public:
     template<typename P>
     WidgetResolverListener(P &&_pool, WidgetResolver &_resolver,
                            WidgetResolverCallback _callback,
@@ -64,17 +65,18 @@ struct WidgetResolverListener final
         cancel_ptr = *this;
     }
 
+    void Finish() noexcept;
+
+private:
     void Destroy() noexcept {
         this->~WidgetResolverListener();
     }
-
-    void Finish() noexcept;
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override;
 };
 
-struct WidgetResolver {
+class WidgetResolver {
     Widget &widget;
 
     boost::intrusive::list<WidgetResolverListener,
@@ -89,11 +91,12 @@ struct WidgetResolver {
     bool aborted = false;
 #endif
 
+public:
     explicit WidgetResolver(Widget &_widget)
         :widget(_widget) {}
 
-    void Destroy() noexcept {
-        this->~WidgetResolver();
+    bool IsFinished() const noexcept {
+        return finished;
     }
 
     void Start(TranslationService &service) {
@@ -105,7 +108,19 @@ struct WidgetResolver {
                             cancel_ptr);
     }
 
+    void AddListener(WidgetResolverListener &listener) noexcept {
+        assert(!finished);
+
+        listeners.push_back(listener);
+    }
+
     void RemoveListener(WidgetResolverListener &listener);
+
+private:
+    void Destroy() noexcept {
+        this->~WidgetResolver();
+    }
+
     void Abort();
 
     void RegistryCallback(const WidgetClass *cls) noexcept;
@@ -114,6 +129,11 @@ struct WidgetResolver {
 void
 WidgetResolver::RemoveListener(WidgetResolverListener &listener)
 {
+    assert(widget.resolver == this);
+    assert(!listeners.empty());
+    assert(!finished || running);
+    assert(!aborted);
+
     listeners.erase(listeners.iterator_to(listener));
 
     if (listeners.empty() && !finished)
@@ -147,10 +167,6 @@ WidgetResolverListener::Cancel() noexcept
 {
     assert(!finished);
     assert(!aborted);
-    assert(resolver.widget.resolver == &resolver);
-    assert(!resolver.listeners.empty());
-    assert(!resolver.finished || resolver.running);
-    assert(!resolver.aborted);
 
 #ifndef NDEBUG
     aborted = true;
@@ -256,7 +272,7 @@ ResolveWidget(struct pool &pool,
     if (resolver == nullptr) {
         resolver = widget_resolver_alloc(widget);
         is_new = true;
-    } else if (resolver->finished) {
+    } else if (resolver->IsFinished()) {
         /* we have already failed to resolve this widget class; return
            immediately, don't try again */
         callback();
@@ -272,7 +288,7 @@ ResolveWidget(struct pool &pool,
                                                         callback,
                                                         cancel_ptr);
 
-    resolver->listeners.push_back(*listener);
+    resolver->AddListener(*listener);
 
     /* finally send request to the widget registry */
 
