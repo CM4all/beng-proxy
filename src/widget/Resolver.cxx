@@ -37,6 +37,7 @@
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
 #include "util/Cancellable.hxx"
+#include "util/DestructObserver.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -76,7 +77,7 @@ private:
     void Cancel() noexcept override;
 };
 
-class WidgetResolver {
+class WidgetResolver final : DestructAnchor {
     Widget &widget;
 
     boost::intrusive::list<WidgetResolverListener,
@@ -216,10 +217,15 @@ WidgetResolver::RegistryCallback(const WidgetClass *cls) noexcept
         /* the widget session code requires a valid view */
         widget.from_template.view != nullptr;
 
+    const DestructObserver destructed(*this);
+
     do {
         auto &l = listeners.front();
         listeners.pop_front();
         l.Finish();
+
+        if (destructed)
+            return;
     } while (!listeners.empty());
 
     Destroy();
