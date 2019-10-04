@@ -141,7 +141,7 @@ css_rewrite_block_uris(struct pool &pool,
 
     auto input =
         istream_memory_new(pool, p_strdup(pool, block), block.size);
-    auto replace = istream_replace_new(*ctx.event_loop, pool,
+    auto replace = istream_replace_new(ctx.event_loop, pool,
                                        std::move(input));
 
     bool modified = false;

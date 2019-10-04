@@ -42,10 +42,10 @@ class SessionLease;
 class RealmSessionLease;
 
 struct WidgetContext {
-    EventLoop *event_loop;
+    EventLoop &event_loop;
 
-    ResourceLoader *resource_loader;
-    ResourceLoader *filter_resource_loader;
+    ResourceLoader &resource_loader;
+    ResourceLoader &filter_resource_loader;
 
     const char *site_name;
 

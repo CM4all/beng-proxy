@@ -325,18 +325,18 @@ WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body) noex
     const WidgetView *t_view = widget.GetTransformationView();
     assert(t_view != nullptr);
 
-    ctx.resource_loader->SendRequest(pool,
-                                     parent_stopwatch,
-                                     ctx.session_id.GetClusterHash(),
-                                     nullptr,
-                                     ctx.site_name,
-                                     HTTP_METHOD_GET, address, HTTP_STATUS_OK,
-                                     MakeRequestHeaders(*view, *t_view,
-                                                        address.IsAnyHttp(),
-                                                        false),
-                                     nullptr, nullptr,
-                                     *this,
-                                     cancel_ptr);
+    ctx.resource_loader.SendRequest(pool,
+                                    parent_stopwatch,
+                                    ctx.session_id.GetClusterHash(),
+                                    nullptr,
+                                    ctx.site_name,
+                                    HTTP_METHOD_GET, address, HTTP_STATUS_OK,
+                                    MakeRequestHeaders(*view, *t_view,
+                                                       address.IsAnyHttp(),
+                                                       false),
+                                    nullptr, nullptr,
+                                    *this,
+                                    cancel_ptr);
 
     return true;
 }
@@ -474,15 +474,15 @@ WidgetRequest::FilterResponse(http_status_t status,
 #endif
 
     ctx.filter_resource_loader
-        ->SendRequest(pool,
-                      parent_stopwatch,
-                      ctx.session_id.GetClusterHash(),
-                      filter.cache_tag,
-                      ctx.site_name,
-                      HTTP_METHOD_POST, filter.address, status,
-                      std::move(headers), std::move(body), source_tag,
-                      *this,
-                      cancel_ptr);
+        .SendRequest(pool,
+                     parent_stopwatch,
+                     ctx.session_id.GetClusterHash(),
+                     filter.cache_tag,
+                     ctx.site_name,
+                     HTTP_METHOD_POST, filter.address, status,
+                     std::move(headers), std::move(body), source_tag,
+                     *this,
+                     cancel_ptr);
 }
 
 void
@@ -756,15 +756,15 @@ WidgetRequest::SendRequest() noexcept
             widget.logger(4, "  ", i.key, ": ", i.value);
     }
 
-    ctx.resource_loader->SendRequest(pool, parent_stopwatch,
-                                     ctx.session_id.GetClusterHash(),
-                                     nullptr,
-                                     ctx.site_name,
-                                     widget.from_request.method,
-                                     *address, HTTP_STATUS_OK,
-                                     std::move(headers),
-                                     std::move(request_body), nullptr,
-                                     *this, cancel_ptr);
+    ctx.resource_loader.SendRequest(pool, parent_stopwatch,
+                                    ctx.session_id.GetClusterHash(),
+                                    nullptr,
+                                    ctx.site_name,
+                                    widget.from_request.method,
+                                    *address, HTTP_STATUS_OK,
+                                    std::move(headers),
+                                    std::move(request_body), nullptr,
+                                    *this, cancel_ptr);
 }
 
 void

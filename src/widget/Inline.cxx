@@ -89,7 +89,7 @@ public:
          pool(_pool), ctx(_ctx), parent_stopwatch(_parent_stopwatch),
          plain_text(_plain_text),
          widget(_widget),
-         header_timeout_event(*ctx.event_loop,
+         header_timeout_event(ctx.event_loop,
                               BIND_THIS_METHOD(OnHeaderTimeout)),
          delayed(_delayed) {
         delayed.cancel_ptr = *this;
@@ -97,7 +97,7 @@ public:
 
     UnusedIstreamPtr MakeResponse(UnusedIstreamPtr input) noexcept {
         return NewTimeoutIstream(pool, std::move(input),
-                                 *ctx.event_loop,
+                                 ctx.event_loop,
                                  inline_widget_body_timeout);
     }
 
@@ -367,14 +367,14 @@ embed_inline_widget(struct pool &pool, WidgetContext &ctx,
            gets cancelled, but the event cannot reach this stack
            frame; by preventing reads on the request body, this
            situation is avoided */
-        auto _pause = istream_pause_new(pool, *ctx.event_loop,
+        auto _pause = istream_pause_new(pool, ctx.event_loop,
                                         std::move(widget.from_request.body));
         pause = std::move(_pause.second);
 
         widget.from_request.body = UnusedHoldIstreamPtr(pool, std::move(_pause.first));
     }
 
-    auto delayed = istream_delayed_new(pool, *ctx.event_loop);
+    auto delayed = istream_delayed_new(pool, ctx.event_loop);
 
     auto iw = NewFromPool<InlineWidget>(pool, pool, ctx, parent_stopwatch,
                                         plain_text, widget,

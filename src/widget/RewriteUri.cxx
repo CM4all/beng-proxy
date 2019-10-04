@@ -325,7 +325,7 @@ public:
                       delayed.cancel_ptr);
 
         return NewTimeoutIstream(pool, std::move(input),
-                                 *ctx.event_loop,
+                                 ctx.event_loop,
                                  inline_widget_body_timeout);
     }
 
@@ -433,7 +433,7 @@ rewrite_widget_uri(struct pool &pool,
 
         return istream;
     } else {
-        auto delayed = istream_delayed_new(pool, *ctx.event_loop);
+        auto delayed = istream_delayed_new(pool, ctx.event_loop);
 
         auto rwu = NewFromPool<UriRewriter>(pool, pool, ctx, widget,
                                             value, mode, stateful,

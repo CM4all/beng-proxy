@@ -464,12 +464,12 @@ processor_process(struct pool &caller_pool,
                              text_processor(processor->GetPool(),
                                             std::move(input),
                                             widget, ctx),
-                             *ctx.event_loop,
+                             ctx.event_loop,
                              true);
 
     auto tee2 = AddTeeIstream(tee, true);
 
-    auto r = istream_replace_new(*ctx.event_loop, processor->GetPool(),
+    auto r = istream_replace_new(ctx.event_loop, processor->GetPool(),
                                  std::move(tee));
 
     processor->replace = std::move(r.second);

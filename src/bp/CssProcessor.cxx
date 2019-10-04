@@ -318,10 +318,10 @@ css_processor(struct pool &caller_pool, UnusedIstreamPtr input,
     auto pool = pool_new_linear(&caller_pool, "css_processor", 32768);
 
     auto tee = NewTeeIstream(pool, std::move(input),
-                             *ctx.event_loop,
+                             ctx.event_loop,
                              true);
 
-    auto replace = istream_replace_new(*ctx.event_loop, pool,
+    auto replace = istream_replace_new(ctx.event_loop, pool,
                                        AddTeeIstream(tee, true));
 
     NewFromPool<CssProcessor>(std::move(pool),
