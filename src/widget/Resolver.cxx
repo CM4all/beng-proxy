@@ -92,14 +92,14 @@ class WidgetResolver {
 #endif
 
 public:
-    explicit WidgetResolver(Widget &_widget)
+    explicit WidgetResolver(Widget &_widget) noexcept
         :widget(_widget) {}
 
     bool IsFinished() const noexcept {
         return finished;
     }
 
-    void Start(TranslationService &service) {
+    void Start(TranslationService &service) noexcept {
         /* use the widget pool because the listener pool may be
            aborted, while the others still run */
         widget_class_lookup(widget.pool, widget.pool, service,
@@ -114,20 +114,20 @@ public:
         listeners.push_back(listener);
     }
 
-    void RemoveListener(WidgetResolverListener &listener);
+    void RemoveListener(WidgetResolverListener &listener) noexcept;
 
 private:
     void Destroy() noexcept {
         this->~WidgetResolver();
     }
 
-    void Abort();
+    void Abort() noexcept;
 
     void RegistryCallback(const WidgetClass *cls) noexcept;
 };
 
 void
-WidgetResolver::RemoveListener(WidgetResolverListener &listener)
+WidgetResolver::RemoveListener(WidgetResolverListener &listener) noexcept
 {
     assert(widget.resolver == this);
     assert(!listeners.empty());
@@ -143,7 +143,7 @@ WidgetResolver::RemoveListener(WidgetResolverListener &listener)
 }
 
 void
-WidgetResolver::Abort()
+WidgetResolver::Abort() noexcept
 {
     assert(listeners.empty());
     assert(widget.resolver == this);
