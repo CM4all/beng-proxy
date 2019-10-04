@@ -338,12 +338,15 @@ WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body)
 void
 WidgetRequest::DispatchError(std::exception_ptr ep)
 {
-    if (lookup_id != nullptr)
-        lookup_handler->WidgetLookupError(ep);
-    else
-        http_handler->InvokeError(ep);
-
-    Destroy();
+    if (lookup_id != nullptr) {
+        auto &handler = *lookup_handler;
+        Destroy();
+        handler.WidgetLookupError(ep);
+    } else {
+        auto &handler = *http_handler;
+        Destroy();
+        handler.InvokeError(ep);
+    }
 }
 
 void
@@ -560,17 +563,20 @@ WidgetRequest::DispatchResponse(http_status_t status, StringMap &&headers,
     } else if (lookup_id != nullptr) {
         body.Clear();
 
+        auto &handler = *lookup_handler;
+        Destroy();
+
         WidgetError error(WidgetErrorCode::NOT_A_CONTAINER,
                           "Cannot process container widget response");
-        lookup_handler->WidgetLookupError(std::make_exception_ptr(error));
-        Destroy();
+        handler.WidgetLookupError(std::make_exception_ptr(error));
     } else {
         /* no transformation left */
 
-        /* finally pass the response to our handler */
-        http_handler->InvokeResponse(status, std::move(headers),
-                                     std::move(body));
+        auto &handler = *http_handler;
         Destroy();
+
+        /* finally pass the response to our handler */
+        handler.InvokeResponse(status, std::move(headers), std::move(body));
     }
 }
 
