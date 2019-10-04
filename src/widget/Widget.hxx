@@ -52,7 +52,7 @@ struct WidgetSession;
 struct WidgetView;
 struct WidgetClass;
 struct ResourceAddress;
-struct WidgetResolver;
+class WidgetResolver;
 
 /**
  * A widget instance.

@@ -40,7 +40,7 @@
 
 #include <boost/intrusive/list.hpp>
 
-struct WidgetResolver;
+class WidgetResolver;
 
 class WidgetResolverListener final
     : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
