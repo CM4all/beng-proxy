@@ -45,13 +45,14 @@
 #include "util/StringView.hxx"
 
 ResourceAddress::ResourceAddress(AllocatorPtr alloc,
-                                 const ResourceAddress &src)
+                                 const ResourceAddress &src) noexcept
 {
     CopyFrom(alloc, src);
 }
 
 void
-ResourceAddress::CopyFrom(AllocatorPtr alloc, const ResourceAddress &src)
+ResourceAddress::CopyFrom(AllocatorPtr alloc,
+                          const ResourceAddress &src) noexcept
 {
     type = src.type;
 
@@ -88,13 +89,13 @@ ResourceAddress::CopyFrom(AllocatorPtr alloc, const ResourceAddress &src)
 }
 
 ResourceAddress *
-ResourceAddress::Dup(AllocatorPtr alloc) const
+ResourceAddress::Dup(AllocatorPtr alloc) const noexcept
 {
     return alloc.New<ResourceAddress>(alloc, *this);
 }
 
 ResourceAddress
-ResourceAddress::WithPath(AllocatorPtr alloc, const char *path) const
+ResourceAddress::WithPath(AllocatorPtr alloc, const char *path) const noexcept
 {
     switch (type) {
     case Type::NONE:
@@ -118,7 +119,8 @@ ResourceAddress::WithPath(AllocatorPtr alloc, const char *path) const
 }
 
 ResourceAddress
-ResourceAddress::WithQueryStringFrom(AllocatorPtr alloc, const char *uri) const
+ResourceAddress::WithQueryStringFrom(AllocatorPtr alloc,
+                                     const char *uri) const noexcept
 {
     const char *query_string;
 
@@ -173,7 +175,7 @@ ResourceAddress::WithQueryStringFrom(AllocatorPtr alloc, const char *uri) const
 
 ResourceAddress
 ResourceAddress::WithArgs(AllocatorPtr alloc,
-                          StringView args, StringView path) const
+                          StringView args, StringView path) const noexcept
 {
     switch (type) {
         CgiAddress *cgi;
@@ -213,7 +215,7 @@ ResourceAddress::WithArgs(AllocatorPtr alloc,
 }
 
 const char *
-ResourceAddress::AutoBase(AllocatorPtr alloc, const char *uri) const
+ResourceAddress::AutoBase(AllocatorPtr alloc, const char *uri) const noexcept
 {
     assert(uri != nullptr);
 
@@ -237,7 +239,8 @@ ResourceAddress::AutoBase(AllocatorPtr alloc, const char *uri) const
 }
 
 ResourceAddress
-ResourceAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
+ResourceAddress::SaveBase(AllocatorPtr alloc,
+                          const char *suffix) const noexcept
 {
     switch (type) {
     case Type::NONE:
@@ -336,7 +339,8 @@ ResourceAddress::CacheStore(AllocatorPtr alloc,
 }
 
 ResourceAddress
-ResourceAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
+ResourceAddress::LoadBase(AllocatorPtr alloc,
+                          const char *suffix) const noexcept
 {
     switch (type) {
     case Type::NONE:
@@ -422,7 +426,7 @@ ResourceAddress::CacheLoad(AllocatorPtr alloc, const ResourceAddress &src,
 }
 
 ResourceAddress
-ResourceAddress::Apply(AllocatorPtr alloc, StringView relative) const
+ResourceAddress::Apply(AllocatorPtr alloc, StringView relative) const noexcept
 {
     const HttpAddress *uwa;
     const CgiAddress *cgi;
@@ -466,7 +470,7 @@ ResourceAddress::Apply(AllocatorPtr alloc, StringView relative) const
 }
 
 StringView
-ResourceAddress::RelativeTo(const ResourceAddress &base) const
+ResourceAddress::RelativeTo(const ResourceAddress &base) const noexcept
 {
     assert(base.type == type);
 
@@ -494,7 +498,7 @@ ResourceAddress::RelativeTo(const ResourceAddress &base) const
 }
 
 const char *
-ResourceAddress::GetId(AllocatorPtr alloc) const
+ResourceAddress::GetId(AllocatorPtr alloc) const noexcept
 {
     switch (type) {
     case Type::NONE:
@@ -524,7 +528,7 @@ ResourceAddress::GetId(AllocatorPtr alloc) const
 }
 
 const char *
-ResourceAddress::GetHostAndPort() const
+ResourceAddress::GetHostAndPort() const noexcept
 {
     switch (type) {
     case Type::NONE:
@@ -548,7 +552,7 @@ ResourceAddress::GetHostAndPort() const
 }
 
 const char *
-ResourceAddress::GetUriPath() const
+ResourceAddress::GetUriPath() const noexcept
 {
     switch (type) {
     case Type::NONE:
@@ -609,7 +613,7 @@ ResourceAddress::Check() const
 }
 
 bool
-ResourceAddress::IsValidBase() const
+ResourceAddress::IsValidBase() const noexcept
 {
     switch (type) {
     case Type::NONE:
@@ -639,7 +643,7 @@ ResourceAddress::IsValidBase() const
 }
 
 bool
-ResourceAddress::HasQueryString() const
+ResourceAddress::HasQueryString() const noexcept
 {
     switch (type) {
     case Type::NONE:
@@ -670,7 +674,7 @@ ResourceAddress::HasQueryString() const
 }
 
 bool
-ResourceAddress::IsExpandable() const
+ResourceAddress::IsExpandable() const noexcept
 {
     switch (type) {
     case Type::NONE:

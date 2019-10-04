@@ -81,51 +81,51 @@ private:
         const NfsAddress *nfs;
 
         U() = default;
-        constexpr U(std::nullptr_t n):file(n) {}
-        constexpr U(const FileAddress &_file):file(&_file) {}
-        constexpr U(const HttpAddress &_http):http(&_http) {}
-        constexpr U(const LhttpAddress &_lhttp):lhttp(&_lhttp) {}
-        constexpr U(const CgiAddress &_cgi):cgi(&_cgi) {}
-        constexpr U(const NfsAddress &_nfs):nfs(&_nfs) {}
+        constexpr U(std::nullptr_t n) noexcept:file(n) {}
+        constexpr U(const FileAddress &_file) noexcept:file(&_file) {}
+        constexpr U(const HttpAddress &_http) noexcept:http(&_http) {}
+        constexpr U(const LhttpAddress &_lhttp) noexcept:lhttp(&_lhttp) {}
+        constexpr U(const CgiAddress &_cgi) noexcept:cgi(&_cgi) {}
+        constexpr U(const NfsAddress &_nfs) noexcept:nfs(&_nfs) {}
     } u;
 
 public:
     ResourceAddress() = default;
 
-    constexpr ResourceAddress(std::nullptr_t n)
+    constexpr ResourceAddress(std::nullptr_t n) noexcept
       :type(Type::NONE), u(n) {}
 
-    constexpr ResourceAddress(const FileAddress &file)
+    constexpr ResourceAddress(const FileAddress &file) noexcept
       :type(Type::LOCAL), u(file) {}
 
-    constexpr ResourceAddress(const HttpAddress &http)
+    constexpr ResourceAddress(const HttpAddress &http) noexcept
         :type(Type::HTTP), u(http) {}
 
-    constexpr ResourceAddress(const LhttpAddress &lhttp)
+    constexpr ResourceAddress(const LhttpAddress &lhttp) noexcept
       :type(Type::LHTTP), u(lhttp) {}
 
     constexpr ResourceAddress(Type _type,
-                              const CgiAddress &cgi)
+                              const CgiAddress &cgi) noexcept
       :type(_type), u(cgi) {}
 
-    constexpr ResourceAddress(const NfsAddress &nfs)
+    constexpr ResourceAddress(const NfsAddress &nfs) noexcept
       :type(Type::NFS), u(nfs) {}
 
-    constexpr ResourceAddress(ShallowCopy, const ResourceAddress &src)
+    constexpr ResourceAddress(ShallowCopy, const ResourceAddress &src) noexcept
         :type(src.type), u(src.u) {}
 
-    constexpr ResourceAddress(ResourceAddress &&src)
+    constexpr ResourceAddress(ResourceAddress &&src) noexcept
         :ResourceAddress(ShallowCopy(), src) {}
 
-    ResourceAddress(AllocatorPtr alloc, const ResourceAddress &src);
+    ResourceAddress(AllocatorPtr alloc, const ResourceAddress &src) noexcept;
 
     ResourceAddress &operator=(ResourceAddress &&) = default;
 
-    constexpr bool IsDefined() const {
+    constexpr bool IsDefined() const noexcept {
         return type != Type::NONE;
     }
 
-    void Clear() {
+    void Clear() noexcept {
         type = Type::NONE;
     }
 
@@ -139,118 +139,118 @@ public:
     }
 
     gcc_pure
-    bool IsAnyHttp() const {
+    bool IsAnyHttp() const noexcept {
         return IsHttp() || type == Type::LHTTP;
     }
 
     /**
      * Is this a CGI address, or a similar protocol?
      */
-    bool IsCgiAlike() const {
+    bool IsCgiAlike() const noexcept {
         return type == Type::CGI || type == Type::FASTCGI || type == Type::WAS;
     }
 
     gcc_pure
-    const FileAddress &GetFile() const {
+    const FileAddress &GetFile() const noexcept {
         assert(type == Type::LOCAL);
 
         return *u.file;
     }
 
     gcc_pure
-    FileAddress &GetFile() {
+    FileAddress &GetFile() noexcept {
         assert(type == Type::LOCAL);
 
         return *const_cast<FileAddress *>(u.file);
     }
 
     gcc_pure
-    const HttpAddress &GetHttp() const {
+    const HttpAddress &GetHttp() const noexcept {
         assert(type == Type::HTTP);
 
         return *u.http;
     }
 
     gcc_pure
-    HttpAddress &GetHttp() {
+    HttpAddress &GetHttp() noexcept {
         assert(type == Type::HTTP);
 
         return *const_cast<HttpAddress *>(u.http);
     }
 
     gcc_pure
-    const LhttpAddress &GetLhttp() const {
+    const LhttpAddress &GetLhttp() const noexcept {
         assert(type == Type::LHTTP);
 
         return *u.lhttp;
     }
 
     gcc_pure
-    LhttpAddress &GetLhttp() {
+    LhttpAddress &GetLhttp() noexcept {
         assert(type == Type::LHTTP);
 
         return *const_cast<LhttpAddress *>(u.lhttp);
     }
 
     gcc_pure
-    const NfsAddress &GetNfs() const {
+    const NfsAddress &GetNfs() const noexcept {
         assert(type == Type::NFS);
 
         return *u.nfs;
     }
 
     gcc_pure
-    NfsAddress &GetNfs() {
+    NfsAddress &GetNfs() noexcept {
         assert(type == Type::NFS);
 
         return *const_cast<NfsAddress *>(u.nfs);
     }
 
     gcc_pure
-    const CgiAddress &GetCgi() const {
+    const CgiAddress &GetCgi() const noexcept {
         assert(IsCgiAlike() || type == Type::PIPE);
 
         return *u.cgi;
     }
 
     gcc_pure
-    CgiAddress &GetCgi() {
+    CgiAddress &GetCgi() noexcept {
         assert(IsCgiAlike() || type == Type::PIPE);
 
         return *const_cast<CgiAddress *>(u.cgi);
     }
 
     gcc_pure
-    bool HasQueryString() const;
+    bool HasQueryString() const noexcept;
 
     gcc_pure
-    bool IsValidBase() const;
-
-    /**
-     * Determine the URI path.  May return nullptr if unknown or not
-     * applicable.
-     */
-    gcc_pure
-    const char *GetHostAndPort() const;
+    bool IsValidBase() const noexcept;
 
     /**
      * Determine the URI path.  May return nullptr if unknown or not
      * applicable.
      */
     gcc_pure
-    const char *GetUriPath() const;
+    const char *GetHostAndPort() const noexcept;
+
+    /**
+     * Determine the URI path.  May return nullptr if unknown or not
+     * applicable.
+     */
+    gcc_pure
+    const char *GetUriPath() const noexcept;
 
     /**
      * Generates a string identifying the address.  This can be used as a
      * key in a hash table.
      */
     gcc_pure
-    const char *GetId(AllocatorPtr alloc) const;
+    const char *GetId(AllocatorPtr alloc) const noexcept;
 
-    void CopyFrom(AllocatorPtr alloc, const ResourceAddress &src);
+    void CopyFrom(AllocatorPtr alloc, const ResourceAddress &src) noexcept;
 
     gcc_malloc
-    ResourceAddress *Dup(AllocatorPtr alloc) const;
+    ResourceAddress *Dup(AllocatorPtr alloc) const noexcept;
 
     /**
      * Construct a copy of this object with a different HTTP URI
@@ -260,7 +260,8 @@ public:
      * instance contains pointers to the this instance and to the
      * given path parameter.
      */
-    ResourceAddress WithPath(AllocatorPtr alloc, const char *path) const;
+    ResourceAddress WithPath(AllocatorPtr alloc,
+                             const char *path) const noexcept;
 
     /**
      * Construct a copy of this object and insert the query string
@@ -273,7 +274,7 @@ public:
      * given path parameter.
      */
     ResourceAddress WithQueryStringFrom(AllocatorPtr alloc,
-                                        const char *uri) const;
+                                        const char *uri) const noexcept;
 
     /**
      * Construct a copy of this object and insert the URI
@@ -286,7 +287,7 @@ public:
      * given path parameter.
      */
     ResourceAddress WithArgs(AllocatorPtr alloc,
-                             StringView args, StringView path) const;
+                             StringView args, StringView path) const noexcept;
 
     /**
      * Check if a "base" URI can be generated automatically from this
@@ -297,7 +298,7 @@ public:
      * @return a newly allocated base, or nullptr if that is not possible
      */
     gcc_malloc
-    const char *AutoBase(AllocatorPtr alloc, const char *uri) const;
+    const char *AutoBase(AllocatorPtr alloc, const char *uri) const noexcept;
 
     /**
      * Duplicate a resource address, but return the base address.
@@ -307,7 +308,8 @@ public:
      * cannot have a base address
      */
     gcc_pure
-    ResourceAddress SaveBase(AllocatorPtr alloc, const char *suffix) const;
+    ResourceAddress SaveBase(AllocatorPtr alloc,
+                             const char *suffix) const noexcept;
 
     /**
      * Duplicate a resource address, and append a suffix.
@@ -319,7 +321,8 @@ public:
      * @return nullptr if this address type cannot have a base address
      */
     gcc_pure
-    ResourceAddress LoadBase(AllocatorPtr alloc, const char *suffix) const;
+    ResourceAddress LoadBase(AllocatorPtr alloc,
+                             const char *suffix) const noexcept;
 
     /**
      * Copies data from #src for storing in the translation cache.
@@ -342,16 +345,16 @@ public:
                    bool unsafe_base, bool expandable);
 
     gcc_pure
-    ResourceAddress Apply(AllocatorPtr alloc, StringView relative) const;
+    ResourceAddress Apply(AllocatorPtr alloc, StringView relative) const noexcept;
 
     gcc_pure
-    StringView RelativeTo(const ResourceAddress &base) const;
+    StringView RelativeTo(const ResourceAddress &base) const noexcept;
 
     /**
      * Does this address need to be expanded with Expand()?
      */
     gcc_pure
-    bool IsExpandable() const;
+    bool IsExpandable() const noexcept;
 
     /**
      * Expand the expand_path_info attribute.
