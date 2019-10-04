@@ -49,6 +49,7 @@
 #include "widget/Ref.hxx"
 #include "widget/Class.hxx"
 #include "widget/Dump.hxx"
+#include "penv.hxx"
 #include "session/Session.hxx"
 #include "GrowingBuffer.hxx"
 #include "ResourceLoader.hxx"
@@ -168,14 +169,46 @@ Request::AutoDeflate(HttpHeaders &response_headers,
  *
  */
 
+struct processor_env *
+Request::NewProcessorEnv() const noexcept
+{
+    const char *uri = translate.response->uri != nullptr
+        ? translate.response->uri
+        : request.uri;
+
+    return NewFromPool<struct processor_env>
+        (pool, instance.event_loop,
+         *instance.cached_resource_loader,
+         *instance.buffered_filter_resource_loader,
+         connection.per_request.site_name,
+         translate.response->untrusted,
+         request.local_host_and_port, request.remote_host,
+         uri,
+         request_absolute_uri(request,
+                              translate.response->scheme,
+                              translate.response->host,
+                              uri),
+         dissected_uri.base,
+         &args,
+         session_cookie,
+         session_id, realm,
+         &request.headers);
+}
+
+struct processor_env &
+Request::MakeProcessorEnv() noexcept
+{
+    if (env == nullptr)
+        env = NewProcessorEnv();
+    return *env;
+}
+
 inline void
 Request::InvokeXmlProcessor(http_status_t status,
                             StringMap &response_headers,
                             UnusedIstreamPtr response_body,
                             const Transformation &transformation)
 {
-    const char *uri;
-
     assert(!response_sent);
 
     if (!response_body) {
@@ -247,10 +280,6 @@ Request::InvokeXmlProcessor(http_status_t status,
         widget->for_focused = &for_focused;
     }
 
-    uri = translate.response->uri != nullptr
-        ? translate.response->uri
-        : request.uri;
-
     if (translate.response->uri != nullptr)
         dissected_uri.base = translate.response->uri;
 
@@ -265,23 +294,6 @@ Request::InvokeXmlProcessor(http_status_t status,
         }
     }
 
-    env = processor_env(instance.event_loop,
-                        *instance.cached_resource_loader,
-                        *instance.buffered_filter_resource_loader,
-                        connection.per_request.site_name,
-                        translate.response->untrusted,
-                        request.local_host_and_port, request.remote_host,
-                        uri,
-                        request_absolute_uri(request,
-                                             translate.response->scheme,
-                                             translate.response->host,
-                                             uri),
-                        dissected_uri.base,
-                        &args,
-                        session_cookie,
-                        session_id, realm,
-                        &request.headers);
-
     if (proxy_ref != nullptr) {
         /* the client requests a widget in proxy mode */
 
@@ -291,7 +303,7 @@ Request::InvokeXmlProcessor(http_status_t status,
         /* the client requests the whole template */
         response_body = processor_process(pool, stopwatch,
                                           std::move(response_body),
-                                          *widget, env,
+                                          *widget, MakeProcessorEnv(),
                                           transformation.u.processor.options);
         assert(response_body);
 
@@ -348,32 +360,11 @@ Request::InvokeCssProcessor(http_status_t status,
         return;
     }
 
-    const char *uri = translate.response->uri != nullptr
-        ? translate.response->uri
-        : request.uri;
-
     if (translate.response->uri != nullptr)
         dissected_uri.base = translate.response->uri;
 
-    env = processor_env(instance.event_loop,
-                        *instance.cached_resource_loader,
-                        *instance.buffered_filter_resource_loader,
-                        translate.response->site,
-                        translate.response->untrusted,
-                        request.local_host_and_port, request.remote_host,
-                        uri,
-                        request_absolute_uri(request,
-                                             translate.response->scheme,
-                                             translate.response->host,
-                                             uri),
-                        dissected_uri.base,
-                        &args,
-                        session_cookie,
-                        session_id, realm,
-                        &request.headers);
-
     response_body = css_processor(pool, std::move(response_body),
-                                  *widget, env,
+                                  *widget, MakeProcessorEnv(),
                                   transformation.u.css_processor.options);
     assert(response_body);
 
@@ -417,32 +408,11 @@ Request::InvokeTextProcessor(http_status_t status,
         return;
     }
 
-    const char *uri = translate.response->uri != nullptr
-        ? translate.response->uri
-        : request.uri;
-
     if (translate.response->uri != nullptr)
         dissected_uri.base = translate.response->uri;
 
-    env = processor_env(instance.event_loop,
-                        *instance.cached_resource_loader,
-                        *instance.buffered_filter_resource_loader,
-                        translate.response->site,
-                        translate.response->untrusted,
-                        request.local_host_and_port, request.remote_host,
-                        uri,
-                        request_absolute_uri(request,
-                                             translate.response->scheme,
-                                             translate.response->host,
-                                             uri),
-                        dissected_uri.base,
-                        &args,
-                        session_cookie,
-                        session_id, realm,
-                        &request.headers);
-
     response_body = text_processor(pool, std::move(response_body),
-                                   *widget, env);
+                                   *widget, MakeProcessorEnv());
     assert(response_body);
 
     InvokeResponse(status,

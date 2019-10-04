@@ -204,7 +204,7 @@ ProxyWidget::Continue()
     if (ref != nullptr) {
         frame_parent_widget(request.pool, *widget,
                             ref->id,
-                            request.env,
+                            request.MakeProcessorEnv(),
                             request.stopwatch,
                             *this, cancel_ptr);
     } else {
@@ -245,7 +245,7 @@ ProxyWidget::Continue()
         widget->from_request.frame = true;
 
         frame_top_widget(request.pool, *widget,
-                         request.env,
+                         request.MakeProcessorEnv(),
                          request.stopwatch,
                          *this,
                          cancel_ptr);
@@ -349,6 +349,6 @@ proxy_widget(Request &request2,
     processor_lookup_widget(request2.pool, request2.stopwatch,
                             std::move(body),
                             widget, proxy_ref->id,
-                            request2.env, options,
+                            request2.MakeProcessorEnv(), options,
                             *proxy, proxy->cancel_ptr);
 }

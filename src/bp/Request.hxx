@@ -43,7 +43,6 @@
 #include "delegate/Handler.hxx"
 #include "nfs/Cache.hxx"
 #include "strmap.hxx"
-#include "penv.hxx"
 #include "session/Session.hxx"
 #include "widget/View.hxx"
 #include "HttpResponseHandler.hxx"
@@ -228,8 +227,10 @@ struct Request final : HttpResponseHandler, DelegateHandler,
      */
     const char *resource_tag;
 
-    struct processor_env env;
+private:
+    struct processor_env *env = nullptr;
 
+public:
     /**
      * A pointer to the request body, or nullptr if there is none.  Once
      * the request body has been "used", this pointer gets cleared.
@@ -526,9 +527,13 @@ public:
     void DispatchRedirect(http_status_t status, const char *location,
                           const char *msg);
 
+    struct processor_env &MakeProcessorEnv() noexcept;
+
 private:
     UnusedIstreamPtr AutoDeflate(HttpHeaders &response_headers,
                                  UnusedIstreamPtr response_body);
+
+    struct processor_env *NewProcessorEnv() const noexcept;
 
     void InvokeXmlProcessor(http_status_t status,
                             StringMap &response_headers,
