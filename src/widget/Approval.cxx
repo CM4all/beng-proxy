@@ -35,7 +35,7 @@
 #include "Widget.hxx"
 
 bool
-widget_init_approval(Widget *widget, bool self_container)
+widget_init_approval(Widget *widget, bool self_container) noexcept
 {
     assert(widget != NULL);
     assert(widget->parent != NULL);
@@ -74,8 +74,9 @@ widget_init_approval(Widget *widget, bool self_container)
     }
 }
 
+gcc_pure
 static inline bool
-widget_check_group_approval(const Widget *widget)
+widget_check_group_approval(const Widget *widget) noexcept
 {
     assert(widget != NULL);
     assert(widget->parent != NULL);
@@ -90,7 +91,7 @@ widget_check_group_approval(const Widget *widget)
 }
 
 bool
-widget_check_approval(Widget *widget)
+widget_check_approval(Widget *widget) noexcept
 {
     assert(widget != NULL);
     assert(widget->parent != NULL);
