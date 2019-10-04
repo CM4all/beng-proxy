@@ -55,6 +55,7 @@
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "util/Compiler.h"
+#include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
 #include <string.h>

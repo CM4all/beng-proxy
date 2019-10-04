@@ -131,7 +131,7 @@ FilteredSocketBalancer::GetEventLoop() noexcept
 }
 
 void
-FilteredSocketBalancer::Get(struct pool &pool,
+FilteredSocketBalancer::Get(AllocatorPtr alloc,
                             const StopwatchPtr &parent_stopwatch,
                             bool ip_transparent,
                             SocketAddress bind_address,
@@ -142,7 +142,7 @@ FilteredSocketBalancer::Get(struct pool &pool,
                             StockGetHandler &handler,
                             CancellablePointer &cancel_ptr) noexcept
 {
-    BR::Start(pool, GetEventLoop().SteadyNow(), balancer,
+    BR::Start(alloc, GetEventLoop().SteadyNow(), balancer,
               address_list, cancel_ptr,
               session_sticky,
               stock, parent_stopwatch,

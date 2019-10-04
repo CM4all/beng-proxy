@@ -36,7 +36,6 @@
 #include "event/Chrono.hxx"
 #include "util/Compiler.h"
 
-struct pool;
 struct AddressList;
 class EventLoop;
 class StockGetHandler;
@@ -46,6 +45,7 @@ class SocketAddress;
 class SocketFilterFactory;
 class FilteredSocketStock;
 class StopwatchPtr;
+class AllocatorPtr;
 
 /*
  * Wrapper for the #FilteredSocketStock class to support load
@@ -75,7 +75,7 @@ public:
      * select the worker; 0 means disable stickiness
      * @param timeout the connect timeout for each attempt [seconds]
      */
-    void Get(struct pool &pool,
+    void Get(AllocatorPtr alloc,
              const StopwatchPtr &parent_stopwatch,
              bool ip_transparent,
              SocketAddress bind_address,
