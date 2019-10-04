@@ -33,8 +33,8 @@
 #pragma once
 
 struct pool;
+struct WidgetContext;
 class UnusedIstreamPtr;
-struct processor_env;
 struct StringView;
 struct escape_class;
 class Widget;
@@ -47,7 +47,7 @@ class TranslationService;
  */
 UnusedIstreamPtr
 css_rewrite_block_uris(struct pool &pool,
-                       struct processor_env &env,
+                       WidgetContext &ctx,
                        TranslationService &service,
                        Widget &widget,
                        StringView block,

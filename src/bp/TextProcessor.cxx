@@ -36,7 +36,7 @@
 #include "istream/SubstIstream.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
-#include "penv.hxx"
+#include "widget/Context.hxx"
 #include "pool/pool.hxx"
 
 #include <assert.h>
@@ -82,7 +82,7 @@ base_uri(struct pool *pool, const char *absolute_uri)
 static SubstTree
 processor_subst_beng_widget(struct pool &pool,
                             const Widget &widget,
-                            const struct processor_env &env)
+                            const WidgetContext &ctx)
 {
     SubstTree subst;
     subst.Add(pool, "&c:type;", widget.class_name);
@@ -91,18 +91,18 @@ processor_subst_beng_widget(struct pool &pool,
     subst.Add(pool, "&c:id;", widget.id);
     subst.Add(pool, "&c:path;", widget.GetIdPath());
     subst.Add(pool, "&c:prefix;", widget.GetPrefix());
-    subst.Add(pool, "&c:uri;", env.absolute_uri);
-    subst.Add(pool, "&c:base;", base_uri(&pool, env.uri));
-    subst.Add(pool, "&c:frame;", strmap_get_checked(env.args, "frame"));
+    subst.Add(pool, "&c:uri;", ctx.absolute_uri);
+    subst.Add(pool, "&c:base;", base_uri(&pool, ctx.uri));
+    subst.Add(pool, "&c:frame;", strmap_get_checked(ctx.args, "frame"));
     subst.Add(pool, "&c:view;", widget.GetEffectiveView()->name);
-    subst.Add(pool, "&c:session;", strmap_get_checked(env.args, "session"));
+    subst.Add(pool, "&c:session;", strmap_get_checked(ctx.args, "session"));
     return subst;
 }
 
 UnusedIstreamPtr
 text_processor(struct pool &pool, UnusedIstreamPtr input,
-               const Widget &widget, const struct processor_env &env)
+               const Widget &widget, const WidgetContext &ctx)
 {
     return istream_subst_new(&pool, std::move(input),
-                             processor_subst_beng_widget(pool, widget, env));
+                             processor_subst_beng_widget(pool, widget, ctx));
 }

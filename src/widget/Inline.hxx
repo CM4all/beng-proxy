@@ -39,10 +39,10 @@
 #include "event/Chrono.hxx"
 
 struct pool;
+struct WidgetContext;
 class UnusedIstreamPtr;
 class Widget;
 class StopwatchPtr;
-struct processor_env;
 
 extern const Event::Duration inline_widget_body_timeout;
 
@@ -56,7 +56,7 @@ extern const Event::Duration inline_widget_body_timeout;
  * @param plain_text expect text/plain?
  */
 UnusedIstreamPtr
-embed_inline_widget(struct pool &pool, struct processor_env &env,
+embed_inline_widget(struct pool &pool, WidgetContext &ctx,
                     const StopwatchPtr &parent_stopwatch,
                     bool plain_text,
                     Widget &widget) noexcept;

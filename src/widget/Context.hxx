@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_PROCESSOR_ENV_H
-#define BENG_PROXY_PROCESSOR_ENV_H
+#pragma once
 
 #include "bp/session/Id.hxx"
 #include "util/StringView.hxx"
@@ -42,7 +41,7 @@ class StringMap;
 class SessionLease;
 class RealmSessionLease;
 
-struct processor_env {
+struct WidgetContext {
     EventLoop *event_loop;
 
     ResourceLoader *resource_loader;
@@ -79,9 +78,9 @@ struct processor_env {
     SessionId session_id;
     const char *realm;
 
-    processor_env() = default;
+    WidgetContext() = default;
 
-    processor_env(EventLoop &_event_loop,
+    WidgetContext(EventLoop &_event_loop,
                   ResourceLoader &_resource_loader,
                   ResourceLoader &_filter_resource_loader,
                   const char *site_name,
@@ -100,5 +99,3 @@ struct processor_env {
     SessionLease GetSession() const;
     RealmSessionLease GetRealmSession() const;
 };
-
-#endif

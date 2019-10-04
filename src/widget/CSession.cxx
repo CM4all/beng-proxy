@@ -30,17 +30,17 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "penv.hxx"
+#include "Context.hxx"
 #include "bp/session/Session.hxx"
 
 SessionLease
-processor_env::GetSession() const
+WidgetContext::GetSession() const
 {
     return SessionLease(session_id);
 }
 
 RealmSessionLease
-processor_env::GetRealmSession() const
+WidgetContext::GetRealmSession() const
 {
     return {session_id, realm};
 }

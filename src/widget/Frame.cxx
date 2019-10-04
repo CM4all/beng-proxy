@@ -35,10 +35,10 @@
 #include "Error.hxx"
 #include "Widget.hxx"
 #include "Class.hxx"
+#include "Context.hxx"
 #include "Approval.hxx"
 #include "Resolver.hxx"
 #include "LookupHandler.hxx"
-#include "penv.hxx"
 #include "HttpResponseHandler.hxx"
 #include "istream/istream.hxx"
 #include "bp/session/Session.hxx"
@@ -49,7 +49,7 @@
 
 void
 frame_top_widget(struct pool &pool, Widget &widget,
-                 struct processor_env &env,
+                 WidgetContext &ctx,
                  const StopwatchPtr &parent_stopwatch,
                  HttpResponseHandler &handler,
                  CancellablePointer &cancel_ptr)
@@ -69,7 +69,7 @@ frame_top_widget(struct pool &pool, Widget &widget,
     }
 
     try {
-        widget.CheckHost(env.untrusted_host, env.site_name);
+        widget.CheckHost(ctx.untrusted_host, ctx.site_name);
     } catch (...) {
         WidgetError error(widget, WidgetErrorCode::FORBIDDEN,
                           "Untrusted host");
@@ -79,20 +79,20 @@ frame_top_widget(struct pool &pool, Widget &widget,
     }
 
     if (widget.session_sync_pending) {
-        auto session = env.GetRealmSession();
+        auto session = ctx.GetRealmSession();
         if (session)
             widget.LoadFromSession(*session);
         else
             widget.session_sync_pending = false;
     }
 
-    widget_http_request(pool, widget, env, parent_stopwatch,
+    widget_http_request(pool, widget, ctx, parent_stopwatch,
                         handler, cancel_ptr);
 }
 
 void
 frame_parent_widget(struct pool &pool, Widget &widget, const char *id,
-                    struct processor_env &env,
+                    WidgetContext &ctx,
                     const StopwatchPtr &parent_stopwatch,
                     WidgetLookupHandler &handler,
                     CancellablePointer &cancel_ptr)
@@ -130,13 +130,13 @@ frame_parent_widget(struct pool &pool, Widget &widget, const char *id,
     }
 
     if (widget.session_sync_pending) {
-        auto session = env.GetRealmSession();
+        auto session = ctx.GetRealmSession();
         if (session)
             widget.LoadFromSession(*session);
         else
             widget.session_sync_pending = false;
     }
 
-    widget_http_lookup(pool, widget, id, env, parent_stopwatch,
+    widget_http_lookup(pool, widget, id, ctx, parent_stopwatch,
                        handler, cancel_ptr);
 }

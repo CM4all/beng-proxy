@@ -39,6 +39,7 @@
 #include "util/Compiler.h"
 
 struct pool;
+struct WidgetContext;
 class UnusedIstreamPtr;
 class TranslationService;
 struct parsed_uri;
@@ -72,7 +73,7 @@ parse_uri_mode(StringView s) noexcept;
  */
 UnusedIstreamPtr
 rewrite_widget_uri(struct pool &pool,
-                   struct processor_env &env,
+                   WidgetContext &ctx,
                    TranslationService &service,
                    Widget &widget,
                    StringView value,

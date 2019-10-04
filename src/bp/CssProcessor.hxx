@@ -45,9 +45,9 @@ enum css_processor_options {
 };
 
 struct pool;
+struct WidgetContext;
 class UnusedIstreamPtr;
 class Widget;
-struct processor_env;
 
 /**
  * Process the specified istream, and return the processed stream.
@@ -57,5 +57,5 @@ struct processor_env;
 UnusedIstreamPtr
 css_processor(struct pool &pool, UnusedIstreamPtr stream,
               Widget &widget,
-              struct processor_env &env,
+              WidgetContext &ctx,
               unsigned options);

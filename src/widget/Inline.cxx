@@ -35,9 +35,9 @@
 #include "Error.hxx"
 #include "Widget.hxx"
 #include "Class.hxx"
+#include "Context.hxx"
 #include "Resolver.hxx"
 #include "Approval.hxx"
-#include "penv.hxx"
 #include "bp/Global.hxx"
 #include "http/HeaderUtil.hxx"
 #include "HttpResponseHandler.hxx"
@@ -68,7 +68,7 @@ const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
 
 class InlineWidget final : PoolLeakDetector, HttpResponseHandler, Cancellable {
     struct pool &pool;
-    struct processor_env &env;
+    WidgetContext &ctx;
     const StopwatchPtr parent_stopwatch;
     const bool plain_text;
     Widget &widget;
@@ -80,16 +80,16 @@ class InlineWidget final : PoolLeakDetector, HttpResponseHandler, Cancellable {
     CancellablePointer cancel_ptr;
 
 public:
-    InlineWidget(struct pool &_pool, struct processor_env &_env,
+    InlineWidget(struct pool &_pool, WidgetContext &_ctx,
                  const StopwatchPtr &_parent_stopwatch,
                  bool _plain_text,
                  Widget &_widget,
                  DelayedIstreamControl &_delayed) noexcept
         :PoolLeakDetector(_pool),
-         pool(_pool), env(_env), parent_stopwatch(_parent_stopwatch),
+         pool(_pool), ctx(_ctx), parent_stopwatch(_parent_stopwatch),
          plain_text(_plain_text),
          widget(_widget),
-         header_timeout_event(*env.event_loop,
+         header_timeout_event(*ctx.event_loop,
                               BIND_THIS_METHOD(OnHeaderTimeout)),
          delayed(_delayed) {
         delayed.cancel_ptr = *this;
@@ -97,7 +97,7 @@ public:
 
     UnusedIstreamPtr MakeResponse(UnusedIstreamPtr input) noexcept {
         return NewTimeoutIstream(pool, std::move(input),
-                                 *env.event_loop,
+                                 *ctx.event_loop,
                                  inline_widget_body_timeout);
     }
 
@@ -286,7 +286,7 @@ InlineWidget::SendRequest() noexcept
     }
 
     try {
-        widget.CheckHost(env.untrusted_host, env.site_name);
+        widget.CheckHost(ctx.untrusted_host, ctx.site_name);
     } catch (const std::runtime_error &e) {
         WidgetError error(widget, WidgetErrorCode::FORBIDDEN, "Untrusted host");
         widget.Cancel();
@@ -304,7 +304,7 @@ InlineWidget::SendRequest() noexcept
     }
 
     if (widget.session_sync_pending) {
-        auto session = env.GetRealmSession();
+        auto session = ctx.GetRealmSession();
         if (session)
             widget.LoadFromSession(*session);
         else
@@ -312,7 +312,7 @@ InlineWidget::SendRequest() noexcept
     }
 
     header_timeout_event.Schedule(inline_widget_header_timeout);
-    widget_http_request(pool, widget, env,
+    widget_http_request(pool, widget, ctx,
                         parent_stopwatch,
                         *this, cancel_ptr);
 }
@@ -354,7 +354,7 @@ InlineWidget::Start() noexcept
  */
 
 UnusedIstreamPtr
-embed_inline_widget(struct pool &pool, struct processor_env &env,
+embed_inline_widget(struct pool &pool, WidgetContext &ctx,
                     const StopwatchPtr &parent_stopwatch,
                     bool plain_text,
                     Widget &widget) noexcept
@@ -367,16 +367,16 @@ embed_inline_widget(struct pool &pool, struct processor_env &env,
            gets cancelled, but the event cannot reach this stack
            frame; by preventing reads on the request body, this
            situation is avoided */
-        auto _pause = istream_pause_new(pool, *env.event_loop,
+        auto _pause = istream_pause_new(pool, *ctx.event_loop,
                                         std::move(widget.from_request.body));
         pause = std::move(_pause.second);
 
         widget.from_request.body = UnusedHoldIstreamPtr(pool, std::move(_pause.first));
     }
 
-    auto delayed = istream_delayed_new(pool, *env.event_loop);
+    auto delayed = istream_delayed_new(pool, *ctx.event_loop);
 
-    auto iw = NewFromPool<InlineWidget>(pool, pool, env, parent_stopwatch,
+    auto iw = NewFromPool<InlineWidget>(pool, pool, ctx, parent_stopwatch,
                                         plain_text, widget,
                                         delayed.second);
 

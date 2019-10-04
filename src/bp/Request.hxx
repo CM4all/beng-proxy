@@ -62,6 +62,7 @@ struct BpConnection;
 struct IncomingHttpRequest;
 struct FilterTransformation;
 struct DelegateAddress;
+struct WidgetContext;
 
 /*
  * The BENG request struct.  This is only used by the handlers
@@ -228,7 +229,7 @@ struct Request final : HttpResponseHandler, DelegateHandler,
     const char *resource_tag;
 
 private:
-    struct processor_env *env = nullptr;
+    WidgetContext *widget_context = nullptr;
 
 public:
     /**
@@ -527,13 +528,13 @@ public:
     void DispatchRedirect(http_status_t status, const char *location,
                           const char *msg);
 
-    struct processor_env &MakeProcessorEnv() noexcept;
+    WidgetContext &MakeWidgetContext() noexcept;
 
 private:
     UnusedIstreamPtr AutoDeflate(HttpHeaders &response_headers,
                                  UnusedIstreamPtr response_body);
 
-    struct processor_env *NewProcessorEnv() const noexcept;
+    WidgetContext *NewWidgetContext() const noexcept;
 
     void InvokeXmlProcessor(http_status_t status,
                             StringMap &response_headers,

@@ -34,8 +34,8 @@
 #include "widget/Widget.hxx"
 #include "widget/Request.hxx"
 #include "widget/Resolver.hxx"
+#include "widget/Context.hxx"
 #include "bp/XmlProcessor.hxx"
-#include "penv.hxx"
 #include "uri/Dissect.hxx"
 #include "HttpResponseHandler.hxx"
 #include "istream/istream.hxx"
@@ -88,7 +88,7 @@ Widget::CheckHost(const char *, const char *) const
 }
 
 RealmSessionLease
-processor_env::GetRealmSession() const
+WidgetContext::GetRealmSession() const
 {
     return nullptr;
 }
@@ -106,7 +106,7 @@ Widget::LoadFromSession(gcc_unused RealmSession &session)
 void
 widget_http_request(gcc_unused struct pool &pool,
                     gcc_unused Widget &widget,
-                    gcc_unused struct processor_env &env,
+                    WidgetContext &,
                     const StopwatchPtr &,
                     HttpResponseHandler &handler,
                     gcc_unused CancellablePointer &cancel_ptr) noexcept
@@ -138,8 +138,8 @@ test_abort_resolver()
     const char *uri;
     bool ret;
     DissectedUri dissected_uri;
-    struct processor_env env;
-    env.event_loop = &instance.event_loop;
+    WidgetContext ctx;
+    ctx.event_loop = &instance.event_loop;
 
     auto pool = pool_new_linear(instance.root_pool, "test", 4096);
 
@@ -152,7 +152,7 @@ test_abort_resolver()
 
     Widget widget(pool, nullptr);
 
-    auto istream = embed_inline_widget(*pool, env, nullptr, false, widget);
+    auto istream = embed_inline_widget(*pool, ctx, nullptr, false, widget);
 }
 
 int main(int argc, char **argv) {

@@ -35,10 +35,10 @@
 #include "util/Compiler.h"
 
 struct pool;
+struct WidgetContext;
 class UnusedIstreamPtr;
 class StringMap;
 class Widget;
-struct processor_env;
 
 /**
  * Check if the resource described by the specified headers can be
@@ -55,4 +55,4 @@ text_processor_allowed(const StringMap &headers);
  */
 UnusedIstreamPtr
 text_processor(struct pool &pool, UnusedIstreamPtr istream,
-               const Widget &widget, const struct processor_env &env);
+               const Widget &widget, const WidgetContext &ctx);

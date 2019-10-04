@@ -37,6 +37,7 @@
 #include "bp/session/Session.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
+#include "widget/Context.hxx"
 #include "widget/Resolver.hxx"
 #include "PInstance.hxx"
 #include "escape_pool.hxx"
@@ -44,7 +45,6 @@
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/StringSink.hxx"
-#include "penv.hxx"
 #include "widget/Inline.hxx"
 #include "util/Cancellable.hxx"
 
@@ -88,7 +88,7 @@ Widget::LoadFromSession(gcc_unused RealmSession &session)
 }
 
 UnusedIstreamPtr
-embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
+embed_inline_widget(struct pool &pool, WidgetContext &,
                     const StopwatchPtr &,
                     gcc_unused bool plain_text,
                     Widget &widget) noexcept
@@ -195,17 +195,17 @@ assert_rewrite_check4(EventLoop &event_loop,
     session_id.Clear();
 
     FailingResourceLoader resource_loader;
-    struct processor_env env(event_loop,
-                             resource_loader, resource_loader,
-                             site_name, nullptr,
-                             nullptr, nullptr,
-                             nullptr, nullptr,
-                             "/index.html",
-                             nullptr,
-                             nullptr, session_id, "foo",
-                             nullptr);
+    WidgetContext ctx(event_loop,
+                      resource_loader, resource_loader,
+                      site_name, nullptr,
+                      nullptr, nullptr,
+                      nullptr, nullptr,
+                      "/index.html",
+                      nullptr,
+                      nullptr, session_id, "foo",
+                      nullptr);
 
-    auto istream = rewrite_widget_uri(*pool, env, *(TranslationService *)0x1,
+    auto istream = rewrite_widget_uri(*pool, ctx, *(TranslationService *)0x1,
                                       *widget,
                                       value2,
                                       mode, stateful, view, &html_escape_class);

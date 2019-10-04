@@ -32,8 +32,8 @@
 
 #include "CssRewrite.hxx"
 #include "css_parser.hxx"
-#include "penv.hxx"
 #include "widget/RewriteUri.hxx"
+#include "widget/Context.hxx"
 #include "pool/pool.hxx"
 #include "pool/tpool.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -114,7 +114,7 @@ static constexpr CssParserHandler css_rewrite_parser_handler = {
 
 UnusedIstreamPtr
 css_rewrite_block_uris(struct pool &pool,
-                       struct processor_env &env,
+                       WidgetContext &ctx,
                        TranslationService &service,
                        Widget &widget,
                        const StringView block,
@@ -141,7 +141,7 @@ css_rewrite_block_uris(struct pool &pool,
 
     auto input =
         istream_memory_new(pool, p_strdup(pool, block), block.size);
-    auto replace = istream_replace_new(*env.event_loop, pool,
+    auto replace = istream_replace_new(*ctx.event_loop, pool,
                                        std::move(input));
 
     bool modified = false;
@@ -149,7 +149,7 @@ css_rewrite_block_uris(struct pool &pool,
         const struct css_url *url = &rewrite.urls[i];
 
         auto value =
-            rewrite_widget_uri(pool, env, service,
+            rewrite_widget_uri(pool, ctx, service,
                                widget,
                                {block.data + url->start, url->end - url->start},
                                RewriteUriMode::PARTIAL, false, nullptr,

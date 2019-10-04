@@ -49,7 +49,7 @@
 #include "widget/Ref.hxx"
 #include "widget/Class.hxx"
 #include "widget/Dump.hxx"
-#include "penv.hxx"
+#include "widget/Context.hxx"
 #include "session/Session.hxx"
 #include "GrowingBuffer.hxx"
 #include "ResourceLoader.hxx"
@@ -169,14 +169,14 @@ Request::AutoDeflate(HttpHeaders &response_headers,
  *
  */
 
-struct processor_env *
-Request::NewProcessorEnv() const noexcept
+WidgetContext *
+Request::NewWidgetContext() const noexcept
 {
     const char *uri = translate.response->uri != nullptr
         ? translate.response->uri
         : request.uri;
 
-    return NewFromPool<struct processor_env>
+    return NewFromPool<WidgetContext>
         (pool, instance.event_loop,
          *instance.cached_resource_loader,
          *instance.buffered_filter_resource_loader,
@@ -195,12 +195,12 @@ Request::NewProcessorEnv() const noexcept
          &request.headers);
 }
 
-struct processor_env &
-Request::MakeProcessorEnv() noexcept
+WidgetContext &
+Request::MakeWidgetContext() noexcept
 {
-    if (env == nullptr)
-        env = NewProcessorEnv();
-    return *env;
+    if (widget_context == nullptr)
+        widget_context = NewWidgetContext();
+    return *widget_context;
 }
 
 inline void
@@ -303,7 +303,7 @@ Request::InvokeXmlProcessor(http_status_t status,
         /* the client requests the whole template */
         response_body = processor_process(pool, stopwatch,
                                           std::move(response_body),
-                                          *widget, MakeProcessorEnv(),
+                                          *widget, MakeWidgetContext(),
                                           transformation.u.processor.options);
         assert(response_body);
 
@@ -364,7 +364,7 @@ Request::InvokeCssProcessor(http_status_t status,
         dissected_uri.base = translate.response->uri;
 
     response_body = css_processor(pool, std::move(response_body),
-                                  *widget, MakeProcessorEnv(),
+                                  *widget, MakeWidgetContext(),
                                   transformation.u.css_processor.options);
     assert(response_body);
 
@@ -412,7 +412,7 @@ Request::InvokeTextProcessor(http_status_t status,
         dissected_uri.base = translate.response->uri;
 
     response_body = text_processor(pool, std::move(response_body),
-                                   *widget, MakeProcessorEnv());
+                                   *widget, MakeWidgetContext());
     assert(response_body);
 
     InvokeResponse(status,

@@ -35,7 +35,7 @@
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
 #include "bp/XmlProcessor.hxx"
-#include "penv.hxx"
+#include "widget/Context.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
@@ -55,7 +55,7 @@ TranslationService *global_translation_service;
 
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool,
-                    gcc_unused struct processor_env &env,
+                    WidgetContext &,
                     const StopwatchPtr &,
                     gcc_unused bool plain_text,
                     Widget &widget) noexcept
@@ -82,7 +82,7 @@ parse_uri_mode(gcc_unused StringView s) noexcept
 
 UnusedIstreamPtr
 rewrite_widget_uri(gcc_unused struct pool &pool,
-                   gcc_unused struct processor_env &env,
+                   WidgetContext &,
                    gcc_unused TranslationService &service,
                    gcc_unused Widget &widget,
                    gcc_unused StringView value,
@@ -109,25 +109,25 @@ try {
     session_id.Generate();
 
     FailingResourceLoader resource_loader;
-    struct processor_env env(instance.event_loop,
-                             resource_loader, resource_loader,
-                             nullptr, nullptr,
-                             "localhost:8080",
-                             "localhost:8080",
-                             "/beng.html",
-                             "http://localhost:8080/beng.html",
-                             "/beng.html",
-                             nullptr,
-                             nullptr,
-                             session_id, "foo",
-                             nullptr);
+    WidgetContext ctx(instance.event_loop,
+                      resource_loader, resource_loader,
+                      nullptr, nullptr,
+                      "localhost:8080",
+                      "localhost:8080",
+                      "/beng.html",
+                      "http://localhost:8080/beng.html",
+                      "/beng.html",
+                      nullptr,
+                      nullptr,
+                      session_id, "foo",
+                      nullptr);
 
     auto result =
         processor_process(instance.root_pool, nullptr,
                           UnusedIstreamPtr(istream_file_new(instance.event_loop,
                                                             instance.root_pool,
                                                             "/dev/stdin", (off_t)-1)),
-                          widget, env, PROCESSOR_CONTAINER);
+                          widget, ctx, PROCESSOR_CONTAINER);
 
     StdioSink sink(std::move(result));
     sink.LoopRead();

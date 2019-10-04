@@ -34,9 +34,9 @@
 #include "Widget.hxx"
 #include "Resolver.hxx"
 #include "Class.hxx"
+#include "Context.hxx"
 #include "Inline.hxx"
 #include "uri/Extract.hxx"
-#include "penv.hxx"
 #include "pool/tpool.hxx"
 #include "escape_class.hxx"
 #include "istream_escape.hxx"
@@ -201,7 +201,7 @@ uri_add_raw_site_suffix(struct pool &pool, const char *uri, const char *site_nam
  * @return the new URI or nullptr if it is unchanged
  */
 static const char *
-do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
+do_rewrite_widget_uri(struct pool &pool, WidgetContext &ctx,
                       Widget &widget,
                       StringView value,
                       RewriteUriMode mode, bool stateful,
@@ -227,7 +227,7 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
         return widget.AbsoluteUri(pool, stateful, value);
 
     case RewriteUriMode::FOCUS:
-        frame = strmap_get_checked(env.args, "frame");
+        frame = strmap_get_checked(ctx.args, "frame");
         break;
 
     case RewriteUriMode::PARTIAL:
@@ -243,7 +243,7 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
         gcc_unreachable();
     }
 
-    const char *uri = widget.ExternalUri(pool, env.external_base_uri, env.args,
+    const char *uri = widget.ExternalUri(pool, ctx.external_base_uri, ctx.args,
                                          stateful,
                                          value,
                                          frame, view);
@@ -258,19 +258,19 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
     }
 
     if (widget.cls->untrusted_host != nullptr &&
-        (env.untrusted_host == nullptr ||
-         strcmp(widget.cls->untrusted_host, env.untrusted_host) != 0))
+        (ctx.untrusted_host == nullptr ||
+         strcmp(widget.cls->untrusted_host, ctx.untrusted_host) != 0))
         uri = uri_replace_hostname(pool, uri, widget.cls->untrusted_host);
     else if (widget.cls->untrusted_prefix != nullptr)
-        uri = uri_add_prefix(pool, uri, env.absolute_uri, env.untrusted_host,
+        uri = uri_add_prefix(pool, uri, ctx.absolute_uri, ctx.untrusted_host,
                              widget.cls->untrusted_prefix);
     else if (widget.cls->untrusted_site_suffix != nullptr)
-        uri = uri_add_site_suffix(pool, uri, env.site_name,
-                                  env.untrusted_host,
+        uri = uri_add_site_suffix(pool, uri, ctx.site_name,
+                                  ctx.untrusted_host,
                                   widget.cls->untrusted_site_suffix);
     else if (widget.cls->untrusted_raw_site_suffix != nullptr)
-        uri = uri_add_raw_site_suffix(pool, uri, env.site_name,
-                                      env.untrusted_host,
+        uri = uri_add_raw_site_suffix(pool, uri, ctx.site_name,
+                                      ctx.untrusted_host,
                                       widget.cls->untrusted_raw_site_suffix);
 
     return uri;
@@ -284,7 +284,7 @@ do_rewrite_widget_uri(struct pool &pool, struct processor_env &env,
 
 class UriRewriter {
     struct pool &pool;
-    struct processor_env &env;
+    WidgetContext &ctx;
     Widget &widget;
 
     /** the value passed to rewrite_widget_uri() */
@@ -300,14 +300,14 @@ class UriRewriter {
 
 public:
     UriRewriter(struct pool &_pool,
-                struct processor_env &_env,
+                WidgetContext &_ctx,
                 Widget &_widget,
                 StringView _value,
                 RewriteUriMode _mode, bool _stateful,
                 const char *_view,
                 const struct escape_class *_escape,
                 DelayedIstreamControl &_delayed) noexcept
-        :pool(_pool), env(_env), widget(_widget),
+        :pool(_pool), ctx(_ctx), widget(_widget),
          value(DupBuffer(pool, _value)),
          mode(_mode), stateful(_stateful),
          view(_view != nullptr
@@ -325,7 +325,7 @@ public:
                       delayed.cancel_ptr);
 
         return NewTimeoutIstream(pool, std::move(input),
-                                 *env.event_loop,
+                                 *ctx.event_loop,
                                  inline_widget_body_timeout);
     }
 
@@ -341,7 +341,7 @@ UriRewriter::ResolverCallback() noexcept
         const char *uri;
 
         if (widget.session_sync_pending) {
-            RealmSessionLease session(env.session_id, env.realm);
+            RealmSessionLease session(ctx.session_id, ctx.realm);
             if (session)
                 widget.LoadFromSession(*session);
             else
@@ -356,7 +356,7 @@ UriRewriter::ResolverCallback() noexcept
             value.data = unescaped;
         }
 
-        uri = do_rewrite_widget_uri(pool, env, widget,
+        uri = do_rewrite_widget_uri(pool, ctx, widget,
                                     value, mode, stateful,
                                     view);
         if (uri != nullptr) {
@@ -385,7 +385,7 @@ UriRewriter::ResolverCallback() noexcept
 
 UnusedIstreamPtr
 rewrite_widget_uri(struct pool &pool,
-                   struct processor_env &env,
+                   WidgetContext &ctx,
                    TranslationService &service,
                    Widget &widget,
                    StringView value,
@@ -398,7 +398,7 @@ rewrite_widget_uri(struct pool &pool,
         return nullptr;
 
     if (mode == RewriteUriMode::RESPONSE) {
-        auto istream = embed_inline_widget(pool, env,
+        auto istream = embed_inline_widget(pool, ctx,
                                            nullptr, // TODO
                                            true, widget);
         if (escape != nullptr)
@@ -422,7 +422,7 @@ rewrite_widget_uri(struct pool &pool,
             value.data = unescaped;
         }
 
-        uri = do_rewrite_widget_uri(pool, env, widget, value, mode, stateful,
+        uri = do_rewrite_widget_uri(pool, ctx, widget, value, mode, stateful,
                                     view);
         if (uri == nullptr)
             return nullptr;
@@ -433,9 +433,9 @@ rewrite_widget_uri(struct pool &pool,
 
         return istream;
     } else {
-        auto delayed = istream_delayed_new(pool, *env.event_loop);
+        auto delayed = istream_delayed_new(pool, *ctx.event_loop);
 
-        auto rwu = NewFromPool<UriRewriter>(pool, pool, env, widget,
+        auto rwu = NewFromPool<UriRewriter>(pool, pool, ctx, widget,
                                             value, mode, stateful,
                                             view, escape, delayed.second);
 

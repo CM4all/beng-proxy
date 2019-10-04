@@ -65,11 +65,11 @@ enum processor_options {
 };
 
 struct pool;
+struct WidgetContext;
 class StopwatchPtr;
 class UnusedIstreamPtr;
 struct parsed_uri;
 class Widget;
-struct processor_env;
 class StringMap;
 class WidgetLookupHandler;
 class CancellablePointer;
@@ -88,7 +88,7 @@ processor_process(struct pool &pool,
                   const StopwatchPtr &parent_stopwatch,
                   UnusedIstreamPtr istream,
                   Widget &widget,
-                  struct processor_env &env,
+                  WidgetContext &ctx,
                   unsigned options);
 
 /**
@@ -102,7 +102,7 @@ processor_lookup_widget(struct pool &pool,
                         const StopwatchPtr &parent_stopwatch,
                         UnusedIstreamPtr istream,
                         Widget &widget, const char *id,
-                        struct processor_env &env,
+                        WidgetContext &ctx,
                         unsigned options,
                         WidgetLookupHandler &handler,
                         CancellablePointer &cancel_ptr);

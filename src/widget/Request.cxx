@@ -33,6 +33,7 @@
 #include "Request.hxx"
 #include "Widget.hxx"
 #include "Class.hxx"
+#include "Context.hxx"
 #include "Error.hxx"
 #include "LookupHandler.hxx"
 #include "HttpResponseHandler.hxx"
@@ -42,7 +43,6 @@
 #include "bp/CssProcessor.hxx"
 #include "bp/TextProcessor.hxx"
 #include "bp/session/Session.hxx"
-#include "penv.hxx"
 #include "http/CookieClient.hxx"
 #include "ResourceLoader.hxx"
 #include "http/HeaderWriter.hxx"
@@ -90,7 +90,7 @@ class WidgetRequest final
     Widget &widget;
     const char *const lookup_id = nullptr;
 
-    struct processor_env &env;
+    WidgetContext &ctx;
     const char *host_and_port;
 
     /**
@@ -118,21 +118,21 @@ class WidgetRequest final
 
 public:
     WidgetRequest(struct pool &_pool, Widget &_widget,
-                  struct processor_env &_env,
+                  WidgetContext &_ctx,
                   const StopwatchPtr &_parent_stopwatch,
                   HttpResponseHandler &_handler,
                   CancellablePointer &_cancel_ptr) noexcept
         :PoolLeakDetector(_pool),
          pool(_pool),
          parent_stopwatch(_parent_stopwatch),
-         widget(_widget), env(_env), http_handler(&_handler),
+         widget(_widget), ctx(_ctx), http_handler(&_handler),
          caller_cancel_ptr(_cancel_ptr)
     {
         caller_cancel_ptr = *this;
     }
 
     WidgetRequest(struct pool &_pool, Widget &_widget,
-                  struct processor_env &_env,
+                  WidgetContext &_ctx,
                   const char *_lookup_id,
                   const StopwatchPtr &_parent_stopwatch,
                   WidgetLookupHandler &_handler,
@@ -142,7 +142,7 @@ public:
          parent_stopwatch(_parent_stopwatch),
          widget(_widget),
          lookup_id(_lookup_id),
-         env(_env),
+         ctx(_ctx),
          lookup_handler(&_handler),
          caller_cancel_ptr(_cancel_ptr)
     {
@@ -159,7 +159,7 @@ public:
 private:
     RealmSessionLease GetSessionIfStateful() const {
         return widget.cls->stateful
-            ? env.GetRealmSession()
+            ? ctx.GetRealmSession()
             : nullptr;
     }
 
@@ -261,16 +261,16 @@ WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
                                   bool exclude_host, bool with_body) noexcept
 {
     auto headers =
-        forward_request_headers(pool, *env.request_headers,
-                                env.local_host,
-                                env.remote_host,
+        forward_request_headers(pool, *ctx.request_headers,
+                                ctx.local_host,
+                                ctx.remote_host,
                                 exclude_host, with_body,
                                 widget.from_request.frame && !t_view.HasProcessor(),
                                 widget.from_request.frame && t_view.transformation == nullptr,
                                 widget.from_request.frame && t_view.transformation == nullptr,
                                 a_view.request_header_forward,
-                                env.session_cookie,
-                                env.GetRealmSession().get(),
+                                ctx.session_cookie,
+                                ctx.GetRealmSession().get(),
                                 host_and_port,
                                 widget_uri(&widget));
 
@@ -325,11 +325,11 @@ WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body) noex
     const WidgetView *t_view = widget.GetTransformationView();
     assert(t_view != nullptr);
 
-    env.resource_loader->SendRequest(pool,
+    ctx.resource_loader->SendRequest(pool,
                                      parent_stopwatch,
-                                     env.session_id.GetClusterHash(),
+                                     ctx.session_id.GetClusterHash(),
                                      nullptr,
-                                     env.site_name,
+                                     ctx.site_name,
                                      HTTP_METHOD_GET, address, HTTP_STATUS_OK,
                                      MakeRequestHeaders(*view, *t_view,
                                                         address.IsAnyHttp(),
@@ -379,7 +379,7 @@ WidgetRequest::ProcessResponse(http_status_t status,
         auto &_parent_stopwatch = parent_stopwatch;
         auto &_widget = widget;
         const char *_lookup_id = lookup_id;
-        auto &_env = env;
+        auto &_ctx = ctx;
         auto &_handler = *lookup_handler;
         auto &_cancel_ptr = caller_cancel_ptr;
 
@@ -387,14 +387,14 @@ WidgetRequest::ProcessResponse(http_status_t status,
 
         processor_lookup_widget(_pool, _parent_stopwatch, std::move(body),
                                 _widget, _lookup_id,
-                                _env, options,
+                                _ctx, options,
                                 _handler,
                                 _cancel_ptr);
     } else
         DispatchResponse(status, processor_header_forward(pool, headers),
                          processor_process(pool, parent_stopwatch,
                                            std::move(body),
-                                           widget, env, options));
+                                           widget, ctx, options));
 }
 
 gcc_pure
@@ -426,7 +426,7 @@ WidgetRequest::CssProcessResponse(http_status_t status,
     }
 
     DispatchResponse(status, processor_header_forward(pool, headers),
-                     css_processor(pool, std::move(body), widget, env, options));
+                     css_processor(pool, std::move(body), widget, ctx, options));
 }
 
 void
@@ -449,7 +449,7 @@ WidgetRequest::TextProcessResponse(http_status_t status,
     }
 
     DispatchResponse(status, processor_header_forward(pool, headers),
-                     text_processor(pool, std::move(body), widget, env));
+                     text_processor(pool, std::move(body), widget, ctx));
 }
 
 void
@@ -473,12 +473,12 @@ WidgetRequest::FilterResponse(http_status_t status,
         body = NewAutoPipeIstream(&pool, std::move(body), global_pipe_stock);
 #endif
 
-    env.filter_resource_loader
+    ctx.filter_resource_loader
         ->SendRequest(pool,
                       parent_stopwatch,
-                      env.session_id.GetClusterHash(),
+                      ctx.session_id.GetClusterHash(),
                       filter.cache_tag,
-                      env.site_name,
+                      ctx.site_name,
                       HTTP_METHOD_POST, filter.address, status,
                       std::move(headers), std::move(body), source_tag,
                       *this,
@@ -662,7 +662,7 @@ WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
     }
 
     if (host_and_port != nullptr) {
-        auto session = env.GetRealmSession();
+        auto session = ctx.GetRealmSession();
         if (session)
             widget_collect_cookies(session->cookies, headers,
                                    host_and_port);
@@ -699,7 +699,7 @@ WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 
     if (widget.session_save_pending &&
         Transformation::HasProcessor(transformation)) {
-        auto session = env.GetRealmSession();
+        auto session = ctx.GetRealmSession();
         if (session)
             widget.SaveToSession(*session);
     }
@@ -756,10 +756,10 @@ WidgetRequest::SendRequest() noexcept
             widget.logger(4, "  ", i.key, ": ", i.value);
     }
 
-    env.resource_loader->SendRequest(pool, parent_stopwatch,
-                                     env.session_id.GetClusterHash(),
+    ctx.resource_loader->SendRequest(pool, parent_stopwatch,
+                                     ctx.session_id.GetClusterHash(),
                                      nullptr,
-                                     env.site_name,
+                                     ctx.site_name,
                                      widget.from_request.method,
                                      *address, HTTP_STATUS_OK,
                                      std::move(headers),
@@ -799,14 +799,14 @@ WidgetRequest::ContentTypeLookup() noexcept
 
 void
 widget_http_request(struct pool &pool, Widget &widget,
-                    struct processor_env &env,
+                    WidgetContext &ctx,
                     const StopwatchPtr &parent_stopwatch,
                     HttpResponseHandler &handler,
                     CancellablePointer &cancel_ptr) noexcept
 {
     assert(widget.cls != nullptr);
 
-    auto embed = NewFromPool<WidgetRequest>(pool, pool, widget, env,
+    auto embed = NewFromPool<WidgetRequest>(pool, pool, widget, ctx,
                                             parent_stopwatch,
                                             handler, cancel_ptr);
 
@@ -816,7 +816,7 @@ widget_http_request(struct pool &pool, Widget &widget,
 
 void
 widget_http_lookup(struct pool &pool, Widget &widget, const char *id,
-                   struct processor_env &env,
+                   WidgetContext &ctx,
                    const StopwatchPtr &parent_stopwatch,
                    WidgetLookupHandler &handler,
                    CancellablePointer &cancel_ptr) noexcept
@@ -824,7 +824,7 @@ widget_http_lookup(struct pool &pool, Widget &widget, const char *id,
     assert(widget.cls != nullptr);
     assert(id != nullptr);
 
-    auto embed = NewFromPool<WidgetRequest>(pool, pool, widget, env, id,
+    auto embed = NewFromPool<WidgetRequest>(pool, pool, widget, ctx, id,
                                             parent_stopwatch,
                                             handler, cancel_ptr);
 

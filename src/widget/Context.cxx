@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,9 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "penv.hxx"
+#include "Context.hxx"
 
-processor_env::processor_env(EventLoop &_event_loop,
+WidgetContext::WidgetContext(EventLoop &_event_loop,
                              ResourceLoader &_resource_loader,
                              ResourceLoader &_filter_resource_loader,
                              const char *_site_name,

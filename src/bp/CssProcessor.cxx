@@ -34,10 +34,10 @@
 #include "css_parser.hxx"
 #include "css_util.hxx"
 #include "Global.hxx"
-#include "penv.hxx"
 #include "strmap.hxx"
 #include "widget/Widget.hxx"
 #include "widget/RewriteUri.hxx"
+#include "widget/Context.hxx"
 #include "pool/Holder.hxx"
 #include "pool/tpool.hxx"
 #include "escape_css.hxx"
@@ -52,7 +52,7 @@
 
 struct CssProcessor final : PoolHolder {
     Widget &container;
-    struct processor_env &env;
+    WidgetContext &ctx;
     const unsigned options;
 
     SharedPoolPtr<ReplaceIstreamControl> replace;
@@ -72,7 +72,7 @@ struct CssProcessor final : PoolHolder {
                  UnusedIstreamPtr input,
                  SharedPoolPtr<ReplaceIstreamControl> _replace,
                  Widget &_container,
-                 struct processor_env &_env,
+                 WidgetContext &_ctx,
                  unsigned _options);
 
     void Destroy() noexcept {
@@ -220,7 +220,7 @@ css_processor_parser_url(const CssParserValue *url, void *ctx)
 
     auto istream =
         rewrite_widget_uri(processor->GetPool(),
-                           processor->env,
+                           processor->ctx,
                            *global_translation_service,
                            processor->container,
                            url->value,
@@ -243,7 +243,7 @@ css_processor_parser_import(const CssParserValue *url, void *ctx)
 
     auto istream =
         rewrite_widget_uri(processor->GetPool(),
-                           processor->env,
+                           processor->ctx,
                            *global_translation_service,
                            processor->container,
                            url->value,
@@ -300,10 +300,10 @@ CssProcessor::CssProcessor(PoolPtr &&_pool,
                            UnusedIstreamPtr input,
                            SharedPoolPtr<ReplaceIstreamControl> _replace,
                            Widget &_container,
-                           struct processor_env &_env,
+                           WidgetContext &_ctx,
                            unsigned _options)
     :PoolHolder(std::move(_pool)),
-     container(_container), env(_env),
+     container(_container), ctx(_ctx),
      options(_options),
      replace(std::move(_replace)),
      parser(css_parser_new(pool, std::move(input), false,
@@ -312,22 +312,22 @@ CssProcessor::CssProcessor(PoolPtr &&_pool,
 UnusedIstreamPtr
 css_processor(struct pool &caller_pool, UnusedIstreamPtr input,
               Widget &widget,
-              struct processor_env &env,
+              WidgetContext &ctx,
               unsigned options)
 {
     auto pool = pool_new_linear(&caller_pool, "css_processor", 32768);
 
     auto tee = NewTeeIstream(pool, std::move(input),
-                             *env.event_loop,
+                             *ctx.event_loop,
                              true);
 
-    auto replace = istream_replace_new(*env.event_loop, pool,
+    auto replace = istream_replace_new(*ctx.event_loop, pool,
                                        AddTeeIstream(tee, true));
 
     NewFromPool<CssProcessor>(std::move(pool),
                               std::move(tee),
                               std::move(replace.second),
-                              widget, env,
+                              widget, ctx,
                               options);
 
     return std::move(replace.first);

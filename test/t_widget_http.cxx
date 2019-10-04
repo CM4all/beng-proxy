@@ -33,6 +33,7 @@
 #include "tconstruct.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
+#include "widget/Context.hxx"
 #include "widget/Request.hxx"
 #include "widget/LookupHandler.hxx"
 #include "http_address.hxx"
@@ -44,7 +45,6 @@
 #include "bp/XmlProcessor.hxx"
 #include "bp/CssProcessor.hxx"
 #include "bp/TextProcessor.hxx"
-#include "penv.hxx"
 #include "translation/Transformation.hxx"
 #include "crash.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -95,7 +95,7 @@ processor_process(gcc_unused struct pool &pool,
                   const StopwatchPtr &,
                   UnusedIstreamPtr istream,
                   gcc_unused Widget &widget,
-                  gcc_unused struct processor_env &env,
+                  WidgetContext &,
                   gcc_unused unsigned options)
 {
     return istream;
@@ -107,7 +107,7 @@ processor_lookup_widget(gcc_unused struct pool &pool,
                         gcc_unused UnusedIstreamPtr istream,
                         gcc_unused Widget &widget,
                         gcc_unused const char *id,
-                        gcc_unused struct processor_env &env,
+                        WidgetContext &,
                         gcc_unused unsigned options,
                         WidgetLookupHandler &handler,
                         gcc_unused CancellablePointer &cancel_ptr)
@@ -118,7 +118,7 @@ processor_lookup_widget(gcc_unused struct pool &pool,
 UnusedIstreamPtr
 css_processor(gcc_unused struct pool &pool, UnusedIstreamPtr stream,
               gcc_unused Widget &widget,
-              gcc_unused struct processor_env &env,
+              WidgetContext &,
               gcc_unused unsigned options)
 {
     return stream;
@@ -133,7 +133,7 @@ text_processor_allowed(gcc_unused const StringMap &headers)
 UnusedIstreamPtr
 text_processor(gcc_unused struct pool &pool, UnusedIstreamPtr stream,
                gcc_unused const Widget &widget,
-               gcc_unused const struct processor_env &env)
+               const WidgetContext &)
 {
     return stream;
 }
@@ -292,13 +292,13 @@ TEST(WidgetHttpTest, CookieClient)
     auto *session = session_new();
 
     MyResourceLoader resource_loader;
-    struct processor_env env;
-    env.resource_loader = &resource_loader;
-    env.local_host = "localhost";
-    env.remote_host = "localhost";
-    env.request_headers = strmap_new(pool);
-    env.session_id = session->id;
-    env.realm = "foo";
+    WidgetContext ctx;
+    ctx.resource_loader = &resource_loader;
+    ctx.local_host = "localhost";
+    ctx.remote_host = "localhost";
+    ctx.request_headers = strmap_new(pool);
+    ctx.session_id = session->id;
+    ctx.realm = "foo";
     session_put(session);
 
     Widget widget(*pool, &cls);
@@ -308,7 +308,7 @@ TEST(WidgetHttpTest, CookieClient)
         got_response = false;
 
         Context context;
-        widget_http_request(*pool, widget, env,
+        widget_http_request(*pool, widget, ctx,
                             nullptr,
                             context, cancel_ptr);
 

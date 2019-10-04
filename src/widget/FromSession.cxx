@@ -35,7 +35,6 @@
 #include "Class.hxx"
 #include "Ref.hxx"
 #include "bp/session/Session.hxx"
-#include "penv.hxx"
 #include "puri_relative.hxx"
 #include "AllocatorPtr.hxx"
 #include "shm/dpool.hxx"
