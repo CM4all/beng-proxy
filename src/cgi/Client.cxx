@@ -34,7 +34,6 @@
 #include "Error.hxx"
 #include "Parser.hxx"
 #include "pool/pool.hxx"
-#include "pool/LeakDetector.hxx"
 #include "istream/Handler.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/Pointer.hxx"
@@ -53,7 +52,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-class CGIClient final : PoolLeakDetector, Istream, IstreamHandler, Cancellable, DestructAnchor {
+class CGIClient final : Istream, IstreamHandler, Cancellable, DestructAnchor {
     const StopwatchPtr stopwatch;
 
     IstreamPointer input;
@@ -485,7 +484,7 @@ CGIClient::CGIClient(struct pool &_pool, StopwatchPtr &&_stopwatch,
                      UnusedIstreamPtr _input,
                      HttpResponseHandler &_handler,
                      CancellablePointer &cancel_ptr)
-    :PoolLeakDetector(_pool), Istream(_pool),
+    :Istream(_pool),
      stopwatch(std::move(_stopwatch)),
      input(std::move(_input), *this),
      buffer(fb_pool_get()),
