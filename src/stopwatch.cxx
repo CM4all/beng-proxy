@@ -163,7 +163,7 @@ StopwatchPtr::StopwatchPtr(Stopwatch *parent, const char *name,
     }
 }
 
-StopwatchPtr::~StopwatchPtr() = default;
+StopwatchPtr::~StopwatchPtr() noexcept = default;
 
 inline void
 Stopwatch::RecordEvent(const char *event_name) noexcept
