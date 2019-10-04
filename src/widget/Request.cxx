@@ -111,8 +111,9 @@ class WidgetRequest final
     const char *content_type = nullptr;
 
     WidgetLookupHandler *lookup_handler;
-
     HttpResponseHandler *http_handler;
+
+    CancellablePointer &caller_cancel_ptr;
     CancellablePointer cancel_ptr;
 
 public:
@@ -124,8 +125,10 @@ public:
         :PoolLeakDetector(_pool),
          pool(_pool),
          parent_stopwatch(_parent_stopwatch),
-         widget(_widget), env(_env), http_handler(&_handler) {
-        _cancel_ptr = *this;
+         widget(_widget), env(_env), http_handler(&_handler),
+         caller_cancel_ptr(_cancel_ptr)
+    {
+        caller_cancel_ptr = *this;
     }
 
     WidgetRequest(struct pool &_pool, Widget &_widget,
@@ -140,8 +143,10 @@ public:
          widget(_widget),
          lookup_id(_lookup_id),
          env(_env),
-         lookup_handler(&_handler) {
-        _cancel_ptr = *this;
+         lookup_handler(&_handler),
+         caller_cancel_ptr(_cancel_ptr)
+    {
+        caller_cancel_ptr = *this;
     }
 
     void Destroy() noexcept {
@@ -368,13 +373,23 @@ WidgetRequest::ProcessResponse(http_status_t status,
         return;
     }
 
-    if (lookup_id != nullptr)
-        processor_lookup_widget(pool, parent_stopwatch, std::move(body),
-                                widget, lookup_id,
-                                env, options,
-                                *lookup_handler,
-                                cancel_ptr);
-    else
+    if (lookup_id != nullptr) {
+        auto &_pool = pool;
+        auto &_parent_stopwatch = parent_stopwatch;
+        auto &_widget = widget;
+        const char *_lookup_id = lookup_id;
+        auto &_env = env;
+        auto &_handler = *lookup_handler;
+        auto &_cancel_ptr = caller_cancel_ptr;
+
+        Destroy();
+
+        processor_lookup_widget(_pool, _parent_stopwatch, std::move(body),
+                                _widget, _lookup_id,
+                                _env, options,
+                                _handler,
+                                _cancel_ptr);
+    } else
         DispatchResponse(status, processor_header_forward(pool, headers),
                          processor_process(pool, parent_stopwatch,
                                            std::move(body),
