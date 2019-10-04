@@ -78,8 +78,6 @@ struct WidgetContext {
     SessionId session_id;
     const char *realm;
 
-    WidgetContext() = default;
-
     WidgetContext(EventLoop &_event_loop,
                   ResourceLoader &_resource_loader,
                   ResourceLoader &_filter_resource_loader,
