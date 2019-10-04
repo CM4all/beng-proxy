@@ -40,7 +40,6 @@
 #include "stock/MapStock.hxx"
 #include "util/Compiler.h"
 
-struct pool;
 class StockMap;
 struct StockItem;
 class StockGetHandler;
@@ -50,6 +49,7 @@ struct FilteredSocket;
 class EventLoop;
 class SocketAddress;
 class StopwatchPtr;
+class AllocatorPtr;
 
 /**
  * A stock for TCP connections wrapped with #FilteredSocket.
@@ -77,7 +77,7 @@ public:
      * #address if nullptr is passed here
      * @param timeout the connect timeout in seconds
      */
-    void Get(struct pool &pool,
+    void Get(AllocatorPtr alloc,
              StopwatchPtr stopwatch,
              const char *name,
              bool ip_transparent,

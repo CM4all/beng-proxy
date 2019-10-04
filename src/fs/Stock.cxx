@@ -57,7 +57,7 @@
 #include <sys/socket.h>
 
 struct FilteredSocketStockRequest {
-    struct pool &caller_pool;
+    const AllocatorPtr alloc;
 
     StopwatchPtr stopwatch;
 
@@ -69,14 +69,14 @@ struct FilteredSocketStockRequest {
 
     SocketFilterFactory *const filter_factory;
 
-    FilteredSocketStockRequest(struct pool &_caller_pool,
+    FilteredSocketStockRequest(AllocatorPtr _alloc,
                                StopwatchPtr &&_stopwatch,
                                bool _ip_transparent,
                                SocketAddress _bind_address,
                                SocketAddress _address,
                                Event::Duration _timeout,
                                SocketFilterFactory *_filter_factory)
-        :caller_pool(_caller_pool),
+        :alloc(_alloc),
          stopwatch(std::move(_stopwatch)),
          ip_transparent(_ip_transparent),
          bind_address(_bind_address), address(_address),
@@ -243,7 +243,7 @@ FilteredSocketStock::Create(CreateStockItem c, StockRequest _request,
                                                          request.filter_factory,
                                                          cancel_ptr);
 
-    client_socket_new(c.stock.GetEventLoop(), request.caller_pool,
+    client_socket_new(c.stock.GetEventLoop(), request.alloc,
                       std::move(request.stopwatch),
                       address_family, SOCK_STREAM, 0,
                       request.ip_transparent,
@@ -279,7 +279,7 @@ FilteredSocketStockConnection::Release() noexcept
  */
 
 void
-FilteredSocketStock::Get(struct pool &pool,
+FilteredSocketStock::Get(AllocatorPtr alloc,
                          StopwatchPtr stopwatch,
                          const char *name,
                          bool ip_transparent,
@@ -293,8 +293,8 @@ FilteredSocketStock::Get(struct pool &pool,
     assert(!address.IsNull());
 
     auto request =
-        NewDisposablePointer<FilteredSocketStockRequest>(pool, pool,
-                                                std::move(stopwatch),
+        NewDisposablePointer<FilteredSocketStockRequest>(alloc, alloc,
+                                                         std::move(stopwatch),
                                                          ip_transparent,
                                                          bind_address, address,
                                                          timeout,
@@ -309,14 +309,13 @@ FilteredSocketStock::Get(struct pool &pool,
             char bind_buffer[1024];
             if (!ToString(bind_buffer, sizeof(bind_buffer), bind_address))
                 bind_buffer[0] = 0;
-            name = p_strcat(&pool, bind_buffer, ">", buffer, nullptr);
+            name = alloc.Concat(bind_buffer, '>', buffer);
         } else
-            name = p_strdup(&pool, buffer);
+            name = alloc.Dup(buffer);
     }
 
     if (filter_factory != nullptr)
-        name = p_strcat(&pool, name, "|", filter_factory->GetFilterId(),
-                        nullptr);
+        name = alloc.Concat(name, '|', filter_factory->GetFilterId());
 
     stock.Get(name, std::move(request), handler, cancel_ptr);
 }

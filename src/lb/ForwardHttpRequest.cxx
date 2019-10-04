@@ -67,6 +67,7 @@
 #include "util/Cancellable.hxx"
 #include "util/LeakDetector.hxx"
 #include "util/FNVHash.hxx"
+#include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
 static constexpr Event::Duration LB_HTTP_CONNECT_TIMEOUT =
