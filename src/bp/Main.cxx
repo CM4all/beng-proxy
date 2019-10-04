@@ -174,6 +174,9 @@ BpInstance::ReloadEventCallback(int) noexcept
 
     FadeChildren();
 
+    if (widget_registry != nullptr)
+        widget_registry->FlushCache();
+
     if (translation_cache != nullptr)
         translation_cache->Flush();
 
@@ -376,8 +379,11 @@ try {
             instance.translation_service = instance.translation_cache;
         }
 
+        /* the WidgetRegistry class has its own cache and doesn't need
+           the TranslationCache */
         instance.widget_registry =
-            new WidgetRegistry(*instance.translation_service);
+            new WidgetRegistry(instance.root_pool,
+                               *instance.translation_stock);
     }
 
     instance.lhttp_stock = lhttp_stock_new(0, 16, instance.event_loop,

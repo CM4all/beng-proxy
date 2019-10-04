@@ -61,11 +61,17 @@ widget_registry_lookup(struct pool &pool,
 struct WidgetRegistryLookup final : TranslateHandler {
     struct pool &pool;
 
+    WidgetClassCache &cache;
+
+    const char *const name;
+
     const WidgetRegistryCallback callback;
 
-    WidgetRegistryLookup(struct pool &_pool,
+    WidgetRegistryLookup(struct pool &_pool, WidgetClassCache &_cache,
+                         const char *_name,
                          WidgetRegistryCallback _callback) noexcept
-        :pool(_pool), callback(_callback) {}
+        :pool(_pool), cache(_cache),
+         name(_name), callback(_callback) {}
 
     /* virtual methods from TranslateHandler */
     void OnTranslateResponse(TranslateResponse &response) noexcept override;
@@ -102,6 +108,8 @@ WidgetRegistryLookup::OnTranslateResponse(TranslateResponse &response) noexcept
     cls->dump_headers = response.dump_headers;
     cls->views.CopyChainFrom(pool, *response.views);
 
+    cache.Put(name, *cls);
+
     callback(cls);
 }
 
@@ -121,7 +129,14 @@ WidgetRegistry::LookupWidgetClass(struct pool &pool, struct pool &widget_pool,
 {
     assert(widget_type != nullptr);
 
+    const auto *cls = cache.Get(widget_type);
+    if (cls != nullptr) {
+        callback(NewFromPool<WidgetClass>(widget_pool, widget_pool, *cls));
+        return;
+    }
+
     auto lookup = NewFromPool<WidgetRegistryLookup>(pool, widget_pool,
+                                                    cache, widget_type,
                                                     callback);
     widget_registry_lookup(pool, translation_service, widget_type,
                            *lookup, cancel_ptr);

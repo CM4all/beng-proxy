@@ -110,6 +110,9 @@ Context::ResolverCallback2() noexcept
  *
  */
 
+WidgetClassCache::WidgetClassCache(struct pool &parent_pool) noexcept
+    :PoolHolder(parent_pool) {}
+
 void
 WidgetRegistry::LookupWidgetClass(struct pool &, struct pool &,
                                   const char *,
@@ -152,7 +155,8 @@ widget_registry_finish(Context *data)
 TEST(WidgetResolver, Normal)
 {
     Context data;
-    WidgetRegistry registry(*(TranslationService *)(size_t)0x1);
+    WidgetRegistry registry(data.root_pool,
+                            *(TranslationService *)(size_t)0x1);
 
     auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
@@ -184,7 +188,8 @@ TEST(WidgetResolver, Normal)
 TEST(WidgetResolver, Abort)
 {
     Context data;
-    WidgetRegistry registry(*(TranslationService *)(size_t)0x1);
+    WidgetRegistry registry(data.root_pool,
+                            *(TranslationService *)(size_t)0x1);
 
     auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
@@ -216,7 +221,8 @@ TEST(WidgetResolver, Abort)
 TEST(WidgetResolver, TwoClients)
 {
     Context data;
-    WidgetRegistry registry(*(TranslationService *)(size_t)0x1);
+    WidgetRegistry registry(data.root_pool,
+                            *(TranslationService *)(size_t)0x1);
 
     auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
@@ -254,7 +260,8 @@ TEST(WidgetResolver, TwoAbort)
     Context data;
     data.first.abort = true;
 
-    WidgetRegistry registry(*(TranslationService *)(size_t)0x1);
+    WidgetRegistry registry(data.root_pool,
+                            *(TranslationService *)(size_t)0x1);
 
     auto pool = pool_new_linear(data.root_pool, "test", 8192);
 

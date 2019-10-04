@@ -30,39 +30,28 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
-
 #include "Cache.hxx"
-#include "util/BindMethod.hxx"
+#include "pool/pool.hxx"
+#include "AllocatorPtr.hxx"
 
-struct pool;
-class TranslationService;
-class CancellablePointer;
-struct WidgetClass;
+inline
+WidgetClassCache::Item::Item(PoolPtr &&_pool, const WidgetClass &_cls) noexcept
+    :PoolHolder(std::move(_pool)), cls(AllocatorPtr(pool), _cls)
+{
+}
 
-typedef BoundMethod<void(const WidgetClass *cls) noexcept> WidgetRegistryCallback;
+WidgetClassCache::WidgetClassCache(struct pool &parent_pool) noexcept
+    :PoolHolder(pool_new_dummy(&parent_pool, "WidgetClassCache")) {}
 
-/**
- * Interface for the widget registry managed by the translation
- * server.
- */
-class WidgetRegistry {
-    TranslationService &translation_service;
+void
+WidgetClassCache::Put(const char *name, const WidgetClass &cls) noexcept
+{
+    auto item_pool = pool_new_linear(pool, "WidgetClassCacheItem", 4096);
 
-    WidgetClassCache cache;
+    /* move the string to the new pool */
+    name = p_strdup(item_pool, name);
 
-public:
-    explicit WidgetRegistry(struct pool &parent_pool,
-                            TranslationService &_translation_service) noexcept
-        :translation_service(_translation_service),
-         cache(parent_pool) {}
-
-    void FlushCache() noexcept {
-        cache.Clear();
-    }
-
-    void LookupWidgetClass(struct pool &pool, struct pool &widget_pool,
-                           const char *name,
-                           WidgetRegistryCallback callback,
-                           CancellablePointer &cancel_ptr) noexcept;
-};
+    map.emplace(std::piecewise_construct,
+                std::forward_as_tuple(name),
+                std::forward_as_tuple(std::move(item_pool), cls));
+}

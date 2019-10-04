@@ -106,7 +106,7 @@ public:
         auto *session = session_new();
 
         FailingResourceLoader resource_loader;
-        WidgetRegistry widget_registry(*(TranslationService *)(size_t)0x1);
+        WidgetRegistry widget_registry(pool, *(TranslationService *)(size_t)0x1);
         auto &ctx = *NewFromPool<WidgetContext>
             (pool,
              event_loop, resource_loader, resource_loader,

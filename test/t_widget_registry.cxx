@@ -117,8 +117,8 @@ MyTranslationService::SendRequest(struct pool &pool,
 TEST(WidgetRegistry, Normal)
 {
     MyTranslationService ts;
-    WidgetRegistry registry(ts);
     Context data;
+    WidgetRegistry registry(data.root_pool, ts);
     CancellablePointer cancel_ptr;
 
     auto pool = pool_new_linear(data.root_pool, "test", 8192);
@@ -143,8 +143,8 @@ TEST(WidgetRegistry, Normal)
 TEST(WidgetRegistry, Abort)
 {
     MyTranslationService ts;
-    WidgetRegistry registry(ts);
     Context data;
+    WidgetRegistry registry(data.root_pool, ts);
     CancellablePointer cancel_ptr;
 
     auto pool = pool_new_linear(data.root_pool, "test", 8192);

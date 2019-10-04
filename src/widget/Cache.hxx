@@ -32,37 +32,34 @@
 
 #pragma once
 
-#include "Cache.hxx"
-#include "util/BindMethod.hxx"
+#include "Class.hxx"
+#include "pool/Holder.hxx"
+#include "util/StringLess.hxx"
 
-struct pool;
-class TranslationService;
-class CancellablePointer;
-struct WidgetClass;
+#include <map>
 
-typedef BoundMethod<void(const WidgetClass *cls) noexcept> WidgetRegistryCallback;
+class WidgetClassCache final : PoolHolder {
+    struct Item final : PoolHolder {
+        const WidgetClass cls;
 
-/**
- * Interface for the widget registry managed by the translation
- * server.
- */
-class WidgetRegistry {
-    TranslationService &translation_service;
+        Item(PoolPtr &&_pool, const WidgetClass &_cls) noexcept;
+    };
 
-    WidgetClassCache cache;
+    std::map<const char *, Item, StringLess> map;
 
 public:
-    explicit WidgetRegistry(struct pool &parent_pool,
-                            TranslationService &_translation_service) noexcept
-        :translation_service(_translation_service),
-         cache(parent_pool) {}
+    explicit WidgetClassCache(struct pool &parent_pool) noexcept;
 
-    void FlushCache() noexcept {
-        cache.Clear();
+    const WidgetClass *Get(const char *name) const noexcept {
+        auto i = map.find(name);
+        return i != map.end()
+            ? &i->second.cls
+            : nullptr;
     }
 
-    void LookupWidgetClass(struct pool &pool, struct pool &widget_pool,
-                           const char *name,
-                           WidgetRegistryCallback callback,
-                           CancellablePointer &cancel_ptr) noexcept;
+    void Put(const char *name, const WidgetClass &cls) noexcept;
+
+    void Clear() noexcept {
+        map.clear();
+    }
 };
