@@ -241,8 +241,8 @@ private:
 
     /* virtual methods from class SuffixRegistryHandler */
     void OnSuffixRegistrySuccess(const char *content_type,
-                                 const Transformation *transformations) override;
-    void OnSuffixRegistryError(std::exception_ptr ep) override;
+                                 const Transformation *transformations) noexcept override;
+    void OnSuffixRegistryError(std::exception_ptr ep) noexcept override;
 };
 
 static const char *
@@ -771,14 +771,14 @@ WidgetRequest::SendRequest() noexcept
 void
 WidgetRequest::OnSuffixRegistrySuccess(const char *_content_type,
                                        // TODO: apply transformations
-                                       gcc_unused const Transformation *transformations)
+                                       gcc_unused const Transformation *transformations) noexcept
 {
     content_type = _content_type;
     SendRequest();
 }
 
 void
-WidgetRequest::OnSuffixRegistryError(std::exception_ptr ep)
+WidgetRequest::OnSuffixRegistryError(std::exception_ptr ep) noexcept
 {
     widget.Cancel();
     DispatchError(ep);

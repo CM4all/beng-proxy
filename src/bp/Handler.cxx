@@ -330,7 +330,7 @@ Request::CheckHandleProbePathSuffixes(const TranslateResponse &response)
 
 void
 Request::OnSuffixRegistrySuccess(const char *content_type,
-                                 const Transformation *transformations)
+                                 const Transformation *transformations) noexcept
 {
     translate.content_type = content_type;
     translate.suffix_transformation = transformations;
@@ -339,7 +339,7 @@ Request::OnSuffixRegistrySuccess(const char *content_type,
 }
 
 void
-Request::OnSuffixRegistryError(std::exception_ptr ep)
+Request::OnSuffixRegistryError(std::exception_ptr ep) noexcept
 {
     LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
                      "Configuration server failed",

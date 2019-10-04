@@ -48,9 +48,9 @@ public:
      * all files of this type
      */
     virtual void OnSuffixRegistrySuccess(const char *content_type,
-                                         const Transformation *transformations) = 0;
+                                         const Transformation *transformations) noexcept = 0;
 
-    virtual void OnSuffixRegistryError(std::exception_ptr ep) = 0;
+    virtual void OnSuffixRegistryError(std::exception_ptr ep) noexcept = 0;
 };
 
 /**
@@ -63,4 +63,4 @@ suffix_registry_lookup(struct pool &pool,
                        const char *suffix,
                        const StopwatchPtr &parent_stopwatch,
                        SuffixRegistryHandler &handler,
-                       CancellablePointer &cancel_ptr);
+                       CancellablePointer &cancel_ptr) noexcept;

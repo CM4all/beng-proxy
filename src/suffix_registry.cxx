@@ -45,7 +45,7 @@ struct SuffixRegistryLookup {
 
     SuffixRegistryLookup(ConstBuffer<void> payload,
                          const char *suffix,
-                         SuffixRegistryHandler &_handler)
+                         SuffixRegistryHandler &_handler) noexcept
         :handler(_handler) {
         request.content_type_lookup = payload;
         request.suffix = suffix;
@@ -58,7 +58,7 @@ struct SuffixRegistryLookup {
  */
 
 static void
-suffix_translate_response(TranslateResponse &response, void *ctx)
+suffix_translate_response(TranslateResponse &response, void *ctx) noexcept
 {
     SuffixRegistryLookup &lookup = *(SuffixRegistryLookup *)ctx;
 
@@ -69,7 +69,7 @@ suffix_translate_response(TranslateResponse &response, void *ctx)
 }
 
 static void
-suffix_translate_error(std::exception_ptr ep, void *ctx)
+suffix_translate_error(std::exception_ptr ep, void *ctx) noexcept
 {
     SuffixRegistryLookup &lookup = *(SuffixRegistryLookup *)ctx;
 
@@ -93,7 +93,7 @@ suffix_registry_lookup(struct pool &pool,
                        const char *suffix,
                        const StopwatchPtr &parent_stopwatch,
                        SuffixRegistryHandler &handler,
-                       CancellablePointer &cancel_ptr)
+                       CancellablePointer &cancel_ptr) noexcept
 {
     auto lookup = NewFromPool<SuffixRegistryLookup>(pool,
                                                     payload, suffix,

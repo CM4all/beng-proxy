@@ -614,8 +614,8 @@ public:
 
     /* virtual methods from class SuffixRegistryHandler */
     void OnSuffixRegistrySuccess(const char *content_type,
-                                 const Transformation *transformations) override;
-    void OnSuffixRegistryError(std::exception_ptr ep) override;
+                                 const Transformation *transformations) noexcept override;
+    void OnSuffixRegistryError(std::exception_ptr ep) noexcept override;
 };
 
 #endif
