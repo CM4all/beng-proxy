@@ -220,14 +220,23 @@ WidgetResolver::RegistryCallback(const WidgetClass *cls) noexcept
     const DestructObserver destructed(*this);
 
     do {
+        assert(!listeners.empty());
         auto &l = listeners.front();
         listeners.pop_front();
+
+        if (listeners.empty())
+            /* destruct this object before invoking the last callback
+               because the callback may free the memory pool */
+            Destroy();
+
         l.Finish();
 
         if (destructed)
             return;
     } while (!listeners.empty());
 
+    /* this is reachable only if the last listener has been canceled
+       from within the previous listener callback */
     Destroy();
 }
 
