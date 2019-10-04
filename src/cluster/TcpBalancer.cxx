@@ -45,6 +45,7 @@ TcpBalancer::GetEventLoop() noexcept
 
 class TcpBalancerRequest : StockGetHandler {
     TcpBalancer &tcp_balancer;
+    const StopwatchPtr &parent_stopwatch;
 
     const bool ip_transparent;
     const SocketAddress bind_address;
@@ -55,11 +56,12 @@ class TcpBalancerRequest : StockGetHandler {
 
 public:
     TcpBalancerRequest(TcpBalancer &_tcp_balancer,
+                       const StopwatchPtr &_parent_stopwatch,
                        bool _ip_transparent,
                        SocketAddress _bind_address,
                        Event::Duration _timeout,
                        StockGetHandler &_handler) noexcept
-        :tcp_balancer(_tcp_balancer),
+        :tcp_balancer(_tcp_balancer), parent_stopwatch(_parent_stopwatch),
          ip_transparent(_ip_transparent),
          bind_address(_bind_address),
          timeout(_timeout),
@@ -83,7 +85,7 @@ TcpBalancerRequest::Send(struct pool &pool, SocketAddress address,
                          CancellablePointer &cancel_ptr) noexcept
 {
     tcp_balancer.tcp_stock.Get(pool,
-                               nullptr, // TODO: stopwatch support
+                               parent_stopwatch,
                                nullptr,
                                ip_transparent,
                                bind_address,
@@ -124,7 +126,7 @@ TcpBalancerRequest::OnStockItemError(std::exception_ptr ep) noexcept
  */
 
 void
-TcpBalancer::Get(struct pool &pool,
+TcpBalancer::Get(struct pool &pool, const StopwatchPtr &parent_stopwatch,
                  bool ip_transparent,
                  SocketAddress bind_address,
                  sticky_hash_t session_sticky,
@@ -138,6 +140,7 @@ TcpBalancer::Get(struct pool &pool,
                                                address_list, cancel_ptr,
                                                session_sticky,
                                                *this,
+                                               parent_stopwatch,
                                                ip_transparent,
                                                bind_address, timeout,
                                                handler);

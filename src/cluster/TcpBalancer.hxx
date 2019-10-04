@@ -44,6 +44,7 @@ struct StockItem;
 class CancellablePointer;
 class SocketAddress;
 class EventLoop;
+class StopwatchPtr;
 
 /**
  * Wrapper for #TcpStock to support load balancing.
@@ -73,7 +74,7 @@ public:
      * select the worker; 0 means disable stickiness
      * @param timeout the connect timeout for each attempt
      */
-    void Get(struct pool &pool,
+    void Get(struct pool &pool, const StopwatchPtr &parent_stopwatch,
              bool ip_transparent,
              SocketAddress bind_address,
              sticky_hash_t session_sticky,

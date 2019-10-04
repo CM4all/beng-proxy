@@ -117,6 +117,7 @@ public:
     void Start(TcpBalancer &tcp_balancer,
                const AddressList &address_list) noexcept {
         tcp_balancer.Get(pool,
+                         stopwatch,
                          false, SocketAddress::Null(),
                          0, address_list, std::chrono::seconds(20),
                          *this, connect_cancel_ptr);

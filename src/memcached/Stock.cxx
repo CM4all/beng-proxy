@@ -43,6 +43,7 @@
 #include "istream/UnusedHoldPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
+#include "stopwatch.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -172,6 +173,7 @@ memcached_stock_invoke(struct pool &pool, MemachedStock &stock,
                                                       handler, cancel_ptr);
 
     stock.tcp_balancer.Get(pool,
+                           nullptr, // TODO: stopwatch support
                            false, SocketAddress::Null(),
                            0, stock.address,
                            std::chrono::seconds(10),
