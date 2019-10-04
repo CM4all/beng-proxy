@@ -135,10 +135,17 @@ WidgetResolver::RemoveListener(WidgetResolverListener &listener) noexcept
 
     listeners.erase(listeners.iterator_to(listener));
 
-    if (listeners.empty() && !finished)
+    if (listeners.empty()) {
         /* the last listener has been aborted: abort the widget
            registry */
-        Abort();
+        if (finished)
+            /* destroy the resolver before returning from
+               WidgetResolverListener::Cancel() because its caller may
+               destroy the memory pool */
+            Destroy();
+        else
+            Abort();
+    }
 }
 
 void
