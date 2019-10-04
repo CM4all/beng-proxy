@@ -47,6 +47,7 @@ class SocketDescriptor;
 class CancellablePointer;
 class SocketAddress;
 class EventLoop;
+class StopwatchPtr;
 
 /**
  * A TCP connection stock.
@@ -76,7 +77,8 @@ public:
      * #address if nullptr is passed here
      * @param timeout the connect timeout in seconds
      */
-    void Get(AllocatorPtr alloc, const char *name,
+    void Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
+             const char *name,
              bool ip_transparent,
              SocketAddress bind_address,
              SocketAddress address,

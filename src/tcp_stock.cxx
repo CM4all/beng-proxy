@@ -59,16 +59,20 @@
 struct TcpStockRequest {
     AllocatorPtr alloc;
 
+    StopwatchPtr stopwatch;
+
     const bool ip_transparent;
 
     const SocketAddress bind_address, address;
 
     const Event::Duration timeout;
 
-    TcpStockRequest(AllocatorPtr _alloc,
+    TcpStockRequest(AllocatorPtr _alloc, const StopwatchPtr &parent_stopwatch,
+                    const char *name,
                     bool _ip_transparent, SocketAddress _bind_address,
                     SocketAddress _address, Event::Duration _timeout) noexcept
         :alloc(_alloc),
+         stopwatch(parent_stopwatch, name),
          ip_transparent(_ip_transparent), bind_address(_bind_address),
          address(_address), timeout(_timeout) {}
 };
@@ -208,7 +212,7 @@ TcpStock::Create(CreateStockItem c,
                                               cancel_ptr);
 
     client_socket_new(c.stock.GetEventLoop(), request->alloc,
-                      nullptr, // TODO: stopwatch support
+                      std::move(request->stopwatch),
                       request->address.GetFamily(), SOCK_STREAM, 0,
                       request->ip_transparent,
                       request->bind_address,
@@ -234,7 +238,8 @@ TcpStockConnection::~TcpStockConnection() noexcept
  */
 
 void
-TcpStock::Get(AllocatorPtr alloc, const char *name,
+TcpStock::Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
+              const char *name,
               bool ip_transparent,
               SocketAddress bind_address,
               SocketAddress address,
@@ -243,11 +248,6 @@ TcpStock::Get(AllocatorPtr alloc, const char *name,
               CancellablePointer &cancel_ptr)
 {
     assert(!address.IsNull());
-
-    auto request = NewDisposablePointer<TcpStockRequest>(alloc, alloc,
-                                                         ip_transparent,
-                                                         bind_address, address,
-                                                         timeout);
 
     if (name == nullptr) {
         char buffer[1024];
@@ -262,6 +262,13 @@ TcpStock::Get(AllocatorPtr alloc, const char *name,
         } else
             name = alloc.Dup(buffer);
     }
+
+    auto request = NewDisposablePointer<TcpStockRequest>(alloc, alloc,
+                                                         parent_stopwatch,
+                                                         name,
+                                                         ip_transparent,
+                                                         bind_address, address,
+                                                         timeout);
 
     stock.Get(name, std::move(request), handler, cancel_ptr);
 }

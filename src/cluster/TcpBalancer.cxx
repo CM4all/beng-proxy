@@ -35,6 +35,7 @@
 #include "tcp_stock.hxx"
 #include "stock/GetHandler.hxx"
 #include "event/Loop.hxx"
+#include "stopwatch.hxx"
 
 inline EventLoop &
 TcpBalancer::GetEventLoop() noexcept
@@ -82,6 +83,7 @@ TcpBalancerRequest::Send(struct pool &pool, SocketAddress address,
                          CancellablePointer &cancel_ptr) noexcept
 {
     tcp_balancer.tcp_stock.Get(pool,
+                               nullptr, // TODO: stopwatch support
                                nullptr,
                                ip_transparent,
                                bind_address,
