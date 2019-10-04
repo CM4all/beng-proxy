@@ -216,8 +216,7 @@ ProxyWidget::Continue()
         if (view_name != nullptr) {
             /* the client can select the view; he can never explicitly
                select the default view */
-            const WidgetView *view =
-                widget_class_view_lookup(widget->cls, view_name);
+            const WidgetView *view = widget->cls->FindViewByName(view_name);
             if (view == nullptr || view->name == nullptr) {
                 widget->Cancel();
                 request.DispatchResponse(HTTP_STATUS_NOT_FOUND,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,6 +34,7 @@
 #define BENG_PROXY_WIDGET_CLASS_HXX
 
 #include "View.hxx"
+#include "util/Compiler.h"
 #include "util/StringSet.hxx"
 
 /**
@@ -132,29 +133,24 @@ struct WidgetClass {
      * std::runtime_error with an explanatory message.
      */
     void CheckHost(const char *host, const char *site_name) const;
+
+    const WidgetView *FindViewByName(const char *name) const noexcept {
+        return widget_view_lookup(&views, name);
+    }
+
+    gcc_pure
+    bool HasGroups() const noexcept {
+        return !container_groups.IsEmpty();
+    }
+
+    gcc_pure
+    bool MayEmbed(const WidgetClass &child) const noexcept {
+        return container_groups.IsEmpty() ||
+            (child.group != nullptr &&
+             container_groups.Contains(child.group));
+    }
 };
 
 extern const WidgetClass root_widget_class;
-
-static inline const WidgetView *
-widget_class_view_lookup(const WidgetClass *cls, const char *name)
-{
-    return widget_view_lookup(&cls->views, name);
-}
-
-static inline bool
-widget_class_has_groups(const WidgetClass *cls)
-{
-    return !cls->container_groups.IsEmpty();
-}
-
-static inline bool
-widget_class_may_embed(const WidgetClass *container,
-                       const WidgetClass *child)
-{
-    return container->container_groups.IsEmpty() ||
-        (child->group != NULL &&
-         container->container_groups.Contains(child->group));
-}
 
 #endif

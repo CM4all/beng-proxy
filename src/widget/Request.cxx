@@ -617,8 +617,7 @@ WidgetRequest::UpdateView(StringMap &headers)
     if (view_name != nullptr) {
         /* yes, look it up in the class */
 
-        const WidgetView *view =
-            widget_class_view_lookup(widget.cls, view_name);
+        const WidgetView *view = widget.cls->FindViewByName(view_name);
         if (view == nullptr) {
             /* the view specified in the response header does not
                exist, bail out */

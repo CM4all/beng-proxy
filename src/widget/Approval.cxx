@@ -44,7 +44,7 @@ widget_init_approval(Widget *widget, bool self_container)
     const Widget *parent = widget->parent;
 
     if (!self_container) {
-        if (widget_class_has_groups(parent->cls))
+        if (parent->cls->HasGroups())
             /* the container limits the groups; postpone a check until
                we know the widget's group */
             widget->approval = Widget::Approval::UNKNOWN;
@@ -59,7 +59,7 @@ widget_init_approval(Widget *widget, bool self_container)
 
     /* failed the SELF_CONTAINER test */
 
-    if (widget_class_has_groups(parent->cls)) {
+    if (parent->cls->HasGroups()) {
         /* the container allows a set of groups - postpone the
            approval check until we know this widget's group
            (if any) */
@@ -80,14 +80,13 @@ widget_check_group_approval(const Widget *widget)
     assert(widget != NULL);
     assert(widget->parent != NULL);
 
-    if (widget->parent->cls == NULL ||
-        !widget_class_has_groups(widget->parent->cls))
+    if (widget->parent->cls == nullptr || !widget->parent->cls->HasGroups())
         return true;
 
     if (widget->cls == NULL)
         return false;
 
-    return widget_class_may_embed(widget->parent->cls, widget->cls);
+    return widget->parent->cls->MayEmbed(*widget->cls);
 }
 
 bool
