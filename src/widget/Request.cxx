@@ -121,7 +121,7 @@ public:
                   struct processor_env &_env,
                   const StopwatchPtr &_parent_stopwatch,
                   HttpResponseHandler &_handler,
-                  CancellablePointer &_cancel_ptr)
+                  CancellablePointer &_cancel_ptr) noexcept
         :PoolLeakDetector(_pool),
          pool(_pool),
          parent_stopwatch(_parent_stopwatch),
@@ -136,7 +136,7 @@ public:
                   const char *_lookup_id,
                   const StopwatchPtr &_parent_stopwatch,
                   WidgetLookupHandler &_handler,
-                  CancellablePointer &_cancel_ptr)
+                  CancellablePointer &_cancel_ptr) noexcept
         :PoolLeakDetector(_pool),
          pool(_pool),
          parent_stopwatch(_parent_stopwatch),
@@ -153,8 +153,8 @@ public:
         this->~WidgetRequest();
     }
 
-    bool ContentTypeLookup();
-    void SendRequest();
+    bool ContentTypeLookup() noexcept;
+    void SendRequest() noexcept;
 
 private:
     RealmSessionLease GetSessionIfStateful() const {
@@ -169,13 +169,13 @@ private:
      */
     StringMap MakeRequestHeaders(const WidgetView &a_view,
                                  const WidgetView &t_view,
-                                 bool exclude_host, bool with_body);
+                                 bool exclude_host, bool with_body) noexcept;
 
-    bool HandleRedirect(const char *location, UnusedIstreamPtr &body);
+    bool HandleRedirect(const char *location, UnusedIstreamPtr &body) noexcept;
 
-    void DispatchError(std::exception_ptr ep);
+    void DispatchError(std::exception_ptr ep) noexcept;
 
-    void DispatchError(WidgetErrorCode code, const char *msg) {
+    void DispatchError(WidgetErrorCode code, const char *msg) noexcept {
         DispatchError(std::make_exception_ptr(WidgetError(widget, code, msg)));
     }
 
@@ -186,7 +186,7 @@ private:
      * transformation in the chain.
      */
     void DispatchResponse(http_status_t status, StringMap &&headers,
-                          UnusedIstreamPtr body);
+                          UnusedIstreamPtr body) noexcept;
 
     /**
      * The widget response is going to be embedded into a template; check
@@ -194,14 +194,15 @@ private:
      */
     void ProcessResponse(http_status_t status,
                          StringMap &headers, UnusedIstreamPtr body,
-                         unsigned options);
+                         unsigned options) noexcept;
 
     void CssProcessResponse(http_status_t status,
                             StringMap &headers, UnusedIstreamPtr body,
-                            unsigned options);
+                            unsigned options) noexcept;
 
     void TextProcessResponse(http_status_t status,
-                             StringMap &headers, UnusedIstreamPtr body);
+                             StringMap &headers,
+                             UnusedIstreamPtr body) noexcept;
 
     void FilterResponse(http_status_t status,
                         StringMap &&headers, UnusedIstreamPtr body,
@@ -219,7 +220,7 @@ private:
      */
     void TransformResponse(http_status_t status,
                            StringMap &&headers, UnusedIstreamPtr body,
-                           const Transformation &t);
+                           const Transformation &t) noexcept;
 
     /**
      * Throws exception on error.
@@ -257,7 +258,7 @@ widget_uri(Widget *widget)
 StringMap
 WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
                                   const WidgetView &t_view,
-                                  bool exclude_host, bool with_body)
+                                  bool exclude_host, bool with_body) noexcept
 {
     auto headers =
         forward_request_headers(pool, *env.request_headers,
@@ -295,7 +296,7 @@ WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
 }
 
 bool
-WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body)
+WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body) noexcept
 {
     if (num_redirects >= 8)
         return false;
@@ -341,7 +342,7 @@ WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body)
 }
 
 void
-WidgetRequest::DispatchError(std::exception_ptr ep)
+WidgetRequest::DispatchError(std::exception_ptr ep) noexcept
 {
     if (lookup_id != nullptr) {
         auto &handler = *lookup_handler;
@@ -357,7 +358,7 @@ WidgetRequest::DispatchError(std::exception_ptr ep)
 void
 WidgetRequest::ProcessResponse(http_status_t status,
                                StringMap &headers, UnusedIstreamPtr body,
-                               unsigned options)
+                               unsigned options) noexcept
 {
     if (!body) {
         /* this should not happen, but we're ignoring this formal
@@ -396,8 +397,9 @@ WidgetRequest::ProcessResponse(http_status_t status,
                                            widget, env, options));
 }
 
+gcc_pure
 static bool
-css_processable(const StringMap &headers)
+css_processable(const StringMap &headers) noexcept
 {
     const char *content_type = headers.Get("content-type");
     return content_type != nullptr &&
@@ -407,7 +409,7 @@ css_processable(const StringMap &headers)
 void
 WidgetRequest::CssProcessResponse(http_status_t status,
                                   StringMap &headers, UnusedIstreamPtr body,
-                                  unsigned options)
+                                  unsigned options) noexcept
 {
     if (!body) {
         /* this should not happen, but we're ignoring this formal
@@ -429,7 +431,8 @@ WidgetRequest::CssProcessResponse(http_status_t status,
 
 void
 WidgetRequest::TextProcessResponse(http_status_t status,
-                                   StringMap &headers, UnusedIstreamPtr body)
+                                   StringMap &headers,
+                                   UnusedIstreamPtr body) noexcept
 {
     if (!body) {
         /* this should not happen, but we're ignoring this formal
@@ -502,7 +505,7 @@ WidgetRequest::SubstResponse(http_status_t status,
 void
 WidgetRequest::TransformResponse(http_status_t status,
                                  StringMap &&headers, UnusedIstreamPtr body,
-                                 const Transformation &t)
+                                 const Transformation &t) noexcept
 {
     assert(transformation == t.next);
 
@@ -565,7 +568,7 @@ widget_transformation_enabled(const Widget *widget,
 
 void
 WidgetRequest::DispatchResponse(http_status_t status, StringMap &&headers,
-                                UnusedIstreamPtr body)
+                                UnusedIstreamPtr body) noexcept
 {
     const Transformation *t = transformation;
 
@@ -712,7 +715,7 @@ WidgetRequest::OnHttpError(std::exception_ptr ep) noexcept
 }
 
 void
-WidgetRequest::SendRequest()
+WidgetRequest::SendRequest() noexcept
 {
     const WidgetView *a_view = widget.GetAddressView();
     assert(a_view != nullptr);
@@ -782,7 +785,7 @@ WidgetRequest::OnSuffixRegistryError(std::exception_ptr ep)
 }
 
 bool
-WidgetRequest::ContentTypeLookup()
+WidgetRequest::ContentTypeLookup() noexcept
 {
     return suffix_registry_lookup(pool, *global_translation_service,
                                   *widget.GetAddress(),
@@ -800,7 +803,7 @@ widget_http_request(struct pool &pool, Widget &widget,
                     struct processor_env &env,
                     const StopwatchPtr &parent_stopwatch,
                     HttpResponseHandler &handler,
-                    CancellablePointer &cancel_ptr)
+                    CancellablePointer &cancel_ptr) noexcept
 {
     assert(widget.cls != nullptr);
 
@@ -817,7 +820,7 @@ widget_http_lookup(struct pool &pool, Widget &widget, const char *id,
                    struct processor_env &env,
                    const StopwatchPtr &parent_stopwatch,
                    WidgetLookupHandler &handler,
-                   CancellablePointer &cancel_ptr)
+                   CancellablePointer &cancel_ptr) noexcept
 {
     assert(widget.cls != nullptr);
     assert(id != nullptr);

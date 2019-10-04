@@ -54,7 +54,7 @@ widget_http_request(struct pool &pool, Widget &widget,
                     struct processor_env &env,
                     const StopwatchPtr &parent_stopwatch,
                     HttpResponseHandler &handler,
-                    CancellablePointer &cancel_ptr);
+                    CancellablePointer &cancel_ptr) noexcept;
 
 /**
  * Send a HTTP request to the widget server, process it, and look up
@@ -68,6 +68,6 @@ widget_http_lookup(struct pool &pool, Widget &widget, const char *id,
                    struct processor_env &env,
                    const StopwatchPtr &parent_stopwatch,
                    WidgetLookupHandler &handler,
-                   CancellablePointer &cancel_ptr);
+                   CancellablePointer &cancel_ptr) noexcept;
 
 #endif

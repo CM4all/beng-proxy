@@ -109,7 +109,7 @@ widget_http_request(gcc_unused struct pool &pool,
                     gcc_unused struct processor_env &env,
                     const StopwatchPtr &,
                     HttpResponseHandler &handler,
-                    gcc_unused CancellablePointer &cancel_ptr)
+                    gcc_unused CancellablePointer &cancel_ptr) noexcept
 {
     handler.InvokeError(std::make_exception_ptr(std::runtime_error("Test")));
 }
