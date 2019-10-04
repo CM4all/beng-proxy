@@ -51,6 +51,6 @@ widget_class_lookup(struct pool &pool, struct pool &widget_pool,
                     TranslationService &service,
                     const char *widget_type,
                     WidgetRegistryCallback callback,
-                    CancellablePointer &cancel_ptr);
+                    CancellablePointer &cancel_ptr) noexcept;
 
 #endif

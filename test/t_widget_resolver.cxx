@@ -116,7 +116,7 @@ widget_class_lookup(gcc_unused struct pool &pool,
                     gcc_unused TranslationService &service,
                     gcc_unused const char *widget_type,
                     WidgetRegistryCallback callback,
-                    CancellablePointer &cancel_ptr)
+                    CancellablePointer &cancel_ptr) noexcept
 {
     Context *data = global;
     assert(!data->registry.requested);

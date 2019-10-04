@@ -47,7 +47,7 @@ widget_registry_lookup(struct pool &pool,
                        TranslationService &service,
                        const char *widget_type,
                        const TranslateHandler &handler, void *ctx,
-                       CancellablePointer &cancel_ptr)
+                       CancellablePointer &cancel_ptr) noexcept
 {
     auto request = NewFromPool<TranslateRequest>(pool);
 
@@ -64,7 +64,7 @@ struct WidgetRegistryLookup {
     const WidgetRegistryCallback callback;
 
     WidgetRegistryLookup(struct pool &_pool,
-                         WidgetRegistryCallback _callback)
+                         WidgetRegistryCallback _callback) noexcept
         :pool(_pool), callback(_callback) {}
 };
 
@@ -123,7 +123,7 @@ widget_class_lookup(struct pool &pool, struct pool &widget_pool,
                     TranslationService &service,
                     const char *widget_type,
                     WidgetRegistryCallback callback,
-                    CancellablePointer &cancel_ptr)
+                    CancellablePointer &cancel_ptr) noexcept
 {
     assert(widget_type != nullptr);
 

@@ -61,7 +61,7 @@ widget_class_lookup(gcc_unused struct pool &pool,
                     gcc_unused TranslationService &service,
                     gcc_unused const char *widget_type,
                     WidgetRegistryCallback callback,
-                    gcc_unused CancellablePointer &cancel_ptr)
+                    gcc_unused CancellablePointer &cancel_ptr) noexcept
 {
     callback(nullptr);
 }
