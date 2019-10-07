@@ -360,8 +360,11 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
         headers.Write("set-cookie", buffer);
     }
 
-    request.SendResponse(status, std::move(headers), std::move(response_body));
+    auto &_request = request;
     ResponseSent();
+
+    _request.SendResponse(status, std::move(headers),
+                          std::move(response_body));
 }
 
 void
@@ -377,10 +380,14 @@ LbRequest::OnHttpError(std::exception_ptr ep) noexcept
 
     connection.logger(2, ep);
 
-    if (!send_fallback(request, cluster_config.fallback))
-        connection.SendError(request, ep);
+    auto &_connection = connection;
+    auto &_request = request;
+    const auto &fallback = cluster_config.fallback;
 
     ResponseSent();
+
+    if (!send_fallback(_request, fallback))
+        _connection.SendError(_request, ep);
 }
 
 /*
@@ -453,10 +460,14 @@ LbRequest::OnStockItemError(std::exception_ptr ep) noexcept
 
     body.Clear();
 
-    if (!send_fallback(request, cluster_config.fallback))
-        connection.SendError(request, ep);
+    auto &_connection = connection;
+    auto &_request = request;
+    const auto &fallback = cluster_config.fallback;
 
     ResponseSent();
+
+    if (!send_fallback(_request, fallback))
+        _connection.SendError(_request, ep);
 }
 
 /*
