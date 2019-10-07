@@ -60,8 +60,6 @@
  *
  */
 
-TranslationService *global_translation_service;
-
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool,
                     WidgetContext &,
@@ -92,7 +90,6 @@ parse_uri_mode(gcc_unused StringView s) noexcept
 UnusedIstreamPtr
 rewrite_widget_uri(gcc_unused struct pool &pool,
                    WidgetContext &,
-                   gcc_unused TranslationService &service,
                    gcc_unused Widget &widget,
                    gcc_unused StringView value,
                    gcc_unused RewriteUriMode mode,
@@ -143,6 +140,7 @@ TEST(Processor, Abort)
     FailingResourceLoader resource_loader;
     WidgetContext ctx(instance.event_loop,
                       resource_loader, resource_loader,
+                      nullptr,
                       nullptr, nullptr,
                       "localhost:8080",
                       "localhost:8080",

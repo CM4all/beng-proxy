@@ -341,7 +341,7 @@ InlineWidget::Start() noexcept
 {
     if (widget.cls == nullptr)
         ResolveWidget(pool, widget,
-                      *global_translation_service,
+                      *ctx.widget_registry,
                       BIND_THIS_METHOD(ResolverCallback), cancel_ptr);
     else
         SendRequest();

@@ -124,7 +124,7 @@ struct TestOperation final : Cancellable {
 void
 ResolveWidget(struct pool &pool,
               gcc_unused Widget &widget,
-              gcc_unused TranslationService &service,
+              WidgetRegistry &,
               gcc_unused WidgetResolverCallback callback,
               CancellablePointer &cancel_ptr) noexcept
 {
@@ -143,6 +143,7 @@ test_abort_resolver()
     FailingResourceLoader resource_loader;
     WidgetContext ctx(instance.event_loop,
                       resource_loader, resource_loader,
+                      nullptr,
                       nullptr, nullptr,
                       "localhost:8080",
                       "localhost:8080",

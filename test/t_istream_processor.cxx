@@ -56,13 +56,14 @@ class EventLoop;
 const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
 
 void
-widget_class_lookup(gcc_unused struct pool &pool,
-                    gcc_unused struct pool &widget_pool,
-                    gcc_unused TranslationService &service,
-                    gcc_unused const char *widget_type,
-                    WidgetRegistryCallback callback,
-                    gcc_unused CancellablePointer &cancel_ptr) noexcept
+WidgetRegistry::LookupWidgetClass(struct pool &,
+                                  struct pool &,
+                                  const char *,
+                                  WidgetRegistryCallback callback,
+                                  CancellablePointer &) noexcept
 {
+    (void)translation_service; // suppress -Wunused-private-field
+
     callback(nullptr);
 }
 
@@ -105,9 +106,11 @@ public:
         auto *session = session_new();
 
         FailingResourceLoader resource_loader;
+        WidgetRegistry widget_registry(*(TranslationService *)(size_t)0x1);
         auto &ctx = *NewFromPool<WidgetContext>
             (pool,
              event_loop, resource_loader, resource_loader,
+             &widget_registry,
              nullptr, nullptr,
              "localhost:8080",
              "localhost:8080",

@@ -114,16 +114,15 @@ WidgetRegistryLookup::OnTranslateError(std::exception_ptr ep) noexcept
 }
 
 void
-widget_class_lookup(struct pool &pool, struct pool &widget_pool,
-                    TranslationService &service,
-                    const char *widget_type,
-                    WidgetRegistryCallback callback,
-                    CancellablePointer &cancel_ptr) noexcept
+WidgetRegistry::LookupWidgetClass(struct pool &pool, struct pool &widget_pool,
+                                  const char *widget_type,
+                                  WidgetRegistryCallback callback,
+                                  CancellablePointer &cancel_ptr) noexcept
 {
     assert(widget_type != nullptr);
 
     auto lookup = NewFromPool<WidgetRegistryLookup>(pool, widget_pool,
                                                     callback);
-    widget_registry_lookup(pool, service, widget_type,
+    widget_registry_lookup(pool, translation_service, widget_type,
                            *lookup, cancel_ptr);
 }

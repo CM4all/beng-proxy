@@ -36,7 +36,7 @@
 
 struct pool;
 class Widget;
-class TranslationService;
+class WidgetRegistry;
 class CancellablePointer;
 
 typedef BoundMethod<void() noexcept> WidgetResolverCallback;
@@ -49,6 +49,6 @@ typedef BoundMethod<void() noexcept> WidgetResolverCallback;
 void
 ResolveWidget(struct pool &pool,
               Widget &widget,
-              TranslationService &service,
+              WidgetRegistry &registry,
               WidgetResolverCallback callback,
               CancellablePointer &cancel_ptr) noexcept;

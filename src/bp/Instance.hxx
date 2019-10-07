@@ -66,6 +66,7 @@ class SpawnServerClient;
 class TranslationStock;
 class TranslationCache;
 class TranslationService;
+class WidgetRegistry;
 class LhttpStock;
 class FcgiStock;
 class NfsStock;
@@ -145,6 +146,7 @@ struct BpInstance final : PInstance, ControlHandler {
     TranslationStock *translation_stock = nullptr;
     TranslationCache *translation_cache = nullptr;
     TranslationService *translation_service = nullptr;
+    WidgetRegistry *widget_registry = nullptr;
     TcpStock *tcp_stock = nullptr;
     TcpBalancer *tcp_balancer = nullptr;
 

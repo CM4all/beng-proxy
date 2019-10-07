@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_WIDGET_REGISTRY_HXX
-#define BENG_PROXY_WIDGET_REGISTRY_HXX
+#pragma once
 
 #include "util/BindMethod.hxx"
 
@@ -46,11 +45,15 @@ typedef BoundMethod<void(const WidgetClass *cls) noexcept> WidgetRegistryCallbac
  * Interface for the widget registry managed by the translation
  * server.
  */
-void
-widget_class_lookup(struct pool &pool, struct pool &widget_pool,
-                    TranslationService &service,
-                    const char *widget_type,
-                    WidgetRegistryCallback callback,
-                    CancellablePointer &cancel_ptr) noexcept;
+class WidgetRegistry {
+    TranslationService &translation_service;
 
-#endif
+public:
+    explicit WidgetRegistry(TranslationService &_translation_service) noexcept
+        :translation_service(_translation_service) {}
+
+    void LookupWidgetClass(struct pool &pool, struct pool &widget_pool,
+                           const char *name,
+                           WidgetRegistryCallback callback,
+                           CancellablePointer &cancel_ptr) noexcept;
+};

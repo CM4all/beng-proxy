@@ -38,7 +38,6 @@ class UnusedIstreamPtr;
 struct StringView;
 struct escape_class;
 class Widget;
-class TranslationService;
 
 /**
  * Rewrite URLs in CSS.
@@ -48,7 +47,6 @@ class TranslationService;
 UnusedIstreamPtr
 css_rewrite_block_uris(struct pool &pool,
                        WidgetContext &ctx,
-                       TranslationService &service,
                        Widget &widget,
                        StringView block,
                        const struct escape_class *escape) noexcept;

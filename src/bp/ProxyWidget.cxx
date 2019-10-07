@@ -32,6 +32,7 @@
 
 #include "ProxyWidget.hxx"
 #include "Request.hxx"
+#include "Instance.hxx"
 #include "CsrfProtection.hxx"
 #include "Global.hxx"
 #include "widget/Widget.hxx"
@@ -281,7 +282,7 @@ ProxyWidget::WidgetFound(Widget &_widget) noexcept
 
     if (widget->cls == nullptr) {
         ResolveWidget(request.pool, *widget,
-                      *global_translation_service,
+                      *request.instance.widget_registry,
                       BIND_THIS_METHOD(ResolverCallback),
                       cancel_ptr);
         return;

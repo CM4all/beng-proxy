@@ -41,7 +41,6 @@
 struct pool;
 struct WidgetContext;
 class UnusedIstreamPtr;
-class TranslationService;
 struct parsed_uri;
 class StringMap;
 class Widget;
@@ -74,7 +73,6 @@ parse_uri_mode(StringView s) noexcept;
 UnusedIstreamPtr
 rewrite_widget_uri(struct pool &pool,
                    WidgetContext &ctx,
-                   TranslationService &service,
                    Widget &widget,
                    StringView value,
                    RewriteUriMode mode, bool stateful,

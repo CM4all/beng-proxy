@@ -47,6 +47,7 @@
 #include "fcache.hxx"
 #include "translation/Stock.hxx"
 #include "translation/Cache.hxx"
+#include "widget/Registry.hxx"
 #include "lhttp_stock.hxx"
 #include "fcgi/Stock.hxx"
 #include "was/Stock.hxx"
@@ -93,6 +94,7 @@ BpInstance::~BpInstance() noexcept
 void
 BpInstance::FreeStocksAndCaches() noexcept
 {
+    delete std::exchange(widget_registry, nullptr);
     translation_service = nullptr;
     delete std::exchange(translation_cache, nullptr);
     delete std::exchange(translation_stock, nullptr);

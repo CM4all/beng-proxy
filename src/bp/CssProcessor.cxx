@@ -33,7 +33,6 @@
 #include "CssProcessor.hxx"
 #include "css_parser.hxx"
 #include "css_util.hxx"
-#include "Global.hxx"
 #include "strmap.hxx"
 #include "widget/Widget.hxx"
 #include "widget/RewriteUri.hxx"
@@ -221,7 +220,6 @@ css_processor_parser_url(const CssParserValue *url, void *ctx)
     auto istream =
         rewrite_widget_uri(processor->GetPool(),
                            processor->ctx,
-                           *global_translation_service,
                            processor->container,
                            url->value,
                            processor->uri_rewrite.mode, false,
@@ -244,7 +242,6 @@ css_processor_parser_import(const CssParserValue *url, void *ctx)
     auto istream =
         rewrite_widget_uri(processor->GetPool(),
                            processor->ctx,
-                           *global_translation_service,
                            processor->container,
                            url->value,
                            RewriteUriMode::PARTIAL, false, nullptr,

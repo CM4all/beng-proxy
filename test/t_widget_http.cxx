@@ -294,6 +294,7 @@ TEST(WidgetHttpTest, CookieClient)
     MyResourceLoader resource_loader;
     WidgetContext ctx(instance.event_loop,
                       resource_loader, resource_loader,
+                      nullptr,
                       nullptr, nullptr,
                       "localhost", "localhost",
                       nullptr, nullptr,

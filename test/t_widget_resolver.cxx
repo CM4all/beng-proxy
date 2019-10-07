@@ -111,13 +111,13 @@ Context::ResolverCallback2() noexcept
  */
 
 void
-widget_class_lookup(gcc_unused struct pool &pool,
-                    gcc_unused struct pool &widget_pool,
-                    gcc_unused TranslationService &service,
-                    gcc_unused const char *widget_type,
-                    WidgetRegistryCallback callback,
-                    CancellablePointer &cancel_ptr) noexcept
+WidgetRegistry::LookupWidgetClass(struct pool &, struct pool &,
+                                  const char *,
+                                  WidgetRegistryCallback callback,
+                                  CancellablePointer &cancel_ptr) noexcept
 {
+    (void)translation_service; // suppress -Wunused-private-field
+
     Context *data = global;
     assert(!data->registry.requested);
     assert(!data->registry.finished);
@@ -152,14 +152,14 @@ widget_registry_finish(Context *data)
 TEST(WidgetResolver, Normal)
 {
     Context data;
+    WidgetRegistry registry(*(TranslationService *)(size_t)0x1);
 
     auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
     auto widget = NewFromPool<Widget>(pool, pool, nullptr);
     widget->class_name = "foo";
 
-    ResolveWidget(pool, *widget,
-                  *(TranslationService *)(size_t)0x1,
+    ResolveWidget(pool, *widget, registry,
                   BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.cancel_ptr);
 
@@ -184,14 +184,14 @@ TEST(WidgetResolver, Normal)
 TEST(WidgetResolver, Abort)
 {
     Context data;
+    WidgetRegistry registry(*(TranslationService *)(size_t)0x1);
 
     auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
     auto widget = NewFromPool<Widget>(pool, pool, nullptr);
     widget->class_name = "foo";
 
-    ResolveWidget(pool, *widget,
-                  *(TranslationService *)(size_t)0x1,
+    ResolveWidget(pool, *widget, registry,
                   BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.cancel_ptr);
 
@@ -216,19 +216,18 @@ TEST(WidgetResolver, Abort)
 TEST(WidgetResolver, TwoClients)
 {
     Context data;
+    WidgetRegistry registry(*(TranslationService *)(size_t)0x1);
 
     auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
     auto widget = NewFromPool<Widget>(pool, pool, nullptr);
     widget->class_name = "foo";
 
-    ResolveWidget(pool, *widget,
-                  *(TranslationService *)(size_t)0x1,
+    ResolveWidget(pool, *widget, registry,
                   BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.cancel_ptr);
 
-    ResolveWidget(pool, *widget,
-                  *(TranslationService *)(size_t)0x1,
+    ResolveWidget(pool, *widget, registry,
                   BIND_METHOD(data, &Context::ResolverCallback2),
                   data.second.cancel_ptr);
 
@@ -255,18 +254,18 @@ TEST(WidgetResolver, TwoAbort)
     Context data;
     data.first.abort = true;
 
+    WidgetRegistry registry(*(TranslationService *)(size_t)0x1);
+
     auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
     auto widget = NewFromPool<Widget>(pool, pool, nullptr);
     widget->class_name = "foo";
 
-    ResolveWidget(pool, *widget,
-                  *(TranslationService *)(size_t)0x1,
+    ResolveWidget(pool, *widget, registry,
                   BIND_METHOD(data, &Context::ResolverCallback1),
                   data.first.cancel_ptr);
 
-    ResolveWidget(pool, *widget,
-                  *(TranslationService *)(size_t)0x1,
+    ResolveWidget(pool, *widget, registry,
                   BIND_METHOD(data, &Context::ResolverCallback2),
                   data.second.cancel_ptr);
 

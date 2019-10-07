@@ -117,14 +117,15 @@ MyTranslationService::SendRequest(struct pool &pool,
 TEST(WidgetRegistry, Normal)
 {
     MyTranslationService ts;
+    WidgetRegistry registry(ts);
     Context data;
     CancellablePointer cancel_ptr;
 
     auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
-    widget_class_lookup(pool, pool, ts, "sync",
-                        BIND_METHOD(data, &Context::RegistryCallback),
-                        cancel_ptr);
+    registry.LookupWidgetClass(pool, pool, "sync",
+                               BIND_METHOD(data, &Context::RegistryCallback),
+                               cancel_ptr);
     ASSERT_FALSE(ts.aborted);
     ASSERT_TRUE(data.got_class);
     ASSERT_NE(data.cls, nullptr);
@@ -142,14 +143,15 @@ TEST(WidgetRegistry, Normal)
 TEST(WidgetRegistry, Abort)
 {
     MyTranslationService ts;
+    WidgetRegistry registry(ts);
     Context data;
     CancellablePointer cancel_ptr;
 
     auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
-    widget_class_lookup(pool, pool, ts,  "block",
-                        BIND_METHOD(data, &Context::RegistryCallback),
-                        cancel_ptr);
+    registry.LookupWidgetClass(pool, pool,  "block",
+                               BIND_METHOD(data, &Context::RegistryCallback),
+                               cancel_ptr);
     ASSERT_FALSE(data.got_class);
     ASSERT_FALSE(ts.aborted);
 

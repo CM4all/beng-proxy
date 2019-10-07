@@ -180,6 +180,7 @@ Request::NewWidgetContext() const noexcept
         (pool, instance.event_loop,
          *instance.cached_resource_loader,
          *instance.buffered_filter_resource_loader,
+         instance.widget_registry,
          connection.per_request.site_name,
          translate.response->untrusted,
          request.local_host_and_port, request.remote_host,

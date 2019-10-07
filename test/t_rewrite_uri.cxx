@@ -104,7 +104,7 @@ embed_inline_widget(struct pool &pool, WidgetContext &,
 void
 ResolveWidget(gcc_unused struct pool &pool,
               Widget &widget,
-              gcc_unused TranslationService &service,
+              WidgetRegistry &,
               WidgetResolverCallback callback,
               gcc_unused CancellablePointer &cancel_ptr) noexcept
 {
@@ -197,6 +197,7 @@ assert_rewrite_check4(EventLoop &event_loop,
     FailingResourceLoader resource_loader;
     WidgetContext ctx(event_loop,
                       resource_loader, resource_loader,
+                      nullptr,
                       site_name, nullptr,
                       nullptr, nullptr,
                       nullptr, nullptr,
@@ -205,7 +206,7 @@ assert_rewrite_check4(EventLoop &event_loop,
                       nullptr, session_id, "foo",
                       nullptr);
 
-    auto istream = rewrite_widget_uri(*pool, ctx, *(TranslationService *)0x1,
+    auto istream = rewrite_widget_uri(*pool, ctx,
                                       *widget,
                                       value2,
                                       mode, stateful, view, &html_escape_class);

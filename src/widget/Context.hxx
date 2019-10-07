@@ -37,6 +37,7 @@
 
 class EventLoop;
 class ResourceLoader;
+class WidgetRegistry;
 class StringMap;
 class SessionLease;
 class RealmSessionLease;
@@ -46,6 +47,8 @@ struct WidgetContext {
 
     ResourceLoader &resource_loader;
     ResourceLoader &filter_resource_loader;
+
+    WidgetRegistry *widget_registry;
 
     const char *site_name;
 
@@ -81,6 +84,7 @@ struct WidgetContext {
     WidgetContext(EventLoop &_event_loop,
                   ResourceLoader &_resource_loader,
                   ResourceLoader &_filter_resource_loader,
+                  WidgetRegistry *_widget_registry,
                   const char *site_name,
                   const char *untrusted_host,
                   const char *local_host,

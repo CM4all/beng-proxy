@@ -99,13 +99,13 @@ public:
         return finished;
     }
 
-    void Start(TranslationService &service) noexcept {
+    void Start(WidgetRegistry &registry) noexcept {
         /* use the widget pool because the listener pool may be
            aborted, while the others still run */
-        widget_class_lookup(widget.pool, widget.pool, service,
-                            widget.class_name,
-                            BIND_THIS_METHOD(RegistryCallback),
-                            cancel_ptr);
+        registry.LookupWidgetClass(widget.pool, widget.pool,
+                                   widget.class_name,
+                                   BIND_THIS_METHOD(RegistryCallback),
+                                   cancel_ptr);
     }
 
     void AddListener(WidgetResolverListener &listener) noexcept {
@@ -262,7 +262,7 @@ widget_resolver_alloc(Widget &widget) noexcept
 void
 ResolveWidget(struct pool &pool,
               Widget &widget,
-              TranslationService &service,
+              WidgetRegistry &registry,
               WidgetResolverCallback callback,
               CancellablePointer &cancel_ptr) noexcept
 {
@@ -304,5 +304,5 @@ ResolveWidget(struct pool &pool,
     /* finally send request to the widget registry */
 
     if (is_new)
-        resolver->Start(service);
+        resolver->Start(registry);
 }
