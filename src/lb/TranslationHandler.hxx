@@ -78,7 +78,7 @@ public:
 
     void Pick(struct pool &pool, const IncomingHttpRequest &request,
               const char *listener_tag,
-              const TranslateHandler &handler, void *ctx,
+              TranslateHandler &handler,
               CancellablePointer &cancel_ptr);
 
     void PutCache(const IncomingHttpRequest &request,

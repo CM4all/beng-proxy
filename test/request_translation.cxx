@@ -97,12 +97,17 @@ print_resource_address(const ResourceAddress *address)
     }
 }
 
-static void
-my_translate_response(TranslateResponse &response, void *ctx)
+class MyHandler final : public TranslateHandler {
+public:
+    /* virtual methods from TranslateHandler */
+    void OnTranslateResponse(TranslateResponse &response) noexcept override;
+    void OnTranslateError(std::exception_ptr error) noexcept override;
+};
+
+void
+MyHandler::OnTranslateResponse(TranslateResponse &response) noexcept
 {
     const WidgetView *view;
-
-    (void)ctx;
 
     if (response.status != 0)
         printf("status=%d\n", response.status);
@@ -150,16 +155,11 @@ my_translate_response(TranslateResponse &response, void *ctx)
         printf("user=%s\n", response.user);
 }
 
-static void
-my_translate_error(std::exception_ptr ep, gcc_unused void *ctx)
+void
+MyHandler::OnTranslateError(std::exception_ptr ep) noexcept
 {
     PrintException(ep);
 }
-
-static constexpr TranslateHandler my_translate_handler = {
-    .response = my_translate_response,
-    .error = my_translate_error,
-};
 
 int main(int argc, char **argv) {
     const ScopeFbPoolInit fb_pool_init;
@@ -179,10 +179,11 @@ int main(int argc, char **argv) {
     TranslationStock stock(instance.event_loop,
                            translation_socket, 0);
 
+    MyHandler handler;
     CancellablePointer cancel_ptr;
     stock.SendRequest(instance.root_pool,
                       request, nullptr,
-                      my_translate_handler, nullptr, cancel_ptr);
+                      handler, cancel_ptr);
 
     instance.event_loop.Dispatch();
 }

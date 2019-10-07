@@ -34,7 +34,7 @@
 
 struct pool;
 struct TranslateRequest;
-struct TranslateHandler;
+class TranslateHandler;
 class StopwatchPtr;
 class CancellablePointer;
 
@@ -43,6 +43,6 @@ public:
     virtual void SendRequest(struct pool &pool,
                              const TranslateRequest &request,
                              const StopwatchPtr &parent_stopwatch,
-                             const TranslateHandler &handler, void *ctx,
+                             TranslateHandler &handler,
                              CancellablePointer &cancel_ptr) noexcept = 0;
 };

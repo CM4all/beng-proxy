@@ -44,7 +44,7 @@
 #include "pool/pool.hxx"
 #include "io/Logger.hxx"
 
-struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
+struct ErrorResponseLoader final : TranslateHandler, HttpResponseHandler, Cancellable {
     CancellablePointer cancel_ptr;
 
     Request &request;
@@ -94,6 +94,10 @@ struct ErrorResponseLoader final : HttpResponseHandler, Cancellable {
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override;
 
+    /* virtual methods from TranslateHandler */
+    void OnTranslateResponse(TranslateResponse &response) noexcept override;
+    void OnTranslateError(std::exception_ptr error) noexcept override;
+
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
                         UnusedIstreamPtr body) noexcept override;
@@ -135,15 +139,12 @@ ErrorResponseLoader::OnHttpError(std::exception_ptr ep) noexcept
  *
  */
 
-static void
-errdoc_translate_response(TranslateResponse &response, void *ctx)
+void
+ErrorResponseLoader::OnTranslateResponse(TranslateResponse &response) noexcept
 {
-    auto &er = *(ErrorResponseLoader *)ctx;
-
     if ((response.status == (http_status_t)0 ||
          http_status_is_success(response.status)) &&
         response.address.IsDefined()) {
-        auto &request = er.request;
 
         request.instance.cached_resource_loader
             ->SendRequest(request.pool, request.stopwatch,
@@ -151,27 +152,20 @@ errdoc_translate_response(TranslateResponse &response, void *ctx)
                           HTTP_METHOD_GET,
                           response.address, HTTP_STATUS_OK,
                           StringMap(request.pool), nullptr, nullptr,
-                          er, request.cancel_ptr);
+                          *this, request.cancel_ptr);
     } else {
-        er.ResubmitAndDestroy();
+        ResubmitAndDestroy();
     }
 }
 
-static void
-errdoc_translate_error(std::exception_ptr ep, void *ctx)
+void
+ErrorResponseLoader::OnTranslateError(std::exception_ptr ep) noexcept
 {
-    auto &er = *(ErrorResponseLoader *)ctx;
-
-    LogConcat(2, er.request.request.uri,
+    LogConcat(2, request.request.uri,
               "error document translation error: ", ep);
 
-    er.ResubmitAndDestroy();
+    ResubmitAndDestroy();
 }
-
-static constexpr TranslateHandler errdoc_translate_handler = {
-    .response = errdoc_translate_response,
-    .error = errdoc_translate_error,
-};
 
 static void
 fill_translate_request(TranslateRequest *t,
@@ -224,6 +218,5 @@ errdoc_dispatch_response(Request &request2, http_status_t status,
     instance.translation_service->SendRequest(request2.pool,
                                               er->translate_request,
                                               request2.stopwatch,
-                                              errdoc_translate_handler, er,
-                                              er->cancel_ptr);
+                                              *er, er->cancel_ptr);
 }

@@ -46,7 +46,7 @@ static void
 widget_registry_lookup(struct pool &pool,
                        TranslationService &service,
                        const char *widget_type,
-                       const TranslateHandler &handler, void *ctx,
+                       TranslateHandler &handler,
                        CancellablePointer &cancel_ptr) noexcept
 {
     auto request = NewFromPool<TranslateRequest>(pool);
@@ -55,10 +55,10 @@ widget_registry_lookup(struct pool &pool,
 
     service.SendRequest(pool, *request,
                         nullptr, // TODO
-                        handler, ctx, cancel_ptr);
+                        handler, cancel_ptr);
 }
 
-struct WidgetRegistryLookup {
+struct WidgetRegistryLookup final : TranslateHandler {
     struct pool &pool;
 
     const WidgetRegistryCallback callback;
@@ -66,21 +66,23 @@ struct WidgetRegistryLookup {
     WidgetRegistryLookup(struct pool &_pool,
                          WidgetRegistryCallback _callback) noexcept
         :pool(_pool), callback(_callback) {}
+
+    /* virtual methods from TranslateHandler */
+    void OnTranslateResponse(TranslateResponse &response) noexcept override;
+    void OnTranslateError(std::exception_ptr error) noexcept override;
 };
 
-static void
-widget_translate_response(TranslateResponse &response, void *ctx)
+void
+WidgetRegistryLookup::OnTranslateResponse(TranslateResponse &response) noexcept
 {
-    const auto lookup = (WidgetRegistryLookup *)ctx;
-
     assert(response.views != nullptr);
 
     if (response.status != 0) {
-        lookup->callback(nullptr);
+        callback(nullptr);
         return;
     }
 
-    auto cls = NewFromPool<WidgetClass>(lookup->pool);
+    auto cls = NewFromPool<WidgetClass>(pool);
     cls->local_uri = response.local_uri;
     cls->untrusted_host = response.untrusted;
     cls->untrusted_prefix = response.untrusted_prefix;
@@ -98,25 +100,18 @@ widget_translate_response(TranslateResponse &response, void *ctx)
     cls->anchor_absolute = response.anchor_absolute;
     cls->info_headers = response.widget_info;
     cls->dump_headers = response.dump_headers;
-    cls->views.CopyChainFrom(lookup->pool, *response.views);
+    cls->views.CopyChainFrom(pool, *response.views);
 
-    lookup->callback(cls);
+    callback(cls);
 }
 
-static void
-widget_translate_error(std::exception_ptr ep, void *ctx)
+void
+WidgetRegistryLookup::OnTranslateError(std::exception_ptr ep) noexcept
 {
-    const auto lookup = (WidgetRegistryLookup *)ctx;
-
     LogConcat(2, "WidgetRegistry", ep);
 
-    lookup->callback(nullptr);
+    callback(nullptr);
 }
-
-static constexpr TranslateHandler widget_translate_handler = {
-    .response = widget_translate_response,
-    .error = widget_translate_error,
-};
 
 void
 widget_class_lookup(struct pool &pool, struct pool &widget_pool,
@@ -130,6 +125,5 @@ widget_class_lookup(struct pool &pool, struct pool &widget_pool,
     auto lookup = NewFromPool<WidgetRegistryLookup>(pool, widget_pool,
                                                     callback);
     widget_registry_lookup(pool, service, widget_type,
-                           widget_translate_handler, lookup,
-                           cancel_ptr);
+                           *lookup, cancel_ptr);
 }

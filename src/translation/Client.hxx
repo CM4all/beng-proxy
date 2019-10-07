@@ -40,7 +40,7 @@ class CancellablePointer;
 class SocketDescriptor;
 class StopwatchPtr;
 struct TranslateRequest;
-struct TranslateHandler;
+class TranslateHandler;
 
 /**
  * Call the translation server.
@@ -50,7 +50,7 @@ translate(struct pool &pool, EventLoop &event_loop,
           StopwatchPtr stopwatch,
           SocketDescriptor fd, Lease &lease,
           const TranslateRequest &request,
-          const TranslateHandler &handler, void *ctx,
+          TranslateHandler &handler,
           CancellablePointer &cancel_ptr) noexcept;
 
 #endif

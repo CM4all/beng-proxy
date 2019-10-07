@@ -88,6 +88,6 @@ public:
     void SendRequest(struct pool &pool,
                      const TranslateRequest &request,
                      const StopwatchPtr &parent_stopwatch,
-                     const TranslateHandler &handler, void *ctx,
+                     TranslateHandler &handler,
                      CancellablePointer &cancel_ptr) noexcept override;
 };

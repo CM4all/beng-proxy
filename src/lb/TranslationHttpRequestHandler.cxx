@@ -49,7 +49,7 @@
  *
  */
 
-struct LbHttpRequest final : private Cancellable, private LeakDetector {
+struct LbHttpRequest final : private Cancellable, TranslateHandler, private LeakDetector {
     struct pool &pool;
     LbHttpConnection &connection;
     LbTranslationHandler &handler;
@@ -85,36 +85,39 @@ private:
         Destroy();
         cancel_ptr.Cancel();
     }
+
+    /* virtual methods from TranslateHandler */
+    void OnTranslateResponse(TranslateResponse &response) noexcept override;
+    void OnTranslateError(std::exception_ptr error) noexcept override;
 };
 
-static void
-lb_http_translate_response(TranslateResponse &response, void *ctx)
+void
+LbHttpRequest::OnTranslateResponse(TranslateResponse &response) noexcept
 {
-    auto &r = *(LbHttpRequest *)ctx;
-    auto &c = r.connection;
-    auto &request = r.request;
+    auto &_request = request;
+    auto &c = connection;
 
     if (response.site != nullptr)
         c.per_request.site_name = p_strdup(request.pool, response.site);
 
     if (response.https_only != 0 && !c.IsEncrypted()) {
-        r.Destroy();
+        Destroy();
 
         const char *host = c.per_request.host;
         if (host == nullptr) {
-            request.SendMessage(HTTP_STATUS_BAD_REQUEST, "No Host header");
+            _request.SendMessage(HTTP_STATUS_BAD_REQUEST, "No Host header");
             return;
         }
 
-        request.SendRedirect(HTTP_STATUS_MOVED_PERMANENTLY,
-                             MakeHttpsRedirect(request.pool, host,
-                                               response.https_only,
-                                               request.uri),
-                             "This page requires \"https\"");
+        _request.SendRedirect(HTTP_STATUS_MOVED_PERMANENTLY,
+                              MakeHttpsRedirect(_request.pool, host,
+                                                response.https_only,
+                                                _request.uri),
+                              "This page requires \"https\"");
     } else if (response.status != http_status_t(0) ||
                response.redirect != nullptr ||
                response.message != nullptr) {
-        r.Destroy();
+        Destroy();
 
         auto status = response.status;
         if (status == http_status_t(0))
@@ -124,13 +127,13 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
         if (body == nullptr)
             body = http_status_to_string(status);
 
-        request.SendSimpleResponse(status, response.redirect, body);
+        _request.SendSimpleResponse(status, response.redirect, body);
     } else if (response.pool != nullptr) {
-        auto *destination = r.handler.FindDestination(response.pool);
+        auto *destination = handler.FindDestination(response.pool);
         if (destination == nullptr) {
-            r.Destroy();
+            Destroy();
 
-            c.LogSendError(request,
+            c.LogSendError(_request,
                            std::make_exception_ptr(std::runtime_error("No such pool")));
             return;
         }
@@ -138,36 +141,30 @@ lb_http_translate_response(TranslateResponse &response, void *ctx)
         if (response.canonical_host != nullptr)
             c.per_request.canonical_host = response.canonical_host;
 
-        request.body = std::move(r.request_body);
+        request.body = std::move(request_body);
 
-        auto &caller_cancel_ptr = r.caller_cancel_ptr;
-        r.Destroy();
+        auto &_caller_cancel_ptr = caller_cancel_ptr;
+        Destroy();
 
-        c.HandleHttpRequest(*destination, request, caller_cancel_ptr);
+        c.HandleHttpRequest(*destination, _request, _caller_cancel_ptr);
     } else {
-        r.Destroy();
+        Destroy();
 
-        c.LogSendError(request,
+        c.LogSendError(_request,
                        std::make_exception_ptr(std::runtime_error("Invalid translation server response")));
     }
 }
 
-static void
-lb_http_translate_error(std::exception_ptr ep, void *ctx)
+void
+LbHttpRequest::OnTranslateError(std::exception_ptr ep) noexcept
 {
-    auto &r = *(LbHttpRequest *)ctx;
-    auto &request = r.request;
-    auto &connection = r.connection;
+    auto &_request = request;
+    auto &_connection = connection;
 
-    r.Destroy();
+    Destroy();
 
-    connection.LogSendError(request, ep);
+    _connection.LogSendError(_request, ep);
 }
-
-static constexpr TranslateHandler lb_http_translate_handler = {
-    .response = lb_http_translate_response,
-    .error = lb_http_translate_error,
-};
 
 /*
  * constructor
@@ -184,6 +181,5 @@ LbHttpConnection::AskTranslationServer(LbTranslationHandler &handler,
 
     handler.Pick(request.pool, request,
                  listener.tag.empty() ? nullptr : listener.tag.c_str(),
-                 lb_http_translate_handler, r,
-                 r->translate_cancel_ptr);
+                 *r, r->translate_cancel_ptr);
 }

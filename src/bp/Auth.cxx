@@ -72,13 +72,6 @@ Request::OnAuthTranslateResponse(const TranslateResponse &response) noexcept
     OnTranslateResponseAfterAuth(*translate.previous);
 }
 
-static void
-auth_translate_response(TranslateResponse &response, void *ctx)
-{
-    auto &request = *(Request *)ctx;
-    request.OnAuthTranslateResponse(response);
-}
-
 inline void
 Request::OnAuthTranslateError(std::exception_ptr ep) noexcept
 {
@@ -86,16 +79,21 @@ Request::OnAuthTranslateError(std::exception_ptr ep) noexcept
                      "Configuration server failed", ep, 1);
 }
 
-static void
-auth_translate_error(std::exception_ptr ep, void *ctx)
-{
-    auto &request = *(Request *)ctx;
-    request.OnAuthTranslateError(std::move(ep));
-}
+class AuthTranslateHandler final : public TranslateHandler {
+    Request &request;
 
-static constexpr TranslateHandler auth_translate_handler = {
-    .response = auth_translate_response,
-    .error = auth_translate_error,
+public:
+    explicit AuthTranslateHandler(Request &_request) noexcept
+        :request(_request) {}
+
+    /* virtual methods from TranslateHandler */
+    void OnTranslateResponse(TranslateResponse &response) noexcept override {
+        request.OnAuthTranslateResponse(response);
+    }
+
+    void OnTranslateError(std::exception_ptr error) noexcept override {
+        request.OnAuthTranslateError(error);
+    }
 };
 
 void
@@ -158,9 +156,12 @@ Request::HandleAuth(const TranslateResponse &response)
 
     translate.previous = &response;
 
+    auto *auth_translate_handler =
+        NewFromPool<AuthTranslateHandler>(pool, *this);
+
     instance.translation_service->SendRequest(pool, *t,
                                               stopwatch,
-                                              auth_translate_handler, this,
+                                              *auth_translate_handler,
                                               cancel_ptr);
 }
 

@@ -37,8 +37,8 @@
 #include "stock/Class.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 
-struct TranslateHandler;
 struct TranslateRequest;
+class TranslateHandler;
 
 class TranslationStock final : public TranslationService, StockClass {
     class Connection;
@@ -73,7 +73,7 @@ public:
     void SendRequest(struct pool &pool,
                      const TranslateRequest &request,
                      const StopwatchPtr &parent_stopwatch,
-                     const TranslateHandler &handler, void *ctx,
+                     TranslateHandler &handler,
                      CancellablePointer &cancel_ptr) noexcept override;
 
 private:

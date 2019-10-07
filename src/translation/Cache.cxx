@@ -392,7 +392,7 @@ struct tcache {
                     const char *site) noexcept;
 };
 
-struct TranslateCacheRequest {
+struct TranslateCacheRequest final : TranslateHandler {
     struct pool *pool;
 
     struct tcache *tcache;
@@ -406,22 +406,25 @@ struct TranslateCacheRequest {
 
     const char *key;
 
-    const TranslateHandler *handler;
-    void *handler_ctx;
+    TranslateHandler *handler;
 
     TranslateCacheRequest(struct pool &_pool, struct tcache &_tcache,
                           const TranslateRequest &_request, const char *_key,
                           bool _cacheable,
-                          const TranslateHandler &_handler, void *_ctx)
+                          TranslateHandler &_handler)
         :pool(&_pool), tcache(&_tcache), request(_request),
          cacheable(_cacheable),
          find_base(false), key(_key),
-         handler(&_handler), handler_ctx(_ctx) {}
+         handler(&_handler) {}
 
     TranslateCacheRequest(const TranslateRequest &_request, bool _find_base)
         :request(_request), cacheable(true), find_base(_find_base) {}
 
     TranslateCacheRequest(TranslateCacheRequest &) = delete;
+
+    /* virtual methods from TranslateHandler */
+    void OnTranslateResponse(TranslateResponse &response) noexcept override;
+    void OnTranslateError(std::exception_ptr error) noexcept override;
 };
 
 inline TranslateCachePerHost &
@@ -1259,89 +1262,80 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
  *
  */
 
-static void
-tcache_handler_response(TranslateResponse &response, void *ctx)
+void
+TranslateCacheRequest::OnTranslateResponse(TranslateResponse &response) noexcept
 {
-    TranslateCacheRequest &tcr = *(TranslateCacheRequest *)ctx;
-    tcr.tcache->active = true;
+    tcache->active = true;
 
     if (!response.invalidate.empty())
-        tcr.tcache->Invalidate(tcr.request,
-                               response.invalidate,
-                               nullptr);
+        tcache->Invalidate(request,
+                           response.invalidate,
+                           nullptr);
 
     RegexPointer regex;
 
-    if (!tcr.cacheable) {
-        LogConcat(4, "TranslationCache", "ignore ", tcr.key);
+    if (!cacheable) {
+        LogConcat(4, "TranslationCache", "ignore ", key);
     } else if (tcache_response_evaluate(response)) {
         try {
-            auto item = tcache_store(tcr, response);
+            auto item = tcache_store(*this, response);
             regex = item->regex;
         } catch (...) {
-            tcr.handler->error(std::current_exception(), tcr.handler_ctx);
+            handler->OnTranslateError(std::current_exception());
             return;
         }
     } else {
-        LogConcat(4, "TranslationCache", "nocache ", tcr.key);
+        LogConcat(4, "TranslationCache", "nocache ", key);
     }
 
-    if (tcr.request.uri != nullptr && response.IsExpandable()) {
+    if (request.uri != nullptr && response.IsExpandable()) {
         UniqueRegex unref_regex;
 
         try {
             regex = unref_regex = response.CompileRegex();
 
-            tcache_expand_response(*tcr.pool, response, regex,
-                                   tcr.request.uri, tcr.request.host,
-                                   tcr.request.user);
+            tcache_expand_response(*pool, response, regex,
+                                   request.uri, request.host,
+                                   request.user);
         } catch (...) {
-            tcr.handler->error(std::current_exception(), tcr.handler_ctx);
+            handler->OnTranslateError(std::current_exception());
             return;
         }
     } else if (response.easy_base) {
         /* create a writable copy and apply the BASE */
         try {
-            response.CacheLoad(*tcr.pool, response, tcr.request.uri);
+            response.CacheLoad(*pool, response, request.uri);
         } catch (...) {
-            tcr.handler->error(std::current_exception(), tcr.handler_ctx);
+            handler->OnTranslateError(std::current_exception());
             return;
         }
     } else if (response.base != nullptr) {
-        const char *uri = tcr.request.uri;
+        const char *uri = request.uri;
         const char *tail = require_base_tail(uri, response.base);
         if (!response.unsafe_base && !uri_path_verify_paranoid(tail)) {
-            tcr.handler->error(std::make_exception_ptr(HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
-                                                                           "Malformed URI")),
-                               tcr.handler_ctx);
+            handler->OnTranslateError(std::make_exception_ptr(HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
+                                                                                  "Malformed URI")));
             return;
         }
     }
 
-    tcr.handler->response(response, tcr.handler_ctx);
+    handler->OnTranslateResponse(response);
 }
 
-static void
-tcache_handler_error(std::exception_ptr ep, void *ctx)
+void
+TranslateCacheRequest::OnTranslateError(std::exception_ptr ep) noexcept
 {
-    TranslateCacheRequest &tcr = *(TranslateCacheRequest *)ctx;
+    LogConcat(4, "TranslationCache", "error ", key);
 
-    LogConcat(4, "TranslationCache", "error ", tcr.key);
-
-    tcr.handler->error(ep, tcr.handler_ctx);
+    handler->OnTranslateError(ep);
 }
-
-static constexpr TranslateHandler tcache_handler = {
-    .response = tcache_handler_response,
-    .error = tcache_handler_error,
-};
 
 static void
 tcache_hit(struct pool &pool,
            const char *uri, const char *host, const char *user,
            gcc_unused const char *key,
            const TranslateCacheItem &item,
-           const TranslateHandler &handler, void *ctx)
+           TranslateHandler &handler)
 {
     auto response = NewFromPool<TranslateResponse>(pool);
 
@@ -1350,7 +1344,7 @@ tcache_hit(struct pool &pool,
     try {
         response->CacheLoad(pool, item.response, uri);
     } catch (...) {
-        handler.error(std::current_exception(), ctx);
+        handler.OnTranslateError(std::current_exception());
         return;
     }
 
@@ -1359,12 +1353,12 @@ tcache_hit(struct pool &pool,
             tcache_expand_response(pool, *response, item.regex,
                                    uri, host, user);
         } catch (...) {
-            handler.error(std::current_exception(), ctx);
+            handler.OnTranslateError(std::current_exception());
             return;
         }
     }
 
-    handler.response(*response, ctx);
+    handler.OnTranslateResponse(*response);
 }
 
 static void
@@ -1372,19 +1366,19 @@ tcache_miss(struct pool &pool, struct tcache &tcache,
             const TranslateRequest &request, const char *key,
             bool cacheable,
             const StopwatchPtr &parent_stopwatch,
-            const TranslateHandler &handler, void *ctx,
+            TranslateHandler &handler,
             CancellablePointer &cancel_ptr)
 {
     auto tcr = NewFromPool<TranslateCacheRequest>(pool, pool, tcache,
                                                   request, key,
                                                   cacheable,
-                                                  handler, ctx);
+                                                  handler);
 
     if (cacheable)
         LogConcat(4, "TranslationCache", "miss ", key);
 
     tcache.next.SendRequest(pool, request, parent_stopwatch,
-                            tcache_handler, tcr, cancel_ptr);
+                            *tcr, cancel_ptr);
 }
 
 gcc_pure
@@ -1519,7 +1513,7 @@ void
 TranslationCache::SendRequest(struct pool &pool,
                               const TranslateRequest &request,
                               const StopwatchPtr &parent_stopwatch,
-                              const TranslateHandler &handler, void *ctx,
+                              TranslateHandler &handler,
                               CancellablePointer &cancel_ptr) noexcept
 {
     const bool cacheable = cache->active && tcache_request_evaluate(request);
@@ -1529,9 +1523,9 @@ TranslationCache::SendRequest(struct pool &pool,
         : nullptr;
     if (item != nullptr)
         tcache_hit(pool, request.uri, request.host, request.user, key,
-                   *item, handler, ctx);
+                   *item, handler);
     else
         tcache_miss(pool, *cache, request, key, cacheable,
                     parent_stopwatch,
-                    handler, ctx, cancel_ptr);
+                    handler, cancel_ptr);
 }

@@ -92,7 +92,7 @@ Fill(TranslateRequest &t, const char *name,
     t.host = request.headers.Get("host");
 }
 
-struct LbTranslateHandlerRequest {
+struct LbTranslateHandlerRequest final : TranslateHandler {
     LbTranslationHandler &th;
 
     const IncomingHttpRequest &http_request;
@@ -100,47 +100,41 @@ struct LbTranslateHandlerRequest {
 
     TranslateRequest request;
 
-    const TranslateHandler &handler;
-    void *handler_ctx;
+    TranslateHandler &handler;
 
     LbTranslateHandlerRequest(LbTranslationHandler &_th,
                               const char *name,
                               const char *_listener_tag,
                               const IncomingHttpRequest &_request,
-                              const TranslateHandler &_handler, void *_ctx)
+                              TranslateHandler &_handler)
         :th(_th), http_request(_request), listener_tag(_listener_tag),
-         handler(_handler), handler_ctx(_ctx)
+         handler(_handler)
     {
         Fill(request, name, listener_tag, _request);
     }
+
+    /* virtual methods from TranslateHandler */
+    void OnTranslateResponse(TranslateResponse &response) noexcept override;
+    void OnTranslateError(std::exception_ptr error) noexcept override;
 };
 
-static void
-lbth_translate_response(TranslateResponse &response, void *ctx)
+void
+LbTranslateHandlerRequest::OnTranslateResponse(TranslateResponse &response) noexcept
 {
-    auto &r = *(LbTranslateHandlerRequest *)ctx;
-
-    r.th.PutCache(r.http_request, r.listener_tag, response);
-    r.handler.response(response, r.handler_ctx);
+    th.PutCache(http_request, listener_tag, response);
+    handler.OnTranslateResponse(response);
 }
 
-static void
-lbth_translate_error(std::exception_ptr ep, void *ctx)
+void
+LbTranslateHandlerRequest::OnTranslateError(std::exception_ptr ep) noexcept
 {
-    auto &r = *(LbTranslateHandlerRequest *)ctx;
-
-    r.handler.error(ep, r.handler_ctx);
+    handler.OnTranslateError(ep);
 }
-
-static constexpr TranslateHandler lbth_translate_handler = {
-    .response = lbth_translate_response,
-    .error = lbth_translate_error,
-};
 
 void
 LbTranslationHandler::Pick(struct pool &pool, const IncomingHttpRequest &request,
                            const char *listener_tag,
-                           const TranslateHandler &handler, void *ctx,
+                           TranslateHandler &handler,
                            CancellablePointer &cancel_ptr)
 {
     if (cache) {
@@ -158,7 +152,7 @@ LbTranslationHandler::Pick(struct pool &pool, const IncomingHttpRequest &request
             response.pool = item->pool.empty() ? nullptr : item->pool.c_str();
             response.canonical_host = item->canonical_host.empty() ? nullptr : item->canonical_host.c_str();
 
-            handler.response(response, ctx);
+            handler.OnTranslateResponse(response);
             return;
         }
     }
@@ -166,10 +160,10 @@ LbTranslationHandler::Pick(struct pool &pool, const IncomingHttpRequest &request
     auto *r = NewFromPool<LbTranslateHandlerRequest>(pool,
                                                      *this, name, listener_tag,
                                                      request,
-                                                     handler, ctx);
+                                                     handler);
     stock.SendRequest(pool, r->request,
                       nullptr,
-                      lbth_translate_handler, r, cancel_ptr);
+                      *r, cancel_ptr);
 }
 
 void

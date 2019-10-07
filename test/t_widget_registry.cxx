@@ -58,7 +58,7 @@ public:
     void SendRequest(struct pool &pool,
                      const TranslateRequest &request,
                      const StopwatchPtr &parent_stopwatch,
-                     const TranslateHandler &handler, void *ctx,
+                     TranslateHandler &handler,
                      CancellablePointer &cancel_ptr) noexcept override;
 
     /* virtual methods from class Cancellable */
@@ -86,7 +86,7 @@ void
 MyTranslationService::SendRequest(struct pool &pool,
                                   const TranslateRequest &request,
                                   const StopwatchPtr &,
-                                  const TranslateHandler &handler, void *ctx,
+                                  TranslateHandler &handler,
                                   CancellablePointer &cancel_ptr) noexcept
 {
     assert(request.remote_host == NULL);
@@ -101,7 +101,7 @@ MyTranslationService::SendRequest(struct pool &pool,
         response->address = *http_address_parse(pool, "http://foo/");
         response->views = NewFromPool<WidgetView>(pool, nullptr);
         response->views->address = {ShallowCopy(), response->address};
-        handler.response(*response, ctx);
+        handler.OnTranslateResponse(*response);
     } else if (strcmp(request.widget_type, "block") == 0) {
         cancel_ptr = *this;
     } else

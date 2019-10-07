@@ -62,8 +62,7 @@ class TranslateClient final : BufferedSocketHandler, Cancellable {
     /** the marshalled translate request */
     GrowingBufferReader request;
 
-    const TranslateHandler &handler;
-    void *handler_ctx;
+    TranslateHandler &handler;
 
     TranslateParser parser;
 
@@ -73,7 +72,7 @@ public:
                     SocketDescriptor fd, Lease &lease,
                     const TranslateRequest &request2,
                     GrowingBuffer &&_request,
-                    const TranslateHandler &_handler, void *_ctx,
+                    TranslateHandler &_handler,
                     CancellablePointer &cancel_ptr) noexcept;
 
     bool TryWrite() noexcept;
@@ -139,12 +138,11 @@ TranslateClient::Fail(std::exception_ptr ep) noexcept
 
     ReleaseSocket(false);
 
-    auto _handler = handler;
-    auto _handler_ctx = handler_ctx;
+    auto &_handler = handler;
 
     Destroy();
 
-    _handler.error(ep, _handler_ctx);
+    _handler.OnTranslateError(ep);
 }
 
 /*
@@ -177,7 +175,7 @@ try {
                 /* this pool reference allows calling our destructor
                    after the handler has released the pool */
                 const ScopePoolRef ref(pool TRACE_ARGS);
-                handler.response(parser.GetResponse(), handler_ctx);
+                handler.OnTranslateResponse(parser.GetResponse());
                 Destroy();
             }
 
@@ -236,13 +234,13 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
                                  SocketDescriptor fd, Lease &lease,
                                  const TranslateRequest &request2,
                                  GrowingBuffer &&_request,
-                                 const TranslateHandler &_handler, void *_ctx,
+                                 TranslateHandler &_handler,
                                  CancellablePointer &cancel_ptr) noexcept
     :pool(p),
      stopwatch(std::move(_stopwatch)),
      socket(event_loop),
      request(std::move(_request)),
-     handler(_handler), handler_ctx(_ctx),
+     handler(_handler),
      parser(p, request2)
 {
     socket.Init(fd, FdType::FD_SOCKET,
@@ -259,7 +257,7 @@ translate(struct pool &pool, EventLoop &event_loop,
           StopwatchPtr stopwatch,
           SocketDescriptor fd, Lease &lease,
           const TranslateRequest &request,
-          const TranslateHandler &handler, void *ctx,
+          TranslateHandler &handler,
           CancellablePointer &cancel_ptr) noexcept
 try {
     assert(fd.IsDefined());
@@ -267,8 +265,6 @@ try {
            request.pool != nullptr ||
            (!request.content_type_lookup.IsNull() &&
             request.suffix != nullptr));
-    assert(handler.response != nullptr);
-    assert(handler.error != nullptr);
 
     GrowingBuffer gb = MarshalTranslateRequest(PROTOCOL_VERSION,
                                                request);
@@ -277,11 +273,11 @@ try {
                                                 std::move(stopwatch),
                                                 fd, lease,
                                                 request, std::move(gb),
-                                                handler, ctx, cancel_ptr);
+                                                handler, cancel_ptr);
 
     client->TryWrite();
 } catch (...) {
     lease.ReleaseLease(true);
 
-    handler.error(std::current_exception(), ctx);
+    handler.OnTranslateError(std::current_exception());
 }

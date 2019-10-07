@@ -57,7 +57,6 @@
 #include "strmap.hxx"
 #include "istream/istream.hxx"
 #include "translation/Service.hxx"
-#include "translation/Handler.hxx"
 #include "translation/Transformation.hxx"
 #include "translation/Protocol.hxx"
 #include "ua_classification.hxx"
@@ -590,8 +589,8 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
     SubmitTranslateRequest();
 }
 
-inline void
-Request::OnTranslateResponse(const TranslateResponse &response)
+void
+Request::OnTranslateResponse(TranslateResponse &response) noexcept
 {
     if (response.https_only != 0) {
         const char *https = request.headers.Get("x-cm4all-https");
@@ -729,28 +728,13 @@ Request::CheckHandleReadFile(const TranslateResponse &response)
     return true;
 }
 
-static void
-handler_translate_response(TranslateResponse &response, void *ctx)
+void
+Request::OnTranslateError(std::exception_ptr ep) noexcept
 {
-    auto &request = *(Request *)ctx;
-
-    request.OnTranslateResponse(response);
+    InstallErrorTranslateResponse();
+    LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+                     "Configuration server failed", ep, 1);
 }
-
-static void
-handler_translate_error(std::exception_ptr ep, void *ctx)
-{
-    auto &request = *(Request *)ctx;
-
-    request.InstallErrorTranslateResponse();
-    request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                             "Configuration server failed", ep, 1);
-}
-
-static constexpr TranslateHandler handler_translate_handler = {
-    .response = handler_translate_response,
-    .error = handler_translate_error,
-};
 
 void
 Request::SubmitTranslateRequest()
@@ -758,7 +742,7 @@ Request::SubmitTranslateRequest()
     instance.translation_service->SendRequest(pool,
                                               translate.request,
                                               stopwatch,
-                                              handler_translate_handler, this,
+                                              *this,
                                               cancel_ptr);
 }
 

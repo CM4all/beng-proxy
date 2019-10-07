@@ -38,7 +38,7 @@
 #include "widget/View.hxx"
 #include "pool/pool.hxx"
 
-struct SuffixRegistryLookup {
+struct SuffixRegistryLookup final : TranslateHandler {
     TranslateRequest request;
 
     SuffixRegistryHandler &handler;
@@ -50,41 +50,26 @@ struct SuffixRegistryLookup {
         request.content_type_lookup = payload;
         request.suffix = suffix;
     }
+
+    /* virtual methods from TranslateHandler */
+    void OnTranslateResponse(TranslateResponse &response) noexcept override;
+    void OnTranslateError(std::exception_ptr error) noexcept override;
 };
 
-/*
- * TranslateHandler
- *
- */
-
-static void
-suffix_translate_response(TranslateResponse &response, void *ctx) noexcept
+void
+SuffixRegistryLookup::OnTranslateResponse(TranslateResponse &response) noexcept
 {
-    SuffixRegistryLookup &lookup = *(SuffixRegistryLookup *)ctx;
-
-    lookup.handler.OnSuffixRegistrySuccess(response.content_type,
-                                           response.views != nullptr
-                                           ? response.views->transformation
-                                           : nullptr);
+    handler.OnSuffixRegistrySuccess(response.content_type,
+                                    response.views != nullptr
+                                    ? response.views->transformation
+                                    : nullptr);
 }
 
-static void
-suffix_translate_error(std::exception_ptr ep, void *ctx) noexcept
+void
+SuffixRegistryLookup::OnTranslateError(std::exception_ptr ep) noexcept
 {
-    SuffixRegistryLookup &lookup = *(SuffixRegistryLookup *)ctx;
-
-    lookup.handler.OnSuffixRegistryError(ep);
+    handler.OnSuffixRegistryError(ep);
 }
-
-static constexpr TranslateHandler suffix_translate_handler = {
-    .response = suffix_translate_response,
-    .error = suffix_translate_error,
-};
-
-/*
- * constructor
- *
- */
 
 void
 suffix_registry_lookup(struct pool &pool,
@@ -100,5 +85,5 @@ suffix_registry_lookup(struct pool &pool,
                                                     handler);
 
     service.SendRequest(pool, lookup->request, parent_stopwatch,
-                        suffix_translate_handler, lookup, cancel_ptr);
+                        *lookup, cancel_ptr);
 }

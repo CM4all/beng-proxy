@@ -127,8 +127,7 @@ class TranslationStock::Request final
 
     const TranslateRequest &request;
 
-    const TranslateHandler &handler;
-    void *handler_ctx;
+    TranslateHandler &handler;
 
     CancellablePointer &caller_cancel_ptr;
     CancellablePointer cancel_ptr;
@@ -137,7 +136,7 @@ public:
     Request(TranslationStock &_stock, struct pool &_pool,
             const TranslateRequest &_request,
             const StopwatchPtr &parent_stopwatch,
-            const TranslateHandler &_handler, void *_ctx,
+            TranslateHandler &_handler,
             CancellablePointer &_cancel_ptr) noexcept
         :PoolLeakDetector(_pool),
          pool(_pool),
@@ -145,7 +144,7 @@ public:
                    _request.GetDiagnosticName()),
          stock(_stock),
          request(_request),
-         handler(_handler), handler_ctx(_ctx),
+         handler(_handler),
          caller_cancel_ptr(_cancel_ptr)
     {
         _cancel_ptr = *this;
@@ -196,7 +195,7 @@ TranslationStock::Request::OnStockItemReady(StockItem &_item) noexcept
     translate(pool, stock.GetEventLoop(), std::move(stopwatch),
               item->GetSocket(),
               *this,
-              request, handler, handler_ctx,
+              request, handler,
               caller_cancel_ptr);
 
     /* ReleaseLease() will invoke Destroy() */
@@ -206,9 +205,8 @@ void
 TranslationStock::Request::OnStockItemError(std::exception_ptr ep) noexcept
 {
     auto &_handler = handler;
-    auto *_handler_ctx = handler_ctx;
     Destroy();
-    _handler.error(ep, _handler_ctx);
+    _handler.OnTranslateError(ep);
 }
 
 void
@@ -223,11 +221,11 @@ void
 TranslationStock::SendRequest(struct pool &pool,
                               const TranslateRequest &request,
                               const StopwatchPtr &parent_stopwatch,
-                              const TranslateHandler &handler, void *ctx,
+                              TranslateHandler &handler,
                               CancellablePointer &cancel_ptr) noexcept
 {
     auto r = NewFromPool<Request>(pool, *this, pool, request,
                                   parent_stopwatch,
-                                  handler, ctx, cancel_ptr);
+                                  handler, cancel_ptr);
     r->Start();
 }

@@ -36,6 +36,7 @@
 #include "uri/Dissect.hxx"
 #include "pool/LeakDetector.hxx"
 #include "istream/UnusedHoldPtr.hxx"
+#include "translation/Handler.hxx"
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
 #include "translation/Transformation.hxx"
@@ -69,6 +70,7 @@ struct WidgetContext;
  * (handler.c, file-handler.c etc.).
  */
 struct Request final : HttpResponseHandler, DelegateHandler,
+    TranslateHandler,
     NfsCacheHandler, SuffixRegistryHandler, Cancellable, PoolLeakDetector {
 
     struct pool &pool;
@@ -308,7 +310,6 @@ public:
 
     bool ParseRequestUri() noexcept;
 
-    void OnTranslateResponse(const TranslateResponse &response);
     void OnTranslateResponseAfterAuth(const TranslateResponse &response);
     void OnTranslateResponse2(const TranslateResponse &response);
 
@@ -603,6 +604,10 @@ public:
 
         Destroy();
     }
+
+    /* virtual methods from TranslateHandler */
+    void OnTranslateResponse(TranslateResponse &response) noexcept override;
+    void OnTranslateError(std::exception_ptr error) noexcept override;
 
     /* virtual methods from class HttpResponseHandler */
     void OnHttpResponse(http_status_t status, StringMap &&headers,
