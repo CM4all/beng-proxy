@@ -2,7 +2,7 @@ cm4all-beng-proxy (16.0.2) unstable; urgency=low
 
   * fix several crash bugs
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 07 Oct 2019 12:03:31 +0200
 
 cm4all-beng-proxy (16.0.1) unstable; urgency=low
 
