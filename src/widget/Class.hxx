@@ -126,6 +126,7 @@ struct WidgetClass {
     bool dump_headers = false;
 
     WidgetClass() = default;
+    WidgetClass(AllocatorPtr alloc, const WidgetClass &src) noexcept;
 
     /**
      * Determines whether it is allowed to embed the widget in a page with
