@@ -68,7 +68,7 @@ ExpansibleBuffer::Resize(size_t new_max_size) noexcept
     char *new_buffer = (char *)p_malloc(&pool, new_max_size);
     memcpy(new_buffer, buffer, size);
 
-    p_free(&pool, buffer);
+    p_free(&pool, buffer, max_size);
 
     buffer = new_buffer;
     max_size = new_max_size;

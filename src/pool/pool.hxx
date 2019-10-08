@@ -286,7 +286,7 @@ p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL) noexcept
 #define p_malloc_fwd(pool, size) p_malloc_impl(pool, size TRACE_ARGS_FWD)
 
 void
-p_free(struct pool *pool, const void *ptr) noexcept;
+p_free(struct pool *pool, const void *ptr, size_t size) noexcept;
 
 gcc_malloc gcc_returns_nonnull
 void *
@@ -389,7 +389,7 @@ void
 DeleteFromPool(struct pool &pool, T *t) noexcept
 {
     t->~T();
-    p_free(&pool, t);
+    p_free(&pool, t, sizeof(*t));
 }
 
 /**

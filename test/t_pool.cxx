@@ -56,16 +56,12 @@ TEST(PoolTest, Libc)
     ASSERT_EQ(size_t(256 + 64), pool_brutto_size(pool));
     ASSERT_EQ(size_t(256 + 64), pool_netto_size(pool));
 
-    /* freeing doesn't reduce the size counters, because the pool
-       doesn't know the size of the allocations that are being
-       freed; these tests must be adjusted once this is
-       implemented */
-    p_free(pool, q);
-    ASSERT_EQ(size_t(256 + 64), pool_brutto_size(pool));
-    ASSERT_EQ(size_t(256 + 64), pool_netto_size(pool));
-    p_free(pool, r);
-    ASSERT_EQ(size_t(256 + 64), pool_brutto_size(pool));
-    ASSERT_EQ(size_t(256 + 64), pool_netto_size(pool));
+    p_free(pool, q, 64);
+    ASSERT_EQ(size_t(256), pool_brutto_size(pool));
+    ASSERT_EQ(size_t(256), pool_netto_size(pool));
+    p_free(pool, r, 256);
+    ASSERT_EQ(size_t(0), pool_brutto_size(pool));
+    ASSERT_EQ(size_t(0), pool_netto_size(pool));
 }
 
 TEST(PoolTest, Linear)

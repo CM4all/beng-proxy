@@ -228,7 +228,7 @@ struct pool final
 
     /**
      * The number of bytes allocated from this pool, not counting
-     * overhead and not counting p_free().
+     * overhead.
      */
     size_t netto_size = 0;
 
@@ -1107,14 +1107,14 @@ p_free_libc(struct pool *pool, void *ptr)
 }
 
 void
-p_free(struct pool *pool, const void *cptr) noexcept
+p_free(struct pool *pool, const void *cptr, size_t size) noexcept
 {
     void *ptr = const_cast<void *>(cptr);
 
     assert(pool != nullptr);
     assert(ptr != nullptr);
     assert((((unsigned long)ptr) & ALIGN_MASK) == 0);
-    assert(pool_contains(*pool, ptr, 1));
+    assert(pool_contains(*pool, ptr, size));
 
     switch (pool->type) {
     case POOL_DUMMY:
@@ -1129,16 +1129,15 @@ p_free(struct pool *pool, const void *cptr) noexcept
 #ifndef NDEBUG
         {
             struct allocation_info *info = get_linear_allocation_info(ptr);
+            assert(size == info->size);
             pool->allocations.erase(pool->allocations.iterator_to(*info));
-            PoisonInaccessible(ptr, info->size);
         }
-#else
-        /* we don't know the exact size of this buffer, so we only
-           mark the first ALIGN bytes */
-        PoisonInaccessible(ptr, ALIGN_SIZE);
 #endif
+        PoisonInaccessible(ptr, size);
         break;
     }
+
+    pool->netto_size -= size;
 }
 
 #ifndef NDEBUG
