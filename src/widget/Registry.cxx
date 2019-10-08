@@ -58,7 +58,7 @@ widget_registry_lookup(struct pool &caller_pool, struct pool &widget_pool,
                         handler, cancel_ptr);
 }
 
-struct WidgetRegistryLookup final : TranslateHandler {
+class WidgetRegistryLookup final : TranslateHandler {
     struct pool &widget_pool;
 
     WidgetClassCache &cache;
@@ -67,12 +67,21 @@ struct WidgetRegistryLookup final : TranslateHandler {
 
     const WidgetRegistryCallback callback;
 
+public:
     WidgetRegistryLookup(struct pool &_widget_pool, WidgetClassCache &_cache,
                          const char *_name,
                          WidgetRegistryCallback _callback) noexcept
         :widget_pool(_widget_pool), cache(_cache),
          name(_name), callback(_callback) {}
 
+    void Start(struct pool &caller_pool, TranslationService &service,
+               CancellablePointer &cancel_ptr) noexcept {
+        widget_registry_lookup(caller_pool, widget_pool,
+                               service, name,
+                               *this, cancel_ptr);
+    }
+
+private:
     /* virtual methods from TranslateHandler */
     void OnTranslateResponse(TranslateResponse &response) noexcept override;
     void OnTranslateError(std::exception_ptr error) noexcept override;
@@ -139,7 +148,5 @@ WidgetRegistry::LookupWidgetClass(struct pool &caller_pool,
     auto lookup = NewFromPool<WidgetRegistryLookup>(caller_pool, widget_pool,
                                                     cache, widget_type,
                                                     callback);
-    widget_registry_lookup(caller_pool, widget_pool,
-                           translation_service, widget_type,
-                           *lookup, cancel_ptr);
+    lookup->Start(caller_pool, translation_service, cancel_ptr);
 }
