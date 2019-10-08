@@ -375,10 +375,10 @@ try {
                                      false);
             instance.translation_service = instance.translation_cache;
         }
-    }
 
-    instance.widget_registry =
-        new WidgetRegistry(*instance.translation_service);
+        instance.widget_registry =
+            new WidgetRegistry(*instance.translation_service);
+    }
 
     instance.lhttp_stock = lhttp_stock_new(0, 16, instance.event_loop,
                                            *instance.spawn_service,
