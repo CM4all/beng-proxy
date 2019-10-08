@@ -61,7 +61,7 @@ public:
         cache.Clear();
     }
 
-    void LookupWidgetClass(struct pool &pool, struct pool &widget_pool,
+    void LookupWidgetClass(struct pool &caller_pool, struct pool &widget_pool,
                            const char *name,
                            WidgetRegistryCallback callback,
                            CancellablePointer &cancel_ptr) noexcept;
