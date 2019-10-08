@@ -103,7 +103,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     PInstance instance;
 
-    auto pool2 = pool_new_libc(instance.root_pool, "cache");
+    auto pool2 = pool_new_dummy(instance.root_pool, "cache");
 
     HttpCacheHeap cache(*pool2, instance.event_loop, max_size);
 

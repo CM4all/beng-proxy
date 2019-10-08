@@ -64,6 +64,13 @@ struct StringView;
 void
 pool_recycler_clear() noexcept;
 
+/**
+ * Create a new pool which cannot allocate anything; it only serves as
+ * parent for other pools.
+ */
+PoolPtr
+pool_new_dummy(struct pool *parent, const char *name) noexcept;
+
 PoolPtr
 pool_new_libc(struct pool *parent, const char *name) noexcept;
 

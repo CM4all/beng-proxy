@@ -1463,7 +1463,7 @@ inline
 tcache::tcache(struct pool &_pool, EventLoop &event_loop,
                TranslationService &_next, unsigned max_size,
                bool handshake_cacheable)
-    :pool(pool_new_libc(&_pool, "translate_cache")),
+    :pool(pool_new_dummy(&_pool, "translate_cache")),
      slice_pool(4096, 32768),
      per_host(PerHostSet::bucket_traits(per_host_buckets, N_BUCKETS)),
      per_site(PerSiteSet::bucket_traits(per_site_buckets, N_BUCKETS)),

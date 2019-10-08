@@ -103,6 +103,7 @@ static constexpr size_t LINEAR_PREFIX = 0;
 #endif
 
 enum pool_type {
+    POOL_DUMMY,
     POOL_LIBC,
     POOL_LINEAR,
 };
@@ -409,6 +410,14 @@ pool_new(struct pool *parent, const char *name) noexcept
 #endif
 
     return pool;
+}
+
+PoolPtr
+pool_new_dummy(struct pool *parent, const char *name) noexcept
+{
+    struct pool *pool = pool_new(parent, name);
+    pool->type = POOL_DUMMY;
+    return PoolPtr(PoolPtr::donate, *pool);
 }
 
 PoolPtr
@@ -763,6 +772,9 @@ size_t
 pool_brutto_size(const struct pool *pool) noexcept
 {
     switch (pool->type) {
+    case POOL_DUMMY:
+        return 0;
+
     case POOL_LIBC:
         return pool_netto_size(pool);
 
@@ -821,6 +833,9 @@ static const char *
 pool_type_string(enum pool_type type) noexcept
 {
     switch (type) {
+    case POOL_DUMMY:
+        return "dummy";
+
     case POOL_LIBC:
         return "libc";
 
@@ -930,6 +945,9 @@ pool_clear(struct pool &pool) noexcept
 #endif
 
     switch (pool.type) {
+    case POOL_DUMMY:
+        break;
+
     case POOL_LIBC:
         pool.current_area.libc.clear_and_dispose(libc_pool_chunk::Disposer());
         break;

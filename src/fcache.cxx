@@ -628,7 +628,7 @@ FilterCacheRequest::OnHttpError(std::exception_ptr ep) noexcept
 FilterCache::FilterCache(struct pool &_pool, size_t max_size,
                          EventLoop &_event_loop,
                          ResourceLoader &_resource_loader)
-    :pool(pool_new_libc(&_pool, "filter_cache")),
+    :pool(pool_new_dummy(&_pool, "filter_cache")),
      slice_pool(1024, 65536),
      rubber(max_size),
      /* leave 12.5% of the rubber allocator empty, to increase the

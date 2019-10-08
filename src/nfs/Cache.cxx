@@ -395,7 +395,7 @@ NfsCacheRequest::OnNfsStockError(std::exception_ptr ep) noexcept
 inline
 NfsCache::NfsCache(struct pool &_pool, size_t max_size,
                    NfsStock &_stock, EventLoop &_event_loop)
-    :pool(pool_new_libc(&_pool, "nfs_cache")),
+    :pool(pool_new_dummy(&_pool, "nfs_cache")),
      stock(_stock),
      event_loop(_event_loop),
      rubber(max_size),

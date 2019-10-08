@@ -651,7 +651,7 @@ HttpCache::HttpCache(struct pool &_pool, size_t max_size,
                      bool _obey_no_cache,
                      EventLoop &_event_loop,
                      ResourceLoader &_resource_loader)
-    :pool(pool_new_libc(&_pool, "http_cache")),
+    :pool(pool_new_dummy(&_pool, "http_cache")),
      event_loop(_event_loop),
      compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
      heap(pool, event_loop, max_size),
