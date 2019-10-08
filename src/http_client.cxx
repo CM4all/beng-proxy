@@ -920,11 +920,12 @@ HttpClient::FeedHeaders(ConstBuffer<void> b)
 
     if (response.state == Response::State::END) {
         auto &handler = request.handler;
+        const auto status = response.status;
         auto headers = std::move(response.headers);
         auto body = std::move(response.body);
 
         ResponseFinished();
-        handler.InvokeResponse(response.status, std::move(headers),
+        handler.InvokeResponse(status, std::move(headers),
                                std::move(body));
         return BufferedResult::CLOSED;
     }
