@@ -125,8 +125,8 @@ public:
     }
 
 private:
-    void Destroy() {
-        this->~FcgiRemoteRequest();
+    void Destroy() noexcept {
+        DeleteFromPool(pool, this);
     }
 
     /* virtual methods from class StockGetHandler */

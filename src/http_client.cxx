@@ -270,8 +270,8 @@ private:
         socket.Release(preserve, reuse);
     }
 
-    void Destroy() {
-        this->~HttpClient();
+    void Destroy() noexcept {
+        DeleteFromPool(pool, this);
     }
 
     void DestroyInvokeError(std::exception_ptr ep) noexcept {

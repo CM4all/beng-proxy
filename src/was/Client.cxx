@@ -155,8 +155,8 @@ public:
                      ConstBuffer<const char *> params) noexcept;
 
 private:
-    void Destroy() {
-        this->~WasClient();
+    void Destroy() noexcept {
+        DeleteFromPool(pool, this);
     }
 
     template<typename B>

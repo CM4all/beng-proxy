@@ -93,10 +93,10 @@ public:
     void Start(const char *name, SocketAddress address);
 
 private:
-    void Destroy() {
+    void Destroy() noexcept {
         assert(lease_state == LeaseState::NONE);
 
-        this->~LbResolveConnectRequest();
+        DeleteFromPool(pool, this);
     }
 
     void DoRelease() {

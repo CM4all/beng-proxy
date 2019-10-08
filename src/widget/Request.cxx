@@ -150,7 +150,7 @@ public:
     }
 
     void Destroy() noexcept {
-        this->~WidgetRequest();
+        DeleteFromPool(pool, this);
     }
 
     bool ContentTypeLookup() noexcept;

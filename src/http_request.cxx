@@ -133,10 +133,10 @@ public:
     }
 
 private:
-    void Destroy() {
+    void Destroy() noexcept {
         assert(stock_item == nullptr);
 
-        this->~HttpRequest();
+        DeleteFromPool(pool, this);
     }
 
     void ResponseSent() {

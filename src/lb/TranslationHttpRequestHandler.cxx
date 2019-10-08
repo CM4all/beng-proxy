@@ -74,8 +74,8 @@ struct LbHttpRequest final : private Cancellable, TranslateHandler, private Leak
         caller_cancel_ptr = *this;
     }
 
-    void Destroy() {
-        this->~LbHttpRequest();
+    void Destroy() noexcept {
+        DeleteFromPool(pool, this);
     }
 
 private:

@@ -105,8 +105,8 @@ public:
         caller_cancel_ptr = *this;
     }
 
-    void Destroy() {
-        this->~WasRequest();
+    void Destroy() noexcept {
+        DeleteFromPool(pool, this);
     }
 
     void Start(StockMap &was_stock, const ChildOptions &options,

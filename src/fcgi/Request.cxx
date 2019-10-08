@@ -115,7 +115,7 @@ public:
 
 private:
     void Destroy() noexcept {
-        this->~FcgiRequest();
+        DeleteFromPool(pool, this);
     }
 
     /* virtual methods from class Cancellable */

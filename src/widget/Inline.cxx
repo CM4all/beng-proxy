@@ -105,7 +105,7 @@ public:
 
 private:
     void Destroy() noexcept {
-        this->~InlineWidget();
+        DeleteFromPool(pool, this);
     }
 
     void Fail(std::exception_ptr ep) noexcept {

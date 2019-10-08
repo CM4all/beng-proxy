@@ -79,7 +79,7 @@ public:
 
 private:
     void Destroy() noexcept {
-        this->~TranslateClient();
+        DeleteFromPool(pool, this);
     }
 
     void ReleaseSocket(bool reuse) noexcept;
