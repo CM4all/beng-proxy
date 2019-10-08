@@ -1109,12 +1109,7 @@ p_free_libc(struct pool *pool, void *ptr)
 void
 p_free(struct pool *pool, const void *cptr) noexcept
 {
-    /* deconst hack - we know what we're doing![tm] */
-    union {
-        const void *in;
-        void *out;
-    } u = { .in = cptr };
-    void *ptr = u.out;
+    void *ptr = const_cast<void *>(cptr);
 
     assert(pool != nullptr);
     assert(ptr != nullptr);
