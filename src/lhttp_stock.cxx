@@ -355,14 +355,9 @@ lhttp_stock_get(LhttpStock *lhttp_stock,
     if (jail != nullptr)
         jail->Check();
 
-    union {
-        const LhttpAddress *in;
-        void *out;
-    } deconst = { .in = address };
-
     const TempPoolLease tpool;
     return lhttp_stock->GetConnectionStock().GetNow(lhttp_stock_key(tpool, address),
-                                                    ToNopPointer(deconst.out));
+                                                    ToNopPointer(const_cast<LhttpAddress *>(address)));
 }
 
 SocketDescriptor
