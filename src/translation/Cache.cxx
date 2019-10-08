@@ -204,7 +204,7 @@ struct TranslateCachePerHost
     struct tcache &tcache;
 
     /**
-     * A pointer to the hashmap key, for use with p_free().
+     * The hashmap key.
      */
     const std::string host;
 
@@ -276,7 +276,7 @@ struct TranslateCachePerSite
     struct tcache &tcache;
 
     /**
-     * A pointer to the hashmap key, for use with p_free().
+     * The hashmap key.
      */
     const std::string site;
 
