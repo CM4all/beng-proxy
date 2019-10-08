@@ -1116,19 +1116,29 @@ p_free(struct pool *pool, const void *cptr) noexcept
     assert((((unsigned long)ptr) & ALIGN_MASK) == 0);
     assert(pool_contains(*pool, ptr, 1));
 
-    if (pool->type == POOL_LIBC)
+    switch (pool->type) {
+    case POOL_DUMMY:
+        assert(false);
+        gcc_unreachable();
+
+    case POOL_LIBC:
         p_free_libc(pool, ptr);
+        break;
+
+    case POOL_LINEAR:
 #ifndef NDEBUG
-    else if (pool->type == POOL_LINEAR) {
-        struct allocation_info *info = get_linear_allocation_info(ptr);
-        pool->allocations.erase(pool->allocations.iterator_to(*info));
-        PoisonInaccessible(ptr, info->size);
-    }
-#endif
-    else
+        {
+            struct allocation_info *info = get_linear_allocation_info(ptr);
+            pool->allocations.erase(pool->allocations.iterator_to(*info));
+            PoisonInaccessible(ptr, info->size);
+        }
+#else
         /* we don't know the exact size of this buffer, so we only
            mark the first ALIGN bytes */
         PoisonInaccessible(ptr, ALIGN_SIZE);
+#endif
+        break;
+    }
 }
 
 #ifndef NDEBUG
