@@ -32,7 +32,6 @@
 
 #include "istream.hxx"
 #include "Handler.hxx"
-#include "pool/Notify.hxx"
 
 #include <assert.h>
 
@@ -46,13 +45,13 @@ Istream::InvokeReady() noexcept
     assert(!closing);
 
 #ifndef NDEBUG
-    PoolNotify notify(pool);
+    const DestructObserver destructed(*this);
 #endif
 
     bool result = handler->OnIstreamReady();
 
 #ifndef NDEBUG
-    if (notify.IsDestroyed() || destroyed) {
+    if (destructed || destroyed) {
         assert(!result);
     }
 #endif
@@ -75,7 +74,7 @@ Istream::InvokeData(const void *data, size_t length) noexcept
            (off_t)length <= available_full);
 
 #ifndef NDEBUG
-    PoolNotify notify(pool);
+    const DestructObserver destructed(*this);
     in_data = true;
 #endif
 
@@ -84,7 +83,7 @@ Istream::InvokeData(const void *data, size_t length) noexcept
     assert(nbytes == 0 || !eof);
 
 #ifndef NDEBUG
-    if (notify.IsDestroyed() || destroyed) {
+    if (destructed || destroyed) {
         assert(nbytes == 0);
         return nbytes;
     }
@@ -113,7 +112,7 @@ Istream::InvokeDirect(FdType type, int fd, size_t max_length) noexcept
     assert(!closing);
 
 #ifndef NDEBUG
-    PoolNotify notify(pool);
+    const DestructObserver destructed(*this);
     in_data = true;
 #endif
 
@@ -123,7 +122,7 @@ Istream::InvokeDirect(FdType type, int fd, size_t max_length) noexcept
     assert(nbytes == ISTREAM_RESULT_CLOSED || !eof);
 
 #ifndef NDEBUG
-    if (notify.IsDestroyed() || destroyed) {
+    if (destructed || destroyed) {
         assert(nbytes == ISTREAM_RESULT_CLOSED);
         return nbytes;
     }

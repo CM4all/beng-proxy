@@ -38,7 +38,6 @@
 #include "GrowingBuffer.hxx"
 #include "event/DeferEvent.hxx"
 #include "pool/pool.hxx"
-#include "pool/Notify.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/DestructObserver.hxx"
 

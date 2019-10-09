@@ -34,8 +34,8 @@
 #define ISTREAM_HXX
 
 #include "pool/Holder.hxx"
-#include "pool/Notify.hxx"
 #include "io/FdType.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/LeakDetector.hxx"
 
 #include <algorithm>
@@ -44,6 +44,21 @@
 
 class IstreamHandler;
 class IstreamBucketList;
+
+/**
+ * This trick avoids the "DestructAnchor is an ambiguous base of ..."
+ * error.
+ */
+class IstreamDestructAnchor {
+#ifndef NDEBUG
+    DestructAnchor destruct_anchor;
+#endif
+
+public:
+    operator DestructAnchor &() noexcept {
+        return destruct_anchor;
+    }
+};
 
 /**
  * An asynchronous input stream.
@@ -56,7 +71,7 @@ class IstreamBucketList;
  * - it has reached end-of-file
  * - an error has occurred
  */
-class Istream : PoolHolder, LeakDetector {
+class Istream : PoolHolder, LeakDetector, IstreamDestructAnchor {
     /** data sink */
     IstreamHandler *handler = nullptr;
 
@@ -228,7 +243,7 @@ public:
         assert(!eof);
         assert(!reading);
 
-        PoolNotify notify(pool);
+        const DestructObserver destructed(*this);
         reading = true;
 #endif
 
@@ -236,7 +251,7 @@ public:
 
 #ifndef NDEBUG
         assert(available >= -1);
-        assert(!notify.IsDestroyed());
+        assert(!destructed);
         assert(!destroyed);
         assert(reading);
 
@@ -273,7 +288,7 @@ public:
         assert(!eof);
         assert(!reading);
 
-        PoolNotify notify(pool);
+        const DestructObserver destructed(*this);
         reading = true;
 #endif
 
@@ -281,7 +296,7 @@ public:
         assert(nbytes <= length);
 
 #ifndef NDEBUG
-        if (notify.IsDestroyed() || destroyed)
+        if (destructed || destroyed)
             return nbytes;
 
         reading = false;
@@ -324,14 +339,14 @@ public:
         assert(!reading);
         assert(!in_data);
 
-        PoolNotify notify(pool);
+        const DestructObserver destructed(*this);
         reading = true;
 #endif
 
         _Read();
 
 #ifndef NDEBUG
-        if (notify.IsDestroyed() || destroyed)
+        if (destructed || destroyed)
             return;
 
         reading = false;
@@ -355,7 +370,7 @@ public:
         assert(!reading);
         assert(!in_data);
 
-        PoolNotify notify(pool);
+        const DestructObserver destructed(*this);
         reading = true;
 
         try {
@@ -365,14 +380,14 @@ public:
 
 #ifndef NDEBUG
         } catch (...) {
-            if (!notify.IsDestroyed()) {
+            if (!destructed) {
                 assert(destroyed);
             }
 
             throw;
         }
 
-        assert(!notify.IsDestroyed());
+        assert(!destructed);
         assert(!destroyed);
         assert(reading);
 
@@ -438,14 +453,14 @@ public:
         assert(!reading);
         assert(!in_data);
 
-        PoolNotify notify(pool);
+        const DestructObserver destructed(*this);
         reading = true;
 #endif
 
         int fd = _AsFd();
 
 #ifndef NDEBUG
-        assert((notify.IsDestroyed() || destroyed) == (fd >= 0));
+        assert((destructed || destroyed) == (fd >= 0));
 
         if (fd < 0)
             reading = false;
