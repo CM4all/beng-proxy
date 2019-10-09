@@ -52,12 +52,12 @@ class IstreamBucketList;
 class IstreamDestructAnchor {
 #ifndef NDEBUG
     DestructAnchor destruct_anchor;
-#endif
 
 public:
     operator DestructAnchor &() noexcept {
         return destruct_anchor;
     }
+#endif
 };
 
 /**
