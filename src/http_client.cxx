@@ -271,6 +271,12 @@ private:
     }
 
     void Destroy() noexcept {
+        /* this pool reference ensures that our destructor can finish
+           execution even if HttpBodyReader's reference is released in
+           its destructor (which is called from within our
+           destructor) */
+        const ScopePoolRef ref(pool TRACE_ARGS);
+
         DeleteFromPool(pool, this);
     }
 
