@@ -71,7 +71,7 @@ public:
 
     WasOutput(struct pool &pool, EventLoop &event_loop, FileDescriptor _fd,
               UnusedIstreamPtr _input,
-              WasOutputHandler &_handler)
+              WasOutputHandler &_handler) noexcept
         :PoolLeakDetector(pool), fd(_fd),
          event(event_loop, BIND_THIS_METHOD(WriteEventCallback),
                SocketDescriptor::FromFileDescriptor(fd)),
@@ -104,19 +104,19 @@ public:
         _handler.WasOutputError(ep);
     }
 
-    void ScheduleWrite() {
+    void ScheduleWrite() noexcept {
         event.ScheduleWrite();
         timeout_event.Schedule(was_output_timeout);
     }
 
-    void AbortError(std::exception_ptr ep) {
+    void AbortError(std::exception_ptr ep) noexcept {
         if (input.IsDefined())
             input.ClearAndClose();
 
         DestroyError(ep);
     }
 
-    bool CheckLength();
+    bool CheckLength() noexcept;
 
     void WriteEventCallback(unsigned events) noexcept;
 
@@ -133,7 +133,7 @@ public:
 };
 
 bool
-WasOutput::CheckLength()
+WasOutput::CheckLength() noexcept
 {
     if (known_length)
         return true;
@@ -344,7 +344,7 @@ WasOutput::OnError(std::exception_ptr ep) noexcept
 WasOutput *
 was_output_new(struct pool &pool, EventLoop &event_loop,
                FileDescriptor fd, UnusedIstreamPtr input,
-               WasOutputHandler &handler)
+               WasOutputHandler &handler) noexcept
 {
     assert(fd.IsDefined());
 
@@ -353,7 +353,7 @@ was_output_new(struct pool &pool, EventLoop &event_loop,
 }
 
 uint64_t
-was_output_free(WasOutput *output)
+was_output_free(WasOutput *output) noexcept
 {
     assert(output != nullptr);
 
@@ -366,7 +366,7 @@ was_output_free(WasOutput *output)
 }
 
 bool
-was_output_check_length(WasOutput &output)
+was_output_check_length(WasOutput &output) noexcept
 {
     return output.CheckLength();
 }

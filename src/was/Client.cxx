@@ -387,10 +387,11 @@ private:
     }
 
     /* virtual methods from class WasOutputHandler */
-    bool WasOutputLength(uint64_t length) override;
-    bool WasOutputPremature(uint64_t length, std::exception_ptr ep) override;
-    void WasOutputEof() override;
-    void WasOutputError(std::exception_ptr ep) override;
+    bool WasOutputLength(uint64_t length) noexcept override;
+    bool WasOutputPremature(uint64_t length,
+                            std::exception_ptr ep) noexcept override;
+    void WasOutputEof() noexcept override;
+    void WasOutputError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class WasInputHandler */
     void WasInputClose(uint64_t received) noexcept override;
@@ -650,7 +651,7 @@ WasClient::OnWasControlDrained() noexcept
  */
 
 bool
-WasClient::WasOutputLength(uint64_t length)
+WasClient::WasOutputLength(uint64_t length) noexcept
 {
     assert(control.IsDefined());
     assert(request.body != nullptr);
@@ -659,7 +660,7 @@ WasClient::WasOutputLength(uint64_t length)
 }
 
 bool
-WasClient::WasOutputPremature(uint64_t length, std::exception_ptr ep)
+WasClient::WasOutputPremature(uint64_t length, std::exception_ptr ep) noexcept
 {
     assert(control.IsDefined());
     assert(request.body != nullptr);
@@ -676,7 +677,7 @@ WasClient::WasOutputPremature(uint64_t length, std::exception_ptr ep)
 }
 
 void
-WasClient::WasOutputEof()
+WasClient::WasOutputEof() noexcept
 {
     assert(request.body != nullptr);
 
@@ -686,7 +687,7 @@ WasClient::WasOutputEof()
 }
 
 void
-WasClient::WasOutputError(std::exception_ptr ep)
+WasClient::WasOutputError(std::exception_ptr ep) noexcept
 {
     assert(request.body != nullptr);
 

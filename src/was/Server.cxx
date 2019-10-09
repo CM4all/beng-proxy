@@ -198,10 +198,11 @@ private:
     void OnWasControlError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class WasOutputHandler */
-    bool WasOutputLength(uint64_t length) override;
-    bool WasOutputPremature(uint64_t length, std::exception_ptr ep) override;
-    void WasOutputEof() override;
-    void WasOutputError(std::exception_ptr ep) override;
+    bool WasOutputLength(uint64_t length) noexcept override;
+    bool WasOutputPremature(uint64_t length,
+                            std::exception_ptr ep) noexcept override;
+    void WasOutputEof() noexcept override;
+    void WasOutputError(std::exception_ptr ep) noexcept override;
 
     /* virtual methods from class WasInputHandler */
     void WasInputClose(uint64_t received) noexcept override;
@@ -259,7 +260,7 @@ WasServer::ReleaseUnused()
  */
 
 bool
-WasServer::WasOutputLength(uint64_t length)
+WasServer::WasOutputLength(uint64_t length) noexcept
 {
     assert(control.IsDefined());
     assert(response.body != nullptr);
@@ -268,7 +269,7 @@ WasServer::WasOutputLength(uint64_t length)
 }
 
 bool
-WasServer::WasOutputPremature(uint64_t length, std::exception_ptr ep)
+WasServer::WasOutputPremature(uint64_t length, std::exception_ptr ep) noexcept
 {
     if (!control.IsDefined())
         /* this can happen if was_input_free() call destroys the
@@ -287,7 +288,7 @@ WasServer::WasOutputPremature(uint64_t length, std::exception_ptr ep)
 }
 
 void
-WasServer::WasOutputEof()
+WasServer::WasOutputEof() noexcept
 {
     assert(response.body != nullptr);
 
@@ -295,7 +296,7 @@ WasServer::WasOutputEof()
 }
 
 void
-WasServer::WasOutputError(std::exception_ptr ep)
+WasServer::WasOutputError(std::exception_ptr ep) noexcept
 {
     assert(response.body != nullptr);
 

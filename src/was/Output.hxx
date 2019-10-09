@@ -51,7 +51,7 @@ public:
      * @param true on success, false if the #WasOutput object has been
      * deleted
      */
-    virtual bool WasOutputLength(uint64_t length) = 0;
+    virtual bool WasOutputLength(uint64_t length) noexcept = 0;
 
     /**
      * The stream ended prematurely, but the #WasOutput object is
@@ -62,11 +62,11 @@ public:
      * deleted
      */
     virtual bool WasOutputPremature(uint64_t length,
-                                    std::exception_ptr ep) = 0;
+                                    std::exception_ptr ep) noexcept = 0;
 
-    virtual void WasOutputEof() = 0;
+    virtual void WasOutputEof() noexcept = 0;
 
-    virtual void WasOutputError(std::exception_ptr ep) = 0;
+    virtual void WasOutputError(std::exception_ptr ep) noexcept = 0;
 };
 
 /**
@@ -75,16 +75,16 @@ public:
 WasOutput *
 was_output_new(struct pool &pool, EventLoop &event_loop,
                FileDescriptor fd, UnusedIstreamPtr input,
-               WasOutputHandler &handler);
+               WasOutputHandler &handler) noexcept;
 
 /**
  * @return the total number of bytes written to the pipe
  */
 uint64_t
-was_output_free(WasOutput *data);
+was_output_free(WasOutput *data) noexcept;
 
 static inline uint64_t
-was_output_free_p(WasOutput **output_p)
+was_output_free_p(WasOutput **output_p) noexcept
 {
     WasOutput *output = *output_p;
     *output_p = nullptr;
@@ -97,6 +97,6 @@ was_output_free_p(WasOutput **output_p)
  * @return the WasOutputHandler::length() return value
  */
 bool
-was_output_check_length(WasOutput &output);
+was_output_check_length(WasOutput &output) noexcept;
 
 #endif
