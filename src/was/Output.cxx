@@ -80,19 +80,39 @@ public:
         ScheduleWrite();
     }
 
+    void Destroy() noexcept {
+        this->~WasOutput();
+    }
+
+    void DestroyEof() noexcept {
+        auto &_handler = handler;
+        Destroy();
+        _handler.WasOutputEof();
+    }
+
+    void DestroyPremature(std::exception_ptr ep) noexcept {
+        const auto _sent = sent;
+        auto &_handler = handler;
+        Destroy();
+        _handler.WasOutputPremature(_sent, ep);
+    }
+
+    void DestroyError(std::exception_ptr ep) noexcept {
+        auto &_handler = handler;
+        Destroy();
+        _handler.WasOutputError(ep);
+    }
+
     void ScheduleWrite() {
         event.ScheduleWrite();
         timeout_event.Schedule(was_output_timeout);
     }
 
     void AbortError(std::exception_ptr ep) {
-        event.Cancel();
-        timeout_event.Cancel();
-
         if (input.IsDefined())
             input.ClearAndClose();
 
-        handler.WasOutputError(ep);
+        DestroyError(ep);
     }
 
     bool CheckLength();
@@ -177,7 +197,7 @@ WasOutput::OnIstreamReady() noexcept
         if (!known_length && !handler.WasOutputLength(sent))
             return false;
 
-        handler.WasOutputEof();
+        DestroyEof();
         return false;
     }
 
@@ -236,7 +256,7 @@ WasOutput::OnIstreamReady() noexcept
         if (!known_length && !handler.WasOutputLength(sent))
             return false;
 
-        handler.WasOutputEof();
+        DestroyEof();
         return false;
     }
 
@@ -302,7 +322,7 @@ WasOutput::OnEof() noexcept
     if (!known_length && !handler.WasOutputLength(sent))
         return;
 
-    handler.WasOutputEof();
+    DestroyEof();
 }
 
 void
@@ -311,10 +331,8 @@ WasOutput::OnError(std::exception_ptr ep) noexcept
     assert(input.IsDefined());
 
     input.Clear();
-    event.Cancel();
-    timeout_event.Cancel();
 
-    handler.WasOutputPremature(sent, ep);
+    DestroyPremature(ep);
 }
 
 /*
@@ -341,10 +359,9 @@ was_output_free(WasOutput *output)
     if (output->input.IsDefined())
         output->input.ClearAndClose();
 
-    output->event.Cancel();
-    output->timeout_event.Cancel();
-
-    return output->sent;
+    const auto sent = output->sent;
+    output->Destroy();
+    return sent;
 }
 
 bool
