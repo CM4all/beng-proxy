@@ -445,7 +445,7 @@ public:
         int fd = _AsFd();
 
 #ifndef NDEBUG
-        assert(!notify.IsDestroyed() || fd < 0);
+        assert((notify.IsDestroyed() || destroyed) == (fd >= 0));
 
         if (fd < 0)
             reading = false;
