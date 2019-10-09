@@ -81,6 +81,15 @@ public:
         ScheduleWrite();
     }
 
+    uint64_t Close() noexcept {
+        if (input.IsDefined())
+            input.ClearAndClose();
+
+        const auto _sent = sent;
+        Destroy();
+        return _sent;
+    }
+
     void Destroy() noexcept {
         this->~WasOutput();
     }
@@ -357,12 +366,7 @@ was_output_free(WasOutput *output) noexcept
 {
     assert(output != nullptr);
 
-    if (output->input.IsDefined())
-        output->input.ClearAndClose();
-
-    const auto sent = output->sent;
-    output->Destroy();
-    return sent;
+    return output->Close();
 }
 
 bool
