@@ -238,23 +238,8 @@ private:
 
     /**
      * Destroys the objects WasControl, WasInput, WasOutput and
-     * releases the socket lease.
-     */
-    void Clear(std::exception_ptr ep) {
-        request.ClearBody();
-
-        if (response.body != nullptr)
-            was_input_free_p(&response.body, ep);
-
-        if (control.IsDefined())
-            control.ReleaseSocket();
-
-        lease.ReleaseWas(false);
-    }
-
-    /**
-     * Like Clear(), but assumes the response body has not been
-     * enabled.
+     * releases the socket lease.  Assumes the response body has not
+     * been enabled.
      */
     void ClearUnused() {
         request.ClearBody();
@@ -285,7 +270,16 @@ private:
     void AbortResponseBody(std::exception_ptr ep) {
         assert(response.WasSubmitted());
 
-        Clear(ep);
+        request.ClearBody();
+
+        if (response.body != nullptr)
+            was_input_free_p(&response.body, ep);
+
+        if (control.IsDefined())
+            control.ReleaseSocket();
+
+        lease.ReleaseWas(false);
+
         Destroy();
     }
 
