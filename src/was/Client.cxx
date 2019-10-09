@@ -237,7 +237,7 @@ private:
     }
 
     /**
-     * Destroys the objects was_control, was_input, was_output and
+     * Destroys the objects WasControl, WasInput, WasOutput and
      * releases the socket lease.
      */
     void Clear(std::exception_ptr ep) {
