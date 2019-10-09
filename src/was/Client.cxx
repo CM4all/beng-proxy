@@ -42,7 +42,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"
 #include "pool/pool.hxx"
-#include "pool/Holder.hxx"
+#include "pool/LeakDetector.hxx"
 #include "stopwatch.hxx"
 #include "io/FileDescriptor.hxx"
 #include "util/Cast.hxx"
@@ -61,7 +61,7 @@
 
 class WasClient final
     : WasControlHandler, WasOutputHandler, WasInputHandler,
-      DestructAnchor,
+      DestructAnchor, PoolLeakDetector,
       Cancellable
 {
     struct pool &pool;
@@ -784,7 +784,8 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
                      http_method_t method, UnusedIstreamPtr body,
                      HttpResponseHandler &_handler,
                      CancellablePointer &cancel_ptr)
-    :pool(_pool), caller_pool(_caller_pool),
+    :PoolLeakDetector(_pool),
+     pool(_pool), caller_pool(_caller_pool),
      stopwatch(std::move(_stopwatch)),
      lease(_lease),
      control(event_loop, control_fd, *this),
