@@ -32,7 +32,6 @@
 
 #include "pool.hxx"
 #include "Ptr.hxx"
-#include "Notify.hxx"
 #include "LeakDetector.hxx"
 #include "SlicePool.hxx"
 #include "AllocatorStats.hxx"
@@ -174,9 +173,6 @@ struct pool final
 #endif
     struct pool *parent = nullptr;
     unsigned ref = 1;
-
-    boost::intrusive::list<PoolNotify,
-                           boost::intrusive::constant_time_size<false>> notify;
 
 #ifndef NDEBUG
     bool trashed = false;
@@ -614,8 +610,6 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
     pool_check_leaks(*pool);
     pool_check_attachments(*pool);
 
-    pool->notify.clear();
-
 #ifndef NDEBUG
     if (pool->trashed)
         trash.erase(trash.iterator_to(*pool));
@@ -865,11 +859,6 @@ void
 pool_dump_tree(const struct pool &pool) noexcept
 {
     pool_dump_node(0, pool);
-}
-
-PoolNotify::PoolNotify(struct pool &pool) noexcept
-{
-    pool.notify.push_back(*this);
 }
 
 #ifndef NDEBUG
