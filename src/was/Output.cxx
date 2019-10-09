@@ -56,7 +56,6 @@
 static constexpr Event::Duration was_output_timeout = std::chrono::minutes(2);
 
 class WasOutput final : IstreamHandler, PoolLeakDetector {
-public:
     FileDescriptor fd;
     SocketEvent event;
     TimerEvent timeout_event;
@@ -69,6 +68,7 @@ public:
 
     bool known_length = false;
 
+public:
     WasOutput(struct pool &pool, EventLoop &event_loop, FileDescriptor _fd,
               UnusedIstreamPtr _input,
               WasOutputHandler &_handler) noexcept
@@ -90,6 +90,9 @@ public:
         return _sent;
     }
 
+    bool CheckLength() noexcept;
+
+private:
     void Destroy() noexcept {
         this->~WasOutput();
     }
@@ -124,8 +127,6 @@ public:
 
         DestroyError(ep);
     }
-
-    bool CheckLength() noexcept;
 
     void WriteEventCallback(unsigned events) noexcept;
 
