@@ -43,6 +43,7 @@
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
+#include "pool/LeakDetector.hxx"
 #include "util/StaticArray.hxx"
 
 #include <was/protocol.h>
@@ -54,7 +55,7 @@
 
 static constexpr Event::Duration was_output_timeout = std::chrono::minutes(2);
 
-class WasOutput final : IstreamHandler {
+class WasOutput final : IstreamHandler, PoolLeakDetector {
 public:
     FileDescriptor fd;
     SocketEvent event;
@@ -68,10 +69,10 @@ public:
 
     bool known_length = false;
 
-    WasOutput(EventLoop &event_loop, FileDescriptor _fd,
+    WasOutput(struct pool &pool, EventLoop &event_loop, FileDescriptor _fd,
               UnusedIstreamPtr _input,
               WasOutputHandler &_handler)
-        :fd(_fd),
+        :PoolLeakDetector(pool), fd(_fd),
          event(event_loop, BIND_THIS_METHOD(WriteEventCallback),
                SocketDescriptor::FromFileDescriptor(fd)),
          timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
@@ -347,7 +348,7 @@ was_output_new(struct pool &pool, EventLoop &event_loop,
 {
     assert(fd.IsDefined());
 
-    return NewFromPool<WasOutput>(pool, event_loop, fd,
+    return NewFromPool<WasOutput>(pool, pool, event_loop, fd,
                                   std::move(input), handler);
 }
 
