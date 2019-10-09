@@ -125,7 +125,7 @@ protected:
 
     /**
      * Prepare a call to IstreamHandler::OnEof(); the caller is
-     * response for actually calling it.
+     * responsible for actually calling it.
      */
     IstreamHandler &PrepareEof() noexcept;
 
