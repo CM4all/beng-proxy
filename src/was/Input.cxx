@@ -52,8 +52,7 @@
 #include <string.h>
 #include <unistd.h>
 
-class WasInput final : public Istream {
-public:
+class WasInput final : Istream {
     FileDescriptor fd;
     SocketEvent event;
 
@@ -67,6 +66,7 @@ public:
 
     bool closed = false, known_length = false;
 
+public:
     WasInput(struct pool &p, EventLoop &event_loop, FileDescriptor _fd,
              WasInputHandler &_handler) noexcept
         :Istream(p), fd(_fd),
@@ -76,6 +76,16 @@ public:
     }
 
     void Free(std::exception_ptr ep) noexcept;
+
+    using Istream::Destroy;
+
+    void DestroyUnused() noexcept {
+        assert(!HasHandler());
+        assert(!closed);
+        assert(!buffer.IsDefined());
+
+        Destroy();
+    }
 
     UnusedIstreamPtr Enable() noexcept {
         assert(!enabled);
@@ -88,6 +98,7 @@ public:
     void PrematureThrow(uint64_t _length);
     bool Premature(uint64_t _length) noexcept;
 
+private:
     bool CanRelease() const {
         return known_length && received == length;
     }
@@ -109,10 +120,6 @@ public:
     bool CheckReleasePipe() noexcept {
         return !CanRelease() || ReleasePipe();
     }
-
-    using Istream::HasHandler;
-    using Istream::Destroy;
-    using Istream::DestroyError;
 
     void ScheduleRead() noexcept {
         assert(fd.IsDefined());
@@ -396,11 +403,7 @@ was_input_free(WasInput *input, std::exception_ptr ep) noexcept
 void
 was_input_free_unused(WasInput *input) noexcept
 {
-    assert(!input->HasHandler());
-    assert(!input->closed);
-    assert(!input->buffer.IsDefined());
-
-    input->Destroy();
+    input->DestroyUnused();
 }
 
 UnusedIstreamPtr
