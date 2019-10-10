@@ -48,6 +48,10 @@ class LeasePtr {
 #endif
 
 public:
+    LeasePtr() = default;
+    LeasePtr(const LeasePtr &) = delete;
+    LeasePtr &operator=(const LeasePtr &) = delete;
+
 #ifndef NDEBUG
     bool IsReleased() const noexcept {
         return released;
