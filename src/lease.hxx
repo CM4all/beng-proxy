@@ -43,10 +43,6 @@ public:
 class LeasePtr {
     Lease *lease = nullptr;
 
-#ifndef NDEBUG
-    bool released;
-#endif
-
 public:
     LeasePtr() = default;
 
@@ -60,27 +56,16 @@ public:
     LeasePtr(const LeasePtr &) = delete;
     LeasePtr &operator=(const LeasePtr &) = delete;
 
-#ifndef NDEBUG
-    bool IsReleased() const noexcept {
-        return released;
+    operator bool() const noexcept {
+        return lease != nullptr;
     }
-#endif
 
     void Set(Lease &_lease) noexcept {
         lease = &_lease;
-
-#ifndef NDEBUG
-        released = false;
-#endif
     }
 
     void Release(bool reuse) noexcept {
         assert(lease != nullptr);
-        assert(!released);
-
-#ifndef NDEBUG
-        released = true;
-#endif
 
         auto *l = lease;
         lease = nullptr;
