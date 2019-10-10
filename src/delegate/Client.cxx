@@ -50,7 +50,7 @@
 #include <sys/socket.h>
 
 struct DelegateClient final : PoolHolder, Cancellable {
-    struct lease_ref lease_ref;
+    LeasePtr lease_ref;
     const SocketDescriptor s;
     SocketEvent event;
 

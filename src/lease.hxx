@@ -40,7 +40,7 @@ public:
     virtual void ReleaseLease(bool reuse) noexcept = 0;
 };
 
-struct lease_ref {
+struct LeasePtr {
     Lease *lease;
 
 #ifndef NDEBUG

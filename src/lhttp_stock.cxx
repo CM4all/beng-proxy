@@ -95,7 +95,7 @@ class LhttpConnection final : LoggerDomainFactory, StockItem {
 
     StockItem *child = nullptr;
 
-    struct lease_ref lease_ref;
+    LeasePtr lease_ref;
 
     UniqueSocketDescriptor fd;
     SocketEvent event;

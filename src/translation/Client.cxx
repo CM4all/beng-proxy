@@ -57,7 +57,7 @@ class TranslateClient final : BufferedSocketHandler, Cancellable {
     const StopwatchPtr stopwatch;
 
     BufferedSocket socket;
-    struct lease_ref lease_ref;
+    LeasePtr lease_ref;
 
     /** the marshalled translate request */
     GrowingBufferReader request;

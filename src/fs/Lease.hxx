@@ -45,7 +45,7 @@
  */
 class FilteredSocketLease final : BufferedSocketHandler {
     FilteredSocket *socket;
-    struct lease_ref lease_ref;
+    LeasePtr lease_ref;
 
     BufferedSocketHandler &handler;
 

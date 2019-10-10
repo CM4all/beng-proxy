@@ -56,7 +56,7 @@ MultiStock::Item::GetKey() const
 
 void
 MultiStock::Item::AddLease(StockGetHandler &handler,
-                           struct lease_ref &lease_ref)
+                           LeasePtr &lease_ref)
 {
     lease_ref.Set(AddLease());
 
@@ -97,7 +97,7 @@ MultiStock::MakeItem(const char *uri, StockRequest request,
 StockItem *
 MultiStock::GetNow(const char *uri, StockRequest request,
                    unsigned max_leases,
-                   struct lease_ref &lease_ref)
+                   LeasePtr &lease_ref)
 {
     return MakeItem(uri, std::move(request), max_leases).AddLease(lease_ref);
 }

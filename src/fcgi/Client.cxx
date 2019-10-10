@@ -77,7 +77,7 @@ struct FcgiClient final
 
     BufferedSocket socket;
 
-    struct lease_ref lease_ref;
+    LeasePtr lease_ref;
 
     UniqueFileDescriptor stderr_fd;
 

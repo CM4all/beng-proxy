@@ -41,7 +41,7 @@
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive/list.hpp>
 
-struct lease_ref;
+class LeasePtr;
 class StockMap;
 class StockGetHandler;
 struct StockItem;
@@ -125,9 +125,9 @@ class MultiStock {
 
     public:
         void AddLease(StockGetHandler &handler,
-                      struct lease_ref &lease_ref);
+                      LeasePtr &lease_ref);
 
-        StockItem *AddLease(struct lease_ref &lease_ref) {
+        StockItem *AddLease(LeasePtr &lease_ref) {
             lease_ref.Set(AddLease());
             return &item;
         }
@@ -198,7 +198,7 @@ public:
      */
     StockItem *GetNow(const char *uri, StockRequest request,
                       unsigned max_leases,
-                      struct lease_ref &lease_ref);
+                      LeasePtr &lease_ref);
 
 private:
     Item &MakeItem(const char *uri, StockRequest request,

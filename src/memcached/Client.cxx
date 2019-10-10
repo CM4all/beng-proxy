@@ -65,7 +65,7 @@ struct MemcachedClient final
 
     /* I/O */
     BufferedSocket socket;
-    struct lease_ref lease_ref;
+    LeasePtr lease_ref;
 
     /* request */
     struct Request {
