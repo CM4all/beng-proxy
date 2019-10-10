@@ -238,7 +238,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
                                  CancellablePointer &cancel_ptr) noexcept
     :pool(p),
      stopwatch(std::move(_stopwatch)),
-     socket(event_loop),
+     socket(event_loop), lease_ref(lease),
      request(std::move(_request)),
      handler(_handler),
      parser(p, request2)
@@ -247,7 +247,6 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
                 translate_read_timeout,
                 translate_write_timeout,
                 *this);
-    lease_ref.Set(lease);
 
     cancel_ptr = *this;
 }

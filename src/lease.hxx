@@ -49,6 +49,10 @@ class LeasePtr {
 
 public:
     LeasePtr() = default;
+
+    explicit LeasePtr(Lease &_lease) noexcept
+        :lease(&_lease) {}
+
     LeasePtr(const LeasePtr &) = delete;
     LeasePtr &operator=(const LeasePtr &) = delete;
 

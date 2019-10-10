@@ -687,14 +687,12 @@ MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
                                  MemcachedResponseHandler &_handler,
                                  CancellablePointer &cancel_ptr)
     :Istream(_pool),
-     socket(event_loop),
+     socket(event_loop), lease_ref(lease),
      request(std::move(_request), *this, _handler)
 {
     socket.Init(fd, fd_type,
                 Event::Duration(-1), memcached_client_timeout,
                 *this);
-
-    lease_ref.Set(lease);
 
     cancel_ptr = *this;
 

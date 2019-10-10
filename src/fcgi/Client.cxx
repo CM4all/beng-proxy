@@ -1061,6 +1061,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
                        CancellablePointer &cancel_ptr)
     :Istream(_pool),
      socket(event_loop),
+     lease_ref(lease),
      stderr_fd(std::move(_stderr_fd)),
      stopwatch(std::move(_stopwatch)),
      handler(_handler),
@@ -1070,8 +1071,6 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
     socket.Init(fd, fd_type,
                 fcgi_client_timeout, fcgi_client_timeout,
                 *this);
-
-    lease_ref.Set(lease);
 
     cancel_ptr = *this;
 }

@@ -60,10 +60,10 @@ struct DelegateClient final : PoolHolder, Cancellable {
                    struct pool &_pool,
                    DelegateHandler &_handler) noexcept
         :PoolHolder(_pool),
+         lease_ref(lease),
          s(_s), event(event_loop, BIND_THIS_METHOD(SocketEventCallback), s),
-         handler(_handler) {
-        lease_ref.Set(lease);
-
+         handler(_handler)
+    {
         event.ScheduleRead();
     }
 
