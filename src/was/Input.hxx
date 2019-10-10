@@ -129,6 +129,14 @@ UnusedIstreamPtr
 was_input_enable(WasInput &input) noexcept;
 
 /**
+ * Cancel the SocketEvent.  This is sometimes necessary, because the
+ * destructor may do it too late (after the pipe lease has been
+ * released already).
+ */
+void
+was_input_disable(WasInput &input) noexcept;
+
+/**
  * Set the new content length of this entity.
  *
  * @return false if the value is invalid (callback "abort" has been

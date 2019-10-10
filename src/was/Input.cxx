@@ -94,6 +94,10 @@ public:
         return UnusedIstreamPtr(this);
     }
 
+    void Disable() noexcept {
+        event.Cancel();
+    }
+
     bool SetLength(uint64_t _length) noexcept;
     void PrematureThrow(uint64_t _length);
     bool Premature(uint64_t _length) noexcept;
@@ -410,6 +414,12 @@ UnusedIstreamPtr
 was_input_enable(WasInput &input) noexcept
 {
     return input.Enable();
+}
+
+void
+was_input_disable(WasInput &input) noexcept
+{
+    input.Disable();
 }
 
 inline bool

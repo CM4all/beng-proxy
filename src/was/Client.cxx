@@ -272,8 +272,11 @@ private:
 
         request.ClearBody();
 
-        if (response.body != nullptr)
-            was_input_free_p(&response.body, ep);
+        auto *response_body = std::exchange(response.body, nullptr);
+        if (response_body != nullptr)
+            /* cancel the SocketEvent before releasing the WAS
+               process lease */
+            was_input_disable(*response_body);
 
         if (control.IsDefined())
             control.ReleaseSocket();
@@ -281,6 +284,9 @@ private:
         lease.ReleaseWas(false);
 
         Destroy();
+
+        if (response_body != nullptr)
+            was_input_free(response_body, ep);
     }
 
     /**
