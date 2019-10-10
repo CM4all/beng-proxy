@@ -41,7 +41,7 @@ public:
 };
 
 class LeasePtr {
-    Lease *lease;
+    Lease *lease = nullptr;
 
 #ifndef NDEBUG
     bool released;
@@ -52,6 +52,10 @@ public:
 
     explicit LeasePtr(Lease &_lease) noexcept
         :lease(&_lease) {}
+
+    ~LeasePtr() noexcept {
+        assert(lease == nullptr);
+    }
 
     LeasePtr(const LeasePtr &) = delete;
     LeasePtr &operator=(const LeasePtr &) = delete;
@@ -78,7 +82,9 @@ public:
         released = true;
 #endif
 
-        lease->ReleaseLease(reuse);
+        auto *l = lease;
+        lease = nullptr;
+        l->ReleaseLease(reuse);
     }
 };
 
