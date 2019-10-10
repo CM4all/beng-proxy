@@ -83,8 +83,10 @@ struct DelegateClient final : PoolHolder, Cancellable {
 
     void DestroyError(std::exception_ptr ep) noexcept {
         ReleaseSocket(false);
-        handler.OnDelegateError(ep);
+
+        auto &_handler = handler;
         Destroy();
+        _handler.OnDelegateError(ep);
     }
 
     void DestroyError(const char *msg) noexcept {
@@ -133,8 +135,9 @@ DelegateClient::HandleFd(const struct msghdr &msg, size_t length)
     const void *data = CMSG_DATA(cmsg);
     const int *fd_p = (const int *)data;
 
-    handler.OnDelegateSuccess(UniqueFileDescriptor(*fd_p));
+    auto &_handler = handler;
     Destroy();
+    _handler.OnDelegateSuccess(UniqueFileDescriptor(*fd_p));
 }
 
 inline void
@@ -160,8 +163,9 @@ DelegateClient::HandleErrno(size_t length)
         ep = std::make_exception_ptr(std::runtime_error("Failed to receive errno"));
     }
 
-    handler.OnDelegateError(ep);
+    auto &_handler = handler;
     Destroy();
+    _handler.OnDelegateError(ep);
 }
 
 inline void
