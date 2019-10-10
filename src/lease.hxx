@@ -40,11 +40,18 @@ public:
     virtual void ReleaseLease(bool reuse) noexcept = 0;
 };
 
-struct LeasePtr {
+class LeasePtr {
     Lease *lease;
 
 #ifndef NDEBUG
     bool released;
+#endif
+
+public:
+#ifndef NDEBUG
+    bool IsReleased() const noexcept {
+        return released;
+    }
 #endif
 
     void Set(Lease &_lease) noexcept {

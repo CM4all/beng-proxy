@@ -81,7 +81,7 @@ void
 FilteredSocketLease::Release(bool preserve, bool reuse) noexcept
 {
     assert(!IsReleased());
-    assert(!lease_ref.released);
+    assert(!lease_ref.IsReleased());
 
     if (preserve)
         MoveSocketInput();
