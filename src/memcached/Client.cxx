@@ -34,7 +34,6 @@
 #include "Handler.hxx"
 #include "Packet.hxx"
 #include "Error.hxx"
-#include "please.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/Handler.hxx"
@@ -47,6 +46,7 @@
 #include "util/ByteOrder.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
+#include "lease.hxx"
 
 #include <errno.h>
 #include <sys/socket.h>
@@ -135,7 +135,7 @@ struct MemcachedClient final
      */
     void ReleaseSocket(bool reuse) noexcept {
         socket.Abandon();
-        p_lease_release(lease_ref, reuse, GetPool());
+        lease_ref.Release(reuse);
     }
 
     void DestroySocket(bool reuse) noexcept {
@@ -694,7 +694,7 @@ MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
                 Event::Duration(-1), memcached_client_timeout,
                 *this);
 
-    p_lease_ref_set(lease_ref, lease, GetPool(), "memcached_client_lease");
+    lease_ref.Set(lease);
 
     cancel_ptr = *this;
 

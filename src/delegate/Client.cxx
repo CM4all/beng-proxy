@@ -33,7 +33,6 @@
 #include "Client.hxx"
 #include "Handler.hxx"
 #include "Protocol.hxx"
-#include "please.hxx"
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
 #include "event/SocketEvent.hxx"
@@ -42,6 +41,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
+#include "lease.hxx"
 
 #include <stdexcept>
 
@@ -62,8 +62,7 @@ struct DelegateClient final : PoolHolder, Cancellable {
         :PoolHolder(_pool),
          s(_s), event(event_loop, BIND_THIS_METHOD(SocketEventCallback), s),
          handler(_handler) {
-        p_lease_ref_set(lease_ref, lease,
-                        pool, "delegate_client_lease");
+        lease_ref.Set(lease);
 
         event.ScheduleRead();
     }
@@ -75,7 +74,7 @@ struct DelegateClient final : PoolHolder, Cancellable {
     void ReleaseSocket(bool reuse) noexcept {
         assert(s.IsDefined());
 
-        p_lease_release(lease_ref, reuse, pool);
+        lease_ref.Release(reuse);
     }
 
     void DestroyError(std::exception_ptr ep) noexcept {

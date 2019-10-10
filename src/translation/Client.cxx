@@ -36,12 +36,12 @@
 #include "translation/Request.hxx"
 #include "translation/Handler.hxx"
 #include "event/net/BufferedSocket.hxx"
-#include "please.hxx"
 #include "stopwatch.hxx"
 #include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
+#include "lease.hxx"
 
 #include <stdexcept>
 
@@ -128,7 +128,7 @@ TranslateClient::ReleaseSocket(bool reuse) noexcept
     socket.Abandon();
     socket.Destroy();
 
-    p_lease_release(lease_ref, reuse, pool);
+    lease_ref.Release(reuse);
 }
 
 void
@@ -247,7 +247,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
                 translate_read_timeout,
                 translate_write_timeout,
                 *this);
-    p_lease_ref_set(lease_ref, lease, p, "translate_lease");
+    lease_ref.Set(lease);
 
     cancel_ptr = *this;
 }

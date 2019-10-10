@@ -43,7 +43,6 @@
 #include "istream/Pointer.hxx"
 #include "istream/ConcatIstream.hxx"
 #include "istream/Bucket.hxx"
-#include "please.hxx"
 #include "http/HeaderParser.hxx"
 #include "direct.hxx"
 #include "strmap.hxx"
@@ -63,6 +62,7 @@
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "stopwatch.hxx"
+#include "lease.hxx"
 
 #include <sys/socket.h>
 #include <string.h>
@@ -165,7 +165,7 @@ struct FcgiClient final
      */
     void ReleaseSocket(bool reuse) {
         socket.Abandon();
-        p_lease_release(lease_ref, reuse, GetPool());
+        lease_ref.Release(reuse);
     }
 
     /**
@@ -1071,7 +1071,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
                 fcgi_client_timeout, fcgi_client_timeout,
                 *this);
 
-    p_lease_ref_set(lease_ref, lease, GetPool(), "fcgi_client_lease");
+    lease_ref.Set(lease);
 
     cancel_ptr = *this;
 }
