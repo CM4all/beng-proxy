@@ -199,23 +199,6 @@ pool_commit() noexcept
 {
 }
 
-static inline void
-pool_attach(gcc_unused struct pool *pool, gcc_unused const void *p,
-            gcc_unused const char *name) noexcept
-{
-}
-
-static inline void
-pool_attach_checked(gcc_unused struct pool *pool, gcc_unused const void *p,
-                    gcc_unused const char *name) noexcept
-{
-}
-
-static inline void
-pool_detach(gcc_unused struct pool *pool, gcc_unused const void *p) noexcept
-{
-}
-
 #else
 
 void
@@ -232,25 +215,6 @@ pool_contains(const struct pool &pool, const void *ptr, size_t size) noexcept;
  */
 void
 pool_register_leak_detector(struct pool &pool, PoolLeakDetector &ld) noexcept;
-
-/**
- * Attach an opaque object to the pool.  It must be detached before
- * the pool is destroyed.  This is used in debugging mode to track
- * whether all external objects have been destroyed.
- */
-void
-pool_attach(struct pool *pool, const void *p, const char *name) noexcept;
-
-/**
- * Same as pool_attach(), but checks if the object is already
- * registered.
- */
-void
-pool_attach_checked(struct pool *pool, const void *p,
-                    const char *name) noexcept;
-
-void
-pool_detach(struct pool *pool, const void *p) noexcept;
 
 #endif
 

@@ -88,14 +88,6 @@ struct allocation_info {
 #endif
 };
 
-struct attachment final
-    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-
-    const void *value;
-
-    const char *name;
-};
-
 static constexpr size_t LINEAR_PREFIX = sizeof(struct allocation_info);
 #else
 static constexpr size_t LINEAR_PREFIX = 0;
@@ -210,9 +202,6 @@ struct pool final
                                                          PoolLeakDetector::PoolLeakDetectorSiblingsHook,
                                                          &PoolLeakDetector::pool_leak_detector_siblings>,
                            boost::intrusive::constant_time_size<false>> leaks;
-
-    boost::intrusive::list<struct attachment,
-                           boost::intrusive::constant_time_size<false>> attachments;
 #endif
 
     SlicePool *slice_pool;
@@ -574,25 +563,6 @@ pool_check_leaks(const struct pool &pool) noexcept
 }
 
 static void
-pool_check_attachments(const struct pool &pool) noexcept
-{
-#ifdef NDEBUG
-    (void)pool;
-#else
-    if (pool.attachments.empty())
-        return;
-
-    pool.logger(1, "pool has attachments left:");
-
-    for (const auto &attachment : pool.attachments)
-        pool.logger.Format(1, " name='%s' value=%p",
-                           attachment.name, attachment.value);
-
-    abort();
-#endif
-}
-
-static void
 pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
              struct pool *reparent_to) noexcept
 {
@@ -608,7 +578,6 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
 #endif
 
     pool_check_leaks(*pool);
-    pool_check_attachments(*pool);
 
 #ifndef NDEBUG
     if (pool->trashed)
@@ -927,7 +896,6 @@ void
 pool_clear(struct pool &pool) noexcept
 {
     assert(pool.leaks.empty());
-    assert(pool.attachments.empty());
 
 #ifndef NDEBUG
     pool.allocations.clear();
@@ -1135,55 +1103,6 @@ void
 pool_register_leak_detector(struct pool &pool, PoolLeakDetector &ld) noexcept
 {
     pool.leaks.push_back(ld);
-}
-
-void
-pool_attach(struct pool *pool, const void *p, const char *name) noexcept
-{
-    assert(pool != nullptr);
-    assert(p != nullptr);
-    assert(name != nullptr);
-
-    struct attachment *attachment = (struct attachment *)
-        xmalloc(sizeof(*attachment));
-    attachment->value = p;
-    attachment->name = name;
-
-    pool->attachments.push_back(*attachment);
-}
-
-static struct attachment *
-find_attachment(struct pool *pool, const void *p) noexcept
-{
-    for (auto &attachment : pool->attachments)
-        if (attachment.value == p)
-            return &attachment;
-
-    return nullptr;
-}
-
-void
-pool_attach_checked(struct pool *pool, const void *p,
-                    const char *name) noexcept
-{
-    assert(pool != nullptr);
-    assert(p != nullptr);
-    assert(name != nullptr);
-
-    if (find_attachment(pool, p) != nullptr)
-        return;
-
-    pool_attach(pool, p, name);
-}
-
-void
-pool_detach(struct pool *pool, const void *p) noexcept
-{
-    struct attachment *attachment = find_attachment(pool, p);
-    assert(attachment != nullptr);
-
-    pool->attachments.erase_and_dispose(pool->attachments.iterator_to(*attachment),
-                                        free);
 }
 
 #endif
