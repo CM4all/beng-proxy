@@ -34,7 +34,7 @@
 #include "Handler.hxx"
 #include "Protocol.hxx"
 #include "pool/pool.hxx"
-#include "pool/Holder.hxx"
+#include "pool/LeakDetector.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SendMessage.hxx"
@@ -49,7 +49,7 @@
 #include <string.h>
 #include <sys/socket.h>
 
-struct DelegateClient final : PoolHolder, Cancellable {
+struct DelegateClient final : PoolLeakDetector, Cancellable {
     LeasePtr lease_ref;
     const SocketDescriptor s;
     SocketEvent event;
@@ -59,7 +59,7 @@ struct DelegateClient final : PoolHolder, Cancellable {
     DelegateClient(EventLoop &event_loop, SocketDescriptor _s, Lease &lease,
                    struct pool &_pool,
                    DelegateHandler &_handler) noexcept
-        :PoolHolder(_pool),
+        :PoolLeakDetector(_pool),
          lease_ref(lease),
          s(_s), event(event_loop, BIND_THIS_METHOD(SocketEventCallback), s),
          handler(_handler)
