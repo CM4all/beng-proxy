@@ -74,6 +74,10 @@ struct DelegateClient final : PoolHolder, Cancellable {
     void ReleaseSocket(bool reuse) noexcept {
         assert(s.IsDefined());
 
+        /* the SocketEvent must be canceled before releasing its lease
+           to avoid EBADFD from epoll_ctl() */
+        event.Cancel();
+
         lease_ref.Release(reuse);
     }
 
@@ -100,7 +104,6 @@ private:
 
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
-        event.Cancel();
         ReleaseSocket(false);
         Destroy();
     }
