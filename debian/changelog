@@ -3,6 +3,7 @@ cm4all-beng-proxy (16.0.3) unstable; urgency=low
   * bp: optimized widget class cache
   * http_client: fix use-after-free bug
   * was_client: fix use-after-free bug
+  * translation: fix use-after-free crash bug
 
  --   
 

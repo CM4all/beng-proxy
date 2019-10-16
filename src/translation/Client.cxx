@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,6 +34,7 @@
 #include "Marshal.hxx"
 #include "translation/Parser.hxx"
 #include "translation/Request.hxx"
+#include "translation/Response.hxx"
 #include "translation/Handler.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "stopwatch.hxx"
@@ -172,11 +173,10 @@ try {
             ReleaseSocket(true);
 
             {
-                /* this pool reference allows calling our destructor
-                   after the handler has released the pool */
-                const ScopePoolRef ref(pool TRACE_ARGS);
-                handler.OnTranslateResponse(parser.GetResponse());
+                auto &_handler = handler;
+                auto &response = parser.GetResponse();
                 Destroy();
+                _handler.OnTranslateResponse(response);
             }
 
             return BufferedResult::CLOSED;
@@ -241,7 +241,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
      socket(event_loop), lease_ref(lease),
      request(std::move(_request)),
      handler(_handler),
-     parser(p, request2)
+     parser(p, request2, *NewFromPool<TranslateResponse>(p))
 {
     socket.Init(fd, FdType::FD_SOCKET,
                 translate_read_timeout,
