@@ -38,6 +38,20 @@
 
 #include <stdexcept>
 
+static auto
+ParseSessionCookieSameSite(const char *s)
+{
+    using SS = BpConfig::SessionCookieSameSite;
+    if (StringIsEqual(s, "none"))
+        return SS::NONE;
+    else if (StringIsEqual(s, "strict"))
+        return SS::STRICT;
+    else if (StringIsEqual(s, "lax"))
+        return SS::LAX;
+    else
+        throw std::runtime_error("Invalid value");
+}
+
 void
 BpConfig::HandleSet(StringView name, const char *value)
 {
@@ -76,6 +90,8 @@ BpConfig::HandleSet(StringView name, const char *value)
             throw std::runtime_error("Invalid value");
 
         session_cookie = value;
+    } else if (name.Equals("session_cookie_same_site")) {
+        session_cookie_same_site = ParseSessionCookieSameSite(value);
     } else if (name.Equals("dynamic_session_cookie")) {
         dynamic_session_cookie = ParseBool(value);
     } else if (name.Equals("session_idle_timeout")) {

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (16.0.4) unstable; urgency=low
 
-  * 
+  * bp: support the "SameSite" attribute in the session cookie
 
  --   
 

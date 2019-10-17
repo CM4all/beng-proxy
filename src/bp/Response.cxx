@@ -502,6 +502,20 @@ Request::GenerateSetCookie(GrowingBuffer &headers)
         if (translate.response->secure_cookie)
             headers.Write("; Secure");
 
+        using SS = BpConfig::SessionCookieSameSite;
+        switch (connection.config.session_cookie_same_site) {
+        case SS::NONE:
+            break;
+
+        case SS::STRICT:
+            headers.Write("; SameSite=strict");
+            break;
+
+        case SS::LAX:
+            headers.Write("; SameSite=lax");
+            break;
+        }
+
         if (translate.response->cookie_domain != nullptr) {
             headers.Write("; Domain=\"");
             headers.Write(translate.response->cookie_domain);
