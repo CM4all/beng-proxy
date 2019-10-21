@@ -85,7 +85,7 @@ private:
                          BengProxy::ControlCommand command,
                          ConstBuffer<void> payload,
                          WritableBuffer<UniqueFileDescriptor> fds,
-                         SocketAddress address) override;
+                         SocketAddress address, int uid) override;
 
     void OnControlError(std::exception_ptr ep) noexcept override;
 };

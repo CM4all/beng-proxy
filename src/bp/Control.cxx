@@ -126,13 +126,13 @@ BpInstance::OnControlPacket(ControlServer &control_server,
                             BengProxy::ControlCommand command,
                             ConstBuffer<void> payload,
                             WritableBuffer<UniqueFileDescriptor> fds,
-                            SocketAddress address)
+                            SocketAddress address, int uid)
 {
-    LogConcat(5, "control", "command=", int(command),
+    LogConcat(5, "control", "command=", int(command), " uid=", uid,
               " payload_length=", unsigned(payload.size));
 
     /* only local clients are allowed to use most commands */
-    const bool is_privileged = address.GetFamily() == AF_LOCAL;
+    const bool is_privileged = uid >= 0;
 
     switch (command) {
     case ControlCommand::NOP:

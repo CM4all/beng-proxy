@@ -61,7 +61,7 @@ static void
 control_server_decode(ControlServer &control_server,
                       const void *data, size_t length,
                       WritableBuffer<UniqueFileDescriptor> fds,
-                      SocketAddress address,
+                      SocketAddress address, int uid,
                       ControlHandler &handler)
 {
     /* verify the magic number */
@@ -110,7 +110,7 @@ control_server_decode(ControlServer &control_server,
         handler.OnControlPacket(control_server, command,
                                 {payload_length > 0 ? payload : nullptr, payload_length},
                                 fds,
-                                address);
+                                address, uid);
 
         payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */
 
@@ -129,7 +129,7 @@ ControlServer::OnUdpDatagram(ConstBuffer<void> payload,
         return true;
 
     control_server_decode(*this, payload.data, payload.size,
-                          fds, address, handler);
+                          fds, address, uid, handler);
     return true;
 }
 
