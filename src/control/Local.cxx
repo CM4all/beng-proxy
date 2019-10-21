@@ -56,10 +56,10 @@ void
 LocalControl::OnControlPacket(ControlServer &control_server,
                               BengProxy::ControlCommand command,
                               ConstBuffer<void> payload,
-                              SocketAddress address)
+                              SocketAddress address, int uid)
 {
     handler.OnControlPacket(control_server, command,
-                            payload, address);
+                            payload, address, uid);
 }
 
 void

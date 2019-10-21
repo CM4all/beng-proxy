@@ -279,9 +279,9 @@ void
 LbControl::OnControlPacket(ControlServer &control_server,
                            BengProxy::ControlCommand command,
                            ConstBuffer<void> payload,
-                           SocketAddress address)
+                           SocketAddress address, int uid)
 {
-    logger(5, "command=", int(command),
+    logger(5, "command=", int(command), " uid=", uid,
            " payload_length=", unsigned(payload.size));
 
     /* only local clients are allowed to use most commands */

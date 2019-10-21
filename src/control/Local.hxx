@@ -63,7 +63,7 @@ public:
     void OnControlPacket(ControlServer &control_server,
                          BengProxy::ControlCommand command,
                          ConstBuffer<void> payload,
-                         SocketAddress address) override;
+                         SocketAddress address, int uid) override;
 
     void OnControlError(std::exception_ptr ep) noexcept override;
 };

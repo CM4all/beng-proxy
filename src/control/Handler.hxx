@@ -55,7 +55,7 @@ public:
     virtual void OnControlPacket(ControlServer &control_server,
                                  BengProxy::ControlCommand command,
                                  ConstBuffer<void> payload,
-                                 SocketAddress address) = 0;
+                                 SocketAddress address, int uid) = 0;
 
     virtual void OnControlError(std::exception_ptr ep) noexcept = 0;
 };

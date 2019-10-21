@@ -60,7 +60,7 @@ ControlServer::ControlServer(EventLoop &event_loop, ControlHandler &_handler,
 static void
 control_server_decode(ControlServer &control_server,
                       const void *data, size_t length,
-                      SocketAddress address,
+                      SocketAddress address, int uid,
                       ControlHandler &handler)
 {
     /* verify the magic number */
@@ -108,7 +108,7 @@ control_server_decode(ControlServer &control_server,
 
         handler.OnControlPacket(control_server, command,
                                 {payload_length > 0 ? payload : nullptr, payload_length},
-                                address);
+                                address, uid);
 
         payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */
 
@@ -125,7 +125,7 @@ ControlServer::OnUdpDatagram(const void *data, size_t length,
         /* discard datagram if raw() returns false */
         return true;
 
-    control_server_decode(*this, data, length, address, handler);
+    control_server_decode(*this, data, length, address, uid, handler);
     return true;
 }
 
