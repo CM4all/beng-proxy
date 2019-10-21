@@ -285,7 +285,7 @@ LbControl::OnControlPacket(ControlServer &control_server,
            " payload_length=", unsigned(payload.size));
 
     /* only local clients are allowed to use most commands */
-    const bool is_privileged = address.GetFamily() == AF_LOCAL;
+    const bool is_privileged = uid >= 0;
 
     switch (command) {
     case ControlCommand::NOP:
