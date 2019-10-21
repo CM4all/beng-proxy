@@ -281,6 +281,9 @@ LbControl::OnControlPacket(ControlServer &control_server,
                            ConstBuffer<void> payload,
                            SocketAddress address)
 {
+    logger(5, "command=", int(command),
+           " payload_length=", unsigned(payload.size));
+
     /* only local clients are allowed to use most commands */
     const bool is_privileged = address.GetFamily() == AF_LOCAL;
 
