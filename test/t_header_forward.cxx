@@ -540,9 +540,10 @@ static const char *
 RelocateCallback(const char *uri, void *ctx) noexcept
 {
     auto &pool = *(struct pool *)ctx;
+    const AllocatorPtr alloc(pool);
     const char *suffix = StringAfterPrefix(uri, "http://localhost:8080/");
     if (suffix != nullptr)
-        return p_strcat(&pool, "http://example.com/", suffix, nullptr);
+        return alloc.Concat("http://example.com/", suffix);
 
     return uri;
 }
@@ -661,7 +662,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     /* response headers: nullptr */
 
-    auto out1 = forward_response_headers(*pool, HTTP_STATUS_OK,
+    auto out1 = forward_response_headers(alloc, HTTP_STATUS_OK,
                                          {},
                                          "192.168.0.2", nullptr,
                                          nullptr, nullptr,
@@ -671,7 +672,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     /* response headers: basic test */
 
-    auto out2 = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
+    auto out2 = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                          "192.168.0.2", nullptr,
                                          nullptr, nullptr,
                                          settings);
@@ -682,7 +683,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::YES;
 
-    auto out3 = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
+    auto out3 = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                          "192.168.0.2", nullptr,
                                          nullptr, nullptr,
                                          settings);
@@ -692,7 +693,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     settings[HeaderGroup::IDENTITY] = HeaderForwardMode::YES;
 
-    auto out4 = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
+    auto out4 = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                          "192.168.0.2", nullptr,
                                          nullptr, nullptr,
                                          settings);
@@ -703,7 +704,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     settings[HeaderGroup::IDENTITY] = HeaderForwardMode::MANGLE;
 
-    auto out5 = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
+    auto out5 = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                          "192.168.0.2", nullptr,
                                          nullptr, nullptr,
                                          settings);
@@ -718,7 +719,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     settings[HeaderGroup::LINK] = HeaderForwardMode::NO;
 
-    auto out5b = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
+    auto out5b = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                           "192.168.0.2", nullptr,
                                           RelocateCallback, (struct pool *)pool,
                                           settings);
@@ -727,7 +728,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     settings[HeaderGroup::LINK] = HeaderForwardMode::YES;
 
-    out5b = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
+    out5b = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                      "192.168.0.2", nullptr,
                                      RelocateCallback, (struct pool *)pool,
                                      settings);
@@ -737,7 +738,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     settings[HeaderGroup::LINK] = HeaderForwardMode::MANGLE;
 
-    out5b = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
+    out5b = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                      "192.168.0.2", nullptr,
                                      RelocateCallback, (struct pool *)pool,
                                      settings);
@@ -751,7 +752,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     settings[HeaderGroup::COOKIE] = HeaderForwardMode::YES;
 
-    auto out6 = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
+    auto out6 = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                          "192.168.0.2", nullptr,
                                          nullptr, nullptr,
                                          settings);
@@ -762,7 +763,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     headers.Add(alloc, "access-control-allow-methods", "POST");
 
-    auto out7 = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
+    auto out7 = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                          "192.168.0.2", nullptr,
                                          nullptr, nullptr,
                                          settings);
@@ -771,7 +772,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     settings[HeaderGroup::CORS] = HeaderForwardMode::YES;
 
-    auto out8 = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
+    auto out8 = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                          "192.168.0.2", nullptr,
                                          nullptr, nullptr,
                                          settings);
@@ -783,7 +784,7 @@ TEST(HeaderForwardTest, ResponseHeaders)
 
     settings[HeaderGroup::SECURE] = HeaderForwardMode::YES;
 
-    auto out9 = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
+    auto out9 = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                          "192.168.0.2", nullptr,
                                          nullptr, nullptr,
                                          settings);
