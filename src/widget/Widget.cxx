@@ -37,6 +37,7 @@
 #include "pool/tpool.hxx"
 #include "util/HexFormat.h"
 #include "util/Cast.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <string.h>
 #include <assert.h>
@@ -115,18 +116,20 @@ Widget::SetId(const StringView _id)
     assert(parent != nullptr);
     assert(!_id.empty());
 
-    id = p_strdup(pool, _id);
+    const AllocatorPtr alloc(pool);
+
+    id = alloc.DupZ(_id);
 
     const char *p = parent->GetIdPath();
     if (p != nullptr)
         id_path = *p == 0
             ? id
-            : p_strcat(&pool, p, WIDGET_REF_SEPARATOR_S, id, nullptr);
+            : alloc.Concat(p, WIDGET_REF_SEPARATOR, id);
 
     p = parent->GetPrefix();
     if (p != nullptr) {
         const TempPoolLease tpool;
-        prefix = p_strcat(&pool, p, quote_prefix(tpool, id), "__", nullptr);
+        prefix = alloc.Concat(p, quote_prefix(tpool, id), "__");
     }
 }
 
@@ -137,7 +140,9 @@ Widget::SetClassName(const StringView _class_name)
     assert(class_name == nullptr);
     assert(cls == nullptr);
 
-    class_name = p_strdup(pool, _class_name);
+    const AllocatorPtr alloc(pool);
+
+    class_name = alloc.DupZ(_class_name);
     quoted_class_name = quote_prefix(&pool, class_name);
 }
 
@@ -150,16 +155,19 @@ Widget::GetLogName() const
     if (class_name == nullptr)
         return id;
 
+    const AllocatorPtr alloc(pool);
+
     if (id_path == nullptr) {
         if (id != nullptr)
-            return lazy.log_name = p_strcat(&pool, class_name,
-                                            "#(null)" WIDGET_REF_SEPARATOR_S,
-                                            id_path, nullptr);
+            return lazy.log_name = alloc.Concat(class_name,
+                                                "#(null)",
+                                                WIDGET_REF_SEPARATOR,
+                                                id_path);
 
         return class_name;
     }
 
-    return lazy.log_name = p_strcat(&pool, class_name, "#", id_path, nullptr);
+    return lazy.log_name = alloc.Concat(class_name, '#', id_path);
 }
 
 StringView
