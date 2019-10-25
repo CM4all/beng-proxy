@@ -103,10 +103,10 @@ struct FilterCacheInfo {
     FilterCacheInfo(const char *_tag, const char *_key) noexcept
         :tag(_tag), key(_key) {}
 
-    FilterCacheInfo(struct pool &pool, const FilterCacheInfo &src) noexcept
+    FilterCacheInfo(AllocatorPtr alloc, const FilterCacheInfo &src) noexcept
         :expires(src.expires),
-         tag(p_strdup_checked(&pool, src.tag)),
-         key(p_strdup(&pool, src.key)) {}
+         tag(alloc.CheckDup(src.tag)),
+         key(alloc.Dup(src.key)) {}
 
     FilterCacheInfo(FilterCacheInfo &&src) = default;
 
@@ -351,7 +351,7 @@ FilterCacheRequest::FilterCacheRequest(PoolPtr &&_pool,
     :PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
      cache(_cache),
      handler(_handler),
-     info(pool, _info),
+     info(GetPool(), _info),
      timeout_event(cache.GetEventLoop(), BIND_THIS_METHOD(OnTimeout))
 {
 }
@@ -375,7 +375,7 @@ FilterCacheRequest::CancelStore() noexcept
 
 /* check whether the request could produce a cacheable response */
 static FilterCacheInfo *
-filter_cache_request_evaluate(struct pool &pool,
+filter_cache_request_evaluate(AllocatorPtr alloc,
                               const char *tag,
                               const ResourceAddress &address,
                               const char *source_id,
@@ -388,10 +388,10 @@ filter_cache_request_evaluate(struct pool &pool,
     if (user == nullptr)
         user = "";
 
-    return NewFromPool<FilterCacheInfo>(pool, tag,
-                                        p_strcat(&pool, source_id, "|",
-                                                 user, "|",
-                                                 address.GetId(AllocatorPtr(pool)), nullptr));
+    return alloc.New<FilterCacheInfo>(tag,
+                                      alloc.Concat(source_id, '|',
+                                                   user, '|',
+                                                   address.GetId(alloc)));
 }
 
 void
