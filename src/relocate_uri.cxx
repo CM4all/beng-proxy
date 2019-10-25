@@ -42,7 +42,7 @@
  */
 gcc_pure
 static const char *
-MatchUriHost(const char *uri, const char *host)
+MatchUriHost(const char *uri, const char *host) noexcept
 {
     const auto &h = uri_host_and_port(uri);
     if (!h.IsNull()) {
@@ -67,7 +67,7 @@ MatchUriHost(const char *uri, const char *host)
 
 gcc_pure
 static StringView
-UriBaseTail(StringView uri, StringView base)
+UriBaseTail(StringView uri, StringView base) noexcept
 {
     return uri.StartsWith(base)
         ? StringView(uri.data + base.size, uri.end())
@@ -76,7 +76,7 @@ UriBaseTail(StringView uri, StringView base)
 
 gcc_pure
 static StringView
-UriPrefixBeforeTail(StringView uri, StringView tail)
+UriPrefixBeforeTail(StringView uri, StringView tail) noexcept
 {
     return uri.size > tail.size &&
         memcmp(uri.end() - tail.size, tail.data, tail.size) == 0 &&
@@ -89,7 +89,7 @@ const char *
 RelocateUri(struct pool &pool, const char *uri,
             const char *internal_host, StringView internal_path,
             const char *external_scheme, const char *external_host,
-            StringView external_path, StringView base)
+            StringView external_path, StringView base) noexcept
 {
     const char *path = MatchUriHost(uri, internal_host);
     if (path == nullptr)
