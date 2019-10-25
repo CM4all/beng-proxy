@@ -70,7 +70,7 @@ static unsigned translation_protocol_version;
 static bool translation_protocol_version_received = false;
 
 static const char *
-GetBounceUri(struct pool &pool, const IncomingHttpRequest &request,
+GetBounceUri(AllocatorPtr alloc, const IncomingHttpRequest &request,
              const DissectedUri &dissected_uri,
              const TranslateResponse &response) noexcept
 {
@@ -83,20 +83,18 @@ GetBounceUri(struct pool &pool, const IncomingHttpRequest &request,
         host = "localhost";
 
     const char *uri_path = response.uri != nullptr
-        ? p_strncat(&pool, response.uri, strlen(response.uri),
-                    ";", dissected_uri.args == nullptr ? (size_t)0 : 1,
-                    dissected_uri.args.data, dissected_uri.args.size,
-                    "?", dissected_uri.query == nullptr ? (size_t)0 : 1,
-                    dissected_uri.query.data, dissected_uri.query.size,
-                    nullptr)
+        ? alloc.Concat(response.uri,
+                       StringView{";", dissected_uri.args == nullptr ? (size_t)0 : 1},
+                       dissected_uri.args,
+                       StringView{"?", dissected_uri.query == nullptr ? (size_t)0 : 1},
+                       dissected_uri.query)
         : request.uri;
 
-    const char *current_uri = p_strcat(&pool, scheme, "://", host, uri_path,
-                                       nullptr);
-    const char *escaped_uri = uri_escape_dup(pool, current_uri,
+    const char *current_uri = alloc.Concat(scheme, "://", host, uri_path);
+    const char *escaped_uri = uri_escape_dup(alloc, current_uri,
                                              strlen(current_uri));
 
-    return p_strcat(&pool, response.bounce, escaped_uri, nullptr);
+    return alloc.Concat(response.bounce, escaped_uri);
 }
 
 /**
@@ -206,17 +204,17 @@ Request::CheckHandleRedirect(const TranslateResponse &response)
         ? response.status
         : HTTP_STATUS_SEE_OTHER;
 
+    const AllocatorPtr alloc(pool);
+
     const char *redirect_uri = response.redirect;
 
     if (response.redirect_full_uri && !dissected_uri.args.IsNull())
-        redirect_uri = p_strncat(&pool, redirect_uri, strlen(redirect_uri),
-                                 ";", size_t(1),
-                                 dissected_uri.args.data, dissected_uri.args.size,
-                                 dissected_uri.path_info.data, dissected_uri.path_info.size,
-                                 nullptr);
+        redirect_uri = alloc.Concat(redirect_uri, ';',
+                                    dissected_uri.args,
+                                    dissected_uri.path_info);
 
     if (response.redirect_query_string && !dissected_uri.query.IsNull())
-        redirect_uri = uri_append_query_string_n(pool, redirect_uri,
+        redirect_uri = uri_append_query_string_n(alloc, redirect_uri,
                                                  dissected_uri.query);
 
     DispatchRedirect(status, redirect_uri, response.message);
@@ -832,15 +830,17 @@ Request::AskTranslationServer() noexcept
 inline void
 Request::ServeDocumentRootFile(const BpConfig &config) noexcept
 {
-    auto tr = NewFromPool<TranslateResponse>(pool);
+    const AllocatorPtr alloc(pool);
+
+    auto tr = alloc.New<TranslateResponse>();
     tr->Clear();
     translate.response = tr;
 
-    const char *index_file = nullptr;
+    StringView index_file = nullptr;
     if (dissected_uri.base.back() == '/')
         index_file = "index.html";
 
-    auto view = NewFromPool<WidgetView>(pool, nullptr);
+    auto view = alloc.New<WidgetView>(nullptr);
 
     tr->views = view;
     tr->transparent = true;
@@ -848,13 +848,10 @@ Request::ServeDocumentRootFile(const BpConfig &config) noexcept
     translate.transformation = tr->views->transformation;
     translate.suffix_transformation = nullptr;
 
-    const char *path = p_strncat(&pool,
-                                 config.document_root,
-                                 strlen(config.document_root),
-                                 dissected_uri.base.data, dissected_uri.base.size,
-                                 index_file, (size_t)10,
-                                 nullptr);
-    auto *fa = NewFromPool<FileAddress>(pool, path);
+    const char *path = alloc.Concat(config.document_root,
+                                    dissected_uri.base,
+                                    index_file);
+    auto *fa = alloc.New<FileAddress>(path);
     tr->address = *fa;
 
     translate.address = {ShallowCopy(), tr->address};
