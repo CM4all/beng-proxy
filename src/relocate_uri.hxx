@@ -37,10 +37,11 @@
 
 struct HttpAddress;
 struct StringView;
+class AllocatorPtr;
 
 gcc_pure
 const char *
-RelocateUri(struct pool &pool, const char *uri,
+RelocateUri(AllocatorPtr alloc, const char *uri,
             const char *internal_host, StringView internal_path,
             const char *external_scheme, const char *external_host,
             StringView external_path,

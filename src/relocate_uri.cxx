@@ -32,9 +32,9 @@
 
 #include "relocate_uri.hxx"
 #include "http_address.hxx"
-#include "pool/pool.hxx"
 #include "uri/Extract.hxx"
 #include "util/StringView.hxx"
+#include "AllocatorPtr.hxx"
 
 /**
  * If the given URI matches the #HttpAddress regarding and port, then
@@ -86,7 +86,7 @@ UriPrefixBeforeTail(StringView uri, StringView tail) noexcept
 }
 
 const char *
-RelocateUri(struct pool &pool, const char *uri,
+RelocateUri(AllocatorPtr alloc, const char *uri,
             const char *internal_host, StringView internal_path,
             const char *external_scheme, const char *external_host,
             StringView external_path, StringView base) noexcept
@@ -107,10 +107,6 @@ RelocateUri(struct pool &pool, const char *uri,
     if (tail2.IsNull())
         return nullptr;
 
-    return p_strncat(&pool, external_scheme, strlen(external_scheme),
-                     "://", size_t(3),
-                     external_host, strlen(external_host),
-                     base.data, base.size,
-                     tail2.data, tail2.size,
-                     nullptr);
+    return alloc.Concat(external_scheme, "://",
+                        external_host, base, tail2);
 }

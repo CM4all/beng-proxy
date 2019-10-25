@@ -799,7 +799,7 @@ Request::RelocateCallback(const char *const uri, void *ctx) noexcept
            request.uri.base either */
         internal_path.size = q - internal_path.data;
 
-    const char *new_uri = RelocateUri(request.request.pool, uri,
+    const char *new_uri = RelocateUri(AllocatorPtr{request.request.pool}, uri,
                                       address.host_and_port,
                                       internal_path,
                                       external_scheme, external_host,
