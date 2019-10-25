@@ -90,11 +90,8 @@ request_absolute_uri(const IncomingHttpRequest &request,
     if (host == nullptr || !hostname_is_well_formed(host))
         return nullptr;
 
-    return p_strcat(request.pool,
-                    scheme, "://",
-                    host,
-                    uri,
-                    nullptr);
+    const AllocatorPtr alloc(request.pool);
+    return alloc.Concat(scheme, "://", host, uri);
 }
 
 /**
@@ -619,12 +616,14 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
                      UnusedIstreamPtr body,
                      const FilterTransformation &filter) noexcept
 {
+    const AllocatorPtr alloc(pool);
+
     previous_status = status;
 
     const char *source_tag = resource_tag_append_etag(&pool, resource_tag,
                                                       headers2);
     resource_tag = source_tag != nullptr
-        ? p_strcat(&pool, source_tag, "|", filter.GetId(AllocatorPtr(pool)), nullptr)
+        ? alloc.Concat(source_tag, '|', filter.GetId(AllocatorPtr(pool)))
         : nullptr;
 
     if (filter.reveal_user)
