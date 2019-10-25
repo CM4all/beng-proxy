@@ -210,16 +210,22 @@ Context::OnHttpError(std::exception_ptr ep) noexcept
  *
  */
 
+gcc_pure
+static const char *
+GetCgiPath(AllocatorPtr alloc, const char *name) noexcept
+{
+    const char *srcdir = getenv("srcdir");
+    if (srcdir == nullptr)
+        srcdir = ".";
+
+    return alloc.Concat(srcdir, "/demo/cgi-bin/", name);
+}
+
 static void
 test_normal(PoolPtr pool, Context *c)
 {
-    const char *path;
-
-    path = getenv("srcdir");
-    if (path != NULL)
-        path = p_strcat(pool, path, "/demo/cgi-bin/env.py", NULL);
-    else
-        path = "./demo/cgi-bin/env.py";
+    const AllocatorPtr alloc(pool);
+    const char *path = GetCgiPath(alloc, "env.py");
 
     const auto address = MakeCgiAddress(pool, path, "/")
         .ScriptName("env.py")
@@ -244,13 +250,8 @@ test_normal(PoolPtr pool, Context *c)
 static void
 test_tiny(PoolPtr pool, Context *c)
 {
-    const char *path;
-
-    path = getenv("srcdir");
-    if (path != NULL)
-        path = p_strcat(pool, path, "/demo/cgi-bin/tiny.sh", NULL);
-    else
-        path = "./demo/cgi-bin/tiny.sh";
+    const AllocatorPtr alloc(pool);
+    const char *path = GetCgiPath(alloc, "tiny.sh");
 
     const auto address = MakeCgiAddress(pool, path, "/")
         .ScriptName("tiny.py")
@@ -275,13 +276,8 @@ test_tiny(PoolPtr pool, Context *c)
 static void
 test_close_early(PoolPtr pool, Context *c)
 {
-    const char *path;
-
-    path = getenv("srcdir");
-    if (path != NULL)
-        path = p_strcat(pool, path, "/demo/cgi-bin/env.py", NULL);
-    else
-        path = "./demo/cgi-bin/env.py";
+    const AllocatorPtr alloc(pool);
+    const char *path = GetCgiPath(alloc, "env.py");
 
     c->close_response_body_early = true;
 
@@ -308,13 +304,8 @@ test_close_early(PoolPtr pool, Context *c)
 static void
 test_close_late(PoolPtr pool, Context *c)
 {
-    const char *path;
-
-    path = getenv("srcdir");
-    if (path != NULL)
-        path = p_strcat(pool, path, "/demo/cgi-bin/env.py", NULL);
-    else
-        path = "./demo/cgi-bin/env.py";
+    const AllocatorPtr alloc(pool);
+    const char *path = GetCgiPath(alloc, "env.py");
 
     c->close_response_body_late = true;
 
@@ -341,13 +332,9 @@ test_close_late(PoolPtr pool, Context *c)
 static void
 test_close_data(PoolPtr pool, Context *c)
 {
-    const char *path;
+    const AllocatorPtr alloc(pool);
+    const char *path = GetCgiPath(alloc, "env.py");
 
-    path = getenv("srcdir");
-    if (path != NULL)
-        path = p_strcat(pool, path, "/demo/cgi-bin/env.py", NULL);
-    else
-        path = "./demo/cgi-bin/env.py";
     c->close_response_body_data = true;
 
     const auto address = MakeCgiAddress(pool, path, "/")
@@ -373,13 +360,8 @@ test_close_data(PoolPtr pool, Context *c)
 static void
 test_post(PoolPtr pool, Context *c)
 {
-    const char *path;
-
-    path = getenv("srcdir");
-    if (path != NULL)
-        path = p_strcat(pool, path, "/demo/cgi-bin/cat.sh", NULL);
-    else
-        path = "./demo/cgi-bin/cat.sh";
+    const AllocatorPtr alloc(pool);
+    const char *path = GetCgiPath(alloc, "cat.sh");
 
     c->body_read = true;
 
@@ -408,13 +390,8 @@ test_post(PoolPtr pool, Context *c)
 static void
 test_status(PoolPtr pool, Context *c)
 {
-    const char *path;
-
-    path = getenv("srcdir");
-    if (path != NULL)
-        path = p_strcat(pool, path, "/demo/cgi-bin/status.sh", NULL);
-    else
-        path = "./demo/cgi-bin/status.sh";
+    const AllocatorPtr alloc(pool);
+    const char *path = GetCgiPath(alloc, "status.sh");
 
     c->body_read = true;
 
@@ -441,13 +418,8 @@ test_status(PoolPtr pool, Context *c)
 static void
 test_no_content(PoolPtr pool, Context *c)
 {
-    const char *path;
-
-    path = getenv("srcdir");
-    if (path != NULL)
-        path = p_strcat(pool, path, "/demo/cgi-bin/no_content.sh", NULL);
-    else
-        path = "./demo/cgi-bin/no_content.sh";
+    const AllocatorPtr alloc(pool);
+    const char *path = GetCgiPath(alloc, "no_content.sh");
 
     c->no_content = true;
 
@@ -474,13 +446,8 @@ test_no_content(PoolPtr pool, Context *c)
 static void
 test_no_length(PoolPtr pool, Context *c)
 {
-    const char *path;
-
-    path = getenv("srcdir");
-    if (path != NULL)
-        path = p_strcat(pool, path, "/demo/cgi-bin/length0.sh", NULL);
-    else
-        path = "./demo/cgi-bin/length0.sh";
+    const AllocatorPtr alloc(pool);
+    const char *path = GetCgiPath(alloc, "length0.sh");
 
     const auto address = MakeCgiAddress(pool, path, "/")
         .ScriptName("length0.sh")
@@ -503,13 +470,8 @@ test_no_length(PoolPtr pool, Context *c)
 static void
 test_length_ok(PoolPtr pool, Context *c)
 {
-    const char *path;
-
-    path = getenv("srcdir");
-    if (path != NULL)
-        path = p_strcat(pool, path, "/demo/cgi-bin/length1.sh", NULL);
-    else
-        path = "./demo/cgi-bin/length1.sh";
+    const AllocatorPtr alloc(pool);
+    const char *path = GetCgiPath(alloc, "length1.sh");
 
     const auto address = MakeCgiAddress(pool, path, "/")
         .ScriptName("length1.sh")
@@ -532,15 +494,10 @@ test_length_ok(PoolPtr pool, Context *c)
 static void
 test_length_ok_large(PoolPtr pool, Context *c)
 {
-    const char *path;
+    const AllocatorPtr alloc(pool);
+    const char *path = GetCgiPath(alloc, "length5.sh");
 
     c->body_read = true;
-
-    path = getenv("srcdir");
-    if (path != NULL)
-        path = p_strcat(pool, path, "/demo/cgi-bin/length5.sh", NULL);
-    else
-        path = "./demo/cgi-bin/length5.sh";
 
     const auto address = MakeCgiAddress(pool, path, "/")
         .ScriptName("length5.sh")
@@ -563,13 +520,8 @@ test_length_ok_large(PoolPtr pool, Context *c)
 static void
 test_length_too_small(PoolPtr pool, Context *c)
 {
-    const char *path;
-
-    path = getenv("srcdir");
-    if (path != NULL)
-        path = p_strcat(pool, path, "/demo/cgi-bin/length2.sh", NULL);
-    else
-        path = "./demo/cgi-bin/length2.sh";
+    const AllocatorPtr alloc(pool);
+    const char *path = GetCgiPath(alloc, "length2.sh");
 
     const auto address = MakeCgiAddress(pool, path, "/")
         .ScriptName("length2.sh")
@@ -591,13 +543,8 @@ test_length_too_small(PoolPtr pool, Context *c)
 static void
 test_length_too_big(PoolPtr pool, Context *c)
 {
-    const char *path;
-
-    path = getenv("srcdir");
-    if (path != NULL)
-        path = p_strcat(pool, path, "/demo/cgi-bin/length3.sh", NULL);
-    else
-        path = "./demo/cgi-bin/length3.sh";
+    const AllocatorPtr alloc(pool);
+    const char *path = GetCgiPath(alloc, "length3.sh");
 
     const auto address = MakeCgiAddress(pool, path, "/")
         .ScriptName("length3.sh")
@@ -620,13 +567,8 @@ test_length_too_big(PoolPtr pool, Context *c)
 static void
 test_length_too_small_late(PoolPtr pool, Context *c)
 {
-    const char *path;
-
-    path = getenv("srcdir");
-    if (path != NULL)
-        path = p_strcat(pool, path, "/demo/cgi-bin/length4.sh", NULL);
-    else
-        path = "./demo/cgi-bin/length4.sh";
+    const AllocatorPtr alloc(pool);
+    const char *path = GetCgiPath(alloc, "length4.sh");
 
     const auto address = MakeCgiAddress(pool, path, "/")
         .ScriptName("length4.sh")
@@ -652,13 +594,8 @@ test_length_too_small_late(PoolPtr pool, Context *c)
 static void
 test_large_header(PoolPtr pool, Context *c)
 {
-    const char *path;
-
-    path = getenv("srcdir");
-    if (path != NULL)
-        path = p_strcat(pool, path, "/demo/cgi-bin/large_header.sh", NULL);
-    else
-        path = "./demo/cgi-bin/large_header.sh";
+    const AllocatorPtr alloc(pool);
+    const char *path = GetCgiPath(alloc, "large_header.sh");
 
     const auto address = MakeCgiAddress(pool, path, "/")
         .ScriptName("large_header.py")
