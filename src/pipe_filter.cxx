@@ -53,25 +53,26 @@
 #include <errno.h>
 
 static const char *
-append_etag(struct pool &pool, const char *in, const char *suffix)
+append_etag(AllocatorPtr alloc, const char *in, const char *suffix)
 {
     size_t length;
 
     if (*in != '"')
         /* simple concatenation */
-        return p_strcat(&pool, in, suffix, nullptr);
+        return alloc.Concat(in, suffix);
 
     length = strlen(in + 1);
     if (in[length] != '"')
-        return p_strcat(&pool, in, suffix, nullptr);
+        return alloc.Concat(in, suffix);
 
-    return p_strncat(&pool, in, length, suffix, strlen(suffix),
-                     "\"", (size_t)1, nullptr);
+    return alloc.Concat(StringView{in, length},
+                        suffix,
+                        '"');
 }
 
 template<typename A, typename E>
 static const char *
-make_pipe_etag(struct pool &pool, const char *in,
+make_pipe_etag(AllocatorPtr alloc, const char *in,
                const char *path,
                const A &args,
                const E &env)
@@ -91,7 +92,7 @@ make_pipe_etag(struct pool &pool, const char *in,
     suffix[9] = 0;
 
     /* append the hash to the old ETag */
-    return append_etag(pool, in, suffix);
+    return append_etag(alloc, in, suffix);
 }
 
 void
