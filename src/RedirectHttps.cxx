@@ -31,14 +31,14 @@
  */
 
 #include "RedirectHttps.hxx"
-#include "pool/pool.hxx"
 #include "net/HostParser.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <stdio.h>
 
 const char *
-MakeHttpsRedirect(struct pool &p, const char *_host, uint16_t port,
-                  const char *uri)
+MakeHttpsRedirect(AllocatorPtr alloc, const char *_host, uint16_t port,
+                  const char *uri) noexcept
 {
     char port_buffer[16];
     size_t port_length = 0;
@@ -55,11 +55,10 @@ MakeHttpsRedirect(struct pool &p, const char *_host, uint16_t port,
     const size_t is_ipv6 = eh.host != nullptr && eh.host.Find(':') != nullptr;
     const size_t need_brackets = is_ipv6 && port_length > 0;
 
-    return p_strncat(&p, "https://", size_t(8),
-                     &a, need_brackets,
-                     host.data, host.size,
-                     &b, need_brackets,
-                     port_buffer, port_length,
-                     uri, strlen(uri),
-                     nullptr);
+    return alloc.Concat("https://",
+                        StringView(&a, need_brackets),
+                        host,
+                        StringView(&b, need_brackets),
+                        StringView(port_buffer, port_length),
+                        uri);
 }

@@ -35,7 +35,7 @@
 
 #include <stdint.h>
 
-struct pool;
+class AllocatorPtr;
 
 /**
  * Generate a "https://" redirect URI for the current request.
@@ -45,7 +45,7 @@ struct pool;
  * @param uri the request URI
  */
 const char *
-MakeHttpsRedirect(struct pool &p, const char *host, uint16_t port,
-                  const char *uri);
+MakeHttpsRedirect(AllocatorPtr alloc, const char *host, uint16_t port,
+                  const char *uri) noexcept;
 
 #endif

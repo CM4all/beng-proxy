@@ -43,6 +43,7 @@
 #include "istream/UnusedHoldPtr.hxx"
 #include "util/Cancellable.hxx"
 #include "util/LeakDetector.hxx"
+#include "AllocatorPtr.hxx"
 
 /*
  * TranslateHandler
@@ -110,7 +111,8 @@ LbHttpRequest::OnTranslateResponse(TranslateResponse &response) noexcept
         }
 
         _request.SendRedirect(HTTP_STATUS_MOVED_PERMANENTLY,
-                              MakeHttpsRedirect(_request.pool, host,
+                              MakeHttpsRedirect(AllocatorPtr{_request.pool},
+                                                host,
                                                 response.https_only,
                                                 _request.uri),
                               "This page requires \"https\"");
