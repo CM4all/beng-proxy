@@ -818,7 +818,6 @@ executable(
   'src/bp/GenerateResponse.cxx',
   'src/resource_tag.cxx',
   'src/widget/RewriteUri.cxx',
-  'src/serialize.cxx',
   'src/file_request.cxx',
   'src/static_headers.cxx',
   'src/suffix_registry.cxx',
