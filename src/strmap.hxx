@@ -188,11 +188,7 @@ public:
     gcc_pure
     std::pair<const_iterator, const_iterator> EqualRange(const char *key) const noexcept;
 
-    void CopyFrom(const StringMap &src, const char *key) noexcept {
-        const auto r = src.EqualRange(key);
-        for (auto i = r.first; i != r.second; ++i)
-            Add(key, i->value);
-    }
+    void CopyFrom(const StringMap &src, const char *key) noexcept;
 
     /**
      * Copy string pointers with keys from the given key list.
