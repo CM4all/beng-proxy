@@ -301,14 +301,6 @@ gcc_malloc gcc_returns_nonnull gcc_printf(2, 3)
 char *
 p_sprintf(struct pool *pool, const char *fmt, ...) noexcept;
 
-gcc_malloc gcc_returns_nonnull
-char *
-p_strcat(struct pool *pool, const char *s, ...) noexcept;
-
-gcc_malloc gcc_returns_nonnull
-char *
-p_strncat(struct pool *pool, const char *s, size_t length, ...) noexcept;
-
 template<typename T>
 gcc_malloc gcc_returns_nonnull
 T *
@@ -406,12 +398,5 @@ gcc_malloc gcc_returns_nonnull
 char *
 p_strdup_lower_impl(struct pool &pool, StringView src
                     TRACE_ARGS_DECL) noexcept;
-
-/**
- * Concatenate all strings and return a newly allocated
- * null-terminated string.
- */
-char *
-StringConcat(struct pool &pool, ConstBuffer<StringView> src) noexcept;
 
 #endif
