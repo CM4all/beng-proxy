@@ -260,8 +260,10 @@ WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
                                   const WidgetView &t_view,
                                   bool exclude_host, bool with_body) noexcept
 {
+    const AllocatorPtr alloc(pool);
+
     auto headers =
-        forward_request_headers(pool, *ctx.request_headers,
+        forward_request_headers(alloc, *ctx.request_headers,
                                 ctx.local_host,
                                 ctx.remote_host,
                                 exclude_host, with_body,
@@ -276,22 +278,20 @@ WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
 
     if (widget.cls->info_headers) {
         if (widget.id != nullptr)
-            headers.Add(pool, "x-cm4all-widget-id", widget.id);
+            headers.Add(alloc, "x-cm4all-widget-id", widget.id);
 
         if (widget.class_name != nullptr)
-            headers.Add(pool, "x-cm4all-widget-type", widget.class_name);
+            headers.Add(alloc, "x-cm4all-widget-type", widget.class_name);
 
         const char *prefix = widget.GetPrefix();
         if (prefix != nullptr)
-            headers.Add(pool, "x-cm4all-widget-prefix", prefix);
+            headers.Add(alloc, "x-cm4all-widget-prefix", prefix);
     }
 
     if (widget.from_template.headers != nullptr)
         /* copy HTTP request headers from template */
         for (const auto &i : *widget.from_template.headers)
-            headers.SecureSet(pool,
-                              p_strdup(&pool, i.key),
-                              p_strdup(&pool, i.value));
+            headers.SecureSet(alloc, alloc.Dup(i.key), alloc.Dup(i.value));
 
     return headers;
 }
@@ -458,16 +458,18 @@ WidgetRequest::FilterResponse(http_status_t status,
                               StringMap &&headers, UnusedIstreamPtr body,
                               const FilterTransformation &filter) noexcept
 {
+    const AllocatorPtr alloc(pool);
+
     previous_status = status;
 
     const char *source_tag = resource_tag_append_etag(pool, resource_tag,
                                                       headers);
     resource_tag = source_tag != nullptr
-        ? p_strcat(&pool, source_tag, "|", filter.GetId(AllocatorPtr(pool)), nullptr)
+        ? alloc.Concat(source_tag, '|', filter.GetId(alloc))
         : nullptr;
 
     if (filter.reveal_user)
-        forward_reveal_user(pool, headers, GetSessionIfStateful().get());
+        forward_reveal_user(alloc, headers, GetSessionIfStateful().get());
 
 #ifdef SPLICE
     if (body)
