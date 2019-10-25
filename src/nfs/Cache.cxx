@@ -194,12 +194,12 @@ struct NfsCacheRequest final : NfsStockGetHandler, NfsClientOpenFileHandler {
     NfsCacheHandler &handler;
     CancellablePointer &cancel_ptr;
 
-    NfsCacheRequest(struct pool &pool, NfsCache &_cache,
+    NfsCacheRequest(AllocatorPtr alloc, NfsCache &_cache,
                     const char *_key, const char *_path,
                     NfsCacheHandler &_handler,
-                    CancellablePointer &_cancel_ptr)
+                    CancellablePointer &_cancel_ptr) noexcept
         :cache(_cache),
-         key(p_strdup(pool, _key)), path(_path),
+         key(alloc.Dup(_key)), path(_path),
          handler(_handler),
          cancel_ptr(_cancel_ptr) {}
 
@@ -257,10 +257,10 @@ static constexpr off_t cacheable_size_limit = 512 * 1024;
 static constexpr Event::Duration nfs_cache_timeout = std::chrono::minutes(1);
 
 static const char *
-nfs_cache_key(struct pool &pool, const char *server,
-              const char *_export, const char *path)
+nfs_cache_key(AllocatorPtr alloc, const char *server,
+              const char *_export, const char *path) noexcept
 {
-    return p_strcat(&pool, server, ":", _export, path, nullptr);
+    return alloc.Concat(server, ':', _export, path);
 }
 
 NfsCacheStore::NfsCacheStore(PoolPtr &&_pool, NfsCache &_cache,
