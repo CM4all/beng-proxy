@@ -1290,9 +1290,9 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 
     /* request line */
 
-    const char *p = p_strcat(&GetPool(),
-                             http_method_to_string(method), " ", uri,
-                             " HTTP/1.1\r\n", nullptr);
+    const AllocatorPtr alloc(GetPool());
+    const char *p = alloc.Concat(http_method_to_string(method), ' ', uri,
+                                 " HTTP/1.1\r\n");
     auto request_line_stream = istream_string_new(GetPool(), p);
 
     /* headers */
