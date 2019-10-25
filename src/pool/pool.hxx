@@ -372,6 +372,32 @@ public:
     }
 };
 
+/**
+ * An overload without a pool; this one cannot free memory
+ * (pool_new_libc() only) and has no assertions, but it calls the
+ * object's destructor.  It can sometimes be useful to destruct
+ * objects which don't have a pointer to the pool they were allocated
+ * from.
+ */
+template<typename T>
+void
+DeleteFromPool(T *t) noexcept
+{
+    t->~T();
+}
+
+/**
+ * Like #PoolDisposer, but calls the DeleteFromPool() overload without
+ * a pool parameter.
+ */
+class NoPoolDisposer {
+public:
+    template<typename T>
+    void operator()(T *t) noexcept {
+        DeleteFromPool(t);
+    }
+};
+
 gcc_malloc gcc_returns_nonnull
 char *
 p_strdup_impl(struct pool &pool, StringView src TRACE_ARGS_DECL) noexcept;
