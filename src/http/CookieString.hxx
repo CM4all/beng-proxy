@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,10 +36,10 @@
 
 #pragma once
 
-struct pool;
 struct StringView;
+class AllocatorPtr;
 
 void
-cookie_next_name_value(struct pool &pool, StringView &input,
+cookie_next_name_value(AllocatorPtr alloc, StringView &input,
                        StringView &name, StringView &value,
                        bool rfc_ignorant) noexcept;

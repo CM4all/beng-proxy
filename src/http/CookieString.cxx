@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,7 +33,6 @@
 #include "CookieString.hxx"
 #include "Tokenizer.hxx"
 #include "PTokenizer.hxx"
-#include "pool/pool.hxx"
 #include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -82,27 +81,27 @@ cookie_next_rfc_ignorant_value(StringView &input, StringView &value) noexcept
 }
 
 static void
-cookie_next_value(struct pool &pool, StringView &input,
+cookie_next_value(AllocatorPtr alloc, StringView &input,
                   StringView &value) noexcept
 {
     if (!input.empty() && input.front() == '"')
-        http_next_quoted_string(pool, input, value);
+        http_next_quoted_string(alloc, input, value);
     else
         cookie_next_unquoted_value(input, value);
 }
 
 static void
-cookie_next_rfc_ignorant_value(struct pool &pool, StringView &input,
+cookie_next_rfc_ignorant_value(AllocatorPtr alloc, StringView &input,
                                StringView &value) noexcept
 {
     if (!input.empty() && input.front() == '"')
-        http_next_quoted_string(pool, input, value);
+        http_next_quoted_string(alloc, input, value);
     else
         cookie_next_rfc_ignorant_value(input, value);
 }
 
 void
-cookie_next_name_value(struct pool &pool, StringView &input,
+cookie_next_name_value(AllocatorPtr alloc, StringView &input,
                        StringView &name, StringView &value,
                        bool rfc_ignorant) noexcept
 {
@@ -116,9 +115,9 @@ cookie_next_name_value(struct pool &pool, StringView &input,
         input.StripLeft();
 
         if (rfc_ignorant)
-            cookie_next_rfc_ignorant_value(pool, input, value);
+            cookie_next_rfc_ignorant_value(alloc, input, value);
         else
-            cookie_next_value(pool, input, value);
+            cookie_next_value(alloc, input, value);
     } else
         value = nullptr;
 }
