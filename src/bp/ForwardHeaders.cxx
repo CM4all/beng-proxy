@@ -355,7 +355,7 @@ forward_request_headers(struct pool &pool, const StringMap &src,
                     break;
 
                 if (StringIsEqual(key, "cookie")) {
-                    value = cookie_exclude(i.value, session_cookie, &pool);
+                    value = cookie_exclude(i.value, session_cookie, pool);
                     if (value != nullptr)
                         break;
                 }

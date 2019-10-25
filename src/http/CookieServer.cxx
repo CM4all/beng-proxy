@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,12 +33,11 @@
 #include "CookieServer.hxx"
 #include "CookieString.hxx"
 #include "strmap.hxx"
-#include "pool/pool.hxx"
 #include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
 StringMap
-cookie_map_parse(struct pool &pool, const char *p) noexcept
+cookie_map_parse(AllocatorPtr alloc, const char *p) noexcept
 {
     assert(p != nullptr);
 
@@ -48,11 +47,11 @@ cookie_map_parse(struct pool &pool, const char *p) noexcept
 
     while (true) {
         StringView name, value;
-        cookie_next_name_value(pool, input, name, value, true);
+        cookie_next_name_value(alloc, input, name, value, true);
         if (name.empty())
             break;
 
-        cookies.Add(pool, p_strdup(pool, name), p_strdup(pool, value));
+        cookies.Add(alloc, alloc.DupZ(name), alloc.DupZ(value));
 
         input.StripLeft();
         if (input.empty() || input.front() != ';')
@@ -66,13 +65,14 @@ cookie_map_parse(struct pool &pool, const char *p) noexcept
 }
 
 const char *
-cookie_exclude(const char *p, const char *_exclude, struct pool *pool) noexcept
+cookie_exclude(const char *p, const char *_exclude,
+               AllocatorPtr alloc) noexcept
 {
     assert(p != nullptr);
     assert(_exclude != nullptr);
 
     const char *const p0 = p;
-    char *const dest0 = (char *)p_malloc(pool, strlen(p) + 1);
+    char *const dest0 = alloc.NewArray<char>(strlen(p) + 1);
     char *dest = dest0;
 
     StringView input = p;
@@ -84,7 +84,7 @@ cookie_exclude(const char *p, const char *_exclude, struct pool *pool) noexcept
 
     while (true) {
         StringView name, value;
-        cookie_next_name_value(*pool, input, name, value, true);
+        cookie_next_name_value(alloc, input, name, value, true);
         if (name.empty())
             break;
 

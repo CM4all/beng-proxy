@@ -41,10 +41,11 @@
 
 int main(int argc, char **argv) {
     RootPool pool;
+    const AllocatorPtr alloc(pool);
 
     StringMap cookies;
     for (int i = 1; i < argc; ++i)
-        cookies.Merge(cookie_map_parse(pool, argv[i]));
+        cookies.Merge(cookie_map_parse(alloc, argv[i]));
 
     for (const auto &i : cookies)
         printf("%s=%s\n", i.key, i.value);

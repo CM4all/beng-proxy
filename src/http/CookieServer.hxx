@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,7 +38,7 @@
 
 #include "util/Compiler.h"
 
-struct pool;
+class AllocatorPtr;
 class StringMap;
 
 /**
@@ -47,7 +47,7 @@ class StringMap;
  */
 gcc_pure
 StringMap
-cookie_map_parse(struct pool &pool, const char *p) noexcept;
+cookie_map_parse(AllocatorPtr alloc, const char *p) noexcept;
 
 /**
  * Remove cookies with the specified name from a Cookie request
@@ -56,4 +56,5 @@ cookie_map_parse(struct pool &pool, const char *p) noexcept;
  * remain after removing the excluded cookie.
  */
 const char *
-cookie_exclude(const char *p, const char *exclude, struct pool *pool) noexcept;
+cookie_exclude(const char *p, const char *exclude,
+               AllocatorPtr alloc) noexcept;
