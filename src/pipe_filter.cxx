@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -53,25 +53,25 @@
 #include <errno.h>
 
 static const char *
-append_etag(struct pool *pool, const char *in, const char *suffix)
+append_etag(struct pool &pool, const char *in, const char *suffix)
 {
     size_t length;
 
     if (*in != '"')
         /* simple concatenation */
-        return p_strcat(pool, in, suffix, nullptr);
+        return p_strcat(&pool, in, suffix, nullptr);
 
     length = strlen(in + 1);
     if (in[length] != '"')
-        return p_strcat(pool, in, suffix, nullptr);
+        return p_strcat(&pool, in, suffix, nullptr);
 
-    return p_strncat(pool, in, length, suffix, strlen(suffix),
+    return p_strncat(&pool, in, length, suffix, strlen(suffix),
                      "\"", (size_t)1, nullptr);
 }
 
 template<typename A, typename E>
 static const char *
-make_pipe_etag(struct pool *pool, const char *in,
+make_pipe_etag(struct pool &pool, const char *in,
                const char *path,
                const A &args,
                const E &env)
@@ -96,7 +96,7 @@ make_pipe_etag(struct pool *pool, const char *in,
 
 void
 pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
-            struct pool *pool,
+            struct pool &pool,
             const StopwatchPtr &parent_stopwatch,
             const char *path,
             ConstBuffer<const char *> args,
@@ -126,7 +126,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 
     try {
         options.CopyTo(p, true, nullptr);
-        response = SpawnChildProcess(event_loop, pool, path, std::move(body),
+        response = SpawnChildProcess(event_loop, &pool, path, std::move(body),
                                      std::move(p),
                                      spawn_service);
     } catch (...) {
@@ -147,10 +147,10 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
                               options.env);
         assert(etag != nullptr);
 
-        headers.Add(*pool, "etag", etag);
+        headers.Add(pool, "etag", etag);
     }
 
-    response = istream_stopwatch_new(*pool, std::move(response),
+    response = istream_stopwatch_new(pool, std::move(response),
                                      std::move(stopwatch));
 
     handler.InvokeResponse(status, std::move(headers), std::move(response));

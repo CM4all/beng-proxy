@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -53,7 +53,7 @@ template<typename T> struct ConstBuffer;
  */
 void
 pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
-            struct pool *pool,
+            struct pool &pool,
             const StopwatchPtr &parent_stopwatch,
             const char *path,
             ConstBuffer<const char *> args,
