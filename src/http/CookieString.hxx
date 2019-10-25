@@ -42,4 +42,4 @@ struct StringView;
 void
 cookie_next_name_value(struct pool &pool, StringView &input,
                        StringView &name, StringView &value,
-                       bool rfc_ignorant);
+                       bool rfc_ignorant) noexcept;

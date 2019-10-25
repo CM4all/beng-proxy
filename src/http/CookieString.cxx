@@ -39,7 +39,7 @@
 
 gcc_always_inline
 static constexpr bool
-char_is_cookie_octet(char ch)
+char_is_cookie_octet(char ch) noexcept
 {
     return ch == 0x21 || (ch >= 0x23 && ch <= 0x2b) ||
         (ch >= 0x2d && ch <= 0x3a) ||
@@ -48,7 +48,7 @@ char_is_cookie_octet(char ch)
 }
 
 static void
-cookie_next_unquoted_value(StringView &input, StringView &value)
+cookie_next_unquoted_value(StringView &input, StringView &value) noexcept
 {
     value.size = 0;
     value.data = input.data;
@@ -62,14 +62,14 @@ cookie_next_unquoted_value(StringView &input, StringView &value)
 
 gcc_always_inline
 static constexpr bool
-char_is_rfc_ignorant_cookie_octet(char ch)
+char_is_rfc_ignorant_cookie_octet(char ch) noexcept
 {
     return char_is_cookie_octet(ch) ||
         ch == ' ' || ch == ',';
 }
 
 static void
-cookie_next_rfc_ignorant_value(StringView &input, StringView &value)
+cookie_next_rfc_ignorant_value(StringView &input, StringView &value) noexcept
 {
     value.size = 0;
     value.data = input.data;
@@ -83,7 +83,7 @@ cookie_next_rfc_ignorant_value(StringView &input, StringView &value)
 
 static void
 cookie_next_value(struct pool &pool, StringView &input,
-                  StringView &value)
+                  StringView &value) noexcept
 {
     if (!input.empty() && input.front() == '"')
         http_next_quoted_string(pool, input, value);
@@ -93,7 +93,7 @@ cookie_next_value(struct pool &pool, StringView &input,
 
 static void
 cookie_next_rfc_ignorant_value(struct pool &pool, StringView &input,
-                               StringView &value)
+                               StringView &value) noexcept
 {
     if (!input.empty() && input.front() == '"')
         http_next_quoted_string(pool, input, value);
@@ -104,7 +104,7 @@ cookie_next_rfc_ignorant_value(struct pool &pool, StringView &input,
 void
 cookie_next_name_value(struct pool &pool, StringView &input,
                        StringView &name, StringView &value,
-                       bool rfc_ignorant)
+                       bool rfc_ignorant) noexcept
 {
     http_next_token(input, name);
     if (name.empty())
