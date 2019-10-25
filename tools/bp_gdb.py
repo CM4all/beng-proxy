@@ -801,6 +801,13 @@ class CatIstreamInputPrinter:
     def to_string(self):
         return self.val['input']
 
+class SpawnServerChildPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return '{id=%d, pid=%d, name=%s}' % (self.val['id'], self.val['pid'], self.val['name'])
+
 import gdb.printing
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter("cm4all-beng-proxy")
@@ -829,6 +836,7 @@ def build_pretty_printer():
     pp.add_printer('StockMap::Item', '^StockMap::Item$', StockMapItemPrinter)
     pp.add_printer('IstreamPointer', '^IstreamPointer$', IstreamPointerPrinter)
     pp.add_printer('CatIstream::Input', '^CatIstream::Input$', CatIstreamInputPrinter)
+    pp.add_printer('SpawnServerChild', '^SpawnServerChild$', SpawnServerChildPrinter)
     return pp
 
 gdb.printing.register_pretty_printer(gdb.current_objfile(), build_pretty_printer(), replace=True)
