@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,6 +40,7 @@
 #include "strmap.hxx"
 #include "GrowingBuffer.hxx"
 #include "util/ConstBuffer.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -48,6 +49,7 @@
 int main(int argc, char **argv) {
     const ScopeFbPoolInit fb_pool_init;
     RootPool pool;
+    const AllocatorPtr alloc(pool);
 
     struct shm *shm = shm_new(1024, 512);
     struct dpool *dpool = dpool_new(*shm);
@@ -58,7 +60,7 @@ int main(int argc, char **argv) {
         cookie_jar_set_cookie2(jar, argv[i], "foo.bar", nullptr);
 
     StringMap headers(*pool);
-    cookie_jar_http_header(jar, "foo.bar", "/x", headers, pool);
+    cookie_jar_http_header(jar, "foo.bar", "/x", headers, alloc);
 
     GrowingBufferReader reader(headers_dup(headers));
 

@@ -34,7 +34,7 @@
 
 #include "util/Compiler.h"
 
-struct pool;
+class AllocatorPtr;
 class StringMap;
 struct CookieJar;
 
@@ -53,10 +53,10 @@ cookie_jar_set_cookie2(CookieJar &jar, const char *value,
  * Generate the HTTP request header for cookies in the jar.
  */
 gcc_pure
-char *
+const char *
 cookie_jar_http_header_value(const CookieJar &jar,
                              const char *domain, const char *path,
-                             struct pool &pool) noexcept;
+                             AllocatorPtr alloc) noexcept;
 
 /**
  * Generate HTTP request headers passing for all cookies in the linked
@@ -65,4 +65,4 @@ cookie_jar_http_header_value(const CookieJar &jar,
 void
 cookie_jar_http_header(const CookieJar &jar,
                        const char *domain, const char *path,
-                       StringMap &headers, struct pool &pool) noexcept;
+                       StringMap &headers, AllocatorPtr alloc) noexcept;

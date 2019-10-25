@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,6 +41,7 @@
 #include "http/CookieServer.hxx"
 #include "util/CharUtil.hxx"
 #include "util/StringCompare.hxx"
+#include "AllocatorPtr.hxx"
 
 #ifndef NDEBUG
 #include "io/Logger.hxx"

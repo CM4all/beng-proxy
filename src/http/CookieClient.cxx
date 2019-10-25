@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,6 +41,7 @@
 #include "shm/dpool.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringView.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <iterator>
 
@@ -194,10 +195,10 @@ try {
     /* XXX log error */
 }
 
-char *
+const char *
 cookie_jar_http_header_value(const CookieJar &jar,
                              const char *domain, const char *path,
-                             struct pool &pool) noexcept
+                             AllocatorPtr alloc) noexcept
 {
     static constexpr size_t buffer_size = 4096;
 
@@ -242,9 +243,9 @@ cookie_jar_http_header_value(const CookieJar &jar,
         }
     }
 
-    char *value;
+    const char *value;
     if (length > 0)
-        value = p_strndup(&pool, buffer, length);
+        value = alloc.DupZ({buffer, length});
     else
         value = nullptr;
 
@@ -254,9 +255,10 @@ cookie_jar_http_header_value(const CookieJar &jar,
 void
 cookie_jar_http_header(const CookieJar &jar,
                        const char *domain, const char *path,
-                       StringMap &headers, struct pool &pool) noexcept
+                       StringMap &headers, AllocatorPtr alloc) noexcept
 {
-    char *cookie = cookie_jar_http_header_value(jar, domain, path, pool);
+    const char *cookie =
+        cookie_jar_http_header_value(jar, domain, path, alloc);
 
     if (cookie != nullptr) {
         headers.Add("cookie2", "$Version=\"1\"");
