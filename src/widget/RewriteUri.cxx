@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -48,11 +48,11 @@
 #include "istream/istream.hxx"
 #include "strmap.hxx"
 #include "bp/session/Session.hxx"
-#include "pool/pool.hxx"
 #include "pool/pbuffer.hxx"
 #include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
+#include "AllocatorPtr.hxx"
 
 RewriteUriMode
 parse_uri_mode(const StringView s) noexcept
@@ -75,7 +75,7 @@ parse_uri_mode(const StringView s) noexcept
  */
 
 static const char *
-uri_replace_hostname(struct pool &pool, const char *uri,
+uri_replace_hostname(AllocatorPtr alloc, const char *uri,
                      const char *hostname) noexcept
 {
     assert(hostname != nullptr);
@@ -83,23 +83,18 @@ uri_replace_hostname(struct pool &pool, const char *uri,
     const auto old_host = uri_host_and_port(uri);
     if (old_host.IsNull())
         return *uri == '/'
-            ? p_strcat(&pool,
-                       "//", hostname,
-                       uri, nullptr)
+            ? alloc.Concat("//", hostname, uri)
             : nullptr;
 
     const char *colon = old_host.Find(':');
     const char *end = colon != nullptr ? colon : old_host.end();
 
-    return p_strncat(&pool,
-                     uri, old_host.data - uri,
-                     hostname, strlen(hostname),
-                     end, strlen(end),
-                     nullptr);
+    return alloc.Concat(StringView{uri, old_host.data},
+                        hostname, end);
 }
 
 static const char *
-uri_add_prefix(struct pool &pool, const char *uri, const char *absolute_uri,
+uri_add_prefix(AllocatorPtr alloc, const char *uri, const char *absolute_uri,
                const char *untrusted_host,
                const char *untrusted_prefix) noexcept
 {
@@ -120,27 +115,22 @@ uri_add_prefix(struct pool &pool, const char *uri, const char *absolute_uri,
         if (host.IsNull())
             return uri;
 
-        return p_strncat(&pool, absolute_uri, size_t(host.data - absolute_uri),
-                         untrusted_prefix, strlen(untrusted_prefix),
-                         ".", size_t(1),
-                         host.data, host.size,
-                         uri, strlen(uri),
-                         nullptr);
+        return alloc.Concat(StringView{absolute_uri, host.data},
+                            untrusted_prefix,
+                            '.', host, uri);
     }
 
     const auto host = uri_host_and_port(uri);
     if (host.IsNull())
         return uri;
 
-    return p_strncat(&pool, uri, size_t(host.data - uri),
-                     untrusted_prefix, strlen(untrusted_prefix),
-                     ".", size_t(1),
-                     host.data, strlen(host.data),
-                     nullptr);
+    return alloc.Concat(StringView{uri, host.data},
+                        untrusted_prefix,
+                        '.', host);
 }
 
 static const char *
-uri_add_site_suffix(struct pool &pool, const char *uri, const char *site_name,
+uri_add_site_suffix(AllocatorPtr alloc, const char *uri, const char *site_name,
                     const char *untrusted_host,
                     const char *untrusted_site_suffix) noexcept
 {
@@ -164,12 +154,11 @@ uri_add_site_suffix(struct pool &pool, const char *uri, const char *site_name,
            URI */
         return uri;
 
-    return p_strcat(&pool, "//", site_name, ".", untrusted_site_suffix,
-                    path, nullptr);
+    return alloc.Concat("//", site_name, ".", untrusted_site_suffix, path);
 }
 
 static const char *
-uri_add_raw_site_suffix(struct pool &pool, const char *uri, const char *site_name,
+uri_add_raw_site_suffix(AllocatorPtr alloc, const char *uri, const char *site_name,
                         const char *untrusted_host,
                         const char *untrusted_raw_site_suffix) noexcept
 {
@@ -193,15 +182,14 @@ uri_add_raw_site_suffix(struct pool &pool, const char *uri, const char *site_nam
            URI */
         return uri;
 
-    return p_strcat(&pool, "//", site_name, untrusted_raw_site_suffix,
-                    path, nullptr);
+    return alloc.Concat("//", site_name, untrusted_raw_site_suffix, path);
 }
 
 /**
  * @return the new URI or nullptr if it is unchanged
  */
 static const char *
-do_rewrite_widget_uri(struct pool &pool, WidgetContext &ctx,
+do_rewrite_widget_uri(AllocatorPtr alloc, WidgetContext &ctx,
                       Widget &widget,
                       StringView value,
                       RewriteUriMode mode, bool stateful,
@@ -210,10 +198,8 @@ do_rewrite_widget_uri(struct pool &pool, WidgetContext &ctx,
     if (widget.cls->local_uri != nullptr &&
         value.size >= 2 && value[0] == '@' && value[1] == '/')
         /* relative to widget's "local URI" */
-        return p_strncat(&pool, widget.cls->local_uri,
-                         strlen(widget.cls->local_uri),
-                         value.data + 2, value.size - 2,
-                         nullptr);
+        return alloc.Concat(widget.cls->local_uri,
+                            StringView{value.data + 2, value.size - 2});
 
     const char *frame = nullptr;
 
@@ -224,7 +210,7 @@ do_rewrite_widget_uri(struct pool &pool, WidgetContext &ctx,
             /* the browser can only contact HTTP widgets directly */
             return nullptr;
 
-        return widget.AbsoluteUri(pool, stateful, value);
+        return widget.AbsoluteUri(alloc, stateful, value);
 
     case RewriteUriMode::FOCUS:
         frame = strmap_get_checked(ctx.args, "frame");
@@ -243,7 +229,8 @@ do_rewrite_widget_uri(struct pool &pool, WidgetContext &ctx,
         gcc_unreachable();
     }
 
-    const char *uri = widget.ExternalUri(pool, ctx.external_base_uri, ctx.args,
+    const char *uri = widget.ExternalUri(alloc, ctx.external_base_uri,
+                                         ctx.args,
                                          stateful,
                                          value,
                                          frame, view);
@@ -260,16 +247,16 @@ do_rewrite_widget_uri(struct pool &pool, WidgetContext &ctx,
     if (widget.cls->untrusted_host != nullptr &&
         (ctx.untrusted_host == nullptr ||
          strcmp(widget.cls->untrusted_host, ctx.untrusted_host) != 0))
-        uri = uri_replace_hostname(pool, uri, widget.cls->untrusted_host);
+        uri = uri_replace_hostname(alloc, uri, widget.cls->untrusted_host);
     else if (widget.cls->untrusted_prefix != nullptr)
-        uri = uri_add_prefix(pool, uri, ctx.absolute_uri, ctx.untrusted_host,
+        uri = uri_add_prefix(alloc, uri, ctx.absolute_uri, ctx.untrusted_host,
                              widget.cls->untrusted_prefix);
     else if (widget.cls->untrusted_site_suffix != nullptr)
-        uri = uri_add_site_suffix(pool, uri, ctx.site_name,
+        uri = uri_add_site_suffix(alloc, uri, ctx.site_name,
                                   ctx.untrusted_host,
                                   widget.cls->untrusted_site_suffix);
     else if (widget.cls->untrusted_raw_site_suffix != nullptr)
-        uri = uri_add_raw_site_suffix(pool, uri, ctx.site_name,
+        uri = uri_add_raw_site_suffix(alloc, uri, ctx.site_name,
                                       ctx.untrusted_host,
                                       widget.cls->untrusted_raw_site_suffix);
 
