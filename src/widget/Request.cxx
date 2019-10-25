@@ -460,7 +460,7 @@ WidgetRequest::FilterResponse(http_status_t status,
 {
     previous_status = status;
 
-    const char *source_tag = resource_tag_append_etag(&pool, resource_tag,
+    const char *source_tag = resource_tag_append_etag(pool, resource_tag,
                                                       headers);
     resource_tag = source_tag != nullptr
         ? p_strcat(&pool, source_tag, "|", filter.GetId(AllocatorPtr(pool)), nullptr)

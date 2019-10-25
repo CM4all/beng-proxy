@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,14 +33,14 @@
 #ifndef BENG_PROXY_RESOURCE_TAG_HXX
 #define BENG_PROXY_RESOURCE_TAG_HXX
 
-struct pool;
+class AllocatorPtr;
 class StringMap;
 
 /**
  * A tag which addresses a resource in the filter cache.
  */
 const char *
-resource_tag_append_etag(struct pool *pool, const char *tag,
+resource_tag_append_etag(AllocatorPtr alloc, const char *tag,
                          const StringMap &headers);
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,11 +32,11 @@
 
 #include "resource_tag.hxx"
 #include "strmap.hxx"
-#include "pool/pool.hxx"
 #include "http/List.hxx"
+#include "AllocatorPtr.hxx"
 
 const char *
-resource_tag_append_etag(struct pool *pool, const char *tag,
+resource_tag_append_etag(AllocatorPtr alloc, const char *tag,
                          const StringMap &headers)
 {
     const char *etag, *p;
@@ -54,6 +54,6 @@ resource_tag_append_etag(struct pool *pool, const char *tag,
            because we are not allowed to store the response anyway */
         return NULL;
 
-    return p_strcat(pool, tag, "|etag=", etag, NULL);
+    return alloc.Concat(tag, "|etag=", etag);
 }
 

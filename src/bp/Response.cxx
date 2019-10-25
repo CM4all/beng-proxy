@@ -620,7 +620,7 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
 
     previous_status = status;
 
-    const char *source_tag = resource_tag_append_etag(&pool, resource_tag,
+    const char *source_tag = resource_tag_append_etag(pool, resource_tag,
                                                       headers2);
     resource_tag = source_tag != nullptr
         ? alloc.Concat(source_tag, '|', filter.GetId(AllocatorPtr(pool)))
