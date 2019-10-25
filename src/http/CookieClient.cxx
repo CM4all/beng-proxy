@@ -47,8 +47,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+gcc_pure
 static bool
-domain_matches(const char *domain, const char *match)
+domain_matches(const char *domain, const char *match) noexcept
 {
     size_t domain_length = strlen(domain);
     size_t match_length = strlen(match);
@@ -63,8 +64,9 @@ domain_matches(const char *domain, const char *match)
           domain[domain_length - match_length - 1] == '.'));
 }
 
+gcc_pure
 static bool
-path_matches(const char *path, const char *match)
+path_matches(const char *path, const char *match) noexcept
 {
     return match == nullptr || StringStartsWith(path, match);
 }
@@ -73,7 +75,7 @@ template<typename L>
 static void
 cookie_list_delete_match(struct dpool &dpool, L &list,
                          const char *domain, const char *path,
-                         StringView name)
+                         StringView name) noexcept
 {
     assert(domain != nullptr);
 
@@ -88,7 +90,8 @@ cookie_list_delete_match(struct dpool &dpool, L &list,
 }
 
 static Cookie *
-parse_next_cookie(struct dpool &pool, struct pool &tpool, StringView &input)
+parse_next_cookie(struct dpool &pool, struct pool &tpool,
+                  StringView &input) noexcept
 {
     StringView name, value;
     cookie_next_name_value(tpool, input, name, value, false);
@@ -127,7 +130,7 @@ parse_next_cookie(struct dpool &pool, struct pool &tpool, StringView &input)
 
 static bool
 apply_next_cookie(CookieJar &jar, struct pool &tpool, StringView &input,
-                  const char *domain, const char *path)
+                  const char *domain, const char *path) noexcept
 {
     assert(domain != nullptr);
 
@@ -168,7 +171,7 @@ apply_next_cookie(CookieJar &jar, struct pool &tpool, StringView &input,
 
 void
 cookie_jar_set_cookie2(CookieJar &jar, const char *value,
-                       const char *domain, const char *path)
+                       const char *domain, const char *path) noexcept
 try {
     const TempPoolLease tpool;
 
@@ -194,7 +197,7 @@ try {
 char *
 cookie_jar_http_header_value(const CookieJar &jar,
                              const char *domain, const char *path,
-                             struct pool &pool)
+                             struct pool &pool) noexcept
 {
     static constexpr size_t buffer_size = 4096;
 
@@ -251,7 +254,7 @@ cookie_jar_http_header_value(const CookieJar &jar,
 void
 cookie_jar_http_header(const CookieJar &jar,
                        const char *domain, const char *path,
-                       StringMap &headers, struct pool &pool)
+                       StringMap &headers, struct pool &pool) noexcept
 {
     char *cookie = cookie_jar_http_header_value(jar, domain, path, pool);
 

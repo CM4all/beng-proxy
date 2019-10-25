@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include "util/Compiler.h"
+
 struct pool;
 class StringMap;
 struct CookieJar;
@@ -45,15 +47,16 @@ struct CookieJar;
  */
 void
 cookie_jar_set_cookie2(CookieJar &jar, const char *value,
-                       const char *domain, const char *path);
+                       const char *domain, const char *path) noexcept;
 
 /**
  * Generate the HTTP request header for cookies in the jar.
  */
+gcc_pure
 char *
 cookie_jar_http_header_value(const CookieJar &jar,
                              const char *domain, const char *path,
-                             struct pool &pool);
+                             struct pool &pool) noexcept;
 
 /**
  * Generate HTTP request headers passing for all cookies in the linked
@@ -62,4 +65,4 @@ cookie_jar_http_header_value(const CookieJar &jar,
 void
 cookie_jar_http_header(const CookieJar &jar,
                        const char *domain, const char *path,
-                       StringMap &headers, struct pool &pool);
+                       StringMap &headers, struct pool &pool) noexcept;
