@@ -62,7 +62,7 @@ header_parse_line(struct pool &pool, StringMap &headers,
     char *key = p_strdup_lower(pool, StringView(line.begin(), key_end));
     char *value = p_strndup(&pool, colon, line.end() - colon);
 
-    headers.Add(key, value);
+    headers.Add(pool, key, value);
 }
 
 void

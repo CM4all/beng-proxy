@@ -65,28 +65,23 @@ public:
      */
     bool generate_server_header = false;
 
-    explicit HttpHeaders(struct pool &pool) noexcept
-        :map(pool) {}
+    HttpHeaders() = default;
 
     explicit HttpHeaders(StringMap &&_map) noexcept
         :map(std::move(_map)) {}
 
-    HttpHeaders(struct pool &pool, GrowingBuffer &&_buffer) noexcept
-        :map(pool), buffer(std::move(_buffer)) {}
+    HttpHeaders(GrowingBuffer &&_buffer) noexcept
+        :buffer(std::move(_buffer)) {}
 
     HttpHeaders(HttpHeaders &&) = default;
     HttpHeaders &operator=(HttpHeaders &&) = default;
-
-    struct pool &GetPool() noexcept {
-        return map.GetPool();
-    }
 
     const StringMap &GetMap() const noexcept {
         return map;
     }
 
-    StringMap &&ToMap() && noexcept {
-        header_parse_buffer(GetPool(), map, std::move(buffer));
+    StringMap &&ToMap(struct pool &pool) && noexcept {
+        header_parse_buffer(pool, map, std::move(buffer));
         return std::move(map);
     }
 

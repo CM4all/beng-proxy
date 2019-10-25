@@ -62,7 +62,7 @@ public:
         // TODO
 
         if (request.body)
-            request.SendResponse(HTTP_STATUS_OK, HttpHeaders(request.pool),
+            request.SendResponse(HTTP_STATUS_OK, {},
                                  std::move(request.body));
         else
             request.SendMessage(HTTP_STATUS_OK, "Hello, world!\n");

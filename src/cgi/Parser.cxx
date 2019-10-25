@@ -40,11 +40,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-CGIParser::CGIParser(struct pool &pool)
-    :headers(pool)
-{
-}
-
 inline Completion
 CGIParser::Finish(ForeignFifoBuffer<uint8_t> &buffer)
 {

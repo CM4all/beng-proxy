@@ -43,8 +43,8 @@ HttpResponseHandler::InvokeResponse(struct pool &pool,
     assert(http_status_is_valid(status));
     assert(msg != nullptr);
 
-    StringMap headers(pool);
-    headers.Add("content-type", "text/plain; charset=utf-8");
+    StringMap headers;
+    headers.Add(pool, "content-type", "text/plain; charset=utf-8");
     InvokeResponse(status, std::move(headers),
                    istream_string_new(pool, msg));
 }

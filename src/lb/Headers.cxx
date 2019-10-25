@@ -45,12 +45,12 @@ forward_via(struct pool &pool, StringMap &headers,
     const char *p = headers.Remove("via");
     if (p == nullptr) {
         if (local_host != nullptr)
-            headers.Add("via", p_strcat(&pool, "1.1 ", local_host, nullptr));
+            headers.Add(pool, "via", p_strcat(&pool, "1.1 ", local_host, nullptr));
     } else {
         if (local_host == nullptr)
-            headers.Add("via", p);
+            headers.Add(pool, "via", p);
         else
-            headers.Add("via", p_strcat(&pool, p, ", 1.1 ", local_host, nullptr));
+            headers.Add(pool, "via", p_strcat(&pool, p, ", 1.1 ", local_host, nullptr));
     }
 }
 
@@ -61,12 +61,12 @@ forward_xff(struct pool &pool, StringMap &headers,
     const char *p = headers.Remove("x-forwarded-for");
     if (p == nullptr) {
         if (remote_host != nullptr)
-            headers.Add("x-forwarded-for", remote_host);
+            headers.Add(pool, "x-forwarded-for", remote_host);
     } else {
         if (remote_host == nullptr)
-            headers.Add("x-forwarded-for", p);
+            headers.Add(pool, "x-forwarded-for", p);
         else
-            headers.Add("x-forwarded-for",
+            headers.Add(pool, "x-forwarded-for",
                         p_strcat(&pool, p, ", ", remote_host, nullptr));
     }
 }
@@ -87,10 +87,10 @@ lb_forward_request_headers(struct pool &pool, StringMap &headers,
                            const char *peer_issuer_subject,
                            bool mangle_via)
 {
-    headers.SecureSet("x-cm4all-https", https ? "on" : nullptr);
+    headers.SecureSet(pool, "x-cm4all-https", https ? "on" : nullptr);
 
-    headers.SecureSet("x-cm4all-beng-peer-subject", peer_subject);
-    headers.SecureSet("x-cm4all-beng-peer-issuer-subject",
+    headers.SecureSet(pool, "x-cm4all-beng-peer-subject", peer_subject);
+    headers.SecureSet(pool, "x-cm4all-beng-peer-issuer-subject",
                       peer_issuer_subject);
 
     if (mangle_via)

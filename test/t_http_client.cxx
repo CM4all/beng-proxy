@@ -230,7 +230,7 @@ test_no_keepalive(Context<Connection> &c)
 {
     c.connection = Connection::NewClose(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           nullptr,
 #ifdef HAVE_EXPECT_100
                           false,

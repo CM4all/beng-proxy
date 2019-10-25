@@ -201,14 +201,16 @@ inline int
 ServerConnection::Request::OnHeaderCallback(StringView name,
                                             StringView value) noexcept
 {
+    AllocatorPtr alloc(pool);
+
     if (name.Equals(":method"))
         method = ParseHttpMethod(value);
     else if (name.Equals(":path"))
         uri = p_strdup(pool, value);
     else if (name.Equals(":authority"))
-        headers.Add("host", p_strdup(pool, value));
+        headers.Add(alloc, "host", p_strdup(pool, value));
     else if (name.size >= 2 && name.front() != ':')
-        headers.Add(p_strdup_lower(pool, name), p_strdup(pool, value));
+        headers.Add(alloc, p_strdup_lower(pool, name), p_strdup(pool, value));
 
     return 0;
 }
@@ -336,7 +338,7 @@ ServerConnection::Request::SendResponse(http_status_t status,
     StaticArray<nghttp2_nv, 256> hdrs;
     hdrs.push_back(MakeNv(":status", status_string));
 
-    for (const auto &i : std::move(response_headers).ToMap()) {
+    for (const auto &i : std::move(response_headers).ToMap(pool)) {
         if (hdrs.full())
             // TODO: what now?
             break;

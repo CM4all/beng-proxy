@@ -88,7 +88,7 @@ fcgi_server_mirror(struct pool *pool)
     char buffer[32];
     if (request.length > 0) {
         sprintf(buffer, "%llu", (unsigned long long)request.length);
-        request.headers->Add("content-length", buffer);
+        request.headers->Add(*pool, "content-length", buffer);
     }
 
     write_fcgi_headers(&request, status, request.headers);

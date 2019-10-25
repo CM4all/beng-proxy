@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     for (int i = 1; i < argc; ++i)
         cookie_jar_set_cookie2(jar, argv[i], "foo.bar", nullptr);
 
-    StringMap headers(*pool);
+    StringMap headers;
     cookie_jar_http_header(jar, "foo.bar", "/x", headers, alloc);
 
     GrowingBufferReader reader(headers_dup(headers));

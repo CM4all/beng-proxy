@@ -151,7 +151,7 @@ ErrorResponseLoader::OnTranslateResponse(TranslateResponse &response) noexcept
                           0, nullptr, nullptr,
                           HTTP_METHOD_GET,
                           response.address, HTTP_STATUS_OK,
-                          StringMap(request.pool), nullptr, nullptr,
+                          {}, nullptr, nullptr,
                           *this, request.cancel_ptr);
     } else {
         ResubmitAndDestroy();

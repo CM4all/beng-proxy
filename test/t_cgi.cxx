@@ -227,7 +227,7 @@ test_normal(PoolPtr pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, StringMap(*pool), nullptr,
+            nullptr, {}, nullptr,
             *c, c->cancel_ptr);
 
     pool.reset();
@@ -258,7 +258,7 @@ test_tiny(PoolPtr pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, StringMap(*pool), nullptr,
+            nullptr, {}, nullptr,
             *c, c->cancel_ptr);
 
     pool.reset();
@@ -291,7 +291,7 @@ test_close_early(PoolPtr pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, StringMap(*pool), nullptr,
+            nullptr, {}, nullptr,
             *c, c->cancel_ptr);
 
     pool.reset();
@@ -324,7 +324,7 @@ test_close_late(PoolPtr pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, StringMap(*pool), nullptr,
+            nullptr, {}, nullptr,
             *c, c->cancel_ptr);
 
     pool.reset();
@@ -356,7 +356,7 @@ test_close_data(PoolPtr pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, StringMap(*pool), nullptr,
+            nullptr, {}, nullptr,
             *c, c->cancel_ptr);
 
     pool.reset();
@@ -389,7 +389,7 @@ test_post(PoolPtr pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, nullptr, HTTP_METHOD_POST, &address,
-            nullptr, StringMap(*pool),
+            nullptr, {},
             UnusedIstreamPtr(istream_file_new(c->event_loop, *pool,
                                               "build.ninja", 8192)),
             *c, c->cancel_ptr);
@@ -424,7 +424,7 @@ test_status(PoolPtr pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, StringMap(*pool), nullptr,
+            nullptr, {}, nullptr,
             *c, c->cancel_ptr);
 
     pool.reset();
@@ -457,7 +457,7 @@ test_no_content(PoolPtr pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, StringMap(*pool), nullptr,
+            nullptr, {}, nullptr,
             *c, c->cancel_ptr);
 
     pool.reset();
@@ -488,7 +488,7 @@ test_no_length(PoolPtr pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, StringMap(*pool), nullptr,
+            nullptr, {}, nullptr,
             *c, c->cancel_ptr);
 
     pool.reset();
@@ -517,7 +517,7 @@ test_length_ok(PoolPtr pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, StringMap(*pool), nullptr,
+            nullptr, {}, nullptr,
             *c, c->cancel_ptr);
 
     pool.reset();
@@ -548,7 +548,7 @@ test_length_ok_large(PoolPtr pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, StringMap(*pool), nullptr,
+            nullptr, {}, nullptr,
             *c, c->cancel_ptr);
 
     pool.reset();
@@ -577,7 +577,7 @@ test_length_too_small(PoolPtr pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, StringMap(*pool), nullptr,
+            nullptr, {}, nullptr,
             *c, c->cancel_ptr);
 
     pool.reset();
@@ -605,7 +605,7 @@ test_length_too_big(PoolPtr pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, StringMap(*pool), nullptr,
+            nullptr, {}, nullptr,
             *c, c->cancel_ptr);
 
     pool.reset();
@@ -634,7 +634,7 @@ test_length_too_small_late(PoolPtr pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, StringMap(*pool), nullptr,
+            nullptr, {}, nullptr,
             *c, c->cancel_ptr);
 
     pool.reset();
@@ -666,7 +666,7 @@ test_large_header(PoolPtr pool, Context *c)
 
     cgi_new(c->spawn_service, c->event_loop,
             pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, StringMap(*pool), nullptr,
+            nullptr, {}, nullptr,
             *c, c->cancel_ptr);
 
     pool.reset();

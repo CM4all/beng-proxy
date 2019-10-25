@@ -122,7 +122,8 @@ ProxyWidget::OnHttpResponse(http_status_t status, StringMap &&_headers,
                                             nullptr, nullptr,
                                             view->response_header_forward);
 
-    add_translation_vary_header(headers, *request.translate.response);
+    add_translation_vary_header(request.pool, headers,
+                                *request.translate.response);
 
     request.product_token = headers.Remove("server");
 

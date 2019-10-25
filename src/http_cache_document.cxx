@@ -33,6 +33,7 @@
 #include "http_cache_document.hxx"
 #include "http_cache_rfc.hxx"
 #include "strmap.hxx"
+#include "AllocatorPtr.hxx"
 
 HttpCacheDocument::HttpCacheDocument(struct pool &pool,
                                      const HttpCacheResponseInfo &_info,
@@ -40,7 +41,6 @@ HttpCacheDocument::HttpCacheDocument(struct pool &pool,
                                      http_status_t _status,
                                      const StringMap &_response_headers) noexcept
     :info(pool, _info),
-     vary(pool),
      status(_status),
      response_headers(pool, _response_headers)
 {

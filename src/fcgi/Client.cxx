@@ -142,8 +142,8 @@ struct FcgiClient final
          */
         bool stderr;
 
-        Response(struct pool &p, bool _no_body)
-            :headers(p), no_body(_no_body) {}
+        explicit Response(bool _no_body)
+            :no_body(_no_body) {}
     } response;
 
     size_t content_length = 0, skip_length = 0;
@@ -1066,7 +1066,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
      stopwatch(std::move(_stopwatch)),
      handler(_handler),
      id(_id),
-     response(GetPool(), http_method_is_empty(method))
+     response(http_method_is_empty(method))
 {
     socket.Init(fd, fd_type,
                 fcgi_client_timeout, fcgi_client_timeout,

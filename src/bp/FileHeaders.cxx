@@ -157,7 +157,7 @@ static void
 DispatchNotModified(Request &request2, const TranslateResponse &tr,
                     FileDescriptor fd, const struct stat &st)
 {
-    HttpHeaders headers(request2.pool);
+    HttpHeaders headers;
     auto &headers2 = headers.GetBuffer();
 
     file_cache_headers(headers2,
@@ -191,7 +191,7 @@ Request::EvaluateFileRequest(FileDescriptor fd, const struct stat &st,
         const char *p = request_headers.Get("if-match");
         if (p != nullptr && !CheckETagList(p, fd, st)) {
             DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
-                             HttpHeaders(pool), nullptr);
+                             {}, nullptr);
             return false;
         }
 
@@ -230,7 +230,7 @@ Request::EvaluateFileRequest(FileDescriptor fd, const struct stat &st,
             if (t != std::chrono::system_clock::from_time_t(-1) &&
                 std::chrono::system_clock::from_time_t(st.st_mtime) > t) {
                 DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
-                                 HttpHeaders(pool), nullptr);
+                                 {}, nullptr);
                 return false;
             }
         }

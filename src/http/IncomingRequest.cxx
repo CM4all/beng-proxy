@@ -48,8 +48,9 @@ IncomingHttpRequest::IncomingHttpRequest(PoolPtr &&_pool,
      local_host_and_port(_local_host_and_port),
      remote_host(_remote_host),
      method(HTTP_METHOD_NULL),
-     uri(nullptr),
-     headers(pool) {}
+     uri(nullptr)
+{
+}
 
 IncomingHttpRequest::IncomingHttpRequest(PoolPtr &&_pool,
                                          SocketAddress _local_address,
@@ -64,8 +65,9 @@ IncomingHttpRequest::IncomingHttpRequest(PoolPtr &&_pool,
      local_host_and_port(_local_host_and_port),
      remote_host(_remote_host),
      method(_method),
-     uri(p_strdup(pool, _uri)),
-     headers(pool) {}
+     uri(p_strdup(pool, _uri))
+{
+}
 
 void
 IncomingHttpRequest::SendSimpleResponse(http_status_t status,
@@ -79,7 +81,7 @@ IncomingHttpRequest::SendSimpleResponse(http_status_t status,
     else if (msg == nullptr)
         msg = http_status_to_string(status);
 
-    HttpHeaders response_headers(pool);
+    HttpHeaders response_headers;
     response_headers.generate_date_header = true;
 
     if (location != nullptr)
@@ -98,7 +100,7 @@ IncomingHttpRequest::SendSimpleResponse(http_status_t status,
 void
 IncomingHttpRequest::SendMessage(http_status_t status, const char *msg) const noexcept
 {
-    HttpHeaders response_headers(pool);
+    HttpHeaders response_headers;
     response_headers.generate_date_header = true;
 
     response_headers.Write("content-type", "text/plain");
@@ -119,7 +121,7 @@ IncomingHttpRequest::SendRedirect(http_status_t status, const char *location,
     else if (msg == nullptr)
         msg = http_status_to_string(status);
 
-    HttpHeaders response_headers(pool);
+    HttpHeaders response_headers;
     response_headers.generate_date_header = true;
 
     response_headers.Write("content-type", "text/plain");

@@ -34,8 +34,8 @@
 #define BENG_PROXY_STRMAP_HXX
 
 #include "util/ShallowCopy.hxx"
-
 #include "util/Compiler.h"
+#include "AllocatorPtr.hxx"
 
 #include <boost/intrusive/set.hpp>
 
@@ -99,8 +99,6 @@ class StringMap {
         };
     };
 
-    struct pool &pool;
-
     typedef boost::intrusive::multiset<Item,
                                        boost::intrusive::compare<Item::Compare>,
                                        boost::intrusive::constant_time_size<false>> Map;
@@ -110,15 +108,14 @@ class StringMap {
     Map map;
 
 public:
-    explicit StringMap(struct pool &_pool) noexcept
-        :pool(_pool) {}
+    StringMap() = default;
 
-    explicit StringMap(struct pool &_pool,
+    template<typename A>
+    explicit StringMap(A _alloc,
                        std::initializer_list<std::pair<const char *, const char *>> init) noexcept
-        :StringMap(_pool)
     {
         for (const auto &i : init)
-            Add(i.first, i.second);
+            Add(_alloc, i.first, i.second);
     }
 
     StringMap(struct pool &_pool, const StringMap &src) noexcept;
@@ -143,10 +140,6 @@ public:
         return *this;
     }
 
-    struct pool &GetPool() noexcept {
-        return pool;
-    }
-
     const_iterator begin() const noexcept {
         return map.begin();
     }
@@ -162,8 +155,9 @@ public:
 
     void Clear() noexcept;
 
-    void Add(const char *key, const char *value) noexcept;
-    const char *Set(const char *key, const char *value) noexcept;
+    void Add(AllocatorPtr alloc, const char *key, const char *value) noexcept;
+    const char *Set(AllocatorPtr alloc,
+                    const char *key, const char *value) noexcept;
     const char *Remove(const char *key) noexcept;
 
     /**
@@ -175,7 +169,8 @@ public:
      * Remove all existing values with the specified key and
      * (optionally, if not nullptr) add a new value.
      */
-    void SecureSet(const char *key, const char *value) noexcept;
+    void SecureSet(AllocatorPtr alloc,
+                   const char *key, const char *value) noexcept;
 
     gcc_pure
     const char *Get(const char *key) const noexcept;
@@ -188,21 +183,24 @@ public:
     gcc_pure
     std::pair<const_iterator, const_iterator> EqualRange(const char *key) const noexcept;
 
-    void CopyFrom(const StringMap &src, const char *key) noexcept;
+    void CopyFrom(AllocatorPtr alloc,
+                  const StringMap &src, const char *key) noexcept;
 
     /**
      * Copy string pointers with keys from the given key list.
      *
      * @param keys a nullptr terminated array of keys
      */
-    void ListCopyFrom(const StringMap &src, const char *const*keys) noexcept;
+    void ListCopyFrom(AllocatorPtr alloc,
+                      const StringMap &src, const char *const*keys) noexcept;
 
     /**
      * Copy string pointers with the given key prefix.
      *
      * @param keys a nullptr terminated array of keys
      */
-    void PrefixCopyFrom(const StringMap &src, const char *prefix) noexcept;
+    void PrefixCopyFrom(AllocatorPtr alloc,
+                        const StringMap &src, const char *prefix) noexcept;
 
     /**
      * Move items from #src, merging it into this object.

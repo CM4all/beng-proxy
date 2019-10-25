@@ -241,7 +241,7 @@ Request::CheckHandleStatus(const TranslateResponse &response)
     if (response.status == (http_status_t)0)
         return false;
 
-    DispatchResponse(response.status, HttpHeaders(pool), nullptr);
+    DispatchResponse(response.status, {}, nullptr);
     return true;
 }
 

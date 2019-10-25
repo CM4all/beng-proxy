@@ -129,7 +129,7 @@ Request::HandleProxyAddress() noexcept
 #endif
 
     for (const auto &i : tr.request_headers)
-        forward.headers.SecureSet(i.key, i.value);
+        forward.headers.SecureSet(pool, i.key, i.value);
 
     collect_cookies = true;
 

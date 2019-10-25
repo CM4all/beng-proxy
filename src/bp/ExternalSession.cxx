@@ -65,7 +65,7 @@ public:
                      session_id.GetClusterHash(),
                      nullptr,
                      HTTP_METHOD_GET, address,
-                     HttpHeaders(pool), nullptr,
+                     {}, nullptr,
                      *this, cancel_ptr);
     }
 

@@ -192,7 +192,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
                               HttpResponseHandler &handler,
                               CancellablePointer &) noexcept
 {
-    StringMap response_headers(pool);
+    StringMap response_headers;
     const char *p;
 
     EXPECT_FALSE(got_request);
@@ -209,7 +209,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
         EXPECT_EQ(p, nullptr);
 
         /* set one cookie */
-        response_headers.Add("set-cookie", "foo=bar");
+        response_headers.Add(pool, "set-cookie", "foo=bar");
         break;
 
     case 1:
@@ -219,7 +219,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
         ASSERT_STREQ(p, "foo=bar");
 
         /* add 2 more cookies */
-        response_headers.Add("set-cookie", "a=b, c=d");
+        response_headers.Add(pool, "set-cookie", "a=b, c=d");
         break;
 
     case 2:
@@ -229,8 +229,8 @@ MyResourceLoader::SendRequest(struct pool &pool,
         ASSERT_STREQ(p, "c=d; a=b; foo=bar");
 
         /* set two cookies in two headers */
-        response_headers.Add("set-cookie", "e=f");
-        response_headers.Add("set-cookie", "g=h");
+        response_headers.Add(pool, "set-cookie", "e=f");
+        response_headers.Add(pool, "set-cookie", "g=h");
         break;
 
     case 3:

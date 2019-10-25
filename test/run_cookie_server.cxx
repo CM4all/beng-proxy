@@ -42,7 +42,7 @@
 int main(int argc, char **argv) {
     RootPool pool;
 
-    StringMap cookies(pool);
+    StringMap cookies;
     for (int i = 1; i < argc; ++i)
         cookies.Merge(cookie_map_parse(pool, argv[i]));
 

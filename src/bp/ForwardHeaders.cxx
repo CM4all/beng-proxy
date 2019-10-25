@@ -207,7 +207,7 @@ ClassifyRequestHeader(const char *name, const bool with_body,
 }
 
 static void
-forward_user_agent(StringMap &dest, const StringMap &src,
+forward_user_agent(AllocatorPtr alloc, StringMap &dest, const StringMap &src,
                    bool mangle) noexcept
 {
     const char *p;
@@ -218,7 +218,7 @@ forward_user_agent(StringMap &dest, const StringMap &src,
     if (p == nullptr)
         p = PRODUCT_TOKEN;
 
-    dest.Add("user-agent", p);
+    dest.Add(alloc, "user-agent", p);
 }
 
 static void
@@ -228,12 +228,12 @@ forward_via(struct pool &pool, StringMap &dest, const StringMap &src,
     const char *p = src.Get("via");
     if (p == nullptr) {
         if (local_host != nullptr && mangle)
-            dest.Add("via", p_strcat(&pool, "1.1 ", local_host, nullptr));
+            dest.Add(pool, "via", p_strcat(&pool, "1.1 ", local_host, nullptr));
     } else {
         if (local_host == nullptr || !mangle)
-            dest.Add("via", p);
+            dest.Add(pool, "via", p);
         else
-            dest.Add("via", p_strcat(&pool, p, ", 1.1 ", local_host, nullptr));
+            dest.Add(pool, "via", p_strcat(&pool, p, ", 1.1 ", local_host, nullptr));
     }
 }
 
@@ -246,12 +246,12 @@ forward_xff(struct pool &pool, StringMap &dest, const StringMap &src,
     p = src.Get("x-forwarded-for");
     if (p == nullptr) {
         if (remote_host != nullptr && mangle)
-            dest.Add("x-forwarded-for", remote_host);
+            dest.Add(pool, "x-forwarded-for", remote_host);
     } else {
         if (remote_host == nullptr || !mangle)
-            dest.Add("x-forwarded-for", p);
+            dest.Add(pool, "x-forwarded-for", p);
         else
-            dest.Add("x-forwarded-for",
+            dest.Add(pool, "x-forwarded-for",
                      p_strcat(&pool, p, ", ", remote_host, nullptr));
     }
 }
@@ -303,7 +303,7 @@ forward_request_headers(struct pool &pool, const StringMap &src,
 
     const bool is_upgrade = with_body && http_is_upgrade(src);
 
-    StringMap dest(pool);
+    StringMap dest;
     bool found_accept_charset = false;
 
     for (const auto &i : src) {
@@ -312,30 +312,30 @@ forward_request_headers(struct pool &pool, const StringMap &src,
 
         const auto group = ClassifyRequestHeader(key, with_body, is_upgrade);
         if (group == HeaderGroup::ALL) {
-            dest.Add(key, value);
+            dest.Add(pool, key, value);
             continue;
         } else if (group == HeaderGroup::MAX) {
             if (StringIsEqual(key, "host")) {
                 if (!exclude_host)
-                    dest.Add(key, value);
+                    dest.Add(pool, key, value);
                 if (settings[HeaderGroup::FORWARD] == HeaderForwardMode::MANGLE)
-                    dest.Add("x-forwarded-host", value);
+                    dest.Add(pool, "x-forwarded-host", value);
             } else if (forward_charset &&
                        StringIsEqual(key, "accept-charset")) {
-                dest.Add(key, value);
+                dest.Add(pool, key, value);
                 found_accept_charset = true;
             } else if (forward_encoding &&
                        StringIsEqual(key, "accept-encoding")) {
-                dest.Add(key, value);
+                dest.Add(pool, key, value);
             } else if ((session == nullptr ||
                         session->parent.language == nullptr) &&
                        StringIsEqual(key, "accept-language")) {
-                dest.Add(key, value);
+                dest.Add(pool, key, value);
             } else if (forward_range &&
                        (StringIsEqual(key, "range") ||
                         // TODO: separate parameter for cache headers
                         IsIfCacheHeader(key))) {
-                dest.Add(key, value);
+                dest.Add(pool, key, value);
             }
 
             continue;
@@ -367,11 +367,11 @@ forward_request_headers(struct pool &pool, const StringMap &src,
             continue;
         }
 
-        dest.Add(key, value);
+        dest.Add(pool, key, value);
     }
 
     if (!found_accept_charset)
-        dest.Add("accept-charset", "utf-8");
+        dest.Add(pool, "accept-charset", "utf-8");
 
     if (settings[HeaderGroup::COOKIE] == HeaderForwardMode::MANGLE &&
         session != nullptr && host_and_port != nullptr && uri != nullptr)
@@ -379,14 +379,14 @@ forward_request_headers(struct pool &pool, const StringMap &src,
                                dest, pool);
 
     if (session != nullptr && session->parent.language != nullptr)
-        dest.Add("accept-language",
+        dest.Add(pool, "accept-language",
                   p_strdup(&pool, session->parent.language));
 
     if (session != nullptr && session->user != nullptr)
-        dest.Add("x-cm4all-beng-user", p_strdup(&pool, session->user));
+        dest.Add(pool, "x-cm4all-beng-user", p_strdup(&pool, session->user));
 
     if (settings[HeaderGroup::CAPABILITIES] != HeaderForwardMode::NO)
-        forward_user_agent(dest, src,
+        forward_user_agent(pool, dest, src,
                            settings[HeaderGroup::CAPABILITIES] == HeaderForwardMode::MANGLE);
 
     if (settings[HeaderGroup::IDENTITY] != HeaderForwardMode::NO)
@@ -553,7 +553,7 @@ forward_response_headers(struct pool &pool, http_status_t status,
 {
     const bool is_upgrade = http_is_upgrade(status, src);
 
-    StringMap dest(pool);
+    StringMap dest;
 
     for (const auto &i : src) {
         const char *const key = i.key;
@@ -561,7 +561,7 @@ forward_response_headers(struct pool &pool, http_status_t status,
 
         const auto group = ClassifyResponseHeader(key, is_upgrade);
         if (group == HeaderGroup::ALL) {
-            dest.Add(key, value);
+            dest.Add(pool, key, value);
             continue;
         } else if (group == HeaderGroup::MAX) {
             continue;
@@ -594,7 +594,7 @@ forward_response_headers(struct pool &pool, http_status_t status,
             continue;
         }
 
-        dest.Add(key, value);
+        dest.Add(pool, key, value);
     }
 
     if (settings[HeaderGroup::IDENTITY] != HeaderForwardMode::NO)
@@ -605,11 +605,12 @@ forward_response_headers(struct pool &pool, http_status_t status,
 }
 
 void
-forward_reveal_user(StringMap &headers,
+forward_reveal_user(AllocatorPtr alloc, StringMap &headers,
                     const RealmSession *session) noexcept
 {
-    headers.SecureSet("x-cm4all-beng-user",
+    headers.SecureSet(alloc,
+                      "x-cm4all-beng-user",
                       session != nullptr && session->user != nullptr
-                      ? p_strdup(&headers.GetPool(), session->user)
+                      ? alloc.DupZ(session->user)
                       : nullptr);
 }

@@ -46,8 +46,7 @@ struct HttpCacheDocument {
     http_status_t status;
     StringMap response_headers;
 
-    explicit HttpCacheDocument(struct pool &pool) noexcept
-        :vary(pool), response_headers(pool) {}
+    HttpCacheDocument() = default;
 
     HttpCacheDocument(struct pool &pool,
                       const HttpCacheResponseInfo &_info,

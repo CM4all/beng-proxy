@@ -45,7 +45,7 @@ static constexpr char ARGS_ESCAPE_CHAR = '$';
 StringMap
 args_parse(struct pool &pool, const StringView p) noexcept
 {
-    StringMap args(pool);
+    StringMap args;
 
     for (const auto s : IterableSplitString(p, '&')) {
         const char *equals = s.Find('=');
@@ -63,7 +63,7 @@ args_parse(struct pool &pool, const StringView p) noexcept
         char *value = uri_unescape_dup(pool, escaped_value,
                                        ARGS_ESCAPE_CHAR);
         if (value != nullptr)
-                args.Add(p_strdup(pool, name), value);
+            args.Add(pool, p_strdup(pool, name), value);
     }
 
     return args;

@@ -45,7 +45,6 @@ Request::Request(BpConnection &_connection,
      logger(connection.logger),
      stopwatch(parent_stopwatch, "handler"),
      request(_request),
-     args(pool),
      request_body(pool, std::move(request.body))
 {
     session_id.Clear();

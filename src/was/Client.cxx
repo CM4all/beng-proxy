@@ -112,8 +112,8 @@ class WasClient final
          */
         bool released = false;
 
-        Response(struct pool &_caller_pool, WasInput *_body)
-            :headers(_caller_pool), body(_body) {}
+        explicit Response(WasInput *_body) noexcept
+            :body(_body) {}
 
         /**
          * Are we currently receiving response metadata (such as
@@ -469,7 +469,8 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
             return false;
         }
 
-        response.headers.Add(p_strndup_lower(&pool, (const char *)payload.data,
+        response.headers.Add(pool,
+                             p_strndup_lower(&pool, (const char *)payload.data,
                                              p - (const char *)payload.data),
                              p_strndup(&pool, p + 1,
                                        (const char *)payload.data + payload.size - p - 1));
@@ -795,8 +796,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
              ? was_output_new(pool, event_loop, output_fd,
                               std::move(body), *this)
              : nullptr),
-     response(_caller_pool,
-              http_method_is_empty(method)
+     response(http_method_is_empty(method)
               ? nullptr
               : was_input_new(pool, event_loop, input_fd, *this))
 {

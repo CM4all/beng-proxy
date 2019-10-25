@@ -78,13 +78,13 @@ put_random(HttpCacheHeap *cache)
         static const char *const values[] = {
             "a", "b", "c", "d", "e", "f", "g", "h",
         };
-        request_headers->Add("x-foo", values[random() % 8]);
+        request_headers->Add(*tpool, "x-foo", values[random() % 8]);
     }
 
     auto *response_headers = strmap_new(tpool);
-    response_headers->Add("content-type", "text/plain");
-    response_headers->Add("x-foo", "bar");
-    response_headers->Add("x-bar", "foo");
+    response_headers->Add(*tpool, "content-type", "text/plain");
+    response_headers->Add(*tpool, "x-foo", "bar");
+    response_headers->Add(*tpool, "x-bar", "foo");
 
     cache->Put(uri, info, *request_headers,
                HTTP_STATUS_OK, *response_headers,

@@ -296,8 +296,8 @@ try {
     fd = std::move(new_fd);
     idle = false;
 
-    StringMap headers(*pool);
-    headers.Add("host", url.host.c_str());
+    StringMap headers;
+    headers.Add(*pool, "host", url.host.c_str());
 
     switch (url.protocol) {
     case parsed_url::HTTP:

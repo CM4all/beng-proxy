@@ -432,7 +432,7 @@ test_empty(Context<Connection> &c)
 {
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           nullptr,
 #ifdef HAVE_EXPECT_100
                           false,
@@ -459,7 +459,7 @@ test_body(Context<Connection> &c)
 {
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           istream_string_new(*c.pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -493,7 +493,7 @@ test_read_body(Context<Connection> &c)
     c.read_response_body = true;
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           istream_string_new(*c.pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -525,7 +525,7 @@ test_huge(Context<Connection> &c)
     c.close_response_body_data = true;
     c.connection = Connection::NewHuge(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           nullptr,
 #ifdef HAVE_EXPECT_100
                           false,
@@ -552,7 +552,7 @@ test_close_response_body_early(Context<Connection> &c)
     c.close_response_body_early = true;
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           istream_string_new(*c.pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -580,7 +580,7 @@ test_close_response_body_late(Context<Connection> &c)
     c.close_response_body_late = true;
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           istream_string_new(*c.pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -608,7 +608,7 @@ test_close_response_body_data(Context<Connection> &c)
     c.close_response_body_data = true;
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           istream_string_new(*c.pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -659,7 +659,7 @@ test_close_request_body_early(Context<Connection> &c)
 {
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -695,7 +695,7 @@ test_close_request_body_fail(Context<Connection> &c)
     c.delayed = &delayed.second;
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           wrap_fake_request_body(c.pool, std::move(request_body)),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -737,7 +737,7 @@ test_data_blocking(Context<Connection> &c)
     c.data_blocking = 5;
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           wrap_fake_request_body(c.pool, std::move(request_body)),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -787,8 +787,8 @@ template<class Connection>
 static void
 test_data_blocking2(Context<Connection> &c)
 {
-    StringMap request_headers(*c.pool);
-    request_headers.Add("connection", "close");
+    StringMap request_headers;
+    request_headers.Add(*c.pool, "connection", "close");
 
     constexpr size_t body_size = 256;
 
@@ -851,7 +851,7 @@ test_body_fail(Context<Connection> &c)
     const std::runtime_error error("body_fail");
 
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           wrap_fake_request_body(c.pool, istream_fail_new(*c.pool, std::make_exception_ptr(error))),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -878,7 +878,7 @@ test_head(Context<Connection> &c)
 {
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_HEAD, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_HEAD, "/foo", {},
                           istream_string_new(*c.pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -909,7 +909,7 @@ test_head_discard(Context<Connection> &c)
 {
     c.connection = Connection::NewFixed(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_HEAD, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_HEAD, "/foo", {},
                           nullptr,
 #ifdef HAVE_EXPECT_100
                           false,
@@ -937,7 +937,7 @@ test_head_discard2(Context<Connection> &c)
 {
     c.connection = Connection::NewTiny(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_HEAD, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_HEAD, "/foo", {},
                           nullptr,
 #ifdef HAVE_EXPECT_100
                           false,
@@ -966,7 +966,7 @@ test_ignored_body(Context<Connection> &c)
 {
     c.connection = Connection::NewNull(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           wrap_fake_request_body(c.pool, istream_zero_new(*c.pool)),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -998,7 +998,7 @@ test_close_ignored_request_body(Context<Connection> &c)
     c.connection = Connection::NewNull(*c.pool, c.event_loop);
     c.close_request_body_early = true;
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -1029,7 +1029,7 @@ test_head_close_ignored_request_body(Context<Connection> &c)
     c.connection = Connection::NewNull(*c.pool, c.event_loop);
     c.close_request_body_early = true;
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_HEAD, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_HEAD, "/foo", {},
                           wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -1059,7 +1059,7 @@ test_close_request_body_eor(Context<Connection> &c)
     c.connection = Connection::NewDummy(*c.pool, c.event_loop);
     c.close_request_body_eof = true;
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           wrap_fake_request_body(c.pool, make_delayed_request_body(c)),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -1089,7 +1089,7 @@ test_close_request_body_eor2(Context<Connection> &c)
     c.connection = Connection::NewFixed(*c.pool, c.event_loop);
     c.close_request_body_eof = true;
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           make_delayed_request_body(c),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -1123,7 +1123,7 @@ test_bogus_100(Context<Connection> &c)
 {
     c.connection = Connection::NewTwice100(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           nullptr, false,
                           c, c.cancel_ptr);
 
@@ -1158,7 +1158,7 @@ test_twice_100(Context<Connection> &c)
     delayed.second.cancel_ptr = nullptr;
     c.request_body = &delayed.second;
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           std::move(delayed.first),
                           false,
                           c, c.cancel_ptr);
@@ -1192,7 +1192,7 @@ test_close_100(Context<Connection> &c)
 
     c.connection = Connection::NewClose100(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_POST, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_POST, "/foo", {},
                           std::move(request_body.first), true,
                           c, c.cancel_ptr);
 
@@ -1217,7 +1217,7 @@ test_no_body_while_sending(Context<Connection> &c)
 {
     c.connection = Connection::NewNull(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           wrap_fake_request_body(c.pool, istream_block_new(*c.pool)),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -1241,7 +1241,7 @@ test_hold(Context<Connection> &c)
 {
     c.connection = Connection::NewHold(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           wrap_fake_request_body(c.pool, istream_block_new(*c.pool)),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -1271,7 +1271,7 @@ test_premature_close_headers(Context<Connection> &c)
 {
     c.connection = Connection::NewPrematureCloseHeaders(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           nullptr,
 #ifdef HAVE_EXPECT_100
                           false,
@@ -1302,7 +1302,7 @@ test_premature_close_body(Context<Connection> &c)
 {
     c.connection = Connection::NewPrematureCloseBody(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool), nullptr,
+                          HTTP_METHOD_GET, "/foo", {}, nullptr,
 #ifdef HAVE_EXPECT_100
                           false,
 #endif
@@ -1329,7 +1329,7 @@ test_post_empty(Context<Connection> &c)
 {
     c.connection = Connection::NewMirror(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_POST, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_POST, "/foo", {},
                           istream_null_new(*c.pool),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -1369,7 +1369,7 @@ test_buckets(Context<Connection> &c)
     c.read_after_buckets = true;
 
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           nullptr,
 #ifdef HAVE_EXPECT_100
                           false,
@@ -1399,7 +1399,7 @@ test_buckets_close(Context<Connection> &c)
     c.close_after_buckets = true;
 
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           nullptr,
 #ifdef HAVE_EXPECT_100
                           false,
@@ -1431,7 +1431,7 @@ test_premature_end(Context<Connection> &c)
     c.connection = Connection::NewPrematureEnd(*c.pool, c.event_loop);
 
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           nullptr,
 #ifdef HAVE_EXPECT_100
                           false,
@@ -1459,7 +1459,7 @@ test_excess_data(Context<Connection> &c)
     c.connection = Connection::NewExcessData(*c.pool, c.event_loop);
 
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           nullptr,
 #ifdef HAVE_EXPECT_100
                           false,
@@ -1484,7 +1484,7 @@ TestCancelNop(Context<Connection> &c)
 {
     c.connection = Connection::NewNop(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_POST, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_POST, "/foo", {},
                           istream_null_new(*c.pool),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -1502,7 +1502,7 @@ TestCancelWithFailedSocketGet(Context<Connection> &c)
 {
     c.connection = Connection::NewNop(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           nullptr,
 #ifdef HAVE_EXPECT_100
                           false,
@@ -1521,7 +1521,7 @@ TestCancelWithFailedSocketPost(Context<Connection> &c)
 {
     c.connection = Connection::NewNop(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_POST, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_POST, "/foo", {},
                           istream_null_new(*c.pool),
 #ifdef HAVE_EXPECT_100
                           false,
@@ -1540,7 +1540,7 @@ TestCloseWithFailedSocketGet(Context<Connection> &c)
 {
     c.connection = Connection::NewHold(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_GET, "/foo", {},
                           nullptr,
 #ifdef HAVE_EXPECT_100
                           false,
@@ -1568,7 +1568,7 @@ TestCloseWithFailedSocketPost(Context<Connection> &c)
 {
     c.connection = Connection::NewHold(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_POST, "/foo", StringMap(*c.pool),
+                          HTTP_METHOD_POST, "/foo", {},
                           istream_null_new(*c.pool),
 #ifdef HAVE_EXPECT_100
                           false,

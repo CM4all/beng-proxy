@@ -64,7 +64,7 @@ Request::DispatchFile(const struct stat &st,
     if (override_content_type == nullptr)
         override_content_type = address.content_type;
 
-    HttpHeaders headers(pool);
+    HttpHeaders headers;
     GrowingBuffer &headers2 = headers.GetBuffer();
     file_response_headers(headers2,
                           instance.event_loop.GetSystemClockCache(),
@@ -148,7 +148,7 @@ Request::DispatchCompressedFile(const struct stat &st,
     if (override_content_type == nullptr)
         override_content_type = address.content_type;
 
-    HttpHeaders headers(pool);
+    HttpHeaders headers;
     GrowingBuffer &headers2 = headers.GetBuffer();
     file_response_headers(headers2,
                           instance.event_loop.GetSystemClockCache(),
@@ -263,7 +263,7 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 
     if (S_ISCHR(st.st_mode)) {
         /* allow character devices, but skip range etc. */
-        DispatchResponse(HTTP_STATUS_OK, HttpHeaders(pool),
+        DispatchResponse(HTTP_STATUS_OK, {},
                          UnusedIstreamPtr(body));
         return;
     }

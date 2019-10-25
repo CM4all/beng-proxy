@@ -56,7 +56,7 @@
 static void
 DispatchUnauthorized(Request &request2) noexcept
 {
-    HttpHeaders headers(request2.pool);
+    HttpHeaders headers;
     headers.Write("www-authenticate",
                   "Basic realm=\"Geschuetzter Bereich\"");
     request2.DispatchResponse(HTTP_STATUS_UNAUTHORIZED, std::move(headers),
@@ -273,7 +273,7 @@ Request::EmulateModAuthEasy(const FileAddress &address,
     if (override_content_type == nullptr)
         override_content_type = address.content_type;
 
-    HttpHeaders headers(pool);
+    HttpHeaders headers;
     GrowingBuffer &headers2 = headers.GetBuffer();
     file_response_headers(headers2,
                           instance.event_loop.GetSystemClockCache(),

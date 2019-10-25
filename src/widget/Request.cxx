@@ -276,20 +276,21 @@ WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
 
     if (widget.cls->info_headers) {
         if (widget.id != nullptr)
-            headers.Add("x-cm4all-widget-id", widget.id);
+            headers.Add(pool, "x-cm4all-widget-id", widget.id);
 
         if (widget.class_name != nullptr)
-            headers.Add("x-cm4all-widget-type", widget.class_name);
+            headers.Add(pool, "x-cm4all-widget-type", widget.class_name);
 
         const char *prefix = widget.GetPrefix();
         if (prefix != nullptr)
-            headers.Add("x-cm4all-widget-prefix", prefix);
+            headers.Add(pool, "x-cm4all-widget-prefix", prefix);
     }
 
     if (widget.from_template.headers != nullptr)
         /* copy HTTP request headers from template */
         for (const auto &i : *widget.from_template.headers)
-            headers.SecureSet(p_strdup(&pool, i.key),
+            headers.SecureSet(pool,
+                              p_strdup(&pool, i.key),
                               p_strdup(&pool, i.value));
 
     return headers;
@@ -466,7 +467,7 @@ WidgetRequest::FilterResponse(http_status_t status,
         : nullptr;
 
     if (filter.reveal_user)
-        forward_reveal_user(headers, GetSessionIfStateful().get());
+        forward_reveal_user(pool, headers, GetSessionIfStateful().get());
 
 #ifdef SPLICE
     if (body)
@@ -695,7 +696,7 @@ WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
     }
 
     if (content_type != nullptr)
-        headers.Set("content-type", content_type);
+        headers.Set(pool, "content-type", content_type);
 
     if (widget.session_save_pending &&
         Transformation::HasProcessor(transformation)) {

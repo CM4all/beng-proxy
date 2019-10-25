@@ -56,7 +56,7 @@
 #include <functional>
 
 static void
-RunNull(WasServer &server, struct pool &pool,
+RunNull(WasServer &server, struct pool &,
         gcc_unused http_method_t method,
         gcc_unused const char *uri, gcc_unused StringMap &&headers,
         UnusedIstreamPtr body)
@@ -64,7 +64,7 @@ RunNull(WasServer &server, struct pool &pool,
     body.Clear();
 
     was_server_response(server, HTTP_STATUS_NO_CONTENT,
-                        StringMap(pool), nullptr);
+                        {}, nullptr);
 }
 
 static void
@@ -75,7 +75,7 @@ RunHello(WasServer &server, struct pool &pool,
 {
     body.Clear();
 
-    was_server_response(server, HTTP_STATUS_OK, StringMap(pool),
+    was_server_response(server, HTTP_STATUS_OK, {},
                         istream_string_new(pool, "hello"));
 }
 
@@ -87,7 +87,7 @@ RunHuge(WasServer &server, struct pool &pool,
 {
     body.Clear();
 
-    was_server_response(server, HTTP_STATUS_OK, StringMap(pool),
+    was_server_response(server, HTTP_STATUS_OK, {},
                         istream_head_new(pool,
                                          istream_zero_new(pool),
                                          524288, true));
@@ -101,7 +101,7 @@ RunHold(WasServer &server, struct pool &pool,
 {
     body.Clear();
 
-    was_server_response(server, HTTP_STATUS_OK, StringMap(pool),
+    was_server_response(server, HTTP_STATUS_OK, {},
                         istream_block_new(pool));
 }
 

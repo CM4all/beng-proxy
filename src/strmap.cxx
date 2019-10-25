@@ -59,20 +59,19 @@ StringMap::Item::ShallowCloner::operator()(const Item &src) const noexcept
     return NewFromPool<Item>(pool, ShallowCopy(), src);
 }
 
-StringMap::StringMap(struct pool &_pool, const StringMap &src) noexcept
-    :pool(_pool) {
+StringMap::StringMap(struct pool &pool, const StringMap &src) noexcept
+{
     map.clone_from(src.map, Item::Cloner(pool), [](Item *){});
 }
 
-StringMap::StringMap(struct pool &_pool, const StringMap *src) noexcept
-    :pool(_pool) {
+StringMap::StringMap(struct pool &pool, const StringMap *src) noexcept
+{
     if (src != nullptr)
         map.clone_from(src->map, Item::Cloner(pool), [](Item *){});
 }
 
-StringMap::StringMap(ShallowCopy, struct pool &_pool,
+StringMap::StringMap(ShallowCopy, struct pool &pool,
                      const StringMap &src) noexcept
-    :pool(_pool)
 {
     map.clone_from(src.map, Item::ShallowCloner(pool), [](Item *){});
 }
@@ -80,18 +79,19 @@ StringMap::StringMap(ShallowCopy, struct pool &_pool,
 void
 StringMap::Clear() noexcept
 {
-    map.clear_and_dispose(PoolDisposer(pool));
+    map.clear_and_dispose(NoPoolDisposer());
 }
 
 void
-StringMap::Add(const char *key, const char *value) noexcept
+StringMap::Add(AllocatorPtr alloc,
+               const char *key, const char *value) noexcept
 {
-    Item *item = NewFromPool<Item>(pool, key, value);
+    Item *item = alloc.New<Item>(key, value);
     map.insert(*item);
 }
 
 const char *
-StringMap::Set(const char *key, const char *value) noexcept
+StringMap::Set(AllocatorPtr alloc, const char *key, const char *value) noexcept
 {
     auto i = map.upper_bound(key, Item::Compare());
     if (i != map.begin() && strcmp(std::prev(i)->key, key) == 0) {
@@ -100,7 +100,7 @@ StringMap::Set(const char *key, const char *value) noexcept
         i->value = value;
         return old_value;
     } else {
-        map.insert_before(i, *NewFromPool<Item>(pool, key, value));
+        map.insert_before(i, *alloc.New<Item>(key, value));
         return nullptr;
     }
 }
@@ -113,18 +113,19 @@ StringMap::Remove(const char *key) noexcept
         return nullptr;
 
     const char *value = i->value;
-    map.erase_and_dispose(i, PoolDisposer(pool));
+    map.erase_and_dispose(i, NoPoolDisposer());
     return value;
 }
 
 void
 StringMap::RemoveAll(const char *key) noexcept
 {
-    map.erase_and_dispose(key, Item::Compare(), PoolDisposer(pool));
+    map.erase_and_dispose(key, Item::Compare(), NoPoolDisposer());
 }
 
 void
-StringMap::SecureSet(const char *key, const char *value) noexcept
+StringMap::SecureSet(AllocatorPtr alloc,
+                     const char *key, const char *value) noexcept
 {
     auto r = map.equal_range(key, Item::Compare());
     if (r.first != r.second) {
@@ -135,9 +136,9 @@ StringMap::SecureSet(const char *key, const char *value) noexcept
         }
 
         /* and erase all other values with the same key */
-        map.erase_and_dispose(r.first, r.second, PoolDisposer(pool));
+        map.erase_and_dispose(r.first, r.second, NoPoolDisposer());
     } else if (value != nullptr)
-        map.insert_before(r.second, *NewFromPool<Item>(pool, key, value));
+        map.insert_before(r.second, *alloc.New<Item>(key, value));
 }
 
 const char *
@@ -157,24 +158,27 @@ StringMap::EqualRange(const char *key) const noexcept
 }
 
 void
-StringMap::CopyFrom(const StringMap &src, const char *key) noexcept
+StringMap::CopyFrom(AllocatorPtr alloc,
+                    const StringMap &src, const char *key) noexcept
 {
     const auto r = src.EqualRange(key);
     for (auto i = r.first; i != r.second; ++i)
-        Add(key, i->value);
+        Add(alloc, key, i->value);
 }
 
 void
-StringMap::ListCopyFrom(const StringMap &src, const char *const*keys) noexcept
+StringMap::ListCopyFrom(AllocatorPtr alloc,
+                        const StringMap &src, const char *const*keys) noexcept
 {
     assert(keys != nullptr);
 
     for (; *keys != nullptr; ++keys)
-        CopyFrom(src, *keys);
+        CopyFrom(alloc, src, *keys);
 }
 
 void
-StringMap::PrefixCopyFrom(const StringMap &src, const char *_prefix) noexcept
+StringMap::PrefixCopyFrom(AllocatorPtr alloc,
+                          const StringMap &src, const char *_prefix) noexcept
 {
     assert(_prefix != nullptr);
     assert(*_prefix != 0);
@@ -184,13 +188,13 @@ StringMap::PrefixCopyFrom(const StringMap &src, const char *_prefix) noexcept
     // TODO optimize this search
     for (const auto &i : src)
         if (StringStartsWith(i.key, prefix))
-            Add(i.key, i.value);
+            Add(alloc, i.key, i.value);
 }
 
 StringMap *
 strmap_new(struct pool *pool) noexcept
 {
-    return NewFromPool<StringMap>(*pool, *pool);
+    return NewFromPool<StringMap>(*pool);
 }
 
 StringMap *gcc_malloc

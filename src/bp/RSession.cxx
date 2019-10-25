@@ -201,7 +201,7 @@ Request::MakeSession()
     session_id = session->id;
     send_session_cookie = true;
 
-    args.Set("session", session_id_string = session_id.Format());
+    args.Set(pool, "session", session_id_string = session_id.Format());
 
     return SessionLease(session);
 }

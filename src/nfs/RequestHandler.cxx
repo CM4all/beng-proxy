@@ -66,7 +66,7 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle,
     if (override_content_type == nullptr)
         override_content_type = translate.address.GetNfs().content_type;
 
-    HttpHeaders headers(pool);
+    HttpHeaders headers;
     GrowingBuffer &headers2 = headers.GetBuffer();
     header_write(headers2, "cache-control", "max-age=60");
 

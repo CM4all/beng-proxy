@@ -379,11 +379,12 @@ private:
 };
 
 static void
-UpdateHeader(StringMap &dest, const StringMap &src, const char *name) noexcept
+UpdateHeader(AllocatorPtr alloc, StringMap &dest,
+             const StringMap &src, const char *name) noexcept
 {
     const char *value = src.Get(name);
     if (value != nullptr)
-        dest.SecureSet(name, p_strdup(dest.GetPool(), value));
+        dest.SecureSet(alloc, name, alloc.Dup(value));
 }
 
 static const char *
@@ -490,8 +491,8 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
             /* TODO: this leaks pool memory each time we update
                headers; how to fix this? */
-            UpdateHeader(document->response_headers, _headers, "expires");
-            UpdateHeader(document->response_headers, _headers, "cache-control");
+            UpdateHeader(GetPool(), document->response_headers, _headers, "expires");
+            UpdateHeader(GetPool(), document->response_headers, _headers, "cache-control");
         }
 
         LogConcat(5, "HttpCache", "not_modified ", key);
@@ -738,7 +739,7 @@ HttpCache::Miss(struct pool &caller_pool,
 {
     if (info.only_if_cached) {
         handler.InvokeResponse(HTTP_STATUS_GATEWAY_TIMEOUT,
-                               StringMap(caller_pool), UnusedIstreamPtr());
+                               {}, UnusedIstreamPtr());
         return;
     }
 
@@ -797,7 +798,7 @@ CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
     if (info.if_match != nullptr &&
         !CheckETagList(info.if_match, document.response_headers)) {
         handler.InvokeResponse(HTTP_STATUS_PRECONDITION_FAILED,
-                               StringMap(pool), UnusedIstreamPtr());
+                               {}, UnusedIstreamPtr());
         return false;
     }
 
@@ -845,8 +846,7 @@ CheckCacheRequest(struct pool &pool, const HttpCacheRequestInfo &info,
                 lm != std::chrono::system_clock::from_time_t(-1) &&
                 lm > iums) {
                 handler.InvokeResponse(HTTP_STATUS_PRECONDITION_FAILED,
-                                       StringMap(pool),
-                                       UnusedIstreamPtr());
+                                       {}, UnusedIstreamPtr());
                 return false;
             }
         }
@@ -915,10 +915,12 @@ HttpCache::Revalidate(struct pool &caller_pool,
     LogConcat(4, "HttpCache", "test ", request->key);
 
     if (document.info.last_modified != nullptr)
-        headers.Set("if-modified-since", document.info.last_modified);
+        headers.Set(request->GetPool(),
+                    "if-modified-since", document.info.last_modified);
 
     if (document.info.etag != nullptr)
-        headers.Set("if-none-match", document.info.etag);
+        headers.Set(request->GetPool(),
+                    "if-none-match", document.info.etag);
 
     resource_loader.SendRequest(request->GetPool(), parent_stopwatch,
                                 session_sticky,

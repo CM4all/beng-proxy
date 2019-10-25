@@ -50,7 +50,7 @@ Test1(struct dpool *dpool)
 {
     RootPool pool;
     const AllocatorPtr alloc(pool);
-    StringMap headers(pool);
+    StringMap headers;
 
     CookieJar jar(*dpool);
 
@@ -93,7 +93,7 @@ Test2(struct dpool *dpool)
 {
     RootPool pool;
     const AllocatorPtr alloc(pool);
-    StringMap headers(pool);
+    StringMap headers;
 
     /* wrong path */
     CookieJar jar(*dpool);

@@ -261,7 +261,7 @@ cookie_jar_http_header(const CookieJar &jar,
         cookie_jar_http_header_value(jar, domain, path, alloc);
 
     if (cookie != nullptr) {
-        headers.Add("cookie2", "$Version=\"1\"");
-        headers.Add("cookie", cookie);
+        headers.Add(alloc, "cookie2", "$Version=\"1\"");
+        headers.Add(alloc, "cookie", cookie);
     }
 }

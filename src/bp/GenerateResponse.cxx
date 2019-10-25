@@ -44,7 +44,7 @@ method_not_allowed(Request &request2, const char *allow)
 {
     assert(allow != nullptr);
 
-    HttpHeaders headers(request2.pool);
+    HttpHeaders headers;
     headers.Write("content-type", "text/plain");
     headers.Write("allow", allow);
 

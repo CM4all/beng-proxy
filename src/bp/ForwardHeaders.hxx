@@ -40,6 +40,8 @@
 
 #include <beng-proxy/Headers.hxx>
 
+class AllocatorPtr;
+
 struct HeaderForwardSettings {
     using Group = BengProxy::HeaderGroup;
     using Mode = BengProxy::HeaderForwardMode;
@@ -118,5 +120,5 @@ forward_response_headers(struct pool &pool, http_status_t status,
  * Generate a X-CM4all-BENG-User header (if available)_.
  */
 void
-forward_reveal_user(StringMap &headers,
+forward_reveal_user(AllocatorPtr alloc, StringMap &headers,
                     const RealmSession *session) noexcept;

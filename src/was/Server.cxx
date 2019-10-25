@@ -45,6 +45,7 @@
 #include "io/FileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringFormat.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <was/protocol.h>
 
@@ -558,7 +559,8 @@ WasServer::SendResponse(http_status_t status,
         if (request.method == HTTP_METHOD_HEAD) {
             off_t available = body.GetAvailable(false);
             if (available >= 0)
-                headers.Add("content-length",
+                headers.Add(AllocatorPtr{request.pool},
+                            "content-length",
                             p_sprintf(request.pool, "%lu",
                                       (unsigned long)available));
         }

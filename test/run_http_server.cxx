@@ -195,16 +195,14 @@ Connection::HandleHttpRequest(IncomingHttpRequest &request,
         if (request.body)
             sink_null_new(request.pool, std::move(request.body));
 
-        request.SendResponse(HTTP_STATUS_NO_CONTENT, HttpHeaders(request.pool),
-                             nullptr);
+        request.SendResponse(HTTP_STATUS_NO_CONTENT, {}, nullptr);
         break;
 
     case Mode::MIRROR:
         status = request.body
             ? HTTP_STATUS_OK
             : HTTP_STATUS_NO_CONTENT;
-        request.SendResponse(status, HttpHeaders(request.pool),
-                             std::move(request.body));
+        request.SendResponse(status, {}, std::move(request.body));
         break;
 
     case Mode::CLOSE:
@@ -223,9 +221,7 @@ Connection::HandleHttpRequest(IncomingHttpRequest &request,
                                          256, false);
             body = istream_byte_new(request.pool, std::move(body));
 
-            request.SendResponse(HTTP_STATUS_OK,
-                                 HttpHeaders(request.pool),
-                                 std::move(body));
+            request.SendResponse(HTTP_STATUS_OK, {}, std::move(body));
         }
 
         break;
@@ -234,7 +230,7 @@ Connection::HandleHttpRequest(IncomingHttpRequest &request,
         if (request.body)
             sink_null_new(request.pool, std::move(request.body));
 
-        request.SendResponse(HTTP_STATUS_OK, HttpHeaders(request.pool),
+        request.SendResponse(HTTP_STATUS_OK, {},
                              istream_memory_new(request.pool,
                                                 data, sizeof(data)));
         break;
@@ -243,8 +239,7 @@ Connection::HandleHttpRequest(IncomingHttpRequest &request,
         if (request.body)
             sink_null_new(request.pool, std::move(request.body));
 
-        request.SendResponse(HTTP_STATUS_OK,
-                             HttpHeaders(request.pool),
+        request.SendResponse(HTTP_STATUS_OK, {},
                              istream_head_new(request.pool,
                                               istream_zero_new(request.pool),
                                               512 * 1024, true));
@@ -259,8 +254,7 @@ Connection::HandleHttpRequest(IncomingHttpRequest &request,
                                                instance.event_loop);
             delayed.second.cancel_ptr = *this;
 
-            request.SendResponse(HTTP_STATUS_OK,
-                                 HttpHeaders(request.pool),
+            request.SendResponse(HTTP_STATUS_OK, {},
                                  std::move(delayed.first));
         }
 

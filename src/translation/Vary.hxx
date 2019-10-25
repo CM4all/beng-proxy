@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,12 +33,13 @@
 #ifndef BENG_PROXY_TRANSLATE_VARY_HXX
 #define BENG_PROXY_TRANSLATE_VARY_HXX
 
+class AllocatorPtr;
 class StringMap;
 struct TranslateResponse;
 class GrowingBuffer;
 
 void
-add_translation_vary_header(StringMap &headers,
+add_translation_vary_header(AllocatorPtr alloc, StringMap &headers,
                             const TranslateResponse &response);
 
 void

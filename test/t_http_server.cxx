@@ -299,13 +299,13 @@ static void
 TestSimple(Server &server)
 {
     server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
-        request.SendResponse(HTTP_STATUS_OK, HttpHeaders(request.pool),
+        request.SendResponse(HTTP_STATUS_OK, {},
                              istream_string_new(request.pool, "foo"));
     });
 
     Client client;
     client.SendRequest(server,
-                       HTTP_METHOD_GET, "/", HttpHeaders(server.GetPool()),
+                       HTTP_METHOD_GET, "/", {},
                        nullptr);
     client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
 }
@@ -314,13 +314,13 @@ static void
 TestMirror(Server &server)
 {
     server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
-        request.SendResponse(HTTP_STATUS_OK, HttpHeaders(request.pool),
+        request.SendResponse(HTTP_STATUS_OK, {},
                              std::move(request.body));
     });
 
     Client client;
     client.SendRequest(server,
-                       HTTP_METHOD_POST, "/", HttpHeaders(server.GetPool()),
+                       HTTP_METHOD_POST, "/", {},
                        istream_string_new(server.GetPool(), "foo"));
     client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
 }
@@ -330,13 +330,13 @@ TestDiscardTinyRequestBody(Server &server)
 {
     server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
         request.body.Clear();
-        request.SendResponse(HTTP_STATUS_OK, HttpHeaders(request.pool),
+        request.SendResponse(HTTP_STATUS_OK, {},
                              istream_string_new(request.pool, "foo"));
     });
 
     Client client;
     client.SendRequest(server,
-                       HTTP_METHOD_POST, "/", HttpHeaders(server.GetPool()),
+                       HTTP_METHOD_POST, "/", {},
                        istream_string_new(server.GetPool(), "foo"));
     client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
 }
@@ -370,7 +370,7 @@ TestDiscardedHugeRequestBody(Server &server)
     private:
         void OnTimer() noexcept {
             body.Clear();
-            request->SendResponse(HTTP_STATUS_OK, HttpHeaders(request->pool),
+            request->SendResponse(HTTP_STATUS_OK, {},
                                   istream_string_new(request->pool, "foo"));
         }
     } respond_later(server.GetEventLoop());
@@ -381,7 +381,7 @@ TestDiscardedHugeRequestBody(Server &server)
 
     Client client;
     client.SendRequest(server,
-                       HTTP_METHOD_POST, "/", HttpHeaders(server.GetPool()),
+                       HTTP_METHOD_POST, "/", {},
                        istream_zero_new(server.GetPool()));
     client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
 }

@@ -36,7 +36,7 @@
 StringMap
 processor_header_forward(struct pool &pool, const StringMap &src)
 {
-    StringMap dest(pool);
+    StringMap dest;
 
     static const char *const copy_headers[] = {
         "content-language",
@@ -46,19 +46,19 @@ processor_header_forward(struct pool &pool, const StringMap &src)
         nullptr,
     };
 
-    dest.ListCopyFrom(src, copy_headers);
+    dest.ListCopyFrom(pool, src, copy_headers);
 
 #ifndef NDEBUG
     /* copy Wildfire headers if present (debug build only, to avoid
        overhead on production servers) */
     if (src.Get("x-wf-protocol-1") != nullptr)
-        dest.PrefixCopyFrom(src, "x-wf-");
+        dest.PrefixCopyFrom(pool, src, "x-wf-");
 #endif
 
     /* reportedly, the Internet Explorer caches uncacheable resources
        without revalidating them; only Cache-Control will prevent him
        from showing stale data to the user */
-    dest.Add("cache-control", "no-store");
+    dest.Add(pool, "cache-control", "no-store");
 
     return dest;
 }

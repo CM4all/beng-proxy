@@ -215,7 +215,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 
     body.Clear();
 
-    StringMap response_headers(pool);
+    StringMap response_headers;
     if (request->response_headers != NULL) {
         GrowingBuffer gb;
         gb.Write(request->response_headers);
@@ -291,7 +291,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
 
     current_request = num;
 
-    StringMap headers(pool);
+    StringMap headers;
     if (request->request_headers != NULL) {
         GrowingBuffer gb;
         gb.Write(request->request_headers);

@@ -71,7 +71,7 @@ NfsRequest::OnNfsCacheResponse(NfsCacheHandle &handle,
 {
     auto headers = static_response_headers(pool, FileDescriptor::Undefined(),
                                            st, content_type);
-    headers.Add("cache-control", "max-age=60");
+    headers.Add(pool, "cache-control", "max-age=60");
 
     // TODO: handle revalidation etc.
     handler.InvokeResponse(HTTP_STATUS_OK, std::move(headers),

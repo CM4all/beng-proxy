@@ -35,13 +35,14 @@
 #include "strmap.hxx"
 #include "pool/pool.hxx"
 #include "util/StringView.hxx"
+#include "AllocatorPtr.hxx"
 
 StringMap
 cookie_map_parse(struct pool &pool, const char *p) noexcept
 {
     assert(p != nullptr);
 
-    StringMap cookies(pool);
+    StringMap cookies;
 
     StringView input = p;
 
@@ -51,7 +52,7 @@ cookie_map_parse(struct pool &pool, const char *p) noexcept
         if (name.empty())
             break;
 
-        cookies.Add(p_strdup(pool, name), p_strdup(pool, value));
+        cookies.Add(pool, p_strdup(pool, name), p_strdup(pool, value));
 
         input.StripLeft();
         if (input.empty() || input.front() != ';')

@@ -79,7 +79,7 @@ TestCancelBlocking()
     auto request_pool = pool_new_linear(context.root_pool, "Request", 8192);
     filter_cache_request(*context.fcache, request_pool, nullptr,
                          nullptr, nullptr,
-                         "foo", HTTP_STATUS_OK, StringMap(*request_pool),
+                         "foo", HTTP_STATUS_OK, {},
                          istream_string_new(*request_pool, "bar"),
                          context, cancel_ptr);
 

@@ -295,7 +295,7 @@ http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
             value = "";
         else
             value = p_strdup(&pool, value);
-        dest.Set(name, value);
+        dest.Set(pool, name, value);
     }
 }
 

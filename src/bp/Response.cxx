@@ -628,7 +628,7 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
         : nullptr;
 
     if (filter.reveal_user)
-        forward_reveal_user(headers2, GetRealmSession().get());
+        forward_reveal_user(pool, headers2, GetRealmSession().get());
 
 #ifdef SPLICE
     if (body)
@@ -730,7 +730,7 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
     const Transformation *transformation = PopTransformation();
     if (transformation != nullptr &&
         filter_enabled(*translate.response, status)) {
-        ApplyTransformation(status, std::move(headers).ToMap(),
+        ApplyTransformation(status, std::move(headers).ToMap(pool),
                             std::move(response_body),
                             *transformation);
     } else {
@@ -756,7 +756,7 @@ Request::DispatchResponse(http_status_t status,
 void
 Request::DispatchResponse(http_status_t status, const char *msg)
 {
-    DispatchResponse(status, HttpHeaders(pool), msg);
+    DispatchResponse(status, {}, msg);
 }
 
 void
@@ -769,7 +769,7 @@ Request::DispatchRedirect(http_status_t status,
     if (msg == nullptr)
         msg = "redirection";
 
-    HttpHeaders headers(pool);
+    HttpHeaders headers;
     headers.Write("location", location);
 
     DispatchResponse(status, std::move(headers), msg);
@@ -874,7 +874,7 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
                                                 RelocateCallback, this,
                                                 translate.response->response_header_forward);
 
-    add_translation_vary_header(new_headers,
+    add_translation_vary_header(pool, new_headers,
                                 *translate.response);
 
     product_token = new_headers.Remove("server");

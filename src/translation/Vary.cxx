@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,7 +36,7 @@
 #include "strmap.hxx"
 #include "GrowingBuffer.hxx"
 #include "http/HeaderWriter.hxx"
-#include "pool/pool.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -87,7 +87,7 @@ translation_vary_header(const TranslateResponse &response)
 }
 
 void
-add_translation_vary_header(StringMap &headers,
+add_translation_vary_header(AllocatorPtr alloc, StringMap &headers,
                             const TranslateResponse &response)
 {
     const char *value = translation_vary_header(response);
@@ -96,9 +96,9 @@ add_translation_vary_header(StringMap &headers,
 
     const char *old = headers.Get("vary");
     if (old != nullptr)
-        value = p_strcat(&headers.GetPool(), old, ",", value, nullptr);
+        value = alloc.Concat(old, ",", value);
 
-    headers.Add("vary", value);
+    headers.Add(alloc, "vary", value);
 }
 
 void

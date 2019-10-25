@@ -1500,7 +1500,8 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
             value[length] = 0;
         }
 
-        widget.widget->from_template.headers->Add(widget.param.name.StringDup(widget.pool),
+        widget.widget->from_template.headers->Add(widget.pool,
+                                                  widget.param.name.StringDup(widget.pool),
                                                   value);
     } else if (tag == Tag::SCRIPT) {
         if (xml_tag.type == XmlParserTagType::OPEN)

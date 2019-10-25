@@ -96,7 +96,7 @@ handle_fcgi_param(struct pool *pool, FcgiRequest *r,
                 *q += 'a' - 'A';
         }
 
-        r->headers->Add(p, p_strdup(pool, value));
+        r->headers->Add(*pool, p, p_strdup(pool, value));
     }
 }
 

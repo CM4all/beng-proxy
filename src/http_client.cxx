@@ -210,9 +210,6 @@ class HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, Des
          * #HttpResponseHandler.
          */
         UnusedIstreamPtr body;
-
-        explicit Response(struct pool &pool)
-            :headers(pool) {}
     } response;
 
     ResponseBodyReader response_body_reader;
@@ -1284,7 +1281,6 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
             Event::Duration(-1), http_client_timeout,
             *this),
      request(handler),
-     response(caller_pool),
      response_body_reader(pool)
 {
     response.state = HttpClient::Response::State::STATUS;

@@ -109,7 +109,7 @@ static_response_headers(struct pool &pool,
                         FileDescriptor fd, const struct stat &st,
                         const char *content_type)
 {
-    StringMap headers(pool);
+    StringMap headers;
 
     if (S_ISCHR(st.st_mode))
         return headers;
@@ -121,13 +121,13 @@ static_response_headers(struct pool &pool,
             ? p_strdup(&pool, buffer)
             : "application/octet-stream";
 
-    headers.Add("content-type", content_type);
+    headers.Add(pool, "content-type", content_type);
 
-    headers.Add("last-modified",
+    headers.Add(pool, "last-modified",
                 p_strdup(&pool, http_date_format(std::chrono::system_clock::from_time_t(st.st_mtime))));
 
     GetAnyETag(buffer, sizeof(buffer), fd, st);
-    headers.Add("etag", p_strdup(&pool, buffer));
+    headers.Add(pool, "etag", p_strdup(&pool, buffer));
 
     return headers;
 }

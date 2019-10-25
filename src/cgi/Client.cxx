@@ -488,7 +488,6 @@ CGIClient::CGIClient(struct pool &_pool, StopwatchPtr &&_stopwatch,
      stopwatch(std::move(_stopwatch)),
      input(std::move(_input), *this),
      buffer(fb_pool_get()),
-     parser(_pool),
      handler(_handler)
 {
     cancel_ptr = *this;

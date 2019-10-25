@@ -72,8 +72,6 @@ struct CGIParser {
 
     bool finished = false;
 
-    CGIParser(struct pool &pool);
-
     /**
      * Did the parser finish reading the response headers?
      */
