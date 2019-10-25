@@ -85,7 +85,6 @@ struct HeaderForwardSettings {
     }
 };
 
-struct pool;
 class StringMap;
 struct RealmSession;
 
@@ -96,7 +95,7 @@ struct RealmSession;
  * @param forward_range forward the "Range" request header?
  */
 StringMap
-forward_request_headers(struct pool &pool, const StringMap &src,
+forward_request_headers(AllocatorPtr alloc, const StringMap &src,
                         const char *local_host, const char *remote_host,
                         bool exclude_host,
                         bool with_body, bool forward_charset,
@@ -108,7 +107,7 @@ forward_request_headers(struct pool &pool, const StringMap &src,
                         const char *host_and_port, const char *uri) noexcept;
 
 StringMap
-forward_response_headers(struct pool &pool, http_status_t status,
+forward_response_headers(AllocatorPtr alloc, http_status_t status,
                          const StringMap &src,
                          const char *local_host,
                          const char *session_cookie,

@@ -79,14 +79,14 @@ TEST(HeaderForwardTest, BasicRequestHeader)
                              {"from", "2"},
                              {"cache-control", "3"},
                             }};
-    auto a = forward_request_headers(pool, headers,
+    auto a = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
                                      nullptr, nullptr, nullptr, nullptr);
     check_strmap(a, "accept=1;accept-charset=utf-8;cache-control=3;from=2;");
 
-    a = forward_request_headers(pool, headers,
+    a = forward_request_headers(alloc, headers,
                                 "192.168.0.2", "192.168.0.3",
                                 true, true, true, true, true,
                                 settings,
@@ -95,7 +95,7 @@ TEST(HeaderForwardTest, BasicRequestHeader)
 
     std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
                 HeaderForwardMode::YES);
-    a = forward_request_headers(pool, headers,
+    a = forward_request_headers(alloc, headers,
                                 "192.168.0.2", "192.168.0.3",
                                 false, false, false, false, false,
                                 settings,
@@ -104,7 +104,7 @@ TEST(HeaderForwardTest, BasicRequestHeader)
 
     std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
                 HeaderForwardMode::MANGLE);
-    a = forward_request_headers(pool, headers,
+    a = forward_request_headers(alloc, headers,
                                 "192.168.0.2", "192.168.0.3",
                                 false, false, false, false, false,
                                 settings,
@@ -113,7 +113,7 @@ TEST(HeaderForwardTest, BasicRequestHeader)
 
     std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
                 HeaderForwardMode::BOTH);
-    a = forward_request_headers(pool, headers,
+    a = forward_request_headers(alloc, headers,
                                 "192.168.0.2", "192.168.0.3",
                                 false, false, false, false, false,
                                 settings,
@@ -128,14 +128,14 @@ TEST(HeaderForwardTest, HostRequestHeader)
     TestPool pool;
     const AllocatorPtr alloc(pool);
     const StringMap headers{alloc, {{"host", "foo"}}};
-    auto a = forward_request_headers(pool, headers,
+    auto a = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      true, false, false, false, false,
                                      settings,
                                      nullptr, nullptr, nullptr, nullptr);
     check_strmap(a, "accept-charset=utf-8;");
 
-    a = forward_request_headers(pool, headers,
+    a = forward_request_headers(alloc, headers,
                                 "192.168.0.2", "192.168.0.3",
                                 false, false, false, false, false,
                                 settings,
@@ -143,7 +143,7 @@ TEST(HeaderForwardTest, HostRequestHeader)
     check_strmap(a, "accept-charset=utf-8;host=foo;");
 
     settings[HeaderGroup::FORWARD] = HeaderForwardMode::MANGLE;
-    a = forward_request_headers(pool, headers,
+    a = forward_request_headers(alloc, headers,
                                 "192.168.0.2", "192.168.0.3",
                                 true, false, false, false, false,
                                 settings,
@@ -151,7 +151,7 @@ TEST(HeaderForwardTest, HostRequestHeader)
     check_strmap(a, "accept-charset=utf-8;x-forwarded-host=foo;");
 
     settings[HeaderGroup::FORWARD] = HeaderForwardMode::MANGLE;
-    a = forward_request_headers(pool, headers,
+    a = forward_request_headers(alloc, headers,
                                 "192.168.0.2", "192.168.0.3",
                                 false, false, false, false, false,
                                 settings,
@@ -166,7 +166,7 @@ TEST(HeaderForwardTest, AuthRequestHeaders)
     TestPool pool;
     const AllocatorPtr alloc(pool);
     const StringMap headers{alloc, {{"authorization", "foo"}}};
-    auto a = forward_request_headers(pool, headers,
+    auto a = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
@@ -174,7 +174,7 @@ TEST(HeaderForwardTest, AuthRequestHeaders)
     check_strmap(a, "accept-charset=utf-8;");
 
     settings[HeaderGroup::AUTH] = HeaderForwardMode::MANGLE;
-    a = forward_request_headers(pool, headers,
+    a = forward_request_headers(alloc, headers,
                                 "192.168.0.2", "192.168.0.3",
                                 false, false, false, false, false,
                                 settings,
@@ -182,7 +182,7 @@ TEST(HeaderForwardTest, AuthRequestHeaders)
     check_strmap(a, "accept-charset=utf-8;");
 
     settings[HeaderGroup::AUTH] = HeaderForwardMode::BOTH;
-    a = forward_request_headers(pool, headers,
+    a = forward_request_headers(alloc, headers,
                                 "192.168.0.2", "192.168.0.3",
                                 false, false, false, false, false,
                                 settings,
@@ -190,7 +190,7 @@ TEST(HeaderForwardTest, AuthRequestHeaders)
     check_strmap(a, "accept-charset=utf-8;");
 
     settings[HeaderGroup::AUTH] = HeaderForwardMode::YES;
-    a = forward_request_headers(pool, headers,
+    a = forward_request_headers(alloc, headers,
                                 "192.168.0.2", "192.168.0.3",
                                 false, false, false, false, false,
                                 settings,
@@ -205,21 +205,21 @@ TEST(HeaderForwardTest, RangeRequestHeader)
     TestPool pool;
     const AllocatorPtr alloc(pool);
     const StringMap headers{alloc, {{"range", "1-42"}}};
-    auto a = forward_request_headers(pool, headers,
+    auto a = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
                                      nullptr, nullptr, nullptr, nullptr);
     check_strmap(a, "accept-charset=utf-8;");
 
-    a = forward_request_headers(pool, headers,
+    a = forward_request_headers(alloc, headers,
                                 "192.168.0.2", "192.168.0.3",
                                 false, false, false, false, true,
                                 settings,
                                 nullptr, nullptr, nullptr, nullptr);
     check_strmap(a, "accept-charset=utf-8;range=1-42;");
 
-    a = forward_request_headers(pool, {},
+    a = forward_request_headers(alloc, {},
                                 "192.168.0.2", "192.168.0.3",
                                 false, false, false, false, true,
                                 settings,
@@ -241,21 +241,21 @@ TEST(HeaderForwardTest, CacheRequestHeaders)
                              {"if-none-match", "d"},
                              {"if-foo", "e"},
                             }};
-    auto a = forward_request_headers(pool, headers,
+    auto a = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
                                      nullptr, nullptr, nullptr, nullptr);
     check_strmap(a, "accept-charset=utf-8;");
 
-    a = forward_request_headers(pool, headers,
+    a = forward_request_headers(alloc, headers,
                                 "192.168.0.2", "192.168.0.3",
                                 false, false, false, false, true,
                                 settings,
                                 nullptr, nullptr, nullptr, nullptr);
     check_strmap(a, "accept-charset=utf-8;if-match=c;if-modified-since=a;if-none-match=d;if-unmodified-since=b;");
 
-    a = forward_request_headers(pool, {},
+    a = forward_request_headers(alloc, {},
                                 "192.168.0.2", "192.168.0.3",
                                 false, false, false, false, true,
                                 settings,
@@ -298,7 +298,7 @@ TEST(HeaderForwardTest, RequestHeaders)
                  "x-forwarded-for=10.0.0.2;");
 
     /* nullptr test */
-    auto a = forward_request_headers(pool, {},
+    auto a = forward_request_headers(alloc, {},
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
@@ -322,7 +322,7 @@ TEST(HeaderForwardTest, RequestHeaders)
     /* no accept-charset forwarded */
     headers.Add(alloc, "accept-charset", "iso-8859-1");
 
-    auto c = forward_request_headers(pool, headers,
+    auto c = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
@@ -333,7 +333,7 @@ TEST(HeaderForwardTest, RequestHeaders)
                  "x-forwarded-for=10.0.0.2, 192.168.0.3;");
 
     /* now accept-charset is forwarded */
-    auto d = forward_request_headers(pool, headers,
+    auto d = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, true, false, false,
                                      settings,
@@ -344,7 +344,7 @@ TEST(HeaderForwardTest, RequestHeaders)
                  "x-forwarded-for=10.0.0.2, 192.168.0.3;");
 
     /* with request body */
-    auto e = forward_request_headers(pool, headers,
+    auto e = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, true, false, false, false,
                                      settings,
@@ -358,7 +358,7 @@ TEST(HeaderForwardTest, RequestHeaders)
     /* don't forward user-agent */
 
     settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::NO;
-    auto f = forward_request_headers(pool, headers,
+    auto f = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
@@ -371,7 +371,7 @@ TEST(HeaderForwardTest, RequestHeaders)
     /* mangle user-agent */
 
     settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::MANGLE;
-    auto g = forward_request_headers(pool, headers,
+    auto g = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
@@ -387,7 +387,7 @@ TEST(HeaderForwardTest, RequestHeaders)
     settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::NO;
     settings[HeaderGroup::IDENTITY] = HeaderForwardMode::YES;
 
-    auto h = forward_request_headers(pool, headers,
+    auto h = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
@@ -401,7 +401,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     settings[HeaderGroup::IDENTITY] = HeaderForwardMode::NO;
 
-    auto i = forward_request_headers(pool, headers,
+    auto i = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
@@ -413,7 +413,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     settings[HeaderGroup::COOKIE] = HeaderForwardMode::YES;
 
-    auto j = forward_request_headers(pool, headers,
+    auto j = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
@@ -426,7 +426,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     headers.Add(alloc, "cookie", "c=d");
 
-    auto k = forward_request_headers(pool, headers,
+    auto k = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
@@ -439,7 +439,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     settings[HeaderGroup::COOKIE] = HeaderForwardMode::BOTH;
 
-    auto l = forward_request_headers(pool, headers,
+    auto l = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
@@ -453,7 +453,7 @@ TEST(HeaderForwardTest, RequestHeaders)
     settings[HeaderGroup::COOKIE] = HeaderForwardMode::NO;
     settings[HeaderGroup::OTHER] = HeaderForwardMode::YES;
 
-    auto m = forward_request_headers(pool, headers,
+    auto m = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
@@ -466,7 +466,7 @@ TEST(HeaderForwardTest, RequestHeaders)
     headers.Add(alloc, "access-control-request-method", "POST");
     headers.Add(alloc, "origin", "example.com");
 
-    auto n = forward_request_headers(pool, headers,
+    auto n = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                   false, false, false, false, false,
                                      settings,
@@ -476,7 +476,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     settings[HeaderGroup::CORS] = HeaderForwardMode::YES;
 
-    auto o = forward_request_headers(pool, headers,
+    auto o = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
@@ -490,7 +490,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     settings[HeaderGroup::SECURE] = HeaderForwardMode::YES;
 
-    auto p = forward_request_headers(pool, headers,
+    auto p = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
@@ -506,7 +506,7 @@ TEST(HeaderForwardTest, RequestHeaders)
     settings[HeaderGroup::SECURE] = HeaderForwardMode::NO;
     settings[HeaderGroup::SSL] = HeaderForwardMode::YES;
 
-    auto q = forward_request_headers(pool, headers,
+    auto q = forward_request_headers(alloc, headers,
                                      "192.168.0.2", "192.168.0.3",
                                      false, false, false, false, false,
                                      settings,
@@ -522,7 +522,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
     settings[HeaderGroup::LINK] = HeaderForwardMode::YES;
 
-    q = forward_request_headers(pool, headers,
+    q = forward_request_headers(alloc, headers,
                                 "192.168.0.2", "192.168.0.3",
                                 false, false, false, false, false,
                                 settings,
@@ -571,7 +571,7 @@ TEST(HeaderForwardTest, BasicResponseHeader)
                              {"retry-after", "14"},
                              {"vary", "15"},
                             }};
-    auto a = forward_response_headers(pool, HTTP_STATUS_OK, headers,
+    auto a = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                       "192.168.0.2", nullptr,
                                       nullptr, nullptr,
                                       settings);
@@ -579,7 +579,7 @@ TEST(HeaderForwardTest, BasicResponseHeader)
 
     std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
                 HeaderForwardMode::YES);
-    a = forward_response_headers(pool, HTTP_STATUS_OK, headers,
+    a = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                  "192.168.0.2", nullptr,
                                  nullptr, nullptr,
                                  settings);
@@ -587,7 +587,7 @@ TEST(HeaderForwardTest, BasicResponseHeader)
 
     std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
                 HeaderForwardMode::MANGLE);
-    a = forward_response_headers(pool, HTTP_STATUS_OK, headers,
+    a = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                  "192.168.0.2", nullptr,
                                  nullptr, nullptr,
                                  settings);
@@ -595,7 +595,7 @@ TEST(HeaderForwardTest, BasicResponseHeader)
 
     std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
                 HeaderForwardMode::BOTH);
-    a = forward_response_headers(pool, HTTP_STATUS_OK, headers,
+    a = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                  "192.168.0.2", nullptr,
                                  nullptr, nullptr,
                                  settings);
@@ -613,28 +613,28 @@ TEST(HeaderForwardTest, AuthResponseHeaders)
                              {"www-authenticate", "foo"},
                              {"authentication-info", "bar"},
                             }};
-    auto a = forward_response_headers(pool, HTTP_STATUS_OK, headers,
+    auto a = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                       "192.168.0.2", nullptr,
                                       nullptr, nullptr,
                                       settings);
     check_strmap(a, "");
 
     settings[HeaderGroup::AUTH] = HeaderForwardMode::MANGLE;
-    a = forward_response_headers(pool, HTTP_STATUS_OK, headers,
+    a = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                  "192.168.0.2", nullptr,
                                  nullptr, nullptr,
                                  settings);
     check_strmap(a, "");
 
     settings[HeaderGroup::AUTH] = HeaderForwardMode::BOTH;
-    a = forward_response_headers(pool, HTTP_STATUS_OK, headers,
+    a = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                  "192.168.0.2", nullptr,
                                  nullptr, nullptr,
                                  settings);
     check_strmap(a, "");
 
     settings[HeaderGroup::AUTH] = HeaderForwardMode::YES;
-    a = forward_response_headers(pool, HTTP_STATUS_OK, headers,
+    a = forward_response_headers(alloc, HTTP_STATUS_OK, headers,
                                  "192.168.0.2", nullptr,
                                  nullptr, nullptr,
                                  settings);
