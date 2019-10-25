@@ -37,7 +37,7 @@
 #include "util/StringView.hxx"
 
 StringMap
-cookie_map_parse(struct pool &pool, const char *p)
+cookie_map_parse(struct pool &pool, const char *p) noexcept
 {
     assert(p != nullptr);
 
@@ -65,7 +65,7 @@ cookie_map_parse(struct pool &pool, const char *p)
 }
 
 const char *
-cookie_exclude(const char *p, const char *_exclude, struct pool *pool)
+cookie_exclude(const char *p, const char *_exclude, struct pool *pool) noexcept
 {
     assert(p != nullptr);
     assert(_exclude != nullptr);

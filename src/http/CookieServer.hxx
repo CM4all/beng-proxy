@@ -47,7 +47,7 @@ class StringMap;
  */
 gcc_pure
 StringMap
-cookie_map_parse(struct pool &pool, const char *p);
+cookie_map_parse(struct pool &pool, const char *p) noexcept;
 
 /**
  * Remove cookies with the specified name from a Cookie request
@@ -56,4 +56,4 @@ cookie_map_parse(struct pool &pool, const char *p);
  * remain after removing the excluded cookie.
  */
 const char *
-cookie_exclude(const char *p, const char *exclude, struct pool *pool);
+cookie_exclude(const char *p, const char *exclude, struct pool *pool) noexcept;
