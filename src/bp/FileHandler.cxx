@@ -199,7 +199,8 @@ Request::CheckAutoCompressedFile(const struct stat &st,
     if (!http_client_accepts_encoding(request.headers, encoding))
         return false;
 
-    const char *compressed_path = p_strcat(&pool, path, suffix, nullptr);
+    const AllocatorPtr alloc(pool);
+    const char *compressed_path = alloc.Concat(path, suffix);
     return DispatchCompressedFile(st, body, encoding, compressed_path);
 }
 
