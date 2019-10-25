@@ -50,7 +50,7 @@
  * parameters from the parent container.
  */
 ResourceAddress
-Widget::GetBaseAddress(struct pool &_pool, bool stateful) const
+Widget::GetBaseAddress(AllocatorPtr alloc, bool stateful) const
 {
     const ResourceAddress *src = stateful
         ? GetAddress()
@@ -62,17 +62,17 @@ Widget::GetBaseAddress(struct pool &_pool, bool stateful) const
     const auto &src_http = src->GetHttp();
     const char *const src_path = src_http.path;
 
-    const char *uri = uri_delete_query_string(_pool, src_path,
+    const char *uri = uri_delete_query_string(alloc, src_path,
                                               from_template.query_string);
 
     if (!from_request.query_string.empty())
-        uri = uri_delete_query_string(_pool, src_path,
+        uri = uri_delete_query_string(alloc, src_path,
                                       from_request.query_string);
 
     if (uri == src_path)
         return {ShallowCopy(), *src};
 
-    return src->WithPath(_pool, uri);
+    return src->WithPath(alloc, uri);
 }
 
 static const ResourceAddress *
@@ -98,6 +98,8 @@ HasTrailingSlash(const char *p)
 const ResourceAddress *
 Widget::DetermineAddress(bool stateful) const
 {
+    const AllocatorPtr alloc(pool);
+
     const char *path_info, *uri;
     ResourceAddress *address;
 
@@ -132,18 +134,18 @@ Widget::DetermineAddress(bool stateful) const
                    URI path and path_info */
                 ++path_info;
 
-            uri = p_strcat(&pool, uri, path_info, nullptr);
+            uri = alloc.Concat(uri, path_info);
         }
 
         if (from_template.query_string != nullptr)
-            uri = uri_insert_query_string(pool, uri,
+            uri = uri_insert_query_string(alloc, uri,
                                           from_template.query_string);
 
         if (stateful && !from_request.query_string.IsNull())
-            uri = uri_append_query_string_n(pool, uri,
+            uri = uri_append_query_string_n(alloc, uri,
                                             from_request.query_string);
 
-        return NewFromPool<ResourceAddress>(pool, original_address->WithPath(pool, uri));
+        return alloc.New<ResourceAddress>(original_address->WithPath(alloc, uri));
 
     case ResourceAddress::Type::LHTTP:
         assert(original_address->GetLhttp().uri != nullptr);
@@ -156,43 +158,39 @@ Widget::DetermineAddress(bool stateful) const
                    URI path and path_info */
                 ++path_info;
 
-            uri = p_strcat(&pool, uri, path_info, nullptr);
+            uri = alloc.Concat(uri, path_info);
         }
 
         if (from_template.query_string != nullptr)
-            uri = uri_insert_query_string(pool, uri,
+            uri = uri_insert_query_string(alloc, uri,
                                           from_template.query_string);
 
         if (stateful && !from_request.query_string.IsNull())
-            uri = uri_append_query_string_n(pool, uri,
+            uri = uri_append_query_string_n(alloc, uri,
                                             from_request.query_string);
 
-        return NewFromPool<ResourceAddress>(pool, original_address->WithPath(pool, uri));
+        return alloc.New<ResourceAddress>(original_address->WithPath(alloc, uri));
 
     case ResourceAddress::Type::CGI:
     case ResourceAddress::Type::FASTCGI:
     case ResourceAddress::Type::WAS:
-        address = original_address->Dup(pool);
+        address = original_address->Dup(alloc);
         cgi = &address->GetCgi();
 
         if (*path_info != 0)
             cgi->path_info = cgi->path_info != nullptr
-                ? uri_absolute(pool, cgi->path_info, path_info)
+                ? uri_absolute(alloc, cgi->path_info, path_info)
                 : path_info;
 
         if (!stateful || from_request.query_string.empty())
             cgi->query_string = from_template.query_string;
         else if (from_template.query_string == nullptr)
-            cgi->query_string = p_strdup(pool, from_request.query_string);
+            cgi->query_string = alloc.DupZ(from_request.query_string);
         else
             cgi->query_string =
-                p_strncat(&pool,
-                          from_request.query_string.data,
-                          from_request.query_string.size,
-                          "&", (size_t)1,
-                          from_template.query_string,
-                          strlen(from_template.query_string),
-                          nullptr);
+                alloc.Concat(from_request.query_string,
+                             '&',
+                             from_template.query_string);
 
         return address;
     }
@@ -201,7 +199,7 @@ Widget::DetermineAddress(bool stateful) const
 }
 
 const char *
-Widget::AbsoluteUri(struct pool &_pool, bool stateful,
+Widget::AbsoluteUri(AllocatorPtr alloc, bool stateful,
                     StringView relative_uri) const
 {
     assert(GetAddress()->IsHttp());
@@ -220,23 +218,23 @@ Widget::AbsoluteUri(struct pool &_pool, bool stateful,
           : GetStatelessAddress())->GetHttp();
     const char *base = uwa->path;
     if (relative_uri.IsNull())
-        return uwa->GetAbsoluteURI(AllocatorPtr(_pool));
+        return uwa->GetAbsoluteURI(alloc);
 
-    const char *uri = uri_absolute(_pool, base, relative_uri);
+    const char *uri = uri_absolute(alloc, base, relative_uri);
     assert(uri != nullptr);
     if (!relative_uri.empty() &&
         from_template.query_string != nullptr)
         /* the relative_uri is non-empty, and uri_absolute() has
            removed the query string: re-add the configured query
            string */
-        uri = uri_insert_query_string(_pool, uri,
+        uri = uri_insert_query_string(alloc, uri,
                                       from_template.query_string);
 
-    return uwa->GetAbsoluteURI(AllocatorPtr(_pool), uri);
+    return uwa->GetAbsoluteURI(alloc, uri);
 }
 
 StringView
-Widget::RelativeUri(struct pool &_pool, bool stateful,
+Widget::RelativeUri(AllocatorPtr alloc, bool stateful,
                     StringView relative_uri) const
 {
     const ResourceAddress *base;
@@ -247,9 +245,9 @@ Widget::RelativeUri(struct pool &_pool, bool stateful,
         relative_uri.skip_front(1);
         base = widget_get_original_address(this);
     } else
-        base = NewFromPool<ResourceAddress>(_pool, GetBaseAddress(_pool, stateful));
+        base = alloc.New<ResourceAddress>(GetBaseAddress(alloc, stateful));
 
-    const auto address = base->Apply(_pool, relative_uri);
+    const auto address = base->Apply(alloc, relative_uri);
     if (!address.IsDefined())
         return nullptr;
 
@@ -280,7 +278,7 @@ compare_widget_path(const Widget *widget, const char *other)
 }
 
 const char *
-Widget::ExternalUri(struct pool &_pool,
+Widget::ExternalUri(AllocatorPtr alloc,
                     StringView external_base_uri,
                     const StringMap *args,
                     bool stateful,
@@ -342,16 +340,11 @@ Widget::ExternalUri(struct pool &_pool,
                           frame == nullptr ? nullptr : "frame", frame,
                           nullptr);
 
-    new_uri = p_strncat(&_pool,
-                        external_base_uri.data, external_base_uri.size,
-                        ";", (size_t)1,
-                        args2, strlen(args2),
-                        "&view=", (size_t)(view != nullptr ? 6 : 0),
-                        view != nullptr ? view : "",
-                        view != nullptr ? strlen(view) : (size_t)0,
-                        "/", (size_t)(suffix.size > 0),
-                        suffix.data, suffix.size,
-                        query_string.data, query_string.size,
-                        nullptr);
+    new_uri = alloc.Concat(external_base_uri, ';',
+                           args2,
+                           StringView{"&view=", size_t(view != nullptr ? 6 : 0)},
+                           view != nullptr ? view : "",
+                           StringView{"/", size_t(suffix.size > 0)},
+                           suffix, query_string);
     return new_uri;
 }

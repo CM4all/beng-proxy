@@ -44,6 +44,7 @@
 #include <stdint.h>
 
 struct pool;
+class AllocatorPtr;
 class StringMap;
 struct StringView;
 struct DissectedUri;
@@ -444,21 +445,21 @@ public:
     }
 
     gcc_pure
-    ResourceAddress GetBaseAddress(struct pool &pool, bool stateful) const;
+    ResourceAddress GetBaseAddress(AllocatorPtr alloc, bool stateful) const;
 
     gcc_pure
-    const char *AbsoluteUri(struct pool &_pool, bool stateful,
+    const char *AbsoluteUri(AllocatorPtr alloc, bool stateful,
                             StringView relative_uri) const;
 
     /**
      * Returns an URI relative to the widget base address.
      */
     gcc_pure
-    StringView RelativeUri(struct pool &_pool, bool stateful,
+    StringView RelativeUri(AllocatorPtr alloc, bool stateful,
                            StringView relative_uri) const;
 
     gcc_pure
-    const char *ExternalUri(struct pool &_pool,
+    const char *ExternalUri(AllocatorPtr alloc,
                             StringView external_base_uri,
                             const StringMap *args,
                             bool stateful,

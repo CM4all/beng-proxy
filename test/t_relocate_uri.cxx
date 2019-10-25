@@ -34,6 +34,7 @@
 #include "http_address.hxx"
 #include "pool/RootPool.hxx"
 #include "util/StringView.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <stdio.h>
 
@@ -100,13 +101,13 @@ static constexpr RelocateUriTest relocate_uri_tests[] = {
 };
 
 static void
-CheckRelocateUri(struct pool &pool, const char *uri,
+CheckRelocateUri(AllocatorPtr alloc, const char *uri,
                  const char *internal_host, StringView internal_path,
                  const char *external_scheme, const char *external_host,
                  StringView external_path, StringView base,
                  const char *expected)
 {
-    auto *relocated = RelocateUri(pool, uri, internal_host, internal_path,
+    auto *relocated = RelocateUri(alloc, uri, internal_host, internal_path,
                                   external_scheme, external_host,
                                   external_path, base);
     CheckString(expected, relocated);
