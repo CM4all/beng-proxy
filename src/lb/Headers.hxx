@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,7 +33,7 @@
 #ifndef BENG_LB_HEADERS_HXX
 #define BENG_LB_HEADERS_HXX
 
-struct pool;
+class AllocatorPtr;
 class StringMap;
 class HttpHeaders;
 
@@ -41,11 +41,11 @@ class HttpHeaders;
  * Which headers should be forwarded to/from remote HTTP servers?
  */
 void
-lb_forward_request_headers(struct pool &pool, StringMap &headers,
+lb_forward_request_headers(AllocatorPtr alloc, StringMap &headers,
                            const char *local_host, const char *remote_host,
                            bool https,
                            const char *peer_subject,
                            const char *peer_issuer_subject,
-                           bool mangle_via);
+                           bool mangle_via) noexcept;
 
 #endif
