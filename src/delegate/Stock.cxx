@@ -60,13 +60,14 @@ struct DelegateArgs {
                  const ChildOptions &_options)
         :executable_path(_executable_path), options(_options) {}
 
-    const char *GetStockKey(struct pool &pool) const {
+    const char *GetStockKey(AllocatorPtr alloc) const {
         const char *key = executable_path;
 
         char options_buffer[16384];
-        *options.MakeId(options_buffer) = 0;
-        if (*options_buffer != 0)
-            key = p_strcat(&pool, key, "|", options_buffer, nullptr);
+        char *options_end = options.MakeId(options_buffer);
+        if (options_end > options_buffer)
+            key = alloc.Concat(key, '|',
+                               StringView{options_buffer, options_end});
 
         return key;
     }
@@ -216,7 +217,7 @@ delegate_stock_get(StockMap *delegate_stock,
     const TempPoolLease tpool;
     const AllocatorPtr alloc(tpool);
     auto r = NewDisposablePointer<DelegateArgs>(alloc, helper, options);
-    const char *key = r->GetStockKey(*tpool);
+    const char *key = r->GetStockKey(alloc);
     return delegate_stock->GetNow(key, std::move(r));
 }
 
