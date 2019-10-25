@@ -57,16 +57,12 @@
  */
 gcc_pure
 static const char *
-ForwardURI(struct pool &pool, const DissectedUri &uri)
+ForwardURI(AllocatorPtr alloc, const DissectedUri &uri) noexcept
 {
     if (uri.query.empty())
-        return p_strdup(pool, uri.base);
+        return alloc.DupZ(uri.base);
     else
-        return p_strncat(&pool,
-                         uri.base.data, uri.base.size,
-                         "?", (size_t)1,
-                         uri.query.data, uri.query.size,
-                         nullptr);
+        return alloc.Concat(uri.base, '?', uri.query);
 }
 
 inline const char *
