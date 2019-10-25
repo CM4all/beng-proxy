@@ -186,8 +186,6 @@ private:
 };
 
 struct NfsCacheRequest final : NfsStockGetHandler, NfsClientOpenFileHandler {
-    struct pool &pool;
-
     NfsCache &cache;
 
     const char *key;
@@ -196,11 +194,11 @@ struct NfsCacheRequest final : NfsStockGetHandler, NfsClientOpenFileHandler {
     NfsCacheHandler &handler;
     CancellablePointer &cancel_ptr;
 
-    NfsCacheRequest(struct pool &_pool, NfsCache &_cache,
+    NfsCacheRequest(struct pool &pool, NfsCache &_cache,
                     const char *_key, const char *_path,
                     NfsCacheHandler &_handler,
                     CancellablePointer &_cancel_ptr)
-        :pool(_pool), cache(_cache),
+        :cache(_cache),
          key(p_strdup(pool, _key)), path(_path),
          handler(_handler),
          cancel_ptr(_cancel_ptr) {}
