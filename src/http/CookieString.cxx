@@ -35,6 +35,7 @@
 #include "PTokenizer.hxx"
 #include "pool/pool.hxx"
 #include "util/StringView.hxx"
+#include "AllocatorPtr.hxx"
 
 gcc_always_inline
 static constexpr bool

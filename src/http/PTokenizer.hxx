@@ -36,17 +36,17 @@
 
 #pragma once
 
-struct pool;
 struct StringView;
+class AllocatorPtr;
 
 void
-http_next_quoted_string(struct pool &pool, StringView &input,
+http_next_quoted_string(AllocatorPtr alloc, StringView &input,
                         StringView &value) noexcept;
 
 void
-http_next_value(struct pool &pool,
+http_next_value(AllocatorPtr alloc,
                 StringView &input, StringView &value) noexcept;
 
 void
-http_next_name_value(struct pool &pool, StringView &input,
+http_next_name_value(AllocatorPtr alloc, StringView &input,
                      StringView &name, StringView &value) noexcept;

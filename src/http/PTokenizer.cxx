@@ -33,14 +33,14 @@
 #include "PTokenizer.hxx"
 #include "Tokenizer.hxx"
 #include "Chars.hxx"
-#include "pool/pool.hxx"
 #include "util/StringView.hxx"
+#include "AllocatorPtr.hxx"
 
 void
-http_next_quoted_string(struct pool &pool, StringView &input,
+http_next_quoted_string(AllocatorPtr alloc, StringView &input,
                         StringView &value) noexcept
 {
-    char *dest = (char *)p_malloc(&pool, input.size); /* TODO: optimize memory consumption */
+    char *dest = alloc.NewArray<char>(input.size); /* TODO: optimize memory consumption */
     size_t pos = 1;
 
     value.size = 0;
@@ -65,16 +65,17 @@ http_next_quoted_string(struct pool &pool, StringView &input,
 }
 
 void
-http_next_value(struct pool &pool, StringView &input, StringView &value) noexcept
+http_next_value(AllocatorPtr alloc,
+                StringView &input, StringView &value) noexcept
 {
     if (!input.empty() && input.front() == '"')
-        http_next_quoted_string(pool, input, value);
+        http_next_quoted_string(alloc, input, value);
     else
         http_next_token(input, value);
 }
 
 void
-http_next_name_value(struct pool &pool, StringView &input,
+http_next_name_value(AllocatorPtr alloc, StringView &input,
                      StringView &name, StringView &value) noexcept
 {
     http_next_token(input, name);
@@ -86,7 +87,7 @@ http_next_name_value(struct pool &pool, StringView &input,
         input.pop_front();
         input.StripLeft();
 
-        http_next_value(pool, input, value);
+        http_next_value(alloc, input, value);
     } else
         value = nullptr;
 }
