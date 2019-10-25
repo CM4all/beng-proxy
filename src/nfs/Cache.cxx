@@ -463,7 +463,7 @@ NfsCache::Request(struct pool &caller_pool,
     auto r = NewFromPool<NfsCacheRequest>(caller_pool, caller_pool, *this,
                                           key, path,
                                           handler, cancel_ptr);
-    nfs_stock_get(&stock, &caller_pool, server, _export,
+    nfs_stock_get(&stock, caller_pool, server, _export,
                   *r, cancel_ptr);
 }
 

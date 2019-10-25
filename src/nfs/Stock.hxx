@@ -34,7 +34,7 @@
 
 #include <exception>
 
-struct pool;
+class AllocatorPtr;
 class NfsStock;
 class NfsClient;
 class CancellablePointer;
@@ -56,7 +56,7 @@ void
 nfs_stock_free(NfsStock *stock) noexcept;
 
 void
-nfs_stock_get(NfsStock *stock, struct pool *pool,
+nfs_stock_get(NfsStock *stock, AllocatorPtr alloc,
               const char *server, const char *export_name,
               NfsStockGetHandler &handler,
               CancellablePointer &cancel_ptr) noexcept;

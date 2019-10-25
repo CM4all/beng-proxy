@@ -33,9 +33,9 @@
 #include "Stock.hxx"
 #include "Client.hxx"
 #include "Handler.hxx"
-#include "pool/pool.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/set.hpp>
@@ -130,7 +130,7 @@ public:
 
     ~NfsStock() noexcept;
 
-    void Get(struct pool &pool,
+    void Get(AllocatorPtr alloc,
              const char *server, const char *export_name,
              NfsStockGetHandler &handler,
              CancellablePointer &cancel_ptr) noexcept;
@@ -228,13 +228,12 @@ nfs_stock_free(NfsStock *stock) noexcept
 }
 
 inline void
-NfsStock::Get(struct pool &caller_pool,
+NfsStock::Get(AllocatorPtr alloc,
               const char *server, const char *export_name,
               NfsStockGetHandler &handler,
               CancellablePointer &cancel_ptr) noexcept
 {
-    const char *key = p_strcat(&caller_pool, server, ":", export_name,
-                               nullptr);
+    const char *key = alloc.Concat(server, ':', export_name);
 
     ConnectionMap::insert_commit_data hint;
     auto result = connections.insert_check(key,
@@ -255,9 +254,8 @@ NfsStock::Get(struct pool &caller_pool,
         }
     }
 
-    auto request = NewFromPool<NfsStockRequest>(caller_pool, *connection,
-                                                handler,
-                                                cancel_ptr);
+    auto request = alloc.New<NfsStockRequest>(*connection,
+                                              handler, cancel_ptr);
     connection->requests.push_front(*request);
 
     if (is_new)
@@ -267,10 +265,10 @@ NfsStock::Get(struct pool &caller_pool,
 }
 
 void
-nfs_stock_get(NfsStock *stock, struct pool *pool,
+nfs_stock_get(NfsStock *stock, AllocatorPtr alloc,
               const char *server, const char *export_name,
               NfsStockGetHandler &handler,
               CancellablePointer &cancel_ptr) noexcept
 {
-    stock->Get(*pool, server, export_name, handler, cancel_ptr);
+    stock->Get(alloc, server, export_name, handler, cancel_ptr);
 }
