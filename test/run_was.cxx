@@ -129,10 +129,12 @@ Context::OnData(const void *data, size_t length) noexcept
  */
 
 void
-Context::OnHttpResponse(gcc_unused http_status_t status,
+Context::OnHttpResponse(http_status_t status,
                         gcc_unused StringMap &&headers,
                         UnusedIstreamPtr _body) noexcept
 {
+    fprintf(stderr, "status: %s\n", http_status_to_string(status));
+
     if (_body)
         body.Set(std::move(_body), *this);
 }
