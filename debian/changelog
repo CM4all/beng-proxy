@@ -1,6 +1,6 @@
 cm4all-beng-proxy (16.0.5) unstable; urgency=low
 
-  * merge release 15.24
+  * merge release 15.25
 
  --   
 
@@ -45,6 +45,13 @@ cm4all-beng-proxy (16.0.1) unstable; urgency=low
   * debian: use debhelper 12
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 27 Sep 2019 14:09:41 +0200
+
+cm4all-beng-proxy (15.25) unstable; urgency=low
+
+  * spawn: fix orphaned LHTTP processes after EAGAIN on spawner socket
+  * lb/certdb: don't reconnect to database after non-fatal error
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 28 Oct 2019 14:19:52 +0100
 
 cm4all-beng-proxy (15.24) unstable; urgency=low
 

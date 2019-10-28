@@ -97,7 +97,7 @@ try {
 
     conn.SetSingleRowMode();
 } catch (...) {
-    conn.Error(std::current_exception());
+    conn.CheckError(std::current_exception());
 }
 
 void
