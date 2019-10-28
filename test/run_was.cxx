@@ -163,12 +163,14 @@ try {
 
     StaticArray<const char *, 64> params;
 
-    if (argc < 2) {
-        fprintf(stderr, "Usage: run_was PATH [--parameter a=b ...]\n");
+    if (argc < 3) {
+        fprintf(stderr, "Usage: run_was PATH URI [--parameter a=b ...]\n");
         return EXIT_FAILURE;
     }
 
-    for (int i = 2; i < argc;) {
+    const char *uri = argv[2];
+
+    for (int i = 3; i < argc;) {
         if (strcmp(argv[i], "--parameter") == 0 ||
             strcmp(argv[i], "-p") == 0) {
             ++i;
@@ -205,7 +207,7 @@ try {
                        context.process.input,
                        context.process.output,
                        context,
-                       HTTP_METHOD_GET, "/",
+                       HTTP_METHOD_GET, uri,
                        nullptr,
                        nullptr, nullptr,
                        *strmap_new(context.root_pool),
