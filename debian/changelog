@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.25) unstable; urgency=low
 
-  * 
+  * lb/certdb: don't reconnect to database after non-fatal error
 
  --   
 
