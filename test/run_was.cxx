@@ -38,7 +38,7 @@
 #include "HttpResponseHandler.hxx"
 #include "direct.hxx"
 #include "strmap.hxx"
-#include "istream/Handler.hxx"
+#include "istream/sink_fd.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/FileIstream.hxx"
@@ -62,31 +62,16 @@
 #include <signal.h>
 
 struct Context final
-    : PInstance, WasLease, IstreamHandler, HttpResponseHandler {
+    : PInstance, WasLease, HttpResponseHandler {
 
     WasProcess process;
 
-    IstreamPointer body;
+    SinkFd *body = nullptr;
     bool error;
 
     CancellablePointer cancel_ptr;
 
     Context():body(nullptr) {}
-
-    /* virtual methods from class IstreamHandler */
-
-    size_t OnData(const void *data, size_t length) noexcept override;
-
-    void OnEof() noexcept override {
-        body.Clear();
-    }
-
-    void OnError(std::exception_ptr ep) noexcept override {
-        PrintException(ep);
-
-        body.Clear();
-        error = true;
-    }
 
     /* virtual methods from class Lease */
     void ReleaseWas(gcc_unused bool reuse) override {
@@ -106,22 +91,48 @@ struct Context final
 };
 
 /*
- * istream handler
+ * SinkFdHandler
  *
  */
 
-size_t
-Context::OnData(const void *data, size_t length) noexcept
+static void
+my_sink_fd_input_eof(void *ctx)
 {
-    ssize_t nbytes = write(1, data, length);
-    if (nbytes <= 0) {
-        error = true;
-        body.ClearAndClose();
-        return 0;
-    }
+    auto &c = *(Context *)ctx;
 
-    return (size_t)nbytes;
+    c.body = nullptr;
 }
+
+static void
+my_sink_fd_input_error(std::exception_ptr ep, void *ctx)
+{
+    auto &c = *(Context *)ctx;
+
+    PrintException(ep);
+
+    c.body = nullptr;
+    c.error = true;
+}
+
+static bool
+my_sink_fd_send_error(int error, void *ctx)
+{
+    auto &c = *(Context *)ctx;
+
+    fprintf(stderr, "%s\n", strerror(error));
+
+    c.body = nullptr;
+    c.error = true;
+
+    return true;
+}
+
+static constexpr SinkFdHandler my_sink_fd_handler = {
+    .input_eof = my_sink_fd_input_eof,
+    .input_error = my_sink_fd_input_error,
+    .send_error = my_sink_fd_send_error,
+};
+
 
 /*
  * http_response_handler
@@ -135,8 +146,15 @@ Context::OnHttpResponse(http_status_t status,
 {
     fprintf(stderr, "status: %s\n", http_status_to_string(status));
 
-    if (_body)
-        body.Set(std::move(_body), *this);
+    if (_body) {
+        struct pool &pool = root_pool;
+        body = sink_fd_new(event_loop, pool,
+                           std::move(_body),
+                           FileDescriptor(STDOUT_FILENO),
+                           guess_fd_type(STDOUT_FILENO),
+                           my_sink_fd_handler, this);
+        sink_fd_read(body);
+    }
 }
 
 void
