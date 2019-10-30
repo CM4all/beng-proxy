@@ -328,8 +328,12 @@ WasInput::TryDirect() noexcept
     }
 
     ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, fd.Get(), max_length);
-    if (nbytes == ISTREAM_RESULT_EOF || nbytes == ISTREAM_RESULT_BLOCKING ||
-        nbytes == ISTREAM_RESULT_CLOSED)
+    if (nbytes == ISTREAM_RESULT_BLOCKING) {
+        event.CancelRead();
+        return false;
+    }
+
+    if (nbytes == ISTREAM_RESULT_EOF || nbytes == ISTREAM_RESULT_CLOSED)
         return false;
 
     if (nbytes < 0) {
