@@ -1,5 +1,6 @@
 cm4all-beng-proxy (15.26) unstable; urgency=low
 
+  * bp: allow Content-Length response header in HEAD requests
   * was: fix busy loop
 
  --   

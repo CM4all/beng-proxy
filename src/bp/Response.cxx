@@ -864,8 +864,6 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
         }
     }
 
-    const auto *original_headers = &headers;
-
     auto new_headers = forward_response_headers(pool, status, headers,
                                                 request.local_host_and_port,
                                                 session_cookie,
@@ -883,10 +881,10 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
 
     HttpHeaders headers2(std::move(new_headers));
 
-    if (original_headers != nullptr && request.method == HTTP_METHOD_HEAD)
+    if (request.method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body
            (RFC 2616 14.13) */
-        headers2.MoveToBuffer("content-length");
+        headers2.CopyToBuffer(headers, "content-length");
 
     DispatchResponse(status, std::move(headers2), std::move(body));
 }
