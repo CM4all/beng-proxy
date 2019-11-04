@@ -304,9 +304,6 @@ The following settings are available:
   connections to the translation server. Set to 0 to disable the limit.
   The default is 64.
 
-- ``stopwatch``: Set to ``yes`` to enable the stopwatch. See
-  :ref:`stopwatch` for details.
-
 - ``dump_widget_tree``: Set to ``yes`` to dump the widget tree for each
   request into the log file.
 
