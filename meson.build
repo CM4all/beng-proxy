@@ -835,7 +835,6 @@ executable(
   'src/widget/FromSession.cxx',
   'src/widget/Registry.cxx',
   'src/widget/Resolver.cxx',
-  'src/widget/Dump.cxx',
   'src/widget/Request.cxx',
   'src/widget/Inline.cxx',
   'src/istream_escape.cxx',

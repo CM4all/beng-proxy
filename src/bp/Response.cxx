@@ -48,7 +48,6 @@
 #include "widget/Widget.hxx"
 #include "widget/Ref.hxx"
 #include "widget/Class.hxx"
-#include "widget/Dump.hxx"
 #include "widget/Context.hxx"
 #include "session/Session.hxx"
 #include "GrowingBuffer.hxx"
@@ -304,11 +303,6 @@ Request::InvokeXmlProcessor(http_status_t status,
                                           *widget, MakeWidgetContext(),
                                           transformation.u.processor.options);
         assert(response_body);
-
-        if (instance.config.dump_widget_tree)
-            response_body = widget_dump_tree_after_istream(pool,
-                                                           std::move(response_body),
-                                                           *widget);
 
         InvokeResponse(status,
                        processor_header_forward(pool, response_headers),

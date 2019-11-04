@@ -138,11 +138,6 @@ struct BpConfig {
 
     bool dynamic_session_cookie = false;
 
-    /**
-     * Dump widget trees to the log file?
-     */
-    bool dump_widget_tree = false;
-
     bool verbose_response = false;
 
     bool emulate_mod_auth_easy = false;

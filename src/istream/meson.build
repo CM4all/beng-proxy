@@ -36,7 +36,6 @@ istream_basic = static_library(
   'istream_catch.cxx',
   'istream_hold.cxx',
   'istream_memory.cxx',
-  'istream_notify.cxx',
   'istream_null.cxx',
   'istream_string.cxx',
   'istream_trace.cxx',

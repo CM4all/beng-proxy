@@ -82,7 +82,7 @@ BpConfig::HandleSet(StringView name, const char *value)
     } else if (name.Equals("stopwatch")) {
         /* deprecated */
     } else if (name.Equals("dump_widget_tree")) {
-        dump_widget_tree = ParseBool(value);
+        /* deprecated */
     } else if (name.Equals("verbose_response")) {
         verbose_response = ParseBool(value);
     } else if (name.Equals("session_cookie")) {
