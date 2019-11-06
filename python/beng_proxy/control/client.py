@@ -70,7 +70,7 @@ class Client:
 
     def send_tcache_invalidate(self, vary):
         payload = ''
-        for command, value in iteritems(iteritems):
+        for command, value in iteritems(vary):
             assert isinstance(command, int)
             assert isinstance(value, str)
 
