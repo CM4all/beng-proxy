@@ -103,12 +103,19 @@ public:
     }
 
     /**
+     * Copy a (hop-by-hop) header from a map to the buffer.
+     */
+    void CopyToBuffer(const StringMap &src, const char *name) noexcept {
+        const char *value = src.Get(name);
+        if (value != nullptr)
+            Write(name, value);
+    }
+
+    /**
      * Move a (hop-by-hop) header from the map to the buffer.
      */
     void MoveToBuffer(const char *name) noexcept {
-        const char *value = map.Get(name);
-        if (value != nullptr)
-            Write(name, value);
+        CopyToBuffer(map, name);
     }
 
     void MoveToBuffer(const char *const*names) noexcept {
