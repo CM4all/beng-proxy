@@ -264,6 +264,7 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
                 /* flush the encrypted_output buffer, because it may
                    contain a "TLS alert" */
             } catch (...) {
+                const std::lock_guard<std::mutex> lock(f.mutex);
                 f.encrypted_output.MoveFromAllowNull(encrypted_output);
                 throw;
             }
