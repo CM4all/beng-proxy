@@ -1,6 +1,6 @@
 Source: cm4all-beng-proxy
 Section: web
-Priority: extra
+Priority: optional
 Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 12~), dh-python,
  meson (>= 0.47),
