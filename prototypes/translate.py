@@ -27,7 +27,6 @@ demo_path = '/usr/share/cm4all/beng-proxy/demo/htdocs'
 test_path = os.path.join(os.getcwd(), 'test')
 was_examples_path = was_path
 was_examples = ['hello', 'random', 'mirror', 'cookie']
-coma_fastcgi = '/usr/bin/cm4all-coma-fastcgi'
 coma_was = os.path.join(was_path, 'coma-was')
 coma_demo = '/var/www'
 image_processor_path = '/usr/share/cm4all/coma/apps/imageprocessor/htdocs'
@@ -188,12 +187,11 @@ class Translation(Protocol):
             response.packet(TRANSLATE_EXPAND_REDIRECT, r'\1/')
         elif uri[-4:] == '.cls':
             # run COMA-FastCGI
-            response.packet(TRANSLATE_EASY_BASE)
             response.packet(TRANSLATE_REGEX, r'^(.*\.cls)$')
             response.packet(TRANSLATE_REGEX_TAIL)
-            response.packet(TRANSLATE_FASTCGI, easy_path)
-            response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1')
-            response.packet(TRANSLATE_ACTION, coma_fastcgi)
+            response.packet(TRANSLATE_WAS, coma_was)
+            response.pair('COMA_CLASS', path)
+            response.expand_pair('COMA_CLASS', document_root + r'/\1')
             response.pair('UPLOAD_BUFFER_SIZE', '4M')
             response.packet(TRANSLATE_FILE_NOT_FOUND, '404')
             response.packet(TRANSLATE_ENOTDIR, 'foo')
@@ -264,8 +262,8 @@ class Translation(Protocol):
                     response.packet(TRANSLATE_FASTCGI, path)
                     response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
                 elif request.probe_suffix == '.cls':
-                    response.packet(TRANSLATE_FASTCGI, path)
-                    response.packet(TRANSLATE_ACTION, coma_fastcgi)
+                    response.packet(TRANSLATE_WAS, coma_was)
+                    response.pair('COMA_CLASS', path)
                 else:
                     response.packet(TRANSLATE_PATH, path)
                 response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1' + request.probe_suffix)
@@ -297,8 +295,8 @@ class Translation(Protocol):
             return
 
         if path[-4:] == '.cls':
-            response.packet(TRANSLATE_FASTCGI, path)
-            response.packet(TRANSLATE_ACTION, coma_fastcgi)
+            response.packet(TRANSLATE_WAS, coma_was)
+            response.pair('COMA_CLASS', path)
             response.pair('UPLOAD_BUFFER_SIZE', '4M')
             if jail:
                 response.packet(TRANSLATE_JAILCGI)
@@ -320,20 +318,16 @@ class Translation(Protocol):
                 response.gzipped(path + '.gz')
 
     def _handle_coma(self, response, base_uri, relative_uri, base_path,
-                     config_file=None, was=False):
+                     config_file=None):
         i = relative_uri.find('/')
         if i < 0: i = len(relative_uri)
         relative_path, path_info = relative_uri[:i], relative_uri[i:]
 
         path = os.path.join(base_path, relative_path)
         response.packet(TRANSLATE_DOCUMENT_ROOT, base_path)
-        if was:
-            response.packet(TRANSLATE_WAS, coma_was)
-            response.pair('COMA_CLASS', path)
-            response.packet(TRANSLATE_NO_NEW_PRIVS)
-        else:
-            response.packet(TRANSLATE_FASTCGI, path)
-            response.packet(TRANSLATE_ACTION, coma_fastcgi)
+        response.packet(TRANSLATE_WAS, coma_was)
+        response.pair('COMA_CLASS', path)
+        response.packet(TRANSLATE_NO_NEW_PRIVS)
         response.packet(TRANSLATE_SCRIPT_NAME, base_uri + relative_path)
         response.packet(TRANSLATE_PATH_INFO, path_info)
         if config_file is not None:
@@ -512,8 +506,6 @@ class Translation(Protocol):
 
         elif uri[:6] == '/coma/':
             self._handle_coma(response, uri[:6], uri[6:], coma_demo)
-        elif uri[:10] == '/coma-was/':
-            self._handle_coma(response, uri[:10], uri[10:], coma_demo, was=True)
         elif uri[:11] == '/coma-apps/':
             m = coma_apps_re.match(uri)
             if m:
@@ -551,8 +543,8 @@ class Translation(Protocol):
             response.path('/var/www' + uri)
             response.packet(TRANSLATE_EXPAND_PATH, r"/var/www/\1")
             response.packet(TRANSLATE_FILTER)
-            response.packet(TRANSLATE_FASTCGI, os.path.join(image_processor_path, 'filter.cls'))
-            response.packet(TRANSLATE_ACTION, coma_fastcgi)
+            response.packet(TRANSLATE_WAS, coma_was)
+            response.pair('COMA_CLASS', os.path.join(image_processor_path, 'filter.cls'))
             response.packet(TRANSLATE_PATH_INFO, path_info)
             response.packet(TRANSLATE_EXPAND_PATH_INFO, r"/\2")
         elif uri == '/lhttp/':
@@ -1053,7 +1045,6 @@ if __name__ == '__main__':
 
         was_examples_path = os.path.join(src_dir, 'libwas', 'output', 'debug', 'examples')
         was_examples_path = os.path.join(src_dir, 'libwas')
-        coma_fastcgi = os.path.join(src_dir, 'cgi-coma/output/debug/cm4all-coma-fastcgi')
         coma_was = os.path.join(src_dir, 'cgi-coma/output/debug/coma-was')
         coma_demo = os.path.join(src_dir, 'cgi-coma/demo')
         image_processor_path = os.path.join(src_dir, 'image-processor/src')
