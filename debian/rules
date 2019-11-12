@@ -7,7 +7,7 @@ MESON_OPTIONS = \
 	--werror
 
 %:
-	dh $@ --with=python2 --with sphinxdoc --no-start
+	dh $@ --with=python2 --with=python3 --with sphinxdoc --no-start
 
 .PHONY: override_dh_auto_configure
 override_dh_auto_configure:

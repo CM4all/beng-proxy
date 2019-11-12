@@ -128,6 +128,18 @@ Description: Python bindings for beng-proxy
  .
  This is the Python translation server library.
 
+Package: python3-cm4all-beng-proxy
+Architecture: all
+Section: python
+Provides: ${python3:Provides}
+Depends: ${python3:Depends}, python3-future
+Recommends: cm4all-beng-proxy | cm4all-beng-lb
+Description: Python 3 bindings for beng-proxy's control channel
+ BENG proxy is an HTTP proxy server which includes a HTML template
+ processor.
+ .
+ This Python 3 library provides a control channel client.
+
 Package: cm4all-beng-proxy-tools
 Architecture: all
 Depends: ruby (>= 1:2.1)
