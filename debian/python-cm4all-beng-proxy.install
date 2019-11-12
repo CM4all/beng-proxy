@@ -1,3 +1,0 @@
-python/beng_proxy/*.py usr/share/pyshared/beng_proxy
-python/beng_proxy/translation/*.py usr/share/pyshared/beng_proxy/translation
-python/beng_proxy/control/*.py usr/share/pyshared/beng_proxy/control
