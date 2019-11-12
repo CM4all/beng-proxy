@@ -57,28 +57,36 @@ class Client:
             packets.append((command, payload))
         return packets
 
+    @staticmethod
+    def __to_bytes(s):
+        assert isinstance(s, (str, bytes))
+
+        if not isinstance(s, bytes):
+            s = s.encode('ascii')
+        return s
+
     def send(self, command, payload=None):
         assert isinstance(command, int)
-        if payload is None: payload = ''
-        assert isinstance(payload, str)
+        if payload is None: payload = b''
+        payload = self.__to_bytes(payload)
 
         length = len(payload)
         assert length <= 0xffff
         header = struct.pack('>IHH', control_magic, length, command)
-        padding = ' ' * (3 - ((length - 1) & 0x3))
+        padding = b' ' * (3 - ((length - 1) & 0x3))
         self._socket.send(header + payload + padding)
 
     def send_tcache_invalidate(self, vary):
-        payload = ''
+        payload = b''
         for command, value in iteritems(vary):
             assert isinstance(command, int)
-            assert isinstance(value, str)
+            value = self.__to_bytes(value)
 
             length = len(value)
             assert length <= 0xffff
             payload += struct.pack('>HH', length, command)
             payload += value
-            payload += ' ' * (3 - ((length - 1) & 0x3))
+            payload += b' ' * (3 - ((length - 1) & 0x3))
 
         self.send(CONTROL_TCACHE_INVALIDATE, payload)
 
