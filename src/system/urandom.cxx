@@ -34,6 +34,7 @@
 #include "system/Error.hxx"
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "util/RuntimeError.hxx"
 
 static size_t
 Read(const char *path, FileDescriptor fd, void *p, size_t size)
@@ -43,7 +44,7 @@ Read(const char *path, FileDescriptor fd, void *p, size_t size)
         throw FormatErrno("Failed to read from %s", path);
 
     if (nbytes == 0)
-        throw std::runtime_error(std::string("Short read from ") + path);
+        throw FormatRuntimeError("Short read from %s", path);
 
     return nbytes;
 }
