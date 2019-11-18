@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,6 +33,7 @@
 #include "load_file.hxx"
 #include "HttpMessageResponse.hxx"
 #include "pool/pool.hxx"
+#include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "http/Status.h"
@@ -42,9 +43,7 @@
 ConstBuffer<void>
 LoadFile(struct pool &pool, const char *path, off_t max_size)
 {
-    UniqueFileDescriptor fd;
-    if (!fd.OpenReadOnly(path))
-        throw FormatErrno("Failed to open %s", path);
+    auto fd = OpenReadOnly(path);
 
     off_t size = fd.GetSize();
     if (size < 0)
