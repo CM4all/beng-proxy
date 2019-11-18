@@ -51,13 +51,10 @@ Read(const char *path, FileDescriptor fd, void *p, size_t size)
 
 static void
 FullRead(const char *path, FileDescriptor fd, void *_p, size_t size)
-{
-    uint8_t *p = (uint8_t *)_p;
-
-    while (size > 0) {
-        size_t nbytes = Read(path, fd, p, size);
-        size -= nbytes;
-    }
+try {
+    fd.FullRead(_p, size);
+} catch (...) {
+    std::throw_with_nested(FormatRuntimeError("Error on %s", path));
 }
 
 static size_t
