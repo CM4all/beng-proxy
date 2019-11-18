@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,7 +31,7 @@
  */
 
 #include "random.hxx"
-#include "system/urandom.hxx"
+#include "system/Urandom.hxx"
 
 #include <random>
 

@@ -56,7 +56,7 @@
 #include "ssl/Unique.hxx"
 #include "ssl/Error.hxx"
 #include "lb/Config.hxx"
-#include "system/urandom.hxx"
+#include "system/Urandom.hxx"
 #include "system/Error.hxx"
 #include "io/StringFile.hxx"
 #include "util/ConstBuffer.hxx"

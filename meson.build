@@ -167,7 +167,6 @@ system2 = static_library(
   'system2',
   'src/system/SetupProcess.cxx',
   'src/system/Isolate.cxx',
-  'src/system/urandom.cxx',
   include_directories: inc,
 )
 system_dep = declare_dependency(

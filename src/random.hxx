@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * PRNG for session ids.
  */
 
-#ifndef BENG_PROXY_RANDOM_HXX
-#define BENG_PROXY_RANDOM_HXX
+#pragma once
 
 #include <stdint.h>
 
@@ -50,5 +49,3 @@ random_seed();
  */
 uint64_t
 random_uint64() noexcept;
-
-#endif
