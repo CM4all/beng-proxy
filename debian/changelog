@@ -1,6 +1,6 @@
 cm4all-beng-proxy (16.0.7) unstable; urgency=low
 
-  * 
+  * use getrandom() instead of /dev/urandom if available
 
  --   
 
