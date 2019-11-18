@@ -32,9 +32,10 @@
 
 #include "pexpand.hxx"
 #include "expand.hxx"
-#include "regex.hxx"
 #include "AllocatorPtr.hxx"
+#include "regex.hxx"
 #include "uri/Escape.hxx"
+#include "pcre/MatchInfo.hxx"
 #include "util/StringView.hxx"
 
 #include <assert.h>

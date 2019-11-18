@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "regex.hxx"
+#include "pcre/Regex.hxx"
 #include "pexpand.hxx"
 #include "TestPool.hxx"
 #include "AllocatorPtr.hxx"
@@ -40,48 +40,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-
-TEST(RegexTest, Match1)
-{
-    UniqueRegex r;
-    ASSERT_FALSE(r.IsDefined());
-    r.Compile(".", false, false);
-    ASSERT_TRUE(r.IsDefined());
-    ASSERT_TRUE(r.Match("a"));
-    ASSERT_TRUE(r.Match("abc"));
-}
-
-TEST(RegexTest, Match2)
-{
-    UniqueRegex r = UniqueRegex();
-    ASSERT_FALSE(r.IsDefined());
-    r.Compile("..", false, false);
-    ASSERT_TRUE(r.IsDefined());
-    ASSERT_FALSE(r.Match("a"));
-    ASSERT_TRUE(r.Match("abc"));
-}
-
-TEST(RegexTest, NotAnchored)
-{
-    UniqueRegex r = UniqueRegex();
-    ASSERT_FALSE(r.IsDefined());
-    r.Compile("/foo/", false, false);
-    ASSERT_TRUE(r.IsDefined());
-    ASSERT_TRUE(r.Match("/foo/"));
-    ASSERT_TRUE(r.Match("/foo/bar"));
-    ASSERT_TRUE(r.Match("foo/foo/"));
-}
-
-TEST(RegexTest, Anchored)
-{
-    UniqueRegex r = UniqueRegex();
-    ASSERT_FALSE(r.IsDefined());
-    r.Compile("/foo/", true, false);
-    ASSERT_TRUE(r.IsDefined());
-    ASSERT_TRUE(r.Match("/foo/"));
-    ASSERT_TRUE(r.Match("/foo/bar"));
-    ASSERT_FALSE(r.Match("foo/foo/"));
-}
 
 TEST(RegexTest, Expand)
 {

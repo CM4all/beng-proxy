@@ -339,7 +339,7 @@ test('t_regex', executable('t_regex',
   include_directories: inc,
   dependencies: [
     gtest,
-    libpcre,
+    pcre_dep,
     putil_dep,
   ]))
 
@@ -352,7 +352,7 @@ test('t_header_forward', executable('t_header_forward',
   dependencies: [
     gtest,
     threads,
-    libpcre,
+    pcre_dep,
     putil_dep,
     http_dep,
     cookie_dep,

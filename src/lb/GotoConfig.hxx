@@ -33,9 +33,9 @@
 #ifndef BENG_LB_GOTO_CONFIG_HXX
 #define BENG_LB_GOTO_CONFIG_HXX
 
-#include "regex.hxx"
 #include "ClusterConfig.hxx"
 #include "SimpleHttpResponse.hxx"
+#include "pcre/Regex.hxx"
 #include "util/StringLess.hxx"
 
 #include "util/Compiler.h"

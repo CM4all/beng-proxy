@@ -110,7 +110,6 @@ add_global_arguments(debug_flags, language: 'c')
 add_global_arguments(debug_flags, language: 'cpp')
 
 threads = dependency('threads')
-libpcre = dependency('libpcre')
 libsodium = dependency('libsodium', version: '>= 1.0.16')
 libjsoncpp = dependency('jsoncpp')
 libyamlcpp = dependency('yaml-cpp')
@@ -145,6 +144,7 @@ util_dep = declare_dependency(
   ],
 )
 
+subdir('libcommon/src/pcre')
 subdir('libcommon/src/time')
 subdir('libcommon/src/io')
 
@@ -343,7 +343,7 @@ expand = static_library('expand',
   'src/pexpand.cxx',
   include_directories: inc,
   dependencies: [
-    libpcre,
+    pcre_dep,
   ])
 expand_dep = declare_dependency(link_with: expand,
                                 dependencies: [putil_dep])
@@ -398,6 +398,7 @@ raddress_dep = declare_dependency(
     spawn_dep,
     adata_dep,
     expand_dep,
+    pcre_dep,
   ],
 )
 
@@ -902,7 +903,6 @@ executable(
   'src/cluster/BalancerMap.cxx',
   'src/cluster/ConnectBalancer.cxx',
   'src/cluster/TcpBalancer.cxx',
-  'src/regex.cxx',
   'src/http_address.cxx',
   'src/HttpResponseHandler.cxx',
   'src/istream_gb.cxx',
@@ -983,6 +983,7 @@ executable(
     control_server_dep,
     lua_dep,
     thread_pool_dep,
+    pcre_dep,
   ],
   install: true,
   install_dir: 'sbin',
@@ -990,7 +991,6 @@ executable(
 
 executable(
   'cm4all-certdb',
-  'src/regex.cxx',
   'src/lb/Config.cxx',
   'src/lb/ConfigParser.cxx',
   'src/lb/GotoConfig.cxx',
@@ -1014,7 +1014,7 @@ executable(
   include_directories: inc,
   dependencies: [
     libjsoncpp,
-    libpcre,
+    pcre_dep,
     avahi_dep,
     ssl_dep,
     pg_dep,

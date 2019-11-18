@@ -32,8 +32,8 @@
 
 #pragma once
 
+#include "pcre/Regex.hxx"
 #include "util/Compiler.h"
-#include "regex.hxx"
 
 #include <forward_list>
 #include <string>
