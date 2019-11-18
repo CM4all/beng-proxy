@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,15 +32,14 @@
 
 #include "StringFile.hxx"
 #include "system/Error.hxx"
+#include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/StringStrip.hxx"
 
 std::string
 LoadStringFile(const char *path)
 {
-    UniqueFileDescriptor fd;
-    if (!fd.OpenReadOnly(path))
-        throw FormatErrno("Failed to open %s", path);
+    auto fd = OpenReadOnly(path);
 
     char buffer[1024];
     ssize_t nbytes = fd.Read(buffer, sizeof(buffer));
