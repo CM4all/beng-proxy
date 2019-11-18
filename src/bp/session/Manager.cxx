@@ -34,7 +34,6 @@
 #include "Session.hxx"
 #include "shm/shm.hxx"
 #include "shm/dpool.hxx"
-#include "random.hxx"
 #include "crash.hxx"
 #include "io/Logger.hxx"
 #include "util/StaticArray.hxx"
