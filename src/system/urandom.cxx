@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,26 +32,8 @@
 
 #include "urandom.hxx"
 #include "system/Error.hxx"
+#include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <stdint.h>
-#include <stddef.h>
-
-static UniqueFileDescriptor
-Open(const char *path)
-{
-    UniqueFileDescriptor fd;
-    if (!fd.OpenReadOnly(path))
-        throw FormatErrno("Failed to open %s", path);
-
-    return fd;
-}
 
 static size_t
 Read(const char *path, FileDescriptor fd, void *p, size_t size)
@@ -80,13 +62,13 @@ FullRead(const char *path, FileDescriptor fd, void *_p, size_t size)
 static size_t
 Read(const char *path, void *p, size_t size)
 {
-    return Read(path, Open(path), p, size);
+    return Read(path, OpenReadOnly(path), p, size);
 }
 
 static void
 FullRead(const char *path, void *p, size_t size)
 {
-    FullRead(path, Open(path), p, size);
+    FullRead(path, OpenReadOnly(path), p, size);
 }
 
 size_t
