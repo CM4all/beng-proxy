@@ -22,19 +22,6 @@ gtest = declare_dependency(
   compile_args: gtest_compile_args,
 )
 
-executable('TrafoExample',
-  '../src/trafo/Server.cxx',
-  '../src/trafo/Listener.cxx',
-  '../src/trafo/Connection.cxx',
-  '../src/trafo/AllocatedRequest.cxx',
-  '../src/trafo/Response.cxx',
-  'TrafoExample.cxx',
-  include_directories: inc,
-  dependencies: [
-    event_net_dep,
-    system_dep,
-  ])
-
 executable('dump_udp',
   'dump_udp.cxx',
   include_directories: inc,

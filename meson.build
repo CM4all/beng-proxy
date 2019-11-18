@@ -520,6 +520,7 @@ memcached_client_dep = declare_dependency(
 )
 
 subdir('libcommon/src/translation')
+subdir('libcommon/src/translation/server')
 
 libcommon_translation_dep = translation_dep
 
