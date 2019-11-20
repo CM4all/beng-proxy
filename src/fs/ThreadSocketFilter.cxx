@@ -309,7 +309,7 @@ ThreadSocketFilter::Done() noexcept
         return;
     }
 
-    if (input_eof) {
+    if (connected && input_eof) {
         /* this condition was signalled by
            ThreadSocketFilterHandler::run(), probably because a TLS
            "close notify" alert was received */

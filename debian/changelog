@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.27) unstable; urgency=low
 
-  * 
+  * ssl: fix crash due to race condition after "close notify" alert
 
  --   
 
