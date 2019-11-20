@@ -1,5 +1,6 @@
 cm4all-beng-proxy (16.0.7) unstable; urgency=low
 
+  * merge release 15.27
   * use getrandom() instead of /dev/urandom if available
 
  --   
@@ -60,6 +61,14 @@ cm4all-beng-proxy (16.0.1) unstable; urgency=low
   * debian: use debhelper 12
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 27 Sep 2019 14:09:41 +0200
+
+cm4all-beng-proxy (15.27) unstable; urgency=low
+
+  * ssl: fix crash due to race condition after "close notify" alert
+  * debian: remove package cm4all-beng-proxy-optimized
+  * debian: use debhelper 12
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 20 Nov 2019 14:02:28 +0100
 
 cm4all-beng-proxy (15.26) unstable; urgency=low
 
