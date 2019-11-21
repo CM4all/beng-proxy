@@ -41,10 +41,10 @@
 class UnusedIstreamPtr;
 class Request;
 class Widget;
-struct widget_ref;
+struct WidgetRef;
 
 void
 proxy_widget(Request &request2,
              UnusedIstreamPtr body,
-             Widget &widget, const struct widget_ref *proxy_ref,
+             Widget &widget, const WidgetRef *proxy_ref,
              unsigned options);

@@ -39,8 +39,8 @@ struct pool;
 
 /** a reference to a widget inside a widget.  nullptr means the current
     (root) widget is being referenced */
-struct widget_ref {
-    const struct widget_ref *next;
+struct WidgetRef {
+    const WidgetRef *next;
 
     const char *id;
 };
@@ -48,7 +48,7 @@ struct widget_ref {
 static constexpr char WIDGET_REF_SEPARATOR = ':';
 
 gcc_pure
-const struct widget_ref *
+const WidgetRef *
 widget_ref_parse(struct pool *pool, const char *p);
 
 /**
@@ -56,7 +56,7 @@ widget_ref_parse(struct pool *pool, const char *p);
  */
 gcc_pure
 bool
-widget_ref_includes(const struct widget_ref *outer,
-                    const struct widget_ref *inner);
+widget_ref_includes(const WidgetRef *outer,
+                    const WidgetRef *inner);
 
 #endif

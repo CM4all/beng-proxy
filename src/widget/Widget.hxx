@@ -52,6 +52,7 @@ struct RealmSession;
 struct WidgetSession;
 struct WidgetView;
 struct WidgetClass;
+struct WidgetRef;
 struct ResourceAddress;
 class WidgetResolver;
 
@@ -189,7 +190,7 @@ public:
          * nullptr when the focused widget is not an (indirect) child of
          * this one.
          */
-        const struct widget_ref *focus_ref = nullptr;
+        const WidgetRef *focus_ref = nullptr;
 
         /**
          * The new path_info for the focused widget.

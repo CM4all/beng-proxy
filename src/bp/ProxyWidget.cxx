@@ -71,12 +71,12 @@ struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable
     /**
      * A reference to the widget that should be proxied.
      */
-    const struct widget_ref *ref;
+    const WidgetRef *ref;
 
     CancellablePointer cancel_ptr;
 
     ProxyWidget(Request &_request, Widget &_widget,
-                const struct widget_ref *_ref)
+                const WidgetRef *_ref)
         :request(_request),
          view_name(request.args.Remove("view")),
          widget(&_widget), ref(_ref) {
@@ -336,7 +336,7 @@ ProxyWidget::Cancel() noexcept
 void
 proxy_widget(Request &request2,
              UnusedIstreamPtr body,
-             Widget &widget, const struct widget_ref *proxy_ref,
+             Widget &widget, const WidgetRef *proxy_ref,
              unsigned options)
 {
     assert(!widget.from_request.frame);

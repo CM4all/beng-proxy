@@ -37,10 +37,10 @@
 #include <assert.h>
 #include <string.h>
 
-const struct widget_ref *
+const WidgetRef *
 widget_ref_parse(struct pool *pool, const char *_p)
 {
-    const struct widget_ref *root = nullptr, **wr_p = &root;
+    const WidgetRef *root = nullptr, **wr_p = &root;
 
     if (_p == nullptr || *_p == 0)
         return nullptr;
@@ -49,7 +49,7 @@ widget_ref_parse(struct pool *pool, const char *_p)
         if (id.empty())
             continue;
 
-        auto wr = NewFromPool<struct widget_ref>(*pool);
+        auto wr = NewFromPool<WidgetRef>(*pool);
         wr->next = nullptr;
         wr->id = p_strndup(pool, id.data, id.size);
 
@@ -61,8 +61,8 @@ widget_ref_parse(struct pool *pool, const char *_p)
 }
 
 bool
-widget_ref_includes(const struct widget_ref *outer,
-                    const struct widget_ref *inner)
+widget_ref_includes(const WidgetRef *outer,
+                    const WidgetRef *inner)
 {
     assert(inner != nullptr);
 

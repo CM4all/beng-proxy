@@ -101,7 +101,7 @@ request_absolute_uri(const IncomingHttpRequest &request,
  */
 static void
 session_drop_widgets(RealmSession &session, const char *uri,
-                     const struct widget_ref *ref)
+                     const WidgetRef *ref)
 {
     WidgetSession::Set *map = &session.widgets;
     const char *id = uri;
@@ -228,10 +228,10 @@ Request::InvokeXmlProcessor(http_status_t status,
                                        ? translate.response->uri
                                        : p_strdup(pool, dissected_uri.base));
 
-    const struct widget_ref *focus_ref =
+    const WidgetRef *focus_ref =
         widget_ref_parse(&pool, args.Remove("focus"));
 
-    const struct widget_ref *proxy_ref =
+    const WidgetRef *proxy_ref =
         widget_ref_parse(&pool, args.Get("frame"));
 
     if (focus_ref != nullptr && proxy_ref != nullptr &&
