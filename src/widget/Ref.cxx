@@ -45,13 +45,18 @@ widget_ref_parse(struct pool *pool, const char *_p)
     if (_p == nullptr || *_p == 0)
         return nullptr;
 
-    for (auto id : IterableSplitString(_p, WIDGET_REF_SEPARATOR)) {
+    char *p = p_strdup(pool, _p);
+
+    for (auto id : IterableSplitString(p, WIDGET_REF_SEPARATOR)) {
         if (id.empty())
             continue;
 
+        char *_id = const_cast<char *>(id.data);
+        _id[id.size] = 0;
+
         auto wr = NewFromPool<WidgetRef>(*pool);
         wr->next = nullptr;
-        wr->id = p_strndup(pool, id.data, id.size);
+        wr->id = _id;
 
         *wr_p = wr;
         wr_p = &wr->next;
