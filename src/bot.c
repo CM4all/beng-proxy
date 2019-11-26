@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -55,5 +55,7 @@ user_agent_is_bot(const char *user_agent)
         strstr(user_agent, "Applebot") != NULL ||
         strstr(user_agent, "WordPress/") != NULL || /* WordPress pingbacks */
         strstr(user_agent, "pingback") != NULL || /* WordPress (and other?) pingbacks */
+        strstr(user_agent, "adscanner") != NULL || /* http://seocompany.store */
+        strstr(user_agent, "DotBot") != NULL || /* http://www.opensiteexplorer.org/dotbot */
         false;
 }
