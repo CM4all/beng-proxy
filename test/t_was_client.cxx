@@ -124,6 +124,36 @@ RunMirror(WasServer &server, gcc_unused struct pool &pool,
                         std::move(headers), std::move(body));
 }
 
+static void
+RunMalformedHeaderName(WasServer &server, gcc_unused struct pool &pool,
+                       http_method_t, const char *, StringMap &&,
+                       UnusedIstreamPtr body)
+{
+    body.Clear();
+
+    StringMap response_headers(pool);
+    response_headers.Add("header name", "foo");
+
+    was_server_response(server,
+                        HTTP_STATUS_NO_CONTENT,
+                        std::move(response_headers), nullptr);
+}
+
+static void
+RunMalformedHeaderValue(WasServer &server, gcc_unused struct pool &pool,
+                       http_method_t, const char *, StringMap &&,
+                       UnusedIstreamPtr body)
+{
+    body.Clear();
+
+    StringMap response_headers(pool);
+    response_headers.Add("name", "foo\nbar");
+
+    was_server_response(server,
+                        HTTP_STATUS_NO_CONTENT,
+                        std::move(response_headers), nullptr);
+}
+
 class WasConnection final : WasServerHandler, WasLease {
     EventLoop &event_loop;
 
@@ -244,6 +274,14 @@ public:
         return new WasConnection(pool, event_loop, RunNop);
     }
 
+    static WasConnection *NewMalformedHeaderName(struct pool &pool, EventLoop &event_loop) {
+        return new WasConnection(pool, event_loop, RunMalformedHeaderName);
+    }
+
+    static WasConnection *NewMalformedHeaderValue(struct pool &pool, EventLoop &event_loop) {
+        return new WasConnection(pool, event_loop, RunMalformedHeaderValue);
+    }
+
 private:
     /* virtual methods from class WasLease */
     void ReleaseWas(bool reuse) override {
@@ -254,6 +292,50 @@ private:
         ReleaseWas(false);
     }
 };
+
+template<class Connection>
+static void
+test_malformed_header_name(Context<Connection> &c)
+{
+    c.connection = Connection::NewMalformedHeaderName(*c.pool, c.event_loop);
+    c.connection->Request(c.pool, c,
+                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          nullptr,
+#ifdef HAVE_EXPECT_100
+                          false,
+#endif
+                          c, c.cancel_ptr);
+    pool_unref(c.pool);
+    pool_commit();
+
+    c.event_loop.Dispatch();
+
+    assert(c.status == http_status_t(0));
+    assert(c.request_error);
+    assert(c.released);
+}
+
+template<class Connection>
+static void
+test_malformed_header_value(Context<Connection> &c)
+{
+    c.connection = Connection::NewMalformedHeaderValue(*c.pool, c.event_loop);
+    c.connection->Request(c.pool, c,
+                          HTTP_METHOD_GET, "/foo", StringMap(*c.pool),
+                          nullptr,
+#ifdef HAVE_EXPECT_100
+                          false,
+#endif
+                          c, c.cancel_ptr);
+    pool_unref(c.pool);
+    pool_commit();
+
+    c.event_loop.Dispatch();
+
+    assert(c.status == http_status_t(0));
+    assert(c.request_error);
+    assert(c.released);
+}
 
 /*
  * main
@@ -269,4 +351,6 @@ int main(int argc, char **argv) {
     const ScopeFbPoolInit fb_pool_init;
 
     run_all_tests<WasConnection>();
+    run_test<WasConnection>(test_malformed_header_name);
+    run_test<WasConnection>(test_malformed_header_value);
 }
