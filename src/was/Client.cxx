@@ -421,10 +421,11 @@ ParseHeaderPacket(struct pool &pool, StringMap &headers,
     if (p == nullptr || p == payload.data)
         throw WasProtocolError("Malformed WAS HEADER packet");
 
-    headers.Add(p_strndup_lower(&pool, (const char *)payload.data,
-                                p - (const char *)payload.data),
-                p_strndup(&pool, p + 1,
-                          (const char *)payload.data + payload.size - p - 1));
+    const StringView name(payload.data, p);
+    const StringView value(p + 1, payload.size - name.size - 1);
+
+    headers.Add(p_strdup_lower(pool, name),
+                p_strdup(pool, value));
 }
 
 bool
