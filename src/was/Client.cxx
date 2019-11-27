@@ -44,6 +44,7 @@
 #include "pool/pool.hxx"
 #include "stopwatch.hxx"
 #include "io/FileDescriptor.hxx"
+#include "http/HeaderName.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
@@ -421,7 +422,7 @@ ParseHeaderPacket(struct pool &pool, StringMap &headers,
     const StringView name = pair.first;
     const StringView value = pair.second;
 
-    if (name.empty() || value.IsNull())
+    if (value.IsNull() || !http_header_name_valid(name))
         throw WasProtocolError("Malformed WAS HEADER packet");
 
     headers.Add(p_strdup_lower(pool, name),
