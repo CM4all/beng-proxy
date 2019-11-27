@@ -414,6 +414,23 @@ WasClient::SubmitPendingResponse()
  * WasControlHandler
  */
 
+static constexpr bool
+IsValidHeaderValueChar(char ch) noexcept
+{
+    return ch != '\0' && ch != '\n' && ch != '\r';
+}
+
+gcc_pure
+static bool
+IsValidHeaderValue(StringView value) noexcept
+{
+    for (char ch : value)
+        if (!IsValidHeaderValueChar(ch))
+            return false;
+
+    return true;
+}
+
 static void
 ParseHeaderPacket(struct pool &pool, StringMap &headers,
                   StringView payload)
@@ -422,7 +439,8 @@ ParseHeaderPacket(struct pool &pool, StringMap &headers,
     const StringView name = pair.first;
     const StringView value = pair.second;
 
-    if (value.IsNull() || !http_header_name_valid(name))
+    if (value.IsNull() || !http_header_name_valid(name) ||
+        !IsValidHeaderValue(value))
         throw WasProtocolError("Malformed WAS HEADER packet");
 
     headers.Add(p_strdup_lower(pool, name),
