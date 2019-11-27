@@ -48,21 +48,17 @@ void
 header_parse_line(struct pool &pool, StringMap &headers,
                   StringView line) noexcept
 {
-    const char *colon = line.Find(':');
-    if (gcc_unlikely(colon == nullptr || colon == line.data))
+    const auto pair = line.Split(':');
+    const StringView name = pair.first;
+    StringView value = pair.second;
+
+    if (gcc_unlikely(value.IsNull() || name.empty()))
         return;
 
-    const char *key_end = colon;
+    value.StripLeft();
 
-    ++colon;
-    if (gcc_likely(colon < line.end() && *colon == ' '))
-        ++colon;
-    colon = StripLeft(colon, line.end());
-
-    char *key = p_strdup_lower(pool, StringView(line.begin(), key_end));
-    char *value = p_strndup(&pool, colon, line.end() - colon);
-
-    headers.Add(key, value);
+    headers.Add(p_strdup_lower(pool, name),
+                p_strdup(pool, value));
 }
 
 void
