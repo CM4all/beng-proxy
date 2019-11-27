@@ -34,6 +34,7 @@
 #include "pool/pool.hxx"
 #include "strmap.hxx"
 #include "GrowingBuffer.hxx"
+#include "http/HeaderName.hxx"
 #include "util/StringView.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StaticFifoBuffer.hxx"
@@ -44,6 +45,23 @@
 #include <assert.h>
 #include <string.h>
 
+static constexpr bool
+IsValidHeaderValueChar(char ch) noexcept
+{
+    return ch != '\0' && ch != '\n' && ch != '\r';
+}
+
+gcc_pure
+static bool
+IsValidHeaderValue(StringView value) noexcept
+{
+    for (char ch : value)
+        if (!IsValidHeaderValueChar(ch))
+            return false;
+
+    return true;
+}
+
 void
 header_parse_line(struct pool &pool, StringMap &headers,
                   StringView line) noexcept
@@ -52,7 +70,9 @@ header_parse_line(struct pool &pool, StringMap &headers,
     const StringView name = pair.first;
     StringView value = pair.second;
 
-    if (gcc_unlikely(value.IsNull() || name.empty()))
+    if (gcc_unlikely(value.IsNull() ||
+                     !http_header_name_valid(name) ||
+                     !IsValidHeaderValue(value)))
         return;
 
     value.StripLeft();

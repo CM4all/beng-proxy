@@ -1,7 +1,7 @@
 cm4all-beng-proxy (15.28) unstable; urgency=low
 
   * bot: add adscanner, DotBot, serpstatbot
-  * was: validate response headers
+  * {http,was,fcgi,cgi}_client: validate response headers
 
  --   
 
