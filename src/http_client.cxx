@@ -748,7 +748,13 @@ HttpClient::HandleLine(const char *line, size_t length)
     if (response.state == Response::State::STATUS)
         return ParseStatusLine(line, length);
     else if (length > 0) {
-        header_parse_line(caller_pool, response.headers, {line, length});
+        if (!header_parse_line(caller_pool, response.headers,
+                               {line, length})) {
+            AbortResponseHeaders(HttpClientErrorCode::GARBAGE,
+                                 "malformed HTTP header line");
+            return false;
+        }
+
         return true;
     } else
         return HeadersFinished();

@@ -62,7 +62,7 @@ IsValidHeaderValue(StringView value) noexcept
     return true;
 }
 
-void
+bool
 header_parse_line(struct pool &pool, StringMap &headers,
                   StringView line) noexcept
 {
@@ -73,12 +73,13 @@ header_parse_line(struct pool &pool, StringMap &headers,
     if (gcc_unlikely(value.IsNull() ||
                      !http_header_name_valid(name) ||
                      !IsValidHeaderValue(value)))
-        return;
+        return false;
 
     value.StripLeft();
 
     headers.Add(p_strdup_lower(pool, name),
                 p_strdup(pool, value));
+    return true;
 }
 
 void

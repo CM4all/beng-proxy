@@ -385,7 +385,8 @@ FcgiClient::HandleLine(const char *line, size_t length)
     assert(line != nullptr);
 
     if (length > 0) {
-        header_parse_line(GetPool(), response.headers, {line, length});
+        if (!header_parse_line(GetPool(), response.headers, {line, length}))
+            throw FcgiClientError("Malformed FastCGI response header");
         return false;
     } else {
         response.read_state = Response::READ_BODY;

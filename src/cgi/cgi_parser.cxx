@@ -107,7 +107,8 @@ CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<uint8_t> &buffer)
             return Finish(buffer);
         }
 
-        header_parse_line(pool, headers, {start, line_length});
+        if (!header_parse_line(pool, headers, {start, line_length}))
+            throw CgiError("Malformed CGI response header line");
 
         start = next;
     }
