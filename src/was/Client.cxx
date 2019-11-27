@@ -50,6 +50,7 @@
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
 #include "util/StringFormat.hxx"
+#include "util/StringView.hxx"
 #include "util/ScopeExit.hxx"
 
 #include <was/protocol.h>
@@ -414,9 +415,9 @@ WasClient::SubmitPendingResponse()
 
 static void
 ParseHeaderPacket(struct pool &pool, StringMap &headers,
-                  ConstBuffer<void> payload)
+                  StringView payload)
 {
-    const char *p = (const char *)memchr(payload.data, '=', payload.size);
+    const char *p = payload.Find('=');
     if (p == nullptr || p == payload.data)
         throw WasProtocolError("Malformed WAS HEADER packet");
 
@@ -457,7 +458,8 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
         }
 
         try {
-            ParseHeaderPacket(pool, response.headers, payload);
+            ParseHeaderPacket(pool, response.headers,
+                              StringView(payload));
         } catch (...) {
             stopwatch_event(stopwatch, "control_error");
             AbortResponseHeaders(std::current_exception());
