@@ -75,7 +75,7 @@ struct FilteredSocketStockRequest {
                                SocketAddress _bind_address,
                                SocketAddress _address,
                                Event::Duration _timeout,
-                               SocketFilterFactory *_filter_factory)
+                               SocketFilterFactory *_filter_factory) noexcept
         :alloc(_alloc),
          stopwatch(std::move(_stopwatch)),
          ip_transparent(_ip_transparent),
@@ -84,7 +84,7 @@ struct FilteredSocketStockRequest {
          filter_factory(_filter_factory) {}
 };
 
-struct FilteredSocketStockConnection final
+class FilteredSocketStockConnection final
     : StockItem, ConnectSocketHandler, BufferedSocketHandler, Cancellable {
 
     BasicLogger<StockLoggerDomain> logger;
@@ -102,6 +102,7 @@ struct FilteredSocketStockConnection final
 
     FilteredSocket socket;
 
+public:
     FilteredSocketStockConnection(CreateStockItem c, FdType _type,
                                   SocketAddress _address,
                                   SocketFilterFactory *_filter_factory,
@@ -124,6 +125,25 @@ struct FilteredSocketStockConnection final
             socket.Close();
             socket.Destroy();
         }
+    }
+
+    void Start(FilteredSocketStockRequest &&request, int domain) noexcept {
+        client_socket_new(stock.GetEventLoop(), request.alloc,
+                          std::move(request.stopwatch),
+                          domain, SOCK_STREAM, 0,
+                          request.ip_transparent,
+                          request.bind_address,
+                          request.address,
+                          request.timeout,
+                          *this, cancel_ptr);
+    }
+
+    SocketAddress GetAddress() const noexcept {
+        return address;
+    }
+
+    auto &GetSocket() noexcept {
+        return socket;
     }
 
     /* virtual methods from class Cancellable */
@@ -242,16 +262,7 @@ FilteredSocketStock::Create(CreateStockItem c, StockRequest _request,
                                                          request.address,
                                                          request.filter_factory,
                                                          cancel_ptr);
-
-    client_socket_new(c.stock.GetEventLoop(), request.alloc,
-                      std::move(request.stopwatch),
-                      address_family, SOCK_STREAM, 0,
-                      request.ip_transparent,
-                      request.bind_address,
-                      request.address,
-                      request.timeout,
-                      *connection,
-                      connection->cancel_ptr);
+    connection->Start(std::move(request), address_family);
 }
 
 bool
@@ -325,7 +336,7 @@ fs_stock_item_get(StockItem &item)
 {
     auto &connection = (FilteredSocketStockConnection &)item;
 
-    return connection.socket;
+    return connection.GetSocket();
 }
 
 SocketAddress
@@ -333,5 +344,5 @@ fs_stock_item_get_address(const StockItem &item)
 {
     const auto &connection = (const FilteredSocketStockConnection &)item;
 
-    return connection.address;
+    return connection.GetAddress();
 }
