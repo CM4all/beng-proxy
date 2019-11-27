@@ -69,6 +69,13 @@ public:
 		return session;
 	}
 
+	static Session NewClient(const nghttp2_session_callbacks *callbacks,
+				 void *user_data) noexcept {
+		Session session;
+		nghttp2_session_client_new(&session.session, callbacks, user_data);
+		return session;
+	}
+
 	auto *get() const noexcept {
 		return session;
 	}

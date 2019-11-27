@@ -31,6 +31,7 @@
  */
 
 #include "strmap.hxx"
+#include "nghttp2/Client.hxx"
 #include "http_client.hxx"
 #include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"
@@ -75,6 +76,7 @@
 struct parsed_url {
 	enum {
 		HTTP, HTTPS,
+		HTTP2,
 	} protocol;
 
 	std::string host;
@@ -99,6 +101,11 @@ parse_url(const char *url)
 		url += 8;
 		dest.protocol = parsed_url::HTTPS;
 		dest.default_port = 443;
+	} else if (memcmp(url, "http2://", 8) == 0) {
+		url += 8;
+		dest.protocol = parsed_url::HTTP2;
+		// TODO dest.default_port = 443;
+		dest.default_port = 80;
 	} else
 		throw std::runtime_error("Unsupported URL");
 
@@ -126,13 +133,17 @@ GetHostWithoutPort(struct pool &pool, const struct parsed_url &url) noexcept
 }
 
 struct Context final
-	: PInstance, ConnectSocketHandler, Lease, HttpResponseHandler {
+	: PInstance, ConnectSocketHandler, Lease,
+	  NgHttp2::ConnectionHandler,
+	  HttpResponseHandler {
 
 	struct parsed_url url;
 
 	ShutdownListener shutdown_listener;
 
 	PoolPtr pool;
+
+	std::unique_ptr<NgHttp2::ClientConnection> nghttp2_client;
 
 	CancellablePointer cancel_ptr;
 
@@ -177,6 +188,11 @@ struct Context final
 		} else
 			fd.Close();
 	}
+
+	/* virtual methods from class NgHttp2::ConnectionHandler */
+	void OnNgHttp2ConnectionIdle() noexcept override;
+	void OnNgHttp2ConnectionError(std::exception_ptr e) noexcept override;
+	void OnNgHttp2ConnectionClosed() noexcept override;
 
 	/* virtual methods from class HttpResponseHandler */
 	void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -248,6 +264,25 @@ static constexpr SinkFdHandler my_sink_fd_handler = {
 	.send_error = my_sink_fd_send_error,
 };
 
+void
+Context::OnNgHttp2ConnectionIdle() noexcept
+{
+	nghttp2_client.reset();
+}
+
+void
+Context::OnNgHttp2ConnectionError(std::exception_ptr e) noexcept
+{
+	PrintException(e);
+	nghttp2_client.reset();
+}
+
+void
+Context::OnNgHttp2ConnectionClosed() noexcept
+{
+	// TODO
+	nghttp2_client.reset();
+}
 
 /*
  * http_response_handler
@@ -327,6 +362,27 @@ try {
 				    std::move(request_body), false,
 				    *this,
 				    cancel_ptr);
+		break;
+
+	case parsed_url::HTTP2:
+		reuse = false;
+
+		nghttp2_client = std::make_unique<NgHttp2::ClientConnection>(event_loop,
+									     std::move(fd),
+									     FdType::FD_TCP,
+									     /* TODO
+									     ssl_client_create(event_loop,
+											       GetHostWithoutPort(*pool, url),
+											       nullptr),
+									     */
+									     nullptr,
+									     *this);
+
+		nghttp2_client->SendRequest(*pool, nullptr,
+					    method, url.uri,
+					    std::move(headers),
+					    std::move(request_body),
+					    *this, cancel_ptr);
 		break;
 	}
 } catch (const std::runtime_error &e) {
