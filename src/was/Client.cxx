@@ -446,7 +446,7 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
         p = (const char *)memchr(payload.data, '=', payload.size);
         if (p == nullptr || p == payload.data) {
             stopwatch_event(stopwatch, "control_error");
-            AbortResponse(std::make_exception_ptr(WasProtocolError("Malformed WAS HEADER packet")));
+            AbortResponseHeaders(std::make_exception_ptr(WasProtocolError("Malformed WAS HEADER packet")));
             return false;
         }
 
