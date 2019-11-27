@@ -146,6 +146,7 @@ public:
         return socket;
     }
 
+private:
     /* virtual methods from class Cancellable */
     void Cancel() noexcept override {
         assert(cancel_ptr);
