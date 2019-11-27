@@ -417,12 +417,12 @@ static void
 ParseHeaderPacket(struct pool &pool, StringMap &headers,
                   StringView payload)
 {
-    const char *p = payload.Find('=');
-    if (p == nullptr || p == payload.data)
-        throw WasProtocolError("Malformed WAS HEADER packet");
+    const auto pair = payload.Split('=');
+    const StringView name = pair.first;
+    const StringView value = pair.second;
 
-    const StringView name(payload.data, p);
-    const StringView value(p + 1, payload.size - name.size - 1);
+    if (name.empty() || value.IsNull())
+        throw WasProtocolError("Malformed WAS HEADER packet");
 
     headers.Add(p_strdup_lower(pool, name),
                 p_strdup(pool, value));
