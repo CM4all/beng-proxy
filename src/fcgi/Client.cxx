@@ -394,7 +394,6 @@ FcgiClient::ParseHeaders(const char *data, size_t length)
     const char *p = data, *const data_end = data + length;
 
     const char *next = nullptr;
-    bool finished = false;
 
     const char *eol;
     while ((eol = (const char *)memchr(p, '\n', data_end - p)) != nullptr) {
@@ -402,8 +401,7 @@ FcgiClient::ParseHeaders(const char *data, size_t length)
 
         eol = StripRight(p, eol);
 
-        finished = HandleLine(p, eol - p);
-        if (finished)
+        if (HandleLine(p, eol - p))
             break;
 
         p = next;
