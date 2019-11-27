@@ -41,7 +41,10 @@ class StringMap;
 struct StringView;
 class GrowingBuffer;
 
-void
+/**
+ * @return true on success, false on error
+ */
+bool
 header_parse_line(struct pool &pool, StringMap &headers,
                   StringView line) noexcept;
 

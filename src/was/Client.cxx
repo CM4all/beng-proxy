@@ -45,12 +45,14 @@
 #include "pool/LeakDetector.hxx"
 #include "stopwatch.hxx"
 #include "io/FileDescriptor.hxx"
+#include "http/HeaderName.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
 #include "util/StringFormat.hxx"
+#include "util/StringView.hxx"
 #include "util/ScopeExit.hxx"
 
 #include <was/protocol.h>
@@ -431,6 +433,40 @@ WasClient::SubmitPendingResponse()
  * WasControlHandler
  */
 
+static constexpr bool
+IsValidHeaderValueChar(char ch) noexcept
+{
+    return ch != '\0' && ch != '\n' && ch != '\r';
+}
+
+gcc_pure
+static bool
+IsValidHeaderValue(StringView value) noexcept
+{
+    for (char ch : value)
+        if (!IsValidHeaderValueChar(ch))
+            return false;
+
+    return true;
+}
+
+static void
+ParseHeaderPacket(struct pool &pool, StringMap &headers,
+                  StringView payload)
+{
+    const auto pair = payload.Split('=');
+    const StringView name = pair.first;
+    const StringView value = pair.second;
+
+    if (value.IsNull() || !http_header_name_valid(name) ||
+        !IsValidHeaderValue(value))
+        throw WasProtocolError("Malformed WAS HEADER packet");
+
+    headers.Add(pool,
+                p_strdup_lower(pool, name),
+                p_strdup(pool, value));
+}
+
 bool
 WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) noexcept
 {
@@ -439,7 +475,6 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
         const uint16_t *status16_r;
         http_status_t status;
         const uint64_t *length_p;
-        const char *p;
 
     case WAS_COMMAND_NOP:
         break;
@@ -462,18 +497,15 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
             return false;
         }
 
-        p = (const char *)memchr(payload.data, '=', payload.size);
-        if (p == nullptr || p == payload.data) {
+        try {
+            ParseHeaderPacket(pool, response.headers,
+                              StringView(payload));
+        } catch (...) {
             stopwatch.RecordEvent("control_error");
-            AbortResponse(std::make_exception_ptr(WasProtocolError("Malformed WAS HEADER packet")));
+            AbortResponseHeaders(std::current_exception());
             return false;
         }
 
-        response.headers.Add(pool,
-                             p_strndup_lower(&pool, (const char *)payload.data,
-                                             p - (const char *)payload.data),
-                             p_strndup(&pool, p + 1,
-                                       (const char *)payload.data + payload.size - p - 1));
         break;
 
     case WAS_COMMAND_STATUS:

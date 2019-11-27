@@ -237,10 +237,9 @@ executable('run_cookie_server',
 
 executable('run_header_parser',
   'run_header_parser.cxx',
-  '../src/http/HeaderParser.cxx',
   include_directories: inc,
   dependencies: [
-    putil_dep,
+    http_util_dep,
   ])
 
 executable('run_html_unescape',

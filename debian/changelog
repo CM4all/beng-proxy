@@ -62,6 +62,13 @@ cm4all-beng-proxy (16.0.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 27 Sep 2019 14:09:41 +0200
 
+cm4all-beng-proxy (15.28) unstable; urgency=low
+
+  * bot: add adscanner, DotBot, serpstatbot
+  * {http,was,fcgi,cgi}_client: validate response headers
+
+ --   
+
 cm4all-beng-proxy (15.27) unstable; urgency=low
 
   * ssl: fix crash due to race condition after "close notify" alert

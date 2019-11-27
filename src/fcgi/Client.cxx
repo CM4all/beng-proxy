@@ -209,8 +209,14 @@ struct FcgiClient final
     gcc_pure
     BufferAnalysis AnalyseBuffer(const void *data, size_t size) const;
 
+    /**
+     * Throws on error.
+     */
     bool HandleLine(const char *line, size_t length);
 
+    /**
+     * Throws on error.
+     */
     size_t ParseHeaders(const char *data, size_t length);
 
     /**
@@ -383,7 +389,8 @@ FcgiClient::HandleLine(const char *line, size_t length)
     assert(line != nullptr);
 
     if (length > 0) {
-        header_parse_line(GetPool(), response.headers, {line, length});
+        if (!header_parse_line(GetPool(), response.headers, {line, length}))
+            throw FcgiClientError("Malformed FastCGI response header");
         return false;
     } else {
         stopwatch.RecordEvent("response_headers");
@@ -400,7 +407,6 @@ FcgiClient::ParseHeaders(const char *data, size_t length)
     const char *p = data, *const data_end = data + length;
 
     const char *next = nullptr;
-    bool finished = false;
 
     const char *eol;
     while ((eol = (const char *)memchr(p, '\n', data_end - p)) != nullptr) {
@@ -408,8 +414,7 @@ FcgiClient::ParseHeaders(const char *data, size_t length)
 
         eol = StripRight(p, eol);
 
-        finished = HandleLine(p, eol - p);
-        if (finished)
+        if (HandleLine(p, eol - p))
             break;
 
         p = next;
@@ -436,7 +441,12 @@ FcgiClient::Feed(const uint8_t *data, size_t length)
         size_t consumed;
 
     case Response::READ_HEADERS:
-        return ParseHeaders((const char *)data, length);
+        try {
+            return ParseHeaders((const char *)data, length);
+        } catch (...) {
+            AbortResponseHeaders(std::current_exception());
+            return 0;
+        }
 
     case Response::READ_NO_BODY:
         /* unreachable */
@@ -602,15 +612,15 @@ FcgiClient::ConsumeInput(const uint8_t *data0, size_t length0)
 
             size_t nbytes = Feed(data, length);
             if (nbytes == 0) {
+                if (destructed)
+                    return BufferedResult::CLOSED;
+
                 if (at_headers) {
                     /* incomplete header line received, want more
                        data */
                     assert(response.read_state == FcgiClient::Response::READ_HEADERS);
                     return BufferedResult::MORE;
                 }
-
-                if (destructed)
-                    return BufferedResult::CLOSED;
 
                 /* the response body handler blocks, wait for it to
                    become ready */

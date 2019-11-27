@@ -34,6 +34,7 @@
 #include "pool/pool.hxx"
 #include "strmap.hxx"
 #include "GrowingBuffer.hxx"
+#include "http/HeaderName.hxx"
 #include "util/StringView.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StaticFifoBuffer.hxx"
@@ -44,25 +45,42 @@
 #include <assert.h>
 #include <string.h>
 
-void
+static constexpr bool
+IsValidHeaderValueChar(char ch) noexcept
+{
+    return ch != '\0' && ch != '\n' && ch != '\r';
+}
+
+gcc_pure
+static bool
+IsValidHeaderValue(StringView value) noexcept
+{
+    for (char ch : value)
+        if (!IsValidHeaderValueChar(ch))
+            return false;
+
+    return true;
+}
+
+bool
 header_parse_line(struct pool &pool, StringMap &headers,
                   StringView line) noexcept
 {
-    const char *colon = line.Find(':');
-    if (gcc_unlikely(colon == nullptr || colon == line.data))
-        return;
+    const auto pair = line.Split(':');
+    const StringView name = pair.first;
+    StringView value = pair.second;
 
-    const char *key_end = colon;
+    if (gcc_unlikely(value.IsNull() ||
+                     !http_header_name_valid(name) ||
+                     !IsValidHeaderValue(value)))
+        return false;
 
-    ++colon;
-    if (gcc_likely(colon < line.end() && *colon == ' '))
-        ++colon;
-    colon = StripLeft(colon, line.end());
+    value.StripLeft();
 
-    char *key = p_strdup_lower(pool, StringView(line.begin(), key_end));
-    char *value = p_strndup(&pool, colon, line.end() - colon);
-
-    headers.Add(pool, key, value);
+    headers.Add(pool,
+                p_strdup_lower(pool, name),
+                p_strdup(pool, value));
+    return true;
 }
 
 void

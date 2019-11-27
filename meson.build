@@ -462,7 +462,7 @@ http_util = static_library('http_util',
   include_directories: inc,
 )
 http_util_dep = declare_dependency(link_with: http_util,
-                                   dependencies: [pool_dep, http_dep])
+                                   dependencies: [pool_dep, putil_dep, http_dep])
 
 cookie = static_library('cookie',
   'src/http/CookieJar.cxx',

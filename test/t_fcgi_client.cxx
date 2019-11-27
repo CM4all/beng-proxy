@@ -150,6 +150,28 @@ fcgi_server_tiny(struct pool *pool)
 }
 
 static void
+fcgi_server_malformed_header_name(struct pool *pool)
+{
+    FcgiRequest request;
+    read_fcgi_request(pool, &request);
+
+    discard_fcgi_request_body(&request);
+    write_fcgi_stdout_string(&request, "header name: foo\n\nhello");
+    write_fcgi_end(&request);
+}
+
+static void
+fcgi_server_malformed_header_value(struct pool *pool)
+{
+    FcgiRequest request;
+    read_fcgi_request(pool, &request);
+
+    discard_fcgi_request_body(&request);
+    write_fcgi_stdout_string(&request, "header: foo\rbar\n\nhello");
+    write_fcgi_end(&request);
+}
+
+static void
 fcgi_server_huge(struct pool *pool)
 {
     FcgiRequest request;
@@ -309,6 +331,14 @@ struct Connection {
         return New(event_loop, fcgi_server_tiny);
     }
 
+    static Connection *NewMalformedHeaderName(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, fcgi_server_malformed_header_name);
+    }
+
+    static Connection *NewMalformedHeaderValue(struct pool &, EventLoop &event_loop) {
+        return New(event_loop, fcgi_server_malformed_header_value);
+    }
+
     static Connection *NewHuge(struct pool &, EventLoop &event_loop) {
         return New(event_loop, fcgi_server_huge);
     }
@@ -390,6 +420,46 @@ Connection::~Connection()
     assert(!WIFSIGNALED(status));
 }
 
+template<class Connection>
+static void
+test_malformed_header_name(Context<Connection> &c)
+{
+    c.connection = Connection::NewMalformedHeaderName(*c.pool, c.event_loop);
+    c.connection->Request(c.pool, c,
+                          HTTP_METHOD_GET, "/foo", {},
+                          nullptr,
+#ifdef HAVE_EXPECT_100
+                          false,
+#endif
+                          c, c.cancel_ptr);
+
+    c.event_loop.Dispatch();
+
+    assert(c.status == http_status_t(0));
+    assert(c.request_error);
+    assert(c.released);
+}
+
+template<class Connection>
+static void
+test_malformed_header_value(Context<Connection> &c)
+{
+    c.connection = Connection::NewMalformedHeaderValue(*c.pool, c.event_loop);
+    c.connection->Request(c.pool, c,
+                          HTTP_METHOD_GET, "/foo", {},
+                          nullptr,
+#ifdef HAVE_EXPECT_100
+                          false,
+#endif
+                          c, c.cancel_ptr);
+
+    c.event_loop.Dispatch();
+
+    assert(c.status == http_status_t(0));
+    assert(c.request_error);
+    assert(c.released);
+}
+
 /*
  * main
  *
@@ -404,6 +474,8 @@ int main(int argc, char **argv) {
     const ScopeFbPoolInit fb_pool_init;
 
     run_all_tests<Connection>();
+    run_test<Connection>(test_malformed_header_name);
+    run_test<Connection>(test_malformed_header_value);
 
     int status;
     while (wait(&status) > 0) {
