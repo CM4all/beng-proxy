@@ -132,8 +132,7 @@ RunMalformedHeaderName(WasServer &server, gcc_unused struct pool &pool,
 {
     body.Clear();
 
-    const AllocatorPtr alloc(pool);
-    StringMap response_headers(alloc, {{"header name", "foo"}});
+    StringMap response_headers(pool, {{"header name", "foo"}});
 
     was_server_response(server,
                         HTTP_STATUS_NO_CONTENT,
@@ -147,8 +146,7 @@ RunMalformedHeaderValue(WasServer &server, gcc_unused struct pool &pool,
 {
     body.Clear();
 
-    const AllocatorPtr alloc(pool);
-    StringMap response_headers(alloc, {{"name", "foo\nbar"}});
+    StringMap response_headers(pool, {{"name", "foo\nbar"}});
 
     was_server_response(server,
                         HTTP_STATUS_NO_CONTENT,

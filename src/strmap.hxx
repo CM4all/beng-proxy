@@ -111,7 +111,7 @@ public:
     StringMap() = default;
 
     template<typename A>
-    explicit StringMap(A _alloc,
+    explicit StringMap(A &&_alloc,
                        std::initializer_list<std::pair<const char *, const char *>> init) noexcept
     {
         for (const auto &i : init)
