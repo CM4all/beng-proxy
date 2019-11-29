@@ -31,6 +31,7 @@
  */
 
 #include "Server.hxx"
+#include "Util.hxx"
 #include "IstreamDataSource.hxx"
 #include "Option.hxx"
 #include "Callbacks.hxx"
@@ -312,19 +313,6 @@ ServerConnection::Request::OnEndDataFrame() noexcept
 		FlushMoreRequestBodyData();
 
 	return 0;
-}
-
-static constexpr auto
-MakeNv(StringView name, StringView value,
-       uint8_t flags=NGHTTP2_NV_FLAG_NONE) noexcept
-{
-	nghttp2_nv nv{};
-	nv.name = const_cast<uint8_t *>((const uint8_t *)(const void *)name.data);
-	nv.value = const_cast<uint8_t *>((const uint8_t *)(const void *)value.data);
-	nv.namelen = name.size;
-	nv.valuelen = value.size;
-	nv.flags = flags;
-	return nv;
 }
 
 void
