@@ -44,7 +44,7 @@ class ThreadSocketFilterHandler;
  * Create a new SSL filter.
  */
 SslFilter *
-ssl_filter_new(UniqueSSL &&ssl);
+ssl_filter_new(UniqueSSL &&ssl) noexcept;
 
 /**
  * Create a new SSL filter.
@@ -59,12 +59,12 @@ SslFilter *
 ssl_filter_new(SslFactory &factory);
 
 ThreadSocketFilterHandler &
-ssl_filter_get_handler(SslFilter &ssl);
+ssl_filter_get_handler(SslFilter &ssl) noexcept;
 
 gcc_pure
 const char *
-ssl_filter_get_peer_subject(SslFilter *ssl);
+ssl_filter_get_peer_subject(SslFilter *ssl) noexcept;
 
 gcc_pure
 const char *
-ssl_filter_get_peer_issuer_subject(SslFilter *ssl);
+ssl_filter_get_peer_issuer_subject(SslFilter *ssl) noexcept;
