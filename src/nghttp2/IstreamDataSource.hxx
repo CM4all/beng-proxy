@@ -43,59 +43,59 @@ namespace NgHttp2 {
  * Adapter between an #Istream and a #nghttp2_data_source.
  */
 class IstreamDataSource final : FifoBufferSinkHandler {
-    nghttp2_session *const session;
-    const int32_t stream_id;
+	nghttp2_session *const session;
+	const int32_t stream_id;
 
-    FifoBufferSink sink;
+	FifoBufferSink sink;
 
-    bool eof = false, error = false;
+	bool eof = false, error = false;
 
 public:
-    IstreamDataSource(nghttp2_session *_session, int32_t _stream_id,
-                      UnusedIstreamPtr &&_input) noexcept
-        :session(_session), stream_id(_stream_id),
-         sink(std::move(_input), *this) {}
+	IstreamDataSource(nghttp2_session *_session, int32_t _stream_id,
+			  UnusedIstreamPtr &&_input) noexcept
+		:session(_session), stream_id(_stream_id),
+		 sink(std::move(_input), *this) {}
 
-    nghttp2_data_provider MakeDataProvider() noexcept {
-        nghttp2_data_provider dp;
-        dp.source.ptr = this;
-        dp.read_callback = ReadCallback;
-        return dp;
-    }
+	nghttp2_data_provider MakeDataProvider() noexcept {
+		nghttp2_data_provider dp;
+		dp.source.ptr = this;
+		dp.read_callback = ReadCallback;
+		return dp;
+	}
 
 private:
-    /* virtual methods from class FifoBufferSinkHandler */
-    bool OnFifoBufferSinkData() noexcept override {
-        nghttp2_session_resume_data(session, stream_id);
-        return true;
-    }
+	/* virtual methods from class FifoBufferSinkHandler */
+	bool OnFifoBufferSinkData() noexcept override {
+		nghttp2_session_resume_data(session, stream_id);
+		return true;
+	}
 
-    void OnFifoBufferSinkEof() noexcept override {
-        eof = true;
-        nghttp2_session_resume_data(session, stream_id);
-    }
+	void OnFifoBufferSinkEof() noexcept override {
+		eof = true;
+		nghttp2_session_resume_data(session, stream_id);
+	}
 
-    void OnFifoBufferSinkError(std::exception_ptr ep) noexcept override {
-        // TODO how to propagate the exception details?
-        (void)ep;
-        error = true;
-        nghttp2_session_resume_data(session, stream_id);
+	void OnFifoBufferSinkError(std::exception_ptr ep) noexcept override {
+		// TODO how to propagate the exception details?
+		(void)ep;
+		error = true;
+		nghttp2_session_resume_data(session, stream_id);
 
-        // TODO: use nghttp2_submit_rst_stream()?
-    }
+		// TODO: use nghttp2_submit_rst_stream()?
+	}
 
-    /* libnghttp2 callbacks */
-    ssize_t ReadCallback(uint8_t *buf, size_t length,
-                         uint32_t &data_flags) noexcept;
+	/* libnghttp2 callbacks */
+	ssize_t ReadCallback(uint8_t *buf, size_t length,
+			     uint32_t &data_flags) noexcept;
 
-    static ssize_t ReadCallback(nghttp2_session *, int32_t,
-                                uint8_t *buf, size_t length,
-                                uint32_t *data_flags,
-                                nghttp2_data_source *source,
-                                void *) noexcept {
-        auto &ids = *(IstreamDataSource *)source->ptr;
-        return ids.ReadCallback(buf, length, *data_flags);
-    }
+	static ssize_t ReadCallback(nghttp2_session *, int32_t,
+				    uint8_t *buf, size_t length,
+				    uint32_t *data_flags,
+				    nghttp2_data_source *source,
+				    void *) noexcept {
+		auto &ids = *(IstreamDataSource *)source->ptr;
+		return ids.ReadCallback(buf, length, *data_flags);
+	}
 };
 
 } // namespace NgHttp2

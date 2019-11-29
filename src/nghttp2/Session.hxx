@@ -41,42 +41,42 @@
 namespace NgHttp2 {
 
 class Session {
-    nghttp2_session *session = nullptr;
+	nghttp2_session *session = nullptr;
 
 public:
-    Session() noexcept = default;
+	Session() noexcept = default;
 
-    ~Session() noexcept {
-        if (session != nullptr)
-            nghttp2_session_del(session);
-    }
+	~Session() noexcept {
+		if (session != nullptr)
+			nghttp2_session_del(session);
+	}
 
-    Session(Session &&src) noexcept
-        :session(std::exchange(src.session, nullptr)) {}
+	Session(Session &&src) noexcept
+		:session(std::exchange(src.session, nullptr)) {}
 
-    Session &operator=(Session &&src) noexcept {
-        using std::swap;
-        swap(session, src.session);
-        return *this;
-    }
+	Session &operator=(Session &&src) noexcept {
+		using std::swap;
+		swap(session, src.session);
+		return *this;
+	}
 
-    static Session NewServer(const nghttp2_session_callbacks *callbacks,
-                             void *user_data,
-                             const nghttp2_option *option) noexcept {
-        Session session;
-        nghttp2_session_server_new2(&session.session, callbacks, user_data,
-                                    option);
-        return session;
-    }
+	static Session NewServer(const nghttp2_session_callbacks *callbacks,
+				 void *user_data,
+				 const nghttp2_option *option) noexcept {
+		Session session;
+		nghttp2_session_server_new2(&session.session, callbacks, user_data,
+					    option);
+		return session;
+	}
 
-    auto *get() const noexcept {
-        return session;
-    }
+	auto *get() const noexcept {
+		return session;
+	}
 
-    gcc_pure
-    void *GetStreamUserData(int32_t stream_id) const noexcept {
-        return nghttp2_session_get_stream_user_data(session, stream_id);
-    }
+	gcc_pure
+	void *GetStreamUserData(int32_t stream_id) const noexcept {
+		return nghttp2_session_get_stream_user_data(session, stream_id);
+	}
 };
 
 } // namespace NgHttp2

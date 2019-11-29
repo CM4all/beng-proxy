@@ -46,70 +46,70 @@ class HttpServerConnectionHandler;
 namespace NgHttp2 {
 
 class ServerConnection final : BufferedSocketHandler {
-    struct pool &pool;
+	struct pool &pool;
 
-    FilteredSocket socket;
+	FilteredSocket socket;
 
-    HttpServerConnectionHandler &handler;
+	HttpServerConnectionHandler &handler;
 
-    const SocketAddress local_address, remote_address;
+	const SocketAddress local_address, remote_address;
 
-    const char *const local_host_and_port;
-    const char *const remote_host;
+	const char *const local_host_and_port;
+	const char *const remote_host;
 
-    NgHttp2::Session session;
+	NgHttp2::Session session;
 
-    class Request;
-    using RequestList =
-        boost::intrusive::list<Request,
-                               boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>>,
-                               boost::intrusive::constant_time_size<false>>;
+	class Request;
+	using RequestList =
+		boost::intrusive::list<Request,
+				       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>>,
+				       boost::intrusive::constant_time_size<false>>;
 
-    RequestList requests;
+	RequestList requests;
 
 public:
-    ServerConnection(struct pool &_pool, EventLoop &loop,
-                     UniqueSocketDescriptor fd, FdType fd_type,
-                     SocketFilterPtr filter,
-                     SocketAddress remote_address,
-                     HttpServerConnectionHandler &_handler);
+	ServerConnection(struct pool &_pool, EventLoop &loop,
+			 UniqueSocketDescriptor fd, FdType fd_type,
+			 SocketFilterPtr filter,
+			 SocketAddress remote_address,
+			 HttpServerConnectionHandler &_handler);
 
-    ~ServerConnection() noexcept;
+	~ServerConnection() noexcept;
 
 private:
-    ssize_t SendCallback(const void *data, size_t length) noexcept;
+	ssize_t SendCallback(const void *data, size_t length) noexcept;
 
-    static ssize_t SendCallback(nghttp2_session *, const uint8_t *data,
-                                size_t length, int,
-                                void *user_data) noexcept {
-        auto &c = *(ServerConnection *)user_data;
-        return c.SendCallback(data, length);
-    }
+	static ssize_t SendCallback(nghttp2_session *, const uint8_t *data,
+				    size_t length, int,
+				    void *user_data) noexcept {
+		auto &c = *(ServerConnection *)user_data;
+		return c.SendCallback(data, length);
+	}
 
-    int OnFrameRecvCallback(const nghttp2_frame *frame) noexcept;
+	int OnFrameRecvCallback(const nghttp2_frame *frame) noexcept;
 
-    static int OnFrameRecvCallback(nghttp2_session *,
-                                   const nghttp2_frame *frame,
-                                   void *user_data) noexcept {
-        auto &c = *(ServerConnection *)user_data;
-        return c.OnFrameRecvCallback(frame);
-    }
+	static int OnFrameRecvCallback(nghttp2_session *,
+				       const nghttp2_frame *frame,
+				       void *user_data) noexcept {
+		auto &c = *(ServerConnection *)user_data;
+		return c.OnFrameRecvCallback(frame);
+	}
 
-    int OnBeginHeaderCallback(const nghttp2_frame *frame) noexcept;
+	int OnBeginHeaderCallback(const nghttp2_frame *frame) noexcept;
 
-    static int OnBeginHeaderCallback(nghttp2_session *,
-                                     const nghttp2_frame *frame,
-                                     void *user_data) noexcept {
-        auto &c = *(ServerConnection *)user_data;
-        return c.OnBeginHeaderCallback(frame);
-    }
+	static int OnBeginHeaderCallback(nghttp2_session *,
+					 const nghttp2_frame *frame,
+					 void *user_data) noexcept {
+		auto &c = *(ServerConnection *)user_data;
+		return c.OnBeginHeaderCallback(frame);
+	}
 
-    /* virtual methods from class BufferedSocketHandler */
-    BufferedResult OnBufferedData() override;
-    bool OnBufferedClosed() noexcept override;
-    bool OnBufferedWrite() override;
-    // TODO bool OnBufferedDrained() noexcept override;
-    void OnBufferedError(std::exception_ptr e) noexcept override;
+	/* virtual methods from class BufferedSocketHandler */
+	BufferedResult OnBufferedData() override;
+	bool OnBufferedClosed() noexcept override;
+	bool OnBufferedWrite() override;
+	// TODO bool OnBufferedDrained() noexcept override;
+	void OnBufferedError(std::exception_ptr e) noexcept override;
 };
 
 } // namespace NgHttp2
