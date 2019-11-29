@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -73,130 +73,130 @@
 #include <errno.h>
 
 struct parsed_url {
-    enum {
-        HTTP, HTTPS,
-    } protocol;
+	enum {
+		HTTP, HTTPS,
+	} protocol;
 
-    std::string host;
+	std::string host;
 
-    int default_port;
+	int default_port;
 
-    const char *uri;
+	const char *uri;
 };
 
 static struct parsed_url
 parse_url(const char *url)
 {
-    assert(url != nullptr);
+	assert(url != nullptr);
 
-    struct parsed_url dest;
+	struct parsed_url dest;
 
-    if (memcmp(url, "http://", 7) == 0) {
-        url += 7;
-        dest.protocol = parsed_url::HTTP;
-        dest.default_port = 80;
-    } else if (memcmp(url, "https://", 8) == 0) {
-        url += 8;
-        dest.protocol = parsed_url::HTTPS;
-        dest.default_port = 443;
-    } else
-        throw std::runtime_error("Unsupported URL");
+	if (memcmp(url, "http://", 7) == 0) {
+		url += 7;
+		dest.protocol = parsed_url::HTTP;
+		dest.default_port = 80;
+	} else if (memcmp(url, "https://", 8) == 0) {
+		url += 8;
+		dest.protocol = parsed_url::HTTPS;
+		dest.default_port = 443;
+	} else
+		throw std::runtime_error("Unsupported URL");
 
-    dest.uri = strchr(url, '/');
-    if (dest.uri == nullptr || dest.uri == url)
-        throw std::runtime_error("Missing URI path");
+	dest.uri = strchr(url, '/');
+	if (dest.uri == nullptr || dest.uri == url)
+		throw std::runtime_error("Missing URI path");
 
-    dest.host = std::string(url, dest.uri);
+	dest.host = std::string(url, dest.uri);
 
-    return dest;
+	return dest;
 }
 
 gcc_pure
 static const char *
 GetHostWithoutPort(struct pool &pool, const struct parsed_url &url) noexcept
 {
-    if (url.host.empty())
-        return nullptr;
+	if (url.host.empty())
+		return nullptr;
 
-    auto e = ExtractHost(url.host.c_str());
-    if (e.host.IsNull())
-        return nullptr;
+	auto e = ExtractHost(url.host.c_str());
+	if (e.host.IsNull())
+		return nullptr;
 
-    return p_strdup(pool, e.host);
+	return p_strdup(pool, e.host);
 }
 
 struct Context final
-    : PInstance, ConnectSocketHandler, Lease, HttpResponseHandler {
+	: PInstance, ConnectSocketHandler, Lease, HttpResponseHandler {
 
-    struct parsed_url url;
+	struct parsed_url url;
 
-    ShutdownListener shutdown_listener;
+	ShutdownListener shutdown_listener;
 
-    PoolPtr pool;
+	PoolPtr pool;
 
-    CancellablePointer cancel_ptr;
+	CancellablePointer cancel_ptr;
 
-    http_method_t method;
-    UnusedIstreamPtr request_body;
+	http_method_t method;
+	UnusedIstreamPtr request_body;
 
-    UniqueSocketDescriptor fd;
-    FilteredSocket fs;
+	UniqueSocketDescriptor fd;
+	FilteredSocket fs;
 
-    bool idle, reuse, aborted, got_response = false;
-    http_status_t status;
+	bool idle, reuse, aborted, got_response = false;
+	http_status_t status;
 
-    SinkFd *body = nullptr;
-    bool body_eof, body_abort;
+	SinkFd *body = nullptr;
+	bool body_eof, body_abort;
 
-    Context()
-        :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
-         pool(pool_new_linear(root_pool, "test", 8192)),
-         fs(event_loop) {}
+	Context()
+		:shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
+		 pool(pool_new_linear(root_pool, "test", 8192)),
+		 fs(event_loop) {}
 
-    void ShutdownCallback() noexcept;
+	void ShutdownCallback() noexcept;
 
-    /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
-    void OnSocketConnectError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class ConnectSocketHandler */
+	void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
+	void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 
-    /* virtual methods from class Lease */
-    void ReleaseLease(bool _reuse) noexcept override {
-        assert(!idle);
-        assert(url.protocol == parsed_url::HTTP ||
-               url.protocol == parsed_url::HTTPS ||
-               fd.IsDefined());
+	/* virtual methods from class Lease */
+	void ReleaseLease(bool _reuse) noexcept override {
+		assert(!idle);
+		assert(url.protocol == parsed_url::HTTP ||
+		       url.protocol == parsed_url::HTTPS ||
+		       fd.IsDefined());
 
-        idle = true;
-        reuse = _reuse;
+		idle = true;
+		reuse = _reuse;
 
-        if (url.protocol == parsed_url::HTTP ||
-            url.protocol == parsed_url::HTTPS) {
-            if (fs.IsConnected())
-                fs.Close();
-            fs.Destroy();
-        } else
-            fd.Close();
-    }
+		if (url.protocol == parsed_url::HTTP ||
+		    url.protocol == parsed_url::HTTPS) {
+			if (fs.IsConnected())
+				fs.Close();
+			fs.Destroy();
+		} else
+			fd.Close();
+	}
 
-    /* virtual methods from class HttpResponseHandler */
-    void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        UnusedIstreamPtr body) noexcept override;
-    void OnHttpError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(http_status_t status, StringMap &&headers,
+			    UnusedIstreamPtr body) noexcept override;
+	void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 void
 Context::ShutdownCallback() noexcept
 {
-    if (body != nullptr) {
-        sink_fd_close(body);
-        body = nullptr;
-        body_abort = true;
-    } else {
-        aborted = true;
-        cancel_ptr.Cancel();
-    }
+	if (body != nullptr) {
+		sink_fd_close(body);
+		body = nullptr;
+		body_abort = true;
+	} else {
+		aborted = true;
+		cancel_ptr.Cancel();
+	}
 
-    shutdown_listener.Disable();
+	shutdown_listener.Disable();
 }
 
 /*
@@ -207,45 +207,45 @@ Context::ShutdownCallback() noexcept
 static void
 my_sink_fd_input_eof(void *ctx)
 {
-    auto *c = (Context *)ctx;
+	auto *c = (Context *)ctx;
 
-    c->body = nullptr;
-    c->body_eof = true;
+	c->body = nullptr;
+	c->body_eof = true;
 
-    c->shutdown_listener.Disable();
+	c->shutdown_listener.Disable();
 }
 
 static void
 my_sink_fd_input_error(std::exception_ptr ep, void *ctx)
 {
-    auto *c = (Context *)ctx;
+	auto *c = (Context *)ctx;
 
-    PrintException(ep);
+	PrintException(ep);
 
-    c->body = nullptr;
-    c->body_abort = true;
+	c->body = nullptr;
+	c->body_abort = true;
 
-    c->shutdown_listener.Disable();
+	c->shutdown_listener.Disable();
 }
 
 static bool
 my_sink_fd_send_error(int error, void *ctx)
 {
-    auto *c = (Context *)ctx;
+	auto *c = (Context *)ctx;
 
-    fprintf(stderr, "%s\n", strerror(error));
+	fprintf(stderr, "%s\n", strerror(error));
 
-    c->body = nullptr;
-    c->body_abort = true;
+	c->body = nullptr;
+	c->body_abort = true;
 
-    c->shutdown_listener.Disable();
-    return true;
+	c->shutdown_listener.Disable();
+	return true;
 }
 
 static constexpr SinkFdHandler my_sink_fd_handler = {
-    .input_eof = my_sink_fd_input_eof,
-    .input_error = my_sink_fd_input_error,
-    .send_error = my_sink_fd_send_error,
+	.input_eof = my_sink_fd_input_eof,
+	.input_error = my_sink_fd_input_error,
+	.send_error = my_sink_fd_send_error,
 };
 
 
@@ -256,32 +256,32 @@ static constexpr SinkFdHandler my_sink_fd_handler = {
 
 void
 Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
-                        UnusedIstreamPtr _body) noexcept
+			UnusedIstreamPtr _body) noexcept
 {
-    got_response = true;
-    status = _status;
+	got_response = true;
+	status = _status;
 
-    if (_body) {
-        body = sink_fd_new(event_loop, *pool,
-                           NewAutoPipeIstream(pool, std::move(_body), nullptr),
-                           FileDescriptor(STDOUT_FILENO),
-                           guess_fd_type(STDOUT_FILENO),
-                           my_sink_fd_handler, this);
-        sink_fd_read(body);
-    } else {
-        body_eof = true;
-        shutdown_listener.Disable();
-    }
+	if (_body) {
+		body = sink_fd_new(event_loop, *pool,
+				   NewAutoPipeIstream(pool, std::move(_body), nullptr),
+				   FileDescriptor(STDOUT_FILENO),
+				   guess_fd_type(STDOUT_FILENO),
+				   my_sink_fd_handler, this);
+		sink_fd_read(body);
+	} else {
+		body_eof = true;
+		shutdown_listener.Disable();
+	}
 }
 
 void
 Context::OnHttpError(std::exception_ptr ep) noexcept
 {
-    PrintException(ep);
+	PrintException(ep);
 
-    aborted = true;
+	aborted = true;
 
-    shutdown_listener.Disable();
+	shutdown_listener.Disable();
 }
 
 
@@ -293,60 +293,60 @@ Context::OnHttpError(std::exception_ptr ep) noexcept
 void
 Context::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) noexcept
 try {
-    fd = std::move(new_fd);
-    idle = false;
+	fd = std::move(new_fd);
+	idle = false;
 
-    StringMap headers;
-    headers.Add(*pool, "host", url.host.c_str());
+	StringMap headers;
+	headers.Add(*pool, "host", url.host.c_str());
 
-    switch (url.protocol) {
-    case parsed_url::HTTP:
-        fs.InitDummy(fd.Release(), FdType::FD_TCP);
+	switch (url.protocol) {
+	case parsed_url::HTTP:
+		fs.InitDummy(fd.Release(), FdType::FD_TCP);
 
-        http_client_request(*pool, nullptr, fs,
-                            *this,
-                            "localhost",
-                            method, url.uri,
-                            HttpHeaders(std::move(headers)),
-                            std::move(request_body), false,
-                            *this,
-                            cancel_ptr);
-        break;
+		http_client_request(*pool, nullptr, fs,
+				    *this,
+				    "localhost",
+				    method, url.uri,
+				    HttpHeaders(std::move(headers)),
+				    std::move(request_body), false,
+				    *this,
+				    cancel_ptr);
+		break;
 
-    case parsed_url::HTTPS:
-        fs.InitDummy(fd.Release(), FdType::FD_TCP,
-                     ssl_client_create(event_loop,
-                                       GetHostWithoutPort(*pool, url),
-                                       nullptr));
+	case parsed_url::HTTPS:
+		fs.InitDummy(fd.Release(), FdType::FD_TCP,
+			     ssl_client_create(event_loop,
+					       GetHostWithoutPort(*pool, url),
+					       nullptr));
 
-        http_client_request(*pool, nullptr, fs,
-                            *this,
-                            "localhost",
-                            method, url.uri,
-                            HttpHeaders(std::move(headers)),
-                            std::move(request_body), false,
-                            *this,
-                            cancel_ptr);
-        break;
-    }
+		http_client_request(*pool, nullptr, fs,
+				    *this,
+				    "localhost",
+				    method, url.uri,
+				    HttpHeaders(std::move(headers)),
+				    std::move(request_body), false,
+				    *this,
+				    cancel_ptr);
+		break;
+	}
 } catch (const std::runtime_error &e) {
-    PrintException(e);
+	PrintException(e);
 
-    aborted = true;
-    request_body.Clear();
+	aborted = true;
+	request_body.Clear();
 
-    shutdown_listener.Disable();
- }
+	shutdown_listener.Disable();
+}
 
 void
 Context::OnSocketConnectError(std::exception_ptr ep) noexcept
 {
-    PrintException(ep);
+	PrintException(ep);
 
-    aborted = true;
-    request_body.Clear();
+	aborted = true;
+	request_body.Clear();
 
-    shutdown_listener.Disable();
+	shutdown_listener.Disable();
 }
 
 /*
@@ -357,80 +357,80 @@ Context::OnSocketConnectError(std::exception_ptr ep) noexcept
 int
 main(int argc, char **argv)
 try {
-    Context ctx;
+	Context ctx;
 
-    if (argc < 2 || argc > 3) {
-        fprintf(stderr, "usage: run_client URL [BODY]\n");
-        return EXIT_FAILURE;
-    }
+	if (argc < 2 || argc > 3) {
+		fprintf(stderr, "usage: run_client URL [BODY]\n");
+		return EXIT_FAILURE;
+	}
 
-    ctx.url = parse_url(argv[1]);
+	ctx.url = parse_url(argv[1]);
 
-    direct_global_init();
-    SetupProcess();
-    const ScopeFbPoolInit fb_pool_init;
+	direct_global_init();
+	SetupProcess();
+	const ScopeFbPoolInit fb_pool_init;
 
-    const ScopeSslGlobalInit ssl_init;
-    ssl_client_init(SslClientConfig());
+	const ScopeSslGlobalInit ssl_init;
+	ssl_client_init(SslClientConfig());
 
-    /* connect socket */
+	/* connect socket */
 
-    struct addrinfo hints;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_flags = AI_ADDRCONFIG;
-    hints.ai_socktype = SOCK_STREAM;
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_flags = AI_ADDRCONFIG;
+	hints.ai_socktype = SOCK_STREAM;
 
-    const auto ail = Resolve(ctx.url.host.c_str(), ctx.url.default_port,
-                             &hints);
-    const auto &ai = ail.front();
+	const auto ail = Resolve(ctx.url.host.c_str(), ctx.url.default_port,
+				 &hints);
+	const auto &ai = ail.front();
 
-    /* initialize */
+	/* initialize */
 
-    ctx.shutdown_listener.Enable();
+	ctx.shutdown_listener.Enable();
 
-    /* open request body */
+	/* open request body */
 
-    if (argc >= 3) {
-        struct stat st;
+	if (argc >= 3) {
+		struct stat st;
 
-        if (stat(argv[2], &st) < 0) {
-            fprintf(stderr, "Failed to stat %s: %s\n",
-                    argv[2], strerror(errno));
-            return EXIT_FAILURE;
-        }
+		if (stat(argv[2], &st) < 0) {
+			fprintf(stderr, "Failed to stat %s: %s\n",
+				argv[2], strerror(errno));
+			return EXIT_FAILURE;
+		}
 
-        ctx.method = HTTP_METHOD_POST;
+		ctx.method = HTTP_METHOD_POST;
 
-        ctx.request_body = UnusedIstreamPtr(istream_file_new(ctx.event_loop, ctx.pool,
-                                                             argv[2], st.st_size));
-    } else {
-        ctx.method = HTTP_METHOD_GET;
-    }
+		ctx.request_body = UnusedIstreamPtr(istream_file_new(ctx.event_loop, ctx.pool,
+								     argv[2], st.st_size));
+	} else {
+		ctx.method = HTTP_METHOD_GET;
+	}
 
-    /* connect */
+	/* connect */
 
-    ConnectSocket connect(ctx.event_loop, ctx);
-    ctx.cancel_ptr = connect;
-    connect.Connect(ai, std::chrono::seconds(30));
+	ConnectSocket connect(ctx.event_loop, ctx);
+	ctx.cancel_ptr = connect;
+	connect.Connect(ai, std::chrono::seconds(30));
 
-    /* run test */
+	/* run test */
 
-    ctx.event_loop.Dispatch();
+	ctx.event_loop.Dispatch();
 
-    assert(!ctx.got_response || ctx.body_eof || ctx.body_abort || ctx.aborted);
+	assert(!ctx.got_response || ctx.body_eof || ctx.body_abort || ctx.aborted);
 
-    if (ctx.got_response)
-        fprintf(stderr, "reuse=%d\n", ctx.reuse);
+	if (ctx.got_response)
+		fprintf(stderr, "reuse=%d\n", ctx.reuse);
 
-    /* cleanup */
+	/* cleanup */
 
-    ctx.pool.reset();
-    pool_commit();
+	ctx.pool.reset();
+	pool_commit();
 
-    ssl_client_deinit();
+	ssl_client_deinit();
 
-    return ctx.got_response && ctx.body_eof ? EXIT_SUCCESS : EXIT_FAILURE;
+	return ctx.got_response && ctx.body_eof ? EXIT_SUCCESS : EXIT_FAILURE;
 } catch (const std::exception &e) {
-    PrintException(e);
-    return EXIT_FAILURE;
+	PrintException(e);
+	return EXIT_FAILURE;
 }
