@@ -293,6 +293,7 @@ public:
     /* virtual methods from SocketFilter */
     void Init(FilteredSocket &_socket) noexcept override {
         socket = &_socket;
+        Schedule();
     }
 
     void SetHandshakeCallback(BoundMethod<void() noexcept> callback) noexcept override;
