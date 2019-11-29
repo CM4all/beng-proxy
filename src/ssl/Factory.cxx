@@ -57,305 +57,305 @@
 #include <assert.h>
 
 struct SslFactoryCertKey {
-    struct Name {
-        AllocatedString<> value;
-        size_t length;
+	struct Name {
+		AllocatedString<> value;
+		size_t length;
 
-        Name(AllocatedString<> &&_value)
-            :value(std::move(_value)), length(strlen(value.c_str())) {}
+		Name(AllocatedString<> &&_value)
+			:value(std::move(_value)), length(strlen(value.c_str())) {}
 
-        Name(const char *_value)
-            :value(AllocatedString<>::Duplicate(_value)),
-             length(strlen(_value)) {}
+		Name(const char *_value)
+			:value(AllocatedString<>::Duplicate(_value)),
+			 length(strlen(_value)) {}
 
-        gcc_pure
-        bool Match(StringView host_name) const;
-    };
+		gcc_pure
+		bool Match(StringView host_name) const;
+	};
 
-    SslCtx ssl_ctx;
+	SslCtx ssl_ctx;
 
-    std::forward_list<Name> names;
+	std::forward_list<Name> names;
 
-    SslFactoryCertKey() = default;
+	SslFactoryCertKey() = default;
 
-    SslFactoryCertKey(SslFactoryCertKey &&other) = default;
-    SslFactoryCertKey &operator=(SslFactoryCertKey &&other) = default;
+	SslFactoryCertKey(SslFactoryCertKey &&other) = default;
+	SslFactoryCertKey &operator=(SslFactoryCertKey &&other) = default;
 
-    void LoadServer(const SslConfig &parent_config,
-                    const SslCertKeyConfig &config);
+	void LoadServer(const SslConfig &parent_config,
+			const SslCertKeyConfig &config);
 
-    void CacheCommonName(X509_NAME &subject) {
-        auto common_name = NidToString(subject, NID_commonName);
-        if (common_name != nullptr)
-            names.emplace_front(std::move(common_name));
-    }
+	void CacheCommonName(X509_NAME &subject) {
+		auto common_name = NidToString(subject, NID_commonName);
+		if (common_name != nullptr)
+			names.emplace_front(std::move(common_name));
+	}
 
-    void CacheCommonName(X509 &cert) {
-        X509_NAME *subject = X509_get_subject_name(&cert);
-        if (subject != nullptr)
-            CacheCommonName(*subject);
+	void CacheCommonName(X509 &cert) {
+		X509_NAME *subject = X509_get_subject_name(&cert);
+		if (subject != nullptr)
+			CacheCommonName(*subject);
 
-        for (const auto &i : GetSubjectAltNames(cert))
-            names.emplace_front(i.c_str());
-    }
+		for (const auto &i : GetSubjectAltNames(cert))
+			names.emplace_front(i.c_str());
+	}
 
-    gcc_pure
-    bool MatchCommonName(StringView host_name) const;
+	gcc_pure
+	bool MatchCommonName(StringView host_name) const;
 
-    void SetSessionIdContext(ConstBuffer<void> _sid_ctx) {
-        auto sid_ctx = ConstBuffer<unsigned char>::FromVoid(_sid_ctx);
-        int result = SSL_CTX_set_session_id_context(ssl_ctx.get(),
-                                                    sid_ctx.data,
-                                                    sid_ctx.size);
-        if (result == 0)
-            throw SslError("SSL_CTX_set_session_id_context() failed");
-    }
+	void SetSessionIdContext(ConstBuffer<void> _sid_ctx) {
+		auto sid_ctx = ConstBuffer<unsigned char>::FromVoid(_sid_ctx);
+		int result = SSL_CTX_set_session_id_context(ssl_ctx.get(),
+							    sid_ctx.data,
+							    sid_ctx.size);
+		if (result == 0)
+			throw SslError("SSL_CTX_set_session_id_context() failed");
+	}
 
-    UniqueSSL Make() const {
-        UniqueSSL ssl(SSL_new(ssl_ctx.get()));
-        if (!ssl)
-            throw SslError("SSL_new() failed");
+	UniqueSSL Make() const {
+		UniqueSSL ssl(SSL_new(ssl_ctx.get()));
+		if (!ssl)
+			throw SslError("SSL_new() failed");
 
-        return ssl;
-    }
+		return ssl;
+	}
 
-    void Apply(SSL *ssl) const {
-        SSL_set_SSL_CTX(ssl, ssl_ctx.get());
-    }
+	void Apply(SSL *ssl) const {
+		SSL_set_SSL_CTX(ssl, ssl_ctx.get());
+	}
 
-    unsigned Flush(long tm) {
-        return ::FlushSessionCache(*ssl_ctx, tm);
-    }
+	unsigned Flush(long tm) {
+		return ::FlushSessionCache(*ssl_ctx, tm);
+	}
 };
 
 struct SslFactory {
-    std::vector<SslFactoryCertKey> cert_key;
+	std::vector<SslFactoryCertKey> cert_key;
 
-    const std::unique_ptr<SslSniCallback> sni;
+	const std::unique_ptr<SslSniCallback> sni;
 
-    SslFactory(std::unique_ptr<SslSniCallback> &&_sni)
-        :sni(std::move(_sni)) {}
+	SslFactory(std::unique_ptr<SslSniCallback> &&_sni)
+		:sni(std::move(_sni)) {}
 
-    gcc_pure
-    const SslFactoryCertKey *FindCommonName(StringView host_name) const;
+	gcc_pure
+	const SslFactoryCertKey *FindCommonName(StringView host_name) const;
 
-    void EnableSNI();
+	void EnableSNI();
 
-    void SetSessionIdContext(ConstBuffer<void> sid_ctx) {
-        for (auto &i : cert_key)
-            i.SetSessionIdContext(sid_ctx);
-    }
+	void SetSessionIdContext(ConstBuffer<void> sid_ctx) {
+		for (auto &i : cert_key)
+			i.SetSessionIdContext(sid_ctx);
+	}
 
-    UniqueSSL Make();
+	UniqueSSL Make();
 
-    unsigned Flush(long tm);
+	unsigned Flush(long tm);
 };
 
 static void
 load_certs_keys(SslFactory &factory, const SslConfig &config)
 {
-    factory.cert_key.reserve(config.cert_key.size());
+	factory.cert_key.reserve(config.cert_key.size());
 
-    for (const auto &c : config.cert_key) {
-        SslFactoryCertKey ck;
-        ck.LoadServer(config, c);
+	for (const auto &c : config.cert_key) {
+		SslFactoryCertKey ck;
+		ck.LoadServer(config, c);
 
-        factory.cert_key.emplace_back(std::move(ck));
-    }
+		factory.cert_key.emplace_back(std::move(ck));
+	}
 }
 
 static void
 ApplyServerConfig(SSL_CTX *ssl_ctx, const SslCertKeyConfig &cert_key)
 {
-    ERR_clear_error();
+	ERR_clear_error();
 
-    if (SSL_CTX_use_RSAPrivateKey_file(ssl_ctx,
-                                       cert_key.key_file.c_str(),
-                                       SSL_FILETYPE_PEM) != 1)
-        throw SslError("Failed to load key file " +
-                       cert_key.key_file);
+	if (SSL_CTX_use_RSAPrivateKey_file(ssl_ctx,
+					   cert_key.key_file.c_str(),
+					   SSL_FILETYPE_PEM) != 1)
+		throw SslError("Failed to load key file " +
+			       cert_key.key_file);
 
-    if (SSL_CTX_use_certificate_chain_file(ssl_ctx,
-                                           cert_key.cert_file.c_str()) != 1)
-        throw SslError("Failed to load certificate file " +
-                       cert_key.cert_file);
+	if (SSL_CTX_use_certificate_chain_file(ssl_ctx,
+					       cert_key.cert_file.c_str()) != 1)
+		throw SslError("Failed to load certificate file " +
+			       cert_key.cert_file);
 
-    if (SSL_CTX_check_private_key(ssl_ctx) != 1)
-        throw SslError("Key '" + cert_key.key_file +
-                       "' does not match certificate '" +
-                       cert_key.cert_file + "'");
+	if (SSL_CTX_check_private_key(ssl_ctx) != 1)
+		throw SslError("Key '" + cert_key.key_file +
+			       "' does not match certificate '" +
+			       cert_key.cert_file + "'");
 }
 
 inline bool
 SslFactoryCertKey::Name::Match(StringView host_name) const
 {
-    if (value == nullptr)
-        return false;
+	if (value == nullptr)
+		return false;
 
-    if (length == host_name.size &&
-        memcmp(host_name.data, value.c_str(), host_name.size) == 0)
-        return true;
+	if (length == host_name.size &&
+	    memcmp(host_name.data, value.c_str(), host_name.size) == 0)
+		return true;
 
-    if (value[0] == '*' && value[1] == '.' && value[2] != 0) {
-        if (host_name.size >= length &&
-            /* match only one segment (no dots) */
-            memchr(host_name.data, '.',
-                   host_name.size - length + 1) == nullptr &&
-            memcmp(host_name.data + host_name.size - length + 1,
-                   value.c_str() + 1, length - 1) == 0)
-            return true;
-    }
+	if (value[0] == '*' && value[1] == '.' && value[2] != 0) {
+		if (host_name.size >= length &&
+		    /* match only one segment (no dots) */
+		    memchr(host_name.data, '.',
+			   host_name.size - length + 1) == nullptr &&
+		    memcmp(host_name.data + host_name.size - length + 1,
+			   value.c_str() + 1, length - 1) == 0)
+			return true;
+	}
 
-    return false;
+	return false;
 }
 
 inline bool
 SslFactoryCertKey::MatchCommonName(StringView host_name) const
 {
-    for (const auto &name : names)
-        if (name.Match(host_name))
-            return true;
+	for (const auto &name : names)
+		if (name.Match(host_name))
+			return true;
 
-    return false;
+	return false;
 }
 
 inline const SslFactoryCertKey *
 SslFactory::FindCommonName(StringView host_name) const
 {
-    for (const auto &ck : cert_key)
-        if (ck.MatchCommonName(host_name))
-            return &ck;
+	for (const auto &ck : cert_key)
+		if (ck.MatchCommonName(host_name))
+			return &ck;
 
-    return nullptr;
+	return nullptr;
 }
 
 static int
 ssl_servername_callback(SSL *ssl, gcc_unused int *al,
-                        const SslFactory &factory)
+			const SslFactory &factory)
 {
-    const char *_host_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
-    if (_host_name == nullptr)
-        return SSL_TLSEXT_ERR_OK;
+	const char *_host_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+	if (_host_name == nullptr)
+		return SSL_TLSEXT_ERR_OK;
 
-    const StringView host_name(_host_name);
+	const StringView host_name(_host_name);
 
-    /* find the first certificate that matches */
+	/* find the first certificate that matches */
 
-    const auto *ck = factory.FindCommonName(host_name);
-    if (ck != nullptr) {
-        /* found it - now use it */
-        ck->Apply(ssl);
-    } else if (factory.sni) {
-        try {
-            factory.sni->OnSni(ssl, host_name.data);
-        } catch (const std::exception &e) {
-            PrintException(e);
-        }
-    }
+	const auto *ck = factory.FindCommonName(host_name);
+	if (ck != nullptr) {
+		/* found it - now use it */
+		ck->Apply(ssl);
+	} else if (factory.sni) {
+		try {
+			factory.sni->OnSni(ssl, host_name.data);
+		} catch (const std::exception &e) {
+			PrintException(e);
+		}
+	}
 
-    return SSL_TLSEXT_ERR_OK;
+	return SSL_TLSEXT_ERR_OK;
 }
 
 inline void
 SslFactory::EnableSNI()
 {
-    SSL_CTX *ssl_ctx = cert_key.front().ssl_ctx.get();
+	SSL_CTX *ssl_ctx = cert_key.front().ssl_ctx.get();
 
-    if (!SSL_CTX_set_tlsext_servername_callback(ssl_ctx,
-                                                ssl_servername_callback) ||
-        !SSL_CTX_set_tlsext_servername_arg(ssl_ctx, this))
-        throw SslError("SSL_CTX_set_tlsext_servername_callback() failed");
+	if (!SSL_CTX_set_tlsext_servername_callback(ssl_ctx,
+						    ssl_servername_callback) ||
+	    !SSL_CTX_set_tlsext_servername_arg(ssl_ctx, this))
+		throw SslError("SSL_CTX_set_tlsext_servername_callback() failed");
 }
 
 inline UniqueSSL
 SslFactory::Make()
 {
-    auto ssl = cert_key.front().Make();
+	auto ssl = cert_key.front().Make();
 
-    SSL_set_accept_state(ssl.get());
+	SSL_set_accept_state(ssl.get());
 
-    return ssl;
+	return ssl;
 }
 
 inline unsigned
 SslFactory::Flush(long tm)
 {
-    unsigned n = 0;
-    for (auto &i : cert_key)
-        n += i.Flush(tm);
-    return n;
+	unsigned n = 0;
+	for (auto &i : cert_key)
+		n += i.Flush(tm);
+	return n;
 }
 
 void
 SslFactoryCertKey::LoadServer(const SslConfig &parent_config,
-                              const SslCertKeyConfig &config)
+			      const SslCertKeyConfig &config)
 {
-    assert(!ssl_ctx);
+	assert(!ssl_ctx);
 
-    ssl_ctx = CreateBasicSslCtx(true);
+	ssl_ctx = CreateBasicSslCtx(true);
 
-    assert(!parent_config.cert_key.empty());
+	assert(!parent_config.cert_key.empty());
 
-    ApplyServerConfig(ssl_ctx.get(), config);
-    ApplyServerConfig(*ssl_ctx, parent_config);
+	ApplyServerConfig(ssl_ctx.get(), config);
+	ApplyServerConfig(*ssl_ctx, parent_config);
 
-    auto ssl = Make();
+	auto ssl = Make();
 
-    X509 *cert = SSL_get_certificate(ssl.get());
-    if (cert == nullptr)
-        throw SslError("No certificate in SSL_CTX");
+	X509 *cert = SSL_get_certificate(ssl.get());
+	if (cert == nullptr)
+		throw SslError("No certificate in SSL_CTX");
 
-    EVP_PKEY *key = SSL_get_privatekey(ssl.get());
-    if (key == nullptr)
-        throw SslError("No certificate in SSL_CTX");
+	EVP_PKEY *key = SSL_get_privatekey(ssl.get());
+	if (key == nullptr)
+		throw SslError("No certificate in SSL_CTX");
 
-    if (!MatchModulus(*cert, *key))
-        /* this shouldn't ever fail because
-           SSL_CTX_check_private_key() was successful */
-        throw SslError("Key '" + config.key_file +
-                       "' does not match certificate '" +
-                       config.cert_file + "'");
+	if (!MatchModulus(*cert, *key))
+		/* this shouldn't ever fail because
+		   SSL_CTX_check_private_key() was successful */
+		throw SslError("Key '" + config.key_file +
+			       "' does not match certificate '" +
+			       config.cert_file + "'");
 
-    CacheCommonName(*cert);
+	CacheCommonName(*cert);
 }
 
 SslFactory *
 ssl_factory_new_server(const SslConfig &config,
-                       std::unique_ptr<SslSniCallback> &&sni)
+		       std::unique_ptr<SslSniCallback> &&sni)
 {
-    assert(!config.cert_key.empty());
+	assert(!config.cert_key.empty());
 
-    std::unique_ptr<SslFactory> factory(new SslFactory(std::move(sni)));
+	std::unique_ptr<SslFactory> factory(new SslFactory(std::move(sni)));
 
-    load_certs_keys(*factory, config);
+	load_certs_keys(*factory, config);
 
-    if (factory->cert_key.size() > 1 || factory->sni)
-        factory->EnableSNI();
+	if (factory->cert_key.size() > 1 || factory->sni)
+		factory->EnableSNI();
 
-    return factory.release();
+	return factory.release();
 }
 
 void
 ssl_factory_free(SslFactory *factory)
 {
-    delete factory;
+	delete factory;
 }
 
 void
 ssl_factory_set_session_id_context(SslFactory &factory,
-                                   ConstBuffer<void> sid_ctx)
+				   ConstBuffer<void> sid_ctx)
 {
-    factory.SetSessionIdContext(sid_ctx);
+	factory.SetSessionIdContext(sid_ctx);
 }
 
 UniqueSSL
 ssl_factory_make(SslFactory &factory)
 {
-    return factory.Make();
+	return factory.Make();
 }
 
 unsigned
 ssl_factory_flush(SslFactory &factory, long tm)
 {
-    return factory.Flush(tm);
+	return factory.Flush(tm);
 }

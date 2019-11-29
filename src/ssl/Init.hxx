@@ -48,14 +48,14 @@ void
 ssl_thread_deinit();
 
 struct ScopeSslGlobalInit {
-    ScopeSslGlobalInit() {
-        ssl_global_init();
-    }
+	ScopeSslGlobalInit() {
+		ssl_global_init();
+	}
 
-    ~ScopeSslGlobalInit() {
-        ssl_global_deinit();
-    }
+	~ScopeSslGlobalInit() {
+		ssl_global_deinit();
+	}
 
-    ScopeSslGlobalInit(const ScopeSslGlobalInit &) = delete;
-    ScopeSslGlobalInit &operator=(const ScopeSslGlobalInit &) = delete;
+	ScopeSslGlobalInit(const ScopeSslGlobalInit &) = delete;
+	ScopeSslGlobalInit &operator=(const ScopeSslGlobalInit &) = delete;
 };

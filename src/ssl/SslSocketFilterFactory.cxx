@@ -36,5 +36,5 @@
 SocketFilterPtr
 SslSocketFilterFactory::CreateFilter()
 {
-    return ssl_client_create(event_loop, host, certificate);
+	return ssl_client_create(event_loop, host, certificate);
 }

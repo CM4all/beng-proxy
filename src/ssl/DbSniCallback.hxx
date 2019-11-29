@@ -38,12 +38,12 @@
 class CertCache;
 
 class DbSslSniCallback final : public SslSniCallback {
-    CertCache &cache;
+	CertCache &cache;
 
 public:
-    explicit DbSslSniCallback(CertCache &_cache):cache(_cache) {}
+	explicit DbSslSniCallback(CertCache &_cache):cache(_cache) {}
 
-    void OnSni(SSL *ssl, const char *name) override;
+	void OnSni(SSL *ssl, const char *name) override;
 };
 
 #endif

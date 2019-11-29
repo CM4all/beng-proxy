@@ -37,18 +37,19 @@
 class EventLoop;
 
 class SslSocketFilterFactory final : public SocketFilterFactory {
-    EventLoop &event_loop;
-    const char *const host;
-    const char *const certificate;
+	EventLoop &event_loop;
+	const char *const host;
+	const char *const certificate;
 
 public:
-    SslSocketFilterFactory(EventLoop &_event_loop,
-                           const char *_host, const char *_certificate)
-        :event_loop(_event_loop), host(_host), certificate(_certificate) {}
+	SslSocketFilterFactory(EventLoop &_event_loop,
+			       const char *_host, const char *_certificate)
+		:event_loop(_event_loop), host(_host),
+		 certificate(_certificate) {}
 
-    const char *GetFilterId() const override {
-        return host;
-    }
+	const char *GetFilterId() const override {
+		return host;
+	}
 
-    SocketFilterPtr CreateFilter() override;
+	SocketFilterPtr CreateFilter() override;
 };

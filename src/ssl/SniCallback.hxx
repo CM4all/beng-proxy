@@ -41,9 +41,9 @@
 
 class SslSniCallback {
 public:
-    virtual ~SslSniCallback() {}
+	virtual ~SslSniCallback() {}
 
-    virtual void OnSni(SSL *ssl, const char *name) = 0;
+	virtual void OnSni(SSL *ssl, const char *name) = 0;
 };
 
 #endif
