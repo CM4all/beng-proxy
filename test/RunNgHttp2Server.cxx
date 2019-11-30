@@ -42,62 +42,62 @@
 #include "fb_pool.hxx"
 
 class Connection final
-    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>,
-      HttpServerConnectionHandler
+	: public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>,
+	  HttpServerConnectionHandler
 {
-    NgHttp2::ServerConnection http;
+	NgHttp2::ServerConnection http;
 
 public:
-    Connection(struct pool &pool, EventLoop &event_loop,
-               UniqueSocketDescriptor fd, SocketAddress address)
-        :http(pool, event_loop, std::move(fd), FD_TCP, nullptr,
-              address,
-              *this) {}
+	Connection(struct pool &pool, EventLoop &event_loop,
+		   UniqueSocketDescriptor fd, SocketAddress address)
+		:http(pool, event_loop, std::move(fd), FD_TCP, nullptr,
+		      address,
+		      *this) {}
 
-    /* virtual methods from class HttpServerConnectionHandler */
-    void HandleHttpRequest(IncomingHttpRequest &request,
-                           const StopwatchPtr &,
-                           CancellablePointer &cancel_ptr) noexcept override {
-        (void)cancel_ptr;
-        // TODO
+	/* virtual methods from class HttpServerConnectionHandler */
+	void HandleHttpRequest(IncomingHttpRequest &request,
+			       const StopwatchPtr &,
+			       CancellablePointer &cancel_ptr) noexcept override {
+		(void)cancel_ptr;
+		// TODO
 
-        if (request.body)
-            request.SendResponse(HTTP_STATUS_OK, {},
-                                 std::move(request.body));
-        else
-            request.SendMessage(HTTP_STATUS_OK, "Hello, world!\n");
-    }
+		if (request.body)
+			request.SendResponse(HTTP_STATUS_OK, {},
+					     std::move(request.body));
+		else
+			request.SendMessage(HTTP_STATUS_OK, "Hello, world!\n");
+	}
 
-    void LogHttpRequest(IncomingHttpRequest &,
-                        http_status_t, off_t,
-                        uint64_t,
-                        uint64_t) noexcept override {}
+	void LogHttpRequest(IncomingHttpRequest &,
+			    http_status_t, off_t,
+			    uint64_t,
+			    uint64_t) noexcept override {}
 
-    void HttpConnectionError(std::exception_ptr e) noexcept override {
-        PrintException(e);
-        delete this;
-    }
+	void HttpConnectionError(std::exception_ptr e) noexcept override {
+		PrintException(e);
+		delete this;
+	}
 
-    void HttpConnectionClosed() noexcept override {
-        delete this;
-    }
+	void HttpConnectionClosed() noexcept override {
+		delete this;
+	}
 };
 
 typedef TemplateServerSocket<Connection, struct pool &,
-                             EventLoop &> Listener;
+			     EventLoop &> Listener;
 
 int
 main(int, char **) noexcept
 try {
-    const ScopeFbPoolInit fb_pool_init;
-    RootPool pool;
-    EventLoop event_loop;
+	const ScopeFbPoolInit fb_pool_init;
+	RootPool pool;
+	EventLoop event_loop;
 
-    Listener listener(event_loop, pool.get(), event_loop);
-    listener.ListenTCP(8000);
+	Listener listener(event_loop, pool.get(), event_loop);
+	listener.ListenTCP(8000);
 
-    event_loop.Dispatch();
+	event_loop.Dispatch();
 } catch (...) {
-    PrintException(std::current_exception());
-    return EXIT_FAILURE;
+	PrintException(std::current_exception());
+	return EXIT_FAILURE;
 }
