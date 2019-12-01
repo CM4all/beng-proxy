@@ -72,6 +72,8 @@ public:
 
 	void SetEof() noexcept;
 
+	using Istream::DestroyError;
+
 	void SubmitBuffer() noexcept;
 
 	/* virtual methods from class Istream */
@@ -113,6 +115,13 @@ FifoBufferIstreamControl::SetEof() noexcept
 {
 	if (fbi != nullptr)
 		fbi->SetEof();
+}
+
+void
+FifoBufferIstreamControl::DestroyError(std::exception_ptr e) noexcept
+{
+	if (fbi != nullptr)
+		fbi->DestroyError(std::move(e));
 }
 
 size_t

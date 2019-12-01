@@ -66,6 +66,7 @@ public:
 	void SubmitBuffer() noexcept;
 
 	void SetEof() noexcept;
+	void DestroyError(std::exception_ptr e) noexcept;
 };
 
 /**

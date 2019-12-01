@@ -93,6 +93,9 @@ public:
 	}
 
 	~Request() noexcept {
+		if (request_body_control)
+			request_body_control->DestroyError(std::make_exception_ptr(std::runtime_error("Canceled")));
+
 		if (response_body)
 			response_body.reset();
 		else if (cancel_ptr)
@@ -117,20 +120,27 @@ public:
 
 	int OnEndDataFrame() noexcept;
 
-	int OnStreamCloseCallback() noexcept {
+	int OnStreamCloseCallback(uint32_t error_code) noexcept {
+		if (request_body_control) {
+			auto error = FormatRuntimeError("Stream closed: %s",
+							nghttp2_http2_strerror(error_code));
+			request_body_control->DestroyError(std::make_exception_ptr(std::move(error)));
+			request_body_control.reset();
+		}
+
 		Destroy();
 		return 0;
 	}
 
 	static int OnStreamCloseCallback(nghttp2_session *session,
 					 int32_t stream_id,
-					 uint32_t, void *) noexcept {
+					 uint32_t error_code, void *) noexcept {
 		auto *request = (Request *)
 			nghttp2_session_get_stream_user_data(session, stream_id);
 		if (request == nullptr)
 			return 0;
 
-		return request->OnStreamCloseCallback();
+		return request->OnStreamCloseCallback(error_code);
 	}
 
 	int OnHeaderCallback(StringView name, StringView value) noexcept;
