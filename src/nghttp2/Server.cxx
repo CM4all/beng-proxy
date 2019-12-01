@@ -336,6 +336,18 @@ ServerConnection::Request::SendResponse(http_status_t status,
 	StaticArray<nghttp2_nv, 256> hdrs;
 	hdrs.push_back(MakeNv(":status", status_string));
 
+	char content_length_string[32];
+	if (_response_body) {
+		const auto content_length = _response_body.GetAvailable(false);
+		if (content_length >= 0) {
+			snprintf(content_length_string,
+				 sizeof(content_length_string),
+				 "%lu", (unsigned long)content_length);
+			hdrs.push_back(MakeNv("content-length",
+					      content_length_string));
+		}
+	}
+
 	for (const auto &i : std::move(response_headers).ToMap(pool)) {
 		if (hdrs.full())
 			// TODO: what now?
