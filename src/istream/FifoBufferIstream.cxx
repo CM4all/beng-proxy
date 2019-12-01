@@ -41,166 +41,166 @@
 #include <string.h>
 
 class FifoBufferIstream final : public Istream {
-    FifoBufferIstreamHandler &handler;
+	FifoBufferIstreamHandler &handler;
 
-    const SharedPoolPtr<FifoBufferIstreamControl> control;
+	const SharedPoolPtr<FifoBufferIstreamControl> control;
 
-    SliceFifoBuffer buffer;
+	SliceFifoBuffer buffer;
 
-    bool eof = false;
+	bool eof = false;
 
 public:
-    FifoBufferIstream(struct pool &p,
-                      FifoBufferIstreamHandler &_handler) noexcept
-        :Istream(p),
-         handler(_handler),
-         control(SharedPoolPtr<FifoBufferIstreamControl>::Make(p, *this)) {}
+	FifoBufferIstream(struct pool &p,
+			  FifoBufferIstreamHandler &_handler) noexcept
+		:Istream(p),
+		 handler(_handler),
+		 control(SharedPoolPtr<FifoBufferIstreamControl>::Make(p, *this)) {}
 
-    ~FifoBufferIstream() noexcept {
-        control->fbi = nullptr;
-    }
+	~FifoBufferIstream() noexcept {
+		control->fbi = nullptr;
+	}
 
-    auto GetControl() noexcept {
-        return control;
-    }
+	auto GetControl() noexcept {
+		return control;
+	}
 
-    auto &GetBuffer() noexcept {
-        return buffer;
-    }
+	auto &GetBuffer() noexcept {
+		return buffer;
+	}
 
-    size_t Push(ConstBuffer<void> src) noexcept;
+	size_t Push(ConstBuffer<void> src) noexcept;
 
-    void SetEof() noexcept;
+	void SetEof() noexcept;
 
-    void SubmitBuffer() noexcept;
+	void SubmitBuffer() noexcept;
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) noexcept override {
-        return partial || eof
-            ? (off_t)buffer.GetAvailable()
-            : (off_t)-1;
-    }
+	off_t _GetAvailable(bool partial) noexcept override {
+		return partial || eof
+			? (off_t)buffer.GetAvailable()
+			: (off_t)-1;
+	}
 
-    off_t _Skip(off_t length) noexcept override;
-    void _Read() noexcept override;
-    void _FillBucketList(IstreamBucketList &list) noexcept override;
-    size_t _ConsumeBucketList(size_t nbytes) noexcept override;
+	off_t _Skip(off_t length) noexcept override;
+	void _Read() noexcept override;
+	void _FillBucketList(IstreamBucketList &list) noexcept override;
+	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
 
-    void _Close() noexcept override {
-        handler.OnFifoBufferIstreamClosed();
-        Istream::_Close();
-    }
+	void _Close() noexcept override {
+		handler.OnFifoBufferIstreamClosed();
+		Istream::_Close();
+	}
 };
 
 SliceFifoBuffer *
 FifoBufferIstreamControl::GetBuffer() noexcept
 {
-    return fbi != nullptr
-        ? &fbi->GetBuffer()
-        : nullptr;
+	return fbi != nullptr
+		? &fbi->GetBuffer()
+		: nullptr;
 }
 
 void
 FifoBufferIstreamControl::SubmitBuffer() noexcept
 {
-    if (fbi != nullptr)
-        fbi->SubmitBuffer();
+	if (fbi != nullptr)
+		fbi->SubmitBuffer();
 }
 
 void
 FifoBufferIstreamControl::SetEof() noexcept
 {
-    if (fbi != nullptr)
-        fbi->SetEof();
+	if (fbi != nullptr)
+		fbi->SetEof();
 }
 
 size_t
 FifoBufferIstream::Push(ConstBuffer<void> src) noexcept
 {
-    buffer.AllocateIfNull(fb_pool_get());
+	buffer.AllocateIfNull(fb_pool_get());
 
-    auto w = buffer.Write();
-    size_t nbytes = std::min(w.size, src.size);
-    memcpy(w.data, src.data, nbytes);
-    buffer.Append(nbytes);
-    return nbytes;
+	auto w = buffer.Write();
+	size_t nbytes = std::min(w.size, src.size);
+	memcpy(w.data, src.data, nbytes);
+	buffer.Append(nbytes);
+	return nbytes;
 }
 
 void
 FifoBufferIstream::SetEof() noexcept
 {
-    eof = true;
+	eof = true;
 
-    if (buffer.empty())
-        DestroyEof();
+	if (buffer.empty())
+		DestroyEof();
 }
 
 void
 FifoBufferIstream::SubmitBuffer() noexcept
 {
-    while (!buffer.empty()) {
-        if (SendFromBuffer(buffer) == 0)
-            return;
+	while (!buffer.empty()) {
+		if (SendFromBuffer(buffer) == 0)
+			return;
 
-        if (buffer.empty() && !eof)
-            handler.OnFifoBufferIstreamDrained();
-    }
+		if (buffer.empty() && !eof)
+			handler.OnFifoBufferIstreamDrained();
+	}
 
-    if (buffer.empty()) {
-        if (eof)
-            DestroyEof();
-        else
-            buffer.FreeIfDefined();
-    }
+	if (buffer.empty()) {
+		if (eof)
+			DestroyEof();
+		else
+			buffer.FreeIfDefined();
+	}
 }
 
 off_t
 FifoBufferIstream::_Skip(off_t length) noexcept
 {
-    size_t nbytes = std::min<decltype(length)>(length, buffer.GetAvailable());
-    buffer.Consume(nbytes);
-    buffer.FreeIfEmpty();
-    return nbytes;
+	size_t nbytes = std::min<decltype(length)>(length, buffer.GetAvailable());
+	buffer.Consume(nbytes);
+	buffer.FreeIfEmpty();
+	return nbytes;
 }
 
 void
 FifoBufferIstream::_Read() noexcept
 {
-    SubmitBuffer();
+	SubmitBuffer();
 }
 
 void
 FifoBufferIstream::_FillBucketList(IstreamBucketList &list) noexcept
 {
-    auto r = buffer.Read();
-    if (!r.empty())
-        list.Push(r.ToVoid());
+	auto r = buffer.Read();
+	if (!r.empty())
+		list.Push(r.ToVoid());
 
-    if (!eof)
-        list.SetMore();
+	if (!eof)
+		list.SetMore();
 }
 
 size_t
 FifoBufferIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
-    size_t consumed = std::min(nbytes, buffer.GetAvailable());
-    buffer.Consume(consumed);
+	size_t consumed = std::min(nbytes, buffer.GetAvailable());
+	buffer.Consume(consumed);
 
-    if (consumed > 0 && buffer.empty() && !eof) {
-        handler.OnFifoBufferIstreamDrained();
+	if (consumed > 0 && buffer.empty() && !eof) {
+		handler.OnFifoBufferIstreamDrained();
 
-        if (buffer.empty())
-            buffer.Free();
-    }
+		if (buffer.empty())
+			buffer.Free();
+	}
 
-    return nbytes - consumed;
+	return nbytes - consumed;
 }
 
 std::pair<UnusedIstreamPtr, SharedPoolPtr<FifoBufferIstreamControl>>
 NewFifoBufferIstream(struct pool &pool,
-                     FifoBufferIstreamHandler &handler) noexcept
+		     FifoBufferIstreamHandler &handler) noexcept
 {
-    auto *i = NewIstream<FifoBufferIstream>(pool, handler);
-    return std::make_pair(UnusedIstreamPtr(i), i->GetControl());
+	auto *i = NewIstream<FifoBufferIstream>(pool, handler);
+	return std::make_pair(UnusedIstreamPtr(i), i->GetControl());
 }

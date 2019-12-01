@@ -42,30 +42,30 @@ class FifoBufferIstream;
 
 class FifoBufferIstreamHandler {
 public:
-    virtual void OnFifoBufferIstreamDrained() noexcept = 0;
-    virtual void OnFifoBufferIstreamClosed() noexcept {}
+	virtual void OnFifoBufferIstreamDrained() noexcept = 0;
+	virtual void OnFifoBufferIstreamClosed() noexcept {}
 };
 
 class FifoBufferIstreamControl final {
-    friend class FifoBufferIstream;
+	friend class FifoBufferIstream;
 
-    FifoBufferIstream *fbi;
+	FifoBufferIstream *fbi;
 
 public:
-    explicit constexpr FifoBufferIstreamControl(FifoBufferIstream &_fbi) noexcept
-        :fbi(&_fbi) {}
+	explicit constexpr FifoBufferIstreamControl(FifoBufferIstream &_fbi) noexcept
+		:fbi(&_fbi) {}
 
-    operator bool() const noexcept {
-        return fbi != nullptr;
-    }
+	operator bool() const noexcept {
+		return fbi != nullptr;
+	}
 
-    SliceFifoBuffer *GetBuffer() noexcept;
+	SliceFifoBuffer *GetBuffer() noexcept;
 
-    size_t Push(ConstBuffer<void> src) noexcept;
+	size_t Push(ConstBuffer<void> src) noexcept;
 
-    void SubmitBuffer() noexcept;
+	void SubmitBuffer() noexcept;
 
-    void SetEof() noexcept;
+	void SetEof() noexcept;
 };
 
 /**
@@ -73,4 +73,4 @@ public:
  */
 std::pair<UnusedIstreamPtr, SharedPoolPtr<FifoBufferIstreamControl>>
 NewFifoBufferIstream(struct pool &pool,
-                     FifoBufferIstreamHandler &handler) noexcept;
+		     FifoBufferIstreamHandler &handler) noexcept;

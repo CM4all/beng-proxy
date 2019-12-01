@@ -37,38 +37,38 @@
 
 class FifoBufferSinkHandler {
 public:
-    virtual bool OnFifoBufferSinkData() noexcept = 0;
-    virtual void OnFifoBufferSinkEof() noexcept = 0;
-    virtual void OnFifoBufferSinkError(std::exception_ptr ep) noexcept = 0;
+	virtual bool OnFifoBufferSinkData() noexcept = 0;
+	virtual void OnFifoBufferSinkEof() noexcept = 0;
+	virtual void OnFifoBufferSinkError(std::exception_ptr ep) noexcept = 0;
 };
 
 /**
  * An #IstreamSink implementation which copies data into a FIFO buffer.
  */
 class FifoBufferSink final : public IstreamSink {
-    SliceFifoBuffer buffer;
+	SliceFifoBuffer buffer;
 
-    FifoBufferSinkHandler &handler;
+	FifoBufferSinkHandler &handler;
 
 public:
-    template<typename I>
-    FifoBufferSink(I &&_input, FifoBufferSinkHandler &_handler) noexcept
-        :IstreamSink(std::forward<I>(_input), FD_ANY),
-         handler(_handler) {}
+	template<typename I>
+	FifoBufferSink(I &&_input, FifoBufferSinkHandler &_handler) noexcept
+		:IstreamSink(std::forward<I>(_input), FD_ANY),
+		 handler(_handler) {}
 
-    auto &GetBuffer() noexcept {
-        return buffer;
-    }
+	auto &GetBuffer() noexcept {
+		return buffer;
+	}
 
-    void Read() noexcept {
-        input.Read();
-    }
+	void Read() noexcept {
+		input.Read();
+	}
 
 protected:
-    /* virtual methods from class IstreamHandler */
-    bool OnIstreamReady() noexcept override;
-    size_t OnData(const void *data, size_t length) noexcept override;
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
-    void OnEof() noexcept override;
-    void OnError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class IstreamHandler */
+	bool OnIstreamReady() noexcept override;
+	size_t OnData(const void *data, size_t length) noexcept override;
+	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
 };
