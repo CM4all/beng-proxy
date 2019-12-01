@@ -3,6 +3,7 @@ libnghttp2 = dependency('libnghttp2')
 nghttp2 = static_library('nghttp2',
   'Server.cxx',
   'Client.cxx',
+  'Stock.cxx',
   'IstreamDataSource.cxx',
   include_directories: inc,
 )

@@ -1,0 +1,111 @@
+/*
+ * Copyright 2007-2019 Content Management AG
+ * All rights reserved.
+ *
+ * author: Max Kellermann <mk@cm4all.com>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * - Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * - Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the
+ * distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
+ * FOUNDATION OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#pragma once
+
+#include "event/Chrono.hxx"
+#include "util/Cancellable.hxx"
+#include "util/Compiler.h"
+
+#include <exception>
+
+#include <boost/intrusive/list.hpp>
+#include <boost/intrusive/unordered_set.hpp>
+
+class EventLoop;
+class AllocatorPtr;
+class StopwatchPtr;
+class SocketAddress;
+class CancellablePointer;
+
+namespace NgHttp2 {
+
+class ClientConnection;
+
+class StockGetHandler {
+public:
+	virtual void OnNgHttp2StockReady(ClientConnection &connection) noexcept = 0;
+	virtual void OnNgHttp2StockError(std::exception_ptr e) noexcept = 0;
+};
+
+class Stock {
+	class Item;
+
+	struct ItemHash {
+		gcc_pure
+		size_t operator()(const char *key) const noexcept;
+
+		gcc_pure
+		size_t operator()(const Item &item) const noexcept;
+	};
+
+	struct ItemEqual {
+		gcc_pure
+		bool operator()(const char *a, const Item &b) const noexcept;
+
+		gcc_pure
+		bool operator()(const Item &a, const Item &b) const noexcept;
+	};
+
+	using SetHook = boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>;
+
+	using Set = boost::intrusive::unordered_set<Item,
+						    boost::intrusive::base_hook<SetHook>,
+						    boost::intrusive::hash<ItemHash>,
+						    boost::intrusive::equal<ItemEqual>,
+						    boost::intrusive::constant_time_size<false>>;
+	Set items;
+
+	static constexpr size_t N_BUCKETS = 251;
+	Set::bucket_type buckets[N_BUCKETS];
+
+public:
+	Stock() noexcept;
+	~Stock() noexcept;
+
+	Stock(const Stock &) = delete;
+	Stock &operator=(const Stock &) = delete;
+
+	void Get(EventLoop &event_loop,
+		 AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
+		 const char *name,
+		 SocketAddress bind_address,
+		 SocketAddress address,
+		 Event::Duration timeout,
+		 StockGetHandler &handler,
+		 CancellablePointer &cancel_ptr) noexcept;
+
+private:
+	void DeleteItem(Item *item) noexcept;
+};
+
+} // namespace NgHttp2
