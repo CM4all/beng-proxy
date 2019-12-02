@@ -45,707 +45,707 @@
 #include "util/StringView.hxx"
 
 ResourceAddress::ResourceAddress(AllocatorPtr alloc,
-                                 const ResourceAddress &src) noexcept
+				 const ResourceAddress &src) noexcept
 {
-    CopyFrom(alloc, src);
+	CopyFrom(alloc, src);
 }
 
 void
 ResourceAddress::CopyFrom(AllocatorPtr alloc,
-                          const ResourceAddress &src) noexcept
+			  const ResourceAddress &src) noexcept
 {
-    type = src.type;
+	type = src.type;
 
-    switch (src.type) {
-    case Type::NONE:
-        break;
+	switch (src.type) {
+	case Type::NONE:
+		break;
 
-    case Type::LOCAL:
-        assert(src.u.file != nullptr);
-        u.file = alloc.New<FileAddress>(alloc, *src.u.file);
-        break;
+	case Type::LOCAL:
+		assert(src.u.file != nullptr);
+		u.file = alloc.New<FileAddress>(alloc, *src.u.file);
+		break;
 
-    case Type::HTTP:
-        assert(src.u.http != nullptr);
-        u.http = alloc.New<HttpAddress>(alloc, *src.u.http);
-        break;
+	case Type::HTTP:
+		assert(src.u.http != nullptr);
+		u.http = alloc.New<HttpAddress>(alloc, *src.u.http);
+		break;
 
-    case Type::LHTTP:
-        assert(src.u.lhttp != nullptr);
-        u.lhttp = src.u.lhttp->Dup(alloc);
-        break;
+	case Type::LHTTP:
+		assert(src.u.lhttp != nullptr);
+		u.lhttp = src.u.lhttp->Dup(alloc);
+		break;
 
-    case Type::PIPE:
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-        u.cgi = src.u.cgi->Clone(alloc);
-        break;
+	case Type::PIPE:
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		u.cgi = src.u.cgi->Clone(alloc);
+		break;
 
-    case Type::NFS:
-        u.nfs = alloc.New<NfsAddress>(alloc, *src.u.nfs);
-        break;
-    }
+	case Type::NFS:
+		u.nfs = alloc.New<NfsAddress>(alloc, *src.u.nfs);
+		break;
+	}
 }
 
 ResourceAddress *
 ResourceAddress::Dup(AllocatorPtr alloc) const noexcept
 {
-    return alloc.New<ResourceAddress>(alloc, *this);
+	return alloc.New<ResourceAddress>(alloc, *this);
 }
 
 ResourceAddress
 ResourceAddress::WithPath(AllocatorPtr alloc, const char *path) const noexcept
 {
-    switch (type) {
-    case Type::NONE:
-    case Type::LOCAL:
-    case Type::PIPE:
-    case Type::NFS:
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-        break;
+	switch (type) {
+	case Type::NONE:
+	case Type::LOCAL:
+	case Type::PIPE:
+	case Type::NFS:
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		break;
 
-    case Type::HTTP:
-        return *alloc.New<HttpAddress>(ShallowCopy(), GetHttp(), path);
+	case Type::HTTP:
+		return *alloc.New<HttpAddress>(ShallowCopy(), GetHttp(), path);
 
-    case Type::LHTTP:
-        return *alloc.New<LhttpAddress>(ShallowCopy(), GetLhttp(), path);
-    }
+	case Type::LHTTP:
+		return *alloc.New<LhttpAddress>(ShallowCopy(), GetLhttp(), path);
+	}
 
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }
 
 ResourceAddress
 ResourceAddress::WithQueryStringFrom(AllocatorPtr alloc,
-                                     const char *uri) const noexcept
+				     const char *uri) const noexcept
 {
-    const char *query_string;
+	const char *query_string;
 
-    switch (type) {
-        CgiAddress *cgi;
+	switch (type) {
+		CgiAddress *cgi;
 
-    case Type::NONE:
-    case Type::LOCAL:
-    case Type::PIPE:
-    case Type::NFS:
-        /* no query string support */
-        return {ShallowCopy(), *this};
+	case Type::NONE:
+	case Type::LOCAL:
+	case Type::PIPE:
+	case Type::NFS:
+		/* no query string support */
+		return {ShallowCopy(), *this};
 
-    case Type::HTTP:
-        assert(u.http != nullptr);
+	case Type::HTTP:
+		assert(u.http != nullptr);
 
-        query_string = uri_query_string(uri);
-        if (query_string == nullptr)
-            /* no query string in URI */
-            return {ShallowCopy(), *this};
+		query_string = uri_query_string(uri);
+		if (query_string == nullptr)
+			/* no query string in URI */
+			return {ShallowCopy(), *this};
 
-        return *u.http->InsertQueryString(alloc, query_string);
+		return *u.http->InsertQueryString(alloc, query_string);
 
-    case Type::LHTTP:
-        assert(u.lhttp != nullptr);
+	case Type::LHTTP:
+		assert(u.lhttp != nullptr);
 
-        query_string = uri_query_string(uri);
-        if (query_string == nullptr)
-            /* no query string in URI */
-            return {ShallowCopy(), *this};
+		query_string = uri_query_string(uri);
+		if (query_string == nullptr)
+			/* no query string in URI */
+			return {ShallowCopy(), *this};
 
-        return *u.lhttp->InsertQueryString(alloc, query_string);
+		return *u.lhttp->InsertQueryString(alloc, query_string);
 
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-        assert(u.cgi->path != nullptr);
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		assert(u.cgi->path != nullptr);
 
-        query_string = uri_query_string(uri);
-        if (query_string == nullptr)
-            /* no query string in URI */
-            return {ShallowCopy(), *this};
+		query_string = uri_query_string(uri);
+		if (query_string == nullptr)
+			/* no query string in URI */
+			return {ShallowCopy(), *this};
 
-        cgi = alloc.New<CgiAddress>(ShallowCopy(), GetCgi());
-        cgi->InsertQueryString(alloc, query_string);
-        return ResourceAddress(type, *cgi);
-    }
+		cgi = alloc.New<CgiAddress>(ShallowCopy(), GetCgi());
+		cgi->InsertQueryString(alloc, query_string);
+		return ResourceAddress(type, *cgi);
+	}
 
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }
 
 ResourceAddress
 ResourceAddress::WithArgs(AllocatorPtr alloc,
-                          StringView args, StringView path) const noexcept
+			  StringView args, StringView path) const noexcept
 {
-    switch (type) {
-        CgiAddress *cgi;
+	switch (type) {
+		CgiAddress *cgi;
 
-    case Type::NONE:
-    case Type::LOCAL:
-    case Type::PIPE:
-    case Type::NFS:
-        /* no arguments support */
-        return {ShallowCopy(), *this};
+	case Type::NONE:
+	case Type::LOCAL:
+	case Type::PIPE:
+	case Type::NFS:
+		/* no arguments support */
+		return {ShallowCopy(), *this};
 
-    case Type::HTTP:
-        assert(u.http != nullptr);
+	case Type::HTTP:
+		assert(u.http != nullptr);
 
-        return *GetHttp().InsertArgs(alloc, args, path);
+		return *GetHttp().InsertArgs(alloc, args, path);
 
-    case Type::LHTTP:
-        assert(u.lhttp != nullptr);
+	case Type::LHTTP:
+		assert(u.lhttp != nullptr);
 
-        return *GetLhttp().InsertArgs(alloc, args, path);
+		return *GetLhttp().InsertArgs(alloc, args, path);
 
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-        assert(u.cgi->path != nullptr);
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		assert(u.cgi->path != nullptr);
 
-        if (u.cgi->uri == nullptr && u.cgi->path_info == nullptr)
-            return {ShallowCopy(), *this};
+		if (u.cgi->uri == nullptr && u.cgi->path_info == nullptr)
+			return {ShallowCopy(), *this};
 
-        cgi = alloc.New<CgiAddress>(ShallowCopy(), GetCgi());
-        cgi->InsertArgs(alloc, args, path);
-        return ResourceAddress(type, *cgi);
-    }
+		cgi = alloc.New<CgiAddress>(ShallowCopy(), GetCgi());
+		cgi->InsertArgs(alloc, args, path);
+		return ResourceAddress(type, *cgi);
+	}
 
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }
 
 const char *
 ResourceAddress::AutoBase(AllocatorPtr alloc, const char *uri) const noexcept
 {
-    assert(uri != nullptr);
+	assert(uri != nullptr);
 
-    switch (type) {
-    case Type::NONE:
-    case Type::LOCAL:
-    case Type::PIPE:
-    case Type::HTTP:
-    case Type::LHTTP:
-    case Type::NFS:
-        return nullptr;
+	switch (type) {
+	case Type::NONE:
+	case Type::LOCAL:
+	case Type::PIPE:
+	case Type::HTTP:
+	case Type::LHTTP:
+	case Type::NFS:
+		return nullptr;
 
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-        return u.cgi->AutoBase(alloc, uri);
-    }
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		return u.cgi->AutoBase(alloc, uri);
+	}
 
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }
 
 ResourceAddress
 ResourceAddress::SaveBase(AllocatorPtr alloc,
-                          const char *suffix) const noexcept
+			  const char *suffix) const noexcept
 {
-    switch (type) {
-    case Type::NONE:
-    case Type::PIPE:
-        return nullptr;
+	switch (type) {
+	case Type::NONE:
+	case Type::PIPE:
+		return nullptr;
 
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-        {
-            auto *cgi = GetCgi().SaveBase(alloc, suffix);
-            if (cgi == nullptr)
-                return nullptr;
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		{
+			auto *cgi = GetCgi().SaveBase(alloc, suffix);
+			if (cgi == nullptr)
+				return nullptr;
 
-            return ResourceAddress(type, *cgi);
-        }
+			return ResourceAddress(type, *cgi);
+		}
 
-    case Type::LOCAL:
-        {
-            auto *file = GetFile().SaveBase(alloc, suffix);
-            if (file == nullptr)
-                return nullptr;
+	case Type::LOCAL:
+		{
+			auto *file = GetFile().SaveBase(alloc, suffix);
+			if (file == nullptr)
+				return nullptr;
 
-            return *file;
-        }
+			return *file;
+		}
 
-    case Type::HTTP:
-        {
-            auto *http = GetHttp().SaveBase(alloc, suffix);
-            if (http == nullptr)
-                return nullptr;
+	case Type::HTTP:
+		{
+			auto *http = GetHttp().SaveBase(alloc, suffix);
+			if (http == nullptr)
+				return nullptr;
 
-            return *http;
-        }
+			return *http;
+		}
 
-    case Type::LHTTP:
-        {
-            auto *lhttp = GetLhttp().SaveBase(alloc, suffix);
-            if (lhttp == nullptr)
-                return nullptr;
+	case Type::LHTTP:
+		{
+			auto *lhttp = GetLhttp().SaveBase(alloc, suffix);
+			if (lhttp == nullptr)
+				return nullptr;
 
-            return *lhttp;
-        }
+			return *lhttp;
+		}
 
-    case Type::NFS:
-        {
-            auto *nfs = GetNfs().SaveBase(alloc, suffix);
-            if (nfs == nullptr)
-                return nullptr;
+	case Type::NFS:
+		{
+			auto *nfs = GetNfs().SaveBase(alloc, suffix);
+			if (nfs == nullptr)
+				return nullptr;
 
-            return *nfs;
-        }
-    }
+			return *nfs;
+		}
+	}
 
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }
 
 void
 ResourceAddress::CacheStore(AllocatorPtr alloc,
-                            const ResourceAddress &src,
-                            const char *uri, const char *base,
-                            bool easy_base, bool expandable)
+			    const ResourceAddress &src,
+			    const char *uri, const char *base,
+			    bool easy_base, bool expandable)
 {
-    if (base == nullptr) {
-        CopyFrom(alloc, src);
-        return;
-    } else if (const char *tail = base_tail(uri, base)) {
-        /* we received a valid BASE packet - store only the base
-           URI */
+	if (base == nullptr) {
+		CopyFrom(alloc, src);
+		return;
+	} else if (const char *tail = base_tail(uri, base)) {
+		/* we received a valid BASE packet - store only the base
+		   URI */
 
-        if (easy_base || expandable) {
-            /* when the response is expandable, skip appending the
-               tail URI, don't call SaveBase() */
-            CopyFrom(alloc, src);
-            return;
-        }
+		if (easy_base || expandable) {
+			/* when the response is expandable, skip appending the
+			   tail URI, don't call SaveBase() */
+			CopyFrom(alloc, src);
+			return;
+		}
 
-        if (src.type == Type::NONE) {
-            /* _save_base() will fail on a "NONE" address, but in this
-               case, the operation is useful and is allowed as a
-               special case */
-            type = Type::NONE;
-            return;
-        }
+		if (src.type == Type::NONE) {
+			/* _save_base() will fail on a "NONE" address, but in this
+			   case, the operation is useful and is allowed as a
+			   special case */
+			type = Type::NONE;
+			return;
+		}
 
-        *this = src.SaveBase(alloc, tail);
-        if (IsDefined())
-            return;
+		*this = src.SaveBase(alloc, tail);
+		if (IsDefined())
+			return;
 
-        /* the tail could not be applied to the address, so this is a
-           base mismatch */
-    }
+		/* the tail could not be applied to the address, so this is a
+		   base mismatch */
+	}
 
-    throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST, "Base mismatch");
+	throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST, "Base mismatch");
 }
 
 ResourceAddress
 ResourceAddress::LoadBase(AllocatorPtr alloc,
-                          const char *suffix) const noexcept
+			  const char *suffix) const noexcept
 {
-    switch (type) {
-    case Type::NONE:
-    case Type::PIPE:
-        assert(false);
-        gcc_unreachable();
+	switch (type) {
+	case Type::NONE:
+	case Type::PIPE:
+		assert(false);
+		gcc_unreachable();
 
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-        {
-            auto *cgi = GetCgi().LoadBase(alloc, suffix);
-            if (cgi == nullptr)
-                return nullptr;
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		{
+			auto *cgi = GetCgi().LoadBase(alloc, suffix);
+			if (cgi == nullptr)
+				return nullptr;
 
-            return ResourceAddress(type, *cgi);
-        }
+			return ResourceAddress(type, *cgi);
+		}
 
-    case Type::LOCAL:
-        {
-            auto *file = GetFile().LoadBase(alloc, suffix);
-            if (file == nullptr)
-                return nullptr;
+	case Type::LOCAL:
+		{
+			auto *file = GetFile().LoadBase(alloc, suffix);
+			if (file == nullptr)
+				return nullptr;
 
-            return *file;
-        }
+			return *file;
+		}
 
-    case Type::HTTP:
-        {
-            auto *http = GetHttp().LoadBase(alloc, suffix);
-            if (http == nullptr)
-                return nullptr;
+	case Type::HTTP:
+		{
+			auto *http = GetHttp().LoadBase(alloc, suffix);
+			if (http == nullptr)
+				return nullptr;
 
-            return *http;
-        }
+			return *http;
+		}
 
-    case Type::LHTTP:
-        {
-            auto *lhttp = GetLhttp().LoadBase(alloc, suffix);
-            if (lhttp == nullptr)
-                return nullptr;
+	case Type::LHTTP:
+		{
+			auto *lhttp = GetLhttp().LoadBase(alloc, suffix);
+			if (lhttp == nullptr)
+				return nullptr;
 
-            return *lhttp;
-        }
+			return *lhttp;
+		}
 
-    case Type::NFS:
-        {
-            auto *nfs = GetNfs().LoadBase(alloc, suffix);
-            if (nfs == nullptr)
-                return nullptr;
+	case Type::NFS:
+		{
+			auto *nfs = GetNfs().LoadBase(alloc, suffix);
+			if (nfs == nullptr)
+				return nullptr;
 
-            return *nfs;
-        }
-    }
+			return *nfs;
+		}
+	}
 
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }
 
 void
 ResourceAddress::CacheLoad(AllocatorPtr alloc, const ResourceAddress &src,
-                           const char *uri, const char *base,
-                           bool unsafe_base, bool expandable)
+			   const char *uri, const char *base,
+			   bool unsafe_base, bool expandable)
 {
-    if (base != nullptr && !expandable) {
-        const char *tail = require_base_tail(uri, base);
+	if (base != nullptr && !expandable) {
+		const char *tail = require_base_tail(uri, base);
 
-        if (!unsafe_base && !uri_path_verify_paranoid(tail - 1))
-            throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST, "Malformed URI");
+		if (!unsafe_base && !uri_path_verify_paranoid(tail - 1))
+			throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST, "Malformed URI");
 
-        if (src.type == Type::NONE) {
-            /* see code comment in tcache_store_address() */
-            type = Type::NONE;
-            return;
-        }
+		if (src.type == Type::NONE) {
+			/* see code comment in tcache_store_address() */
+			type = Type::NONE;
+			return;
+		}
 
-        *this = src.LoadBase(alloc, tail);
-        if (IsDefined())
-            return;
-    }
+		*this = src.LoadBase(alloc, tail);
+		if (IsDefined())
+			return;
+	}
 
-    CopyFrom(alloc, src);
+	CopyFrom(alloc, src);
 }
 
 ResourceAddress
 ResourceAddress::Apply(AllocatorPtr alloc, StringView relative) const noexcept
 {
-    const HttpAddress *uwa;
-    const CgiAddress *cgi;
-    const LhttpAddress *lhttp;
+	const HttpAddress *uwa;
+	const CgiAddress *cgi;
+	const LhttpAddress *lhttp;
 
-    switch (type) {
-    case Type::NONE:
-        return nullptr;
+	switch (type) {
+	case Type::NONE:
+		return nullptr;
 
-    case Type::LOCAL:
-    case Type::PIPE:
-    case Type::NFS:
-        return {ShallowCopy(), *this};
+	case Type::LOCAL:
+	case Type::PIPE:
+	case Type::NFS:
+		return {ShallowCopy(), *this};
 
-    case Type::HTTP:
-        uwa = u.http->Apply(alloc, relative);
-        if (uwa == nullptr)
-            return nullptr;
+	case Type::HTTP:
+		uwa = u.http->Apply(alloc, relative);
+		if (uwa == nullptr)
+			return nullptr;
 
-        return *uwa;
+		return *uwa;
 
-    case Type::LHTTP:
-        lhttp = u.lhttp->Apply(alloc, relative);
-        if (lhttp == nullptr)
-            return nullptr;
+	case Type::LHTTP:
+		lhttp = u.lhttp->Apply(alloc, relative);
+		if (lhttp == nullptr)
+			return nullptr;
 
-        return *lhttp;
+		return *lhttp;
 
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-        cgi = u.cgi->Apply(alloc, relative);
-        if (cgi == nullptr)
-            return nullptr;
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		cgi = u.cgi->Apply(alloc, relative);
+		if (cgi == nullptr)
+			return nullptr;
 
-        return ResourceAddress(type, *cgi);
-    }
+		return ResourceAddress(type, *cgi);
+	}
 
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }
 
 StringView
 ResourceAddress::RelativeTo(const ResourceAddress &base) const noexcept
 {
-    assert(base.type == type);
+	assert(base.type == type);
 
-    switch (type) {
-    case Type::NONE:
-    case Type::LOCAL:
-    case Type::PIPE:
-    case Type::NFS:
-        return nullptr;
+	switch (type) {
+	case Type::NONE:
+	case Type::LOCAL:
+	case Type::PIPE:
+	case Type::NFS:
+		return nullptr;
 
-    case Type::HTTP:
-        return u.http->RelativeTo(*base.u.http);
+	case Type::HTTP:
+		return u.http->RelativeTo(*base.u.http);
 
-    case Type::LHTTP:
-        return u.lhttp->RelativeTo(*base.u.lhttp);
+	case Type::LHTTP:
+		return u.lhttp->RelativeTo(*base.u.lhttp);
 
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-        return uri_relative(base.u.cgi->path_info, u.cgi->path_info);
-    }
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		return uri_relative(base.u.cgi->path_info, u.cgi->path_info);
+	}
 
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }
 
 const char *
 ResourceAddress::GetId(AllocatorPtr alloc) const noexcept
 {
-    switch (type) {
-    case Type::NONE:
-        return "";
+	switch (type) {
+	case Type::NONE:
+		return "";
 
-    case Type::LOCAL:
-        return alloc.Dup(u.file->path);
+	case Type::LOCAL:
+		return alloc.Dup(u.file->path);
 
-    case Type::HTTP:
-        return u.http->GetAbsoluteURI(alloc);
+	case Type::HTTP:
+		return u.http->GetAbsoluteURI(alloc);
 
-    case Type::LHTTP:
-        return u.lhttp->GetId(alloc);
+	case Type::LHTTP:
+		return u.lhttp->GetId(alloc);
 
-    case Type::PIPE:
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-        return u.cgi->GetId(alloc);
+	case Type::PIPE:
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		return u.cgi->GetId(alloc);
 
-    case Type::NFS:
-        return u.nfs->GetId(alloc);
-    }
+	case Type::NFS:
+		return u.nfs->GetId(alloc);
+	}
 
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }
 
 const char *
 ResourceAddress::GetHostAndPort() const noexcept
 {
-    switch (type) {
-    case Type::NONE:
-    case Type::LOCAL:
-    case Type::PIPE:
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-    case Type::NFS:
-        return nullptr;
+	switch (type) {
+	case Type::NONE:
+	case Type::LOCAL:
+	case Type::PIPE:
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+	case Type::NFS:
+		return nullptr;
 
-    case Type::HTTP:
-        return u.http->host_and_port;
+	case Type::HTTP:
+		return u.http->host_and_port;
 
-    case Type::LHTTP:
-        return u.lhttp->host_and_port;
-    }
+	case Type::LHTTP:
+		return u.lhttp->host_and_port;
+	}
 
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }
 
 const char *
 ResourceAddress::GetUriPath() const noexcept
 {
-    switch (type) {
-    case Type::NONE:
-    case Type::LOCAL:
-    case Type::PIPE:
-    case Type::NFS:
-        return nullptr;
+	switch (type) {
+	case Type::NONE:
+	case Type::LOCAL:
+	case Type::PIPE:
+	case Type::NFS:
+		return nullptr;
 
-    case Type::HTTP:
-        return u.http->path;
+	case Type::HTTP:
+		return u.http->path;
 
-    case Type::LHTTP:
-        return u.lhttp->uri;
+	case Type::LHTTP:
+		return u.lhttp->uri;
 
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-        if (u.cgi->uri != nullptr)
-            return u.cgi->uri;
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		if (u.cgi->uri != nullptr)
+			return u.cgi->uri;
 
-        return u.cgi->script_name;
-    }
+		return u.cgi->script_name;
+	}
 
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }
 
 void
 ResourceAddress::Check() const
 {
-    switch (type) {
-    case Type::NONE:
-        break;
+	switch (type) {
+	case Type::NONE:
+		break;
 
-    case Type::HTTP:
-        u.http->Check();
-        break;
+	case Type::HTTP:
+		u.http->Check();
+		break;
 
-    case Type::LOCAL:
-        u.file->Check();
-        break;
+	case Type::LOCAL:
+		u.file->Check();
+		break;
 
-    case Type::LHTTP:
-        u.lhttp->Check();
-        break;
+	case Type::LHTTP:
+		u.lhttp->Check();
+		break;
 
-    case Type::PIPE:
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-        u.cgi->Check();
-        break;
+	case Type::PIPE:
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		u.cgi->Check();
+		break;
 
-    case Type::NFS:
-        u.nfs->Check();
-        break;
-    }
+	case Type::NFS:
+		u.nfs->Check();
+		break;
+	}
 }
 
 bool
 ResourceAddress::IsValidBase() const noexcept
 {
-    switch (type) {
-    case Type::NONE:
-        return true;
+	switch (type) {
+	case Type::NONE:
+		return true;
 
-    case Type::LOCAL:
-        return u.file->IsValidBase();
+	case Type::LOCAL:
+		return u.file->IsValidBase();
 
-    case Type::HTTP:
-        return u.http->IsValidBase();
+	case Type::HTTP:
+		return u.http->IsValidBase();
 
-    case Type::LHTTP:
-        return u.lhttp->IsValidBase();
+	case Type::LHTTP:
+		return u.lhttp->IsValidBase();
 
-    case Type::PIPE:
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-        return u.cgi->IsValidBase();
+	case Type::PIPE:
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		return u.cgi->IsValidBase();
 
-    case Type::NFS:
-        return u.nfs->IsValidBase();
-    }
+	case Type::NFS:
+		return u.nfs->IsValidBase();
+	}
 
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }
 
 bool
 ResourceAddress::HasQueryString() const noexcept
 {
-    switch (type) {
-    case Type::NONE:
-        return false;
+	switch (type) {
+	case Type::NONE:
+		return false;
 
-    case Type::LOCAL:
-        return u.file->HasQueryString();
+	case Type::LOCAL:
+		return u.file->HasQueryString();
 
-    case Type::HTTP:
-        return u.http->HasQueryString();
+	case Type::HTTP:
+		return u.http->HasQueryString();
 
-    case Type::LHTTP:
-        return u.lhttp->HasQueryString();
+	case Type::LHTTP:
+		return u.lhttp->HasQueryString();
 
-    case Type::PIPE:
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-        return u.cgi->HasQueryString();
+	case Type::PIPE:
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		return u.cgi->HasQueryString();
 
-    case Type::NFS:
-        return u.nfs->HasQueryString();
-    }
+	case Type::NFS:
+		return u.nfs->HasQueryString();
+	}
 
-    /* unreachable */
-    assert(false);
-    return false;
+	/* unreachable */
+	assert(false);
+	return false;
 }
 
 bool
 ResourceAddress::IsExpandable() const noexcept
 {
-    switch (type) {
-    case Type::NONE:
-        return false;
+	switch (type) {
+	case Type::NONE:
+		return false;
 
-    case Type::LOCAL:
-        return u.file->IsExpandable();
+	case Type::LOCAL:
+		return u.file->IsExpandable();
 
-    case Type::PIPE:
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-        return u.cgi->IsExpandable();
+	case Type::PIPE:
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		return u.cgi->IsExpandable();
 
-    case Type::HTTP:
-        return u.http->IsExpandable();
+	case Type::HTTP:
+		return u.http->IsExpandable();
 
-    case Type::LHTTP:
-        return u.lhttp->IsExpandable();
+	case Type::LHTTP:
+		return u.lhttp->IsExpandable();
 
-    case Type::NFS:
-        return u.nfs->IsExpandable();
-    }
+	case Type::NFS:
+		return u.nfs->IsExpandable();
+	}
 
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }
 
 void
 ResourceAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
-    switch (type) {
-        FileAddress *file;
-        CgiAddress *cgi;
-        HttpAddress *uwa;
-        LhttpAddress *lhttp;
+	switch (type) {
+		FileAddress *file;
+		CgiAddress *cgi;
+		HttpAddress *uwa;
+		LhttpAddress *lhttp;
 
-    case Type::NONE:
-        break;
+	case Type::NONE:
+		break;
 
-    case Type::LOCAL:
-        u.file = file = alloc.New<FileAddress>(alloc, *u.file);
-        file->Expand(alloc, match_info);
-        break;
+	case Type::LOCAL:
+		u.file = file = alloc.New<FileAddress>(alloc, *u.file);
+		file->Expand(alloc, match_info);
+		break;
 
-    case Type::PIPE:
-    case Type::CGI:
-    case Type::FASTCGI:
-    case Type::WAS:
-        u.cgi = cgi = u.cgi->Clone(alloc);
-        cgi->Expand(alloc, match_info);
-        break;
+	case Type::PIPE:
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		u.cgi = cgi = u.cgi->Clone(alloc);
+		cgi->Expand(alloc, match_info);
+		break;
 
-    case Type::HTTP:
-        /* copy the http_address object (it's a pointer, not
-           in-line) and expand it */
-        u.http = uwa = alloc.New<HttpAddress>(alloc, *u.http);
-        uwa->Expand(alloc, match_info);
-        break;
+	case Type::HTTP:
+		/* copy the http_address object (it's a pointer, not
+		   in-line) and expand it */
+		u.http = uwa = alloc.New<HttpAddress>(alloc, *u.http);
+		uwa->Expand(alloc, match_info);
+		break;
 
-    case Type::LHTTP:
-        /* copy the lhttp_address object (it's a pointer, not
-           in-line) and expand it */
-        u.lhttp = lhttp = u.lhttp->Dup(alloc);
-        lhttp->Expand(alloc, match_info);
-        break;
+	case Type::LHTTP:
+		/* copy the lhttp_address object (it's a pointer, not
+		   in-line) and expand it */
+		u.lhttp = lhttp = u.lhttp->Dup(alloc);
+		lhttp->Expand(alloc, match_info);
+		break;
 
-    case Type::NFS:
-        /* copy the nfs_address object (it's a pointer, not
-           in-line) and expand it */
-        u.nfs = u.nfs->Expand(alloc, match_info);
-        break;
-    }
+	case Type::NFS:
+		/* copy the nfs_address object (it's a pointer, not
+		   in-line) and expand it */
+		u.nfs = u.nfs->Expand(alloc, match_info);
+		break;
+	}
 }
