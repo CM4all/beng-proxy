@@ -49,48 +49,48 @@ class FilteredSocketBalancer;
  * protocols implemented by beng-proxy.
  */
 class DirectResourceLoader final : public ResourceLoader {
-    EventLoop &event_loop;
-    TcpBalancer *tcp_balancer;
-    FilteredSocketBalancer &fs_balancer;
-    SpawnService &spawn_service;
-    LhttpStock *lhttp_stock;
-    FcgiStock *fcgi_stock;
-    StockMap *was_stock;
-    StockMap *delegate_stock;
-    NfsCache *nfs_cache;
+	EventLoop &event_loop;
+	TcpBalancer *tcp_balancer;
+	FilteredSocketBalancer &fs_balancer;
+	SpawnService &spawn_service;
+	LhttpStock *lhttp_stock;
+	FcgiStock *fcgi_stock;
+	StockMap *was_stock;
+	StockMap *delegate_stock;
+	NfsCache *nfs_cache;
 
 public:
-    DirectResourceLoader(EventLoop &_event_loop,
-                         TcpBalancer *_tcp_balancer,
-                         FilteredSocketBalancer &_fs_balancer,
-                         SpawnService &_spawn_service,
-                         LhttpStock *_lhttp_stock,
-                         FcgiStock *_fcgi_stock, StockMap *_was_stock,
-                         StockMap *_delegate_stock,
-                         NfsCache *_nfs_cache) noexcept
-        :event_loop(_event_loop),
-         tcp_balancer(_tcp_balancer),
-         fs_balancer(_fs_balancer),
-         spawn_service(_spawn_service),
-         lhttp_stock(_lhttp_stock),
-         fcgi_stock(_fcgi_stock), was_stock(_was_stock),
-         delegate_stock(_delegate_stock),
-         nfs_cache(_nfs_cache)
-    {
-    }
+	DirectResourceLoader(EventLoop &_event_loop,
+			     TcpBalancer *_tcp_balancer,
+			     FilteredSocketBalancer &_fs_balancer,
+			     SpawnService &_spawn_service,
+			     LhttpStock *_lhttp_stock,
+			     FcgiStock *_fcgi_stock, StockMap *_was_stock,
+			     StockMap *_delegate_stock,
+			     NfsCache *_nfs_cache) noexcept
+		:event_loop(_event_loop),
+		 tcp_balancer(_tcp_balancer),
+		 fs_balancer(_fs_balancer),
+		 spawn_service(_spawn_service),
+		 lhttp_stock(_lhttp_stock),
+		 fcgi_stock(_fcgi_stock), was_stock(_was_stock),
+		 delegate_stock(_delegate_stock),
+		 nfs_cache(_nfs_cache)
+	{
+	}
 
-    /* virtual methods from class ResourceLoader */
-    void SendRequest(struct pool &pool,
-                     const StopwatchPtr &parent_stopwatch,
-                     sticky_hash_t session_sticky,
-                     const char *cache_tag,
-                     const char *site_name,
-                     http_method_t method,
-                     const ResourceAddress &address,
-                     http_status_t status, StringMap &&headers,
-                     UnusedIstreamPtr body, const char *body_etag,
-                     HttpResponseHandler &handler,
-                     CancellablePointer &cancel_ptr) noexcept override;
+	/* virtual methods from class ResourceLoader */
+	void SendRequest(struct pool &pool,
+			 const StopwatchPtr &parent_stopwatch,
+			 sticky_hash_t session_sticky,
+			 const char *cache_tag,
+			 const char *site_name,
+			 http_method_t method,
+			 const ResourceAddress &address,
+			 http_status_t status, StringMap &&headers,
+			 UnusedIstreamPtr body, const char *body_etag,
+			 HttpResponseHandler &handler,
+			 CancellablePointer &cancel_ptr) noexcept override;
 };
 
 #endif
