@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_HTTP_ADDRESS_HXX
-#define BENG_PROXY_HTTP_ADDRESS_HXX
+#pragma once
 
 #include "address_list.hxx"
 
@@ -217,5 +216,3 @@ HttpAddress *
 http_address_dup_with_path(AllocatorPtr alloc,
 			   const HttpAddress *uwa,
 			   const char *path);
-
-#endif

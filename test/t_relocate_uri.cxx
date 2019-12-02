@@ -31,7 +31,6 @@
  */
 
 #include "relocate_uri.hxx"
-#include "http_address.hxx"
 #include "pool/RootPool.hxx"
 #include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"

@@ -33,7 +33,7 @@
 #include "http_cache_rfc.hxx"
 #include "http_cache_document.hxx"
 #include "http_cache_internal.hxx"
-#include "http_address.hxx"
+#include "http/Address.hxx"
 #include "strmap.hxx"
 #include "ResourceAddress.hxx"
 #include "lhttp_address.hxx"

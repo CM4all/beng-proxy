@@ -31,7 +31,7 @@
  */
 
 #include "Session.hxx"
-#include "http_address.hxx"
+#include "http/Address.hxx"
 #include "shm/dpool.hxx"
 #include "shm/dbuffer.hxx"
 #include "crash.hxx"

@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_address.hxx"
+#include "Address.hxx"
 #include "uri/Base.hxx"
 #include "uri/Relative.hxx"
 #include "uri/Verify.hxx"

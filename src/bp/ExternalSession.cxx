@@ -33,7 +33,7 @@
 #include "ExternalSession.hxx"
 #include "session/Session.hxx"
 #include "Instance.hxx"
-#include "http_address.hxx"
+#include "http/Address.hxx"
 #include "http_request.hxx"
 #include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"

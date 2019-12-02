@@ -34,7 +34,7 @@
 #include "http_cache.hxx"
 #include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
-#include "http_address.hxx"
+#include "http/Address.hxx"
 #include "GrowingBuffer.hxx"
 #include "http/HeaderParser.hxx"
 #include "strmap.hxx"

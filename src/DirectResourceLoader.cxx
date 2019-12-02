@@ -39,7 +39,7 @@
 #include "file_request.hxx"
 #include "file_address.hxx"
 #include "lhttp_request.hxx"
-#include "http_address.hxx"
+#include "http/Address.hxx"
 #include "http/Headers.hxx"
 #include "cgi/Glue.hxx"
 #include "cgi/Address.hxx"

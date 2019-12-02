@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_address.hxx"
+#include "http/Address.hxx"
 #include "shm/dpool.hxx"
 
 HttpAddress::HttpAddress(struct dpool &pool, const HttpAddress &src)

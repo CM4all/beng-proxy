@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_address.hxx"
+#include "http/Address.hxx"
 #include "TestPool.hxx"
 #include "AllocatorPtr.hxx"
 

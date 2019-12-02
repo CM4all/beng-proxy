@@ -37,7 +37,7 @@
 #include "puri_relative.hxx"
 #include "args.hxx"
 #include "pool/tpool.hxx"
-#include "http_address.hxx"
+#include "http/Address.hxx"
 #include "lhttp_address.hxx"
 #include "cgi/Address.hxx"
 #include "AllocatorPtr.hxx"

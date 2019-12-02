@@ -33,7 +33,7 @@
 #include "FailingResourceLoader.hxx"
 #include "tconstruct.hxx"
 #include "widget/RewriteUri.hxx"
-#include "http_address.hxx"
+#include "http/Address.hxx"
 #include "bp/session/Session.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"

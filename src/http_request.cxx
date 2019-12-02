@@ -33,7 +33,7 @@
 #include "http_request.hxx"
 #include "http_client.hxx"
 #include "http/Headers.hxx"
-#include "http_address.hxx"
+#include "http/Address.hxx"
 #include "HttpResponseHandler.hxx"
 #include "http/HeaderWriter.hxx"
 #include "stock/GetHandler.hxx"

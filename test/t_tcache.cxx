@@ -39,7 +39,7 @@
 #include "translation/Transformation.hxx"
 #include "translation/Protocol.hxx"
 #include "widget/View.hxx"
-#include "http_address.hxx"
+#include "http/Address.hxx"
 #include "file_address.hxx"
 #include "delegate/Address.hxx"
 #include "cgi/Address.hxx"

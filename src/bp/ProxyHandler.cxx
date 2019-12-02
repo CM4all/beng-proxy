@@ -43,7 +43,7 @@
 #include "ResourceLoader.hxx"
 #include "HttpResponseHandler.hxx"
 #include "http/IncomingRequest.hxx"
-#include "http_address.hxx"
+#include "http/Address.hxx"
 #include "cgi/Address.hxx"
 #include "uri/Extract.hxx"
 #include "istream/AutoPipeIstream.hxx"

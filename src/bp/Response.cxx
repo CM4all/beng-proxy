@@ -70,7 +70,7 @@
 #include "translation/Vary.hxx"
 #include "translation/Transformation.hxx"
 #include "http/Date.hxx"
-#include "http_address.hxx"
+#include "http/Address.hxx"
 #include "relocate_uri.hxx"
 #include "FilterStatus.hxx"
 

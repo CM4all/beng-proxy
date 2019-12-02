@@ -33,7 +33,7 @@
 #include "widget/Registry.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
-#include "http_address.hxx"
+#include "http/Address.hxx"
 #include "translation/Service.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Request.hxx"

@@ -36,7 +36,7 @@
 #include "widget/Context.hxx"
 #include "widget/Request.hxx"
 #include "widget/LookupHandler.hxx"
-#include "http_address.hxx"
+#include "http/Address.hxx"
 #include "strmap.hxx"
 #include "http/HeaderParser.hxx"
 #include "PInstance.hxx"
