@@ -4,6 +4,7 @@ nghttp2 = static_library('nghttp2',
   'Server.cxx',
   'Client.cxx',
   'Stock.cxx',
+  'Glue.cxx',
   'IstreamDataSource.cxx',
   include_directories: inc,
 )
