@@ -77,6 +77,7 @@ class UserAgentClassList;
 struct BpWorker;
 class BPListener;
 struct BpConnection;
+namespace NgHttp2 { class Stock; }
 
 struct BpInstance final : PInstance, ControlHandler {
 	BpCmdLine cmdline;
@@ -152,6 +153,8 @@ struct BpInstance final : PInstance, ControlHandler {
 
 	FilteredSocketStock *fs_stock = nullptr;
 	FilteredSocketBalancer *fs_balancer = nullptr;
+
+	NgHttp2::Stock *nghttp2_stock = nullptr;
 
 	/* cache */
 	HttpCache *http_cache = nullptr;

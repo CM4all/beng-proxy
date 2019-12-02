@@ -48,6 +48,7 @@
 #include "cluster/TcpBalancer.hxx"
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
+#include "nghttp2/Stock.hxx"
 #include "stock/MapStock.hxx"
 #include "http_cache.hxx"
 #include "lhttp_stock.hxx"
@@ -361,6 +362,8 @@ try {
 						    instance.config.tcp_stock_limit);
 	instance.fs_balancer = new FilteredSocketBalancer(*instance.fs_stock,
 							  instance.failure_manager);
+
+	instance.nghttp2_stock = new NgHttp2::Stock();
 
 	if (instance.config.translation_socket != nullptr) {
 		instance.translation_stock =

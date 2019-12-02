@@ -883,6 +883,7 @@ executable(
     memcached_client_dep,
     delegate_client_dep,
     control_server_dep,
+    nghttp2_dep,
     libsodium,
     libcrypt,
   ],

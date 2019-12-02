@@ -55,6 +55,7 @@
 #include "tcp_stock.hxx"
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
+#include "nghttp2/Stock.hxx"
 #include "stock/MapStock.hxx"
 #include "session/Save.hxx"
 #include "nfs/Stock.hxx"
@@ -129,6 +130,7 @@ BpInstance::FreeStocksAndCaches() noexcept
 
 	delete std::exchange(fs_balancer, nullptr);
 	delete std::exchange(fs_stock, nullptr);
+	delete std::exchange(nghttp2_stock, nullptr);
 
 	delete std::exchange(tcp_balancer, nullptr);
 
