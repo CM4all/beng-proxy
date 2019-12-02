@@ -43,6 +43,7 @@ class FcgiStock;
 class NfsCache;
 class TcpBalancer;
 class FilteredSocketBalancer;
+namespace NgHttp2 { class Stock; }
 
 /**
  * A #ResourceLoader implementation which integrates all client-side
@@ -52,6 +53,7 @@ class DirectResourceLoader final : public ResourceLoader {
 	EventLoop &event_loop;
 	TcpBalancer *tcp_balancer;
 	FilteredSocketBalancer &fs_balancer;
+	NgHttp2::Stock &nghttp2_stock;
 	SpawnService &spawn_service;
 	LhttpStock *lhttp_stock;
 	FcgiStock *fcgi_stock;
@@ -63,6 +65,7 @@ public:
 	DirectResourceLoader(EventLoop &_event_loop,
 			     TcpBalancer *_tcp_balancer,
 			     FilteredSocketBalancer &_fs_balancer,
+			     NgHttp2::Stock &_nghttp2_stock,
 			     SpawnService &_spawn_service,
 			     LhttpStock *_lhttp_stock,
 			     FcgiStock *_fcgi_stock, StockMap *_was_stock,
@@ -71,6 +74,7 @@ public:
 		:event_loop(_event_loop),
 		 tcp_balancer(_tcp_balancer),
 		 fs_balancer(_fs_balancer),
+		 nghttp2_stock(_nghttp2_stock),
 		 spawn_service(_spawn_service),
 		 lhttp_stock(_lhttp_stock),
 		 fcgi_stock(_fcgi_stock), was_stock(_was_stock),

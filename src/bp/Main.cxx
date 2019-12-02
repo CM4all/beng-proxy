@@ -419,6 +419,7 @@ try {
 		new DirectResourceLoader(instance.event_loop,
 					 instance.tcp_balancer,
 					 *instance.fs_balancer,
+					 *instance.nghttp2_stock,
 					 *instance.spawn_service,
 					 instance.lhttp_stock,
 					 instance.fcgi_stock,

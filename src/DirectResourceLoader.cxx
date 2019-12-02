@@ -35,6 +35,7 @@
 #include "HttpResponseHandler.hxx"
 #include "fs/SocketFilter.hxx"
 #include "fs/Factory.hxx"
+#include "nghttp2/Glue.hxx"
 #include "http_request.hxx"
 #include "file_request.hxx"
 #include "file_address.hxx"
@@ -261,13 +262,23 @@ try {
 			filter_factory = nullptr;
 		}
 
-		http_request(pool, event_loop, fs_balancer,
-			     parent_stopwatch,
-			     session_sticky,
-			     filter_factory,
-			     method, address.GetHttp(),
-			     HttpHeaders(std::move(headers)), std::move(body),
-			     handler, cancel_ptr);
+		if (address.GetHttp().http2)
+			NgHttp2::SendRequest(pool, event_loop, nghttp2_stock,
+					     parent_stopwatch,
+					     filter_factory,
+					     method, address.GetHttp(),
+					     std::move(headers),
+					     std::move(body),
+					     handler, cancel_ptr);
+		else
+			http_request(pool, event_loop, fs_balancer,
+				     parent_stopwatch,
+				     session_sticky,
+				     filter_factory,
+				     method, address.GetHttp(),
+				     HttpHeaders(std::move(headers)),
+				     std::move(body),
+				     handler, cancel_ptr);
 		return;
 
 	case ResourceAddress::Type::LHTTP:
