@@ -86,6 +86,10 @@ public:
 		return defer_invoke_idle.GetEventLoop();
 	}
 
+	bool IsIdle() const noexcept {
+		return requests.empty();
+	}
+
 	void SendRequest(struct pool &request_pool,
 			 StopwatchPtr stopwatch,
 			 http_method_t method, const char *uri,
