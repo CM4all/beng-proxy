@@ -49,6 +49,8 @@ class MatchInfo;
 struct HttpAddress {
 	const bool ssl;
 
+	const bool http2;
+
 	/**
 	 * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
 	 * translation cache.
@@ -73,15 +75,15 @@ struct HttpAddress {
 
 	AddressList addresses;
 
-	HttpAddress(bool _ssl,
+	HttpAddress(bool _ssl, bool _http2,
 		    const char *_host_and_port, const char *_path);
 
-	HttpAddress(ShallowCopy, bool _ssl,
+	HttpAddress(ShallowCopy, bool _ssl, bool _http2,
 		    const char *_host_and_port, const char *_path,
 		    const AddressList &_addresses);
 
 	constexpr HttpAddress(ShallowCopy shallow_copy, const HttpAddress &src)
-		:ssl(src.ssl),
+		:ssl(src.ssl), http2(src.http2),
 		 expand_path(src.expand_path),
 		 certificate(src.certificate),
 		 host_and_port(src.host_and_port),
@@ -97,7 +99,7 @@ struct HttpAddress {
 
 	constexpr HttpAddress(ShallowCopy shallow_copy, const HttpAddress &src,
 			      const char *_path)
-		:ssl(src.ssl),
+		:ssl(src.ssl), http2(src.http2),
 		 certificate(src.certificate),
 		 host_and_port(src.host_and_port),
 		 path(_path),

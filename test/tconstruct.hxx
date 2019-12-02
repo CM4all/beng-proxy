@@ -262,7 +262,7 @@ struct MakeFileAddress : FileAddress {
 
 struct MakeHttpAddress : HttpAddress {
     explicit MakeHttpAddress(const char *_path)
-        :HttpAddress(false, "localhost:8080", _path) {}
+        :HttpAddress(false, false, "localhost:8080", _path) {}
 
     MakeHttpAddress &&Host(const char *value) {
         host_and_port = value;

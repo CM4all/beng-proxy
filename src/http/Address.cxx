@@ -46,19 +46,19 @@
 
 #include <string.h>
 
-HttpAddress::HttpAddress(bool _ssl,
+HttpAddress::HttpAddress(bool _ssl, bool _http2,
 			 const char *_host_and_port, const char *_path)
-	:ssl(_ssl),
+	:ssl(_ssl), http2(_http2),
 	 host_and_port(_host_and_port),
 	 path(_path)
 {
 }
 
 HttpAddress::HttpAddress(ShallowCopy shallow_copy,
-			 bool _ssl,
+			 bool _ssl, bool _http2,
 			 const char *_host_and_port, const char *_path,
 			 const AddressList &_addresses)
-	:ssl(_ssl),
+	:ssl(_ssl), http2(_http2),
 	 host_and_port(_host_and_port),
 	 path(_path),
 	 addresses(shallow_copy, _addresses)
@@ -66,7 +66,7 @@ HttpAddress::HttpAddress(ShallowCopy shallow_copy,
 }
 
 HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src)
-	:ssl(src.ssl),
+	:ssl(src.ssl), http2(src.http2),
 	 expand_path(src.expand_path),
 	 certificate(alloc.CheckDup(src.certificate)),
 	 host_and_port(alloc.CheckDup(src.host_and_port)),
@@ -77,7 +77,7 @@ HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src)
 
 HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src,
 			 const char *_path)
-	:ssl(src.ssl),
+	:ssl(src.ssl), http2(src.http2),
 	 certificate(alloc.CheckDup(src.certificate)),
 	 host_and_port(alloc.CheckDup(src.host_and_port)),
 	 path(alloc.Dup(_path)),
@@ -86,12 +86,12 @@ HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src,
 }
 
 static HttpAddress *
-http_address_new(AllocatorPtr alloc, bool ssl,
+http_address_new(AllocatorPtr alloc, bool ssl, bool http2,
 		 const char *host_and_port, const char *path)
 {
 	assert(path != nullptr);
 
-	return alloc.New<HttpAddress>(ssl, host_and_port, path);
+	return alloc.New<HttpAddress>(ssl, http2, host_and_port, path);
 }
 
 /**
@@ -100,7 +100,7 @@ http_address_new(AllocatorPtr alloc, bool ssl,
  * Throws std::runtime_error on error.
  */
 static HttpAddress *
-http_address_parse2(AllocatorPtr alloc, bool ssl,
+http_address_parse2(AllocatorPtr alloc, bool ssl, bool http2,
 		    const char *uri)
 {
 	assert(uri != nullptr);
@@ -118,18 +118,22 @@ http_address_parse2(AllocatorPtr alloc, bool ssl,
 		path = "/";
 	}
 
-	return http_address_new(alloc, ssl, host_and_port, path);
+	return http_address_new(alloc, ssl, http2, host_and_port, path);
 }
 
 HttpAddress *
 http_address_parse(AllocatorPtr alloc, const char *uri)
 {
 	if (auto http = StringAfterPrefix(uri, "http://"))
-		return http_address_parse2(alloc, false, http);
+		return http_address_parse2(alloc, false, false, http);
 	else if (auto https = StringAfterPrefix(uri, "https://"))
-		return http_address_parse2(alloc, true, https);
+		return http_address_parse2(alloc, true, false, https);
+	else if (auto http2 = StringAfterPrefix(uri, "http2://"))
+		return http_address_parse2(alloc, false, true, http2);
+	else if (auto https2 = StringAfterPrefix(uri, "https2://"))
+		return http_address_parse2(alloc, true, true, https2);
 	else if (auto unix = StringAfterPrefix(uri, "unix:/"))
-		return http_address_new(alloc, false, nullptr,
+		return http_address_new(alloc, false, false, nullptr,
 					/* rewind to the slash */
 					unix - 1);
 
