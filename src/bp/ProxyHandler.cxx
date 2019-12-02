@@ -59,86 +59,86 @@ gcc_pure
 static const char *
 ForwardURI(AllocatorPtr alloc, const DissectedUri &uri) noexcept
 {
-    if (uri.query.empty())
-        return alloc.DupZ(uri.base);
-    else
-        return alloc.Concat(uri.base, '?', uri.query);
+	if (uri.query.empty())
+		return alloc.DupZ(uri.base);
+	else
+		return alloc.Concat(uri.base, '?', uri.query);
 }
 
 inline const char *
 Request::ForwardURI() const noexcept
 {
-    const TranslateResponse &t = *translate.response;
-    if (t.transparent || dissected_uri.args == nullptr)
-        /* transparent or no args: return the full URI as-is */
-        return request.uri;
-    else
-        /* remove the "args" part */
-        return ::ForwardURI(pool, dissected_uri);
+	const TranslateResponse &t = *translate.response;
+	if (t.transparent || dissected_uri.args == nullptr)
+		/* transparent or no args: return the full URI as-is */
+		return request.uri;
+	else
+		/* remove the "args" part */
+		return ::ForwardURI(pool, dissected_uri);
 }
 
 void
 Request::HandleProxyAddress() noexcept
 {
-    const TranslateResponse &tr = *translate.response;
-    ResourceAddress address(ShallowCopy(), translate.address);
+	const TranslateResponse &tr = *translate.response;
+	ResourceAddress address(ShallowCopy(), translate.address);
 
-    assert(address.type == ResourceAddress::Type::HTTP ||
-           address.type == ResourceAddress::Type::LHTTP ||
-           address.type == ResourceAddress::Type::NFS ||
-           address.IsCgiAlike());
+	assert(address.type == ResourceAddress::Type::HTTP ||
+	       address.type == ResourceAddress::Type::LHTTP ||
+	       address.type == ResourceAddress::Type::NFS ||
+	       address.IsCgiAlike());
 
-    if (translate.response->transparent &&
-        (!dissected_uri.args.IsNull() || !dissected_uri.path_info.empty()))
-        address = address.WithArgs(pool,
-                                   dissected_uri.args,
-                                   dissected_uri.path_info);
+	if (translate.response->transparent &&
+	    (!dissected_uri.args.IsNull() || !dissected_uri.path_info.empty()))
+		address = address.WithArgs(pool,
+					   dissected_uri.args,
+					   dissected_uri.path_info);
 
-    if (!processor_focus)
-        /* forward query string */
-        address = address.WithQueryStringFrom(pool, request.uri);
+	if (!processor_focus)
+		/* forward query string */
+		address = address.WithQueryStringFrom(pool, request.uri);
 
-    if (address.IsCgiAlike() &&
-        address.GetCgi().script_name == nullptr &&
-        address.GetCgi().uri == nullptr)
-        /* pass the "real" request URI to the CGI (but without the
-           "args", unless the request is "transparent") */
-        address.GetCgi().uri = ForwardURI();
+	if (address.IsCgiAlike() &&
+	    address.GetCgi().script_name == nullptr &&
+	    address.GetCgi().uri == nullptr)
+		/* pass the "real" request URI to the CGI (but without the
+		   "args", unless the request is "transparent") */
+		address.GetCgi().uri = ForwardURI();
 
-    cookie_uri = address.GetUriPath();
+	cookie_uri = address.GetUriPath();
 
-    auto forward = request_forward(*this,
-                                   tr.request_header_forward,
-                                   GetCookieHost(),
-                                   GetCookieURI(),
-                                   address.IsAnyHttp());
+	auto forward = request_forward(*this,
+				       tr.request_header_forward,
+				       GetCookieHost(),
+				       GetCookieURI(),
+				       address.IsAnyHttp());
 
-    if (tr.require_csrf_token &&
-        MethodNeedsCsrfProtection(forward.method) &&
-        !CheckCsrfToken())
-        return;
+	if (tr.require_csrf_token &&
+	    MethodNeedsCsrfProtection(forward.method) &&
+	    !CheckCsrfToken())
+		return;
 
 #ifdef SPLICE
-    if (forward.body)
-        forward.body = NewAutoPipeIstream(&pool, std::move(forward.body),
-                                          instance.pipe_stock);
+	if (forward.body)
+		forward.body = NewAutoPipeIstream(&pool, std::move(forward.body),
+						  instance.pipe_stock);
 #endif
 
-    for (const auto &i : tr.request_headers)
-        forward.headers.SecureSet(pool, i.key, i.value);
+	for (const auto &i : tr.request_headers)
+		forward.headers.SecureSet(pool, i.key, i.value);
 
-    collect_cookies = true;
+	collect_cookies = true;
 
-    auto &rl = tr.uncached
-        ? *instance.direct_resource_loader
-        : *instance.cached_resource_loader;
+	auto &rl = tr.uncached
+		? *instance.direct_resource_loader
+		: *instance.cached_resource_loader;
 
-    rl.SendRequest(pool, stopwatch,
-                   session_id.GetClusterHash(),
-                   nullptr, tr.site,
-                   forward.method, address, HTTP_STATUS_OK,
-                   std::move(forward.headers),
-                   std::move(forward.body),
-                   nullptr,
-                   *this, cancel_ptr);
+	rl.SendRequest(pool, stopwatch,
+		       session_id.GetClusterHash(),
+		       nullptr, tr.site,
+		       forward.method, address, HTTP_STATUS_OK,
+		       std::move(forward.headers),
+		       std::move(forward.body),
+		       nullptr,
+		       *this, cancel_ptr);
 }

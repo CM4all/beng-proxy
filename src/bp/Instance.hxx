@@ -79,163 +79,163 @@ class BPListener;
 struct BpConnection;
 
 struct BpInstance final : PInstance, ControlHandler {
-    BpCmdLine cmdline;
-    BpConfig config;
+	BpCmdLine cmdline;
+	BpConfig config;
 
-    uint64_t http_request_counter = 0;
-    uint64_t http_traffic_received_counter = 0;
-    uint64_t http_traffic_sent_counter = 0;
+	uint64_t http_request_counter = 0;
+	uint64_t http_traffic_received_counter = 0;
+	uint64_t http_traffic_sent_counter = 0;
 
-    std::unique_ptr<UserAgentClassList> ua_classification;
+	std::unique_ptr<UserAgentClassList> ua_classification;
 
-    std::forward_list<BPListener> listeners;
+	std::forward_list<BPListener> listeners;
 
-    boost::intrusive::list<BpConnection,
-                           boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
-                           boost::intrusive::constant_time_size<true>> connections;
+	boost::intrusive::list<BpConnection,
+			       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
+			       boost::intrusive::constant_time_size<true>> connections;
 
-    std::unique_ptr<AccessLogGlue> access_log, child_error_log;
+	std::unique_ptr<AccessLogGlue> access_log, child_error_log;
 
-    bool should_exit = false;
-    ShutdownListener shutdown_listener;
-    SignalEvent sighup_event;
+	bool should_exit = false;
+	ShutdownListener shutdown_listener;
+	SignalEvent sighup_event;
 
-    TimerEvent compress_timer;
+	TimerEvent compress_timer;
 
-    /**
-     * Registry for jobs running in background, created by the request
-     * handler code.
-     */
-    BackgroundManager background_manager;
+	/**
+	 * Registry for jobs running in background, created by the request
+	 * handler code.
+	 */
+	BackgroundManager background_manager;
 
-    /* child management */
-    ChildProcessRegistry child_process_registry;
-    SpawnService *spawn_service;
-    TimerEvent spawn_worker_event;
+	/* child management */
+	ChildProcessRegistry child_process_registry;
+	SpawnService *spawn_service;
+	TimerEvent spawn_worker_event;
 
-    std::unique_ptr<SpawnServerClient> spawn;
+	std::unique_ptr<SpawnServerClient> spawn;
 
-    boost::intrusive::list<BpWorker,
-                           boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
-                           boost::intrusive::constant_time_size<true>> workers;
+	boost::intrusive::list<BpWorker,
+			       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
+			       boost::intrusive::constant_time_size<true>> workers;
 
-    /**
-     * This object distributes all control packets received by the
-     * master process to all worker processes.
-     */
-    ControlDistribute *control_distribute = nullptr;
+	/**
+	 * This object distributes all control packets received by the
+	 * master process to all worker processes.
+	 */
+	ControlDistribute *control_distribute = nullptr;
 
-    /**
-     * The configured control channel servers (see
-     * BpConfig::control_listen).  May be empty if none was
-     * configured.
-     */
-    std::forward_list<ControlServer> control_servers;
+	/**
+	 * The configured control channel servers (see
+	 * BpConfig::control_listen).  May be empty if none was
+	 * configured.
+	 */
+	std::forward_list<ControlServer> control_servers;
 
-    /**
-     * The implicit per-process control server.  It listens on a local
-     * socket "@beng-proxy:PID" and will accept connections only from
-     * root or the beng-proxy user.
-     */
-    std::unique_ptr<LocalControl> local_control_server;
+	/**
+	 * The implicit per-process control server.  It listens on a local
+	 * socket "@beng-proxy:PID" and will accept connections only from
+	 * root or the beng-proxy user.
+	 */
+	std::unique_ptr<LocalControl> local_control_server;
 
-    MyAvahiClient avahi_client;
+	MyAvahiClient avahi_client;
 
-    /* stock */
-    FailureManager failure_manager;
-    TranslationStock *translation_stock = nullptr;
-    TranslationCache *translation_cache = nullptr;
-    TranslationService *translation_service = nullptr;
-    WidgetRegistry *widget_registry = nullptr;
-    TcpStock *tcp_stock = nullptr;
-    TcpBalancer *tcp_balancer = nullptr;
+	/* stock */
+	FailureManager failure_manager;
+	TranslationStock *translation_stock = nullptr;
+	TranslationCache *translation_cache = nullptr;
+	TranslationService *translation_service = nullptr;
+	WidgetRegistry *widget_registry = nullptr;
+	TcpStock *tcp_stock = nullptr;
+	TcpBalancer *tcp_balancer = nullptr;
 
-    FilteredSocketStock *fs_stock = nullptr;
-    FilteredSocketBalancer *fs_balancer = nullptr;
+	FilteredSocketStock *fs_stock = nullptr;
+	FilteredSocketBalancer *fs_balancer = nullptr;
 
-    /* cache */
-    HttpCache *http_cache = nullptr;
+	/* cache */
+	HttpCache *http_cache = nullptr;
 
-    FilterCache *filter_cache = nullptr;
+	FilterCache *filter_cache = nullptr;
 
-    LhttpStock *lhttp_stock = nullptr;
-    FcgiStock *fcgi_stock = nullptr;
+	LhttpStock *lhttp_stock = nullptr;
+	FcgiStock *fcgi_stock = nullptr;
 
-    StockMap *was_stock = nullptr;
+	StockMap *was_stock = nullptr;
 
-    StockMap *delegate_stock = nullptr;
+	StockMap *delegate_stock = nullptr;
 
-    NfsStock *nfs_stock = nullptr;
-    NfsCache *nfs_cache = nullptr;
+	NfsStock *nfs_stock = nullptr;
+	NfsCache *nfs_cache = nullptr;
 
-    PipeStock *pipe_stock = nullptr;
+	PipeStock *pipe_stock = nullptr;
 
-    ResourceLoader *direct_resource_loader = nullptr;
-    ResourceLoader *cached_resource_loader = nullptr;
-    ResourceLoader *filter_resource_loader = nullptr;
-    ResourceLoader *buffered_filter_resource_loader = nullptr;
+	ResourceLoader *direct_resource_loader = nullptr;
+	ResourceLoader *cached_resource_loader = nullptr;
+	ResourceLoader *filter_resource_loader = nullptr;
+	ResourceLoader *buffered_filter_resource_loader = nullptr;
 
-    /* session */
-    TimerEvent session_save_timer;
+	/* session */
+	TimerEvent session_save_timer;
 
-    BpInstance() noexcept;
-    ~BpInstance() noexcept;
+	BpInstance() noexcept;
+	~BpInstance() noexcept;
 
-    void EnableSignals() noexcept;
-    void DisableSignals() noexcept;
+	void EnableSignals() noexcept;
+	void DisableSignals() noexcept;
 
-    void ForkCow(bool inherit) noexcept;
+	void ForkCow(bool inherit) noexcept;
 
-    void Compress() noexcept;
-    void ScheduleCompress() noexcept;
-    void OnCompressTimer() noexcept;
+	void Compress() noexcept;
+	void ScheduleCompress() noexcept;
+	void OnCompressTimer() noexcept;
 
-    void ScheduleSaveSessions() noexcept;
+	void ScheduleSaveSessions() noexcept;
 
-    /**
-     * Transition the current process from "master" to "worker".  Call
-     * this after forking in the new worker process.
-     */
-    void InitWorker();
+	/**
+	 * Transition the current process from "master" to "worker".  Call
+	 * this after forking in the new worker process.
+	 */
+	void InitWorker();
 
-    pid_t SpawnWorker() noexcept;
-    void ScheduleSpawnWorker() noexcept;
-    void KillAllWorkers() noexcept;
+	pid_t SpawnWorker() noexcept;
+	void ScheduleSpawnWorker() noexcept;
+	void KillAllWorkers() noexcept;
 
-    /**
-     * Handler for #CONTROL_FADE_CHILDREN
-     */
-    void FadeChildren() noexcept;
-    void FadeTaggedChildren(const char *tag) noexcept;
+	/**
+	 * Handler for #CONTROL_FADE_CHILDREN
+	 */
+	void FadeChildren() noexcept;
+	void FadeTaggedChildren(const char *tag) noexcept;
 
-    void ShutdownCallback() noexcept;
+	void ShutdownCallback() noexcept;
 
-    void ReloadEventCallback(int signo) noexcept;
+	void ReloadEventCallback(int signo) noexcept;
 
-    void AddListener(const BpConfig::Listener &c);
-    void AddTcpListener(int port);
+	void AddListener(const BpConfig::Listener &c);
+	void AddTcpListener(int port);
 
-    void EnableListeners() noexcept;
-    void DisableListeners() noexcept;
+	void EnableListeners() noexcept;
+	void DisableListeners() noexcept;
 
-    gcc_pure
-    BengProxy::ControlStats GetStats() const noexcept;
+	gcc_pure
+	BengProxy::ControlStats GetStats() const noexcept;
 
-    /* virtual methods from class ControlHandler */
-    void OnControlPacket(ControlServer &control_server,
-                         BengProxy::ControlCommand command,
-                         ConstBuffer<void> payload,
-                         WritableBuffer<UniqueFileDescriptor> fds,
-                         SocketAddress address, int uid) override;
+	/* virtual methods from class ControlHandler */
+	void OnControlPacket(ControlServer &control_server,
+			     BengProxy::ControlCommand command,
+			     ConstBuffer<void> payload,
+			     WritableBuffer<UniqueFileDescriptor> fds,
+			     SocketAddress address, int uid) override;
 
-    void OnControlError(std::exception_ptr ep) noexcept override;
+	void OnControlError(std::exception_ptr ep) noexcept override;
 
 private:
-    void RespawnWorkerCallback() noexcept;
+	void RespawnWorkerCallback() noexcept;
 
-    bool AllocatorCompressCallback() noexcept;
+	bool AllocatorCompressCallback() noexcept;
 
-    void SaveSessions() noexcept;
+	void SaveSessions() noexcept;
 
-    void FreeStocksAndCaches() noexcept;
+	void FreeStocksAndCaches() noexcept;
 };

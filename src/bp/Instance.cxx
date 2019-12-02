@@ -68,172 +68,172 @@
 static constexpr auto COMPRESS_INTERVAL = std::chrono::minutes(10);
 
 BpInstance::BpInstance() noexcept
-    :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
-     sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback)),
-     compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
-     child_process_registry(event_loop),
-     spawn_worker_event(event_loop,
-                        BIND_THIS_METHOD(RespawnWorkerCallback)),
-     avahi_client(event_loop, "beng-proxy"),
-     session_save_timer(event_loop, BIND_THIS_METHOD(SaveSessions))
+	:shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
+	 sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback)),
+	 compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
+	 child_process_registry(event_loop),
+	 spawn_worker_event(event_loop,
+			    BIND_THIS_METHOD(RespawnWorkerCallback)),
+	 avahi_client(event_loop, "beng-proxy"),
+	 session_save_timer(event_loop, BIND_THIS_METHOD(SaveSessions))
 {
 }
 
 BpInstance::~BpInstance() noexcept
 {
-    delete (BufferedResourceLoader *)buffered_filter_resource_loader;
+	delete (BufferedResourceLoader *)buffered_filter_resource_loader;
 
-    if (filter_resource_loader != direct_resource_loader)
-        delete (FilterResourceLoader *)filter_resource_loader;
+	if (filter_resource_loader != direct_resource_loader)
+		delete (FilterResourceLoader *)filter_resource_loader;
 
-    delete (DirectResourceLoader *)direct_resource_loader;
+	delete (DirectResourceLoader *)direct_resource_loader;
 
-    FreeStocksAndCaches();
+	FreeStocksAndCaches();
 }
 
 void
 BpInstance::FreeStocksAndCaches() noexcept
 {
-    delete std::exchange(widget_registry, nullptr);
-    translation_service = nullptr;
-    delete std::exchange(translation_cache, nullptr);
-    delete std::exchange(translation_stock, nullptr);
+	delete std::exchange(widget_registry, nullptr);
+	translation_service = nullptr;
+	delete std::exchange(translation_cache, nullptr);
+	delete std::exchange(translation_stock, nullptr);
 
-    if (http_cache != nullptr) {
-        delete (CachedResourceLoader *)cached_resource_loader;
-        cached_resource_loader = nullptr;
+	if (http_cache != nullptr) {
+		delete (CachedResourceLoader *)cached_resource_loader;
+		cached_resource_loader = nullptr;
 
-        http_cache_close(http_cache);
-        http_cache = nullptr;
-    }
+		http_cache_close(http_cache);
+		http_cache = nullptr;
+	}
 
-    if (filter_cache != nullptr) {
-        filter_cache_close(filter_cache);
-        filter_cache = nullptr;
-    }
+	if (filter_cache != nullptr) {
+		filter_cache_close(filter_cache);
+		filter_cache = nullptr;
+	}
 
-    if (lhttp_stock != nullptr) {
-        lhttp_stock_free(lhttp_stock);
-        lhttp_stock = nullptr;
-    }
+	if (lhttp_stock != nullptr) {
+		lhttp_stock_free(lhttp_stock);
+		lhttp_stock = nullptr;
+	}
 
-    if (fcgi_stock != nullptr) {
-        fcgi_stock_free(fcgi_stock);
-        fcgi_stock = nullptr;
-    }
+	if (fcgi_stock != nullptr) {
+		fcgi_stock_free(fcgi_stock);
+		fcgi_stock = nullptr;
+	}
 
-    if (was_stock != nullptr) {
-        was_stock_free(was_stock);
-        was_stock = nullptr;
-    }
+	if (was_stock != nullptr) {
+		was_stock_free(was_stock);
+		was_stock = nullptr;
+	}
 
-    delete std::exchange(fs_balancer, nullptr);
-    delete std::exchange(fs_stock, nullptr);
+	delete std::exchange(fs_balancer, nullptr);
+	delete std::exchange(fs_stock, nullptr);
 
-    delete std::exchange(tcp_balancer, nullptr);
+	delete std::exchange(tcp_balancer, nullptr);
 
-    delete tcp_stock;
-    tcp_stock = nullptr;
+	delete tcp_stock;
+	tcp_stock = nullptr;
 
-    if (delegate_stock != nullptr) {
-        delegate_stock_free(delegate_stock);
-        delegate_stock = nullptr;
-    }
+	if (delegate_stock != nullptr) {
+		delegate_stock_free(delegate_stock);
+		delegate_stock = nullptr;
+	}
 
-    if (nfs_cache != nullptr) {
-        nfs_cache_free(nfs_cache);
-        nfs_cache = nullptr;
-    }
+	if (nfs_cache != nullptr) {
+		nfs_cache_free(nfs_cache);
+		nfs_cache = nullptr;
+	}
 
-    if (nfs_stock != nullptr) {
-        nfs_stock_free(nfs_stock);
-        nfs_stock = nullptr;
-    }
+	if (nfs_stock != nullptr) {
+		nfs_stock_free(nfs_stock);
+		nfs_stock = nullptr;
+	}
 
-    delete std::exchange(pipe_stock, nullptr);
+	delete std::exchange(pipe_stock, nullptr);
 }
 
 void
 BpInstance::ForkCow(bool inherit) noexcept
 {
-    fb_pool_fork_cow(inherit);
+	fb_pool_fork_cow(inherit);
 
-    if (translation_cache != nullptr)
-        translation_cache->ForkCow(inherit);
+	if (translation_cache != nullptr)
+		translation_cache->ForkCow(inherit);
 
-    if (http_cache != nullptr)
-        http_cache_fork_cow(*http_cache, inherit);
+	if (http_cache != nullptr)
+		http_cache_fork_cow(*http_cache, inherit);
 
-    if (filter_cache != nullptr)
-        filter_cache_fork_cow(*filter_cache, inherit);
+	if (filter_cache != nullptr)
+		filter_cache_fork_cow(*filter_cache, inherit);
 
-    if (nfs_cache != nullptr)
-        nfs_cache_fork_cow(*nfs_cache, inherit);
+	if (nfs_cache != nullptr)
+		nfs_cache_fork_cow(*nfs_cache, inherit);
 }
 
 void
 BpInstance::Compress() noexcept
 {
-    fb_pool_compress();
+	fb_pool_compress();
 }
 
 void
 BpInstance::ScheduleCompress() noexcept
 {
-    compress_timer.Schedule(COMPRESS_INTERVAL);
+	compress_timer.Schedule(COMPRESS_INTERVAL);
 }
 
 void
 BpInstance::OnCompressTimer() noexcept
 {
-    Compress();
-    ScheduleCompress();
+	Compress();
+	ScheduleCompress();
 }
 
 void
 BpInstance::FadeChildren() noexcept
 {
-    if (lhttp_stock != nullptr)
-        lhttp_stock_fade_all(*lhttp_stock);
+	if (lhttp_stock != nullptr)
+		lhttp_stock_fade_all(*lhttp_stock);
 
-    if (fcgi_stock != nullptr)
-        fcgi_stock_fade_all(*fcgi_stock);
+	if (fcgi_stock != nullptr)
+		fcgi_stock_fade_all(*fcgi_stock);
 
-    if (was_stock != nullptr)
-        was_stock->FadeAll();
+	if (was_stock != nullptr)
+		was_stock->FadeAll();
 
-    if (delegate_stock != nullptr)
-        delegate_stock->FadeAll();
+	if (delegate_stock != nullptr)
+		delegate_stock->FadeAll();
 }
 
 void
 BpInstance::FadeTaggedChildren(const char *tag) noexcept
 {
-    assert(tag != nullptr);
+	assert(tag != nullptr);
 
-    if (lhttp_stock != nullptr)
-        lhttp_stock_fade_tag(*lhttp_stock, tag);
+	if (lhttp_stock != nullptr)
+		lhttp_stock_fade_tag(*lhttp_stock, tag);
 
-    if (fcgi_stock != nullptr)
-        fcgi_stock_fade_tag(*fcgi_stock, tag);
+	if (fcgi_stock != nullptr)
+		fcgi_stock_fade_tag(*fcgi_stock, tag);
 
-    if (was_stock != nullptr)
-        was_stock_fade_tag(*was_stock, tag);
+	if (was_stock != nullptr)
+		was_stock_fade_tag(*was_stock, tag);
 
-    // TODO: delegate_stock
+	// TODO: delegate_stock
 }
 
 void
 BpInstance::SaveSessions() noexcept
 {
-    session_save();
+	session_save();
 
-    ScheduleSaveSessions();
+	ScheduleSaveSessions();
 }
 
 void
 BpInstance::ScheduleSaveSessions() noexcept
 {
-    /* save all sessions every 2 minutes */
-    session_save_timer.Schedule(std::chrono::minutes(2));
+	/* save all sessions every 2 minutes */
+	session_save_timer.Schedule(std::chrono::minutes(2));
 }

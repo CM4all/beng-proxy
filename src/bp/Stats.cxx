@@ -50,51 +50,51 @@
 BengProxy::ControlStats
 BpInstance::GetStats() const noexcept
 {
-    BengProxy::ControlStats stats;
+	BengProxy::ControlStats stats;
 
-    StockStats tcp_stock_stats = {
-        .busy = 0,
-        .idle = 0,
-    };
+	StockStats tcp_stock_stats = {
+		.busy = 0,
+		.idle = 0,
+	};
 
-    tcp_stock->AddStats(tcp_stock_stats);
-    fs_stock->AddStats(tcp_stock_stats);
+	tcp_stock->AddStats(tcp_stock_stats);
+	fs_stock->AddStats(tcp_stock_stats);
 
-    const auto tcache_stats = translation_cache != nullptr
-        ? translation_cache->GetStats()
-        : AllocatorStats::Zero();
-    const auto http_cache_stats = http_cache != nullptr
-        ? http_cache_get_stats(*http_cache)
-        : AllocatorStats::Zero();
-    const auto fcache_stats = filter_cache != nullptr
-        ? filter_cache_get_stats(*filter_cache)
-        : AllocatorStats::Zero();
+	const auto tcache_stats = translation_cache != nullptr
+		? translation_cache->GetStats()
+		: AllocatorStats::Zero();
+	const auto http_cache_stats = http_cache != nullptr
+		? http_cache_get_stats(*http_cache)
+		: AllocatorStats::Zero();
+	const auto fcache_stats = filter_cache != nullptr
+		? filter_cache_get_stats(*filter_cache)
+		: AllocatorStats::Zero();
 
-    stats.incoming_connections = ToBE32(connections.size());
-    stats.outgoing_connections = ToBE32(tcp_stock_stats.busy
-                                               + tcp_stock_stats.idle);
-    stats.children = ToBE32(child_process_registry.GetCount());
-    stats.sessions = ToBE32(session_manager->LockCount());
-    stats.http_requests = ToBE64(http_request_counter);
-    stats.http_traffic_received = ToBE64(http_traffic_received_counter);
-    stats.http_traffic_sent = ToBE64(http_traffic_sent_counter);
-    stats.translation_cache_size = ToBE64(tcache_stats.netto_size);
-    stats.http_cache_size = ToBE64(http_cache_stats.netto_size);
-    stats.filter_cache_size = ToBE64(fcache_stats.netto_size);
+	stats.incoming_connections = ToBE32(connections.size());
+	stats.outgoing_connections = ToBE32(tcp_stock_stats.busy
+					    + tcp_stock_stats.idle);
+	stats.children = ToBE32(child_process_registry.GetCount());
+	stats.sessions = ToBE32(session_manager->LockCount());
+	stats.http_requests = ToBE64(http_request_counter);
+	stats.http_traffic_received = ToBE64(http_traffic_received_counter);
+	stats.http_traffic_sent = ToBE64(http_traffic_sent_counter);
+	stats.translation_cache_size = ToBE64(tcache_stats.netto_size);
+	stats.http_cache_size = ToBE64(http_cache_stats.netto_size);
+	stats.filter_cache_size = ToBE64(fcache_stats.netto_size);
 
-    stats.translation_cache_brutto_size = ToBE64(tcache_stats.brutto_size);
-    stats.http_cache_brutto_size = ToBE64(http_cache_stats.brutto_size);
-    stats.filter_cache_brutto_size = ToBE64(fcache_stats.brutto_size);
+	stats.translation_cache_brutto_size = ToBE64(tcache_stats.brutto_size);
+	stats.http_cache_brutto_size = ToBE64(http_cache_stats.brutto_size);
+	stats.filter_cache_brutto_size = ToBE64(fcache_stats.brutto_size);
 
-    const auto nfs_cache_stats = nfs_cache_get_stats(*nfs_cache);
-    stats.nfs_cache_size = ToBE64(nfs_cache_stats.netto_size);
-    stats.nfs_cache_brutto_size = ToBE64(nfs_cache_stats.brutto_size);
+	const auto nfs_cache_stats = nfs_cache_get_stats(*nfs_cache);
+	stats.nfs_cache_size = ToBE64(nfs_cache_stats.netto_size);
+	stats.nfs_cache_brutto_size = ToBE64(nfs_cache_stats.brutto_size);
 
-    const auto io_buffers_stats = fb_pool_get().GetStats();
-    stats.io_buffers_size = ToBE64(io_buffers_stats.netto_size);
-    stats.io_buffers_brutto_size = ToBE64(io_buffers_stats.brutto_size);
+	const auto io_buffers_stats = fb_pool_get().GetStats();
+	stats.io_buffers_size = ToBE64(io_buffers_stats.netto_size);
+	stats.io_buffers_brutto_size = ToBE64(io_buffers_stats.brutto_size);
 
-    /* TODO: add stats from all worker processes;  */
+	/* TODO: add stats from all worker processes;  */
 
-    return stats;
+	return stats;
 }

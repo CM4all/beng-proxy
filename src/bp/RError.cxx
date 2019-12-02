@@ -57,145 +57,145 @@
 static MessageHttpResponse
 Dup(struct pool &pool, http_status_t status, const char *msg)
 {
-    return {status, p_strdup(&pool, msg)};
+	return {status, p_strdup(&pool, msg)};
 }
 
 gcc_pure
 static MessageHttpResponse
 ToResponse(struct pool &pool, std::exception_ptr ep)
 {
-    try {
-        FindRetrowNested<HttpMessageResponse>(ep);
-    } catch (const HttpMessageResponse &e) {
-        return Dup(pool, e.GetStatus(), e.what());
-    }
+	try {
+		FindRetrowNested<HttpMessageResponse>(ep);
+	} catch (const HttpMessageResponse &e) {
+		return Dup(pool, e.GetStatus(), e.what());
+	}
 
-    try {
-        FindRetrowNested<std::system_error>(ep);
-    } catch (const std::system_error &e) {
-        if (e.code().category() == ErrnoCategory()) {
-            switch (e.code().value()) {
-            case ENOENT:
-            case ENOTDIR:
-                return {HTTP_STATUS_NOT_FOUND,
-                        "The requested file does not exist."};
+	try {
+		FindRetrowNested<std::system_error>(ep);
+	} catch (const std::system_error &e) {
+		if (e.code().category() == ErrnoCategory()) {
+			switch (e.code().value()) {
+			case ENOENT:
+			case ENOTDIR:
+				return {HTTP_STATUS_NOT_FOUND,
+					"The requested file does not exist."};
 
-            case EACCES:
-            case EPERM:
-                return {HTTP_STATUS_FORBIDDEN,
-                        "Access to the requested file denied."};
-            }
-        }
-    }
+			case EACCES:
+			case EPERM:
+				return {HTTP_STATUS_FORBIDDEN,
+					"Access to the requested file denied."};
+			}
+		}
+	}
 
-    try {
-        FindRetrowNested<WidgetError>(ep);
-    } catch (const WidgetError &e) {
-        switch (e.GetCode()) {
-        case WidgetErrorCode::UNSPECIFIED:
-            break;
+	try {
+		FindRetrowNested<WidgetError>(ep);
+	} catch (const WidgetError &e) {
+		switch (e.GetCode()) {
+		case WidgetErrorCode::UNSPECIFIED:
+			break;
 
-        case WidgetErrorCode::WRONG_TYPE:
-        case WidgetErrorCode::UNSUPPORTED_ENCODING:
-            return {HTTP_STATUS_BAD_GATEWAY, "Malformed widget response"};
+		case WidgetErrorCode::WRONG_TYPE:
+		case WidgetErrorCode::UNSUPPORTED_ENCODING:
+			return {HTTP_STATUS_BAD_GATEWAY, "Malformed widget response"};
 
-        case WidgetErrorCode::NO_SUCH_VIEW:
-            return {HTTP_STATUS_NOT_FOUND, "No such view"};
+		case WidgetErrorCode::NO_SUCH_VIEW:
+			return {HTTP_STATUS_NOT_FOUND, "No such view"};
 
-        case WidgetErrorCode::NOT_A_CONTAINER:
-            return Dup(pool, HTTP_STATUS_NOT_FOUND, e.what());
+		case WidgetErrorCode::NOT_A_CONTAINER:
+			return Dup(pool, HTTP_STATUS_NOT_FOUND, e.what());
 
-        case WidgetErrorCode::FORBIDDEN:
-            return {HTTP_STATUS_FORBIDDEN, "Forbidden"};
-        }
-    }
+		case WidgetErrorCode::FORBIDDEN:
+			return {HTTP_STATUS_FORBIDDEN, "Forbidden"};
+		}
+	}
 
-    try {
-        FindRetrowNested<HttpClientError>(ep);
-    } catch (...) {
-        return {HTTP_STATUS_BAD_GATEWAY, "Upstream server failed"};
-    }
+	try {
+		FindRetrowNested<HttpClientError>(ep);
+	} catch (...) {
+		return {HTTP_STATUS_BAD_GATEWAY, "Upstream server failed"};
+	}
 
-    try {
-        FindRetrowNested<WasError>(ep);
-    } catch (...) {
-        return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
-    }
+	try {
+		FindRetrowNested<WasError>(ep);
+	} catch (...) {
+		return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
+	}
 
-    try {
-        FindRetrowNested<FcgiClientError>(ep);
-    } catch (...) {
-        return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
-    }
+	try {
+		FindRetrowNested<FcgiClientError>(ep);
+	} catch (...) {
+		return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
+	}
 
-    try {
-        FindRetrowNested<CgiError>(ep);
-    } catch (...) {
-        return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
-    }
+	try {
+		FindRetrowNested<CgiError>(ep);
+	} catch (...) {
+		return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
+	}
 
-    try {
-        FindRetrowNested<MemcachedClientError>(ep);
-    } catch (...) {
-        return {HTTP_STATUS_BAD_GATEWAY, "Cache server failed"};
-    }
+	try {
+		FindRetrowNested<MemcachedClientError>(ep);
+	} catch (...) {
+		return {HTTP_STATUS_BAD_GATEWAY, "Cache server failed"};
+	}
 
-    try {
-        FindRetrowNested<NfsClientError>(ep);
-    } catch (const NfsClientError &e) {
-        switch (e.GetCode()) {
-        case NFS3ERR_NOENT:
-        case NFS3ERR_NOTDIR:
-            return {HTTP_STATUS_NOT_FOUND,
-                    "The requested file does not exist."};
-        }
-    }
+	try {
+		FindRetrowNested<NfsClientError>(ep);
+	} catch (const NfsClientError &e) {
+		switch (e.GetCode()) {
+		case NFS3ERR_NOENT:
+		case NFS3ERR_NOTDIR:
+			return {HTTP_STATUS_NOT_FOUND,
+				"The requested file does not exist."};
+		}
+	}
 
-    return {HTTP_STATUS_INTERNAL_SERVER_ERROR, "Internal server error"};
+	return {HTTP_STATUS_INTERNAL_SERVER_ERROR, "Internal server error"};
 }
 
 void
 Request::LogDispatchError(http_status_t status,
-                          const char *msg, const char *log_msg,
-                          unsigned log_level)
+			  const char *msg, const char *log_msg,
+			  unsigned log_level)
 {
-    logger(log_level, "error on '", request.uri, "': ", log_msg);
+	logger(log_level, "error on '", request.uri, "': ", log_msg);
 
-    if (instance.config.verbose_response)
-        msg = p_strdup(&pool, log_msg);
+	if (instance.config.verbose_response)
+		msg = p_strdup(&pool, log_msg);
 
-    DispatchResponse(status, msg);
+	DispatchResponse(status, msg);
 }
 
 void
 Request::LogDispatchError(http_status_t status, const char *log_msg,
-                          unsigned log_level)
+			  unsigned log_level)
 {
-    LogDispatchError(status, http_status_to_string(status),
-                     log_msg, log_level);
+	LogDispatchError(status, http_status_to_string(status),
+			 log_msg, log_level);
 }
 
 void
 Request::LogDispatchError(std::exception_ptr ep)
 {
-    auto response = ToResponse(pool, ep);
-    if (instance.config.verbose_response)
-        response.message = p_strdup(&pool, GetFullMessage(ep).c_str());
+	auto response = ToResponse(pool, ep);
+	if (instance.config.verbose_response)
+		response.message = p_strdup(&pool, GetFullMessage(ep).c_str());
 
-    logger(response.status == HTTP_STATUS_INTERNAL_SERVER_ERROR ? 1 : 2,
-           "error on '", request.uri, "': ", ep);
+	logger(response.status == HTTP_STATUS_INTERNAL_SERVER_ERROR ? 1 : 2,
+	       "error on '", request.uri, "': ", ep);
 
-    DispatchResponse(response.status, response.message);
+	DispatchResponse(response.status, response.message);
 }
 
 void
 Request::LogDispatchError(http_status_t status, const char *msg,
-                          std::exception_ptr ep, unsigned log_level)
+			  std::exception_ptr ep, unsigned log_level)
 {
-    logger(log_level, "error on '", request.uri, "': ", ep);
+	logger(log_level, "error on '", request.uri, "': ", ep);
 
-    if (instance.config.verbose_response)
-        msg = p_strdup(&pool, GetFullMessage(ep).c_str());
+	if (instance.config.verbose_response)
+		msg = p_strdup(&pool, GetFullMessage(ep).c_str());
 
-    DispatchResponse(status, msg);
+	DispatchResponse(status, msg);
 }

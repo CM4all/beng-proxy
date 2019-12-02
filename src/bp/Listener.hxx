@@ -43,23 +43,23 @@ struct SslFactory;
  * Listener for incoming HTTP connections.
  */
 class BPListener final : public ServerSocket {
-    BpInstance &instance;
+	BpInstance &instance;
 
-    const char *const tag;
+	const char *const tag;
 
-    const bool auth_alt_host;
+	const bool auth_alt_host;
 
-    SslFactory *ssl_factory = nullptr;
+	SslFactory *ssl_factory = nullptr;
 
 public:
-    BPListener(BpInstance &_instance, const char *_tag,
-               bool _auth_alt_host,
-               const SslConfig *ssl_config);
-    ~BPListener();
+	BPListener(BpInstance &_instance, const char *_tag,
+		   bool _auth_alt_host,
+		   const SslConfig *ssl_config);
+	~BPListener();
 
 protected:
-    void OnAccept(UniqueSocketDescriptor &&fd, SocketAddress address) noexcept override;
-    void OnAcceptError(std::exception_ptr ep) noexcept override;
+	void OnAccept(UniqueSocketDescriptor &&fd, SocketAddress address) noexcept override;
+	void OnAcceptError(std::exception_ptr ep) noexcept override;
 };
 
 #endif

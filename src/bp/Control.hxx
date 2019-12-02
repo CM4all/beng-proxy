@@ -71,7 +71,7 @@ global_control_handler_add_fd(BpInstance *instance);
  */
 void
 global_control_handler_set_fd(BpInstance *instance,
-                              UniqueSocketDescriptor &&fd);
+			      UniqueSocketDescriptor &&fd);
 
 void
 local_control_handler_init(BpInstance *instance);
