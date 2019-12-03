@@ -225,9 +225,9 @@ Response
 - ``STATUS``: HTTP status code, encoded as ``uint16_t``; this parameter
   is usually not used
 
-- ``HTTP``: this URL parameter may be specified instead of ``PATH`` to
-  tell :program:`beng-proxy` to obtain the resource from a remote HTTP
-  server (see :ref:`http`)
+- ``HTTP``: load the resource from a remote HTTP server (see
+  :ref:`http`).  Payload is an absolute URI starting with ``http://`
+  or `https://`.
 
 - ``CERTIFICATE``: Use the named client certificate for the outbound
   SSL connection (see :ref:`CERTIFICATE <certificate>`).
