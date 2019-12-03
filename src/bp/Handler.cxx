@@ -201,7 +201,7 @@ handle_translated_request2(Request &request,
         request.DispatchResponse(HTTP_STATUS_UNAUTHORIZED, "Unauthorized");
     } else {
         request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                                 "Empty response from translation server", 1);
+                                 "Empty response from configuration server", 1);
     }
 }
 
