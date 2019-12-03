@@ -333,7 +333,7 @@ ResourceAddress::CacheStore(AllocatorPtr alloc,
            base mismatch */
     }
 
-    throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST, "Base mismatch");
+    throw HttpMessageResponse(HTTP_STATUS_BAD_GATEWAY, "Base mismatch");
 }
 
 ResourceAddress
