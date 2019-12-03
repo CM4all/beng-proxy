@@ -95,7 +95,7 @@ processor_subst_beng_widget(struct pool &pool,
     subst.Add(pool, "&c:base;", base_uri(&pool, env.uri));
     subst.Add(pool, "&c:frame;", strmap_get_checked(env.args, "frame"));
     subst.Add(pool, "&c:view;", widget.GetEffectiveView()->name);
-    subst.Add(pool, "&c:session;", strmap_get_checked(env.args, "session"));
+    subst.Add(pool, "&c:session;", nullptr); /* obsolete as of version 15.29 */
     return subst;
 }
 

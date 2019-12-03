@@ -66,6 +66,10 @@ Request::ParseArgs()
     }
 
     args = args_parse(&pool, dissected_uri.args.data, dissected_uri.args.size);
+
+    /* obsolete as of version 15.29 */
+    args.Remove("session");
+
     translate.request.param = args.Remove("translate");
     translate.request.session = nullptr;
 }

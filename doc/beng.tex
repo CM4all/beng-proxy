@@ -3747,8 +3747,6 @@ this variable for redirecting \\
 \texttt{\&c:view;} & the name of the current view \\
 
 \hline
-\texttt{\&c:session;} & the current session id \\
-\hline
 \end{longtabu*}
 
 \subsection{Relative URIs}
@@ -3962,9 +3960,10 @@ beng_widget_uri(base_uri, session_id, frame, focus, mode,
 \end{verbatim*}
 
 The return value is the URI which can be safely requested by the
-widget server.  For \texttt{base\_uri}, \texttt{session\_id},
+widget server.  For \texttt{base\_uri} and
 \texttt{frame}, you should pass the value of \texttt{\&c:base;},
-\texttt{\&c:session;}, \texttt{\&c:frame;}.
+\texttt{\&c:frame;}.  The \verb|session_id| parameter is obsolete and
+should be \verb|null|.
 
 \texttt{focus} is the path of the focused widget, and can be filled
 with \texttt{\&c:path;} most of the time, unless you can to request a

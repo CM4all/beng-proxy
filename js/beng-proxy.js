@@ -18,9 +18,6 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
 
     let params = "";
 
-    if (session_id)
-        params += ";session=" + _beng_proxy_escape(session_id);
-
     if (translate != null)
         params += "&translate=" + _beng_proxy_escape(translate);
 
