@@ -429,6 +429,7 @@ ServerConnection::SendCallback(const void *data, size_t length) noexcept
 		const int e = errno;
 		switch (e) {
 		case EAGAIN:
+		socket.ScheduleWrite();
 			return NGHTTP2_ERR_WOULDBLOCK;
 		}
 	}
@@ -528,6 +529,9 @@ ServerConnection::OnBufferedWrite()
 	if (rv != 0)
 		throw FormatRuntimeError("nghttp2_session_send() failed: %s",
 					 nghttp2_strerror(rv));
+
+	if (!nghttp2_session_want_write(session.get()))
+		socket.UnscheduleWrite();
 
 	return true;
 }
