@@ -31,70 +31,12 @@
  */
 
 #include "FifoBufferIstream.hxx"
-#include "istream.hxx"
 #include "UnusedPtr.hxx"
 #include "Bucket.hxx"
 #include "New.hxx"
-#include "SliceFifoBuffer.hxx"
 #include "fb_pool.hxx"
 
 #include <string.h>
-
-class FifoBufferIstream final : public Istream {
-	FifoBufferIstreamHandler &handler;
-
-	const SharedPoolPtr<FifoBufferIstreamControl> control;
-
-	SliceFifoBuffer buffer;
-
-	bool eof = false;
-
-public:
-	FifoBufferIstream(struct pool &p,
-			  FifoBufferIstreamHandler &_handler) noexcept
-		:Istream(p),
-		 handler(_handler),
-		 control(SharedPoolPtr<FifoBufferIstreamControl>::Make(p, *this)) {}
-
-	~FifoBufferIstream() noexcept {
-		control->fbi = nullptr;
-	}
-
-	auto GetControl() noexcept {
-		return control;
-	}
-
-	auto &GetBuffer() noexcept {
-		return buffer;
-	}
-
-	size_t Push(ConstBuffer<void> src) noexcept;
-
-	void SetEof() noexcept;
-
-	using Istream::DestroyError;
-
-	void SubmitBuffer() noexcept;
-
-	/* virtual methods from class Istream */
-
-	off_t _GetAvailable(bool partial) noexcept override {
-		return partial || eof
-			? (off_t)buffer.GetAvailable()
-			: (off_t)-1;
-	}
-
-	off_t _Skip(off_t length) noexcept override;
-	void _Read() noexcept override;
-	void _FillBucketList(IstreamBucketList &list) noexcept override;
-	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
-
-	void _Close() noexcept override {
-		if (!eof)
-			handler.OnFifoBufferIstreamClosed();
-		Istream::_Close();
-	}
-};
 
 SliceFifoBuffer *
 FifoBufferIstreamControl::GetBuffer() noexcept
