@@ -307,7 +307,8 @@ Stock::Stock() noexcept
 Stock::~Stock() noexcept = default;
 
 static StringBuffer<1024>
-MakeKey(SocketAddress bind_address, SocketAddress address) noexcept
+MakeKey(SocketAddress bind_address, SocketAddress address,
+	SocketFilterFactory *filter_factory) noexcept
 {
 	StringBuffer<1024> buffer;
 	char *p = buffer.data();
@@ -322,6 +323,16 @@ MakeKey(SocketAddress bind_address, SocketAddress address) noexcept
 
 	if (ToString(p, end - p, address))
 		p += strlen(p);
+
+	if (filter_factory != nullptr && p + 2 < end) {
+		*p++ = '|';
+
+		const char *id = filter_factory->GetFilterId();
+		if (id != nullptr) {
+			auto length = std::min<size_t>(strlen(id), end - p - 1);
+			p = (char *)mempcpy(p, id, length);
+		}
+	}
 
 	*p = 0;
 
@@ -344,7 +355,7 @@ Stock::Get(EventLoop &event_loop,
 	if (name != nullptr)
 		key = name;
 	else {
-		key_buffer = MakeKey(bind_address, address);
+		key_buffer = MakeKey(bind_address, address, filter_factory);
 		key = key_buffer.c_str();
 	}
 
