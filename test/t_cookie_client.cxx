@@ -39,15 +39,16 @@
 #include "AllocatorPtr.hxx"
 #include "strmap.hxx"
 
-#include <assert.h>
-#include <stdio.h>
+#include <gtest/gtest.h>
+
 #include <unistd.h>
 #include <errno.h>
-#include <string.h>
 
-static void
-Test1(struct dpool *dpool)
+TEST(CookieClientTest, Test1)
 {
+	const auto shm = shm_new(1024, 512);
+	const auto dpool = dpool_new(*shm);
+
 	RootPool pool;
 	const AllocatorPtr alloc(pool);
 	StringMap headers;
@@ -56,41 +57,46 @@ Test1(struct dpool *dpool)
 
 	/* empty cookie jar */
 	cookie_jar_http_header(jar, "foo.bar", "/", headers, alloc);
-	assert(headers.Get("cookie") == nullptr);
-	assert(headers.Get("cookie2") == nullptr);
+	EXPECT_EQ(headers.Get("cookie"), nullptr);
+	EXPECT_EQ(headers.Get("cookie2"), nullptr);
 
 	/* wrong domain */
 	cookie_jar_set_cookie2(jar, "a=b", "other.domain", nullptr);
 	cookie_jar_http_header(jar, "foo.bar", "/", headers, alloc);
-	assert(headers.Get("cookie") == nullptr);
-	assert(headers.Get("cookie2") == nullptr);
+	EXPECT_EQ(headers.Get("cookie"), nullptr);
+	EXPECT_EQ(headers.Get("cookie2"), nullptr);
 
 	/* correct domain */
 	cookie_jar_set_cookie2(jar, "a=b", "foo.bar", nullptr);
 	cookie_jar_http_header(jar, "foo.bar", "/", headers, alloc);
-	assert(strcmp(headers.Get("cookie"), "a=b") == 0);
+	EXPECT_STREQ(headers.Get("cookie"), "a=b");
 
 	/* another cookie */
 	headers.Clear();
 	cookie_jar_set_cookie2(jar, "c=d", "foo.bar", nullptr);
 	cookie_jar_http_header(jar, "foo.bar", "/", headers, alloc);
-	assert(strcmp(headers.Get("cookie"), "c=d; a=b") == 0);
+	EXPECT_STREQ(headers.Get("cookie"), "c=d; a=b");
 
 	/* delete a cookie */
 	headers.Clear();
 	cookie_jar_set_cookie2(jar, "c=xyz;max-age=0", "foo.bar", nullptr);
 	cookie_jar_http_header(jar, "foo.bar", "/", headers, alloc);
-	assert(strcmp(headers.Get("cookie"), "a=b") == 0);
+	EXPECT_STREQ(headers.Get("cookie"), "a=b");
 
 	/* other domain */
 	headers.Clear();
 	cookie_jar_http_header(jar, "other.domain", "/some_path", headers, alloc);
-	assert(strcmp(headers.Get("cookie"), "a=b") == 0);
+	EXPECT_STREQ(headers.Get("cookie"), "a=b");
+
+	dpool_destroy(dpool);
+	shm_close(shm);
 }
 
-static void
-Test2(struct dpool *dpool)
+TEST(CookieClientTest, Test2)
 {
+	const auto shm = shm_new(1024, 512);
+	const auto dpool = dpool_new(*shm);
+
 	RootPool pool;
 	const AllocatorPtr alloc(pool);
 	StringMap headers;
@@ -100,40 +106,29 @@ Test2(struct dpool *dpool)
 
 	cookie_jar_set_cookie2(jar, "a=b;path=\"/foo\"", "foo.bar", "/bar/x");
 	cookie_jar_http_header(jar, "foo.bar", "/", headers, alloc);
-	assert(headers.Get("cookie") == nullptr);
-	assert(headers.Get("cookie2") == nullptr);
+	EXPECT_EQ(headers.Get("cookie"), nullptr);
+	EXPECT_EQ(headers.Get("cookie2"), nullptr);
 
 	/* correct path */
 	headers.Clear();
 	cookie_jar_set_cookie2(jar, "a=b;path=\"/bar\"", "foo.bar", "/bar/x");
 	cookie_jar_http_header(jar, "foo.bar", "/bar", headers, alloc);
-	assert(strcmp(headers.Get("cookie"), "a=b") == 0);
+	EXPECT_STREQ(headers.Get("cookie"), "a=b");
 
 	/* delete: path mismatch */
 	headers.Clear();
 	cookie_jar_set_cookie2(jar, "a=b;path=\"/foo\";max-age=0",
 			       "foo.bar", "/foo/x");
 	cookie_jar_http_header(jar, "foo.bar", "/bar", headers, alloc);
-	assert(strcmp(headers.Get("cookie"), "a=b") == 0);
+	EXPECT_STREQ(headers.Get("cookie"), "a=b");
 
 	/* delete: path match */
 	headers.Clear();
 	cookie_jar_set_cookie2(jar, "a=b;path=\"/bar\";max-age=0",
 			       "foo.bar", "/bar/x");
 	cookie_jar_http_header(jar, "foo.bar", "/bar", headers, alloc);
-	assert(headers.Get("cookie") == nullptr);
-	assert(headers.Get("cookie2") == nullptr);
-}
-
-int main(int argc gcc_unused, char **argv gcc_unused) {
-	struct shm *shm;
-	struct dpool *dpool;
-
-	shm = shm_new(1024, 512);
-	dpool = dpool_new(*shm);
-
-	Test1(dpool);
-	Test2(dpool);
+	EXPECT_EQ(headers.Get("cookie"), nullptr);
+	EXPECT_EQ(headers.Get("cookie2"), nullptr);
 
 	dpool_destroy(dpool);
 	shm_close(shm);
