@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,26 +35,7 @@
 #include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
-#include <stdio.h>
-
-static void
-CheckString(const char *expected, const char *value)
-{
-	if (expected == nullptr) {
-		if (value != nullptr) {
-			fprintf(stderr, "Expected nullptr, got '%s'\n", value);
-			abort();
-		}
-	} else {
-		if (value == nullptr) {
-			fprintf(stderr, "Expected '%s', got nullptr\n", expected);
-			abort();
-		} else if (strcmp(expected, value) != 0) {
-			fprintf(stderr, "Expected '%s', got '%s'\n", expected, value);
-			abort();
-		}
-	}
-}
+#include <gtest/gtest.h>
 
 struct RelocateUriTest {
 	const char *uri;
@@ -109,26 +90,19 @@ CheckRelocateUri(AllocatorPtr alloc, const char *uri,
 	auto *relocated = RelocateUri(alloc, uri, internal_host, internal_path,
 				      external_scheme, external_host,
 				      external_path, base);
-	CheckString(expected, relocated);
+	EXPECT_STREQ(expected, relocated);
 }
 
-static void
-TestRelocateUri(struct pool &pool)
+TEST(RelocateUri, RelocateUri)
 {
-	for (const auto &i : relocate_uri_tests)
-		CheckRelocateUri(pool, i.uri, i.internal_host, i.internal_path,
+	RootPool pool;
+
+	for (const auto &i : relocate_uri_tests) {
+		AllocatorPtr alloc(pool);
+
+		CheckRelocateUri(alloc, i.uri, i.internal_host, i.internal_path,
 				 "https", "external-host:80",
 				 i.external_path, i.base,
 				 i.expected);
-}
-
-/*
- * the main test code
- *
- */
-
-int main(gcc_unused int argc, gcc_unused char **argv)
-{
-	TestRelocateUri(RootPool());
-	return EXIT_SUCCESS;
+	}
 }

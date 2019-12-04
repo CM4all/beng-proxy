@@ -587,6 +587,7 @@ test('t_relocate_uri', executable('t_relocate_uri',
   '../src/relocate_uri.cxx',
   include_directories: inc,
   dependencies: [
+    gtest,
     putil_dep,
   ]))
 
