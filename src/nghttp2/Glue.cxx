@@ -97,7 +97,7 @@ private:
 	}
 
 	/* virtual methods from class StockGetHandler */
-	void OnNgHttp2StockReady(ClientConnection &connection) noexcept {
+	void OnNgHttp2StockReady(ClientConnection &connection) noexcept override {
 		auto &_pool = pool;
 		auto _stopwatch = std::move(stopwatch);
 		auto &_handler = handler;
@@ -114,7 +114,7 @@ private:
 				       _handler, _caller_cancel_ptr);
 	}
 
-	void OnNgHttp2StockError(std::exception_ptr e) noexcept {
+	void OnNgHttp2StockError(std::exception_ptr e) noexcept override {
 		auto &_handler = handler;
 		Destroy();
 		_handler.InvokeError(std::move(e));
