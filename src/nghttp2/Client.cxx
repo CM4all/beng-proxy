@@ -40,6 +40,7 @@
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "istream/FifoBufferIstream.hxx"
+#include "fs/FilteredSocket.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
@@ -294,7 +295,7 @@ ClientConnection::Request::SendRequest(http_method_t method, const char *uri,
 
 	state = State::HEADERS;
 
-	connection.socket.ScheduleWrite();
+	connection.socket->ScheduleWrite();
 }
 
 void
@@ -448,14 +449,14 @@ ClientConnection::ClientConnection(EventLoop &loop,
 				   FdType fd_type,
 				   SocketFilterPtr filter,
 				   ConnectionHandler &_handler)
-	:socket(loop),
+	:socket(new FilteredSocket(loop)),
 	 handler(_handler),
 	 defer_invoke_idle(loop, BIND_THIS_METHOD(InvokeIdle))
 {
-	socket.Init(fd.Release(), fd_type,
-		    Event::Duration(-1), write_timeout,
-		    std::move(filter),
-		    *this);
+	socket->Init(fd.Release(), fd_type,
+		     Event::Duration(-1), write_timeout,
+		     std::move(filter),
+		     *this);
 
 	NgHttp2::SessionCallbacks callbacks;
 	nghttp2_session_callbacks_set_send_callback(callbacks.get(), SendCallback);
@@ -478,7 +479,7 @@ ClientConnection::ClientConnection(EventLoop &loop,
 		throw FormatRuntimeError("nghttp2_submit_settings() failed: %s",
 					 nghttp2_strerror(rv));
 
-	socket.ScheduleReadNoTimeout(false);
+	socket->ScheduleReadNoTimeout(false);
 }
 
 ClientConnection::~ClientConnection() noexcept
@@ -524,12 +525,12 @@ ClientConnection::AbortAllRequests(std::exception_ptr e) noexcept
 ssize_t
 ClientConnection::SendCallback(const void *data, size_t length) noexcept
 {
-	const auto nbytes = socket.Write(data, length);
+	const auto nbytes = socket->Write(data, length);
 	if (nbytes < 0) {
 		const int e = errno;
 		switch (e) {
 		case EAGAIN:
-			socket.ScheduleWrite();
+			socket->ScheduleWrite();
 			return NGHTTP2_ERR_WOULDBLOCK;
 		}
 	}
@@ -575,7 +576,7 @@ ClientConnection::OnFrameRecvCallback(const nghttp2_frame *frame) noexcept
 BufferedResult
 ClientConnection::OnBufferedData()
 {
-	auto r = socket.ReadBuffer();
+	auto r = socket->ReadBuffer();
 
 	auto nbytes = nghttp2_session_mem_recv(session.get(),
 					       (const uint8_t *)r.data, r.size);
@@ -583,7 +584,7 @@ ClientConnection::OnBufferedData()
 		throw FormatRuntimeError("nghttp2_session_mem_recv() failed: %s",
 					 nghttp2_strerror((int)nbytes));
 
-	socket.DisposeConsumed(nbytes);
+	socket->DisposeConsumed(nbytes);
 
 	const auto rv = nghttp2_session_send(session.get());
 	if (rv != 0)
@@ -611,7 +612,7 @@ ClientConnection::OnBufferedWrite()
 					 nghttp2_strerror(rv));
 
 	if (!nghttp2_session_want_write(session.get()))
-		socket.UnscheduleWrite();
+		socket->UnscheduleWrite();
 
 	return true;
 }

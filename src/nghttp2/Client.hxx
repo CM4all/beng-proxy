@@ -33,12 +33,14 @@
 #pragma once
 
 #include "Session.hxx"
-#include "fs/FilteredSocket.hxx"
 #include "fs/Ptr.hxx"
+#include "event/net/BufferedSocket.hxx"
 #include "event/DeferEvent.hxx"
 #include "http/Method.h"
 
 #include <boost/intrusive/list.hpp>
+
+#include <memory>
 
 struct pool;
 class StringMap;
@@ -47,6 +49,7 @@ class UniqueSocketDescriptor;
 class HttpResponseHandler;
 class UnusedIstreamPtr;
 class CancellablePointer;
+class FilteredSocket;
 
 namespace NgHttp2 {
 
@@ -58,7 +61,7 @@ public:
 };
 
 class ClientConnection final : BufferedSocketHandler {
-	FilteredSocket socket;
+	const std::unique_ptr<FilteredSocket> socket;
 
 	ConnectionHandler &handler;
 
