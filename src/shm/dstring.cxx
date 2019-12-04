@@ -43,48 +43,48 @@
 char *
 d_memdup(struct dpool &pool, const void *src, size_t length)
 {
-    void *dest = d_malloc(pool, length);
-    memcpy(dest, src, length);
-    return (char *)dest;
+	void *dest = d_malloc(pool, length);
+	memcpy(dest, src, length);
+	return (char *)dest;
 }
 
 char *
 d_strdup(struct dpool &pool, const char *src)
 {
-    return (char *)d_memdup(pool, src, strlen(src) + 1);
+	return (char *)d_memdup(pool, src, strlen(src) + 1);
 }
 
 char *
 d_strdup(struct dpool &pool, StringView src)
 {
-    return d_strndup(pool, src.data, src.size);
+	return d_strndup(pool, src.data, src.size);
 }
 
 char *
 d_strndup(struct dpool &pool, const char *src, size_t length)
 {
-    char *dest = (char *)d_malloc(pool, length + 1);
-    memcpy(dest, src, length);
-    dest[length] = 0;
-    return dest;
+	char *dest = (char *)d_malloc(pool, length + 1);
+	memcpy(dest, src, length);
+	dest[length] = 0;
+	return dest;
 }
 
 StringView
 DupStringView(struct dpool &pool, StringView src)
 {
-    if (src.IsNull())
-        return nullptr;
+	if (src.IsNull())
+		return nullptr;
 
-    if (src.empty())
-        return "";
+	if (src.empty())
+		return "";
 
-    const char *data = d_memdup(pool, src.data, src.size);
-    return {data, src.size};
+	const char *data = d_memdup(pool, src.data, src.size);
+	return {data, src.size};
 }
 
 void
 FreeStringView(struct dpool &pool, StringView s)
 {
-    if (!s.empty())
-        d_free(pool, s.data);
+	if (!s.empty())
+		d_free(pool, s.data);
 }

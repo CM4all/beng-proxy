@@ -66,19 +66,19 @@ template<typename T, typename... Args>
 T *
 NewFromShm(struct shm *shm, unsigned num_pages, Args&&... args)
 {
-    void *t = shm_alloc(shm, num_pages);
-    if (t == nullptr)
-        return nullptr;
+	void *t = shm_alloc(shm, num_pages);
+	if (t == nullptr)
+		return nullptr;
 
-    return ::new(t) T(std::forward<Args>(args)...);
+	return ::new(t) T(std::forward<Args>(args)...);
 }
 
 template<typename T>
 void
 DeleteFromShm(struct shm *shm, T *t)
 {
-    t->~T();
-    shm_free(shm, t);
+	t->~T();
+	shm_free(shm, t);
 }
 
 #endif

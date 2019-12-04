@@ -46,79 +46,79 @@ struct dpool;
  * An instance is always in a well-defined state; it cannot be uninitialized.
  */
 class DString {
-    char *value = nullptr;
+	char *value = nullptr;
 
-    explicit constexpr DString(char *_value):value(_value) {}
+	explicit constexpr DString(char *_value):value(_value) {}
 
 public:
-    /**
-     * Construct a "nulled" instance.
-     */
-    DString() = default;
+	/**
+	 * Construct a "nulled" instance.
+	 */
+	DString() = default;
 
-    constexpr DString(std::nullptr_t) {}
+	constexpr DString(std::nullptr_t) {}
 
-    /**
-     * Throws std::bad_alloc on error.
-     */
-    DString(struct dpool &pool, StringView src) {
-        Set(pool, src);
-    }
+	/**
+	 * Throws std::bad_alloc on error.
+	 */
+	DString(struct dpool &pool, StringView src) {
+		Set(pool, src);
+	}
 
-    /**
-     * Throws std::bad_alloc on error.
-     */
-    DString(struct dpool &pool, const DString &src)
-        :DString(pool, src.value) {}
+	/**
+	 * Throws std::bad_alloc on error.
+	 */
+	DString(struct dpool &pool, const DString &src)
+		:DString(pool, src.value) {}
 
-    static DString Donate(char *_value) {
-        return DString(_value);
-    }
+	static DString Donate(char *_value) {
+		return DString(_value);
+	}
 
-    DString(DString &&src):value(src.value) {
-        src.value = nullptr;
-    }
+	DString(DString &&src):value(src.value) {
+		src.value = nullptr;
+	}
 
-    DString &operator=(DString &&src) noexcept {
-        std::swap(value, src.value);
-        return *this;
-    }
+	DString &operator=(DString &&src) noexcept {
+		std::swap(value, src.value);
+		return *this;
+	}
 
-    constexpr operator bool() const noexcept {
-        return value != nullptr;
-    }
+	constexpr operator bool() const noexcept {
+		return value != nullptr;
+	}
 
-    constexpr operator const char *() const noexcept {
-        return value;
-    }
+	constexpr operator const char *() const noexcept {
+		return value;
+	}
 
-    constexpr const char *c_str() const noexcept {
-        return value;
-    }
+	constexpr const char *c_str() const noexcept {
+		return value;
+	}
 
-    operator StringView() const noexcept {
-        return value;
-    }
+	operator StringView() const noexcept {
+		return value;
+	}
 
-    /* note: this method is only necessary to work around a GCC 8 bug
-       ("error: call of overloaded 'StringView(const DString&)' is
-       ambiguous") */
-    auto ToStringView() const noexcept {
-        return value;
-    }
+	/* note: this method is only necessary to work around a GCC 8 bug
+	   ("error: call of overloaded 'StringView(const DString&)' is
+	   ambiguous") */
+	auto ToStringView() const noexcept {
+		return value;
+	}
 
-    void Clear(struct dpool &pool) noexcept;
+	void Clear(struct dpool &pool) noexcept;
 
-    /**
-     * Assign a new value.  Throws std::bad_alloc if memory allocation
-     * fails.
-     */
-    void Set(struct dpool &pool, StringView _value);
+	/**
+	 * Assign a new value.  Throws std::bad_alloc if memory allocation
+	 * fails.
+	 */
+	void Set(struct dpool &pool, StringView _value);
 
-    /**
-     * Assign a new value.  Returns false if memory allocation fails.
-     */
-    bool SetNoExcept(struct dpool &pool, StringView _value) noexcept;
+	/**
+	 * Assign a new value.  Returns false if memory allocation fails.
+	 */
+	bool SetNoExcept(struct dpool &pool, StringView _value) noexcept;
 };
 
 #endif

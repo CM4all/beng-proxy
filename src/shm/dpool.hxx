@@ -99,7 +99,7 @@ d_strdup(struct dpool &pool, StringView src);
 static inline char *
 d_strdup_checked(struct dpool &pool, const char *src)
 {
-    return src != NULL ? d_strdup(pool, src) : NULL;
+	return src != NULL ? d_strdup(pool, src) : NULL;
 }
 
 /**
@@ -130,30 +130,30 @@ template<typename T, typename... Args>
 T *
 NewFromPool(struct dpool &pool, Args&&... args)
 {
-    void *t = d_malloc(pool, sizeof(T));
+	void *t = d_malloc(pool, sizeof(T));
 
-    try {
-        return ::new(t) T(std::forward<Args>(args)...);
-    } catch (...) {
-        d_free(pool, t);
-        throw;
-    }
+	try {
+		return ::new(t) T(std::forward<Args>(args)...);
+	} catch (...) {
+		d_free(pool, t);
+		throw;
+	}
 }
 
 template<typename T>
 void
 DeleteFromPool(struct dpool &pool, T *t)
 {
-    t->~T();
-    d_free(pool, t);
+	t->~T();
+	d_free(pool, t);
 }
 
 template<typename T>
 void
 DeleteDestroyPool(struct dpool &pool, T *t)
 {
-    t->~T();
-    dpool_destroy(&pool);
+	t->~T();
+	dpool_destroy(&pool);
 }
 
 #endif
