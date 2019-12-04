@@ -90,7 +90,8 @@ public:
 	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
 
 	void _Close() noexcept override {
-		handler.OnFifoBufferIstreamClosed();
+		if (!eof)
+			handler.OnFifoBufferIstreamClosed();
 		Istream::_Close();
 	}
 };
