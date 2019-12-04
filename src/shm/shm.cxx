@@ -64,7 +64,7 @@ struct shm {
 		: boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 		unsigned num_pages;
 
-		bool operator<(const Page &other) const {
+		bool operator<(const Page &other) const noexcept {
 			return this < &other;
 		}
 	};
@@ -75,68 +75,70 @@ struct shm {
 	PageList available;
 	Page pages[1];
 
-	shm(size_t _page_size, unsigned _num_pages)
+	shm(size_t _page_size, unsigned _num_pages) noexcept
 		:page_size(_page_size), num_pages(_num_pages),
 		 data(At(page_size * CalcHeaderPages())) {
 		pages[0].num_pages = num_pages;
 		available.push_front(pages[0]);
 	}
 
-	static unsigned CalcHeaderPages(size_t page_size, unsigned num_pages) {
+	static unsigned CalcHeaderPages(size_t page_size,
+					unsigned num_pages) noexcept {
 		size_t header_size = sizeof(struct shm) +
 			(num_pages - 1) * sizeof(Page);
 		return (header_size + page_size - 1) / page_size;
 	}
 
-	static size_t CalcMemoryMapSize(size_t page_size, unsigned num_pages) {
+	static size_t CalcMemoryMapSize(size_t page_size,
+					unsigned num_pages) noexcept {
 		return page_size * (CalcHeaderPages(page_size, num_pages) + num_pages);
 	}
 
-	unsigned CalcHeaderPages() const {
+	unsigned CalcHeaderPages() const noexcept {
 		return CalcHeaderPages(page_size, num_pages);
 	}
 
-	size_t CalcMemoryMapSize() const {
+	size_t CalcMemoryMapSize() const noexcept {
 		return CalcMemoryMapSize(page_size, num_pages);
 	}
 
-	uint8_t *At(size_t offset) {
+	uint8_t *At(size_t offset) noexcept {
 		return (uint8_t *)this + offset;
 	}
 
-	const uint8_t *At(size_t offset) const {
+	const uint8_t *At(size_t offset) const noexcept {
 		return (const uint8_t *)this + offset;
 	}
 
-	uint8_t *GetData() {
+	uint8_t *GetData() noexcept {
 		return data;
 	}
 
-	const uint8_t *GetData() const {
+	const uint8_t *GetData() const noexcept {
 		return data;
 	}
 
-	uint8_t *PageData(unsigned page_number) {
+	uint8_t *PageData(unsigned page_number) noexcept {
 		return GetData() + page_number * page_size;
 	}
 
-	const uint8_t *PageData(unsigned page_number) const {
+	const uint8_t *PageData(unsigned page_number) const noexcept {
 		return GetData() + page_number * page_size;
 	}
 
-	uint8_t *PageData(Page &page) {
+	uint8_t *PageData(Page &page) noexcept {
 		return PageData(PageNumber(page));
 	}
 
-	const uint8_t *PageData(const Page &page) const {
+	const uint8_t *PageData(const Page &page) const noexcept {
 		return PageData(PageNumber(page));
 	}
 
-	unsigned PageNumber(const Page &page) const {
+	unsigned PageNumber(const Page &page) const noexcept {
 		return &page - &pages[0];
 	}
 
-	unsigned PageNumber(const void *p) const {
+	unsigned PageNumber(const void *p) const noexcept {
 		ptrdiff_t difference = (const uint8_t *)p - GetData();
 		unsigned page_number = difference / page_size;
 		assert(difference % page_size == 0);
@@ -146,17 +148,17 @@ struct shm {
 		return page_number;
 	}
 
-	Page *FindAvailable(unsigned want_pages);
-	Page *SplitPage(Page *page, unsigned want_pages);
+	Page *FindAvailable(unsigned want_pages) noexcept;
+	Page *SplitPage(Page *page, unsigned want_pages) noexcept;
 
 	/**
 	 * Merge this page with its adjacent pages if possible, to create
 	 * bigger "available" areas.
 	 */
-	void Merge(Page *page);
+	void Merge(Page *page) noexcept;
 
-	void *Allocate(unsigned want_pages);
-	void Free(const void *p);
+	void *Allocate(unsigned want_pages) noexcept;
+	void Free(const void *p) noexcept;
 };
 
 struct shm *
@@ -177,7 +179,7 @@ shm_new(size_t page_size, unsigned num_pages)
 }
 
 void
-shm_ref(struct shm *shm)
+shm_ref(struct shm *shm) noexcept
 {
 	assert(shm != nullptr);
 
@@ -185,7 +187,7 @@ shm_ref(struct shm *shm)
 }
 
 void
-shm_close(struct shm *shm)
+shm_close(struct shm *shm) noexcept
 {
 	assert(shm != nullptr);
 
@@ -199,13 +201,13 @@ shm_close(struct shm *shm)
 }
 
 size_t
-shm_page_size(const struct shm *shm)
+shm_page_size(const struct shm *shm) noexcept
 {
 	return shm->page_size;
 }
 
 shm::Page *
-shm::FindAvailable(unsigned want_pages)
+shm::FindAvailable(unsigned want_pages) noexcept
 {
 	for (auto &page : available)
 		if (page.num_pages >= want_pages)
@@ -215,7 +217,7 @@ shm::FindAvailable(unsigned want_pages)
 }
 
 shm::Page *
-shm::SplitPage(Page *page, unsigned want_pages)
+shm::SplitPage(Page *page, unsigned want_pages) noexcept
 {
 	assert(page->num_pages > want_pages);
 
@@ -228,7 +230,7 @@ shm::SplitPage(Page *page, unsigned want_pages)
 }
 
 void *
-shm::Allocate(unsigned want_pages)
+shm::Allocate(unsigned want_pages) noexcept
 {
 	assert(want_pages > 0);
 
@@ -265,7 +267,7 @@ shm::Allocate(unsigned want_pages)
 }
 
 void *
-shm_alloc(struct shm *shm, unsigned want_pages)
+shm_alloc(struct shm *shm, unsigned want_pages) noexcept
 {
 	return shm->Allocate(want_pages);
 }
@@ -273,7 +275,7 @@ shm_alloc(struct shm *shm, unsigned want_pages)
 /** merge this page with its adjacent pages if possible, to create
     bigger "available" areas */
 void
-shm::Merge(Page *page)
+shm::Merge(Page *page) noexcept
 {
 	/* merge with previous page? */
 
@@ -309,7 +311,7 @@ shm::Merge(Page *page)
 }
 
 void
-shm::Free(const void *p)
+shm::Free(const void *p) noexcept
 {
 	unsigned page_number = PageNumber(p);
 	Page *page = &pages[page_number];
@@ -324,7 +326,7 @@ shm::Free(const void *p)
 }
 
 void
-shm_free(struct shm *shm, const void *p)
+shm_free(struct shm *shm, const void *p) noexcept
 {
 	shm->Free(p);
 }

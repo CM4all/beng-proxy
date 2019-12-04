@@ -48,19 +48,19 @@ struct shm *
 shm_new(size_t page_size, unsigned num_pages);
 
 void
-shm_ref(struct shm *shm);
+shm_ref(struct shm *shm) noexcept;
 
 void
-shm_close(struct shm *shm);
+shm_close(struct shm *shm) noexcept;
 
 size_t
-shm_page_size(const struct shm *shm);
+shm_page_size(const struct shm *shm) noexcept;
 
 void *
-shm_alloc(struct shm *shm, unsigned num_pages);
+shm_alloc(struct shm *shm, unsigned num_pages) noexcept;
 
 void
-shm_free(struct shm *shm, const void *p);
+shm_free(struct shm *shm, const void *p) noexcept;
 
 template<typename T, typename... Args>
 T *
@@ -75,7 +75,7 @@ NewFromShm(struct shm *shm, unsigned num_pages, Args&&... args)
 
 template<typename T>
 void
-DeleteFromShm(struct shm *shm, T *t)
+DeleteFromShm(struct shm *shm, T *t) noexcept
 {
 	t->~T();
 	shm_free(shm, t);
