@@ -445,18 +445,14 @@ ClientConnection::Request::OnStreamCloseCallback(uint32_t error_code) noexcept
 }
 
 ClientConnection::ClientConnection(EventLoop &loop,
-				   UniqueSocketDescriptor fd,
-				   FdType fd_type,
-				   SocketFilterPtr filter,
+				   std::unique_ptr<FilteredSocket> _socket,
 				   ConnectionHandler &_handler)
-	:socket(new FilteredSocket(loop)),
+	:socket(std::move(_socket)),
 	 handler(_handler),
 	 defer_invoke_idle(loop, BIND_THIS_METHOD(InvokeIdle))
 {
-	socket->Init(fd.Release(), fd_type,
-		     Event::Duration(-1), write_timeout,
-		     std::move(filter),
-		     *this);
+	socket->Reinit(Event::Duration(-1), write_timeout,
+		       *this);
 
 	NgHttp2::SessionCallbacks callbacks;
 	nghttp2_session_callbacks_set_send_callback(callbacks.get(), SendCallback);

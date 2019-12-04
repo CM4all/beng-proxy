@@ -33,14 +33,16 @@
 #include "Stock.hxx"
 #include "Client.hxx"
 #include "fs/Factory.hxx"
+#include "fs/FilteredSocket.hxx"
+#include "fs/Connect.hxx"
 #include "event/TimerEvent.hxx"
-#include "event/net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/ToString.hxx"
 #include "io/Logger.hxx"
 #include "util/djbhash.h"
 #include "util/StringBuffer.hxx"
 #include "AllocatorPtr.hxx"
+#include "stopwatch.hxx"
 
 #include <string>
 
@@ -50,7 +52,7 @@ namespace NgHttp2 {
 
 class Stock::Item final
 	: public boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
-	  ConnectSocketHandler, ConnectionHandler
+	  ConnectFilteredSocketHandler, ConnectionHandler
 {
 	Stock &stock;
 
@@ -86,7 +88,6 @@ class Stock::Item final
 			       boost::intrusive::constant_time_size<false>> get_requests;
 
 	CancellablePointer connect_cancel;
-	ConnectSocket connect_operation;
 
 	TimerEvent idle_timer;
 
@@ -132,8 +133,8 @@ private:
 	}
 
 	/* virtual methods from class ConnectSocketHandler */
-	void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
-	void OnSocketConnectError(std::exception_ptr e) noexcept override {
+	void OnConnectFilteredSocket(std::unique_ptr<FilteredSocket> socket) noexcept override;
+	void OnConnectFilteredSocketError(std::exception_ptr e) noexcept override {
 		AbortConnectError(std::move(e));
 	}
 
@@ -148,7 +149,6 @@ Stock::Item::Item(Stock &_stock, EventLoop &event_loop, K &&_key,
 		  SocketFilterFactory *_filter_factory) noexcept
 	:stock(_stock), key(std::forward<K>(_key)),
 	 filter_factory(_filter_factory),
-	 connect_operation(event_loop, *this),
 	 idle_timer(event_loop, BIND_THIS_METHOD(OnIdleTimer))
 {
 }
@@ -158,14 +158,10 @@ Stock::Item::Start(SocketAddress bind_address,
 		   SocketAddress address,
 		   Event::Duration timeout) noexcept
 {
-	const int address_family = address.GetFamily();
-	fd_type = address_family == AF_LOCAL
-		? FD_SOCKET
-		: FD_TCP;
-
-	(void)bind_address; // TODO
-
-	connect_operation.Connect(address, timeout);
+	ConnectFilteredSocket(GetEventLoop(),
+			      {}, // TODO
+			      false, bind_address, address, timeout,
+			      filter_factory, *this, connect_cancel);
 }
 
 void
@@ -175,8 +171,6 @@ Stock::Item::AddGetHandler(AllocatorPtr alloc,
 			   CancellablePointer &cancel_ptr) noexcept
 {
 	if (connection) {
-		assert(!connect_operation.IsPending());
-
 		idle_timer.Schedule(std::chrono::minutes(1));
 		handler.OnNgHttp2StockReady(*connection);
 	} else {
@@ -202,30 +196,22 @@ void
 Stock::Item::Cancel() noexcept
 {
 	assert(get_requests.empty());
+	assert(!connection);
 
-	if (connect_operation.IsPending()) {
-		assert(!connection);
-
-		connect_cancel.Cancel();
-	} else {
-		// TODO cancel SSL handshake?
-	}
+	connect_cancel.Cancel();
 
 	stock.DeleteItem(this);
 }
 
 void
-Stock::Item::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
+Stock::Item::OnConnectFilteredSocket(std::unique_ptr<FilteredSocket> socket) noexcept
 {
 	assert(!get_requests.empty());
 	assert(!connection);
 
 	NgHttp2::ConnectionHandler &handler = *this;
 	connection = std::make_unique<ClientConnection>(GetEventLoop(),
-							std::move(fd), fd_type,
-							filter_factory != nullptr
-							? filter_factory->CreateFilter()
-							: nullptr,
+							std::move(socket),
 							handler);
 
 	auto &c = *connection;

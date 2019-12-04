@@ -334,6 +334,8 @@ try {
 	StringMap headers;
 	headers.Add(*pool, "host", url.host.c_str());
 
+	std::unique_ptr<FilteredSocket> fsp;
+
 	switch (url.protocol) {
 	case parsed_url::HTTP:
 		fs.InitDummy(fd.Release(), FdType::FD_TCP);
@@ -367,15 +369,16 @@ try {
 	case parsed_url::HTTP2:
 		reuse = false;
 
+		fsp = std::make_unique<FilteredSocket>(event_loop);
+		fsp->InitDummy(fd.Release(), FdType::FD_TCP,
+			       /* TODO
+			       ssl_client_create(event_loop,
+						 GetHostWithoutPort(*pool, url),
+						 nullptr) */
+			       nullptr);
+
 		nghttp2_client = std::make_unique<NgHttp2::ClientConnection>(event_loop,
-									     std::move(fd),
-									     FdType::FD_TCP,
-									     /* TODO
-									     ssl_client_create(event_loop,
-											       GetHostWithoutPort(*pool, url),
-											       nullptr),
-									     */
-									     nullptr,
+									     std::move(fsp),
 									     *this);
 
 		nghttp2_client->SendRequest(*pool, nullptr,
