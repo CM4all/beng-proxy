@@ -36,86 +36,86 @@
 BufferedResult
 NopSocketFilter::OnData() noexcept
 {
-    return socket->InvokeData();
+	return socket->InvokeData();
 }
 
 bool
 NopSocketFilter::IsEmpty() const noexcept
 {
-    return socket->InternalIsEmpty();
+	return socket->InternalIsEmpty();
 }
 
 bool
 NopSocketFilter::IsFull() const noexcept
 {
-    return socket->InternalIsFull();
+	return socket->InternalIsFull();
 }
 
 size_t
 NopSocketFilter::GetAvailable() const noexcept
 {
-    return socket->InternalGetAvailable();
+	return socket->InternalGetAvailable();
 }
 
 WritableBuffer<void>
 NopSocketFilter::ReadBuffer() noexcept
 {
-    return socket->InternalReadBuffer();
+	return socket->InternalReadBuffer();
 }
 
 void
 NopSocketFilter::Consumed(size_t nbytes) noexcept
 {
-    socket->InternalConsumed(nbytes);
+	socket->InternalConsumed(nbytes);
 }
 
 bool
 NopSocketFilter::Read(bool expect_more) noexcept
 {
-    return socket->InternalRead(expect_more);
+	return socket->InternalRead(expect_more);
 }
 
 ssize_t
 NopSocketFilter::Write(const void *data, size_t length) noexcept
 {
-    return socket->InternalWrite(data, length);
+	return socket->InternalWrite(data, length);
 }
 
 void
 NopSocketFilter::ScheduleRead(bool expect_more,
-                              Event::Duration timeout) noexcept
+			      Event::Duration timeout) noexcept
 {
-    socket->InternalScheduleRead(expect_more, timeout);
+	socket->InternalScheduleRead(expect_more, timeout);
 }
 
 void
 NopSocketFilter::ScheduleWrite() noexcept
 {
-    socket->InternalScheduleWrite();
+	socket->InternalScheduleWrite();
 }
 
 void
 NopSocketFilter::UnscheduleWrite() noexcept
 {
-    socket->InternalUnscheduleWrite();
+	socket->InternalUnscheduleWrite();
 }
 
 bool
 NopSocketFilter::InternalWrite() noexcept
 {
-    return socket->InvokeWrite();
+	return socket->InvokeWrite();
 }
 
 bool
 NopSocketFilter::OnRemaining(size_t remaining) noexcept
 {
-    return socket->InvokeRemaining(remaining);
+	return socket->InvokeRemaining(remaining);
 }
 
 void
 NopSocketFilter::OnEnd() noexcept
 {
-    socket->InvokeEnd();
+	socket->InvokeEnd();
 }
 
 void

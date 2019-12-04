@@ -39,28 +39,28 @@
  * passes data as-is.  It is meant for debugging.
  */
 class NopSocketFilter : public SocketFilter {
-    FilteredSocket *socket;
+	FilteredSocket *socket;
 
 public:
-    /* virtual methods from SocketFilter */
-    void Init(FilteredSocket &_socket) noexcept override {
-        socket = &_socket;
-    }
+	/* virtual methods from SocketFilter */
+	void Init(FilteredSocket &_socket) noexcept override {
+		socket = &_socket;
+	}
 
-    BufferedResult OnData() noexcept override;
-    bool IsEmpty() const noexcept override;
-    bool IsFull() const noexcept override;
-    size_t GetAvailable() const noexcept override;
-    WritableBuffer<void> ReadBuffer() noexcept override;
-    void Consumed(size_t nbytes) noexcept override;
-    bool Read(bool expect_more) noexcept override;
-    ssize_t Write(const void *data, size_t length) noexcept override;
-    void ScheduleRead(bool expect_more,
-                      Event::Duration timeout) noexcept override;
-    void ScheduleWrite() noexcept override;
-    void UnscheduleWrite() noexcept override;
-    bool InternalWrite() noexcept override;
-    bool OnRemaining(size_t remaining) noexcept override;
-    void OnEnd() noexcept override;
-    void Close() noexcept override;
+	BufferedResult OnData() noexcept override;
+	bool IsEmpty() const noexcept override;
+	bool IsFull() const noexcept override;
+	size_t GetAvailable() const noexcept override;
+	WritableBuffer<void> ReadBuffer() noexcept override;
+	void Consumed(size_t nbytes) noexcept override;
+	bool Read(bool expect_more) noexcept override;
+	ssize_t Write(const void *data, size_t length) noexcept override;
+	void ScheduleRead(bool expect_more,
+			  Event::Duration timeout) noexcept override;
+	void ScheduleWrite() noexcept override;
+	void UnscheduleWrite() noexcept override;
+	bool InternalWrite() noexcept override;
+	bool OnRemaining(size_t remaining) noexcept override;
+	void OnEnd() noexcept override;
+	void Close() noexcept override;
 };

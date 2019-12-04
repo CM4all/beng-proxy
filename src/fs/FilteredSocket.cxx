@@ -46,51 +46,51 @@
 BufferedResult
 FilteredSocket::OnBufferedData()
 {
-    return filter->OnData();
+	return filter->OnData();
 }
 
 bool
 FilteredSocket::OnBufferedClosed() noexcept
 {
-    return InvokeClosed();
+	return InvokeClosed();
 }
 
 bool
 FilteredSocket::OnBufferedRemaining(size_t remaining) noexcept
 {
-    return filter->OnRemaining(remaining);
+	return filter->OnRemaining(remaining);
 }
 
 bool
 FilteredSocket::OnBufferedWrite()
 {
-    return filter->InternalWrite();
+	return filter->InternalWrite();
 }
 
 bool
 FilteredSocket::OnBufferedEnd() noexcept
 {
-    filter->OnEnd();
-    return true;
+	filter->OnEnd();
+	return true;
 }
 
 bool
 FilteredSocket::OnBufferedTimeout() noexcept
 {
-    // TODO: let handler intercept this call
-    return InvokeTimeout();
+	// TODO: let handler intercept this call
+	return InvokeTimeout();
 }
 
 enum write_result
 FilteredSocket::OnBufferedBroken() noexcept
 {
-    return handler->OnBufferedBroken();
+	return handler->OnBufferedBroken();
 }
 
 void
 FilteredSocket::OnBufferedError(std::exception_ptr ep) noexcept
 {
-    handler->OnBufferedError(ep);
+	handler->OnBufferedError(ep);
 }
 
 /*
@@ -100,152 +100,152 @@ FilteredSocket::OnBufferedError(std::exception_ptr ep) noexcept
 
 void
 FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
-                     Event::Duration read_timeout,
-                     Event::Duration write_timeout,
-                     SocketFilterPtr _filter,
-                     BufferedSocketHandler &__handler) noexcept
+		     Event::Duration read_timeout,
+		     Event::Duration write_timeout,
+		     SocketFilterPtr _filter,
+		     BufferedSocketHandler &__handler) noexcept
 {
-    BufferedSocketHandler *_handler = &__handler;
+	BufferedSocketHandler *_handler = &__handler;
 
-    filter = std::move(_filter);
+	filter = std::move(_filter);
 
-    if (filter != nullptr) {
-        handler = _handler;
+	if (filter != nullptr) {
+		handler = _handler;
 
-        _handler = this;
-    }
+		_handler = this;
+	}
 
-    base.Init(fd, fd_type,
-              read_timeout, write_timeout,
-              *_handler);
+	base.Init(fd, fd_type,
+		  read_timeout, write_timeout,
+		  *_handler);
 
 #ifndef NDEBUG
-    ended = false;
+	ended = false;
 #endif
 
-    drained = true;
+	drained = true;
 
-    if (filter != nullptr)
-        filter->Init(*this);
+	if (filter != nullptr)
+		filter->Init(*this);
 }
 
 void
 FilteredSocket::InitDummy(SocketDescriptor fd, FdType fd_type,
-                          SocketFilterPtr _filter) noexcept
+			  SocketFilterPtr _filter) noexcept
 {
-    assert(!filter);
+	assert(!filter);
 
-    filter = std::move(_filter);
+	filter = std::move(_filter);
 
-    if (filter != nullptr)
-        base.Init(fd, fd_type,
-                  Event::Duration{-1}, Event::Duration{-1},
-                  *this);
-    else
-        base.Init(fd, fd_type);
+	if (filter != nullptr)
+		base.Init(fd, fd_type,
+			  Event::Duration{-1}, Event::Duration{-1},
+			  *this);
+	else
+		base.Init(fd, fd_type);
 
 #ifndef NDEBUG
-    ended = false;
+	ended = false;
 #endif
 
-    drained = true;
+	drained = true;
 
-    if (filter != nullptr)
-        filter->Init(*this);
+	if (filter != nullptr)
+		filter->Init(*this);
 }
 
 void
 FilteredSocket::Reinit(Event::Duration read_timeout,
-                       Event::Duration write_timeout,
-                       BufferedSocketHandler &_handler) noexcept
+		       Event::Duration write_timeout,
+		       BufferedSocketHandler &_handler) noexcept
 {
-    if (filter != nullptr) {
-        handler = &_handler;
-        base.SetTimeouts(read_timeout, write_timeout);
-    } else
-        base.Reinit(read_timeout, write_timeout, _handler);
+	if (filter != nullptr) {
+		handler = &_handler;
+		base.SetTimeouts(read_timeout, write_timeout);
+	} else
+		base.Reinit(read_timeout, write_timeout, _handler);
 }
 
 void
 FilteredSocket::Destroy() noexcept
 {
-    filter.reset();
-    base.Destroy();
+	filter.reset();
+	base.Destroy();
 }
 
 bool
 FilteredSocket::IsEmpty() const noexcept
 {
-    return filter != nullptr
-        ? filter->IsEmpty()
-        : base.IsEmpty();
+	return filter != nullptr
+		? filter->IsEmpty()
+		: base.IsEmpty();
 }
 
 bool
 FilteredSocket::IsFull() const noexcept
 {
-    return filter != nullptr
-        ? filter->IsFull()
-        : base.IsFull();
+	return filter != nullptr
+		? filter->IsFull()
+		: base.IsFull();
 }
 
 size_t
 FilteredSocket::GetAvailable() const noexcept
 {
-    return filter != nullptr
-        ? filter->GetAvailable()
-        : base.GetAvailable();
+	return filter != nullptr
+		? filter->GetAvailable()
+		: base.GetAvailable();
 }
 
 WritableBuffer<void>
 FilteredSocket::ReadBuffer() const noexcept
 {
-    return filter != nullptr
-        ? filter->ReadBuffer()
-        : base.ReadBuffer();
+	return filter != nullptr
+		? filter->ReadBuffer()
+		: base.ReadBuffer();
 }
 
 void
 FilteredSocket::DisposeConsumed(size_t nbytes) noexcept
 {
-    if (filter != nullptr)
-        filter->Consumed(nbytes);
-    else
-        base.DisposeConsumed(nbytes);
+	if (filter != nullptr)
+		filter->Consumed(nbytes);
+	else
+		base.DisposeConsumed(nbytes);
 }
 
 bool
 FilteredSocket::Read(bool expect_more) noexcept
 {
-    if (filter != nullptr)
-        return filter->Read(expect_more);
-    else
-        return base.Read(expect_more);
+	if (filter != nullptr)
+		return filter->Read(expect_more);
+	else
+		return base.Read(expect_more);
 }
 
 ssize_t
 FilteredSocket::Write(const void *data, size_t length) noexcept
 {
-    return filter != nullptr
-        ? filter->Write(data, length)
-        : base.Write(data, length);
+	return filter != nullptr
+		? filter->Write(data, length)
+		: base.Write(data, length);
 }
 
 bool
 FilteredSocket::InternalDrained() noexcept
 {
-    assert(filter != nullptr);
-    assert(IsConnected());
+	assert(filter != nullptr);
+	assert(IsConnected());
 
-    if (drained)
-        return true;
+	if (drained)
+		return true;
 
-    drained = true;
-    return handler->OnBufferedDrained();
+	drained = true;
+	return handler->OnBufferedDrained();
 }
 
 bool
 FilteredSocket::InvokeTimeout() noexcept
 {
-    return handler->OnBufferedTimeout();
+	return handler->OnBufferedTimeout();
 }

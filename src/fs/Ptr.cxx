@@ -36,5 +36,5 @@
 void
 SocketFilterDisposer::operator()(SocketFilter *f) const noexcept
 {
-    f->Close();
+	f->Close();
 }

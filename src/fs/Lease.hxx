@@ -44,155 +44,155 @@
  * method.
  */
 class FilteredSocketLease final : BufferedSocketHandler {
-    FilteredSocket *socket;
-    LeasePtr lease_ref;
+	FilteredSocket *socket;
+	LeasePtr lease_ref;
 
-    BufferedSocketHandler &handler;
+	BufferedSocketHandler &handler;
 
-    std::array<SliceFifoBuffer, 4> input;
+	std::array<SliceFifoBuffer, 4> input;
 
 public:
-    FilteredSocketLease(FilteredSocket &_socket, Lease &lease,
-                        Event::Duration read_timeout,
-                        Event::Duration write_timeout,
-                        BufferedSocketHandler &_handler) noexcept;
+	FilteredSocketLease(FilteredSocket &_socket, Lease &lease,
+			    Event::Duration read_timeout,
+			    Event::Duration write_timeout,
+			    BufferedSocketHandler &_handler) noexcept;
 
-    ~FilteredSocketLease() noexcept;
+	~FilteredSocketLease() noexcept;
 
-    gcc_pure
-    bool IsConnected() const noexcept {
-        return socket != nullptr && socket->IsConnected();
-    }
+	gcc_pure
+	bool IsConnected() const noexcept {
+		return socket != nullptr && socket->IsConnected();
+	}
 
-    void Close() const noexcept {
-        socket->Close();
-    }
+	void Close() const noexcept {
+		socket->Close();
+	}
 
-    gcc_pure
-    bool HasFilter() const noexcept {
-        assert(!IsReleased());
+	gcc_pure
+	bool HasFilter() const noexcept {
+		assert(!IsReleased());
 
-        return socket->HasFilter();
-    }
+		return socket->HasFilter();
+	}
 
 #ifndef NDEBUG
-    gcc_pure
-    bool HasEnded() const noexcept {
-        assert(!IsReleased());
+	gcc_pure
+	bool HasEnded() const noexcept {
+		assert(!IsReleased());
 
-        return socket->ended;
-    }
+		return socket->ended;
+	}
 #endif
 
-    /**
-     * @param preserve preserve the contents of the input buffer for
-     * further consumption?
-     */
-    void Release(bool preserve, bool reuse) noexcept;
+	/**
+	 * @param preserve preserve the contents of the input buffer for
+	 * further consumption?
+	 */
+	void Release(bool preserve, bool reuse) noexcept;
 
-    bool IsReleased() const noexcept {
-        return socket == nullptr;
-    }
+	bool IsReleased() const noexcept {
+		return socket == nullptr;
+	}
 
-    gcc_pure
-    FdType GetType() const noexcept {
-        assert(!IsReleased());
+	gcc_pure
+	FdType GetType() const noexcept {
+		assert(!IsReleased());
 
-        return socket->GetType();
-    }
+		return socket->GetType();
+	}
 
-    void SetDirect(bool _direct) noexcept {
-        assert(!IsReleased());
+	void SetDirect(bool _direct) noexcept {
+		assert(!IsReleased());
 
-        socket->SetDirect(_direct);
-    }
+		socket->SetDirect(_direct);
+	}
 
-    int AsFD() noexcept {
-        assert(!IsReleased());
+	int AsFD() noexcept {
+		assert(!IsReleased());
 
-        return socket->AsFD();
-    }
+		return socket->AsFD();
+	}
 
-    gcc_pure
-    bool IsEmpty() const noexcept;
+	gcc_pure
+	bool IsEmpty() const noexcept;
 
-    gcc_pure
-    size_t GetAvailable() const noexcept;
+	gcc_pure
+	size_t GetAvailable() const noexcept;
 
-    WritableBuffer<void> ReadBuffer() const noexcept;
+	WritableBuffer<void> ReadBuffer() const noexcept;
 
-    void DisposeConsumed(size_t nbytes) noexcept;
+	void DisposeConsumed(size_t nbytes) noexcept;
 
-    bool Read(bool expect_more) noexcept;
+	bool Read(bool expect_more) noexcept;
 
-    void ScheduleReadTimeout(bool expect_more,
-                             Event::Duration timeout) noexcept {
-        socket->ScheduleReadTimeout(expect_more, timeout);
-    }
+	void ScheduleReadTimeout(bool expect_more,
+				 Event::Duration timeout) noexcept {
+		socket->ScheduleReadTimeout(expect_more, timeout);
+	}
 
-    void ScheduleReadNoTimeout(bool expect_more) noexcept {
-        socket->ScheduleReadNoTimeout(expect_more);
-    }
+	void ScheduleReadNoTimeout(bool expect_more) noexcept {
+		socket->ScheduleReadNoTimeout(expect_more);
+	}
 
-    ssize_t Write(const void *data, size_t size) noexcept {
-        assert(!IsReleased());
+	ssize_t Write(const void *data, size_t size) noexcept {
+		assert(!IsReleased());
 
-        return socket->Write(data, size);
-    }
+		return socket->Write(data, size);
+	}
 
-    void ScheduleWrite() noexcept {
-        assert(!IsReleased());
+	void ScheduleWrite() noexcept {
+		assert(!IsReleased());
 
-        socket->ScheduleWrite();
-    }
+		socket->ScheduleWrite();
+	}
 
-    void UnscheduleWrite() noexcept {
-        assert(!IsReleased());
+	void UnscheduleWrite() noexcept {
+		assert(!IsReleased());
 
-        socket->UnscheduleWrite();
-    }
+		socket->UnscheduleWrite();
+	}
 
-    ssize_t WriteV(const struct iovec *v, size_t n) noexcept {
-        assert(!IsReleased());
+	ssize_t WriteV(const struct iovec *v, size_t n) noexcept {
+		assert(!IsReleased());
 
-        return socket->WriteV(v, n);
-    }
+		return socket->WriteV(v, n);
+	}
 
-    ssize_t WriteFrom(int fd, FdType fd_type, size_t length) noexcept {
-        assert(!IsReleased());
+	ssize_t WriteFrom(int fd, FdType fd_type, size_t length) noexcept {
+		assert(!IsReleased());
 
-        return socket->WriteFrom(fd, fd_type, length);
-    }
+		return socket->WriteFrom(fd, fd_type, length);
+	}
 
 private:
-    /**
-     * Move data from the #FilteredSocket input buffers to our #input
-     * buffers.  This is done prior to releasing the #FilteredSocket
-     * to be able to continue reading pending input.
-     */
-    void MoveSocketInput() noexcept;
+	/**
+	 * Move data from the #FilteredSocket input buffers to our #input
+	 * buffers.  This is done prior to releasing the #FilteredSocket
+	 * to be able to continue reading pending input.
+	 */
+	void MoveSocketInput() noexcept;
 
-    /**
-     * Move data to the front-most #input buffer.
-     */
-    void MoveInput() noexcept;
+	/**
+	 * Move data to the front-most #input buffer.
+	 */
+	void MoveInput() noexcept;
 
-    bool IsReleasedEmpty() const noexcept {
-        return input.front().empty();
-    }
+	bool IsReleasedEmpty() const noexcept {
+		return input.front().empty();
+	}
 
-    bool ReadReleased() noexcept;
+	bool ReadReleased() noexcept;
 
-    /* virtual methods from class BufferedSocketHandler */
-    BufferedResult OnBufferedData() override;
-    DirectResult OnBufferedDirect(SocketDescriptor fd,
-                                  FdType fd_type) override;
-    bool OnBufferedClosed() noexcept override;
-    bool OnBufferedRemaining(size_t remaining) noexcept override;
-    bool OnBufferedEnd() noexcept override;
-    bool OnBufferedWrite() override;
-    bool OnBufferedDrained() noexcept override;
-    bool OnBufferedTimeout() noexcept override;
-    enum write_result OnBufferedBroken() noexcept override;
-    void OnBufferedError(std::exception_ptr e) noexcept override;
+	/* virtual methods from class BufferedSocketHandler */
+	BufferedResult OnBufferedData() override;
+	DirectResult OnBufferedDirect(SocketDescriptor fd,
+				      FdType fd_type) override;
+	bool OnBufferedClosed() noexcept override;
+	bool OnBufferedRemaining(size_t remaining) noexcept override;
+	bool OnBufferedEnd() noexcept override;
+	bool OnBufferedWrite() override;
+	bool OnBufferedDrained() noexcept override;
+	bool OnBufferedTimeout() noexcept override;
+	enum write_result OnBufferedBroken() noexcept override;
+	void OnBufferedError(std::exception_ptr e) noexcept override;
 };

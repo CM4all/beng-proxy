@@ -52,37 +52,37 @@ class AllocatorPtr;
  * balancing.
  */
 class FilteredSocketBalancer {
-    friend class FilteredSocketBalancerRequest;
+	friend class FilteredSocketBalancerRequest;
 
-    FilteredSocketStock &stock;
+	FilteredSocketStock &stock;
 
-    BalancerMap balancer;
+	BalancerMap balancer;
 
 public:
-    FilteredSocketBalancer(FilteredSocketStock &_stock,
-                           FailureManager &failure_manager) noexcept
-        :stock(_stock), balancer(failure_manager) {}
+	FilteredSocketBalancer(FilteredSocketStock &_stock,
+			       FailureManager &failure_manager) noexcept
+		:stock(_stock), balancer(failure_manager) {}
 
-    gcc_pure
-    EventLoop &GetEventLoop() noexcept;
+	gcc_pure
+	EventLoop &GetEventLoop() noexcept;
 
-    FailureManager &GetFailureManager() {
-        return balancer.GetFailureManager();
-    }
+	FailureManager &GetFailureManager() {
+		return balancer.GetFailureManager();
+	}
 
-    /**
-     * @param session_sticky a portion of the session id that is used to
-     * select the worker; 0 means disable stickiness
-     * @param timeout the connect timeout for each attempt [seconds]
-     */
-    void Get(AllocatorPtr alloc,
-             const StopwatchPtr &parent_stopwatch,
-             bool ip_transparent,
-             SocketAddress bind_address,
-             unsigned session_sticky,
-             const AddressList &address_list,
-             Event::Duration timeout,
-             SocketFilterFactory *filter_factory,
-             StockGetHandler &handler,
-             CancellablePointer &cancel_ptr) noexcept;
+	/**
+	 * @param session_sticky a portion of the session id that is used to
+	 * select the worker; 0 means disable stickiness
+	 * @param timeout the connect timeout for each attempt [seconds]
+	 */
+	void Get(AllocatorPtr alloc,
+		 const StopwatchPtr &parent_stopwatch,
+		 bool ip_transparent,
+		 SocketAddress bind_address,
+		 unsigned session_sticky,
+		 const AddressList &address_list,
+		 Event::Duration timeout,
+		 SocketFilterFactory *filter_factory,
+		 StockGetHandler &handler,
+		 CancellablePointer &cancel_ptr) noexcept;
 };

@@ -38,7 +38,7 @@ class SocketFilter;
 
 class SocketFilterDisposer {
 public:
-    void operator()(SocketFilter *f) const noexcept;
+	void operator()(SocketFilter *f) const noexcept;
 };
 
 using SocketFilterPtr = std::unique_ptr<SocketFilter, SocketFilterDisposer>;

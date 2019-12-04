@@ -39,58 +39,58 @@
 #include "stopwatch.hxx"
 
 class FilteredSocketBalancerRequest : public StockGetHandler {
-    FilteredSocketStock &stock;
+	FilteredSocketStock &stock;
 
-    const StopwatchPtr &parent_stopwatch;
+	const StopwatchPtr &parent_stopwatch;
 
-    const bool ip_transparent;
-    const SocketAddress bind_address;
+	const bool ip_transparent;
+	const SocketAddress bind_address;
 
-    const Event::Duration timeout;
+	const Event::Duration timeout;
 
-    SocketFilterFactory *const filter_factory;
+	SocketFilterFactory *const filter_factory;
 
-    StockGetHandler &handler;
+	StockGetHandler &handler;
 
 public:
-    FilteredSocketBalancerRequest(FilteredSocketStock &_stock,
-                                  const StopwatchPtr &_parent_stopwatch,
-                                  bool _ip_transparent,
-                                  SocketAddress _bind_address,
-                                  Event::Duration _timeout,
-                                  SocketFilterFactory *_filter_factory,
-                                  StockGetHandler &_handler) noexcept
-        :stock(_stock),
-         parent_stopwatch(_parent_stopwatch),
-         ip_transparent(_ip_transparent),
-         bind_address(_bind_address),
-         timeout(_timeout),
-         filter_factory(_filter_factory),
-         handler(_handler) {}
+	FilteredSocketBalancerRequest(FilteredSocketStock &_stock,
+				      const StopwatchPtr &_parent_stopwatch,
+				      bool _ip_transparent,
+				      SocketAddress _bind_address,
+				      Event::Duration _timeout,
+				      SocketFilterFactory *_filter_factory,
+				      StockGetHandler &_handler) noexcept
+		:stock(_stock),
+		 parent_stopwatch(_parent_stopwatch),
+		 ip_transparent(_ip_transparent),
+		 bind_address(_bind_address),
+		 timeout(_timeout),
+		 filter_factory(_filter_factory),
+		 handler(_handler) {}
 
-    void Send(AllocatorPtr alloc, SocketAddress address,
-              CancellablePointer &cancel_ptr) noexcept;
+	void Send(AllocatorPtr alloc, SocketAddress address,
+		  CancellablePointer &cancel_ptr) noexcept;
 
 private:
-    /* virtual methods from class StockGetHandler */
-    void OnStockItemReady(StockItem &item) noexcept final;
-    void OnStockItemError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class StockGetHandler */
+	void OnStockItemReady(StockItem &item) noexcept final;
+	void OnStockItemError(std::exception_ptr ep) noexcept override;
 };
 
 using BR = BalancerRequest<FilteredSocketBalancerRequest>;
 
 inline void
 FilteredSocketBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
-                                    CancellablePointer &cancel_ptr) noexcept
+				    CancellablePointer &cancel_ptr) noexcept
 {
-    stock.Get(alloc,
-              StopwatchPtr(parent_stopwatch, "connect"),
-              nullptr,
-              ip_transparent, bind_address, address,
-              timeout,
-              filter_factory,
-              *this,
-              cancel_ptr);
+	stock.Get(alloc,
+		  StopwatchPtr(parent_stopwatch, "connect"),
+		  nullptr,
+		  ip_transparent, bind_address, address,
+		  timeout,
+		  filter_factory,
+		  *this,
+		  cancel_ptr);
 }
 
 /*
@@ -101,22 +101,22 @@ FilteredSocketBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
 void
 FilteredSocketBalancerRequest::OnStockItemReady(StockItem &item) noexcept
 {
-    auto &base = BR::Cast(*this);
-    base.ConnectSuccess();
+	auto &base = BR::Cast(*this);
+	base.ConnectSuccess();
 
-    handler.OnStockItemReady(item);
-    base.Destroy();
+	handler.OnStockItemReady(item);
+	base.Destroy();
 }
 
 void
 FilteredSocketBalancerRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
-    auto &base = BR::Cast(*this);
-    if (!base.ConnectFailure(stock.GetEventLoop().SteadyNow())) {
-        auto &_handler = handler;
-        base.Destroy();
-        _handler.OnStockItemError(ep);
-    }
+	auto &base = BR::Cast(*this);
+	if (!base.ConnectFailure(stock.GetEventLoop().SteadyNow())) {
+		auto &_handler = handler;
+		base.Destroy();
+		_handler.OnStockItemError(ep);
+	}
 }
 
 /*
@@ -127,27 +127,27 @@ FilteredSocketBalancerRequest::OnStockItemError(std::exception_ptr ep) noexcept
 EventLoop &
 FilteredSocketBalancer::GetEventLoop() noexcept
 {
-    return stock.GetEventLoop();
+	return stock.GetEventLoop();
 }
 
 void
 FilteredSocketBalancer::Get(AllocatorPtr alloc,
-                            const StopwatchPtr &parent_stopwatch,
-                            bool ip_transparent,
-                            SocketAddress bind_address,
-                            sticky_hash_t session_sticky,
-                            const AddressList &address_list,
-                            Event::Duration timeout,
-                            SocketFilterFactory *filter_factory,
-                            StockGetHandler &handler,
-                            CancellablePointer &cancel_ptr) noexcept
+			    const StopwatchPtr &parent_stopwatch,
+			    bool ip_transparent,
+			    SocketAddress bind_address,
+			    sticky_hash_t session_sticky,
+			    const AddressList &address_list,
+			    Event::Duration timeout,
+			    SocketFilterFactory *filter_factory,
+			    StockGetHandler &handler,
+			    CancellablePointer &cancel_ptr) noexcept
 {
-    BR::Start(alloc, GetEventLoop().SteadyNow(), balancer,
-              address_list, cancel_ptr,
-              session_sticky,
-              stock, parent_stopwatch,
-              ip_transparent,
-              bind_address, timeout,
-              filter_factory,
-              handler);
+	BR::Start(alloc, GetEventLoop().SteadyNow(), balancer,
+		  address_list, cancel_ptr,
+		  session_sticky,
+		  stock, parent_stopwatch,
+		  ip_transparent,
+		  bind_address, timeout,
+		  filter_factory,
+		  handler);
 }

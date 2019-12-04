@@ -57,127 +57,127 @@
 #include <sys/socket.h>
 
 struct FilteredSocketStockRequest {
-    const AllocatorPtr alloc;
+	const AllocatorPtr alloc;
 
-    StopwatchPtr stopwatch;
+	StopwatchPtr stopwatch;
 
-    const bool ip_transparent;
+	const bool ip_transparent;
 
-    const SocketAddress bind_address, address;
+	const SocketAddress bind_address, address;
 
-    const Event::Duration timeout;
+	const Event::Duration timeout;
 
-    SocketFilterFactory *const filter_factory;
+	SocketFilterFactory *const filter_factory;
 
-    FilteredSocketStockRequest(AllocatorPtr _alloc,
-                               StopwatchPtr &&_stopwatch,
-                               bool _ip_transparent,
-                               SocketAddress _bind_address,
-                               SocketAddress _address,
-                               Event::Duration _timeout,
-                               SocketFilterFactory *_filter_factory) noexcept
-        :alloc(_alloc),
-         stopwatch(std::move(_stopwatch)),
-         ip_transparent(_ip_transparent),
-         bind_address(_bind_address), address(_address),
-         timeout(_timeout),
-         filter_factory(_filter_factory) {}
+	FilteredSocketStockRequest(AllocatorPtr _alloc,
+				   StopwatchPtr &&_stopwatch,
+				   bool _ip_transparent,
+				   SocketAddress _bind_address,
+				   SocketAddress _address,
+				   Event::Duration _timeout,
+				   SocketFilterFactory *_filter_factory) noexcept
+		:alloc(_alloc),
+		 stopwatch(std::move(_stopwatch)),
+		 ip_transparent(_ip_transparent),
+		 bind_address(_bind_address), address(_address),
+		 timeout(_timeout),
+		 filter_factory(_filter_factory) {}
 };
 
 class FilteredSocketStockConnection final
-    : StockItem, ConnectSocketHandler, BufferedSocketHandler, Cancellable {
+	: StockItem, ConnectSocketHandler, BufferedSocketHandler, Cancellable {
 
-    BasicLogger<StockLoggerDomain> logger;
+	BasicLogger<StockLoggerDomain> logger;
 
-    const FdType type;
+	const FdType type;
 
-    const AllocatedSocketAddress address;
+	const AllocatedSocketAddress address;
 
-    SocketFilterFactory *const filter_factory;
+	SocketFilterFactory *const filter_factory;
 
-    /**
-     * To cancel the ClientSocket.
-     */
-    CancellablePointer cancel_ptr;
+	/**
+	 * To cancel the ClientSocket.
+	 */
+	CancellablePointer cancel_ptr;
 
-    FilteredSocket socket;
+	FilteredSocket socket;
 
 public:
-    FilteredSocketStockConnection(CreateStockItem c, FdType _type,
-                                  SocketAddress _address,
-                                  SocketFilterFactory *_filter_factory,
-                                  CancellablePointer &_cancel_ptr) noexcept
-        :StockItem(c),
-         logger(c.stock),
-         type(_type),
-         address(_address),
-         filter_factory(_filter_factory),
-         socket(c.stock.GetEventLoop()) {
-        _cancel_ptr = *this;
+	FilteredSocketStockConnection(CreateStockItem c, FdType _type,
+				      SocketAddress _address,
+				      SocketFilterFactory *_filter_factory,
+				      CancellablePointer &_cancel_ptr) noexcept
+		:StockItem(c),
+		 logger(c.stock),
+		 type(_type),
+		 address(_address),
+		 filter_factory(_filter_factory),
+		 socket(c.stock.GetEventLoop()) {
+		_cancel_ptr = *this;
 
-        cancel_ptr = nullptr;
-    }
+		cancel_ptr = nullptr;
+	}
 
-    ~FilteredSocketStockConnection() override {
-        if (cancel_ptr)
-            cancel_ptr.Cancel();
-        else if (socket.IsValid() && socket.IsConnected()) {
-            socket.Close();
-            socket.Destroy();
-        }
-    }
+	~FilteredSocketStockConnection() override {
+		if (cancel_ptr)
+			cancel_ptr.Cancel();
+		else if (socket.IsValid() && socket.IsConnected()) {
+			socket.Close();
+			socket.Destroy();
+		}
+	}
 
-    void Start(FilteredSocketStockRequest &&request, int domain) noexcept {
-        client_socket_new(stock.GetEventLoop(), request.alloc,
-                          std::move(request.stopwatch),
-                          domain, SOCK_STREAM, 0,
-                          request.ip_transparent,
-                          request.bind_address,
-                          request.address,
-                          request.timeout,
-                          *this, cancel_ptr);
-    }
+	void Start(FilteredSocketStockRequest &&request, int domain) noexcept {
+		client_socket_new(stock.GetEventLoop(), request.alloc,
+				  std::move(request.stopwatch),
+				  domain, SOCK_STREAM, 0,
+				  request.ip_transparent,
+				  request.bind_address,
+				  request.address,
+				  request.timeout,
+				  *this, cancel_ptr);
+	}
 
-    SocketAddress GetAddress() const noexcept {
-        return address;
-    }
+	SocketAddress GetAddress() const noexcept {
+		return address;
+	}
 
-    auto &GetSocket() noexcept {
-        return socket;
-    }
+	auto &GetSocket() noexcept {
+		return socket;
+	}
 
 private:
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override {
-        assert(cancel_ptr);
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		assert(cancel_ptr);
 
-        cancel_ptr.CancelAndClear();
-        InvokeCreateAborted();
-    }
+		cancel_ptr.CancelAndClear();
+		InvokeCreateAborted();
+	}
 
-    /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
-    void OnSocketConnectError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class ConnectSocketHandler */
+	void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
+	void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 
-    /* virtual methods from class BufferedSocketHandler */
-    BufferedResult OnBufferedData() override;
-    bool OnBufferedClosed() noexcept override;
+	/* virtual methods from class BufferedSocketHandler */
+	BufferedResult OnBufferedData() override;
+	bool OnBufferedClosed() noexcept override;
 
-    gcc_noreturn
-    bool OnBufferedWrite() override {
-        /* should never be reached because we never schedule
-           writing */
-        gcc_unreachable();
-    }
+	gcc_noreturn
+	bool OnBufferedWrite() override {
+		/* should never be reached because we never schedule
+		   writing */
+		gcc_unreachable();
+	}
 
-    void OnBufferedError(std::exception_ptr e) noexcept override;
+	void OnBufferedError(std::exception_ptr e) noexcept override;
 
-    /* virtual methods from class StockItem */
-    bool Borrow() noexcept override {
-        return true;
-    }
+	/* virtual methods from class StockItem */
+	bool Borrow() noexcept override {
+		return true;
+	}
 
-    bool Release() noexcept override;
+	bool Release() noexcept override;
 };
 
 /*
@@ -188,23 +188,23 @@ private:
 BufferedResult
 FilteredSocketStockConnection::OnBufferedData()
 {
-    logger(2, "unexpected data in idle TCP connection");
-    InvokeIdleDisconnect();
-    return BufferedResult::CLOSED;
+	logger(2, "unexpected data in idle TCP connection");
+	InvokeIdleDisconnect();
+	return BufferedResult::CLOSED;
 }
 
 bool
 FilteredSocketStockConnection::OnBufferedClosed() noexcept
 {
-    InvokeIdleDisconnect();
-    return false;
+	InvokeIdleDisconnect();
+	return false;
 }
 
 void
 FilteredSocketStockConnection::OnBufferedError(std::exception_ptr e) noexcept
 {
-    logger(2, "error on idle connection: ", e);
-    InvokeIdleDisconnect();
+	logger(2, "error on idle connection: ", e);
+	InvokeIdleDisconnect();
 }
 
 /*
@@ -215,32 +215,32 @@ FilteredSocketStockConnection::OnBufferedError(std::exception_ptr e) noexcept
 void
 FilteredSocketStockConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
 {
-    cancel_ptr = nullptr;
+	cancel_ptr = nullptr;
 
-    try {
-        socket.Init(fd.Release(), type,
-                    Event::Duration(-1), Event::Duration(-1),
-                    filter_factory != nullptr
-                    ? filter_factory->CreateFilter()
-                    : nullptr,
-                    *this);
-    } catch (...) {
-        InvokeCreateError(std::current_exception());
-        return;
-    }
+	try {
+		socket.Init(fd.Release(), type,
+			    Event::Duration(-1), Event::Duration(-1),
+			    filter_factory != nullptr
+			    ? filter_factory->CreateFilter()
+			    : nullptr,
+			    *this);
+	} catch (...) {
+		InvokeCreateError(std::current_exception());
+		return;
+	}
 
-    InvokeCreateSuccess();
+	InvokeCreateSuccess();
 }
 
 void
 FilteredSocketStockConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
 {
-    cancel_ptr = nullptr;
+	cancel_ptr = nullptr;
 
-    ep = NestException(ep,
-                       FormatRuntimeError("Failed to connect to '%s'",
-                                          GetStockName()));
-    InvokeCreateError(ep);
+	ep = NestException(ep,
+			   FormatRuntimeError("Failed to connect to '%s'",
+					      GetStockName()));
+	InvokeCreateError(ep);
 }
 
 /*
@@ -250,39 +250,39 @@ FilteredSocketStockConnection::OnSocketConnectError(std::exception_ptr ep) noexc
 
 void
 FilteredSocketStock::Create(CreateStockItem c, StockRequest _request,
-                            CancellablePointer &cancel_ptr)
+			    CancellablePointer &cancel_ptr)
 {
-    auto &request = *(FilteredSocketStockRequest *)_request.get();
+	auto &request = *(FilteredSocketStockRequest *)_request.get();
 
-    const int address_family = request.address.GetFamily();
-    const FdType type = address_family == AF_LOCAL
-        ? FD_SOCKET
-        : FD_TCP;
+	const int address_family = request.address.GetFamily();
+	const FdType type = address_family == AF_LOCAL
+		? FD_SOCKET
+		: FD_TCP;
 
-    auto *connection = new FilteredSocketStockConnection(c, type,
-                                                         request.address,
-                                                         request.filter_factory,
-                                                         cancel_ptr);
-    connection->Start(std::move(request), address_family);
+	auto *connection = new FilteredSocketStockConnection(c, type,
+							     request.address,
+							     request.filter_factory,
+							     cancel_ptr);
+	connection->Start(std::move(request), address_family);
 }
 
 bool
 FilteredSocketStockConnection::Release() noexcept
 {
-    if (!socket.IsConnected())
-        return false;
+	if (!socket.IsConnected())
+		return false;
 
-    if (!socket.IsEmpty()) {
-        logger(2, "unexpected data in idle connection");
-        return false;
-    }
+	if (!socket.IsEmpty()) {
+		logger(2, "unexpected data in idle connection");
+		return false;
+	}
 
-    socket.Reinit(Event::Duration(-1), Event::Duration(-1), *this);
-    socket.UnscheduleWrite();
+	socket.Reinit(Event::Duration(-1), Event::Duration(-1), *this);
+	socket.UnscheduleWrite();
 
-    socket.ScheduleReadTimeout(false, std::chrono::minutes(1));
+	socket.ScheduleReadTimeout(false, std::chrono::minutes(1));
 
-    return true;
+	return true;
 }
 
 /*
@@ -292,58 +292,58 @@ FilteredSocketStockConnection::Release() noexcept
 
 void
 FilteredSocketStock::Get(AllocatorPtr alloc,
-                         StopwatchPtr stopwatch,
-                         const char *name,
-                         bool ip_transparent,
-                         SocketAddress bind_address,
-                         SocketAddress address,
-                         Event::Duration timeout,
-                         SocketFilterFactory *filter_factory,
-                         StockGetHandler &handler,
-                         CancellablePointer &cancel_ptr) noexcept
+			 StopwatchPtr stopwatch,
+			 const char *name,
+			 bool ip_transparent,
+			 SocketAddress bind_address,
+			 SocketAddress address,
+			 Event::Duration timeout,
+			 SocketFilterFactory *filter_factory,
+			 StockGetHandler &handler,
+			 CancellablePointer &cancel_ptr) noexcept
 {
-    assert(!address.IsNull());
+	assert(!address.IsNull());
 
-    auto request =
-        NewDisposablePointer<FilteredSocketStockRequest>(alloc, alloc,
-                                                         std::move(stopwatch),
-                                                         ip_transparent,
-                                                         bind_address, address,
-                                                         timeout,
-                                                         filter_factory);
+	auto request =
+		NewDisposablePointer<FilteredSocketStockRequest>(alloc, alloc,
+								 std::move(stopwatch),
+								 ip_transparent,
+								 bind_address, address,
+								 timeout,
+								 filter_factory);
 
-    if (name == nullptr) {
-        char buffer[1024];
-        if (!ToString(buffer, sizeof(buffer), address))
-            buffer[0] = 0;
+	if (name == nullptr) {
+		char buffer[1024];
+		if (!ToString(buffer, sizeof(buffer), address))
+			buffer[0] = 0;
 
-        if (!bind_address.IsNull()) {
-            char bind_buffer[1024];
-            if (!ToString(bind_buffer, sizeof(bind_buffer), bind_address))
-                bind_buffer[0] = 0;
-            name = alloc.Concat(bind_buffer, '>', buffer);
-        } else
-            name = alloc.Dup(buffer);
-    }
+		if (!bind_address.IsNull()) {
+			char bind_buffer[1024];
+			if (!ToString(bind_buffer, sizeof(bind_buffer), bind_address))
+				bind_buffer[0] = 0;
+			name = alloc.Concat(bind_buffer, '>', buffer);
+		} else
+			name = alloc.Dup(buffer);
+	}
 
-    if (filter_factory != nullptr)
-        name = alloc.Concat(name, '|', filter_factory->GetFilterId());
+	if (filter_factory != nullptr)
+		name = alloc.Concat(name, '|', filter_factory->GetFilterId());
 
-    stock.Get(name, std::move(request), handler, cancel_ptr);
+	stock.Get(name, std::move(request), handler, cancel_ptr);
 }
 
 FilteredSocket &
 fs_stock_item_get(StockItem &item)
 {
-    auto &connection = (FilteredSocketStockConnection &)item;
+	auto &connection = (FilteredSocketStockConnection &)item;
 
-    return connection.GetSocket();
+	return connection.GetSocket();
 }
 
 SocketAddress
 fs_stock_item_get_address(const StockItem &item)
 {
-    const auto &connection = (const FilteredSocketStockConnection &)item;
+	const auto &connection = (const FilteredSocketStockConnection &)item;
 
-    return connection.GetAddress();
+	return connection.GetAddress();
 }

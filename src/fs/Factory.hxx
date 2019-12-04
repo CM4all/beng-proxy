@@ -36,14 +36,14 @@
 
 class SocketFilterFactory {
 public:
-    /**
-     * Return an identifier for filters created by this factory.  This
-     * is used to match existing connections for reuse.
-     */
-    virtual const char *GetFilterId() const = 0;
+	/**
+	 * Return an identifier for filters created by this factory.  This
+	 * is used to match existing connections for reuse.
+	 */
+	virtual const char *GetFilterId() const = 0;
 
-    /**
-     * Throws std::runtime_error on error.
-     */
-    virtual SocketFilterPtr CreateFilter() = 0;
+	/**
+	 * Throws std::runtime_error on error.
+	 */
+	virtual SocketFilterPtr CreateFilter() = 0;
 };

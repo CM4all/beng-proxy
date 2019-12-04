@@ -55,43 +55,43 @@ class AllocatorPtr;
  * A stock for TCP connections wrapped with #FilteredSocket.
  */
 class FilteredSocketStock final : StockClass {
-    StockMap stock;
+	StockMap stock;
 
 public:
-    /**
-     * @param limit the maximum number of connections per host
-     */
-    FilteredSocketStock(EventLoop &event_loop, unsigned limit) noexcept
-        :stock(event_loop, *this, limit, 16) {}
+	/**
+	 * @param limit the maximum number of connections per host
+	 */
+	FilteredSocketStock(EventLoop &event_loop, unsigned limit) noexcept
+		:stock(event_loop, *this, limit, 16) {}
 
-    EventLoop &GetEventLoop() noexcept {
-        return stock.GetEventLoop();
-    }
+	EventLoop &GetEventLoop() noexcept {
+		return stock.GetEventLoop();
+	}
 
-    void AddStats(StockStats &data) const noexcept {
-        stock.AddStats(data);
-    }
+	void AddStats(StockStats &data) const noexcept {
+		stock.AddStats(data);
+	}
 
-    /**
-     * @param name the MapStock name; it is auto-generated from the
-     * #address if nullptr is passed here
-     * @param timeout the connect timeout in seconds
-     */
-    void Get(AllocatorPtr alloc,
-             StopwatchPtr stopwatch,
-             const char *name,
-             bool ip_transparent,
-             SocketAddress bind_address,
-             SocketAddress address,
-             Event::Duration timeout,
-             SocketFilterFactory *filter_factory,
-             StockGetHandler &handler,
-             CancellablePointer &cancel_ptr) noexcept;
+	/**
+	 * @param name the MapStock name; it is auto-generated from the
+	 * #address if nullptr is passed here
+	 * @param timeout the connect timeout in seconds
+	 */
+	void Get(AllocatorPtr alloc,
+		 StopwatchPtr stopwatch,
+		 const char *name,
+		 bool ip_transparent,
+		 SocketAddress bind_address,
+		 SocketAddress address,
+		 Event::Duration timeout,
+		 SocketFilterFactory *filter_factory,
+		 StockGetHandler &handler,
+		 CancellablePointer &cancel_ptr) noexcept;
 
 private:
-    /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, StockRequest request,
-                CancellablePointer &cancel_ptr) override;
+	/* virtual methods from class StockClass */
+	void Create(CreateStockItem c, StockRequest request,
+		    CancellablePointer &cancel_ptr) override;
 };
 
 gcc_pure
