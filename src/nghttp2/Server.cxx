@@ -252,8 +252,8 @@ ServerConnection::Request::FlushMoreRequestBodyData() noexcept
 
 	if (eof && more_request_body_data.empty())
 		request_body_control->SetEof();
-
-	request_body_control->SubmitBuffer();
+	else
+		request_body_control->SubmitBuffer();
 }
 
 inline int
@@ -284,8 +284,10 @@ ServerConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data
 
 	if (!data.empty())
 		more_request_body_data.Append(data.data, data.size);
-	else if (eof)
+	else if (eof) {
 		request_body_control->SetEof();
+		return 0;
+	}
 
 	request_body_control->SubmitBuffer();
 

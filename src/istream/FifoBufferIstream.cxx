@@ -55,6 +55,8 @@ FifoBufferIstream::SetEof() noexcept
 
 	if (buffer.empty())
 		DestroyEof();
+	else
+		SubmitBuffer();
 }
 
 void
