@@ -430,7 +430,7 @@ ServerConnection::SendCallback(const void *data, size_t length) noexcept
 		const int e = errno;
 		switch (e) {
 		case EAGAIN:
-		socket.ScheduleWrite();
+			socket.ScheduleWrite();
 			return NGHTTP2_ERR_WOULDBLOCK;
 		}
 	}
