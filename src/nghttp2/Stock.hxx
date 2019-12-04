@@ -45,6 +45,7 @@ class EventLoop;
 class AllocatorPtr;
 class StopwatchPtr;
 class SocketAddress;
+class SocketFilterFactory;
 class CancellablePointer;
 
 namespace NgHttp2 {
@@ -101,6 +102,7 @@ public:
 		 SocketAddress bind_address,
 		 SocketAddress address,
 		 Event::Duration timeout,
+		 SocketFilterFactory *filter_factory,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 

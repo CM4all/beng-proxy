@@ -32,6 +32,7 @@
 
 #include "Stock.hxx"
 #include "Client.hxx"
+#include "fs/Factory.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
@@ -54,6 +55,8 @@ class Stock::Item final
 	Stock &stock;
 
 	const std::string key;
+
+	SocketFilterFactory *const filter_factory;
 
 	std::unique_ptr<ClientConnection> connection;
 
@@ -91,7 +94,8 @@ class Stock::Item final
 
 public:
 	template<typename K>
-	Item(Stock &_stock, EventLoop &event_loop, K &&_key) noexcept;
+	Item(Stock &_stock, EventLoop &event_loop, K &&_key,
+	     SocketFilterFactory *_filter_factory) noexcept;
 
 	auto &GetEventLoop() const noexcept {
 		return idle_timer.GetEventLoop();
@@ -140,8 +144,10 @@ private:
 };
 
 template<typename K>
-Stock::Item::Item(Stock &_stock, EventLoop &event_loop, K &&_key) noexcept
+Stock::Item::Item(Stock &_stock, EventLoop &event_loop, K &&_key,
+		  SocketFilterFactory *_filter_factory) noexcept
 	:stock(_stock), key(std::forward<K>(_key)),
+	 filter_factory(_filter_factory),
 	 connect_operation(event_loop, *this),
 	 idle_timer(event_loop, BIND_THIS_METHOD(OnIdleTimer))
 {
@@ -217,7 +223,9 @@ Stock::Item::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
 	NgHttp2::ConnectionHandler &handler = *this;
 	connection = std::make_unique<ClientConnection>(GetEventLoop(),
 							std::move(fd), fd_type,
-							nullptr, // TODO ssl
+							filter_factory != nullptr
+							? filter_factory->CreateFilter()
+							: nullptr,
 							handler);
 
 	auto &c = *connection;
@@ -327,6 +335,7 @@ Stock::Get(EventLoop &event_loop,
 	   SocketAddress bind_address,
 	   SocketAddress address,
 	   Event::Duration timeout,
+	   SocketFilterFactory *filter_factory,
 	   StockGetHandler &handler,
 	   CancellablePointer &cancel_ptr) noexcept
 {
@@ -343,7 +352,7 @@ Stock::Get(EventLoop &event_loop,
 	auto i = items.insert_check(key, ItemHash(), ItemEqual(), hint);
 	Item *item;
 	if (i.second) {
-		item = new Item(*this, event_loop, key);
+		item = new Item(*this, event_loop, key, filter_factory);
 		items.insert_commit(*item, hint);
 	} else
 		item = &*i.first;
