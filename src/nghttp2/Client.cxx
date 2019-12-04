@@ -364,6 +364,7 @@ ClientConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data
 						       uint8_t flags) noexcept
 {
 	if (!more_response_body_data.empty())
+		// TODO use nghttp2_option_set_no_auto_window_update()/nghttp2_session_consume() instead
 		return NGHTTP2_ERR_PAUSE;
 
 	if (!response_body_control)
@@ -373,6 +374,7 @@ ClientConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data
 	buffer.AllocateIfNull(fb_pool_get());
 
 	if (buffer.IsFull())
+		// TODO use nghttp2_option_set_no_auto_window_update()/nghttp2_session_consume() instead
 		return NGHTTP2_ERR_PAUSE;
 
 	auto w = buffer.Write();

@@ -366,6 +366,7 @@ Stock::Get(EventLoop &event_loop,
 		item = new Item(*this, event_loop, key, filter_factory);
 		items.insert_commit(*item, hint);
 	} else
+		// TODO check if the connection is valid and no NGHTTP2_GOAWAY was received
 		item = &*i.first;
 
 	item->AddGetHandler(alloc, parent_stopwatch, handler, cancel_ptr);
