@@ -510,23 +510,20 @@ test('t_fcache', executable('t_fcache',
     stopwatch_dep,
   ]))
 
-test('t_cookie_client', executable('t_cookie_client',
-  't_cookie_client.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    threads,
-    cookie_dep,
-  ]))
-
-test('t_cookie_server', executable('t_cookie_server',
-  't_cookie_server.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    threads,
-    cookie_dep,
-  ]))
+test(
+  't_cookie',
+  executable(
+    't_cookie',
+    't_cookie_client.cxx',
+    't_cookie_server.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      threads,
+      cookie_dep,
+    ],
+  ),
+)
 
 test('t_shm', executable('t_shm',
   't_shm.cxx',
