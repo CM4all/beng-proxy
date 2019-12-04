@@ -33,47 +33,16 @@
 #pragma once
 
 #include "istream.hxx"
-#include "pool/SharedPtr.hxx"
 #include "SliceFifoBuffer.hxx"
-
-#include <utility>
-
-class UnusedIstreamPtr;
-class FifoBufferIstream;
 
 class FifoBufferIstreamHandler {
 public:
 	virtual void OnFifoBufferIstreamDrained() noexcept = 0;
-	virtual void OnFifoBufferIstreamClosed() noexcept {}
-};
-
-class FifoBufferIstreamControl final {
-	friend class FifoBufferIstream;
-
-	FifoBufferIstream *fbi;
-
-public:
-	explicit constexpr FifoBufferIstreamControl(FifoBufferIstream &_fbi) noexcept
-		:fbi(&_fbi) {}
-
-	operator bool() const noexcept {
-		return fbi != nullptr;
-	}
-
-	SliceFifoBuffer *GetBuffer() noexcept;
-
-	size_t Push(ConstBuffer<void> src) noexcept;
-
-	void SubmitBuffer() noexcept;
-
-	void SetEof() noexcept;
-	void DestroyError(std::exception_ptr e) noexcept;
+	virtual void OnFifoBufferIstreamClosed() noexcept = 0;
 };
 
 class FifoBufferIstream final : public Istream {
 	FifoBufferIstreamHandler &handler;
-
-	const SharedPoolPtr<FifoBufferIstreamControl> control;
 
 	SliceFifoBuffer buffer;
 
@@ -83,16 +52,7 @@ public:
 	FifoBufferIstream(struct pool &p,
 			  FifoBufferIstreamHandler &_handler) noexcept
 		:Istream(p),
-		 handler(_handler),
-		 control(SharedPoolPtr<FifoBufferIstreamControl>::Make(p, *this)) {}
-
-	~FifoBufferIstream() noexcept {
-		control->fbi = nullptr;
-	}
-
-	auto GetControl() noexcept {
-		return control;
-	}
+		 handler(_handler) {}
 
 	auto &GetBuffer() noexcept {
 		return buffer;
@@ -125,10 +85,3 @@ public:
 		Istream::_Close();
 	}
 };
-
-/**
- * An #Istream implementation which serves data from a FIFO buffer.
- */
-std::pair<UnusedIstreamPtr, SharedPoolPtr<FifoBufferIstreamControl>>
-NewFifoBufferIstream(struct pool &pool,
-		     FifoBufferIstreamHandler &handler) noexcept;

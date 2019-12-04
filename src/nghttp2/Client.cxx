@@ -94,7 +94,7 @@ class ClientConnection::Request final
 
 	StringMap response_headers;
 
-	SharedPoolPtr<FifoBufferIstreamControl> response_body_control;
+	FifoBufferIstream *response_body_control;
 
 	DynamicFifoBuffer<uint8_t> more_response_body_data;
 
@@ -343,15 +343,14 @@ ClientConnection::Request::FlushMoreRequestBodyData() noexcept
 	if (r.empty())
 		return;
 
-	auto *buffer = response_body_control->GetBuffer();
-	assert(buffer != nullptr);
+	auto &buffer = response_body_control->GetBuffer();
 
-	buffer->AllocateIfNull(fb_pool_get());
+	buffer.AllocateIfNull(fb_pool_get());
 
-	auto w = buffer->Write();
+	auto w = buffer.Write();
 	size_t nbytes = std::min(r.size, w.size);
 	std::copy_n(r.data, nbytes, w.data);
-	buffer->Append(nbytes);
+	buffer.Append(nbytes);
 	more_response_body_data.Consume(nbytes);
 
 	if (eof && more_response_body_data.empty())
@@ -370,21 +369,16 @@ ClientConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data
 	if (!response_body_control)
 		return 0;
 
-	auto *buffer = response_body_control->GetBuffer();
-	if (buffer == nullptr) {
-		response_body_control.reset();
-		return 0;
-	}
+	auto &buffer = response_body_control->GetBuffer();
+	buffer.AllocateIfNull(fb_pool_get());
 
-	buffer->AllocateIfNull(fb_pool_get());
-
-	if (buffer->IsFull())
+	if (buffer.IsFull())
 		return NGHTTP2_ERR_PAUSE;
 
-	auto w = buffer->Write();
+	auto w = buffer.Write();
 	size_t nbytes = std::min(w.size, data.size);
 	std::copy_n(data.data, nbytes, w.data);
-	buffer->Append(nbytes);
+	buffer.Append(nbytes);
 	data.skip_front(nbytes);
 
 	eof = (flags & NGHTTP2_FLAG_END_STREAM) != 0;
@@ -407,9 +401,11 @@ ClientConnection::Request::SubmitResponse(bool has_response_body) noexcept
 
 	UnusedIstreamPtr body;
 
-	if (has_response_body)
-		std::tie(body, response_body_control) = NewFifoBufferIstream(pool,
-									     *this);
+	if (has_response_body) {
+		FifoBufferIstreamHandler &fbi_handler = *this;
+		response_body_control = NewFromPool<FifoBufferIstream>(pool, pool, fbi_handler);
+		body = UnusedIstreamPtr(response_body_control);
+	}
 
 	state = State::BODY;
 

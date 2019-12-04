@@ -31,41 +31,10 @@
  */
 
 #include "FifoBufferIstream.hxx"
-#include "UnusedPtr.hxx"
 #include "Bucket.hxx"
-#include "New.hxx"
 #include "fb_pool.hxx"
 
 #include <string.h>
-
-SliceFifoBuffer *
-FifoBufferIstreamControl::GetBuffer() noexcept
-{
-	return fbi != nullptr
-		? &fbi->GetBuffer()
-		: nullptr;
-}
-
-void
-FifoBufferIstreamControl::SubmitBuffer() noexcept
-{
-	if (fbi != nullptr)
-		fbi->SubmitBuffer();
-}
-
-void
-FifoBufferIstreamControl::SetEof() noexcept
-{
-	if (fbi != nullptr)
-		fbi->SetEof();
-}
-
-void
-FifoBufferIstreamControl::DestroyError(std::exception_ptr e) noexcept
-{
-	if (fbi != nullptr)
-		fbi->DestroyError(std::move(e));
-}
 
 size_t
 FifoBufferIstream::Push(ConstBuffer<void> src) noexcept
@@ -147,12 +116,4 @@ FifoBufferIstream::_ConsumeBucketList(size_t nbytes) noexcept
 	}
 
 	return nbytes - consumed;
-}
-
-std::pair<UnusedIstreamPtr, SharedPoolPtr<FifoBufferIstreamControl>>
-NewFifoBufferIstream(struct pool &pool,
-		     FifoBufferIstreamHandler &handler) noexcept
-{
-	auto *i = NewIstream<FifoBufferIstream>(pool, handler);
-	return std::make_pair(UnusedIstreamPtr(i), i->GetControl());
 }

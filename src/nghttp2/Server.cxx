@@ -72,7 +72,7 @@ class ServerConnection::Request final
 
 	CancellablePointer cancel_ptr;
 
-	SharedPoolPtr<FifoBufferIstreamControl> request_body_control;
+	FifoBufferIstream *request_body_control = nullptr;
 
 	DynamicFifoBuffer<uint8_t> more_request_body_data;
 
@@ -125,7 +125,7 @@ public:
 			auto error = FormatRuntimeError("Stream closed: %s",
 							nghttp2_http2_strerror(error_code));
 			request_body_control->DestroyError(std::make_exception_ptr(std::move(error)));
-			request_body_control.reset();
+			request_body_control = nullptr;
 		}
 
 		Destroy();
@@ -190,6 +190,12 @@ private:
 		FlushMoreRequestBodyData();
 	}
 
+	void OnFifoBufferIstreamClosed() noexcept {
+		assert(request_body_control);
+
+		request_body_control = nullptr;
+	}
+
 	/* virtual methods from class IncomingHttpRequest */
 	void SendResponse(http_status_t status,
 			  HttpHeaders &&response_headers,
@@ -235,15 +241,13 @@ ServerConnection::Request::FlushMoreRequestBodyData() noexcept
 	if (r.empty())
 		return;
 
-	auto *buffer = request_body_control->GetBuffer();
-	assert(buffer != nullptr);
+	auto &buffer = request_body_control->GetBuffer();
+	buffer.AllocateIfNull(fb_pool_get());
 
-	buffer->AllocateIfNull(fb_pool_get());
-
-	auto w = buffer->Write();
+	auto w = buffer.Write();
 	size_t nbytes = std::min(r.size, w.size);
 	std::copy_n(r.data, nbytes, w.data);
-	buffer->Append(nbytes);
+	buffer.Append(nbytes);
 	more_request_body_data.Consume(nbytes);
 
 	if (eof && more_request_body_data.empty())
@@ -262,21 +266,16 @@ ServerConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data
 	if (!request_body_control)
 		return 0;
 
-	auto *buffer = request_body_control->GetBuffer();
-	if (buffer == nullptr) {
-		request_body_control.reset();
-		return 0;
-	}
+	auto &buffer = request_body_control->GetBuffer();
+	buffer.AllocateIfNull(fb_pool_get());
 
-	buffer->AllocateIfNull(fb_pool_get());
-
-	if (buffer->IsFull())
+	if (buffer.IsFull())
 		return NGHTTP2_ERR_PAUSE;
 
-	auto w = buffer->Write();
+	auto w = buffer.Write();
 	size_t nbytes = std::min(w.size, data.size);
 	std::copy_n(data.data, nbytes, w.data);
-	buffer->Append(nbytes);
+	buffer.Append(nbytes);
 	data.skip_front(nbytes);
 
 	eof = (flags & NGHTTP2_FLAG_END_STREAM) != 0;
@@ -296,9 +295,11 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 {
 	// TODO
 
-	if (has_request_body)
-		std::tie(body, request_body_control) = NewFifoBufferIstream(pool,
-									    *this);
+	if (has_request_body) {
+		FifoBufferIstreamHandler &handler = *this;
+		request_body_control = NewFromPool<FifoBufferIstream>(pool, pool, handler);
+		body = UnusedIstreamPtr(request_body_control);
+	}
 
 	StopwatchPtr stopwatch; // TODO
 
