@@ -74,6 +74,9 @@ public:
 		 caller_cancel_ptr(_caller_cancel_ptr)
 	{
 		caller_cancel_ptr = *this;
+
+		if (address.host_and_port != nullptr)
+			headers.Add(pool, "host", address.host_and_port);
 	}
 
 	void Start(AllocatorPtr alloc,
