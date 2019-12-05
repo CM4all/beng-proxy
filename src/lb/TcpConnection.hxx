@@ -60,142 +60,142 @@ struct LbGoto;
 struct LbInstance;
 
 class LbTcpConnection final
-    : PoolHolder, LoggerDomainFactory, ConnectSocketHandler,
-      public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+	: PoolHolder, LoggerDomainFactory, ConnectSocketHandler,
+	  public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
-    LbInstance &instance;
+	LbInstance &instance;
 
-    const LbListenerConfig &listener;
-    LbCluster &cluster;
+	const LbListenerConfig &listener;
+	LbCluster &cluster;
 
-    /**
-     * The client's address formatted as a string (for logging).  This
-     * is guaranteed to be non-nullptr.
-     */
-    const char *client_address;
+	/**
+	 * The client's address formatted as a string (for logging).  This
+	 * is guaranteed to be non-nullptr.
+	 */
+	const char *client_address;
 
-    const sticky_hash_t session_sticky;
+	const sticky_hash_t session_sticky;
 
-    const LazyDomainLogger logger;
+	const LazyDomainLogger logger;
 
 public:
-    struct Inbound final : BufferedSocketHandler {
-        FilteredSocket socket;
+	struct Inbound final : BufferedSocketHandler {
+		FilteredSocket socket;
 
-        Inbound(EventLoop &event_loop,
-                UniqueSocketDescriptor &&fd, FdType fd_type,
-                SocketFilterPtr &&filter);
+		Inbound(EventLoop &event_loop,
+			UniqueSocketDescriptor &&fd, FdType fd_type,
+			SocketFilterPtr &&filter);
 
-        void Destroy();
+		void Destroy();
 
-        void ScheduleHandshakeCallback(BoundMethod<void() noexcept> callback) {
-            socket.ScheduleReadNoTimeout(false);
-            socket.SetHandshakeCallback(callback);
-        }
+		void ScheduleHandshakeCallback(BoundMethod<void() noexcept> callback) {
+			socket.ScheduleReadNoTimeout(false);
+			socket.SetHandshakeCallback(callback);
+		}
 
-    private:
-        /* virtual methods from class BufferedSocketHandler */
-        BufferedResult OnBufferedData() override;
-        // TODO: DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
-        bool OnBufferedClosed() noexcept override;
-        bool OnBufferedWrite() override;
-        bool OnBufferedDrained() noexcept override;
-        enum write_result OnBufferedBroken() noexcept override;
-        void OnBufferedError(std::exception_ptr e) noexcept override;
-    } inbound;
+	private:
+		/* virtual methods from class BufferedSocketHandler */
+		BufferedResult OnBufferedData() override;
+		// TODO: DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
+		bool OnBufferedClosed() noexcept override;
+		bool OnBufferedWrite() override;
+		bool OnBufferedDrained() noexcept override;
+		enum write_result OnBufferedBroken() noexcept override;
+		void OnBufferedError(std::exception_ptr e) noexcept override;
+	} inbound;
 
-    static constexpr LbTcpConnection &FromInbound(Inbound &i) {
-        return ContainerCast(i, &LbTcpConnection::inbound);
-    }
+	static constexpr LbTcpConnection &FromInbound(Inbound &i) {
+		return ContainerCast(i, &LbTcpConnection::inbound);
+	}
 
-    struct Outbound final : BufferedSocketHandler {
-        BufferedSocket socket;
+	struct Outbound final : BufferedSocketHandler {
+		BufferedSocket socket;
 
-        explicit Outbound(EventLoop &event_loop)
-            :socket(event_loop) {}
+		explicit Outbound(EventLoop &event_loop)
+			:socket(event_loop) {}
 
-        void Destroy();
+		void Destroy();
 
-    private:
-        /* virtual methods from class BufferedSocketHandler */
-        BufferedResult OnBufferedData() override;
-        // TODO: DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
-        bool OnBufferedClosed() noexcept override;
-        bool OnBufferedEnd() noexcept override;
-        bool OnBufferedWrite() override;
-        enum write_result OnBufferedBroken() noexcept override;
-        void OnBufferedError(std::exception_ptr e) noexcept override;
-    } outbound;
+	private:
+		/* virtual methods from class BufferedSocketHandler */
+		BufferedResult OnBufferedData() override;
+		// TODO: DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
+		bool OnBufferedClosed() noexcept override;
+		bool OnBufferedEnd() noexcept override;
+		bool OnBufferedWrite() override;
+		enum write_result OnBufferedBroken() noexcept override;
+		void OnBufferedError(std::exception_ptr e) noexcept override;
+	} outbound;
 
-    static constexpr LbTcpConnection &FromOutbound(Outbound &o) {
-        return ContainerCast(o, &LbTcpConnection::outbound);
-    }
+	static constexpr LbTcpConnection &FromOutbound(Outbound &o) {
+		return ContainerCast(o, &LbTcpConnection::outbound);
+	}
 
-    StaticSocketAddress bind_address;
+	StaticSocketAddress bind_address;
 
-    /**
-     * This class defers the connect to the outbound server, to move
-     * it out of the OnHandshake() stack frame, to avoid destroing the
-     * caller's object.
-     */
-    DeferEvent defer_connect;
+	/**
+	 * This class defers the connect to the outbound server, to move
+	 * it out of the OnHandshake() stack frame, to avoid destroing the
+	 * caller's object.
+	 */
+	DeferEvent defer_connect;
 
-    CancellablePointer cancel_connect;
+	CancellablePointer cancel_connect;
 
-    bool got_inbound_data, got_outbound_data;
+	bool got_inbound_data, got_outbound_data;
 
-    LbTcpConnection(PoolPtr &&pool, LbInstance &_instance,
-                    const LbListenerConfig &_listener,
-                    LbCluster &_cluster,
-                    UniqueSocketDescriptor &&fd, FdType fd_type,
-                    SocketFilterPtr &&filter,
-                    SocketAddress _client_address);
+	LbTcpConnection(PoolPtr &&pool, LbInstance &_instance,
+			const LbListenerConfig &_listener,
+			LbCluster &_cluster,
+			UniqueSocketDescriptor &&fd, FdType fd_type,
+			SocketFilterPtr &&filter,
+			SocketAddress _client_address);
 
-    ~LbTcpConnection();
+	~LbTcpConnection();
 
-    static LbTcpConnection *New(LbInstance &instance,
-                                const LbListenerConfig &listener,
-                                LbCluster &cluster,
-                                SslFactory *ssl_factory,
-                                UniqueSocketDescriptor &&fd,
-                                SocketAddress address);
+	static LbTcpConnection *New(LbInstance &instance,
+				    const LbListenerConfig &listener,
+				    LbCluster &cluster,
+				    SslFactory *ssl_factory,
+				    UniqueSocketDescriptor &&fd,
+				    SocketAddress address);
 
-    EventLoop &GetEventLoop() {
-        return inbound.socket.GetEventLoop();
-    }
+	EventLoop &GetEventLoop() {
+		return inbound.socket.GetEventLoop();
+	}
 
-    void Destroy();
+	void Destroy();
 
 protected:
-    /* virtual methods from class LoggerDomainFactory */
-    std::string MakeLoggerDomain() const noexcept override;
+	/* virtual methods from class LoggerDomainFactory */
+	std::string MakeLoggerDomain() const noexcept override;
 
 private:
-    void ScheduleHandshakeCallback() {
-        inbound.ScheduleHandshakeCallback(BIND_THIS_METHOD(OnHandshake));
-    }
+	void ScheduleHandshakeCallback() {
+		inbound.ScheduleHandshakeCallback(BIND_THIS_METHOD(OnHandshake));
+	}
 
-    void ConnectOutbound();
+	void ConnectOutbound();
 
 public:
-    void DestroyBoth();
+	void DestroyBoth();
 
-    void OnHandshake() noexcept {
-        defer_connect.Schedule();
-    }
+	void OnHandshake() noexcept {
+		defer_connect.Schedule();
+	}
 
-    void OnDeferredHandshake() noexcept;
+	void OnDeferredHandshake() noexcept;
 
-    void OnTcpEnd();
-    void OnTcpError(const char *prefix, const char *error);
-    void OnTcpErrno(const char *prefix, int error);
-    void OnTcpError(const char *prefix, std::exception_ptr ep);
+	void OnTcpEnd();
+	void OnTcpError(const char *prefix, const char *error);
+	void OnTcpErrno(const char *prefix, int error);
+	void OnTcpError(const char *prefix, std::exception_ptr ep);
 
 private:
-    /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
-    void OnSocketConnectTimeout() noexcept override;
-    void OnSocketConnectError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class ConnectSocketHandler */
+	void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
+	void OnSocketConnectTimeout() noexcept override;
+	void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 };
 
 #endif
