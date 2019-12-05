@@ -190,6 +190,7 @@ ConnectFilteredSocketOperation::OnSocketConnectSuccess(UniqueSocketDescriptor &&
 		socket->SetHandshakeCallback(BIND_THIS_METHOD(OnHandshake));
 	} else {
 		handler.OnConnectFilteredSocket(std::move(socket));
+		delete this;
 	}
 }
 
