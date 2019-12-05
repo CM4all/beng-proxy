@@ -330,21 +330,6 @@ LbTcpConnection::Outbound::Destroy()
 	socket.Destroy();
 }
 
-void
-LbTcpConnection::DestroyBoth()
-{
-	if (inbound.socket.IsValid())
-		inbound.Destroy();
-
-	defer_connect.Cancel();
-
-	if (cancel_connect) {
-		cancel_connect.Cancel();
-		cancel_connect = nullptr;
-	} else if (outbound.socket.IsValid())
-		outbound.Destroy();
-}
-
 inline void
 LbTcpConnection::OnDeferredHandshake() noexcept
 {
@@ -516,7 +501,16 @@ LbTcpConnection::LbTcpConnection(PoolPtr &&_pool, LbInstance &_instance,
 
 LbTcpConnection::~LbTcpConnection()
 {
-	DestroyBoth();
+	if (inbound.socket.IsValid())
+		inbound.Destroy();
+
+	defer_connect.Cancel();
+
+	if (cancel_connect) {
+		cancel_connect.Cancel();
+		cancel_connect = nullptr;
+	} else if (outbound.socket.IsValid())
+		outbound.Destroy();
 
 	auto &connections = instance.tcp_connections;
 	connections.erase(connections.iterator_to(*this));

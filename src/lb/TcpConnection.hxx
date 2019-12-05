@@ -178,8 +178,6 @@ private:
 	void ConnectOutbound();
 
 public:
-	void DestroyBoth();
-
 	void OnHandshake() noexcept {
 		defer_connect.Schedule();
 	}
