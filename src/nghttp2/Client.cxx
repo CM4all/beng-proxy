@@ -116,6 +116,12 @@ public:
 	}
 
 	~Request() noexcept {
+		if (id >= 0)
+			/* clear stream_user_data to ignore future
+			   callbacks on this stream */
+			nghttp2_session_set_stream_user_data(connection.session.get(),
+							     id, nullptr);
+
 		connection.RemoveRequest(*this);
 	}
 
