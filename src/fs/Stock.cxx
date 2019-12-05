@@ -31,6 +31,7 @@
  */
 
 #include "Stock.hxx"
+#include "Connect.hxx"
 #include "Factory.hxx"
 #include "FilteredSocket.hxx"
 #include "AllocatorPtr.hxx"
@@ -39,7 +40,6 @@
 #include "stock/Class.hxx"
 #include "stock/LoggerDomain.hxx"
 #include "address_list.hxx"
-#include "net/PConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/ToString.hxx"
@@ -87,15 +87,11 @@ struct FilteredSocketStockRequest {
 };
 
 class FilteredSocketStockConnection final
-	: StockItem, ConnectSocketHandler, BufferedSocketHandler, Cancellable {
+	: StockItem, ConnectFilteredSocketHandler, BufferedSocketHandler, Cancellable {
 
 	BasicLogger<StockLoggerDomain> logger;
 
-	const FdType type;
-
 	const AllocatedSocketAddress address;
-
-	SocketFilterFactory *const filter_factory;
 
 	/**
 	 * To cancel the ClientSocket.
@@ -105,15 +101,13 @@ class FilteredSocketStockConnection final
 	std::unique_ptr<FilteredSocket> socket;
 
 public:
-	FilteredSocketStockConnection(CreateStockItem c, FdType _type,
+	FilteredSocketStockConnection(CreateStockItem c,
 				      SocketAddress _address,
-				      SocketFilterFactory *_filter_factory,
 				      CancellablePointer &_cancel_ptr) noexcept
 		:StockItem(c),
 		 logger(c.stock),
-		 type(_type),
-		 address(_address),
-		 filter_factory(_filter_factory) {
+		 address(_address)
+	{
 		_cancel_ptr = *this;
 
 		cancel_ptr = nullptr;
@@ -128,15 +122,15 @@ public:
 		}
 	}
 
-	void Start(FilteredSocketStockRequest &&request, int domain) noexcept {
-		client_socket_new(stock.GetEventLoop(), request.alloc,
-				  std::move(request.stopwatch),
-				  domain, SOCK_STREAM, 0,
-				  request.ip_transparent,
-				  request.bind_address,
-				  request.address,
-				  request.timeout,
-				  *this, cancel_ptr);
+	void Start(FilteredSocketStockRequest &&request) noexcept {
+		ConnectFilteredSocket(stock.GetEventLoop(),
+				      std::move(request.stopwatch),
+				      request.ip_transparent,
+				      request.bind_address,
+				      request.address,
+				      request.timeout,
+				      request.filter_factory,
+				      *this, cancel_ptr);
 	}
 
 	SocketAddress GetAddress() const noexcept {
@@ -159,8 +153,8 @@ private:
 	}
 
 	/* virtual methods from class ConnectSocketHandler */
-	void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
-	void OnSocketConnectError(std::exception_ptr ep) noexcept override;
+	void OnConnectFilteredSocket(std::unique_ptr<FilteredSocket> socket) noexcept override;
+	void OnConnectFilteredSocketError(std::exception_ptr e) noexcept override;
 
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override;
@@ -216,29 +210,19 @@ FilteredSocketStockConnection::OnBufferedError(std::exception_ptr e) noexcept
  */
 
 void
-FilteredSocketStockConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
+FilteredSocketStockConnection::OnConnectFilteredSocket(std::unique_ptr<FilteredSocket> _socket) noexcept
 {
 	cancel_ptr = nullptr;
 
-	socket = std::make_unique<FilteredSocket>(stock.GetEventLoop());
-
-	try {
-		socket->Init(fd.Release(), type,
-			    Event::Duration(-1), Event::Duration(-1),
-			    filter_factory != nullptr
-			    ? filter_factory->CreateFilter()
-			    : nullptr,
-			    *this);
-	} catch (...) {
-		InvokeCreateError(std::current_exception());
-		return;
-	}
+	socket = std::move(_socket);
+	socket->Reinit(Event::Duration(-1), Event::Duration(-1),
+		       *this);
 
 	InvokeCreateSuccess();
 }
 
 void
-FilteredSocketStockConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
+FilteredSocketStockConnection::OnConnectFilteredSocketError(std::exception_ptr ep) noexcept
 {
 	cancel_ptr = nullptr;
 
@@ -259,16 +243,10 @@ FilteredSocketStock::Create(CreateStockItem c, StockRequest _request,
 {
 	auto &request = *(FilteredSocketStockRequest *)_request.get();
 
-	const int address_family = request.address.GetFamily();
-	const FdType type = address_family == AF_LOCAL
-		? FD_SOCKET
-		: FD_TCP;
-
-	auto *connection = new FilteredSocketStockConnection(c, type,
+	auto *connection = new FilteredSocketStockConnection(c,
 							     request.address,
-							     request.filter_factory,
 							     cancel_ptr);
-	connection->Start(std::move(request), address_family);
+	connection->Start(std::move(request));
 }
 
 bool
