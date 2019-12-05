@@ -40,6 +40,7 @@
 #include "net/ToString.hxx"
 #include "io/Logger.hxx"
 #include "util/djbhash.h"
+#include "util/DeleteDisposer.hxx"
 #include "util/StringBuffer.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
@@ -290,7 +291,10 @@ Stock::Stock() noexcept
 {
 }
 
-Stock::~Stock() noexcept = default;
+Stock::~Stock() noexcept
+{
+	items.clear_and_dispose(DeleteDisposer());
+}
 
 static StringBuffer<1024>
 MakeKey(SocketAddress bind_address, SocketAddress address,
