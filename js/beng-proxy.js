@@ -32,8 +32,6 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
                 uri += "&view=" + _beng_proxy_escape(view);
         }
 
-        if (mode == "save")
-            uri += "&save=1";
         if (path != null) {
             var query_string = null;
             var qmark = path.indexOf("?");
