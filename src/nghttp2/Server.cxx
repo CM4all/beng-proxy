@@ -93,6 +93,11 @@ public:
 	}
 
 	~Request() noexcept {
+		/* clear stream_user_data to ignore future callbacks
+		   on this stream */
+		nghttp2_session_set_stream_user_data(connection.session.get(),
+						     id, nullptr);
+
 		if (request_body_control)
 			request_body_control->DestroyError(std::make_exception_ptr(std::runtime_error("Canceled")));
 
