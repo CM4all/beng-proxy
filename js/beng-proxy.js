@@ -16,20 +16,20 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
          mode != "partial" && mode != "save"))
         return null;
 
-    let uri = base_uri + ";session=" + _beng_proxy_escape(session_id || "");
+    let params = ";session=" + _beng_proxy_escape(session_id || "");
     if (focus != null) {
         if (mode == "frame")
             mode = "partial";
 
-        uri += "&focus=" + _beng_proxy_escape(focus);
+        params += "&focus=" + _beng_proxy_escape(focus);
         if (mode == "partial" || mode == "save")
             frame = focus;
 
         if (frame != null) {
-            uri += "&frame=" + _beng_proxy_escape(frame);
+            params += "&frame=" + _beng_proxy_escape(frame);
 
             if (view != null)
-                uri += "&view=" + _beng_proxy_escape(view);
+                params += "&view=" + _beng_proxy_escape(view);
         }
 
         if (path != null) {
@@ -39,16 +39,16 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
                 query_string = path.substring(qmark);
                 path = path.substring(0, qmark);
             }
-            uri += "&path=" + _beng_proxy_escape(path);
+            params += "&path=" + _beng_proxy_escape(path);
             if (query_string != null)
-                uri += query_string;
+                params += query_string;
         }
     }
 
     if (translate != null)
-        uri += "&translate=" + _beng_proxy_escape(translate);
+        params += "&translate=" + _beng_proxy_escape(translate);
 
-    return uri;
+    return base_uri.concat(";", params.slice(1));
 }
 
 (window.cm4all && window.cm4all.widgets) || (function() {
