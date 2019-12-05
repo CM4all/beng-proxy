@@ -92,8 +92,6 @@ class Stock::Item final
 
 	TimerEvent idle_timer;
 
-	FdType fd_type;
-
 public:
 	template<typename K>
 	Item(Stock &_stock, EventLoop &event_loop, K &&_key,
