@@ -36,6 +36,7 @@
 #include "event/net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "system/Error.hxx"
+#include "util/LeakDetector.hxx"
 #include "stopwatch.hxx"
 
 #include <exception>
@@ -44,7 +45,8 @@
 #include <netinet/in.h>
 
 class ConnectFilteredSocketOperation final
-	: Cancellable, ConnectSocketHandler, BufferedSocketHandler
+	: Cancellable, ConnectSocketHandler, BufferedSocketHandler,
+	  LeakDetector
 {
 	ConnectFilteredSocketHandler &handler;
 
