@@ -21,6 +21,9 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
     if (session_id)
         params += ";session=" + _beng_proxy_escape(session_id);
 
+    if (translate != null)
+        params += "&translate=" + _beng_proxy_escape(translate);
+
     if (focus != null) {
         if (mode == "frame")
             mode = "partial";
@@ -48,9 +51,6 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
                 params += query_string;
         }
     }
-
-    if (translate != null)
-        params += "&translate=" + _beng_proxy_escape(translate);
 
     if (!params)
         return base_uri;
