@@ -504,8 +504,6 @@ LbTcpConnection::~LbTcpConnection()
 	if (inbound.socket.IsValid())
 		inbound.Destroy();
 
-	defer_connect.Cancel();
-
 	if (cancel_connect) {
 		cancel_connect.Cancel();
 		cancel_connect = nullptr;
