@@ -49,6 +49,8 @@
 #include "util/Exception.hxx"
 #include "stopwatch.hxx"
 
+#include <memory>
+
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
@@ -100,7 +102,7 @@ class FilteredSocketStockConnection final
 	 */
 	CancellablePointer cancel_ptr;
 
-	FilteredSocket socket;
+	std::unique_ptr<FilteredSocket> socket;
 
 public:
 	FilteredSocketStockConnection(CreateStockItem c, FdType _type,
@@ -111,8 +113,7 @@ public:
 		 logger(c.stock),
 		 type(_type),
 		 address(_address),
-		 filter_factory(_filter_factory),
-		 socket(c.stock.GetEventLoop()) {
+		 filter_factory(_filter_factory) {
 		_cancel_ptr = *this;
 
 		cancel_ptr = nullptr;
@@ -121,9 +122,9 @@ public:
 	~FilteredSocketStockConnection() override {
 		if (cancel_ptr)
 			cancel_ptr.Cancel();
-		else if (socket.IsValid() && socket.IsConnected()) {
-			socket.Close();
-			socket.Destroy();
+		else if (socket && socket->IsValid() && socket->IsConnected()) {
+			socket->Close();
+			socket->Destroy();
 		}
 	}
 
@@ -143,7 +144,9 @@ public:
 	}
 
 	auto &GetSocket() noexcept {
-		return socket;
+		assert(socket);
+
+		return *socket;
 	}
 
 private:
@@ -217,8 +220,10 @@ FilteredSocketStockConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&f
 {
 	cancel_ptr = nullptr;
 
+	socket = std::make_unique<FilteredSocket>(stock.GetEventLoop());
+
 	try {
-		socket.Init(fd.Release(), type,
+		socket->Init(fd.Release(), type,
 			    Event::Duration(-1), Event::Duration(-1),
 			    filter_factory != nullptr
 			    ? filter_factory->CreateFilter()
@@ -269,18 +274,20 @@ FilteredSocketStock::Create(CreateStockItem c, StockRequest _request,
 bool
 FilteredSocketStockConnection::Release() noexcept
 {
-	if (!socket.IsConnected())
+	assert(socket);
+
+	if (!socket->IsConnected())
 		return false;
 
-	if (!socket.IsEmpty()) {
+	if (!socket->IsEmpty()) {
 		logger(2, "unexpected data in idle connection");
 		return false;
 	}
 
-	socket.Reinit(Event::Duration(-1), Event::Duration(-1), *this);
-	socket.UnscheduleWrite();
+	socket->Reinit(Event::Duration(-1), Event::Duration(-1), *this);
+	socket->UnscheduleWrite();
 
-	socket.ScheduleReadTimeout(false, std::chrono::minutes(1));
+	socket->ScheduleReadTimeout(false, std::chrono::minutes(1));
 
 	return true;
 }
