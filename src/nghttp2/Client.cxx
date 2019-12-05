@@ -298,9 +298,7 @@ ClientConnection::Request::SendRequest(http_method_t method, const char *uri,
 				    dpp,
 				    this);
 	if (id < 0) {
-		auto &_handler = handler;
-		Destroy();
-		_handler.InvokeError(std::make_exception_ptr(FormatRuntimeError("nghttp2_submit_request() failed: %s",
+		AbortResponseHeaders(std::make_exception_ptr(FormatRuntimeError("nghttp2_submit_request() failed: %s",
 										nghttp2_strerror(id))));
 		return;
 	}
