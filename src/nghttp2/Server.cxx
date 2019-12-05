@@ -300,8 +300,8 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 	// TODO
 
 	if (has_request_body) {
-		FifoBufferIstreamHandler &handler = *this;
-		request_body_control = NewFromPool<FifoBufferIstream>(pool, pool, handler);
+		FifoBufferIstreamHandler &fbi_handler = *this;
+		request_body_control = NewFromPool<FifoBufferIstream>(pool, pool, fbi_handler);
 		body = UnusedIstreamPtr(request_body_control);
 	}
 
