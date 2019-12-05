@@ -129,6 +129,12 @@ public:
 		this->~Request();
 	}
 
+	void DestroyEof() noexcept {
+		auto *rbc = response_body_control;
+		Destroy();
+		rbc->SetEof();
+	}
+
 	void AbortError(std::exception_ptr e) noexcept;
 
 	void SendRequest(http_method_t method, const char *uri,
@@ -361,7 +367,7 @@ ClientConnection::Request::FlushMoreRequestBodyData() noexcept
 	more_response_body_data.Consume(nbytes);
 
 	if (eof && more_response_body_data.empty())
-		response_body_control->SetEof();
+		DestroyEof();
 	else
 		response_body_control->SubmitBuffer();
 }
@@ -395,7 +401,7 @@ ClientConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data
 	if (!data.empty())
 		more_response_body_data.Append(data.data, data.size);
 	else if (eof) {
-		response_body_control->SetEof();
+		DestroyEof();
 		return 0;
 	}
 
@@ -434,7 +440,7 @@ ClientConnection::Request::OnEndDataFrame() noexcept
 	eof = true;
 
 	if (more_response_body_data.empty())
-		response_body_control->SetEof();
+		DestroyEof();
 	else
 		FlushMoreRequestBodyData();
 
