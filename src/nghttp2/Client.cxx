@@ -99,7 +99,7 @@ class ClientConnection::Request final
 
 	DynamicFifoBuffer<uint8_t> more_response_body_data;
 
-	mutable std::unique_ptr<IstreamDataSource> response_body;
+	mutable std::unique_ptr<IstreamDataSource> request_body;
 
 public:
 	explicit Request(struct pool &_pool,
@@ -208,13 +208,13 @@ private:
 		Destroy();
 	}
 
-	nghttp2_data_provider MakeResponseDataProvider(UnusedIstreamPtr &&istream) const noexcept {
-		assert(!response_body);
+	nghttp2_data_provider MakeRequestDataProvider(UnusedIstreamPtr &&istream) const noexcept {
+		assert(!request_body);
 		assert(istream);
 
-		response_body = std::make_unique<IstreamDataSource>(connection.session.get(), id,
-								    std::move(istream));
-		return response_body->MakeDataProvider();
+		request_body = std::make_unique<IstreamDataSource>(connection.session.get(), id,
+								   std::move(istream));
+		return request_body->MakeDataProvider();
 	}
 
 	void FlushMoreRequestBodyData() noexcept;
@@ -289,7 +289,7 @@ ClientConnection::Request::SendRequest(http_method_t method, const char *uri,
 
 	nghttp2_data_provider dp, *dpp = nullptr;
 	if (body) {
-		dp = MakeResponseDataProvider(std::move(body));
+		dp = MakeRequestDataProvider(std::move(body));
 		dpp = &dp;
 	}
 
