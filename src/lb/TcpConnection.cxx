@@ -395,7 +395,6 @@ LbTcpConnection::OnSocketConnectTimeout() noexcept
 {
 	cancel_connect = nullptr;
 
-	inbound.Destroy();
 	OnTcpError("Connect error", "Timeout");
 }
 
@@ -404,7 +403,6 @@ LbTcpConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
 {
 	cancel_connect = nullptr;
 
-	inbound.Destroy();
 	OnTcpError("Connect error", ep);
 }
 
@@ -417,7 +415,6 @@ LbTcpConnection::ConnectOutbound()
 		const auto *member = cluster.Pick(GetEventLoop().SteadyNow(),
 						  session_sticky);
 		if (member == nullptr) {
-			inbound.Destroy();
 			OnTcpError("Zeroconf error", "Zeroconf cluster is empty");
 			return;
 		}
