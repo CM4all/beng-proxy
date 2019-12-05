@@ -91,9 +91,7 @@ private:
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
-		if (socket)
-			socket->Close();
-		else
+		if (!socket)
 			connect_socket.Cancel();
 
 		delete this;

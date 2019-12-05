@@ -359,27 +359,6 @@ http_server_connection_new(struct pool *pool,
                                              handler);
 }
 
-inline void
-HttpServerConnection::CloseSocket() noexcept
-{
-    assert(socket.IsConnected());
-
-    socket.Close();
-
-    idle_timeout.Cancel();
-}
-
-void
-HttpServerConnection::DestroySocket() noexcept
-{
-    assert(socket.IsValid());
-
-    if (socket.IsConnected())
-        CloseSocket();
-
-    socket.Destroy();
-}
-
 void
 HttpServerConnection::CloseRequest() noexcept
 {
@@ -417,8 +396,6 @@ HttpServerConnection::Done() noexcept
        transfer remaining response data */
     socket.Shutdown();
 
-    DestroySocket();
-
     auto *_handler = handler;
     handler = nullptr;
 
@@ -431,8 +408,6 @@ void
 HttpServerConnection::Cancel() noexcept
 {
     assert(handler != nullptr);
-
-    DestroySocket();
 
     if (request.read_state != Request::START)
         CloseRequest();
@@ -449,8 +424,6 @@ void
 HttpServerConnection::Error(std::exception_ptr e) noexcept
 {
     assert(handler != nullptr);
-
-    DestroySocket();
 
     if (request.read_state != Request::START)
         CloseRequest();
@@ -473,8 +446,6 @@ void
 http_server_connection_close(HttpServerConnection *connection) noexcept
 {
     assert(connection != nullptr);
-
-    connection->DestroySocket();
 
     connection->handler = nullptr;
 

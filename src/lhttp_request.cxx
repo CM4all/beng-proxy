@@ -88,7 +88,6 @@ private:
 	void ReleaseLease(bool reuse) noexcept override {
 		if (socket.IsConnected())
 			socket.Abandon();
-		socket.Destroy();
 
 		stock_item.Put(!reuse);
 

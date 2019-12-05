@@ -38,6 +38,15 @@
 #include <string.h>
 #include <errno.h>
 
+FilteredSocket::~FilteredSocket() noexcept
+{
+	if (IsValid()) {
+		if (IsConnected())
+			Close();
+		Destroy();
+	}
+}
+
 /*
  * buffered_socket_handler
  *

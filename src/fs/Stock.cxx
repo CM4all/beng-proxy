@@ -116,10 +116,6 @@ public:
 	~FilteredSocketStockConnection() override {
 		if (cancel_ptr)
 			cancel_ptr.Cancel();
-		else if (socket && socket->IsValid() && socket->IsConnected()) {
-			socket->Close();
-			socket->Destroy();
-		}
 	}
 
 	void Start(FilteredSocketStockRequest &&request) noexcept {

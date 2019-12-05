@@ -39,6 +39,9 @@
 
 /**
  * A wrapper for #BufferedSocket that can filter input and output.
+ *
+ * Unlike #BufferedSocket, this class "owns" the socket and closes it
+ * automatically in its destructor.
  */
 class FilteredSocket final : BufferedSocketHandler {
 	BufferedSocket base;
@@ -65,6 +68,8 @@ class FilteredSocket final : BufferedSocketHandler {
 public:
 	explicit FilteredSocket(EventLoop &_event_loop) noexcept
 		:base(_event_loop) {}
+
+	~FilteredSocket() noexcept;
 
 	EventLoop &GetEventLoop() noexcept {
 		return base.GetEventLoop();

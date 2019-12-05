@@ -86,8 +86,6 @@ public:
 			UniqueSocketDescriptor &&fd, FdType fd_type,
 			SocketFilterPtr &&filter);
 
-		void Destroy();
-
 		void ScheduleHandshakeCallback(BoundMethod<void() noexcept> callback) {
 			socket.ScheduleReadNoTimeout(false);
 			socket.SetHandshakeCallback(callback);

@@ -310,9 +310,6 @@ struct HttpServerConnection final
 
     void CloseRequest() noexcept;
 
-    void CloseSocket() noexcept;
-    void DestroySocket() noexcept;
-
     /**
      * The last response on this connection is finished, and it should
      * be closed.

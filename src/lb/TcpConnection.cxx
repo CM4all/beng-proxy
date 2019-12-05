@@ -313,15 +313,6 @@ LbTcpConnection::MakeLoggerDomain() const noexcept
 }
 
 void
-LbTcpConnection::Inbound::Destroy()
-{
-	if (socket.IsConnected())
-		socket.Close();
-
-	socket.Destroy();
-}
-
-void
 LbTcpConnection::Outbound::Destroy()
 {
 	if (socket.IsConnected())
@@ -498,9 +489,6 @@ LbTcpConnection::LbTcpConnection(PoolPtr &&_pool, LbInstance &_instance,
 
 LbTcpConnection::~LbTcpConnection()
 {
-	if (inbound.socket.IsValid())
-		inbound.Destroy();
-
 	if (cancel_connect) {
 		cancel_connect.Cancel();
 		cancel_connect = nullptr;
