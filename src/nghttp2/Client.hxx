@@ -33,7 +33,6 @@
 #pragma once
 
 #include "Session.hxx"
-#include "fs/Ptr.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "event/DeferEvent.hxx"
 #include "http/Method.h"
@@ -45,7 +44,6 @@
 struct pool;
 class StringMap;
 class StopwatchPtr;
-class UniqueSocketDescriptor;
 class HttpResponseHandler;
 class UnusedIstreamPtr;
 class CancellablePointer;
