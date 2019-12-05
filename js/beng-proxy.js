@@ -16,7 +16,7 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
          mode != "partial" && mode != "save"))
         return null;
 
-    var uri = base_uri + ";session=" + _beng_proxy_escape(session_id || "");
+    let uri = base_uri + ";session=" + _beng_proxy_escape(session_id || "");
     if (focus != null) {
         if (mode == "frame")
             mode = "partial";
@@ -33,8 +33,8 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
         }
 
         if (path != null) {
-            var query_string = null;
-            var qmark = path.indexOf("?");
+            let query_string = null;
+            let qmark = path.indexOf("?");
             if (qmark >= 0) {
                 query_string = path.substring(qmark);
                 path = path.substring(0, qmark);
