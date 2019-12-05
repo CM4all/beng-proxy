@@ -190,7 +190,7 @@ private:
 		FlushMoreRequestBodyData();
 	}
 
-	void OnFifoBufferIstreamClosed() noexcept {
+	void OnFifoBufferIstreamClosed() noexcept override {
 		assert(request_body_control);
 
 		request_body_control = nullptr;
