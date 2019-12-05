@@ -49,51 +49,51 @@
 #include <stdexcept>
 
 class LhttpRequest final : Lease, PoolLeakDetector {
-    StockItem &stock_item;
+	StockItem &stock_item;
 
-    FilteredSocket socket;
+	FilteredSocket socket;
 
 public:
-    explicit LhttpRequest(struct pool &_pool, EventLoop &event_loop,
-                          StockItem &_stock_item) noexcept
-        :PoolLeakDetector(_pool),
-         stock_item(_stock_item), socket(event_loop)
-    {
-        socket.InitDummy(lhttp_stock_item_get_socket(stock_item),
-                         lhttp_stock_item_get_type(stock_item));
-    }
+	explicit LhttpRequest(struct pool &_pool, EventLoop &event_loop,
+			      StockItem &_stock_item) noexcept
+		:PoolLeakDetector(_pool),
+		 stock_item(_stock_item), socket(event_loop)
+	{
+		socket.InitDummy(lhttp_stock_item_get_socket(stock_item),
+				 lhttp_stock_item_get_type(stock_item));
+	}
 
-    void Start(struct pool &pool,
-               StopwatchPtr &&stopwatch,
-               const LhttpAddress &address,
-               http_method_t method, HttpHeaders &&headers,
-               UnusedIstreamPtr body,
-               HttpResponseHandler &handler,
-               CancellablePointer &cancel_ptr) noexcept {
-        http_client_request(pool, std::move(stopwatch),
-                            socket,
-                            *this,
-                            stock_item.GetStockName(),
-                            method, address.uri, std::move(headers),
-                            std::move(body), true,
-                            handler, cancel_ptr);
-    }
+	void Start(struct pool &pool,
+		   StopwatchPtr &&stopwatch,
+		   const LhttpAddress &address,
+		   http_method_t method, HttpHeaders &&headers,
+		   UnusedIstreamPtr body,
+		   HttpResponseHandler &handler,
+		   CancellablePointer &cancel_ptr) noexcept {
+		http_client_request(pool, std::move(stopwatch),
+				    socket,
+				    *this,
+				    stock_item.GetStockName(),
+				    method, address.uri, std::move(headers),
+				    std::move(body), true,
+				    handler, cancel_ptr);
+	}
 
 private:
-    void Destroy() {
-        this->~LhttpRequest();
-    }
+	void Destroy() {
+		this->~LhttpRequest();
+	}
 
-    /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) noexcept override {
-        if (socket.IsConnected())
-            socket.Abandon();
-        socket.Destroy();
+	/* virtual methods from class Lease */
+	void ReleaseLease(bool reuse) noexcept override {
+		if (socket.IsConnected())
+			socket.Abandon();
+		socket.Destroy();
 
-        stock_item.Put(!reuse);
+		stock_item.Put(!reuse);
 
-        Destroy();
-    }
+		Destroy();
+	}
 };
 
 /*
@@ -103,54 +103,54 @@ private:
 
 void
 lhttp_request(struct pool &pool, EventLoop &event_loop,
-              LhttpStock &lhttp_stock,
-              const StopwatchPtr &parent_stopwatch,
-              const char *site_name,
-              const LhttpAddress &address,
-              http_method_t method, HttpHeaders &&headers,
-              UnusedIstreamPtr body,
-              HttpResponseHandler &handler,
-              CancellablePointer &cancel_ptr) noexcept
+	      LhttpStock &lhttp_stock,
+	      const StopwatchPtr &parent_stopwatch,
+	      const char *site_name,
+	      const LhttpAddress &address,
+	      http_method_t method, HttpHeaders &&headers,
+	      UnusedIstreamPtr body,
+	      HttpResponseHandler &handler,
+	      CancellablePointer &cancel_ptr) noexcept
 {
-    StopwatchPtr stopwatch(parent_stopwatch, address.uri);
+	StopwatchPtr stopwatch(parent_stopwatch, address.uri);
 
-    try {
-        address.options.Check();
-    } catch (...) {
-        stopwatch.RecordEvent("error");
+	try {
+		address.options.Check();
+	} catch (...) {
+		stopwatch.RecordEvent("error");
 
-        body.Clear();
+		body.Clear();
 
-        handler.InvokeError(std::current_exception());
-        return;
-    }
+		handler.InvokeError(std::current_exception());
+		return;
+	}
 
-    StockItem *stock_item;
+	StockItem *stock_item;
 
-    try {
-        stock_item = lhttp_stock_get(&lhttp_stock, &address);
-    } catch (...) {
-        stopwatch.RecordEvent("launch_error");
+	try {
+		stock_item = lhttp_stock_get(&lhttp_stock, &address);
+	} catch (...) {
+		stopwatch.RecordEvent("launch_error");
 
-        body.Clear();
+		body.Clear();
 
-        handler.InvokeError(std::current_exception());
-        return;
-    }
+		handler.InvokeError(std::current_exception());
+		return;
+	}
 
-    stopwatch.RecordEvent("launch");
+	stopwatch.RecordEvent("launch");
 
-    lhttp_stock_item_set_site(*stock_item, site_name);
-    lhttp_stock_item_set_uri(*stock_item, address.uri);
+	lhttp_stock_item_set_site(*stock_item, site_name);
+	lhttp_stock_item_set_uri(*stock_item, address.uri);
 
-    auto request = NewFromPool<LhttpRequest>(pool, pool,
-                                             event_loop, *stock_item);
+	auto request = NewFromPool<LhttpRequest>(pool, pool,
+						 event_loop, *stock_item);
 
-    if (address.host_and_port != nullptr)
-        headers.Write("host", address.host_and_port);
+	if (address.host_and_port != nullptr)
+		headers.Write("host", address.host_and_port);
 
-    request->Start(pool, std::move(stopwatch), address,
-                   method, std::move(headers),
-                   std::move(body),
-                   handler, cancel_ptr);
+	request->Start(pool, std::move(stopwatch), address,
+		       method, std::move(headers),
+		       std::move(body),
+		       handler, cancel_ptr);
 }

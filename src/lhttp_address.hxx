@@ -49,146 +49,146 @@ struct StringView;
  * beng-proxy.
  */
 struct LhttpAddress {
-    const char *path;
+	const char *path;
 
-    ExpandableStringList args;
+	ExpandableStringList args;
 
-    ChildOptions options;
+	ChildOptions options;
 
-    /**
-     * The host part of the URI (including the port, if any).
-     */
-    const char *host_and_port;
+	/**
+	 * The host part of the URI (including the port, if any).
+	 */
+	const char *host_and_port;
 
-    const char *uri;
+	const char *uri;
 
-    /**
-     * The maximum number of concurrent connections to one instance.
-     */
-    unsigned concurrency = 1;
+	/**
+	 * The maximum number of concurrent connections to one instance.
+	 */
+	unsigned concurrency = 1;
 
-    /**
-     * Pass a blocking listener socket to the child process?  The
-     * default is true; sets SOCK_NONBLOCK if false.
-     */
-    bool blocking = true;
+	/**
+	 * Pass a blocking listener socket to the child process?  The
+	 * default is true; sets SOCK_NONBLOCK if false.
+	 */
+	bool blocking = true;
 
-    /**
-     * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
-     * translation cache.
-     */
-    bool expand_uri = false;
+	/**
+	 * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
+	 * translation cache.
+	 */
+	bool expand_uri = false;
 
-    explicit LhttpAddress(const char *path) noexcept;
+	explicit LhttpAddress(const char *path) noexcept;
 
-    constexpr LhttpAddress(ShallowCopy shallow_copy,
-                           const LhttpAddress &src) noexcept
-        :path(src.path),
-         args(shallow_copy, src.args),
-         options(shallow_copy, src.options),
-         host_and_port(src.host_and_port),
-         uri(src.uri),
-         concurrency(src.concurrency),
-         blocking(src.blocking),
-         expand_uri(src.expand_uri)
-    {
-    }
+	constexpr LhttpAddress(ShallowCopy shallow_copy,
+			       const LhttpAddress &src) noexcept
+		:path(src.path),
+		 args(shallow_copy, src.args),
+		 options(shallow_copy, src.options),
+		 host_and_port(src.host_and_port),
+		 uri(src.uri),
+		 concurrency(src.concurrency),
+		 blocking(src.blocking),
+		 expand_uri(src.expand_uri)
+	{
+	}
 
-    constexpr LhttpAddress(LhttpAddress &&src) noexcept
-        :LhttpAddress(ShallowCopy(), src) {}
+	constexpr LhttpAddress(LhttpAddress &&src) noexcept
+		:LhttpAddress(ShallowCopy(), src) {}
 
-    LhttpAddress(ShallowCopy shallow_copy, const LhttpAddress &src,
-                 const char *_uri) noexcept
-        :LhttpAddress(shallow_copy, src)
-    {
-        uri = _uri;
-    }
+	LhttpAddress(ShallowCopy shallow_copy, const LhttpAddress &src,
+		     const char *_uri) noexcept
+		:LhttpAddress(shallow_copy, src)
+	{
+		uri = _uri;
+	}
 
-    LhttpAddress(AllocatorPtr alloc, const LhttpAddress &src) noexcept;
+	LhttpAddress(AllocatorPtr alloc, const LhttpAddress &src) noexcept;
 
-    LhttpAddress &operator=(const LhttpAddress &) = delete;
+	LhttpAddress &operator=(const LhttpAddress &) = delete;
 
-    /**
-     * Generates a string identifying the server process.  This can be
-     * used as a key in a hash table.  The string will be allocated by
-     * the specified pool.
-     */
-    gcc_pure
-    const char *GetServerId(AllocatorPtr alloc) const noexcept;
+	/**
+	 * Generates a string identifying the server process.  This can be
+	 * used as a key in a hash table.  The string will be allocated by
+	 * the specified pool.
+	 */
+	gcc_pure
+	const char *GetServerId(AllocatorPtr alloc) const noexcept;
 
-    /**
-     * Generates a string identifying the address.  This can be used as a
-     * key in a hash table.  The string will be allocated by the specified
-     * pool.
-     */
-    gcc_pure
-    const char *GetId(AllocatorPtr alloc) const noexcept;
+	/**
+	 * Generates a string identifying the address.  This can be used as a
+	 * key in a hash table.  The string will be allocated by the specified
+	 * pool.
+	 */
+	gcc_pure
+	const char *GetId(AllocatorPtr alloc) const noexcept;
 
-    /**
-     * Throws std::runtime_error on error.
-     */
-    void Check() const;
+	/**
+	 * Throws std::runtime_error on error.
+	 */
+	void Check() const;
 
-    gcc_pure
-    bool HasQueryString() const noexcept;
+	gcc_pure
+	bool HasQueryString() const noexcept;
 
-    LhttpAddress *Dup(AllocatorPtr alloc) const noexcept;
+	LhttpAddress *Dup(AllocatorPtr alloc) const noexcept;
 
-    LhttpAddress *DupWithUri(AllocatorPtr alloc,
-                             const char *uri) const noexcept;
+	LhttpAddress *DupWithUri(AllocatorPtr alloc,
+				 const char *uri) const noexcept;
 
-    /**
-     * Duplicates this #lhttp_address object and inserts the specified
-     * query string into the URI.
-     */
-    gcc_malloc
-    LhttpAddress *InsertQueryString(AllocatorPtr alloc,
-                                    const char *query_string) const noexcept;
+	/**
+	 * Duplicates this #lhttp_address object and inserts the specified
+	 * query string into the URI.
+	 */
+	gcc_malloc
+	LhttpAddress *InsertQueryString(AllocatorPtr alloc,
+					const char *query_string) const noexcept;
 
-    /**
-     * Duplicates this #lhttp_address object and inserts the specified
-     * arguments into the URI.
-     */
-    gcc_malloc
-    LhttpAddress *InsertArgs(AllocatorPtr alloc,
-                             StringView new_args,
-                             StringView path_info) const noexcept;
+	/**
+	 * Duplicates this #lhttp_address object and inserts the specified
+	 * arguments into the URI.
+	 */
+	gcc_malloc
+	LhttpAddress *InsertArgs(AllocatorPtr alloc,
+				 StringView new_args,
+				 StringView path_info) const noexcept;
 
-    gcc_pure
-    bool IsValidBase() const noexcept;
+	gcc_pure
+	bool IsValidBase() const noexcept;
 
-    LhttpAddress *SaveBase(AllocatorPtr alloc,
-                           const char *suffix) const noexcept;
+	LhttpAddress *SaveBase(AllocatorPtr alloc,
+			       const char *suffix) const noexcept;
 
-    LhttpAddress *LoadBase(AllocatorPtr alloc,
-                           const char *suffix) const noexcept;
+	LhttpAddress *LoadBase(AllocatorPtr alloc,
+			       const char *suffix) const noexcept;
 
-    /**
-     * @return a new object on success, src if no change is needed, nullptr
-     * on error
-     */
-    const LhttpAddress *Apply(AllocatorPtr alloc,
-                              StringView relative) const noexcept;
+	/**
+	 * @return a new object on success, src if no change is needed, nullptr
+	 * on error
+	 */
+	const LhttpAddress *Apply(AllocatorPtr alloc,
+				  StringView relative) const noexcept;
 
-    gcc_pure
-    StringView RelativeTo(const LhttpAddress &base) const noexcept;
+	gcc_pure
+	StringView RelativeTo(const LhttpAddress &base) const noexcept;
 
-    /**
-     * Does this address need to be expanded with lhttp_address_expand()?
-     */
-    gcc_pure
-    bool IsExpandable() const noexcept {
-        return options.IsExpandable() ||
-            expand_uri ||
-            args.IsExpandable();
-    }
+	/**
+	 * Does this address need to be expanded with lhttp_address_expand()?
+	 */
+	gcc_pure
+	bool IsExpandable() const noexcept {
+		return options.IsExpandable() ||
+			expand_uri ||
+			args.IsExpandable();
+	}
 
-    void Expand(AllocatorPtr alloc, const MatchInfo &match_info) noexcept;
+	void Expand(AllocatorPtr alloc, const MatchInfo &match_info) noexcept;
 
-    /**
-     * Throws std::runtime_error on error.
-     */
-    void CopyTo(PreparedChildProcess &dest) const noexcept;
+	/**
+	 * Throws std::runtime_error on error.
+	 */
+	void CopyTo(PreparedChildProcess &dest) const noexcept;
 };
 
 #endif

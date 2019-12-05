@@ -50,13 +50,13 @@ class HttpHeaders;
  */
 void
 lhttp_request(struct pool &pool, EventLoop &event_loop,
-              LhttpStock &lhttp_stock,
-              const StopwatchPtr &parent_stopwatch,
-              const char *site_name,
-              const LhttpAddress &address,
-              http_method_t method,
-              HttpHeaders &&headers, UnusedIstreamPtr body,
-              HttpResponseHandler &handler,
-              CancellablePointer &cancel_ptr) noexcept;
+	      LhttpStock &lhttp_stock,
+	      const StopwatchPtr &parent_stopwatch,
+	      const char *site_name,
+	      const LhttpAddress &address,
+	      http_method_t method,
+	      HttpHeaders &&headers, UnusedIstreamPtr body,
+	      HttpResponseHandler &handler,
+	      CancellablePointer &cancel_ptr) noexcept;
 
 #endif

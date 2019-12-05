@@ -47,177 +47,177 @@
 #include <string.h>
 
 LhttpAddress::LhttpAddress(const char *_path) noexcept
-    :path(_path),
-     host_and_port(nullptr),
-     uri(nullptr)
+	:path(_path),
+	 host_and_port(nullptr),
+	 uri(nullptr)
 {
-    assert(path != nullptr);
+	assert(path != nullptr);
 }
 
 LhttpAddress::LhttpAddress(AllocatorPtr alloc,
-                           const LhttpAddress &src) noexcept
-    :path(alloc.Dup(src.path)),
-     args(alloc, src.args),
-     options(alloc, src.options),
-     host_and_port(alloc.CheckDup(src.host_and_port)),
-     uri(alloc.Dup(src.uri)),
-     concurrency(src.concurrency),
-     blocking(src.blocking),
-     expand_uri(src.expand_uri)
+			   const LhttpAddress &src) noexcept
+	:path(alloc.Dup(src.path)),
+	 args(alloc, src.args),
+	 options(alloc, src.options),
+	 host_and_port(alloc.CheckDup(src.host_and_port)),
+	 uri(alloc.Dup(src.uri)),
+	 concurrency(src.concurrency),
+	 blocking(src.blocking),
+	 expand_uri(src.expand_uri)
 {
 }
 
 const char *
 LhttpAddress::GetServerId(AllocatorPtr alloc) const noexcept
 {
-    PoolStringBuilder<256> b;
-    b.push_back(path);
+	PoolStringBuilder<256> b;
+	b.push_back(path);
 
-    char child_options_buffer[16384];
-    b.emplace_back(child_options_buffer,
-                   options.MakeId(child_options_buffer));
+	char child_options_buffer[16384];
+	b.emplace_back(child_options_buffer,
+		       options.MakeId(child_options_buffer));
 
-    for (auto i : args) {
-        b.push_back("!");
-        b.push_back(i);
-    }
+	for (auto i : args) {
+		b.push_back("!");
+		b.push_back(i);
+	}
 
-    return b(alloc);
+	return b(alloc);
 }
 
 const char *
 LhttpAddress::GetId(AllocatorPtr alloc) const noexcept
 {
-    const char *p = GetServerId(alloc);
+	const char *p = GetServerId(alloc);
 
-    if (uri != nullptr)
-        p = alloc.Concat(p, ";u=", uri);
+	if (uri != nullptr)
+		p = alloc.Concat(p, ";u=", uri);
 
-    return p;
+	return p;
 }
 
 LhttpAddress *
 LhttpAddress::Dup(AllocatorPtr alloc) const noexcept
 {
-    return alloc.New<LhttpAddress>(alloc, *this);
+	return alloc.New<LhttpAddress>(alloc, *this);
 }
 
 void
 LhttpAddress::Check() const
 {
-    if (uri == nullptr)
-        throw std::runtime_error("missing LHTTP_URI");
+	if (uri == nullptr)
+		throw std::runtime_error("missing LHTTP_URI");
 
-    options.Check();
+	options.Check();
 }
 
 LhttpAddress *
 LhttpAddress::DupWithUri(AllocatorPtr alloc, const char *new_uri) const noexcept
 {
-    LhttpAddress *p = Dup(alloc);
-    p->uri = new_uri;
-    return p;
+	LhttpAddress *p = Dup(alloc);
+	p->uri = new_uri;
+	return p;
 }
 
 bool
 LhttpAddress::HasQueryString() const noexcept
 {
-    return strchr(uri, '?') != nullptr;
+	return strchr(uri, '?') != nullptr;
 }
 
 LhttpAddress *
 LhttpAddress::InsertQueryString(AllocatorPtr alloc,
-                                const char *query_string) const noexcept
+				const char *query_string) const noexcept
 {
-    return alloc.New<LhttpAddress>(ShallowCopy(), *this,
-                                   uri_insert_query_string(alloc, uri,
-                                                           query_string));
+	return alloc.New<LhttpAddress>(ShallowCopy(), *this,
+				       uri_insert_query_string(alloc, uri,
+							       query_string));
 }
 
 LhttpAddress *
 LhttpAddress::InsertArgs(AllocatorPtr alloc,
-                         StringView new_args,
-                         StringView path_info) const noexcept
+			 StringView new_args,
+			 StringView path_info) const noexcept
 {
-    return alloc.New<LhttpAddress>(ShallowCopy(), *this,
-                                   uri_insert_args(alloc, uri,
-                                                   new_args, path_info));
+	return alloc.New<LhttpAddress>(ShallowCopy(), *this,
+				       uri_insert_args(alloc, uri,
+						       new_args, path_info));
 }
 
 bool
 LhttpAddress::IsValidBase() const noexcept
 {
-    return IsExpandable() || is_base(uri);
+	return IsExpandable() || is_base(uri);
 }
 
 LhttpAddress *
 LhttpAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const noexcept
 {
-    assert(suffix != nullptr);
+	assert(suffix != nullptr);
 
-    size_t length = base_string(uri, suffix);
-    if (length == (size_t)-1)
-        return nullptr;
+	size_t length = base_string(uri, suffix);
+	if (length == (size_t)-1)
+		return nullptr;
 
-    return DupWithUri(alloc, alloc.DupZ({uri, length}));
+	return DupWithUri(alloc, alloc.DupZ({uri, length}));
 }
 
 LhttpAddress *
 LhttpAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const noexcept
 {
-    assert(suffix != nullptr);
-    assert(uri != nullptr);
-    assert(*uri != 0);
-    assert(uri[strlen(uri) - 1] == '/');
-    assert(suffix != nullptr);
+	assert(suffix != nullptr);
+	assert(uri != nullptr);
+	assert(*uri != 0);
+	assert(uri[strlen(uri) - 1] == '/');
+	assert(suffix != nullptr);
 
-    return DupWithUri(alloc, alloc.Concat(uri, suffix));
+	return DupWithUri(alloc, alloc.Concat(uri, suffix));
 }
 
 const LhttpAddress *
 LhttpAddress::Apply(AllocatorPtr alloc, StringView relative) const noexcept
 {
-    if (relative.empty())
-        return this;
+	if (relative.empty())
+		return this;
 
-    if (uri_has_authority(relative))
-        return nullptr;
+	if (uri_has_authority(relative))
+		return nullptr;
 
-    const char *p = uri_absolute(alloc, path, relative);
-    assert(p != nullptr);
+	const char *p = uri_absolute(alloc, path, relative);
+	assert(p != nullptr);
 
-    return alloc.New<LhttpAddress>(ShallowCopy(), *this, p);
+	return alloc.New<LhttpAddress>(ShallowCopy(), *this, p);
 }
 
 StringView
 LhttpAddress::RelativeTo(const LhttpAddress &base) const noexcept
 {
-    if (strcmp(base.path, path) != 0)
-        return nullptr;
+	if (strcmp(base.path, path) != 0)
+		return nullptr;
 
-    return uri_relative(base.uri, uri);
+	return uri_relative(base.uri, uri);
 }
 
 void
 LhttpAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info) noexcept
 {
-    options.Expand(alloc, match_info);
+	options.Expand(alloc, match_info);
 
-    if (expand_uri) {
-        expand_uri = false;
-        uri = expand_string(alloc, uri, match_info);
-    }
+	if (expand_uri) {
+		expand_uri = false;
+		uri = expand_string(alloc, uri, match_info);
+	}
 
-    args.Expand(alloc, match_info);
+	args.Expand(alloc, match_info);
 }
 
 void
 LhttpAddress::CopyTo(PreparedChildProcess &dest) const noexcept
 {
-    dest.Append(path);
+	dest.Append(path);
 
-    for (const char *i : args)
-        dest.Append(i);
+	for (const char *i : args)
+		dest.Append(i);
 
-    options.CopyTo(dest, true, nullptr);
+	options.CopyTo(dest, true, nullptr);
 }

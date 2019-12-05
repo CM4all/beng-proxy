@@ -51,9 +51,9 @@ class SpawnService;
  */
 LhttpStock *
 lhttp_stock_new(unsigned limit, unsigned max_idle,
-                EventLoop &event_loop, SpawnService &spawn_service,
-                SocketDescriptor log_socket,
-                const ChildErrorLogOptions &log_options) noexcept;
+		EventLoop &event_loop, SpawnService &spawn_service,
+		SocketDescriptor log_socket,
+		const ChildErrorLogOptions &log_options) noexcept;
 
 void
 lhttp_stock_free(LhttpStock *lhttp_stock) noexcept;
@@ -69,7 +69,7 @@ lhttp_stock_fade_tag(LhttpStock &ls, const char *tag) noexcept;
  */
 StockItem *
 lhttp_stock_get(LhttpStock *lhttp_stock,
-                const LhttpAddress *address);
+		const LhttpAddress *address);
 
 /**
  * Returns the socket descriptor of the specified stock item.
