@@ -275,6 +275,31 @@ FilteredSocketStockConnection::Release() noexcept
  *
  */
 
+static const char *
+MakeKey(AllocatorPtr alloc, const char *name,
+	SocketAddress bind_address, SocketAddress address,
+	SocketFilterFactory *filter_factory) noexcept
+{
+	if (name == nullptr) {
+		char buffer[1024];
+		if (!ToString(buffer, sizeof(buffer), address))
+			buffer[0] = 0;
+
+		if (!bind_address.IsNull()) {
+			char bind_buffer[1024];
+			if (!ToString(bind_buffer, sizeof(bind_buffer), bind_address))
+				bind_buffer[0] = 0;
+			name = alloc.Concat(bind_buffer, '>', buffer);
+		} else
+			name = alloc.Dup(buffer);
+	}
+
+	if (filter_factory != nullptr)
+		name = alloc.Concat(name, '|', filter_factory->GetFilterId());
+
+	return name;
+}
+
 void
 FilteredSocketStock::Get(AllocatorPtr alloc,
 			 StopwatchPtr stopwatch,
@@ -297,22 +322,9 @@ FilteredSocketStock::Get(AllocatorPtr alloc,
 								 timeout,
 								 filter_factory);
 
-	if (name == nullptr) {
-		char buffer[1024];
-		if (!ToString(buffer, sizeof(buffer), address))
-			buffer[0] = 0;
-
-		if (!bind_address.IsNull()) {
-			char bind_buffer[1024];
-			if (!ToString(bind_buffer, sizeof(bind_buffer), bind_address))
-				bind_buffer[0] = 0;
-			name = alloc.Concat(bind_buffer, '>', buffer);
-		} else
-			name = alloc.Dup(buffer);
-	}
-
-	if (filter_factory != nullptr)
-		name = alloc.Concat(name, '|', filter_factory->GetFilterId());
+	name = MakeKey(alloc, name,
+		       bind_address, address,
+		       filter_factory);
 
 	stock.Get(name, std::move(request), handler, cancel_ptr);
 }
