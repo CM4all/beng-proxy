@@ -37,7 +37,7 @@
 #include <exception>
 #include <memory>
 
-struct FilteredSocket;
+class FilteredSocket;
 class EventLoop;
 class StopwatchPtr;
 class SocketAddress;

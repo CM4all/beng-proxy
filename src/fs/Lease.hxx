@@ -80,7 +80,7 @@ public:
 	bool HasEnded() const noexcept {
 		assert(!IsReleased());
 
-		return socket->ended;
+		return socket->HasEnded();
 	}
 #endif
 

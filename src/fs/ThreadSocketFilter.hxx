@@ -40,7 +40,7 @@
 
 #include <mutex>
 
-struct FilteredSocket;
+class FilteredSocket;
 struct ThreadSocketFilterInternal;
 class ThreadQueue;
 

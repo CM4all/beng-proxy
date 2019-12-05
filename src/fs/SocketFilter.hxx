@@ -40,7 +40,7 @@
 #include <stddef.h>
 
 enum class BufferedResult;
-struct FilteredSocket;
+class FilteredSocket;
 
 class SocketFilter {
 public:

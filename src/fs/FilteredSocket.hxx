@@ -40,7 +40,7 @@
 /**
  * A wrapper for #BufferedSocket that can filter input and output.
  */
-struct FilteredSocket final : private BufferedSocketHandler {
+class FilteredSocket final : BufferedSocketHandler {
 	BufferedSocket base;
 
 #ifndef NDEBUG
@@ -62,6 +62,7 @@ struct FilteredSocket final : private BufferedSocketHandler {
 	 */
 	bool drained;
 
+public:
 	explicit FilteredSocket(EventLoop &_event_loop) noexcept
 		:base(_event_loop) {}
 

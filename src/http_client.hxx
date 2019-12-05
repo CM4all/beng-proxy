@@ -44,7 +44,7 @@
 struct pool;
 class StopwatchPtr;
 class UnusedIstreamPtr;
-struct FilteredSocket;
+class FilteredSocket;
 class Lease;
 class HttpResponseHandler;
 class CancellablePointer;

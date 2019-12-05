@@ -45,7 +45,7 @@ struct StockItem;
 class StockGetHandler;
 class CancellablePointer;
 class SocketFilterFactory;
-struct FilteredSocket;
+class FilteredSocket;
 class EventLoop;
 class SocketAddress;
 class StopwatchPtr;
