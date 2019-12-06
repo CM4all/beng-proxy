@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,33 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Glue code for using the ssl_filter in a client connection.
- */
-
 #pragma once
 
-#include "Alpn.hxx"
-#include "fs/Ptr.hxx"
-
-#include <memory>
-
-struct SslClientConfig;
-class EventLoop;
-
-void
-ssl_client_init(const SslClientConfig &config);
-
-void
-ssl_client_deinit();
-
-/**
- * Throws std::runtime_error on error.
- *
- * @param certificate the name of the client certificate to be used
- */
-SocketFilterPtr
-ssl_client_create(EventLoop &event_loop,
-		  const char *hostname,
-		  const char *certificate,
-		  SslClientAlpn alpn=SslClientAlpn::NONE);
+enum class SslClientAlpn {
+	NONE,
+	HTTP_2,
+};

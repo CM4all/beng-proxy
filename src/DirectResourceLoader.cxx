@@ -254,10 +254,15 @@ try {
 
 	case ResourceAddress::Type::HTTP:
 		if (address.GetHttp().ssl) {
+			auto alpn = address.GetHttp().http2
+				? SslClientAlpn::HTTP_2
+				: SslClientAlpn::NONE;
+
 			filter_factory = NewFromPool<SslSocketFilterFactory>(pool,
 									     event_loop,
 									     GetHostWithoutPort(pool, address.GetHttp()),
-									     address.GetHttp().certificate);
+									     address.GetHttp().certificate,
+									     alpn);
 		} else {
 			filter_factory = nullptr;
 		}

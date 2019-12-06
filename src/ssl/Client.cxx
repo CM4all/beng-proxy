@@ -168,14 +168,28 @@ ssl_client_deinit()
 	delete std::exchange(ssl_client_certs, nullptr);
 }
 
+static constexpr unsigned char alpn_h2[] = {
+	2, 'h', '2',
+};
+
 SocketFilterPtr
 ssl_client_create(EventLoop &event_loop,
 		  const char *hostname,
-		  const char *certificate)
+		  const char *certificate,
+		  SslClientAlpn alpn)
 {
 	UniqueSSL ssl(SSL_new(ssl_client_ctx.get()));
 	if (!ssl)
 		throw SslError("SSL_new() failed");
+
+	switch (alpn) {
+	case SslClientAlpn::NONE:
+		break;
+
+	case SslClientAlpn::HTTP_2:
+		SSL_set_alpn_protos(ssl.get(), alpn_h2, std::size(alpn_h2));
+		break;
+	}
 
 	SSL_set_connect_state(ssl.get());
 

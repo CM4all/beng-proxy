@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include "Alpn.hxx"
 #include "fs/Factory.hxx"
 
 class EventLoop;
@@ -40,12 +41,14 @@ class SslSocketFilterFactory final : public SocketFilterFactory {
 	EventLoop &event_loop;
 	const char *const host;
 	const char *const certificate;
+	const SslClientAlpn alpn;
 
 public:
 	SslSocketFilterFactory(EventLoop &_event_loop,
-			       const char *_host, const char *_certificate)
+			       const char *_host, const char *_certificate,
+			       SslClientAlpn _alpn=SslClientAlpn::NONE)
 		:event_loop(_event_loop), host(_host),
-		 certificate(_certificate) {}
+		 certificate(_certificate), alpn(_alpn) {}
 
 	const char *GetFilterId() const override {
 		return host;

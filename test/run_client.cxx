@@ -340,10 +340,21 @@ try {
 	headers.Add(*pool, "host", url.host.c_str());
 
 	SocketFilterPtr socket_filter;
-	if (url.ssl)
+	if (url.ssl) {
+		SslClientAlpn alpn = SslClientAlpn::NONE;
+		switch (url.protocol) {
+		case parsed_url::HTTP:
+			break;
+
+		case parsed_url::HTTP2:
+			alpn = SslClientAlpn::HTTP_2;
+			break;
+		}
+
 		socket_filter = ssl_client_create(event_loop,
 						  GetHostWithoutPort(*pool, url),
-						  nullptr);
+						  nullptr, alpn);
+	}
 
 	std::unique_ptr<FilteredSocket> fsp;
 
