@@ -107,8 +107,12 @@ parse_url(const char *url)
 	} else if (memcmp(url, "http2://", 8) == 0) {
 		url += 8;
 		dest.protocol = parsed_url::HTTP2;
-		// TODO dest.default_port = 443;
 		dest.default_port = 80;
+	} else if (memcmp(url, "https2://", 8) == 0) {
+		url += 9;
+		dest.protocol = parsed_url::HTTP2;
+		dest.ssl = true;
+		dest.default_port = 443;
 	} else
 		throw std::runtime_error("Unsupported URL");
 
