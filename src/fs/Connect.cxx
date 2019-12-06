@@ -110,11 +110,12 @@ private:
 	BufferedResult OnBufferedData() override;
 	bool OnBufferedClosed() noexcept override;
 
-	gcc_noreturn
 	bool OnBufferedWrite() override {
-		/* should never be reached because we never schedule
-		   writing */
-		gcc_unreachable();
+		/* we called ScheduleWrite() only to initiate the TLS
+		   handshake; we don't need to write, actually */
+		// TODO: move this to the SslFilter
+		socket->UnscheduleWrite();
+		return true;
 	}
 
 	void OnBufferedError(std::exception_ptr e) noexcept override;
