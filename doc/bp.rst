@@ -1159,7 +1159,6 @@ in ``SCRIPT`` elements.
 - ``&c:frame;``: the top widget in this frame (if any)
 
 - ``&c:view;``: the name of the current view
-- ``&c:session;``: the current session id
 
 .. _rewrite:
 
@@ -1341,9 +1340,10 @@ provides a JavaScript function to generate such an URI::
    beng_widget_uri(base_uri, session_id, frame, focus, mode,
                    path, translate, view);
 
-The return value is the URI which can be safely requested by the widget
-server. For ``base_uri``, ``session_id``, ``frame``, you should pass the
-value of ``&c:base;``, ``&c:session;``, ``&c:frame;``.
+The return value is the URI which can be safely requested by the
+widget server. For ``base_uri`` and, ``frame``, you should pass the
+value of ``&c:base;``, ``&c:frame;``.  The ``session_id`` parameter is
+obsolete and should be ``null``.
 
 ``focus`` is the path of the focused widget, and can be filled with
 ``&c:path;`` most of the time, unless you can to request a different

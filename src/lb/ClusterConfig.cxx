@@ -32,6 +32,8 @@
 
 #include "ClusterConfig.hxx"
 
+#include <stdexcept>
+
 void
 LbClusterConfig::FillAddressList()
 {

@@ -102,7 +102,6 @@ public:
 
 private:
     SessionId session_id;
-    StringBuffer<sizeof(SessionId) * 2 + 1> session_id_string;
     bool send_session_cookie = false;
 
     /**
@@ -500,7 +499,6 @@ public:
 private:
     const StringMap *GetCookies();
     const char *GetCookieSessionId();
-    const char *GetUriSessionId();
 
     SessionLease LoadSession(const char *_session_id);
 

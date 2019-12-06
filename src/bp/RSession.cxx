@@ -103,14 +103,6 @@ build_session_cookie_name(struct pool *pool, const BpConfig *config,
 }
 
 inline const char *
-Request::GetUriSessionId()
-{
-    assert(!stateless);
-
-    return args.Get("session");
-}
-
-inline const char *
 Request::GetCookieSessionId()
 {
     assert(!stateless);
@@ -129,8 +121,6 @@ Request::DetermineSession()
        MakeStateless() if the TranslateResponse suggests to do so */
     stateless = user_agent == nullptr || user_agent_is_bot(user_agent);
     if (stateless) {
-        /* don't propagate a stale session id to processed URIs */
-        args.Remove("session");
         return;
     }
 
@@ -138,22 +128,15 @@ Request::DetermineSession()
                                                &instance.config,
                                                request.headers);
 
-    const char *sid = GetUriSessionId();
     bool cookie_received = false;
-    if (sid == nullptr || *sid == 0) {
-        sid = GetCookieSessionId();
-        if (sid == nullptr)
-            return;
+    const char *sid = GetCookieSessionId();
+    if (sid == nullptr)
+        return;
 
-        cookie_received = true;
-    }
+    cookie_received = true;
 
     auto session = LoadSession(sid);
     if (!session) {
-        if (!cookie_received)
-            /* remove invalid session id from URI args */
-            args.Remove("session");
-
         return;
     }
 
@@ -165,10 +148,6 @@ Request::DetermineSession()
 
     if (cookie_received) {
         session->cookie_received = true;
-
-        /* we're using cookies, and we can safely remove the session
-           id from the args */
-        args.Remove("session");
     }
 }
 
@@ -201,8 +180,6 @@ Request::MakeSession()
     session_id = session->id;
     send_session_cookie = true;
 
-    args.Set(pool, "session", session_id_string = session_id.Format());
-
     return SessionLease(session);
 }
 
@@ -226,8 +203,6 @@ Request::IgnoreSession()
 
     assert(!stateless);
 
-    args.Remove("session");
-
     session_id.Clear();
     send_session_cookie = false;
 }
@@ -239,8 +214,6 @@ Request::DiscardSession()
         return;
 
     assert(!stateless);
-
-    args.Remove("session");
 
     session_delete(session_id);
     session_id.Clear();

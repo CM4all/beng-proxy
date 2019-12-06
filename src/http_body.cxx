@@ -34,6 +34,8 @@
 #include "istream/UnusedPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 
+#include <stdexcept>
+
 #include <limits.h>
 
 /** determine how much can be read from the body */

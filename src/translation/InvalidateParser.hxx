@@ -37,6 +37,8 @@
 #include "translation/Protocol.hxx"
 #include "util/StaticArray.hxx"
 
+#include <string>
+
 #include <stddef.h>
 
 struct pool;
