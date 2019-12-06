@@ -75,9 +75,11 @@
 
 struct parsed_url {
 	enum {
-		HTTP, HTTPS,
+		HTTP,
 		HTTP2,
 	} protocol;
+
+	bool ssl = false;
 
 	std::string host;
 
@@ -99,7 +101,8 @@ parse_url(const char *url)
 		dest.default_port = 80;
 	} else if (memcmp(url, "https://", 8) == 0) {
 		url += 8;
-		dest.protocol = parsed_url::HTTPS;
+		dest.protocol = parsed_url::HTTP;
+		dest.ssl = true;
 		dest.default_port = 443;
 	} else if (memcmp(url, "http2://", 8) == 0) {
 		url += 8;
@@ -174,14 +177,12 @@ struct Context final
 	void ReleaseLease(bool _reuse) noexcept override {
 		assert(!idle);
 		assert(url.protocol == parsed_url::HTTP ||
-		       url.protocol == parsed_url::HTTPS ||
 		       fd.IsDefined());
 
 		idle = true;
 		reuse = _reuse;
 
-		if (url.protocol == parsed_url::HTTP ||
-		    url.protocol == parsed_url::HTTPS) {
+		if (url.protocol == parsed_url::HTTP) {
 			if (fs.IsConnected())
 				fs.Close();
 			fs.Destroy();
@@ -334,27 +335,18 @@ try {
 	StringMap headers;
 	headers.Add(*pool, "host", url.host.c_str());
 
+	SocketFilterPtr socket_filter;
+	if (url.ssl)
+		socket_filter = ssl_client_create(event_loop,
+						  GetHostWithoutPort(*pool, url),
+						  nullptr);
+
 	std::unique_ptr<FilteredSocket> fsp;
 
 	switch (url.protocol) {
 	case parsed_url::HTTP:
-		fs.InitDummy(fd.Release(), FdType::FD_TCP);
-
-		http_client_request(*pool, nullptr, fs,
-				    *this,
-				    "localhost",
-				    method, url.uri,
-				    HttpHeaders(std::move(headers)),
-				    std::move(request_body), false,
-				    *this,
-				    cancel_ptr);
-		break;
-
-	case parsed_url::HTTPS:
 		fs.InitDummy(fd.Release(), FdType::FD_TCP,
-			     ssl_client_create(event_loop,
-					       GetHostWithoutPort(*pool, url),
-					       nullptr));
+			     std::move(socket_filter));
 
 		http_client_request(*pool, nullptr, fs,
 				    *this,
@@ -371,11 +363,7 @@ try {
 
 		fsp = std::make_unique<FilteredSocket>(event_loop);
 		fsp->InitDummy(fd.Release(), FdType::FD_TCP,
-			       /* TODO
-			       ssl_client_create(event_loop,
-						 GetHostWithoutPort(*pool, url),
-						 nullptr) */
-			       nullptr);
+			     std::move(socket_filter));
 
 		nghttp2_client = std::make_unique<NgHttp2::ClientConnection>(event_loop,
 									     std::move(fsp),
