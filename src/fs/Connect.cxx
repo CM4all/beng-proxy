@@ -34,6 +34,8 @@
 #include "FilteredSocket.hxx"
 #include "Factory.hxx"
 #include "event/net/ConnectSocket.hxx"
+#include "event/TimerEvent.hxx"
+#include "event/DeferEvent.hxx"
 #include "net/SocketAddress.hxx"
 #include "system/Error.hxx"
 #include "util/LeakDetector.hxx"
@@ -54,6 +56,8 @@ class ConnectFilteredSocketOperation final
 
 	TimerEvent timeout_event;
 
+	DeferEvent defer_handshake_callback;
+
 	ConnectSocket connect_socket;
 
 	SocketFilterFactory *const filter_factory;
@@ -70,6 +74,8 @@ public:
 				       CancellablePointer &caller_cancel_ptr) noexcept
 		:handler(_handler), stopwatch(std::move(_stopwatch)),
 		 timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
+		 defer_handshake_callback(event_loop,
+					  BIND_THIS_METHOD(OnDeferredHandshake)),
 		 connect_socket(event_loop, *this),
 		 filter_factory(_filter_factory)
 	{
@@ -87,6 +93,7 @@ public:
 
 private:
 	void OnHandshake() noexcept;
+	void OnDeferredHandshake() noexcept;
 	void OnTimeout() noexcept;
 
 	/* virtual methods from class Cancellable */
@@ -223,6 +230,17 @@ ConnectFilteredSocketOperation::OnHandshake() noexcept
 	assert(socket->IsConnected());
 
 	stopwatch.RecordEvent("handshake");
+
+	/* the ThreadSocketFilter::mutex is locked in here, so we need
+	   to move the handler callback out of this stack frame */
+	defer_handshake_callback.Schedule();
+}
+
+void
+ConnectFilteredSocketOperation::OnDeferredHandshake() noexcept
+{
+	assert(socket);
+	assert(socket->IsConnected());
 
 	handler.OnConnectFilteredSocket(std::move(socket));
 	delete this;
