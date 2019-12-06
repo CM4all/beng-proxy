@@ -554,6 +554,24 @@ Note that due to technical limitations of the current implementation, it
 is not possible to combine client certificate and the certificate
 database.
 
+Wireshark
+~~~~~~~~~
+
+Wireshark can decrypt SSL/TLS traffic if it knows the session keys.
+These keys can be logged by :program:`beng-lb` and
+:program:`beng-proxy` by setting the environment variable
+:envvar:`SSLKEYLOGFILE` to the desired file name.  All keys will then
+be appended to that file.  Obviously, this compromises the security of
+all logged connections, so it should not be used on production servers
+where real data is transmitted.
+
+In Wireshark, you can specify the file in the SSL protocol settings as
+"(Pre-)Master-Secret log filename".
+
+.. note::
+   This feature is only available if the project was built with
+   OpenSSL 1.1.1 or newer (i.e. Debian Buster).
+
 Monitors
 --------
 

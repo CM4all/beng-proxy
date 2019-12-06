@@ -3,6 +3,7 @@ cm4all-beng-proxy (16.0.7) unstable; urgency=low
   * merge release 15.29
   * use getrandom() instead of /dev/urandom if available
   * HTTP/2 client
+  * ssl: support logging session keys for Wireshark
 
  --   
 
