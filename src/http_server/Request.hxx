@@ -43,24 +43,24 @@
 struct HttpServerConnection;
 
 struct HttpServerRequest final : public IncomingHttpRequest {
-    HttpServerConnection &connection;
+	HttpServerConnection &connection;
 
-    RootStopwatchPtr stopwatch;
+	RootStopwatchPtr stopwatch;
 
-    HttpServerRequest(PoolPtr &&_pool, HttpServerConnection &_connection,
-                      SocketAddress _local_address,
-                      SocketAddress _remote_address,
-                      const char *_local_host_and_port,
-                      const char *_remote_host,
-                      http_method_t _method,
-                      StringView _uri) noexcept;
+	HttpServerRequest(PoolPtr &&_pool, HttpServerConnection &_connection,
+			  SocketAddress _local_address,
+			  SocketAddress _remote_address,
+			  const char *_local_host_and_port,
+			  const char *_remote_host,
+			  http_method_t _method,
+			  StringView _uri) noexcept;
 
-    void Destroy() noexcept;
+	void Destroy() noexcept;
 
-    /* virtual methods from class IncomingHttpRequest */
-    void SendResponse(http_status_t status,
-                      HttpHeaders &&response_headers,
-                      UnusedIstreamPtr response_body) const noexcept override;
+	/* virtual methods from class IncomingHttpRequest */
+	void SendResponse(http_status_t status,
+			  HttpHeaders &&response_headers,
+			  UnusedIstreamPtr response_body) const noexcept override;
 };
 
 #endif

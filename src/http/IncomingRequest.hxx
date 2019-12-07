@@ -46,69 +46,69 @@ class HttpHeaders;
 class Istream;
 
 struct IncomingHttpRequest {
-    const PoolPtr pool;
+	const PoolPtr pool;
 
-    const SocketAddress local_address, remote_address;
+	const SocketAddress local_address, remote_address;
 
-    /**
-     * The local address (host and port) that was connected to.
-     */
-    const char *const local_host_and_port;
+	/**
+	 * The local address (host and port) that was connected to.
+	 */
+	const char *const local_host_and_port;
 
-    /**
-     * The address of the client, without the port number.
-     */
-    const char *const remote_host;
+	/**
+	 * The address of the client, without the port number.
+	 */
+	const char *const remote_host;
 
-    /* request metadata */
-    http_method_t method;
-    char *uri;
-    StringMap headers;
+	/* request metadata */
+	http_method_t method;
+	char *uri;
+	StringMap headers;
 
-    /**
-     * The request body.  The handler is responsible for closing this
-     * istream.
-     */
-    UnusedIstreamPtr body;
+	/**
+	 * The request body.  The handler is responsible for closing this
+	 * istream.
+	 */
+	UnusedIstreamPtr body;
 
 protected:
-    IncomingHttpRequest(PoolPtr &&_pool,
-                        SocketAddress _local_address,
-                        SocketAddress _remote_address,
-                        const char *_local_host_and_port,
-                        const char *_remote_host) noexcept;
+	IncomingHttpRequest(PoolPtr &&_pool,
+			    SocketAddress _local_address,
+			    SocketAddress _remote_address,
+			    const char *_local_host_and_port,
+			    const char *_remote_host) noexcept;
 
-    IncomingHttpRequest(PoolPtr &&_pool,
-                        SocketAddress _local_address,
-                        SocketAddress _remote_address,
-                        const char *_local_host_and_port,
-                        const char *_remote_host,
-                        http_method_t _method,
-                        StringView _uri) noexcept;
+	IncomingHttpRequest(PoolPtr &&_pool,
+			    SocketAddress _local_address,
+			    SocketAddress _remote_address,
+			    const char *_local_host_and_port,
+			    const char *_remote_host,
+			    http_method_t _method,
+			    StringView _uri) noexcept;
 
-    ~IncomingHttpRequest() noexcept = default;
+	~IncomingHttpRequest() noexcept = default;
 
-    IncomingHttpRequest(const IncomingHttpRequest &) = delete;
-    IncomingHttpRequest &operator=(const IncomingHttpRequest &) = delete;
+	IncomingHttpRequest(const IncomingHttpRequest &) = delete;
+	IncomingHttpRequest &operator=(const IncomingHttpRequest &) = delete;
 
 public:
-    bool HasBody() const noexcept {
-        return body;
-    }
+	bool HasBody() const noexcept {
+		return body;
+	}
 
-    virtual void SendResponse(http_status_t status,
-                              HttpHeaders &&response_headers,
-                              UnusedIstreamPtr response_body) const noexcept = 0;
+	virtual void SendResponse(http_status_t status,
+				  HttpHeaders &&response_headers,
+				  UnusedIstreamPtr response_body) const noexcept = 0;
 
-    /**
-     * Generate a "simple" response with an optional plain-text body and
-     * an optional "Location" redirect header.
-     */
-    void SendSimpleResponse(http_status_t status, const char *location,
-                            const char *msg) const noexcept;
+	/**
+	 * Generate a "simple" response with an optional plain-text body and
+	 * an optional "Location" redirect header.
+	 */
+	void SendSimpleResponse(http_status_t status, const char *location,
+				const char *msg) const noexcept;
 
-    void SendMessage(http_status_t status, const char *msg) const noexcept;
+	void SendMessage(http_status_t status, const char *msg) const noexcept;
 
-    void SendRedirect(http_status_t status, const char *location,
-                      const char *msg) const noexcept;
+	void SendRedirect(http_status_t status, const char *location,
+			  const char *msg) const noexcept;
 };
