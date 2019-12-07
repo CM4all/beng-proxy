@@ -189,6 +189,10 @@ private:
 	void FlushMoreRequestBodyData() noexcept;
 
 	/* virtual methods from class FifoBufferIstreamHandler */
+	void OnFifoBufferIstreamConsumed(size_t nbytes) noexcept override {
+		(void)nbytes; // TODO
+	}
+
 	void OnFifoBufferIstreamDrained() noexcept override {
 		assert(request_body_control);
 

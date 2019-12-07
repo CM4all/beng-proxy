@@ -223,6 +223,10 @@ private:
 	void Cancel() noexcept override;
 
 	/* virtual methods from class FifoBufferIstreamHandler */
+	void OnFifoBufferIstreamConsumed(size_t nbytes) noexcept override {
+		(void)nbytes; // TODO
+	}
+
 	void OnFifoBufferIstreamDrained() noexcept override {
 		assert(response_body_control);
 

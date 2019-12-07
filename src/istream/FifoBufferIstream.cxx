@@ -63,8 +63,11 @@ void
 FifoBufferIstream::SubmitBuffer() noexcept
 {
 	while (!buffer.empty()) {
-		if (SendFromBuffer(buffer) == 0)
+		size_t nbytes = SendFromBuffer(buffer);
+		if (nbytes == 0)
 			return;
+
+		handler.OnFifoBufferIstreamConsumed(nbytes);
 
 		if (buffer.empty() && !eof)
 			handler.OnFifoBufferIstreamDrained();
@@ -109,6 +112,7 @@ FifoBufferIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
 	size_t consumed = std::min(nbytes, buffer.GetAvailable());
 	buffer.Consume(consumed);
+	handler.OnFifoBufferIstreamConsumed(consumed);
 
 	if (consumed > 0 && buffer.empty() && !eof) {
 		handler.OnFifoBufferIstreamDrained();

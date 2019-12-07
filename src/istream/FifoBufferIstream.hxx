@@ -37,6 +37,7 @@
 
 class FifoBufferIstreamHandler {
 public:
+	virtual void OnFifoBufferIstreamConsumed(size_t nbytes) noexcept = 0;
 	virtual void OnFifoBufferIstreamDrained() noexcept = 0;
 	virtual void OnFifoBufferIstreamClosed() noexcept = 0;
 };
