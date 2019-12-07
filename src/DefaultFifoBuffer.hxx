@@ -43,10 +43,7 @@
 class DefaultFifoBuffer : public SliceFifoBuffer {
 public:
 	void Allocate();
-	void Free();
 	void AllocateIfNull();
-	void FreeIfDefined();
-	void FreeIfEmpty();
 	void CycleIfEmpty();
 };
 
