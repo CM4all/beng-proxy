@@ -63,10 +63,11 @@ FifoBufferIstream::SubmitBuffer() noexcept
 		if (nbytes == 0)
 			return;
 
-		handler.OnFifoBufferIstreamConsumed(nbytes);
-
-		if (buffer.empty() && !eof)
-			handler.OnFifoBufferIstreamDrained();
+		if (!eof) {
+			handler.OnFifoBufferIstreamConsumed(nbytes);
+			if (buffer.empty())
+				handler.OnFifoBufferIstreamDrained();
+		}
 	}
 
 	if (buffer.empty()) {
@@ -84,7 +85,13 @@ FifoBufferIstream::_Skip(off_t length) noexcept
 	buffer.Consume(nbytes);
 	buffer.FreeIfEmpty();
 	Consumed(nbytes);
-	handler.OnFifoBufferIstreamConsumed(nbytes);
+
+	if (nbytes > 0 && !eof) {
+		handler.OnFifoBufferIstreamConsumed(nbytes);
+		if (buffer.empty())
+			handler.OnFifoBufferIstreamDrained();
+	}
+
 	return nbytes;
 }
 
@@ -110,11 +117,12 @@ FifoBufferIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
 	size_t consumed = std::min(nbytes, buffer.GetAvailable());
 	buffer.Consume(consumed);
-	Consumed(nbytes);
-	handler.OnFifoBufferIstreamConsumed(consumed);
+	Consumed(consumed);
 
-	if (consumed > 0 && buffer.empty() && !eof) {
-		handler.OnFifoBufferIstreamDrained();
+	if (consumed > 0 && !eof) {
+		handler.OnFifoBufferIstreamConsumed(consumed);
+		if (buffer.empty())
+			handler.OnFifoBufferIstreamDrained();
 
 		if (buffer.empty())
 			buffer.Free();
