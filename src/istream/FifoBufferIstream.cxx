@@ -128,5 +128,5 @@ FifoBufferIstream::_ConsumeBucketList(size_t nbytes) noexcept
 			buffer.Free();
 	}
 
-	return nbytes - consumed;
+	return consumed;
 }
