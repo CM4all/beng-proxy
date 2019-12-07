@@ -42,9 +42,9 @@
  */
 class DefaultFifoBuffer : public SliceFifoBuffer {
 public:
-	void Allocate();
-	void AllocateIfNull();
-	void CycleIfEmpty();
+	void Allocate() noexcept;
+	void AllocateIfNull() noexcept;
+	void CycleIfEmpty() noexcept;
 };
 
 #endif

@@ -34,19 +34,19 @@
 #include "fb_pool.hxx"
 
 void
-DefaultFifoBuffer::Allocate()
+DefaultFifoBuffer::Allocate() noexcept
 {
 	SliceFifoBuffer::Allocate(fb_pool_get());
 }
 
 void
-DefaultFifoBuffer::AllocateIfNull()
+DefaultFifoBuffer::AllocateIfNull() noexcept
 {
 	SliceFifoBuffer::AllocateIfNull(fb_pool_get());
 }
 
 void
-DefaultFifoBuffer::CycleIfEmpty()
+DefaultFifoBuffer::CycleIfEmpty() noexcept
 {
 	SliceFifoBuffer::CycleIfEmpty(fb_pool_get());
 }
