@@ -52,11 +52,7 @@ void
 FifoBufferIstream::SetEof() noexcept
 {
 	eof = true;
-
-	if (buffer.empty())
-		DestroyEof();
-	else
-		SubmitBuffer();
+	SubmitBuffer();
 }
 
 void
