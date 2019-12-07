@@ -464,6 +464,8 @@ ClientConnection::ClientConnection(EventLoop &loop,
 	socket->Reinit(Event::Duration(-1), write_timeout,
 		       *this);
 
+	NgHttp2::Option option;
+
 	NgHttp2::SessionCallbacks callbacks;
 	nghttp2_session_callbacks_set_send_callback(callbacks.get(), SendCallback);
 	nghttp2_session_callbacks_set_on_frame_recv_callback(callbacks.get(),
@@ -475,7 +477,8 @@ ClientConnection::ClientConnection(EventLoop &loop,
 	nghttp2_session_callbacks_set_on_data_chunk_recv_callback(callbacks.get(),
 								  Request::OnDataChunkReceivedCallback);
 
-	session = NgHttp2::Session::NewClient(callbacks.get(), this);
+	session = NgHttp2::Session::NewClient(callbacks.get(), this,
+					      option.get());
 
 	static constexpr nghttp2_settings_entry iv[1] = {{NGHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS, 256}};
 

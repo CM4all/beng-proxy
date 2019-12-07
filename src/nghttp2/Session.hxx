@@ -70,9 +70,12 @@ public:
 	}
 
 	static Session NewClient(const nghttp2_session_callbacks *callbacks,
-				 void *user_data) noexcept {
+				 void *user_data,
+				 const nghttp2_option *option) noexcept {
 		Session session;
-		nghttp2_session_client_new(&session.session, callbacks, user_data);
+		nghttp2_session_client_new2(&session.session,
+					    callbacks, user_data,
+					    option);
 		return session;
 	}
 
