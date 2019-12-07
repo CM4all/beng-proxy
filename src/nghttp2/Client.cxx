@@ -217,7 +217,7 @@ private:
 		return request_body->MakeDataProvider();
 	}
 
-	void FlushMoreRequestBodyData() noexcept;
+	void FlushMoreResponseBodyData() noexcept;
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override;
@@ -226,7 +226,7 @@ private:
 	void OnFifoBufferIstreamDrained() noexcept override {
 		assert(response_body_control);
 
-		FlushMoreRequestBodyData();
+		FlushMoreResponseBodyData();
 	}
 
 	void OnFifoBufferIstreamClosed() noexcept override {
@@ -346,7 +346,7 @@ ClientConnection::Request::OnHeaderCallback(StringView name,
 }
 
 void
-ClientConnection::Request::FlushMoreRequestBodyData() noexcept
+ClientConnection::Request::FlushMoreResponseBodyData() noexcept
 {
 	assert(response_body_control);
 
@@ -440,7 +440,7 @@ ClientConnection::Request::OnEndDataFrame() noexcept
 	if (more_response_body_data.empty())
 		DestroyEof();
 	else
-		FlushMoreRequestBodyData();
+		FlushMoreResponseBodyData();
 
 	return 0;
 }
