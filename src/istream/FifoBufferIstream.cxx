@@ -87,6 +87,7 @@ FifoBufferIstream::_Skip(off_t length) noexcept
 	size_t nbytes = std::min<decltype(length)>(length, buffer.GetAvailable());
 	buffer.Consume(nbytes);
 	buffer.FreeIfEmpty();
+	Consumed(nbytes);
 	return nbytes;
 }
 
@@ -112,6 +113,7 @@ FifoBufferIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
 	size_t consumed = std::min(nbytes, buffer.GetAvailable());
 	buffer.Consume(consumed);
+	Consumed(nbytes);
 	handler.OnFifoBufferIstreamConsumed(consumed);
 
 	if (consumed > 0 && buffer.empty() && !eof) {
