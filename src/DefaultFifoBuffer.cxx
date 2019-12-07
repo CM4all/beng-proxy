@@ -36,35 +36,35 @@
 void
 DefaultFifoBuffer::Allocate()
 {
-    SliceFifoBuffer::Allocate(fb_pool_get());
+	SliceFifoBuffer::Allocate(fb_pool_get());
 }
 
 void
 DefaultFifoBuffer::Free()
 {
-    SliceFifoBuffer::Free();
+	SliceFifoBuffer::Free();
 }
 
 void
 DefaultFifoBuffer::AllocateIfNull()
 {
-    SliceFifoBuffer::AllocateIfNull(fb_pool_get());
+	SliceFifoBuffer::AllocateIfNull(fb_pool_get());
 }
 
 void
 DefaultFifoBuffer::FreeIfDefined()
 {
-    SliceFifoBuffer::FreeIfDefined();
+	SliceFifoBuffer::FreeIfDefined();
 }
 
 void
 DefaultFifoBuffer::FreeIfEmpty()
 {
-    SliceFifoBuffer::FreeIfEmpty();
+	SliceFifoBuffer::FreeIfEmpty();
 }
 
 void
 DefaultFifoBuffer::CycleIfEmpty()
 {
-    SliceFifoBuffer::CycleIfEmpty(fb_pool_get());
+	SliceFifoBuffer::CycleIfEmpty(fb_pool_get());
 }
