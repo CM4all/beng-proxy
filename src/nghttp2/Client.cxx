@@ -49,7 +49,6 @@
 #include "util/StaticArray.hxx"
 #include "util/StringView.hxx"
 #include "HttpResponseHandler.hxx"
-#include "fb_pool.hxx"
 #include "stopwatch.hxx"
 
 #include <nghttp2/nghttp2.h>
@@ -358,14 +357,7 @@ ClientConnection::Request::FlushMoreResponseBodyData() noexcept
 	if (r.empty())
 		return;
 
-	auto &buffer = response_body_control->GetBuffer();
-
-	buffer.AllocateIfNull(fb_pool_get());
-
-	auto w = buffer.Write();
-	size_t nbytes = std::min(r.size, w.size);
-	std::copy_n(r.data, nbytes, w.data);
-	buffer.Append(nbytes);
+	size_t nbytes = response_body_control->Push(r.ToVoid());
 	more_response_body_data.Consume(nbytes);
 
 	if (eof && more_response_body_data.empty())
@@ -385,17 +377,11 @@ ClientConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data
 	if (!response_body_control)
 		return 0;
 
-	auto &buffer = response_body_control->GetBuffer();
-	buffer.AllocateIfNull(fb_pool_get());
-
-	if (buffer.IsFull())
+	size_t nbytes = response_body_control->Push(data.ToVoid());
+	if (nbytes == 0)
 		// TODO use nghttp2_option_set_no_auto_window_update()/nghttp2_session_consume() instead
 		return NGHTTP2_ERR_PAUSE;
 
-	auto w = buffer.Write();
-	size_t nbytes = std::min(w.size, data.size);
-	std::copy_n(data.data, nbytes, w.data);
-	buffer.Append(nbytes);
 	data.skip_front(nbytes);
 
 	eof = (flags & NGHTTP2_FLAG_END_STREAM) != 0;
