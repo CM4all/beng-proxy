@@ -88,6 +88,7 @@ FifoBufferIstream::_Skip(off_t length) noexcept
 	buffer.Consume(nbytes);
 	buffer.FreeIfEmpty();
 	Consumed(nbytes);
+	handler.OnFifoBufferIstreamConsumed(nbytes);
 	return nbytes;
 }
 
