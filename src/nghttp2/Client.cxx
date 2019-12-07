@@ -470,7 +470,10 @@ ClientConnection::ClientConnection(EventLoop &loop,
 	session = NgHttp2::Session::NewClient(callbacks.get(), this,
 					      option.get());
 
-	static constexpr nghttp2_settings_entry iv[1] = {{NGHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS, 256}};
+	static constexpr nghttp2_settings_entry iv[] = {
+		{NGHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS, 256},
+		{NGHTTP2_SETTINGS_ENABLE_PUSH, false},
+	};
 
 	const auto rv = nghttp2_submit_settings(session.get(), NGHTTP2_FLAG_NONE,
 						iv, std::size(iv));
