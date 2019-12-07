@@ -181,7 +181,7 @@ public:
 private:
 	/* virtual methods from class MultiFifoBufferIstreamHandler */
 	void OnFifoBufferIstreamConsumed(size_t nbytes) noexcept override {
-		(void)nbytes; // TODO
+		nghttp2_session_consume(connection.session.get(), id, nbytes);
 	}
 
 	void OnFifoBufferIstreamClosed() noexcept override {
@@ -344,6 +344,7 @@ ServerConnection::ServerConnection(struct pool &_pool, EventLoop &loop,
 
 	NgHttp2::Option option;
 	//nghttp2_option_set_recv_client_preface(option.get(), 1);
+	nghttp2_option_set_no_auto_window_update(option.get(), true);
 
 	NgHttp2::SessionCallbacks callbacks;
 	nghttp2_session_callbacks_set_send_callback(callbacks.get(), SendCallback);
