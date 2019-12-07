@@ -39,12 +39,11 @@
 #include "pool/PSocketAddress.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
-#include "istream/FifoBufferIstream.hxx"
+#include "istream/MultiFifoBufferIstream.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
-#include "util/DynamicFifoBuffer.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StaticArray.hxx"
 #include "util/StringView.hxx"
@@ -60,7 +59,7 @@ namespace NgHttp2 {
 static constexpr Event::Duration write_timeout = std::chrono::seconds(30);
 
 class ClientConnection::Request final
-	: Cancellable, FifoBufferIstreamHandler,
+	: Cancellable, MultiFifoBufferIstreamHandler,
 	  public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>
 {
 	struct pool &pool;
@@ -94,9 +93,7 @@ class ClientConnection::Request final
 
 	StringMap response_headers;
 
-	FifoBufferIstream *response_body_control;
-
-	DynamicFifoBuffer<uint8_t> more_response_body_data;
+	MultiFifoBufferIstream *response_body_control;
 
 	mutable std::unique_ptr<IstreamDataSource> request_body;
 
@@ -108,8 +105,7 @@ public:
 			 CancellablePointer &cancel_ptr) noexcept
 		:pool(_pool),
 		 stopwatch(std::move(_stopwatch)),
-		 connection(_connection), handler(_handler),
-		 more_response_body_data(nullptr)
+		 connection(_connection), handler(_handler)
 	{
 		cancel_ptr = *this;
 	}
@@ -216,20 +212,12 @@ private:
 		return request_body->MakeDataProvider();
 	}
 
-	void FlushMoreResponseBodyData() noexcept;
-
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override;
 
-	/* virtual methods from class FifoBufferIstreamHandler */
+	/* virtual methods from class MultiFifoBufferIstreamHandler */
 	void OnFifoBufferIstreamConsumed(size_t nbytes) noexcept override {
 		(void)nbytes; // TODO
-	}
-
-	void OnFifoBufferIstreamDrained() noexcept override {
-		assert(response_body_control);
-
-		FlushMoreResponseBodyData();
 	}
 
 	void OnFifoBufferIstreamClosed() noexcept override {
@@ -348,47 +336,20 @@ ClientConnection::Request::OnHeaderCallback(StringView name,
 	return 0;
 }
 
-void
-ClientConnection::Request::FlushMoreResponseBodyData() noexcept
-{
-	assert(response_body_control);
-
-	auto r = more_response_body_data.Read();
-	if (r.empty())
-		return;
-
-	size_t nbytes = response_body_control->Push(r.ToVoid());
-	more_response_body_data.Consume(nbytes);
-
-	if (eof && more_response_body_data.empty())
-		DestroyEof();
-	else
-		response_body_control->SubmitBuffer();
-}
-
 inline int
 ClientConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data,
 						       uint8_t flags) noexcept
 {
-	if (!more_response_body_data.empty())
-		// TODO use nghttp2_option_set_no_auto_window_update()/nghttp2_session_consume() instead
-		return NGHTTP2_ERR_PAUSE;
+	// TODO: limit the MultiFifoBuffer size
 
 	if (!response_body_control)
 		return 0;
 
-	size_t nbytes = response_body_control->Push(data.ToVoid());
-	if (nbytes == 0)
-		// TODO use nghttp2_option_set_no_auto_window_update()/nghttp2_session_consume() instead
-		return NGHTTP2_ERR_PAUSE;
-
-	data.skip_front(nbytes);
+	response_body_control->Push(data.ToVoid());
 
 	eof = (flags & NGHTTP2_FLAG_END_STREAM) != 0;
 
-	if (!data.empty())
-		more_response_body_data.Append(data.data, data.size);
-	else if (eof) {
+	if (eof) {
 		DestroyEof();
 		return 0;
 	}
@@ -407,8 +368,8 @@ ClientConnection::Request::SubmitResponse(bool has_response_body) noexcept
 	UnusedIstreamPtr body;
 
 	if (has_response_body) {
-		FifoBufferIstreamHandler &fbi_handler = *this;
-		response_body_control = NewFromPool<FifoBufferIstream>(pool, pool, fbi_handler);
+		MultiFifoBufferIstreamHandler &fbi_handler = *this;
+		response_body_control = NewFromPool<MultiFifoBufferIstream>(pool, pool, fbi_handler);
 		body = UnusedIstreamPtr(response_body_control);
 	}
 
@@ -427,10 +388,7 @@ ClientConnection::Request::OnEndDataFrame() noexcept
 
 	eof = true;
 
-	if (more_response_body_data.empty())
-		DestroyEof();
-	else
-		FlushMoreResponseBodyData();
+	DestroyEof();
 
 	return 0;
 }

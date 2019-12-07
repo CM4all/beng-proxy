@@ -40,11 +40,10 @@
 #include "http_server/Handler.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
-#include "istream/FifoBufferIstream.hxx"
+#include "istream/MultiFifoBufferIstream.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
-#include "util/DynamicFifoBuffer.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StaticArray.hxx"
 #include "util/StringView.hxx"
@@ -60,7 +59,7 @@ namespace NgHttp2 {
 static constexpr Event::Duration write_timeout = std::chrono::seconds(30);
 
 class ServerConnection::Request final
-	: public IncomingHttpRequest, FifoBufferIstreamHandler,
+	: public IncomingHttpRequest, MultiFifoBufferIstreamHandler,
 	  public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>
 {
 	ServerConnection &connection;
@@ -71,9 +70,7 @@ class ServerConnection::Request final
 
 	CancellablePointer cancel_ptr;
 
-	FifoBufferIstream *request_body_control = nullptr;
-
-	DynamicFifoBuffer<uint8_t> more_request_body_data;
+	MultiFifoBufferIstream *request_body_control = nullptr;
 
 	mutable std::unique_ptr<IstreamDataSource> response_body;
 
@@ -85,8 +82,7 @@ public:
 				     _connection.remote_address,
 				     _connection.local_host_and_port,
 				     _connection.remote_host),
-		 connection(_connection), id(_id),
-		 more_request_body_data(nullptr)
+		 connection(_connection), id(_id)
 	{
 		method = HTTP_METHOD_GET;
 	}
@@ -183,17 +179,9 @@ public:
 	}
 
 private:
-	void FlushMoreRequestBodyData() noexcept;
-
-	/* virtual methods from class FifoBufferIstreamHandler */
+	/* virtual methods from class MultiFifoBufferIstreamHandler */
 	void OnFifoBufferIstreamConsumed(size_t nbytes) noexcept override {
 		(void)nbytes; // TODO
-	}
-
-	void OnFifoBufferIstreamDrained() noexcept override {
-		assert(request_body_control);
-
-		FlushMoreRequestBodyData();
 	}
 
 	void OnFifoBufferIstreamClosed() noexcept override {
@@ -238,47 +226,19 @@ ServerConnection::Request::OnHeaderCallback(StringView name,
 	return 0;
 }
 
-void
-ServerConnection::Request::FlushMoreRequestBodyData() noexcept
-{
-	assert(request_body_control);
-
-	auto r = more_request_body_data.Read();
-	if (r.empty())
-		return;
-
-	size_t nbytes = request_body_control->Push(r.ToVoid());
-	more_request_body_data.Consume(nbytes);
-
-	if (eof && more_request_body_data.empty())
-		request_body_control->SetEof();
-	else
-		request_body_control->SubmitBuffer();
-}
-
 inline int
 ServerConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data,
 						       uint8_t flags) noexcept
 {
-	if (!more_request_body_data.empty())
-		// TODO use nghttp2_option_set_no_auto_window_update()/nghttp2_session_consume() instead
-		return NGHTTP2_ERR_PAUSE;
+	// TODO: limit the MultiFifoBuffer size
 
 	if (!request_body_control)
 		return 0;
 
-	size_t nbytes = request_body_control->Push(data.ToVoid());
-	if (nbytes == 0)
-		// TODO use nghttp2_option_set_no_auto_window_update()/nghttp2_session_consume() instead
-		return NGHTTP2_ERR_PAUSE;
-
-	data.skip_front(nbytes);
+	request_body_control->Push(data.ToVoid());
 
 	eof = (flags & NGHTTP2_FLAG_END_STREAM) != 0;
-
-	if (!data.empty())
-		more_request_body_data.Append(data.data, data.size);
-	else if (eof) {
+	if (eof) {
 		request_body_control->SetEof();
 		return 0;
 	}
@@ -294,8 +254,8 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 	// TODO
 
 	if (has_request_body) {
-		FifoBufferIstreamHandler &fbi_handler = *this;
-		request_body_control = NewFromPool<FifoBufferIstream>(pool, pool, fbi_handler);
+		MultiFifoBufferIstreamHandler &fbi_handler = *this;
+		request_body_control = NewFromPool<MultiFifoBufferIstream>(pool, pool, fbi_handler);
 		body = UnusedIstreamPtr(request_body_control);
 	}
 
@@ -316,11 +276,7 @@ ServerConnection::Request::OnEndDataFrame() noexcept
 
 	eof = true;
 
-	if (more_request_body_data.empty())
-		request_body_control->SetEof();
-	else
-		FlushMoreRequestBodyData();
-
+	request_body_control->SetEof();
 	return 0;
 }
 
