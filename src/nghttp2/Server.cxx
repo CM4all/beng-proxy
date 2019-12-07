@@ -207,7 +207,7 @@ private:
 	/* virtual methods from class IncomingHttpRequest */
 	void SendResponse(http_status_t status,
 			  HttpHeaders &&response_headers,
-			  UnusedIstreamPtr response_body) const noexcept override;
+			  UnusedIstreamPtr response_body) noexcept override;
 };
 
 static http_method_t
@@ -329,7 +329,7 @@ ServerConnection::Request::OnEndDataFrame() noexcept
 void
 ServerConnection::Request::SendResponse(http_status_t status,
 					HttpHeaders &&response_headers,
-					UnusedIstreamPtr _response_body) const noexcept
+					UnusedIstreamPtr _response_body) noexcept
 {
 	char status_string[16];
 	sprintf(status_string, "%u", unsigned(status));

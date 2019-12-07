@@ -98,17 +98,17 @@ public:
 
 	virtual void SendResponse(http_status_t status,
 				  HttpHeaders &&response_headers,
-				  UnusedIstreamPtr response_body) const noexcept = 0;
+				  UnusedIstreamPtr response_body) noexcept = 0;
 
 	/**
 	 * Generate a "simple" response with an optional plain-text body and
 	 * an optional "Location" redirect header.
 	 */
 	void SendSimpleResponse(http_status_t status, const char *location,
-				const char *msg) const noexcept;
+				const char *msg) noexcept;
 
-	void SendMessage(http_status_t status, const char *msg) const noexcept;
+	void SendMessage(http_status_t status, const char *msg) noexcept;
 
 	void SendRedirect(http_status_t status, const char *location,
-			  const char *msg) const noexcept;
+			  const char *msg) noexcept;
 };

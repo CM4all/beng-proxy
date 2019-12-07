@@ -72,7 +72,7 @@ IncomingHttpRequest::IncomingHttpRequest(PoolPtr &&_pool,
 void
 IncomingHttpRequest::SendSimpleResponse(http_status_t status,
 					const char *location,
-					const char *msg) const noexcept
+					const char *msg) noexcept
 {
 	assert(unsigned(status) >= 200 && unsigned(status) < 600);
 
@@ -98,7 +98,7 @@ IncomingHttpRequest::SendSimpleResponse(http_status_t status,
 }
 
 void
-IncomingHttpRequest::SendMessage(http_status_t status, const char *msg) const noexcept
+IncomingHttpRequest::SendMessage(http_status_t status, const char *msg) noexcept
 {
 	HttpHeaders response_headers;
 	response_headers.generate_date_header = true;
@@ -111,7 +111,7 @@ IncomingHttpRequest::SendMessage(http_status_t status, const char *msg) const no
 
 void
 IncomingHttpRequest::SendRedirect(http_status_t status, const char *location,
-				  const char *msg) const noexcept
+				  const char *msg) noexcept
 {
 	assert(status >= 300 && status < 400);
 	assert(location != nullptr);

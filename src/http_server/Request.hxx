@@ -60,7 +60,7 @@ struct HttpServerRequest final : public IncomingHttpRequest {
 	/* virtual methods from class IncomingHttpRequest */
 	void SendResponse(http_status_t status,
 			  HttpHeaders &&response_headers,
-			  UnusedIstreamPtr response_body) const noexcept override;
+			  UnusedIstreamPtr response_body) noexcept override;
 };
 
 #endif

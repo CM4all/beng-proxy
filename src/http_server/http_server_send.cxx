@@ -199,7 +199,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
 void
 HttpServerRequest::SendResponse(http_status_t status,
                                 HttpHeaders &&response_headers,
-                                UnusedIstreamPtr response_body) const noexcept
+                                UnusedIstreamPtr response_body) noexcept
 {
     assert(connection.request.request == this);
 
