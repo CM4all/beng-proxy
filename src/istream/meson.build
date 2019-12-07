@@ -67,6 +67,7 @@ istream = static_library(
   'FifoBufferIstream.cxx',
   'FifoBufferSink.cxx',
   'FileIstream.cxx',
+  'MultiFifoBufferIstream.cxx',
   'PipeLeaseIstream.cxx',
   'ReplaceIstream.cxx',
   'SliceIstream.cxx',
