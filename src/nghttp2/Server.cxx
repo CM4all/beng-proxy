@@ -100,9 +100,7 @@ public:
 		if (request_body_control)
 			request_body_control->DestroyError(std::make_exception_ptr(std::runtime_error("Canceled")));
 
-		if (response_body)
-			response_body.reset();
-		else if (cancel_ptr)
+		if (cancel_ptr)
 			cancel_ptr.Cancel();
 	}
 
@@ -331,6 +329,8 @@ ServerConnection::Request::SendResponse(http_status_t status,
 					HttpHeaders &&response_headers,
 					UnusedIstreamPtr _response_body) noexcept
 {
+	cancel_ptr = nullptr;
+
 	char status_string[16];
 	sprintf(status_string, "%u", unsigned(status));
 
