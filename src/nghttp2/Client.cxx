@@ -200,8 +200,7 @@ private:
 	}
 
 	void AbortResponseBody(std::exception_ptr e) noexcept {
-		// TODO
-		(void)e;
+		response_body_control->DestroyError(std::move(e));
 		Destroy();
 	}
 
