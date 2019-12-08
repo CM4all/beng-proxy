@@ -68,19 +68,24 @@ class Stock::Item final
 		  Cancellable {
 		Item &item;
 
+		const StopwatchPtr stopwatch;
+
 		StockGetHandler &handler;
 
 		GetRequest(Item &_item,
-			   const StopwatchPtr &, // TODO
+			   const StopwatchPtr &parent_stopwatch,
 			   StockGetHandler &_handler,
 			   CancellablePointer &cancel_ptr) noexcept
-			:item(_item), handler(_handler)
+			:item(_item),
+			 stopwatch(parent_stopwatch, "connect"),
+			 handler(_handler)
 		{
 			cancel_ptr = *this;
 		}
 
 		/* virtual methods from class Cancellable */
 		void Cancel() noexcept override {
+			stopwatch.RecordEvent("cancel");
 			item.CancelGetRequest(*this);
 		}
 	};
@@ -131,6 +136,7 @@ private:
 		assert(!get_requests.empty());
 
 		get_requests.clear_and_dispose([&e](GetRequest *request){
+			request->stopwatch.RecordEvent("error");
 			request->handler.OnNgHttp2StockError(e);
 		});
 
@@ -222,6 +228,7 @@ Stock::Item::OnConnectFilteredSocket(std::unique_ptr<FilteredSocket> socket) noe
 
 	auto &c = *connection;
 	get_requests.clear_and_dispose([&c](GetRequest *request){
+		request->stopwatch.RecordEvent("success");
 		request->handler.OnNgHttp2StockReady(c);
 	});
 }
