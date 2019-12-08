@@ -255,7 +255,15 @@ ServerConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data
 int
 ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 {
-	// TODO
+	if (method == HTTP_METHOD_NULL || uri == nullptr) {
+		/* no method and no URI - refuse to handle this
+		   request */
+		nghttp2_submit_rst_stream(connection.session.get(),
+					  NGHTTP2_FLAG_NONE,
+					  id, NGHTTP2_CANCEL);
+		Destroy();
+		return 0;
+	}
 
 	if (has_request_body) {
 		MultiFifoBufferIstreamHandler &fbi_handler = *this;
