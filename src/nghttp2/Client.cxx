@@ -39,7 +39,9 @@
 #include "pool/PSocketAddress.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
+#include "istream/LengthIstream.hxx"
 #include "istream/MultiFifoBufferIstream.hxx"
+#include "istream/New.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -362,15 +364,23 @@ ClientConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data
 int
 ClientConnection::Request::SubmitResponse(bool has_response_body) noexcept
 {
-	// TODO
-	// TODO: content-length
-
 	UnusedIstreamPtr body;
 
 	if (has_response_body) {
 		MultiFifoBufferIstreamHandler &fbi_handler = *this;
 		response_body_control = NewFromPool<MultiFifoBufferIstream>(pool, pool, fbi_handler);
 		body = UnusedIstreamPtr(response_body_control);
+
+		const char *content_length =
+			response_headers.Remove("content-length");
+		if (content_length != nullptr) {
+			char *endptr;
+			auto length = strtoul(content_length, &endptr, 10);
+			if (endptr > content_length)
+				body = NewIstreamPtr<LengthIstream>(pool,
+								    std::move(body),
+								    length);
+		}
 	}
 
 	state = State::BODY;
