@@ -170,8 +170,10 @@ Stock::Item::Start(SocketAddress bind_address,
 		   SocketAddress address,
 		   Event::Duration timeout) noexcept
 {
+	assert(!get_requests.empty());
+
 	ConnectFilteredSocket(GetEventLoop(),
-			      {}, // TODO
+			      get_requests.front().stopwatch,
 			      false, bind_address, address, timeout,
 			      filter_factory, *this, connect_cancel);
 }
