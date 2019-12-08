@@ -92,6 +92,8 @@ class Stock::Item final
 
 	TimerEvent idle_timer;
 
+	bool go_away = false;
+
 public:
 	template<typename K>
 	Item(Stock &_stock, EventLoop &event_loop, K &&_key,
@@ -103,6 +105,10 @@ public:
 
 	const std::string &GetKey() const noexcept {
 		return key;
+	}
+
+	bool IsAvailable() const noexcept {
+		return !go_away;
 	}
 
 	void Start(SocketAddress bind_address,
@@ -139,6 +145,7 @@ private:
 
 	/* virtual methods from class ConnectionHandler */
 	void OnNgHttp2ConnectionIdle() noexcept override;
+	void OnNgHttp2ConnectionGoAway() noexcept override;
 	void OnNgHttp2ConnectionError(std::exception_ptr e) noexcept override;
 	void OnNgHttp2ConnectionClosed() noexcept override;
 };
@@ -225,7 +232,20 @@ Stock::Item::OnNgHttp2ConnectionIdle() noexcept
 	assert(connection);
 	assert(get_requests.empty());
 
-	idle_timer.Schedule(std::chrono::minutes(1));
+	idle_timer.Schedule(go_away
+			    ? std::chrono::minutes(0)
+			    : std::chrono::minutes(1));
+}
+
+void
+Stock::Item::OnNgHttp2ConnectionGoAway() noexcept
+{
+	assert(connection);
+
+	go_away = true;
+
+	if (connection->IsIdle())
+		idle_timer.Schedule(std::chrono::seconds(0));
 }
 
 void
@@ -347,20 +367,19 @@ Stock::Get(EventLoop &event_loop,
 		key = key_buffer.c_str();
 	}
 
-	Set::insert_commit_data hint;
-	auto i = items.insert_check(key, ItemHash(), ItemEqual(), hint);
-	Item *item;
-	if (i.second) {
-		item = new Item(*this, event_loop, key, filter_factory);
-		items.insert_commit(*item, hint);
-	} else
-		// TODO check if the connection is valid and no NGHTTP2_GOAWAY was received
-		item = &*i.first;
+	auto e = items.equal_range(key, ItemHash(), ItemEqual());
+	for (auto i = e.first; i != e.second; ++i) {
+		if (i->IsAvailable()) {
+			i->AddGetHandler(alloc, parent_stopwatch,
+					 handler, cancel_ptr);
+			return;
+		}
+	}
 
+	auto *item = new Item(*this, event_loop, key, filter_factory);
+	items.insert(*item);
 	item->AddGetHandler(alloc, parent_stopwatch, handler, cancel_ptr);
-
-	if (i.second)
-		item->Start(bind_address, address, timeout);
+	item->Start(bind_address, address, timeout);
 }
 
 inline void

@@ -79,11 +79,11 @@ class Stock {
 
 	using SetHook = boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>;
 
-	using Set = boost::intrusive::unordered_set<Item,
-						    boost::intrusive::base_hook<SetHook>,
-						    boost::intrusive::hash<ItemHash>,
-						    boost::intrusive::equal<ItemEqual>,
-						    boost::intrusive::constant_time_size<false>>;
+	using Set = boost::intrusive::unordered_multiset<Item,
+							 boost::intrusive::base_hook<SetHook>,
+							 boost::intrusive::hash<ItemHash>,
+							 boost::intrusive::equal<ItemEqual>,
+							 boost::intrusive::constant_time_size<false>>;
 	Set items;
 
 	static constexpr size_t N_BUCKETS = 251;
