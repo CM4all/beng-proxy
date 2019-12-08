@@ -161,7 +161,7 @@ public:
 				    const uint8_t *value, size_t valuelen,
 				    uint8_t, void *) noexcept {
 		if (frame->hd.type != NGHTTP2_HEADERS ||
-		    frame->headers.cat != NGHTTP2_HCAT_REQUEST)
+		    frame->headers.cat != NGHTTP2_HCAT_RESPONSE)
 			return 0;
 
 		auto *request = (Request *)
