@@ -387,6 +387,10 @@ ClientConnection::Request::SubmitResponse(bool has_response_body) noexcept
 
 	handler.InvokeResponse(status, std::move(response_headers),
 			       std::move(body));
+
+	if (!has_response_body)
+		Destroy();
+
 	return 0;
 }
 
