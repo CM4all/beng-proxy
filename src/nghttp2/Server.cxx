@@ -74,7 +74,7 @@ class ServerConnection::Request final
 
 	MultiFifoBufferIstream *request_body_control = nullptr;
 
-	mutable std::unique_ptr<IstreamDataSource> response_body;
+	std::unique_ptr<IstreamDataSource> response_body;
 
 public:
 	explicit Request(PoolPtr &&_pool,
@@ -107,7 +107,7 @@ public:
 		this->~Request();
 	}
 
-	nghttp2_data_provider MakeResponseDataProvider(UnusedIstreamPtr &&istream) const noexcept {
+	nghttp2_data_provider MakeResponseDataProvider(UnusedIstreamPtr &&istream) noexcept {
 		assert(!response_body);
 		assert(istream);
 
