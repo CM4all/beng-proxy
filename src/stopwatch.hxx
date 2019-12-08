@@ -76,10 +76,13 @@ public:
 
 class RootStopwatchPtr : public StopwatchPtr {
 public:
+	RootStopwatchPtr() = default;
+
 	RootStopwatchPtr(const char *name, const char *suffix=nullptr) noexcept
 		:StopwatchPtr(name, suffix) {}
 
-	RootStopwatchPtr(RootStopwatchPtr &&) = default;
+	RootStopwatchPtr(RootStopwatchPtr &&) noexcept = default;
+	RootStopwatchPtr &operator=(RootStopwatchPtr &&) noexcept = default;
 };
 
 void
