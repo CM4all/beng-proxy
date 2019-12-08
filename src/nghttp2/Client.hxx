@@ -60,6 +60,8 @@ public:
 };
 
 class ClientConnection final : BufferedSocketHandler {
+	static constexpr size_t MAX_CONCURRENT_STREAMS = 256;
+
 	const std::unique_ptr<FilteredSocket> socket;
 
 	ConnectionHandler &handler;
@@ -70,11 +72,13 @@ class ClientConnection final : BufferedSocketHandler {
 	using RequestList =
 		boost::intrusive::list<Request,
 				       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
-				       boost::intrusive::constant_time_size<false>>;
+				       boost::intrusive::constant_time_size<true>>;
 
 	RequestList requests;
 
 	DeferEvent defer_invoke_idle;
+
+	size_t max_concurrent_streams = MAX_CONCURRENT_STREAMS;
 
 public:
 	ClientConnection(EventLoop &loop,
@@ -89,6 +93,10 @@ public:
 
 	bool IsIdle() const noexcept {
 		return requests.empty();
+	}
+
+	bool IsFull() const noexcept {
+		return requests.size() >= max_concurrent_streams;
 	}
 
 	void SendRequest(struct pool &request_pool,

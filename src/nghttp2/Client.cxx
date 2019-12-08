@@ -440,7 +440,7 @@ ClientConnection::ClientConnection(EventLoop &loop,
 					      option.get());
 
 	static constexpr nghttp2_settings_entry iv[] = {
-		{NGHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS, 256},
+		{NGHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS, MAX_CONCURRENT_STREAMS},
 		{NGHTTP2_SETTINGS_ENABLE_PUSH, false},
 	};
 
@@ -536,6 +536,13 @@ ClientConnection::OnFrameRecvCallback(const nghttp2_frame *frame) noexcept
 			return request.OnEndDataFrame();
 		}
 
+		break;
+
+	case NGHTTP2_SETTINGS:
+		for (size_t i = 0; i < frame->settings.niv; ++i)
+			if (frame->settings.iv[i].settings_id == NGHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS)
+				max_concurrent_streams = std::min<size_t>(frame->settings.iv[i].value,
+									  MAX_CONCURRENT_STREAMS);
 		break;
 
 	case NGHTTP2_GOAWAY:

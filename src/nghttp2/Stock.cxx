@@ -108,7 +108,7 @@ public:
 	}
 
 	bool IsAvailable() const noexcept {
-		return !go_away;
+		return !go_away && (!connection || !connection->IsFull());
 	}
 
 	void Start(SocketAddress bind_address,
