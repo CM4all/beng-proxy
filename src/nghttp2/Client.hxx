@@ -53,7 +53,7 @@ namespace NgHttp2 {
 
 class ConnectionHandler {
 public:
-	virtual void OnNgHttp2ConnectionIdle() noexcept = 0;
+	virtual void OnNgHttp2ConnectionIdle() noexcept {};
 	virtual void OnNgHttp2ConnectionError(std::exception_ptr e) noexcept = 0;
 	virtual void OnNgHttp2ConnectionClosed() noexcept = 0;
 };
