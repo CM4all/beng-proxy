@@ -538,6 +538,10 @@ ClientConnection::OnFrameRecvCallback(const nghttp2_frame *frame) noexcept
 
 		break;
 
+	case NGHTTP2_GOAWAY:
+		handler.OnNgHttp2ConnectionGoAway();
+		break;
+
 	default:
 		break;
 	}
