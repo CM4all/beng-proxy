@@ -40,7 +40,9 @@
 #include "http_server/Handler.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
+#include "istream/LengthIstream.hxx"
 #include "istream/MultiFifoBufferIstream.hxx"
+#include "istream/New.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
@@ -257,6 +259,16 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 		MultiFifoBufferIstreamHandler &fbi_handler = *this;
 		request_body_control = NewFromPool<MultiFifoBufferIstream>(pool, pool, fbi_handler);
 		body = UnusedIstreamPtr(request_body_control);
+
+		const char *content_length = headers.Remove("content-length");
+		if (content_length != nullptr) {
+			char *endptr;
+			auto length = strtoul(content_length, &endptr, 10);
+			if (endptr > content_length)
+				body = NewIstreamPtr<LengthIstream>(pool,
+								    std::move(body),
+								    length);
+		}
 	}
 
 	StopwatchPtr stopwatch; // TODO
