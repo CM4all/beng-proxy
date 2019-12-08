@@ -76,6 +76,8 @@ class ServerConnection::Request final
 
 	std::unique_ptr<IstreamDataSource> response_body;
 
+	RootStopwatchPtr stopwatch;
+
 public:
 	explicit Request(PoolPtr &&_pool,
 			 ServerConnection &_connection, uint32_t _id) noexcept
@@ -271,7 +273,7 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 		}
 	}
 
-	StopwatchPtr stopwatch; // TODO
+	stopwatch = RootStopwatchPtr(uri);
 
 	connection.handler.HandleHttpRequest(*this,
 					     stopwatch,
