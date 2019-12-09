@@ -206,6 +206,8 @@ struct TeeIstream final : IstreamHandler, DestructAnchor {
 
 		auto *output = NewIstream<Output>(p, *this, weak);
 		outputs.push_back(*output);
+		if (!weak)
+			++n_strong;
 		return UnusedIstreamPtr(output);
 	}
 
