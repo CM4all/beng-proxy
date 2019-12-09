@@ -97,6 +97,10 @@ public:
 		return filter != nullptr;
 	}
 
+	const SocketFilter *GetFilter() const noexcept {
+		return filter.get();
+	}
+
 	FdType GetType() const noexcept {
 		return filter == nullptr
 			? base.GetType()
