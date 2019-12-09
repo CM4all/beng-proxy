@@ -41,7 +41,7 @@
 #include "io/Logger.hxx"
 #include "util/djbhash.h"
 #include "util/DeleteDisposer.hxx"
-#include "util/StringBuffer.hxx"
+#include "util/StringBuilder.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
@@ -323,37 +323,35 @@ Stock::~Stock() noexcept
 	items.clear_and_dispose(DeleteDisposer());
 }
 
-static StringBuffer<1024>
-MakeKey(SocketAddress bind_address, SocketAddress address,
-	SocketFilterFactory *filter_factory) noexcept
+static void
+AppendSocketAddress(StringBuilder &b, SocketAddress address)
 {
-	StringBuffer<1024> buffer;
-	char *p = buffer.data();
-	const auto end = buffer + buffer.capacity();
+	assert(!address.IsNull());
 
+	auto w = b.Write();
+	if (ToString(w.data, w.size, address))
+		b.Extend(strlen(w.data));
+}
+
+static void
+MakeKey(StringBuilder &b,
+	SocketAddress bind_address, SocketAddress address,
+	SocketFilterFactory *filter_factory)
+{
 	if (!bind_address.IsNull()) {
-		if (ToString(p, end - p - 1, bind_address))
-			p += strlen(p);
-
-		*p++ = '>';
+		AppendSocketAddress(b, bind_address);
+		b.Append('>');
 	}
 
-	if (ToString(p, end - p, address))
-		p += strlen(p);
+	AppendSocketAddress(b, address);
 
-	if (filter_factory != nullptr && p + 2 < end) {
-		*p++ = '|';
+	if (filter_factory != nullptr) {
+		b.Append('|');
 
 		const char *id = filter_factory->GetFilterId();
-		if (id != nullptr) {
-			auto length = std::min<size_t>(strlen(id), end - p - 1);
-			p = (char *)mempcpy(p, id, length);
-		}
+		if (id != nullptr)
+			b.Append(id);
 	}
-
-	*p = 0;
-
-	return buffer;
 }
 
 void
@@ -368,12 +366,21 @@ Stock::Get(EventLoop &event_loop,
 	   CancellablePointer &cancel_ptr) noexcept
 {
 	const char *key;
-	StringBuffer<1024> key_buffer;
+	char key_buffer[1024];
 	if (name != nullptr)
 		key = name;
 	else {
-		key_buffer = MakeKey(bind_address, address, filter_factory);
-		key = key_buffer.c_str();
+		try {
+			StringBuilder b(key_buffer);
+			MakeKey(b, bind_address, address,
+				filter_factory);
+		} catch (StringBuilder::Overflow) {
+			/* shouldn't happen */
+			handler.OnNgHttp2StockError(std::current_exception());
+			return;
+		}
+
+		key = key_buffer;
 	}
 
 	auto e = items.equal_range(key, ItemHash(), ItemEqual());
