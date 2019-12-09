@@ -201,12 +201,12 @@ timeval_diff_ms(const struct timeval *a, const struct timeval *b) noexcept
 
 template<typename... Args>
 static inline void
-AppendFormat(StringBuilder<> &b, const char *fmt, Args&&... args)
+AppendFormat(StringBuilder &b, const char *fmt, Args&&... args)
 {
 	size_t size = b.GetRemainingSize();
 	size_t n = snprintf(b.GetTail(), size, fmt, args...);
 	if (n >= size - 1)
-		throw StringBuilder<>::Overflow();
+		throw StringBuilder::Overflow();
 	b.Extend(n);
 }
 
@@ -217,7 +217,7 @@ try {
 		return;
 
 	char message[1024];
-	StringBuilder<> b(message, sizeof(message));
+	StringBuilder b(message, sizeof(message));
 
 	b.CheckAppend(indent);
 	std::fill_n(b.GetTail(), indent, ' ');
@@ -249,5 +249,5 @@ try {
 
 	for (const auto &child : children)
 		child->Dump(indent);
-} catch (StringBuilder<>::Overflow) {
+} catch (StringBuilder::Overflow) {
 }
