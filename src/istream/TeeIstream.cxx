@@ -274,13 +274,15 @@ TeeIstream::Output::Feed(const char *data, size_t length) noexcept
 	length -= skip;
 
 	const DestructObserver destructed(*this);
+	const DestructObserver parent_destructed(parent);
 
 	size_t nbytes = InvokeData(data, length);
 	if (destructed) {
-		/* this output has been closed, so pretend everything was
-		   consumed */
+		/* this output has been closed, so pretend everything
+		   was consumed (unless the whole TeeIstream has been
+		   destroyed) */
 		assert(nbytes == 0);
-		return length;
+		return parent_destructed ? 0 : length;
 	}
 
 	skip += nbytes;
