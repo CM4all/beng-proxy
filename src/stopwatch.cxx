@@ -212,42 +212,42 @@ AppendFormat(StringBuilder<> &b, const char *fmt, Args&&... args)
 
 inline void
 Stopwatch::Dump(size_t indent) noexcept
-	try {
-		if (!stopwatch_fd.IsDefined())
-			return;
+try {
+	if (!stopwatch_fd.IsDefined())
+		return;
 
-		char message[1024];
-		StringBuilder<> b(message, sizeof(message));
+	char message[1024];
+	StringBuilder<> b(message, sizeof(message));
 
-		b.CheckAppend(indent);
-		std::fill_n(b.GetTail(), indent, ' ');
-		b.Extend(indent);
+	b.CheckAppend(indent);
+	std::fill_n(b.GetTail(), indent, ' ');
+	b.Extend(indent);
 
-		b.Append(name.c_str());
+	b.Append(name.c_str());
 
-		for (const auto &i : events)
-			AppendFormat(b, " %s=%ldms",
-				     i.name.c_str(),
-				     ToLongMs(i.time - time));
+	for (const auto &i : events)
+		AppendFormat(b, " %s=%ldms",
+			     i.name.c_str(),
+			     ToLongMs(i.time - time));
 
 #if 0
-		struct rusage new_self;
-		getrusage(RUSAGE_SELF, &new_self);
-		AppendFormat(b, " (beng-proxy=%ld+%ldms)",
-			     timeval_diff_ms(&new_self.ru_utime, &self.ru_utime),
-			     timeval_diff_ms(&new_self.ru_stime, &self.ru_stime));
+	struct rusage new_self;
+	getrusage(RUSAGE_SELF, &new_self);
+	AppendFormat(b, " (beng-proxy=%ld+%ldms)",
+		     timeval_diff_ms(&new_self.ru_utime, &self.ru_utime),
+		     timeval_diff_ms(&new_self.ru_stime, &self.ru_stime));
 #endif
 
-		b.Append('\n');
+	b.Append('\n');
 
-		if (stopwatch_fd.Write(message, strlen(message)) < 0) {
-			stopwatch_fd.Close();
-			return;
-		}
-
-		indent += 2;
-
-		for (const auto &child : children)
-			child->Dump(indent);
-	} catch (StringBuilder<>::Overflow) {
+	if (stopwatch_fd.Write(message, strlen(message)) < 0) {
+		stopwatch_fd.Close();
+		return;
 	}
+
+	indent += 2;
+
+	for (const auto &child : children)
+		child->Dump(indent);
+} catch (StringBuilder<>::Overflow) {
+}
