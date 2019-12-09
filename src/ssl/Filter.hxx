@@ -38,6 +38,7 @@
 
 struct SslFactory;
 struct SslFilter;
+class SocketFilter;
 class ThreadSocketFilterHandler;
 
 /**
@@ -60,6 +61,15 @@ ssl_filter_new(SslFactory &factory);
 
 ThreadSocketFilterHandler &
 ssl_filter_get_handler(SslFilter &ssl) noexcept;
+
+/**
+ * Attempt to cast a #SocketFilter pointer to a #SslFilter.  If the
+ * given #SocketFilter is a different type (or is nullptr), this
+ * function returns nullptr.
+ */
+gcc_pure
+const SslFilter *
+ssl_filter_cast_from(const SocketFilter *socket_filter) noexcept;
 
 gcc_pure
 const char *

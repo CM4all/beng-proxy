@@ -359,6 +359,16 @@ ssl_filter_get_handler(SslFilter &ssl) noexcept
 	return ssl;
 }
 
+const SslFilter *
+ssl_filter_cast_from(const SocketFilter *socket_filter) noexcept
+{
+	const auto *tsf = dynamic_cast<const ThreadSocketFilter *>(socket_filter);
+	if (tsf == nullptr)
+		return nullptr;
+
+	return dynamic_cast<const SslFilter *>(tsf->GetHandler());
+}
+
 const char *
 ssl_filter_get_peer_subject(const SslFilter &ssl) noexcept
 {
