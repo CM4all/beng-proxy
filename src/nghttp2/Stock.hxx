@@ -37,6 +37,7 @@
 #include "util/Compiler.h"
 
 #include <exception>
+#include <memory>
 
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/unordered_set.hpp>
@@ -46,6 +47,7 @@ class AllocatorPtr;
 class StopwatchPtr;
 class SocketAddress;
 class SocketFilterFactory;
+class FilteredSocket;
 class CancellablePointer;
 
 namespace NgHttp2 {
@@ -55,6 +57,18 @@ class ClientConnection;
 class StockGetHandler {
 public:
 	virtual void OnNgHttp2StockReady(ClientConnection &connection) noexcept = 0;
+
+	/**
+	 * The server refuses to accept TLS ALPN "h2", and the handler
+	 * may decide to use the socket for something else
+	 * (e.g. invoke a HTTP/1.1 client).
+	 *
+	 * @param socket the connected socket; may be nullptr if
+	 * another #StockGetHandler (for the same server) has already
+	 * consumed it
+	 */
+	virtual void OnNgHttp2StockAlpn(std::unique_ptr<FilteredSocket> &&socket) noexcept = 0;
+
 	virtual void OnNgHttp2StockError(std::exception_ptr e) noexcept = 0;
 };
 

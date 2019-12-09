@@ -118,12 +118,24 @@ private:
 				       _handler, _caller_cancel_ptr);
 	}
 
+	void OnNgHttp2StockAlpn(std::unique_ptr<FilteredSocket> &&socket) noexcept override;
+
 	void OnNgHttp2StockError(std::exception_ptr e) noexcept override {
 		auto &_handler = handler;
 		Destroy();
 		_handler.InvokeError(std::move(e));
 	}
 };
+
+void
+GlueRequest::OnNgHttp2StockAlpn(std::unique_ptr<FilteredSocket> &&socket) noexcept
+{
+	// TODO: fall back to HTTP/1.1
+
+	(void)socket;
+
+	OnNgHttp2StockError(std::make_exception_ptr(std::runtime_error("Server does not support HTTP/2")));
+}
 
 void
 SendRequest(struct pool &pool, EventLoop &event_loop, Stock &stock,

@@ -36,6 +36,7 @@
 #include "fs/FilteredSocket.hxx"
 #include "fs/Connect.hxx"
 #include "fs/Key.hxx"
+#include "ssl/Filter.hxx"
 #include "event/TimerEvent.hxx"
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
@@ -98,6 +99,8 @@ class Stock::Item final
 	TimerEvent idle_timer;
 
 	bool go_away = false;
+
+	bool alpn_failure = false;
 
 public:
 	template<typename K>
@@ -183,6 +186,7 @@ Stock::Item::Start(SocketAddress bind_address,
 		   Event::Duration timeout) noexcept
 {
 	assert(!get_requests.empty());
+	assert(!alpn_failure);
 
 	ConnectFilteredSocket(GetEventLoop(),
 			      get_requests.front().stopwatch,
@@ -199,6 +203,8 @@ Stock::Item::AddGetHandler(AllocatorPtr alloc,
 	if (connection) {
 		idle_timer.Schedule(std::chrono::minutes(1));
 		handler.OnNgHttp2StockReady(*connection);
+	} else if (alpn_failure) {
+		handler.OnNgHttp2StockAlpn(nullptr);
 	} else {
 		auto *request = alloc.New<GetRequest>(*this, parent_stopwatch,
 						      handler, cancel_ptr);
@@ -229,11 +235,37 @@ Stock::Item::Cancel() noexcept
 	stock.DeleteItem(this);
 }
 
+static bool
+IsAlpnHttp2(ConstBuffer<unsigned char> alpn) noexcept
+{
+	return alpn != nullptr && alpn.size == 2 &&
+		alpn[0] == 'h' && alpn[1] != '2';
+}
+
 void
 Stock::Item::OnConnectFilteredSocket(std::unique_ptr<FilteredSocket> socket) noexcept
 {
+	assert(socket);
 	assert(!get_requests.empty());
 	assert(!connection);
+
+	const auto *ssl_filter = ssl_filter_cast_from(socket->GetFilter());
+	if (ssl_filter != nullptr) {
+		const auto alpn = ssl_filter_get_alpn_selected(*ssl_filter);
+		if (!IsAlpnHttp2(alpn)) {
+			alpn_failure = true;
+
+			auto _socket = std::move(socket);
+			get_requests.clear_and_dispose([&_socket](GetRequest *request){
+				request->stopwatch.RecordEvent("alpn");
+				request->handler.OnNgHttp2StockAlpn(std::move(_socket));
+			});
+
+			/* this item stays in the map so it can serve
+			   future requests quickly */
+			return;
+		}
+	}
 
 	NgHttp2::ConnectionHandler &handler = *this;
 	connection = std::make_unique<ClientConnection>(GetEventLoop(),
