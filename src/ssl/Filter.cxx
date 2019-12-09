@@ -70,6 +70,14 @@ struct SslFilter final : ThreadSocketFilterHandler {
 			    NewFifoBufferBio(encrypted_output));
 	}
 
+private:
+	/**
+	 * Called from inside Run() right after the handshake has
+	 * completed.  This is used to collect some data for our
+	 * public getters.
+	 */
+	void PostHandshake() noexcept;
+
 	void Encrypt();
 
 	/* virtual methods from class ThreadSocketFilterHandler */
@@ -125,6 +133,16 @@ CheckThrowSslError(SSL *ssl, int result)
 {
 	if (is_ssl_error(ssl, result))
 		throw MakeSslError();
+}
+
+inline void
+SslFilter::PostHandshake() noexcept
+{
+	UniqueX509 cert(SSL_get_peer_certificate(ssl.get()));
+	if (cert != nullptr) {
+		peer_subject = format_subject_name(cert.get());
+		peer_issuer_subject = format_issuer_subject_name(cert.get());
+	}
 }
 
 enum class SslDecryptResult {
@@ -252,12 +270,7 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 		int result = SSL_do_handshake(ssl.get());
 		if (result == 1) {
 			handshaking = false;
-
-			UniqueX509 cert(SSL_get_peer_certificate(ssl.get()));
-			if (cert != nullptr) {
-				peer_subject = format_subject_name(cert.get());
-				peer_issuer_subject = format_issuer_subject_name(cert.get());
-			}
+			PostHandshake();
 		} else {
 			try {
 				CheckThrowSslError(ssl.get(), result);
