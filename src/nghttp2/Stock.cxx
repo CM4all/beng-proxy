@@ -348,7 +348,7 @@ MakeKey(StringBuilder &b, SocketAddress bind_address,
 static void
 MakeKey(StringBuilder &b,
 	SocketAddress bind_address, SocketAddress address,
-	SocketFilterFactory *filter_factory)
+	const SocketFilterFactory *filter_factory)
 {
 	MakeKey(b, bind_address, address);
 
