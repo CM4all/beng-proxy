@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -52,9 +52,9 @@ class EventLoop;
  */
 UnusedIstreamPtr
 NewTeeIstream(struct pool &pool, UnusedIstreamPtr input,
-              EventLoop &event_loop,
-              bool weak,
-              bool defer_read=false) noexcept;
+	      EventLoop &event_loop,
+	      bool weak,
+	      bool defer_read=false) noexcept;
 
 /**
  * Create another output for the given #TeeIstream.
