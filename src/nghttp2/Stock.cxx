@@ -112,8 +112,20 @@ public:
 		return key;
 	}
 
+	bool IsIdle() const noexcept {
+		return (!connection || connection->IsIdle()) &&
+			get_requests.empty();
+	}
+
 	bool IsAvailable() const noexcept {
 		return !go_away && (!connection || !connection->IsFull());
+	}
+
+	void Fade() noexcept {
+		go_away = true;
+
+		if (IsIdle())
+			idle_timer.Schedule(std::chrono::seconds(0));
 	}
 
 	void Start(SocketAddress bind_address,
@@ -251,10 +263,7 @@ Stock::Item::OnNgHttp2ConnectionGoAway() noexcept
 {
 	assert(connection);
 
-	go_away = true;
-
-	if (connection->IsIdle())
-		idle_timer.Schedule(std::chrono::seconds(0));
+	Fade();
 }
 
 void
@@ -321,6 +330,13 @@ Stock::Stock() noexcept
 Stock::~Stock() noexcept
 {
 	items.clear_and_dispose(DeleteDisposer());
+}
+
+void
+Stock::FadeAll() noexcept
+{
+	for (auto &i : items)
+		i.Fade();
 }
 
 void

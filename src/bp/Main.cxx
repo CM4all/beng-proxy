@@ -190,6 +190,9 @@ BpInstance::ReloadEventCallback(int) noexcept
 	if (nfs_cache != nullptr)
 		nfs_cache_flush(*nfs_cache);
 
+	if (nghttp2_stock != nullptr)
+		nghttp2_stock->FadeAll();
+
 	Compress();
 }
 

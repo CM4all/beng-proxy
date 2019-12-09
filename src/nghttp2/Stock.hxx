@@ -96,6 +96,8 @@ public:
 	Stock(const Stock &) = delete;
 	Stock &operator=(const Stock &) = delete;
 
+	void FadeAll() noexcept;
+
 	void Get(EventLoop &event_loop,
 		 AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
 		 const char *name,
