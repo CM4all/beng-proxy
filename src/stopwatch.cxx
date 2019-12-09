@@ -217,7 +217,7 @@ try {
 		return;
 
 	char message[1024];
-	StringBuilder b(message, sizeof(message));
+	StringBuilder b(message);
 
 	b.CheckAppend(indent);
 	std::fill_n(b.GetTail(), indent, ' ');
