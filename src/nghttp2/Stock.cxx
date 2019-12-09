@@ -346,11 +346,14 @@ MakeKey(StringBuilder &b, SocketAddress bind_address,
 }
 
 static void
-MakeKey(StringBuilder &b,
+MakeKey(StringBuilder &b, const char *name,
 	SocketAddress bind_address, SocketAddress address,
 	const SocketFilterFactory *filter_factory)
 {
-	MakeKey(b, bind_address, address);
+	if (name != nullptr)
+		b.Append(name);
+	else
+		MakeKey(b, bind_address, address);
 
 	if (filter_factory != nullptr) {
 		b.Append('|');
@@ -372,23 +375,18 @@ Stock::Get(EventLoop &event_loop,
 	   StockGetHandler &handler,
 	   CancellablePointer &cancel_ptr) noexcept
 {
-	const char *key;
 	char key_buffer[1024];
-	if (name != nullptr)
-		key = name;
-	else {
-		try {
-			StringBuilder b(key_buffer);
-			MakeKey(b, bind_address, address,
-				filter_factory);
-		} catch (StringBuilder::Overflow) {
-			/* shouldn't happen */
-			handler.OnNgHttp2StockError(std::current_exception());
-			return;
-		}
-
-		key = key_buffer;
+	try {
+		StringBuilder b(key_buffer);
+		MakeKey(b, name, bind_address, address,
+			filter_factory);
+	} catch (StringBuilder::Overflow) {
+		/* shouldn't happen */
+		handler.OnNgHttp2StockError(std::current_exception());
+		return;
 	}
+
+	const char *key = key_buffer;
 
 	auto e = items.equal_range(key, ItemHash(), ItemEqual());
 	for (auto i = e.first; i != e.second; ++i) {
