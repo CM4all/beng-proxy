@@ -199,17 +199,6 @@ timeval_diff_ms(const struct timeval *a, const struct timeval *b) noexcept
 
 #endif
 
-template<typename... Args>
-static inline void
-AppendFormat(StringBuilder &b, const char *fmt, Args&&... args)
-{
-	size_t size = b.GetRemainingSize();
-	size_t n = snprintf(b.GetTail(), size, fmt, args...);
-	if (n >= size - 1)
-		throw StringBuilder::Overflow();
-	b.Extend(n);
-}
-
 inline void
 Stopwatch::Dump(size_t indent) noexcept
 try {
@@ -226,16 +215,16 @@ try {
 	b.Append(name.c_str());
 
 	for (const auto &i : events)
-		AppendFormat(b, " %s=%ldms",
-			     i.name.c_str(),
-			     ToLongMs(i.time - time));
+		b.Format(" %s=%ldms",
+			 i.name.c_str(),
+			 ToLongMs(i.time - time));
 
 #if 0
 	struct rusage new_self;
 	getrusage(RUSAGE_SELF, &new_self);
-	AppendFormat(b, " (beng-proxy=%ld+%ldms)",
-		     timeval_diff_ms(&new_self.ru_utime, &self.ru_utime),
-		     timeval_diff_ms(&new_self.ru_stime, &self.ru_stime));
+	b.Format(" (beng-proxy=%ld+%ldms)",
+		 timeval_diff_ms(&new_self.ru_utime, &self.ru_utime),
+		 timeval_diff_ms(&new_self.ru_stime, &self.ru_stime));
 #endif
 
 	b.Append('\n');
