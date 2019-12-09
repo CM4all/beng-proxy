@@ -35,9 +35,9 @@
 #include "fs/Factory.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "fs/Connect.hxx"
+#include "fs/Key.hxx"
 #include "event/TimerEvent.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/ToString.hxx"
 #include "io/Logger.hxx"
 #include "util/djbhash.h"
 #include "util/DeleteDisposer.hxx"
@@ -323,47 +323,6 @@ Stock::~Stock() noexcept
 	items.clear_and_dispose(DeleteDisposer());
 }
 
-static void
-AppendSocketAddress(StringBuilder &b, SocketAddress address)
-{
-	assert(!address.IsNull());
-
-	auto w = b.Write();
-	if (ToString(w.data, w.size, address))
-		b.Extend(strlen(w.data));
-}
-
-static void
-MakeKey(StringBuilder &b, SocketAddress bind_address,
-	SocketAddress address) noexcept
-{
-	if (!bind_address.IsNull()) {
-		AppendSocketAddress(b, bind_address);
-		b.Append('>');
-	}
-
-	AppendSocketAddress(b, address);
-}
-
-static void
-MakeKey(StringBuilder &b, const char *name,
-	SocketAddress bind_address, SocketAddress address,
-	const SocketFilterFactory *filter_factory)
-{
-	if (name != nullptr)
-		b.Append(name);
-	else
-		MakeKey(b, bind_address, address);
-
-	if (filter_factory != nullptr) {
-		b.Append('|');
-
-		const char *id = filter_factory->GetFilterId();
-		if (id != nullptr)
-			b.Append(id);
-	}
-}
-
 void
 Stock::Get(EventLoop &event_loop,
 	   AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
@@ -378,8 +337,8 @@ Stock::Get(EventLoop &event_loop,
 	char key_buffer[1024];
 	try {
 		StringBuilder b(key_buffer);
-		MakeKey(b, name, bind_address, address,
-			filter_factory);
+		MakeFilteredSocketStockKey(b, name, bind_address, address,
+					   filter_factory);
 	} catch (StringBuilder::Overflow) {
 		/* shouldn't happen */
 		handler.OnNgHttp2StockError(std::current_exception());

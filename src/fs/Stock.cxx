@@ -31,6 +31,7 @@
  */
 
 #include "Stock.hxx"
+#include "Key.hxx"
 #include "Connect.hxx"
 #include "Factory.hxx"
 #include "FilteredSocket.hxx"
@@ -38,14 +39,15 @@
 #include "pool/DisposablePointer.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
+#include "stock/GetHandler.hxx"
 #include "stock/LoggerDomain.hxx"
 #include "address_list.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/AllocatedSocketAddress.hxx"
-#include "net/ToString.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
 #include "util/RuntimeError.hxx"
+#include "util/StringBuilder.hxx"
 #include "util/Exception.hxx"
 #include "stopwatch.hxx"
 
@@ -271,31 +273,6 @@ FilteredSocketStockConnection::Release() noexcept
  *
  */
 
-static const char *
-MakeKey(AllocatorPtr alloc, const char *name,
-	SocketAddress bind_address, SocketAddress address,
-	SocketFilterFactory *filter_factory) noexcept
-{
-	if (name == nullptr) {
-		char buffer[1024];
-		if (!ToString(buffer, sizeof(buffer), address))
-			buffer[0] = 0;
-
-		if (!bind_address.IsNull()) {
-			char bind_buffer[1024];
-			if (!ToString(bind_buffer, sizeof(bind_buffer), bind_address))
-				bind_buffer[0] = 0;
-			name = alloc.Concat(bind_buffer, '>', buffer);
-		} else
-			name = alloc.Dup(buffer);
-	}
-
-	if (filter_factory != nullptr)
-		name = alloc.Concat(name, '|', filter_factory->GetFilterId());
-
-	return name;
-}
-
 void
 FilteredSocketStock::Get(AllocatorPtr alloc,
 			 StopwatchPtr stopwatch,
@@ -310,6 +287,19 @@ FilteredSocketStock::Get(AllocatorPtr alloc,
 {
 	assert(!address.IsNull());
 
+	char key_buffer[1024];
+	try {
+		StringBuilder b(key_buffer);
+		MakeFilteredSocketStockKey(b, name, bind_address, address,
+					   filter_factory);
+	} catch (StringBuilder::Overflow) {
+		/* shouldn't happen */
+		handler.OnStockItemError(std::current_exception());
+		return;
+	}
+
+	const char *key = key_buffer;
+
 	auto request =
 		NewDisposablePointer<FilteredSocketStockRequest>(alloc, alloc,
 								 std::move(stopwatch),
@@ -318,11 +308,7 @@ FilteredSocketStock::Get(AllocatorPtr alloc,
 								 timeout,
 								 filter_factory);
 
-	name = MakeKey(alloc, name,
-		       bind_address, address,
-		       filter_factory);
-
-	stock.Get(name, std::move(request), handler, cancel_ptr);
+	stock.Get(key, std::move(request), handler, cancel_ptr);
 }
 
 FilteredSocket &

@@ -501,6 +501,7 @@ socket = static_library('socket',
   'src/fs/Connect.cxx',
   'src/fs/Lease.cxx',
   'src/fs/Stock.cxx',
+  'src/fs/Key.cxx',
   'src/fs/Balancer.cxx',
   include_directories: inc,
 )
