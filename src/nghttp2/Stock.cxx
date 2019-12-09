@@ -334,9 +334,8 @@ AppendSocketAddress(StringBuilder &b, SocketAddress address)
 }
 
 static void
-MakeKey(StringBuilder &b,
-	SocketAddress bind_address, SocketAddress address,
-	SocketFilterFactory *filter_factory)
+MakeKey(StringBuilder &b, SocketAddress bind_address,
+	SocketAddress address) noexcept
 {
 	if (!bind_address.IsNull()) {
 		AppendSocketAddress(b, bind_address);
@@ -344,6 +343,14 @@ MakeKey(StringBuilder &b,
 	}
 
 	AppendSocketAddress(b, address);
+}
+
+static void
+MakeKey(StringBuilder &b,
+	SocketAddress bind_address, SocketAddress address,
+	SocketFilterFactory *filter_factory)
+{
+	MakeKey(b, bind_address, address);
 
 	if (filter_factory != nullptr) {
 		b.Append('|');
