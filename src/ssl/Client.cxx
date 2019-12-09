@@ -172,6 +172,11 @@ static constexpr unsigned char alpn_h2[] = {
 	2, 'h', '2',
 };
 
+static constexpr unsigned char alpn_http_any[] = {
+	2, 'h', '2',
+	8, 'h', 't', 't', 'p', '/', '1', '.', '1',
+};
+
 SocketFilterPtr
 ssl_client_create(EventLoop &event_loop,
 		  const char *hostname,
@@ -188,6 +193,11 @@ ssl_client_create(EventLoop &event_loop,
 
 	case SslClientAlpn::HTTP_2:
 		SSL_set_alpn_protos(ssl.get(), alpn_h2, std::size(alpn_h2));
+		break;
+
+	case SslClientAlpn::HTTP_ANY:
+		SSL_set_alpn_protos(ssl.get(), alpn_http_any,
+				    std::size(alpn_http_any));
 		break;
 	}
 

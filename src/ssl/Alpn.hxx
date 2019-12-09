@@ -35,4 +35,9 @@
 enum class SslClientAlpn {
 	NONE,
 	HTTP_2,
+
+	/**
+	 * HTTP/2 or HTTP/1.1.
+	 */
+	HTTP_ANY,
 };
