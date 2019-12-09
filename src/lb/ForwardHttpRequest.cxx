@@ -413,10 +413,10 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
         failure = GetFailureManager().Make(fs_stock_item_get_address(*stock_item));
 
     const char *peer_subject = connection.ssl_filter != nullptr
-        ? ssl_filter_get_peer_subject(connection.ssl_filter)
+        ? ssl_filter_get_peer_subject(*connection.ssl_filter)
         : nullptr;
     const char *peer_issuer_subject = connection.ssl_filter != nullptr
-        ? ssl_filter_get_peer_issuer_subject(connection.ssl_filter)
+        ? ssl_filter_get_peer_issuer_subject(*connection.ssl_filter)
         : nullptr;
 
     auto &headers = request.headers;

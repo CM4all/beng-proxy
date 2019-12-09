@@ -63,8 +63,8 @@ ssl_filter_get_handler(SslFilter &ssl) noexcept;
 
 gcc_pure
 const char *
-ssl_filter_get_peer_subject(SslFilter *ssl) noexcept;
+ssl_filter_get_peer_subject(const SslFilter &ssl) noexcept;
 
 gcc_pure
 const char *
-ssl_filter_get_peer_issuer_subject(SslFilter *ssl) noexcept;
+ssl_filter_get_peer_issuer_subject(const SslFilter &ssl) noexcept;

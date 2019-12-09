@@ -360,17 +360,13 @@ ssl_filter_get_handler(SslFilter &ssl) noexcept
 }
 
 const char *
-ssl_filter_get_peer_subject(SslFilter *ssl) noexcept
+ssl_filter_get_peer_subject(const SslFilter &ssl) noexcept
 {
-	assert(ssl != nullptr);
-
-	return ssl->peer_subject.c_str();
+	return ssl.peer_subject.c_str();
 }
 
 const char *
-ssl_filter_get_peer_issuer_subject(SslFilter *ssl) noexcept
+ssl_filter_get_peer_issuer_subject(const SslFilter &ssl) noexcept
 {
-	assert(ssl != nullptr);
-
-	return ssl->peer_issuer_subject.c_str();
+	return ssl.peer_issuer_subject.c_str();
 }
