@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,11 +33,11 @@
 #pragma once
 
 #include "ssl/Unique.hxx"
-
 #include "util/Compiler.h"
 
 struct SslFactory;
 struct SslFilter;
+template<typename T> struct ConstBuffer;
 class SocketFilter;
 class ThreadSocketFilterHandler;
 
@@ -70,6 +70,10 @@ ssl_filter_get_handler(SslFilter &ssl) noexcept;
 gcc_pure
 const SslFilter *
 ssl_filter_cast_from(const SocketFilter *socket_filter) noexcept;
+
+gcc_pure
+ConstBuffer<unsigned char>
+ssl_filter_get_alpn_selected(const SslFilter &ssl) noexcept;
 
 gcc_pure
 const char *

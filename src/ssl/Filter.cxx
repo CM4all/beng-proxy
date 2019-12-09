@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,6 +40,7 @@
 #include "fs/ThreadSocketFilter.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
+#include "util/AllocatedArray.hxx"
 #include "util/AllocatedString.hxx"
 
 #include <openssl/ssl.h>
@@ -61,6 +62,8 @@ struct SslFilter final : ThreadSocketFilterHandler {
 
 	bool handshaking = true;
 
+	AllocatedArray<unsigned char> alpn_selected;
+
 	AllocatedString<> peer_subject = nullptr, peer_issuer_subject = nullptr;
 
 	SslFilter(UniqueSSL &&_ssl)
@@ -68,6 +71,10 @@ struct SslFilter final : ThreadSocketFilterHandler {
 		SSL_set_bio(ssl.get(),
 			    NewFifoBufferBio(encrypted_input),
 			    NewFifoBufferBio(encrypted_output));
+	}
+
+	ConstBuffer<unsigned char> GetAlpnSelected() const noexcept {
+		return alpn_selected;
 	}
 
 private:
@@ -138,6 +145,13 @@ CheckThrowSslError(SSL *ssl, int result)
 inline void
 SslFilter::PostHandshake() noexcept
 {
+	const unsigned char *alpn_data;
+	unsigned int alpn_length;
+	SSL_get0_alpn_selected(ssl.get(), &alpn_data, &alpn_length);
+	if (alpn_length > 0)
+		alpn_selected = ConstBuffer<unsigned char>(alpn_data,
+							   alpn_length);
+
 	UniqueX509 cert(SSL_get_peer_certificate(ssl.get()));
 	if (cert != nullptr) {
 		peer_subject = format_subject_name(cert.get());
@@ -367,6 +381,12 @@ ssl_filter_cast_from(const SocketFilter *socket_filter) noexcept
 		return nullptr;
 
 	return dynamic_cast<const SslFilter *>(tsf->GetHandler());
+}
+
+ConstBuffer<unsigned char>
+ssl_filter_get_alpn_selected(const SslFilter &ssl) noexcept
+{
+	return ssl.GetAlpnSelected();
 }
 
 const char *
