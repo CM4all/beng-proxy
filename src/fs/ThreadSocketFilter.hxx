@@ -231,6 +231,10 @@ public:
 
 	~ThreadSocketFilter() noexcept;
 
+	const ThreadSocketFilterHandler *GetHandler() const noexcept {
+		return handler;
+	}
+
 private:
 	/**
 	 * Schedule a Run() call in a worker thread.
