@@ -5,6 +5,7 @@ if not libnghttp2.found()
 endif
 
 nghttp2 = static_library('nghttp2',
+  'Error.cxx',
   'Server.cxx',
   'Client.cxx',
   'Stock.cxx',

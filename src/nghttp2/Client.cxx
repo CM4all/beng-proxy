@@ -32,6 +32,7 @@
 
 #include "Client.hxx"
 #include "Util.hxx"
+#include "Error.hxx"
 #include "IstreamDataSource.hxx"
 #include "Option.hxx"
 #include "Callbacks.hxx"
@@ -479,8 +480,7 @@ ClientConnection::ClientConnection(EventLoop &loop,
 	const auto rv = nghttp2_submit_settings(session.get(), NGHTTP2_FLAG_NONE,
 						iv, std::size(iv));
 	if (rv != 0)
-		throw FormatRuntimeError("nghttp2_submit_settings() failed: %s",
-					 nghttp2_strerror(rv));
+		throw MakeError(rv, "nghttp2_submit_settings() failed");
 
 	DeferWrite();
 	socket->ScheduleReadNoTimeout(false);
@@ -603,8 +603,7 @@ ClientConnection::OnBufferedData()
 	auto nbytes = nghttp2_session_mem_recv(session.get(),
 					       (const uint8_t *)r.data, r.size);
 	if (nbytes < 0)
-		throw FormatRuntimeError("nghttp2_session_mem_recv() failed: %s",
-					 nghttp2_strerror((int)nbytes));
+		throw MakeError(int(nbytes), "nghttp2_session_mem_recv() failed");
 
 	socket->DisposeConsumed(nbytes);
 
@@ -628,8 +627,7 @@ ClientConnection::OnBufferedWrite()
 {
 	const auto rv = nghttp2_session_send(session.get());
 	if (rv != 0)
-		throw FormatRuntimeError("nghttp2_session_send() failed: %s",
-					 nghttp2_strerror(rv));
+		throw MakeError(rv, "nghttp2_session_send() failed");
 
 	if (!nghttp2_session_want_write(session.get()))
 		socket->UnscheduleWrite();
