@@ -46,19 +46,19 @@
 
 #include <string.h>
 
-HttpAddress::HttpAddress(bool _ssl, bool _http2,
+HttpAddress::HttpAddress(bool _ssl,
 			 const char *_host_and_port, const char *_path)
-	:ssl(_ssl), http2(_http2),
+	:ssl(_ssl),
 	 host_and_port(_host_and_port),
 	 path(_path)
 {
 }
 
 HttpAddress::HttpAddress(ShallowCopy shallow_copy,
-			 bool _ssl, bool _http2,
+			 bool _ssl,
 			 const char *_host_and_port, const char *_path,
 			 const AddressList &_addresses)
-	:ssl(_ssl), http2(_http2),
+	:ssl(_ssl),
 	 host_and_port(_host_and_port),
 	 path(_path),
 	 addresses(shallow_copy, _addresses)
@@ -86,12 +86,12 @@ HttpAddress::HttpAddress(AllocatorPtr alloc, const HttpAddress &src,
 }
 
 static HttpAddress *
-http_address_new(AllocatorPtr alloc, bool ssl, bool http2,
+http_address_new(AllocatorPtr alloc, bool ssl,
 		 const char *host_and_port, const char *path)
 {
 	assert(path != nullptr);
 
-	return alloc.New<HttpAddress>(ssl, http2, host_and_port, path);
+	return alloc.New<HttpAddress>(ssl, host_and_port, path);
 }
 
 /**
@@ -100,7 +100,7 @@ http_address_new(AllocatorPtr alloc, bool ssl, bool http2,
  * Throws std::runtime_error on error.
  */
 static HttpAddress *
-http_address_parse2(AllocatorPtr alloc, bool ssl, bool http2,
+http_address_parse2(AllocatorPtr alloc, bool ssl,
 		    const char *uri)
 {
 	assert(uri != nullptr);
@@ -118,22 +118,18 @@ http_address_parse2(AllocatorPtr alloc, bool ssl, bool http2,
 		path = "/";
 	}
 
-	return http_address_new(alloc, ssl, http2, host_and_port, path);
+	return http_address_new(alloc, ssl, host_and_port, path);
 }
 
 HttpAddress *
 http_address_parse(AllocatorPtr alloc, const char *uri)
 {
 	if (auto http = StringAfterPrefix(uri, "http://"))
-		return http_address_parse2(alloc, false, false, http);
+		return http_address_parse2(alloc, false, http);
 	else if (auto https = StringAfterPrefix(uri, "https://"))
-		return http_address_parse2(alloc, true, false, https);
-	else if (auto http2 = StringAfterPrefix(uri, "http2://"))
-		return http_address_parse2(alloc, false, true, http2);
-	else if (auto https2 = StringAfterPrefix(uri, "https2://"))
-		return http_address_parse2(alloc, true, true, https2);
+		return http_address_parse2(alloc, true, https);
 	else if (auto unix = StringAfterPrefix(uri, "unix:/"))
-		return http_address_new(alloc, false, false, nullptr,
+		return http_address_new(alloc, false, nullptr,
 					/* rewind to the slash */
 					unix - 1);
 

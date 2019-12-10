@@ -45,6 +45,8 @@ class _Lookup:
         if m:
             uri = m.group(1)
             return response.http(uri)
+        if line == 'http2':
+            return response.packet(TRANSLATE_HTTP2)
         m = re.match(r'^pipe\s+"(\S+)"', line)
         if m:
             line = line[4:]

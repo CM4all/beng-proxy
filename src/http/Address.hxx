@@ -49,7 +49,7 @@ class MatchInfo;
 struct HttpAddress {
 	const bool ssl;
 
-	const bool http2;
+	bool http2 = false;
 
 	/**
 	 * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
@@ -75,10 +75,10 @@ struct HttpAddress {
 
 	AddressList addresses;
 
-	HttpAddress(bool _ssl, bool _http2,
+	HttpAddress(bool _ssl,
 		    const char *_host_and_port, const char *_path);
 
-	HttpAddress(ShallowCopy, bool _ssl, bool _http2,
+	HttpAddress(ShallowCopy, bool _ssl,
 		    const char *_host_and_port, const char *_path,
 		    const AddressList &_addresses);
 

@@ -227,9 +227,10 @@ Response
 
 - ``HTTP``: load the resource from a remote HTTP server (see
   :ref:`http`).  Payload is an absolute URI starting with ``http://`
-  or `https://`.  Experimental HTTP/2 client support can be requested
-  using ``http2://` and `https2://` (this syntax is subject to change
-  when HTTP/2 support is finalized).
+  or `https://`.
+
+- ``HTTP2``: force HTTP/2 for the preceding ``HTTP`` packet.  No
+  payload.
 
 - ``CERTIFICATE``: Use the named client certificate for the outbound
   SSL connection (see :ref:`CERTIFICATE <certificate>`).
