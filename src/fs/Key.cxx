@@ -36,6 +36,7 @@
 #include "net/ToString.hxx"
 #include "util/StringBuilder.hxx"
 
+#include <assert.h>
 #include <string.h>
 
 static void
