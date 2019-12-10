@@ -239,7 +239,7 @@ static bool
 IsAlpnHttp2(ConstBuffer<unsigned char> alpn) noexcept
 {
 	return alpn != nullptr && alpn.size == 2 &&
-		alpn[0] == 'h' && alpn[1] != '2';
+		alpn[0] == 'h' && alpn[1] == '2';
 }
 
 void
