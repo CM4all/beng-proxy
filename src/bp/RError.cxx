@@ -118,17 +118,7 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
 
 	try {
 		FindRetrowNested<WasError>(ep);
-	} catch (...) {
-		return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
-	}
-
-	try {
 		FindRetrowNested<FcgiClientError>(ep);
-	} catch (...) {
-		return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
-	}
-
-	try {
 		FindRetrowNested<CgiError>(ep);
 	} catch (...) {
 		return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
