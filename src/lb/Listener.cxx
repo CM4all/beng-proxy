@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,32 +42,32 @@
 
 void
 LbListener::OnAccept(UniqueSocketDescriptor &&new_fd,
-                     SocketAddress address) noexcept
+		     SocketAddress address) noexcept
 try {
-    switch (config.destination.GetProtocol()) {
-    case LbProtocol::HTTP:
-        NewLbHttpConnection(instance, config, destination,
-                            ssl_factory,
-                            std::move(new_fd), address);
-        break;
+	switch (config.destination.GetProtocol()) {
+	case LbProtocol::HTTP:
+		NewLbHttpConnection(instance, config, destination,
+				    ssl_factory,
+				    std::move(new_fd), address);
+		break;
 
-    case LbProtocol::TCP:
-        assert(destination.cluster != nullptr);
+	case LbProtocol::TCP:
+		assert(destination.cluster != nullptr);
 
-        LbTcpConnection::New(instance, config, *destination.cluster,
-                             ssl_factory,
-                             std::move(new_fd), address);
-        break;
-    }
+		LbTcpConnection::New(instance, config, *destination.cluster,
+				     ssl_factory,
+				     std::move(new_fd), address);
+		break;
+	}
 } catch (...) {
-    logger(1, "Failed to setup accepted connection: ",
-           std::current_exception());
+	logger(1, "Failed to setup accepted connection: ",
+	       std::current_exception());
 }
 
 void
 LbListener::OnAcceptError(std::exception_ptr ep) noexcept
 {
-    logger(2, "Failed to accept: ", ep);
+	logger(2, "Failed to accept: ", ep);
 }
 
 /*
@@ -76,58 +76,58 @@ LbListener::OnAcceptError(std::exception_ptr ep) noexcept
  */
 
 LbListener::LbListener(LbInstance &_instance,
-                       const LbListenerConfig &_config)
-    :ServerSocket(_instance.event_loop),
-     instance(_instance), config(_config),
-     logger("listener " + config.name)
+		       const LbListenerConfig &_config)
+	:ServerSocket(_instance.event_loop),
+	 instance(_instance), config(_config),
+	 logger("listener " + config.name)
 {
 }
 
 void
 LbListener::Setup()
 try {
-    assert(ssl_factory == nullptr);
+	assert(ssl_factory == nullptr);
 
-    if (config.ssl) {
-        /* prepare SSL support */
+	if (config.ssl) {
+		/* prepare SSL support */
 
-        std::unique_ptr<SslSniCallback> sni_callback;
-        if (config.cert_db != nullptr) {
-            auto &cert_cache = instance.GetCertCache(*config.cert_db);
-            sni_callback.reset(new DbSslSniCallback(cert_cache));
-        }
+		std::unique_ptr<SslSniCallback> sni_callback;
+		if (config.cert_db != nullptr) {
+			auto &cert_cache = instance.GetCertCache(*config.cert_db);
+			sni_callback.reset(new DbSslSniCallback(cert_cache));
+		}
 
-        ssl_factory = ssl_factory_new_server(config.ssl_config,
-                                             std::move(sni_callback));
+		ssl_factory = ssl_factory_new_server(config.ssl_config,
+						     std::move(sni_callback));
 
-        /* we use the listener name as OpenSSL session_id_context,
-           because listener names are unique, so I hope this should be
-           good enough */
-        ssl_factory_set_session_id_context(*ssl_factory, {config.name.data(), config.name.size()});
-    }
+		/* we use the listener name as OpenSSL session_id_context,
+		   because listener names are unique, so I hope this should be
+		   good enough */
+		ssl_factory_set_session_id_context(*ssl_factory, {config.name.data(), config.name.size()});
+	}
 
-    Listen(config.Create(SOCK_STREAM));
+	Listen(config.Create(SOCK_STREAM));
 } catch (...) {
-    std::throw_with_nested(FormatRuntimeError("Failed to set up listener '%s'",
-                                              config.name.c_str()));
+	std::throw_with_nested(FormatRuntimeError("Failed to set up listener '%s'",
+						  config.name.c_str()));
 }
 
 void
 LbListener::Scan(LbGotoMap &goto_map)
 {
-    destination = goto_map.GetInstance(config.destination);
+	destination = goto_map.GetInstance(config.destination);
 }
 
 LbListener::~LbListener()
 {
-    if (ssl_factory != nullptr)
-        ssl_factory_free(ssl_factory);
+	if (ssl_factory != nullptr)
+		ssl_factory_free(ssl_factory);
 }
 
 unsigned
 LbListener::FlushSSLSessionCache(long tm)
 {
-    return ssl_factory != nullptr
-        ? ssl_factory_flush(*ssl_factory, tm)
-        : 0;
+	return ssl_factory != nullptr
+		? ssl_factory_flush(*ssl_factory, tm)
+		: 0;
 }

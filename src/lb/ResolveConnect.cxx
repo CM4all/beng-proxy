@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -52,230 +52,230 @@
 #include "stopwatch.hxx"
 
 static constexpr Event::Duration LB_HTTP_CONNECT_TIMEOUT =
-    std::chrono::seconds(20);
+	std::chrono::seconds(20);
 
 class LbResolveConnectRequest final
-    : LeakDetector, Cancellable, StockGetHandler, Lease, HttpResponseHandler {
+	: LeakDetector, Cancellable, StockGetHandler, Lease, HttpResponseHandler {
 
-    struct pool &pool;
+	struct pool &pool;
 
-    LbHttpConnection &connection;
+	LbHttpConnection &connection;
 
-    IncomingHttpRequest &request;
+	IncomingHttpRequest &request;
 
-    /**
-     * The request body.
-     */
-    UnusedHoldIstreamPtr body;
+	/**
+	 * The request body.
+	 */
+	UnusedHoldIstreamPtr body;
 
-    CancellablePointer cancel_ptr;
+	CancellablePointer cancel_ptr;
 
-    StockItem *stock_item;
+	StockItem *stock_item;
 
-    bool response_sent = false, reuse;
+	bool response_sent = false, reuse;
 
-    enum class LeaseState : uint8_t {
-        NONE,
-        BUSY,
-        PENDING,
-    } lease_state = LeaseState::NONE;
+	enum class LeaseState : uint8_t {
+		NONE,
+		BUSY,
+		PENDING,
+	} lease_state = LeaseState::NONE;
 
 public:
-    LbResolveConnectRequest(LbHttpConnection &_connection,
-                            IncomingHttpRequest &_request,
-                            CancellablePointer &_cancel_ptr)
-        :pool(_request.pool), connection(_connection),
-         request(_request),
-         body(pool, std::move(request.body)) {
-        _cancel_ptr = *this;
-    }
+	LbResolveConnectRequest(LbHttpConnection &_connection,
+				IncomingHttpRequest &_request,
+				CancellablePointer &_cancel_ptr)
+		:pool(_request.pool), connection(_connection),
+		 request(_request),
+		 body(pool, std::move(request.body)) {
+		_cancel_ptr = *this;
+	}
 
-    void Start(const char *name, SocketAddress address);
+	void Start(const char *name, SocketAddress address);
 
 private:
-    void Destroy() noexcept {
-        assert(lease_state == LeaseState::NONE);
+	void Destroy() noexcept {
+		assert(lease_state == LeaseState::NONE);
 
-        DeleteFromPool(pool, this);
-    }
+		DeleteFromPool(pool, this);
+	}
 
-    void DoRelease() {
-        assert(lease_state == LeaseState::PENDING);
+	void DoRelease() {
+		assert(lease_state == LeaseState::PENDING);
 
-        lease_state = LeaseState::NONE;
-        stock_item->Put(!reuse);
-    }
+		lease_state = LeaseState::NONE;
+		stock_item->Put(!reuse);
+	}
 
-    bool CheckRelease() {
-        if (lease_state == LeaseState::PENDING)
-            DoRelease();
-        return lease_state == LeaseState::NONE;
-    }
+	bool CheckRelease() {
+		if (lease_state == LeaseState::PENDING)
+			DoRelease();
+		return lease_state == LeaseState::NONE;
+	}
 
-    void ResponseSent() {
-        assert(!response_sent);
-        response_sent = true;
+	void ResponseSent() {
+		assert(!response_sent);
+		response_sent = true;
 
-        if (CheckRelease())
-            Destroy();
-    }
+		if (CheckRelease())
+			Destroy();
+	}
 
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override {
-        assert(!response_sent);
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		assert(!response_sent);
 
-        CheckRelease();
-        cancel_ptr.Cancel();
-        Destroy();
-    }
+		CheckRelease();
+		cancel_ptr.Cancel();
+		Destroy();
+	}
 
-    /* virtual methods from class StockGetHandler */
-    void OnStockItemReady(StockItem &item) noexcept override;
-    void OnStockItemError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class StockGetHandler */
+	void OnStockItemReady(StockItem &item) noexcept override;
+	void OnStockItemError(std::exception_ptr ep) noexcept override;
 
-    /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) noexcept override;
+	/* virtual methods from class Lease */
+	void ReleaseLease(bool reuse) noexcept override;
 
-    /* virtual methods from class HttpResponseHandler */
-    void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        UnusedIstreamPtr body) noexcept override;
-    void OnHttpError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(http_status_t status, StringMap &&headers,
+			    UnusedIstreamPtr body) noexcept override;
+	void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 void
 LbResolveConnectRequest::OnStockItemReady(StockItem &item) noexcept
 {
-    assert(lease_state == LeaseState::NONE);
-    assert(!response_sent);
+	assert(lease_state == LeaseState::NONE);
+	assert(!response_sent);
 
-    stock_item = &item;
-    lease_state = LeaseState::BUSY;
+	stock_item = &item;
+	lease_state = LeaseState::BUSY;
 
-    const char *peer_subject = connection.ssl_filter != nullptr
-        ? ssl_filter_get_peer_subject(*connection.ssl_filter)
-        : nullptr;
-    const char *peer_issuer_subject = connection.ssl_filter != nullptr
-        ? ssl_filter_get_peer_issuer_subject(*connection.ssl_filter)
-        : nullptr;
+	const char *peer_subject = connection.ssl_filter != nullptr
+		? ssl_filter_get_peer_subject(*connection.ssl_filter)
+		: nullptr;
+	const char *peer_issuer_subject = connection.ssl_filter != nullptr
+		? ssl_filter_get_peer_issuer_subject(*connection.ssl_filter)
+		: nullptr;
 
-    auto &headers = request.headers;
-    lb_forward_request_headers(pool, headers,
-                               request.local_host_and_port,
-                               request.remote_host,
-                               connection.IsEncrypted(),
-                               peer_subject, peer_issuer_subject,
-                               false);
+	auto &headers = request.headers;
+	lb_forward_request_headers(pool, headers,
+				   request.local_host_and_port,
+				   request.remote_host,
+				   connection.IsEncrypted(),
+				   peer_subject, peer_issuer_subject,
+				   false);
 
-    http_client_request(pool, nullptr,
-                        fs_stock_item_get(item),
-                        *this,
-                        item.GetStockName(),
-                        request.method, request.uri,
-                        HttpHeaders(std::move(headers)),
-                        std::move(body), true,
-                        *this, cancel_ptr);
+	http_client_request(pool, nullptr,
+			    fs_stock_item_get(item),
+			    *this,
+			    item.GetStockName(),
+			    request.method, request.uri,
+			    HttpHeaders(std::move(headers)),
+			    std::move(body), true,
+			    *this, cancel_ptr);
 }
 
 void
 LbResolveConnectRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
-    assert(lease_state == LeaseState::NONE);
-    assert(!response_sent);
+	assert(lease_state == LeaseState::NONE);
+	assert(!response_sent);
 
-    connection.logger(2, "Connect error: ", ep);
+	connection.logger(2, "Connect error: ", ep);
 
-    body.Clear();
-    connection.SendError(request, ep);
-    ResponseSent();
+	body.Clear();
+	connection.SendError(request, ep);
+	ResponseSent();
 }
 
 void
 LbResolveConnectRequest::ReleaseLease(bool _reuse) noexcept
 {
-    assert(lease_state == LeaseState::BUSY);
+	assert(lease_state == LeaseState::BUSY);
 
-    lease_state = LeaseState::PENDING;
-    reuse = _reuse;
+	lease_state = LeaseState::PENDING;
+	reuse = _reuse;
 
-    if (response_sent) {
-        DoRelease();
-        Destroy();
-    }
+	if (response_sent) {
+		DoRelease();
+		Destroy();
+	}
 }
 
 void
 LbResolveConnectRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
-                                        UnusedIstreamPtr response_body) noexcept
+					UnusedIstreamPtr response_body) noexcept
 {
-    assert(lease_state != LeaseState::NONE);
-    assert(!response_sent);
+	assert(lease_state != LeaseState::NONE);
+	assert(!response_sent);
 
-    HttpHeaders headers(std::move(_headers));
+	HttpHeaders headers(std::move(_headers));
 
-    if (request.method == HTTP_METHOD_HEAD)
-        /* pass Content-Length, even though there is no response body
-           (RFC 2616 14.13) */
-        headers.MoveToBuffer("content-length");
+	if (request.method == HTTP_METHOD_HEAD)
+		/* pass Content-Length, even though there is no response body
+		   (RFC 2616 14.13) */
+		headers.MoveToBuffer("content-length");
 
-    request.SendResponse(status, std::move(headers), std::move(response_body));
-    ResponseSent();
+	request.SendResponse(status, std::move(headers), std::move(response_body));
+	ResponseSent();
 }
 
 void
 LbResolveConnectRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
-    assert(lease_state != LeaseState::NONE);
-    assert(!response_sent);
+	assert(lease_state != LeaseState::NONE);
+	assert(!response_sent);
 
-    connection.logger(2, ep);
+	connection.logger(2, ep);
 
-    connection.SendError(request, ep);
-    ResponseSent();
+	connection.SendError(request, ep);
+	ResponseSent();
 }
 
 inline void
 LbResolveConnectRequest::Start(const char *name, SocketAddress address)
 {
-    connection.instance.fs_stock->Get(pool, nullptr,
-                                      name, false, nullptr,
-                                      address,
-                                      LB_HTTP_CONNECT_TIMEOUT,
-                                      nullptr,
-                                      *this, cancel_ptr);
+	connection.instance.fs_stock->Get(pool, nullptr,
+					  name, false, nullptr,
+					  address,
+					  LB_HTTP_CONNECT_TIMEOUT,
+					  nullptr,
+					  *this, cancel_ptr);
 
 }
 
 void
 LbHttpConnection::ResolveConnect(const char *host,
-                                 IncomingHttpRequest &request,
-                                 CancellablePointer &cancel_ptr)
+				 IncomingHttpRequest &request,
+				 CancellablePointer &cancel_ptr)
 {
-    per_request.forwarded_to = host;
+	per_request.forwarded_to = host;
 
-    SocketAddress address;
+	SocketAddress address;
 
-    try {
-        static constexpr struct addrinfo hints = {
-            .ai_flags = AI_ADDRCONFIG,
-            .ai_family = AF_UNSPEC,
-            .ai_socktype = SOCK_STREAM,
-            .ai_protocol = 0,
-            .ai_addrlen = 0,
-            .ai_addr = nullptr,
-            .ai_canonname = nullptr,
-            .ai_next = nullptr,
-        };
+	try {
+		static constexpr struct addrinfo hints = {
+			.ai_flags = AI_ADDRCONFIG,
+			.ai_family = AF_UNSPEC,
+			.ai_socktype = SOCK_STREAM,
+			.ai_protocol = 0,
+			.ai_addrlen = 0,
+			.ai_addr = nullptr,
+			.ai_canonname = nullptr,
+			.ai_next = nullptr,
+		};
 
-        /* TODO: make this lookup non-blocking */
-        address = DupAddress(*request.pool,
-                             Resolve(host, 80, &hints).front());
-    } catch (...) {
-        SendError(request, std::current_exception());
-        return;
-    }
+		/* TODO: make this lookup non-blocking */
+		address = DupAddress(*request.pool,
+				     Resolve(host, 80, &hints).front());
+	} catch (...) {
+		SendError(request, std::current_exception());
+		return;
+	}
 
-    const auto request2 =
-        NewFromPool<LbResolveConnectRequest>(request.pool, *this,
-                                             request, cancel_ptr);
-    request2->Start(host, address);
+	const auto request2 =
+		NewFromPool<LbResolveConnectRequest>(request.pool, *this,
+						     request, cancel_ptr);
+	request2->Start(host, address);
 }

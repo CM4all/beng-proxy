@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -50,38 +50,38 @@ class CancellablePointer;
 class LbTranslationCache;
 
 class LbTranslationHandler final {
-    const char *const name;
+	const char *const name;
 
-    TranslationStock stock;
+	TranslationStock stock;
 
-    const std::map<const char *, LbGoto, StringLess> destinations;
+	const std::map<const char *, LbGoto, StringLess> destinations;
 
-    std::unique_ptr<LbTranslationCache> cache;
+	std::unique_ptr<LbTranslationCache> cache;
 
 public:
-    LbTranslationHandler(EventLoop &event_loop, LbGotoMap &goto_map,
-                         const LbTranslationHandlerConfig &_config);
-    ~LbTranslationHandler() noexcept;
+	LbTranslationHandler(EventLoop &event_loop, LbGotoMap &goto_map,
+			     const LbTranslationHandlerConfig &_config);
+	~LbTranslationHandler() noexcept;
 
-    gcc_pure
-    size_t GetAllocatedCacheMemory() const noexcept;
+	gcc_pure
+	size_t GetAllocatedCacheMemory() const noexcept;
 
-    void FlushCache();
-    void InvalidateCache(const TranslationInvalidateRequest &request);
+	void FlushCache();
+	void InvalidateCache(const TranslationInvalidateRequest &request);
 
-    const LbGoto *FindDestination(const char *destination_name) const {
-        auto i = destinations.find(destination_name);
-        return i != destinations.end()
-            ? &i->second
-            : nullptr;
-    }
+	const LbGoto *FindDestination(const char *destination_name) const {
+		auto i = destinations.find(destination_name);
+		return i != destinations.end()
+			? &i->second
+			: nullptr;
+	}
 
-    void Pick(struct pool &pool, const IncomingHttpRequest &request,
-              const char *listener_tag,
-              TranslateHandler &handler,
-              CancellablePointer &cancel_ptr);
+	void Pick(struct pool &pool, const IncomingHttpRequest &request,
+		  const char *listener_tag,
+		  TranslateHandler &handler,
+		  CancellablePointer &cancel_ptr);
 
-    void PutCache(const IncomingHttpRequest &request,
-                  const char *listener_tag,
-                  const TranslateResponse &response);
+	void PutCache(const IncomingHttpRequest &request,
+		      const char *listener_tag,
+		      const TranslateResponse &response);
 };

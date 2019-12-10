@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,31 +40,31 @@
 #include <forward_list>
 
 struct LbHttpCheckConfig {
-    std::string host;
-    std::string uri;
-    std::string file_exists;
-    std::string success_message;
+	std::string host;
+	std::string uri;
+	std::string file_exists;
+	std::string success_message;
 
-    std::forward_list<MaskedSocketAddress> client_addresses;
+	std::forward_list<MaskedSocketAddress> client_addresses;
 
-    gcc_pure
-    bool MatchClientAddress(SocketAddress address) const noexcept {
-        if (client_addresses.empty())
-            return true;
+	gcc_pure
+	bool MatchClientAddress(SocketAddress address) const noexcept {
+		if (client_addresses.empty())
+			return true;
 
-        return std::any_of(client_addresses.begin(), client_addresses.end(),
-                           [=](const MaskedSocketAddress &i){
-                               return i.Matches(address);
-                           });
-    }
+		return std::any_of(client_addresses.begin(), client_addresses.end(),
+				   [=](const MaskedSocketAddress &i){
+					   return i.Matches(address);
+				   });
+	}
 
-    gcc_pure
-    bool Match(const char *request_uri,
-               const char *request_host) const noexcept {
-        return request_host != nullptr &&
-            request_host == host && request_uri == uri;
-    }
+	gcc_pure
+	bool Match(const char *request_uri,
+		   const char *request_host) const noexcept {
+		return request_host != nullptr &&
+			request_host == host && request_uri == uri;
+	}
 
-    gcc_pure
-    bool Check() const noexcept;
+	gcc_pure
+	bool Check() const noexcept;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_LB_LISTENER_HXX
-#define BENG_LB_LISTENER_HXX
+#pragma once
 
 #include "Goto.hxx"
 #include "io/Logger.hxx"
@@ -46,30 +45,28 @@ class LbGotoMap;
  * Listener on a TCP port.
  */
 class LbListener final : public ServerSocket {
-    LbInstance &instance;
+	LbInstance &instance;
 
-    const LbListenerConfig &config;
+	const LbListenerConfig &config;
 
-    LbGoto destination;
+	LbGoto destination;
 
-    SslFactory *ssl_factory = nullptr;
+	SslFactory *ssl_factory = nullptr;
 
-    const Logger logger;
+	const Logger logger;
 
 public:
-    LbListener(LbInstance &_instance,
-               const LbListenerConfig &_config);
-    ~LbListener();
+	LbListener(LbInstance &_instance,
+		   const LbListenerConfig &_config);
+	~LbListener();
 
-    void Setup();
-    void Scan(LbGotoMap &goto_map);
+	void Setup();
+	void Scan(LbGotoMap &goto_map);
 
-    unsigned FlushSSLSessionCache(long tm);
+	unsigned FlushSSLSessionCache(long tm);
 
 protected:
-    void OnAccept(UniqueSocketDescriptor &&fd,
-                  SocketAddress address) noexcept override;
-    void OnAcceptError(std::exception_ptr ep) noexcept override;
+	void OnAccept(UniqueSocketDescriptor &&fd,
+		      SocketAddress address) noexcept override;
+	void OnAcceptError(std::exception_ptr ep) noexcept override;
 };
-
-#endif

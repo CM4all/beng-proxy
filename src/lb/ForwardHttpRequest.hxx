@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_LB_FORWARD_HTTP_REQUEST_HXX
-#define BENG_LB_FORWARD_HTTP_REQUEST_HXX
+#pragma once
 
 struct LbHttpConnection;
 struct IncomingHttpRequest;
@@ -40,8 +39,6 @@ class CancellablePointer;
 
 void
 ForwardHttpRequest(LbHttpConnection &connection,
-                   IncomingHttpRequest &request,
-                   LbCluster &cluster,
-                   CancellablePointer &cancel_ptr) noexcept;
-
-#endif
+		   IncomingHttpRequest &request,
+		   LbCluster &cluster,
+		   CancellablePointer &cancel_ptr) noexcept;

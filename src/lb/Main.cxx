@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -75,180 +75,181 @@
 #endif
 
 static constexpr cap_value_t cap_keep_list[1] = {
-    /* keep the NET_RAW capability to be able to to use the socket
-       option IP_TRANSPARENT */
-    CAP_NET_RAW,
+	/* keep the NET_RAW capability to be able to to use the socket
+	   option IP_TRANSPARENT */
+	CAP_NET_RAW,
 };
 
 void
 LbInstance::ShutdownCallback() noexcept
 {
-    if (should_exit)
-        return;
+	if (should_exit)
+		return;
 
-    should_exit = true;
-    deinit_signals(this);
-    thread_pool_stop();
+	should_exit = true;
+	deinit_signals(this);
+	thread_pool_stop();
 
-    avahi_client.Close();
+	avahi_client.Close();
 
-    compress_event.Cancel();
+	compress_event.Cancel();
 
-    DeinitAllControls();
+	DeinitAllControls();
 
-    while (!tcp_connections.empty())
-        tcp_connections.front().Destroy();
+	while (!tcp_connections.empty())
+		tcp_connections.front().Destroy();
 
-    while (!http_connections.empty())
-        http_connections.front().CloseAndDestroy();
+	while (!http_connections.empty())
+		http_connections.front().CloseAndDestroy();
 
-    goto_map.Clear();
+	goto_map.Clear();
 
-    DisconnectCertCaches();
+	DisconnectCertCaches();
 
-    DeinitAllListeners();
+	DeinitAllListeners();
 
-    thread_pool_join();
+	thread_pool_join();
 
-    monitors.clear();
+	monitors.clear();
 
-    pool_commit();
+	pool_commit();
 
-    delete std::exchange(fs_balancer, nullptr);
-    delete std::exchange(fs_stock, nullptr);
+	delete std::exchange(fs_balancer, nullptr);
+	delete std::exchange(fs_stock, nullptr);
 
-    delete std::exchange(balancer, nullptr);
+	delete std::exchange(balancer, nullptr);
 
-    delete std::exchange(pipe_stock, nullptr);
+	delete std::exchange(pipe_stock, nullptr);
 
-    pool_commit();
+	pool_commit();
 }
 
 void
 LbInstance::ReloadEventCallback(int) noexcept
 {
-    unsigned n_ssl_sessions = FlushSSLSessionCache(LONG_MAX);
-    logger(3, "flushed ", n_ssl_sessions, " SSL sessions");
+	unsigned n_ssl_sessions = FlushSSLSessionCache(LONG_MAX);
+	logger(3, "flushed ", n_ssl_sessions, " SSL sessions");
 
-    goto_map.FlushCaches();
+	goto_map.FlushCaches();
 
-    Compress();
+	Compress();
 }
 
 void
 init_signals(LbInstance *instance)
 {
-    instance->shutdown_listener.Enable();
-    instance->sighup_event.Enable();
+	instance->shutdown_listener.Enable();
+	instance->sighup_event.Enable();
 }
 
 void
 deinit_signals(LbInstance *instance)
 {
-    instance->shutdown_listener.Disable();
-    instance->sighup_event.Disable();
+	instance->shutdown_listener.Disable();
+	instance->sighup_event.Disable();
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 try {
-    const ScopeFbPoolInit fb_pool_init;
+	const ScopeFbPoolInit fb_pool_init;
 
-    /* configuration */
+	/* configuration */
 
-    LbCmdLine cmdline;
-    LbConfig config;
-    ParseCommandLine(cmdline, config, argc, argv);
+	LbCmdLine cmdline;
+	LbConfig config;
+	ParseCommandLine(cmdline, config, argc, argv);
 
-    LoadConfigFile(config, cmdline.config_path);
+	LoadConfigFile(config, cmdline.config_path);
 
-    LbInstance instance(config);
+	LbInstance instance(config);
 
-    if (cmdline.check) {
-        const ScopeSslGlobalInit ssl_init;
-        lb_check(instance.event_loop, config);
-        return EXIT_SUCCESS;
-    }
+	if (cmdline.check) {
+		const ScopeSslGlobalInit ssl_init;
+		lb_check(instance.event_loop, config);
+		return EXIT_SUCCESS;
+	}
 
-    /* initialize */
+	/* initialize */
 
-    SetupProcess();
+	SetupProcess();
 
-    const ScopeSslGlobalInit ssl_init;
+	const ScopeSslGlobalInit ssl_init;
 
-    const ODBus::ScopeInit dbus_init;
-    dbus_connection_set_exit_on_disconnect(ODBus::Connection::GetSystem(),
-                                           false);
+	const ODBus::ScopeInit dbus_init;
+	dbus_connection_set_exit_on_disconnect(ODBus::Connection::GetSystem(),
+					       false);
 
-    /* prevent libpq from initializing libssl & libcrypto again */
-    PQinitOpenSSL(0, 0);
+	/* prevent libpq from initializing libssl & libcrypto again */
+	PQinitOpenSSL(0, 0);
 
-    direct_global_init();
+	direct_global_init();
 
-    init_signals(&instance);
+	init_signals(&instance);
 
-    instance.InitAllControls();
-    instance.InitAllListeners();
+	instance.InitAllControls();
+	instance.InitAllListeners();
 
-    instance.balancer = new BalancerMap(instance.failure_manager);
+	instance.balancer = new BalancerMap(instance.failure_manager);
 
-    instance.fs_stock = new FilteredSocketStock(instance.event_loop,
-                                                cmdline.tcp_stock_limit);
-    instance.fs_balancer = new FilteredSocketBalancer(*instance.fs_stock,
-                                                      instance.failure_manager);
+	instance.fs_stock = new FilteredSocketStock(instance.event_loop,
+						    cmdline.tcp_stock_limit);
+	instance.fs_balancer = new FilteredSocketBalancer(*instance.fs_stock,
+							  instance.failure_manager);
 
-    instance.pipe_stock = new PipeStock(instance.event_loop);
+	instance.pipe_stock = new PipeStock(instance.event_loop);
 
-    /* launch the access logger */
+	/* launch the access logger */
 
-    instance.access_log.reset(AccessLogGlue::Create(config.access_log,
-                                                    &cmdline.logger_user));
+	instance.access_log.reset(AccessLogGlue::Create(config.access_log,
+							&cmdline.logger_user));
 
-    /* daemonize II */
+	/* daemonize II */
 
-    if (!cmdline.user.IsEmpty())
-        capabilities_pre_setuid();
+	if (!cmdline.user.IsEmpty())
+		capabilities_pre_setuid();
 
-    cmdline.user.Apply();
-
-#ifdef __linux
-    /* revert the "dumpable" flag to "true" after it was cleared by
-       setreuid(); this is necessary for two reasons: (1) we want core
-       dumps to be able to analyze crashes; and (2) Linux kernels
-       older than 4.10 (commit 68eb94f16227) don't allow writing to
-       /proc/self/setgroups etc. without it, which
-       isolate_from_filesystem() needs to do */
-    prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
-#endif
-
-    /* can't change to new (empty) rootfs if we may need to reconnect
-       to PostgreSQL eventually */
-    // TODO: bind-mount the PostgreSQL socket into the new rootfs
-    if (!config.HasCertDatabase())
-        isolate_from_filesystem(config.HasZeroConf());
-
-    if (!cmdline.user.IsEmpty())
-        capabilities_post_setuid(cap_keep_list, std::size(cap_keep_list));
+	cmdline.user.Apply();
 
 #ifdef __linux
-    prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+	/* revert the "dumpable" flag to "true" after it was cleared by
+	   setreuid(); this is necessary for two reasons: (1) we want core
+	   dumps to be able to analyze crashes; and (2) Linux kernels
+	   older than 4.10 (commit 68eb94f16227) don't allow writing to
+	   /proc/self/setgroups etc. without it, which
+	   isolate_from_filesystem() needs to do */
+	prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
 #endif
 
-    /* main loop */
+	/* can't change to new (empty) rootfs if we may need to reconnect
+	   to PostgreSQL eventually */
+	// TODO: bind-mount the PostgreSQL socket into the new rootfs
+	if (!config.HasCertDatabase())
+		isolate_from_filesystem(config.HasZeroConf());
 
-    instance.InitWorker();
+	if (!cmdline.user.IsEmpty())
+		capabilities_post_setuid(cap_keep_list, std::size(cap_keep_list));
 
-    /* tell systemd we're ready */
-    sd_notify(0, "READY=1");
+#ifdef __linux
+	prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+#endif
 
-    instance.event_loop.Dispatch();
+	/* main loop */
 
-    /* cleanup */
+	instance.InitWorker();
 
-    instance.DeinitAllListeners();
-    instance.DeinitAllControls();
+	/* tell systemd we're ready */
+	sd_notify(0, "READY=1");
 
-    thread_pool_deinit();
+	instance.event_loop.Dispatch();
+
+	/* cleanup */
+
+	instance.DeinitAllListeners();
+	instance.DeinitAllControls();
+
+	thread_pool_deinit();
 } catch (...) {
-    PrintException(std::current_exception());
-    return EXIT_FAILURE;
+	PrintException(std::current_exception());
+	return EXIT_FAILURE;
 }

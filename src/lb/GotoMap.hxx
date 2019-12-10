@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_LB_GOTO_MAP_HXX
-#define BENG_LB_GOTO_MAP_HXX
+#pragma once
 
 #include "LuaInitHook.hxx"
 #include "util/Compiler.h"
@@ -55,48 +54,46 @@ class LbLuaHandler;
 class LbMonitorManager;
 
 class LbGotoMap final {
-    const LbConfig &root_config;
-    FailureManager &failure_manager;
-    LbMonitorManager &monitors;
-    MyAvahiClient &avahi_client;
+	const LbConfig &root_config;
+	FailureManager &failure_manager;
+	LbMonitorManager &monitors;
+	MyAvahiClient &avahi_client;
 
-    LbLuaInitHook lua_init_hook;
+	LbLuaInitHook lua_init_hook;
 
-    std::map<const LbClusterConfig *, LbCluster> clusters;
-    std::map<const LbBranchConfig *, LbBranch> branches;
-    std::map<const LbTranslationHandlerConfig *,
-             LbTranslationHandler> translation_handlers;
-    std::map<const LbLuaHandlerConfig *,
-             LbLuaHandler> lua_handlers;
+	std::map<const LbClusterConfig *, LbCluster> clusters;
+	std::map<const LbBranchConfig *, LbBranch> branches;
+	std::map<const LbTranslationHandlerConfig *,
+		 LbTranslationHandler> translation_handlers;
+	std::map<const LbLuaHandlerConfig *,
+		 LbLuaHandler> lua_handlers;
 
 public:
-    LbGotoMap(const LbConfig &_config,
-              FailureManager &_failure_manager,
-              LbMonitorManager &_monitors,
-              MyAvahiClient &_avahi_client);
+	LbGotoMap(const LbConfig &_config,
+		  FailureManager &_failure_manager,
+		  LbMonitorManager &_monitors,
+		  MyAvahiClient &_avahi_client);
 
-    ~LbGotoMap() noexcept;
+	~LbGotoMap() noexcept;
 
-    LbGotoMap(const LbGotoMap &) = delete;
-    LbGotoMap &operator=(const LbGotoMap &) = delete;
+	LbGotoMap(const LbGotoMap &) = delete;
+	LbGotoMap &operator=(const LbGotoMap &) = delete;
 
-    void Clear();
+	void Clear();
 
-    void FlushCaches();
-    void InvalidateTranslationCaches(const TranslationInvalidateRequest &request);
+	void FlushCaches();
+	void InvalidateTranslationCaches(const TranslationInvalidateRequest &request);
 
-    gcc_pure
-    size_t GetAllocatedTranslationCacheMemory() const noexcept;
+	gcc_pure
+	size_t GetAllocatedTranslationCacheMemory() const noexcept;
 
-    LbGoto GetInstance(const char *name);
-    LbGoto GetInstance(const LbGotoConfig &config);
+	LbGoto GetInstance(const char *name);
+	LbGoto GetInstance(const LbGotoConfig &config);
 
-    LbCluster &GetInstance(const LbClusterConfig &config);
+	LbCluster &GetInstance(const LbClusterConfig &config);
 
 private:
-    LbBranch &GetInstance(const LbBranchConfig &config);
-    LbLuaHandler &GetInstance(const LbLuaHandlerConfig &config);
-    LbTranslationHandler &GetInstance(const LbTranslationHandlerConfig &config);
+	LbBranch &GetInstance(const LbBranchConfig &config);
+	LbLuaHandler &GetInstance(const LbLuaHandlerConfig &config);
+	LbTranslationHandler &GetInstance(const LbTranslationHandlerConfig &config);
 };
-
-#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -46,77 +46,77 @@
 static constexpr Event::Duration COMPRESS_INTERVAL = std::chrono::minutes(10);
 
 LbInstance::LbInstance(const LbConfig &_config) noexcept
-    :config(_config),
-     monitors(event_loop, failure_manager),
-     avahi_client(event_loop, "beng-lb"),
-     goto_map(config, failure_manager, monitors, avahi_client),
-     compress_event(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
-     shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
-     sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback))
+	:config(_config),
+	 monitors(event_loop, failure_manager),
+	 avahi_client(event_loop, "beng-lb"),
+	 goto_map(config, failure_manager, monitors, avahi_client),
+	 compress_event(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
+	 shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
+	 sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback))
 {
 }
 
 LbInstance::~LbInstance() noexcept
 {
-    assert(tcp_connections.empty());
-    assert(http_connections.empty());
+	assert(tcp_connections.empty());
+	assert(http_connections.empty());
 }
 
 void
 LbInstance::InitWorker()
 {
-    compress_event.Schedule(COMPRESS_INTERVAL);
+	compress_event.Schedule(COMPRESS_INTERVAL);
 
-    for (auto &listener : listeners)
-        listener.Scan(goto_map);
+	for (auto &listener : listeners)
+		listener.Scan(goto_map);
 
-    ConnectCertCaches();
+	ConnectCertCaches();
 }
 
 void
 LbInstance::Compress() noexcept
 {
-    fb_pool_compress();
+	fb_pool_compress();
 
-    for (auto &i : cert_dbs)
-        i.second.Expire();
+	for (auto &i : cert_dbs)
+		i.second.Expire();
 
-    unsigned n_ssl_sessions = FlushSSLSessionCache(time(nullptr));
-    logger(3, "flushed ", n_ssl_sessions, " SSL sessions");
+	unsigned n_ssl_sessions = FlushSSLSessionCache(time(nullptr));
+	logger(3, "flushed ", n_ssl_sessions, " SSL sessions");
 }
 
 CertCache &
 LbInstance::GetCertCache(const LbCertDatabaseConfig &cert_db_config)
 {
-    auto i = cert_dbs.emplace(std::piecewise_construct,
-                              std::forward_as_tuple(cert_db_config.name),
-                              std::forward_as_tuple(event_loop,
-                                                    cert_db_config));
-    if (i.second)
-        for (const auto &j : cert_db_config.ca_certs)
-            i.first->second.LoadCaCertificate(j.c_str());
+	auto i = cert_dbs.emplace(std::piecewise_construct,
+				  std::forward_as_tuple(cert_db_config.name),
+				  std::forward_as_tuple(event_loop,
+							cert_db_config));
+	if (i.second)
+		for (const auto &j : cert_db_config.ca_certs)
+			i.first->second.LoadCaCertificate(j.c_str());
 
-    return i.first->second;
+	return i.first->second;
 }
 
 void
 LbInstance::ConnectCertCaches()
 {
-    for (auto &i : cert_dbs)
-        i.second.Connect();
+	for (auto &i : cert_dbs)
+		i.second.Connect();
 }
 
 void
 LbInstance::DisconnectCertCaches() noexcept
 {
-    for (auto &i : cert_dbs)
-        i.second.Disconnect();
+	for (auto &i : cert_dbs)
+		i.second.Disconnect();
 }
 
 void
 LbInstance::OnCompressTimer() noexcept
 {
-    Compress();
+	Compress();
 
-    compress_event.Schedule(COMPRESS_INTERVAL);
+	compress_event.Schedule(COMPRESS_INTERVAL);
 }

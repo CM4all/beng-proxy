@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_LB_HEADERS_HXX
-#define BENG_LB_HEADERS_HXX
+#pragma once
 
 class AllocatorPtr;
 class StringMap;
@@ -42,10 +41,8 @@ class HttpHeaders;
  */
 void
 lb_forward_request_headers(AllocatorPtr alloc, StringMap &headers,
-                           const char *local_host, const char *remote_host,
-                           bool https,
-                           const char *peer_subject,
-                           const char *peer_issuer_subject,
-                           bool mangle_via) noexcept;
-
-#endif
+			   const char *local_host, const char *remote_host,
+			   bool https,
+			   const char *peer_subject,
+			   const char *peer_issuer_subject,
+			   bool mangle_via) noexcept;

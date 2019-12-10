@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,13 +42,13 @@
 #include "avahi/Client.hxx"
 
 LbGotoMap::LbGotoMap(const LbConfig &_config,
-                     FailureManager &_failure_manager,
-                     LbMonitorManager &_monitors,
-                     MyAvahiClient &_avahi_client)
-    :root_config(_config), failure_manager(_failure_manager),
-     monitors(_monitors),
-     avahi_client(_avahi_client),
-     lua_init_hook(this) {}
+		     FailureManager &_failure_manager,
+		     LbMonitorManager &_monitors,
+		     MyAvahiClient &_avahi_client)
+	:root_config(_config), failure_manager(_failure_manager),
+	 monitors(_monitors),
+	 avahi_client(_avahi_client),
+	 lua_init_hook(this) {}
 
 LbGotoMap::~LbGotoMap() noexcept
 {
@@ -57,95 +57,95 @@ LbGotoMap::~LbGotoMap() noexcept
 void
 LbGotoMap::Clear()
 {
-    translation_handlers.clear();
-    clusters.clear();
+	translation_handlers.clear();
+	clusters.clear();
 }
 
 void
 LbGotoMap::FlushCaches()
 {
-    for (auto &i : translation_handlers)
-        i.second.FlushCache();
+	for (auto &i : translation_handlers)
+		i.second.FlushCache();
 }
 
 void
 LbGotoMap::InvalidateTranslationCaches(const TranslationInvalidateRequest &request)
 {
-    for (auto &i : translation_handlers)
-        i.second.InvalidateCache(request);
+	for (auto &i : translation_handlers)
+		i.second.InvalidateCache(request);
 }
 
 size_t
 LbGotoMap::GetAllocatedTranslationCacheMemory() const noexcept
 {
-    size_t result = 0;
-    for (const auto &i : translation_handlers)
-        result += i.second.GetAllocatedCacheMemory();
-    return result;
+	size_t result = 0;
+	for (const auto &i : translation_handlers)
+		result += i.second.GetAllocatedCacheMemory();
+	return result;
 }
 
 LbGoto
 LbGotoMap::GetInstance(const char *name)
 {
-    return GetInstance(root_config.FindGoto(name));
+	return GetInstance(root_config.FindGoto(name));
 }
 
 LbGoto
 LbGotoMap::GetInstance(const LbGotoConfig &config)
 {
-    if (config.cluster != nullptr)
-        return GetInstance(*config.cluster);
-    else if (config.branch != nullptr)
-        return GetInstance(*config.branch);
-    else if (config.lua != nullptr)
-        return GetInstance(*config.lua);
-    else if (config.translation != nullptr)
-        return GetInstance(*config.translation);
-    else if (config.response.IsDefined())
-        return config.response;
-    else
-        return LbGoto();
+	if (config.cluster != nullptr)
+		return GetInstance(*config.cluster);
+	else if (config.branch != nullptr)
+		return GetInstance(*config.branch);
+	else if (config.lua != nullptr)
+		return GetInstance(*config.lua);
+	else if (config.translation != nullptr)
+		return GetInstance(*config.translation);
+	else if (config.response.IsDefined())
+		return config.response;
+	else
+		return LbGoto();
 }
 
 LbCluster &
 LbGotoMap::GetInstance(const LbClusterConfig &config)
 {
-    auto *monitor_stock = config.monitor != nullptr
-        ? &monitors[*config.monitor]
-        : nullptr;
+	auto *monitor_stock = config.monitor != nullptr
+		? &monitors[*config.monitor]
+		: nullptr;
 
-    return clusters.emplace(std::piecewise_construct,
-                            std::forward_as_tuple(&config),
-                            std::forward_as_tuple(config, failure_manager,
-                                                  monitor_stock,
-                                                  avahi_client))
-        .first->second;
+	return clusters.emplace(std::piecewise_construct,
+				std::forward_as_tuple(&config),
+				std::forward_as_tuple(config, failure_manager,
+						      monitor_stock,
+						      avahi_client))
+		.first->second;
 }
 
 LbBranch &
 LbGotoMap::GetInstance(const LbBranchConfig &config)
 {
-    return branches.emplace(std::piecewise_construct,
-                            std::forward_as_tuple(&config),
-                            std::forward_as_tuple(*this, config))
-        .first->second;
+	return branches.emplace(std::piecewise_construct,
+				std::forward_as_tuple(&config),
+				std::forward_as_tuple(*this, config))
+		.first->second;
 }
 
 LbLuaHandler &
 LbGotoMap::GetInstance(const LbLuaHandlerConfig &config)
 {
-    return lua_handlers.emplace(std::piecewise_construct,
-                                std::forward_as_tuple(&config),
-                                std::forward_as_tuple(lua_init_hook, config))
-        .first->second;
+	return lua_handlers.emplace(std::piecewise_construct,
+				    std::forward_as_tuple(&config),
+				    std::forward_as_tuple(lua_init_hook, config))
+		.first->second;
 }
 
 LbTranslationHandler &
 LbGotoMap::GetInstance(const LbTranslationHandlerConfig &config)
 {
-    return translation_handlers.emplace(std::piecewise_construct,
-                                        std::forward_as_tuple(&config),
-                                        std::forward_as_tuple(avahi_client.GetEventLoop(),
-                                                              *this, config))
-        .first->second;
+	return translation_handlers.emplace(std::piecewise_construct,
+					    std::forward_as_tuple(&config),
+					    std::forward_as_tuple(avahi_client.GetEventLoop(),
+								  *this, config))
+		.first->second;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,8 +38,8 @@
 bool
 LbHttpCheckConfig::Check() const noexcept
 {
-    assert(!file_exists.empty());
+	assert(!file_exists.empty());
 
-    struct stat st;
-    return stat(file_exists.c_str(), &st) == 0;
+	struct stat st;
+	return stat(file_exists.c_str(), &st) == 0;
 }

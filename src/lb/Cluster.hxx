@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_LB_CLUSTER_HXX
-#define BENG_LB_CLUSTER_HXX
+#pragma once
 
 #include "StickyHash.hxx"
 #include "avahi/ExplorerListener.hxx"
@@ -59,254 +58,252 @@ class StickyCache;
 class AvahiServiceExplorer;
 
 class LbCluster final : AvahiServiceExplorerListener {
-    const LbClusterConfig &config;
-    FailureManager &failure_manager;
-    LbMonitorStock *const monitors;
+	const LbClusterConfig &config;
+	FailureManager &failure_manager;
+	LbMonitorStock *const monitors;
 
-    const Logger logger;
+	const Logger logger;
 
-    /**
-     * This #AvahiServiceExplorer locates Zeroconf nodes.
-     */
-    std::unique_ptr<AvahiServiceExplorer> explorer;
+	/**
+	 * This #AvahiServiceExplorer locates Zeroconf nodes.
+	 */
+	std::unique_ptr<AvahiServiceExplorer> explorer;
 
-    class StickyRing;
+	class StickyRing;
 
-    /**
-     * For consistent hashing.  It is populated by FillActive().
-     */
-    StickyRing *sticky_ring = nullptr;
+	/**
+	 * For consistent hashing.  It is populated by FillActive().
+	 */
+	StickyRing *sticky_ring = nullptr;
 
-    /**
-     * @see LbClusterConfig::sticky_cache
-     */
-    StickyCache *sticky_cache = nullptr;
+	/**
+	 * @see LbClusterConfig::sticky_cache
+	 */
+	StickyCache *sticky_cache = nullptr;
 
-    /**
-     * A list of #LbMonitorRef instances, one for each static member
-     * (i.e. not Zeroconf).
-     */
-    std::forward_list<LbMonitorRef> static_member_monitors;
+	/**
+	 * A list of #LbMonitorRef instances, one for each static member
+	 * (i.e. not Zeroconf).
+	 */
+	std::forward_list<LbMonitorRef> static_member_monitors;
 
-    class Member
-        : LeakDetector,
-          public boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+	class Member
+		: LeakDetector,
+		  public boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
-        const std::string key;
+		const std::string key;
 
-        AllocatedSocketAddress address;
+		AllocatedSocketAddress address;
 
-        FailureRef failure;
+		FailureRef failure;
 
-        std::unique_ptr<LbMonitorRef> monitor;
+		std::unique_ptr<LbMonitorRef> monitor;
 
-        mutable std::string log_name;
+		mutable std::string log_name;
 
-        unsigned refs = 1;
+		unsigned refs = 1;
 
-    public:
-        Member(const std::string &_key, SocketAddress _address,
-               ReferencedFailureInfo &_failure,
-               LbMonitorStock *monitors);
-        ~Member() noexcept;
+	public:
+		Member(const std::string &_key, SocketAddress _address,
+		       ReferencedFailureInfo &_failure,
+		       LbMonitorStock *monitors);
+		~Member() noexcept;
 
-        Member(const Member &) = delete;
-        Member &operator=(const Member &) = delete;
+		Member(const Member &) = delete;
+		Member &operator=(const Member &) = delete;
 
-        void Ref() noexcept {
-            ++refs;
-        }
+		void Ref() noexcept {
+			++refs;
+		}
 
-        void Unref() noexcept {
-            if (--refs == 0)
-                delete this;
-        }
+		void Unref() noexcept {
+			if (--refs == 0)
+				delete this;
+		}
 
-        const std::string &GetKey() const noexcept {
-            return key;
-        }
+		const std::string &GetKey() const noexcept {
+			return key;
+		}
 
-        SocketAddress GetAddress() const noexcept {
-            return address;
-        }
+		SocketAddress GetAddress() const noexcept {
+			return address;
+		}
 
-        void SetAddress(SocketAddress _address) noexcept {
-            address = _address;
-        }
+		void SetAddress(SocketAddress _address) noexcept {
+			address = _address;
+		}
 
-        auto &GetFailureRef() noexcept {
-            return failure;
-        }
+		auto &GetFailureRef() noexcept {
+			return failure;
+		}
 
-        FailureInfo &GetFailureInfo() noexcept {
-            return *failure;
-        }
+		FailureInfo &GetFailureInfo() noexcept {
+			return *failure;
+		}
 
-        /**
-         * Obtain a name identifying this object for logging.
-         */
-        gcc_pure
-        const char *GetLogName() const noexcept;
+		/**
+		 * Obtain a name identifying this object for logging.
+		 */
+		gcc_pure
+		const char *GetLogName() const noexcept;
 
-        struct Compare {
-            bool operator()(const Member &a, const Member &b) const noexcept {
-                return a.key < b.key;
-            }
+		struct Compare {
+			bool operator()(const Member &a, const Member &b) const noexcept {
+				return a.key < b.key;
+			}
 
-            bool operator()(const Member &a, const std::string &b) const noexcept {
-                return a.key < b;
-            }
+			bool operator()(const Member &a, const std::string &b) const noexcept {
+				return a.key < b;
+			}
 
-            bool operator()(const std::string &a, const Member &b) const noexcept {
-                return a < b.key;
-            }
-        };
+			bool operator()(const std::string &a, const Member &b) const noexcept {
+				return a < b.key;
+			}
+		};
 
-        struct UnrefDisposer {
-            void operator()(Member *member) const noexcept {
-                member->Unref();
-            }
-        };
-    };
-
-public:
-    /**
-     * A (counted) reference to a #Member.  It keeps the #Member valid
-     * even if it gets removed because the Zeroconf entry disappears.
-     */
-    class MemberPtr {
-        Member *value = nullptr;
-
-    public:
-        MemberPtr() = default;
-
-        MemberPtr(Member *_value) noexcept
-            :value(_value) {
-            if (value != nullptr)
-                value->Ref();
-        }
-
-        MemberPtr(Member &_value) noexcept
-            :value(&_value) {
-            value->Ref();
-        }
-
-        MemberPtr(const MemberPtr &src) noexcept
-            :MemberPtr(src.value) {}
-
-        MemberPtr(MemberPtr &&src) noexcept
-            :value(std::exchange(src.value, nullptr)) {}
-
-        ~MemberPtr() {
-            if (value != nullptr)
-                value->Unref();
-        }
-
-        MemberPtr &operator=(const MemberPtr &src) noexcept {
-            if (value != src.value) {
-                if (value != nullptr)
-                    value->Unref();
-
-                value = src.value;
-
-                if (value != nullptr)
-                    value->Ref();
-            }
-
-            return *this;
-        }
-
-        MemberPtr &operator=(MemberPtr &&src) noexcept {
-            std::swap(value, src.value);
-            return *this;
-        }
-
-        Member *operator->() {
-            return value;
-        }
-
-        Member &operator*() {
-            return *value;
-        }
-
-        operator bool() const {
-            return value != nullptr;
-        }
-    };
-
-private:
-    typedef boost::intrusive::set<Member,
-                                  boost::intrusive::compare<Member::Compare>,
-                                  boost::intrusive::constant_time_size<false>> MemberMap;
-
-    /**
-     * All Zeroconf members.  Managed by our
-     * AvahiServiceExplorerListener virtual method overrides.
-     */
-    MemberMap members;
-
-    /**
-     * All #members pointers in a std::vector.  Populated by
-     * FillActive().
-     */
-    std::vector<MemberMap::pointer> active_members;
-
-    bool dirty = false;
-
-    unsigned last_pick = 0;
+		struct UnrefDisposer {
+			void operator()(Member *member) const noexcept {
+				member->Unref();
+			}
+		};
+	};
 
 public:
-    LbCluster(const LbClusterConfig &_config, FailureManager &_failure_manager,
-              LbMonitorStock *_monitors,
-              MyAvahiClient &avahi_client);
-    ~LbCluster() noexcept;
+	/**
+	 * A (counted) reference to a #Member.  It keeps the #Member valid
+	 * even if it gets removed because the Zeroconf entry disappears.
+	 */
+	class MemberPtr {
+		Member *value = nullptr;
 
-    const LbClusterConfig &GetConfig() const noexcept {
-        return config;
-    }
+	public:
+		MemberPtr() = default;
 
-    gcc_pure
-    size_t GetZeroconfCount() noexcept {
-        if (dirty) {
-            dirty = false;
-            FillActive();
-        }
+		MemberPtr(Member *_value) noexcept
+			:value(_value) {
+			if (value != nullptr)
+				value->Ref();
+		}
 
-        return active_members.size();
-    }
+		MemberPtr(Member &_value) noexcept
+			:value(&_value) {
+			value->Ref();
+		}
 
-    /**
-     * Pick a member for the next request.
-     *
-     * Zeroconf only.
-     */
-    Member *Pick(Expiry now, sticky_hash_t sticky_hash) noexcept;
+		MemberPtr(const MemberPtr &src) noexcept
+			:MemberPtr(src.value) {}
+
+		MemberPtr(MemberPtr &&src) noexcept
+			:value(std::exchange(src.value, nullptr)) {}
+
+		~MemberPtr() {
+			if (value != nullptr)
+				value->Unref();
+		}
+
+		MemberPtr &operator=(const MemberPtr &src) noexcept {
+			if (value != src.value) {
+				if (value != nullptr)
+					value->Unref();
+
+				value = src.value;
+
+				if (value != nullptr)
+					value->Ref();
+			}
+
+			return *this;
+		}
+
+		MemberPtr &operator=(MemberPtr &&src) noexcept {
+			std::swap(value, src.value);
+			return *this;
+		}
+
+		Member *operator->() {
+			return value;
+		}
+
+		Member &operator*() {
+			return *value;
+		}
+
+		operator bool() const {
+			return value != nullptr;
+		}
+	};
 
 private:
-    /**
-     * Fill #active_members and #sticky_ring.
-     *
-     * Zeroconf only.
-     */
-    void FillActive() noexcept;
+	typedef boost::intrusive::set<Member,
+				      boost::intrusive::compare<Member::Compare>,
+				      boost::intrusive::constant_time_size<false>> MemberMap;
 
-    /**
-     * Pick the next active Zeroconf member in a round-robin way.
-     * Does not update the #StickyCache.
-     */
-    MemberMap::reference PickNextZeroconf() noexcept;
+	/**
+	 * All Zeroconf members.  Managed by our
+	 * AvahiServiceExplorerListener virtual method overrides.
+	 */
+	MemberMap members;
 
-    /**
-     * Like PickNextZeroconf(), but skips members which are bad
-     * according to failure_get_status().  If all are bad, a random
-     * (bad) one is returned.
-     */
-    MemberMap::reference PickNextGoodZeroconf(Expiry now) noexcept;
+	/**
+	 * All #members pointers in a std::vector.  Populated by
+	 * FillActive().
+	 */
+	std::vector<MemberMap::pointer> active_members;
 
-    /* virtual methods from class AvahiServiceExplorerListener */
-    void OnAvahiNewObject(const std::string &key,
-                          SocketAddress address) noexcept override;
-    void OnAvahiRemoveObject(const std::string &key) noexcept override;
+	bool dirty = false;
+
+	unsigned last_pick = 0;
+
+public:
+	LbCluster(const LbClusterConfig &_config, FailureManager &_failure_manager,
+		  LbMonitorStock *_monitors,
+		  MyAvahiClient &avahi_client);
+	~LbCluster() noexcept;
+
+	const LbClusterConfig &GetConfig() const noexcept {
+		return config;
+	}
+
+	gcc_pure
+	size_t GetZeroconfCount() noexcept {
+		if (dirty) {
+			dirty = false;
+			FillActive();
+		}
+
+		return active_members.size();
+	}
+
+	/**
+	 * Pick a member for the next request.
+	 *
+	 * Zeroconf only.
+	 */
+	Member *Pick(Expiry now, sticky_hash_t sticky_hash) noexcept;
+
+private:
+	/**
+	 * Fill #active_members and #sticky_ring.
+	 *
+	 * Zeroconf only.
+	 */
+	void FillActive() noexcept;
+
+	/**
+	 * Pick the next active Zeroconf member in a round-robin way.
+	 * Does not update the #StickyCache.
+	 */
+	MemberMap::reference PickNextZeroconf() noexcept;
+
+	/**
+	 * Like PickNextZeroconf(), but skips members which are bad
+	 * according to failure_get_status().  If all are bad, a random
+	 * (bad) one is returned.
+	 */
+	MemberMap::reference PickNextGoodZeroconf(Expiry now) noexcept;
+
+	/* virtual methods from class AvahiServiceExplorerListener */
+	void OnAvahiNewObject(const std::string &key,
+			      SocketAddress address) noexcept override;
+	void OnAvahiRemoveObject(const std::string &key) noexcept override;
 };
-
-#endif

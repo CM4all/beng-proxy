@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_LB_INSTANCE_HXX
-#define BENG_PROXY_LB_INSTANCE_HXX
+#pragma once
 
 #include "PInstance.hxx"
 #include "GotoMap.hxx"
@@ -62,96 +61,96 @@ class CertCache;
 namespace BengProxy { struct ControlStats; }
 
 struct LbInstance final : PInstance {
-    const LbConfig &config;
+	const LbConfig &config;
 
-    const Logger logger;
+	const Logger logger;
 
-    uint64_t http_request_counter = 0;
-    uint64_t http_traffic_received_counter = 0;
-    uint64_t http_traffic_sent_counter = 0;
+	uint64_t http_request_counter = 0;
+	uint64_t http_traffic_received_counter = 0;
+	uint64_t http_traffic_sent_counter = 0;
 
-    std::forward_list<LbControl> controls;
+	std::forward_list<LbControl> controls;
 
-    LbMonitorManager monitors;
+	LbMonitorManager monitors;
 
-    MyAvahiClient avahi_client;
+	MyAvahiClient avahi_client;
 
-    LbGotoMap goto_map;
+	LbGotoMap goto_map;
 
-    std::forward_list<LbListener> listeners;
+	std::forward_list<LbListener> listeners;
 
-    std::map<std::string, CertCache> cert_dbs;
+	std::map<std::string, CertCache> cert_dbs;
 
-    TimerEvent compress_event;
+	TimerEvent compress_event;
 
-    boost::intrusive::list<LbHttpConnection,
-                           boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
-                           boost::intrusive::constant_time_size<true>> http_connections;
+	boost::intrusive::list<LbHttpConnection,
+			       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
+			       boost::intrusive::constant_time_size<true>> http_connections;
 
-    boost::intrusive::list<LbTcpConnection,
-                           boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
-                           boost::intrusive::constant_time_size<true>> tcp_connections;
+	boost::intrusive::list<LbTcpConnection,
+			       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
+			       boost::intrusive::constant_time_size<true>> tcp_connections;
 
-    std::unique_ptr<AccessLogGlue> access_log;
+	std::unique_ptr<AccessLogGlue> access_log;
 
-    bool should_exit = false;
-    ShutdownListener shutdown_listener;
-    SignalEvent sighup_event;
+	bool should_exit = false;
+	ShutdownListener shutdown_listener;
+	SignalEvent sighup_event;
 
-    /* stock */
-    FailureManager failure_manager;
-    BalancerMap *balancer;
+	/* stock */
+	FailureManager failure_manager;
+	BalancerMap *balancer;
 
-    FilteredSocketStock *fs_stock = nullptr;
-    FilteredSocketBalancer *fs_balancer = nullptr;
+	FilteredSocketStock *fs_stock = nullptr;
+	FilteredSocketBalancer *fs_balancer = nullptr;
 
-    PipeStock *pipe_stock;
+	PipeStock *pipe_stock;
 
-    explicit LbInstance(const LbConfig &_config) noexcept;
-    ~LbInstance() noexcept;
+	explicit LbInstance(const LbConfig &_config) noexcept;
+	~LbInstance() noexcept;
 
-    /**
-     * Transition the current process from "master" to "worker".  Call
-     * this after forking in the new worker process.
-     */
-    void InitWorker();
+	/**
+	 * Transition the current process from "master" to "worker".  Call
+	 * this after forking in the new worker process.
+	 */
+	void InitWorker();
 
-    void InitAllListeners();
-    void DeinitAllListeners() noexcept;
+	void InitAllListeners();
+	void DeinitAllListeners() noexcept;
 
-    void InitAllControls();
-    void EnableAllControls() noexcept;
-    void DeinitAllControls() noexcept;
+	void InitAllControls();
+	void EnableAllControls() noexcept;
+	void DeinitAllControls() noexcept;
 
-    gcc_pure
-    BengProxy::ControlStats GetStats() const noexcept;
+	gcc_pure
+	BengProxy::ControlStats GetStats() const noexcept;
 
-    /**
-     * Compress memory allocators, try to return unused memory areas
-     * to the kernel.
-     */
-    void Compress() noexcept;
+	/**
+	 * Compress memory allocators, try to return unused memory areas
+	 * to the kernel.
+	 */
+	void Compress() noexcept;
 
-    CertCache &GetCertCache(const LbCertDatabaseConfig &cert_db_config);
-    void ConnectCertCaches();
-    void DisconnectCertCaches() noexcept;
+	CertCache &GetCertCache(const LbCertDatabaseConfig &cert_db_config);
+	void ConnectCertCaches();
+	void DisconnectCertCaches() noexcept;
 
-    void FlushTranslationCaches() noexcept {
-        goto_map.FlushCaches();
-    }
+	void FlushTranslationCaches() noexcept {
+		goto_map.FlushCaches();
+	}
 
-    void InvalidateTranslationCaches(const TranslationInvalidateRequest &request) noexcept {
-        goto_map.InvalidateTranslationCaches(request);
-    }
+	void InvalidateTranslationCaches(const TranslationInvalidateRequest &request) noexcept {
+		goto_map.InvalidateTranslationCaches(request);
+	}
 
-    unsigned FlushSSLSessionCache(long tm) noexcept;
+	unsigned FlushSSLSessionCache(long tm) noexcept;
 
-    void ShutdownCallback() noexcept;
+	void ShutdownCallback() noexcept;
 
-    void ReloadEventCallback(int signo) noexcept;
+	void ReloadEventCallback(int signo) noexcept;
 
 private:
-    void OnCompressTimer() noexcept;
+	void OnCompressTimer() noexcept;
 };
 
 struct client_connection;
@@ -161,5 +160,3 @@ init_signals(LbInstance *instance);
 
 void
 deinit_signals(LbInstance *instance);
-
-#endif

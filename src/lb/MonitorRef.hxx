@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,21 +38,21 @@ class LbMonitorStock;
 class LbMonitorController;
 
 class LbMonitorRef final {
-    LbMonitorStock &stock;
-    LbMonitorController *controller;
+	LbMonitorStock &stock;
+	LbMonitorController *controller;
 
 public:
-    LbMonitorRef(LbMonitorStock &_stock,
-                 LbMonitorController &_controller) noexcept;
+	LbMonitorRef(LbMonitorStock &_stock,
+		     LbMonitorController &_controller) noexcept;
 
-    LbMonitorRef(LbMonitorRef &&src) noexcept
-        :stock(src.stock), controller(std::exchange(src.controller, nullptr)) {}
+	LbMonitorRef(LbMonitorRef &&src) noexcept
+		:stock(src.stock), controller(std::exchange(src.controller, nullptr)) {}
 
-    ~LbMonitorRef() noexcept {
-        if (controller != nullptr)
-            Release();
-    }
+	~LbMonitorRef() noexcept {
+		if (controller != nullptr)
+			Release();
+	}
 
 private:
-    void Release() noexcept;
+	void Release() noexcept;
 };

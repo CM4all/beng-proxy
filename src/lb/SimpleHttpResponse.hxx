@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,30 +30,27 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_LB_SIMPLE_HTTP_RESPONSE_HXX
-#define BENG_LB_SIMPLE_HTTP_RESPONSE_HXX
+#pragma once
 
 #include "http/Status.h"
 
 #include <string>
 
 struct LbSimpleHttpResponse {
-    http_status_t status = http_status_t(0);
+	http_status_t status = http_status_t(0);
 
-    /**
-     * The "Location" response header.
-     */
-    std::string location;
+	/**
+	 * The "Location" response header.
+	 */
+	std::string location;
 
-    std::string message;
+	std::string message;
 
-    LbSimpleHttpResponse() = default;
-    explicit LbSimpleHttpResponse(http_status_t _status)
-        :status(_status) {}
+	LbSimpleHttpResponse() = default;
+	explicit LbSimpleHttpResponse(http_status_t _status)
+		:status(_status) {}
 
-    bool IsDefined() const {
-        return status != http_status_t(0);
-    }
+	bool IsDefined() const {
+		return status != http_status_t(0);
+	}
 };
-
-#endif

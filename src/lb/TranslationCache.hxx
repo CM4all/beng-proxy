@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_LB_TRANSLATION_CACHE_HXX
-#define BENG_LB_TRANSLATION_CACHE_HXX
+#pragma once
 
 #include "io/Logger.hxx"
 #include "http/Status.h"
@@ -44,68 +43,66 @@ struct TranslationInvalidateRequest;
 struct TranslateResponse;
 
 class LbTranslationCache final {
-    const LLogger logger;
+	const LLogger logger;
 
 public:
-    struct Item {
-        http_status_t status = http_status_t(0);
-        uint16_t https_only = 0;
-        std::string redirect, message, pool, canonical_host, site;
+	struct Item {
+		http_status_t status = http_status_t(0);
+		uint16_t https_only = 0;
+		std::string redirect, message, pool, canonical_host, site;
 
-        explicit Item(const TranslateResponse &response);
+		explicit Item(const TranslateResponse &response);
 
-        size_t GetAllocatedMemory() const noexcept {
-            return sizeof(*this) + redirect.length() + message.length() +
-                pool.length() + canonical_host.length() + site.length();
-        }
-    };
+		size_t GetAllocatedMemory() const noexcept {
+			return sizeof(*this) + redirect.length() + message.length() +
+				pool.length() + canonical_host.length() + site.length();
+		}
+	};
 
-    struct Vary {
-        bool host = false;
-        bool listener_tag = false;
+	struct Vary {
+		bool host = false;
+		bool listener_tag = false;
 
-    public:
-        Vary() = default;
-        explicit Vary(const TranslateResponse &response);
+	public:
+		Vary() = default;
+		explicit Vary(const TranslateResponse &response);
 
-        constexpr operator bool() const {
-            return host || listener_tag;
-        }
+		constexpr operator bool() const {
+			return host || listener_tag;
+		}
 
-        void Clear() {
-            host = false;
-            listener_tag = false;
-        }
+		void Clear() {
+			host = false;
+			listener_tag = false;
+		}
 
-        Vary &operator|=(const Vary other) {
-            host |= other.host;
-            listener_tag |= other.listener_tag;
-            return *this;
-        }
-    };
+		Vary &operator|=(const Vary other) {
+			host |= other.host;
+			listener_tag |= other.listener_tag;
+			return *this;
+		}
+	};
 
 private:
-    typedef ::Cache<std::string, Item, 32768, 4093> Cache;
-    Cache cache;
+	typedef ::Cache<std::string, Item, 32768, 4093> Cache;
+	Cache cache;
 
-    Vary seen_vary;
+	Vary seen_vary;
 
 public:
-    LbTranslationCache()
-        :logger("tcache") {}
+	LbTranslationCache()
+		:logger("tcache") {}
 
-    gcc_pure
-    size_t GetAllocatedMemory() const noexcept;
+	gcc_pure
+	size_t GetAllocatedMemory() const noexcept;
 
-    void Clear();
-    void Invalidate(const TranslationInvalidateRequest &request);
+	void Clear();
+	void Invalidate(const TranslationInvalidateRequest &request);
 
-    const Item *Get(const IncomingHttpRequest &request,
-                    const char *listener_tag);
+	const Item *Get(const IncomingHttpRequest &request,
+			const char *listener_tag);
 
-    void Put(const IncomingHttpRequest &request,
-             const char *listener_tag,
-             const TranslateResponse &response);
+	void Put(const IncomingHttpRequest &request,
+		 const char *listener_tag,
+		 const TranslateResponse &response);
 };
-
-#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_LB_LUA_HANDLER_HXX
-#define BENG_LB_LUA_HANDLER_HXX
+#pragma once
 
 #include "lua/State.hxx"
 #include "lua/Value.hxx"
@@ -43,21 +42,19 @@ class HttpResponseHandler;
 class LuaInitHook;
 
 class LbLuaHandler final {
-    const LbLuaHandlerConfig &config;
+	const LbLuaHandlerConfig &config;
 
-    Lua::State state;
-    Lua::Value function;
+	Lua::State state;
+	Lua::Value function;
 
 public:
-    LbLuaHandler(LuaInitHook &init_hook, const LbLuaHandlerConfig &config);
-    ~LbLuaHandler();
+	LbLuaHandler(LuaInitHook &init_hook, const LbLuaHandlerConfig &config);
+	~LbLuaHandler();
 
-    const LbLuaHandlerConfig &GetConfig() const {
-        return config;
-    }
+	const LbLuaHandlerConfig &GetConfig() const {
+		return config;
+	}
 
-    const LbGoto *HandleRequest(IncomingHttpRequest &request,
-                                HttpResponseHandler &handler);
+	const LbGoto *HandleRequest(IncomingHttpRequest &request,
+				    HttpResponseHandler &handler);
 };
-
-#endif

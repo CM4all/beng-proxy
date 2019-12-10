@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -61,45 +61,45 @@
 
 inline
 LbHttpConnection::LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
-                                   const LbListenerConfig &_listener,
-                                   const LbGoto &_destination,
-                                   SocketAddress _client_address)
-    :PoolHolder(std::move(_pool)), instance(_instance), listener(_listener),
-     initial_destination(_destination),
-     client_address(address_to_string(pool, _client_address)),
-     logger(*this)
+				   const LbListenerConfig &_listener,
+				   const LbGoto &_destination,
+				   SocketAddress _client_address)
+	:PoolHolder(std::move(_pool)), instance(_instance), listener(_listener),
+	 initial_destination(_destination),
+	 client_address(address_to_string(pool, _client_address)),
+	 logger(*this)
 {
-    if (client_address == nullptr)
-        client_address = "unknown";
+	if (client_address == nullptr)
+		client_address = "unknown";
 }
 
 gcc_pure
 static int
 HttpServerLogLevel(std::exception_ptr e)
 {
-    try {
-        FindRetrowNested<HttpServerSocketError>(e);
-    } catch (const HttpServerSocketError &) {
-        e = std::current_exception();
+	try {
+		FindRetrowNested<HttpServerSocketError>(e);
+	} catch (const HttpServerSocketError &) {
+		e = std::current_exception();
 
-        /* some socket errors caused by our client are less
-           important */
+		/* some socket errors caused by our client are less
+		   important */
 
-        try {
-            FindRetrowNested<std::system_error>(e);
-        } catch (const std::system_error &se) {
-            if (IsErrno(se, ECONNRESET))
-                return 4;
-        }
+		try {
+			FindRetrowNested<std::system_error>(e);
+		} catch (const std::system_error &se) {
+			if (IsErrno(se, ECONNRESET))
+				return 4;
+		}
 
-        try {
-            FindRetrowNested<SocketProtocolError>(e);
-        } catch (...) {
-            return 4;
-        }
-    }
+		try {
+			FindRetrowNested<SocketProtocolError>(e);
+		} catch (...) {
+			return 4;
+		}
+	}
 
-    return 2;
+	return 2;
 }
 
 /*
@@ -109,99 +109,99 @@ HttpServerLogLevel(std::exception_ptr e)
 
 LbHttpConnection *
 NewLbHttpConnection(LbInstance &instance,
-                    const LbListenerConfig &listener,
-                    const LbGoto &destination,
-                    SslFactory *ssl_factory,
-                    UniqueSocketDescriptor &&fd, SocketAddress address)
+		    const LbListenerConfig &listener,
+		    const LbGoto &destination,
+		    SslFactory *ssl_factory,
+		    UniqueSocketDescriptor &&fd, SocketAddress address)
 {
-    assert(listener.destination.GetProtocol() == LbProtocol::HTTP);
+	assert(listener.destination.GetProtocol() == LbProtocol::HTTP);
 
-    /* determine the local socket address */
-    StaticSocketAddress local_address = fd.GetLocalAddress();
+	/* determine the local socket address */
+	StaticSocketAddress local_address = fd.GetLocalAddress();
 
-    auto fd_type = FdType::FD_TCP;
+	auto fd_type = FdType::FD_TCP;
 
-    SslFilter *ssl_filter = nullptr;
-    SocketFilterPtr filter;
+	SslFilter *ssl_filter = nullptr;
+	SocketFilterPtr filter;
 
-    if (ssl_factory != nullptr) {
-        ssl_filter = ssl_filter_new(*ssl_factory);
-        filter.reset(new ThreadSocketFilter(instance.event_loop,
-                                            thread_pool_get_queue(instance.event_loop),
-                                            &ssl_filter_get_handler(*ssl_filter)));
-    }
+	if (ssl_factory != nullptr) {
+		ssl_filter = ssl_filter_new(*ssl_factory);
+		filter.reset(new ThreadSocketFilter(instance.event_loop,
+						    thread_pool_get_queue(instance.event_loop),
+						    &ssl_filter_get_handler(*ssl_filter)));
+	}
 
-    auto pool = pool_new_linear(instance.root_pool, "http_connection", 2048);
+	auto pool = pool_new_linear(instance.root_pool, "http_connection", 2048);
 
-    auto *connection = NewFromPool<LbHttpConnection>(std::move(pool), instance,
-                                                     listener, destination,
-                                                     address);
-    connection->ssl_filter = ssl_filter;
+	auto *connection = NewFromPool<LbHttpConnection>(std::move(pool), instance,
+							 listener, destination,
+							 address);
+	connection->ssl_filter = ssl_filter;
 
-    instance.http_connections.push_back(*connection);
+	instance.http_connections.push_back(*connection);
 
-    connection->http = http_server_connection_new(&connection->GetPool(),
-                                                  instance.event_loop,
-                                                  std::move(fd), fd_type,
-                                                  std::move(filter),
-                                                  local_address.IsDefined()
-                                                  ? (SocketAddress)local_address
-                                                  : nullptr,
-                                                  address,
-                                                  false,
-                                                  *connection);
-    return connection;
+	connection->http = http_server_connection_new(&connection->GetPool(),
+						      instance.event_loop,
+						      std::move(fd), fd_type,
+						      std::move(filter),
+						      local_address.IsDefined()
+						      ? (SocketAddress)local_address
+						      : nullptr,
+						      address,
+						      false,
+						      *connection);
+	return connection;
 }
 
 void
 LbHttpConnection::Destroy()
 {
-    assert(!instance.http_connections.empty());
+	assert(!instance.http_connections.empty());
 
-    auto &connections = instance.http_connections;
-    connections.erase(connections.iterator_to(*this));
+	auto &connections = instance.http_connections;
+	connections.erase(connections.iterator_to(*this));
 
-    this->~LbHttpConnection();
+	this->~LbHttpConnection();
 }
 
 void
 LbHttpConnection::CloseAndDestroy()
 {
-    assert(listener.destination.GetProtocol() == LbProtocol::HTTP);
-    assert(http != nullptr);
+	assert(listener.destination.GetProtocol() == LbProtocol::HTTP);
+	assert(http != nullptr);
 
-    http_server_connection_close(http);
+	http_server_connection_close(http);
 
-    Destroy();
+	Destroy();
 }
 
 void
 LbHttpConnection::SendError(IncomingHttpRequest &request, std::exception_ptr ep)
 {
-    const char *msg = listener.verbose_response
-        ? p_strdup(request.pool, GetFullMessage(ep).c_str())
-        : "Bad gateway";
+	const char *msg = listener.verbose_response
+		? p_strdup(request.pool, GetFullMessage(ep).c_str())
+		: "Bad gateway";
 
-    request.SendMessage(HTTP_STATUS_BAD_GATEWAY, msg);
+	request.SendMessage(HTTP_STATUS_BAD_GATEWAY, msg);
 }
 
 void
 LbHttpConnection::LogSendError(IncomingHttpRequest &request,
-                               std::exception_ptr ep)
+			       std::exception_ptr ep)
 {
-    logger(2, ep);
-    SendError(request, ep);
+	logger(2, ep);
+	SendError(request, ep);
 }
 
 static void
 SendResponse(IncomingHttpRequest &request,
-             const LbSimpleHttpResponse &response)
+	     const LbSimpleHttpResponse &response)
 {
-    assert(response.IsDefined());
+	assert(response.IsDefined());
 
-    request.SendSimpleResponse(response.status,
-                               response.location.empty() ? nullptr : response.location.c_str(),
-                               response.message.empty() ? nullptr : response.message.c_str());
+	request.SendSimpleResponse(response.status,
+				   response.location.empty() ? nullptr : response.location.c_str(),
+				   response.message.empty() ? nullptr : response.message.c_str());
 }
 
 /*
@@ -211,139 +211,139 @@ SendResponse(IncomingHttpRequest &request,
 
 inline void
 LbHttpConnection::PerRequest::Begin(const IncomingHttpRequest &request,
-                                    std::chrono::steady_clock::time_point now)
+				    std::chrono::steady_clock::time_point now)
 {
-    start_time = now;
-    host = request.headers.Get("host");
-    x_forwarded_for = request.headers.Get("x-forwarded-for");
-    referer = request.headers.Get("referer");
-    user_agent = request.headers.Get("user-agent");
-    canonical_host = nullptr;
-    site_name = nullptr;
-    forwarded_to = nullptr;
+	start_time = now;
+	host = request.headers.Get("host");
+	x_forwarded_for = request.headers.Get("x-forwarded-for");
+	referer = request.headers.Get("referer");
+	user_agent = request.headers.Get("user-agent");
+	canonical_host = nullptr;
+	site_name = nullptr;
+	forwarded_to = nullptr;
 }
 
 void
 LbHttpConnection::RequestHeadersFinished(const IncomingHttpRequest &request) noexcept
 {
-    ++instance.http_request_counter;
+	++instance.http_request_counter;
 
-    per_request.Begin(request, instance.event_loop.SteadyNow());
+	per_request.Begin(request, instance.event_loop.SteadyNow());
 }
 
 void
 LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
-                                    const StopwatchPtr &,
-                                    CancellablePointer &cancel_ptr) noexcept
+				    const StopwatchPtr &,
+				    CancellablePointer &cancel_ptr) noexcept
 {
-    if (!uri_path_verify_quick(request.uri)) {
-        request.body.Clear();
-        request.SendMessage(HTTP_STATUS_BAD_REQUEST, "Malformed request URI");
-        return;
-    }
+	if (!uri_path_verify_quick(request.uri)) {
+		request.body.Clear();
+		request.SendMessage(HTTP_STATUS_BAD_REQUEST, "Malformed request URI");
+		return;
+	}
 
-    if (instance.config.global_http_check &&
-        instance.config.global_http_check->Match(request.uri, per_request.host) &&
-        instance.config.global_http_check->MatchClientAddress(request.remote_address)) {
-        request.body.Clear();
+	if (instance.config.global_http_check &&
+	    instance.config.global_http_check->Match(request.uri, per_request.host) &&
+	    instance.config.global_http_check->MatchClientAddress(request.remote_address)) {
+		request.body.Clear();
 
-        if (instance.config.global_http_check->Check())
-            request.SendMessage(HTTP_STATUS_OK,
-                                instance.config.global_http_check->success_message.c_str());
-        else
-            request.SendSimpleResponse(HTTP_STATUS_NOT_FOUND,
-                                       nullptr, nullptr);
+		if (instance.config.global_http_check->Check())
+			request.SendMessage(HTTP_STATUS_OK,
+					    instance.config.global_http_check->success_message.c_str());
+		else
+			request.SendSimpleResponse(HTTP_STATUS_NOT_FOUND,
+						   nullptr, nullptr);
 
-        return;
-    }
+		return;
+	}
 
-    HandleHttpRequest(initial_destination, request, cancel_ptr);
+	HandleHttpRequest(initial_destination, request, cancel_ptr);
 }
 
 void
 LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
-                                    IncomingHttpRequest &request,
-                                    CancellablePointer &cancel_ptr)
+				    IncomingHttpRequest &request,
+				    CancellablePointer &cancel_ptr)
 {
-    const auto &goto_ = destination.FindRequestLeaf(request);
-    if (goto_.response != nullptr) {
-        request.body.Clear();
-        SendResponse(request, *goto_.response);
-        return;
-    }
+	const auto &goto_ = destination.FindRequestLeaf(request);
+	if (goto_.response != nullptr) {
+		request.body.Clear();
+		SendResponse(request, *goto_.response);
+		return;
+	}
 
-    if (goto_.lua != nullptr) {
-        InvokeLua(*goto_.lua, request, cancel_ptr);
-        return;
-    }
+	if (goto_.lua != nullptr) {
+		InvokeLua(*goto_.lua, request, cancel_ptr);
+		return;
+	}
 
-    if (goto_.translation != nullptr) {
-        AskTranslationServer(*goto_.translation, request, cancel_ptr);
-        return;
-    }
+	if (goto_.translation != nullptr) {
+		AskTranslationServer(*goto_.translation, request, cancel_ptr);
+		return;
+	}
 
-    if (goto_.resolve_connect != nullptr) {
-        ResolveConnect(goto_.resolve_connect, request, cancel_ptr);
-        return;
-    }
+	if (goto_.resolve_connect != nullptr) {
+		ResolveConnect(goto_.resolve_connect, request, cancel_ptr);
+		return;
+	}
 
-    assert(goto_.cluster != nullptr);
-    ForwardHttpRequest(*goto_.cluster, request, cancel_ptr);
+	assert(goto_.cluster != nullptr);
+	ForwardHttpRequest(*goto_.cluster, request, cancel_ptr);
 }
 
 void
 LbHttpConnection::ForwardHttpRequest(LbCluster &cluster,
-                                     IncomingHttpRequest &request,
-                                     CancellablePointer &cancel_ptr)
+				     IncomingHttpRequest &request,
+				     CancellablePointer &cancel_ptr)
 {
-    ::ForwardHttpRequest(*this, request, cluster, cancel_ptr);
+	::ForwardHttpRequest(*this, request, cluster, cancel_ptr);
 }
 
 void
 LbHttpConnection::LogHttpRequest(IncomingHttpRequest &request,
-                                 http_status_t status, int64_t length,
-                                 uint64_t bytes_received, uint64_t bytes_sent) noexcept
+				 http_status_t status, int64_t length,
+				 uint64_t bytes_received, uint64_t bytes_sent) noexcept
 {
-    instance.http_traffic_received_counter += bytes_received;
-    instance.http_traffic_sent_counter += bytes_sent;
-    if (instance.access_log != nullptr)
-        instance.access_log->Log(instance.event_loop.SystemNow(),
-                                 request, per_request.site_name,
-                                 per_request.forwarded_to,
-                                 per_request.host,
-                                 per_request.x_forwarded_for,
-                                 per_request.referer,
-                                 per_request.user_agent,
-                                 status, length,
-                                 bytes_received, bytes_sent,
-                                 per_request.GetDuration(instance.event_loop.SteadyNow()));
+	instance.http_traffic_received_counter += bytes_received;
+	instance.http_traffic_sent_counter += bytes_sent;
+	if (instance.access_log != nullptr)
+		instance.access_log->Log(instance.event_loop.SystemNow(),
+					 request, per_request.site_name,
+					 per_request.forwarded_to,
+					 per_request.host,
+					 per_request.x_forwarded_for,
+					 per_request.referer,
+					 per_request.user_agent,
+					 status, length,
+					 bytes_received, bytes_sent,
+					 per_request.GetDuration(instance.event_loop.SteadyNow()));
 }
 
 void
 LbHttpConnection::HttpConnectionError(std::exception_ptr e) noexcept
 {
-    logger(HttpServerLogLevel(e), e);
+	logger(HttpServerLogLevel(e), e);
 
-    assert(http != nullptr);
-    http = nullptr;
+	assert(http != nullptr);
+	http = nullptr;
 
-    Destroy();
+	Destroy();
 }
 
 void
 LbHttpConnection::HttpConnectionClosed() noexcept
 {
-    assert(http != nullptr);
-    http = nullptr;
+	assert(http != nullptr);
+	http = nullptr;
 
-    Destroy();
+	Destroy();
 }
 
 std::string
 LbHttpConnection::MakeLoggerDomain() const noexcept
 {
-    return "listener='" + listener.name
-        + "' cluster='" + listener.destination.GetName()
-        + "' client='" + client_address
-        + "'";
+	return "listener='" + listener.name
+		+ "' cluster='" + listener.destination.GetName()
+		+ "' client='" + client_address
+		+ "'";
 }

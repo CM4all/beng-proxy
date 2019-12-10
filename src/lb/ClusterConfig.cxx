@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,32 +37,32 @@
 void
 LbClusterConfig::FillAddressList()
 {
-    assert(address_list.IsEmpty());
+	assert(address_list.IsEmpty());
 
-    address_list.SetStickyMode(sticky_mode);
+	address_list.SetStickyMode(sticky_mode);
 
-    for (auto &member : members) {
-        address_allocations.emplace_front(member.node->address);
-        auto &address = address_allocations.front();
-        if (member.port != 0)
-            address.SetPort(member.port);
+	for (auto &member : members) {
+		address_allocations.emplace_front(member.node->address);
+		auto &address = address_allocations.front();
+		if (member.port != 0)
+			address.SetPort(member.port);
 
-        if (!address_list.AddPointer(address))
-            throw std::runtime_error("Too many members");
-    }
+		if (!address_list.AddPointer(address))
+			throw std::runtime_error("Too many members");
+	}
 }
 
 int
 LbClusterConfig::FindJVMRoute(const char *jvm_route) const
 {
-    assert(jvm_route != nullptr);
+	assert(jvm_route != nullptr);
 
-    for (unsigned i = 0, n = members.size(); i < n; ++i) {
-        const auto &node = *members[i].node;
+	for (unsigned i = 0, n = members.size(); i < n; ++i) {
+		const auto &node = *members[i].node;
 
-        if (!node.jvm_route.empty() && node.jvm_route == jvm_route)
-            return i;
-    }
+		if (!node.jvm_route.empty() && node.jvm_route == jvm_route)
+			return i;
+	}
 
-    return -1;
+	return -1;
 }

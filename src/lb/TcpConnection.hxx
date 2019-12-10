@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_LB_CONNECTION_H
-#define BENG_PROXY_LB_CONNECTION_H
+#pragma once
 
 #include "fs/FilteredSocket.hxx"
 #include "StickyHash.hxx"
@@ -193,5 +192,3 @@ private:
 	void OnSocketConnectTimeout() noexcept override;
 	void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 };
-
-#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,80 +40,80 @@
 #include "HttpResponseHandler.hxx"
 
 class LbLuaResponseHandler final : public HttpResponseHandler {
-    LbHttpConnection &connection;
+	LbHttpConnection &connection;
 
-    IncomingHttpRequest &request;
+	IncomingHttpRequest &request;
 
-    bool finished = false;
+	bool finished = false;
 
 public:
-    LbLuaResponseHandler(LbHttpConnection &_connection,
-                         IncomingHttpRequest &_request)
-        :connection(_connection), request(_request) {}
+	LbLuaResponseHandler(LbHttpConnection &_connection,
+			     IncomingHttpRequest &_request)
+		:connection(_connection), request(_request) {}
 
-    bool IsFinished() const {
-        return finished;
-    }
+	bool IsFinished() const {
+		return finished;
+	}
 
-    /* virtual methods from class HttpResponseHandler */
-    void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        UnusedIstreamPtr body) noexcept override;
-    void OnHttpError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(http_status_t status, StringMap &&headers,
+			    UnusedIstreamPtr body) noexcept override;
+	void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 void
 LbLuaResponseHandler::OnHttpResponse(http_status_t status,
-                                     StringMap &&_headers,
-                                     UnusedIstreamPtr response_body) noexcept
+				     StringMap &&_headers,
+				     UnusedIstreamPtr response_body) noexcept
 {
-    finished = true;
+	finished = true;
 
-    HttpHeaders headers(std::move(_headers));
+	HttpHeaders headers(std::move(_headers));
 
-    if (request.method == HTTP_METHOD_HEAD)
-        /* pass Content-Length, even though there is no response body
-           (RFC 2616 14.13) */
-        headers.MoveToBuffer("content-length");
+	if (request.method == HTTP_METHOD_HEAD)
+		/* pass Content-Length, even though there is no response body
+		   (RFC 2616 14.13) */
+		headers.MoveToBuffer("content-length");
 
-    request.SendResponse(status, std::move(headers), std::move(response_body));
+	request.SendResponse(status, std::move(headers), std::move(response_body));
 }
 
 void
 LbLuaResponseHandler::OnHttpError(std::exception_ptr ep) noexcept
 {
-    finished = true;
+	finished = true;
 
-    connection.LogSendError(request, ep);
+	connection.LogSendError(request, ep);
 }
 
 void
 LbHttpConnection::InvokeLua(LbLuaHandler &handler,
-                            IncomingHttpRequest &request,
-                            CancellablePointer &cancel_ptr)
+			    IncomingHttpRequest &request,
+			    CancellablePointer &cancel_ptr)
 {
-    LbLuaResponseHandler response_handler(*this, request);
-    const LbGoto *g;
+	LbLuaResponseHandler response_handler(*this, request);
+	const LbGoto *g;
 
-    try {
-        g = handler.HandleRequest(request, response_handler);
-    } catch (...) {
-        if (response_handler.IsFinished())
-            logger(1, "Lua error: ", std::current_exception());
-        else
-            response_handler.InvokeError(std::current_exception());
-        return;
-    }
+	try {
+		g = handler.HandleRequest(request, response_handler);
+	} catch (...) {
+		if (response_handler.IsFinished())
+			logger(1, "Lua error: ", std::current_exception());
+		else
+			response_handler.InvokeError(std::current_exception());
+		return;
+	}
 
-    if (response_handler.IsFinished())
-        return;
+	if (response_handler.IsFinished())
+		return;
 
-    if (g == nullptr) {
-        request.body.Clear();
-        request.SendMessage(HTTP_STATUS_BAD_GATEWAY,
-                            "No response from Lua handler");
-        return;
-    }
+	if (g == nullptr) {
+		request.body.Clear();
+		request.SendMessage(HTTP_STATUS_BAD_GATEWAY,
+				    "No response from Lua handler");
+		return;
+	}
 
-    HandleHttpRequest(*g, request, cancel_ptr);
-    return;
+	HandleHttpRequest(*g, request, cancel_ptr);
+	return;
 }

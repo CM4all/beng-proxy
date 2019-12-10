@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,17 +37,17 @@
 #include <assert.h>
 
 LbMonitorRef::LbMonitorRef(LbMonitorStock &_stock,
-                           LbMonitorController &_controller) noexcept
-    :stock(_stock), controller(&_controller)
+			   LbMonitorController &_controller) noexcept
+	:stock(_stock), controller(&_controller)
 {
-    controller->Ref();
+	controller->Ref();
 }
 
 void
 LbMonitorRef::Release() noexcept
 {
-    assert(controller != nullptr);
+	assert(controller != nullptr);
 
-    if (controller->Unref())
-        stock.Remove(*controller);
+	if (controller->Unref())
+		stock.Remove(*controller);
 }

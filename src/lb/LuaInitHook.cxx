@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -44,58 +44,58 @@ typedef Lua::Class<LbLuaInitHook *, lua_pools_class> LuaPools;
 static LbLuaInitHook &
 CheckLuaPools(lua_State *L, int idx)
 {
-    return *LuaPools::Cast(L, idx);
+	return *LuaPools::Cast(L, idx);
 }
 
 int
 LbLuaInitHook::GetPool(lua_State *L, const char *name)
 {
-    if (goto_map == nullptr)
-        return 0;
+	if (goto_map == nullptr)
+		return 0;
 
-    auto g = goto_map->GetInstance(name);
-    if (!g.IsDefined())
-        return 0;
+	auto g = goto_map->GetInstance(name);
+	if (!g.IsDefined())
+		return 0;
 
-    NewLuaGoto(L, std::move(g));
-    return 1;
+	NewLuaGoto(L, std::move(g));
+	return 1;
 }
 
 static int
 LuaPoolsIndex(lua_State *L)
 {
-    if (lua_gettop(L) != 2)
-        return luaL_error(L, "Invalid parameters");
+	if (lua_gettop(L) != 2)
+		return luaL_error(L, "Invalid parameters");
 
-    auto &hook = CheckLuaPools(L, 1);
+	auto &hook = CheckLuaPools(L, 1);
 
-    if (!lua_isstring(L, 2))
-        luaL_argerror(L, 2, "string expected");
+	if (!lua_isstring(L, 2))
+		luaL_argerror(L, 2, "string expected");
 
-    const char *name = lua_tostring(L, 2);
-    return hook.GetPool(L, name);
+	const char *name = lua_tostring(L, 2);
+	return hook.GetPool(L, name);
 }
 
 void
 LbLuaInitHook::PreInit(lua_State *L)
 {
-    const Lua::ScopeCheckStack check_stack(L);
+	const Lua::ScopeCheckStack check_stack(L);
 
-    RegisterLuaGoto(L);
+	RegisterLuaGoto(L);
 
-    LuaPools::Register(L);
-    Lua::SetTable(L, -3, "__index", LuaPoolsIndex);
-    lua_pop(L, 1);
+	LuaPools::Register(L);
+	Lua::SetTable(L, -3, "__index", LuaPoolsIndex);
+	lua_pop(L, 1);
 
-    Lua::SetGlobal(L, "pools", Lua::Lambda([this, L](){
-                LuaPools::New(L, this);
-            }));
+	Lua::SetGlobal(L, "pools", Lua::Lambda([this, L](){
+		LuaPools::New(L, this);
+	}));
 }
 
 void
 LbLuaInitHook::PostInit(lua_State *L)
 {
-    const Lua::ScopeCheckStack check_stack(L);
+	const Lua::ScopeCheckStack check_stack(L);
 
-    Lua::SetGlobal(L, "pools", nullptr);
+	Lua::SetGlobal(L, "pools", nullptr);
 }

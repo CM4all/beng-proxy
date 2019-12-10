@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,49 +39,49 @@
 void
 LbInstance::InitAllListeners()
 {
-    for (const auto &i : config.listeners) {
-        listeners.emplace_front(*this, i);
-        auto &listener = listeners.front();
-        listener.Setup();
-    }
+	for (const auto &i : config.listeners) {
+		listeners.emplace_front(*this, i);
+		auto &listener = listeners.front();
+		listener.Setup();
+	}
 }
 
 void
 LbInstance::DeinitAllListeners() noexcept
 {
-    listeners.clear();
+	listeners.clear();
 }
 
 unsigned
 LbInstance::FlushSSLSessionCache(long tm) noexcept
 {
-    unsigned n = 0;
-    for (auto &listener : listeners)
-        n += listener.FlushSSLSessionCache(tm);
+	unsigned n = 0;
+	for (auto &listener : listeners)
+		n += listener.FlushSSLSessionCache(tm);
 
-    for (auto &db : cert_dbs)
-        n += db.second.FlushSessionCache(tm);
+	for (auto &db : cert_dbs)
+		n += db.second.FlushSessionCache(tm);
 
-    return n;
+	return n;
 }
 
 void
 LbInstance::InitAllControls()
 {
-    for (const auto &i : config.controls) {
-        controls.emplace_front(*this, i);
-    }
+	for (const auto &i : config.controls) {
+		controls.emplace_front(*this, i);
+	}
 }
 
 void
 LbInstance::DeinitAllControls() noexcept
 {
-    controls.clear();
+	controls.clear();
 }
 
 void
 LbInstance::EnableAllControls() noexcept
 {
-    for (auto &control : controls)
-        control.Enable();
+	for (auto &control : controls)
+		control.Enable();
 }
