@@ -43,6 +43,7 @@
 #include "fcgi/Error.hxx"
 #include "was/Error.hxx"
 #include "widget/Error.hxx"
+#include "ssl/Error.hxx"
 #include "HttpResponseHandler.hxx"
 #include "http_server/http_server.hxx"
 #include "http/IncomingRequest.hxx"
@@ -112,6 +113,10 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
 
 	try {
 		FindRetrowNested<HttpClientError>(ep);
+
+		/* a SslError is usually a failure to connect to the
+		   next server */
+		FindRetrowNested<SslError>(ep);
 	} catch (...) {
 		return {HTTP_STATUS_BAD_GATEWAY, "Upstream server failed"};
 	}
