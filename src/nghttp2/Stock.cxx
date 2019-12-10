@@ -321,10 +321,11 @@ Stock::Item::OnNgHttp2ConnectionClosed() noexcept
 void
 Stock::Item::OnIdleTimer() noexcept
 {
-	assert(connection);
 	assert(get_requests.empty());
 
-	if (connection->IsIdle())
+	/* FadeAll() can schedule this call when there is no
+	   connection, e.g. if alpn_failure is set */
+	if (!connection || connection->IsIdle())
 		stock.DeleteItem(this);
 	else
 		idle_timer.Schedule(std::chrono::minutes(1));
