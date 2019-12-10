@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * TCP client connection pooling.
  */
 
-#ifndef BENG_PROXY_TCP_STOCK_HXX
-#define BENG_PROXY_TCP_STOCK_HXX
+#pragma once
 
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
@@ -55,41 +54,41 @@ class StopwatchPtr;
  * @return the new TCP connections stock (this function cannot fail)
  */
 class TcpStock final : StockClass {
-    StockMap stock;
+	StockMap stock;
 
 public:
-    /**
-     * @param limit the maximum number of connections per host
-     */
-    TcpStock(EventLoop &event_loop, unsigned limit)
-        :stock(event_loop, *this, limit, 16) {}
+	/**
+	 * @param limit the maximum number of connections per host
+	 */
+	TcpStock(EventLoop &event_loop, unsigned limit)
+		:stock(event_loop, *this, limit, 16) {}
 
-    EventLoop &GetEventLoop() const noexcept {
-        return stock.GetEventLoop();
-    }
+	EventLoop &GetEventLoop() const noexcept {
+		return stock.GetEventLoop();
+	}
 
-    void AddStats(StockStats &data) const {
-        stock.AddStats(data);
-    }
+	void AddStats(StockStats &data) const {
+		stock.AddStats(data);
+	}
 
-    /**
-     * @param name the MapStock name; it is auto-generated from the
-     * #address if nullptr is passed here
-     * @param timeout the connect timeout in seconds
-     */
-    void Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
-             const char *name,
-             bool ip_transparent,
-             SocketAddress bind_address,
-             SocketAddress address,
-             Event::Duration timeout,
-             StockGetHandler &handler,
-             CancellablePointer &cancel_ptr);
+	/**
+	 * @param name the MapStock name; it is auto-generated from the
+	 * #address if nullptr is passed here
+	 * @param timeout the connect timeout in seconds
+	 */
+	void Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
+		 const char *name,
+		 bool ip_transparent,
+		 SocketAddress bind_address,
+		 SocketAddress address,
+		 Event::Duration timeout,
+		 StockGetHandler &handler,
+		 CancellablePointer &cancel_ptr);
 
 private:
-    /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, StockRequest request,
-                CancellablePointer &cancel_ptr) override;
+	/* virtual methods from class StockClass */
+	void Create(CreateStockItem c, StockRequest request,
+		    CancellablePointer &cancel_ptr) override;
 };
 
 gcc_pure
@@ -106,5 +105,3 @@ tcp_stock_item_get_address(const StockItem &item);
 gcc_pure
 int
 tcp_stock_item_get_domain(const StockItem &item);
-
-#endif
