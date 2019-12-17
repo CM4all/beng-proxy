@@ -1,5 +1,6 @@
 cm4all-beng-proxy (16.0.8) unstable; urgency=low
 
+  * merge release 15.30
   * bp: convert SSL/TLS errors to "502 Bad Gateway"
 
  --   
@@ -70,6 +71,13 @@ cm4all-beng-proxy (16.0.1) unstable; urgency=low
   * debian: use debhelper 12
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 27 Sep 2019 14:09:41 +0200
+
+cm4all-beng-proxy (15.30) unstable; urgency=low
+
+  * certdb: fix use-after-free bug after database disconnect
+  * certdb: schedule database reconnect after reconnect failure
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 17 Dec 2019 19:58:06 +0100
 
 cm4all-beng-proxy (15.29) unstable; urgency=low
 
