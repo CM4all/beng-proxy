@@ -32,6 +32,8 @@
 
 #include "GotoConfig.hxx"
 
+#ifdef HAVE_AVAHI
+
 bool
 LbBranchConfig::HasZeroConf() const
 {
@@ -44,6 +46,8 @@ LbBranchConfig::HasZeroConf() const
 
 	return false;
 }
+
+#endif
 
 LbProtocol
 LbGotoConfig::GetProtocol() const
@@ -74,9 +78,13 @@ LbGotoConfig::GetName() const
 		: branch->name.c_str();
 }
 
+#ifdef HAVE_AVAHI
+
 bool
 LbGotoConfig::HasZeroConf() const
 {
 	return (cluster != nullptr && cluster->HasZeroConf()) ||
 		(branch != nullptr && branch->HasZeroConf());
 }
+
+#endif

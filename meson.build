@@ -330,7 +330,13 @@ ssl_dep = declare_dependency(
   ],
 )
 
+libcommon_require_avahi = get_option('zeroconf')
 subdir('libcommon/src/avahi')
+if avahi_dep.found()
+  avahi_dep = declare_dependency(compile_args: '-DHAVE_AVAHI',
+                                 dependencies: avahi_dep)
+endif
+
 subdir('libcommon/src/pg')
 subdir('libcommon/src/curl')
 subdir('libcommon/src/odbus')

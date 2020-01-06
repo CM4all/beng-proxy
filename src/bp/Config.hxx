@@ -57,7 +57,9 @@ struct BpConfig {
     struct Listener : SocketConfig {
         std::string tag;
 
+#ifdef HAVE_AVAHI
         std::string zeroconf_service;
+#endif
 
         bool auth_alt_host = false;
 

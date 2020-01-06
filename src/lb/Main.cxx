@@ -90,7 +90,9 @@ LbInstance::ShutdownCallback() noexcept
 	deinit_signals(this);
 	thread_pool_stop();
 
+#ifdef HAVE_AVAHI
 	avahi_client.Close();
+#endif
 
 	compress_event.Cancel();
 

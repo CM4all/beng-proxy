@@ -103,11 +103,13 @@ class LbRequest final
 	StockItem *stock_item = nullptr;
 	FailurePtr failure;
 
+#ifdef HAVE_AVAHI
 	/**
 	 * The number of remaining connection attempts.  We give up when
 	 * we get an error and this attribute is already zero.
 	 */
 	unsigned retries;
+#endif
 
 	unsigned new_cookie = 0;
 
@@ -125,8 +127,10 @@ public:
 		 body(pool, std::move(request.body)) {
 		_cancel_ptr = *this;
 
+#ifdef HAVE_AVAHI
 		if (cluster_config.HasZeroConf())
 			retries = CalculateRetries(cluster.GetZeroconfCount());
+#endif
 	}
 
 	EventLoop &GetEventLoop() const noexcept {
@@ -140,6 +144,7 @@ public:
 	void Start() noexcept;
 
 private:
+#ifdef HAVE_AVAHI
 	/* code copied from generic_balancer.hxx */
 	static constexpr unsigned CalculateRetries(size_t size) noexcept {
 		if (size <= 1)
@@ -151,6 +156,7 @@ private:
 		else
 			return 3;
 	}
+#endif
 
 	void Destroy() noexcept {
 		assert(stock_item == nullptr);
@@ -403,6 +409,7 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
 
 	stock_item = &item;
 
+#ifdef HAVE_AVAHI
 	if (cluster_config.HasZeroConf()) {
 		failure = current_member->GetFailureRef();
 
@@ -410,6 +417,7 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
 		   updates */
 		failure->UnsetConnect();
 	} else
+#endif
 		failure = GetFailureManager().Make(fs_stock_item_get_address(*stock_item));
 
 	const char *peer_subject = connection.ssl_filter != nullptr
@@ -445,6 +453,7 @@ LbRequest::OnStockItemError(std::exception_ptr ep) noexcept
 
 	connection.logger(2, "Connect error: ", ep);
 
+#ifdef HAVE_AVAHI
 	if (cluster_config.HasZeroConf()) {
 		/* without the tcp_balancer, we have to roll our own failure
 		   updates and retries */
@@ -457,6 +466,7 @@ LbRequest::OnStockItemError(std::exception_ptr ep) noexcept
 			return;
 		}
 	}
+#endif
 
 	body.Clear();
 
@@ -522,6 +532,7 @@ LbRequest::Start() noexcept
 {
 	const auto bind_address = MakeBindAddress();
 
+#ifdef HAVE_AVAHI
 	if (cluster_config.HasZeroConf()) {
 		auto *member = cluster.Pick(GetEventLoop().SteadyNow(),
 					    GetStickyHash());
@@ -547,6 +558,7 @@ LbRequest::Start() noexcept
 
 		return;
 	}
+#endif
 
 	balancer.Get(pool, nullptr,
 		     cluster_config.transparent_source,

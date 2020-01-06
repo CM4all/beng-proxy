@@ -44,10 +44,16 @@
 LbGotoMap::LbGotoMap(const LbConfig &_config,
 		     FailureManager &_failure_manager,
 		     LbMonitorManager &_monitors,
-		     MyAvahiClient &_avahi_client)
+#ifdef HAVE_AVAHI
+		     MyAvahiClient &_avahi_client,
+#endif
+		     EventLoop &_event_loop) noexcept
 	:root_config(_config), failure_manager(_failure_manager),
 	 monitors(_monitors),
+#ifdef HAVE_AVAHI
 	 avahi_client(_avahi_client),
+#endif
+	 event_loop(_event_loop),
 	 lua_init_hook(this) {}
 
 LbGotoMap::~LbGotoMap() noexcept
@@ -117,8 +123,11 @@ LbGotoMap::GetInstance(const LbClusterConfig &config)
 	return clusters.emplace(std::piecewise_construct,
 				std::forward_as_tuple(&config),
 				std::forward_as_tuple(config, failure_manager,
-						      monitor_stock,
-						      avahi_client))
+						      monitor_stock
+#ifdef HAVE_AVAHI
+						      , avahi_client
+#endif
+						      ))
 		.first->second;
 }
 
@@ -145,7 +154,12 @@ LbGotoMap::GetInstance(const LbTranslationHandlerConfig &config)
 {
 	return translation_handlers.emplace(std::piecewise_construct,
 					    std::forward_as_tuple(&config),
-					    std::forward_as_tuple(avahi_client.GetEventLoop(),
+					    std::forward_as_tuple(
+#ifdef HAVE_AVAHI
+								  avahi_client.GetEventLoop(),
+#else
+								  event_loop,
+#endif
 								  *this, config))
 		.first->second;
 }

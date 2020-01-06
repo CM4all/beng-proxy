@@ -140,7 +140,9 @@ struct BpInstance final : PInstance, ControlHandler {
 	 */
 	std::unique_ptr<LocalControl> local_control_server;
 
+#ifdef HAVE_AVAHI
 	MyAvahiClient avahi_client;
+#endif
 
 	/* stock */
 	FailureManager failure_manager;

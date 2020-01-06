@@ -61,10 +61,12 @@ struct LbListenerConfig : SocketConfig {
         listen = 64;
     }
 
+#ifdef HAVE_AVAHI
     gcc_pure
     bool HasZeroConf() const {
         return destination.HasZeroConf();
     }
+#endif
 };
 
 #endif

@@ -191,9 +191,11 @@ struct LbConfig {
 
     gcc_pure
     bool HasZeroConf() const {
+#ifdef HAVE_AVAHI
         for (const auto &i : listeners)
             if (i.HasZeroConf())
                 return true;
+#endif
 
         return false;
     }

@@ -82,11 +82,15 @@ LbCluster::Member::GetLogName() const noexcept
 
 LbCluster::LbCluster(const LbClusterConfig &_config,
 		     FailureManager &_failure_manager,
-		     LbMonitorStock *_monitors,
-		     MyAvahiClient &avahi_client)
+		     LbMonitorStock *_monitors
+#ifdef HAVE_AVAHI
+		     , MyAvahiClient &avahi_client
+#endif
+		     )
 	:config(_config), failure_manager(_failure_manager), monitors(_monitors),
 	 logger("cluster " + config.name)
 {
+#ifdef HAVE_AVAHI
 	if (config.HasZeroConf())
 		explorer.reset(new AvahiServiceExplorer(avahi_client, *this,
 							AVAHI_IF_UNSPEC,
@@ -95,6 +99,7 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 							config.zeroconf_domain.empty()
 							? nullptr
 							: config.zeroconf_domain.c_str()));
+#endif
 
 	if (monitors != nullptr)
 		/* create monitors for "static" members */
@@ -110,6 +115,8 @@ LbCluster::~LbCluster() noexcept
 
 	members.clear_and_dispose(Member::UnrefDisposer());
 }
+
+#ifdef HAVE_AVAHI
 
 LbCluster::MemberMap::reference
 LbCluster::PickNextZeroconf() noexcept
@@ -298,3 +305,5 @@ LbCluster::OnAvahiRemoveObject(const std::string &key) noexcept
 	members.erase_and_dispose(i, Member::UnrefDisposer());
 	dirty = true;
 }
+
+#endif

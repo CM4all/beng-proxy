@@ -175,13 +175,17 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 		break;
 
 	case ControlCommand::DISABLE_ZEROCONF:
+#ifdef HAVE_AVAHI
 		if (is_privileged)
 			avahi_client.HideServices();
+#endif
 		break;
 
 	case ControlCommand::ENABLE_ZEROCONF:
+#ifdef HAVE_AVAHI
 		if (is_privileged)
 			avahi_client.ShowServices();
+#endif
 		break;
 
 	case ControlCommand::FLUSH_NFS_CACHE:

@@ -832,11 +832,15 @@ executable('RunNameCache',
     pg_dep,
   ])
 
-executable('RunAvahiExplorer',
-  'RunAvahiExplorer.cxx',
-  include_directories: inc,
-  dependencies: [
-    avahi_dep,
-    net_dep,
-    io_dep,
-  ])
+if avahi_dep.found()
+  executable(
+    'RunAvahiExplorer',
+    'RunAvahiExplorer.cxx',
+    include_directories: inc,
+    dependencies: [
+      avahi_dep,
+      net_dep,
+      io_dep,
+    ],
+  )
+endif

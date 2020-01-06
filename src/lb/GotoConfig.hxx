@@ -122,7 +122,9 @@ struct LbGotoConfig {
 	gcc_pure
 	const char *GetName() const;
 
+#ifdef HAVE_AVAHI
 	bool HasZeroConf() const;
+#endif
 };
 
 struct LbConditionConfig {
@@ -187,9 +189,11 @@ struct LbGotoIfConfig {
 	LbGotoIfConfig(LbConditionConfig &&c, LbGotoConfig d)
 		:condition(std::move(c)), destination(d) {}
 
+#ifdef HAVE_AVAHI
 	bool HasZeroConf() const {
 		return destination.HasZeroConf();
 	}
+#endif
 };
 
 /**
@@ -219,7 +223,9 @@ struct LbBranchConfig {
 		return fallback.GetProtocol();
 	}
 
+#ifdef HAVE_AVAHI
 	bool HasZeroConf() const;
+#endif
 };
 
 /**

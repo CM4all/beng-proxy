@@ -402,6 +402,7 @@ LbTcpConnection::ConnectOutbound()
 {
 	const auto &cluster_config = cluster.GetConfig();
 
+#ifdef HAVE_AVAHI
 	if (cluster_config.HasZeroConf()) {
 		const auto *member = cluster.Pick(GetEventLoop().SteadyNow(),
 						  session_sticky);
@@ -422,6 +423,7 @@ LbTcpConnection::ConnectOutbound()
 				  cancel_connect);
 		return;
 	}
+#endif
 
 	client_balancer_connect(GetEventLoop(), pool, *instance.balancer,
 				cluster_config.transparent_source,

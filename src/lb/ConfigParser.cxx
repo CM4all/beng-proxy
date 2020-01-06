@@ -522,6 +522,8 @@ validate_protocol_sticky(LbProtocol protocol, StickyMode sticky)
     return false;
 }
 
+#ifdef HAVE_AVAHI
+
 gcc_const
 static bool
 ValidateZeroconfSticky(StickyMode sticky) noexcept
@@ -542,6 +544,8 @@ ValidateZeroconfSticky(StickyMode sticky) noexcept
 
     gcc_unreachable();
 }
+
+#endif
 
 gcc_pure
 static StickyMode
@@ -577,8 +581,12 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
     } else if (strcmp(word, "sticky") == 0) {
         config.sticky_mode = ParseStickyMode(line.ExpectValueAndEnd());
     } else if (strcmp(word, "sticky_cache") == 0) {
+#ifdef HAVE_AVAHI
         config.sticky_cache = line.NextBool();
         line.ExpectEnd();
+#else
+	throw LineParser::Error("Zeroconf support is disabled at compile time");
+#endif
     } else if (strcmp(word, "session_cookie") == 0) {
         config.session_cookie = line.ExpectValueAndEnd();
     } else if (strcmp(word, "monitor") == 0) {
@@ -589,9 +597,11 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
         if (config.monitor == nullptr)
             throw LineParser::Error("No such monitor");
     } else if (strcmp(word, "member") == 0) {
+#ifdef HAVE_AVAHI
         if (!config.zeroconf_service.empty() ||
             !config.zeroconf_domain.empty())
             throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
+#endif
 
         char *name = line.ExpectValue();
 
@@ -629,6 +639,7 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
                 parent.AutoCreateMember(*member, name);
         }
     } else if (strcmp(word, "zeroconf_service") == 0) {
+#ifdef HAVE_AVAHI
         if (!config.members.empty())
             throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
 
@@ -637,7 +648,11 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 
         config.zeroconf_service = MakeZeroconfServiceType(line.ExpectValueAndEnd(),
                                                           "_tcp");
+#else
+	throw LineParser::Error("Zeroconf support is disabled at compile time");
+#endif
     } else if (strcmp(word, "zeroconf_domain") == 0) {
+#ifdef HAVE_AVAHI
         if (!config.members.empty())
             throw LineParser::Error("Cannot configure both hard-coded members and Zeroconf");
 
@@ -645,6 +660,9 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
             throw LineParser::Error("Duplicate zeroconf_domain");
 
         config.zeroconf_domain = line.ExpectValueAndEnd();
+#else
+	throw LineParser::Error("Zeroconf support is disabled at compile time");
+#endif
     } else if (strcmp(word, "protocol") == 0) {
         const char *protocol = line.ExpectValueAndEnd();
         if (strcmp(protocol, "http") == 0)
@@ -702,9 +720,11 @@ LbConfigParser::Cluster::Finish()
            pointer to it */
         config.monitor = nullptr;
 
+#ifdef HAVE_AVAHI
     if (!config.zeroconf_domain.empty() &&
         config.zeroconf_service.empty())
         throw LineParser::Error("zeroconf_service missing");
+#endif
 
     if (config.members.empty() && !config.HasZeroConf())
         throw LineParser::Error("Pool has no members");
@@ -712,9 +732,11 @@ LbConfigParser::Cluster::Finish()
     if (!validate_protocol_sticky(config.protocol, config.sticky_mode))
         throw LineParser::Error("The selected sticky mode not available for this protocol");
 
+#ifdef HAVE_AVAHI
     if (config.HasZeroConf() &&
         !ValidateZeroconfSticky(config.sticky_mode))
         throw LineParser::Error("The selected sticky mode not compatible with Zeroconf");
+#endif
 
     if (config.members.size() == 1)
         /* with only one member, a sticky setting doesn't make

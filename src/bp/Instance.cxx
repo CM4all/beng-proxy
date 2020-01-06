@@ -75,7 +75,9 @@ BpInstance::BpInstance() noexcept
 	 child_process_registry(event_loop),
 	 spawn_worker_event(event_loop,
 			    BIND_THIS_METHOD(RespawnWorkerCallback)),
+#ifdef HAVE_AVAHI
 	 avahi_client(event_loop, "beng-proxy"),
+#endif
 	 session_save_timer(event_loop, BIND_THIS_METHOD(SaveSessions))
 {
 }

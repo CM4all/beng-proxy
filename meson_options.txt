@@ -2,3 +2,4 @@ option('documentation', type: 'feature',
   description: 'Build documentation')
 
 option('nfs', type: 'feature', description: 'userspace NFS client')
+option('zeroconf', type: 'feature', description: 'Zeroconf support (using Avahi)')

@@ -47,6 +47,7 @@ struct LbLuaHandlerConfig;
 struct TranslationInvalidateRequest;
 class FailureManager;
 class MyAvahiClient;
+class EventLoop;
 class LbCluster;
 class LbBranch;
 class LbTranslationHandler;
@@ -57,7 +58,10 @@ class LbGotoMap final {
 	const LbConfig &root_config;
 	FailureManager &failure_manager;
 	LbMonitorManager &monitors;
+#ifdef HAVE_AVAHI
 	MyAvahiClient &avahi_client;
+#endif
+	EventLoop &event_loop;
 
 	LbLuaInitHook lua_init_hook;
 
@@ -72,7 +76,10 @@ public:
 	LbGotoMap(const LbConfig &_config,
 		  FailureManager &_failure_manager,
 		  LbMonitorManager &_monitors,
-		  MyAvahiClient &_avahi_client);
+#ifdef HAVE_AVAHI
+		  MyAvahiClient &_avahi_client,
+#endif
+		  EventLoop &_event_loop) noexcept;
 
 	~LbGotoMap() noexcept;
 

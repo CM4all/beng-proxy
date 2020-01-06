@@ -93,11 +93,13 @@ struct LbClusterConfig {
 
 	bool mangle_via = false;
 
+#ifdef HAVE_AVAHI
 	/**
 	 * Enable the #StickyCache for Zeroconf?  By default, consistent
 	 * hashing using #HashRing is used.
 	 */
 	bool sticky_cache = false;
+#endif
 
 	LbSimpleHttpResponse fallback;
 
@@ -109,7 +111,9 @@ struct LbClusterConfig {
 
 	std::vector<LbMemberConfig> members;
 
+#ifdef HAVE_AVAHI
 	std::string zeroconf_service, zeroconf_domain;
+#endif
 
 	std::forward_list<AllocatedSocketAddress> address_allocations;
 
@@ -140,6 +144,10 @@ struct LbClusterConfig {
 	int FindJVMRoute(const char *jvm_route) const;
 
 	bool HasZeroConf() const {
+#ifdef HAVE_AVAHI
 		return !zeroconf_service.empty();
+#else
+		return false;
+#endif
 	}
 };

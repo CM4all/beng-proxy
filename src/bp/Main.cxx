@@ -141,7 +141,9 @@ BpInstance::ShutdownCallback() noexcept
 
 	pool_commit();
 
+#ifdef HAVE_AVAHI
 	avahi_client.Close();
+#endif
 
 	compress_timer.Cancel();
 
@@ -220,11 +222,12 @@ BpInstance::AddListener(const BpConfig::Listener &c)
 				c.ssl ? &c.ssl_config : nullptr);
 	auto &listener = listeners.front();
 
+	listener.Listen(c.Create(SOCK_STREAM));
+
+#ifdef HAVE_AVAHI
 	const char *const interface = c.interface.empty()
 		? nullptr
 		: c.interface.c_str();
-
-	listener.Listen(c.Create(SOCK_STREAM));
 
 	if (!c.zeroconf_service.empty()) {
 		/* ask the kernel for the effective address via getsockname(),
@@ -235,6 +238,7 @@ BpInstance::AddListener(const BpConfig::Listener &c)
 			avahi_client.AddService(c.zeroconf_service.c_str(),
 						interface, local_address);
 	}
+#endif
 }
 
 void

@@ -57,17 +57,23 @@ class MyAvahiClient;
 class StickyCache;
 class AvahiServiceExplorer;
 
-class LbCluster final : AvahiServiceExplorerListener {
+class LbCluster final
+#ifdef HAVE_AVAHI
+	: AvahiServiceExplorerListener
+#endif
+{
 	const LbClusterConfig &config;
 	FailureManager &failure_manager;
 	LbMonitorStock *const monitors;
 
 	const Logger logger;
 
+#ifdef HAVE_AVAHI
 	/**
 	 * This #AvahiServiceExplorer locates Zeroconf nodes.
 	 */
 	std::unique_ptr<AvahiServiceExplorer> explorer;
+#endif
 
 	class StickyRing;
 
@@ -252,18 +258,24 @@ private:
 
 	bool dirty = false;
 
+#ifdef HAVE_AVAHI
 	unsigned last_pick = 0;
+#endif
 
 public:
 	LbCluster(const LbClusterConfig &_config, FailureManager &_failure_manager,
-		  LbMonitorStock *_monitors,
-		  MyAvahiClient &avahi_client);
+		  LbMonitorStock *_monitors
+#ifdef HAVE_AVAHI
+		  , MyAvahiClient &avahi_client
+#endif
+		  );
 	~LbCluster() noexcept;
 
 	const LbClusterConfig &GetConfig() const noexcept {
 		return config;
 	}
 
+#ifdef HAVE_AVAHI
 	gcc_pure
 	size_t GetZeroconfCount() noexcept {
 		if (dirty) {
@@ -306,4 +318,5 @@ private:
 	void OnAvahiNewObject(const std::string &key,
 			      SocketAddress address) noexcept override;
 	void OnAvahiRemoveObject(const std::string &key) noexcept override;
+#endif
 };
