@@ -184,7 +184,7 @@ make_parent_directory_recursive(char *path)
 static bool
 make_parent_directory(const char *path)
 {
-    char buffer[strlen(path)];
+    char buffer[strlen(path) + 1];
     strcpy(buffer, path);
 
     return make_parent_directory_recursive(buffer);
