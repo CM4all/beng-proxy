@@ -1,2 +1,4 @@
 option('documentation', type: 'feature',
   description: 'Build documentation')
+
+option('nfs', type: 'feature', description: 'userspace NFS client')

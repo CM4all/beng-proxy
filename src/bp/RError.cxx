@@ -53,7 +53,9 @@
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
 
+#ifdef HAVE_LIBNFS
 #include <nfsc/libnfs-raw-nfs.h>
+#endif
 
 static MessageHttpResponse
 Dup(struct pool &pool, http_status_t status, const char *msg)
@@ -135,6 +137,7 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
 		return {HTTP_STATUS_BAD_GATEWAY, "Cache server failed"};
 	}
 
+#ifdef HAVE_LIBNFS
 	try {
 		FindRetrowNested<NfsClientError>(ep);
 	} catch (const NfsClientError &e) {
@@ -145,6 +148,7 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
 				"The requested file does not exist."};
 		}
 	}
+#endif
 
 	return {HTTP_STATUS_INTERNAL_SERVER_ERROR, "Internal server error"};
 }

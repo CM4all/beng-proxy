@@ -71,7 +71,10 @@ struct WidgetContext;
  */
 class Request final : public HttpResponseHandler, DelegateHandler,
     TranslateHandler,
-    NfsCacheHandler, SuffixRegistryHandler, Cancellable, PoolLeakDetector {
+#ifdef HAVE_LIBNFS
+    NfsCacheHandler,
+#endif
+    SuffixRegistryHandler, Cancellable, PoolLeakDetector {
 
 public:
     struct pool &pool;
@@ -633,10 +636,12 @@ private:
     void OnDelegateSuccess(UniqueFileDescriptor fd) override;
     void OnDelegateError(std::exception_ptr ep) override;
 
+#ifdef HAVE_LIBNFS
     /* virtual methods from class NfsCacheHandler */
     void OnNfsCacheResponse(NfsCacheHandle &handle,
                             const struct stat &st) noexcept override;
     void OnNfsCacheError(std::exception_ptr ep) noexcept override;
+#endif
 
     /* virtual methods from class SuffixRegistryHandler */
     void OnSuffixRegistrySuccess(const char *content_type,

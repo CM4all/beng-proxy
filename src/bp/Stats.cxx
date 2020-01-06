@@ -50,7 +50,7 @@
 BengProxy::ControlStats
 BpInstance::GetStats() const noexcept
 {
-	BengProxy::ControlStats stats;
+	BengProxy::ControlStats stats{};
 
 	StockStats tcp_stock_stats = {
 		.busy = 0,
@@ -86,9 +86,11 @@ BpInstance::GetStats() const noexcept
 	stats.http_cache_brutto_size = ToBE64(http_cache_stats.brutto_size);
 	stats.filter_cache_brutto_size = ToBE64(fcache_stats.brutto_size);
 
+#ifdef HAVE_LIBNFS
 	const auto nfs_cache_stats = nfs_cache_get_stats(*nfs_cache);
 	stats.nfs_cache_size = ToBE64(nfs_cache_stats.netto_size);
 	stats.nfs_cache_brutto_size = ToBE64(nfs_cache_stats.brutto_size);
+#endif
 
 	const auto io_buffers_stats = fb_pool_get().GetStats();
 	stats.io_buffers_size = ToBE64(io_buffers_stats.netto_size);

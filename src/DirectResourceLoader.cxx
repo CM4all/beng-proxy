@@ -133,7 +133,9 @@ try {
 	switch (address.type) {
 		const FileAddress *file;
 		const CgiAddress *cgi;
+#ifdef HAVE_LIBNFS
 		const NfsAddress *nfs;
+#endif
 		SocketFilterFactory *filter_factory;
 
 	case ResourceAddress::Type::NONE:
@@ -164,6 +166,7 @@ try {
 		return;
 
 	case ResourceAddress::Type::NFS:
+#ifdef HAVE_LIBNFS
 		/* NFS files cannot receive a request body, close it */
 		body.Clear();
 
@@ -174,6 +177,9 @@ try {
 			    nfs->path, nfs->content_type,
 			    handler, cancel_ptr);
 		return;
+#else
+		throw std::runtime_error("NFS support is disabled");
+#endif
 
 	case ResourceAddress::Type::PIPE:
 		cgi = &address.GetCgi();

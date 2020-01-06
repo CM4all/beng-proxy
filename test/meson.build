@@ -290,20 +290,24 @@ executable('run_client_balancer',
     raddress_dep,
   ])
 
-executable('run_nfs_client',
-  'run_nfs_client.cxx',
-  '../src/PInstance.cxx',
-  '../src/direct.cxx',
-  '../src/pipe_stock.cxx',
-  '../src/PipeLease.cxx',
-  '../src/nfs/Istream.cxx',
-  include_directories: inc,
-  dependencies: [
-    nfs_client_dep,
-    istream_dep,
-    stock_dep,
-    io_dep,
-  ])
+if nfs_client_dep.found()
+  executable(
+    'run_nfs_client',
+    'run_nfs_client.cxx',
+    '../src/PInstance.cxx',
+    '../src/direct.cxx',
+    '../src/pipe_stock.cxx',
+    '../src/PipeLease.cxx',
+    '../src/nfs/Istream.cxx',
+    include_directories: inc,
+    dependencies: [
+      nfs_client_dep,
+      istream_dep,
+      stock_dep,
+      io_dep,
+    ],
+  )
+endif
 
 test('t_cache', executable('t_cache',
   't_cache.cxx',

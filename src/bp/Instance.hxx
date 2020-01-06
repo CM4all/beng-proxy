@@ -168,8 +168,10 @@ struct BpInstance final : PInstance, ControlHandler {
 
 	StockMap *delegate_stock = nullptr;
 
+#ifdef HAVE_LIBNFS
 	NfsStock *nfs_stock = nullptr;
 	NfsCache *nfs_cache = nullptr;
+#endif
 
 	PipeStock *pipe_stock = nullptr;
 

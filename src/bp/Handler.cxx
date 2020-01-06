@@ -129,9 +129,11 @@ Request::HandleAddress(const ResourceAddress &address)
 			HandleFileAddress(address.GetFile());
 		break;
 
+#ifdef HAVE_LIBNFS
 	case ResourceAddress::Type::NFS:
 		HandleNfsAddress();
 		break;
+#endif
 
 	default:
 		HandleProxyAddress();

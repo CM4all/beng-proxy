@@ -113,7 +113,6 @@ threads = dependency('threads')
 libsodium = dependency('libsodium', version: '>= 1.0.16')
 libjsoncpp = dependency('jsoncpp')
 libyamlcpp = dependency('yaml-cpp')
-libnfs = dependency('libnfs')
 zlib = dependency('zlib')
 libcrypt = compiler.find_library('crypt')
 
@@ -655,22 +654,31 @@ fcgi_client_dep = declare_dependency(
   ],
 )
 
-nfs_client = static_library('nfs_client',
-  'src/nfs/Stock.cxx',
-  'src/nfs/Client.cxx',
-  'src/nfs/Error.cxx',
-  'src/nfs/Cache.cxx',
-  'src/nfs/Glue.cxx',
-  include_directories: inc,
-  dependencies: [
-    libnfs,
-  ])
-nfs_client_dep = declare_dependency(
-  link_with: nfs_client,
-  dependencies: [
-    event_dep,
-  ],
-)
+libnfs = dependency('libnfs', required: get_option('nfs'))
+if libnfs.found()
+  add_global_arguments('-DHAVE_LIBNFS', language: 'cpp')
+
+  nfs_client = static_library(
+    'nfs_client',
+    'src/nfs/Stock.cxx',
+    'src/nfs/Client.cxx',
+    'src/nfs/Error.cxx',
+    'src/nfs/Cache.cxx',
+    'src/nfs/Glue.cxx',
+    include_directories: inc,
+    dependencies: [
+      libnfs,
+    ],
+  )
+  nfs_client_dep = declare_dependency(
+    link_with: nfs_client,
+    dependencies: [
+      event_dep,
+    ],
+  )
+else
+  nfs_client_dep = dependency('', required: false)
+endif
 
 delegate_client = static_library('delegate_client',
   'src/delegate/Client.cxx',
@@ -761,8 +769,19 @@ control_server_dep = declare_dependency(
   ],
 )
 
+sources = [
+]
+
+if nfs_client_dep.found()
+  sources += [
+    'src/nfs/RequestHandler.cxx',
+    'src/nfs/Istream.cxx',
+  ]
+endif
+
 executable(
   'cm4all-beng-proxy',
+  sources,
   'src/delegate/RequestHandler.cxx',
   'src/capabilities.cxx',
   'src/address_string.cxx',
@@ -786,8 +805,6 @@ executable(
   'src/bp/drop.cxx',
   'src/relocate_uri.cxx',
   'src/fcache.cxx',
-  'src/nfs/RequestHandler.cxx',
-  'src/nfs/Istream.cxx',
   'src/bp/FileHeaders.cxx',
   'src/bp/FileHandler.cxx',
   'src/bp/EmulateModAuthEasy.cxx',
@@ -863,7 +880,6 @@ executable(
   include_directories: inc,
   dependencies: [
     threads,
-    libnfs,
     avahi_dep,
     pool_dep,
     net_dep,

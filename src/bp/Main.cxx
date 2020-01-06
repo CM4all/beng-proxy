@@ -187,8 +187,10 @@ BpInstance::ReloadEventCallback(int) noexcept
 	if (filter_cache != nullptr)
 		filter_cache_flush(*filter_cache);
 
+#ifdef HAVE_LIBNFS
 	if (nfs_cache != nullptr)
 		nfs_cache_flush(*nfs_cache);
+#endif
 
 	if (nghttp2_stock != nullptr)
 		nghttp2_stock->FadeAll();
@@ -412,11 +414,13 @@ try {
 	instance.delegate_stock = delegate_stock_new(instance.event_loop,
 						     *instance.spawn_service);
 
+#ifdef HAVE_LIBNFS
 	instance.nfs_stock = nfs_stock_new(instance.event_loop);
 	instance.nfs_cache = nfs_cache_new(instance.root_pool,
 					   instance.config.nfs_cache_size,
 					   *instance.nfs_stock,
 					   instance.event_loop);
+#endif
 
 	instance.direct_resource_loader =
 		new DirectResourceLoader(instance.event_loop,
@@ -427,8 +431,11 @@ try {
 					 instance.lhttp_stock,
 					 instance.fcgi_stock,
 					 instance.was_stock,
-					 instance.delegate_stock,
-					 instance.nfs_cache);
+					 instance.delegate_stock
+#ifdef HAVE_LIBNFS
+					 , instance.nfs_cache
+#endif
+					 );
 
 	if (instance.config.http_cache_size > 0) {
 		instance.http_cache = http_cache_new(instance.root_pool,

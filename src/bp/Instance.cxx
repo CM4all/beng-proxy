@@ -142,6 +142,7 @@ BpInstance::FreeStocksAndCaches() noexcept
 		delegate_stock = nullptr;
 	}
 
+#ifdef HAVE_LIBNFS
 	if (nfs_cache != nullptr) {
 		nfs_cache_free(nfs_cache);
 		nfs_cache = nullptr;
@@ -151,6 +152,7 @@ BpInstance::FreeStocksAndCaches() noexcept
 		nfs_stock_free(nfs_stock);
 		nfs_stock = nullptr;
 	}
+#endif
 
 	delete std::exchange(pipe_stock, nullptr);
 }
@@ -169,8 +171,10 @@ BpInstance::ForkCow(bool inherit) noexcept
 	if (filter_cache != nullptr)
 		filter_cache_fork_cow(*filter_cache, inherit);
 
+#ifdef HAVE_LIBNFS
 	if (nfs_cache != nullptr)
 		nfs_cache_fork_cow(*nfs_cache, inherit);
+#endif
 }
 
 void

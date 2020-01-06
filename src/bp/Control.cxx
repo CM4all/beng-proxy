@@ -185,8 +185,10 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 		break;
 
 	case ControlCommand::FLUSH_NFS_CACHE:
+#ifdef HAVE_LIBNFS
 		if (nfs_cache != nullptr)
 			nfs_cache_flush(*nfs_cache);
+#endif
 		break;
 
 	case ControlCommand::FLUSH_FILTER_CACHE:

@@ -59,7 +59,9 @@ class DirectResourceLoader final : public ResourceLoader {
 	FcgiStock *fcgi_stock;
 	StockMap *was_stock;
 	StockMap *delegate_stock;
+#ifdef HAVE_LIBNFS
 	NfsCache *nfs_cache;
+#endif
 
 public:
 	DirectResourceLoader(EventLoop &_event_loop,
@@ -69,8 +71,11 @@ public:
 			     SpawnService &_spawn_service,
 			     LhttpStock *_lhttp_stock,
 			     FcgiStock *_fcgi_stock, StockMap *_was_stock,
-			     StockMap *_delegate_stock,
-			     NfsCache *_nfs_cache) noexcept
+			     StockMap *_delegate_stock
+#ifdef HAVE_LIBNFS
+			     , NfsCache *_nfs_cache
+#endif
+			     ) noexcept
 		:event_loop(_event_loop),
 		 tcp_balancer(_tcp_balancer),
 		 fs_balancer(_fs_balancer),
@@ -78,8 +83,10 @@ public:
 		 spawn_service(_spawn_service),
 		 lhttp_stock(_lhttp_stock),
 		 fcgi_stock(_fcgi_stock), was_stock(_was_stock),
-		 delegate_stock(_delegate_stock),
-		 nfs_cache(_nfs_cache)
+		 delegate_stock(_delegate_stock)
+#ifdef HAVE_LIBNFS
+		, nfs_cache(_nfs_cache)
+#endif
 	{
 	}
 
