@@ -19,7 +19,6 @@ debug = get_option('b_ndebug') != 'true'
 
 common_flags = [
   '-D_REENTRANT', '-D_GNU_SOURCE',
-  '-DSPLICE',
   '-DPACKAGE="' + meson.project_name() + '"',
   '-DVERSION="' + meson.project_version() + '"',
   '-DCACHE_LOG',

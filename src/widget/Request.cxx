@@ -471,10 +471,8 @@ WidgetRequest::FilterResponse(http_status_t status,
     if (filter.reveal_user)
         forward_reveal_user(alloc, headers, GetSessionIfStateful().get());
 
-#ifdef SPLICE
     if (body)
         body = NewAutoPipeIstream(&pool, std::move(body), global_pipe_stock);
-#endif
 
     ctx.filter_resource_loader
         .SendRequest(pool,

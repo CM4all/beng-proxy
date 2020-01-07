@@ -118,11 +118,9 @@ Request::HandleProxyAddress() noexcept
 	    !CheckCsrfToken())
 		return;
 
-#ifdef SPLICE
 	if (forward.body)
 		forward.body = NewAutoPipeIstream(&pool, std::move(forward.body),
 						  instance.pipe_stock);
-#endif
 
 	for (const auto &i : tr.request_headers)
 		forward.headers.SecureSet(pool, i.key, i.value);

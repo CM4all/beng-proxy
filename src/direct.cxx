@@ -41,7 +41,6 @@
 #include <fcntl.h>
 
 #ifdef __linux
-#ifdef SPLICE
 
 FdTypeMask ISTREAM_TO_PIPE = FdType::FD_FILE;
 FdTypeMask ISTREAM_TO_CHARDEV = 0;
@@ -123,7 +122,6 @@ direct_global_init()
     close(a[1]);
 }
 
-#endif /* #ifdefSPLICE */
 #endif  /* #ifdef __linux */
 
 ssize_t

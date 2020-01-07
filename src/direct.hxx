@@ -47,8 +47,6 @@
 
 #ifdef __linux
 
-#ifdef SPLICE
-
 enum {
     ISTREAM_TO_FILE = FdType::FD_PIPE,
     ISTREAM_TO_SOCKET = FdType::FD_FILE | FdType::FD_PIPE,
@@ -64,18 +62,6 @@ extern "C" {
 
 void
 direct_global_init();
-
-#else /* !SPLICE */
-
-enum {
-    ISTREAM_TO_FILE = 0,
-    ISTREAM_TO_PIPE = 0,
-    ISTREAM_TO_SOCKET = FdType::FD_FILE,
-    ISTREAM_TO_TCP = FdType::FD_FILE,
-    ISTREAM_TO_CHARDEV = 0,
-}
-
-#endif /* !SPLICE */
 
 gcc_const
 static inline FdTypeMask
@@ -117,10 +103,6 @@ istream_direct_mask_to(gcc_unused FdType type)
 {
     return 0;
 }
-
-#endif /* !__linux */
-
-#if !defined(__linux) || !defined(SPLICE)
 
 static inline void
 direct_global_init() {}

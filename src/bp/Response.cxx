@@ -591,10 +591,8 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
         WriteCsrfToken(headers);
     }
 
-#ifdef SPLICE
     if (body)
         body = NewAutoPipeIstream(&pool, std::move(body), instance.pipe_stock);
-#endif
 
 #ifndef NDEBUG
     response_sent = true;
@@ -623,10 +621,8 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
     if (filter.reveal_user)
         forward_reveal_user(pool, headers2, GetRealmSession().get());
 
-#ifdef SPLICE
     if (body)
         body = NewAutoPipeIstream(&pool, std::move(body), instance.pipe_stock);
-#endif
 
     instance.buffered_filter_resource_loader
         ->SendRequest(pool, stopwatch,

@@ -138,11 +138,9 @@ ProxyWidget::OnHttpResponse(http_status_t status, StringMap &&_headers,
            (RFC 2616 14.13) */
         headers2.CopyToBuffer(_headers, "content-length");
 
-#ifdef SPLICE
     if (body)
         body = NewAutoPipeIstream(&request.pool, std::move(body),
                                   global_pipe_stock);
-#endif
 
     /* disable the following transformations, because they are meant
        for the template, not for this widget */
