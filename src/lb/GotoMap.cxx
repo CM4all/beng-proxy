@@ -154,12 +154,7 @@ LbGotoMap::GetInstance(const LbTranslationHandlerConfig &config)
 {
 	return translation_handlers.emplace(std::piecewise_construct,
 					    std::forward_as_tuple(&config),
-					    std::forward_as_tuple(
-#ifdef HAVE_AVAHI
-								  avahi_client.GetEventLoop(),
-#else
-								  event_loop,
-#endif
+					    std::forward_as_tuple(event_loop,
 								  *this, config))
 		.first->second;
 }
