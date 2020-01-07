@@ -305,6 +305,7 @@ shm_dep = declare_dependency(link_with: shm,
                              dependencies: [io_dep])
 
 subdir('libcommon/src/ssl')
+subdir('libcommon/src/pg')
 
 ssl2 = static_library(
   'ssl2',
@@ -322,6 +323,9 @@ ssl2 = static_library(
   'src/ssl/Filter.cxx',
   'src/ssl/Init.cxx',
   include_directories: inc,
+  dependencies: [
+    pg_dep,
+  ],
 )
 ssl_dep = declare_dependency(
   link_with: ssl2,
@@ -337,7 +341,6 @@ if avahi_dep.found()
                                  dependencies: avahi_dep)
 endif
 
-subdir('libcommon/src/pg')
 subdir('libcommon/src/curl')
 
 libcommon_enable_libsystemd = get_option('systemd')
