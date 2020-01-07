@@ -656,8 +656,6 @@ fcgi_client_dep = declare_dependency(
 
 libnfs = dependency('libnfs', required: get_option('nfs'))
 if libnfs.found()
-  add_global_arguments('-DHAVE_LIBNFS', language: 'cpp')
-
   nfs_client = static_library(
     'nfs_client',
     'src/nfs/Stock.cxx',
@@ -671,6 +669,7 @@ if libnfs.found()
     ],
   )
   nfs_client_dep = declare_dependency(
+    compile_args: '-DHAVE_LIBNFS',
     link_with: nfs_client,
     dependencies: [
       event_dep,
