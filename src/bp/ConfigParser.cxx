@@ -32,13 +32,16 @@
 
 #include "Config.hxx"
 #include "access_log/ConfigParser.hxx"
-#include "avahi/Check.hxx"
 #include "spawn/ConfigParser.hxx"
 #include "io/FileLineParser.hxx"
 #include "io/ConfigParser.hxx"
 #include "net/Parser.hxx"
 #include "util/StringView.hxx"
 #include "util/StringParser.hxx"
+
+#ifdef HAVE_AVAHI
+#include "avahi/Check.hxx"
+#endif
 
 #include <string.h>
 

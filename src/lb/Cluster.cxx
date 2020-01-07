@@ -34,12 +34,15 @@
 #include "ClusterConfig.hxx"
 #include "MonitorStock.hxx"
 #include "MonitorRef.hxx"
-#include "avahi/Explorer.hxx"
 #include "StickyCache.hxx"
 #include "net/FailureManager.hxx"
 #include "net/ToString.hxx"
 #include "util/HashRing.hxx"
 #include "util/ConstBuffer.hxx"
+
+#ifdef HAVE_AVAHI
+#include "avahi/Explorer.hxx"
+#endif
 
 #include <sodium/crypto_generichash.h>
 

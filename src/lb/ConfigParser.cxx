@@ -34,7 +34,6 @@
 #include "Check.hxx"
 #include "AllocatorPtr.hxx"
 #include "access_log/ConfigParser.hxx"
-#include "avahi/Check.hxx"
 #include "io/FileLineParser.hxx"
 #include "io/ConfigParser.hxx"
 #include "system/Error.hxx"
@@ -44,6 +43,10 @@
 #include "util/CharUtil.hxx"
 #include "util/ScopeExit.hxx"
 #include "util/RuntimeError.hxx"
+
+#ifdef HAVE_AVAHI
+#include "avahi/Check.hxx"
+#endif
 
 #include <assert.h>
 #include <stdio.h>

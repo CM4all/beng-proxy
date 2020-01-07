@@ -40,9 +40,12 @@
 #include "event/TimerEvent.hxx"
 #include "spawn/Registry.hxx"
 #include "control/Handler.hxx"
-#include "avahi/Client.hxx"
 #include "net/FailureManager.hxx"
 #include "util/Background.hxx"
+
+#ifdef HAVE_AVAHI
+#include "avahi/Client.hxx"
+#endif
 
 #include <boost/intrusive/list.hpp>
 

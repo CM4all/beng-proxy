@@ -39,7 +39,10 @@
 #include "Config.hxx"
 #include "LuaInitHook.hxx"
 #include "MonitorManager.hxx"
+
+#ifdef HAVE_AVAHI
 #include "avahi/Client.hxx"
+#endif
 
 LbGotoMap::LbGotoMap(const LbConfig &_config,
 		     FailureManager &_failure_manager,

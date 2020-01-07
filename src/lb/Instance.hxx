@@ -38,9 +38,12 @@
 #include "event/TimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
-#include "avahi/Client.hxx"
 #include "net/FailureManager.hxx"
 #include "io/Logger.hxx"
+
+#ifdef HAVE_AVAHI
+#include "avahi/Client.hxx"
+#endif
 
 #include <forward_list>
 #include <memory>

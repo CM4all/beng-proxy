@@ -33,11 +33,14 @@
 #pragma once
 
 #include "StickyHash.hxx"
-#include "avahi/ExplorerListener.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/FailureRef.hxx"
 #include "io/Logger.hxx"
 #include "util/LeakDetector.hxx"
+
+#ifdef HAVE_AVAHI
+#include "avahi/ExplorerListener.hxx"
+#endif
 
 #include <boost/intrusive/set.hpp>
 
