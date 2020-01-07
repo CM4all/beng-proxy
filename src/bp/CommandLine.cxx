@@ -41,7 +41,9 @@
 #include "util/StringView.hxx"
 #include "util/IterableSplitString.hxx"
 
+#ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -404,10 +406,12 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
             if (config.num_workers > 1024)
                 arg_error(argv[0], "too many workers configured");
 
+#ifdef HAVE_LIBSYSTEMD
             if (config.num_workers == 1 && sd_booted())
                 /* we don't need a watchdog process if systemd watches
                    on us */
                 config.num_workers = 0;
+#endif
 
             break;
 

@@ -2,4 +2,5 @@ option('documentation', type: 'feature',
   description: 'Build documentation')
 
 option('nfs', type: 'feature', description: 'userspace NFS client')
+option('systemd', type: 'boolean', value: true, description: 'systemd support (using libsystemd)')
 option('zeroconf', type: 'feature', description: 'Zeroconf support (using Avahi)')

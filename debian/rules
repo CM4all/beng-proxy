@@ -5,6 +5,7 @@ MESON_OPTIONS = \
 	--includedir=include/cm4all/libbeng-proxy-3 \
 	-Ddocumentation=enabled \
 	-Dnfs=enabled \
+	-Dsystemd=true \
 	-Dzeroconf=enabled \
 	--werror
 

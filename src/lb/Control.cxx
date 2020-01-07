@@ -41,7 +41,9 @@
 #include "util/Exception.hxx"
 #include "util/WritableBuffer.hxx"
 
+#ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-journal.h>
+#endif
 
 #include <string.h>
 #include <stdlib.h>
@@ -61,13 +63,17 @@ LbControl::InvalidateTranslationCache(ConstBuffer<void> payload,
     if (payload.empty()) {
         /* flush the translation cache if the payload is empty */
 
+#ifdef HAVE_LIBSYSTEMD
         char address_buffer[256];
         sd_journal_send("MESSAGE=control TCACHE_INVALIDATE *",
                         "REMOTE_ADDR=%s",
                         ToString(address_buffer, sizeof(address_buffer),
                                  address, "?"),
                         "PRIORITY=%i", LOG_DEBUG,
-                        nullptr);
+			nullptr);
+#else
+	(void)address;
+#endif
 
         instance.FlushTranslationCaches();
         return;
@@ -86,6 +92,7 @@ LbControl::InvalidateTranslationCache(ConstBuffer<void> payload,
         return;
     }
 
+#ifdef HAVE_LIBSYSTEMD
     char address_buffer[256];
     sd_journal_send("MESSAGE=control TCACHE_INVALIDATE %s", request.ToString().c_str(),
                     "REMOTE_ADDR=%s",
@@ -93,6 +100,7 @@ LbControl::InvalidateTranslationCache(ConstBuffer<void> payload,
                              address, "?"),
                     "PRIORITY=%i", LOG_DEBUG,
                     nullptr);
+#endif
 
     instance.InvalidateTranslationCaches(request);
 }

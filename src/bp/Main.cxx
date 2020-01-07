@@ -78,15 +78,20 @@
 #include "spawn/Glue.hxx"
 #include "spawn/Client.hxx"
 #include "address_list.hxx"
-#include "odbus/Init.hxx"
-#include "odbus/Connection.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/FailureManager.hxx"
 #include "io/Logger.hxx"
 #include "util/PrintException.hxx"
 
+#if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
+#include "odbus/Init.hxx"
+#include "odbus/Connection.hxx"
+#endif
+
+#ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
+#endif
 
 #include <assert.h>
 #include <string.h>
@@ -259,9 +264,11 @@ try {
 		debug_mode = true;
 #endif
 
+#if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
 	const ODBus::ScopeInit dbus_init;
 	dbus_connection_set_exit_on_disconnect(ODBus::Connection::GetSystem(),
 					       false);
+#endif
 
 	const ScopeFbPoolInit fb_pool_init;
 
@@ -502,8 +509,10 @@ try {
 		instance.InitWorker();
 	}
 
+#ifdef HAVE_LIBSYSTEMD
 	/* tell systemd we're ready */
 	sd_notify(0, "READY=1");
+#endif
 
 	/* main loop */
 

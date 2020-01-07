@@ -339,7 +339,11 @@ endif
 
 subdir('libcommon/src/pg')
 subdir('libcommon/src/curl')
-subdir('libcommon/src/odbus')
+
+libcommon_enable_libsystemd = get_option('systemd')
+if libcommon_enable_libsystemd or avahi_dep.found()
+  subdir('libcommon/src/odbus')
+endif
 
 subdir('src/istream')
 
@@ -986,7 +990,6 @@ executable(
     libpcre,
     libsodium,
     avahi_dep,
-    odbus_dep,
     pool_dep,
     io_dep,
     socket_dep,

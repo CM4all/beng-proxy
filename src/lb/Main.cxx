@@ -46,14 +46,20 @@
 #include "thread_pool.hxx"
 #include "fb_pool.hxx"
 #include "capabilities.hxx"
-#include "odbus/Init.hxx"
-#include "odbus/Connection.hxx"
 #include "net/FailureManager.hxx"
 #include "system/Isolate.hxx"
 #include "system/SetupProcess.hxx"
 #include "util/PrintException.hxx"
 
+#if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
+#include "odbus/Init.hxx"
+#include "odbus/Connection.hxx"
+#endif
+
+#ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
+#endif
+
 #include <postgresql/libpq-fe.h>
 
 #include <assert.h>
@@ -178,9 +184,11 @@ try {
 
 	const ScopeSslGlobalInit ssl_init;
 
+#if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
 	const ODBus::ScopeInit dbus_init;
 	dbus_connection_set_exit_on_disconnect(ODBus::Connection::GetSystem(),
 					       false);
+#endif
 
 	/* prevent libpq from initializing libssl & libcrypto again */
 	PQinitOpenSSL(0, 0);
@@ -240,8 +248,10 @@ try {
 
 	instance.InitWorker();
 
+#ifdef HAVE_LIBSYSTEMD
 	/* tell systemd we're ready */
 	sd_notify(0, "READY=1");
+#endif
 
 	instance.event_loop.Dispatch();
 
