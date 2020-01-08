@@ -242,6 +242,7 @@ try {
 	}
 
 	case ResourceAddress::Type::WAS:
+#ifdef HAVE_LIBWAS
 		cgi = &address.GetCgi();
 		was_request(pool, *was_stock, parent_stopwatch,
 			    site_name,
@@ -257,6 +258,9 @@ try {
 			    cgi->params.ToArray(pool),
 			    handler, cancel_ptr);
 		return;
+#else
+		throw std::runtime_error("WAS support is disabled");
+#endif
 
 	case ResourceAddress::Type::HTTP:
 		if (address.GetHttp().ssl) {

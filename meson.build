@@ -115,7 +115,7 @@ libyamlcpp = dependency('yaml-cpp')
 zlib = dependency('zlib')
 libcrypt = compiler.find_library('crypt')
 
-libwas = dependency('libcm4all-was-protocol', version: '>= 1.0')
+libwas = dependency('libcm4all-was-protocol', version: '>= 1.0', required: get_option('was'))
 
 inc = include_directories('src', 'include', 'libcommon/src')
 
@@ -413,53 +413,64 @@ raddress_dep = declare_dependency(
   ],
 )
 
-was_common = static_library('was_common',
-  'src/was/Control.cxx',
-  'src/was/Output.cxx',
-  'src/was/Input.cxx',
-  include_directories: inc,
-  dependencies: [
-    libwas,
-  ],
-)
-was_common_dep = declare_dependency(
-  link_with: was_common,
-  dependencies: [
-    istream_dep,
-    event_net_dep,
-    event_dep,
-    net_dep,
-    putil_dep,
-    http_dep,
-  ],
-)
+if libwas.found()
+  was_common = static_library(
+    'was_common',
+    'src/was/Control.cxx',
+    'src/was/Output.cxx',
+    'src/was/Input.cxx',
+    include_directories: inc,
+    dependencies: [
+      libwas,
+    ],
+  )
 
-was_client = static_library('was_client',
-  'src/was/Client.cxx',
-  'src/was/Stock.cxx',
-  'src/was/Launch.cxx',
-  'src/was/Glue.cxx',
-  include_directories: inc,
-  dependencies: [
-    libwas,
-  ])
-was_client_dep = declare_dependency(
-  link_with: was_client,
-  dependencies: [
-    spawn_dep,
-    raddress_dep,
-    was_common_dep,
-    stopwatch_dep,
-  ],
-)
+  was_common_dep = declare_dependency(
+    link_with: was_common,
+    dependencies: [
+      istream_dep,
+      event_net_dep,
+      event_dep,
+      net_dep,
+      putil_dep,
+      http_dep,
+    ],
+  )
 
-was_server = static_library('was_server',
-  'src/was/Server.cxx',
-  include_directories: inc,
-  dependencies: [
-    libwas,
-    was_common_dep,
-  ])
+  was_client = static_library(
+    'was_client',
+    'src/was/Client.cxx',
+    'src/was/Stock.cxx',
+    'src/was/Launch.cxx',
+    'src/was/Glue.cxx',
+    include_directories: inc,
+    dependencies: [
+      libwas,
+    ],
+  )
+  was_client_dep = declare_dependency(
+    compile_args: '-DHAVE_LIBWAS',
+    link_with: was_client,
+    dependencies: [
+      spawn_dep,
+      raddress_dep,
+      was_common_dep,
+      stopwatch_dep,
+    ],
+  )
+
+  was_server = static_library(
+    'was_server',
+    'src/was/Server.cxx',
+    include_directories: inc,
+    dependencies: [
+      libwas,
+      was_common_dep,
+    ],
+  )
+else
+  was_client_dep = dependency('', required: false)
+endif
 
 http_util = static_library('http_util',
   'src/http/Tokenizer.cxx',

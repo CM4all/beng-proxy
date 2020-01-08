@@ -415,11 +415,13 @@ try {
 					     *instance.spawn_service,
 					     child_log_socket, child_log_options);
 
+#ifdef HAVE_LIBWAS
 	instance.was_stock = was_stock_new(instance.config.was_stock_limit,
 					   instance.config.was_stock_max_idle,
 					   instance.event_loop,
 					   *instance.spawn_service,
 					   child_log_socket, child_log_options);
+#endif
 
 	instance.delegate_stock = delegate_stock_new(instance.event_loop,
 						     *instance.spawn_service);
@@ -440,7 +442,9 @@ try {
 					 *instance.spawn_service,
 					 instance.lhttp_stock,
 					 instance.fcgi_stock,
+#ifdef HAVE_LIBWAS
 					 instance.was_stock,
+#endif
 					 instance.delegate_stock
 #ifdef HAVE_LIBNFS
 					 , instance.nfs_cache

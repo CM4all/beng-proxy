@@ -169,7 +169,9 @@ struct BpInstance final : PInstance, ControlHandler {
 	LhttpStock *lhttp_stock = nullptr;
 	FcgiStock *fcgi_stock = nullptr;
 
+#ifdef HAVE_LIBWAS
 	StockMap *was_stock = nullptr;
+#endif
 
 	StockMap *delegate_stock = nullptr;
 

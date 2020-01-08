@@ -57,7 +57,9 @@ class DirectResourceLoader final : public ResourceLoader {
 	SpawnService &spawn_service;
 	LhttpStock *lhttp_stock;
 	FcgiStock *fcgi_stock;
+#ifdef HAVE_LIBWAS
 	StockMap *was_stock;
+#endif
 	StockMap *delegate_stock;
 #ifdef HAVE_LIBNFS
 	NfsCache *nfs_cache;
@@ -70,7 +72,10 @@ public:
 			     NgHttp2::Stock &_nghttp2_stock,
 			     SpawnService &_spawn_service,
 			     LhttpStock *_lhttp_stock,
-			     FcgiStock *_fcgi_stock, StockMap *_was_stock,
+			     FcgiStock *_fcgi_stock,
+#ifdef HAVE_LIBWAS
+			     StockMap *_was_stock,
+#endif
 			     StockMap *_delegate_stock
 #ifdef HAVE_LIBNFS
 			     , NfsCache *_nfs_cache
@@ -82,7 +87,10 @@ public:
 		 nghttp2_stock(_nghttp2_stock),
 		 spawn_service(_spawn_service),
 		 lhttp_stock(_lhttp_stock),
-		 fcgi_stock(_fcgi_stock), was_stock(_was_stock),
+		 fcgi_stock(_fcgi_stock),
+#ifdef HAVE_LIBWAS
+		 was_stock(_was_stock),
+#endif
 		 delegate_stock(_delegate_stock)
 #ifdef HAVE_LIBNFS
 		, nfs_cache(_nfs_cache)

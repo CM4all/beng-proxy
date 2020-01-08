@@ -125,10 +125,12 @@ BpInstance::FreeStocksAndCaches() noexcept
 		fcgi_stock = nullptr;
 	}
 
+#ifdef HAVE_LIBWAS
 	if (was_stock != nullptr) {
 		was_stock_free(was_stock);
 		was_stock = nullptr;
 	}
+#endif
 
 	delete std::exchange(fs_balancer, nullptr);
 	delete std::exchange(fs_stock, nullptr);
@@ -207,8 +209,10 @@ BpInstance::FadeChildren() noexcept
 	if (fcgi_stock != nullptr)
 		fcgi_stock_fade_all(*fcgi_stock);
 
+#ifdef HAVE_LIBWAS
 	if (was_stock != nullptr)
 		was_stock->FadeAll();
+#endif
 
 	if (delegate_stock != nullptr)
 		delegate_stock->FadeAll();
@@ -225,8 +229,10 @@ BpInstance::FadeTaggedChildren(const char *tag) noexcept
 	if (fcgi_stock != nullptr)
 		fcgi_stock_fade_tag(*fcgi_stock, tag);
 
+#ifdef HAVE_LIBWAS
 	if (was_stock != nullptr)
 		was_stock_fade_tag(*was_stock, tag);
+#endif
 
 	// TODO: delegate_stock
 }

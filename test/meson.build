@@ -162,26 +162,32 @@ executable('run_ping',
     event_net_dep,
   ])
 
-executable('run_was',
-  'run_was.cxx',
-  '../src/PInstance.cxx',
-  '../src/pexpand.cxx',
-  '../src/io/SpliceSupport.cxx',
-  include_directories: inc,
-  dependencies: [
-    net_dep,
-    was_client_dep,
-    stopwatch_dep,
-  ])
+if libwas.found()
+  executable(
+    'run_was',
+    'run_was.cxx',
+    '../src/PInstance.cxx',
+    '../src/pexpand.cxx',
+    '../src/io/SpliceSupport.cxx',
+    include_directories: inc,
+    dependencies: [
+      net_dep,
+      was_client_dep,
+      stopwatch_dep,
+    ],
+  )
 
-executable('was_mirror',
-  'was_mirror.cxx',
-  '../src/PInstance.cxx',
-  '../src/io/SpliceSupport.cxx',
-  include_directories: inc,
-  dependencies: [
-    declare_dependency(link_with: was_server),
-  ])
+  executable(
+    'was_mirror',
+    'was_mirror.cxx',
+    '../src/PInstance.cxx',
+    '../src/io/SpliceSupport.cxx',
+    include_directories: inc,
+    dependencies: [
+      declare_dependency(link_with: was_server),
+    ],
+  )
+endif
 
 executable('format_http_date',
   'format_http_date.cxx',
@@ -464,16 +470,22 @@ test('t_fcgi_client', executable('t_fcgi_client',
   ]),
 )
 
-test('t_was_client', executable('t_was_client',
-  't_was_client.cxx',
-  '../src/PInstance.cxx',
-  '../src/io/SpliceSupport.cxx',
-  include_directories: inc,
-  dependencies: [
-    was_client_dep,
-    declare_dependency(link_with: was_server),
-  ]),
-)
+if libwas.found()
+  test(
+    't_was_client',
+    executable(
+      't_was_client',
+      't_was_client.cxx',
+      '../src/PInstance.cxx',
+      '../src/io/SpliceSupport.cxx',
+      include_directories: inc,
+      dependencies: [
+        was_client_dep,
+        declare_dependency(link_with: was_server),
+      ],
+    ),
+  )
+endif
 
 test('t_memcached_client', executable('t_memcached_client',
   't_memcached_client.cxx',

@@ -6,6 +6,7 @@ MESON_OPTIONS = \
 	-Ddocumentation=enabled \
 	-Dnfs=enabled \
 	-Dsystemd=true \
+	-Dwas=enabled \
 	-Dzeroconf=enabled \
 	--werror
 
