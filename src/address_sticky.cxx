@@ -38,9 +38,9 @@
 sticky_hash_t
 socket_address_sticky(SocketAddress address)
 {
-    const auto p = address.GetSteadyPart();
-    if (p == nullptr)
-        return 0;
+	const auto p = address.GetSteadyPart();
+	if (p == nullptr)
+		return 0;
 
-    return djb_hash(p.data, p.size);
+	return djb_hash(p.data, p.size);
 }

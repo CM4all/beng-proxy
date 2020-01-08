@@ -50,36 +50,36 @@ class StopwatchPtr;
  * Wrapper for #TcpStock to support load balancing.
  */
 class TcpBalancer {
-    friend class TcpBalancerRequest;
+	friend class TcpBalancerRequest;
 
-    TcpStock &tcp_stock;
+	TcpStock &tcp_stock;
 
-    BalancerMap balancer;
+	BalancerMap balancer;
 
 public:
-    /**
-     * @param tcp_stock the underlying #TcpStock object
-     */
-    TcpBalancer(TcpStock &_tcp_stock, FailureManager &failure_manager)
-        :tcp_stock(_tcp_stock), balancer(failure_manager) {}
+	/**
+	 * @param tcp_stock the underlying #TcpStock object
+	 */
+	TcpBalancer(TcpStock &_tcp_stock, FailureManager &failure_manager)
+		:tcp_stock(_tcp_stock), balancer(failure_manager) {}
 
-    EventLoop &GetEventLoop() noexcept;
+	EventLoop &GetEventLoop() noexcept;
 
-    FailureManager &GetFailureManager() {
-        return balancer.GetFailureManager();
-    }
+	FailureManager &GetFailureManager() {
+		return balancer.GetFailureManager();
+	}
 
-    /**
-     * @param session_sticky a portion of the session id that is used to
-     * select the worker; 0 means disable stickiness
-     * @param timeout the connect timeout for each attempt
-     */
-    void Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
-             bool ip_transparent,
-             SocketAddress bind_address,
-             sticky_hash_t session_sticky,
-             const AddressList &address_list,
-             Event::Duration timeout,
-             StockGetHandler &handler,
-             CancellablePointer &cancel_ptr);
+	/**
+	 * @param session_sticky a portion of the session id that is used to
+	 * select the worker; 0 means disable stickiness
+	 * @param timeout the connect timeout for each attempt
+	 */
+	void Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
+		 bool ip_transparent,
+		 SocketAddress bind_address,
+		 sticky_hash_t session_sticky,
+		 const AddressList &address_list,
+		 Event::Duration timeout,
+		 StockGetHandler &handler,
+		 CancellablePointer &cancel_ptr);
 };

@@ -41,40 +41,40 @@
 void
 PipeLease::Release(bool reuse) noexcept
 {
-    if (!IsDefined())
-        return;
+	if (!IsDefined())
+		return;
 
-    if (stock != nullptr) {
-        assert(item != nullptr);
-        item->Put(!reuse);
-        item = nullptr;
+	if (stock != nullptr) {
+		assert(item != nullptr);
+		item->Put(!reuse);
+		item = nullptr;
 
-        read_fd.SetUndefined();
-        write_fd.SetUndefined();
-    } else {
-        if (read_fd.IsDefined())
-            read_fd.Close();
-        if (write_fd.IsDefined())
-            write_fd.Close();
-    }
+		read_fd.SetUndefined();
+		write_fd.SetUndefined();
+	} else {
+		if (read_fd.IsDefined())
+			read_fd.Close();
+		if (write_fd.IsDefined())
+			write_fd.Close();
+	}
 }
 
 void
 PipeLease::Create()
 {
-    assert(!IsDefined());
+	assert(!IsDefined());
 
-    if (stock != nullptr) {
-        assert(item == nullptr);
+	if (stock != nullptr) {
+		assert(item == nullptr);
 
-        item = stock->GetNow(nullptr);
+		item = stock->GetNow(nullptr);
 
-        FileDescriptor fds[2];
-        pipe_stock_item_get(item, fds);
-        read_fd = fds[0];
-        write_fd = fds[1];
-    } else {
-        if (!FileDescriptor::CreatePipeNonBlock(read_fd, write_fd))
-            throw MakeErrno("pipe() failed");
-    }
+		FileDescriptor fds[2];
+		pipe_stock_item_get(item, fds);
+		read_fd = fds[0];
+		write_fd = fds[1];
+	} else {
+		if (!FileDescriptor::CreatePipeNonBlock(read_fd, write_fd))
+			throw MakeErrno("pipe() failed");
+	}
 }

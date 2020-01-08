@@ -43,61 +43,61 @@ class SessionLease;
 class RealmSessionLease;
 
 struct WidgetContext {
-    EventLoop &event_loop;
+	EventLoop &event_loop;
 
-    ResourceLoader &resource_loader;
-    ResourceLoader &filter_resource_loader;
+	ResourceLoader &resource_loader;
+	ResourceLoader &filter_resource_loader;
 
-    WidgetRegistry *widget_registry;
+	WidgetRegistry *widget_registry;
 
-    const char *site_name;
+	const char *site_name;
 
-    /**
-     * If non-NULL, then only untrusted widgets with this host are
-     * allowed; all trusted widgets are rejected.
-     */
-    const char *untrusted_host;
+	/**
+	 * If non-NULL, then only untrusted widgets with this host are
+	 * allowed; all trusted widgets are rejected.
+	 */
+	const char *untrusted_host;
 
-    const char *local_host;
-    const char *remote_host;
+	const char *local_host;
+	const char *remote_host;
 
-    const char *uri;
+	const char *uri;
 
-    const char *absolute_uri;
+	const char *absolute_uri;
 
-    /** the base URI which was requested by the beng-proxy client */
-    StringView external_base_uri;
+	/** the base URI which was requested by the beng-proxy client */
+	StringView external_base_uri;
 
-    /** semicolon-arguments in the external URI */
-    const StringMap *args;
+	/** semicolon-arguments in the external URI */
+	const StringMap *args;
 
-    const StringMap *request_headers;
+	const StringMap *request_headers;
 
-    /**
-     * The name of the session cookie.
-     */
-    const char *session_cookie;
+	/**
+	 * The name of the session cookie.
+	 */
+	const char *session_cookie;
 
-    SessionId session_id;
-    const char *realm;
+	SessionId session_id;
+	const char *realm;
 
-    WidgetContext(EventLoop &_event_loop,
-                  ResourceLoader &_resource_loader,
-                  ResourceLoader &_filter_resource_loader,
-                  WidgetRegistry *_widget_registry,
-                  const char *site_name,
-                  const char *untrusted_host,
-                  const char *local_host,
-                  const char *remote_host,
-                  const char *request_uri,
-                  const char *absolute_uri,
-                  StringView external_base_uri,
-                  const StringMap *args,
-                  const char *session_cookie,
-                  SessionId session_id,
-                  const char *realm,
-                  const StringMap *request_headers);
+	WidgetContext(EventLoop &_event_loop,
+		      ResourceLoader &_resource_loader,
+		      ResourceLoader &_filter_resource_loader,
+		      WidgetRegistry *_widget_registry,
+		      const char *site_name,
+		      const char *untrusted_host,
+		      const char *local_host,
+		      const char *remote_host,
+		      const char *request_uri,
+		      const char *absolute_uri,
+		      StringView external_base_uri,
+		      const StringMap *args,
+		      const char *session_cookie,
+		      SessionId session_id,
+		      const char *realm,
+		      const StringMap *request_headers);
 
-    SessionLease GetSession() const;
-    RealmSessionLease GetRealmSession() const;
+	SessionLease GetSession() const;
+	RealmSessionLease GetRealmSession() const;
 };

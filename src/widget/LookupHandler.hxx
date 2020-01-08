@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_WIDGET_LOOKUP_HANDLER_HXX
-#define BENG_PROXY_WIDGET_LOOKUP_HANDLER_HXX
+#pragma once
 
 #include <exception>
 
@@ -42,9 +41,7 @@ class Widget;
  */
 class WidgetLookupHandler {
 public:
-    virtual void WidgetFound(Widget &widget) noexcept = 0;
-    virtual void WidgetNotFound() noexcept = 0;
-    virtual void WidgetLookupError(std::exception_ptr ep) noexcept = 0;
+	virtual void WidgetFound(Widget &widget) noexcept = 0;
+	virtual void WidgetNotFound() noexcept = 0;
+	virtual void WidgetLookupError(std::exception_ptr ep) noexcept = 0;
 };
-
-#endif

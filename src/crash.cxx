@@ -42,23 +42,23 @@ struct crash global_crash;
 void
 crash_init(struct crash *crash)
 {
-    assert(crash != nullptr);
+	assert(crash != nullptr);
 
-    void *p = mmap(nullptr, sizeof(*crash->shm),
-             PROT_READ|PROT_WRITE,
-             MAP_ANONYMOUS|MAP_SHARED,
-             -1, 0);
-    if (p == (struct crash_shm *)-1)
-        throw MakeErrno("mmap() failed");
+	void *p = mmap(nullptr, sizeof(*crash->shm),
+		       PROT_READ|PROT_WRITE,
+		       MAP_ANONYMOUS|MAP_SHARED,
+		       -1, 0);
+	if (p == (struct crash_shm *)-1)
+		throw MakeErrno("mmap() failed");
 
-    crash->shm = new(p) crash_shm();
+	crash->shm = new(p) crash_shm();
 }
 
 void
 crash_deinit(struct crash *crash) noexcept
 {
-    assert(crash != nullptr);
-    assert(crash->shm != nullptr);
+	assert(crash != nullptr);
+	assert(crash->shm != nullptr);
 
-    munmap(crash->shm, sizeof(*crash->shm));
+	munmap(crash->shm, sizeof(*crash->shm));
 }

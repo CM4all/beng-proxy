@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_CONTROL_SERVER_H
-#define BENG_PROXY_CONTROL_SERVER_H
+#pragma once
 
 #include "beng-proxy/Control.hxx"
 #include "Handler.hxx"
@@ -50,42 +49,40 @@ struct SocketConfig;
  * Server side part of the "control" protocol.
  */
 class ControlServer final : FullUdpHandler {
-    ControlHandler &handler;
+	ControlHandler &handler;
 
-    UdpListener socket;
+	UdpListener socket;
 
 public:
-    ControlServer(EventLoop &event_loop, UniqueSocketDescriptor s,
-                  ControlHandler &_handler) noexcept;
+	ControlServer(EventLoop &event_loop, UniqueSocketDescriptor s,
+		      ControlHandler &_handler) noexcept;
 
-    ControlServer(EventLoop &event_loop, ControlHandler &_handler,
-                  const SocketConfig &config);
+	ControlServer(EventLoop &event_loop, ControlHandler &_handler,
+		      const SocketConfig &config);
 
-    auto &GetEventLoop() const noexcept {
-        return socket.GetEventLoop();
-    }
+	auto &GetEventLoop() const noexcept {
+		return socket.GetEventLoop();
+	}
 
-    void Enable() noexcept {
-        socket.Enable();
-    }
+	void Enable() noexcept {
+		socket.Enable();
+	}
 
-    void Disable() noexcept {
-        socket.Disable();
-    }
+	void Disable() noexcept {
+		socket.Disable();
+	}
 
-    /**
-     * Throws std::runtime_error on error.
-     */
-    void Reply(SocketAddress address,
-               BengProxy::ControlCommand command,
-               const void *payload, size_t payload_length);
+	/**
+	 * Throws std::runtime_error on error.
+	 */
+	void Reply(SocketAddress address,
+		   BengProxy::ControlCommand command,
+		   const void *payload, size_t payload_length);
 
 private:
-    /* virtual methods from class UdpHandler */
-    bool OnUdpDatagram(ConstBuffer<void> payload,
-                       WritableBuffer<UniqueFileDescriptor> fds,
-                       SocketAddress address, int uid) override;
-    void OnUdpError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class UdpHandler */
+	bool OnUdpDatagram(ConstBuffer<void> payload,
+			   WritableBuffer<UniqueFileDescriptor> fds,
+			   SocketAddress address, int uid) override;
+	void OnUdpError(std::exception_ptr ep) noexcept override;
 };
-
-#endif

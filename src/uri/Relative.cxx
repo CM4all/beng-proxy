@@ -38,17 +38,17 @@
 StringView
 uri_relative(StringView base, StringView uri)
 {
-    if (base.empty() || uri.empty())
-        return nullptr;
+	if (base.empty() || uri.empty())
+		return nullptr;
 
-    if (uri.SkipPrefix(base))
-        return uri;
+	if (uri.SkipPrefix(base))
+		return uri;
 
-    /* special case: http://hostname without trailing slash */
-    if (uri.size == base.size - 1 &&
-        memcmp(uri.data, base.data, base.size) &&
-        memchr(uri.data + 7, '/', uri.size - 7) == nullptr)
-        return "";
+	/* special case: http://hostname without trailing slash */
+	if (uri.size == base.size - 1 &&
+	    memcmp(uri.data, base.data, base.size) &&
+	    memchr(uri.data + 7, '/', uri.size - 7) == nullptr)
+		return "";
 
-    return nullptr;
+	return nullptr;
 }

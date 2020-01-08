@@ -46,113 +46,113 @@
 #include <alloca.h>
 
 ControlServer::ControlServer(EventLoop &event_loop, UniqueSocketDescriptor s,
-                             ControlHandler &_handler) noexcept
-    :handler(_handler), socket(event_loop, std::move(s), *this)
+			     ControlHandler &_handler) noexcept
+	:handler(_handler), socket(event_loop, std::move(s), *this)
 {
 }
 
 ControlServer::ControlServer(EventLoop &event_loop, ControlHandler &_handler,
-                             const SocketConfig &config)
-    :ControlServer(event_loop, config.Create(SOCK_DGRAM), _handler)
+			     const SocketConfig &config)
+	:ControlServer(event_loop, config.Create(SOCK_DGRAM), _handler)
 {
 }
 
 static void
 control_server_decode(ControlServer &control_server,
-                      const void *data, size_t length,
-                      WritableBuffer<UniqueFileDescriptor> fds,
-                      SocketAddress address, int uid,
-                      ControlHandler &handler)
+		      const void *data, size_t length,
+		      WritableBuffer<UniqueFileDescriptor> fds,
+		      SocketAddress address, int uid,
+		      ControlHandler &handler)
 {
-    /* verify the magic number */
+	/* verify the magic number */
 
-    const uint32_t *magic = (const uint32_t *)data;
+	const uint32_t *magic = (const uint32_t *)data;
 
-    if (length < sizeof(*magic) || FromBE32(*magic) != BengProxy::control_magic) {
-        handler.OnControlError(std::make_exception_ptr(std::runtime_error("wrong magic")));
-        return;
-    }
+	if (length < sizeof(*magic) || FromBE32(*magic) != BengProxy::control_magic) {
+		handler.OnControlError(std::make_exception_ptr(std::runtime_error("wrong magic")));
+		return;
+	}
 
-    data = magic + 1;
-    length -= sizeof(*magic);
+	data = magic + 1;
+	length -= sizeof(*magic);
 
-    if (length % 4 != 0) {
-        handler.OnControlError(std::make_exception_ptr(FormatRuntimeError("odd control packet (length=%zu)", length)));
-        return;
-    }
+	if (length % 4 != 0) {
+		handler.OnControlError(std::make_exception_ptr(FormatRuntimeError("odd control packet (length=%zu)", length)));
+		return;
+	}
 
-    /* now decode all commands */
+	/* now decode all commands */
 
-    while (length > 0) {
-        const auto *header = (const BengProxy::ControlHeader *)data;
-        if (length < sizeof(*header)) {
-            handler.OnControlError(std::make_exception_ptr(FormatRuntimeError("partial header (length=%zu)",
-                                                                              length)));
-            return;
-        }
+	while (length > 0) {
+		const auto *header = (const BengProxy::ControlHeader *)data;
+		if (length < sizeof(*header)) {
+			handler.OnControlError(std::make_exception_ptr(FormatRuntimeError("partial header (length=%zu)",
+											  length)));
+			return;
+		}
 
-        size_t payload_length = FromBE16(header->length);
-        const auto command = (BengProxy::ControlCommand)
-            FromBE16(header->command);
+		size_t payload_length = FromBE16(header->length);
+		const auto command = (BengProxy::ControlCommand)
+			FromBE16(header->command);
 
-        data = header + 1;
-        length -= sizeof(*header);
+		data = header + 1;
+		length -= sizeof(*header);
 
-        const char *payload = (const char *)data;
-        if (length < payload_length) {
-            handler.OnControlError(std::make_exception_ptr(FormatRuntimeError("partial payload (length=%zu, expected=%zu)",
-                                                                              length, payload_length)));
-            return;
-        }
+		const char *payload = (const char *)data;
+		if (length < payload_length) {
+			handler.OnControlError(std::make_exception_ptr(FormatRuntimeError("partial payload (length=%zu, expected=%zu)",
+											  length, payload_length)));
+			return;
+		}
 
-        /* this command is ok, pass it to the callback */
+		/* this command is ok, pass it to the callback */
 
-        handler.OnControlPacket(control_server, command,
-                                {payload_length > 0 ? payload : nullptr, payload_length},
-                                fds,
-                                address, uid);
+		handler.OnControlPacket(control_server, command,
+					{payload_length > 0 ? payload : nullptr, payload_length},
+					fds,
+					address, uid);
 
-        payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */
+		payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */
 
-        data = payload + payload_length;
-        length -= payload_length;
-    }
+		data = payload + payload_length;
+		length -= payload_length;
+	}
 }
 
 bool
 ControlServer::OnUdpDatagram(ConstBuffer<void> payload,
-                             WritableBuffer<UniqueFileDescriptor> fds,
-                             SocketAddress address, int uid)
+			     WritableBuffer<UniqueFileDescriptor> fds,
+			     SocketAddress address, int uid)
 {
-    if (!handler.OnControlRaw(payload, address, uid))
-        /* discard datagram if raw() returns false */
-        return true;
+	if (!handler.OnControlRaw(payload, address, uid))
+		/* discard datagram if raw() returns false */
+		return true;
 
-    control_server_decode(*this, payload.data, payload.size,
-                          fds, address, uid, handler);
-    return true;
+	control_server_decode(*this, payload.data, payload.size,
+			      fds, address, uid, handler);
+	return true;
 }
 
 void
 ControlServer::OnUdpError(std::exception_ptr ep) noexcept
 {
-    handler.OnControlError(ep);
+	handler.OnControlError(ep);
 }
 
 void
 ControlServer::Reply(SocketAddress address,
-                     BengProxy::ControlCommand command,
-                     const void *payload, size_t payload_length)
+		     BengProxy::ControlCommand command,
+		     const void *payload, size_t payload_length)
 {
-    const struct BengProxy::ControlHeader header{ToBE16(payload_length), ToBE16(uint16_t(command))};
+	const struct BengProxy::ControlHeader header{ToBE16(payload_length), ToBE16(uint16_t(command))};
 
-    struct iovec v[] = {
-        { const_cast<BengProxy::ControlHeader *>(&header), sizeof(header) },
-        { const_cast<void *>(payload), payload_length },
-    };
+	struct iovec v[] = {
+		{ const_cast<BengProxy::ControlHeader *>(&header), sizeof(header) },
+		{ const_cast<void *>(payload), payload_length },
+	};
 
-    SendMessage(socket.GetSocket(),
-                MessageHeader(ConstBuffer<struct iovec>(v, std::size(v)))
-                .SetAddress(address),
-                MSG_DONTWAIT|MSG_NOSIGNAL);
+	SendMessage(socket.GetSocket(),
+		    MessageHeader(ConstBuffer<struct iovec>(v, std::size(v)))
+		    .SetAddress(address),
+		    MSG_DONTWAIT|MSG_NOSIGNAL);
 }

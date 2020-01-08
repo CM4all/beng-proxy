@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_FILTER_CACHE_HXX
-#define BENG_FILTER_CACHE_HXX
+#pragma once
 
 #include "http/Status.h"
 #include "util/Compiler.h"
@@ -53,8 +52,8 @@ class CancellablePointer;
  */
 FilterCache *
 filter_cache_new(struct pool *pool, size_t max_size,
-                 EventLoop &event_loop,
-                 ResourceLoader &resource_loader);
+		 EventLoop &event_loop,
+		 ResourceLoader &resource_loader);
 
 void
 filter_cache_close(FilterCache *cache) noexcept;
@@ -80,14 +79,12 @@ filter_cache_flush_tag(FilterCache &cache, const char *tag) noexcept;
  */
 void
 filter_cache_request(FilterCache &cache,
-                     struct pool &pool,
-                     const StopwatchPtr &parent_stopwatch,
-                     const char *cache_tag,
-                     const ResourceAddress &address,
-                     const char *source_id,
-                     http_status_t status, StringMap &&headers,
-                     UnusedIstreamPtr body,
-                     HttpResponseHandler &handler,
-                     CancellablePointer &cancel_ptr) noexcept;
-
-#endif
+		     struct pool &pool,
+		     const StopwatchPtr &parent_stopwatch,
+		     const char *cache_tag,
+		     const ResourceAddress &address,
+		     const char *source_id,
+		     http_status_t status, StringMap &&headers,
+		     UnusedIstreamPtr body,
+		     HttpResponseHandler &handler,
+		     CancellablePointer &cancel_ptr) noexcept;

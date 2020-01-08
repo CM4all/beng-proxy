@@ -45,13 +45,13 @@
 #include <assert.h>
 
 struct crash_shm {
-    std::atomic_uint counter;
+	std::atomic_uint counter;
 
-    crash_shm() noexcept:counter(0) {}
+	crash_shm() noexcept:counter(0) {}
 };
 
 struct crash {
-    struct crash_shm *shm;
+	struct crash_shm *shm;
 };
 
 extern struct crash global_crash;
@@ -71,13 +71,13 @@ crash_deinit(struct crash *crash) noexcept;
 static inline void
 crash_global_init()
 {
-    crash_init(&global_crash);
+	crash_init(&global_crash);
 }
 
 static inline void
 crash_global_deinit() noexcept
 {
-    crash_deinit(&global_crash);
+	crash_deinit(&global_crash);
 }
 
 /**
@@ -87,10 +87,10 @@ gcc_pure
 static inline bool
 crash_is_safe(struct crash *crash) noexcept
 {
-    assert(crash != nullptr);
-    assert(crash->shm != nullptr);
+	assert(crash != nullptr);
+	assert(crash->shm != nullptr);
 
-    return crash->shm->counter == 0;
+	return crash->shm->counter == 0;
 }
 
 /**
@@ -100,9 +100,9 @@ crash_is_safe(struct crash *crash) noexcept
 static inline void
 crash_unsafe_enter(void) noexcept
 {
-    assert(global_crash.shm != nullptr);
+	assert(global_crash.shm != nullptr);
 
-    ++global_crash.shm->counter;
+	++global_crash.shm->counter;
 }
 
 /**
@@ -112,10 +112,10 @@ crash_unsafe_enter(void) noexcept
 static inline void
 crash_unsafe_leave() noexcept
 {
-    assert(global_crash.shm != nullptr);
-    assert(!crash_is_safe(&global_crash));
+	assert(global_crash.shm != nullptr);
+	assert(!crash_is_safe(&global_crash));
 
-    --global_crash.shm->counter;
+	--global_crash.shm->counter;
 }
 
 /**
@@ -125,31 +125,31 @@ gcc_pure
 static inline bool
 crash_in_unsafe() noexcept
 {
-    return !crash_is_safe(&global_crash);
+	return !crash_is_safe(&global_crash);
 }
 
 class ScopeCrashGlobalInit {
 public:
-    ScopeCrashGlobalInit() {
-        crash_global_init();
-    }
+	ScopeCrashGlobalInit() {
+		crash_global_init();
+	}
 
-    ~ScopeCrashGlobalInit() noexcept {
-        crash_global_deinit();
-    }
+	~ScopeCrashGlobalInit() noexcept {
+		crash_global_deinit();
+	}
 
-    ScopeCrashGlobalInit(const ScopeCrashGlobalInit &) = delete;
-    ScopeCrashGlobalInit &operator=(const ScopeCrashGlobalInit &) = delete;
+	ScopeCrashGlobalInit(const ScopeCrashGlobalInit &) = delete;
+	ScopeCrashGlobalInit &operator=(const ScopeCrashGlobalInit &) = delete;
 };
 
 struct ScopeCrashUnsafe {
-    ScopeCrashUnsafe() noexcept {
-        crash_unsafe_enter();
-    }
+	ScopeCrashUnsafe() noexcept {
+		crash_unsafe_enter();
+	}
 
-    ~ScopeCrashUnsafe() noexcept {
-        crash_unsafe_leave();
-    }
+	~ScopeCrashUnsafe() noexcept {
+		crash_unsafe_leave();
+	}
 };
 
 #endif

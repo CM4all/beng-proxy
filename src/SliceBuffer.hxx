@@ -47,64 +47,64 @@ class SliceArea;
  * #SliceFifoBuffer which cannot consume any data.
  */
 class SliceBuffer {
-    SliceAllocation allocation;
+	SliceAllocation allocation;
 
-    size_t fill;
+	size_t fill;
 
 public:
-    SliceBuffer() = default;
+	SliceBuffer() = default;
 
-    explicit SliceBuffer(SliceAllocation &&src) noexcept
-        :allocation(std::move(src)), fill(0) {}
+	explicit SliceBuffer(SliceAllocation &&src) noexcept
+		:allocation(std::move(src)), fill(0) {}
 
-    SliceBuffer(SliceBuffer &&) noexcept = default;
+	SliceBuffer(SliceBuffer &&) noexcept = default;
 
-    ~SliceBuffer() noexcept {
-        if (allocation.IsDefined())
-            allocation.Free();
-    }
+	~SliceBuffer() noexcept {
+		if (allocation.IsDefined())
+			allocation.Free();
+	}
 
-    SliceBuffer &operator=(SliceBuffer &&) noexcept = default;
+	SliceBuffer &operator=(SliceBuffer &&) noexcept = default;
 
-    SliceBuffer &operator=(SliceAllocation &&src) noexcept {
-        allocation = std::move(src);
-        fill = 0;
-        return *this;
-    }
+	SliceBuffer &operator=(SliceAllocation &&src) noexcept {
+		allocation = std::move(src);
+		fill = 0;
+		return *this;
+	}
 
-    bool IsDefined() const noexcept {
-        return allocation.IsDefined();
-    }
+	bool IsDefined() const noexcept {
+		return allocation.IsDefined();
+	}
 
-    auto size() const noexcept {
-        assert(IsDefined());
+	auto size() const noexcept {
+		assert(IsDefined());
 
-        return fill;
-    }
+		return fill;
+	}
 
-    bool empty() const noexcept {
-        return size() == 0;
-    }
+	bool empty() const noexcept {
+		return size() == 0;
+	}
 
-    ConstBuffer<uint8_t> Read() noexcept {
-        assert(IsDefined());
+	ConstBuffer<uint8_t> Read() noexcept {
+		assert(IsDefined());
 
-        return {(const uint8_t *)allocation.data, fill};
-    }
+		return {(const uint8_t *)allocation.data, fill};
+	}
 
-    WritableBuffer<uint8_t> Write() noexcept {
-        assert(IsDefined());
+	WritableBuffer<uint8_t> Write() noexcept {
+		assert(IsDefined());
 
-        return {(uint8_t *)allocation.data + fill, allocation.size - fill};
-    }
+		return {(uint8_t *)allocation.data + fill, allocation.size - fill};
+	}
 
-    void Append(size_t n) noexcept {
-        assert(IsDefined());
+	void Append(size_t n) noexcept {
+		assert(IsDefined());
 
-        fill += n;
-    }
+		fill += n;
+	}
 
-    SliceAllocation &&StealAllocation() noexcept {
-        return std::move(allocation);
-    }
+	SliceAllocation &&StealAllocation() noexcept {
+		return std::move(allocation);
+	}
 };

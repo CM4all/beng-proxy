@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ADDRESS_LIST_HXX
-#define BENG_PROXY_ADDRESS_LIST_HXX
+#pragma once
 
 #include "net/SocketAddress.hxx"
 #include "util/StaticArray.hxx"
@@ -52,83 +51,81 @@ class AddressInfoList;
  * Store a URI along with a list of socket addresses.
  */
 struct AddressList {
-    static constexpr size_t MAX_ADDRESSES = 16;
+	static constexpr size_t MAX_ADDRESSES = 16;
 
-    StickyMode sticky_mode = StickyMode::NONE;
+	StickyMode sticky_mode = StickyMode::NONE;
 
-    typedef StaticArray<SocketAddress, MAX_ADDRESSES> Array;
-    typedef Array::const_iterator const_iterator;
+	typedef StaticArray<SocketAddress, MAX_ADDRESSES> Array;
+	typedef Array::const_iterator const_iterator;
 
-    Array addresses;
+	Array addresses;
 
-    AddressList() = default;
+	AddressList() = default;
 
-    constexpr AddressList(ShallowCopy, const AddressList &src) noexcept
-        :sticky_mode(src.sticky_mode),
-         addresses(src.addresses)
-    {
-    }
+	constexpr AddressList(ShallowCopy, const AddressList &src) noexcept
+		:sticky_mode(src.sticky_mode),
+		 addresses(src.addresses)
+	{
+	}
 
-    AddressList(ShallowCopy, const AddressInfoList &src) noexcept;
+	AddressList(ShallowCopy, const AddressInfoList &src) noexcept;
 
-    AddressList(AllocatorPtr alloc, const AddressList &src) noexcept;
+	AddressList(AllocatorPtr alloc, const AddressList &src) noexcept;
 
-    AddressList(struct dpool &pool, const AddressList &src) noexcept;
-    void Free(struct dpool &pool) noexcept;
+	AddressList(struct dpool &pool, const AddressList &src) noexcept;
+	void Free(struct dpool &pool) noexcept;
 
-    void SetStickyMode(StickyMode _sticky_mode) noexcept {
-        sticky_mode = _sticky_mode;
-    }
+	void SetStickyMode(StickyMode _sticky_mode) noexcept {
+		sticky_mode = _sticky_mode;
+	}
 
-    constexpr
-    bool IsEmpty() const noexcept {
-        return addresses.empty();
-    }
+	constexpr
+	bool IsEmpty() const noexcept {
+		return addresses.empty();
+	}
 
-    Array::size_type GetSize() const noexcept {
-        return addresses.size();
-    }
+	Array::size_type GetSize() const noexcept {
+		return addresses.size();
+	}
 
-    /**
-     * Is there no more than one address?
-     */
-    constexpr
-    bool IsSingle() const noexcept {
-        return addresses.size() == 1;
-    }
+	/**
+	 * Is there no more than one address?
+	 */
+	constexpr
+	bool IsSingle() const noexcept {
+		return addresses.size() == 1;
+	}
 
-    constexpr const_iterator begin() const noexcept {
-        return addresses.begin();
-    }
+	constexpr const_iterator begin() const noexcept {
+		return addresses.begin();
+	}
 
-    constexpr const_iterator end() const noexcept {
-        return addresses.end();
-    }
+	constexpr const_iterator end() const noexcept {
+		return addresses.end();
+	}
 
-    /**
-     * @return false if the list is full
-     */
-    bool AddPointer(SocketAddress address) noexcept {
-        return addresses.checked_append(address);
-    }
+	/**
+	 * @return false if the list is full
+	 */
+	bool AddPointer(SocketAddress address) noexcept {
+		return addresses.checked_append(address);
+	}
 
-    bool Add(AllocatorPtr alloc, SocketAddress address) noexcept;
-    bool Add(AllocatorPtr alloc, const AddressInfoList &list) noexcept;
+	bool Add(AllocatorPtr alloc, SocketAddress address) noexcept;
+	bool Add(AllocatorPtr alloc, const AddressInfoList &list) noexcept;
 
-    bool Add(struct dpool &pool, SocketAddress address) noexcept;
+	bool Add(struct dpool &pool, SocketAddress address) noexcept;
 
-    const SocketAddress &operator[](unsigned n) const noexcept {
-        assert(addresses[n].IsDefined());
+	const SocketAddress &operator[](unsigned n) const noexcept {
+		assert(addresses[n].IsDefined());
 
-        return addresses[n];
-    }
+		return addresses[n];
+	}
 
-    /**
-     * Generates a unique string which identifies this object in a hash
-     * table.  This string stored in a statically allocated buffer.
-     */
-    gcc_pure
-    const char *GetKey() const noexcept;
+	/**
+	 * Generates a unique string which identifies this object in a hash
+	 * table.  This string stored in a statically allocated buffer.
+	 */
+	gcc_pure
+	const char *GetKey() const noexcept;
 };
-
-#endif

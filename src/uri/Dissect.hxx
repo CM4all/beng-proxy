@@ -30,12 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Dissect an URI into its parts.
- */
-
-#ifndef BENG_PROXY_URI_DISSECT_HXX
-#define BENG_PROXY_URI_DISSECT_HXX
+#pragma once
 
 #include "util/StringView.hxx"
 
@@ -43,34 +38,32 @@
  * A splitted URI.
  */
 struct DissectedUri {
-    /**
-     * The "base" URI that points to the real resource, without
-     * dynamic arguments.
-     */
-    StringView base;
+	/**
+	 * The "base" URI that points to the real resource, without
+	 * dynamic arguments.
+	 */
+	StringView base;
 
-    /**
-     * The beng-proxy arguments, which were introduced by a semicolon
-     * (without the semicolon).
-     */
-    StringView args;
+	/**
+	 * The beng-proxy arguments, which were introduced by a semicolon
+	 * (without the semicolon).
+	 */
+	StringView args;
 
-    /**
-     * The URI portion after the arguments, including the leading
-     * slash.
-     */
-    StringView path_info;
+	/**
+	 * The URI portion after the arguments, including the leading
+	 * slash.
+	 */
+	StringView path_info;
 
-    /**
-     * The query string (without the question mark).
-     */
-    StringView query;
+	/**
+	 * The query string (without the question mark).
+	 */
+	StringView query;
 
-    /**
-     * Split the URI into its parts.  The result contains pointers
-     * into the original string.
-     */
-    bool Parse(const char *src);
+	/**
+	 * Split the URI into its parts.  The result contains pointers
+	 * into the original string.
+	 */
+	bool Parse(const char *src);
 };
-
-#endif

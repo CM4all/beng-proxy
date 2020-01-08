@@ -36,8 +36,8 @@
 void
 SliceAllocation::Free() noexcept
 {
-    assert(IsDefined());
+	assert(IsDefined());
 
-    area->Free(data);
-    data = nullptr;
+	area->Free(data);
+	data = nullptr;
 }

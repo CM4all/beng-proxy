@@ -35,48 +35,43 @@
  * #UdpDistribute.
  */
 
-#ifndef BENG_PROXY_CONTROL_DISTRIBUTE_HXX
-#define BENG_PROXY_CONTROL_DISTRIBUTE_HXX
+#pragma once
 
 #include "Handler.hxx"
 #include "net/UdpDistribute.hxx"
-
-#include <stddef.h>
 
 class ControlServer;
 class EventLoop;
 class SocketAddress;
 
 class ControlDistribute final : public ControlHandler {
-    UdpDistribute distribute;
+	UdpDistribute distribute;
 
-    ControlHandler &next_handler;
+	ControlHandler &next_handler;
 
 public:
-    ControlDistribute(EventLoop &event_loop, ControlHandler &_next_handler);
+	ControlDistribute(EventLoop &event_loop, ControlHandler &_next_handler);
 
-    UniqueSocketDescriptor Add() {
-        return distribute.Add();
-    }
+	UniqueSocketDescriptor Add() {
+		return distribute.Add();
+	}
 
-    void Clear() {
-        distribute.Clear();
-    }
+	void Clear() {
+		distribute.Clear();
+	}
 
-    static const struct control_handler handler;
+	static const struct control_handler handler;
 
 private:
-    /* virtual methods from class ControlHandler */
-    bool OnControlRaw(ConstBuffer<void> payload,
-                      SocketAddress address, int uid) override;
+	/* virtual methods from class ControlHandler */
+	bool OnControlRaw(ConstBuffer<void> payload,
+			  SocketAddress address, int uid) override;
 
-    void OnControlPacket(ControlServer &control_server,
-                         BengProxy::ControlCommand command,
-                         ConstBuffer<void> payload,
-                         WritableBuffer<UniqueFileDescriptor> fds,
-                         SocketAddress address, int uid) override;
+	void OnControlPacket(ControlServer &control_server,
+			     BengProxy::ControlCommand command,
+			     ConstBuffer<void> payload,
+			     WritableBuffer<UniqueFileDescriptor> fds,
+			     SocketAddress address, int uid) override;
 
-    void OnControlError(std::exception_ptr ep) noexcept override;
+	void OnControlError(std::exception_ptr ep) noexcept override;
 };
-
-#endif

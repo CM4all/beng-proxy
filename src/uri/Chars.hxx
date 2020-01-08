@@ -34,16 +34,15 @@
  * URI character classification according to RFC 2396.
  */
 
-#ifndef URI_CHARS_HXX
-#define URI_CHARS_HXX
+#pragma once
 
 #include "util/CharUtil.hxx"
 
 constexpr bool
 IsUriMarkChar(char ch) noexcept
 {
-    return ch == '-' || ch == '_' || ch == '.' || ch == '!' || ch == '~' ||
-        ch == '*' || ch == '\'' || ch == '(' || ch == ')';
+	return ch == '-' || ch == '_' || ch == '.' || ch == '!' || ch == '~' ||
+		ch == '*' || ch == '\'' || ch == '(' || ch == ')';
 }
 
 /**
@@ -52,7 +51,7 @@ IsUriMarkChar(char ch) noexcept
 constexpr bool
 IsUriUnreservedChar(char ch) noexcept
 {
-    return IsAlphaNumericASCII(ch) || IsUriMarkChar(ch);
+	return IsAlphaNumericASCII(ch) || IsUriMarkChar(ch);
 }
 
 /**
@@ -61,10 +60,8 @@ IsUriUnreservedChar(char ch) noexcept
 constexpr bool
 IsUriPchar(char ch) noexcept
 {
-    return IsUriUnreservedChar(ch) ||
-        ch == '%' || /* "escaped" */
-        ch == ':' || ch == '@' || ch == '&' || ch == '=' || ch == '+' ||
-        ch == '$' || ch == ',';
+	return IsUriUnreservedChar(ch) ||
+		ch == '%' || /* "escaped" */
+		ch == ':' || ch == '@' || ch == '&' || ch == '=' || ch == '+' ||
+		ch == '$' || ch == ',';
 }
-
-#endif

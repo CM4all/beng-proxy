@@ -38,22 +38,22 @@
 
 void
 CachedResourceLoader::SendRequest(struct pool &pool,
-                                  const StopwatchPtr &parent_stopwatch,
-                                  sticky_hash_t session_sticky,
-                                  const char *cache_tag,
-                                  const char *site_name,
-                                  http_method_t method,
-                                  const ResourceAddress &address,
-                                  gcc_unused http_status_t status,
-                                  StringMap &&headers,
-                                  UnusedIstreamPtr body,
-                                  gcc_unused const char *body_etag,
-                                  HttpResponseHandler &handler,
-                                  CancellablePointer &cancel_ptr) noexcept
+				  const StopwatchPtr &parent_stopwatch,
+				  sticky_hash_t session_sticky,
+				  const char *cache_tag,
+				  const char *site_name,
+				  http_method_t method,
+				  const ResourceAddress &address,
+				  gcc_unused http_status_t status,
+				  StringMap &&headers,
+				  UnusedIstreamPtr body,
+				  gcc_unused const char *body_etag,
+				  HttpResponseHandler &handler,
+				  CancellablePointer &cancel_ptr) noexcept
 {
-    http_cache_request(cache, pool, parent_stopwatch,
-                       session_sticky, cache_tag, site_name,
-                       method, address,
-                       std::move(headers), std::move(body),
-                       handler, cancel_ptr);
+	http_cache_request(cache, pool, parent_stopwatch,
+			   session_sticky, cache_tag, site_name,
+			   method, address,
+			   std::move(headers), std::move(body),
+			   handler, cancel_ptr);
 }

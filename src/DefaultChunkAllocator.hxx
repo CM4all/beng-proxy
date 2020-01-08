@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_DEFAULT_CHUNK_ALLOCATOR_HXX
-#define BENG_PROXY_DEFAULT_CHUNK_ALLOCATOR_HXX
+#pragma once
 
 #include "SliceAllocation.hxx"
 
@@ -41,26 +40,24 @@ template<typename T> struct WritableBuffer;
 class SliceArea;
 
 class DefaultChunkAllocator {
-    SliceAllocation allocation;
+	SliceAllocation allocation;
 
 public:
-    DefaultChunkAllocator() = default;
-    DefaultChunkAllocator(DefaultChunkAllocator &&src) noexcept = default;
+	DefaultChunkAllocator() = default;
+	DefaultChunkAllocator(DefaultChunkAllocator &&src) noexcept = default;
 
-    DefaultChunkAllocator &operator=(const DefaultChunkAllocator &) = delete;
+	DefaultChunkAllocator &operator=(const DefaultChunkAllocator &) = delete;
 
 #ifndef NDEBUG
-    ~DefaultChunkAllocator() noexcept;
+	~DefaultChunkAllocator() noexcept;
 #endif
 
-    friend void swap(DefaultChunkAllocator &a,
-                     DefaultChunkAllocator &b) noexcept {
-        using std::swap;
-        swap(a.allocation, b.allocation);
-    }
+	friend void swap(DefaultChunkAllocator &a,
+			 DefaultChunkAllocator &b) noexcept {
+		using std::swap;
+		swap(a.allocation, b.allocation);
+	}
 
-    WritableBuffer<void> Allocate() noexcept;
-    void Free() noexcept;
+	WritableBuffer<void> Allocate() noexcept;
+	void Free() noexcept;
 };
-
-#endif

@@ -42,62 +42,62 @@
 
 size_t
 uri_escape(char *dest, StringView src,
-           char escape_char)
+	   char escape_char)
 {
-    size_t dest_length = 0;
+	size_t dest_length = 0;
 
-    for (size_t i = 0; i < src.size; ++i) {
-        if (IsUriUnreservedChar(src[i])) {
-            dest[dest_length++] = src[i];
-        } else {
-            dest[dest_length++] = escape_char;
-            format_uint8_hex_fixed(&dest[dest_length], (uint8_t)src[i]);
-            dest_length += 2;
-        }
-    }
+	for (size_t i = 0; i < src.size; ++i) {
+		if (IsUriUnreservedChar(src[i])) {
+			dest[dest_length++] = src[i];
+		} else {
+			dest[dest_length++] = escape_char;
+			format_uint8_hex_fixed(&dest[dest_length], (uint8_t)src[i]);
+			dest_length += 2;
+		}
+	}
 
-    return dest_length;
+	return dest_length;
 }
 
 size_t
 uri_escape(char *dest, ConstBuffer<void> src,
-           char escape_char)
+	   char escape_char)
 {
-    return uri_escape(dest, StringView((const char *)src.data, src.size),
-                      escape_char);
+	return uri_escape(dest, StringView((const char *)src.data, src.size),
+			  escape_char);
 }
 
 char *
 uri_unescape(char *dest, StringView _src, char escape_char)
 {
-    auto src = _src.begin();
-    const auto end = _src.end();
+	auto src = _src.begin();
+	const auto end = _src.end();
 
-    while (true) {
-        auto p = std::find(src, end, escape_char);
-        dest = std::copy(src, p, dest);
+	while (true) {
+		auto p = std::find(src, end, escape_char);
+		dest = std::copy(src, p, dest);
 
-        if (p == end)
-            break;
+		if (p == end)
+			break;
 
-        if (p >= end - 2)
-            /* percent sign at the end of string */
-            return nullptr;
+		if (p >= end - 2)
+			/* percent sign at the end of string */
+			return nullptr;
 
-        const int digit1 = ParseHexDigit(p[1]);
-        const int digit2 = ParseHexDigit(p[2]);
-        if (digit1 == -1 || digit2 == -1)
-            /* invalid hex digits */
-            return nullptr;
+		const int digit1 = ParseHexDigit(p[1]);
+		const int digit2 = ParseHexDigit(p[2]);
+		if (digit1 == -1 || digit2 == -1)
+			/* invalid hex digits */
+			return nullptr;
 
-        const char ch = (char)((digit1 << 4) | digit2);
-        if (ch == 0)
-            /* no %00 hack allowed! */
-            return nullptr;
+		const char ch = (char)((digit1 << 4) | digit2);
+		if (ch == 0)
+			/* no %00 hack allowed! */
+			return nullptr;
 
-        *dest++ = ch;
-        src = p + 3;
-    }
+		*dest++ = ch;
+		src = p + 3;
+	}
 
-    return dest;
+	return dest;
 }

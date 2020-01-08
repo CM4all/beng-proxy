@@ -48,7 +48,7 @@ typedef BoundMethod<void() noexcept> WidgetResolverCallback;
  */
 void
 ResolveWidget(struct pool &pool,
-              Widget &widget,
-              WidgetRegistry &registry,
-              WidgetResolverCallback callback,
-              CancellablePointer &cancel_ptr) noexcept;
+	      Widget &widget,
+	      WidgetRegistry &registry,
+	      WidgetResolverCallback callback,
+	      CancellablePointer &cancel_ptr) noexcept;

@@ -67,69 +67,69 @@ static constexpr Event::Duration inline_widget_header_timeout = std::chrono::sec
 const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
 
 class InlineWidget final : PoolLeakDetector, HttpResponseHandler, Cancellable {
-    struct pool &pool;
-    WidgetContext &ctx;
-    const StopwatchPtr parent_stopwatch;
-    const bool plain_text;
-    Widget &widget;
+	struct pool &pool;
+	WidgetContext &ctx;
+	const StopwatchPtr parent_stopwatch;
+	const bool plain_text;
+	Widget &widget;
 
-    TimerEvent header_timeout_event;
+	TimerEvent header_timeout_event;
 
-    DelayedIstreamControl &delayed;
+	DelayedIstreamControl &delayed;
 
-    CancellablePointer cancel_ptr;
+	CancellablePointer cancel_ptr;
 
 public:
-    InlineWidget(struct pool &_pool, WidgetContext &_ctx,
-                 const StopwatchPtr &_parent_stopwatch,
-                 bool _plain_text,
-                 Widget &_widget,
-                 DelayedIstreamControl &_delayed) noexcept
-        :PoolLeakDetector(_pool),
-         pool(_pool), ctx(_ctx), parent_stopwatch(_parent_stopwatch),
-         plain_text(_plain_text),
-         widget(_widget),
-         header_timeout_event(ctx.event_loop,
-                              BIND_THIS_METHOD(OnHeaderTimeout)),
-         delayed(_delayed) {
-        delayed.cancel_ptr = *this;
-    }
+	InlineWidget(struct pool &_pool, WidgetContext &_ctx,
+		     const StopwatchPtr &_parent_stopwatch,
+		     bool _plain_text,
+		     Widget &_widget,
+		     DelayedIstreamControl &_delayed) noexcept
+		:PoolLeakDetector(_pool),
+		 pool(_pool), ctx(_ctx), parent_stopwatch(_parent_stopwatch),
+		 plain_text(_plain_text),
+		 widget(_widget),
+		 header_timeout_event(ctx.event_loop,
+				      BIND_THIS_METHOD(OnHeaderTimeout)),
+		 delayed(_delayed) {
+		delayed.cancel_ptr = *this;
+	}
 
-    UnusedIstreamPtr MakeResponse(UnusedIstreamPtr input) noexcept {
-        return NewTimeoutIstream(pool, std::move(input),
-                                 ctx.event_loop,
-                                 inline_widget_body_timeout);
-    }
+	UnusedIstreamPtr MakeResponse(UnusedIstreamPtr input) noexcept {
+		return NewTimeoutIstream(pool, std::move(input),
+					 ctx.event_loop,
+					 inline_widget_body_timeout);
+	}
 
-    void Start() noexcept;
+	void Start() noexcept;
 
 private:
-    void Destroy() noexcept {
-        DeleteFromPool(pool, this);
-    }
+	void Destroy() noexcept {
+		DeleteFromPool(pool, this);
+	}
 
-    void Fail(std::exception_ptr ep) noexcept {
-        auto &_delayed = delayed;
-        Destroy();
-        _delayed.SetError(ep);
-    }
+	void Fail(std::exception_ptr ep) noexcept {
+		auto &_delayed = delayed;
+		Destroy();
+		_delayed.SetError(ep);
+	}
 
-    void SendRequest() noexcept;
-    void ResolverCallback() noexcept;
+	void SendRequest() noexcept;
+	void ResolverCallback() noexcept;
 
-    void OnHeaderTimeout() noexcept {
-        widget.Cancel();
-        cancel_ptr.Cancel();
-        Fail(std::make_exception_ptr(std::runtime_error("Header timeout")));
-    }
+	void OnHeaderTimeout() noexcept {
+		widget.Cancel();
+		cancel_ptr.Cancel();
+		Fail(std::make_exception_ptr(std::runtime_error("Header timeout")));
+	}
 
-    /* virtual methods from class HttpResponseHandler */
-    void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        UnusedIstreamPtr body) noexcept override;
-    void OnHttpError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(http_status_t status, StringMap &&headers,
+			    UnusedIstreamPtr body) noexcept override;
+	void OnHttpError(std::exception_ptr ep) noexcept override;
 
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override;
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override;
 };
 
 /**
@@ -141,67 +141,67 @@ private:
  */
 static UnusedIstreamPtr
 widget_response_format(struct pool &pool, const Widget &widget,
-                       const StringMap &headers, UnusedIstreamPtr body,
-                       bool plain_text)
+		       const StringMap &headers, UnusedIstreamPtr body,
+		       bool plain_text)
 {
-    assert(body);
+	assert(body);
 
-    const char *p = headers.Get("content-encoding");
-    if (p != nullptr && strcmp(p, "identity") != 0)
-        throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
-                          "widget sent non-identity response, cannot embed");
+	const char *p = headers.Get("content-encoding");
+	if (p != nullptr && strcmp(p, "identity") != 0)
+		throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
+				  "widget sent non-identity response, cannot embed");
 
-    const char *content_type = headers.Get("content-type");
+	const char *content_type = headers.Get("content-type");
 
-    if (plain_text) {
-        if (content_type == nullptr ||
-            !StringStartsWith(content_type, "text/plain"))
-            throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
-                              "widget sent non-text/plain response");
+	if (plain_text) {
+		if (content_type == nullptr ||
+		    !StringStartsWith(content_type, "text/plain"))
+			throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
+					  "widget sent non-text/plain response");
 
-        return body;
-    }
+		return body;
+	}
 
-    if (content_type == nullptr ||
-        (!StringStartsWith(content_type, "text/") &&
-         !StringStartsWith(content_type, "application/xml") &&
-         !StringStartsWith(content_type, "application/xhtml+xml")))
-        throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
-                          "widget sent non-text response");
+	if (content_type == nullptr ||
+	    (!StringStartsWith(content_type, "text/") &&
+	     !StringStartsWith(content_type, "application/xml") &&
+	     !StringStartsWith(content_type, "application/xhtml+xml")))
+		throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
+				  "widget sent non-text response");
 
-    const auto charset = http_header_param(content_type, "charset");
-    if (!charset.IsNull() && !charset.EqualsIgnoreCase("utf-8") &&
-        !charset.EqualsIgnoreCase("utf8")) {
-        /* beng-proxy expects all widgets to send their HTML code in
-           utf-8; this widget however used a different charset.
-           Automatically convert it with istream_iconv */
-        const char *charset2 = p_strdup(pool, charset);
-        auto ic = istream_iconv_new(pool, std::move(body), "utf-8", charset2);
-        if (!ic)
-            throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
-                              StringFormat<64>("widget sent unknown charset '%s'",
-                                               charset2));
+	const auto charset = http_header_param(content_type, "charset");
+	if (!charset.IsNull() && !charset.EqualsIgnoreCase("utf-8") &&
+	    !charset.EqualsIgnoreCase("utf8")) {
+		/* beng-proxy expects all widgets to send their HTML code in
+		   utf-8; this widget however used a different charset.
+		   Automatically convert it with istream_iconv */
+		const char *charset2 = p_strdup(pool, charset);
+		auto ic = istream_iconv_new(pool, std::move(body), "utf-8", charset2);
+		if (!ic)
+			throw WidgetError(widget, WidgetErrorCode::UNSUPPORTED_ENCODING,
+					  StringFormat<64>("widget sent unknown charset '%s'",
+							   charset2));
 
-        widget.logger(6, "charset conversion '", charset2, "' -> utf-8");
-        body = std::move(ic);
-    }
+		widget.logger(6, "charset conversion '", charset2, "' -> utf-8");
+		body = std::move(ic);
+	}
 
-    if (StringStartsWith(content_type, "text/") &&
-        !StringStartsWith(content_type + 5, "html") &&
-        !StringStartsWith(content_type + 5, "xml")) {
-        /* convert text to HTML */
+	if (StringStartsWith(content_type, "text/") &&
+	    !StringStartsWith(content_type + 5, "html") &&
+	    !StringStartsWith(content_type + 5, "xml")) {
+		/* convert text to HTML */
 
-        widget.logger(6, "converting text to HTML");
+		widget.logger(6, "converting text to HTML");
 
-        auto i = istream_html_escape_new(pool, std::move(body));
-        body = istream_cat_new(pool,
-                               istream_string_new(pool,
-                                                  "<pre class=\"beng_text_widget\">"),
-                               std::move(i),
-                               istream_string_new(pool, "</pre>"));
-    }
+		auto i = istream_html_escape_new(pool, std::move(body));
+		body = istream_cat_new(pool,
+				       istream_string_new(pool,
+							  "<pre class=\"beng_text_widget\">"),
+				       std::move(i),
+				       istream_string_new(pool, "</pre>"));
+	}
 
-    return body;
+	return body;
 }
 
 /*
@@ -211,61 +211,61 @@ widget_response_format(struct pool &pool, const Widget &widget,
 
 void
 InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
-                             UnusedIstreamPtr body) noexcept
+			     UnusedIstreamPtr body) noexcept
 {
-    header_timeout_event.Cancel();
+	header_timeout_event.Cancel();
 
-    if (!http_status_is_success(status)) {
-        /* the HTTP status code returned by the widget server is
-           non-successful - don't embed this widget into the
-           template */
-        body.Clear();
+	if (!http_status_is_success(status)) {
+		/* the HTTP status code returned by the widget server is
+		   non-successful - don't embed this widget into the
+		   template */
+		body.Clear();
 
-        WidgetError error(widget, WidgetErrorCode::UNSPECIFIED,
-                          StringFormat<64>("response status %d", status));
-        Fail(std::make_exception_ptr(error));
-        return;
-    }
+		WidgetError error(widget, WidgetErrorCode::UNSPECIFIED,
+				  StringFormat<64>("response status %d", status));
+		Fail(std::make_exception_ptr(error));
+		return;
+	}
 
-    if (body) {
-        /* check if the content-type is correct for embedding into
-           a template, and convert if possible */
-        try {
-            body = widget_response_format(pool, widget,
-                                          headers, std::move(body),
-                                          plain_text);
-        } catch (...) {
-            Fail(std::current_exception());
-            return;
-        }
-    } else
-        body = istream_null_new(pool);
+	if (body) {
+		/* check if the content-type is correct for embedding into
+		   a template, and convert if possible */
+		try {
+			body = widget_response_format(pool, widget,
+						      headers, std::move(body),
+						      plain_text);
+		} catch (...) {
+			Fail(std::current_exception());
+			return;
+		}
+	} else
+		body = istream_null_new(pool);
 
-    auto &_delayed = delayed;
-    Destroy();
-    _delayed.Set(std::move(body));
+	auto &_delayed = delayed;
+	Destroy();
+	_delayed.Set(std::move(body));
 }
 
 void
 InlineWidget::OnHttpError(std::exception_ptr ep) noexcept
 {
-    header_timeout_event.Cancel();
+	header_timeout_event.Cancel();
 
-    Fail(ep);
+	Fail(ep);
 }
 
 void
 InlineWidget::Cancel() noexcept
 {
-    header_timeout_event.Cancel();
+	header_timeout_event.Cancel();
 
-    /* make sure that all widget resources are freed when the request
-       is cancelled */
-    widget.Cancel();
+	/* make sure that all widget resources are freed when the request
+	   is cancelled */
+	widget.Cancel();
 
-    cancel_ptr.Cancel();
+	cancel_ptr.Cancel();
 
-    Destroy();
+	Destroy();
 }
 
 /*
@@ -276,45 +276,45 @@ InlineWidget::Cancel() noexcept
 void
 InlineWidget::SendRequest() noexcept
 {
-    if (!widget_check_approval(&widget)) {
-        WidgetError error(*widget.parent, WidgetErrorCode::FORBIDDEN,
-                          StringFormat<256>("not allowed to embed widget class '%s'",
-                                            widget.class_name));
-        widget.Cancel();
-        Fail(std::make_exception_ptr(error));
-        return;
-    }
+	if (!widget_check_approval(&widget)) {
+		WidgetError error(*widget.parent, WidgetErrorCode::FORBIDDEN,
+				  StringFormat<256>("not allowed to embed widget class '%s'",
+						    widget.class_name));
+		widget.Cancel();
+		Fail(std::make_exception_ptr(error));
+		return;
+	}
 
-    try {
-        widget.CheckHost(ctx.untrusted_host, ctx.site_name);
-    } catch (const std::runtime_error &e) {
-        WidgetError error(widget, WidgetErrorCode::FORBIDDEN, "Untrusted host");
-        widget.Cancel();
-        Fail(NestException(std::current_exception(), error));
-        return;
-    }
+	try {
+		widget.CheckHost(ctx.untrusted_host, ctx.site_name);
+	} catch (const std::runtime_error &e) {
+		WidgetError error(widget, WidgetErrorCode::FORBIDDEN, "Untrusted host");
+		widget.Cancel();
+		Fail(NestException(std::current_exception(), error));
+		return;
+	}
 
-    if (!widget.HasDefaultView()) {
-        WidgetError error(widget, WidgetErrorCode::NO_SUCH_VIEW,
-                          StringFormat<256>("No such view: %s",
-                                            widget.from_template.view_name));
-        widget.Cancel();
-        Fail(std::make_exception_ptr(error));
-        return;
-    }
+	if (!widget.HasDefaultView()) {
+		WidgetError error(widget, WidgetErrorCode::NO_SUCH_VIEW,
+				  StringFormat<256>("No such view: %s",
+						    widget.from_template.view_name));
+		widget.Cancel();
+		Fail(std::make_exception_ptr(error));
+		return;
+	}
 
-    if (widget.session_sync_pending) {
-        auto session = ctx.GetRealmSession();
-        if (session)
-            widget.LoadFromSession(*session);
-        else
-            widget.session_sync_pending = false;
-    }
+	if (widget.session_sync_pending) {
+		auto session = ctx.GetRealmSession();
+		if (session)
+			widget.LoadFromSession(*session);
+		else
+			widget.session_sync_pending = false;
+	}
 
-    header_timeout_event.Schedule(inline_widget_header_timeout);
-    widget_http_request(pool, widget, ctx,
-                        parent_stopwatch,
-                        *this, cancel_ptr);
+	header_timeout_event.Schedule(inline_widget_header_timeout);
+	widget_http_request(pool, widget, ctx,
+			    parent_stopwatch,
+			    *this, cancel_ptr);
 }
 
 
@@ -326,25 +326,25 @@ InlineWidget::SendRequest() noexcept
 void
 InlineWidget::ResolverCallback() noexcept
 {
-    if (widget.cls != nullptr) {
-        SendRequest();
-    } else {
-        WidgetError error(widget, WidgetErrorCode::UNSPECIFIED,
-                          "Failed to look up widget class");
-        widget.Cancel();
-        Fail(std::make_exception_ptr(error));
-    }
+	if (widget.cls != nullptr) {
+		SendRequest();
+	} else {
+		WidgetError error(widget, WidgetErrorCode::UNSPECIFIED,
+				  "Failed to look up widget class");
+		widget.Cancel();
+		Fail(std::make_exception_ptr(error));
+	}
 }
 
 void
 InlineWidget::Start() noexcept
 {
-    if (widget.cls == nullptr)
-        ResolveWidget(pool, widget,
-                      *ctx.widget_registry,
-                      BIND_THIS_METHOD(ResolverCallback), cancel_ptr);
-    else
-        SendRequest();
+	if (widget.cls == nullptr)
+		ResolveWidget(pool, widget,
+			      *ctx.widget_registry,
+			      BIND_THIS_METHOD(ResolverCallback), cancel_ptr);
+	else
+		SendRequest();
 }
 
 
@@ -355,37 +355,37 @@ InlineWidget::Start() noexcept
 
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool, WidgetContext &ctx,
-                    const StopwatchPtr &parent_stopwatch,
-                    bool plain_text,
-                    Widget &widget) noexcept
+		    const StopwatchPtr &parent_stopwatch,
+		    bool plain_text,
+		    Widget &widget) noexcept
 {
-    SharedPoolPtr<PauseIstreamControl> pause;
-    if (widget.from_request.body) {
-        /* use a "paused" stream, to avoid a recursion bug: when
-           somebody within this stack frame attempts to read from it,
-           and the HTTP server trips on an I/O error, the HTTP request
-           gets cancelled, but the event cannot reach this stack
-           frame; by preventing reads on the request body, this
-           situation is avoided */
-        auto _pause = istream_pause_new(pool, ctx.event_loop,
-                                        std::move(widget.from_request.body));
-        pause = std::move(_pause.second);
+	SharedPoolPtr<PauseIstreamControl> pause;
+	if (widget.from_request.body) {
+		/* use a "paused" stream, to avoid a recursion bug: when
+		   somebody within this stack frame attempts to read from it,
+		   and the HTTP server trips on an I/O error, the HTTP request
+		   gets cancelled, but the event cannot reach this stack
+		   frame; by preventing reads on the request body, this
+		   situation is avoided */
+		auto _pause = istream_pause_new(pool, ctx.event_loop,
+						std::move(widget.from_request.body));
+		pause = std::move(_pause.second);
 
-        widget.from_request.body = UnusedHoldIstreamPtr(pool, std::move(_pause.first));
-    }
+		widget.from_request.body = UnusedHoldIstreamPtr(pool, std::move(_pause.first));
+	}
 
-    auto delayed = istream_delayed_new(pool, ctx.event_loop);
+	auto delayed = istream_delayed_new(pool, ctx.event_loop);
 
-    auto iw = NewFromPool<InlineWidget>(pool, pool, ctx, parent_stopwatch,
-                                        plain_text, widget,
-                                        delayed.second);
+	auto iw = NewFromPool<InlineWidget>(pool, pool, ctx, parent_stopwatch,
+					    plain_text, widget,
+					    delayed.second);
 
-    UnusedHoldIstreamPtr hold(pool, iw->MakeResponse(std::move(delayed.first)));
+	UnusedHoldIstreamPtr hold(pool, iw->MakeResponse(std::move(delayed.first)));
 
-    iw->Start();
+	iw->Start();
 
-    if (pause)
-        pause->Resume();
+	if (pause)
+		pause->Resume();
 
-    return std::move(hold);
+	return std::move(hold);
 }

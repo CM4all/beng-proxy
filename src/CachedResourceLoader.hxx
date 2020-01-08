@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_CACHED_RESOURCE_LOADER_HXX
-#define BENG_PROXY_CACHED_RESOURCE_LOADER_HXX
+#pragma once
 
 #include "ResourceLoader.hxx"
 
@@ -42,24 +41,22 @@ class HttpCache;
  * the HTTP cache.
  */
 class CachedResourceLoader final : public ResourceLoader {
-    HttpCache &cache;
+	HttpCache &cache;
 
 public:
-    explicit CachedResourceLoader(HttpCache &_cache) noexcept
-        :cache(_cache) {}
+	explicit CachedResourceLoader(HttpCache &_cache) noexcept
+		:cache(_cache) {}
 
-    /* virtual methods from class ResourceLoader */
-    void SendRequest(struct pool &pool,
-                     const StopwatchPtr &parent_stopwatch,
-                     sticky_hash_t session_sticky,
-                     const char *cache_tag,
-                     const char *site_name,
-                     http_method_t method,
-                     const ResourceAddress &address,
-                     http_status_t status, StringMap &&headers,
-                     UnusedIstreamPtr body, const char *body_etag,
-                     HttpResponseHandler &handler,
-                     CancellablePointer &cancel_ptr) noexcept override;
+	/* virtual methods from class ResourceLoader */
+	void SendRequest(struct pool &pool,
+			 const StopwatchPtr &parent_stopwatch,
+			 sticky_hash_t session_sticky,
+			 const char *cache_tag,
+			 const char *site_name,
+			 http_method_t method,
+			 const ResourceAddress &address,
+			 http_status_t status, StringMap &&headers,
+			 UnusedIstreamPtr body, const char *body_etag,
+			 HttpResponseHandler &handler,
+			 CancellablePointer &cancel_ptr) noexcept override;
 };
-
-#endif

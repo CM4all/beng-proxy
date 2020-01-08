@@ -36,11 +36,11 @@
 SessionLease
 WidgetContext::GetSession() const
 {
-    return SessionLease(session_id);
+	return SessionLease(session_id);
 }
 
 RealmSessionLease
 WidgetContext::GetRealmSession() const
 {
-    return {session_id, realm};
+	return {session_id, realm};
 }

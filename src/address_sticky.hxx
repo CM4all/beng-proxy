@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ADDRESS_STICKY_HXX
-#define BENG_PROXY_ADDRESS_STICKY_HXX
+#pragma once
 
 #include "StickyHash.hxx"
 
@@ -42,5 +41,3 @@ class SocketAddress;
 gcc_pure
 sticky_hash_t
 socket_address_sticky(SocketAddress address);
-
-#endif

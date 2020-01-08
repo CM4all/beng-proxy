@@ -39,124 +39,124 @@
 bool
 uri_segment_verify(const char *src, const char *end)
 {
-    for (; src < end; ++src) {
-        /* XXX check for invalid escaped characters? */
+	for (; src < end; ++src) {
+		/* XXX check for invalid escaped characters? */
 
-        if (!IsUriPchar(*src))
-            return false;
-    }
+		if (!IsUriPchar(*src))
+			return false;
+	}
 
-    return true;
+	return true;
 }
 
 bool
 uri_path_verify(StringView uri)
 {
-    if (uri.empty() || uri.front() != '/')
-        /* path must begin with slash */
-        return false;
+	if (uri.empty() || uri.front() != '/')
+		/* path must begin with slash */
+		return false;
 
-    auto src = uri.begin(), end = uri.end();
-    const char *slash;
-    ++src;
-    while (src < end) {
-        slash = (const char *)memchr(src, '/', end - src);
-        if (slash == nullptr)
-            slash = end;
+	auto src = uri.begin(), end = uri.end();
+	const char *slash;
+	++src;
+	while (src < end) {
+		slash = (const char *)memchr(src, '/', end - src);
+		if (slash == nullptr)
+			slash = end;
 
-        if (!uri_segment_verify(src, slash))
-            return false;
+		if (!uri_segment_verify(src, slash))
+			return false;
 
-        src = slash + 1;
-    }
+		src = slash + 1;
+	}
 
-    return true;
+	return true;
 }
 
 static constexpr bool
 IsEncodedNul(const char *p)
 {
-    return p[0] == '%' && p[1] == '0' && p[2] == '0';
+	return p[0] == '%' && p[1] == '0' && p[2] == '0';
 }
 
 static constexpr bool
 IsEncodedDot(const char *p)
 {
-    return p[0] == '%' && p[1] == '2' &&
-        (p[2] == 'e' || p[2] == 'E');
+	return p[0] == '%' && p[1] == '2' &&
+		(p[2] == 'e' || p[2] == 'E');
 }
 
 static constexpr bool
 IsEncodedSlash(const char *p)
 {
-    return p[0] == '%' && p[1] == '2' &&
-        (p[2] == 'f' || p[2] == 'F');
+	return p[0] == '%' && p[1] == '2' &&
+		(p[2] == 'f' || p[2] == 'F');
 }
 
 bool
 uri_path_verify_paranoid(const char *uri)
 {
-    if (uri[0] == '.' &&
-        (uri[1] == 0 || uri[1] == '/' ||
-         (uri[1] == '.' && (uri[2] == 0 || uri[2] == '/')) ||
-         IsEncodedDot(uri + 1)))
-        /* no ".", "..", "./", "../" */
-        return false;
+	if (uri[0] == '.' &&
+	    (uri[1] == 0 || uri[1] == '/' ||
+	     (uri[1] == '.' && (uri[2] == 0 || uri[2] == '/')) ||
+	     IsEncodedDot(uri + 1)))
+		/* no ".", "..", "./", "../" */
+		return false;
 
-    if (IsEncodedDot(uri))
-        return false;
+	if (IsEncodedDot(uri))
+		return false;
 
-    while (*uri != 0 && *uri != '?') {
-        if (*uri == '%') {
-            if (/* don't allow an encoded NUL character */
-                IsEncodedNul(uri) ||
-                /* don't allow an encoded slash (somebody trying to
-                   hide a hack?) */
-                IsEncodedSlash(uri))
-                return false;
+	while (*uri != 0 && *uri != '?') {
+		if (*uri == '%') {
+			if (/* don't allow an encoded NUL character */
+			    IsEncodedNul(uri) ||
+			    /* don't allow an encoded slash (somebody trying to
+			       hide a hack?) */
+			    IsEncodedSlash(uri))
+				return false;
 
-            ++uri;
-        } else if (*uri == '/') {
-            ++uri;
+			++uri;
+		} else if (*uri == '/') {
+			++uri;
 
-            if (IsEncodedDot(uri))
-                /* encoded dot after a slash - what's this client
-                   trying to hide? */
-                return false;
+			if (IsEncodedDot(uri))
+				/* encoded dot after a slash - what's this client
+				   trying to hide? */
+				return false;
 
-            if (*uri == '.') {
-                ++uri;
+			if (*uri == '.') {
+				++uri;
 
-                if (IsEncodedDot(uri))
-                    /* encoded dot after a real dot - smells fishy */
-                    return false;
+				if (IsEncodedDot(uri))
+					/* encoded dot after a real dot - smells fishy */
+					return false;
 
-                if (*uri == 0 || *uri == '/')
-                    return false;
+				if (*uri == 0 || *uri == '/')
+					return false;
 
-                if (*uri == '.')
-                    /* disallow two dots after a slash, even if
-                       something else follows - this is the paranoid
-                       function after all! */
-                    return false;
-            }
-        } else
-            ++uri;
-    }
+				if (*uri == '.')
+					/* disallow two dots after a slash, even if
+					   something else follows - this is the paranoid
+					   function after all! */
+					return false;
+			}
+		} else
+			++uri;
+	}
 
-    return true;
+	return true;
 }
 
 bool
 uri_path_verify_quick(const char *uri)
 {
-    if (*uri != '/')
-        /* must begin with a slash */
-        return false;
+	if (*uri != '/')
+		/* must begin with a slash */
+		return false;
 
-    for (++uri; *uri != 0; ++uri)
-        if ((signed char)*uri <= 0x20)
-            return false;
+	for (++uri; *uri != 0; ++uri)
+		if ((signed char)*uri <= 0x20)
+			return false;
 
-    return true;
+	return true;
 }

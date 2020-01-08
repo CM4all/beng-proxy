@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_P_INSTANCE_HXX
-#define BENG_PROXY_P_INSTANCE_HXX
+#pragma once
 
 #include "pool/RootPool.hxx"
 #include "event/Loop.hxx"
@@ -41,12 +40,10 @@
  * a #RootPool.
  */
 struct PInstance {
-    EventLoop event_loop;
+	EventLoop event_loop;
 
-    RootPool root_pool;
+	RootPool root_pool;
 
-    PInstance();
-    ~PInstance();
+	PInstance();
+	~PInstance();
 };
-
-#endif

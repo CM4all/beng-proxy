@@ -41,114 +41,114 @@
 #include "stopwatch.hxx"
 
 class BufferedResourceLoader::Request final
-    : PoolLeakDetector, Cancellable, BufferedIstreamHandler
+	: PoolLeakDetector, Cancellable, BufferedIstreamHandler
 {
-    struct pool &pool;
-    ResourceLoader &next;
-    const StopwatchPtr parent_stopwatch;
-    const sticky_hash_t session_sticky;
-    const char *const cache_tag;
-    const char *const site_name;
-    const http_method_t method;
-    const ResourceAddress &address;
-    const http_status_t status;
-    StringMap headers;
-    const char *const body_etag;
-    HttpResponseHandler &handler;
+	struct pool &pool;
+	ResourceLoader &next;
+	const StopwatchPtr parent_stopwatch;
+	const sticky_hash_t session_sticky;
+	const char *const cache_tag;
+	const char *const site_name;
+	const http_method_t method;
+	const ResourceAddress &address;
+	const http_status_t status;
+	StringMap headers;
+	const char *const body_etag;
+	HttpResponseHandler &handler;
 
-    CancellablePointer cancel_ptr;
+	CancellablePointer cancel_ptr;
 
 public:
-    Request(struct pool &_pool, ResourceLoader &_next,
-            const StopwatchPtr &_parent_stopwatch,
-            sticky_hash_t _session_sticky,
-            const char *_cache_tag,
-            const char *_site_name,
-            http_method_t _method, const ResourceAddress &_address,
-            http_status_t _status, StringMap &&_headers,
-            const char *_body_etag,
-            HttpResponseHandler &_handler,
-            CancellablePointer &_cancel_ptr) noexcept
-        :PoolLeakDetector(_pool), pool(_pool),
-         next(_next), parent_stopwatch(_parent_stopwatch),
-         session_sticky(_session_sticky),
-         cache_tag(_cache_tag),
-         site_name(_site_name),
-         method(_method), address(_address),
-         status(_status),
-         /* copy the headers, because they may come from a
-            FilterCacheRequest pool which may be freed before
-            BufferedIstream becomes ready */
-         headers(pool, _headers),
-         body_etag(_body_etag),
-         handler(_handler)
-    {
-        _cancel_ptr = *this;
-    }
+	Request(struct pool &_pool, ResourceLoader &_next,
+		const StopwatchPtr &_parent_stopwatch,
+		sticky_hash_t _session_sticky,
+		const char *_cache_tag,
+		const char *_site_name,
+		http_method_t _method, const ResourceAddress &_address,
+		http_status_t _status, StringMap &&_headers,
+		const char *_body_etag,
+		HttpResponseHandler &_handler,
+		CancellablePointer &_cancel_ptr) noexcept
+		:PoolLeakDetector(_pool), pool(_pool),
+		 next(_next), parent_stopwatch(_parent_stopwatch),
+		 session_sticky(_session_sticky),
+		 cache_tag(_cache_tag),
+		 site_name(_site_name),
+		 method(_method), address(_address),
+		 status(_status),
+		 /* copy the headers, because they may come from a
+		    FilterCacheRequest pool which may be freed before
+		    BufferedIstream becomes ready */
+		 headers(pool, _headers),
+		 body_etag(_body_etag),
+		 handler(_handler)
+	{
+		_cancel_ptr = *this;
+	}
 
-    void Start(EventLoop &_event_loop, PipeStock *_pipe_stock,
-               UnusedIstreamPtr &&body) noexcept {
-        NewBufferedIstream(pool, _event_loop, _pipe_stock,
-                           *this, std::move(body),
-                           cancel_ptr);
-    }
+	void Start(EventLoop &_event_loop, PipeStock *_pipe_stock,
+		   UnusedIstreamPtr &&body) noexcept {
+		NewBufferedIstream(pool, _event_loop, _pipe_stock,
+				   *this, std::move(body),
+				   cancel_ptr);
+	}
 
 private:
-    void Destroy() noexcept {
-        this->~Request();
-    }
+	void Destroy() noexcept {
+		this->~Request();
+	}
 
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override {
-        cancel_ptr.Cancel();
-        Destroy();
-    }
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		cancel_ptr.Cancel();
+		Destroy();
+	}
 
-    /* virtual methods from class BufferedIstreamHandler */
-    void OnBufferedIstreamReady(UnusedIstreamPtr i) noexcept override {
-        next.SendRequest(pool, parent_stopwatch,
-                         session_sticky, cache_tag, site_name,
-                         method, address, status, std::move(headers),
-                         std::move(i), body_etag,
-                         handler, cancel_ptr);
+	/* virtual methods from class BufferedIstreamHandler */
+	void OnBufferedIstreamReady(UnusedIstreamPtr i) noexcept override {
+		next.SendRequest(pool, parent_stopwatch,
+				 session_sticky, cache_tag, site_name,
+				 method, address, status, std::move(headers),
+				 std::move(i), body_etag,
+				 handler, cancel_ptr);
 
-        // TODO: destruct before invoking next.SendRequest()
-        Destroy();
-    }
+		// TODO: destruct before invoking next.SendRequest()
+		Destroy();
+	}
 
-    void OnBufferedIstreamError(std::exception_ptr e) noexcept override {
-        auto &_handler = handler;
-        Destroy();
-        _handler.InvokeError(std::move(e));
-    }
+	void OnBufferedIstreamError(std::exception_ptr e) noexcept override {
+		auto &_handler = handler;
+		Destroy();
+		_handler.InvokeError(std::move(e));
+	}
 };
 
 void
 BufferedResourceLoader::SendRequest(struct pool &pool,
-                                    const StopwatchPtr &parent_stopwatch,
-                                    sticky_hash_t session_sticky,
-                                    const char *cache_tag,
-                                    const char *site_name,
-                                    http_method_t method,
-                                    const ResourceAddress &address,
-                                    http_status_t status, StringMap &&headers,
-                                    UnusedIstreamPtr body, const char *body_etag,
-                                    HttpResponseHandler &handler,
-                                    CancellablePointer &cancel_ptr) noexcept
+				    const StopwatchPtr &parent_stopwatch,
+				    sticky_hash_t session_sticky,
+				    const char *cache_tag,
+				    const char *site_name,
+				    http_method_t method,
+				    const ResourceAddress &address,
+				    http_status_t status, StringMap &&headers,
+				    UnusedIstreamPtr body, const char *body_etag,
+				    HttpResponseHandler &handler,
+				    CancellablePointer &cancel_ptr) noexcept
 {
-    if (body) {
-        auto *request = NewFromPool<Request>(pool, pool, next, parent_stopwatch,
-                                             session_sticky,
-                                             cache_tag, site_name,
-                                             method, address,
-                                             status, std::move(headers),
-                                             body_etag, handler, cancel_ptr);
-        request->Start(event_loop, pipe_stock, std::move(body));
-    } else {
-        next.SendRequest(pool, parent_stopwatch,
-                         session_sticky, cache_tag, site_name,
-                         method, address, status, std::move(headers),
-                         std::move(body), body_etag,
-                         handler, cancel_ptr);
-    }
+	if (body) {
+		auto *request = NewFromPool<Request>(pool, pool, next, parent_stopwatch,
+						     session_sticky,
+						     cache_tag, site_name,
+						     method, address,
+						     status, std::move(headers),
+						     body_etag, handler, cancel_ptr);
+		request->Start(event_loop, pipe_stock, std::move(body));
+	} else {
+		next.SendRequest(pool, parent_stopwatch,
+				 session_sticky, cache_tag, site_name,
+				 method, address, status, std::move(headers),
+				 std::move(body), body_etag,
+				 handler, cancel_ptr);
+	}
 }

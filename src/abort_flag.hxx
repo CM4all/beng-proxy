@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_ABORT_FLAG_HXX
-#define BENG_ABORT_FLAG_HXX
+#pragma once
 
 #include "util/Cancellable.hxx"
 
@@ -42,19 +41,17 @@
  */
 class AbortFlag final : Cancellable {
 public:
-    bool aborted = false;
+	bool aborted = false;
 
-    explicit AbortFlag(CancellablePointer &cancel_ptr) {
-        cancel_ptr = *this;
-    }
+	explicit AbortFlag(CancellablePointer &cancel_ptr) {
+		cancel_ptr = *this;
+	}
 
 private:
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override {
-        assert(!aborted);
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		assert(!aborted);
 
-        aborted = true;
-    }
+		aborted = true;
+	}
 };
-
-#endif

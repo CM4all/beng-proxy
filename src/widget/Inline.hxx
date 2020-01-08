@@ -57,6 +57,6 @@ extern const Event::Duration inline_widget_body_timeout;
  */
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool, WidgetContext &ctx,
-                    const StopwatchPtr &parent_stopwatch,
-                    bool plain_text,
-                    Widget &widget) noexcept;
+		    const StopwatchPtr &parent_stopwatch,
+		    bool plain_text,
+		    Widget &widget) noexcept;

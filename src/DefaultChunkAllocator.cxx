@@ -41,7 +41,7 @@
 
 DefaultChunkAllocator::~DefaultChunkAllocator() noexcept
 {
-    assert(!allocation.IsDefined());
+	assert(!allocation.IsDefined());
 }
 
 #endif
@@ -49,16 +49,16 @@ DefaultChunkAllocator::~DefaultChunkAllocator() noexcept
 WritableBuffer<void>
 DefaultChunkAllocator::Allocate() noexcept
 {
-    assert(!allocation.IsDefined());
+	assert(!allocation.IsDefined());
 
-    allocation = fb_pool_get().Alloc();
-    return {allocation.data, allocation.size};
+	allocation = fb_pool_get().Alloc();
+	return {allocation.data, allocation.size};
 }
 
 void
 DefaultChunkAllocator::Free() noexcept
 {
-    assert(allocation.IsDefined());
+	assert(allocation.IsDefined());
 
-    allocation.Free();
+	allocation.Free();
 }

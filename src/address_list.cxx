@@ -39,60 +39,60 @@
 
 AddressList::AddressList(ShallowCopy, const AddressInfoList &src) noexcept
 {
-    for (const auto &i : src) {
-        if (addresses.full())
-            break;
+	for (const auto &i : src) {
+		if (addresses.full())
+			break;
 
-        addresses.push_back(i);
-    }
+		addresses.push_back(i);
+	}
 }
 
 AddressList::AddressList(AllocatorPtr alloc, const AddressList &src) noexcept
-    :sticky_mode(src.sticky_mode)
+	:sticky_mode(src.sticky_mode)
 {
-    addresses.clear();
+	addresses.clear();
 
-    for (const auto &i : src)
-        Add(alloc, i);
+	for (const auto &i : src)
+		Add(alloc, i);
 }
 
 bool
 AddressList::Add(AllocatorPtr alloc, const SocketAddress address) noexcept
 {
-    if (addresses.full())
-        return false;
+	if (addresses.full())
+		return false;
 
-    addresses.push_back(alloc.Dup(address));
-    return true;
+	addresses.push_back(alloc.Dup(address));
+	return true;
 }
 
 bool
 AddressList::Add(AllocatorPtr alloc, const AddressInfoList &list) noexcept
 {
-    for (const auto &i : list)
-        if (!Add(alloc, i))
-            return false;
+	for (const auto &i : list)
+		if (!Add(alloc, i))
+			return false;
 
-    return true;
+	return true;
 }
 
 const char *
 AddressList::GetKey() const noexcept
 {
-    static char buffer[2048];
-    size_t length = 0;
-    bool success;
+	static char buffer[2048];
+	size_t length = 0;
+	bool success;
 
-    for (const auto &i : *this) {
-        if (length > 0 && length < sizeof(buffer) - 1)
-            buffer[length++] = ' ';
+	for (const auto &i : *this) {
+		if (length > 0 && length < sizeof(buffer) - 1)
+			buffer[length++] = ' ';
 
-        success = ToString(buffer + length, sizeof(buffer) - length, i);
-        if (success)
-            length += strlen(buffer + length);
-    }
+		success = ToString(buffer + length, sizeof(buffer) - length, i);
+		if (success)
+			length += strlen(buffer + length);
+	}
 
-    buffer[length] = 0;
+	buffer[length] = 0;
 
-    return buffer;
+	return buffer;
 }

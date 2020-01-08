@@ -47,27 +47,27 @@ class Expiry;
  * Load balancer for AddressList.
  */
 class BalancerMap {
-    FailureManager &failure_manager;
+	FailureManager &failure_manager;
 
-    Cache<std::string, RoundRobinBalancer, 2048, 1021> cache;
+	Cache<std::string, RoundRobinBalancer, 2048, 1021> cache;
 
 public:
-    explicit BalancerMap(FailureManager &_failure_manager) noexcept
-        :failure_manager(_failure_manager) {}
+	explicit BalancerMap(FailureManager &_failure_manager) noexcept
+		:failure_manager(_failure_manager) {}
 
-    FailureManager &GetFailureManager() const noexcept {
-        return failure_manager;
-    }
+	FailureManager &GetFailureManager() const noexcept {
+		return failure_manager;
+	}
 
-    /**
-     * Gets the next socket address to connect to.  These are selected
-     * in a round-robin fashion, which results in symmetric
-     * load-balancing.  If a server is known to be faulty, it is not
-     * used (see net/FailureManager.hxx).
-     *
-     * @param session a portion of the session id used to select an
-     * address if stickiness is enabled; 0 if there is no session
-     */
-    SocketAddress Get(Expiry now,
-                      const AddressList &list, unsigned session) noexcept;
+	/**
+	 * Gets the next socket address to connect to.  These are selected
+	 * in a round-robin fashion, which results in symmetric
+	 * load-balancing.  If a server is known to be faulty, it is not
+	 * used (see net/FailureManager.hxx).
+	 *
+	 * @param session a portion of the session id used to select an
+	 * address if stickiness is enabled; 0 if there is no session
+	 */
+	SocketAddress Get(Expiry now,
+			  const AddressList &list, unsigned session) noexcept;
 };

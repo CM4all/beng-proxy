@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_WAS_CONTROL_HXX
-#define BENG_PROXY_WAS_CONTROL_HXX
+#pragma once
 
 #include "event/net/BufferedSocket.hxx"
 #include "SliceFifoBuffer.hxx"
@@ -43,130 +42,128 @@ template<typename T> struct ConstBuffer;
 
 class WasControlHandler {
 public:
-    /**
-     * A packet was received.
-     *
-     * @return false if the object was closed
-     */
-    virtual bool OnWasControlPacket(enum was_command cmd,
-                                    ConstBuffer<void> payload) noexcept = 0;
+	/**
+	 * A packet was received.
+	 *
+	 * @return false if the object was closed
+	 */
+	virtual bool OnWasControlPacket(enum was_command cmd,
+					ConstBuffer<void> payload) noexcept = 0;
 
-    /**
-     * Called after a group of control packets have been handled, and
-     * the input buffer is drained.
-     *
-     * @return false if the #WasControl object has been destructed
-     */
-    virtual bool OnWasControlDrained() noexcept {
-        return true;
-    }
+	/**
+	 * Called after a group of control packets have been handled, and
+	 * the input buffer is drained.
+	 *
+	 * @return false if the #WasControl object has been destructed
+	 */
+	virtual bool OnWasControlDrained() noexcept {
+		return true;
+	}
 
-    virtual void OnWasControlDone() noexcept = 0;
-    virtual void OnWasControlError(std::exception_ptr ep) noexcept = 0;
+	virtual void OnWasControlDone() noexcept = 0;
+	virtual void OnWasControlError(std::exception_ptr ep) noexcept = 0;
 };
 
 /**
  * Web Application Socket protocol, control channel library.
  */
 class WasControl final : BufferedSocketHandler {
-    BufferedSocket socket;
+	BufferedSocket socket;
 
-    bool done = false;
+	bool done = false;
 
-    WasControlHandler &handler;
+	WasControlHandler &handler;
 
-    struct {
-        unsigned bulk = 0;
-    } output;
+	struct {
+		unsigned bulk = 0;
+	} output;
 
-    SliceFifoBuffer output_buffer;
-
-public:
-    WasControl(EventLoop &event_loop, SocketDescriptor _fd,
-               WasControlHandler &_handler) noexcept;
-
-    EventLoop &GetEventLoop() noexcept {
-        return socket.GetEventLoop();
-    }
-
-    bool IsDefined() const noexcept {
-        return socket.IsValid();
-    }
-
-    bool Send(enum was_command cmd,
-              const void *payload, size_t payload_length) noexcept;
-
-    bool SendEmpty(enum was_command cmd) noexcept {
-        return Send(cmd, nullptr, 0);
-    }
-
-    bool SendString(enum was_command cmd, const char *payload) noexcept;
-
-    bool SendUint64(enum was_command cmd, uint64_t payload) noexcept {
-        return Send(cmd, &payload, sizeof(payload));
-    }
-
-    bool SendArray(enum was_command cmd,
-                   ConstBuffer<const char *> values) noexcept;
-
-    bool SendStrmap(enum was_command cmd, const StringMap &map) noexcept;
-
-    /**
-     * Enables bulk mode.
-     */
-    void BulkOn() noexcept {
-        ++output.bulk;
-    }
-
-    /**
-     * Disables bulk mode and flushes the output buffer.
-     */
-    bool BulkOff() noexcept;
-
-    void Done() noexcept;
-
-    bool empty() const {
-        return socket.IsEmpty() && output_buffer.empty();
-    }
-
-private:
-    void *Start(enum was_command cmd, size_t payload_length) noexcept;
-    bool Finish(size_t payload_length) noexcept;
-
-    void ScheduleRead() noexcept;
-    void ScheduleWrite() noexcept;
+	SliceFifoBuffer output_buffer;
 
 public:
-    /**
-     * Release the socket held by this object.
-     */
-    void ReleaseSocket() noexcept;
+	WasControl(EventLoop &event_loop, SocketDescriptor _fd,
+		   WasControlHandler &_handler) noexcept;
+
+	EventLoop &GetEventLoop() noexcept {
+		return socket.GetEventLoop();
+	}
+
+	bool IsDefined() const noexcept {
+		return socket.IsValid();
+	}
+
+	bool Send(enum was_command cmd,
+		  const void *payload, size_t payload_length) noexcept;
+
+	bool SendEmpty(enum was_command cmd) noexcept {
+		return Send(cmd, nullptr, 0);
+	}
+
+	bool SendString(enum was_command cmd, const char *payload) noexcept;
+
+	bool SendUint64(enum was_command cmd, uint64_t payload) noexcept {
+		return Send(cmd, &payload, sizeof(payload));
+	}
+
+	bool SendArray(enum was_command cmd,
+		       ConstBuffer<const char *> values) noexcept;
+
+	bool SendStrmap(enum was_command cmd, const StringMap &map) noexcept;
+
+	/**
+	 * Enables bulk mode.
+	 */
+	void BulkOn() noexcept {
+		++output.bulk;
+	}
+
+	/**
+	 * Disables bulk mode and flushes the output buffer.
+	 */
+	bool BulkOff() noexcept;
+
+	void Done() noexcept;
+
+	bool empty() const {
+		return socket.IsEmpty() && output_buffer.empty();
+	}
 
 private:
-    void InvokeDone() noexcept {
-        ReleaseSocket();
-        handler.OnWasControlDone();
-    }
+	void *Start(enum was_command cmd, size_t payload_length) noexcept;
+	bool Finish(size_t payload_length) noexcept;
 
-    void InvokeError(std::exception_ptr ep) noexcept {
-        ReleaseSocket();
-        handler.OnWasControlError(ep);
-    }
+	void ScheduleRead() noexcept;
+	void ScheduleWrite() noexcept;
 
-    void InvokeError(const char *msg) noexcept;
+public:
+	/**
+	 * Release the socket held by this object.
+	 */
+	void ReleaseSocket() noexcept;
 
-    bool InvokeDrained() noexcept {
-        return handler.OnWasControlDrained();
-    }
+private:
+	void InvokeDone() noexcept {
+		ReleaseSocket();
+		handler.OnWasControlDone();
+	}
 
-    bool TryWrite() noexcept;
+	void InvokeError(std::exception_ptr ep) noexcept {
+		ReleaseSocket();
+		handler.OnWasControlError(ep);
+	}
 
-    /* virtual methods from class BufferedSocketHandler */
-    BufferedResult OnBufferedData() override;
-    bool OnBufferedClosed() noexcept override;
-    bool OnBufferedWrite() override;
-    bool OnBufferedDrained() noexcept override;
-    void OnBufferedError(std::exception_ptr e) noexcept override;
+	void InvokeError(const char *msg) noexcept;
+
+	bool InvokeDrained() noexcept {
+		return handler.OnWasControlDrained();
+	}
+
+	bool TryWrite() noexcept;
+
+	/* virtual methods from class BufferedSocketHandler */
+	BufferedResult OnBufferedData() override;
+	bool OnBufferedClosed() noexcept override;
+	bool OnBufferedWrite() override;
+	bool OnBufferedDrained() noexcept override;
+	void OnBufferedError(std::exception_ptr e) noexcept override;
 };
-
-#endif

@@ -34,8 +34,7 @@
  * Handler for control messages.
  */
 
-#ifndef BENG_PROXY_CONTROL_HANDLER_HXX
-#define BENG_PROXY_CONTROL_HANDLER_HXX
+#pragma once
 
 struct BpInstance;
 class UniqueSocketDescriptor;
@@ -81,5 +80,3 @@ local_control_handler_deinit(BpInstance *instance);
 
 void
 local_control_handler_open(BpInstance *instance);
-
-#endif

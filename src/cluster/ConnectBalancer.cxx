@@ -39,52 +39,52 @@
 #include "stopwatch.hxx"
 
 struct ClientBalancerRequest : ConnectSocketHandler {
-    EventLoop &event_loop;
+	EventLoop &event_loop;
 
-    bool ip_transparent;
-    StaticSocketAddress bind_address;
+	bool ip_transparent;
+	StaticSocketAddress bind_address;
 
-    /**
-     * The connect timeout for each attempt.
-     */
-    const Event::Duration timeout;
+	/**
+	 * The connect timeout for each attempt.
+	 */
+	const Event::Duration timeout;
 
-    ConnectSocketHandler &handler;
+	ConnectSocketHandler &handler;
 
-    ClientBalancerRequest(EventLoop &_event_loop,
-                          bool _ip_transparent, SocketAddress _bind_address,
-                          Event::Duration _timeout,
-                          ConnectSocketHandler &_handler)
-        :event_loop(_event_loop), ip_transparent(_ip_transparent),
-         timeout(_timeout),
-         handler(_handler) {
-        if (_bind_address.IsNull() || !_bind_address.IsDefined())
-            bind_address.Clear();
-        else
-            bind_address = _bind_address;
-    }
+	ClientBalancerRequest(EventLoop &_event_loop,
+			      bool _ip_transparent, SocketAddress _bind_address,
+			      Event::Duration _timeout,
+			      ConnectSocketHandler &_handler)
+		:event_loop(_event_loop), ip_transparent(_ip_transparent),
+		 timeout(_timeout),
+		 handler(_handler) {
+		if (_bind_address.IsNull() || !_bind_address.IsDefined())
+			bind_address.Clear();
+		else
+			bind_address = _bind_address;
+	}
 
-    void Send(AllocatorPtr alloc, SocketAddress address,
-              CancellablePointer &cancel_ptr);
+	void Send(AllocatorPtr alloc, SocketAddress address,
+		  CancellablePointer &cancel_ptr);
 
-    /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
-    void OnSocketConnectTimeout() noexcept override;
-    void OnSocketConnectError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class ConnectSocketHandler */
+	void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
+	void OnSocketConnectTimeout() noexcept override;
+	void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 };
 
 inline void
 ClientBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
-                            CancellablePointer &cancel_ptr)
+			    CancellablePointer &cancel_ptr)
 {
-    client_socket_new(event_loop, alloc, nullptr,
-                      address.GetFamily(), SOCK_STREAM, 0,
-                      ip_transparent,
-                      bind_address,
-                      address,
-                      timeout,
-                      *this,
-                      cancel_ptr);
+	client_socket_new(event_loop, alloc, nullptr,
+			  address.GetFamily(), SOCK_STREAM, 0,
+			  ip_transparent,
+			  bind_address,
+			  address,
+			  timeout,
+			  *this,
+			  cancel_ptr);
 }
 
 /*
@@ -95,34 +95,34 @@ ClientBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
 void
 ClientBalancerRequest::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
 {
-    auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
-    base.ConnectSuccess();
+	auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
+	base.ConnectSuccess();
 
-    auto &_handler = handler;
-    base.Destroy();
-    _handler.OnSocketConnectSuccess(std::move(fd));
+	auto &_handler = handler;
+	base.Destroy();
+	_handler.OnSocketConnectSuccess(std::move(fd));
 }
 
 void
 ClientBalancerRequest::OnSocketConnectTimeout() noexcept
 {
-    auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
-    if (!base.ConnectFailure(event_loop.SteadyNow())) {
-        auto &_handler = handler;
-        base.Destroy();
-        _handler.OnSocketConnectTimeout();
-    }
+	auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
+	if (!base.ConnectFailure(event_loop.SteadyNow())) {
+		auto &_handler = handler;
+		base.Destroy();
+		_handler.OnSocketConnectTimeout();
+	}
 }
 
 void
 ClientBalancerRequest::OnSocketConnectError(std::exception_ptr ep) noexcept
 {
-    auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
-    if (!base.ConnectFailure(event_loop.SteadyNow())) {
-        auto &_handler = handler;
-        base.Destroy();
-        _handler.OnSocketConnectError(ep);
-    }
+	auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
+	if (!base.ConnectFailure(event_loop.SteadyNow())) {
+		auto &_handler = handler;
+		base.Destroy();
+		_handler.OnSocketConnectError(ep);
+	}
 }
 
 /*
@@ -132,23 +132,23 @@ ClientBalancerRequest::OnSocketConnectError(std::exception_ptr ep) noexcept
 
 void
 client_balancer_connect(EventLoop &event_loop,
-                        struct pool &pool, BalancerMap &balancer,
-                        bool ip_transparent,
-                        SocketAddress bind_address,
-                        sticky_hash_t session_sticky,
-                        const AddressList *address_list,
-                        Event::Duration timeout,
-                        ConnectSocketHandler &handler,
-                        CancellablePointer &cancel_ptr)
+			struct pool &pool, BalancerMap &balancer,
+			bool ip_transparent,
+			SocketAddress bind_address,
+			sticky_hash_t session_sticky,
+			const AddressList *address_list,
+			Event::Duration timeout,
+			ConnectSocketHandler &handler,
+			CancellablePointer &cancel_ptr)
 {
-    BalancerRequest<ClientBalancerRequest>::Start(pool, event_loop.SteadyNow(),
-                                                  balancer,
-                                                  *address_list,
-                                                  cancel_ptr,
-                                                  session_sticky,
-                                                  event_loop,
-                                                  ip_transparent,
-                                                  bind_address,
-                                                  timeout,
-                                                  handler);
+	BalancerRequest<ClientBalancerRequest>::Start(pool, event_loop.SteadyNow(),
+						      balancer,
+						      *address_list,
+						      cancel_ptr,
+						      session_sticky,
+						      event_loop,
+						      ip_transparent,
+						      bind_address,
+						      timeout,
+						      handler);
 }

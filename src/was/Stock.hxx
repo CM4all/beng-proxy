@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_WAS_STOCK_HXX
-#define BENG_PROXY_WAS_STOCK_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -55,9 +54,9 @@ class SocketDescriptor;
  */
 StockMap *
 was_stock_new(unsigned limit, unsigned max_idle,
-              EventLoop &event_loop, SpawnService &spawn_service,
-              SocketDescriptor log_socket,
-              const ChildErrorLogOptions &log_options) noexcept;
+	      EventLoop &event_loop, SpawnService &spawn_service,
+	      SocketDescriptor log_socket,
+	      const ChildErrorLogOptions &log_options) noexcept;
 
 void
 was_stock_free(StockMap *stock) noexcept;
@@ -70,11 +69,11 @@ was_stock_fade_tag(StockMap &s, const char *tag) noexcept;
  */
 void
 was_stock_get(StockMap *hstock, struct pool *pool,
-              const ChildOptions &options,
-              const char *executable_path,
-              ConstBuffer<const char *> args,
-              StockGetHandler &handler,
-              CancellablePointer &cancel_ptr) noexcept;
+	      const ChildOptions &options,
+	      const char *executable_path,
+	      ConstBuffer<const char *> args,
+	      StockGetHandler &handler,
+	      CancellablePointer &cancel_ptr) noexcept;
 
 void
 was_stock_item_set_site(StockItem &item, const char *site) noexcept;
@@ -96,5 +95,3 @@ was_stock_item_get(const StockItem &item) noexcept;
  */
 void
 was_stock_item_stop(StockItem &item, uint64_t received) noexcept;
-
-#endif

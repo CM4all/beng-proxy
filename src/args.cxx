@@ -45,120 +45,120 @@ static constexpr char ARGS_ESCAPE_CHAR = '$';
 StringMap
 args_parse(struct pool &pool, const StringView p) noexcept
 {
-    StringMap args;
+	StringMap args;
 
-    for (const auto s : IterableSplitString(p, '&')) {
-        const char *equals = s.Find('=');
-        if (equals == nullptr)
-            continue;
+	for (const auto s : IterableSplitString(p, '&')) {
+		const char *equals = s.Find('=');
+		if (equals == nullptr)
+			continue;
 
-        StringView name(s);
-        name.SetEnd(equals);
-        if (name.empty())
-            continue;
+		StringView name(s);
+		name.SetEnd(equals);
+		if (name.empty())
+			continue;
 
-        StringView escaped_value(s);
-        escaped_value.MoveFront(equals + 1);
+		StringView escaped_value(s);
+		escaped_value.MoveFront(equals + 1);
 
-        char *value = uri_unescape_dup(pool, escaped_value,
-                                       ARGS_ESCAPE_CHAR);
-        if (value != nullptr)
-            args.Add(pool, p_strdup(pool, name), value);
-    }
+		char *value = uri_unescape_dup(pool, escaped_value,
+					       ARGS_ESCAPE_CHAR);
+		if (value != nullptr)
+			args.Add(pool, p_strdup(pool, name), value);
+	}
 
-    return args;
+	return args;
 }
 
 const char *
 args_format_n(struct pool &pool, const StringMap *args,
-              const char *replace_key, StringView replace_value,
-              const char *replace_key2, StringView replace_value2,
-              const char *replace_key3, StringView replace_value3,
-              const char *remove_key) noexcept
+	      const char *replace_key, StringView replace_value,
+	      const char *replace_key2, StringView replace_value2,
+	      const char *replace_key3, StringView replace_value3,
+	      const char *remove_key) noexcept
 {
-    size_t length = 0;
+	size_t length = 0;
 
-    /* determine length */
+	/* determine length */
 
-    if (args != nullptr)
-        for (const auto &i : *args)
-            length += strlen(i.key) + 1 + strlen(i.value) * 3 + 1;
+	if (args != nullptr)
+		for (const auto &i : *args)
+			length += strlen(i.key) + 1 + strlen(i.value) * 3 + 1;
 
-    if (replace_key != nullptr)
-        length += strlen(replace_key) + 1 + replace_value.size * 3 + 1;
+	if (replace_key != nullptr)
+		length += strlen(replace_key) + 1 + replace_value.size * 3 + 1;
 
-    if (replace_key2 != nullptr)
-        length += strlen(replace_key2) + 1 + replace_value2.size * 3 + 1;
+	if (replace_key2 != nullptr)
+		length += strlen(replace_key2) + 1 + replace_value2.size * 3 + 1;
 
-    if (replace_key3 != nullptr)
-        length += strlen(replace_key3) + 1 + replace_value3.size * 3 + 1;
+	if (replace_key3 != nullptr)
+		length += strlen(replace_key3) + 1 + replace_value3.size * 3 + 1;
 
-    /* allocate memory, format it */
+	/* allocate memory, format it */
 
-    char *p = (char *)p_malloc(&pool, length + 1);
-    const char *const ret = p;
+	char *p = (char *)p_malloc(&pool, length + 1);
+	const char *const ret = p;
 
-    if (args != nullptr) {
-        for (const auto &i : *args) {
-            if ((replace_key != nullptr && strcmp(i.key, replace_key) == 0) ||
-                (replace_key2 != nullptr && strcmp(i.key, replace_key2) == 0) ||
-                (replace_key3 != nullptr && strcmp(i.key, replace_key3) == 0) ||
-                (remove_key != nullptr && strcmp(i.key, remove_key) == 0))
-                continue;
-            if (p > ret)
-                *p++ = '&';
-            length = strlen(i.key);
-            memcpy(p, i.key, length);
-            p += length;
-            *p++ = '=';
-            p += uri_escape(p, i.value,
-                            ARGS_ESCAPE_CHAR);
-        }
-    }
+	if (args != nullptr) {
+		for (const auto &i : *args) {
+			if ((replace_key != nullptr && strcmp(i.key, replace_key) == 0) ||
+			    (replace_key2 != nullptr && strcmp(i.key, replace_key2) == 0) ||
+			    (replace_key3 != nullptr && strcmp(i.key, replace_key3) == 0) ||
+			    (remove_key != nullptr && strcmp(i.key, remove_key) == 0))
+				continue;
+			if (p > ret)
+				*p++ = '&';
+			length = strlen(i.key);
+			memcpy(p, i.key, length);
+			p += length;
+			*p++ = '=';
+			p += uri_escape(p, i.value,
+					ARGS_ESCAPE_CHAR);
+		}
+	}
 
-    if (replace_key != nullptr) {
-        if (p > ret)
-            *p++ = '&';
-        length = strlen(replace_key);
-        memcpy(p, replace_key, length);
-        p += length;
-        *p++ = '=';
-        p += uri_escape(p, replace_value, ARGS_ESCAPE_CHAR);
-    }
+	if (replace_key != nullptr) {
+		if (p > ret)
+			*p++ = '&';
+		length = strlen(replace_key);
+		memcpy(p, replace_key, length);
+		p += length;
+		*p++ = '=';
+		p += uri_escape(p, replace_value, ARGS_ESCAPE_CHAR);
+	}
 
-    if (replace_key2 != nullptr) {
-        if (p > ret)
-            *p++ = '&';
-        length = strlen(replace_key2);
-        memcpy(p, replace_key2, length);
-        p += length;
-        *p++ = '=';
-        p += uri_escape(p, replace_value2, ARGS_ESCAPE_CHAR);
-    }
+	if (replace_key2 != nullptr) {
+		if (p > ret)
+			*p++ = '&';
+		length = strlen(replace_key2);
+		memcpy(p, replace_key2, length);
+		p += length;
+		*p++ = '=';
+		p += uri_escape(p, replace_value2, ARGS_ESCAPE_CHAR);
+	}
 
-    if (replace_key3 != nullptr) {
-        if (p > ret)
-            *p++ = '&';
-        length = strlen(replace_key3);
-        memcpy(p, replace_key3, length);
-        p += length;
-        *p++ = '=';
-        p += uri_escape(p, replace_value3, ARGS_ESCAPE_CHAR);
-    }
+	if (replace_key3 != nullptr) {
+		if (p > ret)
+			*p++ = '&';
+		length = strlen(replace_key3);
+		memcpy(p, replace_key3, length);
+		p += length;
+		*p++ = '=';
+		p += uri_escape(p, replace_value3, ARGS_ESCAPE_CHAR);
+	}
 
-    *p = 0;
-    return ret;
+	*p = 0;
+	return ret;
 }
 
 const char *
 args_format(struct pool &pool, const StringMap *args,
-            const char *replace_key, StringView replace_value,
-            const char *replace_key2, StringView replace_value2,
-            const char *remove_key) noexcept
+	    const char *replace_key, StringView replace_value,
+	    const char *replace_key2, StringView replace_value2,
+	    const char *remove_key) noexcept
 {
-    return args_format_n(pool, args,
-                         replace_key, replace_value,
-                         replace_key2, replace_value2,
-                         nullptr, nullptr,
-                         remove_key);
+	return args_format_n(pool, args,
+			     replace_key, replace_value,
+			     replace_key2, replace_value2,
+			     nullptr, nullptr,
+			     remove_key);
 }

@@ -53,312 +53,312 @@
 #include <unistd.h>
 
 class WasInput final : Istream {
-    FileDescriptor fd;
-    SocketEvent event;
+	FileDescriptor fd;
+	SocketEvent event;
 
-    WasInputHandler &handler;
+	WasInputHandler &handler;
 
-    SliceFifoBuffer buffer;
+	SliceFifoBuffer buffer;
 
-    uint64_t received = 0, length;
+	uint64_t received = 0, length;
 
-    bool enabled = false;
+	bool enabled = false;
 
-    bool closed = false, known_length = false;
+	bool closed = false, known_length = false;
 
 public:
-    WasInput(struct pool &p, EventLoop &event_loop, FileDescriptor _fd,
-             WasInputHandler &_handler) noexcept
-        :Istream(p), fd(_fd),
-         event(event_loop, BIND_THIS_METHOD(EventCallback),
-               SocketDescriptor::FromFileDescriptor(fd)),
-         handler(_handler) {
-    }
+	WasInput(struct pool &p, EventLoop &event_loop, FileDescriptor _fd,
+		 WasInputHandler &_handler) noexcept
+		:Istream(p), fd(_fd),
+		 event(event_loop, BIND_THIS_METHOD(EventCallback),
+		       SocketDescriptor::FromFileDescriptor(fd)),
+		 handler(_handler) {
+	}
 
-    void Free(std::exception_ptr ep) noexcept;
+	void Free(std::exception_ptr ep) noexcept;
 
-    using Istream::Destroy;
+	using Istream::Destroy;
 
-    void DestroyUnused() noexcept {
-        assert(!HasHandler());
-        assert(!closed);
-        assert(!buffer.IsDefined());
+	void DestroyUnused() noexcept {
+		assert(!HasHandler());
+		assert(!closed);
+		assert(!buffer.IsDefined());
 
-        Destroy();
-    }
+		Destroy();
+	}
 
-    UnusedIstreamPtr Enable() noexcept {
-        assert(!enabled);
-        enabled = true;
-        ScheduleRead();
-        return UnusedIstreamPtr(this);
-    }
+	UnusedIstreamPtr Enable() noexcept {
+		assert(!enabled);
+		enabled = true;
+		ScheduleRead();
+		return UnusedIstreamPtr(this);
+	}
 
-    void Disable() noexcept {
-        event.Cancel();
-    }
+	void Disable() noexcept {
+		event.Cancel();
+	}
 
-    bool SetLength(uint64_t _length) noexcept;
-    void PrematureThrow(uint64_t _length);
-    bool Premature(uint64_t _length) noexcept;
+	bool SetLength(uint64_t _length) noexcept;
+	void PrematureThrow(uint64_t _length);
+	bool Premature(uint64_t _length) noexcept;
 
 private:
-    bool CanRelease() const {
-        return known_length && received == length;
-    }
+	bool CanRelease() const {
+		return known_length && received == length;
+	}
 
-    /**
-     * @return false if the #WasInput has been destroyed
-     */
-    bool ReleasePipe() noexcept {
-        assert(fd.IsDefined());
-        fd.SetUndefined();
-        event.Cancel();
+	/**
+	 * @return false if the #WasInput has been destroyed
+	 */
+	bool ReleasePipe() noexcept {
+		assert(fd.IsDefined());
+		fd.SetUndefined();
+		event.Cancel();
 
-        return handler.WasInputRelease();
-    }
+		return handler.WasInputRelease();
+	}
 
-    /**
-     * @return false if the #WasInput has been destroyed
-     */
-    bool CheckReleasePipe() noexcept {
-        return !CanRelease() || ReleasePipe();
-    }
+	/**
+	 * @return false if the #WasInput has been destroyed
+	 */
+	bool CheckReleasePipe() noexcept {
+		return !CanRelease() || ReleasePipe();
+	}
 
-    void ScheduleRead() noexcept {
-        assert(fd.IsDefined());
-        assert(!buffer.IsDefined() || !buffer.IsFull());
+	void ScheduleRead() noexcept {
+		assert(fd.IsDefined());
+		assert(!buffer.IsDefined() || !buffer.IsFull());
 
-        event.ScheduleRead();
-    }
+		event.ScheduleRead();
+	}
 
-    void AbortError(std::exception_ptr ep) noexcept {
-        buffer.FreeIfDefined();
-        event.Cancel();
+	void AbortError(std::exception_ptr ep) noexcept {
+		buffer.FreeIfDefined();
+		event.Cancel();
 
-        /* protect against recursive Free() call within the istream
-           handler */
-        closed = true;
+		/* protect against recursive Free() call within the istream
+		   handler */
+		closed = true;
 
-        handler.WasInputError();
-        DestroyError(ep);
-    }
+		handler.WasInputError();
+		DestroyError(ep);
+	}
 
-    void AbortError(const char *msg) noexcept {
-        AbortError(std::make_exception_ptr(WasProtocolError(msg)));
-    }
+	void AbortError(const char *msg) noexcept {
+		AbortError(std::make_exception_ptr(WasProtocolError(msg)));
+	}
 
-    void Eof() noexcept {
-        assert(known_length);
-        assert(received == length);
-        assert(!buffer.IsDefined());
+	void Eof() noexcept {
+		assert(known_length);
+		assert(received == length);
+		assert(!buffer.IsDefined());
 
-        event.Cancel();
+		event.Cancel();
 
-        handler.WasInputEof();
-        DestroyEof();
-    }
+		handler.WasInputEof();
+		DestroyEof();
+	}
 
-    bool CheckEof() noexcept {
-        if (CanRelease() && buffer.empty()) {
-            Eof();
-            return true;
-        } else
-            return false;
-    }
+	bool CheckEof() noexcept {
+		if (CanRelease() && buffer.empty()) {
+			Eof();
+			return true;
+		} else
+			return false;
+	}
 
-    /**
-     * Consume data from the input buffer.
-     *
-     * @return false if the handler blocks or if this object has been
-     * destroyed
-     */
-    bool SubmitBuffer() noexcept {
-        auto r = buffer.Read();
-        if (!r.empty()) {
-            size_t nbytes = InvokeData(r.data, r.size);
-            if (nbytes == 0)
-                return false;
+	/**
+	 * Consume data from the input buffer.
+	 *
+	 * @return false if the handler blocks or if this object has been
+	 * destroyed
+	 */
+	bool SubmitBuffer() noexcept {
+		auto r = buffer.Read();
+		if (!r.empty()) {
+			size_t nbytes = InvokeData(r.data, r.size);
+			if (nbytes == 0)
+				return false;
 
-            buffer.Consume(nbytes);
-            buffer.FreeIfEmpty();
-        }
+			buffer.Consume(nbytes);
+			buffer.FreeIfEmpty();
+		}
 
-        if (CheckEof())
-            return false;
+		if (CheckEof())
+			return false;
 
-        return true;
-    }
+		return true;
+	}
 
-    /*
-     * socket i/o
-     *
-     */
+	/*
+	 * socket i/o
+	 *
+	 */
 
-    /**
-     * Throws on error.
-     */
-    void ReadToBuffer();
+	/**
+	 * Throws on error.
+	 */
+	void ReadToBuffer();
 
-    bool TryBuffered() noexcept;
-    bool TryDirect() noexcept;
+	bool TryBuffered() noexcept;
+	bool TryDirect() noexcept;
 
-    void TryRead() noexcept {
-        if (CheckDirect(FdType::FD_PIPE)) {
-            if (SubmitBuffer() && buffer.empty())
-                TryDirect();
-        } else {
-            TryBuffered();
-        }
-    }
+	void TryRead() noexcept {
+		if (CheckDirect(FdType::FD_PIPE)) {
+			if (SubmitBuffer() && buffer.empty())
+				TryDirect();
+		} else {
+			TryBuffered();
+		}
+	}
 
-    void EventCallback(unsigned events) noexcept;
+	void EventCallback(unsigned events) noexcept;
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) noexcept override {
-        if (known_length)
-            return length - received + buffer.GetAvailable();
-        else if (partial)
-            return buffer.GetAvailable();
-        else
-            return -1;
-    }
+	off_t _GetAvailable(bool partial) noexcept override {
+		if (known_length)
+			return length - received + buffer.GetAvailable();
+		else if (partial)
+			return buffer.GetAvailable();
+		else
+			return -1;
+	}
 
-    void _Read() noexcept override {
-        event.Cancel();
+	void _Read() noexcept override {
+		event.Cancel();
 
-        if (SubmitBuffer())
-            TryRead();
-    }
+		if (SubmitBuffer())
+			TryRead();
+	}
 
-    void _FillBucketList(IstreamBucketList &list) override;
-    size_t _ConsumeBucketList(size_t nbytes) noexcept override;
+	void _FillBucketList(IstreamBucketList &list) override;
+	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
 
-    void _Close() noexcept override {
-        buffer.FreeIfDefined();
-        event.Cancel();
+	void _Close() noexcept override {
+		buffer.FreeIfDefined();
+		event.Cancel();
 
-        /* protect against recursive Free() call within the istream
-           handler */
-        closed = true;
+		/* protect against recursive Free() call within the istream
+		   handler */
+		closed = true;
 
-        handler.WasInputClose(received);
+		handler.WasInputClose(received);
 
-        Destroy();
-    }
+		Destroy();
+	}
 };
 
 void
 WasInput::ReadToBuffer()
 {
-    buffer.AllocateIfNull(fb_pool_get());
+	buffer.AllocateIfNull(fb_pool_get());
 
-    size_t max_length = 4096;
-    if (known_length) {
-        uint64_t rest = length - received;
-        if (rest < (uint64_t)max_length)
-            max_length = rest;
+	size_t max_length = 4096;
+	if (known_length) {
+		uint64_t rest = length - received;
+		if (rest < (uint64_t)max_length)
+			max_length = rest;
 
-        if (max_length == 0)
-            /* all the data we need is already in the buffer */
-            return;
-    }
+		if (max_length == 0)
+			/* all the data we need is already in the buffer */
+			return;
+	}
 
-    ssize_t nbytes = read_to_buffer(fd.Get(), buffer, max_length);
-    assert(nbytes != -2);
+	ssize_t nbytes = read_to_buffer(fd.Get(), buffer, max_length);
+	assert(nbytes != -2);
 
-    if (nbytes == 0)
-        throw WasProtocolError("server closed the data connection");
+	if (nbytes == 0)
+		throw WasProtocolError("server closed the data connection");
 
-    if (nbytes < 0) {
-        const int e = errno;
+	if (nbytes < 0) {
+		const int e = errno;
 
-        if (e == EAGAIN) {
-            buffer.FreeIfEmpty();
-            ScheduleRead();
-            return;
-        }
+		if (e == EAGAIN) {
+			buffer.FreeIfEmpty();
+			ScheduleRead();
+			return;
+		}
 
-        throw MakeErrno(e, "read error on WAS data connection");
-    }
+		throw MakeErrno(e, "read error on WAS data connection");
+	}
 
-    received += nbytes;
+	received += nbytes;
 
-    if (buffer.IsFull())
-        event.CancelRead();
+	if (buffer.IsFull())
+		event.CancelRead();
 }
 
 inline bool
 WasInput::TryBuffered() noexcept
 {
-    if (fd.IsDefined()) {
-        try {
-            ReadToBuffer();
-        } catch (...) {
-            AbortError(std::current_exception());
-            return false;
-        }
+	if (fd.IsDefined()) {
+		try {
+			ReadToBuffer();
+		} catch (...) {
+			AbortError(std::current_exception());
+			return false;
+		}
 
-        if (!CheckReleasePipe())
-            return false;
-    }
+		if (!CheckReleasePipe())
+			return false;
+	}
 
-    if (SubmitBuffer()) {
-        assert(!buffer.IsDefinedAndFull());
+	if (SubmitBuffer()) {
+		assert(!buffer.IsDefinedAndFull());
 
-        if (fd.IsDefined())
-            ScheduleRead();
-    }
+		if (fd.IsDefined())
+			ScheduleRead();
+	}
 
-    return true;
+	return true;
 }
 
 inline bool
 WasInput::TryDirect() noexcept
 {
-    assert(buffer.empty());
-    assert(!buffer.IsDefined());
+	assert(buffer.empty());
+	assert(!buffer.IsDefined());
 
-    size_t max_length = 0x1000000;
-    if (known_length) {
-        uint64_t rest = length - received;
-        if (rest < (uint64_t)max_length)
-            max_length = rest;
-    }
+	size_t max_length = 0x1000000;
+	if (known_length) {
+		uint64_t rest = length - received;
+		if (rest < (uint64_t)max_length)
+			max_length = rest;
+	}
 
-    ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, fd.Get(), max_length);
-    if (nbytes == ISTREAM_RESULT_BLOCKING) {
-        event.CancelRead();
-        return false;
-    }
+	ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, fd.Get(), max_length);
+	if (nbytes == ISTREAM_RESULT_BLOCKING) {
+		event.CancelRead();
+		return false;
+	}
 
-    if (nbytes == ISTREAM_RESULT_EOF || nbytes == ISTREAM_RESULT_CLOSED)
-        return false;
+	if (nbytes == ISTREAM_RESULT_EOF || nbytes == ISTREAM_RESULT_CLOSED)
+		return false;
 
-    if (nbytes < 0) {
-        const int e = errno;
+	if (nbytes < 0) {
+		const int e = errno;
 
-        if (e == EAGAIN) {
-            ScheduleRead();
-            return false;
-        }
+		if (e == EAGAIN) {
+			ScheduleRead();
+			return false;
+		}
 
-        AbortError(std::make_exception_ptr(MakeErrno(e,
-                                                     "read error on WAS data connection")));
-        return false;
-    }
+		AbortError(std::make_exception_ptr(MakeErrno(e,
+							     "read error on WAS data connection")));
+		return false;
+	}
 
-    received += nbytes;
+	received += nbytes;
 
-    if (!CheckReleasePipe())
-        return false;
+	if (!CheckReleasePipe())
+		return false;
 
-    if (CheckEof())
-        return false;
+	if (CheckEof())
+		return false;
 
-    ScheduleRead();
-    return true;
+	ScheduleRead();
+	return true;
 }
 
 /*
@@ -369,9 +369,9 @@ WasInput::TryDirect() noexcept
 inline void
 WasInput::EventCallback(unsigned) noexcept
 {
-    assert(fd.IsDefined());
+	assert(fd.IsDefined());
 
-    TryRead();
+	TryRead();
 }
 
 /*
@@ -381,180 +381,180 @@ WasInput::EventCallback(unsigned) noexcept
 
 WasInput *
 was_input_new(struct pool &pool, EventLoop &event_loop, FileDescriptor fd,
-              WasInputHandler &handler) noexcept
+	      WasInputHandler &handler) noexcept
 {
-    assert(fd.IsDefined());
+	assert(fd.IsDefined());
 
-    return NewFromPool<WasInput>(pool, pool, event_loop, fd,
-                                 handler);
+	return NewFromPool<WasInput>(pool, pool, event_loop, fd,
+				     handler);
 }
 
 inline void
 WasInput::Free(std::exception_ptr ep) noexcept
 {
-    assert(ep || closed || !enabled);
+	assert(ep || closed || !enabled);
 
-    buffer.FreeIfDefined();
+	buffer.FreeIfDefined();
 
-    event.Cancel();
+	event.Cancel();
 
-    if (!closed && enabled)
-        DestroyError(ep);
+	if (!closed && enabled)
+		DestroyError(ep);
 }
 
 void
 was_input_free(WasInput *input, std::exception_ptr ep) noexcept
 {
-    input->Free(ep);
+	input->Free(ep);
 }
 
 void
 was_input_free_unused(WasInput *input) noexcept
 {
-    input->DestroyUnused();
+	input->DestroyUnused();
 }
 
 UnusedIstreamPtr
 was_input_enable(WasInput &input) noexcept
 {
-    return input.Enable();
+	return input.Enable();
 }
 
 void
 was_input_disable(WasInput &input) noexcept
 {
-    input.Disable();
+	input.Disable();
 }
 
 inline bool
 WasInput::SetLength(uint64_t _length) noexcept
 {
-    if (known_length) {
-        if (_length == length)
-            return true;
+	if (known_length) {
+		if (_length == length)
+			return true;
 
-        // TODO: don't invoke Istream::DestroyError() if not yet enabled
-        AbortError("wrong input length announced");
-        return false;
-    }
+		// TODO: don't invoke Istream::DestroyError() if not yet enabled
+		AbortError("wrong input length announced");
+		return false;
+	}
 
-    if (_length < received) {
-        /* this length must be bogus, because we already received more than that from the socket */
-        AbortError("announced length is too small");
-        return false;
-    }
+	if (_length < received) {
+		/* this length must be bogus, because we already received more than that from the socket */
+		AbortError("announced length is too small");
+		return false;
+	}
 
-    length = _length;
-    known_length = true;
+	length = _length;
+	known_length = true;
 
-    if (!CheckReleasePipe())
-        return false;
+	if (!CheckReleasePipe())
+		return false;
 
-    if (enabled && CheckEof())
-        return false;
+	if (enabled && CheckEof())
+		return false;
 
-    return true;
+	return true;
 }
 
 bool
 was_input_set_length(WasInput *input, uint64_t length) noexcept
 {
-    return input->SetLength(length);
+	return input->SetLength(length);
 }
 
 void
 WasInput::PrematureThrow(uint64_t _length)
 {
-    buffer.FreeIfDefined();
-    event.Cancel();
+	buffer.FreeIfDefined();
+	event.Cancel();
 
-    if (known_length && _length > length)
-        throw WasProtocolError("announced premature length is too large");
+	if (known_length && _length > length)
+		throw WasProtocolError("announced premature length is too large");
 
-    if (_length < received)
-        throw WasProtocolError("announced premature length is too small");
+	if (_length < received)
+		throw WasProtocolError("announced premature length is too small");
 
-    uint64_t remaining = received - _length;
+	uint64_t remaining = received - _length;
 
-    while (remaining > 0) {
-        uint8_t discard_buffer[4096];
-        size_t size = std::min(remaining, uint64_t(sizeof(discard_buffer)));
-        ssize_t nbytes = fd.Read(discard_buffer, size);
-        if (nbytes < 0)
-            throw NestException(std::make_exception_ptr(MakeErrno("Read error")),
-                                WasError("read error on WAS data connection"));
+	while (remaining > 0) {
+		uint8_t discard_buffer[4096];
+		size_t size = std::min(remaining, uint64_t(sizeof(discard_buffer)));
+		ssize_t nbytes = fd.Read(discard_buffer, size);
+		if (nbytes < 0)
+			throw NestException(std::make_exception_ptr(MakeErrno("Read error")),
+					    WasError("read error on WAS data connection"));
 
-        if (nbytes == 0)
-            throw WasProtocolError("server closed the WAS data connection");
+		if (nbytes == 0)
+			throw WasProtocolError("server closed the WAS data connection");
 
-        remaining -= nbytes;
-    }
+		remaining -= nbytes;
+	}
 }
 
 inline bool
 WasInput::Premature(uint64_t _length) noexcept
 {
-    bool result = false;
-    try {
-        PrematureThrow(_length);
-        result = true;
-        throw WasProtocolError("premature end of WAS response");
-    } catch (...) {
-        DestroyError(std::current_exception());
-    }
+	bool result = false;
+	try {
+		PrematureThrow(_length);
+		result = true;
+		throw WasProtocolError("premature end of WAS response");
+	} catch (...) {
+		DestroyError(std::current_exception());
+	}
 
-    return result;
+	return result;
 }
 
 bool
 was_input_premature(WasInput *input, uint64_t length) noexcept
 {
-    return input->Premature(length);
+	return input->Premature(length);
 }
 
 void
 was_input_premature_throw(WasInput *input, uint64_t length)
 {
-    AtScopeExit(input) { input->Destroy(); };
-    input->PrematureThrow(length);
-    throw WasProtocolError("premature end of WAS response");
+	AtScopeExit(input) { input->Destroy(); };
+	input->PrematureThrow(length);
+	throw WasProtocolError("premature end of WAS response");
 }
 
 void
 WasInput::_FillBucketList(IstreamBucketList &list)
 {
-    auto r = buffer.Read();
-    if (r.empty()) {
-        if (!fd.IsDefined())
-            return;
+	auto r = buffer.Read();
+	if (r.empty()) {
+		if (!fd.IsDefined())
+			return;
 
-        ReadToBuffer();
+		ReadToBuffer();
 
-        if (!CheckReleasePipe())
-            // TODO: deal with this condition properly or improve error message
-            throw std::runtime_error("WAS peer failed");
+		if (!CheckReleasePipe())
+			// TODO: deal with this condition properly or improve error message
+			throw std::runtime_error("WAS peer failed");
 
-        r = buffer.Read();
-        if (r.empty()) {
-            list.SetMore();
-            return;
-        }
-    }
+		r = buffer.Read();
+		if (r.empty()) {
+			list.SetMore();
+			return;
+		}
+	}
 
-    list.Push(r.ToVoid());
+	list.Push(r.ToVoid());
 
-    if (!known_length || received < length)
-        list.SetMore();
+	if (!known_length || received < length)
+		list.SetMore();
 }
 
 size_t
 WasInput::_ConsumeBucketList(size_t nbytes) noexcept
 {
-    size_t consumed = std::min(buffer.GetAvailable(), nbytes);
+	size_t consumed = std::min(buffer.GetAvailable(), nbytes);
 
-    buffer.Consume(consumed);
-    buffer.FreeIfEmpty();
+	buffer.Consume(consumed);
+	buffer.FreeIfEmpty();
 
-    Consumed(consumed);
-    return consumed;
+	Consumed(consumed);
+	return consumed;
 }

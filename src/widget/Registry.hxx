@@ -47,22 +47,22 @@ typedef BoundMethod<void(const WidgetClass *cls) noexcept> WidgetRegistryCallbac
  * server.
  */
 class WidgetRegistry {
-    TranslationService &translation_service;
+	TranslationService &translation_service;
 
-    WidgetClassCache cache;
+	WidgetClassCache cache;
 
 public:
-    explicit WidgetRegistry(struct pool &parent_pool,
-                            TranslationService &_translation_service) noexcept
-        :translation_service(_translation_service),
-         cache(parent_pool) {}
+	explicit WidgetRegistry(struct pool &parent_pool,
+				TranslationService &_translation_service) noexcept
+		:translation_service(_translation_service),
+		 cache(parent_pool) {}
 
-    void FlushCache() noexcept {
-        cache.Clear();
-    }
+	void FlushCache() noexcept {
+		cache.Clear();
+	}
 
-    void LookupWidgetClass(struct pool &caller_pool, struct pool &widget_pool,
-                           const char *name,
-                           WidgetRegistryCallback callback,
-                           CancellablePointer &cancel_ptr) noexcept;
+	void LookupWidgetClass(struct pool &caller_pool, struct pool &widget_pool,
+			       const char *name,
+			       WidgetRegistryCallback callback,
+			       CancellablePointer &cancel_ptr) noexcept;
 };

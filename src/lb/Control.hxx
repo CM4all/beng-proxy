@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_LB_CONTROL_H
-#define BENG_PROXY_LB_CONTROL_H
+#pragma once
 
 #include "control/Handler.hxx"
 #include "control/Server.hxx"
@@ -46,48 +45,46 @@ template<typename T> struct ConstBuffer;
 class EventLoop;
 
 class LbControl final : ControlHandler {
-    const LLogger logger;
+	const LLogger logger;
 
-    LbInstance &instance;
+	LbInstance &instance;
 
-    ControlServer server;
+	ControlServer server;
 
 public:
-    LbControl(LbInstance &_instance, const LbControlConfig &config);
+	LbControl(LbInstance &_instance, const LbControlConfig &config);
 
-    auto &GetEventLoop() const noexcept {
-        return server.GetEventLoop();
-    }
+	auto &GetEventLoop() const noexcept {
+		return server.GetEventLoop();
+	}
 
-    void Enable() noexcept {
-        server.Enable();
-    }
+	void Enable() noexcept {
+		server.Enable();
+	}
 
-    void Disable() noexcept {
-        server.Disable();
-    }
+	void Disable() noexcept {
+		server.Disable();
+	}
 
 private:
-    void InvalidateTranslationCache(ConstBuffer<void> payload,
-                                    SocketAddress address);
+	void InvalidateTranslationCache(ConstBuffer<void> payload,
+					SocketAddress address);
 
-    void EnableNode(const char *payload, size_t length);
-    void FadeNode(const char *payload, size_t length);
+	void EnableNode(const char *payload, size_t length);
+	void FadeNode(const char *payload, size_t length);
 
-    void QueryNodeStatus(ControlServer &control_server,
-                         StringView payload,
-                         SocketAddress address);
+	void QueryNodeStatus(ControlServer &control_server,
+			     StringView payload,
+			     SocketAddress address);
 
-    void QueryStats(ControlServer &control_server, SocketAddress address);
+	void QueryStats(ControlServer &control_server, SocketAddress address);
 
-    /* virtual methods from class ControlHandler */
-    void OnControlPacket(ControlServer &control_server,
-                         BengProxy::ControlCommand command,
-                         ConstBuffer<void> payload,
-                         WritableBuffer<UniqueFileDescriptor> fds,
-                         SocketAddress address, int uid) override;
+	/* virtual methods from class ControlHandler */
+	void OnControlPacket(ControlServer &control_server,
+			     BengProxy::ControlCommand command,
+			     ConstBuffer<void> payload,
+			     WritableBuffer<UniqueFileDescriptor> fds,
+			     SocketAddress address, int uid) override;
 
-    void OnControlError(std::exception_ptr ep) noexcept override;
+	void OnControlError(std::exception_ptr ep) noexcept override;
 };
-
-#endif

@@ -36,8 +36,8 @@
 
 bool
 ControlHandler::OnControlRaw(gcc_unused ConstBuffer<void> payload,
-                             gcc_unused SocketAddress address,
-                             gcc_unused int uid)
+			     gcc_unused SocketAddress address,
+			     gcc_unused int uid)
 {
-    return true;
+	return true;
 }

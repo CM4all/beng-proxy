@@ -43,111 +43,111 @@ template<typename T> struct ConstBuffer;
 class SocketAddress;
 
 class AllocatorPtr {
-    struct pool &pool;
+	struct pool &pool;
 
 public:
-    constexpr AllocatorPtr(struct pool &_pool) noexcept :pool(_pool) {}
+	constexpr AllocatorPtr(struct pool &_pool) noexcept :pool(_pool) {}
 
-    char *Dup(const char *src) const noexcept {
-        return p_strdup(&pool, src);
-    }
+	char *Dup(const char *src) const noexcept {
+		return p_strdup(&pool, src);
+	}
 
-    const char *CheckDup(const char *src) const noexcept {
-        return p_strdup_checked(&pool, src);
-    }
+	const char *CheckDup(const char *src) const noexcept {
+		return p_strdup_checked(&pool, src);
+	}
 
-    template<typename... Args>
-    char *Concat(Args&&... args) const noexcept {
-        const size_t length = ConcatLength(args...);
-        char *result = NewArray<char>(length + 1);
-        *ConcatCopy(result, args...) = 0;
-        return result;
-    }
+	template<typename... Args>
+	char *Concat(Args&&... args) const noexcept {
+		const size_t length = ConcatLength(args...);
+		char *result = NewArray<char>(length + 1);
+		*ConcatCopy(result, args...) = 0;
+		return result;
+	}
 
-    template<typename T, typename... Args>
-    T *New(Args&&... args) const noexcept {
-        return NewFromPool<T>(pool, std::forward<Args>(args)...);
-    }
+	template<typename T, typename... Args>
+	T *New(Args&&... args) const noexcept {
+		return NewFromPool<T>(pool, std::forward<Args>(args)...);
+	}
 
-    template<typename T>
-    T *NewArray(size_t n) const noexcept {
-        return PoolAlloc<T>(pool, n);
-    }
+	template<typename T>
+	T *NewArray(size_t n) const noexcept {
+		return PoolAlloc<T>(pool, n);
+	}
 
-    void *Dup(const void *data, size_t size) const noexcept {
-        return p_memdup(&pool, data, size);
-    }
+	void *Dup(const void *data, size_t size) const noexcept {
+		return p_memdup(&pool, data, size);
+	}
 
-    ConstBuffer<void> Dup(ConstBuffer<void> src) const noexcept;
+	ConstBuffer<void> Dup(ConstBuffer<void> src) const noexcept;
 
-    template<typename T>
-    ConstBuffer<T> Dup(ConstBuffer<T> src) const noexcept {
-        return ConstBuffer<T>::FromVoid(Dup(src.ToVoid()));
-    }
+	template<typename T>
+	ConstBuffer<T> Dup(ConstBuffer<T> src) const noexcept {
+		return ConstBuffer<T>::FromVoid(Dup(src.ToVoid()));
+	}
 
-    StringView Dup(StringView src) const noexcept;
-    const char *DupZ(StringView src) const noexcept;
+	StringView Dup(StringView src) const noexcept;
+	const char *DupZ(StringView src) const noexcept;
 
-    const char *DupToLower(StringView src) const noexcept {
-        return p_strdup_lower(pool, src);
-    }
+	const char *DupToLower(StringView src) const noexcept {
+		return p_strdup_lower(pool, src);
+	}
 
-    SocketAddress Dup(SocketAddress src) const noexcept;
+	SocketAddress Dup(SocketAddress src) const noexcept;
 
 private:
-    template<typename... Args>
-    static size_t ConcatLength(const char *s, Args... args) noexcept {
-        return strlen(s) + ConcatLength(args...);
-    }
+	template<typename... Args>
+	static size_t ConcatLength(const char *s, Args... args) noexcept {
+		return strlen(s) + ConcatLength(args...);
+	}
 
-    template<typename... Args>
-    static size_t ConcatLength(char, Args... args) noexcept {
-        return 1 + ConcatLength(args...);
-    }
+	template<typename... Args>
+	static size_t ConcatLength(char, Args... args) noexcept {
+		return 1 + ConcatLength(args...);
+	}
 
-    template<typename... Args>
-    static constexpr size_t ConcatLength(StringView s, Args... args) noexcept {
-        return s.size + ConcatLength(args...);
-    }
+	template<typename... Args>
+	static constexpr size_t ConcatLength(StringView s, Args... args) noexcept {
+		return s.size + ConcatLength(args...);
+	}
 
-    template<typename... Args>
-    static constexpr size_t ConcatLength(ConstBuffer<StringView> s,
-                                         Args... args) noexcept {
-        size_t length = ConcatLength(args...);
-        for (const auto &i : s)
-            length += i.size;
-        return length;
-    }
+	template<typename... Args>
+	static constexpr size_t ConcatLength(ConstBuffer<StringView> s,
+					     Args... args) noexcept {
+		size_t length = ConcatLength(args...);
+		for (const auto &i : s)
+			length += i.size;
+		return length;
+	}
 
-    static constexpr size_t ConcatLength() noexcept {
-        return 0;
-    }
+	static constexpr size_t ConcatLength() noexcept {
+		return 0;
+	}
 
-    template<typename... Args>
-    static char *ConcatCopy(char *p, const char *s, Args... args) noexcept {
-        return ConcatCopy(stpcpy(p, s), args...);
-    }
+	template<typename... Args>
+	static char *ConcatCopy(char *p, const char *s, Args... args) noexcept {
+		return ConcatCopy(stpcpy(p, s), args...);
+	}
 
-    template<typename... Args>
-    static char *ConcatCopy(char *p, char ch, Args... args) noexcept {
-        *p++ = ch;
-        return ConcatCopy(p, args...);
-    }
+	template<typename... Args>
+	static char *ConcatCopy(char *p, char ch, Args... args) noexcept {
+		*p++ = ch;
+		return ConcatCopy(p, args...);
+	}
 
-    template<typename... Args>
-    static char *ConcatCopy(char *p, StringView s, Args... args) noexcept {
-        return ConcatCopy((char *)mempcpy(p, s.data, s.size), args...);
-    }
+	template<typename... Args>
+	static char *ConcatCopy(char *p, StringView s, Args... args) noexcept {
+		return ConcatCopy((char *)mempcpy(p, s.data, s.size), args...);
+	}
 
-    template<typename... Args>
-    static char *ConcatCopy(char *p, ConstBuffer<StringView> s, Args... args) noexcept {
-        for (const auto &i : s)
-            p = ConcatCopy(p, i);
-        return ConcatCopy(p, args...);
-    }
+	template<typename... Args>
+	static char *ConcatCopy(char *p, ConstBuffer<StringView> s, Args... args) noexcept {
+		for (const auto &i : s)
+			p = ConcatCopy(p, i);
+		return ConcatCopy(p, args...);
+	}
 
-    template<typename... Args>
-    static char *ConcatCopy(char *p) noexcept {
-        return p;
-    }
+	template<typename... Args>
+	static char *ConcatCopy(char *p) noexcept {
+		return p;
+	}
 };

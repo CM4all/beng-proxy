@@ -44,123 +44,123 @@
 class WidgetResolver;
 
 class WidgetResolverListener final
-    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
-      PoolHolder,
-      Cancellable {
+	: public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+	  PoolHolder,
+	  Cancellable {
 
-    WidgetResolver &resolver;
+	WidgetResolver &resolver;
 
-    const WidgetResolverCallback callback;
+	const WidgetResolverCallback callback;
 
 #ifndef NDEBUG
-    bool finished = false, aborted = false;
+	bool finished = false, aborted = false;
 #endif
 
 public:
-    template<typename P>
-    WidgetResolverListener(P &&_pool, WidgetResolver &_resolver,
-                           WidgetResolverCallback _callback,
-                           CancellablePointer &cancel_ptr) noexcept
-        :PoolHolder(std::forward<P>(_pool)), resolver(_resolver),
-         callback(_callback) {
-        cancel_ptr = *this;
-    }
+	template<typename P>
+	WidgetResolverListener(P &&_pool, WidgetResolver &_resolver,
+			       WidgetResolverCallback _callback,
+			       CancellablePointer &cancel_ptr) noexcept
+		:PoolHolder(std::forward<P>(_pool)), resolver(_resolver),
+		 callback(_callback) {
+		cancel_ptr = *this;
+	}
 
-    void Finish() noexcept;
+	void Finish() noexcept;
 
 private:
-    void Destroy() noexcept {
-        this->~WidgetResolverListener();
-    }
+	void Destroy() noexcept {
+		this->~WidgetResolverListener();
+	}
 
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override;
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override;
 };
 
 class WidgetResolver final : DestructAnchor {
-    Widget &widget;
+	Widget &widget;
 
-    boost::intrusive::list<WidgetResolverListener,
-                           boost::intrusive::constant_time_size<false>> listeners;
+	boost::intrusive::list<WidgetResolverListener,
+			       boost::intrusive::constant_time_size<false>> listeners;
 
-    CancellablePointer cancel_ptr;
+	CancellablePointer cancel_ptr;
 
-    bool finished = false;
+	bool finished = false;
 
 #ifndef NDEBUG
-    bool aborted = false;
+	bool aborted = false;
 #endif
 
 public:
-    explicit WidgetResolver(Widget &_widget) noexcept
-        :widget(_widget) {}
+	explicit WidgetResolver(Widget &_widget) noexcept
+		:widget(_widget) {}
 
-    bool IsFinished() const noexcept {
-        return finished;
-    }
+	bool IsFinished() const noexcept {
+		return finished;
+	}
 
-    void Start(WidgetRegistry &registry) noexcept {
-        /* use the widget pool because the listener pool may be
-           aborted, while the others still run */
-        registry.LookupWidgetClass(widget.pool, widget.pool,
-                                   widget.class_name,
-                                   BIND_THIS_METHOD(RegistryCallback),
-                                   cancel_ptr);
-    }
+	void Start(WidgetRegistry &registry) noexcept {
+		/* use the widget pool because the listener pool may be
+		   aborted, while the others still run */
+		registry.LookupWidgetClass(widget.pool, widget.pool,
+					   widget.class_name,
+					   BIND_THIS_METHOD(RegistryCallback),
+					   cancel_ptr);
+	}
 
-    void AddListener(WidgetResolverListener &listener) noexcept {
-        assert(!finished);
+	void AddListener(WidgetResolverListener &listener) noexcept {
+		assert(!finished);
 
-        listeners.push_back(listener);
-    }
+		listeners.push_back(listener);
+	}
 
-    void RemoveListener(WidgetResolverListener &listener) noexcept;
+	void RemoveListener(WidgetResolverListener &listener) noexcept;
 
 private:
-    void Destroy() noexcept {
-        this->~WidgetResolver();
-    }
+	void Destroy() noexcept {
+		this->~WidgetResolver();
+	}
 
-    void Abort() noexcept;
+	void Abort() noexcept;
 
-    void RegistryCallback(const WidgetClass *cls) noexcept;
+	void RegistryCallback(const WidgetClass *cls) noexcept;
 };
 
 void
 WidgetResolver::RemoveListener(WidgetResolverListener &listener) noexcept
 {
-    assert(widget.resolver == this);
-    assert(!listeners.empty());
-    assert(!aborted);
+	assert(widget.resolver == this);
+	assert(!listeners.empty());
+	assert(!aborted);
 
-    listeners.erase(listeners.iterator_to(listener));
+	listeners.erase(listeners.iterator_to(listener));
 
-    if (listeners.empty()) {
-        /* the last listener has been aborted: abort the widget
-           registry */
-        if (finished)
-            /* destroy the resolver before returning from
-               WidgetResolverListener::Cancel() because its caller may
-               destroy the memory pool */
-            Destroy();
-        else
-            Abort();
-    }
+	if (listeners.empty()) {
+		/* the last listener has been aborted: abort the widget
+		   registry */
+		if (finished)
+			/* destroy the resolver before returning from
+			   WidgetResolverListener::Cancel() because its caller may
+			   destroy the memory pool */
+			Destroy();
+		else
+			Abort();
+	}
 }
 
 void
 WidgetResolver::Abort() noexcept
 {
-    assert(listeners.empty());
-    assert(widget.resolver == this);
+	assert(listeners.empty());
+	assert(widget.resolver == this);
 
 #ifndef NDEBUG
-    aborted = true;
+	aborted = true;
 #endif
 
-    widget.resolver = nullptr;
-    cancel_ptr.Cancel();
-    Destroy();
+	widget.resolver = nullptr;
+	cancel_ptr.Cancel();
+	Destroy();
 }
 
 /*
@@ -171,16 +171,16 @@ WidgetResolver::Abort() noexcept
 void
 WidgetResolverListener::Cancel() noexcept
 {
-    assert(!finished);
-    assert(!aborted);
+	assert(!finished);
+	assert(!aborted);
 
 #ifndef NDEBUG
-    aborted = true;
+	aborted = true;
 #endif
 
-    resolver.RemoveListener(*this);
+	resolver.RemoveListener(*this);
 
-    Destroy();
+	Destroy();
 }
 
 
@@ -192,59 +192,59 @@ WidgetResolverListener::Cancel() noexcept
 inline void
 WidgetResolverListener::Finish() noexcept
 {
-    assert(!finished);
-    assert(!aborted);
+	assert(!finished);
+	assert(!aborted);
 
 #ifndef NDEBUG
-    finished = true;
+	finished = true;
 #endif
 
-    callback();
-    Destroy();
+	callback();
+	Destroy();
 }
 
 void
 WidgetResolver::RegistryCallback(const WidgetClass *cls) noexcept
 {
-    assert(widget.cls == nullptr);
-    assert(widget.resolver == this);
-    assert(!listeners.empty());
-    assert(!finished);
-    assert(!aborted);
+	assert(widget.cls == nullptr);
+	assert(widget.resolver == this);
+	assert(!listeners.empty());
+	assert(!finished);
+	assert(!aborted);
 
-    finished = true;
+	finished = true;
 
-    widget.cls = cls;
+	widget.cls = cls;
 
-    widget.from_template.view = widget.from_request.view = cls != nullptr
-        ? widget_view_lookup(&cls->views, widget.from_template.view_name)
-        : nullptr;
+	widget.from_template.view = widget.from_request.view = cls != nullptr
+		? widget_view_lookup(&cls->views, widget.from_template.view_name)
+		: nullptr;
 
-    widget.session_sync_pending = cls != nullptr && cls->stateful &&
-        /* the widget session code requires a valid view */
-        widget.from_template.view != nullptr;
+	widget.session_sync_pending = cls != nullptr && cls->stateful &&
+		/* the widget session code requires a valid view */
+		widget.from_template.view != nullptr;
 
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 
-    do {
-        assert(!listeners.empty());
-        auto &l = listeners.front();
-        listeners.pop_front();
+	do {
+		assert(!listeners.empty());
+		auto &l = listeners.front();
+		listeners.pop_front();
 
-        if (listeners.empty())
-            /* destruct this object before invoking the last callback
-               because the callback may free the memory pool */
-            Destroy();
+		if (listeners.empty())
+			/* destruct this object before invoking the last callback
+			   because the callback may free the memory pool */
+			Destroy();
 
-        l.Finish();
+		l.Finish();
 
-        if (destructed)
-            return;
-    } while (!listeners.empty());
+		if (destructed)
+			return;
+	} while (!listeners.empty());
 
-    /* this is reachable only if the last listener has been canceled
-       from within the previous listener callback */
-    Destroy();
+	/* this is reachable only if the last listener has been canceled
+	   from within the previous listener callback */
+	Destroy();
 }
 
 
@@ -256,53 +256,53 @@ WidgetResolver::RegistryCallback(const WidgetClass *cls) noexcept
 static WidgetResolver *
 widget_resolver_alloc(Widget &widget) noexcept
 {
-    return widget.resolver = NewFromPool<WidgetResolver>(widget.pool, widget);
+	return widget.resolver = NewFromPool<WidgetResolver>(widget.pool, widget);
 }
 
 void
 ResolveWidget(struct pool &pool,
-              Widget &widget,
-              WidgetRegistry &registry,
-              WidgetResolverCallback callback,
-              CancellablePointer &cancel_ptr) noexcept
+	      Widget &widget,
+	      WidgetRegistry &registry,
+	      WidgetResolverCallback callback,
+	      CancellablePointer &cancel_ptr) noexcept
 {
-    bool is_new = false;
+	bool is_new = false;
 
-    assert(widget.class_name != nullptr);
-    assert(pool_contains(widget.pool, &widget, sizeof(widget)));
+	assert(widget.class_name != nullptr);
+	assert(pool_contains(widget.pool, &widget, sizeof(widget)));
 
-    if (widget.cls != nullptr) {
-        /* already resolved successfully */
-        callback();
-        return;
-    }
+	if (widget.cls != nullptr) {
+		/* already resolved successfully */
+		callback();
+		return;
+	}
 
-    /* create new resolver object if it does not already exist */
+	/* create new resolver object if it does not already exist */
 
-    WidgetResolver *resolver = widget.resolver;
-    if (resolver == nullptr) {
-        resolver = widget_resolver_alloc(widget);
-        is_new = true;
-    } else if (resolver->IsFinished()) {
-        /* we have already failed to resolve this widget class; return
-           immediately, don't try again */
-        callback();
-        return;
-    }
+	WidgetResolver *resolver = widget.resolver;
+	if (resolver == nullptr) {
+		resolver = widget_resolver_alloc(widget);
+		is_new = true;
+	} else if (resolver->IsFinished()) {
+		/* we have already failed to resolve this widget class; return
+		   immediately, don't try again */
+		callback();
+		return;
+	}
 
-    assert(pool_contains(widget.pool, widget.resolver,
-                         sizeof(*widget.resolver)));
+	assert(pool_contains(widget.pool, widget.resolver,
+			     sizeof(*widget.resolver)));
 
-    /* add a new listener to the resolver */
+	/* add a new listener to the resolver */
 
-    auto listener = NewFromPool<WidgetResolverListener>(pool, pool, *resolver,
-                                                        callback,
-                                                        cancel_ptr);
+	auto listener = NewFromPool<WidgetResolverListener>(pool, pool, *resolver,
+							    callback,
+							    cancel_ptr);
 
-    resolver->AddListener(*listener);
+	resolver->AddListener(*listener);
 
-    /* finally send request to the widget registry */
+	/* finally send request to the widget registry */
 
-    if (is_new)
-        resolver->Start(registry);
+	if (is_new)
+		resolver->Start(registry);
 }

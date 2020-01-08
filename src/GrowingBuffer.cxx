@@ -44,328 +44,328 @@
 GrowingBuffer::Buffer &
 GrowingBuffer::BufferPtr::Allocate() noexcept
 {
-    assert(buffer == nullptr);
+	assert(buffer == nullptr);
 
-    auto a = allocator.Allocate();
-    buffer = ::new(a.data) Buffer(a.size - sizeof(*buffer) + sizeof(buffer->data));
-    return *buffer;
+	auto a = allocator.Allocate();
+	buffer = ::new(a.data) Buffer(a.size - sizeof(*buffer) + sizeof(buffer->data));
+	return *buffer;
 }
 
 void
 GrowingBuffer::BufferPtr::Free() noexcept
 {
-    assert(buffer != nullptr);
+	assert(buffer != nullptr);
 
-    buffer->~Buffer();
-    allocator.Free();
-    buffer = nullptr;
+	buffer->~Buffer();
+	allocator.Free();
+	buffer = nullptr;
 }
 
 void
 GrowingBuffer::BufferPtr::Pop() noexcept
 {
-    assert(buffer != nullptr);
+	assert(buffer != nullptr);
 
-    auto next = std::move(buffer->next);
-    *this = std::move(next);
+	auto next = std::move(buffer->next);
+	*this = std::move(next);
 }
 
 WritableBuffer<void>
 GrowingBuffer::Buffer::Write() noexcept
 {
-    return {data + fill, size - fill};
+	return {data + fill, size - fill};
 }
 
 size_t
 GrowingBuffer::Buffer::WriteSome(ConstBuffer<void> src) noexcept
 {
-    auto dest = Write();
-    size_t nbytes = std::min(dest.size, src.size);
-    memcpy(dest.data, src.data, nbytes);
-    fill += nbytes;
-    return nbytes;
+	auto dest = Write();
+	size_t nbytes = std::min(dest.size, src.size);
+	memcpy(dest.data, src.data, nbytes);
+	fill += nbytes;
+	return nbytes;
 }
 
 GrowingBuffer::Buffer &
 GrowingBuffer::AppendBuffer() noexcept
 {
-    tail = tail != nullptr
-        ? &tail->next.Allocate()
-        : &head.Allocate();
+	tail = tail != nullptr
+		? &tail->next.Allocate()
+		: &head.Allocate();
 
-    return *tail;
+	return *tail;
 }
 
 void *
 GrowingBuffer::Write(size_t length) noexcept
 {
-    /* this method is only allowed with "tiny" sizes which fit well
-       into any buffer */
-    assert(tail == nullptr || length <= tail->size);
+	/* this method is only allowed with "tiny" sizes which fit well
+	   into any buffer */
+	assert(tail == nullptr || length <= tail->size);
 
-    auto *buffer = tail;
-    if (buffer == nullptr || buffer->fill + length > buffer->size)
-        buffer = &AppendBuffer();
+	auto *buffer = tail;
+	if (buffer == nullptr || buffer->fill + length > buffer->size)
+		buffer = &AppendBuffer();
 
-    assert(buffer->fill + length <= buffer->size);
+	assert(buffer->fill + length <= buffer->size);
 
-    void *ret = buffer->data + buffer->fill;
-    buffer->fill += length;
+	void *ret = buffer->data + buffer->fill;
+	buffer->fill += length;
 
-    return ret;
+	return ret;
 }
 
 size_t
 GrowingBuffer::WriteSome(const void *p, size_t length) noexcept
 {
-    auto *buffer = tail;
-    if (buffer == nullptr || buffer->IsFull())
-        buffer = &AppendBuffer();
+	auto *buffer = tail;
+	if (buffer == nullptr || buffer->IsFull())
+		buffer = &AppendBuffer();
 
-    return buffer->WriteSome({p, length});
+	return buffer->WriteSome({p, length});
 }
 
 void
 GrowingBuffer::Write(const void *p, size_t length) noexcept
 {
-    while (length > 0) {
-        size_t nbytes = WriteSome(p, length);
-        p = ((const char *)p) + nbytes;
-        length -= nbytes;
-    }
+	while (length > 0) {
+		size_t nbytes = WriteSome(p, length);
+		p = ((const char *)p) + nbytes;
+		length -= nbytes;
+	}
 }
 
 void
 GrowingBuffer::Write(const char *p) noexcept
 {
-    Write(p, strlen(p));
+	Write(p, strlen(p));
 }
 
 void
 GrowingBuffer::AppendMoveFrom(GrowingBuffer &&src) noexcept
 {
-    if (src.IsEmpty())
-        return;
+	if (src.IsEmpty())
+		return;
 
-    tail->next = std::move(src.head);
-    tail = src.tail;
-    src.tail = nullptr;
+	tail->next = std::move(src.head);
+	tail = src.tail;
+	src.tail = nullptr;
 }
 
 size_t
 GrowingBuffer::GetSize() const noexcept
 {
-    size_t result = 0;
+	size_t result = 0;
 
-    ForEachBuffer([&result](ConstBuffer<void> b){
-            result += b.size;
-        });
+	ForEachBuffer([&result](ConstBuffer<void> b){
+		result += b.size;
+	});
 
-    return result;
+	return result;
 }
 
 ConstBuffer<void>
 GrowingBuffer::Read() const noexcept
 {
-    if (!head)
-        return nullptr;
+	if (!head)
+		return nullptr;
 
-    assert(position < head->size);
+	assert(position < head->size);
 
-    return { head->data + position, head->fill - position };
+	return { head->data + position, head->fill - position };
 }
 
 void
 GrowingBuffer::Consume(size_t length) noexcept
 {
-    if (length == 0)
-        return;
+	if (length == 0)
+		return;
 
-    assert(head);
+	assert(head);
 
-    position += length;
+	position += length;
 
-    assert(position <= head->fill);
+	assert(position <= head->fill);
 
-    if (position >= head->fill) {
-        head.Pop();
-        if (!head)
-            tail = nullptr;
+	if (position >= head->fill) {
+		head.Pop();
+		if (!head)
+			tail = nullptr;
 
-        position = 0;
-    }
+		position = 0;
+	}
 }
 
 void
 GrowingBuffer::Skip(size_t length) noexcept
 {
-    while (length > 0) {
-        assert(head);
+	while (length > 0) {
+		assert(head);
 
-        size_t remaining = head->fill - position;
-        if (length < remaining) {
-            position += length;
-            return;
-        }
+		size_t remaining = head->fill - position;
+		if (length < remaining) {
+			position += length;
+			return;
+		}
 
-        length -= remaining;
-        position = 0;
-        head.Pop();
-        if (!head)
-            tail = nullptr;
-    }
+		length -= remaining;
+		position = 0;
+		head.Pop();
+		if (!head)
+			tail = nullptr;
+	}
 }
 
 GrowingBufferReader::GrowingBufferReader(GrowingBuffer &&gb) noexcept
-    :buffer(std::move(gb.head))
+	:buffer(std::move(gb.head))
 {
-    assert(!buffer || buffer->fill > 0);
+	assert(!buffer || buffer->fill > 0);
 }
 
 bool
 GrowingBufferReader::IsEOF() const noexcept
 {
-    assert(!buffer || position <= buffer->fill);
+	assert(!buffer || position <= buffer->fill);
 
-    return !buffer || position == buffer->fill;
+	return !buffer || position == buffer->fill;
 }
 
 size_t
 GrowingBufferReader::Available() const noexcept
 {
-    size_t result = 0;
+	size_t result = 0;
 
-    ForEachBuffer([&result](ConstBuffer<void> b){
-            result += b.size;
-        });
+	ForEachBuffer([&result](ConstBuffer<void> b){
+		result += b.size;
+	});
 
-    return result;
+	return result;
 }
 
 ConstBuffer<void>
 GrowingBufferReader::Read() const noexcept
 {
-    if (!buffer)
-        return nullptr;
+	if (!buffer)
+		return nullptr;
 
-    assert(position < buffer->fill);
+	assert(position < buffer->fill);
 
-    return { buffer->data + position, buffer->fill - position };
+	return { buffer->data + position, buffer->fill - position };
 }
 
 void
 GrowingBufferReader::Consume(size_t length) noexcept
 {
-    assert(buffer);
+	assert(buffer);
 
-    if (length == 0)
-        return;
+	if (length == 0)
+		return;
 
-    position += length;
+	position += length;
 
-    assert(position <= buffer->fill);
+	assert(position <= buffer->fill);
 
-    if (position >= buffer->fill) {
-        buffer.Pop();
-        position = 0;
-    }
+	if (position >= buffer->fill) {
+		buffer.Pop();
+		position = 0;
+	}
 }
 
 void
 GrowingBufferReader::Skip(size_t length) noexcept
 {
-    while (length > 0) {
-        assert(buffer);
+	while (length > 0) {
+		assert(buffer);
 
-        size_t remaining = buffer->fill - position;
-        if (length < remaining) {
-            position += length;
-            return;
-        }
+		size_t remaining = buffer->fill - position;
+		if (length < remaining) {
+			position += length;
+			return;
+		}
 
-        length -= remaining;
-        buffer.Pop();
-        position = 0;
-    }
+		length -= remaining;
+		buffer.Pop();
+		position = 0;
+	}
 }
 
 void
 GrowingBuffer::CopyTo(void *dest) const noexcept
 {
-    ForEachBuffer([&dest](ConstBuffer<void> b){
-            dest = mempcpy(dest, b.data, b.size);
-        });
+	ForEachBuffer([&dest](ConstBuffer<void> b){
+		dest = mempcpy(dest, b.data, b.size);
+	});
 }
 
 WritableBuffer<void>
 GrowingBuffer::Dup(struct pool &_pool) const noexcept
 {
-    size_t length = GetSize();
-    if (length == 0)
-        return nullptr;
+	size_t length = GetSize();
+	if (length == 0)
+		return nullptr;
 
-    void *dest = p_malloc(&_pool, length);
-    CopyTo(dest);
+	void *dest = p_malloc(&_pool, length);
+	CopyTo(dest);
 
-    return { dest, length };
+	return { dest, length };
 }
 
 void
 GrowingBuffer::FillBucketList(IstreamBucketList &list) const noexcept
 {
-    ForEachBuffer([&list](ConstBuffer<void> b){
-            list.Push(b);
-        });
+	ForEachBuffer([&list](ConstBuffer<void> b){
+		list.Push(b);
+	});
 }
 
 size_t
 GrowingBuffer::ConsumeBucketList(size_t nbytes) noexcept
 {
-    size_t result = 0;
-    while (nbytes > 0 && head) {
-        size_t available = head->fill - position;
-        if (nbytes < available) {
-            position += nbytes;
-            result += nbytes;
-            break;
-        }
+	size_t result = 0;
+	while (nbytes > 0 && head) {
+		size_t available = head->fill - position;
+		if (nbytes < available) {
+			position += nbytes;
+			result += nbytes;
+			break;
+		}
 
-        result += available;
-        nbytes -= available;
+		result += available;
+		nbytes -= available;
 
-        head.Pop();
-        position = 0;
-    }
+		head.Pop();
+		position = 0;
+	}
 
-    return result;
+	return result;
 }
 
 void
 GrowingBufferReader::FillBucketList(IstreamBucketList &list) const noexcept
 {
-    ForEachBuffer([&list](ConstBuffer<void> b){
-            list.Push(b);
-        });
+	ForEachBuffer([&list](ConstBuffer<void> b){
+		list.Push(b);
+	});
 }
 
 size_t
 GrowingBufferReader::ConsumeBucketList(size_t nbytes) noexcept
 {
-    size_t result = 0;
-    while (nbytes > 0 && buffer) {
-        size_t available = buffer->fill - position;
-        if (nbytes < available) {
-            position += nbytes;
-            result += nbytes;
-            break;
-        }
+	size_t result = 0;
+	while (nbytes > 0 && buffer) {
+		size_t available = buffer->fill - position;
+		if (nbytes < available) {
+			position += nbytes;
+			result += nbytes;
+			break;
+		}
 
-        result += available;
-        nbytes -= available;
+		result += available;
+		nbytes -= available;
 
-        buffer.Pop();
-        position = 0;
-    }
+		buffer.Pop();
+		position = 0;
+	}
 
-    return result;
+	return result;
 }

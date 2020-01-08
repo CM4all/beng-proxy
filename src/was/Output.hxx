@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_WAS_OUTPUT_HXX
-#define BENG_PROXY_WAS_OUTPUT_HXX
+#pragma once
 
 #include <exception>
 
@@ -45,28 +44,28 @@ class WasOutput;
 
 class WasOutputHandler {
 public:
-    /**
-     * Announces the length of the resource.
-     *
-     * @param true on success, false if the #WasOutput object has been
-     * deleted
-     */
-    virtual bool WasOutputLength(uint64_t length) noexcept = 0;
+	/**
+	 * Announces the length of the resource.
+	 *
+	 * @param true on success, false if the #WasOutput object has been
+	 * deleted
+	 */
+	virtual bool WasOutputLength(uint64_t length) noexcept = 0;
 
-    /**
-     * The stream ended prematurely, but the #WasOutput object is
-     * still ok.
-     *
-     * @param the number of bytes aready sent
-     * @param true on success, false if the #WasOutput object has been
-     * deleted
-     */
-    virtual bool WasOutputPremature(uint64_t length,
-                                    std::exception_ptr ep) noexcept = 0;
+	/**
+	 * The stream ended prematurely, but the #WasOutput object is
+	 * still ok.
+	 *
+	 * @param the number of bytes aready sent
+	 * @param true on success, false if the #WasOutput object has been
+	 * deleted
+	 */
+	virtual bool WasOutputPremature(uint64_t length,
+					std::exception_ptr ep) noexcept = 0;
 
-    virtual void WasOutputEof() noexcept = 0;
+	virtual void WasOutputEof() noexcept = 0;
 
-    virtual void WasOutputError(std::exception_ptr ep) noexcept = 0;
+	virtual void WasOutputError(std::exception_ptr ep) noexcept = 0;
 };
 
 /**
@@ -74,8 +73,8 @@ public:
  */
 WasOutput *
 was_output_new(struct pool &pool, EventLoop &event_loop,
-               FileDescriptor fd, UnusedIstreamPtr input,
-               WasOutputHandler &handler) noexcept;
+	       FileDescriptor fd, UnusedIstreamPtr input,
+	       WasOutputHandler &handler) noexcept;
 
 /**
  * @return the total number of bytes written to the pipe
@@ -86,9 +85,9 @@ was_output_free(WasOutput *data) noexcept;
 static inline uint64_t
 was_output_free_p(WasOutput **output_p) noexcept
 {
-    WasOutput *output = *output_p;
-    *output_p = nullptr;
-    return was_output_free(output);
+	WasOutput *output = *output_p;
+	*output_p = nullptr;
+	return was_output_free(output);
 }
 
 /**
@@ -98,5 +97,3 @@ was_output_free_p(WasOutput **output_p) noexcept
  */
 bool
 was_output_check_length(WasOutput &output) noexcept;
-
-#endif

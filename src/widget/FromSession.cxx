@@ -44,83 +44,83 @@
 
 void
 Widget::SaveToSession(WidgetSession &ws) const
-try {
-    assert(cls != nullptr);
-    assert(cls->stateful); /* cannot save state for stateless widgets */
+	try {
+		assert(cls != nullptr);
+		assert(cls->stateful); /* cannot save state for stateless widgets */
 
-    auto &p = ws.session.parent.pool;
+		auto &p = ws.session.parent.pool;
 
-    ws.path_info.Set(p, from_request.path_info);
+		ws.path_info.Set(p, from_request.path_info);
 
-    if (from_request.query_string.empty())
-        ws.query_string.Clear(p);
-    else
-        ws.query_string.Set(p, from_request.query_string);
-} catch (const std::bad_alloc &) {
-}
+		if (from_request.query_string.empty())
+			ws.query_string.Clear(p);
+		else
+			ws.query_string.Set(p, from_request.query_string);
+	} catch (const std::bad_alloc &) {
+	}
 
 void
 Widget::LoadFromSession(const WidgetSession &ws)
 {
-    assert(cls != nullptr);
-    assert(cls->stateful); /* cannot load state from stateless widgets */
-    assert(lazy.address == nullptr);
+	assert(cls != nullptr);
+	assert(cls->stateful); /* cannot load state from stateless widgets */
+	assert(lazy.address == nullptr);
 
-    from_request.path_info = ws.path_info;
+	from_request.path_info = ws.path_info;
 
-    if (ws.query_string != nullptr)
-        from_request.query_string = ws.query_string.c_str();
+	if (ws.query_string != nullptr)
+		from_request.query_string = ws.query_string.c_str();
 }
 
 void
 Widget::LoadFromSession(RealmSession &session)
 {
-    assert(parent != nullptr);
-    assert(lazy.address == nullptr);
-    assert(cls != nullptr);
-    assert(cls->stateful);
-    assert(session_sync_pending);
-    assert(!session_save_pending);
+	assert(parent != nullptr);
+	assert(lazy.address == nullptr);
+	assert(cls != nullptr);
+	assert(cls->stateful);
+	assert(session_sync_pending);
+	assert(!session_save_pending);
 
-    session_sync_pending = false;
+	session_sync_pending = false;
 
-    if (!ShouldSyncSession())
-        /* not stateful in this request */
-        return;
+	if (!ShouldSyncSession())
+		/* not stateful in this request */
+		return;
 
-    /* are we focused? */
+	/* are we focused? */
 
-    if (HasFocus()) {
-        /* postpone until we have the widget's response; we do not
-           know yet which view will be used until we have checked the
-           response headers */
+	if (HasFocus()) {
+		/* postpone until we have the widget's response; we do not
+		   know yet which view will be used until we have checked the
+		   response headers */
 
-        session_save_pending = true;
-    } else {
-        /* get query string from session */
+		session_save_pending = true;
+	} else {
+		/* get query string from session */
 
-        auto *ws = GetSession(session, false);
-        if (ws != nullptr)
-            LoadFromSession(*ws);
-    }
+		auto *ws = GetSession(session, false);
+		if (ws != nullptr)
+			LoadFromSession(*ws);
+	}
 }
 
 void
 Widget::SaveToSession(RealmSession &session)
 {
-    assert(parent != nullptr);
-    assert(cls != nullptr);
-    assert(cls->stateful);
-    assert(!session_sync_pending);
-    assert(session_save_pending);
+	assert(parent != nullptr);
+	assert(cls != nullptr);
+	assert(cls->stateful);
+	assert(!session_sync_pending);
+	assert(session_save_pending);
 
-    session_save_pending = false;
+	session_save_pending = false;
 
-    if (!ShouldSyncSession())
-        /* not stateful in this request */
-        return;
+	if (!ShouldSyncSession())
+		/* not stateful in this request */
+		return;
 
-    auto *ws = GetSession(session, true);
-    if (ws != nullptr)
-        SaveToSession(*ws);
+	auto *ws = GetSession(session, true);
+	if (ws != nullptr)
+		SaveToSession(*ws);
 }

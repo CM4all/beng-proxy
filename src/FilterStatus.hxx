@@ -37,19 +37,19 @@
 constexpr bool
 FilterStatusIsRecessive(http_status_t status) noexcept
 {
-    return status == HTTP_STATUS_OK || status == HTTP_STATUS_NO_CONTENT;
+	return status == HTTP_STATUS_OK || status == HTTP_STATUS_NO_CONTENT;
 }
 
 constexpr http_status_t
 ApplyFilterStatus(http_status_t previous_status, http_status_t filter_status,
-                  bool has_body) noexcept
+		  bool has_body) noexcept
 {
-        /* if the filter didn't specify a status (other than 200 or
-           204), forward the previous status instead */
-        return FilterStatusIsRecessive(filter_status) &&
-            /* ... but only if it is compatible with the presence of a
-               response body */
-            (!http_status_is_empty(previous_status) || !has_body)
-            ? previous_status
-            : filter_status;
+	/* if the filter didn't specify a status (other than 200 or
+	   204), forward the previous status instead */
+	return FilterStatusIsRecessive(filter_status) &&
+		/* ... but only if it is compatible with the presence of a
+		   response body */
+		(!http_status_is_empty(previous_status) || !has_body)
+		? previous_status
+		: filter_status;
 }

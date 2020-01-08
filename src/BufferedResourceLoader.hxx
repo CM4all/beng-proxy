@@ -42,29 +42,29 @@ class PipeStock;
  * postpone the real #ResourceLoader call.
  */
 class BufferedResourceLoader final : public ResourceLoader {
-    EventLoop &event_loop;
-    ResourceLoader &next;
+	EventLoop &event_loop;
+	ResourceLoader &next;
 
-    PipeStock *const pipe_stock;
+	PipeStock *const pipe_stock;
 
-    class Request;
+	class Request;
 
 public:
-    BufferedResourceLoader(EventLoop &_event_loop,
-                           ResourceLoader &_next,
-                           PipeStock *_pipe_stock) noexcept
-        :event_loop(_event_loop), next(_next), pipe_stock(_pipe_stock) {}
+	BufferedResourceLoader(EventLoop &_event_loop,
+			       ResourceLoader &_next,
+			       PipeStock *_pipe_stock) noexcept
+		:event_loop(_event_loop), next(_next), pipe_stock(_pipe_stock) {}
 
-    /* virtual methods from class ResourceLoader */
-    void SendRequest(struct pool &pool,
-                     const StopwatchPtr &parent_stopwatch,
-                     sticky_hash_t session_sticky,
-                     const char *cache_tag,
-                     const char *site_name,
-                     http_method_t method,
-                     const ResourceAddress &address,
-                     http_status_t status, StringMap &&headers,
-                     UnusedIstreamPtr body, const char *body_etag,
-                     HttpResponseHandler &handler,
-                     CancellablePointer &cancel_ptr) noexcept override;
+	/* virtual methods from class ResourceLoader */
+	void SendRequest(struct pool &pool,
+			 const StopwatchPtr &parent_stopwatch,
+			 sticky_hash_t session_sticky,
+			 const char *cache_tag,
+			 const char *site_name,
+			 http_method_t method,
+			 const ResourceAddress &address,
+			 http_status_t status, StringMap &&headers,
+			 UnusedIstreamPtr body, const char *body_etag,
+			 HttpResponseHandler &handler,
+			 CancellablePointer &cancel_ptr) noexcept override;
 };

@@ -34,8 +34,7 @@
  * Pick the output of a single widget for displaying it in an IFRAME.
  */
 
-#ifndef BENG_PROXY_FRAME_HXX
-#define BENG_PROXY_FRAME_HXX
+#pragma once
 
 struct pool;
 struct WidgetContext;
@@ -52,10 +51,10 @@ class StopwatchPtr;
  */
 void
 frame_top_widget(struct pool &pool, Widget &widget,
-                 WidgetContext &ctx,
-                 const StopwatchPtr &parent_stopwatch,
-                 HttpResponseHandler &_handler,
-                 CancellablePointer &cancel_ptr);
+		 WidgetContext &ctx,
+		 const StopwatchPtr &parent_stopwatch,
+		 HttpResponseHandler &_handler,
+		 CancellablePointer &cancel_ptr);
 
 /**
  * Looks up a child widget in the specified widget.  This is a wrapper
@@ -64,9 +63,7 @@ frame_top_widget(struct pool &pool, Widget &widget,
  */
 void
 frame_parent_widget(struct pool &pool, Widget &widget, const char *id,
-                    WidgetContext &ctx,
-                    const StopwatchPtr &parent_stopwatch,
-                    WidgetLookupHandler &handler,
-                    CancellablePointer &cancel_ptr);
-
-#endif
+		    WidgetContext &ctx,
+		    const StopwatchPtr &parent_stopwatch,
+		    WidgetLookupHandler &handler,
+		    CancellablePointer &cancel_ptr);

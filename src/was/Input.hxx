@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_WAS_INPUT_HXX
-#define BENG_PROXY_WAS_INPUT_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -47,45 +46,45 @@ class WasInput;
 
 class WasInputHandler {
 public:
-    /**
-     * Istream::Close() has been called.
-     *
-     * The #Istream will be destroyed right after returning from this
-     * method; the method should abandon all pointers to it, and not
-     * call it.
-     *
-     * @param received the number of bytes received so far (includes
-     * data that hasn't been delivered to the #IstreamHandler yet)
-     */
-    virtual void WasInputClose(uint64_t received) noexcept = 0;
+	/**
+	 * Istream::Close() has been called.
+	 *
+	 * The #Istream will be destroyed right after returning from this
+	 * method; the method should abandon all pointers to it, and not
+	 * call it.
+	 *
+	 * @param received the number of bytes received so far (includes
+	 * data that hasn't been delivered to the #IstreamHandler yet)
+	 */
+	virtual void WasInputClose(uint64_t received) noexcept = 0;
 
-    /**
-     * All data was received from the pipe to the input buffer; we
-     * don't need the pipe anymore for this request.
-     *
-     * @return false if the #WasInput has been destroyed by this
-     * method
-     */
-    virtual bool WasInputRelease() noexcept = 0;
+	/**
+	 * All data was received from the pipe to the input buffer; we
+	 * don't need the pipe anymore for this request.
+	 *
+	 * @return false if the #WasInput has been destroyed by this
+	 * method
+	 */
+	virtual bool WasInputRelease() noexcept = 0;
 
-    /**
-     * Called right before reporting end-of-file to the #IstreamHandler.
-     *
-     * The #Istream will be destroyed right after returning from this
-     * method; the method should abandon all pointers to it, and not
-     * call it.
-     */
-    virtual void WasInputEof() noexcept = 0;
+	/**
+	 * Called right before reporting end-of-file to the #IstreamHandler.
+	 *
+	 * The #Istream will be destroyed right after returning from this
+	 * method; the method should abandon all pointers to it, and not
+	 * call it.
+	 */
+	virtual void WasInputEof() noexcept = 0;
 
-    /**
-     * There was an I/O error on the pipe.  Called right before
-     * reporting the error to the #IstreamHandler.
-     *
-     * The #Istream will be destroyed right after returning from this
-     * method; the method should abandon all pointers to it, and not
-     * call it.
-     */
-    virtual void WasInputError() noexcept = 0;
+	/**
+	 * There was an I/O error on the pipe.  Called right before
+	 * reporting the error to the #IstreamHandler.
+	 *
+	 * The #Istream will be destroyed right after returning from this
+	 * method; the method should abandon all pointers to it, and not
+	 * call it.
+	 */
+	virtual void WasInputError() noexcept = 0;
 };
 
 
@@ -94,7 +93,7 @@ public:
  */
 WasInput *
 was_input_new(struct pool &pool, EventLoop &event_loop, FileDescriptor fd,
-              WasInputHandler &handler) noexcept;
+	      WasInputHandler &handler) noexcept;
 
 /**
  * @param error the error reported to the istream handler
@@ -105,9 +104,9 @@ was_input_free(WasInput *input, std::exception_ptr ep) noexcept;
 static inline void
 was_input_free_p(WasInput **input_p, std::exception_ptr ep) noexcept
 {
-    WasInput *input = *input_p;
-    *input_p = nullptr;
-    was_input_free(input, ep);
+	WasInput *input = *input_p;
+	*input_p = nullptr;
+	was_input_free(input, ep);
 }
 
 /**
@@ -120,9 +119,9 @@ was_input_free_unused(WasInput *input) noexcept;
 static inline void
 was_input_free_unused_p(WasInput **input_p) noexcept
 {
-    WasInput *input = *input_p;
-    *input_p = nullptr;
-    was_input_free_unused(input);
+	WasInput *input = *input_p;
+	*input_p = nullptr;
+	was_input_free_unused(input);
 }
 
 UnusedIstreamPtr
@@ -166,5 +165,3 @@ was_input_premature_throw(WasInput *input, uint64_t length);
 
 void
 was_input_enable_timeout(WasInput *input) noexcept;
-
-#endif

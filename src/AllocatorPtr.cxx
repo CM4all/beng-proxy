@@ -37,41 +37,41 @@
 ConstBuffer<void>
 AllocatorPtr::Dup(ConstBuffer<void> src) const noexcept
 {
-    if (src == nullptr)
-        return nullptr;
+	if (src == nullptr)
+		return nullptr;
 
-    if (src.empty())
-        return {"", 0};
+	if (src.empty())
+		return {"", 0};
 
-    return {Dup(src.data, src.size), src.size};
+	return {Dup(src.data, src.size), src.size};
 }
 
 StringView
 AllocatorPtr::Dup(StringView src) const noexcept
 {
-    if (src == nullptr)
-        return nullptr;
+	if (src == nullptr)
+		return nullptr;
 
-    if (src.empty())
-        return "";
+	if (src.empty())
+		return "";
 
-    return {(const char *)Dup(src.data, src.size), src.size};
+	return {(const char *)Dup(src.data, src.size), src.size};
 }
 
 const char *
 AllocatorPtr::DupZ(StringView src) const noexcept
 {
-    if (src == nullptr)
-        return nullptr;
+	if (src == nullptr)
+		return nullptr;
 
-    if (src.empty())
-        return "";
+	if (src.empty())
+		return "";
 
-    return p_strndup(&pool, src.data, src.size);
+	return p_strndup(&pool, src.data, src.size);
 }
 
 SocketAddress
 AllocatorPtr::Dup(SocketAddress src) const noexcept
 {
-    return DupAddress(pool, src);
+	return DupAddress(pool, src);
 }

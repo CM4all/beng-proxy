@@ -42,48 +42,48 @@
 
 bool
 LocalControl::OnControlRaw(ConstBuffer<void> payload,
-                           SocketAddress address,
-                           int uid)
+			   SocketAddress address,
+			   int uid)
 {
-    if (uid < 0 || (uid != 0 && (uid_t)uid != geteuid()))
-        /* only root and the beng-proxy user are allowed to send
-           commands to the implicit control channel */
-        return false;
+	if (uid < 0 || (uid != 0 && (uid_t)uid != geteuid()))
+		/* only root and the beng-proxy user are allowed to send
+		   commands to the implicit control channel */
+		return false;
 
-    return handler.OnControlRaw(payload, address, uid);
+	return handler.OnControlRaw(payload, address, uid);
 }
 
 void
 LocalControl::OnControlPacket(ControlServer &control_server,
-                              BengProxy::ControlCommand command,
-                              ConstBuffer<void> payload,
-                              WritableBuffer<UniqueFileDescriptor> fds,
-                              SocketAddress address, int uid)
+			      BengProxy::ControlCommand command,
+			      ConstBuffer<void> payload,
+			      WritableBuffer<UniqueFileDescriptor> fds,
+			      SocketAddress address, int uid)
 {
-    handler.OnControlPacket(control_server, command,
-                            payload, fds, address, uid);
+	handler.OnControlPacket(control_server, command,
+				payload, fds, address, uid);
 }
 
 void
 LocalControl::OnControlError(std::exception_ptr ep) noexcept
 {
-    handler.OnControlError(ep);
+	handler.OnControlError(ep);
 }
 
 void
 LocalControl::Open(EventLoop &event_loop)
 {
-    server.reset();
+	server.reset();
 
-    struct sockaddr_un sa;
-    sa.sun_family = AF_LOCAL;
-    sa.sun_path[0] = '\0';
-    sprintf(sa.sun_path + 1, "%s%d", prefix, (int)getpid());
+	struct sockaddr_un sa;
+	sa.sun_family = AF_LOCAL;
+	sa.sun_path[0] = '\0';
+	sprintf(sa.sun_path + 1, "%s%d", prefix, (int)getpid());
 
-    SocketConfig config;
-    config.bind_address = SocketAddress((const struct sockaddr *)&sa,
-                                        SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1)),
-    config.pass_cred = true;
+	SocketConfig config;
+	config.bind_address = SocketAddress((const struct sockaddr *)&sa,
+					    SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1)),
+		config.pass_cred = true;
 
-    server.reset(new ControlServer(event_loop, *this, config));
+	server.reset(new ControlServer(event_loop, *this, config));
 }

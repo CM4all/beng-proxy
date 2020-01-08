@@ -41,15 +41,15 @@ class Expiry;
  * A round-robin load balancer for #AddressList.
  */
 class RoundRobinBalancer final {
-    /** the index of the item that will be returned next */
-    unsigned next = 0;
+	/** the index of the item that will be returned next */
+	unsigned next = 0;
 
 public:
-    SocketAddress Get(FailureManager &failure_manager,
-                      Expiry now,
-                      const AddressList &addresses,
-                      bool allow_fade) noexcept;
+	SocketAddress Get(FailureManager &failure_manager,
+			  Expiry now,
+			  const AddressList &addresses,
+			  bool allow_fade) noexcept;
 
 private:
-    const SocketAddress &NextAddress(const AddressList &addresses) noexcept;
+	const SocketAddress &NextAddress(const AddressList &addresses) noexcept;
 };

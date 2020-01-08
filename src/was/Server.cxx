@@ -55,205 +55,205 @@
 #include <unistd.h>
 
 class WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
-    struct pool &pool;
+	struct pool &pool;
 
-    SocketDescriptor control_fd;
-    FileDescriptor input_fd, output_fd;
+	SocketDescriptor control_fd;
+	FileDescriptor input_fd, output_fd;
 
-    WasControl control;
+	WasControl control;
 
-    WasServerHandler &handler;
+	WasServerHandler &handler;
 
-    struct Request {
-        PoolPtr pool;
+	struct Request {
+		PoolPtr pool;
 
-        http_method_t method;
+		http_method_t method;
 
-        const char *uri;
+		const char *uri;
 
-        /**
-         * Request headers being assembled.  This pointer is set to
-         * nullptr before before the request is dispatched to the
-         * handler.
-         */
-        StringMap *headers;
+		/**
+		 * Request headers being assembled.  This pointer is set to
+		 * nullptr before before the request is dispatched to the
+		 * handler.
+		 */
+		StringMap *headers;
 
-        WasInput *body;
+		WasInput *body;
 
-        bool released = false;
+		bool released = false;
 
-        enum class State : uint8_t {
-            /**
-             * No request is being processed currently.
-             */
-            NONE,
+		enum class State : uint8_t {
+			/**
+			 * No request is being processed currently.
+			 */
+			NONE,
 
-            /**
-             * Receiving headers.
-             */
-            HEADERS,
+			/**
+			 * Receiving headers.
+			 */
+			HEADERS,
 
-            /**
-             * Receiving headers.
-             */
-            PENDING,
+			/**
+			 * Receiving headers.
+			 */
+			PENDING,
 
-            /**
-             * Request metadata already submitted to
-             * WasServerHandler::OnWasRequest().
-             */
-            SUBMITTED,
-        } state = State::NONE;
-    } request;
+			/**
+			 * Request metadata already submitted to
+			 * WasServerHandler::OnWasRequest().
+			 */
+			SUBMITTED,
+		} state = State::NONE;
+	} request;
 
-    struct {
-        http_status_t status;
+	struct {
+		http_status_t status;
 
-        WasOutput *body;
-    } response;
+		WasOutput *body;
+	} response;
 
 public:
-    WasServer(struct pool &_pool, EventLoop &event_loop,
-              SocketDescriptor _control_fd,
-              FileDescriptor _input_fd, FileDescriptor _output_fd,
-              WasServerHandler &_handler)
-        :pool(_pool),
-         control_fd(_control_fd), input_fd(_input_fd), output_fd(_output_fd),
-         control(event_loop, control_fd, *this),
-         handler(_handler) {}
+	WasServer(struct pool &_pool, EventLoop &event_loop,
+		  SocketDescriptor _control_fd,
+		  FileDescriptor _input_fd, FileDescriptor _output_fd,
+		  WasServerHandler &_handler)
+		:pool(_pool),
+		 control_fd(_control_fd), input_fd(_input_fd), output_fd(_output_fd),
+		 control(event_loop, control_fd, *this),
+		 handler(_handler) {}
 
-    void Free() {
-        ReleaseError("shutting down WAS connection");
-    }
+	void Free() {
+		ReleaseError("shutting down WAS connection");
+	}
 
-    void SendResponse(http_status_t status,
-                      StringMap &&headers, UnusedIstreamPtr body) noexcept;
+	void SendResponse(http_status_t status,
+			  StringMap &&headers, UnusedIstreamPtr body) noexcept;
 
 private:
-    void CloseFiles() {
-        control_fd.Close();
-        input_fd.Close();
-        output_fd.Close();
-    }
+	void CloseFiles() {
+		control_fd.Close();
+		input_fd.Close();
+		output_fd.Close();
+	}
 
-    void ReleaseError(std::exception_ptr ep);
+	void ReleaseError(std::exception_ptr ep);
 
-    void ReleaseError(const char *msg) {
-        ReleaseError(std::make_exception_ptr(WasProtocolError(msg)));
-    }
+	void ReleaseError(const char *msg) {
+		ReleaseError(std::make_exception_ptr(WasProtocolError(msg)));
+	}
 
-    void ReleaseUnused();
+	void ReleaseUnused();
 
-    /**
-     * Abort receiving the response status/headers from the WAS server.
-     */
-    void AbortError(std::exception_ptr ep) {
-        auto &handler2 = handler;
-        ReleaseError(ep);
-        handler2.OnWasClosed();
-    }
+	/**
+	 * Abort receiving the response status/headers from the WAS server.
+	 */
+	void AbortError(std::exception_ptr ep) {
+		auto &handler2 = handler;
+		ReleaseError(ep);
+		handler2.OnWasClosed();
+	}
 
-    void AbortError(const char *msg) {
-        AbortError(std::make_exception_ptr(WasProtocolError(msg)));
-    }
+	void AbortError(const char *msg) {
+		AbortError(std::make_exception_ptr(WasProtocolError(msg)));
+	}
 
-    /**
-     * Abort receiving the response status/headers from the WAS server.
-     */
-    void AbortUnused() {
-        auto &handler2 = handler;
-        ReleaseUnused();
-        handler2.OnWasClosed();
-    }
+	/**
+	 * Abort receiving the response status/headers from the WAS server.
+	 */
+	void AbortUnused() {
+		auto &handler2 = handler;
+		ReleaseUnused();
+		handler2.OnWasClosed();
+	}
 
-    /* virtual methods from class WasControlHandler */
-    bool OnWasControlPacket(enum was_command cmd,
-                            ConstBuffer<void> payload) noexcept override;
+	/* virtual methods from class WasControlHandler */
+	bool OnWasControlPacket(enum was_command cmd,
+				ConstBuffer<void> payload) noexcept override;
 
-    bool OnWasControlDrained() noexcept override {
-        if (request.state == Request::State::PENDING) {
-            request.state = Request::State::SUBMITTED;
+	bool OnWasControlDrained() noexcept override {
+		if (request.state == Request::State::PENDING) {
+			request.state = Request::State::SUBMITTED;
 
-            UnusedIstreamPtr body;
-            if (request.released) {
-                was_input_free_unused(request.body);
-                request.body = nullptr;
+			UnusedIstreamPtr body;
+			if (request.released) {
+				was_input_free_unused(request.body);
+				request.body = nullptr;
 
-                body = istream_null_new(*request.pool);
-            } else if (request.body != nullptr)
-                body = was_input_enable(*request.body);
+				body = istream_null_new(*request.pool);
+			} else if (request.body != nullptr)
+				body = was_input_enable(*request.body);
 
-            handler.OnWasRequest(*request.pool, request.method,
-                                 request.uri, std::move(*request.headers),
-                                 std::move(body));
-            /* XXX check if connection has been closed */
-        }
+			handler.OnWasRequest(*request.pool, request.method,
+					     request.uri, std::move(*request.headers),
+					     std::move(body));
+			/* XXX check if connection has been closed */
+		}
 
-        return true;
-    }
+		return true;
+	}
 
-    void OnWasControlDone() noexcept override {
-        assert(!control.IsDefined());
-    }
+	void OnWasControlDone() noexcept override {
+		assert(!control.IsDefined());
+	}
 
-    void OnWasControlError(std::exception_ptr ep) noexcept override;
+	void OnWasControlError(std::exception_ptr ep) noexcept override;
 
-    /* virtual methods from class WasOutputHandler */
-    bool WasOutputLength(uint64_t length) noexcept override;
-    bool WasOutputPremature(uint64_t length,
-                            std::exception_ptr ep) noexcept override;
-    void WasOutputEof() noexcept override;
-    void WasOutputError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class WasOutputHandler */
+	bool WasOutputLength(uint64_t length) noexcept override;
+	bool WasOutputPremature(uint64_t length,
+				std::exception_ptr ep) noexcept override;
+	void WasOutputEof() noexcept override;
+	void WasOutputError(std::exception_ptr ep) noexcept override;
 
-    /* virtual methods from class WasInputHandler */
-    void WasInputClose(uint64_t received) noexcept override;
-    bool WasInputRelease() noexcept override;
-    void WasInputEof() noexcept override;
-    void WasInputError() noexcept override;
+	/* virtual methods from class WasInputHandler */
+	void WasInputClose(uint64_t received) noexcept override;
+	bool WasInputRelease() noexcept override;
+	void WasInputEof() noexcept override;
+	void WasInputError() noexcept override;
 };
 
 void
 WasServer::ReleaseError(std::exception_ptr ep)
 {
-    if (control.IsDefined())
-        control.ReleaseSocket();
+	if (control.IsDefined())
+		control.ReleaseSocket();
 
-    if (request.state != Request::State::NONE) {
-        if (request.body != nullptr)
-            was_input_free_p(&request.body, ep);
+	if (request.state != Request::State::NONE) {
+		if (request.body != nullptr)
+			was_input_free_p(&request.body, ep);
 
-        if (request.state == Request::State::SUBMITTED &&
-            response.body != nullptr)
-            was_output_free_p(&response.body);
+		if (request.state == Request::State::SUBMITTED &&
+		    response.body != nullptr)
+			was_output_free_p(&response.body);
 
-        request.pool.reset();
-    }
+		request.pool.reset();
+	}
 
-    CloseFiles();
+	CloseFiles();
 
-    this->~WasServer();
+	this->~WasServer();
 }
 
 void
 WasServer::ReleaseUnused()
 {
-    if (control.IsDefined())
-        control.ReleaseSocket();
+	if (control.IsDefined())
+		control.ReleaseSocket();
 
-    if (request.state != Request::State::NONE) {
-        if (request.body != nullptr)
-            was_input_free_unused_p(&request.body);
+	if (request.state != Request::State::NONE) {
+		if (request.body != nullptr)
+			was_input_free_unused_p(&request.body);
 
-        if (request.state == Request::State::SUBMITTED &&
-            response.body != nullptr)
-            was_output_free_p(&response.body);
+		if (request.state == Request::State::SUBMITTED &&
+		    response.body != nullptr)
+			was_output_free_p(&response.body);
 
-        request.pool.reset();
-    }
+		request.pool.reset();
+	}
 
-    CloseFiles();
+	CloseFiles();
 
-    this->~WasServer();
+	this->~WasServer();
 }
 
 /*
@@ -263,46 +263,46 @@ WasServer::ReleaseUnused()
 bool
 WasServer::WasOutputLength(uint64_t length) noexcept
 {
-    assert(control.IsDefined());
-    assert(response.body != nullptr);
+	assert(control.IsDefined());
+	assert(response.body != nullptr);
 
-    return control.SendUint64(WAS_COMMAND_LENGTH, length);
+	return control.SendUint64(WAS_COMMAND_LENGTH, length);
 }
 
 bool
 WasServer::WasOutputPremature(uint64_t length, std::exception_ptr ep) noexcept
 {
-    if (!control.IsDefined())
-        /* this can happen if was_input_free() call destroys the
-           WasOutput instance; this check means to work around this
-           circular call */
-        return true;
+	if (!control.IsDefined())
+		/* this can happen if was_input_free() call destroys the
+		   WasOutput instance; this check means to work around this
+		   circular call */
+		return true;
 
-    assert(response.body != nullptr);
+	assert(response.body != nullptr);
 
-    response.body = nullptr;
+	response.body = nullptr;
 
-    /* XXX send PREMATURE, recover */
-    (void)length;
-    AbortError(ep);
-    return false;
+	/* XXX send PREMATURE, recover */
+	(void)length;
+	AbortError(ep);
+	return false;
 }
 
 void
 WasServer::WasOutputEof() noexcept
 {
-    assert(response.body != nullptr);
+	assert(response.body != nullptr);
 
-    response.body = nullptr;
+	response.body = nullptr;
 }
 
 void
 WasServer::WasOutputError(std::exception_ptr ep) noexcept
 {
-    assert(response.body != nullptr);
+	assert(response.body != nullptr);
 
-    response.body = nullptr;
-    AbortError(ep);
+	response.body = nullptr;
+	AbortError(ep);
 }
 
 /*
@@ -312,51 +312,51 @@ WasServer::WasOutputError(std::exception_ptr ep) noexcept
 void
 WasServer::WasInputClose(gcc_unused uint64_t received) noexcept
 {
-    /* this happens when the request handler isn't interested in the
-       request body */
+	/* this happens when the request handler isn't interested in the
+	   request body */
 
-    assert(request.state == Request::State::SUBMITTED);
-    assert(request.body != nullptr);
+	assert(request.state == Request::State::SUBMITTED);
+	assert(request.body != nullptr);
 
-    request.body = nullptr;
+	request.body = nullptr;
 
-    if (control.IsDefined())
-        control.SendEmpty(WAS_COMMAND_STOP);
+	if (control.IsDefined())
+		control.SendEmpty(WAS_COMMAND_STOP);
 
-    // TODO: handle PREMATURE packet which we'll receive soon
+	// TODO: handle PREMATURE packet which we'll receive soon
 }
 
 bool
 WasServer::WasInputRelease() noexcept
 {
-    assert(request.body != nullptr);
-    assert(!request.released);
+	assert(request.body != nullptr);
+	assert(!request.released);
 
-    request.released = true;
-    return true;
+	request.released = true;
+	return true;
 }
 
 void
 WasServer::WasInputEof() noexcept
 {
-    assert(request.state == Request::State::SUBMITTED);
-    assert(request.body != nullptr);
-    assert(request.released);
+	assert(request.state == Request::State::SUBMITTED);
+	assert(request.body != nullptr);
+	assert(request.released);
 
-    request.body = nullptr;
+	request.body = nullptr;
 
-    // TODO
+	// TODO
 }
 
 void
 WasServer::WasInputError() noexcept
 {
-    assert(request.state == Request::State::SUBMITTED);
-    assert(request.body != nullptr);
+	assert(request.state == Request::State::SUBMITTED);
+	assert(request.body != nullptr);
 
-    request.body = nullptr;
+	request.body = nullptr;
 
-    AbortUnused();
+	AbortUnused();
 }
 
 /*
@@ -365,153 +365,153 @@ WasServer::WasInputError() noexcept
 
 bool
 WasServer::OnWasControlPacket(enum was_command cmd,
-                              ConstBuffer<void> payload) noexcept
+			      ConstBuffer<void> payload) noexcept
 {
-    switch (cmd) {
-        const uint64_t *length_p;
-        const char *p;
-        http_method_t method;
+	switch (cmd) {
+		const uint64_t *length_p;
+		const char *p;
+		http_method_t method;
 
-    case WAS_COMMAND_NOP:
-        break;
+	case WAS_COMMAND_NOP:
+		break;
 
-    case WAS_COMMAND_REQUEST:
-        if (request.state != Request::State::NONE) {
-            AbortError("misplaced REQUEST packet");
-            return false;
-        }
+	case WAS_COMMAND_REQUEST:
+		if (request.state != Request::State::NONE) {
+			AbortError("misplaced REQUEST packet");
+			return false;
+		}
 
-        request.pool = pool_new_linear(&pool, "was_server_request", 32768);
-        request.method = HTTP_METHOD_GET;
-        request.uri = nullptr;
-        request.headers = strmap_new(request.pool);
-        request.body = nullptr;
-        request.state = Request::State::HEADERS;
-        response.body = nullptr;
-        break;
+		request.pool = pool_new_linear(&pool, "was_server_request", 32768);
+		request.method = HTTP_METHOD_GET;
+		request.uri = nullptr;
+		request.headers = strmap_new(request.pool);
+		request.body = nullptr;
+		request.state = Request::State::HEADERS;
+		response.body = nullptr;
+		break;
 
-    case WAS_COMMAND_METHOD:
-        if (payload.size != sizeof(method)) {
-            AbortError("malformed METHOD packet");
-            return false;
-        }
+	case WAS_COMMAND_METHOD:
+		if (payload.size != sizeof(method)) {
+			AbortError("malformed METHOD packet");
+			return false;
+		}
 
-        method = *(const http_method_t *)payload.data;
-        if (request.method != HTTP_METHOD_GET &&
-            method != request.method) {
-            /* sending that packet twice is illegal */
-            AbortError("misplaced METHOD packet");
-            return false;
-        }
+		method = *(const http_method_t *)payload.data;
+		if (request.method != HTTP_METHOD_GET &&
+		    method != request.method) {
+			/* sending that packet twice is illegal */
+			AbortError("misplaced METHOD packet");
+			return false;
+		}
 
-        if (!http_method_is_valid(method)) {
-            AbortError("invalid METHOD packet");
-            return false;
-        }
+		if (!http_method_is_valid(method)) {
+			AbortError("invalid METHOD packet");
+			return false;
+		}
 
-        request.method = method;
-        break;
+		request.method = method;
+		break;
 
-    case WAS_COMMAND_URI:
-        if (request.state != Request::State::HEADERS ||
-            request.uri != nullptr) {
-            AbortError("misplaced URI packet");
-            return false;
-        }
+	case WAS_COMMAND_URI:
+		if (request.state != Request::State::HEADERS ||
+		    request.uri != nullptr) {
+			AbortError("misplaced URI packet");
+			return false;
+		}
 
-        request.uri = p_strndup(request.pool,
-                                (const char *)payload.data, payload.size);
-        break;
+		request.uri = p_strndup(request.pool,
+					(const char *)payload.data, payload.size);
+		break;
 
-    case WAS_COMMAND_SCRIPT_NAME:
-    case WAS_COMMAND_PATH_INFO:
-    case WAS_COMMAND_QUERY_STRING:
-        // XXX
-        break;
+	case WAS_COMMAND_SCRIPT_NAME:
+	case WAS_COMMAND_PATH_INFO:
+	case WAS_COMMAND_QUERY_STRING:
+		// XXX
+		break;
 
-    case WAS_COMMAND_HEADER:
-        if (request.state != Request::State::HEADERS) {
-            AbortError("misplaced HEADER packet");
-            return false;
-        }
+	case WAS_COMMAND_HEADER:
+		if (request.state != Request::State::HEADERS) {
+			AbortError("misplaced HEADER packet");
+			return false;
+		}
 
-        p = (const char *)memchr(payload.data, '=', payload.size);
-        if (p == nullptr) {
-            AbortError("malformed HEADER packet");
-            return false;
-        }
+		p = (const char *)memchr(payload.data, '=', payload.size);
+		if (p == nullptr) {
+			AbortError("malformed HEADER packet");
+			return false;
+		}
 
-        // XXX parse buffer
+		// XXX parse buffer
 
-        break;
+		break;
 
-    case WAS_COMMAND_PARAMETER:
-        // XXX
-        break;
+	case WAS_COMMAND_PARAMETER:
+		// XXX
+		break;
 
-    case WAS_COMMAND_STATUS:
-        AbortError("misplaced STATUS packet");
-        return false;
+	case WAS_COMMAND_STATUS:
+		AbortError("misplaced STATUS packet");
+		return false;
 
-    case WAS_COMMAND_NO_DATA:
-        if (request.state != Request::State::HEADERS ||
-            request.uri == nullptr) {
-            AbortError("misplaced NO_DATA packet");
-            return false;
-        }
+	case WAS_COMMAND_NO_DATA:
+		if (request.state != Request::State::HEADERS ||
+		    request.uri == nullptr) {
+			AbortError("misplaced NO_DATA packet");
+			return false;
+		}
 
-        request.body = nullptr;
-        request.state = Request::State::PENDING;
-        break;
+		request.body = nullptr;
+		request.state = Request::State::PENDING;
+		break;
 
-    case WAS_COMMAND_DATA:
-        if (request.state != Request::State::HEADERS ||
-            request.uri == nullptr) {
-            AbortError("misplaced DATA packet");
-            return false;
-        }
+	case WAS_COMMAND_DATA:
+		if (request.state != Request::State::HEADERS ||
+		    request.uri == nullptr) {
+			AbortError("misplaced DATA packet");
+			return false;
+		}
 
-        request.body = was_input_new(*request.pool, control.GetEventLoop(),
-                                     input_fd, *this);
-        request.state = Request::State::PENDING;
-        break;
+		request.body = was_input_new(*request.pool, control.GetEventLoop(),
+					     input_fd, *this);
+		request.state = Request::State::PENDING;
+		break;
 
-    case WAS_COMMAND_LENGTH:
-        if (request.state < Request::State::PENDING ||
-            request.body == nullptr) {
-            AbortError("misplaced LENGTH packet");
-            return false;
-        }
+	case WAS_COMMAND_LENGTH:
+		if (request.state < Request::State::PENDING ||
+		    request.body == nullptr) {
+			AbortError("misplaced LENGTH packet");
+			return false;
+		}
 
-        length_p = (const uint64_t *)payload.data;
-        if (payload.size != sizeof(*length_p)) {
-            AbortError("malformed LENGTH packet");
-            return false;
-        }
+		length_p = (const uint64_t *)payload.data;
+		if (payload.size != sizeof(*length_p)) {
+			AbortError("malformed LENGTH packet");
+			return false;
+		}
 
-        if (!was_input_set_length(request.body, *length_p)) {
-            AbortError("invalid LENGTH packet");
-            return false;
-        }
+		if (!was_input_set_length(request.body, *length_p)) {
+			AbortError("invalid LENGTH packet");
+			return false;
+		}
 
-        break;
+		break;
 
-    case WAS_COMMAND_STOP:
-    case WAS_COMMAND_PREMATURE:
-        // XXX
-        AbortError(StringFormat<64>("unexpected packet: %d", cmd));
-        return false;
-    }
+	case WAS_COMMAND_STOP:
+	case WAS_COMMAND_PREMATURE:
+		// XXX
+		AbortError(StringFormat<64>("unexpected packet: %d", cmd));
+		return false;
+	}
 
-    return true;
+	return true;
 }
 
 void
 WasServer::OnWasControlError(std::exception_ptr ep) noexcept
 {
-    assert(!control.IsDefined());
+	assert(!control.IsDefined());
 
-    AbortError(ep);
+	AbortError(ep);
 }
 
 /*
@@ -521,74 +521,74 @@ WasServer::OnWasControlError(std::exception_ptr ep) noexcept
 
 WasServer *
 was_server_new(struct pool &pool, EventLoop &event_loop,
-               SocketDescriptor control_fd,
-               FileDescriptor input_fd, int output_fd,
-               WasServerHandler &handler)
+	       SocketDescriptor control_fd,
+	       FileDescriptor input_fd, int output_fd,
+	       WasServerHandler &handler)
 {
-    assert(control_fd.IsDefined());
-    assert(input_fd.IsDefined());
-    assert(output_fd >= 0);
+	assert(control_fd.IsDefined());
+	assert(input_fd.IsDefined());
+	assert(output_fd >= 0);
 
-    return NewFromPool<WasServer>(pool, pool, event_loop,
-                                  control_fd, input_fd,
-                                  FileDescriptor(output_fd),
-                                  handler);
+	return NewFromPool<WasServer>(pool, pool, event_loop,
+				      control_fd, input_fd,
+				      FileDescriptor(output_fd),
+				      handler);
 }
 
 void
 was_server_free(WasServer *server)
 {
-    server->Free();
+	server->Free();
 }
 
 inline void
 WasServer::SendResponse(http_status_t status,
-                        StringMap &&headers, UnusedIstreamPtr body) noexcept
+			StringMap &&headers, UnusedIstreamPtr body) noexcept
 {
-    assert(request.state == Request::State::SUBMITTED);
-    assert(response.body == nullptr);
-    assert(http_status_is_valid(status));
-    assert(!http_status_is_empty(status) || !body);
+	assert(request.state == Request::State::SUBMITTED);
+	assert(response.body == nullptr);
+	assert(http_status_is_valid(status));
+	assert(!http_status_is_empty(status) || !body);
 
-    control.BulkOn();
+	control.BulkOn();
 
-    if (!control.Send(WAS_COMMAND_STATUS, &status, sizeof(status)))
-        return;
+	if (!control.Send(WAS_COMMAND_STATUS, &status, sizeof(status)))
+		return;
 
-    if (body && http_method_is_empty(request.method)) {
-        if (request.method == HTTP_METHOD_HEAD) {
-            off_t available = body.GetAvailable(false);
-            if (available >= 0)
-                headers.Add(AllocatorPtr{request.pool},
-                            "content-length",
-                            p_sprintf(request.pool, "%lu",
-                                      (unsigned long)available));
-        }
+	if (body && http_method_is_empty(request.method)) {
+		if (request.method == HTTP_METHOD_HEAD) {
+			off_t available = body.GetAvailable(false);
+			if (available >= 0)
+				headers.Add(AllocatorPtr{request.pool},
+					    "content-length",
+					    p_sprintf(request.pool, "%lu",
+						      (unsigned long)available));
+		}
 
-        body.Clear();
-    }
+		body.Clear();
+	}
 
-    control.SendStrmap(WAS_COMMAND_HEADER, headers);
+	control.SendStrmap(WAS_COMMAND_HEADER, headers);
 
-    if (body) {
-        response.body = was_output_new(*request.pool,
-                                       control.GetEventLoop(),
-                                       output_fd, std::move(body),
-                                       *this);
-        if (!control.SendEmpty(WAS_COMMAND_DATA) ||
-            !was_output_check_length(*response.body))
-            return;
-    } else {
-        if (!control.SendEmpty(WAS_COMMAND_NO_DATA))
-            return;
-    }
+	if (body) {
+		response.body = was_output_new(*request.pool,
+					       control.GetEventLoop(),
+					       output_fd, std::move(body),
+					       *this);
+		if (!control.SendEmpty(WAS_COMMAND_DATA) ||
+		    !was_output_check_length(*response.body))
+			return;
+	} else {
+		if (!control.SendEmpty(WAS_COMMAND_NO_DATA))
+			return;
+	}
 
-    control.BulkOff();
+	control.BulkOff();
 }
 
 void
 was_server_response(WasServer &server, http_status_t status,
-                    StringMap &&headers, UnusedIstreamPtr body) noexcept
+		    StringMap &&headers, UnusedIstreamPtr body) noexcept
 {
-    server.SendResponse(status, std::move(headers), std::move(body));
+	server.SendResponse(status, std::move(headers), std::move(body));
 }

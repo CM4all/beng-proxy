@@ -37,47 +37,47 @@
 
 const char *
 UriFindUnescapedSuffix(const char *const uri_start,
-                       const char *const suffix_start) noexcept
+		       const char *const suffix_start) noexcept
 {
-    const char *uri_i = (const char *)rawmemchr(uri_start, '\0');
-    const char *suffix_i = (const char *)rawmemchr(suffix_start, '\0');
+	const char *uri_i = (const char *)rawmemchr(uri_start, '\0');
+	const char *suffix_i = (const char *)rawmemchr(suffix_start, '\0');
 
-    while (true) {
-        if (suffix_i == suffix_start)
-            /* full match - success */
-            return uri_i;
+	while (true) {
+		if (suffix_i == suffix_start)
+			/* full match - success */
+			return uri_i;
 
-        if (uri_i == uri_start)
-            /* URI is too short - fail */
-            return nullptr;
+		if (uri_i == uri_start)
+			/* URI is too short - fail */
+			return nullptr;
 
-        --uri_i;
-        --suffix_i;
+		--uri_i;
+		--suffix_i;
 
-        char suffix_ch = *suffix_i;
+		char suffix_ch = *suffix_i;
 
-        if (suffix_ch == '%')
-            /* malformed escape */
-            return nullptr;
+		if (suffix_ch == '%')
+			/* malformed escape */
+			return nullptr;
 
-        if (suffix_start + 2 <= suffix_i &&
-            suffix_i[-2] == '%') {
-            const int digit1 = ParseHexDigit(suffix_ch);
-            if (digit1 < 0)
-                /* malformed hex digit */
-                return nullptr;
+		if (suffix_start + 2 <= suffix_i &&
+		    suffix_i[-2] == '%') {
+			const int digit1 = ParseHexDigit(suffix_ch);
+			if (digit1 < 0)
+				/* malformed hex digit */
+				return nullptr;
 
-            const int digit2 = ParseHexDigit(*--suffix_i);
-            if (digit2 < 0)
-                /* malformed hex digit */
-                return nullptr;
+			const int digit2 = ParseHexDigit(*--suffix_i);
+			if (digit2 < 0)
+				/* malformed hex digit */
+				return nullptr;
 
-            --suffix_i;
-            suffix_ch = (digit2 << 4) | digit1;
-        }
+			--suffix_i;
+			suffix_ch = (digit2 << 4) | digit1;
+		}
 
-        if (*uri_i != suffix_ch)
-            /* mismatch */
-            return nullptr;
-    }
+		if (*uri_i != suffix_ch)
+			/* mismatch */
+			return nullptr;
+	}
 }

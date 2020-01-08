@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ARGS_HXX
-#define BENG_PROXY_ARGS_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -58,16 +57,14 @@ args_parse(struct pool &pool, StringView p) noexcept;
 gcc_pure
 const char *
 args_format_n(struct pool &pool, const StringMap *args,
-              const char *replace_key, StringView replace_value,
-              const char *replace_key2, StringView replace_value2,
-              const char *replace_key3, StringView replace_value3,
-              const char *remove_key) noexcept;
+	      const char *replace_key, StringView replace_value,
+	      const char *replace_key2, StringView replace_value2,
+	      const char *replace_key3, StringView replace_value3,
+	      const char *remove_key) noexcept;
 
 gcc_pure
 const char *
 args_format(struct pool &pool, const StringMap *args,
-            const char *replace_key, StringView replace_value,
-            const char *replace_key2, StringView replace_value2,
-            const char *remove_key) noexcept;
-
-#endif
+	    const char *replace_key, StringView replace_value,
+	    const char *replace_key2, StringView replace_value2,
+	    const char *remove_key) noexcept;

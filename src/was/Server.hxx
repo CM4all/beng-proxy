@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_WAS_SERVER_HXX
-#define BENG_PROXY_WAS_SERVER_HXX
+#pragma once
 
 #include "http/Method.h"
 #include "http/Status.h"
@@ -48,11 +47,11 @@ class WasServer;
 
 class WasServerHandler {
 public:
-    virtual void OnWasRequest(struct pool &pool, http_method_t method,
-                              const char *uri, StringMap &&headers,
-                              UnusedIstreamPtr body) noexcept = 0;
+	virtual void OnWasRequest(struct pool &pool, http_method_t method,
+				  const char *uri, StringMap &&headers,
+				  UnusedIstreamPtr body) noexcept = 0;
 
-    virtual void OnWasClosed() noexcept = 0;
+	virtual void OnWasClosed() noexcept = 0;
 };
 
 /**
@@ -68,15 +67,13 @@ public:
  */
 WasServer *
 was_server_new(struct pool &pool, EventLoop &event_loop,
-               SocketDescriptor control_fd,
-               FileDescriptor input_fd, int output_fd,
-               WasServerHandler &handler);
+	       SocketDescriptor control_fd,
+	       FileDescriptor input_fd, int output_fd,
+	       WasServerHandler &handler);
 
 void
 was_server_free(WasServer *server);
 
 void
 was_server_response(WasServer &server, http_status_t status,
-                    StringMap &&headers, UnusedIstreamPtr body) noexcept;
-
-#endif
+		    StringMap &&headers, UnusedIstreamPtr body) noexcept;

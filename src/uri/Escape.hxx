@@ -30,12 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Escape and unescape in URI style ('%20').
- */
-
-#ifndef BENG_PROXY_URI_ESCAPE_HXX
-#define BENG_PROXY_URI_ESCAPE_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -50,11 +45,11 @@ struct StringView;
  */
 size_t
 uri_escape(char *dest, StringView src,
-           char escape_char='%');
+	   char escape_char='%');
 
 size_t
 uri_escape(char *dest, ConstBuffer<void> src,
-           char escape_char='%');
+	   char escape_char='%');
 
 /**
  * @param escape_char the character that is used to escape; use '%'
@@ -64,6 +59,4 @@ uri_escape(char *dest, ConstBuffer<void> src,
  */
 char *
 uri_unescape(char *dest, StringView src,
-             char escape_char='%');
-
-#endif
+	     char escape_char='%');

@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_WAS_LAUNCH_HXX
-#define BENG_PROXY_WAS_LAUNCH_HXX
+#pragma once
 
 #include "io/UniqueFileDescriptor.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -42,15 +41,15 @@ struct ChildOptions;
 template<typename T> struct ConstBuffer;
 
 struct WasProcess {
-    int pid;
-    UniqueSocketDescriptor control;
-    UniqueFileDescriptor input, output;
+	int pid;
+	UniqueSocketDescriptor control;
+	UniqueFileDescriptor input, output;
 
-    void Close() noexcept {
-        control.Close();
-        input.Close();
-        output.Close();
-    }
+	void Close() noexcept {
+		control.Close();
+		input.Close();
+		output.Close();
+	}
 };
 
 /**
@@ -60,11 +59,9 @@ struct WasProcess {
  */
 WasProcess
 was_launch(SpawnService &spawn_service,
-           const char *name,
-           const char *executable_path,
-           ConstBuffer<const char *> args,
-           const ChildOptions &options,
-           UniqueFileDescriptor stderr_fd,
-           ExitListener *listener);
-
-#endif
+	   const char *name,
+	   const char *executable_path,
+	   ConstBuffer<const char *> args,
+	   const ChildOptions &options,
+	   UniqueFileDescriptor stderr_fd,
+	   ExitListener *listener);

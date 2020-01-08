@@ -30,39 +30,36 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ALLOCATOR_STATS_HXX
-#define BENG_PROXY_ALLOCATOR_STATS_HXX
+#pragma once
 
 struct AllocatorStats {
-    /**
-     * Number of bytes allocated from the kernel.
-     */
-    size_t brutto_size;
+	/**
+	 * Number of bytes allocated from the kernel.
+	 */
+	size_t brutto_size;
 
-    /**
-     * Number of bytes being used by client code.
-     */
-    size_t netto_size;
+	/**
+	 * Number of bytes being used by client code.
+	 */
+	size_t netto_size;
 
-    static constexpr AllocatorStats Zero() {
-        return { 0, 0 };
-    }
+	static constexpr AllocatorStats Zero() {
+		return { 0, 0 };
+	}
 
-    void Clear() {
-        brutto_size = 0;
-        netto_size = 0;
-    }
+	void Clear() {
+		brutto_size = 0;
+		netto_size = 0;
+	}
 
-    AllocatorStats &operator+=(const AllocatorStats other) {
-        brutto_size += other.brutto_size;
-        netto_size += other.netto_size;
-        return *this;
-    }
+	AllocatorStats &operator+=(const AllocatorStats other) {
+		brutto_size += other.brutto_size;
+		netto_size += other.netto_size;
+		return *this;
+	}
 
-    constexpr AllocatorStats operator+(const AllocatorStats other) const {
-        return { brutto_size + other.brutto_size,
-                netto_size + other.netto_size };
-    }
+	constexpr AllocatorStats operator+(const AllocatorStats other) const {
+		return { brutto_size + other.brutto_size,
+			netto_size + other.netto_size };
+	}
 };
-
-#endif

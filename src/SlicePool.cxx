@@ -45,20 +45,20 @@
 static constexpr size_t
 align_size(size_t size) noexcept
 {
-    return ((size - 1) | 0x1f) + 1;
+	return ((size - 1) | 0x1f) + 1;
 }
 
 gcc_const
 static inline size_t
 align_page_size(size_t size) noexcept
 {
-    return ((size - 1) | (mmap_page_size() - 1)) + 1;
+	return ((size - 1) | (mmap_page_size() - 1)) + 1;
 }
 
 static constexpr unsigned
 divide_round_up(unsigned a, unsigned b) noexcept
 {
-    return (a + b - 1) / b;
+	return (a + b - 1) / b;
 }
 
 /*
@@ -68,112 +68,112 @@ divide_round_up(unsigned a, unsigned b) noexcept
 
 inline
 SliceArea::SliceArea(SlicePool &_pool) noexcept
-    :pool(_pool)
+	:pool(_pool)
 {
-    /* build the "free" list */
-    for (unsigned i = 0; i < pool.slices_per_area - 1; ++i)
-        slices[i].next = i + 1;
+	/* build the "free" list */
+	for (unsigned i = 0; i < pool.slices_per_area - 1; ++i)
+		slices[i].next = i + 1;
 
-    slices[pool.slices_per_area - 1].next = Slot::END_OF_LIST;
+	slices[pool.slices_per_area - 1].next = Slot::END_OF_LIST;
 
-    PoisonInaccessible(GetPage(pool.header_pages),
-                       mmap_page_size() * (pool.pages_per_area - pool.header_pages));
+	PoisonInaccessible(GetPage(pool.header_pages),
+			   mmap_page_size() * (pool.pages_per_area - pool.header_pages));
 }
 
 SliceArea *
 SliceArea::New(SlicePool &pool) noexcept
 {
-    void *p = mmap_alloc_anonymous(pool.area_size);
-    if (p == (void *)-1) {
-        fputs("Out of adress space\n", stderr);
-        abort();
-    }
+	void *p = mmap_alloc_anonymous(pool.area_size);
+	if (p == (void *)-1) {
+		fputs("Out of adress space\n", stderr);
+		abort();
+	}
 
-    return ::new(p) SliceArea(pool);
+	return ::new(p) SliceArea(pool);
 }
 
 inline bool
 SliceArea::IsFull() const noexcept
 {
-    assert(free_head < pool.slices_per_area ||
-           free_head == Slot::END_OF_LIST);
+	assert(free_head < pool.slices_per_area ||
+	       free_head == Slot::END_OF_LIST);
 
-    return free_head == Slot::END_OF_LIST;
+	return free_head == Slot::END_OF_LIST;
 }
 
 void
 SliceArea::Delete() noexcept
 {
-    assert(allocated_count == 0);
+	assert(allocated_count == 0);
 
 #ifndef NDEBUG
-    for (unsigned i = 0; i < pool.slices_per_area; ++i)
-        assert(slices[i].next < pool.slices_per_area ||
-               slices[i].next == Slot::END_OF_LIST);
+	for (unsigned i = 0; i < pool.slices_per_area; ++i)
+		assert(slices[i].next < pool.slices_per_area ||
+		       slices[i].next == Slot::END_OF_LIST);
 
-    unsigned i = free_head;
-    while (i != Slot::END_OF_LIST) {
-        assert(i < pool.slices_per_area);
+	unsigned i = free_head;
+	while (i != Slot::END_OF_LIST) {
+		assert(i < pool.slices_per_area);
 
-        unsigned next = slices[i].next;
-        slices[i].next = Slot::MARK;
-        i = next;
-    }
+		unsigned next = slices[i].next;
+		slices[i].next = Slot::MARK;
+		i = next;
+	}
 #endif
 
-    this->~SliceArea();
-    mmap_free(this, pool.area_size);
+	this->~SliceArea();
+	mmap_free(this, pool.area_size);
 }
 
 inline void *
 SliceArea::GetPage(unsigned page) noexcept
 {
-    assert(page <= pool.pages_per_area);
+	assert(page <= pool.pages_per_area);
 
-    return (uint8_t *)this + (pool.header_pages + page) * mmap_page_size();
+	return (uint8_t *)this + (pool.header_pages + page) * mmap_page_size();
 }
 
 inline void *
 SliceArea::GetSlice(unsigned slice) noexcept
 {
-    assert(slice < pool.slices_per_area);
-    assert(slices[slice].IsAllocated());
+	assert(slice < pool.slices_per_area);
+	assert(slices[slice].IsAllocated());
 
-    unsigned page = (slice / pool.slices_per_page) * pool.pages_per_slice;
-    slice %= pool.slices_per_page;
+	unsigned page = (slice / pool.slices_per_page) * pool.pages_per_slice;
+	slice %= pool.slices_per_page;
 
-    return (uint8_t *)GetPage(page) + slice * pool.slice_size;
+	return (uint8_t *)GetPage(page) + slice * pool.slice_size;
 }
 
 inline unsigned
 SliceArea::IndexOf(const void *_p) noexcept
 {
-    const uint8_t *p = (const uint8_t *)_p;
-    assert(p >= (uint8_t *)GetPage(0));
-    assert(p < (uint8_t *)GetPage(pool.pages_per_area));
+	const uint8_t *p = (const uint8_t *)_p;
+	assert(p >= (uint8_t *)GetPage(0));
+	assert(p < (uint8_t *)GetPage(pool.pages_per_area));
 
-    size_t offset = p - (const uint8_t *)this;
-    const unsigned page = offset / mmap_page_size() - pool.header_pages;
-    offset %= mmap_page_size();
-    assert(offset % pool.slice_size == 0);
+	size_t offset = p - (const uint8_t *)this;
+	const unsigned page = offset / mmap_page_size() - pool.header_pages;
+	offset %= mmap_page_size();
+	assert(offset % pool.slice_size == 0);
 
-    return page * pool.slices_per_page / pool.pages_per_slice
-        + offset / pool.slice_size;
+	return page * pool.slices_per_page / pool.pages_per_slice
+		+ offset / pool.slice_size;
 }
 
 unsigned
 SliceArea::FindFree(unsigned start) const noexcept
 {
-    assert(start <= pool.slices_per_page);
+	assert(start <= pool.slices_per_page);
 
-    const unsigned end = pool.slices_per_page;
+	const unsigned end = pool.slices_per_page;
 
-    unsigned i;
-    for (i = start; i != end; ++i)
-        if (!slices[i].IsAllocated())
-            break;
+	unsigned i;
+	for (i = start; i != end; ++i)
+		if (!slices[i].IsAllocated())
+			break;
 
-    return i;
+	return i;
 }
 
 /**
@@ -184,52 +184,52 @@ gcc_pure
 unsigned
 SliceArea::FindAllocated(unsigned start) const noexcept
 {
-    assert(start <= pool.slices_per_page);
+	assert(start <= pool.slices_per_page);
 
-    const unsigned end = pool.slices_per_page;
+	const unsigned end = pool.slices_per_page;
 
-    unsigned i;
-    for (i = start; i != end; ++i)
-        if (slices[i].IsAllocated())
-            break;
+	unsigned i;
+	for (i = start; i != end; ++i)
+		if (slices[i].IsAllocated())
+			break;
 
-    return i;
+	return i;
 }
 
 void
 SliceArea::PunchSliceRange(unsigned start, gcc_unused unsigned end) noexcept
 {
-    assert(start <= end);
+	assert(start <= end);
 
-    unsigned start_page = divide_round_up(start, pool.slices_per_page)
-        * pool.pages_per_slice;
-    unsigned end_page = (start / pool.slices_per_page )
-        * pool.pages_per_slice;
-    assert(start_page <= end_page + 1);
-    if (start_page >= end_page)
-        return;
+	unsigned start_page = divide_round_up(start, pool.slices_per_page)
+		* pool.pages_per_slice;
+	unsigned end_page = (start / pool.slices_per_page )
+		* pool.pages_per_slice;
+	assert(start_page <= end_page + 1);
+	if (start_page >= end_page)
+		return;
 
-    uint8_t *start_pointer = (uint8_t *)GetPage(start_page);
-    uint8_t *end_pointer = (uint8_t *)GetPage(end_page);
+	uint8_t *start_pointer = (uint8_t *)GetPage(start_page);
+	uint8_t *end_pointer = (uint8_t *)GetPage(end_page);
 
-    mmap_discard_pages(start_pointer, end_pointer - start_pointer);
+	mmap_discard_pages(start_pointer, end_pointer - start_pointer);
 }
 
 void
 SliceArea::Compress() noexcept
 {
-    unsigned position = 0;
+	unsigned position = 0;
 
-    while (true) {
-        unsigned first_free = FindFree(position);
-        if (first_free == pool.slices_per_page)
-            break;
+	while (true) {
+		unsigned first_free = FindFree(position);
+		if (first_free == pool.slices_per_page)
+			break;
 
-        unsigned first_allocated = FindAllocated(first_free + 1);
-        PunchSliceRange(first_free, first_allocated);
+		unsigned first_allocated = FindAllocated(first_free + 1);
+		PunchSliceRange(first_free, first_allocated);
 
-        position = first_allocated;
-    }
+		position = first_allocated;
+	}
 }
 
 /*
@@ -239,202 +239,202 @@ SliceArea::Compress() noexcept
 
 SlicePool::SlicePool(size_t _slice_size, unsigned _slices_per_area) noexcept
 {
-    assert(_slice_size > 0);
-    assert(_slices_per_area > 0);
+	assert(_slice_size > 0);
+	assert(_slices_per_area > 0);
 
-    if (_slice_size <= mmap_page_size() / 2) {
-        slice_size = align_size(_slice_size);
+	if (_slice_size <= mmap_page_size() / 2) {
+		slice_size = align_size(_slice_size);
 
-        slices_per_page = mmap_page_size() / slice_size;
-        pages_per_slice = 1;
+		slices_per_page = mmap_page_size() / slice_size;
+		pages_per_slice = 1;
 
-        pages_per_area = divide_round_up(_slices_per_area,
-                                         slices_per_page);
-    } else {
-        slice_size = align_page_size(_slice_size);
+		pages_per_area = divide_round_up(_slices_per_area,
+						 slices_per_page);
+	} else {
+		slice_size = align_page_size(_slice_size);
 
-        slices_per_page = 1;
-        pages_per_slice = slice_size / mmap_page_size();
+		slices_per_page = 1;
+		pages_per_slice = slice_size / mmap_page_size();
 
-        pages_per_area = _slices_per_area * pages_per_slice;
-    }
+		pages_per_area = _slices_per_area * pages_per_slice;
+	}
 
-    slices_per_area = (pages_per_area / pages_per_slice) * slices_per_page;
+	slices_per_area = (pages_per_area / pages_per_slice) * slices_per_page;
 
-    const size_t header_size = SliceArea::GetHeaderSize(slices_per_area);
-    header_pages = divide_round_up(header_size, mmap_page_size());
+	const size_t header_size = SliceArea::GetHeaderSize(slices_per_area);
+	header_pages = divide_round_up(header_size, mmap_page_size());
 
-    area_size = mmap_page_size() * (header_pages + pages_per_area);
+	area_size = mmap_page_size() * (header_pages + pages_per_area);
 }
 
 SlicePool::~SlicePool() noexcept
 {
-    assert(areas.empty());
-    assert(full_areas.empty());
+	assert(areas.empty());
+	assert(full_areas.empty());
 
-    empty_areas.clear_and_dispose(SliceArea::Disposer());
+	empty_areas.clear_and_dispose(SliceArea::Disposer());
 }
 
 void
 SliceArea::ForkCow(bool inherit) noexcept
 {
-    mmap_enable_fork(this, pool.area_size, inherit);
+	mmap_enable_fork(this, pool.area_size, inherit);
 }
 
 void
 SlicePool::ForkCow(bool inherit) noexcept
 {
-    if (inherit == fork_cow)
-        return;
+	if (inherit == fork_cow)
+		return;
 
-    fork_cow = inherit;
-    for (auto &area : areas)
-        area.ForkCow(fork_cow);
+	fork_cow = inherit;
+	for (auto &area : areas)
+		area.ForkCow(fork_cow);
 
-    for (auto &area : empty_areas)
-        area.ForkCow(fork_cow);
+	for (auto &area : empty_areas)
+		area.ForkCow(fork_cow);
 
-    for (auto &area : full_areas)
-        area.ForkCow(fork_cow);
+	for (auto &area : full_areas)
+		area.ForkCow(fork_cow);
 }
 
 void
 SlicePool::Compress() noexcept
 {
-    for (auto &area : areas)
-        area.Compress();
+	for (auto &area : areas)
+		area.Compress();
 
-    empty_areas.clear_and_dispose(SliceArea::Disposer());
+	empty_areas.clear_and_dispose(SliceArea::Disposer());
 
-    /* compressing full_areas would have no effect */
+	/* compressing full_areas would have no effect */
 }
 
 gcc_pure
 inline SliceArea *
 SlicePool::FindNonFullArea() noexcept
 {
-    if (!areas.empty())
-        return &areas.front();
+	if (!areas.empty())
+		return &areas.front();
 
-    if (!empty_areas.empty())
-        return &empty_areas.front();
+	if (!empty_areas.empty())
+		return &empty_areas.front();
 
-    return nullptr;
+	return nullptr;
 }
 
 inline SliceArea &
 SlicePool::MakeNonFullArea() noexcept
 {
-    SliceArea *area = FindNonFullArea();
-    if (area == nullptr) {
-        area = SliceArea::New(*this);
-        area->ForkCow(fork_cow);
-        empty_areas.push_front(*area);
-    }
+	SliceArea *area = FindNonFullArea();
+	if (area == nullptr) {
+		area = SliceArea::New(*this);
+		area->ForkCow(fork_cow);
+		empty_areas.push_front(*area);
+	}
 
-    return *area;
+	return *area;
 }
 
 inline void *
 SliceArea::Alloc() noexcept
 {
-    assert(!IsFull());
+	assert(!IsFull());
 
-    const unsigned i = free_head;
-    auto *const slot = &slices[i];
+	const unsigned i = free_head;
+	auto *const slot = &slices[i];
 
-    ++allocated_count;
-    free_head = slot->next;
-    slot->next = Slot::ALLOCATED;
+	++allocated_count;
+	free_head = slot->next;
+	slot->next = Slot::ALLOCATED;
 
-    auto *p = GetSlice(i);
-    PoisonUndefined(p, pool.slice_size);
-    return p;
+	auto *p = GetSlice(i);
+	PoisonUndefined(p, pool.slice_size);
+	return p;
 }
 
 SliceAllocation
 SlicePool::Alloc() noexcept
 {
-    auto &area = MakeNonFullArea();
+	auto &area = MakeNonFullArea();
 
-    const bool was_empty = area.IsEmpty();
+	const bool was_empty = area.IsEmpty();
 
-    void *p = area.Alloc();
+	void *p = area.Alloc();
 
-    if (area.IsFull()) {
-        /* if the area has become full, move it to the back of the
-           linked list, to avoid iterating over a long list of full
-           areas in the next call */
-        areas.erase(areas.iterator_to(area));
-        full_areas.push_back(area);
-    } else if (was_empty) {
-        empty_areas.erase(empty_areas.iterator_to(area));
-        areas.push_back(area);
-    }
+	if (area.IsFull()) {
+		/* if the area has become full, move it to the back of the
+		   linked list, to avoid iterating over a long list of full
+		   areas in the next call */
+		areas.erase(areas.iterator_to(area));
+		full_areas.push_back(area);
+	} else if (was_empty) {
+		empty_areas.erase(empty_areas.iterator_to(area));
+		areas.push_back(area);
+	}
 
-    return { area, p, slice_size };
+	return { area, p, slice_size };
 }
 
 inline void
 SliceArea::_Free(void *p) noexcept
 {
-    unsigned i = IndexOf(p);
-    assert(slices[i].IsAllocated());
+	unsigned i = IndexOf(p);
+	assert(slices[i].IsAllocated());
 
-    PoisonUndefined(p, pool.slice_size);
+	PoisonUndefined(p, pool.slice_size);
 
-    slices[i].next = free_head;
-    free_head = i;
+	slices[i].next = free_head;
+	free_head = i;
 
-    assert(allocated_count > 0);
-    --allocated_count;
+	assert(allocated_count > 0);
+	--allocated_count;
 }
 
 void
 SlicePool::Free(SliceArea &area, void *p) noexcept
 {
-    const bool was_full = area.IsFull();
+	const bool was_full = area.IsFull();
 
-    area._Free(p);
+	area._Free(p);
 
-    if (was_full) {
-        /* if the area has become non-full, move it to the front of
-           the linked list, so the next allocation will be taken from
-           here; this attempts to keep as many areas as possible
-           completely empty, so the next Compress() call can dispose
-           them */
-        full_areas.erase(full_areas.iterator_to(area));
-        areas.push_front(area);
-    } else if (area.IsEmpty()) {
-        areas.erase(areas.iterator_to(area));
-        empty_areas.push_front(area);
-    }
+	if (was_full) {
+		/* if the area has become non-full, move it to the front of
+		   the linked list, so the next allocation will be taken from
+		   here; this attempts to keep as many areas as possible
+		   completely empty, so the next Compress() call can dispose
+		   them */
+		full_areas.erase(full_areas.iterator_to(area));
+		areas.push_front(area);
+	} else if (area.IsEmpty()) {
+		areas.erase(areas.iterator_to(area));
+		empty_areas.push_front(area);
+	}
 }
 
 void
 SliceArea::Free(void *p) noexcept
 {
-    pool.Free(*this, p);
+	pool.Free(*this, p);
 }
 
 inline void
 SlicePool::AddStats(AllocatorStats &stats, const AreaList &list) const noexcept
 {
-    for (const auto &area : list) {
-        stats.brutto_size += area_size;
-        stats.netto_size += area.GetNettoSize(slice_size);
-    }
+	for (const auto &area : list) {
+		stats.brutto_size += area_size;
+		stats.netto_size += area.GetNettoSize(slice_size);
+	}
 }
 
 AllocatorStats
 SlicePool::GetStats() const noexcept
 {
-    AllocatorStats stats;
-    stats.brutto_size = stats.netto_size = 0;
+	AllocatorStats stats;
+	stats.brutto_size = stats.netto_size = 0;
 
-    AddStats(stats, areas);
-    AddStats(stats, empty_areas);
-    AddStats(stats, full_areas);
+	AddStats(stats, areas);
+	AddStats(stats, empty_areas);
+	AddStats(stats, full_areas);
 
-    return stats;
+	return stats;
 }

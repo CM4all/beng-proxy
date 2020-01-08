@@ -40,47 +40,47 @@
 const WidgetRef *
 widget_ref_parse(struct pool *pool, const char *_p)
 {
-    const WidgetRef *root = nullptr, **wr_p = &root;
+	const WidgetRef *root = nullptr, **wr_p = &root;
 
-    if (_p == nullptr || *_p == 0)
-        return nullptr;
+	if (_p == nullptr || *_p == 0)
+		return nullptr;
 
-    char *p = p_strdup(pool, _p);
+	char *p = p_strdup(pool, _p);
 
-    for (auto id : IterableSplitString(p, WIDGET_REF_SEPARATOR)) {
-        if (id.empty())
-            continue;
+	for (auto id : IterableSplitString(p, WIDGET_REF_SEPARATOR)) {
+		if (id.empty())
+			continue;
 
-        char *_id = const_cast<char *>(id.data);
-        _id[id.size] = 0;
+		char *_id = const_cast<char *>(id.data);
+		_id[id.size] = 0;
 
-        auto wr = NewFromPool<WidgetRef>(*pool);
-        wr->next = nullptr;
-        wr->id = _id;
+		auto wr = NewFromPool<WidgetRef>(*pool);
+		wr->next = nullptr;
+		wr->id = _id;
 
-        *wr_p = wr;
-        wr_p = &wr->next;
-    }
+		*wr_p = wr;
+		wr_p = &wr->next;
+	}
 
-    return root;
+	return root;
 }
 
 bool
 widget_ref_includes(const WidgetRef *outer,
-                    const WidgetRef *inner)
+		    const WidgetRef *inner)
 {
-    assert(inner != nullptr);
+	assert(inner != nullptr);
 
-    while (true) {
-        if (strcmp(outer->id, inner->id) != 0)
-            return false;
+	while (true) {
+		if (strcmp(outer->id, inner->id) != 0)
+			return false;
 
-        outer = outer->next;
-        if (outer == nullptr)
-            return true;
+		outer = outer->next;
+		if (outer == nullptr)
+			return true;
 
-        inner = inner->next;
-        if (inner == nullptr)
-            return false;
-    }
+		inner = inner->next;
+		if (inner == nullptr)
+			return false;
+	}
 }

@@ -39,90 +39,90 @@
 
 static bool
 CheckAddress(FailureManager &failure_manager, Expiry now,
-             const SocketAddress address, bool allow_fade) noexcept
+	     const SocketAddress address, bool allow_fade) noexcept
 {
-    return failure_manager.Check(now, address, allow_fade);
+	return failure_manager.Check(now, address, allow_fade);
 }
 
 static SocketAddress
 next_failover_address(FailureManager &failure_manager, Expiry now,
-                      const AddressList &list) noexcept
+		      const AddressList &list) noexcept
 {
-    assert(list.GetSize() > 0);
+	assert(list.GetSize() > 0);
 
-    for (auto i : list)
-        if (CheckAddress(failure_manager, now, i, true))
-            return i;
+	for (auto i : list)
+		if (CheckAddress(failure_manager, now, i, true))
+			return i;
 
-    /* none available - return first node as last resort */
-    return list[0];
+	/* none available - return first node as last resort */
+	return list[0];
 }
 
 static const SocketAddress &
 next_sticky_address_checked(FailureManager &failure_manager, const Expiry now,
-                            const AddressList &al,
-                            sticky_hash_t sticky_hash) noexcept
+			    const AddressList &al,
+			    sticky_hash_t sticky_hash) noexcept
 {
-    assert(al.GetSize() >= 2);
+	assert(al.GetSize() >= 2);
 
-    unsigned i = sticky_hash % al.GetSize();
-    bool allow_fade = true;
+	unsigned i = sticky_hash % al.GetSize();
+	bool allow_fade = true;
 
-    const SocketAddress &first = al[i];
-    const SocketAddress *ret = &first;
-    do {
-        if (CheckAddress(failure_manager, now, *ret, allow_fade))
-            return *ret;
+	const SocketAddress &first = al[i];
+	const SocketAddress *ret = &first;
+	do {
+		if (CheckAddress(failure_manager, now, *ret, allow_fade))
+			return *ret;
 
-        /* only the first iteration is allowed to override
-           FAILURE_FADE */
-        allow_fade = false;
+		/* only the first iteration is allowed to override
+		   FAILURE_FADE */
+		allow_fade = false;
 
-        ++i;
-        if (i >= al.GetSize())
-            i = 0;
+		++i;
+		if (i >= al.GetSize())
+			i = 0;
 
-        ret = &al[i];
+		ret = &al[i];
 
-    } while (ret != &first);
+	} while (ret != &first);
 
-    /* all addresses failed: */
-    return first;
+	/* all addresses failed: */
+	return first;
 }
 
 SocketAddress
 BalancerMap::Get(const Expiry now,
-                 const AddressList &list, sticky_hash_t sticky_hash) noexcept
+		 const AddressList &list, sticky_hash_t sticky_hash) noexcept
 {
-    if (list.IsSingle())
-        return list[0];
+	if (list.IsSingle())
+		return list[0];
 
-    switch (list.sticky_mode) {
-    case StickyMode::NONE:
-        break;
+	switch (list.sticky_mode) {
+	case StickyMode::NONE:
+		break;
 
-    case StickyMode::FAILOVER:
-        return next_failover_address(failure_manager, now, list);
+	case StickyMode::FAILOVER:
+		return next_failover_address(failure_manager, now, list);
 
-    case StickyMode::SOURCE_IP:
-    case StickyMode::HOST:
-    case StickyMode::XHOST:
-    case StickyMode::SESSION_MODULO:
-    case StickyMode::COOKIE:
-    case StickyMode::JVM_ROUTE:
-        if (sticky_hash != 0)
-            return next_sticky_address_checked(failure_manager, now, list,
-                                               sticky_hash);
-        break;
-    }
+	case StickyMode::SOURCE_IP:
+	case StickyMode::HOST:
+	case StickyMode::XHOST:
+	case StickyMode::SESSION_MODULO:
+	case StickyMode::COOKIE:
+	case StickyMode::JVM_ROUTE:
+		if (sticky_hash != 0)
+			return next_sticky_address_checked(failure_manager, now, list,
+							   sticky_hash);
+		break;
+	}
 
-    std::string key = list.GetKey();
-    auto *item = cache.Get(key);
+	std::string key = list.GetKey();
+	auto *item = cache.Get(key);
 
-    if (item == nullptr)
-        /* create a new cache item */
-        item = &cache.Put(std::move(key), RoundRobinBalancer());
+	if (item == nullptr)
+		/* create a new cache item */
+		item = &cache.Put(std::move(key), RoundRobinBalancer());
 
-    return item->Get(failure_manager, now, list,
-                     list.sticky_mode == StickyMode::NONE);
+	return item->Get(failure_manager, now, list,
+			 list.sticky_mode == StickyMode::NONE);
 }

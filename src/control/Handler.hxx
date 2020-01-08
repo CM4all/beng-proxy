@@ -30,14 +30,11 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CONTROL_HANDLER_HXX
-#define CONTROL_HANDLER_HXX
+#pragma once
 
 #include "beng-proxy/Control.hxx"
 
 #include <exception>
-
-#include <stddef.h>
 
 template<typename T> struct ConstBuffer;
 template<typename T> struct WritableBuffer;
@@ -47,20 +44,18 @@ class ControlServer;
 
 class ControlHandler {
 public:
-    /**
-     * @return false if the datagram shall be discarded
-     */
-    virtual bool OnControlRaw(ConstBuffer<void> payload,
-                              SocketAddress address,
-                              int uid);
+	/**
+	 * @return false if the datagram shall be discarded
+	 */
+	virtual bool OnControlRaw(ConstBuffer<void> payload,
+				  SocketAddress address,
+				  int uid);
 
-    virtual void OnControlPacket(ControlServer &control_server,
-                                 BengProxy::ControlCommand command,
-                                 ConstBuffer<void> payload,
-                                 WritableBuffer<UniqueFileDescriptor> fds,
-                                 SocketAddress address, int uid) = 0;
+	virtual void OnControlPacket(ControlServer &control_server,
+				     BengProxy::ControlCommand command,
+				     ConstBuffer<void> payload,
+				     WritableBuffer<UniqueFileDescriptor> fds,
+				     SocketAddress address, int uid) = 0;
 
-    virtual void OnControlError(std::exception_ptr ep) noexcept = 0;
+	virtual void OnControlError(std::exception_ptr ep) noexcept = 0;
 };
-
-#endif

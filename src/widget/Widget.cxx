@@ -45,211 +45,211 @@
 static constexpr bool
 valid_prefix_start_char(char ch) noexcept
 {
-    return (ch >= 'A' && ch <= 'Z') ||
-        (ch >= 'a' && ch <= 'z') ||
-        ch == '_';
+	return (ch >= 'A' && ch <= 'Z') ||
+		(ch >= 'a' && ch <= 'z') ||
+		ch == '_';
 }
 
 static constexpr bool
 valid_prefix_char(char ch) noexcept
 {
-    return valid_prefix_start_char(ch) ||
-        (ch >= '0' && ch <= '9');
+	return valid_prefix_start_char(ch) ||
+		(ch >= '0' && ch <= '9');
 }
 
 static size_t
 count_invalid_chars(const char *p)
 {
-    assert(*p != 0);
+	assert(*p != 0);
 
-    size_t n = 0;
-    if (!valid_prefix_start_char(*p))
-        ++n;
+	size_t n = 0;
+	if (!valid_prefix_start_char(*p))
+		++n;
 
-    for (++p; *p != 0; ++p)
-        if (!valid_prefix_char(*p))
-            ++n;
+	for (++p; *p != 0; ++p)
+		if (!valid_prefix_char(*p))
+			++n;
 
-    return n;
+	return n;
 }
 
 static char *
 quote_byte(char *p, uint8_t ch)
 {
-    *p++ = '_';
-    format_uint8_hex_fixed(p, ch);
-    return p + 2;
+	*p++ = '_';
+	format_uint8_hex_fixed(p, ch);
+	return p + 2;
 }
 
 static const char *
 quote_prefix(struct pool *pool, const char *p)
 {
-    if (*p == 0)
-        return p;
+	if (*p == 0)
+		return p;
 
-    size_t n_quotes = count_invalid_chars(p);
-    if (n_quotes == 0)
-        /* no escaping needed */
-        return p;
+	size_t n_quotes = count_invalid_chars(p);
+	if (n_quotes == 0)
+		/* no escaping needed */
+		return p;
 
-    const size_t src_length = strlen(p);
-    char *buffer = (char *) p_malloc(pool, src_length + n_quotes * 2 + 1);
-    char *q = buffer;
+	const size_t src_length = strlen(p);
+	char *buffer = (char *) p_malloc(pool, src_length + n_quotes * 2 + 1);
+	char *q = buffer;
 
-    if (!valid_prefix_start_char(*p))
-        q = quote_byte(q, *p++);
+	if (!valid_prefix_start_char(*p))
+		q = quote_byte(q, *p++);
 
-    while (*p != 0) {
-        if (!valid_prefix_char(*p))
-            q = quote_byte(q, *p++);
-        else
-            *q++ = *p++;
-    }
+	while (*p != 0) {
+		if (!valid_prefix_char(*p))
+			q = quote_byte(q, *p++);
+		else
+			*q++ = *p++;
+	}
 
-    *q = 0;
-    return buffer;
+	*q = 0;
+	return buffer;
 }
 
 void
 Widget::SetId(const StringView _id)
 {
-    assert(parent != nullptr);
-    assert(!_id.empty());
+	assert(parent != nullptr);
+	assert(!_id.empty());
 
-    const AllocatorPtr alloc(pool);
+	const AllocatorPtr alloc(pool);
 
-    id = alloc.DupZ(_id);
+	id = alloc.DupZ(_id);
 
-    const char *p = parent->GetIdPath();
-    if (p != nullptr)
-        id_path = *p == 0
-            ? id
-            : alloc.Concat(p, WIDGET_REF_SEPARATOR, id);
+	const char *p = parent->GetIdPath();
+	if (p != nullptr)
+		id_path = *p == 0
+			? id
+			: alloc.Concat(p, WIDGET_REF_SEPARATOR, id);
 
-    p = parent->GetPrefix();
-    if (p != nullptr) {
-        const TempPoolLease tpool;
-        prefix = alloc.Concat(p, quote_prefix(tpool, id), "__");
-    }
+	p = parent->GetPrefix();
+	if (p != nullptr) {
+		const TempPoolLease tpool;
+		prefix = alloc.Concat(p, quote_prefix(tpool, id), "__");
+	}
 }
 
 void
 Widget::SetClassName(const StringView _class_name)
 {
-    assert(parent != nullptr);
-    assert(class_name == nullptr);
-    assert(cls == nullptr);
+	assert(parent != nullptr);
+	assert(class_name == nullptr);
+	assert(cls == nullptr);
 
-    const AllocatorPtr alloc(pool);
+	const AllocatorPtr alloc(pool);
 
-    class_name = alloc.DupZ(_class_name);
-    quoted_class_name = quote_prefix(&pool, class_name);
+	class_name = alloc.DupZ(_class_name);
+	quoted_class_name = quote_prefix(&pool, class_name);
 }
 
 const char *
 Widget::GetLogName() const
 {
-    if (lazy.log_name != nullptr)
-        return lazy.log_name;
+	if (lazy.log_name != nullptr)
+		return lazy.log_name;
 
-    if (class_name == nullptr)
-        return id;
+	if (class_name == nullptr)
+		return id;
 
-    const AllocatorPtr alloc(pool);
+	const AllocatorPtr alloc(pool);
 
-    if (id_path == nullptr) {
-        if (id != nullptr)
-            return lazy.log_name = alloc.Concat(class_name,
-                                                "#(null)",
-                                                WIDGET_REF_SEPARATOR,
-                                                id_path);
+	if (id_path == nullptr) {
+		if (id != nullptr)
+			return lazy.log_name = alloc.Concat(class_name,
+							    "#(null)",
+							    WIDGET_REF_SEPARATOR,
+							    id_path);
 
-        return class_name;
-    }
+		return class_name;
+	}
 
-    return lazy.log_name = alloc.Concat(class_name, '#', id_path);
+	return lazy.log_name = alloc.Concat(class_name, '#', id_path);
 }
 
 StringView
 Widget::LoggerDomain::GetDomain() const
 {
-    const auto &widget = ContainerCast(*this, (LoggerDomain Widget::*)&Widget::logger);
-    return widget.GetLogName();
+	const auto &widget = ContainerCast(*this, (LoggerDomain Widget::*)&Widget::logger);
+	return widget.GetLogName();
 }
 
 bool
 Widget::IsContainerByDefault() const
 {
-    const WidgetView *v = GetDefaultView();
-    return v != nullptr && v->IsContainer();
+	const WidgetView *v = GetDefaultView();
+	return v != nullptr && v->IsContainer();
 }
 
 bool
 Widget::HasProcessor() const
 {
-    const WidgetView *v = GetTransformationView();
-    assert(v != nullptr);
-    return v->HasProcessor();
+	const WidgetView *v = GetTransformationView();
+	assert(v != nullptr);
+	return v->HasProcessor();
 }
 
 bool
 Widget::IsContainer() const
 {
-    const WidgetView *v = GetTransformationView();
-    return v != nullptr && v->IsContainer();
+	const WidgetView *v = GetTransformationView();
+	return v != nullptr && v->IsContainer();
 }
 
 Widget *
 Widget::FindChild(const char *child_id)
 {
-    assert(child_id != nullptr);
+	assert(child_id != nullptr);
 
-    for (auto &child : children)
-        if (child.id != nullptr && strcmp(child.id, child_id) == 0)
-            return &child;
+	for (auto &child : children)
+		if (child.id != nullptr && strcmp(child.id, child_id) == 0)
+			return &child;
 
-    return nullptr;
+	return nullptr;
 }
 
 void
 Widget::CheckHost(const char *host, const char *site_name) const
 {
-    assert(cls != nullptr);
+	assert(cls != nullptr);
 
-    cls->CheckHost(host, site_name);
+	cls->CheckHost(host, site_name);
 }
 
 bool
 widget_check_recursion(const Widget *widget)
 {
-    unsigned depth = 0;
+	unsigned depth = 0;
 
-    assert(widget != nullptr);
+	assert(widget != nullptr);
 
-    do {
-        if (++depth >= 8)
-            return true;
+	do {
+		if (++depth >= 8)
+			return true;
 
-        widget = widget->parent;
-    } while (widget != nullptr);
+		widget = widget->parent;
+	} while (widget != nullptr);
 
-    return false;
+	return false;
 }
 
 void
 Widget::DiscardForFocused() noexcept
 {
-    /* the request body was not forwarded to the focused widget,
-       so discard it */
-    if (for_focused != nullptr)
-        DeleteFromPool(pool, std::exchange(for_focused, nullptr));
+	/* the request body was not forwarded to the focused widget,
+	   so discard it */
+	if (for_focused != nullptr)
+		DeleteFromPool(pool, std::exchange(for_focused, nullptr));
 }
 
 void
 Widget::Cancel()
 {
-    /* we are not going to consume the request body, so abort it */
-    from_request.body.Clear();
+	/* we are not going to consume the request body, so abort it */
+	from_request.body.Clear();
 
-    DiscardForFocused();
+	DiscardForFocused();
 }

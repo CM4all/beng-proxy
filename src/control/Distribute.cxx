@@ -36,35 +36,35 @@
 #include "util/WritableBuffer.hxx"
 
 ControlDistribute::ControlDistribute(EventLoop &event_loop,
-                                     ControlHandler &_next_handler)
-    :distribute(event_loop),
-     next_handler(_next_handler)
+				     ControlHandler &_next_handler)
+	:distribute(event_loop),
+	 next_handler(_next_handler)
 {
 }
 
 bool
 ControlDistribute::OnControlRaw(ConstBuffer<void> payload,
-                                SocketAddress address, int uid)
+				SocketAddress address, int uid)
 {
-    /* forward the packet to all worker processes */
-    distribute.Packet(payload.data, payload.size);
+	/* forward the packet to all worker processes */
+	distribute.Packet(payload.data, payload.size);
 
-    return next_handler.OnControlRaw(payload, address, uid);
+	return next_handler.OnControlRaw(payload, address, uid);
 }
 
 void
 ControlDistribute::OnControlPacket(ControlServer &control_server,
-                                   BengProxy::ControlCommand command,
-                                   ConstBuffer<void> payload,
-                                   WritableBuffer<UniqueFileDescriptor> fds,
-                                   SocketAddress address, int uid)
+				   BengProxy::ControlCommand command,
+				   ConstBuffer<void> payload,
+				   WritableBuffer<UniqueFileDescriptor> fds,
+				   SocketAddress address, int uid)
 {
-    return next_handler.OnControlPacket(control_server, command,
-                                        payload, fds, address, uid);
+	return next_handler.OnControlPacket(control_server, command,
+					    payload, fds, address, uid);
 }
 
 void
 ControlDistribute::OnControlError(std::exception_ptr ep) noexcept
 {
-    return next_handler.OnControlError(ep);
+	return next_handler.OnControlError(ep);
 }

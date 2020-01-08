@@ -45,56 +45,56 @@
 
 WasProcess
 was_launch(SpawnService &spawn_service,
-           const char *name,
-           const char *executable_path,
-           ConstBuffer<const char *> args,
-           const ChildOptions &options,
-           UniqueFileDescriptor stderr_fd,
-           ExitListener *listener)
+	   const char *name,
+	   const char *executable_path,
+	   ConstBuffer<const char *> args,
+	   const ChildOptions &options,
+	   UniqueFileDescriptor stderr_fd,
+	   ExitListener *listener)
 {
-    WasProcess process;
+	WasProcess process;
 
-    PreparedChildProcess p;
+	PreparedChildProcess p;
 
-    UniqueSocketDescriptor control_fd;
-    if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-                                                  control_fd, process.control))
-        throw MakeErrno("Failed to create socket pair");
+	UniqueSocketDescriptor control_fd;
+	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+						      control_fd, process.control))
+		throw MakeErrno("Failed to create socket pair");
 
-    p.SetControl(std::move(control_fd));
+	p.SetControl(std::move(control_fd));
 
-    UniqueFileDescriptor input_r, input_w;
-    if (!UniqueFileDescriptor::CreatePipe(input_r, input_w))
-        throw MakeErrno("Failed to create first pipe");
+	UniqueFileDescriptor input_r, input_w;
+	if (!UniqueFileDescriptor::CreatePipe(input_r, input_w))
+		throw MakeErrno("Failed to create first pipe");
 
-    input_r.SetNonBlocking();
-    process.input = std::move(input_r);
-    p.SetStdout(std::move(input_w));
+	input_r.SetNonBlocking();
+	process.input = std::move(input_r);
+	p.SetStdout(std::move(input_w));
 
-    UniqueFileDescriptor output_r, output_w;
-    if (!UniqueFileDescriptor::CreatePipe(output_r, output_w))
-        throw MakeErrno("Failed to create second pipe");
+	UniqueFileDescriptor output_r, output_w;
+	if (!UniqueFileDescriptor::CreatePipe(output_r, output_w))
+		throw MakeErrno("Failed to create second pipe");
 
-    p.SetStdin(std::move(output_r));
-    output_w.SetNonBlocking();
-    process.output = std::move(output_w);
+	p.SetStdin(std::move(output_r));
+	output_w.SetNonBlocking();
+	process.output = std::move(output_w);
 
-    /* allocate 256 kB for each pipe to reduce the system call and
-       latency overhead for splicing */
-    static constexpr int PIPE_BUFFER_SIZE = 256 * 1024;
-    fcntl(process.input.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
-    fcntl(process.output.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
+	/* allocate 256 kB for each pipe to reduce the system call and
+	   latency overhead for splicing */
+	static constexpr int PIPE_BUFFER_SIZE = 256 * 1024;
+	fcntl(process.input.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
+	fcntl(process.output.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
 
-    p.Append(executable_path);
-    for (auto i : args)
-        p.Append(i);
+	p.Append(executable_path);
+	for (auto i : args)
+		p.Append(i);
 
-    options.CopyTo(p, true, nullptr);
+	options.CopyTo(p, true, nullptr);
 
-    if (p.stderr_fd < 0 && stderr_fd.IsDefined())
-        p.SetStderr(std::move(stderr_fd));
+	if (p.stderr_fd < 0 && stderr_fd.IsDefined())
+		p.SetStderr(std::move(stderr_fd));
 
-    process.pid = spawn_service.SpawnChildProcess(name, std::move(p),
-                                                  listener);
-    return process;
+	process.pid = spawn_service.SpawnChildProcess(name, std::move(p),
+						      listener);
+	return process;
 }

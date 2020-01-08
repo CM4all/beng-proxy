@@ -30,21 +30,18 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef WAS_ERROR_HXX
-#define WAS_ERROR_HXX
+#pragma once
 
 #include <stdexcept>
 
 class WasError : public std::runtime_error {
 public:
-    explicit WasError(const char *_msg)
-        :std::runtime_error(_msg) {}
+	explicit WasError(const char *_msg)
+		:std::runtime_error(_msg) {}
 };
 
 class WasProtocolError : public WasError {
 public:
-    explicit WasProtocolError(const char *_msg)
-        :WasError(_msg) {}
+	explicit WasProtocolError(const char *_msg)
+		:WasError(_msg) {}
 };
-
-#endif

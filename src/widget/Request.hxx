@@ -30,12 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Send HTTP requests to a widget server.
- */
-
-#ifndef BENG_PROXY_WIDGET_REQUEST_HXX
-#define BENG_PROXY_WIDGET_REQUEST_HXX
+#pragma once
 
 struct pool;
 class Widget;
@@ -51,10 +46,10 @@ class WidgetLookupHandler;
  */
 void
 widget_http_request(struct pool &pool, Widget &widget,
-                    WidgetContext &ctx,
-                    const StopwatchPtr &parent_stopwatch,
-                    HttpResponseHandler &handler,
-                    CancellablePointer &cancel_ptr) noexcept;
+		    WidgetContext &ctx,
+		    const StopwatchPtr &parent_stopwatch,
+		    HttpResponseHandler &handler,
+		    CancellablePointer &cancel_ptr) noexcept;
 
 /**
  * Send a HTTP request to the widget server, process it, and look up
@@ -65,9 +60,7 @@ widget_http_request(struct pool &pool, Widget &widget,
  */
 void
 widget_http_lookup(struct pool &pool, Widget &widget, const char *id,
-                   WidgetContext &ctx,
-                   const StopwatchPtr &parent_stopwatch,
-                   WidgetLookupHandler &handler,
-                   CancellablePointer &cancel_ptr) noexcept;
-
-#endif
+		   WidgetContext &ctx,
+		   const StopwatchPtr &parent_stopwatch,
+		   WidgetLookupHandler &handler,
+		   CancellablePointer &cancel_ptr) noexcept;

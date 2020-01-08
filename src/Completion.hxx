@@ -30,32 +30,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_COMPLETION_H
-#define BENG_PROXY_COMPLETION_H
+#pragma once
 
 /**
  * A return value type which indicates the state of the desired
  * operation.
  */
 enum class Completion {
-    /**
-     * The operation completed.
-     */
-    DONE,
+	/**
+	 * The operation completed.
+	 */
+	DONE,
 
-    /**
-     * Partial completion.  More data is needed to complete the
-     * operation.  If no more data can be obtained (e.g. because the
-     * socket may be closed already), the recipient of this value
-     * shall abort the operation.
-     */
-    MORE,
+	/**
+	 * Partial completion.  More data is needed to complete the
+	 * operation.  If no more data can be obtained (e.g. because the
+	 * socket may be closed already), the recipient of this value
+	 * shall abort the operation.
+	 */
+	MORE,
 
-    /**
-     * The object has been closed/destroyed.  Details have been
-     * supplied to the handler.
-     */
-    CLOSED,
+	/**
+	 * The object has been closed/destroyed.  Details have been
+	 * supplied to the handler.
+	 */
+	CLOSED,
 };
-
-#endif

@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_WAS_GLUE_HXX
-#define BENG_PROXY_WAS_GLUE_HXX
+#pragma once
 
 #include "http/Method.h"
 
@@ -54,18 +53,16 @@ template<typename T> struct ConstBuffer;
  */
 void
 was_request(struct pool &pool, StockMap &was_stock,
-            const StopwatchPtr &parent_stopwatch,
-            const char *site_name,
-            const ChildOptions &options,
-            const char *action,
-            const char *path,
-            ConstBuffer<const char *> args,
-            http_method_t method, const char *uri,
-            const char *script_name, const char *path_info,
-            const char *query_string,
-            const StringMap &headers, UnusedIstreamPtr body,
-            ConstBuffer<const char *> params,
-            HttpResponseHandler &handler,
-            CancellablePointer &cancel_ptr);
-
-#endif
+	    const StopwatchPtr &parent_stopwatch,
+	    const char *site_name,
+	    const ChildOptions &options,
+	    const char *action,
+	    const char *path,
+	    ConstBuffer<const char *> args,
+	    http_method_t method, const char *uri,
+	    const char *script_name, const char *path_info,
+	    const char *query_string,
+	    const StringMap &headers, UnusedIstreamPtr body,
+	    ConstBuffer<const char *> params,
+	    HttpResponseHandler &handler,
+	    CancellablePointer &cancel_ptr);

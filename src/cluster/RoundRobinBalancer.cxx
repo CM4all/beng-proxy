@@ -39,33 +39,33 @@
 inline const SocketAddress &
 RoundRobinBalancer::NextAddress(const AddressList &addresses) noexcept
 {
-    assert(addresses.GetSize() >= 2);
-    assert(next < addresses.GetSize());
+	assert(addresses.GetSize() >= 2);
+	assert(next < addresses.GetSize());
 
-    const SocketAddress &address = addresses[next];
+	const SocketAddress &address = addresses[next];
 
-    ++next;
-    if (next >= addresses.GetSize())
-        next = 0;
+	++next;
+	if (next >= addresses.GetSize())
+		next = 0;
 
-    return address;
+	return address;
 }
 
 SocketAddress
 RoundRobinBalancer::Get(FailureManager &failure_manager,
-                        const Expiry now,
-                        const AddressList &addresses,
-                        bool allow_fade) noexcept
+			const Expiry now,
+			const AddressList &addresses,
+			bool allow_fade) noexcept
 {
-    const auto &first = NextAddress(addresses);
-    const SocketAddress *ret = &first;
-    do {
-        if (failure_manager.Check(now, *ret, allow_fade))
-            return *ret;
+	const auto &first = NextAddress(addresses);
+	const SocketAddress *ret = &first;
+	do {
+		if (failure_manager.Check(now, *ret, allow_fade))
+			return *ret;
 
-        ret = &NextAddress(addresses);
-    } while (ret != &first);
+		ret = &NextAddress(addresses);
+	} while (ret != &first);
 
-    /* all addresses failed: */
-    return first;
+	/* all addresses failed: */
+	return first;
 }

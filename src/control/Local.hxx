@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_CONTROL_LOCAL_HXX
-#define BENG_PROXY_CONTROL_LOCAL_HXX
+#pragma once
 
 #include "Handler.hxx"
 
@@ -43,30 +42,28 @@ class EventLoop;
  * Control server on an implicitly configured local socket.
  */
 class LocalControl final : ControlHandler {
-    const char *const prefix;
+	const char *const prefix;
 
-    ControlHandler &handler;
+	ControlHandler &handler;
 
-    std::unique_ptr<ControlServer> server;
+	std::unique_ptr<ControlServer> server;
 
 public:
-    LocalControl(const char *_prefix, ControlHandler &_handler)
-        :prefix(_prefix), handler(_handler) {}
+	LocalControl(const char *_prefix, ControlHandler &_handler)
+		:prefix(_prefix), handler(_handler) {}
 
-    void Open(EventLoop &event_loop);
+	void Open(EventLoop &event_loop);
 
-    /* virtual methods from class ControlHandler */
-    bool OnControlRaw(ConstBuffer<void> payload,
-                      SocketAddress address,
-                      int uid) override;
+	/* virtual methods from class ControlHandler */
+	bool OnControlRaw(ConstBuffer<void> payload,
+			  SocketAddress address,
+			  int uid) override;
 
-    void OnControlPacket(ControlServer &control_server,
-                         BengProxy::ControlCommand command,
-                         ConstBuffer<void> payload,
-                         WritableBuffer<UniqueFileDescriptor> fds,
-                         SocketAddress address, int uid) override;
+	void OnControlPacket(ControlServer &control_server,
+			     BengProxy::ControlCommand command,
+			     ConstBuffer<void> payload,
+			     WritableBuffer<UniqueFileDescriptor> fds,
+			     SocketAddress address, int uid) override;
 
-    void OnControlError(std::exception_ptr ep) noexcept override;
+	void OnControlError(std::exception_ptr ep) noexcept override;
 };
-
-#endif
