@@ -71,7 +71,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-struct FcgiClient final
+class FcgiClient final
 	: BufferedSocketHandler, Cancellable, Istream, IstreamHandler,
 	  WithInstanceList<FcgiClient>, DestructAnchor {
 
@@ -148,6 +148,7 @@ struct FcgiClient final
 
 	size_t content_length = 0, skip_length = 0;
 
+public:
 	FcgiClient(struct pool &_pool, EventLoop &event_loop,
 		   StopwatchPtr &&_stopwatch,
 		   SocketDescriptor fd, FdType fd_type, Lease &lease,
@@ -160,6 +161,15 @@ struct FcgiClient final
 
 	using Istream::GetPool;
 
+	void Start(UnusedIstreamPtr &&request_istream) noexcept {
+		request.input.Set(std::move(request_istream), *this,
+				  istream_direct_mask_to(socket.GetType()));
+
+		socket.ScheduleReadNoTimeout(true);
+		request.input.Read();
+	}
+
+private:
 	/**
 	 * Release the socket held by this object.
 	 */
@@ -1207,9 +1217,5 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 		request = istream_gb_new(*pool, std::move(buffer));
 	}
 
-	client->request.input.Set(std::move(request), *client,
-				  istream_direct_mask_to(client->socket.GetType()));
-
-	client->socket.ScheduleReadNoTimeout(true);
-	client->request.input.Read();
+	client->Start(std::move(request));
 }
