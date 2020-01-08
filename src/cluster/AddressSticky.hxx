@@ -40,4 +40,4 @@ class SocketAddress;
 
 gcc_pure
 sticky_hash_t
-socket_address_sticky(SocketAddress address);
+socket_address_sticky(SocketAddress address) noexcept;

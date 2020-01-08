@@ -36,7 +36,7 @@
 #include "util/ConstBuffer.hxx"
 
 sticky_hash_t
-socket_address_sticky(SocketAddress address)
+socket_address_sticky(SocketAddress address) noexcept
 {
 	const auto p = address.GetSteadyPart();
 	if (p == nullptr)
