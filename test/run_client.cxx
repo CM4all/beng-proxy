@@ -31,7 +31,6 @@
  */
 
 #include "strmap.hxx"
-#include "nghttp2/Client.hxx"
 #include "http_client.hxx"
 #include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"
@@ -62,6 +61,10 @@
 #include "util/PrintException.hxx"
 #include "util/Compiler.h"
 #include "stopwatch.hxx"
+
+#ifdef HAVE_NGHTTP2
+#include "nghttp2/Client.hxx"
+#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
