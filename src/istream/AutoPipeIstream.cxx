@@ -35,11 +35,11 @@
 #include "New.hxx"
 #include "UnusedPtr.hxx"
 #include "ForwardIstream.hxx"
-#include "direct.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
 #include "system/Error.hxx"
 #include "io/Splice.hxx"
+#include "io/SpliceSupport.hxx"
 
 #include <assert.h>
 #include <errno.h>

@@ -37,13 +37,13 @@
 #include "SliceIstream.hxx"
 #include "PipeLeaseIstream.hxx"
 #include "PipeLease.hxx"
-#include "direct.hxx"
 #include "fb_pool.hxx"
 #include "SlicePool.hxx"
 #include "SliceBuffer.hxx"
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
 #include "event/DeferEvent.hxx"
+#include "io/SpliceSupport.hxx"
 #include "util/Cancellable.hxx"
 
 #include <assert.h>

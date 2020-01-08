@@ -32,11 +32,11 @@
 
 #include "was/Server.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "direct.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "io/Logger.hxx"
+#include "io/SpliceSupport.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -35,7 +35,6 @@
 #include "Control.hxx"
 #include "Output.hxx"
 #include "Input.hxx"
-#include "direct.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"

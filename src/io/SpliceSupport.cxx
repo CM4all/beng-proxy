@@ -30,9 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "direct.hxx"
+#include "SpliceSupport.hxx"
 
-#include <stdbool.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/stat.h>

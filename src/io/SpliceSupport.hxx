@@ -30,12 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Helper inline functions for direct data transfer.
- */
-
-#ifndef BENG_PROXY_DIRECT_HXX
-#define BENG_PROXY_DIRECT_HXX
+#pragma once
 
 #include "io/FdType.hxx"
 
@@ -124,5 +119,3 @@ direct_available(int fd, FdType fd_type, size_t max_length);
 gcc_pure
 FdType
 guess_fd_type(int fd);
-
-#endif

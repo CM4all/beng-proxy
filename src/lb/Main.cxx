@@ -30,7 +30,6 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "direct.hxx"
 #include "CommandLine.hxx"
 #include "Instance.hxx"
 #include "TcpConnection.hxx"
@@ -49,6 +48,7 @@
 #include "net/FailureManager.hxx"
 #include "system/Isolate.hxx"
 #include "system/SetupProcess.hxx"
+#include "io/SpliceSupport.hxx"
 #include "util/PrintException.hxx"
 
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)

@@ -30,7 +30,6 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "direct.hxx"
 #include "CommandLine.hxx"
 #include "Instance.hxx"
 #include "Listener.hxx"
@@ -81,6 +80,7 @@
 #include "net/StaticSocketAddress.hxx"
 #include "net/FailureManager.hxx"
 #include "io/Logger.hxx"
+#include "io/SpliceSupport.hxx"
 #include "util/PrintException.hxx"
 
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)

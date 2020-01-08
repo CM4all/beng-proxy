@@ -33,7 +33,6 @@
 #include "Input.hxx"
 #include "Error.hxx"
 #include "event/SocketEvent.hxx"
-#include "direct.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/Result.hxx"

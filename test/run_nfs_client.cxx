@@ -40,10 +40,10 @@
 #include "event/ShutdownListener.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
+#include "io/SpliceSupport.hxx"
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
 #include "HttpResponseHandler.hxx"
-#include "direct.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 

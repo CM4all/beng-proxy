@@ -35,7 +35,6 @@
 #include "http_server/Handler.hxx"
 #include "http/Headers.hxx"
 #include "duplex.hxx"
-#include "direct.hxx"
 #include "istream/sink_null.hxx"
 #include "istream/ByteIstream.hxx"
 #include "istream/DelayedIstream.hxx"
@@ -53,6 +52,7 @@
 #include "fb_pool.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "io/SpliceSupport.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 

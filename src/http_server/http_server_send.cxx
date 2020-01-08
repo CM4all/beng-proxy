@@ -34,7 +34,6 @@
 #include "Request.hxx"
 #include "http/Headers.hxx"
 #include "http/Upgrade.hxx"
-#include "direct.hxx"
 #include "http/HeaderWriter.hxx"
 #include "GrowingBuffer.hxx"
 #include "istream_gb.hxx"

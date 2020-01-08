@@ -32,7 +32,6 @@
 
 #pragma once
 
-#include "direct.hxx"
 #include "fb_pool.hxx"
 #include "PInstance.hxx"
 #include "istream/istream.hxx"
@@ -48,6 +47,7 @@
 #include "istream/Pointer.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "pool/pool.hxx"
+#include "io/SpliceSupport.hxx"
 #include "event/DeferEvent.hxx"
 
 #include <gtest/gtest.h>
