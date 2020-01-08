@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __BENG_FCGI_PROTOCOL_H
-#define __BENG_FCGI_PROTOCOL_H
+#pragma once
 
 #include <stdint.h>
 
@@ -63,26 +62,24 @@
 #define FCGI_FILTER     3
 
 struct fcgi_record_header {
-    unsigned char version;
-    unsigned char type;
-    uint16_t request_id;
-    uint16_t content_length;
-    unsigned char padding_length;
-    unsigned char reserved;
-    /*
-    unsigned char content_data[content_length];
-    unsigned char padding_data[padding_length];
-    */
+	unsigned char version;
+	unsigned char type;
+	uint16_t request_id;
+	uint16_t content_length;
+	unsigned char padding_length;
+	unsigned char reserved;
+	/*
+	  unsigned char content_data[content_length];
+	  unsigned char padding_data[padding_length];
+	*/
 };
 
 static_assert(sizeof(fcgi_record_header) == 8, "Wrong FastCGI header size");
 
 struct fcgi_begin_request {
-    uint16_t role;
-    unsigned char flags;
-    unsigned char reserved[5];
+	uint16_t role;
+	unsigned char flags;
+	unsigned char reserved[5];
 };
 
 static_assert(sizeof(fcgi_begin_request) == 8, "Wrong FastCGI packet size");
-
-#endif

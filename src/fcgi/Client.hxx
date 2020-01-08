@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_FCGI_CLIENT_HXX
-#define BENG_PROXY_FCGI_CLIENT_HXX
+#pragma once
 
 #include "io/FdType.hxx"
 #include "http/Method.h"
@@ -73,18 +72,16 @@ template<typename T> struct ConstBuffer;
  */
 void
 fcgi_client_request(struct pool *pool, EventLoop &event_loop,
-                    StopwatchPtr stopwatch,
-                    SocketDescriptor fd, FdType fd_type, Lease &lease,
-                    http_method_t method, const char *uri,
-                    const char *script_filename,
-                    const char *script_name, const char *path_info,
-                    const char *query_string,
-                    const char *document_root,
-                    const char *remote_addr,
-                    const StringMap &headers, UnusedIstreamPtr body,
-                    ConstBuffer<const char *> params,
-                    UniqueFileDescriptor &&stderr_fd,
-                    HttpResponseHandler &handler,
-                    CancellablePointer &cancel_ptr);
-
-#endif
+		    StopwatchPtr stopwatch,
+		    SocketDescriptor fd, FdType fd_type, Lease &lease,
+		    http_method_t method, const char *uri,
+		    const char *script_filename,
+		    const char *script_name, const char *path_info,
+		    const char *query_string,
+		    const char *document_root,
+		    const char *remote_addr,
+		    const StringMap &headers, UnusedIstreamPtr body,
+		    ConstBuffer<const char *> params,
+		    UniqueFileDescriptor &&stderr_fd,
+		    HttpResponseHandler &handler,
+		    CancellablePointer &cancel_ptr);

@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_FCGI_REQUEST_HXX
-#define BENG_PROXY_FCGI_REQUEST_HXX
+#pragma once
 
 #include "http/Method.h"
 
@@ -55,22 +54,20 @@ template<typename T> struct ConstBuffer;
  */
 void
 fcgi_request(struct pool *pool, EventLoop &event_loop,
-             FcgiStock *fcgi_stock,
-             const StopwatchPtr &parent_stopwatch,
-             const char *site_name,
-             const ChildOptions &options,
-             const char *action,
-             const char *path,
-             ConstBuffer<const char *> args,
-             http_method_t method, const char *uri,
-             const char *script_name, const char *path_info,
-             const char *query_string,
-             const char *document_root,
-             const char *remote_addr,
-             const StringMap &headers, UnusedIstreamPtr body,
-             ConstBuffer<const char *> params,
-             UniqueFileDescriptor &&stderr_fd,
-             HttpResponseHandler &handler,
-             CancellablePointer &cancel_ptr) noexcept;
-
-#endif
+	     FcgiStock *fcgi_stock,
+	     const StopwatchPtr &parent_stopwatch,
+	     const char *site_name,
+	     const ChildOptions &options,
+	     const char *action,
+	     const char *path,
+	     ConstBuffer<const char *> args,
+	     http_method_t method, const char *uri,
+	     const char *script_name, const char *path_info,
+	     const char *query_string,
+	     const char *document_root,
+	     const char *remote_addr,
+	     const StringMap &headers, UnusedIstreamPtr body,
+	     ConstBuffer<const char *> params,
+	     UniqueFileDescriptor &&stderr_fd,
+	     HttpResponseHandler &handler,
+	     CancellablePointer &cancel_ptr) noexcept;

@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_FCGI_HXX
-#define BENG_PROXY_ISTREAM_FCGI_HXX
+#pragma once
 
 #include <stdint.h>
 
@@ -45,6 +44,4 @@ class UnusedIstreamPtr;
  */
 UnusedIstreamPtr
 istream_fcgi_new(struct pool &pool, UnusedIstreamPtr input,
-                 uint16_t request_id) noexcept;
-
-#endif
+		 uint16_t request_id) noexcept;

@@ -69,153 +69,153 @@
 #endif
 
 class FcgiStock final : StockClass, ChildStockClass {
-    StockMap hstock;
-    ChildStock child_stock;
+	StockMap hstock;
+	ChildStock child_stock;
 
 public:
-    FcgiStock(unsigned limit, unsigned max_idle,
-              EventLoop &event_loop, SpawnService &spawn_service,
-              SocketDescriptor _log_socket,
-              const ChildErrorLogOptions &_log_options) noexcept;
+	FcgiStock(unsigned limit, unsigned max_idle,
+		  EventLoop &event_loop, SpawnService &spawn_service,
+		  SocketDescriptor _log_socket,
+		  const ChildErrorLogOptions &_log_options) noexcept;
 
-    ~FcgiStock() noexcept {
-        /* this one must be cleared before #child_stock; FadeAll()
-           calls ClearIdle(), so this method is the best match for
-           what we want to do (though a kludge) */
-        hstock.FadeAll();
-    }
+	~FcgiStock() noexcept {
+		/* this one must be cleared before #child_stock; FadeAll()
+		   calls ClearIdle(), so this method is the best match for
+		   what we want to do (though a kludge) */
+		hstock.FadeAll();
+	}
 
-    EventLoop &GetEventLoop() noexcept {
-        return hstock.GetEventLoop();
-    }
+	EventLoop &GetEventLoop() noexcept {
+		return hstock.GetEventLoop();
+	}
 
-    SocketDescriptor GetLogSocket() const noexcept {
-        return child_stock.GetLogSocket();
-    }
+	SocketDescriptor GetLogSocket() const noexcept {
+		return child_stock.GetLogSocket();
+	}
 
-    const auto &GetLogOptions() const noexcept {
-        return child_stock.GetLogOptions();
-    }
+	const auto &GetLogOptions() const noexcept {
+		return child_stock.GetLogOptions();
+	}
 
-    StockItem *Get(const ChildOptions &options,
-                   const char *executable_path,
-                   ConstBuffer<const char *> args);
+	StockItem *Get(const ChildOptions &options,
+		       const char *executable_path,
+		       ConstBuffer<const char *> args);
 
-    void FadeAll() noexcept {
-        hstock.FadeAll();
-        child_stock.GetStockMap().FadeAll();
-    }
+	void FadeAll() noexcept {
+		hstock.FadeAll();
+		child_stock.GetStockMap().FadeAll();
+	}
 
-    void FadeTag(const char *tag) noexcept;
+	void FadeTag(const char *tag) noexcept;
 
 private:
-    /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, StockRequest request,
-                CancellablePointer &cancel_ptr) override;
+	/* virtual methods from class StockClass */
+	void Create(CreateStockItem c, StockRequest request,
+		    CancellablePointer &cancel_ptr) override;
 
-    /* virtual methods from class ChildStockClass */
-    const char *GetChildTag(void *info) const noexcept override;
-    void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
-                      PreparedChildProcess &p) override;
+	/* virtual methods from class ChildStockClass */
+	const char *GetChildTag(void *info) const noexcept override;
+	void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
+			  PreparedChildProcess &p) override;
 };
 
 struct FcgiChildParams {
-    const char *executable_path;
+	const char *executable_path;
 
-    ConstBuffer<const char *> args;
+	ConstBuffer<const char *> args;
 
-    const ChildOptions &options;
+	const ChildOptions &options;
 
-    FcgiChildParams(const char *_executable_path,
-                    ConstBuffer<const char *> _args,
-                    const ChildOptions &_options) noexcept
-        :executable_path(_executable_path), args(_args),
-         options(_options) {}
+	FcgiChildParams(const char *_executable_path,
+			ConstBuffer<const char *> _args,
+			const ChildOptions &_options) noexcept
+		:executable_path(_executable_path), args(_args),
+		 options(_options) {}
 
-    const char *GetStockKey(struct pool &pool) const noexcept;
+	const char *GetStockKey(struct pool &pool) const noexcept;
 };
 
 struct FcgiConnection final : StockItem {
-    const LLogger logger;
+	const LLogger logger;
 
-    std::string jail_home_directory;
+	std::string jail_home_directory;
 
-    JailConfig jail_config;
+	JailConfig jail_config;
 
-    StockItem *child = nullptr;
+	StockItem *child = nullptr;
 
-    UniqueSocketDescriptor fd;
-    SocketEvent event;
-    TimerEvent idle_timeout_event;
+	UniqueSocketDescriptor fd;
+	SocketEvent event;
+	TimerEvent idle_timeout_event;
 
-    /**
-     * Is this a fresh connection to the FastCGI child process?
-     */
-    bool fresh = true;
+	/**
+	 * Is this a fresh connection to the FastCGI child process?
+	 */
+	bool fresh = true;
 
-    /**
-     * Shall the FastCGI child process be killed?
-     */
-    bool kill = false;
+	/**
+	 * Shall the FastCGI child process be killed?
+	 */
+	bool kill = false;
 
-    /**
-     * Was the current request aborted by the fcgi_client caller?
-     */
-    bool aborted = false;
+	/**
+	 * Was the current request aborted by the fcgi_client caller?
+	 */
+	bool aborted = false;
 
-    explicit FcgiConnection(EventLoop &event_loop, CreateStockItem c) noexcept
-        :StockItem(c), logger(GetStockName()),
-         event(event_loop, BIND_THIS_METHOD(OnSocketEvent)),
-         idle_timeout_event(c.stock.GetEventLoop(),
-                            BIND_THIS_METHOD(OnIdleTimeout)) {}
+	explicit FcgiConnection(EventLoop &event_loop, CreateStockItem c) noexcept
+		:StockItem(c), logger(GetStockName()),
+		 event(event_loop, BIND_THIS_METHOD(OnSocketEvent)),
+		 idle_timeout_event(c.stock.GetEventLoop(),
+				    BIND_THIS_METHOD(OnIdleTimeout)) {}
 
-    ~FcgiConnection() noexcept override;
+	~FcgiConnection() noexcept override;
 
-    gcc_pure
-    const char *GetTag() const noexcept {
-        assert(child != nullptr);
+	gcc_pure
+	const char *GetTag() const noexcept {
+		assert(child != nullptr);
 
-        return child_stock_item_get_tag(*child);
-    }
+		return child_stock_item_get_tag(*child);
+	}
 
-    void SetSite(const char *site) noexcept {
-        child_stock_item_set_site(*child, site);
-    }
+	void SetSite(const char *site) noexcept {
+		child_stock_item_set_site(*child, site);
+	}
 
-    void SetUri(const char *uri) noexcept {
-        child_stock_item_set_uri(*child, uri);
-    }
+	void SetUri(const char *uri) noexcept {
+		child_stock_item_set_uri(*child, uri);
+	}
 
-    /* virtual methods from class StockItem */
-    bool Borrow() noexcept override;
-    bool Release() noexcept override;
+	/* virtual methods from class StockItem */
+	bool Borrow() noexcept override;
+	bool Release() noexcept override;
 
 private:
-    void OnSocketEvent(unsigned events) noexcept;
-    void OnIdleTimeout() noexcept;
+	void OnSocketEvent(unsigned events) noexcept;
+	void OnIdleTimeout() noexcept;
 };
 
 const char *
 FcgiChildParams::GetStockKey(struct pool &pool) const noexcept
 {
-    PoolStringBuilder<256> b;
-    b.push_back(executable_path);
+	PoolStringBuilder<256> b;
+	b.push_back(executable_path);
 
-    for (auto i : args) {
-        b.push_back(" ");
-        b.push_back(i);
-    }
+	for (auto i : args) {
+		b.push_back(" ");
+		b.push_back(i);
+	}
 
-    for (auto i : options.env) {
-        b.push_back("$");
-        b.push_back(i);
-    }
+	for (auto i : options.env) {
+		b.push_back("$");
+		b.push_back(i);
+	}
 
-    char options_buffer[16384];
-    b.emplace_back(options_buffer,
-                   options.MakeId(options_buffer));
+	char options_buffer[16384];
+	b.emplace_back(options_buffer,
+		       options.MakeId(options_buffer));
 
-    return b(pool);
+	return b(pool);
 }
 
 /*
@@ -226,20 +226,20 @@ FcgiChildParams::GetStockKey(struct pool &pool) const noexcept
 void
 FcgiConnection::OnSocketEvent(unsigned) noexcept
 {
-    char buffer;
-    ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
-    if (nbytes < 0)
-        logger(2, "error on idle FastCGI connection: ", strerror(errno));
-    else if (nbytes > 0)
-        logger(2, "unexpected data from idle FastCGI connection");
+	char buffer;
+	ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
+	if (nbytes < 0)
+		logger(2, "error on idle FastCGI connection: ", strerror(errno));
+	else if (nbytes > 0)
+		logger(2, "unexpected data from idle FastCGI connection");
 
-    InvokeIdleDisconnect();
+	InvokeIdleDisconnect();
 }
 
 inline void
 FcgiConnection::OnIdleTimeout() noexcept
 {
-    InvokeIdleDisconnect();
+	InvokeIdleDisconnect();
 }
 
 /*
@@ -250,34 +250,34 @@ FcgiConnection::OnIdleTimeout() noexcept
 const char *
 FcgiStock::GetChildTag(void *info) const noexcept
 {
-    const auto &params = *(const FcgiChildParams *)info;
+	const auto &params = *(const FcgiChildParams *)info;
 
-    return params.options.tag;
+	return params.options.tag;
 }
 
 void
 FcgiStock::PrepareChild(void *info, UniqueSocketDescriptor &&fd,
-                        PreparedChildProcess &p)
+			PreparedChildProcess &p)
 {
-    auto &params = *(FcgiChildParams *)info;
-    const ChildOptions &options = params.options;
+	auto &params = *(FcgiChildParams *)info;
+	const ChildOptions &options = params.options;
 
-    p.SetStdin(std::move(fd));
+	p.SetStdin(std::move(fd));
 
-    /* the FastCGI protocol defines a channel for stderr, so we could
-       close its "real" stderr here, but many FastCGI applications
-       don't use the FastCGI protocol to send error messages, so we
-       just keep it open */
+	/* the FastCGI protocol defines a channel for stderr, so we could
+	   close its "real" stderr here, but many FastCGI applications
+	   don't use the FastCGI protocol to send error messages, so we
+	   just keep it open */
 
-    UniqueFileDescriptor null_fd;
-    if (null_fd.Open("/dev/null", O_WRONLY))
-        p.SetStdout(std::move(null_fd));
+	UniqueFileDescriptor null_fd;
+	if (null_fd.Open("/dev/null", O_WRONLY))
+		p.SetStdout(std::move(null_fd));
 
-    p.Append(params.executable_path);
-    for (auto i : params.args)
-        p.Append(i);
+	p.Append(params.executable_path);
+	for (auto i : params.args)
+		p.Append(i);
 
-    options.CopyTo(p, true, nullptr);
+	options.CopyTo(p, true, nullptr);
 }
 
 /*
@@ -287,100 +287,100 @@ FcgiStock::PrepareChild(void *info, UniqueSocketDescriptor &&fd,
 
 void
 FcgiStock::Create(CreateStockItem c, StockRequest request,
-                  gcc_unused CancellablePointer &cancel_ptr)
+		  gcc_unused CancellablePointer &cancel_ptr)
 {
-    auto *params = (FcgiChildParams *)request.get();
+	auto *params = (FcgiChildParams *)request.get();
 
-    assert(params != nullptr);
-    assert(params->executable_path != nullptr);
+	assert(params != nullptr);
+	assert(params->executable_path != nullptr);
 
-    auto *connection = new FcgiConnection(GetEventLoop(), c);
+	auto *connection = new FcgiConnection(GetEventLoop(), c);
 
-    const ChildOptions &options = params->options;
-    if (options.jail != nullptr && options.jail->enabled) {
-        connection->jail_home_directory = options.jail->home_directory;
+	const ChildOptions &options = params->options;
+	if (options.jail != nullptr && options.jail->enabled) {
+		connection->jail_home_directory = options.jail->home_directory;
 
-        if (!connection->jail_config.Load("/etc/cm4all/jailcgi/jail.conf")) {
-            delete connection;
-            throw FcgiClientError("Failed to load /etc/cm4all/jailcgi/jail.conf");
-        }
-    }
+		if (!connection->jail_config.Load("/etc/cm4all/jailcgi/jail.conf")) {
+			delete connection;
+			throw FcgiClientError("Failed to load /etc/cm4all/jailcgi/jail.conf");
+		}
+	}
 
-    const char *key = c.GetStockName();
+	const char *key = c.GetStockName();
 
-    try {
-        connection->child = child_stock.GetStockMap().GetNow(key,
-                                                             std::move(request));
-    } catch (...) {
-        delete connection;
-        std::throw_with_nested(FcgiClientError(StringFormat<256>("Failed to start FastCGI server '%s'",
-                                                                 key)));
-    }
+	try {
+		connection->child = child_stock.GetStockMap().GetNow(key,
+								     std::move(request));
+	} catch (...) {
+		delete connection;
+		std::throw_with_nested(FcgiClientError(StringFormat<256>("Failed to start FastCGI server '%s'",
+									 key)));
+	}
 
-    try {
-        connection->fd = child_stock_item_connect(*connection->child);
-    } catch (...) {
-        connection->kill = true;
-        delete connection;
-        std::throw_with_nested(FcgiClientError(StringFormat<256>("Failed to connect to FastCGI server '%s'",
-                                                                 key)));
-    }
+	try {
+		connection->fd = child_stock_item_connect(*connection->child);
+	} catch (...) {
+		connection->kill = true;
+		delete connection;
+		std::throw_with_nested(FcgiClientError(StringFormat<256>("Failed to connect to FastCGI server '%s'",
+									 key)));
+	}
 
-    connection->event.Open(connection->fd);
+	connection->event.Open(connection->fd);
 
-    connection->InvokeCreateSuccess();
+	connection->InvokeCreateSuccess();
 }
 
 bool
 FcgiConnection::Borrow() noexcept
 {
-    /* check the connection status before using it, just in case the
-       FastCGI server has decided to close the connection before
-       fcgi_connection_event_callback() got invoked */
-    char buffer;
-    ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
-    if (nbytes > 0) {
-        logger(2, "unexpected data from idle FastCGI connection");
-        return false;
-    } else if (nbytes == 0) {
-        /* connection closed (not worth a log message) */
-        return false;
-    } else if (errno != EAGAIN) {
-        logger(2, "error on idle FastCGI connection: ", strerror(errno));
-        return false;
-    }
+	/* check the connection status before using it, just in case the
+	   FastCGI server has decided to close the connection before
+	   fcgi_connection_event_callback() got invoked */
+	char buffer;
+	ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
+	if (nbytes > 0) {
+		logger(2, "unexpected data from idle FastCGI connection");
+		return false;
+	} else if (nbytes == 0) {
+		/* connection closed (not worth a log message) */
+		return false;
+	} else if (errno != EAGAIN) {
+		logger(2, "error on idle FastCGI connection: ", strerror(errno));
+		return false;
+	}
 
-    event.Cancel();
-    idle_timeout_event.Cancel();
-    aborted = false;
-    return true;
+	event.Cancel();
+	idle_timeout_event.Cancel();
+	aborted = false;
+	return true;
 }
 
 bool
 FcgiConnection::Release() noexcept
 {
-    fresh = false;
-    event.ScheduleRead();
-    idle_timeout_event.Schedule(std::chrono::minutes(6));
-    return true;
+	fresh = false;
+	event.ScheduleRead();
+	idle_timeout_event.Schedule(std::chrono::minutes(6));
+	return true;
 }
 
 FcgiConnection::~FcgiConnection() noexcept
 {
-    if (fd.IsDefined()) {
-        event.Cancel();
-        fd.Close();
-    }
+	if (fd.IsDefined()) {
+		event.Cancel();
+		fd.Close();
+	}
 
-    if (fresh && aborted)
-        /* the fcgi_client caller has aborted the request before the
-           first response on a fresh connection was received: better
-           kill the child process, it may be failing on us
-           completely */
-        kill = true;
+	if (fresh && aborted)
+		/* the fcgi_client caller has aborted the request before the
+		   first response on a fresh connection was received: better
+		   kill the child process, it may be failing on us
+		   completely */
+		kill = true;
 
-    if (child != nullptr)
-        child->Put(kill);
+	if (child != nullptr)
+		child->Put(kill);
 }
 
 
@@ -391,143 +391,143 @@ FcgiConnection::~FcgiConnection() noexcept
 
 inline
 FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
-                     EventLoop &event_loop, SpawnService &spawn_service,
-                     SocketDescriptor _log_socket,
-                     const ChildErrorLogOptions &_log_options) noexcept
-    :hstock(event_loop, *this, limit, max_idle),
-     child_stock(event_loop, spawn_service,
-                 *this,
-                 4,
-                 _log_socket, _log_options,
-                 limit, max_idle) {}
+		     EventLoop &event_loop, SpawnService &spawn_service,
+		     SocketDescriptor _log_socket,
+		     const ChildErrorLogOptions &_log_options) noexcept
+	:hstock(event_loop, *this, limit, max_idle),
+	 child_stock(event_loop, spawn_service,
+		     *this,
+		     4,
+		     _log_socket, _log_options,
+		     limit, max_idle) {}
 
 void
 FcgiStock::FadeTag(const char *tag) noexcept
 {
-    assert(tag != nullptr);
+	assert(tag != nullptr);
 
-    hstock.FadeIf([tag](const StockItem &item){
-            const auto &connection = (const FcgiConnection &)item;
-            const char *tag2 = connection.GetTag();
-            return tag2 != nullptr && strcmp(tag, tag2) == 0;
-        });
+	hstock.FadeIf([tag](const StockItem &item){
+		const auto &connection = (const FcgiConnection &)item;
+		const char *tag2 = connection.GetTag();
+		return tag2 != nullptr && strcmp(tag, tag2) == 0;
+	});
 
-    child_stock.FadeTag(tag);
+	child_stock.FadeTag(tag);
 }
 
 FcgiStock *
 fcgi_stock_new(unsigned limit, unsigned max_idle,
-               EventLoop &event_loop, SpawnService &spawn_service,
-               SocketDescriptor log_socket,
-               const ChildErrorLogOptions &log_options) noexcept
+	       EventLoop &event_loop, SpawnService &spawn_service,
+	       SocketDescriptor log_socket,
+	       const ChildErrorLogOptions &log_options) noexcept
 {
-    return new FcgiStock(limit, max_idle, event_loop, spawn_service,
-                         log_socket, log_options);
+	return new FcgiStock(limit, max_idle, event_loop, spawn_service,
+			     log_socket, log_options);
 }
 
 void
 fcgi_stock_free(FcgiStock *fcgi_stock) noexcept
 {
-    delete fcgi_stock;
+	delete fcgi_stock;
 }
 
 SocketDescriptor
 fcgi_stock_get_log_socket(const FcgiStock &fs) noexcept
 {
-    return fs.GetLogSocket();
+	return fs.GetLogSocket();
 }
 
 const ChildErrorLogOptions &
 fcgi_stock_get_log_options(const FcgiStock &fs) noexcept
 {
-    return fs.GetLogOptions();
+	return fs.GetLogOptions();
 }
 
 void
 fcgi_stock_fade_all(FcgiStock &fs) noexcept
 {
-    fs.FadeAll();
+	fs.FadeAll();
 }
 
 void
 fcgi_stock_fade_tag(FcgiStock &fs, const char *tag) noexcept
 {
-    fs.FadeTag(tag);
+	fs.FadeTag(tag);
 }
 
 inline StockItem *
 FcgiStock::Get(const ChildOptions &options,
-               const char *executable_path,
-               ConstBuffer<const char *> args)
+	       const char *executable_path,
+	       ConstBuffer<const char *> args)
 {
-    const TempPoolLease tpool;
+	const TempPoolLease tpool;
 
-    auto r = NewDisposablePointer<FcgiChildParams>(*tpool, executable_path,
-                                                   args, options);
-    const char *key = r->GetStockKey(*tpool);
-    return hstock.GetNow(key, std::move(r));
+	auto r = NewDisposablePointer<FcgiChildParams>(*tpool, executable_path,
+						       args, options);
+	const char *key = r->GetStockKey(*tpool);
+	return hstock.GetNow(key, std::move(r));
 }
 
 StockItem *
 fcgi_stock_get(FcgiStock *fcgi_stock,
-               const ChildOptions &options,
-               const char *executable_path,
-               ConstBuffer<const char *> args)
+	       const ChildOptions &options,
+	       const char *executable_path,
+	       ConstBuffer<const char *> args)
 {
-    return fcgi_stock->Get(options, executable_path, args);
+	return fcgi_stock->Get(options, executable_path, args);
 }
 
 int
 fcgi_stock_item_get_domain(gcc_unused const StockItem &item) noexcept
 {
-    return AF_LOCAL;
+	return AF_LOCAL;
 }
 
 void
 fcgi_stock_item_set_site(StockItem &item, const char *site) noexcept
 {
-    auto &connection = (FcgiConnection &)item;
-    connection.SetSite(site);
+	auto &connection = (FcgiConnection &)item;
+	connection.SetSite(site);
 }
 
 void
 fcgi_stock_item_set_uri(StockItem &item, const char *uri) noexcept
 {
-    auto &connection = (FcgiConnection &)item;
-    connection.SetUri(uri);
+	auto &connection = (FcgiConnection &)item;
+	connection.SetUri(uri);
 }
 
 SocketDescriptor
 fcgi_stock_item_get(const StockItem &item) noexcept
 {
-    const auto *connection = (const FcgiConnection *)&item;
+	const auto *connection = (const FcgiConnection *)&item;
 
-    assert(connection->fd.IsDefined());
+	assert(connection->fd.IsDefined());
 
-    return connection->fd;
+	return connection->fd;
 }
 
 const char *
 fcgi_stock_translate_path(const StockItem &item,
-                          const char *path, AllocatorPtr alloc) noexcept
+			  const char *path, AllocatorPtr alloc) noexcept
 {
-    const auto *connection = (const FcgiConnection *)&item;
+	const auto *connection = (const FcgiConnection *)&item;
 
-    if (connection->jail_home_directory.empty())
-        /* no JailCGI - application's namespace is the same as ours,
-           no translation needed */
-        return path;
+	if (connection->jail_home_directory.empty())
+		/* no JailCGI - application's namespace is the same as ours,
+		   no translation needed */
+		return path;
 
-    const char *jailed = connection->jail_config.TranslatePath(path,
-                                                               connection->jail_home_directory.c_str(),
-                                                               alloc);
-    return jailed != nullptr ? jailed : path;
+	const char *jailed = connection->jail_config.TranslatePath(path,
+								   connection->jail_home_directory.c_str(),
+								   alloc);
+	return jailed != nullptr ? jailed : path;
 }
 
 void
 fcgi_stock_aborted(StockItem &item) noexcept
 {
-    auto *connection = (FcgiConnection *)&item;
+	auto *connection = (FcgiConnection *)&item;
 
-    connection->aborted = true;
+	connection->aborted = true;
 }

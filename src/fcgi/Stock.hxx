@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_FCGI_STOCK_HXX
-#define BENG_PROXY_FCGI_STOCK_HXX
+#pragma once
 
 struct ChildErrorLogOptions;
 struct StockItem;
@@ -49,9 +48,9 @@ class SocketDescriptor;
  */
 FcgiStock *
 fcgi_stock_new(unsigned limit, unsigned max_idle,
-               EventLoop &event_loop, SpawnService &spawn_service,
-               SocketDescriptor log_socket,
-               const ChildErrorLogOptions &log_options) noexcept;
+	       EventLoop &event_loop, SpawnService &spawn_service,
+	       SocketDescriptor log_socket,
+	       const ChildErrorLogOptions &log_options) noexcept;
 
 void
 fcgi_stock_free(FcgiStock *fcgi_stock) noexcept;
@@ -75,9 +74,9 @@ fcgi_stock_fade_tag(FcgiStock &fs, const char *tag) noexcept;
  */
 StockItem *
 fcgi_stock_get(FcgiStock *fcgi_stock,
-               const ChildOptions &options,
-               const char *executable_path,
-               ConstBuffer<const char *> args);
+	       const ChildOptions &options,
+	       const char *executable_path,
+	       ConstBuffer<const char *> args);
 
 void
 fcgi_stock_item_set_site(StockItem &item, const char *site) noexcept;
@@ -99,7 +98,7 @@ fcgi_stock_item_get_domain(const StockItem &item) noexcept;
  */
 const char *
 fcgi_stock_translate_path(const StockItem &item,
-                          const char *path, AllocatorPtr alloc) noexcept;
+			  const char *path, AllocatorPtr alloc) noexcept;
 
 /**
  * Let the fcgi_stock know that the client is being aborted.  The
@@ -110,5 +109,3 @@ fcgi_stock_translate_path(const StockItem &item,
  */
 void
 fcgi_stock_aborted(StockItem &item) noexcept;
-
-#endif

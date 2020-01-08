@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_FCGI_REMOTE_HXX
-#define BENG_PROXY_FCGI_REMOTE_HXX
+#pragma once
 
 #include "http/Method.h"
 
@@ -52,19 +51,17 @@ template<typename T> struct ConstBuffer;
  */
 void
 fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
-                    TcpBalancer *tcp_balancer,
-                    const StopwatchPtr &parent_stopwatch,
-                    const AddressList *address_list,
-                    const char *path,
-                    http_method_t method, const char *uri,
-                    const char *script_name, const char *path_info,
-                    const char *query_string,
-                    const char *document_root,
-                    const char *remote_addr,
-                    StringMap &&headers, UnusedIstreamPtr body,
-                    ConstBuffer<const char *> params,
-                    UniqueFileDescriptor stderr_fd,
-                    HttpResponseHandler &handler,
-                    CancellablePointer &cancel_ptr);
-
-#endif
+		    TcpBalancer *tcp_balancer,
+		    const StopwatchPtr &parent_stopwatch,
+		    const AddressList *address_list,
+		    const char *path,
+		    http_method_t method, const char *uri,
+		    const char *script_name, const char *path_info,
+		    const char *query_string,
+		    const char *document_root,
+		    const char *remote_addr,
+		    StringMap &&headers, UnusedIstreamPtr body,
+		    ConstBuffer<const char *> params,
+		    UniqueFileDescriptor stderr_fd,
+		    HttpResponseHandler &handler,
+		    CancellablePointer &cancel_ptr);

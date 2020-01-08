@@ -30,15 +30,12 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef FCGI_ERROR_HXX
-#define FCGI_ERROR_HXX
+#pragma once
 
 #include <stdexcept>
 
 class FcgiClientError : public std::runtime_error {
 public:
-    explicit FcgiClientError(const char *_msg)
-        :std::runtime_error(_msg) {}
+	explicit FcgiClientError(const char *_msg)
+		:std::runtime_error(_msg) {}
 };
-
-#endif
