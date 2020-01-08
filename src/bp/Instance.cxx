@@ -134,7 +134,9 @@ BpInstance::FreeStocksAndCaches() noexcept
 
 	delete std::exchange(fs_balancer, nullptr);
 	delete std::exchange(fs_stock, nullptr);
+#ifdef HAVE_NGHTTP2
 	delete std::exchange(nghttp2_stock, nullptr);
+#endif
 
 	delete std::exchange(tcp_balancer, nullptr);
 

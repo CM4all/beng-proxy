@@ -277,6 +277,7 @@ try {
 			filter_factory = nullptr;
 		}
 
+#ifdef HAVE_NGHTTP2
 		if (address.GetHttp().http2)
 			NgHttp2::SendRequest(pool, event_loop, nghttp2_stock,
 					     parent_stopwatch,
@@ -286,6 +287,7 @@ try {
 					     std::move(body),
 					     handler, cancel_ptr);
 		else
+#endif
 			http_request(pool, event_loop, fs_balancer,
 				     parent_stopwatch,
 				     session_sticky,

@@ -159,7 +159,9 @@ struct BpInstance final : PInstance, ControlHandler {
 	FilteredSocketStock *fs_stock = nullptr;
 	FilteredSocketBalancer *fs_balancer = nullptr;
 
+#ifdef HAVE_NGHTTP2
 	NgHttp2::Stock *nghttp2_stock = nullptr;
+#endif
 
 	/* cache */
 	HttpCache *http_cache = nullptr;

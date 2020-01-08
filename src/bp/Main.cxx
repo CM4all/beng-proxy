@@ -198,8 +198,10 @@ BpInstance::ReloadEventCallback(int) noexcept
 		nfs_cache_flush(*nfs_cache);
 #endif
 
+#ifdef HAVE_NGHTTP2
 	if (nghttp2_stock != nullptr)
 		nghttp2_stock->FadeAll();
+#endif
 
 	Compress();
 }
@@ -378,7 +380,9 @@ try {
 	instance.fs_balancer = new FilteredSocketBalancer(*instance.fs_stock,
 							  instance.failure_manager);
 
+#ifdef HAVE_NGHTTP2
 	instance.nghttp2_stock = new NgHttp2::Stock();
+#endif
 
 	if (instance.config.translation_socket != nullptr) {
 		instance.translation_stock =
@@ -438,7 +442,9 @@ try {
 		new DirectResourceLoader(instance.event_loop,
 					 instance.tcp_balancer,
 					 *instance.fs_balancer,
+#ifdef HAVE_NGHTTP2
 					 *instance.nghttp2_stock,
+#endif
 					 *instance.spawn_service,
 					 instance.lhttp_stock,
 					 instance.fcgi_stock,

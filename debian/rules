@@ -4,6 +4,7 @@
 MESON_OPTIONS = \
 	--includedir=include/cm4all/libbeng-proxy-3 \
 	-Ddocumentation=enabled \
+	-Dhttp2=enabled \
 	-Dnfs=enabled \
 	-Dsystemd=true \
 	-Dwas=enabled \

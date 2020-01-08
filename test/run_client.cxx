@@ -75,7 +75,9 @@
 struct parsed_url {
 	enum {
 		HTTP,
+#ifdef HAVE_NGHTTP2
 		HTTP2,
+#endif
 	} protocol;
 
 	bool ssl = false;
@@ -103,6 +105,7 @@ parse_url(const char *url)
 		dest.protocol = parsed_url::HTTP;
 		dest.ssl = true;
 		dest.default_port = 443;
+#ifdef HAVE_NGHTTP2
 	} else if (memcmp(url, "http2://", 8) == 0) {
 		url += 8;
 		dest.protocol = parsed_url::HTTP2;
@@ -112,6 +115,7 @@ parse_url(const char *url)
 		dest.protocol = parsed_url::HTTP2;
 		dest.ssl = true;
 		dest.default_port = 443;
+#endif
 	} else
 		throw std::runtime_error("Unsupported URL");
 
@@ -140,7 +144,9 @@ GetHostWithoutPort(struct pool &pool, const struct parsed_url &url) noexcept
 
 struct Context final
 	: PInstance, ConnectSocketHandler, Lease,
+#ifdef HAVE_NGHTTP2
 	  NgHttp2::ConnectionHandler,
+#endif
 	  HttpResponseHandler {
 
 	struct parsed_url url;
@@ -149,7 +155,9 @@ struct Context final
 
 	PoolPtr pool;
 
+#ifdef HAVE_NGHTTP2
 	std::unique_ptr<NgHttp2::ClientConnection> nghttp2_client;
+#endif
 
 	CancellablePointer cancel_ptr;
 
@@ -193,10 +201,12 @@ struct Context final
 			fd.Close();
 	}
 
+#ifdef HAVE_NGHTTP2
 	/* virtual methods from class NgHttp2::ConnectionHandler */
 	void OnNgHttp2ConnectionIdle() noexcept override;
 	void OnNgHttp2ConnectionError(std::exception_ptr e) noexcept override;
 	void OnNgHttp2ConnectionClosed() noexcept override;
+#endif
 
 	/* virtual methods from class HttpResponseHandler */
 	void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -268,6 +278,8 @@ static constexpr SinkFdHandler my_sink_fd_handler = {
 	.send_error = my_sink_fd_send_error,
 };
 
+#ifdef HAVE_NGHTTP2
+
 void
 Context::OnNgHttp2ConnectionIdle() noexcept
 {
@@ -287,6 +299,8 @@ Context::OnNgHttp2ConnectionClosed() noexcept
 	// TODO
 	nghttp2_client.reset();
 }
+
+#endif
 
 /*
  * http_response_handler
@@ -345,9 +359,11 @@ try {
 		case parsed_url::HTTP:
 			break;
 
+#ifdef HAVE_NGHTTP2
 		case parsed_url::HTTP2:
 			alpn = SslClientAlpn::HTTP_2;
 			break;
+#endif
 		}
 
 		socket_filter = ssl_client_create(event_loop,
@@ -372,6 +388,7 @@ try {
 				    cancel_ptr);
 		break;
 
+#ifdef HAVE_NGHTTP2
 	case parsed_url::HTTP2:
 		reuse = false;
 
@@ -389,6 +406,7 @@ try {
 					    std::move(request_body),
 					    *this, cancel_ptr);
 		break;
+#endif
 	}
 } catch (const std::runtime_error &e) {
 	PrintException(e);

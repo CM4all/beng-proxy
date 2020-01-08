@@ -53,7 +53,9 @@ class DirectResourceLoader final : public ResourceLoader {
 	EventLoop &event_loop;
 	TcpBalancer *tcp_balancer;
 	FilteredSocketBalancer &fs_balancer;
+#ifdef HAVE_NGHTTP2
 	NgHttp2::Stock &nghttp2_stock;
+#endif
 	SpawnService &spawn_service;
 	LhttpStock *lhttp_stock;
 	FcgiStock *fcgi_stock;
@@ -69,7 +71,9 @@ public:
 	DirectResourceLoader(EventLoop &_event_loop,
 			     TcpBalancer *_tcp_balancer,
 			     FilteredSocketBalancer &_fs_balancer,
+#ifdef HAVE_NGHTTP2
 			     NgHttp2::Stock &_nghttp2_stock,
+#endif
 			     SpawnService &_spawn_service,
 			     LhttpStock *_lhttp_stock,
 			     FcgiStock *_fcgi_stock,
@@ -84,7 +88,9 @@ public:
 		:event_loop(_event_loop),
 		 tcp_balancer(_tcp_balancer),
 		 fs_balancer(_fs_balancer),
+#ifdef HAVE_NGHTTP2
 		 nghttp2_stock(_nghttp2_stock),
+#endif
 		 spawn_service(_spawn_service),
 		 lhttp_stock(_lhttp_stock),
 		 fcgi_stock(_fcgi_stock),

@@ -1,4 +1,8 @@
-libnghttp2 = dependency('libnghttp2')
+libnghttp2 = dependency('libnghttp2', required: get_option('http2'))
+if not libnghttp2.found()
+  nghttp2_dep = libnghttp2
+  subdir_done()
+endif
 
 nghttp2 = static_library('nghttp2',
   'Server.cxx',
@@ -9,6 +13,7 @@ nghttp2 = static_library('nghttp2',
   include_directories: inc,
 )
 nghttp2_dep = declare_dependency(
+  compile_args: '-DHAVE_NGHTTP2',
   link_with: nghttp2,
   dependencies: [
     libnghttp2,
