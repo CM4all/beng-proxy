@@ -115,7 +115,7 @@ static void
 HandleStopwatchPipe(ConstBuffer<void> payload,
 		    WritableBuffer<UniqueFileDescriptor> fds)
 {
-	if (!payload.empty() || fds.size != 1)
+	if (!payload.empty() || fds.size != 1 || !fds.front().IsPipe())
 		throw std::runtime_error("Malformed STOPWATCH_PIPE packet");
 
 	stopwatch_enable(std::move(fds.front()));
