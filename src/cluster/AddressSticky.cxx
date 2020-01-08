@@ -30,69 +30,17 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "address_list.hxx"
-#include "net/AddressInfo.hxx"
-#include "net/ToString.hxx"
-#include "AllocatorPtr.hxx"
+#include "AddressSticky.hxx"
+#include "net/SocketAddress.hxx"
+#include "util/djbhash.h"
+#include "util/ConstBuffer.hxx"
 
-#include <string.h>
-
-AddressList::AddressList(ShallowCopy, const AddressInfoList &src) noexcept
+sticky_hash_t
+socket_address_sticky(SocketAddress address)
 {
-	for (const auto &i : src) {
-		if (addresses.full())
-			break;
+	const auto p = address.GetSteadyPart();
+	if (p == nullptr)
+		return 0;
 
-		addresses.push_back(i);
-	}
-}
-
-AddressList::AddressList(AllocatorPtr alloc, const AddressList &src) noexcept
-	:sticky_mode(src.sticky_mode)
-{
-	addresses.clear();
-
-	for (const auto &i : src)
-		Add(alloc, i);
-}
-
-bool
-AddressList::Add(AllocatorPtr alloc, const SocketAddress address) noexcept
-{
-	if (addresses.full())
-		return false;
-
-	addresses.push_back(alloc.Dup(address));
-	return true;
-}
-
-bool
-AddressList::Add(AllocatorPtr alloc, const AddressInfoList &list) noexcept
-{
-	for (const auto &i : list)
-		if (!Add(alloc, i))
-			return false;
-
-	return true;
-}
-
-const char *
-AddressList::GetKey() const noexcept
-{
-	static char buffer[2048];
-	size_t length = 0;
-	bool success;
-
-	for (const auto &i : *this) {
-		if (length > 0 && length < sizeof(buffer) - 1)
-			buffer[length++] = ' ';
-
-		success = ToString(buffer + length, sizeof(buffer) - length, i);
-		if (success)
-			length += strlen(buffer + length);
-	}
-
-	buffer[length] = 0;
-
-	return buffer;
+	return djb_hash(p.data, p.size);
 }

@@ -402,7 +402,7 @@ test('t_balancer', executable('t_balancer',
   't_balancer.cxx',
   '../src/cluster/RoundRobinBalancer.cxx',
   '../src/cluster/BalancerMap.cxx',
-  '../src/address_list.cxx',
+  '../src/cluster/AddressList.cxx',
   include_directories: inc,
   dependencies: [
     gtest,

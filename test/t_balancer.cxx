@@ -32,8 +32,8 @@
 
 #include "TestPool.hxx"
 #include "cluster/BalancerMap.hxx"
+#include "cluster/AddressList.hxx"
 #include "AllocatorPtr.hxx"
-#include "address_list.hxx"
 #include "event/Loop.hxx"
 #include "net/Resolver.hxx"
 #include "net/AddressInfo.hxx"

@@ -33,8 +33,8 @@
 #pragma once
 
 #include "SimpleHttpResponse.hxx"
-#include "address_list.hxx"
-#include "StickyMode.hxx"
+#include "cluster/AddressList.hxx"
+#include "cluster/StickyMode.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 
 #include <string>

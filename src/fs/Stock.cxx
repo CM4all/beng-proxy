@@ -41,7 +41,7 @@
 #include "stock/Class.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/LoggerDomain.hxx"
-#include "address_list.hxx"
+#include "cluster/AddressList.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "io/Logger.hxx"

@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "address_list.hxx"
+#include "cluster/AddressList.hxx"
 #include "shm/dpool.hxx"
 
 AddressList::AddressList(struct dpool &pool, const AddressList &src) noexcept

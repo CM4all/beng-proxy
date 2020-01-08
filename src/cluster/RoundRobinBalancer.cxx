@@ -31,7 +31,7 @@
  */
 
 #include "RoundRobinBalancer.hxx"
-#include "address_list.hxx"
+#include "AddressList.hxx"
 #include "net/FailureManager.hxx"
 
 #include <assert.h>

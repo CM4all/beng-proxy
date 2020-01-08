@@ -33,7 +33,7 @@
 #pragma once
 
 #include "BalancerMap.hxx"
-#include "address_list.hxx"
+#include "AddressList.hxx"
 #include "pool/PSocketAddress.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"

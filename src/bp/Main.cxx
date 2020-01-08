@@ -77,7 +77,6 @@
 #include "spawn/Local.hxx"
 #include "spawn/Glue.hxx"
 #include "spawn/Client.hxx"
-#include "address_list.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/FailureManager.hxx"

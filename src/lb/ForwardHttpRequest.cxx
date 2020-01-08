@@ -41,7 +41,7 @@
 #include "JvmRoute.hxx"
 #include "Headers.hxx"
 #include "ssl/Filter.hxx"
-#include "address_sticky.hxx"
+#include "cluster/AddressSticky.hxx"
 #include "address_string.hxx"
 #include "http_server/http_server.hxx"
 #include "http/IncomingRequest.hxx"

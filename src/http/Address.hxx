@@ -32,8 +32,7 @@
 
 #pragma once
 
-#include "address_list.hxx"
-
+#include "cluster/AddressList.hxx"
 #include "util/Compiler.h"
 
 #include <stddef.h>

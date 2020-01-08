@@ -33,7 +33,7 @@
 #pragma once
 
 #include "spawn/ChildOptions.hxx"
-#include "address_list.hxx"
+#include "cluster/AddressList.hxx"
 #include "adata/ExpandableStringList.hxx"
 
 #include "util/Compiler.h"

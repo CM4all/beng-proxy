@@ -32,8 +32,8 @@
 
 #include "ConnectBalancer.hxx"
 #include "BalancerRequest.hxx"
+#include "AddressList.hxx"
 #include "net/PConnectSocket.hxx"
-#include "address_list.hxx"
 #include "event/Loop.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "stopwatch.hxx"

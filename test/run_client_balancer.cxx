@@ -32,6 +32,7 @@
 
 #include "cluster/ConnectBalancer.hxx"
 #include "cluster/BalancerMap.hxx"
+#include "cluster/AddressList.hxx"
 #include "event/net/ConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
@@ -40,7 +41,6 @@
 #include "pool/pool.hxx"
 #include "pool/Ptr.hxx"
 #include "AllocatorPtr.hxx"
-#include "address_list.hxx"
 #include "net/Resolver.hxx"
 #include "net/AddressInfo.hxx"
 #include "util/Cancellable.hxx"

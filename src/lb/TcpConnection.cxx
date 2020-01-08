@@ -37,7 +37,7 @@
 #include "Instance.hxx"
 #include "AllocatorPtr.hxx"
 #include "cluster/ConnectBalancer.hxx"
-#include "address_sticky.hxx"
+#include "cluster/AddressSticky.hxx"
 #include "ssl/Filter.hxx"
 #include "fs/ThreadSocketFilter.hxx"
 #include "thread_pool.hxx"
