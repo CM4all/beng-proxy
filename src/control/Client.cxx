@@ -414,7 +414,7 @@ Stopwatch(const char *server, ConstBuffer<const char *> args)
 	FileDescriptor fds[] = { w };
 
 	BengControlClient client(server);
-	client.Send(BengProxy::ControlCommand::STOPWATCH, nullptr, fds);
+	client.Send(BengProxy::ControlCommand::STOPWATCH_PIPE, nullptr, fds);
 
 	w.Close();
 

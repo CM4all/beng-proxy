@@ -345,7 +345,7 @@ LbControl::OnControlPacket(ControlServer &control_server,
 	case ControlCommand::ENABLE_ZEROCONF:
 	case ControlCommand::FLUSH_NFS_CACHE:
 	case ControlCommand::FLUSH_FILTER_CACHE:
-	case ControlCommand::STOPWATCH:
+	case ControlCommand::STOPWATCH_PIPE:
 		/* not applicable */
 		break;
 	}

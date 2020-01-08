@@ -112,11 +112,11 @@ query_stats(BpInstance *instance, ControlServer *server,
 }
 
 static void
-HandleStopwatch(ConstBuffer<void> payload,
-		WritableBuffer<UniqueFileDescriptor> fds)
+HandleStopwatchPipe(ConstBuffer<void> payload,
+		    WritableBuffer<UniqueFileDescriptor> fds)
 {
 	if (!payload.empty() || fds.size != 1)
-		throw std::runtime_error("Malformed STOPWATCH packet");
+		throw std::runtime_error("Malformed STOPWATCH_PIPE packet");
 
 	stopwatch_enable(std::move(fds.front()));
 }
@@ -207,8 +207,8 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 
 		break;
 
-	case ControlCommand::STOPWATCH:
-		HandleStopwatch(payload, fds);
+	case ControlCommand::STOPWATCH_PIPE:
+		HandleStopwatchPipe(payload, fds);
 		break;
 	}
 }

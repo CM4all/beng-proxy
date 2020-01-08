@@ -134,9 +134,10 @@ enum class ControlCommand {
     FLUSH_FILTER_CACHE = 12,
 
     /**
-     * Read the stopwatch.
+     * Write stopwatch data in human-readable text format into the
+     * given pipe.
      */
-    STOPWATCH = 13,
+    STOPWATCH_PIPE = 13,
 };
 
 struct ControlStats {
