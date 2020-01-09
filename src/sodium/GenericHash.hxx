@@ -55,7 +55,7 @@ public:
 		Update({&p, sizeof(p)});
 	}
 
-	void Final(unsigned char *out, size_t outlen) noexcept {
-		crypto_generichash_blake2b_final(&state, out, outlen);
+	void Final(void *out, size_t outlen) noexcept {
+		crypto_generichash_blake2b_final(&state, (unsigned char *)out, outlen);
 	}
 };
