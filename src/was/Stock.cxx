@@ -32,12 +32,9 @@
 
 #include "Stock.hxx"
 #include "Launch.hxx"
-#include "stock/MapStock.hxx"
 #include "stock/Stock.hxx"
-#include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "access_log/ChildErrorLog.hxx"
-#include "access_log/ChildErrorLogOptions.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
@@ -420,37 +417,14 @@ WasChild::OnIdleTimeout() noexcept
  *
  */
 
-class WasStock final : StockClass {
-	SpawnService &spawn_service;
-	const SocketDescriptor log_socket;
-	const ChildErrorLogOptions log_options;
-	StockMap stock;
-
-public:
-	explicit WasStock(EventLoop &event_loop, SpawnService &_spawn_service,
-			  const SocketDescriptor _log_socket,
-			  const ChildErrorLogOptions &_log_options,
-			  unsigned limit, unsigned max_idle) noexcept
-		:spawn_service(_spawn_service),
-		 log_socket(_log_socket), log_options(_log_options),
-		 stock(event_loop, *this, limit, max_idle) {}
-
-	StockMap &GetStock() noexcept {
-		return stock;
-	}
-
-	void FadeTag(const char *tag) noexcept {
-		stock.FadeIf([tag](const StockItem &item){
-			const auto &child = (const WasChild &)item;
-			return child.IsTag(tag);
-		});
-	}
-
-private:
-	/* virtual methods from class StockClass */
-	void Create(CreateStockItem c, StockRequest request,
-		    CancellablePointer &cancel_ptr) override;
-};
+void
+WasStock::FadeTag(const char *tag) noexcept
+{
+	stock.FadeIf([tag](const StockItem &item){
+		const auto &child = (const WasChild &)item;
+		return child.IsTag(tag);
+	});
+}
 
 void
 WasStock::Create(CreateStockItem c, StockRequest _request,

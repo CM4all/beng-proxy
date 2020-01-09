@@ -32,22 +32,47 @@
 
 #pragma once
 
+#include "access_log/ChildErrorLogOptions.hxx"
+#include "stock/Class.hxx"
+#include "stock/MapStock.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "util/Compiler.h"
 
 #include <stdint.h>
 
 struct pool;
-struct ChildErrorLogOptions;
-class StockMap;
-struct StockItem;
-class StockGetHandler;
 struct ChildOptions;
-class CancellablePointer;
 struct WasProcess;
 template<typename T> struct ConstBuffer;
-class EventLoop;
 class SpawnService;
-class SocketDescriptor;
+class WasChild;
+
+class WasStock final : StockClass {
+	SpawnService &spawn_service;
+	const SocketDescriptor log_socket;
+	const ChildErrorLogOptions log_options;
+	StockMap stock;
+
+public:
+	explicit WasStock(EventLoop &event_loop, SpawnService &_spawn_service,
+			  const SocketDescriptor _log_socket,
+			  const ChildErrorLogOptions &_log_options,
+			  unsigned limit, unsigned max_idle) noexcept
+		:spawn_service(_spawn_service),
+		 log_socket(_log_socket), log_options(_log_options),
+		 stock(event_loop, *this, limit, max_idle) {}
+
+	StockMap &GetStock() noexcept {
+		return stock;
+	}
+
+	void FadeTag(const char *tag) noexcept;
+
+private:
+	/* virtual methods from class StockClass */
+	void Create(CreateStockItem c, StockRequest request,
+		    CancellablePointer &cancel_ptr) override;
+};
 
 /**
  * Launch and manage WAS child processes.
