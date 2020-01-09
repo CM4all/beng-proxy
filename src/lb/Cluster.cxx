@@ -45,6 +45,8 @@
 #include "avahi/Explorer.hxx"
 #endif
 
+#ifdef HAVE_AVAHI
+
 class LbCluster::StickyRing final : public HashRing<MemberMap::pointer,
 						    sticky_hash_t,
 						    4096, 8> {};
@@ -82,6 +84,8 @@ LbCluster::Member::GetLogName() const noexcept
 	return log_name.c_str();
 }
 
+#endif
+
 LbCluster::LbCluster(const LbClusterConfig &_config,
 		     FailureManager &_failure_manager,
 		     LbMonitorStock *_monitors
@@ -112,7 +116,9 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 
 LbCluster::~LbCluster() noexcept
 {
+#ifdef HAVE_AVAHI
 	members.clear_and_dispose(Member::UnrefDisposer());
+#endif
 }
 
 #ifdef HAVE_AVAHI

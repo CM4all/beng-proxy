@@ -76,7 +76,6 @@ class LbCluster final
 	 * This #AvahiServiceExplorer locates Zeroconf nodes.
 	 */
 	std::unique_ptr<AvahiServiceExplorer> explorer;
-#endif
 
 	class StickyRing;
 
@@ -89,6 +88,7 @@ class LbCluster final
 	 * @see LbClusterConfig::sticky_cache
 	 */
 	std::unique_ptr<StickyCache> sticky_cache;
+#endif
 
 	/**
 	 * A list of #LbMonitorRef instances, one for each static member
@@ -96,6 +96,7 @@ class LbCluster final
 	 */
 	std::forward_list<LbMonitorRef> static_member_monitors;
 
+#ifdef HAVE_AVAHI
 	class Member
 		: LeakDetector,
 		  public boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
@@ -261,7 +262,6 @@ private:
 
 	bool dirty = false;
 
-#ifdef HAVE_AVAHI
 	unsigned last_pick = 0;
 #endif
 

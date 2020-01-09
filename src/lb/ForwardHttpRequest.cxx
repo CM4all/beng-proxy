@@ -93,12 +93,14 @@ class LbRequest final
 
 	CancellablePointer cancel_ptr;
 
+#ifdef HAVE_AVAHI
 	/**
 	 * The cluster member we're currently connecting to (waiting for
 	 * #StockGetHandler to be called).  Only used for Zeroconf to be
 	 * able to call failure_set().
 	 */
 	LbCluster::MemberPtr current_member;
+#endif
 
 	StockItem *stock_item = nullptr;
 	FailurePtr failure;
