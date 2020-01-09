@@ -54,6 +54,7 @@
 
 class AccessLogGlue;
 class Stock;
+class WasStock;
 class PipeStock;
 class ResourceLoader;
 class StockMap;
@@ -172,7 +173,7 @@ struct BpInstance final : PInstance, ControlHandler {
 	FcgiStock *fcgi_stock = nullptr;
 
 #ifdef HAVE_LIBWAS
-	StockMap *was_stock = nullptr;
+	WasStock *was_stock = nullptr;
 #endif
 
 	StockMap *delegate_stock = nullptr;

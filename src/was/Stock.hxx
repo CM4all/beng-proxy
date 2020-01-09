@@ -47,6 +47,9 @@ template<typename T> struct ConstBuffer;
 class SpawnService;
 class WasChild;
 
+/**
+ * Launch and manage WAS child processes.
+ */
 class WasStock final : StockClass {
 	SpawnService &spawn_service;
 	const SocketDescriptor log_socket;
@@ -62,43 +65,27 @@ public:
 		 log_socket(_log_socket), log_options(_log_options),
 		 stock(event_loop, *this, limit, max_idle) {}
 
-	StockMap &GetStock() noexcept {
-		return stock;
+	void FadeAll() noexcept {
+		stock.FadeAll();
 	}
 
 	void FadeTag(const char *tag) noexcept;
+
+	/**
+	 * @param args command-line arguments
+	 */
+	void Get(struct pool &pool,
+		 const ChildOptions &options,
+		 const char *executable_path,
+		 ConstBuffer<const char *> args,
+		 StockGetHandler &handler,
+		 CancellablePointer &cancel_ptr) noexcept;
 
 private:
 	/* virtual methods from class StockClass */
 	void Create(CreateStockItem c, StockRequest request,
 		    CancellablePointer &cancel_ptr) override;
 };
-
-/**
- * Launch and manage WAS child processes.
- */
-StockMap *
-was_stock_new(unsigned limit, unsigned max_idle,
-	      EventLoop &event_loop, SpawnService &spawn_service,
-	      SocketDescriptor log_socket,
-	      const ChildErrorLogOptions &log_options) noexcept;
-
-void
-was_stock_free(StockMap *stock) noexcept;
-
-void
-was_stock_fade_tag(StockMap &s, const char *tag) noexcept;
-
-/**
- * @param args command-line arguments
- */
-void
-was_stock_get(StockMap *hstock, struct pool *pool,
-	      const ChildOptions &options,
-	      const char *executable_path,
-	      ConstBuffer<const char *> args,
-	      StockGetHandler &handler,
-	      CancellablePointer &cancel_ptr) noexcept;
 
 void
 was_stock_item_set_site(StockItem &item, const char *site) noexcept;

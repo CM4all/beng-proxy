@@ -37,8 +37,7 @@
 struct pool;
 class StopwatchPtr;
 class UnusedIstreamPtr;
-struct was_stock;
-class StockMap;
+class WasStock;
 class StringMap;
 class HttpResponseHandler;
 class CancellablePointer;
@@ -52,7 +51,7 @@ template<typename T> struct ConstBuffer;
  * @param args command-line arguments
  */
 void
-was_request(struct pool &pool, StockMap &was_stock,
+was_request(struct pool &pool, WasStock &was_stock,
 	    const StopwatchPtr &parent_stopwatch,
 	    const char *site_name,
 	    const ChildOptions &options,

@@ -126,10 +126,7 @@ BpInstance::FreeStocksAndCaches() noexcept
 	}
 
 #ifdef HAVE_LIBWAS
-	if (was_stock != nullptr) {
-		was_stock_free(was_stock);
-		was_stock = nullptr;
-	}
+	delete std::exchange(was_stock, nullptr);
 #endif
 
 	delete std::exchange(fs_balancer, nullptr);
@@ -233,7 +230,7 @@ BpInstance::FadeTaggedChildren(const char *tag) noexcept
 
 #ifdef HAVE_LIBWAS
 	if (was_stock != nullptr)
-		was_stock_fade_tag(*was_stock, tag);
+		was_stock->FadeTag(tag);
 #endif
 
 	// TODO: delegate_stock

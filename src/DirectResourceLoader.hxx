@@ -37,6 +37,7 @@
 
 class EventLoop;
 class SpawnService;
+class WasStock;
 class StockMap;
 class LhttpStock;
 class FcgiStock;
@@ -60,7 +61,7 @@ class DirectResourceLoader final : public ResourceLoader {
 	LhttpStock *lhttp_stock;
 	FcgiStock *fcgi_stock;
 #ifdef HAVE_LIBWAS
-	StockMap *was_stock;
+	WasStock *was_stock;
 #endif
 	StockMap *delegate_stock;
 #ifdef HAVE_LIBNFS
@@ -78,7 +79,7 @@ public:
 			     LhttpStock *_lhttp_stock,
 			     FcgiStock *_fcgi_stock,
 #ifdef HAVE_LIBWAS
-			     StockMap *_was_stock,
+			     WasStock *_was_stock,
 #endif
 			     StockMap *_delegate_stock
 #ifdef HAVE_LIBNFS

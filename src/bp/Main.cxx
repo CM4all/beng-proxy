@@ -420,11 +420,11 @@ try {
 					     child_log_socket, child_log_options);
 
 #ifdef HAVE_LIBWAS
-	instance.was_stock = was_stock_new(instance.config.was_stock_limit,
-					   instance.config.was_stock_max_idle,
-					   instance.event_loop,
-					   *instance.spawn_service,
-					   child_log_socket, child_log_options);
+	instance.was_stock = new WasStock(instance.event_loop,
+					  *instance.spawn_service,
+					  child_log_socket, child_log_options,
+					  instance.config.was_stock_limit,
+					  instance.config.was_stock_max_idle);
 #endif
 
 	instance.delegate_stock = delegate_stock_new(instance.event_loop,

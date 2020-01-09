@@ -458,34 +458,8 @@ WasChild::~WasChild() noexcept
  *
  */
 
-StockMap *
-was_stock_new(unsigned limit, unsigned max_idle,
-	      EventLoop &event_loop, SpawnService &spawn_service,
-	      SocketDescriptor log_socket,
-	      const ChildErrorLogOptions &log_options) noexcept
-{
-	auto *stock = new WasStock(event_loop, spawn_service,
-				   log_socket, log_options,
-				   limit, max_idle);
-	return &stock->GetStock();
-}
-
 void
-was_stock_free(StockMap *_stock) noexcept
-{
-	auto *stock = (WasStock *)&_stock->GetClass();
-	delete stock;
-}
-
-void
-was_stock_fade_tag(StockMap &_stock, const char *tag) noexcept
-{
-	auto &stock = (WasStock &)_stock.GetClass();
-	stock.FadeTag(tag);
-}
-
-void
-was_stock_get(StockMap *hstock, struct pool *pool,
+WasStock::Get(struct pool &pool,
 	      const ChildOptions &options,
 	      const char *executable_path,
 	      ConstBuffer<const char *> args,
@@ -494,12 +468,11 @@ was_stock_get(StockMap *hstock, struct pool *pool,
 {
 	const TempPoolLease tpool;
 
-	auto r = NewDisposablePointer<WasChildParams>(*pool, executable_path,
+	auto r = NewDisposablePointer<WasChildParams>(pool, executable_path,
 						      args, options);
 	const char *key = r->GetStockKey(*tpool);
 
-	hstock->Get(key, std::move(r),
-		    handler, cancel_ptr);
+	stock.Get(key, std::move(r), handler, cancel_ptr);
 }
 
 void

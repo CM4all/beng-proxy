@@ -109,9 +109,9 @@ public:
 		DeleteFromPool(pool, this);
 	}
 
-	void Start(StockMap &was_stock, const ChildOptions &options,
+	void Start(WasStock &was_stock, const ChildOptions &options,
 		   const char *action, ConstBuffer<const char *> args) {
-		was_stock_get(&was_stock, &pool,
+		was_stock.Get(pool,
 			      options,
 			      action, args,
 			      *this, stock_cancel_ptr);
@@ -240,7 +240,7 @@ stopwatch_new_was(const StopwatchPtr &parent_stopwatch,
 }
 
 void
-was_request(struct pool &pool, StockMap &was_stock,
+was_request(struct pool &pool, WasStock &was_stock,
 	    const StopwatchPtr &parent_stopwatch,
 	    const char *site_name,
 	    const ChildOptions &options,
