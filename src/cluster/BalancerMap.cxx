@@ -116,7 +116,7 @@ BalancerMap::Get(const Expiry now,
 		break;
 	}
 
-	std::string key = list.GetKey();
+	auto key = list.GetHashKey();
 	auto *item = cache.Get(key);
 
 	if (item == nullptr)

@@ -401,6 +401,7 @@ raddress = static_library('raddress',
   include_directories: inc,
   dependencies: [
     libpcre,
+    libsodium,
   ])
 raddress_dep = declare_dependency(
   link_with: raddress,

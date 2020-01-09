@@ -31,6 +31,8 @@
  */
 
 #include "AddressList.hxx"
+#include "sodium/HashKey.hxx"
+#include "sodium/GenericHash.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/ToString.hxx"
 #include "AllocatorPtr.hxx"
@@ -76,23 +78,13 @@ AddressList::Add(AllocatorPtr alloc, const AddressInfoList &list) noexcept
 	return true;
 }
 
-const char *
-AddressList::GetKey() const noexcept
+HashKey
+AddressList::GetHashKey() const noexcept
 {
-	static char buffer[2048];
-	size_t length = 0;
-	bool success;
+	GenericHashState state(sizeof(HashKey));
 
-	for (const auto &i : *this) {
-		if (length > 0 && length < sizeof(buffer) - 1)
-			buffer[length++] = ' ';
+	for (const auto &i : *this)
+		state.Update(i.GetSteadyPart());
 
-		success = ToString(buffer + length, sizeof(buffer) - length, i);
-		if (success)
-			length += strlen(buffer + length);
-	}
-
-	buffer[length] = 0;
-
-	return buffer;
+	return state.GetFinalT<HashKey>();
 }

@@ -43,6 +43,7 @@
 #include <assert.h>
 
 struct dpool;
+struct HashKey;
 class AllocatorPtr;
 class SocketAddress;
 class AddressInfoList;
@@ -123,9 +124,9 @@ struct AddressList {
 	}
 
 	/**
-	 * Generates a unique string which identifies this object in a hash
-	 * table.  This string stored in a statically allocated buffer.
+	 * Generates a collision-free hash which identifies this
+	 * object in a hash table.
 	 */
 	gcc_pure
-	const char *GetKey() const noexcept;
+	HashKey GetHashKey() const noexcept;
 };

@@ -34,9 +34,8 @@
 
 #include "RoundRobinBalancer.hxx"
 #include "StickyHash.hxx"
+#include "sodium/HashKey.hxx"
 #include "util/Cache.hxx"
-
-#include <string>
 
 struct AddressList;
 class SocketAddress;
@@ -49,7 +48,7 @@ class Expiry;
 class BalancerMap {
 	FailureManager &failure_manager;
 
-	Cache<std::string, RoundRobinBalancer, 2048, 1021> cache;
+	Cache<HashKey, RoundRobinBalancer, 2048, 1021> cache;
 
 public:
 	explicit BalancerMap(FailureManager &_failure_manager) noexcept

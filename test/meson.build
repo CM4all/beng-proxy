@@ -297,6 +297,7 @@ executable('run_client_balancer',
     stopwatch_dep,
     eutil_dep,
     raddress_dep,
+    libsodium,
   ])
 
 if nfs_client_dep.found()
@@ -418,6 +419,7 @@ test('t_balancer', executable('t_balancer',
     eutil_dep,
     pool_dep,
     net_dep,
+    libsodium,
   ]))
 
 test('t_cgi', executable('t_cgi',
