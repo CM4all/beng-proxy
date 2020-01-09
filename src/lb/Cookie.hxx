@@ -37,7 +37,7 @@
 #ifndef BENG_PROXY_LB_COOKIE_HXX
 #define BENG_PROXY_LB_COOKIE_HXX
 
-#include "StickyHash.hxx"
+#include "cluster/StickyHash.hxx"
 
 #include <assert.h>
 

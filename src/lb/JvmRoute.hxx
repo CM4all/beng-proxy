@@ -37,8 +37,7 @@
 #ifndef BENG_PROXY_LB_JVM_ROUTE_HXX
 #define BENG_PROXY_LB_JVM_ROUTE_HXX
 
-#include "StickyHash.hxx"
-
+#include "cluster/StickyHash.hxx"
 #include "util/Compiler.h"
 
 class StringMap;

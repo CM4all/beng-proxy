@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "StickyHash.hxx"
+#include "cluster/StickyHash.hxx"
 #include "http/Method.h"
 #include "http/Status.h"
 

@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_HTTP_CACHE_H
 #define BENG_PROXY_HTTP_CACHE_H
 
-#include "StickyHash.hxx"
+#include "cluster/StickyHash.hxx"
 #include "http/Method.h"
 #include "util/Compiler.h"
 

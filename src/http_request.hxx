@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_HTTP_REQUEST_HXX
 #define BENG_PROXY_HTTP_REQUEST_HXX
 
-#include "StickyHash.hxx"
+#include "cluster/StickyHash.hxx"
 #include "http/Method.h"
 
 struct pool;

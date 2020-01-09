@@ -34,7 +34,7 @@
 #include "ClusterConfig.hxx"
 #include "MonitorStock.hxx"
 #include "MonitorRef.hxx"
-#include "StickyCache.hxx"
+#include "cluster/StickyCache.hxx"
 #include "sodium/GenericHash.hxx"
 #include "net/FailureManager.hxx"
 #include "net/ToString.hxx"

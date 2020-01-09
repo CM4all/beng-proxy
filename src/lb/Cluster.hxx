@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "StickyHash.hxx"
+#include "cluster/StickyHash.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/FailureRef.hxx"
 #include "io/Logger.hxx"

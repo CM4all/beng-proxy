@@ -33,7 +33,7 @@
 #pragma once
 
 #include "fs/FilteredSocket.hxx"
-#include "StickyHash.hxx"
+#include "cluster/StickyHash.hxx"
 #include "pool/Holder.hxx"
 #include "event/DeferEvent.hxx"
 #include "io/Logger.hxx"
