@@ -44,57 +44,57 @@
 bool
 Request::HasValidCsrfToken() noexcept
 {
-    CsrfToken given_csrf_token;
-    if (!given_csrf_token.Parse(request.headers.Get("x-cm4all-csrf-token")))
-        return false;
+	CsrfToken given_csrf_token;
+	if (!given_csrf_token.Parse(request.headers.Get("x-cm4all-csrf-token")))
+		return false;
 
-    constexpr std::chrono::system_clock::duration max_age =
-        std::chrono::hours(1);
-    const auto now = instance.event_loop.SystemNow();
-    if (given_csrf_token.time > now ||
-        given_csrf_token.time < now - max_age)
-        /* expired */
-        return false;
+	constexpr std::chrono::system_clock::duration max_age =
+		std::chrono::hours(1);
+	const auto now = instance.event_loop.SystemNow();
+	if (given_csrf_token.time > now ||
+	    given_csrf_token.time < now - max_age)
+		/* expired */
+		return false;
 
-    CsrfHash expected_hash;
+	CsrfHash expected_hash;
 
-    {
-        const auto session = GetSession();
-        if (!session)
-            /* need a valid session */
-            return false;
+	{
+		const auto session = GetSession();
+		if (!session)
+			/* need a valid session */
+			return false;
 
-        expected_hash.Generate(given_csrf_token.time,
-                               session->csrf_salt);
-    }
+		expected_hash.Generate(given_csrf_token.time,
+				       session->csrf_salt);
+	}
 
-    return expected_hash == given_csrf_token.hash;
+	return expected_hash == given_csrf_token.hash;
 }
 
 bool
 Request::CheckCsrfToken() noexcept
 {
-    bool result = HasValidCsrfToken();
-    if (!result)
-        DispatchResponse(HTTP_STATUS_FORBIDDEN, "Bad CSRF token");
-    return result;
+	bool result = HasValidCsrfToken();
+	if (!result)
+		DispatchResponse(HTTP_STATUS_FORBIDDEN, "Bad CSRF token");
+	return result;
 }
 
 void
 Request::WriteCsrfToken(HttpHeaders &headers) noexcept
 {
-    CsrfToken token;
+	CsrfToken token;
 
-    {
-        const auto session = GetSession();
-        if (!session)
-            /* need a valid session */
-            return;
+	{
+		const auto session = GetSession();
+		if (!session)
+			/* need a valid session */
+			return;
 
-        token.Generate(instance.event_loop.SystemNow(), session->csrf_salt);
-    }
+		token.Generate(instance.event_loop.SystemNow(), session->csrf_salt);
+	}
 
-    char s[CsrfToken::STRING_LENGTH];
-    token.Format(s);
-    headers.Write("x-cm4all-csrf-token", s);
+	char s[CsrfToken::STRING_LENGTH];
+	token.Format(s);
+	headers.Write("x-cm4all-csrf-token", s);
 }

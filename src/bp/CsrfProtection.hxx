@@ -37,15 +37,15 @@
 constexpr bool
 MethodNeedsCsrfProtection(http_method_t method) noexcept
 {
-    switch (method) {
-    case HTTP_METHOD_HEAD:
-    case HTTP_METHOD_GET:
-    case HTTP_METHOD_OPTIONS:
-    case HTTP_METHOD_TRACE:
-        return false;
+	switch (method) {
+	case HTTP_METHOD_HEAD:
+	case HTTP_METHOD_GET:
+	case HTTP_METHOD_OPTIONS:
+	case HTTP_METHOD_TRACE:
+		return false;
 
-    default:
-        return true;
-    }
+	default:
+		return true;
+	}
 }
 

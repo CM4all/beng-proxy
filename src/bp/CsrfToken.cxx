@@ -45,78 +45,78 @@ template<typename T>
 static const char *
 ParseHexSegment(const char *s, T &value_r) noexcept
 {
-    constexpr size_t segment_size = sizeof(T) * 2;
+	constexpr size_t segment_size = sizeof(T) * 2;
 
-    if (memchr(s, 0, segment_size) != nullptr)
-        /* too short */
-        return nullptr;
+	if (memchr(s, 0, segment_size) != nullptr)
+		/* too short */
+		return nullptr;
 
-    std::array<char, segment_size + 1> segment;
-    *std::copy_n(s, segment_size, segment.begin()) = 0;
+	std::array<char, segment_size + 1> segment;
+	*std::copy_n(s, segment_size, segment.begin()) = 0;
 
-    char *endptr;
-    value_r = strtoul(&segment.front(), &endptr, 16);
-    if (endptr != &segment.back())
-        return nullptr;
+	char *endptr;
+	value_r = strtoul(&segment.front(), &endptr, 16);
+	if (endptr != &segment.back())
+		return nullptr;
 
-    return s + segment_size;
+	return s + segment_size;
 }
 
 void
 CsrfHash::Generate(std::chrono::system_clock::time_point time,
-                   const SessionId &salt) noexcept
+		   const SessionId &salt) noexcept
 {
-    const uint32_t t = ImportTime(time);
+	const uint32_t t = ImportTime(time);
 
-    /* calculate the Blake2b hash of the time stamp and the session's
-       salt */
-    crypto_generichash_state state;
-    crypto_generichash_init(&state, nullptr, 0, sizeof(data));
-    crypto_generichash_update(&state, (const unsigned char *)&t, sizeof(t));
-    crypto_generichash_update(&state, (const unsigned char *)&salt,
-                              sizeof(salt));
-    crypto_generichash_final(&state, (unsigned char *)&data, sizeof(data));
+	/* calculate the Blake2b hash of the time stamp and the session's
+	   salt */
+	crypto_generichash_state state;
+	crypto_generichash_init(&state, nullptr, 0, sizeof(data));
+	crypto_generichash_update(&state, (const unsigned char *)&t, sizeof(t));
+	crypto_generichash_update(&state, (const unsigned char *)&salt,
+				  sizeof(salt));
+	crypto_generichash_final(&state, (unsigned char *)&data, sizeof(data));
 }
 
 const char *
 CsrfHash::Parse(const char *s) noexcept
 {
-    for (auto &i : data) {
-        s = ParseHexSegment(s, i);
-        if (s == nullptr)
-            break;
-    }
+	for (auto &i : data) {
+		s = ParseHexSegment(s, i);
+		if (s == nullptr)
+			break;
+	}
 
-    return s;
+	return s;
 }
 
 void
 CsrfToken::Format(char *s) const noexcept
 {
-    format_uint32_hex_fixed(s, hash.ImportTime(time));
-    s += 8;
+	format_uint32_hex_fixed(s, hash.ImportTime(time));
+	s += 8;
 
-    for (const uint8_t i : hash.data) {
-        format_uint8_hex_fixed(s, i);
-        s += 2;
-    }
+	for (const uint8_t i : hash.data) {
+		format_uint8_hex_fixed(s, i);
+		s += 2;
+	}
 
-    *s = 0;
+	*s = 0;
 }
 
 bool
 CsrfToken::Parse(const char *s) noexcept
 {
-    if (s == nullptr)
-        return false;
+	if (s == nullptr)
+		return false;
 
-    uint32_t t;
-    s = ParseHexSegment(s, t);
-    if (s == nullptr)
-        return false;
+	uint32_t t;
+	s = ParseHexSegment(s, t);
+	if (s == nullptr)
+		return false;
 
-    time = hash.ExportTime(t);
+	time = hash.ExportTime(t);
 
-    s = hash.Parse(s);
-    return s != nullptr && *s == 0;
+	s = hash.Parse(s);
+	return s != nullptr && *s == 0;
 }
