@@ -35,6 +35,7 @@
 #include "MonitorStock.hxx"
 #include "MonitorRef.hxx"
 #include "StickyCache.hxx"
+#include "sodium/GenericHash.hxx"
 #include "net/FailureManager.hxx"
 #include "net/ToString.hxx"
 #include "util/HashRing.hxx"
@@ -43,8 +44,6 @@
 #ifdef HAVE_AVAHI
 #include "avahi/Explorer.hxx"
 #endif
-
-#include <sodium/crypto_generichash.h>
 
 class LbCluster::StickyRing final : public HashRing<MemberMap::pointer,
 						    sticky_hash_t,
@@ -212,28 +211,6 @@ LbCluster::Pick(const Expiry now, sticky_hash_t sticky_hash) noexcept
 	return &i;
 }
 
-static void
-UpdateHash(crypto_generichash_state &state, ConstBuffer<void> p) noexcept
-{
-	crypto_generichash_update(&state, (const unsigned char *)p.data, p.size);
-}
-
-static void
-UpdateHash(crypto_generichash_state &state, SocketAddress address) noexcept
-{
-	assert(!address.IsNull());
-
-	UpdateHash(state, address.GetSteadyPart());
-}
-
-template<typename T>
-static void
-UpdateHashT(crypto_generichash_state &state, const T &data) noexcept
-{
-	crypto_generichash_update(&state,
-				  (const unsigned char *)&data, sizeof(data));
-}
-
 void
 LbCluster::FillActive() noexcept
 {
@@ -263,11 +240,10 @@ LbCluster::FillActive() noexcept
 					sticky_hash_t result;
 				} u;
 
-				crypto_generichash_state state;
-				crypto_generichash_init(&state, nullptr, 0, sizeof(u.hash));
-				UpdateHash(state, member->GetAddress());
-				UpdateHashT(state, replica);
-				crypto_generichash_final(&state, u.hash, sizeof(u.hash));
+				GenericHashState state(sizeof(u.hash));
+				state.Update(member->GetAddress().GetSteadyPart());
+				state.UpdateT(replica);
+				state.Final(u.hash, sizeof(u.hash));
 
 				return u.result;
 			}

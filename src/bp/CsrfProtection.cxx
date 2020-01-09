@@ -37,8 +37,6 @@
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 
-#include <sodium/crypto_generichash.h>
-
 #include <string.h>
 
 bool

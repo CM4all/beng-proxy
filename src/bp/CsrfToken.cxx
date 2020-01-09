@@ -32,9 +32,8 @@
 
 #include "CsrfToken.hxx"
 #include "session/Id.hxx"
+#include "sodium/GenericHash.hxx"
 #include "util/HexFormat.h"
-
-#include <sodium/crypto_generichash.h>
 
 #include <algorithm>
 
@@ -70,12 +69,10 @@ CsrfHash::Generate(std::chrono::system_clock::time_point time,
 
 	/* calculate the Blake2b hash of the time stamp and the session's
 	   salt */
-	crypto_generichash_state state;
-	crypto_generichash_init(&state, nullptr, 0, sizeof(data));
-	crypto_generichash_update(&state, (const unsigned char *)&t, sizeof(t));
-	crypto_generichash_update(&state, (const unsigned char *)&salt,
-				  sizeof(salt));
-	crypto_generichash_final(&state, (unsigned char *)&data, sizeof(data));
+	GenericHashState state(sizeof(data));
+	state.UpdateT(t);
+	state.UpdateT(salt);
+	state.Final((unsigned char *)&data, sizeof(data));
 }
 
 const char *
