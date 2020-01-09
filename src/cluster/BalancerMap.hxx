@@ -68,5 +68,6 @@ public:
 	 * address if stickiness is enabled; 0 if there is no session
 	 */
 	SocketAddress Get(Expiry now,
-			  const AddressList &list, unsigned session) noexcept;
+			  const AddressList &list,
+			  sticky_hash_t session) noexcept;
 };
