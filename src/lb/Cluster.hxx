@@ -83,12 +83,12 @@ class LbCluster final
 	/**
 	 * For consistent hashing.  It is populated by FillActive().
 	 */
-	StickyRing *sticky_ring = nullptr;
+	std::unique_ptr<StickyRing> sticky_ring;
 
 	/**
 	 * @see LbClusterConfig::sticky_cache
 	 */
-	StickyCache *sticky_cache = nullptr;
+	std::unique_ptr<StickyCache> sticky_cache;
 
 	/**
 	 * A list of #LbMonitorRef instances, one for each static member

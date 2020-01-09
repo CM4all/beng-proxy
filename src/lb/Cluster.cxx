@@ -112,9 +112,6 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 
 LbCluster::~LbCluster() noexcept
 {
-	delete sticky_cache;
-	delete sticky_ring;
-
 	members.clear_and_dispose(Member::UnrefDisposer());
 }
 
@@ -165,7 +162,7 @@ LbCluster::Pick(const Expiry now, sticky_hash_t sticky_hash) noexcept
 
 		if (sticky_cache == nullptr)
 			/* lazy cache allocation */
-			sticky_cache = new StickyCache();
+			sticky_cache = std::make_unique<StickyCache>();
 
 		const auto *cached = sticky_cache->Get(sticky_hash);
 		if (cached != nullptr) {
@@ -223,7 +220,7 @@ LbCluster::FillActive() noexcept
 	if (!config.sticky_cache) {
 		if (sticky_ring == nullptr)
 			/* lazy allocation */
-			sticky_ring = new StickyRing();
+			sticky_ring = std::make_unique<StickyRing>();
 
 		/**
 		 * Functor class which generates a #HashRing hash for a
