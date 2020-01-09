@@ -58,4 +58,9 @@ public:
 	void Final(void *out, size_t outlen) noexcept {
 		crypto_generichash_blake2b_final(&state, (unsigned char *)out, outlen);
 	}
+
+	template<typename T>
+	void FinalT(T &p) noexcept {
+		Final(&p, sizeof(p));
+	}
 };
