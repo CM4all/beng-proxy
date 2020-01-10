@@ -62,11 +62,11 @@ public:
 		return list.size;
 	}
 
-	constexpr auto begin() const noexcept {
+	auto begin() const noexcept {
 		return std::begin(list);
 	}
 
-	constexpr auto end() const noexcept {
+	auto end() const noexcept {
 		return std::end(list);
 	}
 };
