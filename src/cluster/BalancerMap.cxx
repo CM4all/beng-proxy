@@ -39,9 +39,9 @@
 
 static SocketAddress
 next_failover_address(FailureManager &failure_manager, Expiry now,
-		      const AddressList &list) noexcept
+		      const ConstBuffer<SocketAddress> list) noexcept
 {
-	assert(list.GetSize() > 0);
+	assert(!list.empty());
 
 	/* ignore "fade" status here */
 	constexpr bool allow_fade = true;
@@ -51,20 +51,20 @@ next_failover_address(FailureManager &failure_manager, Expiry now,
 			return i;
 
 	/* none available - return first node as last resort */
-	return list[0];
+	return list.front();
 }
 
 static const SocketAddress &
 next_sticky_address_checked(FailureManager &failure_manager, const Expiry now,
-			    const AddressList &al,
+			    const ConstBuffer<SocketAddress> list,
 			    sticky_hash_t sticky_hash) noexcept
 {
-	assert(al.GetSize() >= 2);
+	assert(list.size >= 2);
 
-	size_t i = sticky_hash % al.GetSize();
+	size_t i = sticky_hash % list.size;
 	bool allow_fade = true;
 
-	const SocketAddress &first = al[i];
+	const SocketAddress &first = list[i];
 	const SocketAddress *ret = &first;
 	do {
 		if (failure_manager.Check(now, *ret, allow_fade))
@@ -75,10 +75,10 @@ next_sticky_address_checked(FailureManager &failure_manager, const Expiry now,
 		allow_fade = false;
 
 		++i;
-		if (i >= al.GetSize())
+		if (i >= list.size)
 			i = 0;
 
-		ret = &al[i];
+		ret = &list[i];
 
 	} while (ret != &first);
 
@@ -98,7 +98,8 @@ BalancerMap::Get(const Expiry now,
 		break;
 
 	case StickyMode::FAILOVER:
-		return next_failover_address(failure_manager, now, list);
+		return next_failover_address(failure_manager, now,
+					     list.addresses);
 
 	case StickyMode::SOURCE_IP:
 	case StickyMode::HOST:
@@ -107,7 +108,8 @@ BalancerMap::Get(const Expiry now,
 	case StickyMode::COOKIE:
 	case StickyMode::JVM_ROUTE:
 		if (sticky_hash != 0)
-			return next_sticky_address_checked(failure_manager, now, list,
+			return next_sticky_address_checked(failure_manager, now,
+							   list.addresses,
 							   sticky_hash);
 		break;
 	}
