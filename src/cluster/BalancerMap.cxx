@@ -37,13 +37,6 @@
 
 #include <assert.h>
 
-static bool
-CheckAddress(FailureManager &failure_manager, Expiry now,
-	     const SocketAddress address, bool allow_fade) noexcept
-{
-	return failure_manager.Check(now, address, allow_fade);
-}
-
 static SocketAddress
 next_failover_address(FailureManager &failure_manager, Expiry now,
 		      const AddressList &list) noexcept
@@ -51,7 +44,7 @@ next_failover_address(FailureManager &failure_manager, Expiry now,
 	assert(list.GetSize() > 0);
 
 	for (auto i : list)
-		if (CheckAddress(failure_manager, now, i, true))
+		if (failure_manager.Check(now, i, true))
 			return i;
 
 	/* none available - return first node as last resort */
@@ -71,7 +64,7 @@ next_sticky_address_checked(FailureManager &failure_manager, const Expiry now,
 	const SocketAddress &first = al[i];
 	const SocketAddress *ret = &first;
 	do {
-		if (CheckAddress(failure_manager, now, *ret, allow_fade))
+		if (failure_manager.Check(now, *ret, allow_fade))
 			return *ret;
 
 		/* only the first iteration is allowed to override
