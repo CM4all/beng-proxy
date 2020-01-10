@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,59 +31,46 @@
  */
 
 #include "BalancerMap.hxx"
+#include "PickFailover.hxx"
+#include "PickModulo.hxx"
 #include "AddressList.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
 
-#include <assert.h>
+namespace {
 
-static SocketAddress
-next_failover_address(FailureManager &failure_manager, Expiry now,
-		      const ConstBuffer<SocketAddress> list) noexcept
-{
-	assert(!list.empty());
+/**
+ * Wraps a ConstBuffer<SocketAddress> in an interface for
+ * PickFailover() and PickModulo().
+ */
+class AddressListWrapper {
+	FailureManager &failure_manager;
+	const ConstBuffer<SocketAddress> list;
 
-	/* ignore "fade" status here */
-	constexpr bool allow_fade = true;
+public:
+	constexpr AddressListWrapper(FailureManager &_failure_manager,
+				     ConstBuffer<SocketAddress> _list) noexcept
+		:failure_manager(_failure_manager), list(_list) {}
 
-	for (auto i : list)
-		if (failure_manager.Check(now, i, allow_fade))
-			return i;
+	gcc_pure
+	bool Check(const Expiry now, SocketAddress address,
+		   bool allow_fade) const noexcept {
+		return failure_manager.Check(now, address, allow_fade);
+	}
 
-	/* none available - return first node as last resort */
-	return list.front();
-}
+	constexpr auto size() const noexcept {
+		return list.size;
+	}
 
-static const SocketAddress &
-next_sticky_address_checked(FailureManager &failure_manager, const Expiry now,
-			    const ConstBuffer<SocketAddress> list,
-			    sticky_hash_t sticky_hash) noexcept
-{
-	assert(list.size >= 2);
+	constexpr auto begin() const noexcept {
+		return std::begin(list);
+	}
 
-	size_t i = sticky_hash % list.size;
-	bool allow_fade = true;
+	constexpr auto end() const noexcept {
+		return std::end(list);
+	}
+};
 
-	const SocketAddress &first = list[i];
-	const SocketAddress *ret = &first;
-	do {
-		if (failure_manager.Check(now, *ret, allow_fade))
-			return *ret;
-
-		/* only the first iteration is allowed to override
-		   FAILURE_FADE */
-		allow_fade = false;
-
-		++i;
-		if (i >= list.size)
-			i = 0;
-
-		ret = &list[i];
-
-	} while (ret != &first);
-
-	/* all addresses failed: */
-	return first;
 }
 
 SocketAddress
@@ -98,8 +85,9 @@ BalancerMap::Get(const Expiry now,
 		break;
 
 	case StickyMode::FAILOVER:
-		return next_failover_address(failure_manager, now,
-					     list.addresses);
+		return PickFailover(now,
+				    AddressListWrapper(failure_manager,
+						       list.addresses));
 
 	case StickyMode::SOURCE_IP:
 	case StickyMode::HOST:
@@ -108,9 +96,11 @@ BalancerMap::Get(const Expiry now,
 	case StickyMode::COOKIE:
 	case StickyMode::JVM_ROUTE:
 		if (sticky_hash != 0)
-			return next_sticky_address_checked(failure_manager, now,
-							   list.addresses,
-							   sticky_hash);
+			return PickModulo(now,
+					  AddressListWrapper(failure_manager,
+							     list.addresses),
+					  sticky_hash);
+
 		break;
 	}
 
