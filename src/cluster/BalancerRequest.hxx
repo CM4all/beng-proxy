@@ -34,7 +34,6 @@
 
 #include "BalancerMap.hxx"
 #include "AddressList.hxx"
-#include "pool/PSocketAddress.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
 #include "util/Cancellable.hxx"
@@ -119,15 +118,10 @@ public:
 	}
 
 	void Next(Expiry now) noexcept {
-		const SocketAddress address =
+		const SocketAddress current_address =
 			balancer.Get(now, address_list, session_sticky);
 
-		/* we need to copy this address because it may come from
-		   the balancer's cache, and the according cache item may
-		   be flushed at any time */
-		const auto current_address = DupAddress(alloc, address);
 		failure = balancer.GetFailureManager().Make(current_address);
-
 		request.Send(alloc, current_address, cancel_ptr);
 	}
 
