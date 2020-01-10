@@ -58,7 +58,7 @@ next_sticky_address_checked(FailureManager &failure_manager, const Expiry now,
 {
 	assert(al.GetSize() >= 2);
 
-	unsigned i = sticky_hash % al.GetSize();
+	size_t i = sticky_hash % al.GetSize();
 	bool allow_fade = true;
 
 	const SocketAddress &first = al[i];
