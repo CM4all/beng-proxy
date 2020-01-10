@@ -38,7 +38,6 @@
 #include "random.hxx"
 #include "crash.hxx"
 #include "io/Logger.hxx"
-#include "util/StaticArray.hxx"
 #include "util/RefCount.hxx"
 
 #include <boost/interprocess/sync/interprocess_sharable_mutex.hpp>

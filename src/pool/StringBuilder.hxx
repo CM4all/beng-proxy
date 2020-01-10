@@ -51,7 +51,6 @@ public:
     }
 
     char *operator()(AllocatorPtr alloc) const noexcept {
-        return alloc.Concat(ConstBuffer<StringView>(items.raw(),
-                                                    items.size()));
+        return alloc.Concat(items);
     }
 };

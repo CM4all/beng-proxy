@@ -233,7 +233,7 @@ try {
                        *strmap_new(context.root_pool),
                        UnusedIstreamPtr(request_body(context.event_loop,
                                                      context.root_pool)),
-                       { (const char *const*)params.raw(), params.size() },
+                       params,
                        context, context.cancel_ptr);
 
     context.event_loop.Dispatch();
