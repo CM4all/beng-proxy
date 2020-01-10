@@ -38,7 +38,7 @@
 #include "net/StaticSocketAddress.hxx"
 #include "stopwatch.hxx"
 
-struct ClientBalancerRequest : ConnectSocketHandler {
+class ClientBalancerRequest : ConnectSocketHandler {
 	EventLoop &event_loop;
 
 	bool ip_transparent;
@@ -51,6 +51,7 @@ struct ClientBalancerRequest : ConnectSocketHandler {
 
 	ConnectSocketHandler &handler;
 
+public:
 	ClientBalancerRequest(EventLoop &_event_loop,
 			      bool _ip_transparent, SocketAddress _bind_address,
 			      Event::Duration _timeout,
@@ -67,6 +68,7 @@ struct ClientBalancerRequest : ConnectSocketHandler {
 	void Send(AllocatorPtr alloc, SocketAddress address,
 		  CancellablePointer &cancel_ptr);
 
+private:
 	/* virtual methods from class ConnectSocketHandler */
 	void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
 	void OnSocketConnectTimeout() noexcept override;
