@@ -43,8 +43,11 @@ next_failover_address(FailureManager &failure_manager, Expiry now,
 {
 	assert(list.GetSize() > 0);
 
+	/* ignore "fade" status here */
+	constexpr bool allow_fade = true;
+
 	for (auto i : list)
-		if (failure_manager.Check(now, i, true))
+		if (failure_manager.Check(now, i, allow_fade))
 			return i;
 
 	/* none available - return first node as last resort */
