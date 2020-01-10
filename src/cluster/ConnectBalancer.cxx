@@ -55,7 +55,7 @@ public:
 	ClientBalancerRequest(EventLoop &_event_loop,
 			      bool _ip_transparent, SocketAddress _bind_address,
 			      Event::Duration _timeout,
-			      ConnectSocketHandler &_handler)
+			      ConnectSocketHandler &_handler) noexcept
 		:event_loop(_event_loop), ip_transparent(_ip_transparent),
 		 timeout(_timeout),
 		 handler(_handler) {
@@ -66,7 +66,7 @@ public:
 	}
 
 	void Send(AllocatorPtr alloc, SocketAddress address,
-		  CancellablePointer &cancel_ptr);
+		  CancellablePointer &cancel_ptr) noexcept;
 
 private:
 	/* virtual methods from class ConnectSocketHandler */
@@ -77,7 +77,7 @@ private:
 
 inline void
 ClientBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
-			    CancellablePointer &cancel_ptr)
+			    CancellablePointer &cancel_ptr) noexcept
 {
 	client_socket_new(event_loop, alloc, nullptr,
 			  address.GetFamily(), SOCK_STREAM, 0,
