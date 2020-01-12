@@ -33,6 +33,7 @@
 #include "BalancerMap.hxx"
 #include "PickFailover.hxx"
 #include "PickModulo.hxx"
+#include "RoundRobinBalancer.cxx"
 #include "AddressList.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
@@ -111,6 +112,8 @@ BalancerMap::Get(const Expiry now,
 		/* create a new cache item */
 		item = &cache.Put(std::move(key), RoundRobinBalancer());
 
-	return item->Get(failure_manager, now, list,
+	return item->Get(now,
+			 AddressListWrapper(failure_manager,
+					    list.addresses),
 			 list.sticky_mode == StickyMode::NONE);
 }

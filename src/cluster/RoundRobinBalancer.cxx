@@ -31,39 +31,42 @@
  */
 
 #include "RoundRobinBalancer.hxx"
-#include "AddressList.hxx"
-#include "net/FailureManager.hxx"
+#include "net/SocketAddress.hxx"
+#include "util/Expiry.hxx"
+
+#include <iterator>
 
 #include <assert.h>
 
+template<typename List>
 inline const SocketAddress &
-RoundRobinBalancer::NextAddress(const AddressList &addresses) noexcept
+RoundRobinBalancer::NextAddress(const List &list) noexcept
 {
-	assert(addresses.GetSize() >= 2);
-	assert(next < addresses.GetSize());
+	assert(list.size() >= 2);
+	assert(next < list.size());
 
-	const SocketAddress &address = addresses[next];
+	const SocketAddress &address = *std::next(list.begin(), next);
 
 	++next;
-	if (next >= addresses.GetSize())
+	if (next >= list.size())
 		next = 0;
 
 	return address;
 }
 
+template<typename List>
 SocketAddress
-RoundRobinBalancer::Get(FailureManager &failure_manager,
-			const Expiry now,
-			const AddressList &addresses,
+RoundRobinBalancer::Get(const Expiry now,
+			const List &list,
 			bool allow_fade) noexcept
 {
-	const auto &first = NextAddress(addresses);
+	const auto &first = NextAddress(list);
 	const SocketAddress *ret = &first;
 	do {
-		if (failure_manager.Check(now, *ret, allow_fade))
+		if (list.Check(now, *ret, allow_fade))
 			return *ret;
 
-		ret = &NextAddress(addresses);
+		ret = &NextAddress(list);
 	} while (ret != &first);
 
 	/* all addresses failed: */

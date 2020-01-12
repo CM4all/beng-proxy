@@ -32,9 +32,7 @@
 
 #pragma once
 
-struct AddressList;
 class SocketAddress;
-class FailureManager;
 class Expiry;
 
 /**
@@ -45,11 +43,11 @@ class RoundRobinBalancer final {
 	unsigned next = 0;
 
 public:
-	SocketAddress Get(FailureManager &failure_manager,
-			  Expiry now,
-			  const AddressList &addresses,
+	template<typename List>
+	SocketAddress Get(Expiry now, const List &list,
 			  bool allow_fade) noexcept;
 
 private:
-	const SocketAddress &NextAddress(const AddressList &addresses) noexcept;
+	template<typename List>
+	const SocketAddress &NextAddress(const List &list) noexcept;
 };
