@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,67 +30,47 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "AddressList.hxx"
-#include "sodium/HashKey.hxx"
-#include "sodium/GenericHash.hxx"
-#include "net/AddressInfo.hxx"
-#include "net/ToString.hxx"
-#include "AllocatorPtr.hxx"
+#pragma once
 
-#include <string.h>
+#include "PickFailover.hxx"
+#include "PickModulo.hxx"
+#include "StickyMode.hxx"
+#include "net/SocketAddress.hxx"
+#include "util/Compiler.h"
+#include "util/Expiry.hxx"
 
-AddressList::AddressList(ShallowCopy, const AddressInfoList &src) noexcept
+/**
+ * Pick an address using the given #StickyMode.
+ */
+template<typename List>
+gcc_pure
+SocketAddress
+PickGeneric(Expiry now, StickyMode sticky_mode,
+	    const List &list, sticky_hash_t sticky_hash) noexcept
 {
-	for (const auto &i : src) {
-		if (addresses.full())
-			break;
+	if (list.size() == 1)
+		return *list.begin();
 
-		addresses.push_back(i);
+	switch (sticky_mode) {
+	case StickyMode::NONE:
+		break;
+
+	case StickyMode::FAILOVER:
+		return PickFailover(now, list);
+
+	case StickyMode::SOURCE_IP:
+	case StickyMode::HOST:
+	case StickyMode::XHOST:
+	case StickyMode::SESSION_MODULO:
+	case StickyMode::COOKIE:
+	case StickyMode::JVM_ROUTE:
+		if (sticky_hash != 0)
+			return PickModulo(now, list,
+					  sticky_hash);
+
+		break;
 	}
-}
 
-AddressList::AddressList(AllocatorPtr alloc, const AddressList &src) noexcept
-	:sticky_mode(src.sticky_mode)
-{
-	addresses.clear();
-
-	for (const auto &i : src)
-		Add(alloc, i);
-}
-
-bool
-AddressList::Add(AllocatorPtr alloc, const SocketAddress address) noexcept
-{
-	if (addresses.full())
-		return false;
-
-	addresses.push_back(alloc.Dup(address));
-	return true;
-}
-
-bool
-AddressList::Add(AllocatorPtr alloc, const AddressInfoList &list) noexcept
-{
-	for (const auto &i : list)
-		if (!Add(alloc, i))
-			return false;
-
-	return true;
-}
-
-HashKey
-AddressList::GetHashKey() const noexcept
-{
-	return ::GetHashKey(addresses);
-}
-
-HashKey
-GetHashKey(ConstBuffer<SocketAddress> list) noexcept
-{
-	GenericHashState state(sizeof(HashKey));
-
-	for (const auto &i : list)
-		state.Update(i.GetSteadyPart());
-
-	return state.GetFinalT<HashKey>();
+	return list.GetRoundRobinBalancer().Get(now, list,
+						sticky_mode == StickyMode::NONE);
 }

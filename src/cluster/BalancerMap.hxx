@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -70,4 +70,6 @@ public:
 	SocketAddress Get(Expiry now,
 			  const AddressList &list,
 			  sticky_hash_t session) noexcept;
+
+	RoundRobinBalancer &MakeRoundRobinBalancer(HashKey key) noexcept;
 };

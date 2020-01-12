@@ -130,3 +130,11 @@ struct AddressList {
 	gcc_pure
 	HashKey GetHashKey() const noexcept;
 };
+
+/**
+ * Generates a collision-free hash which identifies the address list
+ * in a hash table.
+ */
+gcc_pure
+HashKey
+GetHashKey(ConstBuffer<SocketAddress> list) noexcept;

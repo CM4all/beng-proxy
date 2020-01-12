@@ -31,8 +31,7 @@
  */
 
 #include "BalancerMap.hxx"
-#include "PickFailover.hxx"
-#include "PickModulo.hxx"
+#include "PickGeneric.hxx"
 #include "RoundRobinBalancer.cxx"
 #include "AddressList.hxx"
 #include "net/SocketAddress.hxx"
@@ -45,13 +44,21 @@ namespace {
  * PickFailover() and PickModulo().
  */
 class AddressListWrapper {
+	BalancerMap &balancer;
 	FailureManager &failure_manager;
 	const ConstBuffer<SocketAddress> list;
 
 public:
-	constexpr AddressListWrapper(FailureManager &_failure_manager,
+	constexpr AddressListWrapper(BalancerMap &_balancer,
+				     FailureManager &_failure_manager,
 				     ConstBuffer<SocketAddress> _list) noexcept
-		:failure_manager(_failure_manager), list(_list) {}
+		:balancer(_balancer),
+		 failure_manager(_failure_manager), list(_list) {}
+
+	gcc_pure
+	auto &GetRoundRobinBalancer() const noexcept {
+		return balancer.MakeRoundRobinBalancer(GetHashKey(list));
+	}
 
 	gcc_pure
 	bool Check(const Expiry now, SocketAddress address,
@@ -78,42 +85,20 @@ SocketAddress
 BalancerMap::Get(const Expiry now,
 		 const AddressList &list, sticky_hash_t sticky_hash) noexcept
 {
-	if (list.IsSingle())
-		return list[0];
+	return PickGeneric(now, list.sticky_mode,
+			   AddressListWrapper(*this, failure_manager,
+					      list.addresses),
+			   sticky_hash);
+}
 
-	switch (list.sticky_mode) {
-	case StickyMode::NONE:
-		break;
-
-	case StickyMode::FAILOVER:
-		return PickFailover(now,
-				    AddressListWrapper(failure_manager,
-						       list.addresses));
-
-	case StickyMode::SOURCE_IP:
-	case StickyMode::HOST:
-	case StickyMode::XHOST:
-	case StickyMode::SESSION_MODULO:
-	case StickyMode::COOKIE:
-	case StickyMode::JVM_ROUTE:
-		if (sticky_hash != 0)
-			return PickModulo(now,
-					  AddressListWrapper(failure_manager,
-							     list.addresses),
-					  sticky_hash);
-
-		break;
-	}
-
-	auto key = list.GetHashKey();
+inline RoundRobinBalancer &
+BalancerMap::MakeRoundRobinBalancer(HashKey key) noexcept
+{
 	auto *item = cache.Get(key);
 
 	if (item == nullptr)
 		/* create a new cache item */
 		item = &cache.Put(std::move(key), RoundRobinBalancer());
 
-	return item->Get(now,
-			 AddressListWrapper(failure_manager,
-					    list.addresses),
-			 list.sticky_mode == StickyMode::NONE);
+	return *item;
 }
