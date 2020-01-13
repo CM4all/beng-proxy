@@ -94,6 +94,11 @@ class FailurePtr {
 public:
 	FailurePtr() = default;
 
+	explicit FailurePtr(ReferencedFailureInfo &_info) noexcept
+		:info(&_info) {
+		info->Ref();
+	}
+
 	FailurePtr(FailurePtr &&src) noexcept
 		:info(std::exchange(src.info, nullptr)) {}
 
