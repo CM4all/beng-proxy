@@ -30,30 +30,18 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "BalancerMap.hxx"
-#include "AddressListWrapper.hxx"
-#include "PickGeneric.hxx"
-#include "RoundRobinBalancer.cxx"
-#include "AddressList.hxx"
+#pragma once
 
-SocketAddress
-BalancerMap::Get(const Expiry now,
-		 const AddressList &list, sticky_hash_t sticky_hash) noexcept
-{
-	return PickGeneric(now, list.sticky_mode,
-			   MakeAddressListWrapper(AddressListWrapper(failure_manager,
-								     list.addresses)),
-			   sticky_hash);
-}
+#include "AddressListView.hxx"
+#include "FailureManagerProxy.hxx"
 
-inline RoundRobinBalancer &
-BalancerMap::MakeRoundRobinBalancer(HashKey key) noexcept
-{
-	auto *item = cache.Get(key);
-
-	if (item == nullptr)
-		/* create a new cache item */
-		item = &cache.Put(std::move(key), RoundRobinBalancer());
-
-	return *item;
-}
+/**
+ * Wraps a ConstBuffer<SocketAddress> in an interface for
+ * PickFailover() and PickModulo().
+ */
+class AddressListWrapper : public AddressListView, public FailureManagerProxy {
+public:
+	constexpr AddressListWrapper(FailureManager &_failure_manager,
+				     ConstBuffer<SocketAddress> _list) noexcept
+		:AddressListView(_list), FailureManagerProxy(_failure_manager) {}
+};
