@@ -30,64 +30,31 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "BalancerMap.hxx"
-#include "HashKey.hxx"
-#include "PickGeneric.hxx"
-#include "RoundRobinBalancer.cxx"
-#include "AddressList.hxx"
-#include "AddressListView.hxx"
-#include "net/SocketAddress.hxx"
-#include "net/FailureManager.hxx"
+#pragma once
 
-namespace {
+#include "net/SocketAddress.hxx"
+#include "util/ConstBuffer.hxx"
 
 /**
  * Wraps a ConstBuffer<SocketAddress> in an interface for
  * PickFailover() and PickModulo().
  */
-class AddressListWrapper : public AddressListView {
-	BalancerMap &balancer;
-	FailureManager &failure_manager;
+class AddressListView {
+	ConstBuffer<SocketAddress> list;
 
 public:
-	constexpr AddressListWrapper(BalancerMap &_balancer,
-				     FailureManager &_failure_manager,
-				     ConstBuffer<SocketAddress> _list) noexcept
-		:AddressListView(_list), balancer(_balancer),
-		 failure_manager(_failure_manager) {}
+	explicit constexpr AddressListView(ConstBuffer<SocketAddress> _list) noexcept
+		:list(_list) {}
 
-	gcc_pure
-	auto &GetRoundRobinBalancer() const noexcept {
-		return balancer.MakeRoundRobinBalancer(GetHashKey(*this));
+	constexpr auto size() const noexcept {
+		return list.size;
 	}
 
-	gcc_pure
-	bool Check(const Expiry now, SocketAddress address,
-		   bool allow_fade) const noexcept {
-		return failure_manager.Check(now, address, allow_fade);
+	auto begin() const noexcept {
+		return std::begin(list);
+	}
+
+	auto end() const noexcept {
+		return std::end(list);
 	}
 };
-
-}
-
-SocketAddress
-BalancerMap::Get(const Expiry now,
-		 const AddressList &list, sticky_hash_t sticky_hash) noexcept
-{
-	return PickGeneric(now, list.sticky_mode,
-			   AddressListWrapper(*this, failure_manager,
-					      list.addresses),
-			   sticky_hash);
-}
-
-inline RoundRobinBalancer &
-BalancerMap::MakeRoundRobinBalancer(HashKey key) noexcept
-{
-	auto *item = cache.Get(key);
-
-	if (item == nullptr)
-		/* create a new cache item */
-		item = &cache.Put(std::move(key), RoundRobinBalancer());
-
-	return *item;
-}
