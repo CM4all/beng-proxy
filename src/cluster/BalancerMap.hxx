@@ -34,7 +34,7 @@
 
 #include "RoundRobinBalancer.hxx"
 #include "StickyHash.hxx"
-#include "sodium/HashKey.hxx"
+#include "HashKey.hxx"
 #include "util/Cache.hxx"
 
 struct AddressList;
@@ -72,4 +72,28 @@ public:
 			  sticky_hash_t session) noexcept;
 
 	RoundRobinBalancer &MakeRoundRobinBalancer(HashKey key) noexcept;
+
+	/**
+	 * Wrap the given "base" address list wrapper in one which
+	 * implements GetRoundRobinBalancer() and can thus be passed
+	 * to PickGeneric().
+	 */
+	template<typename Base>
+	auto MakeAddressListWrapper(Base &&base) noexcept {
+		return Wrapper<Base>(std::move(base), *this);
+	}
+
+	template<typename Base>
+	class Wrapper : public Base {
+		BalancerMap &balancer;
+
+	public:
+		Wrapper(Base &&base, BalancerMap &_balancer) noexcept
+			:Base(std::move(base)), balancer(_balancer) {}
+
+		gcc_pure
+		auto &GetRoundRobinBalancer() const noexcept {
+			return balancer.MakeRoundRobinBalancer(GetHashKey(*this));
+		}
+	};
 };
