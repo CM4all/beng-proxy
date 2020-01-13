@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -130,11 +130,3 @@ struct AddressList {
 	gcc_pure
 	HashKey GetHashKey() const noexcept;
 };
-
-/**
- * Generates a collision-free hash which identifies the address list
- * in a hash table.
- */
-gcc_pure
-HashKey
-GetHashKey(ConstBuffer<SocketAddress> list) noexcept;

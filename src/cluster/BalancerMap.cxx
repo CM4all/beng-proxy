@@ -31,6 +31,7 @@
  */
 
 #include "BalancerMap.hxx"
+#include "HashKey.hxx"
 #include "PickGeneric.hxx"
 #include "RoundRobinBalancer.cxx"
 #include "AddressList.hxx"

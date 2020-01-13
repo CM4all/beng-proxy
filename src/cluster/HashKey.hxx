@@ -30,55 +30,23 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "AddressList.hxx"
-#include "HashKey.hxx"
-#include "net/AddressInfo.hxx"
-#include "net/ToString.hxx"
-#include "AllocatorPtr.hxx"
+#pragma once
 
-#include <string.h>
+#include "sodium/HashKey.hxx"
+#include "sodium/GenericHash.hxx"
 
-AddressList::AddressList(ShallowCopy, const AddressInfoList &src) noexcept
-{
-	for (const auto &i : src) {
-		if (addresses.full())
-			break;
-
-		addresses.push_back(i);
-	}
-}
-
-AddressList::AddressList(AllocatorPtr alloc, const AddressList &src) noexcept
-	:sticky_mode(src.sticky_mode)
-{
-	addresses.clear();
-
-	for (const auto &i : src)
-		Add(alloc, i);
-}
-
-bool
-AddressList::Add(AllocatorPtr alloc, const SocketAddress address) noexcept
-{
-	if (addresses.full())
-		return false;
-
-	addresses.push_back(alloc.Dup(address));
-	return true;
-}
-
-bool
-AddressList::Add(AllocatorPtr alloc, const AddressInfoList &list) noexcept
-{
-	for (const auto &i : list)
-		if (!Add(alloc, i))
-			return false;
-
-	return true;
-}
-
+/**
+ * Generates a collision-free hash which identifies the address list
+ * in a hash table.
+ */
+template<typename List>
 HashKey
-AddressList::GetHashKey() const noexcept
+GetHashKey(const List &list) noexcept
 {
-	return ::GetHashKey(addresses);
+	GenericHashState state(sizeof(HashKey));
+
+	for (const auto &i : list)
+		state.Update(i.GetSteadyPart());
+
+	return state.GetFinalT<HashKey>();
 }
