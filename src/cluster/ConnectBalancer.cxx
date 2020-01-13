@@ -32,7 +32,9 @@
 
 #include "ConnectBalancer.hxx"
 #include "BalancerRequest.hxx"
+#include "AddressListWrapper.hxx"
 #include "AddressList.hxx"
+#include "BalancerMap.hxx"
 #include "net/PConnectSocket.hxx"
 #include "event/Loop.hxx"
 #include "net/StaticSocketAddress.hxx"
@@ -75,7 +77,8 @@ private:
 	void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 };
 
-using BR = BalancerRequest<ClientBalancerRequest>;
+using BR = BalancerRequest<ClientBalancerRequest,
+			   BalancerMap::Wrapper<AddressListWrapper>>;
 
 inline void
 ClientBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
@@ -146,8 +149,9 @@ client_balancer_connect(EventLoop &event_loop,
 			CancellablePointer &cancel_ptr)
 {
 	BR::Start(pool, event_loop.SteadyNow(),
-		  balancer,
-		  address_list,
+		  address_list.sticky_mode,
+		  balancer.MakeAddressListWrapper(AddressListWrapper(balancer.GetFailureManager(),
+								     address_list.addresses)),
 		  cancel_ptr,
 		  session_sticky,
 		  event_loop,

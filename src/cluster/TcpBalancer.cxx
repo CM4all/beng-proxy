@@ -32,6 +32,8 @@
 
 #include "TcpBalancer.hxx"
 #include "BalancerRequest.hxx"
+#include "AddressListWrapper.hxx"
+#include "AddressList.hxx"
 #include "tcp_stock.hxx"
 #include "stock/GetHandler.hxx"
 #include "event/Loop.hxx"
@@ -80,7 +82,8 @@ private:
 	void OnStockItemError(std::exception_ptr ep) noexcept override;
 };
 
-using BR = BalancerRequest<TcpBalancerRequest>;
+using BR = BalancerRequest<TcpBalancerRequest,
+			   BalancerMap::Wrapper<AddressListWrapper>>;
 
 inline void
 TcpBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
@@ -138,8 +141,10 @@ TcpBalancer::Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
 		 CancellablePointer &cancel_ptr)
 {
 	BR::Start(alloc, GetEventLoop().SteadyNow(),
-		  balancer,
-		  address_list, cancel_ptr,
+		  address_list.sticky_mode,
+		  balancer.MakeAddressListWrapper(AddressListWrapper(balancer.GetFailureManager(),
+								     address_list.addresses)),
+		  cancel_ptr,
 		  session_sticky,
 		  *this,
 		  parent_stopwatch,

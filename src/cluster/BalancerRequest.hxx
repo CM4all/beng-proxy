@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 Content Management AG
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,8 +32,7 @@
 
 #pragma once
 
-#include "BalancerMap.hxx"
-#include "AddressList.hxx"
+#include "PickGeneric.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
 #include "net/FailureRef.hxx"
@@ -47,17 +46,17 @@ class CancellablePointer;
 /**
  * Generic connection balancer.
  */
-template<class R>
+template<class R, typename List>
 class BalancerRequest final : Cancellable {
 	R request;
 
 	const AllocatorPtr alloc;
 
-	BalancerMap &balancer;
-
-	const AddressList &address_list;
+	const List list;
 
 	CancellablePointer cancel_ptr;
+
+	const StickyMode sticky_mode;
 
 	/**
 	 * The "sticky id" of the incoming HTTP request.
@@ -75,16 +74,16 @@ class BalancerRequest final : Cancellable {
 public:
 	template<typename... Args>
 	BalancerRequest(AllocatorPtr _alloc,
-			BalancerMap &_balancer,
-			const AddressList &_address_list,
+			StickyMode _sticky_mode,
+			List &&_list,
 			CancellablePointer &_cancel_ptr,
 			sticky_hash_t _session_sticky,
 			Args&&... args) noexcept
 		:request(std::forward<Args>(args)...),
-		 alloc(_alloc), balancer(_balancer),
-		 address_list(_address_list),
+		 alloc(_alloc),
+		 list(std::move(_list)), sticky_mode(_sticky_mode),
 		 session_sticky(_session_sticky),
-		 retries(CalculateRetries(address_list))
+		 retries(CalculateRetries(list))
 	{
 		_cancel_ptr = *this;
 	}
@@ -101,8 +100,8 @@ private:
 		Destroy();
 	}
 
-	static unsigned CalculateRetries(const AddressList &address_list) noexcept {
-		const unsigned size = address_list.GetSize();
+	static unsigned CalculateRetries(const List &list) noexcept {
+		const unsigned size = list.size();
 		if (size <= 1)
 			return 0;
 		else if (size == 2)
@@ -120,9 +119,9 @@ public:
 
 	void Next(Expiry now) noexcept {
 		const SocketAddress current_address =
-			balancer.Get(now, address_list, session_sticky);
+			PickGeneric(now, sticky_mode, list, session_sticky);
 
-		failure = balancer.GetFailureManager().Make(current_address);
+		failure = list.MakeFailureInfo(current_address);
 		request.Send(alloc, current_address, cancel_ptr);
 	}
 

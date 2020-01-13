@@ -33,10 +33,14 @@
 #include "Balancer.hxx"
 #include "Stock.hxx"
 #include "cluster/BalancerRequest.hxx"
+#include "cluster/AddressListWrapper.hxx"
+#include "cluster/AddressList.hxx"
 #include "stock/Stock.hxx"
 #include "stock/GetHandler.hxx"
 #include "event/Loop.hxx"
 #include "stopwatch.hxx"
+
+#include <type_traits>
 
 class FilteredSocketBalancerRequest : public StockGetHandler {
 	FilteredSocketStock &stock;
@@ -77,7 +81,8 @@ private:
 	void OnStockItemError(std::exception_ptr ep) noexcept override;
 };
 
-using BR = BalancerRequest<FilteredSocketBalancerRequest>;
+using BR = BalancerRequest<FilteredSocketBalancerRequest,
+			   BalancerMap::Wrapper<AddressListWrapper>>;
 
 inline void
 FilteredSocketBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
@@ -142,8 +147,11 @@ FilteredSocketBalancer::Get(AllocatorPtr alloc,
 			    StockGetHandler &handler,
 			    CancellablePointer &cancel_ptr) noexcept
 {
-	BR::Start(alloc, GetEventLoop().SteadyNow(), balancer,
-		  address_list, cancel_ptr,
+	BR::Start(alloc, GetEventLoop().SteadyNow(),
+		  address_list.sticky_mode,
+		  balancer.MakeAddressListWrapper(AddressListWrapper(balancer.GetFailureManager(),
+								     address_list.addresses)),
+		  cancel_ptr,
 		  session_sticky,
 		  stock, parent_stopwatch,
 		  ip_transparent,

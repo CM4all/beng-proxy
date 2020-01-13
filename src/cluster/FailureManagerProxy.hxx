@@ -37,6 +37,7 @@
 class Expiry;
 class SocketAddress;
 class FailureManager;
+class ReferencedFailureInfo;
 
 class FailureManagerProxy {
 	FailureManager &failure_manager;
@@ -44,6 +45,9 @@ class FailureManagerProxy {
 public:
 	explicit constexpr FailureManagerProxy(FailureManager &_fm) noexcept
 		:failure_manager(_fm) {}
+
+	gcc_pure
+	ReferencedFailureInfo &MakeFailureInfo(SocketAddress address) const noexcept;
 
 	gcc_pure
 	bool Check(const Expiry now, SocketAddress address,

@@ -35,6 +35,12 @@
 #include "net/SocketAddress.hxx"
 #include "util/Expiry.hxx"
 
+ReferencedFailureInfo &
+FailureManagerProxy::MakeFailureInfo(SocketAddress address) const noexcept
+{
+	return failure_manager.Make(address);
+}
+
 bool
 FailureManagerProxy::Check(const Expiry now, SocketAddress address,
 			   bool allow_fade) const noexcept {
