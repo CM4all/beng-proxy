@@ -122,11 +122,4 @@ struct AddressList {
 
 		return addresses[n];
 	}
-
-	/**
-	 * Generates a collision-free hash which identifies this
-	 * object in a hash table.
-	 */
-	gcc_pure
-	HashKey GetHashKey() const noexcept;
 };

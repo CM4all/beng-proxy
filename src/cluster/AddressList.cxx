@@ -31,12 +31,9 @@
  */
 
 #include "AddressList.hxx"
-#include "HashKey.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/ToString.hxx"
 #include "AllocatorPtr.hxx"
-
-#include <string.h>
 
 AddressList::AddressList(ShallowCopy, const AddressInfoList &src) noexcept
 {
@@ -75,10 +72,4 @@ AddressList::Add(AllocatorPtr alloc, const AddressInfoList &list) noexcept
 			return false;
 
 	return true;
-}
-
-HashKey
-AddressList::GetHashKey() const noexcept
-{
-	return ::GetHashKey(addresses);
 }
