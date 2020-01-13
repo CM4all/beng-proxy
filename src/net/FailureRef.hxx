@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,96 +33,94 @@
 #pragma once
 
 #include "FailureInfo.hxx"
-#include "util/Compiler.h"
 
-class Expiry;
 class FailureInfo;
 
 class ReferencedFailureInfo : public FailureInfo {
-    unsigned refs = 1;
+	unsigned refs = 1;
 
 public:
-    void Ref() noexcept {
-        ++refs;
-    }
+	void Ref() noexcept {
+		++refs;
+	}
 
-    void Unref() noexcept {
-        if (--refs == 0)
-            Destroy();
-    }
+	void Unref() noexcept {
+		if (--refs == 0)
+			Destroy();
+	}
 
-    struct UnrefDisposer {
-        void operator()(ReferencedFailureInfo *failure) const noexcept {
-            failure->Unref();
-        }
-    };
+	struct UnrefDisposer {
+		void operator()(ReferencedFailureInfo *failure) const noexcept {
+			failure->Unref();
+		}
+	};
 
 protected:
-    virtual void Destroy() = 0;
+	virtual void Destroy() = 0;
 };
 
 /**
  * Holds a (counted) reference to a #FailureInfo instance.
  */
 class FailureRef {
-    friend class FailurePtr;
+	friend class FailurePtr;
 
-    ReferencedFailureInfo &info;
+	ReferencedFailureInfo &info;
 
 public:
-    explicit FailureRef(ReferencedFailureInfo &_info) noexcept;
-    ~FailureRef() noexcept;
+	explicit FailureRef(ReferencedFailureInfo &_info) noexcept;
+	~FailureRef() noexcept;
 
-    FailureRef(const FailureRef &) = delete;
-    FailureRef &operator=(const FailureRef &) = delete;
+	FailureRef(const FailureRef &) = delete;
+	FailureRef &operator=(const FailureRef &) = delete;
 
-    FailureInfo *operator->() {
-        return &info;
-    }
+	FailureInfo *operator->() {
+		return &info;
+	}
 
-    FailureInfo &operator*() {
-        return info;
-    }
+	FailureInfo &operator*() {
+		return info;
+	}
 };
 
 /**
  * Like #FailureRef, but manages a dynamic pointer.
  */
 class FailurePtr {
-    ReferencedFailureInfo *info = nullptr;
+	ReferencedFailureInfo *info = nullptr;
 
 public:
-    FailurePtr() = default;
+	FailurePtr() = default;
 
-    ~FailurePtr() noexcept {
-        if (info != nullptr)
-            info->Unref();
-    }
+	~FailurePtr() noexcept {
+		if (info != nullptr)
+			info->Unref();
+	}
 
-    FailurePtr(const FailurePtr &) = delete;
-    FailurePtr &operator=(const FailurePtr &) = delete;
+	FailurePtr(const FailurePtr &) = delete;
+	FailurePtr &operator=(const FailurePtr &) = delete;
 
-    operator bool() const {
-        return info != nullptr;
-    }
+	operator bool() const {
+		return info != nullptr;
+	}
 
-    FailurePtr &operator=(ReferencedFailureInfo &new_info) noexcept {
-        if (info != nullptr)
-            info->Unref();
-        info = &new_info;
-        info->Ref();
-        return *this;
-    }
+	FailurePtr &operator=(ReferencedFailureInfo &new_info) noexcept {
+		if (info != nullptr)
+			info->Unref();
+		info = &new_info;
+		info->Ref();
+		return *this;
+	}
 
-    FailurePtr &operator=(FailureRef &new_ref) noexcept {
-        return *this = new_ref.info;
-    }
+	FailurePtr &operator=(FailureRef &new_ref) noexcept {
+		return *this = new_ref.info;
+	}
 
-    FailureInfo *operator->() {
-        return info;
-    }
+	FailureInfo *operator->() {
+		return info;
+	}
 
-    FailureInfo &operator*() {
-        return *info;
-    }
+	FailureInfo &operator*() {
+		return *info;
+	}
 };

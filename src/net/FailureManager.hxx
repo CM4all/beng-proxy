@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef FAILURE_MANAGER_HXX
-#define FAILURE_MANAGER_HXX
+#pragma once
 
 #include "FailureRef.hxx"
 #include "net/AllocatedSocketAddress.hxx"
@@ -40,95 +39,91 @@
 
 #include <boost/intrusive/unordered_set.hpp>
 
-#include <chrono>
-
 /*
  * Remember which servers (socket addresses) failed recently.
  */
 class FailureManager {
 
-    class Failure final
-        : public boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
-          LeakDetector,
-          public ReferencedFailureInfo {
+	class Failure final
+		: public boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+		  LeakDetector,
+		  public ReferencedFailureInfo {
 
-        const AllocatedSocketAddress address;
+		const AllocatedSocketAddress address;
 
-    public:
-        explicit Failure(SocketAddress _address) noexcept
-            :address(_address) {}
+	public:
+		explicit Failure(SocketAddress _address) noexcept
+			:address(_address) {}
 
-        SocketAddress GetAddress() const noexcept {
-            return address;
-        }
+		SocketAddress GetAddress() const noexcept {
+			return address;
+		}
 
-        struct Hash {
-            gcc_pure
-            size_t operator()(const SocketAddress a) const noexcept;
+		struct Hash {
+			gcc_pure
+			size_t operator()(const SocketAddress a) const noexcept;
 
-            gcc_pure
-            size_t operator()(const Failure &f) const noexcept {
-                return this->operator()(f.address);
-            }
-        };
+			gcc_pure
+			size_t operator()(const Failure &f) const noexcept {
+				return this->operator()(f.address);
+			}
+		};
 
-        struct Equal {
-            gcc_pure
-            bool operator()(const SocketAddress a,
-                            const SocketAddress b) const noexcept {
-                return a == b;
-            }
+		struct Equal {
+			gcc_pure
+			bool operator()(const SocketAddress a,
+					const SocketAddress b) const noexcept {
+				return a == b;
+			}
 
-            gcc_pure
-            bool operator()(const SocketAddress a,
-                            const Failure &b) const noexcept {
-                return a == b.address;
-            }
-        };
+			gcc_pure
+			bool operator()(const SocketAddress a,
+					const Failure &b) const noexcept {
+				return a == b.address;
+			}
+		};
 
-    protected:
-        void Destroy() override {
-            delete this;
-        }
-    };
+	protected:
+		void Destroy() override {
+			delete this;
+		}
+	};
 
-    typedef boost::intrusive::unordered_set<Failure,
-                                            boost::intrusive::hash<Failure::Hash>,
-                                            boost::intrusive::equal<Failure::Equal>,
-                                            boost::intrusive::constant_time_size<false>> FailureSet;
+	typedef boost::intrusive::unordered_set<Failure,
+						boost::intrusive::hash<Failure::Hash>,
+						boost::intrusive::equal<Failure::Equal>,
+						boost::intrusive::constant_time_size<false>> FailureSet;
 
-    static constexpr size_t N_BUCKETS = 97;
+	static constexpr size_t N_BUCKETS = 97;
 
-    FailureSet::bucket_type buckets[N_BUCKETS];
+	FailureSet::bucket_type buckets[N_BUCKETS];
 
-    FailureSet failures;
+	FailureSet failures;
 
 public:
-    FailureManager() noexcept
-        :failures(FailureSet::bucket_traits(buckets, N_BUCKETS)) {}
+	FailureManager() noexcept
+		:failures(FailureSet::bucket_traits(buckets, N_BUCKETS)) {}
 
-    ~FailureManager() noexcept;
+	~FailureManager() noexcept;
 
-    FailureManager(const FailureManager &) = delete;
-    FailureManager &operator=(const FailureManager &) = delete;
+	FailureManager(const FailureManager &) = delete;
+	FailureManager &operator=(const FailureManager &) = delete;
 
-    /**
-     * Looks up a #FailureInfo instance or creates a new one.  The
-     * return value should be passed to the #FailureRef constructor.
-     */
-    ReferencedFailureInfo &Make(SocketAddress address) noexcept;
+	/**
+	 * Looks up a #FailureInfo instance or creates a new one.  The
+	 * return value should be passed to the #FailureRef constructor.
+	 */
+	ReferencedFailureInfo &Make(SocketAddress address) noexcept;
 
-    SocketAddress GetAddress(const FailureInfo &info) const noexcept {
-        const auto &f = (const Failure &)info;
-        return f.GetAddress();
-    }
+	SocketAddress GetAddress(const FailureInfo &info) const noexcept {
+		const auto &f = (const Failure &)info;
+		return f.GetAddress();
+	}
 
-    gcc_pure
-    FailureStatus Get(Expiry now, SocketAddress address) const noexcept;
+	gcc_pure
+	FailureStatus Get(Expiry now, SocketAddress address) const noexcept;
 
-    gcc_pure
-    bool Check(Expiry now, SocketAddress address,
-               bool allow_fade=false) const noexcept;
+	gcc_pure
+	bool Check(Expiry now, SocketAddress address,
+		   bool allow_fade=false) const noexcept;
 };
-
-#endif

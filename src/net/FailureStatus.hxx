@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,29 +33,29 @@
 #pragma once
 
 enum class FailureStatus {
-    /**
-     * No failure, host is ok.
-     */
-    OK,
+	/**
+	 * No failure, host is ok.
+	 */
+	OK,
 
-    /**
-     * Host is being faded out (graceful shutdown).  No new sessions.
-     */
-    FADE,
+	/**
+	 * Host is being faded out (graceful shutdown).  No new sessions.
+	 */
+	FADE,
 
-    /**
-     * A server-side protocol-level failure.
-     */
-    PROTOCOL,
+	/**
+	 * A server-side protocol-level failure.
+	 */
+	PROTOCOL,
 
-    /**
-     * Failed to connect to the host.
-     */
-    CONNECT,
+	/**
+	 * Failed to connect to the host.
+	 */
+	CONNECT,
 
-    /**
-     * The failure was submitted by a "monitor", and will not expire
-     * until the monitor detects recovery.
-     */
-    MONITOR,
+	/**
+	 * The failure was submitted by a "monitor", and will not expire
+	 * until the monitor detects recovery.
+	 */
+	MONITOR,
 };

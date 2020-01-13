@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,12 +34,12 @@
 #include "FailureInfo.hxx"
 
 FailureRef::FailureRef(ReferencedFailureInfo &_info) noexcept
-    :info(_info)
+	:info(_info)
 {
-    info.Ref();
+	info.Ref();
 }
 
 FailureRef::~FailureRef() noexcept
 {
-    info.Unref();
+	info.Unref();
 }

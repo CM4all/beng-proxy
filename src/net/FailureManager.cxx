@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,54 +39,54 @@
 inline size_t
 FailureManager::Failure::Hash::operator()(const SocketAddress a) const noexcept
 {
-    assert(!a.IsNull());
+	assert(!a.IsNull());
 
-    return djb_hash(a.GetAddress(), a.GetSize());
+	return djb_hash(a.GetAddress(), a.GetSize());
 }
 
 FailureManager::~FailureManager() noexcept
 {
-    failures.clear_and_dispose(Failure::UnrefDisposer());
+	failures.clear_and_dispose(Failure::UnrefDisposer());
 }
 
 ReferencedFailureInfo &
 FailureManager::Make(SocketAddress address) noexcept
 {
-    assert(!address.IsNull());
+	assert(!address.IsNull());
 
-    FailureSet::insert_commit_data hint;
-    auto result = failures.insert_check(address, Failure::Hash(),
-                                        Failure::Equal(), hint);
-    if (result.second) {
-        Failure *failure = new Failure(address);
-        failures.insert_commit(*failure, hint);
-        return *failure;
-    } else {
-        return *result.first;
-    }
+	FailureSet::insert_commit_data hint;
+	auto result = failures.insert_check(address, Failure::Hash(),
+					    Failure::Equal(), hint);
+	if (result.second) {
+		Failure *failure = new Failure(address);
+		failures.insert_commit(*failure, hint);
+		return *failure;
+	} else {
+		return *result.first;
+	}
 }
 
 FailureStatus
 FailureManager::Get(const Expiry now, SocketAddress address) const noexcept
 {
-    assert(!address.IsNull());
+	assert(!address.IsNull());
 
-    auto i = failures.find(address, Failure::Hash(), Failure::Equal());
-    if (i == failures.end())
-        return FailureStatus::OK;
+	auto i = failures.find(address, Failure::Hash(), Failure::Equal());
+	if (i == failures.end())
+		return FailureStatus::OK;
 
-    return i->GetStatus(now);
+	return i->GetStatus(now);
 }
 
 bool
 FailureManager::Check(const Expiry now, SocketAddress address,
-                      bool allow_fade) const noexcept
+		      bool allow_fade) const noexcept
 {
-    assert(!address.IsNull());
+	assert(!address.IsNull());
 
-    auto i = failures.find(address, Failure::Hash(), Failure::Equal());
-    if (i == failures.end())
-        return true;
+	auto i = failures.find(address, Failure::Hash(), Failure::Equal());
+	if (i == failures.end())
+		return true;
 
-    return i->Check(now, allow_fade);
+	return i->Check(now, allow_fade);
 }
