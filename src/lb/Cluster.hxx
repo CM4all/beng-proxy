@@ -85,6 +85,19 @@ class LbCluster final
 
 	const Logger logger;
 
+	struct StaticMember {
+		AllocatedSocketAddress address;
+
+		FailurePtr failure;
+
+		StaticMember(AllocatedSocketAddress &&_address,
+			     ReferencedFailureInfo &_failure) noexcept
+			:address(std::move(_address)),
+			 failure(_failure) {}
+	};
+
+	std::vector<StaticMember> static_members;
+
 #ifdef HAVE_AVAHI
 	/**
 	 * This #AvahiServiceExplorer locates Zeroconf nodes.

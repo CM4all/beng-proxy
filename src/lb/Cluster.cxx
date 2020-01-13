@@ -135,6 +135,17 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 	}
 #endif
 
+	static_members.reserve(config.members.size());
+	for (const auto &member : config.members) {
+		AllocatedSocketAddress address(member.node->address);
+		if (member.port > 0)
+			address.SetPort(member.port);
+
+		auto &failure = failure_manager.Make(address);
+
+		static_members.emplace_back(std::move(address), failure);
+	}
+
 	if (monitors != nullptr)
 		/* create monitors for "static" members */
 		for (const auto &member : config.members)
