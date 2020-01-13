@@ -34,6 +34,8 @@
 
 #include "FailureInfo.hxx"
 
+#include <utility>
+
 class FailureInfo;
 
 class ReferencedFailureInfo : public FailureInfo {
@@ -92,6 +94,9 @@ class FailurePtr {
 public:
 	FailurePtr() = default;
 
+	FailurePtr(FailurePtr &&src) noexcept
+		:info(std::exchange(src.info, nullptr)) {}
+
 	~FailurePtr() noexcept {
 		if (info != nullptr)
 			info->Unref();
@@ -102,6 +107,12 @@ public:
 
 	operator bool() const {
 		return info != nullptr;
+	}
+
+	FailurePtr &operator=(FailurePtr &&src) noexcept {
+		using std::swap;
+		swap(info, src.info);
+		return *this;
 	}
 
 	FailurePtr &operator=(ReferencedFailureInfo &new_info) noexcept {
