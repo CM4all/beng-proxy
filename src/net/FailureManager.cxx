@@ -31,17 +31,61 @@
  */
 
 #include "FailureManager.hxx"
+#include "FailureRef.hxx"
+#include "net/AllocatedSocketAddress.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/djbhash.h"
+#include "util/LeakDetector.hxx"
 
 #include <assert.h>
 
+class FailureManager::Failure final
+	: public boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+	  LeakDetector,
+	  public ReferencedFailureInfo {
+
+	const AllocatedSocketAddress address;
+
+public:
+	explicit Failure(SocketAddress _address) noexcept
+		:address(_address) {}
+
+	SocketAddress GetAddress() const noexcept {
+		return address;
+	}
+
+protected:
+	void Destroy() override {
+		delete this;
+	}
+};
+
 inline size_t
-FailureManager::Failure::Hash::operator()(const SocketAddress a) const noexcept
+FailureManager::Hash::operator()(const SocketAddress a) const noexcept
 {
 	assert(!a.IsNull());
 
 	return djb_hash(a.GetAddress(), a.GetSize());
+}
+
+inline size_t
+FailureManager::Hash::operator()(const Failure &f) const noexcept
+{
+	return this->operator()(f.GetAddress());
+}
+
+inline bool
+FailureManager::Equal::operator()(const SocketAddress a,
+				  const SocketAddress b) const noexcept
+{
+	return a == b;
+}
+
+inline bool
+FailureManager::Equal::operator()(const SocketAddress a,
+				  const Failure &b) const noexcept
+{
+	return a == b.GetAddress();
 }
 
 FailureManager::~FailureManager() noexcept
@@ -55,8 +99,7 @@ FailureManager::Make(SocketAddress address) noexcept
 	assert(!address.IsNull());
 
 	FailureSet::insert_commit_data hint;
-	auto result = failures.insert_check(address, Failure::Hash(),
-					    Failure::Equal(), hint);
+	auto result = failures.insert_check(address, Hash(), Equal(), hint);
 	if (result.second) {
 		Failure *failure = new Failure(address);
 		failures.insert_commit(*failure, hint);
@@ -66,12 +109,19 @@ FailureManager::Make(SocketAddress address) noexcept
 	}
 }
 
+SocketAddress
+FailureManager::GetAddress(const FailureInfo &info) const noexcept
+{
+	const auto &f = (const Failure &)info;
+	return f.GetAddress();
+}
+
 FailureStatus
 FailureManager::Get(const Expiry now, SocketAddress address) const noexcept
 {
 	assert(!address.IsNull());
 
-	auto i = failures.find(address, Failure::Hash(), Failure::Equal());
+	auto i = failures.find(address, Hash(), Equal());
 	if (i == failures.end())
 		return FailureStatus::OK;
 
@@ -84,7 +134,7 @@ FailureManager::Check(const Expiry now, SocketAddress address,
 {
 	assert(!address.IsNull());
 
-	auto i = failures.find(address, Failure::Hash(), Failure::Equal());
+	auto i = failures.find(address, Hash(), Equal());
 	if (i == failures.end())
 		return true;
 

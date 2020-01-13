@@ -38,7 +38,9 @@
 #include "net/Resolver.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/FailureManager.hxx"
+#include "net/FailureRef.hxx"
 #include "util/Compiler.h"
+#include "util/Expiry.hxx"
 
 #include <gtest/gtest.h>
 

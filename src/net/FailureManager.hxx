@@ -32,66 +32,44 @@
 
 #pragma once
 
-#include "FailureRef.hxx"
-#include "net/AllocatedSocketAddress.hxx"
-#include "util/LeakDetector.hxx"
+#include "FailureStatus.hxx"
 #include "util/Compiler.h"
 
 #include <boost/intrusive/unordered_set.hpp>
+
+class Expiry;
+class SocketAddress;
+class FailureInfo;
+class ReferencedFailureInfo;
 
 /*
  * Remember which servers (socket addresses) failed recently.
  */
 class FailureManager {
+	class Failure;
 
-	class Failure final
-		: public boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
-		  LeakDetector,
-		  public ReferencedFailureInfo {
+	struct Hash {
+		gcc_pure
+		size_t operator()(const SocketAddress a) const noexcept;
 
-		const AllocatedSocketAddress address;
+		gcc_pure
+		size_t operator()(const Failure &f) const noexcept;
+	};
 
-	public:
-		explicit Failure(SocketAddress _address) noexcept
-			:address(_address) {}
+	struct Equal {
+		gcc_pure
+		bool operator()(const SocketAddress a,
+				const SocketAddress b) const noexcept;
 
-		SocketAddress GetAddress() const noexcept {
-			return address;
-		}
-
-		struct Hash {
-			gcc_pure
-			size_t operator()(const SocketAddress a) const noexcept;
-
-			gcc_pure
-			size_t operator()(const Failure &f) const noexcept {
-				return this->operator()(f.address);
-			}
-		};
-
-		struct Equal {
-			gcc_pure
-			bool operator()(const SocketAddress a,
-					const SocketAddress b) const noexcept {
-				return a == b;
-			}
-
-			gcc_pure
-			bool operator()(const SocketAddress a,
-					const Failure &b) const noexcept {
-				return a == b.address;
-			}
-		};
-
-	protected:
-		void Destroy() override {
-			delete this;
-		}
+		gcc_pure
+		bool operator()(const SocketAddress a,
+				const Failure &b) const noexcept;
 	};
 
 	typedef boost::intrusive::unordered_set<Failure,
-						boost::intrusive::hash<Failure::Hash>,
-						boost::intrusive::equal<Failure::Equal>,
+						boost::intrusive::base_hook<boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
+						boost::intrusive::hash<Hash>,
+						boost::intrusive::equal<Equal>,
 						boost::intrusive::constant_time_size<false>> FailureSet;
 
 	static constexpr size_t N_BUCKETS = 97;
@@ -115,10 +93,7 @@ public:
 	 */
 	ReferencedFailureInfo &Make(SocketAddress address) noexcept;
 
-	SocketAddress GetAddress(const FailureInfo &info) const noexcept {
-		const auto &f = (const Failure &)info;
-		return f.GetAddress();
-	}
+	SocketAddress GetAddress(const FailureInfo &info) const noexcept;
 
 	gcc_pure
 	FailureStatus Get(Expiry now, SocketAddress address) const noexcept;

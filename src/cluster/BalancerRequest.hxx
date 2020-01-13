@@ -36,6 +36,7 @@
 #include "AddressList.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
+#include "net/FailureRef.hxx"
 #include "util/Cancellable.hxx"
 #include "AllocatorPtr.hxx"
 
