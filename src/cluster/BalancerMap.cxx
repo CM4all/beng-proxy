@@ -33,7 +33,6 @@
 #include "BalancerMap.hxx"
 #include "AddressListWrapper.hxx"
 #include "PickGeneric.hxx"
-#include "RoundRobinBalancer.cxx"
 #include "AddressList.hxx"
 
 SocketAddress

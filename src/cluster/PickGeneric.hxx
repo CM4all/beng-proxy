@@ -35,6 +35,7 @@
 #include "PickFailover.hxx"
 #include "PickModulo.hxx"
 #include "StickyMode.hxx"
+#include "RoundRobinBalancer.cxx"
 #include "net/SocketAddress.hxx"
 #include "util/Compiler.h"
 #include "util/Expiry.hxx"
