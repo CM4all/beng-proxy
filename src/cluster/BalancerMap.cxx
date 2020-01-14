@@ -46,7 +46,7 @@ BalancerMap::Get(const Expiry now,
 			   sticky_hash);
 }
 
-inline RoundRobinBalancer &
+RoundRobinBalancer &
 BalancerMap::MakeRoundRobinBalancer(HashKey key) noexcept
 {
 	auto *item = cache.Get(key);
