@@ -4,7 +4,7 @@ cm4all-beng-proxy (15.31) unstable; urgency=low
   * fcache: cache "204 No Content" responses
   * fcache: fix memory leak
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 14 Jan 2020 14:03:35 +0100
 
 cm4all-beng-proxy (15.30) unstable; urgency=low
 
