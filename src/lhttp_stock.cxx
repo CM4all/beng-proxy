@@ -85,6 +85,7 @@ private:
 
 	/* virtual methods from class ChildStockClass */
 	int GetChildSocketType(void *info) const noexcept override;
+	unsigned GetChildBacklog(void *info) const noexcept override;
 	const char *GetChildTag(void *info) const noexcept override;
 	void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
 			  PreparedChildProcess &p) override;
@@ -229,6 +230,17 @@ LhttpStock::GetChildSocketType(void *info) const noexcept
 		type |= SOCK_NONBLOCK;
 
 	return type;
+}
+
+unsigned
+LhttpStock::GetChildBacklog(void *info) const noexcept
+{
+	const auto &address = *(const LhttpAddress *)info;
+
+	/* use the concurrency for the listener backlog to ensure that
+	   we'll never get ECONNREFUSED/EAGAIN while the child process
+	   initializes itself */
+	return address.concurrency;
 }
 
 const char *

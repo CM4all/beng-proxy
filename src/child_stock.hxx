@@ -61,6 +61,8 @@ public:
      */
     virtual int GetChildSocketType(void *info) const noexcept;
 
+    virtual unsigned GetChildBacklog(void *info) const noexcept;
+
     virtual const char *GetChildTag(void *info) const noexcept;
 
     /**
@@ -82,7 +84,7 @@ class ChildStock final : StockClass {
     SpawnService &spawn_service;
     ChildStockClass &cls;
 
-    const int backlog;
+    const unsigned backlog;
 
     const SocketDescriptor log_socket;
 
@@ -91,7 +93,7 @@ class ChildStock final : StockClass {
 public:
     ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
                ChildStockClass &_cls,
-               int _backlog,
+               unsigned _backlog,
                SocketDescriptor _log_socket,
                const ChildErrorLogOptions &_log_options,
                unsigned _limit, unsigned _max_idle) noexcept;

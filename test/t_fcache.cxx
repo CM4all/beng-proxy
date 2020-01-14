@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,6 +31,7 @@
  */
 
 #include "BlockingResourceLoader.hxx"
+#include "MirrorResourceLoader.hxx"
 #include "fcache.hxx"
 #include "strmap.hxx"
 #include "HttpResponseHandler.hxx"
@@ -86,10 +87,47 @@ TestCancelBlocking()
     cancel_ptr.Cancel();
 }
 
+static void
+TestNoBody()
+{
+    struct Context final : HttpResponseHandler {
+        EventLoop event_loop;
+        RootPool root_pool;
+
+        MirrorResourceLoader resource_loader;
+        FilterCache *fcache = filter_cache_new(root_pool, 65536,
+                                               event_loop, resource_loader);
+
+        ~Context() noexcept {
+            filter_cache_close(fcache);
+        }
+
+        /* virtual methods from class HttpResponseHandler */
+        void OnHttpResponse(http_status_t, StringMap &&,
+                            UnusedIstreamPtr) noexcept override {
+        }
+
+        void OnHttpError(std::exception_ptr) noexcept override {
+            abort();
+        }
+    };
+
+    Context context;
+    CancellablePointer cancel_ptr;
+
+    auto request_pool = pool_new_linear(context.root_pool, "Request", 8192);
+    filter_cache_request(*context.fcache, *request_pool, nullptr,
+			 nullptr, nullptr,
+			 "foo", HTTP_STATUS_OK, {},
+                         nullptr,
+                         context, cancel_ptr);
+}
+
 int
 main(int, char **)
 try {
     TestCancelBlocking();
+    TestNoBody();
     return EXIT_SUCCESS;
 } catch (const std::exception &e) {
     PrintException(e);
