@@ -390,7 +390,7 @@ parse_translate_time(const char *p, std::chrono::system_clock::duration offset)
 static constexpr bool
 CanCacheStatus(http_status_t status) noexcept
 {
-    return status == HTTP_STATUS_OK;
+    return status == HTTP_STATUS_OK || status == HTTP_STATUS_NO_CONTENT;
 }
 
 /** check whether the HTTP response should be put into the cache */
