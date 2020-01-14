@@ -75,6 +75,8 @@ private:
 	void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 };
 
+using BR = BalancerRequest<ClientBalancerRequest>;
+
 inline void
 ClientBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
 			    CancellablePointer &cancel_ptr) noexcept
@@ -97,7 +99,7 @@ ClientBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
 void
 ClientBalancerRequest::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
 {
-	auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
+	auto &base = BR::Cast(*this);
 	base.ConnectSuccess();
 
 	auto &_handler = handler;
@@ -108,7 +110,7 @@ ClientBalancerRequest::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexc
 void
 ClientBalancerRequest::OnSocketConnectTimeout() noexcept
 {
-	auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
+	auto &base = BR::Cast(*this);
 	if (!base.ConnectFailure(event_loop.SteadyNow())) {
 		auto &_handler = handler;
 		base.Destroy();
@@ -119,7 +121,7 @@ ClientBalancerRequest::OnSocketConnectTimeout() noexcept
 void
 ClientBalancerRequest::OnSocketConnectError(std::exception_ptr ep) noexcept
 {
-	auto &base = BalancerRequest<ClientBalancerRequest>::Cast(*this);
+	auto &base = BR::Cast(*this);
 	if (!base.ConnectFailure(event_loop.SteadyNow())) {
 		auto &_handler = handler;
 		base.Destroy();
@@ -143,14 +145,14 @@ client_balancer_connect(EventLoop &event_loop,
 			ConnectSocketHandler &handler,
 			CancellablePointer &cancel_ptr)
 {
-	BalancerRequest<ClientBalancerRequest>::Start(pool, event_loop.SteadyNow(),
-						      balancer,
-						      *address_list,
-						      cancel_ptr,
-						      session_sticky,
-						      event_loop,
-						      ip_transparent,
-						      bind_address,
-						      timeout,
-						      handler);
+	BR::Start(pool, event_loop.SteadyNow(),
+		  balancer,
+		  *address_list,
+		  cancel_ptr,
+		  session_sticky,
+		  event_loop,
+		  ip_transparent,
+		  bind_address,
+		  timeout,
+		  handler);
 }
