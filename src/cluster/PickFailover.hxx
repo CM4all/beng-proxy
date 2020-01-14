@@ -36,6 +36,8 @@
 #include "util/Compiler.h"
 #include "util/Expiry.hxx"
 
+#include <iterator>
+
 #include <assert.h>
 
 /**
