@@ -53,6 +53,12 @@ ChildStockClass::GetChildSocketType(void *) const noexcept
     return SOCK_STREAM;
 }
 
+unsigned
+ChildStockClass::GetChildBacklog(void *) const noexcept
+{
+    return 0;
+}
+
 const char *
 ChildStockClass::GetChildTag(void *) const noexcept
 {
@@ -192,7 +198,8 @@ ChildStock::Create(CreateStockItem c, void *info,
                                     cls.GetChildTag(info));
 
     try {
-        item->Spawn(cls, info, backlog, log_socket);
+        item->Spawn(cls, info, std::max(backlog, cls.GetChildBacklog(info)),
+                    log_socket);
     } catch (...) {
         delete item;
         throw;

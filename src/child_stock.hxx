@@ -60,6 +60,8 @@ public:
      */
     virtual int GetChildSocketType(void *info) const noexcept;
 
+    virtual unsigned GetChildBacklog(void *info) const noexcept;
+
     virtual const char *GetChildTag(void *info) const noexcept;
 
     /**
