@@ -387,6 +387,12 @@ parse_translate_time(const char *p, std::chrono::system_clock::duration offset)
     return t;
 }
 
+static constexpr bool
+CanCacheStatus(http_status_t status) noexcept
+{
+    return status == HTTP_STATUS_OK;
+}
+
 /** check whether the HTTP response should be put into the cache */
 static bool
 filter_cache_response_evaluate(FilterCacheInfo &info,
@@ -395,7 +401,7 @@ filter_cache_response_evaluate(FilterCacheInfo &info,
 {
     const char *p;
 
-    if (status != HTTP_STATUS_OK)
+    if (!CanCacheStatus(status))
         return false;
 
     if (body_available != (off_t)-1 && body_available > cacheable_size_limit)
