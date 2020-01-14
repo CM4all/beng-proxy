@@ -80,6 +80,8 @@ private:
 	void OnStockItemError(std::exception_ptr ep) noexcept override;
 };
 
+using BR = BalancerRequest<TcpBalancerRequest>;
+
 inline void
 TcpBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
 			 CancellablePointer &cancel_ptr) noexcept
@@ -103,7 +105,7 @@ TcpBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
 void
 TcpBalancerRequest::OnStockItemReady(StockItem &item) noexcept
 {
-	auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*this);
+	auto &base = BR::Cast(*this);
 	base.ConnectSuccess();
 
 	handler.OnStockItemReady(item);
@@ -113,7 +115,7 @@ TcpBalancerRequest::OnStockItemReady(StockItem &item) noexcept
 void
 TcpBalancerRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
-	auto &base = BalancerRequest<TcpBalancerRequest>::Cast(*this);
+	auto &base = BR::Cast(*this);
 	if (!base.ConnectFailure(GetEventLoop().SteadyNow())) {
 		handler.OnStockItemError(ep);
 		base.Destroy();
@@ -135,13 +137,13 @@ TcpBalancer::Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr)
 {
-	BalancerRequest<TcpBalancerRequest>::Start(alloc, GetEventLoop().SteadyNow(),
-						   balancer,
-						   address_list, cancel_ptr,
-						   session_sticky,
-						   *this,
-						   parent_stopwatch,
-						   ip_transparent,
-						   bind_address, timeout,
-						   handler);
+	BR::Start(alloc, GetEventLoop().SteadyNow(),
+		  balancer,
+		  address_list, cancel_ptr,
+		  session_sticky,
+		  *this,
+		  parent_stopwatch,
+		  ip_transparent,
+		  bind_address, timeout,
+		  handler);
 }
