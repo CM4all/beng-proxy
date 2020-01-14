@@ -388,6 +388,21 @@ istream_spawn_dep = declare_dependency(
   ],
 )
 
+cluster = static_library(
+  'cluster',
+  'src/cluster/AddressSticky.cxx',
+  'src/cluster/BalancerMap.cxx',
+  'src/cluster/FailureManagerProxy.cxx',
+  include_directories: inc,
+  dependencies: [
+    libsodium,
+  ],
+)
+cluster_dep = declare_dependency(
+  link_with: cluster,
+  dependencies: [],
+)
+
 raddress = static_library('raddress',
   'src/regex.cxx',
   'src/cgi/Address.cxx',
@@ -807,8 +822,6 @@ executable(
   'src/delegate/RequestHandler.cxx',
   'src/capabilities.cxx',
   'src/address_string.cxx',
-  'src/cluster/FailureManagerProxy.cxx',
-  'src/cluster/BalancerMap.cxx',
   'src/cluster/TcpBalancer.cxx',
   'src/bot.c',
   'libcommon/src/spawn/Server.cxx',
@@ -926,6 +939,7 @@ executable(
     delegate_client_dep,
     control_server_dep,
     nghttp2_dep,
+    cluster_dep,
     libsodium,
     libcrypt,
   ],
@@ -940,9 +954,6 @@ executable(
   'src/pipe_stock.cxx',
   'src/address_string.cxx',
   'src/cluster/AddressList.cxx',
-  'src/cluster/AddressSticky.cxx',
-  'src/cluster/FailureManagerProxy.cxx',
-  'src/cluster/BalancerMap.cxx',
   'src/cluster/ConnectBalancer.cxx',
   'src/cluster/TcpBalancer.cxx',
   'src/http/Address.cxx',
@@ -1025,6 +1036,7 @@ executable(
     lua_dep,
     thread_pool_dep,
     pcre_dep,
+    cluster_dep,
   ],
   install: true,
   install_dir: 'sbin',

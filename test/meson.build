@@ -288,8 +288,6 @@ executable('run_processor',
 executable('run_client_balancer',
   'run_client_balancer.cxx',
   '../src/PInstance.cxx',
-  '../src/cluster/FailureManagerProxy.cxx',
-  '../src/cluster/BalancerMap.cxx',
   '../src/cluster/ConnectBalancer.cxx',
   include_directories: inc,
   dependencies: [
@@ -297,7 +295,7 @@ executable('run_client_balancer',
     stopwatch_dep,
     eutil_dep,
     raddress_dep,
-    libsodium,
+    cluster_dep,
   ])
 
 if nfs_client_dep.found()
@@ -410,8 +408,6 @@ test('t_expansible_buffer', executable('t_expansible_buffer',
 
 test('t_balancer', executable('t_balancer',
   't_balancer.cxx',
-  '../src/cluster/FailureManagerProxy.cxx',
-  '../src/cluster/BalancerMap.cxx',
   '../src/cluster/AddressList.cxx',
   include_directories: inc,
   dependencies: [
@@ -419,7 +415,7 @@ test('t_balancer', executable('t_balancer',
     eutil_dep,
     pool_dep,
     net_dep,
-    libsodium,
+    cluster_dep,
   ]))
 
 test('t_cgi', executable('t_cgi',
