@@ -217,7 +217,7 @@ ChildStockItem::~ChildStockItem()
 
 ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
                        ChildStockClass &_cls,
-                       int _backlog,
+                       unsigned _backlog,
                        SocketDescriptor _log_socket,
                        unsigned _limit, unsigned _max_idle) noexcept
     :map(event_loop, *this, _limit, _max_idle),

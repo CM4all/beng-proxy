@@ -81,14 +81,14 @@ class ChildStock final : StockClass {
     SpawnService &spawn_service;
     ChildStockClass &cls;
 
-    const int backlog;
+    const unsigned backlog;
 
     const SocketDescriptor log_socket;
 
 public:
     ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
                ChildStockClass &_cls,
-               int _backlog,
+               unsigned _backlog,
                SocketDescriptor _log_socket,
                unsigned _limit, unsigned _max_idle) noexcept;
 
