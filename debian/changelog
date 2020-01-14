@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.31) unstable; urgency=low
 
-  * 
+  * lhttp: use the configured concurrency for the listener backlog
 
  --   
 
