@@ -524,10 +524,13 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
        the sink_rubber_new() call may destroy this object */
     auto &_handler = handler;
 
+    bool destroy = false;
     if (!body) {
         response.cancel_ptr = nullptr;
 
         cache.Put(info, status, headers, {}, 0);
+
+        destroy = true;
     } else {
         /* tee the body: one goes to our client, and one goes into the
            cache */
@@ -563,6 +566,9 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
     }
 
     _handler.InvokeResponse(status, std::move(headers), std::move(body));
+
+    if (destroy)
+        Destroy();
 }
 
 void
