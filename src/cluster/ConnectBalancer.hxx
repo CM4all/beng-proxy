@@ -56,7 +56,7 @@ client_balancer_connect(EventLoop &event_loop, struct pool &pool,
 			bool ip_transparent,
 			SocketAddress bind_address,
 			sticky_hash_t session_sticky,
-			const AddressList *address_list,
+			const AddressList &address_list,
 			Event::Duration timeout,
 			ConnectSocketHandler &handler,
 			CancellablePointer &cancel_ptr);

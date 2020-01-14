@@ -429,7 +429,7 @@ LbTcpConnection::ConnectOutbound()
 				cluster_config.transparent_source,
 				bind_address,
 				session_sticky,
-				&cluster_config.address_list,
+				cluster_config.address_list,
 				LB_TCP_CONNECT_TIMEOUT,
 				*this,
 				cancel_connect);
