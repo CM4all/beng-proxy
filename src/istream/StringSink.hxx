@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef STRING_SINK_HXX
-#define STRING_SINK_HXX
+#pragma once
 
 #include <exception>
 #include <string>
@@ -43,11 +42,9 @@ class StringSink;
 
 StringSink &
 NewStringSink(struct pool &pool, UnusedIstreamPtr input,
-              void (*callback)(std::string &&value, std::exception_ptr error,
-                               void *ctx),
-              void *ctx, CancellablePointer &cancel_ptr);
+	      void (*callback)(std::string &&value, std::exception_ptr error,
+			       void *ctx),
+	      void *ctx, CancellablePointer &cancel_ptr);
 
 void
 ReadStringSink(StringSink &sink) noexcept;
-
-#endif

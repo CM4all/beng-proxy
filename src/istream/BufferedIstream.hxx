@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -45,8 +45,8 @@ class UnusedIstreamPtr;
  */
 class BufferedIstreamHandler {
 public:
-    virtual void OnBufferedIstreamReady(UnusedIstreamPtr i) noexcept = 0;
-    virtual void OnBufferedIstreamError(std::exception_ptr e) noexcept = 0;
+	virtual void OnBufferedIstreamReady(UnusedIstreamPtr i) noexcept = 0;
+	virtual void OnBufferedIstreamError(std::exception_ptr e) noexcept = 0;
 };
 
 /**
@@ -62,7 +62,7 @@ public:
  */
 void
 NewBufferedIstream(struct pool &pool, EventLoop &event_loop,
-                   PipeStock *pipe_stock,
-                   BufferedIstreamHandler &handler,
-                   UnusedIstreamPtr i,
-                   CancellablePointer &cancel_ptr) noexcept;
+		   PipeStock *pipe_stock,
+		   BufferedIstreamHandler &handler,
+		   UnusedIstreamPtr i,
+		   CancellablePointer &cancel_ptr) noexcept;
