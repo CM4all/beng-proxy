@@ -752,6 +752,31 @@ t_istream_filter_deps = [
 ]
 
 test(
+  'TestBufferedResourceLoader',
+  executable(
+    'TestBufferedResourceLoader',
+    'TestBufferedResourceLoader.cxx',
+    'FailingResourceLoader.cxx',
+    'BlockingResourceLoader.cxx',
+    'MirrorResourceLoader.cxx',
+    'RecordingHttpResponseHandler.cxx',
+    '../src/BufferedResourceLoader.cxx',
+    '../src/pipe_stock.cxx',
+    '../src/PipeLease.cxx',
+    '../src/PInstance.cxx',
+    '../src/io/SpliceSupport.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      istream_dep,
+      putil_dep,
+      stock_dep,
+      stopwatch_dep,
+    ],
+  ),
+)  
+
+test(
   'IstreamFilterTest',
   executable(
     'IstreamFilterTest',
