@@ -95,7 +95,7 @@ public:
 
 private:
 	void Destroy() noexcept {
-		this->~Request();
+		DeleteFromPool(pool, this);
 	}
 
 	/* virtual methods from class Cancellable */
