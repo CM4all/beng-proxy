@@ -140,32 +140,36 @@ ResolveWidget(gcc_unused struct pool &pool,
  *
  */
 
-struct StringSinkCtx {
+namespace {
+
+struct MyStringSinkHandler final : StringSinkHandler {
 	std::string value;
 	bool finished = false;
+
+	void OnStringSinkSuccess(std::string &&_value) noexcept override {
+		value = std::move(_value);
+		finished = true;
+	}
+
+	void OnStringSinkError(std::exception_ptr) noexcept override {
+		finished = true;
+	}
 };
 
-static void
-sink_gstring_callback(std::string &&value, std::exception_ptr, void *_ctx)
-{
-	auto &ctx = *(StringSinkCtx *)_ctx;
-
-	ctx.value = std::move(value);
-	ctx.finished = true;
 }
 
 static void
 assert_istream_equals(struct pool *pool, UnusedIstreamPtr _istream,
 		      const char *value)
 {
-	StringSinkCtx ctx;
+	MyStringSinkHandler ctx;
 	CancellablePointer cancel_ptr;
 
 	ASSERT_TRUE(_istream);
 	ASSERT_NE(value, nullptr);
 
 	auto &sink = NewStringSink(*pool, std::move(_istream),
-				   sink_gstring_callback, &ctx, cancel_ptr);
+				   ctx, cancel_ptr);
 
 	while (!ctx.finished)
 		ReadStringSink(sink);

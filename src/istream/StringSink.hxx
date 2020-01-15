@@ -40,11 +40,15 @@ class UnusedIstreamPtr;
 class CancellablePointer;
 class StringSink;
 
+class StringSinkHandler {
+public:
+	virtual void OnStringSinkSuccess(std::string &&value) noexcept = 0;
+	virtual void OnStringSinkError(std::exception_ptr error) noexcept = 0;
+};
+
 StringSink &
 NewStringSink(struct pool &pool, UnusedIstreamPtr input,
-	      void (*callback)(std::string &&value, std::exception_ptr error,
-			       void *ctx),
-	      void *ctx, CancellablePointer &cancel_ptr);
+	      StringSinkHandler &handler, CancellablePointer &cancel_ptr);
 
 void
 ReadStringSink(StringSink &sink) noexcept;

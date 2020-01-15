@@ -39,17 +39,15 @@
 class StringSink final : IstreamSink, Cancellable {
 	std::string value;
 
-	void (*callback)(std::string &&value, std::exception_ptr error, void *ctx);
-	void *callback_ctx;
+	StringSinkHandler &handler;
 
 public:
 	StringSink(UnusedIstreamPtr &&_input,
-		   void (*_callback)(std::string &&value, std::exception_ptr error,
-				     void *ctx),
-		   void *_ctx,
+		   StringSinkHandler &_handler,
 		   CancellablePointer &cancel_ptr)
 		:IstreamSink(std::move(_input), FD_ANY),
-		 callback(_callback), callback_ctx(_ctx) {
+		 handler(_handler)
+	{
 		cancel_ptr = *this;
 	}
 
@@ -76,12 +74,12 @@ private:
 	}
 
 	void OnEof() noexcept override {
-		callback(std::move(value), nullptr, callback_ctx);
+		handler.OnStringSinkSuccess(std::move(value));
 		Destroy();
 	}
 
 	void OnError(std::exception_ptr ep) noexcept override {
-		callback(std::move(value), ep, callback_ctx);
+		handler.OnStringSinkError(std::move(ep));
 		Destroy();
 	}
 };
@@ -93,12 +91,10 @@ private:
 
 StringSink &
 NewStringSink(struct pool &pool, UnusedIstreamPtr input,
-	      void (*callback)(std::string &&value, std::exception_ptr error,
-			       void *ctx),
-	      void *ctx, CancellablePointer &cancel_ptr)
+	      StringSinkHandler &handler, CancellablePointer &cancel_ptr)
 {
 	return *NewFromPool<StringSink>(pool, std::move(input),
-					callback, ctx, cancel_ptr);
+					handler, cancel_ptr);
 }
 
 void

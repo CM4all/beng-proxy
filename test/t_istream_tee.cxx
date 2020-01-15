@@ -87,8 +87,15 @@ struct StatsIstreamSink : IstreamSink {
 	}
 };
 
-struct Context {
+struct Context : StringSinkHandler {
 	std::string value;
+
+	void OnStringSinkSuccess(std::string &&_value) noexcept final {
+		value = std::move(_value);
+	}
+
+	void OnStringSinkError(std::exception_ptr) noexcept final {
+	}
 };
 
 struct BlockContext final : Context, StatsIstreamSink {
@@ -110,14 +117,6 @@ struct BlockContext final : Context, StatsIstreamSink {
  */
 
 static void
-buffer_callback(std::string &&value, std::exception_ptr, void *_ctx)
-{
-	auto &ctx = *(Context *)_ctx;
-
-	ctx.value = std::move(value);
-}
-
-static void
 test_block1(EventLoop &event_loop)
 {
 	CancellablePointer cancel_ptr;
@@ -131,8 +130,7 @@ test_block1(EventLoop &event_loop)
 
 	BlockContext ctx(std::move(tee1));
 
-	auto &sink = NewStringSink(*pool, std::move(tee2),
-				   buffer_callback, (Context *)&ctx, cancel_ptr);
+	auto &sink = NewStringSink(*pool, std::move(tee2), ctx, cancel_ptr);
 	assert(ctx.value.empty());
 
 	/* the input (istream_delayed) blocks */
@@ -173,8 +171,7 @@ test_close_data(EventLoop &event_loop, struct pool *_pool)
 
 	sink_close_new(*pool, std::move(tee1));
 
-	auto &sink = NewStringSink(*pool, std::move(tee2),
-				   buffer_callback, &ctx, cancel_ptr);
+	auto &sink = NewStringSink(*pool, std::move(tee2), ctx, cancel_ptr);
 	assert(ctx.value.empty());
 
 	pool.reset();
@@ -204,8 +201,7 @@ test_close_skipped(EventLoop &event_loop, struct pool *_pool)
 	auto tee1 = NewTeeIstream(*pool, istream_string_new(*pool, "foo"),
 				  event_loop, false);
 	auto tee2 = AddTeeIstream(tee1, false);
-	auto &sink = NewStringSink(*pool, std::move(tee1),
-				   buffer_callback, &ctx, cancel_ptr);
+	auto &sink = NewStringSink(*pool, std::move(tee1), ctx, cancel_ptr);
 
 	sink_close_new(*pool, std::move(tee2));
 	pool.reset();
