@@ -56,6 +56,7 @@ class BufferedResourceLoader::Request final
 	const char *const body_etag;
 	HttpResponseHandler &handler;
 
+	CancellablePointer &caller_cancel_ptr;
 	CancellablePointer cancel_ptr;
 
 public:
@@ -81,9 +82,9 @@ public:
 		    BufferedIstream becomes ready */
 		 headers(pool, _headers),
 		 body_etag(_body_etag),
-		 handler(_handler)
+		 handler(_handler), caller_cancel_ptr(_cancel_ptr)
 	{
-		_cancel_ptr = *this;
+		caller_cancel_ptr = *this;
 	}
 
 	void Start(EventLoop &_event_loop, PipeStock *_pipe_stock,
@@ -110,7 +111,7 @@ private:
 				 session_sticky, cache_tag, site_name,
 				 method, address, status, std::move(headers),
 				 std::move(i), body_etag,
-				 handler, cancel_ptr);
+				 handler, caller_cancel_ptr);
 
 		// TODO: destruct before invoking next.SendRequest()
 		Destroy();
