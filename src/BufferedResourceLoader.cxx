@@ -40,9 +40,9 @@
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
 
-class BufferedResourceLoader::Request final
-	: PoolLeakDetector, Cancellable, BufferedIstreamHandler
-{
+namespace {
+
+class PostponedRequest {
 	struct pool &pool;
 	ResourceLoader &next;
 	const StopwatchPtr parent_stopwatch;
@@ -57,6 +57,59 @@ class BufferedResourceLoader::Request final
 	HttpResponseHandler &handler;
 
 	CancellablePointer &caller_cancel_ptr;
+
+public:
+	PostponedRequest(struct pool &_pool, ResourceLoader &_next,
+			 const StopwatchPtr &_parent_stopwatch,
+			 sticky_hash_t _session_sticky,
+			 const char *_cache_tag,
+			 const char *_site_name,
+			 http_method_t _method,
+			 const ResourceAddress &_address,
+			 http_status_t _status, StringMap &&_headers,
+			 const char *_body_etag,
+			 HttpResponseHandler &_handler,
+			 CancellablePointer &_caller_cancel_ptr) noexcept
+		:pool(_pool),
+		 next(_next), parent_stopwatch(_parent_stopwatch),
+		 session_sticky(_session_sticky),
+		 cache_tag(_cache_tag),
+		 site_name(_site_name),
+		 method(_method), address(_address),
+		 status(_status),
+		 /* copy the headers, because they may come from a
+		    FilterCacheRequest pool which may be freed before
+		    BufferedIstream becomes ready */
+		 headers(pool, _headers),
+		 body_etag(_body_etag),
+		 handler(_handler), caller_cancel_ptr(_caller_cancel_ptr)
+	{
+	}
+
+	auto &GetPool() const noexcept {
+		return pool;
+	}
+
+	auto &GetHandler() noexcept {
+		return handler;
+	}
+
+	void Send(UnusedIstreamPtr body) noexcept {
+		next.SendRequest(pool, parent_stopwatch,
+				 session_sticky, cache_tag, site_name,
+				 method, address, status, std::move(headers),
+				 std::move(body), body_etag,
+				 handler, caller_cancel_ptr);
+	}
+};
+
+}
+
+class BufferedResourceLoader::Request final
+	: PoolLeakDetector, Cancellable, BufferedIstreamHandler
+{
+	PostponedRequest postponed_request;
+
 	CancellablePointer cancel_ptr;
 
 public:
@@ -69,34 +122,34 @@ public:
 		http_status_t _status, StringMap &&_headers,
 		const char *_body_etag,
 		HttpResponseHandler &_handler,
-		CancellablePointer &_cancel_ptr) noexcept
-		:PoolLeakDetector(_pool), pool(_pool),
-		 next(_next), parent_stopwatch(_parent_stopwatch),
-		 session_sticky(_session_sticky),
-		 cache_tag(_cache_tag),
-		 site_name(_site_name),
-		 method(_method), address(_address),
-		 status(_status),
-		 /* copy the headers, because they may come from a
-		    FilterCacheRequest pool which may be freed before
-		    BufferedIstream becomes ready */
-		 headers(pool, _headers),
-		 body_etag(_body_etag),
-		 handler(_handler), caller_cancel_ptr(_cancel_ptr)
+		CancellablePointer &caller_cancel_ptr) noexcept
+		:PoolLeakDetector(_pool),
+		 postponed_request(_pool, _next,
+				   _parent_stopwatch,
+				   _session_sticky,
+				   _cache_tag, _site_name,
+				   _method, _address,
+				   _status, std::move(_headers),
+				   _body_etag, _handler, caller_cancel_ptr)
 	{
 		caller_cancel_ptr = *this;
 	}
 
+	auto &GetPool() const noexcept {
+		return postponed_request.GetPool();
+	}
+
 	void Start(EventLoop &_event_loop, PipeStock *_pipe_stock,
 		   UnusedIstreamPtr &&body) noexcept {
-		NewBufferedIstream(pool, _event_loop, _pipe_stock,
+		NewBufferedIstream(GetPool(),
+				   _event_loop, _pipe_stock,
 				   *this, std::move(body),
 				   cancel_ptr);
 	}
 
 private:
 	void Destroy() noexcept {
-		DeleteFromPool(pool, this);
+		DeleteFromPool(GetPool(), this);
 	}
 
 	/* virtual methods from class Cancellable */
@@ -108,20 +161,16 @@ private:
 	/* virtual methods from class BufferedIstreamHandler */
 	void OnBufferedIstreamReady(UnusedIstreamPtr i) noexcept override {
 		// TODO: eliminate this reference
-		const ScopePoolRef _ref(pool TRACE_ARGS);
+		const ScopePoolRef _ref(GetPool() TRACE_ARGS);
 
-		next.SendRequest(pool, parent_stopwatch,
-				 session_sticky, cache_tag, site_name,
-				 method, address, status, std::move(headers),
-				 std::move(i), body_etag,
-				 handler, caller_cancel_ptr);
+		postponed_request.Send(std::move(i));
 
 		// TODO: destruct before invoking next.SendRequest()
 		Destroy();
 	}
 
 	void OnBufferedIstreamError(std::exception_ptr e) noexcept override {
-		auto &_handler = handler;
+		auto &_handler = postponed_request.GetHandler();
 		Destroy();
 		_handler.InvokeError(std::move(e));
 	}
