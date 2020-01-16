@@ -54,13 +54,13 @@
 #include <string.h>
 
 const char *
-Widget::GetLogName() const
+Widget::GetLogName() const noexcept
 {
     return "dummy";
 }
 
 StringView
-Widget::LoggerDomain::GetDomain() const
+Widget::LoggerDomain::GetDomain() const noexcept
 {
     return "dummy";
 }
@@ -79,7 +79,7 @@ Widget::DiscardForFocused() noexcept
 }
 
 void
-Widget::Cancel()
+Widget::Cancel() noexcept
 {
 }
 
@@ -100,7 +100,7 @@ session_put(Session *session gcc_unused) noexcept
 }
 
 void
-Widget::LoadFromSession(gcc_unused RealmSession &session)
+Widget::LoadFromSession(gcc_unused RealmSession &session) noexcept
 {
 }
 

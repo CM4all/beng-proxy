@@ -84,7 +84,7 @@ session_put(gcc_unused Session *session) noexcept
 }
 
 void
-Widget::LoadFromSession(gcc_unused RealmSession &session)
+Widget::LoadFromSession(gcc_unused RealmSession &session) noexcept
 {
 }
 
