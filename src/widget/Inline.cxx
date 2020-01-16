@@ -37,7 +37,6 @@
 #include "Class.hxx"
 #include "Context.hxx"
 #include "Resolver.hxx"
-#include "Approval.hxx"
 #include "bp/Global.hxx"
 #include "http/HeaderUtil.hxx"
 #include "HttpResponseHandler.hxx"
@@ -276,7 +275,7 @@ InlineWidget::Cancel() noexcept
 void
 InlineWidget::SendRequest() noexcept
 {
-	if (!widget_check_approval(&widget)) {
+	if (!widget.CheckApproval()) {
 		WidgetError error(*widget.parent, WidgetErrorCode::FORBIDDEN,
 				  StringFormat<256>("not allowed to embed widget class '%s'",
 						    widget.class_name));

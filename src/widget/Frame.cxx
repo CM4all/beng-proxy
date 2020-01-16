@@ -36,7 +36,6 @@
 #include "Widget.hxx"
 #include "Class.hxx"
 #include "Context.hxx"
-#include "Approval.hxx"
 #include "Resolver.hxx"
 #include "LookupHandler.hxx"
 #include "HttpResponseHandler.hxx"
@@ -58,7 +57,7 @@ frame_top_widget(struct pool &pool, Widget &widget,
 	assert(widget.HasDefaultView());
 	assert(widget.from_request.frame);
 
-	if (!widget_check_approval(&widget)) {
+	if (!widget.CheckApproval()) {
 		WidgetError error(*widget.parent, WidgetErrorCode::FORBIDDEN,
 				  StringFormat<256>("widget '%s' is not allowed to embed widget '%s'",
 						    widget.parent->GetLogName(),
@@ -113,7 +112,7 @@ frame_parent_widget(struct pool &pool, Widget &widget, const char *id,
 					  "frame within non-container requested");
 		}
 
-		if (!widget_check_approval(&widget)) {
+		if (!widget.CheckApproval()) {
 			char msg[256];
 			snprintf(msg, sizeof(msg),
 				 "widget '%s' is not allowed to embed widget '%s'",

@@ -38,7 +38,6 @@
 #include "uri/Escape.hxx"
 #include "uri/Extract.hxx"
 #include "widget/Widget.hxx"
-#include "widget/Approval.hxx"
 #include "widget/LookupHandler.hxx"
 #include "widget/Class.hxx"
 #include "widget/Context.hxx"
@@ -1296,7 +1295,7 @@ XmlProcessor::PrepareEmbedWidget(Widget &child_widget)
 	/* enforce the SELF_CONTAINER flag */
 	const bool self_container =
 		(options & PROCESSOR_SELF_CONTAINER) != 0;
-	if (!widget_init_approval(&child_widget, self_container))
+	if (!child_widget.InitApproval(self_container))
 		throw FormatRuntimeError("widget is not allowed to embed widget '%s'",
 					 child_widget.GetLogName());
 

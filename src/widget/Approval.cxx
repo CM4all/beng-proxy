@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,30 +30,26 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Approval.hxx"
-#include "Class.hxx"
 #include "Widget.hxx"
+#include "Class.hxx"
 
 bool
-widget_init_approval(Widget *widget, bool self_container) noexcept
+Widget::InitApproval(bool self_container) noexcept
 {
-	assert(widget != NULL);
-	assert(widget->parent != NULL);
-	assert(widget->approval == Widget::Approval::GIVEN);
-
-	const Widget *parent = widget->parent;
+	assert(parent != nullptr);
+	assert(approval == Approval::GIVEN);
 
 	if (!self_container) {
 		if (parent->cls->HasGroups())
 			/* the container limits the groups; postpone a check until
 			   we know the widget's group */
-			widget->approval = Widget::Approval::UNKNOWN;
+			approval = Approval::UNKNOWN;
 
 		return true;
 	}
 
 	if (parent->class_name != NULL &&
-	    strcmp(parent->class_name, widget->class_name) == 0)
+	    strcmp(parent->class_name, class_name) == 0)
 		/* approved by SELF_CONTAINER */
 		return true;
 
@@ -63,13 +59,13 @@ widget_init_approval(Widget *widget, bool self_container) noexcept
 		/* the container allows a set of groups - postpone the
 		   approval check until we know this widget's group
 		   (if any) */
-		widget->approval = Widget::Approval::UNKNOWN;
+		approval = Approval::UNKNOWN;
 		return true;
 	} else {
 		/* the container does not allow any additional group,
 		   which means this widget's approval check has
 		   ultimately failed */
-		widget->approval = Widget::Approval::DENIED;
+		approval = Approval::DENIED;
 		return false;
 	}
 }
@@ -91,15 +87,14 @@ widget_check_group_approval(const Widget *widget) noexcept
 }
 
 bool
-widget_check_approval(Widget *widget) noexcept
+Widget::CheckApproval() noexcept
 {
-	assert(widget != NULL);
-	assert(widget->parent != NULL);
+	assert(parent != nullptr);
 
-	if (widget->approval == Widget::Approval::UNKNOWN)
-		widget->approval = widget_check_group_approval(widget)
-			? Widget::Approval::GIVEN
-			: Widget::Approval::DENIED;
+	if (approval == Approval::UNKNOWN)
+		approval = widget_check_group_approval(this)
+			? Approval::GIVEN
+			: Approval::DENIED;
 
-	return widget->approval == Widget::Approval::GIVEN;
+	return approval == Approval::GIVEN;
 }
