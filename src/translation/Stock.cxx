@@ -74,21 +74,9 @@ class TranslationStock::Connection final : public StockItem {
 	SocketEvent event;
 
 public:
-	explicit Connection(CreateStockItem c) noexcept
-		:StockItem(c),
-		 event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
-
-	void CreateAndConnectAndFinish(SocketAddress a) noexcept {
-		try {
-			s = CreateConnectStreamSocket(a);
-		} catch (...) {
-			InvokeCreateError(std::current_exception());
-			return;
-		}
-
-		event.Open(s);
-		InvokeCreateSuccess();
-	}
+	Connection(CreateStockItem c, UniqueSocketDescriptor &&_s) noexcept
+		:StockItem(c), s(std::move(_s)),
+		 event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback), s) {}
 
 	SocketDescriptor GetSocket() noexcept {
 		return s;
@@ -220,8 +208,9 @@ void
 TranslationStock::Create(CreateStockItem c, StockRequest,
 			 CancellablePointer &)
 {
-	auto *connection = new Connection(c);
-	connection->CreateAndConnectAndFinish(address);
+	auto *connection = new Connection(c,
+					  CreateConnectStreamSocket(address));
+	connection->InvokeCreateSuccess();
 }
 
 void
