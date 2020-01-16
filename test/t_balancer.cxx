@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -48,398 +48,398 @@
 #include <stdlib.h>
 
 class MyBalancer {
-    BalancerMap balancer;
+	BalancerMap balancer;
 
 public:
-    explicit MyBalancer(FailureManager &failure_manager)
-        :balancer(failure_manager) {}
+	explicit MyBalancer(FailureManager &failure_manager)
+		:balancer(failure_manager) {}
 
-    operator BalancerMap *() {
-        return &balancer;
-    }
+	operator BalancerMap *() {
+		return &balancer;
+	}
 
-    SocketAddress Get(const AddressList &al, unsigned session=0) {
-        return balancer.Get(Expiry::Now(), al, session);
-    }
+	SocketAddress Get(const AddressList &al, unsigned session=0) {
+		return balancer.Get(Expiry::Now(), al, session);
+	}
 };
 
 class AddressListBuilder : public AddressList {
-    struct pool *pool;
+	struct pool *pool;
 
 public:
-    AddressListBuilder(struct pool *_pool,
-                       StickyMode _sticky=StickyMode::NONE)
-        :pool(_pool) {
-        sticky_mode = _sticky;
-    }
+	AddressListBuilder(struct pool *_pool,
+			   StickyMode _sticky=StickyMode::NONE)
+		:pool(_pool) {
+		sticky_mode = _sticky;
+	}
 
-    bool Add(const char *host_and_port) {
-        return AddressList::Add(*pool,
-                                Resolve(host_and_port, 80, nullptr).front());
-    }
+	bool Add(const char *host_and_port) {
+		return AddressList::Add(*pool,
+					Resolve(host_and_port, 80, nullptr).front());
+	}
 
-    int Find(SocketAddress address) const {
-        for (unsigned i = 0; i < GetSize(); ++i)
-            if (addresses[i] == address)
-                return i;
+	int Find(SocketAddress address) const {
+		for (unsigned i = 0; i < GetSize(); ++i)
+			if (addresses[i] == address)
+				return i;
 
-        return -1;
-    }
+		return -1;
+	}
 };
 
 gcc_pure
 static FailureStatus
 FailureGet(FailureManager &fm, const char *host_and_port)
 {
-    return fm.Get(Expiry::Now(), Resolve(host_and_port, 80, nullptr).front());
+	return fm.Get(Expiry::Now(), Resolve(host_and_port, 80, nullptr).front());
 }
 
 static void
 FailureAdd(FailureManager &fm, const char *host_and_port,
-           FailureStatus status=FailureStatus::CONNECT,
-           std::chrono::seconds duration=std::chrono::hours(1))
+	   FailureStatus status=FailureStatus::CONNECT,
+	   std::chrono::seconds duration=std::chrono::hours(1))
 {
-    fm.Make(Resolve(host_and_port, 80, nullptr).front())
-        .Set(Expiry::Now(), status, duration);
+	fm.Make(Resolve(host_and_port, 80, nullptr).front())
+		.Set(Expiry::Now(), status, duration);
 }
 
 static void
 FailureRemove(FailureManager &fm, const char *host_and_port,
-              FailureStatus status=FailureStatus::CONNECT)
+	      FailureStatus status=FailureStatus::CONNECT)
 {
-    fm.Make(Resolve(host_and_port, 80, nullptr).front()).Unset(status);
+	fm.Make(Resolve(host_and_port, 80, nullptr).front()).Unset(status);
 }
 
 TEST(BalancerTest, Failure)
 {
-    FailureManager fm;
+	FailureManager fm;
 
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.2"), FailureStatus::OK);
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
+	ASSERT_EQ(FailureGet(fm, "192.168.0.2"), FailureStatus::OK);
 
-    FailureAdd(fm, "192.168.0.1");
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.2"), FailureStatus::OK);
+	FailureAdd(fm, "192.168.0.1");
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
+	ASSERT_EQ(FailureGet(fm, "192.168.0.2"), FailureStatus::OK);
 
-    FailureRemove(fm, "192.168.0.1");
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.2"), FailureStatus::OK);
+	FailureRemove(fm, "192.168.0.1");
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
+	ASSERT_EQ(FailureGet(fm, "192.168.0.2"), FailureStatus::OK);
 
-    /* remove status mismatch */
+	/* remove status mismatch */
 
-    FailureAdd(fm, "192.168.0.1", FailureStatus::PROTOCOL);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
-    for (unsigned i = 0; i < 64; ++i)
-        FailureAdd(fm, "192.168.0.1", FailureStatus::PROTOCOL);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::PROTOCOL);
-    FailureRemove(fm, "192.168.0.1", FailureStatus::CONNECT);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::PROTOCOL);
-    FailureRemove(fm, "192.168.0.1", FailureStatus::PROTOCOL);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
+	FailureAdd(fm, "192.168.0.1", FailureStatus::PROTOCOL);
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
+	for (unsigned i = 0; i < 64; ++i)
+		FailureAdd(fm, "192.168.0.1", FailureStatus::PROTOCOL);
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::PROTOCOL);
+	FailureRemove(fm, "192.168.0.1", FailureStatus::CONNECT);
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::PROTOCOL);
+	FailureRemove(fm, "192.168.0.1", FailureStatus::PROTOCOL);
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
 
-    /* "fade", then "failed", remove "failed", and the old "fade"
-       should remain */
+	/* "fade", then "failed", remove "failed", and the old "fade"
+	   should remain */
 
-    FailureAdd(fm, "192.168.0.1", FailureStatus::FADE);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::FADE);
-    FailureRemove(fm, "192.168.0.1");
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::FADE);
-    FailureAdd(fm, "192.168.0.1");
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
-    FailureRemove(fm, "192.168.0.1");
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::FADE);
-    FailureRemove(fm, "192.168.0.1", FailureStatus::OK);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
+	FailureAdd(fm, "192.168.0.1", FailureStatus::FADE);
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::FADE);
+	FailureRemove(fm, "192.168.0.1");
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::FADE);
+	FailureAdd(fm, "192.168.0.1");
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
+	FailureRemove(fm, "192.168.0.1");
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::FADE);
+	FailureRemove(fm, "192.168.0.1", FailureStatus::OK);
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
 
-    /* first "fail", then "fade"; see if removing the "fade"
-       before" failed" will not bring it back */
+	/* first "fail", then "fade"; see if removing the "fade"
+	   before" failed" will not bring it back */
 
-    FailureAdd(fm, "192.168.0.1", FailureStatus::CONNECT);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
-    FailureAdd(fm, "192.168.0.1", FailureStatus::FADE);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
-    FailureRemove(fm, "192.168.0.1", FailureStatus::CONNECT);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::FADE);
-    FailureAdd(fm, "192.168.0.1", FailureStatus::CONNECT);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
-    FailureRemove(fm, "192.168.0.1", FailureStatus::FADE);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
-    FailureRemove(fm, "192.168.0.1", FailureStatus::CONNECT);
-    ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
+	FailureAdd(fm, "192.168.0.1", FailureStatus::CONNECT);
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
+	FailureAdd(fm, "192.168.0.1", FailureStatus::FADE);
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
+	FailureRemove(fm, "192.168.0.1", FailureStatus::CONNECT);
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::FADE);
+	FailureAdd(fm, "192.168.0.1", FailureStatus::CONNECT);
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
+	FailureRemove(fm, "192.168.0.1", FailureStatus::FADE);
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::CONNECT);
+	FailureRemove(fm, "192.168.0.1", FailureStatus::CONNECT);
+	ASSERT_EQ(FailureGet(fm, "192.168.0.1"), FailureStatus::OK);
 }
 
 TEST(BalancerTest, Basic)
 {
-    FailureManager fm;
-    TestPool pool;
+	FailureManager fm;
+	TestPool pool;
 
-    EventLoop event_loop;
-    MyBalancer balancer(fm);
+	EventLoop event_loop;
+	MyBalancer balancer(fm);
 
-    AddressListBuilder al(pool);
-    al.Add("192.168.0.1");
-    al.Add("192.168.0.2");
-    al.Add("192.168.0.3");
+	AddressListBuilder al(pool);
+	al.Add("192.168.0.1");
+	al.Add("192.168.0.2");
+	al.Add("192.168.0.3");
 
-    SocketAddress result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	SocketAddress result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 1);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 1);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 2);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 2);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 1);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 1);
 
-    /* test with session id, which should be ignored here */
+	/* test with session id, which should be ignored here */
 
-    result = balancer.Get(al, 1);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 2);
+	result = balancer.Get(al, 1);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 2);
 
-    result = balancer.Get(al, 1);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al, 1);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al, 1);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 1);
+	result = balancer.Get(al, 1);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 1);
 }
 
 TEST(BalancerTest, Failed)
 {
-    FailureManager fm;
-    EventLoop event_loop;
-    MyBalancer balancer(fm);
+	FailureManager fm;
+	EventLoop event_loop;
+	MyBalancer balancer(fm);
 
-    TestPool pool;
-    AddressListBuilder al(pool);
-    al.Add("192.168.0.1");
-    al.Add("192.168.0.2");
-    al.Add("192.168.0.3");
+	TestPool pool;
+	AddressListBuilder al(pool);
+	al.Add("192.168.0.1");
+	al.Add("192.168.0.2");
+	al.Add("192.168.0.3");
 
-    FailureAdd(fm, "192.168.0.2");
+	FailureAdd(fm, "192.168.0.2");
 
-    SocketAddress result = balancer.Get(al);
-    ASSERT_EQ(al.Find(result), 0);
+	SocketAddress result = balancer.Get(al);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al);
-    ASSERT_EQ(al.Find(result), 2);
+	result = balancer.Get(al);
+	ASSERT_EQ(al.Find(result), 2);
 
-    result = balancer.Get(al);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al);
+	ASSERT_EQ(al.Find(result), 0);
 }
 
 TEST(BalancerTest, StickyFailover)
 {
-    FailureManager fm;
-    EventLoop event_loop;
-    MyBalancer balancer(fm);
+	FailureManager fm;
+	EventLoop event_loop;
+	MyBalancer balancer(fm);
 
-    TestPool pool;
-    AddressListBuilder al(pool, StickyMode::FAILOVER);
-    al.Add("192.168.0.1");
-    al.Add("192.168.0.2");
-    al.Add("192.168.0.3");
+	TestPool pool;
+	AddressListBuilder al(pool, StickyMode::FAILOVER);
+	al.Add("192.168.0.1");
+	al.Add("192.168.0.2");
+	al.Add("192.168.0.3");
 
-    /* first node is always used */
+	/* first node is always used */
 
-    SocketAddress result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	SocketAddress result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al, 1);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al, 1);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    /* .. even if the second node fails */
+	/* .. even if the second node fails */
 
-    FailureAdd(fm, "192.168.0.2");
+	FailureAdd(fm, "192.168.0.2");
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al, 1);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al, 1);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    /* use third node when both first and second fail */
+	/* use third node when both first and second fail */
 
-    FailureAdd(fm, "192.168.0.1");
+	FailureAdd(fm, "192.168.0.1");
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 2);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 2);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 2);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 2);
 
-    result = balancer.Get(al, 1);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 2);
+	result = balancer.Get(al, 1);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 2);
 
-    /* use second node when first node fails */
+	/* use second node when first node fails */
 
-    FailureRemove(fm, "192.168.0.2");
+	FailureRemove(fm, "192.168.0.2");
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 1);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 1);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 1);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 1);
 
-    result = balancer.Get(al, 1);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 1);
+	result = balancer.Get(al, 1);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 1);
 
-    /* back to first node as soon as it recovers */
+	/* back to first node as soon as it recovers */
 
-    FailureRemove(fm, "192.168.0.1");
+	FailureRemove(fm, "192.168.0.1");
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al, 1);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al, 1);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 }
 
 TEST(BalancerTest, StickyCookie)
 {
-    FailureManager fm;
-    EventLoop event_loop;
-    MyBalancer balancer(fm);
+	FailureManager fm;
+	EventLoop event_loop;
+	MyBalancer balancer(fm);
 
-    TestPool pool;
-    AddressListBuilder al(pool, StickyMode::COOKIE);
-    al.Add("192.168.0.1");
-    al.Add("192.168.0.2");
-    al.Add("192.168.0.3");
+	TestPool pool;
+	AddressListBuilder al(pool, StickyMode::COOKIE);
+	al.Add("192.168.0.1");
+	al.Add("192.168.0.2");
+	al.Add("192.168.0.3");
 
-    /* without cookie: round-robin */
+	/* without cookie: round-robin */
 
-    SocketAddress result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	SocketAddress result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 1);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 1);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 2);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 2);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 1);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 1);
 
-    /* with cookie */
+	/* with cookie */
 
-    result = balancer.Get(al, 1);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 1);
+	result = balancer.Get(al, 1);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 1);
 
-    result = balancer.Get(al, 1);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 1);
+	result = balancer.Get(al, 1);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 1);
 
-    result = balancer.Get(al, 2);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 2);
+	result = balancer.Get(al, 2);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 2);
 
-    result = balancer.Get(al, 2);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 2);
+	result = balancer.Get(al, 2);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 2);
 
-    result = balancer.Get(al, 3);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al, 3);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al, 3);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al, 3);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al, 4);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 1);
+	result = balancer.Get(al, 4);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 1);
 
-    result = balancer.Get(al, 4);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 1);
+	result = balancer.Get(al, 4);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 1);
 
-    /* failed */
+	/* failed */
 
-    FailureAdd(fm, "192.168.0.2");
+	FailureAdd(fm, "192.168.0.2");
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 2);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 2);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 2);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 2);
 
-    /* fade */
+	/* fade */
 
-    FailureAdd(fm, "192.168.0.1", FailureStatus::FADE);
+	FailureAdd(fm, "192.168.0.1", FailureStatus::FADE);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 2);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 2);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 2);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 2);
 
-    result = balancer.Get(al, 3);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al, 3);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al, 3);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 0);
+	result = balancer.Get(al, 3);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 0);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 2);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 2);
 
-    result = balancer.Get(al);
-    ASSERT_NE(result, nullptr);
-    ASSERT_EQ(al.Find(result), 2);
+	result = balancer.Get(al);
+	ASSERT_NE(result, nullptr);
+	ASSERT_EQ(al.Find(result), 2);
 }

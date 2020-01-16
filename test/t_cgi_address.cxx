@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,85 +38,85 @@
 
 TEST(CgiAddressTest, Uri)
 {
-    TestPool pool;
-    AllocatorPtr alloc(pool);
+	TestPool pool;
+	AllocatorPtr alloc(pool);
 
-    CgiAddress a("/usr/bin/cgi");
-    ASSERT_EQ(false, a.IsExpandable());
-    ASSERT_STREQ(a.GetURI(alloc), "/");
+	CgiAddress a("/usr/bin/cgi");
+	ASSERT_EQ(false, a.IsExpandable());
+	ASSERT_STREQ(a.GetURI(alloc), "/");
 
-    a.script_name = "/";
-    ASSERT_STREQ(a.GetURI(alloc), "/");
+	a.script_name = "/";
+	ASSERT_STREQ(a.GetURI(alloc), "/");
 
-    a.path_info = "foo";
-    ASSERT_STREQ(a.GetURI(alloc), "/foo");
+	a.path_info = "foo";
+	ASSERT_STREQ(a.GetURI(alloc), "/foo");
 
-    a.query_string = "";
-    ASSERT_STREQ(a.GetURI(alloc), "/foo?");
+	a.query_string = "";
+	ASSERT_STREQ(a.GetURI(alloc), "/foo?");
 
-    a.query_string = "a=b";
-    ASSERT_STREQ(a.GetURI(alloc), "/foo?a=b");
+	a.query_string = "a=b";
+	ASSERT_STREQ(a.GetURI(alloc), "/foo?a=b");
 
-    a.path_info = "";
-    ASSERT_STREQ(a.GetURI(alloc), "/?a=b");
+	a.path_info = "";
+	ASSERT_STREQ(a.GetURI(alloc), "/?a=b");
 
-    a.path_info = nullptr;
-    ASSERT_STREQ(a.GetURI(alloc), "/?a=b");
+	a.path_info = nullptr;
+	ASSERT_STREQ(a.GetURI(alloc), "/?a=b");
 
-    a.script_name = "/test.cgi";
-    a.path_info = nullptr;
-    a.query_string = nullptr;
-    ASSERT_STREQ(a.GetURI(alloc), "/test.cgi");
+	a.script_name = "/test.cgi";
+	a.path_info = nullptr;
+	a.query_string = nullptr;
+	ASSERT_STREQ(a.GetURI(alloc), "/test.cgi");
 
-    a.path_info = "/foo";
-    ASSERT_STREQ(a.GetURI(alloc), "/test.cgi/foo");
+	a.path_info = "/foo";
+	ASSERT_STREQ(a.GetURI(alloc), "/test.cgi/foo");
 
-    a.script_name = "/bar/";
-    ASSERT_STREQ(a.GetURI(alloc), "/bar/foo");
+	a.script_name = "/bar/";
+	ASSERT_STREQ(a.GetURI(alloc), "/bar/foo");
 
-    a.script_name = "/";
-    ASSERT_STREQ(a.GetURI(alloc), "/foo");
+	a.script_name = "/";
+	ASSERT_STREQ(a.GetURI(alloc), "/foo");
 
-    a.script_name = nullptr;
-    ASSERT_STREQ(a.GetURI(alloc), "/foo");
+	a.script_name = nullptr;
+	ASSERT_STREQ(a.GetURI(alloc), "/foo");
 }
 
 TEST(CgiAddressTest, Apply)
 {
-    TestPool pool;
-    AllocatorPtr alloc(pool);
+	TestPool pool;
+	AllocatorPtr alloc(pool);
 
-    CgiAddress a("/usr/bin/cgi");
-    a.script_name = "/test.pl";
-    a.path_info = "/foo";
+	CgiAddress a("/usr/bin/cgi");
+	a.script_name = "/test.pl";
+	a.path_info = "/foo";
 
-    auto b = a.Apply(alloc, "");
-    ASSERT_EQ((const CgiAddress *)&a, b);
+	auto b = a.Apply(alloc, "");
+	ASSERT_EQ((const CgiAddress *)&a, b);
 
-    b = a.Apply(alloc, "bar");
-    ASSERT_NE(b, nullptr);
-    ASSERT_NE(b, &a);
-    ASSERT_EQ(false, b->IsValidBase());
-    ASSERT_STREQ(b->path, a.path);
-    ASSERT_STREQ(b->script_name, a.script_name);
-    ASSERT_STREQ(b->path_info, "/bar");
+	b = a.Apply(alloc, "bar");
+	ASSERT_NE(b, nullptr);
+	ASSERT_NE(b, &a);
+	ASSERT_EQ(false, b->IsValidBase());
+	ASSERT_STREQ(b->path, a.path);
+	ASSERT_STREQ(b->script_name, a.script_name);
+	ASSERT_STREQ(b->path_info, "/bar");
 
-    a.path_info = "/foo/";
-    ASSERT_EQ(true, a.IsValidBase());
+	a.path_info = "/foo/";
+	ASSERT_EQ(true, a.IsValidBase());
 
-    b = a.Apply(alloc, "bar");
-    ASSERT_NE(b, nullptr);
-    ASSERT_NE(b, &a);
-    ASSERT_EQ(false, b->IsValidBase());
-    ASSERT_STREQ(b->path, a.path);
-    ASSERT_STREQ(b->script_name, a.script_name);
-    ASSERT_STREQ(b->path_info, "/foo/bar");
+	b = a.Apply(alloc, "bar");
+	ASSERT_NE(b, nullptr);
+	ASSERT_NE(b, &a);
+	ASSERT_EQ(false, b->IsValidBase());
+	ASSERT_STREQ(b->path, a.path);
+	ASSERT_STREQ(b->script_name, a.script_name);
+	ASSERT_STREQ(b->path_info, "/foo/bar");
 
-    b = a.Apply(alloc, "/bar");
-    ASSERT_NE(b, nullptr);
-    ASSERT_NE(b, &a);
-    ASSERT_EQ(false, b->IsValidBase());
-    ASSERT_STREQ(b->path, a.path);
-    ASSERT_STREQ(b->script_name, a.script_name);
-    ASSERT_STREQ(b->path_info, "/bar");
+	b = a.Apply(alloc, "/bar");
+	ASSERT_NE(b, nullptr);
+	ASSERT_NE(b, &a);
+	ASSERT_EQ(false, b->IsValidBase());
+	ASSERT_STREQ(b->path, a.path);
+	ASSERT_STREQ(b->script_name, a.script_name);
+	ASSERT_STREQ(b->path_info, "/bar");
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -48,18 +48,18 @@
 #include <stdio.h>
 
 struct Context final : IstreamHandler {
-    PoolPtr pool;
-    bool got_data = false, eof = false, abort = false, closed = false;
-    IstreamPointer abort_istream;
+	PoolPtr pool;
+	bool got_data = false, eof = false, abort = false, closed = false;
+	IstreamPointer abort_istream;
 
-    template<typename P>
-    explicit Context(P &&_pool) noexcept
-        :pool(std::forward<P>(_pool)), abort_istream(nullptr) {}
+	template<typename P>
+	explicit Context(P &&_pool) noexcept
+		:pool(std::forward<P>(_pool)), abort_istream(nullptr) {}
 
-    /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) noexcept override;
-    void OnEof() noexcept override;
-    void OnError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class IstreamHandler */
+	size_t OnData(const void *data, size_t length) noexcept override;
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
 };
 
 /*
@@ -70,32 +70,32 @@ struct Context final : IstreamHandler {
 size_t
 Context::OnData(gcc_unused const void *data, size_t length) noexcept
 {
-    got_data = true;
+	got_data = true;
 
-    if (abort_istream.IsDefined()) {
-        closed = true;
-        abort_istream.ClearAndClose();
-        pool.reset();
-        return 0;
-    }
+	if (abort_istream.IsDefined()) {
+		closed = true;
+		abort_istream.ClearAndClose();
+		pool.reset();
+		return 0;
+	}
 
-    return length;
+	return length;
 }
 
 void
 Context::OnEof() noexcept
 {
-    eof = true;
+	eof = true;
 
-    pool.reset();
+	pool.reset();
 }
 
 void
 Context::OnError(std::exception_ptr) noexcept
 {
-    abort = true;
+	abort = true;
 
-    pool.reset();
+	pool.reset();
 }
 
 /*
@@ -106,67 +106,67 @@ Context::OnError(std::exception_ptr) noexcept
 static void
 istream_read_expect(Context *ctx, IstreamPointer &istream)
 {
-    ASSERT_FALSE(ctx->eof);
+	ASSERT_FALSE(ctx->eof);
 
-    ctx->got_data = false;
+	ctx->got_data = false;
 
-    istream.Read();
-    ASSERT_TRUE(ctx->eof || ctx->got_data);
+	istream.Read();
+	ASSERT_TRUE(ctx->eof || ctx->got_data);
 }
 
 static void
 run_istream_ctx(Context *ctx, PoolPtr pool, UnusedIstreamPtr _istream)
 {
-    gcc_unused off_t a1 = _istream.GetAvailable(false);
-    gcc_unused off_t a2 = _istream.GetAvailable(true);
+	gcc_unused off_t a1 = _istream.GetAvailable(false);
+	gcc_unused off_t a2 = _istream.GetAvailable(true);
 
-    IstreamPointer istream(std::move(_istream), *ctx);
+	IstreamPointer istream(std::move(_istream), *ctx);
 
 #ifndef NO_GOT_DATA_ASSERT
-    while (!ctx->eof)
-        istream_read_expect(ctx, istream);
+	while (!ctx->eof)
+		istream_read_expect(ctx, istream);
 #else
-    for (int i = 0; i < 1000 && !ctx->eof; ++i)
-        istream->Read();
+	for (int i = 0; i < 1000 && !ctx->eof; ++i)
+		istream->Read();
 #endif
 
-    if (!ctx->eof && !ctx->abort)
-        istream.Close();
+	if (!ctx->eof && !ctx->abort)
+		istream.Close();
 
-    if (!ctx->eof) {
-        pool_trash(pool);
-        pool.reset();
-    }
+	if (!ctx->eof) {
+		pool_trash(pool);
+		pool.reset();
+	}
 
-    pool_commit();
+	pool_commit();
 }
 
 static void
 run_istream(PoolPtr pool, UnusedIstreamPtr istream)
 {
-    Context ctx(pool);
-    run_istream_ctx(&ctx, std::move(pool), std::move(istream));
+	Context ctx(pool);
+	run_istream_ctx(&ctx, std::move(pool), std::move(istream));
 }
 
 static UnusedIstreamPtr
 create_test(struct pool *pool)
 {
-    GrowingBuffer gb;
-    gb.Write("foo");
-    return istream_gb_new(*pool, std::move(gb));
+	GrowingBuffer gb;
+	gb.Write("foo");
+	return istream_gb_new(*pool, std::move(gb));
 }
 
 static UnusedIstreamPtr
 create_empty(struct pool *pool)
 {
-    GrowingBuffer gb;
-    return istream_gb_new(*pool, std::move(gb));
+	GrowingBuffer gb;
+	return istream_gb_new(*pool, std::move(gb));
 }
 
 static bool
 Equals(WritableBuffer<void> a, const char *b)
 {
-    return a.size == strlen(b) && memcmp(a.data, b, a.size) == 0;
+	return a.size == strlen(b) && memcmp(a.data, b, a.size) == 0;
 }
 
 
@@ -178,172 +178,172 @@ Equals(WritableBuffer<void> a, const char *b)
 /** normal run */
 TEST(GrowingBufferTest, Normal)
 {
-    const ScopeFbPoolInit fb_pool_init;
-    TestPool pool;
+	const ScopeFbPoolInit fb_pool_init;
+	TestPool pool;
 
-    auto istream = create_test(pool);
-    run_istream(pool.Steal(), std::move(istream));
+	auto istream = create_test(pool);
+	run_istream(pool.Steal(), std::move(istream));
 }
 
 /** empty input */
 TEST(GrowingBufferTest, Empty)
 {
-    const ScopeFbPoolInit fb_pool_init;
-    TestPool pool;
+	const ScopeFbPoolInit fb_pool_init;
+	TestPool pool;
 
-    auto istream = create_empty(pool);
-    run_istream(pool.Steal(), std::move(istream));
+	auto istream = create_empty(pool);
+	run_istream(pool.Steal(), std::move(istream));
 }
 
 /** first buffer is too small, empty */
 TEST(GrowingBufferTest, FirstEmpty)
 {
-    const ScopeFbPoolInit fb_pool_init;
-    TestPool pool;
+	const ScopeFbPoolInit fb_pool_init;
+	TestPool pool;
 
-    GrowingBuffer buffer;
+	GrowingBuffer buffer;
 
-    buffer.Write("0123456789abcdefg");
+	buffer.Write("0123456789abcdefg");
 
-    ASSERT_EQ(buffer.GetSize(), 17u);
-    ASSERT_TRUE(Equals(buffer.Dup(pool), "0123456789abcdefg"));
+	ASSERT_EQ(buffer.GetSize(), 17u);
+	ASSERT_TRUE(Equals(buffer.Dup(pool), "0123456789abcdefg"));
 
-    GrowingBufferReader reader(std::move(buffer));
-    auto x = reader.Read();
-    ASSERT_FALSE(x.IsNull());
-    ASSERT_EQ(x.size, 17u);
+	GrowingBufferReader reader(std::move(buffer));
+	auto x = reader.Read();
+	ASSERT_FALSE(x.IsNull());
+	ASSERT_EQ(x.size, 17u);
 
-    reader.Consume(x.size);
+	reader.Consume(x.size);
 }
 
 /** test growing_buffer_reader_skip() */
 TEST(GrowingBufferTest, Skip)
 {
-    const ScopeFbPoolInit fb_pool_init;
-    TestPool pool;
-    GrowingBuffer buffer;
+	const ScopeFbPoolInit fb_pool_init;
+	TestPool pool;
+	GrowingBuffer buffer;
 
-    buffer.Write("0123");
-    buffer.Write("4567");
-    buffer.Write("89ab");
-    buffer.Write("cdef");
+	buffer.Write("0123");
+	buffer.Write("4567");
+	buffer.Write("89ab");
+	buffer.Write("cdef");
 
-    ASSERT_EQ(buffer.GetSize(), 16u);
-    ASSERT_TRUE(Equals(buffer.Dup(pool), "0123456789abcdef"));
+	ASSERT_EQ(buffer.GetSize(), 16u);
+	ASSERT_TRUE(Equals(buffer.Dup(pool), "0123456789abcdef"));
 
-    constexpr size_t buffer_size = FB_SIZE - sizeof(void *) - sizeof(DefaultChunkAllocator) - 2 * sizeof(size_t);
+	constexpr size_t buffer_size = FB_SIZE - sizeof(void *) - sizeof(DefaultChunkAllocator) - 2 * sizeof(size_t);
 
-    static char zero[buffer_size * 2];
-    buffer.Write(zero, sizeof(zero));
-    ASSERT_EQ(buffer.GetSize(), 16 + buffer_size * 2);
+	static char zero[buffer_size * 2];
+	buffer.Write(zero, sizeof(zero));
+	ASSERT_EQ(buffer.GetSize(), 16 + buffer_size * 2);
 
-    GrowingBufferReader reader(std::move(buffer));
-    ASSERT_EQ(reader.Available(), 16 + buffer_size * 2);
-    reader.Skip(buffer_size - 2);
-    ASSERT_EQ(reader.Available(), 18 + buffer_size);
+	GrowingBufferReader reader(std::move(buffer));
+	ASSERT_EQ(reader.Available(), 16 + buffer_size * 2);
+	reader.Skip(buffer_size - 2);
+	ASSERT_EQ(reader.Available(), 18 + buffer_size);
 
-    auto x = reader.Read();
-    ASSERT_FALSE(x.IsNull());
-    ASSERT_EQ(x.size, 2u);
-    reader.Consume(1);
-    ASSERT_EQ(reader.Available(), 17 + buffer_size);
+	auto x = reader.Read();
+	ASSERT_FALSE(x.IsNull());
+	ASSERT_EQ(x.size, 2u);
+	reader.Consume(1);
+	ASSERT_EQ(reader.Available(), 17 + buffer_size);
 
-    reader.Skip(5);
-    ASSERT_EQ(reader.Available(), 12 + buffer_size);
+	reader.Skip(5);
+	ASSERT_EQ(reader.Available(), 12 + buffer_size);
 
-    x = reader.Read();
-    ASSERT_FALSE(x.IsNull());
-    ASSERT_EQ(x.size, buffer_size - 4);
-    reader.Consume(4);
-    ASSERT_EQ(reader.Available(), 8 + buffer_size);
+	x = reader.Read();
+	ASSERT_FALSE(x.IsNull());
+	ASSERT_EQ(x.size, buffer_size - 4);
+	reader.Consume(4);
+	ASSERT_EQ(reader.Available(), 8 + buffer_size);
 
-    x = reader.Read();
-    ASSERT_FALSE(x.IsNull());
-    ASSERT_EQ(x.size, buffer_size - 8);
+	x = reader.Read();
+	ASSERT_FALSE(x.IsNull());
+	ASSERT_EQ(x.size, buffer_size - 8);
 
-    reader.Skip(buffer_size);
-    ASSERT_EQ(reader.Available(), 8u);
+	reader.Skip(buffer_size);
+	ASSERT_EQ(reader.Available(), 8u);
 
-    x = reader.Read();
-    ASSERT_FALSE(x.IsNull());
-    ASSERT_EQ(x.size, 8u);
+	x = reader.Read();
+	ASSERT_FALSE(x.IsNull());
+	ASSERT_EQ(x.size, 8u);
 
-    reader.Skip(8);
-    ASSERT_EQ(reader.Available(), 0u);
+	reader.Skip(8);
+	ASSERT_EQ(reader.Available(), 0u);
 
-    x = reader.Read();
-    ASSERT_TRUE(x.IsNull());
+	x = reader.Read();
+	ASSERT_TRUE(x.IsNull());
 }
 
 /** test reading the head while appending to the tail */
 TEST(GrowingBufferTest, ConcurrentRW)
 {
-    const ScopeFbPoolInit fb_pool_init;
-    TestPool pool;
+	const ScopeFbPoolInit fb_pool_init;
+	TestPool pool;
 
-    GrowingBuffer buffer;
+	GrowingBuffer buffer;
 
-    buffer.Write("0123");
-    buffer.Write("4567");
-    buffer.Write("89ab");
+	buffer.Write("0123");
+	buffer.Write("4567");
+	buffer.Write("89ab");
 
-    ASSERT_EQ(buffer.GetSize(), 12u);
-    ASSERT_TRUE(Equals(buffer.Dup(pool), "0123456789ab"));
+	ASSERT_EQ(buffer.GetSize(), 12u);
+	ASSERT_TRUE(Equals(buffer.Dup(pool), "0123456789ab"));
 
-    buffer.Skip(12);
-    ASSERT_TRUE(buffer.IsEmpty());
-    ASSERT_EQ(buffer.GetSize(), 0u);
+	buffer.Skip(12);
+	ASSERT_TRUE(buffer.IsEmpty());
+	ASSERT_EQ(buffer.GetSize(), 0u);
 
-    buffer.Write("cdef");
+	buffer.Write("cdef");
 
-    ASSERT_FALSE(buffer.IsEmpty());
-    ASSERT_EQ(buffer.GetSize(), 4u);
-    ASSERT_TRUE(Equals(buffer.Dup(pool), "cdef"));
+	ASSERT_FALSE(buffer.IsEmpty());
+	ASSERT_EQ(buffer.GetSize(), 4u);
+	ASSERT_TRUE(Equals(buffer.Dup(pool), "cdef"));
 
-    auto x = buffer.Read();
-    ASSERT_FALSE(x.IsNull());
-    ASSERT_EQ(x.size, 4u);
+	auto x = buffer.Read();
+	ASSERT_FALSE(x.IsNull());
+	ASSERT_EQ(x.size, 4u);
 }
 
 /** abort without handler */
 TEST(GrowingBufferTest, AbortWithoutHandler)
 {
-    const ScopeFbPoolInit fb_pool_init;
-    TestPool pool;
+	const ScopeFbPoolInit fb_pool_init;
+	TestPool pool;
 
-    auto istream = create_test(pool);
-    istream.Clear();
+	auto istream = create_test(pool);
+	istream.Clear();
 }
 
 /** abort with handler */
 TEST(GrowingBufferTest, AbortWithHandler)
 {
-    const ScopeFbPoolInit fb_pool_init;
-    TestPool pool;
-    Context ctx(pool.Steal());
+	const ScopeFbPoolInit fb_pool_init;
+	TestPool pool;
+	Context ctx(pool.Steal());
 
-    Istream *istream = create_test(ctx.pool).Steal();
-    istream->SetHandler(ctx);
+	Istream *istream = create_test(ctx.pool).Steal();
+	istream->SetHandler(ctx);
 
-    istream->Close();
-    ctx.pool.reset();
+	istream->Close();
+	ctx.pool.reset();
 
-    ASSERT_FALSE(ctx.abort);
+	ASSERT_FALSE(ctx.abort);
 }
 
 /** abort in handler */
 TEST(GrowingBufferTest, AbortInHandler)
 {
-    const ScopeFbPoolInit fb_pool_init;
-    TestPool pool;
-    Context ctx(pool.Steal());
+	const ScopeFbPoolInit fb_pool_init;
+	TestPool pool;
+	Context ctx(pool.Steal());
 
-    ctx.abort_istream.Set(create_test(ctx.pool), ctx);
+	ctx.abort_istream.Set(create_test(ctx.pool), ctx);
 
-    while (!ctx.eof && !ctx.abort && !ctx.closed)
-        istream_read_expect(&ctx, ctx.abort_istream);
+	while (!ctx.eof && !ctx.abort && !ctx.closed)
+		istream_read_expect(&ctx, ctx.abort_istream);
 
-    ASSERT_FALSE(ctx.abort_istream.IsDefined());
-    ASSERT_FALSE(ctx.abort);
-    ASSERT_TRUE(ctx.closed);
+	ASSERT_FALSE(ctx.abort_istream.IsDefined());
+	ASSERT_FALSE(ctx.abort);
+	ASSERT_TRUE(ctx.closed);
 }

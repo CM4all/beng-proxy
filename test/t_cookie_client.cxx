@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,7 +42,6 @@
 #include <gtest/gtest.h>
 
 #include <unistd.h>
-#include <errno.h>
 
 TEST(CookieClientTest, Test1)
 {

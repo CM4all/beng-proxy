@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -64,40 +64,40 @@
 static SpawnConfig spawn_config;
 
 struct Context final : PInstance, HttpResponseHandler, IstreamHandler {
-    ChildProcessRegistry child_process_registry;
-    LocalSpawnService spawn_service;
+	ChildProcessRegistry child_process_registry;
+	LocalSpawnService spawn_service;
 
-    CancellablePointer cancel_ptr;
+	CancellablePointer cancel_ptr;
 
-    unsigned data_blocking = 0;
-    bool close_response_body_early = false;
-    bool close_response_body_late = false;
-    bool close_response_body_data = false;
-    bool body_read = false, no_content = false;
-    bool released = false, aborted = false;
-    http_status_t status = http_status_t(0);
+	unsigned data_blocking = 0;
+	bool close_response_body_early = false;
+	bool close_response_body_late = false;
+	bool close_response_body_data = false;
+	bool body_read = false, no_content = false;
+	bool released = false, aborted = false;
+	http_status_t status = http_status_t(0);
 
-    IstreamPointer body;
-    off_t body_data = 0, body_available = 0;
-    bool body_eof = false, body_abort = false, body_closed = false;
+	IstreamPointer body;
+	off_t body_data = 0, body_available = 0;
+	bool body_eof = false, body_abort = false, body_closed = false;
 
-    Context()
-        :child_process_registry(event_loop),
-         spawn_service(spawn_config, child_process_registry),
-         body(nullptr) {
-        child_process_registry.SetVolatile();
-    }
+	Context()
+		:child_process_registry(event_loop),
+		 spawn_service(spawn_config, child_process_registry),
+		 body(nullptr) {
+		child_process_registry.SetVolatile();
+	}
 
-    /* virtual methods from class HttpResponseHandler */
-    void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        UnusedIstreamPtr body) noexcept override;
-    void OnHttpError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(http_status_t status, StringMap &&headers,
+			    UnusedIstreamPtr body) noexcept override;
+	void OnHttpError(std::exception_ptr ep) noexcept override;
 
-    /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) noexcept override;
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
-    void OnEof() noexcept override;
-    void OnError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class IstreamHandler */
+	size_t OnData(const void *data, size_t length) noexcept override;
+	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
 };
 
 static FdTypeMask my_handler_direct = 0;
@@ -110,60 +110,60 @@ static FdTypeMask my_handler_direct = 0;
 size_t
 Context::OnData(gcc_unused const void *data, size_t length) noexcept
 {
-    body_data += length;
+	body_data += length;
 
-    if (close_response_body_data) {
-        body_closed = true;
-        body.ClearAndClose();
-        return 0;
-    }
+	if (close_response_body_data) {
+		body_closed = true;
+		body.ClearAndClose();
+		return 0;
+	}
 
-    if (data_blocking) {
-        --data_blocking;
-        return 0;
-    }
+	if (data_blocking) {
+		--data_blocking;
+		return 0;
+	}
 
-    return length;
+	return length;
 }
 
 ssize_t
 Context::OnDirect(gcc_unused FdType type, int fd, size_t max_length) noexcept
 {
-    if (close_response_body_data) {
-        body_closed = true;
-        body.ClearAndClose();
-        return 0;
-    }
+	if (close_response_body_data) {
+		body_closed = true;
+		body.ClearAndClose();
+		return 0;
+	}
 
-    if (data_blocking) {
-        --data_blocking;
-        return ISTREAM_RESULT_BLOCKING;
-    }
+	if (data_blocking) {
+		--data_blocking;
+		return ISTREAM_RESULT_BLOCKING;
+	}
 
-    char buffer[256];
-    if (max_length > sizeof(buffer))
-        max_length = sizeof(buffer);
+	char buffer[256];
+	if (max_length > sizeof(buffer))
+		max_length = sizeof(buffer);
 
-    ssize_t nbytes = read(fd, buffer, max_length);
-    if (nbytes <= 0)
-        return nbytes;
+	ssize_t nbytes = read(fd, buffer, max_length);
+	if (nbytes <= 0)
+		return nbytes;
 
-    body_data += nbytes;
-    return nbytes;
+	body_data += nbytes;
+	return nbytes;
 }
 
 void
 Context::OnEof() noexcept
 {
-    body.Clear();
-    body_eof = true;
+	body.Clear();
+	body_eof = true;
 }
 
 void
 Context::OnError(std::exception_ptr) noexcept
 {
-    body.Clear();
-    body_abort = true;
+	body.Clear();
+	body_abort = true;
 }
 
 /*
@@ -173,36 +173,36 @@ Context::OnError(std::exception_ptr) noexcept
 
 void
 Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
-                        UnusedIstreamPtr _body) noexcept
+			UnusedIstreamPtr _body) noexcept
 {
-    assert(!no_content || !_body);
+	assert(!no_content || !_body);
 
-    status = _status;
+	status = _status;
 
-    if (close_response_body_early) {
-        _body.Clear();
-    } else if (_body) {
-        body.Set(std::move(_body), *this, my_handler_direct);
-        body_available = body.GetAvailable(false);
-    }
+	if (close_response_body_early) {
+		_body.Clear();
+	} else if (_body) {
+		body.Set(std::move(_body), *this, my_handler_direct);
+		body_available = body.GetAvailable(false);
+	}
 
-    if (close_response_body_late) {
-        body_closed = true;
-        body.ClearAndClose();
-    }
+	if (close_response_body_late) {
+		body_closed = true;
+		body.ClearAndClose();
+	}
 
-    if (body_read) {
-        assert(body.IsDefined());
-        body.Read();
-    }
+	if (body_read) {
+		assert(body.IsDefined());
+		body.Read();
+	}
 }
 
 void
 Context::OnHttpError(std::exception_ptr ep) noexcept
 {
-    PrintException(ep);
+	PrintException(ep);
 
-    aborted = true;
+	aborted = true;
 }
 
 /*
@@ -214,378 +214,378 @@ gcc_pure
 static const char *
 GetCgiPath(AllocatorPtr alloc, const char *name) noexcept
 {
-    const char *srcdir = getenv("srcdir");
-    if (srcdir == nullptr)
-        srcdir = ".";
+	const char *srcdir = getenv("srcdir");
+	if (srcdir == nullptr)
+		srcdir = ".";
 
-    return alloc.Concat(srcdir, "/demo/cgi-bin/", name);
+	return alloc.Concat(srcdir, "/demo/cgi-bin/", name);
 }
 
 static void
 test_normal(PoolPtr pool, Context *c)
 {
-    const AllocatorPtr alloc(pool);
-    const char *path = GetCgiPath(alloc, "env.py");
+	const AllocatorPtr alloc(pool);
+	const char *path = GetCgiPath(alloc, "env.py");
 
-    const auto address = MakeCgiAddress(pool, path, "/")
-        .ScriptName("env.py")
-        .DocumentRoot("/var/www");
+	const auto address = MakeCgiAddress(pool, path, "/")
+		.ScriptName("env.py")
+		.DocumentRoot("/var/www");
 
-    cgi_new(c->spawn_service, c->event_loop,
-            pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, {}, nullptr,
-            *c, c->cancel_ptr);
+	cgi_new(c->spawn_service, c->event_loop,
+		pool, nullptr, HTTP_METHOD_GET, &address,
+		nullptr, {}, nullptr,
+		*c, c->cancel_ptr);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    c->event_loop.Dispatch();
+	c->event_loop.Dispatch();
 
-    assert(c->status == HTTP_STATUS_OK);
-    assert(!c->body.IsDefined());
-    assert(c->body_eof);
-    assert(!c->body_abort);
+	assert(c->status == HTTP_STATUS_OK);
+	assert(!c->body.IsDefined());
+	assert(c->body_eof);
+	assert(!c->body_abort);
 }
 
 static void
 test_tiny(PoolPtr pool, Context *c)
 {
-    const AllocatorPtr alloc(pool);
-    const char *path = GetCgiPath(alloc, "tiny.sh");
+	const AllocatorPtr alloc(pool);
+	const char *path = GetCgiPath(alloc, "tiny.sh");
 
-    const auto address = MakeCgiAddress(pool, path, "/")
-        .ScriptName("tiny.py")
-        .DocumentRoot("/var/www");
+	const auto address = MakeCgiAddress(pool, path, "/")
+		.ScriptName("tiny.py")
+		.DocumentRoot("/var/www");
 
-    cgi_new(c->spawn_service, c->event_loop,
-            pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, {}, nullptr,
-            *c, c->cancel_ptr);
+	cgi_new(c->spawn_service, c->event_loop,
+		pool, nullptr, HTTP_METHOD_GET, &address,
+		nullptr, {}, nullptr,
+		*c, c->cancel_ptr);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    c->event_loop.Dispatch();
+	c->event_loop.Dispatch();
 
-    assert(c->status == HTTP_STATUS_OK);
-    assert(!c->body.IsDefined());
-    assert(c->body_eof);
-    assert(!c->body_abort);
+	assert(c->status == HTTP_STATUS_OK);
+	assert(!c->body.IsDefined());
+	assert(c->body_eof);
+	assert(!c->body_abort);
 }
 
 static void
 test_close_early(PoolPtr pool, Context *c)
 {
-    const AllocatorPtr alloc(pool);
-    const char *path = GetCgiPath(alloc, "env.py");
+	const AllocatorPtr alloc(pool);
+	const char *path = GetCgiPath(alloc, "env.py");
 
-    c->close_response_body_early = true;
+	c->close_response_body_early = true;
 
-    const auto address = MakeCgiAddress(pool, path, "/")
-        .ScriptName("env.py")
-        .DocumentRoot("/var/www");
+	const auto address = MakeCgiAddress(pool, path, "/")
+		.ScriptName("env.py")
+		.DocumentRoot("/var/www");
 
-    cgi_new(c->spawn_service, c->event_loop,
-            pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, {}, nullptr,
-            *c, c->cancel_ptr);
+	cgi_new(c->spawn_service, c->event_loop,
+		pool, nullptr, HTTP_METHOD_GET, &address,
+		nullptr, {}, nullptr,
+		*c, c->cancel_ptr);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    c->event_loop.Dispatch();
+	c->event_loop.Dispatch();
 
-    assert(c->status == HTTP_STATUS_OK);
-    assert(!c->body.IsDefined());
-    assert(!c->body_eof);
-    assert(!c->body_abort);
+	assert(c->status == HTTP_STATUS_OK);
+	assert(!c->body.IsDefined());
+	assert(!c->body_eof);
+	assert(!c->body_abort);
 }
 
 static void
 test_close_late(PoolPtr pool, Context *c)
 {
-    const AllocatorPtr alloc(pool);
-    const char *path = GetCgiPath(alloc, "env.py");
+	const AllocatorPtr alloc(pool);
+	const char *path = GetCgiPath(alloc, "env.py");
 
-    c->close_response_body_late = true;
+	c->close_response_body_late = true;
 
-    const auto address = MakeCgiAddress(pool, path, "/")
-        .ScriptName("env.py")
-        .DocumentRoot("/var/www");
+	const auto address = MakeCgiAddress(pool, path, "/")
+		.ScriptName("env.py")
+		.DocumentRoot("/var/www");
 
-    cgi_new(c->spawn_service, c->event_loop,
-            pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, {}, nullptr,
-            *c, c->cancel_ptr);
+	cgi_new(c->spawn_service, c->event_loop,
+		pool, nullptr, HTTP_METHOD_GET, &address,
+		nullptr, {}, nullptr,
+		*c, c->cancel_ptr);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    c->event_loop.Dispatch();
+	c->event_loop.Dispatch();
 
-    assert(c->status == HTTP_STATUS_OK);
-    assert(!c->body.IsDefined());
-    assert(!c->body_eof);
-    assert(c->body_abort || c->body_closed);
+	assert(c->status == HTTP_STATUS_OK);
+	assert(!c->body.IsDefined());
+	assert(!c->body_eof);
+	assert(c->body_abort || c->body_closed);
 }
 
 static void
 test_close_data(PoolPtr pool, Context *c)
 {
-    const AllocatorPtr alloc(pool);
-    const char *path = GetCgiPath(alloc, "env.py");
+	const AllocatorPtr alloc(pool);
+	const char *path = GetCgiPath(alloc, "env.py");
 
-    c->close_response_body_data = true;
+	c->close_response_body_data = true;
 
-    const auto address = MakeCgiAddress(pool, path, "/")
-        .ScriptName("env.py")
-        .DocumentRoot("/var/www");
+	const auto address = MakeCgiAddress(pool, path, "/")
+		.ScriptName("env.py")
+		.DocumentRoot("/var/www");
 
-    cgi_new(c->spawn_service, c->event_loop,
-            pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, {}, nullptr,
-            *c, c->cancel_ptr);
+	cgi_new(c->spawn_service, c->event_loop,
+		pool, nullptr, HTTP_METHOD_GET, &address,
+		nullptr, {}, nullptr,
+		*c, c->cancel_ptr);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    c->event_loop.Dispatch();
+	c->event_loop.Dispatch();
 
-    assert(c->status == HTTP_STATUS_OK);
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-    assert(c->body_closed);
+	assert(c->status == HTTP_STATUS_OK);
+	assert(!c->body_eof);
+	assert(!c->body_abort);
+	assert(c->body_closed);
 }
 
 static void
 test_post(PoolPtr pool, Context *c)
 {
-    const AllocatorPtr alloc(pool);
-    const char *path = GetCgiPath(alloc, "cat.sh");
+	const AllocatorPtr alloc(pool);
+	const char *path = GetCgiPath(alloc, "cat.sh");
 
-    c->body_read = true;
+	c->body_read = true;
 
-    const auto address = MakeCgiAddress(pool, path, "/")
-        .ScriptName("cat.py")
-        .DocumentRoot("/var/www");
+	const auto address = MakeCgiAddress(pool, path, "/")
+		.ScriptName("cat.py")
+		.DocumentRoot("/var/www");
 
-    cgi_new(c->spawn_service, c->event_loop,
-            pool, nullptr, HTTP_METHOD_POST, &address,
-            nullptr, {},
-            UnusedIstreamPtr(istream_file_new(c->event_loop, *pool,
-                                              "build.ninja", 8192)),
-            *c, c->cancel_ptr);
+	cgi_new(c->spawn_service, c->event_loop,
+		pool, nullptr, HTTP_METHOD_POST, &address,
+		nullptr, {},
+		UnusedIstreamPtr(istream_file_new(c->event_loop, *pool,
+						  "build.ninja", 8192)),
+		*c, c->cancel_ptr);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    c->event_loop.Dispatch();
+	c->event_loop.Dispatch();
 
-    assert(c->status == HTTP_STATUS_OK);
-    assert(!c->body.IsDefined());
-    assert(c->body_eof);
-    assert(!c->body_abort);
+	assert(c->status == HTTP_STATUS_OK);
+	assert(!c->body.IsDefined());
+	assert(c->body_eof);
+	assert(!c->body_abort);
 }
 
 static void
 test_status(PoolPtr pool, Context *c)
 {
-    const AllocatorPtr alloc(pool);
-    const char *path = GetCgiPath(alloc, "status.sh");
+	const AllocatorPtr alloc(pool);
+	const char *path = GetCgiPath(alloc, "status.sh");
 
-    c->body_read = true;
+	c->body_read = true;
 
-    const auto address = MakeCgiAddress(pool, path, "/")
-        .ScriptName("status.py")
-        .DocumentRoot("/var/www");
+	const auto address = MakeCgiAddress(pool, path, "/")
+		.ScriptName("status.py")
+		.DocumentRoot("/var/www");
 
-    cgi_new(c->spawn_service, c->event_loop,
-            pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, {}, nullptr,
-            *c, c->cancel_ptr);
+	cgi_new(c->spawn_service, c->event_loop,
+		pool, nullptr, HTTP_METHOD_GET, &address,
+		nullptr, {}, nullptr,
+		*c, c->cancel_ptr);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    c->event_loop.Dispatch();
+	c->event_loop.Dispatch();
 
-    assert(c->status == HTTP_STATUS_CREATED);
-    assert(!c->body.IsDefined());
-    assert(c->body_eof);
-    assert(!c->body_abort);
+	assert(c->status == HTTP_STATUS_CREATED);
+	assert(!c->body.IsDefined());
+	assert(c->body_eof);
+	assert(!c->body_abort);
 }
 
 static void
 test_no_content(PoolPtr pool, Context *c)
 {
-    const AllocatorPtr alloc(pool);
-    const char *path = GetCgiPath(alloc, "no_content.sh");
+	const AllocatorPtr alloc(pool);
+	const char *path = GetCgiPath(alloc, "no_content.sh");
 
-    c->no_content = true;
+	c->no_content = true;
 
-    const auto address = MakeCgiAddress(pool, path, "/")
-        .ScriptName("no_content.sh")
-        .DocumentRoot("/var/www");
+	const auto address = MakeCgiAddress(pool, path, "/")
+		.ScriptName("no_content.sh")
+		.DocumentRoot("/var/www");
 
-    cgi_new(c->spawn_service, c->event_loop,
-            pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, {}, nullptr,
-            *c, c->cancel_ptr);
+	cgi_new(c->spawn_service, c->event_loop,
+		pool, nullptr, HTTP_METHOD_GET, &address,
+		nullptr, {}, nullptr,
+		*c, c->cancel_ptr);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    c->event_loop.Dispatch();
+	c->event_loop.Dispatch();
 
-    assert(c->status == HTTP_STATUS_NO_CONTENT);
-    assert(!c->body.IsDefined());
-    assert(!c->body_eof);
-    assert(!c->body_abort);
+	assert(c->status == HTTP_STATUS_NO_CONTENT);
+	assert(!c->body.IsDefined());
+	assert(!c->body_eof);
+	assert(!c->body_abort);
 }
 
 static void
 test_no_length(PoolPtr pool, Context *c)
 {
-    const AllocatorPtr alloc(pool);
-    const char *path = GetCgiPath(alloc, "length0.sh");
+	const AllocatorPtr alloc(pool);
+	const char *path = GetCgiPath(alloc, "length0.sh");
 
-    const auto address = MakeCgiAddress(pool, path, "/")
-        .ScriptName("length0.sh")
-        .DocumentRoot("/var/www");
+	const auto address = MakeCgiAddress(pool, path, "/")
+		.ScriptName("length0.sh")
+		.DocumentRoot("/var/www");
 
-    cgi_new(c->spawn_service, c->event_loop,
-            pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, {}, nullptr,
-            *c, c->cancel_ptr);
+	cgi_new(c->spawn_service, c->event_loop,
+		pool, nullptr, HTTP_METHOD_GET, &address,
+		nullptr, {}, nullptr,
+		*c, c->cancel_ptr);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    c->event_loop.Dispatch();
+	c->event_loop.Dispatch();
 
-    assert(c->body_available == -1);
-    assert(c->body_eof);
+	assert(c->body_available == -1);
+	assert(c->body_eof);
 }
 
 static void
 test_length_ok(PoolPtr pool, Context *c)
 {
-    const AllocatorPtr alloc(pool);
-    const char *path = GetCgiPath(alloc, "length1.sh");
+	const AllocatorPtr alloc(pool);
+	const char *path = GetCgiPath(alloc, "length1.sh");
 
-    const auto address = MakeCgiAddress(pool, path, "/")
-        .ScriptName("length1.sh")
-        .DocumentRoot("/var/www");
+	const auto address = MakeCgiAddress(pool, path, "/")
+		.ScriptName("length1.sh")
+		.DocumentRoot("/var/www");
 
-    cgi_new(c->spawn_service, c->event_loop,
-            pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, {}, nullptr,
-            *c, c->cancel_ptr);
+	cgi_new(c->spawn_service, c->event_loop,
+		pool, nullptr, HTTP_METHOD_GET, &address,
+		nullptr, {}, nullptr,
+		*c, c->cancel_ptr);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    c->event_loop.Dispatch();
+	c->event_loop.Dispatch();
 
-    assert(c->body_available == 4);
-    assert(c->body_eof);
+	assert(c->body_available == 4);
+	assert(c->body_eof);
 }
 
 static void
 test_length_ok_large(PoolPtr pool, Context *c)
 {
-    const AllocatorPtr alloc(pool);
-    const char *path = GetCgiPath(alloc, "length5.sh");
+	const AllocatorPtr alloc(pool);
+	const char *path = GetCgiPath(alloc, "length5.sh");
 
-    c->body_read = true;
+	c->body_read = true;
 
-    const auto address = MakeCgiAddress(pool, path, "/")
-        .ScriptName("length5.sh")
-        .DocumentRoot("/var/www");
+	const auto address = MakeCgiAddress(pool, path, "/")
+		.ScriptName("length5.sh")
+		.DocumentRoot("/var/www");
 
-    cgi_new(c->spawn_service, c->event_loop,
-            pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, {}, nullptr,
-            *c, c->cancel_ptr);
+	cgi_new(c->spawn_service, c->event_loop,
+		pool, nullptr, HTTP_METHOD_GET, &address,
+		nullptr, {}, nullptr,
+		*c, c->cancel_ptr);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    c->event_loop.Dispatch();
+	c->event_loop.Dispatch();
 
-    assert(c->body_available == 8192);
-    assert(c->body_eof);
+	assert(c->body_available == 8192);
+	assert(c->body_eof);
 }
 
 static void
 test_length_too_small(PoolPtr pool, Context *c)
 {
-    const AllocatorPtr alloc(pool);
-    const char *path = GetCgiPath(alloc, "length2.sh");
+	const AllocatorPtr alloc(pool);
+	const char *path = GetCgiPath(alloc, "length2.sh");
 
-    const auto address = MakeCgiAddress(pool, path, "/")
-        .ScriptName("length2.sh")
-        .DocumentRoot("/var/www");
+	const auto address = MakeCgiAddress(pool, path, "/")
+		.ScriptName("length2.sh")
+		.DocumentRoot("/var/www");
 
-    cgi_new(c->spawn_service, c->event_loop,
-            pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, {}, nullptr,
-            *c, c->cancel_ptr);
+	cgi_new(c->spawn_service, c->event_loop,
+		pool, nullptr, HTTP_METHOD_GET, &address,
+		nullptr, {}, nullptr,
+		*c, c->cancel_ptr);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    c->event_loop.Dispatch();
+	c->event_loop.Dispatch();
 
-    assert(c->aborted);
+	assert(c->aborted);
 }
 
 static void
 test_length_too_big(PoolPtr pool, Context *c)
 {
-    const AllocatorPtr alloc(pool);
-    const char *path = GetCgiPath(alloc, "length3.sh");
+	const AllocatorPtr alloc(pool);
+	const char *path = GetCgiPath(alloc, "length3.sh");
 
-    const auto address = MakeCgiAddress(pool, path, "/")
-        .ScriptName("length3.sh")
-        .DocumentRoot("/var/www");
+	const auto address = MakeCgiAddress(pool, path, "/")
+		.ScriptName("length3.sh")
+		.DocumentRoot("/var/www");
 
-    cgi_new(c->spawn_service, c->event_loop,
-            pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, {}, nullptr,
-            *c, c->cancel_ptr);
+	cgi_new(c->spawn_service, c->event_loop,
+		pool, nullptr, HTTP_METHOD_GET, &address,
+		nullptr, {}, nullptr,
+		*c, c->cancel_ptr);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    c->event_loop.Dispatch();
+	c->event_loop.Dispatch();
 
-    assert(!c->aborted);
-    assert(c->body_abort);
+	assert(!c->aborted);
+	assert(c->body_abort);
 }
 
 static void
 test_length_too_small_late(PoolPtr pool, Context *c)
 {
-    const AllocatorPtr alloc(pool);
-    const char *path = GetCgiPath(alloc, "length4.sh");
+	const AllocatorPtr alloc(pool);
+	const char *path = GetCgiPath(alloc, "length4.sh");
 
-    const auto address = MakeCgiAddress(pool, path, "/")
-        .ScriptName("length4.sh")
-        .DocumentRoot("/var/www");
+	const auto address = MakeCgiAddress(pool, path, "/")
+		.ScriptName("length4.sh")
+		.DocumentRoot("/var/www");
 
-    cgi_new(c->spawn_service, c->event_loop,
-            pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, {}, nullptr,
-            *c, c->cancel_ptr);
+	cgi_new(c->spawn_service, c->event_loop,
+		pool, nullptr, HTTP_METHOD_GET, &address,
+		nullptr, {}, nullptr,
+		*c, c->cancel_ptr);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    c->event_loop.Dispatch();
+	c->event_loop.Dispatch();
 
-    assert(!c->aborted);
-    assert(c->body_abort);
+	assert(!c->aborted);
+	assert(c->body_abort);
 }
 
 /**
@@ -594,25 +594,25 @@ test_length_too_small_late(PoolPtr pool, Context *c)
 static void
 test_large_header(PoolPtr pool, Context *c)
 {
-    const AllocatorPtr alloc(pool);
-    const char *path = GetCgiPath(alloc, "large_header.sh");
+	const AllocatorPtr alloc(pool);
+	const char *path = GetCgiPath(alloc, "large_header.sh");
 
-    const auto address = MakeCgiAddress(pool, path, "/")
-        .ScriptName("large_header.py")
-        .DocumentRoot("/var/www");
+	const auto address = MakeCgiAddress(pool, path, "/")
+		.ScriptName("large_header.py")
+		.DocumentRoot("/var/www");
 
-    cgi_new(c->spawn_service, c->event_loop,
-            pool, nullptr, HTTP_METHOD_GET, &address,
-            nullptr, {}, nullptr,
-            *c, c->cancel_ptr);
+	cgi_new(c->spawn_service, c->event_loop,
+		pool, nullptr, HTTP_METHOD_GET, &address,
+		nullptr, {}, nullptr,
+		*c, c->cancel_ptr);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    c->event_loop.Dispatch();
+	c->event_loop.Dispatch();
 
-    assert(c->aborted);
-    assert(!c->body_abort);
+	assert(c->aborted);
+	assert(!c->body_abort);
 }
 
 
@@ -624,48 +624,48 @@ test_large_header(PoolPtr pool, Context *c)
 static void
 run_test(void (*test)(PoolPtr pool, Context *c))
 {
-    Context c;
+	Context c;
 
-    test(pool_new_linear(c.root_pool, "test", 16384), &c);
+	test(pool_new_linear(c.root_pool, "test", 16384), &c);
 }
 
 static void
 run_all_tests()
 {
-    run_test(test_normal);
-    run_test(test_tiny);
-    run_test(test_close_early);
-    run_test(test_close_late);
-    run_test(test_close_data);
-    run_test(test_post);
-    run_test(test_status);
-    run_test(test_no_content);
-    run_test(test_no_length);
-    run_test(test_length_ok);
-    run_test(test_length_ok_large);
-    run_test(test_length_too_small);
-    run_test(test_length_too_big);
-    run_test(test_length_too_small_late);
-    run_test(test_large_header);
+	run_test(test_normal);
+	run_test(test_tiny);
+	run_test(test_close_early);
+	run_test(test_close_late);
+	run_test(test_close_data);
+	run_test(test_post);
+	run_test(test_status);
+	run_test(test_no_content);
+	run_test(test_no_length);
+	run_test(test_length_ok);
+	run_test(test_length_ok_large);
+	run_test(test_length_too_small);
+	run_test(test_length_too_big);
+	run_test(test_length_too_small_late);
+	run_test(test_large_header);
 }
 
 int
 main(int argc, char **argv)
 try {
-    (void)argc;
-    (void)argv;
+	(void)argc;
+	(void)argv;
 
-    SetupProcess();
+	SetupProcess();
 
-    direct_global_init();
-    const ScopeCrashGlobalInit crash_init;
-    const ScopeFbPoolInit fb_pool_init;
+	direct_global_init();
+	const ScopeCrashGlobalInit crash_init;
+	const ScopeFbPoolInit fb_pool_init;
 
-    run_all_tests();
+	run_all_tests();
 
-    my_handler_direct = FD_ANY;
-    run_all_tests();
+	my_handler_direct = FD_ANY;
+	run_all_tests();
 } catch (...) {
-    PrintException(std::current_exception());
-    return EXIT_FAILURE;
+	PrintException(std::current_exception());
+	return EXIT_FAILURE;
 }
