@@ -874,7 +874,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 		fragment = nullptr;
 
 	auto istream =
-		rewrite_widget_uri(pool, ctx,
+		rewrite_widget_uri(pool, ctx, stopwatch,
 				   *target_widget,
 				   value, mode, target_widget == &container,
 				   view,
@@ -1088,7 +1088,7 @@ void
 XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr) noexcept
 {
 	auto result =
-		css_rewrite_block_uris(pool, ctx,
+		css_rewrite_block_uris(pool, ctx, stopwatch,
 				       container,
 				       attr.value,
 				       &html_escape_class);
@@ -1530,7 +1530,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 				css_options |= CSS_PROCESSOR_PREFIX_ID;
 
 			auto istream =
-				css_processor(pool,
+				css_processor(pool, stopwatch,
 					      UnusedIstreamPtr(StartCdataIstream()),
 					      container, ctx,
 					      css_options);

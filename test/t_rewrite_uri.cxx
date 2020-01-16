@@ -47,6 +47,7 @@
 #include "istream/StringSink.hxx"
 #include "widget/Inline.hxx"
 #include "util/Cancellable.hxx"
+#include "stopwatch.hxx"
 
 #include <gtest/gtest.h>
 
@@ -210,7 +211,7 @@ assert_rewrite_check4(EventLoop &event_loop,
 			  nullptr, session_id, "foo",
 			  nullptr);
 
-	auto istream = rewrite_widget_uri(*pool, ctx,
+	auto istream = rewrite_widget_uri(*pool, ctx, nullptr,
 					  *widget,
 					  value2,
 					  mode, stateful, view, &html_escape_class);

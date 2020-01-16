@@ -45,11 +45,14 @@
 #include "istream/istream_string.hxx"
 #include "istream/TeeIstream.hxx"
 #include "pool/pool.hxx"
+#include "stopwatch.hxx"
 
 #include <assert.h>
 #include <string.h>
 
 struct CssProcessor final : PoolHolder {
+	const StopwatchPtr stopwatch;
+
 	Widget &container;
 	WidgetContext &ctx;
 	const unsigned options;
@@ -67,7 +70,7 @@ struct CssProcessor final : PoolHolder {
 
 	UriRewrite uri_rewrite;
 
-	CssProcessor(PoolPtr &&_pool,
+	CssProcessor(PoolPtr &&_pool, const StopwatchPtr &parent_stopwatch,
 		     UnusedIstreamPtr input,
 		     SharedPoolPtr<ReplaceIstreamControl> _replace,
 		     Widget &_container,
@@ -221,6 +224,7 @@ css_processor_parser_url(const CssParserValue *url, void *ctx) noexcept
 	auto istream =
 		rewrite_widget_uri(processor->GetPool(),
 				   processor->ctx,
+				   processor->stopwatch,
 				   processor->container,
 				   url->value,
 				   processor->uri_rewrite.mode, false,
@@ -243,6 +247,7 @@ css_processor_parser_import(const CssParserValue *url, void *ctx) noexcept
 	auto istream =
 		rewrite_widget_uri(processor->GetPool(),
 				   processor->ctx,
+				   processor->stopwatch,
 				   processor->container,
 				   url->value,
 				   RewriteUriMode::PARTIAL, false, nullptr,
@@ -295,12 +300,14 @@ static constexpr CssParserHandler css_processor_parser_handler = {
 
 inline
 CssProcessor::CssProcessor(PoolPtr &&_pool,
+			   const StopwatchPtr &parent_stopwatch,
 			   UnusedIstreamPtr input,
 			   SharedPoolPtr<ReplaceIstreamControl> _replace,
 			   Widget &_container,
 			   WidgetContext &_ctx,
 			   unsigned _options) noexcept
 	:PoolHolder(std::move(_pool)),
+	 stopwatch(parent_stopwatch, "CssProcessor"),
 	 container(_container), ctx(_ctx),
 	 options(_options),
 	 replace(std::move(_replace)),
@@ -308,7 +315,9 @@ CssProcessor::CssProcessor(PoolPtr &&_pool,
 			       css_processor_parser_handler, this)) {}
 
 UnusedIstreamPtr
-css_processor(struct pool &caller_pool, UnusedIstreamPtr input,
+css_processor(struct pool &caller_pool,
+	      const StopwatchPtr &parent_stopwatch,
+	      UnusedIstreamPtr input,
 	      Widget &widget,
 	      WidgetContext &ctx,
 	      unsigned options) noexcept
@@ -322,7 +331,7 @@ css_processor(struct pool &caller_pool, UnusedIstreamPtr input,
 	auto replace = istream_replace_new(ctx.event_loop, pool,
 					   AddTeeIstream(tee, true));
 
-	NewFromPool<CssProcessor>(std::move(pool),
+	NewFromPool<CssProcessor>(std::move(pool), parent_stopwatch,
 				  std::move(tee),
 				  std::move(replace.second),
 				  widget, ctx,

@@ -116,10 +116,12 @@ processor_lookup_widget(gcc_unused struct pool &pool,
 }
 
 UnusedIstreamPtr
-css_processor(gcc_unused struct pool &pool, UnusedIstreamPtr stream,
+css_processor(gcc_unused struct pool &pool,
+              const StopwatchPtr &,
+              UnusedIstreamPtr stream,
               gcc_unused Widget &widget,
               WidgetContext &,
-              gcc_unused unsigned options)
+              gcc_unused unsigned options) noexcept
 {
     return stream;
 }

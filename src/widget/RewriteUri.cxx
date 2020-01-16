@@ -372,7 +372,7 @@ UriRewriter::ResolverCallback() noexcept
 
 UnusedIstreamPtr
 rewrite_widget_uri(struct pool &pool,
-		   WidgetContext &ctx,
+		   WidgetContext &ctx, const StopwatchPtr &parent_stopwatch,
 		   Widget &widget,
 		   StringView value,
 		   RewriteUriMode mode, bool stateful,
@@ -385,7 +385,7 @@ rewrite_widget_uri(struct pool &pool,
 
 	if (mode == RewriteUriMode::RESPONSE) {
 		auto istream = embed_inline_widget(pool, ctx,
-						   nullptr, // TODO
+						   parent_stopwatch,
 						   true, widget);
 		if (escape != nullptr)
 			istream = istream_escape_new(pool, std::move(istream), *escape);

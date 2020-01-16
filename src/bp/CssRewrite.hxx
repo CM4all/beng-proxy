@@ -34,6 +34,7 @@
 
 struct pool;
 struct WidgetContext;
+class StopwatchPtr;
 class UnusedIstreamPtr;
 struct StringView;
 struct escape_class;
@@ -47,6 +48,7 @@ class Widget;
 UnusedIstreamPtr
 css_rewrite_block_uris(struct pool &pool,
 		       WidgetContext &ctx,
+		       const StopwatchPtr &parent_stopwatch,
 		       Widget &widget,
 		       StringView block,
 		       const struct escape_class *escape) noexcept;

@@ -46,6 +46,7 @@ enum css_processor_options {
 
 struct pool;
 struct WidgetContext;
+class StopwatchPtr;
 class UnusedIstreamPtr;
 class Widget;
 
@@ -55,7 +56,9 @@ class Widget;
  * @param widget the widget that represents the template
  */
 UnusedIstreamPtr
-css_processor(struct pool &pool, UnusedIstreamPtr stream,
+css_processor(struct pool &pool,
+	      const StopwatchPtr &parent_stopwatch,
+	      UnusedIstreamPtr stream,
 	      Widget &widget,
 	      WidgetContext &ctx,
 	      unsigned options) noexcept;

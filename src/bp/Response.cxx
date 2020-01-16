@@ -355,7 +355,7 @@ Request::InvokeCssProcessor(http_status_t status,
     if (translate.response->uri != nullptr)
         dissected_uri.base = translate.response->uri;
 
-    response_body = css_processor(pool, std::move(response_body),
+    response_body = css_processor(pool, stopwatch, std::move(response_body),
                                   *widget, MakeWidgetContext(),
                                   transformation.u.css_processor.options);
     assert(response_body);

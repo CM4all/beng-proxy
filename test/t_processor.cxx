@@ -89,7 +89,7 @@ parse_uri_mode(gcc_unused StringView s) noexcept
 
 UnusedIstreamPtr
 rewrite_widget_uri(gcc_unused struct pool &pool,
-                   WidgetContext &,
+                   WidgetContext &, const StopwatchPtr &,
                    gcc_unused Widget &widget,
                    gcc_unused StringView value,
                    gcc_unused RewriteUriMode mode,

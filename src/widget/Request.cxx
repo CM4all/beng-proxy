@@ -427,7 +427,8 @@ WidgetRequest::CssProcessResponse(http_status_t status,
 	}
 
 	DispatchResponse(status, processor_header_forward(pool, headers),
-			 css_processor(pool, std::move(body), widget, ctx, options));
+			 css_processor(pool, parent_stopwatch,
+				       std::move(body), widget, ctx, options));
 }
 
 void
