@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,5 +36,5 @@
 void
 StockItemLease::ReleaseLease(bool reuse) noexcept
 {
-    item.Put(!reuse);
+	item.Put(!reuse);
 }

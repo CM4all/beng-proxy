@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,12 +35,12 @@
 #include "Stock.hxx"
 
 class StockLoggerDomain {
-    const Stock &stock;
+	const Stock &stock;
 
 public:
-    explicit StockLoggerDomain(const Stock &_stock):stock(_stock) {}
+	explicit StockLoggerDomain(const Stock &_stock):stock(_stock) {}
 
-    StringView GetDomain() const {
-        return stock.GetName();
-    }
+	StringView GetDomain() const {
+		return stock.GetName();
+	}
 };

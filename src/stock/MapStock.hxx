@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_MAP_STOCK_HXX
-#define BENG_PROXY_MAP_STOCK_HXX
+#pragma once
 
 #include "Stock.hxx"
 #include "io/Logger.hxx"
@@ -45,144 +44,142 @@
  * URI.
  */
 class StockMap final : StockHandler {
-    struct Item
-        : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-        Stock stock;
+	struct Item
+		: boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+		Stock stock;
 
-        template<typename... Args>
-        explicit Item(Args&&... args) noexcept:stock(std::forward<Args>(args)...) {}
+		template<typename... Args>
+		explicit Item(Args&&... args) noexcept:stock(std::forward<Args>(args)...) {}
 
-        static constexpr Item &Cast(Stock &s) noexcept {
-            return ContainerCast(s, &Item::stock);
-        }
+		static constexpr Item &Cast(Stock &s) noexcept {
+			return ContainerCast(s, &Item::stock);
+		}
 
-        const char *GetKey() const noexcept {
-            return stock.GetName();
-        }
+		const char *GetKey() const noexcept {
+			return stock.GetName();
+		}
 
-        gcc_pure
-        static size_t KeyHasher(const char *key) noexcept;
+		gcc_pure
+		static size_t KeyHasher(const char *key) noexcept;
 
-        gcc_pure
-        static size_t ValueHasher(const Item &value) noexcept {
-            return KeyHasher(value.GetKey());
-        }
+		gcc_pure
+		static size_t ValueHasher(const Item &value) noexcept {
+			return KeyHasher(value.GetKey());
+		}
 
-        gcc_pure
-        static bool KeyValueEqual(const char *a, const Item &b) noexcept {
-            assert(a != nullptr);
+		gcc_pure
+		static bool KeyValueEqual(const char *a, const Item &b) noexcept {
+			assert(a != nullptr);
 
-            return strcmp(a, b.GetKey()) == 0;
-        }
+			return strcmp(a, b.GetKey()) == 0;
+		}
 
-        struct Hash {
-            gcc_pure
-            size_t operator()(const Item &value) const noexcept {
-                return ValueHasher(value);
-            }
-        };
+		struct Hash {
+			gcc_pure
+			size_t operator()(const Item &value) const noexcept {
+				return ValueHasher(value);
+			}
+		};
 
-        struct Equal {
-            gcc_pure
-            bool operator()(const Item &a, const Item &b) const noexcept {
-                return KeyValueEqual(a.GetKey(), b);
-            }
-        };
-    };
+		struct Equal {
+			gcc_pure
+			bool operator()(const Item &a, const Item &b) const noexcept {
+				return KeyValueEqual(a.GetKey(), b);
+			}
+		};
+	};
 
-    typedef boost::intrusive::unordered_set<Item,
-                                            boost::intrusive::hash<Item::Hash>,
-                                            boost::intrusive::equal<Item::Equal>,
-                                            boost::intrusive::constant_time_size<false>> Map;
+	typedef boost::intrusive::unordered_set<Item,
+						boost::intrusive::hash<Item::Hash>,
+						boost::intrusive::equal<Item::Equal>,
+						boost::intrusive::constant_time_size<false>> Map;
 
-    const Logger logger;
+	const Logger logger;
 
-    EventLoop &event_loop;
+	EventLoop &event_loop;
 
-    StockClass &cls;
+	StockClass &cls;
 
-    /**
-     * The maximum number of items in each stock.
-     */
-    const unsigned limit;
+	/**
+	 * The maximum number of items in each stock.
+	 */
+	const unsigned limit;
 
-    /**
-     * The maximum number of permanent idle items in each stock.
-     */
-    const unsigned max_idle;
+	/**
+	 * The maximum number of permanent idle items in each stock.
+	 */
+	const unsigned max_idle;
 
-    Map map;
+	Map map;
 
-    static constexpr size_t N_BUCKETS = 251;
-    Map::bucket_type buckets[N_BUCKETS];
+	static constexpr size_t N_BUCKETS = 251;
+	Map::bucket_type buckets[N_BUCKETS];
 
 public:
-    StockMap(EventLoop &_event_loop, StockClass &_cls,
-             unsigned _limit, unsigned _max_idle) noexcept
-        :event_loop(_event_loop), cls(_cls),
-         limit(_limit), max_idle(_max_idle),
-         map(Map::bucket_traits(buckets, N_BUCKETS)) {}
+	StockMap(EventLoop &_event_loop, StockClass &_cls,
+		 unsigned _limit, unsigned _max_idle) noexcept
+		:event_loop(_event_loop), cls(_cls),
+		 limit(_limit), max_idle(_max_idle),
+		 map(Map::bucket_traits(buckets, N_BUCKETS)) {}
 
-    ~StockMap() noexcept;
+	~StockMap() noexcept;
 
-    EventLoop &GetEventLoop() const noexcept {
-        return event_loop;
-    }
+	EventLoop &GetEventLoop() const noexcept {
+		return event_loop;
+	}
 
-    StockClass &GetClass() noexcept {
-        return cls;
-    }
+	StockClass &GetClass() noexcept {
+		return cls;
+	}
 
-    void Erase(Item &item) noexcept;
+	void Erase(Item &item) noexcept;
 
-    /**
-     * @see Stock::FadeAll()
-     */
-    void FadeAll() noexcept {
-        for (auto &i : map)
-            i.stock.FadeAll();
-    }
+	/**
+	 * @see Stock::FadeAll()
+	 */
+	void FadeAll() noexcept {
+		for (auto &i : map)
+			i.stock.FadeAll();
+	}
 
-    /**
-     * @see Stock::FadeIf()
-     */
-    template<typename P>
-    void FadeIf(P &&predicate) noexcept {
-        for (auto &i : map)
-            i.stock.FadeIf(predicate);
-    }
+	/**
+	 * @see Stock::FadeIf()
+	 */
+	template<typename P>
+	void FadeIf(P &&predicate) noexcept {
+		for (auto &i : map)
+			i.stock.FadeIf(predicate);
+	}
 
-    /**
-     * Obtain statistics.
-     */
-    void AddStats(StockStats &data) const noexcept {
-        for (const auto &i : map)
-            i.stock.AddStats(data);
-    }
+	/**
+	 * Obtain statistics.
+	 */
+	void AddStats(StockStats &data) const noexcept {
+		for (const auto &i : map)
+			i.stock.AddStats(data);
+	}
 
-    Stock &GetStock(const char *uri) noexcept;
+	Stock &GetStock(const char *uri) noexcept;
 
-    void Get(const char *uri, StockRequest &&request,
-             StockGetHandler &handler,
-             CancellablePointer &cancel_ptr) noexcept {
-        Stock &stock = GetStock(uri);
-        stock.Get(std::move(request), handler, cancel_ptr);
-    }
+	void Get(const char *uri, StockRequest &&request,
+		 StockGetHandler &handler,
+		 CancellablePointer &cancel_ptr) noexcept {
+		Stock &stock = GetStock(uri);
+		stock.Get(std::move(request), handler, cancel_ptr);
+	}
 
-    /**
-     * Obtains an item from the stock without going through the
-     * callback.  This requires a stock class which finishes the
-     * create() method immediately.
-     *
-     * Throws exception on error.
-     */
-    StockItem *GetNow(const char *uri, StockRequest &&request) {
-        Stock &stock = GetStock(uri);
-        return stock.GetNow(std::move(request));
-    }
+	/**
+	 * Obtains an item from the stock without going through the
+	 * callback.  This requires a stock class which finishes the
+	 * create() method immediately.
+	 *
+	 * Throws exception on error.
+	 */
+	StockItem *GetNow(const char *uri, StockRequest &&request) {
+		Stock &stock = GetStock(uri);
+		return stock.GetNow(std::move(request));
+	}
 
-    /* virtual methods from class StockHandler */
-    void OnStockEmpty(Stock &stock) noexcept override;
+	/* virtual methods from class StockHandler */
+	void OnStockEmpty(Stock &stock) noexcept override;
 };
-
-#endif

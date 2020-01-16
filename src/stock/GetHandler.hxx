@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_STOCK_GET_HANDLER_HXX
-#define BENG_PROXY_STOCK_GET_HANDLER_HXX
+#pragma once
 
 #include <exception>
 
@@ -42,5 +41,3 @@ public:
     virtual void OnStockItemReady(StockItem &item) noexcept = 0;
     virtual void OnStockItemError(std::exception_ptr ep) noexcept = 0;
 };
-
-#endif

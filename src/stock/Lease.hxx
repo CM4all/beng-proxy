@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_STOCK_LEASE_HXX
-#define BENG_PROXY_STOCK_LEASE_HXX
+#pragma once
 
 #include "lease.hxx"
 
@@ -41,17 +40,15 @@ struct StockItem;
  * A #Lease implementation which calls StockItem::Put().
  */
 class StockItemLease final : public Lease {
-    StockItem &item;
+	StockItem &item;
 
 public:
-    explicit StockItemLease(StockItem &_item):item(_item) {}
+	explicit StockItemLease(StockItem &_item):item(_item) {}
 
-    StockItem &GetItem() {
-        return item;
-    }
+	StockItem &GetItem() {
+		return item;
+	}
 
-    /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) noexcept override;
+	/* virtual methods from class Lease */
+	void ReleaseLease(bool reuse) noexcept override;
 };
-
-#endif

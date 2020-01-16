@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,46 +39,46 @@
 inline size_t
 StockMap::Item::KeyHasher(const char *key) noexcept
 {
-    assert(key != nullptr);
+	assert(key != nullptr);
 
-    return djb_hash_string(key);
+	return djb_hash_string(key);
 }
 
 StockMap::~StockMap() noexcept
 {
-    map.clear_and_dispose(DeleteDisposer());
+	map.clear_and_dispose(DeleteDisposer());
 }
 
 void
 StockMap::Erase(Item &item) noexcept
 {
-    auto i = map.iterator_to(item);
-    map.erase_and_dispose(i, DeleteDisposer());
+	auto i = map.iterator_to(item);
+	map.erase_and_dispose(i, DeleteDisposer());
 }
 
 void
 StockMap::OnStockEmpty(Stock &stock) noexcept
 {
-    auto &item = Item::Cast(stock);
+	auto &item = Item::Cast(stock);
 
-    logger.Format(5, "hstock(%p) remove empty stock(%p, '%s')",
-                  (const void *)this, (const void *)&stock, stock.GetName());
+	logger.Format(5, "hstock(%p) remove empty stock(%p, '%s')",
+		      (const void *)this, (const void *)&stock, stock.GetName());
 
-    Erase(item);
+	Erase(item);
 }
 
 Stock &
 StockMap::GetStock(const char *uri) noexcept
 {
-    Map::insert_commit_data hint;
-    auto i = map.insert_check(uri, Item::KeyHasher, Item::KeyValueEqual, hint);
-    if (i.second) {
-        auto *item = new Item(event_loop, cls,
-                              uri, limit, max_idle,
-                              this);
-        map.insert_commit(*item, hint);
-        return item->stock;
-    } else
-        return i.first->stock;
+	Map::insert_commit_data hint;
+	auto i = map.insert_check(uri, Item::KeyHasher, Item::KeyValueEqual, hint);
+	if (i.second) {
+		auto *item = new Item(event_loop, cls,
+				      uri, limit, max_idle,
+				      this);
+		map.insert_commit(*item, hint);
+		return item->stock;
+	} else
+		return i.first->stock;
 
 }

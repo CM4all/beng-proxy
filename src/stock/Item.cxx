@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,19 +36,19 @@
 const char *
 CreateStockItem::GetStockName() const noexcept
 {
-    return stock.GetName();
+	return stock.GetName();
 }
 
 void
 CreateStockItem::InvokeCreateError(std::exception_ptr ep) noexcept
 {
-    stock.ItemCreateError(handler, ep);
+	stock.ItemCreateError(handler, ep);
 }
 
 void
 CreateStockItem::InvokeCreateAborted() noexcept
 {
-    stock.ItemCreateAborted();
+	stock.ItemCreateAborted();
 }
 
 StockItem::~StockItem() noexcept
@@ -58,35 +58,35 @@ StockItem::~StockItem() noexcept
 const char *
 StockItem::GetStockName() const noexcept
 {
-    return stock.GetName();
+	return stock.GetName();
 }
 
 void
 StockItem::Put(bool destroy) noexcept
 {
-    stock.Put(*this, destroy);
+	stock.Put(*this, destroy);
 }
 
 void
 StockItem::InvokeCreateSuccess() noexcept
 {
-    stock.ItemCreateSuccess(*this);
+	stock.ItemCreateSuccess(*this);
 }
 
 void
 StockItem::InvokeCreateError(std::exception_ptr ep) noexcept
 {
-    stock.ItemCreateError(*this, ep);
+	stock.ItemCreateError(*this, ep);
 }
 
 void
 StockItem::InvokeCreateAborted() noexcept
 {
-    stock.ItemCreateAborted(*this);
+	stock.ItemCreateAborted(*this);
 }
 
 void
 StockItem::InvokeIdleDisconnect() noexcept
 {
-    stock.ItemIdleDisconnect(*this);
+	stock.ItemIdleDisconnect(*this);
 }

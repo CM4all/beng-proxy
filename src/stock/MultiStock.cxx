@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,66 +38,66 @@
 bool
 MultiStock::Item::Compare::Less(const char *a, const char *b) const
 {
-    return strcmp(a, b) < 0;
+	return strcmp(a, b) < 0;
 }
 
 MultiStock::Item::~Item()
 {
-    assert(leases.empty());
+	assert(leases.empty());
 
-    item.Put(!reuse);
+	item.Put(!reuse);
 }
 
 const char *
 MultiStock::Item::GetKey() const
 {
-    return item.GetStockName();
+	return item.GetStockName();
 }
 
 void
 MultiStock::Item::AddLease(StockGetHandler &handler,
-                           LeasePtr &lease_ref)
+			   LeasePtr &lease_ref)
 {
-    lease_ref.Set(AddLease());
+	lease_ref.Set(AddLease());
 
-    handler.OnStockItemReady(item);
+	handler.OnStockItemReady(item);
 }
 
 void
 MultiStock::Item::DeleteLease(Lease *lease, bool _reuse)
 {
-    reuse &= _reuse;
+	reuse &= _reuse;
 
-    assert(!leases.empty());
-    leases.erase_and_dispose(leases.iterator_to(*lease),
-                             DeleteDisposer());
-    ++remaining_leases;
+	assert(!leases.empty());
+	leases.erase_and_dispose(leases.iterator_to(*lease),
+				 DeleteDisposer());
+	++remaining_leases;
 
-    if (leases.empty())
-        delete this;
+	if (leases.empty())
+		delete this;
 }
 
 MultiStock::Item &
 MultiStock::MakeItem(const char *uri, StockRequest request,
-                     unsigned max_leases)
+		     unsigned max_leases)
 {
-    auto i = items.lower_bound(uri, items.key_comp());
-    for (; i != items.end() && !items.key_comp()(uri, *i); ++i)
-        if (i->CanUse())
-            return *i;
+	auto i = items.lower_bound(uri, items.key_comp());
+	for (; i != items.end() && !items.key_comp()(uri, *i); ++i)
+		if (i->CanUse())
+			return *i;
 
-    auto *stock_item = hstock.GetNow(uri, std::move(request));
-    assert(stock_item != nullptr);
+	auto *stock_item = hstock.GetNow(uri, std::move(request));
+	assert(stock_item != nullptr);
 
-    auto *item = new Item(max_leases, *stock_item);
-    items.insert(i, *item);
-    return *item;
+	auto *item = new Item(max_leases, *stock_item);
+	items.insert(i, *item);
+	return *item;
 }
 
 StockItem *
 MultiStock::GetNow(const char *uri, StockRequest request,
-                   unsigned max_leases,
-                   LeasePtr &lease_ref)
+		   unsigned max_leases,
+		   LeasePtr &lease_ref)
 {
-    return MakeItem(uri, std::move(request), max_leases).AddLease(lease_ref);
+	return MakeItem(uri, std::move(request), max_leases).AddLease(lease_ref);
 }

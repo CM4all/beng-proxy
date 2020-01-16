@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_STOCK_CLASS_HXX
-#define BENG_PROXY_STOCK_CLASS_HXX
+#pragma once
 
 #include "Request.hxx"
 
@@ -40,12 +39,10 @@ struct CreateStockItem;
 
 class StockClass {
 public:
-    /**
-     * May throw exception instead of calling InvokeCreateError().
-     */
-    virtual void Create(CreateStockItem c,
-                        StockRequest request,
-                        CancellablePointer &cancel_ptr) = 0;
+	/**
+	 * May throw exception instead of calling InvokeCreateError().
+	 */
+	virtual void Create(CreateStockItem c,
+			    StockRequest request,
+			    CancellablePointer &cancel_ptr) = 0;
 };
-
-#endif

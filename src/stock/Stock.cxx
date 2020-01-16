@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,31 +39,31 @@
 
 inline
 Stock::Waiting::Waiting(Stock &_stock, StockRequest &&_request,
-                        StockGetHandler &_handler,
-                        CancellablePointer &_cancel_ptr) noexcept
-    :stock(_stock), request(std::move(_request)),
-     handler(_handler),
-     cancel_ptr(_cancel_ptr)
+			StockGetHandler &_handler,
+			CancellablePointer &_cancel_ptr) noexcept
+	:stock(_stock), request(std::move(_request)),
+	 handler(_handler),
+	 cancel_ptr(_cancel_ptr)
 {
-    cancel_ptr = *this;
+	cancel_ptr = *this;
 }
 
 inline void
 Stock::Waiting::Destroy() noexcept
 {
-    delete this;
+	delete this;
 }
 
 void
 Stock::FadeAll() noexcept
 {
-    for (auto &i : busy)
-        i.fade = true;
+	for (auto &i : busy)
+		i.fade = true;
 
-    ClearIdle();
-    ScheduleCheckEmpty();
+	ClearIdle();
+	ScheduleCheckEmpty();
 
-    // TODO: restart the "num_create" list?
+	// TODO: restart the "num_create" list?
 }
 
 /*
@@ -74,15 +74,15 @@ Stock::FadeAll() noexcept
 void
 Stock::CheckEmpty() noexcept
 {
-    if (IsEmpty() && handler != nullptr)
-        handler->OnStockEmpty(*this);
+	if (IsEmpty() && handler != nullptr)
+		handler->OnStockEmpty(*this);
 }
 
 void
 Stock::ScheduleCheckEmpty() noexcept
 {
-    if (IsEmpty() && handler != nullptr)
-        empty_event.Schedule();
+	if (IsEmpty() && handler != nullptr)
+		empty_event.Schedule();
 }
 
 
@@ -94,19 +94,19 @@ Stock::ScheduleCheckEmpty() noexcept
 void
 Stock::CleanupEventCallback() noexcept
 {
-    assert(idle.size() > max_idle);
+	assert(idle.size() > max_idle);
 
-    /* destroy one third of the idle items */
+	/* destroy one third of the idle items */
 
-    for (unsigned i = (idle.size() - max_idle + 2) / 3; i > 0; --i)
-        idle.pop_front_and_dispose(DeleteDisposer());
+	for (unsigned i = (idle.size() - max_idle + 2) / 3; i > 0; --i)
+		idle.pop_front_and_dispose(DeleteDisposer());
 
-    /* schedule next cleanup */
+	/* schedule next cleanup */
 
-    if (idle.size() > max_idle)
-        ScheduleCleanup();
-    else
-        CheckEmpty();
+	if (idle.size() > max_idle)
+		ScheduleCleanup();
+	else
+		CheckEmpty();
 }
 
 
@@ -118,58 +118,58 @@ Stock::CleanupEventCallback() noexcept
 void
 Stock::Waiting::Cancel() noexcept
 {
-    auto &list = stock.waiting;
-    const auto i = list.iterator_to(*this);
-    list.erase_and_dispose(i, [](Stock::Waiting *w){ w->Destroy(); });
+	auto &list = stock.waiting;
+	const auto i = list.iterator_to(*this);
+	list.erase_and_dispose(i, [](Stock::Waiting *w){ w->Destroy(); });
 }
 
 void
 Stock::RetryWaiting() noexcept
 {
-    if (limit == 0)
-        /* no limit configured, no waiters possible */
-        return;
+	if (limit == 0)
+		/* no limit configured, no waiters possible */
+		return;
 
-    /* first try to serve existing idle items */
+	/* first try to serve existing idle items */
 
-    while (!idle.empty()) {
-        const auto i = waiting.begin();
-        if (i == waiting.end())
-            return;
+	while (!idle.empty()) {
+		const auto i = waiting.begin();
+		if (i == waiting.end())
+			return;
 
-        auto &w = *i;
+		auto &w = *i;
 
-        waiting.erase(i);
+		waiting.erase(i);
 
-        if (GetIdle(w.handler))
-            w.Destroy();
-        else
-            /* didn't work (probably because borrowing the item has
-               failed) - re-add to "waiting" list */
-            waiting.push_front(w);
-    }
+		if (GetIdle(w.handler))
+			w.Destroy();
+		else
+			/* didn't work (probably because borrowing the item has
+			   failed) - re-add to "waiting" list */
+			waiting.push_front(w);
+	}
 
-    /* if we're below the limit, create a bunch of new items */
+	/* if we're below the limit, create a bunch of new items */
 
-    for (unsigned i = limit - busy.size() - num_create;
-         busy.size() + num_create < limit && i > 0 && !waiting.empty();
-         --i) {
-        auto &w = waiting.front();
-        waiting.pop_front();
+	for (unsigned i = limit - busy.size() - num_create;
+	     busy.size() + num_create < limit && i > 0 && !waiting.empty();
+	     --i) {
+		auto &w = waiting.front();
+		waiting.pop_front();
 
-        GetCreate(std::move(w.request),
-                  w.handler,
-                  w.cancel_ptr);
-        w.Destroy();
-    }
+		GetCreate(std::move(w.request),
+			  w.handler,
+			  w.cancel_ptr);
+		w.Destroy();
+	}
 }
 
 void
 Stock::ScheduleRetryWaiting() noexcept
 {
-    if (limit > 0 && !waiting.empty() &&
-        busy.size() - num_create < limit)
-        retry_event.Schedule();
+	if (limit > 0 && !waiting.empty() &&
+	    busy.size() - num_create < limit)
+		retry_event.Schedule();
 }
 
 
@@ -181,26 +181,26 @@ Stock::ScheduleRetryWaiting() noexcept
 void
 Stock::ClearIdle() noexcept
 {
-    logger.Format(5, "ClearIdle num_idle=%zu num_busy=%zu",
-                  idle.size(), busy.size());
+	logger.Format(5, "ClearIdle num_idle=%zu num_busy=%zu",
+		      idle.size(), busy.size());
 
-    if (idle.size() > max_idle)
-        UnscheduleCleanup();
+	if (idle.size() > max_idle)
+		UnscheduleCleanup();
 
-    idle.clear_and_dispose(DeleteDisposer());
+	idle.clear_and_dispose(DeleteDisposer());
 }
 
 void
 Stock::ClearEventCallback() noexcept
 {
-    logger.Format(6, "ClearEvent may_clear=%d", may_clear);
+	logger.Format(6, "ClearEvent may_clear=%d", may_clear);
 
-    if (may_clear)
-        ClearIdle();
+	if (may_clear)
+		ClearIdle();
 
-    may_clear = true;
-    ScheduleClear();
-    CheckEmpty();
+	may_clear = true;
+	ScheduleClear();
+	CheckEmpty();
 }
 
 
@@ -210,248 +210,248 @@ Stock::ClearEventCallback() noexcept
  */
 
 Stock::Stock(EventLoop &event_loop, StockClass &_cls,
-             const char *_name, unsigned _limit, unsigned _max_idle,
-             StockHandler *_handler) noexcept
-    :cls(_cls),
-     name(_name),
-     limit(_limit), max_idle(_max_idle),
-     handler(_handler),
-     logger(name),
-     retry_event(event_loop, BIND_THIS_METHOD(RetryWaiting)),
-     empty_event(event_loop, BIND_THIS_METHOD(CheckEmpty)),
-     cleanup_event(event_loop, BIND_THIS_METHOD(CleanupEventCallback)),
-     clear_event(event_loop, BIND_THIS_METHOD(ClearEventCallback))
+	     const char *_name, unsigned _limit, unsigned _max_idle,
+	     StockHandler *_handler) noexcept
+	:cls(_cls),
+	 name(_name),
+	 limit(_limit), max_idle(_max_idle),
+	 handler(_handler),
+	 logger(name),
+	 retry_event(event_loop, BIND_THIS_METHOD(RetryWaiting)),
+	 empty_event(event_loop, BIND_THIS_METHOD(CheckEmpty)),
+	 cleanup_event(event_loop, BIND_THIS_METHOD(CleanupEventCallback)),
+	 clear_event(event_loop, BIND_THIS_METHOD(ClearEventCallback))
 {
-    assert(max_idle > 0);
+	assert(max_idle > 0);
 
-    ScheduleClear();
+	ScheduleClear();
 }
 
 Stock::~Stock() noexcept
 {
-    assert(num_create == 0);
+	assert(num_create == 0);
 
-    /* must not delete the Stock when there are busy items left */
-    assert(busy.empty());
+	/* must not delete the Stock when there are busy items left */
+	assert(busy.empty());
 
-    retry_event.Cancel();
-    empty_event.Cancel();
-    cleanup_event.Cancel();
-    clear_event.Cancel();
+	retry_event.Cancel();
+	empty_event.Cancel();
+	cleanup_event.Cancel();
+	clear_event.Cancel();
 
-    ClearIdle();
+	ClearIdle();
 }
 
 bool
 Stock::GetIdle(StockGetHandler &get_handler) noexcept
 {
-    unsigned retry_unclean = idle.size();
+	unsigned retry_unclean = idle.size();
 
-    auto i = idle.begin();
-    const auto end = idle.end();
-    while (i != end) {
-        StockItem &item = *i;
-        assert(item.is_idle);
+	auto i = idle.begin();
+	const auto end = idle.end();
+	while (i != end) {
+		StockItem &item = *i;
+		assert(item.is_idle);
 
-        i = idle.erase(i);
+		i = idle.erase(i);
 
-        if (item.unclean && retry_unclean > 0) {
-            /* postpone reusal of this item until it's "clean" */
-            // TODO: replace this kludge
-            --retry_unclean;
-            idle.push_back(item);
-            continue;
-        }
+		if (item.unclean && retry_unclean > 0) {
+			/* postpone reusal of this item until it's "clean" */
+			// TODO: replace this kludge
+			--retry_unclean;
+			idle.push_back(item);
+			continue;
+		}
 
-        if (idle.size() == max_idle)
-            UnscheduleCleanup();
+		if (idle.size() == max_idle)
+			UnscheduleCleanup();
 
-        if (item.Borrow()) {
+		if (item.Borrow()) {
 #ifndef NDEBUG
-            item.is_idle = false;
+			item.is_idle = false;
 #endif
 
-            busy.push_front(item);
+			busy.push_front(item);
 
-            get_handler.OnStockItemReady(item);
-            return true;
-        }
+			get_handler.OnStockItemReady(item);
+			return true;
+		}
 
-        delete &item;
-    }
+		delete &item;
+	}
 
-    ScheduleCheckEmpty();
-    return false;
+	ScheduleCheckEmpty();
+	return false;
 }
 
 void
 Stock::GetCreate(StockRequest request,
-                 StockGetHandler &get_handler,
-                 CancellablePointer &cancel_ptr) noexcept
+		 StockGetHandler &get_handler,
+		 CancellablePointer &cancel_ptr) noexcept
 {
-    ++num_create;
+	++num_create;
 
-    try {
-        cls.Create({*this, get_handler},
-                   std::move(request), cancel_ptr);
-    } catch (...) {
-        ItemCreateError(get_handler, std::current_exception());
-    }
+	try {
+		cls.Create({*this, get_handler},
+			   std::move(request), cancel_ptr);
+	} catch (...) {
+		ItemCreateError(get_handler, std::current_exception());
+	}
 }
 
 void
 Stock::Get(StockRequest request,
-           StockGetHandler &get_handler,
-           CancellablePointer &cancel_ptr) noexcept
+	   StockGetHandler &get_handler,
+	   CancellablePointer &cancel_ptr) noexcept
 {
-    may_clear = false;
+	may_clear = false;
 
-    if (GetIdle(get_handler))
-        return;
+	if (GetIdle(get_handler))
+		return;
 
-    if (limit > 0 && busy.size() + num_create >= limit) {
-        /* item limit reached: wait for an item to return */
-        auto w = new Waiting(*this, std::move(request),
-                             get_handler, cancel_ptr);
-        waiting.push_front(*w);
-        return;
-    }
+	if (limit > 0 && busy.size() + num_create >= limit) {
+		/* item limit reached: wait for an item to return */
+		auto w = new Waiting(*this, std::move(request),
+				     get_handler, cancel_ptr);
+		waiting.push_front(*w);
+		return;
+	}
 
-    GetCreate(std::move(request), get_handler, cancel_ptr);
+	GetCreate(std::move(request), get_handler, cancel_ptr);
 }
 
 StockItem *
 Stock::GetNow(StockRequest request)
 {
-    struct NowRequest final : public StockGetHandler {
+	struct NowRequest final : public StockGetHandler {
 #ifndef NDEBUG
-        bool created = false;
+		bool created = false;
 #endif
-        StockItem *item;
-        std::exception_ptr error;
+		StockItem *item;
+		std::exception_ptr error;
 
-        /* virtual methods from class StockGetHandler */
-        void OnStockItemReady(StockItem &_item) noexcept override {
+		/* virtual methods from class StockGetHandler */
+		void OnStockItemReady(StockItem &_item) noexcept override {
 #ifndef NDEBUG
-            created = true;
-#endif
-
-            item = &_item;
-        }
-
-        void OnStockItemError(std::exception_ptr ep) noexcept override {
-#ifndef NDEBUG
-            created = true;
+			created = true;
 #endif
 
-            error = ep;
-        }
-    };
+			item = &_item;
+		}
 
-    NowRequest data;
-    CancellablePointer cancel_ptr;
+		void OnStockItemError(std::exception_ptr ep) noexcept override {
+#ifndef NDEBUG
+			created = true;
+#endif
 
-    /* cannot call this on a limited stock */
-    assert(limit == 0);
+			error = ep;
+		}
+	};
 
-    Get(std::move(request), data, cancel_ptr);
-    assert(data.created);
+	NowRequest data;
+	CancellablePointer cancel_ptr;
 
-    if (data.error)
-        std::rethrow_exception(data.error);
+	/* cannot call this on a limited stock */
+	assert(limit == 0);
 
-    return data.item;
+	Get(std::move(request), data, cancel_ptr);
+	assert(data.created);
+
+	if (data.error)
+		std::rethrow_exception(data.error);
+
+	return data.item;
 }
 
 void
 Stock::ItemCreateSuccess(StockItem &item) noexcept
 {
-    assert(num_create > 0);
-    --num_create;
+	assert(num_create > 0);
+	--num_create;
 
-    busy.push_front(item);
+	busy.push_front(item);
 
-    item.handler.OnStockItemReady(item);
+	item.handler.OnStockItemReady(item);
 }
 
 void
 Stock::ItemCreateError(StockItem &item, std::exception_ptr ep) noexcept
 {
-    ItemCreateError(item.handler, ep);
-    delete &item;
+	ItemCreateError(item.handler, ep);
+	delete &item;
 }
 
 void
 Stock::ItemCreateAborted(StockItem &item) noexcept
 {
-    ItemCreateAborted();
-    delete &item;
+	ItemCreateAborted();
+	delete &item;
 }
 
 void
 Stock::ItemCreateError(StockGetHandler &get_handler,
-                       std::exception_ptr ep) noexcept
+		       std::exception_ptr ep) noexcept
 {
-    assert(num_create > 0);
-    --num_create;
+	assert(num_create > 0);
+	--num_create;
 
-    get_handler.OnStockItemError(ep);
+	get_handler.OnStockItemError(ep);
 
-    ScheduleCheckEmpty();
-    ScheduleRetryWaiting();
+	ScheduleCheckEmpty();
+	ScheduleRetryWaiting();
 }
 
 void
 Stock::ItemCreateAborted() noexcept
 {
-    assert(num_create > 0);
-    --num_create;
+	assert(num_create > 0);
+	--num_create;
 
-    ScheduleCheckEmpty();
-    ScheduleRetryWaiting();
+	ScheduleCheckEmpty();
+	ScheduleRetryWaiting();
 }
 
 void
 Stock::Put(StockItem &item, bool destroy) noexcept
 {
-    assert(!item.is_idle);
-    assert(&item.stock == this);
+	assert(!item.is_idle);
+	assert(&item.stock == this);
 
-    may_clear = false;
+	may_clear = false;
 
-    assert(!busy.empty());
+	assert(!busy.empty());
 
-    busy.erase(busy.iterator_to(item));
+	busy.erase(busy.iterator_to(item));
 
-    if (destroy || item.fade || !item.Release()) {
-        delete &item;
-        ScheduleCheckEmpty();
-    } else {
+	if (destroy || item.fade || !item.Release()) {
+		delete &item;
+		ScheduleCheckEmpty();
+	} else {
 #ifndef NDEBUG
-        item.is_idle = true;
+		item.is_idle = true;
 #endif
 
-        if (idle.size() == max_idle)
-            ScheduleCleanup();
+		if (idle.size() == max_idle)
+			ScheduleCleanup();
 
-        idle.push_front(item);
-    }
+		idle.push_front(item);
+	}
 
-    ScheduleRetryWaiting();
+	ScheduleRetryWaiting();
 }
 
 void
 Stock::ItemIdleDisconnect(StockItem &item) noexcept
 {
-    assert(item.is_idle);
+	assert(item.is_idle);
 
-    assert(!idle.empty());
+	assert(!idle.empty());
 
-    idle.erase(idle.iterator_to(item));
+	idle.erase(idle.iterator_to(item));
 
-    if (idle.size() == max_idle)
-        UnscheduleCleanup();
+	if (idle.size() == max_idle)
+		UnscheduleCleanup();
 
-    delete &item;
-    ScheduleCheckEmpty();
+	delete &item;
+	ScheduleCheckEmpty();
 }

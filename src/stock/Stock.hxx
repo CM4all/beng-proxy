@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_STOCK_HXX
-#define BENG_PROXY_STOCK_HXX
+#pragma once
 
 #include "Item.hxx"
 #include "Request.hxx"
@@ -57,11 +56,11 @@ class StockGetHandler;
 
 class StockHandler {
 public:
-    /**
-     * The stock has become empty.  It is safe to delete it from
-     * within this method.
-     */
-    virtual void OnStockEmpty(Stock &stock) noexcept = 0;
+	/**
+	 * The stock has become empty.  It is safe to delete it from
+	 * within this method.
+	 */
+	virtual void OnStockEmpty(Stock &stock) noexcept = 0;
 };
 
 /**
@@ -70,219 +69,217 @@ public:
  * A #Stock instance holds a number of idle objects.
  */
 class Stock {
-    StockClass &cls;
+	StockClass &cls;
 
-    const std::string name;
+	const std::string name;
 
-    /**
-     * The maximum number of items in this stock.  If any more items
-     * are requested, they are put into the #waiting list, which gets
-     * checked as soon as Put() is called.
-     */
-    const unsigned limit;
+	/**
+	 * The maximum number of items in this stock.  If any more items
+	 * are requested, they are put into the #waiting list, which gets
+	 * checked as soon as Put() is called.
+	 */
+	const unsigned limit;
 
-    /**
-     * The maximum number of permanent idle items.  If there are more
-     * than that, a timer will incrementally kill excess items.
-     */
-    const unsigned max_idle;
+	/**
+	 * The maximum number of permanent idle items.  If there are more
+	 * than that, a timer will incrementally kill excess items.
+	 */
+	const unsigned max_idle;
 
-    StockHandler *const handler;
+	StockHandler *const handler;
 
-    const Logger logger;
+	const Logger logger;
 
-    /**
-     * This event is used to move the "retry waiting" code out of the
-     * current stack, to invoke the handler met hod in a safe
-     * environment.
-     */
-    DeferEvent retry_event;
+	/**
+	 * This event is used to move the "retry waiting" code out of the
+	 * current stack, to invoke the handler met hod in a safe
+	 * environment.
+	 */
+	DeferEvent retry_event;
 
-    /**
-     * This event is used to move the "empty" check out of the current
-     * stack, to invoke the handler method in a safe environment.
-     */
-    DeferEvent empty_event;
+	/**
+	 * This event is used to move the "empty" check out of the current
+	 * stack, to invoke the handler method in a safe environment.
+	 */
+	DeferEvent empty_event;
 
-    TimerEvent cleanup_event;
-    TimerEvent clear_event;
+	TimerEvent cleanup_event;
+	TimerEvent clear_event;
 
-    typedef boost::intrusive::list<StockItem,
-                                   boost::intrusive::constant_time_size<true>> ItemList;
+	typedef boost::intrusive::list<StockItem,
+				       boost::intrusive::constant_time_size<true>> ItemList;
 
-    ItemList idle;
+	ItemList idle;
 
-    ItemList busy;
+	ItemList busy;
 
-    unsigned num_create = 0;
+	unsigned num_create = 0;
 
-    struct Waiting final
-        : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
-          Cancellable {
+	struct Waiting final
+		: boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+		  Cancellable {
 
-        Stock &stock;
+		Stock &stock;
 
-        StockRequest request;
+		StockRequest request;
 
-        StockGetHandler &handler;
+		StockGetHandler &handler;
 
-        CancellablePointer &cancel_ptr;
+		CancellablePointer &cancel_ptr;
 
-        Waiting(Stock &_stock, StockRequest &&_request,
-                StockGetHandler &_handler,
-                CancellablePointer &_cancel_ptr) noexcept;
+		Waiting(Stock &_stock, StockRequest &&_request,
+			StockGetHandler &_handler,
+			CancellablePointer &_cancel_ptr) noexcept;
 
-        void Destroy() noexcept;
+		void Destroy() noexcept;
 
-        /* virtual methods from class Cancellable */
-        void Cancel() noexcept override;
-    };
+		/* virtual methods from class Cancellable */
+		void Cancel() noexcept override;
+	};
 
-    typedef boost::intrusive::list<Waiting,
-                                   boost::intrusive::constant_time_size<false>> WaitingList;
+	typedef boost::intrusive::list<Waiting,
+				       boost::intrusive::constant_time_size<false>> WaitingList;
 
-    WaitingList waiting;
+	WaitingList waiting;
 
-    bool may_clear = false;
-
-public:
-    /**
-     * @param name may be something like a hostname:port pair for HTTP
-     * client connections - it is used for logging, and as a key by
-     * the #MapStock class
-     */
-    gcc_nonnull(4)
-    Stock(EventLoop &event_loop, StockClass &cls,
-          const char *name, unsigned limit, unsigned max_idle,
-          StockHandler *handler=nullptr) noexcept;
-
-    ~Stock() noexcept;
-
-    Stock(const Stock &) = delete;
-    Stock &operator=(const Stock &) = delete;
-
-    auto &GetEventLoop() const noexcept {
-        return retry_event.GetEventLoop();
-    }
-
-    StockClass &GetClass() noexcept {
-        return cls;
-    }
-
-    const char *GetName() const noexcept {
-        return name.c_str();
-    }
-
-    /**
-     * Returns true if there are no items in the stock - neither idle
-     * nor busy.
-     */
-    gcc_pure
-    bool IsEmpty() const noexcept {
-        return idle.empty() && busy.empty() && num_create == 0;
-    }
-
-    /**
-     * Obtain statistics.
-     */
-    void AddStats(StockStats &data) const noexcept {
-        data.busy += busy.size();
-        data.idle += idle.size();
-    }
-
-    /**
-     * Destroy all idle items and don't reuse any of the current busy
-     * items.
-     */
-    void FadeAll() noexcept;
-
-    /**
-     * Destroy all matching idle items and don't reuse any of the
-     * matching busy items.
-     */
-    template<typename P>
-    void FadeIf(P &&predicate) noexcept {
-        for (auto &i : busy)
-            if (predicate(i))
-                i.fade = true;
-
-        ClearIdleIf(std::forward<P>(predicate));
-
-        ScheduleCheckEmpty();
-        // TODO: restart the "num_create" list?
-    }
-
-private:
-    /**
-     * Check if the stock has become empty, and invoke the handler.
-     */
-    void CheckEmpty() noexcept;
-    void ScheduleCheckEmpty() noexcept;
-
-    void ScheduleClear() noexcept {
-        clear_event.Schedule(std::chrono::minutes(1));
-    }
-
-    void ClearIdle() noexcept;
-
-    template<typename P>
-    void ClearIdleIf(P &&predicate) noexcept {
-        idle.remove_and_dispose_if(std::forward<P>(predicate),
-                                   DeleteDisposer());
-
-        if (idle.size() <= max_idle)
-            UnscheduleCleanup();
-    }
-
-    bool GetIdle(StockGetHandler &handler) noexcept;
-    void GetCreate(StockRequest request,
-                   StockGetHandler &get_handler,
-                   CancellablePointer &cancel_ptr) noexcept;
+	bool may_clear = false;
 
 public:
-    void Get(StockRequest request,
-             StockGetHandler &get_handler,
-             CancellablePointer &cancel_ptr) noexcept;
+	/**
+	 * @param name may be something like a hostname:port pair for HTTP
+	 * client connections - it is used for logging, and as a key by
+	 * the #MapStock class
+	 */
+	gcc_nonnull(4)
+	Stock(EventLoop &event_loop, StockClass &cls,
+	      const char *name, unsigned limit, unsigned max_idle,
+	      StockHandler *handler=nullptr) noexcept;
 
-    /**
-     * Obtains an item from the stock without going through the
-     * callback.  This requires a stock class which finishes the
-     * create() method immediately.
-     *
-     * Throws exception on error.
-     */
-    StockItem *GetNow(StockRequest request);
+	~Stock() noexcept;
 
-    void Put(StockItem &item, bool destroy) noexcept;
+	Stock(const Stock &) = delete;
+	Stock &operator=(const Stock &) = delete;
 
-    void ItemIdleDisconnect(StockItem &item) noexcept;
+	auto &GetEventLoop() const noexcept {
+		return retry_event.GetEventLoop();
+	}
 
-    void ItemCreateSuccess(StockItem &item) noexcept;
-    void ItemCreateError(StockItem &item, std::exception_ptr ep) noexcept;
-    void ItemCreateAborted(StockItem &item) noexcept;
+	StockClass &GetClass() noexcept {
+		return cls;
+	}
 
-    void ItemCreateError(StockGetHandler &get_handler,
-                         std::exception_ptr ep) noexcept;
-    void ItemCreateAborted() noexcept;
+	const char *GetName() const noexcept {
+		return name.c_str();
+	}
 
-    /**
-     * Retry the waiting requests.  This is called after the number of
-     * busy items was reduced.
-     */
-    void RetryWaiting() noexcept;
-    void ScheduleRetryWaiting() noexcept;
+	/**
+	 * Returns true if there are no items in the stock - neither idle
+	 * nor busy.
+	 */
+	gcc_pure
+	bool IsEmpty() const noexcept {
+		return idle.empty() && busy.empty() && num_create == 0;
+	}
+
+	/**
+	 * Obtain statistics.
+	 */
+	void AddStats(StockStats &data) const noexcept {
+		data.busy += busy.size();
+		data.idle += idle.size();
+	}
+
+	/**
+	 * Destroy all idle items and don't reuse any of the current busy
+	 * items.
+	 */
+	void FadeAll() noexcept;
+
+	/**
+	 * Destroy all matching idle items and don't reuse any of the
+	 * matching busy items.
+	 */
+	template<typename P>
+	void FadeIf(P &&predicate) noexcept {
+		for (auto &i : busy)
+			if (predicate(i))
+				i.fade = true;
+
+		ClearIdleIf(std::forward<P>(predicate));
+
+		ScheduleCheckEmpty();
+		// TODO: restart the "num_create" list?
+	}
 
 private:
-    void ScheduleCleanup() noexcept {
-        cleanup_event.Schedule(std::chrono::seconds(20));
-    }
+	/**
+	 * Check if the stock has become empty, and invoke the handler.
+	 */
+	void CheckEmpty() noexcept;
+	void ScheduleCheckEmpty() noexcept;
 
-    void UnscheduleCleanup() noexcept {
-        cleanup_event.Cancel();
-    }
+	void ScheduleClear() noexcept {
+		clear_event.Schedule(std::chrono::minutes(1));
+	}
 
-    void CleanupEventCallback() noexcept;
-    void ClearEventCallback() noexcept;
+	void ClearIdle() noexcept;
+
+	template<typename P>
+	void ClearIdleIf(P &&predicate) noexcept {
+		idle.remove_and_dispose_if(std::forward<P>(predicate),
+					   DeleteDisposer());
+
+		if (idle.size() <= max_idle)
+			UnscheduleCleanup();
+	}
+
+	bool GetIdle(StockGetHandler &handler) noexcept;
+	void GetCreate(StockRequest request,
+		       StockGetHandler &get_handler,
+		       CancellablePointer &cancel_ptr) noexcept;
+
+public:
+	void Get(StockRequest request,
+		 StockGetHandler &get_handler,
+		 CancellablePointer &cancel_ptr) noexcept;
+
+	/**
+	 * Obtains an item from the stock without going through the
+	 * callback.  This requires a stock class which finishes the
+	 * create() method immediately.
+	 *
+	 * Throws exception on error.
+	 */
+	StockItem *GetNow(StockRequest request);
+
+	void Put(StockItem &item, bool destroy) noexcept;
+
+	void ItemIdleDisconnect(StockItem &item) noexcept;
+
+	void ItemCreateSuccess(StockItem &item) noexcept;
+	void ItemCreateError(StockItem &item, std::exception_ptr ep) noexcept;
+	void ItemCreateAborted(StockItem &item) noexcept;
+
+	void ItemCreateError(StockGetHandler &get_handler,
+			     std::exception_ptr ep) noexcept;
+	void ItemCreateAborted() noexcept;
+
+	/**
+	 * Retry the waiting requests.  This is called after the number of
+	 * busy items was reduced.
+	 */
+	void RetryWaiting() noexcept;
+	void ScheduleRetryWaiting() noexcept;
+
+private:
+	void ScheduleCleanup() noexcept {
+		cleanup_event.Schedule(std::chrono::seconds(20));
+	}
+
+	void UnscheduleCleanup() noexcept {
+		cleanup_event.Cancel();
+	}
+
+	void CleanupEventCallback() noexcept;
+	void ClearEventCallback() noexcept;
 };
-
-#endif

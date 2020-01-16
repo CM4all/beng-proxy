@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_MULTI_STOCK_HXX
-#define BENG_PROXY_MULTI_STOCK_HXX
+#pragma once
 
 #include "Request.hxx"
 #include "lease.hxx"
@@ -52,157 +51,155 @@ struct StockStats;
  * #StockItem.
  */
 class MultiStock {
-    class Item
-        : public boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
+	class Item
+		: public boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
 
-        struct Lease final : ::Lease {
-            static constexpr auto link_mode = boost::intrusive::normal_link;
-            typedef boost::intrusive::link_mode<link_mode> LinkMode;
-            typedef boost::intrusive::list_member_hook<LinkMode> SiblingsListHook;
+		struct Lease final : ::Lease {
+			static constexpr auto link_mode = boost::intrusive::normal_link;
+			typedef boost::intrusive::link_mode<link_mode> LinkMode;
+			typedef boost::intrusive::list_member_hook<LinkMode> SiblingsListHook;
 
-            SiblingsListHook siblings;
+			SiblingsListHook siblings;
 
-            typedef boost::intrusive::member_hook<Lease,
-                                                  Lease::SiblingsListHook,
-                                                  &Lease::siblings> SiblingsListMemberHook;
+			typedef boost::intrusive::member_hook<Lease,
+							      Lease::SiblingsListHook,
+							      &Lease::siblings> SiblingsListMemberHook;
 
-            Item &item;
+			Item &item;
 
-            Lease(Item &_item):item(_item) {}
+			Lease(Item &_item):item(_item) {}
 
-            /* virtual methods from class Lease */
-            void ReleaseLease(bool _reuse) noexcept override {
-                item.DeleteLease(this, _reuse);
-            }
-        };
+			/* virtual methods from class Lease */
+			void ReleaseLease(bool _reuse) noexcept override {
+				item.DeleteLease(this, _reuse);
+			}
+		};
 
-        StockItem &item;
+		StockItem &item;
 
-        boost::intrusive::list<Lease, Lease::SiblingsListMemberHook,
-                               boost::intrusive::constant_time_size<false>> leases;
+		boost::intrusive::list<Lease, Lease::SiblingsListMemberHook,
+				       boost::intrusive::constant_time_size<false>> leases;
 
-        unsigned remaining_leases;
+		unsigned remaining_leases;
 
-        bool reuse = true;
+		bool reuse = true;
 
-    public:
-        Item(unsigned _max_leases, StockItem &_item)
-            :item(_item), remaining_leases(_max_leases) {}
+	public:
+		Item(unsigned _max_leases, StockItem &_item)
+			:item(_item), remaining_leases(_max_leases) {}
 
-        Item(const Item &) = delete;
-        Item &operator=(const Item &) = delete;
+		Item(const Item &) = delete;
+		Item &operator=(const Item &) = delete;
 
-        ~Item();
+		~Item();
 
-        gcc_pure
-        const char *GetKey() const;
+		gcc_pure
+		const char *GetKey() const;
 
-        bool IsFull() const {
-            return remaining_leases == 0;
-        }
+		bool IsFull() const {
+			return remaining_leases == 0;
+		}
 
-        bool CanUse() const {
-            return reuse && !IsFull();
-        }
+		bool CanUse() const {
+			return reuse && !IsFull();
+		}
 
-        void Fade() {
-            reuse = false;
-        }
+		void Fade() {
+			reuse = false;
+		}
 
-        template<typename P>
-        void FadeIf(P &&predicate) {
-            if (predicate(item))
-                Fade();
-        }
+		template<typename P>
+		void FadeIf(P &&predicate) {
+			if (predicate(item))
+				Fade();
+		}
 
-    private:
-        Lease &AddLease() {
-            Lease *lease = new Lease(*this);
-            leases.push_front(*lease);
-            --remaining_leases;
-            return *lease;
-        }
+	private:
+		Lease &AddLease() {
+			Lease *lease = new Lease(*this);
+			leases.push_front(*lease);
+			--remaining_leases;
+			return *lease;
+		}
 
-    public:
-        void AddLease(StockGetHandler &handler,
-                      LeasePtr &lease_ref);
+	public:
+		void AddLease(StockGetHandler &handler,
+			      LeasePtr &lease_ref);
 
-        StockItem *AddLease(LeasePtr &lease_ref) {
-            lease_ref.Set(AddLease());
-            return &item;
-        }
+		StockItem *AddLease(LeasePtr &lease_ref) {
+			lease_ref.Set(AddLease());
+			return &item;
+		}
 
-        void DeleteLease(Lease *lease, bool _reuse);
+		void DeleteLease(Lease *lease, bool _reuse);
 
-        class Compare {
-            gcc_pure
-            bool Less(const char *a, const char *b) const;
+		class Compare {
+			gcc_pure
+			bool Less(const char *a, const char *b) const;
 
-        public:
-            gcc_pure
-            bool operator()(const char *a, const Item &b) const {
-                return Less(a, b.GetKey());
-            }
+		public:
+			gcc_pure
+			bool operator()(const char *a, const Item &b) const {
+				return Less(a, b.GetKey());
+			}
 
-            gcc_pure
-            bool operator()(const Item &a, const char *b) const {
-                return Less(a.GetKey(), b);
-            }
+			gcc_pure
+			bool operator()(const Item &a, const char *b) const {
+				return Less(a.GetKey(), b);
+			}
 
-            gcc_pure
-            bool operator()(const Item &a, const Item &b) const {
-                return Less(a.GetKey(), b.GetKey());
-            }
-        };
-    };
+			gcc_pure
+			bool operator()(const Item &a, const Item &b) const {
+				return Less(a.GetKey(), b.GetKey());
+			}
+		};
+	};
 
-    typedef boost::intrusive::multiset<Item,
-                                       boost::intrusive::compare<Item::Compare>,
-                                       boost::intrusive::constant_time_size<false>> ItemMap;
-    ItemMap items;
+	typedef boost::intrusive::multiset<Item,
+					   boost::intrusive::compare<Item::Compare>,
+					   boost::intrusive::constant_time_size<false>> ItemMap;
+	ItemMap items;
 
-    StockMap &hstock;
+	StockMap &hstock;
 
 public:
-    explicit MultiStock(StockMap &_hstock)
-        :hstock(_hstock) {}
+	explicit MultiStock(StockMap &_hstock)
+		:hstock(_hstock) {}
 
-    MultiStock(const MultiStock &) = delete;
-    MultiStock &operator=(const MultiStock &) = delete;
+	MultiStock(const MultiStock &) = delete;
+	MultiStock &operator=(const MultiStock &) = delete;
 
-    /**
-     * @see Stock::FadeAll()
-     */
-    void FadeAll() {
-        for (auto &i : items)
-            i.Fade();
-    }
+	/**
+	 * @see Stock::FadeAll()
+	 */
+	void FadeAll() {
+		for (auto &i : items)
+			i.Fade();
+	}
 
-    /**
-     * @see Stock::FadeIf()
-     */
-    template<typename P>
-    void FadeIf(P &&predicate) {
-        for (auto &i : items)
-            i.FadeIf(std::forward<P>(predicate));
-    }
+	/**
+	 * @see Stock::FadeIf()
+	 */
+	template<typename P>
+	void FadeIf(P &&predicate) {
+		for (auto &i : items)
+			i.FadeIf(std::forward<P>(predicate));
+	}
 
-    /**
-     * Obtains an item from the stock without going through the
-     * callback.  This requires a stock class which finishes the
-     * StockClass::Create() method immediately.
-     *
-     * Throws exception on error.
-     *
-     * @param max_leases the maximum number of leases per stock_item
-     */
-    StockItem *GetNow(const char *uri, StockRequest request,
-                      unsigned max_leases,
-                      LeasePtr &lease_ref);
+	/**
+	 * Obtains an item from the stock without going through the
+	 * callback.  This requires a stock class which finishes the
+	 * StockClass::Create() method immediately.
+	 *
+	 * Throws exception on error.
+	 *
+	 * @param max_leases the maximum number of leases per stock_item
+	 */
+	StockItem *GetNow(const char *uri, StockRequest request,
+			  unsigned max_leases,
+			  LeasePtr &lease_ref);
 
 private:
-    Item &MakeItem(const char *uri, StockRequest request,
-                   unsigned max_leases);
+	Item &MakeItem(const char *uri, StockRequest request,
+		       unsigned max_leases);
 };
-
-#endif
