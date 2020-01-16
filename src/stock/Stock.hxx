@@ -92,7 +92,7 @@ class Stock {
 
 	/**
 	 * This event is used to move the "retry waiting" code out of the
-	 * current stack, to invoke the handler met hod in a safe
+	 * current stack, to invoke the handler method in a safe
 	 * environment.
 	 */
 	DeferEvent retry_event;
