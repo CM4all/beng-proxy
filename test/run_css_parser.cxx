@@ -52,7 +52,7 @@ static bool should_exit;
  */
 
 static void
-my_parser_class_name(const CssParserValue *name, void *ctx)
+my_parser_class_name(const CssParserValue *name, void *ctx) noexcept
 {
     (void)ctx;
 
@@ -60,7 +60,7 @@ my_parser_class_name(const CssParserValue *name, void *ctx)
 }
 
 static void
-my_parser_xml_id(const CssParserValue *id, void *ctx)
+my_parser_xml_id(const CssParserValue *id, void *ctx) noexcept
 {
     (void)ctx;
 
@@ -70,7 +70,7 @@ my_parser_xml_id(const CssParserValue *id, void *ctx)
 static void
 my_parser_property_keyword(const char *name, StringView value,
                            gcc_unused off_t start, gcc_unused off_t end,
-                           void *ctx)
+                           void *ctx) noexcept
 {
     (void)ctx;
 
@@ -78,7 +78,7 @@ my_parser_property_keyword(const char *name, StringView value,
 }
 
 static void
-my_parser_url(const CssParserValue *url, void *ctx)
+my_parser_url(const CssParserValue *url, void *ctx) noexcept
 {
     (void)ctx;
 
@@ -86,7 +86,7 @@ my_parser_url(const CssParserValue *url, void *ctx)
 }
 
 static void
-my_parser_import(const CssParserValue *url, void *ctx)
+my_parser_import(const CssParserValue *url, void *ctx) noexcept
 {
     (void)ctx;
 
@@ -94,7 +94,7 @@ my_parser_import(const CssParserValue *url, void *ctx)
 }
 
 static void
-my_parser_eof(void *ctx, off_t length)
+my_parser_eof(void *ctx, off_t length) noexcept
 {
     (void)ctx;
     (void)length;
@@ -103,7 +103,7 @@ my_parser_eof(void *ctx, off_t length)
 }
 
 static gcc_noreturn void
-my_parser_error(std::exception_ptr ep, void *ctx)
+my_parser_error(std::exception_ptr ep, void *ctx) noexcept
 {
     (void)ctx;
 
