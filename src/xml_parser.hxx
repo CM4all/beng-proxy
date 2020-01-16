@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_XML_PARSER_HXX
-#define BENG_PROXY_XML_PARSER_HXX
+#pragma once
 
 #include "util/StringView.hxx"
 
@@ -43,53 +42,53 @@ struct pool;
 class UnusedIstreamPtr;
 
 enum class XmlParserTagType {
-    OPEN,
-    CLOSE,
-    SHORT,
+	OPEN,
+	CLOSE,
+	SHORT,
 
-    /** XML processing instruction */
-    PI,
+	/** XML processing instruction */
+	PI,
 };
 
 struct XmlParserTag {
-    off_t start, end;
-    StringView name;
-    XmlParserTagType type;
+	off_t start, end;
+	StringView name;
+	XmlParserTagType type;
 };
 
 struct XmlParserAttribute {
-    off_t name_start, value_start, value_end, end;
-    StringView name, value;
+	off_t name_start, value_start, value_end, end;
+	StringView name, value;
 };
 
 class XmlParserHandler {
 public:
-    /**
-     * A tag has started, and we already know its name.
-     *
-     * @return true if attributes should be parsed, false otherwise
-     * (saves CPU cycles; OnXmlTagFinished() is not called)
-     */
-    virtual bool OnXmlTagStart(const XmlParserTag &tag) noexcept = 0;
+	/**
+	 * A tag has started, and we already know its name.
+	 *
+	 * @return true if attributes should be parsed, false otherwise
+	 * (saves CPU cycles; OnXmlTagFinished() is not called)
+	 */
+	virtual bool OnXmlTagStart(const XmlParserTag &tag) noexcept = 0;
 
-    /**
-     * @return false if the #XmlParser has been closed inside the
-     * method
-     */
-    virtual bool OnXmlTagFinished(const XmlParserTag &tag) noexcept = 0;
+	/**
+	 * @return false if the #XmlParser has been closed inside the
+	 * method
+	 */
+	virtual bool OnXmlTagFinished(const XmlParserTag &tag) noexcept = 0;
 
-    virtual void OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept = 0;
-    virtual size_t OnXmlCdata(const char *p, size_t length, bool escaped,
-                              off_t start) noexcept = 0;
-    virtual void OnXmlEof(off_t length) noexcept = 0;
-    virtual void OnXmlError(std::exception_ptr ep) noexcept = 0;
+	virtual void OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept = 0;
+	virtual size_t OnXmlCdata(const char *p, size_t length, bool escaped,
+				  off_t start) noexcept = 0;
+	virtual void OnXmlEof(off_t length) noexcept = 0;
+	virtual void OnXmlError(std::exception_ptr ep) noexcept = 0;
 };
 
 class XmlParser;
 
 XmlParser *
 parser_new(struct pool &pool, UnusedIstreamPtr input,
-           XmlParserHandler &handler) noexcept;
+	   XmlParserHandler &handler) noexcept;
 
 /**
  * Close the parser object.  This function will not invoke
@@ -106,5 +105,3 @@ parser_read(XmlParser *parser) noexcept;
 
 void
 parser_script(XmlParser *parser) noexcept;
-
-#endif

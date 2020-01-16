@@ -30,12 +30,11 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#pragma once
+
 /*
  * CSS utility functions.
  */
-
-#ifndef BENG_PROXY_CSS_UTIL_HXX
-#define BENG_PROXY_CSS_UTIL_HXX
 
 #include "css_syntax.hxx"
 
@@ -47,19 +46,17 @@ gcc_pure
 static inline unsigned
 underscore_prefix(const char *p, const char *end)
 {
-    const char *q = p;
-    while (q < end && *q == '_')
-        ++q;
+	const char *q = p;
+	while (q < end && *q == '_')
+		++q;
 
-    return q - p;
+	return q - p;
 }
 
 gcc_pure
 static inline bool
 is_underscore_prefix(const char *p, const char *end)
 {
-    unsigned n = underscore_prefix(p, end);
-    return n == 2 || n == 3;
+	unsigned n = underscore_prefix(p, end);
+	return n == 2 || n == 3;
 }
-
-#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,32 +36,32 @@
 
 /** options for processor_new() */
 enum processor_options {
-    /** rewrite URLs */
-    PROCESSOR_REWRITE_URL = 0x1,
+	/** rewrite URLs */
+	PROCESSOR_REWRITE_URL = 0x1,
 
-    /** add prefix to marked CSS class names */
-    PROCESSOR_PREFIX_CSS_CLASS = 0x2,
+	/** add prefix to marked CSS class names */
+	PROCESSOR_PREFIX_CSS_CLASS = 0x2,
 
-    /**
-     * Default URI rewrite mode is base=widget mode=focus.
-     */
-    PROCESSOR_FOCUS_WIDGET = 0x4,
+	/**
+	 * Default URI rewrite mode is base=widget mode=focus.
+	 */
+	PROCESSOR_FOCUS_WIDGET = 0x4,
 
-    /** add prefix to marked XML ids */
-    PROCESSOR_PREFIX_XML_ID = 0x8,
+	/** add prefix to marked XML ids */
+	PROCESSOR_PREFIX_XML_ID = 0x8,
 
-    /** enable the c:embed element */
-    PROCESSOR_CONTAINER = 0x10,
+	/** enable the c:embed element */
+	PROCESSOR_CONTAINER = 0x10,
 
-    /**
-     * Invoke the CSS processor for "style" element contents?
-     */
-    PROCESSOR_STYLE = 0x20,
+	/**
+	 * Invoke the CSS processor for "style" element contents?
+	 */
+	PROCESSOR_STYLE = 0x20,
 
-    /**
-     * Allow this widget to embed more instances of its own class.
-     */
-    PROCESSOR_SELF_CONTAINER = 0x40,
+	/**
+	 * Allow this widget to embed more instances of its own class.
+	 */
+	PROCESSOR_SELF_CONTAINER = 0x40,
 };
 
 struct pool;
@@ -85,11 +85,11 @@ processable(const StringMap &headers);
  */
 UnusedIstreamPtr
 processor_process(struct pool &pool,
-                  const StopwatchPtr &parent_stopwatch,
-                  UnusedIstreamPtr istream,
-                  Widget &widget,
-                  WidgetContext &ctx,
-                  unsigned options);
+		  const StopwatchPtr &parent_stopwatch,
+		  UnusedIstreamPtr istream,
+		  Widget &widget,
+		  WidgetContext &ctx,
+		  unsigned options);
 
 /**
  * Process the specified istream, and find the specified widget.
@@ -99,10 +99,10 @@ processor_process(struct pool &pool,
  */
 void
 processor_lookup_widget(struct pool &pool,
-                        const StopwatchPtr &parent_stopwatch,
-                        UnusedIstreamPtr istream,
-                        Widget &widget, const char *id,
-                        WidgetContext &ctx,
-                        unsigned options,
-                        WidgetLookupHandler &handler,
-                        CancellablePointer &cancel_ptr);
+			const StopwatchPtr &parent_stopwatch,
+			UnusedIstreamPtr istream,
+			Widget &widget, const char *id,
+			WidgetContext &ctx,
+			unsigned options,
+			WidgetLookupHandler &handler,
+			CancellablePointer &cancel_ptr);

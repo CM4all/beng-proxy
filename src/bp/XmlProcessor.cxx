@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -74,314 +74,314 @@
 #include <string.h>
 
 enum uri_base {
-    URI_BASE_TEMPLATE,
-    URI_BASE_WIDGET,
-    URI_BASE_CHILD,
-    URI_BASE_PARENT,
+	URI_BASE_TEMPLATE,
+	URI_BASE_WIDGET,
+	URI_BASE_CHILD,
+	URI_BASE_PARENT,
 };
 
 struct uri_rewrite {
-    enum uri_base base;
-    RewriteUriMode mode;
+	enum uri_base base;
+	RewriteUriMode mode;
 
-    char view[64];
+	char view[64];
 };
 
 struct XmlProcessor final : PoolHolder, XmlParserHandler, Cancellable {
-    class CdataIstream final : public Istream {
-        friend struct XmlProcessor;
-        XmlProcessor &processor;
+	class CdataIstream final : public Istream {
+		friend struct XmlProcessor;
+		XmlProcessor &processor;
 
-    public:
-        explicit CdataIstream(XmlProcessor &_processor)
-            :Istream(_processor.pool), processor(_processor) {}
+	public:
+		explicit CdataIstream(XmlProcessor &_processor)
+			:Istream(_processor.pool), processor(_processor) {}
 
-        /* virtual methods from class Istream */
-        void _Read() noexcept override;
-        void _Close() noexcept override;
-    };
+		/* virtual methods from class Istream */
+		void _Read() noexcept override;
+		void _Close() noexcept override;
+	};
 
-    const StopwatchPtr stopwatch;
+	const StopwatchPtr stopwatch;
 
-    Widget &container;
-    const char *lookup_id;
-    WidgetContext &ctx;
-    const unsigned options;
+	Widget &container;
+	const char *lookup_id;
+	WidgetContext &ctx;
+	const unsigned options;
 
-    SharedPoolPtr<ReplaceIstreamControl> replace;
+	SharedPoolPtr<ReplaceIstreamControl> replace;
 
-    XmlParser *parser;
-    bool had_input;
+	XmlParser *parser;
+	bool had_input;
 
-    enum class Tag {
-        NONE,
-        IGNORE,
-        OTHER,
-        WIDGET,
-        WIDGET_PATH_INFO,
-        WIDGET_PARAM,
-        WIDGET_HEADER,
-        WIDGET_VIEW,
-        A,
-        FORM,
-        IMG,
-        SCRIPT,
-        PARAM,
-        REWRITE_URI,
+	enum class Tag {
+		NONE,
+		IGNORE,
+		OTHER,
+		WIDGET,
+		WIDGET_PATH_INFO,
+		WIDGET_PARAM,
+		WIDGET_HEADER,
+		WIDGET_VIEW,
+		A,
+		FORM,
+		IMG,
+		SCRIPT,
+		PARAM,
+		REWRITE_URI,
 
-        /**
-         * The "meta" element.  This may morph into #META_REFRESH when
-         * an http-equiv="refresh" attribute is found.
-         */
-        META,
+		/**
+		 * The "meta" element.  This may morph into #META_REFRESH when
+		 * an http-equiv="refresh" attribute is found.
+		 */
+		META,
 
-        META_REFRESH,
+		META_REFRESH,
 
-        /**
-         * A "meta" element whose "content" attribute contains a URL
-         * to be rewritten, e.g. <meta property="og:image" content="...">
-         */
-        META_URI_CONTENT,
+		/**
+		 * A "meta" element whose "content" attribute contains a URL
+		 * to be rewritten, e.g. <meta property="og:image" content="...">
+		 */
+		META_URI_CONTENT,
 
-        /**
-         * The "style" element.  This value later morphs into
-         * #STYLE_PROCESS if #PROCESSOR_STYLE is enabled.
-         */
-        STYLE,
+		/**
+		 * The "style" element.  This value later morphs into
+		 * #STYLE_PROCESS if #PROCESSOR_STYLE is enabled.
+		 */
+		STYLE,
 
-        /**
-         * Only used when #PROCESSOR_STYLE is enabled.  If active, then
-         * CDATA is being fed into the CSS processor.
-         */
-        STYLE_PROCESS,
-    };
+		/**
+		 * Only used when #PROCESSOR_STYLE is enabled.  If active, then
+		 * CDATA is being fed into the CSS processor.
+		 */
+		STYLE_PROCESS,
+	};
 
-    Tag tag = Tag::NONE;
+	Tag tag = Tag::NONE;
 
-    struct uri_rewrite uri_rewrite;
+	struct uri_rewrite uri_rewrite;
 
-    /**
-     * The default value for #uri_rewrite.
-     */
-    struct uri_rewrite default_uri_rewrite;
+	/**
+	 * The default value for #uri_rewrite.
+	 */
+	struct uri_rewrite default_uri_rewrite;
 
-    /**
-     * A buffer that may be used for various temporary purposes
-     * (e.g. attribute transformation).
-     */
-    ExpansibleBuffer buffer;
+	/**
+	 * A buffer that may be used for various temporary purposes
+	 * (e.g. attribute transformation).
+	 */
+	ExpansibleBuffer buffer;
 
-    /**
-     * These values are used to buffer c:mode/c:base values in any
-     * order, even after the actual URI attribute.
-     */
-    struct PostponedRewrite {
-        bool pending = false;
+	/**
+	 * These values are used to buffer c:mode/c:base values in any
+	 * order, even after the actual URI attribute.
+	 */
+	struct PostponedRewrite {
+		bool pending = false;
 
-        off_t uri_start, uri_end;
-        ExpansibleBuffer value;
+		off_t uri_start, uri_end;
+		ExpansibleBuffer value;
 
-        /**
-         * The positions of the c:mode/c:base attributes after the URI
-         * attribute.  These have to be deleted *after* the URI
-         * attribute has been rewritten.
-         */
-        struct {
-            off_t start, end;
-        } delete_[4];
+		/**
+		 * The positions of the c:mode/c:base attributes after the URI
+		 * attribute.  These have to be deleted *after* the URI
+		 * attribute has been rewritten.
+		 */
+		struct {
+			off_t start, end;
+		} delete_[4];
 
-        PostponedRewrite(struct pool &_pool) noexcept
-            :value(_pool, 1024, 8192) {}
-    } postponed_rewrite;
+		PostponedRewrite(struct pool &_pool) noexcept
+			:value(_pool, 1024, 8192) {}
+	} postponed_rewrite;
 
-    struct CurrentWidget {
-        off_t start_offset;
+	struct CurrentWidget {
+		off_t start_offset;
 
-        struct pool &pool;
-        Widget *widget = nullptr;
+		struct pool &pool;
+		Widget *widget = nullptr;
 
-        struct Param {
-            ExpansibleBuffer name;
-            ExpansibleBuffer value;
+		struct Param {
+			ExpansibleBuffer name;
+			ExpansibleBuffer value;
 
-            Param(struct pool &_pool)
-                :name(_pool, 128, 512),
-                 value(_pool, 512, 4096) {}
-        } param;
+			Param(struct pool &_pool)
+				:name(_pool, 128, 512),
+				 value(_pool, 512, 4096) {}
+		} param;
 
-        ExpansibleBuffer params;
+		ExpansibleBuffer params;
 
-        CurrentWidget(struct pool &widget_pool,
-                      struct pool &processor_pool) noexcept
-            :pool(widget_pool), param(processor_pool),
-             params(processor_pool, 1024, 8192) {}
-    } widget;
+		CurrentWidget(struct pool &widget_pool,
+			      struct pool &processor_pool) noexcept
+			:pool(widget_pool), param(processor_pool),
+			 params(processor_pool, 1024, 8192) {}
+	} widget;
 
-    /**
-     * Only valid if #cdata_stream_active is true.
-     */
-    off_t cdata_start;
-    CdataIstream *cdata_istream;
+	/**
+	 * Only valid if #cdata_stream_active is true.
+	 */
+	off_t cdata_start;
+	CdataIstream *cdata_istream;
 
-    WidgetLookupHandler *handler;
+	WidgetLookupHandler *handler;
 
-    CancellablePointer *cancel_ptr;
+	CancellablePointer *cancel_ptr;
 
-    XmlProcessor(PoolPtr &&_pool, const StopwatchPtr &parent_stopwatch,
-                 Widget &_widget, WidgetContext &_ctx,
-                 unsigned _options) noexcept
-        :PoolHolder(std::move(_pool)),
-         stopwatch(parent_stopwatch, "XmlProcessor"),
-         container(_widget),
-         ctx(_ctx), options(_options),
-         buffer(pool, 128, 2048),
-         postponed_rewrite(pool),
-         widget(_widget.pool, pool) {
-    }
+	XmlProcessor(PoolPtr &&_pool, const StopwatchPtr &parent_stopwatch,
+		     Widget &_widget, WidgetContext &_ctx,
+		     unsigned _options) noexcept
+		:PoolHolder(std::move(_pool)),
+		 stopwatch(parent_stopwatch, "XmlProcessor"),
+		 container(_widget),
+		 ctx(_ctx), options(_options),
+		 buffer(pool, 128, 2048),
+		 postponed_rewrite(pool),
+		 widget(_widget.pool, pool) {
+	}
 
-    struct pool &GetPool() const noexcept {
-        return pool;
-    }
+	struct pool &GetPool() const noexcept {
+		return pool;
+	}
 
-    void InitParser(UnusedIstreamPtr input) noexcept {
-        parser = parser_new(pool, std::move(input), *this);
-    }
+	void InitParser(UnusedIstreamPtr input) noexcept {
+		parser = parser_new(pool, std::move(input), *this);
+	}
 
-    bool IsQuiet() const noexcept {
-        return !replace;
-    }
+	bool IsQuiet() const noexcept {
+		return !replace;
+	}
 
-    bool HasOptionRewriteUrl() const noexcept {
-        return (options & PROCESSOR_REWRITE_URL) != 0;
-    }
+	bool HasOptionRewriteUrl() const noexcept {
+		return (options & PROCESSOR_REWRITE_URL) != 0;
+	}
 
 private:
-    bool HasOptionPrefixClass() const noexcept {
-        return (options & PROCESSOR_PREFIX_CSS_CLASS) != 0;
-    }
+	bool HasOptionPrefixClass() const noexcept {
+		return (options & PROCESSOR_PREFIX_CSS_CLASS) != 0;
+	}
 
-    bool HasOptionPrefixId() const noexcept {
-        return (options & PROCESSOR_PREFIX_XML_ID) != 0;
-    }
+	bool HasOptionPrefixId() const noexcept {
+		return (options & PROCESSOR_PREFIX_XML_ID) != 0;
+	}
 
-    bool HasOptionPrefixAny() const noexcept {
-        return (options & (PROCESSOR_PREFIX_CSS_CLASS|PROCESSOR_PREFIX_XML_ID)) != 0;
-    }
+	bool HasOptionPrefixAny() const noexcept {
+		return (options & (PROCESSOR_PREFIX_CSS_CLASS|PROCESSOR_PREFIX_XML_ID)) != 0;
+	}
 
-    bool HasOptionStyle() const noexcept {
-        return (options & PROCESSOR_STYLE) != 0;
-    }
+	bool HasOptionStyle() const noexcept {
+		return (options & PROCESSOR_STYLE) != 0;
+	}
 
-    bool MustRewriteEmptyURI() const noexcept {
-        return tag == Tag::FORM;
-    }
+	bool MustRewriteEmptyURI() const noexcept {
+		return tag == Tag::FORM;
+	}
 
-    void Destroy() noexcept {
-        this->~XmlProcessor();
-    }
+	void Destroy() noexcept {
+		this->~XmlProcessor();
+	}
 
-    void Close() noexcept {
-        parser_close(parser);
-        Destroy();
-    }
+	void Close() noexcept {
+		parser_close(parser);
+		Destroy();
+	}
 
-    void Replace(off_t start, off_t end, UnusedIstreamPtr istream) noexcept {
-        replace->Add(start, end, std::move(istream));
-    }
+	void Replace(off_t start, off_t end, UnusedIstreamPtr istream) noexcept {
+		replace->Add(start, end, std::move(istream));
+	}
 
-    void ReplaceAttributeValue(const XmlParserAttribute &attr,
-                               UnusedIstreamPtr value) noexcept {
-        Replace(attr.value_start, attr.value_end, std::move(value));
-    }
+	void ReplaceAttributeValue(const XmlParserAttribute &attr,
+				   UnusedIstreamPtr value) noexcept {
+		Replace(attr.value_start, attr.value_end, std::move(value));
+	}
 
-    void InitUriRewrite(Tag _tag) noexcept {
-        assert(!postponed_rewrite.pending);
+	void InitUriRewrite(Tag _tag) noexcept {
+		assert(!postponed_rewrite.pending);
 
-        tag = _tag;
-        uri_rewrite = default_uri_rewrite;
-    }
+		tag = _tag;
+		uri_rewrite = default_uri_rewrite;
+	}
 
-    void PostponeUriRewrite(off_t start, off_t end,
-                            StringView value) noexcept;
+	void PostponeUriRewrite(off_t start, off_t end,
+				StringView value) noexcept;
 
-    void PostponeUriRewrite(const XmlParserAttribute &attr) noexcept {
-        PostponeUriRewrite(attr.value_start, attr.value_end, attr.value);
-    }
+	void PostponeUriRewrite(const XmlParserAttribute &attr) noexcept {
+		PostponeUriRewrite(attr.value_start, attr.value_end, attr.value);
+	}
 
-    void PostponeRefreshRewrite(const XmlParserAttribute &attr) noexcept;
+	void PostponeRefreshRewrite(const XmlParserAttribute &attr) noexcept;
 
-    void CommitUriRewrite() noexcept;
+	void CommitUriRewrite() noexcept;
 
-    void DeleteUriRewrite(off_t start, off_t end) noexcept;
+	void DeleteUriRewrite(off_t start, off_t end) noexcept;
 
-    void TransformUriAttribute(const XmlParserAttribute &attr,
-                               enum uri_base base, RewriteUriMode mode,
-                               const char *view) noexcept;
+	void TransformUriAttribute(const XmlParserAttribute &attr,
+				   enum uri_base base, RewriteUriMode mode,
+				   const char *view) noexcept;
 
-    bool LinkAttributeFinished(const XmlParserAttribute &attr) noexcept;
-    void HandleClassAttribute(const XmlParserAttribute &attr) noexcept;
-    void HandleIdAttribute(const XmlParserAttribute &attr) noexcept;
-    void HandleStyleAttribute(const XmlParserAttribute &attr) noexcept;
+	bool LinkAttributeFinished(const XmlParserAttribute &attr) noexcept;
+	void HandleClassAttribute(const XmlParserAttribute &attr) noexcept;
+	void HandleIdAttribute(const XmlParserAttribute &attr) noexcept;
+	void HandleStyleAttribute(const XmlParserAttribute &attr) noexcept;
 
-    bool OnProcessingInstruction(StringView name) noexcept;
-    bool OnStartElementInWidget(XmlParserTagType type,
-                                StringView name) noexcept;
+	bool OnProcessingInstruction(StringView name) noexcept;
+	bool OnStartElementInWidget(XmlParserTagType type,
+				    StringView name) noexcept;
 
-    /**
-     * Throws an exception if the widget is not allowed here.
-     */
-    void PrepareEmbedWidget(Widget &child_widget);
+	/**
+	 * Throws an exception if the widget is not allowed here.
+	 */
+	void PrepareEmbedWidget(Widget &child_widget);
 
-    UnusedIstreamPtr EmbedWidget(Widget &child_widget) noexcept;
-    UnusedIstreamPtr OpenWidgetElement(Widget &child_widget) noexcept;
-    void FoundWidget(Widget &child_widget) noexcept;
-    bool CheckWidgetLookup(Widget &child_widget) noexcept;
-    bool WidgetElementFinished(const XmlParserTag &tag,
-                               Widget &child_widget) noexcept;
+	UnusedIstreamPtr EmbedWidget(Widget &child_widget) noexcept;
+	UnusedIstreamPtr OpenWidgetElement(Widget &child_widget) noexcept;
+	void FoundWidget(Widget &child_widget) noexcept;
+	bool CheckWidgetLookup(Widget &child_widget) noexcept;
+	bool WidgetElementFinished(const XmlParserTag &tag,
+				   Widget &child_widget) noexcept;
 
-    Istream *StartCdataIstream() noexcept;
-    void StopCdataIstream() noexcept;
+	Istream *StartCdataIstream() noexcept;
+	void StopCdataIstream() noexcept;
 
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override;
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override;
 
-    /* virtual methods from class XmlParserHandler */
-    bool OnXmlTagStart(const XmlParserTag &tag) noexcept override;
-    bool OnXmlTagFinished(const XmlParserTag &tag) noexcept override;
-    void OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept override;
-    size_t OnXmlCdata(const char *p, size_t length, bool escaped,
-                      off_t start) noexcept override;
-    void OnXmlEof(off_t length) noexcept override;
-    void OnXmlError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class XmlParserHandler */
+	bool OnXmlTagStart(const XmlParserTag &tag) noexcept override;
+	bool OnXmlTagFinished(const XmlParserTag &tag) noexcept override;
+	void OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept override;
+	size_t OnXmlCdata(const char *p, size_t length, bool escaped,
+			  off_t start) noexcept override;
+	void OnXmlEof(off_t length) noexcept override;
+	void OnXmlError(std::exception_ptr ep) noexcept override;
 
-    /**
-     * Is this a tag which can have a link attribute?
-     */
-    static constexpr bool IsLink(Tag tag) noexcept {
-        return tag == Tag::A || tag == Tag::FORM ||
-            tag == Tag::IMG || tag == Tag::SCRIPT ||
-            tag == Tag::META || tag == Tag::META_REFRESH ||
-            tag == Tag::META_URI_CONTENT ||
-            tag == Tag::PARAM || tag == Tag::REWRITE_URI;
-    }
+	/**
+	 * Is this a tag which can have a link attribute?
+	 */
+	static constexpr bool IsLink(Tag tag) noexcept {
+		return tag == Tag::A || tag == Tag::FORM ||
+			tag == Tag::IMG || tag == Tag::SCRIPT ||
+			tag == Tag::META || tag == Tag::META_REFRESH ||
+			tag == Tag::META_URI_CONTENT ||
+			tag == Tag::PARAM || tag == Tag::REWRITE_URI;
+	}
 
-    /**
-     * Is this a HTML tag? (i.e. not a proprietary beng-proxy tag)
-     */
-    static constexpr bool IsHtml(Tag tag) noexcept {
-        return tag == Tag::OTHER || (IsLink(tag) && tag != Tag::REWRITE_URI);
-    }
+	/**
+	 * Is this a HTML tag? (i.e. not a proprietary beng-proxy tag)
+	 */
+	static constexpr bool IsHtml(Tag tag) noexcept {
+		return tag == Tag::OTHER || (IsLink(tag) && tag != Tag::REWRITE_URI);
+	}
 };
 
 bool
 processable(const StringMap &headers)
 {
-    const char *content_type = headers.Get("content-type");
-    return content_type != nullptr &&
-        (strncmp(content_type, "text/html", 9) == 0 ||
-         strncmp(content_type, "text/xml", 8) == 0 ||
-         strncmp(content_type, "application/xml", 15) == 0 ||
-         strncmp(content_type, "application/xhtml+xml", 21) == 0);
+	const char *content_type = headers.Get("content-type");
+	return content_type != nullptr &&
+		(strncmp(content_type, "text/html", 9) == 0 ||
+		 strncmp(content_type, "text/xml", 8) == 0 ||
+		 strncmp(content_type, "application/xml", 15) == 0 ||
+		 strncmp(content_type, "application/xhtml+xml", 21) == 0);
 }
 
 /**
@@ -392,25 +392,25 @@ gcc_pure
 static bool
 CanRewriteUri(StringView uri, bool rewrite_empty) noexcept
 {
-    if (uri.empty())
-        /* an empty URI is a reference to the current document and
-           thus should be rewritten */
-        return rewrite_empty;
+	if (uri.empty())
+		/* an empty URI is a reference to the current document and
+		   thus should be rewritten */
+		return rewrite_empty;
 
-    if (uri.front() == '#')
-        /* can't rewrite URI fragments */
-        return false;
+	if (uri.front() == '#')
+		/* can't rewrite URI fragments */
+		return false;
 
-    if (uri.StartsWith("data:") ||
-        uri.StartsWith("mailto:") || uri.StartsWith("javascript:"))
-        /* ignore data, email and JavaScript links */
-        return false;
+	if (uri.StartsWith("data:") ||
+	    uri.StartsWith("mailto:") || uri.StartsWith("javascript:"))
+		/* ignore data, email and JavaScript links */
+		return false;
 
-    if (uri_has_authority(uri))
-        /* can't rewrite if the specified URI is absolute */
-        return false;
+	if (uri_has_authority(uri))
+		/* can't rewrite if the specified URI is absolute */
+		return false;
 
-    return true;
+	return true;
 }
 
 /*
@@ -421,11 +421,11 @@ CanRewriteUri(StringView uri, bool rewrite_empty) noexcept
 void
 XmlProcessor::Cancel() noexcept
 {
-    /* the request body was not yet submitted to the focused widget;
-       dispose it now */
-    container.DiscardForFocused();
+	/* the request body was not yet submitted to the focused widget;
+	   dispose it now */
+	container.DiscardForFocused();
 
-    Close();
+	Close();
 }
 
 /*
@@ -435,194 +435,194 @@ XmlProcessor::Cancel() noexcept
 
 static XmlProcessor *
 processor_new(struct pool &caller_pool,
-              const StopwatchPtr &parent_stopwatch,
-              Widget &widget,
-              WidgetContext &ctx,
-              unsigned options) noexcept
+	      const StopwatchPtr &parent_stopwatch,
+	      Widget &widget,
+	      WidgetContext &ctx,
+	      unsigned options) noexcept
 {
-    auto pool = pool_new_linear(&caller_pool, "processor", 32768);
+	auto pool = pool_new_linear(&caller_pool, "processor", 32768);
 
-    return NewFromPool<XmlProcessor>(std::move(pool), parent_stopwatch,
-                                     widget, ctx, options);
+	return NewFromPool<XmlProcessor>(std::move(pool), parent_stopwatch,
+					 widget, ctx, options);
 }
 
 UnusedIstreamPtr
 processor_process(struct pool &caller_pool,
-                  const StopwatchPtr &parent_stopwatch,
-                  UnusedIstreamPtr input,
-                  Widget &widget,
-                  WidgetContext &ctx,
-                  unsigned options)
+		  const StopwatchPtr &parent_stopwatch,
+		  UnusedIstreamPtr input,
+		  Widget &widget,
+		  WidgetContext &ctx,
+		  unsigned options)
 {
-    auto *processor = processor_new(caller_pool, parent_stopwatch,
-                                    widget, ctx, options);
-    processor->lookup_id = nullptr;
+	auto *processor = processor_new(caller_pool, parent_stopwatch,
+					widget, ctx, options);
+	processor->lookup_id = nullptr;
 
-    /* the text processor will expand entities */
-    auto tee = NewTeeIstream(processor->GetPool(),
-                             text_processor(processor->GetPool(),
-                                            std::move(input),
-                                            widget, ctx),
-                             ctx.event_loop,
-                             true);
+	/* the text processor will expand entities */
+	auto tee = NewTeeIstream(processor->GetPool(),
+				 text_processor(processor->GetPool(),
+						std::move(input),
+						widget, ctx),
+				 ctx.event_loop,
+				 true);
 
-    auto tee2 = AddTeeIstream(tee, true);
+	auto tee2 = AddTeeIstream(tee, true);
 
-    auto r = istream_replace_new(ctx.event_loop, processor->GetPool(),
-                                 std::move(tee));
+	auto r = istream_replace_new(ctx.event_loop, processor->GetPool(),
+				     std::move(tee));
 
-    processor->replace = std::move(r.second);
-    processor->InitParser(std::move(tee2));
+	processor->replace = std::move(r.second);
+	processor->InitParser(std::move(tee2));
 
-    if (processor->HasOptionRewriteUrl()) {
-        processor->default_uri_rewrite.base = URI_BASE_TEMPLATE;
-        processor->default_uri_rewrite.mode = RewriteUriMode::PARTIAL;
-        processor->default_uri_rewrite.view[0] = 0;
+	if (processor->HasOptionRewriteUrl()) {
+		processor->default_uri_rewrite.base = URI_BASE_TEMPLATE;
+		processor->default_uri_rewrite.mode = RewriteUriMode::PARTIAL;
+		processor->default_uri_rewrite.view[0] = 0;
 
-        if (options & PROCESSOR_FOCUS_WIDGET) {
-            processor->default_uri_rewrite.base = URI_BASE_WIDGET;
-            processor->default_uri_rewrite.mode = RewriteUriMode::FOCUS;
-        }
-    }
+		if (options & PROCESSOR_FOCUS_WIDGET) {
+			processor->default_uri_rewrite.base = URI_BASE_WIDGET;
+			processor->default_uri_rewrite.mode = RewriteUriMode::FOCUS;
+		}
+	}
 
-    //XXX headers = processor_header_forward(pool, headers);
-    return std::move(r.first);
+	//XXX headers = processor_header_forward(pool, headers);
+	return std::move(r.first);
 }
 
 void
 processor_lookup_widget(struct pool &caller_pool,
-                        const StopwatchPtr &parent_stopwatch,
-                        UnusedIstreamPtr istream,
-                        Widget &widget, const char *id,
-                        WidgetContext &ctx,
-                        unsigned options,
-                        WidgetLookupHandler &handler,
-                        CancellablePointer &cancel_ptr)
+			const StopwatchPtr &parent_stopwatch,
+			UnusedIstreamPtr istream,
+			Widget &widget, const char *id,
+			WidgetContext &ctx,
+			unsigned options,
+			WidgetLookupHandler &handler,
+			CancellablePointer &cancel_ptr)
 {
-    assert(id != nullptr);
+	assert(id != nullptr);
 
-    if ((options & PROCESSOR_CONTAINER) == 0) {
-        auto e = WidgetError(WidgetErrorCode::NOT_A_CONTAINER,
-                             "Not a container");
-        handler.WidgetLookupError(std::make_exception_ptr(e));
-        return;
-    }
+	if ((options & PROCESSOR_CONTAINER) == 0) {
+		auto e = WidgetError(WidgetErrorCode::NOT_A_CONTAINER,
+				     "Not a container");
+		handler.WidgetLookupError(std::make_exception_ptr(e));
+		return;
+	}
 
-    auto *processor = processor_new(caller_pool, parent_stopwatch,
-                                    widget, ctx, options);
+	auto *processor = processor_new(caller_pool, parent_stopwatch,
+					widget, ctx, options);
 
-    processor->lookup_id = id;
+	processor->lookup_id = id;
 
-    processor->InitParser(std::move(istream));
+	processor->InitParser(std::move(istream));
 
-    processor->handler = &handler;
+	processor->handler = &handler;
 
-    cancel_ptr = *processor;
-    processor->cancel_ptr = &cancel_ptr;
+	cancel_ptr = *processor;
+	processor->cancel_ptr = &cancel_ptr;
 
-    do {
-        processor->had_input = false;
-    } while (parser_read(processor->parser) && processor->had_input);
+	do {
+		processor->had_input = false;
+	} while (parser_read(processor->parser) && processor->had_input);
 }
 
 void
 XmlProcessor::PostponeUriRewrite(off_t start, off_t end,
-                                 StringView value) noexcept
+				 StringView value) noexcept
 {
-    assert(start <= end);
+	assert(start <= end);
 
-    if (postponed_rewrite.pending)
-        /* cannot rewrite more than one attribute per element */
-        return;
+	if (postponed_rewrite.pending)
+		/* cannot rewrite more than one attribute per element */
+		return;
 
-    if (!CanRewriteUri(value, MustRewriteEmptyURI()))
-        return;
+	if (!CanRewriteUri(value, MustRewriteEmptyURI()))
+		return;
 
-    /* postpone the URI rewrite until the tag is finished: save the
-       attribute value position, save the original attribute value and
-       set the "pending" flag */
+	/* postpone the URI rewrite until the tag is finished: save the
+	   attribute value position, save the original attribute value and
+	   set the "pending" flag */
 
-    postponed_rewrite.uri_start = start;
-    postponed_rewrite.uri_end = end;
+	postponed_rewrite.uri_start = start;
+	postponed_rewrite.uri_end = end;
 
-    bool success = postponed_rewrite.value.Set(value);
+	bool success = postponed_rewrite.value.Set(value);
 
-    for (auto &i : postponed_rewrite.delete_)
-        i.start = 0;
+	for (auto &i : postponed_rewrite.delete_)
+		i.start = 0;
 
-    postponed_rewrite.pending = success;
+	postponed_rewrite.pending = success;
 }
 
 void
 XmlProcessor::DeleteUriRewrite(off_t start, off_t end) noexcept
 {
-    if (!postponed_rewrite.pending) {
-        /* no URI attribute found yet: delete immediately */
-        Replace(start, end, nullptr);
-        return;
-    }
+	if (!postponed_rewrite.pending) {
+		/* no URI attribute found yet: delete immediately */
+		Replace(start, end, nullptr);
+		return;
+	}
 
-    /* find a free position in the "delete" array */
+	/* find a free position in the "delete" array */
 
-    unsigned i = 0;
-    while (postponed_rewrite.delete_[i].start > 0) {
-        ++i;
-        if (i >= std::size(postponed_rewrite.delete_))
-            /* no more room in the array */
-            return;
-    }
+	unsigned i = 0;
+	while (postponed_rewrite.delete_[i].start > 0) {
+		++i;
+		if (i >= std::size(postponed_rewrite.delete_))
+			/* no more room in the array */
+			return;
+	}
 
-    /* postpone the delete until the URI attribute has been replaced */
+	/* postpone the delete until the URI attribute has been replaced */
 
-    postponed_rewrite.delete_[i].start = start;
-    postponed_rewrite.delete_[i].end = end;
+	postponed_rewrite.delete_[i].start = start;
+	postponed_rewrite.delete_[i].end = end;
 }
 
 inline void
 XmlProcessor::PostponeRefreshRewrite(const XmlParserAttribute &attr) noexcept
 {
-    const auto end = attr.value.end();
-    const char *p = attr.value.Find(';');
-    if (p == nullptr || p + 7 > end || memcmp(p + 1, "URL='", 5) != 0 ||
-        end[-1] != '\'')
-        return;
+	const auto end = attr.value.end();
+	const char *p = attr.value.Find(';');
+	if (p == nullptr || p + 7 > end || memcmp(p + 1, "URL='", 5) != 0 ||
+	    end[-1] != '\'')
+		return;
 
-    p += 6;
+	p += 6;
 
-    /* postpone the URI rewrite until the tag is finished: save the
-       attribute value position, save the original attribute value and
-       set the "pending" flag */
+	/* postpone the URI rewrite until the tag is finished: save the
+	   attribute value position, save the original attribute value and
+	   set the "pending" flag */
 
-    PostponeUriRewrite(attr.value_start + (p - attr.value.data),
-                       attr.value_end - 1, {p, end - 1});
+	PostponeUriRewrite(attr.value_start + (p - attr.value.data),
+			   attr.value_end - 1, {p, end - 1});
 }
 
 inline void
 XmlProcessor::CommitUriRewrite() noexcept
 {
-    XmlParserAttribute uri_attribute;
-    uri_attribute.value_start = postponed_rewrite.uri_start;
-    uri_attribute.value_end = postponed_rewrite.uri_end;
+	XmlParserAttribute uri_attribute;
+	uri_attribute.value_start = postponed_rewrite.uri_start;
+	uri_attribute.value_end = postponed_rewrite.uri_end;
 
-    assert(postponed_rewrite.pending);
+	assert(postponed_rewrite.pending);
 
-    postponed_rewrite.pending = false;
+	postponed_rewrite.pending = false;
 
-    /* rewrite the URI */
+	/* rewrite the URI */
 
-    uri_attribute.value = postponed_rewrite.value.ReadStringView();
-    TransformUriAttribute(uri_attribute,
-                          uri_rewrite.base,
-                          uri_rewrite.mode,
-                          uri_rewrite.view[0] != 0
-                          ? uri_rewrite.view : nullptr);
+	uri_attribute.value = postponed_rewrite.value.ReadStringView();
+	TransformUriAttribute(uri_attribute,
+			      uri_rewrite.base,
+			      uri_rewrite.mode,
+			      uri_rewrite.view[0] != 0
+			      ? uri_rewrite.view : nullptr);
 
-    /* now delete all c:base/c:mode attributes which followed the
-       URI */
+	/* now delete all c:base/c:mode attributes which followed the
+	   URI */
 
-    for (const auto &i : postponed_rewrite.delete_)
-        if (i.start > 0)
-            Replace(i.start, i.end, nullptr);
+	for (const auto &i : postponed_rewrite.delete_)
+		if (i.start > 0)
+			Replace(i.start, i.end, nullptr);
 }
 
 /*
@@ -633,34 +633,34 @@ XmlProcessor::CommitUriRewrite() noexcept
 void
 XmlProcessor::StopCdataIstream() noexcept
 {
-    if (tag != Tag::STYLE_PROCESS)
-        return;
+	if (tag != Tag::STYLE_PROCESS)
+		return;
 
-    cdata_istream->DestroyEof();
-    tag = Tag::STYLE;
+	cdata_istream->DestroyEof();
+	tag = Tag::STYLE;
 }
 
 void
 XmlProcessor::CdataIstream::_Read() noexcept
 {
-    assert(processor.tag == Tag::STYLE_PROCESS);
+	assert(processor.tag == Tag::STYLE_PROCESS);
 
-    parser_read(processor.parser);
+	parser_read(processor.parser);
 }
 
 void
 XmlProcessor::CdataIstream::_Close() noexcept
 {
-    assert(processor.tag == Tag::STYLE_PROCESS);
+	assert(processor.tag == Tag::STYLE_PROCESS);
 
-    processor.tag = Tag::STYLE;
-    Destroy();
+	processor.tag = Tag::STYLE;
+	Destroy();
 }
 
 inline Istream *
 XmlProcessor::StartCdataIstream() noexcept
 {
-    return cdata_istream = NewFromPool<CdataIstream>(pool, *this);
+	return cdata_istream = NewFromPool<CdataIstream>(pool, *this);
 }
 
 /*
@@ -671,440 +671,440 @@ XmlProcessor::StartCdataIstream() noexcept
 bool
 XmlProcessor::OnProcessingInstruction(StringView name) noexcept
 {
-    if (!IsQuiet() && HasOptionRewriteUrl() &&
-        name.Equals("cm4all-rewrite-uri")) {
-        InitUriRewrite(Tag::REWRITE_URI);
-        return true;
-    }
+	if (!IsQuiet() && HasOptionRewriteUrl() &&
+	    name.Equals("cm4all-rewrite-uri")) {
+		InitUriRewrite(Tag::REWRITE_URI);
+		return true;
+	}
 
-    return false;
+	return false;
 }
 
 inline bool
 XmlProcessor::OnStartElementInWidget(XmlParserTagType type,
-                                     StringView name) noexcept
+				     StringView name) noexcept
 {
-    if (type == XmlParserTagType::PI)
-        return OnProcessingInstruction(name);
+	if (type == XmlParserTagType::PI)
+		return OnProcessingInstruction(name);
 
-    name.SkipPrefix("c:");
+	name.SkipPrefix("c:");
 
-    if (name.Equals("widget")) {
-        if (type == XmlParserTagType::CLOSE)
-            tag = Tag::WIDGET;
-    } else if (name.Equals("path-info")) {
-        tag = Tag::WIDGET_PATH_INFO;
-    } else if (name.Equals("param") ||
-               name.Equals("parameter")) {
-        tag = Tag::WIDGET_PARAM;
-        widget.param.name.Clear();
-        widget.param.value.Clear();
-    } else if (name.Equals("header")) {
-        tag = Tag::WIDGET_HEADER;
-        widget.param.name.Clear();
-        widget.param.value.Clear();
-    } else if (name.Equals("view")) {
-        tag = Tag::WIDGET_VIEW;
-    } else {
-        tag = Tag::IGNORE;
-        return false;
-    }
+	if (name.Equals("widget")) {
+		if (type == XmlParserTagType::CLOSE)
+			tag = Tag::WIDGET;
+	} else if (name.Equals("path-info")) {
+		tag = Tag::WIDGET_PATH_INFO;
+	} else if (name.Equals("param") ||
+		   name.Equals("parameter")) {
+		tag = Tag::WIDGET_PARAM;
+		widget.param.name.Clear();
+		widget.param.value.Clear();
+	} else if (name.Equals("header")) {
+		tag = Tag::WIDGET_HEADER;
+		widget.param.name.Clear();
+		widget.param.value.Clear();
+	} else if (name.Equals("view")) {
+		tag = Tag::WIDGET_VIEW;
+	} else {
+		tag = Tag::IGNORE;
+		return false;
+	}
 
-    return true;
+	return true;
 }
 
 bool
 XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag) noexcept
 {
-    had_input = true;
+	had_input = true;
 
-    StopCdataIstream();
+	StopCdataIstream();
 
-    if (tag == Tag::SCRIPT && !xml_tag.name.EqualsIgnoreCase("script"))
-        /* workaround for bugged scripts: ignore all closing tags
-           except </SCRIPT> */
-        return false;
+	if (tag == Tag::SCRIPT && !xml_tag.name.EqualsIgnoreCase("script"))
+		/* workaround for bugged scripts: ignore all closing tags
+		   except </SCRIPT> */
+		return false;
 
-    tag = Tag::IGNORE;
+	tag = Tag::IGNORE;
 
-    if (widget.widget != nullptr)
-        return OnStartElementInWidget(xml_tag.type, xml_tag.name);
+	if (widget.widget != nullptr)
+		return OnStartElementInWidget(xml_tag.type, xml_tag.name);
 
-    if (xml_tag.type == XmlParserTagType::PI)
-        return OnProcessingInstruction(xml_tag.name);
+	if (xml_tag.type == XmlParserTagType::PI)
+		return OnProcessingInstruction(xml_tag.name);
 
-    if (xml_tag.name.Equals("c:widget")) {
-        if ((options & PROCESSOR_CONTAINER) == 0 ||
-            ctx.widget_registry == nullptr)
-            return false;
+	if (xml_tag.name.Equals("c:widget")) {
+		if ((options & PROCESSOR_CONTAINER) == 0 ||
+		    ctx.widget_registry == nullptr)
+			return false;
 
-        if (xml_tag.type == XmlParserTagType::CLOSE) {
-            assert(widget.widget == nullptr);
-            return false;
-        }
+		if (xml_tag.type == XmlParserTagType::CLOSE) {
+			assert(widget.widget == nullptr);
+			return false;
+		}
 
-        tag = Tag::WIDGET;
-        widget.widget = NewFromPool<Widget>(widget.pool, widget.pool, nullptr);
-        widget.params.Clear();
+		tag = Tag::WIDGET;
+		widget.widget = NewFromPool<Widget>(widget.pool, widget.pool, nullptr);
+		widget.params.Clear();
 
-        widget.widget->parent = &container;
+		widget.widget->parent = &container;
 
-        return true;
-    } else if (xml_tag.name.EqualsIgnoreCase("script")) {
-        InitUriRewrite(Tag::SCRIPT);
-        return true;
-    } else if (!IsQuiet() && HasOptionStyle() &&
-               xml_tag.name.EqualsIgnoreCase("style")) {
-        tag = Tag::STYLE;
-        return true;
-    } else if (!IsQuiet() && HasOptionRewriteUrl()) {
-        if (xml_tag.name.EqualsIgnoreCase("a")) {
-            InitUriRewrite(Tag::A);
-            return true;
-        } else if (xml_tag.name.EqualsIgnoreCase("link")) {
-            /* this isn't actually an anchor, but we are only interested in
-               the HREF attribute */
-            InitUriRewrite(Tag::A);
-            return true;
-        } else if (xml_tag.name.EqualsIgnoreCase("form")) {
-            InitUriRewrite(Tag::FORM);
-            return true;
-        } else if (xml_tag.name.EqualsIgnoreCase("img")) {
-            InitUriRewrite(Tag::IMG);
-            return true;
-        } else if (xml_tag.name.EqualsIgnoreCase("iframe") ||
-                   xml_tag.name.EqualsIgnoreCase("embed") ||
-                   xml_tag.name.EqualsIgnoreCase("video") ||
-                   xml_tag.name.EqualsIgnoreCase("audio")) {
-            /* this isn't actually an IMG, but we are only interested
-               in the SRC attribute */
-            InitUriRewrite(Tag::IMG);
-            return true;
-        } else if (xml_tag.name.EqualsIgnoreCase("param")) {
-            InitUriRewrite(Tag::PARAM);
-            return true;
-        } else if (xml_tag.name.EqualsIgnoreCase("meta")) {
-            InitUriRewrite(Tag::META);
-            return true;
-        } else if (HasOptionPrefixAny()) {
-            tag = Tag::OTHER;
-            return true;
-        } else {
-            tag = Tag::IGNORE;
-            return false;
-        }
-    } else if (HasOptionPrefixAny()) {
-        tag = Tag::OTHER;
-        return true;
-    } else {
-        tag = Tag::IGNORE;
-        return false;
-    }
+		return true;
+	} else if (xml_tag.name.EqualsIgnoreCase("script")) {
+		InitUriRewrite(Tag::SCRIPT);
+		return true;
+	} else if (!IsQuiet() && HasOptionStyle() &&
+		   xml_tag.name.EqualsIgnoreCase("style")) {
+		tag = Tag::STYLE;
+		return true;
+	} else if (!IsQuiet() && HasOptionRewriteUrl()) {
+		if (xml_tag.name.EqualsIgnoreCase("a")) {
+			InitUriRewrite(Tag::A);
+			return true;
+		} else if (xml_tag.name.EqualsIgnoreCase("link")) {
+			/* this isn't actually an anchor, but we are only interested in
+			   the HREF attribute */
+			InitUriRewrite(Tag::A);
+			return true;
+		} else if (xml_tag.name.EqualsIgnoreCase("form")) {
+			InitUriRewrite(Tag::FORM);
+			return true;
+		} else if (xml_tag.name.EqualsIgnoreCase("img")) {
+			InitUriRewrite(Tag::IMG);
+			return true;
+		} else if (xml_tag.name.EqualsIgnoreCase("iframe") ||
+			   xml_tag.name.EqualsIgnoreCase("embed") ||
+			   xml_tag.name.EqualsIgnoreCase("video") ||
+			   xml_tag.name.EqualsIgnoreCase("audio")) {
+			/* this isn't actually an IMG, but we are only interested
+			   in the SRC attribute */
+			InitUriRewrite(Tag::IMG);
+			return true;
+		} else if (xml_tag.name.EqualsIgnoreCase("param")) {
+			InitUriRewrite(Tag::PARAM);
+			return true;
+		} else if (xml_tag.name.EqualsIgnoreCase("meta")) {
+			InitUriRewrite(Tag::META);
+			return true;
+		} else if (HasOptionPrefixAny()) {
+			tag = Tag::OTHER;
+			return true;
+		} else {
+			tag = Tag::IGNORE;
+			return false;
+		}
+	} else if (HasOptionPrefixAny()) {
+		tag = Tag::OTHER;
+		return true;
+	} else {
+		tag = Tag::IGNORE;
+		return false;
+	}
 }
 
 static void
 SplitString(StringView in, char separator,
-            StringView &before, StringView &after) noexcept
+	    StringView &before, StringView &after) noexcept
 {
-    const char *x = in.Find(separator);
+	const char *x = in.Find(separator);
 
-    if (x != nullptr) {
-        before = {in.data, x};
-        after = {x + 1, in.end()};
-    } else {
-        before = in;
-        after = nullptr;
-    }
+	if (x != nullptr) {
+		before = {in.data, x};
+		after = {x + 1, in.end()};
+	} else {
+		before = in;
+		after = nullptr;
+	}
 }
 
 inline void
 XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
-                                    enum uri_base base,
-                                    RewriteUriMode mode,
-                                    const char *view) noexcept
+				    enum uri_base base,
+				    RewriteUriMode mode,
+				    const char *view) noexcept
 {
-    StringView value = attr.value;
+	StringView value = attr.value;
 
-    /* this has been checked already by PostponeUriRewrite() */
-    assert(CanRewriteUri(value, MustRewriteEmptyURI()));
+	/* this has been checked already by PostponeUriRewrite() */
+	assert(CanRewriteUri(value, MustRewriteEmptyURI()));
 
-    Widget *target_widget = nullptr;
-    StringView child_id, suffix;
+	Widget *target_widget = nullptr;
+	StringView child_id, suffix;
 
-    switch (base) {
-    case URI_BASE_TEMPLATE:
-        /* no need to rewrite the attribute */
-        return;
+	switch (base) {
+	case URI_BASE_TEMPLATE:
+		/* no need to rewrite the attribute */
+		return;
 
-    case URI_BASE_WIDGET:
-        target_widget = &container;
-        break;
+	case URI_BASE_WIDGET:
+		target_widget = &container;
+		break;
 
-    case URI_BASE_CHILD:
-        SplitString(value, '/', child_id, suffix);
+	case URI_BASE_CHILD:
+		SplitString(value, '/', child_id, suffix);
 
-        target_widget = container.FindChild(p_strdup(pool, child_id));
-        if (target_widget == nullptr)
-            return;
+		target_widget = container.FindChild(p_strdup(pool, child_id));
+		if (target_widget == nullptr)
+			return;
 
-        value = suffix;
-        break;
+		value = suffix;
+		break;
 
-    case URI_BASE_PARENT:
-        target_widget = container.parent;
-        if (target_widget == nullptr)
-            return;
+	case URI_BASE_PARENT:
+		target_widget = container.parent;
+		if (target_widget == nullptr)
+			return;
 
-        break;
-    }
+		break;
+	}
 
-    assert(target_widget != nullptr);
+	assert(target_widget != nullptr);
 
-    if (target_widget->cls == nullptr && target_widget->class_name == nullptr)
-        return;
+	if (target_widget->cls == nullptr && target_widget->class_name == nullptr)
+		return;
 
-    const char *hash = value.Find('#');
-    StringView fragment;
-    if (hash != nullptr) {
-        /* save the unescaped fragment part of the URI, don't pass it
-           to rewrite_widget_uri() */
-        fragment = {hash, value.end()};
-        value = {value.data, hash};
-    } else
-        fragment = nullptr;
+	const char *hash = value.Find('#');
+	StringView fragment;
+	if (hash != nullptr) {
+		/* save the unescaped fragment part of the URI, don't pass it
+		   to rewrite_widget_uri() */
+		fragment = {hash, value.end()};
+		value = {value.data, hash};
+	} else
+		fragment = nullptr;
 
-    auto istream =
-        rewrite_widget_uri(pool, ctx,
-                           *target_widget,
-                           value, mode, target_widget == &container,
-                           view,
-                           &html_escape_class);
-    if (!istream)
-        return;
+	auto istream =
+		rewrite_widget_uri(pool, ctx,
+				   *target_widget,
+				   value, mode, target_widget == &container,
+				   view,
+				   &html_escape_class);
+	if (!istream)
+		return;
 
-    if (!fragment.empty()) {
-        /* escape and append the fragment to the new URI */
-        auto s = istream_memory_new(pool,
-                                    p_strdup(pool, fragment),
-                                    fragment.size);
-        s = istream_html_escape_new(pool, std::move(s));
+	if (!fragment.empty()) {
+		/* escape and append the fragment to the new URI */
+		auto s = istream_memory_new(pool,
+					    p_strdup(pool, fragment),
+					    fragment.size);
+		s = istream_html_escape_new(pool, std::move(s));
 
-        istream = istream_cat_new(pool, std::move(istream), std::move(s));
-    }
+		istream = istream_cat_new(pool, std::move(istream), std::move(s));
+	}
 
-    ReplaceAttributeValue(attr, std::move(istream));
+	ReplaceAttributeValue(attr, std::move(istream));
 }
 
 static void
 parser_widget_attr_finished(Widget *widget,
-                            StringView name, StringView value)
+			    StringView name, StringView value)
 {
-    if (name.Equals("type")) {
-        if (value.empty())
-            throw std::runtime_error("empty widget class name");
+	if (name.Equals("type")) {
+		if (value.empty())
+			throw std::runtime_error("empty widget class name");
 
-        widget->SetClassName(value);
-    } else if (name.Equals("id")) {
-        if (!value.empty())
-            widget->SetId(value);
-    } else if (name.Equals("display")) {
-        if (value.Equals("inline"))
-            widget->display = Widget::Display::INLINE;
-        else if (value.Equals("none"))
-            widget->display = Widget::Display::NONE;
-        else
-            throw std::runtime_error("Invalid widget 'display' attribute");
-    } else if (name.Equals("session")) {
-        if (value.Equals("resource"))
-            widget->session_scope = Widget::SessionScope::RESOURCE;
-        else if (value.Equals("site"))
-            widget->session_scope = Widget::SessionScope::SITE;
-        else
-            throw std::runtime_error("Invalid widget 'session' attribute");
-    }
+		widget->SetClassName(value);
+	} else if (name.Equals("id")) {
+		if (!value.empty())
+			widget->SetId(value);
+	} else if (name.Equals("display")) {
+		if (value.Equals("inline"))
+			widget->display = Widget::Display::INLINE;
+		else if (value.Equals("none"))
+			widget->display = Widget::Display::NONE;
+		else
+			throw std::runtime_error("Invalid widget 'display' attribute");
+	} else if (name.Equals("session")) {
+		if (value.Equals("resource"))
+			widget->session_scope = Widget::SessionScope::RESOURCE;
+		else if (value.Equals("site"))
+			widget->session_scope = Widget::SessionScope::SITE;
+		else
+			throw std::runtime_error("Invalid widget 'session' attribute");
+	}
 }
 
 gcc_pure
 static enum uri_base
 parse_uri_base(StringView s) noexcept
 {
-    if (s.Equals("widget"))
-        return URI_BASE_WIDGET;
-    else if (s.Equals("child"))
-        return URI_BASE_CHILD;
-    else if (s.Equals("parent"))
-        return URI_BASE_PARENT;
-    else
-        return URI_BASE_TEMPLATE;
+	if (s.Equals("widget"))
+		return URI_BASE_WIDGET;
+	else if (s.Equals("child"))
+		return URI_BASE_CHILD;
+	else if (s.Equals("parent"))
+		return URI_BASE_PARENT;
+	else
+		return URI_BASE_TEMPLATE;
 }
 
 inline bool
 XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr) noexcept
 {
-    if (attr.name.Equals("c:base")) {
-        uri_rewrite.base = parse_uri_base(attr.value);
+	if (attr.name.Equals("c:base")) {
+		uri_rewrite.base = parse_uri_base(attr.value);
 
-        if (tag != Tag::REWRITE_URI)
-            DeleteUriRewrite(attr.name_start, attr.end);
-        return true;
-    }
+		if (tag != Tag::REWRITE_URI)
+			DeleteUriRewrite(attr.name_start, attr.end);
+		return true;
+	}
 
-    if (attr.name.Equals("c:mode")) {
-        uri_rewrite.mode = parse_uri_mode(attr.value);
+	if (attr.name.Equals("c:mode")) {
+		uri_rewrite.mode = parse_uri_mode(attr.value);
 
-        if (tag != Tag::REWRITE_URI)
-            DeleteUriRewrite(attr.name_start, attr.end);
-        return true;
-    }
+		if (tag != Tag::REWRITE_URI)
+			DeleteUriRewrite(attr.name_start, attr.end);
+		return true;
+	}
 
-    if (attr.name.Equals("c:view") &&
-        attr.value.size < sizeof(uri_rewrite.view)) {
-        memcpy(uri_rewrite.view,
-               attr.value.data, attr.value.size);
-        uri_rewrite.view[attr.value.size] = 0;
+	if (attr.name.Equals("c:view") &&
+	    attr.value.size < sizeof(uri_rewrite.view)) {
+		memcpy(uri_rewrite.view,
+		       attr.value.data, attr.value.size);
+		uri_rewrite.view[attr.value.size] = 0;
 
-        if (tag != Tag::REWRITE_URI)
-            DeleteUriRewrite(attr.name_start, attr.end);
+		if (tag != Tag::REWRITE_URI)
+			DeleteUriRewrite(attr.name_start, attr.end);
 
-        return true;
-    }
+		return true;
+	}
 
-    if (attr.name.Equals("xmlns:c")) {
-        /* delete "xmlns:c" attributes */
-        if (tag != Tag::REWRITE_URI)
-            DeleteUriRewrite(attr.name_start, attr.end);
-        return true;
-    }
+	if (attr.name.Equals("xmlns:c")) {
+		/* delete "xmlns:c" attributes */
+		if (tag != Tag::REWRITE_URI)
+			DeleteUriRewrite(attr.name_start, attr.end);
+		return true;
+	}
 
-    return false;
+	return false;
 }
 
 static const char *
 find_underscore(const char *p, const char *end) noexcept
 {
-    assert(p != nullptr);
-    assert(end != nullptr);
-    assert(p <= end);
+	assert(p != nullptr);
+	assert(end != nullptr);
+	assert(p <= end);
 
-    if (p == end)
-        return nullptr;
+	if (p == end)
+		return nullptr;
 
-    if (is_underscore_prefix(p, end))
-        return p;
+	if (is_underscore_prefix(p, end))
+		return p;
 
-    while (true) {
-        p = (const char *)memchr(p + 1, '_', end - p);
-        if (p == nullptr)
-            return nullptr;
+	while (true) {
+		p = (const char *)memchr(p + 1, '_', end - p);
+		if (p == nullptr)
+			return nullptr;
 
-        if (IsWhitespaceOrNull(p[-1]) &&
-            is_underscore_prefix(p, end))
-            return p;
-    }
+		if (IsWhitespaceOrNull(p[-1]) &&
+		    is_underscore_prefix(p, end))
+			return p;
+	}
 }
 
 inline void
 XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr) noexcept
 {
-    auto p = attr.value.begin();
-    const auto end = attr.value.end();
+	auto p = attr.value.begin();
+	const auto end = attr.value.end();
 
-    const char *u = find_underscore(p, end);
-    if (u == nullptr)
-        return;
+	const char *u = find_underscore(p, end);
+	if (u == nullptr)
+		return;
 
-    buffer.Clear();
+	buffer.Clear();
 
-    do {
-        if (!buffer.Write(p, u - p))
-            return;
+	do {
+		if (!buffer.Write(p, u - p))
+			return;
 
-        p = u;
+		p = u;
 
-        const unsigned n = underscore_prefix(p, end);
-        const char *prefix;
-        if (n == 3 && (prefix = container.GetPrefix()) != nullptr) {
-            if (!buffer.Write(prefix))
-                return;
+		const unsigned n = underscore_prefix(p, end);
+		const char *prefix;
+		if (n == 3 && (prefix = container.GetPrefix()) != nullptr) {
+			if (!buffer.Write(prefix))
+				return;
 
-            p += 3;
-        } else if (n == 2 && (prefix = container.GetQuotedClassName()) != nullptr) {
-            if (!buffer.Write(prefix))
-                return;
+			p += 3;
+		} else if (n == 2 && (prefix = container.GetQuotedClassName()) != nullptr) {
+			if (!buffer.Write(prefix))
+				return;
 
-            p += 2;
-        } else {
-            /* failure; skip all underscores and find the next
-               match */
-            while (u < end && *u == '_')
-                ++u;
+			p += 2;
+		} else {
+			/* failure; skip all underscores and find the next
+			   match */
+			while (u < end && *u == '_')
+				++u;
 
-            if (!buffer.Write(p, u - p))
-                return;
+			if (!buffer.Write(p, u - p))
+				return;
 
-            p = u;
-        }
+			p = u;
+		}
 
-        u = find_underscore(p, end);
-    } while (u != nullptr);
+		u = find_underscore(p, end);
+	} while (u != nullptr);
 
-    if (!buffer.Write(p, end - p))
-        return;
+	if (!buffer.Write(p, end - p))
+		return;
 
-    const size_t length = buffer.GetSize();
-    void *q = buffer.Dup(pool);
-    ReplaceAttributeValue(attr, istream_memory_new(pool, q, length));
+	const size_t length = buffer.GetSize();
+	void *q = buffer.Dup(pool);
+	ReplaceAttributeValue(attr, istream_memory_new(pool, q, length));
 }
 
 void
 XmlProcessor::HandleIdAttribute(const XmlParserAttribute &attr) noexcept
 {
-    auto p = attr.value.begin();
-    const auto end = attr.value.end();
+	auto p = attr.value.begin();
+	const auto end = attr.value.end();
 
-    const unsigned n = underscore_prefix(p, end);
-    if (n == 3) {
-        /* triple underscore: add widget path prefix */
+	const unsigned n = underscore_prefix(p, end);
+	if (n == 3) {
+		/* triple underscore: add widget path prefix */
 
-        const char *prefix = container.GetPrefix();
-        if (prefix == nullptr)
-            return;
+		const char *prefix = container.GetPrefix();
+		if (prefix == nullptr)
+			return;
 
-        Replace(attr.value_start, attr.value_start + 3,
-                istream_string_new(pool, prefix));
-    } else if (n == 2) {
-        /* double underscore: add class name prefix */
+		Replace(attr.value_start, attr.value_start + 3,
+			istream_string_new(pool, prefix));
+	} else if (n == 2) {
+		/* double underscore: add class name prefix */
 
-        const char *class_name = container.GetQuotedClassName();
-        if (class_name == nullptr)
-            return;
+		const char *class_name = container.GetQuotedClassName();
+		if (class_name == nullptr)
+			return;
 
-        Replace(attr.value_start, attr.value_start + 2,
-                istream_string_new(pool, class_name));
-    }
+		Replace(attr.value_start, attr.value_start + 2,
+			istream_string_new(pool, class_name));
+	}
 }
 
 void
 XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr) noexcept
 {
-    auto result =
-        css_rewrite_block_uris(pool, ctx,
-                               container,
-                               attr.value,
-                               &html_escape_class);
-    if (result)
-        ReplaceAttributeValue(attr, std::move(result));
+	auto result =
+		css_rewrite_block_uris(pool, ctx,
+				       container,
+				       attr.value,
+				       &html_escape_class);
+	if (result)
+		ReplaceAttributeValue(attr, std::move(result));
 }
 
 gcc_pure
 static bool
 IsMetaPropertyWithLink(StringView property) noexcept
 {
-    return property.StartsWith("og:") &&
-        (property.EndsWith(":url") ||
-         property.Equals("og:image") ||
-         property.Equals("og:audio") ||
-         property.Equals("og:video"));
+	return property.StartsWith("og:") &&
+		(property.EndsWith(":url") ||
+		 property.Equals("og:image") ||
+		 property.Equals("og:audio") ||
+		 property.Equals("og:video"));
 }
 
 /**
@@ -1115,488 +1115,490 @@ gcc_pure
 static bool
 IsMetaWithUriContent(StringView name, StringView value) noexcept
 {
-    return name.EqualsIgnoreCase("property") && IsMetaPropertyWithLink(value);
+	return name.EqualsIgnoreCase("property") && IsMetaPropertyWithLink(value);
 }
 
 void
 XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
 {
-    had_input = true;
+	had_input = true;
 
-    if (!IsQuiet()) {
-        if (IsLink(tag) &&
-            LinkAttributeFinished(attr))
-            return;
+	if (!IsQuiet()) {
+		if (IsLink(tag) &&
+		    LinkAttributeFinished(attr))
+			return;
 
-        if (tag == Tag::META &&
-            attr.name.EqualsIgnoreCase("http-equiv") &&
-            attr.value.EqualsIgnoreCase("refresh")) {
-            /* morph Tag::META to Tag::META_REFRESH */
-            tag = Tag::META_REFRESH;
-            return;
-        }
+		if (tag == Tag::META &&
+		    attr.name.EqualsIgnoreCase("http-equiv") &&
+		    attr.value.EqualsIgnoreCase("refresh")) {
+			/* morph Tag::META to Tag::META_REFRESH */
+			tag = Tag::META_REFRESH;
+			return;
+		}
 
-        if (tag == Tag::META && IsMetaWithUriContent(attr.name, attr.value)) {
-            /* morph Tag::META to Tag::META_URI_CONTENT */
-            tag = Tag::META_URI_CONTENT;
-            return;
-        }
+		if (tag == Tag::META && IsMetaWithUriContent(attr.name, attr.value)) {
+			/* morph Tag::META to Tag::META_URI_CONTENT */
+			tag = Tag::META_URI_CONTENT;
+			return;
+		}
 
-        if (HasOptionPrefixClass() &&
-            /* due to a limitation in the processor and istream_replace,
-               we cannot edit attributes followed by a URI attribute */
-            !postponed_rewrite.pending &&
-            IsHtml(tag) &&
-            attr.name.Equals("class")) {
-            HandleClassAttribute(attr);
-            return;
-        }
+		if (HasOptionPrefixClass() &&
+		    /* due to a limitation in the processor and istream_replace,
+		       we cannot edit attributes followed by a URI attribute */
+		    !postponed_rewrite.pending &&
+		    IsHtml(tag) &&
+		    attr.name.Equals("class")) {
+			HandleClassAttribute(attr);
+			return;
+		}
 
-        if (HasOptionPrefixId() &&
-            /* due to a limitation in the processor and istream_replace,
-               we cannot edit attributes followed by a URI attribute */
-            !postponed_rewrite.pending &&
-            IsHtml(tag) &&
-            (attr.name.Equals("id") || attr.name.Equals("for"))) {
-            HandleIdAttribute(attr);
-            return;
-        }
+		if (HasOptionPrefixId() &&
+		    /* due to a limitation in the processor and istream_replace,
+		       we cannot edit attributes followed by a URI attribute */
+		    !postponed_rewrite.pending &&
+		    IsHtml(tag) &&
+		    (attr.name.Equals("id") || attr.name.Equals("for"))) {
+			HandleIdAttribute(attr);
+			return;
+		}
 
-        if (HasOptionStyle() && HasOptionRewriteUrl() &&
-            /* due to a limitation in the processor and istream_replace,
-               we cannot edit attributes followed by a URI attribute */
-            !postponed_rewrite.pending &&
-            IsHtml(tag) &&
-            attr.name.Equals("style")) {
-            HandleStyleAttribute(attr);
-            return;
-        }
-    }
+		if (HasOptionStyle() && HasOptionRewriteUrl() &&
+		    /* due to a limitation in the processor and istream_replace,
+		       we cannot edit attributes followed by a URI attribute */
+		    !postponed_rewrite.pending &&
+		    IsHtml(tag) &&
+		    attr.name.Equals("style")) {
+			HandleStyleAttribute(attr);
+			return;
+		}
+	}
 
-    switch (tag) {
-    case Tag::NONE:
-    case Tag::IGNORE:
-    case Tag::OTHER:
-        break;
+	switch (tag) {
+	case Tag::NONE:
+	case Tag::IGNORE:
+	case Tag::OTHER:
+		break;
 
-    case Tag::WIDGET:
-        assert(widget.widget != nullptr);
+	case Tag::WIDGET:
+		assert(widget.widget != nullptr);
 
-        try {
-            parser_widget_attr_finished(widget.widget,
-                                        attr.name, attr.value);
-        } catch (...) {
-            container.logger(2, std::current_exception());
-            // TODO: discard errored widget?
-        }
+		try {
+			parser_widget_attr_finished(widget.widget,
+						    attr.name, attr.value);
+		} catch (...) {
+			container.logger(2, std::current_exception());
+			// TODO: discard errored widget?
+		}
 
-        break;
+		break;
 
-    case Tag::WIDGET_PARAM:
-    case Tag::WIDGET_HEADER:
-        assert(widget.widget != nullptr);
+	case Tag::WIDGET_PARAM:
+	case Tag::WIDGET_HEADER:
+		assert(widget.widget != nullptr);
 
-        if (attr.name.Equals("name")) {
-            widget.param.name.Set(attr.value);
-        } else if (attr.name.Equals("value")) {
-            widget.param.value.Set(attr.value);
-        }
+		if (attr.name.Equals("name")) {
+			widget.param.name.Set(attr.value);
+		} else if (attr.name.Equals("value")) {
+			widget.param.value.Set(attr.value);
+		}
 
-        break;
+		break;
 
-    case Tag::WIDGET_PATH_INFO:
-        assert(widget.widget != nullptr);
+	case Tag::WIDGET_PATH_INFO:
+		assert(widget.widget != nullptr);
 
-        if (attr.name.Equals("value"))
-            widget.widget->from_template.path_info
-                = p_strdup(widget.pool, attr.value);
+		if (attr.name.Equals("value"))
+			widget.widget->from_template.path_info
+				= p_strdup(widget.pool, attr.value);
 
-        break;
+		break;
 
-    case Tag::WIDGET_VIEW:
-        assert(widget.widget != nullptr);
+	case Tag::WIDGET_VIEW:
+		assert(widget.widget != nullptr);
 
-        if (attr.name.Equals("name")) {
-            if (attr.value.empty()) {
-                container.logger(2, "empty view name");
-                return;
-            }
+		if (attr.name.Equals("name")) {
+			if (attr.value.empty()) {
+				container.logger(2, "empty view name");
+				return;
+			}
 
-            widget.widget->from_template.view_name =
-                p_strdup(widget.pool, attr.value);
-        }
+			widget.widget->from_template.view_name =
+				p_strdup(widget.pool, attr.value);
+		}
 
-        break;
+		break;
 
-    case Tag::IMG:
-        if (attr.name.EqualsIgnoreCase("src"))
-            PostponeUriRewrite(attr);
-        break;
+	case Tag::IMG:
+		if (attr.name.EqualsIgnoreCase("src"))
+			PostponeUriRewrite(attr);
+		break;
 
-    case Tag::A:
-        if (attr.name.EqualsIgnoreCase("href")) {
-            PostponeUriRewrite(attr);
-        } else if (IsQuiet() &&
-                   HasOptionPrefixId() &&
-                   attr.name.EqualsIgnoreCase("name"))
-            HandleIdAttribute(attr);
+	case Tag::A:
+		if (attr.name.EqualsIgnoreCase("href")) {
+			PostponeUriRewrite(attr);
+		} else if (IsQuiet() &&
+			   HasOptionPrefixId() &&
+			   attr.name.EqualsIgnoreCase("name"))
+			HandleIdAttribute(attr);
 
-        break;
+		break;
 
-    case Tag::FORM:
-        if (attr.name.EqualsIgnoreCase("action"))
-            PostponeUriRewrite(attr);
-        break;
+	case Tag::FORM:
+		if (attr.name.EqualsIgnoreCase("action"))
+			PostponeUriRewrite(attr);
+		break;
 
-    case Tag::SCRIPT:
-        if (!IsQuiet() &&
-            HasOptionRewriteUrl() &&
-            attr.name.EqualsIgnoreCase("src"))
-            PostponeUriRewrite(attr);
-        break;
+	case Tag::SCRIPT:
+		if (!IsQuiet() &&
+		    HasOptionRewriteUrl() &&
+		    attr.name.EqualsIgnoreCase("src"))
+			PostponeUriRewrite(attr);
+		break;
 
-    case Tag::PARAM:
-        if (attr.name.Equals("value"))
-            PostponeUriRewrite(attr);
-        break;
+	case Tag::PARAM:
+		if (attr.name.Equals("value"))
+			PostponeUriRewrite(attr);
+		break;
 
-    case Tag::META_REFRESH:
-        if (attr.name.EqualsIgnoreCase("content"))
-            PostponeRefreshRewrite(attr);
-        break;
+	case Tag::META_REFRESH:
+		if (attr.name.EqualsIgnoreCase("content"))
+			PostponeRefreshRewrite(attr);
+		break;
 
-    case Tag::META_URI_CONTENT:
-        if (attr.name.EqualsIgnoreCase("content"))
-            PostponeUriRewrite(attr);
-        break;
+	case Tag::META_URI_CONTENT:
+		if (attr.name.EqualsIgnoreCase("content"))
+			PostponeUriRewrite(attr);
+		break;
 
-    case Tag::REWRITE_URI:
-    case Tag::STYLE:
-    case Tag::STYLE_PROCESS:
-    case Tag::META:
-        break;
-    }
+	case Tag::REWRITE_URI:
+	case Tag::STYLE:
+	case Tag::STYLE_PROCESS:
+	case Tag::META:
+		break;
+	}
 }
 
 static std::exception_ptr
 widget_catch_callback(std::exception_ptr ep, void *ctx) noexcept
 {
-    auto *widget = (Widget *)ctx;
+	auto *widget = (Widget *)ctx;
 
-    widget->logger(3, ep);
-    return {};
+	widget->logger(3, ep);
+	return {};
 }
 
 inline void
 XmlProcessor::PrepareEmbedWidget(Widget &child_widget)
 {
-    if (child_widget.class_name == nullptr)
-        throw std::runtime_error("widget without a class");
+	if (child_widget.class_name == nullptr)
+		throw std::runtime_error("widget without a class");
 
-    /* enforce the SELF_CONTAINER flag */
-    const bool self_container =
-        (options & PROCESSOR_SELF_CONTAINER) != 0;
-    if (!widget_init_approval(&child_widget, self_container))
-        throw FormatRuntimeError("widget is not allowed to embed widget '%s'",
-                                 child_widget.GetLogName());
+	/* enforce the SELF_CONTAINER flag */
+	const bool self_container =
+		(options & PROCESSOR_SELF_CONTAINER) != 0;
+	if (!widget_init_approval(&child_widget, self_container))
+		throw FormatRuntimeError("widget is not allowed to embed widget '%s'",
+					 child_widget.GetLogName());
 
-    if (widget_check_recursion(child_widget.parent))
-        throw FormatRuntimeError("maximum widget depth exceeded for widget '%s'",
-                                 child_widget.GetLogName());
+	if (widget_check_recursion(child_widget.parent))
+		throw FormatRuntimeError("maximum widget depth exceeded for widget '%s'",
+					 child_widget.GetLogName());
 
-    if (!widget.params.IsEmpty())
-        child_widget.from_template.query_string =
-            widget.params.StringDup(widget.pool);
+	if (!widget.params.IsEmpty())
+		child_widget.from_template.query_string =
+			widget.params.StringDup(widget.pool);
 
-    container.children.push_front(child_widget);
+	container.children.push_front(child_widget);
 }
 
 inline UnusedIstreamPtr
 XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
 {
-    assert(child_widget.class_name != nullptr);
+	assert(child_widget.class_name != nullptr);
 
-    try {
-        child_widget.CopyFromRequest();
-    } catch (...) {
-        child_widget.Cancel();
-        return nullptr;
-    }
+	try {
+		child_widget.CopyFromRequest();
+	} catch (...) {
+		child_widget.Cancel();
+		return nullptr;
+	}
 
-    if (child_widget.display == Widget::Display::NONE) {
-        child_widget.Cancel();
-        return nullptr;
-    }
+	if (child_widget.display == Widget::Display::NONE) {
+		child_widget.Cancel();
+		return nullptr;
+	}
 
-    StopwatchPtr widget_stopwatch(stopwatch, "widget ",
-                                  child_widget.class_name);
+	StopwatchPtr widget_stopwatch(stopwatch, "widget ",
+				      child_widget.class_name);
 
-    auto istream = embed_inline_widget(pool, ctx, widget_stopwatch,
-                                       false, child_widget);
-    if (istream)
-        istream = istream_catch_new(pool, std::move(istream),
-                                    widget_catch_callback, &child_widget);
+	auto istream = embed_inline_widget(pool, ctx, widget_stopwatch,
+					   false, child_widget);
+	if (istream)
+		istream = istream_catch_new(pool, std::move(istream),
+					    widget_catch_callback, &child_widget);
 
-    return istream;
+	return istream;
 }
 
 inline UnusedIstreamPtr
 XmlProcessor::OpenWidgetElement(Widget &child_widget) noexcept
 {
-    assert(child_widget.parent == &container);
+	assert(child_widget.parent == &container);
 
-    try {
-        PrepareEmbedWidget(child_widget);
-    } catch (...) {
-        container.logger(5, std::current_exception());
-        return nullptr;
-    }
+	try {
+		PrepareEmbedWidget(child_widget);
+	} catch (...) {
+		container.logger(5, std::current_exception());
+		return nullptr;
+	}
 
-    return EmbedWidget(child_widget);
+	return EmbedWidget(child_widget);
 }
 
 inline void
 XmlProcessor::FoundWidget(Widget &child_widget) noexcept
 {
-    assert(child_widget.parent == &container);
-    assert(!replace);
+	assert(child_widget.parent == &container);
+	assert(!replace);
 
-    auto &handler2 = *handler;
+	auto &handler2 = *handler;
 
-    try {
-        {
-            AtScopeExit(this) { Close(); };
-            PrepareEmbedWidget(child_widget);
-        }
+	try {
+		{
+			AtScopeExit(this) { Close(); };
+			PrepareEmbedWidget(child_widget);
+		}
 
-        child_widget.CopyFromRequest();
-        handler2.WidgetFound(child_widget);
-    } catch (...) {
-        child_widget.Cancel();
-        handler2.WidgetLookupError(std::current_exception());
-    }
+		child_widget.CopyFromRequest();
+		handler2.WidgetFound(child_widget);
+	} catch (...) {
+		child_widget.Cancel();
+		handler2.WidgetLookupError(std::current_exception());
+	}
 }
 
 inline bool
 XmlProcessor::CheckWidgetLookup(Widget &child_widget) noexcept
 {
-    assert(child_widget.parent == &container);
-    assert(!replace);
+	assert(child_widget.parent == &container);
+	assert(!replace);
 
-    if (child_widget.id != nullptr && strcmp(lookup_id, child_widget.id) == 0) {
-        FoundWidget(child_widget);
-        return false;
-    } else {
-        child_widget.Cancel();
-        return true;
-    }
+	if (child_widget.id != nullptr && strcmp(lookup_id, child_widget.id) == 0) {
+		FoundWidget(child_widget);
+		return false;
+	} else {
+		child_widget.Cancel();
+		return true;
+	}
 }
 
 inline bool
 XmlProcessor::WidgetElementFinished(const XmlParserTag &widget_tag,
-                                    Widget &child_widget) noexcept
+				    Widget &child_widget) noexcept
 {
-    if (replace) {
-        Replace(widget.start_offset, widget_tag.end, OpenWidgetElement(child_widget));
-        return true;
-    } else
-        return CheckWidgetLookup(child_widget);
+	if (replace) {
+		Replace(widget.start_offset, widget_tag.end, OpenWidgetElement(child_widget));
+		return true;
+	} else
+		return CheckWidgetLookup(child_widget);
 }
 
 gcc_pure
 static bool
 header_name_valid(const char *name, size_t length) noexcept
 {
-    /* name must start with "X-" */
-    if (length < 3 ||
-        (name[0] != 'x' && name[0] != 'X') ||
-        name[1] != '-')
-        return false;
+	/* name must start with "X-" */
+	if (length < 3 ||
+	    (name[0] != 'x' && name[0] != 'X') ||
+	    name[1] != '-')
+		return false;
 
-    /* the rest must be letters, digits or dash */
-    for (size_t i = 2; i < length;  ++i)
-        if (!IsAlphaNumericASCII(name[i]) && name[i] != '-')
-            return false;
+	/* the rest must be letters, digits or dash */
+	for (size_t i = 2; i < length;  ++i)
+		if (!IsAlphaNumericASCII(name[i]) && name[i] != '-')
+			return false;
 
-    return true;
+	return true;
 }
 
 static void
 expansible_buffer_append_uri_escaped(ExpansibleBuffer &buffer,
-                                     struct pool &tpool,
-                                     StringView value) noexcept
+				     struct pool &tpool,
+				     StringView value) noexcept
 {
-    char *escaped = (char *)p_malloc(&tpool, value.size * 3);
-    size_t length = uri_escape(escaped, StringView(value.data, value.size));
-    buffer.Write(escaped, length);
+	char *escaped = (char *)p_malloc(&tpool, value.size * 3);
+	size_t length = uri_escape(escaped, StringView(value.data, value.size));
+	buffer.Write(escaped, length);
 }
 
 bool
 XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 {
-    had_input = true;
+	had_input = true;
 
-    if (postponed_rewrite.pending)
-        CommitUriRewrite();
+	if (postponed_rewrite.pending)
+		CommitUriRewrite();
 
-    if (tag == Tag::WIDGET) {
-        if (xml_tag.type == XmlParserTagType::OPEN || xml_tag.type == XmlParserTagType::SHORT)
-            widget.start_offset = xml_tag.start;
-        else if (widget.widget == nullptr)
-            return true;
+	if (tag == Tag::WIDGET) {
+		if (xml_tag.type == XmlParserTagType::OPEN || xml_tag.type == XmlParserTagType::SHORT)
+			widget.start_offset = xml_tag.start;
+		else if (widget.widget == nullptr)
+			return true;
 
-        assert(widget.widget != nullptr);
+		assert(widget.widget != nullptr);
 
-        if (xml_tag.type == XmlParserTagType::OPEN)
-            return true;
+		if (xml_tag.type == XmlParserTagType::OPEN)
+			return true;
 
-        auto &child_widget = *widget.widget;
-        widget.widget = nullptr;
+		auto &child_widget = *widget.widget;
+		widget.widget = nullptr;
 
-        return WidgetElementFinished(xml_tag, child_widget);
-    } else if (tag == Tag::WIDGET_PARAM) {
-        assert(widget.widget != nullptr);
+		return WidgetElementFinished(xml_tag, child_widget);
+	} else if (tag == Tag::WIDGET_PARAM) {
+		assert(widget.widget != nullptr);
 
-        if (widget.param.name.IsEmpty())
-            return true;
+		if (widget.param.name.IsEmpty())
+			return true;
 
-        const TempPoolLease tpool;
+		const TempPoolLease tpool;
 
-        auto value = widget.param.value.ReadStringView();
-        if (value.Find('&') != nullptr) {
-            char *q = (char *)p_memdup(tpool, value.data, value.size);
-            value.size = unescape_inplace(&html_escape_class, q, value.size);
-            value.data = q;
-        }
+		auto value = widget.param.value.ReadStringView();
+		if (value.Find('&') != nullptr) {
+			char *q = (char *)p_memdup(tpool, value.data, value.size);
+			value.size = unescape_inplace(&html_escape_class, q, value.size);
+			value.data = q;
+		}
 
-        if (!widget.params.IsEmpty())
-            widget.params.Write("&", 1);
+		if (!widget.params.IsEmpty())
+			widget.params.Write("&", 1);
 
-        const auto name = widget.param.name.ReadStringView();
-        expansible_buffer_append_uri_escaped(widget.params, tpool, name);
+		const auto name = widget.param.name.ReadStringView();
+		expansible_buffer_append_uri_escaped(widget.params, tpool, name);
 
-        widget.params.Write("=", 1);
+		widget.params.Write("=", 1);
 
-        expansible_buffer_append_uri_escaped(widget.params, tpool, value);
-    } else if (tag == Tag::WIDGET_HEADER) {
-        assert(widget.widget != nullptr);
+		expansible_buffer_append_uri_escaped(widget.params, tpool, value);
+	} else if (tag == Tag::WIDGET_HEADER) {
+		assert(widget.widget != nullptr);
 
-        if (xml_tag.type == XmlParserTagType::CLOSE)
-            return true;
+		if (xml_tag.type == XmlParserTagType::CLOSE)
+			return true;
 
-        const auto name = widget.param.name.ReadStringView();
-        if (!header_name_valid(name.data, name.size)) {
-            container.logger(3, "invalid widget HTTP header name");
-            return true;
-        }
+		const auto name = widget.param.name.ReadStringView();
+		if (!header_name_valid(name.data, name.size)) {
+			container.logger(3, "invalid widget HTTP header name");
+			return true;
+		}
 
-        if (widget.widget->from_template.headers == nullptr)
-            widget.widget->from_template.headers = strmap_new(&widget.pool);
+		if (widget.widget->from_template.headers == nullptr)
+			widget.widget->from_template.headers = strmap_new(&widget.pool);
 
-        char *value = widget.param.value.StringDup(widget.pool);
-        if (strchr(value, '&') != nullptr) {
-            size_t length = unescape_inplace(&html_escape_class,
-                                             value, strlen(value));
-            value[length] = 0;
-        }
+		char *value = widget.param.value.StringDup(widget.pool);
+		if (strchr(value, '&') != nullptr) {
+			size_t length = unescape_inplace(&html_escape_class,
+							 value, strlen(value));
+			value[length] = 0;
+		}
 
-        widget.widget->from_template.headers->Add(widget.pool,
-                                                  widget.param.name.StringDup(widget.pool),
-                                                  value);
-    } else if (tag == Tag::SCRIPT) {
-        if (xml_tag.type == XmlParserTagType::OPEN)
-            parser_script(parser);
-        else
-            tag = Tag::NONE;
-    } else if (tag == Tag::REWRITE_URI) {
-        /* the settings of this tag become the new default */
-        default_uri_rewrite = uri_rewrite;
+		widget.widget->from_template.headers->Add(widget.pool,
+							  widget.param.name.StringDup(widget.pool),
+							  value);
+	} else if (tag == Tag::SCRIPT) {
+		if (xml_tag.type == XmlParserTagType::OPEN)
+			parser_script(parser);
+		else
+			tag = Tag::NONE;
+	} else if (tag == Tag::REWRITE_URI) {
+		/* the settings of this tag become the new default */
+		default_uri_rewrite = uri_rewrite;
 
-        Replace(xml_tag.start, xml_tag.end, nullptr);
-    } else if (tag == Tag::STYLE) {
-        if (xml_tag.type == XmlParserTagType::OPEN && !IsQuiet() && HasOptionStyle()) {
-            /* create a CSS processor for the contents of this style
-               element */
+		Replace(xml_tag.start, xml_tag.end, nullptr);
+	} else if (tag == Tag::STYLE) {
+		if (xml_tag.type == XmlParserTagType::OPEN && !IsQuiet() &&
+		    HasOptionStyle()) {
+			/* create a CSS processor for the contents of this style
+			   element */
 
-            tag = Tag::STYLE_PROCESS;
+			tag = Tag::STYLE_PROCESS;
 
-            unsigned css_options = 0;
-            if (options & PROCESSOR_REWRITE_URL)
-                css_options |= CSS_PROCESSOR_REWRITE_URL;
-            if (options & PROCESSOR_PREFIX_CSS_CLASS)
-                css_options |= CSS_PROCESSOR_PREFIX_CLASS;
-            if (options & PROCESSOR_PREFIX_XML_ID)
-                css_options |= CSS_PROCESSOR_PREFIX_ID;
+			unsigned css_options = 0;
+			if (options & PROCESSOR_REWRITE_URL)
+				css_options |= CSS_PROCESSOR_REWRITE_URL;
+			if (options & PROCESSOR_PREFIX_CSS_CLASS)
+				css_options |= CSS_PROCESSOR_PREFIX_CLASS;
+			if (options & PROCESSOR_PREFIX_XML_ID)
+				css_options |= CSS_PROCESSOR_PREFIX_ID;
 
-            auto istream =
-                css_processor(pool, UnusedIstreamPtr(StartCdataIstream()),
-                              container, ctx,
-                              css_options);
+			auto istream =
+				css_processor(pool,
+					      UnusedIstreamPtr(StartCdataIstream()),
+					      container, ctx,
+					      css_options);
 
-            /* the end offset will be extended later with
-               istream_replace_extend() */
-            cdata_start = xml_tag.end;
-            Replace(xml_tag.end, xml_tag.end, std::move(istream));
-        }
-    }
+			/* the end offset will be extended later with
+			   istream_replace_extend() */
+			cdata_start = xml_tag.end;
+			Replace(xml_tag.end, xml_tag.end, std::move(istream));
+		}
+	}
 
-    return true;
+	return true;
 }
 
 size_t
 XmlProcessor::OnXmlCdata(const char *p gcc_unused, size_t length,
-                         gcc_unused bool escaped, off_t start) noexcept
+			 gcc_unused bool escaped, off_t start) noexcept
 {
-    had_input = true;
+	had_input = true;
 
-    if (tag == Tag::STYLE_PROCESS) {
-        /* XXX unescape? */
-        length = cdata_istream->InvokeData(p, length);
-        if (length > 0)
-            replace->Extend(cdata_start, start + length);
-    } else if (replace && widget.widget == nullptr)
-        replace->Settle(start + length);
+	if (tag == Tag::STYLE_PROCESS) {
+		/* XXX unescape? */
+		length = cdata_istream->InvokeData(p, length);
+		if (length > 0)
+			replace->Extend(cdata_start, start + length);
+	} else if (replace && widget.widget == nullptr)
+		replace->Settle(start + length);
 
-    return length;
+	return length;
 }
 
 void
 XmlProcessor::OnXmlEof(gcc_unused off_t length) noexcept
 {
-    assert(parser != nullptr);
+	assert(parser != nullptr);
 
-    StopCdataIstream();
+	StopCdataIstream();
 
-    /* the request body could not be submitted to the focused widget,
-       because we didn't find it; dispose it now */
-    container.DiscardForFocused();
+	/* the request body could not be submitted to the focused widget,
+	   because we didn't find it; dispose it now */
+	container.DiscardForFocused();
 
-    if (replace)
-        replace->Finish();
+	if (replace)
+		replace->Finish();
 
-    if (lookup_id != nullptr) {
-        /* widget was not found */
+	if (lookup_id != nullptr) {
+		/* widget was not found */
 
-        handler->WidgetNotFound();
-    }
+		handler->WidgetNotFound();
+	}
 
-    Destroy();
+	Destroy();
 }
 
 void
 XmlProcessor::OnXmlError(std::exception_ptr ep) noexcept
 {
-    assert(parser != nullptr);
+	assert(parser != nullptr);
 
-    StopCdataIstream();
+	StopCdataIstream();
 
-    /* the request body could not be submitted to the focused widget,
-       because we didn't find it; dispose it now */
-    container.DiscardForFocused();
+	/* the request body could not be submitted to the focused widget,
+	   because we didn't find it; dispose it now */
+	container.DiscardForFocused();
 
-    if (lookup_id != nullptr) {
-        handler->WidgetLookupError(ep);
-    }
+	if (lookup_id != nullptr) {
+		handler->WidgetLookupError(ep);
+	}
 
-    Destroy();
+	Destroy();
 }

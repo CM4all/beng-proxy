@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,44 +30,41 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#pragma once
+
 /*
  * CSS syntax rules.
  */
-
-#ifndef BENG_PROXY_CSS_SYNTAX_HXX
-#define BENG_PROXY_CSS_SYNTAX_HXX
 
 #include "util/CharUtil.hxx"
 
 constexpr bool
 is_css_nonascii(char ch)
 {
-    return !IsASCII(ch);
+	return !IsASCII(ch);
 }
 
 constexpr bool
 is_css_nmstart(char ch)
 {
-    return ch == '_' || IsAlphaASCII(ch) || is_css_nonascii(ch) ||
-        ch == '\\';
+	return ch == '_' || IsAlphaASCII(ch) || is_css_nonascii(ch) ||
+		ch == '\\';
 }
 
 constexpr bool
 is_css_nmchar(char ch)
 {
-    return is_css_nmstart(ch) || IsDigitASCII(ch) || ch == '-';
+	return is_css_nmstart(ch) || IsDigitASCII(ch) || ch == '-';
 }
 
 constexpr bool
 is_css_ident_start(char ch)
 {
-    return ch == '-' || is_css_nmstart(ch);
+	return ch == '-' || is_css_nmstart(ch);
 }
 
 constexpr bool
 is_css_ident_char(char ch)
 {
-    return is_css_nmchar(ch);
+	return is_css_nmchar(ch);
 }
-
-#endif

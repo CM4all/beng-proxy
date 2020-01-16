@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -55,4 +55,4 @@ text_processor_allowed(const StringMap &headers);
  */
 UnusedIstreamPtr
 text_processor(struct pool &pool, UnusedIstreamPtr istream,
-               const Widget &widget, const WidgetContext &ctx);
+	       const Widget &widget, const WidgetContext &ctx);
