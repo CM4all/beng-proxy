@@ -61,7 +61,7 @@ struct css_rewrite {
  */
 
 static void
-css_rewrite_parser_url(const CssParserValue *url, void *ctx)
+css_rewrite_parser_url(const CssParserValue *url, void *ctx) noexcept
 {
 	struct css_rewrite *rewrite = (struct css_rewrite *)ctx;
 	assert(rewrite->parser != nullptr);
@@ -74,7 +74,7 @@ css_rewrite_parser_url(const CssParserValue *url, void *ctx)
 }
 
 static void
-css_rewrite_parser_eof(void *ctx, off_t length gcc_unused)
+css_rewrite_parser_eof(void *ctx, off_t length gcc_unused) noexcept
 {
 	struct css_rewrite *rewrite = (struct css_rewrite *)ctx;
 	assert(rewrite->parser != nullptr);
@@ -86,7 +86,7 @@ css_rewrite_parser_eof(void *ctx, off_t length gcc_unused)
 gcc_noreturn
 #endif
 static void
-css_rewrite_parser_error(std::exception_ptr, void *ctx)
+css_rewrite_parser_error(std::exception_ptr, void *ctx) noexcept
 {
 	struct css_rewrite *rewrite = (struct css_rewrite *)ctx;
 	(void)rewrite;

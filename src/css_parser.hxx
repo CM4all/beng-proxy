@@ -51,43 +51,43 @@ struct CssParserHandler {
 	/**
 	 * A class name was found.
 	 */
-	void (*class_name)(const CssParserValue *name, void *ctx);
+	void (*class_name)(const CssParserValue *name, void *ctx) noexcept;
 
 	/**
 	 * A XML id was found.
 	 */
-	void (*xml_id)(const CssParserValue *id, void *ctx);
+	void (*xml_id)(const CssParserValue *id, void *ctx) noexcept;
 
 	/**
 	 * A new block begins.  Optional method.
 	 */
-	void (*block)(void *ctx);
+	void (*block)(void *ctx) noexcept;
 
 	/**
 	 * A property value with a keyword value.  Optional method.
 	 */
 	void (*property_keyword)(const char *name, StringView value,
-				 off_t start, off_t end, void *ctx);
+				 off_t start, off_t end, void *ctx) noexcept;
 
 	/**
 	 * A property value with a URL was found.  Optional method.
 	 */
-	void (*url)(const CssParserValue *url, void *ctx);
+	void (*url)(const CssParserValue *url, void *ctx) noexcept;
 
 	/**
 	 * The command "@import" was found.  Optional method.
 	 */
-	void (*import)(const CssParserValue *url, void *ctx);
+	void (*import)(const CssParserValue *url, void *ctx) noexcept;
 
 	/**
 	 * The CSS end-of-file was reached.
 	 */
-	void (*eof)(void *ctx, off_t length);
+	void (*eof)(void *ctx, off_t length) noexcept;
 
 	/**
 	 * An I/O error has occurred.
 	 */
-	void (*error)(std::exception_ptr ep, void *ctx);
+	void (*error)(std::exception_ptr ep, void *ctx) noexcept;
 };
 
 /**
@@ -97,17 +97,17 @@ struct CssParserHandler {
  */
 CssParser *
 css_parser_new(struct pool &pool, UnusedIstreamPtr input, bool block,
-	       const CssParserHandler &handler, void *handler_ctx);
+	       const CssParserHandler &handler, void *handler_ctx) noexcept;
 
 /**
  * Force-closen the CSS parser, don't invoke any handler methods.
  */
 void
-css_parser_close(CssParser *parser);
+css_parser_close(CssParser *parser) noexcept;
 
 /**
  * Ask the CSS parser to read and parse more CSS source code.  Does
  * nothing if the istream blocks.
  */
 void
-css_parser_read(CssParser *parser);
+css_parser_read(CssParser *parser) noexcept;

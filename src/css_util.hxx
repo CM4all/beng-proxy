@@ -44,7 +44,7 @@
  */
 gcc_pure
 static inline unsigned
-underscore_prefix(const char *p, const char *end)
+underscore_prefix(const char *p, const char *end) noexcept
 {
 	const char *q = p;
 	while (q < end && *q == '_')
@@ -55,7 +55,7 @@ underscore_prefix(const char *p, const char *end)
 
 gcc_pure
 static inline bool
-is_underscore_prefix(const char *p, const char *end)
+is_underscore_prefix(const char *p, const char *end) noexcept
 {
 	unsigned n = underscore_prefix(p, end);
 	return n == 2 || n == 3;

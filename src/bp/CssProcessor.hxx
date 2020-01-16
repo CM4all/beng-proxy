@@ -58,4 +58,4 @@ UnusedIstreamPtr
 css_processor(struct pool &pool, UnusedIstreamPtr stream,
 	      Widget &widget,
 	      WidgetContext &ctx,
-	      unsigned options);
+	      unsigned options) noexcept;

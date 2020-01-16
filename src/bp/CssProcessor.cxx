@@ -72,7 +72,7 @@ struct CssProcessor final : PoolHolder {
 		     SharedPoolPtr<ReplaceIstreamControl> _replace,
 		     Widget &_container,
 		     WidgetContext &_ctx,
-		     unsigned _options);
+		     unsigned _options) noexcept;
 
 	void Destroy() noexcept {
 		this->~CssProcessor();
@@ -82,19 +82,19 @@ struct CssProcessor final : PoolHolder {
 };
 
 static inline bool
-css_processor_option_rewrite_url(const CssProcessor *processor)
+css_processor_option_rewrite_url(const CssProcessor *processor) noexcept
 {
 	return (processor->options & CSS_PROCESSOR_REWRITE_URL) != 0;
 }
 
 static inline bool
-css_processor_option_prefix_class(const CssProcessor *processor)
+css_processor_option_prefix_class(const CssProcessor *processor) noexcept
 {
 	return (processor->options & CSS_PROCESSOR_PREFIX_CLASS) != 0;
 }
 
 static inline bool
-css_processor_option_prefix_id(const CssProcessor *processor)
+css_processor_option_prefix_id(const CssProcessor *processor) noexcept
 {
 	return (processor->options & CSS_PROCESSOR_PREFIX_ID) != 0;
 }
@@ -102,7 +102,7 @@ css_processor_option_prefix_id(const CssProcessor *processor)
 static void
 css_processor_replace_add(CssProcessor *processor,
 			  off_t start, off_t end,
-			  UnusedIstreamPtr istream)
+			  UnusedIstreamPtr istream) noexcept
 {
 	processor->replace->Add(start, end, std::move(istream));
 }
@@ -113,7 +113,7 @@ css_processor_replace_add(CssProcessor *processor,
  */
 
 static void
-css_processor_parser_class_name(const CssParserValue *name, void *ctx)
+css_processor_parser_class_name(const CssParserValue *name, void *ctx) noexcept
 {
 	CssProcessor *processor = (CssProcessor *)ctx;
 
@@ -146,7 +146,7 @@ css_processor_parser_class_name(const CssParserValue *name, void *ctx)
 }
 
 static void
-css_processor_parser_xml_id(const CssParserValue *name, void *ctx)
+css_processor_parser_xml_id(const CssParserValue *name, void *ctx) noexcept
 {
 	CssProcessor *processor = (CssProcessor *)ctx;
 
@@ -180,7 +180,7 @@ css_processor_parser_xml_id(const CssParserValue *name, void *ctx)
 }
 
 static void
-css_processor_parser_block(void *ctx)
+css_processor_parser_block(void *ctx) noexcept
 {
 	CssProcessor *processor = (CssProcessor *)ctx;
 
@@ -190,7 +190,8 @@ css_processor_parser_block(void *ctx)
 
 static void
 css_processor_parser_property_keyword(const char *name, StringView value,
-				      off_t start, off_t end, void *ctx)
+				      off_t start, off_t end,
+				      void *ctx) noexcept
 {
 	CssProcessor *processor = (CssProcessor *)ctx;
 
@@ -210,7 +211,7 @@ css_processor_parser_property_keyword(const char *name, StringView value,
 }
 
 static void
-css_processor_parser_url(const CssParserValue *url, void *ctx)
+css_processor_parser_url(const CssParserValue *url, void *ctx) noexcept
 {
 	CssProcessor *processor = (CssProcessor *)ctx;
 
@@ -232,7 +233,7 @@ css_processor_parser_url(const CssParserValue *url, void *ctx)
 }
 
 static void
-css_processor_parser_import(const CssParserValue *url, void *ctx)
+css_processor_parser_import(const CssParserValue *url, void *ctx) noexcept
 {
 	CssProcessor *processor = (CssProcessor *)ctx;
 
@@ -252,7 +253,7 @@ css_processor_parser_import(const CssParserValue *url, void *ctx)
 }
 
 static void
-css_processor_parser_eof(void *ctx, off_t length gcc_unused)
+css_processor_parser_eof(void *ctx, off_t length gcc_unused) noexcept
 {
 	CssProcessor *processor = (CssProcessor *)ctx;
 
@@ -265,7 +266,7 @@ css_processor_parser_eof(void *ctx, off_t length gcc_unused)
 }
 
 static void
-css_processor_parser_error(std::exception_ptr, void *ctx)
+css_processor_parser_error(std::exception_ptr, void *ctx) noexcept
 {
 	CssProcessor *processor = (CssProcessor *)ctx;
 
@@ -298,7 +299,7 @@ CssProcessor::CssProcessor(PoolPtr &&_pool,
 			   SharedPoolPtr<ReplaceIstreamControl> _replace,
 			   Widget &_container,
 			   WidgetContext &_ctx,
-			   unsigned _options)
+			   unsigned _options) noexcept
 	:PoolHolder(std::move(_pool)),
 	 container(_container), ctx(_ctx),
 	 options(_options),
@@ -310,7 +311,7 @@ UnusedIstreamPtr
 css_processor(struct pool &caller_pool, UnusedIstreamPtr input,
 	      Widget &widget,
 	      WidgetContext &ctx,
-	      unsigned options)
+	      unsigned options) noexcept
 {
 	auto pool = pool_new_linear(&caller_pool, "css_processor", 32768);
 

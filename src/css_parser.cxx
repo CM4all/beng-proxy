@@ -48,27 +48,27 @@ class CssParser final : IstreamSink, DestructAnchor {
 		using TrivialArray<char, max>::raw;
 		using TrivialArray<char, max>::end;
 
-		size_t GetRemainingSpace() const {
+		size_t GetRemainingSpace() const noexcept {
 			return capacity() - size();
 		}
 
-		void AppendTruncated(StringView p) {
+		void AppendTruncated(StringView p) noexcept {
 			size_t n = std::min(p.size, GetRemainingSpace());
 			std::copy_n(p.data, n, end());
 			this->the_size += n;
 		}
 
-		constexpr operator StringView() const {
+		constexpr operator StringView() const noexcept {
 			return {raw(), size()};
 		}
 
 		gcc_pure
-		bool Equals(StringView other) const {
+		bool Equals(StringView other) const noexcept {
 			return other.Equals(*this);
 		}
 
 		template<size_t n>
-		bool EqualsLiteral(const char (&value)[n]) const {
+		bool EqualsLiteral(const char (&value)[n]) const noexcept {
 			return Equals({value, n - 1});
 		}
 	};
@@ -114,17 +114,17 @@ class CssParser final : IstreamSink, DestructAnchor {
 
 public:
 	CssParser(UnusedIstreamPtr input, bool block,
-		  const CssParserHandler &handler, void *handler_ctx);
+		  const CssParserHandler &handler, void *handler_ctx) noexcept;
 
-	void Destroy() {
+	void Destroy() noexcept {
 		this->~CssParser();
 	}
 
-	void Read() {
+	void Read() noexcept {
 		input.Read();
 	}
 
-	void Close() {
+	void Close() noexcept {
 		input.Close();
 	}
 
@@ -567,7 +567,7 @@ CssParser::Feed(const char *start, size_t length) noexcept
 
 CssParser::CssParser(UnusedIstreamPtr _input, bool _block,
 		     const CssParserHandler &_handler,
-		     void *_handler_ctx)
+		     void *_handler_ctx) noexcept
 	:IstreamSink(std::move(_input)), block(_block),
 	 position(0),
 	 handler(_handler), handler_ctx(_handler_ctx),
@@ -577,7 +577,7 @@ CssParser::CssParser(UnusedIstreamPtr _input, bool _block,
 
 CssParser *
 css_parser_new(struct pool &pool, UnusedIstreamPtr input, bool block,
-	       const CssParserHandler &handler, void *handler_ctx)
+	       const CssParserHandler &handler, void *handler_ctx) noexcept
 {
 	assert(handler.eof != nullptr);
 	assert(handler.error != nullptr);
@@ -587,7 +587,7 @@ css_parser_new(struct pool &pool, UnusedIstreamPtr input, bool block,
 }
 
 void
-css_parser_close(CssParser *parser)
+css_parser_close(CssParser *parser) noexcept
 {
 	assert(parser != nullptr);
 
@@ -596,7 +596,7 @@ css_parser_close(CssParser *parser)
 }
 
 void
-css_parser_read(CssParser *parser)
+css_parser_read(CssParser *parser) noexcept
 {
 	assert(parser != nullptr);
 
