@@ -44,7 +44,7 @@
 #include <assert.h>
 
 bool
-Widget::HasFocus() const
+Widget::HasFocus() const noexcept
 {
 	assert(parent != nullptr);
 
@@ -55,7 +55,7 @@ Widget::HasFocus() const
 }
 
 bool
-Widget::DescendantHasFocus() const
+Widget::DescendantHasFocus() const noexcept
 {
 	assert(parent != nullptr);
 
@@ -113,7 +113,8 @@ Widget::CopyFromRequest()
 }
 
 void
-Widget::CopyFromRedirectLocation(StringView location, RealmSession *session)
+Widget::CopyFromRedirectLocation(StringView location,
+				 RealmSession *session) noexcept
 {
 	assert(cls != nullptr);
 

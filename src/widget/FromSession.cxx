@@ -43,24 +43,24 @@
 #include <assert.h>
 
 void
-Widget::SaveToSession(WidgetSession &ws) const
-	try {
-		assert(cls != nullptr);
-		assert(cls->stateful); /* cannot save state for stateless widgets */
+Widget::SaveToSession(WidgetSession &ws) const noexcept
+try {
+	assert(cls != nullptr);
+	assert(cls->stateful); /* cannot save state for stateless widgets */
 
-		auto &p = ws.session.parent.pool;
+	auto &p = ws.session.parent.pool;
 
-		ws.path_info.Set(p, from_request.path_info);
+	ws.path_info.Set(p, from_request.path_info);
 
-		if (from_request.query_string.empty())
-			ws.query_string.Clear(p);
-		else
-			ws.query_string.Set(p, from_request.query_string);
-	} catch (const std::bad_alloc &) {
-	}
+	if (from_request.query_string.empty())
+		ws.query_string.Clear(p);
+	else
+		ws.query_string.Set(p, from_request.query_string);
+} catch (const std::bad_alloc &) {
+}
 
 void
-Widget::LoadFromSession(const WidgetSession &ws)
+Widget::LoadFromSession(const WidgetSession &ws) noexcept
 {
 	assert(cls != nullptr);
 	assert(cls->stateful); /* cannot load state from stateless widgets */
@@ -73,7 +73,7 @@ Widget::LoadFromSession(const WidgetSession &ws)
 }
 
 void
-Widget::LoadFromSession(RealmSession &session)
+Widget::LoadFromSession(RealmSession &session) noexcept
 {
 	assert(parent != nullptr);
 	assert(lazy.address == nullptr);
@@ -106,7 +106,7 @@ Widget::LoadFromSession(RealmSession &session)
 }
 
 void
-Widget::SaveToSession(RealmSession &session)
+Widget::SaveToSession(RealmSession &session) noexcept
 {
 	assert(parent != nullptr);
 	assert(cls != nullptr);

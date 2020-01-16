@@ -50,7 +50,7 @@
  * parameters from the parent container.
  */
 ResourceAddress
-Widget::GetBaseAddress(AllocatorPtr alloc, bool stateful) const
+Widget::GetBaseAddress(AllocatorPtr alloc, bool stateful) const noexcept
 {
 	const ResourceAddress *src = stateful
 		? GetAddress()
@@ -76,7 +76,7 @@ Widget::GetBaseAddress(AllocatorPtr alloc, bool stateful) const
 }
 
 static const ResourceAddress *
-widget_get_original_address(const Widget *widget)
+widget_get_original_address(const Widget *widget) noexcept
 {
 	assert(widget != nullptr);
 	assert(widget->cls != nullptr);
@@ -89,14 +89,14 @@ widget_get_original_address(const Widget *widget)
 
 gcc_pure
 static bool
-HasTrailingSlash(const char *p)
+HasTrailingSlash(const char *p) noexcept
 {
 	size_t length = strlen(p);
 	return length > 0 && p[length - 1] == '/';
 }
 
 const ResourceAddress *
-Widget::DetermineAddress(bool stateful) const
+Widget::DetermineAddress(bool stateful) const noexcept
 {
 	const AllocatorPtr alloc(pool);
 
@@ -200,7 +200,7 @@ Widget::DetermineAddress(bool stateful) const
 
 const char *
 Widget::AbsoluteUri(AllocatorPtr alloc, bool stateful,
-		    StringView relative_uri) const
+		    StringView relative_uri) const noexcept
 {
 	assert(GetAddress()->IsHttp());
 
@@ -235,7 +235,7 @@ Widget::AbsoluteUri(AllocatorPtr alloc, bool stateful,
 
 StringView
 Widget::RelativeUri(AllocatorPtr alloc, bool stateful,
-		    StringView relative_uri) const
+		    StringView relative_uri) const noexcept
 {
 	const ResourceAddress *base;
 	if (relative_uri.SkipPrefix("~/")) {
@@ -263,7 +263,7 @@ Widget::RelativeUri(AllocatorPtr alloc, bool stateful,
  */
 gcc_pure
 static bool
-compare_widget_path(const Widget *widget, const char *other)
+compare_widget_path(const Widget *widget, const char *other) noexcept
 {
 	assert(widget != nullptr);
 
@@ -283,7 +283,7 @@ Widget::ExternalUri(AllocatorPtr alloc,
 		    const StringMap *args,
 		    bool stateful,
 		    StringView relative_uri,
-		    const char *frame, const char *view) const
+		    const char *frame, const char *view) const noexcept
 {
 	const char *qmark, *args2, *new_uri;
 	StringView p;

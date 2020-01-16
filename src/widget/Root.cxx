@@ -33,7 +33,7 @@
 #include "Widget.hxx"
 #include "Class.hxx"
 
-Widget::Widget(RootTag, struct pool &_pool, const char *_id)
+Widget::Widget(RootTag, struct pool &_pool, const char *_id) noexcept
 	:Widget(_pool, &root_widget_class)
 {
 	id = _id;

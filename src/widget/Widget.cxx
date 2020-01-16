@@ -74,7 +74,7 @@ count_invalid_chars(const char *p)
 }
 
 static char *
-quote_byte(char *p, uint8_t ch)
+quote_byte(char *p, uint8_t ch) noexcept
 {
 	*p++ = '_';
 	format_uint8_hex_fixed(p, ch);
@@ -82,7 +82,7 @@ quote_byte(char *p, uint8_t ch)
 }
 
 static const char *
-quote_prefix(struct pool *pool, const char *p)
+quote_prefix(struct pool *pool, const char *p) noexcept
 {
 	if (*p == 0)
 		return p;
@@ -111,7 +111,7 @@ quote_prefix(struct pool *pool, const char *p)
 }
 
 void
-Widget::SetId(const StringView _id)
+Widget::SetId(const StringView _id) noexcept
 {
 	assert(parent != nullptr);
 	assert(!_id.empty());
@@ -134,7 +134,7 @@ Widget::SetId(const StringView _id)
 }
 
 void
-Widget::SetClassName(const StringView _class_name)
+Widget::SetClassName(const StringView _class_name) noexcept
 {
 	assert(parent != nullptr);
 	assert(class_name == nullptr);
@@ -147,7 +147,7 @@ Widget::SetClassName(const StringView _class_name)
 }
 
 const char *
-Widget::GetLogName() const
+Widget::GetLogName() const noexcept
 {
 	if (lazy.log_name != nullptr)
 		return lazy.log_name;
@@ -171,21 +171,21 @@ Widget::GetLogName() const
 }
 
 StringView
-Widget::LoggerDomain::GetDomain() const
+Widget::LoggerDomain::GetDomain() const noexcept
 {
 	const auto &widget = ContainerCast(*this, (LoggerDomain Widget::*)&Widget::logger);
 	return widget.GetLogName();
 }
 
 bool
-Widget::IsContainerByDefault() const
+Widget::IsContainerByDefault() const noexcept
 {
 	const WidgetView *v = GetDefaultView();
 	return v != nullptr && v->IsContainer();
 }
 
 bool
-Widget::HasProcessor() const
+Widget::HasProcessor() const noexcept
 {
 	const WidgetView *v = GetTransformationView();
 	assert(v != nullptr);
@@ -193,14 +193,14 @@ Widget::HasProcessor() const
 }
 
 bool
-Widget::IsContainer() const
+Widget::IsContainer() const noexcept
 {
 	const WidgetView *v = GetTransformationView();
 	return v != nullptr && v->IsContainer();
 }
 
 Widget *
-Widget::FindChild(const char *child_id)
+Widget::FindChild(const char *child_id) noexcept
 {
 	assert(child_id != nullptr);
 
@@ -220,7 +220,7 @@ Widget::CheckHost(const char *host, const char *site_name) const
 }
 
 bool
-widget_check_recursion(const Widget *widget)
+widget_check_recursion(const Widget *widget) noexcept
 {
 	unsigned depth = 0;
 
@@ -246,7 +246,7 @@ Widget::DiscardForFocused() noexcept
 }
 
 void
-Widget::Cancel()
+Widget::Cancel() noexcept
 {
 	/* we are not going to consume the request body, so abort it */
 	from_request.body.Clear();

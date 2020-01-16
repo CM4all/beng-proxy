@@ -285,16 +285,16 @@ private:
 
 	struct LoggerDomain {
 		gcc_pure
-		StringView GetDomain() const;
+		StringView GetDomain() const noexcept;
 	};
 
 public:
 	BasicLogger<LoggerDomain> logger;
 
-	Widget(struct pool &_pool, const WidgetClass *_cls);
+	Widget(struct pool &_pool, const WidgetClass *_cls) noexcept;
 
 	struct RootTag {};
-	Widget(RootTag, struct pool &_pool, const char *_id);
+	Widget(RootTag, struct pool &_pool, const char *_id) noexcept;
 
 	~Widget() noexcept {
 		DiscardForFocused();
@@ -303,18 +303,18 @@ public:
 	Widget(const Widget &) = delete;
 	Widget &operator=(const Widget &) = delete;
 
-	void SetId(StringView _id);
-	void SetClassName(StringView _class_name);
+	void SetId(StringView _id) noexcept;
+	void SetClassName(StringView _class_name) noexcept;
 
-	const char *GetIdPath() const {
+	const char *GetIdPath() const noexcept {
 		return id_path;
 	}
 
-	const char *GetPrefix() const {
+	const char *GetPrefix() const noexcept {
 		return prefix;
 	}
 
-	const char *GetQuotedClassName() const {
+	const char *GetQuotedClassName() const noexcept {
 		return quoted_class_name;
 	}
 
@@ -322,7 +322,7 @@ public:
 	 * Clear the lazy-initialized attributes.  This is meant for unit
 	 * tests only, do not use in production code.
 	 */
-	void ClearLazy() {
+	void ClearLazy() noexcept {
 		lazy = {};
 	}
 
@@ -330,10 +330,10 @@ public:
 	 * Returns this widget's name for log/error messages.
 	 */
 	gcc_pure
-	const char *GetLogName() const;
+	const char *GetLogName() const noexcept;
 
 	gcc_pure
-	Widget *FindRoot() {
+	Widget *FindRoot() noexcept {
 		Widget *w = this;
 		while (w->parent != nullptr)
 			w = w->parent;
@@ -341,27 +341,27 @@ public:
 	}
 
 	gcc_pure
-	Widget *FindChild(const char *child_id);
+	Widget *FindChild(const char *child_id) noexcept;
 
 	gcc_pure
-	const char *GetDefaultPathInfo() const {
+	const char *GetDefaultPathInfo() const noexcept {
 		return from_template.path_info;
 	}
 
 	gcc_pure
-	const char *GetRequestedPathInfo() const {
+	const char *GetRequestedPathInfo() const noexcept {
 		return from_request.path_info != nullptr
 			? from_request.path_info
 			: from_template.path_info;
 	}
 
 	gcc_pure
-	const char *GetPathInfo(bool stateful) const {
+	const char *GetPathInfo(bool stateful) const noexcept {
 		return stateful ? GetRequestedPathInfo() : GetDefaultPathInfo();
 	}
 
 	gcc_pure
-	bool HasDefaultView() const {
+	bool HasDefaultView() const noexcept {
 		return from_template.view != nullptr;
 	}
 
@@ -370,7 +370,7 @@ public:
 	 * class and the view specification in the parent.  It ignores the
 	 * view name from the request.
 	 */
-	const WidgetView *GetDefaultView() const {
+	const WidgetView *GetDefaultView() const noexcept {
 		return from_template.view;
 	}
 
@@ -378,44 +378,44 @@ public:
 	 * Is the default view a container?
 	 */
 	gcc_pure
-	bool IsContainerByDefault() const;
+	bool IsContainerByDefault() const noexcept;
 
 	/**
 	 * Returns the view that is used to determine the address of the
 	 * server.
 	 */
-	const WidgetView *GetAddressView() const {
+	const WidgetView *GetAddressView() const noexcept {
 		return GetDefaultView();
 	}
 
 	gcc_pure
-	const WidgetView *GetEffectiveView() const {
+	const WidgetView *GetEffectiveView() const noexcept {
 		return from_request.view;
 	}
 
 	gcc_pure
-	bool HasFocus() const;
+	bool HasFocus() const noexcept;
 
 	gcc_pure
-	bool DescendantHasFocus() const;
+	bool DescendantHasFocus() const noexcept;
 
 	/**
 	 * Does the effective view enable the HTML processor?
 	 */
 	gcc_pure
-	bool HasProcessor() const;
+	bool HasProcessor() const noexcept;
 
 	/**
 	 * Is the effective view a container?
 	 */
 	gcc_pure
-	bool IsContainer() const;
+	bool IsContainer() const noexcept;
 
 	/**
 	 * Returns the view that is used to determine the transformations of
 	 * the response.
 	 */
-	const WidgetView *GetTransformationView() const {
+	const WidgetView *GetTransformationView() const noexcept {
 		return GetEffectiveView();
 	}
 
@@ -426,10 +426,10 @@ public:
 	 */
 	void CheckHost(const char *host, const char *site_name) const;
 
-	const ResourceAddress *DetermineAddress(bool stateful) const;
+	const ResourceAddress *DetermineAddress(bool stateful) const noexcept;
 
 	gcc_pure
-	const ResourceAddress *GetAddress() const {
+	const ResourceAddress *GetAddress() const noexcept {
 		if (lazy.address == nullptr)
 			lazy.address = DetermineAddress(true);
 
@@ -437,7 +437,7 @@ public:
 	}
 
 	gcc_pure
-	const ResourceAddress *GetStatelessAddress() const {
+	const ResourceAddress *GetStatelessAddress() const noexcept {
 		if (lazy.stateless_address == nullptr)
 			lazy.stateless_address = DetermineAddress(false);
 
@@ -445,18 +445,19 @@ public:
 	}
 
 	gcc_pure
-	ResourceAddress GetBaseAddress(AllocatorPtr alloc, bool stateful) const;
+	ResourceAddress GetBaseAddress(AllocatorPtr alloc,
+				       bool stateful) const noexcept;
 
 	gcc_pure
 	const char *AbsoluteUri(AllocatorPtr alloc, bool stateful,
-				StringView relative_uri) const;
+				StringView relative_uri) const noexcept;
 
 	/**
 	 * Returns an URI relative to the widget base address.
 	 */
 	gcc_pure
 	StringView RelativeUri(AllocatorPtr alloc, bool stateful,
-			       StringView relative_uri) const;
+			       StringView relative_uri) const noexcept;
 
 	gcc_pure
 	const char *ExternalUri(AllocatorPtr alloc,
@@ -464,7 +465,8 @@ public:
 				const StringMap *args,
 				bool stateful,
 				StringView relative_uri,
-				const char *frame, const char *view) const;
+				const char *frame,
+				const char *view) const noexcept;
 
 	/**
 	 * Discard data for the focused widget (which is a descendant of
@@ -477,7 +479,7 @@ public:
 	 * callback must call this function on a widget which it will not
 	 * send a HTTP request to.
 	 */
-	void Cancel();
+	void Cancel() noexcept;
 
 	/**
 	 * Copy parameters from the request to the widget.
@@ -493,7 +495,7 @@ public:
 	WidgetSession *GetSession(RealmSession &session, bool create) noexcept;
 
 	gcc_pure
-	bool ShouldSyncSession() const {
+	bool ShouldSyncSession() const noexcept {
 		if (from_request.body)
 			/* do not save to session when this is a POST request */
 			return false;
@@ -507,24 +509,25 @@ public:
 	}
 
 	/** copy data from the widget to its associated session */
-	void SaveToSession(WidgetSession &ws) const;
+	void SaveToSession(WidgetSession &ws) const noexcept;
 
 	/**
 	 * Save the current request to the session.  Call this after you
 	 * have received the widget's response if the session_save_pending
 	 * flag was set by LoadFromSession().
 	 */
-	void SaveToSession(RealmSession &session);
+	void SaveToSession(RealmSession &session) noexcept;
 
 	/** restore data from the session */
-	void LoadFromSession(const WidgetSession &ws);
-	void LoadFromSession(RealmSession &session);
+	void LoadFromSession(const WidgetSession &ws) noexcept;
+	void LoadFromSession(RealmSession &session) noexcept;
 
 	/**
 	 * Overwrite request data, copy values from a HTTP redirect
 	 * location.
 	 */
-	void CopyFromRedirectLocation(StringView location, RealmSession *session);
+	void CopyFromRedirectLocation(StringView location,
+				      RealmSession *session) noexcept;
 };
 
 /**
@@ -533,4 +536,4 @@ public:
  */
 gcc_pure
 bool
-widget_check_recursion(const Widget *widget);
+widget_check_recursion(const Widget *widget) noexcept;
