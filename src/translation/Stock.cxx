@@ -41,6 +41,7 @@
 #include "pool/LeakDetector.hxx"
 #include "system/Error.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "net/ToString.hxx"
 #include "event/SocketEvent.hxx"
 #include "io/Logger.hxx"
 #include "stopwatch.hxx"
@@ -49,6 +50,23 @@
 
 #include <string.h>
 #include <errno.h>
+
+static UniqueSocketDescriptor
+CreateConnectStreamSocket(const SocketAddress address)
+{
+	UniqueSocketDescriptor fd;
+	if (!fd.CreateNonBlock(address.GetFamily(), SOCK_STREAM, 0))
+		throw MakeErrno("Failed to create socket");
+
+	if (!fd.Connect(address)) {
+		const int e = errno;
+		char buffer[256];
+		ToString(buffer, sizeof(buffer), address);
+		throw FormatErrno(e, "Failed to connect to %s", buffer);
+	}
+
+	return fd;
+}
 
 class TranslationStock::Connection final : public StockItem {
 	UniqueSocketDescriptor s;
@@ -60,27 +78,16 @@ public:
 		:StockItem(c),
 		 event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
 
-private:
-	bool CreateAndConnect(SocketAddress a) noexcept {
-		assert(!s.IsDefined());
-
-		return s.CreateNonBlock(AF_LOCAL, SOCK_STREAM, 0) &&
-			s.Connect(a);
-	}
-
-public:
 	void CreateAndConnectAndFinish(SocketAddress a) noexcept {
-		if (CreateAndConnect(a)) {
-			event.Open(s);
-			InvokeCreateSuccess();
-		} else {
-			auto error = std::make_exception_ptr(MakeErrno("Failed to connect to translation server"));
-
-			if (s.IsDefined())
-				s.Close();
-
-			InvokeCreateError(error);
+		try {
+			s = CreateConnectStreamSocket(a);
+		} catch (...) {
+			InvokeCreateError(std::current_exception());
+			return;
 		}
+
+		event.Open(s);
+		InvokeCreateSuccess();
 	}
 
 	SocketDescriptor GetSocket() noexcept {
