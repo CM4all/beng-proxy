@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -50,44 +50,44 @@ struct tcache;
  * Cache for translation server responses.
  */
 class TranslationCache final : public TranslationService {
-    std::unique_ptr<struct tcache> cache;
+	std::unique_ptr<struct tcache> cache;
 
 public:
-    /**
-     * @param handshake_cacheable if false, then all requests are
-     * deemed uncacheable until the first response is received
-     */
-    TranslationCache(struct pool &pool, EventLoop &event_loop,
-                     TranslationService &next,
-                     unsigned max_size, bool handshake_cacheable=true);
+	/**
+	 * @param handshake_cacheable if false, then all requests are
+	 * deemed uncacheable until the first response is received
+	 */
+	TranslationCache(struct pool &pool, EventLoop &event_loop,
+			 TranslationService &next,
+			 unsigned max_size, bool handshake_cacheable=true);
 
-    ~TranslationCache() noexcept;
+	~TranslationCache() noexcept;
 
-    void ForkCow(bool inherit) noexcept;
+	void ForkCow(bool inherit) noexcept;
 
-    gcc_pure
-    AllocatorStats GetStats() const noexcept;
+	gcc_pure
+	AllocatorStats GetStats() const noexcept;
 
-    /**
-     * Flush all items from the cache.
-     */
-    void Flush() noexcept;
+	/**
+	 * Flush all items from the cache.
+	 */
+	void Flush() noexcept;
 
-    /**
-     * Flush selected items from the cache.
-     *
-     * @param request a request with parameters to compare with
-     * @param vary a list of #beng_translation_command codes which define
-     * the cache item filter
-     */
-    void Invalidate(const TranslateRequest &request,
-                    ConstBuffer<TranslationCommand> vary,
-                    const char *site) noexcept;
+	/**
+	 * Flush selected items from the cache.
+	 *
+	 * @param request a request with parameters to compare with
+	 * @param vary a list of #beng_translation_command codes which define
+	 * the cache item filter
+	 */
+	void Invalidate(const TranslateRequest &request,
+			ConstBuffer<TranslationCommand> vary,
+			const char *site) noexcept;
 
-    /* virtual methods from class TranslationService */
-    void SendRequest(struct pool &pool,
-                     const TranslateRequest &request,
-                     const StopwatchPtr &parent_stopwatch,
-                     TranslateHandler &handler,
-                     CancellablePointer &cancel_ptr) noexcept override;
+	/* virtual methods from class TranslationService */
+	void SendRequest(struct pool &pool,
+			 const TranslateRequest &request,
+			 const StopwatchPtr &parent_stopwatch,
+			 TranslateHandler &handler,
+			 CancellablePointer &cancel_ptr) noexcept override;
 };

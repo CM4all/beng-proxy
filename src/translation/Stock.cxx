@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -51,132 +51,132 @@
 #include <errno.h>
 
 class TranslationStock::Connection final : public StockItem {
-    UniqueSocketDescriptor s;
+	UniqueSocketDescriptor s;
 
-    SocketEvent event;
+	SocketEvent event;
 
 public:
-    explicit Connection(CreateStockItem c) noexcept
-        :StockItem(c),
-         event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
+	explicit Connection(CreateStockItem c) noexcept
+		:StockItem(c),
+		 event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)) {}
 
 private:
-    bool CreateAndConnect(SocketAddress a) noexcept {
-        assert(!s.IsDefined());
+	bool CreateAndConnect(SocketAddress a) noexcept {
+		assert(!s.IsDefined());
 
-        return s.CreateNonBlock(AF_LOCAL, SOCK_STREAM, 0) &&
-            s.Connect(a);
-    }
+		return s.CreateNonBlock(AF_LOCAL, SOCK_STREAM, 0) &&
+			s.Connect(a);
+	}
 
 public:
-    void CreateAndConnectAndFinish(SocketAddress a) noexcept {
-        if (CreateAndConnect(a)) {
-            event.Open(s);
-            InvokeCreateSuccess();
-        } else {
-            auto error = std::make_exception_ptr(MakeErrno("Failed to connect to translation server"));
+	void CreateAndConnectAndFinish(SocketAddress a) noexcept {
+		if (CreateAndConnect(a)) {
+			event.Open(s);
+			InvokeCreateSuccess();
+		} else {
+			auto error = std::make_exception_ptr(MakeErrno("Failed to connect to translation server"));
 
-            if (s.IsDefined())
-                s.Close();
+			if (s.IsDefined())
+				s.Close();
 
-            InvokeCreateError(error);
-        }
-    }
+			InvokeCreateError(error);
+		}
+	}
 
-    SocketDescriptor GetSocket() noexcept {
-        return s;
-    }
+	SocketDescriptor GetSocket() noexcept {
+		return s;
+	}
 
 private:
-    void EventCallback(unsigned) noexcept {
-        char buffer;
-        ssize_t nbytes = recv(s.Get(), &buffer, sizeof(buffer), MSG_DONTWAIT);
-        if (nbytes < 0)
-            LogConcat(2, "translation",
-                      "error on idle translation server connection: ",
-                      strerror(errno));
-        else if (nbytes > 0)
-            LogConcat(2, "translation",
-                      "unexpected data in idle translation server connection");
+	void EventCallback(unsigned) noexcept {
+		char buffer;
+		ssize_t nbytes = recv(s.Get(), &buffer, sizeof(buffer), MSG_DONTWAIT);
+		if (nbytes < 0)
+			LogConcat(2, "translation",
+				  "error on idle translation server connection: ",
+				  strerror(errno));
+		else if (nbytes > 0)
+			LogConcat(2, "translation",
+				  "unexpected data in idle translation server connection");
 
-        InvokeIdleDisconnect();
-    }
+		InvokeIdleDisconnect();
+	}
 
 public:
-    /* virtual methods from class StockItem */
-    bool Borrow() noexcept override {
-        event.Cancel();
-        return true;
-    }
+	/* virtual methods from class StockItem */
+	bool Borrow() noexcept override {
+		event.Cancel();
+		return true;
+	}
 
-    bool Release() noexcept override {
-        event.ScheduleRead();
-        return true;
-    }
+	bool Release() noexcept override {
+		event.ScheduleRead();
+		return true;
+	}
 };
 
 class TranslationStock::Request final
-    : Cancellable, StockGetHandler, Lease, PoolLeakDetector
+	: Cancellable, StockGetHandler, Lease, PoolLeakDetector
 {
-    struct pool &pool;
+	struct pool &pool;
 
-    StopwatchPtr stopwatch;
+	StopwatchPtr stopwatch;
 
-    TranslationStock &stock;
-    Connection *item;
+	TranslationStock &stock;
+	Connection *item;
 
-    const TranslateRequest &request;
+	const TranslateRequest &request;
 
-    TranslateHandler &handler;
+	TranslateHandler &handler;
 
-    CancellablePointer &caller_cancel_ptr;
-    CancellablePointer cancel_ptr;
+	CancellablePointer &caller_cancel_ptr;
+	CancellablePointer cancel_ptr;
 
 public:
-    Request(TranslationStock &_stock, struct pool &_pool,
-            const TranslateRequest &_request,
-            const StopwatchPtr &parent_stopwatch,
-            TranslateHandler &_handler,
-            CancellablePointer &_cancel_ptr) noexcept
-        :PoolLeakDetector(_pool),
-         pool(_pool),
-         stopwatch(parent_stopwatch, "translate",
-                   _request.GetDiagnosticName()),
-         stock(_stock),
-         request(_request),
-         handler(_handler),
-         caller_cancel_ptr(_cancel_ptr)
-    {
-        _cancel_ptr = *this;
-    }
+	Request(TranslationStock &_stock, struct pool &_pool,
+		const TranslateRequest &_request,
+		const StopwatchPtr &parent_stopwatch,
+		TranslateHandler &_handler,
+		CancellablePointer &_cancel_ptr) noexcept
+		:PoolLeakDetector(_pool),
+		 pool(_pool),
+		 stopwatch(parent_stopwatch, "translate",
+			   _request.GetDiagnosticName()),
+		 stock(_stock),
+		 request(_request),
+		 handler(_handler),
+		 caller_cancel_ptr(_cancel_ptr)
+	{
+		_cancel_ptr = *this;
+	}
 
-    void Start() noexcept {
-        stock.Get(*this, cancel_ptr);
-    }
+	void Start() noexcept {
+		stock.Get(*this, cancel_ptr);
+	}
 
 private:
-    void Destroy() noexcept {
-        this->~Request();
-    }
+	void Destroy() noexcept {
+		this->~Request();
+	}
 
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override {
-        /* this cancels only the TranslationStock::Get() call initiated
-           from Start() */
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		/* this cancels only the TranslationStock::Get() call initiated
+		   from Start() */
 
-        cancel_ptr.Cancel();
-        Destroy();
-    }
+		cancel_ptr.Cancel();
+		Destroy();
+	}
 
-    /* virtual methods from class StockGetHandler */
-    void OnStockItemReady(StockItem &item) noexcept override;
-    void OnStockItemError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class StockGetHandler */
+	void OnStockItemReady(StockItem &item) noexcept override;
+	void OnStockItemError(std::exception_ptr ep) noexcept override;
 
-    /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) noexcept override {
-        stock.Put(*item, !reuse);
-        Destroy();
-    }
+	/* virtual methods from class Lease */
+	void ReleaseLease(bool reuse) noexcept override {
+		stock.Put(*item, !reuse);
+		Destroy();
+	}
 };
 
 /*
@@ -187,45 +187,45 @@ private:
 void
 TranslationStock::Request::OnStockItemReady(StockItem &_item) noexcept
 {
-    item = &(Connection &)_item;
+	item = &(Connection &)_item;
 
-    /* cancellation will not be handled by this class from here on;
-       instead, we pass the caller's CancellablePointer to
-       translate() */
-    translate(pool, stock.GetEventLoop(), std::move(stopwatch),
-              item->GetSocket(),
-              *this,
-              request, handler,
-              caller_cancel_ptr);
+	/* cancellation will not be handled by this class from here on;
+	   instead, we pass the caller's CancellablePointer to
+	   translate() */
+	translate(pool, stock.GetEventLoop(), std::move(stopwatch),
+		  item->GetSocket(),
+		  *this,
+		  request, handler,
+		  caller_cancel_ptr);
 
-    /* ReleaseLease() will invoke Destroy() */
+	/* ReleaseLease() will invoke Destroy() */
 }
 
 void
 TranslationStock::Request::OnStockItemError(std::exception_ptr ep) noexcept
 {
-    auto &_handler = handler;
-    Destroy();
-    _handler.OnTranslateError(ep);
+	auto &_handler = handler;
+	Destroy();
+	_handler.OnTranslateError(ep);
 }
 
 void
 TranslationStock::Create(CreateStockItem c, StockRequest,
-                         CancellablePointer &)
+			 CancellablePointer &)
 {
-    auto *connection = new Connection(c);
-    connection->CreateAndConnectAndFinish(address);
+	auto *connection = new Connection(c);
+	connection->CreateAndConnectAndFinish(address);
 }
 
 void
 TranslationStock::SendRequest(struct pool &pool,
-                              const TranslateRequest &request,
-                              const StopwatchPtr &parent_stopwatch,
-                              TranslateHandler &handler,
-                              CancellablePointer &cancel_ptr) noexcept
+			      const TranslateRequest &request,
+			      const StopwatchPtr &parent_stopwatch,
+			      TranslateHandler &handler,
+			      CancellablePointer &cancel_ptr) noexcept
 {
-    auto r = NewFromPool<Request>(pool, *this, pool, request,
-                                  parent_stopwatch,
-                                  handler, cancel_ptr);
-    r->Start();
+	auto r = NewFromPool<Request>(pool, *this, pool, request,
+				      parent_stopwatch,
+				      handler, cancel_ptr);
+	r->Start();
 }

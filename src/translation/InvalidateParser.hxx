@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef TRANSLATION_INVALIDATE_PARSER_HXX
-#define TRANSLATION_INVALIDATE_PARSER_HXX
+#pragma once
 
 #include "Request.hxx"
 #include "translation/Protocol.hxx"
@@ -44,11 +43,11 @@
 struct pool;
 
 struct TranslationInvalidateRequest : TranslateRequest {
-    const char *site = nullptr;
+	const char *site = nullptr;
 
-    StaticArray<TranslationCommand, 32> commands;
+	StaticArray<TranslationCommand, 32> commands;
 
-    std::string ToString() const noexcept;
+	std::string ToString() const noexcept;
 };
 
 /**
@@ -56,6 +55,4 @@ struct TranslationInvalidateRequest : TranslateRequest {
  */
 TranslationInvalidateRequest
 ParseTranslationInvalidateRequest(struct pool &pool,
-                                  const void *data, size_t length);
-
-#endif
+				  const void *data, size_t length);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,19 +34,19 @@
 #include "AllocatorPtr.hxx"
 
 FilterTransformation::FilterTransformation(AllocatorPtr alloc,
-                                           const FilterTransformation &src) noexcept
-    :cache_tag(alloc.CheckDup(src.cache_tag)),
-     address(alloc, src.address),
-     reveal_user(src.reveal_user) {}
+					   const FilterTransformation &src) noexcept
+	:cache_tag(alloc.CheckDup(src.cache_tag)),
+	 address(alloc, src.address),
+	 reveal_user(src.reveal_user) {}
 
 const char *
 FilterTransformation::GetId(AllocatorPtr alloc) const noexcept
 {
-    return address.GetId(alloc);
+	return address.GetId(alloc);
 }
 
 void
 FilterTransformation::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
-    address.Expand(alloc, match_info);
+	address.Expand(alloc, match_info);
 }

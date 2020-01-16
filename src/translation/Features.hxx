@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,8 +36,7 @@
  * #TranslateRequest and #TranslateResponse attributes.
  */
 
-#ifndef BENG_PROXY_TRANSLATION_FEATURES_HXX
-#define BENG_PROXY_TRANSLATION_FEATURES_HXX
+#pragma once
 
 #define TRANSLATION_ENABLE_CACHE 1
 #define TRANSLATION_ENABLE_WANT 1
@@ -49,5 +48,3 @@
 #define TRANSLATION_ENABLE_TRANSFORMATION 1
 #define TRANSLATION_ENABLE_EXECUTE 0
 #define TRANSLATION_ENABLE_JAILCGI 1
-
-#endif

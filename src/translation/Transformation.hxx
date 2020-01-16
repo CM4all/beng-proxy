@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,11 +42,11 @@
 class AllocatorPtr;
 
 struct XmlProcessorTransformation {
-    unsigned options;
+	unsigned options;
 };
 
 struct CssProcessorTransformation {
-    unsigned options;
+	unsigned options;
 };
 
 struct TextProcessorTransformation {
@@ -56,121 +56,121 @@ struct TextProcessorTransformation {
  * Transformations which can be applied to resources.
  */
 struct Transformation {
-    Transformation *next = nullptr;
+	Transformation *next = nullptr;
 
-    enum class Type {
-        PROCESS,
-        PROCESS_CSS,
-        PROCESS_TEXT,
-        FILTER,
-        SUBST,
-    } type;
+	enum class Type {
+		PROCESS,
+		PROCESS_CSS,
+		PROCESS_TEXT,
+		FILTER,
+		SUBST,
+	} type;
 
-    union U {
-        XmlProcessorTransformation processor;
+	union U {
+		XmlProcessorTransformation processor;
 
-        CssProcessorTransformation css_processor;
+		CssProcessorTransformation css_processor;
 
-        TextProcessorTransformation text_processor;
+		TextProcessorTransformation text_processor;
 
-        FilterTransformation filter;
+		FilterTransformation filter;
 
-        SubstTransformation subst;
+		SubstTransformation subst;
 
-        /* we don't even try to call destructors in this union, and
-           these assertions ensure that this is safe: */
-        static_assert(std::is_trivially_destructible<XmlProcessorTransformation>::value);
-        static_assert(std::is_trivially_destructible<CssProcessorTransformation>::value);
-        static_assert(std::is_trivially_destructible<TextProcessorTransformation>::value);
-        static_assert(std::is_trivially_destructible<FilterTransformation>::value);
-        static_assert(std::is_trivially_destructible<SubstTransformation>::value);
+		/* we don't even try to call destructors in this union, and
+		   these assertions ensure that this is safe: */
+		static_assert(std::is_trivially_destructible<XmlProcessorTransformation>::value);
+		static_assert(std::is_trivially_destructible<CssProcessorTransformation>::value);
+		static_assert(std::is_trivially_destructible<TextProcessorTransformation>::value);
+		static_assert(std::is_trivially_destructible<FilterTransformation>::value);
+		static_assert(std::is_trivially_destructible<SubstTransformation>::value);
 
-        /**
-         * This constructor declaration is necessary to allow
-         * non-trivial member types.
-         */
-        U() noexcept {}
-    } u;
+		/**
+		 * This constructor declaration is necessary to allow
+		 * non-trivial member types.
+		 */
+		U() noexcept {}
+	} u;
 
-    explicit Transformation(XmlProcessorTransformation &&src) noexcept
-        :type(Type::PROCESS) {
-        new(&u.processor) XmlProcessorTransformation(std::move(src));
-    }
+	explicit Transformation(XmlProcessorTransformation &&src) noexcept
+		:type(Type::PROCESS) {
+		new(&u.processor) XmlProcessorTransformation(std::move(src));
+	}
 
-    explicit Transformation(CssProcessorTransformation &&src) noexcept
-        :type(Type::PROCESS_CSS) {
-        new(&u.processor) CssProcessorTransformation(std::move(src));
-    }
+	explicit Transformation(CssProcessorTransformation &&src) noexcept
+		:type(Type::PROCESS_CSS) {
+		new(&u.processor) CssProcessorTransformation(std::move(src));
+	}
 
-    explicit Transformation(TextProcessorTransformation &&src) noexcept
-        :type(Type::PROCESS_TEXT) {
-        new(&u.processor) TextProcessorTransformation(std::move(src));
-    }
+	explicit Transformation(TextProcessorTransformation &&src) noexcept
+		:type(Type::PROCESS_TEXT) {
+		new(&u.processor) TextProcessorTransformation(std::move(src));
+	}
 
-    explicit Transformation(FilterTransformation &&src) noexcept
-        :type(Type::FILTER) {
-        new(&u.filter) FilterTransformation(std::move(src));
-    }
+	explicit Transformation(FilterTransformation &&src) noexcept
+		:type(Type::FILTER) {
+		new(&u.filter) FilterTransformation(std::move(src));
+	}
 
-    explicit Transformation(SubstTransformation &&src) noexcept
-        :type(Type::SUBST) {
-        new(&u.subst) SubstTransformation(std::move(src));
-    }
+	explicit Transformation(SubstTransformation &&src) noexcept
+		:type(Type::SUBST) {
+		new(&u.subst) SubstTransformation(std::move(src));
+	}
 
-    Transformation(AllocatorPtr alloc, const Transformation &src) noexcept;
+	Transformation(AllocatorPtr alloc, const Transformation &src) noexcept;
 
-    Transformation(const Transformation &) = delete;
-    Transformation &operator=(const Transformation &) = delete;
+	Transformation(const Transformation &) = delete;
+	Transformation &operator=(const Transformation &) = delete;
 
-    /**
-     * Returns true if the chain contains at least one "PROCESS"
-     * transformation.
-     */
-    gcc_pure
-    static bool HasProcessor(const Transformation *head) noexcept;
+	/**
+	 * Returns true if the chain contains at least one "PROCESS"
+	 * transformation.
+	 */
+	gcc_pure
+	static bool HasProcessor(const Transformation *head) noexcept;
 
-    /**
-     * Returns true if the first "PROCESS" transformation in the chain (if
-     * any) includes the "CONTAINER" processor option.
-     */
-    gcc_pure
-    static bool IsContainer(const Transformation *head) noexcept;
+	/**
+	 * Returns true if the first "PROCESS" transformation in the chain (if
+	 * any) includes the "CONTAINER" processor option.
+	 */
+	gcc_pure
+	static bool IsContainer(const Transformation *head) noexcept;
 
-    /**
-     * Does this transformation need to be expanded with
-     * transformation_expand()?
-     */
-    gcc_pure
-    bool IsExpandable() const noexcept {
-        return type == Type::FILTER &&
-            u.filter.IsExpandable();
-    }
+	/**
+	 * Does this transformation need to be expanded with
+	 * transformation_expand()?
+	 */
+	gcc_pure
+	bool IsExpandable() const noexcept {
+		return type == Type::FILTER &&
+			u.filter.IsExpandable();
+	}
 
-    /**
-     * Does any transformation in the linked list need to be expanded with
-     * transformation_expand()?
-     */
-    gcc_pure
-    bool IsChainExpandable() const noexcept;
+	/**
+	 * Does any transformation in the linked list need to be expanded with
+	 * transformation_expand()?
+	 */
+	gcc_pure
+	bool IsChainExpandable() const noexcept;
 
-    gcc_malloc
-    Transformation *Dup(AllocatorPtr alloc) const noexcept;
+	gcc_malloc
+	Transformation *Dup(AllocatorPtr alloc) const noexcept;
 
-    gcc_malloc
-    static Transformation *DupChain(AllocatorPtr alloc,
-                                    const Transformation *src) noexcept;
+	gcc_malloc
+	static Transformation *DupChain(AllocatorPtr alloc,
+					const Transformation *src) noexcept;
 
-    /**
-     * Expand the strings in this transformation (not following the linked
-     * lits) with the specified regex result.
-     *
-     * Throws std::runtime_error on error.
-     */
-    void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
+	/**
+	 * Expand the strings in this transformation (not following the linked
+	 * lits) with the specified regex result.
+	 *
+	 * Throws std::runtime_error on error.
+	 */
+	void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
 
-    /**
-     * The same as Expand(), but expand all transformations in the
-     * linked list.
-     */
-    void ExpandChain(AllocatorPtr alloc, const MatchInfo &match_info);
+	/**
+	 * The same as Expand(), but expand all transformations in the
+	 * linked list.
+	 */
+	void ExpandChain(AllocatorPtr alloc, const MatchInfo &match_info);
 };

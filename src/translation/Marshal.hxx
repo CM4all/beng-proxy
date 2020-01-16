@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_TRANSLATION_MARSHAL_HXX
-#define BENG_PROXY_TRANSLATION_MARSHAL_HXX
+#pragma once
 
 #include "GrowingBuffer.hxx"
 #include "util/ConstBuffer.hxx"
@@ -45,58 +44,56 @@ struct TranslateRequest;
 class SocketAddress;
 
 class TranslationMarshaller {
-    GrowingBuffer buffer;
+	GrowingBuffer buffer;
 
 public:
-    void Write(TranslationCommand command,
-               ConstBuffer<void> payload=nullptr);
+	void Write(TranslationCommand command,
+		   ConstBuffer<void> payload=nullptr);
 
-    template<typename T>
-    void Write(TranslationCommand command,
-               ConstBuffer<T> payload) {
-        Write(command, payload.ToVoid());
-    }
+	template<typename T>
+	void Write(TranslationCommand command,
+		   ConstBuffer<T> payload) {
+		Write(command, payload.ToVoid());
+	}
 
-    void Write(TranslationCommand command,
-               const char *payload);
+	void Write(TranslationCommand command,
+		   const char *payload);
 
-    template<typename T>
-    void WriteOptional(TranslationCommand command,
-                       ConstBuffer<T> payload) {
-        if (!payload.IsNull())
-            Write(command, payload);
-    }
+	template<typename T>
+	void WriteOptional(TranslationCommand command,
+			   ConstBuffer<T> payload) {
+		if (!payload.IsNull())
+			Write(command, payload);
+	}
 
-    void WriteOptional(TranslationCommand command,
-                       const char *payload) {
-        if (payload != nullptr)
-            Write(command, payload);
-    }
+	void WriteOptional(TranslationCommand command,
+			   const char *payload) {
+		if (payload != nullptr)
+			Write(command, payload);
+	}
 
-    template<typename T>
-    void WriteT(TranslationCommand command, const T &payload) {
-        Write(command, ConstBuffer<T>(&payload, 1));
-    }
+	template<typename T>
+	void WriteT(TranslationCommand command, const T &payload) {
+		Write(command, ConstBuffer<T>(&payload, 1));
+	}
 
-    void Write16(TranslationCommand command, uint16_t payload) {
-        WriteT<uint16_t>(command, payload);
-    }
+	void Write16(TranslationCommand command, uint16_t payload) {
+		WriteT<uint16_t>(command, payload);
+	}
 
-    void Write(TranslationCommand command,
-               TranslationCommand command_string,
-               SocketAddress address);
+	void Write(TranslationCommand command,
+		   TranslationCommand command_string,
+		   SocketAddress address);
 
-    void WriteOptional(TranslationCommand command,
-                       TranslationCommand command_string,
-                       SocketAddress address);
+	void WriteOptional(TranslationCommand command,
+			   TranslationCommand command_string,
+			   SocketAddress address);
 
-    GrowingBuffer Commit() {
-        return std::move(buffer);
-    }
+	GrowingBuffer Commit() {
+		return std::move(buffer);
+	}
 };
 
 GrowingBuffer
 MarshalTranslateRequest(uint8_t PROTOCOL_VERSION,
-                        const TranslateRequest &request);
-
-#endif
+			const TranslateRequest &request);

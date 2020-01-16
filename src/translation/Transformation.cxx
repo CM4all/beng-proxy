@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,104 +37,104 @@
 #include <string.h>
 
 Transformation::Transformation(AllocatorPtr alloc,
-                               const Transformation &src) noexcept
-    :type(src.type)
+			       const Transformation &src) noexcept
+	:type(src.type)
 {
-    switch (type) {
-    case Type::PROCESS:
-        new(&u.processor) XmlProcessorTransformation(src.u.processor);
-        break;
+	switch (type) {
+	case Type::PROCESS:
+		new(&u.processor) XmlProcessorTransformation(src.u.processor);
+		break;
 
-    case Type::PROCESS_CSS:
-        new(&u.css_processor) CssProcessorTransformation(src.u.css_processor);
-        break;
+	case Type::PROCESS_CSS:
+		new(&u.css_processor) CssProcessorTransformation(src.u.css_processor);
+		break;
 
-    case Type::PROCESS_TEXT:
-        new(&u.text_processor) TextProcessorTransformation(src.u.text_processor);
-        break;
+	case Type::PROCESS_TEXT:
+		new(&u.text_processor) TextProcessorTransformation(src.u.text_processor);
+		break;
 
-    case Type::FILTER:
-        new(&u.filter) FilterTransformation(alloc, src.u.filter);
-        break;
+	case Type::FILTER:
+		new(&u.filter) FilterTransformation(alloc, src.u.filter);
+		break;
 
-    case Type::SUBST:
-        new(&u.subst) SubstTransformation(alloc, src.u.subst);
-        break;
-    }
+	case Type::SUBST:
+		new(&u.subst) SubstTransformation(alloc, src.u.subst);
+		break;
+	}
 }
 
 bool
 Transformation::HasProcessor(const Transformation *t) noexcept
 {
-    for (; t != nullptr; t = t->next)
-        if (t->type == Type::PROCESS)
-            return true;
+	for (; t != nullptr; t = t->next)
+		if (t->type == Type::PROCESS)
+			return true;
 
-    return false;
+	return false;
 }
 
 bool
 Transformation::IsContainer(const Transformation *t) noexcept
 {
-    for (; t != nullptr; t = t->next)
-        if (t->type == Type::PROCESS)
-            return (t->u.processor.options & PROCESSOR_CONTAINER) != 0;
+	for (; t != nullptr; t = t->next)
+		if (t->type == Type::PROCESS)
+			return (t->u.processor.options & PROCESSOR_CONTAINER) != 0;
 
-    return false;
+	return false;
 }
 
 Transformation *
 Transformation::Dup(AllocatorPtr alloc) const noexcept
 {
-    return alloc.New<Transformation>(alloc, *this);
+	return alloc.New<Transformation>(alloc, *this);
 }
 
 Transformation *
 Transformation::DupChain(AllocatorPtr alloc,
-                         const Transformation *src) noexcept
+			 const Transformation *src) noexcept
 {
-    Transformation *dest = nullptr, **tail_p = &dest;
+	Transformation *dest = nullptr, **tail_p = &dest;
 
-    for (; src != nullptr; src = src->next) {
-        Transformation *p = src->Dup(alloc);
-        *tail_p = p;
-        tail_p = &p->next;
-    }
+	for (; src != nullptr; src = src->next) {
+		Transformation *p = src->Dup(alloc);
+		*tail_p = p;
+		tail_p = &p->next;
+	}
 
-    return dest;
+	return dest;
 }
 
 bool
 Transformation::IsChainExpandable() const noexcept
 {
-    for (auto t = this; t != nullptr; t = t->next)
-        if (t->IsExpandable())
-            return true;
+	for (auto t = this; t != nullptr; t = t->next)
+		if (t->IsExpandable())
+			return true;
 
-    return false;
+	return false;
 }
 
 void
 Transformation::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {
-    switch (type) {
-    case Type::PROCESS:
-    case Type::PROCESS_CSS:
-    case Type::PROCESS_TEXT:
-        break;
+	switch (type) {
+	case Type::PROCESS:
+	case Type::PROCESS_CSS:
+	case Type::PROCESS_TEXT:
+		break;
 
-    case Type::FILTER:
-        u.filter.Expand(alloc, match_info);
-        break;
+	case Type::FILTER:
+		u.filter.Expand(alloc, match_info);
+		break;
 
-    case Type::SUBST:
-        break;
-    }
+	case Type::SUBST:
+		break;
+	}
 }
 
 void
 Transformation::ExpandChain(AllocatorPtr alloc, const MatchInfo &match_info)
 {
-    for (auto t = this; t != nullptr; t = t->next)
-        t->Expand(alloc, match_info);
+	for (auto t = this; t != nullptr; t = t->next)
+		t->Expand(alloc, match_info);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_TRANSLATE_VARY_HXX
-#define BENG_PROXY_TRANSLATE_VARY_HXX
+#pragma once
 
 class AllocatorPtr;
 class StringMap;
@@ -40,10 +39,8 @@ class GrowingBuffer;
 
 void
 add_translation_vary_header(AllocatorPtr alloc, StringMap &headers,
-                            const TranslateResponse &response);
+			    const TranslateResponse &response);
 
 void
 write_translation_vary_header(GrowingBuffer &headers,
-                              const TranslateResponse &response);
-
-#endif
+			      const TranslateResponse &response);

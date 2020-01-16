@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -44,83 +44,83 @@
 static const char *
 translation_vary_name(TranslationCommand cmd)
 {
-    switch (cmd) {
-    case TranslationCommand::SESSION:
-        /* XXX need both "cookie2" and "cookie"? */
-        return "cookie2";
+	switch (cmd) {
+	case TranslationCommand::SESSION:
+		/* XXX need both "cookie2" and "cookie"? */
+		return "cookie2";
 
-    case TranslationCommand::LANGUAGE:
-        return "accept-language";
+	case TranslationCommand::LANGUAGE:
+		return "accept-language";
 
-    case TranslationCommand::AUTHORIZATION:
-        return "authorization";
+	case TranslationCommand::AUTHORIZATION:
+		return "authorization";
 
-    case TranslationCommand::USER_AGENT:
-    case TranslationCommand::UA_CLASS:
-        return "user-agent";
+	case TranslationCommand::USER_AGENT:
+	case TranslationCommand::UA_CLASS:
+		return "user-agent";
 
-    default:
-        return nullptr;
-    }
+	default:
+		return nullptr;
+	}
 }
 
 static const char *
 translation_vary_header(const TranslateResponse &response)
 {
-    static char buffer[256];
-    char *p = buffer;
+	static char buffer[256];
+	char *p = buffer;
 
-    for (const auto cmd : response.vary) {
-        const char *name = translation_vary_name(cmd);
-        if (name == nullptr)
-            continue;
+	for (const auto cmd : response.vary) {
+		const char *name = translation_vary_name(cmd);
+		if (name == nullptr)
+			continue;
 
-        if (p > buffer)
-            *p++ = ',';
+		if (p > buffer)
+			*p++ = ',';
 
-        size_t length = strlen(name);
-        memcpy(p, name, length);
-        p += length;
-    }
+		size_t length = strlen(name);
+		memcpy(p, name, length);
+		p += length;
+	}
 
-    return p > buffer ? buffer : nullptr;
+	return p > buffer ? buffer : nullptr;
 }
 
 void
 add_translation_vary_header(AllocatorPtr alloc, StringMap &headers,
-                            const TranslateResponse &response)
+			    const TranslateResponse &response)
 {
-    const char *value = translation_vary_header(response);
-    if (value == nullptr)
-        return;
+	const char *value = translation_vary_header(response);
+	if (value == nullptr)
+		return;
 
-    const char *old = headers.Get("vary");
-    if (old != nullptr)
-        value = alloc.Concat(old, ",", value);
+	const char *old = headers.Get("vary");
+	if (old != nullptr)
+		value = alloc.Concat(old, ",", value);
 
-    headers.Add(alloc, "vary", value);
+	headers.Add(alloc, "vary", value);
 }
 
 void
 write_translation_vary_header(GrowingBuffer &headers,
-                              const TranslateResponse &response)
+			      const TranslateResponse &response)
 {
-    bool active = false;
-    for (const auto cmd : response.vary) {
-        const char *name = translation_vary_name(cmd);
-        if (name == nullptr)
-            continue;
+	bool active = false;
+	for (const auto cmd : response.vary) {
+		const char *name = translation_vary_name(cmd);
+		if (name == nullptr)
+			continue;
 
-        if (active) {
-            headers.Write(",", 1);
-        } else {
-            active = true;
-            header_write_begin(headers, "vary");
-        }
+		if (active) {
+			headers.Write(",", 1);
+		} else {
+			active = true;
+			header_write_begin(headers, "vary");
+		}
 
-        headers.Write(name);
-    }
+		headers.Write(name);
+	}
 
-    if (active)
-        header_write_finish(headers);
+	if (active)
+		header_write_finish(headers);
 }

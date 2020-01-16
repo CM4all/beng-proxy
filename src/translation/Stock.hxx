@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,43 +41,43 @@ struct TranslateRequest;
 class TranslateHandler;
 
 class TranslationStock final : public TranslationService, StockClass {
-    class Connection;
-    class Request;
+	class Connection;
+	class Request;
 
-    Stock stock;
+	Stock stock;
 
-    const AllocatedSocketAddress address;
+	const AllocatedSocketAddress address;
 
 public:
-    TranslationStock(EventLoop &event_loop, SocketAddress _address,
-                     unsigned limit) noexcept
-        :stock(event_loop, *this, "translation", limit, 8),
-         address(_address)
-    {
-    }
+	TranslationStock(EventLoop &event_loop, SocketAddress _address,
+			 unsigned limit) noexcept
+		:stock(event_loop, *this, "translation", limit, 8),
+		 address(_address)
+	{
+	}
 
-    auto &GetEventLoop() const noexcept {
-        return stock.GetEventLoop();
-    }
+	auto &GetEventLoop() const noexcept {
+		return stock.GetEventLoop();
+	}
 
-    void Get(StockGetHandler &handler,
-             CancellablePointer &cancel_ptr) noexcept {
-        stock.Get(nullptr, handler, cancel_ptr);
-    }
+	void Get(StockGetHandler &handler,
+		 CancellablePointer &cancel_ptr) noexcept {
+		stock.Get(nullptr, handler, cancel_ptr);
+	}
 
-    void Put(StockItem &item, bool destroy) noexcept {
-        stock.Put(item, destroy);
-    }
+	void Put(StockItem &item, bool destroy) noexcept {
+		stock.Put(item, destroy);
+	}
 
-    /* virtual methods from class TranslationService */
-    void SendRequest(struct pool &pool,
-                     const TranslateRequest &request,
-                     const StopwatchPtr &parent_stopwatch,
-                     TranslateHandler &handler,
-                     CancellablePointer &cancel_ptr) noexcept override;
+	/* virtual methods from class TranslationService */
+	void SendRequest(struct pool &pool,
+			 const TranslateRequest &request,
+			 const StopwatchPtr &parent_stopwatch,
+			 TranslateHandler &handler,
+			 CancellablePointer &cancel_ptr) noexcept override;
 
 private:
-    /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, StockRequest request,
-                CancellablePointer &) override;
+	/* virtual methods from class StockClass */
+	void Create(CreateStockItem c, StockRequest request,
+		    CancellablePointer &) override;
 };

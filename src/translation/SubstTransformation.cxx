@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,7 +34,7 @@
 #include "AllocatorPtr.hxx"
 
 SubstTransformation::SubstTransformation(AllocatorPtr alloc,
-                                         const SubstTransformation &src) noexcept
-    :prefix(alloc.CheckDup(src.prefix)),
-     yaml_file(alloc.CheckDup(src.yaml_file)),
-     yaml_map_path(alloc.CheckDup(src.yaml_map_path)) {}
+					 const SubstTransformation &src) noexcept
+	:prefix(alloc.CheckDup(src.prefix)),
+	 yaml_file(alloc.CheckDup(src.yaml_file)),
+	 yaml_map_path(alloc.CheckDup(src.yaml_map_path)) {}

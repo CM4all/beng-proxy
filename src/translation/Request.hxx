@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_TRANSLATE_REQUEST_HXX
-#define BENG_PROXY_TRANSLATE_REQUEST_HXX
+#pragma once
 
 #include "Features.hxx"
 #if TRANSLATION_ENABLE_HTTP
@@ -49,113 +48,111 @@
 enum class TranslationCommand : uint16_t;
 
 struct TranslateRequest {
-    const char *listener_tag = nullptr;
+	const char *listener_tag = nullptr;
 
 #if TRANSLATION_ENABLE_HTTP
-    SocketAddress local_address = nullptr;
+	SocketAddress local_address = nullptr;
 #endif
 
-    const char *remote_host = nullptr;
-    const char *host = nullptr;
-    const char *alt_host = nullptr;
-    const char *user_agent = nullptr;
-    const char *ua_class = nullptr;
-    const char *accept_language = nullptr;
+	const char *remote_host = nullptr;
+	const char *host = nullptr;
+	const char *alt_host = nullptr;
+	const char *user_agent = nullptr;
+	const char *ua_class = nullptr;
+	const char *accept_language = nullptr;
 
-    /**
-     * The value of the "Authorization" HTTP request header.
-     */
-    const char *authorization = nullptr;
+	/**
+	 * The value of the "Authorization" HTTP request header.
+	 */
+	const char *authorization = nullptr;
 
-    const char *uri = nullptr;
-    const char *args = nullptr;
-    const char *query_string = nullptr;
-    const char *widget_type = nullptr;
+	const char *uri = nullptr;
+	const char *args = nullptr;
+	const char *query_string = nullptr;
+	const char *widget_type = nullptr;
 
 #if TRANSLATION_ENABLE_SESSION
-    ConstBuffer<void> session = nullptr;
+	ConstBuffer<void> session = nullptr;
 #endif
 
-    const char *param = nullptr;
+	const char *param = nullptr;
 
-    /**
-     * The payload of the #TRANSLATE_INTERNAL_REDIRECT packet.  If
-     * ConstBuffer::IsNull(), then no #TRANSLATE_INTERNAL_REDIRECT
-     * packet was received.
-     */
-    ConstBuffer<void> internal_redirect = nullptr;
+	/**
+	 * The payload of the #TRANSLATE_INTERNAL_REDIRECT packet.  If
+	 * ConstBuffer::IsNull(), then no #TRANSLATE_INTERNAL_REDIRECT
+	 * packet was received.
+	 */
+	ConstBuffer<void> internal_redirect = nullptr;
 
 #if TRANSLATION_ENABLE_SESSION
-    /**
-     * The payload of the CHECK packet.  If ConstBuffer::IsNull(),
-     * then no CHECK packet will be sent.
-     */
-    ConstBuffer<void> check = nullptr;
+	/**
+	 * The payload of the CHECK packet.  If ConstBuffer::IsNull(),
+	 * then no CHECK packet will be sent.
+	 */
+	ConstBuffer<void> check = nullptr;
 
-    /**
-     * The payload of the AUTH packet.  If ConstBuffer::IsNull(),
-     * then no AUTH packet will be sent.
-     */
-    ConstBuffer<void> auth = nullptr;
+	/**
+	 * The payload of the AUTH packet.  If ConstBuffer::IsNull(),
+	 * then no AUTH packet will be sent.
+	 */
+	ConstBuffer<void> auth = nullptr;
 #endif
 
 #if TRANSLATION_ENABLE_HTTP
-    /**
-     * The payload of the #TRANSLATE_WANT_FULL_URI packet.  If
-     * ConstBuffer::IsNull(), then no #TRANSLATE_WANT_FULL_URI packet
-     * was received.
-     */
-    ConstBuffer<void> want_full_uri = nullptr;
+	/**
+	 * The payload of the #TRANSLATE_WANT_FULL_URI packet.  If
+	 * ConstBuffer::IsNull(), then no #TRANSLATE_WANT_FULL_URI packet
+	 * was received.
+	 */
+	ConstBuffer<void> want_full_uri = nullptr;
 #endif
 
-    ConstBuffer<TranslationCommand> want = nullptr;
+	ConstBuffer<TranslationCommand> want = nullptr;
 
-    ConstBuffer<void> file_not_found = nullptr;
+	ConstBuffer<void> file_not_found = nullptr;
 
-    ConstBuffer<void> content_type_lookup = nullptr;
+	ConstBuffer<void> content_type_lookup = nullptr;
 
-    const char *suffix = nullptr;
+	const char *suffix = nullptr;
 
-    ConstBuffer<void> enotdir = nullptr;
+	ConstBuffer<void> enotdir = nullptr;
 
-    ConstBuffer<void> directory_index = nullptr;
+	ConstBuffer<void> directory_index = nullptr;
 
 #if TRANSLATION_ENABLE_HTTP
-    ConstBuffer<void> error_document = nullptr;
+	ConstBuffer<void> error_document = nullptr;
 
-    http_status_t error_document_status = http_status_t(0);
+	http_status_t error_document_status = http_status_t(0);
 #endif
 
-    ConstBuffer<void> probe_path_suffixes = nullptr;
-    const char *probe_suffix = nullptr;
+	ConstBuffer<void> probe_path_suffixes = nullptr;
+	const char *probe_suffix = nullptr;
 
-    /**
-     * File contents.
-     */
-    ConstBuffer<void> read_file = nullptr;
+	/**
+	 * File contents.
+	 */
+	ConstBuffer<void> read_file = nullptr;
 
-    const char *user = nullptr;
+	const char *user = nullptr;
 
-    const char *pool = nullptr;
+	const char *pool = nullptr;
 
-    bool cron = false;
+	bool cron = false;
 
-    /**
-     * Returns a name for this object to identify it in diagnostic
-     * messages.
-     */
-    const char *GetDiagnosticName() const {
-        if (uri != nullptr)
-            return uri;
+	/**
+	 * Returns a name for this object to identify it in diagnostic
+	 * messages.
+	 */
+	const char *GetDiagnosticName() const {
+		if (uri != nullptr)
+			return uri;
 
-        if (widget_type != nullptr)
-            return widget_type;
+		if (widget_type != nullptr)
+			return widget_type;
 
-        if (suffix != nullptr)
-            return suffix;
+		if (suffix != nullptr)
+			return suffix;
 
-        return nullptr;
-    }
+		return nullptr;
+	}
 };
-
-#endif

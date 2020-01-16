@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,18 +35,18 @@
 class AllocatorPtr;
 
 struct SubstTransformation {
-    const char *prefix;
+	const char *prefix;
 
-    const char *yaml_file;
+	const char *yaml_file;
 
-    const char *yaml_map_path;
+	const char *yaml_map_path;
 
-    SubstTransformation(const char *_prefix,
-                        const char *_yaml_file,
-                        const char *_yaml_map_path) noexcept
-        :prefix(_prefix),
-         yaml_file(_yaml_file), yaml_map_path(_yaml_map_path) {}
+	SubstTransformation(const char *_prefix,
+			    const char *_yaml_file,
+			    const char *_yaml_map_path) noexcept
+		:prefix(_prefix),
+		 yaml_file(_yaml_file), yaml_map_path(_yaml_map_path) {}
 
-    SubstTransformation(AllocatorPtr alloc,
-                        const SubstTransformation &src) noexcept;
+	SubstTransformation(AllocatorPtr alloc,
+			    const SubstTransformation &src) noexcept;
 };

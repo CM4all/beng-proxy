@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,40 +41,40 @@
 class AllocatorPtr;
 
 struct FilterTransformation {
-    /**
-     * @see TranslationCommand::CACHE_TAG
-     */
-    const char *cache_tag = nullptr;
+	/**
+	 * @see TranslationCommand::CACHE_TAG
+	 */
+	const char *cache_tag = nullptr;
 
-    ResourceAddress address = nullptr;
+	ResourceAddress address = nullptr;
 
-    /**
-     * Send the X-CM4all-BENG-User header to the filter?
-     */
-    bool reveal_user = false;
+	/**
+	 * Send the X-CM4all-BENG-User header to the filter?
+	 */
+	bool reveal_user = false;
 
-    FilterTransformation() = default;
+	FilterTransformation() = default;
 
-    FilterTransformation(AllocatorPtr alloc,
-                         const FilterTransformation &src) noexcept;
+	FilterTransformation(AllocatorPtr alloc,
+			     const FilterTransformation &src) noexcept;
 
-    /**
-     * Does this transformation need to be expanded with
-     * transformation_expand()?
-     */
-    gcc_pure
-    bool IsExpandable() const noexcept {
-        return address.IsExpandable();
-    }
+	/**
+	 * Does this transformation need to be expanded with
+	 * transformation_expand()?
+	 */
+	gcc_pure
+	bool IsExpandable() const noexcept {
+		return address.IsExpandable();
+	}
 
-    gcc_pure
-    const char *GetId(AllocatorPtr alloc) const noexcept;
+	gcc_pure
+	const char *GetId(AllocatorPtr alloc) const noexcept;
 
-    /**
-     * Expand the strings in this transformation (not following the linked
-     * lits) with the specified regex result.
-     *
-     * Throws std::runtime_error on error.
-     */
-    void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
+	/**
+	 * Expand the strings in this transformation (not following the linked
+	 * lits) with the specified regex result.
+	 *
+	 * Throws std::runtime_error on error.
+	 */
+	void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
 };
