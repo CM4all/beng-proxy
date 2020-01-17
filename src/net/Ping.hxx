@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PING_HXX
-#define PING_HXX
+#pragma once
 
 #include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
@@ -42,9 +41,9 @@
 
 class PingClientHandler {
 public:
-    virtual void PingResponse() noexcept = 0;
-    virtual void PingTimeout() noexcept = 0;
-    virtual void PingError(std::exception_ptr ep) noexcept = 0;
+	virtual void PingResponse() noexcept = 0;
+	virtual void PingTimeout() noexcept = 0;
+	virtual void PingError(std::exception_ptr ep) noexcept = 0;
 };
 
 /**
@@ -52,35 +51,35 @@ public:
  * reply.
  */
 class PingClient final {
-    UniqueSocketDescriptor fd;
+	UniqueSocketDescriptor fd;
 
-    uint16_t ident;
+	uint16_t ident;
 
-    SocketEvent event;
-    TimerEvent timeout_event;
+	SocketEvent event;
+	TimerEvent timeout_event;
 
-    PingClientHandler &handler;
+	PingClientHandler &handler;
 
 public:
-    PingClient(EventLoop &event_loop,
-               PingClientHandler &_handler) noexcept;
+	PingClient(EventLoop &event_loop,
+		   PingClientHandler &_handler) noexcept;
 
-    void Start(SocketAddress address) noexcept;
+	void Start(SocketAddress address) noexcept;
 
-    void Cancel() noexcept {
-        if (fd.IsDefined()) {
-            timeout_event.Cancel();
-            event.Cancel();
-            fd.Close();
-        }
-    }
+	void Cancel() noexcept {
+		if (fd.IsDefined()) {
+			timeout_event.Cancel();
+			event.Cancel();
+			fd.Close();
+		}
+	}
 
 private:
-    void ScheduleRead() noexcept;
-    void EventCallback(unsigned events) noexcept;
-    void OnTimeout() noexcept;
+	void ScheduleRead() noexcept;
+	void EventCallback(unsigned events) noexcept;
+	void OnTimeout() noexcept;
 
-    void Read() noexcept;
+	void Read() noexcept;
 };
 
 /**
@@ -89,5 +88,3 @@ private:
 gcc_const
 bool
 ping_available() noexcept;
-
-#endif

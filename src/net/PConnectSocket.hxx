@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -49,11 +49,11 @@ class StopwatchPtr;
  */
 void
 client_socket_new(EventLoop &event_loop, AllocatorPtr alloc,
-                  StopwatchPtr stopwatch,
-                  int domain, int type, int protocol,
-                  bool ip_transparent,
-                  const SocketAddress bind_address,
-                  const SocketAddress address,
-                  Event::Duration timeout,
-                  ConnectSocketHandler &handler,
-                  CancellablePointer &cancel_ptr);
+		  StopwatchPtr stopwatch,
+		  int domain, int type, int protocol,
+		  bool ip_transparent,
+		  const SocketAddress bind_address,
+		  const SocketAddress address,
+		  Event::Duration timeout,
+		  ConnectSocketHandler &handler,
+		  CancellablePointer &cancel_ptr);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -46,40 +46,40 @@
 #include <unistd.h>
 
 class PConnectSocket final : Cancellable, ConnectSocketHandler {
-    ConnectSocket connect;
+	ConnectSocket connect;
 
-    const StopwatchPtr stopwatch;
+	const StopwatchPtr stopwatch;
 
-    ConnectSocketHandler &handler;
+	ConnectSocketHandler &handler;
 
 public:
-    PConnectSocket(EventLoop &event_loop,
-                   UniqueSocketDescriptor &&_fd, Event::Duration timeout,
-                   StopwatchPtr &&_stopwatch,
-                   ConnectSocketHandler &_handler,
-                   CancellablePointer &cancel_ptr)
-        :connect(event_loop, *this),
-         stopwatch(std::move(_stopwatch)),
-         handler(_handler) {
-        cancel_ptr = *this;
+	PConnectSocket(EventLoop &event_loop,
+		       UniqueSocketDescriptor &&_fd, Event::Duration timeout,
+		       StopwatchPtr &&_stopwatch,
+		       ConnectSocketHandler &_handler,
+		       CancellablePointer &cancel_ptr)
+		:connect(event_loop, *this),
+		 stopwatch(std::move(_stopwatch)),
+		 handler(_handler) {
+		cancel_ptr = *this;
 
-        connect.WaitConnected(std::move(_fd), timeout);
-    }
+		connect.WaitConnected(std::move(_fd), timeout);
+	}
 
-    void Delete() {
-        this->~PConnectSocket();
-    }
+	void Delete() {
+		this->~PConnectSocket();
+	}
 
 private:
-    void EventCallback(unsigned events);
+	void EventCallback(unsigned events);
 
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override;
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override;
 
-    /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
-    void OnSocketConnectTimeout() noexcept override;
-    void OnSocketConnectError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class ConnectSocketHandler */
+	void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
+	void OnSocketConnectTimeout() noexcept override;
+	void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 };
 
 
@@ -91,9 +91,9 @@ private:
 void
 PConnectSocket::Cancel() noexcept
 {
-    assert(connect.IsPending());
+	assert(connect.IsPending());
 
-    Delete();
+	Delete();
 }
 
 
@@ -105,34 +105,34 @@ PConnectSocket::Cancel() noexcept
 void
 PConnectSocket::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
 {
-    stopwatch.RecordEvent("connect");
+	stopwatch.RecordEvent("connect");
 
-    auto &_handler = handler;
-    Delete();
+	auto &_handler = handler;
+	Delete();
 
-    _handler.OnSocketConnectSuccess(std::move(fd));
+	_handler.OnSocketConnectSuccess(std::move(fd));
 }
 
 void
 PConnectSocket::OnSocketConnectTimeout() noexcept
 {
-    stopwatch.RecordEvent("timeout");
+	stopwatch.RecordEvent("timeout");
 
-    auto &_handler = handler;
-    Delete();
+	auto &_handler = handler;
+	Delete();
 
-    _handler.OnSocketConnectTimeout();
+	_handler.OnSocketConnectTimeout();
 }
 
 void
 PConnectSocket::OnSocketConnectError(std::exception_ptr ep) noexcept
 {
-    stopwatch.RecordEvent("timeout");
+	stopwatch.RecordEvent("timeout");
 
-    auto &_handler = handler;
-    Delete();
+	auto &_handler = handler;
+	Delete();
 
-    _handler.OnSocketConnectError(ep);
+	_handler.OnSocketConnectError(ep);
 }
 
 /*
@@ -142,53 +142,53 @@ PConnectSocket::OnSocketConnectError(std::exception_ptr ep) noexcept
 
 void
 client_socket_new(EventLoop &event_loop, AllocatorPtr alloc,
-                  StopwatchPtr stopwatch,
-                  int domain, int type, int protocol,
-                  bool ip_transparent,
-                  const SocketAddress bind_address,
-                  const SocketAddress address,
-                  Event::Duration timeout,
-                  ConnectSocketHandler &handler,
-                  CancellablePointer &cancel_ptr)
+		  StopwatchPtr stopwatch,
+		  int domain, int type, int protocol,
+		  bool ip_transparent,
+		  const SocketAddress bind_address,
+		  const SocketAddress address,
+		  Event::Duration timeout,
+		  ConnectSocketHandler &handler,
+		  CancellablePointer &cancel_ptr)
 {
-    assert(!address.IsNull());
+	assert(!address.IsNull());
 
-    UniqueSocketDescriptor fd;
-    if (!fd.CreateNonBlock(domain, type, protocol)) {
-        handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to create socket")));
-        return;
-    }
+	UniqueSocketDescriptor fd;
+	if (!fd.CreateNonBlock(domain, type, protocol)) {
+		handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to create socket")));
+		return;
+	}
 
-    if ((domain == PF_INET || domain == PF_INET6) && type == SOCK_STREAM &&
-        !fd.SetNoDelay()) {
-        handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to set TCP_NODELAY")));
-        return;
-    }
+	if ((domain == PF_INET || domain == PF_INET6) && type == SOCK_STREAM &&
+	    !fd.SetNoDelay()) {
+		handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to set TCP_NODELAY")));
+		return;
+	}
 
-    if (ip_transparent) {
-        int on = 1;
-        if (setsockopt(fd.Get(), SOL_IP, IP_TRANSPARENT, &on, sizeof on) < 0) {
-            handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to set IP_TRANSPARENT")));
-            return;
-        }
-    }
+	if (ip_transparent) {
+		int on = 1;
+		if (setsockopt(fd.Get(), SOL_IP, IP_TRANSPARENT, &on, sizeof on) < 0) {
+			handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to set IP_TRANSPARENT")));
+			return;
+		}
+	}
 
-    if (!bind_address.IsNull() && bind_address.IsDefined() &&
-        !fd.Bind(bind_address)) {
-        handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to bind socket")));
-        return;
-    }
+	if (!bind_address.IsNull() && bind_address.IsDefined() &&
+	    !fd.Bind(bind_address)) {
+		handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to bind socket")));
+		return;
+	}
 
-    if (fd.Connect(address)) {
-        stopwatch.RecordEvent("connect");
+	if (fd.Connect(address)) {
+		stopwatch.RecordEvent("connect");
 
-        handler.OnSocketConnectSuccess(std::move(fd));
-    } else if (errno == EINPROGRESS) {
-        alloc.New<PConnectSocket>(event_loop,
-                                  std::move(fd), timeout,
-                                  std::move(stopwatch),
-                                  handler, cancel_ptr);
-    } else {
-        handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to connect")));
-    }
+		handler.OnSocketConnectSuccess(std::move(fd));
+	} else if (errno == EINPROGRESS) {
+		alloc.New<PConnectSocket>(event_loop,
+					  std::move(fd), timeout,
+					  std::move(stopwatch),
+					  handler, cancel_ptr);
+	} else {
+		handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to connect")));
+	}
 }

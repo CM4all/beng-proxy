@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef UDP_DISTRIBUTE_HXX
-#define UDP_DISTRIBUTE_HXX
+#pragma once
 
 #include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
@@ -46,44 +45,42 @@ class EventLoop;
  * Distribute UDP (control) packets to all workers.
  */
 class UdpDistribute {
-    struct Recipient
-        : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
+	struct Recipient
+		: boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
 
-        UniqueSocketDescriptor fd;
-        SocketEvent event;
+		UniqueSocketDescriptor fd;
+		SocketEvent event;
 
-        Recipient(EventLoop &_event_loop,
-                  UniqueSocketDescriptor &&_fd) noexcept;
+		Recipient(EventLoop &_event_loop,
+			  UniqueSocketDescriptor &&_fd) noexcept;
 
-        void RemoveAndDestroy() noexcept {
-            delete this;
-        }
+		void RemoveAndDestroy() noexcept {
+			delete this;
+		}
 
-    private:
-        void EventCallback(unsigned) noexcept {
-            RemoveAndDestroy();
-        }
-    };
+	private:
+		void EventCallback(unsigned) noexcept {
+			RemoveAndDestroy();
+		}
+	};
 
-    EventLoop &event_loop;
+	EventLoop &event_loop;
 
-    boost::intrusive::list<Recipient,
-                           boost::intrusive::constant_time_size<false>> recipients;
+	boost::intrusive::list<Recipient,
+			       boost::intrusive::constant_time_size<false>> recipients;
 
 public:
-    explicit UdpDistribute(EventLoop &_event_loop) noexcept:event_loop(_event_loop) {}
+	explicit UdpDistribute(EventLoop &_event_loop) noexcept:event_loop(_event_loop) {}
 
-    ~UdpDistribute() noexcept {
-        Clear();
-    }
+	~UdpDistribute() noexcept {
+		Clear();
+	}
 
-    /**
-     * Throws std::system_error on error.
-     */
-    UniqueSocketDescriptor Add();
-    void Clear() noexcept;
+	/**
+	 * Throws std::system_error on error.
+	 */
+	UniqueSocketDescriptor Add();
+	void Clear() noexcept;
 
-    void Packet(const void *payload, size_t payload_length) noexcept;
+	void Packet(const void *payload, size_t payload_length) noexcept;
 };
-
-#endif

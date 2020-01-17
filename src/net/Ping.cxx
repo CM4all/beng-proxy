@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -44,18 +44,18 @@
 #include <unistd.h>
 
 PingClient::PingClient(EventLoop &event_loop,
-                       PingClientHandler &_handler) noexcept
-    :event(event_loop, BIND_THIS_METHOD(EventCallback)),
-     timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
-     handler(_handler)
+		       PingClientHandler &_handler) noexcept
+	:event(event_loop, BIND_THIS_METHOD(EventCallback)),
+	 timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
+	 handler(_handler)
 {
 }
 
 inline void
 PingClient::ScheduleRead() noexcept
 {
-    event.ScheduleRead();
-    timeout_event.Schedule(std::chrono::seconds(10));
+	event.ScheduleRead();
+	timeout_event.Schedule(std::chrono::seconds(10));
 }
 
 static u_short
@@ -93,49 +93,49 @@ in_cksum(const u_short *addr, int len, u_short csum) noexcept
 static bool
 parse_reply(struct msghdr *msg, size_t cc, uint16_t ident) noexcept
 {
-    const void *buf = (const void *)msg->msg_iov->iov_base;
-    const struct icmphdr *icp = (const struct icmphdr *)buf;
-    if (cc < sizeof(*icp))
-        return false;
+	const void *buf = (const void *)msg->msg_iov->iov_base;
+	const struct icmphdr *icp = (const struct icmphdr *)buf;
+	if (cc < sizeof(*icp))
+		return false;
 
-    return icp->type == ICMP_ECHOREPLY && icp->un.echo.id == ident;
+	return icp->type == ICMP_ECHOREPLY && icp->un.echo.id == ident;
 }
 
 inline void
 PingClient::Read() noexcept
 {
-    char buffer[1024];
-    struct iovec iov = {
-        .iov_base = buffer,
-        .iov_len = sizeof(buffer),
-    };
+	char buffer[1024];
+	struct iovec iov = {
+		.iov_base = buffer,
+		.iov_len = sizeof(buffer),
+	};
 
-    struct msghdr msg;
-    memset(&msg, 0, sizeof(msg));
+	struct msghdr msg;
+	memset(&msg, 0, sizeof(msg));
 
-    char addrbuf[128];
-    msg.msg_name = addrbuf;
-    msg.msg_namelen = sizeof(addrbuf);
-    msg.msg_iov = &iov;
-    msg.msg_iovlen = 1;
-    char ans_data[4096];
-    msg.msg_control = ans_data;
-    msg.msg_controllen = sizeof(ans_data);
+	char addrbuf[128];
+	msg.msg_name = addrbuf;
+	msg.msg_namelen = sizeof(addrbuf);
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	char ans_data[4096];
+	msg.msg_control = ans_data;
+	msg.msg_controllen = sizeof(ans_data);
 
-    int cc = recvmsg(fd.Get(), &msg, MSG_DONTWAIT);
-    if (cc >= 0) {
-        if (parse_reply(&msg, cc, ident)) {
-            fd.Close();
-            handler.PingResponse();
-        } else
-            ScheduleRead();
-    } else if (errno == EAGAIN || errno == EINTR) {
-        ScheduleRead();
-    } else {
-        const int e = errno;
-        fd.Close();
-        handler.PingError(std::make_exception_ptr(MakeErrno(e, "Failed to receive ping reply")));
-    }
+	int cc = recvmsg(fd.Get(), &msg, MSG_DONTWAIT);
+	if (cc >= 0) {
+		if (parse_reply(&msg, cc, ident)) {
+			fd.Close();
+			handler.PingResponse();
+		} else
+			ScheduleRead();
+	} else if (errno == EAGAIN || errno == EINTR) {
+		ScheduleRead();
+	} else {
+		const int e = errno;
+		fd.Close();
+		handler.PingError(std::make_exception_ptr(MakeErrno(e, "Failed to receive ping reply")));
+	}
 }
 
 
@@ -147,18 +147,18 @@ PingClient::Read() noexcept
 inline void
 PingClient::EventCallback(unsigned) noexcept
 {
-    assert(fd.IsDefined());
+	assert(fd.IsDefined());
 
-    Read();
+	Read();
 }
 
 inline void
 PingClient::OnTimeout() noexcept
 {
-    assert(fd.IsDefined());
+	assert(fd.IsDefined());
 
-    fd.Close();
-    handler.PingTimeout();
+	fd.Close();
+	handler.PingTimeout();
 }
 
 /*
@@ -169,77 +169,77 @@ PingClient::OnTimeout() noexcept
 bool
 ping_available(void) noexcept
 {
-    int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
-    if (fd < 0)
-        return false;
-    close(fd);
-    return true;
+	int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP);
+	if (fd < 0)
+		return false;
+	close(fd);
+	return true;
 }
 
 static UniqueSocketDescriptor
 CreateIcmp()
 {
-    UniqueSocketDescriptor fd;
-    if (!fd.CreateNonBlock(AF_INET, SOCK_DGRAM, IPPROTO_ICMP))
-        throw MakeErrno("Failed to create ICMP socket");
+	UniqueSocketDescriptor fd;
+	if (!fd.CreateNonBlock(AF_INET, SOCK_DGRAM, IPPROTO_ICMP))
+		throw MakeErrno("Failed to create ICMP socket");
 
-    return fd;
+	return fd;
 }
 
 static uint16_t
 MakeIdent(SocketDescriptor fd)
 {
-    if (!fd.Bind(IPv4Address(0)))
-        throw MakeErrno("Failed to bind ICMP socket");
+	if (!fd.Bind(IPv4Address(0)))
+		throw MakeErrno("Failed to bind ICMP socket");
 
-    struct sockaddr_in sin;
-    sin.sin_family = AF_INET;
-    sin.sin_addr.s_addr = 0;
-    socklen_t sin_length = sizeof(sin);
+	struct sockaddr_in sin;
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = 0;
+	socklen_t sin_length = sizeof(sin);
 
-    if (getsockname(fd.Get(), (struct sockaddr *)&sin, &sin_length) < 0)
-        throw MakeErrno("Failed to inspect ICMP socket");
+	if (getsockname(fd.Get(), (struct sockaddr *)&sin, &sin_length) < 0)
+		throw MakeErrno("Failed to inspect ICMP socket");
 
-    return sin.sin_port;
+	return sin.sin_port;
 }
 
 static void
 SendPing(SocketDescriptor fd, SocketAddress address, uint16_t ident)
 {
-    struct {
-        struct icmphdr header;
-        char data[8];
-    } packet;
+	struct {
+		struct icmphdr header;
+		char data[8];
+	} packet;
 
-    packet.header.type = ICMP_ECHO;
-    packet.header.code = 0;
-    packet.header.checksum = 0;
-    packet.header.un.echo.sequence = htons(1);
-    packet.header.un.echo.id = ident;
-    memset(packet.data, 0, sizeof(packet.data));
-    packet.header.checksum = in_cksum((u_short *)&packet, sizeof(packet), 0);
+	packet.header.type = ICMP_ECHO;
+	packet.header.code = 0;
+	packet.header.checksum = 0;
+	packet.header.un.echo.sequence = htons(1);
+	packet.header.un.echo.id = ident;
+	memset(packet.data, 0, sizeof(packet.data));
+	packet.header.checksum = in_cksum((u_short *)&packet, sizeof(packet), 0);
 
-    struct iovec iov = {
-        .iov_base = &packet,
-        .iov_len = sizeof(packet),
-    };
+	struct iovec iov = {
+		.iov_base = &packet,
+		.iov_len = sizeof(packet),
+	};
 
-    SendMessage(fd,
-                MessageHeader(ConstBuffer<struct iovec>(&iov, 1))
-                .SetAddress(address), 0);
+	SendMessage(fd,
+		    MessageHeader(ConstBuffer<struct iovec>(&iov, 1))
+		    .SetAddress(address), 0);
 }
 
 void
 PingClient::Start(SocketAddress address) noexcept
 {
-    try {
-        fd = CreateIcmp();
-        ident = MakeIdent(fd);
-        SendPing(fd, address, ident);
-    } catch (...) {
-        handler.PingError(std::current_exception());
-        return;
-    }
+	try {
+		fd = CreateIcmp();
+		ident = MakeIdent(fd);
+		SendPing(fd, address, ident);
+	} catch (...) {
+		handler.PingError(std::current_exception());
+		return;
+	}
 
-    ScheduleRead();
+	ScheduleRead();
 }
