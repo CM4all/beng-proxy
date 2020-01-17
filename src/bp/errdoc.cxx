@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -45,63 +45,63 @@
 #include "io/Logger.hxx"
 
 struct ErrorResponseLoader final : TranslateHandler, HttpResponseHandler, Cancellable {
-    CancellablePointer cancel_ptr;
+	CancellablePointer cancel_ptr;
 
-    Request &request;
+	Request &request;
 
-    struct OriginalResponse {
-        http_status_t status;
-        HttpHeaders headers;
-        UnusedHoldIstreamPtr body;
+	struct OriginalResponse {
+		http_status_t status;
+		HttpHeaders headers;
+		UnusedHoldIstreamPtr body;
 
-        OriginalResponse(Request &r,
-                         http_status_t _status, HttpHeaders &&_headers,
-                         UnusedIstreamPtr _body) noexcept
-            :status(_status), headers(std::move(_headers)),
-             body(r.pool, std::move(_body)) {}
+		OriginalResponse(Request &r,
+				 http_status_t _status, HttpHeaders &&_headers,
+				 UnusedIstreamPtr _body) noexcept
+			:status(_status), headers(std::move(_headers)),
+			 body(r.pool, std::move(_body)) {}
 
-        void Resubmit(Request &r) noexcept {
-            r.DispatchResponse(status, std::move(headers), std::move(body));
-        }
-    };
+		void Resubmit(Request &r) noexcept {
+			r.DispatchResponse(status, std::move(headers), std::move(body));
+		}
+	};
 
-    OriginalResponse original_response;
+	OriginalResponse original_response;
 
-    TranslateRequest translate_request;
+	TranslateRequest translate_request;
 
-    ErrorResponseLoader(Request &_request, http_status_t _status,
-                        HttpHeaders &&_headers, UnusedIstreamPtr _body)
-        :request(_request),
-         original_response(request, _status, std::move(_headers),
-                           std::move(_body)) {}
+	ErrorResponseLoader(Request &_request, http_status_t _status,
+			    HttpHeaders &&_headers, UnusedIstreamPtr _body)
+		:request(_request),
+		 original_response(request, _status, std::move(_headers),
+				   std::move(_body)) {}
 
-    void Destroy() {
-        this->~ErrorResponseLoader();
-    }
+	void Destroy() {
+		this->~ErrorResponseLoader();
+	}
 
-    void Resubmit() noexcept {
-        original_response.Resubmit(request);
-    }
+	void Resubmit() noexcept {
+		original_response.Resubmit(request);
+	}
 
-    void ResubmitAndDestroy() noexcept {
-        auto &_request = request;
-        OriginalResponse _response(std::move(original_response));
+	void ResubmitAndDestroy() noexcept {
+		auto &_request = request;
+		OriginalResponse _response(std::move(original_response));
 
-        Destroy();
-        _response.Resubmit(_request);
-    }
+		Destroy();
+		_response.Resubmit(_request);
+	}
 
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override;
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override;
 
-    /* virtual methods from TranslateHandler */
-    void OnTranslateResponse(TranslateResponse &response) noexcept override;
-    void OnTranslateError(std::exception_ptr error) noexcept override;
+	/* virtual methods from TranslateHandler */
+	void OnTranslateResponse(TranslateResponse &response) noexcept override;
+	void OnTranslateError(std::exception_ptr error) noexcept override;
 
-    /* virtual methods from class HttpResponseHandler */
-    void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        UnusedIstreamPtr body) noexcept override;
-    void OnHttpError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(http_status_t status, StringMap &&headers,
+			    UnusedIstreamPtr body) noexcept override;
+	void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 /*
@@ -111,27 +111,27 @@ struct ErrorResponseLoader final : TranslateHandler, HttpResponseHandler, Cancel
 
 void
 ErrorResponseLoader::OnHttpResponse(http_status_t _status, StringMap &&_headers,
-                                    UnusedIstreamPtr _body) noexcept
+				    UnusedIstreamPtr _body) noexcept
 {
-    if (http_status_is_success(_status)) {
-        auto &_request = request;
-        const auto status = original_response.status;
-        Destroy();
-        _request.InvokeResponse(status, std::move(_headers), std::move(_body));
-    } else {
-        /* close the new response body */
-        _body.Clear();
+	if (http_status_is_success(_status)) {
+		auto &_request = request;
+		const auto status = original_response.status;
+		Destroy();
+		_request.InvokeResponse(status, std::move(_headers), std::move(_body));
+	} else {
+		/* close the new response body */
+		_body.Clear();
 
-        ResubmitAndDestroy();
-    }
+		ResubmitAndDestroy();
+	}
 }
 
 void
 ErrorResponseLoader::OnHttpError(std::exception_ptr ep) noexcept
 {
-    LogConcat(2, request.request.uri, "error on error document: ", ep);
+	LogConcat(2, request.request.uri, "error on error document: ", ep);
 
-    ResubmitAndDestroy();
+	ResubmitAndDestroy();
 }
 
 /*
@@ -142,40 +142,40 @@ ErrorResponseLoader::OnHttpError(std::exception_ptr ep) noexcept
 void
 ErrorResponseLoader::OnTranslateResponse(TranslateResponse &response) noexcept
 {
-    if ((response.status == (http_status_t)0 ||
-         http_status_is_success(response.status)) &&
-        response.address.IsDefined()) {
+	if ((response.status == (http_status_t)0 ||
+	     http_status_is_success(response.status)) &&
+	    response.address.IsDefined()) {
 
-        request.instance.cached_resource_loader
-            ->SendRequest(request.pool, request.stopwatch,
-                          0, nullptr, nullptr,
-                          HTTP_METHOD_GET,
-                          response.address, HTTP_STATUS_OK,
-                          {}, nullptr, nullptr,
-                          *this, request.cancel_ptr);
-    } else {
-        ResubmitAndDestroy();
-    }
+		request.instance.cached_resource_loader
+			->SendRequest(request.pool, request.stopwatch,
+				      0, nullptr, nullptr,
+				      HTTP_METHOD_GET,
+				      response.address, HTTP_STATUS_OK,
+				      {}, nullptr, nullptr,
+				      *this, request.cancel_ptr);
+	} else {
+		ResubmitAndDestroy();
+	}
 }
 
 void
 ErrorResponseLoader::OnTranslateError(std::exception_ptr ep) noexcept
 {
-    LogConcat(2, request.request.uri,
-              "error document translation error: ", ep);
+	LogConcat(2, request.request.uri,
+		  "error document translation error: ", ep);
 
-    ResubmitAndDestroy();
+	ResubmitAndDestroy();
 }
 
 static void
 fill_translate_request(TranslateRequest *t,
-                       const TranslateRequest *src,
-                       ConstBuffer<void> error_document,
-                       http_status_t status)
+		       const TranslateRequest *src,
+		       ConstBuffer<void> error_document,
+		       http_status_t status)
 {
-    *t = *src;
-    t->error_document = error_document;
-    t->error_document_status = status;
+	*t = *src;
+	t->error_document = error_document;
+	t->error_document_status = status;
 }
 
 /*
@@ -186,8 +186,8 @@ fill_translate_request(TranslateRequest *t,
 void
 ErrorResponseLoader::Cancel() noexcept
 {
-    cancel_ptr.Cancel();
-    Destroy();
+	cancel_ptr.Cancel();
+	Destroy();
 }
 
 /*
@@ -197,26 +197,26 @@ ErrorResponseLoader::Cancel() noexcept
 
 void
 errdoc_dispatch_response(Request &request2, http_status_t status,
-                         ConstBuffer<void> error_document,
-                         HttpHeaders &&headers, UnusedIstreamPtr body)
+			 ConstBuffer<void> error_document,
+			 HttpHeaders &&headers, UnusedIstreamPtr body)
 {
-    assert(!error_document.IsNull());
+	assert(!error_document.IsNull());
 
-    auto &instance = request2.instance;
+	auto &instance = request2.instance;
 
-    assert(instance.translation_service != nullptr);
+	assert(instance.translation_service != nullptr);
 
-    auto *er = NewFromPool<ErrorResponseLoader>(request2.pool, request2,
-                                                status, std::move(headers),
-                                                std::move(body));
+	auto *er = NewFromPool<ErrorResponseLoader>(request2.pool, request2,
+						    status, std::move(headers),
+						    std::move(body));
 
-    request2.cancel_ptr = *er;
+	request2.cancel_ptr = *er;
 
-    fill_translate_request(&er->translate_request,
-                           &request2.translate.request,
-                           error_document, status);
-    instance.translation_service->SendRequest(request2.pool,
-                                              er->translate_request,
-                                              request2.stopwatch,
-                                              *er, er->cancel_ptr);
+	fill_translate_request(&er->translate_request,
+			       &request2.translate.request,
+			       error_document, status);
+	instance.translation_service->SendRequest(request2.pool,
+						  er->translate_request,
+						  request2.stopwatch,
+						  *er, er->cancel_ptr);
 }

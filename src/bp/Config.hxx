@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -50,116 +50,116 @@ struct StringView;
  * Configuration.
  */
 struct BpConfig {
-    static constexpr unsigned MAX_PORTS = 32;
+	static constexpr unsigned MAX_PORTS = 32;
 
-    StaticArray<unsigned, MAX_PORTS> ports;
+	StaticArray<unsigned, MAX_PORTS> ports;
 
-    struct Listener : SocketConfig {
-        std::string tag;
+	struct Listener : SocketConfig {
+		std::string tag;
 
 #ifdef HAVE_AVAHI
-        std::string zeroconf_service;
+		std::string zeroconf_service;
 #endif
 
-        bool auth_alt_host = false;
+		bool auth_alt_host = false;
 
-        bool ssl = false;
+		bool ssl = false;
 
-        SslConfig ssl_config;
+		SslConfig ssl_config;
 
-        Listener() {
-            listen = 64;
-            tcp_defer_accept = 10;
-        }
+		Listener() {
+			listen = 64;
+			tcp_defer_accept = 10;
+		}
 
-        Listener(SocketAddress _address, const std::string &_tag)
-            :SocketConfig(_address), tag(_tag) {
-            listen = 64;
-            tcp_defer_accept = 10;
-        }
-    };
+		Listener(SocketAddress _address, const std::string &_tag)
+			:SocketConfig(_address), tag(_tag) {
+			listen = 64;
+			tcp_defer_accept = 10;
+		}
+	};
 
-    std::forward_list<Listener> listen;
+	std::forward_list<Listener> listen;
 
-    AccessLogConfig access_log;
+	AccessLogConfig access_log;
 
-    AccessLogConfig child_error_log;
+	AccessLogConfig child_error_log;
 
-    std::string session_cookie = "beng_proxy_session";
+	std::string session_cookie = "beng_proxy_session";
 
-    std::chrono::seconds session_idle_timeout = std::chrono::minutes(30);
+	std::chrono::seconds session_idle_timeout = std::chrono::minutes(30);
 
-    std::string session_save_path;
+	std::string session_save_path;
 
-    struct ControlListener : SocketConfig {
-        ControlListener() {
-            pass_cred = true;
-        }
+	struct ControlListener : SocketConfig {
+		ControlListener() {
+			pass_cred = true;
+		}
 
-        explicit ControlListener(SocketAddress _bind_address)
-            :SocketConfig(_bind_address) {
-            pass_cred = true;
-        }
-    };
+		explicit ControlListener(SocketAddress _bind_address)
+			:SocketConfig(_bind_address) {
+			pass_cred = true;
+		}
+	};
 
-    std::forward_list<ControlListener> control_listen;
+	std::forward_list<ControlListener> control_listen;
 
-    AllocatedSocketAddress multicast_group;
+	AllocatedSocketAddress multicast_group;
 
-    const char *document_root = "/var/www";
+	const char *document_root = "/var/www";
 
-    AllocatedSocketAddress translation_socket;
+	AllocatedSocketAddress translation_socket;
 
-    unsigned num_workers = 0;
+	unsigned num_workers = 0;
 
-    /** maximum number of simultaneous connections */
-    unsigned max_connections = 32768;
+	/** maximum number of simultaneous connections */
+	unsigned max_connections = 32768;
 
-    size_t http_cache_size = 512 * 1024 * 1024;
+	size_t http_cache_size = 512 * 1024 * 1024;
 
-    size_t filter_cache_size = 128 * 1024 * 1024;
+	size_t filter_cache_size = 128 * 1024 * 1024;
 
-    size_t nfs_cache_size = 256 * 1024 * 1024;
+	size_t nfs_cache_size = 256 * 1024 * 1024;
 
-    unsigned translate_cache_size = 131072;
-    unsigned translate_stock_limit = 64;
+	unsigned translate_cache_size = 131072;
+	unsigned translate_stock_limit = 64;
 
-    unsigned tcp_stock_limit = 0;
+	unsigned tcp_stock_limit = 0;
 
-    unsigned fcgi_stock_limit = 0, fcgi_stock_max_idle = 16;
+	unsigned fcgi_stock_limit = 0, fcgi_stock_max_idle = 16;
 
-    unsigned was_stock_limit = 0, was_stock_max_idle = 16;
+	unsigned was_stock_limit = 0, was_stock_max_idle = 16;
 
-    unsigned cluster_size = 0, cluster_node = 0;
+	unsigned cluster_size = 0, cluster_node = 0;
 
-    enum class SessionCookieSameSite : uint8_t {
-        NONE,
-        STRICT,
-        LAX,
-    } session_cookie_same_site;
+	enum class SessionCookieSameSite : uint8_t {
+		NONE,
+		STRICT,
+		LAX,
+	} session_cookie_same_site;
 
-    bool dynamic_session_cookie = false;
+	bool dynamic_session_cookie = false;
 
-    bool verbose_response = false;
+	bool verbose_response = false;
 
-    bool emulate_mod_auth_easy = false;
+	bool emulate_mod_auth_easy = false;
 
-    bool http_cache_obey_no_cache = true;
+	bool http_cache_obey_no_cache = true;
 
-    SpawnConfig spawn;
+	SpawnConfig spawn;
 
-    SslClientConfig ssl_client;
+	SslClientConfig ssl_client;
 
-    BpConfig() {
-        translation_socket.SetLocal("@translation");
+	BpConfig() {
+		translation_socket.SetLocal("@translation");
 #ifdef HAVE_LIBSYSTEMD
-        spawn.systemd_scope = "bp-spawn.scope";
-        spawn.systemd_scope_description = "The cm4all-beng-proxy child process spawner";
-        spawn.systemd_slice = "system-cm4all.slice";
+		spawn.systemd_scope = "bp-spawn.scope";
+		spawn.systemd_scope_description = "The cm4all-beng-proxy child process spawner";
+		spawn.systemd_slice = "system-cm4all.slice";
 #endif
-    }
+	}
 
-    void HandleSet(StringView name, const char *value);
+	void HandleSet(StringView name, const char *value);
 };
 
 /**

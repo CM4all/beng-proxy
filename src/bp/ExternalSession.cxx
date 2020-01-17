@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -47,73 +47,73 @@
 #include "stopwatch.hxx"
 
 class ExternalSessionRefresh final
-    : PoolHolder, public LinkedBackgroundJob, HttpResponseHandler {
+	: PoolHolder, public LinkedBackgroundJob, HttpResponseHandler {
 
-    const HttpAddress address;
+	const HttpAddress address;
 
 public:
-    ExternalSessionRefresh(PoolPtr &&_pool,
-                           BackgroundManager &_manager,
-                           const HttpAddress &_address)
-        :PoolHolder(std::move(_pool)),
-         LinkedBackgroundJob(_manager),
-         address(GetPool(), _address) {}
+	ExternalSessionRefresh(PoolPtr &&_pool,
+			       BackgroundManager &_manager,
+			       const HttpAddress &_address)
+		:PoolHolder(std::move(_pool)),
+		 LinkedBackgroundJob(_manager),
+		 address(GetPool(), _address) {}
 
-    void SendRequest(BpInstance &instance, const SessionId session_id) {
-        http_request(pool, instance.event_loop, *instance.fs_balancer,
-                     nullptr,
-                     session_id.GetClusterHash(),
-                     nullptr,
-                     HTTP_METHOD_GET, address,
-                     {}, nullptr,
-                     *this, cancel_ptr);
-    }
+	void SendRequest(BpInstance &instance, const SessionId session_id) {
+		http_request(pool, instance.event_loop, *instance.fs_balancer,
+			     nullptr,
+			     session_id.GetClusterHash(),
+			     nullptr,
+			     HTTP_METHOD_GET, address,
+			     {}, nullptr,
+			     *this, cancel_ptr);
+	}
 
-    /* virtual methods from class HttpResponseHandler */
-    void OnHttpResponse(http_status_t status,
-                        gcc_unused StringMap &&headers,
-                        UnusedIstreamPtr body) noexcept override {
-        body.Clear();
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(http_status_t status,
+			    gcc_unused StringMap &&headers,
+			    UnusedIstreamPtr body) noexcept override {
+		body.Clear();
 
-        if (status < 200 || status >= 300)
-            LogConcat(3, "ExternalSessionManager", "Status ", int(status),
-                      " from manager '", address.path, "'");
+		if (status < 200 || status >= 300)
+			LogConcat(3, "ExternalSessionManager", "Status ", int(status),
+				  " from manager '", address.path, "'");
 
-        Remove();
-    }
+		Remove();
+	}
 
-    void OnHttpError(std::exception_ptr ep) noexcept override {
-        LogConcat(2, "ExternalSessionManager", "Failed to refresh external session: ", ep);
+	void OnHttpError(std::exception_ptr ep) noexcept override {
+		LogConcat(2, "ExternalSessionManager", "Failed to refresh external session: ", ep);
 
-        Remove();
-    }
+		Remove();
+	}
 };
 
 void
 RefreshExternalSession(BpInstance &instance, Session &session)
 {
-    if (session.external_manager == nullptr ||
-        session.external_keepalive <= std::chrono::seconds::zero())
-        /* feature is not enabled */
-        return;
+	if (session.external_manager == nullptr ||
+	    session.external_keepalive <= std::chrono::seconds::zero())
+		/* feature is not enabled */
+		return;
 
-    const auto now = instance.event_loop.SteadyNow();
-    if (now < session.next_external_keepalive)
-        /* not yet */
-        return;
+	const auto now = instance.event_loop.SteadyNow();
+	if (now < session.next_external_keepalive)
+		/* not yet */
+		return;
 
-    LogConcat(5, "ExternalSessionManager", "refresh '",
-              session.external_manager->path, "'");
+	LogConcat(5, "ExternalSessionManager", "refresh '",
+		  session.external_manager->path, "'");
 
-    session.next_external_keepalive = now + session.external_keepalive;
+	session.next_external_keepalive = now + session.external_keepalive;
 
-    auto pool = pool_new_linear(instance.root_pool, "external_session_refresh",
-                                4096);
+	auto pool = pool_new_linear(instance.root_pool, "external_session_refresh",
+				    4096);
 
-    auto *refresh = NewFromPool<ExternalSessionRefresh>(std::move(pool),
-                                                        instance.background_manager,
-                                                        *session.external_manager);
-    instance.background_manager.Add(*refresh);
+	auto *refresh = NewFromPool<ExternalSessionRefresh>(std::move(pool),
+							    instance.background_manager,
+							    *session.external_manager);
+	instance.background_manager.Add(*refresh);
 
-    refresh->SendRequest(instance, session.id);
+	refresh->SendRequest(instance, session.id);
 }

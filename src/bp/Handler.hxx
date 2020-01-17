@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Handler for HTTP requests.
  */
 
-#ifndef BENG_PROXY_HANDLER_HXX
-#define BENG_PROXY_HANDLER_HXX
+#pragma once
 
 class Request;
 struct BpConnection;
@@ -51,8 +50,6 @@ fcgi_handler(Request &request2);
 
 void
 handle_http_request(BpConnection &connection,
-                    IncomingHttpRequest &request,
-                    const StopwatchPtr &parent_stopwatch,
-                    CancellablePointer &cancel_ptr);
-
-#endif
+		    IncomingHttpRequest &request,
+		    const StopwatchPtr &parent_stopwatch,
+		    CancellablePointer &cancel_ptr);

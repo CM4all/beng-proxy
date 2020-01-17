@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Handle the request/response headers for static files.
  */
 
-#ifndef BENG_PROXY_FILE_HEADERS_HXX
-#define BENG_PROXY_FILE_HEADERS_HXX
+#pragma once
 
 #include "http/Range.hxx"
 
@@ -49,17 +48,15 @@ class GrowingBuffer;
 struct stat;
 
 struct file_request {
-    HttpRangeRequest range;
+	HttpRangeRequest range;
 
-    explicit file_request(off_t _size):range(_size) {}
+	explicit file_request(off_t _size):range(_size) {}
 };
 
 void
 file_response_headers(GrowingBuffer &headers,
-                      const ClockCache<std::chrono::system_clock> &system_clock,
-                      const char *override_content_type,
-                      FileDescriptor fd, const struct stat &st,
-                      std::chrono::seconds expires_relative,
-                      bool processor_first);
-
-#endif
+		      const ClockCache<std::chrono::system_clock> &system_clock,
+		      const char *override_content_type,
+		      FileDescriptor fd, const struct stat &st,
+		      std::chrono::seconds expires_relative,
+		      bool processor_first);

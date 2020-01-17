@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_CONNECTION_HXX
-#define BENG_PROXY_CONNECTION_HXX
+#pragma once
 
 #include "http_server/Handler.hxx"
 #include "io/Logger.hxx"
@@ -54,85 +53,83 @@ struct HttpServerConnection;
  * A connection from a HTTP client.
  */
 struct BpConnection final
-    : PoolHolder, HttpServerConnectionHandler,
-      boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+	: PoolHolder, HttpServerConnectionHandler,
+	  boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
-    BpInstance &instance;
-    const BpConfig &config;
+	BpInstance &instance;
+	const BpConfig &config;
 
-    const char *const listener_tag;
+	const char *const listener_tag;
 
-    const bool auth_alt_host;
+	const bool auth_alt_host;
 
-    /**
-     * The address (host and port) of the client.
-     */
-    const char *const remote_host_and_port;
+	/**
+	 * The address (host and port) of the client.
+	 */
+	const char *const remote_host_and_port;
 
-    const LLogger logger;
+	const LLogger logger;
 
-    HttpServerConnection *http;
+	HttpServerConnection *http;
 
-    /**
-     * Attributes which are specific to the current request.  They are
-     * only valid while a request is being handled (i.e. during the
-     * lifetime of the #IncomingHttpRequest instance).  Strings are
-     * allocated from the request pool.
-     */
-    struct PerRequest {
-        /**
-         * The time stamp at the start of the request.  Used to calculate
-         * the request duration.
-         */
-        std::chrono::steady_clock::time_point start_time;
+	/**
+	 * Attributes which are specific to the current request.  They are
+	 * only valid while a request is being handled (i.e. during the
+	 * lifetime of the #IncomingHttpRequest instance).  Strings are
+	 * allocated from the request pool.
+	 */
+	struct PerRequest {
+		/**
+		 * The time stamp at the start of the request.  Used to calculate
+		 * the request duration.
+		 */
+		std::chrono::steady_clock::time_point start_time;
 
-        /**
-         * The name of the site being accessed by the current HTTP
-         * request (from #TRANSLATE_SITE).  It is a hack to allow the
-         * "log" callback to see this information.
-         */
-        const char *site_name;
+		/**
+		 * The name of the site being accessed by the current HTTP
+		 * request (from #TRANSLATE_SITE).  It is a hack to allow the
+		 * "log" callback to see this information.
+		 */
+		const char *site_name;
 
-        void Begin(std::chrono::steady_clock::time_point now) noexcept;
+		void Begin(std::chrono::steady_clock::time_point now) noexcept;
 
-        std::chrono::steady_clock::duration GetDuration(std::chrono::steady_clock::time_point now) const noexcept {
-            return now - start_time;
-        }
-    } per_request;
+		std::chrono::steady_clock::duration GetDuration(std::chrono::steady_clock::time_point now) const noexcept {
+			return now - start_time;
+		}
+	} per_request;
 
-    BpConnection(PoolPtr &&_pool, BpInstance &_instance,
-                 const char *_listener_tag, bool _auth_alt_host,
-                 SocketAddress remote_address) noexcept;
-    ~BpConnection() noexcept;
+	BpConnection(PoolPtr &&_pool, BpInstance &_instance,
+		     const char *_listener_tag, bool _auth_alt_host,
+		     SocketAddress remote_address) noexcept;
+	~BpConnection() noexcept;
 
-    using PoolHolder::GetPool;
+	using PoolHolder::GetPool;
 
-    struct Disposer {
-        void operator()(BpConnection *c) noexcept;
-    };
+	struct Disposer {
+		void operator()(BpConnection *c) noexcept;
+	};
 
-    /* virtual methods from class HttpServerConnectionHandler */
-    void RequestHeadersFinished(const IncomingHttpRequest &request) noexcept override;
-    void HandleHttpRequest(IncomingHttpRequest &request,
-                           const StopwatchPtr &parent_stopwatch,
-                           CancellablePointer &cancel_ptr) noexcept override;
+	/* virtual methods from class HttpServerConnectionHandler */
+	void RequestHeadersFinished(const IncomingHttpRequest &request) noexcept override;
+	void HandleHttpRequest(IncomingHttpRequest &request,
+			       const StopwatchPtr &parent_stopwatch,
+			       CancellablePointer &cancel_ptr) noexcept override;
 
-    void LogHttpRequest(IncomingHttpRequest &request,
-                        http_status_t status, off_t length,
-                        uint64_t bytes_received,
-                        uint64_t bytes_sent) noexcept override;
+	void LogHttpRequest(IncomingHttpRequest &request,
+			    http_status_t status, off_t length,
+			    uint64_t bytes_received,
+			    uint64_t bytes_sent) noexcept override;
 
-    void HttpConnectionError(std::exception_ptr e) noexcept override;
-    void HttpConnectionClosed() noexcept override;
+	void HttpConnectionError(std::exception_ptr e) noexcept override;
+	void HttpConnectionClosed() noexcept override;
 };
 
 void
 new_connection(BpInstance &instance,
-               UniqueSocketDescriptor &&fd, SocketAddress address,
-               SslFactory *ssl_factory,
-               const char *listener_tag, bool auth_alt_host) noexcept;
+	       UniqueSocketDescriptor &&fd, SocketAddress address,
+	       SslFactory *ssl_factory,
+	       const char *listener_tag, bool auth_alt_host) noexcept;
 
 void
 close_connection(BpConnection *connection) noexcept;
-
-#endif

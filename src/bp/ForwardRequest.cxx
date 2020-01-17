@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,47 +37,47 @@
 
 ForwardRequest
 request_forward(Request &request2,
-                const HeaderForwardSettings &header_forward,
-                const char *host_and_port, const char *uri,
-                bool exclude_host) noexcept
+		const HeaderForwardSettings &header_forward,
+		const char *host_and_port, const char *uri,
+		bool exclude_host) noexcept
 {
-    const auto &request = request2.request;
+	const auto &request = request2.request;
 
-    assert(!request.HasBody() || request2.request_body);
+	assert(!request.HasBody() || request2.request_body);
 
-    http_method_t method;
-    UnusedIstreamPtr body;
+	http_method_t method;
+	UnusedIstreamPtr body;
 
-    /* send a request body? */
+	/* send a request body? */
 
-    if (request2.processor_focus) {
-        /* reserve method+body for the processor, and
-           convert this request to a GET */
+	if (request2.processor_focus) {
+		/* reserve method+body for the processor, and
+		   convert this request to a GET */
 
-        method = HTTP_METHOD_GET;
-    } else {
-        /* forward body (if any) to the real server */
+		method = HTTP_METHOD_GET;
+	} else {
+		/* forward body (if any) to the real server */
 
-        method = request.method;
-        body = std::move(request2.request_body);
-    }
+		method = request.method;
+		body = std::move(request2.request_body);
+	}
 
-    /* generate request headers */
+	/* generate request headers */
 
-    const bool has_body = body;
+	const bool has_body = body;
 
-    return ForwardRequest(method,
-                          forward_request_headers(request2.pool, request.headers,
-                                                  request.local_host_and_port,
-                                                  request.remote_host,
-                                                  exclude_host,
-                                                  has_body,
-                                                  !request2.IsProcessorEnabled(),
-                                                  !request2.IsTransformationEnabled(),
-                                                  !request2.IsTransformationEnabled(),
-                                                  header_forward,
-                                                  request2.session_cookie,
-                                                  request2.GetRealmSession().get(),
-                                                  host_and_port, uri),
-                          std::move(body));
+	return ForwardRequest(method,
+			      forward_request_headers(request2.pool, request.headers,
+						      request.local_host_and_port,
+						      request.remote_host,
+						      exclude_host,
+						      has_body,
+						      !request2.IsProcessorEnabled(),
+						      !request2.IsTransformationEnabled(),
+						      !request2.IsTransformationEnabled(),
+						      header_forward,
+						      request2.session_cookie,
+						      request2.GetRealmSession().get(),
+						      host_and_port, uri),
+			      std::move(body));
 }

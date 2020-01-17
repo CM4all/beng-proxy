@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -49,90 +49,90 @@ gcc_pure
 static const char *
 get_file_path(const TranslateResponse &response)
 {
-    if (response.test_path != nullptr)
-        return response.test_path;
+	if (response.test_path != nullptr)
+		return response.test_path;
 
-    const auto &address = response.address;
-    switch (address.type) {
-    case ResourceAddress::Type::NONE:
-    case ResourceAddress::Type::HTTP:
-    case ResourceAddress::Type::PIPE:
-    case ResourceAddress::Type::NFS:
-        return nullptr;
+	const auto &address = response.address;
+	switch (address.type) {
+	case ResourceAddress::Type::NONE:
+	case ResourceAddress::Type::HTTP:
+	case ResourceAddress::Type::PIPE:
+	case ResourceAddress::Type::NFS:
+		return nullptr;
 
-    case ResourceAddress::Type::CGI:
-    case ResourceAddress::Type::FASTCGI:
-    case ResourceAddress::Type::WAS:
-        return address.GetCgi().path;
+	case ResourceAddress::Type::CGI:
+	case ResourceAddress::Type::FASTCGI:
+	case ResourceAddress::Type::WAS:
+		return address.GetCgi().path;
 
-    case ResourceAddress::Type::LHTTP:
-        return address.GetLhttp().path;
+	case ResourceAddress::Type::LHTTP:
+		return address.GetLhttp().path;
 
-    case ResourceAddress::Type::LOCAL:
-        return address.GetFile().path;
+	case ResourceAddress::Type::LOCAL:
+		return address.GetFile().path;
 
-        // TODO: implement NFS
-    }
+		// TODO: implement NFS
+	}
 
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }
 
 static bool
 submit_enotdir(Request &request, const TranslateResponse &response)
 {
-    request.translate.request.enotdir = response.enotdir;
+	request.translate.request.enotdir = response.enotdir;
 
-    const char *const uri = request.request.uri;
-    if (request.translate.enotdir_uri == nullptr) {
-        request.translate.request.uri = request.translate.enotdir_uri =
-            p_strdup(&request.pool, uri);
-        request.translate.enotdir_path_info = uri + strlen(uri);
-    }
+	const char *const uri = request.request.uri;
+	if (request.translate.enotdir_uri == nullptr) {
+		request.translate.request.uri = request.translate.enotdir_uri =
+			p_strdup(&request.pool, uri);
+		request.translate.enotdir_path_info = uri + strlen(uri);
+	}
 
-    const char *slash = (const char *)
-        memrchr(uri, '/', request.translate.enotdir_path_info - uri);
-    if (slash == nullptr || slash == uri)
-        return true;
+	const char *slash = (const char *)
+		memrchr(uri, '/', request.translate.enotdir_path_info - uri);
+	if (slash == nullptr || slash == uri)
+		return true;
 
-    request.translate.enotdir_uri[slash - uri] = 0;
-    request.translate.enotdir_path_info = slash;
+	request.translate.enotdir_uri[slash - uri] = 0;
+	request.translate.enotdir_path_info = slash;
 
-    request.SubmitTranslateRequest();
-    return false;
+	request.SubmitTranslateRequest();
+	return false;
 }
 
 bool
 check_file_enotdir(Request &request,
-                   const TranslateResponse &response)
+		   const TranslateResponse &response)
 {
-    assert(!response.enotdir.IsNull());
+	assert(!response.enotdir.IsNull());
 
-    const char *path = get_file_path(response);
-    if (path == nullptr) {
-        request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                                 "Resource address not compatible with ENOTDIR",
-                                 1);
-        return false;
-    }
+	const char *path = get_file_path(response);
+	if (path == nullptr) {
+		request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+					 "Resource address not compatible with ENOTDIR",
+					 1);
+		return false;
+	}
 
-    struct stat st;
-    if (stat(path, &st) < 0 && errno == ENOTDIR)
-        return submit_enotdir(request, response);
+	struct stat st;
+	if (stat(path, &st) < 0 && errno == ENOTDIR)
+		return submit_enotdir(request, response);
 
-    return true;
+	return true;
 }
 
 void
 apply_file_enotdir(Request &request)
 {
-    if (request.translate.enotdir_path_info != nullptr) {
-        /* append the path_info to the resource address */
+	if (request.translate.enotdir_path_info != nullptr) {
+		/* append the path_info to the resource address */
 
-        auto address =
-            request.translate.address.Apply(request.pool,
-                                            request.translate.enotdir_path_info);
-        if (address.IsDefined())
-            request.translate.address = {ShallowCopy(), address};
-    }
+		auto address =
+			request.translate.address.Apply(request.pool,
+							request.translate.enotdir_path_info);
+		if (address.IsDefined())
+			request.translate.address = {ShallowCopy(), address};
+	}
 }

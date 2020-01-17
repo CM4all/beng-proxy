@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Implementation of TRANSLATE_ENOTDIR.
  */
 
-#ifndef BENG_PROXY_ENOTDIR_HXX
-#define BENG_PROXY_ENOTDIR_HXX
+#pragma once
 
 class Request;
 struct TranslateResponse;
@@ -55,5 +54,3 @@ check_file_enotdir(Request &request, const TranslateResponse &response);
  */
 void
 apply_file_enotdir(Request &request);
-
-#endif

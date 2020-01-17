@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Common request forwarding code for the request handlers.
  */
 
-#ifndef BENG_PROXY_REQUEST_FORWARD_HXX
-#define BENG_PROXY_REQUEST_FORWARD_HXX
+#pragma once
 
 #include "strmap.hxx"
 #include "http/Method.h"
@@ -47,22 +46,20 @@ class Request;
 class Istream;
 
 struct ForwardRequest {
-    http_method_t method;
+	http_method_t method;
 
-    StringMap headers;
+	StringMap headers;
 
-    UnusedIstreamPtr body;
+	UnusedIstreamPtr body;
 
-    ForwardRequest(http_method_t _method, StringMap &&_headers,
-                   UnusedIstreamPtr _body) noexcept
-        :method(_method), headers(std::move(_headers)),
-         body(std::move(_body)) {}
+	ForwardRequest(http_method_t _method, StringMap &&_headers,
+		       UnusedIstreamPtr _body) noexcept
+		:method(_method), headers(std::move(_headers)),
+		 body(std::move(_body)) {}
 };
 
 ForwardRequest
 request_forward(Request &src,
-                const HeaderForwardSettings &header_forward,
-                const char *host_and_port, const char *uri,
-                bool exclude_host) noexcept;
-
-#endif
+		const HeaderForwardSettings &header_forward,
+		const char *host_and_port, const char *uri,
+		bool exclude_host) noexcept;

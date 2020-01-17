@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -56,69 +56,69 @@
 #include <unistd.h>
 
 BpConnection::BpConnection(PoolPtr &&_pool, BpInstance &_instance,
-                           const char *_listener_tag,
-                           bool _auth_alt_host,
-                           SocketAddress remote_address) noexcept
-    :PoolHolder(std::move(_pool)),
-     instance(_instance),
-     config(_instance.config),
-     listener_tag(_listener_tag),
-     auth_alt_host(_auth_alt_host),
-     remote_host_and_port(address_to_string(pool, remote_address)),
-     logger(remote_host_and_port)
+			   const char *_listener_tag,
+			   bool _auth_alt_host,
+			   SocketAddress remote_address) noexcept
+	:PoolHolder(std::move(_pool)),
+	 instance(_instance),
+	 config(_instance.config),
+	 listener_tag(_listener_tag),
+	 auth_alt_host(_auth_alt_host),
+	 remote_host_and_port(address_to_string(pool, remote_address)),
+	 logger(remote_host_and_port)
 {
 }
 
 BpConnection::~BpConnection() noexcept
 {
-    if (http != nullptr)
-        http_server_connection_close(http);
+	if (http != nullptr)
+		http_server_connection_close(http);
 
-    pool_trash(pool);
+	pool_trash(pool);
 }
 
 void
 BpConnection::Disposer::operator()(BpConnection *c) noexcept
 {
-    c->~BpConnection();
+	c->~BpConnection();
 }
 
 void
 close_connection(BpConnection *connection) noexcept
 {
-    auto &connections = connection->instance.connections;
-    assert(!connections.empty());
-    connections.erase_and_dispose(connections.iterator_to(*connection),
-                                  BpConnection::Disposer());
+	auto &connections = connection->instance.connections;
+	assert(!connections.empty());
+	connections.erase_and_dispose(connections.iterator_to(*connection),
+				      BpConnection::Disposer());
 }
 
 gcc_pure
 static int
 HttpServerLogLevel(std::exception_ptr e) noexcept
 {
-    try {
-        FindRetrowNested<HttpServerSocketError>(e);
-    } catch (const HttpServerSocketError &) {
-        e = std::current_exception();
+	try {
+		FindRetrowNested<HttpServerSocketError>(e);
+	} catch (const HttpServerSocketError &) {
+		e = std::current_exception();
 
-        /* some socket errors caused by our client are less
-           important */
+		/* some socket errors caused by our client are less
+		   important */
 
-        try {
-            FindRetrowNested<std::system_error>(e);
-        } catch (const std::system_error &se) {
-            if (IsErrno(se, ECONNRESET))
-                return 4;
-        }
+		try {
+			FindRetrowNested<std::system_error>(e);
+		} catch (const std::system_error &se) {
+			if (IsErrno(se, ECONNRESET))
+				return 4;
+		}
 
-        try {
-            FindRetrowNested<SocketProtocolError>(e);
-        } catch (...) {
-            return 4;
-        }
-    }
+		try {
+			FindRetrowNested<SocketProtocolError>(e);
+		} catch (...) {
+			return 4;
+		}
+	}
 
-    return 2;
+	return 2;
 }
 
 
@@ -130,60 +130,60 @@ HttpServerLogLevel(std::exception_ptr e) noexcept
 inline void
 BpConnection::PerRequest::Begin(std::chrono::steady_clock::time_point now) noexcept
 {
-    start_time = now;
-    site_name = nullptr;
+	start_time = now;
+	site_name = nullptr;
 }
 
 void
 BpConnection::RequestHeadersFinished(const IncomingHttpRequest &) noexcept
 {
-    ++instance.http_request_counter;
+	++instance.http_request_counter;
 
-    per_request.Begin(instance.event_loop.SteadyNow());
+	per_request.Begin(instance.event_loop.SteadyNow());
 }
 
 void
 BpConnection::HandleHttpRequest(IncomingHttpRequest &request,
-                                const StopwatchPtr &parent_stopwatch,
-                                CancellablePointer &cancel_ptr) noexcept
+				const StopwatchPtr &parent_stopwatch,
+				CancellablePointer &cancel_ptr) noexcept
 {
-    handle_http_request(*this, request, parent_stopwatch, cancel_ptr);
+	handle_http_request(*this, request, parent_stopwatch, cancel_ptr);
 }
 
 void
 BpConnection::LogHttpRequest(IncomingHttpRequest &request,
-                             http_status_t status, int64_t length,
-                             uint64_t bytes_received, uint64_t bytes_sent) noexcept
+			     http_status_t status, int64_t length,
+			     uint64_t bytes_received, uint64_t bytes_sent) noexcept
 {
-    instance.http_traffic_received_counter += bytes_received;
-    instance.http_traffic_sent_counter += bytes_sent;
-    if (instance.access_log != nullptr)
-        instance.access_log->Log(instance.event_loop.SystemNow(),
-                                 request, per_request.site_name,
-                                 nullptr,
-                                 request.headers.Get("referer"),
-                                 request.headers.Get("user-agent"),
-                                 status, length,
-                                 bytes_received, bytes_sent,
-                                 per_request.GetDuration(instance.event_loop.SteadyNow()));
+	instance.http_traffic_received_counter += bytes_received;
+	instance.http_traffic_sent_counter += bytes_sent;
+	if (instance.access_log != nullptr)
+		instance.access_log->Log(instance.event_loop.SystemNow(),
+					 request, per_request.site_name,
+					 nullptr,
+					 request.headers.Get("referer"),
+					 request.headers.Get("user-agent"),
+					 status, length,
+					 bytes_received, bytes_sent,
+					 per_request.GetDuration(instance.event_loop.SteadyNow()));
 }
 
 void
 BpConnection::HttpConnectionError(std::exception_ptr e) noexcept
 {
-    http = nullptr;
+	http = nullptr;
 
-    logger(HttpServerLogLevel(e), e);
+	logger(HttpServerLogLevel(e), e);
 
-    close_connection(this);
+	close_connection(this);
 }
 
 void
 BpConnection::HttpConnectionClosed() noexcept
 {
-    http = nullptr;
+	http = nullptr;
 
-    close_connection(this);
+	close_connection(this);
 }
 
 /*
@@ -193,49 +193,49 @@ BpConnection::HttpConnectionClosed() noexcept
 
 void
 new_connection(BpInstance &instance,
-               UniqueSocketDescriptor &&fd, SocketAddress address,
-               SslFactory *ssl_factory,
-               const char *listener_tag, bool auth_alt_host) noexcept
+	       UniqueSocketDescriptor &&fd, SocketAddress address,
+	       SslFactory *ssl_factory,
+	       const char *listener_tag, bool auth_alt_host) noexcept
 {
-    if (instance.connections.size() >= instance.config.max_connections) {
-        unsigned num_dropped = drop_some_connections(&instance);
+	if (instance.connections.size() >= instance.config.max_connections) {
+		unsigned num_dropped = drop_some_connections(&instance);
 
-        if (num_dropped == 0) {
-            LogConcat(1, "connection", "too many connections (",
-                      unsigned(instance.connections.size()),
-                      ", dropping");
-            return;
-        }
-    }
+		if (num_dropped == 0) {
+			LogConcat(1, "connection", "too many connections (",
+				  unsigned(instance.connections.size()),
+				  ", dropping");
+			return;
+		}
+	}
 
-    SocketFilterPtr filter;
-    if (ssl_factory != nullptr) {
-        auto *ssl_filter = ssl_filter_new(*ssl_factory);
-        filter.reset(new ThreadSocketFilter(instance.event_loop,
-                                            thread_pool_get_queue(instance.event_loop),
-                                            &ssl_filter_get_handler(*ssl_filter)));
-    }
+	SocketFilterPtr filter;
+	if (ssl_factory != nullptr) {
+		auto *ssl_filter = ssl_filter_new(*ssl_factory);
+		filter.reset(new ThreadSocketFilter(instance.event_loop,
+						    thread_pool_get_queue(instance.event_loop),
+						    &ssl_filter_get_handler(*ssl_filter)));
+	}
 
-    /* determine the local socket address */
-    const StaticSocketAddress local_address = fd.GetLocalAddress();
+	/* determine the local socket address */
+	const StaticSocketAddress local_address = fd.GetLocalAddress();
 
-    auto pool = pool_new_linear(instance.root_pool, "connection", 2048);
-    pool_set_major(pool);
+	auto pool = pool_new_linear(instance.root_pool, "connection", 2048);
+	pool_set_major(pool);
 
-    auto *connection = NewFromPool<BpConnection>(std::move(pool), instance,
-                                                 listener_tag, auth_alt_host,
-                                                 address);
-    instance.connections.push_front(*connection);
+	auto *connection = NewFromPool<BpConnection>(std::move(pool), instance,
+						     listener_tag, auth_alt_host,
+						     address);
+	instance.connections.push_front(*connection);
 
-    connection->http =
-        http_server_connection_new(&connection->GetPool(),
-                                   instance.event_loop,
-                                   std::move(fd), FdType::FD_TCP,
-                                   std::move(filter),
-                                   local_address.IsDefined()
-                                   ? (SocketAddress)local_address
-                                   : nullptr,
-                                   address,
-                                   true,
-                                   *connection);
+	connection->http =
+		http_server_connection_new(&connection->GetPool(),
+					   instance.event_loop,
+					   std::move(fd), FdType::FD_TCP,
+					   std::move(filter),
+					   local_address.IsDefined()
+					   ? (SocketAddress)local_address
+					   : nullptr,
+					   address,
+					   true,
+					   *connection);
 }

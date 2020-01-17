@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -43,46 +43,46 @@
 class AllocatorPtr;
 
 struct HeaderForwardSettings {
-    using Group = BengProxy::HeaderGroup;
-    using Mode = BengProxy::HeaderForwardMode;
+	using Group = BengProxy::HeaderGroup;
+	using Mode = BengProxy::HeaderForwardMode;
 
-    Mode modes[size_t(Group::MAX)];
+	Mode modes[size_t(Group::MAX)];
 
-    HeaderForwardSettings() = default;
+	HeaderForwardSettings() = default;
 
-    static constexpr HeaderForwardSettings AllNo() noexcept {
-        static_assert(Mode::NO == Mode(),
-                      "Wrong default value");
+	static constexpr HeaderForwardSettings AllNo() noexcept {
+		static_assert(Mode::NO == Mode(),
+			      "Wrong default value");
 
-        return HeaderForwardSettings{Mode::NO};
-    }
+		return HeaderForwardSettings{Mode::NO};
+	}
 
-    constexpr auto &operator[](Group group) noexcept {
-        return modes[size_t(group)];
-    }
+	constexpr auto &operator[](Group group) noexcept {
+		return modes[size_t(group)];
+	}
 
-    constexpr const auto &operator[](Group group) const noexcept {
-        return modes[size_t(group)];
-    }
+	constexpr const auto &operator[](Group group) const noexcept {
+		return modes[size_t(group)];
+	}
 
-    static constexpr auto MakeDefaultRequest() noexcept {
-        auto s = AllNo();
-        s[Group::IDENTITY] = Mode::MANGLE;
-        s[Group::CAPABILITIES] = Mode::YES;
-        s[Group::COOKIE] = Mode::MANGLE;
-        s[Group::AUTH] = Mode::MANGLE;
-        return s;
-    }
+	static constexpr auto MakeDefaultRequest() noexcept {
+		auto s = AllNo();
+		s[Group::IDENTITY] = Mode::MANGLE;
+		s[Group::CAPABILITIES] = Mode::YES;
+		s[Group::COOKIE] = Mode::MANGLE;
+		s[Group::AUTH] = Mode::MANGLE;
+		return s;
+	}
 
-    static constexpr auto MakeDefaultResponse() noexcept {
-        auto s = AllNo();
-        s[Group::CAPABILITIES] = Mode::YES;
-        s[Group::COOKIE] = Mode::MANGLE;
-        s[Group::TRANSFORMATION] = Mode::MANGLE;
-        s[Group::LINK] = Mode::YES;
-        s[Group::AUTH] = Mode::MANGLE;
-        return s;
-    }
+	static constexpr auto MakeDefaultResponse() noexcept {
+		auto s = AllNo();
+		s[Group::CAPABILITIES] = Mode::YES;
+		s[Group::COOKIE] = Mode::MANGLE;
+		s[Group::TRANSFORMATION] = Mode::MANGLE;
+		s[Group::LINK] = Mode::YES;
+		s[Group::AUTH] = Mode::MANGLE;
+		return s;
+	}
 };
 
 class StringMap;
@@ -96,28 +96,28 @@ struct RealmSession;
  */
 StringMap
 forward_request_headers(AllocatorPtr alloc, const StringMap &src,
-                        const char *local_host, const char *remote_host,
-                        bool exclude_host,
-                        bool with_body, bool forward_charset,
-                        bool forward_encoding,
-                        bool forward_range,
-                        const HeaderForwardSettings &settings,
-                        const char *session_cookie,
-                        const RealmSession *session,
-                        const char *host_and_port, const char *uri) noexcept;
+			const char *local_host, const char *remote_host,
+			bool exclude_host,
+			bool with_body, bool forward_charset,
+			bool forward_encoding,
+			bool forward_range,
+			const HeaderForwardSettings &settings,
+			const char *session_cookie,
+			const RealmSession *session,
+			const char *host_and_port, const char *uri) noexcept;
 
 StringMap
 forward_response_headers(AllocatorPtr alloc, http_status_t status,
-                         const StringMap &src,
-                         const char *local_host,
-                         const char *session_cookie,
-                         const char *(*relocate)(const char *uri, void *ctx),
-                         void *relocate_ctx,
-                         const HeaderForwardSettings &settings) noexcept;
+			 const StringMap &src,
+			 const char *local_host,
+			 const char *session_cookie,
+			 const char *(*relocate)(const char *uri, void *ctx),
+			 void *relocate_ctx,
+			 const HeaderForwardSettings &settings) noexcept;
 
 /**
  * Generate a X-CM4all-BENG-User header (if available)_.
  */
 void
 forward_reveal_user(AllocatorPtr alloc, StringMap &headers,
-                    const RealmSession *session) noexcept;
+		    const RealmSession *session) noexcept;

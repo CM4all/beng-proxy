@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_FILE_DIRECTORY_INDEX_HXX
-#define BENG_PROXY_FILE_DIRECTORY_INDEX_HXX
+#pragma once
 
 class Request;
 struct TranslateResponse;
@@ -45,6 +44,4 @@ struct TranslateResponse;
  */
 bool
 check_directory_index(Request &request,
-                      const TranslateResponse &response);
-
-#endif
+		      const TranslateResponse &response);

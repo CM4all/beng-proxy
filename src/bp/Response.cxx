@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -76,21 +76,21 @@
 
 static const char *
 request_absolute_uri(const IncomingHttpRequest &request,
-                     const char *scheme, const char *host, const char *uri)
+		     const char *scheme, const char *host, const char *uri)
 {
-    assert(uri != nullptr);
+	assert(uri != nullptr);
 
-    if (scheme == nullptr)
-        scheme = "http";
+	if (scheme == nullptr)
+		scheme = "http";
 
-    if (host == nullptr)
-        host = request.headers.Get("host");
+	if (host == nullptr)
+		host = request.headers.Get("host");
 
-    if (host == nullptr || !hostname_is_well_formed(host))
-        return nullptr;
+	if (host == nullptr || !hostname_is_well_formed(host))
+		return nullptr;
 
-    const AllocatorPtr alloc(request.pool);
-    return alloc.Concat(scheme, "://", host, uri);
+	const AllocatorPtr alloc(request.pool);
+	return alloc.Concat(scheme, "://", host, uri);
 }
 
 /**
@@ -101,63 +101,63 @@ request_absolute_uri(const IncomingHttpRequest &request,
  */
 static void
 session_drop_widgets(RealmSession &session, const char *uri,
-                     const WidgetRef *ref)
+		     const WidgetRef *ref)
 {
-    WidgetSession::Set *map = &session.widgets;
-    const char *id = uri;
+	WidgetSession::Set *map = &session.widgets;
+	const char *id = uri;
 
-    while (true) {
-        auto i = map->find(id, WidgetSession::Compare());
-        if (i == map->end())
-            /* no such widget session */
-            return;
+	while (true) {
+		auto i = map->find(id, WidgetSession::Compare());
+		if (i == map->end())
+			/* no such widget session */
+			return;
 
-        auto &ws = *i;
+		auto &ws = *i;
 
-        if (ref == nullptr) {
-            /* found the widget session */
-            map->erase(i);
-            ws.Destroy(session.parent.pool);
-            return;
-        }
+		if (ref == nullptr) {
+			/* found the widget session */
+			map->erase(i);
+			ws.Destroy(session.parent.pool);
+			return;
+		}
 
-        map = &ws.children;
-        id = ref->id;
-        ref = ref->next;
-    }
+		map = &ws.children;
+		id = ref->id;
+		ref = ref->next;
+	}
 }
 
 inline UnusedIstreamPtr
 Request::AutoDeflate(HttpHeaders &response_headers,
-                     UnusedIstreamPtr response_body)
+		     UnusedIstreamPtr response_body)
 {
-    if (compressed) {
-        /* already compressed */
-    } else if (response_body &&
-               translate.response->auto_deflate &&
-        http_client_accepts_encoding(request.headers, "deflate") &&
-        response_headers.Get("content-encoding") == nullptr) {
-        auto available = response_body.GetAvailable(false);
-        if (available < 0 || available >= 512) {
-            compressed = true;
-            response_headers.Write("content-encoding", "deflate");
-            response_body = istream_deflate_new(pool, std::move(response_body),
-                                                instance.event_loop);
-        }
-    } else if (response_body &&
-               translate.response->auto_gzip &&
-        http_client_accepts_encoding(request.headers, "gzip") &&
-        response_headers.Get("content-encoding") == nullptr) {
-        auto available = response_body.GetAvailable(false);
-        if (available < 0 || available >= 512) {
-            compressed = true;
-            response_headers.Write("content-encoding", "gzip");
-            response_body = istream_deflate_new(pool, std::move(response_body),
-                                                instance.event_loop, true);
-        }
-    }
+	if (compressed) {
+		/* already compressed */
+	} else if (response_body &&
+		   translate.response->auto_deflate &&
+		   http_client_accepts_encoding(request.headers, "deflate") &&
+		   response_headers.Get("content-encoding") == nullptr) {
+		auto available = response_body.GetAvailable(false);
+		if (available < 0 || available >= 512) {
+			compressed = true;
+			response_headers.Write("content-encoding", "deflate");
+			response_body = istream_deflate_new(pool, std::move(response_body),
+							    instance.event_loop);
+		}
+	} else if (response_body &&
+		   translate.response->auto_gzip &&
+		   http_client_accepts_encoding(request.headers, "gzip") &&
+		   response_headers.Get("content-encoding") == nullptr) {
+		auto available = response_body.GetAvailable(false);
+		if (available < 0 || available >= 512) {
+			compressed = true;
+			response_headers.Write("content-encoding", "gzip");
+			response_body = istream_deflate_new(pool, std::move(response_body),
+							    instance.event_loop, true);
+		}
+	}
 
-    return response_body;
+	return response_body;
 }
 
 /*
@@ -168,267 +168,267 @@ Request::AutoDeflate(HttpHeaders &response_headers,
 WidgetContext *
 Request::NewWidgetContext() const noexcept
 {
-    const char *uri = translate.response->uri != nullptr
-        ? translate.response->uri
-        : request.uri;
+	const char *uri = translate.response->uri != nullptr
+		? translate.response->uri
+		: request.uri;
 
-    return NewFromPool<WidgetContext>
-        (pool, instance.event_loop,
-         *instance.cached_resource_loader,
-         *instance.buffered_filter_resource_loader,
-         instance.widget_registry,
-         connection.per_request.site_name,
-         translate.response->untrusted,
-         request.local_host_and_port, request.remote_host,
-         uri,
-         request_absolute_uri(request,
-                              translate.response->scheme,
-                              translate.response->host,
-                              uri),
-         dissected_uri.base,
-         &args,
-         session_cookie,
-         session_id, realm,
-         &request.headers);
+	return NewFromPool<WidgetContext>
+		(pool, instance.event_loop,
+		 *instance.cached_resource_loader,
+		 *instance.buffered_filter_resource_loader,
+		 instance.widget_registry,
+		 connection.per_request.site_name,
+		 translate.response->untrusted,
+		 request.local_host_and_port, request.remote_host,
+		 uri,
+		 request_absolute_uri(request,
+				      translate.response->scheme,
+				      translate.response->host,
+				      uri),
+		 dissected_uri.base,
+		 &args,
+		 session_cookie,
+		 session_id, realm,
+		 &request.headers);
 }
 
 WidgetContext &
 Request::MakeWidgetContext() noexcept
 {
-    if (widget_context == nullptr)
-        widget_context = NewWidgetContext();
-    return *widget_context;
+	if (widget_context == nullptr)
+		widget_context = NewWidgetContext();
+	return *widget_context;
 }
 
 inline void
 Request::InvokeXmlProcessor(http_status_t status,
-                            StringMap &response_headers,
-                            UnusedIstreamPtr response_body,
-                            const Transformation &transformation)
+			    StringMap &response_headers,
+			    UnusedIstreamPtr response_body,
+			    const Transformation &transformation)
 {
-    assert(!response_sent);
+	assert(!response_sent);
 
-    if (!response_body) {
-        DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-                         "Empty template cannot be processed");
-        return;
-    }
+	if (!response_body) {
+		DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
+				 "Empty template cannot be processed");
+		return;
+	}
 
-    if (!processable(response_headers)) {
-        response_body.Clear();
-        DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-                         "Invalid template content type");
-        return;
-    }
+	if (!processable(response_headers)) {
+		response_body.Clear();
+		DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
+				 "Invalid template content type");
+		return;
+	}
 
-    auto *widget = NewFromPool<Widget>(pool,
-                                       Widget::RootTag(),
-                                       pool,
-                                       translate.response->uri != nullptr
-                                       ? translate.response->uri
-                                       : p_strdup(pool, dissected_uri.base));
+	auto *widget = NewFromPool<Widget>(pool,
+					   Widget::RootTag(),
+					   pool,
+					   translate.response->uri != nullptr
+					   ? translate.response->uri
+					   : p_strdup(pool, dissected_uri.base));
 
-    const WidgetRef *focus_ref =
-        widget_ref_parse(&pool, args.Remove("focus"));
+	const WidgetRef *focus_ref =
+		widget_ref_parse(&pool, args.Remove("focus"));
 
-    const WidgetRef *proxy_ref =
-        widget_ref_parse(&pool, args.Get("frame"));
+	const WidgetRef *proxy_ref =
+		widget_ref_parse(&pool, args.Get("frame"));
 
-    if (focus_ref != nullptr && proxy_ref != nullptr &&
-        !widget_ref_includes(proxy_ref, focus_ref)) {
-        /* the focused widget is not reachable because it is not
-           within the "frame" */
+	if (focus_ref != nullptr && proxy_ref != nullptr &&
+	    !widget_ref_includes(proxy_ref, focus_ref)) {
+		/* the focused widget is not reachable because it is not
+		   within the "frame" */
 
-        focus_ref = nullptr;
+		focus_ref = nullptr;
 
-        if (request_body) {
-            logger(4, "discarding non-framed request body");
-            request_body.Clear();
-        }
-    }
+		if (request_body) {
+			logger(4, "discarding non-framed request body");
+			request_body.Clear();
+		}
+	}
 
-    widget->from_request.focus_ref = focus_ref;
+	widget->from_request.focus_ref = focus_ref;
 
-    if (proxy_ref != nullptr)
-        /* disable all following transformations, because we're doing
-           a direct proxy request to a widget */
-        CancelTransformations();
+	if (proxy_ref != nullptr)
+		/* disable all following transformations, because we're doing
+		   a direct proxy request to a widget */
+		CancelTransformations();
 
-    if (translate.response->untrusted != nullptr && proxy_ref == nullptr) {
-        logger(2, "refusing to render template on untrusted domain '",
-               translate.response->untrusted, "'");
-        response_body.Clear();
-        DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
-        return;
-    }
+	if (translate.response->untrusted != nullptr && proxy_ref == nullptr) {
+		logger(2, "refusing to render template on untrusted domain '",
+		       translate.response->untrusted, "'");
+		response_body.Clear();
+		DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
+		return;
+	}
 
-    if (focus_ref != nullptr) {
-        http_method_t method = request.method;
-        if (http_method_is_empty(method) && HasTransformations())
-            /* the following transformation may need the processed
-               document to generate its headers, so we should not pass
-               HEAD to the processor */
-            method = HTTP_METHOD_GET;
+	if (focus_ref != nullptr) {
+		http_method_t method = request.method;
+		if (http_method_is_empty(method) && HasTransformations())
+			/* the following transformation may need the processed
+			   document to generate its headers, so we should not pass
+			   HEAD to the processor */
+			method = HTTP_METHOD_GET;
 
-        auto &for_focused = *NewFromPool<Widget::ForFocused>(pool, method,
-                                                             args.Remove("path"),
-                                                             dissected_uri.query,
-                                                             std::move(request_body));
-        widget->for_focused = &for_focused;
-    }
+		auto &for_focused = *NewFromPool<Widget::ForFocused>(pool, method,
+								     args.Remove("path"),
+								     dissected_uri.query,
+								     std::move(request_body));
+		widget->for_focused = &for_focused;
+	}
 
-    if (translate.response->uri != nullptr)
-        dissected_uri.base = translate.response->uri;
+	if (translate.response->uri != nullptr)
+		dissected_uri.base = translate.response->uri;
 
-    /* make sure we have a session */
-    {
-        auto session = MakeRealmSession();
-        if (session) {
-            if (widget->from_request.focus_ref == nullptr)
-                /* drop the widget session and all descendants if there is
-                   no focus */
-                session_drop_widgets(*session, widget->id, proxy_ref);
-        }
-    }
+	/* make sure we have a session */
+	{
+		auto session = MakeRealmSession();
+		if (session) {
+			if (widget->from_request.focus_ref == nullptr)
+				/* drop the widget session and all descendants if there is
+				   no focus */
+				session_drop_widgets(*session, widget->id, proxy_ref);
+		}
+	}
 
-    if (proxy_ref != nullptr) {
-        /* the client requests a widget in proxy mode */
+	if (proxy_ref != nullptr) {
+		/* the client requests a widget in proxy mode */
 
-        proxy_widget(*this, std::move(response_body),
-                     *widget, proxy_ref, transformation.u.processor.options);
-    } else {
-        /* the client requests the whole template */
-        response_body = processor_process(pool, stopwatch,
-                                          std::move(response_body),
-                                          *widget, MakeWidgetContext(),
-                                          transformation.u.processor.options);
-        assert(response_body);
+		proxy_widget(*this, std::move(response_body),
+			     *widget, proxy_ref, transformation.u.processor.options);
+	} else {
+		/* the client requests the whole template */
+		response_body = processor_process(pool, stopwatch,
+						  std::move(response_body),
+						  *widget, MakeWidgetContext(),
+						  transformation.u.processor.options);
+		assert(response_body);
 
-        InvokeResponse(status,
-                       processor_header_forward(pool, response_headers),
-                       std::move(response_body));
-    }
+		InvokeResponse(status,
+			       processor_header_forward(pool, response_headers),
+			       std::move(response_body));
+	}
 }
 
 static bool
 css_processable(const StringMap &headers)
 {
-    const char *content_type = headers.Get("content-type");
-    return content_type != nullptr &&
-        strncmp(content_type, "text/css", 8) == 0;
+	const char *content_type = headers.Get("content-type");
+	return content_type != nullptr &&
+		strncmp(content_type, "text/css", 8) == 0;
 }
 
 inline void
 Request::InvokeCssProcessor(http_status_t status,
-                            StringMap &response_headers,
-                            UnusedIstreamPtr response_body,
-                            const Transformation &transformation)
+			    StringMap &response_headers,
+			    UnusedIstreamPtr response_body,
+			    const Transformation &transformation)
 {
-    assert(!response_sent);
+	assert(!response_sent);
 
-    if (!response_body) {
-        DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-                         "Empty template cannot be processed");
-        return;
-    }
+	if (!response_body) {
+		DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
+				 "Empty template cannot be processed");
+		return;
+	}
 
-    if (!css_processable(response_headers)) {
-        response_body.Clear();
-        DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-                         "Invalid template content type");
-        return;
-    }
+	if (!css_processable(response_headers)) {
+		response_body.Clear();
+		DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
+				 "Invalid template content type");
+		return;
+	}
 
-    auto *widget = NewFromPool<Widget>(pool,
-                                       Widget::RootTag(),
-                                       pool,
-                                       p_strdup(pool, dissected_uri.base));
+	auto *widget = NewFromPool<Widget>(pool,
+					   Widget::RootTag(),
+					   pool,
+					   p_strdup(pool, dissected_uri.base));
 
-    if (translate.response->untrusted != nullptr) {
-        logger(2, "refusing to render template on untrusted domain '",
-               translate.response->untrusted, "'");
-        response_body.Clear();
-        DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
-        return;
-    }
+	if (translate.response->untrusted != nullptr) {
+		logger(2, "refusing to render template on untrusted domain '",
+		       translate.response->untrusted, "'");
+		response_body.Clear();
+		DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
+		return;
+	}
 
-    if (translate.response->uri != nullptr)
-        dissected_uri.base = translate.response->uri;
+	if (translate.response->uri != nullptr)
+		dissected_uri.base = translate.response->uri;
 
-    response_body = css_processor(pool, stopwatch, std::move(response_body),
-                                  *widget, MakeWidgetContext(),
-                                  transformation.u.css_processor.options);
-    assert(response_body);
+	response_body = css_processor(pool, stopwatch, std::move(response_body),
+				      *widget, MakeWidgetContext(),
+				      transformation.u.css_processor.options);
+	assert(response_body);
 
-    InvokeResponse(status,
-                   processor_header_forward(pool,
-                                            response_headers),
-                   std::move(response_body));
+	InvokeResponse(status,
+		       processor_header_forward(pool,
+						response_headers),
+		       std::move(response_body));
 }
 
 inline void
 Request::InvokeTextProcessor(http_status_t status,
-                             StringMap &response_headers,
-                             UnusedIstreamPtr response_body)
+			     StringMap &response_headers,
+			     UnusedIstreamPtr response_body)
 {
-    assert(!response_sent);
+	assert(!response_sent);
 
-    if (!response_body) {
-        DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-                         "Empty template cannot be processed");
-        return;
-    }
+	if (!response_body) {
+		DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
+				 "Empty template cannot be processed");
+		return;
+	}
 
-    if (!text_processor_allowed(response_headers)) {
-        response_body.Clear();
-        DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-                         "Invalid template content type");
-        return;
-    }
+	if (!text_processor_allowed(response_headers)) {
+		response_body.Clear();
+		DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
+				 "Invalid template content type");
+		return;
+	}
 
-    auto *widget = NewFromPool<Widget>(pool,
-                                       Widget::RootTag(),
-                                       pool,
-                                       p_strdup(pool,
-                                                dissected_uri.base));
+	auto *widget = NewFromPool<Widget>(pool,
+					   Widget::RootTag(),
+					   pool,
+					   p_strdup(pool,
+						    dissected_uri.base));
 
-    if (translate.response->untrusted != nullptr) {
-        logger(2, "refusing to render template on untrusted domain '",
-               translate.response->untrusted, "'");
-        response_body.Clear();
-        DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
-        return;
-    }
+	if (translate.response->untrusted != nullptr) {
+		logger(2, "refusing to render template on untrusted domain '",
+		       translate.response->untrusted, "'");
+		response_body.Clear();
+		DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
+		return;
+	}
 
-    if (translate.response->uri != nullptr)
-        dissected_uri.base = translate.response->uri;
+	if (translate.response->uri != nullptr)
+		dissected_uri.base = translate.response->uri;
 
-    response_body = text_processor(pool, std::move(response_body),
-                                   *widget, MakeWidgetContext());
-    assert(response_body);
+	response_body = text_processor(pool, std::move(response_body),
+				       *widget, MakeWidgetContext());
+	assert(response_body);
 
-    InvokeResponse(status,
-                   processor_header_forward(pool, response_headers),
-                   std::move(response_body));
+	InvokeResponse(status,
+		       processor_header_forward(pool, response_headers),
+		       std::move(response_body));
 }
 
 inline void
 Request::InvokeSubst(http_status_t status,
-                     StringMap &&response_headers,
-                     UnusedIstreamPtr response_body,
-                     bool alt_syntax,
-                     const char *prefix,
-                     const char *yaml_file,
-                     const char *yaml_map_path) noexcept
+		     StringMap &&response_headers,
+		     UnusedIstreamPtr response_body,
+		     bool alt_syntax,
+		     const char *prefix,
+		     const char *yaml_file,
+		     const char *yaml_map_path) noexcept
 {
-    try {
-        InvokeResponse(status, std::move(response_headers),
-                       NewYamlSubstIstream(pool, std::move(response_body),
-                                           alt_syntax,
-                                           prefix, yaml_file, yaml_map_path));
-    } catch (...) {
-        LogDispatchError(std::current_exception());
-    }
+	try {
+		InvokeResponse(status, std::move(response_headers),
+			       NewYamlSubstIstream(pool, std::move(response_body),
+						   alt_syntax,
+						   prefix, yaml_file, yaml_map_path));
+	} catch (...) {
+		LogDispatchError(std::current_exception());
+	}
 }
 
 /**
@@ -436,121 +436,121 @@ Request::InvokeSubst(http_status_t status,
  */
 static void
 translation_response_headers(HttpHeaders &headers,
-                             const TranslateResponse &tr)
+			     const TranslateResponse &tr)
 {
-    if (tr.response_header_forward[BengProxy::HeaderGroup::AUTH] == BengProxy::HeaderForwardMode::MANGLE) {
-        if (tr.www_authenticate != nullptr)
-            headers.Write("www-authenticate", tr.www_authenticate);
+	if (tr.response_header_forward[BengProxy::HeaderGroup::AUTH] == BengProxy::HeaderForwardMode::MANGLE) {
+		if (tr.www_authenticate != nullptr)
+			headers.Write("www-authenticate", tr.www_authenticate);
 
-        if (tr.authentication_info != nullptr)
-            headers.Write("authentication-info", tr.authentication_info);
-    }
+		if (tr.authentication_info != nullptr)
+			headers.Write("authentication-info", tr.authentication_info);
+	}
 
-    for (const auto &i : tr.response_headers)
-        headers.Write(i.key, i.value);
+	for (const auto &i : tr.response_headers)
+		headers.Write(i.key, i.value);
 }
 
 inline void
 Request::MoreResponseHeaders(HttpHeaders &headers) const noexcept
 {
-    /* RFC 2616 3.8: Product Tokens */
-    if (product_token != nullptr)
-        headers.Write("server", product_token);
-    else
-        headers.generate_server_header = true;
+	/* RFC 2616 3.8: Product Tokens */
+	if (product_token != nullptr)
+		headers.Write("server", product_token);
+	else
+		headers.generate_server_header = true;
 
-    /* RFC 2616 14.18: Date */
-    if (date != nullptr)
-        headers.Write("date", date);
+	/* RFC 2616 14.18: Date */
+	if (date != nullptr)
+		headers.Write("date", date);
 #ifndef NO_DATE_HEADER
-    else
-        headers.generate_date_header = true;
+	else
+		headers.generate_date_header = true;
 #endif
 
-    translation_response_headers(headers, *translate.response);
+	translation_response_headers(headers, *translate.response);
 }
 
 inline void
 Request::GenerateSetCookie(GrowingBuffer &headers)
 {
-    assert(!stateless);
-    assert(session_cookie != nullptr);
+	assert(!stateless);
+	assert(session_cookie != nullptr);
 
-    if (send_session_cookie) {
-        header_write_begin(headers, "set-cookie");
-        headers.Write(session_cookie);
-        headers.Write("=", 1);
-        headers.Write(session_id.Format());
-        headers.Write("; HttpOnly; Path=");
+	if (send_session_cookie) {
+		header_write_begin(headers, "set-cookie");
+		headers.Write(session_cookie);
+		headers.Write("=", 1);
+		headers.Write(session_id.Format());
+		headers.Write("; HttpOnly; Path=");
 
-        const char *cookie_path = translate.response->cookie_path;
-        if (cookie_path == nullptr)
-            cookie_path = "/";
+		const char *cookie_path = translate.response->cookie_path;
+		if (cookie_path == nullptr)
+			cookie_path = "/";
 
-        headers.Write(cookie_path);
-        headers.Write("; Version=1");
+		headers.Write(cookie_path);
+		headers.Write("; Version=1");
 
-        if (translate.response->secure_cookie)
-            headers.Write("; Secure");
+		if (translate.response->secure_cookie)
+			headers.Write("; Secure");
 
-        using SS = BpConfig::SessionCookieSameSite;
-        switch (connection.config.session_cookie_same_site) {
-        case SS::NONE:
-            break;
+		using SS = BpConfig::SessionCookieSameSite;
+		switch (connection.config.session_cookie_same_site) {
+		case SS::NONE:
+			break;
 
-        case SS::STRICT:
-            headers.Write("; SameSite=strict");
-            break;
+		case SS::STRICT:
+			headers.Write("; SameSite=strict");
+			break;
 
-        case SS::LAX:
-            headers.Write("; SameSite=lax");
-            break;
-        }
+		case SS::LAX:
+			headers.Write("; SameSite=lax");
+			break;
+		}
 
-        if (translate.response->cookie_domain != nullptr) {
-            headers.Write("; Domain=\"");
-            headers.Write(translate.response->cookie_domain);
-            headers.Write("\"");
-        }
+		if (translate.response->cookie_domain != nullptr) {
+			headers.Write("; Domain=\"");
+			headers.Write(translate.response->cookie_domain);
+			headers.Write("\"");
+		}
 
-        /* "Discard" must be last, to work around an Android bug*/
-        headers.Write("; Discard");
+		/* "Discard" must be last, to work around an Android bug*/
+		headers.Write("; Discard");
 
-        header_write_finish(headers);
+		header_write_finish(headers);
 
-        /* workaround for IE10 bug; see
-           http://projects.intern.cm-ag/view.php?id=3789 for
-           details */
-        header_write(headers, "p3p", "CP=\"CAO PSA OUR\"");
+		/* workaround for IE10 bug; see
+		   http://projects.intern.cm-ag/view.php?id=3789 for
+		   details */
+		header_write(headers, "p3p", "CP=\"CAO PSA OUR\"");
 
-        auto session = MakeSession();
-        if (session)
-            session->cookie_sent = true;
-    } else if (translate.response->discard_session &&
-               !session_id.IsDefined()) {
-        /* delete the cookie for the discarded session */
-        header_write_begin(headers, "set-cookie");
-        headers.Write(session_cookie);
-        headers.Write("=; HttpOnly; Path=");
+		auto session = MakeSession();
+		if (session)
+			session->cookie_sent = true;
+	} else if (translate.response->discard_session &&
+		   !session_id.IsDefined()) {
+		/* delete the cookie for the discarded session */
+		header_write_begin(headers, "set-cookie");
+		headers.Write(session_cookie);
+		headers.Write("=; HttpOnly; Path=");
 
-        const char *cookie_path = translate.response->cookie_path;
-        if (cookie_path == nullptr)
-            cookie_path = "/";
+		const char *cookie_path = translate.response->cookie_path;
+		if (cookie_path == nullptr)
+			cookie_path = "/";
 
-        headers.Write(cookie_path);
-        headers.Write("; Version=1; Max-Age=0");
+		headers.Write(cookie_path);
+		headers.Write("; Version=1; Max-Age=0");
 
-        if (translate.response->cookie_domain != nullptr) {
-            headers.Write("; Domain=\"");
-            headers.Write(translate.response->cookie_domain);
-            headers.Write("\"");
-        }
+		if (translate.response->cookie_domain != nullptr) {
+			headers.Write("; Domain=\"");
+			headers.Write(translate.response->cookie_domain);
+			headers.Write("\"");
+		}
 
-        /* "Discard" must be last, to work around an Android bug*/
-        headers.Write("; Discard");
+		/* "Discard" must be last, to work around an Android bug*/
+		headers.Write("; Discard");
 
-        header_write_finish(headers);
-    }
+		header_write_finish(headers);
+	}
 }
 
 /*
@@ -560,245 +560,245 @@ Request::GenerateSetCookie(GrowingBuffer &headers)
 
 inline void
 Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
-                                UnusedIstreamPtr body)
+				UnusedIstreamPtr body)
 {
-    assert(!response_sent);
+	assert(!response_sent);
 
-    if (http_status_is_success(status) &&
-        translate.response->www_authenticate != nullptr)
-        /* default to "401 Unauthorized" */
-        status = HTTP_STATUS_UNAUTHORIZED;
+	if (http_status_is_success(status) &&
+	    translate.response->www_authenticate != nullptr)
+		/* default to "401 Unauthorized" */
+		status = HTTP_STATUS_UNAUTHORIZED;
 
-    MoreResponseHeaders(headers);
+	MoreResponseHeaders(headers);
 
-    DiscardRequestBody();
+	DiscardRequestBody();
 
-    if (!stateless)
-        GenerateSetCookie(headers.GetBuffer());
+	if (!stateless)
+		GenerateSetCookie(headers.GetBuffer());
 
-    if (translate.response->send_csrf_token &&
-        http_status_is_success(status)) {
-        if (headers.Get("access-control-allow-origin") != nullptr) {
-            /* if this CORS header indicates that other origins may
-               send requests, then this undermindes our CSRF
-               protection; thus, enabling both CORS headers and
-               SEND_CSRF_TOKEN is a bug */
-            DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-                             "Conflicting CSRF/CORS configuration");
-            return;
-        }
+	if (translate.response->send_csrf_token &&
+	    http_status_is_success(status)) {
+		if (headers.Get("access-control-allow-origin") != nullptr) {
+			/* if this CORS header indicates that other origins may
+			   send requests, then this undermindes our CSRF
+			   protection; thus, enabling both CORS headers and
+			   SEND_CSRF_TOKEN is a bug */
+			DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
+					 "Conflicting CSRF/CORS configuration");
+			return;
+		}
 
-        WriteCsrfToken(headers);
-    }
+		WriteCsrfToken(headers);
+	}
 
-    if (body)
-        body = NewAutoPipeIstream(&pool, std::move(body), instance.pipe_stock);
+	if (body)
+		body = NewAutoPipeIstream(&pool, std::move(body), instance.pipe_stock);
 
 #ifndef NDEBUG
-    response_sent = true;
+	response_sent = true;
 #endif
 
-    auto &_request = request;
-    Destroy();
-    _request.SendResponse(status, std::move(headers), std::move(body));
+	auto &_request = request;
+	Destroy();
+	_request.SendResponse(status, std::move(headers), std::move(body));
 }
 
 inline void
 Request::ApplyFilter(http_status_t status, StringMap &&headers2,
-                     UnusedIstreamPtr body,
-                     const FilterTransformation &filter) noexcept
+		     UnusedIstreamPtr body,
+		     const FilterTransformation &filter) noexcept
 {
-    const AllocatorPtr alloc(pool);
+	const AllocatorPtr alloc(pool);
 
-    previous_status = status;
+	previous_status = status;
 
-    const char *source_tag = resource_tag_append_etag(pool, resource_tag,
-                                                      headers2);
-    resource_tag = source_tag != nullptr
-        ? alloc.Concat(source_tag, '|', filter.GetId(AllocatorPtr(pool)))
-        : nullptr;
+	const char *source_tag = resource_tag_append_etag(pool, resource_tag,
+							  headers2);
+	resource_tag = source_tag != nullptr
+		? alloc.Concat(source_tag, '|', filter.GetId(AllocatorPtr(pool)))
+		: nullptr;
 
-    if (filter.reveal_user)
-        forward_reveal_user(pool, headers2, GetRealmSession().get());
+	if (filter.reveal_user)
+		forward_reveal_user(pool, headers2, GetRealmSession().get());
 
-    if (body)
-        body = NewAutoPipeIstream(&pool, std::move(body), instance.pipe_stock);
+	if (body)
+		body = NewAutoPipeIstream(&pool, std::move(body), instance.pipe_stock);
 
-    instance.buffered_filter_resource_loader
-        ->SendRequest(pool, stopwatch,
-                      session_id.GetClusterHash(),
-                      filter.cache_tag,
-                      translate.response->site,
-                      HTTP_METHOD_POST, filter.address,
-                      status, std::move(headers2),
-                      std::move(body), source_tag,
-                      *this, cancel_ptr);
+	instance.buffered_filter_resource_loader
+		->SendRequest(pool, stopwatch,
+			      session_id.GetClusterHash(),
+			      filter.cache_tag,
+			      translate.response->site,
+			      HTTP_METHOD_POST, filter.address,
+			      status, std::move(headers2),
+			      std::move(body), source_tag,
+			      *this, cancel_ptr);
 }
 
 void
 Request::ApplyTransformation(http_status_t status, StringMap &&headers,
-                             UnusedIstreamPtr response_body,
-                             const Transformation &transformation)
+			     UnusedIstreamPtr response_body,
+			     const Transformation &transformation)
 {
-    transformed = true;
+	transformed = true;
 
-    switch (transformation.type) {
-    case Transformation::Type::FILTER:
-        ApplyFilter(status, std::move(headers),
-                    std::move(response_body),
-                    transformation.u.filter);
-        break;
+	switch (transformation.type) {
+	case Transformation::Type::FILTER:
+		ApplyFilter(status, std::move(headers),
+			    std::move(response_body),
+			    transformation.u.filter);
+		break;
 
-    case Transformation::Type::PROCESS:
-        /* processor responses cannot be cached */
-        resource_tag = nullptr;
+	case Transformation::Type::PROCESS:
+		/* processor responses cannot be cached */
+		resource_tag = nullptr;
 
-        InvokeXmlProcessor(status, headers, std::move(response_body),
-                           transformation);
-        break;
+		InvokeXmlProcessor(status, headers, std::move(response_body),
+				   transformation);
+		break;
 
-    case Transformation::Type::PROCESS_CSS:
-        /* processor responses cannot be cached */
-        resource_tag = nullptr;
+	case Transformation::Type::PROCESS_CSS:
+		/* processor responses cannot be cached */
+		resource_tag = nullptr;
 
-        InvokeCssProcessor(status, headers, std::move(response_body),
-                           transformation);
-        break;
+		InvokeCssProcessor(status, headers, std::move(response_body),
+				   transformation);
+		break;
 
-    case Transformation::Type::PROCESS_TEXT:
-        /* processor responses cannot be cached */
-        resource_tag = nullptr;
+	case Transformation::Type::PROCESS_TEXT:
+		/* processor responses cannot be cached */
+		resource_tag = nullptr;
 
-        InvokeTextProcessor(status, headers, std::move(response_body));
-        break;
+		InvokeTextProcessor(status, headers, std::move(response_body));
+		break;
 
-    case Transformation::Type::SUBST:
-        /* subst responses cannot be cached */
-        resource_tag = nullptr;
+	case Transformation::Type::SUBST:
+		/* subst responses cannot be cached */
+		resource_tag = nullptr;
 
-        InvokeSubst(status, std::move(headers), std::move(response_body),
-                    translate.response->subst_alt_syntax,
-                    transformation.u.subst.prefix,
-                    transformation.u.subst.yaml_file,
-                    transformation.u.subst.yaml_map_path);
-        break;
-    }
+		InvokeSubst(status, std::move(headers), std::move(response_body),
+			    translate.response->subst_alt_syntax,
+			    transformation.u.subst.prefix,
+			    transformation.u.subst.yaml_file,
+			    transformation.u.subst.yaml_map_path);
+		break;
+	}
 }
 
 static bool
 filter_enabled(const TranslateResponse &tr,
-               http_status_t status)
+	       http_status_t status)
 {
-    return http_status_is_success(status) ||
-        (http_status_is_client_error(status) && tr.filter_4xx);
+	return http_status_is_success(status) ||
+		(http_status_is_client_error(status) && tr.filter_4xx);
 }
 
 void
 Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
-                          UnusedIstreamPtr response_body)
+			  UnusedIstreamPtr response_body)
 {
-    assert(!response_sent);
+	assert(!response_sent);
 
-    if (http_status_is_error(status) && !transformed &&
-        !translate.response->error_document.IsNull()) {
-        transformed = true;
+	if (http_status_is_error(status) && !transformed &&
+	    !translate.response->error_document.IsNull()) {
+		transformed = true;
 
-        /* for sure, the errdoc library doesn't use the request body;
-           discard it as early as possible */
-        DiscardRequestBody();
+		/* for sure, the errdoc library doesn't use the request body;
+		   discard it as early as possible */
+		DiscardRequestBody();
 
-        errdoc_dispatch_response(*this, status,
-                                 translate.response->error_document,
-                                 std::move(headers),
-                                 std::move(response_body));
-        return;
-    }
+		errdoc_dispatch_response(*this, status,
+					 translate.response->error_document,
+					 std::move(headers),
+					 std::move(response_body));
+		return;
+	}
 
-    /* if HTTP status code is not successful: don't apply
-       transformation on the error document */
-    const Transformation *transformation = PopTransformation();
-    if (transformation != nullptr &&
-        filter_enabled(*translate.response, status)) {
-        ApplyTransformation(status, std::move(headers).ToMap(pool),
-                            std::move(response_body),
-                            *transformation);
-    } else {
-        response_body = AutoDeflate(headers, std::move(response_body));
-        DispatchResponseDirect(status, std::move(headers),
-                               std::move(response_body));
-    }
+	/* if HTTP status code is not successful: don't apply
+	   transformation on the error document */
+	const Transformation *transformation = PopTransformation();
+	if (transformation != nullptr &&
+	    filter_enabled(*translate.response, status)) {
+		ApplyTransformation(status, std::move(headers).ToMap(pool),
+				    std::move(response_body),
+				    *transformation);
+	} else {
+		response_body = AutoDeflate(headers, std::move(response_body));
+		DispatchResponseDirect(status, std::move(headers),
+				       std::move(response_body));
+	}
 }
 
 void
 Request::DispatchResponse(http_status_t status,
-                          HttpHeaders &&headers, const char *msg)
+			  HttpHeaders &&headers, const char *msg)
 {
-    assert(http_status_is_valid(status));
-    assert(msg != nullptr);
+	assert(http_status_is_valid(status));
+	assert(msg != nullptr);
 
-    headers.Write("content-type", "text/plain");
+	headers.Write("content-type", "text/plain");
 
-    DispatchResponse(status, std::move(headers),
-                     istream_string_new(pool, msg));
+	DispatchResponse(status, std::move(headers),
+			 istream_string_new(pool, msg));
 }
 
 void
 Request::DispatchResponse(http_status_t status, const char *msg)
 {
-    DispatchResponse(status, {}, msg);
+	DispatchResponse(status, {}, msg);
 }
 
 void
 Request::DispatchRedirect(http_status_t status,
-                          const char *location, const char *msg)
+			  const char *location, const char *msg)
 {
-    assert(status >= 300 && status < 400);
-    assert(location != nullptr);
+	assert(status >= 300 && status < 400);
+	assert(location != nullptr);
 
-    if (msg == nullptr)
-        msg = "redirection";
+	if (msg == nullptr)
+		msg = "redirection";
 
-    HttpHeaders headers;
-    headers.Write("location", location);
+	HttpHeaders headers;
+	headers.Write("location", location);
 
-    DispatchResponse(status, std::move(headers), msg);
+	DispatchResponse(status, std::move(headers), msg);
 }
 
 const char *
 Request::RelocateCallback(const char *const uri, void *ctx) noexcept
 {
-    auto &request = *(Request *)ctx;
-    auto &tr = *request.translate.response;
+	auto &request = *(Request *)ctx;
+	auto &tr = *request.translate.response;
 
-    if (tr.base == nullptr || tr.IsExpandable() || !tr.address.IsHttp())
-        return uri;
+	if (tr.base == nullptr || tr.IsExpandable() || !tr.address.IsHttp())
+		return uri;
 
-    const char *external_scheme = tr.scheme != nullptr
-        ? tr.scheme : "http";
-    const char *external_host = tr.host != nullptr
-        ? tr.host
-        : request.request.headers.Get("host");
+	const char *external_scheme = tr.scheme != nullptr
+		? tr.scheme : "http";
+	const char *external_host = tr.host != nullptr
+		? tr.host
+		: request.request.headers.Get("host");
 
-    const auto &address = tr.address.GetHttp();
+	const auto &address = tr.address.GetHttp();
 
-    StringView internal_path = address.path;
-    const char *q = internal_path.Find('?');
-    if (q != nullptr)
-        /* truncate the query string, because it's not part of
-           request.uri.base either */
-        internal_path.size = q - internal_path.data;
+	StringView internal_path = address.path;
+	const char *q = internal_path.Find('?');
+	if (q != nullptr)
+		/* truncate the query string, because it's not part of
+		   request.uri.base either */
+		internal_path.size = q - internal_path.data;
 
-    const char *new_uri = RelocateUri(AllocatorPtr{request.request.pool}, uri,
-                                      address.host_and_port,
-                                      internal_path,
-                                      external_scheme, external_host,
-                                      request.dissected_uri.base, tr.base);
-    if (new_uri == nullptr)
-        return uri;
+	const char *new_uri = RelocateUri(AllocatorPtr{request.request.pool}, uri,
+					  address.host_and_port,
+					  internal_path,
+					  external_scheme, external_host,
+					  request.dissected_uri.base, tr.base);
+	if (new_uri == nullptr)
+		return uri;
 
-    // TODO: check regex and inverse_regex
+	// TODO: check regex and inverse_regex
 
-    return new_uri;
+	return new_uri;
 }
 
 /*
@@ -808,82 +808,82 @@ Request::RelocateCallback(const char *const uri, void *ctx) noexcept
 
 void
 Request::OnHttpResponse(http_status_t status, StringMap &&headers,
-                        UnusedIstreamPtr body) noexcept
+			UnusedIstreamPtr body) noexcept
 {
-    assert(!response_sent);
+	assert(!response_sent);
 
-    if (previous_status != http_status_t(0)) {
-        status = ApplyFilterStatus(previous_status, status, !!body);
-        previous_status = http_status_t(0);
-    }
+	if (previous_status != http_status_t(0)) {
+		status = ApplyFilterStatus(previous_status, status, !!body);
+		previous_status = http_status_t(0);
+	}
 
-    if (collect_cookies) {
-        collect_cookies = false;
-        CollectCookies(headers);
-    }
+	if (collect_cookies) {
+		collect_cookies = false;
+		CollectCookies(headers);
+	}
 
-    if (http_status_is_success(status)) {
-        using namespace BengProxy;
+	if (http_status_is_success(status)) {
+		using namespace BengProxy;
 
-        if (!transformed &&
-            (translate.response->response_header_forward[HeaderGroup::TRANSFORMATION] == HeaderForwardMode::MANGLE)) {
-            /* handle the response header "x-cm4all-view" */
-            const char *view_name = headers.Get("x-cm4all-view");
-            if (view_name != nullptr) {
-                const WidgetView *view =
-                    widget_view_lookup(translate.response->views, view_name);
-                if (view == nullptr) {
-                    /* the view specified in the response header does not
-                       exist, bail out */
+		if (!transformed &&
+		    (translate.response->response_header_forward[HeaderGroup::TRANSFORMATION] == HeaderForwardMode::MANGLE)) {
+			/* handle the response header "x-cm4all-view" */
+			const char *view_name = headers.Get("x-cm4all-view");
+			if (view_name != nullptr) {
+				const WidgetView *view =
+					widget_view_lookup(translate.response->views, view_name);
+				if (view == nullptr) {
+					/* the view specified in the response header does not
+					   exist, bail out */
 
-                    body.Clear();
+					body.Clear();
 
-                    logger(4, "No such view: ", view_name);
-                    DispatchResponse(HTTP_STATUS_NOT_FOUND, "No such view");
-                    return;
-                }
+					logger(4, "No such view: ", view_name);
+					DispatchResponse(HTTP_STATUS_NOT_FOUND, "No such view");
+					return;
+				}
 
-                translate.transformation = view->transformation;
-            }
-        }
+				translate.transformation = view->transformation;
+			}
+		}
 
-        const Transformation *transformation = PopTransformation();
-        if (transformation != nullptr) {
-            ApplyTransformation(status, std::move(headers), std::move(body),
-                                *transformation);
-            return;
-        }
-    }
+		const Transformation *transformation = PopTransformation();
+		if (transformation != nullptr) {
+			ApplyTransformation(status, std::move(headers), std::move(body),
+					    *transformation);
+			return;
+		}
+	}
 
-    auto new_headers = forward_response_headers(pool, status, headers,
-                                                request.local_host_and_port,
-                                                session_cookie,
-                                                RelocateCallback, this,
-                                                translate.response->response_header_forward);
+	auto new_headers = forward_response_headers(pool, status, headers,
+						    request.local_host_and_port,
+						    session_cookie,
+						    RelocateCallback, this,
+						    translate.response->response_header_forward);
 
-    add_translation_vary_header(pool, new_headers,
-                                *translate.response);
+	add_translation_vary_header(pool, new_headers,
+				    *translate.response);
 
-    product_token = new_headers.Remove("server");
+	product_token = new_headers.Remove("server");
 
 #ifdef NO_DATE_HEADER
-    date = new_headers.Remove("date");
+	date = new_headers.Remove("date");
 #endif
 
-    HttpHeaders headers2(std::move(new_headers));
+	HttpHeaders headers2(std::move(new_headers));
 
-    if (request.method == HTTP_METHOD_HEAD)
-        /* pass Content-Length, even though there is no response body
-           (RFC 2616 14.13) */
-        headers2.CopyToBuffer(headers, "content-length");
+	if (request.method == HTTP_METHOD_HEAD)
+		/* pass Content-Length, even though there is no response body
+		   (RFC 2616 14.13) */
+		headers2.CopyToBuffer(headers, "content-length");
 
-    DispatchResponse(status, std::move(headers2), std::move(body));
+	DispatchResponse(status, std::move(headers2), std::move(body));
 }
 
 void
 Request::OnHttpError(std::exception_ptr ep) noexcept
 {
-    assert(!response_sent);
+	assert(!response_sent);
 
-    LogDispatchError(ep);
+	LogDispatchError(ep);
 }

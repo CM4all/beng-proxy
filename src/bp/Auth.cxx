@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -48,120 +48,120 @@
 inline void
 Request::OnAuthTranslateResponse(const TranslateResponse &response) noexcept
 {
-    bool is_authenticated = false;
-    {
-        auto session = ApplyTranslateSession(response);
-        if (session)
-            is_authenticated = session->user != nullptr;
-    }
+	bool is_authenticated = false;
+	{
+		auto session = ApplyTranslateSession(response);
+		if (session)
+			is_authenticated = session->user != nullptr;
+	}
 
-    if (CheckHandleRedirectBounceStatus(response))
-        return;
+	if (CheckHandleRedirectBounceStatus(response))
+		return;
 
-    if (!is_authenticated) {
-        /* for some reason, the translation server did not send
-           REDIRECT/BOUNCE/STATUS, but we still don't have a user -
-           this should not happen; bail out, don't dare to accept the
-           client */
-        DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
-        return;
-    }
+	if (!is_authenticated) {
+		/* for some reason, the translation server did not send
+		   REDIRECT/BOUNCE/STATUS, but we still don't have a user -
+		   this should not happen; bail out, don't dare to accept the
+		   client */
+		DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
+		return;
+	}
 
-    translate.user_modified = response.user != nullptr;
+	translate.user_modified = response.user != nullptr;
 
-    OnTranslateResponseAfterAuth(*translate.previous);
+	OnTranslateResponseAfterAuth(*translate.previous);
 }
 
 inline void
 Request::OnAuthTranslateError(std::exception_ptr ep) noexcept
 {
-    LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                     "Configuration server failed", ep, 1);
+	LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+			 "Configuration server failed", ep, 1);
 }
 
 class AuthTranslateHandler final : public TranslateHandler {
-    Request &request;
+	Request &request;
 
 public:
-    explicit AuthTranslateHandler(Request &_request) noexcept
-        :request(_request) {}
+	explicit AuthTranslateHandler(Request &_request) noexcept
+		:request(_request) {}
 
-    /* virtual methods from TranslateHandler */
-    void OnTranslateResponse(TranslateResponse &response) noexcept override {
-        request.OnAuthTranslateResponse(response);
-    }
+	/* virtual methods from TranslateHandler */
+	void OnTranslateResponse(TranslateResponse &response) noexcept override {
+		request.OnAuthTranslateResponse(response);
+	}
 
-    void OnTranslateError(std::exception_ptr error) noexcept override {
-        request.OnAuthTranslateError(error);
-    }
+	void OnTranslateError(std::exception_ptr error) noexcept override {
+		request.OnAuthTranslateError(error);
+	}
 };
 
 void
 Request::HandleAuth(const TranslateResponse &response)
 {
-    assert(response.HasAuth());
+	assert(response.HasAuth());
 
-    auto auth = response.auth;
-    if (auth == nullptr) {
-        /* load #TRANSLATE_AUTH_FILE */
-        assert(response.auth_file != nullptr);
+	auto auth = response.auth;
+	if (auth == nullptr) {
+		/* load #TRANSLATE_AUTH_FILE */
+		assert(response.auth_file != nullptr);
 
-        try {
-            auth = LoadFile(pool, response.auth_file, 64);
-        } catch (...) {
-            LogDispatchError(std::current_exception());
-            return;
-        }
-    } else {
-        assert(response.auth_file == nullptr);
-    }
+		try {
+			auth = LoadFile(pool, response.auth_file, 64);
+		} catch (...) {
+			LogDispatchError(std::current_exception());
+			return;
+		}
+	} else {
+		assert(response.auth_file == nullptr);
+	}
 
-    const auto auth_base = auth;
+	const auto auth_base = auth;
 
-    if (!response.append_auth.IsNull()) {
-        assert(!auth.IsNull());
+	if (!response.append_auth.IsNull()) {
+		assert(!auth.IsNull());
 
-        auth = LazyCatBuffer(pool, auth, response.append_auth);
-    }
+		auth = LazyCatBuffer(pool, auth, response.append_auth);
+	}
 
-    /* we need to validate the session realm early */
-    ApplyTranslateRealm(response, auth_base);
+	/* we need to validate the session realm early */
+	ApplyTranslateRealm(response, auth_base);
 
-    bool is_authenticated = false;
-    {
-        auto session = GetRealmSession();
-        if (session)
-            is_authenticated = session->user != nullptr &&
-                !session->user_expires.IsExpired();
-    }
+	bool is_authenticated = false;
+	{
+		auto session = GetRealmSession();
+		if (session)
+			is_authenticated = session->user != nullptr &&
+				!session->user_expires.IsExpired();
+	}
 
-    if (is_authenticated) {
-        /* already authenticated; we can skip the AUTH request */
-        OnTranslateResponseAfterAuth(response);
-        return;
-    }
+	if (is_authenticated) {
+		/* already authenticated; we can skip the AUTH request */
+		OnTranslateResponseAfterAuth(response);
+		return;
+	}
 
-    auto t = NewFromPool<TranslateRequest>(pool);
-    t->auth = auth;
-    t->uri = request.uri;
-    t->host = translate.request.host;
-    t->session = translate.request.session;
+	auto t = NewFromPool<TranslateRequest>(pool);
+	t->auth = auth;
+	t->uri = request.uri;
+	t->host = translate.request.host;
+	t->session = translate.request.session;
 
-    if (response.protocol_version >= 2) {
-        t->listener_tag = connection.listener_tag;
+	if (response.protocol_version >= 2) {
+		t->listener_tag = connection.listener_tag;
 
-        if (connection.auth_alt_host)
-            t->alt_host = request.headers.Get("x-cm4all-althost");
-    }
+		if (connection.auth_alt_host)
+			t->alt_host = request.headers.Get("x-cm4all-althost");
+	}
 
-    translate.previous = &response;
+	translate.previous = &response;
 
-    auto *auth_translate_handler =
-        NewFromPool<AuthTranslateHandler>(pool, *this);
+	auto *auth_translate_handler =
+		NewFromPool<AuthTranslateHandler>(pool, *this);
 
-    instance.translation_service->SendRequest(pool, *t,
-                                              stopwatch,
-                                              *auth_translate_handler,
-                                              cancel_ptr);
+	instance.translation_service->SendRequest(pool, *t,
+						  stopwatch,
+						  *auth_translate_handler,
+						  cancel_ptr);
 }
 

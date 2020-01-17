@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -45,6 +45,6 @@ struct WidgetRef;
 
 void
 proxy_widget(Request &request2,
-             UnusedIstreamPtr body,
-             Widget &widget, const WidgetRef *proxy_ref,
-             unsigned options);
+	     UnusedIstreamPtr body,
+	     Widget &widget, const WidgetRef *proxy_ref,
+	     unsigned options);

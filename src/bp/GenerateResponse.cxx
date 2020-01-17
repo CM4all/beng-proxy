@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,14 +42,14 @@
 void
 method_not_allowed(Request &request2, const char *allow)
 {
-    assert(allow != nullptr);
+	assert(allow != nullptr);
 
-    HttpHeaders headers;
-    headers.Write("content-type", "text/plain");
-    headers.Write("allow", allow);
+	HttpHeaders headers;
+	headers.Write("content-type", "text/plain");
+	headers.Write("allow", allow);
 
-    request2.DispatchResponse(HTTP_STATUS_METHOD_NOT_ALLOWED,
-                              std::move(headers),
-                              istream_string_new(request2.pool,
-                                                 "This method is not allowed."));
+	request2.DispatchResponse(HTTP_STATUS_METHOD_NOT_ALLOWED,
+				  std::move(headers),
+				  istream_string_new(request2.pool,
+						     "This method is not allowed."));
 }

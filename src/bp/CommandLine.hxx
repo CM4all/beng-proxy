@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -47,13 +47,13 @@ extern bool debug_mode;
 #endif
 
 struct BpCmdLine {
-    UidGid user;
+	UidGid user;
 
-    UidGid logger_user;
+	UidGid logger_user;
 
-    const char *config_file = "/etc/cm4all/beng/proxy/beng-proxy.conf";
+	const char *config_file = "/etc/cm4all/beng/proxy/beng-proxy.conf";
 
-    const char *ua_classification_file = nullptr;
+	const char *ua_classification_file = nullptr;
 };
 
 void

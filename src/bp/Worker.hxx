@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_WORKER_HXX
-#define BENG_PROXY_WORKER_HXX
+#pragma once
 
 #include "spawn/ExitListener.hxx"
 #include "crash.hxx"
@@ -43,25 +42,23 @@
 struct BpInstance;
 
 struct BpWorker final
-    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
-      ExitListener {
+	: boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+	  ExitListener {
 
-    BpInstance &instance;
+	BpInstance &instance;
 
-    const pid_t pid;
+	const pid_t pid;
 
-    struct crash crash;
+	struct crash crash;
 
-    BpWorker(BpInstance &_instance, pid_t _pid,
-             const struct crash &_crash)
-        :instance(_instance), pid(_pid), crash(_crash) {}
+	BpWorker(BpInstance &_instance, pid_t _pid,
+		 const struct crash &_crash)
+		:instance(_instance), pid(_pid), crash(_crash) {}
 
-    ~BpWorker() {
-        crash_deinit(&crash);
-    }
+	~BpWorker() {
+		crash_deinit(&crash);
+	}
 
-    /* virtual methods from class ExitListener */
-    void OnChildProcessExit(int status) noexcept override;
+	/* virtual methods from class ExitListener */
+	void OnChildProcessExit(int status) noexcept override;
 };
-
-#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,41 +37,41 @@
 #include "strmap.hxx"
 
 Request::Request(BpConnection &_connection,
-                 IncomingHttpRequest &_request,
-                 const StopwatchPtr &parent_stopwatch) noexcept
-    :PoolLeakDetector(_request.pool), pool(_request.pool),
-     instance(_connection.instance),
-     connection(_connection),
-     logger(connection.logger),
-     stopwatch(parent_stopwatch, "handler"),
-     request(_request),
-     request_body(pool, std::move(request.body))
+		 IncomingHttpRequest &_request,
+		 const StopwatchPtr &parent_stopwatch) noexcept
+	:PoolLeakDetector(_request.pool), pool(_request.pool),
+	 instance(_connection.instance),
+	 connection(_connection),
+	 logger(connection.logger),
+	 stopwatch(parent_stopwatch, "handler"),
+	 request(_request),
+	 request_body(pool, std::move(request.body))
 {
-    session_id.Clear();
+	session_id.Clear();
 }
 
 bool
 Request::IsProcessorEnabled() const
 {
-    return translate.response->views->HasProcessor();
+	return translate.response->views->HasProcessor();
 }
 
 void
 Request::ParseArgs()
 {
-    assert(args.IsEmpty());
+	assert(args.IsEmpty());
 
-    if (dissected_uri.args.empty()) {
-        translate.request.param = nullptr;
-        translate.request.session = nullptr;
-        return;
-    }
+	if (dissected_uri.args.empty()) {
+		translate.request.param = nullptr;
+		translate.request.session = nullptr;
+		return;
+	}
 
-    args = args_parse(pool, dissected_uri.args);
+	args = args_parse(pool, dissected_uri.args);
 
-    /* obsolete as of version 15.29 */
-    args.Remove("session");
+	/* obsolete as of version 15.29 */
+	args.Remove("session");
 
-    translate.request.param = args.Remove("translate");
-    translate.request.session = nullptr;
+	translate.request.param = args.Remove("translate");
+	translate.request.session = nullptr;
 }

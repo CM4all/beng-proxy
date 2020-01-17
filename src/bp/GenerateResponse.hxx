@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,12 +34,9 @@
  * Generate custom HTTP responses.
  */
 
-#ifndef BENG_PROXY_CUSTOM_RESPONSE_HXX
-#define BENG_PROXY_CUSTOM_RESPONSE_HXX
+#pragma once
 
 class Request;
 
 void
 method_not_allowed(Request &request, const char *allow);
-
-#endif

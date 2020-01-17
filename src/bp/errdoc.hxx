@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ERRDOC_HXX
-#define BENG_PROXY_ERRDOC_HXX
+#pragma once
 
 #include "http/Status.h"
 
@@ -50,7 +49,5 @@ template<typename T> struct ConstBuffer;
  */
 void
 errdoc_dispatch_response(Request &request2, http_status_t status,
-                         ConstBuffer<void> error_document,
-                         HttpHeaders &&headers, UnusedIstreamPtr body);
-
-#endif
+			 ConstBuffer<void> error_document,
+			 HttpHeaders &&headers, UnusedIstreamPtr body);

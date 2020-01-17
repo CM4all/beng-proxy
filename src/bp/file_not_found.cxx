@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -44,61 +44,61 @@ gcc_pure
 static bool
 is_enoent(const char *path)
 {
-    struct stat st;
-    return lstat(path, &st) < 0 && errno == ENOENT;
+	struct stat st;
+	return lstat(path, &st) < 0 && errno == ENOENT;
 }
 
 bool
 Request::CheckFileNotFound(const TranslateResponse &response) noexcept
 {
-    assert(!response.file_not_found.IsNull());
+	assert(!response.file_not_found.IsNull());
 
-    if (response.test_path != nullptr) {
-        if (!is_enoent(response.test_path))
-            return true;
-    } else {
-        switch (response.address.type) {
-        case ResourceAddress::Type::NONE:
-        case ResourceAddress::Type::HTTP:
-        case ResourceAddress::Type::PIPE:
-        case ResourceAddress::Type::NFS:
-            LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                             "Resource address not compatible with TRANSLATE_FILE_NOT_FOUND",
-                             1);
-            return false;
+	if (response.test_path != nullptr) {
+		if (!is_enoent(response.test_path))
+			return true;
+	} else {
+		switch (response.address.type) {
+		case ResourceAddress::Type::NONE:
+		case ResourceAddress::Type::HTTP:
+		case ResourceAddress::Type::PIPE:
+		case ResourceAddress::Type::NFS:
+			LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+					 "Resource address not compatible with TRANSLATE_FILE_NOT_FOUND",
+					 1);
+			return false;
 
-        case ResourceAddress::Type::CGI:
-        case ResourceAddress::Type::FASTCGI:
-        case ResourceAddress::Type::WAS:
-            if (!is_enoent(response.address.GetCgi().path))
-                return true;
+		case ResourceAddress::Type::CGI:
+		case ResourceAddress::Type::FASTCGI:
+		case ResourceAddress::Type::WAS:
+			if (!is_enoent(response.address.GetCgi().path))
+				return true;
 
-            break;
+			break;
 
-        case ResourceAddress::Type::LHTTP:
-            if (!is_enoent(response.address.GetLhttp().path))
-                return true;
+		case ResourceAddress::Type::LHTTP:
+			if (!is_enoent(response.address.GetLhttp().path))
+				return true;
 
-            break;
+			break;
 
-        case ResourceAddress::Type::LOCAL:
-            if (!is_enoent(response.address.GetFile().path))
-                return true;
+		case ResourceAddress::Type::LOCAL:
+			if (!is_enoent(response.address.GetFile().path))
+				return true;
 
-            break;
+			break;
 
-            // TODO: implement NFS
-        }
-    }
+			// TODO: implement NFS
+		}
+	}
 
-    if (++translate.n_file_not_found > 20) {
-        LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-                         "got too many consecutive FILE_NOT_FOUND packets",
-                         1);
-        return false;
-    }
+	if (++translate.n_file_not_found > 20) {
+		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+				 "got too many consecutive FILE_NOT_FOUND packets",
+				 1);
+		return false;
+	}
 
-    translate.request.file_not_found = response.file_not_found;
-    SubmitTranslateRequest();
-    return false;
+	translate.request.file_not_found = response.file_not_found;
+	SubmitTranslateRequest();
+	return false;
 }
