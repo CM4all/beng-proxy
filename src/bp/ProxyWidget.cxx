@@ -55,7 +55,7 @@
 #include "io/Logger.hxx"
 #include "util/Cast.hxx"
 
-struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable {
+struct ProxyWidget final : PoolLeakDetector, WidgetLookupHandler, HttpResponseHandler, Cancellable {
 	Request &request;
 
 	/**
@@ -77,9 +77,14 @@ struct ProxyWidget final : WidgetLookupHandler, HttpResponseHandler, Cancellable
 
 	ProxyWidget(Request &_request, Widget &_widget,
 		    const WidgetRef *_ref)
-		:request(_request),
+		:PoolLeakDetector(_request.pool),
+		 request(_request),
 		 view_name(request.args.Remove("view")),
 		 widget(&_widget), ref(_ref) {
+	}
+
+	void Destroy() noexcept {
+		DeleteFromPool(request.pool, this);
 	}
 
 	void Continue();
@@ -146,7 +151,10 @@ ProxyWidget::OnHttpResponse(http_status_t status, StringMap &&_headers,
 	   for the template, not for this widget */
 	request.CancelTransformations();
 
-	request.DispatchResponse(status, std::move(headers2), std::move(body));
+	auto &_request = request;
+	Destroy();
+	_request.DispatchResponse(status, std::move(headers2),
+				  std::move(body));
 }
 
 void
@@ -154,7 +162,9 @@ ProxyWidget::OnHttpError(std::exception_ptr ep) noexcept
 {
 	widget->DiscardForFocused();
 
-	request.LogDispatchError(ep);
+	auto &_request = request;
+	Destroy();
+	_request.LogDispatchError(ep);
 }
 
 /**
@@ -197,7 +207,10 @@ ProxyWidget::Continue()
 
 	if (!widget->HasDefaultView()) {
 		widget->Cancel();
-		request.DispatchResponse(HTTP_STATUS_NOT_FOUND, "No such view");
+		auto &_request = request;
+		Destroy();
+		_request.DispatchResponse(HTTP_STATUS_NOT_FOUND,
+					  "No such view");
 		return;
 	}
 
@@ -209,9 +222,17 @@ ProxyWidget::Continue()
 				    *this, cancel_ptr);
 	} else {
 		if (widget->cls->require_csrf_token &&
-		    MethodNeedsCsrfProtection(widget->from_request.method) &&
-		    !request.CheckCsrfToken())
-			return;
+		    MethodNeedsCsrfProtection(widget->from_request.method)) {
+			/* pool reference necessary because
+			   Request::CheckCsrfToken() may destroy the
+			   pool and leave us unable to call our
+			   destructor */
+			const ScopePoolRef _ref(request.pool TRACE_ARGS);
+			if (!request.CheckCsrfToken()) {
+				Destroy();
+				return;
+			}
+		}
 
 		if (view_name != nullptr) {
 			/* the client can select the view; he can never explicitly
@@ -219,14 +240,19 @@ ProxyWidget::Continue()
 			const WidgetView *view = widget->cls->FindViewByName(view_name);
 			if (view == nullptr || view->name == nullptr) {
 				widget->Cancel();
-				request.DispatchResponse(HTTP_STATUS_NOT_FOUND,
-							 "No such view");
+				auto &_request = request;
+				Destroy();
+				_request.DispatchResponse(HTTP_STATUS_NOT_FOUND,
+							  "No such view");
 				return;
 			}
 
 			if (!widget_view_allowed(*widget, *view)) {
 				widget->Cancel();
-				request.DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
+				auto &_request = request;
+				Destroy();
+				_request.DispatchResponse(HTTP_STATUS_FORBIDDEN,
+							  "Forbidden");
 				return;
 			}
 
@@ -262,9 +288,11 @@ ProxyWidget::ResolverCallback() noexcept
 		snprintf(log_msg, sizeof(log_msg), "Failed to look up class for widget '%s'",
 			 widget->GetLogName());
 
-		request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-					 "No such widget type",
-					 log_msg);
+		auto &_request = request;
+		Destroy();
+		_request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+					  "No such widget type",
+					  log_msg);
 		return;
 	}
 
@@ -301,14 +329,18 @@ ProxyWidget::WidgetNotFound() noexcept
 	snprintf(log_msg, sizeof(log_msg), "Widget '%s' not found in %s",
 		 ref->id, widget->GetLogName());
 
-	request.LogDispatchError(HTTP_STATUS_NOT_FOUND, "No such widget", log_msg);
+	auto &_request = request;
+	Destroy();
+	_request.LogDispatchError(HTTP_STATUS_NOT_FOUND, "No such widget", log_msg);
 }
 
 void
 ProxyWidget::WidgetLookupError(std::exception_ptr ep) noexcept
 {
 	widget->Cancel();
-	request.LogDispatchError(ep);
+	auto &_request = request;
+	Destroy();
+	_request.LogDispatchError(ep);
 }
 
 /*
@@ -324,6 +356,8 @@ ProxyWidget::Cancel() noexcept
 	widget->Cancel();
 
 	cancel_ptr.Cancel();
+
+	Destroy();
 }
 
 /*
