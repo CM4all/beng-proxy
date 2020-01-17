@@ -203,7 +203,7 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 			/* find first character */
 			p = (const char *)memchr(buffer, '<', end - buffer);
 			if (p == nullptr) {
-				nbytes = handler.OnXmlCdata(buffer, end - buffer, true,
+				nbytes = handler.OnXmlCdata({buffer, end}, true,
 							    position + buffer - start);
 				assert(nbytes <= (size_t)(end - buffer));
 
@@ -213,7 +213,7 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 			}
 
 			if (p > buffer) {
-				nbytes = handler.OnXmlCdata(buffer, p - buffer, true,
+				nbytes = handler.OnXmlCdata({buffer, p}, true,
 							    position + buffer - start);
 				assert(nbytes <= (size_t)(p - buffer));
 
@@ -239,7 +239,7 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 				tag.type = XmlParserTagType::CLOSE;
 				++buffer;
 			} else {
-				nbytes = handler.OnXmlCdata("<", 1, true,
+				nbytes = handler.OnXmlCdata("<", true,
 							    position + buffer - start);
 				assert(nbytes <= (size_t)(end - buffer));
 
@@ -548,7 +548,7 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 						off_t cdata_end = position + buffer - start;
 						off_t cdata_start = cdata_end - cdata_length;
 
-						nbytes = handler.OnXmlCdata(p, cdata_length, false,
+						nbytes = handler.OnXmlCdata({p, cdata_length}, false,
 									    cdata_start);
 						assert(nbytes <= (size_t)(buffer - p));
 
@@ -571,7 +571,7 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 						   restore the data we already skipped */
 						assert(cdend_match < 3);
 
-						nbytes = handler.OnXmlCdata("]]", cdend_match, false,
+						nbytes = handler.OnXmlCdata({"]]", cdend_match}, false,
 									    position + buffer - start);
 						assert(nbytes <= cdend_match);
 
@@ -595,7 +595,7 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 				off_t cdata_end = position + buffer - start;
 				off_t cdata_start = cdata_end - cdata_length;
 
-				nbytes = handler.OnXmlCdata(p, cdata_length, false,
+				nbytes = handler.OnXmlCdata({p, cdata_length}, false,
 							    cdata_start);
 				assert(nbytes <= (size_t)(buffer - p));
 

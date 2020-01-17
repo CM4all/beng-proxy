@@ -59,10 +59,10 @@ public:
 
     void OnXmlAttributeFinished(gcc_unused const XmlParserAttribute &attr) noexcept override {}
 
-    size_t OnXmlCdata(const char *p, size_t length, gcc_unused bool escaped,
+    size_t OnXmlCdata(StringView text, gcc_unused bool escaped,
                       gcc_unused off_t start) noexcept override {
-        (void)write(1, p, length);
-        return length;
+        (void)write(STDOUT_FILENO, text.data, text.size);
+        return text.size;
     }
 
     void OnXmlEof(gcc_unused off_t length) noexcept override {

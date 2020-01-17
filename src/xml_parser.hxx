@@ -78,7 +78,7 @@ public:
 	virtual bool OnXmlTagFinished(const XmlParserTag &tag) noexcept = 0;
 
 	virtual void OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept = 0;
-	virtual size_t OnXmlCdata(const char *p, size_t length, bool escaped,
+	virtual size_t OnXmlCdata(StringView text, bool escaped,
 				  off_t start) noexcept = 0;
 	virtual void OnXmlEof(off_t length) noexcept = 0;
 	virtual void OnXmlError(std::exception_ptr ep) noexcept = 0;

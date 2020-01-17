@@ -348,7 +348,7 @@ private:
 	bool OnXmlTagStart(const XmlParserTag &tag) noexcept override;
 	bool OnXmlTagFinished(const XmlParserTag &tag) noexcept override;
 	void OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept override;
-	size_t OnXmlCdata(const char *p, size_t length, bool escaped,
+	size_t OnXmlCdata(StringView text, bool escaped,
 			  off_t start) noexcept override;
 	void OnXmlEof(off_t length) noexcept override;
 	void OnXmlError(std::exception_ptr ep) noexcept override;
@@ -1545,20 +1545,20 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 }
 
 size_t
-XmlProcessor::OnXmlCdata(const char *p gcc_unused, size_t length,
+XmlProcessor::OnXmlCdata(StringView text,
 			 gcc_unused bool escaped, off_t start) noexcept
 {
 	had_input = true;
 
 	if (tag == Tag::STYLE_PROCESS) {
 		/* XXX unescape? */
-		length = cdata_istream->InvokeData(p, length);
+		size_t length = cdata_istream->InvokeData(text.data, text.size);
 		if (length > 0)
 			replace->Extend(cdata_start, start + length);
 	} else if (replace && widget.widget == nullptr)
-		replace->Settle(start + length);
+		replace->Settle(start + text.size);
 
-	return length;
+	return text.size;
 }
 
 void
