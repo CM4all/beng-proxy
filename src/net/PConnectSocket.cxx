@@ -127,7 +127,7 @@ PConnectSocket::OnSocketConnectTimeout() noexcept
 void
 PConnectSocket::OnSocketConnectError(std::exception_ptr ep) noexcept
 {
-	stopwatch.RecordEvent("timeout");
+	stopwatch.RecordEvent("error");
 
 	auto &_handler = handler;
 	Delete();
