@@ -72,15 +72,15 @@
 #include <assert.h>
 #include <string.h>
 
-enum uri_base {
-	URI_BASE_TEMPLATE,
-	URI_BASE_WIDGET,
-	URI_BASE_CHILD,
-	URI_BASE_PARENT,
+enum class UriBase {
+	TEMPLATE,
+	WIDGET,
+	CHILD,
+	PARENT,
 };
 
 struct uri_rewrite {
-	enum uri_base base;
+	UriBase base;
 	RewriteUriMode mode;
 
 	char view[64];
@@ -314,7 +314,7 @@ private:
 	void DeleteUriRewrite(off_t start, off_t end) noexcept;
 
 	void TransformUriAttribute(const XmlParserAttribute &attr,
-				   enum uri_base base, RewriteUriMode mode,
+				   UriBase base, RewriteUriMode mode,
 				   const char *view) noexcept;
 
 	bool LinkAttributeFinished(const XmlParserAttribute &attr) noexcept;
@@ -474,12 +474,12 @@ processor_process(struct pool &caller_pool,
 	processor->InitParser(std::move(tee2));
 
 	if (processor->HasOptionRewriteUrl()) {
-		processor->default_uri_rewrite.base = URI_BASE_TEMPLATE;
+		processor->default_uri_rewrite.base = UriBase::TEMPLATE;
 		processor->default_uri_rewrite.mode = RewriteUriMode::PARTIAL;
 		processor->default_uri_rewrite.view[0] = 0;
 
 		if (options & PROCESSOR_FOCUS_WIDGET) {
-			processor->default_uri_rewrite.base = URI_BASE_WIDGET;
+			processor->default_uri_rewrite.base = UriBase::WIDGET;
 			processor->default_uri_rewrite.mode = RewriteUriMode::FOCUS;
 		}
 	}
@@ -818,7 +818,7 @@ SplitString(StringView in, char separator,
 
 inline void
 XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
-				    enum uri_base base,
+				    UriBase base,
 				    RewriteUriMode mode,
 				    const char *view) noexcept
 {
@@ -831,15 +831,15 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 	StringView child_id, suffix;
 
 	switch (base) {
-	case URI_BASE_TEMPLATE:
+	case UriBase::TEMPLATE:
 		/* no need to rewrite the attribute */
 		return;
 
-	case URI_BASE_WIDGET:
+	case UriBase::WIDGET:
 		target_widget = &container;
 		break;
 
-	case URI_BASE_CHILD:
+	case UriBase::CHILD:
 		SplitString(value, '/', child_id, suffix);
 
 		target_widget = container.FindChild(p_strdup(pool, child_id));
@@ -849,7 +849,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 		value = suffix;
 		break;
 
-	case URI_BASE_PARENT:
+	case UriBase::PARENT:
 		target_widget = container.parent;
 		if (target_widget == nullptr)
 			return;
@@ -924,17 +924,17 @@ parser_widget_attr_finished(Widget *widget,
 }
 
 gcc_pure
-static enum uri_base
+static UriBase
 parse_uri_base(StringView s) noexcept
 {
 	if (s.Equals("widget"))
-		return URI_BASE_WIDGET;
+		return UriBase::WIDGET;
 	else if (s.Equals("child"))
-		return URI_BASE_CHILD;
+		return UriBase::CHILD;
 	else if (s.Equals("parent"))
-		return URI_BASE_PARENT;
+		return UriBase::PARENT;
 	else
-		return URI_BASE_TEMPLATE;
+		return UriBase::TEMPLATE;
 }
 
 inline bool
