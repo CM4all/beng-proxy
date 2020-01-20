@@ -37,6 +37,7 @@
 #include "Context.hxx"
 #include "Inline.hxx"
 #include "uri/Extract.hxx"
+#include "pool/LeakDetector.hxx"
 #include "pool/tpool.hxx"
 #include "escape_class.hxx"
 #include "istream_escape.hxx"
@@ -269,7 +270,7 @@ do_rewrite_widget_uri(AllocatorPtr alloc, WidgetContext &ctx,
  *
  */
 
-class UriRewriter {
+class UriRewriter final : PoolLeakDetector, Cancellable {
 	struct pool &pool;
 	WidgetContext &ctx;
 	Widget &widget;
@@ -285,6 +286,8 @@ class UriRewriter {
 
 	DelayedIstreamControl &delayed;
 
+	CancellablePointer cancel_ptr;
+
 public:
 	UriRewriter(struct pool &_pool,
 		    WidgetContext &_ctx,
@@ -294,14 +297,22 @@ public:
 		    const char *_view,
 		    const struct escape_class *_escape,
 		    DelayedIstreamControl &_delayed) noexcept
-		:pool(_pool), ctx(_ctx), widget(_widget),
+		:PoolLeakDetector(_pool),
+		 pool(_pool), ctx(_ctx), widget(_widget),
 		 value(DupBuffer(pool, _value)),
 		 mode(_mode), stateful(_stateful),
 		 view(_view != nullptr
 		      ? (*_view != 0 ? p_strdup(&pool, _view) : "")
 		      : nullptr),
 		 escape(_escape),
-		 delayed(_delayed) {}
+		 delayed(_delayed)
+	{
+		delayed.cancel_ptr = *this;
+	}
+
+	void Destroy() noexcept {
+		this->~UriRewriter();
+	}
 
 	UnusedIstreamPtr Start(WidgetRegistry &widget_registry,
 			       UnusedIstreamPtr input) noexcept {
@@ -309,7 +320,7 @@ public:
 			      widget,
 			      widget_registry,
 			      BIND_THIS_METHOD(ResolverCallback),
-			      delayed.cancel_ptr);
+			      cancel_ptr);
 
 		return NewTimeoutIstream(pool, std::move(input),
 					 ctx.event_loop,
@@ -318,6 +329,12 @@ public:
 
 private:
 	void ResolverCallback() noexcept;
+
+	void Cancel() noexcept override {
+		auto _cancel_ptr = std::move(cancel_ptr);
+		Destroy();
+		_cancel_ptr.Cancel();
+	}
 };
 
 void
@@ -361,7 +378,9 @@ UriRewriter::ResolverCallback() noexcept
 	} else
 		istream = istream_null_new(pool);
 
-	delayed.Set(std::move(istream));
+	auto &_delayed = delayed;
+	Destroy();
+	_delayed.Set(std::move(istream));
 }
 
 /*
