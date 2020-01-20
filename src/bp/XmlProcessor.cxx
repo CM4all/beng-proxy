@@ -79,7 +79,7 @@ enum class UriBase {
 	PARENT,
 };
 
-struct uri_rewrite {
+struct UriRewrite {
 	UriBase base;
 	RewriteUriMode mode;
 
@@ -157,12 +157,12 @@ struct XmlProcessor final : PoolHolder, XmlParserHandler, Cancellable {
 
 	Tag tag = Tag::NONE;
 
-	struct uri_rewrite uri_rewrite;
+	UriRewrite uri_rewrite;
 
 	/**
 	 * The default value for #uri_rewrite.
 	 */
-	struct uri_rewrite default_uri_rewrite;
+	UriRewrite default_uri_rewrite;
 
 	/**
 	 * A buffer that may be used for various temporary purposes
