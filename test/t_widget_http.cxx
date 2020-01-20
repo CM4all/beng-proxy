@@ -51,6 +51,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/AutoPipeIstream.hxx"
+#include "pool/SharedPtr.hxx"
 #include "bp/session/Session.hxx"
 #include "bp/session/Glue.hxx"
 #include "suffix_registry.hxx"
@@ -95,7 +96,7 @@ processor_process(gcc_unused struct pool &pool,
 		  const StopwatchPtr &,
 		  UnusedIstreamPtr istream,
 		  gcc_unused Widget &widget,
-		  WidgetContext &,
+		  SharedPoolPtr<WidgetContext>,
 		  gcc_unused unsigned options)
 {
 	return istream;
@@ -107,7 +108,7 @@ processor_lookup_widget(gcc_unused struct pool &pool,
 			gcc_unused UnusedIstreamPtr istream,
 			gcc_unused Widget &widget,
 			gcc_unused const char *id,
-			WidgetContext &,
+			SharedPoolPtr<WidgetContext>,
 			gcc_unused unsigned options,
 			WidgetLookupHandler &handler,
 			gcc_unused CancellablePointer &cancel_ptr)
@@ -120,7 +121,7 @@ css_processor(gcc_unused struct pool &pool,
 	      const StopwatchPtr &,
 	      UnusedIstreamPtr stream,
 	      gcc_unused Widget &widget,
-	      WidgetContext &,
+	      SharedPoolPtr<WidgetContext>,
 	      gcc_unused unsigned options) noexcept
 {
 	return stream;
@@ -294,18 +295,20 @@ TEST(WidgetHttpTest, CookieClient)
 	auto *session = session_new();
 
 	MyResourceLoader resource_loader;
-	WidgetContext ctx(instance.event_loop,
-			  resource_loader, resource_loader,
-			  nullptr,
-			  nullptr, nullptr,
-			  "localhost", "localhost",
-			  nullptr, nullptr,
-			  nullptr,
-			  nullptr,
-			  nullptr,
-			  session->id,
-			  "foo",
-			  strmap_new(pool));
+
+	auto ctx = SharedPoolPtr<WidgetContext>::Make
+		(*pool, instance.event_loop,
+		 resource_loader, resource_loader,
+		 nullptr,
+		 nullptr, nullptr,
+		 "localhost", "localhost",
+		 nullptr, nullptr,
+		 nullptr,
+		 nullptr,
+		 nullptr,
+		 session->id,
+		 "foo",
+		 strmap_new(pool));
 	session_put(session);
 
 	Widget widget(*pool, &cls);

@@ -65,6 +65,7 @@ enum processor_options {
 };
 
 struct pool;
+template<typename T> class SharedPoolPtr;
 struct WidgetContext;
 class StopwatchPtr;
 class UnusedIstreamPtr;
@@ -88,7 +89,7 @@ processor_process(struct pool &pool,
 		  const StopwatchPtr &parent_stopwatch,
 		  UnusedIstreamPtr istream,
 		  Widget &widget,
-		  WidgetContext &ctx,
+		  SharedPoolPtr<WidgetContext> ctx,
 		  unsigned options);
 
 /**
@@ -102,7 +103,7 @@ processor_lookup_widget(struct pool &pool,
 			const StopwatchPtr &parent_stopwatch,
 			UnusedIstreamPtr istream,
 			Widget &widget, const char *id,
-			WidgetContext &ctx,
+			SharedPoolPtr<WidgetContext> ctx,
 			unsigned options,
 			WidgetLookupHandler &handler,
 			CancellablePointer &cancel_ptr);

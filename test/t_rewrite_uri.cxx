@@ -45,6 +45,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/StringSink.hxx"
+#include "pool/SharedPtr.hxx"
 #include "widget/Inline.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
@@ -89,7 +90,7 @@ Widget::LoadFromSession(gcc_unused RealmSession &session) noexcept
 }
 
 UnusedIstreamPtr
-embed_inline_widget(struct pool &pool, WidgetContext &,
+embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext>,
 		    const StopwatchPtr &,
 		    gcc_unused bool plain_text,
 		    Widget &widget) noexcept
@@ -200,18 +201,20 @@ assert_rewrite_check4(EventLoop &event_loop,
 	session_id.Clear();
 
 	FailingResourceLoader resource_loader;
-	WidgetContext ctx(event_loop,
-			  resource_loader, resource_loader,
-			  nullptr,
-			  site_name, nullptr,
-			  nullptr, nullptr,
-			  nullptr, nullptr,
-			  "/index.html",
-			  nullptr,
-			  nullptr, session_id, "foo",
-			  nullptr);
 
-	auto istream = rewrite_widget_uri(*pool, ctx, nullptr,
+	auto ctx = SharedPoolPtr<WidgetContext>::Make
+		(pool, event_loop,
+		 resource_loader, resource_loader,
+		 nullptr,
+		 site_name, nullptr,
+		 nullptr, nullptr,
+		 nullptr, nullptr,
+		 "/index.html",
+		 nullptr,
+		 nullptr, session_id, "foo",
+		 nullptr);
+
+	auto istream = rewrite_widget_uri(*pool, std::move(ctx), nullptr,
 					  *widget,
 					  value2,
 					  mode, stateful, view, &html_escape_class);

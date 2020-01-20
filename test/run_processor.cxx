@@ -42,6 +42,7 @@
 #include "widget/RewriteUri.hxx"
 #include "istream/FileIstream.hxx"
 #include "istream/istream_string.hxx"
+#include "pool/SharedPtr.hxx"
 #include "util/StringView.hxx"
 #include "util/PrintException.hxx"
 #include "stopwatch.hxx"
@@ -53,7 +54,7 @@
 
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool,
-		    WidgetContext &,
+		    SharedPoolPtr<WidgetContext>,
 		    const StopwatchPtr &,
 		    gcc_unused bool plain_text,
 		    Widget &widget) noexcept
@@ -80,7 +81,7 @@ parse_uri_mode(gcc_unused StringView s) noexcept
 
 UnusedIstreamPtr
 rewrite_widget_uri(gcc_unused struct pool &pool,
-		   WidgetContext &, const StopwatchPtr &,
+		   SharedPoolPtr<WidgetContext>, const StopwatchPtr &,
 		   gcc_unused Widget &widget,
 		   gcc_unused StringView value,
 		   gcc_unused RewriteUriMode mode,
@@ -106,26 +107,28 @@ try {
 	session_id.Generate();
 
 	FailingResourceLoader resource_loader;
-	WidgetContext ctx(instance.event_loop,
-			  resource_loader, resource_loader,
-			  nullptr,
-			  nullptr, nullptr,
-			  "localhost:8080",
-			  "localhost:8080",
-			  "/beng.html",
-			  "http://localhost:8080/beng.html",
-			  "/beng.html",
-			  nullptr,
-			  nullptr,
-			  session_id, "foo",
-			  nullptr);
+
+	auto ctx = SharedPoolPtr<WidgetContext>::Make
+		(instance.root_pool, instance.event_loop,
+		 resource_loader, resource_loader,
+		 nullptr,
+		 nullptr, nullptr,
+		 "localhost:8080",
+		 "localhost:8080",
+		 "/beng.html",
+		 "http://localhost:8080/beng.html",
+		 "/beng.html",
+		 nullptr,
+		 nullptr,
+		 session_id, "foo",
+		 nullptr);
 
 	auto result =
 		processor_process(instance.root_pool, nullptr,
 				  UnusedIstreamPtr(istream_file_new(instance.event_loop,
 								    instance.root_pool,
 								    "/dev/stdin", (off_t)-1)),
-				  widget, ctx, PROCESSOR_CONTAINER);
+				  widget, std::move(ctx), PROCESSOR_CONTAINER);
 
 	StdioSink sink(std::move(result));
 	sink.LoopRead();

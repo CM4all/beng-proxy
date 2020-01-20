@@ -43,6 +43,7 @@
 #include "istream/BlockIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "pool/pool.hxx"
+#include "pool/SharedPtr.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 #include "stopwatch.hxx"
@@ -62,7 +63,7 @@
 
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool,
-		    WidgetContext &,
+		    SharedPoolPtr<WidgetContext>,
 		    const StopwatchPtr &,
 		    gcc_unused bool plain_text,
 		    Widget &widget) noexcept
@@ -89,7 +90,7 @@ parse_uri_mode(gcc_unused StringView s) noexcept
 
 UnusedIstreamPtr
 rewrite_widget_uri(gcc_unused struct pool &pool,
-		   WidgetContext &, const StopwatchPtr &,
+		   SharedPoolPtr<WidgetContext> , const StopwatchPtr &,
 		   gcc_unused Widget &widget,
 		   gcc_unused StringView value,
 		   gcc_unused RewriteUriMode mode,
@@ -138,23 +139,26 @@ TEST(Processor, Abort)
 	session_id.Generate();
 
 	FailingResourceLoader resource_loader;
-	WidgetContext ctx(instance.event_loop,
-			  resource_loader, resource_loader,
-			  nullptr,
-			  nullptr, nullptr,
-			  "localhost:8080",
-			  "localhost:8080",
-			  "/beng.html",
-			  "http://localhost:8080/beng.html",
-			  "/beng.html",
-			  nullptr,
-			  "bp_session", session_id, "foo",
-			  nullptr);
+
+	auto ctx = SharedPoolPtr<WidgetContext>::Make
+		(*pool, instance.event_loop,
+		 resource_loader, resource_loader,
+		 nullptr,
+		 nullptr, nullptr,
+		 "localhost:8080",
+		 "localhost:8080",
+		 "/beng.html",
+		 "http://localhost:8080/beng.html",
+		 "/beng.html",
+		 nullptr,
+		 "bp_session", session_id, "foo",
+		 nullptr);
 
 	CancellablePointer cancel_ptr;
 	MyWidgetLookupHandler handler;
 	processor_lookup_widget(*pool, nullptr, istream_block_new(*pool),
-				widget, "foo", ctx, PROCESSOR_CONTAINER,
+				widget, "foo", std::move(ctx),
+				PROCESSOR_CONTAINER,
 				handler, cancel_ptr);
 
 	cancel_ptr.Cancel();

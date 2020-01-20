@@ -40,6 +40,7 @@
 
 struct pool;
 struct WidgetContext;
+template<typename T> class SharedPoolPtr;
 class UnusedIstreamPtr;
 class Widget;
 class StopwatchPtr;
@@ -56,7 +57,7 @@ extern const Event::Duration inline_widget_body_timeout;
  * @param plain_text expect text/plain?
  */
 UnusedIstreamPtr
-embed_inline_widget(struct pool &pool, WidgetContext &ctx,
+embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext> ctx,
 		    const StopwatchPtr &parent_stopwatch,
 		    bool plain_text,
 		    Widget &widget) noexcept;

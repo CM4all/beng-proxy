@@ -105,7 +105,7 @@ struct XmlProcessor final : PoolHolder, XmlParserHandler, Cancellable {
 
 	Widget &container;
 	const char *lookup_id;
-	WidgetContext &ctx;
+	const SharedPoolPtr<WidgetContext> ctx;
 	const unsigned options;
 
 	SharedPoolPtr<ReplaceIstreamControl> replace;
@@ -228,12 +228,12 @@ struct XmlProcessor final : PoolHolder, XmlParserHandler, Cancellable {
 	CancellablePointer *cancel_ptr;
 
 	XmlProcessor(PoolPtr &&_pool, const StopwatchPtr &parent_stopwatch,
-		     Widget &_widget, WidgetContext &_ctx,
+		     Widget &_widget, SharedPoolPtr<WidgetContext> &&_ctx,
 		     unsigned _options) noexcept
 		:PoolHolder(std::move(_pool)),
 		 stopwatch(parent_stopwatch, "XmlProcessor"),
 		 container(_widget),
-		 ctx(_ctx), options(_options),
+		 ctx(std::move(_ctx)), options(_options),
 		 buffer(pool, 128, 2048),
 		 postponed_rewrite(pool),
 		 widget(_widget.pool, pool) {
@@ -437,13 +437,13 @@ static XmlProcessor *
 processor_new(struct pool &caller_pool,
 	      const StopwatchPtr &parent_stopwatch,
 	      Widget &widget,
-	      WidgetContext &ctx,
+	      SharedPoolPtr<WidgetContext> ctx,
 	      unsigned options) noexcept
 {
 	auto pool = pool_new_linear(&caller_pool, "processor", 32768);
 
 	return NewFromPool<XmlProcessor>(std::move(pool), parent_stopwatch,
-					 widget, ctx, options);
+					 widget, std::move(ctx), options);
 }
 
 UnusedIstreamPtr
@@ -451,7 +451,7 @@ processor_process(struct pool &caller_pool,
 		  const StopwatchPtr &parent_stopwatch,
 		  UnusedIstreamPtr input,
 		  Widget &widget,
-		  WidgetContext &ctx,
+		  SharedPoolPtr<WidgetContext> ctx,
 		  unsigned options)
 {
 	auto *processor = processor_new(caller_pool, parent_stopwatch,
@@ -462,13 +462,13 @@ processor_process(struct pool &caller_pool,
 	auto tee = NewTeeIstream(processor->GetPool(),
 				 text_processor(processor->GetPool(),
 						std::move(input),
-						widget, ctx),
-				 ctx.event_loop,
+						widget, *ctx),
+				 ctx->event_loop,
 				 true);
 
 	auto tee2 = AddTeeIstream(tee, true);
 
-	auto r = istream_replace_new(ctx.event_loop, processor->GetPool(),
+	auto r = istream_replace_new(ctx->event_loop, processor->GetPool(),
 				     std::move(tee));
 
 	processor->replace = std::move(r.second);
@@ -494,7 +494,7 @@ processor_lookup_widget(struct pool &caller_pool,
 			const StopwatchPtr &parent_stopwatch,
 			UnusedIstreamPtr istream,
 			Widget &widget, const char *id,
-			WidgetContext &ctx,
+			SharedPoolPtr<WidgetContext> ctx,
 			unsigned options,
 			WidgetLookupHandler &handler,
 			CancellablePointer &cancel_ptr)
@@ -509,7 +509,7 @@ processor_lookup_widget(struct pool &caller_pool,
 	}
 
 	auto *processor = processor_new(caller_pool, parent_stopwatch,
-					widget, ctx, options);
+					widget, std::move(ctx), options);
 
 	processor->lookup_id = id;
 
@@ -735,7 +735,7 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag) noexcept
 
 	if (xml_tag.name.Equals("c:widget")) {
 		if ((options & PROCESSOR_CONTAINER) == 0 ||
-		    ctx.widget_registry == nullptr)
+		    ctx->widget_registry == nullptr)
 			return false;
 
 		if (xml_tag.type == XmlParserTagType::CLOSE) {

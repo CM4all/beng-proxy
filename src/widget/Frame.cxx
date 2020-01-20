@@ -40,6 +40,7 @@
 #include "LookupHandler.hxx"
 #include "HttpResponseHandler.hxx"
 #include "istream/istream.hxx"
+#include "pool/SharedPtr.hxx"
 #include "bp/session/Session.hxx"
 #include "util/Exception.hxx"
 #include "util/StringFormat.hxx"
@@ -48,7 +49,7 @@
 
 void
 frame_top_widget(struct pool &pool, Widget &widget,
-		 WidgetContext &ctx,
+		 SharedPoolPtr<WidgetContext> ctx,
 		 const StopwatchPtr &parent_stopwatch,
 		 HttpResponseHandler &handler,
 		 CancellablePointer &cancel_ptr)
@@ -68,7 +69,7 @@ frame_top_widget(struct pool &pool, Widget &widget,
 	}
 
 	try {
-		widget.CheckHost(ctx.untrusted_host, ctx.site_name);
+		widget.CheckHost(ctx->untrusted_host, ctx->site_name);
 	} catch (...) {
 		WidgetError error(widget, WidgetErrorCode::FORBIDDEN,
 				  "Untrusted host");
@@ -78,20 +79,20 @@ frame_top_widget(struct pool &pool, Widget &widget,
 	}
 
 	if (widget.session_sync_pending) {
-		auto session = ctx.GetRealmSession();
+		auto session = ctx->GetRealmSession();
 		if (session)
 			widget.LoadFromSession(*session);
 		else
 			widget.session_sync_pending = false;
 	}
 
-	widget_http_request(pool, widget, ctx, parent_stopwatch,
+	widget_http_request(pool, widget, std::move(ctx), parent_stopwatch,
 			    handler, cancel_ptr);
 }
 
 void
 frame_parent_widget(struct pool &pool, Widget &widget, const char *id,
-		    WidgetContext &ctx,
+		    SharedPoolPtr<WidgetContext> ctx,
 		    const StopwatchPtr &parent_stopwatch,
 		    WidgetLookupHandler &handler,
 		    CancellablePointer &cancel_ptr)
@@ -129,13 +130,13 @@ frame_parent_widget(struct pool &pool, Widget &widget, const char *id,
 	}
 
 	if (widget.session_sync_pending) {
-		auto session = ctx.GetRealmSession();
+		auto session = ctx->GetRealmSession();
 		if (session)
 			widget.LoadFromSession(*session);
 		else
 			widget.session_sync_pending = false;
 	}
 
-	widget_http_lookup(pool, widget, id, ctx, parent_stopwatch,
+	widget_http_lookup(pool, widget, id, std::move(ctx), parent_stopwatch,
 			   handler, cancel_ptr);
 }

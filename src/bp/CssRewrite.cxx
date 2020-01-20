@@ -114,7 +114,7 @@ static constexpr CssParserHandler css_rewrite_parser_handler = {
 
 UnusedIstreamPtr
 css_rewrite_block_uris(struct pool &pool,
-		       WidgetContext &ctx,
+		       SharedPoolPtr<WidgetContext> ctx,
 		       const StopwatchPtr &parent_stopwatch,
 		       Widget &widget,
 		       const StringView block,
@@ -141,7 +141,7 @@ css_rewrite_block_uris(struct pool &pool,
 
 	auto input =
 		istream_memory_new(pool, p_strdup(pool, block), block.size);
-	auto replace = istream_replace_new(ctx.event_loop, pool,
+	auto replace = istream_replace_new(ctx->event_loop, pool,
 					   std::move(input));
 
 	bool modified = false;

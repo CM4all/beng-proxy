@@ -34,6 +34,7 @@
 
 struct pool;
 struct WidgetContext;
+template<typename T> class SharedPoolPtr;
 class StopwatchPtr;
 class UnusedIstreamPtr;
 struct StringView;
@@ -47,7 +48,7 @@ class Widget;
  */
 UnusedIstreamPtr
 css_rewrite_block_uris(struct pool &pool,
-		       WidgetContext &ctx,
+		       SharedPoolPtr<WidgetContext> ctx,
 		       const StopwatchPtr &parent_stopwatch,
 		       Widget &widget,
 		       StringView block,

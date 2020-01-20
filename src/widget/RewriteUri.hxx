@@ -40,6 +40,7 @@
 
 struct pool;
 struct WidgetContext;
+template<typename T> class SharedPoolPtr;
 class StopwatchPtr;
 class UnusedIstreamPtr;
 struct parsed_uri;
@@ -73,7 +74,8 @@ parse_uri_mode(StringView s) noexcept;
  */
 UnusedIstreamPtr
 rewrite_widget_uri(struct pool &pool,
-		   WidgetContext &ctx, const StopwatchPtr &parent_stopwatch,
+		   SharedPoolPtr<WidgetContext> ctx,
+		   const StopwatchPtr &parent_stopwatch,
 		   Widget &widget,
 		   StringView value,
 		   RewriteUriMode mode, bool stateful,

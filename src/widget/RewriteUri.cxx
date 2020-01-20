@@ -38,6 +38,7 @@
 #include "Inline.hxx"
 #include "uri/Extract.hxx"
 #include "pool/LeakDetector.hxx"
+#include "pool/SharedPtr.hxx"
 #include "pool/tpool.hxx"
 #include "escape_class.hxx"
 #include "istream_escape.hxx"
@@ -272,7 +273,7 @@ do_rewrite_widget_uri(AllocatorPtr alloc, WidgetContext &ctx,
 
 class UriRewriter final : PoolLeakDetector, Cancellable {
 	struct pool &pool;
-	WidgetContext &ctx;
+	const SharedPoolPtr<WidgetContext> ctx;
 	Widget &widget;
 
 	/** the value passed to rewrite_widget_uri() */
@@ -290,7 +291,7 @@ class UriRewriter final : PoolLeakDetector, Cancellable {
 
 public:
 	UriRewriter(struct pool &_pool,
-		    WidgetContext &_ctx,
+		    SharedPoolPtr<WidgetContext> &&_ctx,
 		    Widget &_widget,
 		    StringView _value,
 		    RewriteUriMode _mode, bool _stateful,
@@ -298,7 +299,7 @@ public:
 		    const struct escape_class *_escape,
 		    DelayedIstreamControl &_delayed) noexcept
 		:PoolLeakDetector(_pool),
-		 pool(_pool), ctx(_ctx), widget(_widget),
+		 pool(_pool), ctx(std::move(_ctx)), widget(_widget),
 		 value(DupBuffer(pool, _value)),
 		 mode(_mode), stateful(_stateful),
 		 view(_view != nullptr
@@ -314,14 +315,13 @@ public:
 		this->~UriRewriter();
 	}
 
-	UnusedIstreamPtr Start(WidgetRegistry &widget_registry,
-			       UnusedIstreamPtr input) noexcept {
+	UnusedIstreamPtr Start(UnusedIstreamPtr input) noexcept {
 		auto &_pool = pool;
-		auto &event_loop = ctx.event_loop;
+		auto &event_loop = ctx->event_loop;
 
 		ResolveWidget(pool,
 			      widget,
-			      widget_registry,
+			      *ctx->widget_registry,
 			      BIND_THIS_METHOD(ResolverCallback),
 			      cancel_ptr);
 
@@ -348,7 +348,7 @@ UriRewriter::ResolverCallback() noexcept
 		const char *uri;
 
 		if (widget.session_sync_pending) {
-			RealmSessionLease session(ctx.session_id, ctx.realm);
+			RealmSessionLease session(ctx->session_id, ctx->realm);
 			if (session)
 				widget.LoadFromSession(*session);
 			else
@@ -363,7 +363,7 @@ UriRewriter::ResolverCallback() noexcept
 			value.data = unescaped;
 		}
 
-		uri = do_rewrite_widget_uri(pool, ctx, widget,
+		uri = do_rewrite_widget_uri(pool, *ctx, widget,
 					    value, mode, stateful,
 					    view);
 		if (uri != nullptr) {
@@ -394,7 +394,8 @@ UriRewriter::ResolverCallback() noexcept
 
 UnusedIstreamPtr
 rewrite_widget_uri(struct pool &pool,
-		   WidgetContext &ctx, const StopwatchPtr &parent_stopwatch,
+		   SharedPoolPtr<WidgetContext> ctx,
+		   const StopwatchPtr &parent_stopwatch,
 		   Widget &widget,
 		   StringView value,
 		   RewriteUriMode mode, bool stateful,
@@ -406,7 +407,7 @@ rewrite_widget_uri(struct pool &pool,
 		return nullptr;
 
 	if (mode == RewriteUriMode::RESPONSE) {
-		auto istream = embed_inline_widget(pool, ctx,
+		auto istream = embed_inline_widget(pool, std::move(ctx),
 						   parent_stopwatch,
 						   true, widget);
 		if (escape != nullptr)
@@ -430,7 +431,8 @@ rewrite_widget_uri(struct pool &pool,
 			value.data = unescaped;
 		}
 
-		uri = do_rewrite_widget_uri(pool, ctx, widget, value, mode, stateful,
+		uri = do_rewrite_widget_uri(pool, *ctx, widget, value,
+					    mode, stateful,
 					    view);
 		if (uri == nullptr)
 			return nullptr;
@@ -441,12 +443,12 @@ rewrite_widget_uri(struct pool &pool,
 
 		return istream;
 	} else {
-		auto delayed = istream_delayed_new(pool, ctx.event_loop);
+		auto delayed = istream_delayed_new(pool, ctx->event_loop);
 
-		auto rwu = NewFromPool<UriRewriter>(pool, pool, ctx, widget,
+		auto rwu = NewFromPool<UriRewriter>(pool, pool, std::move(ctx), widget,
 						    value, mode, stateful,
 						    view, escape, delayed.second);
 
-		return rwu->Start(*ctx.widget_registry, std::move(delayed.first));
+		return rwu->Start(std::move(delayed.first));
 	}
 }

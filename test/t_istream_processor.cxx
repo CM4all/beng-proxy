@@ -35,6 +35,7 @@
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
 #include "pool/pool.hxx"
+#include "pool/SharedPtr.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Ptr.hxx"
 #include "widget/Class.hxx"
@@ -69,7 +70,7 @@ WidgetRegistry::LookupWidgetClass(struct pool &,
 }
 
 UnusedIstreamPtr
-embed_inline_widget(struct pool &pool, WidgetContext &,
+embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext>,
 		    const StopwatchPtr &,
 		    gcc_unused bool plain_text,
 		    Widget &widget) noexcept
@@ -105,7 +106,8 @@ public:
 
 		FailingResourceLoader resource_loader;
 		WidgetRegistry widget_registry(pool, *(TranslationService *)(size_t)0x1);
-		auto &ctx = *NewFromPool<WidgetContext>
+
+		auto ctx = SharedPoolPtr<WidgetContext>::Make
 			(pool,
 			 event_loop, resource_loader, resource_loader,
 			 &widget_registry,
@@ -122,7 +124,7 @@ public:
 
 		return processor_process(pool, nullptr,
 					 std::move(input), *widget.release(),
-					 ctx, PROCESSOR_CONTAINER);
+					 std::move(ctx), PROCESSOR_CONTAINER);
 	}
 };
 

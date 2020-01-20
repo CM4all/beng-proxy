@@ -34,6 +34,7 @@
 
 #include "uri/Dissect.hxx"
 #include "pool/LeakDetector.hxx"
+#include "pool/SharedPtr.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Request.hxx"
@@ -243,7 +244,7 @@ private:
 	const char *resource_tag;
 
 private:
-	WidgetContext *widget_context = nullptr;
+	SharedPoolPtr<WidgetContext> widget_context;
 
 public:
 	/**
@@ -292,6 +293,8 @@ public:
 	Request(BpConnection &_connection,
 		IncomingHttpRequest &_request,
 		const StopwatchPtr &parent_stopwatch) noexcept;
+
+	~Request() noexcept;
 
 private:
 	void Destroy() noexcept {
@@ -545,13 +548,13 @@ public:
 	void DispatchRedirect(http_status_t status, const char *location,
 			      const char *msg);
 
-	WidgetContext &MakeWidgetContext() noexcept;
+	SharedPoolPtr<WidgetContext> MakeWidgetContext() noexcept;
 
 private:
 	UnusedIstreamPtr AutoDeflate(HttpHeaders &response_headers,
 				     UnusedIstreamPtr response_body);
 
-	WidgetContext *NewWidgetContext() const noexcept;
+	SharedPoolPtr<WidgetContext> NewWidgetContext() const noexcept;
 
 	void InvokeXmlProcessor(http_status_t status,
 				StringMap &response_headers,

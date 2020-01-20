@@ -165,14 +165,14 @@ Request::AutoDeflate(HttpHeaders &response_headers,
  *
  */
 
-WidgetContext *
+SharedPoolPtr<WidgetContext>
 Request::NewWidgetContext() const noexcept
 {
 	const char *uri = translate.response->uri != nullptr
 		? translate.response->uri
 		: request.uri;
 
-	return NewFromPool<WidgetContext>
+	return SharedPoolPtr<WidgetContext>::Make
 		(pool, instance.event_loop,
 		 *instance.cached_resource_loader,
 		 *instance.buffered_filter_resource_loader,
@@ -192,12 +192,12 @@ Request::NewWidgetContext() const noexcept
 		 &request.headers);
 }
 
-WidgetContext &
+SharedPoolPtr<WidgetContext>
 Request::MakeWidgetContext() noexcept
 {
-	if (widget_context == nullptr)
+	if (!widget_context)
 		widget_context = NewWidgetContext();
-	return *widget_context;
+	return widget_context;
 }
 
 inline void
@@ -397,7 +397,7 @@ Request::InvokeTextProcessor(http_status_t status,
 		dissected_uri.base = translate.response->uri;
 
 	response_body = text_processor(pool, std::move(response_body),
-				       *widget.release(), MakeWidgetContext());
+				       *widget.release(), *MakeWidgetContext());
 	assert(response_body);
 
 	InvokeResponse(status,

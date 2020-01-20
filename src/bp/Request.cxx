@@ -33,6 +33,7 @@
 #include "Request.hxx"
 #include "Connection.hxx"
 #include "http/IncomingRequest.hxx"
+#include "widget/Context.hxx"
 #include "args.hxx"
 #include "strmap.hxx"
 
@@ -49,6 +50,8 @@ Request::Request(BpConnection &_connection,
 {
 	session_id.Clear();
 }
+
+Request::~Request() noexcept = default;
 
 bool
 Request::IsProcessorEnabled() const

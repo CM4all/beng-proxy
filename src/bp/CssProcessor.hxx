@@ -46,6 +46,7 @@ enum css_processor_options {
 
 struct pool;
 struct WidgetContext;
+template<typename T> class SharedPoolPtr;
 class StopwatchPtr;
 class UnusedIstreamPtr;
 class Widget;
@@ -60,5 +61,5 @@ css_processor(struct pool &pool,
 	      const StopwatchPtr &parent_stopwatch,
 	      UnusedIstreamPtr stream,
 	      Widget &widget,
-	      WidgetContext &ctx,
+	      SharedPoolPtr<WidgetContext> ctx,
 	      unsigned options) noexcept;

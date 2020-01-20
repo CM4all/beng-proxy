@@ -38,6 +38,7 @@
 
 struct pool;
 struct WidgetContext;
+template<typename T> class SharedPoolPtr;
 class Widget;
 class HttpResponseHandler;
 class WidgetLookupHandler;
@@ -51,7 +52,7 @@ class StopwatchPtr;
  */
 void
 frame_top_widget(struct pool &pool, Widget &widget,
-		 WidgetContext &ctx,
+		 SharedPoolPtr<WidgetContext> ctx,
 		 const StopwatchPtr &parent_stopwatch,
 		 HttpResponseHandler &_handler,
 		 CancellablePointer &cancel_ptr);
@@ -63,7 +64,7 @@ frame_top_widget(struct pool &pool, Widget &widget,
  */
 void
 frame_parent_widget(struct pool &pool, Widget &widget, const char *id,
-		    WidgetContext &ctx,
+		    SharedPoolPtr<WidgetContext> ctx,
 		    const StopwatchPtr &parent_stopwatch,
 		    WidgetLookupHandler &handler,
 		    CancellablePointer &cancel_ptr);

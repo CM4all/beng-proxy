@@ -54,7 +54,7 @@ struct CssProcessor final : PoolHolder {
 	const StopwatchPtr stopwatch;
 
 	Widget &container;
-	WidgetContext &ctx;
+	const SharedPoolPtr<WidgetContext> ctx;
 	const unsigned options;
 
 	SharedPoolPtr<ReplaceIstreamControl> replace;
@@ -74,7 +74,7 @@ struct CssProcessor final : PoolHolder {
 		     UnusedIstreamPtr input,
 		     SharedPoolPtr<ReplaceIstreamControl> _replace,
 		     Widget &_container,
-		     WidgetContext &_ctx,
+		     SharedPoolPtr<WidgetContext> &&_ctx,
 		     unsigned _options) noexcept;
 
 	void Destroy() noexcept {
@@ -304,11 +304,11 @@ CssProcessor::CssProcessor(PoolPtr &&_pool,
 			   UnusedIstreamPtr input,
 			   SharedPoolPtr<ReplaceIstreamControl> _replace,
 			   Widget &_container,
-			   WidgetContext &_ctx,
+			   SharedPoolPtr<WidgetContext> &&_ctx,
 			   unsigned _options) noexcept
 	:PoolHolder(std::move(_pool)),
 	 stopwatch(parent_stopwatch, "CssProcessor"),
-	 container(_container), ctx(_ctx),
+	 container(_container), ctx(std::move(_ctx)),
 	 options(_options),
 	 replace(std::move(_replace)),
 	 parser(css_parser_new(pool, std::move(input), false,
@@ -319,22 +319,22 @@ css_processor(struct pool &caller_pool,
 	      const StopwatchPtr &parent_stopwatch,
 	      UnusedIstreamPtr input,
 	      Widget &widget,
-	      WidgetContext &ctx,
+	      SharedPoolPtr<WidgetContext> ctx,
 	      unsigned options) noexcept
 {
 	auto pool = pool_new_linear(&caller_pool, "css_processor", 32768);
 
 	auto tee = NewTeeIstream(pool, std::move(input),
-				 ctx.event_loop,
+				 ctx->event_loop,
 				 true);
 
-	auto replace = istream_replace_new(ctx.event_loop, pool,
+	auto replace = istream_replace_new(ctx->event_loop, pool,
 					   AddTeeIstream(tee, true));
 
 	NewFromPool<CssProcessor>(std::move(pool), parent_stopwatch,
 				  std::move(tee),
 				  std::move(replace.second),
-				  widget, ctx,
+				  widget, std::move(ctx),
 				  options);
 
 	return std::move(replace.first);

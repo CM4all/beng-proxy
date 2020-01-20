@@ -42,6 +42,7 @@
 #include "istream/istream.hxx"
 #include "istream/istream_iconv.hxx"
 #include "pool/pool.hxx"
+#include "pool/SharedPtr.hxx"
 #include "PInstance.hxx"
 #include "bp/session/Session.hxx"
 #include "util/Cancellable.hxx"
@@ -107,7 +108,7 @@ Widget::LoadFromSession(gcc_unused RealmSession &session) noexcept
 void
 widget_http_request(gcc_unused struct pool &pool,
 		    gcc_unused Widget &widget,
-		    WidgetContext &,
+		    SharedPoolPtr<WidgetContext>,
 		    const StopwatchPtr &,
 		    HttpResponseHandler &handler,
 		    gcc_unused CancellablePointer &cancel_ptr) noexcept
@@ -141,21 +142,23 @@ test_abort_resolver()
 	DissectedUri dissected_uri;
 
 	FailingResourceLoader resource_loader;
-	WidgetContext ctx(instance.event_loop,
-			  resource_loader, resource_loader,
-			  nullptr,
-			  nullptr, nullptr,
-			  "localhost:8080",
-			  "localhost:8080",
-			  "/beng.html",
-			  "http://localhost:8080/beng.html",
-			  "/beng.html",
-			  nullptr,
-			  nullptr,
-			  {}, "foo",
-			  nullptr);
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 4096);
+
+	auto ctx = SharedPoolPtr<WidgetContext>::Make
+		(*pool, instance.event_loop,
+		 resource_loader, resource_loader,
+		 nullptr,
+		 nullptr, nullptr,
+		 "localhost:8080",
+		 "localhost:8080",
+		 "/beng.html",
+		 "http://localhost:8080/beng.html",
+		 "/beng.html",
+		 nullptr,
+		 nullptr,
+		 SessionId{}, "foo",
+		 nullptr);
 
 	uri = "/beng.html";
 	ret = dissected_uri.Parse(uri);
@@ -166,7 +169,8 @@ test_abort_resolver()
 
 	Widget widget(pool, nullptr);
 
-	auto istream = embed_inline_widget(*pool, ctx, nullptr, false, widget);
+	auto istream = embed_inline_widget(*pool, std::move(ctx),
+					   nullptr, false, widget);
 }
 
 int

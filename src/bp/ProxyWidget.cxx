@@ -38,6 +38,7 @@
 #include "widget/Widget.hxx"
 #include "widget/Ref.hxx"
 #include "widget/Class.hxx"
+#include "widget/Context.hxx"
 #include "widget/Request.hxx"
 #include "widget/LookupHandler.hxx"
 #include "widget/Resolver.hxx"
