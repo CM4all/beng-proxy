@@ -92,9 +92,6 @@ public:
 
     UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
                                 UnusedIstreamPtr input) const noexcept {
-        /* HACK, processor.c will ignore c:widget otherwise */
-        global_translation_service = (TranslationService *)(size_t)1;
-
         auto *widget = NewFromPool<Widget>(pool, pool, &root_widget_class);
 
         crash_global_init();
