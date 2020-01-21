@@ -37,13 +37,6 @@ executable('dump_control',
     system_dep,
   ])
 
-executable('send_control',
-  'send_control.cxx',
-  include_directories: inc,
-  dependencies: [
-    control_server_dep,
-  ])
-
 executable('run_ua_parser',
   'run_ua_parser.cxx',
   '../src/ua_classification.cxx',
