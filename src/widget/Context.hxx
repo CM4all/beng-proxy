@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,8 +32,11 @@
 
 #pragma once
 
+#include "Ptr.hxx"
 #include "bp/session/Id.hxx"
 #include "util/StringView.hxx"
+
+#include <boost/intrusive/slist.hpp>
 
 class EventLoop;
 class ResourceLoader;
@@ -41,6 +44,7 @@ class WidgetRegistry;
 class StringMap;
 class SessionLease;
 class RealmSessionLease;
+class Widget;
 
 struct WidgetContext {
 	EventLoop &event_loop;
@@ -81,6 +85,10 @@ struct WidgetContext {
 	SessionId session_id;
 	const char *realm;
 
+	boost::intrusive::slist<Widget,
+				boost::intrusive::base_hook<boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
+				boost::intrusive::constant_time_size<false>> root_widgets;
+
 	WidgetContext(EventLoop &_event_loop,
 		      ResourceLoader &_resource_loader,
 		      ResourceLoader &_filter_resource_loader,
@@ -98,6 +106,10 @@ struct WidgetContext {
 		      const char *realm,
 		      const StringMap *request_headers);
 
+	~WidgetContext() noexcept;
+
 	SessionLease GetSession() const;
 	RealmSessionLease GetRealmSession() const;
+
+	Widget &AddRootWidget(WidgetPtr widget) noexcept;
 };

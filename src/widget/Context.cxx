@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,6 +31,7 @@
  */
 
 #include "Context.hxx"
+#include "Widget.hxx"
 
 WidgetContext::WidgetContext(EventLoop &_event_loop,
 			     ResourceLoader &_resource_loader,
@@ -60,3 +61,15 @@ WidgetContext::WidgetContext(EventLoop &_event_loop,
 	 request_headers(_request_headers),
 	 session_cookie(_session_cookie),
 	 session_id(_session_id), realm(_realm) {}
+
+WidgetContext::~WidgetContext() noexcept
+{
+	root_widgets.clear_and_dispose(Widget::Disposer{});
+}
+
+Widget &
+WidgetContext::AddRootWidget(WidgetPtr widget) noexcept
+{
+	root_widgets.push_front(*widget.release());
+	return root_widgets.front();
+}

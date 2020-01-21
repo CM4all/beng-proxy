@@ -542,6 +542,12 @@ public:
 	 */
 	void CopyFromRedirectLocation(StringView location,
 				      RealmSession *session) noexcept;
+
+	struct Disposer {
+		void operator()(Widget *widget) noexcept {
+			widget->~Widget();
+		}
+	};
 };
 
 /**

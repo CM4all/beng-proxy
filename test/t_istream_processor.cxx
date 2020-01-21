@@ -94,8 +94,6 @@ public:
 
 	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
 				    UnusedIstreamPtr input) const noexcept {
-		auto widget = MakeRootWidget(pool, nullptr);
-
 		crash_global_init();
 		AtScopeExit() { crash_global_deinit(); };
 
@@ -120,10 +118,13 @@ public:
 			 nullptr,
 			 "bp_session", session->id, "foo",
 			 nullptr);
+		auto &widget = ctx->AddRootWidget(MakeRootWidget(pool,
+								 nullptr));
+
 		session_put(session);
 
 		return processor_process(pool, nullptr,
-					 std::move(input), *widget.release(),
+					 std::move(input), widget,
 					 std::move(ctx), PROCESSOR_CONTAINER);
 	}
 };
