@@ -40,3 +40,9 @@ Widget::Widget(struct pool &_pool,
 	if (_cls != nullptr)
 		from_template.view = from_request.view = &_cls->views;
 }
+
+Widget::~Widget() noexcept
+{
+	DiscardForFocused();
+	children.clear_and_dispose(Disposer{});
+}

@@ -296,9 +296,7 @@ public:
 	struct RootTag {};
 	Widget(RootTag, struct pool &_pool, const char *_id) noexcept;
 
-	~Widget() noexcept {
-		DiscardForFocused();
-	}
+	~Widget() noexcept;
 
 	Widget(const Widget &) = delete;
 	Widget &operator=(const Widget &) = delete;
