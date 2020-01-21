@@ -316,14 +316,17 @@ public:
 
 	UnusedIstreamPtr Start(WidgetRegistry &widget_registry,
 			       UnusedIstreamPtr input) noexcept {
+		auto &_pool = pool;
+		auto &event_loop = ctx.event_loop;
+
 		ResolveWidget(pool,
 			      widget,
 			      widget_registry,
 			      BIND_THIS_METHOD(ResolverCallback),
 			      cancel_ptr);
 
-		return NewTimeoutIstream(pool, std::move(input),
-					 ctx.event_loop,
+		return NewTimeoutIstream(_pool, std::move(input),
+					 event_loop,
 					 inline_widget_body_timeout);
 	}
 
