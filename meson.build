@@ -150,6 +150,7 @@ io2 = static_library(
   'io2',
   'src/io/Buffered.cxx',
   'src/io/StringFile.cxx',
+  'src/io/SpliceSupport.cxx',
   include_directories: inc,
 )
 io_dep = declare_dependency(
@@ -836,7 +837,6 @@ executable(
   'src/bp/ConfigParser.cxx',
   'src/bp/Listener.cxx',
   'src/bp/Connection.cxx',
-  'src/io/SpliceSupport.cxx',
   'src/bp/drop.cxx',
   'src/relocate_uri.cxx',
   'src/fcache.cxx',
@@ -959,7 +959,6 @@ executable(
   'src/http/Address.cxx',
   'src/HttpResponseHandler.cxx',
   'src/istream_gb.cxx',
-  'src/io/SpliceSupport.cxx',
   'src/access_log/Client.cxx',
   'src/access_log/Launch.cxx',
   'src/access_log/Glue.cxx',
