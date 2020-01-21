@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -57,72 +57,72 @@ const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
 
 void
 WidgetRegistry::LookupWidgetClass(struct pool &,
-                                  struct pool &,
-                                  const char *,
-                                  WidgetRegistryCallback callback,
-                                  CancellablePointer &) noexcept
+				  struct pool &,
+				  const char *,
+				  WidgetRegistryCallback callback,
+				  CancellablePointer &) noexcept
 {
-    (void)translation_service; // suppress -Wunused-private-field
+	(void)translation_service; // suppress -Wunused-private-field
 
-    callback(nullptr);
+	callback(nullptr);
 }
 
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool, WidgetContext &,
-                    const StopwatchPtr &,
-                    gcc_unused bool plain_text,
-                    Widget &widget) noexcept
+		    const StopwatchPtr &,
+		    gcc_unused bool plain_text,
+		    Widget &widget) noexcept
 {
-    return istream_string_new(pool, p_strdup(&pool, widget.class_name));
+	return istream_string_new(pool, p_strdup(&pool, widget.class_name));
 }
 
 class IstreamProcessorTestTraits {
 public:
-    static constexpr const char *expected_result =
-        "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar";
+	static constexpr const char *expected_result =
+		"foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar";
 
-    static constexpr bool call_available = true;
-    static constexpr bool got_data_assert = true;
-    static constexpr bool enable_blocking = true;
-    static constexpr bool enable_abort_istream = true;
+	static constexpr bool call_available = true;
+	static constexpr bool got_data_assert = true;
+	static constexpr bool enable_blocking = true;
+	static constexpr bool enable_abort_istream = true;
 
-    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
-        return istream_string_new(pool, "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> <c:widget id=\"foo\" type=\"bar\"/>");
-    }
+	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+		return istream_string_new(pool, "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> <c:widget id=\"foo\" type=\"bar\"/>");
+	}
 
-    UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
-                                UnusedIstreamPtr input) const noexcept {
-        auto *widget = NewFromPool<Widget>(pool, pool, &root_widget_class);
+	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
+				    UnusedIstreamPtr input) const noexcept {
+		auto *widget = NewFromPool<Widget>(pool, pool, &root_widget_class);
 
-        crash_global_init();
-        AtScopeExit() { crash_global_deinit(); };
+		crash_global_init();
+		AtScopeExit() { crash_global_deinit(); };
 
-        session_manager_init(event_loop, std::chrono::minutes(30), 0, 0);
-        AtScopeExit() { session_manager_deinit(); };
+		session_manager_init(event_loop, std::chrono::minutes(30), 0, 0);
+		AtScopeExit() { session_manager_deinit(); };
 
-        auto *session = session_new();
+		auto *session = session_new();
 
-        FailingResourceLoader resource_loader;
-        WidgetRegistry widget_registry(pool, *(TranslationService *)(size_t)0x1);
-        auto &ctx = *NewFromPool<WidgetContext>
-            (pool,
-             event_loop, resource_loader, resource_loader,
-             &widget_registry,
-             nullptr, nullptr,
-             "localhost:8080",
-             "localhost:8080",
-             "/beng.html",
-             "http://localhost:8080/beng.html",
-             "/beng.html",
-             nullptr,
-             "bp_session", session->id, "foo",
-             nullptr);
-        session_put(session);
+		FailingResourceLoader resource_loader;
+		WidgetRegistry widget_registry(pool, *(TranslationService *)(size_t)0x1);
+		auto &ctx = *NewFromPool<WidgetContext>
+			(pool,
+			 event_loop, resource_loader, resource_loader,
+			 &widget_registry,
+			 nullptr, nullptr,
+			 "localhost:8080",
+			 "localhost:8080",
+			 "/beng.html",
+			 "http://localhost:8080/beng.html",
+			 "/beng.html",
+			 nullptr,
+			 "bp_session", session->id, "foo",
+			 nullptr);
+		session_put(session);
 
-        return processor_process(pool, nullptr,
-                                 std::move(input), *widget, ctx, PROCESSOR_CONTAINER);
-    }
+		return processor_process(pool, nullptr,
+					 std::move(input), *widget, ctx, PROCESSOR_CONTAINER);
+	}
 };
 
 INSTANTIATE_TYPED_TEST_CASE_P(Processor, IstreamFilterTest,
-                              IstreamProcessorTestTraits);
+			      IstreamProcessorTestTraits);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,26 +38,28 @@
 #include <unistd.h>
 #include <stdio.h>
 
-int main(int argc gcc_unused, char **argv gcc_unused) {
-    char buffer[16];
-    ssize_t nbytes;
+int
+main(int argc gcc_unused, char **argv gcc_unused)
+{
+	char buffer[16];
+	ssize_t nbytes;
 
-    RootPool pool;
+	RootPool pool;
 
-    GrowingBuffer gb;
+	GrowingBuffer gb;
 
-    /* read input from stdin */
+	/* read input from stdin */
 
-    while ((nbytes = read(0, buffer, sizeof(buffer))) > 0)
-        gb.Write(buffer, (size_t)nbytes);
+	while ((nbytes = read(0, buffer, sizeof(buffer))) > 0)
+		gb.Write(buffer, (size_t)nbytes);
 
-    /* parse the headers */
+	/* parse the headers */
 
-    auto *headers = strmap_new(pool);
-    header_parse_buffer(pool, *headers, std::move(gb));
+	auto *headers = strmap_new(pool);
+	header_parse_buffer(pool, *headers, std::move(gb));
 
-    /* dump headers */
+	/* dump headers */
 
-    for (const auto &i : *headers)
-        printf("%s: %s\n", i.key, i.value);
+	for (const auto &i : *headers)
+		printf("%s: %s\n", i.key, i.value);
 }

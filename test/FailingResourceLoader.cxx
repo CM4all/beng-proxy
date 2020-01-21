@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,19 +38,19 @@
 
 void
 FailingResourceLoader::SendRequest(struct pool &,
-                                   const StopwatchPtr &,
-                                   sticky_hash_t,
-                                   const char *,
-                                   const char *,
-                                   http_method_t,
-                                   const ResourceAddress &,
-                                   http_status_t,
-                                   StringMap &&,
-                                   UnusedIstreamPtr body, const char *,
-                                   HttpResponseHandler &handler,
-                                   CancellablePointer &) noexcept
+				   const StopwatchPtr &,
+				   sticky_hash_t,
+				   const char *,
+				   const char *,
+				   http_method_t,
+				   const ResourceAddress &,
+				   http_status_t,
+				   StringMap &&,
+				   UnusedIstreamPtr body, const char *,
+				   HttpResponseHandler &handler,
+				   CancellablePointer &) noexcept
 {
-    body.Clear();
+	body.Clear();
 
-    handler.InvokeError(std::make_exception_ptr(std::runtime_error("unimplemented")));
+	handler.InvokeError(std::make_exception_ptr(std::runtime_error("unimplemented")));
 }

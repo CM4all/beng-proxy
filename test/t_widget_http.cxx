@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -71,14 +71,14 @@
 #include <signal.h>
 
 struct request {
-    bool cached;
-    http_method_t method;
-    const char *uri;
-    const char *request_headers;
+	bool cached;
+	http_method_t method;
+	const char *uri;
+	const char *request_headers;
 
-    http_status_t status;
-    const char *response_headers;
-    const char *response_body;
+	http_status_t status;
+	const char *response_headers;
+	const char *response_body;
 };
 
 static unsigned test_id;
@@ -87,68 +87,68 @@ static bool got_request, got_response;
 bool
 processable(gcc_unused const StringMap &headers)
 {
-    return false;
+	return false;
 }
 
 UnusedIstreamPtr
 processor_process(gcc_unused struct pool &pool,
-                  const StopwatchPtr &,
-                  UnusedIstreamPtr istream,
-                  gcc_unused Widget &widget,
-                  WidgetContext &,
-                  gcc_unused unsigned options)
+		  const StopwatchPtr &,
+		  UnusedIstreamPtr istream,
+		  gcc_unused Widget &widget,
+		  WidgetContext &,
+		  gcc_unused unsigned options)
 {
-    return istream;
+	return istream;
 }
 
 void
 processor_lookup_widget(gcc_unused struct pool &pool,
-                        const StopwatchPtr &,
-                        gcc_unused UnusedIstreamPtr istream,
-                        gcc_unused Widget &widget,
-                        gcc_unused const char *id,
-                        WidgetContext &,
-                        gcc_unused unsigned options,
-                        WidgetLookupHandler &handler,
-                        gcc_unused CancellablePointer &cancel_ptr)
+			const StopwatchPtr &,
+			gcc_unused UnusedIstreamPtr istream,
+			gcc_unused Widget &widget,
+			gcc_unused const char *id,
+			WidgetContext &,
+			gcc_unused unsigned options,
+			WidgetLookupHandler &handler,
+			gcc_unused CancellablePointer &cancel_ptr)
 {
-    handler.WidgetNotFound();
+	handler.WidgetNotFound();
 }
 
 UnusedIstreamPtr
 css_processor(gcc_unused struct pool &pool,
-              const StopwatchPtr &,
-              UnusedIstreamPtr stream,
-              gcc_unused Widget &widget,
-              WidgetContext &,
-              gcc_unused unsigned options) noexcept
+	      const StopwatchPtr &,
+	      UnusedIstreamPtr stream,
+	      gcc_unused Widget &widget,
+	      WidgetContext &,
+	      gcc_unused unsigned options) noexcept
 {
-    return stream;
+	return stream;
 }
 
 bool
 text_processor_allowed(gcc_unused const StringMap &headers)
 {
-    return false;
+	return false;
 }
 
 UnusedIstreamPtr
 text_processor(gcc_unused struct pool &pool, UnusedIstreamPtr stream,
-               gcc_unused const Widget &widget,
-               const WidgetContext &)
+	       gcc_unused const Widget &widget,
+	       const WidgetContext &)
 {
-    return stream;
+	return stream;
 }
 
 bool
 suffix_registry_lookup(gcc_unused struct pool &pool,
-                       gcc_unused TranslationService &service,
-                       gcc_unused const ResourceAddress &address,
-                       const StopwatchPtr &,
-                       gcc_unused SuffixRegistryHandler &handler,
-                       gcc_unused CancellablePointer &cancel_ptr)
+		       gcc_unused TranslationService &service,
+		       gcc_unused const ResourceAddress &address,
+		       const StopwatchPtr &,
+		       gcc_unused SuffixRegistryHandler &handler,
+		       gcc_unused CancellablePointer &cancel_ptr)
 {
-    return false;
+	return false;
 }
 
 TranslationService *global_translation_service;
@@ -158,168 +158,168 @@ PipeStock *global_pipe_stock;
 
 UnusedIstreamPtr
 NewAutoPipeIstream(gcc_unused struct pool *pool, UnusedIstreamPtr input,
-                   gcc_unused PipeStock *pipe_stock) noexcept
+		   gcc_unused PipeStock *pipe_stock) noexcept
 {
-    return input;
+	return input;
 }
 
 class MyResourceLoader final : public ResourceLoader {
 public:
-    /* virtual methods from class ResourceLoader */
-    void SendRequest(struct pool &pool,
-                     const StopwatchPtr &parent_stopwatch,
-                     sticky_hash_t,
-                     const char *cache_tag,
-                     const char *site_name,
-                     http_method_t method,
-                     const ResourceAddress &address,
-                     http_status_t status, StringMap &&headers,
-                     UnusedIstreamPtr body, const char *body_etag,
-                     HttpResponseHandler &handler,
-                     CancellablePointer &cancel_ptr) noexcept override;
+	/* virtual methods from class ResourceLoader */
+	void SendRequest(struct pool &pool,
+			 const StopwatchPtr &parent_stopwatch,
+			 sticky_hash_t,
+			 const char *cache_tag,
+			 const char *site_name,
+			 http_method_t method,
+			 const ResourceAddress &address,
+			 http_status_t status, StringMap &&headers,
+			 UnusedIstreamPtr body, const char *body_etag,
+			 HttpResponseHandler &handler,
+			 CancellablePointer &cancel_ptr) noexcept override;
 };
 
 void
 MyResourceLoader::SendRequest(struct pool &pool,
-                              const StopwatchPtr &,
-                              sticky_hash_t,
-                              gcc_unused const char *cache_tag,
-                              gcc_unused const char *site_name,
-                              http_method_t method,
-                              gcc_unused const ResourceAddress &address,
-                              gcc_unused http_status_t status,
-                              StringMap &&headers,
-                              UnusedIstreamPtr body,
-                              gcc_unused const char *body_etag,
-                              HttpResponseHandler &handler,
-                              CancellablePointer &) noexcept
+			      const StopwatchPtr &,
+			      sticky_hash_t,
+			      gcc_unused const char *cache_tag,
+			      gcc_unused const char *site_name,
+			      http_method_t method,
+			      gcc_unused const ResourceAddress &address,
+			      gcc_unused http_status_t status,
+			      StringMap &&headers,
+			      UnusedIstreamPtr body,
+			      gcc_unused const char *body_etag,
+			      HttpResponseHandler &handler,
+			      CancellablePointer &) noexcept
 {
-    StringMap response_headers;
-    const char *p;
+	StringMap response_headers;
+	const char *p;
 
-    EXPECT_FALSE(got_request);
-    ASSERT_EQ(method, HTTP_METHOD_GET);
-    EXPECT_FALSE(body);
+	EXPECT_FALSE(got_request);
+	ASSERT_EQ(method, HTTP_METHOD_GET);
+	EXPECT_FALSE(body);
 
-    got_request = true;
+	got_request = true;
 
-    body.Clear();
+	body.Clear();
 
-    switch (test_id) {
-    case 0:
-        p = headers.Get("cookie");
-        EXPECT_EQ(p, nullptr);
+	switch (test_id) {
+	case 0:
+		p = headers.Get("cookie");
+		EXPECT_EQ(p, nullptr);
 
-        /* set one cookie */
-        response_headers.Add(pool, "set-cookie", "foo=bar");
-        break;
+		/* set one cookie */
+		response_headers.Add(pool, "set-cookie", "foo=bar");
+		break;
 
-    case 1:
-        /* is the one cookie present? */
-        p = headers.Get("cookie");
-        EXPECT_NE(p, nullptr);
-        ASSERT_STREQ(p, "foo=bar");
+	case 1:
+		/* is the one cookie present? */
+		p = headers.Get("cookie");
+		EXPECT_NE(p, nullptr);
+		ASSERT_STREQ(p, "foo=bar");
 
-        /* add 2 more cookies */
-        response_headers.Add(pool, "set-cookie", "a=b, c=d");
-        break;
+		/* add 2 more cookies */
+		response_headers.Add(pool, "set-cookie", "a=b, c=d");
+		break;
 
-    case 2:
-        /* are 3 cookies present? */
-        p = headers.Get("cookie");
-        EXPECT_NE(p, nullptr);
-        ASSERT_STREQ(p, "c=d; a=b; foo=bar");
+	case 2:
+		/* are 3 cookies present? */
+		p = headers.Get("cookie");
+		EXPECT_NE(p, nullptr);
+		ASSERT_STREQ(p, "c=d; a=b; foo=bar");
 
-        /* set two cookies in two headers */
-        response_headers.Add(pool, "set-cookie", "e=f");
-        response_headers.Add(pool, "set-cookie", "g=h");
-        break;
+		/* set two cookies in two headers */
+		response_headers.Add(pool, "set-cookie", "e=f");
+		response_headers.Add(pool, "set-cookie", "g=h");
+		break;
 
-    case 3:
-        /* check for 5 cookies */
-        p = headers.Get("cookie");
-        EXPECT_NE(p, nullptr);
-        ASSERT_STREQ(p, "g=h; e=f; c=d; a=b; foo=bar");
-        break;
-    }
+	case 3:
+		/* check for 5 cookies */
+		p = headers.Get("cookie");
+		EXPECT_NE(p, nullptr);
+		ASSERT_STREQ(p, "g=h; e=f; c=d; a=b; foo=bar");
+		break;
+	}
 
-    handler.InvokeResponse(HTTP_STATUS_OK,
-                           std::move(response_headers),
-                           istream_null_new(pool));
+	handler.InvokeResponse(HTTP_STATUS_OK,
+			       std::move(response_headers),
+			       istream_null_new(pool));
 }
 
 struct Context final : HttpResponseHandler {
-    /* virtual methods from class HttpResponseHandler */
-    void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        UnusedIstreamPtr body) noexcept override;
-    void OnHttpError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(http_status_t status, StringMap &&headers,
+			    UnusedIstreamPtr body) noexcept override;
+	void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 void
 Context::OnHttpResponse(http_status_t status, gcc_unused StringMap &&headers,
-                        UnusedIstreamPtr body) noexcept
+			UnusedIstreamPtr body) noexcept
 {
-    EXPECT_FALSE(got_response);
-    ASSERT_EQ(status, 200);
-    ASSERT_TRUE(body);
+	EXPECT_FALSE(got_response);
+	ASSERT_EQ(status, 200);
+	ASSERT_TRUE(body);
 
-    got_response = true;
+	got_response = true;
 }
 
 void
 Context::OnHttpError(std::exception_ptr ep) noexcept
 {
-    PrintException(ep);
+	PrintException(ep);
 
-    FAIL();
+	FAIL();
 }
 
 TEST(WidgetHttpTest, CookieClient)
 {
-    PInstance instance;
-    struct pool *pool = instance.root_pool;
+	PInstance instance;
+	struct pool *pool = instance.root_pool;
 
-    const ScopeCrashGlobalInit crash_init;
-    const ScopeSessionManagerInit sm_init(instance.event_loop,
-                                          std::chrono::minutes(30),
-                                          0, 0);
+	const ScopeCrashGlobalInit crash_init;
+	const ScopeSessionManagerInit sm_init(instance.event_loop,
+					      std::chrono::minutes(30),
+					      0, 0);
 
-    const auto address = MakeHttpAddress("/bar/").Host("foo");
-    WidgetClass cls;
-    cls.views.address = address;
-    cls.stateful = true;
+	const auto address = MakeHttpAddress("/bar/").Host("foo");
+	WidgetClass cls;
+	cls.views.address = address;
+	cls.stateful = true;
 
-    CancellablePointer cancel_ptr;
+	CancellablePointer cancel_ptr;
 
-    auto *session = session_new();
+	auto *session = session_new();
 
-    MyResourceLoader resource_loader;
-    WidgetContext ctx(instance.event_loop,
-                      resource_loader, resource_loader,
-                      nullptr,
-                      nullptr, nullptr,
-                      "localhost", "localhost",
-                      nullptr, nullptr,
-                      nullptr,
-                      nullptr,
-                      nullptr,
-                      session->id,
-                      "foo",
-                      strmap_new(pool));
-    session_put(session);
+	MyResourceLoader resource_loader;
+	WidgetContext ctx(instance.event_loop,
+			  resource_loader, resource_loader,
+			  nullptr,
+			  nullptr, nullptr,
+			  "localhost", "localhost",
+			  nullptr, nullptr,
+			  nullptr,
+			  nullptr,
+			  nullptr,
+			  session->id,
+			  "foo",
+			  strmap_new(pool));
+	session_put(session);
 
-    Widget widget(*pool, &cls);
+	Widget widget(*pool, &cls);
 
-    for (test_id = 0; test_id < 4; ++test_id) {
-        got_request = false;
-        got_response = false;
+	for (test_id = 0; test_id < 4; ++test_id) {
+		got_request = false;
+		got_response = false;
 
-        Context context;
-        widget_http_request(*pool, widget, ctx,
-                            nullptr,
-                            context, cancel_ptr);
+		Context context;
+		widget_http_request(*pool, widget, ctx,
+				    nullptr,
+				    context, cancel_ptr);
 
-        assert(got_request);
-        assert(got_response);
-    }
+		assert(got_request);
+		assert(got_response);
+	}
 }

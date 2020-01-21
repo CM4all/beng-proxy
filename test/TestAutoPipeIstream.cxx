@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,22 +38,22 @@
 
 class IstreamAutoPipeTestTraits {
 public:
-    static constexpr const char *expected_result = "foo";
+	static constexpr const char *expected_result = "foo";
 
-    static constexpr bool call_available = true;
-    static constexpr bool got_data_assert = true;
-    static constexpr bool enable_blocking = true;
-    static constexpr bool enable_abort_istream = true;
+	static constexpr bool call_available = true;
+	static constexpr bool got_data_assert = true;
+	static constexpr bool enable_blocking = true;
+	static constexpr bool enable_abort_istream = true;
 
-    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
-        return istream_string_new(pool, "foo");
-    }
+	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+		return istream_string_new(pool, "foo");
+	}
 
-    UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
-                                UnusedIstreamPtr input) const noexcept {
-        return NewAutoPipeIstream(&pool, std::move(input), nullptr);
-    }
+	UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
+				    UnusedIstreamPtr input) const noexcept {
+		return NewAutoPipeIstream(&pool, std::move(input), nullptr);
+	}
 };
 
 INSTANTIATE_TYPED_TEST_CASE_P(AutoPipe, IstreamFilterTest,
-                              IstreamAutoPipeTestTraits);
+			      IstreamAutoPipeTestTraits);

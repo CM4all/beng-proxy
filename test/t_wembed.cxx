@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -56,21 +56,21 @@
 const char *
 Widget::GetLogName() const noexcept
 {
-    return "dummy";
+	return "dummy";
 }
 
 StringView
 Widget::LoggerDomain::GetDomain() const noexcept
 {
-    return "dummy";
+	return "dummy";
 }
 
 UnusedIstreamPtr
 istream_iconv_new(gcc_unused struct pool &pool, UnusedIstreamPtr input,
-                  gcc_unused const char *tocode,
-                  gcc_unused const char *fromcode) noexcept
+		  gcc_unused const char *tocode,
+		  gcc_unused const char *fromcode) noexcept
 {
-    return input;
+	return input;
 }
 
 void
@@ -91,7 +91,7 @@ Widget::CheckHost(const char *, const char *) const
 RealmSessionLease
 WidgetContext::GetRealmSession() const
 {
-    return nullptr;
+	return nullptr;
 }
 
 void
@@ -106,72 +106,71 @@ Widget::LoadFromSession(gcc_unused RealmSession &session) noexcept
 
 void
 widget_http_request(gcc_unused struct pool &pool,
-                    gcc_unused Widget &widget,
-                    WidgetContext &,
-                    const StopwatchPtr &,
-                    HttpResponseHandler &handler,
-                    gcc_unused CancellablePointer &cancel_ptr) noexcept
+		    gcc_unused Widget &widget,
+		    WidgetContext &,
+		    const StopwatchPtr &,
+		    HttpResponseHandler &handler,
+		    gcc_unused CancellablePointer &cancel_ptr) noexcept
 {
-    handler.InvokeError(std::make_exception_ptr(std::runtime_error("Test")));
+	handler.InvokeError(std::make_exception_ptr(std::runtime_error("Test")));
 }
 
 struct TestOperation final : Cancellable {
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override {
-    }
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+	}
 };
 
 void
 ResolveWidget(struct pool &pool,
-              gcc_unused Widget &widget,
-              WidgetRegistry &,
-              gcc_unused WidgetResolverCallback callback,
-              CancellablePointer &cancel_ptr) noexcept
+	      gcc_unused Widget &widget,
+	      WidgetRegistry &,
+	      gcc_unused WidgetResolverCallback callback,
+	      CancellablePointer &cancel_ptr) noexcept
 {
-    auto to = NewFromPool<TestOperation>(pool);
-    cancel_ptr = *to;
+	auto to = NewFromPool<TestOperation>(pool);
+	cancel_ptr = *to;
 }
 
 static void
 test_abort_resolver()
 {
-    PInstance instance;
-    const char *uri;
-    bool ret;
-    DissectedUri dissected_uri;
+	PInstance instance;
+	const char *uri;
+	bool ret;
+	DissectedUri dissected_uri;
 
-    FailingResourceLoader resource_loader;
-    WidgetContext ctx(instance.event_loop,
-                      resource_loader, resource_loader,
-                      nullptr,
-                      nullptr, nullptr,
-                      "localhost:8080",
-                      "localhost:8080",
-                      "/beng.html",
-                      "http://localhost:8080/beng.html",
-                      "/beng.html",
-                      nullptr,
-                      nullptr,
-                      {}, "foo",
-                      nullptr);
+	FailingResourceLoader resource_loader;
+	WidgetContext ctx(instance.event_loop,
+			  resource_loader, resource_loader,
+			  nullptr,
+			  nullptr, nullptr,
+			  "localhost:8080",
+			  "localhost:8080",
+			  "/beng.html",
+			  "http://localhost:8080/beng.html",
+			  "/beng.html",
+			  nullptr,
+			  nullptr,
+			  {}, "foo",
+			  nullptr);
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 4096);
+	auto pool = pool_new_linear(instance.root_pool, "test", 4096);
 
-    uri = "/beng.html";
-    ret = dissected_uri.Parse(uri);
-    if (!ret) {
-        fprintf(stderr, "uri_parse() failed\n");
-        exit(2);
-    }
+	uri = "/beng.html";
+	ret = dissected_uri.Parse(uri);
+	if (!ret) {
+		fprintf(stderr, "uri_parse() failed\n");
+		exit(2);
+	}
 
-    Widget widget(pool, nullptr);
+	Widget widget(pool, nullptr);
 
-    auto istream = embed_inline_widget(*pool, ctx, nullptr, false, widget);
+	auto istream = embed_inline_widget(*pool, ctx, nullptr, false, widget);
 }
 
-int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
-
-    test_abort_resolver();
+int
+main(int, char **)
+{
+	test_abort_resolver();
 }

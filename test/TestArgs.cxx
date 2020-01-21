@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,14 +41,14 @@
 
 TEST(Args, Parse)
 {
-    RootPool pool;
+	RootPool pool;
 
-    const StringView s("a=foo&b=bar&c=$20&=&=xyz&d=&e");
-    const auto args = args_parse(pool, s);
+	const StringView s("a=foo&b=bar&c=$20&=&=xyz&d=&e");
+	const auto args = args_parse(pool, s);
 
-    EXPECT_EQ(std::distance(args.begin(), args.end()), 4u);
-    EXPECT_STREQ(args.Get("a"), "foo");
-    EXPECT_STREQ(args.Get("b"), "bar");
-    EXPECT_STREQ(args.Get("c"), " ");
-    EXPECT_STREQ(args.Get("d"), "");
+	EXPECT_EQ(std::distance(args.begin(), args.end()), 4u);
+	EXPECT_STREQ(args.Get("a"), "foo");
+	EXPECT_STREQ(args.Get("b"), "bar");
+	EXPECT_STREQ(args.Get("c"), " ");
+	EXPECT_STREQ(args.Get("d"), "");
 }

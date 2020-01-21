@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,50 +37,50 @@
 
 TEST(SessionIdTest, IsDefined)
 {
-    random_seed();
+	random_seed();
 
-    SessionId a;
-    a.Clear();
-    EXPECT_FALSE(a.IsDefined());
-    EXPECT_EQ(a, a);
+	SessionId a;
+	a.Clear();
+	EXPECT_FALSE(a.IsDefined());
+	EXPECT_EQ(a, a);
 
-    SessionId b;
-    b.Generate();
-    EXPECT_TRUE(b.IsDefined());
-    EXPECT_EQ(b, b);
-    EXPECT_NE(a, b);
-    EXPECT_NE(b, a);
+	SessionId b;
+	b.Generate();
+	EXPECT_TRUE(b.IsDefined());
+	EXPECT_EQ(b, b);
+	EXPECT_NE(a, b);
+	EXPECT_NE(b, a);
 }
 
 TEST(SessionIdTest, FormatAndParse)
 {
-    random_seed();
+	random_seed();
 
-    SessionId a;
-    a.Generate();
-    EXPECT_TRUE(a.IsDefined());
+	SessionId a;
+	a.Generate();
+	EXPECT_TRUE(a.IsDefined());
 
-    const auto s = a.Format();
-    EXPECT_EQ(strlen(s), sizeof(a) * 2);
+	const auto s = a.Format();
+	EXPECT_EQ(strlen(s), sizeof(a) * 2);
 
-    SessionId b;
-    ASSERT_TRUE(b.Parse(s));
-    ASSERT_EQ(b, a);
-    ASSERT_EQ(a, b);
+	SessionId b;
+	ASSERT_TRUE(b.Parse(s));
+	ASSERT_EQ(b, a);
+	ASSERT_EQ(a, b);
 }
 
 TEST(SessionIdTest, ClusterHash)
 {
-    random_seed();
+	random_seed();
 
-    for (unsigned cluster_size = 2; cluster_size <= 16; ++cluster_size) {
-        for (unsigned cluster_node = 0; cluster_node < cluster_size; ++cluster_node) {
-            SessionId a;
-            a.Generate();
-            EXPECT_TRUE(a.IsDefined());
+	for (unsigned cluster_size = 2; cluster_size <= 16; ++cluster_size) {
+		for (unsigned cluster_node = 0; cluster_node < cluster_size; ++cluster_node) {
+			SessionId a;
+			a.Generate();
+			EXPECT_TRUE(a.IsDefined());
 
-            a.SetClusterNode(cluster_size, cluster_node);
-            ASSERT_EQ(a.GetClusterHash() % cluster_size, cluster_node);
-        }
-    }
+			a.SetClusterNode(cluster_size, cluster_node);
+			ASSERT_EQ(a.GetClusterHash() % cluster_size, cluster_node);
+		}
+	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -62,42 +62,42 @@
 
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool,
-                    WidgetContext &,
-                    const StopwatchPtr &,
-                    gcc_unused bool plain_text,
-                    Widget &widget) noexcept
+		    WidgetContext &,
+		    const StopwatchPtr &,
+		    gcc_unused bool plain_text,
+		    Widget &widget) noexcept
 {
-    const char *s = widget.GetIdPath();
-    if (s == nullptr)
-        s = "widget";
+	const char *s = widget.GetIdPath();
+	if (s == nullptr)
+		s = "widget";
 
-    return istream_string_new(pool, s);
+	return istream_string_new(pool, s);
 }
 
 WidgetSession *
 Widget::GetSession(gcc_unused RealmSession &session,
-                   gcc_unused bool create) noexcept
+		   gcc_unused bool create) noexcept
 {
-    return nullptr;
+	return nullptr;
 }
 
 RewriteUriMode
 parse_uri_mode(gcc_unused StringView s) noexcept
 {
-    return RewriteUriMode::DIRECT;
+	return RewriteUriMode::DIRECT;
 }
 
 UnusedIstreamPtr
 rewrite_widget_uri(gcc_unused struct pool &pool,
-                   WidgetContext &, const StopwatchPtr &,
-                   gcc_unused Widget &widget,
-                   gcc_unused StringView value,
-                   gcc_unused RewriteUriMode mode,
-                   gcc_unused bool stateful,
-                   gcc_unused const char *view,
-                   gcc_unused const struct escape_class *escape) noexcept
+		   WidgetContext &, const StopwatchPtr &,
+		   gcc_unused Widget &widget,
+		   gcc_unused StringView value,
+		   gcc_unused RewriteUriMode mode,
+		   gcc_unused bool stateful,
+		   gcc_unused const char *view,
+		   gcc_unused const struct escape_class *escape) noexcept
 {
-    return nullptr;
+	return nullptr;
 }
 
 /*
@@ -107,18 +107,18 @@ rewrite_widget_uri(gcc_unused struct pool &pool,
 
 class MyWidgetLookupHandler final : public WidgetLookupHandler {
 public:
-    /* virtual methods from class WidgetLookupHandler */
-    void WidgetFound(gcc_unused Widget &widget) noexcept override {
-        fprintf(stderr, "widget found\n");
-    }
+	/* virtual methods from class WidgetLookupHandler */
+	void WidgetFound(gcc_unused Widget &widget) noexcept override {
+		fprintf(stderr, "widget found\n");
+	}
 
-    void WidgetNotFound() noexcept override {
-        fprintf(stderr, "widget not found\n");
-    }
+	void WidgetNotFound() noexcept override {
+		fprintf(stderr, "widget not found\n");
+	}
 
-    void WidgetLookupError(std::exception_ptr ep) noexcept override {
-        PrintException(ep);
-    }
+	void WidgetLookupError(std::exception_ptr ep) noexcept override {
+		PrintException(ep);
+	}
 };
 
 /*
@@ -128,37 +128,37 @@ public:
 
 TEST(Processor, Abort)
 {
-    PInstance instance;
+	PInstance instance;
 
-    auto pool = pool_new_libc(instance.root_pool, "test");
+	auto pool = pool_new_libc(instance.root_pool, "test");
 
-    Widget widget(*pool, &root_widget_class);
+	Widget widget(*pool, &root_widget_class);
 
-    SessionId session_id;
-    session_id.Generate();
+	SessionId session_id;
+	session_id.Generate();
 
-    FailingResourceLoader resource_loader;
-    WidgetContext ctx(instance.event_loop,
-                      resource_loader, resource_loader,
-                      nullptr,
-                      nullptr, nullptr,
-                      "localhost:8080",
-                      "localhost:8080",
-                      "/beng.html",
-                      "http://localhost:8080/beng.html",
-                      "/beng.html",
-                      nullptr,
-                      "bp_session", session_id, "foo",
-                      nullptr);
+	FailingResourceLoader resource_loader;
+	WidgetContext ctx(instance.event_loop,
+			  resource_loader, resource_loader,
+			  nullptr,
+			  nullptr, nullptr,
+			  "localhost:8080",
+			  "localhost:8080",
+			  "/beng.html",
+			  "http://localhost:8080/beng.html",
+			  "/beng.html",
+			  nullptr,
+			  "bp_session", session_id, "foo",
+			  nullptr);
 
-    CancellablePointer cancel_ptr;
-    MyWidgetLookupHandler handler;
-    processor_lookup_widget(*pool, nullptr, istream_block_new(*pool),
-                            widget, "foo", ctx, PROCESSOR_CONTAINER,
-                            handler, cancel_ptr);
+	CancellablePointer cancel_ptr;
+	MyWidgetLookupHandler handler;
+	processor_lookup_widget(*pool, nullptr, istream_block_new(*pool),
+				widget, "foo", ctx, PROCESSOR_CONTAINER,
+				handler, cancel_ptr);
 
-    cancel_ptr.Cancel();
+	cancel_ptr.Cancel();
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 }

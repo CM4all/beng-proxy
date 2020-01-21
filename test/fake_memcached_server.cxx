@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,96 +41,97 @@
 static void
 read_full_or_abort(int fd, void *dest0, size_t length)
 {
-    char *dest = (char *)dest0;
-    ssize_t nbytes;
+	char *dest = (char *)dest0;
+	ssize_t nbytes;
 
-    while (length > 0) {
-        nbytes = read(fd, dest, length);
-        if (nbytes < 0) {
-            perror("read() failed");
-            exit(2);
-        }
+	while (length > 0) {
+		nbytes = read(fd, dest, length);
+		if (nbytes < 0) {
+			perror("read() failed");
+			exit(2);
+		}
 
-        if (nbytes == 0)
-            exit(0);
+		if (nbytes == 0)
+			exit(0);
 
-        dest += nbytes;
-        length -= nbytes;
-    }
+		dest += nbytes;
+		length -= nbytes;
+	}
 }
 
 static void
 read_discard(int fd, size_t length)
 {
-    static char buffer[4096];
+	static char buffer[4096];
 
-    while (length >= sizeof(buffer)) {
-        read_full_or_abort(fd, buffer, sizeof(buffer));
-        length -= sizeof(buffer);
-    }
+	while (length >= sizeof(buffer)) {
+		read_full_or_abort(fd, buffer, sizeof(buffer));
+		length -= sizeof(buffer);
+	}
 
-    read_full_or_abort(fd, buffer, length);
+	read_full_or_abort(fd, buffer, length);
 }
 
 static void
 write_full_or_abort(int fd, const void *dest0, size_t length)
 {
-    const char *dest = (const char *)dest0;
-    ssize_t nbytes;
+	const char *dest = (const char *)dest0;
+	ssize_t nbytes;
 
-    while (length > 0) {
-        nbytes = write(fd, dest, length);
-        if (nbytes < 0) {
-            perror("write() failed");
-            exit(2);
-        }
+	while (length > 0) {
+		nbytes = write(fd, dest, length);
+		if (nbytes < 0) {
+			perror("write() failed");
+			exit(2);
+		}
 
-        if (nbytes == 0) {
-            fprintf(stderr, "empty write()\n");
-            exit(2);
-        }
+		if (nbytes == 0) {
+			fprintf(stderr, "empty write()\n");
+			exit(2);
+		}
 
-        dest += nbytes;
-        length -= nbytes;
-    }
+		dest += nbytes;
+		length -= nbytes;
+	}
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
-    struct memcached_request_header request_header;
-    static constexpr char response_key[3] = {'f','o','o'};
-    static char response_body1[1024];
-    static char response_body2[2 * FB_SIZE];
-    const struct memcached_response_header response_header = {
-        .magic = MEMCACHED_MAGIC_RESPONSE,
-        .opcode = 0,
-        .key_length = ToBE16(sizeof(response_key)),
-        .extras_length = 0,
-        .data_type = 0,
-        .status = MEMCACHED_STATUS_NO_ERROR,
-        .body_length = ToBE32(sizeof(response_key) +
-                              sizeof(response_body1) +
-                              sizeof(response_body2)),
-        .message_id = 0,
-        .cas = {0, 0, 0, 0, 0, 0, 0, 0},
-    };
+	struct memcached_request_header request_header;
+	static constexpr char response_key[3] = {'f','o','o'};
+	static char response_body1[1024];
+	static char response_body2[2 * FB_SIZE];
+	const struct memcached_response_header response_header = {
+		.magic = MEMCACHED_MAGIC_RESPONSE,
+		.opcode = 0,
+		.key_length = ToBE16(sizeof(response_key)),
+		.extras_length = 0,
+		.data_type = 0,
+		.status = MEMCACHED_STATUS_NO_ERROR,
+		.body_length = ToBE32(sizeof(response_key) +
+				      sizeof(response_body1) +
+				      sizeof(response_body2)),
+		.message_id = 0,
+		.cas = {0, 0, 0, 0, 0, 0, 0, 0},
+	};
 
-    (void)argc;
-    (void)argv;
+	(void)argc;
+	(void)argv;
 
-    while (true) {
-        read_full_or_abort(0, &request_header, sizeof(request_header));
+	while (true) {
+		read_full_or_abort(0, &request_header, sizeof(request_header));
 
-        if (request_header.magic != MEMCACHED_MAGIC_REQUEST) {
-            fprintf(stderr, "wrong magic: 0x%02x\n", request_header.magic);
-            return 2;
-        }
+		if (request_header.magic != MEMCACHED_MAGIC_REQUEST) {
+			fprintf(stderr, "wrong magic: 0x%02x\n", request_header.magic);
+			return 2;
+		}
 
-        read_discard(0, FromBE32(request_header.body_length));
+		read_discard(0, FromBE32(request_header.body_length));
 
-        write_full_or_abort(1, &response_header, sizeof(response_header));
-        write_full_or_abort(1, response_key, sizeof(response_key));
-        write_full_or_abort(1, response_body1, sizeof(response_body1));
-        write_full_or_abort(1, response_body2, sizeof(response_body2));
-    }
+		write_full_or_abort(1, &response_header, sizeof(response_header));
+		write_full_or_abort(1, response_key, sizeof(response_key));
+		write_full_or_abort(1, response_body1, sizeof(response_body1));
+		write_full_or_abort(1, response_body2, sizeof(response_body2));
+	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -47,85 +47,85 @@
  */
 template<typename T>
 class SharedPoolPtr : LeakDetector {
-    struct ControlBlock : PoolLeakDetector {
-        struct pool &p;
+	struct ControlBlock : PoolLeakDetector {
+		struct pool &p;
 
-        uintptr_t ref = 1;
+		uintptr_t ref = 1;
 
-        T value;
+		T value;
 
-        template<typename... Args>
-        explicit ControlBlock(struct pool &_p, Args&&... args)
-            :PoolLeakDetector(_p),
-             p(_p), value(std::forward<Args>(args)...) {}
+		template<typename... Args>
+		explicit ControlBlock(struct pool &_p, Args&&... args)
+			:PoolLeakDetector(_p),
+			 p(_p), value(std::forward<Args>(args)...) {}
 
-        void Ref() noexcept {
-            ++ref;
-        }
+		void Ref() noexcept {
+			++ref;
+		}
 
-        void Unref() noexcept {
-            if (--ref == 0)
-                DeleteFromPool(p, this);
-        }
-    };
+		void Unref() noexcept {
+			if (--ref == 0)
+				DeleteFromPool(p, this);
+		}
+	};
 
-    ControlBlock *control = nullptr;
+	ControlBlock *control = nullptr;
 
-    explicit SharedPoolPtr(ControlBlock *_control):control(_control) {}
+	explicit SharedPoolPtr(ControlBlock *_control):control(_control) {}
 
 public:
-    SharedPoolPtr() = default;
-    SharedPoolPtr(SharedPoolPtr &&src) noexcept
-        :control(std::exchange(src.control, nullptr)) {}
+	SharedPoolPtr() = default;
+	SharedPoolPtr(SharedPoolPtr &&src) noexcept
+		:control(std::exchange(src.control, nullptr)) {}
 
-    SharedPoolPtr(const SharedPoolPtr &src) noexcept
-        :LeakDetector(), control(src.control) {
-        if (control != nullptr)
-            control->Ref();
-    }
+	SharedPoolPtr(const SharedPoolPtr &src) noexcept
+		:LeakDetector(), control(src.control) {
+		if (control != nullptr)
+			control->Ref();
+	}
 
-    ~SharedPoolPtr() noexcept {
-        if (control != nullptr)
-            control->Unref();
-    }
+	~SharedPoolPtr() noexcept {
+		if (control != nullptr)
+			control->Unref();
+	}
 
-    SharedPoolPtr &operator=(SharedPoolPtr &&src) noexcept {
-        using std::swap;
-        swap(control, src.control);
-        return *this;
-    }
+	SharedPoolPtr &operator=(SharedPoolPtr &&src) noexcept {
+		using std::swap;
+		swap(control, src.control);
+		return *this;
+	}
 
-    SharedPoolPtr &operator=(const SharedPoolPtr &src) noexcept {
-        if (control != nullptr)
-            control->Unref();
+	SharedPoolPtr &operator=(const SharedPoolPtr &src) noexcept {
+		if (control != nullptr)
+			control->Unref();
 
-        control = src.control;
-        if (control != nullptr)
-            control->Ref();
+		control = src.control;
+		if (control != nullptr)
+			control->Ref();
 
-        return *this;
-    }
+		return *this;
+	}
 
-    void reset() noexcept {
-        auto *c = std::exchange(control, nullptr);
-        if (c != nullptr)
-            c->Unref();
-    }
+	void reset() noexcept {
+		auto *c = std::exchange(control, nullptr);
+		if (c != nullptr)
+			c->Unref();
+	}
 
-    operator bool() const noexcept {
-        return control != nullptr;
-    }
+	operator bool() const noexcept {
+		return control != nullptr;
+	}
 
-    T &operator*() const noexcept {
-        return control->value;
-    }
+	T &operator*() const noexcept {
+		return control->value;
+	}
 
-    T *operator->() const noexcept {
-        return &control->value;
-    }
+	T *operator->() const noexcept {
+		return &control->value;
+	}
 
-    template<typename... Args>
-    static SharedPoolPtr<T> Make(struct pool &p, Args&&... args) {
-        return SharedPoolPtr<T>(NewFromPool<ControlBlock>(p, p, std::forward<Args>(args)...));
-    }
+	template<typename... Args>
+	static SharedPoolPtr<T> Make(struct pool &p, Args&&... args) {
+		return SharedPoolPtr<T>(NewFromPool<ControlBlock>(p, p, std::forward<Args>(args)...));
+	}
 };

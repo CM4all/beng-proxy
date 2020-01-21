@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -53,48 +53,48 @@
 #include <sys/stat.h>
 
 struct Context final : PInstance, NfsClientHandler, NfsClientOpenFileHandler {
-    PoolPtr pool;
+	PoolPtr pool;
 
-    const char *path;
+	const char *path;
 
-    ShutdownListener shutdown_listener;
-    CancellablePointer cancel_ptr;
+	ShutdownListener shutdown_listener;
+	CancellablePointer cancel_ptr;
 
-    NfsClient *client;
+	NfsClient *client;
 
-    bool aborted = false, failed = false, connected = false, closed = false;
+	bool aborted = false, failed = false, connected = false, closed = false;
 
-    SinkFd *body;
-    bool body_eof = false, body_abort = false, body_closed = false;
+	SinkFd *body;
+	bool body_eof = false, body_abort = false, body_closed = false;
 
-    Context()
-        :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)) {}
+	Context()
+		:shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)) {}
 
-    void ShutdownCallback() noexcept;
+	void ShutdownCallback() noexcept;
 
-    /* virtual methods from NfsClientHandler */
-    void OnNfsClientReady(NfsClient &client) noexcept override;
-    void OnNfsMountError(std::exception_ptr ep) noexcept override;
-    void OnNfsClientClosed(std::exception_ptr ep) noexcept override;
+	/* virtual methods from NfsClientHandler */
+	void OnNfsClientReady(NfsClient &client) noexcept override;
+	void OnNfsMountError(std::exception_ptr ep) noexcept override;
+	void OnNfsClientClosed(std::exception_ptr ep) noexcept override;
 
-    /* virtual methods from class NfsClientOpenFileHandler */
-    void OnNfsOpen(NfsFileHandle *handle,
-                   const struct stat *st) noexcept override;
-    void OnNfsOpenError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class NfsClientOpenFileHandler */
+	void OnNfsOpen(NfsFileHandle *handle,
+		       const struct stat *st) noexcept override;
+	void OnNfsOpenError(std::exception_ptr ep) noexcept override;
 };
 
 void
 Context::ShutdownCallback() noexcept
 {
-    aborted = true;
+	aborted = true;
 
-    if (body != nullptr)
-        sink_fd_close(body);
-    else
-        cancel_ptr.Cancel();
+	if (body != nullptr)
+		sink_fd_close(body);
+	else
+		cancel_ptr.Cancel();
 
-    if (client != nullptr)
-        nfs_client_free(std::exchange(client, nullptr));
+	if (client != nullptr)
+		nfs_client_free(std::exchange(client, nullptr));
 }
 
 /*
@@ -105,50 +105,50 @@ Context::ShutdownCallback() noexcept
 static void
 my_sink_fd_input_eof(void *ctx)
 {
-    Context *c = (Context *)ctx;
+	Context *c = (Context *)ctx;
 
-    c->body = nullptr;
-    c->body_eof = true;
+	c->body = nullptr;
+	c->body_eof = true;
 
-    c->shutdown_listener.Disable();
-    nfs_client_free(c->client);
+	c->shutdown_listener.Disable();
+	nfs_client_free(c->client);
 }
 
 static void
 my_sink_fd_input_error(std::exception_ptr ep, void *ctx)
 {
-    Context *c = (Context *)ctx;
+	Context *c = (Context *)ctx;
 
-    PrintException(ep);
+	PrintException(ep);
 
-    c->body = nullptr;
-    c->body_abort = true;
+	c->body = nullptr;
+	c->body_abort = true;
 
-    c->shutdown_listener.Disable();
-    nfs_client_free(c->client);
+	c->shutdown_listener.Disable();
+	nfs_client_free(c->client);
 }
 
 static bool
 my_sink_fd_send_error(int error, void *ctx)
 {
-    Context *c = (Context *)ctx;
+	Context *c = (Context *)ctx;
 
-    fprintf(stderr, "%s\n", strerror(error));
+	fprintf(stderr, "%s\n", strerror(error));
 
-    sink_fd_close(c->body);
+	sink_fd_close(c->body);
 
-    c->body = nullptr;
-    c->body_abort = true;
+	c->body = nullptr;
+	c->body_abort = true;
 
-    c->shutdown_listener.Disable();
-    nfs_client_free(c->client);
-    return false;
+	c->shutdown_listener.Disable();
+	nfs_client_free(c->client);
+	return false;
 }
 
 static constexpr SinkFdHandler my_sink_fd_handler = {
-    .input_eof = my_sink_fd_input_eof,
-    .input_error = my_sink_fd_input_error,
-    .send_error = my_sink_fd_send_error,
+	.input_eof = my_sink_fd_input_eof,
+	.input_error = my_sink_fd_input_error,
+	.send_error = my_sink_fd_send_error,
 };
 
 /*
@@ -159,34 +159,34 @@ static constexpr SinkFdHandler my_sink_fd_handler = {
 void
 Context::OnNfsOpen(NfsFileHandle *handle, const struct stat *st) noexcept
 {
-    assert(!aborted);
-    assert(!failed);
-    assert(connected);
+	assert(!aborted);
+	assert(!failed);
+	assert(connected);
 
-    body = sink_fd_new(event_loop, *pool,
-                       NewAutoPipeIstream(pool,
-                                          istream_nfs_new(*pool, *handle,
-                                                          0, st->st_size),
-                                          nullptr),
-                       FileDescriptor(STDOUT_FILENO),
-                       guess_fd_type(STDOUT_FILENO),
-                       my_sink_fd_handler, this);
-    sink_fd_read(body);
+	body = sink_fd_new(event_loop, *pool,
+			   NewAutoPipeIstream(pool,
+					      istream_nfs_new(*pool, *handle,
+							      0, st->st_size),
+					      nullptr),
+			   FileDescriptor(STDOUT_FILENO),
+			   guess_fd_type(STDOUT_FILENO),
+			   my_sink_fd_handler, this);
+	sink_fd_read(body);
 }
 
 void
 Context::OnNfsOpenError(std::exception_ptr ep) noexcept
 {
-    assert(!aborted);
-    assert(!failed);
-    assert(connected);
+	assert(!aborted);
+	assert(!failed);
+	assert(connected);
 
-    failed = true;
+	failed = true;
 
-    PrintException(ep);
+	PrintException(ep);
 
-    shutdown_listener.Disable();
-    nfs_client_free(client);
+	shutdown_listener.Disable();
+	nfs_client_free(client);
 }
 
 /*
@@ -197,44 +197,44 @@ Context::OnNfsOpenError(std::exception_ptr ep) noexcept
 void
 Context::OnNfsClientReady(NfsClient &_client) noexcept
 {
-    assert(!aborted);
-    assert(!failed);
-    assert(!connected);
-    assert(!closed);
+	assert(!aborted);
+	assert(!failed);
+	assert(!connected);
+	assert(!closed);
 
-    connected = true;
-    client = &_client;
+	connected = true;
+	client = &_client;
 
-    nfs_client_open_file(*client, path,
-                         *this, cancel_ptr);
+	nfs_client_open_file(*client, path,
+			     *this, cancel_ptr);
 }
 
 void
 Context::OnNfsMountError(std::exception_ptr ep) noexcept
 {
-    assert(!aborted);
-    assert(!failed);
-    assert(!connected);
-    assert(!closed);
+	assert(!aborted);
+	assert(!failed);
+	assert(!connected);
+	assert(!closed);
 
-    failed = true;
+	failed = true;
 
-    PrintException(ep);
+	PrintException(ep);
 
-    shutdown_listener.Disable();
+	shutdown_listener.Disable();
 }
 
 void
 Context::OnNfsClientClosed(std::exception_ptr ep) noexcept
 {
-    assert(!aborted);
-    assert(!failed);
-    assert(connected);
-    assert(!closed);
+	assert(!aborted);
+	assert(!failed);
+	assert(connected);
+	assert(!closed);
 
-    closed = true;
+	closed = true;
 
-    PrintException(ep);
+	PrintException(ep);
 }
 
 /*
@@ -242,42 +242,44 @@ Context::OnNfsClientClosed(std::exception_ptr ep) noexcept
  *
  */
 
-int main(int argc, char **argv) {
-    if (argc != 4) {
-        fprintf(stderr, "usage: run_nfs_client SERVER ROOT PATH\n");
-        return EXIT_FAILURE;
-    }
+int
+main(int argc, char **argv)
+{
+	if (argc != 4) {
+		fprintf(stderr, "usage: run_nfs_client SERVER ROOT PATH\n");
+		return EXIT_FAILURE;
+	}
 
-    const char *const server = argv[1];
-    const char *const _export = argv[2];
+	const char *const server = argv[1];
+	const char *const _export = argv[2];
 
-    Context ctx;
-    ctx.path = argv[3];
+	Context ctx;
+	ctx.path = argv[3];
 
-    /* initialize */
+	/* initialize */
 
-    SetupProcess();
+	SetupProcess();
 
-    direct_global_init();
+	direct_global_init();
 
-    ctx.shutdown_listener.Enable();
+	ctx.shutdown_listener.Enable();
 
-    ctx.pool = pool_new_libc(ctx.root_pool, "pool");
+	ctx.pool = pool_new_libc(ctx.root_pool, "pool");
 
-    /* open NFS connection */
+	/* open NFS connection */
 
-    nfs_client_new(ctx.event_loop, server, _export,
-                   ctx, ctx.cancel_ptr);
+	nfs_client_new(ctx.event_loop, server, _export,
+		       ctx, ctx.cancel_ptr);
 
-    /* run */
+	/* run */
 
-    ctx.event_loop.Dispatch();
+	ctx.event_loop.Dispatch();
 
-    assert(ctx.aborted || ctx.failed || ctx.connected);
+	assert(ctx.aborted || ctx.failed || ctx.connected);
 
-    /* cleanup */
+	/* cleanup */
 
-    return ctx.connected
-        ? EXIT_SUCCESS
-        : EXIT_FAILURE;
+	return ctx.connected
+		? EXIT_SUCCESS
+		: EXIT_FAILURE;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -63,282 +63,282 @@
 #include <stdlib.h>
 
 class Server final
-    : PoolHolder, HttpServerConnectionHandler, Lease, BufferedSocketHandler
+	: PoolHolder, HttpServerConnectionHandler, Lease, BufferedSocketHandler
 {
-    HttpServerConnection *connection = nullptr;
+	HttpServerConnection *connection = nullptr;
 
-    std::function<void(IncomingHttpRequest &request,
-                       CancellablePointer &cancel_ptr)> request_handler;
+	std::function<void(IncomingHttpRequest &request,
+			   CancellablePointer &cancel_ptr)> request_handler;
 
-    FilteredSocket client_fs;
+	FilteredSocket client_fs;
 
-    bool client_fs_released = false;
+	bool client_fs_released = false;
 
 public:
-    Server(struct pool &_pool, EventLoop &event_loop);
+	Server(struct pool &_pool, EventLoop &event_loop);
 
-    ~Server() noexcept {
-        CloseClientSocket();
-        CheckCloseConnection();
-    }
+	~Server() noexcept {
+		CloseClientSocket();
+		CheckCloseConnection();
+	}
 
-    using PoolHolder::GetPool;
+	using PoolHolder::GetPool;
 
-    auto &GetEventLoop() noexcept {
-        return client_fs.GetEventLoop();
-    }
+	auto &GetEventLoop() noexcept {
+		return client_fs.GetEventLoop();
+	}
 
-    template<typename T>
-    void SetRequestHandler(T &&handler) noexcept {
-        request_handler = std::forward<T>(handler);
-    }
+	template<typename T>
+	void SetRequestHandler(T &&handler) noexcept {
+		request_handler = std::forward<T>(handler);
+	}
 
-    void CloseConnection() noexcept {
-        http_server_connection_close(connection);
-        connection = nullptr;
-    }
+	void CloseConnection() noexcept {
+		http_server_connection_close(connection);
+		connection = nullptr;
+	}
 
-    void CheckCloseConnection() noexcept {
-        if (connection != nullptr)
-            CloseConnection();
-    }
+	void CheckCloseConnection() noexcept {
+		if (connection != nullptr)
+			CloseConnection();
+	}
 
-    void SendRequest(http_method_t method, const char *uri,
-                     HttpHeaders &&headers,
-                     UnusedIstreamPtr body, bool expect_100,
-                     HttpResponseHandler &handler,
-                     CancellablePointer &cancel_ptr) noexcept {
-        http_client_request(*pool, nullptr, client_fs, *this,
-                            "foo",
-                            method, uri, std::move(headers),
-                            std::move(body), expect_100,
-                            handler, cancel_ptr);
-    }
+	void SendRequest(http_method_t method, const char *uri,
+			 HttpHeaders &&headers,
+			 UnusedIstreamPtr body, bool expect_100,
+			 HttpResponseHandler &handler,
+			 CancellablePointer &cancel_ptr) noexcept {
+		http_client_request(*pool, nullptr, client_fs, *this,
+				    "foo",
+				    method, uri, std::move(headers),
+				    std::move(body), expect_100,
+				    handler, cancel_ptr);
+	}
 
-    void CloseClientSocket() noexcept {
-        if (client_fs.IsValid() && client_fs.IsConnected()) {
-            client_fs.Close();
-            client_fs.Destroy();
-        }
-    }
+	void CloseClientSocket() noexcept {
+		if (client_fs.IsValid() && client_fs.IsConnected()) {
+			client_fs.Close();
+			client_fs.Destroy();
+		}
+	}
 
 private:
-    /* virtual methods from class HttpServerConnectionHandler */
-    void HandleHttpRequest(IncomingHttpRequest &request,
-                           const StopwatchPtr &parent_stopwatch,
-                           CancellablePointer &cancel_ptr) noexcept override;
+	/* virtual methods from class HttpServerConnectionHandler */
+	void HandleHttpRequest(IncomingHttpRequest &request,
+			       const StopwatchPtr &parent_stopwatch,
+			       CancellablePointer &cancel_ptr) noexcept override;
 
-    void LogHttpRequest(IncomingHttpRequest &,
-                        http_status_t, int64_t,
-                        uint64_t, uint64_t) noexcept override {}
+	void LogHttpRequest(IncomingHttpRequest &,
+			    http_status_t, int64_t,
+			    uint64_t, uint64_t) noexcept override {}
 
-    void HttpConnectionError(std::exception_ptr e) noexcept override;
-    void HttpConnectionClosed() noexcept override;
+	void HttpConnectionError(std::exception_ptr e) noexcept override;
+	void HttpConnectionClosed() noexcept override;
 
-    /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) noexcept override {
-        client_fs_released = true;
+	/* virtual methods from class Lease */
+	void ReleaseLease(bool reuse) noexcept override {
+		client_fs_released = true;
 
-        if (reuse && client_fs.IsValid() && client_fs.IsConnected()) {
-            client_fs.Reinit(Event::Duration(-1), Event::Duration(-1), *this);
-            client_fs.UnscheduleWrite();
-        } else {
-            CloseClientSocket();
-        }
-    }
+		if (reuse && client_fs.IsValid() && client_fs.IsConnected()) {
+			client_fs.Reinit(Event::Duration(-1), Event::Duration(-1), *this);
+			client_fs.UnscheduleWrite();
+		} else {
+			CloseClientSocket();
+		}
+	}
 
-    /* virtual methods from class BufferedSocketHandler */
-    BufferedResult OnBufferedData() override {
-        fprintf(stderr, "unexpected data in idle TCP connection");
-        CloseClientSocket();
-        return BufferedResult::CLOSED;
-    }
+	/* virtual methods from class BufferedSocketHandler */
+	BufferedResult OnBufferedData() override {
+		fprintf(stderr, "unexpected data in idle TCP connection");
+		CloseClientSocket();
+		return BufferedResult::CLOSED;
+	}
 
-    bool OnBufferedClosed() noexcept override {
-        CloseClientSocket();
-        return false;
-    }
+	bool OnBufferedClosed() noexcept override {
+		CloseClientSocket();
+		return false;
+	}
 
-    gcc_noreturn
-    bool OnBufferedWrite() override {
-        /* should never be reached because we never schedule
-           writing */
-        gcc_unreachable();
-    }
+	gcc_noreturn
+	bool OnBufferedWrite() override {
+		/* should never be reached because we never schedule
+		   writing */
+		gcc_unreachable();
+	}
 
-    void OnBufferedError(std::exception_ptr e) noexcept override {
-        PrintException(e);
-        CloseClientSocket();
-    }
+	void OnBufferedError(std::exception_ptr e) noexcept override {
+		PrintException(e);
+		CloseClientSocket();
+	}
 };
 
 class Client final : HttpResponseHandler, IstreamSink {
-    CancellablePointer client_cancel_ptr;
+	CancellablePointer client_cancel_ptr;
 
-    std::exception_ptr response_error;
-    std::string response_body;
-    http_status_t status{};
+	std::exception_ptr response_error;
+	std::string response_body;
+	http_status_t status{};
 
-    bool response_eof = false;
+	bool response_eof = false;
 
 public:
-    void SendRequest(Server &server,
-                     http_method_t method, const char *uri,
-                     HttpHeaders &&headers,
-                     UnusedIstreamPtr body, bool expect_100=false) noexcept {
-        server.SendRequest(method, uri, std::move(headers),
-                             std::move(body), expect_100,
-                             *this, client_cancel_ptr);
-    }
+	void SendRequest(Server &server,
+			 http_method_t method, const char *uri,
+			 HttpHeaders &&headers,
+			 UnusedIstreamPtr body, bool expect_100=false) noexcept {
+		server.SendRequest(method, uri, std::move(headers),
+				   std::move(body), expect_100,
+				   *this, client_cancel_ptr);
+	}
 
-    bool IsClientDone() const noexcept {
-        return response_error || response_eof;
-    }
+	bool IsClientDone() const noexcept {
+		return response_error || response_eof;
+	}
 
-    void WaitDone(Server &server) {
-        auto &event_loop = server.GetEventLoop();
-        while (!IsClientDone())
-            event_loop.LoopOnce();
-    }
+	void WaitDone(Server &server) {
+		auto &event_loop = server.GetEventLoop();
+		while (!IsClientDone())
+			event_loop.LoopOnce();
+	}
 
-    void RethrowResponseError() const {
-        if (response_error)
-            std::rethrow_exception(response_error);
-    }
+	void RethrowResponseError() const {
+		if (response_error)
+			std::rethrow_exception(response_error);
+	}
 
-    void ExpectResponse(Server &server, http_status_t expected_status,
-                        const char *expected_body) {
-        WaitDone(server);
-        RethrowResponseError();
+	void ExpectResponse(Server &server, http_status_t expected_status,
+			    const char *expected_body) {
+		WaitDone(server);
+		RethrowResponseError();
 
-        if (status != expected_status)
-            throw FormatRuntimeError("Got status %d, expected %d\n",
-                                     int(status), int(expected_status));
+		if (status != expected_status)
+			throw FormatRuntimeError("Got status %d, expected %d\n",
+						 int(status), int(expected_status));
 
-        if (response_body != expected_body)
-            throw FormatRuntimeError("Got response body '%s', expected '%s'\n",
-                                     response_body.c_str(), expected_body);
-    }
+		if (response_body != expected_body)
+			throw FormatRuntimeError("Got response body '%s', expected '%s'\n",
+						 response_body.c_str(), expected_body);
+	}
 
 private:
-    /* virtual methods from class HttpResponseHandler */
-    void OnHttpResponse(http_status_t _status, StringMap &&headers,
-                        UnusedIstreamPtr body) noexcept override {
-        status = _status;
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(http_status_t _status, StringMap &&headers,
+			    UnusedIstreamPtr body) noexcept override {
+		status = _status;
 
-        (void)headers;
+		(void)headers;
 
-        IstreamSink::SetInput(std::move(body));
-        input.Read();
-    }
+		IstreamSink::SetInput(std::move(body));
+		input.Read();
+	}
 
-    void OnHttpError(std::exception_ptr ep) noexcept override {
-        response_error = std::move(ep);
-    }
+	void OnHttpError(std::exception_ptr ep) noexcept override {
+		response_error = std::move(ep);
+	}
 
-    /* virtual methods from class IstreamHandler */
+	/* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) noexcept override {
-        response_body.append((const char *)data, length);
-        return length;
-    }
+	size_t OnData(const void *data, size_t length) noexcept override {
+		response_body.append((const char *)data, length);
+		return length;
+	}
 
-    void OnEof() noexcept override {
-        IstreamSink::ClearInput();
-        response_eof = true;
-    }
+	void OnEof() noexcept override {
+		IstreamSink::ClearInput();
+		response_eof = true;
+	}
 
-    void OnError(std::exception_ptr ep) noexcept override {
-        IstreamSink::ClearInput();
-        response_error = std::move(ep);
-    }
+	void OnError(std::exception_ptr ep) noexcept override {
+		IstreamSink::ClearInput();
+		response_error = std::move(ep);
+	}
 };
 
 Server::Server(struct pool &_pool, EventLoop &event_loop)
-    :PoolHolder(pool_new_libc(&_pool, "catch")),
-     client_fs(event_loop)
+	:PoolHolder(pool_new_libc(&_pool, "catch")),
+	 client_fs(event_loop)
 {
-    UniqueSocketDescriptor client_socket, server_socket;
-    if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-                                                  client_socket, server_socket))
-        throw MakeErrno("socketpair() failed");
+	UniqueSocketDescriptor client_socket, server_socket;
+	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+						      client_socket, server_socket))
+		throw MakeErrno("socketpair() failed");
 
-    connection = http_server_connection_new(pool, event_loop,
-                                            std::move(server_socket),
-                                            FdType::FD_SOCKET,
-                                            nullptr,
-                                            nullptr, nullptr,
-                                            true, *this);
+	connection = http_server_connection_new(pool, event_loop,
+						std::move(server_socket),
+						FdType::FD_SOCKET,
+						nullptr,
+						nullptr, nullptr,
+						true, *this);
 
-    client_fs.InitDummy(client_socket.Release(), FdType::FD_SOCKET);
+	client_fs.InitDummy(client_socket.Release(), FdType::FD_SOCKET);
 }
 
 void
 Server::HandleHttpRequest(IncomingHttpRequest &request,
-                          const StopwatchPtr &,
-                          CancellablePointer &cancel_ptr) noexcept
+			  const StopwatchPtr &,
+			  CancellablePointer &cancel_ptr) noexcept
 {
-    request_handler(request, cancel_ptr);
+	request_handler(request, cancel_ptr);
 }
 
 void
 Server::HttpConnectionError(std::exception_ptr e) noexcept
 {
-    connection = nullptr;
+	connection = nullptr;
 
-    PrintException(e);
+	PrintException(e);
 }
 
 void
 Server::HttpConnectionClosed() noexcept
 {
-    connection = nullptr;
+	connection = nullptr;
 }
 
 static void
 TestSimple(Server &server)
 {
-    server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
-        request.SendResponse(HTTP_STATUS_OK, {},
-                             istream_string_new(request.pool, "foo"));
-    });
+	server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
+		request.SendResponse(HTTP_STATUS_OK, {},
+				     istream_string_new(request.pool, "foo"));
+	});
 
-    Client client;
-    client.SendRequest(server,
-                       HTTP_METHOD_GET, "/", {},
-                       nullptr);
-    client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
+	Client client;
+	client.SendRequest(server,
+			   HTTP_METHOD_GET, "/", {},
+			   nullptr);
+	client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
 }
 
 static void
 TestMirror(Server &server)
 {
-    server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
-        request.SendResponse(HTTP_STATUS_OK, {},
-                             std::move(request.body));
-    });
+	server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
+		request.SendResponse(HTTP_STATUS_OK, {},
+				     std::move(request.body));
+	});
 
-    Client client;
-    client.SendRequest(server,
-                       HTTP_METHOD_POST, "/", {},
-                       istream_string_new(server.GetPool(), "foo"));
-    client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
+	Client client;
+	client.SendRequest(server,
+			   HTTP_METHOD_POST, "/", {},
+			   istream_string_new(server.GetPool(), "foo"));
+	client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
 }
 
 static void
 TestDiscardTinyRequestBody(Server &server)
 {
-    server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
-        request.body.Clear();
-        request.SendResponse(HTTP_STATUS_OK, {},
-                             istream_string_new(request.pool, "foo"));
-    });
+	server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
+		request.body.Clear();
+		request.SendResponse(HTTP_STATUS_OK, {},
+				     istream_string_new(request.pool, "foo"));
+	});
 
-    Client client;
-    client.SendRequest(server,
-                       HTTP_METHOD_POST, "/", {},
-                       istream_string_new(server.GetPool(), "foo"));
-    client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
+	Client client;
+	client.SendRequest(server,
+			   HTTP_METHOD_POST, "/", {},
+			   istream_string_new(server.GetPool(), "foo"));
+	client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
 }
 
 /**
@@ -349,64 +349,64 @@ TestDiscardTinyRequestBody(Server &server)
 static void
 TestDiscardedHugeRequestBody(Server &server)
 {
-    class RespondLater {
-        TimerEvent timer;
+	class RespondLater {
+		TimerEvent timer;
 
-        IncomingHttpRequest *request;
+		IncomingHttpRequest *request;
 
-        UnusedHoldIstreamPtr body;
+		UnusedHoldIstreamPtr body;
 
-    public:
-        explicit RespondLater(EventLoop &event_loop) noexcept
-            :timer(event_loop, BIND_THIS_METHOD(OnTimer)) {}
+	public:
+		explicit RespondLater(EventLoop &event_loop) noexcept
+			:timer(event_loop, BIND_THIS_METHOD(OnTimer)) {}
 
-        void Schedule(IncomingHttpRequest &_request) noexcept {
-            request = &_request;
-            body = UnusedHoldIstreamPtr(request->pool, std::move(request->body));
+		void Schedule(IncomingHttpRequest &_request) noexcept {
+			request = &_request;
+			body = UnusedHoldIstreamPtr(request->pool, std::move(request->body));
 
-            timer.Schedule(std::chrono::milliseconds(10));
-        }
+			timer.Schedule(std::chrono::milliseconds(10));
+		}
 
-    private:
-        void OnTimer() noexcept {
-            body.Clear();
-            request->SendResponse(HTTP_STATUS_OK, {},
-                                  istream_string_new(request->pool, "foo"));
-        }
-    } respond_later(server.GetEventLoop());
+	private:
+		void OnTimer() noexcept {
+			body.Clear();
+			request->SendResponse(HTTP_STATUS_OK, {},
+					      istream_string_new(request->pool, "foo"));
+		}
+	} respond_later(server.GetEventLoop());
 
-    server.SetRequestHandler([&respond_later](IncomingHttpRequest &request, CancellablePointer &) noexcept {
-        respond_later.Schedule(request);
-    });
+	server.SetRequestHandler([&respond_later](IncomingHttpRequest &request, CancellablePointer &) noexcept {
+		respond_later.Schedule(request);
+	});
 
-    Client client;
-    client.SendRequest(server,
-                       HTTP_METHOD_POST, "/", {},
-                       istream_zero_new(server.GetPool()));
-    client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
+	Client client;
+	client.SendRequest(server,
+			   HTTP_METHOD_POST, "/", {},
+			   istream_zero_new(server.GetPool()));
+	client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
 }
 
 int
 main(int argc, char **argv) noexcept
 try {
-    (void)argc;
-    (void)argv;
+	(void)argc;
+	(void)argv;
 
-    direct_global_init();
-    const ScopeFbPoolInit fb_pool_init;
-    PInstance instance;
+	direct_global_init();
+	const ScopeFbPoolInit fb_pool_init;
+	PInstance instance;
 
-    {
-        Server server(instance.root_pool, instance.event_loop);
-        TestSimple(server);
-        TestMirror(server);
-        TestDiscardTinyRequestBody(server);
-        TestDiscardedHugeRequestBody(server);
+	{
+		Server server(instance.root_pool, instance.event_loop);
+		TestSimple(server);
+		TestMirror(server);
+		TestDiscardTinyRequestBody(server);
+		TestDiscardedHugeRequestBody(server);
 
-        server.CloseClientSocket();
-        instance.event_loop.Dispatch();
-    }
+		server.CloseClientSocket();
+		instance.event_loop.Dispatch();
+	}
 } catch (...) {
-    PrintException(std::current_exception());
-    return EXIT_FAILURE;
+	PrintException(std::current_exception());
+	return EXIT_FAILURE;
 }

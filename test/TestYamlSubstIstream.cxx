@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,35 +42,35 @@
 #include <yaml-cpp/node/impl.h>
 
 static constexpr char yaml[] =
-    "top: level\n"
-    "child:\n"
-    "  grandchild:\n"
-    "    greeting: Good morning\n"
-    "    object: everybody\n"
-    "    nested:\n"
-    "      foo: bar\n";
+	"top: level\n"
+	"child:\n"
+	"  grandchild:\n"
+	"    greeting: Good morning\n"
+	"    object: everybody\n"
+	"    nested:\n"
+	"      foo: bar\n";
 
 class IstreamYamlSubstTestTraits {
 public:
-    static constexpr const char *expected_result = "Good morning, everybody! bar";
+	static constexpr const char *expected_result = "Good morning, everybody! bar";
 
-    static constexpr bool call_available = true;
-    static constexpr bool got_data_assert = true;
-    static constexpr bool enable_blocking = true;
-    static constexpr bool enable_abort_istream = true;
+	static constexpr bool call_available = true;
+	static constexpr bool got_data_assert = true;
+	static constexpr bool enable_blocking = true;
+	static constexpr bool enable_abort_istream = true;
 
-    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
-        return istream_string_new(pool, "{[foo:greeting]}, {[foo:object]}! {[foo:nested.foo]}");
-    }
+	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+		return istream_string_new(pool, "{[foo:greeting]}, {[foo:object]}! {[foo:nested.foo]}");
+	}
 
-    UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
-                                UnusedIstreamPtr input) const noexcept {
-        return NewYamlSubstIstream(pool, std::move(input), true,
-                                   "foo:",
-                                   YAML::Load(yaml),
-                                   "child.grandchild");
-    }
+	UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
+				    UnusedIstreamPtr input) const noexcept {
+		return NewYamlSubstIstream(pool, std::move(input), true,
+					   "foo:",
+					   YAML::Load(yaml),
+					   "child.grandchild");
+	}
 };
 
 INSTANTIATE_TYPED_TEST_CASE_P(YamlSubst, IstreamFilterTest,
-                              IstreamYamlSubstTestTraits);
+			      IstreamYamlSubstTestTraits);

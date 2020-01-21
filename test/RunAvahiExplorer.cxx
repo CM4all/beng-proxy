@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,59 +40,59 @@
 #include "util/PrintException.hxx"
 
 class Instance final : AvahiServiceExplorerListener {
-    EventLoop event_loop;
-    ShutdownListener shutdown_listener;
-    MyAvahiClient client;
-    AvahiServiceExplorer explorer;
+	EventLoop event_loop;
+	ShutdownListener shutdown_listener;
+	MyAvahiClient client;
+	AvahiServiceExplorer explorer;
 
 public:
-    explicit Instance(const char *service)
-        :shutdown_listener(event_loop, BIND_THIS_METHOD(OnShutdown)),
-         client(event_loop, "RunAvahiExplorer"),
-         explorer(client, *this,
-                  AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC,
-                  service, nullptr) {
-        shutdown_listener.Enable();
-    }
+	explicit Instance(const char *service)
+		:shutdown_listener(event_loop, BIND_THIS_METHOD(OnShutdown)),
+		 client(event_loop, "RunAvahiExplorer"),
+		 explorer(client, *this,
+			  AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC,
+			  service, nullptr) {
+		shutdown_listener.Enable();
+	}
 
-    void Dispatch() {
-        event_loop.Dispatch();
-    }
+	void Dispatch() {
+		event_loop.Dispatch();
+	}
 
 private:
-    void OnShutdown() noexcept {
-        event_loop.Break();
-    }
+	void OnShutdown() noexcept {
+		event_loop.Break();
+	}
 
-    /* virtual methods from class AvahiServiceExplorerListener */
-    void OnAvahiNewObject(const std::string &key,
-                          SocketAddress address) noexcept override {
-        char buffer[1024];
+	/* virtual methods from class AvahiServiceExplorerListener */
+	void OnAvahiNewObject(const std::string &key,
+			      SocketAddress address) noexcept override {
+		char buffer[1024];
 
-        printf("new '%s' at %s\n", key.c_str(),
-               ToString(buffer, sizeof(buffer), address, "?"));
-    }
+		printf("new '%s' at %s\n", key.c_str(),
+		       ToString(buffer, sizeof(buffer), address, "?"));
+	}
 
-    void OnAvahiRemoveObject(const std::string &key) noexcept override {
-        printf("remove '%s'\n", key.c_str());
-    }
+	void OnAvahiRemoveObject(const std::string &key) noexcept override {
+		printf("remove '%s'\n", key.c_str());
+	}
 };
 
 int
 main(int argc, char **argv)
 try {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s SERVICE\n", argv[0]);
-        return EXIT_FAILURE;
-    }
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s SERVICE\n", argv[0]);
+		return EXIT_FAILURE;
+	}
 
-    const auto service_type = MakeZeroconfServiceType(argv[1], "_tcp");
+	const auto service_type = MakeZeroconfServiceType(argv[1], "_tcp");
 
-    Instance instance(service_type.c_str());
-    instance.Dispatch();
+	Instance instance(service_type.c_str());
+	instance.Dispatch();
 
-    return EXIT_SUCCESS;
+	return EXIT_SUCCESS;
 } catch (const std::exception &e) {
-    PrintException(e);
-    return EXIT_FAILURE;
+	PrintException(e);
+	return EXIT_FAILURE;
 }

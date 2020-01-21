@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -58,55 +58,55 @@
 #include <string.h>
 
 struct Context final : PInstance, Lease, MemcachedResponseHandler {
-    ShutdownListener shutdown_listener;
+	ShutdownListener shutdown_listener;
 
-    PoolPtr pool;
+	PoolPtr pool;
 
-    CancellablePointer cancel_ptr;
+	CancellablePointer cancel_ptr;
 
-    UniqueSocketDescriptor s;
-    bool idle = false, reuse, aborted = false;
-    enum memcached_response_status status;
+	UniqueSocketDescriptor s;
+	bool idle = false, reuse, aborted = false;
+	enum memcached_response_status status;
 
-    SinkFd *value;
-    bool value_eof = false, value_abort = false, value_closed = false;
+	SinkFd *value;
+	bool value_eof = false, value_abort = false, value_closed = false;
 
-    Context()
-        :shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
-         pool(pool_new_linear(root_pool, "test", 8192)) {}
+	Context()
+		:shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
+		 pool(pool_new_linear(root_pool, "test", 8192)) {}
 
-    void ShutdownCallback() noexcept;
+	void ShutdownCallback() noexcept;
 
-    /* virtual methods from class Lease */
-    void ReleaseLease(bool _reuse) noexcept override {
-        assert(!idle);
-        assert(s.IsDefined());
+	/* virtual methods from class Lease */
+	void ReleaseLease(bool _reuse) noexcept override {
+		assert(!idle);
+		assert(s.IsDefined());
 
-        idle = true;
-        reuse = _reuse;
+		idle = true;
+		reuse = _reuse;
 
-        s.Close();
-    }
+		s.Close();
+	}
 
-    /* virtual methods from class MemcachedResponseHandler */
-    void OnMemcachedResponse(enum memcached_response_status status,
-                             const void *extras, size_t extras_length,
-                             const void *key, size_t key_length,
-                             UnusedIstreamPtr value) noexcept override;
-    void OnMemcachedError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class MemcachedResponseHandler */
+	void OnMemcachedResponse(enum memcached_response_status status,
+				 const void *extras, size_t extras_length,
+				 const void *key, size_t key_length,
+				 UnusedIstreamPtr value) noexcept override;
+	void OnMemcachedError(std::exception_ptr ep) noexcept override;
 };
 
 void
 Context::ShutdownCallback() noexcept
 {
-    if (value != nullptr) {
-        sink_fd_close(value);
-        value = nullptr;
-        value_abort = true;
-    } else {
-        aborted = true;
-        cancel_ptr.Cancel();
-    }
+	if (value != nullptr) {
+		sink_fd_close(value);
+		value = nullptr;
+		value_abort = true;
+	} else {
+		aborted = true;
+		cancel_ptr.Cancel();
+	}
 }
 
 /*
@@ -117,46 +117,46 @@ Context::ShutdownCallback() noexcept
 static void
 my_sink_fd_input_eof(void *ctx)
 {
-    auto *c = (Context *)ctx;
+	auto *c = (Context *)ctx;
 
-    c->value = NULL;
-    c->value_eof = true;
+	c->value = NULL;
+	c->value_eof = true;
 
-    c->shutdown_listener.Disable();
+	c->shutdown_listener.Disable();
 }
 
 static void
 my_sink_fd_input_error(std::exception_ptr ep, void *ctx)
 {
-    auto *c = (Context *)ctx;
+	auto *c = (Context *)ctx;
 
-    PrintException(ep);
+	PrintException(ep);
 
-    c->value = NULL;
-    c->value_abort = true;
+	c->value = NULL;
+	c->value_abort = true;
 
-    c->shutdown_listener.Disable();
+	c->shutdown_listener.Disable();
 }
 
 static bool
 my_sink_fd_send_error(int error, void *ctx)
 {
-    auto *c = (Context *)ctx;
+	auto *c = (Context *)ctx;
 
-    fprintf(stderr, "%s\n", strerror(error));
+	fprintf(stderr, "%s\n", strerror(error));
 
-    c->value = NULL;
-    c->value_abort = true;
+	c->value = NULL;
+	c->value_abort = true;
 
-    c->shutdown_listener.Disable();
+	c->shutdown_listener.Disable();
 
-    return true;
+	return true;
 }
 
 static constexpr SinkFdHandler my_sink_fd_handler = {
-    .input_eof = my_sink_fd_input_eof,
-    .input_error = my_sink_fd_input_error,
-    .send_error = my_sink_fd_send_error,
+	.input_eof = my_sink_fd_input_eof,
+	.input_error = my_sink_fd_input_error,
+	.send_error = my_sink_fd_send_error,
 };
 
 /*
@@ -166,36 +166,36 @@ static constexpr SinkFdHandler my_sink_fd_handler = {
 
 void
 Context::OnMemcachedResponse(enum memcached_response_status _status,
-                             const void *, size_t,
-                             const void *, size_t,
-                             UnusedIstreamPtr _value) noexcept
+			     const void *, size_t,
+			     const void *, size_t,
+			     UnusedIstreamPtr _value) noexcept
 {
-    fprintf(stderr, "status=%d\n", _status);
+	fprintf(stderr, "status=%d\n", _status);
 
-    status = _status;
+	status = _status;
 
-    if (_value) {
-        value = sink_fd_new(event_loop, *pool,
-                            NewAutoPipeIstream(pool, std::move(_value),
-                                               nullptr),
-                            FileDescriptor(STDOUT_FILENO),
-                            guess_fd_type(STDOUT_FILENO),
-                            my_sink_fd_handler, this);
-    } else {
-        value_eof = true;
-        shutdown_listener.Disable();
-    }
+	if (_value) {
+		value = sink_fd_new(event_loop, *pool,
+				    NewAutoPipeIstream(pool, std::move(_value),
+						       nullptr),
+				    FileDescriptor(STDOUT_FILENO),
+				    guess_fd_type(STDOUT_FILENO),
+				    my_sink_fd_handler, this);
+	} else {
+		value_eof = true;
+		shutdown_listener.Disable();
+	}
 }
 
 void
 Context::OnMemcachedError(std::exception_ptr ep) noexcept
 {
-    PrintException(ep);
+	PrintException(ep);
 
-    status = (memcached_response_status)-1;
-    value_eof = true;
+	status = (memcached_response_status)-1;
+	value_eof = true;
 
-    shutdown_listener.Disable();
+	shutdown_listener.Disable();
 }
 
 /*
@@ -204,74 +204,74 @@ Context::OnMemcachedError(std::exception_ptr ep) noexcept
  */
 
 int main(int argc, char **argv) {
-    enum memcached_opcode opcode;
-    const char *key, *value;
-    const void *extras;
-    size_t extras_length;
-    struct memcached_set_extras set_extras;
+	enum memcached_opcode opcode;
+	const char *key, *value;
+	const void *extras;
+	size_t extras_length;
+	struct memcached_set_extras set_extras;
 
-    if (argc < 3 || argc > 5) {
-        fprintf(stderr, "usage: run-memcached-client HOST[:PORT] OPCODE [KEY] [VALUE]\n");
-        return 1;
-    }
+	if (argc < 3 || argc > 5) {
+		fprintf(stderr, "usage: run-memcached-client HOST[:PORT] OPCODE [KEY] [VALUE]\n");
+		return 1;
+	}
 
-    if (strcmp(argv[2], "get") == 0)
-        opcode = MEMCACHED_OPCODE_GET;
-    else if (strcmp(argv[2], "set") == 0)
-        opcode = MEMCACHED_OPCODE_SET;
-    else if (strcmp(argv[2], "delete") == 0)
-        opcode = MEMCACHED_OPCODE_DELETE;
-    else {
-        fprintf(stderr, "unknown opcode\n");
-        return 1;
-    }
+	if (strcmp(argv[2], "get") == 0)
+		opcode = MEMCACHED_OPCODE_GET;
+	else if (strcmp(argv[2], "set") == 0)
+		opcode = MEMCACHED_OPCODE_SET;
+	else if (strcmp(argv[2], "delete") == 0)
+		opcode = MEMCACHED_OPCODE_DELETE;
+	else {
+		fprintf(stderr, "unknown opcode\n");
+		return 1;
+	}
 
-    key = argc > 3 ? argv[3] : NULL;
-    value = argc > 4 ? argv[4] : NULL;
+	key = argc > 3 ? argv[3] : NULL;
+	value = argc > 4 ? argv[4] : NULL;
 
-    if (opcode == MEMCACHED_OPCODE_SET) {
-        set_extras.flags = 0;
-        set_extras.expiration = ToBE32(300);
-        extras = &set_extras;
-        extras_length = sizeof(set_extras);
-    } else {
-        extras = NULL;
-        extras_length = 0;
-    }
+	if (opcode == MEMCACHED_OPCODE_SET) {
+		set_extras.flags = 0;
+		set_extras.expiration = ToBE32(300);
+		extras = &set_extras;
+		extras_length = sizeof(set_extras);
+	} else {
+		extras = NULL;
+		extras_length = 0;
+	}
 
-    direct_global_init();
+	direct_global_init();
 
-    /* connect socket */
+	/* connect socket */
 
-    Context ctx;
-    ctx.s = ResolveConnectStreamSocket(argv[1], 11211);
-    ctx.s.SetNoDelay();
+	Context ctx;
+	ctx.s = ResolveConnectStreamSocket(argv[1], 11211);
+	ctx.s.SetNoDelay();
 
-    /* initialize */
+	/* initialize */
 
-    SetupProcess();
-    const ScopeFbPoolInit fb_pool_init;
+	SetupProcess();
+	const ScopeFbPoolInit fb_pool_init;
 
-    ctx.shutdown_listener.Enable();
+	ctx.shutdown_listener.Enable();
 
-    /* run test */
+	/* run test */
 
-    memcached_client_invoke(ctx.pool, ctx.event_loop, ctx.s, FdType::FD_TCP,
-                            ctx,
-                            opcode,
-                            extras, extras_length,
-                            key, key != NULL ? strlen(key) : 0,
-                            value != nullptr ? istream_string_new(ctx.pool, value) : nullptr,
-                            ctx, ctx.cancel_ptr);
+	memcached_client_invoke(ctx.pool, ctx.event_loop, ctx.s, FdType::FD_TCP,
+				ctx,
+				opcode,
+				extras, extras_length,
+				key, key != NULL ? strlen(key) : 0,
+				value != nullptr ? istream_string_new(ctx.pool, value) : nullptr,
+				ctx, ctx.cancel_ptr);
 
-    ctx.event_loop.Dispatch();
+	ctx.event_loop.Dispatch();
 
-    assert(ctx.value_eof || ctx.value_abort || ctx.aborted);
+	assert(ctx.value_eof || ctx.value_abort || ctx.aborted);
 
-    /* cleanup */
+	/* cleanup */
 
-    ctx.pool.reset();
-    pool_commit();
+	ctx.pool.reset();
+	pool_commit();
 
-    return ctx.value_eof ? 0 : 2;
+	return ctx.value_eof ? 0 : 2;
 }

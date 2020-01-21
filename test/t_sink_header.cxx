@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -44,57 +44,57 @@
 
 static void
 my_sink_header_done(gcc_unused void *header, gcc_unused size_t length,
-                    UnusedIstreamPtr tail,
-                    void *ctx)
+		    UnusedIstreamPtr tail,
+		    void *ctx)
 {
-    auto &delayed = *(DelayedIstreamControl *)ctx;
+	auto &delayed = *(DelayedIstreamControl *)ctx;
 
-    assert(length == 6);
-    assert(header != NULL);
-    assert(memcmp(header, "foobar", 6) == 0);
+	assert(length == 6);
+	assert(header != NULL);
+	assert(memcmp(header, "foobar", 6) == 0);
 
-    delayed.Set(std::move(tail));
+	delayed.Set(std::move(tail));
 }
 
 static void
 my_sink_header_error(std::exception_ptr ep, void *ctx)
 {
-    auto &delayed = *(DelayedIstreamControl *)ctx;
+	auto &delayed = *(DelayedIstreamControl *)ctx;
 
-    delayed.SetError(ep);
+	delayed.SetError(ep);
 }
 
 static const struct sink_header_handler my_sink_header_handler = {
-    .done = my_sink_header_done,
-    .error = my_sink_header_error,
+	.done = my_sink_header_done,
+	.error = my_sink_header_error,
 };
 
 class IstreamSinkHeaderTestTraits {
 public:
-    static constexpr const char *expected_result = "foo";
+	static constexpr const char *expected_result = "foo";
 
-    static constexpr bool call_available = true;
-    static constexpr bool got_data_assert = false;
-    static constexpr bool enable_blocking = false;
-    static constexpr bool enable_abort_istream = true;
+	static constexpr bool call_available = true;
+	static constexpr bool got_data_assert = false;
+	static constexpr bool enable_blocking = false;
+	static constexpr bool enable_abort_istream = true;
 
-    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
-        return istream_memory_new(pool, "\0\0\0\x06" "foobarfoo", 13);
-    }
+	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+		return istream_memory_new(pool, "\0\0\0\x06" "foobarfoo", 13);
+	}
 
-    UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
-                                UnusedIstreamPtr input) const noexcept {
-        auto delayed = istream_delayed_new(pool, event_loop);
-        UnusedHoldIstreamPtr hold(pool, std::move(delayed.first));
+	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
+				    UnusedIstreamPtr input) const noexcept {
+		auto delayed = istream_delayed_new(pool, event_loop);
+		UnusedHoldIstreamPtr hold(pool, std::move(delayed.first));
 
-        auto &sink = sink_header_new(pool, std::move(input),
-                                     my_sink_header_handler, &delayed.second,
-                                     delayed.second.cancel_ptr);
-        sink_header_read(sink);
+		auto &sink = sink_header_new(pool, std::move(input),
+					     my_sink_header_handler, &delayed.second,
+					     delayed.second.cancel_ptr);
+		sink_header_read(sink);
 
-        return std::move(hold);
-    }
+		return std::move(hold);
+	}
 };
 
 INSTANTIATE_TYPED_TEST_CASE_P(SinkHeader, IstreamFilterTest,
-                              IstreamSinkHeaderTestTraits);
+			      IstreamSinkHeaderTestTraits);

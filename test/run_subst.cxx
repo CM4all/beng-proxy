@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -44,34 +44,34 @@
 int
 main(int argc, char **argv)
 try {
-    int i;
+	int i;
 
-    const ScopeFbPoolInit fb_pool_init;
-    PInstance instance;
+	const ScopeFbPoolInit fb_pool_init;
+	PInstance instance;
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    SubstTree tree;
+	SubstTree tree;
 
-    for (i = 1; i <= argc - 2; i += 2) {
-        tree.Add(pool, argv[i], argv[i + 1]);
-    }
+	for (i = 1; i <= argc - 2; i += 2) {
+		tree.Add(pool, argv[i], argv[i + 1]);
+	}
 
-    if (i < argc) {
-        fprintf(stderr, "usage: %s [A1 B1 A2 B2 ...]\n", argv[0]);
-        return 1;
-    }
+	if (i < argc) {
+		fprintf(stderr, "usage: %s [A1 B1 A2 B2 ...]\n", argv[0]);
+		return 1;
+	}
 
-    StdioSink sink(istream_subst_new(pool,
-                                     UnusedIstreamPtr(istream_file_new(instance.event_loop, pool,
-                                                                       "/dev/stdin", (off_t)-1)),
-                                     std::move(tree)));
+	StdioSink sink(istream_subst_new(pool,
+					 UnusedIstreamPtr(istream_file_new(instance.event_loop, pool,
+									   "/dev/stdin", (off_t)-1)),
+					 std::move(tree)));
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    sink.LoopRead();
+	sink.LoopRead();
 } catch (...) {
-    PrintException(std::current_exception());
-    return EXIT_FAILURE;
+	PrintException(std::current_exception());
+	return EXIT_FAILURE;
 }

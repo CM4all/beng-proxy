@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -49,25 +49,25 @@ static bool got_item;
 static StockItem *last_item;
 
 struct MyStockItem final : StockItem {
-    StockRequest request;
+	StockRequest request;
 
-    explicit MyStockItem(CreateStockItem c)
-        :StockItem(c) {}
+	explicit MyStockItem(CreateStockItem c)
+		:StockItem(c) {}
 
-    ~MyStockItem() override {
-        ++num_destroy;
-    }
+	~MyStockItem() override {
+		++num_destroy;
+	}
 
-    /* virtual methods from class StockItem */
-    bool Borrow() noexcept override {
-        ++num_borrow;
-        return true;
-    }
+	/* virtual methods from class StockItem */
+	bool Borrow() noexcept override {
+		++num_borrow;
+		return true;
+	}
 
-    bool Release() noexcept override {
-        ++num_release;
-        return true;
-    }
+	bool Release() noexcept override {
+		++num_release;
+		return true;
+	}
 };
 
 /*
@@ -77,177 +77,178 @@ struct MyStockItem final : StockItem {
 
 class MyStockClass final : public StockClass {
 public:
-    /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, StockRequest request,
-                CancellablePointer &cancel_ptr) override;
+	/* virtual methods from class StockClass */
+	void Create(CreateStockItem c, StockRequest request,
+		    CancellablePointer &cancel_ptr) override;
 };
 
 void
 MyStockClass::Create(CreateStockItem c,
-                     StockRequest request,
-                     gcc_unused CancellablePointer &cancel_ptr)
+		     StockRequest request,
+		     gcc_unused CancellablePointer &cancel_ptr)
 {
-    auto *item = new MyStockItem(c);
-    item->request = std::move(request);
+	auto *item = new MyStockItem(c);
+	item->request = std::move(request);
 
-    if (next_fail) {
-        ++num_fail;
-        delete item;
-        throw std::runtime_error("next_fail");
-    } else {
-        ++num_create;
-        item->InvokeCreateSuccess();
-    }
+	if (next_fail) {
+		++num_fail;
+		delete item;
+		throw std::runtime_error("next_fail");
+	} else {
+		++num_create;
+		item->InvokeCreateSuccess();
+	}
 }
 
 class MyStockGetHandler final : public StockGetHandler {
 public:
-    /* virtual methods from class StockGetHandler */
-    void OnStockItemReady(StockItem &item) noexcept override {
-        assert(!got_item);
+	/* virtual methods from class StockGetHandler */
+	void OnStockItemReady(StockItem &item) noexcept override {
+		assert(!got_item);
 
-        got_item = true;
-        last_item = &item;
-    }
+		got_item = true;
+		last_item = &item;
+	}
 
-    void OnStockItemError(std::exception_ptr ep) noexcept override {
-        PrintException(ep);
+	void OnStockItemError(std::exception_ptr ep) noexcept override {
+		PrintException(ep);
 
-        got_item = true;
-        last_item = nullptr;
-    }
+		got_item = true;
+		last_item = nullptr;
+	}
 };
 
-int main(gcc_unused int argc, gcc_unused char **argv)
+int
+main(int, char **)
 {
-    Stock *stock;
-    CancellablePointer cancel_ptr;
-    StockItem *item, *second, *third;
+	Stock *stock;
+	CancellablePointer cancel_ptr;
+	StockItem *item, *second, *third;
 
-    EventLoop event_loop;
+	EventLoop event_loop;
 
-    MyStockClass cls;
-    stock = new Stock(event_loop, cls, "test", 3, 8);
+	MyStockClass cls;
+	stock = new Stock(event_loop, cls, "test", 3, 8);
 
-    MyStockGetHandler handler;
+	MyStockGetHandler handler;
 
-    /* create first item */
+	/* create first item */
 
-    stock->Get(nullptr, handler, cancel_ptr);
-    assert(got_item);
-    assert(last_item != nullptr);
-    assert(num_create == 1 && num_fail == 0);
-    assert(num_borrow == 0 && num_release == 0 && num_destroy == 0);
-    item = last_item;
+	stock->Get(nullptr, handler, cancel_ptr);
+	assert(got_item);
+	assert(last_item != nullptr);
+	assert(num_create == 1 && num_fail == 0);
+	assert(num_borrow == 0 && num_release == 0 && num_destroy == 0);
+	item = last_item;
 
-    /* release first item */
+	/* release first item */
 
-    stock->Put(*item, false);
-    event_loop.LoopNonBlock();
-    assert(num_create == 1 && num_fail == 0);
-    assert(num_borrow == 0 && num_release == 1 && num_destroy == 0);
+	stock->Put(*item, false);
+	event_loop.LoopNonBlock();
+	assert(num_create == 1 && num_fail == 0);
+	assert(num_borrow == 0 && num_release == 1 && num_destroy == 0);
 
-    /* reuse first item */
+	/* reuse first item */
 
-    got_item = false;
-    last_item = nullptr;
-    stock->Get(nullptr, handler, cancel_ptr);
-    assert(got_item);
-    assert(last_item == item);
-    assert(num_create == 1 && num_fail == 0);
-    assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
+	got_item = false;
+	last_item = nullptr;
+	stock->Get(nullptr, handler, cancel_ptr);
+	assert(got_item);
+	assert(last_item == item);
+	assert(num_create == 1 && num_fail == 0);
+	assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
 
-    /* create second item */
+	/* create second item */
 
-    got_item = false;
-    last_item = nullptr;
-    stock->Get(nullptr, handler, cancel_ptr);
-    assert(got_item);
-    assert(last_item != nullptr);
-    assert(last_item != item);
-    assert(num_create == 2 && num_fail == 0);
-    assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
-    second = last_item;
+	got_item = false;
+	last_item = nullptr;
+	stock->Get(nullptr, handler, cancel_ptr);
+	assert(got_item);
+	assert(last_item != nullptr);
+	assert(last_item != item);
+	assert(num_create == 2 && num_fail == 0);
+	assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
+	second = last_item;
 
-    /* fail to create third item */
+	/* fail to create third item */
 
-    next_fail = true;
-    got_item = false;
-    last_item = nullptr;
-    stock->Get(nullptr, handler, cancel_ptr);
-    assert(got_item);
-    assert(last_item == nullptr);
-    assert(num_create == 2 && num_fail == 1);
-    assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
+	next_fail = true;
+	got_item = false;
+	last_item = nullptr;
+	stock->Get(nullptr, handler, cancel_ptr);
+	assert(got_item);
+	assert(last_item == nullptr);
+	assert(num_create == 2 && num_fail == 1);
+	assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
 
-    /* create third item */
+	/* create third item */
 
-    next_fail = false;
-    got_item = false;
-    last_item = nullptr;
-    stock->Get(nullptr, handler, cancel_ptr);
-    assert(got_item);
-    assert(last_item != nullptr);
-    assert(num_create == 3 && num_fail == 1);
-    assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
-    third = last_item;
+	next_fail = false;
+	got_item = false;
+	last_item = nullptr;
+	stock->Get(nullptr, handler, cancel_ptr);
+	assert(got_item);
+	assert(last_item != nullptr);
+	assert(num_create == 3 && num_fail == 1);
+	assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
+	third = last_item;
 
-    /* fourth item waiting */
+	/* fourth item waiting */
 
-    got_item = false;
-    last_item = nullptr;
-    stock->Get(nullptr, handler, cancel_ptr);
-    assert(!got_item);
-    assert(num_create == 3 && num_fail == 1);
-    assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
+	got_item = false;
+	last_item = nullptr;
+	stock->Get(nullptr, handler, cancel_ptr);
+	assert(!got_item);
+	assert(num_create == 3 && num_fail == 1);
+	assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
 
-    /* fifth item waiting */
+	/* fifth item waiting */
 
-    stock->Get(nullptr, handler, cancel_ptr);
-    assert(!got_item);
-    assert(num_create == 3 && num_fail == 1);
-    assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
+	stock->Get(nullptr, handler, cancel_ptr);
+	assert(!got_item);
+	assert(num_create == 3 && num_fail == 1);
+	assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
 
-    /* return third item */
+	/* return third item */
 
-    stock->Put(*third, false);
-    event_loop.LoopNonBlock();
-    assert(num_create == 3 && num_fail == 1);
-    assert(num_borrow == 2 && num_release == 2 && num_destroy == 1);
-    assert(got_item);
-    assert(last_item == third);
+	stock->Put(*third, false);
+	event_loop.LoopNonBlock();
+	assert(num_create == 3 && num_fail == 1);
+	assert(num_borrow == 2 && num_release == 2 && num_destroy == 1);
+	assert(got_item);
+	assert(last_item == third);
 
-    /* destroy second item */
+	/* destroy second item */
 
-    got_item = false;
-    last_item = nullptr;
-    stock->Put(*second, true);
-    event_loop.LoopNonBlock();
-    assert(num_create == 4 && num_fail == 1);
-    assert(num_borrow == 2 && num_release == 2 && num_destroy == 2);
-    assert(got_item);
-    assert(last_item != nullptr);
-    second = last_item;
+	got_item = false;
+	last_item = nullptr;
+	stock->Put(*second, true);
+	event_loop.LoopNonBlock();
+	assert(num_create == 4 && num_fail == 1);
+	assert(num_borrow == 2 && num_release == 2 && num_destroy == 2);
+	assert(got_item);
+	assert(last_item != nullptr);
+	second = last_item;
 
-    /* destroy first item */
+	/* destroy first item */
 
-    stock->Put(*item, true);
-    assert(num_create == 4 && num_fail == 1);
-    assert(num_borrow == 2 && num_release == 2 && num_destroy == 3);
+	stock->Put(*item, true);
+	assert(num_create == 4 && num_fail == 1);
+	assert(num_borrow == 2 && num_release == 2 && num_destroy == 3);
 
-    /* destroy second item */
+	/* destroy second item */
 
-    stock->Put(*second, true);
-    assert(num_create == 4 && num_fail == 1);
-    assert(num_borrow == 2 && num_release == 2 && num_destroy == 4);
+	stock->Put(*second, true);
+	assert(num_create == 4 && num_fail == 1);
+	assert(num_borrow == 2 && num_release == 2 && num_destroy == 4);
 
-    /* destroy third item */
+	/* destroy third item */
 
-    stock->Put(*third, true);
-    assert(num_create == 4 && num_fail == 1);
-    assert(num_borrow == 2 && num_release == 2 && num_destroy == 5);
+	stock->Put(*third, true);
+	assert(num_create == 4 && num_fail == 1);
+	assert(num_borrow == 2 && num_release == 2 && num_destroy == 5);
 
-    /* cleanup */
+	/* cleanup */
 
-    delete stock;
+	delete stock;
 }

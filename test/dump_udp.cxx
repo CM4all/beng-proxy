@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -44,48 +44,48 @@
 
 class DumpUdpHandler final : public UdpHandler {
 public:
-    /* virtual methods from class UdpHandler */
-    bool OnUdpDatagram(gcc_unused const void *data, size_t length,
-                       gcc_unused SocketAddress address, int uid) override {
-        printf("packet: %zu uid=%d\n", length, uid);
-        return true;
-    }
+	/* virtual methods from class UdpHandler */
+	bool OnUdpDatagram(gcc_unused const void *data, size_t length,
+			   gcc_unused SocketAddress address, int uid) override {
+		printf("packet: %zu uid=%d\n", length, uid);
+		return true;
+	}
 
-    void OnUdpError(std::exception_ptr ep) noexcept override {
-        PrintException(ep);
-    }
+	void OnUdpError(std::exception_ptr ep) noexcept override {
+		PrintException(ep);
+	}
 };
 
 int main(int argc, char **argv)
 try {
-    SetLogLevel(5);
+	SetLogLevel(5);
 
-    if (argc > 3) {
-        fprintf(stderr, "usage: dump-udp [LISTEN:PORT [MCAST_GROUP]]\n");
-        return 1;
-    }
+	if (argc > 3) {
+		fprintf(stderr, "usage: dump-udp [LISTEN:PORT [MCAST_GROUP]]\n");
+		return 1;
+	}
 
-    const char *listen_host = argc >= 2 ? argv[1] : "*";
-    const char *mcast_group = argc >= 3 ? argv[2] : nullptr;
+	const char *listen_host = argc >= 2 ? argv[1] : "*";
+	const char *mcast_group = argc >= 3 ? argv[2] : nullptr;
 
-    SetupProcess();
+	SetupProcess();
 
-    EventLoop event_loop;
+	EventLoop event_loop;
 
-    DumpUdpHandler handler;
+	DumpUdpHandler handler;
 
-    SocketConfig config;
-    config.bind_address = ParseSocketAddress(listen_host, 1234, true);
+	SocketConfig config;
+	config.bind_address = ParseSocketAddress(listen_host, 1234, true);
 
-    if (mcast_group != nullptr)
-        config.multicast_group = ParseSocketAddress(mcast_group, 0, false);
+	if (mcast_group != nullptr)
+		config.multicast_group = ParseSocketAddress(mcast_group, 0, false);
 
-    UdpListener udp(event_loop, config.Create(SOCK_DGRAM), handler);
+	UdpListener udp(event_loop, config.Create(SOCK_DGRAM), handler);
 
-    event_loop.Dispatch();
+	event_loop.Dispatch();
 
-    return 0;
+	return 0;
 } catch (const std::exception &e) {
-    PrintException(e);
-    return EXIT_FAILURE;
+	PrintException(e);
+	return EXIT_FAILURE;
 }

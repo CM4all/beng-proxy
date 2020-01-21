@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -55,224 +55,224 @@
 #include <stdlib.h>
 
 struct Data final : RubberSinkHandler {
-    enum Result {
-        NONE, DONE, OOM, TOO_LARGE, ERROR
-    } result;
+	enum Result {
+		NONE, DONE, OOM, TOO_LARGE, ERROR
+	} result;
 
-    Rubber &r;
+	Rubber &r;
 
-    RubberAllocation allocation;
-    size_t size;
-    std::exception_ptr error;
+	RubberAllocation allocation;
+	size_t size;
+	std::exception_ptr error;
 
-    CancellablePointer cancel_ptr;
+	CancellablePointer cancel_ptr;
 
-    explicit Data(Rubber &_r) noexcept:result(NONE), r(_r) {}
+	explicit Data(Rubber &_r) noexcept:result(NONE), r(_r) {}
 
-    /* virtual methods from class RubberSinkHandler */
-    void RubberDone(RubberAllocation &&a, size_t size) noexcept override;
-    void RubberOutOfMemory() noexcept override;
-    void RubberTooLarge() noexcept override;
-    void RubberError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class RubberSinkHandler */
+	void RubberDone(RubberAllocation &&a, size_t size) noexcept override;
+	void RubberOutOfMemory() noexcept override;
+	void RubberTooLarge() noexcept override;
+	void RubberError(std::exception_ptr ep) noexcept override;
 };
 
 void
 Data::RubberDone(RubberAllocation &&a, size_t _size) noexcept
 {
-    assert(result == NONE);
+	assert(result == NONE);
 
-    result = DONE;
-    allocation = std::move(a);
-    size = _size;
+	result = DONE;
+	allocation = std::move(a);
+	size = _size;
 }
 
 void
 Data::RubberOutOfMemory() noexcept
 {
-    assert(result == NONE);
+	assert(result == NONE);
 
-    result = OOM;
+	result = OOM;
 }
 
 void
 Data::RubberTooLarge() noexcept
 {
-    assert(result == NONE);
+	assert(result == NONE);
 
-    result = TOO_LARGE;
+	result = TOO_LARGE;
 }
 
 void
 Data::RubberError(std::exception_ptr ep) noexcept
 {
-    assert(result == NONE);
+	assert(result == NONE);
 
-    result = ERROR;
-    error = ep;
+	result = ERROR;
+	error = ep;
 }
 
 TEST(SinkRubberTest, Empty)
 {
-    TestPool pool;
-    Rubber r(4 * 1024 * 1024);
-    Data data(r);
+	TestPool pool;
+	Rubber r(4 * 1024 * 1024);
+	Data data(r);
 
-    sink_rubber_new(pool, istream_null_new(pool), r, 1024,
-                    data, data.cancel_ptr);
+	sink_rubber_new(pool, istream_null_new(pool), r, 1024,
+			data, data.cancel_ptr);
 
-    ASSERT_EQ(Data::DONE, data.result);
-    ASSERT_FALSE(data.allocation);
-    ASSERT_EQ(size_t(0), data.size);
+	ASSERT_EQ(Data::DONE, data.result);
+	ASSERT_FALSE(data.allocation);
+	ASSERT_EQ(size_t(0), data.size);
 }
 
 TEST(SinkRubberTest, Empty2)
 {
-    TestPool pool;
-    Rubber r(4 * 1024 * 1024);
-    Data data(r);
+	TestPool pool;
+	Rubber r(4 * 1024 * 1024);
+	Data data(r);
 
-    auto input = istream_byte_new(pool, istream_null_new(pool));
-    auto *sink = sink_rubber_new(pool, std::move(input), r, 1024,
-                                 data, data.cancel_ptr);
-    ASSERT_NE(sink, nullptr);
+	auto input = istream_byte_new(pool, istream_null_new(pool));
+	auto *sink = sink_rubber_new(pool, std::move(input), r, 1024,
+				     data, data.cancel_ptr);
+	ASSERT_NE(sink, nullptr);
 
-    ASSERT_EQ(Data::NONE, data.result);
-    sink_rubber_read(*sink);
+	ASSERT_EQ(Data::NONE, data.result);
+	sink_rubber_read(*sink);
 
-    ASSERT_EQ(Data::DONE, data.result);
-    ASSERT_FALSE(data.allocation);
-    ASSERT_EQ(size_t(0), data.size);
+	ASSERT_EQ(Data::DONE, data.result);
+	ASSERT_FALSE(data.allocation);
+	ASSERT_EQ(size_t(0), data.size);
 }
 
 TEST(SinkRubberTest, String)
 {
-    TestPool pool;
-    Rubber r(4 * 1024 * 1024);
-    Data data(r);
+	TestPool pool;
+	Rubber r(4 * 1024 * 1024);
+	Data data(r);
 
-    auto input = istream_string_new(pool, "foo");
-    auto *sink = sink_rubber_new(pool, std::move(input), r, 1024,
-                                 data, data.cancel_ptr);
-    ASSERT_NE(sink, nullptr);
+	auto input = istream_string_new(pool, "foo");
+	auto *sink = sink_rubber_new(pool, std::move(input), r, 1024,
+				     data, data.cancel_ptr);
+	ASSERT_NE(sink, nullptr);
 
-    ASSERT_EQ(Data::NONE, data.result);
-    sink_rubber_read(*sink);
+	ASSERT_EQ(Data::NONE, data.result);
+	sink_rubber_read(*sink);
 
-    ASSERT_EQ(Data::DONE, data.result);
-    ASSERT_TRUE(data.allocation);
-    ASSERT_EQ(size_t(3), data.size);
-    ASSERT_EQ(size_t(32), r.GetSizeOf(data.allocation.GetId()));
-    ASSERT_EQ(0, memcmp("foo", r.Read(data.allocation.GetId()), 3));
+	ASSERT_EQ(Data::DONE, data.result);
+	ASSERT_TRUE(data.allocation);
+	ASSERT_EQ(size_t(3), data.size);
+	ASSERT_EQ(size_t(32), r.GetSizeOf(data.allocation.GetId()));
+	ASSERT_EQ(0, memcmp("foo", r.Read(data.allocation.GetId()), 3));
 }
 
 TEST(SinkRubberTest, String2)
 {
-    TestPool pool;
-    Rubber r(4 * 1024 * 1024);
-    Data data(r);
+	TestPool pool;
+	Rubber r(4 * 1024 * 1024);
+	Data data(r);
 
-    auto input = istream_four_new(pool,
-                                  istream_string_new(*pool, "foobar"));
-    auto *sink = sink_rubber_new(pool, std::move(input), r, 1024,
-                                 data, data.cancel_ptr);
-    ASSERT_NE(sink, nullptr);
+	auto input = istream_four_new(pool,
+				      istream_string_new(*pool, "foobar"));
+	auto *sink = sink_rubber_new(pool, std::move(input), r, 1024,
+				     data, data.cancel_ptr);
+	ASSERT_NE(sink, nullptr);
 
-    ASSERT_EQ(Data::NONE, data.result);
+	ASSERT_EQ(Data::NONE, data.result);
 
-    sink_rubber_read(*sink);
-    if (Data::NONE == data.result)
-        sink_rubber_read(*sink);
+	sink_rubber_read(*sink);
+	if (Data::NONE == data.result)
+		sink_rubber_read(*sink);
 
-    ASSERT_EQ(Data::DONE, data.result);
-    ASSERT_TRUE(data.allocation);
-    ASSERT_EQ(size_t(6), data.size);
-    ASSERT_EQ(size_t(32), r.GetSizeOf(data.allocation.GetId()));
-    ASSERT_EQ(0, memcmp("foobar", r.Read(data.allocation.GetId()), 6));
+	ASSERT_EQ(Data::DONE, data.result);
+	ASSERT_TRUE(data.allocation);
+	ASSERT_EQ(size_t(6), data.size);
+	ASSERT_EQ(size_t(32), r.GetSizeOf(data.allocation.GetId()));
+	ASSERT_EQ(0, memcmp("foobar", r.Read(data.allocation.GetId()), 6));
 }
 
 TEST(SinkRubberTest, TooLarge1)
 {
-    TestPool pool;
-    Rubber r(4 * 1024 * 1024);
-    Data data(r);
+	TestPool pool;
+	Rubber r(4 * 1024 * 1024);
+	Data data(r);
 
-    sink_rubber_new(pool, istream_string_new(*pool, "foobar"), r, 5,
-                    data, data.cancel_ptr);
-    ASSERT_EQ(Data::TOO_LARGE, data.result);
+	sink_rubber_new(pool, istream_string_new(*pool, "foobar"), r, 5,
+			data, data.cancel_ptr);
+	ASSERT_EQ(Data::TOO_LARGE, data.result);
 }
 
 TEST(SinkRubberTest, TooLarge2)
 {
-    TestPool pool;
-    Rubber r(4 * 1024 * 1024);
-    Data data(r);
+	TestPool pool;
+	Rubber r(4 * 1024 * 1024);
+	Data data(r);
 
-    auto input = istream_four_new(pool,
-                                  istream_string_new(*pool, "foobar"));
-    auto *sink = sink_rubber_new(pool, std::move(input), r, 5,
-                    data, data.cancel_ptr);
+	auto input = istream_four_new(pool,
+				      istream_string_new(*pool, "foobar"));
+	auto *sink = sink_rubber_new(pool, std::move(input), r, 5,
+				     data, data.cancel_ptr);
 
-    ASSERT_EQ(Data::NONE, data.result);
+	ASSERT_EQ(Data::NONE, data.result);
 
-    sink_rubber_read(*sink);
-    if (Data::NONE == data.result)
-        sink_rubber_read(*sink);
+	sink_rubber_read(*sink);
+	if (Data::NONE == data.result)
+		sink_rubber_read(*sink);
 
-    ASSERT_EQ(Data::TOO_LARGE, data.result);
+	ASSERT_EQ(Data::TOO_LARGE, data.result);
 }
 
 TEST(SinkRubberTest, Error)
 {
-    TestPool pool;
-    Rubber r(4 * 1024 * 1024);
-    Data data(r);
+	TestPool pool;
+	Rubber r(4 * 1024 * 1024);
+	Data data(r);
 
-    auto input = istream_fail_new(pool,
-                                  std::make_exception_ptr(std::runtime_error("error")));
-    auto *sink = sink_rubber_new(pool, std::move(input), r, 1024,
-                                 data, data.cancel_ptr);
-    ASSERT_NE(sink, nullptr);
+	auto input = istream_fail_new(pool,
+				      std::make_exception_ptr(std::runtime_error("error")));
+	auto *sink = sink_rubber_new(pool, std::move(input), r, 1024,
+				     data, data.cancel_ptr);
+	ASSERT_NE(sink, nullptr);
 
-    ASSERT_EQ(Data::NONE, data.result);
-    sink_rubber_read(*sink);
+	ASSERT_EQ(Data::NONE, data.result);
+	sink_rubber_read(*sink);
 
-    ASSERT_EQ(Data::ERROR, data.result);
-    ASSERT_NE(data.error, nullptr);
+	ASSERT_EQ(Data::ERROR, data.result);
+	ASSERT_NE(data.error, nullptr);
 }
 
 TEST(SinkRubberTest, OOM)
 {
-    TestPool pool;
-    Rubber r(4 * 1024 * 1024);
-    Data data(r);
+	TestPool pool;
+	Rubber r(4 * 1024 * 1024);
+	Data data(r);
 
-    EventLoop event_loop;
-    auto input = istream_delayed_new(pool, event_loop);
-    input.second.cancel_ptr = nullptr;
+	EventLoop event_loop;
+	auto input = istream_delayed_new(pool, event_loop);
+	input.second.cancel_ptr = nullptr;
 
-    sink_rubber_new(pool, std::move(input.first), r, 8 * 1024 * 1024,
-                    data, data.cancel_ptr);
-    ASSERT_EQ(Data::OOM, data.result);
+	sink_rubber_new(pool, std::move(input.first), r, 8 * 1024 * 1024,
+			data, data.cancel_ptr);
+	ASSERT_EQ(Data::OOM, data.result);
 }
 
 TEST(SinkRubberTest, Abort)
 {
-    TestPool pool;
-    Rubber r(4 * 1024 * 1024);
-    Data data(r);
+	TestPool pool;
+	Rubber r(4 * 1024 * 1024);
+	Data data(r);
 
-    EventLoop event_loop;
-    auto delayed = istream_delayed_new(pool, event_loop);
-    delayed.second.cancel_ptr = nullptr;
+	EventLoop event_loop;
+	auto delayed = istream_delayed_new(pool, event_loop);
+	delayed.second.cancel_ptr = nullptr;
 
-    auto input = istream_cat_new(pool, istream_string_new(*pool, "foo"),
-                                 std::move(delayed.first));
-    auto *sink = sink_rubber_new(pool, std::move(input), r, 4,
-                                 data, data.cancel_ptr);
-    ASSERT_NE(sink, nullptr);
-    ASSERT_EQ(Data::NONE, data.result);
-    sink_rubber_read(*sink);
-    ASSERT_EQ(Data::NONE, data.result);
+	auto input = istream_cat_new(pool, istream_string_new(*pool, "foo"),
+				     std::move(delayed.first));
+	auto *sink = sink_rubber_new(pool, std::move(input), r, 4,
+				     data, data.cancel_ptr);
+	ASSERT_NE(sink, nullptr);
+	ASSERT_EQ(Data::NONE, data.result);
+	sink_rubber_read(*sink);
+	ASSERT_EQ(Data::NONE, data.result);
 
-    data.cancel_ptr.Cancel();
+	data.cancel_ptr.Cancel();
 }

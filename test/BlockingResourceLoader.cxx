@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,38 +38,38 @@
 #include "util/Cancellable.hxx"
 
 class BlockingResourceRequest : PoolHolder, LeakDetector, Cancellable {
-    UnusedHoldIstreamPtr request_body;
+	UnusedHoldIstreamPtr request_body;
 
 public:
-    BlockingResourceRequest(struct pool &_pool,
-                            UnusedIstreamPtr &&_request_body,
-                            CancellablePointer &cancel_ptr) noexcept
-        :PoolHolder(_pool),
-         request_body(GetPool(), std::move(_request_body)) {
-        cancel_ptr = *this;
-    }
+	BlockingResourceRequest(struct pool &_pool,
+				UnusedIstreamPtr &&_request_body,
+				CancellablePointer &cancel_ptr) noexcept
+		:PoolHolder(_pool),
+		 request_body(GetPool(), std::move(_request_body)) {
+		cancel_ptr = *this;
+	}
 
 private:
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override {
-        this->~BlockingResourceRequest();
-    }
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		this->~BlockingResourceRequest();
+	}
 };
 
 void
 BlockingResourceLoader::SendRequest(struct pool &pool,
-                                    const StopwatchPtr &,
-                                    sticky_hash_t,
-                                    const char *,
-                                    const char *,
-                                    http_method_t,
-                                    const ResourceAddress &,
-                                    http_status_t,
-                                    StringMap &&,
-                                    UnusedIstreamPtr body, const char *,
-                                    HttpResponseHandler &,
-                                    CancellablePointer &cancel_ptr) noexcept
+				    const StopwatchPtr &,
+				    sticky_hash_t,
+				    const char *,
+				    const char *,
+				    http_method_t,
+				    const ResourceAddress &,
+				    http_status_t,
+				    StringMap &&,
+				    UnusedIstreamPtr body, const char *,
+				    HttpResponseHandler &,
+				    CancellablePointer &cancel_ptr) noexcept
 {
-    NewFromPool<BlockingResourceRequest>(pool, pool,
-                                         std::move(body), cancel_ptr);
+	NewFromPool<BlockingResourceRequest>(pool, pool,
+					     std::move(body), cancel_ptr);
 }

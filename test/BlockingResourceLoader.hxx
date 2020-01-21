@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,20 +30,22 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#pragma once
+
 #include "ResourceLoader.hxx"
 
 class BlockingResourceLoader final : public ResourceLoader {
 public:
-    /* virtual methods from class ResourceLoader */
-    void SendRequest(struct pool &pool,
-                     const StopwatchPtr &parent_stopwatch,
-                     sticky_hash_t session_sticky,
-                     const char *cache_tag,
-                     const char *site_name,
-                     http_method_t method,
-                     const ResourceAddress &address,
-                     http_status_t status, StringMap &&headers,
-                     UnusedIstreamPtr body, const char *body_etag,
-                     HttpResponseHandler &handler,
-                     CancellablePointer &cancel_ptr) noexcept override;
+	/* virtual methods from class ResourceLoader */
+	void SendRequest(struct pool &pool,
+			 const StopwatchPtr &parent_stopwatch,
+			 sticky_hash_t session_sticky,
+			 const char *cache_tag,
+			 const char *site_name,
+			 http_method_t method,
+			 const ResourceAddress &address,
+			 http_status_t status, StringMap &&headers,
+			 UnusedIstreamPtr body, const char *body_etag,
+			 HttpResponseHandler &handler,
+			 CancellablePointer &cancel_ptr) noexcept override;
 };

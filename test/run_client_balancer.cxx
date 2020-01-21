@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -53,35 +53,35 @@
 #include <string.h>
 
 struct Context final : PInstance, ConnectSocketHandler {
-    FailureManager failure_manager;
-    BalancerMap balancer;
+	FailureManager failure_manager;
+	BalancerMap balancer;
 
-    enum {
-        NONE, SUCCESS, TIMEOUT, ERROR,
-    } result = TIMEOUT;
+	enum {
+		NONE, SUCCESS, TIMEOUT, ERROR,
+	} result = TIMEOUT;
 
-    UniqueSocketDescriptor fd;
-    std::exception_ptr error;
+	UniqueSocketDescriptor fd;
+	std::exception_ptr error;
 
-    Context()
-        :balancer(failure_manager)
-    {
-    }
+	Context()
+		:balancer(failure_manager)
+	{
+	}
 
-    /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) noexcept override {
-        result = SUCCESS;
-        fd = std::move(new_fd);
-    }
+	/* virtual methods from class ConnectSocketHandler */
+	void OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) noexcept override {
+		result = SUCCESS;
+		fd = std::move(new_fd);
+	}
 
-    void OnSocketConnectTimeout() noexcept override {
-        result = TIMEOUT;
-    }
+	void OnSocketConnectTimeout() noexcept override {
+		result = TIMEOUT;
+	}
 
-    void OnSocketConnectError(std::exception_ptr ep) noexcept override {
-        result = ERROR;
-        error = std::move(ep);
-    }
+	void OnSocketConnectError(std::exception_ptr ep) noexcept override {
+		result = ERROR;
+		error = std::move(ep);
+	}
 };
 
 /*
@@ -92,61 +92,61 @@ struct Context final : PInstance, ConnectSocketHandler {
 int
 main(int argc, char **argv)
 try {
-    if (argc <= 1) {
-        fprintf(stderr, "Usage: run-client-balancer ADDRESS ...\n");
-        return EXIT_FAILURE;
-    }
+	if (argc <= 1) {
+		fprintf(stderr, "Usage: run-client-balancer ADDRESS ...\n");
+		return EXIT_FAILURE;
+	}
 
-    /* initialize */
+	/* initialize */
 
-    Context ctx;
+	Context ctx;
 
-    const auto pool = pool_new_linear(ctx.root_pool, "test", 8192);
-    AllocatorPtr alloc(pool);
+	const auto pool = pool_new_linear(ctx.root_pool, "test", 8192);
+	AllocatorPtr alloc(pool);
 
-    AddressList address_list;
+	AddressList address_list;
 
-    struct addrinfo hints;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_flags = AI_ADDRCONFIG;
-    hints.ai_socktype = SOCK_STREAM;
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_flags = AI_ADDRCONFIG;
+	hints.ai_socktype = SOCK_STREAM;
 
-    for (int i = 1; i < argc; ++i)
-        address_list.Add(alloc, Resolve(argv[i], 80, &hints));
+	for (int i = 1; i < argc; ++i)
+		address_list.Add(alloc, Resolve(argv[i], 80, &hints));
 
-    /* connect */
+	/* connect */
 
-    CancellablePointer cancel_ptr;
-    client_balancer_connect(ctx.event_loop, *pool, ctx.balancer,
-                            false, SocketAddress::Null(),
-                            0, address_list, std::chrono::seconds(30),
-                            ctx, cancel_ptr);
+	CancellablePointer cancel_ptr;
+	client_balancer_connect(ctx.event_loop, *pool, ctx.balancer,
+				false, SocketAddress::Null(),
+				0, address_list, std::chrono::seconds(30),
+				ctx, cancel_ptr);
 
-    ctx.event_loop.Dispatch();
+	ctx.event_loop.Dispatch();
 
-    assert(ctx.result != Context::NONE);
+	assert(ctx.result != Context::NONE);
 
-    /* cleanup */
+	/* cleanup */
 
-    switch (ctx.result) {
-    case Context::NONE:
-        break;
+	switch (ctx.result) {
+	case Context::NONE:
+		break;
 
-    case Context::SUCCESS:
-        return EXIT_SUCCESS;
+	case Context::SUCCESS:
+		return EXIT_SUCCESS;
 
-    case Context::TIMEOUT:
-        fprintf(stderr, "timeout\n");
-        return EXIT_FAILURE;
+	case Context::TIMEOUT:
+		fprintf(stderr, "timeout\n");
+		return EXIT_FAILURE;
 
-    case Context::ERROR:
-        PrintException(ctx.error);
-        return EXIT_FAILURE;
-    }
+	case Context::ERROR:
+		PrintException(ctx.error);
+		return EXIT_FAILURE;
+	}
 
-    assert(false);
-    return EXIT_FAILURE;
+	assert(false);
+	return EXIT_FAILURE;
 } catch (const std::exception &e) {
-    PrintException(e);
-    return EXIT_FAILURE;
+	PrintException(e);
+	return EXIT_FAILURE;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -53,83 +53,83 @@
 
 UnusedIstreamPtr
 embed_inline_widget(struct pool &pool,
-                    WidgetContext &,
-                    const StopwatchPtr &,
-                    gcc_unused bool plain_text,
-                    Widget &widget) noexcept
+		    WidgetContext &,
+		    const StopwatchPtr &,
+		    gcc_unused bool plain_text,
+		    Widget &widget) noexcept
 {
-    const char *s = widget.GetIdPath();
-    if (s == nullptr)
-        s = "widget";
+	const char *s = widget.GetIdPath();
+	if (s == nullptr)
+		s = "widget";
 
-    return istream_string_new(pool, s);
+	return istream_string_new(pool, s);
 }
 
 WidgetSession *
 Widget::GetSession(gcc_unused RealmSession &session,
-                   gcc_unused bool create) noexcept
+		   gcc_unused bool create) noexcept
 {
-    return nullptr;
+	return nullptr;
 }
 
 RewriteUriMode
 parse_uri_mode(gcc_unused StringView s) noexcept
 {
-    return RewriteUriMode::DIRECT;
+	return RewriteUriMode::DIRECT;
 }
 
 UnusedIstreamPtr
 rewrite_widget_uri(gcc_unused struct pool &pool,
-                   WidgetContext &, const StopwatchPtr &,
-                   gcc_unused Widget &widget,
-                   gcc_unused StringView value,
-                   gcc_unused RewriteUriMode mode,
-                   gcc_unused bool stateful,
-                   gcc_unused const char *view,
-                   gcc_unused const struct escape_class *escape) noexcept
+		   WidgetContext &, const StopwatchPtr &,
+		   gcc_unused Widget &widget,
+		   gcc_unused StringView value,
+		   gcc_unused RewriteUriMode mode,
+		   gcc_unused bool stateful,
+		   gcc_unused const char *view,
+		   gcc_unused const struct escape_class *escape) noexcept
 {
-    return nullptr;
+	return nullptr;
 }
 
 int
 main(int argc, char **argv)
 try {
-    (void)argc;
-    (void)argv;
+	(void)argc;
+	(void)argv;
 
-    const ScopeFbPoolInit fb_pool_init;
-    PInstance instance;
+	const ScopeFbPoolInit fb_pool_init;
+	PInstance instance;
 
-    Widget widget(instance.root_pool, &root_widget_class);
+	Widget widget(instance.root_pool, &root_widget_class);
 
-    SessionId session_id;
-    session_id.Generate();
+	SessionId session_id;
+	session_id.Generate();
 
-    FailingResourceLoader resource_loader;
-    WidgetContext ctx(instance.event_loop,
-                      resource_loader, resource_loader,
-                      nullptr,
-                      nullptr, nullptr,
-                      "localhost:8080",
-                      "localhost:8080",
-                      "/beng.html",
-                      "http://localhost:8080/beng.html",
-                      "/beng.html",
-                      nullptr,
-                      nullptr,
-                      session_id, "foo",
-                      nullptr);
+	FailingResourceLoader resource_loader;
+	WidgetContext ctx(instance.event_loop,
+			  resource_loader, resource_loader,
+			  nullptr,
+			  nullptr, nullptr,
+			  "localhost:8080",
+			  "localhost:8080",
+			  "/beng.html",
+			  "http://localhost:8080/beng.html",
+			  "/beng.html",
+			  nullptr,
+			  nullptr,
+			  session_id, "foo",
+			  nullptr);
 
-    auto result =
-        processor_process(instance.root_pool, nullptr,
-                          UnusedIstreamPtr(istream_file_new(instance.event_loop,
-                                                            instance.root_pool,
-                                                            "/dev/stdin", (off_t)-1)),
-                          widget, ctx, PROCESSOR_CONTAINER);
+	auto result =
+		processor_process(instance.root_pool, nullptr,
+				  UnusedIstreamPtr(istream_file_new(instance.event_loop,
+								    instance.root_pool,
+								    "/dev/stdin", (off_t)-1)),
+				  widget, ctx, PROCESSOR_CONTAINER);
 
-    StdioSink sink(std::move(result));
-    sink.LoopRead();
+	StdioSink sink(std::move(result));
+	sink.LoopRead();
 } catch (...) {
-    PrintException(std::current_exception());
-    return EXIT_FAILURE;
+	PrintException(std::current_exception());
+	return EXIT_FAILURE;
 }

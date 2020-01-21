@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,6 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#pragma once
+
 #include "istream/Handler.hxx"
 #include "istream/Pointer.hxx"
 #include "util/PrintException.hxx"
@@ -41,47 +43,47 @@
 #include <string.h>
 
 struct StdioSink final : IstreamHandler {
-    IstreamPointer input;
+	IstreamPointer input;
 
-    template<typename I>
-    explicit StdioSink(I &&_input)
-        :input(std::forward<I>(_input), *this) {}
+	template<typename I>
+	explicit StdioSink(I &&_input)
+		:input(std::forward<I>(_input), *this) {}
 
-    void LoopRead() {
-        while (input.IsDefined())
-            input.Read();
-    }
+	void LoopRead() {
+		while (input.IsDefined())
+			input.Read();
+	}
 
-    /* virtual methods from class IstreamHandler */
+	/* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) noexcept override;
+	size_t OnData(const void *data, size_t length) noexcept override;
 
-    void OnEof() noexcept override {
-        input.Clear();
-    }
+	void OnEof() noexcept override {
+		input.Clear();
+	}
 
-    void OnError(std::exception_ptr ep) noexcept override {
-        input.Clear();
+	void OnError(std::exception_ptr ep) noexcept override {
+		input.Clear();
 
-        PrintException(ep);
-    }
+		PrintException(ep);
+	}
 };
 
 size_t
 StdioSink::OnData(const void *data, size_t length) noexcept
 {
-    ssize_t nbytes = write(STDOUT_FILENO, data, length);
-    if (nbytes < 0) {
-        perror("failed to write to stdout");
-        input.ClearAndClose();
-        return 0;
-    }
+	ssize_t nbytes = write(STDOUT_FILENO, data, length);
+	if (nbytes < 0) {
+		perror("failed to write to stdout");
+		input.ClearAndClose();
+		return 0;
+	}
 
-    if (nbytes == 0) {
-        fprintf(stderr, "failed to write to stdout\n");
-        input.ClearAndClose();
-        return 0;
-    }
+	if (nbytes == 0) {
+		fprintf(stderr, "failed to write to stdout\n");
+		input.ClearAndClose();
+		return 0;
+	}
 
-    return (size_t)nbytes;
+	return (size_t)nbytes;
 }

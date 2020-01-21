@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -47,39 +47,39 @@ struct Usage {};
 int
 main(int argc, char **argv)
 try {
-    ConstBuffer<const char *> args(argv + 1, argc - 1);
-    if (args.empty())
-        throw Usage();
+	ConstBuffer<const char *> args(argv + 1, argc - 1);
+	if (args.empty())
+		throw Usage();
 
-    const char *const prefix = args.shift();
-    if (args.empty())
-        throw Usage();
+	const char *const prefix = args.shift();
+	if (args.empty())
+		throw Usage();
 
-    const char *const yaml_file = args.shift();
-    const char *const yaml_map_path = args.empty() ? nullptr : args.shift();
+	const char *const yaml_file = args.shift();
+	const char *const yaml_map_path = args.empty() ? nullptr : args.shift();
 
-    if (!args.empty())
-        throw Usage();
+	if (!args.empty())
+		throw Usage();
 
-    const ScopeFbPoolInit fb_pool_init;
-    PInstance instance;
+	const ScopeFbPoolInit fb_pool_init;
+	PInstance instance;
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    StdioSink sink(NewYamlSubstIstream(pool,
-                                       UnusedIstreamPtr(istream_file_new(instance.event_loop, *pool,
-                                                                         "/dev/stdin", (off_t)-1)),
-                                       true,
-                                       prefix, yaml_file, yaml_map_path));
+	StdioSink sink(NewYamlSubstIstream(pool,
+					   UnusedIstreamPtr(istream_file_new(instance.event_loop, *pool,
+									     "/dev/stdin", (off_t)-1)),
+					   true,
+					   prefix, yaml_file, yaml_map_path));
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 
-    sink.LoopRead();
+	sink.LoopRead();
 } catch (Usage) {
-    fprintf(stderr, "usage: %s PREFIX DATA.yaml [MAP_PATH]\n", argv[0]);
-    return EXIT_FAILURE;
+	fprintf(stderr, "usage: %s PREFIX DATA.yaml [MAP_PATH]\n", argv[0]);
+	return EXIT_FAILURE;
 } catch (...) {
-    PrintException(std::current_exception());
-    return EXIT_FAILURE;
+	PrintException(std::current_exception());
+	return EXIT_FAILURE;
 }

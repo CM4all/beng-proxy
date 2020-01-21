@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,50 +35,50 @@
 bool
 Context::ReadBuckets(size_t limit)
 {
-    IstreamBucketList list;
-    input.FillBucketList(list);
+	IstreamBucketList list;
+	input.FillBucketList(list);
 
-    if (list.IsEmpty() && list.HasMore())
-        return false;
+	if (list.IsEmpty() && list.HasMore())
+		return false;
 
-    got_data = true;
+	got_data = true;
 
-    bool result = true;
-    size_t consumed = 0;
+	bool result = true;
+	size_t consumed = 0;
 
-    for (const auto &i : list) {
-        if (i.GetType() != IstreamBucket::Type::BUFFER) {
-            result = false;
-            break;
-        }
+	for (const auto &i : list) {
+		if (i.GetType() != IstreamBucket::Type::BUFFER) {
+			result = false;
+			break;
+		}
 
-        const auto b = i.GetBuffer();
-        size_t size = std::min(b.size, limit);
+		const auto b = i.GetBuffer();
+		size_t size = std::min(b.size, limit);
 
-        if (expected_result && record) {
-            assert(skipped + buffer.size() == offset);
-            assert(memcmp((const char *)expected_result + skipped + buffer.size(),
-                          b.data, b.size) == 0);
+		if (expected_result && record) {
+			assert(skipped + buffer.size() == offset);
+			assert(memcmp((const char *)expected_result + skipped + buffer.size(),
+				      b.data, b.size) == 0);
 
-            buffer.append((const char *)b.data, size);
-        }
+			buffer.append((const char *)b.data, size);
+		}
 
-        consumed += size;
-        offset += size;
-        limit -= size;
-        if (limit == 0)
-            break;
-    }
+		consumed += size;
+		offset += size;
+		limit -= size;
+		if (limit == 0)
+			break;
+	}
 
-    gcc_unused size_t consumed2 = input.ConsumeBucketList(consumed);
-    assert(consumed2 == consumed);
+	gcc_unused size_t consumed2 = input.ConsumeBucketList(consumed);
+	assert(consumed2 == consumed);
 
-    if (result && !list.HasMore()) {
-        ClearAndCloseInput();
-        result = false;
-    }
+	if (result && !list.HasMore()) {
+		ClearAndCloseInput();
+		result = false;
+	}
 
-    return result;
+	return result;
 }
 
 /*
@@ -89,82 +89,82 @@ Context::ReadBuckets(size_t limit)
 size_t
 Context::OnData(gcc_unused const void *data, size_t length) noexcept
 {
-    got_data = true;
+	got_data = true;
 
-    if (block_inject != nullptr) {
-        DeferInject(*block_inject,
-                    std::make_exception_ptr(std::runtime_error("block_inject")));
-        block_inject = nullptr;
-        return 0;
-    }
+	if (block_inject != nullptr) {
+		DeferInject(*block_inject,
+			    std::make_exception_ptr(std::runtime_error("block_inject")));
+		block_inject = nullptr;
+		return 0;
+	}
 
-    if (block_byte) {
-        block_byte_state = !block_byte_state;
-        if (block_byte_state)
-            return 0;
-    }
+	if (block_byte) {
+		block_byte_state = !block_byte_state;
+		if (block_byte_state)
+			return 0;
+	}
 
-    if (abort_istream != nullptr && abort_after-- == 0) {
-        DeferInject(*abort_istream,
-                    std::make_exception_ptr(std::runtime_error("abort_istream")));
-        abort_istream = nullptr;
-        return 0;
-    }
+	if (abort_istream != nullptr && abort_after-- == 0) {
+		DeferInject(*abort_istream,
+			    std::make_exception_ptr(std::runtime_error("abort_istream")));
+		abort_istream = nullptr;
+		return 0;
+	}
 
-    if (half && length > 8)
-        length = (length + 1) / 2;
+	if (half && length > 8)
+		length = (length + 1) / 2;
 
-    if (block_after >= 0) {
-        --block_after;
-        if (block_after == -1)
-            /* block once */
-            return 0;
-    }
+	if (block_after >= 0) {
+		--block_after;
+		if (block_after == -1)
+			/* block once */
+			return 0;
+	}
 
-    if (expected_result && record) {
-        assert(skipped + buffer.size() == offset);
-        assert(memcmp((const char *)expected_result + skipped + buffer.size(), data, length) == 0);
+	if (expected_result && record) {
+		assert(skipped + buffer.size() == offset);
+		assert(memcmp((const char *)expected_result + skipped + buffer.size(), data, length) == 0);
 
-        buffer.append((const char *)data, length);
-    }
+		buffer.append((const char *)data, length);
+	}
 
-    offset += length;
-    return length;
+	offset += length;
+	return length;
 }
 
 ssize_t
 Context::OnDirect(gcc_unused FdType type, gcc_unused int fd, size_t max_length) noexcept
 {
-    got_data = true;
+	got_data = true;
 
-    if (block_inject != nullptr) {
-        DeferInject(*block_inject,
-                    std::make_exception_ptr(std::runtime_error("block_inject")));
-        block_inject = nullptr;
-        return 0;
-    }
+	if (block_inject != nullptr) {
+		DeferInject(*block_inject,
+			    std::make_exception_ptr(std::runtime_error("block_inject")));
+		block_inject = nullptr;
+		return 0;
+	}
 
-    if (abort_istream != nullptr) {
-        DeferInject(*abort_istream,
-                    std::make_exception_ptr(std::runtime_error("abort_istream")));
-        abort_istream = nullptr;
-        return 0;
-    }
+	if (abort_istream != nullptr) {
+		DeferInject(*abort_istream,
+			    std::make_exception_ptr(std::runtime_error("abort_istream")));
+		abort_istream = nullptr;
+		return 0;
+	}
 
-    offset += max_length;
-    return max_length;
+	offset += max_length;
+	return max_length;
 }
 
 void
 Context::OnEof() noexcept
 {
-    eof = true;
+	eof = true;
 }
 
 void
 Context::OnError(std::exception_ptr) noexcept
 {
-    assert(!expected_result || !record);
+	assert(!expected_result || !record);
 
-    eof = true;
+	eof = true;
 }

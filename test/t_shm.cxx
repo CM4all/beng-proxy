@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,94 +36,94 @@
 
 TEST(ShmTest, Basic)
 {
-    struct shm *shm;
-    void *a, *b, *c, *d, *e;
+	struct shm *shm;
+	void *a, *b, *c, *d, *e;
 
-    shm = shm_new(1024, 2);
+	shm = shm_new(1024, 2);
 
-    a = shm_alloc(shm, 1);
-    ASSERT_NE(a, nullptr);
+	a = shm_alloc(shm, 1);
+	ASSERT_NE(a, nullptr);
 
-    b = shm_alloc(shm, 2);
-    ASSERT_EQ(b, nullptr);
+	b = shm_alloc(shm, 2);
+	ASSERT_EQ(b, nullptr);
 
-    b = shm_alloc(shm, 1);
-    ASSERT_NE(b, nullptr);
+	b = shm_alloc(shm, 1);
+	ASSERT_NE(b, nullptr);
 
-    c = shm_alloc(shm, 1);
-    ASSERT_EQ(c, nullptr);
+	c = shm_alloc(shm, 1);
+	ASSERT_EQ(c, nullptr);
 
-    shm_free(shm, a);
-    c = shm_alloc(shm, 1);
-    ASSERT_NE(c, nullptr);
+	shm_free(shm, a);
+	c = shm_alloc(shm, 1);
+	ASSERT_NE(c, nullptr);
 
-    a = shm_alloc(shm, 1);
-    ASSERT_EQ(a, nullptr);
+	a = shm_alloc(shm, 1);
+	ASSERT_EQ(a, nullptr);
 
-    shm_free(shm, b);
-    shm_free(shm, c);
+	shm_free(shm, b);
+	shm_free(shm, c);
 
-    a = shm_alloc(shm, 2);
-    ASSERT_NE(a, nullptr);
+	a = shm_alloc(shm, 2);
+	ASSERT_NE(a, nullptr);
 
-    b = shm_alloc(shm, 2);
-    ASSERT_EQ(b, nullptr);
+	b = shm_alloc(shm, 2);
+	ASSERT_EQ(b, nullptr);
 
-    b = shm_alloc(shm, 1);
-    ASSERT_EQ(b, nullptr);
+	b = shm_alloc(shm, 1);
+	ASSERT_EQ(b, nullptr);
 
-    shm_free(shm, a);
+	shm_free(shm, a);
 
-    a = shm_alloc(shm, 2);
-    ASSERT_NE(a, nullptr);
+	a = shm_alloc(shm, 2);
+	ASSERT_NE(a, nullptr);
 
-    shm_close(shm);
+	shm_close(shm);
 
-    /* allocate and deallocate in different order, to see if adjacent
-       free pages are merged properly */
+	/* allocate and deallocate in different order, to see if adjacent
+	   free pages are merged properly */
 
-    shm = shm_new(1024, 5);
+	shm = shm_new(1024, 5);
 
-    a = shm_alloc(shm, 1);
-    ASSERT_NE(a, nullptr);
+	a = shm_alloc(shm, 1);
+	ASSERT_NE(a, nullptr);
 
-    b = shm_alloc(shm, 2);
-    ASSERT_NE(b, nullptr);
+	b = shm_alloc(shm, 2);
+	ASSERT_NE(b, nullptr);
 
-    c = shm_alloc(shm, 1);
-    ASSERT_NE(c, nullptr);
+	c = shm_alloc(shm, 1);
+	ASSERT_NE(c, nullptr);
 
-    d = shm_alloc(shm, 1);
-    ASSERT_NE(d, nullptr);
+	d = shm_alloc(shm, 1);
+	ASSERT_NE(d, nullptr);
 
-    e = shm_alloc(shm, 1);
-    ASSERT_EQ(e, nullptr);
+	e = shm_alloc(shm, 1);
+	ASSERT_EQ(e, nullptr);
 
-    shm_free(shm, b);
-    shm_free(shm, c);
+	shm_free(shm, b);
+	shm_free(shm, c);
 
-    e = shm_alloc(shm, 4);
-    ASSERT_EQ(e, nullptr);
+	e = shm_alloc(shm, 4);
+	ASSERT_EQ(e, nullptr);
 
-    e = shm_alloc(shm, 3);
-    ASSERT_NE(e, nullptr);
-    shm_free(shm, e);
+	e = shm_alloc(shm, 3);
+	ASSERT_NE(e, nullptr);
+	shm_free(shm, e);
 
-    b = shm_alloc(shm, 2);
-    ASSERT_NE(b, nullptr);
+	b = shm_alloc(shm, 2);
+	ASSERT_NE(b, nullptr);
 
-    c = shm_alloc(shm, 1);
-    ASSERT_NE(c, nullptr);
+	c = shm_alloc(shm, 1);
+	ASSERT_NE(c, nullptr);
 
-    shm_free(shm, c);
-    shm_free(shm, b);
+	shm_free(shm, c);
+	shm_free(shm, b);
 
-    e = shm_alloc(shm, 4);
-    ASSERT_EQ(e, nullptr);
+	e = shm_alloc(shm, 4);
+	ASSERT_EQ(e, nullptr);
 
-    e = shm_alloc(shm, 3);
-    ASSERT_NE(e, nullptr);
-    shm_free(shm, e);
+	e = shm_alloc(shm, 3);
+	ASSERT_NE(e, nullptr);
+	shm_free(shm, e);
 
-    shm_close(shm);
+	shm_close(shm);
 }

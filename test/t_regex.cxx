@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -43,112 +43,112 @@
 
 TEST(RegexTest, Expand)
 {
-    UniqueRegex r;
-    ASSERT_FALSE(r.IsDefined());
-    r.Compile("^/foo/(\\w+)/([^/]+)/(.*)$", false, true);
-    ASSERT_TRUE(r.IsDefined());
+	UniqueRegex r;
+	ASSERT_FALSE(r.IsDefined());
+	r.Compile("^/foo/(\\w+)/([^/]+)/(.*)$", false, true);
+	ASSERT_TRUE(r.IsDefined());
 
-    ASSERT_FALSE(r.Match("a"));
+	ASSERT_FALSE(r.Match("a"));
 
-    auto match_info = r.MatchCapture("/foo/bar/a/b/c.html");
-    ASSERT_TRUE(match_info.IsDefined());
+	auto match_info = r.MatchCapture("/foo/bar/a/b/c.html");
+	ASSERT_TRUE(match_info.IsDefined());
 
-    TestPool pool;
-    AllocatorPtr alloc(pool);
+	TestPool pool;
+	AllocatorPtr alloc(pool);
 
-    auto e = expand_string(alloc, "\\1-\\2-\\3-\\\\", match_info);
-    ASSERT_NE(e, nullptr);
-    ASSERT_EQ(strcmp(e, "bar-a-b/c.html-\\"), 0);
+	auto e = expand_string(alloc, "\\1-\\2-\\3-\\\\", match_info);
+	ASSERT_NE(e, nullptr);
+	ASSERT_EQ(strcmp(e, "bar-a-b/c.html-\\"), 0);
 
-    match_info = r.MatchCapture("/foo/bar/a/b/");
-    ASSERT_TRUE(match_info.IsDefined());
+	match_info = r.MatchCapture("/foo/bar/a/b/");
+	ASSERT_TRUE(match_info.IsDefined());
 
-    e = expand_string(alloc, "\\1-\\2-\\3-\\\\", match_info);
-    ASSERT_NE(e, nullptr);
-    ASSERT_EQ(strcmp(e, "bar-a-b/-\\"), 0);
+	e = expand_string(alloc, "\\1-\\2-\\3-\\\\", match_info);
+	ASSERT_NE(e, nullptr);
+	ASSERT_EQ(strcmp(e, "bar-a-b/-\\"), 0);
 
-    match_info = r.MatchCapture("/foo/bar/a%20b/c%2520.html");
-    ASSERT_TRUE(match_info.IsDefined());
+	match_info = r.MatchCapture("/foo/bar/a%20b/c%2520.html");
+	ASSERT_TRUE(match_info.IsDefined());
 
-    e = expand_string_unescaped(alloc, "\\1-\\2-\\3", match_info);
-    ASSERT_NE(e, nullptr);
-    ASSERT_EQ(strcmp(e, "bar-a b-c%20.html"), 0);
+	e = expand_string_unescaped(alloc, "\\1-\\2-\\3", match_info);
+	ASSERT_NE(e, nullptr);
+	ASSERT_EQ(strcmp(e, "bar-a b-c%20.html"), 0);
 
-    ASSERT_THROW(expand_string_unescaped(alloc, "\\4", match_info),
-                 std::runtime_error);
+	ASSERT_THROW(expand_string_unescaped(alloc, "\\4", match_info),
+		     std::runtime_error);
 }
 
 TEST(RegexTest, ExpandMalformedUriEscape)
 {
-    UniqueRegex r;
-    ASSERT_FALSE(r.IsDefined());
-    r.Compile("^(.*)$", false, true);
-    ASSERT_TRUE(r.IsDefined());
+	UniqueRegex r;
+	ASSERT_FALSE(r.IsDefined());
+	r.Compile("^(.*)$", false, true);
+	ASSERT_TRUE(r.IsDefined());
 
-    auto match_info = r.MatchCapture("%xxx");
-    ASSERT_TRUE(match_info.IsDefined());
+	auto match_info = r.MatchCapture("%xxx");
+	ASSERT_TRUE(match_info.IsDefined());
 
-    TestPool pool;
-    AllocatorPtr alloc(pool);
+	TestPool pool;
+	AllocatorPtr alloc(pool);
 
-    auto e = expand_string(alloc, "-\\1-", match_info);
-    ASSERT_NE(e, nullptr);
-    ASSERT_EQ(strcmp(e, "-%xxx-"), 0);
+	auto e = expand_string(alloc, "-\\1-", match_info);
+	ASSERT_NE(e, nullptr);
+	ASSERT_EQ(strcmp(e, "-%xxx-"), 0);
 
-    ASSERT_THROW(expand_string_unescaped(alloc, "-\\1-", match_info),
-                 std::runtime_error);
+	ASSERT_THROW(expand_string_unescaped(alloc, "-\\1-", match_info),
+		     std::runtime_error);
 }
 
 TEST(RegexTest, ExpandOptional)
 {
-    UniqueRegex r;
-    ASSERT_FALSE(r.IsDefined());
-    r.Compile("^(a)(b)?(c)$", true, true);
-    ASSERT_TRUE(r.IsDefined());
+	UniqueRegex r;
+	ASSERT_FALSE(r.IsDefined());
+	r.Compile("^(a)(b)?(c)$", true, true);
+	ASSERT_TRUE(r.IsDefined());
 
-    auto match_info = r.MatchCapture("abc");
-    ASSERT_TRUE(match_info.IsDefined());
+	auto match_info = r.MatchCapture("abc");
+	ASSERT_TRUE(match_info.IsDefined());
 
-    TestPool pool;
-    AllocatorPtr alloc(pool);
+	TestPool pool;
+	AllocatorPtr alloc(pool);
 
-    auto e = expand_string(alloc, "\\1-\\2-\\3", match_info);
-    ASSERT_NE(e, nullptr);
-    ASSERT_EQ(strcmp(e, "a-b-c"), 0);
+	auto e = expand_string(alloc, "\\1-\\2-\\3", match_info);
+	ASSERT_NE(e, nullptr);
+	ASSERT_EQ(strcmp(e, "a-b-c"), 0);
 
-    match_info = r.MatchCapture("ac");
-    ASSERT_TRUE(match_info.IsDefined());
-    e = expand_string(alloc, "\\1-\\2-\\3", match_info);
-    ASSERT_NE(e, nullptr);
-    ASSERT_EQ(strcmp(e, "a--c"), 0);
+	match_info = r.MatchCapture("ac");
+	ASSERT_TRUE(match_info.IsDefined());
+	e = expand_string(alloc, "\\1-\\2-\\3", match_info);
+	ASSERT_NE(e, nullptr);
+	ASSERT_EQ(strcmp(e, "a--c"), 0);
 }
 
 TEST(RegexTest, ExpandOptionalLast)
 {
-    UniqueRegex r;
-    ASSERT_FALSE(r.IsDefined());
-    r.Compile("^(a)(b)?(c)?$", true, true);
-    ASSERT_TRUE(r.IsDefined());
+	UniqueRegex r;
+	ASSERT_FALSE(r.IsDefined());
+	r.Compile("^(a)(b)?(c)?$", true, true);
+	ASSERT_TRUE(r.IsDefined());
 
-    auto match_info = r.MatchCapture("abc");
-    ASSERT_TRUE(match_info.IsDefined());
+	auto match_info = r.MatchCapture("abc");
+	ASSERT_TRUE(match_info.IsDefined());
 
-    TestPool pool;
-    AllocatorPtr alloc(pool);
+	TestPool pool;
+	AllocatorPtr alloc(pool);
 
-    auto e = expand_string(alloc, "\\1-\\2-\\3", match_info);
-    ASSERT_NE(e, nullptr);
-    ASSERT_EQ(strcmp(e, "a-b-c"), 0);
+	auto e = expand_string(alloc, "\\1-\\2-\\3", match_info);
+	ASSERT_NE(e, nullptr);
+	ASSERT_EQ(strcmp(e, "a-b-c"), 0);
 
-    match_info = r.MatchCapture("ac");
-    ASSERT_TRUE(match_info.IsDefined());
-    e = expand_string(alloc, "\\1-\\2-\\3", match_info);
-    ASSERT_NE(e, nullptr);
-    ASSERT_EQ(strcmp(e, "a--c"), 0);
+	match_info = r.MatchCapture("ac");
+	ASSERT_TRUE(match_info.IsDefined());
+	e = expand_string(alloc, "\\1-\\2-\\3", match_info);
+	ASSERT_NE(e, nullptr);
+	ASSERT_EQ(strcmp(e, "a--c"), 0);
 
-    match_info = r.MatchCapture("ab");
-    ASSERT_TRUE(match_info.IsDefined());
-    e = expand_string(alloc, "\\1-\\2-\\3", match_info);
-    ASSERT_NE(e, nullptr);
-    ASSERT_EQ(strcmp(e, "a-b-"), 0);
+	match_info = r.MatchCapture("ab");
+	ASSERT_TRUE(match_info.IsDefined());
+	e = expand_string(alloc, "\\1-\\2-\\3", match_info);
+	ASSERT_NE(e, nullptr);
+	ASSERT_EQ(strcmp(e, "a-b-"), 0);
 }

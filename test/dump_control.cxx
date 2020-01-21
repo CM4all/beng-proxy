@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -46,52 +46,52 @@ using namespace BengProxy;
 
 class DumpControlHandler final : public ControlHandler {
 public:
-    void OnControlPacket(gcc_unused ControlServer &control_server,
-                         BengProxy::ControlCommand command,
-                         ConstBuffer<void> payload,
-                         WritableBuffer<UniqueFileDescriptor>,
-                         gcc_unused SocketAddress address, int uid) override {
-        printf("packet command=%u uid=%d length=%zu\n",
-               unsigned(command), uid, payload.size);
-    }
+	void OnControlPacket(gcc_unused ControlServer &control_server,
+			     BengProxy::ControlCommand command,
+			     ConstBuffer<void> payload,
+			     WritableBuffer<UniqueFileDescriptor>,
+			     gcc_unused SocketAddress address, int uid) override {
+		printf("packet command=%u uid=%d length=%zu\n",
+		       unsigned(command), uid, payload.size);
+	}
 
-    void OnControlError(std::exception_ptr ep) noexcept override {
-        PrintException(ep);
-    }
+	void OnControlError(std::exception_ptr ep) noexcept override {
+		PrintException(ep);
+	}
 };
 
 int main(int argc, char **argv)
 try {
-    SetLogLevel(5);
+	SetLogLevel(5);
 
-    if (argc > 3) {
-        fprintf(stderr, "usage: dump-control [LISTEN:PORT [MCAST_GROUP]]\n");
-        return 1;
-    }
+	if (argc > 3) {
+		fprintf(stderr, "usage: dump-control [LISTEN:PORT [MCAST_GROUP]]\n");
+		return 1;
+	}
 
-    const char *listen_host = argc >= 2 ? argv[1] : "*";
-    const char *mcast_group = argc >= 3 ? argv[2] : NULL;
+	const char *listen_host = argc >= 2 ? argv[1] : "*";
+	const char *mcast_group = argc >= 3 ? argv[2] : NULL;
 
-    SetupProcess();
+	SetupProcess();
 
-    EventLoop event_loop;
+	EventLoop event_loop;
 
-    SocketConfig config;
-    config.bind_address = ParseSocketAddress(listen_host, 1234, true);
+	SocketConfig config;
+	config.bind_address = ParseSocketAddress(listen_host, 1234, true);
 
-    if (mcast_group != nullptr)
-        config.multicast_group = ParseSocketAddress(mcast_group, 0, false);
+	if (mcast_group != nullptr)
+		config.multicast_group = ParseSocketAddress(mcast_group, 0, false);
 
-    config.Fixup();
+	config.Fixup();
 
-    DumpControlHandler handler;
+	DumpControlHandler handler;
 
-    ControlServer cs(event_loop, handler, config);
+	ControlServer cs(event_loop, handler, config);
 
-    event_loop.Dispatch();
+	event_loop.Dispatch();
 
-    return 0;
+	return 0;
 } catch (const std::exception &e) {
-    PrintException(e);
-    return EXIT_FAILURE;
- }
+	PrintException(e);
+	return EXIT_FAILURE;
+}

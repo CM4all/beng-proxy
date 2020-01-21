@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -57,52 +57,52 @@
 
 static void
 RunNull(WasServer &server, struct pool &,
-        gcc_unused http_method_t method,
-        gcc_unused const char *uri, gcc_unused StringMap &&headers,
-        UnusedIstreamPtr body)
+	gcc_unused http_method_t method,
+	gcc_unused const char *uri, gcc_unused StringMap &&headers,
+	UnusedIstreamPtr body)
 {
-    body.Clear();
+	body.Clear();
 
-    was_server_response(server, HTTP_STATUS_NO_CONTENT,
-                        {}, nullptr);
+	was_server_response(server, HTTP_STATUS_NO_CONTENT,
+			    {}, nullptr);
 }
 
 static void
 RunHello(WasServer &server, struct pool &pool,
-         gcc_unused http_method_t method,
-         gcc_unused const char *uri, gcc_unused StringMap &&headers,
-         UnusedIstreamPtr body)
+	 gcc_unused http_method_t method,
+	 gcc_unused const char *uri, gcc_unused StringMap &&headers,
+	 UnusedIstreamPtr body)
 {
-    body.Clear();
+	body.Clear();
 
-    was_server_response(server, HTTP_STATUS_OK, {},
-                        istream_string_new(pool, "hello"));
+	was_server_response(server, HTTP_STATUS_OK, {},
+			    istream_string_new(pool, "hello"));
 }
 
 static void
 RunHuge(WasServer &server, struct pool &pool,
-         gcc_unused http_method_t method,
-         gcc_unused const char *uri, gcc_unused StringMap &&headers,
-         UnusedIstreamPtr body)
+	gcc_unused http_method_t method,
+	gcc_unused const char *uri, gcc_unused StringMap &&headers,
+	UnusedIstreamPtr body)
 {
-    body.Clear();
+	body.Clear();
 
-    was_server_response(server, HTTP_STATUS_OK, {},
-                        istream_head_new(pool,
-                                         istream_zero_new(pool),
-                                         524288, true));
+	was_server_response(server, HTTP_STATUS_OK, {},
+			    istream_head_new(pool,
+					     istream_zero_new(pool),
+					     524288, true));
 }
 
 static void
 RunHold(WasServer &server, struct pool &pool,
-        gcc_unused http_method_t method,
-        gcc_unused const char *uri, gcc_unused StringMap &&headers,
-        UnusedIstreamPtr body)
+	gcc_unused http_method_t method,
+	gcc_unused const char *uri, gcc_unused StringMap &&headers,
+	UnusedIstreamPtr body)
 {
-    body.Clear();
+	body.Clear();
 
-    was_server_response(server, HTTP_STATUS_OK, {},
-                        istream_block_new(pool));
+	was_server_response(server, HTTP_STATUS_OK, {},
+			    istream_block_new(pool));
 }
 
 static void
@@ -115,221 +115,221 @@ RunNop(WasServer &, struct pool &,
 
 static void
 RunMirror(WasServer &server, gcc_unused struct pool &pool,
-          gcc_unused http_method_t method,
-          gcc_unused const char *uri, StringMap &&headers,
-          UnusedIstreamPtr body)
+	  gcc_unused http_method_t method,
+	  gcc_unused const char *uri, StringMap &&headers,
+	  UnusedIstreamPtr body)
 {
-    const bool has_body = body;
-    was_server_response(server,
-                        has_body ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
-                        std::move(headers), std::move(body));
+	const bool has_body = body;
+	was_server_response(server,
+			    has_body ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
+			    std::move(headers), std::move(body));
 }
 
 static void
 RunMalformedHeaderName(WasServer &server, gcc_unused struct pool &pool,
-                       http_method_t, const char *, StringMap &&,
-                       UnusedIstreamPtr body)
+		       http_method_t, const char *, StringMap &&,
+		       UnusedIstreamPtr body)
 {
-    body.Clear();
+	body.Clear();
 
-    StringMap response_headers(pool, {{"header name", "foo"}});
+	StringMap response_headers(pool, {{"header name", "foo"}});
 
-    was_server_response(server,
-                        HTTP_STATUS_NO_CONTENT,
-                        std::move(response_headers), nullptr);
+	was_server_response(server,
+			    HTTP_STATUS_NO_CONTENT,
+			    std::move(response_headers), nullptr);
 }
 
 static void
 RunMalformedHeaderValue(WasServer &server, gcc_unused struct pool &pool,
-                       http_method_t, const char *, StringMap &&,
-                       UnusedIstreamPtr body)
+			http_method_t, const char *, StringMap &&,
+			UnusedIstreamPtr body)
 {
-    body.Clear();
+	body.Clear();
 
-    StringMap response_headers(pool, {{"name", "foo\nbar"}});
+	StringMap response_headers(pool, {{"name", "foo\nbar"}});
 
-    was_server_response(server,
-                        HTTP_STATUS_NO_CONTENT,
-                        std::move(response_headers), nullptr);
+	was_server_response(server,
+			    HTTP_STATUS_NO_CONTENT,
+			    std::move(response_headers), nullptr);
 }
 
 class WasConnection final : WasServerHandler, WasLease {
-    EventLoop &event_loop;
+	EventLoop &event_loop;
 
-    SocketDescriptor control_fd;
-    FileDescriptor input_fd, output_fd;
+	SocketDescriptor control_fd;
+	FileDescriptor input_fd, output_fd;
 
-    WasServer *server;
+	WasServer *server;
 
-    Lease *lease;
+	Lease *lease;
 
-    typedef std::function<void(WasServer &server, struct pool &pool,
-                               http_method_t method,
-                               const char *uri, StringMap &&headers,
-                               UnusedIstreamPtr body)> Callback;
+	typedef std::function<void(WasServer &server, struct pool &pool,
+				   http_method_t method,
+				   const char *uri, StringMap &&headers,
+				   UnusedIstreamPtr body)> Callback;
 
-    const Callback callback;
+	const Callback callback;
 
 public:
-    WasConnection(struct pool &pool, EventLoop &_event_loop,
-                  Callback &&_callback)
-        :event_loop(_event_loop), callback(std::move(_callback)) {
-        FileDescriptor input_w;
-        if (!FileDescriptor::CreatePipeNonBlock(input_fd, input_w)) {
-            perror("pipe");
-            exit(EXIT_FAILURE);
-        }
+	WasConnection(struct pool &pool, EventLoop &_event_loop,
+		      Callback &&_callback)
+		:event_loop(_event_loop), callback(std::move(_callback)) {
+		FileDescriptor input_w;
+		if (!FileDescriptor::CreatePipeNonBlock(input_fd, input_w)) {
+			perror("pipe");
+			exit(EXIT_FAILURE);
+		}
 
-        FileDescriptor output_r;
-        if (!FileDescriptor::CreatePipeNonBlock(output_r, output_fd)) {
-            perror("pipe");
-            exit(EXIT_FAILURE);
-        }
+		FileDescriptor output_r;
+		if (!FileDescriptor::CreatePipeNonBlock(output_r, output_fd)) {
+			perror("pipe");
+			exit(EXIT_FAILURE);
+		}
 
-        SocketDescriptor control_server;
-        if (!SocketDescriptor::CreateSocketPairNonBlock(AF_LOCAL, SOCK_STREAM, 0,
-                                                        control_fd,
-                                                        control_server)) {
-            perror("socketpair");
-            exit(EXIT_FAILURE);
-        }
+		SocketDescriptor control_server;
+		if (!SocketDescriptor::CreateSocketPairNonBlock(AF_LOCAL, SOCK_STREAM, 0,
+								control_fd,
+								control_server)) {
+			perror("socketpair");
+			exit(EXIT_FAILURE);
+		}
 
-        server = was_server_new(pool, event_loop, control_server,
-                                output_r, input_w.Get(), *this);
-    }
+		server = was_server_new(pool, event_loop, control_server,
+					output_r, input_w.Get(), *this);
+	}
 
-    ~WasConnection() {
-        control_fd.Close();
-        input_fd.Close();
-        output_fd.Close();
+	~WasConnection() {
+		control_fd.Close();
+		input_fd.Close();
+		output_fd.Close();
 
-        if (server != nullptr)
-            was_server_free(server);
-    }
+		if (server != nullptr)
+			was_server_free(server);
+	}
 
-    void Request(struct pool *pool,
-                 Lease &_lease,
-                 http_method_t method, const char *uri,
-                 StringMap &&headers, UnusedIstreamPtr body,
-                 HttpResponseHandler &handler,
-                 CancellablePointer &cancel_ptr) {
-        lease = &_lease;
-        was_client_request(*pool, event_loop, nullptr,
-                           control_fd, input_fd, output_fd,
-                           *this,
-                           method, uri, uri, nullptr, nullptr,
-                           headers, std::move(body), nullptr,
-                           handler, cancel_ptr);
-    }
+	void Request(struct pool *pool,
+		     Lease &_lease,
+		     http_method_t method, const char *uri,
+		     StringMap &&headers, UnusedIstreamPtr body,
+		     HttpResponseHandler &handler,
+		     CancellablePointer &cancel_ptr) {
+		lease = &_lease;
+		was_client_request(*pool, event_loop, nullptr,
+				   control_fd, input_fd, output_fd,
+				   *this,
+				   method, uri, uri, nullptr, nullptr,
+				   headers, std::move(body), nullptr,
+				   handler, cancel_ptr);
+	}
 
-    void InjectSocketFailure() noexcept {
-        control_fd.Shutdown();
-    }
+	void InjectSocketFailure() noexcept {
+		control_fd.Shutdown();
+	}
 
-    /* virtual methods from class WasServerHandler */
+	/* virtual methods from class WasServerHandler */
 
-    void OnWasRequest(struct pool &pool, http_method_t method,
-                      const char *uri, StringMap &&headers,
-                      UnusedIstreamPtr body) noexcept override {
-        callback(*server, pool, method, uri,
-                 std::move(headers), std::move(body));
-    }
+	void OnWasRequest(struct pool &pool, http_method_t method,
+			  const char *uri, StringMap &&headers,
+			  UnusedIstreamPtr body) noexcept override {
+		callback(*server, pool, method, uri,
+			 std::move(headers), std::move(body));
+	}
 
-    void OnWasClosed() noexcept override {
-        server = nullptr;
-    }
+	void OnWasClosed() noexcept override {
+		server = nullptr;
+	}
 
-    /* constructors */
+	/* constructors */
 
-    static WasConnection *NewMirror(struct pool &pool, EventLoop &event_loop) {
-        return new WasConnection(pool, event_loop, RunMirror);
-    }
+	static WasConnection *NewMirror(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunMirror);
+	}
 
-    static WasConnection *NewNull(struct pool &pool, EventLoop &event_loop) {
-        return new WasConnection(pool, event_loop, RunNull);
-    }
+	static WasConnection *NewNull(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunNull);
+	}
 
-    static WasConnection *NewDummy(struct pool &pool, EventLoop &event_loop) {
-        return new WasConnection(pool, event_loop, RunHello);
-    }
+	static WasConnection *NewDummy(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunHello);
+	}
 
-    static WasConnection *NewFixed(struct pool &pool, EventLoop &event_loop) {
-        return new WasConnection(pool, event_loop, RunHello);
-    }
+	static WasConnection *NewFixed(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunHello);
+	}
 
-    static WasConnection *NewTiny(struct pool &pool, EventLoop &event_loop) {
-        return new WasConnection(pool, event_loop, RunHello);
-    }
+	static WasConnection *NewTiny(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunHello);
+	}
 
-    static WasConnection *NewHuge(struct pool &pool, EventLoop &event_loop) {
-        return new WasConnection(pool, event_loop, RunHuge);
-    }
+	static WasConnection *NewHuge(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunHuge);
+	}
 
-    static WasConnection *NewHold(struct pool &pool, EventLoop &event_loop) {
-        return new WasConnection(pool, event_loop, RunHold);
-    }
+	static WasConnection *NewHold(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunHold);
+	}
 
-    static WasConnection *NewNop(struct pool &pool, EventLoop &event_loop) {
-        return new WasConnection(pool, event_loop, RunNop);
-    }
+	static WasConnection *NewNop(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunNop);
+	}
 
-    static WasConnection *NewMalformedHeaderName(struct pool &pool, EventLoop &event_loop) {
-        return new WasConnection(pool, event_loop, RunMalformedHeaderName);
-    }
+	static WasConnection *NewMalformedHeaderName(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunMalformedHeaderName);
+	}
 
-    static WasConnection *NewMalformedHeaderValue(struct pool &pool, EventLoop &event_loop) {
-        return new WasConnection(pool, event_loop, RunMalformedHeaderValue);
-    }
+	static WasConnection *NewMalformedHeaderValue(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunMalformedHeaderValue);
+	}
 
 private:
-    /* virtual methods from class WasLease */
-    void ReleaseWas(bool reuse) override {
-        lease->ReleaseLease(reuse);
-    }
+	/* virtual methods from class WasLease */
+	void ReleaseWas(bool reuse) override {
+		lease->ReleaseLease(reuse);
+	}
 
-    void ReleaseWasStop(gcc_unused uint64_t input_received) override {
-        ReleaseWas(false);
-    }
+	void ReleaseWasStop(gcc_unused uint64_t input_received) override {
+		ReleaseWas(false);
+	}
 };
 
 template<class Connection>
 static void
 test_malformed_header_name(Context<Connection> &c)
 {
-    c.connection = Connection::NewMalformedHeaderName(*c.pool, c.event_loop);
-    c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", {},
-                          nullptr,
+	c.connection = Connection::NewMalformedHeaderName(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HTTP_METHOD_GET, "/foo", {},
+			      nullptr,
 #ifdef HAVE_EXPECT_100
-                          false,
+			      false,
 #endif
-                          c, c.cancel_ptr);
+			      c, c.cancel_ptr);
 
-    c.event_loop.Dispatch();
+	c.event_loop.Dispatch();
 
-    assert(c.status == http_status_t(0));
-    assert(c.request_error);
-    assert(c.released);
+	assert(c.status == http_status_t(0));
+	assert(c.request_error);
+	assert(c.released);
 }
 
 template<class Connection>
 static void
 test_malformed_header_value(Context<Connection> &c)
 {
-    c.connection = Connection::NewMalformedHeaderValue(*c.pool, c.event_loop);
-    c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", {},
-                          nullptr,
+	c.connection = Connection::NewMalformedHeaderValue(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HTTP_METHOD_GET, "/foo", {},
+			      nullptr,
 #ifdef HAVE_EXPECT_100
-                          false,
+			      false,
 #endif
-                          c, c.cancel_ptr);
+			      c, c.cancel_ptr);
 
-    c.event_loop.Dispatch();
+	c.event_loop.Dispatch();
 
-    assert(c.status == http_status_t(0));
-    assert(c.request_error);
-    assert(c.released);
+	assert(c.status == http_status_t(0));
+	assert(c.request_error);
+	assert(c.released);
 }
 
 /*
@@ -337,15 +337,14 @@ test_malformed_header_value(Context<Connection> &c)
  *
  */
 
-int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
+int
+main(int, char **)
+{
+	SetupProcess();
+	direct_global_init();
+	const ScopeFbPoolInit fb_pool_init;
 
-    SetupProcess();
-    direct_global_init();
-    const ScopeFbPoolInit fb_pool_init;
-
-    run_all_tests<WasConnection>();
-    run_test<WasConnection>(test_malformed_header_name);
-    run_test<WasConnection>(test_malformed_header_value);
+	run_all_tests<WasConnection>();
+	run_test<WasConnection>(test_malformed_header_name);
+	run_test<WasConnection>(test_malformed_header_value);
 }

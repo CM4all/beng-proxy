@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -64,12 +64,12 @@ struct SkipErrorTraits {};
 
 template<typename T>
 class IstreamFilterTest : public ::testing::Test {
-    const ScopeFbPoolInit fb_pool_init;
+	const ScopeFbPoolInit fb_pool_init;
 
 public:
-    IstreamFilterTest() {
-        direct_global_init();
-    }
+	IstreamFilterTest() {
+		direct_global_init();
+	}
 };
 
 TYPED_TEST_CASE_P(IstreamFilterTest);
@@ -78,105 +78,105 @@ struct Instance : PInstance {
 };
 
 struct Context final : IstreamSink {
-    using IstreamSink::input;
+	using IstreamSink::input;
 
-    Instance &instance;
+	Instance &instance;
 
-    bool half = false;
-    bool got_data;
-    bool eof = false;
+	bool half = false;
+	bool got_data;
+	bool eof = false;
 
-    const char *const expected_result;
-    bool record = false;
-    std::string buffer;
+	const char *const expected_result;
+	bool record = false;
+	std::string buffer;
 
-    InjectIstreamControl *abort_istream = nullptr;
-    int abort_after = 0;
+	InjectIstreamControl *abort_istream = nullptr;
+	int abort_after = 0;
 
-    /**
-     * An InjectIstream instance which will fail after the data
-     * handler has blocked.
-     */
-    InjectIstreamControl *block_inject = nullptr;
+	/**
+	 * An InjectIstream instance which will fail after the data
+	 * handler has blocked.
+	 */
+	InjectIstreamControl *block_inject = nullptr;
 
-    int block_after = -1;
+	int block_after = -1;
 
-    bool block_byte = false, block_byte_state = false;
+	bool block_byte = false, block_byte_state = false;
 
-    /**
-     * The current offset in the #Istream.
-     */
-    size_t offset = 0;
+	/**
+	 * The current offset in the #Istream.
+	 */
+	size_t offset = 0;
 
-    size_t skipped = 0;
+	size_t skipped = 0;
 
-    DeferEvent defer_inject_event;
-    InjectIstreamControl *defer_inject_istream = nullptr;
-    std::exception_ptr defer_inject_error;
+	DeferEvent defer_inject_event;
+	InjectIstreamControl *defer_inject_istream = nullptr;
+	std::exception_ptr defer_inject_error;
 
-    template<typename I>
-    explicit Context(Instance &_instance, const char *_expected_result,
-                     I &&_input) noexcept
-        :IstreamSink(std::forward<I>(_input)), instance(_instance),
-         expected_result(_expected_result),
-         defer_inject_event(instance.event_loop,
-                            BIND_THIS_METHOD(DeferredInject)) {}
+	template<typename I>
+	explicit Context(Instance &_instance, const char *_expected_result,
+			 I &&_input) noexcept
+		:IstreamSink(std::forward<I>(_input)), instance(_instance),
+		 expected_result(_expected_result),
+		 defer_inject_event(instance.event_loop,
+				    BIND_THIS_METHOD(DeferredInject)) {}
 
-    void Skip(off_t nbytes) noexcept {
-        assert(skipped == 0);
-        auto s = input.Skip(nbytes);
-        if (s > 0) {
-            skipped += s;
-            offset += s;
-        }
-    }
+	void Skip(off_t nbytes) noexcept {
+		assert(skipped == 0);
+		auto s = input.Skip(nbytes);
+		if (s > 0) {
+			skipped += s;
+			offset += s;
+		}
+	}
 
-    int ReadEvent() {
-        input.Read();
-        return instance.event_loop.LoopOnceNonBlock();
-    }
+	int ReadEvent() {
+		input.Read();
+		return instance.event_loop.LoopOnceNonBlock();
+	}
 
-    void ReadExpect() {
-        assert(!eof);
+	void ReadExpect() {
+		assert(!eof);
 
-        got_data = false;
+		got_data = false;
 
-        gcc_unused
-        const auto ret = ReadEvent();
-        assert(eof || got_data || ret == 0);
+		gcc_unused
+			const auto ret = ReadEvent();
+		assert(eof || got_data || ret == 0);
 
-        /* give istream_later another chance to breathe */
-        instance.event_loop.LoopOnceNonBlock();
-    }
+		/* give istream_later another chance to breathe */
+		instance.event_loop.LoopOnceNonBlock();
+	}
 
-    void DeferInject(InjectIstreamControl &inject, std::exception_ptr ep) {
-        assert(ep);
-        assert(defer_inject_istream == nullptr);
-        assert(!defer_inject_error);
+	void DeferInject(InjectIstreamControl &inject, std::exception_ptr ep) {
+		assert(ep);
+		assert(defer_inject_istream == nullptr);
+		assert(!defer_inject_error);
 
-        defer_inject_istream = &inject;
-        defer_inject_error = ep;
-        defer_inject_event.Schedule();
-    }
+		defer_inject_istream = &inject;
+		defer_inject_error = ep;
+		defer_inject_event.Schedule();
+	}
 
-    void DeferredInject() noexcept {
-        assert(defer_inject_istream != nullptr);
-        assert(defer_inject_error);
+	void DeferredInject() noexcept {
+		assert(defer_inject_istream != nullptr);
+		assert(defer_inject_error);
 
-        auto &i = *defer_inject_istream;
-        defer_inject_istream = nullptr;
+		auto &i = *defer_inject_istream;
+		defer_inject_istream = nullptr;
 
-        i.InjectFault(std::exchange(defer_inject_error,
-                                    std::exception_ptr()));
-    }
+		i.InjectFault(std::exchange(defer_inject_error,
+					    std::exception_ptr()));
+	}
 
-    bool ReadBuckets(size_t limit);
+	bool ReadBuckets(size_t limit);
 
-    /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) noexcept override;
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
-    void OnEof() noexcept override;
-    void OnError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class IstreamHandler */
+	size_t OnData(const void *data, size_t length) noexcept override;
+	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
 };
 
 /*
@@ -188,55 +188,55 @@ template<typename Traits>
 static void
 run_istream_ctx(const Traits &traits, Context &ctx, PoolPtr pool)
 {
-    ctx.eof = false;
+	ctx.eof = false;
 
-    if (traits.call_available) {
-        gcc_unused off_t a1 = ctx.input.GetAvailable(false);
-        gcc_unused off_t a2 = ctx.input.GetAvailable(true);
-    }
+	if (traits.call_available) {
+		gcc_unused off_t a1 = ctx.input.GetAvailable(false);
+		gcc_unused off_t a2 = ctx.input.GetAvailable(true);
+	}
 
-    if (traits.got_data_assert) {
-        while (!ctx.eof)
-            ctx.ReadExpect();
-    } else {
-        for (int i = 0; i < 1000 && !ctx.eof; ++i)
-            ctx.ReadEvent();
-    }
+	if (traits.got_data_assert) {
+		while (!ctx.eof)
+			ctx.ReadExpect();
+	} else {
+		for (int i = 0; i < 1000 && !ctx.eof; ++i)
+			ctx.ReadEvent();
+	}
 
-    if (ctx.expected_result && ctx.record) {
-        ASSERT_EQ(ctx.buffer.size() + ctx.skipped,
-                  strlen(ctx.expected_result));
-        ASSERT_EQ(memcmp(ctx.buffer.data(),
-                         (const char *)ctx.expected_result + ctx.skipped,
-                         ctx.buffer.size()),
-                  0);
-    }
+	if (ctx.expected_result && ctx.record) {
+		ASSERT_EQ(ctx.buffer.size() + ctx.skipped,
+			  strlen(ctx.expected_result));
+		ASSERT_EQ(memcmp(ctx.buffer.data(),
+				 (const char *)ctx.expected_result + ctx.skipped,
+				 ctx.buffer.size()),
+			  0);
+	}
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 }
 
 template<typename Traits, typename I>
 static void
 run_istream_block(const Traits &traits, Instance &instance, PoolPtr pool,
-                  I &&istream,
-                  bool record,
-                  int block_after)
+		  I &&istream,
+		  bool record,
+		  int block_after)
 {
-    Context ctx(instance, traits.expected_result, std::forward<I>(istream));
-    ctx.block_after = block_after;
-    ctx.record = ctx.expected_result && record;
+	Context ctx(instance, traits.expected_result, std::forward<I>(istream));
+	ctx.block_after = block_after;
+	ctx.record = ctx.expected_result && record;
 
-    run_istream_ctx(traits, ctx, std::move(pool));
+	run_istream_ctx(traits, ctx, std::move(pool));
 }
 
 template<typename Traits, typename I>
 static void
 run_istream(const Traits &traits, Instance &instance, PoolPtr pool,
-            I &&istream, bool record)
+	    I &&istream, bool record)
 {
-    run_istream_block(traits, instance, std::move(pool),
-                      std::forward<I>(istream), record, -1);
+	run_istream_block(traits, instance, std::move(pool),
+			  std::forward<I>(istream), record, -1);
 }
 
 
@@ -248,398 +248,398 @@ run_istream(const Traits &traits, Instance &instance, PoolPtr pool,
 /** normal run */
 TYPED_TEST_P(IstreamFilterTest, Normal)
 {
-    TypeParam traits;
-    Instance instance;
+	TypeParam traits;
+	Instance instance;
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
-    ASSERT_TRUE(!!istream);
+	auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
+	ASSERT_TRUE(!!istream);
 
-    run_istream(traits, instance, std::move(pool), std::move(istream), true);
+	run_istream(traits, instance, std::move(pool), std::move(istream), true);
 }
 
 /** test with Istream::FillBucketList() */
 TYPED_TEST_P(IstreamFilterTest, Bucket)
 {
-    TypeParam traits;
-    Instance instance;
+	TypeParam traits;
+	Instance instance;
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
-    ASSERT_TRUE(!!istream);
+	auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
+	ASSERT_TRUE(!!istream);
 
-    Context ctx(instance, traits.expected_result, std::move(istream));
-    if (ctx.expected_result)
-        ctx.record = true;
+	Context ctx(instance, traits.expected_result, std::move(istream));
+	if (ctx.expected_result)
+		ctx.record = true;
 
-    while (ctx.ReadBuckets(1024 * 1024)) {}
+	while (ctx.ReadBuckets(1024 * 1024)) {}
 
-    if (ctx.input.IsDefined())
-        run_istream_ctx(traits, ctx, std::move(pool));
+	if (ctx.input.IsDefined())
+		run_istream_ctx(traits, ctx, std::move(pool));
 }
 
 /** test with Istream::FillBucketList() */
 TYPED_TEST_P(IstreamFilterTest, SmallBucket)
 {
-    TypeParam traits;
-    Instance instance;
+	TypeParam traits;
+	Instance instance;
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
-    ASSERT_TRUE(!!istream);
+	auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
+	ASSERT_TRUE(!!istream);
 
-    Context ctx(instance, traits.expected_result, std::move(istream));
-    if (ctx.expected_result)
-        ctx.record = true;
+	Context ctx(instance, traits.expected_result, std::move(istream));
+	if (ctx.expected_result)
+		ctx.record = true;
 
-    while (ctx.ReadBuckets(3)) {}
+	while (ctx.ReadBuckets(3)) {}
 
-    if (ctx.input.IsDefined())
-        run_istream_ctx(traits, ctx, std::move(pool));
+	if (ctx.input.IsDefined())
+		run_istream_ctx(traits, ctx, std::move(pool));
 }
 
 /** Istream::FillBucketList() throws */
 TYPED_TEST_P(IstreamFilterTest, BucketError)
 {
-    if (std::is_base_of<SkipErrorTraits, TypeParam>::value)
-        return;
+	if (std::is_base_of<SkipErrorTraits, TypeParam>::value)
+		return;
 
-    TypeParam traits;
-    Instance instance;
+	TypeParam traits;
+	Instance instance;
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    const std::runtime_error error("test_fail");
-    auto istream = traits.CreateTest(instance.event_loop, pool,
-                                     istream_fail_new(pool, std::make_exception_ptr(error)));
-    ASSERT_TRUE(!!istream);
+	const std::runtime_error error("test_fail");
+	auto istream = traits.CreateTest(instance.event_loop, pool,
+					 istream_fail_new(pool, std::make_exception_ptr(error)));
+	ASSERT_TRUE(!!istream);
 
-    Context ctx(instance, traits.expected_result, std::move(istream));
-    if (ctx.expected_result)
-        ctx.record = true;
+	Context ctx(instance, traits.expected_result, std::move(istream));
+	if (ctx.expected_result)
+		ctx.record = true;
 
-    try {
-        while (ctx.ReadBuckets(3)) {}
+	try {
+		while (ctx.ReadBuckets(3)) {}
 
-        /* this is only reachable if the Istream doesn't support
-           FillBucketList() */
-        ASSERT_TRUE(ctx.input.IsDefined());
-        ctx.input.ClearAndClose();
-    } catch (...) {
-        ASSERT_FALSE(ctx.input.IsDefined());
-    }
+		/* this is only reachable if the Istream doesn't support
+		   FillBucketList() */
+		ASSERT_TRUE(ctx.input.IsDefined());
+		ctx.input.ClearAndClose();
+	} catch (...) {
+		ASSERT_FALSE(ctx.input.IsDefined());
+	}
 }
 
 /** invoke Istream::Skip(1) */
 TYPED_TEST_P(IstreamFilterTest, Skip)
 {
-    TypeParam traits;
-    Instance instance;
+	TypeParam traits;
+	Instance instance;
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
-    ASSERT_TRUE(!!istream);
+	auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
+	ASSERT_TRUE(!!istream);
 
-    Context ctx(instance, traits.expected_result, std::move(istream));
-    ctx.record = ctx.expected_result != nullptr;
-    ctx.Skip(1);
+	Context ctx(instance, traits.expected_result, std::move(istream));
+	ctx.record = ctx.expected_result != nullptr;
+	ctx.Skip(1);
 
-    run_istream_ctx(traits, ctx, std::move(pool));
+	run_istream_ctx(traits, ctx, std::move(pool));
 }
 
 /** block once after n data() invocations */
 TYPED_TEST_P(IstreamFilterTest, Block)
 {
-    TypeParam traits;
-    if (!traits.enable_blocking)
-        return;
+	TypeParam traits;
+	if (!traits.enable_blocking)
+		return;
 
-    Instance instance;
+	Instance instance;
 
-    for (int n = 0; n < 8; ++n) {
-        auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	for (int n = 0; n < 8; ++n) {
+		auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-        auto istream = traits.CreateTest(instance.event_loop, pool,
-                                   traits.CreateInput(pool));
-        ASSERT_TRUE(!!istream);
+		auto istream = traits.CreateTest(instance.event_loop, pool,
+						 traits.CreateInput(pool));
+		ASSERT_TRUE(!!istream);
 
-        run_istream_block(traits, instance,
-                          std::move(pool), std::move(istream), true, n);
-    }
+		run_istream_block(traits, instance,
+				  std::move(pool), std::move(istream), true, n);
+	}
 }
 
 /** test with istream_byte */
 TYPED_TEST_P(IstreamFilterTest, Byte)
 {
-    TypeParam traits;
-    if (!traits.enable_blocking)
-        return;
+	TypeParam traits;
+	if (!traits.enable_blocking)
+		return;
 
-    Instance instance;
+	Instance instance;
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    auto istream =
-        traits.CreateTest(instance.event_loop, pool,
-                          istream_byte_new(pool, traits.CreateInput(pool)));
-    run_istream(traits, instance, std::move(pool), std::move(istream), true);
+	auto istream =
+		traits.CreateTest(instance.event_loop, pool,
+				  istream_byte_new(pool, traits.CreateInput(pool)));
+	run_istream(traits, instance, std::move(pool), std::move(istream), true);
 }
 
 /** block and consume one byte at a time */
 TYPED_TEST_P(IstreamFilterTest, BlockByte)
 {
-    TypeParam traits;
-    if (!traits.enable_blocking)
-        return;
+	TypeParam traits;
+	if (!traits.enable_blocking)
+		return;
 
-    Instance instance;
+	Instance instance;
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    Context ctx(instance,
-                traits.expected_result,
-                traits.CreateTest(instance.event_loop, pool,
-                            istream_byte_new(pool, traits.CreateInput(pool))));
-    ctx.block_byte = true;
+	Context ctx(instance,
+		    traits.expected_result,
+		    traits.CreateTest(instance.event_loop, pool,
+				      istream_byte_new(pool, traits.CreateInput(pool))));
+	ctx.block_byte = true;
 #ifdef EXPECTED_RESULT
-    ctx.record = true;
+	ctx.record = true;
 #endif
 
-    run_istream_ctx(traits, ctx, std::move(pool));
+	run_istream_ctx(traits, ctx, std::move(pool));
 }
 
 /** error occurs while blocking */
 TYPED_TEST_P(IstreamFilterTest, BlockInject)
 {
-    TypeParam traits;
-    if (!traits.enable_blocking)
-        return;
+	TypeParam traits;
+	if (!traits.enable_blocking)
+		return;
 
-    Instance instance;
+	Instance instance;
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    auto inject = istream_inject_new(pool, traits.CreateInput(pool));
+	auto inject = istream_inject_new(pool, traits.CreateInput(pool));
 
-    Context ctx(instance,
-                traits.expected_result,
-                traits.CreateTest(instance.event_loop, pool,
-                                  std::move(inject.first)));
-    ctx.block_inject = &inject.second;
-    run_istream_ctx(traits, ctx, std::move(pool));
+	Context ctx(instance,
+		    traits.expected_result,
+		    traits.CreateTest(instance.event_loop, pool,
+				      std::move(inject.first)));
+	ctx.block_inject = &inject.second;
+	run_istream_ctx(traits, ctx, std::move(pool));
 
-    ASSERT_TRUE(ctx.eof);
+	ASSERT_TRUE(ctx.eof);
 }
 
 /** accept only half of the data */
 TYPED_TEST_P(IstreamFilterTest, Half)
 {
-    TypeParam traits;
-    Instance instance;
+	TypeParam traits;
+	Instance instance;
 
-    Context ctx(instance,
-                traits.expected_result,
-                traits.CreateTest(instance.event_loop, instance.root_pool,
-                                  traits.CreateInput(instance.root_pool)));
-    ctx.half = true;
+	Context ctx(instance,
+		    traits.expected_result,
+		    traits.CreateTest(instance.event_loop, instance.root_pool,
+				      traits.CreateInput(instance.root_pool)));
+	ctx.half = true;
 #ifdef EXPECTED_RESULT
-    ctx.record = true;
+	ctx.record = true;
 #endif
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    run_istream_ctx(traits, ctx, std::move(pool));
+	run_istream_ctx(traits, ctx, std::move(pool));
 }
 
 /** input fails */
 TYPED_TEST_P(IstreamFilterTest, Fail)
 {
-    TypeParam traits;
-    Instance instance;
+	TypeParam traits;
+	Instance instance;
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    const std::runtime_error error("test_fail");
-    auto istream = traits.CreateTest(instance.event_loop, pool,
-                                     istream_fail_new(pool, std::make_exception_ptr(error)));
-    run_istream(traits, instance, std::move(pool), std::move(istream), false);
+	const std::runtime_error error("test_fail");
+	auto istream = traits.CreateTest(instance.event_loop, pool,
+					 istream_fail_new(pool, std::make_exception_ptr(error)));
+	run_istream(traits, instance, std::move(pool), std::move(istream), false);
 }
 
 /** input fails after the first byte */
 TYPED_TEST_P(IstreamFilterTest, FailAfterFirstByte)
 {
-    TypeParam traits;
-    Instance instance;
+	TypeParam traits;
+	Instance instance;
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    const std::runtime_error error("test_fail");
-    auto istream =
-        traits.CreateTest(instance.event_loop, pool,
-                    istream_cat_new(pool,
-                                    istream_head_new(pool, traits.CreateInput(pool),
-                                                     1, false),
-                                    istream_fail_new(pool, std::make_exception_ptr(error))));
-    run_istream(traits, instance, std::move(pool), std::move(istream), false);
+	const std::runtime_error error("test_fail");
+	auto istream =
+		traits.CreateTest(instance.event_loop, pool,
+				  istream_cat_new(pool,
+						  istream_head_new(pool, traits.CreateInput(pool),
+								   1, false),
+						  istream_fail_new(pool, std::make_exception_ptr(error))));
+	run_istream(traits, instance, std::move(pool), std::move(istream), false);
 }
 
 /** abort without handler */
 TYPED_TEST_P(IstreamFilterTest, AbortWithoutHandler)
 {
-    TypeParam traits;
-    Instance instance;
+	TypeParam traits;
+	Instance instance;
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
-    istream.Clear();
+	auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
+	istream.Clear();
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 }
 
 /** abort in handler */
 TYPED_TEST_P(IstreamFilterTest, AbortInHandler)
 {
-    TypeParam traits;
-    if (!traits.enable_abort_istream)
-        return;
+	TypeParam traits;
+	if (!traits.enable_abort_istream)
+		return;
 
-    Instance instance;
+	Instance instance;
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    auto inject = istream_inject_new(pool, traits.CreateInput(pool));
-    auto istream = traits.CreateTest(instance.event_loop, pool, std::move(inject.first));
+	auto inject = istream_inject_new(pool, traits.CreateInput(pool));
+	auto istream = traits.CreateTest(instance.event_loop, pool, std::move(inject.first));
 
-    Context ctx(instance,
-                traits.expected_result,
-                std::move(istream));
-    ctx.block_after = -1;
-    ctx.abort_istream = &inject.second;
+	Context ctx(instance,
+		    traits.expected_result,
+		    std::move(istream));
+	ctx.block_after = -1;
+	ctx.abort_istream = &inject.second;
 
-    while (!ctx.eof) {
-        ctx.ReadExpect();
-        ctx.instance.event_loop.LoopOnceNonBlock();
-    }
+	while (!ctx.eof) {
+		ctx.ReadExpect();
+		ctx.instance.event_loop.LoopOnceNonBlock();
+	}
 
-    ASSERT_EQ(ctx.abort_istream, nullptr);
+	ASSERT_EQ(ctx.abort_istream, nullptr);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 }
 
 /** abort in handler, with some data consumed */
 TYPED_TEST_P(IstreamFilterTest, AbortInHandlerHalf)
 {
-    TypeParam traits;
-    if (!traits.enable_abort_istream || !traits.enable_blocking)
-        return;
+	TypeParam traits;
+	if (!traits.enable_abort_istream || !traits.enable_blocking)
+		return;
 
-    Instance instance;
+	Instance instance;
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    auto inject = istream_inject_new(pool, istream_four_new(pool, traits.CreateInput(pool)));
-    auto istream = traits.CreateTest(instance.event_loop, pool,
-                               istream_byte_new(pool, std::move(inject.first)));
+	auto inject = istream_inject_new(pool, istream_four_new(pool, traits.CreateInput(pool)));
+	auto istream = traits.CreateTest(instance.event_loop, pool,
+					 istream_byte_new(pool, std::move(inject.first)));
 
-    Context ctx(instance,
-                traits.expected_result,
-                std::move(istream));
-    ctx.half = true;
-    ctx.abort_after = 2;
-    ctx.abort_istream = &inject.second;
+	Context ctx(instance,
+		    traits.expected_result,
+		    std::move(istream));
+	ctx.half = true;
+	ctx.abort_after = 2;
+	ctx.abort_istream = &inject.second;
 
-    while (!ctx.eof) {
-        ctx.ReadExpect();
-        ctx.instance.event_loop.LoopOnceNonBlock();
-    }
+	while (!ctx.eof) {
+		ctx.ReadExpect();
+		ctx.instance.event_loop.LoopOnceNonBlock();
+	}
 
-    ASSERT_TRUE(ctx.abort_istream == nullptr || ctx.abort_after >= 0);
+	ASSERT_TRUE(ctx.abort_istream == nullptr || ctx.abort_after >= 0);
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 }
 
 /** abort after 1 byte of output */
 TYPED_TEST_P(IstreamFilterTest, AbortAfter1Byte)
 {
-    TypeParam traits;
-    Instance instance;
+	TypeParam traits;
+	Instance instance;
 
-    const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    auto istream = istream_head_new(pool,
-                                    traits.CreateTest(instance.event_loop, pool,
-                                                      traits.CreateInput(pool)),
-                                    1, false);
-    run_istream(traits, instance, std::move(pool), std::move(istream), false);
+	auto istream = istream_head_new(pool,
+					traits.CreateTest(instance.event_loop, pool,
+							  traits.CreateInput(pool)),
+					1, false);
+	run_istream(traits, instance, std::move(pool), std::move(istream), false);
 }
 
 /** test with istream_later filter */
 TYPED_TEST_P(IstreamFilterTest, Later)
 {
-    TypeParam traits;
-    Instance instance;
+	TypeParam traits;
+	Instance instance;
 
-    const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    auto istream =
-        traits.CreateTest(instance.event_loop, pool,
-                    istream_later_new(pool, traits.CreateInput(pool),
-                                      instance.event_loop));
-    run_istream(traits, instance, std::move(pool), std::move(istream), true);
+	auto istream =
+		traits.CreateTest(instance.event_loop, pool,
+				  istream_later_new(pool, traits.CreateInput(pool),
+						    instance.event_loop));
+	run_istream(traits, instance, std::move(pool), std::move(istream), true);
 }
 
 /** test with large input and blocking handler */
 TYPED_TEST_P(IstreamFilterTest, BigHold)
 {
-    TypeParam traits;
-    if (!traits.expected_result)
-        return;
+	TypeParam traits;
+	if (!traits.expected_result)
+		return;
 
-    Instance instance;
+	Instance instance;
 
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    auto istream = traits.CreateInput(pool);
-    for (unsigned i = 0; i < 1024; ++i)
-        istream = istream_cat_new(pool, std::move(istream),
-                                  traits.CreateInput(pool));
+	auto istream = traits.CreateInput(pool);
+	for (unsigned i = 0; i < 1024; ++i)
+		istream = istream_cat_new(pool, std::move(istream),
+					  traits.CreateInput(pool));
 
-    istream = traits.CreateTest(instance.event_loop, pool, std::move(istream));
-    auto *inner = istream.Steal();
-    UnusedHoldIstreamPtr hold(pool, UnusedIstreamPtr(inner));
+	istream = traits.CreateTest(instance.event_loop, pool, std::move(istream));
+	auto *inner = istream.Steal();
+	UnusedHoldIstreamPtr hold(pool, UnusedIstreamPtr(inner));
 
-    inner->Read();
+	inner->Read();
 
-    hold.Clear();
+	hold.Clear();
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 }
 
 REGISTER_TYPED_TEST_CASE_P(IstreamFilterTest,
-                           Normal,
-                           Bucket,
-                           SmallBucket,
-                           BucketError,
-                           Skip,
-                           Block,
-                           Byte,
-                           BlockByte,
-                           BlockInject,
-                           Half,
-                           Fail,
-                           FailAfterFirstByte,
-                           AbortWithoutHandler,
-                           AbortInHandler,
-                           AbortInHandlerHalf,
-                           AbortAfter1Byte,
-                           Later,
-                           BigHold);
+			   Normal,
+			   Bucket,
+			   SmallBucket,
+			   BucketError,
+			   Skip,
+			   Block,
+			   Byte,
+			   BlockByte,
+			   BlockInject,
+			   Half,
+			   Fail,
+			   FailAfterFirstByte,
+			   AbortWithoutHandler,
+			   AbortInHandler,
+			   AbortInHandlerHalf,
+			   AbortAfter1Byte,
+			   Later,
+			   BigHold);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,33 +40,33 @@
 
 TEST(TestRedirectHttps, Basic)
 {
-    TestPool pool;
-    const AllocatorPtr alloc(pool);
+	TestPool pool;
+	const AllocatorPtr alloc(pool);
 
-    ASSERT_STREQ(MakeHttpsRedirect(alloc, "localhost", 0, "/foo"),
-                 "https://localhost/foo");
+	ASSERT_STREQ(MakeHttpsRedirect(alloc, "localhost", 0, "/foo"),
+		     "https://localhost/foo");
 
-    ASSERT_STREQ(MakeHttpsRedirect(alloc, "localhost:80", 0, "/foo"),
-                 "https://localhost/foo");
+	ASSERT_STREQ(MakeHttpsRedirect(alloc, "localhost:80", 0, "/foo"),
+		     "https://localhost/foo");
 
-    ASSERT_STREQ(MakeHttpsRedirect(alloc, "localhost:80", 443, "/foo"),
-                 "https://localhost/foo");
+	ASSERT_STREQ(MakeHttpsRedirect(alloc, "localhost:80", 443, "/foo"),
+		     "https://localhost/foo");
 
-    ASSERT_STREQ(MakeHttpsRedirect(alloc, "localhost:80", 444, "/foo"),
-                 "https://localhost:444/foo");
+	ASSERT_STREQ(MakeHttpsRedirect(alloc, "localhost:80", 444, "/foo"),
+		     "https://localhost:444/foo");
 }
 
 TEST(TestRedirectHttps, IPv6)
 {
-    TestPool pool;
-    const AllocatorPtr alloc(pool);
+	TestPool pool;
+	const AllocatorPtr alloc(pool);
 
-    ASSERT_STREQ(MakeHttpsRedirect(alloc, "::", 0, "/foo"),
-                 "https://::/foo");
+	ASSERT_STREQ(MakeHttpsRedirect(alloc, "::", 0, "/foo"),
+		     "https://::/foo");
 
-    ASSERT_STREQ(MakeHttpsRedirect(alloc, "[::]:80", 0, "/foo"),
-                 "https://::/foo");
+	ASSERT_STREQ(MakeHttpsRedirect(alloc, "[::]:80", 0, "/foo"),
+		     "https://::/foo");
 
-    ASSERT_STREQ(MakeHttpsRedirect(alloc, "::", 444, "/foo"),
-                 "https://[::]:444/foo");
+	ASSERT_STREQ(MakeHttpsRedirect(alloc, "::", 444, "/foo"),
+		     "https://[::]:444/foo");
 }

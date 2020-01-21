@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef TEST_POOL_HXX
-#define TEST_POOL_HXX
+#pragma once
 
 #include "pool/pool.hxx"
 #include "pool/Ptr.hxx"
@@ -40,33 +39,31 @@
 #include <assert.h>
 
 class TestPool {
-    RootPool root_pool;
-    PoolPtr the_pool;
+	RootPool root_pool;
+	PoolPtr the_pool;
 
 public:
-    TestPool()
-        :the_pool(pool_new_libc(root_pool, "test")) {}
+	TestPool()
+		:the_pool(pool_new_libc(root_pool, "test")) {}
 
-    TestPool(const TestPool &) = delete;
-    TestPool &operator=(const TestPool &) = delete;
+	TestPool(const TestPool &) = delete;
+	TestPool &operator=(const TestPool &) = delete;
 
-    operator struct pool &() {
-        assert(the_pool);
+	operator struct pool &() {
+		assert(the_pool);
 
-        return the_pool;
-    }
+		return the_pool;
+	}
 
-    operator struct pool *() {
-        assert(the_pool);
+	operator struct pool *() {
+		assert(the_pool);
 
-        return the_pool;
-    }
+		return the_pool;
+	}
 
-    PoolPtr Steal() noexcept {
-        assert(the_pool);
+	PoolPtr Steal() noexcept {
+		assert(the_pool);
 
-        return std::move(the_pool);
-    }
+		return std::move(the_pool);
+	}
 };
-
-#endif

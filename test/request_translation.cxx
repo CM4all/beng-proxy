@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -54,136 +54,138 @@
 static void
 print_resource_address(const ResourceAddress *address)
 {
-    switch (address->type) {
-    case ResourceAddress::Type::NONE:
-        break;
+	switch (address->type) {
+	case ResourceAddress::Type::NONE:
+		break;
 
-    case ResourceAddress::Type::LOCAL:
-        printf("path=%s\n", address->GetFile().path);
-        if (address->GetFile().content_type != nullptr)
-            printf("content_type=%s\n",
-                   address->GetFile().content_type);
-        break;
+	case ResourceAddress::Type::LOCAL:
+		printf("path=%s\n", address->GetFile().path);
+		if (address->GetFile().content_type != nullptr)
+			printf("content_type=%s\n",
+			       address->GetFile().content_type);
+		break;
 
-    case ResourceAddress::Type::HTTP:
-        printf("http=%s\n", address->GetHttp().path);
-        break;
+	case ResourceAddress::Type::HTTP:
+		printf("http=%s\n", address->GetHttp().path);
+		break;
 
-    case ResourceAddress::Type::LHTTP:
-        printf("lhttp=%s|%s\n", address->GetLhttp().path,
-               address->GetLhttp().uri);
-        break;
+	case ResourceAddress::Type::LHTTP:
+		printf("lhttp=%s|%s\n", address->GetLhttp().path,
+		       address->GetLhttp().uri);
+		break;
 
-    case ResourceAddress::Type::PIPE:
-        printf("pipe=%s\n", address->GetCgi().path);
-        break;
+	case ResourceAddress::Type::PIPE:
+		printf("pipe=%s\n", address->GetCgi().path);
+		break;
 
-    case ResourceAddress::Type::CGI:
-        printf("cgi=%s\n", address->GetCgi().path);
-        break;
+	case ResourceAddress::Type::CGI:
+		printf("cgi=%s\n", address->GetCgi().path);
+		break;
 
-    case ResourceAddress::Type::FASTCGI:
-        printf("fastcgi=%s\n", address->GetCgi().path);
-        break;
+	case ResourceAddress::Type::FASTCGI:
+		printf("fastcgi=%s\n", address->GetCgi().path);
+		break;
 
-    case ResourceAddress::Type::WAS:
-        printf("was=%s\n", address->GetCgi().path);
-        break;
+	case ResourceAddress::Type::WAS:
+		printf("was=%s\n", address->GetCgi().path);
+		break;
 
-    case ResourceAddress::Type::NFS:
-        printf("nfs=%s:%s\n", address->GetNfs().server,
-               address->GetNfs().path);
-        break;
-    }
+	case ResourceAddress::Type::NFS:
+		printf("nfs=%s:%s\n", address->GetNfs().server,
+		       address->GetNfs().path);
+		break;
+	}
 }
 
 class MyHandler final : public TranslateHandler {
 public:
-    /* virtual methods from TranslateHandler */
-    void OnTranslateResponse(TranslateResponse &response) noexcept override;
-    void OnTranslateError(std::exception_ptr error) noexcept override;
+	/* virtual methods from TranslateHandler */
+	void OnTranslateResponse(TranslateResponse &response) noexcept override;
+	void OnTranslateError(std::exception_ptr error) noexcept override;
 };
 
 void
 MyHandler::OnTranslateResponse(TranslateResponse &response) noexcept
 {
-    const WidgetView *view;
+	const WidgetView *view;
 
-    if (response.status != 0)
-        printf("status=%d\n", response.status);
+	if (response.status != 0)
+		printf("status=%d\n", response.status);
 
-    print_resource_address(&response.address);
+	print_resource_address(&response.address);
 
-    for (view = response.views; view != nullptr; view = view->next) {
-        if (view->name != nullptr)
-            printf("view=%s\n", view->name);
+	for (view = response.views; view != nullptr; view = view->next) {
+		if (view->name != nullptr)
+			printf("view=%s\n", view->name);
 
-        for (const Transformation *transformation = view->transformation;
-             transformation != nullptr;
-             transformation = transformation->next) {
-            switch (transformation->type) {
-            case Transformation::Type::PROCESS:
-                printf("process\n");
-                break;
+		for (const Transformation *transformation = view->transformation;
+		     transformation != nullptr;
+		     transformation = transformation->next) {
+			switch (transformation->type) {
+			case Transformation::Type::PROCESS:
+				printf("process\n");
+				break;
 
-            case Transformation::Type::PROCESS_CSS:
-                printf("process_css\n");
-                break;
+			case Transformation::Type::PROCESS_CSS:
+				printf("process_css\n");
+				break;
 
-            case Transformation::Type::PROCESS_TEXT:
-                printf("process_text\n");
-                break;
+			case Transformation::Type::PROCESS_TEXT:
+				printf("process_text\n");
+				break;
 
-            case Transformation::Type::FILTER:
-                printf("filter\n");
-                print_resource_address(&transformation->u.filter.address);
-                break;
+			case Transformation::Type::FILTER:
+				printf("filter\n");
+				print_resource_address(&transformation->u.filter.address);
+				break;
 
-            case Transformation::Type::SUBST:
-                printf("subst '%s'\n", transformation->u.subst.yaml_file);
-                break;
-            }
-        }
-    }
+			case Transformation::Type::SUBST:
+				printf("subst '%s'\n", transformation->u.subst.yaml_file);
+				break;
+			}
+		}
+	}
 
-    if (response.redirect != nullptr)
-        printf("redirect=%s\n", response.redirect);
-    if (!response.session.IsNull())
-        printf("session=%.*s\n", (int)response.session.size,
-               (const char *)response.session.data);
-    if (response.user != nullptr)
-        printf("user=%s\n", response.user);
+	if (response.redirect != nullptr)
+		printf("redirect=%s\n", response.redirect);
+	if (!response.session.IsNull())
+		printf("session=%.*s\n", (int)response.session.size,
+		       (const char *)response.session.data);
+	if (response.user != nullptr)
+		printf("user=%s\n", response.user);
 }
 
 void
 MyHandler::OnTranslateError(std::exception_ptr ep) noexcept
 {
-    PrintException(ep);
+	PrintException(ep);
 }
 
-int main(int argc, char **argv) {
-    const ScopeFbPoolInit fb_pool_init;
+int
+main(int argc, char **argv)
+{
+	const ScopeFbPoolInit fb_pool_init;
 
-    TranslateRequest request;
-    request.host = "example.com";
-    request.uri = "/foo/index.html";
+	TranslateRequest request;
+	request.host = "example.com";
+	request.uri = "/foo/index.html";
 
-    (void)argc;
-    (void)argv;
+	(void)argc;
+	(void)argv;
 
-    PInstance instance;
+	PInstance instance;
 
-    AllocatedSocketAddress translation_socket;
-    translation_socket.SetLocal("@translation");
+	AllocatedSocketAddress translation_socket;
+	translation_socket.SetLocal("@translation");
 
-    TranslationStock stock(instance.event_loop,
-                           translation_socket, 0);
+	TranslationStock stock(instance.event_loop,
+			       translation_socket, 0);
 
-    MyHandler handler;
-    CancellablePointer cancel_ptr;
-    stock.SendRequest(instance.root_pool,
-                      request, nullptr,
-                      handler, cancel_ptr);
+	MyHandler handler;
+	CancellablePointer cancel_ptr;
+	stock.SendRequest(instance.root_pool,
+			  request, nullptr,
+			  handler, cancel_ptr);
 
-    instance.event_loop.Dispatch();
+	instance.event_loop.Dispatch();
 }

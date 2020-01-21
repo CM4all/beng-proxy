@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -62,32 +62,32 @@
 #include <signal.h>
 
 struct Context final
-    : PInstance, WasLease, HttpResponseHandler {
+	: PInstance, WasLease, HttpResponseHandler {
 
-    WasProcess process;
+	WasProcess process;
 
-    SinkFd *body = nullptr;
-    bool error;
+	SinkFd *body = nullptr;
+	bool error;
 
-    CancellablePointer cancel_ptr;
+	CancellablePointer cancel_ptr;
 
-    Context():body(nullptr) {}
+	Context():body(nullptr) {}
 
-    /* virtual methods from class Lease */
-    void ReleaseWas(gcc_unused bool reuse) override {
-        kill(process.pid, SIGTERM);
+	/* virtual methods from class Lease */
+	void ReleaseWas(gcc_unused bool reuse) override {
+		kill(process.pid, SIGTERM);
 
-        process.Close();
-    }
+		process.Close();
+	}
 
-    void ReleaseWasStop(gcc_unused uint64_t input_received) override {
-        ReleaseWas(false);
-    }
+	void ReleaseWasStop(gcc_unused uint64_t input_received) override {
+		ReleaseWas(false);
+	}
 
-    /* virtual methods from class HttpResponseHandler */
-    void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        UnusedIstreamPtr body) noexcept override;
-    void OnHttpError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(http_status_t status, StringMap &&headers,
+			    UnusedIstreamPtr body) noexcept override;
+	void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 /*
@@ -98,39 +98,39 @@ struct Context final
 static void
 my_sink_fd_input_eof(void *ctx)
 {
-    auto &c = *(Context *)ctx;
+	auto &c = *(Context *)ctx;
 
-    c.body = nullptr;
+	c.body = nullptr;
 }
 
 static void
 my_sink_fd_input_error(std::exception_ptr ep, void *ctx)
 {
-    auto &c = *(Context *)ctx;
+	auto &c = *(Context *)ctx;
 
-    PrintException(ep);
+	PrintException(ep);
 
-    c.body = nullptr;
-    c.error = true;
+	c.body = nullptr;
+	c.error = true;
 }
 
 static bool
 my_sink_fd_send_error(int error, void *ctx)
 {
-    auto &c = *(Context *)ctx;
+	auto &c = *(Context *)ctx;
 
-    fprintf(stderr, "%s\n", strerror(error));
+	fprintf(stderr, "%s\n", strerror(error));
 
-    c.body = nullptr;
-    c.error = true;
+	c.body = nullptr;
+	c.error = true;
 
-    return true;
+	return true;
 }
 
 static constexpr SinkFdHandler my_sink_fd_handler = {
-    .input_eof = my_sink_fd_input_eof,
-    .input_error = my_sink_fd_input_error,
-    .send_error = my_sink_fd_send_error,
+	.input_eof = my_sink_fd_input_eof,
+	.input_error = my_sink_fd_input_error,
+	.send_error = my_sink_fd_send_error,
 };
 
 
@@ -141,105 +141,105 @@ static constexpr SinkFdHandler my_sink_fd_handler = {
 
 void
 Context::OnHttpResponse(http_status_t status,
-                        gcc_unused StringMap &&headers,
-                        UnusedIstreamPtr _body) noexcept
+			gcc_unused StringMap &&headers,
+			UnusedIstreamPtr _body) noexcept
 {
-    fprintf(stderr, "status: %s\n", http_status_to_string(status));
+	fprintf(stderr, "status: %s\n", http_status_to_string(status));
 
-    if (_body) {
-        struct pool &pool = root_pool;
-        body = sink_fd_new(event_loop, pool,
-                           std::move(_body),
-                           FileDescriptor(STDOUT_FILENO),
-                           guess_fd_type(STDOUT_FILENO),
-                           my_sink_fd_handler, this);
-        sink_fd_read(body);
-    }
+	if (_body) {
+		struct pool &pool = root_pool;
+		body = sink_fd_new(event_loop, pool,
+				   std::move(_body),
+				   FileDescriptor(STDOUT_FILENO),
+				   guess_fd_type(STDOUT_FILENO),
+				   my_sink_fd_handler, this);
+		sink_fd_read(body);
+	}
 }
 
 void
 Context::OnHttpError(std::exception_ptr ep) noexcept
 {
-    PrintException(ep);
+	PrintException(ep);
 
-    error = true;
+	error = true;
 }
 
 static Istream *
 request_body(EventLoop &event_loop, struct pool &pool)
 {
-    struct stat st;
-    return fstat(0, &st) == 0 && S_ISREG(st.st_mode)
-        ? istream_file_fd_new(event_loop, pool,
-                              "/dev/stdin", UniqueFileDescriptor(STDIN_FILENO),
-                              FdType::FD_FILE, -1)
-        : nullptr;
+	struct stat st;
+	return fstat(0, &st) == 0 && S_ISREG(st.st_mode)
+		? istream_file_fd_new(event_loop, pool,
+				      "/dev/stdin", UniqueFileDescriptor(STDIN_FILENO),
+				      FdType::FD_FILE, -1)
+		: nullptr;
 }
 
 int
 main(int argc, char **argv)
 try {
-    SetLogLevel(5);
+	SetLogLevel(5);
 
-    StaticArray<const char *, 64> params;
+	StaticArray<const char *, 64> params;
 
-    if (argc < 3) {
-        fprintf(stderr, "Usage: run_was PATH URI [--parameter a=b ...]\n");
-        return EXIT_FAILURE;
-    }
+	if (argc < 3) {
+		fprintf(stderr, "Usage: run_was PATH URI [--parameter a=b ...]\n");
+		return EXIT_FAILURE;
+	}
 
-    const char *uri = argv[2];
+	const char *uri = argv[2];
 
-    for (int i = 3; i < argc;) {
-        if (strcmp(argv[i], "--parameter") == 0 ||
-            strcmp(argv[i], "-p") == 0) {
-            ++i;
-            if (i >= argc)
-                throw std::runtime_error("Parameter value missing");
+	for (int i = 3; i < argc;) {
+		if (strcmp(argv[i], "--parameter") == 0 ||
+		    strcmp(argv[i], "-p") == 0) {
+			++i;
+			if (i >= argc)
+				throw std::runtime_error("Parameter value missing");
 
-            if (params.full())
-                throw std::runtime_error("Too many parameters");
+			if (params.full())
+				throw std::runtime_error("Too many parameters");
 
-            params.push_back(argv[i++]);
-        } else
-            throw std::runtime_error("Unrecognized parameter");
-    }
+			params.push_back(argv[i++]);
+		} else
+			throw std::runtime_error("Unrecognized parameter");
+	}
 
-    direct_global_init();
+	direct_global_init();
 
-    SpawnConfig spawn_config;
+	SpawnConfig spawn_config;
 
-    const ScopeFbPoolInit fb_pool_init;
+	const ScopeFbPoolInit fb_pool_init;
 
-    ChildOptions child_options;
+	ChildOptions child_options;
 
-    Context context;
-    ChildProcessRegistry child_process_registry(context.event_loop);
-    child_process_registry.SetVolatile();
-    LocalSpawnService spawn_service(spawn_config, child_process_registry);
+	Context context;
+	ChildProcessRegistry child_process_registry(context.event_loop);
+	child_process_registry.SetVolatile();
+	LocalSpawnService spawn_service(spawn_config, child_process_registry);
 
-    context.process = was_launch(spawn_service, "was",
-                                 argv[1], nullptr,
-                                 child_options, {}, nullptr);
+	context.process = was_launch(spawn_service, "was",
+				     argv[1], nullptr,
+				     child_options, {}, nullptr);
 
-    was_client_request(context.root_pool, context.event_loop, nullptr,
-                       context.process.control,
-                       context.process.input,
-                       context.process.output,
-                       context,
-                       HTTP_METHOD_GET, uri,
-                       nullptr,
-                       nullptr, nullptr,
-                       *strmap_new(context.root_pool),
-                       UnusedIstreamPtr(request_body(context.event_loop,
-                                                     context.root_pool)),
-                       params,
-                       context, context.cancel_ptr);
+	was_client_request(context.root_pool, context.event_loop, nullptr,
+			   context.process.control,
+			   context.process.input,
+			   context.process.output,
+			   context,
+			   HTTP_METHOD_GET, uri,
+			   nullptr,
+			   nullptr, nullptr,
+			   *strmap_new(context.root_pool),
+			   UnusedIstreamPtr(request_body(context.event_loop,
+							 context.root_pool)),
+			   params,
+			   context, context.cancel_ptr);
 
-    context.event_loop.Dispatch();
+	context.event_loop.Dispatch();
 
-    return context.error;
+	return context.error;
 } catch (const std::exception &e) {
-    PrintException(e);
-    return EXIT_FAILURE;
+	PrintException(e);
+	return EXIT_FAILURE;
 }
