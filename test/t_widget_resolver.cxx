@@ -33,6 +33,7 @@
 #include "widget/Resolver.hxx"
 #include "widget/Registry.hxx"
 #include "widget/Widget.hxx"
+#include "widget/Ptr.hxx"
 #include "widget/Class.hxx"
 #include "pool/pool.hxx"
 #include "pool/Ptr.hxx"
@@ -75,6 +76,11 @@ struct Context {
 	void ResolverCallback1() noexcept;
 	void ResolverCallback2() noexcept;
 };
+
+void
+Widget::DiscardForFocused() noexcept
+{
+}
 
 const WidgetView *
 widget_view_lookup(const WidgetView *view,
@@ -160,7 +166,7 @@ TEST(WidgetResolver, Normal)
 
 	auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
-	auto widget = NewFromPool<Widget>(pool, pool, nullptr);
+	WidgetPtr widget(NewFromPool<Widget>(pool, pool, nullptr));
 	widget->class_name = "foo";
 
 	ResolveWidget(pool, *widget, registry,
@@ -181,6 +187,7 @@ TEST(WidgetResolver, Normal)
 	ASSERT_TRUE(data.registry.finished);
 	ASSERT_FALSE(data.registry.aborted);
 
+	widget.reset();
 	pool.reset();
 	pool_commit();
 }

@@ -623,6 +623,7 @@ test('t_widget_resolver', executable('t_widget_resolver',
   dependencies: [
     gtest,
     putil_dep,
+    istream_dep,
   ]))
 
 test('t_wembed', executable('t_wembed',
