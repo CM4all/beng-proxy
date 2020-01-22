@@ -200,7 +200,7 @@ TEST(WidgetResolver, Abort)
 
 	auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
-	auto widget = NewFromPool<Widget>(pool, pool, nullptr);
+	WidgetPtr widget(NewFromPool<Widget>(pool, pool, nullptr));
 	widget->class_name = "foo";
 
 	ResolveWidget(pool, *widget, registry,
@@ -221,6 +221,7 @@ TEST(WidgetResolver, Abort)
 	ASSERT_FALSE(data.registry.finished);
 	ASSERT_TRUE(data.registry.aborted);
 
+	widget.reset();
 	pool.reset();
 	pool_commit();
 }
@@ -233,7 +234,7 @@ TEST(WidgetResolver, TwoClients)
 
 	auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
-	auto widget = NewFromPool<Widget>(pool, pool, nullptr);
+	WidgetPtr widget(NewFromPool<Widget>(pool, pool, nullptr));
 	widget->class_name = "foo";
 
 	ResolveWidget(pool, *widget, registry,
@@ -258,6 +259,7 @@ TEST(WidgetResolver, TwoClients)
 	ASSERT_TRUE(data.registry.finished);
 	ASSERT_FALSE(data.registry.aborted);
 
+	widget.reset();
 	pool.reset();
 	pool_commit();
 }
@@ -272,7 +274,7 @@ TEST(WidgetResolver, TwoAbort)
 
 	auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
-	auto widget = NewFromPool<Widget>(pool, pool, nullptr);
+	WidgetPtr widget(NewFromPool<Widget>(pool, pool, nullptr));
 	widget->class_name = "foo";
 
 	ResolveWidget(pool, *widget, registry,
@@ -297,6 +299,7 @@ TEST(WidgetResolver, TwoAbort)
 	ASSERT_TRUE(data.registry.finished);
 	ASSERT_FALSE(data.registry.aborted);
 
+	widget.reset();
 	pool.reset();
 	pool_commit();
 }
