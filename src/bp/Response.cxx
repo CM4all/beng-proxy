@@ -294,6 +294,8 @@ Request::InvokeXmlProcessor(http_status_t status,
 	if (proxy_ref != nullptr) {
 		/* the client requests a widget in proxy mode */
 
+		ctx.reset();
+
 		proxy_widget(*this, std::move(response_body),
 			     widget, proxy_ref,
 			     transformation.u.processor.options);
@@ -358,7 +360,7 @@ Request::InvokeCssProcessor(http_status_t status,
 		dissected_uri.base = translate.response->uri;
 
 	response_body = css_processor(pool, stopwatch, std::move(response_body),
-				      widget, ctx,
+				      widget, std::move(ctx),
 				      transformation.u.css_processor.options);
 	assert(response_body);
 
@@ -407,6 +409,8 @@ Request::InvokeTextProcessor(http_status_t status,
 	response_body = text_processor(pool, std::move(response_body),
 				       widget, *ctx);
 	assert(response_body);
+
+	ctx.reset();
 
 	InvokeResponse(status,
 		       processor_header_forward(pool, response_headers),
