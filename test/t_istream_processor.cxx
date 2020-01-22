@@ -36,6 +36,7 @@
 #include "istream/istream.hxx"
 #include "pool/pool.hxx"
 #include "widget/Widget.hxx"
+#include "widget/Ptr.hxx"
 #include "widget/Class.hxx"
 #include "widget/Context.hxx"
 #include "bp/XmlProcessor.hxx"
@@ -92,7 +93,7 @@ public:
 
 	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
 				    UnusedIstreamPtr input) const noexcept {
-		auto *widget = NewFromPool<Widget>(pool, pool, &root_widget_class);
+		auto widget = MakeRootWidget(pool, nullptr);
 
 		crash_global_init();
 		AtScopeExit() { crash_global_deinit(); };
@@ -120,7 +121,8 @@ public:
 		session_put(session);
 
 		return processor_process(pool, nullptr,
-					 std::move(input), *widget, ctx, PROCESSOR_CONTAINER);
+					 std::move(input), *widget.release(),
+					 ctx, PROCESSOR_CONTAINER);
 	}
 };
 

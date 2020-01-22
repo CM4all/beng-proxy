@@ -33,8 +33,6 @@
 #include "Class.hxx"
 #include "AllocatorPtr.hxx"
 
-const WidgetClass root_widget_class{};
-
 WidgetClass::WidgetClass(AllocatorPtr alloc, const WidgetClass &src) noexcept
 	:local_uri(alloc.CheckDup(src.local_uri)),
 	 untrusted_host(alloc.CheckDup(src.untrusted_host)),

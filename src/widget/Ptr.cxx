@@ -30,19 +30,21 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "Ptr.hxx"
+#include "Widget.hxx"
+#include "Class.hxx"
+#include "pool/pool.hxx"
 
-#include "util/DestructDeleter.hxx"
-
-#include <memory>
-
-class Widget;
-struct WidgetClass;
-
-using WidgetPtr = std::unique_ptr<Widget, DestructDeleter>;
+const WidgetClass root_widget_class{};
 
 WidgetPtr
-MakeWidget(struct pool &pool, const WidgetClass *cls) noexcept;
+MakeWidget(struct pool &pool, const WidgetClass *cls) noexcept
+{
+	return WidgetPtr(NewFromPool<Widget>(pool, pool, cls));
+}
 
 WidgetPtr
-MakeRootWidget(struct pool &pool, const char *id) noexcept;
+MakeRootWidget(struct pool &pool, const char *id) noexcept
+{
+	return WidgetPtr(NewFromPool<Widget>(pool, Widget::RootTag{}, pool, id));
+}

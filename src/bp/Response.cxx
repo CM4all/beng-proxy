@@ -46,8 +46,8 @@
 #include "http/HeaderParser.hxx"
 #include "ForwardHeaders.hxx"
 #include "widget/Widget.hxx"
+#include "widget/Ptr.hxx"
 #include "widget/Ref.hxx"
-#include "widget/Class.hxx"
 #include "widget/Context.hxx"
 #include "session/Session.hxx"
 #include "GrowingBuffer.hxx"
@@ -221,12 +221,10 @@ Request::InvokeXmlProcessor(http_status_t status,
 		return;
 	}
 
-	auto *widget = NewFromPool<Widget>(pool,
-					   Widget::RootTag(),
-					   pool,
-					   translate.response->uri != nullptr
-					   ? translate.response->uri
-					   : p_strdup(pool, dissected_uri.base));
+	auto widget = MakeRootWidget(pool,
+				     translate.response->uri != nullptr
+				     ? translate.response->uri
+				     : p_strdup(pool, dissected_uri.base));
 
 	const WidgetRef *focus_ref =
 		widget_ref_parse(&pool, args.Remove("focus"));
@@ -295,12 +293,14 @@ Request::InvokeXmlProcessor(http_status_t status,
 		/* the client requests a widget in proxy mode */
 
 		proxy_widget(*this, std::move(response_body),
-			     *widget, proxy_ref, transformation.u.processor.options);
+			     *widget.release(), proxy_ref,
+			     transformation.u.processor.options);
 	} else {
 		/* the client requests the whole template */
 		response_body = processor_process(pool, stopwatch,
 						  std::move(response_body),
-						  *widget, MakeWidgetContext(),
+						  *widget.release(),
+						  MakeWidgetContext(),
 						  transformation.u.processor.options);
 		assert(response_body);
 
@@ -339,10 +339,7 @@ Request::InvokeCssProcessor(http_status_t status,
 		return;
 	}
 
-	auto *widget = NewFromPool<Widget>(pool,
-					   Widget::RootTag(),
-					   pool,
-					   p_strdup(pool, dissected_uri.base));
+	auto widget = MakeRootWidget(pool, p_strdup(pool, dissected_uri.base));
 
 	if (translate.response->untrusted != nullptr) {
 		logger(2, "refusing to render template on untrusted domain '",
@@ -356,7 +353,7 @@ Request::InvokeCssProcessor(http_status_t status,
 		dissected_uri.base = translate.response->uri;
 
 	response_body = css_processor(pool, stopwatch, std::move(response_body),
-				      *widget, MakeWidgetContext(),
+				      *widget.release(), MakeWidgetContext(),
 				      transformation.u.css_processor.options);
 	assert(response_body);
 
@@ -386,11 +383,7 @@ Request::InvokeTextProcessor(http_status_t status,
 		return;
 	}
 
-	auto *widget = NewFromPool<Widget>(pool,
-					   Widget::RootTag(),
-					   pool,
-					   p_strdup(pool,
-						    dissected_uri.base));
+	auto widget = MakeRootWidget(pool, p_strdup(pool, dissected_uri.base));
 
 	if (translate.response->untrusted != nullptr) {
 		logger(2, "refusing to render template on untrusted domain '",
@@ -404,7 +397,7 @@ Request::InvokeTextProcessor(http_status_t status,
 		dissected_uri.base = translate.response->uri;
 
 	response_body = text_processor(pool, std::move(response_body),
-				       *widget, MakeWidgetContext());
+				       *widget.release(), MakeWidgetContext());
 	assert(response_body);
 
 	InvokeResponse(status,

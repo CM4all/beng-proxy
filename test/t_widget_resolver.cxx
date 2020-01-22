@@ -166,7 +166,7 @@ TEST(WidgetResolver, Normal)
 
 	auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
-	WidgetPtr widget(NewFromPool<Widget>(pool, pool, nullptr));
+	auto widget = MakeWidget(pool, nullptr);
 	widget->class_name = "foo";
 
 	ResolveWidget(pool, *widget, registry,
@@ -200,7 +200,7 @@ TEST(WidgetResolver, Abort)
 
 	auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
-	WidgetPtr widget(NewFromPool<Widget>(pool, pool, nullptr));
+	auto widget = MakeWidget(pool, nullptr);
 	widget->class_name = "foo";
 
 	ResolveWidget(pool, *widget, registry,
@@ -234,7 +234,7 @@ TEST(WidgetResolver, TwoClients)
 
 	auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
-	WidgetPtr widget(NewFromPool<Widget>(pool, pool, nullptr));
+	auto widget = MakeWidget(pool, nullptr);
 	widget->class_name = "foo";
 
 	ResolveWidget(pool, *widget, registry,
@@ -274,7 +274,7 @@ TEST(WidgetResolver, TwoAbort)
 
 	auto pool = pool_new_linear(data.root_pool, "test", 8192);
 
-	WidgetPtr widget(NewFromPool<Widget>(pool, pool, nullptr));
+	auto widget = MakeWidget(pool, nullptr);
 	widget->class_name = "foo";
 
 	ResolveWidget(pool, *widget, registry,

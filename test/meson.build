@@ -619,6 +619,8 @@ test('t_widget_resolver', executable('t_widget_resolver',
   't_widget_resolver.cxx',
   '../src/widget/Resolver.cxx',
   '../src/widget/Init.cxx',
+  '../src/widget/Root.cxx',
+  '../src/widget/Ptr.cxx',
   include_directories: inc,
   dependencies: [
     gtest,
