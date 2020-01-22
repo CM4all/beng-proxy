@@ -38,6 +38,7 @@
 #include "uri/Escape.hxx"
 #include "uri/Extract.hxx"
 #include "widget/Widget.hxx"
+#include "widget/Ptr.hxx"
 #include "widget/LookupHandler.hxx"
 #include "widget/Class.hxx"
 #include "widget/Context.hxx"
@@ -197,7 +198,7 @@ struct XmlProcessor final : PoolHolder, XmlParserHandler, Cancellable {
 		off_t start_offset;
 
 		struct pool &pool;
-		Widget *widget = nullptr;
+		WidgetPtr widget;
 
 		struct Param {
 			ExpansibleBuffer name;
@@ -329,14 +330,14 @@ private:
 	/**
 	 * Throws an exception if the widget is not allowed here.
 	 */
-	void PrepareEmbedWidget(Widget &child_widget);
+	Widget &PrepareEmbedWidget(WidgetPtr &&child_widget);
 
 	UnusedIstreamPtr EmbedWidget(Widget &child_widget) noexcept;
-	UnusedIstreamPtr OpenWidgetElement(Widget &child_widget) noexcept;
-	void FoundWidget(Widget &child_widget) noexcept;
-	bool CheckWidgetLookup(Widget &child_widget) noexcept;
+	UnusedIstreamPtr OpenWidgetElement(WidgetPtr &&child_widget) noexcept;
+	void FoundWidget(WidgetPtr &&child_widget) noexcept;
+	bool CheckWidgetLookup(WidgetPtr &&child_widget) noexcept;
 	bool WidgetElementFinished(const XmlParserTag &tag,
-				   Widget &child_widget) noexcept;
+				   WidgetPtr &&child_widget) noexcept;
 
 	Istream *StartCdataIstream() noexcept;
 	void StopCdataIstream() noexcept;
@@ -743,7 +744,8 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag) noexcept
 		}
 
 		tag = Tag::WIDGET;
-		widget.widget = NewFromPool<Widget>(widget.pool, widget.pool, nullptr);
+		widget.widget.reset(NewFromPool<Widget>(widget.pool,
+							widget.pool, nullptr));
 		widget.params.Clear();
 
 		widget.widget->parent = &container;
@@ -1286,28 +1288,29 @@ widget_catch_callback(std::exception_ptr ep, void *ctx) noexcept
 	return {};
 }
 
-inline void
-XmlProcessor::PrepareEmbedWidget(Widget &child_widget)
+inline Widget &
+XmlProcessor::PrepareEmbedWidget(WidgetPtr &&child_widget)
 {
-	if (child_widget.class_name == nullptr)
+	if (child_widget->class_name == nullptr)
 		throw std::runtime_error("widget without a class");
 
 	/* enforce the SELF_CONTAINER flag */
 	const bool self_container =
 		(options & PROCESSOR_SELF_CONTAINER) != 0;
-	if (!child_widget.InitApproval(self_container))
+	if (!child_widget->InitApproval(self_container))
 		throw FormatRuntimeError("widget is not allowed to embed widget '%s'",
-					 child_widget.GetLogName());
+					 child_widget->GetLogName());
 
-	if (widget_check_recursion(child_widget.parent))
+	if (widget_check_recursion(child_widget->parent))
 		throw FormatRuntimeError("maximum widget depth exceeded for widget '%s'",
-					 child_widget.GetLogName());
+					 child_widget->GetLogName());
 
 	if (!widget.params.IsEmpty())
-		child_widget.from_template.query_string =
+		child_widget->from_template.query_string =
 			widget.params.StringDup(widget.pool);
 
-	container.children.push_front(child_widget);
+	container.children.push_front(*child_widget.release());
+	return container.children.front();
 }
 
 inline UnusedIstreamPtr
@@ -1340,66 +1343,69 @@ XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
 }
 
 inline UnusedIstreamPtr
-XmlProcessor::OpenWidgetElement(Widget &child_widget) noexcept
+XmlProcessor::OpenWidgetElement(WidgetPtr &&child_widget) noexcept
 {
-	assert(child_widget.parent == &container);
+	assert(child_widget->parent == &container);
 
 	try {
-		PrepareEmbedWidget(child_widget);
+		return EmbedWidget(PrepareEmbedWidget(std::move(child_widget)));
 	} catch (...) {
 		container.logger(5, std::current_exception());
 		return nullptr;
 	}
-
-	return EmbedWidget(child_widget);
 }
 
 inline void
-XmlProcessor::FoundWidget(Widget &child_widget) noexcept
+XmlProcessor::FoundWidget(WidgetPtr &&child_widget) noexcept
 {
-	assert(child_widget.parent == &container);
+	assert(child_widget->parent == &container);
 	assert(!replace);
 
 	auto &handler2 = *handler;
 
+	Widget *child_widget2 = nullptr;
+
 	try {
 		{
 			AtScopeExit(this) { Close(); };
-			PrepareEmbedWidget(child_widget);
+			child_widget2 = &PrepareEmbedWidget(std::move(child_widget));
 		}
 
-		child_widget.CopyFromRequest();
-		handler2.WidgetFound(child_widget);
+		child_widget2->CopyFromRequest();
+		handler2.WidgetFound(*child_widget2);
 	} catch (...) {
-		child_widget.Cancel();
+		if (child_widget2 != nullptr)
+			child_widget2->Cancel();
 		handler2.WidgetLookupError(std::current_exception());
 	}
 }
 
 inline bool
-XmlProcessor::CheckWidgetLookup(Widget &child_widget) noexcept
+XmlProcessor::CheckWidgetLookup(WidgetPtr &&child_widget) noexcept
 {
-	assert(child_widget.parent == &container);
+	assert(child_widget->parent == &container);
 	assert(!replace);
 
-	if (child_widget.id != nullptr && strcmp(lookup_id, child_widget.id) == 0) {
-		FoundWidget(child_widget);
+	if (child_widget->id != nullptr &&
+	    strcmp(lookup_id, child_widget->id) == 0) {
+		FoundWidget(std::move(child_widget));
 		return false;
 	} else {
-		child_widget.Cancel();
+		child_widget->Cancel();
 		return true;
 	}
 }
 
 inline bool
 XmlProcessor::WidgetElementFinished(const XmlParserTag &widget_tag,
-				    Widget &child_widget) noexcept
+				    WidgetPtr &&child_widget) noexcept
 {
 	if (replace) {
-		Replace(widget.start_offset, widget_tag.end, OpenWidgetElement(child_widget));
+		Replace(widget.start_offset, widget_tag.end,
+			OpenWidgetElement(std::move(child_widget)));
 		return true;
 	} else
-		return CheckWidgetLookup(child_widget);
+		return CheckWidgetLookup(std::move(child_widget));
 }
 
 gcc_pure
@@ -1449,10 +1455,9 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 		if (xml_tag.type == XmlParserTagType::OPEN)
 			return true;
 
-		auto &child_widget = *widget.widget;
-		widget.widget = nullptr;
-
-		return WidgetElementFinished(xml_tag, child_widget);
+		return WidgetElementFinished(xml_tag,
+					     std::exchange(widget.widget,
+							   nullptr));
 	} else if (tag == Tag::WIDGET_PARAM) {
 		assert(widget.widget != nullptr);
 
