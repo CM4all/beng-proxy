@@ -131,7 +131,7 @@ public:
 	} approval = Approval::GIVEN;
 
 	/** what is the scope of session data? */
-	enum SessionScope : uint8_t {
+	enum class SessionScope : uint8_t {
 		/** each resource has its own set of widget sessions */
 		RESOURCE,
 
