@@ -41,6 +41,8 @@
 
 #include <boost/intrusive/slist.hpp>
 
+#include <memory>
+
 #include <stdint.h>
 
 struct pool;
@@ -55,6 +57,7 @@ struct WidgetClass;
 struct WidgetRef;
 struct ResourceAddress;
 class WidgetResolver;
+class LimitedConcurrencyQueue;
 
 /**
  * A widget instance.
@@ -68,6 +71,11 @@ public:
 				boost::intrusive::constant_time_size<false>> children;
 
 	Widget *parent = nullptr;
+
+	/**
+	 * This class throttles concurrent requests to child widgets.
+	 */
+	std::unique_ptr<LimitedConcurrencyQueue> child_throttler;
 
 	struct pool &pool;
 

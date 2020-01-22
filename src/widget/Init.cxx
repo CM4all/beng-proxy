@@ -32,6 +32,7 @@
 
 #include "Widget.hxx"
 #include "Class.hxx"
+#include "util/LimitedConcurrencyQueue.hxx"
 
 Widget::Widget(struct pool &_pool,
 	       const WidgetClass *_cls) noexcept

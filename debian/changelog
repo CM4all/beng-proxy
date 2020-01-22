@@ -1,6 +1,6 @@
 cm4all-beng-proxy (16.0.9) unstable; urgency=low
 
-  * 
+  * bp: limit widget request concurrency to 32
 
  --   
 

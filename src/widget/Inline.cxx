@@ -55,6 +55,7 @@
 #include "pool/LeakDetector.hxx"
 #include "event/TimerEvent.hxx"
 #include "util/Cancellable.hxx"
+#include "util/LimitedConcurrencyQueue.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringFormat.hxx"
 #include "util/Exception.hxx"
@@ -65,12 +66,22 @@
 static constexpr Event::Duration inline_widget_header_timeout = std::chrono::seconds(5);
 const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
 
+static LimitedConcurrencyQueue &
+GetChildThrottler(EventLoop &event_loop, Widget &widget) noexcept
+{
+	if (!widget.child_throttler)
+		widget.child_throttler = std::make_unique<LimitedConcurrencyQueue>(event_loop, 32);
+	return *widget.child_throttler;
+}
+
 class InlineWidget final : PoolLeakDetector, HttpResponseHandler, Cancellable {
 	struct pool &pool;
 	const SharedPoolPtr<WidgetContext> ctx;
 	const StopwatchPtr parent_stopwatch;
 	const bool plain_text;
 	Widget &widget;
+
+	LimitedConcurrencyJob throttle_job;
 
 	TimerEvent header_timeout_event;
 
@@ -89,6 +100,9 @@ public:
 		 parent_stopwatch(_parent_stopwatch),
 		 plain_text(_plain_text),
 		 widget(_widget),
+		 throttle_job(GetChildThrottler(ctx->event_loop,
+						*widget.parent),
+			      BIND_THIS_METHOD(OnThrottled)),
 		 header_timeout_event(ctx->event_loop,
 				      BIND_THIS_METHOD(OnHeaderTimeout)),
 		 delayed(_delayed) {
@@ -122,6 +136,9 @@ private:
 		cancel_ptr.Cancel();
 		Fail(std::make_exception_ptr(std::runtime_error("Header timeout")));
 	}
+
+	/* LimitedConcurrencyJob callback */
+	void OnThrottled() noexcept;
 
 	/* virtual methods from class HttpResponseHandler */
 	void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -213,6 +230,8 @@ void
 InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
 			     UnusedIstreamPtr body) noexcept
 {
+	assert(throttle_job.IsRunning());
+
 	header_timeout_event.Cancel();
 
 	if (!http_status_is_success(status)) {
@@ -249,6 +268,8 @@ InlineWidget::OnHttpResponse(http_status_t status, StringMap &&headers,
 void
 InlineWidget::OnHttpError(std::exception_ptr ep) noexcept
 {
+	assert(throttle_job.IsRunning());
+
 	header_timeout_event.Cancel();
 
 	Fail(ep);
@@ -263,8 +284,13 @@ InlineWidget::Cancel() noexcept
 	   is cancelled */
 	widget.Cancel();
 
-	cancel_ptr.Cancel();
+	/* cancel_ptr can be unset if we're waiting for the
+	   LimitedConcurrencyJob callback */
+	if (cancel_ptr)
+		cancel_ptr.Cancel();
 
+	/* the destructor will automatically cancel the
+	   LimitedConcurrencyJob */
 	Destroy();
 }
 
@@ -276,6 +302,8 @@ InlineWidget::Cancel() noexcept
 void
 InlineWidget::SendRequest() noexcept
 {
+	assert(throttle_job.IsRunning());
+
 	if (!widget.CheckApproval()) {
 		WidgetError error(*widget.parent, WidgetErrorCode::FORBIDDEN,
 				  StringFormat<256>("not allowed to embed widget class '%s'",
@@ -326,8 +354,11 @@ InlineWidget::SendRequest() noexcept
 void
 InlineWidget::ResolverCallback() noexcept
 {
+	cancel_ptr = nullptr;
+
 	if (widget.cls != nullptr) {
-		SendRequest();
+		if (throttle_job.IsRunning())
+			SendRequest();
 	} else {
 		WidgetError error(widget, WidgetErrorCode::UNSPECIFIED,
 				  "Failed to look up widget class");
@@ -337,16 +368,24 @@ InlineWidget::ResolverCallback() noexcept
 }
 
 void
+InlineWidget::OnThrottled() noexcept
+{
+	/* send the HTTP request unless we're still waiting for
+	   ResolveWidget() to finish */
+	if (widget.cls != nullptr)
+		SendRequest();
+}
+
+void
 InlineWidget::Start() noexcept
 {
 	if (widget.cls == nullptr)
 		ResolveWidget(pool, widget,
 			      *ctx->widget_registry,
 			      BIND_THIS_METHOD(ResolverCallback), cancel_ptr);
-	else
-		SendRequest();
-}
 
+	throttle_job.Schedule();
+}
 
 /*
  * Constructor
