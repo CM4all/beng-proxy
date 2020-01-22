@@ -133,8 +133,6 @@ TEST(Processor, Abort)
 
 	auto pool = pool_new_libc(instance.root_pool, "test");
 
-	Widget widget(*pool, &root_widget_class);
-
 	SessionId session_id;
 	session_id.Generate();
 
@@ -153,6 +151,8 @@ TEST(Processor, Abort)
 		 nullptr,
 		 "bp_session", session_id, "foo",
 		 nullptr);
+	auto &widget = ctx->AddRootWidget(MakeRootWidget(instance.root_pool,
+							 nullptr));
 
 	CancellablePointer cancel_ptr;
 	MyWidgetLookupHandler handler;

@@ -38,7 +38,7 @@
 #include "widget/Context.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Widget.hxx"
-#include "widget/Class.hxx"
+#include "widget/Ptr.hxx"
 #include "widget/RewriteUri.hxx"
 #include "istream/FileIstream.hxx"
 #include "istream/istream_string.hxx"
@@ -101,8 +101,6 @@ try {
 	const ScopeFbPoolInit fb_pool_init;
 	PInstance instance;
 
-	Widget widget(instance.root_pool, &root_widget_class);
-
 	SessionId session_id;
 	session_id.Generate();
 
@@ -122,6 +120,8 @@ try {
 		 nullptr,
 		 session_id, "foo",
 		 nullptr);
+	auto &widget = ctx->AddRootWidget(MakeRootWidget(instance.root_pool,
+							 nullptr));
 
 	auto result =
 		processor_process(instance.root_pool, nullptr,
