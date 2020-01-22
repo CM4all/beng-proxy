@@ -33,6 +33,7 @@
 #pragma once
 
 #include "istream/UnusedHoldPtr.hxx"
+#include "pool/LeakDetector.hxx"
 #include "io/Logger.hxx"
 #include "http/Method.h"
 #include "util/StringView.hxx"
@@ -59,7 +60,8 @@ class WidgetResolver;
  * A widget instance.
  */
 class Widget final
-	: public boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>
+	: PoolLeakDetector,
+	  public boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>
 {
 public:
 	boost::intrusive::slist<Widget,
