@@ -167,7 +167,9 @@ test_abort_resolver()
 		exit(2);
 	}
 
+	const auto root_widget = MakeRootWidget(pool, "foo");
 	Widget widget(pool, nullptr);
+	widget.parent = root_widget.get();
 
 	auto istream = embed_inline_widget(*pool, std::move(ctx),
 					   nullptr, false, widget);
