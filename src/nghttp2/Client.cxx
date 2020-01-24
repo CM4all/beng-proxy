@@ -60,6 +60,8 @@ namespace NgHttp2 {
 
 static constexpr Event::Duration write_timeout = std::chrono::seconds(30);
 
+constexpr size_t ClientConnection::MAX_CONCURRENT_STREAMS;
+
 class ClientConnection::Request final
 	: Cancellable, MultiFifoBufferIstreamHandler,
 	  public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>
