@@ -1,4 +1,4 @@
-cm4all-beng-proxy (16.0.9) unstable; urgency=low
+cm4all-beng-proxy (16.1) unstable; urgency=low
 
   * bp: limit widget request concurrency to 32
   * bp/processor: fix use-after-free buf
