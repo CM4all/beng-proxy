@@ -1582,10 +1582,11 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length) noexcept
 	if (lookup_id != nullptr) {
 		/* widget was not found */
 
-		handler->WidgetNotFound();
-	}
-
-	Destroy();
+		auto &_handler = *handler;
+		Destroy();
+		_handler.WidgetNotFound();
+	} else
+		Destroy();
 }
 
 void
@@ -1600,8 +1601,9 @@ XmlProcessor::OnXmlError(std::exception_ptr ep) noexcept
 	container.DiscardForFocused();
 
 	if (lookup_id != nullptr) {
-		handler->WidgetLookupError(ep);
-	}
-
-	Destroy();
+		auto &_handler = *handler;
+		Destroy();
+		_handler.WidgetLookupError(ep);
+	} else
+		Destroy();
 }
