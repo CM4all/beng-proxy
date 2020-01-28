@@ -239,5 +239,5 @@ expect_monitor_run(EventLoop &event_loop,
 }
 
 const LbMonitorClass expect_monitor_class = {
-	.run = expect_monitor_run,
+	expect_monitor_run,
 };

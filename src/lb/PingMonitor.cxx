@@ -87,5 +87,5 @@ ping_monitor_run(EventLoop &event_loop,
 }
 
 const LbMonitorClass ping_monitor_class = {
-	.run = ping_monitor_run,
+	ping_monitor_run,
 };

@@ -105,5 +105,5 @@ syn_monitor_run(EventLoop &event_loop,
 }
 
 const LbMonitorClass syn_monitor_class = {
-	.run = syn_monitor_run,
+	syn_monitor_run,
 };
