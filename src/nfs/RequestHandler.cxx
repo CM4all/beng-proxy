@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -54,77 +54,77 @@
 
 void
 Request::OnNfsCacheResponse(NfsCacheHandle &handle,
-                            const struct stat &st) noexcept
+			    const struct stat &st) noexcept
 {
-    const TranslateResponse *const tr = translate.response;
+	const TranslateResponse *const tr = translate.response;
 
-    struct file_request file_request(st.st_size);
-    if (!EvaluateFileRequest(FileDescriptor::Undefined(), st, file_request))
-        return;
+	struct file_request file_request(st.st_size);
+	if (!EvaluateFileRequest(FileDescriptor::Undefined(), st, file_request))
+		return;
 
-    const char *override_content_type = translate.content_type;
-    if (override_content_type == nullptr)
-        override_content_type = translate.address.GetNfs().content_type;
+	const char *override_content_type = translate.content_type;
+	if (override_content_type == nullptr)
+		override_content_type = translate.address.GetNfs().content_type;
 
-    HttpHeaders headers;
-    GrowingBuffer &headers2 = headers.GetBuffer();
-    header_write(headers2, "cache-control", "max-age=60");
+	HttpHeaders headers;
+	GrowingBuffer &headers2 = headers.GetBuffer();
+	header_write(headers2, "cache-control", "max-age=60");
 
-    file_response_headers(headers2,
-                          instance.event_loop.GetSystemClockCache(),
-                          override_content_type,
-                          FileDescriptor::Undefined(), st,
-                          tr->expires_relative,
-                          IsProcessorFirst());
-    write_translation_vary_header(headers2, *tr);
+	file_response_headers(headers2,
+			      instance.event_loop.GetSystemClockCache(),
+			      override_content_type,
+			      FileDescriptor::Undefined(), st,
+			      tr->expires_relative,
+			      IsProcessorFirst());
+	write_translation_vary_header(headers2, *tr);
 
-    http_status_t status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
+	http_status_t status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
 
-    /* generate the Content-Range header */
+	/* generate the Content-Range header */
 
-    header_write(headers2, "accept-ranges", "bytes");
+	header_write(headers2, "accept-ranges", "bytes");
 
-    bool no_body = false;
+	bool no_body = false;
 
-    switch (file_request.range.type) {
-    case HttpRangeRequest::Type::NONE:
-        break;
+	switch (file_request.range.type) {
+	case HttpRangeRequest::Type::NONE:
+		break;
 
-    case HttpRangeRequest::Type::VALID:
-        status = HTTP_STATUS_PARTIAL_CONTENT;
+	case HttpRangeRequest::Type::VALID:
+		status = HTTP_STATUS_PARTIAL_CONTENT;
 
-        header_write(headers2, "content-range",
-                     p_sprintf(&pool, "bytes %lu-%lu/%lu",
-                               (unsigned long)file_request.range.skip,
-                               (unsigned long)(file_request.range.size - 1),
-                               (unsigned long)st.st_size));
-        break;
+		header_write(headers2, "content-range",
+			     p_sprintf(&pool, "bytes %lu-%lu/%lu",
+				       (unsigned long)file_request.range.skip,
+				       (unsigned long)(file_request.range.size - 1),
+				       (unsigned long)st.st_size));
+		break;
 
-    case HttpRangeRequest::Type::INVALID:
-        status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
+	case HttpRangeRequest::Type::INVALID:
+		status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
 
-        header_write(headers2, "content-range",
-                     p_sprintf(&pool, "bytes */%lu",
-                               (unsigned long)st.st_size));
+		header_write(headers2, "content-range",
+			     p_sprintf(&pool, "bytes */%lu",
+				       (unsigned long)st.st_size));
 
-        no_body = true;
-        break;
-    }
+		no_body = true;
+		break;
+	}
 
-    UnusedIstreamPtr response_body;
-    if (!no_body)
-        response_body = nfs_cache_handle_open(pool, handle,
-                                              file_request.range.skip,
-                                              file_request.range.size);
+	UnusedIstreamPtr response_body;
+	if (!no_body)
+		response_body = nfs_cache_handle_open(pool, handle,
+						      file_request.range.skip,
+						      file_request.range.size);
 
-    DispatchResponse(status, std::move(headers),
-                     std::move(response_body));
+	DispatchResponse(status, std::move(headers),
+			 std::move(response_body));
 }
 
 void
 Request::OnNfsCacheError(std::exception_ptr ep) noexcept
 {
-    LogDispatchError(ep);
+	LogDispatchError(ep);
 }
 
 /*
@@ -135,23 +135,23 @@ Request::OnNfsCacheError(std::exception_ptr ep) noexcept
 void
 Request::HandleNfsAddress() noexcept
 {
-    const auto &address = translate.address.GetNfs();
-    assert(address.server != NULL);
-    assert(address.export_name != NULL);
-    assert(address.path != NULL);
+	const auto &address = translate.address.GetNfs();
+	assert(address.server != NULL);
+	assert(address.export_name != NULL);
+	assert(address.path != NULL);
 
-    /* check request */
+	/* check request */
 
-    if (request.method != HTTP_METHOD_HEAD &&
-        request.method != HTTP_METHOD_GET &&
-        !processor_focus) {
-        method_not_allowed(*this, "GET, HEAD");
-        return;
-    }
+	if (request.method != HTTP_METHOD_HEAD &&
+	    request.method != HTTP_METHOD_GET &&
+	    !processor_focus) {
+		method_not_allowed(*this, "GET, HEAD");
+		return;
+	}
 
-    /* run the delegate helper */
+	/* run the delegate helper */
 
-    nfs_cache_request(pool, *instance.nfs_cache,
-                      address.server, address.export_name, address.path,
-                      *this, cancel_ptr);
+	nfs_cache_request(pool, *instance.nfs_cache,
+			  address.server, address.export_name, address.path,
+			  *this, cancel_ptr);
 }

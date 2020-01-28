@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_NFS_GLUE_HXX
-#define BENG_PROXY_NFS_GLUE_HXX
+#pragma once
 
 struct pool;
 class NfsCache;
@@ -40,9 +39,7 @@ class CancellablePointer;
 
 void
 nfs_request(struct pool &pool, NfsCache &nfs_cache,
-            const char *server, const char *export_, const char *path,
-            const char *content_type,
-            HttpResponseHandler &handler,
-            CancellablePointer &cancel_ptr);
-
-#endif
+	    const char *server, const char *export_, const char *path,
+	    const char *content_type,
+	    HttpResponseHandler &handler,
+	    CancellablePointer &cancel_ptr);

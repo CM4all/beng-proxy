@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_NFS_CLIENT_HXX
-#define BENG_PROXY_NFS_CLIENT_HXX
+#pragma once
 
 #include <stdint.h>
 #include <stddef.h>
@@ -48,25 +47,23 @@ class EventLoop;
 
 void
 nfs_client_new(EventLoop &event_loop,
-               const char *server, const char *root,
-               NfsClientHandler &handler,
-               CancellablePointer &cancel_ptr) noexcept;
+	       const char *server, const char *root,
+	       NfsClientHandler &handler,
+	       CancellablePointer &cancel_ptr) noexcept;
 
 void
 nfs_client_free(NfsClient *client) noexcept;
 
 void
 nfs_client_open_file(NfsClient &client,
-                     const char *path,
-                     NfsClientOpenFileHandler &handler,
-                     CancellablePointer &cancel_ptr) noexcept;
+		     const char *path,
+		     NfsClientOpenFileHandler &handler,
+		     CancellablePointer &cancel_ptr) noexcept;
 
 void
 nfs_client_close_file(NfsFileHandle &handle) noexcept;
 
 void
 nfs_client_read_file(NfsFileHandle &handle,
-                     uint64_t offset, size_t length,
-                     NfsClientReadFileHandler &handler) noexcept;
-
-#endif
+		     uint64_t offset, size_t length,
+		     NfsClientReadFileHandler &handler) noexcept;

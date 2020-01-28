@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_NFS_CACHE_HXX
-#define BENG_PROXY_NFS_CACHE_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -52,9 +51,9 @@ struct AllocatorStats;
 
 class NfsCacheHandler {
 public:
-    virtual void OnNfsCacheResponse(NfsCacheHandle &handle,
-                                    const struct stat &st) noexcept = 0;
-    virtual void OnNfsCacheError(std::exception_ptr ep) noexcept = 0;
+	virtual void OnNfsCacheResponse(NfsCacheHandle &handle,
+					const struct stat &st) noexcept = 0;
+	virtual void OnNfsCacheError(std::exception_ptr ep) noexcept = 0;
 };
 
 /**
@@ -64,7 +63,7 @@ public:
  */
 NfsCache *
 nfs_cache_new(struct pool &pool, size_t max_size, NfsStock &stock,
-              EventLoop &event_loop);
+	      EventLoop &event_loop);
 
 void
 nfs_cache_free(NfsCache *cache) noexcept;
@@ -81,13 +80,11 @@ nfs_cache_flush(NfsCache &cache) noexcept;
 
 void
 nfs_cache_request(struct pool &pool, NfsCache &cache,
-                  const char *server, const char *export_name,
-                  const char *path,
-                  NfsCacheHandler &handler,
-                  CancellablePointer &cancel_ptr) noexcept;
+		  const char *server, const char *export_name,
+		  const char *path,
+		  NfsCacheHandler &handler,
+		  CancellablePointer &cancel_ptr) noexcept;
 
 UnusedIstreamPtr
 nfs_cache_handle_open(struct pool &pool, NfsCacheHandle &handle,
-                      uint64_t start, uint64_t end) noexcept;
-
-#endif
+		      uint64_t start, uint64_t end) noexcept;

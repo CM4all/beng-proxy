@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,8 +42,8 @@ class EventLoop;
 
 class NfsStockGetHandler {
 public:
-    virtual void OnNfsStockReady(NfsClient &client) noexcept = 0;
-    virtual void OnNfsStockError(std::exception_ptr ep) noexcept = 0;
+	virtual void OnNfsStockReady(NfsClient &client) noexcept = 0;
+	virtual void OnNfsStockError(std::exception_ptr ep) noexcept = 0;
 };
 
 /**
@@ -57,6 +57,6 @@ nfs_stock_free(NfsStock *stock) noexcept;
 
 void
 nfs_stock_get(NfsStock *stock, AllocatorPtr alloc,
-              const char *server, const char *export_name,
-              NfsStockGetHandler &handler,
-              CancellablePointer &cancel_ptr) noexcept;
+	      const char *server, const char *export_name,
+	      NfsStockGetHandler &handler,
+	      CancellablePointer &cancel_ptr) noexcept;

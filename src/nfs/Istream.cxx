@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -48,130 +48,130 @@
 static constexpr size_t NFS_BUFFER_SIZE = 32768;
 
 class NfsIstream final : public Istream, NfsClientReadFileHandler {
-    NfsFileHandle *handle;
+	NfsFileHandle *handle;
 
-    /**
-     * The offset of the next "pread" call on the NFS server.
-     */
-    uint64_t offset;
+	/**
+	 * The offset of the next "pread" call on the NFS server.
+	 */
+	uint64_t offset;
 
-    /**
-     * The number of bytes that are remaining on the NFS server, not
-     * including the amount of data that is already pending.
-     */
-    uint64_t remaining;
+	/**
+	 * The number of bytes that are remaining on the NFS server, not
+	 * including the amount of data that is already pending.
+	 */
+	uint64_t remaining;
 
-    /**
-     * The number of bytes currently scheduled by nfs_pread_async().
-     */
-    size_t pending_read = 0;
+	/**
+	 * The number of bytes currently scheduled by nfs_pread_async().
+	 */
+	size_t pending_read = 0;
 
-    /**
-     * The number of bytes that shall be discarded from the
-     * nfs_pread_async() result.  This is non-zero if istream_skip()
-     * has been called while a read call was pending.
-     */
-    size_t discard_read = 0;
+	/**
+	 * The number of bytes that shall be discarded from the
+	 * nfs_pread_async() result.  This is non-zero if istream_skip()
+	 * has been called while a read call was pending.
+	 */
+	size_t discard_read = 0;
 
-    ForeignFifoBuffer<uint8_t> buffer;
+	ForeignFifoBuffer<uint8_t> buffer;
 
 public:
-    NfsIstream(struct pool &p, NfsFileHandle &_handle,
-               uint64_t start, uint64_t end)
-        :Istream(p), handle(&_handle),
-         offset(start), remaining(end - start),
-         buffer(nullptr) {}
+	NfsIstream(struct pool &p, NfsFileHandle &_handle,
+		   uint64_t start, uint64_t end)
+		:Istream(p), handle(&_handle),
+		 offset(start), remaining(end - start),
+		 buffer(nullptr) {}
 
-    ~NfsIstream() noexcept {
-        if (handle != nullptr)
-            nfs_client_close_file(*handle);
-    }
+	~NfsIstream() noexcept {
+		if (handle != nullptr)
+			nfs_client_close_file(*handle);
+	}
 
 private:
-    void ScheduleRead();
+	void ScheduleRead();
 
-    /**
-     * Check for end-of-file, and if there's more data to read, schedule
-     * another read call.
-     *
-     * The input buffer must be empty.
-     */
-    void ScheduleReadOrEof();
+	/**
+	 * Check for end-of-file, and if there's more data to read, schedule
+	 * another read call.
+	 *
+	 * The input buffer must be empty.
+	 */
+	void ScheduleReadOrEof();
 
-    void Feed(const void *data, size_t length);
+	void Feed(const void *data, size_t length);
 
-    void ReadFromBuffer();
+	void ReadFromBuffer();
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
-        return remaining + pending_read - discard_read +
-            buffer.GetAvailable();
-    }
+	off_t _GetAvailable(gcc_unused bool partial) noexcept override {
+		return remaining + pending_read - discard_read +
+			buffer.GetAvailable();
+	}
 
-    off_t _Skip(off_t length) noexcept override;
+	off_t _Skip(off_t length) noexcept override;
 
-    void _Read() noexcept override {
-        if (!buffer.empty())
-            ReadFromBuffer();
-        else
-            ScheduleReadOrEof();
-    }
+	void _Read() noexcept override {
+		if (!buffer.empty())
+			ReadFromBuffer();
+		else
+			ScheduleReadOrEof();
+	}
 
-    /* virtual methods from class NfsClientReadFileHandler */
-    void OnNfsRead(const void *data, size_t length) noexcept override;
-    void OnNfsReadError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class NfsClientReadFileHandler */
+	void OnNfsRead(const void *data, size_t length) noexcept override;
+	void OnNfsReadError(std::exception_ptr ep) noexcept override;
 };
 
 void
 NfsIstream::ScheduleReadOrEof()
 {
-    assert(buffer.empty());
+	assert(buffer.empty());
 
-    if (pending_read > 0)
-        return;
+	if (pending_read > 0)
+		return;
 
-    if (remaining > 0) {
-        /* read more */
+	if (remaining > 0) {
+		/* read more */
 
-        ScheduleRead();
-    } else {
-        /* end of file */
+		ScheduleRead();
+	} else {
+		/* end of file */
 
-        nfs_client_close_file(*std::exchange(handle, nullptr));
-        DestroyEof();
-    }
+		nfs_client_close_file(*std::exchange(handle, nullptr));
+		DestroyEof();
+	}
 }
 
 inline void
 NfsIstream::Feed(const void *data, size_t length)
 {
-    assert(length > 0);
+	assert(length > 0);
 
-    if (buffer.IsNull()) {
-        const uint64_t total_size = remaining + length;
-        const size_t buffer_size = total_size > NFS_BUFFER_SIZE
-            ? NFS_BUFFER_SIZE
-            : (size_t)total_size;
-        buffer.SetBuffer(PoolAlloc<uint8_t>(GetPool(), buffer_size),
-                         buffer_size);
-    }
+	if (buffer.IsNull()) {
+		const uint64_t total_size = remaining + length;
+		const size_t buffer_size = total_size > NFS_BUFFER_SIZE
+			? NFS_BUFFER_SIZE
+			: (size_t)total_size;
+		buffer.SetBuffer(PoolAlloc<uint8_t>(GetPool(), buffer_size),
+				 buffer_size);
+	}
 
-    auto w = buffer.Write();
-    assert(w.size >= length);
+	auto w = buffer.Write();
+	assert(w.size >= length);
 
-    memcpy(w.data, data, length);
-    buffer.Append(length);
+	memcpy(w.data, data, length);
+	buffer.Append(length);
 }
 
 void
 NfsIstream::ReadFromBuffer()
 {
-    assert(buffer.IsDefined());
+	assert(buffer.IsDefined());
 
-    size_t buffer_remaining = ConsumeFromBuffer(buffer);
-    if (buffer_remaining == 0 && pending_read == 0)
-        ScheduleReadOrEof();
+	size_t buffer_remaining = ConsumeFromBuffer(buffer);
+	if (buffer_remaining == 0 && pending_read == 0)
+		ScheduleReadOrEof();
 }
 
 /*
@@ -182,54 +182,54 @@ NfsIstream::ReadFromBuffer()
 void
 NfsIstream::OnNfsRead(const void *data, size_t _length) noexcept
 {
-    assert(pending_read > 0);
-    assert(discard_read <= pending_read);
-    assert(_length <= pending_read);
+	assert(pending_read > 0);
+	assert(discard_read <= pending_read);
+	assert(_length <= pending_read);
 
-    if (_length < pending_read) {
-        nfs_client_close_file(*std::exchange(handle, nullptr));
-        DestroyError(std::make_exception_ptr(std::runtime_error("premature end of file")));
-        return;
-    }
+	if (_length < pending_read) {
+		nfs_client_close_file(*std::exchange(handle, nullptr));
+		DestroyError(std::make_exception_ptr(std::runtime_error("premature end of file")));
+		return;
+	}
 
-    const size_t discard = discard_read;
-    const size_t length = pending_read - discard;
-    pending_read = 0;
-    discard_read = 0;
+	const size_t discard = discard_read;
+	const size_t length = pending_read - discard;
+	pending_read = 0;
+	discard_read = 0;
 
-    if (length > 0)
-        Feed((const char *)data + discard, length);
-    ReadFromBuffer();
+	if (length > 0)
+		Feed((const char *)data + discard, length);
+	ReadFromBuffer();
 }
 
 void
 NfsIstream::OnNfsReadError(std::exception_ptr ep) noexcept
 {
-    assert(pending_read > 0);
+	assert(pending_read > 0);
 
-    nfs_client_close_file(*std::exchange(handle, nullptr));
-    DestroyError(ep);
+	nfs_client_close_file(*std::exchange(handle, nullptr));
+	DestroyError(ep);
 }
 
 inline void
 NfsIstream::ScheduleRead()
 {
-    assert(pending_read == 0);
+	assert(pending_read == 0);
 
-    const size_t max = buffer.IsDefined()
-        ? buffer.Write().size
-        : NFS_BUFFER_SIZE;
-    size_t nbytes = remaining > max
-        ? max
-        : (size_t)remaining;
+	const size_t max = buffer.IsDefined()
+		? buffer.Write().size
+		: NFS_BUFFER_SIZE;
+	size_t nbytes = remaining > max
+		? max
+		: (size_t)remaining;
 
-    const uint64_t read_offset = offset;
+	const uint64_t read_offset = offset;
 
-    offset += nbytes;
-    remaining -= nbytes;
-    pending_read = nbytes;
+	offset += nbytes;
+	remaining -= nbytes;
+	pending_read = nbytes;
 
-    nfs_client_read_file(*handle, read_offset, nbytes, *this);
+	nfs_client_read_file(*handle, read_offset, nbytes, *this);
 }
 
 /*
@@ -240,40 +240,40 @@ NfsIstream::ScheduleRead()
 off_t
 NfsIstream::_Skip(off_t _length) noexcept
 {
-    assert(discard_read <= pending_read);
+	assert(discard_read <= pending_read);
 
-    uint64_t length = _length;
+	uint64_t length = _length;
 
-    uint64_t result = 0;
+	uint64_t result = 0;
 
-    if (buffer.IsDefined()) {
-        const uint64_t buffer_available = buffer.GetAvailable();
-        const uint64_t consume = length < buffer_available
-            ? length
-            : buffer_available;
-        buffer.Consume(consume);
-        result += consume;
-        length -= consume;
-    }
+	if (buffer.IsDefined()) {
+		const uint64_t buffer_available = buffer.GetAvailable();
+		const uint64_t consume = length < buffer_available
+			? length
+			: buffer_available;
+		buffer.Consume(consume);
+		result += consume;
+		length -= consume;
+	}
 
-    const uint64_t pending_available =
-        pending_read - discard_read;
-    uint64_t consume = length < pending_available
-        ? length
-        : pending_available;
-    discard_read += consume;
-    result += consume;
-    length -= consume;
+	const uint64_t pending_available =
+		pending_read - discard_read;
+	uint64_t consume = length < pending_available
+		? length
+		: pending_available;
+	discard_read += consume;
+	result += consume;
+	length -= consume;
 
-    if (length > remaining)
-        length = remaining;
+	if (length > remaining)
+		length = remaining;
 
-    remaining -= length;
-    offset += length;
-    result += length;
+	remaining -= length;
+	offset += length;
+	result += length;
 
-    Consumed(result);
-    return result;
+	Consumed(result);
+	return result;
 }
 
 /*
@@ -283,9 +283,9 @@ NfsIstream::_Skip(off_t _length) noexcept
 
 UnusedIstreamPtr
 istream_nfs_new(struct pool &pool, NfsFileHandle &handle,
-                uint64_t start, uint64_t end)
+		uint64_t start, uint64_t end)
 {
-    assert(start <= end);
+	assert(start <= end);
 
-    return NewIstreamPtr<NfsIstream>(pool, handle, start, end);
+	return NewIstreamPtr<NfsIstream>(pool, handle, start, end);
 }

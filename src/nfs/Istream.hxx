@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_NFS_HXX
-#define BENG_PROXY_ISTREAM_NFS_HXX
+#pragma once
 
 #include <stdint.h>
 
@@ -44,6 +43,4 @@ class NfsFileHandle;
  */
 UnusedIstreamPtr
 istream_nfs_new(struct pool &pool, NfsFileHandle &handle,
-                uint64_t start, uint64_t end);
-
-#endif
+		uint64_t start, uint64_t end);
