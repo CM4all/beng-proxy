@@ -41,9 +41,9 @@
 static void
 FillIssuerCommonName(Pg::Connection &c)
 {
-	auto result = c.ExecuteParams(true,
-				      "SELECT id::int8, certificate_der FROM server_certificate "
-				      "WHERE NOT deleted AND issuer_common_name IS NULL");
+	auto result = c.Execute(true,
+				"SELECT id::int8, certificate_der FROM server_certificate "
+				"WHERE NOT deleted AND issuer_common_name IS NULL");
 	for (unsigned row = 0, n_rows = result.GetRowCount(); row < n_rows; ++row) {
 		const int64_t id = FromBE64(*(const int64_t *)(const void *)result.GetValue(row, 0));
 
