@@ -1114,17 +1114,14 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 	static unsigned next_request_id = 1;
 	++next_request_id;
 
-	struct fcgi_record_header header = {
-		.version = FCGI_VERSION_1,
-		.type = FCGI_BEGIN_REQUEST,
-		.request_id = ToBE16(next_request_id),
-		.content_length = 0,
-		.padding_length = 0,
-		.reserved = 0,
+	struct fcgi_record_header header{
+		FCGI_VERSION_1,
+		FCGI_BEGIN_REQUEST,
+		ToBE16(next_request_id),
 	};
-	static constexpr struct fcgi_begin_request begin_request = {
-		.role = ToBE16(FCGI_RESPONDER),
-		.flags = FCGI_KEEP_CONN,
+	static constexpr struct fcgi_begin_request begin_request{
+		ToBE16(FCGI_RESPONDER),
+		FCGI_KEEP_CONN,
 	};
 
 	assert(http_method_is_valid(method));

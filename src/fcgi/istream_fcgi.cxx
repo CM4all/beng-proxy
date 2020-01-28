@@ -51,15 +51,9 @@ class FcgiIstream final : public FacadeIstream, DestructAnchor {
 public:
 	FcgiIstream(struct pool &_pool, UnusedIstreamPtr _input,
 		    uint16_t request_id) noexcept
-		:FacadeIstream(_pool, std::move(_input)) {
-		header = (struct fcgi_record_header){
-			.version = FCGI_VERSION_1,
-			.type = FCGI_STDIN,
-			.request_id = request_id,
-			.content_length = 0,
-			.padding_length = 0,
-			.reserved = 0,
-		};
+		:FacadeIstream(_pool, std::move(_input)),
+		 header{FCGI_VERSION_1, FCGI_STDIN, request_id}
+	{
 	}
 
 	bool WriteHeader() noexcept;
