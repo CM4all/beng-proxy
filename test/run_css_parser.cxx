@@ -112,14 +112,14 @@ my_parser_error(std::exception_ptr ep, void *ctx) noexcept
 }
 
 static constexpr CssParserHandler my_parser_handler = {
-    .class_name = my_parser_class_name,
-    .xml_id = my_parser_xml_id,
-    .block = nullptr,
-    .property_keyword = my_parser_property_keyword,
-    .url = my_parser_url,
-    .import = my_parser_import,
-    .eof = my_parser_eof,
-    .error = my_parser_error,
+    my_parser_class_name,
+    my_parser_xml_id,
+    nullptr,
+    my_parser_property_keyword,
+    my_parser_url,
+    my_parser_import,
+    my_parser_eof,
+    my_parser_error,
 };
 
 
