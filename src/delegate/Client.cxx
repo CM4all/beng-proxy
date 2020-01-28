@@ -39,6 +39,7 @@
 #include "net/SocketDescriptor.hxx"
 #include "net/SendMessage.hxx"
 #include "net/MsgHdr.hxx"
+#include "io/Iovec.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
@@ -190,15 +191,12 @@ DelegateClient::HandleMsg(const struct msghdr &msg,
 inline void
 DelegateClient::TryRead()
 {
-	struct iovec iov;
+	DelegateResponseHeader header;
+	auto iov = MakeIovecT(header);
 	int new_fd;
 	char ccmsg[CMSG_SPACE(sizeof(new_fd))];
 	auto msg = MakeMsgHdr(nullptr, {&iov, 1}, {ccmsg, sizeof(ccmsg)});
-	DelegateResponseHeader header;
 	ssize_t nbytes;
-
-	iov.iov_base = &header;
-	iov.iov_len = sizeof(header);
 
 	nbytes = recvmsg(s.Get(), &msg, MSG_CMSG_CLOEXEC);
 	if (nbytes < 0) {
@@ -226,8 +224,8 @@ SendDelegatePacket(SocketDescriptor s, DelegateRequestCommand cmd,
 	const DelegateRequestHeader header{uint16_t(length), cmd};
 
 	struct iovec v[] = {
-		{ const_cast<void *>((const void *)&header), sizeof(header) },
-		{ const_cast<void *>(payload), length },
+		MakeIovecT(header),
+		MakeIovec(ConstBuffer<void>{payload, length}),
 	};
 
 	auto nbytes = SendMessage(s,
