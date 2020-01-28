@@ -72,7 +72,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <poll.h>
 
 struct Usage {
 	const char *text;
@@ -228,13 +227,10 @@ Monitor()
 			throw "CURRENT_TIMESTAMP failed";
 	}
 
-	struct pollfd pfd = {
-		.fd = db.GetSocket(),
-		.events = POLLIN,
-	};
+	const FileDescriptor fd(db.GetSocket());
 
 	while (true) {
-		if (poll(&pfd, 1, -1) < 0)
+		if (fd.WaitReadable(-1) < 0)
 			throw "poll() failed";
 
 		db.ConsumeInput();
