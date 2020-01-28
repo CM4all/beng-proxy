@@ -36,6 +36,7 @@
 #include "net/RConnectSocket.hxx"
 #include "net/SendMessage.hxx"
 #include "net/ScmRightsBuilder.hxx"
+#include "net/MsgHdr.hxx"
 #include "io/Iovec.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
@@ -125,15 +126,7 @@ BengControlClient::Receive()
 		MakeIovecT(payload),
 	};
 
-	struct msghdr msg = {
-		.msg_name = nullptr,
-		.msg_namelen = 0,
-		.msg_iov = v,
-		.msg_iovlen = std::size(v),
-		.msg_control = nullptr,
-		.msg_controllen = 0,
-		.msg_flags = 0,
-	};
+	auto msg = MakeMsgHdr(v);
 
 	auto nbytes = recvmsg(socket.Get(), &msg, 0);
 	if (nbytes < 0)
