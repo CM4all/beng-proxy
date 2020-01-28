@@ -99,5 +99,3 @@ struct AccessLogConfig {
 			type = Type::EXECUTE;
 	}
 };
-
-#endif
