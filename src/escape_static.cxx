@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,22 +39,22 @@ static char buffer[4096];
 const char *
 unescape_static(const struct escape_class *cls, StringView p)
 {
-    if (p.size >= sizeof(buffer))
-        return nullptr;
+	if (p.size >= sizeof(buffer))
+		return nullptr;
 
-    size_t l = unescape_buffer(cls, p, buffer);
-    buffer[l] = 0;
-    return buffer;
+	size_t l = unescape_buffer(cls, p, buffer);
+	buffer[l] = 0;
+	return buffer;
 }
 
 const char *
 escape_static(const struct escape_class *cls, StringView p)
 {
-    size_t l = escape_size(cls, p);
-    if (l >= sizeof(buffer))
-        return nullptr;
+	size_t l = escape_size(cls, p);
+	if (l >= sizeof(buffer))
+		return nullptr;
 
-    l = escape_buffer(cls, p, buffer);
-    buffer[l] = 0;
-    return buffer;
+	l = escape_buffer(cls, p, buffer);
+	buffer[l] = 0;
+	return buffer;
 }

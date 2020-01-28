@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,113 +39,113 @@
 static const char *
 css_unescape_find(StringView p) noexcept
 {
-    return p.Find('\\');
+	return p.Find('\\');
 }
 
 static constexpr bool
 need_simple_escape(char ch) noexcept
 {
-    return ch == '\\' || ch == '"' || ch == '\'';
+	return ch == '\\' || ch == '"' || ch == '\'';
 }
 
 static size_t
 css_unescape(StringView _p, char *q) noexcept
 {
-    const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
+	const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
 
-    const char *bs;
-    while ((bs = (const char *)memchr(p, '\\', p_end - p)) != nullptr) {
-        memmove(q, p, bs - p);
-        q += bs - p;
+	const char *bs;
+	while ((bs = (const char *)memchr(p, '\\', p_end - p)) != nullptr) {
+		memmove(q, p, bs - p);
+		q += bs - p;
 
-        p = bs + 1;
+		p = bs + 1;
 
-        if (p < p_end && need_simple_escape(*p))
-            *q++ = *p++;
-        else
-            /* XXX implement newline and hex codes */
-            *q++ = '\\';
-    }
+		if (p < p_end && need_simple_escape(*p))
+			*q++ = *p++;
+		else
+			/* XXX implement newline and hex codes */
+			*q++ = '\\';
+	}
 
-    memmove(q, p, p_end - p);
-    q += p_end - p;
+	memmove(q, p, p_end - p);
+	q += p_end - p;
 
-    return q - q_start;
+	return q - q_start;
 }
 
 static size_t
 css_escape_size(StringView _p) noexcept
 {
-    const char *p = _p.begin(), *const end = _p.end();
+	const char *p = _p.begin(), *const end = _p.end();
 
-    size_t size = 0;
-    while (p < end) {
-        if (need_simple_escape(*p))
-            size += 2;
-        else
-            /* XXX implement newline and hex codes */
-            ++size;
-    }
+	size_t size = 0;
+	while (p < end) {
+		if (need_simple_escape(*p))
+			size += 2;
+		else
+			/* XXX implement newline and hex codes */
+			++size;
+	}
 
-    return size;
+	return size;
 }
 
 static const char *
 css_escape_find(StringView _p) noexcept
 {
-    const char *p = _p.begin(), *const end = _p.end();
+	const char *p = _p.begin(), *const end = _p.end();
 
-    while (p < end) {
-        if (need_simple_escape(*p))
-            return p;
+	while (p < end) {
+		if (need_simple_escape(*p))
+			return p;
 
-        ++p;
-    }
+		++p;
+	}
 
-    return nullptr;
+	return nullptr;
 }
 
 static StringView
 css_escape_char(char ch) noexcept
 {
-    switch (ch) {
-    case '\\':
-        return "\\\\";
+	switch (ch) {
+	case '\\':
+		return "\\\\";
 
-    case '"':
-        return "\\\"";
+	case '"':
+		return "\\\"";
 
-    case '\'':
-        return "\\'";
+	case '\'':
+		return "\\'";
 
-    default:
-        assert(false);
-        return nullptr;
-    }
+	default:
+		assert(false);
+		return nullptr;
+	}
 }
 
 static size_t
 css_escape(StringView _p, char *q) noexcept
 {
-    const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
+	const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
 
-    while (p < p_end) {
-        char ch = *p++;
-        if (need_simple_escape(ch)) {
-            *q++ = '\\';
-            *q++ = ch;
-        } else
-            *q++ = ch;
-    }
+	while (p < p_end) {
+		char ch = *p++;
+		if (need_simple_escape(ch)) {
+			*q++ = '\\';
+			*q++ = ch;
+		} else
+			*q++ = ch;
+	}
 
-    return q - q_start;
+	return q - q_start;
 }
 
 const struct escape_class css_escape_class = {
-    .unescape_find = css_unescape_find,
-    .unescape = css_unescape,
-    .escape_find = css_escape_find,
-    .escape_char = css_escape_char,
-    .escape_size = css_escape_size,
-    .escape = css_escape,
+	.unescape_find = css_unescape_find,
+	.unescape = css_unescape,
+	.escape_find = css_escape_find,
+	.escape_char = css_escape_char,
+	.escape_size = css_escape_size,
+	.escape = css_escape,
 };

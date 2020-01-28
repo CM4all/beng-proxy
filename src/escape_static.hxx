@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Escaping with a static destination buffer.
  */
 
-#ifndef BENG_PROXY_ESCAPE_STATIC_HXX
-#define BENG_PROXY_ESCAPE_STATIC_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -55,5 +54,3 @@ unescape_static(const struct escape_class *cls, StringView p);
 gcc_pure
 const char *
 escape_static(const struct escape_class *cls, StringView p);
-
-#endif
