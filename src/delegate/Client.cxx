@@ -38,6 +38,7 @@
 #include "event/SocketEvent.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SendMessage.hxx"
+#include "net/MsgHdr.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
@@ -192,14 +193,7 @@ DelegateClient::TryRead()
 	struct iovec iov;
 	int new_fd;
 	char ccmsg[CMSG_SPACE(sizeof(new_fd))];
-	struct msghdr msg = {
-		.msg_name = nullptr,
-		.msg_namelen = 0,
-		.msg_iov = &iov,
-		.msg_iovlen = 1,
-		.msg_control = ccmsg,
-		.msg_controllen = sizeof(ccmsg),
-	};
+	auto msg = MakeMsgHdr(nullptr, {&iov, 1}, {ccmsg, sizeof(ccmsg)});
 	DelegateResponseHeader header;
 	ssize_t nbytes;
 
