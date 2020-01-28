@@ -353,12 +353,12 @@ void
 NfsCacheRequest::OnNfsOpen(NfsFileHandle *handle,
 			   const struct stat *st) noexcept
 {
-	NfsCacheHandle handle2 = {
-		.cache = cache,
-		.key = key,
-		.file = handle,
-		.item = nullptr,
-		.stat = *st,
+	NfsCacheHandle handle2{
+		cache,
+		key,
+		handle,
+		nullptr,
+		*st,
 	};
 
 	handler.OnNfsCacheResponse(handle2, *st);
@@ -446,12 +446,12 @@ NfsCache::Request(struct pool &caller_pool,
 	if (item != nullptr) {
 		LogConcat(4, "NfsCache", "hit ", key);
 
-		NfsCacheHandle handle2 = {
-			.cache = *this,
-			.key = key,
-			.file = nullptr,
-			.item = item,
-			.stat = item->stat,
+		NfsCacheHandle handle2{
+			*this,
+			key,
+			nullptr,
+			item,
+			item->stat,
 		};
 
 		handler.OnNfsCacheResponse(handle2, item->stat);
