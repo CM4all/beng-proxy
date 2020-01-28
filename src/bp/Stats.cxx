@@ -52,10 +52,7 @@ BpInstance::GetStats() const noexcept
 {
 	BengProxy::ControlStats stats{};
 
-	StockStats tcp_stock_stats = {
-		.busy = 0,
-		.idle = 0,
-	};
+	StockStats tcp_stock_stats{};
 
 	tcp_stock->AddStats(tcp_stock_stats);
 	fs_stock->AddStats(tcp_stock_stats);
