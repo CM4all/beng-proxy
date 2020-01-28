@@ -97,14 +97,14 @@ css_rewrite_parser_error(std::exception_ptr, void *ctx) noexcept
 }
 
 static constexpr CssParserHandler css_rewrite_parser_handler = {
-	.class_name = nullptr,
-	.xml_id = nullptr,
-	.block = nullptr,
-	.property_keyword = nullptr,
-	.url = css_rewrite_parser_url,
-	.import = nullptr,
-	.eof = css_rewrite_parser_eof,
-	.error = css_rewrite_parser_error,
+	nullptr,
+	nullptr,
+	nullptr,
+	nullptr,
+	css_rewrite_parser_url,
+	nullptr,
+	css_rewrite_parser_eof,
+	css_rewrite_parser_error,
 };
 
 /*

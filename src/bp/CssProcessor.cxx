@@ -283,14 +283,14 @@ css_processor_parser_error(std::exception_ptr, void *ctx) noexcept
 }
 
 static constexpr CssParserHandler css_processor_parser_handler = {
-	.class_name = css_processor_parser_class_name,
-	.xml_id = css_processor_parser_xml_id,
-	.block = css_processor_parser_block,
-	.property_keyword = css_processor_parser_property_keyword,
-	.url = css_processor_parser_url,
-	.import = css_processor_parser_import,
-	.eof = css_processor_parser_eof,
-	.error = css_processor_parser_error,
+	css_processor_parser_class_name,
+	css_processor_parser_xml_id,
+	css_processor_parser_block,
+	css_processor_parser_property_keyword,
+	css_processor_parser_url,
+	css_processor_parser_import,
+	css_processor_parser_eof,
+	css_processor_parser_error,
 };
 
 /*
