@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,19 +37,19 @@
 std::string
 MakeCommonNameWildcard(const char *s)
 {
-    const char *p = s;
-    while (*p == '.' || *p == '*')
-        ++p;
+	const char *p = s;
+	while (*p == '.' || *p == '*')
+		++p;
 
-    if (p > s && p[-1] != '.')
-        return std::string();
+	if (p > s && p[-1] != '.')
+		return std::string();
 
-    const char *dot = strchr(p, '.');
-    if (dot == nullptr)
-        return std::string();
+	const char *dot = strchr(p, '.');
+	if (dot == nullptr)
+		return std::string();
 
-    std::string result(s, p);
-    result.push_back('*');
-    result.append(dot);
-    return result;
+	std::string result(s, p);
+	result.push_back('*');
+	result.append(dot);
+	return result;
 }

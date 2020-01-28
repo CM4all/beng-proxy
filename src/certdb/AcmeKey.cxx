@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,9 +35,9 @@
 #include "util/RuntimeError.hxx"
 
 AcmeKey::AcmeKey(const char *path)
-    :key(LoadKeyFile(path))
+	:key(LoadKeyFile(path))
 {
-    if (EVP_PKEY_base_id(key.get()) != EVP_PKEY_RSA)
-        throw FormatRuntimeError("File '%s' does not contain an RSA file",
-                                 path);
+	if (EVP_PKEY_base_id(key.get()) != EVP_PKEY_RSA)
+		throw FormatRuntimeError("File '%s' does not contain an RSA file",
+					 path);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,15 +38,15 @@
  * An ACME account key.
  */
 class AcmeKey {
-    UniqueEVP_PKEY key;
+	UniqueEVP_PKEY key;
 
 public:
-    explicit AcmeKey(const char *path);
+	explicit AcmeKey(const char *path);
 
-    AcmeKey(AcmeKey &&) = default;
-    AcmeKey &operator=(AcmeKey &&) = default;
+	AcmeKey(AcmeKey &&) = default;
+	AcmeKey &operator=(AcmeKey &&) = default;
 
-    auto &&operator*() const noexcept {
-        return *key;
-    }
+	auto &&operator*() const noexcept {
+		return *key;
+	}
 };

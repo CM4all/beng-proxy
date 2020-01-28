@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,42 +39,42 @@
 UniqueX509
 LoadCertificate(const Pg::Result &result, unsigned row, unsigned column)
 {
-    if (!result.IsColumnBinary(column) || result.IsValueNull(row, column))
-        throw std::runtime_error("Unexpected result");
+	if (!result.IsColumnBinary(column) || result.IsValueNull(row, column))
+		throw std::runtime_error("Unexpected result");
 
-    const auto cert_der = result.GetBinaryValue(row, column);
-    return DecodeDerCertificate(cert_der);
+	const auto cert_der = result.GetBinaryValue(row, column);
+	return DecodeDerCertificate(cert_der);
 }
 
 UniqueEVP_PKEY
 LoadWrappedKey(const CertDatabaseConfig &config,
-               const Pg::Result &result, unsigned row, unsigned column)
+	       const Pg::Result &result, unsigned row, unsigned column)
 {
-    if (!result.IsColumnBinary(column) || result.IsValueNull(row, column))
-        throw std::runtime_error("Unexpected result");
+	if (!result.IsColumnBinary(column) || result.IsValueNull(row, column))
+		throw std::runtime_error("Unexpected result");
 
-    auto key_der = result.GetBinaryValue(row, column);
+	auto key_der = result.GetBinaryValue(row, column);
 
-    std::unique_ptr<unsigned char[]> unwrapped;
-    if (!result.IsValueNull(row, column + 1)) {
-        /* the private key is encrypted; descrypt it using the AES key
-           from the configuration file */
-        const auto key_wrap_name = result.GetValue(row, column + 1);
-        key_der = UnwrapKey(key_der, config, key_wrap_name, unwrapped);
-    }
+	std::unique_ptr<unsigned char[]> unwrapped;
+	if (!result.IsValueNull(row, column + 1)) {
+		/* the private key is encrypted; descrypt it using the AES key
+		   from the configuration file */
+		const auto key_wrap_name = result.GetValue(row, column + 1);
+		key_der = UnwrapKey(key_der, config, key_wrap_name, unwrapped);
+	}
 
-    return DecodeDerKey(key_der);
+	return DecodeDerKey(key_der);
 }
 
 std::pair<UniqueX509, UniqueEVP_PKEY>
 LoadCertificateKey(const CertDatabaseConfig &config,
-                   const Pg::Result &result, unsigned row, unsigned column)
+		   const Pg::Result &result, unsigned row, unsigned column)
 {
-    auto pair = std::make_pair(LoadCertificate(result, row, column),
-                               LoadWrappedKey(config, result, row, column + 1));
+	auto pair = std::make_pair(LoadCertificate(result, row, column),
+				   LoadWrappedKey(config, result, row, column + 1));
 
-    if (!MatchModulus(*pair.first, *pair.second))
-        throw std::runtime_error("Key does not match certificate");
+	if (!MatchModulus(*pair.first, *pair.second))
+		throw std::runtime_error("Key does not match certificate");
 
-    return pair;
+	return pair;
 }

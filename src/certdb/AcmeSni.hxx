@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,4 +38,4 @@ struct AcmeChallenge;
 
 UniqueX509
 MakeTlsSni01Cert(EVP_PKEY &account_key, EVP_PKEY &key,
-                 const AcmeChallenge &authz);
+		 const AcmeChallenge &authz);

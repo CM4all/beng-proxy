@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -49,4 +49,4 @@ MakeHttp01(const AcmeChallenge &challenge, EVP_PKEY &account_key);
  */
 std::string
 MakeHttp01File(const char *directory, const AcmeChallenge &challenge,
-               EVP_PKEY &account_key);
+	       EVP_PKEY &account_key);

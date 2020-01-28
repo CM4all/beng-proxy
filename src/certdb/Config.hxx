@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CERT_DATABASE_CONFIG_HXX
-#define CERT_DATABASE_CONFIG_HXX
+#pragma once
 
 #include <map>
 #include <string>
@@ -39,19 +38,17 @@
 #include <stdexcept>
 
 struct CertDatabaseConfig {
-    std::string connect;
-    std::string schema;
+	std::string connect;
+	std::string schema;
 
-    typedef std::array<unsigned char, 256/8> AES256;
+	typedef std::array<unsigned char, 256/8> AES256;
 
-    std::map<std::string, AES256> wrap_keys;
+	std::map<std::string, AES256> wrap_keys;
 
-    std::string default_wrap_key;
+	std::string default_wrap_key;
 
-    void Check() {
-        if (connect.empty())
-            throw std::runtime_error("Missing 'connect'");
-    }
+	void Check() {
+		if (connect.empty())
+			throw std::runtime_error("Missing 'connect'");
+	}
 };
-
-#endif

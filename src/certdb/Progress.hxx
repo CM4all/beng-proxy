@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PROGRESS_HXX
-#define PROGRESS_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -41,42 +40,42 @@
  * An interface to Workshop job progress reporting.
  */
 class WorkshopProgress {
-    unsigned min = 0, max = 0;
+	unsigned min = 0, max = 0;
 
-    bool use_control_channel = false;
+	bool use_control_channel = false;
 
 public:
-    WorkshopProgress() = default;
+	WorkshopProgress() = default;
 
-    constexpr WorkshopProgress(unsigned _min, unsigned _max)
-        :min(_min), max(_max) {}
+	constexpr WorkshopProgress(unsigned _min, unsigned _max)
+		:min(_min), max(_max) {}
 
-    constexpr WorkshopProgress(WorkshopProgress parent,
-                               unsigned _min, unsigned _max)
-        :min(parent.Scale(_min)), max(parent.Scale(_max)),
-         use_control_channel(parent.use_control_channel) {}
+	constexpr WorkshopProgress(WorkshopProgress parent,
+				   unsigned _min, unsigned _max)
+		:min(parent.Scale(_min)), max(parent.Scale(_max)),
+		 use_control_channel(parent.use_control_channel) {}
 
-    /**
-     * Send progress to the Workshop control channel on fd=3.
-     */
-    void UseControlChannel() {
-        use_control_channel = true;
-    }
+	/**
+	 * Send progress to the Workshop control channel on fd=3.
+	 */
+	void UseControlChannel() {
+		use_control_channel = true;
+	}
 
-    bool IsEnabled() const {
-        return min < max;
-    }
+	bool IsEnabled() const {
+		return min < max;
+	}
 
-    void operator()(int value) noexcept;
+	void operator()(int value) noexcept;
 
 private:
-    static constexpr unsigned Clamp(int x) noexcept {
-        return std::min(100u, (unsigned)std::max(0, x));
-    }
+	static constexpr unsigned Clamp(int x) noexcept {
+		return std::min(100u, (unsigned)std::max(0, x));
+	}
 
-    constexpr unsigned Scale(unsigned x) const {
-        return (min * (100u - x) + max * x) / 100u;
-    }
+	constexpr unsigned Scale(unsigned x) const {
+		return (min * (100u - x) + max * x) / 100u;
+	}
 };
 
 /**
@@ -84,20 +83,18 @@ private:
  * predefined number of steps.
  */
 class StepProgress {
-    WorkshopProgress parent;
+	WorkshopProgress parent;
 
-    const unsigned n;
+	const unsigned n;
 
-    unsigned i = 0;
+	unsigned i = 0;
 
 public:
-    StepProgress(WorkshopProgress _parent, unsigned _n)
-        :parent(_parent), n(_n) {}
+	StepProgress(WorkshopProgress _parent, unsigned _n)
+		:parent(_parent), n(_n) {}
 
-    void operator()() {
-        ++i;
-        parent(i * 100u / n);
-    }
+	void operator()() {
+		++i;
+		parent(i * 100u / n);
+	}
 };
-
-#endif

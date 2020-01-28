@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ACME_CLIENT_HXX
-#define BENG_PROXY_ACME_CLIENT_HXX
+#pragma once
 
 #include "event/Loop.hxx"
 #include "GlueHttpClient.hxx"
@@ -52,128 +51,126 @@ struct AcmeChallenge;
  * @see https://ietf-wg-acme.github.io/acme/
  */
 class AcmeClient {
-    EventLoop event_loop;
-    GlueHttpClient glue_http_client;
-    const std::string server;
+	EventLoop event_loop;
+	GlueHttpClient glue_http_client;
+	const std::string server;
 
-    /**
-     * A replay nonce that was received in the previous request.  It
-     * is remembered for the next NextNonce() call, to save a HTTP
-     * request.
-     */
-    std::string next_nonce;
+	/**
+	 * A replay nonce that was received in the previous request.  It
+	 * is remembered for the next NextNonce() call, to save a HTTP
+	 * request.
+	 */
+	std::string next_nonce;
 
-    const std::string agreement_url;
+	const std::string agreement_url;
 
-    const bool fake;
+	const bool fake;
 
 public:
-    explicit AcmeClient(const AcmeConfig &config);
-    ~AcmeClient();
+	explicit AcmeClient(const AcmeConfig &config);
+	~AcmeClient();
 
-    bool IsFake() const {
-        return fake;
-    }
+	bool IsFake() const {
+		return fake;
+	}
 
-    struct Account {
-        std::string location;
-    };
+	struct Account {
+		std::string location;
+	};
 
-    /**
-     * Register a new account.
-     *
-     * @param key the account key
-     * @param email an email address to be associated with the account
-     */
-    Account NewReg(EVP_PKEY &key, const char *email);
+	/**
+	 * Register a new account.
+	 *
+	 * @param key the account key
+	 * @param email an email address to be associated with the account
+	 */
+	Account NewReg(EVP_PKEY &key, const char *email);
 
-    /**
-     * Create a new "authz" object, to prepare for a new certificate.
-     *
-     * After this method succeeds, configure the web server with a new
-     * temporary certificate using AcmeChallenge::MakeDnsName(), and
-     * then call UpdateAuthz().
-     *
-     * @param key the account key
-     * @param host the host name ("common name") for the new certificate
-     * @param challenge_type the desired challenge type
-     */
-    AcmeChallenge NewAuthz(EVP_PKEY &key, const char *host,
-                           const char *challenge_type);
+	/**
+	 * Create a new "authz" object, to prepare for a new certificate.
+	 *
+	 * After this method succeeds, configure the web server with a new
+	 * temporary certificate using AcmeChallenge::MakeDnsName(), and
+	 * then call UpdateAuthz().
+	 *
+	 * @param key the account key
+	 * @param host the host name ("common name") for the new certificate
+	 * @param challenge_type the desired challenge type
+	 */
+	AcmeChallenge NewAuthz(EVP_PKEY &key, const char *host,
+			       const char *challenge_type);
 
-    /**
-     * Update the "authz" object.  Call this method after NewAuthz().
-     *
-     * If this method returns false, call CheckAuthz() repeatedly with
-     * a reasonable delay.
-     *
-     * @param key the account key
-     * @param authz the return value of NewAuthz()
-     * @return true if the authz object is done, and NewCert() can be
-     * called
-     */
-    bool UpdateAuthz(EVP_PKEY &key, const AcmeChallenge &authz);
+	/**
+	 * Update the "authz" object.  Call this method after NewAuthz().
+	 *
+	 * If this method returns false, call CheckAuthz() repeatedly with
+	 * a reasonable delay.
+	 *
+	 * @param key the account key
+	 * @param authz the return value of NewAuthz()
+	 * @return true if the authz object is done, and NewCert() can be
+	 * called
+	 */
+	bool UpdateAuthz(EVP_PKEY &key, const AcmeChallenge &authz);
 
-    /**
-     * Check whether the "authz" object is done.  Call this method
-     * repeatedly after UpdateAuthz() with a reasonable delay.
-     *
-     * @param key the account key
-     * @param authz the return value of NewAuthz()
-     * @return true if the authz object is done, and NewCert() can be
-     * called
-     */
-    bool CheckAuthz(const AcmeChallenge &authz);
+	/**
+	 * Check whether the "authz" object is done.  Call this method
+	 * repeatedly after UpdateAuthz() with a reasonable delay.
+	 *
+	 * @param key the account key
+	 * @param authz the return value of NewAuthz()
+	 * @return true if the authz object is done, and NewCert() can be
+	 * called
+	 */
+	bool CheckAuthz(const AcmeChallenge &authz);
 
-    /**
-     * Ask the server to produce a signed certificate.
-     *
-     * @param key the account key
-     * @param req the certificate request signed with the certificate
-     * key (not with the account key!)
-     */
-    UniqueX509 NewCert(EVP_PKEY &key, X509_REQ &req);
+	/**
+	 * Ask the server to produce a signed certificate.
+	 *
+	 * @param key the account key
+	 * @param req the certificate request signed with the certificate
+	 * key (not with the account key!)
+	 */
+	UniqueX509 NewCert(EVP_PKEY &key, X509_REQ &req);
 
 private:
-    /**
-     * Ask the server for a new replay nonce.
-     */
-    std::string RequestNonce();
+	/**
+	 * Ask the server for a new replay nonce.
+	 */
+	std::string RequestNonce();
 
-    /**
-     * Obtain a replay nonce.
-     */
-    std::string NextNonce();
+	/**
+	 * Obtain a replay nonce.
+	 */
+	std::string NextNonce();
 
-    GlueHttpResponse FakeRequest(http_method_t method, const char *uri,
-                                 ConstBuffer<void> body);
+	GlueHttpResponse FakeRequest(http_method_t method, const char *uri,
+				     ConstBuffer<void> body);
 
-    GlueHttpResponse Request(http_method_t method, const char *uri,
-                             ConstBuffer<void> body);
+	GlueHttpResponse Request(http_method_t method, const char *uri,
+				 ConstBuffer<void> body);
 
-    GlueHttpResponse SignedRequest(EVP_PKEY &key,
-                                   http_method_t method, const char *uri,
-                                   ConstBuffer<void> payload);
+	GlueHttpResponse SignedRequest(EVP_PKEY &key,
+				       http_method_t method, const char *uri,
+				       ConstBuffer<void> payload);
 
-    GlueHttpResponse SignedRequest(EVP_PKEY &key,
-                                   http_method_t method, const char *uri,
-                                   const char *payload) {
-        return SignedRequest(key, method, uri,
-                             ConstBuffer<void>(payload, strlen(payload)));
-    }
+	GlueHttpResponse SignedRequest(EVP_PKEY &key,
+				       http_method_t method, const char *uri,
+				       const char *payload) {
+		return SignedRequest(key, method, uri,
+				     ConstBuffer<void>(payload, strlen(payload)));
+	}
 
-    template<typename P>
-    GlueHttpResponse SignedRequestRetry(EVP_PKEY &key,
-                                        http_method_t method, const char *uri,
-                                        P payload) {
-        constexpr unsigned max_attempts = 3;
-        for (unsigned remaining_attempts = max_attempts;;) {
-            auto response = SignedRequest(key, method, uri, payload);
-            if (!http_status_is_server_error(response.status) ||
-                --remaining_attempts == 0)
-                return response;
-        }
-    }
+	template<typename P>
+	GlueHttpResponse SignedRequestRetry(EVP_PKEY &key,
+					    http_method_t method, const char *uri,
+					    P payload) {
+		constexpr unsigned max_attempts = 3;
+		for (unsigned remaining_attempts = max_attempts;;) {
+			auto response = SignedRequest(key, method, uri, payload);
+			if (!http_status_is_server_error(response.status) ||
+			    --remaining_attempts == 0)
+				return response;
+		}
+	}
 };
-
-#endif

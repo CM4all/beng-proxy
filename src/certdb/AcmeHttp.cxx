@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,45 +42,45 @@
 std::string
 MakeHttp01(const AcmeChallenge &challenge, EVP_PKEY &account_key)
 {
-    return challenge.token + "." +
-        UrlSafeBase64SHA256(MakeJwk(account_key)).c_str();
+	return challenge.token + "." +
+		UrlSafeBase64SHA256(MakeJwk(account_key)).c_str();
 }
 
 static void
 CreateFile(const char *path, ConstBuffer<void> contents)
 {
-    FileWriter file(path);
+	FileWriter file(path);
 
-    /* force the file to be world-readable so our web server can
-       deliver it to the ACME server's HTTP client */
-    fchmod(file.GetFileDescriptor().Get(), 0644);
+	/* force the file to be world-readable so our web server can
+	   deliver it to the ACME server's HTTP client */
+	fchmod(file.GetFileDescriptor().Get(), 0644);
 
-    file.Write(contents.data, contents.size);
-    file.Commit();
+	file.Write(contents.data, contents.size);
+	file.Commit();
 }
 
 static void
 CreateFile(const char *path, const std::string &contents)
 {
-    CreateFile(path, ConstBuffer<void>(contents.data(), contents.length()));
+	CreateFile(path, ConstBuffer<void>(contents.data(), contents.length()));
 }
 
 gcc_pure
 static bool
 IsValidAcmeChallengeToken(const std::string &token) noexcept
 {
-    return !token.empty() && token.front() != '.' &&
-        token.find('/') == token.npos;
+	return !token.empty() && token.front() != '.' &&
+		token.find('/') == token.npos;
 }
 
 std::string
 MakeHttp01File(const char *directory, const AcmeChallenge &challenge,
-               EVP_PKEY &account_key)
+	       EVP_PKEY &account_key)
 {
-    if (!IsValidAcmeChallengeToken(challenge.token))
-        throw std::runtime_error("Malformed ACME challenge token");
+	if (!IsValidAcmeChallengeToken(challenge.token))
+		throw std::runtime_error("Malformed ACME challenge token");
 
-    std::string path = std::string(directory) + "/" + challenge.token;
-    CreateFile(path.c_str(), MakeHttp01(challenge, account_key));
-    return path;
+	std::string path = std::string(directory) + "/" + challenge.token;
+	CreateFile(path.c_str(), MakeHttp01(challenge, account_key));
+	return path;
 }

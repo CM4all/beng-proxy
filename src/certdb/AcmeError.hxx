@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,14 +40,14 @@
 namespace Json { class Value; }
 
 class AcmeError : public std::runtime_error {
-    std::string type;
+	std::string type;
 
 public:
-    AcmeError(const Json::Value &error);
+	AcmeError(const Json::Value &error);
 
-    const std::string &GetType() const {
-        return type;
-    }
+	const std::string &GetType() const {
+		return type;
+	}
 };
 
 gcc_pure

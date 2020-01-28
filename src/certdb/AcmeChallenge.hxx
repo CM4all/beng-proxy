@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,7 +37,7 @@
 #include <string>
 
 struct AcmeChallenge {
-    std::string type;
-    std::string token;
-    std::string uri;
+	std::string type;
+	std::string token;
+	std::string uri;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,12 +37,12 @@
 void
 WorkshopProgress::operator()(int _value) noexcept
 {
-    if (!IsEnabled())
-        return;
+	if (!IsEnabled())
+		return;
 
-    const unsigned value = Scale(Clamp(_value));
-    if (use_control_channel)
-        dprintf(3, "progress %u", value);
-    else
-        printf("%u\n", value);
+	const unsigned value = Scale(Clamp(_value));
+	if (use_control_channel)
+		dprintf(3, "progress %u", value);
+	else
+		printf("%u\n", value);
 }

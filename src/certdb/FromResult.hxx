@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CERT_DATABASE_FROM_RESULT_HXX
-#define CERT_DATABASE_FROM_RESULT_HXX
+#pragma once
 
 #include "ssl/Unique.hxx"
 
@@ -45,10 +44,8 @@ LoadCertificate(const Pg::Result &result, unsigned row, unsigned column);
 
 UniqueEVP_PKEY
 LoadWrappedKey(const CertDatabaseConfig &config,
-               const Pg::Result &result, unsigned row, unsigned column);
+	       const Pg::Result &result, unsigned row, unsigned column);
 
 std::pair<UniqueX509, UniqueEVP_PKEY>
 LoadCertificateKey(const CertDatabaseConfig &config,
-                   const Pg::Result &result, unsigned row, unsigned column);
-
-#endif
+		   const Pg::Result &result, unsigned row, unsigned column);

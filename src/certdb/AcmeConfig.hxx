@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,30 +30,27 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ACME_CONFIG_HXX
-#define ACME_CONFIG_HXX
+#pragma once
 
 #include <string>
 
 struct AcmeConfig {
-    std::string account_key_path = "/etc/cm4all/acme/account.key";
+	std::string account_key_path = "/etc/cm4all/acme/account.key";
 
-    std::string agreement_url = "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf";
+	std::string agreement_url = "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf";
 
-    /**
-     * Specifies the directory mapped to
-     * "http://example.com/.well-known/acme-challenge/".
-     *
-     * If this is non-empty, then "http-01" is used instead of
-     * "tls-sni-01".
-     */
-    std::string challenge_directory;
+	/**
+	 * Specifies the directory mapped to
+	 * "http://example.com/.well-known/acme-challenge/".
+	 *
+	 * If this is non-empty, then "http-01" is used instead of
+	 * "tls-sni-01".
+	 */
+	std::string challenge_directory;
 
-    bool debug = false;
+	bool debug = false;
 
-    bool staging = false;
+	bool staging = false;
 
-    bool fake = false;
+	bool fake = false;
 };
-
-#endif

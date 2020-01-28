@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_GLUE_HTTP_CLIENT_HXX
-#define BENG_PROXY_GLUE_HTTP_CLIENT_HXX
+#pragma once
 
 #include "curl/Global.hxx"
 #include "http/Method.h"
@@ -44,37 +43,35 @@ template<typename T> struct ConstBuffer;
 class EventLoop;
 
 struct GlueHttpResponse {
-    http_status_t status;
+	http_status_t status;
 
-    std::multimap<std::string, std::string> headers;
+	std::multimap<std::string, std::string> headers;
 
-    std::string body;
+	std::string body;
 
-    GlueHttpResponse(http_status_t _status,
-                     std::multimap<std::string, std::string> &&_headers,
-                     std::string &&_body)
-        :status(_status), headers(std::move(_headers)), body(_body) {}
+	GlueHttpResponse(http_status_t _status,
+			 std::multimap<std::string, std::string> &&_headers,
+			 std::string &&_body)
+		:status(_status), headers(std::move(_headers)), body(_body) {}
 };
 
 class GlueHttpClient {
-    CurlGlobal curl_global;
+	CurlGlobal curl_global;
 
-    bool verbose = false;
+	bool verbose = false;
 
 public:
-    explicit GlueHttpClient(EventLoop &event_loop);
-    ~GlueHttpClient();
+	explicit GlueHttpClient(EventLoop &event_loop);
+	~GlueHttpClient();
 
-    GlueHttpClient(const GlueHttpClient &) = delete;
-    GlueHttpClient &operator=(const GlueHttpClient &) = delete;
+	GlueHttpClient(const GlueHttpClient &) = delete;
+	GlueHttpClient &operator=(const GlueHttpClient &) = delete;
 
-    void EnableVerbose() noexcept {
-        verbose = true;
-    }
+	void EnableVerbose() noexcept {
+		verbose = true;
+	}
 
-    GlueHttpResponse Request(EventLoop &event_loop,
-                             http_method_t method, const char *uri,
-                             ConstBuffer<void> body);
+	GlueHttpResponse Request(EventLoop &event_loop,
+				 http_method_t method, const char *uri,
+				 ConstBuffer<void> body);
 };
-
-#endif

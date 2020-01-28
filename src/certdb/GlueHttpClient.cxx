@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,7 +40,7 @@
 #include <exception>
 
 GlueHttpClient::GlueHttpClient(EventLoop &event_loop)
-    :curl_global(event_loop)
+	:curl_global(event_loop)
 {
 }
 
@@ -49,81 +49,81 @@ GlueHttpClient::~GlueHttpClient()
 }
 
 class GlueHttpResponseHandler final : public CurlResponseHandler {
-    http_status_t status;
-    std::multimap<std::string, std::string> headers;
+	http_status_t status;
+	std::multimap<std::string, std::string> headers;
 
-    std::string body_string;
+	std::string body_string;
 
-    std::exception_ptr error;
+	std::exception_ptr error;
 
-    bool done = false;
-
-public:
-    bool IsDone() const {
-        return done;
-    }
-
-    void CheckThrowError() {
-        if (error)
-            std::rethrow_exception(error);
-    }
-
-    GlueHttpResponse MoveResponse() {
-        return {status, std::move(headers), std::move(body_string)};
-    }
+	bool done = false;
 
 public:
-    /* virtual methods from class CurlResponseHandler */
+	bool IsDone() const {
+		return done;
+	}
 
-    void OnHeaders(unsigned _status,
-                   std::multimap<std::string, std::string> &&_headers) override {
-        status = http_status_t(_status);
-        headers = std::move(_headers);
-    }
+	void CheckThrowError() {
+		if (error)
+			std::rethrow_exception(error);
+	}
 
-    void OnData(ConstBuffer<void> data) override {
-        body_string.append((const char *)data.data, data.size);
-    }
+	GlueHttpResponse MoveResponse() {
+		return {status, std::move(headers), std::move(body_string)};
+	}
 
-    void OnEnd() override {
-        done = true;
-    }
+public:
+	/* virtual methods from class CurlResponseHandler */
 
-    void OnError(std::exception_ptr e) noexcept override {
-        error = std::move(e);
-        done = true;
-    }
+	void OnHeaders(unsigned _status,
+		       std::multimap<std::string, std::string> &&_headers) override {
+		status = http_status_t(_status);
+		headers = std::move(_headers);
+	}
+
+	void OnData(ConstBuffer<void> data) override {
+		body_string.append((const char *)data.data, data.size);
+	}
+
+	void OnEnd() override {
+		done = true;
+	}
+
+	void OnError(std::exception_ptr e) noexcept override {
+		error = std::move(e);
+		done = true;
+	}
 };
 
 GlueHttpResponse
 GlueHttpClient::Request(EventLoop &event_loop,
-                        http_method_t method, const char *uri,
-                        ConstBuffer<void> body)
+			http_method_t method, const char *uri,
+			ConstBuffer<void> body)
 {
-    CurlSlist header_list;
+	CurlSlist header_list;
 
-    CurlEasy easy(uri);
-    easy.SetOption(CURLOPT_VERBOSE, long(verbose));
+	CurlEasy easy(uri);
+	easy.SetOption(CURLOPT_VERBOSE, long(verbose));
 
-    if (method == HTTP_METHOD_HEAD)
-        easy.SetNoBody();
-    else if (method == HTTP_METHOD_POST)
-        easy.SetPost();
+	if (method == HTTP_METHOD_HEAD)
+		easy.SetNoBody();
+	else if (method == HTTP_METHOD_POST)
+		easy.SetPost();
 
-    if (!body.IsNull()) {
-        easy.SetRequestBody(body.data, body.size);
-        header_list.Append("Content-Type: application/json");
-    }
+	if (!body.IsNull()) {
+		easy.SetRequestBody(body.data, body.size);
+		header_list.Append("Content-Type: application/json");
+	}
 
-    easy.SetRequestHeaders(header_list.Get());
+	easy.SetRequestHeaders(header_list.Get());
 
-    GlueHttpResponseHandler handler;
-    CurlRequest request(curl_global, std::move(easy), handler);
+	GlueHttpResponseHandler handler;
+	CurlRequest request(curl_global, std::move(easy), handler);
 
-    request.Start();
+	request.Start();
 
-    while (!handler.IsDone() && event_loop.LoopOnce()) {}
+	while (!handler.IsDone() && event_loop.LoopOnce()) {}
 
-    handler.CheckThrowError();
-    return handler.MoveResponse();
+	handler.CheckThrowError();
+	return handler.MoveResponse();
 }

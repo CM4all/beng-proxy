@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -44,9 +44,9 @@
 static char *
 Hex(char *dest, ConstBuffer<uint8_t> src)
 {
-    for (auto b : src)
-        dest += sprintf(dest, "%02x", b);
-    return dest;
+	for (auto b : src)
+		dest += sprintf(dest, "%02x", b);
+	return dest;
 }
 
 /**
@@ -56,51 +56,51 @@ Hex(char *dest, ConstBuffer<uint8_t> src)
 static std::string
 MakeDnsName(const AcmeChallenge &challenge, EVP_PKEY &key)
 {
-    const auto thumbprint_b64 = UrlSafeBase64SHA256(MakeJwk(key));
+	const auto thumbprint_b64 = UrlSafeBase64SHA256(MakeJwk(key));
 
-    std::string key_authz = challenge.token;
-    key_authz += '.';
-    key_authz += thumbprint_b64.c_str();
+	std::string key_authz = challenge.token;
+	key_authz += '.';
+	key_authz += thumbprint_b64.c_str();
 
-    unsigned char md[SHA256_DIGEST_LENGTH];
-    SHA256((const unsigned char *)key_authz.data(), key_authz.length(), md);
+	unsigned char md[SHA256_DIGEST_LENGTH];
+	SHA256((const unsigned char *)key_authz.data(), key_authz.length(), md);
 
-    char result[SHA256_DIGEST_LENGTH * 2 + 32], *p = result;
-    p = Hex(p, {md, SHA256_DIGEST_LENGTH / 2});
-    *p++ = '.';
-    p = Hex(p, {md + SHA256_DIGEST_LENGTH / 2, SHA256_DIGEST_LENGTH / 2});
-    strcpy(p, ".acme.invalid");
+	char result[SHA256_DIGEST_LENGTH * 2 + 32], *p = result;
+	p = Hex(p, {md, SHA256_DIGEST_LENGTH / 2});
+	*p++ = '.';
+	p = Hex(p, {md + SHA256_DIGEST_LENGTH / 2, SHA256_DIGEST_LENGTH / 2});
+	strcpy(p, ".acme.invalid");
 
-    return result;
+	return result;
 }
 
 static std::string
 MakeHandleFromAcmeSni01(const std::string &acme)
 {
-    auto i = acme.find('.');
-    if (i != 32)
-        i = std::min<size_t>(32, acme.length());
+	auto i = acme.find('.');
+	if (i != 32)
+		i = std::min<size_t>(32, acme.length());
 
-    return "acme.invalid:" + acme.substr(0, i);
+	return "acme.invalid:" + acme.substr(0, i);
 }
 
 UniqueX509
 MakeTlsSni01Cert(EVP_PKEY &account_key, EVP_PKEY &key,
-                 const AcmeChallenge &authz)
+		 const AcmeChallenge &authz)
 {
-    const auto alt_host = MakeDnsName(authz, account_key);
-    std::string alt_name = "DNS:" + alt_host;
+	const auto alt_host = MakeDnsName(authz, account_key);
+	std::string alt_name = "DNS:" + alt_host;
 
-    const std::string common_name = MakeHandleFromAcmeSni01(alt_host);
+	const std::string common_name = MakeHandleFromAcmeSni01(alt_host);
 
-    auto cert = MakeSelfIssuedDummyCert(common_name.c_str());
+	auto cert = MakeSelfIssuedDummyCert(common_name.c_str());
 
-    AddExt(*cert, NID_subject_alt_name, alt_name.c_str());
+	AddExt(*cert, NID_subject_alt_name, alt_name.c_str());
 
-    X509_set_pubkey(cert.get(), &key);
-    if (!X509_sign(cert.get(), &key, EVP_sha1()))
-        throw SslError("X509_sign() failed");
+	X509_set_pubkey(cert.get(), &key);
+	if (!X509_sign(cert.get(), &key, EVP_sha1()))
+		throw SslError("X509_sign() failed");
 
-    return cert;
+	return cert;
 }
 
