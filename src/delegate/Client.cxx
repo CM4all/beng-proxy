@@ -229,10 +229,7 @@ static void
 SendDelegatePacket(SocketDescriptor s, DelegateRequestCommand cmd,
 		   const void *payload, size_t length)
 {
-	const DelegateRequestHeader header = {
-		.length = (uint16_t)length,
-		.command = cmd,
-	};
+	const DelegateRequestHeader header{uint16_t(length), cmd};
 
 	struct iovec v[] = {
 		{ const_cast<void *>((const void *)&header), sizeof(header) },
