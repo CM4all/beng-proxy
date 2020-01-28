@@ -184,7 +184,12 @@ make_parent_directory_recursive(char *path)
 static bool
 make_parent_directory(const char *path)
 {
-	char buffer[strlen(path) + 1];
+	char buffer[PATH_MAX];
+	if (strlen(path) >= sizeof(buffer)) {
+		fprintf(stderr, "Path too long\n");
+		return false;
+	}
+
 	strcpy(buffer, path);
 
 	return make_parent_directory_recursive(buffer);
