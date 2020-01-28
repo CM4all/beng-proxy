@@ -217,12 +217,12 @@ CssParser::Feed(const char *start, size_t length) noexcept
 			do {
 				if (!is_css_nmchar(*buffer)) {
 					if (!name_buffer.empty()) {
-						CssParserValue name = {
-							.start = name_start,
-							.end = position + (off_t)(buffer - start),
+						CssParserValue name{
+							name_start,
+							position + (off_t)(buffer - start),
+							name_buffer,
 						};
 
-						name.value = name_buffer;
 						handler.class_name(&name,handler_ctx);
 					}
 
@@ -243,11 +243,11 @@ CssParser::Feed(const char *start, size_t length) noexcept
 				if (!is_css_nmchar(*buffer)) {
 					if (!name_buffer.empty()) {
 						CssParserValue name = {
-							.start = name_start,
-							.end = position + (off_t)(buffer - start),
+							name_start,
+							position + (off_t)(buffer - start),
+							name_buffer,
 						};
 
-						name.value = name_buffer;
 						handler.xml_id(&name, handler_ctx);
 					}
 
