@@ -189,11 +189,8 @@ ParseListenerConfig(const char *s,
 		return;
 	}
 
-	struct addrinfo hints;
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_flags = AI_ADDRCONFIG|AI_PASSIVE;
-	hints.ai_socktype = SOCK_STREAM;
-
+	static constexpr auto hints = MakeAddrInfo(AI_ADDRCONFIG|AI_PASSIVE,
+						   AF_UNSPEC, SOCK_STREAM);
 	for (const auto &i : Resolve(s, debug_mode ? 8080 : 80, &hints))
 		list.emplace_front(i, tag);
 }

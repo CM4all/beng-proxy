@@ -106,10 +106,8 @@ try {
 
 	AddressList address_list;
 
-	struct addrinfo hints;
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_flags = AI_ADDRCONFIG;
-	hints.ai_socktype = SOCK_STREAM;
+	static constexpr auto hints = MakeAddrInfo(AI_ADDRCONFIG, AF_UNSPEC,
+						   SOCK_STREAM);
 
 	for (int i = 1; i < argc; ++i)
 		address_list.Add(alloc, Resolve(argv[i], 80, &hints));

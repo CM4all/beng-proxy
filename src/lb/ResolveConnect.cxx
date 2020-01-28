@@ -255,16 +255,9 @@ LbHttpConnection::ResolveConnect(const char *host,
 	SocketAddress address;
 
 	try {
-		static constexpr struct addrinfo hints = {
-			.ai_flags = AI_ADDRCONFIG,
-			.ai_family = AF_UNSPEC,
-			.ai_socktype = SOCK_STREAM,
-			.ai_protocol = 0,
-			.ai_addrlen = 0,
-			.ai_addr = nullptr,
-			.ai_canonname = nullptr,
-			.ai_next = nullptr,
-		};
+		static constexpr auto hints = MakeAddrInfo(AI_ADDRCONFIG,
+							   AF_UNSPEC,
+							   SOCK_STREAM);
 
 		/* TODO: make this lookup non-blocking */
 		address = DupAddress(*request.pool,

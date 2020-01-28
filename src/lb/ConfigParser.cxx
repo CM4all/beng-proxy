@@ -38,6 +38,7 @@
 #include "io/ConfigParser.hxx"
 #include "system/Error.hxx"
 #include "net/Parser.hxx"
+#include "net/AddressInfo.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringStrip.hxx"
 #include "util/CharUtil.hxx"
@@ -484,10 +485,7 @@ LbConfigParser::AutoCreateMember(LbMemberConfig &member, const char *name)
 static unsigned
 parse_port(const char *p, SocketAddress address)
 {
-	struct addrinfo hints;
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = address.GetFamily();
-	hints.ai_socktype = SOCK_STREAM;
+	const auto hints = MakeAddrInfo(0, address.GetFamily(), SOCK_STREAM);
 
 	struct addrinfo *ai;
 	if (getaddrinfo(nullptr, p, &hints, &ai) != 0)
