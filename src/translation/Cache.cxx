@@ -1119,11 +1119,7 @@ tcache::Invalidate(const TranslateRequest &request,
 		   ConstBuffer<TranslationCommand> vary,
 		   const char *site) noexcept
 {
-	TranslationCacheInvalidate data = {
-		.request = &request,
-		.vary = vary,
-		.site = site,
-	};
+	TranslationCacheInvalidate data{&request, vary, site};
 
 	gcc_unused
 		unsigned removed = site != nullptr
