@@ -1014,7 +1014,7 @@ tcache_lookup(AllocatorPtr alloc, struct tcache &tcache,
 	return nullptr;
 }
 
-struct tcache_invalidate_data {
+struct TranslationCacheInvalidate {
 	const TranslateRequest *request;
 
 	ConstBuffer<TranslationCommand> vary;
@@ -1026,7 +1026,7 @@ static bool
 tcache_invalidate_match(const CacheItem *_item, void *ctx)
 {
 	const TranslateCacheItem &item = *(const TranslateCacheItem *)_item;
-	const tcache_invalidate_data &data = *(const tcache_invalidate_data *)ctx;
+	const auto &data = *(const TranslationCacheInvalidate *)ctx;
 
 	return item.InvalidateMatch(data.vary, *data.request, data.site);
 }
@@ -1119,7 +1119,7 @@ tcache::Invalidate(const TranslateRequest &request,
 		   ConstBuffer<TranslationCommand> vary,
 		   const char *site) noexcept
 {
-	struct tcache_invalidate_data data = {
+	TranslationCacheInvalidate data = {
 		.request = &request,
 		.vary = vary,
 		.site = site,
