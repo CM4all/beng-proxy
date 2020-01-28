@@ -35,6 +35,7 @@
 #include "net/IPv4Address.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SendMessage.hxx"
+#include "io/Iovec.hxx"
 
 #include <sys/socket.h>
 #include <errno.h>
@@ -105,10 +106,7 @@ inline void
 PingClient::Read() noexcept
 {
 	char buffer[1024];
-	struct iovec iov = {
-		.iov_base = buffer,
-		.iov_len = sizeof(buffer),
-	};
+	auto iov = MakeIovecT(buffer);
 
 	struct msghdr msg;
 	memset(&msg, 0, sizeof(msg));
@@ -219,10 +217,7 @@ SendPing(SocketDescriptor fd, SocketAddress address, uint16_t ident)
 	memset(packet.data, 0, sizeof(packet.data));
 	packet.header.checksum = in_cksum((u_short *)&packet, sizeof(packet), 0);
 
-	struct iovec iov = {
-		.iov_base = &packet,
-		.iov_len = sizeof(packet),
-	};
+	auto iov = MakeIovecT(packet);
 
 	SendMessage(fd,
 		    MessageHeader(ConstBuffer<struct iovec>(&iov, 1))
