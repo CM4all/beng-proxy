@@ -38,10 +38,9 @@
 #include "ssl/Name.hxx"
 #include "ssl/AltName.hxx"
 #include "ssl/Error.hxx"
+#include "io/FileDescriptor.hxx"
 
 #include <openssl/aes.h>
-
-#include <sys/poll.h>
 
 CertDatabase::CertDatabase(const CertDatabaseConfig &_config)
 	:config(_config), conn(config.connect.c_str())
@@ -56,12 +55,7 @@ CertDatabase::CheckConnected()
 	if (GetStatus() != CONNECTION_OK)
 		return false;
 
-	struct pollfd pfd = {
-		.fd = GetSocket(),
-		.events = POLLIN,
-	};
-
-	if (poll(&pfd, 1, 0) == 0)
+	if (FileDescriptor(GetSocket()).WaitReadable(0) == 0)
 		return true;
 
 	conn.ConsumeInput();
@@ -70,8 +64,7 @@ CertDatabase::CheckConnected()
 
 	/* try again, just in case the previous PQconsumeInput() call has
 	   read a final message from the socket */
-
-	if (poll(&pfd, 1, 0) == 0)
+	if (FileDescriptor(GetSocket()).WaitReadable(0) == 0)
 		return true;
 
 	conn.ConsumeInput();
