@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_DELEGATE_ADDRESS_HXX
-#define BENG_PROXY_DELEGATE_ADDRESS_HXX
+#pragma once
 
 #include "spawn/ChildOptions.hxx"
 
@@ -44,46 +43,44 @@ class MatchInfo;
  * The description of a delegate process.
  */
 struct DelegateAddress {
-    const char *delegate;
+	const char *delegate;
 
-    /**
-     * Options for the delegate process.
-     */
-    ChildOptions child_options;
+	/**
+	 * Options for the delegate process.
+	 */
+	ChildOptions child_options;
 
-    DelegateAddress(const char *_delegate);
+	DelegateAddress(const char *_delegate);
 
-    constexpr DelegateAddress(ShallowCopy shallow_copy,
-                              const DelegateAddress &src)
-        :delegate(src.delegate),
-         child_options(shallow_copy, src.child_options) {}
+	constexpr DelegateAddress(ShallowCopy shallow_copy,
+				  const DelegateAddress &src)
+		:delegate(src.delegate),
+		 child_options(shallow_copy, src.child_options) {}
 
-    constexpr DelegateAddress(DelegateAddress &&src)
-        :DelegateAddress(ShallowCopy(), src) {}
+	constexpr DelegateAddress(DelegateAddress &&src)
+		:DelegateAddress(ShallowCopy(), src) {}
 
-    DelegateAddress(AllocatorPtr alloc, const DelegateAddress &src);
+	DelegateAddress(AllocatorPtr alloc, const DelegateAddress &src);
 
-    DelegateAddress &operator=(const DelegateAddress &) = delete;
+	DelegateAddress &operator=(const DelegateAddress &) = delete;
 
-    /**
-     * Throws std::runtime_error on error.
-     */
-    void Check() const {
-        child_options.Check();
-    }
+	/**
+	 * Throws std::runtime_error on error.
+	 */
+	void Check() const {
+		child_options.Check();
+	}
 
-    /**
-     * Does this object need to be expanded with Expand()?
-     */
-    gcc_pure
-    bool IsExpandable() const {
-        return child_options.IsExpandable();
-    }
+	/**
+	 * Does this object need to be expanded with Expand()?
+	 */
+	gcc_pure
+	bool IsExpandable() const {
+		return child_options.IsExpandable();
+	}
 
-    /**
-     * Throws std::runtime_error on error.
-     */
-    void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
+	/**
+	 * Throws std::runtime_error on error.
+	 */
+	void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
 };
-
-#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -54,40 +54,40 @@
 void
 Request::OnDelegateSuccess(UniqueFileDescriptor fd)
 {
-    /* get file information */
+	/* get file information */
 
-    struct stat st;
-    if (fstat(fd.Get(), &st) < 0) {
-        DispatchResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                         "Internal server error");
-        return;
-    }
+	struct stat st;
+	if (fstat(fd.Get(), &st) < 0) {
+		DispatchResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+				 "Internal server error");
+		return;
+	}
 
-    if (!S_ISREG(st.st_mode)) {
-        DispatchResponse(HTTP_STATUS_NOT_FOUND, "Not a regular file");
-        return;
-    }
+	if (!S_ISREG(st.st_mode)) {
+		DispatchResponse(HTTP_STATUS_NOT_FOUND, "Not a regular file");
+		return;
+	}
 
-    /* request options */
+	/* request options */
 
-    struct file_request file_request(st.st_size);
-    if (!EvaluateFileRequest(fd, st, file_request)) {
-        return;
-    }
+	struct file_request file_request(st.st_size);
+	if (!EvaluateFileRequest(fd, st, file_request)) {
+		return;
+	}
 
-    /* build the response */
+	/* build the response */
 
-    DispatchFile(st, file_request,
-                 istream_file_fd_new(instance.event_loop, pool,
-                                     handler.delegate.path,
-                                     std::move(fd), FdType::FD_FILE,
-                                     file_request.range.size));
+	DispatchFile(st, file_request,
+		     istream_file_fd_new(instance.event_loop, pool,
+					 handler.delegate.path,
+					 std::move(fd), FdType::FD_FILE,
+					 file_request.range.size));
 }
 
 void
 Request::OnDelegateError(std::exception_ptr ep)
 {
-    LogDispatchError(ep);
+	LogDispatchError(ep);
 }
 
 /*
@@ -97,25 +97,25 @@ Request::OnDelegateError(std::exception_ptr ep)
 
 void
 Request::HandleDelegateAddress(const DelegateAddress &address,
-                               const char *path) noexcept
+			       const char *path) noexcept
 {
-    assert(path != nullptr);
+	assert(path != nullptr);
 
-    /* check request */
+	/* check request */
 
-    if (request.method != HTTP_METHOD_HEAD &&
-        request.method != HTTP_METHOD_GET &&
-        !processor_focus) {
-        method_not_allowed(*this, "GET, HEAD");
-        return;
-    }
+	if (request.method != HTTP_METHOD_HEAD &&
+	    request.method != HTTP_METHOD_GET &&
+	    !processor_focus) {
+		method_not_allowed(*this, "GET, HEAD");
+		return;
+	}
 
-    /* run the delegate helper */
+	/* run the delegate helper */
 
-    handler.delegate.path = path;
+	handler.delegate.path = path;
 
-    delegate_stock_open(instance.delegate_stock, request.pool,
-                        address.delegate, address.child_options,
-                        path,
-                        *this, cancel_ptr);
+	delegate_stock_open(instance.delegate_stock, request.pool,
+			    address.delegate, address.child_options,
+			    path,
+			    *this, cancel_ptr);
 }

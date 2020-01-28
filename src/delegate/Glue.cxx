@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,35 +41,35 @@
 #include "net/SocketDescriptor.hxx"
 
 struct DelegateGlue final : Lease {
-    StockItem &item;
+	StockItem &item;
 
-    explicit DelegateGlue(StockItem &_item):item(_item) {}
+	explicit DelegateGlue(StockItem &_item):item(_item) {}
 
-    /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) noexcept override {
-        item.Put(!reuse);
-    }
+	/* virtual methods from class Lease */
+	void ReleaseLease(bool reuse) noexcept override {
+		item.Put(!reuse);
+	}
 };
 
 void
 delegate_stock_open(StockMap *stock, struct pool *pool,
-                    const char *helper,
-                    const ChildOptions &options,
-                    const char *path,
-                    DelegateHandler &handler,
-                    CancellablePointer &cancel_ptr)
+		    const char *helper,
+		    const ChildOptions &options,
+		    const char *path,
+		    DelegateHandler &handler,
+		    CancellablePointer &cancel_ptr)
 {
-    StockItem *item;
+	StockItem *item;
 
-    try {
-        item = delegate_stock_get(stock, helper, options);
-    } catch (...) {
-        handler.OnDelegateError(std::current_exception());
-        return;
-    }
+	try {
+		item = delegate_stock_get(stock, helper, options);
+	} catch (...) {
+		handler.OnDelegateError(std::current_exception());
+		return;
+	}
 
-    auto glue = NewFromPool<DelegateGlue>(*pool, *item);
-    delegate_open(stock->GetEventLoop(), delegate_stock_item_get(*item), *glue,
-                  pool, path,
-                  handler, cancel_ptr);
+	auto glue = NewFromPool<DelegateGlue>(*pool, *item);
+	delegate_open(stock->GetEventLoop(), delegate_stock_item_get(*item), *glue,
+		      pool, path,
+		      handler, cancel_ptr);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_DELEGATE_CLIENT_HXX
-#define BENG_DELEGATE_CLIENT_HXX
+#pragma once
 
 struct pool;
 class EventLoop;
@@ -48,8 +47,6 @@ class DelegateHandler;
  */
 void
 delegate_open(EventLoop &event_loop, SocketDescriptor fd, Lease &lease,
-              struct pool *pool, const char *path,
-              DelegateHandler &handler,
-              CancellablePointer &cancel_ptr);
-
-#endif
+	      struct pool *pool, const char *path,
+	      DelegateHandler &handler,
+	      CancellablePointer &cancel_ptr);

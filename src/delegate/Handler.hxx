@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_DELEGATE_HANDLER_HXX
-#define BENG_DELEGATE_HANDLER_HXX
+#pragma once
 
 #include <exception>
 
@@ -39,8 +38,6 @@ class UniqueFileDescriptor;
 
 class DelegateHandler {
 public:
-    virtual void OnDelegateSuccess(UniqueFileDescriptor fd) = 0;
-    virtual void OnDelegateError(std::exception_ptr ep) = 0;
+	virtual void OnDelegateSuccess(UniqueFileDescriptor fd) = 0;
+	virtual void OnDelegateError(std::exception_ptr ep) = 0;
 };
-
-#endif

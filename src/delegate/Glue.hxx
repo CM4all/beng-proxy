@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,8 +35,7 @@
  * together.
  */
 
-#ifndef BENG_DELEGATE_GLUE_HXX
-#define BENG_DELEGATE_GLUE_HXX
+#pragma once
 
 struct ChildOptions;
 class StockMap;
@@ -45,10 +44,8 @@ class CancellablePointer;
 
 void
 delegate_stock_open(StockMap *stock, struct pool *pool,
-                    const char *helper,
-                    const ChildOptions &options,
-                    const char *path,
-                    DelegateHandler &handler,
-                    CancellablePointer &cancel_ptr);
-
-#endif
+		    const char *helper,
+		    const ChildOptions &options,
+		    const char *path,
+		    DelegateHandler &handler,
+		    CancellablePointer &cancel_ptr);

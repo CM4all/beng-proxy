@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -52,87 +52,87 @@
 #include <sys/socket.h>
 
 struct DelegateArgs {
-    const char *executable_path;
+	const char *executable_path;
 
-    const ChildOptions &options;
+	const ChildOptions &options;
 
-    DelegateArgs(const char *_executable_path,
-                 const ChildOptions &_options)
-        :executable_path(_executable_path), options(_options) {}
+	DelegateArgs(const char *_executable_path,
+		     const ChildOptions &_options)
+		:executable_path(_executable_path), options(_options) {}
 
-    const char *GetStockKey(AllocatorPtr alloc) const {
-        const char *key = executable_path;
+	const char *GetStockKey(AllocatorPtr alloc) const {
+		const char *key = executable_path;
 
-        char options_buffer[16384];
-        char *options_end = options.MakeId(options_buffer);
-        if (options_end > options_buffer)
-            key = alloc.Concat(key, '|',
-                               StringView{options_buffer, options_end});
+		char options_buffer[16384];
+		char *options_end = options.MakeId(options_buffer);
+		if (options_end > options_buffer)
+			key = alloc.Concat(key, '|',
+					   StringView{options_buffer, options_end});
 
-        return key;
-    }
+		return key;
+	}
 };
 
 class DelegateProcess final : public StockItem {
-    const LLogger logger;
+	const LLogger logger;
 
-    UniqueSocketDescriptor fd;
+	UniqueSocketDescriptor fd;
 
-    SocketEvent event;
-    TimerEvent idle_timeout_event;
+	SocketEvent event;
+	TimerEvent idle_timeout_event;
 
 public:
-    explicit DelegateProcess(CreateStockItem c,
-                             UniqueSocketDescriptor &&_fd) noexcept
-        :StockItem(c),
-         logger(c.GetStockName()),
-         fd(std::move(_fd)),
-         event(c.stock.GetEventLoop(),
-               BIND_THIS_METHOD(SocketEventCallback), fd),
-         idle_timeout_event(c.stock.GetEventLoop(),
-                    BIND_THIS_METHOD(OnIdleTimeout))
-    {
-    }
+	explicit DelegateProcess(CreateStockItem c,
+				 UniqueSocketDescriptor &&_fd) noexcept
+		:StockItem(c),
+		 logger(c.GetStockName()),
+		 fd(std::move(_fd)),
+		 event(c.stock.GetEventLoop(),
+		       BIND_THIS_METHOD(SocketEventCallback), fd),
+		 idle_timeout_event(c.stock.GetEventLoop(),
+				    BIND_THIS_METHOD(OnIdleTimeout))
+	{
+	}
 
-    SocketDescriptor GetSocket() const noexcept {
-        return fd;
-    }
+	SocketDescriptor GetSocket() const noexcept {
+		return fd;
+	}
 
-    /* virtual methods from class StockItem */
-    bool Borrow() noexcept override {
-        event.Cancel();
-        idle_timeout_event.Cancel();
-        return true;
-    }
+	/* virtual methods from class StockItem */
+	bool Borrow() noexcept override {
+		event.Cancel();
+		idle_timeout_event.Cancel();
+		return true;
+	}
 
-    bool Release() noexcept override {
-        event.ScheduleRead();
-        idle_timeout_event.Schedule(std::chrono::minutes(1));
-        return true;
-    }
+	bool Release() noexcept override {
+		event.ScheduleRead();
+		idle_timeout_event.Schedule(std::chrono::minutes(1));
+		return true;
+	}
 
 private:
-    void SocketEventCallback(unsigned events) noexcept;
-    void OnIdleTimeout() noexcept;
+	void SocketEventCallback(unsigned events) noexcept;
+	void OnIdleTimeout() noexcept;
 };
 
 class DelegateStock final : StockClass {
-    SpawnService &spawn_service;
-    StockMap stock;
+	SpawnService &spawn_service;
+	StockMap stock;
 
 public:
-    explicit DelegateStock(EventLoop &event_loop, SpawnService &_spawn_service)
-        :spawn_service(_spawn_service),
-         stock(event_loop, *this, 0, 16) {}
+	explicit DelegateStock(EventLoop &event_loop, SpawnService &_spawn_service)
+		:spawn_service(_spawn_service),
+		 stock(event_loop, *this, 0, 16) {}
 
-    StockMap &GetStock() {
-        return stock;
-    }
+	StockMap &GetStock() {
+		return stock;
+	}
 
 private:
-    /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, StockRequest request,
-                CancellablePointer &cancel_ptr) override;
+	/* virtual methods from class StockClass */
+	void Create(CreateStockItem c, StockRequest request,
+		    CancellablePointer &cancel_ptr) override;
 };
 
 /*
@@ -143,20 +143,20 @@ private:
 inline void
 DelegateProcess::SocketEventCallback(unsigned) noexcept
 {
-    char buffer;
-    ssize_t nbytes = recv(fd.Get(), &buffer, sizeof(buffer), MSG_DONTWAIT);
-    if (nbytes < 0)
-        logger(2, "error on idle delegate process: ", strerror(errno));
-    else if (nbytes > 0)
-        logger(2, "unexpected data from idle delegate process");
+	char buffer;
+	ssize_t nbytes = recv(fd.Get(), &buffer, sizeof(buffer), MSG_DONTWAIT);
+	if (nbytes < 0)
+		logger(2, "error on idle delegate process: ", strerror(errno));
+	else if (nbytes > 0)
+		logger(2, "unexpected data from idle delegate process");
 
-    InvokeIdleDisconnect();
+	InvokeIdleDisconnect();
 }
 
 inline void
 DelegateProcess::OnIdleTimeout() noexcept
 {
-    InvokeIdleDisconnect();
+	InvokeIdleDisconnect();
 }
 
 /*
@@ -166,28 +166,28 @@ DelegateProcess::OnIdleTimeout() noexcept
 
 void
 DelegateStock::Create(CreateStockItem c,
-                      StockRequest request,
-                      gcc_unused CancellablePointer &cancel_ptr)
+		      StockRequest request,
+		      gcc_unused CancellablePointer &cancel_ptr)
 {
-    auto &info = *(DelegateArgs *)request.get();
+	auto &info = *(DelegateArgs *)request.get();
 
-    PreparedChildProcess p;
-    p.Append(info.executable_path);
+	PreparedChildProcess p;
+	p.Append(info.executable_path);
 
-    info.options.CopyTo(p, true, nullptr);
+	info.options.CopyTo(p, true, nullptr);
 
-    UniqueSocketDescriptor server_fd, client_fd;
-    if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
-                                                  server_fd, client_fd))
-        throw MakeErrno("socketpair() failed");
+	UniqueSocketDescriptor server_fd, client_fd;
+	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+						      server_fd, client_fd))
+		throw MakeErrno("socketpair() failed");
 
-    p.SetStdin(std::move(server_fd));
+	p.SetStdin(std::move(server_fd));
 
-    spawn_service.SpawnChildProcess(info.executable_path,
-                                    std::move(p), nullptr);
+	spawn_service.SpawnChildProcess(info.executable_path,
+					std::move(p), nullptr);
 
-    auto *process = new DelegateProcess(c, std::move(client_fd));
-    process->InvokeCreateSuccess();
+	auto *process = new DelegateProcess(c, std::move(client_fd));
+	process->InvokeCreateSuccess();
 }
 
 /*
@@ -198,33 +198,33 @@ DelegateStock::Create(CreateStockItem c,
 StockMap *
 delegate_stock_new(EventLoop &event_loop, SpawnService &spawn_service)
 {
-    auto *stock = new DelegateStock(event_loop, spawn_service);
-    return &stock->GetStock();
+	auto *stock = new DelegateStock(event_loop, spawn_service);
+	return &stock->GetStock();
 }
 
 void
 delegate_stock_free(StockMap *_stock)
 {
-    auto *stock = (DelegateStock *)&_stock->GetClass();
-    delete stock;
+	auto *stock = (DelegateStock *)&_stock->GetClass();
+	delete stock;
 }
 
 StockItem *
 delegate_stock_get(StockMap *delegate_stock,
-                   const char *helper,
-                   const ChildOptions &options)
+		   const char *helper,
+		   const ChildOptions &options)
 {
-    const TempPoolLease tpool;
-    const AllocatorPtr alloc(tpool);
-    auto r = NewDisposablePointer<DelegateArgs>(alloc, helper, options);
-    const char *key = r->GetStockKey(alloc);
-    return delegate_stock->GetNow(key, std::move(r));
+	const TempPoolLease tpool;
+	const AllocatorPtr alloc(tpool);
+	auto r = NewDisposablePointer<DelegateArgs>(alloc, helper, options);
+	const char *key = r->GetStockKey(alloc);
+	return delegate_stock->GetNow(key, std::move(r));
 }
 
 SocketDescriptor
 delegate_stock_item_get(StockItem &item) noexcept
 {
-    auto *process = (DelegateProcess *)&item;
+	auto *process = (DelegateProcess *)&item;
 
-    return process->GetSocket();
+	return process->GetSocket();
 }

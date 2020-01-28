@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,13 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * This helper library glues delegate_glue and http_response_handler
- * together.
- */
-
-#ifndef BENG_PROXY_DELEGATE_HTTP_REQUEST_HXX
-#define BENG_PROXY_DELEGATE_HTTP_REQUEST_HXX
+#pragma once
 
 struct pool;
 class StockMap;
@@ -45,13 +39,15 @@ struct ChildOptions;
 class EventLoop;
 class CancellablePointer;
 
+/*
+ * This helper library glues delegate_glue and http_response_handler
+ * together.
+ */
 void
 delegate_stock_request(EventLoop &event_loop, StockMap &stock,
-                       struct pool &pool,
-                       const char *helper,
-                       const ChildOptions &options,
-                       const char *path, const char *content_type,
-                       HttpResponseHandler &handler,
-                       CancellablePointer &cancel_ptr);
-
-#endif
+		       struct pool &pool,
+		       const char *helper,
+		       const ChildOptions &options,
+		       const char *path, const char *content_type,
+		       HttpResponseHandler &handler,
+		       CancellablePointer &cancel_ptr);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_DELEGATE_STOCK_HXX
-#define BENG_DELEGATE_STOCK_HXX
+#pragma once
 
 struct ChildOptions;
 class StockMap;
@@ -52,10 +51,8 @@ delegate_stock_free(StockMap *stock);
  */
 StockItem *
 delegate_stock_get(StockMap *delegate_stock,
-                   const char *path,
-                   const ChildOptions &options);
+		   const char *path,
+		   const ChildOptions &options);
 
 SocketDescriptor
 delegate_stock_item_get(StockItem &item) noexcept;
-
-#endif

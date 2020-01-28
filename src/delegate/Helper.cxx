@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -53,146 +53,146 @@
 static bool
 delegate_send(const void *data, size_t length)
 {
-    ssize_t nbytes = send(0, data, length, 0);
-    if (nbytes < 0) {
-        fprintf(stderr, "send() on delegate socket failed: %s\n",
-                strerror(errno));
-        return false;
-    }
+	ssize_t nbytes = send(0, data, length, 0);
+	if (nbytes < 0) {
+		fprintf(stderr, "send() on delegate socket failed: %s\n",
+			strerror(errno));
+		return false;
+	}
 
-    if ((size_t)nbytes != length) {
-        fprintf(stderr, "short send() on delegate socket\n");
-        return false;
-    }
+	if ((size_t)nbytes != length) {
+		fprintf(stderr, "short send() on delegate socket\n");
+		return false;
+	}
 
-    return true;
+	return true;
 }
 
 static bool
 delegate_send_int(DelegateResponseCommand command, int value)
 {
-    const DelegateIntPacket packet = {
-        .header = {
-            .length = sizeof(packet) - sizeof(packet.header),
-            .command = command,
-        },
-        .value = value,
-    };
+	const DelegateIntPacket packet = {
+		.header = {
+			.length = sizeof(packet) - sizeof(packet.header),
+			.command = command,
+		},
+		.value = value,
+	};
 
-    return delegate_send(&packet, sizeof(packet));
+	return delegate_send(&packet, sizeof(packet));
 }
 
 static bool
 delegate_send_fd(DelegateResponseCommand command, int fd)
 {
-    DelegateResponseHeader header = {
-        .length = 0,
-        .command = command,
-    };
-    struct iovec vec = {
-        .iov_base = &header,
-        .iov_len = sizeof(header),
-    };
+	DelegateResponseHeader header = {
+		.length = 0,
+		.command = command,
+	};
+	struct iovec vec = {
+		.iov_base = &header,
+		.iov_len = sizeof(header),
+	};
 
-    struct msghdr msg = {
-        .msg_name = nullptr,
-        .msg_namelen = 0,
-        .msg_iov = &vec,
-        .msg_iovlen = 1,
-        .msg_control = nullptr,
-        .msg_controllen = 0,
-        .msg_flags = 0,
-    };
+	struct msghdr msg = {
+		.msg_name = nullptr,
+		.msg_namelen = 0,
+		.msg_iov = &vec,
+		.msg_iovlen = 1,
+		.msg_control = nullptr,
+		.msg_controllen = 0,
+		.msg_flags = 0,
+	};
 
-    ScmRightsBuilder<1> srb(msg);
-    srb.push_back(fd);
-    srb.Finish(msg);
+	ScmRightsBuilder<1> srb(msg);
+	srb.push_back(fd);
+	srb.Finish(msg);
 
-    if (sendmsg(0, &msg, 0) < 0) {
-        fprintf(stderr, "failed to send fd: %s\n", strerror(errno));
-        return false;
-    }
+	if (sendmsg(0, &msg, 0) < 0) {
+		fprintf(stderr, "failed to send fd: %s\n", strerror(errno));
+		return false;
+	}
 
-    return true;
+	return true;
 }
 
 static bool
 delegate_handle_open(const char *payload)
 {
-    int fd = open(payload, O_RDONLY|O_CLOEXEC|O_NOCTTY);
-    if (fd >= 0) {
-        bool success = delegate_send_fd(DelegateResponseCommand::FD, fd);
-        close(fd);
-        return success;
-    } else {
-        /* error: send error code to client */
+	int fd = open(payload, O_RDONLY|O_CLOEXEC|O_NOCTTY);
+	if (fd >= 0) {
+		bool success = delegate_send_fd(DelegateResponseCommand::FD, fd);
+		close(fd);
+		return success;
+	} else {
+		/* error: send error code to client */
 
-        return delegate_send_int(DelegateResponseCommand::ERRNO, errno);
-    }
+		return delegate_send_int(DelegateResponseCommand::ERRNO, errno);
+	}
 }
 
 static bool
 delegate_handle(DelegateRequestCommand command,
-                const char *payload, size_t length)
+		const char *payload, size_t length)
 {
-    (void)length;
+	(void)length;
 
-    switch (command) {
-    case DelegateRequestCommand::OPEN:
-        return delegate_handle_open(payload);
-    }
+	switch (command) {
+	case DelegateRequestCommand::OPEN:
+		return delegate_handle_open(payload);
+	}
 
-    fprintf(stderr, "unknown command: %d\n", int(command));
-    return false;
+	fprintf(stderr, "unknown command: %d\n", int(command));
+	return false;
 }
 
 int main(int argc gcc_unused, char **argv gcc_unused)
 {
-    while (true) {
-        DelegateRequestHeader header;
-        ssize_t nbytes = recv(0, &header, sizeof(header), 0);
-        if (nbytes < 0) {
-            fprintf(stderr, "recv() on delegate socket failed: %s\n",
-                    strerror(errno));
-            return 2;
-        }
+	while (true) {
+		DelegateRequestHeader header;
+		ssize_t nbytes = recv(0, &header, sizeof(header), 0);
+		if (nbytes < 0) {
+			fprintf(stderr, "recv() on delegate socket failed: %s\n",
+				strerror(errno));
+			return 2;
+		}
 
-        if (nbytes == 0)
-            break;
+		if (nbytes == 0)
+			break;
 
-        if ((size_t)nbytes != sizeof(header)) {
-            fprintf(stderr, "short recv() on delegate socket\n");
-            return 2;
-        }
+		if ((size_t)nbytes != sizeof(header)) {
+			fprintf(stderr, "short recv() on delegate socket\n");
+			return 2;
+		}
 
-        char payload[4096];
-        if (header.length >= sizeof(payload)) {
-            fprintf(stderr, "delegate payload too large\n");
-            return 2;
-        }
+		char payload[4096];
+		if (header.length >= sizeof(payload)) {
+			fprintf(stderr, "delegate payload too large\n");
+			return 2;
+		}
 
-        size_t length = 0;
+		size_t length = 0;
 
-        while (length < header.length) {
-            nbytes = recv(0, payload + length,
-                          sizeof(payload) - 1 - length, 0);
-            if (nbytes < 0) {
-                fprintf(stderr, "recv() on delegate socket failed: %s\n",
-                        strerror(errno));
-                return 2;
-            }
+		while (length < header.length) {
+			nbytes = recv(0, payload + length,
+				      sizeof(payload) - 1 - length, 0);
+			if (nbytes < 0) {
+				fprintf(stderr, "recv() on delegate socket failed: %s\n",
+					strerror(errno));
+				return 2;
+			}
 
-            if (nbytes == 0)
-                break;
+			if (nbytes == 0)
+				break;
 
-            length += (size_t)nbytes;
-        }
+			length += (size_t)nbytes;
+		}
 
-        payload[length] = 0;
+		payload[length] = 0;
 
-        if (!delegate_handle(header.command, payload, length))
-            return 2;
-    }
+		if (!delegate_handle(header.command, payload, length))
+			return 2;
+	}
 
-    return 0;
+	return 0;
 }
