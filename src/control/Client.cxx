@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,6 +36,7 @@
 #include "net/RConnectSocket.hxx"
 #include "net/SendMessage.hxx"
 #include "net/ScmRightsBuilder.hxx"
+#include "io/Iovec.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/ByteOrder.hxx"
@@ -90,10 +91,10 @@ BengControlClient::Send(BengProxy::ControlCommand cmd,
 	static constexpr uint8_t padding[3] = {0, 0, 0};
 
 	struct iovec v[] = {
-		{ const_cast<uint32_t *>(&magic), sizeof(magic) },
-		{ const_cast<BengProxy::ControlHeader *>(&header), sizeof(header) },
-		{ const_cast<void *>(payload.data), payload.size },
-		{ const_cast<uint8_t *>(padding), PaddingSize(payload.size) },
+		MakeIovecT(magic),
+		MakeIovecT(header),
+		MakeIovec(payload),
+		MakeIovec(ConstBuffer<uint8_t>(padding, PaddingSize(payload.size))),
 	};
 
 	MessageHeader msg = ConstBuffer<struct iovec>(v);
@@ -120,8 +121,8 @@ BengControlClient::Receive()
 	char payload[4096];
 
 	struct iovec v[] = {
-		{ &header, sizeof(header) },
-		{ payload, sizeof(payload) },
+		MakeIovecT(header),
+		MakeIovecT(payload),
 	};
 
 	struct msghdr msg = {
