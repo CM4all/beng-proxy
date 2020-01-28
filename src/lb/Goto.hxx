@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_LB_GOTO_HXX
-#define BENG_LB_GOTO_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -42,34 +41,32 @@ class LbTranslationHandler;
 struct LbSimpleHttpResponse;
 
 struct LbGoto {
-    LbCluster *cluster = nullptr;
-    LbBranch *branch = nullptr;
-    LbLuaHandler *lua = nullptr;
-    LbTranslationHandler *translation = nullptr;
-    const LbSimpleHttpResponse *response = nullptr;
+	LbCluster *cluster = nullptr;
+	LbBranch *branch = nullptr;
+	LbLuaHandler *lua = nullptr;
+	LbTranslationHandler *translation = nullptr;
+	const LbSimpleHttpResponse *response = nullptr;
 
-    /**
-     * Resolve this host name and connect to the resulting
-     * address.
-     */
-    const char *resolve_connect = nullptr;
+	/**
+	 * Resolve this host name and connect to the resulting
+	 * address.
+	 */
+	const char *resolve_connect = nullptr;
 
-    LbGoto() = default;
-    LbGoto(LbCluster &_cluster):cluster(&_cluster) {}
-    LbGoto(LbBranch &_branch):branch(&_branch) {}
-    LbGoto(LbLuaHandler &_lua):lua(&_lua) {}
-    LbGoto(LbTranslationHandler &_translation):translation(&_translation) {}
-    LbGoto(const LbSimpleHttpResponse &_response):response(&_response) {}
+	LbGoto() = default;
+	LbGoto(LbCluster &_cluster):cluster(&_cluster) {}
+	LbGoto(LbBranch &_branch):branch(&_branch) {}
+	LbGoto(LbLuaHandler &_lua):lua(&_lua) {}
+	LbGoto(LbTranslationHandler &_translation):translation(&_translation) {}
+	LbGoto(const LbSimpleHttpResponse &_response):response(&_response) {}
 
-    bool IsDefined() const {
-        return cluster != nullptr || branch != nullptr ||
-            lua != nullptr || translation != nullptr ||
-            response != nullptr || resolve_connect != nullptr;
-    }
+	bool IsDefined() const {
+		return cluster != nullptr || branch != nullptr ||
+			lua != nullptr || translation != nullptr ||
+			response != nullptr || resolve_connect != nullptr;
+	}
 
-    template<typename R>
-    gcc_pure
-    const LbGoto &FindRequestLeaf(const R &request) const;
+	template<typename R>
+	gcc_pure
+	const LbGoto &FindRequestLeaf(const R &request) const;
 };
-
-#endif

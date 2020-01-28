@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,22 +37,22 @@
 struct LbConfig;
 
 struct LbCmdLine {
-    UidGid user;
+	UidGid user;
 
-    UidGid logger_user;
+	UidGid logger_user;
 
-    /**
-     * The configuration file.
-     */
-    const char *config_path = "/etc/cm4all/beng/lb.conf";
+	/**
+	 * The configuration file.
+	 */
+	const char *config_path = "/etc/cm4all/beng/lb.conf";
 
-    unsigned tcp_stock_limit = 256;
+	unsigned tcp_stock_limit = 256;
 
-    /**
-     * If true, then the environment (e.g. the configuration file) is
-     * checked, and the process exits.
-     */
-    bool check = false;
+	/**
+	 * If true, then the environment (e.g. the configuration file) is
+	 * checked, and the process exits.
+	 */
+	bool check = false;
 };
 
 /**
@@ -60,4 +60,4 @@ struct LbCmdLine {
  */
 void
 ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
-                 int argc, char **argv);
+		 int argc, char **argv);

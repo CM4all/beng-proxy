@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Node selection by jvmRoute.
  */
 
-#ifndef BENG_PROXY_LB_JVM_ROUTE_HXX
-#define BENG_PROXY_LB_JVM_ROUTE_HXX
+#pragma once
 
 #include "cluster/StickyHash.hxx"
 #include "util/Compiler.h"
@@ -49,6 +48,4 @@ struct LbClusterConfig;
 gcc_pure
 sticky_hash_t
 lb_jvm_route_get(const StringMap &request_headers,
-                 const LbClusterConfig &cluster);
-
-#endif
+		 const LbClusterConfig &cluster);

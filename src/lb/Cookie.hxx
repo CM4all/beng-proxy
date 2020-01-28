@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Node selection by cookie.
  */
 
-#ifndef BENG_PROXY_LB_COOKIE_HXX
-#define BENG_PROXY_LB_COOKIE_HXX
+#pragma once
 
 #include "cluster/StickyHash.hxx"
 
@@ -64,10 +63,8 @@ lb_cookie_generate(unsigned n);
 static inline unsigned
 lb_cookie_next(unsigned n, unsigned i)
 {
-    assert(n >= 2);
-    assert(i >= 1 && i <= n);
+	assert(n >= 2);
+	assert(i >= 1 && i <= n);
 
-    return (i % n) + 1;
+	return (i % n) + 1;
 }
-
-#endif

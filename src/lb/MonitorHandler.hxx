@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,8 +36,8 @@
 
 class LbMonitorHandler {
 public:
-    virtual void Success() = 0;
-    virtual void Fade() = 0;
-    virtual void Timeout() = 0;
-    virtual void Error(std::exception_ptr e) = 0;
+	virtual void Success() = 0;
+	virtual void Fade() = 0;
+	virtual void Timeout() = 0;
+	virtual void Error(std::exception_ptr e) = 0;
 };

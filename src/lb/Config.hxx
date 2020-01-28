@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_LB_CONFIG_H
-#define BENG_LB_CONFIG_H
+#pragma once
 
 #include "lb/ListenerConfig.hxx"
 #include "lb/GotoConfig.hxx"
@@ -50,155 +49,155 @@
 struct LbHttpCheckConfig;
 
 struct LbControlConfig : SocketConfig {
-    LbControlConfig() {
-        pass_cred = true;
-    }
+	LbControlConfig() {
+		pass_cred = true;
+	}
 };
 
 struct LbCertDatabaseConfig : CertDatabaseConfig {
-    std::string name;
+	std::string name;
 
-    /**
-     * List of PEM path names containing certificator authorities
-     * we're going to use to build the certificate chain.
-     */
-    std::list<std::string> ca_certs;
+	/**
+	 * List of PEM path names containing certificator authorities
+	 * we're going to use to build the certificate chain.
+	 */
+	std::list<std::string> ca_certs;
 
-    explicit LbCertDatabaseConfig(const char *_name):name(_name) {}
+	explicit LbCertDatabaseConfig(const char *_name):name(_name) {}
 };
 
 struct LbConfig {
-    AccessLogConfig access_log;
+	AccessLogConfig access_log;
 
-    std::list<LbControlConfig> controls;
+	std::list<LbControlConfig> controls;
 
-    std::map<std::string, LbCertDatabaseConfig> cert_dbs;
+	std::map<std::string, LbCertDatabaseConfig> cert_dbs;
 
-    std::map<std::string, LbMonitorConfig> monitors;
+	std::map<std::string, LbMonitorConfig> monitors;
 
-    std::map<std::string, LbNodeConfig> nodes;
+	std::map<std::string, LbNodeConfig> nodes;
 
-    std::map<std::string, LbClusterConfig> clusters;
-    std::map<std::string, LbBranchConfig> branches;
-    std::map<std::string, LbLuaHandlerConfig> lua_handlers;
-    std::map<std::string, LbTranslationHandlerConfig> translation_handlers;
+	std::map<std::string, LbClusterConfig> clusters;
+	std::map<std::string, LbBranchConfig> branches;
+	std::map<std::string, LbLuaHandlerConfig> lua_handlers;
+	std::map<std::string, LbTranslationHandlerConfig> translation_handlers;
 
-    std::list<LbListenerConfig> listeners;
+	std::list<LbListenerConfig> listeners;
 
-    std::unique_ptr<LbHttpCheckConfig> global_http_check;
+	std::unique_ptr<LbHttpCheckConfig> global_http_check;
 
-    LbConfig();
-    ~LbConfig();
+	LbConfig();
+	~LbConfig();
 
-    template<typename T>
-    gcc_pure
-    const LbMonitorConfig *FindMonitor(T &&t) const {
-        const auto i = monitors.find(std::forward<T>(t));
-        return i != monitors.end()
-            ? &i->second
-            : nullptr;
-    }
+	template<typename T>
+	gcc_pure
+	const LbMonitorConfig *FindMonitor(T &&t) const {
+		const auto i = monitors.find(std::forward<T>(t));
+		return i != monitors.end()
+			? &i->second
+			: nullptr;
+	}
 
-    template<typename T>
-    gcc_pure
-    const LbCertDatabaseConfig *FindCertDb(T &&t) const {
-        const auto i = cert_dbs.find(std::forward<T>(t));
-        return i != cert_dbs.end()
-            ? &i->second
-            : nullptr;
-    }
+	template<typename T>
+	gcc_pure
+	const LbCertDatabaseConfig *FindCertDb(T &&t) const {
+		const auto i = cert_dbs.find(std::forward<T>(t));
+		return i != cert_dbs.end()
+			? &i->second
+			: nullptr;
+	}
 
-    template<typename T>
-    gcc_pure
-    const LbNodeConfig *FindNode(T &&t) const {
-        const auto i = nodes.find(std::forward<T>(t));
-        return i != nodes.end()
-            ? &i->second
-            : nullptr;
-    }
+	template<typename T>
+	gcc_pure
+	const LbNodeConfig *FindNode(T &&t) const {
+		const auto i = nodes.find(std::forward<T>(t));
+		return i != nodes.end()
+			? &i->second
+			: nullptr;
+	}
 
-    template<typename T>
-    gcc_pure
-    const LbClusterConfig *FindCluster(T &&t) const {
-        const auto i = clusters.find(std::forward<T>(t));
-        return i != clusters.end()
-            ? &i->second
-            : nullptr;
-    }
+	template<typename T>
+	gcc_pure
+	const LbClusterConfig *FindCluster(T &&t) const {
+		const auto i = clusters.find(std::forward<T>(t));
+		return i != clusters.end()
+			? &i->second
+			: nullptr;
+	}
 
-    template<typename T>
-    gcc_pure
-    const LbGotoConfig FindGoto(T &&t) const {
-        LbGotoConfig g;
+	template<typename T>
+	gcc_pure
+	const LbGotoConfig FindGoto(T &&t) const {
+		LbGotoConfig g;
 
-        g.cluster = FindCluster(t);
-        if (g.cluster == nullptr) {
-            g.branch = FindBranch(t);
-            if (g.branch == nullptr) {
-                g.lua = FindLuaHandler(t);
-                if (g.lua == nullptr)
-                    g.translation = FindTranslationHandler(t);
-            }
-        }
+		g.cluster = FindCluster(t);
+		if (g.cluster == nullptr) {
+			g.branch = FindBranch(t);
+			if (g.branch == nullptr) {
+				g.lua = FindLuaHandler(t);
+				if (g.lua == nullptr)
+					g.translation = FindTranslationHandler(t);
+			}
+		}
 
-        return g;
-    }
+		return g;
+	}
 
-    template<typename T>
-    gcc_pure
-    const LbBranchConfig *FindBranch(T &&t) const {
-        const auto i = branches.find(std::forward<T>(t));
-        return i != branches.end()
-            ? &i->second
-            : nullptr;
-    }
+	template<typename T>
+	gcc_pure
+	const LbBranchConfig *FindBranch(T &&t) const {
+		const auto i = branches.find(std::forward<T>(t));
+		return i != branches.end()
+			? &i->second
+			: nullptr;
+	}
 
-    template<typename T>
-    gcc_pure
-    const LbLuaHandlerConfig *FindLuaHandler(T &&t) const {
-        const auto i = lua_handlers.find(std::forward<T>(t));
-        return i != lua_handlers.end()
-            ? &i->second
-            : nullptr;
-    }
+	template<typename T>
+	gcc_pure
+	const LbLuaHandlerConfig *FindLuaHandler(T &&t) const {
+		const auto i = lua_handlers.find(std::forward<T>(t));
+		return i != lua_handlers.end()
+			? &i->second
+			: nullptr;
+	}
 
-    template<typename T>
-    gcc_pure
-    const LbTranslationHandlerConfig *FindTranslationHandler(T &&t) const {
-        const auto i = translation_handlers.find(std::forward<T>(t));
-        return i != translation_handlers.end()
-            ? &i->second
-            : nullptr;
-    }
+	template<typename T>
+	gcc_pure
+	const LbTranslationHandlerConfig *FindTranslationHandler(T &&t) const {
+		const auto i = translation_handlers.find(std::forward<T>(t));
+		return i != translation_handlers.end()
+			? &i->second
+			: nullptr;
+	}
 
-    template<typename T>
-    gcc_pure
-    const LbListenerConfig *FindListener(T &&t) const {
-        for (const auto &i : listeners)
-            if (i.name == t)
-                return &i;
+	template<typename T>
+	gcc_pure
+	const LbListenerConfig *FindListener(T &&t) const {
+		for (const auto &i : listeners)
+			if (i.name == t)
+				return &i;
 
-        return nullptr;
-    }
+		return nullptr;
+	}
 
-    bool HasCertDatabase() const {
-        for (const auto &i : listeners)
-            if (i.cert_db != nullptr)
-                return true;
+	bool HasCertDatabase() const {
+		for (const auto &i : listeners)
+			if (i.cert_db != nullptr)
+				return true;
 
-        return false;
-    }
+		return false;
+	}
 
-    gcc_pure
-    bool HasZeroConf() const {
+	gcc_pure
+	bool HasZeroConf() const {
 #ifdef HAVE_AVAHI
-        for (const auto &i : listeners)
-            if (i.HasZeroConf())
-                return true;
+		for (const auto &i : listeners)
+			if (i.HasZeroConf())
+				return true;
 #endif
 
-        return false;
-    }
+		return false;
+	}
 };
 
 /**
@@ -207,5 +206,3 @@ struct LbConfig {
  */
 void
 LoadConfigFile(LbConfig &config, const char *path);
-
-#endif

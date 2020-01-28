@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -49,25 +49,25 @@ class SocketAddress;
  * #LbMonitorConfig for different nodes.
  */
 class LbMonitorStock {
-    EventLoop &event_loop;
-    FailureManager &failure_manager;
-    const LbMonitorConfig &config;
-    const LbMonitorClass &class_;
+	EventLoop &event_loop;
+	FailureManager &failure_manager;
+	const LbMonitorConfig &config;
+	const LbMonitorClass &class_;
 
-    std::map<std::string, LbMonitorController> map;
+	std::map<std::string, LbMonitorController> map;
 
 public:
-    LbMonitorStock(EventLoop &_event_loop,
-                   FailureManager &_failure_manager,
-                   const LbMonitorConfig &_config);
-    ~LbMonitorStock();
+	LbMonitorStock(EventLoop &_event_loop,
+		       FailureManager &_failure_manager,
+		       const LbMonitorConfig &_config);
+	~LbMonitorStock();
 
-    LbMonitorStock(const LbMonitorStock &) = delete;
-    LbMonitorStock &operator=(const LbMonitorStock &) = delete;
+	LbMonitorStock(const LbMonitorStock &) = delete;
+	LbMonitorStock &operator=(const LbMonitorStock &) = delete;
 
-    LbMonitorRef Add(const char *node_name, SocketAddress address);
+	LbMonitorRef Add(const char *node_name, SocketAddress address);
 
-    LbMonitorRef Add(const LbNodeConfig &node, unsigned port);
+	LbMonitorRef Add(const LbNodeConfig &node, unsigned port);
 
-    void Remove(LbMonitorController &m) noexcept;
+	void Remove(LbMonitorController &m) noexcept;
 };

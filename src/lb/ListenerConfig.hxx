@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_LB_LISTENER_CONFIG_HXX
-#define BENG_LB_LISTENER_CONFIG_HXX
+#pragma once
 
 #include "GotoConfig.hxx"
 #include "ssl/Config.hxx"
@@ -42,31 +41,29 @@
 struct LbCertDatabaseConfig;
 
 struct LbListenerConfig : SocketConfig {
-    std::string name;
+	std::string name;
 
-    LbGotoConfig destination;
+	LbGotoConfig destination;
 
-    std::string tag;
+	std::string tag;
 
-    bool verbose_response = false;
+	bool verbose_response = false;
 
-    bool ssl = false;
+	bool ssl = false;
 
-    SslConfig ssl_config;
+	SslConfig ssl_config;
 
-    const LbCertDatabaseConfig *cert_db = nullptr;
+	const LbCertDatabaseConfig *cert_db = nullptr;
 
-    explicit LbListenerConfig(const char *_name)
-        :name(_name) {
-        listen = 64;
-    }
+	explicit LbListenerConfig(const char *_name)
+		:name(_name) {
+		listen = 64;
+	}
 
 #ifdef HAVE_AVAHI
-    gcc_pure
-    bool HasZeroConf() const {
-        return destination.HasZeroConf();
-    }
+	gcc_pure
+	bool HasZeroConf() const {
+		return destination.HasZeroConf();
+	}
 #endif
 };
-
-#endif

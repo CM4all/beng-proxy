@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -43,34 +43,34 @@
 sticky_hash_t
 lb_cookie_get(const StringMap &request_headers)
 {
-    const TempPoolLease tpool;
+	const TempPoolLease tpool;
 
-    const char *cookie = request_headers.Get("cookie");
-    if (cookie == NULL)
-        return 0;
+	const char *cookie = request_headers.Get("cookie");
+	if (cookie == NULL)
+		return 0;
 
-    const auto jar = cookie_map_parse(*tpool, cookie);
+	const auto jar = cookie_map_parse(*tpool, cookie);
 
-    const char *p = jar.Get("beng_lb_node");
-    if (p == nullptr)
-        return 0;
+	const char *p = jar.Get("beng_lb_node");
+	if (p == nullptr)
+		return 0;
 
-    p = StringAfterPrefix(p, "0-");
-    if (p == nullptr)
-        return 0;
+	p = StringAfterPrefix(p, "0-");
+	if (p == nullptr)
+		return 0;
 
-    char *endptr;
-    unsigned long id = strtoul(p, &endptr, 16);
-    if (endptr == p || *endptr != 0)
-        return 0;
+	char *endptr;
+	unsigned long id = strtoul(p, &endptr, 16);
+	if (endptr == p || *endptr != 0)
+		return 0;
 
-    return (sticky_hash_t)id;
+	return (sticky_hash_t)id;
 }
 
 sticky_hash_t
 lb_cookie_generate(unsigned n)
 {
-    assert(n >= 2);
+	assert(n >= 2);
 
-    return (random() % n) + 1;
+	return (random() % n) + 1;
 }

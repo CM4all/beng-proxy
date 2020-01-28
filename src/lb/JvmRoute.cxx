@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -43,31 +43,31 @@
 
 sticky_hash_t
 lb_jvm_route_get(const StringMap &request_headers,
-                 const LbClusterConfig &cluster)
+		 const LbClusterConfig &cluster)
 {
-    const TempPoolLease tpool;
+	const TempPoolLease tpool;
 
-    const char *cookie = request_headers.Get("cookie");
-    if (cookie == NULL)
-        return 0;
+	const char *cookie = request_headers.Get("cookie");
+	if (cookie == NULL)
+		return 0;
 
-    const auto jar = cookie_map_parse(*tpool, cookie);
+	const auto jar = cookie_map_parse(*tpool, cookie);
 
-    const char *p = jar.Get("JSESSIONID");
-    if (p == NULL)
-        return 0;
+	const char *p = jar.Get("JSESSIONID");
+	if (p == NULL)
+		return 0;
 
-    p = strchr(p, '.');
-    if (p == NULL || p[1] == 0)
-        return 0;
+	p = strchr(p, '.');
+	if (p == NULL || p[1] == 0)
+		return 0;
 
-    const char *jvm_route = p + 1;
-    int i = cluster.FindJVMRoute(jvm_route);
-    if (i < 0)
-        return 0;
+	const char *jvm_route = p + 1;
+	int i = cluster.FindJVMRoute(jvm_route);
+	if (i < 0)
+		return 0;
 
-    /* add num_members to make sure that the modulo still maps to the
-       node index, but the first node is not referred to as zero
-       (special value for "no session") */
-    return i + cluster.members.size();
+	/* add num_members to make sure that the modulo still maps to the
+	   node index, but the first node is not referred to as zero
+	   (special value for "no session") */
+	return i + cluster.members.size();
 }

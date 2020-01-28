@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -48,77 +48,77 @@
 #include <errno.h>
 
 class ExpectMonitor final : ConnectSocketHandler, Cancellable {
-    const LbMonitorConfig &config;
+	const LbMonitorConfig &config;
 
-    ConnectSocket connect;
+	ConnectSocket connect;
 
-    SocketDescriptor fd = SocketDescriptor::Undefined();
+	SocketDescriptor fd = SocketDescriptor::Undefined();
 
-    SocketEvent event;
-    TimerEvent timeout_event;
+	SocketEvent event;
+	TimerEvent timeout_event;
 
-    /**
-     * A timer which is used to delay the recv() call, just in case
-     * the server sends the response in more than one packet.
-     */
-    TimerEvent delay_event;
+	/**
+	 * A timer which is used to delay the recv() call, just in case
+	 * the server sends the response in more than one packet.
+	 */
+	TimerEvent delay_event;
 
-    LbMonitorHandler &handler;
+	LbMonitorHandler &handler;
 
 public:
-    ExpectMonitor(EventLoop &event_loop,
-                  const LbMonitorConfig &_config,
-                  LbMonitorHandler &_handler) noexcept
-        :config(_config),
-         connect(event_loop, *this),
-         event(event_loop, BIND_THIS_METHOD(EventCallback)),
-         timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
-         delay_event(event_loop, BIND_THIS_METHOD(DelayCallback)),
-         handler(_handler) {}
+	ExpectMonitor(EventLoop &event_loop,
+		      const LbMonitorConfig &_config,
+		      LbMonitorHandler &_handler) noexcept
+		:config(_config),
+		 connect(event_loop, *this),
+		 event(event_loop, BIND_THIS_METHOD(EventCallback)),
+		 timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
+		 delay_event(event_loop, BIND_THIS_METHOD(DelayCallback)),
+		 handler(_handler) {}
 
-    ExpectMonitor(const ExpectMonitor &other) = delete;
+	ExpectMonitor(const ExpectMonitor &other) = delete;
 
-    void Start(SocketAddress address, CancellablePointer &cancel_ptr) noexcept {
-        cancel_ptr = *this;
+	void Start(SocketAddress address, CancellablePointer &cancel_ptr) noexcept {
+		cancel_ptr = *this;
 
-        const Event::Duration zero{};
-        const auto timeout = config.connect_timeout > zero
-            ? config.connect_timeout
-            : (config.timeout > zero
-               ? config.timeout
-               : std::chrono::seconds(30));
+		const Event::Duration zero{};
+		const auto timeout = config.connect_timeout > zero
+			? config.connect_timeout
+			: (config.timeout > zero
+			   ? config.timeout
+			   : std::chrono::seconds(30));
 
-        connect.Connect(address, timeout);
-    }
-
-private:
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override;
-
-    /* virtual methods from class ConnectSocketHandler */
-    void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
-
-    void OnSocketConnectTimeout() noexcept override {
-        handler.Timeout();
-        delete this;
-    }
-
-    void OnSocketConnectError(std::exception_ptr ep) noexcept override {
-        handler.Error(ep);
-        delete this;
-    }
+		connect.Connect(address, timeout);
+	}
 
 private:
-    void EventCallback(unsigned events) noexcept;
-    void OnTimeout() noexcept;
-    void DelayCallback() noexcept;
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override;
+
+	/* virtual methods from class ConnectSocketHandler */
+	void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
+
+	void OnSocketConnectTimeout() noexcept override {
+		handler.Timeout();
+		delete this;
+	}
+
+	void OnSocketConnectError(std::exception_ptr ep) noexcept override {
+		handler.Error(ep);
+		delete this;
+	}
+
+private:
+	void EventCallback(unsigned events) noexcept;
+	void OnTimeout() noexcept;
+	void DelayCallback() noexcept;
 };
 
 static bool
 check_expectation(char *received, size_t received_length,
-                  const char *expect) noexcept
+		  const char *expect) noexcept
 {
-    return memmem(received, received_length, expect, strlen(expect)) != nullptr;
+	return memmem(received, received_length, expect, strlen(expect)) != nullptr;
 }
 
 /*
@@ -129,14 +129,14 @@ check_expectation(char *received, size_t received_length,
 void
 ExpectMonitor::Cancel() noexcept
 {
-    if (fd.IsDefined()) {
-        event.Cancel();
-        timeout_event.Cancel();
-        delay_event.Cancel();
-        fd.Close();
-    }
+	if (fd.IsDefined()) {
+		event.Cancel();
+		timeout_event.Cancel();
+		delay_event.Cancel();
+		fd.Close();
+	}
 
-    delete this;
+	delete this;
 }
 
 /*
@@ -147,48 +147,48 @@ ExpectMonitor::Cancel() noexcept
 inline void
 ExpectMonitor::EventCallback(unsigned) noexcept
 {
-    event.Cancel();
+	event.Cancel();
 
-    /* wait 10ms before we start reading */
-    delay_event.Schedule(std::chrono::milliseconds(10));
+	/* wait 10ms before we start reading */
+	delay_event.Schedule(std::chrono::milliseconds(10));
 }
 
 inline void
 ExpectMonitor::OnTimeout() noexcept
 {
-    fd.Close();
-    handler.Timeout();
+	fd.Close();
+	handler.Timeout();
 
-    delete this;
+	delete this;
 }
 
 void
 ExpectMonitor::DelayCallback() noexcept
 {
-    char buffer[1024];
+	char buffer[1024];
 
-    ssize_t nbytes = recv(fd.Get(), buffer, sizeof(buffer),
-                          MSG_DONTWAIT);
-    if (nbytes < 0) {
-        auto e = MakeErrno("Failed to receive");
-        fd.Close();
-        handler.Error(std::make_exception_ptr(e));
-    } else if (!config.fade_expect.empty() &&
-               check_expectation(buffer, nbytes,
-                                 config.fade_expect.c_str())) {
-        fd.Close();
-        handler.Fade();
-    } else if (config.expect.empty() ||
-               check_expectation(buffer, nbytes,
-                                 config.expect.c_str())) {
-        fd.Close();
-        handler.Success();
-    } else {
-        fd.Close();
-        handler.Error(std::make_exception_ptr(std::runtime_error("Expectation failed")));
-    }
+	ssize_t nbytes = recv(fd.Get(), buffer, sizeof(buffer),
+			      MSG_DONTWAIT);
+	if (nbytes < 0) {
+		auto e = MakeErrno("Failed to receive");
+		fd.Close();
+		handler.Error(std::make_exception_ptr(e));
+	} else if (!config.fade_expect.empty() &&
+		   check_expectation(buffer, nbytes,
+				     config.fade_expect.c_str())) {
+		fd.Close();
+		handler.Fade();
+	} else if (config.expect.empty() ||
+		   check_expectation(buffer, nbytes,
+				     config.expect.c_str())) {
+		fd.Close();
+		handler.Success();
+	} else {
+		fd.Close();
+		handler.Error(std::make_exception_ptr(std::runtime_error("Expectation failed")));
+	}
 
-    delete this;
+	delete this;
 }
 
 /*
@@ -199,25 +199,25 @@ ExpectMonitor::DelayCallback() noexcept
 void
 ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) noexcept
 {
-    if (!config.send.empty()) {
-        ssize_t nbytes = send(new_fd.Get(), config.send.data(),
-                              config.send.length(),
-                              MSG_DONTWAIT);
-        if (nbytes < 0) {
-            handler.Error(std::make_exception_ptr(MakeErrno("Failed to send")));
-            delete this;
-            return;
-        }
-    }
+	if (!config.send.empty()) {
+		ssize_t nbytes = send(new_fd.Get(), config.send.data(),
+				      config.send.length(),
+				      MSG_DONTWAIT);
+		if (nbytes < 0) {
+			handler.Error(std::make_exception_ptr(MakeErrno("Failed to send")));
+			delete this;
+			return;
+		}
+	}
 
-    const auto expect_timeout = config.timeout > Event::Duration{}
-        ? config.timeout
-        : std::chrono::seconds(10);
+	const auto expect_timeout = config.timeout > Event::Duration{}
+	? config.timeout
+		  : std::chrono::seconds(10);
 
-    fd = new_fd.Release();
-    event.Open(fd);
-    event.ScheduleRead();
-    timeout_event.Schedule(expect_timeout);
+	fd = new_fd.Release();
+	event.Open(fd);
+	event.ScheduleRead();
+	timeout_event.Schedule(expect_timeout);
 }
 
 /*
@@ -227,17 +227,17 @@ ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) noexcept
 
 static void
 expect_monitor_run(EventLoop &event_loop,
-                   const LbMonitorConfig &config,
-                   SocketAddress address,
-                   LbMonitorHandler &handler,
-                   CancellablePointer &cancel_ptr)
+		   const LbMonitorConfig &config,
+		   SocketAddress address,
+		   LbMonitorHandler &handler,
+		   CancellablePointer &cancel_ptr)
 {
-    ExpectMonitor *expect = new ExpectMonitor(event_loop, config,
-                                              handler);
+	ExpectMonitor *expect = new ExpectMonitor(event_loop, config,
+						  handler);
 
-    expect->Start(address, cancel_ptr);
+	expect->Start(address, cancel_ptr);
 }
 
 const LbMonitorClass expect_monitor_class = {
-    .run = expect_monitor_run,
+	.run = expect_monitor_run,
 };

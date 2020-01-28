@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -45,22 +45,22 @@ class FailureManager;
  * A manager for LbMonitorStock instances.
  */
 class LbMonitorManager {
-    EventLoop &event_loop;
-    FailureManager &failure_manager;
+	EventLoop &event_loop;
+	FailureManager &failure_manager;
 
-    std::map<const LbMonitorConfig *, LbMonitorStock> monitors;
+	std::map<const LbMonitorConfig *, LbMonitorStock> monitors;
 
 public:
-    LbMonitorManager(EventLoop &_event_loop,
-                     FailureManager &_failure_manager);
+	LbMonitorManager(EventLoop &_event_loop,
+			 FailureManager &_failure_manager);
 
-    ~LbMonitorManager();
+	~LbMonitorManager();
 
-    LbMonitorManager(const LbMonitorManager &) = delete;
-    LbMonitorManager &operator=(const LbMonitorManager &) = delete;
+	LbMonitorManager(const LbMonitorManager &) = delete;
+	LbMonitorManager &operator=(const LbMonitorManager &) = delete;
 
-    void clear();
+	void clear();
 
-    gcc_pure
-    LbMonitorStock &operator[](const LbMonitorConfig &monitor_config);
+	gcc_pure
+	LbMonitorStock &operator[](const LbMonitorConfig &monitor_config);
 };

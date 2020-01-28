@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_LB_MONITOR_CONTROLLER_HXX
-#define BENG_PROXY_LB_MONITOR_CONTROLLER_HXX
+#pragma once
 
 #include "MonitorHandler.hxx"
 #include "io/Logger.hxx"
@@ -48,63 +47,61 @@ struct LbMonitorClass;
 class LbMonitorController;
 
 class LbMonitorController final : public LbMonitorHandler {
-    EventLoop &event_loop;
-    FailureRef failure;
+	EventLoop &event_loop;
+	FailureRef failure;
 
-    const LbMonitorConfig &config;
-    const AllocatedSocketAddress address;
-    const LbMonitorClass &class_;
+	const LbMonitorConfig &config;
+	const AllocatedSocketAddress address;
+	const LbMonitorClass &class_;
 
-    const Logger logger;
+	const Logger logger;
 
-    TimerEvent interval_event;
-    TimerEvent timeout_event;
+	TimerEvent interval_event;
+	TimerEvent timeout_event;
 
-    CancellablePointer cancel_ptr;
+	CancellablePointer cancel_ptr;
 
-    bool state = true;
-    bool fade = false;
+	bool state = true;
+	bool fade = false;
 
-    unsigned ref = 0;
+	unsigned ref = 0;
 
 public:
-    LbMonitorController(EventLoop &_event_loop,
-                        FailureManager &_failure_manager,
-                        const char *node_name,
-                        const LbMonitorConfig &_config,
-                        SocketAddress _address,
-                        const LbMonitorClass &_class) noexcept;
+	LbMonitorController(EventLoop &_event_loop,
+			    FailureManager &_failure_manager,
+			    const char *node_name,
+			    const LbMonitorConfig &_config,
+			    SocketAddress _address,
+			    const LbMonitorClass &_class) noexcept;
 
-    ~LbMonitorController() noexcept;
+	~LbMonitorController() noexcept;
 
-    LbMonitorController(const LbMonitorController &) = delete;
-    LbMonitorController &operator=(const LbMonitorController &) = delete;
+	LbMonitorController(const LbMonitorController &) = delete;
+	LbMonitorController &operator=(const LbMonitorController &) = delete;
 
-    void Ref() noexcept {
-        ++ref;
-    }
+	void Ref() noexcept {
+		++ref;
+	}
 
-    /**
-     * @return true if the reference counter has dropped to 0 (and the
-     * object can be deleted)
-     */
-    bool Unref() noexcept {
-        return --ref == 0;
-    }
+	/**
+	 * @return true if the reference counter has dropped to 0 (and the
+	 * object can be deleted)
+	 */
+	bool Unref() noexcept {
+		return --ref == 0;
+	}
 
-    const SocketAddress GetAddress() const noexcept {
-        return address;
-    }
+	const SocketAddress GetAddress() const noexcept {
+		return address;
+	}
 
 private:
-    void IntervalCallback() noexcept;
-    void TimeoutCallback() noexcept;
+	void IntervalCallback() noexcept;
+	void TimeoutCallback() noexcept;
 
-    /* virtual methods from class LbMonitorHandler */
-    virtual void Success() override;
-    virtual void Fade() override;
-    virtual void Timeout() override;
-    virtual void Error(std::exception_ptr e) override;
+	/* virtual methods from class LbMonitorHandler */
+	virtual void Success() override;
+	virtual void Fade() override;
+	virtual void Timeout() override;
+	virtual void Error(std::exception_ptr e) override;
 };
-
-#endif

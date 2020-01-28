@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,9 +38,9 @@ class CancellablePointer;
 struct LbMonitorConfig;
 
 struct LbMonitorClass {
-    void (*run)(EventLoop &event_loop,
-                const LbMonitorConfig &config,
-                SocketAddress address,
-                LbMonitorHandler &handler,
-                CancellablePointer &cancel_ptr);
+	void (*run)(EventLoop &event_loop,
+		    const LbMonitorConfig &config,
+		    SocketAddress address,
+		    LbMonitorHandler &handler,
+		    CancellablePointer &cancel_ptr);
 };

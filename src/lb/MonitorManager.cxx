@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,8 +35,8 @@
 #include "MonitorConfig.hxx"
 
 LbMonitorManager::LbMonitorManager(EventLoop &_event_loop,
-                                   FailureManager &_failure_manager)
-    :event_loop(_event_loop), failure_manager(_failure_manager)
+				   FailureManager &_failure_manager)
+	:event_loop(_event_loop), failure_manager(_failure_manager)
 {
 }
 
@@ -47,17 +47,17 @@ LbMonitorManager::~LbMonitorManager()
 void
 LbMonitorManager::clear()
 {
-    monitors.clear();
+	monitors.clear();
 }
 
 LbMonitorStock &
 LbMonitorManager::operator[](const LbMonitorConfig &monitor_config)
 {
-    return monitors
-        .emplace(std::piecewise_construct,
-                 std::forward_as_tuple(&monitor_config),
-                 std::forward_as_tuple(event_loop,
-                                       failure_manager,
-                                       monitor_config))
-        .first->second;
+	return monitors
+		.emplace(std::piecewise_construct,
+			 std::forward_as_tuple(&monitor_config),
+			 std::forward_as_tuple(event_loop,
+					       failure_manager,
+					       monitor_config))
+		.first->second;
 }

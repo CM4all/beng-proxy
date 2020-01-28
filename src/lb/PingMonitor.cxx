@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,54 +38,54 @@
 #include "util/Cancellable.hxx"
 
 class LbPingMonitor final : PingClientHandler, Cancellable {
-    PingClient ping;
+	PingClient ping;
 
-    LbMonitorHandler &handler;
+	LbMonitorHandler &handler;
 
 public:
-    explicit LbPingMonitor(EventLoop &event_loop,
-                           LbMonitorHandler &_handler)
-        :ping(event_loop, *this), handler(_handler) {}
+	explicit LbPingMonitor(EventLoop &event_loop,
+			       LbMonitorHandler &_handler)
+		:ping(event_loop, *this), handler(_handler) {}
 
-    void Start(SocketAddress address, CancellablePointer &cancel_ptr) {
-        cancel_ptr = *this;
-        ping.Start(address);
-    }
+	void Start(SocketAddress address, CancellablePointer &cancel_ptr) {
+		cancel_ptr = *this;
+		ping.Start(address);
+	}
 
 private:
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override {
-        delete this;
-    }
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		delete this;
+	}
 
-    /* virtual methods from class PingClientHandler */
-    void PingResponse() noexcept override {
-        handler.Success();
-        delete this;
-    }
+	/* virtual methods from class PingClientHandler */
+	void PingResponse() noexcept override {
+		handler.Success();
+		delete this;
+	}
 
-    void PingTimeout() noexcept override {
-        handler.Timeout();
-        delete this;
-    }
+	void PingTimeout() noexcept override {
+		handler.Timeout();
+		delete this;
+	}
 
-    void PingError(std::exception_ptr ep) noexcept override {
-        handler.Error(ep);
-        delete this;
-    }
+	void PingError(std::exception_ptr ep) noexcept override {
+		handler.Error(ep);
+		delete this;
+	}
 };
 
 static void
 ping_monitor_run(EventLoop &event_loop,
-                 gcc_unused const LbMonitorConfig &config,
-                 SocketAddress address,
-                 LbMonitorHandler &handler,
-                 CancellablePointer &cancel_ptr)
+		 gcc_unused const LbMonitorConfig &config,
+		 SocketAddress address,
+		 LbMonitorHandler &handler,
+		 CancellablePointer &cancel_ptr)
 {
-    auto *ping = new LbPingMonitor(event_loop, handler);
-    ping->Start(address, cancel_ptr);
+	auto *ping = new LbPingMonitor(event_loop, handler);
+	ping->Start(address, cancel_ptr);
 }
 
 const LbMonitorClass ping_monitor_class = {
-    .run = ping_monitor_run,
+	.run = ping_monitor_run,
 };
