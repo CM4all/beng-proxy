@@ -379,7 +379,7 @@ WidgetRequest::ProcessResponse(http_status_t status,
 
 	if (lookup_id != nullptr) {
 		auto &_pool = pool;
-		auto &_parent_stopwatch = parent_stopwatch;
+		auto _parent_stopwatch = parent_stopwatch;
 		auto &_widget = widget;
 		const char *_lookup_id = lookup_id;
 		auto _ctx = std::move(ctx);
