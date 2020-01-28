@@ -37,6 +37,7 @@
 
 #include "Protocol.hxx"
 #include "net/ScmRightsBuilder.hxx"
+#include "net/MsgHdr.hxx"
 #include "io/Iovec.hxx"
 #include "util/Compiler.h"
 
@@ -91,16 +92,7 @@ delegate_send_fd(DelegateResponseCommand command, int fd)
 		.command = command,
 	};
 	auto vec = MakeIovecT(header);
-
-	struct msghdr msg = {
-		.msg_name = nullptr,
-		.msg_namelen = 0,
-		.msg_iov = &vec,
-		.msg_iovlen = 1,
-		.msg_control = nullptr,
-		.msg_controllen = 0,
-		.msg_flags = 0,
-	};
+	auto msg = MakeMsgHdr({&vec, 1});
 
 	ScmRightsBuilder<1> srb(msg);
 	srb.push_back(fd);
