@@ -73,12 +73,12 @@ delegate_send(const void *data, size_t length)
 static bool
 delegate_send_int(DelegateResponseCommand command, int value)
 {
-	const DelegateIntPacket packet = {
-		.header = {
-			.length = sizeof(packet) - sizeof(packet.header),
-			.command = command,
+	const DelegateIntPacket packet{
+		{
+			sizeof(packet) - sizeof(packet.header),
+			command,
 		},
-		.value = value,
+		value,
 	};
 
 	return delegate_send(&packet, sizeof(packet));
@@ -87,9 +87,9 @@ delegate_send_int(DelegateResponseCommand command, int value)
 static bool
 delegate_send_fd(DelegateResponseCommand command, int fd)
 {
-	DelegateResponseHeader header = {
-		.length = 0,
-		.command = command,
+	const DelegateResponseHeader header{
+		0,
+		command,
 	};
 	auto vec = MakeIovecT(header);
 	auto msg = MakeMsgHdr({&vec, 1});
