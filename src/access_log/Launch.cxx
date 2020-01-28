@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -49,10 +49,10 @@ gcc_noreturn
 static void
 Exec(const char *command)
 {
-    execl("/bin/sh", "sh", "-c", command, nullptr);
-    fprintf(stderr, "failed to execute %s: %s\n",
-            command, strerror(errno));
-    _exit(EXIT_FAILURE);
+	execl("/bin/sh", "sh", "-c", command, nullptr);
+	fprintf(stderr, "failed to execute %s: %s\n",
+		command, strerror(errno));
+	_exit(EXIT_FAILURE);
 
 }
 
@@ -60,42 +60,42 @@ gcc_noreturn
 static void
 RunLogger(const char *command, SocketDescriptor fd)
 {
-    fd.CheckDuplicate(FileDescriptor(STDIN_FILENO));
-    Exec(command);
+	fd.CheckDuplicate(FileDescriptor(STDIN_FILENO));
+	Exec(command);
 }
 
 LogProcess
 LaunchLogger(const char *command,
-             const UidGid *user)
+	     const UidGid *user)
 {
-    LogProcess p;
-    UniqueSocketDescriptor server_fd;
+	LogProcess p;
+	UniqueSocketDescriptor server_fd;
 
-    if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
-                                                  server_fd, p.fd))
-        throw MakeErrno("socketpair() failed");
+	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
+						      server_fd, p.fd))
+		throw MakeErrno("socketpair() failed");
 
-    /* we need an unidirectional socket only */
-    p.fd.ShutdownRead();
-    server_fd.ShutdownWrite();
+	/* we need an unidirectional socket only */
+	p.fd.ShutdownRead();
+	server_fd.ShutdownWrite();
 
-    p.pid = fork();
-    if (p.pid < 0)
-        throw MakeErrno("fork() failed");
+	p.pid = fork();
+	if (p.pid < 0)
+		throw MakeErrno("fork() failed");
 
-    if (p.pid == 0) {
-        try {
-            if (user != nullptr)
-                user->Apply();
+	if (p.pid == 0) {
+		try {
+			if (user != nullptr)
+				user->Apply();
 
-            RunLogger(command, server_fd);
-        } catch (...) {
-            PrintException(std::current_exception());
-            _exit(EXIT_FAILURE);
-        }
-    }
+			RunLogger(command, server_fd);
+		} catch (...) {
+			PrintException(std::current_exception());
+			_exit(EXIT_FAILURE);
+		}
+	}
 
-    return p;
+	return p;
 }
 
 static constexpr size_t MAX_ARGS = 255;
@@ -104,46 +104,46 @@ gcc_noreturn
 static void
 Exec(ConstBuffer<const char *> _args)
 {
-    std::array<const char *, MAX_ARGS + 1> args;
-    assert(_args.size < args.size());
-    *std::copy_n(_args.data, _args.size, args.begin()) = nullptr;
+	std::array<const char *, MAX_ARGS + 1> args;
+	assert(_args.size < args.size());
+	*std::copy_n(_args.data, _args.size, args.begin()) = nullptr;
 
-    execv(args.front(), const_cast<char **>(&args.front()));
-    fprintf(stderr, "failed to execute %s: %s\n",
-            args.front(), strerror(errno));
-    _exit(EXIT_FAILURE);
+	execv(args.front(), const_cast<char **>(&args.front()));
+	fprintf(stderr, "failed to execute %s: %s\n",
+		args.front(), strerror(errno));
+	_exit(EXIT_FAILURE);
 
 }
 
 UniqueSocketDescriptor
 LaunchLogger(ConstBuffer<const char *> args)
 {
-    if (args.size > MAX_ARGS)
-        throw std::runtime_error("Too many arguments");
+	if (args.size > MAX_ARGS)
+		throw std::runtime_error("Too many arguments");
 
-    UniqueSocketDescriptor child_fd, parent_fd;
+	UniqueSocketDescriptor child_fd, parent_fd;
 
-    if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
-                                                  child_fd, parent_fd))
-        throw MakeErrno("socketpair() failed");
+	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
+						      child_fd, parent_fd))
+		throw MakeErrno("socketpair() failed");
 
-    /* we need an unidirectional socket only */
-    parent_fd.ShutdownRead();
-    child_fd.ShutdownWrite();
+	/* we need an unidirectional socket only */
+	parent_fd.ShutdownRead();
+	child_fd.ShutdownWrite();
 
-    const auto pid = fork();
-    if (pid < 0)
-        throw MakeErrno("fork() failed");
+	const auto pid = fork();
+	if (pid < 0)
+		throw MakeErrno("fork() failed");
 
-    if (pid == 0) {
-        try {
-            child_fd.CheckDuplicate(FileDescriptor(STDIN_FILENO));
-            Exec(args);
-        } catch (...) {
-            PrintException(std::current_exception());
-            _exit(EXIT_FAILURE);
-        }
-    }
+	if (pid == 0) {
+		try {
+			child_fd.CheckDuplicate(FileDescriptor(STDIN_FILENO));
+			Exec(args);
+		} catch (...) {
+			PrintException(std::current_exception());
+			_exit(EXIT_FAILURE);
+		}
+	}
 
-    return parent_fd;
+	return parent_fd;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -48,7 +48,7 @@
 static constexpr unsigned MAX_CHILDREN = 32;
 
 struct Child {
-    int fd;
+	int fd;
 };
 
 static unsigned n_children;
@@ -57,45 +57,45 @@ static Child children[MAX_CHILDREN];
 static bool
 Forward()
 {
-    char buffer[65536];
-    ssize_t nbytes = recv(STDIN_FILENO, buffer, sizeof(buffer), 0);
-    if (nbytes <= 0) {
-        if (nbytes < 0) {
-            if (errno == EAGAIN || errno == EINTR)
-                return true;
+	char buffer[65536];
+	ssize_t nbytes = recv(STDIN_FILENO, buffer, sizeof(buffer), 0);
+	if (nbytes <= 0) {
+		if (nbytes < 0) {
+			if (errno == EAGAIN || errno == EINTR)
+				return true;
 
-            fprintf(stderr, "Failed to receive: %s\n", strerror(errno));
-        }
+			fprintf(stderr, "Failed to receive: %s\n", strerror(errno));
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    for (unsigned i = 0; i < n_children; ++i) {
-        Child &c = children[i];
-        send(c.fd, buffer, nbytes, MSG_DONTWAIT|MSG_NOSIGNAL);
-    }
+	for (unsigned i = 0; i < n_children; ++i) {
+		Child &c = children[i];
+		send(c.fd, buffer, nbytes, MSG_DONTWAIT|MSG_NOSIGNAL);
+	}
 
-    return true;
+	return true;
 }
 
 int
 main(int argc, char **argv)
 try {
-    if (argc < 2 || unsigned(argc) > 1 + MAX_CHILDREN) {
-        fprintf(stderr, "Usage: %s PROGRAM1 PROGRAM2 ...\n", argv[0]);
-        return EXIT_FAILURE;
-    }
+	if (argc < 2 || unsigned(argc) > 1 + MAX_CHILDREN) {
+		fprintf(stderr, "Usage: %s PROGRAM1 PROGRAM2 ...\n", argv[0]);
+		return EXIT_FAILURE;
+	}
 
-    for (int i = 1; i < argc; ++i) {
-        const char *program = argv[i];
-        auto process = LaunchLogger(program, nullptr);
-        Child &child = children[n_children++];
-        child.fd = process.fd.Steal();
-    }
+	for (int i = 1; i < argc; ++i) {
+		const char *program = argv[i];
+		auto process = LaunchLogger(program, nullptr);
+		Child &child = children[n_children++];
+		child.fd = process.fd.Steal();
+	}
 
-    while (Forward()) {}
-    return EXIT_SUCCESS;
+	while (Forward()) {}
+	return EXIT_SUCCESS;
 } catch (const std::exception &e) {
-    PrintException(e);
-    return EXIT_FAILURE;
+	PrintException(e);
+	return EXIT_FAILURE;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Launch logger child processes.
  */
 
-#ifndef BENG_PROXY_LOG_LAUNCH_H
-#define BENG_PROXY_LOG_LAUNCH_H
+#pragma once
 
 #include "net/UniqueSocketDescriptor.hxx"
 
@@ -45,15 +44,13 @@ struct UidGid;
 template<typename T> struct ConstBuffer;
 
 struct LogProcess {
-    pid_t pid;
-    UniqueSocketDescriptor fd;
+	pid_t pid;
+	UniqueSocketDescriptor fd;
 };
 
 LogProcess
 LaunchLogger(const char *command,
-             const UidGid *uid_gid);
+	     const UidGid *uid_gid);
 
 UniqueSocketDescriptor
 LaunchLogger(ConstBuffer<const char *> args);
-
-#endif

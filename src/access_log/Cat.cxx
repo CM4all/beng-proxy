@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -45,12 +45,12 @@
 
 int main(int argc, char **argv)
 {
-    (void)argc;
-    (void)argv;
+	(void)argc;
+	(void)argv;
 
-    const FileDescriptor fd(STDOUT_FILENO);
+	const FileDescriptor fd(STDOUT_FILENO);
 
-    AccessLogServer().Run(std::bind(LogOneLine, fd,
-                                    std::placeholders::_1, true));
-    return 0;
+	AccessLogServer().Run(std::bind(LogOneLine, fd,
+					std::placeholders::_1, true));
+	return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ACCESS_LOG_CONFIG_HXX
-#define ACCESS_LOG_CONFIG_HXX
+#pragma once
 
 #include "ChildErrorLogOptions.hxx"
 #include "net/AllocatedSocketAddress.hxx"
@@ -43,62 +42,62 @@
  * Configuration which describes whether and how to log HTTP requests.
  */
 struct AccessLogConfig {
-    enum class Type {
-        DISABLED,
-        INTERNAL,
-        SEND,
-        EXECUTE,
-    } type = Type::INTERNAL;
+	enum class Type {
+		DISABLED,
+		INTERNAL,
+		SEND,
+		EXECUTE,
+	} type = Type::INTERNAL;
 
-    /**
-     * An address where we will send access log datagrams.
-     */
-    AllocatedSocketAddress send_to;
+	/**
+	 * An address where we will send access log datagrams.
+	 */
+	AllocatedSocketAddress send_to;
 
-    /**
-     * A command to be executed with a shell, where fd0 is a socket
-     * which receives access log datagrams.
-     *
-     * Special value "null" specifies that access logging is disabled
-     * completely, and "" (empty string) specifies that one-line
-     * logging is performed directly to standard output.
-     */
-    std::string command;
+	/**
+	 * A command to be executed with a shell, where fd0 is a socket
+	 * which receives access log datagrams.
+	 *
+	 * Special value "null" specifies that access logging is disabled
+	 * completely, and "" (empty string) specifies that one-line
+	 * logging is performed directly to standard output.
+	 */
+	std::string command;
 
-    /**
-     * Don't log this request URI if host=="localhost" and
-     * status==200.
-     */
-    std::string ignore_localhost_200;
+	/**
+	 * Don't log this request URI if host=="localhost" and
+	 * status==200.
+	 */
+	std::string ignore_localhost_200;
 
-    /**
-     * A list of proxy servers whose "X-Forwarded-For" header will be
-     * trusted.
-     */
-    std::set<std::string> trust_xff;
+	/**
+	 * A list of proxy servers whose "X-Forwarded-For" header will be
+	 * trusted.
+	 */
+	std::set<std::string> trust_xff;
 
-    ChildErrorLogOptions child_error_options;
+	ChildErrorLogOptions child_error_options;
 
-    /**
-     * Forward error messages printed by child processes into their
-     * stderr pipe to the Pond server?
-     */
-    bool forward_child_errors = false;
+	/**
+	 * Forward error messages printed by child processes into their
+	 * stderr pipe to the Pond server?
+	 */
+	bool forward_child_errors = false;
 
-    /**
-     * Setter for the deprecated "--access-logger" command-line
-     * option, which has a few special cases.
-     */
-    void SetLegacy(const char *new_value) {
-        command = new_value;
+	/**
+	 * Setter for the deprecated "--access-logger" command-line
+	 * option, which has a few special cases.
+	 */
+	void SetLegacy(const char *new_value) {
+		command = new_value;
 
-        if (command.empty() || command == "internal")
-            type = Type::INTERNAL;
-        else if (command == "null")
-            type = Type::DISABLED;
-        else
-            type = Type::EXECUTE;
-    }
+		if (command.empty() || command == "internal")
+			type = Type::INTERNAL;
+		else if (command == "null")
+			type = Type::DISABLED;
+		else
+			type = Type::EXECUTE;
+	}
 };
 
 #endif

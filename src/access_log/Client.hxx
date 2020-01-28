@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_LOG_CLIENT_HXX
-#define BENG_PROXY_LOG_CLIENT_HXX
+#pragma once
 
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Logger.hxx"
@@ -42,19 +41,17 @@ namespace Net { namespace Log { struct Datagram; }}
  * A client for the logging protocol.
  */
 class LogClient {
-    const LLogger logger;
+	const LLogger logger;
 
-    UniqueSocketDescriptor fd;
+	UniqueSocketDescriptor fd;
 
 public:
-    explicit LogClient(UniqueSocketDescriptor &&_fd) noexcept
-        :logger("access_log"), fd(std::move(_fd)) {}
+	explicit LogClient(UniqueSocketDescriptor &&_fd) noexcept
+		:logger("access_log"), fd(std::move(_fd)) {}
 
-    SocketDescriptor GetSocket() noexcept {
-        return fd;
-    }
+	SocketDescriptor GetSocket() noexcept {
+		return fd;
+	}
 
-    bool Send(const Net::Log::Datagram &d) noexcept;
+	bool Send(const Net::Log::Datagram &d) noexcept;
 };
-
-#endif

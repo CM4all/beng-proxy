@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,16 +42,16 @@
 static void
 dump(const Net::Log::Datagram &d)
 {
-    if (d.site != nullptr && d.valid_traffic)
-        printf("%s %llu\n", d.site,
-               (unsigned long long)(d.traffic_received + d.traffic_sent));
+	if (d.site != nullptr && d.valid_traffic)
+		printf("%s %llu\n", d.site,
+		       (unsigned long long)(d.traffic_received + d.traffic_sent));
 }
 
 int main(int argc, char **argv)
 {
-    (void)argc;
-    (void)argv;
+	(void)argc;
+	(void)argv;
 
-    AccessLogServer().Run(dump);
-    return 0;
+	AccessLogServer().Run(dump);
+	return 0;
 }

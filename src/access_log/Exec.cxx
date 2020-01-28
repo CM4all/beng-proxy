@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -48,35 +48,36 @@
 #include <errno.h>
 #include <unistd.h>
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 try {
-    int i = 1;
+	int i = 1;
 
-    SocketConfig config;
+	SocketConfig config;
 
-    if (i + 2 <= argc && strcmp(argv[i], "--multicast-group") == 0) {
-        ++i;
-        config.multicast_group = ParseSocketAddress(argv[i++], 0, false);
-    }
+	if (i + 2 <= argc && strcmp(argv[i], "--multicast-group") == 0) {
+		++i;
+		config.multicast_group = ParseSocketAddress(argv[i++], 0, false);
+	}
 
-    if (i + 2 > argc) {
-        fprintf(stderr, "Usage: log-exec [--multicast-group MCAST_IP] IP PROGRAM ...\n");
-        return EXIT_FAILURE;
-    }
+	if (i + 2 > argc) {
+		fprintf(stderr, "Usage: log-exec [--multicast-group MCAST_IP] IP PROGRAM ...\n");
+		return EXIT_FAILURE;
+	}
 
-    config.bind_address = ParseSocketAddress(argv[i++], 5479, true);
+	config.bind_address = ParseSocketAddress(argv[i++], 5479, true);
 
-    auto fd = config.Create(SOCK_DGRAM);
+	auto fd = config.Create(SOCK_DGRAM);
 
-    fd.SetBlocking();
-    fd.CheckDuplicate(FileDescriptor(STDIN_FILENO));
+	fd.SetBlocking();
+	fd.CheckDuplicate(FileDescriptor(STDIN_FILENO));
 
-    execv(argv[i], &argv[i]);
+	execv(argv[i], &argv[i]);
 
-    fprintf(stderr, "Failed to execute %s: %s\n",
-            argv[i], strerror(errno));
-    return EXIT_FAILURE;
+	fprintf(stderr, "Failed to execute %s: %s\n",
+		argv[i], strerror(errno));
+	return EXIT_FAILURE;
 } catch (const std::exception &e) {
-    PrintException(e);
-    return EXIT_FAILURE;
+	PrintException(e);
+	return EXIT_FAILURE;
 }

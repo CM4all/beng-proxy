@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,5 +36,5 @@
  * Run-time options for #ChildErrorLog.
  */
 struct ChildErrorLogOptions {
-    double rate_limit = -1, burst = -1;
+	double rate_limit = -1, burst = -1;
 };

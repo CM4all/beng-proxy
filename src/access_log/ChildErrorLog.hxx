@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -46,51 +46,51 @@ namespace Net { namespace Log { struct Datagram; class PipeAdapter; }}
  * A glue class which manages where a child process logs its "stderr".
  */
 class ChildErrorLog {
-    std::unique_ptr<Net::Log::PipeAdapter> adapter;
+	std::unique_ptr<Net::Log::PipeAdapter> adapter;
 
-    std::string site, uri;
+	std::string site, uri;
 
 public:
-    ChildErrorLog();
+	ChildErrorLog();
 
-    /**
-     * Construct a #Net::Log::PipeAdapter if the given socket is
-     * defined.
-     *
-     * Throws on error.
-     */
-    ChildErrorLog(PreparedChildProcess &p,
-                  EventLoop &event_loop, SocketDescriptor socket,
-                  const ChildErrorLogOptions &options);
+	/**
+	 * Construct a #Net::Log::PipeAdapter if the given socket is
+	 * defined.
+	 *
+	 * Throws on error.
+	 */
+	ChildErrorLog(PreparedChildProcess &p,
+		      EventLoop &event_loop, SocketDescriptor socket,
+		      const ChildErrorLogOptions &options);
 
-    ~ChildErrorLog() noexcept;
+	~ChildErrorLog() noexcept;
 
-    ChildErrorLog(ChildErrorLog &&) = default;
-    ChildErrorLog &operator=(ChildErrorLog &&);
+	ChildErrorLog(ChildErrorLog &&) = default;
+	ChildErrorLog &operator=(ChildErrorLog &&);
 
-    operator bool() const {
-        return adapter != nullptr;
-    }
+	operator bool() const {
+		return adapter != nullptr;
+	}
 
-    /**
-     * @see Net::Log::PipeAdapter::GetDatagram()
-     */
-    Net::Log::Datagram &GetDatagram() noexcept;
+	/**
+	 * @see Net::Log::PipeAdapter::GetDatagram()
+	 */
+	Net::Log::Datagram &GetDatagram() noexcept;
 
-    void SetSite(const char *_site) noexcept;
-    void SetUri(const char *_uri) noexcept;
+	void SetSite(const char *_site) noexcept;
+	void SetUri(const char *_uri) noexcept;
 
-    /**
-     * Throws on error.
-     */
-    UniqueFileDescriptor EnableClient(EventLoop &event_loop,
-                                      SocketDescriptor socket,
-                                      const ChildErrorLogOptions &options);
+	/**
+	 * Throws on error.
+	 */
+	UniqueFileDescriptor EnableClient(EventLoop &event_loop,
+					  SocketDescriptor socket,
+					  const ChildErrorLogOptions &options);
 
-    /**
-     * Throws on error.
-     */
-    void EnableClient(PreparedChildProcess &p,
-                      EventLoop &event_loop, SocketDescriptor socket,
-                      const ChildErrorLogOptions &log_options);
+	/**
+	 * Throws on error.
+	 */
+	void EnableClient(PreparedChildProcess &p,
+			  EventLoop &event_loop, SocketDescriptor socket,
+			  const ChildErrorLogOptions &log_options);
 };

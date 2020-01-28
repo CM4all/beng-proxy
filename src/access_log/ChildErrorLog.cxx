@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -44,97 +44,97 @@ ChildErrorLog::~ChildErrorLog() noexcept = default;
 ChildErrorLog &ChildErrorLog::operator=(ChildErrorLog &&) = default;
 
 ChildErrorLog::ChildErrorLog(PreparedChildProcess &p,
-                             EventLoop &event_loop, SocketDescriptor socket,
-                             const ChildErrorLogOptions &options)
+			     EventLoop &event_loop, SocketDescriptor socket,
+			     const ChildErrorLogOptions &options)
 {
-    if (socket.IsDefined())
-        EnableClient(p, event_loop, socket, options);
+	if (socket.IsDefined())
+		EnableClient(p, event_loop, socket, options);
 }
 
 UniqueFileDescriptor
 ChildErrorLog::EnableClient(EventLoop &event_loop, SocketDescriptor socket,
-                            const ChildErrorLogOptions &options)
+			    const ChildErrorLogOptions &options)
 {
-    assert(!adapter);
+	assert(!adapter);
 
-    if (!socket.IsDefined())
-        return UniqueFileDescriptor();
+	if (!socket.IsDefined())
+		return UniqueFileDescriptor();
 
-    UniqueFileDescriptor r, w;
-    if (!UniqueFileDescriptor::CreatePipe(r, w))
-        throw MakeErrno("Failed to create pipe");
+	UniqueFileDescriptor r, w;
+	if (!UniqueFileDescriptor::CreatePipe(r, w))
+		throw MakeErrno("Failed to create pipe");
 
-    adapter = std::make_unique<Net::Log::PipeAdapter>(event_loop, std::move(r),
-                                                      socket);
-    if (options.rate_limit > 0)
-        adapter->SetRateLimit(options.rate_limit, options.burst);
-    return w;
+	adapter = std::make_unique<Net::Log::PipeAdapter>(event_loop, std::move(r),
+							  socket);
+	if (options.rate_limit > 0)
+		adapter->SetRateLimit(options.rate_limit, options.burst);
+	return w;
 }
 
 void
 ChildErrorLog::EnableClient(PreparedChildProcess &p,
-                            EventLoop &event_loop, SocketDescriptor socket,
-                            const ChildErrorLogOptions &options)
+			    EventLoop &event_loop, SocketDescriptor socket,
+			    const ChildErrorLogOptions &options)
 {
-    assert(!adapter);
+	assert(!adapter);
 
-    if (p.stderr_fd >= 0)
-        /* already set */
-        return;
+	if (p.stderr_fd >= 0)
+		/* already set */
+		return;
 
-    auto w = EnableClient(event_loop, socket, options);
-    if (w.IsDefined())
-        p.SetStderr(std::move(w));
+	auto w = EnableClient(event_loop, socket, options);
+	if (w.IsDefined())
+		p.SetStderr(std::move(w));
 }
 
 Net::Log::Datagram &
 ChildErrorLog::GetDatagram() noexcept
 {
-    assert(adapter);
+	assert(adapter);
 
-    return adapter->GetDatagram();
+	return adapter->GetDatagram();
 }
 
 void
 ChildErrorLog::SetSite(const char *_site) noexcept
 {
-    if (!adapter)
-        return;
+	if (!adapter)
+		return;
 
-    if (_site == nullptr) {
-        if (site.empty())
-            return;
+	if (_site == nullptr) {
+		if (site.empty())
+			return;
 
-        site.clear();
-    } else {
-        if (site == _site)
-            return;
+		site.clear();
+	} else {
+		if (site == _site)
+			return;
 
-        site = _site;
-        _site = site.c_str();
-    }
+		site = _site;
+		_site = site.c_str();
+	}
 
-    GetDatagram().site = _site;
+	GetDatagram().site = _site;
 }
 
 void
 ChildErrorLog::SetUri(const char *_uri) noexcept
 {
-    if (!adapter)
-        return;
+	if (!adapter)
+		return;
 
-    if (_uri == nullptr) {
-        if (uri.empty())
-            return;
+	if (_uri == nullptr) {
+		if (uri.empty())
+			return;
 
-        uri.clear();
-    } else {
-        if (uri == _uri)
-            return;
+		uri.clear();
+	} else {
+		if (uri == _uri)
+			return;
 
-        uri = _uri;
-        _uri = uri.c_str();
-    }
+		uri = _uri;
+		_uri = uri.c_str();
+	}
 
-    GetDatagram().http_uri = _uri;
+	GetDatagram().http_uri = _uri;
 }

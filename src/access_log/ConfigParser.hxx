@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ACCESS_LOG_CONFIG_PARSER_HXX
-#define ACCESS_LOG_CONFIG_PARSER_HXX
+#pragma once
 
 #include "Config.hxx"
 #include "io/ConfigParser.hxx"
@@ -40,27 +39,25 @@
  * Configuration which describes whether and how to log HTTP requests.
  */
 class AccessLogConfigParser : public ConfigParser {
-    AccessLogConfig config;
-    bool enabled = true, type_selected = false;
+	AccessLogConfig config;
+	bool enabled = true, type_selected = false;
 
-    const bool is_child_error_logger;
+	const bool is_child_error_logger;
 
 public:
-    explicit AccessLogConfigParser(bool _is_child_error_logger=false) noexcept
-        :is_child_error_logger(_is_child_error_logger) {}
+	explicit AccessLogConfigParser(bool _is_child_error_logger=false) noexcept
+		:is_child_error_logger(_is_child_error_logger) {}
 
-    bool IsChildErrorLogger() const noexcept {
-        return is_child_error_logger;
-    }
+	bool IsChildErrorLogger() const noexcept {
+		return is_child_error_logger;
+	}
 
-    AccessLogConfig &&GetConfig() {
-        return std::move(config);
-    }
+	AccessLogConfig &&GetConfig() {
+		return std::move(config);
+	}
 
 protected:
-    /* virtual methods from class ConfigParser */
-    void ParseLine(FileLineParser &line) override;
-    void Finish() override;
+	/* virtual methods from class ConfigParser */
+	void ParseLine(FileLineParser &line) override;
+	void Finish() override;
 };
-
-#endif

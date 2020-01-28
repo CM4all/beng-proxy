@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,11 +38,11 @@ using namespace Net::Log;
 bool
 LogClient::Send(const Datagram &d) noexcept
 {
-    try {
-        Net::Log::Send(fd, d);
-        return true;
-    } catch (...) {
-        logger(1, std::current_exception());
-        return false;
-    }
+	try {
+		Net::Log::Send(fd, d);
+		return true;
+	} catch (...) {
+		logger(1, std::current_exception());
+		return false;
+	}
 }

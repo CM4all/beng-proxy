@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_LOG_SERVER_H
-#define BENG_PROXY_LOG_SERVER_H
+#pragma once
 
 #include "net/log/Datagram.hxx"
 #include "net/SocketDescriptor.hxx"
@@ -45,49 +44,47 @@
  * the receipt.
  */
 struct ReceivedAccessLogDatagram : Net::Log::Datagram {
-    SocketAddress logger_client_address;
+	SocketAddress logger_client_address;
 
-    /**
-     * The raw datagram payload.
-     */
-    ConstBuffer<void> raw;
+	/**
+	 * The raw datagram payload.
+	 */
+	ConstBuffer<void> raw;
 };
 
 /**
  * A simple server for the logging protocol.
  */
 class AccessLogServer {
-    const SocketDescriptor fd;
+	const SocketDescriptor fd;
 
-    ReceivedAccessLogDatagram datagram;
+	ReceivedAccessLogDatagram datagram;
 
-    static constexpr size_t N = 32;
-    std::array<StaticSocketAddress, N> addresses;
-    std::array<uint8_t[16384], N> payloads;
-    std::array<size_t, N> sizes;
-    size_t n_payloads = 0, current_payload = 0;
+	static constexpr size_t N = 32;
+	std::array<StaticSocketAddress, N> addresses;
+	std::array<uint8_t[16384], N> payloads;
+	std::array<size_t, N> sizes;
+	size_t n_payloads = 0, current_payload = 0;
 
 public:
-    explicit AccessLogServer(SocketDescriptor _fd):fd(_fd) {}
+	explicit AccessLogServer(SocketDescriptor _fd):fd(_fd) {}
 
-    /**
-     * Construct an instance with the default socket (STDIN_FILENO).
-     */
-    AccessLogServer();
+	/**
+	 * Construct an instance with the default socket (STDIN_FILENO).
+	 */
+	AccessLogServer();
 
-    AccessLogServer(const AccessLogServer &) = delete;
-    AccessLogServer &operator=(const AccessLogServer &) = delete;
+	AccessLogServer(const AccessLogServer &) = delete;
+	AccessLogServer &operator=(const AccessLogServer &) = delete;
 
-    const ReceivedAccessLogDatagram *Receive();
+	const ReceivedAccessLogDatagram *Receive();
 
-    template<typename F>
-    void Run(F &&f) {
-        while (const auto *d = Receive())
-            f(*d);
-    }
+	template<typename F>
+	void Run(F &&f) {
+		while (const auto *d = Receive())
+			f(*d);
+	}
 
 private:
-    bool Fill();
+	bool Fill();
 };
-
-#endif

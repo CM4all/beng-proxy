@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -51,99 +51,99 @@ namespace JsonWriter {
  * FILE* which knows how to write some simple values.
  */
 class Sink {
-    FILE *file;
+	FILE *file;
 
 public:
-    explicit Sink(FILE *_file) noexcept:file(_file) {}
+	explicit Sink(FILE *_file) noexcept:file(_file) {}
 
-    void WriteRaw(char ch) noexcept {
-        fputc(ch, file);
-    }
+	void WriteRaw(char ch) noexcept {
+		fputc(ch, file);
+	}
 
-    void WriteRaw(const char *s) noexcept {
-        fputs(s, file);
-    }
+	void WriteRaw(const char *s) noexcept {
+		fputs(s, file);
+	}
 
-    void NewLine() noexcept {
-        WriteRaw('\n');
-        fflush(file);
-    }
+	void NewLine() noexcept {
+		WriteRaw('\n');
+		fflush(file);
+	}
 
 private:
-    void WriteStringChar(char ch) noexcept {
-        switch (ch) {
-        case '\\':
-        case '"':
-            WriteRaw('\\');
-            WriteRaw(ch);
-            break;
+	void WriteStringChar(char ch) noexcept {
+		switch (ch) {
+		case '\\':
+		case '"':
+			WriteRaw('\\');
+			WriteRaw(ch);
+			break;
 
-        case '\n':
-            WriteRaw('\\');
-            WriteRaw('n');
-            break;
+		case '\n':
+			WriteRaw('\\');
+			WriteRaw('n');
+			break;
 
-        case '\r':
-            WriteRaw('\\');
-            WriteRaw('r');
-            break;
+		case '\r':
+			WriteRaw('\\');
+			WriteRaw('r');
+			break;
 
-        default:
-            if ((unsigned char)ch < 0x20)
-                /* escape non-printable control characters */
-                fprintf(file, "\\x%02x", ch);
-            else
-                WriteRaw(ch);
-            break;
-        }
-    }
+		default:
+			if ((unsigned char)ch < 0x20)
+				/* escape non-printable control characters */
+				fprintf(file, "\\x%02x", ch);
+			else
+				WriteRaw(ch);
+			break;
+		}
+	}
 
 public:
-    void WriteValue(StringView value) noexcept {
-        WriteRaw('"');
+	void WriteValue(StringView value) noexcept {
+		WriteRaw('"');
 
-        for (const char ch : value)
-            WriteStringChar(ch);
+		for (const char ch : value)
+			WriteStringChar(ch);
 
-        WriteRaw('"');
-    }
+		WriteRaw('"');
+	}
 
-    void WriteValue(const char *value) noexcept {
-        WriteRaw('"');
+	void WriteValue(const char *value) noexcept {
+		WriteRaw('"');
 
-        while (*value != 0)
-            WriteStringChar(*value++);
+		while (*value != 0)
+			WriteStringChar(*value++);
 
-        WriteRaw('"');
-    }
+		WriteRaw('"');
+	}
 
-    void WriteValue(std::nullptr_t) noexcept {
-        WriteRaw("null");
-    }
+	void WriteValue(std::nullptr_t) noexcept {
+		WriteRaw("null");
+	}
 
-    void WriteValue(bool value) noexcept {
-        WriteRaw(value ? "true" : "false");
-    }
+	void WriteValue(bool value) noexcept {
+		WriteRaw(value ? "true" : "false");
+	}
 
-    void WriteValue(int value) noexcept {
-        fprintf(file, "%i", value);
-    }
+	void WriteValue(int value) noexcept {
+		fprintf(file, "%i", value);
+	}
 
-    void WriteValue(unsigned value) noexcept {
-        fprintf(file, "%u", value);
-    }
+	void WriteValue(unsigned value) noexcept {
+		fprintf(file, "%u", value);
+	}
 
-    void WriteValue(int64_t value) noexcept {
-        fprintf(file, "%" PRIi64, value);
-    }
+	void WriteValue(int64_t value) noexcept {
+		fprintf(file, "%" PRIi64, value);
+	}
 
-    void WriteValue(uint64_t value) noexcept {
-        fprintf(file, "%" PRIu64, value);
-    }
+	void WriteValue(uint64_t value) noexcept {
+		fprintf(file, "%" PRIu64, value);
+	}
 
-    void WriteValue(double value) noexcept {
-        fprintf(file, "%f", value);
-    }
+	void WriteValue(double value) noexcept {
+		fprintf(file, "%f", value);
+	}
 };
 
 /**
@@ -151,39 +151,39 @@ public:
  * member, and call Flush() once to finish this object.
  */
 class Object {
-    Sink sink;
+	Sink sink;
 
-    bool pending_comma = false;
+	bool pending_comma = false;
 
 public:
-    explicit Object(Sink _sink) noexcept:sink(_sink) {
-        sink.WriteRaw('{');
-    }
+	explicit Object(Sink _sink) noexcept:sink(_sink) {
+		sink.WriteRaw('{');
+	}
 
-    Object(const Object &) = delete;
-    Object &operator=(const Object &) = delete;
+	Object(const Object &) = delete;
+	Object &operator=(const Object &) = delete;
 
-    Sink AddMember(const char *name) noexcept {
-        if (pending_comma) {
-            sink.WriteRaw(',');
-            pending_comma = false;
-        }
+	Sink AddMember(const char *name) noexcept {
+		if (pending_comma) {
+			sink.WriteRaw(',');
+			pending_comma = false;
+		}
 
-        sink.WriteValue(name);
-        sink.WriteRaw(':');
-        pending_comma = true;
+		sink.WriteValue(name);
+		sink.WriteRaw(':');
+		pending_comma = true;
 
-        return sink;
-    }
+		return sink;
+	}
 
-    template<typename T>
-    void AddMember(const char *name, T &&value) noexcept {
-        AddMember(name).WriteValue(std::forward<T>(value));
-    }
+	template<typename T>
+	void AddMember(const char *name, T &&value) noexcept {
+		AddMember(name).WriteValue(std::forward<T>(value));
+	}
 
-    void Flush() noexcept {
-        sink.WriteRaw('}');
-    }
+	void Flush() noexcept {
+		sink.WriteRaw('}');
+	}
 };
 
 } // namespace JsonWriter
