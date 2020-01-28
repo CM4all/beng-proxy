@@ -217,10 +217,10 @@ html_escape(StringView _p, char *q) noexcept
 }
 
 const struct escape_class html_escape_class = {
-	.unescape_find = html_unescape_find,
-	.unescape = html_unescape,
-	.escape_find = html_escape_find,
-	.escape_char = html_escape_char,
-	.escape_size = html_escape_size,
-	.escape = html_escape,
+	html_unescape_find,
+	html_unescape,
+	html_escape_find,
+	html_escape_char,
+	html_escape_size,
+	html_escape,
 };

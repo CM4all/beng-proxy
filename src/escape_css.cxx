@@ -142,10 +142,10 @@ css_escape(StringView _p, char *q) noexcept
 }
 
 const struct escape_class css_escape_class = {
-	.unescape_find = css_unescape_find,
-	.unescape = css_unescape,
-	.escape_find = css_escape_find,
-	.escape_char = css_escape_char,
-	.escape_size = css_escape_size,
-	.escape = css_escape,
+	css_unescape_find,
+	css_unescape,
+	css_escape_find,
+	css_escape_char,
+	css_escape_size,
+	css_escape,
 };
