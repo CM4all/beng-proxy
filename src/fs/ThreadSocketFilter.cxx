@@ -607,7 +607,8 @@ ThreadSocketFilter::InternalWrite() noexcept
 	}
 
 	/* copy to stack, unlock */
-	uint8_t copy[r.size];
+	assert(r.size <= FB_SIZE);
+	uint8_t copy[FB_SIZE];
 	memcpy(copy, r.data, r.size);
 	lock.unlock();
 
