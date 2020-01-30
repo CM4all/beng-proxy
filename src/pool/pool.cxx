@@ -952,8 +952,8 @@ pool_dump_allocations(const struct pool &pool) noexcept
     size_t sum = 0;
     for (const auto &info : pool.allocations) {
         sum += info.size;
-        pool.logger.Format(6, "- %s:%u %zu => %zu\n",
-                           info.file, info.line, info.size, sum);
+        pool.logger.Format(6, "- %s:%u %zu [%s] => %zu\n",
+			   info.file, info.line, info.size, info.type ? info.type : "", sum);
     }
 }
 #endif
