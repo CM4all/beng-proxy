@@ -85,9 +85,9 @@ struct Context final
 	void OnNfsOpenError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class SinkFdHandler */
-	void OnInputEof() noexcept;
-	void OnInputError(std::exception_ptr ep) noexcept;
-	bool OnSendError(int error) noexcept;
+	void OnInputEof() noexcept override;
+	void OnInputError(std::exception_ptr ep) noexcept override;
+	bool OnSendError(int error) noexcept override;
 };
 
 void
