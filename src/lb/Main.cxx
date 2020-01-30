@@ -42,7 +42,7 @@
 #include "access_log/Glue.hxx"
 #include "ssl/Init.hxx"
 #include "pool/pool.hxx"
-#include "thread_pool.hxx"
+#include "thread/Pool.hxx"
 #include "fb_pool.hxx"
 #include "capabilities.hxx"
 #include "net/FailureManager.hxx"

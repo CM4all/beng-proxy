@@ -48,7 +48,7 @@
 #include "pool/pool.hxx"
 #include "address_string.hxx"
 #include "fs/ThreadSocketFilter.hxx"
-#include "thread_pool.hxx"
+#include "thread/Pool.hxx"
 #include "uri/Verify.hxx"
 #include "ssl/Filter.hxx"
 #include "net/SocketProtocolError.hxx"

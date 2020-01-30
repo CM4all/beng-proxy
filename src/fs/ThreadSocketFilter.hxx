@@ -33,7 +33,7 @@
 #pragma once
 
 #include "SocketFilter.hxx"
-#include "thread_job.hxx"
+#include "thread/Job.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "SliceFifoBuffer.hxx"

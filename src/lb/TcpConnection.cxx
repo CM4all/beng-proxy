@@ -40,7 +40,7 @@
 #include "cluster/AddressSticky.hxx"
 #include "ssl/Filter.hxx"
 #include "fs/ThreadSocketFilter.hxx"
-#include "thread_pool.hxx"
+#include "thread/Pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "address_string.hxx"

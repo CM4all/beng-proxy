@@ -30,46 +30,80 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "thread_worker.hxx"
-#include "thread_queue.hxx"
-#include "thread_job.hxx"
-#include "ssl/Init.hxx"
-#include "system/Error.hxx"
-#include "util/ScopeExit.hxx"
+/*
+ * A queue that manages work for worker threads.
+ */
 
-static void *
-thread_worker_run(void *ctx) noexcept
+#include "Pool.hxx"
+#include "Queue.hxx"
+#include "Worker.hxx"
+#include "io/Logger.hxx"
+
+#include <array>
+
+#include <assert.h>
+#include <stdlib.h>
+
+static ThreadQueue *global_thread_queue;
+static std::array<struct thread_worker, 8> worker_threads;
+
+static void
+thread_pool_init(EventLoop &event_loop)
 {
-	/* reduce glibc's thread cancellation overhead */
-	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, nullptr);
+	global_thread_queue = thread_queue_new(event_loop);
+}
 
-	struct thread_worker &w = *(struct thread_worker *)ctx;
-	ThreadQueue &q = *w.queue;
+static void
+thread_pool_start()
+try {
+	assert(global_thread_queue != nullptr);
 
-	ThreadJob *job;
-	while ((job = thread_queue_wait(q)) != nullptr) {
-		job->Run();
-		thread_queue_done(q, *job);
+	for (auto &i : worker_threads)
+		thread_worker_create(i, *global_thread_queue);
+} catch (...) {
+	LogConcat(1, "thread_pool", "Failed to launch worker thread: ",
+		  std::current_exception());
+	exit(EXIT_FAILURE);
+}
+
+ThreadQueue &
+thread_pool_get_queue(EventLoop &event_loop)
+{
+	if (global_thread_queue == nullptr) {
+		/* initial call - create the queue and launch worker
+		   threads */
+		thread_pool_init(event_loop);
+		thread_pool_start();
 	}
 
-	ssl_thread_deinit();
-
-	return nullptr;
+	return *global_thread_queue;
 }
 
 void
-thread_worker_create(struct thread_worker &w, ThreadQueue &q)
+thread_pool_stop(void)
 {
-	w.queue = &q;
+	if (global_thread_queue == nullptr)
+		return;
 
-	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-	AtScopeExit(&attr) { pthread_attr_destroy(&attr); };
+	thread_queue_stop(*global_thread_queue);
+}
 
-	/* 64 kB stack ought to be enough */
-	pthread_attr_setstacksize(&attr, 65536);
+void
+thread_pool_join(void)
+{
+	if (global_thread_queue == nullptr)
+		return;
 
-	int error = pthread_create(&w.thread, &attr, thread_worker_run, &w);
-	if (error != 0)
-		throw MakeErrno(error, "Failed to create worker thread");
+	for (auto &i : worker_threads)
+		thread_worker_join(i);
+}
+
+void
+thread_pool_deinit(void)
+{
+	if (global_thread_queue == nullptr)
+		return;
+
+	thread_queue_free(global_thread_queue);
+	global_thread_queue = nullptr;
 }

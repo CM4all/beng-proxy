@@ -508,9 +508,9 @@ cookie_dep = declare_dependency(link_with: cookie,
                                 dependencies: [shm_dep, http_util_dep, putil_dep])
 
 thread_pool = static_library('thread_queue',
-  'src/thread_queue.cxx',
-  'src/thread_worker.cxx',
-  'src/thread_pool.cxx',
+  'src/thread/Queue.cxx',
+  'src/thread/Worker.cxx',
+  'src/thread/Pool.cxx',
   include_directories: inc,
   dependencies: [
     event_dep,

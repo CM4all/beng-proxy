@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "thread_queue.hxx"
-#include "thread_job.hxx"
+#include "Queue.hxx"
+#include "Job.hxx"
 #include "notify.hxx"
 
 #include "util/Compiler.h"

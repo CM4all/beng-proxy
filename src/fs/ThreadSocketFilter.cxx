@@ -33,7 +33,7 @@
 #include "ThreadSocketFilter.hxx"
 #include "FilteredSocket.hxx"
 #include "fb_pool.hxx"
-#include "thread_queue.hxx"
+#include "thread/Queue.hxx"
 #include "pool/pool.hxx"
 #include "system/Error.hxx"
 

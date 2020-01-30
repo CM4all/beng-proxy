@@ -39,7 +39,7 @@
 #include "ssl/Error.hxx"
 #include "io/Logger.hxx"
 #include "fs/ThreadSocketFilter.hxx"
-#include "thread_pool.hxx"
+#include "thread/Pool.hxx"
 #include "util/RuntimeError.hxx"
 
 #include <map>
