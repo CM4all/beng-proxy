@@ -94,7 +94,8 @@ public:
 		   unsigned _backlog,
 		   SocketDescriptor _log_socket,
 		   const ChildErrorLogOptions &_log_options,
-		   unsigned _limit, unsigned _max_idle) noexcept;
+		   unsigned _limit, unsigned _max_idle,
+		   Event::Duration _clear_interval) noexcept;
 
 	StockMap &GetStockMap() noexcept {
 		return map;

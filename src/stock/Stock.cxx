@@ -211,10 +211,12 @@ Stock::ClearEventCallback() noexcept
 
 Stock::Stock(EventLoop &event_loop, StockClass &_cls,
 	     const char *_name, unsigned _limit, unsigned _max_idle,
+	     Event::Duration _clear_interval,
 	     StockHandler *_handler) noexcept
 	:cls(_cls),
 	 name(_name),
 	 limit(_limit), max_idle(_max_idle),
+	 clear_interval(_clear_interval),
 	 handler(_handler),
 	 logger(name),
 	 retry_event(event_loop, BIND_THIS_METHOD(RetryWaiting)),

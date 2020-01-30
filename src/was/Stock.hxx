@@ -63,7 +63,8 @@ public:
 			  unsigned limit, unsigned max_idle) noexcept
 		:spawn_service(_spawn_service),
 		 log_socket(_log_socket), log_options(_log_options),
-		 stock(event_loop, *this, limit, max_idle) {}
+		 stock(event_loop, *this, limit, max_idle,
+		       std::chrono::minutes(10)) {}
 
 	void FadeAll() noexcept {
 		stock.FadeAll();

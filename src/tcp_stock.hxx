@@ -61,7 +61,9 @@ public:
 	 * @param limit the maximum number of connections per host
 	 */
 	TcpStock(EventLoop &event_loop, unsigned limit) noexcept
-		:stock(event_loop, *this, limit, 16) {}
+		:stock(event_loop, *this, limit, 16,
+		       /* each TcpStockConnection has its own timer */
+		       Event::Duration::zero()) {}
 
 	EventLoop &GetEventLoop() const noexcept {
 		return stock.GetEventLoop();

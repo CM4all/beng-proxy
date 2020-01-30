@@ -75,6 +75,7 @@ StockMap::GetStock(const char *uri) noexcept
 	if (i.second) {
 		auto *item = new Item(event_loop, cls,
 				      uri, limit, max_idle,
+				      clear_interval,
 				      this);
 		map.insert_commit(*item, hint);
 		return item->stock;

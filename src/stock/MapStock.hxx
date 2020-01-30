@@ -33,6 +33,7 @@
 #pragma once
 
 #include "Stock.hxx"
+#include "event/Chrono.hxx"
 #include "io/Logger.hxx"
 #include "util/Cast.hxx"
 #include "util/Compiler.h"
@@ -110,6 +111,8 @@ class StockMap final : StockHandler {
 	 */
 	const unsigned max_idle;
 
+	const Event::Duration clear_interval;
+
 	Map map;
 
 	static constexpr size_t N_BUCKETS = 251;
@@ -117,9 +120,11 @@ class StockMap final : StockHandler {
 
 public:
 	StockMap(EventLoop &_event_loop, StockClass &_cls,
-		 unsigned _limit, unsigned _max_idle) noexcept
+		 unsigned _limit, unsigned _max_idle,
+		 Event::Duration _clear_interval) noexcept
 		:event_loop(_event_loop), cls(_cls),
 		 limit(_limit), max_idle(_max_idle),
+		 clear_interval(_clear_interval),
 		 map(Map::bucket_traits(buckets, N_BUCKETS)) {}
 
 	~StockMap() noexcept;

@@ -128,7 +128,8 @@ main(int, char **)
 	EventLoop event_loop;
 
 	MyStockClass cls;
-	stock = new Stock(event_loop, cls, "test", 3, 8);
+	stock = new Stock(event_loop, cls, "test", 3, 8,
+			  Event::Duration::zero());
 
 	MyStockGetHandler handler;
 

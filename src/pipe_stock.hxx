@@ -43,7 +43,8 @@ class FileDescriptor;
 class PipeStock final : public Stock, StockClass {
 public:
 	explicit PipeStock(EventLoop &event_loop)
-		:Stock(event_loop, *this, "pipe", 0, 64) {}
+		:Stock(event_loop, *this, "pipe", 0, 64,
+		       Event::Duration::zero()) {}
 
 private:
 	/* virtual methods from class StockClass */

@@ -86,6 +86,8 @@ class Stock {
 	 */
 	const unsigned max_idle;
 
+	const Event::Duration clear_interval;
+
 	StockHandler *const handler;
 
 	const Logger logger;
@@ -153,6 +155,7 @@ public:
 	gcc_nonnull(4)
 	Stock(EventLoop &event_loop, StockClass &cls,
 	      const char *name, unsigned limit, unsigned max_idle,
+	      Event::Duration _clear_interval,
 	      StockHandler *handler=nullptr) noexcept;
 
 	~Stock() noexcept;
@@ -219,7 +222,8 @@ private:
 	void ScheduleCheckEmpty() noexcept;
 
 	void ScheduleClear() noexcept {
-		clear_event.Schedule(std::chrono::minutes(1));
+		if (clear_interval > Event::Duration::zero())
+			clear_event.Schedule(clear_interval);
 	}
 
 	void ClearIdle() noexcept;

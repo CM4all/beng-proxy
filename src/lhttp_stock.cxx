@@ -296,9 +296,11 @@ LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
 		     *this,
 		     64,
 		     log_socket, log_options,
-		     limit, max_idle),
+		     limit, max_idle,
+		     std::chrono::minutes(5)),
 	 mchild_stock(child_stock.GetStockMap()),
-	 hstock(event_loop, *this, limit, max_idle) {}
+	 hstock(event_loop, *this, limit, max_idle,
+		std::chrono::minutes(2)) {}
 
 void
 LhttpStock::FadeTag(const char *tag) noexcept

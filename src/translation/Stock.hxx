@@ -51,7 +51,8 @@ class TranslationStock final : public TranslationService, StockClass {
 public:
 	TranslationStock(EventLoop &event_loop, SocketAddress _address,
 			 unsigned limit) noexcept
-		:stock(event_loop, *this, "translation", limit, 8),
+		:stock(event_loop, *this, "translation", limit, 8,
+		       Event::Duration::zero()),
 		 address(_address)
 	{
 	}

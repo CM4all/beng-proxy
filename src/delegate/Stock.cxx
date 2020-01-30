@@ -116,7 +116,8 @@ class DelegateStock final : StockClass {
 public:
 	explicit DelegateStock(EventLoop &event_loop, SpawnService &_spawn_service)
 		:spawn_service(_spawn_service),
-		 stock(event_loop, *this, 0, 16) {}
+		 stock(event_loop, *this, 0, 16,
+		       std::chrono::minutes(2)) {}
 
 	StockMap &GetStock() {
 		return stock;

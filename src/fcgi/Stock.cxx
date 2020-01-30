@@ -381,12 +381,14 @@ FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
 		     EventLoop &event_loop, SpawnService &spawn_service,
 		     SocketDescriptor _log_socket,
 		     const ChildErrorLogOptions &_log_options) noexcept
-	:hstock(event_loop, *this, limit, max_idle),
+	:hstock(event_loop, *this, limit, max_idle,
+		std::chrono::minutes(2)),
 	 child_stock(event_loop, spawn_service,
 		     *this,
 		     4,
 		     _log_socket, _log_options,
-		     limit, max_idle) {}
+		     limit, max_idle,
+		     std::chrono::minutes(5)) {}
 
 void
 FcgiStock::FadeTag(const char *tag) noexcept
