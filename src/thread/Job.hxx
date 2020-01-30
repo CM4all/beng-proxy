@@ -80,7 +80,7 @@ public:
 	 * may be accessed without mutex protection.  Use this method with
 	 * caution.
 	 */
-	bool IsIdle() const {
+	bool IsIdle() const noexcept {
 		return state == State::INITIAL;
 	}
 
