@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,12 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Launch processes and connect a stream socket to them.
- */
-
-#ifndef BENG_PROXY_CHILD_STOCK_HXX
-#define BENG_PROXY_CHILD_STOCK_HXX
+#pragma once
 
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
@@ -48,28 +43,31 @@ class UniqueSocketDescriptor;
 class EventLoop;
 class SpawnService;
 
+/*
+ * Launch processes and connect a stream socket to them.
+ */
 class ChildStockClass {
 public:
-    /**
-     * Determine the socket type for the given child process.  The
-     * default is SOCK_STREAM.  This method may also be used to add
-     * the SOCK_NONBLOCK flag.  SOCK_CLOEXEC should not be used; it is
-     * added automatically.
-     *
-     * @param info an opaque pointer describing the process to be
-     * spawned
-     */
-    virtual int GetChildSocketType(void *info) const noexcept;
+	/**
+	 * Determine the socket type for the given child process.  The
+	 * default is SOCK_STREAM.  This method may also be used to add
+	 * the SOCK_NONBLOCK flag.  SOCK_CLOEXEC should not be used; it is
+	 * added automatically.
+	 *
+	 * @param info an opaque pointer describing the process to be
+	 * spawned
+	 */
+	virtual int GetChildSocketType(void *info) const noexcept;
 
-    virtual unsigned GetChildBacklog(void *info) const noexcept;
+	virtual unsigned GetChildBacklog(void *info) const noexcept;
 
-    virtual const char *GetChildTag(void *info) const noexcept;
+	virtual const char *GetChildTag(void *info) const noexcept;
 
-    /**
-     * Throws std::runtime_error on error.
-     */
-    virtual void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
-                              PreparedChildProcess &p) = 0;
+	/**
+	 * Throws std::runtime_error on error.
+	 */
+	virtual void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
+				  PreparedChildProcess &p) = 0;
 };
 
 /**
@@ -79,46 +77,46 @@ public:
  * #ChildStockClass.
  */
 class ChildStock final : StockClass {
-    StockMap map;
+	StockMap map;
 
-    SpawnService &spawn_service;
-    ChildStockClass &cls;
+	SpawnService &spawn_service;
+	ChildStockClass &cls;
 
-    const unsigned backlog;
+	const unsigned backlog;
 
-    const SocketDescriptor log_socket;
+	const SocketDescriptor log_socket;
 
-    const ChildErrorLogOptions log_options;
+	const ChildErrorLogOptions log_options;
 
 public:
-    ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
-               ChildStockClass &_cls,
-               unsigned _backlog,
-               SocketDescriptor _log_socket,
-               const ChildErrorLogOptions &_log_options,
-               unsigned _limit, unsigned _max_idle) noexcept;
+	ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
+		   ChildStockClass &_cls,
+		   unsigned _backlog,
+		   SocketDescriptor _log_socket,
+		   const ChildErrorLogOptions &_log_options,
+		   unsigned _limit, unsigned _max_idle) noexcept;
 
-    StockMap &GetStockMap() noexcept {
-        return map;
-    }
+	StockMap &GetStockMap() noexcept {
+		return map;
+	}
 
-    SocketDescriptor GetLogSocket() const noexcept {
-        return log_socket;
-    }
+	SocketDescriptor GetLogSocket() const noexcept {
+		return log_socket;
+	}
 
-    const auto &GetLogOptions() const noexcept {
-        return log_options;
-    }
+	const auto &GetLogOptions() const noexcept {
+		return log_options;
+	}
 
-    /**
-     * "Fade" all child processes with the given tag.
-     */
-    void FadeTag(const char *tag);
+	/**
+	 * "Fade" all child processes with the given tag.
+	 */
+	void FadeTag(const char *tag);
 
 private:
-    /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, StockRequest request,
-                CancellablePointer &cancel_ptr) override;
+	/* virtual methods from class StockClass */
+	void Create(CreateStockItem c, StockRequest request,
+		    CancellablePointer &cancel_ptr) override;
 };
 
 /**
@@ -135,7 +133,7 @@ child_stock_item_connect(StockItem &item);
 constexpr FdType
 child_stock_item_get_type(const StockItem &) noexcept
 {
-    return FdType::FD_SOCKET;
+	return FdType::FD_SOCKET;
 }
 
 const char *
@@ -146,5 +144,3 @@ child_stock_item_set_site(StockItem &item, const char *site) noexcept;
 
 void
 child_stock_item_set_uri(StockItem &item, const char *uri) noexcept;
-
-#endif

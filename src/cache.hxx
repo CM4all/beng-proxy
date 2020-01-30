@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_CACHE_HXX
-#define BENG_PROXY_CACHE_HXX
+#pragma once
 
 #include "event/CleanupTimer.hxx"
 
@@ -48,252 +47,250 @@
 class EventLoop;
 
 class CacheItem {
-    friend class Cache;
+	friend class Cache;
 
-    using LinkMode =
-        boost::intrusive::link_mode<boost::intrusive::normal_link>;
-    using SiblingsHook = boost::intrusive::list_member_hook<LinkMode>;
-    using SetHook = boost::intrusive::unordered_set_member_hook<LinkMode>;
+	using LinkMode =
+		boost::intrusive::link_mode<boost::intrusive::normal_link>;
+	using SiblingsHook = boost::intrusive::list_member_hook<LinkMode>;
+	using SetHook = boost::intrusive::unordered_set_member_hook<LinkMode>;
 
-    /**
-     * This item's siblings, sorted by #last_accessed.
-     */
-    SiblingsHook sorted_siblings;
+	/**
+	 * This item's siblings, sorted by #last_accessed.
+	 */
+	SiblingsHook sorted_siblings;
 
-    SetHook set_hook;
+	SetHook set_hook;
 
-    /**
-     * The key under which this item is stored in the hash table.
-     */
-    const char *key;
+	/**
+	 * The key under which this item is stored in the hash table.
+	 */
+	const char *key;
 
-    const std::chrono::steady_clock::time_point expires;
+	const std::chrono::steady_clock::time_point expires;
 
-    const size_t size;
+	const size_t size;
 
-    std::chrono::steady_clock::time_point last_accessed{};
+	std::chrono::steady_clock::time_point last_accessed{};
 
-    /**
-     * If non-zero, then this item has been locked by somebody, and
-     * must not be destroyed.
-     */
-    unsigned lock = 0;
+	/**
+	 * If non-zero, then this item has been locked by somebody, and
+	 * must not be destroyed.
+	 */
+	unsigned lock = 0;
 
-    /**
-     * If true, then this item has been removed from the cache, but
-     * could not be destroyed yet, because it is locked.
-     */
-    bool removed = false;
+	/**
+	 * If true, then this item has been removed from the cache, but
+	 * could not be destroyed yet, because it is locked.
+	 */
+	bool removed = false;
 
 public:
-    CacheItem(std::chrono::steady_clock::time_point _expires,
-              size_t _size) noexcept
-        :expires(_expires), size(_size) {}
+	CacheItem(std::chrono::steady_clock::time_point _expires,
+		  size_t _size) noexcept
+		:expires(_expires), size(_size) {}
 
-    CacheItem(std::chrono::steady_clock::time_point now,
-              std::chrono::system_clock::time_point system_now,
-              std::chrono::system_clock::time_point _expires,
-              size_t _size) noexcept;
+	CacheItem(std::chrono::steady_clock::time_point now,
+		  std::chrono::system_clock::time_point system_now,
+		  std::chrono::system_clock::time_point _expires,
+		  size_t _size) noexcept;
 
-    CacheItem(std::chrono::steady_clock::time_point now,
-              std::chrono::seconds max_age, size_t _size) noexcept;
+	CacheItem(std::chrono::steady_clock::time_point now,
+		  std::chrono::seconds max_age, size_t _size) noexcept;
 
-    CacheItem(const CacheItem &) = delete;
+	CacheItem(const CacheItem &) = delete;
 
-    void Release() noexcept;
+	void Release() noexcept;
 
-    /**
-     * Locks the specified item in memory, i.e. prevents that it is
-     * freed by Cache::Remove().
-     */
-    void Lock() noexcept {
-        ++lock;
-    }
+	/**
+	 * Locks the specified item in memory, i.e. prevents that it is
+	 * freed by Cache::Remove().
+	 */
+	void Lock() noexcept {
+		++lock;
+	}
 
-    void Unlock() noexcept;
+	void Unlock() noexcept;
 
-    const char *GetKey() const noexcept {
-        return key;
-    }
+	const char *GetKey() const noexcept {
+		return key;
+	}
 
-    size_t GetSize() const noexcept {
-        return size;
-    }
+	size_t GetSize() const noexcept {
+		return size;
+	}
 
-    gcc_pure
-    bool Validate(std::chrono::steady_clock::time_point now) const noexcept {
-        return now < expires && Validate();
-    }
+	gcc_pure
+	bool Validate(std::chrono::steady_clock::time_point now) const noexcept {
+		return now < expires && Validate();
+	}
 
-    virtual bool Validate() const noexcept {
-        return true;
-    }
+	virtual bool Validate() const noexcept {
+		return true;
+	}
 
-    virtual void Destroy() noexcept = 0;
+	virtual void Destroy() noexcept = 0;
 
-    gcc_pure
-    static size_t KeyHasher(const char *key) noexcept;
+	gcc_pure
+	static size_t KeyHasher(const char *key) noexcept;
 
-    gcc_pure
-    static size_t ValueHasher(const CacheItem &value) noexcept {
-        return KeyHasher(value.key);
-    }
+	gcc_pure
+	static size_t ValueHasher(const CacheItem &value) noexcept {
+		return KeyHasher(value.key);
+	}
 
-    gcc_pure
-    static bool KeyValueEqual(const char *a, const CacheItem &b) noexcept;
+	gcc_pure
+	static bool KeyValueEqual(const char *a, const CacheItem &b) noexcept;
 
-    struct Hash {
-        gcc_pure
-        size_t operator()(const CacheItem &value) const noexcept {
-            return ValueHasher(value);
-        }
-    };
+	struct Hash {
+		gcc_pure
+		size_t operator()(const CacheItem &value) const noexcept {
+			return ValueHasher(value);
+		}
+	};
 
-    struct Equal {
-        gcc_pure
-        bool operator()(const CacheItem &a,
-                        const CacheItem &b) const noexcept {
-            return KeyValueEqual(a.key, b);
-        }
-    };
+	struct Equal {
+		gcc_pure
+		bool operator()(const CacheItem &a,
+				const CacheItem &b) const noexcept {
+			return KeyValueEqual(a.key, b);
+		}
+	};
 };
 
 class Cache {
-    const size_t max_size;
-    size_t size = 0;
+	const size_t max_size;
+	size_t size = 0;
 
-    using ItemSet =
-        boost::intrusive::unordered_multiset<CacheItem,
-                                             boost::intrusive::member_hook<CacheItem,
-                                                                           CacheItem::SetHook,
-                                                                           &CacheItem::set_hook>,
-                                             boost::intrusive::hash<CacheItem::Hash>,
-                                             boost::intrusive::equal<CacheItem::Equal>,
-                                             boost::intrusive::constant_time_size<false>>;
+	using ItemSet =
+		boost::intrusive::unordered_multiset<CacheItem,
+						     boost::intrusive::member_hook<CacheItem,
+										   CacheItem::SetHook,
+										   &CacheItem::set_hook>,
+						     boost::intrusive::hash<CacheItem::Hash>,
+						     boost::intrusive::equal<CacheItem::Equal>,
+						     boost::intrusive::constant_time_size<false>>;
 
-    std::unique_ptr<ItemSet::bucket_type[]> buckets;
+	std::unique_ptr<ItemSet::bucket_type[]> buckets;
 
-    ItemSet items;
+	ItemSet items;
 
-    /**
-     * A linked list of all cache items, sorted by last_accessed,
-     * oldest first.
-     */
-    boost::intrusive::list<CacheItem,
-                           boost::intrusive::member_hook<CacheItem,
-                                                         CacheItem::SiblingsHook,
-                                                         &CacheItem::sorted_siblings>,
-                           boost::intrusive::constant_time_size<false>> sorted_items;
+	/**
+	 * A linked list of all cache items, sorted by last_accessed,
+	 * oldest first.
+	 */
+	boost::intrusive::list<CacheItem,
+			       boost::intrusive::member_hook<CacheItem,
+							     CacheItem::SiblingsHook,
+							     &CacheItem::sorted_siblings>,
+			       boost::intrusive::constant_time_size<false>> sorted_items;
 
-    CleanupTimer cleanup_timer;
+	CleanupTimer cleanup_timer;
 
 public:
-    Cache(EventLoop &event_loop,
-          unsigned hashtable_capacity, size_t _max_size) noexcept;
+	Cache(EventLoop &event_loop,
+	      unsigned hashtable_capacity, size_t _max_size) noexcept;
 
-    ~Cache() noexcept;
+	~Cache() noexcept;
 
-    auto &GetEventLoop() const noexcept {
-        return cleanup_timer.GetEventLoop();
-    }
+	auto &GetEventLoop() const noexcept {
+		return cleanup_timer.GetEventLoop();
+	}
 
-    gcc_pure
-    std::chrono::steady_clock::time_point SteadyNow() const noexcept;
+	gcc_pure
+	std::chrono::steady_clock::time_point SteadyNow() const noexcept;
 
-    gcc_pure
-    std::chrono::system_clock::time_point SystemNow() const noexcept;
+	gcc_pure
+	std::chrono::system_clock::time_point SystemNow() const noexcept;
 
-    void EventAdd() noexcept;
-    void EventDel() noexcept;
+	void EventAdd() noexcept;
+	void EventDel() noexcept;
 
-    gcc_pure
-    CacheItem *Get(const char *key) noexcept;
+	gcc_pure
+	CacheItem *Get(const char *key) noexcept;
 
-    /**
-     * Find the first CacheItem for a key which matches with the
-     * specified matching function.
-     *
-     * @param key the cache item key
-     * @param match the match callback function
-     * @param ctx a context pointer for the callback
-     */
-    gcc_pure
-    CacheItem *GetMatch(const char *key,
-                        bool (*match)(const CacheItem *, void *),
-                        void *ctx) noexcept;
+	/**
+	 * Find the first CacheItem for a key which matches with the
+	 * specified matching function.
+	 *
+	 * @param key the cache item key
+	 * @param match the match callback function
+	 * @param ctx a context pointer for the callback
+	 */
+	gcc_pure
+	CacheItem *GetMatch(const char *key,
+			    bool (*match)(const CacheItem *, void *),
+			    void *ctx) noexcept;
 
-    /**
-     * Add an item to this cache.  Item with the same key are preserved.
-     *
-     * @return false if the item could not be added to the cache due
-     * to size constraints
-     */
-    bool Add(const char *key, CacheItem &item) noexcept;
+	/**
+	 * Add an item to this cache.  Item with the same key are preserved.
+	 *
+	 * @return false if the item could not be added to the cache due
+	 * to size constraints
+	 */
+	bool Add(const char *key, CacheItem &item) noexcept;
 
-    bool Put(const char *key, CacheItem &item) noexcept;
+	bool Put(const char *key, CacheItem &item) noexcept;
 
-    /**
-     * Adds a new item to this cache, or replaces an existing item
-     * which matches with the specified matching function.
-     *
-     * @param key the cache item key
-     * @param item the new cache item
-     * @param match the match callback function
-     * @param ctx a context pointer for the callback
-     */
-    bool PutMatch(const char *key, CacheItem &item,
-                  bool (*match)(const CacheItem *, void *),
-                  void *ctx) noexcept;
+	/**
+	 * Adds a new item to this cache, or replaces an existing item
+	 * which matches with the specified matching function.
+	 *
+	 * @param key the cache item key
+	 * @param item the new cache item
+	 * @param match the match callback function
+	 * @param ctx a context pointer for the callback
+	 */
+	bool PutMatch(const char *key, CacheItem &item,
+		      bool (*match)(const CacheItem *, void *),
+		      void *ctx) noexcept;
 
-    void Remove(const char *key) noexcept;
+	void Remove(const char *key) noexcept;
 
-    /**
-     * Removes all matching cache items.
-     *
-     * @return the number of items which were removed
-     */
-    void RemoveMatch(const char *key,
-                     bool (*match)(const CacheItem *, void *),
-                     void *ctx) noexcept;
+	/**
+	 * Removes all matching cache items.
+	 *
+	 * @return the number of items which were removed
+	 */
+	void RemoveMatch(const char *key,
+			 bool (*match)(const CacheItem *, void *),
+			 void *ctx) noexcept;
 
-    void Remove(CacheItem &item) noexcept;
+	void Remove(CacheItem &item) noexcept;
 
-    /**
-     * Removes all matching cache items.
-     *
-     * @return the number of items which were removed
-     */
-    unsigned RemoveAllMatch(bool (*match)(const CacheItem *, void *),
-                            void *ctx) noexcept;
+	/**
+	 * Removes all matching cache items.
+	 *
+	 * @return the number of items which were removed
+	 */
+	unsigned RemoveAllMatch(bool (*match)(const CacheItem *, void *),
+				void *ctx) noexcept;
 
-    void Flush() noexcept;
+	void Flush() noexcept;
 
 private:
-    /** clean up expired cache items every 60 seconds */
-    bool ExpireCallback() noexcept;
+	/** clean up expired cache items every 60 seconds */
+	bool ExpireCallback() noexcept;
 
-    void ItemRemoved(CacheItem *item) noexcept;
+	void ItemRemoved(CacheItem *item) noexcept;
 
-    class ItemRemover {
-        Cache &cache;
+	class ItemRemover {
+		Cache &cache;
 
-    public:
-        explicit constexpr ItemRemover(Cache &_cache) noexcept
-            :cache(_cache) {}
+	public:
+		explicit constexpr ItemRemover(Cache &_cache) noexcept
+			:cache(_cache) {}
 
-        void operator()(CacheItem *item) noexcept {
-            cache.ItemRemoved(item);
-        }
-    };
+		void operator()(CacheItem *item) noexcept {
+			cache.ItemRemoved(item);
+		}
+	};
 
-    void RemoveItem(CacheItem &item) noexcept;
+	void RemoveItem(CacheItem &item) noexcept;
 
-    void RefreshItem(CacheItem &item,
-                     std::chrono::steady_clock::time_point now) noexcept;
+	void RefreshItem(CacheItem &item,
+			 std::chrono::steady_clock::time_point now) noexcept;
 
-    void DestroyOldestItem() noexcept;
+	void DestroyOldestItem() noexcept;
 
-    bool NeedRoom(size_t _size) noexcept;
+	bool NeedRoom(size_t _size) noexcept;
 };
-
-#endif

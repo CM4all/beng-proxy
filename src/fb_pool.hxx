@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,8 +35,7 @@
  * back to the kernel.
  */
 
-#ifndef BENG_PROXY_FB_POOL_HXX
-#define BENG_PROXY_FB_POOL_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -75,13 +74,11 @@ fb_pool_compress(void);
 
 class ScopeFbPoolInit {
 public:
-    ScopeFbPoolInit() {
-        fb_pool_init();
-    }
+	ScopeFbPoolInit() {
+		fb_pool_init();
+	}
 
-    ~ScopeFbPoolInit() {
-        fb_pool_deinit();
-    }
+	~ScopeFbPoolInit() {
+		fb_pool_deinit();
+	}
 };
-
-#endif

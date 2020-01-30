@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -61,118 +61,118 @@
 #include <string.h>
 
 static constexpr Event::Duration HTTP_CONNECT_TIMEOUT =
-    std::chrono::seconds(30);
+	std::chrono::seconds(30);
 
 class HttpRequest final
-    : Cancellable, StockGetHandler, Lease, HttpResponseHandler, PoolLeakDetector {
+	: Cancellable, StockGetHandler, Lease, HttpResponseHandler, PoolLeakDetector {
 
-    struct pool &pool;
+	struct pool &pool;
 
-    EventLoop &event_loop;
+	EventLoop &event_loop;
 
-    FilteredSocketBalancer &fs_balancer;
+	FilteredSocketBalancer &fs_balancer;
 
-    StopwatchPtr stopwatch;
+	StopwatchPtr stopwatch;
 
-    const sticky_hash_t session_sticky;
+	const sticky_hash_t session_sticky;
 
-    SocketFilterFactory *const filter_factory;
+	SocketFilterFactory *const filter_factory;
 
-    StockItem *stock_item = nullptr;
-    FailurePtr failure;
+	StockItem *stock_item = nullptr;
+	FailurePtr failure;
 
-    const http_method_t method;
-    const HttpAddress &address;
-    HttpHeaders headers;
-    UnusedHoldIstreamPtr body;
+	const http_method_t method;
+	const HttpAddress &address;
+	HttpHeaders headers;
+	UnusedHoldIstreamPtr body;
 
-    unsigned retries;
+	unsigned retries;
 
-    HttpResponseHandler &handler;
-    CancellablePointer cancel_ptr;
+	HttpResponseHandler &handler;
+	CancellablePointer cancel_ptr;
 
-    bool response_sent = false;
+	bool response_sent = false;
 
 public:
-    HttpRequest(struct pool &_pool, EventLoop &_event_loop,
-                FilteredSocketBalancer &_fs_balancer,
-                const StopwatchPtr &parent_stopwatch,
-                sticky_hash_t _session_sticky,
-                SocketFilterFactory *_filter_factory,
-                http_method_t _method,
-                const HttpAddress &_address,
-                HttpHeaders &&_headers,
-                UnusedIstreamPtr _body,
-                HttpResponseHandler &_handler,
-                CancellablePointer &_cancel_ptr)
-        :PoolLeakDetector(_pool),
-         pool(_pool), event_loop(_event_loop), fs_balancer(_fs_balancer),
-         stopwatch(parent_stopwatch, _address.path),
-         session_sticky(_session_sticky),
-         filter_factory(_filter_factory),
-         method(_method), address(_address),
-         headers(std::move(_headers)), body(pool, std::move(_body)),
-         /* can only retry if there is no request body */
-         retries(body ? 0 : 2),
-         handler(_handler)
-    {
-        _cancel_ptr = *this;
+	HttpRequest(struct pool &_pool, EventLoop &_event_loop,
+		    FilteredSocketBalancer &_fs_balancer,
+		    const StopwatchPtr &parent_stopwatch,
+		    sticky_hash_t _session_sticky,
+		    SocketFilterFactory *_filter_factory,
+		    http_method_t _method,
+		    const HttpAddress &_address,
+		    HttpHeaders &&_headers,
+		    UnusedIstreamPtr _body,
+		    HttpResponseHandler &_handler,
+		    CancellablePointer &_cancel_ptr)
+		:PoolLeakDetector(_pool),
+		 pool(_pool), event_loop(_event_loop), fs_balancer(_fs_balancer),
+		 stopwatch(parent_stopwatch, _address.path),
+		 session_sticky(_session_sticky),
+		 filter_factory(_filter_factory),
+		 method(_method), address(_address),
+		 headers(std::move(_headers)), body(pool, std::move(_body)),
+		 /* can only retry if there is no request body */
+		 retries(body ? 0 : 2),
+		 handler(_handler)
+	{
+		_cancel_ptr = *this;
 
-        if (address.host_and_port != nullptr)
-            headers.Write("host", address.host_and_port);
-    }
+		if (address.host_and_port != nullptr)
+			headers.Write("host", address.host_and_port);
+	}
 
-    void BeginConnect() {
-        fs_balancer.Get(pool, stopwatch,
-                        false, SocketAddress::Null(),
-                        session_sticky,
-                        address.addresses,
-                        HTTP_CONNECT_TIMEOUT,
-                        filter_factory,
-                        *this, cancel_ptr);
-    }
+	void BeginConnect() {
+		fs_balancer.Get(pool, stopwatch,
+				false, SocketAddress::Null(),
+				session_sticky,
+				address.addresses,
+				HTTP_CONNECT_TIMEOUT,
+				filter_factory,
+				*this, cancel_ptr);
+	}
 
 private:
-    void Destroy() noexcept {
-        assert(stock_item == nullptr);
+	void Destroy() noexcept {
+		assert(stock_item == nullptr);
 
-        DeleteFromPool(pool, this);
-    }
+		DeleteFromPool(pool, this);
+	}
 
-    void ResponseSent() {
-        assert(!response_sent);
-        response_sent = true;
+	void ResponseSent() {
+		assert(!response_sent);
+		response_sent = true;
 
-        if (stock_item == nullptr)
-            Destroy();
-    }
+		if (stock_item == nullptr)
+			Destroy();
+	}
 
-    void Failed(std::exception_ptr ep) {
-        body.Clear();
-        auto &_handler = handler;
-        ResponseSent();
-        _handler.InvokeError(ep);
-    }
+	void Failed(std::exception_ptr ep) {
+		body.Clear();
+		auto &_handler = handler;
+		ResponseSent();
+		_handler.InvokeError(ep);
+	}
 
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override {
-        assert(!response_sent);
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		assert(!response_sent);
 
-        cancel_ptr.Cancel();
-        Destroy();
-    }
+		cancel_ptr.Cancel();
+		Destroy();
+	}
 
-    /* virtual methods from class StockGetHandler */
-    void OnStockItemReady(StockItem &item) noexcept override;
-    void OnStockItemError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class StockGetHandler */
+	void OnStockItemReady(StockItem &item) noexcept override;
+	void OnStockItemError(std::exception_ptr ep) noexcept override;
 
-    /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) noexcept override;
+	/* virtual methods from class Lease */
+	void ReleaseLease(bool reuse) noexcept override;
 
-    /* virtual methods from class HttpResponseHandler */
-    void OnHttpResponse(http_status_t status, StringMap &&headers,
-                        UnusedIstreamPtr body) noexcept override;
-    void OnHttpError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(http_status_t status, StringMap &&headers,
+			    UnusedIstreamPtr body) noexcept override;
+	void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
 /*
@@ -182,50 +182,50 @@ private:
 
 void
 HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
-                            UnusedIstreamPtr _body) noexcept
+			    UnusedIstreamPtr _body) noexcept
 {
-    assert(!response_sent);
+	assert(!response_sent);
 
-    failure->UnsetProtocol();
+	failure->UnsetProtocol();
 
-    auto &_handler = handler;
-    ResponseSent();
-    _handler.InvokeResponse(status, std::move(_headers), std::move(_body));
+	auto &_handler = handler;
+	ResponseSent();
+	_handler.InvokeResponse(status, std::move(_headers), std::move(_body));
 }
 
 static bool
 HasHttpClientErrorCode(std::exception_ptr ep,
-                       HttpClientErrorCode code) noexcept
+		       HttpClientErrorCode code) noexcept
 {
-    try {
-        FindRetrowNested<HttpClientError>(ep);
-        return false;
-    } catch (const HttpClientError &e) {
-        return e.GetCode() == code;
-    }
+	try {
+		FindRetrowNested<HttpClientError>(ep);
+		return false;
+	} catch (const HttpClientError &e) {
+		return e.GetCode() == code;
+	}
 }
 
 void
 HttpRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
-    assert(!response_sent);
+	assert(!response_sent);
 
-    if (retries > 0 &&
-        HasHttpClientErrorCode(ep, HttpClientErrorCode::REFUSED)) {
-        /* the server has closed the connection prematurely, maybe
-           because it didn't want to get any further requests on that
-           TCP connection.  Let's try again. */
+	if (retries > 0 &&
+	    HasHttpClientErrorCode(ep, HttpClientErrorCode::REFUSED)) {
+		/* the server has closed the connection prematurely, maybe
+		   because it didn't want to get any further requests on that
+		   TCP connection.  Let's try again. */
 
-        --retries;
-        BeginConnect();
-    } else {
-        if (IsHttpClientServerFailure(ep)) {
-            failure->SetProtocol(event_loop.SteadyNow(),
-                                 std::chrono::seconds(20));
-        }
+		--retries;
+		BeginConnect();
+	} else {
+		if (IsHttpClientServerFailure(ep)) {
+			failure->SetProtocol(event_loop.SteadyNow(),
+					     std::chrono::seconds(20));
+		}
 
-        Failed(ep);
-    }
+		Failed(ep);
+	}
 }
 
 /*
@@ -236,34 +236,34 @@ HttpRequest::OnHttpError(std::exception_ptr ep) noexcept
 void
 HttpRequest::OnStockItemReady(StockItem &item) noexcept
 {
-    assert(stock_item == nullptr);
-    assert(!response_sent);
+	assert(stock_item == nullptr);
+	assert(!response_sent);
 
-    stopwatch.RecordEvent("connect");
+	stopwatch.RecordEvent("connect");
 
-    stock_item = &item;
+	stock_item = &item;
 
-    failure = fs_balancer.GetFailureManager()
-        .Make(fs_stock_item_get_address(*stock_item));
+	failure = fs_balancer.GetFailureManager()
+		.Make(fs_stock_item_get_address(*stock_item));
 
-    http_client_request(pool, std::move(stopwatch),
-                        fs_stock_item_get(item),
-                        *this,
-                        item.GetStockName(),
-                        method, address.path, std::move(headers),
-                        std::move(body), true,
-                        *this, cancel_ptr);
+	http_client_request(pool, std::move(stopwatch),
+			    fs_stock_item_get(item),
+			    *this,
+			    item.GetStockName(),
+			    method, address.path, std::move(headers),
+			    std::move(body), true,
+			    *this, cancel_ptr);
 }
 
 void
 HttpRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
-    assert(stock_item == nullptr);
-    assert(!response_sent);
+	assert(stock_item == nullptr);
+	assert(!response_sent);
 
-    stopwatch.RecordEvent("connect_error");
+	stopwatch.RecordEvent("connect_error");
 
-    Failed(ep);
+	Failed(ep);
 }
 
 /*
@@ -274,14 +274,14 @@ HttpRequest::OnStockItemError(std::exception_ptr ep) noexcept
 void
 HttpRequest::ReleaseLease(bool reuse) noexcept
 {
-    assert(stock_item != nullptr);
+	assert(stock_item != nullptr);
 
-    stock_item->Put(!reuse);
-    stock_item = nullptr;
+	stock_item->Put(!reuse);
+	stock_item = nullptr;
 
-    if (response_sent) {
-        Destroy();
-    }
+	if (response_sent) {
+		Destroy();
+	}
 }
 
 /*
@@ -291,27 +291,27 @@ HttpRequest::ReleaseLease(bool reuse) noexcept
 
 void
 http_request(struct pool &pool, EventLoop &event_loop,
-             FilteredSocketBalancer &fs_balancer,
-             const StopwatchPtr &parent_stopwatch,
-             sticky_hash_t session_sticky,
-             SocketFilterFactory *filter_factory,
-             http_method_t method,
-             const HttpAddress &uwa,
-             HttpHeaders &&headers,
-             UnusedIstreamPtr body,
-             HttpResponseHandler &handler,
-             CancellablePointer &_cancel_ptr)
+	     FilteredSocketBalancer &fs_balancer,
+	     const StopwatchPtr &parent_stopwatch,
+	     sticky_hash_t session_sticky,
+	     SocketFilterFactory *filter_factory,
+	     http_method_t method,
+	     const HttpAddress &uwa,
+	     HttpHeaders &&headers,
+	     UnusedIstreamPtr body,
+	     HttpResponseHandler &handler,
+	     CancellablePointer &_cancel_ptr)
 {
-    assert(uwa.host_and_port != nullptr);
-    assert(uwa.path != nullptr);
+	assert(uwa.host_and_port != nullptr);
+	assert(uwa.path != nullptr);
 
-    auto hr = NewFromPool<HttpRequest>(pool, pool, event_loop, fs_balancer,
-                                       parent_stopwatch,
-                                       session_sticky,
-                                       filter_factory,
-                                       method, uwa,
-                                       std::move(headers), std::move(body),
-                                       handler, _cancel_ptr);
+	auto hr = NewFromPool<HttpRequest>(pool, pool, event_loop, fs_balancer,
+					   parent_stopwatch,
+					   session_sticky,
+					   filter_factory,
+					   method, uwa,
+					   std::move(headers), std::move(body),
+					   handler, _cancel_ptr);
 
-    hr->BeginConnect();
+	hr->BeginConnect();
 }

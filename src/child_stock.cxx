@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -50,141 +50,141 @@
 int
 ChildStockClass::GetChildSocketType(void *) const noexcept
 {
-    return SOCK_STREAM;
+	return SOCK_STREAM;
 }
 
 unsigned
 ChildStockClass::GetChildBacklog(void *) const noexcept
 {
-    return 0;
+	return 0;
 }
 
 const char *
 ChildStockClass::GetChildTag(void *) const noexcept
 {
-    return nullptr;
+	return nullptr;
 }
 
 class ChildStockItem final : public StockItem, ExitListener {
-    SpawnService &spawn_service;
+	SpawnService &spawn_service;
 
-    const std::string tag;
+	const std::string tag;
 
-    ChildErrorLog log;
+	ChildErrorLog log;
 
-    ChildSocket socket;
-    int pid = -1;
+	ChildSocket socket;
+	int pid = -1;
 
-    bool busy = true;
+	bool busy = true;
 
-    TimerEvent idle_timeout_event;
+	TimerEvent idle_timeout_event;
 
 public:
-    ChildStockItem(CreateStockItem c,
-                   SpawnService &_spawn_service,
-                   const char *_tag) noexcept
-        :StockItem(c),
-         spawn_service(_spawn_service),
-         tag(_tag != nullptr ? _tag : ""),
-         idle_timeout_event(GetEventLoop(),
-                            BIND_THIS_METHOD(OnIdleTimeout)) {}
+	ChildStockItem(CreateStockItem c,
+		       SpawnService &_spawn_service,
+		       const char *_tag) noexcept
+		:StockItem(c),
+		 spawn_service(_spawn_service),
+		 tag(_tag != nullptr ? _tag : ""),
+		 idle_timeout_event(GetEventLoop(),
+				    BIND_THIS_METHOD(OnIdleTimeout)) {}
 
-    ~ChildStockItem() override;
+	~ChildStockItem() override;
 
-    EventLoop &GetEventLoop() {
-        return stock.GetEventLoop();
-    }
+	EventLoop &GetEventLoop() {
+		return stock.GetEventLoop();
+	}
 
-    void Spawn(ChildStockClass &cls, void *info,
-               int backlog,
-               SocketDescriptor log_socket,
-               const ChildErrorLogOptions &log_options);
+	void Spawn(ChildStockClass &cls, void *info,
+		   int backlog,
+		   SocketDescriptor log_socket,
+		   const ChildErrorLogOptions &log_options);
 
-    gcc_pure
-    const char *GetTag() const {
-        return tag.empty() ? nullptr : tag.c_str();
-    }
+	gcc_pure
+	const char *GetTag() const {
+		return tag.empty() ? nullptr : tag.c_str();
+	}
 
-    gcc_pure
-    bool IsTag(const char *_tag) const {
-        return tag == _tag;
-    }
+	gcc_pure
+	bool IsTag(const char *_tag) const {
+		return tag == _tag;
+	}
 
-    void SetSite(const char *site) noexcept {
-        log.SetSite(site);
-    }
+	void SetSite(const char *site) noexcept {
+		log.SetSite(site);
+	}
 
-    void SetUri(const char *uri) noexcept {
-        log.SetUri(uri);
-    }
+	void SetUri(const char *uri) noexcept {
+		log.SetUri(uri);
+	}
 
-    UniqueSocketDescriptor Connect() {
-        try {
-            return socket.Connect();
-        } catch (...) {
-            /* if the connection fails, abandon the child process, don't
-               try again - it will never work! */
-            fade = true;
-            throw;
-        }
-    }
+	UniqueSocketDescriptor Connect() {
+		try {
+			return socket.Connect();
+		} catch (...) {
+			/* if the connection fails, abandon the child process, don't
+			   try again - it will never work! */
+			fade = true;
+			throw;
+		}
+	}
 
-    /* virtual methods from class StockItem */
-    bool Borrow() noexcept override {
-        assert(!busy);
-        busy = true;
+	/* virtual methods from class StockItem */
+	bool Borrow() noexcept override {
+		assert(!busy);
+		busy = true;
 
-        idle_timeout_event.Cancel();
+		idle_timeout_event.Cancel();
 
-        return true;
-    }
+		return true;
+	}
 
-    bool Release() noexcept override {
-        assert(busy);
-        busy = false;
+	bool Release() noexcept override {
+		assert(busy);
+		busy = false;
 
-        /* reuse this item only if the child process hasn't exited */
-        if (pid <= 0)
-            return false;
+		/* reuse this item only if the child process hasn't exited */
+		if (pid <= 0)
+			return false;
 
-        /* kill idle processes after 15 minutes */
-        idle_timeout_event.Schedule(std::chrono::minutes(15));
-        return true;
-    }
+		/* kill idle processes after 15 minutes */
+		idle_timeout_event.Schedule(std::chrono::minutes(15));
+		return true;
+	}
 
 private:
-    void OnIdleTimeout() noexcept {
-        InvokeIdleDisconnect();
-    }
+	void OnIdleTimeout() noexcept {
+		InvokeIdleDisconnect();
+	}
 
-    /* virtual methods from class ExitListener */
-    void OnChildProcessExit(int status) noexcept override;
+	/* virtual methods from class ExitListener */
+	void OnChildProcessExit(int status) noexcept override;
 };
 
 void
 ChildStockItem::Spawn(ChildStockClass &cls, void *info,
-                      int backlog,
-                      SocketDescriptor log_socket,
-                      const ChildErrorLogOptions &log_options)
+		      int backlog,
+		      SocketDescriptor log_socket,
+		      const ChildErrorLogOptions &log_options)
 {
-    int socket_type = cls.GetChildSocketType(info);
+	int socket_type = cls.GetChildSocketType(info);
 
-    PreparedChildProcess p;
-    cls.PrepareChild(info, socket.Create(socket_type, backlog), p);
+	PreparedChildProcess p;
+	cls.PrepareChild(info, socket.Create(socket_type, backlog), p);
 
-    if (log_socket.IsDefined() && p.stderr_fd < 0)
-        log.EnableClient(p, GetEventLoop(), log_socket, log_options);
+	if (log_socket.IsDefined() && p.stderr_fd < 0)
+		log.EnableClient(p, GetEventLoop(), log_socket, log_options);
 
-    pid = spawn_service.SpawnChildProcess(GetStockName(), std::move(p), this);
+	pid = spawn_service.SpawnChildProcess(GetStockName(), std::move(p), this);
 }
 
 void
 ChildStockItem::OnChildProcessExit(gcc_unused int status) noexcept
 {
-    pid = -1;
+	pid = -1;
 
-    if (!busy)
-        InvokeIdleDisconnect();
+	if (!busy)
+		InvokeIdleDisconnect();
 }
 
 /*
@@ -194,30 +194,30 @@ ChildStockItem::OnChildProcessExit(gcc_unused int status) noexcept
 
 void
 ChildStock::Create(CreateStockItem c, StockRequest request,
-                   CancellablePointer &)
+		   CancellablePointer &)
 {
-    auto *item = new ChildStockItem(c, spawn_service,
-                                    cls.GetChildTag(request.get()));
+	auto *item = new ChildStockItem(c, spawn_service,
+					cls.GetChildTag(request.get()));
 
-    try {
+	try {
 		item->Spawn(cls, request.get(),
 			    std::max(backlog, cls.GetChildBacklog(request.get())),
 			    log_socket, log_options);
-    } catch (...) {
-        delete item;
-        throw;
-    }
+	} catch (...) {
+		delete item;
+		throw;
+	}
 
-    item->InvokeCreateSuccess();
+	item->InvokeCreateSuccess();
 }
 
 ChildStockItem::~ChildStockItem()
 {
-    if (pid >= 0)
-        spawn_service.KillChildProcess(pid);
+	if (pid >= 0)
+		spawn_service.KillChildProcess(pid);
 
-    if (socket.IsDefined())
-        socket.Unlink();
+	if (socket.IsDefined())
+		socket.Unlink();
 }
 
 /*
@@ -226,54 +226,54 @@ ChildStockItem::~ChildStockItem()
  */
 
 ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
-                       ChildStockClass &_cls,
-                       unsigned _backlog,
-                       SocketDescriptor _log_socket,
-                       const ChildErrorLogOptions &_log_options,
-                       unsigned _limit, unsigned _max_idle) noexcept
-    :map(event_loop, *this, _limit, _max_idle),
-     spawn_service(_spawn_service), cls(_cls),
-     backlog(_backlog),
-     log_socket(_log_socket),
-     log_options(_log_options)
+		       ChildStockClass &_cls,
+		       unsigned _backlog,
+		       SocketDescriptor _log_socket,
+		       const ChildErrorLogOptions &_log_options,
+		       unsigned _limit, unsigned _max_idle) noexcept
+	:map(event_loop, *this, _limit, _max_idle),
+	 spawn_service(_spawn_service), cls(_cls),
+	 backlog(_backlog),
+	 log_socket(_log_socket),
+	 log_options(_log_options)
 {
 }
 
 void
 ChildStock::FadeTag(const char *tag)
 {
-    map.FadeIf([tag](const StockItem &_item) {
-            const auto &item = (const ChildStockItem &)_item;
-            return item.IsTag(tag);
-        });
+	map.FadeIf([tag](const StockItem &_item) {
+		const auto &item = (const ChildStockItem &)_item;
+		return item.IsTag(tag);
+	});
 }
 
 UniqueSocketDescriptor
 child_stock_item_connect(StockItem &_item)
 {
-    auto &item = (ChildStockItem &)_item;
+	auto &item = (ChildStockItem &)_item;
 
-    return item.Connect();
+	return item.Connect();
 }
 
 const char *
 child_stock_item_get_tag(const StockItem &_item)
 {
-    const auto &item = (const ChildStockItem &)_item;
+	const auto &item = (const ChildStockItem &)_item;
 
-    return item.GetTag();
+	return item.GetTag();
 }
 
 void
 child_stock_item_set_site(StockItem &_item, const char *site) noexcept
 {
-    auto &item = (ChildStockItem &)_item;
-    item.SetSite(site);
+	auto &item = (ChildStockItem &)_item;
+	item.SetSite(site);
 }
 
 void
 child_stock_item_set_uri(StockItem &_item, const char *uri) noexcept
 {
-    auto &item = (ChildStockItem &)_item;
-    item.SetUri(uri);
+	auto &item = (ChildStockItem &)_item;
+	item.SetUri(uri);
 }

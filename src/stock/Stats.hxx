@@ -33,5 +33,5 @@
 #pragma once
 
 struct StockStats {
-    unsigned busy, idle;
+	unsigned busy, idle;
 };

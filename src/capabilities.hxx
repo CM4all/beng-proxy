@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Utilities for Linux capabilities.
  */
 
-#ifndef BENG_PROXY_CAPABILITIES_HXX
-#define BENG_PROXY_CAPABILITIES_HXX
+#pragma once
 
 #include <sys/capability.h>
 
@@ -51,5 +50,3 @@ capabilities_pre_setuid();
  */
 void
 capabilities_post_setuid(const cap_value_t *keep_list, unsigned n);
-
-#endif

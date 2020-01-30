@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_PIPE_STOCK_HXX
-#define BENG_PROXY_PIPE_STOCK_HXX
+#pragma once
 
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
@@ -43,16 +42,14 @@ class FileDescriptor;
  */
 class PipeStock final : public Stock, StockClass {
 public:
-    explicit PipeStock(EventLoop &event_loop)
-        :Stock(event_loop, *this, "pipe", 0, 64) {}
+	explicit PipeStock(EventLoop &event_loop)
+		:Stock(event_loop, *this, "pipe", 0, 64) {}
 
 private:
-    /* virtual methods from class StockClass */
-    void Create(CreateStockItem c, StockRequest request,
-                CancellablePointer &cancel_ptr) override;
+	/* virtual methods from class StockClass */
+	void Create(CreateStockItem c, StockRequest request,
+		    CancellablePointer &cancel_ptr) override;
 };
 
 void
 pipe_stock_item_get(StockItem *item, FileDescriptor fds[2]);
-
-#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,24 +42,24 @@ template<typename T>
 static size_t
 obtain_entropy(T *dest, size_t max)
 {
-    size_t nbytes = UrandomRead(dest, max * sizeof(dest[0]));
-    return nbytes / sizeof(dest[0]);
+	size_t nbytes = UrandomRead(dest, max * sizeof(dest[0]));
+	return nbytes / sizeof(dest[0]);
 }
 
 void
 random_seed()
 {
-    uint32_t seed[Prng::state_size * 2];
-    auto n = obtain_entropy(seed, Prng::state_size);
-    if (n == 0)
-        return;
+	uint32_t seed[Prng::state_size * 2];
+	auto n = obtain_entropy(seed, Prng::state_size);
+	if (n == 0)
+		return;
 
-    std::seed_seq ss(seed, seed + n);
-    prng.seed(ss);
+	std::seed_seq ss(seed, seed + n);
+	prng.seed(ss);
 }
 
 uint64_t
 random_uint64() noexcept
 {
-    return prng();
+	return prng();
 }

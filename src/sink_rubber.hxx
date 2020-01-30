@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_SINK_RUBBER_HXX
-#define BENG_PROXY_SINK_RUBBER_HXX
+#pragma once
 
 #include <exception>
 
@@ -46,10 +45,10 @@ class CancellablePointer;
 
 class RubberSinkHandler {
 public:
-    virtual void RubberDone(RubberAllocation &&a, size_t size) noexcept = 0;
-    virtual void RubberOutOfMemory() noexcept = 0;
-    virtual void RubberTooLarge() noexcept = 0;
-    virtual void RubberError(std::exception_ptr ep) noexcept = 0;
+	virtual void RubberDone(RubberAllocation &&a, size_t size) noexcept = 0;
+	virtual void RubberOutOfMemory() noexcept = 0;
+	virtual void RubberTooLarge() noexcept = 0;
+	virtual void RubberError(std::exception_ptr ep) noexcept = 0;
 };
 
 /**
@@ -57,11 +56,9 @@ public:
  */
 RubberSink *
 sink_rubber_new(struct pool &pool, UnusedIstreamPtr input,
-                Rubber &rubber, size_t max_size,
-                RubberSinkHandler &handler,
-                CancellablePointer &cancel_ptr) noexcept;
+		Rubber &rubber, size_t max_size,
+		RubberSinkHandler &handler,
+		CancellablePointer &cancel_ptr) noexcept;
 
 void
 sink_rubber_read(RubberSink &sink) noexcept;
-
-#endif

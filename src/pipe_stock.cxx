@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,15 +40,15 @@
 #include <fcntl.h>
 
 struct PipeStockItem final : StockItem {
-    UniqueFileDescriptor fds[2];
+	UniqueFileDescriptor fds[2];
 
-    explicit PipeStockItem(CreateStockItem c)
-        :StockItem(c) {
-    }
+	explicit PipeStockItem(CreateStockItem c)
+		:StockItem(c) {
+	}
 
-    /* virtual methods from class StockItem */
-    bool Borrow() noexcept override;
-    bool Release() noexcept override;
+	/* virtual methods from class StockItem */
+	bool Borrow() noexcept override;
+	bool Release() noexcept override;
 };
 
 /*
@@ -58,30 +58,30 @@ struct PipeStockItem final : StockItem {
 
 void
 PipeStock::Create(CreateStockItem c, StockRequest,
-                  gcc_unused CancellablePointer &cancel_ptr)
+		  gcc_unused CancellablePointer &cancel_ptr)
 {
-    auto *item = new PipeStockItem(c);
+	auto *item = new PipeStockItem(c);
 
-    if (!UniqueFileDescriptor::CreatePipeNonBlock(item->fds[0],
-                                                  item->fds[1])) {
-        int e = errno;
-        delete item;
-        throw MakeErrno(e, "pipe() failed");
-    }
+	if (!UniqueFileDescriptor::CreatePipeNonBlock(item->fds[0],
+						      item->fds[1])) {
+		int e = errno;
+		delete item;
+		throw MakeErrno(e, "pipe() failed");
+	}
 
-    item->InvokeCreateSuccess();
+	item->InvokeCreateSuccess();
 }
 
 bool
 PipeStockItem::Borrow() noexcept
 {
-    return true;
+	return true;
 }
 
 bool
 PipeStockItem::Release() noexcept
 {
-    return true;
+	return true;
 }
 
 /*
@@ -92,8 +92,8 @@ PipeStockItem::Release() noexcept
 void
 pipe_stock_item_get(StockItem *_item, FileDescriptor fds[2])
 {
-    auto *item = (PipeStockItem *)_item;
+	auto *item = (PipeStockItem *)_item;
 
-    fds[0] = item->fds[0];
-    fds[1] = item->fds[1];
+	fds[0] = item->fds[0];
+	fds[1] = item->fds[1];
 }

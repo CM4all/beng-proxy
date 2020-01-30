@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -43,181 +43,181 @@
 
 class ThreadQueue {
 public:
-    std::mutex mutex;
-    std::condition_variable cond;
+	std::mutex mutex;
+	std::condition_variable cond;
 
-    bool alive = true;
+	bool alive = true;
 
-    /**
-     * Was the #wakeup_event triggered?  This avoids duplicate events.
-     */
-    bool pending = false;
+	/**
+	 * Was the #wakeup_event triggered?  This avoids duplicate events.
+	 */
+	bool pending = false;
 
-    typedef boost::intrusive::list<ThreadJob,
-                                   boost::intrusive::constant_time_size<false>> JobList;
+	typedef boost::intrusive::list<ThreadJob,
+				       boost::intrusive::constant_time_size<false>> JobList;
 
-    JobList waiting, busy, done;
+	JobList waiting, busy, done;
 
-    Notify notify;
+	Notify notify;
 
-    explicit ThreadQueue(EventLoop &event_loop) noexcept
-        :notify(event_loop, BIND_THIS_METHOD(WakeupCallback)) {}
+	explicit ThreadQueue(EventLoop &event_loop) noexcept
+		:notify(event_loop, BIND_THIS_METHOD(WakeupCallback)) {}
 
-    ~ThreadQueue() noexcept {
-        assert(!alive);
-    }
+	~ThreadQueue() noexcept {
+		assert(!alive);
+	}
 
-    bool IsEmpty() const noexcept {
-        return waiting.empty() && busy.empty() && done.empty();
-    }
+	bool IsEmpty() const noexcept {
+		return waiting.empty() && busy.empty() && done.empty();
+	}
 
-    void WakeupCallback() noexcept;
+	void WakeupCallback() noexcept;
 };
 
 void
 ThreadQueue::WakeupCallback() noexcept
 {
-    mutex.lock();
+	mutex.lock();
 
-    pending = false;
+	pending = false;
 
-    for (auto i = done.begin(), end = done.end(); i != end;) {
-        ThreadJob *job = &*i;
-        assert(job->state == ThreadJob::State::DONE);
+	for (auto i = done.begin(), end = done.end(); i != end;) {
+		ThreadJob *job = &*i;
+		assert(job->state == ThreadJob::State::DONE);
 
-        i = done.erase(i);
+		i = done.erase(i);
 
-        if (job->again) {
-            /* schedule this job again */
-            job->state = ThreadJob::State::WAITING;
-            job->again = false;
-            waiting.push_back(*job);
-            cond.notify_one();
-        } else {
-            job->state = ThreadJob::State::INITIAL;
-            mutex.unlock();
-            job->Done();
-            mutex.lock();
-        }
-    }
+		if (job->again) {
+			/* schedule this job again */
+			job->state = ThreadJob::State::WAITING;
+			job->again = false;
+			waiting.push_back(*job);
+			cond.notify_one();
+		} else {
+			job->state = ThreadJob::State::INITIAL;
+			mutex.unlock();
+			job->Done();
+			mutex.lock();
+		}
+	}
 
-    const bool empty = IsEmpty();
+	const bool empty = IsEmpty();
 
-    mutex.unlock();
+	mutex.unlock();
 
-    if (empty)
-        notify.Disable();
+	if (empty)
+		notify.Disable();
 }
 
 ThreadQueue *
 thread_queue_new(EventLoop &event_loop) noexcept
 {
-    return new ThreadQueue(event_loop);
+	return new ThreadQueue(event_loop);
 }
 
 void
 thread_queue_stop(ThreadQueue &q) noexcept
 {
-    std::unique_lock<std::mutex> lock(q.mutex);
-    q.alive = false;
-    q.cond.notify_all();
+	std::unique_lock<std::mutex> lock(q.mutex);
+	q.alive = false;
+	q.cond.notify_all();
 }
 
 void
 thread_queue_free(ThreadQueue *q) noexcept
 {
-    delete q;
+	delete q;
 }
 
 void
 thread_queue_add(ThreadQueue &q, ThreadJob &job) noexcept
 {
-    q.mutex.lock();
-    assert(q.alive);
+	q.mutex.lock();
+	assert(q.alive);
 
-    if (job.state == ThreadJob::State::INITIAL) {
-        job.state = ThreadJob::State::WAITING;
-        job.again = false;
-        q.waiting.push_back(job);
-        q.cond.notify_one();
-    } else if (job.state != ThreadJob::State::WAITING) {
-        job.again = true;
-    }
+	if (job.state == ThreadJob::State::INITIAL) {
+		job.state = ThreadJob::State::WAITING;
+		job.again = false;
+		q.waiting.push_back(job);
+		q.cond.notify_one();
+	} else if (job.state != ThreadJob::State::WAITING) {
+		job.again = true;
+	}
 
-    q.mutex.unlock();
+	q.mutex.unlock();
 
-    q.notify.Enable();
+	q.notify.Enable();
 }
 
 ThreadJob *
 thread_queue_wait(ThreadQueue &q) noexcept
 {
-    std::unique_lock<std::mutex> lock(q.mutex);
+	std::unique_lock<std::mutex> lock(q.mutex);
 
-    while (true) {
-        if (!q.alive)
-            return nullptr;
+	while (true) {
+		if (!q.alive)
+			return nullptr;
 
-        auto i = q.waiting.begin();
-        if (i != q.waiting.end()) {
-            auto &job = *i;
-            assert(job.state == ThreadJob::State::WAITING);
+		auto i = q.waiting.begin();
+		if (i != q.waiting.end()) {
+			auto &job = *i;
+			assert(job.state == ThreadJob::State::WAITING);
 
-            job.state = ThreadJob::State::BUSY;
-            q.waiting.erase(i);
-            q.busy.push_back(job);
-            return &job;
-        }
+			job.state = ThreadJob::State::BUSY;
+			q.waiting.erase(i);
+			q.busy.push_back(job);
+			return &job;
+		}
 
-        /* queue is empty, wait for a new job to be added */
-        q.cond.wait(lock);
-    }
+		/* queue is empty, wait for a new job to be added */
+		q.cond.wait(lock);
+	}
 }
 
 void
 thread_queue_done(ThreadQueue &q, ThreadJob &job) noexcept
 {
-    assert(job.state == ThreadJob::State::BUSY);
+	assert(job.state == ThreadJob::State::BUSY);
 
-    q.mutex.lock();
+	q.mutex.lock();
 
-    job.state = ThreadJob::State::DONE;
-    q.busy.erase(q.busy.iterator_to(job));
-    q.done.push_back(job);
+	job.state = ThreadJob::State::DONE;
+	q.busy.erase(q.busy.iterator_to(job));
+	q.done.push_back(job);
 
-    q.pending = true;
+	q.pending = true;
 
-    q.mutex.unlock();
+	q.mutex.unlock();
 
-    q.notify.Signal();
+	q.notify.Signal();
 }
 
 bool
 thread_queue_cancel(ThreadQueue &q, ThreadJob &job) noexcept
 {
-    std::unique_lock<std::mutex> lock(q.mutex);
+	std::unique_lock<std::mutex> lock(q.mutex);
 
-    switch (job.state) {
-    case ThreadJob::State::INITIAL:
-        /* already idle */
-        return true;
+	switch (job.state) {
+	case ThreadJob::State::INITIAL:
+		/* already idle */
+		return true;
 
-    case ThreadJob::State::WAITING:
-        /* cancel it */
-        q.waiting.erase(q.waiting.iterator_to(job));
-        job.state = ThreadJob::State::INITIAL;
-        return true;
+	case ThreadJob::State::WAITING:
+		/* cancel it */
+		q.waiting.erase(q.waiting.iterator_to(job));
+		job.state = ThreadJob::State::INITIAL;
+		return true;
 
-    case ThreadJob::State::BUSY:
-        /* no chance */
-        return false;
+	case ThreadJob::State::BUSY:
+		/* no chance */
+		return false;
 
-    case ThreadJob::State::DONE:
-        /* TODO: the callback hasn't been invoked yet - do that now?
-           anyway, with this pending state, we can't return success */
-        return false;
-    }
+	case ThreadJob::State::DONE:
+		/* TODO: the callback hasn't been invoked yet - do that now?
+		   anyway, with this pending state, we can't return success */
+		return false;
+	}
 
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }

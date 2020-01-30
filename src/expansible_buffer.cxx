@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,125 +39,126 @@
 #include <string.h>
 
 ExpansibleBuffer::ExpansibleBuffer(struct pool &_pool,
-                                   size_t initial_size,
-                                   size_t _hard_limit) noexcept
-    :pool(_pool),
-     buffer((char *)p_malloc(&pool, initial_size)),
-     hard_limit(_hard_limit),
-     max_size(initial_size) {
-    assert(initial_size > 0);
-    assert(hard_limit >= initial_size);
+				   size_t initial_size,
+				   size_t _hard_limit) noexcept
+	:pool(_pool),
+	 buffer((char *)p_malloc(&pool, initial_size)),
+	 hard_limit(_hard_limit),
+	 max_size(initial_size)
+{
+	assert(initial_size > 0);
+	assert(hard_limit >= initial_size);
 }
 
 void
 ExpansibleBuffer::Clear() noexcept
 {
-    PoisonUndefined(buffer, max_size);
+	PoisonUndefined(buffer, max_size);
 
-    size = 0;
+	size = 0;
 }
 
 bool
 ExpansibleBuffer::Resize(size_t new_max_size) noexcept
 {
-    assert(new_max_size > max_size);
+	assert(new_max_size > max_size);
 
-    if (new_max_size > hard_limit)
-        return false;
+	if (new_max_size > hard_limit)
+		return false;
 
-    char *new_buffer = (char *)p_malloc(&pool, new_max_size);
-    memcpy(new_buffer, buffer, size);
+	char *new_buffer = (char *)p_malloc(&pool, new_max_size);
+	memcpy(new_buffer, buffer, size);
 
-    p_free(&pool, buffer, max_size);
+	p_free(&pool, buffer, max_size);
 
-    buffer = new_buffer;
-    max_size = new_max_size;
-    return true;
+	buffer = new_buffer;
+	max_size = new_max_size;
+	return true;
 }
 
 void *
 ExpansibleBuffer::Write(size_t length) noexcept
 {
-    size_t new_size = size + length;
-    if (new_size > max_size &&
-        !Resize(((new_size - 1) | 0x3ff) + 1))
-        return nullptr;
+	size_t new_size = size + length;
+	if (new_size > max_size &&
+	    !Resize(((new_size - 1) | 0x3ff) + 1))
+		return nullptr;
 
-    char *dest = buffer + size;
-    size = new_size;
+	char *dest = buffer + size;
+	size = new_size;
 
-    return dest;
+	return dest;
 }
 
 bool
 ExpansibleBuffer::Write(const void *p, size_t length) noexcept
 {
-    void *q = Write(length);
-    if (q == nullptr)
-        return false;
+	void *q = Write(length);
+	if (q == nullptr)
+		return false;
 
-    memcpy(q, p, length);
-    return true;
+	memcpy(q, p, length);
+	return true;
 }
 
 bool
 ExpansibleBuffer::Write(const char *p) noexcept
 {
-    return Write(p, strlen(p));
+	return Write(p, strlen(p));
 }
 
 bool
 ExpansibleBuffer::Set(const void *p, size_t new_size) noexcept
 {
-    if (new_size > max_size && !Resize(((new_size - 1) | 0x3ff) + 1))
-        return false;
+	if (new_size > max_size && !Resize(((new_size - 1) | 0x3ff) + 1))
+		return false;
 
-    size = new_size;
-    memcpy(buffer, p, new_size);
-    return true;
+	size = new_size;
+	memcpy(buffer, p, new_size);
+	return true;
 }
 
 bool
 ExpansibleBuffer::Set(StringView p) noexcept
 {
-    return Set(p.data, p.size);
+	return Set(p.data, p.size);
 }
 
 ConstBuffer<void>
 ExpansibleBuffer::Read() const noexcept
 {
-    return {buffer, size};
+	return {buffer, size};
 }
 
 const char *
 ExpansibleBuffer::ReadString() noexcept
 {
-    if (size == 0 || buffer[size - 1] != 0)
-        /* append a null terminator */
-        Write("\0", 1);
+	if (size == 0 || buffer[size - 1] != 0)
+		/* append a null terminator */
+		Write("\0", 1);
 
-    /* the buffer is now a valid C string (assuming it doesn't contain
-       any nulls */
-    return buffer;
+	/* the buffer is now a valid C string (assuming it doesn't contain
+	   any nulls */
+	return buffer;
 }
 
 StringView
 ExpansibleBuffer::ReadStringView() const noexcept
 {
-    return { (const char *)buffer, size };
+	return { (const char *)buffer, size };
 }
 
 void *
 ExpansibleBuffer::Dup(struct pool &_pool) const noexcept
 {
-    return p_memdup(&_pool, buffer, size);
+	return p_memdup(&_pool, buffer, size);
 }
 
 char *
 ExpansibleBuffer::StringDup(struct pool &_pool) const noexcept
 {
-    char *p = (char *)p_malloc(&_pool, size + 1);
-    memcpy(p, buffer, size);
-    p[size] = 0;
-    return p;
+	char *p = (char *)p_malloc(&_pool, size + 1);
+	memcpy(p, buffer, size);
+	p[size] = 0;
+	return p;
 }

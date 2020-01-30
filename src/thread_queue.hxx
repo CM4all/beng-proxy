@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * A queue that manages work for worker threads.
  */
 
-#ifndef BENG_PROXY_THREAD_QUEUE_HXX
-#define BENG_PROXY_THREAD_QUEUE_HXX
+#pragma once
 
 class EventLoop;
 class ThreadQueue;
@@ -83,5 +82,3 @@ thread_queue_done(ThreadQueue &q, ThreadJob &job) noexcept;
  */
 bool
 thread_queue_cancel(ThreadQueue &q, ThreadJob &job) noexcept;
-
-#endif

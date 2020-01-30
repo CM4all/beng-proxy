@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,40 +40,40 @@ static SlicePool *fb_pool;
 void
 fb_pool_init()
 {
-    assert(fb_pool == nullptr);
+	assert(fb_pool == nullptr);
 
-    fb_pool = new SlicePool(FB_SIZE, 256);
+	fb_pool = new SlicePool(FB_SIZE, 256);
 }
 
 void
 fb_pool_deinit(void)
 {
-    assert(fb_pool != nullptr);
+	assert(fb_pool != nullptr);
 
-    delete fb_pool;
-    fb_pool = nullptr;
+	delete fb_pool;
+	fb_pool = nullptr;
 }
 
 void
 fb_pool_fork_cow(bool inherit)
 {
-    assert(fb_pool != nullptr);
+	assert(fb_pool != nullptr);
 
-    fb_pool->ForkCow(inherit);
+	fb_pool->ForkCow(inherit);
 }
 
 SlicePool &
 fb_pool_get()
 {
-    assert(fb_pool != nullptr);
+	assert(fb_pool != nullptr);
 
-    return *fb_pool;
+	return *fb_pool;
 }
 
 void
 fb_pool_compress(void)
 {
-    assert(fb_pool != nullptr);
+	assert(fb_pool != nullptr);
 
-    fb_pool->Compress();
+	fb_pool->Compress();
 }

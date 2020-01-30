@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_HTTP_REQUEST_HXX
-#define BENG_PROXY_HTTP_REQUEST_HXX
+#pragma once
 
 #include "cluster/StickyHash.hxx"
 #include "http/Method.h"
@@ -55,14 +54,12 @@ class HttpHeaders;
  */
 void
 http_request(struct pool &pool, EventLoop &event_loop,
-             FilteredSocketBalancer &fs_balancer,
-             const StopwatchPtr &parent_stopwatch,
-             sticky_hash_t session_sticky,
-             SocketFilterFactory *filter_factory,
-             http_method_t method,
-             const HttpAddress &address,
-             HttpHeaders &&headers, UnusedIstreamPtr body,
-             HttpResponseHandler &handler,
-             CancellablePointer &cancel_ptr);
-
-#endif
+	     FilteredSocketBalancer &fs_balancer,
+	     const StopwatchPtr &parent_stopwatch,
+	     sticky_hash_t session_sticky,
+	     SocketFilterFactory *filter_factory,
+	     http_method_t method,
+	     const HttpAddress &address,
+	     HttpHeaders &&headers, UnusedIstreamPtr body,
+	     HttpResponseHandler &handler,
+	     CancellablePointer &cancel_ptr);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,54 +39,54 @@
 static void
 make_child_socket_path(struct sockaddr_un *address)
 {
-    address->sun_family = AF_LOCAL;
+	address->sun_family = AF_LOCAL;
 
-    strcpy(address->sun_path, "/tmp/cm4all-beng-proxy-socket-XXXXXX");
-    if (*mktemp(address->sun_path) == 0)
-        throw MakeErrno("mktemp() failed");
+	strcpy(address->sun_path, "/tmp/cm4all-beng-proxy-socket-XXXXXX");
+	if (*mktemp(address->sun_path) == 0)
+		throw MakeErrno("mktemp() failed");
 }
 
 UniqueSocketDescriptor
 ChildSocket::Create(int socket_type, int backlog)
 {
-    make_child_socket_path(&address);
+	make_child_socket_path(&address);
 
-    unlink(address.sun_path);
+	unlink(address.sun_path);
 
-    UniqueSocketDescriptor fd;
-    if (!fd.Create(AF_LOCAL, socket_type, 0))
-        throw MakeErrno("failed to create local socket");
+	UniqueSocketDescriptor fd;
+	if (!fd.Create(AF_LOCAL, socket_type, 0))
+		throw MakeErrno("failed to create local socket");
 
-    /* allow only beng-proxy to connect to it */
-    fchmod(fd.Get(), 0600);
+	/* allow only beng-proxy to connect to it */
+	fchmod(fd.Get(), 0600);
 
-    if (!fd.Bind(GetAddress()))
-        throw MakeErrno("failed to bind local socket");
+	if (!fd.Bind(GetAddress()))
+		throw MakeErrno("failed to bind local socket");
 
-    if (!fd.Listen(backlog))
-        throw MakeErrno("failed to listen on local socket");
+	if (!fd.Listen(backlog))
+		throw MakeErrno("failed to listen on local socket");
 
-    return fd;
+	return fd;
 }
 
 void
 ChildSocket::Unlink()
 {
-    unlink(address.sun_path);
+	unlink(address.sun_path);
 }
 
 UniqueSocketDescriptor
 ChildSocket::Connect() const
 {
-    UniqueSocketDescriptor fd;
-    if (!fd.CreateNonBlock(AF_LOCAL, SOCK_STREAM, 0))
-        throw MakeErrno("Failed to create socket");
+	UniqueSocketDescriptor fd;
+	if (!fd.CreateNonBlock(AF_LOCAL, SOCK_STREAM, 0))
+		throw MakeErrno("Failed to create socket");
 
-    if (!fd.Connect(GetAddress())) {
-        int e = errno;
-        fd.Close();
-        throw MakeErrno(e, "Failed to connect");
-    }
+	if (!fd.Connect(GetAddress())) {
+		int e = errno;
+		fd.Close();
+		throw MakeErrno(e, "Failed to connect");
+	}
 
-    return fd;
+	return fd;
 }

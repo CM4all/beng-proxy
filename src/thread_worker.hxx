@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_THREAD_WORKER_HXX
-#define BENG_PROXY_THREAD_WORKER_HXX
+#pragma once
 
 #include <pthread.h>
 
@@ -41,9 +40,9 @@ class ThreadQueue;
  * A thread that performs queued work.
  */
 struct thread_worker {
-    pthread_t thread;
+	pthread_t thread;
 
-    ThreadQueue *queue;
+	ThreadQueue *queue;
 };
 
 /**
@@ -59,7 +58,5 @@ thread_worker_create(struct thread_worker &w, ThreadQueue &q);
 static inline void
 thread_worker_join(struct thread_worker &w)
 {
-    pthread_join(w.thread, nullptr);
+	pthread_join(w.thread, nullptr);
 }
-
-#endif

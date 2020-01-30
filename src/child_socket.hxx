@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_CHILD_SOCKET_HXX
-#define BENG_PROXY_CHILD_SOCKET_HXX
+#pragma once
 
 #include "net/SocketAddress.hxx"
 
@@ -44,32 +43,30 @@ class UniqueSocketDescriptor;
  * Create a listener socket for a child process.
  */
 struct ChildSocket {
-    struct sockaddr_un address;
+	struct sockaddr_un address;
 
-    ChildSocket() {
-        address.sun_family = AF_UNSPEC;
-    }
+	ChildSocket() {
+		address.sun_family = AF_UNSPEC;
+	}
 
-    bool IsDefined() const {
-        return GetAddress().IsDefined();
-    }
+	bool IsDefined() const {
+		return GetAddress().IsDefined();
+	}
 
-    /**
-     * Throws std::runtime_error on error.
-     */
-    UniqueSocketDescriptor Create(int socket_type, int backlog);
+	/**
+	 * Throws std::runtime_error on error.
+	 */
+	UniqueSocketDescriptor Create(int socket_type, int backlog);
 
-    void Unlink();
+	void Unlink();
 
-    SocketAddress GetAddress() const {
-        return SocketAddress((const struct sockaddr *)&address,
-                             SUN_LEN(&address));
-    }
+	SocketAddress GetAddress() const {
+		return SocketAddress((const struct sockaddr *)&address,
+				     SUN_LEN(&address));
+	}
 
-    /**
-     * Throws std::runtime_error on error.
-     */
-    UniqueSocketDescriptor Connect() const;
+	/**
+	 * Throws std::runtime_error on error.
+	 */
+	UniqueSocketDescriptor Connect() const;
 };
-
-#endif

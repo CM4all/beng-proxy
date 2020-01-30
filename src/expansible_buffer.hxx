@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_EXPANSIBLE_BUFFER_HXX
-#define BENG_EXPANSIBLE_BUFFER_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -47,69 +46,67 @@ struct StringView;
  * smaller chunks.  Additionally, it can be reused.
  */
 class ExpansibleBuffer {
-    struct pool &pool;
-    char *buffer;
-    const size_t hard_limit;
-    size_t max_size;
-    size_t size = 0;
+	struct pool &pool;
+	char *buffer;
+	const size_t hard_limit;
+	size_t max_size;
+	size_t size = 0;
 
 public:
-    /**
-     * @param _hard_limit the buffer will refuse to grow beyond this size
-     */
-    ExpansibleBuffer(struct pool &_pool,
-                     size_t initial_size, size_t _hard_limit) noexcept;
+	/**
+	 * @param _hard_limit the buffer will refuse to grow beyond this size
+	 */
+	ExpansibleBuffer(struct pool &_pool,
+			 size_t initial_size, size_t _hard_limit) noexcept;
 
-    ExpansibleBuffer(const ExpansibleBuffer &) = delete;
-    ExpansibleBuffer &operator=(const ExpansibleBuffer &) = delete;
+	ExpansibleBuffer(const ExpansibleBuffer &) = delete;
+	ExpansibleBuffer &operator=(const ExpansibleBuffer &) = delete;
 
-    bool IsEmpty() const noexcept {
-        return size == 0;
-    }
+	bool IsEmpty() const noexcept {
+		return size == 0;
+	}
 
-    size_t GetSize() const noexcept {
-        return size;
-    }
+	size_t GetSize() const noexcept {
+		return size;
+	}
 
-    void Clear() noexcept;
+	void Clear() noexcept;
 
-    /**
-     * @return nullptr if the operation would exceed the hard limit
-     */
-    void *Write(size_t length) noexcept;
+	/**
+	 * @return nullptr if the operation would exceed the hard limit
+	 */
+	void *Write(size_t length) noexcept;
 
-    /**
-     * @return false if the operation would exceed the hard limit
-     */
-    bool Write(const void *p, size_t length) noexcept;
+	/**
+	 * @return false if the operation would exceed the hard limit
+	 */
+	bool Write(const void *p, size_t length) noexcept;
 
-    /**
-     * @return false if the operation would exceed the hard limit
-     */
-    bool Write(const char *p) noexcept;
+	/**
+	 * @return false if the operation would exceed the hard limit
+	 */
+	bool Write(const char *p) noexcept;
 
-    /**
-     * @return false if the operation would exceed the hard limit
-     */
-    bool Set(const void *p, size_t new_size) noexcept;
+	/**
+	 * @return false if the operation would exceed the hard limit
+	 */
+	bool Set(const void *p, size_t new_size) noexcept;
 
-    bool Set(StringView p) noexcept;
+	bool Set(StringView p) noexcept;
 
-    gcc_pure
-    ConstBuffer<void> Read() const noexcept;
+	gcc_pure
+	ConstBuffer<void> Read() const noexcept;
 
-    gcc_pure
-    const char *ReadString() noexcept;
+	gcc_pure
+	const char *ReadString() noexcept;
 
-    gcc_pure
-    StringView ReadStringView() const noexcept;
+	gcc_pure
+	StringView ReadStringView() const noexcept;
 
-    void *Dup(struct pool &_pool) const noexcept;
+	void *Dup(struct pool &_pool) const noexcept;
 
-    char *StringDup(struct pool &_pool) const noexcept;
+	char *StringDup(struct pool &_pool) const noexcept;
 
 private:
-    bool Resize(size_t new_max_size) noexcept;
+	bool Resize(size_t new_max_size) noexcept;
 };
-
-#endif
