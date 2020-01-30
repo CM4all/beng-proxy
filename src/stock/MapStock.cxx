@@ -68,14 +68,14 @@ StockMap::OnStockEmpty(Stock &stock) noexcept
 }
 
 Stock &
-StockMap::GetStock(const char *uri) noexcept
+StockMap::GetStock(const char *uri, void *request) noexcept
 {
 	Map::insert_commit_data hint;
 	auto i = map.insert_check(uri, Item::KeyHasher, Item::KeyValueEqual, hint);
 	if (i.second) {
 		auto *item = new Item(event_loop, cls,
 				      uri, limit, max_idle,
-				      clear_interval,
+				      GetClearInterval(request),
 				      this);
 		map.insert_commit(*item, hint);
 		return item->stock;

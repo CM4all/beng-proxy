@@ -44,7 +44,7 @@
  * A hash table of any number of Stock objects, each with a different
  * URI.
  */
-class StockMap final : StockHandler {
+class StockMap : StockHandler {
 	struct Item
 		: boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 		Stock stock;
@@ -167,7 +167,7 @@ public:
 	void Get(const char *uri, StockRequest &&request,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept {
-		Stock &stock = GetStock(uri);
+		Stock &stock = GetStock(uri, request.get());
 		stock.Get(std::move(request), handler, cancel_ptr);
 	}
 
@@ -179,12 +179,21 @@ public:
 	 * Throws exception on error.
 	 */
 	StockItem *GetNow(const char *uri, StockRequest &&request) {
-		Stock &stock = GetStock(uri);
+		Stock &stock = GetStock(uri, request.get());
 		return stock.GetNow(std::move(request));
 	}
 
+protected:
+	/**
+	 * Derived classes can override this method to choose a
+	 * per-#Stock clear_interval.
+	 */
+	virtual Event::Duration GetClearInterval(void *) const noexcept {
+		return clear_interval;
+	}
+
 private:
-	Stock &GetStock(const char *uri) noexcept;
+	Stock &GetStock(const char *uri, void *request) noexcept;
 
 	/* virtual methods from class StockHandler */
 	void OnStockEmpty(Stock &stock) noexcept override;
