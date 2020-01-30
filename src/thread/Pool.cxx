@@ -39,13 +39,13 @@
 #include "Worker.hxx"
 #include "io/Logger.hxx"
 
-#include <array>
+#include <forward_list>
 
 #include <assert.h>
 #include <stdlib.h>
 
 static ThreadQueue *global_thread_queue;
-static std::array<ThreadWorker, 8> worker_threads;
+static std::forward_list<ThreadWorker> worker_threads;
 
 static void
 thread_pool_init(EventLoop &event_loop) noexcept
@@ -58,8 +58,11 @@ thread_pool_start() noexcept
 try {
 	assert(global_thread_queue != nullptr);
 
-	for (auto &i : worker_threads)
-		thread_worker_create(i, *global_thread_queue);
+	for (unsigned i = 0; i < 8; ++i) {
+		worker_threads.emplace_front();
+		thread_worker_create(worker_threads.front(),
+				     *global_thread_queue);
+	}
 } catch (...) {
 	LogConcat(1, "thread_pool", "Failed to launch worker thread: ",
 		  std::current_exception());
@@ -94,8 +97,10 @@ thread_pool_join() noexcept
 	if (global_thread_queue == nullptr)
 		return;
 
-	for (auto &i : worker_threads)
-		thread_worker_join(i);
+	while (!worker_threads.empty()) {
+		thread_worker_join(worker_threads.front());
+		worker_threads.pop_front();
+	}
 }
 
 void
