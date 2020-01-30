@@ -379,12 +379,18 @@ InlineWidget::OnThrottled() noexcept
 void
 InlineWidget::Start() noexcept
 {
-	if (widget.cls == nullptr)
+	/* this check must come before
+	   LimitedConcurrencyJob::Schedule(); if it is true, then
+	   OnThrottled() will do nothing and this object is not yet
+	   destructed */
+	const bool need_resolver = widget.cls == nullptr;
+
+	throttle_job.Schedule();
+
+	if (need_resolver)
 		ResolveWidget(pool, widget,
 			      *ctx->widget_registry,
 			      BIND_THIS_METHOD(ResolverCallback), cancel_ptr);
-
-	throttle_job.Schedule();
 }
 
 /*
