@@ -38,8 +38,8 @@
 #include "widget/Class.hxx"
 #include "penv.hxx"
 #include "pool/pool.hxx"
-#include "escape_html.hxx"
-#include "escape_pool.hxx"
+#include "util/CharUtil.hxx"
+#include "util/HexFormat.h"
 
 #include <assert.h>
 
@@ -81,13 +81,50 @@ base_uri(struct pool *pool, const char *absolute_uri)
 	return p_strndup(pool, absolute_uri, p - absolute_uri);
 }
 
+static constexpr bool
+MustEscape(char ch) noexcept
+{
+	/* escape all characters which may be dangerous inside HTML */
+	/* note: we don't escape '%' because we assume that the input
+	   value has already been escaped, and this isn't about
+	   protecting URIs, but about protecting HTML and
+	   JavaScript from injection attacks */
+	return ch == '\'' || ch == '"' || ch == '&' ||
+		ch == '<' || ch == '>' ||
+		!IsPrintableASCII(ch);
+}
+
+static size_t
+CountMustEscape(StringView s) noexcept
+{
+	size_t n = 0;
+	for (char ch : s)
+		if (MustEscape(ch))
+			++n;
+	return n;
+}
+
 static StringView
 EscapeValue(struct pool &pool, StringView v) noexcept
 {
-	if (!v.empty())
-		v = escape_dup(&pool, &html_escape_class, v);
+	const size_t n_escape = CountMustEscape(v);
+	if (n_escape == 0)
+		return v;
 
-	return v;
+	const size_t result_length = v.size + n_escape * 2;
+	char *p = PoolAlloc<char>(pool, result_length);
+	const StringView result(p, result_length);
+
+	for (char ch : v) {
+		if (MustEscape(ch)) {
+			*p++ = '%';
+			format_uint8_hex_fixed(p, ch);
+			p += 2;
+		} else
+			*p++ = ch;
+	}
+
+	return result;
 }
 
 static SubstTree

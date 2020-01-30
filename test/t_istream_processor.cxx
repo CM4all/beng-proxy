@@ -48,7 +48,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define EXPECTED_RESULT "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar<b>http://localhost:8080/beng.html?&apos;</b>"
+#define EXPECTED_RESULT "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar<b>http://localhost:8080/beng.html?%27</b>"
 
 class EventLoop;
 
