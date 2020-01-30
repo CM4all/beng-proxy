@@ -40,7 +40,7 @@
 #include <stdlib.h>
 
 void
-capabilities_pre_setuid()
+capabilities_pre_setuid() noexcept
 {
 	/* we want to keep all capabilities after switching to an
 	   unprivileged uid */
@@ -53,7 +53,7 @@ capabilities_pre_setuid()
 }
 
 void
-capabilities_post_setuid(const cap_value_t *keep_list, unsigned n)
+capabilities_post_setuid(const cap_value_t *keep_list, unsigned n) noexcept
 {
 	/* restore the KEEPCAPS flag */
 

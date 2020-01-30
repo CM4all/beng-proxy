@@ -43,10 +43,10 @@
  * capabilities after switching to an unprivileged uid.
  */
 void
-capabilities_pre_setuid();
+capabilities_pre_setuid() noexcept;
 
 /**
  * Call after setuid().
  */
 void
-capabilities_post_setuid(const cap_value_t *keep_list, unsigned n);
+capabilities_post_setuid(const cap_value_t *keep_list, unsigned n) noexcept;
