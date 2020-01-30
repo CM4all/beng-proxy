@@ -51,8 +51,7 @@ class SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
 
 	FileDescriptor fd;
 	FdType fd_type;
-	const SinkFdHandler *handler;
-	void *handler_ctx;
+	SinkFdHandler &handler;
 
 	SocketEvent event;
 
@@ -77,11 +76,11 @@ public:
 	SinkFd(EventLoop &event_loop, struct pool &_pool,
 	       UnusedIstreamPtr &&_istream,
 	       FileDescriptor _fd, FdType _fd_type,
-	       const SinkFdHandler &_handler, void *_handler_ctx) noexcept
+	       SinkFdHandler &_handler) noexcept
 		:IstreamSink(std::move(_istream), istream_direct_mask_to(_fd_type)),
 		 pool(&_pool),
 		 fd(_fd), fd_type(_fd_type),
-		 handler(&_handler), handler_ctx(_handler_ctx),
+		 handler(_handler),
 		 event(event_loop, BIND_THIS_METHOD(EventCallback),
 		       SocketDescriptor::FromFileDescriptor(fd))
 	{
@@ -152,7 +151,7 @@ SinkFd::OnData(const void *data, size_t length) noexcept
 		return 0;
 	} else {
 		event.Cancel();
-		if (handler->send_error(errno, handler_ctx)) {
+		if (handler.OnSendError(errno)) {
 			input.Close();
 			Destroy();
 		}
@@ -198,7 +197,7 @@ SinkFd::OnEof() noexcept
 
 	event.Cancel();
 
-	handler->input_eof(handler_ctx);
+	handler.OnInputEof();
 	Destroy();
 }
 
@@ -213,7 +212,7 @@ SinkFd::OnError(std::exception_ptr ep) noexcept
 
 	event.Cancel();
 
-	handler->input_error(ep, handler_ctx);
+	handler.OnInputError(ep);
 	Destroy();
 }
 
@@ -245,16 +244,13 @@ SinkFd::EventCallback(unsigned) noexcept
 SinkFd *
 sink_fd_new(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr istream,
 	    FileDescriptor fd, FdType fd_type,
-	    const SinkFdHandler &handler, void *ctx) noexcept
+	    SinkFdHandler &handler) noexcept
 {
 	assert(fd.IsDefined());
-	assert(handler.input_eof != nullptr);
-	assert(handler.input_error != nullptr);
-	assert(handler.send_error != nullptr);
 
 	return NewFromPool<SinkFd>(pool, event_loop, pool, std::move(istream),
 				   fd, fd_type,
-				   handler, ctx);
+				   handler);
 }
 
 void

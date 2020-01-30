@@ -57,7 +57,9 @@
 #include <errno.h>
 #include <string.h>
 
-struct Context final : PInstance, Lease, MemcachedResponseHandler {
+struct Context final
+	: PInstance, Lease, MemcachedResponseHandler, SinkFdHandler
+{
 	ShutdownListener shutdown_listener;
 
 	PoolPtr pool;
@@ -94,6 +96,11 @@ struct Context final : PInstance, Lease, MemcachedResponseHandler {
 				 const void *key, size_t key_length,
 				 UnusedIstreamPtr value) noexcept override;
 	void OnMemcachedError(std::exception_ptr ep) noexcept override;
+
+	/* virtual methods from class SinkFdHandler */
+	void OnInputEof() noexcept;
+	void OnInputError(std::exception_ptr ep) noexcept;
+	bool OnSendError(int error) noexcept;
 };
 
 void
@@ -114,50 +121,37 @@ Context::ShutdownCallback() noexcept
  *
  */
 
-static void
-my_sink_fd_input_eof(void *ctx)
+void
+Context::OnInputEof() noexcept
 {
-	auto *c = (Context *)ctx;
+	value = nullptr;
+	value_eof = true;
 
-	c->value = NULL;
-	c->value_eof = true;
-
-	c->shutdown_listener.Disable();
+	shutdown_listener.Disable();
 }
 
-static void
-my_sink_fd_input_error(std::exception_ptr ep, void *ctx)
+void
+Context::OnInputError(std::exception_ptr ep) noexcept
 {
-	auto *c = (Context *)ctx;
-
 	PrintException(ep);
 
-	c->value = NULL;
-	c->value_abort = true;
+	value = nullptr;
+	value_abort = true;
 
-	c->shutdown_listener.Disable();
+	shutdown_listener.Disable();
 }
 
-static bool
-my_sink_fd_send_error(int error, void *ctx)
+bool
+Context::OnSendError(int error) noexcept
 {
-	auto *c = (Context *)ctx;
-
 	fprintf(stderr, "%s\n", strerror(error));
 
-	c->value = NULL;
-	c->value_abort = true;
+	value = nullptr;
+	value_abort = true;
 
-	c->shutdown_listener.Disable();
-
+	shutdown_listener.Disable();
 	return true;
 }
-
-static constexpr SinkFdHandler my_sink_fd_handler = {
-	.input_eof = my_sink_fd_input_eof,
-	.input_error = my_sink_fd_input_error,
-	.send_error = my_sink_fd_send_error,
-};
 
 /*
  * memcached_response_handler_t
@@ -180,7 +174,7 @@ Context::OnMemcachedResponse(enum memcached_response_status _status,
 						       nullptr),
 				    FileDescriptor(STDOUT_FILENO),
 				    guess_fd_type(STDOUT_FILENO),
-				    my_sink_fd_handler, this);
+				    *this);
 	} else {
 		value_eof = true;
 		shutdown_listener.Disable();

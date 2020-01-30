@@ -42,17 +42,18 @@ class FileDescriptor;
 class UnusedIstreamPtr;
 struct SinkFd;
 
-struct SinkFdHandler {
+class SinkFdHandler {
+public:
 	/**
 	 * Called when end-of-file has been received from the istream.
 	 */
-	void (*input_eof)(void *ctx);
+	virtual void OnInputEof() noexcept = 0;
 
 	/**
 	 * Called when an error has been reported by the istream, right
 	 * before the sink is destructed.
 	 */
-	void (*input_error)(std::exception_ptr ep, void *ctx);
+	virtual void OnInputError(std::exception_ptr ep) noexcept = 0;
 
 	/**
 	 * Called when a send error has occurred on the socket, right
@@ -61,7 +62,7 @@ struct SinkFdHandler {
 	 * @return true to close the stream, false when this method has
 	 * already destructed the sink
 	 */
-	bool (*send_error)(int error, void *ctx);
+	virtual bool OnSendError(int error) noexcept = 0;
 };
 
 /**
@@ -70,7 +71,7 @@ struct SinkFdHandler {
 SinkFd *
 sink_fd_new(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr istream,
 	    FileDescriptor fd, FdType fd_type,
-	    const SinkFdHandler &handler, void *ctx) noexcept;
+	    SinkFdHandler &handler) noexcept;
 
 void
 sink_fd_read(SinkFd *ss) noexcept;

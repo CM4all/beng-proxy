@@ -52,7 +52,9 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
-struct Context final : PInstance, NfsClientHandler, NfsClientOpenFileHandler {
+struct Context final
+	: PInstance, NfsClientHandler, NfsClientOpenFileHandler, SinkFdHandler
+{
 	PoolPtr pool;
 
 	const char *path;
@@ -81,6 +83,11 @@ struct Context final : PInstance, NfsClientHandler, NfsClientOpenFileHandler {
 	void OnNfsOpen(NfsFileHandle *handle,
 		       const struct stat *st) noexcept override;
 	void OnNfsOpenError(std::exception_ptr ep) noexcept override;
+
+	/* virtual methods from class SinkFdHandler */
+	void OnInputEof() noexcept;
+	void OnInputError(std::exception_ptr ep) noexcept;
+	bool OnSendError(int error) noexcept;
 };
 
 void
@@ -102,54 +109,40 @@ Context::ShutdownCallback() noexcept
  *
  */
 
-static void
-my_sink_fd_input_eof(void *ctx)
+void
+Context::OnInputEof() noexcept
 {
-	Context *c = (Context *)ctx;
+	body = nullptr;
+	body_eof = true;
 
-	c->body = nullptr;
-	c->body_eof = true;
-
-	c->shutdown_listener.Disable();
-	nfs_client_free(c->client);
+	shutdown_listener.Disable();
+	nfs_client_free(client);
 }
 
-static void
-my_sink_fd_input_error(std::exception_ptr ep, void *ctx)
+void
+Context::OnInputError(std::exception_ptr ep) noexcept
 {
-	Context *c = (Context *)ctx;
-
 	PrintException(ep);
 
-	c->body = nullptr;
-	c->body_abort = true;
+	body = nullptr;
+	body_abort = true;
 
-	c->shutdown_listener.Disable();
-	nfs_client_free(c->client);
+	shutdown_listener.Disable();
+	nfs_client_free(client);
 }
 
-static bool
-my_sink_fd_send_error(int error, void *ctx)
+bool
+Context::OnSendError(int error) noexcept
 {
-	Context *c = (Context *)ctx;
-
 	fprintf(stderr, "%s\n", strerror(error));
 
-	sink_fd_close(c->body);
+	body = nullptr;
+	body_abort = true;
 
-	c->body = nullptr;
-	c->body_abort = true;
-
-	c->shutdown_listener.Disable();
-	nfs_client_free(c->client);
-	return false;
+	shutdown_listener.Disable();
+	nfs_client_free(client);
+	return true;
 }
-
-static constexpr SinkFdHandler my_sink_fd_handler = {
-	.input_eof = my_sink_fd_input_eof,
-	.input_error = my_sink_fd_input_error,
-	.send_error = my_sink_fd_send_error,
-};
 
 /*
  * NfsClientOpenFileHandler
@@ -170,7 +163,7 @@ Context::OnNfsOpen(NfsFileHandle *handle, const struct stat *st) noexcept
 					      nullptr),
 			   FileDescriptor(STDOUT_FILENO),
 			   guess_fd_type(STDOUT_FILENO),
-			   my_sink_fd_handler, this);
+			   *this);
 	sink_fd_read(body);
 }
 

@@ -150,6 +150,7 @@ struct Context final
 #ifdef HAVE_NGHTTP2
 	  NgHttp2::ConnectionHandler,
 #endif
+	  SinkFdHandler,
 	  HttpResponseHandler {
 
 	struct parsed_url url;
@@ -215,6 +216,11 @@ struct Context final
 	void OnHttpResponse(http_status_t status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 	void OnHttpError(std::exception_ptr ep) noexcept override;
+
+	/* virtual methods from class SinkFdHandler */
+	void OnInputEof() noexcept;
+	void OnInputError(std::exception_ptr ep) noexcept;
+	bool OnSendError(int error) noexcept;
 };
 
 void
@@ -237,49 +243,37 @@ Context::ShutdownCallback() noexcept
  *
  */
 
-static void
-my_sink_fd_input_eof(void *ctx)
+void
+Context::OnInputEof() noexcept
 {
-	auto *c = (Context *)ctx;
+	body = nullptr;
+	body_eof = true;
 
-	c->body = nullptr;
-	c->body_eof = true;
-
-	c->shutdown_listener.Disable();
+	shutdown_listener.Disable();
 }
 
-static void
-my_sink_fd_input_error(std::exception_ptr ep, void *ctx)
+void
+Context::OnInputError(std::exception_ptr ep) noexcept
 {
-	auto *c = (Context *)ctx;
-
 	PrintException(ep);
 
-	c->body = nullptr;
-	c->body_abort = true;
+	body = nullptr;
+	body_abort = true;
 
-	c->shutdown_listener.Disable();
+	shutdown_listener.Disable();
 }
 
-static bool
-my_sink_fd_send_error(int error, void *ctx)
+bool
+Context::OnSendError(int error) noexcept
 {
-	auto *c = (Context *)ctx;
-
 	fprintf(stderr, "%s\n", strerror(error));
 
-	c->body = nullptr;
-	c->body_abort = true;
+	body = nullptr;
+	body_abort = true;
 
-	c->shutdown_listener.Disable();
+	shutdown_listener.Disable();
 	return true;
 }
-
-static constexpr SinkFdHandler my_sink_fd_handler = {
-	.input_eof = my_sink_fd_input_eof,
-	.input_error = my_sink_fd_input_error,
-	.send_error = my_sink_fd_send_error,
-};
 
 #ifdef HAVE_NGHTTP2
 
@@ -322,7 +316,7 @@ Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
 				   NewAutoPipeIstream(pool, std::move(_body), nullptr),
 				   FileDescriptor(STDOUT_FILENO),
 				   guess_fd_type(STDOUT_FILENO),
-				   my_sink_fd_handler, this);
+				   *this);
 		sink_fd_read(body);
 	} else {
 		body_eof = true;
