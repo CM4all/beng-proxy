@@ -2,7 +2,7 @@ cm4all-beng-proxy (15.32) unstable; urgency=low
 
   * bp/processor: escape "&c:XXX;" entity values
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 30 Jan 2020 09:40:09 +0100
 
 cm4all-beng-proxy (15.31) unstable; urgency=low
 
