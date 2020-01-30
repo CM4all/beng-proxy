@@ -81,7 +81,7 @@ embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext>,
 class IstreamProcessorTestTraits {
 public:
 	static constexpr const char *expected_result =
-		"foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar<b>http://localhost:8080/beng.html?&apos;</b>";
+		"foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar<b>http://localhost:8080/beng.html?%27%%22%3c%3e</b>";
 
 	static constexpr bool call_available = true;
 	static constexpr bool got_data_assert = true;
@@ -112,9 +112,9 @@ public:
 			 nullptr, nullptr,
 			 "localhost:8080",
 			 "localhost:8080",
-			 "/beng.html?'",
-			 "http://localhost:8080/beng.html?'",
-			 "/beng.html?'",
+			 "/beng.html?'%\"<>",
+			 "http://localhost:8080/beng.html?'%\"<>",
+			 "/beng.html?'%\"<>",
 			 nullptr,
 			 "bp_session", session->id, "foo",
 			 nullptr);

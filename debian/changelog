@@ -1,6 +1,6 @@
 cm4all-beng-proxy (16.3) unstable; urgency=low
 
-  * merge release 15.32
+  * merge release 15.33
   * fix resolver bug causing "Address already in use"
 
  --   
@@ -94,6 +94,12 @@ cm4all-beng-proxy (16.0.1) unstable; urgency=low
   * debian: use debhelper 12
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 27 Sep 2019 14:09:41 +0200
+
+cm4all-beng-proxy (15.33) unstable; urgency=low
+
+  * bp/processor: escape substituted entity values using the URI syntax
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 30 Jan 2020 16:29:36 +0100
 
 cm4all-beng-proxy (15.32) unstable; urgency=low
 

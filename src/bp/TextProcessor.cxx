@@ -38,8 +38,8 @@
 #include "widget/Class.hxx"
 #include "widget/Context.hxx"
 #include "pool/pool.hxx"
-#include "escape_html.hxx"
-#include "escape_pool.hxx"
+#include "util/CharUtil.hxx"
+#include "util/HexFormat.h"
 
 #include <assert.h>
 
@@ -81,14 +81,50 @@ base_uri(struct pool *pool, const char *absolute_uri)
 	return p_strndup(pool, absolute_uri, p - absolute_uri);
 }
 
-static void
-SubstAddEscaped(struct pool &pool, SubstTree &subst, const char *a,
-		StringView b) noexcept
+static constexpr bool
+MustEscape(char ch) noexcept
 {
-	if (!b.empty())
-		b = escape_dup(&pool, &html_escape_class, b);
+	/* escape all characters which may be dangerous inside HTML */
+	/* note: we don't escape '%' because we assume that the input
+	   value has already been escaped, and this isn't about
+	   protecting URIs, but about protecting HTML and
+	   JavaScript from injection attacks */
+	return ch == '\'' || ch == '"' || ch == '&' ||
+		ch == '<' || ch == '>' ||
+		!IsPrintableASCII(ch);
+}
 
-	subst.Add(pool, a, b);
+static size_t
+CountMustEscape(StringView s) noexcept
+{
+	size_t n = 0;
+	for (char ch : s)
+		if (MustEscape(ch))
+			++n;
+	return n;
+}
+
+static StringView
+EscapeValue(struct pool &pool, StringView v) noexcept
+{
+	const size_t n_escape = CountMustEscape(v);
+	if (n_escape == 0)
+		return v;
+
+	const size_t result_length = v.size + n_escape * 2;
+	char *p = PoolAlloc<char>(pool, result_length);
+	const StringView result(p, result_length);
+
+	for (char ch : v) {
+		if (MustEscape(ch)) {
+			*p++ = '%';
+			format_uint8_hex_fixed(p, ch);
+			p += 2;
+		} else
+			*p++ = ch;
+	}
+
+	return result;
 }
 
 static SubstTree
@@ -97,17 +133,18 @@ processor_subst_beng_widget(struct pool &pool,
 			    const WidgetContext &ctx)
 {
 	SubstTree subst;
-	SubstAddEscaped(pool, subst, "&c:type;", widget.class_name);
-	SubstAddEscaped(pool, subst, "&c:class;", widget.GetQuotedClassName());
-	SubstAddEscaped(pool, subst, "&c:local;", widget.cls->local_uri);
-	SubstAddEscaped(pool, subst, "&c:id;", widget.id);
-	SubstAddEscaped(pool, subst, "&c:path;", widget.GetIdPath());
-	SubstAddEscaped(pool, subst, "&c:prefix;", widget.GetPrefix());
-	SubstAddEscaped(pool, subst, "&c:uri;", ctx.absolute_uri);
-	SubstAddEscaped(pool, subst, "&c:base;", base_uri(&pool, ctx.uri));
-	SubstAddEscaped(pool, subst, "&c:frame;", strmap_get_checked(ctx.args, "frame"));
-	SubstAddEscaped(pool, subst, "&c:view;", widget.GetEffectiveView()->name);
-	SubstAddEscaped(pool, subst, "&c:session;", nullptr); /* obsolete as of version 15.29 */
+	subst.Add(pool, "&c:type;", widget.class_name);
+	subst.Add(pool, "&c:type;", widget.class_name);
+	subst.Add(pool, "&c:class;", widget.GetQuotedClassName());
+	subst.Add(pool, "&c:local;", widget.cls->local_uri);
+	subst.Add(pool, "&c:id;", widget.id);
+	subst.Add(pool, "&c:path;", widget.GetIdPath());
+	subst.Add(pool, "&c:prefix;", widget.GetPrefix());
+	subst.Add(pool, "&c:uri;", EscapeValue(pool, ctx.absolute_uri));
+	subst.Add(pool, "&c:base;", EscapeValue(pool, base_uri(&pool, ctx.uri)));
+	subst.Add(pool, "&c:frame;", EscapeValue(pool, strmap_get_checked(ctx.args, "frame")));
+	subst.Add(pool, "&c:view;", widget.GetEffectiveView()->name);
+	subst.Add(pool, "&c:session;", nullptr); /* obsolete as of version 15.29 */
 	return subst;
 }
 
