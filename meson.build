@@ -23,7 +23,7 @@ common_flags = [
   '-DVERSION="' + meson.project_version() + '"',
   '-DCACHE_LOG',
   '-Wwrite-strings', '-Wcast-qual', '-Wcast-align', '-Wfloat-equal',
-  '-Wshadow', '-Wpointer-arith', '-Wsign-compare',
+  '-Wshadow', '-Wpointer-arith',
   '-Wmissing-declarations', '-Wmissing-noreturn', '-Wmissing-format-attribute',
   '-Wredundant-decls',
   '-Wunused',
@@ -53,6 +53,7 @@ endif
 test_cxxflags = test_common_flags + [
   '-fno-threadsafe-statics',
   '-fmerge-all-constants',
+
   '-Wno-missing-field-initializers',
   '-Wno-non-virtual-dtor',
 
