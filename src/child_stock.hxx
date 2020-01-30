@@ -48,6 +48,8 @@ class SpawnService;
  */
 class ChildStockClass {
 public:
+	virtual Event::Duration GetChildClearInterval(void *info) const noexcept = 0;
+
 	/**
 	 * Determine the socket type for the given child process.  The
 	 * default is SOCK_STREAM.  This method may also be used to add
@@ -77,7 +79,24 @@ public:
  * #ChildStockClass.
  */
 class ChildStock final : StockClass {
-	StockMap map;
+	class MyStockMap final : public StockMap {
+		ChildStockClass &ccls;
+
+	public:
+		MyStockMap(EventLoop &_event_loop, StockClass &_cls,
+			   ChildStockClass &_ccls,
+			   unsigned _limit, unsigned _max_idle) noexcept
+			:StockMap(_event_loop, _cls, _limit, _max_idle,
+				  Event::Duration::zero()),
+			 ccls(_ccls) {}
+
+	protected:
+		Event::Duration GetClearInterval(void *info) const noexcept override {
+			return ccls.GetChildClearInterval(info);
+		}
+	};
+
+	MyStockMap map;
 
 	SpawnService &spawn_service;
 	ChildStockClass &cls;
@@ -94,8 +113,7 @@ public:
 		   unsigned _backlog,
 		   SocketDescriptor _log_socket,
 		   const ChildErrorLogOptions &_log_options,
-		   unsigned _limit, unsigned _max_idle,
-		   Event::Duration _clear_interval) noexcept;
+		   unsigned _limit, unsigned _max_idle) noexcept;
 
 	StockMap &GetStockMap() noexcept {
 		return map;

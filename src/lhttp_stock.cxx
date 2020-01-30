@@ -83,6 +83,7 @@ private:
 		    CancellablePointer &cancel_ptr) override;
 
 	/* virtual methods from class ChildStockClass */
+	Event::Duration GetChildClearInterval(void *info) const noexcept override;
 	int GetChildSocketType(void *info) const noexcept override;
 	unsigned GetChildBacklog(void *info) const noexcept override;
 	const char *GetChildTag(void *info) const noexcept override;
@@ -208,6 +209,18 @@ LhttpConnection::EventCallback(unsigned) noexcept
  *
  */
 
+Event::Duration
+LhttpStock::GetChildClearInterval(void *info) const noexcept
+{
+	const auto &address = *(const LhttpAddress *)info;
+
+	return address.options.ns.mount.pivot_root == nullptr
+		? std::chrono::minutes(15)
+		/* lower clear_interval for jailed (per-account?)
+		   processes */
+		: std::chrono::minutes(5);
+}
+
 int
 LhttpStock::GetChildSocketType(void *info) const noexcept
 {
@@ -296,8 +309,7 @@ LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
 		     *this,
 		     64,
 		     log_socket, log_options,
-		     limit, max_idle,
-		     std::chrono::minutes(5)),
+		     limit, max_idle),
 	 mchild_stock(child_stock.GetStockMap()),
 	 hstock(event_loop, *this, limit, max_idle,
 		std::chrono::minutes(2)) {}

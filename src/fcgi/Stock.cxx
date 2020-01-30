@@ -113,6 +113,7 @@ private:
 		    CancellablePointer &cancel_ptr) override;
 
 	/* virtual methods from class ChildStockClass */
+	Event::Duration GetChildClearInterval(void *info) const noexcept override;
 	const char *GetChildTag(void *info) const noexcept override;
 	void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
 			  PreparedChildProcess &p) override;
@@ -235,6 +236,18 @@ FcgiConnection::OnSocketEvent(unsigned) noexcept
  * child_stock class
  *
  */
+
+Event::Duration
+FcgiStock::GetChildClearInterval(void *info) const noexcept
+{
+	const auto &params = *(const FcgiChildParams *)info;
+
+	return params.options.ns.mount.pivot_root == nullptr
+		? std::chrono::minutes(10)
+		/* lower clear_interval for jailed (per-account?)
+		   processes */
+		: std::chrono::minutes(5);
+}
 
 const char *
 FcgiStock::GetChildTag(void *info) const noexcept
@@ -387,8 +400,7 @@ FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
 		     *this,
 		     4,
 		     _log_socket, _log_options,
-		     limit, max_idle,
-		     std::chrono::minutes(5)) {}
+		     limit, max_idle) {}
 
 void
 FcgiStock::FadeTag(const char *tag) noexcept

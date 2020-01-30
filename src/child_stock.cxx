@@ -217,9 +217,8 @@ ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
 		       unsigned _backlog,
 		       SocketDescriptor _log_socket,
 		       const ChildErrorLogOptions &_log_options,
-		       unsigned _limit, unsigned _max_idle,
-		       Event::Duration _clear_interval) noexcept
-	:map(event_loop, *this, _limit, _max_idle, _clear_interval),
+		       unsigned _limit, unsigned _max_idle) noexcept
+	:map(event_loop, *this, _cls, _limit, _max_idle),
 	 spawn_service(_spawn_service), cls(_cls),
 	 backlog(_backlog),
 	 log_socket(_log_socket),
