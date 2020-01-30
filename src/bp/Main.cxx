@@ -408,7 +408,7 @@ try {
 					   *instance.translation_stock);
 	}
 
-	instance.lhttp_stock = lhttp_stock_new(0, 16, instance.event_loop,
+	instance.lhttp_stock = lhttp_stock_new(0, 8, instance.event_loop,
 					       *instance.spawn_service,
 					       child_log_socket,
 					       child_log_options);

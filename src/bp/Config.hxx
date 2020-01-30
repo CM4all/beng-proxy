@@ -126,7 +126,7 @@ struct BpConfig {
 
 	unsigned tcp_stock_limit = 0;
 
-	unsigned fcgi_stock_limit = 0, fcgi_stock_max_idle = 16;
+	unsigned fcgi_stock_limit = 0, fcgi_stock_max_idle = 8;
 
 	unsigned was_stock_limit = 0, was_stock_max_idle = 16;
 
