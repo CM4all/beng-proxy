@@ -1160,6 +1160,9 @@ in ``SCRIPT`` elements.
 
 - ``&c:view;``: the name of the current view
 
+Before inserting, the values are escaped using the standard XML
+entities.
+
 .. _rewrite:
 
 Relative URIs

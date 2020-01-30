@@ -38,6 +38,8 @@
 #include "widget/Class.hxx"
 #include "widget/Context.hxx"
 #include "pool/pool.hxx"
+#include "escape_html.hxx"
+#include "escape_pool.hxx"
 
 #include <assert.h>
 
@@ -79,23 +81,33 @@ base_uri(struct pool *pool, const char *absolute_uri)
 	return p_strndup(pool, absolute_uri, p - absolute_uri);
 }
 
+static void
+SubstAddEscaped(struct pool &pool, SubstTree &subst, const char *a,
+		StringView b) noexcept
+{
+	if (!b.empty())
+		b = escape_dup(&pool, &html_escape_class, b);
+
+	subst.Add(pool, a, b);
+}
+
 static SubstTree
 processor_subst_beng_widget(struct pool &pool,
 			    const Widget &widget,
 			    const WidgetContext &ctx)
 {
 	SubstTree subst;
-	subst.Add(pool, "&c:type;", widget.class_name);
-	subst.Add(pool, "&c:class;", widget.GetQuotedClassName());
-	subst.Add(pool, "&c:local;", widget.cls->local_uri);
-	subst.Add(pool, "&c:id;", widget.id);
-	subst.Add(pool, "&c:path;", widget.GetIdPath());
-	subst.Add(pool, "&c:prefix;", widget.GetPrefix());
-	subst.Add(pool, "&c:uri;", ctx.absolute_uri);
-	subst.Add(pool, "&c:base;", base_uri(&pool, ctx.uri));
-	subst.Add(pool, "&c:frame;", strmap_get_checked(ctx.args, "frame"));
-	subst.Add(pool, "&c:view;", widget.GetEffectiveView()->name);
-	subst.Add(pool, "&c:session;", nullptr); /* obsolete as of version 15.29 */
+	SubstAddEscaped(pool, subst, "&c:type;", widget.class_name);
+	SubstAddEscaped(pool, subst, "&c:class;", widget.GetQuotedClassName());
+	SubstAddEscaped(pool, subst, "&c:local;", widget.cls->local_uri);
+	SubstAddEscaped(pool, subst, "&c:id;", widget.id);
+	SubstAddEscaped(pool, subst, "&c:path;", widget.GetIdPath());
+	SubstAddEscaped(pool, subst, "&c:prefix;", widget.GetPrefix());
+	SubstAddEscaped(pool, subst, "&c:uri;", ctx.absolute_uri);
+	SubstAddEscaped(pool, subst, "&c:base;", base_uri(&pool, ctx.uri));
+	SubstAddEscaped(pool, subst, "&c:frame;", strmap_get_checked(ctx.args, "frame"));
+	SubstAddEscaped(pool, subst, "&c:view;", widget.GetEffectiveView()->name);
+	SubstAddEscaped(pool, subst, "&c:session;", nullptr); /* obsolete as of version 15.29 */
 	return subst;
 }
 
