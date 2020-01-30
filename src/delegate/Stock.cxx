@@ -37,7 +37,6 @@
 #include "system/Error.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "event/SocketEvent.hxx"
-#include "event/TimerEvent.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
@@ -79,7 +78,6 @@ class DelegateProcess final : public StockItem {
 	UniqueSocketDescriptor fd;
 
 	SocketEvent event;
-	TimerEvent idle_timeout_event;
 
 public:
 	explicit DelegateProcess(CreateStockItem c,
@@ -88,9 +86,7 @@ public:
 		 logger(c.GetStockName()),
 		 fd(std::move(_fd)),
 		 event(c.stock.GetEventLoop(),
-		       BIND_THIS_METHOD(SocketEventCallback), fd),
-		 idle_timeout_event(c.stock.GetEventLoop(),
-				    BIND_THIS_METHOD(OnIdleTimeout))
+		       BIND_THIS_METHOD(SocketEventCallback), fd)
 	{
 	}
 
@@ -101,19 +97,16 @@ public:
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override {
 		event.Cancel();
-		idle_timeout_event.Cancel();
 		return true;
 	}
 
 	bool Release() noexcept override {
 		event.ScheduleRead();
-		idle_timeout_event.Schedule(std::chrono::minutes(1));
 		return true;
 	}
 
 private:
 	void SocketEventCallback(unsigned events) noexcept;
-	void OnIdleTimeout() noexcept;
 };
 
 class DelegateStock final : StockClass {
@@ -150,12 +143,6 @@ DelegateProcess::SocketEventCallback(unsigned) noexcept
 	else if (nbytes > 0)
 		logger(2, "unexpected data from idle delegate process");
 
-	InvokeIdleDisconnect();
-}
-
-inline void
-DelegateProcess::OnIdleTimeout() noexcept
-{
 	InvokeIdleDisconnect();
 }
 
