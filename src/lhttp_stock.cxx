@@ -44,7 +44,6 @@
 #include "spawn/JailParams.hxx"
 #include "spawn/Prepared.hxx"
 #include "event/SocketEvent.hxx"
-#include "event/TimerEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Logger.hxx"
 #include "util/RuntimeError.hxx"
@@ -100,15 +99,13 @@ class LhttpConnection final : LoggerDomainFactory, StockItem {
 
 	UniqueSocketDescriptor fd;
 	SocketEvent event;
-	TimerEvent idle_timeout_event;
 
 public:
 	explicit LhttpConnection(CreateStockItem c) noexcept
 		:StockItem(c),
 		 logger(*this),
-		 event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)),
-		 idle_timeout_event(c.stock.GetEventLoop(),
-				    BIND_THIS_METHOD(OnIdleTimeout)) {}
+		 event(c.stock.GetEventLoop(),
+		       BIND_THIS_METHOD(EventCallback)) {}
 
 	~LhttpConnection() noexcept override;
 
@@ -138,7 +135,6 @@ public:
 
 private:
 	void EventCallback(unsigned events) noexcept;
-	void OnIdleTimeout() noexcept;
 
 	/* virtual methods from LoggerDomainFactory */
 	std::string MakeLoggerDomain() const noexcept override {
@@ -148,13 +144,11 @@ private:
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override {
 		event.Cancel();
-		idle_timeout_event.Cancel();
 		return true;
 	}
 
 	bool Release() noexcept override {
 		event.ScheduleRead();
-		idle_timeout_event.Schedule(std::chrono::minutes(5));
 		return true;
 	}
 };
@@ -206,12 +200,6 @@ LhttpConnection::EventCallback(unsigned) noexcept
 	else if (nbytes > 0)
 		logger(2, "unexpected data from idle LHTTP connection");
 
-	InvokeIdleDisconnect();
-}
-
-inline void
-LhttpConnection::OnIdleTimeout() noexcept
-{
 	InvokeIdleDisconnect();
 }
 
