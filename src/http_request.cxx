@@ -111,7 +111,7 @@ public:
 		 filter_factory(_filter_factory),
 		 session_sticky(_session_sticky),
 		 /* can only retry if there is no request body */
-		 retries(body ? 0 : 2),
+		 retries(_body ? 0 : 2),
 		 method(_method), address(_address),
 		 headers(std::move(_headers)), body(pool, std::move(_body)),
 		 handler(_handler)
