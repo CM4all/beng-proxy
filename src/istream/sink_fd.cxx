@@ -46,7 +46,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-struct SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
+class SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
 	struct pool *pool;
 
 	FileDescriptor fd;
@@ -73,6 +73,7 @@ struct SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
 	bool valid = true;
 #endif
 
+public:
 	SinkFd(EventLoop &event_loop, struct pool &_pool,
 	       UnusedIstreamPtr &&_istream,
 	       FileDescriptor _fd, FdType _fd_type,
@@ -96,14 +97,23 @@ struct SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
 	}
 
 	void Read() noexcept {
+		assert(valid);
+		assert(IsDefined());
+
 		input.Read();
 	}
 
 	void Close() noexcept {
+#ifndef NDEBUG
+		valid = false;
+#endif
+
+		event.Cancel();
 		input.Close();
 		Destroy();
 	}
 
+private:
 	void ScheduleWrite() noexcept {
 		assert(fd.IsDefined());
 		assert(input.IsDefined());
@@ -251,8 +261,6 @@ void
 sink_fd_read(SinkFd *ss) noexcept
 {
 	assert(ss != nullptr);
-	assert(ss->valid);
-	assert(ss->IsDefined());
 
 	ss->Read();
 }
@@ -261,13 +269,6 @@ void
 sink_fd_close(SinkFd *ss) noexcept
 {
 	assert(ss != nullptr);
-	assert(ss->valid);
-	assert(ss->IsDefined());
 
-#ifndef NDEBUG
-	ss->valid = false;
-#endif
-
-	ss->event.Cancel();
 	ss->Close();
 }
