@@ -46,7 +46,6 @@
 #include "pool/StringBuilder.hxx"
 #include "AllocatorPtr.hxx"
 #include "event/SocketEvent.hxx"
-#include "event/TimerEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/Logger.hxx"
@@ -146,7 +145,6 @@ struct FcgiConnection final : StockItem {
 
 	UniqueSocketDescriptor fd;
 	SocketEvent event;
-	TimerEvent idle_timeout_event;
 
 	/**
 	 * Is this a fresh connection to the FastCGI child process?
@@ -165,9 +163,7 @@ struct FcgiConnection final : StockItem {
 
 	explicit FcgiConnection(EventLoop &event_loop, CreateStockItem c) noexcept
 		:StockItem(c), logger(GetStockName()),
-		 event(event_loop, BIND_THIS_METHOD(OnSocketEvent)),
-		 idle_timeout_event(c.stock.GetEventLoop(),
-				    BIND_THIS_METHOD(OnIdleTimeout)) {}
+		 event(event_loop, BIND_THIS_METHOD(OnSocketEvent)) {}
 
 	~FcgiConnection() noexcept override;
 
@@ -192,7 +188,6 @@ struct FcgiConnection final : StockItem {
 
 private:
 	void OnSocketEvent(unsigned events) noexcept;
-	void OnIdleTimeout() noexcept;
 };
 
 const char *
@@ -233,12 +228,6 @@ FcgiConnection::OnSocketEvent(unsigned) noexcept
 	else if (nbytes > 0)
 		logger(2, "unexpected data from idle FastCGI connection");
 
-	InvokeIdleDisconnect();
-}
-
-inline void
-FcgiConnection::OnIdleTimeout() noexcept
-{
 	InvokeIdleDisconnect();
 }
 
@@ -351,7 +340,6 @@ FcgiConnection::Borrow() noexcept
 	}
 
 	event.Cancel();
-	idle_timeout_event.Cancel();
 	aborted = false;
 	return true;
 }
@@ -361,7 +349,6 @@ FcgiConnection::Release() noexcept
 {
 	fresh = false;
 	event.ScheduleRead();
-	idle_timeout_event.Schedule(std::chrono::minutes(6));
 	return true;
 }
 
