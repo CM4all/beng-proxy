@@ -42,9 +42,10 @@ class UniqueSocketDescriptor;
 /**
  * Create a listener socket for a child process.
  */
-struct ChildSocket {
+class ChildSocket {
 	struct sockaddr_un address;
 
+public:
 	ChildSocket() noexcept {
 		address.sun_family = AF_UNSPEC;
 	}
