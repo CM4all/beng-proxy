@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_SINK_FD_HXX
-#define BENG_PROXY_SINK_FD_HXX
+#pragma once
 
 #include "io/FdType.hxx"
 
@@ -44,25 +43,25 @@ class UnusedIstreamPtr;
 struct SinkFd;
 
 struct SinkFdHandler {
-    /**
-     * Called when end-of-file has been received from the istream.
-     */
-    void (*input_eof)(void *ctx);
+	/**
+	 * Called when end-of-file has been received from the istream.
+	 */
+	void (*input_eof)(void *ctx);
 
-    /**
-     * Called when an error has been reported by the istream, right
-     * before the sink is destructed.
-     */
-    void (*input_error)(std::exception_ptr ep, void *ctx);
+	/**
+	 * Called when an error has been reported by the istream, right
+	 * before the sink is destructed.
+	 */
+	void (*input_error)(std::exception_ptr ep, void *ctx);
 
-    /**
-     * Called when a send error has occurred on the socket, right
-     * before the sink is destructed.
-     *
-     * @return true to close the stream, false when this method has
-     * already destructed the sink
-     */
-    bool (*send_error)(int error, void *ctx);
+	/**
+	 * Called when a send error has occurred on the socket, right
+	 * before the sink is destructed.
+	 *
+	 * @return true to close the stream, false when this method has
+	 * already destructed the sink
+	 */
+	bool (*send_error)(int error, void *ctx);
 };
 
 /**
@@ -70,13 +69,11 @@ struct SinkFdHandler {
  */
 SinkFd *
 sink_fd_new(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr istream,
-            FileDescriptor fd, FdType fd_type,
-            const SinkFdHandler &handler, void *ctx) noexcept;
+	    FileDescriptor fd, FdType fd_type,
+	    const SinkFdHandler &handler, void *ctx) noexcept;
 
 void
 sink_fd_read(SinkFd *ss) noexcept;
 
 void
 sink_fd_close(SinkFd *ss) noexcept;
-
-#endif
