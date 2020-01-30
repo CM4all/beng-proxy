@@ -42,7 +42,6 @@
 #include "pool/tpool.hxx"
 #include "pool/StringBuilder.hxx"
 #include "event/SocketEvent.hxx"
-#include "event/TimerEvent.hxx"
 #include "net/log/Datagram.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
@@ -63,8 +62,6 @@
 #include <sys/un.h>
 #include <signal.h>
 #include <stdlib.h>
-
-static constexpr Event::Duration was_idle_timeout = std::chrono::minutes(5);
 
 struct WasChildParams {
 	const char *executable_path;
@@ -93,7 +90,6 @@ class WasChild final : public StockItem, ExitListener {
 
 	WasProcess process;
 	SocketEvent event;
-	TimerEvent idle_timeout_event;
 
 	/**
 	 * If true, then we're waiting for PREMATURE (after the #WasClient
@@ -111,9 +107,7 @@ public:
 			  const char *_tag) noexcept
 		:StockItem(c), logger(GetStockName()), spawn_service(_spawn_service),
 		 tag(_tag != nullptr ? _tag : ""),
-		 event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)),
-		 idle_timeout_event(c.stock.GetEventLoop(),
-				    BIND_THIS_METHOD(OnIdleTimeout))
+		 event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback))
 	{
 		/* mark this object as "unused" so the destructor doesn't
 		   attempt to kill the process */
@@ -198,7 +192,6 @@ private:
 	void RecoverStop() noexcept;
 
 	void EventCallback(unsigned events) noexcept;
-	void OnIdleTimeout() noexcept;
 
 public:
 	/* virtual methods from class StockItem */
@@ -210,13 +203,11 @@ public:
 			return false;
 
 		event.Cancel();
-		idle_timeout_event.Cancel();
 		return true;
 	}
 
 	bool Release() noexcept override {
 		event.ScheduleRead();
-		idle_timeout_event.Schedule(was_idle_timeout);
 		unclean = stopping;
 		return true;
 	}
@@ -403,12 +394,6 @@ WasChild::EventCallback(unsigned) noexcept
 	else if (nbytes > 0)
 		logger(2, "unexpected data from idle WAS control connection");
 
-	InvokeIdleDisconnect();
-}
-
-inline void
-WasChild::OnIdleTimeout() noexcept
-{
 	InvokeIdleDisconnect();
 }
 
