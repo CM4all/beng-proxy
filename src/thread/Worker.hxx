@@ -39,7 +39,7 @@ class ThreadQueue;
 /**
  * A thread that performs queued work.
  */
-struct thread_worker {
+struct ThreadWorker {
 	pthread_t thread;
 
 	ThreadQueue *queue;
@@ -49,14 +49,14 @@ struct thread_worker {
  * Throws exception on error.
  */
 void
-thread_worker_create(struct thread_worker &w, ThreadQueue &q);
+thread_worker_create(ThreadWorker &w, ThreadQueue &q);
 
 /**
  * Wait for the thread to exit.  You must call thread_queue_stop()
  * prior to this function.
  */
 static inline void
-thread_worker_join(struct thread_worker &w) noexcept
+thread_worker_join(ThreadWorker &w) noexcept
 {
 	pthread_join(w.thread, nullptr);
 }

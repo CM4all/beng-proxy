@@ -45,7 +45,7 @@
 #include <stdlib.h>
 
 static ThreadQueue *global_thread_queue;
-static std::array<struct thread_worker, 8> worker_threads;
+static std::array<ThreadWorker, 8> worker_threads;
 
 static void
 thread_pool_init(EventLoop &event_loop) noexcept

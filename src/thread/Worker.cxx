@@ -43,7 +43,7 @@ thread_worker_run(void *ctx) noexcept
 	/* reduce glibc's thread cancellation overhead */
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, nullptr);
 
-	struct thread_worker &w = *(struct thread_worker *)ctx;
+	auto &w = *(ThreadWorker *)ctx;
 	ThreadQueue &q = *w.queue;
 
 	ThreadJob *job;
@@ -58,7 +58,7 @@ thread_worker_run(void *ctx) noexcept
 }
 
 void
-thread_worker_create(struct thread_worker &w, ThreadQueue &q)
+thread_worker_create(ThreadWorker &w, ThreadQueue &q)
 {
 	w.queue = &q;
 
