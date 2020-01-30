@@ -164,8 +164,6 @@ public:
 			i.stock.AddStats(data);
 	}
 
-	Stock &GetStock(const char *uri) noexcept;
-
 	void Get(const char *uri, StockRequest &&request,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept {
@@ -184,6 +182,9 @@ public:
 		Stock &stock = GetStock(uri);
 		return stock.GetNow(std::move(request));
 	}
+
+private:
+	Stock &GetStock(const char *uri) noexcept;
 
 	/* virtual methods from class StockHandler */
 	void OnStockEmpty(Stock &stock) noexcept override;
