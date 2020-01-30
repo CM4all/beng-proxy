@@ -22,8 +22,6 @@ common_flags = [
   '-DPACKAGE="' + meson.project_name() + '"',
   '-DVERSION="' + meson.project_version() + '"',
   '-DCACHE_LOG',
-  '-Wall',
-  '-Wextra',
   '-Wwrite-strings', '-Wcast-qual', '-Wcast-align', '-Wfloat-equal',
   '-Wshadow', '-Wpointer-arith', '-Wsign-compare',
   '-Wmissing-declarations', '-Wmissing-noreturn', '-Wmissing-format-attribute',

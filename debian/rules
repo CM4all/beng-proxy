@@ -9,6 +9,7 @@ MESON_OPTIONS = \
 	-Dsystemd=true \
 	-Dwas=enabled \
 	-Dzeroconf=enabled \
+	--warnlevel=2 \
 	--werror
 
 %:
