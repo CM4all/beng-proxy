@@ -48,7 +48,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define EXPECTED_RESULT "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar"
+#define EXPECTED_RESULT "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar<b>http://localhost:8080/beng.html</b>"
 
 class EventLoop;
 
@@ -76,7 +76,7 @@ embed_inline_widget(struct pool &pool, gcc_unused struct processor_env &env,
 static UnusedIstreamPtr
 create_input(struct pool &pool)
 {
-    return istream_string_new(pool, "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> <c:widget id=\"foo\" type=\"bar\"/>");
+    return istream_string_new(pool, "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> <c:widget id=\"foo\" type=\"bar\"/><b>&c:uri;</b>");
 }
 
 static UnusedIstreamPtr
