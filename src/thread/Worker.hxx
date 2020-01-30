@@ -56,7 +56,7 @@ thread_worker_create(struct thread_worker &w, ThreadQueue &q);
  * prior to this function.
  */
 static inline void
-thread_worker_join(struct thread_worker &w)
+thread_worker_join(struct thread_worker &w) noexcept
 {
 	pthread_join(w.thread, nullptr);
 }
