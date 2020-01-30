@@ -162,7 +162,7 @@ Widget::GetLogName() const noexcept
 			return lazy.log_name = alloc.Concat(class_name,
 							    "#(null)",
 							    WIDGET_REF_SEPARATOR,
-							    id_path);
+							    id);
 
 		return class_name;
 	}

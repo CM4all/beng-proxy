@@ -2,7 +2,7 @@ cm4all-beng-proxy (16.3) unstable; urgency=low
 
   * merge release 15.33
   * fix resolver bug causing "Address already in use"
-  * fix crash bug
+  * fix two crash bugs
   * fix "spawner gone, emergency"
 
  --   
