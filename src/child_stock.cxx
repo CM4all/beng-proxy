@@ -38,7 +38,6 @@
 #include "stock/Item.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
-#include "event/TimerEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "pool/pool.hxx"
 
@@ -77,17 +76,13 @@ class ChildStockItem final : public StockItem, ExitListener {
 
 	bool busy = true;
 
-	TimerEvent idle_timeout_event;
-
 public:
 	ChildStockItem(CreateStockItem c,
 		       SpawnService &_spawn_service,
 		       const char *_tag) noexcept
 		:StockItem(c),
 		 spawn_service(_spawn_service),
-		 tag(_tag != nullptr ? _tag : ""),
-		 idle_timeout_event(GetEventLoop(),
-				    BIND_THIS_METHOD(OnIdleTimeout)) {}
+		 tag(_tag != nullptr ? _tag : "") {}
 
 	~ChildStockItem() override;
 
@@ -134,8 +129,6 @@ public:
 		assert(!busy);
 		busy = true;
 
-		idle_timeout_event.Cancel();
-
 		return true;
 	}
 
@@ -147,16 +140,10 @@ public:
 		if (pid <= 0)
 			return false;
 
-		/* kill idle processes after 15 minutes */
-		idle_timeout_event.Schedule(std::chrono::minutes(15));
 		return true;
 	}
 
 private:
-	void OnIdleTimeout() noexcept {
-		InvokeIdleDisconnect();
-	}
-
 	/* virtual methods from class ExitListener */
 	void OnChildProcessExit(int status) noexcept override;
 };
