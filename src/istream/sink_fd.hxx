@@ -40,7 +40,7 @@ struct pool;
 class EventLoop;
 class FileDescriptor;
 class UnusedIstreamPtr;
-struct SinkFd;
+class SinkFd;
 
 class SinkFdHandler {
 public:
