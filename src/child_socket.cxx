@@ -70,7 +70,7 @@ ChildSocket::Create(int socket_type, int backlog)
 }
 
 void
-ChildSocket::Unlink()
+ChildSocket::Unlink() noexcept
 {
 	unlink(address.sun_path);
 }

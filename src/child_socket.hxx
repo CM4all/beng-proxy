@@ -45,11 +45,11 @@ class UniqueSocketDescriptor;
 struct ChildSocket {
 	struct sockaddr_un address;
 
-	ChildSocket() {
+	ChildSocket() noexcept {
 		address.sun_family = AF_UNSPEC;
 	}
 
-	bool IsDefined() const {
+	bool IsDefined() const noexcept {
 		return GetAddress().IsDefined();
 	}
 
@@ -58,9 +58,9 @@ struct ChildSocket {
 	 */
 	UniqueSocketDescriptor Create(int socket_type, int backlog);
 
-	void Unlink();
+	void Unlink() noexcept;
 
-	SocketAddress GetAddress() const {
+	SocketAddress GetAddress() const noexcept {
 		return SocketAddress((const struct sockaddr *)&address,
 				     SUN_LEN(&address));
 	}
