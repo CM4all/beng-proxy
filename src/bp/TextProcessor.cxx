@@ -99,7 +99,7 @@ processor_subst_beng_widget(struct pool &pool,
 	subst.Add(pool, "&c:type;", widget.class_name);
 	subst.Add(pool, "&c:type;", widget.class_name);
 	subst.Add(pool, "&c:class;", widget.GetQuotedClassName());
-	subst.Add(pool, "&c:local;", EscapeValue(pool, widget.cls->local_uri));
+	subst.Add(pool, "&c:local;", widget.cls->local_uri);
 	subst.Add(pool, "&c:id;", widget.id);
 	subst.Add(pool, "&c:path;", widget.GetIdPath());
 	subst.Add(pool, "&c:prefix;", widget.GetPrefix());
