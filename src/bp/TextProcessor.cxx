@@ -81,14 +81,13 @@ base_uri(struct pool *pool, const char *absolute_uri)
 	return p_strndup(pool, absolute_uri, p - absolute_uri);
 }
 
-static void
-SubstAddEscaped(struct pool &pool, SubstTree &subst, const char *a,
-		StringView b) noexcept
+static StringView
+EscapeValue(struct pool &pool, StringView v) noexcept
 {
-	if (!b.empty())
-		b = escape_dup(&pool, &html_escape_class, b);
+	if (!v.empty())
+		v = escape_dup(&pool, &html_escape_class, v);
 
-	subst.Add(pool, a, b);
+	return v;
 }
 
 static SubstTree
@@ -100,13 +99,13 @@ processor_subst_beng_widget(struct pool &pool,
 	subst.Add(pool, "&c:type;", widget.class_name);
 	subst.Add(pool, "&c:type;", widget.class_name);
 	subst.Add(pool, "&c:class;", widget.GetQuotedClassName());
-	SubstAddEscaped(pool, subst, "&c:local;", widget.cls->local_uri);
+	subst.Add(pool, "&c:local;", EscapeValue(pool, widget.cls->local_uri));
 	subst.Add(pool, "&c:id;", widget.id);
 	subst.Add(pool, "&c:path;", widget.GetIdPath());
 	subst.Add(pool, "&c:prefix;", widget.GetPrefix());
-	SubstAddEscaped(pool, subst, "&c:uri;", env.absolute_uri);
-	SubstAddEscaped(pool, subst, "&c:base;", base_uri(&pool, env.uri));
-	SubstAddEscaped(pool, subst, "&c:frame;", strmap_get_checked(env.args, "frame"));
+	subst.Add(pool, "&c:uri;", EscapeValue(pool, env.absolute_uri));
+	subst.Add(pool, "&c:base;", EscapeValue(pool, base_uri(&pool, env.uri)));
+	subst.Add(pool, "&c:frame;", EscapeValue(pool, strmap_get_checked(env.args, "frame")));
 	subst.Add(pool, "&c:view;", widget.GetEffectiveView()->name);
 	subst.Add(pool, "&c:session;", nullptr); /* obsolete as of version 15.29 */
 	return subst;
