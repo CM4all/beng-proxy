@@ -74,24 +74,24 @@ class HttpRequest final
 
 	StopwatchPtr stopwatch;
 
-	const sticky_hash_t session_sticky;
-
 	SocketFilterFactory *const filter_factory;
 
 	StockItem *stock_item = nullptr;
 	FailurePtr failure;
+
+	const sticky_hash_t session_sticky;
+
+	unsigned retries;
+
+	bool response_sent = false;
 
 	const http_method_t method;
 	const HttpAddress &address;
 	HttpHeaders headers;
 	UnusedHoldIstreamPtr body;
 
-	unsigned retries;
-
 	HttpResponseHandler &handler;
 	CancellablePointer cancel_ptr;
-
-	bool response_sent = false;
 
 public:
 	HttpRequest(struct pool &_pool, EventLoop &_event_loop,
@@ -108,12 +108,12 @@ public:
 		:PoolLeakDetector(_pool),
 		 pool(_pool), event_loop(_event_loop), fs_balancer(_fs_balancer),
 		 stopwatch(parent_stopwatch, _address.path),
-		 session_sticky(_session_sticky),
 		 filter_factory(_filter_factory),
-		 method(_method), address(_address),
-		 headers(std::move(_headers)), body(pool, std::move(_body)),
+		 session_sticky(_session_sticky),
 		 /* can only retry if there is no request body */
 		 retries(body ? 0 : 2),
+		 method(_method), address(_address),
+		 headers(std::move(_headers)), body(pool, std::move(_body)),
 		 handler(_handler)
 	{
 		_cancel_ptr = *this;
