@@ -52,13 +52,13 @@ class ThreadQueue;
  */
 gcc_const
 ThreadQueue &
-thread_pool_get_queue(EventLoop &event_loop);
+thread_pool_get_queue(EventLoop &event_loop) noexcept;
 
 void
-thread_pool_stop();
+thread_pool_stop() noexcept;
 
 void
-thread_pool_join();
+thread_pool_join() noexcept;
 
 void
-thread_pool_deinit();
+thread_pool_deinit() noexcept;

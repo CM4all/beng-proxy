@@ -48,13 +48,13 @@ static ThreadQueue *global_thread_queue;
 static std::array<struct thread_worker, 8> worker_threads;
 
 static void
-thread_pool_init(EventLoop &event_loop)
+thread_pool_init(EventLoop &event_loop) noexcept
 {
 	global_thread_queue = thread_queue_new(event_loop);
 }
 
 static void
-thread_pool_start()
+thread_pool_start() noexcept
 try {
 	assert(global_thread_queue != nullptr);
 
@@ -67,7 +67,7 @@ try {
 }
 
 ThreadQueue &
-thread_pool_get_queue(EventLoop &event_loop)
+thread_pool_get_queue(EventLoop &event_loop) noexcept
 {
 	if (global_thread_queue == nullptr) {
 		/* initial call - create the queue and launch worker
@@ -80,7 +80,7 @@ thread_pool_get_queue(EventLoop &event_loop)
 }
 
 void
-thread_pool_stop(void)
+thread_pool_stop() noexcept
 {
 	if (global_thread_queue == nullptr)
 		return;
@@ -89,7 +89,7 @@ thread_pool_stop(void)
 }
 
 void
-thread_pool_join(void)
+thread_pool_join() noexcept
 {
 	if (global_thread_queue == nullptr)
 		return;
@@ -99,7 +99,7 @@ thread_pool_join(void)
 }
 
 void
-thread_pool_deinit(void)
+thread_pool_deinit() noexcept
 {
 	if (global_thread_queue == nullptr)
 		return;
