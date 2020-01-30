@@ -27,6 +27,7 @@ common_flags = [
   '-Wmissing-declarations', '-Wmissing-noreturn', '-Wmissing-format-attribute',
   '-Wredundant-decls',
   '-Wunused',
+  '-Wno-unused-result',
   '-Wundef',
 ]
 
