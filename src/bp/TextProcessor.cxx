@@ -45,64 +45,64 @@ gcc_pure
 static bool
 text_processor_allowed_content_type(const char *content_type)
 {
-    assert(content_type != NULL);
+	assert(content_type != NULL);
 
-    return strncmp(content_type, "text/", 5) == 0 ||
-        strncmp(content_type, "application/json", 16) == 0 ||
-        strncmp(content_type, "application/javascript", 22) == 0;
+	return strncmp(content_type, "text/", 5) == 0 ||
+		strncmp(content_type, "application/json", 16) == 0 ||
+		strncmp(content_type, "application/javascript", 22) == 0;
 }
 
 bool
 text_processor_allowed(const StringMap &headers)
 {
-    const char *content_type = headers.Get("content-type");
-    return content_type != NULL &&
-        text_processor_allowed_content_type(content_type);
+	const char *content_type = headers.Get("content-type");
+	return content_type != NULL &&
+		text_processor_allowed_content_type(content_type);
 }
 
 gcc_pure
 static const char *
 base_uri(struct pool *pool, const char *absolute_uri)
 {
-    const char *p;
+	const char *p;
 
-    if (absolute_uri == NULL)
-        return NULL;
+	if (absolute_uri == NULL)
+		return NULL;
 
-    p = strchr(absolute_uri, ';');
-    if (p == NULL) {
-        p = strchr(absolute_uri, '?');
-        if (p == NULL)
-            return absolute_uri;
-    }
+	p = strchr(absolute_uri, ';');
+	if (p == NULL) {
+		p = strchr(absolute_uri, '?');
+		if (p == NULL)
+			return absolute_uri;
+	}
 
-    return p_strndup(pool, absolute_uri, p - absolute_uri);
+	return p_strndup(pool, absolute_uri, p - absolute_uri);
 }
 
 static SubstTree
 processor_subst_beng_widget(struct pool &pool,
-                            const Widget &widget,
-                            const struct processor_env &env)
+			    const Widget &widget,
+			    const struct processor_env &env)
 {
-    SubstTree subst;
-    subst.Add(pool, "&c:type;", widget.class_name);
-    subst.Add(pool, "&c:class;", widget.GetQuotedClassName());
-    subst.Add(pool, "&c:local;", widget.cls->local_uri);
-    subst.Add(pool, "&c:id;", widget.id);
-    subst.Add(pool, "&c:path;", widget.GetIdPath());
-    subst.Add(pool, "&c:prefix;", widget.GetPrefix());
-    subst.Add(pool, "&c:uri;", env.absolute_uri);
-    subst.Add(pool, "&c:base;", base_uri(&pool, env.uri));
-    subst.Add(pool, "&c:frame;", strmap_get_checked(env.args, "frame"));
-    subst.Add(pool, "&c:view;", widget.GetEffectiveView()->name);
-    subst.Add(pool, "&c:session;", nullptr); /* obsolete as of version 15.29 */
-    return subst;
+	SubstTree subst;
+	subst.Add(pool, "&c:type;", widget.class_name);
+	subst.Add(pool, "&c:class;", widget.GetQuotedClassName());
+	subst.Add(pool, "&c:local;", widget.cls->local_uri);
+	subst.Add(pool, "&c:id;", widget.id);
+	subst.Add(pool, "&c:path;", widget.GetIdPath());
+	subst.Add(pool, "&c:prefix;", widget.GetPrefix());
+	subst.Add(pool, "&c:uri;", env.absolute_uri);
+	subst.Add(pool, "&c:base;", base_uri(&pool, env.uri));
+	subst.Add(pool, "&c:frame;", strmap_get_checked(env.args, "frame"));
+	subst.Add(pool, "&c:view;", widget.GetEffectiveView()->name);
+	subst.Add(pool, "&c:session;", nullptr); /* obsolete as of version 15.29 */
+	return subst;
 }
 
 UnusedIstreamPtr
 text_processor(struct pool &pool, UnusedIstreamPtr input,
-               const Widget &widget, const struct processor_env &env)
+	       const Widget &widget, const struct processor_env &env)
 {
-    return istream_subst_new(&pool, std::move(input),
-                             processor_subst_beng_widget(pool, widget, env));
+	return istream_subst_new(&pool, std::move(input),
+				 processor_subst_beng_widget(pool, widget, env));
 }
