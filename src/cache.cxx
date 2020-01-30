@@ -341,7 +341,7 @@ Cache::RemoveAllMatch(bool (*match)(const CacheItem *, void *),
 	return removed;
 }
 
-static std::chrono::steady_clock::time_point
+static constexpr std::chrono::steady_clock::time_point
 ToSteady(std::chrono::steady_clock::time_point steady_now,
 	 std::chrono::system_clock::time_point system_now,
 	 std::chrono::system_clock::time_point t) noexcept
