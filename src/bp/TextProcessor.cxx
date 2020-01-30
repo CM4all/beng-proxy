@@ -97,17 +97,18 @@ processor_subst_beng_widget(struct pool &pool,
 			    const struct processor_env &env)
 {
 	SubstTree subst;
-	SubstAddEscaped(pool, subst, "&c:type;", widget.class_name);
-	SubstAddEscaped(pool, subst, "&c:class;", widget.GetQuotedClassName());
+	subst.Add(pool, "&c:type;", widget.class_name);
+	subst.Add(pool, "&c:type;", widget.class_name);
+	subst.Add(pool, "&c:class;", widget.GetQuotedClassName());
 	SubstAddEscaped(pool, subst, "&c:local;", widget.cls->local_uri);
-	SubstAddEscaped(pool, subst, "&c:id;", widget.id);
-	SubstAddEscaped(pool, subst, "&c:path;", widget.GetIdPath());
-	SubstAddEscaped(pool, subst, "&c:prefix;", widget.GetPrefix());
+	subst.Add(pool, "&c:id;", widget.id);
+	subst.Add(pool, "&c:path;", widget.GetIdPath());
+	subst.Add(pool, "&c:prefix;", widget.GetPrefix());
 	SubstAddEscaped(pool, subst, "&c:uri;", env.absolute_uri);
 	SubstAddEscaped(pool, subst, "&c:base;", base_uri(&pool, env.uri));
 	SubstAddEscaped(pool, subst, "&c:frame;", strmap_get_checked(env.args, "frame"));
-	SubstAddEscaped(pool, subst, "&c:view;", widget.GetEffectiveView()->name);
-	SubstAddEscaped(pool, subst, "&c:session;", nullptr); /* obsolete as of version 15.29 */
+	subst.Add(pool, "&c:view;", widget.GetEffectiveView()->name);
+	subst.Add(pool, "&c:session;", nullptr); /* obsolete as of version 15.29 */
 	return subst;
 }
 
