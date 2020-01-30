@@ -90,7 +90,7 @@ PipeStockItem::Release() noexcept
  */
 
 void
-pipe_stock_item_get(StockItem *_item, FileDescriptor fds[2])
+pipe_stock_item_get(StockItem *_item, FileDescriptor fds[2]) noexcept
 {
 	auto *item = (PipeStockItem *)_item;
 

@@ -52,4 +52,4 @@ private:
 };
 
 void
-pipe_stock_item_get(StockItem *item, FileDescriptor fds[2]);
+pipe_stock_item_get(StockItem *item, FileDescriptor fds[2]) noexcept;
