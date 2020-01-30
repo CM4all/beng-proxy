@@ -25,9 +25,8 @@ common_flags = [
   '-Wwrite-strings', '-Wcast-qual', '-Wcast-align', '-Wfloat-equal',
   '-Wshadow', '-Wpointer-arith', '-Wsign-compare',
   '-Wmissing-declarations', '-Wmissing-noreturn', '-Wmissing-format-attribute',
-  '-Wredundant-decls', '-Wno-long-long',
+  '-Wredundant-decls',
   '-Wunused',
-  '-Wno-unused-result',
   '-Wundef',
 ]
 
@@ -54,7 +53,6 @@ endif
 test_cxxflags = test_common_flags + [
   '-fno-threadsafe-statics',
   '-fmerge-all-constants',
-  '-Wno-variadic-macros',
   '-Wno-missing-field-initializers',
   '-Wno-non-virtual-dtor',
 
