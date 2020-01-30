@@ -245,7 +245,7 @@ TcpStock::Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
 	      SocketAddress address,
 	      Event::Duration timeout,
 	      StockGetHandler &handler,
-	      CancellablePointer &cancel_ptr)
+	      CancellablePointer &cancel_ptr) noexcept
 {
 	assert(!address.IsNull());
 
@@ -274,7 +274,7 @@ TcpStock::Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
 }
 
 SocketDescriptor
-tcp_stock_item_get(const StockItem &item)
+tcp_stock_item_get(const StockItem &item) noexcept
 {
 	auto *connection = (const TcpStockConnection *)&item;
 
@@ -282,7 +282,7 @@ tcp_stock_item_get(const StockItem &item)
 }
 
 SocketAddress
-tcp_stock_item_get_address(const StockItem &item)
+tcp_stock_item_get_address(const StockItem &item) noexcept
 {
 	auto &connection = (const TcpStockConnection &)item;
 
@@ -292,7 +292,7 @@ tcp_stock_item_get_address(const StockItem &item)
 }
 
 int
-tcp_stock_item_get_domain(const StockItem &item)
+tcp_stock_item_get_domain(const StockItem &item) noexcept
 {
 	auto *connection = (const TcpStockConnection *)&item;
 

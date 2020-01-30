@@ -60,14 +60,14 @@ public:
 	/**
 	 * @param limit the maximum number of connections per host
 	 */
-	TcpStock(EventLoop &event_loop, unsigned limit)
+	TcpStock(EventLoop &event_loop, unsigned limit) noexcept
 		:stock(event_loop, *this, limit, 16) {}
 
 	EventLoop &GetEventLoop() const noexcept {
 		return stock.GetEventLoop();
 	}
 
-	void AddStats(StockStats &data) const {
+	void AddStats(StockStats &data) const noexcept {
 		stock.AddStats(data);
 	}
 
@@ -83,7 +83,7 @@ public:
 		 SocketAddress address,
 		 Event::Duration timeout,
 		 StockGetHandler &handler,
-		 CancellablePointer &cancel_ptr);
+		 CancellablePointer &cancel_ptr) noexcept;
 
 private:
 	/* virtual methods from class StockClass */
@@ -93,15 +93,15 @@ private:
 
 gcc_pure
 SocketDescriptor
-tcp_stock_item_get(const StockItem &item);
+tcp_stock_item_get(const StockItem &item) noexcept;
 
 /**
  * Returns the (peer) address this object is connected to.
  */
 gcc_pure
 SocketAddress
-tcp_stock_item_get_address(const StockItem &item);
+tcp_stock_item_get_address(const StockItem &item) noexcept;
 
 gcc_pure
 int
-tcp_stock_item_get_domain(const StockItem &item);
+tcp_stock_item_get_domain(const StockItem &item) noexcept;
