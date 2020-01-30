@@ -133,7 +133,7 @@ isolate_from_filesystem(bool allow_dbus)
     /* symlink /var/run to /run, because some libraries such as
        libdbus use the old path */
     mkdir("var", 0700);
-    symlink("/run", "var/run");
+    (void)symlink("/run", "var/run");
     chmod("var", 0111);
 
     struct stat st;
