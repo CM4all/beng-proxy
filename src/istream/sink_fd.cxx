@@ -47,8 +47,6 @@
 #include <errno.h>
 
 class SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
-	struct pool *pool;
-
 	FileDescriptor fd;
 	FdType fd_type;
 	SinkFdHandler &handler;
@@ -73,12 +71,11 @@ class SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
 #endif
 
 public:
-	SinkFd(EventLoop &event_loop, struct pool &_pool,
+	SinkFd(EventLoop &event_loop,
 	       UnusedIstreamPtr &&_istream,
 	       FileDescriptor _fd, FdType _fd_type,
 	       SinkFdHandler &_handler) noexcept
 		:IstreamSink(std::move(_istream), istream_direct_mask_to(_fd_type)),
-		 pool(&_pool),
 		 fd(_fd), fd_type(_fd_type),
 		 handler(_handler),
 		 event(event_loop, BIND_THIS_METHOD(EventCallback),
@@ -248,7 +245,7 @@ sink_fd_new(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr istream,
 {
 	assert(fd.IsDefined());
 
-	return NewFromPool<SinkFd>(pool, event_loop, pool, std::move(istream),
+	return NewFromPool<SinkFd>(pool, event_loop, std::move(istream),
 				   fd, fd_type,
 				   handler);
 }
