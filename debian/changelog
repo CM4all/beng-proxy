@@ -1,6 +1,6 @@
 cm4all-beng-proxy (15.32) unstable; urgency=low
 
-  * 
+  * bp/processor: escape "&c:XXX;" entity values
 
  --   
 

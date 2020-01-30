@@ -48,7 +48,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define EXPECTED_RESULT "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar<b>http://localhost:8080/beng.html</b>"
+#define EXPECTED_RESULT "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar<b>http://localhost:8080/beng.html?&apos;</b>"
 
 class EventLoop;
 
@@ -98,9 +98,9 @@ create_test(EventLoop &event_loop, struct pool &pool, UnusedIstreamPtr input)
                         nullptr, nullptr,
                         "localhost:8080",
                         "localhost:8080",
-                        "/beng.html",
-                        "http://localhost:8080/beng.html",
-                        "/beng.html",
+                        "/beng.html?'",
+                        "http://localhost:8080/beng.html?'",
+                        "/beng.html?'",
                         nullptr,
                         "bp_session", session->id, "foo",
                         nullptr);
