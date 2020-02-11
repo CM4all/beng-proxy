@@ -30,30 +30,42 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "AcmeAuthorization.hxx"
+#include "AcmeChallenge.hxx"
+#include "util/RuntimeError.hxx"
 
-#include <string>
-#include <exception>
-
-class AcmeError;
-
-struct AcmeChallenge {
-	std::string type;
-
-	enum class Status {
-		PENDING,
-		PROCESSING,
-		VALID,
-		INVALID,
-	} status = Status::INVALID;
-
-	std::string token;
-	std::string uri;
-
-	std::exception_ptr error;
-
-	void Check() const;
-
-	static Status ParseStatus(const std::string &s);
-	static const char *FormatStatus(Status s) noexcept;
+static constexpr const char *acme_authorization_status_strings[] = {
+	"pending",
+	"valid",
+	"invalid",
+	"deactivated",
+	"expired",
+	"revoked",
+	nullptr
 };
+
+AcmeAuthorization::Status
+AcmeAuthorization::ParseStatus(const std::string &s)
+{
+	for (size_t i = 0; acme_authorization_status_strings[i] != nullptr; ++i)
+		if (s == acme_authorization_status_strings[i])
+			return Status(i);
+
+	throw FormatRuntimeError("Invalid authorization status: %s", s.c_str());
+}
+
+const char *
+AcmeAuthorization::FormatStatus(Status s) noexcept
+{
+	return acme_authorization_status_strings[size_t(s)];
+}
+
+const AcmeChallenge *
+AcmeAuthorization::FindChallengeByType(const char *type) const noexcept
+{
+	for (const auto &i : challenges)
+		if (i.type == type)
+			return &i;
+
+	return nullptr;
+}

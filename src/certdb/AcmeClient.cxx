@@ -31,6 +31,8 @@
  */
 
 #include "AcmeClient.hxx"
+#include "AcmeOrder.hxx"
+#include "AcmeAuthorization.hxx"
 #include "AcmeChallenge.hxx"
 #include "AcmeError.hxx"
 #include "AcmeConfig.hxx"
@@ -57,6 +59,7 @@ IsJson(const GlueHttpResponse &response) noexcept
 
 	const char *content_type = i->second.c_str();
 	return strcmp(content_type, "application/json") == 0 ||
+		strcmp(content_type, "application/jose+json") == 0 ||
 		strcmp(content_type, "application/problem+json") == 0;
 }
 
@@ -131,9 +134,9 @@ ThrowStatusError(GlueHttpResponse &&response, const char *msg)
 AcmeClient::AcmeClient(const AcmeConfig &config) noexcept
 	:glue_http_client(event_loop),
 	 server(config.staging
-		? "https://acme-staging.api.letsencrypt.org"
-		: "https://acme-v01.api.letsencrypt.org"),
-	 agreement_url(config.agreement_url),
+		? "https://acme-staging-v02.api.letsencrypt.org"
+		: "https://acme-v02.api.letsencrypt.org"),
+	 account_key_id(config.account_key_id),
 	 fake(config.fake)
 {
 	if (config.debug)
@@ -146,10 +149,53 @@ static AcmeDirectory
 ParseAcmeDirectory(const Json::Value &json) noexcept
 {
 	AcmeDirectory directory;
-	directory.new_reg = GetString(json["new-reg"]);
+	directory.new_nonce = GetString(json["newNonce"]);
+	directory.new_account = GetString(json["newAccount"]);
+	directory.new_order = GetString(json["newOrder"]);
 	directory.new_authz = GetString(json["new-authz"]);
 	directory.new_cert = GetString(json["new-cert"]);
 	return directory;
+}
+
+void
+AcmeClient::RequestDirectory()
+{
+	if (fake)
+		return;
+
+	unsigned remaining_tries = 3;
+	while (true) {
+		auto response = glue_http_client.Request(event_loop,
+							 HTTP_METHOD_GET,
+							 (server + "/directory").c_str(),
+							 nullptr);
+		if (response.status != HTTP_STATUS_OK) {
+			if (http_status_is_server_error(response.status) &&
+			    --remaining_tries > 0)
+				/* try again, just in case it's a
+				   temporary Let's Encrypt hiccup */
+				continue;
+
+			throw FormatRuntimeError("Unexpected response status %d",
+						 response.status);
+		}
+
+		if (!IsJson(response))
+			throw std::runtime_error("JSON expected");
+
+		directory = ParseAcmeDirectory(ParseJson(std::move(response.body)));
+		break;
+	}
+}
+
+void
+AcmeClient::EnsureDirectory()
+{
+	if (fake)
+		return;
+
+	if (directory.new_nonce.empty())
+		RequestDirectory();
 }
 
 std::string
@@ -158,11 +204,15 @@ AcmeClient::RequestNonce()
 	if (fake)
 		return "foo";
 
+	EnsureDirectory();
+	if (directory.new_nonce.empty())
+		throw std::runtime_error("No newNonce in directory");
+
 	unsigned remaining_tries = 3;
 	while (true) {
 		auto response = glue_http_client.Request(event_loop,
-							 HTTP_METHOD_GET,
-							 (server + "/directory").c_str(),
+							 HTTP_METHOD_HEAD,
+							 directory.new_nonce.c_str(),
 							 nullptr);
 		if (response.status != HTTP_STATUS_OK) {
 			if (http_status_is_server_error(response.status) &&
@@ -196,27 +246,19 @@ AcmeClient::NextNonce()
 	return result;
 }
 
-void
-AcmeClient::EnsureDirectory()
-{
-	if (next_nonce.empty())
-		next_nonce = RequestNonce();
-}
-
 static Json::Value
-MakeHeader(EVP_PKEY &key)
+MakeHeader(EVP_PKEY &key, const char *url, const char *kid,
+	   std::string &&nonce)
 {
 	Json::Value root;
 	root["alg"] = "RS256";
-	root["jwk"] = MakeJwk(key);
+	if (kid != nullptr)
+		root["kid"] = kid;
+	else
+		root["jwk"] = MakeJwk(key);
+	root["url"] = url;
+	root["nonce"] = std::move(nonce);
 	return root;
-}
-
-static Json::Value
-WithNonce(Json::Value &&header, std::string &&nonce) noexcept
-{
-	header["nonce"] = std::move(nonce);
-	return std::move(header);
 }
 
 static AllocatedString<>
@@ -296,11 +338,9 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 
 	Json::Value root(Json::objectValue);
 
-	auto header = MakeHeader(key);
-	root["header"] = header;
-
-	const auto protected_header = FormatJson(WithNonce(std::move(header),
-							   NextNonce()));
+	const auto protected_header = FormatJson(MakeHeader(key, uri,
+							    account_key_id.empty() ? nullptr : account_key_id.c_str(),
+							    NextNonce()));
 
 	const auto protected_header_b64 = UrlSafeBase64(protected_header);
 	root["payload"] = payload_b64.c_str();
@@ -321,14 +361,25 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 	return SignedRequest(key, method, uri, FormatJson(payload).c_str());
 }
 
+template<typename T>
+static auto
+WithLocation(T &&t, const GlueHttpResponse &response) noexcept
+{
+	auto location = response.headers.find("location");
+	if (location != response.headers.end())
+		t.location = std::move(location->second);
+
+	return t;
+}
+
 AcmeClient::Account
-AcmeClient::NewReg(EVP_PKEY &key, const char *email)
+AcmeClient::NewAccount(EVP_PKEY &key, const char *email)
 {
 	EnsureDirectory();
-	if (directory.new_reg.empty())
-		throw std::runtime_error("No new-reg in directory");
+	if (directory.new_account.empty())
+		throw std::runtime_error("No newAccount in directory");
 
-	std::string payload("{\"resource\": \"new-reg\", ");
+	std::string payload("{ ");
 
 	if (email != nullptr) {
 		payload += "\"contact\": [ \"mailto:";
@@ -336,16 +387,20 @@ AcmeClient::NewReg(EVP_PKEY &key, const char *email)
 		payload += "\" ], ";
 	}
 
-	payload += "\"agreement\": \"";
-	payload += agreement_url;
-	payload += "\"}";
+	payload += "\"termsOfServiceAgreed\": true }";
 
 	auto response = SignedRequestRetry(key,
 					   HTTP_METHOD_POST,
-					   directory.new_reg.c_str(),
+					   directory.new_account.c_str(),
 					   payload.c_str());
-	if (response.status == HTTP_STATUS_OK)
-		throw std::runtime_error("This key is already registered");
+	if (response.status == HTTP_STATUS_OK) {
+		const auto location = response.headers.find("location");
+		if (location != response.headers.end())
+			throw FormatRuntimeError("This key is already registered: %s",
+						 location->second.c_str());
+		else
+			throw std::runtime_error("This key is already registered");
+	}
 
 	if (response.status != HTTP_STATUS_CREATED)
 		ThrowStatusError(std::move(response),
@@ -353,113 +408,253 @@ AcmeClient::NewReg(EVP_PKEY &key, const char *email)
 
 	Account account;
 
-	auto location = response.headers.find("location");
-	if (location != response.headers.end())
-		account.location = std::move(location->second);
-
-	return account;
+	return WithLocation(Account{}, response);
 }
 
-AcmeChallenge
-AcmeClient::NewAuthz(EVP_PKEY &key, const char *host,
-		     const char *challenge_type)
+static Json::Value
+DnsIdentifierToJson(const std::string &value) noexcept
+{
+	Json::Value root(Json::objectValue);
+	root["type"] = "dns";
+	root["value"] = value;
+	return root;
+}
+
+static Json::Value
+DnsIdentifiersToJson(const std::forward_list<std::string> &identifiers) noexcept
+{
+	Json::Value root(Json::arrayValue);
+	for (const auto &i : identifiers)
+		root.append(DnsIdentifierToJson(i));
+	return root;
+}
+
+static Json::Value
+ToJson(const AcmeClient::OrderRequest &request) noexcept
+{
+	Json::Value root(Json::objectValue);
+	root["identifiers"] = DnsIdentifiersToJson(request.identifiers);
+	return root;
+}
+
+static auto
+ToOrder(const Json::Value &root)
+{
+	if (!root.isObject())
+		throw std::runtime_error("Response is not an object");
+
+	const auto &status = root["status"];
+	if (!status.isString())
+		throw std::runtime_error("No status");
+
+	const auto &authorizations = root["authorizations"];
+	if (!authorizations.isArray() || authorizations.size() == 0)
+		throw std::runtime_error("No authorizations");
+
+	const auto &finalize = root["finalize"];
+	if (!finalize.isString())
+		throw std::runtime_error("No finalize URL");
+
+	AcmeOrder order;
+
+	order.status = status.asString();
+
+	for (const auto &i : authorizations) {
+		if (!i.isString())
+			throw std::runtime_error("Authorization is not a string");
+
+		order.authorizations.emplace_front(i.asString());
+	}
+
+	order.finalize = finalize.asString();
+
+	const auto &certificate = root["certificate"];
+	if (certificate.isString())
+		order.certificate = certificate.asString();
+
+	return order;
+}
+
+AcmeOrder
+AcmeClient::NewOrder(EVP_PKEY &key, OrderRequest &&request)
 {
 	EnsureDirectory();
-	if (directory.new_authz.empty())
-		throw std::runtime_error("No new-authz in directory");
-
-	std::string payload("{\"resource\": \"new-authz\", "
-			    "\"identifier\": { "
-			    "\"type\": \"dns\", "
-			    "\"value\": \"");
-	payload += host;
-	payload += "\" } }";
+	if (directory.new_order.empty())
+		throw std::runtime_error("No newOrder in directory");
 
 	auto response = SignedRequestRetry(key,
 					   HTTP_METHOD_POST,
-					   directory.new_authz.c_str(),
-					   payload.c_str());
-
+					   directory.new_order.c_str(),
+					   ToJson(request));
 	if (response.status != HTTP_STATUS_CREATED)
 		ThrowStatusError(std::move(response),
-				 "Failed to create authz");
+				 "Failed to create order");
 
 	const auto root = ParseJson(std::move(response));
-	CheckThrowError(root, "Failed to create authz");
-
-	const auto &challenge = FindInArray(root["challenges"],
-					    "type", challenge_type);
-	if (challenge.isNull())
-		throw FormatRuntimeError("No %s challenge", challenge_type);
-
-	const auto &token = challenge["token"];
-	if (!token.isString())
-		throw FormatRuntimeError("No %s token", challenge_type);
-
-	const auto &uri = challenge["uri"];
-	if (!uri.isString())
-		throw FormatRuntimeError("No %s uri", challenge_type);
-
-	return {challenge_type, token.asString(), uri.asString()};
+	CheckThrowError(root, "Failed to create order");
+	return WithLocation(ToOrder(root), response);
 }
 
-bool
-AcmeClient::UpdateAuthz(EVP_PKEY &key, const AcmeChallenge &authz)
+static Json::Value
+ToJson(X509_REQ &req) noexcept
 {
-	std::string payload("{ \"resource\": \"challenge\", "
-			    "\"type\": \"");
-	payload += authz.type;
-	payload += "\", \"keyAuthorization\": \"";
-	payload += authz.token;
-	payload += '.';
-	payload += UrlSafeBase64SHA256(FormatJson(MakeJwk(key))).c_str();
-	payload += "\" }";
+	Json::Value root(Json::objectValue);
+	root["csr"] = UrlSafeBase64(req).c_str();
+	return root;
+}
 
+AcmeOrder
+AcmeClient::FinalizeOrder(EVP_PKEY &key, const AcmeOrder &order,
+			  X509_REQ &csr)
+{
 	auto response = SignedRequestRetry(key,
-					   HTTP_METHOD_POST, authz.uri.c_str(),
-					   payload.c_str());
-
-	if (response.status != HTTP_STATUS_ACCEPTED)
+					   HTTP_METHOD_POST,
+					   order.finalize.c_str(),
+					   ToJson(csr));
+	if (response.status != HTTP_STATUS_OK)
 		ThrowStatusError(std::move(response),
-				 "Failed to update authz");
+				 "Failed to finalize order");
 
-	auto root = ParseJson(std::move(response));
-	CheckThrowError(root, "Failed to update authz");
-	return root["status"].asString() != "pending";
-}
-
-bool
-AcmeClient::CheckAuthz(const AcmeChallenge &authz)
-{
-	auto response = Request(HTTP_METHOD_GET, authz.uri.c_str());
-	if (response.status != HTTP_STATUS_ACCEPTED)
-		ThrowStatusError(std::move(response),
-				 "Failed to check authz");
-
-	auto root = ParseJson(std::move(response));
-	CheckThrowError(root, "Failed to check authz");
-	return root["status"].asString() != "pending";
+	const auto root = ParseJson(std::move(response));
+	CheckThrowError(root, "Failed to finalize order");
+	return WithLocation(ToOrder(root), response);
 }
 
 UniqueX509
-AcmeClient::NewCert(EVP_PKEY &key, X509_REQ &req)
+AcmeClient::DownloadCertificate(EVP_PKEY &key, const AcmeOrder &order)
 {
-	EnsureDirectory();
-	if (directory.new_cert.empty())
-		throw std::runtime_error("No new-cert in directory");
-
-	std::string payload("{\"resource\": \"new-cert\", "
-			    "\"csr\": \"");
-	payload += UrlSafeBase64(req).c_str();
-	payload += "\" }";
-
 	auto response = SignedRequestRetry(key,
 					   HTTP_METHOD_POST,
-					   directory.new_cert.c_str(),
-					   payload.c_str());
-	if (response.status != HTTP_STATUS_CREATED)
+					   order.certificate.c_str(),
+					   "");
+	if (response.status != HTTP_STATUS_OK)
 		ThrowStatusError(std::move(response),
-				 "Failed to create certificate");
+				 "Failed to download certificate");
 
-	return DecodeDerCertificate({response.body.data(), response.body.length()});
+	auto ct = response.headers.find("content-type");
+	if (ct == response.headers.end() ||
+	    ct->second != "application/pem-certificate-chain")
+		throw std::runtime_error("Wrong Content-Type in certificate download");
+
+	UniqueBIO in(BIO_new_mem_buf(response.body.data(), response.body.length()));
+	return UniqueX509((X509 *)PEM_ASN1_read_bio((d2i_of_void *)d2i_X509,
+						    PEM_STRING_X509, in.get(),
+						    nullptr, nullptr, nullptr));
+}
+
+static auto
+ToChallenge(const Json::Value &root)
+{
+	if (!root.isObject())
+		throw std::runtime_error("Challenge is not an object");
+
+	const auto &type = root["type"];
+	if (!type.isString())
+		throw std::runtime_error("No type");
+
+	const auto &url = root["url"];
+	if (!url.isString())
+		throw std::runtime_error("No url");
+
+	const auto &status = root["status"];
+	if (!status.isString())
+		throw std::runtime_error("No status");
+
+	const auto &token = root["token"];
+	if (!token.isString())
+		throw std::runtime_error("No token");
+
+	AcmeChallenge challenge;
+	challenge.type = type.asString();
+	challenge.uri = url.asString();
+	challenge.status = AcmeChallenge::ParseStatus(status.asString());
+	challenge.token = token.asString();
+
+	try {
+		CheckThrowError(root);
+	} catch (...) {
+		challenge.error = std::current_exception();
+	}
+
+	return challenge;
+}
+
+static auto
+ToAuthorization(const Json::Value &root)
+{
+	if (!root.isObject())
+		throw std::runtime_error("Response is not an object");
+
+	const auto &status = root["status"];
+	if (!status.isString())
+		throw std::runtime_error("No status");
+
+	const auto &identifier = root["identifier"];
+	if (!identifier.isObject())
+		throw std::runtime_error("No identifier");
+
+	const auto &iv = identifier["value"];
+	if (!iv.isString())
+		throw std::runtime_error("No value");
+
+	const auto &challenges = root["challenges"];
+	if (!challenges.isArray() || challenges.size() == 0)
+		throw std::runtime_error("No challenges");
+
+	AcmeAuthorization response;
+	response.status = AcmeAuthorization::ParseStatus(status.asString());
+	response.identifier = iv.asString();
+
+	for (const auto &i : challenges)
+		response.challenges.emplace_front(ToChallenge(i));
+
+	return response;
+}
+
+AcmeAuthorization
+AcmeClient::Authorize(EVP_PKEY &key, const char *url)
+{
+	auto response = SignedRequestRetry(key,
+					   HTTP_METHOD_POST,
+					   url,
+					   Json::Value(Json::stringValue));
+	if (response.status != HTTP_STATUS_OK)
+		ThrowStatusError(std::move(response),
+				 "Failed to request authorization");
+
+	const auto root = ParseJson(std::move(response));
+	CheckThrowError(root, "Failed to request authorization");
+	return ToAuthorization(root);
+}
+
+AcmeAuthorization
+AcmeClient::PollAuthorization(EVP_PKEY &key, const char *url)
+{
+	auto response = SignedRequestRetry(key,
+					   HTTP_METHOD_POST,
+					   url,
+					   "");
+	if (response.status != HTTP_STATUS_OK)
+		ThrowStatusError(std::move(response),
+				 "Failed to poll authorization");
+
+	const auto root = ParseJson(std::move(response));
+	CheckThrowError(root, "Failed to poll authorization");
+	return ToAuthorization(root);
+}
+
+AcmeChallenge
+AcmeClient::UpdateChallenge(EVP_PKEY &key, const AcmeChallenge &challenge)
+{
+	auto response = SignedRequestRetry(key,
+					   HTTP_METHOD_POST,
+					   challenge.uri.c_str(),
+					   Json::Value(Json::objectValue));
+	if (response.status != HTTP_STATUS_OK)
+		ThrowStatusError(std::move(response),
+				 "Failed to update challenge");
+
+	auto root = ParseJson(std::move(response));
+	CheckThrowError(root, "Failed to update challenge");
+	return ToChallenge(root);
 }

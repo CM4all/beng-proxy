@@ -37,6 +37,7 @@
 #include "ssl/Unique.hxx"
 #include "util/ConstBuffer.hxx"
 
+#include <forward_list>
 #include <string>
 
 #include <string.h>
@@ -44,10 +45,14 @@
 namespace Json { class Value; }
 
 struct AcmeConfig;
+struct AcmeOrder;
+struct AcmeAuthorization;
 struct AcmeChallenge;
 
 struct AcmeDirectory {
-	std::string new_reg;
+	std::string new_nonce;
+	std::string new_account;
+	std::string new_order;
 	std::string new_authz;
 	std::string new_cert;
 };
@@ -63,6 +68,8 @@ class AcmeClient {
 	GlueHttpClient glue_http_client;
 	const std::string server;
 
+	const std::string account_key_id;
+
 	/**
 	 * A replay nonce that was received in the previous request.  It
 	 * is remembered for the next NextNonce() call, to save a HTTP
@@ -71,8 +78,6 @@ class AcmeClient {
 	std::string next_nonce;
 
 	AcmeDirectory directory;
-
-	const std::string agreement_url;
 
 	const bool fake;
 
@@ -94,54 +99,32 @@ public:
 	 * @param key the account key
 	 * @param email an email address to be associated with the account
 	 */
-	Account NewReg(EVP_PKEY &key, const char *email);
+	Account NewAccount(EVP_PKEY &key, const char *email);
+
+	struct OrderRequest {
+		std::forward_list<std::string> identifiers;
+	};
 
 	/**
-	 * Create a new "authz" object, to prepare for a new certificate.
+	 * Apply for Certificate Issuance.
 	 *
-	 * After this method succeeds, configure the web server with a new
-	 * temporary certificate using AcmeChallenge::MakeDnsName(), and
-	 * then call UpdateAuthz().
+	 * @see https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3
 	 *
 	 * @param key the account key
-	 * @param host the host name ("common name") for the new certificate
-	 * @param challenge_type the desired challenge type
 	 */
-	AcmeChallenge NewAuthz(EVP_PKEY &key, const char *host,
-			       const char *challenge_type);
+	AcmeOrder NewOrder(EVP_PKEY &key, OrderRequest &&request);
 
-	/**
-	 * Update the "authz" object.  Call this method after NewAuthz().
-	 *
-	 * If this method returns false, call CheckAuthz() repeatedly with
-	 * a reasonable delay.
-	 *
-	 * @param key the account key
-	 * @param authz the return value of NewAuthz()
-	 * @return true if the authz object is done, and NewCert() can be
-	 * called
-	 */
-	bool UpdateAuthz(EVP_PKEY &key, const AcmeChallenge &authz);
+	AcmeOrder FinalizeOrder(EVP_PKEY &key, const AcmeOrder &order,
+				X509_REQ &csr);
 
-	/**
-	 * Check whether the "authz" object is done.  Call this method
-	 * repeatedly after UpdateAuthz() with a reasonable delay.
-	 *
-	 * @param key the account key
-	 * @param authz the return value of NewAuthz()
-	 * @return true if the authz object is done, and NewCert() can be
-	 * called
-	 */
-	bool CheckAuthz(const AcmeChallenge &authz);
+	UniqueX509 DownloadCertificate(EVP_PKEY &key,
+				       const AcmeOrder &order);
 
-	/**
-	 * Ask the server to produce a signed certificate.
-	 *
-	 * @param key the account key
-	 * @param req the certificate request signed with the certificate
-	 * key (not with the account key!)
-	 */
-	UniqueX509 NewCert(EVP_PKEY &key, X509_REQ &req);
+	AcmeAuthorization Authorize(EVP_PKEY &key, const char *url);
+	AcmeAuthorization PollAuthorization(EVP_PKEY &key, const char *url);
+
+	AcmeChallenge UpdateChallenge(EVP_PKEY &key,
+				      const AcmeChallenge &challenge);
 
 private:
 	/**
@@ -153,6 +136,8 @@ private:
 	 * Obtain a replay nonce.
 	 */
 	std::string NextNonce();
+
+	void RequestDirectory();
 
 	/**
 	 * Ensure that the #AcmeDirectory is filled.

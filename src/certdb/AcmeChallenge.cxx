@@ -30,30 +30,47 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "AcmeChallenge.hxx"
+#include "util/RuntimeError.hxx"
 
-#include <string>
-#include <exception>
-
-class AcmeError;
-
-struct AcmeChallenge {
-	std::string type;
-
-	enum class Status {
-		PENDING,
-		PROCESSING,
-		VALID,
-		INVALID,
-	} status = Status::INVALID;
-
-	std::string token;
-	std::string uri;
-
-	std::exception_ptr error;
-
-	void Check() const;
-
-	static Status ParseStatus(const std::string &s);
-	static const char *FormatStatus(Status s) noexcept;
+static constexpr const char *acme_challenge_status_strings[] = {
+	"pending",
+	"processing",
+	"valid",
+	"invalid",
+	nullptr
 };
+
+AcmeChallenge::Status
+AcmeChallenge::ParseStatus(const std::string &s)
+{
+	for (size_t i = 0; acme_challenge_status_strings[i] != nullptr; ++i)
+		if (s == acme_challenge_status_strings[i])
+			return Status(i);
+
+	throw FormatRuntimeError("Invalid challenge status: %s", s.c_str());
+}
+
+const char *
+AcmeChallenge::FormatStatus(Status s) noexcept
+{
+	return acme_challenge_status_strings[size_t(s)];
+}
+
+void
+AcmeChallenge::Check() const
+{
+	if (error)
+		std::rethrow_exception(error);
+
+	switch (status) {
+	case Status::PENDING:
+	case Status::PROCESSING:
+	case Status::VALID:
+		break;
+
+	case Status::INVALID:
+		throw FormatRuntimeError("Challenge status is '%s'",
+					 AcmeChallenge::FormatStatus(status));
+	}
+}

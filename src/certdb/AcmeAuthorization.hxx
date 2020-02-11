@@ -32,27 +32,28 @@
 
 #pragma once
 
+#include "util/Compiler.h"
+
+#include <forward_list>
 #include <string>
-#include <exception>
 
-class AcmeError;
+struct AcmeChallenge;
 
-struct AcmeChallenge {
-	std::string type;
-
+struct AcmeAuthorization {
 	enum class Status {
 		PENDING,
-		PROCESSING,
 		VALID,
 		INVALID,
+		DEACTIVATED,
+		EXPIRED,
+		REVOKED,
 	} status = Status::INVALID;
 
-	std::string token;
-	std::string uri;
+	std::string identifier;
+	std::forward_list<AcmeChallenge> challenges;
 
-	std::exception_ptr error;
-
-	void Check() const;
+	gcc_pure
+	const AcmeChallenge *FindChallengeByType(const char *type) const noexcept;
 
 	static Status ParseStatus(const std::string &s);
 	static const char *FormatStatus(Status s) noexcept;

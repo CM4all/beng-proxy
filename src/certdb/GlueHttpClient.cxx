@@ -112,7 +112,7 @@ GlueHttpClient::Request(EventLoop &event_loop,
 
 	if (!body.IsNull()) {
 		easy.SetRequestBody(body.data, body.size);
-		header_list.Append("Content-Type: application/json");
+		header_list.Append("Content-Type: application/jose+json");
 	}
 
 	easy.SetRequestHeaders(header_list.Get());

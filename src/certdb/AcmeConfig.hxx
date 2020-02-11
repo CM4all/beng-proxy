@@ -36,8 +36,7 @@
 
 struct AcmeConfig {
 	std::string account_key_path = "/etc/cm4all/acme/account.key";
-
-	std::string agreement_url = "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf";
+	std::string account_key_id;
 
 	/**
 	 * Specifies the directory mapped to

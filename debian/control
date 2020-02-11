@@ -165,16 +165,18 @@ Package: cm4all-beng-lb
 Architecture: any
 Depends: ${shlibs:Depends}, adduser,
  systemd-sysv
-Suggests: cm4all-certdb, avahi-daemon
+Suggests: cm4all-certdb2, avahi-daemon
 Provides: httpd
 Breaks: cm4all-beng-proxy-logging (<< 13.0.9)
 Description: HTTP load balancer
  BENG lb is a HTTP proxy server and load balancer.
 
-Package: cm4all-certdb
+Package: cm4all-certdb2
 Architecture: any
 Enhances: cm4all-beng-lb
 Depends: ${shlibs:Depends}
+Replaces: cm4all-certdb
+Conflicts: cm4all-certdb
 Description: Tools for managing the certificate database
  BENG lb is a HTTP proxy server and load balancer.
  .

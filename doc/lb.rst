@@ -747,39 +747,30 @@ To get started, register an account::
    openssl genrsa -out /etc/cm4all/acme/account.key  4096
    cm4all-certdb acme --staging new-reg foo@example.com
 
+This prints the account "location", which must be specified with the
+``--account-key-id`` option in every successive call.
+
 Note: examples listed here will use the “staging” server. Omit the
 ``–-staging`` option to use the Let’s Encrypt production server.
 
 To obtain a signed certificate, type::
 
-   cm4all-certdb acme --staging new-authz-cert example www.example.com
+   cm4all-certdb acme --staging \
+     --challenge-directory /var/www/acme-challenge \
+     --account-key-id https://staging.api.letsencrypt.org/acme/acct/42 \
+     new-order example www.example.com example.com foo.example.com
 
 To update all names in an existing certificate, use the command
 ``renew-cert`` and specify only the handle (``example`` here)::
 
-   cm4all-certdb acme --staging renew-cert example
+   cm4all-certdb acme --staging \
+     --challenge-directory /var/www/acme-challenge \
+     --account-key-id https://staging.api.letsencrypt.org/acme/acct/42 \
+     renew-cert example
 
-This requires that :program:`beng-lb` runs on the same machine and can be
-contacted at ``www.example.com`` port 443, with the certificate database
-enabled on that listener.
-
-The command ``new-authz-cert`` creates a new ``authz`` object for the
-specified host name, asks the ACME server to conduct ``http-01``
-validation. After the validation succeeds, it will
-create a new private key and a certificate signing request, and ask the
-ACME server to sign the new certificate.
+This requires that the URL
+``http://example.com/.well-known/acme-challenge/`` maps to the
+specified ``--challenge-directory`` path (on all domains).
 
 After the program finishes, the new certificate should be usable
 immediately.
-
-Using ``http-01``
-~~~~~~~~~~~~~~~~~
-
-The option ``--challenge-directory`` enables ``http-01``. The
-parameter is a directory where ACME challenge files are stored, to be
-mapped to ``/.well-known/acme-challenge/`` on all domains to be
-authenticated. Example::
-
-   cm4all-certdb acme --staging \
-     --challenge-directory /var/www/example/.well-known/acme-challenge \
-     new-authz www.example.com

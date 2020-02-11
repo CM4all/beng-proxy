@@ -34,6 +34,8 @@
 #include "AcmeUtil.hxx"
 #include "AcmeError.hxx"
 #include "AcmeClient.hxx"
+#include "AcmeOrder.hxx"
+#include "AcmeAuthorization.hxx"
 #include "AcmeChallenge.hxx"
 #include "AcmeKey.hxx"
 #include "AcmeHttp.hxx"
@@ -60,6 +62,7 @@
 #include "io/StringFile.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/PrintException.hxx"
+#include "util/RuntimeError.hxx"
 #include "util/Compiler.h"
 
 #include <thread>
@@ -348,96 +351,134 @@ MakeCertRequest(EVP_PKEY &key, X509 &src)
 	return req;
 }
 
-static void
-HandleHttp01Challenge(const AcmeConfig &config,
-		      EVP_PKEY &account_key, AcmeClient &client,
-		      const AcmeChallenge &challenge)
-{
-	Http01ChallengeFile file(config.challenge_directory,
-				 challenge, account_key);
+struct PendingAuthorization {
+	std::string url;
+	Http01ChallengeFile file;
 
-	bool done = client.UpdateAuthz(account_key, challenge);
-	while (!done) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		done = client.CheckAuthz(challenge);
+	PendingAuthorization(const std::string &_url,
+			     const std::string &directory,
+			     const AcmeChallenge &challenge,
+			     EVP_PKEY &account_key)
+		:url(_url), file(directory, challenge, account_key) {}
+};
+
+static auto
+CollectPendingAuthorizations(const AcmeConfig &config,
+			     EVP_PKEY &account_key,
+			     AcmeClient &client,
+			     StepProgress &progress,
+			     const std::forward_list<std::string> &authorizations)
+{
+	std::forward_list<PendingAuthorization> pending_authz;
+
+	for (const auto &i : authorizations) {
+		auto ar = client.Authorize(account_key, i.c_str());
+
+		const auto *challenge = ar.FindChallengeByType("http-01");
+		if (challenge == nullptr)
+			throw std::runtime_error("No http-01 challenge found");
+
+		pending_authz.emplace_front(i, config.challenge_directory,
+					    *challenge, account_key);
+		progress();
+
+		auto challenge2 = client.UpdateChallenge(account_key, *challenge);
+		challenge2.Check();
+		progress();
+	}
+
+	return pending_authz;
+}
+
+static void
+AcmeAuthorize(const AcmeConfig &config,
+	      EVP_PKEY &account_key,
+	      AcmeClient &client,
+	      StepProgress &progress,
+	      const std::forward_list<std::string> &authorizations)
+{
+	auto pending_authz = CollectPendingAuthorizations(config, account_key,
+							  client, progress,
+							  authorizations);
+	progress();
+
+	while (!pending_authz.empty()) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
+		for (auto prev = pending_authz.before_begin(), i = std::next(prev);
+		     i != pending_authz.end(); i = std::next(prev)) {
+			auto authorization = client.PollAuthorization(account_key,
+								      i->url.c_str());
+			for (const auto &challenge : authorization.challenges)
+				challenge.Check();
+
+			switch (authorization.status) {
+			case AcmeAuthorization::Status::PENDING:
+				break;
+
+			case AcmeAuthorization::Status::VALID:
+				pending_authz.erase_after(prev);
+				progress();
+				continue;
+
+			case AcmeAuthorization::Status::INVALID:
+			case AcmeAuthorization::Status::DEACTIVATED:
+			case AcmeAuthorization::Status::EXPIRED:
+			case AcmeAuthorization::Status::REVOKED:
+				throw FormatRuntimeError("Authorization has turned '%s'",
+							 AcmeAuthorization::FormatStatus(authorization.status));
+			}
+
+			++prev;
+		}
 	}
 }
 
 static void
-AcmeNewAuthzHttp01(const AcmeConfig &config,
-		   EVP_PKEY &account_key, AcmeClient &client,
-		   const char *host)
-{
-	const char *challenge_type = "http-01";
-
-	const auto challenge = client.NewAuthz(account_key, host, challenge_type);
-	HandleHttp01Challenge(config, account_key, client, challenge);
-}
-
-static void
-AcmeNewAuthz(const AcmeConfig &config,
+AcmeNewOrder(const AcmeConfig &config,
 	     EVP_PKEY &account_key,
+	     CertDatabase &db,
 	     AcmeClient &client,
-	     const char *host)
+	     WorkshopProgress _progress,
+	     const char *handle,
+	     ConstBuffer<const char *> alt_hosts)
 {
 	if (config.challenge_directory.empty())
 		throw "No --challenge-directory specified";
 
-	AcmeNewAuthzHttp01(config, account_key, client, host);
-}
+	AcmeClient::OrderRequest order_request;
+	for (const char *host : alt_hosts)
+		order_request.identifiers.emplace_front(host);
 
-static void
-AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-	    const char *handle,
-	    EVP_PKEY &cert_key, X509_REQ &req)
-{
-	const auto cert = client.NewCert(key, req);
+	StepProgress progress(_progress,
+			      alt_hosts.size * 3 + 5);
+
+	const auto order = client.NewOrder(account_key,
+					   std::move(order_request));
+	progress();
+
+	AcmeAuthorize(config, account_key, client, progress,
+		      order.authorizations);
+
+	const auto cert_key = GenerateRsaKey();
+	const auto req = MakeCertRequest(*cert_key, alt_hosts);
+
+	const auto order2 = client.FinalizeOrder(account_key, order, *req);
+	progress();
+
+	const auto cert = client.DownloadCertificate(account_key, order2);
+	progress();
 
 	WrapKeyHelper wrap_key_helper;
 	const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
 
 	db.DoSerializableRepeat(8, [&](){
-		db.LoadServerCertificate(handle, *cert, cert_key,
+		db.LoadServerCertificate(handle, *cert, *cert_key,
 					 wrap_key.first, wrap_key.second);
 	});
 
 	db.NotifyModified();
-}
 
-static void
-AcmeNewCert(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-	    const char *handle,
-	    ConstBuffer<const char *> alt_hosts)
-{
-	const auto cert_key = GenerateRsaKey();
-	const auto req = MakeCertRequest(*cert_key, alt_hosts);
-	AcmeNewCert(key, db, client, handle, *cert_key, *req);
-}
-
-static void
-AcmeNewCertAll(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-	       const char *handle,
-	       X509 &old_cert, EVP_PKEY &cert_key)
-{
-	const auto req = MakeCertRequest(cert_key, old_cert);
-	AcmeNewCert(key, db, client, handle, cert_key, *req);
-}
-
-static void
-AcmeNewAuthzCert(const AcmeConfig &config, EVP_PKEY &key,
-		 CertDatabase &db, AcmeClient &client,
-		 WorkshopProgress _progress,
-		 const char *handle,
-		 ConstBuffer<const char *> alt_hosts)
-{
-	StepProgress progress(_progress, alt_hosts.size + 1);
-
-	for (const auto *host : alt_hosts) {
-		AcmeNewAuthz(config, key, client, host);
-		progress();
-	}
-
-	AcmeNewCert(key, db, client, handle, alt_hosts);
 	progress();
 }
 
@@ -459,11 +500,14 @@ AllNames(X509 &cert)
 }
 
 static void
-AcmeRenewCert(const AcmeConfig &config, EVP_PKEY &key,
+AcmeRenewCert(const AcmeConfig &config, EVP_PKEY &account_key,
 	      CertDatabase &db, AcmeClient &client,
 	      WorkshopProgress _progress,
 	      const char *handle)
 {
+	if (config.challenge_directory.empty())
+		throw "No --challenge-directory specified";
+
 	const auto old_cert_key = db.GetServerCertificateKeyByHandle(handle);
 	if (!old_cert_key.second)
 		throw "Old certificate not found in database";
@@ -471,21 +515,39 @@ AcmeRenewCert(const AcmeConfig &config, EVP_PKEY &key,
 	auto &old_cert = *old_cert_key.first;
 	auto &old_key = *old_cert_key.second;
 
-	const auto cn = GetCommonName(old_cert);
-	if (cn.IsNull())
-		throw "Old certificate has no common name";
-
 	const auto names = AllNames(old_cert);
-	StepProgress progress(_progress, names.size() + 1);
+	StepProgress progress(_progress,
+			      names.size() * 3 + 5);
 
-	for (const auto &i : names) {
-		printf("new-authz '%s'\n", i.c_str());
-		AcmeNewAuthz(config, key, client, i.c_str());
-		progress();
-	}
+	AcmeClient::OrderRequest order_request;
+	for (const auto &host : names)
+		order_request.identifiers.emplace_front(host);
 
-	printf("new-cert\n");
-	AcmeNewCertAll(key, db, client, handle, old_cert, old_key);
+	const auto order = client.NewOrder(account_key,
+					   std::move(order_request));
+	progress();
+
+	AcmeAuthorize(config, account_key, client, progress,
+		      order.authorizations);
+
+	const auto req = MakeCertRequest(old_key, old_cert);
+
+	const auto order2 = client.FinalizeOrder(account_key, order, *req);
+	progress();
+
+	const auto cert = client.DownloadCertificate(account_key, order2);
+	progress();
+
+	WrapKeyHelper wrap_key_helper;
+	const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
+
+	db.DoSerializableRepeat(8, [&](){
+		db.LoadServerCertificate(handle, *cert, old_key,
+					 wrap_key.first, wrap_key.second);
+	});
+
+	db.NotifyModified();
+
 	progress();
 }
 
@@ -516,6 +578,14 @@ Acme(ConstBuffer<const char *> args)
 
 			config.account_key_path = args.front();
 			args.shift();
+		} else if (strcmp(arg, "--account-key-id") == 0) {
+			args.shift();
+
+			if (args.empty())
+				throw std::runtime_error("Key id missing");
+
+			config.account_key_id = args.front();
+			args.shift();
 		} else if (strcmp(arg, "--challenge-directory") == 0) {
 			args.shift();
 
@@ -523,14 +593,6 @@ Acme(ConstBuffer<const char *> args)
 				throw std::runtime_error("Directory missing");
 
 			config.challenge_directory = args.front();
-			args.shift();
-		} else if (strcmp(arg, "--agreement") == 0) {
-			args.shift();
-
-			if (args.empty())
-				throw std::runtime_error("Agreement URL missing");
-
-			config.agreement_url = args.front();
 			args.shift();
 		} else
 			break;
@@ -550,9 +612,7 @@ Acme(ConstBuffer<const char *> args)
 			"  --account-key FILE\n"
 			"                load the ACME account key from this file\n"
 			"  --challenge-directory PATH\n"
-			"                use http-01 with this challenge directory\n"
-			"  --agreement URL\n"
-			"                use a custom ACME agreement URL\n";
+			"                use http-01 with this challenge directory\n";
 
 	const char *key_path = config.account_key_path.c_str();
 
@@ -567,24 +627,11 @@ Acme(ConstBuffer<const char *> args)
 		const ScopeSslGlobalInit ssl_init;
 		const AcmeKey key(key_path);
 
-		const auto account = AcmeClient(config).NewReg(*key, email);
+		const auto account = AcmeClient(config).NewAccount(*key, email);
 		printf("location: %s\n", account.location.c_str());
-	} else if (strcmp(cmd, "new-authz") == 0) {
-		if (args.size != 1)
-			throw Usage("acme new-authz HOST");
-
-		const char *host = args[0];
-
-		const ScopeSslGlobalInit ssl_init;
-		const AcmeKey key(key_path);
-
-		AcmeClient client(config);
-
-		AcmeNewAuthz(config, *key, client, host);
-		printf("OK\n");
-	} else if (strcmp(cmd, "new-cert") == 0) {
+	} else if (strcmp(cmd, "new-order") == 0) {
 		if (args.size < 2)
-			throw Usage("acme new-cert HANDLE HOST...");
+			throw Usage("acme new-order HANDLE HOST ...");
 
 		const char *handle = args.shift();
 
@@ -594,24 +641,8 @@ Acme(ConstBuffer<const char *> args)
 		CertDatabase db(*db_config);
 		AcmeClient client(config);
 
-		AcmeNewCert(*key, db, client, handle, args);
-
-		printf("OK\n");
-	} else if (strcmp(cmd, "new-authz-cert") == 0) {
-		if (args.size < 2)
-			throw Usage("acme new-authz-cert HANDLE HOST ...");
-
-		const char *handle = args.shift();
-
-		const ScopeSslGlobalInit ssl_init;
-		const AcmeKey key(key_path);
-
-		CertDatabase db(*db_config);
-		AcmeClient client(config);
-
-		AcmeNewAuthzCert(config, *key, db, client, root_progress,
-				 handle, args);
-
+		AcmeNewOrder(config, *key, db, client, root_progress,
+			     handle, args);
 		printf("OK\n");
 	} else if (strcmp(cmd, "renew-cert") == 0) {
 		if (args.size != 1)

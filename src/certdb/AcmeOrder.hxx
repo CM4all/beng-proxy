@@ -32,28 +32,13 @@
 
 #pragma once
 
-#include <string>
 #include <exception>
+#include <forward_list>
 
-class AcmeError;
-
-struct AcmeChallenge {
-	std::string type;
-
-	enum class Status {
-		PENDING,
-		PROCESSING,
-		VALID,
-		INVALID,
-	} status = Status::INVALID;
-
-	std::string token;
-	std::string uri;
-
-	std::exception_ptr error;
-
-	void Check() const;
-
-	static Status ParseStatus(const std::string &s);
-	static const char *FormatStatus(Status s) noexcept;
+struct AcmeOrder {
+	std::string location;
+	std::string status;
+	std::forward_list<std::string> authorizations;
+	std::string finalize;
+	std::string certificate;
 };

@@ -1056,6 +1056,8 @@ executable(
   'src/certdb/AcmeError.cxx',
   'src/certdb/AcmeHttp.cxx',
   'src/certdb/AcmeClient.cxx',
+  'src/certdb/AcmeChallenge.cxx',
+  'src/certdb/AcmeAuthorization.cxx',
   'src/certdb/AcmeKey.cxx',
   'src/certdb/FakeAcmeClient.cxx',
   'src/certdb/Main.cxx',
