@@ -38,6 +38,6 @@ Json::Value
 ParseJson(std::string &&s) noexcept
 {
 	Json::Value root;
-	std::stringstream(std::move(s)) >> root;
+	std::stringstream(std::move(s), std::ios_base::in) >> root;
 	return root;
 }
