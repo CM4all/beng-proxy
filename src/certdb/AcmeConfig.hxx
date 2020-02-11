@@ -42,9 +42,6 @@ struct AcmeConfig {
 	/**
 	 * Specifies the directory mapped to
 	 * "http://example.com/.well-known/acme-challenge/".
-	 *
-	 * If this is non-empty, then "http-01" is used instead of
-	 * "tls-sni-01".
 	 */
 	std::string challenge_directory;
 

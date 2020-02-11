@@ -756,22 +756,21 @@ contacted at ``www.example.com`` port 443, with the certificate database
 enabled on that listener.
 
 The command ``new-authz-cert`` creates a new ``authz`` object for the
-specified host name, asks the ACME server to conduct TLS-SNI-01
-validation (by connecting to :program:`beng-lb`, which will use a specially
-crafted self-signed certificate). After the validation succeeds, it will
+specified host name, asks the ACME server to conduct ``http-01``
+validation. After the validation succeeds, it will
 create a new private key and a certificate signing request, and ask the
 ACME server to sign the new certificate.
 
 After the program finishes, the new certificate should be usable
 immediately.
 
-Using ``http-01`` instead of ``tls-sni-01``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using ``http-01``
+~~~~~~~~~~~~~~~~~
 
-The option ``--challenge-directory`` enables ``http-01`` instead of
-``tls-sni-01``. The parameter is a directory where ACME challenge
-files are stored, to be mapped to ``/.well-known/acme-challenge/`` on
-all domains to be authenticated. Example::
+The option ``--challenge-directory`` enables ``http-01``. The
+parameter is a directory where ACME challenge files are stored, to be
+mapped to ``/.well-known/acme-challenge/`` on all domains to be
+authenticated. Example::
 
    cm4all-certdb acme --staging \
      --challenge-directory /var/www/example/.well-known/acme-challenge \

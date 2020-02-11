@@ -1051,7 +1051,6 @@ executable(
   'src/certdb/GlueHttpClient.cxx',
   'src/certdb/JWS.cxx',
   'src/certdb/AcmeError.cxx',
-  'src/certdb/AcmeSni.cxx',
   'src/certdb/AcmeHttp.cxx',
   'src/certdb/AcmeClient.cxx',
   'src/certdb/AcmeKey.cxx',

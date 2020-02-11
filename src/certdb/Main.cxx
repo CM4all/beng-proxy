@@ -36,7 +36,6 @@
 #include "AcmeClient.hxx"
 #include "AcmeChallenge.hxx"
 #include "AcmeKey.hxx"
-#include "AcmeSni.hxx"
 #include "AcmeHttp.hxx"
 #include "AcmeConfig.hxx"
 #include "Config.hxx"
@@ -352,106 +351,6 @@ MakeCertRequest(EVP_PKEY &key, X509 &src)
 	return req;
 }
 
-/**
- * Generate a tls-sni-01 challenge certificate, load it into the
- * database and send a PostgreSQL notify.  After returning, it is not
- * guaranteed that all servers have already updated their certificate
- * cache.
- *
- * @param key the ACME account key
- * @param cert_key a key for the new challenge certificate
- * @param challenge the "new-authz" response from the ACME server
- * (i.e. the challenge)
- * @return the handle
- */
-static AllocatedString<>
-LoadAcmeNewAuthzTlsSni01Challenge(EVP_PKEY &key, CertDatabase &db,
-				  EVP_PKEY &cert_key,
-				  const AcmeChallenge &challenge)
-{
-	const auto cert = MakeTlsSni01Cert(key, cert_key, challenge);
-	auto handle = GetCommonName(*cert);
-	assert(!handle.IsNull());
-
-	WrapKeyHelper wrap_key_helper;
-	const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
-
-	db.LoadServerCertificate(handle.c_str(), *cert, cert_key,
-				 wrap_key.first, wrap_key.second);
-	db.NotifyModified();
-
-	return handle;
-}
-
-static void
-HandleAcmeNewAuthzTlsSni01(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-			   EVP_PKEY &cert_key,
-			   const AcmeChallenge &challenge,
-			   std::chrono::steady_clock::duration delay)
-{
-	const auto handle =
-		LoadAcmeNewAuthzTlsSni01Challenge(key, db, cert_key, challenge);
-	assert(!handle.IsNull());
-
-	printf("Loaded challenge certificate into database\n");
-
-	/* wait until beng-lb's NameCache has been updated */
-	if (!client.IsFake())
-		std::this_thread::sleep_for(delay);
-
-	printf("Waiting for confirmation from ACME server\n");
-	bool done = client.UpdateAuthz(key, challenge);
-	while (!done) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		done = client.CheckAuthz(challenge);
-	}
-
-	/* delete the challenge record */
-
-	db.DeleteServerCertificateByHandle(handle.c_str());
-
-	// TODO: delete orphaned challenge records
-}
-
-static void
-AcmeNewAuthzTlsSni01(EVP_PKEY &key, CertDatabase &db, AcmeClient &client,
-		     const char *host)
-{
-	const char *challenge_type = "tls-sni-01";
-
-	const auto cert_key = GenerateRsaKey();
-
-	/* 500ms is an arbitrary delay, somewhat bigger than NameCache's
-	   200ms delay */
-	std::chrono::steady_clock::duration delay = std::chrono::milliseconds(500);
-
-	unsigned unauthorized_retries = 3;
-
-	while (true) {
-		const auto response = client.NewAuthz(key, host, challenge_type);
-
-		try {
-			HandleAcmeNewAuthzTlsSni01(key, db, client, *cert_key,
-						   response, delay);
-			break;
-		} catch (...) {
-			if (IsAcmeUnauthorizedError(std::current_exception()) &&
-			    unauthorized_retries-- > 0) {
-				/* just in case this was caused by a timing problem
-				   (the beng-lb instance had not updated its cache
-				   yet), retry with a larger delay */
-
-				PrintException(std::current_exception());
-				fprintf(stderr, "Retrying new-authz.\n");
-				delay *= 2;
-				continue;
-			}
-
-			throw;
-		}
-	}
-}
-
 static void
 AcmeNewAuthzHttp01(const AcmeConfig &config,
 		   EVP_PKEY &account_key, AcmeClient &client,
@@ -473,14 +372,14 @@ AcmeNewAuthzHttp01(const AcmeConfig &config,
 
 static void
 AcmeNewAuthz(const AcmeConfig &config,
-	     EVP_PKEY &account_key, CertDatabase &db,
+	     EVP_PKEY &account_key,
 	     AcmeClient &client,
 	     const char *host)
 {
 	if (config.challenge_directory.empty())
-		AcmeNewAuthzTlsSni01(account_key, db, client, host);
-	else
-		AcmeNewAuthzHttp01(config, account_key, client, host);
+		throw "No --challenge-directory specified";
+
+	AcmeNewAuthzHttp01(config, account_key, client, host);
 }
 
 static void
@@ -530,7 +429,7 @@ AcmeNewAuthzCert(const AcmeConfig &config, EVP_PKEY &key,
 	StepProgress progress(_progress, alt_hosts.size + 1);
 
 	for (const auto *host : alt_hosts) {
-		AcmeNewAuthz(config, key, db, client, host);
+		AcmeNewAuthz(config, key, client, host);
 		progress();
 	}
 
@@ -577,7 +476,7 @@ AcmeRenewCert(const AcmeConfig &config, EVP_PKEY &key,
 
 	for (const auto &i : names) {
 		printf("new-authz '%s'\n", i.c_str());
-		AcmeNewAuthz(config, key, db, client, i.c_str());
+		AcmeNewAuthz(config, key, client, i.c_str());
 		progress();
 	}
 
@@ -675,10 +574,9 @@ Acme(ConstBuffer<const char *> args)
 		const ScopeSslGlobalInit ssl_init;
 		const AcmeKey key(key_path);
 
-		CertDatabase db(*db_config);
 		AcmeClient client(config);
 
-		AcmeNewAuthz(config, *key, db, client, host);
+		AcmeNewAuthz(config, *key, client, host);
 		printf("OK\n");
 	} else if (strcmp(cmd, "new-cert") == 0) {
 		if (args.size < 2)

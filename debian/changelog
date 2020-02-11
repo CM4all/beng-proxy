@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.1) unstable; urgency=low
 
-  * 
+  * certdb: remove obsolete challenge method "sni-01"
 
  --   
 
