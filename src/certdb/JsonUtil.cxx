@@ -30,36 +30,14 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "JsonUtil.hxx"
 
-#include "util/Compiler.h"
+#include <sstream>
 
-#include <json/json.h>
-
-#include <string>
-
-gcc_pure
 Json::Value
-ParseJson(std::string &&s) noexcept;
-
-gcc_pure
-static inline std::string
-GetString(const Json::Value &json) noexcept
+ParseJson(std::string &&s) noexcept
 {
-	return json.isString()
-		? json.asString()
-		: std::string{};
-}
-
-gcc_pure
-static inline const Json::Value &
-FindInArray(const Json::Value &v, const char *key, const char *value) noexcept
-{
-	for (const auto &i : v) {
-		const auto &l = i[key];
-		if (!l.isNull() && l.asString() == value)
-			return i;
-	}
-
-	return Json::Value::null;
+	Json::Value root;
+	std::stringstream(std::move(s)) >> root;
+	return root;
 }

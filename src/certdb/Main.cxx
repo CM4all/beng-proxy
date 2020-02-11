@@ -63,8 +63,6 @@
 #include "util/ScopeExit.hxx"
 #include "util/Compiler.h"
 
-#include <json/json.h>
-
 #include <thread>
 #include <stdexcept>
 #include <set>

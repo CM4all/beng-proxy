@@ -1050,6 +1050,7 @@ executable(
   'src/certdb/Wildcard.cxx',
   'src/certdb/GlueHttpClient.cxx',
   'src/certdb/JWS.cxx',
+  'src/certdb/JsonUtil.cxx',
   'src/certdb/AcmeError.cxx',
   'src/certdb/AcmeHttp.cxx',
   'src/certdb/AcmeClient.cxx',
