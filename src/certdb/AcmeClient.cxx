@@ -153,6 +153,24 @@ AcmeClient::AcmeClient(const AcmeConfig &config) noexcept
 
 AcmeClient::~AcmeClient() noexcept = default;
 
+static std::string
+GetString(const Json::Value &json) noexcept
+{
+	return json.isString()
+		? json.asString()
+		: std::string{};
+}
+
+static AcmeDirectory
+ParseAcmeDirectory(const Json::Value &json) noexcept
+{
+	AcmeDirectory directory;
+	directory.new_reg = GetString(json["new-reg"]);
+	directory.new_authz = GetString(json["new-authz"]);
+	directory.new_cert = GetString(json["new-cert"]);
+	return directory;
+}
+
 std::string
 AcmeClient::RequestNonce()
 {
@@ -162,7 +180,7 @@ AcmeClient::RequestNonce()
 	unsigned remaining_tries = 3;
 	while (true) {
 		auto response = glue_http_client.Request(event_loop,
-							 HTTP_METHOD_HEAD,
+							 HTTP_METHOD_GET,
 							 (server + "/directory").c_str(),
 							 nullptr);
 		if (response.status != HTTP_STATUS_OK) {
@@ -175,6 +193,9 @@ AcmeClient::RequestNonce()
 			throw FormatRuntimeError("Unexpected response status %d",
 						 response.status);
 		}
+
+		if (IsJson(response))
+			directory = ParseAcmeDirectory(ParseJson(std::move(response.body)));
 
 		auto nonce = response.headers.find("replay-nonce");
 		if (nonce == response.headers.end())
@@ -192,6 +213,13 @@ AcmeClient::NextNonce()
 	std::string result;
 	std::swap(result, next_nonce);
 	return result;
+}
+
+void
+AcmeClient::EnsureDirectory()
+{
+	if (next_nonce.empty())
+		next_nonce = RequestNonce();
 }
 
 static std::string
@@ -271,7 +299,7 @@ AcmeClient::Request(http_method_t method, const char *uri,
 	auto response = fake
 		? FakeRequest(method, uri, body)
 		: glue_http_client.Request(event_loop,
-					   method, (server + uri).c_str(),
+					   method, uri,
 					   body);
 
 	auto new_nonce = response.headers.find("replay-nonce");
@@ -316,6 +344,10 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 AcmeClient::Account
 AcmeClient::NewReg(EVP_PKEY &key, const char *email)
 {
+	EnsureDirectory();
+	if (directory.new_reg.empty())
+		throw std::runtime_error("No new-reg in directory");
+
 	std::string payload("{\"resource\": \"new-reg\", ");
 
 	if (email != nullptr) {
@@ -329,7 +361,8 @@ AcmeClient::NewReg(EVP_PKEY &key, const char *email)
 	payload += "\"}";
 
 	auto response = SignedRequestRetry(key,
-					   HTTP_METHOD_POST, "/acme/new-reg",
+					   HTTP_METHOD_POST,
+					   directory.new_reg.c_str(),
 					   payload.c_str());
 	if (response.status == HTTP_STATUS_OK)
 		throw std::runtime_error("This key is already registered");
@@ -362,6 +395,10 @@ AcmeChallenge
 AcmeClient::NewAuthz(EVP_PKEY &key, const char *host,
 		     const char *challenge_type)
 {
+	EnsureDirectory();
+	if (directory.new_authz.empty())
+		throw std::runtime_error("No new-authz in directory");
+
 	std::string payload("{\"resource\": \"new-authz\", "
 			    "\"identifier\": { "
 			    "\"type\": \"dns\", "
@@ -370,7 +407,8 @@ AcmeClient::NewAuthz(EVP_PKEY &key, const char *host,
 	payload += "\" } }";
 
 	auto response = SignedRequestRetry(key,
-					   HTTP_METHOD_POST, "/acme/new-authz",
+					   HTTP_METHOD_POST,
+					   directory.new_authz.c_str(),
 					   payload.c_str());
 	CheckThrowStatusError(std::move(response), HTTP_STATUS_CREATED,
 			      "Failed to create authz");
@@ -397,10 +435,6 @@ AcmeClient::NewAuthz(EVP_PKEY &key, const char *host,
 bool
 AcmeClient::UpdateAuthz(EVP_PKEY &key, const AcmeChallenge &authz)
 {
-	const char *uri = uri_path(authz.uri.c_str());
-	if (uri == nullptr)
-		throw std::runtime_error("Malformed URI in AcmeChallenge");
-
 	std::string payload("{ \"resource\": \"challenge\", "
 			    "\"type\": \"");
 	payload += authz.type;
@@ -411,7 +445,7 @@ AcmeClient::UpdateAuthz(EVP_PKEY &key, const AcmeChallenge &authz)
 	payload += "\" }";
 
 	auto response = SignedRequestRetry(key,
-					   HTTP_METHOD_POST, uri,
+					   HTTP_METHOD_POST, authz.uri.c_str(),
 					   payload.c_str());
 	CheckThrowStatusError(std::move(response), HTTP_STATUS_ACCEPTED,
 			      "Failed to update authz");
@@ -424,11 +458,7 @@ AcmeClient::UpdateAuthz(EVP_PKEY &key, const AcmeChallenge &authz)
 bool
 AcmeClient::CheckAuthz(const AcmeChallenge &authz)
 {
-	const char *uri = uri_path(authz.uri.c_str());
-	if (uri == nullptr)
-		throw std::runtime_error("Malformed URI in AcmeChallenge");
-
-	auto response = Request(HTTP_METHOD_GET, uri,
+	auto response = Request(HTTP_METHOD_GET, authz.uri.c_str(),
 				nullptr);
 	CheckThrowStatusError(std::move(response), HTTP_STATUS_ACCEPTED,
 			      "Failed to check authz");
@@ -441,13 +471,18 @@ AcmeClient::CheckAuthz(const AcmeChallenge &authz)
 UniqueX509
 AcmeClient::NewCert(EVP_PKEY &key, X509_REQ &req)
 {
+	EnsureDirectory();
+	if (directory.new_cert.empty())
+		throw std::runtime_error("No new-cert in directory");
+
 	std::string payload("{\"resource\": \"new-cert\", "
 			    "\"csr\": \"");
 	payload += UrlSafeBase64(req).c_str();
 	payload += "\" }";
 
 	auto response = SignedRequestRetry(key,
-					   HTTP_METHOD_POST, "/acme/new-cert",
+					   HTTP_METHOD_POST,
+					   directory.new_cert.c_str(),
 					   payload.c_str());
 	CheckThrowStatusError(std::move(response), HTTP_STATUS_CREATED,
 			      "Failed to create certificate");

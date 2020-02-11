@@ -44,6 +44,12 @@
 struct AcmeConfig;
 struct AcmeChallenge;
 
+struct AcmeDirectory {
+	std::string new_reg;
+	std::string new_authz;
+	std::string new_cert;
+};
+
 /**
  * Implementation of a ACME client, i.e. the protocol of the "Let's
  * Encrypt" project.
@@ -61,6 +67,8 @@ class AcmeClient {
 	 * request.
 	 */
 	std::string next_nonce;
+
+	AcmeDirectory directory;
 
 	const std::string agreement_url;
 
@@ -143,6 +151,11 @@ private:
 	 * Obtain a replay nonce.
 	 */
 	std::string NextNonce();
+
+	/**
+	 * Ensure that the #AcmeDirectory is filled.
+	 */
+	void EnsureDirectory();
 
 	GlueHttpResponse FakeRequest(http_method_t method, const char *uri,
 				     ConstBuffer<void> body);
