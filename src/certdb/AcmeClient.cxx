@@ -49,7 +49,7 @@
 
 gcc_pure
 static bool
-IsJson(const GlueHttpResponse &response)
+IsJson(const GlueHttpResponse &response) noexcept
 {
 	auto i = response.headers.find("content-type");
 	if (i == response.headers.end())
@@ -62,7 +62,7 @@ IsJson(const GlueHttpResponse &response)
 
 gcc_pure
 static Json::Value
-ParseJson(std::string &&s)
+ParseJson(std::string &&s) noexcept
 {
 	Json::Value root;
 	std::stringstream(std::move(s)) >> root;
@@ -139,7 +139,7 @@ CheckThrowStatusError(GlueHttpResponse &&response,
 		ThrowStatusError(std::move(response), msg);
 }
 
-AcmeClient::AcmeClient(const AcmeConfig &config)
+AcmeClient::AcmeClient(const AcmeConfig &config) noexcept
 	:glue_http_client(event_loop),
 	 server(config.staging
 		? "https://acme-staging.api.letsencrypt.org"
@@ -151,9 +151,7 @@ AcmeClient::AcmeClient(const AcmeConfig &config)
 		glue_http_client.EnableVerbose();
 }
 
-AcmeClient::~AcmeClient()
-{
-}
+AcmeClient::~AcmeClient() noexcept = default;
 
 std::string
 AcmeClient::RequestNonce()
@@ -197,7 +195,7 @@ AcmeClient::NextNonce()
 }
 
 static std::string
-MakeHeader(EVP_PKEY &key)
+MakeHeader(EVP_PKEY &key) noexcept
 {
 	auto jwk = MakeJwk(key);
 
@@ -208,7 +206,7 @@ MakeHeader(EVP_PKEY &key)
 }
 
 static std::string
-WithNonce(const std::string &_header, const std::string &nonce)
+WithNonce(const std::string &_header, const std::string &nonce) noexcept
 {
 	std::string header(_header);
 	assert(header.size() > 8);

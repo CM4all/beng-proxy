@@ -67,8 +67,8 @@ class AcmeClient {
 	const bool fake;
 
 public:
-	explicit AcmeClient(const AcmeConfig &config);
-	~AcmeClient();
+	explicit AcmeClient(const AcmeConfig &config) noexcept;
+	~AcmeClient() noexcept;
 
 	bool IsFake() const {
 		return fake;
