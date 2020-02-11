@@ -331,6 +331,9 @@ AcmeClient::NewReg(EVP_PKEY &key, const char *email)
 	auto response = SignedRequestRetry(key,
 					   HTTP_METHOD_POST, "/acme/new-reg",
 					   payload.c_str());
+	if (response.status == HTTP_STATUS_OK)
+		throw std::runtime_error("This key is already registered");
+
 	CheckThrowStatusError(std::move(response), HTTP_STATUS_CREATED,
 			      "Failed to register account");
 
