@@ -35,6 +35,7 @@
 #include "AcmeError.hxx"
 #include "AcmeConfig.hxx"
 #include "JWS.hxx"
+#include "JsonUtil.hxx"
 #include "ssl/Base64.hxx"
 #include "ssl/Certificate.hxx"
 #include "ssl/Key.hxx"
@@ -45,7 +46,6 @@
 #include <json/json.h>
 
 #include <memory>
-#include <sstream>
 
 gcc_pure
 static bool
@@ -58,15 +58,6 @@ IsJson(const GlueHttpResponse &response) noexcept
 	const char *content_type = i->second.c_str();
 	return strcmp(content_type, "application/json") == 0 ||
 		strcmp(content_type, "application/problem+json") == 0;
-}
-
-gcc_pure
-static Json::Value
-ParseJson(std::string &&s) noexcept
-{
-	Json::Value root;
-	std::stringstream(std::move(s)) >> root;
-	return root;
 }
 
 gcc_pure
@@ -152,14 +143,6 @@ AcmeClient::AcmeClient(const AcmeConfig &config) noexcept
 }
 
 AcmeClient::~AcmeClient() noexcept = default;
-
-static std::string
-GetString(const Json::Value &json) noexcept
-{
-	return json.isString()
-		? json.asString()
-		: std::string{};
-}
 
 static AcmeDirectory
 ParseAcmeDirectory(const Json::Value &json) noexcept
@@ -377,18 +360,6 @@ AcmeClient::NewReg(EVP_PKEY &key, const char *email)
 		account.location = std::move(location->second);
 
 	return account;
-}
-
-static const Json::Value &
-FindInArray(const Json::Value &v, const char *key, const char *value)
-{
-	for (const auto &i : v) {
-		const auto &l = i[key];
-		if (!l.isNull() && l.asString() == value)
-			return i;
-	}
-
-	return Json::Value::null;
 }
 
 AcmeChallenge
