@@ -33,6 +33,7 @@
 #include "AcmeHttp.hxx"
 #include "AcmeChallenge.hxx"
 #include "JWS.hxx"
+#include "JsonUtil.hxx"
 #include "ssl/Base64.hxx"
 #include "io/FileWriter.hxx"
 #include "util/ConstBuffer.hxx"
@@ -43,7 +44,7 @@ std::string
 MakeHttp01(const AcmeChallenge &challenge, EVP_PKEY &account_key)
 {
 	return challenge.token + "." +
-		UrlSafeBase64SHA256(MakeJwk(account_key)).c_str();
+		UrlSafeBase64SHA256(FormatJson(MakeJwk(account_key))).c_str();
 }
 
 static void

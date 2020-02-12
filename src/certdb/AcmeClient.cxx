@@ -192,15 +192,15 @@ AcmeClient::EnsureDirectory()
 		next_nonce = RequestNonce();
 }
 
-static std::string
-MakeHeader(EVP_PKEY &key) noexcept
+static Json::Value
+MakeHeader(EVP_PKEY &key)
 {
 	auto jwk = MakeJwk(key);
 
-	std::string header("{\"alg\": \"RS256\", \"jwk\": ");
-	header += jwk;
-	header += "}";
-	return header;
+	Json::Value root;
+	root["alg"] = "RS256";
+	root["jwk"] = MakeJwk(key);
+	return root;
 }
 
 static std::string
@@ -293,7 +293,7 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 {
 	const auto payload_b64 = UrlSafeBase64(payload);
 
-	const auto header = MakeHeader(key);
+	const auto header = FormatJson(MakeHeader(key));
 
 	const auto nonce = NextNonce();
 
@@ -416,7 +416,7 @@ AcmeClient::UpdateAuthz(EVP_PKEY &key, const AcmeChallenge &authz)
 	payload += "\", \"keyAuthorization\": \"";
 	payload += authz.token;
 	payload += '.';
-	payload += UrlSafeBase64SHA256(MakeJwk(key)).c_str();
+	payload += UrlSafeBase64SHA256(FormatJson(MakeJwk(key))).c_str();
 	payload += "\" }";
 
 	auto response = SignedRequestRetry(key,

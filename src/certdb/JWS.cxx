@@ -36,9 +36,11 @@
 #include "openssl/evp.h"
 #include "openssl/rsa.h"
 
+#include <json/json.h>
+
 #include <stdexcept>
 
-std::string
+Json::Value
 MakeJwk(EVP_PKEY &key)
 {
 	if (EVP_PKEY_base_id(&key) != EVP_PKEY_RSA)
@@ -52,12 +54,9 @@ MakeJwk(EVP_PKEY &key)
 	e = key.pkey.rsa->e;
 #endif
 
-	const auto exponent = UrlSafeBase64(*e);
-	const auto modulus = UrlSafeBase64(*n);
-	std::string jwk("{\"e\":\"");
-	jwk += exponent.c_str();
-	jwk += "\",\"kty\":\"RSA\",\"n\":\"";
-	jwk += modulus.c_str();
-	jwk += "\"}";
-	return jwk;
+	Json::Value root(Json::objectValue);
+	root["kty"] = "RSA";
+	root["e"] = UrlSafeBase64(*e).c_str();
+	root["n"] = UrlSafeBase64(*n).c_str();
+	return root;
 }

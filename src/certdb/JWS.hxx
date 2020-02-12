@@ -38,8 +38,10 @@
 
 #include <string>
 
+namespace Json { class Value; }
+
 /**
  * Throws on error.
  */
-std::string
+Json::Value
 MakeJwk(EVP_PKEY &key);
