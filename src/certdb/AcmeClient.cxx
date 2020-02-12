@@ -311,6 +311,14 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 		       {body.data(), body.length()});
 }
 
+GlueHttpResponse
+AcmeClient::SignedRequest(EVP_PKEY &key,
+			  http_method_t method, const char *uri,
+			  const Json::Value &payload)
+{
+	return SignedRequest(key, method, uri, FormatJson(payload).c_str());
+}
+
 AcmeClient::Account
 AcmeClient::NewReg(EVP_PKEY &key, const char *email)
 {

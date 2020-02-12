@@ -41,6 +41,8 @@
 
 #include <string.h>
 
+namespace Json { class Value; }
+
 struct AcmeConfig;
 struct AcmeChallenge;
 
@@ -173,6 +175,10 @@ private:
 		return SignedRequest(key, method, uri,
 				     ConstBuffer<void>(payload, strlen(payload)));
 	}
+
+	GlueHttpResponse SignedRequest(EVP_PKEY &key,
+				       http_method_t method, const char *uri,
+				       const Json::Value &payload);
 
 	template<typename P>
 	GlueHttpResponse SignedRequestRetry(EVP_PKEY &key,
