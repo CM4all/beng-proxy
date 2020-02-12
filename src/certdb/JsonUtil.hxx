@@ -39,6 +39,10 @@
 #include <string>
 
 gcc_pure
+std::string
+FormatJson(const Json::Value &value) noexcept;
+
+gcc_pure
 Json::Value
 ParseJson(std::string &&s) noexcept;
 
