@@ -203,19 +203,11 @@ MakeHeader(EVP_PKEY &key)
 	return root;
 }
 
-static std::string
-WithNonce(const std::string &_header, const std::string &nonce) noexcept
+static Json::Value
+WithNonce(Json::Value &&header, std::string &&nonce) noexcept
 {
-	std::string header(_header);
-	assert(header.size() > 8);
-
-	size_t i = header.length() - 1;
-	std::string s(", \"nonce\": \"");
-	s += nonce;
-	s += "\"";
-
-	header.insert(i, s);
-	return header;
+	header["nonce"] = std::move(nonce);
+	return std::move(header);
 }
 
 static AllocatedString<>
@@ -293,28 +285,23 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 {
 	const auto payload_b64 = UrlSafeBase64(payload);
 
-	const auto header = FormatJson(MakeHeader(key));
+	Json::Value root(Json::objectValue);
 
-	const auto nonce = NextNonce();
+	auto header = MakeHeader(key);
+	root["header"] = header;
 
-	const auto protected_header = WithNonce(header, nonce);
+	const auto protected_header = FormatJson(WithNonce(std::move(header),
+							   NextNonce()));
 
 	const auto protected_header_b64 = UrlSafeBase64(protected_header);
+	root["payload"] = payload_b64.c_str();
 
-	const auto signature = Sign(key, protected_header_b64.c_str(),
-				    payload_b64.c_str());
+	root["signature"] = Sign(key, protected_header_b64.c_str(),
+				 payload_b64.c_str()).c_str();
 
-	std::string body = "{\"signature\": \"";
-	body += signature.c_str();
-	body += "\", \"payload\": \"";
-	body += payload_b64.c_str();
-	body += "\", \"header\": ";
-	body += header;
-	body += ", \"protected\": \"";
-	body += protected_header_b64.c_str();
-	body += "\"}";
+	root["protected"] = protected_header_b64.c_str();
 
-	return Request(method, uri, body);
+	return Request(method, uri, root);
 }
 
 GlueHttpResponse
