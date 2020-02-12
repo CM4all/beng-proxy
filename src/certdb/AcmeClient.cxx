@@ -117,19 +117,6 @@ ThrowStatusError(GlueHttpResponse &&response, const char *msg)
 	ThrowError(std::move(response), what.c_str());
 }
 
-/**
- * Check the status, and if it's not the expected one, throw an
- * exception.
- */
-static void
-CheckThrowStatusError(GlueHttpResponse &&response,
-		      http_status_t expected_status,
-		      const char *msg)
-{
-	if (response.status != expected_status)
-		ThrowStatusError(std::move(response), msg);
-}
-
 AcmeClient::AcmeClient(const AcmeConfig &config) noexcept
 	:glue_http_client(event_loop),
 	 server(config.staging
@@ -350,8 +337,9 @@ AcmeClient::NewReg(EVP_PKEY &key, const char *email)
 	if (response.status == HTTP_STATUS_OK)
 		throw std::runtime_error("This key is already registered");
 
-	CheckThrowStatusError(std::move(response), HTTP_STATUS_CREATED,
-			      "Failed to register account");
+	if (response.status != HTTP_STATUS_CREATED)
+		ThrowStatusError(std::move(response),
+				 "Failed to register account");
 
 	Account account;
 
@@ -381,8 +369,10 @@ AcmeClient::NewAuthz(EVP_PKEY &key, const char *host,
 					   HTTP_METHOD_POST,
 					   directory.new_authz.c_str(),
 					   payload.c_str());
-	CheckThrowStatusError(std::move(response), HTTP_STATUS_CREATED,
-			      "Failed to create authz");
+
+	if (response.status != HTTP_STATUS_CREATED)
+		ThrowStatusError(std::move(response),
+				 "Failed to create authz");
 
 	const auto root = ParseJson(std::move(response));
 	CheckThrowError(root, "Failed to create authz");
@@ -418,8 +408,10 @@ AcmeClient::UpdateAuthz(EVP_PKEY &key, const AcmeChallenge &authz)
 	auto response = SignedRequestRetry(key,
 					   HTTP_METHOD_POST, authz.uri.c_str(),
 					   payload.c_str());
-	CheckThrowStatusError(std::move(response), HTTP_STATUS_ACCEPTED,
-			      "Failed to update authz");
+
+	if (response.status != HTTP_STATUS_ACCEPTED)
+		ThrowStatusError(std::move(response),
+				 "Failed to update authz");
 
 	auto root = ParseJson(std::move(response));
 	CheckThrowError(root, "Failed to update authz");
@@ -431,8 +423,9 @@ AcmeClient::CheckAuthz(const AcmeChallenge &authz)
 {
 	auto response = Request(HTTP_METHOD_GET, authz.uri.c_str(),
 				nullptr);
-	CheckThrowStatusError(std::move(response), HTTP_STATUS_ACCEPTED,
-			      "Failed to check authz");
+	if (response.status != HTTP_STATUS_ACCEPTED)
+		ThrowStatusError(std::move(response),
+				 "Failed to check authz");
 
 	auto root = ParseJson(std::move(response));
 	CheckThrowError(root, "Failed to check authz");
@@ -455,8 +448,9 @@ AcmeClient::NewCert(EVP_PKEY &key, X509_REQ &req)
 					   HTTP_METHOD_POST,
 					   directory.new_cert.c_str(),
 					   payload.c_str());
-	CheckThrowStatusError(std::move(response), HTTP_STATUS_CREATED,
-			      "Failed to create certificate");
+	if (response.status != HTTP_STATUS_CREATED)
+		ThrowStatusError(std::move(response),
+				 "Failed to create certificate");
 
 	return DecodeDerCertificate({response.body.data(), response.body.length()});
 }
