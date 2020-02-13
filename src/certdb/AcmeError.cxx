@@ -36,7 +36,7 @@
 #include <json/json.h>
 
 AcmeError::AcmeError(const Json::Value &error)
-	:std::runtime_error(error["detail"].asString()),
+	:std::runtime_error("Server error: " + error["detail"].asString()),
 	 type(error["type"].asString())
 {
 }
