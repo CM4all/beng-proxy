@@ -307,8 +307,7 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 	body += protected_header_b64.c_str();
 	body += "\"}";
 
-	return Request(method, uri,
-		       {body.data(), body.length()});
+	return Request(method, uri, body);
 }
 
 GlueHttpResponse

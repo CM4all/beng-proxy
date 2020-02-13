@@ -170,6 +170,12 @@ private:
 		return Request(method, uri, ConstBuffer<void>{body});
 	}
 
+	GlueHttpResponse Request(http_method_t method, const char *uri,
+				 const std::string &body) {
+		return Request(method, uri,
+			       ConstBuffer<void>{body.data(), body.size()});
+	}
+
 	GlueHttpResponse SignedRequest(EVP_PKEY &key,
 				       http_method_t method, const char *uri,
 				       ConstBuffer<void> payload);
