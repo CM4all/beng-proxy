@@ -195,8 +195,6 @@ AcmeClient::EnsureDirectory()
 static Json::Value
 MakeHeader(EVP_PKEY &key)
 {
-	auto jwk = MakeJwk(key);
-
 	Json::Value root;
 	root["alg"] = "RS256";
 	root["jwk"] = MakeJwk(key);
