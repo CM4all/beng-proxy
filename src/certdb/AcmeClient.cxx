@@ -429,8 +429,7 @@ AcmeClient::UpdateAuthz(EVP_PKEY &key, const AcmeChallenge &authz)
 bool
 AcmeClient::CheckAuthz(const AcmeChallenge &authz)
 {
-	auto response = Request(HTTP_METHOD_GET, authz.uri.c_str(),
-				nullptr);
+	auto response = Request(HTTP_METHOD_GET, authz.uri.c_str());
 	if (response.status != HTTP_STATUS_ACCEPTED)
 		ThrowStatusError(std::move(response),
 				 "Failed to check authz");
