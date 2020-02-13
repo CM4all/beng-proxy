@@ -280,6 +280,13 @@ AcmeClient::Request(http_method_t method, const char *uri,
 }
 
 GlueHttpResponse
+AcmeClient::Request(http_method_t method, const char *uri,
+		    const Json::Value &body)
+{
+	return Request(method, uri, FormatJson(body));
+}
+
+GlueHttpResponse
 AcmeClient::SignedRequest(EVP_PKEY &key,
 			  http_method_t method, const char *uri,
 			  ConstBuffer<void> payload)

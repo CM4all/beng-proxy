@@ -176,6 +176,9 @@ private:
 			       ConstBuffer<void>{body.data(), body.size()});
 	}
 
+	GlueHttpResponse Request(http_method_t method, const char *uri,
+				 const Json::Value &body);
+
 	GlueHttpResponse SignedRequest(EVP_PKEY &key,
 				       http_method_t method, const char *uri,
 				       ConstBuffer<void> payload);
