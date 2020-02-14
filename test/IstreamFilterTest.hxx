@@ -266,9 +266,11 @@ TYPED_TEST_P(IstreamFilterTest, Normal)
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
 
-	auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
+	auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(input_pool));
 	ASSERT_TRUE(!!istream);
+	input_pool.reset();
 
 	run_istream(traits, instance, std::move(pool),
 		    std::move(istream), true);
