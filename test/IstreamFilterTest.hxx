@@ -283,9 +283,12 @@ TYPED_TEST_P(IstreamFilterTest, Bucket)
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
 
-	auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
+	auto istream = traits.CreateTest(instance.event_loop, pool,
+					 traits.CreateInput(input_pool));
 	ASSERT_TRUE(!!istream);
+	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
 		    traits.expected_result, std::move(istream));
@@ -305,9 +308,12 @@ TYPED_TEST_P(IstreamFilterTest, SmallBucket)
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
 
-	auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
+	auto istream = traits.CreateTest(instance.event_loop, pool,
+					 traits.CreateInput(input_pool));
 	ASSERT_TRUE(!!istream);
+	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
 		    traits.expected_result, std::move(istream));
@@ -360,9 +366,12 @@ TYPED_TEST_P(IstreamFilterTest, Skip)
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
 
-	auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
+	auto istream = traits.CreateTest(instance.event_loop, pool,
+					 traits.CreateInput(input_pool));
 	ASSERT_TRUE(!!istream);
+	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
 		    traits.expected_result, std::move(istream));
@@ -383,10 +392,13 @@ TYPED_TEST_P(IstreamFilterTest, Block)
 
 	for (int n = 0; n < 8; ++n) {
 		auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+		auto input_pool = pool_new_linear(instance.root_pool, "input",
+						  8192);
 
 		auto istream = traits.CreateTest(instance.event_loop, pool,
-						 traits.CreateInput(pool));
+						 traits.CreateInput(input_pool));
 		ASSERT_TRUE(!!istream);
+		input_pool.reset();
 
 		run_istream_block(traits, instance, std::move(pool),
 				  std::move(istream), true, n);
@@ -403,10 +415,13 @@ TYPED_TEST_P(IstreamFilterTest, Byte)
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
 
 	auto istream =
 		traits.CreateTest(instance.event_loop, pool,
-				  istream_byte_new(pool, traits.CreateInput(pool)));
+				  istream_byte_new(input_pool,
+						   traits.CreateInput(input_pool)));
+	input_pool.reset();
 
 	run_istream(traits, instance, std::move(pool),
 		    std::move(istream), true);
@@ -422,9 +437,12 @@ TYPED_TEST_P(IstreamFilterTest, BlockByte)
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
+
 	auto istream = traits.CreateTest(instance.event_loop, pool,
-					 istream_byte_new(pool,
-							  traits.CreateInput(pool)));
+					 istream_byte_new(input_pool,
+							  traits.CreateInput(input_pool)));
+	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
 		    traits.expected_result,
@@ -447,8 +465,12 @@ TYPED_TEST_P(IstreamFilterTest, BlockInject)
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
 
-	auto inject = istream_inject_new(pool, traits.CreateInput(pool));
+	auto inject = istream_inject_new(input_pool,
+					 traits.CreateInput(input_pool));
+	input_pool.reset();
+
 	auto istream = traits.CreateTest(instance.event_loop, pool,
 					 std::move(inject.first));
 
@@ -469,8 +491,11 @@ TYPED_TEST_P(IstreamFilterTest, Half)
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
-	auto istream = traits.CreateTest(instance.event_loop, instance.root_pool,
-					 traits.CreateInput(instance.root_pool));
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
+
+	auto istream = traits.CreateTest(instance.event_loop, pool,
+					 traits.CreateInput(input_pool));
+	input_pool.reset();
 
 	Context ctx(instance, std::move(pool),
 		    traits.expected_result,
@@ -506,14 +531,18 @@ TYPED_TEST_P(IstreamFilterTest, FailAfterFirstByte)
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
 
 	const std::runtime_error error("test_fail");
 	auto istream =
 		traits.CreateTest(instance.event_loop, pool,
-				  istream_cat_new(pool,
-						  istream_head_new(pool, traits.CreateInput(pool),
+				  istream_cat_new(input_pool,
+						  istream_head_new(input_pool,
+								   traits.CreateInput(input_pool),
 								   1, false),
-						  istream_fail_new(pool, std::make_exception_ptr(error))));
+						  istream_fail_new(input_pool,
+								   std::make_exception_ptr(error))));
+	input_pool.reset();
 
 	run_istream(traits, instance, std::move(pool),
 		    std::move(istream), false);
@@ -526,8 +555,12 @@ TYPED_TEST_P(IstreamFilterTest, AbortWithoutHandler)
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
 
-	auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
+	auto istream = traits.CreateTest(instance.event_loop, pool,
+					 traits.CreateInput(input_pool));
+	input_pool.reset();
+
 	istream.Clear();
 }
 
@@ -541,8 +574,11 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandler)
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
 
-	auto inject = istream_inject_new(pool, traits.CreateInput(pool));
+	auto inject = istream_inject_new(input_pool, traits.CreateInput(input_pool));
+	input_pool.reset();
+
 	auto istream = traits.CreateTest(instance.event_loop, pool, std::move(inject.first));
 
 	Context ctx(instance, std::move(pool),
@@ -569,8 +605,13 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandlerHalf)
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
 
-	auto inject = istream_inject_new(pool, istream_four_new(pool, traits.CreateInput(pool)));
+	auto inject = istream_inject_new(input_pool,
+					 istream_four_new(input_pool,
+							  traits.CreateInput(input_pool)));
+	input_pool.reset();
+
 	auto istream = traits.CreateTest(instance.event_loop, pool,
 					 istream_byte_new(pool, std::move(inject.first)));
 
@@ -596,11 +637,13 @@ TYPED_TEST_P(IstreamFilterTest, AbortAfter1Byte)
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
 
 	auto istream = istream_head_new(pool,
 					traits.CreateTest(instance.event_loop, pool,
-							  traits.CreateInput(pool)),
+							  traits.CreateInput(input_pool)),
 					1, false);
+	input_pool.reset();
 
 	run_istream(traits, instance, std::move(pool),
 		    std::move(istream), false);
@@ -613,11 +656,13 @@ TYPED_TEST_P(IstreamFilterTest, Later)
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
 
 	auto istream =
 		traits.CreateTest(instance.event_loop, pool,
-				  istream_later_new(pool, traits.CreateInput(pool),
+				  istream_later_new(input_pool, traits.CreateInput(input_pool),
 						    instance.event_loop));
+	input_pool.reset();
 
 	run_istream(traits, instance, std::move(pool),
 		    std::move(istream), true);
@@ -633,11 +678,13 @@ TYPED_TEST_P(IstreamFilterTest, BigHold)
 	Instance instance;
 
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
 
-	auto istream = traits.CreateInput(pool);
+	auto istream = traits.CreateInput(input_pool);
 	for (unsigned i = 0; i < 1024; ++i)
-		istream = istream_cat_new(pool, std::move(istream),
-					  traits.CreateInput(pool));
+		istream = istream_cat_new(input_pool, std::move(istream),
+					  traits.CreateInput(input_pool));
+	input_pool.reset();
 
 	istream = traits.CreateTest(instance.event_loop, pool, std::move(istream));
 	auto *inner = istream.Steal();
