@@ -1576,17 +1576,22 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length) noexcept
 	   because we didn't find it; dispose it now */
 	container.DiscardForFocused();
 
-	if (replace)
-		replace->Finish();
-
 	if (lookup_id != nullptr) {
 		/* widget was not found */
+
+		assert(!replace);
 
 		auto &_handler = *handler;
 		Destroy();
 		_handler.WidgetNotFound();
-	} else
+	} else {
+		assert(replace);
+		auto _replace = std::move(replace);
+
 		Destroy();
+
+		_replace->Finish();
+	}
 }
 
 void
