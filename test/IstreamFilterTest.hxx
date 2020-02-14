@@ -62,6 +62,13 @@
 
 struct SkipErrorTraits {};
 
+class AutoPoolCommit {
+public:
+	~AutoPoolCommit() noexcept {
+		pool_commit();
+	}
+};
+
 template<typename T>
 class IstreamFilterTest : public ::testing::Test {
 	const ScopeFbPoolInit fb_pool_init;
@@ -74,7 +81,7 @@ public:
 
 TYPED_TEST_CASE_P(IstreamFilterTest);
 
-struct Instance : PInstance {
+struct Instance : AutoPoolCommit, PInstance {
 };
 
 struct Context final : IstreamSink {
@@ -188,6 +195,8 @@ template<typename Traits>
 static void
 run_istream_ctx(const Traits &traits, Context &ctx, PoolPtr pool)
 {
+	const AutoPoolCommit auto_pool_commit;
+
 	ctx.eof = false;
 
 	if (traits.call_available) {
@@ -213,7 +222,6 @@ run_istream_ctx(const Traits &traits, Context &ctx, PoolPtr pool)
 	}
 
 	pool.reset();
-	pool_commit();
 }
 
 template<typename Traits, typename I>
@@ -497,9 +505,6 @@ TYPED_TEST_P(IstreamFilterTest, AbortWithoutHandler)
 
 	auto istream = traits.CreateTest(instance.event_loop, pool, traits.CreateInput(pool));
 	istream.Clear();
-
-	pool.reset();
-	pool_commit();
 }
 
 /** abort in handler */
@@ -528,9 +533,6 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandler)
 	}
 
 	ASSERT_EQ(ctx.abort_istream, nullptr);
-
-	pool.reset();
-	pool_commit();
 }
 
 /** abort in handler, with some data consumed */
@@ -561,9 +563,6 @@ TYPED_TEST_P(IstreamFilterTest, AbortInHandlerHalf)
 	}
 
 	ASSERT_TRUE(ctx.abort_istream == nullptr || ctx.abort_after >= 0);
-
-	pool.reset();
-	pool_commit();
 }
 
 /** abort after 1 byte of output */
@@ -619,9 +618,6 @@ TYPED_TEST_P(IstreamFilterTest, BigHold)
 	inner->Read();
 
 	hold.Clear();
-
-	pool.reset();
-	pool_commit();
 }
 
 REGISTER_TYPED_TEST_CASE_P(IstreamFilterTest,
