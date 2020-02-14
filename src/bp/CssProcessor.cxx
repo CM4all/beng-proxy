@@ -266,8 +266,10 @@ css_processor_parser_eof(void *ctx, off_t length gcc_unused) noexcept
 
 	processor->parser = nullptr;
 
-	processor->replace->Finish();
+	auto _replace = std::move(processor->replace);
 	processor->Destroy();
+
+	_replace->Finish();
 }
 
 static void
