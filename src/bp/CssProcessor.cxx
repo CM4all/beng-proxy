@@ -330,11 +330,13 @@ css_processor(struct pool &caller_pool,
 				 ctx->event_loop,
 				 true);
 
+	auto tee2 = AddTeeIstream(tee, true);
+
 	auto replace = istream_replace_new(ctx->event_loop, pool,
-					   AddTeeIstream(tee, true));
+					   std::move(tee));
 
 	NewFromPool<CssProcessor>(std::move(pool), parent_stopwatch,
-				  std::move(tee),
+				  std::move(tee2),
 				  std::move(replace.second),
 				  widget, std::move(ctx),
 				  options);
