@@ -158,6 +158,9 @@ Context::OnDirect(gcc_unused FdType type, gcc_unused int fd, size_t max_length) 
 void
 Context::OnEof() noexcept
 {
+	assert(test_pool);
+	test_pool.reset();
+
 	eof = true;
 }
 
@@ -165,6 +168,8 @@ void
 Context::OnError(std::exception_ptr) noexcept
 {
 	assert(!expected_result || !record);
+	assert(test_pool);
+	test_pool.reset();
 
 	eof = true;
 }
