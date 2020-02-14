@@ -812,6 +812,32 @@ test('t_istream_processor', executable('t_istream_processor',
     session_dep,
   ] + t_istream_filter_deps))
 
+test(
+  'TestCssProcessor',
+  executable(
+    'TestCssProcessor',
+    'TestCssProcessor.cxx',
+    'IstreamFilterTest.cxx',
+    'FailingResourceLoader.cxx',
+    '../src/crash.cxx',
+    '../src/random.cxx',
+    '../src/widget/FromSession.cxx',
+    '../src/widget/FromRequest.cxx',
+    '../src/widget/Resolver.cxx',
+    '../src/widget/RewriteUri.cxx',
+    '../src/istream_escape.cxx',
+    '../src/istream_html_escape.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      threads,
+      processor_dep,
+      widget_dep,
+      session_dep,
+    ] + t_istream_filter_deps,
+  ),
+)
+
 test('t_istream_tee', executable('t_istream_tee',
   't_istream_tee.cxx',
   '../src/istream/sink_close.cxx',

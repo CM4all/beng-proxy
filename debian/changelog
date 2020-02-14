@@ -6,6 +6,12 @@ cm4all-beng-proxy (17.0.1) unstable; urgency=low
 
 cm4all-beng-proxy (16.3) unstable; urgency=low
 
+  * bp/CssProcessor: fix use-after-free crash bug
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 14 Feb 2020 19:48:38 +0100
+
+cm4all-beng-proxy (16.3) unstable; urgency=low
+
   * merge release 15.33
   * fix resolver bug causing "Address already in use"
   * fix two crash bugs

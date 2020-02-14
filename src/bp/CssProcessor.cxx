@@ -266,8 +266,10 @@ css_processor_parser_eof(void *ctx, off_t length gcc_unused) noexcept
 
 	processor->parser = nullptr;
 
-	processor->replace->Finish();
+	auto _replace = std::move(processor->replace);
 	processor->Destroy();
+
+	_replace->Finish();
 }
 
 static void
@@ -328,11 +330,13 @@ css_processor(struct pool &caller_pool,
 				 ctx->event_loop,
 				 true);
 
+	auto tee2 = AddTeeIstream(tee, true);
+
 	auto replace = istream_replace_new(ctx->event_loop, pool,
-					   AddTeeIstream(tee, true));
+					   std::move(tee));
 
 	NewFromPool<CssProcessor>(std::move(pool), parent_stopwatch,
-				  std::move(tee),
+				  std::move(tee2),
 				  std::move(replace.second),
 				  widget, std::move(ctx),
 				  options);
