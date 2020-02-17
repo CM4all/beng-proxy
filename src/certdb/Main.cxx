@@ -354,7 +354,7 @@ HandleHttp01Challenge(const AcmeConfig &config,
 		      EVP_PKEY &account_key, AcmeClient &client,
 		      const AcmeChallenge &challenge)
 {
-	const auto file_path = MakeHttp01File(config.challenge_directory.c_str(),
+	const auto file_path = MakeHttp01File(config.challenge_directory,
 					      challenge, account_key);
 	AtScopeExit(&file_path) { unlink(file_path.c_str()); };
 

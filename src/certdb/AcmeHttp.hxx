@@ -48,5 +48,5 @@ MakeHttp01(const AcmeChallenge &challenge, EVP_PKEY &account_key);
  * @return the file path
  */
 std::string
-MakeHttp01File(const char *directory, const AcmeChallenge &challenge,
+MakeHttp01File(const std::string &directory, const AcmeChallenge &challenge,
 	       EVP_PKEY &account_key);
