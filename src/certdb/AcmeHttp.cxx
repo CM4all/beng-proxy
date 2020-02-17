@@ -39,6 +39,7 @@
 #include "util/ConstBuffer.hxx"
 
 #include <sys/stat.h>
+#include <unistd.h>
 
 std::string
 MakeHttp01(const AcmeChallenge &challenge, EVP_PKEY &account_key)
@@ -84,11 +85,15 @@ MakeHttp01FilePath(const std::string &directory,
 	return directory + "/" + challenge.token;
 }
 
-std::string
-MakeHttp01File(const std::string &directory, const AcmeChallenge &challenge,
-	       EVP_PKEY &account_key)
+Http01ChallengeFile::Http01ChallengeFile(const std::string &directory,
+					 const AcmeChallenge &challenge,
+					 EVP_PKEY &account_key)
+	:path(MakeHttp01FilePath(directory, challenge))
 {
-	auto path = MakeHttp01FilePath(directory, challenge);
 	CreateFile(path.c_str(), MakeHttp01(challenge, account_key));
-	return path;
+}
+
+Http01ChallengeFile::~Http01ChallengeFile() noexcept
+{
+	unlink(path.c_str());
 }

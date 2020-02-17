@@ -44,9 +44,16 @@ struct AcmeChallenge;
 std::string
 MakeHttp01(const AcmeChallenge &challenge, EVP_PKEY &account_key);
 
-/**
- * @return the file path
- */
-std::string
-MakeHttp01File(const std::string &directory, const AcmeChallenge &challenge,
-	       EVP_PKEY &account_key);
+class Http01ChallengeFile final {
+	std::string path;
+
+public:
+	Http01ChallengeFile(const std::string &directory,
+			    const AcmeChallenge &challenge,
+			    EVP_PKEY &account_key);
+
+	~Http01ChallengeFile() noexcept;
+
+	Http01ChallengeFile(const Http01ChallengeFile &) = delete;
+	Http01ChallengeFile &operator=(const Http01ChallengeFile &) = delete;
+};

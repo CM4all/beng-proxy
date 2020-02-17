@@ -60,7 +60,6 @@
 #include "io/StringFile.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/PrintException.hxx"
-#include "util/ScopeExit.hxx"
 #include "util/Compiler.h"
 
 #include <thread>
@@ -354,9 +353,8 @@ HandleHttp01Challenge(const AcmeConfig &config,
 		      EVP_PKEY &account_key, AcmeClient &client,
 		      const AcmeChallenge &challenge)
 {
-	const auto file_path = MakeHttp01File(config.challenge_directory,
-					      challenge, account_key);
-	AtScopeExit(&file_path) { unlink(file_path.c_str()); };
+	Http01ChallengeFile file(config.challenge_directory,
+				 challenge, account_key);
 
 	bool done = client.UpdateAuthz(account_key, challenge);
 	while (!done) {
