@@ -350,13 +350,10 @@ MakeCertRequest(EVP_PKEY &key, X509 &src)
 }
 
 static void
-AcmeNewAuthzHttp01(const AcmeConfig &config,
-		   EVP_PKEY &account_key, AcmeClient &client,
-		   const char *host)
+HandleHttp01Challenge(const AcmeConfig &config,
+		      EVP_PKEY &account_key, AcmeClient &client,
+		      const AcmeChallenge &challenge)
 {
-	const char *challenge_type = "http-01";
-
-	const auto challenge = client.NewAuthz(account_key, host, challenge_type);
 	const auto file_path = MakeHttp01File(config.challenge_directory.c_str(),
 					      challenge, account_key);
 	AtScopeExit(&file_path) { unlink(file_path.c_str()); };
@@ -366,6 +363,17 @@ AcmeNewAuthzHttp01(const AcmeConfig &config,
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		done = client.CheckAuthz(challenge);
 	}
+}
+
+static void
+AcmeNewAuthzHttp01(const AcmeConfig &config,
+		   EVP_PKEY &account_key, AcmeClient &client,
+		   const char *host)
+{
+	const char *challenge_type = "http-01";
+
+	const auto challenge = client.NewAuthz(account_key, host, challenge_type);
+	HandleHttp01Challenge(config, account_key, client, challenge);
 }
 
 static void
