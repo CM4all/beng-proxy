@@ -1,6 +1,6 @@
 cm4all-beng-proxy (16.29) unstable; urgency=low
 
-  * 
+  * translation: backport packet REQUEST_URI_VERBATIM from v17.x
 
  --   
 
