@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -60,95 +60,95 @@ template<typename T> class ForeignFifoBuffer;
  * transferring the response body
  */
 struct CGIParser {
-    http_status_t status = HTTP_STATUS_OK;
+	http_status_t status = HTTP_STATUS_OK;
 
-    /**
-     * The remaining number of bytes in the response body, -1 if
-     * unknown.
-     */
-    off_t remaining = -1;
+	/**
+	 * The remaining number of bytes in the response body, -1 if
+	 * unknown.
+	 */
+	off_t remaining = -1;
 
-    StringMap headers;
+	StringMap headers;
 
-    bool finished = false;
+	bool finished = false;
 
-    /**
-     * Did the parser finish reading the response headers?
-     */
-    bool AreHeadersFinished() const {
-        return finished;
-    }
+	/**
+	 * Did the parser finish reading the response headers?
+	 */
+	bool AreHeadersFinished() const {
+		return finished;
+	}
 
-    /**
-     * Run the CGI response header parser with data from the specified
-     * buffer.
-     *
-     * Throws exception on error.
-     *
-     * @param buffer a buffer containing data received from the CGI
-     * program; consumed data will automatically be removed
-     * @return DONE when the headers are finished (the remaining
-     * buffer contains the response body); PARTIAL or NONE when more
-     * header data is expected
-     */
-    Completion FeedHeaders(struct pool &pool,
-                           ForeignFifoBuffer<uint8_t> &buffer);
+	/**
+	 * Run the CGI response header parser with data from the specified
+	 * buffer.
+	 *
+	 * Throws exception on error.
+	 *
+	 * @param buffer a buffer containing data received from the CGI
+	 * program; consumed data will automatically be removed
+	 * @return DONE when the headers are finished (the remaining
+	 * buffer contains the response body); PARTIAL or NONE when more
+	 * header data is expected
+	 */
+	Completion FeedHeaders(struct pool &pool,
+			       ForeignFifoBuffer<uint8_t> &buffer);
 
-    http_status_t GetStatus() const {
-        assert(finished);
+	http_status_t GetStatus() const {
+		assert(finished);
 
-        return status;
-    }
+		return status;
+	}
 
-    StringMap &GetHeaders() {
-        assert(finished);
+	StringMap &GetHeaders() {
+		assert(finished);
 
-        return headers;
-    }
+		return headers;
+	}
 
-    bool KnownLength() const {
-        return remaining >= 0;
-    }
+	bool KnownLength() const {
+		return remaining >= 0;
+	}
 
-    off_t GetAvailable() const {
-        return remaining;
-    }
+	off_t GetAvailable() const {
+		return remaining;
+	}
 
-    bool DoesRequireMore() const {
-        return remaining > 0;
-    }
+	bool DoesRequireMore() const {
+		return remaining > 0;
+	}
 
-    bool IsTooMuch(size_t length) const {
-        return remaining != -1 && (off_t)length > remaining;
-    }
+	bool IsTooMuch(size_t length) const {
+		return remaining != -1 && (off_t)length > remaining;
+	}
 
-    /**
-     * The caller has consumed data from the response body.
-     *
-     * @return true if the response body is finished
-     */
-    bool BodyConsumed(size_t nbytes) {
-        assert(nbytes > 0);
+	/**
+	 * The caller has consumed data from the response body.
+	 *
+	 * @return true if the response body is finished
+	 */
+	bool BodyConsumed(size_t nbytes) {
+		assert(nbytes > 0);
 
-        if (remaining < 0)
-            return false;
+		if (remaining < 0)
+			return false;
 
-        assert((off_t)nbytes <= remaining);
+		assert((off_t)nbytes <= remaining);
 
-        remaining -= nbytes;
-        return remaining == 0;
-    }
+		remaining -= nbytes;
+		return remaining == 0;
+	}
 
-    bool IsEOF() const {
-        return remaining == 0;
-    }
+	bool IsEOF() const {
+		return remaining == 0;
+	}
 
 private:
-    /**
-     * Evaluate the response headers after the headers have been finalized
-     * by an empty line.
-     *
-     * Throws exception on error.
-     */
-    Completion Finish(ForeignFifoBuffer<uint8_t> &buffer);
+	/**
+	 * Evaluate the response headers after the headers have been finalized
+	 * by an empty line.
+	 *
+	 * Throws exception on error.
+	 */
+	Completion Finish(ForeignFifoBuffer<uint8_t> &buffer);
 };

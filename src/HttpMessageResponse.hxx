@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_HTTP_MESSAGE_RESPONSE_HXX
-#define BENG_PROXY_HTTP_MESSAGE_RESPONSE_HXX
+#pragma once
 
 #include "http/Status.h"
 
@@ -42,15 +41,13 @@
  * response shall be sent to our HTTP client.
  */
 class HttpMessageResponse : public std::runtime_error {
-    http_status_t status;
+	http_status_t status;
 
 public:
-    HttpMessageResponse(http_status_t _status, const char *_msg)
-        :std::runtime_error(_msg), status(_status) {}
+	HttpMessageResponse(http_status_t _status, const char *_msg)
+		:std::runtime_error(_msg), status(_status) {}
 
-    http_status_t GetStatus() const {
-        return status;
-    }
+	http_status_t GetStatus() const {
+		return status;
+	}
 };
-
-#endif

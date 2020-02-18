@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,48 +30,45 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_HTTP_CACHE_INFO_HXX
-#define BENG_PROXY_HTTP_CACHE_INFO_HXX
+#pragma once
 
 #include <chrono>
 
 struct HttpCacheRequestInfo {
-    /**
-     * Is the request served by a remote server?  If yes, then we
-     * require the "Date" header to be present.
-     */
-    bool is_remote;
+	/**
+	 * Is the request served by a remote server?  If yes, then we
+	 * require the "Date" header to be present.
+	 */
+	bool is_remote;
 
-    bool only_if_cached = false;
+	bool only_if_cached = false;
 
-    /** does the request URI have a query string?  This information is
-        important for RFC 2616 13.9 */
-    bool has_query_string;
+	/** does the request URI have a query string?  This information is
+	    important for RFC 2616 13.9 */
+	bool has_query_string;
 
-    const char *if_match, *if_none_match;
-    const char *if_modified_since, *if_unmodified_since;
+	const char *if_match, *if_none_match;
+	const char *if_modified_since, *if_unmodified_since;
 };
 
 struct HttpCacheResponseInfo {
-    /** when will the cached resource expire? (beng-proxy time) */
-    std::chrono::system_clock::time_point expires;
+	/** when will the cached resource expire? (beng-proxy time) */
+	std::chrono::system_clock::time_point expires;
 
-    /** when was the cached resource last modified on the widget
-        server? (widget server time) */
-    const char *last_modified;
+	/** when was the cached resource last modified on the widget
+	    server? (widget server time) */
+	const char *last_modified;
 
-    const char *etag;
+	const char *etag;
 
-    const char *vary;
+	const char *vary;
 
-    HttpCacheResponseInfo() = default;
-    HttpCacheResponseInfo(struct pool &pool,
-                          const HttpCacheResponseInfo &src) noexcept;
+	HttpCacheResponseInfo() = default;
+	HttpCacheResponseInfo(struct pool &pool,
+			      const HttpCacheResponseInfo &src) noexcept;
 
-    HttpCacheResponseInfo(const HttpCacheResponseInfo &) = delete;
-    HttpCacheResponseInfo &operator=(const HttpCacheResponseInfo &) = delete;
+	HttpCacheResponseInfo(const HttpCacheResponseInfo &) = delete;
+	HttpCacheResponseInfo &operator=(const HttpCacheResponseInfo &) = delete;
 
-    void MoveToPool(struct pool &pool) noexcept;
+	void MoveToPool(struct pool &pool) noexcept;
 };
-
-#endif

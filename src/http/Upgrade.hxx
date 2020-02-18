@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -46,7 +46,7 @@ gcc_pure
 static inline bool
 http_is_upgrade(http_status_t status) noexcept
 {
-    return status == HTTP_STATUS_SWITCHING_PROTOCOLS;
+	return status == HTTP_STATUS_SWITCHING_PROTOCOLS;
 }
 
 /**
@@ -67,12 +67,12 @@ gcc_pure
 static inline bool
 http_is_upgrade(http_status_t status, const StringMap &headers) noexcept
 {
-    return http_is_upgrade(status) && http_is_upgrade(headers);
+	return http_is_upgrade(status) && http_is_upgrade(headers);
 }
 
 gcc_pure
 static inline bool
 http_is_upgrade(http_status_t status, const HttpHeaders &headers) noexcept
 {
-    return http_is_upgrade(status) && http_is_upgrade(headers);
+	return http_is_upgrade(status) && http_is_upgrade(headers);
 }

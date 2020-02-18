@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,15 +30,12 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CGI_ERROR_HXX
-#define CGI_ERROR_HXX
+#pragma once
 
 #include <stdexcept>
 
 class CgiError : public std::runtime_error {
 public:
-    explicit CgiError(const char *_msg)
-        :std::runtime_error(_msg) {}
+	explicit CgiError(const char *_msg)
+		:std::runtime_error(_msg) {}
 };
-
-#endif

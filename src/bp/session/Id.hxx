@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_SESSION_ID_H
-#define BENG_PROXY_SESSION_ID_H
+#pragma once
 
 #include "util/StringBuffer.hxx"
 #include "util/Compiler.h"
@@ -46,61 +45,59 @@
  * The session id data structure.
  */
 class SessionId {
-    std::array<uint64_t, 2> data;
+	std::array<uint64_t, 2> data;
 
 public:
-    gcc_pure
-    bool IsDefined() const noexcept {
-        return !std::all_of(data.begin(), data.end(), [](auto i){
-                return i == 0;
-            });
-    }
+	gcc_pure
+	bool IsDefined() const noexcept {
+		return !std::all_of(data.begin(), data.end(), [](auto i){
+			return i == 0;
+		});
+	}
 
-    void Clear() noexcept {
-        std::fill(data.begin(), data.end(), 0);
-    }
+	void Clear() noexcept {
+		std::fill(data.begin(), data.end(), 0);
+	}
 
-    void Generate() noexcept;
+	void Generate() noexcept;
 
-    /**
-     * Manipulate the modulo of GetClusterHash() so that it results in
-     * the specified cluster node.
-     */
-    void SetClusterNode(unsigned cluster_size, unsigned cluster_node) noexcept;
+	/**
+	 * Manipulate the modulo of GetClusterHash() so that it results in
+	 * the specified cluster node.
+	 */
+	void SetClusterNode(unsigned cluster_size, unsigned cluster_node) noexcept;
 
-    gcc_pure
-    bool operator==(const SessionId &other) const noexcept {
-        return std::equal(data.begin(), data.end(), other.data.begin());
-    }
+	gcc_pure
+	bool operator==(const SessionId &other) const noexcept {
+		return std::equal(data.begin(), data.end(), other.data.begin());
+	}
 
-    gcc_pure
-    bool operator!=(const SessionId &other) const noexcept {
-        return !(*this == other);
-    }
+	gcc_pure
+	bool operator!=(const SessionId &other) const noexcept {
+		return !(*this == other);
+	}
 
-    gcc_pure
-    size_t Hash() const noexcept {
-        return data[0];
-    }
+	gcc_pure
+	size_t Hash() const noexcept {
+		return data[0];
+	}
 
-    /**
-     * Returns a hash that can be used to determine the cluster node
-     * by calculating the modulo.
-     */
-    gcc_pure
-    auto GetClusterHash() const noexcept {
-        return data.back();
-   }
+	/**
+	 * Returns a hash that can be used to determine the cluster node
+	 * by calculating the modulo.
+	 */
+	gcc_pure
+	auto GetClusterHash() const noexcept {
+		return data.back();
+	}
 
-    /**
-     * Parse a session id from a string.
-     *
-     * @return true on success, false on error
-     */
-    bool Parse(const char *p) noexcept;
+	/**
+	 * Parse a session id from a string.
+	 *
+	 * @return true on success, false on error
+	 */
+	bool Parse(const char *p) noexcept;
 
-    gcc_pure
-    StringBuffer<sizeof(data) * 2 + 1> Format() const noexcept;
+	gcc_pure
+	StringBuffer<sizeof(data) * 2 + 1> Format() const noexcept;
 };
-
-#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -44,87 +44,87 @@
  * to give each of them what they can cope with best.
  */
 class HttpHeaders {
-    StringMap map;
+	StringMap map;
 
-    GrowingBuffer buffer;
+	GrowingBuffer buffer;
 
 public:
-    /**
-     * Shall the HTTP server library generate a "Date" response
-     * header?
-     *
-     * @see RFC 2616 14.18
-     */
-    bool generate_date_header = false;
+	/**
+	 * Shall the HTTP server library generate a "Date" response
+	 * header?
+	 *
+	 * @see RFC 2616 14.18
+	 */
+	bool generate_date_header = false;
 
-    /**
-     * Shall the HTTP server library generate a "Server" response
-     * header?
-     *
-     * @see RFC 2616 3.8
-     */
-    bool generate_server_header = false;
+	/**
+	 * Shall the HTTP server library generate a "Server" response
+	 * header?
+	 *
+	 * @see RFC 2616 3.8
+	 */
+	bool generate_server_header = false;
 
-    HttpHeaders() = default;
+	HttpHeaders() = default;
 
-    explicit HttpHeaders(StringMap &&_map) noexcept
-        :map(std::move(_map)) {}
+	explicit HttpHeaders(StringMap &&_map) noexcept
+		:map(std::move(_map)) {}
 
-    HttpHeaders(GrowingBuffer &&_buffer) noexcept
-        :buffer(std::move(_buffer)) {}
+	HttpHeaders(GrowingBuffer &&_buffer) noexcept
+		:buffer(std::move(_buffer)) {}
 
-    HttpHeaders(HttpHeaders &&) = default;
-    HttpHeaders &operator=(HttpHeaders &&) = default;
+	HttpHeaders(HttpHeaders &&) = default;
+	HttpHeaders &operator=(HttpHeaders &&) = default;
 
-    const StringMap &GetMap() const noexcept {
-        return map;
-    }
+	const StringMap &GetMap() const noexcept {
+		return map;
+	}
 
-    StringMap &&ToMap(struct pool &pool) && noexcept {
-        header_parse_buffer(pool, map, std::move(buffer));
-        return std::move(map);
-    }
+	StringMap &&ToMap(struct pool &pool) && noexcept {
+		header_parse_buffer(pool, map, std::move(buffer));
+		return std::move(map);
+	}
 
-    gcc_pure
-    const char *Get(const char *key) const noexcept {
-        return map.Get(key);
-    }
+	gcc_pure
+	const char *Get(const char *key) const noexcept {
+		return map.Get(key);
+	}
 
-    GrowingBuffer &GetBuffer() noexcept {
-        return buffer;
-    }
+	GrowingBuffer &GetBuffer() noexcept {
+		return buffer;
+	}
 
-    GrowingBuffer MakeBuffer() noexcept {
-        return std::move(buffer);
-    }
+	GrowingBuffer MakeBuffer() noexcept {
+		return std::move(buffer);
+	}
 
-    void Write(const char *name, const char *value) noexcept {
-        header_write(buffer, name, value);
-    }
+	void Write(const char *name, const char *value) noexcept {
+		header_write(buffer, name, value);
+	}
 
-    /**
-     * Copy a (hop-by-hop) header from a map to the buffer.
-     */
-    void CopyToBuffer(const StringMap &src, const char *name) noexcept {
-        const char *value = src.Get(name);
-        if (value != nullptr)
-            Write(name, value);
-    }
+	/**
+	 * Copy a (hop-by-hop) header from a map to the buffer.
+	 */
+	void CopyToBuffer(const StringMap &src, const char *name) noexcept {
+		const char *value = src.Get(name);
+		if (value != nullptr)
+			Write(name, value);
+	}
 
-    /**
-     * Move a (hop-by-hop) header from the map to the buffer.
-     */
-    void MoveToBuffer(const char *name) noexcept {
-        CopyToBuffer(map, name);
-    }
+	/**
+	 * Move a (hop-by-hop) header from the map to the buffer.
+	 */
+	void MoveToBuffer(const char *name) noexcept {
+		CopyToBuffer(map, name);
+	}
 
-    void MoveToBuffer(const char *const*names) noexcept {
-        for (; *names != nullptr; ++names)
-            MoveToBuffer(*names);
-    }
+	void MoveToBuffer(const char *const*names) noexcept {
+		for (; *names != nullptr; ++names)
+			MoveToBuffer(*names);
+	}
 
-    GrowingBuffer &&ToBuffer() noexcept {
-        headers_copy_most(map, buffer);
-        return std::move(buffer);
-    }
+	GrowingBuffer &&ToBuffer() noexcept {
+		headers_copy_most(map, buffer);
+		return std::move(buffer);
+	}
 };

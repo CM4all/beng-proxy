@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_HTTP_CACHE_AGE_HXX
-#define BENG_PROXY_HTTP_CACHE_AGE_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -47,6 +46,4 @@ class StringMap;
 gcc_pure
 std::chrono::system_clock::time_point
 http_cache_calc_expires(const HttpCacheResponseInfo &info,
-                        const StringMap &vary) noexcept;
-
-#endif
+			const StringMap &vary) noexcept;

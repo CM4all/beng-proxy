@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_HTTP_CACHE_HEAP_HXX
-#define BENG_PROXY_HTTP_CACHE_HEAP_HXX
+#pragma once
 
 #include "cache.hxx"
 #include "SlicePool.hxx"
@@ -55,48 +54,46 @@ struct HttpCacheDocument;
  * Caching HTTP responses in heap memory.
  */
 class HttpCacheHeap {
-    struct pool &pool;
+	struct pool &pool;
 
-    SlicePool slice_pool;
+	SlicePool slice_pool;
 
-    Rubber rubber;
+	Rubber rubber;
 
-    Cache cache;
+	Cache cache;
 
 public:
-    HttpCacheHeap(struct pool &pool, EventLoop &event_loop,
-                  size_t max_size) noexcept;
+	HttpCacheHeap(struct pool &pool, EventLoop &event_loop,
+		      size_t max_size) noexcept;
 
-    Rubber &GetRubber() noexcept {
-        return rubber;
-    }
+	Rubber &GetRubber() noexcept {
+		return rubber;
+	}
 
-    void ForkCow(bool inherit) noexcept;
+	void ForkCow(bool inherit) noexcept;
 
-    gcc_pure
-    AllocatorStats GetStats() const noexcept;
+	gcc_pure
+	AllocatorStats GetStats() const noexcept;
 
-    HttpCacheDocument *Get(const char *uri,
-                           StringMap &request_headers) noexcept;
+	HttpCacheDocument *Get(const char *uri,
+			       StringMap &request_headers) noexcept;
 
-    void Put(const char *url,
-             const HttpCacheResponseInfo &info,
-             StringMap &request_headers,
-             http_status_t status,
-             const StringMap &response_headers,
-             RubberAllocation &&a, size_t size) noexcept;
+	void Put(const char *url,
+		 const HttpCacheResponseInfo &info,
+		 StringMap &request_headers,
+		 http_status_t status,
+		 const StringMap &response_headers,
+		 RubberAllocation &&a, size_t size) noexcept;
 
-    void Remove(HttpCacheDocument &document) noexcept;
-    void RemoveURL(const char *url, StringMap &headers) noexcept;
+	void Remove(HttpCacheDocument &document) noexcept;
+	void RemoveURL(const char *url, StringMap &headers) noexcept;
 
-    void Compress() noexcept;
-    void Flush() noexcept;
+	void Compress() noexcept;
+	void Flush() noexcept;
 
-    static void Lock(HttpCacheDocument &document) noexcept;
-    void Unlock(HttpCacheDocument &document) noexcept;
+	static void Lock(HttpCacheDocument &document) noexcept;
+	void Unlock(HttpCacheDocument &document) noexcept;
 
-    UnusedIstreamPtr OpenStream(struct pool &_pool,
-                                HttpCacheDocument &document) noexcept;
+	UnusedIstreamPtr OpenStream(struct pool &_pool,
+				    HttpCacheDocument &document) noexcept;
 };
-
-#endif

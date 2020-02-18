@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -49,11 +49,11 @@ class CancellablePointer;
  */
 void
 cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
-        struct pool *pool,
-        const StopwatchPtr &parent_stopwatch,
-        http_method_t method,
-        const CgiAddress *address,
-        const char *remote_addr,
-        const StringMap &headers, UnusedIstreamPtr body,
-        HttpResponseHandler &_handler,
-        CancellablePointer &cancel_ptr);
+	struct pool *pool,
+	const StopwatchPtr &parent_stopwatch,
+	http_method_t method,
+	const CgiAddress *address,
+	const char *remote_addr,
+	const StringMap &headers, UnusedIstreamPtr body,
+	HttpResponseHandler &_handler,
+	CancellablePointer &cancel_ptr);

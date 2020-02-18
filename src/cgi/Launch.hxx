@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -48,7 +48,7 @@ class StringMap;
  */
 UnusedIstreamPtr
 cgi_launch(EventLoop &event_loop, struct pool *pool, http_method_t method,
-           const CgiAddress *address,
-           const char *remote_addr,
-           const StringMap &headers, UnusedIstreamPtr body,
-           SpawnService &spawn_service);
+	   const CgiAddress *address,
+	   const char *remote_addr,
+	   const StringMap &headers, UnusedIstreamPtr body,
+	   SpawnService &spawn_service);

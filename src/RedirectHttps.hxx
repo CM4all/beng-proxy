@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef REDIRECT_HTTPS_HXX
-#define REDIRECT_HTTPS_HXX
+#pragma once
 
 #include <stdint.h>
 
@@ -46,6 +45,4 @@ class AllocatorPtr;
  */
 const char *
 MakeHttpsRedirect(AllocatorPtr alloc, const char *host, uint16_t port,
-                  const char *uri) noexcept;
-
-#endif
+		  const char *uri) noexcept;

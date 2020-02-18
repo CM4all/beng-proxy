@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,38 +42,38 @@
 
 void
 cgi_new(SpawnService &spawn_service, EventLoop &event_loop,
-        struct pool *pool,
-        const StopwatchPtr &parent_stopwatch,
-        http_method_t method,
-        const CgiAddress *address,
-        const char *remote_addr,
-        const StringMap &headers, UnusedIstreamPtr body,
-        HttpResponseHandler &handler,
-        CancellablePointer &cancel_ptr)
+	struct pool *pool,
+	const StopwatchPtr &parent_stopwatch,
+	http_method_t method,
+	const CgiAddress *address,
+	const char *remote_addr,
+	const StringMap &headers, UnusedIstreamPtr body,
+	HttpResponseHandler &handler,
+	CancellablePointer &cancel_ptr)
 {
-    StopwatchPtr stopwatch(parent_stopwatch, address->path);
+	StopwatchPtr stopwatch(parent_stopwatch, address->path);
 
-    AbortFlag abort_flag(cancel_ptr);
+	AbortFlag abort_flag(cancel_ptr);
 
-    UnusedIstreamPtr input;
+	UnusedIstreamPtr input;
 
-    try {
-        input = cgi_launch(event_loop, pool, method, address,
-                           remote_addr, headers, std::move(body),
-                           spawn_service);
-    } catch (...) {
-        if (abort_flag.aborted) {
-            /* the operation was aborted - don't call the
-               http_response_handler */
-            return;
-        }
+	try {
+		input = cgi_launch(event_loop, pool, method, address,
+				   remote_addr, headers, std::move(body),
+				   spawn_service);
+	} catch (...) {
+		if (abort_flag.aborted) {
+			/* the operation was aborted - don't call the
+			   http_response_handler */
+			return;
+		}
 
-        handler.InvokeError(std::current_exception());
-        return;
-    }
+		handler.InvokeError(std::current_exception());
+		return;
+	}
 
-    stopwatch.RecordEvent("fork");
+	stopwatch.RecordEvent("fork");
 
-    cgi_client_new(*pool, std::move(stopwatch),
-                   std::move(input), handler, cancel_ptr);
+	cgi_client_new(*pool, std::move(stopwatch),
+		       std::move(input), handler, cancel_ptr);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,17 +37,17 @@
 
 class NopThreadSocketFilter final : public ThreadSocketFilterHandler {
 public:
-    /* virtual methods from class ThreadSocketFilterHandler */
-    void Run(ThreadSocketFilterInternal &f) override;
+	/* virtual methods from class ThreadSocketFilterHandler */
+	void Run(ThreadSocketFilterInternal &f) override;
 };
 
 void
 NopThreadSocketFilter::Run(ThreadSocketFilterInternal &f)
 {
-    const std::lock_guard<std::mutex> lock(f.mutex);
-    f.handshaking = false;
-    f.decrypted_input.MoveFrom(f.encrypted_input);
-    f.encrypted_output.MoveFrom(f.plain_output);
+	const std::lock_guard<std::mutex> lock(f.mutex);
+	f.handshaking = false;
+	f.decrypted_input.MoveFrom(f.encrypted_input);
+	f.encrypted_output.MoveFrom(f.plain_output);
 }
 
 /*
@@ -58,5 +58,5 @@ NopThreadSocketFilter::Run(ThreadSocketFilterInternal &f)
 ThreadSocketFilterHandler *
 nop_thread_socket_filter_new()
 {
-    return new NopThreadSocketFilter();
+	return new NopThreadSocketFilter();
 }

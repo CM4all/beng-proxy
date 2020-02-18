@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_FILE_ADDRESS_HXX
-#define BENG_PROXY_FILE_ADDRESS_HXX
+#pragma once
 
 #include "spawn/ChildOptions.hxx"
 #include "util/ConstBuffer.hxx"
@@ -46,82 +45,80 @@ struct DelegateAddress;
  * The address of a local static file.
  */
 struct FileAddress {
-    const char *path;
-    const char *deflated = nullptr;
-    const char *gzipped = nullptr;
+	const char *path;
+	const char *deflated = nullptr;
+	const char *gzipped = nullptr;
 
-    const char *content_type = nullptr;
+	const char *content_type = nullptr;
 
-    ConstBuffer<void> content_type_lookup = nullptr;
+	ConstBuffer<void> content_type_lookup = nullptr;
 
-    const char *document_root = nullptr;
+	const char *document_root = nullptr;
 
-    DelegateAddress *delegate = nullptr;
+	DelegateAddress *delegate = nullptr;
 
-    bool auto_gzipped = false;
+	bool auto_gzipped = false;
 
-    /**
-     * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
-     * translation cache.
-     */
-    bool expand_path = false;
+	/**
+	 * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
+	 * translation cache.
+	 */
+	bool expand_path = false;
 
-    /**
-     * The value of #TRANSLATE_EXPAND_DOCUMENT_ROOT.  Only used by the
-     * translation cache.
-     */
-    bool expand_document_root = false;
+	/**
+	 * The value of #TRANSLATE_EXPAND_DOCUMENT_ROOT.  Only used by the
+	 * translation cache.
+	 */
+	bool expand_document_root = false;
 
-    /**
-     * @param _path the new path pointer (taken as-is, no deep copy)
-     */
-    explicit constexpr FileAddress(const char *_path) noexcept
-        :path(_path)
-    {
-    }
+	/**
+	 * @param _path the new path pointer (taken as-is, no deep copy)
+	 */
+	explicit constexpr FileAddress(const char *_path) noexcept
+		:path(_path)
+	{
+	}
 
-    /**
-     * Copy from an existing #FileAddress instance, but override the
-     * path.
-     *
-     * @param _path the new path pointer (taken as-is, no deep copy)
-     */
-    FileAddress(AllocatorPtr alloc, const FileAddress &src,
-                const char *_path) noexcept;
+	/**
+	 * Copy from an existing #FileAddress instance, but override the
+	 * path.
+	 *
+	 * @param _path the new path pointer (taken as-is, no deep copy)
+	 */
+	FileAddress(AllocatorPtr alloc, const FileAddress &src,
+		    const char *_path) noexcept;
 
-    FileAddress(AllocatorPtr alloc, const FileAddress &src) noexcept;
+	FileAddress(AllocatorPtr alloc, const FileAddress &src) noexcept;
 
-    FileAddress(const FileAddress &) = delete;
-    FileAddress &operator=(const FileAddress &) = delete;
+	FileAddress(const FileAddress &) = delete;
+	FileAddress &operator=(const FileAddress &) = delete;
 
-    gcc_pure
-    bool HasQueryString() const noexcept {
-        return false;
-    }
+	gcc_pure
+	bool HasQueryString() const noexcept {
+		return false;
+	}
 
-    /**
-     * Throws std::runtime_error on error.
-     */
-    void Check() const;
+	/**
+	 * Throws std::runtime_error on error.
+	 */
+	void Check() const;
 
-    gcc_pure
-    bool IsValidBase() const noexcept;
+	gcc_pure
+	bool IsValidBase() const noexcept;
 
-    FileAddress *SaveBase(AllocatorPtr alloc,
-                          const char *suffix) const noexcept;
-    FileAddress *LoadBase(AllocatorPtr alloc,
-                          const char *suffix) const noexcept;
+	FileAddress *SaveBase(AllocatorPtr alloc,
+			      const char *suffix) const noexcept;
+	FileAddress *LoadBase(AllocatorPtr alloc,
+			      const char *suffix) const noexcept;
 
-    /**
-     * Does this address need to be expanded with Expand()?
-     */
-    gcc_pure
-    bool IsExpandable() const noexcept;
+	/**
+	 * Does this address need to be expanded with Expand()?
+	 */
+	gcc_pure
+	bool IsExpandable() const noexcept;
 
-    /**
-     * Throws std::runtime_error on error.
-     */
-    void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
+	/**
+	 * Throws std::runtime_error on error.
+	 */
+	void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
 };
-
-#endif

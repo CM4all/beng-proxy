@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,22 +36,22 @@
 #include "AllocatorPtr.hxx"
 
 HttpCacheDocument::HttpCacheDocument(struct pool &pool,
-                                     const HttpCacheResponseInfo &_info,
-                                     const StringMap &request_headers,
-                                     http_status_t _status,
-                                     const StringMap &_response_headers) noexcept
-    :info(pool, _info),
-     status(_status),
-     response_headers(pool, _response_headers)
+				     const HttpCacheResponseInfo &_info,
+				     const StringMap &request_headers,
+				     http_status_t _status,
+				     const StringMap &_response_headers) noexcept
+	:info(pool, _info),
+	 status(_status),
+	 response_headers(pool, _response_headers)
 {
-    assert(http_status_is_valid(_status));
+	assert(http_status_is_valid(_status));
 
-    if (_info.vary != nullptr)
-        http_cache_copy_vary(vary, pool, _info.vary, request_headers);
+	if (_info.vary != nullptr)
+		http_cache_copy_vary(vary, pool, _info.vary, request_headers);
 }
 
 bool
 HttpCacheDocument::VaryFits(const StringMap *request_headers) const noexcept
 {
-    return http_cache_vary_fits(vary, request_headers);
+	return http_cache_vary_fits(vary, request_headers);
 }

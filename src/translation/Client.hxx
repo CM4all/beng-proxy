@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_TRANSLATE_CLIENT_HXX
-#define BENG_PROXY_TRANSLATE_CLIENT_HXX
+#pragma once
 
 struct pool;
 class EventLoop;
@@ -47,10 +46,8 @@ class TranslateHandler;
  */
 void
 translate(struct pool &pool, EventLoop &event_loop,
-          StopwatchPtr stopwatch,
-          SocketDescriptor fd, Lease &lease,
-          const TranslateRequest &request,
-          TranslateHandler &handler,
-          CancellablePointer &cancel_ptr) noexcept;
-
-#endif
+	  StopwatchPtr stopwatch,
+	  SocketDescriptor fd, Lease &lease,
+	  const TranslateRequest &request,
+	  TranslateHandler &handler,
+	  CancellablePointer &cancel_ptr) noexcept;

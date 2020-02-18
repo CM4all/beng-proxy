@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,11 +37,11 @@
 bool
 http_is_upgrade(const StringMap &headers) noexcept
 {
-    return headers.Contains("upgrade");
+	return headers.Contains("upgrade");
 }
 
 bool
 http_is_upgrade(const HttpHeaders &headers) noexcept
 {
-    return http_is_upgrade(headers.GetMap());
+	return http_is_upgrade(headers.GetMap());
 }

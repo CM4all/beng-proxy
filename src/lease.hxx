@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,47 +30,44 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_LEASE_HXX
-#define BENG_PROXY_LEASE_HXX
+#pragma once
 
 #include <assert.h>
 
 class Lease {
 public:
-    virtual void ReleaseLease(bool reuse) noexcept = 0;
+	virtual void ReleaseLease(bool reuse) noexcept = 0;
 };
 
 class LeasePtr {
-    Lease *lease = nullptr;
+	Lease *lease = nullptr;
 
 public:
-    LeasePtr() = default;
+	LeasePtr() = default;
 
-    explicit LeasePtr(Lease &_lease) noexcept
-        :lease(&_lease) {}
+	explicit LeasePtr(Lease &_lease) noexcept
+		:lease(&_lease) {}
 
-    ~LeasePtr() noexcept {
-        assert(lease == nullptr);
-    }
+	~LeasePtr() noexcept {
+		assert(lease == nullptr);
+	}
 
-    LeasePtr(const LeasePtr &) = delete;
-    LeasePtr &operator=(const LeasePtr &) = delete;
+	LeasePtr(const LeasePtr &) = delete;
+	LeasePtr &operator=(const LeasePtr &) = delete;
 
-    operator bool() const noexcept {
-        return lease != nullptr;
-    }
+	operator bool() const noexcept {
+		return lease != nullptr;
+	}
 
-    void Set(Lease &_lease) noexcept {
-        lease = &_lease;
-    }
+	void Set(Lease &_lease) noexcept {
+		lease = &_lease;
+	}
 
-    void Release(bool reuse) noexcept {
-        assert(lease != nullptr);
+	void Release(bool reuse) noexcept {
+		assert(lease != nullptr);
 
-        auto *l = lease;
-        lease = nullptr;
-        l->ReleaseLease(reuse);
-    }
+		auto *l = lease;
+		lease = nullptr;
+		l->ReleaseLease(reuse);
+	}
 };
-
-#endif
