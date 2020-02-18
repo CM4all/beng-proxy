@@ -757,6 +757,10 @@ The following packets can be used to specify more details:
 - ``AUTO_BASE``: Auto-calculate the ``BASE`` from ``PATH_INFO`` (only
   CGI, FastCGI and WAS)
 
+- ``REQUEST_URI_VERBATIM``: Pass the CGI parameter ``REQUEST_URI``
+  verbatim instead of building it from ``SCRIPT_NAME``, ``PATH_INFO``
+  and ``QUERY_STRING``. (Since version 17.0.1)
+
 See :ref:`rlimits` for how to configure resource limits and :ref:`ns`
 for how to configure namespaces.
 
