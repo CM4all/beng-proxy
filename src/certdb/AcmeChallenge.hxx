@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include <openssl/ossl_typ.h>
-
 #include <string>
 
 struct AcmeChallenge {
