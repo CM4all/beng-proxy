@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -53,69 +53,69 @@
 static const uint8_t PROTOCOL_VERSION = 3;
 
 class TranslateClient final : BufferedSocketHandler, Cancellable {
-    struct pool &pool;
+	struct pool &pool;
 
-    const StopwatchPtr stopwatch;
+	const StopwatchPtr stopwatch;
 
-    BufferedSocket socket;
-    LeasePtr lease_ref;
+	BufferedSocket socket;
+	LeasePtr lease_ref;
 
-    /** the marshalled translate request */
-    GrowingBufferReader request;
+	/** the marshalled translate request */
+	GrowingBufferReader request;
 
-    TranslateHandler &handler;
+	TranslateHandler &handler;
 
-    TranslateParser parser;
+	TranslateParser parser;
 
 public:
-    TranslateClient(struct pool &p, EventLoop &event_loop,
-                    StopwatchPtr &&_stopwatch,
-                    SocketDescriptor fd, Lease &lease,
-                    const TranslateRequest &request2,
-                    GrowingBuffer &&_request,
-                    TranslateHandler &_handler,
-                    CancellablePointer &cancel_ptr) noexcept;
+	TranslateClient(struct pool &p, EventLoop &event_loop,
+			StopwatchPtr &&_stopwatch,
+			SocketDescriptor fd, Lease &lease,
+			const TranslateRequest &request2,
+			GrowingBuffer &&_request,
+			TranslateHandler &_handler,
+			CancellablePointer &cancel_ptr) noexcept;
 
-    bool TryWrite() noexcept;
+	bool TryWrite() noexcept;
 
 private:
-    void Destroy() noexcept {
-        DeleteFromPool(pool, this);
-    }
+	void Destroy() noexcept {
+		DeleteFromPool(pool, this);
+	}
 
-    void ReleaseSocket(bool reuse) noexcept;
+	void ReleaseSocket(bool reuse) noexcept;
 
-    void Fail(std::exception_ptr ep) noexcept;
+	void Fail(std::exception_ptr ep) noexcept;
 
-    BufferedResult Feed(const uint8_t *data, size_t length) noexcept;
+	BufferedResult Feed(const uint8_t *data, size_t length) noexcept;
 
-    /* virtual methods from class BufferedSocketHandler */
-    BufferedResult OnBufferedData() override {
-        auto r = socket.ReadBuffer();
-        assert(!r.empty());
-        return Feed((const uint8_t *)r.data, r.size);
-    }
+	/* virtual methods from class BufferedSocketHandler */
+	BufferedResult OnBufferedData() override {
+		auto r = socket.ReadBuffer();
+		assert(!r.empty());
+		return Feed((const uint8_t *)r.data, r.size);
+	}
 
-    bool OnBufferedClosed() noexcept override {
-        ReleaseSocket(false);
-        return true;
-    }
+	bool OnBufferedClosed() noexcept override {
+		ReleaseSocket(false);
+		return true;
+	}
 
-    bool OnBufferedWrite() override {
-        return TryWrite();
-    }
+	bool OnBufferedWrite() override {
+		return TryWrite();
+	}
 
-    void OnBufferedError(std::exception_ptr ep) noexcept override {
-        Fail(NestException(ep,
-                           std::runtime_error("Translation server connection failed")));
-    }
+	void OnBufferedError(std::exception_ptr ep) noexcept override {
+		Fail(NestException(ep,
+				   std::runtime_error("Translation server connection failed")));
+	}
 
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override {
-        stopwatch.RecordEvent("cancel");
-        ReleaseSocket(false);
-        Destroy();
-    }
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		stopwatch.RecordEvent("cancel");
+		ReleaseSocket(false);
+		Destroy();
+	}
 };
 
 static constexpr auto translate_read_timeout = std::chrono::minutes(1);
@@ -124,26 +124,26 @@ static constexpr auto translate_write_timeout = std::chrono::seconds(10);
 void
 TranslateClient::ReleaseSocket(bool reuse) noexcept
 {
-    assert(socket.IsConnected());
+	assert(socket.IsConnected());
 
-    socket.Abandon();
-    socket.Destroy();
+	socket.Abandon();
+	socket.Destroy();
 
-    lease_ref.Release(reuse);
+	lease_ref.Release(reuse);
 }
 
 void
 TranslateClient::Fail(std::exception_ptr ep) noexcept
 {
-    stopwatch.RecordEvent("error");
+	stopwatch.RecordEvent("error");
 
-    ReleaseSocket(false);
+	ReleaseSocket(false);
 
-    auto &_handler = handler;
+	auto &_handler = handler;
 
-    Destroy();
+	Destroy();
 
-    _handler.OnTranslateError(ep);
+	_handler.OnTranslateError(ep);
 }
 
 /*
@@ -154,39 +154,39 @@ TranslateClient::Fail(std::exception_ptr ep) noexcept
 inline BufferedResult
 TranslateClient::Feed(const uint8_t *data, size_t length) noexcept
 try {
-    size_t consumed = 0;
-    while (consumed < length) {
-        size_t nbytes = parser.Feed(data + consumed, length - consumed);
-        if (nbytes == 0)
-            /* need more data */
-            break;
+	size_t consumed = 0;
+	while (consumed < length) {
+		size_t nbytes = parser.Feed(data + consumed, length - consumed);
+		if (nbytes == 0)
+			/* need more data */
+			break;
 
-        consumed += nbytes;
-        socket.DisposeConsumed(nbytes);
+		consumed += nbytes;
+		socket.DisposeConsumed(nbytes);
 
-        auto result = parser.Process();
-        switch (result) {
-        case TranslateParser::Result::MORE:
-            break;
+		auto result = parser.Process();
+		switch (result) {
+		case TranslateParser::Result::MORE:
+			break;
 
-        case TranslateParser::Result::DONE:
-            ReleaseSocket(true);
+		case TranslateParser::Result::DONE:
+			ReleaseSocket(true);
 
-            {
-                auto &_handler = handler;
-                auto &response = parser.GetResponse();
-                Destroy();
-                _handler.OnTranslateResponse(response);
-            }
+			{
+				auto &_handler = handler;
+				auto &response = parser.GetResponse();
+				Destroy();
+				_handler.OnTranslateResponse(response);
+			}
 
-            return BufferedResult::CLOSED;
-        }
-    }
+			return BufferedResult::CLOSED;
+		}
+	}
 
-    return BufferedResult::MORE;
+	return BufferedResult::MORE;
 } catch (...) {
-    Fail(std::current_exception());
-    return BufferedResult::CLOSED;
+	Fail(std::current_exception());
+	return BufferedResult::CLOSED;
 }
 
 /*
@@ -197,30 +197,30 @@ try {
 bool
 TranslateClient::TryWrite() noexcept
 {
-    auto src = request.Read();
-    assert(!src.IsNull());
+	auto src = request.Read();
+	assert(!src.IsNull());
 
-    ssize_t nbytes = socket.Write(src.data, src.size);
-    if (gcc_unlikely(nbytes < 0)) {
-        if (gcc_likely(nbytes == WRITE_BLOCKING))
-            return true;
+	ssize_t nbytes = socket.Write(src.data, src.size);
+	if (gcc_unlikely(nbytes < 0)) {
+		if (gcc_likely(nbytes == WRITE_BLOCKING))
+			return true;
 
-        Fail(std::make_exception_ptr(MakeErrno("write error to translation server")));
-        return false;
-    }
+		Fail(std::make_exception_ptr(MakeErrno("write error to translation server")));
+		return false;
+	}
 
-    request.Consume(nbytes);
-    if (request.IsEOF()) {
-        /* the buffer is empty, i.e. the request has been sent */
+	request.Consume(nbytes);
+	if (request.IsEOF()) {
+		/* the buffer is empty, i.e. the request has been sent */
 
-        stopwatch.RecordEvent("request_end");
+		stopwatch.RecordEvent("request_end");
 
-        socket.UnscheduleWrite();
-        return socket.Read(true);
-    }
+		socket.UnscheduleWrite();
+		return socket.Read(true);
+	}
 
-    socket.ScheduleWrite();
-    return true;
+	socket.ScheduleWrite();
+	return true;
 }
 
 /*
@@ -230,53 +230,53 @@ TranslateClient::TryWrite() noexcept
 
 inline
 TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
-                                 StopwatchPtr &&_stopwatch,
-                                 SocketDescriptor fd, Lease &lease,
-                                 const TranslateRequest &request2,
-                                 GrowingBuffer &&_request,
-                                 TranslateHandler &_handler,
-                                 CancellablePointer &cancel_ptr) noexcept
-    :pool(p),
-     stopwatch(std::move(_stopwatch)),
-     socket(event_loop), lease_ref(lease),
-     request(std::move(_request)),
-     handler(_handler),
-     parser(p, request2, *NewFromPool<TranslateResponse>(p))
+				 StopwatchPtr &&_stopwatch,
+				 SocketDescriptor fd, Lease &lease,
+				 const TranslateRequest &request2,
+				 GrowingBuffer &&_request,
+				 TranslateHandler &_handler,
+				 CancellablePointer &cancel_ptr) noexcept
+	:pool(p),
+	 stopwatch(std::move(_stopwatch)),
+	 socket(event_loop), lease_ref(lease),
+	 request(std::move(_request)),
+	 handler(_handler),
+	 parser(p, request2, *NewFromPool<TranslateResponse>(p))
 {
-    socket.Init(fd, FdType::FD_SOCKET,
-                translate_read_timeout,
-                translate_write_timeout,
-                *this);
+	socket.Init(fd, FdType::FD_SOCKET,
+		    translate_read_timeout,
+		    translate_write_timeout,
+		    *this);
 
-    cancel_ptr = *this;
+	cancel_ptr = *this;
 }
 
 void
 translate(struct pool &pool, EventLoop &event_loop,
-          StopwatchPtr stopwatch,
-          SocketDescriptor fd, Lease &lease,
-          const TranslateRequest &request,
-          TranslateHandler &handler,
-          CancellablePointer &cancel_ptr) noexcept
+	  StopwatchPtr stopwatch,
+	  SocketDescriptor fd, Lease &lease,
+	  const TranslateRequest &request,
+	  TranslateHandler &handler,
+	  CancellablePointer &cancel_ptr) noexcept
 try {
-    assert(fd.IsDefined());
-    assert(request.uri != nullptr || request.widget_type != nullptr ||
-           request.pool != nullptr ||
-           (!request.content_type_lookup.IsNull() &&
-            request.suffix != nullptr));
+	assert(fd.IsDefined());
+	assert(request.uri != nullptr || request.widget_type != nullptr ||
+	       request.pool != nullptr ||
+	       (!request.content_type_lookup.IsNull() &&
+		request.suffix != nullptr));
 
-    GrowingBuffer gb = MarshalTranslateRequest(PROTOCOL_VERSION,
-                                               request);
+	GrowingBuffer gb = MarshalTranslateRequest(PROTOCOL_VERSION,
+						   request);
 
-    auto *client = NewFromPool<TranslateClient>(pool, pool, event_loop,
-                                                std::move(stopwatch),
-                                                fd, lease,
-                                                request, std::move(gb),
-                                                handler, cancel_ptr);
+	auto *client = NewFromPool<TranslateClient>(pool, pool, event_loop,
+						    std::move(stopwatch),
+						    fd, lease,
+						    request, std::move(gb),
+						    handler, cancel_ptr);
 
-    client->TryWrite();
+	client->TryWrite();
 } catch (...) {
-    lease.ReleaseLease(true);
+	lease.ReleaseLease(true);
 
-    handler.OnTranslateError(std::current_exception());
+	handler.OnTranslateError(std::current_exception());
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -47,6 +47,6 @@ class CancellablePointer;
  */
 void
 cgi_client_new(struct pool &pool, StopwatchPtr stopwatch,
-               UnusedIstreamPtr input,
-               HttpResponseHandler &handler,
-               CancellablePointer &cancel_ptr);
+	       UnusedIstreamPtr input,
+	       HttpResponseHandler &handler,
+	       CancellablePointer &cancel_ptr);

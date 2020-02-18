@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,13 +37,13 @@
 void
 http_next_token(StringView &input, StringView &value) noexcept
 {
-    value.size = 0;
-    value.data = input.data;
+	value.size = 0;
+	value.data = input.data;
 
-    while (value.size < input.size &&
-           char_is_http_token(input[value.size]))
-        ++value.size;
+	while (value.size < input.size &&
+	       char_is_http_token(input[value.size]))
+		++value.size;
 
-    if (value.size > 0)
-        input.skip_front(value.size);
+	if (value.size > 0)
+		input.skip_front(value.size);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,8 +35,7 @@
  * RFC 2616.
  */
 
-#ifndef BENG_PROXY_HTTP_CACHE_RFC_HXX
-#define BENG_PROXY_HTTP_CACHE_RFC_HXX
+#pragma once
 
 #include "http/Method.h"
 #include "http/Status.h"
@@ -57,11 +56,11 @@ struct HttpCacheResponseInfo;
  */
 bool
 http_cache_request_evaluate(HttpCacheRequestInfo &info,
-                            http_method_t method,
-                            const ResourceAddress &address,
-                            const StringMap &headers,
-                            bool obey_no_cache,
-                            bool has_request_body) noexcept;
+			    http_method_t method,
+			    const ResourceAddress &address,
+			    const StringMap &headers,
+			    bool obey_no_cache,
+			    bool has_request_body) noexcept;
 
 gcc_pure
 bool
@@ -82,9 +81,9 @@ http_cache_request_invalidate(http_method_t method) noexcept;
  */
 bool
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
-                             HttpCacheResponseInfo &info,
-                             http_status_t status, const StringMap &headers,
-                             off_t body_available) noexcept;
+			     HttpCacheResponseInfo &info,
+			     http_status_t status, const StringMap &headers,
+			     off_t body_available) noexcept;
 
 /**
  * Copy all request headers mentioned in the Vary response header to a
@@ -92,7 +91,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
  */
 void
 http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
-                     const StringMap &request_headers) noexcept;
+		     const StringMap &request_headers) noexcept;
 
 /**
  * The server sent us a non-"Not Modified" response.  Check if we want
@@ -100,6 +99,4 @@ http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
  */
 bool
 http_cache_prefer_cached(const HttpCacheDocument &document,
-                         const StringMap &response_headers) noexcept;
-
-#endif
+			 const StringMap &response_headers) noexcept;

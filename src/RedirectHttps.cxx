@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,27 +38,27 @@
 
 const char *
 MakeHttpsRedirect(AllocatorPtr alloc, const char *_host, uint16_t port,
-                  const char *uri) noexcept
+		  const char *uri) noexcept
 {
-    char port_buffer[16];
-    size_t port_length = 0;
-    if (port != 0 && port != 443)
-        port_length = sprintf(port_buffer, ":%u", port);
+	char port_buffer[16];
+	size_t port_length = 0;
+	if (port != 0 && port != 443)
+		port_length = sprintf(port_buffer, ":%u", port);
 
-    auto eh = ExtractHost(_host);
-    auto host = eh.host != nullptr
-        ? eh.host
-        : _host;
+	auto eh = ExtractHost(_host);
+	auto host = eh.host != nullptr
+		? eh.host
+		: _host;
 
-    static constexpr char a = '[';
-    static constexpr char b = ']';
-    const size_t is_ipv6 = eh.host != nullptr && eh.host.Find(':') != nullptr;
-    const size_t need_brackets = is_ipv6 && port_length > 0;
+	static constexpr char a = '[';
+	static constexpr char b = ']';
+	const size_t is_ipv6 = eh.host != nullptr && eh.host.Find(':') != nullptr;
+	const size_t need_brackets = is_ipv6 && port_length > 0;
 
-    return alloc.Concat("https://",
-                        StringView(&a, need_brackets),
-                        host,
-                        StringView(&b, need_brackets),
-                        StringView(port_buffer, port_length),
-                        uri);
+	return alloc.Concat("https://",
+			    StringView(&a, need_brackets),
+			    host,
+			    StringView(&b, need_brackets),
+			    StringView(port_buffer, port_length),
+			    uri);
 }

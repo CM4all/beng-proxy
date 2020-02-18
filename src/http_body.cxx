@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,126 +42,126 @@
 size_t
 HttpBodyReader::GetMaxRead(size_t length) const
 {
-    assert(rest != REST_EOF_CHUNK);
+	assert(rest != REST_EOF_CHUNK);
 
-    if (KnownLength() && rest < (off_t)length)
-        /* content-length header was provided, return this value */
-        return (size_t)rest;
-    else
-        /* read as much as possible, the dechunker will do the rest */
-        return length;
+	if (KnownLength() && rest < (off_t)length)
+		/* content-length header was provided, return this value */
+		return (size_t)rest;
+	else
+		/* read as much as possible, the dechunker will do the rest */
+		return length;
 }
 
 void
 HttpBodyReader::Consumed(size_t nbytes)
 {
-    if (!KnownLength())
-        return;
+	if (!KnownLength())
+		return;
 
-    assert((off_t)nbytes <= rest);
+	assert((off_t)nbytes <= rest);
 
-    rest -= (off_t)nbytes;
+	rest -= (off_t)nbytes;
 }
 
 size_t
 HttpBodyReader::FeedBody(const void *data, size_t length)
 {
-    assert(length > 0);
+	assert(length > 0);
 
-    length = GetMaxRead(length);
-    size_t consumed = InvokeData(data, length);
-    if (consumed > 0)
-        Consumed(consumed);
+	length = GetMaxRead(length);
+	size_t consumed = InvokeData(data, length);
+	if (consumed > 0)
+		Consumed(consumed);
 
-    return consumed;
+	return consumed;
 }
 
 ssize_t
 HttpBodyReader::TryDirect(SocketDescriptor fd, FdType fd_type)
 {
-    assert(fd.IsDefined());
-    assert(CheckDirect(fd_type));
+	assert(fd.IsDefined());
+	assert(CheckDirect(fd_type));
 
-    ssize_t nbytes = InvokeDirect(fd_type, fd.Get(), GetMaxRead(INT_MAX));
-    if (nbytes > 0)
-        Consumed((size_t)nbytes);
+	ssize_t nbytes = InvokeDirect(fd_type, fd.Get(), GetMaxRead(INT_MAX));
+	if (nbytes > 0)
+		Consumed((size_t)nbytes);
 
-    return nbytes;
+	return nbytes;
 }
 
 bool
 HttpBodyReader::SocketEOF(size_t remaining)
 {
-    if (rest == REST_UNKNOWN) {
-        rest = remaining;
+	if (rest == REST_UNKNOWN) {
+		rest = remaining;
 
-        if (remaining > 0) {
-            /* serve the rest of the buffer, then end the body
-               stream */
-            return true;
-        }
+		if (remaining > 0) {
+			/* serve the rest of the buffer, then end the body
+			   stream */
+			return true;
+		}
 
-        /* the socket is closed, which ends the body */
-        InvokeEof();
-        return false;
-    } else if (rest == REST_CHUNKED ||
-               rest == REST_EOF_CHUNK) {
-        /* suppress InvokeEof() because the dechunker is responsible
-           for that */
-        return remaining > 0;
-    } else if (rest == (off_t)remaining) {
-        if (remaining > 0)
-            /* serve the rest of the buffer, then end the body
-               stream */
-            return true;
+		/* the socket is closed, which ends the body */
+		InvokeEof();
+		return false;
+	} else if (rest == REST_CHUNKED ||
+		   rest == REST_EOF_CHUNK) {
+		/* suppress InvokeEof() because the dechunker is responsible
+		   for that */
+		return remaining > 0;
+	} else if (rest == (off_t)remaining) {
+		if (remaining > 0)
+			/* serve the rest of the buffer, then end the body
+			   stream */
+			return true;
 
-        InvokeEof();
-        return false;
-    } else {
-        /* something has gone wrong: either not enough or too much
-           data left in the buffer */
-        InvokeError(std::make_exception_ptr(std::runtime_error("premature end of socket")));
-        return false;
-    }
+		InvokeEof();
+		return false;
+	} else {
+		/* something has gone wrong: either not enough or too much
+		   data left in the buffer */
+		InvokeError(std::make_exception_ptr(std::runtime_error("premature end of socket")));
+		return false;
+	}
 }
 
 void
 HttpBodyReader::OnDechunkEndSeen() noexcept
 {
-    assert(rest == REST_CHUNKED);
+	assert(rest == REST_CHUNKED);
 
-    end_seen = true;
+	end_seen = true;
 }
 
 bool
 HttpBodyReader::OnDechunkEnd() noexcept
 {
-    assert(rest == REST_CHUNKED);
+	assert(rest == REST_CHUNKED);
 
-    end_seen = true;
-    rest = REST_EOF_CHUNK;
+	end_seen = true;
+	rest = REST_EOF_CHUNK;
 
-    return true;
+	return true;
 }
 
 UnusedIstreamPtr
 HttpBodyReader::Init(EventLoop &event_loop, off_t content_length,
-                     bool _chunked)
+		     bool _chunked)
 {
-    assert(content_length >= -1);
+	assert(content_length >= -1);
 
-    rest = content_length;
+	rest = content_length;
 
-    UnusedIstreamPtr s(this);
-    if (_chunked) {
-        assert(rest == (off_t)REST_UNKNOWN);
+	UnusedIstreamPtr s(this);
+	if (_chunked) {
+		assert(rest == (off_t)REST_UNKNOWN);
 
-        rest = REST_CHUNKED;
-        end_seen = false;
+		rest = REST_CHUNKED;
+		end_seen = false;
 
-        s = istream_dechunk_new(GetPool(), std::move(s),
-                                event_loop, *this);
-    }
+		s = istream_dechunk_new(GetPool(), std::move(s),
+					event_loop, *this);
+	}
 
-    return s;
+	return s;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_HTTP_CACHE_DOCUMENT_HXX
-#define BENG_PROXY_HTTP_CACHE_DOCUMENT_HXX
+#pragma once
 
 #include "http_cache_info.hxx"
 #include "strmap.hxx"
@@ -39,30 +38,28 @@
 #include "util/Compiler.h"
 
 struct HttpCacheDocument {
-    HttpCacheResponseInfo info;
+	HttpCacheResponseInfo info;
 
-    StringMap vary;
+	StringMap vary;
 
-    http_status_t status;
-    StringMap response_headers;
+	http_status_t status;
+	StringMap response_headers;
 
-    HttpCacheDocument() = default;
+	HttpCacheDocument() = default;
 
-    HttpCacheDocument(struct pool &pool,
-                      const HttpCacheResponseInfo &_info,
-                      const StringMap &request_headers,
-                      http_status_t _status,
-                      const StringMap &response_headers) noexcept;
+	HttpCacheDocument(struct pool &pool,
+			  const HttpCacheResponseInfo &_info,
+			  const StringMap &request_headers,
+			  http_status_t _status,
+			  const StringMap &response_headers) noexcept;
 
-    HttpCacheDocument(const HttpCacheDocument &) = delete;
-    HttpCacheDocument &operator=(const HttpCacheDocument &) = delete;
+	HttpCacheDocument(const HttpCacheDocument &) = delete;
+	HttpCacheDocument &operator=(const HttpCacheDocument &) = delete;
 
-    /**
-     * Checks whether the specified cache item fits the current request.
-     * This is not true if the Vary headers mismatch.
-     */
-    gcc_pure
-    bool VaryFits(const StringMap *request_headers) const noexcept;
+	/**
+	 * Checks whether the specified cache item fits the current request.
+	 * This is not true if the Vary headers mismatch.
+	 */
+	gcc_pure
+	bool VaryFits(const StringMap *request_headers) const noexcept;
 };
-
-#endif

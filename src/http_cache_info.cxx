@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,18 +34,18 @@
 #include "pool/pool.hxx"
 
 HttpCacheResponseInfo::HttpCacheResponseInfo(struct pool &pool,
-                                             const HttpCacheResponseInfo &src) noexcept
-    :expires(src.expires),
-     last_modified(p_strdup_checked(&pool, src.last_modified)),
-     etag(p_strdup_checked(&pool, src.etag)),
-     vary(p_strdup_checked(&pool, src.vary))
+					     const HttpCacheResponseInfo &src) noexcept
+	:expires(src.expires),
+	 last_modified(p_strdup_checked(&pool, src.last_modified)),
+	 etag(p_strdup_checked(&pool, src.etag)),
+	 vary(p_strdup_checked(&pool, src.vary))
 {
 }
 
 void
 HttpCacheResponseInfo::MoveToPool(struct pool &pool) noexcept
 {
-    last_modified = p_strdup_checked(&pool, last_modified);
-    etag = p_strdup_checked(&pool, etag);
-    vary = p_strdup_checked(&pool, vary);
+	last_modified = p_strdup_checked(&pool, last_modified);
+	etag = p_strdup_checked(&pool, etag);
+	vary = p_strdup_checked(&pool, vary);
 }

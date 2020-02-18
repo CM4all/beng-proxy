@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,14 +37,14 @@
 
 void
 HttpResponseHandler::InvokeResponse(struct pool &pool,
-                                    http_status_t status,
-                                    const char *msg) noexcept
+				    http_status_t status,
+				    const char *msg) noexcept
 {
-    assert(http_status_is_valid(status));
-    assert(msg != nullptr);
+	assert(http_status_is_valid(status));
+	assert(msg != nullptr);
 
-    StringMap headers;
-    headers.Add(pool, "content-type", "text/plain; charset=utf-8");
-    InvokeResponse(status, std::move(headers),
-                   istream_string_new(pool, msg));
+	StringMap headers;
+	headers.Add(pool, "content-type", "text/plain; charset=utf-8");
+	InvokeResponse(status, std::move(headers),
+		       istream_string_new(pool, msg));
 }

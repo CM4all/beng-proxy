@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -45,125 +45,125 @@ class MatchInfo;
  * The address of a CGI/FastCGI/WAS request.
  */
 struct CgiAddress {
-    const char *path;
+	const char *path;
 
-    /**
-     * Command-line arguments.
-     */
-    ExpandableStringList args;
+	/**
+	 * Command-line arguments.
+	 */
+	ExpandableStringList args;
 
-    /**
-     * Protocol-specific name/value pairs (per-request).
-     */
-    ExpandableStringList params;
+	/**
+	 * Protocol-specific name/value pairs (per-request).
+	 */
+	ExpandableStringList params;
 
-    ChildOptions options;
+	ChildOptions options;
 
-    const char *interpreter = nullptr;
-    const char *action = nullptr;
+	const char *interpreter = nullptr;
+	const char *action = nullptr;
 
-    const char *uri = nullptr;
-    const char *script_name = nullptr, *path_info = nullptr;
-    const char *query_string = nullptr;
-    const char *document_root = nullptr;
+	const char *uri = nullptr;
+	const char *script_name = nullptr, *path_info = nullptr;
+	const char *query_string = nullptr;
+	const char *document_root = nullptr;
 
-    /**
-     * An optional list of addresses to connect to.  If given
-     * for a FastCGI resource, then beng-proxy connects to one
-     * of the addresses instead of spawning a new child
-     * process.
-     */
-    AddressList address_list;
+	/**
+	 * An optional list of addresses to connect to.  If given
+	 * for a FastCGI resource, then beng-proxy connects to one
+	 * of the addresses instead of spawning a new child
+	 * process.
+	 */
+	AddressList address_list;
 
-    bool expand_path = false;
-    bool expand_uri = false;
-    bool expand_script_name = false;
-    bool expand_path_info = false;
-    bool expand_document_root = false;
+	bool expand_path = false;
+	bool expand_uri = false;
+	bool expand_script_name = false;
+	bool expand_path_info = false;
+	bool expand_document_root = false;
 
-    explicit CgiAddress(const char *_path);
+	explicit CgiAddress(const char *_path);
 
-    constexpr CgiAddress(ShallowCopy shallow_copy, const CgiAddress &src)
-        :path(src.path),
-         args(shallow_copy, src.args), params(shallow_copy, src.params),
-         options(shallow_copy, src.options),
-         interpreter(src.interpreter), action(src.action),
-         uri(src.uri), script_name(src.script_name), path_info(src.path_info),
-         query_string(src.query_string), document_root(src.document_root),
-         address_list(shallow_copy, src.address_list),
-         expand_path(src.expand_path),
-         expand_uri(src.expand_uri),
-         expand_script_name(src.expand_script_name),
-         expand_path_info(src.expand_path_info),
-         expand_document_root(src.expand_document_root)
-    {
-    }
+	constexpr CgiAddress(ShallowCopy shallow_copy, const CgiAddress &src)
+		:path(src.path),
+		 args(shallow_copy, src.args), params(shallow_copy, src.params),
+		 options(shallow_copy, src.options),
+		 interpreter(src.interpreter), action(src.action),
+		 uri(src.uri), script_name(src.script_name), path_info(src.path_info),
+		 query_string(src.query_string), document_root(src.document_root),
+		 address_list(shallow_copy, src.address_list),
+		 expand_path(src.expand_path),
+		 expand_uri(src.expand_uri),
+		 expand_script_name(src.expand_script_name),
+		 expand_path_info(src.expand_path_info),
+		 expand_document_root(src.expand_document_root)
+	{
+	}
 
-    constexpr CgiAddress(CgiAddress &&src):CgiAddress(ShallowCopy(), src) {}
+	constexpr CgiAddress(CgiAddress &&src):CgiAddress(ShallowCopy(), src) {}
 
-    CgiAddress(AllocatorPtr alloc, const CgiAddress &src);
+	CgiAddress(AllocatorPtr alloc, const CgiAddress &src);
 
-    CgiAddress &operator=(const CgiAddress &) = delete;
+	CgiAddress &operator=(const CgiAddress &) = delete;
 
-    gcc_pure
-    const char *GetURI(AllocatorPtr alloc) const;
+	gcc_pure
+	const char *GetURI(AllocatorPtr alloc) const;
 
-    /**
-     * Generates a string identifying the address.  This can be used as a
-     * key in a hash table.  The string will be allocated by the specified
-     * pool.
-     */
-    gcc_pure
-    const char *GetId(AllocatorPtr alloc) const;
+	/**
+	 * Generates a string identifying the address.  This can be used as a
+	 * key in a hash table.  The string will be allocated by the specified
+	 * pool.
+	 */
+	gcc_pure
+	const char *GetId(AllocatorPtr alloc) const;
 
-    void Check() const {
-        options.Check();
-    }
+	void Check() const {
+		options.Check();
+	}
 
-    gcc_pure
-    bool HasQueryString() const {
-        return query_string != nullptr && *query_string != 0;
-    }
+	gcc_pure
+	bool HasQueryString() const {
+		return query_string != nullptr && *query_string != 0;
+	}
 
-    void InsertQueryString(AllocatorPtr alloc, const char *new_query_string);
+	void InsertQueryString(AllocatorPtr alloc, const char *new_query_string);
 
-    void InsertArgs(AllocatorPtr alloc, StringView new_args,
-                    StringView new_path_info);
+	void InsertArgs(AllocatorPtr alloc, StringView new_args,
+			StringView new_path_info);
 
-    CgiAddress *Clone(AllocatorPtr alloc) const;
+	CgiAddress *Clone(AllocatorPtr alloc) const;
 
-    gcc_pure
-    bool IsValidBase() const;
+	gcc_pure
+	bool IsValidBase() const;
 
-    const char *AutoBase(AllocatorPtr alloc, const char *request_uri) const;
+	const char *AutoBase(AllocatorPtr alloc, const char *request_uri) const;
 
-    CgiAddress *SaveBase(AllocatorPtr alloc, const char *suffix) const;
+	CgiAddress *SaveBase(AllocatorPtr alloc, const char *suffix) const;
 
-    CgiAddress *LoadBase(AllocatorPtr alloc, const char *suffix) const;
+	CgiAddress *LoadBase(AllocatorPtr alloc, const char *suffix) const;
 
-    /**
-     * @return a new object on success, src if no change is needed,
-     * nullptr on error
-     */
-    const CgiAddress *Apply(AllocatorPtr alloc, StringView relative) const;
+	/**
+	 * @return a new object on success, src if no change is needed,
+	 * nullptr on error
+	 */
+	const CgiAddress *Apply(AllocatorPtr alloc, StringView relative) const;
 
-    /**
-     * Does this address need to be expanded with Expand()?
-     */
-    gcc_pure
-    bool IsExpandable() const {
-        return options.IsExpandable() ||
-            expand_path ||
-            expand_uri ||
-            expand_script_name ||
-            expand_path_info ||
-            expand_document_root ||
-            args.IsExpandable() ||
-            params.IsExpandable();
-    }
+	/**
+	 * Does this address need to be expanded with Expand()?
+	 */
+	gcc_pure
+	bool IsExpandable() const {
+		return options.IsExpandable() ||
+			expand_path ||
+			expand_uri ||
+			expand_script_name ||
+			expand_path_info ||
+			expand_document_root ||
+			args.IsExpandable() ||
+			params.IsExpandable();
+	}
 
-    /**
-     * Throws std::runtime_error on error.
-     */
-    void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
+	/**
+	 * Throws std::runtime_error on error.
+	 */
+	void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
 };

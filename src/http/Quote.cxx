@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,30 +37,30 @@
 bool
 http_must_quote_token(StringView src) noexcept
 {
-    for (auto ch : src)
-        if (!char_is_http_token(ch))
-            return true;
-    return false;
+	for (auto ch : src)
+		if (!char_is_http_token(ch))
+			return true;
+	return false;
 }
 
 size_t
 http_quote_string(char *dest, const StringView src) noexcept
 {
-    size_t dest_pos = 0, src_pos = 0;
+	size_t dest_pos = 0, src_pos = 0;
 
-    dest[dest_pos++] = '"';
+	dest[dest_pos++] = '"';
 
-    while (src_pos < src.size) {
-        if (src[src_pos] == '"' || src[src_pos] == '\\') {
-            dest[dest_pos++] = '\\';
-            dest[dest_pos++] = src[src_pos++];
-        } else if (char_is_http_text(src[src_pos]))
-            dest[dest_pos++] = src[src_pos++];
-        else
-            /* ignore invalid characters */
-            ++src_pos;
-    }
+	while (src_pos < src.size) {
+		if (src[src_pos] == '"' || src[src_pos] == '\\') {
+			dest[dest_pos++] = '\\';
+			dest[dest_pos++] = src[src_pos++];
+		} else if (char_is_http_text(src[src_pos]))
+			dest[dest_pos++] = src[src_pos++];
+		else
+			/* ignore invalid characters */
+			++src_pos;
+	}
 
-    dest[dest_pos++] = '"';
-    return dest_pos;
+	dest[dest_pos++] = '"';
+	return dest_pos;
 }

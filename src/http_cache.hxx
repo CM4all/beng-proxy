@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_HTTP_CACHE_H
-#define BENG_PROXY_HTTP_CACHE_H
+#pragma once
 
 #include "cluster/StickyHash.hxx"
 #include "http/Method.h"
@@ -56,9 +55,9 @@ class CancellablePointer;
  */
 HttpCache *
 http_cache_new(struct pool &pool, size_t max_size,
-               bool obey_no_cache,
-               EventLoop &event_loop,
-               ResourceLoader &resource_loader);
+	       bool obey_no_cache,
+	       EventLoop &event_loop,
+	       ResourceLoader &resource_loader);
 
 void
 http_cache_close(HttpCache *cache) noexcept;
@@ -79,15 +78,13 @@ http_cache_flush(HttpCache &cache) noexcept;
  */
 void
 http_cache_request(HttpCache &cache,
-                   struct pool &pool,
-                   const StopwatchPtr &parent_stopwatch,
-                   sticky_hash_t session_sticky,
-                   const char *cache_tag,
-                   const char *site_name,
-                   http_method_t method,
-                   const ResourceAddress &address,
-                   StringMap &&headers, UnusedIstreamPtr body,
-                   HttpResponseHandler &handler,
-                   CancellablePointer &cancel_ptr) noexcept;
-
-#endif
+		   struct pool &pool,
+		   const StopwatchPtr &parent_stopwatch,
+		   sticky_hash_t session_sticky,
+		   const char *cache_tag,
+		   const char *site_name,
+		   http_method_t method,
+		   const ResourceAddress &address,
+		   StringMap &&headers, UnusedIstreamPtr body,
+		   HttpResponseHandler &handler,
+		   CancellablePointer &cancel_ptr) noexcept;
