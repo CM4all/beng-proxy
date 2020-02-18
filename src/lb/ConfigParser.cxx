@@ -664,6 +664,18 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 #else
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
+	} else if (strcmp(word, "zeroconf_interface") == 0) {
+#ifdef HAVE_AVAHI
+		if (config.zeroconf_service.empty())
+			throw LineParser::Error("zeroconf_interface without zeroconf_service");
+
+		if (!config.zeroconf_interface.empty())
+			throw LineParser::Error("Duplicate zeroconf_interface");
+
+		config.zeroconf_interface = line.ExpectValueAndEnd();
+#else
+		throw LineParser::Error("Zeroconf support is disabled at compile time");
+#endif
 	} else if (strcmp(word, "protocol") == 0) {
 		const char *protocol = line.ExpectValueAndEnd();
 		if (strcmp(protocol, "http") == 0)

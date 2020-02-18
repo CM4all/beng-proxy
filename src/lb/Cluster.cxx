@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 CM4all GmbH
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,6 +36,7 @@
 #include "MonitorRef.hxx"
 #include "cluster/StickyCache.hxx"
 #include "sodium/GenericHash.hxx"
+#include "system/Error.hxx"
 #include "net/FailureManager.hxx"
 #include "net/ToString.hxx"
 #include "util/HashRing.hxx"
@@ -43,6 +44,8 @@
 
 #ifdef HAVE_AVAHI
 #include "avahi/Explorer.hxx"
+
+#include <net/if.h>
 #endif
 
 #ifdef HAVE_AVAHI
@@ -97,14 +100,26 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 	 logger("cluster " + config.name)
 {
 #ifdef HAVE_AVAHI
-	if (config.HasZeroConf())
+	if (config.HasZeroConf()) {
+		AvahiIfIndex interface = AVAHI_IF_UNSPEC;
+
+		if (!config.zeroconf_interface.empty()) {
+			int i = if_nametoindex(config.zeroconf_interface.c_str());
+			if (i == 0)
+				throw FormatErrno("Failed to find interface '%s'",
+						  config.zeroconf_interface.c_str());
+
+			interface = AvahiIfIndex(i);
+		}
+
 		explorer.reset(new AvahiServiceExplorer(avahi_client, *this,
-							AVAHI_IF_UNSPEC,
+							interface,
 							AVAHI_PROTO_UNSPEC,
 							config.zeroconf_service.c_str(),
 							config.zeroconf_domain.empty()
 							? nullptr
 							: config.zeroconf_domain.c_str()));
+	}
 #endif
 
 	if (monitors != nullptr)

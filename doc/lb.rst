@@ -134,6 +134,14 @@ To discover pool members automatically using Zeroconf, use the
 It will look up in the default domain; to use another domain, use the
 ``zeroconf_domain`` setting.
 
+To limit the search to a certain network interface, specify a
+``zeroconf_interface``::
+
+   pool "auto" {
+      zeroconf_service "widgetserver"
+      zeroconf_interface "eth1"
+   }
+
 This requires ``avahi-daemon`` to be installed and running. And, of
 course, it requires the pool members to publish their service.
 

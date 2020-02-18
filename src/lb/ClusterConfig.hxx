@@ -113,6 +113,7 @@ struct LbClusterConfig {
 
 #ifdef HAVE_AVAHI
 	std::string zeroconf_service, zeroconf_domain;
+	std::string zeroconf_interface;
 #endif
 
 	std::forward_list<AllocatedSocketAddress> address_allocations;
