@@ -428,6 +428,10 @@ WasStock::Create(CreateStockItem c, StockRequest _request,
 		throw;
 	}
 
+	/* invoke the WasChildParams destructor before invoking the
+	   callback, because the latter may destroy the pool */
+	_request.reset();
+
 	child->InvokeCreateSuccess();
 }
 
