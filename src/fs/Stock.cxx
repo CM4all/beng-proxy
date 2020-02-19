@@ -235,7 +235,11 @@ void
 FilteredSocketStock::Create(CreateStockItem c, StockRequest _request,
 			    CancellablePointer &cancel_ptr)
 {
-	auto &request = *(FilteredSocketStockRequest *)_request.get();
+	/* move the request to the stack to avoid use-after-free in
+	   the StockRequest destructor if the pool gets destroyed
+	   before this method returns */
+	auto request = std::move(*(FilteredSocketStockRequest *)_request.get());
+	_request.reset();
 
 	auto *connection = new FilteredSocketStockConnection(c,
 							     request.address,

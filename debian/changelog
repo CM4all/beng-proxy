@@ -1,6 +1,6 @@
 cm4all-beng-proxy (16.5) unstable; urgency=low
 
-  * bp: fix two use-after-free crash bugs
+  * bp: fix three use-after-free crash bugs
 
  --   
 
