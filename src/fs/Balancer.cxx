@@ -109,8 +109,9 @@ FilteredSocketBalancerRequest::OnStockItemReady(StockItem &item) noexcept
 	auto &base = BR::Cast(*this);
 	base.ConnectSuccess();
 
-	handler.OnStockItemReady(item);
+	auto &_handler = handler;
 	base.Destroy();
+	_handler.OnStockItemReady(item);
 }
 
 void
