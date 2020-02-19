@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -43,91 +43,91 @@
  */
 class DisposablePointer {
 public:
-    using DisposeFunction = void(*)(void *ptr) noexcept;
+	using DisposeFunction = void(*)(void *ptr) noexcept;
 
 private:
-    void *ptr = nullptr;
+	void *ptr = nullptr;
 
-    DisposeFunction dispose;
+	DisposeFunction dispose;
 
 public:
-    DisposablePointer() = default;
-    DisposablePointer(std::nullptr_t) noexcept {}
+	DisposablePointer() = default;
+	DisposablePointer(std::nullptr_t) noexcept {}
 
-    DisposablePointer(void *_ptr, DisposeFunction _dispose) noexcept
-        :ptr(_ptr), dispose(_dispose) {}
+	DisposablePointer(void *_ptr, DisposeFunction _dispose) noexcept
+		:ptr(_ptr), dispose(_dispose) {}
 
-    DisposablePointer(DisposablePointer &&src) noexcept
-        :ptr(std::exchange(src.ptr, nullptr)), dispose(src.dispose) {}
+	DisposablePointer(DisposablePointer &&src) noexcept
+		:ptr(std::exchange(src.ptr, nullptr)), dispose(src.dispose) {}
 
-    ~DisposablePointer() noexcept {
-        if (ptr != nullptr)
-            dispose(ptr);
-    }
+	~DisposablePointer() noexcept {
+		if (ptr != nullptr)
+			dispose(ptr);
+	}
 
-    DisposablePointer &operator=(DisposablePointer &&other) noexcept {
-        using std::swap;
-        swap(ptr, other.ptr);
-        swap(dispose, other.dispose);
-        return *this;
-    }
+	DisposablePointer &operator=(DisposablePointer &&other) noexcept {
+		using std::swap;
+		swap(ptr, other.ptr);
+		swap(dispose, other.dispose);
+		return *this;
+	}
 
-    operator bool() const noexcept {
-        return ptr != nullptr;
-    }
+	operator bool() const noexcept {
+		return ptr != nullptr;
+	}
 
-    void *get() const noexcept {
-        return ptr;
-    }
+	void *get() const noexcept {
+		return ptr;
+	}
 };
 
 template<typename T>
 class TypedDisposablePointer : public DisposablePointer {
 public:
-    template<typename... Args>
-    TypedDisposablePointer(Args&&... args) noexcept
-        :DisposablePointer(std::forward<Args>(args)...) {}
+	template<typename... Args>
+	TypedDisposablePointer(Args&&... args) noexcept
+		:DisposablePointer(std::forward<Args>(args)...) {}
 
-    TypedDisposablePointer(void *_ptr, DisposeFunction _dispose) noexcept;
+	TypedDisposablePointer(void *_ptr, DisposeFunction _dispose) noexcept;
 
-    TypedDisposablePointer(T *_ptr, DisposeFunction _dispose) noexcept
-        :DisposablePointer(_ptr, _dispose) {}
+	TypedDisposablePointer(T *_ptr, DisposeFunction _dispose) noexcept
+		:DisposablePointer(_ptr, _dispose) {}
 
-    T *get() const noexcept {
-        return (T *)DisposablePointer::get();
-    }
+	T *get() const noexcept {
+		return (T *)DisposablePointer::get();
+	}
 
-    T *operator->() const noexcept {
-        return get();
-    }
+	T *operator->() const noexcept {
+		return get();
+	}
 
-    T &operator*() const noexcept {
-        return *get();
-    }
+	T &operator*() const noexcept {
+		return *get();
+	}
 };
 
 inline DisposablePointer
 ToNopPointer(void *ptr) noexcept
 {
-    return {ptr, [](void *) noexcept {}};
+	return {ptr, [](void *) noexcept {}};
 }
 
 template<typename T>
 TypedDisposablePointer<T>
 ToDeletePointer(T *ptr) noexcept
 {
-    return {ptr, [](void *p) noexcept {
-        T *t = (T *)p;
-        delete t;
-    }};
+	return {ptr, [](void *p) noexcept {
+		T *t = (T *)p;
+		delete t;
+	}};
 }
 
 template<typename T>
 TypedDisposablePointer<T>
 ToDestructPointer(T *ptr) noexcept
 {
-    return {ptr, [](void *p) noexcept {
-        T *t = (T *)p;
-        t->~T();
-    }};
+	return {ptr, [](void *p) noexcept {
+		T *t = (T *)p;
+		t->~T();
+	}};
 }
