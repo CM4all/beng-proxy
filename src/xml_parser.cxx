@@ -173,16 +173,21 @@ private:
 		assert(input.IsDefined());
 
 		input.Clear();
-		handler.OnXmlEof(position);
+
+		auto &_handler = handler;
+		const auto _position = position;
 		Destroy();
+		_handler.OnXmlEof(_position);
 	}
 
 	void OnError(std::exception_ptr ep) noexcept override {
 		assert(input.IsDefined());
 
 		input.Clear();
-		handler.OnXmlError(ep);
+
+		auto &_handler = handler;
 		Destroy();
+		_handler.OnXmlError(ep);
 	}
 };
 

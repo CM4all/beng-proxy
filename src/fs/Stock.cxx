@@ -61,8 +61,6 @@
 #include <sys/socket.h>
 
 struct FilteredSocketStockRequest {
-	const AllocatorPtr alloc;
-
 	StopwatchPtr stopwatch;
 
 	const bool ip_transparent;
@@ -73,15 +71,13 @@ struct FilteredSocketStockRequest {
 
 	SocketFilterFactory *const filter_factory;
 
-	FilteredSocketStockRequest(AllocatorPtr _alloc,
-				   StopwatchPtr &&_stopwatch,
+	FilteredSocketStockRequest(StopwatchPtr &&_stopwatch,
 				   bool _ip_transparent,
 				   SocketAddress _bind_address,
 				   SocketAddress _address,
 				   Event::Duration _timeout,
 				   SocketFilterFactory *_filter_factory) noexcept
-		:alloc(_alloc),
-		 stopwatch(std::move(_stopwatch)),
+		:stopwatch(std::move(_stopwatch)),
 		 ip_transparent(_ip_transparent),
 		 bind_address(_bind_address), address(_address),
 		 timeout(_timeout),
@@ -239,7 +235,11 @@ void
 FilteredSocketStock::Create(CreateStockItem c, StockRequest _request,
 			    CancellablePointer &cancel_ptr)
 {
-	auto &request = *(FilteredSocketStockRequest *)_request.get();
+	/* move the request to the stack to avoid use-after-free in
+	   the StockRequest destructor if the pool gets destroyed
+	   before this method returns */
+	auto request = std::move(*(FilteredSocketStockRequest *)_request.get());
+	_request.reset();
 
 	auto *connection = new FilteredSocketStockConnection(c,
 							     request.address,
@@ -301,7 +301,7 @@ FilteredSocketStock::Get(AllocatorPtr alloc,
 	const char *key = key_buffer;
 
 	auto request =
-		NewDisposablePointer<FilteredSocketStockRequest>(alloc, alloc,
+		NewDisposablePointer<FilteredSocketStockRequest>(alloc,
 								 std::move(stopwatch),
 								 ip_transparent,
 								 bind_address, address,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,9 +37,9 @@
 bool
 StringSet::Contains(const char *p) const
 {
-    for (auto i : *this)
-        if (strcmp(i, p) == 0)
-            return true;
+	for (auto i : *this)
+		if (strcmp(i, p) == 0)
+			return true;
 
-    return false;
+	return false;
 }

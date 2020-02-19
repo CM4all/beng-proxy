@@ -415,19 +415,22 @@ void
 WasStock::Create(CreateStockItem c, StockRequest _request,
 		 gcc_unused CancellablePointer &cancel_ptr)
 {
-	WasChildParams *params = (WasChildParams *)_request.get();
+	auto &params = *(WasChildParams *)_request.get();
 
-	assert(params != nullptr);
-	assert(params->executable_path != nullptr);
+	assert(params.executable_path != nullptr);
 
-	auto *child = new WasChild(c, spawn_service, params->options.tag);
+	auto *child = new WasChild(c, spawn_service, params.options.tag);
 
 	try {
-		child->Launch(*params, log_socket, log_options);
+		child->Launch(params, log_socket, log_options);
 	} catch (...) {
 		delete child;
 		throw;
 	}
+
+	/* invoke the WasChildParams destructor before invoking the
+	   callback, because the latter may destroy the pool */
+	_request.reset();
 
 	child->InvokeCreateSuccess();
 }

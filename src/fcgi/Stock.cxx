@@ -291,14 +291,13 @@ void
 FcgiStock::Create(CreateStockItem c, StockRequest request,
 		  gcc_unused CancellablePointer &cancel_ptr)
 {
-	auto *params = (FcgiChildParams *)request.get();
+	auto &params = *(FcgiChildParams *)request.get();
 
-	assert(params != nullptr);
-	assert(params->executable_path != nullptr);
+	assert(params.executable_path != nullptr);
 
 	auto *connection = new FcgiConnection(GetEventLoop(), c);
 
-	const ChildOptions &options = params->options;
+	const ChildOptions &options = params.options;
 	if (options.jail != nullptr && options.jail->enabled) {
 		connection->jail_home_directory = options.jail->home_directory;
 

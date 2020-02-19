@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef REFCOUNT_HXX
-#define REFCOUNT_HXX
+#pragma once
 
 #include <atomic>
 
@@ -39,22 +38,20 @@
  * Reference counting API.
  */
 class RefCount {
-    std::atomic_uint value;
+	std::atomic_uint value;
 
 public:
-    constexpr RefCount():value(1) {}
+	constexpr RefCount():value(1) {}
 
-    void Get() {
-        ++value;
-    }
+	void Get() {
+		++value;
+	}
 
-    /**
-     * Decreases the reference counter, and returns true if the counter
-     * has reached 0.
-     */
-    bool Put() {
-        return --value == 0;
-    }
+	/**
+	 * Decreases the reference counter, and returns true if the counter
+	 * has reached 0.
+	 */
+	bool Put() {
+		return --value == 0;
+	}
 };
-
-#endif
