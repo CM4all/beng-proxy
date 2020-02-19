@@ -79,6 +79,11 @@ public:
 	void *get() const noexcept {
 		return ptr;
 	}
+
+	void reset() noexcept {
+		if (ptr != nullptr)
+			dispose(std::exchange(ptr, nullptr));
+	}
 };
 
 template<typename T>
