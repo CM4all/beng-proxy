@@ -141,7 +141,7 @@ Stock::RetryWaiting() noexcept
 
 		waiting.erase(i);
 
-		if (GetIdle(w.handler))
+		if (GetIdle(w.request, w.handler))
 			w.Destroy();
 		else
 			/* didn't work (probably because borrowing the item has
@@ -245,7 +245,8 @@ Stock::~Stock() noexcept
 }
 
 bool
-Stock::GetIdle(StockGetHandler &get_handler) noexcept
+Stock::GetIdle(StockRequest &request,
+	       StockGetHandler &get_handler) noexcept
 {
 	unsigned retry_unclean = idle.size();
 
@@ -272,6 +273,12 @@ Stock::GetIdle(StockGetHandler &get_handler) noexcept
 #ifndef NDEBUG
 			item.is_idle = false;
 #endif
+
+			/* destroy the request before invoking the
+			   handler, because the handler may destroy
+			   the memory pool, which my invalidate the
+			   request's memory region */
+			request.reset();
 
 			busy.push_front(item);
 
@@ -308,7 +315,7 @@ Stock::Get(StockRequest request,
 {
 	may_clear = false;
 
-	if (GetIdle(get_handler))
+	if (GetIdle(request, get_handler))
 		return;
 
 	if (limit > 0 && busy.size() + num_create >= limit) {

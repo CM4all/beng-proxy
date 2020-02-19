@@ -237,7 +237,13 @@ private:
 			UnscheduleCleanup();
 	}
 
-	bool GetIdle(StockGetHandler &handler) noexcept;
+	/**
+	 * @param request a request that shall be destroyed before
+	 * invoking the handler (to avoid use-after-free bugs)
+	 */
+	bool GetIdle(StockRequest &request,
+		     StockGetHandler &handler) noexcept;
+
 	void GetCreate(StockRequest request,
 		       StockGetHandler &get_handler,
 		       CancellablePointer &cancel_ptr) noexcept;
