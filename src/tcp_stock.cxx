@@ -205,19 +205,19 @@ TcpStock::Create(CreateStockItem c,
 		 StockRequest _request,
 		 CancellablePointer &cancel_ptr)
 {
-	TcpStockRequest *request = (TcpStockRequest *)_request.get();
+	auto &request = *(TcpStockRequest *)_request.get();
 
 	auto *connection = new TcpStockConnection(c,
-						  request->address,
+						  request.address,
 						  cancel_ptr);
 
-	client_socket_new(c.stock.GetEventLoop(), request->alloc,
-			  std::move(request->stopwatch),
-			  request->address.GetFamily(), SOCK_STREAM, 0,
-			  request->ip_transparent,
-			  request->bind_address,
-			  request->address,
-			  request->timeout,
+	client_socket_new(c.stock.GetEventLoop(), request.alloc,
+			  std::move(request.stopwatch),
+			  request.address.GetFamily(), SOCK_STREAM, 0,
+			  request.ip_transparent,
+			  request.bind_address,
+			  request.address,
+			  request.timeout,
 			  *connection,
 			  connection->cancel_ptr);
 }
