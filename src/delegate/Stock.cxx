@@ -174,6 +174,10 @@ DelegateStock::Create(CreateStockItem c,
 	spawn_service.SpawnChildProcess(info.executable_path,
 					std::move(p), nullptr);
 
+	/* invoke the DelegateArgs destructor before invoking the
+	   callback, because the latter may destroy the pool */
+	request.reset();
+
 	auto *process = new DelegateProcess(c, std::move(client_fd));
 	process->InvokeCreateSuccess();
 }
