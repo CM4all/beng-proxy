@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,19 +38,19 @@
 ConstBuffer<void>
 LazyCatBuffer(struct pool &pool, ConstBuffer<void> a, ConstBuffer<void> b)
 {
-    assert(!a.IsNull());
-    assert(!b.IsNull());
+	assert(!a.IsNull());
+	assert(!b.IsNull());
 
-    if (a.size == 0)
-        /* no need to allocate a new buffer */
-        return b;
+	if (a.size == 0)
+		/* no need to allocate a new buffer */
+		return b;
 
-    if (b.size == 0)
-        /* no need to allocate a new buffer */
-        return a;
+	if (b.size == 0)
+		/* no need to allocate a new buffer */
+		return a;
 
-    size_t size = a.size + b.size;
-    void *result = p_malloc(&pool, size);
-    mempcpy(mempcpy(result, a.data, a.size), b.data, b.size);
-    return { result, size };
+	size_t size = a.size + b.size;
+	void *result = p_malloc(&pool, size);
+	mempcpy(mempcpy(result, a.data, a.size), b.data, b.size);
+	return { result, size };
 }

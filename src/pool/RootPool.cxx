@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,16 +38,17 @@
 #include <assert.h>
 
 RootPool::RootPool()
-    :p(*pool_new_libc(nullptr, "root").release()) {
-    tpool_init(&p);
+	:p(*pool_new_libc(nullptr, "root").release())
+{
+	tpool_init(&p);
 }
 
 RootPool::~RootPool()
 {
-    gcc_unused auto ref = pool_unref(&p);
-    assert(ref == 0);
+	gcc_unused auto ref = pool_unref(&p);
+	assert(ref == 0);
 
-    tpool_deinit();
-    pool_commit();
-    pool_recycler_clear();
+	tpool_deinit();
+	pool_commit();
+	pool_recycler_clear();
 }

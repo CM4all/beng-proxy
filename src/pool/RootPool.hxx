@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,30 +30,27 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ROOT_POOL_HXX
-#define BENG_PROXY_ROOT_POOL_HXX
+#pragma once
 
 class RootPool {
-    struct pool &p;
+	struct pool &p;
 
 public:
-    RootPool();
-    ~RootPool();
+	RootPool();
+	~RootPool();
 
-    RootPool(const RootPool &) = delete;
-    RootPool &operator=(const RootPool &) = delete;
+	RootPool(const RootPool &) = delete;
+	RootPool &operator=(const RootPool &) = delete;
 
-    struct pool &get() {
-        return p;
-    }
+	struct pool &get() {
+		return p;
+	}
 
-    operator struct pool &() {
-        return p;
-    }
+	operator struct pool &() {
+		return p;
+	}
 
-    operator struct pool *() {
-        return &p;
-    }
+	operator struct pool *() {
+		return &p;
+	}
 };
-
-#endif

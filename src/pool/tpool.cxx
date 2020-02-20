@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,16 +41,16 @@ unsigned tpool_users;
 void
 tpool_init(struct pool *parent) noexcept
 {
-    assert(tpool_singleton == nullptr);
+	assert(tpool_singleton == nullptr);
 
-    tpool_singleton = pool_new_linear(parent, "temporary_pool", 32768).release();
+	tpool_singleton = pool_new_linear(parent, "temporary_pool", 32768).release();
 }
 
 void
 tpool_deinit() noexcept
 {
-    gcc_unused unsigned ref;
-    ref = pool_unref(tpool_singleton);
-    assert(ref == 0);
-    tpool_singleton = nullptr;
+	gcc_unused unsigned ref;
+	ref = pool_unref(tpool_singleton);
+	assert(ref == 0);
+	tpool_singleton = nullptr;
 }

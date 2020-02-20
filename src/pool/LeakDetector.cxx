@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,9 +36,9 @@
 #ifndef NDEBUG
 
 PoolLeakDetector::PoolLeakDetector(struct pool &_pool) noexcept
-    :ldp(_pool)
+	:ldp(_pool)
 {
-    pool_register_leak_detector(ldp, *this);
+	pool_register_leak_detector(ldp, *this);
 }
 
 PoolLeakDetector::~PoolLeakDetector() noexcept = default;

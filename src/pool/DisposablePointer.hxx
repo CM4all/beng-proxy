@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,5 +39,5 @@ template<typename T, typename... Args>
 auto
 NewDisposablePointer(AllocatorPtr alloc, Args&&... args) noexcept
 {
-    return ToDestructPointer(alloc.New<T>(std::forward<Args>(args)...));
+	return ToDestructPointer(alloc.New<T>(std::forward<Args>(args)...));
 }

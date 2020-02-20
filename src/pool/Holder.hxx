@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -47,18 +47,18 @@
  */
 class PoolHolder {
 protected:
-    const PoolPtr pool;
+	const PoolPtr pool;
 
-    template<typename P>
-    explicit PoolHolder(P &&_pool) noexcept
-        :pool(std::forward<P>(_pool))
-    {
-    }
+	template<typename P>
+	explicit PoolHolder(P &&_pool) noexcept
+		:pool(std::forward<P>(_pool))
+	{
+	}
 
-    PoolHolder(const PoolHolder &) = delete;
-    PoolHolder &operator=(const PoolHolder &) = delete;
+	PoolHolder(const PoolHolder &) = delete;
+	PoolHolder &operator=(const PoolHolder &) = delete;
 
-    struct pool &GetPool() noexcept {
-        return *pool;
-    }
+	struct pool &GetPool() noexcept {
+		return *pool;
+	}
 };

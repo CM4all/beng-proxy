@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,28 +41,28 @@
  * before the #pool gets destroyed.
  */
 class PoolLeakDetector {
-    struct pool &ldp;
+	struct pool &ldp;
 
 public:
-    typedef boost::intrusive::list_member_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> PoolLeakDetectorSiblingsHook;
-    PoolLeakDetectorSiblingsHook pool_leak_detector_siblings;
+	typedef boost::intrusive::list_member_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> PoolLeakDetectorSiblingsHook;
+	PoolLeakDetectorSiblingsHook pool_leak_detector_siblings;
 
-    explicit PoolLeakDetector(struct pool &_pool) noexcept;
+	explicit PoolLeakDetector(struct pool &_pool) noexcept;
 
-    PoolLeakDetector(const PoolLeakDetector &src):PoolLeakDetector(src.ldp) {}
+	PoolLeakDetector(const PoolLeakDetector &src):PoolLeakDetector(src.ldp) {}
 
-    /**
-     * This destructor is virtual only to force RTTI on the derived
-     * class, so we can use `typeid()`.
-     */
-    virtual ~PoolLeakDetector() noexcept;
+	/**
+	 * This destructor is virtual only to force RTTI on the derived
+	 * class, so we can use `typeid()`.
+	 */
+	virtual ~PoolLeakDetector() noexcept;
 };
 
 #else
 
 class PoolLeakDetector {
 public:
-    explicit PoolLeakDetector(struct pool &) noexcept {}
+	explicit PoolLeakDetector(struct pool &) noexcept {}
 };
 
 #endif
