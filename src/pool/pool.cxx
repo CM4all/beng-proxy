@@ -38,6 +38,8 @@
 #include "io/Logger.hxx"
 #include "util/Recycler.hxx"
 #include "util/Poison.hxx"
+#include "util/Sanitizer.hxx"
+#include "util/Valgrind.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -468,6 +470,9 @@ PoolPtr
 pool_new_linear(struct pool *parent, const char *name,
 		size_t initial_size) noexcept
 {
+	if (HaveAddressSanitizer() || HaveValgrind())
+		return pool_new_libc(parent, name);
+
 #ifdef POOL_LIBC_ONLY
 	(void)initial_size;
 
@@ -500,6 +505,9 @@ pool_new_slice(struct pool *parent, const char *name,
 {
 	assert(parent != nullptr);
 	assert(slice_pool->GetSliceSize() > LINEAR_POOL_AREA_HEADER);
+
+	if (HaveAddressSanitizer() || HaveValgrind())
+		return pool_new_libc(parent, name);
 
 #ifdef POOL_LIBC_ONLY
 	(void)slice_pool;
