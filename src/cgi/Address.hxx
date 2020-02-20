@@ -75,6 +75,12 @@ struct CgiAddress {
 	 */
 	AddressList address_list;
 
+	/**
+	 * Pass the CGI parameter "REQUEST_URI" verbatim instead of
+	 * building it from SCRIPT_NAME, PATH_INFO and QUERY_STRING.
+	 */
+	bool request_uri_verbatim = false;
+
 	bool expand_path = false;
 	bool expand_uri = false;
 	bool expand_script_name = false;
@@ -91,6 +97,7 @@ struct CgiAddress {
 		 uri(src.uri), script_name(src.script_name), path_info(src.path_info),
 		 query_string(src.query_string), document_root(src.document_root),
 		 address_list(shallow_copy, src.address_list),
+		 request_uri_verbatim(src.request_uri_verbatim),
 		 expand_path(src.expand_path),
 		 expand_uri(src.expand_uri),
 		 expand_script_name(src.expand_script_name),
