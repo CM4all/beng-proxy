@@ -57,8 +57,7 @@ args_parse(struct pool &pool, const StringView p) noexcept
 		if (name.empty())
 			continue;
 
-		StringView escaped_value(s);
-		escaped_value.MoveFront(equals + 1);
+		auto escaped_value = s.substr(equals + 1);
 
 		char *value = uri_unescape_dup(pool, escaped_value,
 					       ARGS_ESCAPE_CHAR);
