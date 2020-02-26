@@ -45,7 +45,7 @@
 class FilteredSocketBalancerRequest : public StockGetHandler {
 	FilteredSocketStock &stock;
 
-	const StopwatchPtr &parent_stopwatch;
+	const StopwatchPtr parent_stopwatch;
 
 	const bool ip_transparent;
 	const SocketAddress bind_address;

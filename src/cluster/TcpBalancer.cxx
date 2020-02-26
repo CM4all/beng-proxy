@@ -47,7 +47,7 @@ TcpBalancer::GetEventLoop() noexcept
 
 class TcpBalancerRequest : StockGetHandler {
 	TcpBalancer &tcp_balancer;
-	const StopwatchPtr &parent_stopwatch;
+	const StopwatchPtr parent_stopwatch;
 
 	const bool ip_transparent;
 	const SocketAddress bind_address;
