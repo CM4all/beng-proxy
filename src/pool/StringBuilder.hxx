@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,19 +38,19 @@
 
 template<size_t MAX>
 class PoolStringBuilder {
-    StaticArray<StringView, MAX> items;
+	StaticArray<StringView, MAX> items;
 
 public:
-    void push_back(StringView s) noexcept {
-        items.push_back(s);
-    }
+	void push_back(StringView s) noexcept {
+		items.push_back(s);
+	}
 
-    template<typename... Args>
-    void emplace_back(Args&&... args) noexcept {
-        items.emplace_back(std::forward<Args>(args)...);
-    }
+	template<typename... Args>
+	void emplace_back(Args&&... args) noexcept {
+		items.emplace_back(std::forward<Args>(args)...);
+	}
 
-    char *operator()(AllocatorPtr alloc) const noexcept {
-        return alloc.Concat(items);
-    }
+	char *operator()(AllocatorPtr alloc) const noexcept {
+		return alloc.Concat(items);
+	}
 };

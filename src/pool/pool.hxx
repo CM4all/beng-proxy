@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Memory pool.
  */
 
-#ifndef BENG_PROXY_POOL_HXX
-#define BENG_PROXY_POOL_HXX
+#pragma once
 
 #include "Type.hxx"
 #include "trace.h"
@@ -76,11 +75,11 @@ pool_new_libc(struct pool *parent, const char *name) noexcept;
 
 PoolPtr
 pool_new_linear(struct pool *parent, const char *name,
-                size_t initial_size) noexcept;
+		size_t initial_size) noexcept;
 
 PoolPtr
 pool_new_slice(struct pool *parent, const char *name,
-               SlicePool *slice_pool) noexcept;
+	       SlicePool *slice_pool) noexcept;
 
 #ifdef NDEBUG
 
@@ -157,34 +156,34 @@ void
 pool_dump_tree(const struct pool &pool) noexcept;
 
 class ScopePoolRef {
-    struct pool &pool;
+	struct pool &pool;
 
 #ifdef TRACE
-    const char *const file;
-    unsigned line;
+	const char *const file;
+	unsigned line;
 #endif
 
 public:
-    explicit ScopePoolRef(struct pool &_pool TRACE_ARGS_DECL_) noexcept
-        :pool(_pool)
-         TRACE_ARGS_INIT
-    {
-        pool_ref_fwd(&_pool);
-    }
+	explicit ScopePoolRef(struct pool &_pool TRACE_ARGS_DECL_) noexcept
+		:pool(_pool)
+		 TRACE_ARGS_INIT
+		{
+			pool_ref_fwd(&_pool);
+		}
 
-    ScopePoolRef(const ScopePoolRef &) = delete;
+	ScopePoolRef(const ScopePoolRef &) = delete;
 
-    ~ScopePoolRef() noexcept {
-        pool_unref_fwd(&pool);
-    }
+	~ScopePoolRef() noexcept {
+		pool_unref_fwd(&pool);
+	}
 
-    operator struct pool &() noexcept {
-        return pool;
-    }
+	operator struct pool &() noexcept {
+		return pool;
+	}
 
-    operator struct pool *() noexcept {
-        return &pool;
-    }
+	operator struct pool *() noexcept {
+		return &pool;
+	}
 };
 
 #ifdef NDEBUG
@@ -232,7 +231,7 @@ gcc_malloc gcc_returns_nonnull
 static inline void *
 p_malloc_type(struct pool &pool, size_t size TYPE_ARG_DECL) noexcept
 {
-    return p_malloc_impl(&pool, size TYPE_ARG_FWD TRACE_ARGS);
+	return p_malloc_impl(&pool, size TYPE_ARG_FWD TRACE_ARGS);
 }
 
 #ifndef NDEBUG
@@ -241,7 +240,7 @@ gcc_malloc gcc_returns_nonnull
 static inline void *
 p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL) noexcept
 {
-    return p_malloc_impl(pool, size TYPE_ARG_NULL TRACE_ARGS_FWD);
+	return p_malloc_impl(pool, size TYPE_ARG_NULL TRACE_ARGS_FWD);
 }
 
 #endif
@@ -255,7 +254,7 @@ p_free(struct pool *pool, const void *ptr, size_t size) noexcept;
 gcc_malloc gcc_returns_nonnull
 void *
 p_memdup_impl(struct pool *pool, const void *src, size_t length
-              TRACE_ARGS_DECL) noexcept;
+	      TRACE_ARGS_DECL) noexcept;
 
 #define p_memdup(pool, src, length) p_memdup_impl(pool, src, length TRACE_ARGS)
 #define p_memdup_fwd(pool, src, length) p_memdup_impl(pool, src, length TRACE_ARGS_FWD)
@@ -270,13 +269,13 @@ p_strdup_impl(struct pool *pool, const char *src TRACE_ARGS_DECL) noexcept;
 static inline const char *
 p_strdup_checked(struct pool *pool, const char *s) noexcept
 {
-    return s == NULL ? NULL : p_strdup(pool, s);
+	return s == NULL ? NULL : p_strdup(pool, s);
 }
 
 gcc_malloc gcc_returns_nonnull
 char *
 p_strdup_lower_impl(struct pool *pool, const char *src
-                    TRACE_ARGS_DECL) noexcept;
+		    TRACE_ARGS_DECL) noexcept;
 
 #define p_strdup_lower(pool, src) p_strdup_lower_impl(pool, src TRACE_ARGS)
 #define p_strdup_lower_fwd(pool, src) p_strdup_lower_impl(pool, src TRACE_ARGS_FWD)
@@ -284,7 +283,7 @@ p_strdup_lower_impl(struct pool *pool, const char *src
 gcc_malloc gcc_returns_nonnull
 char *
 p_strndup_impl(struct pool *pool, const char *src, size_t length
-               TRACE_ARGS_DECL) noexcept;
+	       TRACE_ARGS_DECL) noexcept;
 
 #define p_strndup(pool, src, length) p_strndup_impl(pool, src, length TRACE_ARGS)
 #define p_strndup_fwd(pool, src, length) p_strndup_impl(pool, src, length TRACE_ARGS_FWD)
@@ -292,7 +291,7 @@ p_strndup_impl(struct pool *pool, const char *src, size_t length
 gcc_malloc gcc_returns_nonnull
 char *
 p_strndup_lower_impl(struct pool *pool, const char *src, size_t length
-                     TRACE_ARGS_DECL) noexcept;
+		     TRACE_ARGS_DECL) noexcept;
 
 #define p_strndup_lower(pool, src, length) p_strndup_lower_impl(pool, src, length TRACE_ARGS)
 #define p_strndup_lower_fwd(pool, src, length) p_strndup_lower_impl(pool, src, length TRACE_ARGS_FWD)
@@ -306,10 +305,10 @@ gcc_malloc gcc_returns_nonnull
 T *
 PoolAlloc(pool &p) noexcept
 {
-    static_assert(std::is_trivially_default_constructible<T>::value,
-                  "Must be trivially constructible");
+	static_assert(std::is_trivially_default_constructible<T>::value,
+		      "Must be trivially constructible");
 
-    return (T *)p_malloc_type(p, sizeof(T) TYPE_ARG(T));
+	return (T *)p_malloc_type(p, sizeof(T) TYPE_ARG(T));
 }
 
 template<typename T>
@@ -317,10 +316,10 @@ gcc_malloc gcc_returns_nonnull
 T *
 PoolAlloc(pool &p, size_t n) noexcept
 {
-    static_assert(std::is_trivially_default_constructible<T>::value,
-                  "Must be trivially constructible");
+	static_assert(std::is_trivially_default_constructible<T>::value,
+		      "Must be trivially constructible");
 
-    return (T *)p_malloc_type(p, sizeof(T) * n TYPE_ARG(T));
+	return (T *)p_malloc_type(p, sizeof(T) * n TYPE_ARG(T));
 }
 
 template<>
@@ -328,7 +327,7 @@ gcc_malloc gcc_returns_nonnull
 inline void *
 PoolAlloc<void>(pool &p, size_t n) noexcept
 {
-    return p_malloc(&p, n);
+	return p_malloc(&p, n);
 }
 
 template<typename T, typename... Args>
@@ -336,16 +335,16 @@ gcc_malloc gcc_returns_nonnull
 T *
 NewFromPool(pool &p, Args&&... args)
 {
-    void *t = p_malloc_type(p, sizeof(T) TYPE_ARG(T));
-    return ::new(t) T(std::forward<Args>(args)...);
+	void *t = p_malloc_type(p, sizeof(T) TYPE_ARG(T));
+	return ::new(t) T(std::forward<Args>(args)...);
 }
 
 template<typename T>
 void
 DeleteFromPool(struct pool &pool, T *t) noexcept
 {
-    t->~T();
-    p_free(&pool, t, sizeof(*t));
+	t->~T();
+	p_free(&pool, t, sizeof(*t));
 }
 
 /**
@@ -353,15 +352,15 @@ DeleteFromPool(struct pool &pool, T *t) noexcept
  * on the given pointer.
  */
 class PoolDisposer {
-    struct pool &p;
+	struct pool &p;
 
 public:
-    explicit PoolDisposer(struct pool &_p) noexcept:p(_p) {}
+	explicit PoolDisposer(struct pool &_p) noexcept:p(_p) {}
 
-    template<typename T>
-    void operator()(T *t) noexcept {
-        DeleteFromPool(p, t);
-    }
+	template<typename T>
+	void operator()(T *t) noexcept {
+		DeleteFromPool(p, t);
+	}
 };
 
 /**
@@ -375,7 +374,7 @@ template<typename T>
 void
 DeleteFromPool(T *t) noexcept
 {
-    t->~T();
+	t->~T();
 }
 
 /**
@@ -384,10 +383,10 @@ DeleteFromPool(T *t) noexcept
  */
 class NoPoolDisposer {
 public:
-    template<typename T>
-    void operator()(T *t) noexcept {
-        DeleteFromPool(t);
-    }
+	template<typename T>
+	void operator()(T *t) noexcept {
+		DeleteFromPool(t);
+	}
 };
 
 gcc_malloc gcc_returns_nonnull
@@ -397,6 +396,4 @@ p_strdup_impl(struct pool &pool, StringView src TRACE_ARGS_DECL) noexcept;
 gcc_malloc gcc_returns_nonnull
 char *
 p_strdup_lower_impl(struct pool &pool, StringView src
-                    TRACE_ARGS_DECL) noexcept;
-
-#endif
+		    TRACE_ARGS_DECL) noexcept;

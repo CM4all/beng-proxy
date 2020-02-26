@@ -112,8 +112,7 @@ LastListItem(StringView list) noexcept
 		return std::make_pair("", list);
 	}
 
-	StringView value = list;
-	value.MoveFront(comma + 1);
+	StringView value = list.substr(comma + 1);
 	value.Strip();
 
 	list.size = comma - list.data;

@@ -6,6 +6,13 @@ cm4all-beng-proxy (17.0.1) unstable; urgency=low
 
  --   
 
+cm4all-beng-proxy (16.6) unstable; urgency=low
+
+  * bp: advertise Zeroconf IPv6 wildcard listeners as IPv4 as well
+  * lb: fix crash bug
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 26 Feb 2020 14:25:16 +0100
+
 cm4all-beng-proxy (16.5) unstable; urgency=low
 
   * bp: fix seven use-after-free crash bugs

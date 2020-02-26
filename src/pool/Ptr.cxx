@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,44 +34,44 @@
 #include "pool.hxx"
 
 PoolPtr::PoolPtr(struct pool &_value) noexcept
-    :value(&_value)
+	:value(&_value)
 {
-    pool_ref(value);
+	pool_ref(value);
 }
 
 PoolPtr::PoolPtr(const PoolPtr &src) noexcept
-    :value(src.value)
+	:value(src.value)
 {
-    if (value != nullptr)
-        pool_ref(value);
+	if (value != nullptr)
+		pool_ref(value);
 }
 
 PoolPtr::~PoolPtr() noexcept
 {
-    if (value != nullptr)
-        pool_unref(value);
+	if (value != nullptr)
+		pool_unref(value);
 }
 
 PoolPtr &
 PoolPtr::operator=(const PoolPtr &src) noexcept
 {
-    if (value != nullptr)
-        pool_unref(value);
-    value = src.value;
-    if (value != nullptr)
-        pool_ref(value);
-    return *this;
+	if (value != nullptr)
+		pool_unref(value);
+	value = src.value;
+	if (value != nullptr)
+		pool_ref(value);
+	return *this;
 }
 
 void
 PoolPtr::reset() noexcept
 {
-    if (value != nullptr)
-        pool_unref(std::exchange(value, nullptr));
+	if (value != nullptr)
+		pool_unref(std::exchange(value, nullptr));
 }
 
 void *
 PoolPtr::Allocate(size_t size) const noexcept
 {
-    return p_malloc(value, size);
+	return p_malloc(value, size);
 }

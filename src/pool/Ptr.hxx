@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,62 +42,62 @@
  * A reference-holding pointer to a "struct pool".
  */
 class PoolPtr {
-    struct pool *value = nullptr;
+	struct pool *value = nullptr;
 
 public:
-    PoolPtr() = default;
+	PoolPtr() = default;
 
-    explicit PoolPtr(struct pool &_value) noexcept;
-    PoolPtr(const PoolPtr &src) noexcept;
+	explicit PoolPtr(struct pool &_value) noexcept;
+	PoolPtr(const PoolPtr &src) noexcept;
 
-    struct Donate {};
-    static Donate donate;
+	struct Donate {};
+	static Donate donate;
 
-    /**
-     * Donate a pool reference to a newly constructed #PoolPtr.  It
-     * will not create another reference, but will unreference it in
-     * its destructor.
-     */
-    PoolPtr(Donate, struct pool &_value) noexcept
-        :value(&_value) {}
+	/**
+	 * Donate a pool reference to a newly constructed #PoolPtr.  It
+	 * will not create another reference, but will unreference it in
+	 * its destructor.
+	 */
+	PoolPtr(Donate, struct pool &_value) noexcept
+		:value(&_value) {}
 
-    PoolPtr(Donate, const PoolPtr &_value) noexcept = delete;
+	PoolPtr(Donate, const PoolPtr &_value) noexcept = delete;
 
-    PoolPtr(PoolPtr &&src) noexcept
-        :value(std::exchange(src.value, nullptr)) {}
+	PoolPtr(PoolPtr &&src) noexcept
+		:value(std::exchange(src.value, nullptr)) {}
 
-    ~PoolPtr() noexcept;
+	~PoolPtr() noexcept;
 
-    PoolPtr &operator=(const PoolPtr &src) noexcept;
+	PoolPtr &operator=(const PoolPtr &src) noexcept;
 
-    PoolPtr &operator=(PoolPtr &&src) noexcept {
-        using std::swap;
-        swap(value, src.value);
-        return *this;
-    }
+	PoolPtr &operator=(PoolPtr &&src) noexcept {
+		using std::swap;
+		swap(value, src.value);
+		return *this;
+	}
 
-    operator bool() const noexcept {
-        return value;
-    }
+	operator bool() const noexcept {
+		return value;
+	}
 
-    operator struct pool &() const noexcept {
-        return *value;
-    }
+	operator struct pool &() const noexcept {
+		return *value;
+	}
 
-    operator struct pool *() const noexcept {
-        return value;
-    }
+	operator struct pool *() const noexcept {
+		return value;
+	}
 
-    void reset() noexcept;
+	void reset() noexcept;
 
-    /**
-     * Return the value, releasing ownership.
-     */
-    struct pool *release() noexcept {
-        return std::exchange(value, nullptr);
-    }
+	/**
+	 * Return the value, releasing ownership.
+	 */
+	struct pool *release() noexcept {
+		return std::exchange(value, nullptr);
+	}
 
-    void *Allocate(size_t size) const noexcept;
+	void *Allocate(size_t size) const noexcept;
 };
 
 /**
@@ -109,6 +109,6 @@ gcc_malloc gcc_returns_nonnull
 T *
 NewFromPool(PoolPtr &&p, Args&&... args)
 {
-    void *t = p.Allocate(sizeof(T));
-    return ::new(t) T(std::move(p), std::forward<Args>(args)...);
+	void *t = p.Allocate(sizeof(T));
+	return ::new(t) T(std::move(p), std::forward<Args>(args)...);
 }

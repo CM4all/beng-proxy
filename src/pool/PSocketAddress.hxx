@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,9 +41,9 @@
 static inline SocketAddress
 DupAddress(AllocatorPtr alloc, SocketAddress src) noexcept
 {
-    return src.IsNull()
-        ? src
-        : SocketAddress((const struct sockaddr *)
-                        alloc.Dup(ConstBuffer<void>(src.GetAddress(), src.GetSize())).data,
-                        src.GetSize());
+	return src.IsNull()
+		? src
+		: SocketAddress((const struct sockaddr *)
+				alloc.Dup(ConstBuffer<void>(src.GetAddress(), src.GetSize())).data,
+				src.GetSize());
 }

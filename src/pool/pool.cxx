@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,6 +38,8 @@
 #include "io/Logger.hxx"
 #include "util/Recycler.hxx"
 #include "util/Poison.hxx"
+#include "util/Sanitizer.hxx"
+#include "util/Valgrind.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -75,16 +77,16 @@ static constexpr unsigned RECYCLER_MAX_LINEAR_AREAS = 256;
 
 #ifndef NDEBUG
 struct allocation_info {
-    typedef boost::intrusive::list_member_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> SiblingsHook;
-    SiblingsHook siblings;
+	typedef boost::intrusive::list_member_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> SiblingsHook;
+	SiblingsHook siblings;
 
-    size_t size;
+	size_t size;
 
-    const char *type;
+	const char *type;
 
 #ifdef TRACE
-    const char *file;
-    unsigned line;
+	const char *file;
+	unsigned line;
 #endif
 };
 
@@ -94,140 +96,140 @@ static constexpr size_t LINEAR_PREFIX = 0;
 #endif
 
 enum pool_type {
-    POOL_DUMMY,
-    POOL_LIBC,
-    POOL_LINEAR,
+	POOL_DUMMY,
+	POOL_LIBC,
+	POOL_LINEAR,
 };
 
 struct libc_pool_chunk {
-    typedef boost::intrusive::list_member_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> SiblingsHook;
-    SiblingsHook siblings;
+	typedef boost::intrusive::list_member_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> SiblingsHook;
+	SiblingsHook siblings;
 
 #ifdef POISON
-    size_t size;
+	size_t size;
 #endif
 #ifndef NDEBUG
-    struct allocation_info info;
+	struct allocation_info info;
 #endif
-    unsigned char data[sizeof(size_t)];
+	unsigned char data[sizeof(size_t)];
 
-    struct Disposer {
-        void operator()(struct libc_pool_chunk *chunk) noexcept {
+	struct Disposer {
+		void operator()(struct libc_pool_chunk *chunk) noexcept {
 #ifdef POISON
-            static constexpr size_t LIBC_POOL_CHUNK_HEADER =
-                offsetof(struct libc_pool_chunk, data);
-            PoisonUndefined(chunk, LIBC_POOL_CHUNK_HEADER + chunk->size);
+			static constexpr size_t LIBC_POOL_CHUNK_HEADER =
+				offsetof(struct libc_pool_chunk, data);
+			PoisonUndefined(chunk, LIBC_POOL_CHUNK_HEADER + chunk->size);
 #endif
-            free(chunk);
-        }
-    };
+			free(chunk);
+		}
+	};
 };
 
 struct linear_pool_area {
-    struct linear_pool_area *prev;
+	struct linear_pool_area *prev;
 
-    /**
-     * The slice_area that was used to allocated this pool area.  It
-     * is nullptr if this area was allocated from the libc heap.
-     */
-    SliceArea *slice_area;
+	/**
+	 * The slice_area that was used to allocated this pool area.  It
+	 * is nullptr if this area was allocated from the libc heap.
+	 */
+	SliceArea *slice_area;
 
-    size_t size, used;
-    unsigned char data[sizeof(size_t)];
+	size_t size, used;
+	unsigned char data[sizeof(size_t)];
 };
 
 static const size_t LINEAR_POOL_AREA_HEADER =
-    offsetof(struct linear_pool_area, data);
+	offsetof(struct linear_pool_area, data);
 
 #ifdef DEBUG_POOL_REF
 struct PoolRef {
 #ifdef TRACE
-    const char *file;
-    unsigned line;
+	const char *file;
+	unsigned line;
 #endif
 
-    unsigned count = 1;
+	unsigned count = 1;
 };
 #endif
 
 struct pool final
-    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
-      LoggerDomainFactory {
+	: boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+	  LoggerDomainFactory {
 
-    const LazyDomainLogger logger;
+	const LazyDomainLogger logger;
 
-    typedef boost::intrusive::list<struct pool,
-                                   boost::intrusive::constant_time_size<false>> List;
+	typedef boost::intrusive::list<struct pool,
+				       boost::intrusive::constant_time_size<false>> List;
 
-    List children;
+	List children;
 #ifdef DEBUG_POOL_REF
-    std::forward_list<PoolRef> refs, unrefs;
+	std::forward_list<PoolRef> refs, unrefs;
 #endif
-    struct pool *parent = nullptr;
-    unsigned ref = 1;
+	struct pool *parent = nullptr;
+	unsigned ref = 1;
 
 #ifndef NDEBUG
-    bool trashed = false;
+	bool trashed = false;
 
-    /** this is a major pool, i.e. pool commits are performed after
-        the major pool is freed */
-    bool major;
+	/** this is a major pool, i.e. pool commits are performed after
+	    the major pool is freed */
+	bool major;
 #endif
 
-    enum pool_type type;
-    const char *const name;
+	enum pool_type type;
+	const char *const name;
 
-    union CurrentArea {
-        boost::intrusive::list<struct libc_pool_chunk,
-                               boost::intrusive::member_hook<struct libc_pool_chunk,
-                                                             libc_pool_chunk::SiblingsHook,
-                                                             &libc_pool_chunk::siblings>,
-                               boost::intrusive::constant_time_size<false>> libc;
+	union CurrentArea {
+		boost::intrusive::list<struct libc_pool_chunk,
+				       boost::intrusive::member_hook<struct libc_pool_chunk,
+								     libc_pool_chunk::SiblingsHook,
+								     &libc_pool_chunk::siblings>,
+				       boost::intrusive::constant_time_size<false>> libc;
 
-        struct linear_pool_area *linear;
+		struct linear_pool_area *linear;
 
-        CurrentArea() noexcept:libc() {}
-        ~CurrentArea() {}
-    } current_area;
+		CurrentArea() noexcept:libc() {}
+		~CurrentArea() {}
+	} current_area;
 
 #ifndef NDEBUG
-    boost::intrusive::list<struct allocation_info,
-                           boost::intrusive::member_hook<struct allocation_info,
-                                                         allocation_info::SiblingsHook,
-                                                         &allocation_info::siblings>,
-                           boost::intrusive::constant_time_size<false>> allocations;
+	boost::intrusive::list<struct allocation_info,
+			       boost::intrusive::member_hook<struct allocation_info,
+							     allocation_info::SiblingsHook,
+							     &allocation_info::siblings>,
+			       boost::intrusive::constant_time_size<false>> allocations;
 
-    boost::intrusive::list<PoolLeakDetector,
-                           boost::intrusive::member_hook<PoolLeakDetector,
-                                                         PoolLeakDetector::PoolLeakDetectorSiblingsHook,
-                                                         &PoolLeakDetector::pool_leak_detector_siblings>,
-                           boost::intrusive::constant_time_size<false>> leaks;
+	boost::intrusive::list<PoolLeakDetector,
+			       boost::intrusive::member_hook<PoolLeakDetector,
+							     PoolLeakDetector::PoolLeakDetectorSiblingsHook,
+							     &PoolLeakDetector::pool_leak_detector_siblings>,
+			       boost::intrusive::constant_time_size<false>> leaks;
 #endif
 
-    SlicePool *slice_pool;
+	SlicePool *slice_pool;
 
-    /**
-     * The area size passed to pool_new_linear().
-     */
-    size_t area_size;
+	/**
+	 * The area size passed to pool_new_linear().
+	 */
+	size_t area_size;
 
-    /**
-     * The number of bytes allocated from this pool, not counting
-     * overhead.
-     */
-    size_t netto_size = 0;
+	/**
+	 * The number of bytes allocated from this pool, not counting
+	 * overhead.
+	 */
+	size_t netto_size = 0;
 
-    explicit pool(const char *_name) noexcept
-        :logger(*this), name(_name) {
-    }
+	explicit pool(const char *_name) noexcept
+		:logger(*this), name(_name) {
+	}
 
-    pool(struct pool &&) = delete;
-    pool &operator=(struct pool &&) = delete;
+	pool(struct pool &&) = delete;
+	pool &operator=(struct pool &&) = delete;
 
-    /* virtual methods from class LoggerDomainFactory */
-    std::string MakeLoggerDomain() const noexcept override {
-        return std::string("pool ") + name;
-    }
+	/* virtual methods from class LoggerDomainFactory */
+	std::string MakeLoggerDomain() const noexcept override {
+		return std::string("pool ") + name;
+	}
 };
 
 #ifndef NDEBUG
@@ -235,50 +237,50 @@ static pool::List trash;
 #endif
 
 static struct {
-    Recycler<struct pool, RECYCLER_MAX_POOLS> pools;
+	Recycler<struct pool, RECYCLER_MAX_POOLS> pools;
 
-    unsigned num_linear_areas;
-    struct linear_pool_area *linear_areas;
+	unsigned num_linear_areas;
+	struct linear_pool_area *linear_areas;
 } recycler;
 
 static void * gcc_malloc
 xmalloc(size_t size) noexcept
 {
-    void *p = malloc(size);
-    if (gcc_unlikely(p == nullptr)) {
-        fputs("Out of memory\n", stderr);
-        abort();
-    }
-    return p;
+	void *p = malloc(size);
+	if (gcc_unlikely(p == nullptr)) {
+		fputs("Out of memory\n", stderr);
+		abort();
+	}
+	return p;
 }
 
 static constexpr size_t
 align_size(size_t size) noexcept
 {
-    return ((size - 1) | ALIGN_MASK) + 1;
+	return ((size - 1) | ALIGN_MASK) + 1;
 }
 
 #ifndef NDEBUG
 static struct allocation_info *
 get_linear_allocation_info(void *p) noexcept
 {
-    void *q = (char *)p - sizeof(struct allocation_info);
-    return (struct allocation_info *)q;
+	void *q = (char *)p - sizeof(struct allocation_info);
+	return (struct allocation_info *)q;
 }
 #endif
 
 void
 pool_recycler_clear(void) noexcept
 {
-    recycler.pools.Clear();
+	recycler.pools.Clear();
 
-    while (recycler.linear_areas != nullptr) {
-        struct linear_pool_area *linear = recycler.linear_areas;
-        recycler.linear_areas = linear->prev;
-        free(linear);
-    }
+	while (recycler.linear_areas != nullptr) {
+		struct linear_pool_area *linear = recycler.linear_areas;
+		recycler.linear_areas = linear->prev;
+		free(linear);
+	}
 
-    recycler.num_linear_areas = 0;
+	recycler.num_linear_areas = 0;
 }
 
 /**
@@ -288,240 +290,246 @@ pool_recycler_clear(void) noexcept
 static bool
 pool_recycler_put_linear(struct linear_pool_area *area) noexcept
 {
-    assert(area != nullptr);
-    assert(area->size > 0);
-    assert(area->slice_area == nullptr);
+	assert(area != nullptr);
+	assert(area->size > 0);
+	assert(area->slice_area == nullptr);
 
-    if (recycler.num_linear_areas >= RECYCLER_MAX_LINEAR_AREAS)
-        return false;
+	if (recycler.num_linear_areas >= RECYCLER_MAX_LINEAR_AREAS)
+		return false;
 
-    PoisonInaccessible(area->data, area->used);
+	PoisonInaccessible(area->data, area->used);
 
-    area->prev = recycler.linear_areas;
-    recycler.linear_areas = area;
-    ++recycler.num_linear_areas;
-    return true;
+	area->prev = recycler.linear_areas;
+	recycler.linear_areas = area;
+	++recycler.num_linear_areas;
+	return true;
 }
 
 static struct linear_pool_area *
 pool_recycler_get_linear(size_t size) noexcept
 {
-    assert(size > 0);
+	assert(size > 0);
 
-    struct linear_pool_area **linear_p, *linear;
-    for (linear_p = &recycler.linear_areas, linear = *linear_p;
-         linear != nullptr;
-         linear_p = &linear->prev, linear = *linear_p) {
-        if (linear->size == size) {
-            assert(recycler.num_linear_areas > 0);
-            --recycler.num_linear_areas;
-            *linear_p = linear->prev;
-            return linear;
-        }
-    }
+	struct linear_pool_area **linear_p, *linear;
+	for (linear_p = &recycler.linear_areas, linear = *linear_p;
+	     linear != nullptr;
+	     linear_p = &linear->prev, linear = *linear_p) {
+		if (linear->size == size) {
+			assert(recycler.num_linear_areas > 0);
+			--recycler.num_linear_areas;
+			*linear_p = linear->prev;
+			return linear;
+		}
+	}
 
-    return nullptr;
+	return nullptr;
 }
 
 static void
 pool_free_linear_area(struct linear_pool_area *area) noexcept
 {
-    assert(area->slice_area == nullptr);
+	assert(area->slice_area == nullptr);
 
-    PoisonUndefined(area->data, area->used);
-    free(area);
+	PoisonUndefined(area->data, area->used);
+	free(area);
 }
 
 static bool
 pool_dispose_slice_area(SlicePool *slice_pool,
-                        struct linear_pool_area *area) noexcept
+			struct linear_pool_area *area) noexcept
 {
-    if (area->slice_area == nullptr)
-        return false;
+	if (area->slice_area == nullptr)
+		return false;
 
-    assert(slice_pool != nullptr);
+	assert(slice_pool != nullptr);
 
-    slice_pool->Free(*area->slice_area, area);
-    return true;
+	slice_pool->Free(*area->slice_area, area);
+	return true;
 }
 
 static void
 pool_dispose_linear_area(struct pool *pool,
-                         struct linear_pool_area *area) noexcept
+			 struct linear_pool_area *area) noexcept
 {
-    if (/* recycle only if the area's size is exactly as big as
-           planned, and was not superseded by a larger allocation;
-           this avoids poisoning the recycler with areas that will
-           probably never be used again */
-        area->size != pool->area_size ||
-        (!pool_dispose_slice_area(pool->slice_pool, area) &&
-         !pool_recycler_put_linear(area)))
-        pool_free_linear_area(area);
+	if (/* recycle only if the area's size is exactly as big as
+	       planned, and was not superseded by a larger allocation;
+	       this avoids poisoning the recycler with areas that will
+	       probably never be used again */
+	    area->size != pool->area_size ||
+	    (!pool_dispose_slice_area(pool->slice_pool, area) &&
+	     !pool_recycler_put_linear(area)))
+		pool_free_linear_area(area);
 }
 
 static inline void
 pool_add_child(struct pool *pool, struct pool *child) noexcept
 {
-    assert(child->parent == nullptr);
+	assert(child->parent == nullptr);
 
-    child->parent = pool;
+	child->parent = pool;
 
-    pool->children.push_back(*child);
+	pool->children.push_back(*child);
 }
 
 static inline void
 pool_remove_child(struct pool *pool, struct pool *child) noexcept
 {
-    assert(child->parent == pool);
+	assert(child->parent == pool);
 
-    pool->children.erase(pool->children.iterator_to(*child));
-    child->parent = nullptr;
+	pool->children.erase(pool->children.iterator_to(*child));
+	child->parent = nullptr;
 }
 
 static struct pool *gcc_malloc
 pool_new(struct pool *parent, const char *name) noexcept
 {
-    auto *pool = recycler.pools.Get(name);
+	auto *pool = recycler.pools.Get(name);
 
 #ifndef NDEBUG
-    pool->major = parent == nullptr;
+	pool->major = parent == nullptr;
 #endif
 
-    if (parent != nullptr)
-        pool_add_child(parent, pool);
+	if (parent != nullptr)
+		pool_add_child(parent, pool);
 
 #ifndef NDEBUG
-    pool->major = parent == nullptr;
+	pool->major = parent == nullptr;
 #endif
 
-    return pool;
+	return pool;
 }
 
 PoolPtr
 pool_new_dummy(struct pool *parent, const char *name) noexcept
 {
-    struct pool *pool = pool_new(parent, name);
-    pool->type = POOL_DUMMY;
-    return PoolPtr(PoolPtr::donate, *pool);
+	struct pool *pool = pool_new(parent, name);
+	pool->type = POOL_DUMMY;
+	return PoolPtr(PoolPtr::donate, *pool);
 }
 
 PoolPtr
 pool_new_libc(struct pool *parent, const char *name) noexcept
 {
-    struct pool *pool = pool_new(parent, name);
-    pool->type = POOL_LIBC;
-    return PoolPtr(PoolPtr::donate, *pool);
+	struct pool *pool = pool_new(parent, name);
+	pool->type = POOL_LIBC;
+	return PoolPtr(PoolPtr::donate, *pool);
 }
 
 gcc_malloc
 static struct linear_pool_area *
 pool_new_slice_area(SlicePool *slice_pool,
-                    struct linear_pool_area *prev) noexcept
+		    struct linear_pool_area *prev) noexcept
 {
-    auto allocation = slice_pool->Alloc();
+	auto allocation = slice_pool->Alloc();
 
-    auto *area = (struct linear_pool_area *)allocation.Steal();
-    assert(area != nullptr);
+	auto *area = (struct linear_pool_area *)allocation.Steal();
+	assert(area != nullptr);
 
-    area->prev = prev;
-    area->slice_area = allocation.area;
-    area->size = allocation.size - LINEAR_POOL_AREA_HEADER;
-    area->used = 0;
+	area->prev = prev;
+	area->slice_area = allocation.area;
+	area->size = allocation.size - LINEAR_POOL_AREA_HEADER;
+	area->used = 0;
 
-    PoisonInaccessible(area->data, area->size);
+	PoisonInaccessible(area->data, area->size);
 
-    return area;
+	return area;
 }
 
 static struct linear_pool_area * gcc_malloc
 pool_new_linear_area(struct linear_pool_area *prev, size_t size) noexcept
 {
-    struct linear_pool_area *area = (struct linear_pool_area *)
-        xmalloc(LINEAR_POOL_AREA_HEADER + size);
-    if (area == nullptr)
-        abort();
+	struct linear_pool_area *area = (struct linear_pool_area *)
+		xmalloc(LINEAR_POOL_AREA_HEADER + size);
+	if (area == nullptr)
+		abort();
 
-    area->slice_area = nullptr;
-    area->prev = prev;
-    area->size = size;
-    area->used = 0;
+	area->slice_area = nullptr;
+	area->prev = prev;
+	area->size = size;
+	area->used = 0;
 
-    PoisonInaccessible(area->data, area->size);
+	PoisonInaccessible(area->data, area->size);
 
-    return area;
+	return area;
 }
 
 static inline struct linear_pool_area *
 pool_get_linear_area(struct linear_pool_area *prev, size_t size) noexcept
 {
-    struct linear_pool_area *area = pool_recycler_get_linear(size);
-    if (area == nullptr) {
-        area = pool_new_linear_area(prev, size);
-    } else {
-        area->prev = prev;
-        area->used = 0;
-    }
-    return area;
+	struct linear_pool_area *area = pool_recycler_get_linear(size);
+	if (area == nullptr) {
+		area = pool_new_linear_area(prev, size);
+	} else {
+		area->prev = prev;
+		area->used = 0;
+	}
+	return area;
 }
 
 PoolPtr
 pool_new_linear(struct pool *parent, const char *name,
-                size_t initial_size) noexcept
+		size_t initial_size) noexcept
 {
-#ifdef POOL_LIBC_ONLY
-    (void)initial_size;
+	if (HaveAddressSanitizer() || HaveValgrind())
+		return pool_new_libc(parent, name);
 
-    return pool_new_libc(parent, name);
+#ifdef POOL_LIBC_ONLY
+	(void)initial_size;
+
+	return pool_new_libc(parent, name);
 #else
 
 #ifdef VALGRIND
-    if (RUNNING_ON_VALGRIND)
-        /* Valgrind cannot verify allocations and memory accesses with
-           this library; therefore use the "libc" pool when running on
-           valgrind */
-        return pool_new_libc(parent, name);
+	if (RUNNING_ON_VALGRIND)
+		/* Valgrind cannot verify allocations and memory accesses with
+		   this library; therefore use the "libc" pool when running on
+		   valgrind */
+		return pool_new_libc(parent, name);
 #endif
 
-    struct pool *pool = pool_new(parent, name);
-    pool->type = POOL_LINEAR;
-    pool->area_size = initial_size;
-    pool->slice_pool = nullptr;
-    pool->current_area.linear = nullptr;
+	struct pool *pool = pool_new(parent, name);
+	pool->type = POOL_LINEAR;
+	pool->area_size = initial_size;
+	pool->slice_pool = nullptr;
+	pool->current_area.linear = nullptr;
 
-    assert(parent != nullptr);
+	assert(parent != nullptr);
 
-    return PoolPtr(PoolPtr::donate, *pool);
+	return PoolPtr(PoolPtr::donate, *pool);
 #endif
 }
 
 PoolPtr
 pool_new_slice(struct pool *parent, const char *name,
-               SlicePool *slice_pool) noexcept
+	       SlicePool *slice_pool) noexcept
 {
-    assert(parent != nullptr);
-    assert(slice_pool->GetSliceSize() > LINEAR_POOL_AREA_HEADER);
+	assert(parent != nullptr);
+	assert(slice_pool->GetSliceSize() > LINEAR_POOL_AREA_HEADER);
+
+	if (HaveAddressSanitizer() || HaveValgrind())
+		return pool_new_libc(parent, name);
 
 #ifdef POOL_LIBC_ONLY
-    (void)slice_pool;
+	(void)slice_pool;
 
-    return pool_new_libc(parent, name);
+	return pool_new_libc(parent, name);
 #else
 
 #ifdef VALGRIND
-    if (RUNNING_ON_VALGRIND)
-        /* Valgrind cannot verify allocations and memory accesses with
-           this library; therefore use the "libc" pool when running on
-           valgrind */
-        return pool_new_libc(parent, name);
+	if (RUNNING_ON_VALGRIND)
+		/* Valgrind cannot verify allocations and memory accesses with
+		   this library; therefore use the "libc" pool when running on
+		   valgrind */
+		return pool_new_libc(parent, name);
 #endif
 
-    struct pool *pool = pool_new(parent, name);
-    pool->type = POOL_LINEAR;
-    pool->area_size = slice_pool->GetSliceSize() - LINEAR_POOL_AREA_HEADER;
-    pool->slice_pool = slice_pool;
-    pool->current_area.linear = nullptr;
+	struct pool *pool = pool_new(parent, name);
+	pool->type = POOL_LINEAR;
+	pool->area_size = slice_pool->GetSliceSize() - LINEAR_POOL_AREA_HEADER;
+	pool->slice_pool = slice_pool;
+	pool->current_area.linear = nullptr;
 
-    return PoolPtr(PoolPtr::donate, *pool);
+	return PoolPtr(PoolPtr::donate, *pool);
 #endif
 }
 
@@ -530,10 +538,10 @@ pool_new_slice(struct pool *parent, const char *name,
 void
 pool_set_major(struct pool *pool) noexcept
 {
-    assert(!pool->trashed);
-    assert(pool->children.empty());
+	assert(!pool->trashed);
+	assert(pool->children.empty());
 
-    pool->major = true;
+	pool->major = true;
 }
 
 #endif
@@ -547,102 +555,102 @@ static void
 pool_check_leaks(const struct pool &pool) noexcept
 {
 #ifdef NDEBUG
-    (void)pool;
+	(void)pool;
 #else
-    if (pool.leaks.empty())
-        return;
+	if (pool.leaks.empty())
+		return;
 
-    pool.logger(1, "pool has leaked objects:");
+	pool.logger(1, "pool has leaked objects:");
 
-    for (const auto &ld : pool.leaks)
-        pool.logger.Format(1, " %p %s",
-                           &ld, typeid(ld).name());
+	for (const auto &ld : pool.leaks)
+		pool.logger.Format(1, " %p %s",
+				   &ld, typeid(ld).name());
 
-    abort();
+	abort();
 #endif
 }
 
 static void
 pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
-             struct pool *reparent_to) noexcept
+	     struct pool *reparent_to) noexcept
 {
-    assert(pool->ref == 0);
-    assert(pool->parent == nullptr);
+	assert(pool->ref == 0);
+	assert(pool->parent == nullptr);
 
 #ifdef DUMP_POOL_SIZE
-    pool->logger.Format(4, "pool size=%zu", pool->netto_size);
+	pool->logger.Format(4, "pool size=%zu", pool->netto_size);
 #endif
 
 #ifdef DUMP_POOL_ALLOC_ALL
-    pool_dump_allocations(*pool);
+	pool_dump_allocations(*pool);
 #endif
 
-    pool_check_leaks(*pool);
+	pool_check_leaks(*pool);
 
 #ifndef NDEBUG
-    if (pool->trashed)
-        trash.erase(trash.iterator_to(*pool));
+	if (pool->trashed)
+		trash.erase(trash.iterator_to(*pool));
 #else
-    TRACE_ARGS_IGNORE;
+	TRACE_ARGS_IGNORE;
 #endif
 
-    while (!pool->children.empty()) {
-        struct pool *child = &pool->children.front();
-        pool_remove_child(pool, child);
-        assert(child->ref > 0);
+	while (!pool->children.empty()) {
+		struct pool *child = &pool->children.front();
+		pool_remove_child(pool, child);
+		assert(child->ref > 0);
 
-        if (reparent_to == nullptr) {
-            /* children of major pools are put on trash, so they are
-               collected by pool_commit() */
-            assert(pool->major || pool->trashed);
+		if (reparent_to == nullptr) {
+			/* children of major pools are put on trash, so they are
+			   collected by pool_commit() */
+			assert(pool->major || pool->trashed);
 
 #ifndef NDEBUG
-            trash.push_front(*child);
-            child->trashed = true;
+			trash.push_front(*child);
+			child->trashed = true;
 #else
-            child->parent = nullptr;
+			child->parent = nullptr;
 #endif
-        } else {
-            /* reparent all children of the destroyed pool to its
-               parent, so they can live on - this reparenting never
-               traverses major pools */
+		} else {
+			/* reparent all children of the destroyed pool to its
+			   parent, so they can live on - this reparenting never
+			   traverses major pools */
 
-            assert(!pool->major && !pool->trashed);
+			assert(!pool->major && !pool->trashed);
 
-            pool_add_child(reparent_to, child);
-        }
-    }
+			pool_add_child(reparent_to, child);
+		}
+	}
 
 #ifdef DEBUG_POOL_REF
-    pool->refs.clear();
-    pool->unrefs.clear();
+	pool->refs.clear();
+	pool->unrefs.clear();
 #endif
 
-    pool_clear(*pool);
+	pool_clear(*pool);
 
-    recycler.pools.Put(pool);
+	recycler.pools.Put(pool);
 }
 
 #ifdef DEBUG_POOL_REF
 static void
 pool_increment_ref(gcc_unused struct pool *pool,
-                   std::forward_list<PoolRef> &list TRACE_ARGS_DECL) noexcept
+		   std::forward_list<PoolRef> &list TRACE_ARGS_DECL) noexcept
 {
 #ifdef TRACE
-    for (auto &ref : list) {
-        if (ref.line == line && strcmp(ref.file, file) == 0) {
-            ++ref.count;
-            return;
-        }
-    }
+	for (auto &ref : list) {
+		if (ref.line == line && strcmp(ref.file, file) == 0) {
+			++ref.count;
+			return;
+		}
+	}
 #endif
 
-    list.emplace_front();
+	list.emplace_front();
 
 #ifdef TRACE
-    auto &ref = list.front();
-    ref.file = file;
-    ref.line = line;
+	auto &ref = list.front();
+	ref.file = file;
+	ref.line = line;
 #endif
 }
 #endif
@@ -651,16 +659,16 @@ pool_increment_ref(gcc_unused struct pool *pool,
 static void
 pool_dump_refs(const struct pool &pool) noexcept
 {
-    pool.logger.Format(0, "pool[%p](%u) REF:",
-                       (const void *)&pool, pool.ref);
+	pool.logger.Format(0, "pool[%p](%u) REF:",
+			   (const void *)&pool, pool.ref);
 
 #ifdef TRACE
-    for (auto &ref : pool.refs)
-        pool.logger.Format(0, " %s:%u %u", ref.file, ref.line, ref.count);
+	for (auto &ref : pool.refs)
+		pool.logger.Format(0, " %s:%u %u", ref.file, ref.line, ref.count);
 
-    pool.logger(0, "UNREF:");
-    for (auto &ref : pool.unrefs)
-        pool.logger.Format(0, " %s:%u %u", ref.file, ref.line, ref.count);
+	pool.logger(0, "UNREF:");
+	for (auto &ref : pool.unrefs)
+		pool.logger.Format(0, " %s:%u %u", ref.file, ref.line, ref.count);
 #endif
 }
 #endif
@@ -668,166 +676,166 @@ pool_dump_refs(const struct pool &pool) noexcept
 void
 pool_ref_impl(struct pool *pool TRACE_ARGS_DECL) noexcept
 {
-    assert(pool->ref > 0);
-    ++pool->ref;
+	assert(pool->ref > 0);
+	++pool->ref;
 
 #ifdef POOL_TRACE_REF
-    pool->logger(0, "pool_ref=", pool->ref);
+	pool->logger(0, "pool_ref=", pool->ref);
 #endif
 
 #ifdef DEBUG_POOL_REF
-    pool_increment_ref(pool, pool->refs TRACE_ARGS_FWD);
+	pool_increment_ref(pool, pool->refs TRACE_ARGS_FWD);
 #endif
 }
 
 unsigned
 pool_unref_impl(struct pool *pool TRACE_ARGS_DECL) noexcept
 {
-    assert(pool->ref > 0);
-    --pool->ref;
+	assert(pool->ref > 0);
+	--pool->ref;
 
 #ifdef POOL_TRACE_REF
-    pool->logger(0, "pool_unref=", pool->ref);
+	pool->logger(0, "pool_unref=", pool->ref);
 #endif
 
 #ifdef DEBUG_POOL_REF
-    pool_increment_ref(pool, pool->unrefs TRACE_ARGS_FWD);
+	pool_increment_ref(pool, pool->unrefs TRACE_ARGS_FWD);
 #endif
 
-    if (gcc_unlikely(pool->ref == 0)) {
-        struct pool *parent = pool->parent;
+	if (gcc_unlikely(pool->ref == 0)) {
+		struct pool *parent = pool->parent;
 #ifdef NDEBUG
-        struct pool *reparent_to = nullptr;
+		struct pool *reparent_to = nullptr;
 #else
-        struct pool *reparent_to = pool->major ? nullptr : parent;
+		struct pool *reparent_to = pool->major ? nullptr : parent;
 #endif
-        if (parent != nullptr)
-            pool_remove_child(parent, pool);
+		if (parent != nullptr)
+			pool_remove_child(parent, pool);
 #ifdef DUMP_POOL_UNREF
-        pool_dump_refs(*pool);
+		pool_dump_refs(*pool);
 #endif
-        pool_destroy(pool, parent, reparent_to);
-        return 0;
-    }
+		pool_destroy(pool, parent, reparent_to);
+		return 0;
+	}
 
-    return pool->ref;
+	return pool->ref;
 }
 
 size_t
 pool_netto_size(const struct pool *pool) noexcept
 {
-    return pool->netto_size;
+	return pool->netto_size;
 }
 
 static size_t
 pool_linear_brutto_size(const struct pool *pool) noexcept
 {
-    size_t size = 0;
+	size_t size = 0;
 
-    for (const struct linear_pool_area *area = pool->current_area.linear;
-         area != nullptr; area = area->prev)
-        size += area->size;
+	for (const struct linear_pool_area *area = pool->current_area.linear;
+	     area != nullptr; area = area->prev)
+		size += area->size;
 
-    return size;
+	return size;
 }
 
 size_t
 pool_brutto_size(const struct pool *pool) noexcept
 {
-    switch (pool->type) {
-    case POOL_DUMMY:
-        return 0;
+	switch (pool->type) {
+	case POOL_DUMMY:
+		return 0;
 
-    case POOL_LIBC:
-        return pool_netto_size(pool);
+	case POOL_LIBC:
+		return pool_netto_size(pool);
 
-    case POOL_LINEAR:
-        return pool_linear_brutto_size(pool);
-    }
+	case POOL_LINEAR:
+		return pool_linear_brutto_size(pool);
+	}
 
-    assert(false);
-    return 0;
+	assert(false);
+	return 0;
 }
 
 size_t
 pool_recursive_netto_size(const struct pool *pool) noexcept
 {
-    return pool_netto_size(pool) + pool_children_netto_size(pool);
+	return pool_netto_size(pool) + pool_children_netto_size(pool);
 }
 
 size_t
 pool_recursive_brutto_size(const struct pool *pool) noexcept
 {
-    return pool_brutto_size(pool) + pool_children_brutto_size(pool);
+	return pool_brutto_size(pool) + pool_children_brutto_size(pool);
 }
 
 size_t
 pool_children_netto_size(const struct pool *pool) noexcept
 {
-    size_t size = 0;
+	size_t size = 0;
 
-    for (const auto &child : pool->children)
-        size += pool_recursive_netto_size(&child);
+	for (const auto &child : pool->children)
+		size += pool_recursive_netto_size(&child);
 
-    return size;
+	return size;
 }
 
 size_t
 pool_children_brutto_size(const struct pool *pool) noexcept
 {
-    size_t size = 0;
+	size_t size = 0;
 
-    for (const auto &child : pool->children)
-        size += pool_recursive_brutto_size(&child);
+	for (const auto &child : pool->children)
+		size += pool_recursive_brutto_size(&child);
 
-    return size;
+	return size;
 }
 
 AllocatorStats
 pool_children_stats(const struct pool &pool) noexcept
 {
-    AllocatorStats stats;
-    stats.netto_size = pool_children_netto_size(&pool);
-    stats.brutto_size = pool_children_brutto_size(&pool);
-    return stats;
+	AllocatorStats stats;
+	stats.netto_size = pool_children_netto_size(&pool);
+	stats.brutto_size = pool_children_brutto_size(&pool);
+	return stats;
 }
 
 static const char *
 pool_type_string(enum pool_type type) noexcept
 {
-    switch (type) {
-    case POOL_DUMMY:
-        return "dummy";
+	switch (type) {
+	case POOL_DUMMY:
+		return "dummy";
 
-    case POOL_LIBC:
-        return "libc";
+	case POOL_LIBC:
+		return "libc";
 
-    case POOL_LINEAR:
-        return "linear";
-    }
+	case POOL_LINEAR:
+		return "linear";
+	}
 
-    assert(false);
-    return nullptr;
+	assert(false);
+	return nullptr;
 }
 
 static void
 pool_dump_node(int indent, const struct pool &pool) noexcept
 {
-    pool.logger.Format(2, "%*spool '%s' type=%s ref=%u size=%zu p=%p",
-                       indent, "",
-                       pool.name, pool_type_string(pool.type),
-                       pool.ref, pool.netto_size,
-                       (const void *)&pool);
+	pool.logger.Format(2, "%*spool '%s' type=%s ref=%u size=%zu p=%p",
+			   indent, "",
+			   pool.name, pool_type_string(pool.type),
+			   pool.ref, pool.netto_size,
+			   (const void *)&pool);
 
-    indent += 2;
-    for (const auto &child : pool.children)
-        pool_dump_node(indent, child);
+	indent += 2;
+	for (const auto &child : pool.children)
+		pool_dump_node(indent, child);
 }
 
 void
 pool_dump_tree(const struct pool &pool) noexcept
 {
-    pool_dump_node(0, pool);
+	pool_dump_node(0, pool);
 }
 
 #ifndef NDEBUG
@@ -835,59 +843,59 @@ pool_dump_tree(const struct pool &pool) noexcept
 void
 pool_trash(struct pool *pool) noexcept
 {
-    if (pool->trashed)
-        return;
+	if (pool->trashed)
+		return;
 
-    assert(pool->parent != nullptr);
+	assert(pool->parent != nullptr);
 
-    pool_remove_child(pool->parent, pool);
-    trash.push_front(*pool);
-    pool->trashed = true;
+	pool_remove_child(pool->parent, pool);
+	trash.push_front(*pool);
+	pool->trashed = true;
 }
 
 void
 pool_commit() noexcept
 {
-    if (trash.empty())
-        return;
+	if (trash.empty())
+		return;
 
-    LogConcat(0, "pool", "pool_commit(): there are unreleased pools in the trash:");
+	LogConcat(0, "pool", "pool_commit(): there are unreleased pools in the trash:");
 
-    for (const auto &pool : trash) {
+	for (const auto &pool : trash) {
 #ifdef DEBUG_POOL_REF
-        pool_dump_refs(pool);
+		pool_dump_refs(pool);
 #else
-        LogFormat(0, "pool", "- '%s'(%u)", pool.name, pool.ref);
+		LogFormat(0, "pool", "- '%s'(%u)", pool.name, pool.ref);
 #endif
-    }
+	}
 
-    abort();
+	abort();
 }
 
 static bool
 linear_pool_area_contains(const struct linear_pool_area *area,
-                          const void *ptr, size_t size) noexcept
+			  const void *ptr, size_t size) noexcept
 {
-    return size <= area->used &&
-        ptr >= (const void*)area->data &&
-        ptr <= (const void*)(area->data + area->used - size);
+	return size <= area->used &&
+		ptr >= (const void*)area->data &&
+		ptr <= (const void*)(area->data + area->used - size);
 }
 
 bool
 pool_contains(const struct pool &pool, const void *ptr, size_t size) noexcept
 {
-    assert(ptr != nullptr);
-    assert(size > 0);
+	assert(ptr != nullptr);
+	assert(size > 0);
 
-    if (pool.type != POOL_LINEAR)
-        return true;
+	if (pool.type != POOL_LINEAR)
+		return true;
 
-    for (const struct linear_pool_area *area = pool.current_area.linear;
-         area != nullptr; area = area->prev)
-        if (linear_pool_area_contains(area, ptr, size))
-            return true;
+	for (const struct linear_pool_area *area = pool.current_area.linear;
+	     area != nullptr; area = area->prev)
+		if (linear_pool_area_contains(area, ptr, size))
+			return true;
 
-    return false;
+	return false;
 }
 
 #endif
@@ -895,206 +903,206 @@ pool_contains(const struct pool &pool, const void *ptr, size_t size) noexcept
 void
 pool_clear(struct pool &pool) noexcept
 {
-    assert(pool.leaks.empty());
+	assert(pool.leaks.empty());
 
 #ifndef NDEBUG
-    pool.allocations.clear();
+	pool.allocations.clear();
 #endif
 
-    switch (pool.type) {
-    case POOL_DUMMY:
-        break;
+	switch (pool.type) {
+	case POOL_DUMMY:
+		break;
 
-    case POOL_LIBC:
-        pool.current_area.libc.clear_and_dispose(libc_pool_chunk::Disposer());
-        break;
+	case POOL_LIBC:
+		pool.current_area.libc.clear_and_dispose(libc_pool_chunk::Disposer());
+		break;
 
-    case POOL_LINEAR:
-        while (pool.current_area.linear != nullptr) {
-            struct linear_pool_area *area = pool.current_area.linear;
-            pool.current_area.linear = area->prev;
-            pool_dispose_linear_area(&pool, area);
-        }
-        break;
-    }
+	case POOL_LINEAR:
+		while (pool.current_area.linear != nullptr) {
+			struct linear_pool_area *area = pool.current_area.linear;
+			pool.current_area.linear = area->prev;
+			pool_dispose_linear_area(&pool, area);
+		}
+		break;
+	}
 }
 
 static void *
 p_malloc_libc(struct pool *pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DECL) noexcept
 {
-    const size_t aligned_size = align_size(size);
-    struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)
-        xmalloc(sizeof(*chunk) - sizeof(chunk->data) + aligned_size);
+	const size_t aligned_size = align_size(size);
+	struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)
+		xmalloc(sizeof(*chunk) - sizeof(chunk->data) + aligned_size);
 
 #ifndef NDEBUG
-    pool->allocations.push_back(chunk->info);
-    chunk->info.type = type;
+	pool->allocations.push_back(chunk->info);
+	chunk->info.type = type;
 #ifdef TRACE
-    chunk->info.file = file;
-    chunk->info.line = line;
+	chunk->info.file = file;
+	chunk->info.line = line;
 #endif
-    chunk->info.size = size;
+	chunk->info.size = size;
 #else
-    TRACE_ARGS_IGNORE;
+	TRACE_ARGS_IGNORE;
 #endif
 
-    pool->current_area.libc.push_back(*chunk);
+	pool->current_area.libc.push_back(*chunk);
 #ifdef POISON
-    chunk->size = size;
+	chunk->size = size;
 #endif
-    return chunk->data;
+	return chunk->data;
 }
 
 #ifdef DUMP_POOL_ALLOC
 static void
 pool_dump_allocations(const struct pool &pool) noexcept
 {
-    size_t sum = 0;
-    for (const auto &info : pool.allocations) {
-        sum += info.size;
-        pool.logger.Format(6, "- %s:%u %zu [%s] => %zu\n",
-			   info.file, info.line, info.size, info.type ? info.type : "", sum);
-    }
+	size_t sum = 0;
+	for (const auto &info : pool.allocations) {
+		sum += info.size;
+		pool.logger.Format(6, "- %s:%u %zu [%s] => %zu\n",
+				   info.file, info.line, info.size, info.type ? info.type : "", sum);
+	}
 }
 #endif
 
 static void *
 p_malloc_linear(struct pool *pool, const size_t original_size
-                TYPE_ARG_DECL TRACE_ARGS_DECL) noexcept
+		TYPE_ARG_DECL TRACE_ARGS_DECL) noexcept
 {
-    auto &logger = pool->logger;
-    struct linear_pool_area *area = pool->current_area.linear;
+	auto &logger = pool->logger;
+	struct linear_pool_area *area = pool->current_area.linear;
 
-    size_t size = align_size(original_size);
-    size += LINEAR_PREFIX;
+	size_t size = align_size(original_size);
+	size += LINEAR_PREFIX;
 
-    if (gcc_unlikely(size > pool->area_size)) {
-        /* this allocation is larger than the standard area size;
-           obtain a new area just for this allocation, and keep on
-           using the last area */
-        logger.Format(5, "big allocation on linear pool '%s' (%zu bytes)",
-                      pool->name, original_size);
+	if (gcc_unlikely(size > pool->area_size)) {
+		/* this allocation is larger than the standard area size;
+		   obtain a new area just for this allocation, and keep on
+		   using the last area */
+		logger.Format(5, "big allocation on linear pool '%s' (%zu bytes)",
+			      pool->name, original_size);
 #ifdef DEBUG_POOL_GROW
-        pool_dump_allocations(*pool);
-        logger.Format(6, "+ %s:%u %zu", file, line, original_size);
+		pool_dump_allocations(*pool);
+		logger.Format(6, "+ %s:%u %zu", file, line, original_size);
 #else
-        TRACE_ARGS_IGNORE;
+		TRACE_ARGS_IGNORE;
 #endif
 
-        if (area == nullptr) {
-            /* this is the first allocation, create the initial
-               area */
-            area = pool->current_area.linear =
-                pool_new_linear_area(nullptr, size);
-        } else {
-            /* put the special large area after the current one */
-            area = pool_new_linear_area(area->prev, size);
-            pool->current_area.linear->prev = area;
-        }
-    } else if (gcc_unlikely(area == nullptr || area->used + size > area->size)) {
-        if (area != nullptr) {
-            logger.Format(5, "growing linear pool '%s'", pool->name);
+		if (area == nullptr) {
+			/* this is the first allocation, create the initial
+			   area */
+			area = pool->current_area.linear =
+				pool_new_linear_area(nullptr, size);
+		} else {
+			/* put the special large area after the current one */
+			area = pool_new_linear_area(area->prev, size);
+			pool->current_area.linear->prev = area;
+		}
+	} else if (gcc_unlikely(area == nullptr || area->used + size > area->size)) {
+		if (area != nullptr) {
+			logger.Format(5, "growing linear pool '%s'", pool->name);
 #ifdef DEBUG_POOL_GROW
-            pool_dump_allocations(*pool);
-            logger.Format(6, "+ %s:%u %zu", file, line, original_size);
+			pool_dump_allocations(*pool);
+			logger.Format(6, "+ %s:%u %zu", file, line, original_size);
 #else
-            TRACE_ARGS_IGNORE;
+			TRACE_ARGS_IGNORE;
 #endif
-        }
+		}
 
-        area = pool->slice_pool != nullptr
-            ? pool_new_slice_area(pool->slice_pool, area)
-            : pool_get_linear_area(area, pool->area_size);
-        pool->current_area.linear = area;
-    }
+		area = pool->slice_pool != nullptr
+			? pool_new_slice_area(pool->slice_pool, area)
+			: pool_get_linear_area(area, pool->area_size);
+		pool->current_area.linear = area;
+	}
 
-    void *p = area->data + area->used;
-    area->used += size;
+	void *p = area->data + area->used;
+	area->used += size;
 
-    assert(area->used <= area->size);
+	assert(area->used <= area->size);
 
-    PoisonUndefined(p, size);
+	PoisonUndefined(p, size);
 
 #ifndef NDEBUG
-    struct allocation_info *info = (struct allocation_info *)p;
-    info->type = type;
+	struct allocation_info *info = (struct allocation_info *)p;
+	info->type = type;
 #ifdef TRACE
-    info->file = file;
-    info->line = line;
+	info->file = file;
+	info->line = line;
 #endif
-    info->size = original_size;
-    pool->allocations.push_back(*info);
+	info->size = original_size;
+	pool->allocations.push_back(*info);
 #endif
 
-    return (char*)p + LINEAR_PREFIX;
+	return (char*)p + LINEAR_PREFIX;
 }
 
 static void *
 internal_malloc(struct pool *pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DECL) noexcept
 {
-    assert(pool != nullptr);
+	assert(pool != nullptr);
 
-    pool->netto_size += size;
+	pool->netto_size += size;
 
-    if (gcc_likely(pool->type == POOL_LINEAR))
-        return p_malloc_linear(pool, size TYPE_ARG_FWD TRACE_ARGS_FWD);
+	if (gcc_likely(pool->type == POOL_LINEAR))
+		return p_malloc_linear(pool, size TYPE_ARG_FWD TRACE_ARGS_FWD);
 
-    assert(pool->type == POOL_LIBC);
-    return p_malloc_libc(pool, size TYPE_ARG_FWD TRACE_ARGS_FWD);
+	assert(pool->type == POOL_LIBC);
+	return p_malloc_libc(pool, size TYPE_ARG_FWD TRACE_ARGS_FWD);
 }
 
 void *
 p_malloc_impl(struct pool *pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DECL) noexcept
 {
-    return internal_malloc(pool, size TYPE_ARG_FWD TRACE_ARGS_FWD);
+	return internal_malloc(pool, size TYPE_ARG_FWD TRACE_ARGS_FWD);
 }
 
 static void
 p_free_libc(struct pool *pool, void *ptr)
 {
-    void *q = (char *)ptr - offsetof(struct libc_pool_chunk, data);
-    struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)q;
+	void *q = (char *)ptr - offsetof(struct libc_pool_chunk, data);
+	struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)q;
 
 #ifndef NDEBUG
-    pool->allocations.erase(pool->allocations.iterator_to(chunk->info));
+	pool->allocations.erase(pool->allocations.iterator_to(chunk->info));
 #endif
 
-    pool->current_area.libc.erase_and_dispose(pool->current_area.libc.iterator_to(*chunk),
-                                              libc_pool_chunk::Disposer());
+	pool->current_area.libc.erase_and_dispose(pool->current_area.libc.iterator_to(*chunk),
+						  libc_pool_chunk::Disposer());
 }
 
 void
 p_free(struct pool *pool, const void *cptr, size_t size) noexcept
 {
-    void *ptr = const_cast<void *>(cptr);
+	void *ptr = const_cast<void *>(cptr);
 
-    assert(pool != nullptr);
-    assert(ptr != nullptr);
-    assert((((unsigned long)ptr) & ALIGN_MASK) == 0);
-    assert(pool_contains(*pool, ptr, size));
+	assert(pool != nullptr);
+	assert(ptr != nullptr);
+	assert((((unsigned long)ptr) & ALIGN_MASK) == 0);
+	assert(pool_contains(*pool, ptr, size));
 
-    switch (pool->type) {
-    case POOL_DUMMY:
-        assert(false);
-        gcc_unreachable();
+	switch (pool->type) {
+	case POOL_DUMMY:
+		assert(false);
+		gcc_unreachable();
 
-    case POOL_LIBC:
-        p_free_libc(pool, ptr);
-        break;
+	case POOL_LIBC:
+		p_free_libc(pool, ptr);
+		break;
 
-    case POOL_LINEAR:
+	case POOL_LINEAR:
 #ifndef NDEBUG
-        {
-            struct allocation_info *info = get_linear_allocation_info(ptr);
-            assert(size == info->size);
-            pool->allocations.erase(pool->allocations.iterator_to(*info));
-        }
+		{
+			struct allocation_info *info = get_linear_allocation_info(ptr);
+			assert(size == info->size);
+			pool->allocations.erase(pool->allocations.iterator_to(*info));
+		}
 #endif
-        PoisonInaccessible(ptr, size);
-        break;
-    }
+		PoisonInaccessible(ptr, size);
+		break;
+	}
 
-    pool->netto_size -= size;
+	pool->netto_size -= size;
 }
 
 #ifndef NDEBUG
@@ -1102,7 +1110,7 @@ p_free(struct pool *pool, const void *cptr, size_t size) noexcept
 void
 pool_register_leak_detector(struct pool &pool, PoolLeakDetector &ld) noexcept
 {
-    pool.leaks.push_back(ld);
+	pool.leaks.push_back(ld);
 }
 
 #endif

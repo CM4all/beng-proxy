@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_TPOOL_HXX
-#define BENG_PROXY_TPOOL_HXX
+#pragma once
 
 #include "pool.hxx"
 
@@ -44,22 +43,22 @@ extern unsigned tpool_users;
 
 class TempPoolLease {
 public:
-    TempPoolLease() noexcept {
-        ++tpool_users;
-    }
+	TempPoolLease() noexcept {
+		++tpool_users;
+	}
 
-    ~TempPoolLease() noexcept {
-        if (--tpool_users == 0)
-            pool_clear(*tpool_singleton);
-    }
+	~TempPoolLease() noexcept {
+		if (--tpool_users == 0)
+			pool_clear(*tpool_singleton);
+	}
 
-    operator struct pool &() const noexcept {
-        return *tpool_singleton;
-    }
+	operator struct pool &() const noexcept {
+		return *tpool_singleton;
+	}
 
-    operator struct pool *() const noexcept {
-        return tpool_singleton;
-    }
+	operator struct pool *() const noexcept {
+		return tpool_singleton;
+	}
 };
 
 void
@@ -67,5 +66,3 @@ tpool_init(struct pool *parent) noexcept;
 
 void
 tpool_deinit() noexcept;
-
-#endif

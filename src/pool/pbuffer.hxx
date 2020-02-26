@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Allocating struct ConstBuffer from memory pool.
  */
 
-#ifndef PBUFFER_HXX
-#define PBUFFER_HXX
+#pragma once
 
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"
@@ -45,28 +44,28 @@ template<typename T>
 static inline ConstBuffer<T>
 DupBuffer(pool &p, ConstBuffer<T> src)
 {
-    if (src.IsNull())
-        return nullptr;
+	if (src.IsNull())
+		return nullptr;
 
-    if (src.empty())
-        return ConstBuffer<T>::FromVoid({"", 0});
+	if (src.empty())
+		return ConstBuffer<T>::FromVoid({"", 0});
 
-    ConstBuffer<void> src_v = src.ToVoid();
-    ConstBuffer<void> dest_v(p_memdup(&p, src_v.data, src_v.size), src_v.size);
-    return ConstBuffer<T>::FromVoid(dest_v);
+	ConstBuffer<void> src_v = src.ToVoid();
+	ConstBuffer<void> dest_v(p_memdup(&p, src_v.data, src_v.size), src_v.size);
+	return ConstBuffer<T>::FromVoid(dest_v);
 }
 
 static inline StringView
 DupBuffer(pool &p, StringView src)
 {
-    if (src.IsNull())
-        return nullptr;
+	if (src.IsNull())
+		return nullptr;
 
-    if (src.empty())
-        return "";
+	if (src.empty())
+		return "";
 
-    return StringView((const char *)p_memdup(&p, src.data, src.size),
-                      src.size);
+	return StringView((const char *)p_memdup(&p, src.data, src.size),
+			  src.size);
 }
 
 /**
@@ -76,5 +75,3 @@ DupBuffer(pool &p, StringView src)
  */
 ConstBuffer<void>
 LazyCatBuffer(struct pool &pool, ConstBuffer<void> a, ConstBuffer<void> b);
-
-#endif
