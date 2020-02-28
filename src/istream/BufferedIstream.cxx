@@ -119,8 +119,9 @@ private:
 	void DeferredReady() noexcept;
 
 	void InvokeError(std::exception_ptr e) noexcept {
-		handler.OnBufferedIstreamError(std::move(e));
+		auto &_handler = handler;
 		Destroy();
+		_handler.OnBufferedIstreamError(std::move(e));
 	}
 
 	/* virtual methods from class Cancellable */
@@ -165,8 +166,10 @@ BufferedIstream::Commit() noexcept
 void
 BufferedIstream::DeferredReady() noexcept
 {
-	handler.OnBufferedIstreamReady(Commit());
+	auto i = Commit();
+	auto &_handler = handler;
 	Destroy();
+	_handler.OnBufferedIstreamReady(std::move(i));
 }
 
 size_t
