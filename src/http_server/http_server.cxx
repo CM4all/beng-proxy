@@ -409,6 +409,9 @@ HttpServerConnection::Cancel() noexcept
 {
 	assert(handler != nullptr);
 
+	if (request.request != nullptr)
+		request.request->stopwatch.RecordEvent("cancel");
+
 	if (request.read_state != Request::START)
 		CloseRequest();
 
