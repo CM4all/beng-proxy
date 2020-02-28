@@ -313,6 +313,12 @@ ChunkedIstream::_Read() noexcept
 void
 ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 {
+	if (!input.IsDefined()) {
+		// TODO: generate EOF chunk
+		list.SetMore();
+		return;
+	}
+
 	auto b = ReadBuffer();
 	if (b.empty() && missing_from_current_chunk == 0) {
 		off_t available = input.GetAvailable(true);
@@ -365,6 +371,9 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		Consumed(size);
 		nbytes -= size;
 		total += size;
+
+		if (nbytes > 0)
+			input.ClearAndClose();
 
 		missing_from_current_chunk -= size;
 		if (missing_from_current_chunk == 0) {
