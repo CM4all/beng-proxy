@@ -51,6 +51,13 @@ public:
 		DestroyEof();
 	}
 
+	void _FillBucketList(IstreamBucketList &) override {
+	}
+
+	size_t _ConsumeBucketList(size_t) noexcept override {
+		return 0;
+	}
+
 	int _AsFd() noexcept override {
 		/* fd0 is always linked with /dev/null */
 		int fd = dup(0);
