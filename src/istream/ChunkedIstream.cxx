@@ -104,6 +104,19 @@ private:
 		return { buffer + buffer_sent, sizeof(buffer) - buffer_sent };
 	}
 
+	size_t ConsumeBuffer(size_t nbytes) noexcept {
+		size_t size = ReadBuffer().size;
+		if (size > nbytes)
+			size = nbytes;
+
+		if (size > 0) {
+			buffer_sent += size;
+			Consumed(size);
+		}
+
+		return size;
+	}
+
 	/**
 	 * Returns true if the buffer is consumed.
 	 */
@@ -353,15 +366,9 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
 	size_t total = 0;
 
-	size_t size = ReadBuffer().size;
-	if (size > nbytes)
-		size = nbytes;
-	if (size > 0) {
-		buffer_sent += size;
-		Consumed(size);
-		nbytes -= size;
-		total += size;
-	}
+	size_t size = ConsumeBuffer(nbytes);
+	nbytes -= size;
+	total += size;
 
 	size = std::min(nbytes, missing_from_current_chunk);
 	if (size > 0) {
