@@ -241,6 +241,8 @@ CatchIstream::_Read() noexcept
 {
 	if (HasInput())
 		ForwardIstream::_Read();
+	else if (available == 0)
+		DestroyEof();
 	else
 		SendSpace();
 }
