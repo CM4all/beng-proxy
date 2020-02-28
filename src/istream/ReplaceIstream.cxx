@@ -168,6 +168,21 @@ private:
 			IsBufferAtEOF();
 	}
 
+	gcc_pure
+	off_t GetBufferEndOffsetUntil(const Substitution *s) const noexcept {
+		if (s != nullptr)
+			return std::min(s->start, source_length);
+		else if (finished)
+			return source_length;
+		else if (position < settled_position)
+			return settled_position;
+		else
+			/* block after the last substitution, unless
+			   the caller has already set the "finished"
+			   flag */
+			return -1;
+	}
+
 	/**
 	 * Copy the next chunk from the source buffer to the istream
 	 * handler.
@@ -410,20 +425,9 @@ ReplaceIstream::TryReadFromBuffer() noexcept
 {
 	assert(position <= source_length);
 
-	off_t end;
-	if (first_substitution == nullptr) {
-		if (finished)
-			end = source_length;
-		else if (position < settled_position)
-			end = settled_position;
-		else
-			/* block after the last substitution, unless the caller
-			   has already set the "finished" flag */
-			return true;
-
-	} else {
-		end = std::min(first_substitution->start, source_length);
-	}
+	off_t end = GetBufferEndOffsetUntil(first_substitution);
+	if (end < 0)
+		return true;
 
 	assert(end >= position);
 	assert(end <= source_length);
