@@ -248,6 +248,12 @@ CatchIstream::_Read() noexcept
 void
 CatchIstream::_FillBucketList(IstreamBucketList &list)
 {
+	if (!HasInput()) {
+		// TODO: generate space bucket?
+		list.SetMore();
+		return;
+	}
+
 	try {
 		input.FillBucketList(list);
 	} catch (...) {
