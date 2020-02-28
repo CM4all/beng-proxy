@@ -82,6 +82,11 @@ class ReplaceIstream final : public FacadeIstream, DestructAnchor {
 		bool IsActive() const noexcept;
 
 		/* virtual methods from class IstreamHandler */
+
+		bool OnIstreamReady() noexcept override {
+			return IsActive() && replace.InvokeReady();
+		}
+
 		size_t OnData(const void *data, size_t length) noexcept override;
 		void OnEof() noexcept override;
 		void OnError(std::exception_ptr ep) noexcept override;
