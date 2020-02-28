@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,12 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * HTTP server implementation.
- */
-
-#ifndef BENG_HTTP_SERVER_REQUEST_HXX
-#define BENG_HTTP_SERVER_REQUEST_HXX
+#pragma once
 
 #include "stopwatch.hxx"
 #include "http/IncomingRequest.hxx"
@@ -62,5 +57,3 @@ struct HttpServerRequest final : public IncomingHttpRequest {
 			  HttpHeaders &&response_headers,
 			  UnusedIstreamPtr response_body) noexcept override;
 };
-
-#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_HTTP_SERVER_HANDLER_HXX
-#define BENG_HTTP_SERVER_HANDLER_HXX
+#pragma once
 
 #include "http/Status.h"
 
@@ -45,41 +44,39 @@ class StopwatchPtr;
 
 class HttpServerConnectionHandler {
 public:
-    /**
-     * Called after the empty line after the last header has been
-     * parsed.  Several attributes can be evaluated (method, uri,
-     * headers; but not the body).  This can be used to collect
-     * metadata for LogHttpRequest().
-     */
-    virtual void RequestHeadersFinished(const IncomingHttpRequest &) noexcept {};
+	/**
+	 * Called after the empty line after the last header has been
+	 * parsed.  Several attributes can be evaluated (method, uri,
+	 * headers; but not the body).  This can be used to collect
+	 * metadata for LogHttpRequest().
+	 */
+	virtual void RequestHeadersFinished(const IncomingHttpRequest &) noexcept {};
 
-    virtual void HandleHttpRequest(IncomingHttpRequest &request,
-                                   const StopwatchPtr &parent_stopwatch,
-                                   CancellablePointer &cancel_ptr) noexcept = 0;
+	virtual void HandleHttpRequest(IncomingHttpRequest &request,
+				       const StopwatchPtr &parent_stopwatch,
+				       CancellablePointer &cancel_ptr) noexcept = 0;
 
-    /**
-     * @param length the number of response body (payload) bytes sent
-     * to our HTTP client, or negative if there was no response body
-     * (which is different from "empty response body")
-     * @param bytes_received the number of raw bytes received from our
-     * HTTP client
-     * @param bytes_sent the number of raw bytes sent to our HTTP
-     * client (which includes status line, headers and transport
-     * encoding overhead such as chunk headers)
-     */
-    virtual void LogHttpRequest(IncomingHttpRequest &request,
-                                http_status_t status, int64_t length,
-                                uint64_t bytes_received, uint64_t bytes_sent) noexcept = 0;
+	/**
+	 * @param length the number of response body (payload) bytes sent
+	 * to our HTTP client, or negative if there was no response body
+	 * (which is different from "empty response body")
+	 * @param bytes_received the number of raw bytes received from our
+	 * HTTP client
+	 * @param bytes_sent the number of raw bytes sent to our HTTP
+	 * client (which includes status line, headers and transport
+	 * encoding overhead such as chunk headers)
+	 */
+	virtual void LogHttpRequest(IncomingHttpRequest &request,
+				    http_status_t status, int64_t length,
+				    uint64_t bytes_received, uint64_t bytes_sent) noexcept = 0;
 
-    /**
-     * A fatal protocol level error has occurred, and the connection
-     * was closed.
-     *
-     * This will be called instead of HttpConnectionClosed().
-     */
-    virtual void HttpConnectionError(std::exception_ptr e) noexcept = 0;
+	/**
+	 * A fatal protocol level error has occurred, and the connection
+	 * was closed.
+	 *
+	 * This will be called instead of HttpConnectionClosed().
+	 */
+	virtual void HttpConnectionError(std::exception_ptr e) noexcept = 0;
 
-    virtual void HttpConnectionClosed() noexcept = 0;
+	virtual void HttpConnectionClosed() noexcept = 0;
 };
-
-#endif

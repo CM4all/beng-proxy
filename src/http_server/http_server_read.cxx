@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -53,141 +53,141 @@
 inline bool
 HttpServerConnection::ParseRequestLine(const char *line, size_t length)
 {
-    assert(request.read_state == Request::START);
-    assert(request.request == nullptr);
-    assert(!response.pending_drained);
+	assert(request.read_state == Request::START);
+	assert(request.request == nullptr);
+	assert(!response.pending_drained);
 
-    if (gcc_unlikely(length < 5)) {
-        ProtocolError("malformed request line");
-        return false;
-    }
+	if (gcc_unlikely(length < 5)) {
+		ProtocolError("malformed request line");
+		return false;
+	}
 
-    const char *eol = line + length;
+	const char *eol = line + length;
 
-    http_method_t method = HTTP_METHOD_NULL;
-    switch (line[0]) {
-    case 'D':
-        if (gcc_likely(line[1] == 'E' && line[2] == 'L' && line[3] == 'E' &&
-                       line[4] == 'T' && line[5] == 'E' && line[6] == ' ')) {
-            method = HTTP_METHOD_DELETE;
-            line += 7;
-        }
-        break;
+	http_method_t method = HTTP_METHOD_NULL;
+	switch (line[0]) {
+	case 'D':
+		if (gcc_likely(line[1] == 'E' && line[2] == 'L' && line[3] == 'E' &&
+			       line[4] == 'T' && line[5] == 'E' && line[6] == ' ')) {
+			method = HTTP_METHOD_DELETE;
+			line += 7;
+		}
+		break;
 
-    case 'G':
-        if (gcc_likely(line[1] == 'E' && line[2] == 'T' && line[3] == ' ')) {
-            method = HTTP_METHOD_GET;
-            line += 4;
-        }
-        break;
+	case 'G':
+		if (gcc_likely(line[1] == 'E' && line[2] == 'T' && line[3] == ' ')) {
+			method = HTTP_METHOD_GET;
+			line += 4;
+		}
+		break;
 
-    case 'P':
-        if (gcc_likely(line[1] == 'O' && line[2] == 'S' && line[3] == 'T' &&
-                       line[4] == ' ')) {
-            method = HTTP_METHOD_POST;
-            line += 5;
-        } else if (line[1] == 'U' && line[2] == 'T' && line[3] == ' ') {
-            method = HTTP_METHOD_PUT;
-            line += 4;
-        } else if (auto patch = StringAfterPrefix(line + 1, "ATCH ")) {
-            method = HTTP_METHOD_PATCH;
-            line = patch;
-        } else if (auto propfind = StringAfterPrefix(line + 1, "ROPFIND ")) {
-            method = HTTP_METHOD_PROPFIND;
-            line = propfind;
-        } else if (auto proppatch = StringAfterPrefix(line + 1, "ROPPATCH ")) {
-            method = HTTP_METHOD_PROPPATCH;
-            line = proppatch;
-        }
+	case 'P':
+		if (gcc_likely(line[1] == 'O' && line[2] == 'S' && line[3] == 'T' &&
+			       line[4] == ' ')) {
+			method = HTTP_METHOD_POST;
+			line += 5;
+		} else if (line[1] == 'U' && line[2] == 'T' && line[3] == ' ') {
+			method = HTTP_METHOD_PUT;
+			line += 4;
+		} else if (auto patch = StringAfterPrefix(line + 1, "ATCH ")) {
+			method = HTTP_METHOD_PATCH;
+			line = patch;
+		} else if (auto propfind = StringAfterPrefix(line + 1, "ROPFIND ")) {
+			method = HTTP_METHOD_PROPFIND;
+			line = propfind;
+		} else if (auto proppatch = StringAfterPrefix(line + 1, "ROPPATCH ")) {
+			method = HTTP_METHOD_PROPPATCH;
+			line = proppatch;
+		}
 
-        break;
+		break;
 
-    case 'R':
-        if (auto report = StringAfterPrefix(line + 1, "EPORT ")) {
-            method = HTTP_METHOD_REPORT;
-            line = report;
-        }
+	case 'R':
+		if (auto report = StringAfterPrefix(line + 1, "EPORT ")) {
+			method = HTTP_METHOD_REPORT;
+			line = report;
+		}
 
-        break;
+		break;
 
-    case 'H':
-        if (gcc_likely(line[1] == 'E' && line[2] == 'A' && line[3] == 'D' &&
-                       line[4] == ' ')) {
-            method = HTTP_METHOD_HEAD;
-            line += 5;
-        }
-        break;
+	case 'H':
+		if (gcc_likely(line[1] == 'E' && line[2] == 'A' && line[3] == 'D' &&
+			       line[4] == ' ')) {
+			method = HTTP_METHOD_HEAD;
+			line += 5;
+		}
+		break;
 
-    case 'O':
-        if (auto options = StringAfterPrefix(line + 1, "PTIONS ")) {
-            method = HTTP_METHOD_OPTIONS;
-            line = options;
-        }
-        break;
+	case 'O':
+		if (auto options = StringAfterPrefix(line + 1, "PTIONS ")) {
+			method = HTTP_METHOD_OPTIONS;
+			line = options;
+		}
+		break;
 
-    case 'T':
-        if (auto trace = StringAfterPrefix(line + 1, "RACE ")) {
-            method = HTTP_METHOD_TRACE;
-            line = trace;
-        }
-        break;
+	case 'T':
+		if (auto trace = StringAfterPrefix(line + 1, "RACE ")) {
+			method = HTTP_METHOD_TRACE;
+			line = trace;
+		}
+		break;
 
-    case 'M':
-        if (auto mkcol = StringAfterPrefix(line + 1, "KCOL ")) {
-            method = HTTP_METHOD_MKCOL;
-            line = mkcol;
-        } else if (auto move = StringAfterPrefix(line + 1, "OVE ")) {
-            method = HTTP_METHOD_MOVE;
-            line = move;
-        }
-        break;
+	case 'M':
+		if (auto mkcol = StringAfterPrefix(line + 1, "KCOL ")) {
+			method = HTTP_METHOD_MKCOL;
+			line = mkcol;
+		} else if (auto move = StringAfterPrefix(line + 1, "OVE ")) {
+			method = HTTP_METHOD_MOVE;
+			line = move;
+		}
+		break;
 
-    case 'C':
-        if (auto copy = StringAfterPrefix(line + 1, "OPY ")) {
-            method = HTTP_METHOD_COPY;
-            line = copy;
-        }
-        break;
+	case 'C':
+		if (auto copy = StringAfterPrefix(line + 1, "OPY ")) {
+			method = HTTP_METHOD_COPY;
+			line = copy;
+		}
+		break;
 
-    case 'L':
-        if (auto lock = StringAfterPrefix(line + 1, "OCK ")) {
-            method = HTTP_METHOD_LOCK;
-            line = lock;
-        }
-        break;
+	case 'L':
+		if (auto lock = StringAfterPrefix(line + 1, "OCK ")) {
+			method = HTTP_METHOD_LOCK;
+			line = lock;
+		}
+		break;
 
-    case 'U':
-        if (auto unlock = StringAfterPrefix(line + 1, "NLOCK ")) {
-            method = HTTP_METHOD_UNLOCK;
-            line = unlock;
-        }
-        break;
-    }
+	case 'U':
+		if (auto unlock = StringAfterPrefix(line + 1, "NLOCK ")) {
+			method = HTTP_METHOD_UNLOCK;
+			line = unlock;
+		}
+		break;
+	}
 
-    if (method == HTTP_METHOD_NULL) {
-        /* invalid request method */
+	if (method == HTTP_METHOD_NULL) {
+		/* invalid request method */
 
-        ProtocolError("unrecognized request method");
-        return false;
-    }
+		ProtocolError("unrecognized request method");
+		return false;
+	}
 
-    const char *space = (const char *)memchr(line, ' ', eol - line);
-    if (gcc_unlikely(space == nullptr || space + 6 > line + length ||
-                     memcmp(space + 1, "HTTP/", 5) != 0)) {
-        /* refuse HTTP 0.9 requests */
-        static const char msg[] =
-            "This server requires HTTP 1.1.";
+	const char *space = (const char *)memchr(line, ' ', eol - line);
+	if (gcc_unlikely(space == nullptr || space + 6 > line + length ||
+			 memcmp(space + 1, "HTTP/", 5) != 0)) {
+		/* refuse HTTP 0.9 requests */
+		static const char msg[] =
+			"This server requires HTTP 1.1.";
 
-        ssize_t nbytes = socket.Write(msg, sizeof(msg) - 1);
-        if (nbytes != WRITE_DESTROYED)
-            Done();
-        return false;
-    }
+		ssize_t nbytes = socket.Write(msg, sizeof(msg) - 1);
+		if (nbytes != WRITE_DESTROYED)
+			Done();
+		return false;
+	}
 
-    request.request = http_server_request_new(this, method, {line, space});
-    request.read_state = Request::HEADERS;
+	request.request = http_server_request_new(this, method, {line, space});
+	request.read_state = Request::HEADERS;
 
-    return true;
+	return true;
 }
 
 /**
@@ -196,103 +196,103 @@ HttpServerConnection::ParseRequestLine(const char *line, size_t length)
 inline bool
 HttpServerConnection::HeadersFinished()
 {
-    assert(request.body_state == Request::BodyState::START);
+	assert(request.body_state == Request::BodyState::START);
 
-    auto &r = *request.request;
-    r.stopwatch.RecordEvent("request_headers");
+	auto &r = *request.request;
+	r.stopwatch.RecordEvent("request_headers");
 
-    handler->RequestHeadersFinished(r);
+	handler->RequestHeadersFinished(r);
 
-    /* disable the idle+headers timeout; the request body timeout will
-       be tracked by filtered_socket (auto-refreshing) */
-    idle_timeout.Cancel();
+	/* disable the idle+headers timeout; the request body timeout will
+	   be tracked by filtered_socket (auto-refreshing) */
+	idle_timeout.Cancel();
 
-    const char *value = r.headers.Get("expect");
-    request.expect_100_continue = value != nullptr &&
-        strcmp(value, "100-continue") == 0;
-    request.expect_failed = value != nullptr &&
-        strcmp(value, "100-continue") != 0;
+	const char *value = r.headers.Get("expect");
+	request.expect_100_continue = value != nullptr &&
+		strcmp(value, "100-continue") == 0;
+	request.expect_failed = value != nullptr &&
+		strcmp(value, "100-continue") != 0;
 
-    value = r.headers.Get("connection");
+	value = r.headers.Get("connection");
 
-    /* we disable keep-alive support on ancient HTTP 1.0, because that
-       feature was not well-defined and led to problems with some
-       clients */
-    keep_alive = value == nullptr || !http_list_contains_i(value, "close");
+	/* we disable keep-alive support on ancient HTTP 1.0, because that
+	   feature was not well-defined and led to problems with some
+	   clients */
+	keep_alive = value == nullptr || !http_list_contains_i(value, "close");
 
-    const bool upgrade = http_is_upgrade(r.headers);
+	const bool upgrade = http_is_upgrade(r.headers);
 
-    value = r.headers.Get("transfer-encoding");
+	value = r.headers.Get("transfer-encoding");
 
-    Event::Duration read_timeout = http_server_read_timeout;
+	Event::Duration read_timeout = http_server_read_timeout;
 
-    off_t content_length = -1;
-    const bool chunked = value != nullptr && strcasecmp(value, "chunked") == 0;
-    if (!chunked) {
-        value = r.headers.Get("content-length");
+	off_t content_length = -1;
+	const bool chunked = value != nullptr && strcasecmp(value, "chunked") == 0;
+	if (!chunked) {
+		value = r.headers.Get("content-length");
 
-        if (upgrade) {
-            if (value != nullptr) {
-                ProtocolError("cannot upgrade with Content-Length request header");
-                return false;
-            }
+		if (upgrade) {
+			if (value != nullptr) {
+				ProtocolError("cannot upgrade with Content-Length request header");
+				return false;
+			}
 
-            /* disable timeout */
-            read_timeout = Event::Duration(-1);
+			/* disable timeout */
+			read_timeout = Event::Duration(-1);
 
-            /* forward incoming data as-is */
+			/* forward incoming data as-is */
 
-            keep_alive = false;
-        } else if (value == nullptr) {
-            /* no body at all */
+			keep_alive = false;
+		} else if (value == nullptr) {
+			/* no body at all */
 
-            request.read_state = Request::END;
+			request.read_state = Request::END;
 #ifndef NDEBUG
-            request.body_state = Request::BodyState::NONE;
+			request.body_state = Request::BodyState::NONE;
 #endif
 
-            return true;
-        } else {
-            char *endptr;
+			return true;
+		} else {
+			char *endptr;
 
-            content_length = strtoul(value, &endptr, 10);
-            if (gcc_unlikely(*endptr != 0 || content_length < 0)) {
-                ProtocolError("invalid Content-Length header in HTTP request");
-                return false;
-            }
+			content_length = strtoul(value, &endptr, 10);
+			if (gcc_unlikely(*endptr != 0 || content_length < 0)) {
+				ProtocolError("invalid Content-Length header in HTTP request");
+				return false;
+			}
 
-            if (content_length == 0) {
-                /* empty body */
+			if (content_length == 0) {
+				/* empty body */
 
-                r.body = istream_null_new(r.pool);
-                request.read_state = Request::END;
+				r.body = istream_null_new(r.pool);
+				request.read_state = Request::END;
 #ifndef NDEBUG
-                request.body_state = Request::BodyState::EMPTY;
+				request.body_state = Request::BodyState::EMPTY;
 #endif
 
-                return true;
-            }
-        }
-    } else if (upgrade) {
-        ProtocolError("cannot upgrade chunked request");
-        return false;
-    }
+				return true;
+			}
+		}
+	} else if (upgrade) {
+		ProtocolError("cannot upgrade chunked request");
+		return false;
+	}
 
-    request_body_reader = NewFromPool<RequestBodyReader>(r.pool, r.pool,
-                                                         *this);
-    r.body = request_body_reader->Init(GetEventLoop(), content_length,
-                                       chunked);
+	request_body_reader = NewFromPool<RequestBodyReader>(r.pool, r.pool,
+							     *this);
+	r.body = request_body_reader->Init(GetEventLoop(), content_length,
+					   chunked);
 
-    request.read_state = Request::BODY;
+	request.read_state = Request::BODY;
 #ifndef NDEBUG
-    request.body_state = Request::BodyState::READING;
+	request.body_state = Request::BodyState::READING;
 #endif
 
-    /* for the request body, the FilteredSocket class tracks
-       inactivity timeout */
-    socket.ScheduleReadTimeout(false, read_timeout);
+	/* for the request body, the FilteredSocket class tracks
+	   inactivity timeout */
+	socket.ScheduleReadTimeout(false, read_timeout);
 
-    return true;
+	return true;
 }
 
 /**
@@ -301,215 +301,215 @@ HttpServerConnection::HeadersFinished()
 inline bool
 HttpServerConnection::HandleLine(const char *line, size_t length)
 {
-    assert(request.read_state == Request::START ||
-           request.read_state == Request::HEADERS);
+	assert(request.read_state == Request::START ||
+	       request.read_state == Request::HEADERS);
 
-    if (length >= 8192) {
-        ProtocolError(StringFormat<64>("Request header is too large (%zu)",
-                                       length));
-        return false;
-    }
+	if (length >= 8192) {
+		ProtocolError(StringFormat<64>("Request header is too large (%zu)",
+					       length));
+		return false;
+	}
 
-    if (gcc_unlikely(request.read_state == Request::START)) {
-        assert(request.request == nullptr);
+	if (gcc_unlikely(request.read_state == Request::START)) {
+		assert(request.request == nullptr);
 
-        return ParseRequestLine(line, length);
-    } else if (gcc_likely(length > 0)) {
-        assert(request.read_state == Request::HEADERS);
-        assert(request.request != nullptr);
+		return ParseRequestLine(line, length);
+	} else if (gcc_likely(length > 0)) {
+		assert(request.read_state == Request::HEADERS);
+		assert(request.request != nullptr);
 
-        header_parse_line(request.request->pool,
-                          request.request->headers,
-                          {line, length});
-        return true;
-    } else {
-        assert(request.read_state == Request::HEADERS);
-        assert(request.request != nullptr);
+		header_parse_line(request.request->pool,
+				  request.request->headers,
+				  {line, length});
+		return true;
+	} else {
+		assert(request.read_state == Request::HEADERS);
+		assert(request.request != nullptr);
 
-        return HeadersFinished();
-    }
+		return HeadersFinished();
+	}
 }
 
 inline BufferedResult
 HttpServerConnection::FeedHeaders(const void *_data, size_t length)
 {
-    assert(request.read_state == Request::START ||
-           request.read_state == Request::HEADERS);
+	assert(request.read_state == Request::START ||
+	       request.read_state == Request::HEADERS);
 
-    if (request.bytes_received >= 64 * 1024) {
-        ProtocolError("too many request headers");
-        return BufferedResult::CLOSED;
-    }
+	if (request.bytes_received >= 64 * 1024) {
+		ProtocolError("too many request headers");
+		return BufferedResult::CLOSED;
+	}
 
-    const char *const buffer = (const char *)_data;
-    const char *const buffer_end = buffer + length;
-    const char *start = buffer, *end, *next = nullptr;
-    while ((end = (const char *)memchr(start, '\n',
-                                       buffer_end - start)) != nullptr) {
-        next = end + 1;
+	const char *const buffer = (const char *)_data;
+	const char *const buffer_end = buffer + length;
+	const char *start = buffer, *end, *next = nullptr;
+	while ((end = (const char *)memchr(start, '\n',
+					   buffer_end - start)) != nullptr) {
+		next = end + 1;
 
-        end = StripRight(start, end);
+		end = StripRight(start, end);
 
-        if (!HandleLine(start, end - start))
-            return BufferedResult::CLOSED;
+		if (!HandleLine(start, end - start))
+			return BufferedResult::CLOSED;
 
-        if (request.read_state != Request::HEADERS)
-            break;
+		if (request.read_state != Request::HEADERS)
+			break;
 
-        start = next;
-    }
+		start = next;
+	}
 
-    size_t consumed = 0;
-    if (next != nullptr) {
-        consumed = next - buffer;
-        request.bytes_received += consumed;
-        socket.DisposeConsumed(consumed);
-    }
+	size_t consumed = 0;
+	if (next != nullptr) {
+		consumed = next - buffer;
+		request.bytes_received += consumed;
+		socket.DisposeConsumed(consumed);
+	}
 
-    return request.read_state == Request::HEADERS
-        ? BufferedResult::MORE
-        : BufferedResult::OK;
+	return request.read_state == Request::HEADERS
+		? BufferedResult::MORE
+		: BufferedResult::OK;
 }
 
 inline bool
 HttpServerConnection::SubmitRequest()
 {
-    if (request.read_state == Request::END)
-        /* re-enable the event, to detect client disconnect while
-           we're processing the request */
-        socket.ScheduleReadNoTimeout(false);
+	if (request.read_state == Request::END)
+		/* re-enable the event, to detect client disconnect while
+		   we're processing the request */
+		socket.ScheduleReadNoTimeout(false);
 
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 
-    if (request.expect_failed) {
-        request.request->body.Clear();
-        request.request->SendMessage(HTTP_STATUS_EXPECTATION_FAILED,
-                                     "Unrecognized expectation");
-        if (destructed)
-            return false;
-    } else {
-        request.in_handler = true;
-        handler->HandleHttpRequest(*request.request,
-                                   request.request->stopwatch,
-                                   request.cancel_ptr);
-        if (destructed)
-            return false;
+	if (request.expect_failed) {
+		request.request->body.Clear();
+		request.request->SendMessage(HTTP_STATUS_EXPECTATION_FAILED,
+					     "Unrecognized expectation");
+		if (destructed)
+			return false;
+	} else {
+		request.in_handler = true;
+		handler->HandleHttpRequest(*request.request,
+					   request.request->stopwatch,
+					   request.cancel_ptr);
+		if (destructed)
+			return false;
 
-        request.in_handler = false;
-    }
+		request.in_handler = false;
+	}
 
-    return true;
+	return true;
 }
 
 BufferedResult
 HttpServerConnection::Feed(const void *data, size_t length)
 {
-    assert(!response.pending_drained);
+	assert(!response.pending_drained);
 
-    switch (request.read_state) {
-        BufferedResult result;
+	switch (request.read_state) {
+		BufferedResult result;
 
-    case Request::START:
-        if (score == HTTP_SERVER_NEW)
-            score = HTTP_SERVER_FIRST;
+	case Request::START:
+		if (score == HTTP_SERVER_NEW)
+			score = HTTP_SERVER_FIRST;
 
 #if !GCC_OLDER_THAN(7,0)
-        [[fallthrough]];
+		[[fallthrough]];
 #endif
 
-    case Request::HEADERS:
-        result = FeedHeaders(data, length);
-        if (result == BufferedResult::OK &&
-            (request.read_state == Request::BODY ||
-             request.read_state == Request::END)) {
-            if (request.read_state == Request::BODY)
-                result = request_body_reader->RequireMore()
-                    ? BufferedResult::AGAIN_EXPECT
-                    : BufferedResult::AGAIN_OPTIONAL;
+	case Request::HEADERS:
+		result = FeedHeaders(data, length);
+		if (result == BufferedResult::OK &&
+		    (request.read_state == Request::BODY ||
+		     request.read_state == Request::END)) {
+			if (request.read_state == Request::BODY)
+				result = request_body_reader->RequireMore()
+					? BufferedResult::AGAIN_EXPECT
+					: BufferedResult::AGAIN_OPTIONAL;
 
-            if (!SubmitRequest())
-                result = BufferedResult::CLOSED;
-        }
+			if (!SubmitRequest())
+				result = BufferedResult::CLOSED;
+		}
 
-        return result;
+		return result;
 
-    case Request::BODY:
-        return FeedRequestBody(data, length);
+	case Request::BODY:
+		return FeedRequestBody(data, length);
 
-    case Request::END:
-        /* check if the connection was closed by the client while we
-           were processing the request */
+	case Request::END:
+		/* check if the connection was closed by the client while we
+		   were processing the request */
 
-        if (socket.IsFull())
-            /* the buffer is full, the peer has been pipelining too
-               much - that would disallow us to detect a disconnect;
-               let's disable keep-alive now and discard all data */
-            keep_alive = false;
+		if (socket.IsFull())
+			/* the buffer is full, the peer has been pipelining too
+			   much - that would disallow us to detect a disconnect;
+			   let's disable keep-alive now and discard all data */
+			keep_alive = false;
 
-        if (!keep_alive) {
-            /* discard all pipelined input when keep-alive has been
-               disabled */
-            socket.DisposeConsumed(length);
-            return BufferedResult::OK;
-        }
+		if (!keep_alive) {
+			/* discard all pipelined input when keep-alive has been
+			   disabled */
+			socket.DisposeConsumed(length);
+			return BufferedResult::OK;
+		}
 
-        return BufferedResult::MORE;
-    }
+		return BufferedResult::MORE;
+	}
 
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }
 
 DirectResult
 HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type)
 {
-    assert(IsValid());
-    assert(request.read_state == Request::BODY);
-    assert(!response.pending_drained);
+	assert(IsValid());
+	assert(request.read_state == Request::BODY);
+	assert(!response.pending_drained);
 
-    if (!MaybeSend100Continue())
-        return DirectResult::CLOSED;
+	if (!MaybeSend100Continue())
+		return DirectResult::CLOSED;
 
-    ssize_t nbytes = request_body_reader->TryDirect(fd, fd_type);
-    if (nbytes == ISTREAM_RESULT_BLOCKING)
-        /* the destination fd blocks */
-        return DirectResult::BLOCKING;
+	ssize_t nbytes = request_body_reader->TryDirect(fd, fd_type);
+	if (nbytes == ISTREAM_RESULT_BLOCKING)
+		/* the destination fd blocks */
+		return DirectResult::BLOCKING;
 
-    if (nbytes == ISTREAM_RESULT_CLOSED)
-        /* the stream (and the whole connection) has been closed
-           during the direct() callback (-3); no further checks */
-        return DirectResult::CLOSED;
+	if (nbytes == ISTREAM_RESULT_CLOSED)
+		/* the stream (and the whole connection) has been closed
+		   during the direct() callback (-3); no further checks */
+		return DirectResult::CLOSED;
 
-    if (nbytes < 0) {
-        if (errno == EAGAIN)
-            return DirectResult::EMPTY;
+	if (nbytes < 0) {
+		if (errno == EAGAIN)
+			return DirectResult::EMPTY;
 
-        return DirectResult::ERRNO;
-    }
+		return DirectResult::ERRNO;
+	}
 
-    if (nbytes == ISTREAM_RESULT_EOF)
-        return DirectResult::END;
+	if (nbytes == ISTREAM_RESULT_EOF)
+		return DirectResult::END;
 
-    request.bytes_received += nbytes;
+	request.bytes_received += nbytes;
 
-    if (request_body_reader->IsEOF()) {
-        request.read_state = Request::END;
+	if (request_body_reader->IsEOF()) {
+		request.read_state = Request::END;
 #ifndef NDEBUG
-        request.body_state = Request::BodyState::CLOSED;
+		request.body_state = Request::BodyState::CLOSED;
 #endif
 
-        const DestructObserver destructed(*this);
-        request_body_reader->DestroyEof();
-        return destructed
-            ? DirectResult::CLOSED
-            : DirectResult::OK;
-    } else {
-        return DirectResult::OK;
-    }
+		const DestructObserver destructed(*this);
+		request_body_reader->DestroyEof();
+		return destructed
+			? DirectResult::CLOSED
+			: DirectResult::OK;
+	} else {
+		return DirectResult::OK;
+	}
 }
 
 void
 HttpServerConnection::OnDeferredRead() noexcept
 {
-    socket.Read(false);
+	socket.Read(false);
 }

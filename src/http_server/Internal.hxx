@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __BENG_HTTP_SERVER_INTERNAL_H
-#define __BENG_HTTP_SERVER_INTERNAL_H
+#pragma once
 
 #include "Error.hxx"
 #include "http_server.hxx"
@@ -49,322 +48,322 @@
 #include "util/Exception.hxx"
 
 struct HttpServerConnection final
-    : BufferedSocketHandler, IstreamHandler, DestructAnchor {
+	: BufferedSocketHandler, IstreamHandler, DestructAnchor {
 
-    enum class BucketResult {
-        /**
-         * No data is avaiable right now.  Maybe the #Istream doesn't
-         * support FillBucketList().
-         */
-        UNAVAILABLE,
+	enum class BucketResult {
+		/**
+		 * No data is avaiable right now.  Maybe the #Istream doesn't
+		 * support FillBucketList().
+		 */
+		UNAVAILABLE,
 
-        /**
-         * More data will be available later.
-         */
-        MORE,
+		/**
+		 * More data will be available later.
+		 */
+		MORE,
 
-        /**
-         * Writing to our socket blocks.
-         */
-        BLOCKING,
+		/**
+		 * Writing to our socket blocks.
+		 */
+		BLOCKING,
 
-        /**
-         * The #Istream is now empty.
-         */
-        DEPLETED,
+		/**
+		 * The #Istream is now empty.
+		 */
+		DEPLETED,
 
-        /**
-         * This object has been destroyed inside the function.
-         */
-        DESTROYED,
-    };
+		/**
+		 * This object has been destroyed inside the function.
+		 */
+		DESTROYED,
+	};
 
-    struct RequestBodyReader : HttpBodyReader {
-        HttpServerConnection &connection;
+	struct RequestBodyReader : HttpBodyReader {
+		HttpServerConnection &connection;
 
-        RequestBodyReader(struct pool &_pool,
-                          HttpServerConnection &_connection)
-            :HttpBodyReader(_pool),
-             connection(_connection) {}
+		RequestBodyReader(struct pool &_pool,
+				  HttpServerConnection &_connection)
+			:HttpBodyReader(_pool),
+			 connection(_connection) {}
 
-        /* virtual methods from class Istream */
+		/* virtual methods from class Istream */
 
-        off_t _GetAvailable(bool partial) noexcept override;
-        void _Read() noexcept override;
-        void _Close() noexcept override;
-    };
+		off_t _GetAvailable(bool partial) noexcept override;
+		void _Read() noexcept override;
+		void _Close() noexcept override;
+	};
 
-    struct pool *const pool;
+	struct pool *const pool;
 
-    /* I/O */
-    FilteredSocket socket;
+	/* I/O */
+	FilteredSocket socket;
 
-    /**
-     * Track the total time for idle periods plus receiving all
-     * headers from the client.  Unlike the #filtered_socket read
-     * timeout, it is not refreshed after receiving some header data.
-     */
-    TimerEvent idle_timeout;
+	/**
+	 * Track the total time for idle periods plus receiving all
+	 * headers from the client.  Unlike the #filtered_socket read
+	 * timeout, it is not refreshed after receiving some header data.
+	 */
+	TimerEvent idle_timeout;
 
-    DeferEvent defer_read;
+	DeferEvent defer_read;
 
-    enum http_server_score score = HTTP_SERVER_NEW;
+	enum http_server_score score = HTTP_SERVER_NEW;
 
-    /* handler */
-    HttpServerConnectionHandler *handler;
+	/* handler */
+	HttpServerConnectionHandler *handler;
 
-    /* info */
+	/* info */
 
-    const SocketAddress local_address, remote_address;
+	const SocketAddress local_address, remote_address;
 
-    const char *const local_host_and_port;
-    const char *const remote_host;
+	const char *const local_host_and_port;
+	const char *const remote_host;
 
-    /* request */
-    struct Request {
-        enum {
-            /** there is no request (yet); waiting for the request
-                line */
-            START,
+	/* request */
+	struct Request {
+		enum {
+			/** there is no request (yet); waiting for the request
+			    line */
+			START,
 
-            /** parsing request headers; waiting for empty line */
-            HEADERS,
+			/** parsing request headers; waiting for empty line */
+			HEADERS,
 
-            /** reading the request body */
-            BODY,
+			/** reading the request body */
+			BODY,
 
-            /** the request has been consumed, and we are going to send the response */
-            END
-        } read_state = START;
+			/** the request has been consumed, and we are going to send the response */
+			END
+		} read_state = START;
 
 #ifndef NDEBUG
-        enum class BodyState {
-            START,
-            NONE,
-            EMPTY,
-            READING,
-            CLOSED,
-        } body_state = BodyState::START;
+		enum class BodyState {
+			START,
+			NONE,
+			EMPTY,
+			READING,
+			CLOSED,
+		} body_state = BodyState::START;
 #endif
 
-        /**
-         * This flag is true if we are currently calling the HTTP
-         * request handler.  During this period,
-         * http_server_request_stream_read() does nothing, to prevent
-         * recursion.
-         */
-        bool in_handler;
+		/**
+		 * This flag is true if we are currently calling the HTTP
+		 * request handler.  During this period,
+		 * http_server_request_stream_read() does nothing, to prevent
+		 * recursion.
+		 */
+		bool in_handler;
 
-        /** did the client send an "Expect: 100-continue" header? */
-        bool expect_100_continue;
+		/** did the client send an "Expect: 100-continue" header? */
+		bool expect_100_continue;
 
-        /** send a "417 Expectation Failed" response? */
-        bool expect_failed;
+		/** send a "417 Expectation Failed" response? */
+		bool expect_failed;
 
-        HttpServerRequest *request = nullptr;
+		HttpServerRequest *request = nullptr;
 
-        CancellablePointer cancel_ptr;
+		CancellablePointer cancel_ptr;
 
-        uint64_t bytes_received = 0;
-    } request;
+		uint64_t bytes_received = 0;
+	} request;
 
-    /** the request body reader; this variable is only valid if
-        read_state==READ_BODY */
-    RequestBodyReader *request_body_reader;
+	/** the request body reader; this variable is only valid if
+	    read_state==READ_BODY */
+	RequestBodyReader *request_body_reader;
 
-    /** the response; this struct is only valid if
-        read_state==READ_BODY||read_state==READ_END */
-    struct Response {
-        bool want_write;
+	/** the response; this struct is only valid if
+	    read_state==READ_BODY||read_state==READ_END */
+	struct Response {
+		bool want_write;
 
-        /**
-         * Are we currently waiting for all output buffers to be
-         * drained, before we can close the socket?
-         *
-         * @see BufferedSocketHandler::drained
-         * @see http_server_socket_drained()
-         */
-        bool pending_drained = false;
+		/**
+		 * Are we currently waiting for all output buffers to be
+		 * drained, before we can close the socket?
+		 *
+		 * @see BufferedSocketHandler::drained
+		 * @see http_server_socket_drained()
+		 */
+		bool pending_drained = false;
 
-        http_status_t status;
-        char status_buffer[64];
-        char content_length_buffer[32];
-        IstreamPointer istream;
-        off_t length;
+		http_status_t status;
+		char status_buffer[64];
+		char content_length_buffer[32];
+		IstreamPointer istream;
+		off_t length;
 
-        uint64_t bytes_sent = 0;
+		uint64_t bytes_sent = 0;
 
-        Response()
-            :istream(nullptr) {}
-    } response;
+		Response()
+			:istream(nullptr) {}
+	} response;
 
-    bool date_header;
+	bool date_header;
 
-    /* connection settings */
-    bool keep_alive;
+	/* connection settings */
+	bool keep_alive;
 
-    HttpServerConnection(struct pool &_pool,
-                         EventLoop &_loop,
-                         UniqueSocketDescriptor &&fd, FdType fd_type,
-                         SocketFilterPtr &&filter,
-                         SocketAddress _local_address,
-                         SocketAddress _remote_address,
-                         bool _date_header,
-                         HttpServerConnectionHandler &_handler);
+	HttpServerConnection(struct pool &_pool,
+			     EventLoop &_loop,
+			     UniqueSocketDescriptor &&fd, FdType fd_type,
+			     SocketFilterPtr &&filter,
+			     SocketAddress _local_address,
+			     SocketAddress _remote_address,
+			     bool _date_header,
+			     HttpServerConnectionHandler &_handler);
 
-    void Delete() noexcept;
+	void Delete() noexcept;
 
-    EventLoop &GetEventLoop() {
-        return defer_read.GetEventLoop();
-    }
+	EventLoop &GetEventLoop() {
+		return defer_read.GetEventLoop();
+	}
 
-    gcc_pure
-    bool IsValid() const {
-        return socket.IsValid() && socket.IsConnected();
-    }
+	gcc_pure
+	bool IsValid() const {
+		return socket.IsValid() && socket.IsConnected();
+	}
 
-    void IdleTimeoutCallback() noexcept;
+	void IdleTimeoutCallback() noexcept;
 
-    void Log() noexcept;
+	void Log() noexcept;
 
-    void OnDeferredRead() noexcept;
+	void OnDeferredRead() noexcept;
 
-    /**
-     * @return false if the connection has been closed
-     */
-    bool ParseRequestLine(const char *line, size_t length);
+	/**
+	 * @return false if the connection has been closed
+	 */
+	bool ParseRequestLine(const char *line, size_t length);
 
-    /**
-     * @return false if the connection has been closed
-     */
-    bool HeadersFinished();
+	/**
+	 * @return false if the connection has been closed
+	 */
+	bool HeadersFinished();
 
-    /**
-     * @return false if the connection has been closed
-     */
-    bool HandleLine(const char *line, size_t length);
+	/**
+	 * @return false if the connection has been closed
+	 */
+	bool HandleLine(const char *line, size_t length);
 
-    BufferedResult FeedHeaders(const void *_data, size_t length);
+	BufferedResult FeedHeaders(const void *_data, size_t length);
 
-    /**
-     * @return false if the connection has been closed
-     */
-    bool SubmitRequest();
+	/**
+	 * @return false if the connection has been closed
+	 */
+	bool SubmitRequest();
 
-    /**
-     * @return false if the connection has been closed
-     */
-    BufferedResult Feed(const void *data, size_t size);
+	/**
+	 * @return false if the connection has been closed
+	 */
+	BufferedResult Feed(const void *data, size_t size);
 
-    /**
-     * Send data from the input buffer to the request body istream
-     * handler.
-     */
-    BufferedResult FeedRequestBody(const void *data, size_t size);
+	/**
+	 * Send data from the input buffer to the request body istream
+	 * handler.
+	 */
+	BufferedResult FeedRequestBody(const void *data, size_t size);
 
-    /**
-     * Attempt a "direct" transfer of the request body.  Caller must
-     * hold an additional pool reference.
-     */
-    DirectResult TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type);
+	/**
+	 * Attempt a "direct" transfer of the request body.  Caller must
+	 * hold an additional pool reference.
+	 */
+	DirectResult TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type);
 
-    /**
-     * The request body is not needed anymore.  This method discards
-     * it.  If it is not possible to discard it properly, this method
-     * disables keep-alive so the connection will be closed as soon as
-     * the response has been sent, forcibly disposing the request
-     * body.
-     */
-    void DiscardRequestBody() noexcept;
+	/**
+	 * The request body is not needed anymore.  This method discards
+	 * it.  If it is not possible to discard it properly, this method
+	 * disables keep-alive so the connection will be closed as soon as
+	 * the response has been sent, forcibly disposing the request
+	 * body.
+	 */
+	void DiscardRequestBody() noexcept;
 
-    /**
-     * @return false if the connection has been closed
-     */
-    bool MaybeSend100Continue();
+	/**
+	 * @return false if the connection has been closed
+	 */
+	bool MaybeSend100Continue();
 
-    void SetResponseIstream(UnusedIstreamPtr r);
+	void SetResponseIstream(UnusedIstreamPtr r);
 
-    /**
-     * To be called after the response istream has seen end-of-file,
-     * and has been destroyed.
-     *
-     * @return false if the connection has been closed
-     */
-    bool ResponseIstreamFinished();
+	/**
+	 * To be called after the response istream has seen end-of-file,
+	 * and has been destroyed.
+	 *
+	 * @return false if the connection has been closed
+	 */
+	bool ResponseIstreamFinished();
 
-    void SubmitResponse(http_status_t status,
-                        HttpHeaders &&headers,
-                        UnusedIstreamPtr body);
+	void SubmitResponse(http_status_t status,
+			    HttpHeaders &&headers,
+			    UnusedIstreamPtr body);
 
-    void ScheduleWrite() {
-        response.want_write = true;
-        socket.ScheduleWrite();
-    }
+	void ScheduleWrite() {
+		response.want_write = true;
+		socket.ScheduleWrite();
+	}
 
-    /**
-     * @return false if the connection has been closed
-     */
-    bool TryWrite() noexcept;
-    BucketResult TryWriteBuckets2();
-    BucketResult TryWriteBuckets() noexcept;
+	/**
+	 * @return false if the connection has been closed
+	 */
+	bool TryWrite() noexcept;
+	BucketResult TryWriteBuckets2();
+	BucketResult TryWriteBuckets() noexcept;
 
-    void CloseRequest() noexcept;
+	void CloseRequest() noexcept;
 
-    /**
-     * The last response on this connection is finished, and it should
-     * be closed.
-     */
-    void Done() noexcept;
+	/**
+	 * The last response on this connection is finished, and it should
+	 * be closed.
+	 */
+	void Done() noexcept;
 
-    /**
-     * The peer has closed the socket.
-     */
-    void Cancel() noexcept;
+	/**
+	 * The peer has closed the socket.
+	 */
+	void Cancel() noexcept;
 
-    /**
-     * A fatal error has occurred, and the connection should be closed
-     * immediately, without sending any further information to the
-     * client.  This invokes
-     * HttpServerConnectionHandler::HttpConnectionError(), but not
-     * HttpServerConnectionHandler::HttpConnectionClosed().
-     */
-    void Error(std::exception_ptr e) noexcept;
+	/**
+	 * A fatal error has occurred, and the connection should be closed
+	 * immediately, without sending any further information to the
+	 * client.  This invokes
+	 * HttpServerConnectionHandler::HttpConnectionError(), but not
+	 * HttpServerConnectionHandler::HttpConnectionClosed().
+	 */
+	void Error(std::exception_ptr e) noexcept;
 
-    void Error(const char *msg) noexcept;
+	void Error(const char *msg) noexcept;
 
-    void SocketErrorErrno(const char *msg) noexcept;
+	void SocketErrorErrno(const char *msg) noexcept;
 
-    template<typename T>
-    void SocketError(T &&t) noexcept {
-        try {
-            ThrowException(std::forward<T>(t));
-        } catch (...) {
-            Error(std::make_exception_ptr(HttpServerSocketError()));
-        }
-    }
+	template<typename T>
+	void SocketError(T &&t) noexcept {
+		try {
+			ThrowException(std::forward<T>(t));
+		} catch (...) {
+			Error(std::make_exception_ptr(HttpServerSocketError()));
+		}
+	}
 
-    void SocketError(const char *msg) noexcept {
-        SocketError(std::runtime_error(msg));
-    }
+	void SocketError(const char *msg) noexcept {
+		SocketError(std::runtime_error(msg));
+	}
 
-    void ProtocolError(const char *msg) noexcept {
-        Error(std::make_exception_ptr(SocketProtocolError(msg)));
-    }
+	void ProtocolError(const char *msg) noexcept {
+		Error(std::make_exception_ptr(SocketProtocolError(msg)));
+	}
 
-    /* virtual methods from class BufferedSocketHandler */
-    BufferedResult OnBufferedData() override;
-    DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
-    bool OnBufferedClosed() noexcept override;
-    bool OnBufferedWrite() override;
-    bool OnBufferedDrained() noexcept override;
-    void OnBufferedError(std::exception_ptr e) noexcept override;
+	/* virtual methods from class BufferedSocketHandler */
+	BufferedResult OnBufferedData() override;
+	DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
+	bool OnBufferedClosed() noexcept override;
+	bool OnBufferedWrite() override;
+	bool OnBufferedDrained() noexcept override;
+	void OnBufferedError(std::exception_ptr e) noexcept override;
 
-    /* virtual methods from class IstreamHandler */
-    bool OnIstreamReady() noexcept override;
-    size_t OnData(const void *data, size_t length) noexcept override;
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
-    void OnEof() noexcept override;
-    void OnError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class IstreamHandler */
+	bool OnIstreamReady() noexcept override;
+	size_t OnData(const void *data, size_t length) noexcept override;
+	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
 };
 
 /**
@@ -385,7 +384,5 @@ extern const Event::Duration http_server_write_timeout;
 
 HttpServerRequest *
 http_server_request_new(HttpServerConnection *connection,
-                        http_method_t method,
-                        StringView uri) noexcept;
-
-#endif
+			http_method_t method,
+			StringView uri) noexcept;
