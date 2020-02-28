@@ -39,6 +39,7 @@
 #include "util/Cast.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/HexFormat.h"
+#include "util/StringView.hxx"
 
 #include <algorithm>
 
@@ -355,7 +356,12 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 			throw;
 		}
 
+		bool generate_end = sub.GetTotalBufferSize() >= missing_from_current_chunk;
+
 		list.SpliceBuffersFrom(sub, missing_from_current_chunk);
+
+		if (generate_end)
+			list.Push(StringView("\r\n").ToVoid());
 	}
 
 	list.SetMore();
@@ -379,16 +385,22 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		nbytes -= size;
 		total += size;
 
-		if (nbytes > 0)
-			input.ClearAndClose();
-
 		missing_from_current_chunk -= size;
 		if (missing_from_current_chunk == 0) {
 			/* a chunk ends with "\r\n" */
 			char *p = SetBuffer(2);
 			p[0] = '\r';
 			p[1] = '\n';
+
+			size = ConsumeBuffer(nbytes);
+			nbytes -= size;
+			total += size;
 		}
+
+		if (nbytes > 0)
+			/* if data still remains, then our input must
+			   have reached end-of-file */
+			input.ClearAndClose();
 	}
 
 	return total;
