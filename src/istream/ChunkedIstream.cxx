@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -46,197 +46,197 @@
 #include <string.h>
 
 class ChunkedIstream final : public FacadeIstream, DestructAnchor {
-    /**
-     * This flag is true while writing the buffer inside _Read().
-     * OnData() will check it, and refuse to accept more data from the
-     * input.  This avoids writing the buffer recursively.
-     */
-    bool writing_buffer = false;
+	/**
+	 * This flag is true while writing the buffer inside _Read().
+	 * OnData() will check it, and refuse to accept more data from the
+	 * input.  This avoids writing the buffer recursively.
+	 */
+	bool writing_buffer = false;
 
-    char buffer[7];
-    size_t buffer_sent = sizeof(buffer);
+	char buffer[7];
+	size_t buffer_sent = sizeof(buffer);
 
-    size_t missing_from_current_chunk = 0;
+	size_t missing_from_current_chunk = 0;
 
 public:
-    ChunkedIstream(struct pool &p, UnusedIstreamPtr &&_input) noexcept
-        :FacadeIstream(p, std::move(_input)) {}
+	ChunkedIstream(struct pool &p, UnusedIstreamPtr &&_input) noexcept
+		:FacadeIstream(p, std::move(_input)) {}
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    void _Read() noexcept override;
-    void _FillBucketList(IstreamBucketList &list) override;
-    size_t _ConsumeBucketList(size_t nbytes) noexcept override;
-    void _Close() noexcept override;
+	void _Read() noexcept override;
+	void _FillBucketList(IstreamBucketList &list) override;
+	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
+	void _Close() noexcept override;
 
-    /* virtual methods from class IstreamHandler */
+	/* virtual methods from class IstreamHandler */
 
-    bool OnIstreamReady() noexcept override {
-        return InvokeReady();
-    }
+	bool OnIstreamReady() noexcept override {
+		return InvokeReady();
+	}
 
-    size_t OnData(const void *data, size_t length) noexcept override;
-    void OnEof() noexcept override;
-    void OnError(std::exception_ptr ep) noexcept override;
+	size_t OnData(const void *data, size_t length) noexcept override;
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
 
 private:
-    bool IsBufferEmpty() const noexcept {
-        assert(buffer_sent <= sizeof(buffer));
+	bool IsBufferEmpty() const noexcept {
+		assert(buffer_sent <= sizeof(buffer));
 
-        return buffer_sent == sizeof(buffer);
-    }
+		return buffer_sent == sizeof(buffer);
+	}
 
-    /** set the buffer length and return a pointer to the first byte */
-    char *SetBuffer(size_t length) noexcept {
-        assert(IsBufferEmpty());
-        assert(length <= sizeof(buffer));
+	/** set the buffer length and return a pointer to the first byte */
+	char *SetBuffer(size_t length) noexcept {
+		assert(IsBufferEmpty());
+		assert(length <= sizeof(buffer));
 
-        buffer_sent = sizeof(buffer) - length;
-        return buffer + buffer_sent;
-    }
+		buffer_sent = sizeof(buffer) - length;
+		return buffer + buffer_sent;
+	}
 
-    /** append data to the buffer */
-    void AppendToBuffer(const void *data, size_t length) noexcept;
+	/** append data to the buffer */
+	void AppendToBuffer(const void *data, size_t length) noexcept;
 
-    void StartChunk(size_t length) noexcept;
+	void StartChunk(size_t length) noexcept;
 
-    ConstBuffer<void> ReadBuffer() noexcept {
-        return { buffer + buffer_sent, sizeof(buffer) - buffer_sent };
-    }
+	ConstBuffer<void> ReadBuffer() noexcept {
+		return { buffer + buffer_sent, sizeof(buffer) - buffer_sent };
+	}
 
-    /**
-     * Returns true if the buffer is consumed.
-     */
-    bool SendBuffer() noexcept;
+	/**
+	 * Returns true if the buffer is consumed.
+	 */
+	bool SendBuffer() noexcept;
 
-    /**
-     * Wrapper for SendBuffer() that sets and clears the
-     * #writing_buffer flag.  This requires acquiring a pool reference
-     * to do that safely.
-     *
-     * @return true if the buffer is consumed.
-     */
-    bool SendBuffer2() noexcept;
+	/**
+	 * Wrapper for SendBuffer() that sets and clears the
+	 * #writing_buffer flag.  This requires acquiring a pool reference
+	 * to do that safely.
+	 *
+	 * @return true if the buffer is consumed.
+	 */
+	bool SendBuffer2() noexcept;
 
-    size_t Feed(const char *data, size_t length) noexcept;
+	size_t Feed(const char *data, size_t length) noexcept;
 };
 
 void
 ChunkedIstream::AppendToBuffer(const void *data, size_t length) noexcept
 {
-    assert(data != nullptr);
-    assert(length > 0);
-    assert(length <= buffer_sent);
+	assert(data != nullptr);
+	assert(length > 0);
+	assert(length <= buffer_sent);
 
-    const auto old = ReadBuffer();
+	const auto old = ReadBuffer();
 
 #ifndef NDEBUG
-    /* simulate a buffer reset; if we don't do this, an assertion in
-       SetBuffer() fails (which is invalid for this special case) */
-    buffer_sent = sizeof(buffer);
+	/* simulate a buffer reset; if we don't do this, an assertion in
+	   SetBuffer() fails (which is invalid for this special case) */
+	buffer_sent = sizeof(buffer);
 #endif
 
-    auto dest = SetBuffer(old.size + length);
-    memmove(dest, old.data, old.size);
-    dest += old.size;
+	auto dest = SetBuffer(old.size + length);
+	memmove(dest, old.data, old.size);
+	dest += old.size;
 
-    memcpy(dest, data, length);
+	memcpy(dest, data, length);
 }
 
 void
 ChunkedIstream::StartChunk(size_t length) noexcept
 {
-    assert(length > 0);
-    assert(IsBufferEmpty());
-    assert(missing_from_current_chunk == 0);
+	assert(length > 0);
+	assert(IsBufferEmpty());
+	assert(missing_from_current_chunk == 0);
 
-    if (length > 0x8000)
-        /* maximum chunk size is 32kB for now */
-        length = 0x8000;
+	if (length > 0x8000)
+		/* maximum chunk size is 32kB for now */
+		length = 0x8000;
 
-    missing_from_current_chunk = length;
+	missing_from_current_chunk = length;
 
-    auto p = SetBuffer(6);
-    format_uint16_hex_fixed(p, (uint16_t)length);
-    p[4] = '\r';
-    p[5] = '\n';
+	auto p = SetBuffer(6);
+	format_uint16_hex_fixed(p, (uint16_t)length);
+	p[4] = '\r';
+	p[5] = '\n';
 }
 
 bool
 ChunkedIstream::SendBuffer() noexcept
 {
-    auto r = ReadBuffer();
-    if (r.empty())
-        return true;
+	auto r = ReadBuffer();
+	if (r.empty())
+		return true;
 
-    size_t nbytes = InvokeData(r.data, r.size);
-    if (nbytes > 0)
-        buffer_sent += nbytes;
+	size_t nbytes = InvokeData(r.data, r.size);
+	if (nbytes > 0)
+		buffer_sent += nbytes;
 
-    return nbytes == r.size;
+	return nbytes == r.size;
 }
 
 bool
 ChunkedIstream::SendBuffer2() noexcept
 {
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 
-    assert(!writing_buffer);
-    writing_buffer = true;
+	assert(!writing_buffer);
+	writing_buffer = true;
 
-    const bool result = SendBuffer();
-    if (!destructed)
-        writing_buffer = false;
-    return result;
+	const bool result = SendBuffer();
+	if (!destructed)
+		writing_buffer = false;
+	return result;
 }
 
 inline size_t
 ChunkedIstream::Feed(const char *data, size_t length) noexcept
 {
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 
-    size_t total = 0, rest, nbytes;
+	size_t total = 0, rest, nbytes;
 
-    assert(input.IsDefined());
+	assert(input.IsDefined());
 
-    do {
-        assert(!writing_buffer);
+	do {
+		assert(!writing_buffer);
 
-        if (IsBufferEmpty() && missing_from_current_chunk == 0)
-            StartChunk(length - total);
+		if (IsBufferEmpty() && missing_from_current_chunk == 0)
+			StartChunk(length - total);
 
-        if (!SendBuffer())
-            return destructed ? 0 : total;
+		if (!SendBuffer())
+			return destructed ? 0 : total;
 
-        assert(IsBufferEmpty());
+		assert(IsBufferEmpty());
 
-        if (missing_from_current_chunk == 0) {
-            /* we have just written the previous chunk trailer;
-               re-start this loop to start a new chunk */
-            nbytes = rest = 0;
-            continue;
-        }
+		if (missing_from_current_chunk == 0) {
+			/* we have just written the previous chunk trailer;
+			   re-start this loop to start a new chunk */
+			nbytes = rest = 0;
+			continue;
+		}
 
-        rest = length - total;
-        if (rest > missing_from_current_chunk)
-            rest = missing_from_current_chunk;
+		rest = length - total;
+		if (rest > missing_from_current_chunk)
+			rest = missing_from_current_chunk;
 
-        nbytes = InvokeData(data + total, rest);
-        if (nbytes == 0)
-            return destructed ? 0 : total;
+		nbytes = InvokeData(data + total, rest);
+		if (nbytes == 0)
+			return destructed ? 0 : total;
 
-        total += nbytes;
+		total += nbytes;
 
-        missing_from_current_chunk -= nbytes;
-        if (missing_from_current_chunk == 0) {
-            /* a chunk ends with "\r\n" */
-            char *p = SetBuffer(2);
-            p[0] = '\r';
-            p[1] = '\n';
-        }
-    } while ((!IsBufferEmpty() || total < length) && nbytes == rest);
+		missing_from_current_chunk -= nbytes;
+		if (missing_from_current_chunk == 0) {
+			/* a chunk ends with "\r\n" */
+			char *p = SetBuffer(2);
+			p[0] = '\r';
+			p[1] = '\n';
+		}
+	} while ((!IsBufferEmpty() || total < length) && nbytes == rest);
 
-    return total;
+	return total;
 }
 
 
@@ -248,38 +248,38 @@ ChunkedIstream::Feed(const char *data, size_t length) noexcept
 size_t
 ChunkedIstream::OnData(const void *data, size_t length) noexcept
 {
-    if (writing_buffer)
-        /* this is a recursive call from _Read(): bail out */
-        return 0;
+	if (writing_buffer)
+		/* this is a recursive call from _Read(): bail out */
+		return 0;
 
-    return Feed((const char*)data, length);
+	return Feed((const char*)data, length);
 }
 
 void
 ChunkedIstream::OnEof() noexcept
 {
-    assert(input.IsDefined());
-    assert(missing_from_current_chunk == 0);
+	assert(input.IsDefined());
+	assert(missing_from_current_chunk == 0);
 
-    input.Clear();
+	input.Clear();
 
-    /* write EOF chunk (length 0) */
+	/* write EOF chunk (length 0) */
 
-    AppendToBuffer("0\r\n\r\n", 5);
+	AppendToBuffer("0\r\n\r\n", 5);
 
-    /* flush the buffer */
+	/* flush the buffer */
 
-    if (SendBuffer())
-        DestroyEof();
+	if (SendBuffer())
+		DestroyEof();
 }
 
 void
 ChunkedIstream::OnError(std::exception_ptr ep) noexcept
 {
-    assert(input.IsDefined());
+	assert(input.IsDefined());
 
-    input.Clear();
-    DestroyError(ep);
+	input.Clear();
+	DestroyError(ep);
 }
 
 /*
@@ -290,101 +290,101 @@ ChunkedIstream::OnError(std::exception_ptr ep) noexcept
 void
 ChunkedIstream::_Read() noexcept
 {
-    if (!SendBuffer2())
-        return;
+	if (!SendBuffer2())
+		return;
 
-    if (!input.IsDefined()) {
-        DestroyEof();
-        return;
-    }
+	if (!input.IsDefined()) {
+		DestroyEof();
+		return;
+	}
 
-    if (IsBufferEmpty() && missing_from_current_chunk == 0) {
-        off_t available = input.GetAvailable(true);
-        if (available > 0) {
-            StartChunk(available);
-            if (!SendBuffer2())
-                return;
-        }
-    }
+	if (IsBufferEmpty() && missing_from_current_chunk == 0) {
+		off_t available = input.GetAvailable(true);
+		if (available > 0) {
+			StartChunk(available);
+			if (!SendBuffer2())
+				return;
+		}
+	}
 
-    input.Read();
+	input.Read();
 }
 
 void
 ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 {
-    auto b = ReadBuffer();
-    if (b.empty() && missing_from_current_chunk == 0) {
-        off_t available = input.GetAvailable(true);
-        if (available > 0) {
-            StartChunk(available);
-            b = ReadBuffer();
-        }
-    }
+	auto b = ReadBuffer();
+	if (b.empty() && missing_from_current_chunk == 0) {
+		off_t available = input.GetAvailable(true);
+		if (available > 0) {
+			StartChunk(available);
+			b = ReadBuffer();
+		}
+	}
 
-    if (!b.empty())
-        list.Push(b);
+	if (!b.empty())
+		list.Push(b);
 
-    if (missing_from_current_chunk > 0) {
-        assert(input.IsDefined());
+	if (missing_from_current_chunk > 0) {
+		assert(input.IsDefined());
 
-        IstreamBucketList sub;
-        try {
-            input.FillBucketList(sub);
-        } catch (...) {
-            Destroy();
-            throw;
-        }
+		IstreamBucketList sub;
+		try {
+			input.FillBucketList(sub);
+		} catch (...) {
+			Destroy();
+			throw;
+		}
 
-        list.SpliceBuffersFrom(sub, missing_from_current_chunk);
-    }
+		list.SpliceBuffersFrom(sub, missing_from_current_chunk);
+	}
 
-    list.SetMore();
+	list.SetMore();
 }
 
 size_t
 ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
-    size_t total = 0;
+	size_t total = 0;
 
-    size_t size = ReadBuffer().size;
-    if (size > nbytes)
-        size = nbytes;
-    if (size > 0) {
-        buffer_sent += size;
-        Consumed(size);
-        nbytes -= size;
-        total += size;
-    }
+	size_t size = ReadBuffer().size;
+	if (size > nbytes)
+		size = nbytes;
+	if (size > 0) {
+		buffer_sent += size;
+		Consumed(size);
+		nbytes -= size;
+		total += size;
+	}
 
-    size = std::min(nbytes, missing_from_current_chunk);
-    if (size > 0) {
-        assert(input.IsDefined());
+	size = std::min(nbytes, missing_from_current_chunk);
+	if (size > 0) {
+		assert(input.IsDefined());
 
-        size = input.ConsumeBucketList(size);
-        Consumed(size);
-        nbytes -= size;
-        total += size;
+		size = input.ConsumeBucketList(size);
+		Consumed(size);
+		nbytes -= size;
+		total += size;
 
-        missing_from_current_chunk -= size;
-        if (missing_from_current_chunk == 0) {
-            /* a chunk ends with "\r\n" */
-            char *p = SetBuffer(2);
-            p[0] = '\r';
-            p[1] = '\n';
-        }
-    }
+		missing_from_current_chunk -= size;
+		if (missing_from_current_chunk == 0) {
+			/* a chunk ends with "\r\n" */
+			char *p = SetBuffer(2);
+			p[0] = '\r';
+			p[1] = '\n';
+		}
+	}
 
-    return total;
+	return total;
 }
 
 void
 ChunkedIstream::_Close() noexcept
 {
-    if (input.IsDefined())
-        input.ClearAndClose();
+	if (input.IsDefined())
+		input.ClearAndClose();
 
-    Destroy();
+	Destroy();
 }
 
 /*
@@ -395,5 +395,5 @@ ChunkedIstream::_Close() noexcept
 UnusedIstreamPtr
 istream_chunked_new(struct pool &pool, UnusedIstreamPtr input) noexcept
 {
-    return NewIstreamPtr<ChunkedIstream>(pool, std::move(input));
+	return NewIstreamPtr<ChunkedIstream>(pool, std::move(input));
 }
