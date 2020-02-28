@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -46,184 +46,184 @@
 #include <assert.h>
 
 class ReplaceIstream final : public FacadeIstream, DestructAnchor {
-    struct Substitution final : IstreamSink {
-        Substitution *next = nullptr;
-        ReplaceIstream &replace;
-        const off_t start;
-        off_t end;
+	struct Substitution final : IstreamSink {
+		Substitution *next = nullptr;
+		ReplaceIstream &replace;
+		const off_t start;
+		off_t end;
 
-        Substitution(ReplaceIstream &_replace, off_t _start, off_t _end,
-                     UnusedIstreamPtr _input) noexcept
-            :IstreamSink(std::move(_input)),
-             replace(_replace),
-             start(_start), end(_end)
-        {
-        }
+		Substitution(ReplaceIstream &_replace, off_t _start, off_t _end,
+			     UnusedIstreamPtr _input) noexcept
+			:IstreamSink(std::move(_input)),
+			 replace(_replace),
+			 start(_start), end(_end)
+		{
+		}
 
-        void Destroy() noexcept {
-            this->~Substitution();
-        }
+		void Destroy() noexcept {
+			this->~Substitution();
+		}
 
-        bool IsDefined() const noexcept {
-            return input.IsDefined();
-        }
+		bool IsDefined() const noexcept {
+			return input.IsDefined();
+		}
 
-        off_t GetAvailable(bool partial) const noexcept {
-            return input.GetAvailable(partial);
-        }
+		off_t GetAvailable(bool partial) const noexcept {
+			return input.GetAvailable(partial);
+		}
 
-        void Read() noexcept {
-            input.Read();
-        }
+		void Read() noexcept {
+			input.Read();
+		}
 
-        using IstreamSink::ClearAndCloseInput;
+		using IstreamSink::ClearAndCloseInput;
 
-        gcc_pure
-        bool IsActive() const noexcept;
+		gcc_pure
+		bool IsActive() const noexcept;
 
-        /* virtual methods from class IstreamHandler */
-        size_t OnData(const void *data, size_t length) noexcept override;
-        void OnEof() noexcept override;
-        void OnError(std::exception_ptr ep) noexcept override;
-    };
+		/* virtual methods from class IstreamHandler */
+		size_t OnData(const void *data, size_t length) noexcept override;
+		void OnEof() noexcept override;
+		void OnError(std::exception_ptr ep) noexcept override;
+	};
 
-    /**
-     * This event is scheduled when a #ReplaceIstreamControl method
-     * call allows us to submit more data to the #IstreamHandler.
-     * This avoids stalling the transfer when the last Read() call did
-     * not return any data.
-     */
-    DeferEvent defer_read;
+	/**
+	 * This event is scheduled when a #ReplaceIstreamControl method
+	 * call allows us to submit more data to the #IstreamHandler.
+	 * This avoids stalling the transfer when the last Read() call did
+	 * not return any data.
+	 */
+	DeferEvent defer_read;
 
-    bool finished = false;
-    bool had_input, had_output;
+	bool finished = false;
+	bool had_input, had_output;
 
-    GrowingBuffer buffer;
-    off_t source_length = 0, position = 0;
+	GrowingBuffer buffer;
+	off_t source_length = 0, position = 0;
 
-    /**
-     * The offset given by istream_replace_settle() or the end offset
-     * of the last substitution (whichever is bigger).
-     */
-    off_t settled_position = 0;
+	/**
+	 * The offset given by istream_replace_settle() or the end offset
+	 * of the last substitution (whichever is bigger).
+	 */
+	off_t settled_position = 0;
 
-    Substitution *first_substitution = nullptr,
-        **append_substitution_p = &first_substitution;
+	Substitution *first_substitution = nullptr,
+		**append_substitution_p = &first_substitution;
 
 #ifndef NDEBUG
-    off_t last_substitution_end = 0;
+	off_t last_substitution_end = 0;
 #endif
 
-    const SharedPoolPtr<ReplaceIstreamControl> control;
+	const SharedPoolPtr<ReplaceIstreamControl> control;
 
 public:
-    ReplaceIstream(struct pool &p, EventLoop &event_loop,
-                   UnusedIstreamPtr _input) noexcept
-        :FacadeIstream(p, std::move(_input)),
-         defer_read(event_loop, BIND_THIS_METHOD(DeferredRead)),
-         control(SharedPoolPtr<ReplaceIstreamControl>::Make(p, *this))
-    {
-    }
+	ReplaceIstream(struct pool &p, EventLoop &event_loop,
+		       UnusedIstreamPtr _input) noexcept
+		:FacadeIstream(p, std::move(_input)),
+		 defer_read(event_loop, BIND_THIS_METHOD(DeferredRead)),
+		 control(SharedPoolPtr<ReplaceIstreamControl>::Make(p, *this))
+	{
+	}
 
-    ~ReplaceIstream() noexcept {
-        assert(control);
-        assert(control->replace == this);
+	~ReplaceIstream() noexcept {
+		assert(control);
+		assert(control->replace == this);
 
-        control->replace = nullptr;
-    }
+		control->replace = nullptr;
+	}
 
-    auto GetControl() noexcept {
-        return control;
-    }
+	auto GetControl() noexcept {
+		return control;
+	}
 
-    void Add(off_t start, off_t end, UnusedIstreamPtr contents) noexcept;
-    void Extend(off_t start, off_t end) noexcept;
-    void Settle(off_t offset) noexcept;
-    void Finish() noexcept;
+	void Add(off_t start, off_t end, UnusedIstreamPtr contents) noexcept;
+	void Extend(off_t start, off_t end) noexcept;
+	void Settle(off_t offset) noexcept;
+	void Finish() noexcept;
 
 private:
-    using FacadeIstream::GetPool;
-    using FacadeIstream::HasInput;
+	using FacadeIstream::GetPool;
+	using FacadeIstream::HasInput;
 
-    void DestroyReplace() noexcept;
+	void DestroyReplace() noexcept;
 
-    /**
-     * Is the buffer at the end-of-file position?
-     */
-    bool IsBufferAtEOF() const noexcept {
-        return position == source_length;
-    }
+	/**
+	 * Is the buffer at the end-of-file position?
+	 */
+	bool IsBufferAtEOF() const noexcept {
+		return position == source_length;
+	}
 
-    /**
-     * Is the object at end-of-file?
-     */
-    bool IsEOF() const noexcept {
-        return !input.IsDefined() && finished &&
-            first_substitution == nullptr &&
-            IsBufferAtEOF();
-    }
+	/**
+	 * Is the object at end-of-file?
+	 */
+	bool IsEOF() const noexcept {
+		return !input.IsDefined() && finished &&
+			first_substitution == nullptr &&
+			IsBufferAtEOF();
+	}
 
-    /**
-     * Copy the next chunk from the source buffer to the istream
-     * handler.
-     *
-     * @return true if all pending data has been consumed, false if
-     * the handler is blocking or if this object has been destroyed
-     */
-    bool TryReadFromBuffer() noexcept;
+	/**
+	 * Copy the next chunk from the source buffer to the istream
+	 * handler.
+	 *
+	 * @return true if all pending data has been consumed, false if
+	 * the handler is blocking or if this object has been destroyed
+	 */
+	bool TryReadFromBuffer() noexcept;
 
-    void DeferredRead() noexcept {
-        TryRead();
-    }
+	void DeferredRead() noexcept {
+		TryRead();
+	}
 
-    /**
-     * Copy data from the source buffer to the istream handler.
-     *
-     * @return 0 if the istream handler is not blocking; the number of
-     * bytes remaining in the buffer if it is blocking
-     */
-    size_t ReadFromBuffer(size_t max_length) noexcept;
+	/**
+	 * Copy data from the source buffer to the istream handler.
+	 *
+	 * @return 0 if the istream handler is not blocking; the number of
+	 * bytes remaining in the buffer if it is blocking
+	 */
+	size_t ReadFromBuffer(size_t max_length) noexcept;
 
-    /**
-     * @return true if all data until #end has been consumed, false if
-     * the handler is blocking or if this object has been destroyed
-     */
-    bool ReadFromBufferLoop(off_t end) noexcept;
+	/**
+	 * @return true if all data until #end has been consumed, false if
+	 * the handler is blocking or if this object has been destroyed
+	 */
+	bool ReadFromBufferLoop(off_t end) noexcept;
 
-    /**
-     * @return true if all pending data has been consumed, false if
-     * the handler is blocking or if this object has been destroyed
-     */
-    bool TryRead() noexcept;
+	/**
+	 * @return true if all pending data has been consumed, false if
+	 * the handler is blocking or if this object has been destroyed
+	 */
+	bool TryRead() noexcept;
 
-    void ReadCheckEmpty() noexcept;
+	void ReadCheckEmpty() noexcept;
 
-    /**
-     * Read data from substitution objects.
-     *
-     * @return true if there is no active substitution and reading
-     * shall continue; false if the active substitution blocks or this
-     * object was destroyed
-     */
-    bool ReadSubstitution() noexcept;
+	/**
+	 * Read data from substitution objects.
+	 *
+	 * @return true if there is no active substitution and reading
+	 * shall continue; false if the active substitution blocks or this
+	 * object was destroyed
+	 */
+	bool ReadSubstitution() noexcept;
 
-    /**
-     * Activate the next substitution object after s.
-     */
-    void ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept;
+	/**
+	 * Activate the next substitution object after s.
+	 */
+	void ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept;
 
-    Substitution *GetLastSubstitution() noexcept;
+	Substitution *GetLastSubstitution() noexcept;
 
-    /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) noexcept override;
-    void OnEof() noexcept override;
-    void OnError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class IstreamHandler */
+	size_t OnData(const void *data, size_t length) noexcept override;
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
 
 public:
-    /* virtual methods from class Istream */
-    off_t _GetAvailable(bool partial) noexcept override;
-    void _Read() noexcept override;
-    void _Close() noexcept override;
+	/* virtual methods from class Istream */
+	off_t _GetAvailable(bool partial) noexcept override;
+	void _Read() noexcept override;
+	void _Close() noexcept override;
 };
 
 /**
@@ -233,34 +233,34 @@ public:
 bool
 ReplaceIstream::Substitution::IsActive() const noexcept
 {
-    assert(replace.first_substitution != nullptr);
-    assert(replace.first_substitution->start <= start);
-    assert(start >= replace.position);
+	assert(replace.first_substitution != nullptr);
+	assert(replace.first_substitution->start <= start);
+	assert(start >= replace.position);
 
-    return this == replace.first_substitution && replace.position == start;
+	return this == replace.first_substitution && replace.position == start;
 }
 
 void
 ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept
 {
-    assert(first_substitution == s);
-    assert(s->IsActive());
-    assert(!s->IsDefined());
-    assert(s->start <= s->end);
+	assert(first_substitution == s);
+	assert(s->IsActive());
+	assert(!s->IsDefined());
+	assert(s->start <= s->end);
 
-    buffer.Skip(s->end - s->start);
-    position = s->end;
+	buffer.Skip(s->end - s->start);
+	position = s->end;
 
-    first_substitution = s->next;
-    if (first_substitution == nullptr) {
-        assert(append_substitution_p == &s->next);
-        append_substitution_p = &first_substitution;
-    }
+	first_substitution = s->next;
+	if (first_substitution == nullptr) {
+		assert(append_substitution_p == &s->next);
+		append_substitution_p = &first_substitution;
+	}
 
-    s->Destroy();
+	s->Destroy();
 
-    assert(first_substitution == nullptr ||
-           first_substitution->start >= position);
+	assert(first_substitution == nullptr ||
+	       first_substitution->start >= position);
 }
 
 /*
@@ -271,39 +271,39 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept
 size_t
 ReplaceIstream::Substitution::OnData(const void *data, size_t length) noexcept
 {
-    if (IsActive()) {
-        replace.had_output = true;
-        return replace.InvokeData(data, length);
-    } else
-        return 0;
+	if (IsActive()) {
+		replace.had_output = true;
+		return replace.InvokeData(data, length);
+	} else
+		return 0;
 }
 
 void
 ReplaceIstream::Substitution::OnEof() noexcept
 {
-    input.Clear();
+	input.Clear();
 
-    if (IsActive()) {
-        replace.ToNextSubstitution(this);
+	if (IsActive()) {
+		replace.ToNextSubstitution(this);
 
-        if (replace.IsEOF())
-            replace.DestroyEof();
-        else
-            replace.defer_read.Schedule();
-    }
+		if (replace.IsEOF())
+			replace.DestroyEof();
+		else
+			replace.defer_read.Schedule();
+	}
 }
 
 void
 ReplaceIstream::Substitution::OnError(std::exception_ptr ep) noexcept
 {
-    ClearInput();
+	ClearInput();
 
-    replace.DestroyReplace();
+	replace.DestroyReplace();
 
-    if (replace.HasInput())
-        replace.ClearAndCloseInput();
+	if (replace.HasInput())
+		replace.ClearAndCloseInput();
 
-    replace.DestroyError(ep);
+	replace.DestroyError(ep);
 }
 
 /*
@@ -314,159 +314,159 @@ ReplaceIstream::Substitution::OnError(std::exception_ptr ep) noexcept
 void
 ReplaceIstream::DestroyReplace() noexcept
 {
-    while (first_substitution != nullptr) {
-        auto *s = first_substitution;
-        first_substitution = s->next;
+	while (first_substitution != nullptr) {
+		auto *s = first_substitution;
+		first_substitution = s->next;
 
-        if (s->IsDefined())
-            s->ClearAndCloseInput();
-    }
+		if (s->IsDefined())
+			s->ClearAndCloseInput();
+	}
 }
 
 
 bool
 ReplaceIstream::ReadSubstitution() noexcept
 {
-    while (first_substitution != nullptr && first_substitution->IsActive()) {
-        auto *s = first_substitution;
+	while (first_substitution != nullptr && first_substitution->IsActive()) {
+		auto *s = first_substitution;
 
-        if (s->IsDefined()) {
-            const DestructObserver destructed(*this);
+		if (s->IsDefined()) {
+			const DestructObserver destructed(*this);
 
-            s->Read();
+			s->Read();
 
-            if (destructed)
-                return false;
+			if (destructed)
+				return false;
 
-            /* we assume the substitution object is blocking if it hasn't
-               reached EOF with this one call */
-            if (s == first_substitution)
-                return false;
-        } else {
-            ToNextSubstitution(s);
-            if (IsEOF()) {
-                DestroyEof();
-                return false;
-            }
-        }
-    }
+			/* we assume the substitution object is blocking if it hasn't
+			   reached EOF with this one call */
+			if (s == first_substitution)
+				return false;
+		} else {
+			ToNextSubstitution(s);
+			if (IsEOF()) {
+				DestroyEof();
+				return false;
+			}
+		}
+	}
 
-    return true;
+	return true;
 }
 
 inline size_t
 ReplaceIstream::ReadFromBuffer(size_t max_length) noexcept
 {
-    assert(max_length > 0);
+	assert(max_length > 0);
 
-    auto src = buffer.Read();
-    assert(!src.IsNull());
-    assert(!src.empty());
+	auto src = buffer.Read();
+	assert(!src.IsNull());
+	assert(!src.empty());
 
-    if (src.size > max_length)
-        src.size = max_length;
+	if (src.size > max_length)
+		src.size = max_length;
 
-    had_output = true;
-    size_t nbytes = InvokeData(src.data, src.size);
-    assert(nbytes <= src.size);
+	had_output = true;
+	size_t nbytes = InvokeData(src.data, src.size);
+	assert(nbytes <= src.size);
 
-    if (nbytes == 0)
-        /* istream_replace has been closed */
-        return src.size;
+	if (nbytes == 0)
+		/* istream_replace has been closed */
+		return src.size;
 
-    buffer.Consume(nbytes);
-    position += nbytes;
+	buffer.Consume(nbytes);
+	position += nbytes;
 
-    assert(position <= source_length);
+	assert(position <= source_length);
 
-    return src.size - nbytes;
+	return src.size - nbytes;
 }
 
 inline bool
 ReplaceIstream::ReadFromBufferLoop(off_t end) noexcept
 {
-    assert(end >= position);
-    assert(end <= source_length);
+	assert(end >= position);
+	assert(end <= source_length);
 
-    /* this loop is required to cross the GrowingBuffer borders */
-    while (position < end) {
-        size_t max_length = (size_t)(end - position);
-        if (ReadFromBuffer(max_length) > 0)
-            return false;
+	/* this loop is required to cross the GrowingBuffer borders */
+	while (position < end) {
+		size_t max_length = (size_t)(end - position);
+		if (ReadFromBuffer(max_length) > 0)
+			return false;
 
-        assert(position <= end);
-    }
+		assert(position <= end);
+	}
 
-    return true;
+	return true;
 }
 
 bool
 ReplaceIstream::TryReadFromBuffer() noexcept
 {
-    assert(position <= source_length);
+	assert(position <= source_length);
 
-    off_t end;
-    if (first_substitution == nullptr) {
-        if (finished)
-            end = source_length;
-        else if (position < settled_position)
-            end = settled_position;
-        else
-            /* block after the last substitution, unless the caller
-               has already set the "finished" flag */
-            return true;
+	off_t end;
+	if (first_substitution == nullptr) {
+		if (finished)
+			end = source_length;
+		else if (position < settled_position)
+			end = settled_position;
+		else
+			/* block after the last substitution, unless the caller
+			   has already set the "finished" flag */
+			return true;
 
-    } else {
-        end = std::min(first_substitution->start, source_length);
-    }
+	} else {
+		end = std::min(first_substitution->start, source_length);
+	}
 
-    assert(end >= position);
-    assert(end <= source_length);
+	assert(end >= position);
+	assert(end <= source_length);
 
-    if (!ReadFromBufferLoop(end))
-        return false;
+	if (!ReadFromBufferLoop(end))
+		return false;
 
-    assert(position == end);
+	assert(position == end);
 
-    if (position == source_length &&
-        first_substitution == nullptr &&
-        !input.IsDefined()) {
-        DestroyEof();
-        return false;
-    }
+	if (position == source_length &&
+	    first_substitution == nullptr &&
+	    !input.IsDefined()) {
+		DestroyEof();
+		return false;
+	}
 
-    return true;
+	return true;
 }
 
 bool
 ReplaceIstream::TryRead() noexcept
 {
-    assert(position <= source_length);
+	assert(position <= source_length);
 
-    /* read until someone (input or output) blocks */
-    do {
-        if (!ReadSubstitution())
-            return false;
+	/* read until someone (input or output) blocks */
+	do {
+		if (!ReadSubstitution())
+			return false;
 
-        if (!TryReadFromBuffer())
-            return false;
-    } while (first_substitution != nullptr &&
-             /* quit the loop if we don't have enough data yet */
-             first_substitution->start <= source_length);
+		if (!TryReadFromBuffer())
+			return false;
+	} while (first_substitution != nullptr &&
+		 /* quit the loop if we don't have enough data yet */
+		 first_substitution->start <= source_length);
 
-    return true;
+	return true;
 }
 
 void
 ReplaceIstream::ReadCheckEmpty() noexcept
 {
-    assert(finished);
-    assert(!input.IsDefined());
+	assert(finished);
+	assert(!input.IsDefined());
 
-    if (IsEOF())
-        DestroyEof();
-    else
-        TryRead();
+	if (IsEOF())
+		DestroyEof();
+	else
+		TryRead();
 }
 
 
@@ -478,45 +478,45 @@ ReplaceIstream::ReadCheckEmpty() noexcept
 size_t
 ReplaceIstream::OnData(const void *data, size_t length) noexcept
 {
-    had_input = true;
+	had_input = true;
 
-    if (source_length >= 8 * 1024 * 1024) {
-        ClearAndCloseInput();
-        DestroyReplace();
+	if (source_length >= 8 * 1024 * 1024) {
+		ClearAndCloseInput();
+		DestroyReplace();
 
-        DestroyError(std::make_exception_ptr(std::runtime_error("file too large for processor")));
-        return 0;
-    }
+		DestroyError(std::make_exception_ptr(std::runtime_error("file too large for processor")));
+		return 0;
+	}
 
-    buffer.Write(data, length);
-    source_length += (off_t)length;
+	buffer.Write(data, length);
+	source_length += (off_t)length;
 
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 
-    TryReadFromBuffer();
-    if (destructed || !input.IsDefined())
-        /* the istream API mandates that we must return 0 if the
-           stream is finished */
-        length = 0;
+	TryReadFromBuffer();
+	if (destructed || !input.IsDefined())
+		/* the istream API mandates that we must return 0 if the
+		   stream is finished */
+		length = 0;
 
-    return length;
+	return length;
 }
 
 void
 ReplaceIstream::OnEof() noexcept
 {
-    input.Clear();
+	input.Clear();
 
-    if (finished)
-        ReadCheckEmpty();
+	if (finished)
+		ReadCheckEmpty();
 }
 
 void
 ReplaceIstream::OnError(std::exception_ptr ep) noexcept
 {
-    DestroyReplace();
-    input.Clear();
-    DestroyError(ep);
+	DestroyReplace();
+	input.Clear();
+	DestroyError(ep);
 }
 
 /*
@@ -527,83 +527,83 @@ ReplaceIstream::OnError(std::exception_ptr ep) noexcept
 off_t
 ReplaceIstream::_GetAvailable(bool partial) noexcept
 {
-    off_t length, position2 = 0, l;
+	off_t length, position2 = 0, l;
 
-    if (!partial && !finished)
-        /* we don't know yet how many substitutions will come, so we
-           cannot calculate the exact rest */
-        return (off_t)-1;
+	if (!partial && !finished)
+		/* we don't know yet how many substitutions will come, so we
+		   cannot calculate the exact rest */
+		return (off_t)-1;
 
-    /* get available bytes from input */
+	/* get available bytes from input */
 
-    if (HasInput() && finished) {
-        length = input.GetAvailable(partial);
-        if (length == (off_t)-1) {
-            if (!partial)
-                return (off_t)-1;
-            length = 0;
-        }
-    } else
-        length = 0;
+	if (HasInput() && finished) {
+		length = input.GetAvailable(partial);
+		if (length == (off_t)-1) {
+			if (!partial)
+				return (off_t)-1;
+			length = 0;
+		}
+	} else
+		length = 0;
 
-    /* add available bytes from substitutions (and the source buffers
-       before the substitutions) */
+	/* add available bytes from substitutions (and the source buffers
+	   before the substitutions) */
 
-    position2 = position;
+	position2 = position;
 
-    for (auto subst = first_substitution;
-         subst != nullptr; subst = subst->next) {
-        assert(position2 <= subst->start);
+	for (auto subst = first_substitution;
+	     subst != nullptr; subst = subst->next) {
+		assert(position2 <= subst->start);
 
-        length += subst->start - position2;
+		length += subst->start - position2;
 
-        if (subst->IsDefined()) {
-            l = subst->GetAvailable(partial);
-            if (l != (off_t)-1)
-                length += l;
-            else if (!partial)
-                return (off_t)-1;
-        }
+		if (subst->IsDefined()) {
+			l = subst->GetAvailable(partial);
+			if (l != (off_t)-1)
+				length += l;
+			else if (!partial)
+				return (off_t)-1;
+		}
 
-        position2 = subst->end;
-    }
+		position2 = subst->end;
+	}
 
-    /* add available bytes from tail (if known yet) */
+	/* add available bytes from tail (if known yet) */
 
-    if (finished)
-        length += source_length - position2;
+	if (finished)
+		length += source_length - position2;
 
-    return length;
+	return length;
 }
 
 void
 ReplaceIstream::_Read() noexcept
 {
-    if (!TryRead())
-        return;
+	if (!TryRead())
+		return;
 
-    if (!HasInput())
-        return;
+	if (!HasInput())
+		return;
 
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 
-    had_output = false;
+	had_output = false;
 
-    do {
-        had_input = false;
-        input.Read();
-    } while (!destructed && had_input && !had_output && HasInput());
+	do {
+		had_input = false;
+		input.Read();
+	} while (!destructed && had_input && !had_output && HasInput());
 }
 
 void
 ReplaceIstream::_Close() noexcept
 {
-    DestroyReplace();
+	DestroyReplace();
 
-    if (HasInput())
-        ClearAndCloseInput();
+	if (HasInput())
+		ClearAndCloseInput();
 
-    Destroy();
+	Destroy();
 }
 
 /*
@@ -613,119 +613,119 @@ ReplaceIstream::_Close() noexcept
 
 std::pair<UnusedIstreamPtr, SharedPoolPtr<ReplaceIstreamControl>>
 istream_replace_new(EventLoop &event_loop, struct pool &pool,
-                    UnusedIstreamPtr input) noexcept
+		    UnusedIstreamPtr input) noexcept
 {
-    auto *i = NewIstream<ReplaceIstream>(pool, event_loop, std::move(input));
-    return std::make_pair(UnusedIstreamPtr(i), i->GetControl());
+	auto *i = NewIstream<ReplaceIstream>(pool, event_loop, std::move(input));
+	return std::make_pair(UnusedIstreamPtr(i), i->GetControl());
 }
 
 inline void
 ReplaceIstream::Add(off_t start, off_t end,
-                    UnusedIstreamPtr contents) noexcept
+		    UnusedIstreamPtr contents) noexcept
 {
-    assert(!finished);
-    assert(start >= 0);
-    assert(start <= end);
-    assert(start >= settled_position);
-    assert(start >= last_substitution_end);
+	assert(!finished);
+	assert(start >= 0);
+	assert(start <= end);
+	assert(start >= settled_position);
+	assert(start >= last_substitution_end);
 
-    if (!contents && start == end)
-        return;
+	if (!contents && start == end)
+		return;
 
-    auto s = NewFromPool<Substitution>(GetPool(), *this, start, end,
-                                       std::move(contents));
+	auto s = NewFromPool<Substitution>(GetPool(), *this, start, end,
+					   std::move(contents));
 
-    settled_position = end;
+	settled_position = end;
 
 #ifndef NDEBUG
-    last_substitution_end = end;
+	last_substitution_end = end;
 #endif
 
-    *append_substitution_p = s;
-    append_substitution_p = &s->next;
+	*append_substitution_p = s;
+	append_substitution_p = &s->next;
 
-    defer_read.Schedule();
+	defer_read.Schedule();
 }
 
 void
 ReplaceIstreamControl::Add(off_t start, off_t end,
-                           UnusedIstreamPtr contents) noexcept
+			   UnusedIstreamPtr contents) noexcept
 {
-    if (replace != nullptr)
-        replace->Add(start, end, std::move(contents));
+	if (replace != nullptr)
+		replace->Add(start, end, std::move(contents));
 }
 
 inline ReplaceIstream::Substitution *
 ReplaceIstream::GetLastSubstitution() noexcept
 {
-    auto *substitution = first_substitution;
-    assert(substitution != nullptr);
+	auto *substitution = first_substitution;
+	assert(substitution != nullptr);
 
-    while (substitution->next != nullptr)
-        substitution = substitution->next;
+	while (substitution->next != nullptr)
+		substitution = substitution->next;
 
-    assert(substitution->end <= settled_position);
-    assert(substitution->end == last_substitution_end);
-    return substitution;
+	assert(substitution->end <= settled_position);
+	assert(substitution->end == last_substitution_end);
+	return substitution;
 }
 
 inline void
 ReplaceIstream::Extend(gcc_unused off_t start, off_t end) noexcept
 {
-    assert(!finished);
+	assert(!finished);
 
-    auto *substitution = GetLastSubstitution();
-    assert(substitution->start == start);
-    assert(substitution->end == settled_position);
-    assert(substitution->end == last_substitution_end);
-    assert(end >= substitution->end);
+	auto *substitution = GetLastSubstitution();
+	assert(substitution->start == start);
+	assert(substitution->end == settled_position);
+	assert(substitution->end == last_substitution_end);
+	assert(end >= substitution->end);
 
-    substitution->end = end;
-    settled_position = end;
+	substitution->end = end;
+	settled_position = end;
 #ifndef NDEBUG
-    last_substitution_end = end;
+	last_substitution_end = end;
 #endif
 }
 
 void
 ReplaceIstreamControl::Extend(off_t start, off_t end) noexcept
 {
-    if (replace != nullptr)
-        replace->Extend(start, end);
+	if (replace != nullptr)
+		replace->Extend(start, end);
 }
 
 inline void
 ReplaceIstream::Settle(off_t offset) noexcept
 {
-    assert(!finished);
-    assert(offset >= settled_position);
+	assert(!finished);
+	assert(offset >= settled_position);
 
-    settled_position = offset;
+	settled_position = offset;
 
-    defer_read.Schedule();
+	defer_read.Schedule();
 }
 
 void
 ReplaceIstreamControl::Settle(off_t offset) noexcept
 {
-    if (replace != nullptr)
-        replace->Settle(offset);
+	if (replace != nullptr)
+		replace->Settle(offset);
 }
 
 inline void
 ReplaceIstream::Finish() noexcept
 {
-    assert(!finished);
+	assert(!finished);
 
-    finished = true;
+	finished = true;
 
-    if (!HasInput())
-        ReadCheckEmpty();
+	if (!HasInput())
+		ReadCheckEmpty();
 }
 
 void
 ReplaceIstreamControl::Finish() noexcept
 {
-    if (replace != nullptr)
-        replace->Finish();
+	if (replace != nullptr)
+		replace->Finish();
 }

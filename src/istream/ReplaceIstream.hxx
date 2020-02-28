@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -43,35 +43,35 @@ class UnusedIstreamPtr;
 class ReplaceIstream;
 
 class ReplaceIstreamControl {
-    friend class ReplaceIstream;
+	friend class ReplaceIstream;
 
-    ReplaceIstream *replace;
+	ReplaceIstream *replace;
 
 public:
-    explicit ReplaceIstreamControl(ReplaceIstream &_replace) noexcept
-        :replace(&_replace) {}
+	explicit ReplaceIstreamControl(ReplaceIstream &_replace) noexcept
+		:replace(&_replace) {}
 
-    void Add(off_t start, off_t end, UnusedIstreamPtr contents) noexcept;
+	void Add(off_t start, off_t end, UnusedIstreamPtr contents) noexcept;
 
-    /**
-     * Extend the end position of the latest replacement.
-     *
-     * @param start the start value that was passed to
-     * istream_replace_add()
-     * @param end the new end position; it must not be smaller than the
-     * current end position of the replacement
-     */
-    void Extend(off_t start, off_t end) noexcept;
+	/**
+	 * Extend the end position of the latest replacement.
+	 *
+	 * @param start the start value that was passed to
+	 * istream_replace_add()
+	 * @param end the new end position; it must not be smaller than the
+	 * current end position of the replacement
+	 */
+	void Extend(off_t start, off_t end) noexcept;
 
-    /**
-     * Mark all source data until the given offset as "settled",
-     * i.e. there will be no more substitutions before this offset.  It
-     * allows this object to deliver data until this offset to its
-     * handler.
-     */
-    void Settle(off_t offset) noexcept;
+	/**
+	 * Mark all source data until the given offset as "settled",
+	 * i.e. there will be no more substitutions before this offset.  It
+	 * allows this object to deliver data until this offset to its
+	 * handler.
+	 */
+	void Settle(off_t offset) noexcept;
 
-    void Finish() noexcept;
+	void Finish() noexcept;
 };
 
 /**
@@ -79,4 +79,4 @@ public:
  */
 std::pair<UnusedIstreamPtr, SharedPoolPtr<ReplaceIstreamControl>>
 istream_replace_new(EventLoop &event_loop, struct pool &pool,
-                    UnusedIstreamPtr input) noexcept;
+		    UnusedIstreamPtr input) noexcept;
