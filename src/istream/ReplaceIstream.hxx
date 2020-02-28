@@ -72,6 +72,25 @@ class ReplaceIstream : public FacadeIstream, DestructAnchor {
 			input.Read();
 		}
 
+		void FillBucketList(IstreamBucketList &list) {
+			if (!IsDefined())
+				return;
+
+			try {
+				input.FillBucketList(list);
+			} catch (...) {
+				ClearInput();
+				throw;
+			}
+		}
+
+		size_t ConsumeBucketList(size_t nbytes) noexcept {
+			assert(IsActive());
+			return IsDefined()
+				? input.ConsumeBucketList(nbytes)
+				: 0;
+		}
+
 		using IstreamSink::ClearAndCloseInput;
 
 		gcc_pure
@@ -155,18 +174,23 @@ private:
 	}
 
 	gcc_pure
-	off_t GetBufferEndOffsetUntil(const Substitution *s) const noexcept {
+	off_t GetBufferEndOffsetUntil(off_t _position, const Substitution *s) const noexcept {
 		if (s != nullptr)
 			return std::min(s->start, source_length);
 		else if (finished)
 			return source_length;
-		else if (position < settled_position)
+		else if (_position < settled_position)
 			return settled_position;
 		else
 			/* block after the last substitution, unless
 			   the caller has already set the "finished"
 			   flag */
 			return -1;
+	}
+
+	gcc_pure
+	off_t GetBufferEndOffsetUntil(const Substitution *s) const noexcept {
+		return GetBufferEndOffsetUntil(position, s);
 	}
 
 	/**
@@ -261,5 +285,7 @@ public:
 
 	off_t _GetAvailable(bool partial) noexcept override;
 	void _Read() noexcept override;
+	void _FillBucketList(IstreamBucketList &list) override;
+	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
 	void _Close() noexcept override;
 };

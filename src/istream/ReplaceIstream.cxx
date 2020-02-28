@@ -33,6 +33,8 @@
 #include "ReplaceIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "New.hxx"
+#include "Bucket.hxx"
+#include "GrowingBuffer.hxx"
 #include "pool/pool.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/DestructObserver.hxx"
@@ -432,6 +434,181 @@ ReplaceIstream::_Read() noexcept
 		had_input = false;
 		input.Read();
 	} while (!destructed && had_input && !had_output && HasInput());
+}
+
+void
+ReplaceIstream::_FillBucketList(IstreamBucketList &list)
+{
+	assert(!list.HasMore());
+
+	if (HasInput()) {
+		/* fill our buffer from the input */
+		IstreamBucketList tmp;
+
+		try {
+			input.FillBucketList(tmp);
+		} catch (...) {
+			input.Clear();
+			DestroyReplace();
+			Destroy();
+			throw;
+		}
+
+		size_t total = 0;
+		bool only_buffers = true;
+		for (const auto &i : tmp) {
+			if (i.GetType() != IstreamBucket::Type::BUFFER) {
+				only_buffers = false;
+				break;
+			}
+
+			auto b = i.GetBuffer();
+			buffer.Write(b.data, b.size);
+			source_length += (off_t)b.size;
+
+			if (source_length >= 8 * 1024 * 1024) {
+				ClearAndCloseInput();
+				DestroyReplace();
+				Destroy();
+				throw std::runtime_error("file too large for processor");
+			}
+
+			try {
+				Parse(b);
+			} catch (...) {
+				DestroyReplace();
+				ClearAndCloseInput();
+				Destroy();
+				throw;
+			}
+
+			total += b.size;
+		}
+
+		if (only_buffers && !tmp.HasMore()) {
+			ClearAndCloseInput();
+
+			try {
+				ParseEnd();
+			} catch (...) {
+				DestroyReplace();
+				Destroy();
+				throw;
+			}
+
+			assert(finished);
+		} else if (total > 0)
+			input.ConsumeBucketList(total);
+	}
+
+	off_t fill_position = position;
+	for (auto *s = first_substitution;; s = s->next) {
+		off_t end = GetBufferEndOffsetUntil(fill_position, s);
+		if (end < 0) {
+			/* after last substitution and the "settled" position:
+			   not yet ready to read */
+			list.SetMore();
+			return;
+		}
+
+		assert(end >= fill_position);
+		assert(end <= source_length);
+
+		if (end > fill_position) {
+			/* supply data from the buffer until the first
+			   substitution */
+			const size_t before_size = end - fill_position;
+
+			IstreamBucketList tmp;
+			buffer.FillBucketList(tmp, fill_position - position);
+			size_t nbytes = list.SpliceBuffersFrom(std::move(tmp),
+							       before_size);
+			if (nbytes < before_size)
+				return;
+		}
+
+		if (s == nullptr) {
+			if (input.IsDefined() || !finished)
+				list.SetMore();
+			return;
+		}
+
+		if (end < s->start) {
+			list.SetMore();
+			return;
+		}
+
+		IstreamBucketList tmp;
+
+		try {
+			s->FillBucketList(tmp);
+		} catch (...) {
+			DestroyReplace();
+			if (HasInput())
+				ClearAndCloseInput();
+			Destroy();
+			throw;
+		}
+
+		list.SpliceBuffersFrom(std::move(tmp));
+		if (tmp.HasMore())
+			return;
+
+		fill_position = s->end;
+	}
+}
+
+size_t
+ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
+{
+	size_t total = 0;
+
+	while (true) {
+		auto *s = first_substitution;
+		off_t end = GetBufferEndOffsetUntil(s);
+		assert(end >= 0);
+
+		if (end > position) {
+			/* consume data from the buffer until the first
+			   substitution */
+			const size_t before_size = end - position;
+
+			if (nbytes <= before_size) {
+				/* consumed less than the available chunk */
+				total += nbytes;
+				position += nbytes;
+				buffer.Skip(nbytes);
+				Consumed(nbytes);
+				break;
+			}
+
+			nbytes -= before_size;
+			total += before_size;
+			position += before_size;
+			buffer.Skip(before_size);
+			Consumed(before_size);
+		}
+
+		if (s == nullptr)
+			break;
+
+		const size_t consumed = s->ConsumeBucketList(nbytes);
+		Consumed(consumed);
+		total += consumed;
+		nbytes -= consumed;
+
+		if (nbytes == 0)
+			break;
+
+		/* if there is still data to be consumed, it must mean
+		   that the substitution Istream has reached the
+		   end */
+		if (s->IsDefined())
+			s->ClearAndCloseInput();
+		ToNextSubstitution(s);
+	}
+
+	return total;
 }
 
 void

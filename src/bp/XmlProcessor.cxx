@@ -51,6 +51,7 @@
 #include "strmap.hxx"
 #include "istream_html_escape.hxx"
 #include "istream/istream.hxx"
+#include "istream/Bucket.hxx"
 #include "istream/Sink.hxx"
 #include "istream/ReplaceIstream.hxx"
 #include "istream/ConcatIstream.hxx"
