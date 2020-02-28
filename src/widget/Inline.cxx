@@ -433,5 +433,5 @@ embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext> ctx,
 	if (pause)
 		pause->Resume();
 
-	return std::move(hold);
+	return hold;
 }
