@@ -599,6 +599,8 @@ HttpClient::TryWriteBuckets()
 
 	case BucketResult::DEPLETED:
 		assert(request.istream.IsDefined());
+
+		stopwatch.RecordEvent("request_end");
 		request.istream.ClearAndClose();
 		socket.ScheduleReadNoTimeout(true);
 		break;
