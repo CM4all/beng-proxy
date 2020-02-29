@@ -1,6 +1,7 @@
 cm4all-beng-proxy (15.34) unstable; urgency=low
 
   * bot: add AspiegelBot (Huawei)
+  * http_client: fix crash bug
 
  --   
 

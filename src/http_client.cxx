@@ -559,6 +559,7 @@ HttpClient::TryWriteBuckets2()
 
 		stopwatch_event(stopwatch, "error");
 
+		request.istream.ClearAndClose();
 		throw HttpClientError(HttpClientErrorCode::IO,
 				      StringFormat<64>("write error (%s)",
 						       strerror(_errno)));
