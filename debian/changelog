@@ -4,6 +4,7 @@ cm4all-beng-proxy (16.7) unstable; urgency=low
   * translation: record connect event (stopwatch)
   * http_server: record cancel event (stopwatch)
   * bp: fix three crash bugs
+  * http_client: fix crash bug
 
  --   
 

@@ -559,6 +559,7 @@ HttpClient::TryWriteBuckets2()
 		if (nbytes == WRITE_DESTROYED)
 			return BucketResult::DESTROYED;
 
+		request.istream.ClearAndClose();
 		throw HttpClientError(HttpClientErrorCode::IO,
 				      StringFormat<64>("write error (%s)",
 						       strerror(errno)));
