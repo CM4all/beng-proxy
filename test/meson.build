@@ -109,6 +109,7 @@ executable('run_http_cache',
 
 executable('run_http_server',
   'run_http_server.cxx',
+  'DemoHttpServerConnection.cxx',
   '../src/PInstance.cxx',
   '../src/address_string.cxx',
   '../src/istream_gb.cxx',

@@ -30,31 +30,20 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_server/http_server.hxx"
-#include "http/IncomingRequest.hxx"
-#include "http_server/Handler.hxx"
-#include "http/Headers.hxx"
+#include "DemoHttpServerConnection.hxx"
 #include "duplex.hxx"
-#include "istream/sink_null.hxx"
-#include "istream/ByteIstream.hxx"
-#include "istream/DelayedIstream.hxx"
-#include "istream/HeadIstream.hxx"
-#include "istream/istream_hold.hxx"
-#include "istream/istream_memory.hxx"
-#include "istream/ZeroIstream.hxx"
-#include "istream/istream.hxx"
-#include "istream/UnusedHoldPtr.hxx"
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
-#include "event/TimerEvent.hxx"
+#include "pool/Holder.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/net/TemplateServerSocket.hxx"
 #include "fb_pool.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/SpliceSupport.hxx"
-#include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
+
+#include <memory>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,74 +51,29 @@
 
 struct Instance;
 
-enum class Mode {
-	MODE_NULL,
-	MIRROR,
-
-	/**
-	 * Response body of unknown length with keep-alive disabled.
-	 * Response body ends when socket is closed.
-	 */
-	CLOSE,
-
-	DUMMY,
-	FIXED,
-	HUGE_,
-	HOLD,
-	NOP,
-};
-
 class Connection final
 	: public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>,
-	  HttpServerConnectionHandler, Cancellable
+	  PoolHolder,
+	  DemoHttpServerConnection
 {
 	Instance &instance;
 
-	PoolPtr pool;
-
-	HttpServerConnection *connection;
-
-	UnusedHoldIstreamPtr request_body;
-
-	TimerEvent timer;
-
 public:
-	Connection(Instance &instance,
-		   UniqueSocketDescriptor &&_fd, SocketAddress address) noexcept;
+	Connection(Instance &instance, Mode _mode,
+		   UniqueSocketDescriptor &&_fd,
+		   SocketAddress address) noexcept;
 
-	~Connection() noexcept {
-		if (connection != nullptr)
-			http_server_connection_close(connection);
-	}
-
-private:
-	void OnTimer() noexcept;
-
-	/* virtual methods from class Cancellable */
-	void Cancel() noexcept override {
-		request_body.Clear();
-		timer.Cancel();
-	}
-
+protected:
 	/* virtual methods from class HttpServerConnectionHandler */
-	void HandleHttpRequest(IncomingHttpRequest &request,
-			       const StopwatchPtr &parent_stopwatch,
-			       CancellablePointer &cancel_ptr) noexcept override;
-
-	void LogHttpRequest(IncomingHttpRequest &,
-			    http_status_t, int64_t,
-			    uint64_t, uint64_t) noexcept override {}
-
 	void HttpConnectionError(std::exception_ptr e) noexcept override;
 	void HttpConnectionClosed() noexcept override;
 };
 
-using Listener = TemplateServerSocket<Connection, Instance &>;
+using Listener = TemplateServerSocket<Connection, Instance &,
+				      DemoHttpServerConnection::Mode>;
 
 struct Instance final : PInstance {
 	ShutdownListener shutdown_listener;
-
-	Mode mode;
 
 	std::unique_ptr<Listener> listener;
 
@@ -142,32 +86,21 @@ private:
 	void ShutdownCallback() noexcept;
 };
 
-Connection::Connection(Instance &_instance,
+Connection::Connection(Instance &_instance, Mode _mode,
 		       UniqueSocketDescriptor &&fd,
 		       SocketAddress address) noexcept
-	:instance(_instance),
-	 pool(pool_new_linear(instance.root_pool, "connection", 2048)),
-	 connection(http_server_connection_new(pool, instance.event_loop,
-					       std::move(fd), FdType::FD_SOCKET,
-					       nullptr,
-					       nullptr,
-					       address,
-					       true,
-					       *this)),
-	 timer(instance.event_loop, BIND_THIS_METHOD(OnTimer)) {}
-
+	:PoolHolder(pool_new_linear(_instance.root_pool, "connection", 2048)),
+	 DemoHttpServerConnection(pool, _instance.event_loop,
+				  std::move(fd), FD_SOCKET,
+				  address, _mode),
+	 instance(_instance)
+{
+}
 
 void
 Instance::ShutdownCallback() noexcept
 {
 	listener.reset();
-}
-
-void
-Connection::OnTimer() noexcept
-{
-	instance.OnConnectionClosed();
-	delete this;
 }
 
 void
@@ -177,102 +110,10 @@ Instance::OnConnectionClosed() noexcept
 		shutdown_listener.Disable();
 }
 
-/*
- * http_server handler
- *
- */
-
-void
-Connection::HandleHttpRequest(IncomingHttpRequest &request,
-			      const StopwatchPtr &,
-			      CancellablePointer &cancel_ptr) noexcept
-{
-	switch (instance.mode) {
-		http_status_t status;
-		static char data[0x100];
-
-	case Mode::MODE_NULL:
-		if (request.body)
-			sink_null_new(request.pool, std::move(request.body));
-
-		request.SendResponse(HTTP_STATUS_NO_CONTENT, {}, nullptr);
-		break;
-
-	case Mode::MIRROR:
-		status = request.body
-			? HTTP_STATUS_OK
-			: HTTP_STATUS_NO_CONTENT;
-		request.SendResponse(status, {}, std::move(request.body));
-		break;
-
-	case Mode::CLOSE:
-		/* disable keep-alive */
-		http_server_connection_graceful(connection);
-
-		/* fall through */
-
-	case Mode::DUMMY:
-		if (request.body)
-			sink_null_new(request.pool, std::move(request.body));
-
-		{
-			auto body = istream_head_new(request.pool,
-						     istream_zero_new(request.pool),
-						     256, false);
-			body = istream_byte_new(request.pool, std::move(body));
-
-			request.SendResponse(HTTP_STATUS_OK, {}, std::move(body));
-		}
-
-		break;
-
-	case Mode::FIXED:
-		if (request.body)
-			sink_null_new(request.pool, std::move(request.body));
-
-		request.SendResponse(HTTP_STATUS_OK, {},
-				     istream_memory_new(request.pool,
-							data, sizeof(data)));
-		break;
-
-	case Mode::HUGE_:
-		if (request.body)
-			sink_null_new(request.pool, std::move(request.body));
-
-		request.SendResponse(HTTP_STATUS_OK, {},
-				     istream_head_new(request.pool,
-						      istream_zero_new(request.pool),
-						      512 * 1024, true));
-		break;
-
-	case Mode::HOLD:
-		request_body = UnusedHoldIstreamPtr(request.pool,
-						    std::move(request.body));
-
-		{
-			auto delayed = istream_delayed_new(request.pool,
-							   instance.event_loop);
-			delayed.second.cancel_ptr = *this;
-
-			request.SendResponse(HTTP_STATUS_OK, {},
-					     std::move(delayed.first));
-		}
-
-		timer.Schedule(std::chrono::seconds(0));
-		break;
-
-	case Mode::NOP:
-		cancel_ptr = *this;
-		break;
-	}
-}
-
 void
 Connection::HttpConnectionError(std::exception_ptr e) noexcept
 {
-	PrintException(e);
-
-	connection = nullptr;
+	DemoHttpServerConnection::HttpConnectionError(std::move(e));
 
 	instance.OnConnectionClosed();
 	delete this;
@@ -281,7 +122,7 @@ Connection::HttpConnectionError(std::exception_ptr e) noexcept
 void
 Connection::HttpConnectionClosed() noexcept
 {
-	connection = nullptr;
+	DemoHttpServerConnection::HttpConnectionClosed();
 	instance.OnConnectionClosed();
 	delete this;
 }
@@ -316,22 +157,23 @@ try {
 	instance.shutdown_listener.Enable();
 
 	const char *mode = argv[3];
+	DemoHttpServerConnection::Mode parsed_mode;
 	if (strcmp(mode, "null") == 0)
-		instance.mode = Mode::MODE_NULL;
+		parsed_mode = DemoHttpServerConnection::Mode::MODE_NULL;
 	else if (strcmp(mode, "mirror") == 0)
-		instance.mode = Mode::MIRROR;
+		parsed_mode = DemoHttpServerConnection::Mode::MIRROR;
 	else if (strcmp(mode, "close") == 0)
-		instance.mode = Mode::CLOSE;
+		parsed_mode = DemoHttpServerConnection::Mode::CLOSE;
 	else if (strcmp(mode, "dummy") == 0)
-		instance.mode = Mode::DUMMY;
+		parsed_mode = DemoHttpServerConnection::Mode::DUMMY;
 	else if (strcmp(mode, "fixed") == 0)
-		instance.mode = Mode::FIXED;
+		parsed_mode = DemoHttpServerConnection::Mode::FIXED;
 	else if (strcmp(mode, "huge") == 0)
-		instance.mode = Mode::HUGE_;
+		parsed_mode = DemoHttpServerConnection::Mode::HUGE_;
 	else if (strcmp(mode, "hold") == 0)
-		instance.mode = Mode::HOLD;
+		parsed_mode = DemoHttpServerConnection::Mode::HOLD;
 	else if (strcmp(mode, "nop") == 0)
-		instance.mode = Mode::NOP;
+		parsed_mode = DemoHttpServerConnection::Mode::NOP;
 	else {
 		fprintf(stderr, "Unknown mode: %s\n", mode);
 		return EXIT_FAILURE;
@@ -339,7 +181,7 @@ try {
 
 	if (listen_fd.IsDefined()) {
 		instance.listener = std::make_unique<Listener>(instance.event_loop,
-							       instance);
+							       instance, parsed_mode);
 		instance.listener->Listen(std::move(listen_fd));
 	} else {
 		UniqueSocketDescriptor sockfd;
@@ -350,7 +192,7 @@ try {
 		} else
 			sockfd = UniqueSocketDescriptor(in_fd);
 
-		new Connection(instance, std::move(sockfd), {});
+		new Connection(instance, parsed_mode, std::move(sockfd), {});
 	}
 
 	instance.event_loop.Dispatch();
