@@ -511,6 +511,10 @@ HttpClient::Close()
 	Destroy();
 }
 
+namespace {
+struct RequestBodyCanceled {};
+}
+
 inline HttpClient::BucketResult
 HttpClient::TryWriteBuckets2()
 {
@@ -562,8 +566,7 @@ HttpClient::TryWriteBuckets2()
 		if (nbytes == WRITE_BROKEN)
 			/* request.istream has already been closed by
 			   OnBufferedBroken() */
-			throw HttpClientError(HttpClientErrorCode::IO,
-					      "write error");
+			throw RequestBodyCanceled{};
 
 		request.istream.ClearAndClose();
 
@@ -587,6 +590,9 @@ HttpClient::TryWriteBuckets()
 
 	try {
 		result = TryWriteBuckets2();
+	} catch (RequestBodyCanceled) {
+		assert(!request.istream.IsDefined());
+		return BucketResult::DEPLETED;
 	} catch (...) {
 		assert(!request.istream.IsDefined());
 		stopwatch_event(stopwatch, "error");
