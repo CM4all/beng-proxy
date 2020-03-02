@@ -147,6 +147,10 @@ public:
 		return !HasMore() && consumed == GetTotalBufferSize();
 	}
 
+	/**
+	 * Move buffer buckets from the given list, stopping at the first
+	 * no-buffer bucket or after #max_size bytes have been moved.
+	 */
 	void SpliceBuffersFrom(IstreamBucketList &src, size_t max_size) {
 		if (src.HasMore())
 			SetMore();
