@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,50 +38,50 @@
 
 class ByteIstream final : public ForwardIstream {
 public:
-    ByteIstream(struct pool &p, UnusedIstreamPtr _input)
-        :ForwardIstream(p, std::move(_input)) {}
+	ByteIstream(struct pool &p, UnusedIstreamPtr _input)
+		:ForwardIstream(p, std::move(_input)) {}
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
-        return -1;
-    }
+	off_t _GetAvailable(gcc_unused bool partial) noexcept override {
+		return -1;
+	}
 
-    off_t _Skip(gcc_unused off_t length) noexcept override {
-        return -1;
-    }
+	off_t _Skip(gcc_unused off_t length) noexcept override {
+		return -1;
+	}
 
-    void _FillBucketList(IstreamBucketList &list) override {
-        IstreamBucketList tmp;
+	void _FillBucketList(IstreamBucketList &list) override {
+		IstreamBucketList tmp;
 
-        try {
-            input.FillBucketList(tmp);
-        } catch (...) {
-            Destroy();
-            throw;
-        }
+		try {
+			input.FillBucketList(tmp);
+		} catch (...) {
+			Destroy();
+			throw;
+		}
 
-        list.SpliceBuffersFrom(tmp, 1);
-    }
+		list.SpliceBuffersFrom(tmp, 1);
+	}
 
-    int _AsFd() noexcept override {
-        return -1;
-    }
+	int _AsFd() noexcept override {
+		return -1;
+	}
 
-    /* handler */
+	/* handler */
 
-    size_t OnData(const void *data, gcc_unused size_t length) noexcept override {
-        return ForwardIstream::OnData(data, 1);
-    }
+	size_t OnData(const void *data, gcc_unused size_t length) noexcept override {
+		return ForwardIstream::OnData(data, 1);
+	}
 
-    ssize_t OnDirect(FdType type, int fd,
-                     gcc_unused size_t max_length) noexcept override {
-        return ForwardIstream::OnDirect(type, fd, 1);
-    }
+	ssize_t OnDirect(FdType type, int fd,
+			 gcc_unused size_t max_length) noexcept override {
+		return ForwardIstream::OnDirect(type, fd, 1);
+	}
 };
 
 UnusedIstreamPtr
 istream_byte_new(struct pool &pool, UnusedIstreamPtr input)
 {
-    return NewIstreamPtr<ByteIstream>(pool, std::move(input));
+	return NewIstreamPtr<ByteIstream>(pool, std::move(input));
 }
