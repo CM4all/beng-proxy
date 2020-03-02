@@ -51,17 +51,17 @@ private:
 public:
 	IstreamBucket() = default;
 
-	Type GetType() const {
+	Type GetType() const noexcept {
 		return type;
 	}
 
-	ConstBuffer<void> GetBuffer() const {
+	ConstBuffer<void> GetBuffer() const noexcept {
 		assert(type == Type::BUFFER);
 
 		return buffer;
 	}
 
-	void Set(ConstBuffer<void> _buffer) {
+	void Set(ConstBuffer<void> _buffer) noexcept {
 		type = Type::BUFFER;
 		buffer = _buffer;
 	}
@@ -79,27 +79,27 @@ public:
 	IstreamBucketList(const IstreamBucketList &) = delete;
 	IstreamBucketList &operator=(const IstreamBucketList &) = delete;
 
-	void SetMore(bool _more=true) {
+	void SetMore(bool _more=true) noexcept {
 		more = _more;
 	}
 
-	bool HasMore() const {
+	bool HasMore() const noexcept {
 		return more;
 	}
 
-	bool IsEmpty() const {
+	bool IsEmpty() const noexcept {
 		return list.empty();
 	}
 
-	bool IsFull() const {
+	bool IsFull() const noexcept {
 		return list.full();
 	}
 
-	void Clear() {
+	void Clear() noexcept {
 		list.clear();
 	}
 
-	void Push(const IstreamBucket &bucket) {
+	void Push(const IstreamBucket &bucket) noexcept {
 		if (IsFull()) {
 			SetMore();
 			return;
@@ -108,7 +108,7 @@ public:
 		list.append(bucket);
 	}
 
-	void Push(ConstBuffer<void> buffer) {
+	void Push(ConstBuffer<void> buffer) noexcept {
 		if (IsFull()) {
 			SetMore();
 			return;
@@ -117,16 +117,16 @@ public:
 		list.append().Set(buffer);
 	}
 
-	List::const_iterator begin() const {
+	List::const_iterator begin() const noexcept {
 		return list.begin();
 	}
 
-	List::const_iterator end() const {
+	List::const_iterator end() const noexcept {
 		return list.end();
 	}
 
 	gcc_pure
-	bool HasNonBuffer() const {
+	bool HasNonBuffer() const noexcept {
 		for (const auto &bucket : list)
 			if (bucket.GetType() != IstreamBucket::Type::BUFFER)
 				return true;
@@ -134,7 +134,7 @@ public:
 	}
 
 	gcc_pure
-	size_t GetTotalBufferSize() const {
+	size_t GetTotalBufferSize() const noexcept {
 		size_t size = 0;
 		for (const auto &bucket : list)
 			if (bucket.GetType() == IstreamBucket::Type::BUFFER)
@@ -143,7 +143,7 @@ public:
 	}
 
 	gcc_pure
-	bool IsDepleted(size_t consumed) const {
+	bool IsDepleted(size_t consumed) const noexcept {
 		return !HasMore() && consumed == GetTotalBufferSize();
 	}
 
@@ -153,7 +153,8 @@ public:
 	 *
 	 * @return the number of bytes in all moved buffers
 	 */
-	size_t SpliceBuffersFrom(IstreamBucketList &src, size_t max_size) {
+	size_t SpliceBuffersFrom(IstreamBucketList &src,
+				 size_t max_size) noexcept {
 		if (src.HasMore())
 			SetMore();
 
@@ -185,7 +186,7 @@ public:
 	 *
 	 * @return the number of bytes in all moved buffers
 	 */
-	size_t SpliceBuffersFrom(IstreamBucketList &src) {
+	size_t SpliceBuffersFrom(IstreamBucketList &src) noexcept {
 		if (src.HasMore())
 			SetMore();
 
