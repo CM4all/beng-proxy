@@ -63,7 +63,7 @@ public:
 			throw;
 		}
 
-		list.SpliceBuffersFrom(tmp, 1);
+		list.SpliceBuffersFrom(tmp, 4);
 	}
 
 	int _AsFd() noexcept override {
