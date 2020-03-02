@@ -150,11 +150,14 @@ public:
 	/**
 	 * Move buffer buckets from the given list, stopping at the first
 	 * no-buffer bucket or after #max_size bytes have been moved.
+	 *
+	 * @return the number of bytes in all moved buffers
 	 */
-	void SpliceBuffersFrom(IstreamBucketList &src, size_t max_size) {
+	size_t SpliceBuffersFrom(IstreamBucketList &src, size_t max_size) {
 		if (src.HasMore())
 			SetMore();
 
+		size_t total_size = 0;
 		for (const auto &bucket : src) {
 			if (max_size == 0 ||
 			    bucket.GetType() != IstreamBucket::Type::BUFFER) {
@@ -170,7 +173,10 @@ public:
 
 			Push(buffer);
 			max_size -= buffer.size;
+			total_size += buffer.size;
 		}
+
+		return total_size;
 	}
 
 	/**

@@ -356,11 +356,8 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 			throw;
 		}
 
-		bool generate_end = sub.GetTotalBufferSize() >= missing_from_current_chunk;
-
-		list.SpliceBuffersFrom(sub, missing_from_current_chunk);
-
-		if (generate_end)
+		size_t nbytes = list.SpliceBuffersFrom(sub, missing_from_current_chunk);
+		if (nbytes >= missing_from_current_chunk)
 			list.Push(StringView("\r\n").ToVoid());
 	}
 

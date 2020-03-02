@@ -115,12 +115,9 @@ HeadIstream::_FillBucketList(IstreamBucketList &list)
 		throw;
 	}
 
-	IstreamBucketList tmp2;
-	tmp2.SpliceBuffersFrom(tmp1, rest);
-	if ((off_t)tmp2.GetTotalBufferSize() >= rest)
-		tmp2.SetMore(false);
-
-	list.SpliceBuffersFrom(tmp2);
+	size_t nbytes = list.SpliceBuffersFrom(tmp1, rest);
+	if ((off_t)nbytes >= rest)
+		list.SetMore(false);
 }
 
 ssize_t
