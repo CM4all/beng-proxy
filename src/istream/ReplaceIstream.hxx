@@ -227,6 +227,11 @@ public:
 	void OnError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class Istream */
+
+	bool OnIstreamReady() noexcept override {
+		return GetBufferEndOffsetUntil(first_substitution) > position;
+	}
+
 	off_t _GetAvailable(bool partial) noexcept override;
 	void _Read() noexcept override;
 	void _Close() noexcept override;
