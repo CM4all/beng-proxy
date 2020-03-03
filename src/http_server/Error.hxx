@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,11 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_HTTP_SERVER_ERROR_HXX
-#define BENG_HTTP_SERVER_ERROR_HXX
+#pragma once
 
 #include <exception>
 
 class HttpServerSocketError : public std::nested_exception {};
-
-#endif

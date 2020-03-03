@@ -624,6 +624,20 @@ class StdArrayPrinter:
     def to_string(self):
         return str(self.val['_M_elems'])
 
+class StaticArrayPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def display_hint(self):
+        return 'array'
+
+    def children(self):
+        return [('', self.val['data']['_M_elems'][i]) for i in range(self.val['the_size'])]
+
+    def to_string(self):
+        t = get_basic_type(self.val.type)
+        return "StaticArray<%s>" % t.template_argument(0)
+
 class StringViewPrinter:
     def __init__(self, val):
         self.val = val
@@ -812,6 +826,8 @@ import gdb.printing
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter("cm4all-beng-proxy")
     pp.add_printer('std::array', '^std::array<', StdArrayPrinter)
+    pp.add_printer('TrivialArray', '^TrivialArray<', StaticArrayPrinter)
+    pp.add_printer('StaticArray', '^StaticArray<', StaticArrayPrinter)
     pp.add_printer('boost::intrusive::list', 'boost::intrusive::s?list<', IntrusiveListPrinter)
     pp.add_printer('boost::intrusive::set', 'boost::intrusive::(multi)?set<', IntrusiveSetPrinter)
     pp.add_printer('boost::intrusive::unordered_set', 'boost::intrusive::unordered_(multi)?set<', IntrusiveUnorderedSetPrinter)

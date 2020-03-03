@@ -84,7 +84,7 @@ else
   debug_flags = []
 endif
 
-stopwatch = debug
+stopwatch = get_option('stopwatch')
 if stopwatch
   debug_flags += ['-DENABLE_STOPWATCH']
 endif

@@ -433,5 +433,11 @@ embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext> ctx,
 	if (pause)
 		pause->Resume();
 
+#if GCC_OLDER_THAN(8,0)
+	/* older GCC versions don't have copy elision according to
+	   C++17 */
 	return std::move(hold);
+#else
+	return hold;
+#endif
 }

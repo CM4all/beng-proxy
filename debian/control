@@ -3,6 +3,7 @@ Section: web
 Priority: optional
 Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 12~), dh-python,
+ python2 | python (<< 3~),
  meson (>= 0.47),
  g++ (>= 4:6),
  libc6-dev (>= 2.13),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,36 +38,43 @@
 
 class NullIstream final : public Istream {
 public:
-    NullIstream(struct pool &p)
-        :Istream(p) {}
+	NullIstream(struct pool &p)
+		:Istream(p) {}
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
-        return 0;
-    }
+	off_t _GetAvailable(gcc_unused bool partial) noexcept override {
+		return 0;
+	}
 
-    void _Read() noexcept override {
-        DestroyEof();
-    }
+	void _Read() noexcept override {
+		DestroyEof();
+	}
 
-    int _AsFd() noexcept override {
-        /* fd0 is always linked with /dev/null */
-        int fd = dup(0);
-        if (fd < 0)
-            return -1;
+	void _FillBucketList(IstreamBucketList &) override {
+	}
 
-        Destroy();
-        return fd;
-    }
+	size_t _ConsumeBucketList(size_t) noexcept override {
+		return 0;
+	}
 
-    void _Close() noexcept override {
-        Destroy();
-    }
+	int _AsFd() noexcept override {
+		/* fd0 is always linked with /dev/null */
+		int fd = dup(0);
+		if (fd < 0)
+			return -1;
+
+		Destroy();
+		return fd;
+	}
+
+	void _Close() noexcept override {
+		Destroy();
+	}
 };
 
 UnusedIstreamPtr
 istream_null_new(struct pool &pool)
 {
-    return NewIstreamPtr<NullIstream>(pool);
+	return NewIstreamPtr<NullIstream>(pool);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -44,4 +44,4 @@ class UnusedIstreamPtr;
  */
 UnusedIstreamPtr
 istream_head_new(struct pool &pool, UnusedIstreamPtr input,
-                 size_t size, bool authoritative) noexcept;
+		 size_t size, bool authoritative) noexcept;

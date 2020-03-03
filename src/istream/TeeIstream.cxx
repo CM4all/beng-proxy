@@ -139,6 +139,14 @@ struct TeeIstream final : IstreamHandler, DestructAnchor {
 			}
 
 			bucket_list_size = list.SpliceBuffersFrom(sub);
+
+			if (!parent.IsSingleOutput())
+				/* if there are more outputs, they may
+				   not get an OnData() callback for
+				   the data we have just loaded into
+				   the bucket list, so let's schedule
+				   a read */
+				parent.DeferRead();
 		}
 
 		size_t _ConsumeBucketList(size_t nbytes) noexcept override {
@@ -213,6 +221,12 @@ struct TeeIstream final : IstreamHandler, DestructAnchor {
 
 	UnusedIstreamPtr CreateOutput(bool weak) noexcept {
 		return CreateOutput(GetPool(), weak);
+	}
+
+	bool IsSingleOutput() const noexcept {
+		assert(!outputs.empty());
+
+		return std::next(outputs.begin()) == outputs.end();
 	}
 
 	void ReadInput() noexcept {

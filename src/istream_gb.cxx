@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,66 +42,66 @@
 #include <algorithm>
 
 class GrowingBufferIstream final : public Istream {
-    GrowingBufferReader reader;
+	GrowingBufferReader reader;
 
 public:
-    GrowingBufferIstream(struct pool &p, GrowingBuffer &&_gb)
-        :Istream(p), reader(std::move(_gb)) {
-        _gb.Release();
-    }
+	GrowingBufferIstream(struct pool &p, GrowingBuffer &&_gb)
+		:Istream(p), reader(std::move(_gb)) {
+		_gb.Release();
+	}
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
-        return reader.Available();
-    }
+	off_t _GetAvailable(gcc_unused bool partial) noexcept override {
+		return reader.Available();
+	}
 
-    off_t _Skip(off_t _nbytes) noexcept override {
-        size_t nbytes = _nbytes > off_t(reader.Available())
-            ? reader.Available()
-            : size_t(_nbytes);
+	off_t _Skip(off_t _nbytes) noexcept override {
+		size_t nbytes = _nbytes > off_t(reader.Available())
+			? reader.Available()
+			: size_t(_nbytes);
 
-        reader.Skip(nbytes);
-        Consumed(nbytes);
-        return nbytes;
-    }
+		reader.Skip(nbytes);
+		Consumed(nbytes);
+		return nbytes;
+	}
 
-    void _Read() noexcept override {
-        /* this loop is required to cross the buffer borders */
-        while (true) {
-            auto src = reader.Read();
-            if (src.IsNull()) {
-                assert(reader.IsEOF());
-                DestroyEof();
-                return;
-            }
+	void _Read() noexcept override {
+		/* this loop is required to cross the buffer borders */
+		while (true) {
+			auto src = reader.Read();
+			if (src.IsNull()) {
+				assert(reader.IsEOF());
+				DestroyEof();
+				return;
+			}
 
-            assert(!reader.IsEOF());
+			assert(!reader.IsEOF());
 
-            size_t nbytes = InvokeData(src.data, src.size);
-            if (nbytes == 0)
-                /* growing_buffer has been closed */
-                return;
+			size_t nbytes = InvokeData(src.data, src.size);
+			if (nbytes == 0)
+				/* growing_buffer has been closed */
+				return;
 
-            reader.Consume(nbytes);
-            if (nbytes < src.size)
-                return;
-        }
-    }
+			reader.Consume(nbytes);
+			if (nbytes < src.size)
+				return;
+		}
+	}
 
-    void _FillBucketList(IstreamBucketList &list) override {
-        reader.FillBucketList(list);
-    }
+	void _FillBucketList(IstreamBucketList &list) override {
+		reader.FillBucketList(list);
+	}
 
-    size_t _ConsumeBucketList(size_t nbytes) noexcept override {
-        size_t consumed = reader.ConsumeBucketList(nbytes);
-        Consumed(consumed);
-        return consumed;
-    }
+	size_t _ConsumeBucketList(size_t nbytes) noexcept override {
+		size_t consumed = reader.ConsumeBucketList(nbytes);
+		Consumed(consumed);
+		return consumed;
+	}
 };
 
 UnusedIstreamPtr
-istream_gb_new(struct pool &pool, GrowingBuffer &&gb)
+istream_gb_new(struct pool &pool, GrowingBuffer &&gb) noexcept
 {
-    return UnusedIstreamPtr(NewIstream<GrowingBufferIstream>(pool, std::move(gb)));
+	return UnusedIstreamPtr(NewIstream<GrowingBufferIstream>(pool, std::move(gb)));
 }

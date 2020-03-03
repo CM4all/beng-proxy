@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -54,172 +54,172 @@ const Event::Duration http_server_write_timeout = std::chrono::seconds(30);
 void
 HttpServerConnection::Log() noexcept
 {
-    if (handler == nullptr)
-        /* this can happen when called via
-           http_server_connection_close() (during daemon shutdown) */
-        return;
+	if (handler == nullptr)
+		/* this can happen when called via
+		   http_server_connection_close() (during daemon shutdown) */
+		return;
 
-    handler->LogHttpRequest(*request.request,
-                            response.status,
-                            response.length,
-                            request.bytes_received,
-                            response.bytes_sent);
+	handler->LogHttpRequest(*request.request,
+				response.status,
+				response.length,
+				request.bytes_received,
+				response.bytes_sent);
 }
 
 HttpServerRequest *
 http_server_request_new(HttpServerConnection *connection,
-                        http_method_t method,
-                        StringView uri) noexcept
+			http_method_t method,
+			StringView uri) noexcept
 {
-    assert(connection != nullptr);
+	assert(connection != nullptr);
 
-    connection->response.status = http_status_t(0);
+	connection->response.status = http_status_t(0);
 
-    auto pool = pool_new_linear(connection->pool,
-                                "http_server_request", 8192);
-    pool_set_major(pool);
+	auto pool = pool_new_linear(connection->pool,
+				    "http_server_request", 8192);
+	pool_set_major(pool);
 
-    return NewFromPool<HttpServerRequest>(std::move(pool),
-                                          *connection,
-                                          connection->local_address,
-                                          connection->remote_address,
-                                          connection->local_host_and_port,
-                                          connection->remote_host,
-                                          method, uri);
+	return NewFromPool<HttpServerRequest>(std::move(pool),
+					      *connection,
+					      connection->local_address,
+					      connection->remote_address,
+					      connection->local_host_and_port,
+					      connection->remote_host,
+					      method, uri);
 }
 
 HttpServerConnection::BucketResult
 HttpServerConnection::TryWriteBuckets2()
 {
-    assert(IsValid());
-    assert(request.read_state != Request::START &&
-           request.read_state != Request::HEADERS);
-    assert(request.request != nullptr);
-    assert(response.istream.IsDefined());
+	assert(IsValid());
+	assert(request.read_state != Request::START &&
+	       request.read_state != Request::HEADERS);
+	assert(request.request != nullptr);
+	assert(response.istream.IsDefined());
 
-    if (socket.HasFilter())
-        return BucketResult::UNAVAILABLE;
+	if (socket.HasFilter())
+		return BucketResult::UNAVAILABLE;
 
-    IstreamBucketList list;
+	IstreamBucketList list;
 
-    try {
-        response.istream.FillBucketList(list);
-    } catch (...) {
-        std::throw_with_nested(std::runtime_error("error on HTTP response stream"));
-    }
+	try {
+		response.istream.FillBucketList(list);
+	} catch (...) {
+		std::throw_with_nested(std::runtime_error("error on HTTP response stream"));
+	}
 
-    StaticArray<struct iovec, 64> v;
-    for (const auto &bucket : list) {
-        if (bucket.GetType() != IstreamBucket::Type::BUFFER)
-            break;
+	StaticArray<struct iovec, 64> v;
+	for (const auto &bucket : list) {
+		if (bucket.GetType() != IstreamBucket::Type::BUFFER)
+			break;
 
-        const auto buffer = bucket.GetBuffer();
-        auto &tail = v.append();
-        tail.iov_base = const_cast<void *>(buffer.data);
-        tail.iov_len = buffer.size;
+		const auto buffer = bucket.GetBuffer();
+		auto &tail = v.append();
+		tail.iov_base = const_cast<void *>(buffer.data);
+		tail.iov_len = buffer.size;
 
-        if (v.full())
-            break;
-    }
+		if (v.full())
+			break;
+	}
 
-    if (v.empty()) {
-        return list.HasMore()
-            ? BucketResult::UNAVAILABLE
-            : BucketResult::DEPLETED;
-    }
+	if (v.empty()) {
+		return list.HasMore()
+			? BucketResult::UNAVAILABLE
+			: BucketResult::DEPLETED;
+	}
 
-    ssize_t nbytes = socket.WriteV(v.begin(), v.size());
-    if (nbytes < 0) {
-        if (gcc_likely(nbytes == WRITE_BLOCKING))
-            return BucketResult::BLOCKING;
+	ssize_t nbytes = socket.WriteV(v.begin(), v.size());
+	if (nbytes < 0) {
+		if (gcc_likely(nbytes == WRITE_BLOCKING))
+			return BucketResult::BLOCKING;
 
-        if (nbytes == WRITE_DESTROYED)
-            return BucketResult::DESTROYED;
+		if (nbytes == WRITE_DESTROYED)
+			return BucketResult::DESTROYED;
 
-        SocketErrorErrno("write error on HTTP connection");
-        return BucketResult::DESTROYED;
-    }
+		SocketErrorErrno("write error on HTTP connection");
+		return BucketResult::DESTROYED;
+	}
 
-    response.bytes_sent += nbytes;
-    response.length += nbytes;
+	response.bytes_sent += nbytes;
+	response.length += nbytes;
 
-    size_t consumed = response.istream.ConsumeBucketList(nbytes);
-    assert(consumed == (size_t)nbytes);
+	size_t consumed = response.istream.ConsumeBucketList(nbytes);
+	assert(consumed == (size_t)nbytes);
 
-    return list.IsDepleted(consumed)
-        ? BucketResult::DEPLETED
-        : BucketResult::MORE;
+	return list.IsDepleted(consumed)
+		? BucketResult::DEPLETED
+		: BucketResult::MORE;
 }
 
 HttpServerConnection::BucketResult
 HttpServerConnection::TryWriteBuckets() noexcept
 {
-    BucketResult result;
+	BucketResult result;
 
-    try {
-        result = TryWriteBuckets2();
-    } catch (...) {
-        assert(!response.istream.IsDefined());
+	try {
+		result = TryWriteBuckets2();
+	} catch (...) {
+		assert(!response.istream.IsDefined());
 
-        /* we clear this CancellablePointer here so CloseRequest()
-           won't think we havn't sent a response yet */
-        request.cancel_ptr = nullptr;
+		/* we clear this CancellablePointer here so CloseRequest()
+		   won't think we havn't sent a response yet */
+		request.cancel_ptr = nullptr;
 
-        Error(std::current_exception());
-        return BucketResult::DESTROYED;
-    }
+		Error(std::current_exception());
+		return BucketResult::DESTROYED;
+	}
 
-    switch (result) {
-    case BucketResult::UNAVAILABLE:
-    case BucketResult::MORE:
-        assert(response.istream.IsDefined());
-        break;
+	switch (result) {
+	case BucketResult::UNAVAILABLE:
+	case BucketResult::MORE:
+		assert(response.istream.IsDefined());
+		break;
 
-    case BucketResult::BLOCKING:
-        assert(response.istream.IsDefined());
-        response.want_write = true;
-        ScheduleWrite();
-        break;
+	case BucketResult::BLOCKING:
+		assert(response.istream.IsDefined());
+		response.want_write = true;
+		ScheduleWrite();
+		break;
 
-    case BucketResult::DEPLETED:
-        assert(response.istream.IsDefined());
-        response.istream.ClearAndClose();
-        if (!ResponseIstreamFinished())
-            result = BucketResult::DESTROYED;
-        break;
+	case BucketResult::DEPLETED:
+		assert(response.istream.IsDefined());
+		response.istream.ClearAndClose();
+		if (!ResponseIstreamFinished())
+			result = BucketResult::DESTROYED;
+		break;
 
-    case BucketResult::DESTROYED:
-        break;
-    }
+	case BucketResult::DESTROYED:
+		break;
+	}
 
-    return result;
+	return result;
 }
 
 bool
 HttpServerConnection::TryWrite() noexcept
 {
-    assert(IsValid());
-    assert(request.read_state != Request::START &&
-           request.read_state != Request::HEADERS);
-    assert(request.request != nullptr);
-    assert(response.istream.IsDefined());
+	assert(IsValid());
+	assert(request.read_state != Request::START &&
+	       request.read_state != Request::HEADERS);
+	assert(request.request != nullptr);
+	assert(response.istream.IsDefined());
 
-    switch (TryWriteBuckets()) {
-    case BucketResult::UNAVAILABLE:
-    case BucketResult::MORE:
-        break;
+	switch (TryWriteBuckets()) {
+	case BucketResult::UNAVAILABLE:
+	case BucketResult::MORE:
+		break;
 
-    case BucketResult::BLOCKING:
-    case BucketResult::DEPLETED:
-        return true;
+	case BucketResult::BLOCKING:
+	case BucketResult::DEPLETED:
+		return true;
 
-    case BucketResult::DESTROYED:
-        return false;
-    }
+	case BucketResult::DESTROYED:
+		return false;
+	}
 
-    const DestructObserver destructed(*this);
-    response.istream.Read();
-    return !destructed;
+	const DestructObserver destructed(*this);
+	response.istream.Read();
+	return !destructed;
 }
 
 /*
@@ -230,264 +230,267 @@ HttpServerConnection::TryWrite() noexcept
 BufferedResult
 HttpServerConnection::OnBufferedData()
 {
-    auto r = socket.ReadBuffer();
-    assert(!r.empty());
+	auto r = socket.ReadBuffer();
+	assert(!r.empty());
 
-    if (response.pending_drained) {
-        /* discard all incoming data while we're waiting for the
-           (filtered) response to be drained */
-        socket.DisposeConsumed(r.size);
-        return BufferedResult::OK;
-    }
+	if (response.pending_drained) {
+		/* discard all incoming data while we're waiting for the
+		   (filtered) response to be drained */
+		socket.DisposeConsumed(r.size);
+		return BufferedResult::OK;
+	}
 
-    return Feed(r.data, r.size);
+	return Feed(r.data, r.size);
 }
 
 DirectResult
 HttpServerConnection::OnBufferedDirect(SocketDescriptor fd, FdType fd_type)
 {
-    assert(request.read_state != Request::END);
-    assert(!response.pending_drained);
+	assert(request.read_state != Request::END);
+	assert(!response.pending_drained);
 
-    return TryRequestBodyDirect(fd, fd_type);
+	return TryRequestBodyDirect(fd, fd_type);
 }
 
 bool
 HttpServerConnection::OnBufferedWrite()
 {
-    assert(!response.pending_drained);
+	assert(!response.pending_drained);
 
-    response.want_write = false;
+	response.want_write = false;
 
-    if (!TryWrite())
-        return false;
+	if (!TryWrite())
+		return false;
 
-    if (!response.want_write)
-        socket.UnscheduleWrite();
+	if (!response.want_write)
+		socket.UnscheduleWrite();
 
-    return true;
+	return true;
 }
 
 bool
 HttpServerConnection::OnBufferedDrained() noexcept
 {
-    if (response.pending_drained) {
-        Done();
-        return false;
-    }
+	if (response.pending_drained) {
+		Done();
+		return false;
+	}
 
-    return true;
+	return true;
 }
 
 bool
 HttpServerConnection::OnBufferedClosed() noexcept
 {
-    Cancel();
-    return false;
+	Cancel();
+	return false;
 }
 
 void
 HttpServerConnection::OnBufferedError(std::exception_ptr ep) noexcept
 {
-    SocketError(ep);
+	SocketError(ep);
 }
 
 inline void
 HttpServerConnection::IdleTimeoutCallback() noexcept
 {
-    assert(request.read_state == Request::START ||
-           request.read_state == Request::HEADERS);
+	assert(request.read_state == Request::START ||
+	       request.read_state == Request::HEADERS);
 
-    Cancel();
+	Cancel();
 }
 
 inline
 HttpServerConnection::HttpServerConnection(struct pool &_pool,
-                                           EventLoop &_loop,
-                                           UniqueSocketDescriptor &&fd, FdType fd_type,
-                                           SocketFilterPtr &&filter,
-                                           SocketAddress _local_address,
-                                           SocketAddress _remote_address,
-                                           bool _date_header,
-                                           HttpServerConnectionHandler &_handler)
-    :pool(&_pool), socket(_loop),
-     idle_timeout(_loop, BIND_THIS_METHOD(IdleTimeoutCallback)),
-     defer_read(_loop, BIND_THIS_METHOD(OnDeferredRead)),
-     handler(&_handler),
-     local_address(DupAddress(*pool, _local_address)),
-     remote_address(DupAddress(*pool, _remote_address)),
-     local_host_and_port(address_to_string(*pool, _local_address)),
-     remote_host(address_to_host_string(*pool, _remote_address)),
-     date_header(_date_header)
+					   EventLoop &_loop,
+					   UniqueSocketDescriptor &&fd, FdType fd_type,
+					   SocketFilterPtr &&filter,
+					   SocketAddress _local_address,
+					   SocketAddress _remote_address,
+					   bool _date_header,
+					   HttpServerConnectionHandler &_handler)
+	:pool(&_pool), socket(_loop),
+	 idle_timeout(_loop, BIND_THIS_METHOD(IdleTimeoutCallback)),
+	 defer_read(_loop, BIND_THIS_METHOD(OnDeferredRead)),
+	 handler(&_handler),
+	 local_address(DupAddress(*pool, _local_address)),
+	 remote_address(DupAddress(*pool, _remote_address)),
+	 local_host_and_port(address_to_string(*pool, _local_address)),
+	 remote_host(address_to_host_string(*pool, _remote_address)),
+	 date_header(_date_header)
 {
-    socket.Init(fd.Release(), fd_type,
-                Event::Duration(-1), http_server_write_timeout,
-                std::move(filter),
-                *this);
+	socket.Init(fd.Release(), fd_type,
+		    Event::Duration(-1), http_server_write_timeout,
+		    std::move(filter),
+		    *this);
 
-    idle_timeout.Schedule(http_server_idle_timeout);
+	idle_timeout.Schedule(http_server_idle_timeout);
 
-    /* read the first request, but not in this stack frame, because a
-       failure may destroy the HttpServerConnection before it gets
-       passed to the caller */
-    defer_read.Schedule();
+	/* read the first request, but not in this stack frame, because a
+	   failure may destroy the HttpServerConnection before it gets
+	   passed to the caller */
+	defer_read.Schedule();
 }
 
 void
 HttpServerConnection::Delete() noexcept
 {
-    this->~HttpServerConnection();
+	this->~HttpServerConnection();
 }
 
 HttpServerConnection *
 http_server_connection_new(struct pool *pool,
-                           EventLoop &loop,
-                           UniqueSocketDescriptor fd, FdType fd_type,
-                           SocketFilterPtr filter,
-                           SocketAddress local_address,
-                           SocketAddress remote_address,
-                           bool date_header,
-                           HttpServerConnectionHandler &handler) noexcept
+			   EventLoop &loop,
+			   UniqueSocketDescriptor fd, FdType fd_type,
+			   SocketFilterPtr filter,
+			   SocketAddress local_address,
+			   SocketAddress remote_address,
+			   bool date_header,
+			   HttpServerConnectionHandler &handler) noexcept
 {
-    assert(fd.IsDefined());
+	assert(fd.IsDefined());
 
-    return NewFromPool<HttpServerConnection>(*pool, *pool, loop,
-                                             std::move(fd), fd_type,
-                                             std::move(filter),
-                                             local_address, remote_address,
-                                             date_header,
-                                             handler);
+	return NewFromPool<HttpServerConnection>(*pool, *pool, loop,
+						 std::move(fd), fd_type,
+						 std::move(filter),
+						 local_address, remote_address,
+						 date_header,
+						 handler);
 }
 
 void
 HttpServerConnection::CloseRequest() noexcept
 {
-    assert(request.read_state != Request::START);
-    assert(request.request != nullptr);
+	assert(request.read_state != Request::START);
+	assert(request.request != nullptr);
 
-    if (response.status != http_status_t(0))
-        Log();
+	if (response.status != http_status_t(0))
+		Log();
 
-    auto *_request = std::exchange(request.request, nullptr);
+	auto *_request = std::exchange(request.request, nullptr);
 
-    if ((request.read_state == Request::BODY ||
-         request.read_state == Request::END)) {
-        if (response.istream.IsDefined())
-            response.istream.ClearAndClose();
-        else if (request.cancel_ptr)
-            /* don't call this if coming from
-               _response_stream_abort() */
-            request.cancel_ptr.Cancel();
-    }
+	if ((request.read_state == Request::BODY ||
+	     request.read_state == Request::END)) {
+		if (response.istream.IsDefined())
+			response.istream.ClearAndClose();
+		else if (request.cancel_ptr)
+			/* don't call this if coming from
+			   _response_stream_abort() */
+			request.cancel_ptr.Cancel();
+	}
 
-    _request->Destroy();
+	_request->Destroy();
 
-    /* the handler must have closed the request body */
-    assert(request.read_state != Request::BODY);
+	/* the handler must have closed the request body */
+	assert(request.read_state != Request::BODY);
 }
 
 void
 HttpServerConnection::Done() noexcept
 {
-    assert(handler != nullptr);
-    assert(request.read_state == Request::START);
+	assert(handler != nullptr);
+	assert(request.read_state == Request::START);
 
-    /* shut down the socket gracefully to allow the TCP stack to
-       transfer remaining response data */
-    socket.Shutdown();
+	/* shut down the socket gracefully to allow the TCP stack to
+	   transfer remaining response data */
+	socket.Shutdown();
 
-    auto *_handler = handler;
-    handler = nullptr;
+	auto *_handler = handler;
+	handler = nullptr;
 
-    Delete();
+	Delete();
 
-    _handler->HttpConnectionClosed();
+	_handler->HttpConnectionClosed();
 }
 
 void
 HttpServerConnection::Cancel() noexcept
 {
-    assert(handler != nullptr);
+	assert(handler != nullptr);
 
-    if (request.read_state != Request::START)
-        CloseRequest();
+	if (request.request != nullptr)
+		request.request->stopwatch.RecordEvent("cancel");
 
-    auto *_handler = std::exchange(handler, nullptr);
+	if (request.read_state != Request::START)
+		CloseRequest();
 
-    Delete();
+	auto *_handler = std::exchange(handler, nullptr);
 
-    if (_handler != nullptr)
-        _handler->HttpConnectionClosed();
+	Delete();
+
+	if (_handler != nullptr)
+		_handler->HttpConnectionClosed();
 }
 
 void
 HttpServerConnection::Error(std::exception_ptr e) noexcept
 {
-    assert(handler != nullptr);
+	assert(handler != nullptr);
 
-    if (request.read_state != Request::START)
-        CloseRequest();
+	if (request.read_state != Request::START)
+		CloseRequest();
 
-    auto *_handler = std::exchange(handler, nullptr);
+	auto *_handler = std::exchange(handler, nullptr);
 
-    Delete();
+	Delete();
 
-    if (_handler != nullptr)
-        _handler->HttpConnectionError(e);
+	if (_handler != nullptr)
+		_handler->HttpConnectionError(e);
 }
 
 void
 HttpServerConnection::Error(const char *msg) noexcept
 {
-    Error(std::make_exception_ptr(std::runtime_error(msg)));
+	Error(std::make_exception_ptr(std::runtime_error(msg)));
 }
 
 void
 http_server_connection_close(HttpServerConnection *connection) noexcept
 {
-    assert(connection != nullptr);
+	assert(connection != nullptr);
 
-    connection->handler = nullptr;
+	connection->handler = nullptr;
 
-    if (connection->request.read_state != HttpServerConnection::Request::START)
-        connection->CloseRequest();
+	if (connection->request.read_state != HttpServerConnection::Request::START)
+		connection->CloseRequest();
 
-    connection->Delete();
+	connection->Delete();
 }
 
 void
 HttpServerConnection::SocketErrorErrno(const char *msg) noexcept
 {
-    if (errno == EPIPE || errno == ECONNRESET) {
-        /* don't report this common problem */
-        Cancel();
-        return;
-    }
+	if (errno == EPIPE || errno == ECONNRESET) {
+		/* don't report this common problem */
+		Cancel();
+		return;
+	}
 
-    try {
-        throw MakeErrno(msg);
-    } catch (...) {
-        Error(std::make_exception_ptr(HttpServerSocketError()));
-    }
+	try {
+		throw MakeErrno(msg);
+	} catch (...) {
+		Error(std::make_exception_ptr(HttpServerSocketError()));
+	}
 }
 
 void
 http_server_connection_graceful(HttpServerConnection *connection) noexcept
 {
-    assert(connection != nullptr);
+	assert(connection != nullptr);
 
-    if (connection->request.read_state == HttpServerConnection::Request::START)
-        /* there is no request currently; close the connection
-           immediately */
-        connection->Done();
-    else
-        /* a request is currently being handled; disable keep_alive so
-           the connection will be closed after this last request */
-        connection->keep_alive = false;
+	if (connection->request.read_state == HttpServerConnection::Request::START)
+		/* there is no request currently; close the connection
+		   immediately */
+		connection->Done();
+	else
+		/* a request is currently being handled; disable keep_alive so
+		   the connection will be closed after this last request */
+		connection->keep_alive = false;
 }
 
 enum http_server_score
 http_server_connection_score(const HttpServerConnection *connection) noexcept
 {
-    return connection->score;
+	return connection->score;
 }

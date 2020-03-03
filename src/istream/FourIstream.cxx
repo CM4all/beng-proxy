@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,51 +40,51 @@
 
 class FourIstream final : public ForwardIstream {
 public:
-    FourIstream(struct pool &p, UnusedIstreamPtr _input)
-        :ForwardIstream(p, std::move(_input)) {}
+	FourIstream(struct pool &p, UnusedIstreamPtr _input)
+		:ForwardIstream(p, std::move(_input)) {}
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
-        return -1;
-    }
+	off_t _GetAvailable(gcc_unused bool partial) noexcept override {
+		return -1;
+	}
 
-    off_t _Skip(gcc_unused off_t length) noexcept override {
-        return -1;
-    }
+	off_t _Skip(gcc_unused off_t length) noexcept override {
+		return -1;
+	}
 
-    void _FillBucketList(IstreamBucketList &list) override {
-        IstreamBucketList tmp;
+	void _FillBucketList(IstreamBucketList &list) override {
+		IstreamBucketList tmp;
 
-        try {
-            input.FillBucketList(tmp);
-        } catch (...) {
-            Destroy();
-            throw;
-        }
+		try {
+			input.FillBucketList(tmp);
+		} catch (...) {
+			Destroy();
+			throw;
+		}
 
-        list.SpliceBuffersFrom(tmp, 1);
-    }
+		list.SpliceBuffersFrom(tmp, 4);
+	}
 
-    int _AsFd() noexcept override {
-        return -1;
-    }
+	int _AsFd() noexcept override {
+		return -1;
+	}
 
-    /* virtual methods from class IstreamHandler */
+	/* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) noexcept override {
-        return ForwardIstream::OnData(data,
-                                      std::min(length, size_t(4)));
-    }
+	size_t OnData(const void *data, size_t length) noexcept override {
+		return ForwardIstream::OnData(data,
+					      std::min(length, size_t(4)));
+	}
 
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override {
-        return ForwardIstream::OnDirect(type, fd,
-                                        std::min(max_length, size_t(4)));
-    }
+	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override {
+		return ForwardIstream::OnDirect(type, fd,
+						std::min(max_length, size_t(4)));
+	}
 };
 
 UnusedIstreamPtr
 istream_four_new(struct pool *pool, UnusedIstreamPtr input) noexcept
 {
-    return NewIstreamPtr<FourIstream>(*pool, std::move(input));
+	return NewIstreamPtr<FourIstream>(*pool, std::move(input));
 }

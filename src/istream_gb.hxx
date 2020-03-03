@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,9 +30,6 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_GB_HXX
-#define BENG_PROXY_ISTREAM_GB_HXX
-
 struct pool;
 class UnusedIstreamPtr;
 class GrowingBuffer;
@@ -41,6 +38,4 @@ class GrowingBuffer;
  * A wrapper that turns a #GrowingBuffer into an #Istream.
  */
 UnusedIstreamPtr
-istream_gb_new(struct pool &pool, GrowingBuffer &&gb);
-
-#endif
+istream_gb_new(struct pool &pool, GrowingBuffer &&gb) noexcept;

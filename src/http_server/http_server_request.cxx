@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,120 +37,120 @@
 BufferedResult
 HttpServerConnection::FeedRequestBody(const void *data, size_t length)
 {
-    assert(request.read_state == Request::BODY);
-    assert(request.body_state == Request::BodyState::READING);
-    assert(!response.pending_drained);
+	assert(request.read_state == Request::BODY);
+	assert(request.body_state == Request::BodyState::READING);
+	assert(!response.pending_drained);
 
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 
-    size_t nbytes = request_body_reader->FeedBody(data, length);
-    if (nbytes == 0) {
-        return destructed
-            ? BufferedResult::CLOSED
-            : BufferedResult::BLOCKING;
-    }
+	size_t nbytes = request_body_reader->FeedBody(data, length);
+	if (nbytes == 0) {
+		return destructed
+			? BufferedResult::CLOSED
+			: BufferedResult::BLOCKING;
+	}
 
-    request.bytes_received += nbytes;
-    socket.DisposeConsumed(nbytes);
+	request.bytes_received += nbytes;
+	socket.DisposeConsumed(nbytes);
 
-    if (request.read_state == Request::BODY && request_body_reader->IsEOF()) {
-        request.read_state = Request::END;
+	if (request.read_state == Request::BODY && request_body_reader->IsEOF()) {
+		request.read_state = Request::END;
 #ifndef NDEBUG
-        request.body_state = Request::BodyState::CLOSED;
+		request.body_state = Request::BodyState::CLOSED;
 #endif
 
-        /* re-enable the event, to detect client disconnect while
-           we're processing the request */
-        socket.ScheduleReadNoTimeout(false);
+		/* re-enable the event, to detect client disconnect while
+		   we're processing the request */
+		socket.ScheduleReadNoTimeout(false);
 
-        request.request->stopwatch.RecordEvent("request_end");
+		request.request->stopwatch.RecordEvent("request_end");
 
-        request_body_reader->DestroyEof();
-        if (destructed)
-            return BufferedResult::CLOSED;
-    }
+		request_body_reader->DestroyEof();
+		if (destructed)
+			return BufferedResult::CLOSED;
+	}
 
-    return BufferedResult::OK;
+	return BufferedResult::OK;
 }
 
 void
 HttpServerConnection::DiscardRequestBody() noexcept
 {
-    assert(request.read_state == Request::BODY);
-    assert(request.body_state == Request::BodyState::READING);
-    assert(!request_body_reader->IsEOF());
-    assert(!response.pending_drained);
+	assert(request.read_state == Request::BODY);
+	assert(request.body_state == Request::BodyState::READING);
+	assert(!request_body_reader->IsEOF());
+	assert(!response.pending_drained);
 
-    if (!socket.IsValid() ||
-        !socket.IsConnected()) {
-        /* this happens when there's an error on the socket while
-           reading the request body before the response gets
-           submitted, and this HTTP server library invokes the
-           handler's abort method; the handler will free the request
-           body, but the socket is already closed */
-        assert(request.request == nullptr);
-    }
+	if (!socket.IsValid() ||
+	    !socket.IsConnected()) {
+		/* this happens when there's an error on the socket while
+		   reading the request body before the response gets
+		   submitted, and this HTTP server library invokes the
+		   handler's abort method; the handler will free the request
+		   body, but the socket is already closed */
+		assert(request.request == nullptr);
+	}
 
-    request.read_state = Request::END;
+	request.read_state = Request::END;
 #ifndef NDEBUG
-    request.body_state = Request::BodyState::CLOSED;
+	request.body_state = Request::BodyState::CLOSED;
 #endif
 
-    if (request.expect_100_continue)
-        /* the request body was optional, and we did not send the "100
-           Continue" response (yet): pretend there never was a request
-           body */
-        request.expect_100_continue = false;
-    else if (request_body_reader->Discard(socket))
-        /* the remaining data has already been received into the input
-           buffer, and we only need to discard it from there to have a
-           "clean" connection */
-        return;
-    else
-        /* disable keep-alive so we don't need to wait for the client
-           to finish sending the request body */
-        keep_alive = false;
+	if (request.expect_100_continue)
+		/* the request body was optional, and we did not send the "100
+		   Continue" response (yet): pretend there never was a request
+		   body */
+		request.expect_100_continue = false;
+	else if (request_body_reader->Discard(socket))
+		/* the remaining data has already been received into the input
+		   buffer, and we only need to discard it from there to have a
+		   "clean" connection */
+		return;
+	else
+		/* disable keep-alive so we don't need to wait for the client
+		   to finish sending the request body */
+		keep_alive = false;
 }
 
 off_t
 HttpServerConnection::RequestBodyReader::_GetAvailable(bool partial) noexcept
 {
-    assert(connection.IsValid());
-    assert(connection.request.read_state == Request::BODY);
-    assert(connection.request.body_state == Request::BodyState::READING);
-    assert(!connection.response.pending_drained);
+	assert(connection.IsValid());
+	assert(connection.request.read_state == Request::BODY);
+	assert(connection.request.body_state == Request::BodyState::READING);
+	assert(!connection.response.pending_drained);
 
-    return HttpBodyReader::GetAvailable(connection.socket, partial);
+	return HttpBodyReader::GetAvailable(connection.socket, partial);
 }
 
 void
 HttpServerConnection::RequestBodyReader::_Read() noexcept
 {
-    assert(connection.IsValid());
-    assert(connection.request.read_state == Request::BODY);
-    assert(connection.request.body_state == Request::BodyState::READING);
-    assert(!connection.response.pending_drained);
+	assert(connection.IsValid());
+	assert(connection.request.read_state == Request::BODY);
+	assert(connection.request.body_state == Request::BodyState::READING);
+	assert(!connection.response.pending_drained);
 
-    if (!connection.MaybeSend100Continue())
-        return;
+	if (!connection.MaybeSend100Continue())
+		return;
 
-    if (connection.request.in_handler)
-        /* avoid recursion */
-        return;
+	if (connection.request.in_handler)
+		/* avoid recursion */
+		return;
 
-    connection.socket.Read(RequireMore());
+	connection.socket.Read(RequireMore());
 }
 
 void
 HttpServerConnection::RequestBodyReader::_Close() noexcept
 {
-    if (connection.request.read_state == Request::END)
-        return;
+	if (connection.request.read_state == Request::END)
+		return;
 
-    if (connection.request.request != nullptr)
-        connection.request.request->stopwatch.RecordEvent("close");
+	if (connection.request.request != nullptr)
+		connection.request.request->stopwatch.RecordEvent("close");
 
-    connection.DiscardRequestBody();
+	connection.DiscardRequestBody();
 
-    Destroy();
+	Destroy();
 }

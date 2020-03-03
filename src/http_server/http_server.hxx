@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __BENG_HTTP_SERVER_H
-#define __BENG_HTTP_SERVER_H
+#pragma once
 
 #include "fs/Ptr.hxx"
 #include "io/FdType.hxx"
@@ -54,26 +53,26 @@ class HttpServerConnectionHandler;
  * denial of service attacks.
  */
 enum http_server_score {
-    /**
-     * Connection has been accepted, but client hasn't sent any data
-     * yet.
-     */
-    HTTP_SERVER_NEW,
+	/**
+	 * Connection has been accepted, but client hasn't sent any data
+	 * yet.
+	 */
+	HTTP_SERVER_NEW,
 
-    /**
-     * Client is transmitting the very first request.
-     */
-    HTTP_SERVER_FIRST,
+	/**
+	 * Client is transmitting the very first request.
+	 */
+	HTTP_SERVER_FIRST,
 
-    /**
-     * At least one request was completed, but none was successful.
-     */
-    HTTP_SERVER_ERROR,
+	/**
+	 * At least one request was completed, but none was successful.
+	 */
+	HTTP_SERVER_ERROR,
 
-    /**
-     * At least one request was completed successfully.
-     */
-    HTTP_SERVER_SUCCESS,
+	/**
+	 * At least one request was completed successfully.
+	 */
+	HTTP_SERVER_SUCCESS,
 };
 
 /**
@@ -81,13 +80,13 @@ enum http_server_score {
  */
 HttpServerConnection *
 http_server_connection_new(struct pool *pool,
-                           EventLoop &loop,
-                           UniqueSocketDescriptor fd, FdType fd_type,
-                           SocketFilterPtr filter,
-                           SocketAddress local_address,
-                           SocketAddress remote_address,
-                           bool date_header,
-                           HttpServerConnectionHandler &handler) noexcept;
+			   EventLoop &loop,
+			   UniqueSocketDescriptor fd, FdType fd_type,
+			   SocketFilterPtr filter,
+			   SocketAddress local_address,
+			   SocketAddress remote_address,
+			   bool date_header,
+			   HttpServerConnectionHandler &handler) noexcept;
 
 void
 http_server_connection_close(HttpServerConnection *connection) noexcept;
@@ -97,5 +96,3 @@ http_server_connection_graceful(HttpServerConnection *connection) noexcept;
 
 enum http_server_score
 http_server_connection_score(const HttpServerConnection *connection) noexcept;
-
-#endif

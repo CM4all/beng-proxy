@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,110 +41,110 @@
 #include <assert.h>
 
 class CatchIstream final : public ForwardIstream {
-    /**
-     * This much data was announced by our input, either by
-     * GetAvailable(), OnData() or OnDirect().
-     */
-    off_t available = 0;
+	/**
+	 * This much data was announced by our input, either by
+	 * GetAvailable(), OnData() or OnDirect().
+	 */
+	off_t available = 0;
 
-    /**
-     * The amount of data passed to OnData(), minus the number of
-     * bytes consumed by it.  The next call must be at least this big.
-     */
-    size_t chunk = 0;
+	/**
+	 * The amount of data passed to OnData(), minus the number of
+	 * bytes consumed by it.  The next call must be at least this big.
+	 */
+	size_t chunk = 0;
 
-    std::exception_ptr (*const callback)(std::exception_ptr ep, void *ctx);
-    void *const callback_ctx;
+	std::exception_ptr (*const callback)(std::exception_ptr ep, void *ctx);
+	void *const callback_ctx;
 
 public:
-    CatchIstream(struct pool &_pool, UnusedIstreamPtr _input,
-                 std::exception_ptr (*_callback)(std::exception_ptr ep, void *ctx), void *ctx)
-        :ForwardIstream(_pool, std::move(_input)),
-         callback(_callback), callback_ctx(ctx) {}
+	CatchIstream(struct pool &_pool, UnusedIstreamPtr _input,
+		     std::exception_ptr (*_callback)(std::exception_ptr ep, void *ctx), void *ctx)
+		:ForwardIstream(_pool, std::move(_input)),
+		 callback(_callback), callback_ctx(ctx) {}
 
-    void SendSpace() noexcept;
+	void SendSpace() noexcept;
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) noexcept override;
+	off_t _GetAvailable(bool partial) noexcept override;
 
-    off_t _Skip(off_t length) noexcept override {
-        off_t nbytes = ForwardIstream::_Skip(length);
-        if (nbytes > 0) {
-            if (nbytes < available)
-                available -= nbytes;
-            else
-                available = 0;
+	off_t _Skip(off_t length) noexcept override {
+		off_t nbytes = ForwardIstream::_Skip(length);
+		if (nbytes > 0) {
+			if (nbytes < available)
+				available -= nbytes;
+			else
+				available = 0;
 
-            if ((size_t)nbytes < chunk)
-                chunk -= nbytes;
-            else
-                chunk = 0;
-        }
+			if ((size_t)nbytes < chunk)
+				chunk -= nbytes;
+			else
+				chunk = 0;
+		}
 
-        return nbytes;
-    }
+		return nbytes;
+	}
 
-    void _Read() noexcept override;
-    void _FillBucketList(IstreamBucketList &list) override;
-    void _Close() noexcept override;
+	void _Read() noexcept override;
+	void _FillBucketList(IstreamBucketList &list) override;
+	void _Close() noexcept override;
 
-    /* virtual methods from class IstreamHandler */
+	/* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) noexcept override;
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
-    void OnError(std::exception_ptr ep) noexcept override;
+	size_t OnData(const void *data, size_t length) noexcept override;
+	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
 };
 
 static constexpr char space[] =
-    "                                "
-    "                                "
-    "                                "
-    "                                ";
+	"                                "
+	"                                "
+	"                                "
+	"                                ";
 
 void
 CatchIstream::SendSpace() noexcept
 {
-    assert(!HasInput());
-    assert(available > 0);
-    assert((off_t)chunk <= available);
+	assert(!HasInput());
+	assert(available > 0);
+	assert((off_t)chunk <= available);
 
-    if (chunk > sizeof(space) - 1) {
-        std::unique_ptr<char[]> buffer(new char[chunk]);
-        std::fill_n(buffer.get(), ' ', chunk);
-        size_t nbytes = ForwardIstream::OnData(buffer.get(), chunk);
-        if (nbytes == 0)
-            return;
+	if (chunk > sizeof(space) - 1) {
+		std::unique_ptr<char[]> buffer(new char[chunk]);
+		std::fill_n(buffer.get(), ' ', chunk);
+		size_t nbytes = ForwardIstream::OnData(buffer.get(), chunk);
+		if (nbytes == 0)
+			return;
 
-        chunk -= nbytes;
-        available -= nbytes;
+		chunk -= nbytes;
+		available -= nbytes;
 
-        if (chunk > 0)
-            return;
+		if (chunk > 0)
+			return;
 
-        if (available == 0) {
-            DestroyEof();
-            return;
-        }
-    }
+		if (available == 0) {
+			DestroyEof();
+			return;
+		}
+	}
 
-    do {
-        size_t length;
-        if (available >= (off_t)sizeof(space) - 1)
-            length = sizeof(space) - 1;
-        else
-            length = (size_t)available;
+	do {
+		size_t length;
+		if (available >= (off_t)sizeof(space) - 1)
+			length = sizeof(space) - 1;
+		else
+			length = (size_t)available;
 
-        size_t nbytes = ForwardIstream::OnData(space, length);
-        if (nbytes == 0)
-            return;
+		size_t nbytes = ForwardIstream::OnData(space, length);
+		if (nbytes == 0)
+			return;
 
-        available -= nbytes;
-        if (nbytes < length)
-            return;
-    } while (available > 0);
+		available -= nbytes;
+		if (nbytes < length)
+			return;
+	} while (available > 0);
 
-    DestroyEof();
+	DestroyEof();
 }
 
 
@@ -156,66 +156,66 @@ CatchIstream::SendSpace() noexcept
 size_t
 CatchIstream::OnData(const void *data, size_t length) noexcept
 {
-    if ((off_t)length > available)
-        available = length;
+	if ((off_t)length > available)
+		available = length;
 
-    if (length > chunk)
-        chunk = length;
+	if (length > chunk)
+		chunk = length;
 
-    size_t nbytes = ForwardIstream::OnData(data, length);
-    if (nbytes > 0) {
-        if ((off_t)nbytes < available)
-            available -= (off_t)nbytes;
-        else
-            available = 0;
+	size_t nbytes = ForwardIstream::OnData(data, length);
+	if (nbytes > 0) {
+		if ((off_t)nbytes < available)
+			available -= (off_t)nbytes;
+		else
+			available = 0;
 
-        chunk -= nbytes;
-    }
+		chunk -= nbytes;
+	}
 
-    return nbytes;
+	return nbytes;
 }
 
 ssize_t
 CatchIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 {
-    ssize_t nbytes = ForwardIstream::OnDirect(type, fd, max_length);
-    if (nbytes > 0) {
-        if ((off_t)nbytes < available)
-            available -= (off_t)nbytes;
-        else
-            available = 0;
+	ssize_t nbytes = ForwardIstream::OnDirect(type, fd, max_length);
+	if (nbytes > 0) {
+		if ((off_t)nbytes < available)
+			available -= (off_t)nbytes;
+		else
+			available = 0;
 
-        if ((size_t)nbytes < chunk)
-            chunk -= nbytes;
-        else
-            chunk = 0;
-    }
+		if ((size_t)nbytes < chunk)
+			chunk -= nbytes;
+		else
+			chunk = 0;
+	}
 
-    return nbytes;
+	return nbytes;
 }
 
 void
 CatchIstream::OnError(std::exception_ptr ep) noexcept
 {
-    ep = callback(ep, callback_ctx);
-    if (ep) {
-        /* forward error to our handler */
-        ForwardIstream::OnError(ep);
-        return;
-    }
+	ep = callback(ep, callback_ctx);
+	if (ep) {
+		/* forward error to our handler */
+		ForwardIstream::OnError(ep);
+		return;
+	}
 
-    /* the error has been handled by the callback, and he has disposed
-       it */
+	/* the error has been handled by the callback, and he has disposed
+	   it */
 
-    ClearInput();
+	ClearInput();
 
-    if (available > 0)
-        /* according to a previous call to method "available", there
-           is more data which we must provide - fill that with space
-           characters */
-        SendSpace();
-    else
-        DestroyEof();
+	if (available > 0)
+		/* according to a previous call to method "available", there
+		   is more data which we must provide - fill that with space
+		   characters */
+		SendSpace();
+	else
+		DestroyEof();
 }
 
 /*
@@ -226,49 +226,57 @@ CatchIstream::OnError(std::exception_ptr ep) noexcept
 off_t
 CatchIstream::_GetAvailable(bool partial) noexcept
 {
-    if (HasInput()) {
-        off_t result = ForwardIstream::_GetAvailable(partial);
-        if (result > available)
-            available = result;
+	if (HasInput()) {
+		off_t result = ForwardIstream::_GetAvailable(partial);
+		if (result > available)
+			available = result;
 
-        return result;
-    } else
-        return available;
+		return result;
+	} else
+		return available;
 }
 
 void
 CatchIstream::_Read() noexcept
 {
-    if (HasInput())
-        ForwardIstream::_Read();
-    else
-        SendSpace();
+	if (HasInput())
+		ForwardIstream::_Read();
+	else if (available == 0)
+		DestroyEof();
+	else
+		SendSpace();
 }
 
 void
 CatchIstream::_FillBucketList(IstreamBucketList &list)
 {
-    try {
-        input.FillBucketList(list);
-    } catch (...) {
-        if (callback(std::current_exception(), callback_ctx))
-            throw;
+	if (!HasInput()) {
+		// TODO: generate space bucket?
+		list.SetMore();
+		return;
+	}
 
-        /* the error has been handled by the callback, and he has
-           disposed it */
-        list.SetMore();
+	try {
+		input.FillBucketList(list);
+	} catch (...) {
+		if (callback(std::current_exception(), callback_ctx))
+			throw;
 
-        // TODO: return space bucket here
-    }
+		/* the error has been handled by the callback, and he has
+		   disposed it */
+		list.SetMore();
+
+		// TODO: return space bucket here
+	}
 }
 
 void
 CatchIstream::_Close() noexcept
 {
-    if (HasInput())
-        input.Close();
+	if (HasInput())
+		input.Close();
 
-    Destroy();
+	Destroy();
 }
 
 
@@ -279,10 +287,10 @@ CatchIstream::_Close() noexcept
 
 UnusedIstreamPtr
 istream_catch_new(struct pool *pool, UnusedIstreamPtr input,
-                  std::exception_ptr (*callback)(std::exception_ptr ep, void *ctx), void *ctx)
+		  std::exception_ptr (*callback)(std::exception_ptr ep, void *ctx), void *ctx)
 {
-    assert(callback != nullptr);
+	assert(callback != nullptr);
 
-    return NewIstreamPtr<CatchIstream>(*pool, std::move(input),
-                                       callback, ctx);
+	return NewIstreamPtr<CatchIstream>(*pool, std::move(input),
+					   callback, ctx);
 }

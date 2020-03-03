@@ -37,28 +37,61 @@
 #define USE_BUCKETS
 
 #include "t_client.hxx"
+#include "DemoHttpServerConnection.hxx"
 #include "http_client.hxx"
 #include "http/Headers.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
 #include "io/SpliceSupport.hxx"
-#include "net/SocketDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
+#include "net/SocketAddress.hxx"
+#include "system/Error.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "fb_pool.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "stopwatch.hxx"
 
+#include <memory>
+
 #include <sys/socket.h>
 #include <sys/wait.h>
 
+class Server final : DemoHttpServerConnection {
+public:
+	using DemoHttpServerConnection::DemoHttpServerConnection;
+
+	static auto New(struct pool &pool, EventLoop &event_loop, Mode mode) {
+		UniqueSocketDescriptor client_socket, server_socket;
+		if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+							      client_socket, server_socket))
+			throw MakeErrno("socketpair() failed");
+
+		auto server = std::make_unique<Server>(pool, event_loop,
+						       std::move(server_socket),
+						       FdType::FD_SOCKET, nullptr,
+						       mode);
+		return std::make_pair(std::move(server), std::move(client_socket));
+	}
+};
+
 struct Connection {
 	EventLoop &event_loop;
-	const pid_t pid;
+	const pid_t pid = 0;
+
+	std::unique_ptr<Server> server;
+
 	FilteredSocket socket;
 
 	Connection(EventLoop &_event_loop, pid_t _pid, SocketDescriptor fd)
 		:event_loop(_event_loop), pid(_pid), socket(_event_loop) {
 		socket.InitDummy(fd, FdType::FD_SOCKET);
+	}
+
+	Connection(EventLoop &_event_loop, std::pair<std::unique_ptr<Server>, UniqueSocketDescriptor> _server)
+		:event_loop(_event_loop),
+		 server(std::move(_server.first)),
+		 socket(_event_loop) {
+		socket.InitDummy(_server.second.Release(), FdType::FD_SOCKET);
 	}
 
 	static Connection *New(EventLoop &event_loop,
@@ -86,32 +119,45 @@ struct Connection {
 		socket.Shutdown();
 	}
 
-	static Connection *NewMirror(struct pool &, EventLoop &event_loop) {
-		return New(event_loop, "./test/run_http_server", "mirror");
+	static Connection *NewWithServer(struct pool &pool,
+					 EventLoop &event_loop,
+					 DemoHttpServerConnection::Mode mode) {
+		return new Connection(event_loop,
+				      Server::New(pool, event_loop, mode));
 	}
 
-	static Connection *NewNull(struct pool &, EventLoop &event_loop) {
-		return New(event_loop, "./test/run_http_server", "null");
+	static Connection *NewMirror(struct pool &pool, EventLoop &event_loop) {
+		return NewWithServer(pool, event_loop,
+				     DemoHttpServerConnection::Mode::MIRROR);
 	}
 
-	static Connection *NewDummy(struct pool &, EventLoop &event_loop) {
-		return New(event_loop, "./test/run_http_server", "dummy");
+	static Connection *NewNull(struct pool &pool, EventLoop &event_loop) {
+		return NewWithServer(pool, event_loop,
+				     DemoHttpServerConnection::Mode::MODE_NULL);
 	}
 
-	static Connection *NewClose(struct pool &, EventLoop &event_loop) {
-		return New(event_loop, "./test/run_http_server", "close");
+	static Connection *NewDummy(struct pool &pool, EventLoop &event_loop) {
+		return NewWithServer(pool, event_loop,
+				     DemoHttpServerConnection::Mode::DUMMY);
 	}
 
-	static Connection *NewFixed(struct pool &, EventLoop &event_loop) {
-		return New(event_loop, "./test/run_http_server", "fixed");
+	static Connection *NewClose(struct pool &pool, EventLoop &event_loop) {
+		return NewWithServer(pool, event_loop,
+				     DemoHttpServerConnection::Mode::CLOSE);
+	}
+
+	static Connection *NewFixed(struct pool &pool, EventLoop &event_loop) {
+		return NewWithServer(pool, event_loop,
+				     DemoHttpServerConnection::Mode::FIXED);
 	}
 
 	static Connection *NewTiny(struct pool &p, EventLoop &event_loop) {
 		return NewFixed(p, event_loop);
 	}
 
-	static Connection *NewHuge(struct pool &, EventLoop &event_loop) {
-		return New(event_loop, "./test/run_http_server", "huge");
+	static Connection *NewHuge(struct pool &pool, EventLoop &event_loop) {
+		return NewWithServer(pool, event_loop,
+				     DemoHttpServerConnection::Mode::HUGE_);
 	}
 
 	static Connection *NewTwice100(struct pool &, EventLoop &event_loop) {
@@ -120,29 +166,31 @@ struct Connection {
 
 	static Connection *NewClose100(struct pool &, EventLoop &event_loop);
 
-	static Connection *NewHold(struct pool &, EventLoop &event_loop) {
-		return New(event_loop, "./test/run_http_server", "hold");
+	static Connection *NewHold(struct pool &pool, EventLoop &event_loop) {
+		return NewWithServer(pool, event_loop,
+				     DemoHttpServerConnection::Mode::HOLD);
 	}
 
-	static auto *NewNop(struct pool &, EventLoop &event_loop) {
-		return New(event_loop, "./test/run_http_server", "nop");
+	static auto *NewNop(struct pool &pool, EventLoop &event_loop) {
+		return NewWithServer(pool, event_loop,
+				     DemoHttpServerConnection::Mode::NOP);
 	}
 };
 
 Connection::~Connection()
 {
-	assert(pid >= 1);
-
 	socket.Close();
 	socket.Destroy();
 
-	int status;
-	if (waitpid(pid, &status, 0) < 0) {
-		perror("waitpid() failed");
-		exit(EXIT_FAILURE);
-	}
+	if (pid > 0) {
+		int status;
+		if (waitpid(pid, &status, 0) < 0) {
+			perror("waitpid() failed");
+			exit(EXIT_FAILURE);
+		}
 
-	assert(!WIFSIGNALED(status));
+		assert(!WIFSIGNALED(status));
+	}
 }
 
 Connection *

@@ -182,6 +182,8 @@ private:
 void
 TranslationStock::Request::OnStockItemReady(StockItem &_item) noexcept
 {
+	stopwatch.RecordEvent("connect");
+
 	item = &(Connection &)_item;
 
 	/* cancellation will not be handled by this class from here on;
@@ -199,6 +201,8 @@ TranslationStock::Request::OnStockItemReady(StockItem &_item) noexcept
 void
 TranslationStock::Request::OnStockItemError(std::exception_ptr ep) noexcept
 {
+	stopwatch.RecordEvent("connect_error");
+
 	auto &_handler = handler;
 	Destroy();
 	_handler.OnTranslateError(ep);

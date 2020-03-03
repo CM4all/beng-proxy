@@ -101,7 +101,7 @@ public:
 		assert(!is_linked());
 
 		if (dump)
-			Dump(0);
+			Dump(time, 0);
 	}
 
 	template<typename C>
@@ -111,7 +111,8 @@ public:
 
 	void RecordEvent(const char *name) noexcept;
 
-	void Dump(size_t indent) noexcept;
+	void Dump(std::chrono::steady_clock::time_point root_time,
+		  size_t indent) noexcept;
 };
 
 void
@@ -200,7 +201,8 @@ timeval_diff_ms(const struct timeval *a, const struct timeval *b) noexcept
 #endif
 
 inline void
-Stopwatch::Dump(size_t indent) noexcept
+Stopwatch::Dump(std::chrono::steady_clock::time_point root_time,
+		size_t indent) noexcept
 try {
 	if (!stopwatch_fd.IsDefined())
 		return;
@@ -213,6 +215,9 @@ try {
 	b.Extend(indent);
 
 	b.Append(name.c_str());
+
+	b.Format(" init=%ldms",
+		 ToLongMs(time - root_time));
 
 	for (const auto &i : events)
 		b.Format(" %s=%ldms",
@@ -237,6 +242,6 @@ try {
 	indent += 2;
 
 	for (const auto &child : children)
-		child->Dump(indent);
+		child->Dump(root_time, indent);
 } catch (StringBuilder::Overflow) {
 }
