@@ -260,7 +260,7 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 
 		plain_output.MoveFromAllowNull(f.plain_output);
 		encrypted_input.MoveFromAllowSrcNull(f.encrypted_input);
-		if (!f.encrypted_input.empty())
+		if (!decrypted_input.IsFull() && !f.encrypted_input.empty())
 			/* the destination buffer is full, and data still remains
 			   in the source buffer; after completing this iteration,
 			   we need to do another iteration to process the

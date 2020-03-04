@@ -1,6 +1,7 @@
 cm4all-beng-proxy (16.8) unstable; urgency=low
 
   * control: fix "stats" reply
+  * ssl: fix busy loop during stalled read
 
  --   
 
