@@ -379,7 +379,8 @@ Triggers
 --------
 
 The Debian trigger ``cm4all-apps-changed`` reloads all spawned
-applications. It shall be invoked after updating application packages.
+applications. It shall be invoked after updating application packages
+(or widgets).
 
 Tuning
 ======
