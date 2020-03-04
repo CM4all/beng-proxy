@@ -561,7 +561,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_APPEND, 'mirror')
             response.packet(TRANSLATE_LHTTP_URI, uri)
             response.packet(TRANSLATE_CONCURRENCY, '\x04\x00')
-        elif uri == '/apache/':
+        elif uri[:8] == '/apache/':
             response.packet(TRANSLATE_LHTTP_PATH, apache_lhttpd)
             response.packet(TRANSLATE_APPEND, '-DFOREGROUND')
             response.packet(TRANSLATE_LHTTP_URI, uri[7:])

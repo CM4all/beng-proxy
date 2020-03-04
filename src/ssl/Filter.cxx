@@ -260,12 +260,6 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 
 		plain_output.MoveFromAllowNull(f.plain_output);
 		encrypted_input.MoveFromAllowSrcNull(f.encrypted_input);
-		if (!f.encrypted_input.empty())
-			/* the destination buffer is full, and data still remains
-			   in the source buffer; after completing this iteration,
-			   we need to do another iteration to process the
-			   remaining data */
-			f.again = true;
 
 		f.encrypted_output.MoveFromAllowNull(encrypted_output);
 
@@ -328,6 +322,12 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 		f.decrypted_input.MoveFromAllowNull(decrypted_input);
 		f.encrypted_output.MoveFromAllowNull(encrypted_output);
 		f.drained = plain_output.empty() && encrypted_output.empty();
+
+		if (!decrypted_input.IsDefinedAndFull() && !f.encrypted_input.empty())
+			/* there's more data to be decrypted and we
+			   still have room in the destination buffer,
+			   so let's run again */
+			f.again = true;
 
 		if (!f.plain_output.empty() && !plain_output.IsDefinedAndFull() &&
 		    !encrypted_output.IsDefinedAndFull())
