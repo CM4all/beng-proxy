@@ -420,6 +420,20 @@ host (``tcp_stock_limit``): most servers don’t handle so many
 connections as well as :program:`beng-proxy`, and performance degrades when there
 are too many. By default, there is no limit.
 
+Pipe Limits
+-----------
+
+Linux has a global setting called
+:file:`/proc/sys/fs/pipe-user-pages-soft` which controls how many
+pages of memory one user may allocate for pipe buffers.  The default
+setting ``16384`` is too small for :program:`beng-proxy`, and pipes
+will max out at one page, which decreases performance.  It is
+recommended to increase it to ``1048576`` by adding to
+:file:`/etc/sysctl.d`::
+
+    fs.pipe-user-pages-soft = 1048576
+
+
 Firewall
 --------
 
