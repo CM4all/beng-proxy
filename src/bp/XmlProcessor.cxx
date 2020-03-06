@@ -229,9 +229,10 @@ struct XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellab
 	CancellablePointer *cancel_ptr;
 
 	XmlProcessor(PoolPtr &&_pool, const StopwatchPtr &parent_stopwatch,
+		     UnusedIstreamPtr &&_input,
 		     Widget &_widget, SharedPoolPtr<WidgetContext> &&_ctx,
 		     unsigned _options) noexcept
-		:PoolHolder(std::move(_pool)),
+		:PoolHolder(std::move(_pool)), IstreamSink(std::move(_input)),
 		 stopwatch(parent_stopwatch, "XmlProcessor"),
 		 container(_widget),
 		 ctx(std::move(_ctx)), options(_options),
@@ -244,9 +245,7 @@ struct XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellab
 		return pool;
 	}
 
-	void InitParser(UnusedIstreamPtr _input) noexcept {
-		SetInput(std::move(_input));
-
+	void InitParser() noexcept {
 		parser = NewFromPool<XmlParser>(pool, pool, *this);
 	}
 
@@ -451,11 +450,13 @@ XmlProcessor::Cancel() noexcept
 static XmlProcessor *
 processor_new(PoolPtr &&pool,
 	      const StopwatchPtr &parent_stopwatch,
+	      UnusedIstreamPtr &&input,
 	      Widget &widget,
 	      SharedPoolPtr<WidgetContext> ctx,
 	      unsigned options) noexcept
 {
 	return NewFromPool<XmlProcessor>(std::move(pool), parent_stopwatch,
+					 std::move(input),
 					 widget, std::move(ctx), options);
 }
 
@@ -469,13 +470,9 @@ processor_process(struct pool &caller_pool,
 {
 	auto pool = pool_new_linear(&caller_pool, "XmlProcessor", 32768);
 
-	auto *processor = processor_new(std::move(pool), parent_stopwatch,
-					widget, ctx, options);
-	processor->lookup_id = nullptr;
-
 	/* the text processor will expand entities */
-	auto tee = NewTeeIstream(processor->GetPool(),
-				 text_processor(processor->GetPool(),
+	auto tee = NewTeeIstream(pool,
+				 text_processor(pool,
 						std::move(input),
 						widget, *ctx),
 				 ctx->event_loop,
@@ -483,11 +480,16 @@ processor_process(struct pool &caller_pool,
 
 	auto tee2 = AddTeeIstream(tee, true);
 
-	auto r = istream_replace_new(ctx->event_loop, processor->GetPool(),
+	auto r = istream_replace_new(ctx->event_loop, pool,
 				     std::move(tee));
 
+	auto *processor = processor_new(std::move(pool), parent_stopwatch,
+					std::move(tee2),
+					widget, ctx, options);
+	processor->lookup_id = nullptr;
+
 	processor->replace = std::move(r.second);
-	processor->InitParser(std::move(tee2));
+	processor->InitParser();
 
 	if (processor->HasOptionRewriteUrl()) {
 		processor->default_uri_rewrite.base = UriBase::TEMPLATE;
@@ -525,11 +527,12 @@ processor_lookup_widget(struct pool &caller_pool,
 
 	auto pool = pool_new_linear(&caller_pool, "XmlProcessor", 32768);
 	auto *processor = processor_new(std::move(pool), parent_stopwatch,
+					std::move(istream),
 					widget, std::move(ctx), options);
 
 	processor->lookup_id = id;
 
-	processor->InitParser(std::move(istream));
+	processor->InitParser();
 
 	processor->handler = &handler;
 
