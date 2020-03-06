@@ -78,7 +78,7 @@ public:
 	void Finish() noexcept;
 };
 
-class ReplaceIstream final : public FacadeIstream, DestructAnchor {
+class ReplaceIstream : public FacadeIstream, DestructAnchor {
 	struct Substitution final : IstreamSink {
 		Substitution *next = nullptr;
 		ReplaceIstream &replace;
@@ -258,12 +258,12 @@ private:
 
 	Substitution *GetLastSubstitution() noexcept;
 
+public:
 	/* virtual methods from class IstreamHandler */
 	size_t OnData(const void *data, size_t length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 
-public:
 	/* virtual methods from class Istream */
 	off_t _GetAvailable(bool partial) noexcept override;
 	void _Read() noexcept override;
