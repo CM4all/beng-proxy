@@ -31,6 +31,7 @@
  */
 
 #include "XmlProcessor.hxx"
+#include "WidgetContainerParser.hxx"
 #include "TextProcessor.hxx"
 #include "CssProcessor.hxx"
 #include "CssRewrite.hxx"
@@ -47,7 +48,6 @@
 #include "widget/Error.hxx"
 #include "widget/Inline.hxx"
 #include "widget/RewriteUri.hxx"
-#include "pool/tpool.hxx"
 #include "expansible_buffer.hxx"
 #include "escape_class.hxx"
 #include "escape_html.hxx"
@@ -63,7 +63,6 @@
 #include "istream/TeeIstream.hxx"
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
-#include "util/CharUtil.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StringView.hxx"
@@ -88,7 +87,7 @@ struct UriRewrite {
 	char view[64];
 };
 
-class XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellable, DestructAnchor {
+class XmlProcessor final : PoolHolder, IstreamSink, WidgetContainerParser, Cancellable, DestructAnchor {
 	class CdataIstream final : public Istream {
 		friend struct XmlProcessor;
 		XmlProcessor &processor;
@@ -104,60 +103,13 @@ class XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellabl
 
 	const StopwatchPtr stopwatch;
 
-	Widget &container;
 	const char *lookup_id;
-	const SharedPoolPtr<WidgetContext> ctx;
 	const unsigned options;
 
 	SharedPoolPtr<ReplaceIstreamControl> replace;
 
 	XmlParser parser;
 	bool had_input;
-
-	enum class Tag {
-		NONE,
-		IGNORE,
-		OTHER,
-		WIDGET,
-		WIDGET_PATH_INFO,
-		WIDGET_PARAM,
-		WIDGET_HEADER,
-		WIDGET_VIEW,
-		A,
-		FORM,
-		IMG,
-		SCRIPT,
-		PARAM,
-		REWRITE_URI,
-
-		/**
-		 * The "meta" element.  This may morph into #META_REFRESH when
-		 * an http-equiv="refresh" attribute is found.
-		 */
-		META,
-
-		META_REFRESH,
-
-		/**
-		 * A "meta" element whose "content" attribute contains a URL
-		 * to be rewritten, e.g. <meta property="og:image" content="...">
-		 */
-		META_URI_CONTENT,
-
-		/**
-		 * The "style" element.  This value later morphs into
-		 * #STYLE_PROCESS if #PROCESSOR_STYLE is enabled.
-		 */
-		STYLE,
-
-		/**
-		 * Only used when #PROCESSOR_STYLE is enabled.  If active, then
-		 * CDATA is being fed into the CSS processor.
-		 */
-		STYLE_PROCESS,
-	};
-
-	Tag tag = Tag::NONE;
 
 	UriRewrite uri_rewrite;
 
@@ -195,29 +147,6 @@ class XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellabl
 			:value(_pool, 1024, 8192) {}
 	} postponed_rewrite;
 
-	struct CurrentWidget {
-		off_t start_offset;
-
-		struct pool &pool;
-		WidgetPtr widget;
-
-		struct Param {
-			ExpansibleBuffer name;
-			ExpansibleBuffer value;
-
-			Param(struct pool &_pool)
-				:name(_pool, 128, 512),
-				 value(_pool, 512, 4096) {}
-		} param;
-
-		ExpansibleBuffer params;
-
-		CurrentWidget(struct pool &widget_pool,
-			      struct pool &processor_pool) noexcept
-			:pool(widget_pool), param(processor_pool),
-			 params(processor_pool, 1024, 8192) {}
-	} widget;
-
 	/**
 	 * Only valid if #cdata_stream_active is true.
 	 */
@@ -235,15 +164,14 @@ public:
 		     unsigned _options,
 		     SharedPoolPtr<ReplaceIstreamControl> &&_replace) noexcept
 		:PoolHolder(std::move(_pool)), IstreamSink(std::move(_input)),
+		 WidgetContainerParser(GetPool(), _widget, std::move(_ctx)),
 		 stopwatch(parent_stopwatch, "XmlProcessor"),
-		 container(_widget),
 		 lookup_id(nullptr),
-		 ctx(std::move(_ctx)), options(_options),
+		 options(_options),
 		 replace(std::move(_replace)),
 		 parser(GetPool(), *this),
 		 buffer(GetPool(), 128, 2048),
-		 postponed_rewrite(GetPool()),
-		 widget(_widget.pool, GetPool())
+		 postponed_rewrite(GetPool())
 	{
 		if (HasOptionRewriteUrl()) {
 			default_uri_rewrite.base = UriBase::TEMPLATE;
@@ -265,14 +193,13 @@ public:
 		     WidgetLookupHandler &_handler,
 		     CancellablePointer &caller_cancel_ptr) noexcept
 		:PoolHolder(std::move(_pool)), IstreamSink(std::move(_input)),
+		 WidgetContainerParser(GetPool(), _widget, std::move(_ctx)),
 		 stopwatch(parent_stopwatch, "XmlProcessor"),
-		 container(_widget),
 		 lookup_id(_lookup_id),
-		 ctx(std::move(_ctx)), options(_options),
+		 options(_options),
 		 parser(GetPool(), *this),
 		 buffer(GetPool(), 128, 2048),
 		 postponed_rewrite(GetPool()),
-		 widget(_widget.pool, GetPool()),
 		 handler(&_handler), cancel_ptr(&caller_cancel_ptr)
 	{
 		caller_cancel_ptr = *this;
@@ -371,10 +298,6 @@ private:
 	void HandleIdAttribute(const XmlParserAttribute &attr) noexcept;
 	void HandleStyleAttribute(const XmlParserAttribute &attr) noexcept;
 
-	bool OnProcessingInstruction(StringView name) noexcept;
-	bool OnStartElementInWidget(XmlParserTagType type,
-				    StringView name) noexcept;
-
 	/**
 	 * Throws an exception if the widget is not allowed here.
 	 */
@@ -401,6 +324,10 @@ private:
 
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
+
+	/* virtual methods from class WidgetContainerParser */
+	bool OnProcessingInstruction(StringView name) noexcept override;
+	bool OnXmlTagStart2(const XmlParserTag &tag) noexcept override;
 
 	/* virtual methods from class XmlParserHandler */
 	bool OnXmlTagStart(const XmlParserTag &tag) noexcept override;
@@ -700,40 +627,7 @@ XmlProcessor::OnProcessingInstruction(StringView name) noexcept
 		return true;
 	}
 
-	return false;
-}
-
-inline bool
-XmlProcessor::OnStartElementInWidget(XmlParserTagType type,
-				     StringView name) noexcept
-{
-	if (type == XmlParserTagType::PI)
-		return OnProcessingInstruction(name);
-
-	name.SkipPrefix("c:");
-
-	if (name.Equals("widget")) {
-		if (type == XmlParserTagType::CLOSE)
-			tag = Tag::WIDGET;
-	} else if (name.Equals("path-info")) {
-		tag = Tag::WIDGET_PATH_INFO;
-	} else if (name.Equals("param") ||
-		   name.Equals("parameter")) {
-		tag = Tag::WIDGET_PARAM;
-		widget.param.name.Clear();
-		widget.param.value.Clear();
-	} else if (name.Equals("header")) {
-		tag = Tag::WIDGET_HEADER;
-		widget.param.name.Clear();
-		widget.param.value.Clear();
-	} else if (name.Equals("view")) {
-		tag = Tag::WIDGET_VIEW;
-	} else {
-		tag = Tag::IGNORE;
-		return false;
-	}
-
-	return true;
+	return WidgetContainerParser::OnProcessingInstruction(name);
 }
 
 bool
@@ -743,37 +637,13 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag) noexcept
 
 	StopCdataIstream();
 
-	if (tag == Tag::SCRIPT && !xml_tag.name.EqualsIgnoreCase("script"))
-		/* workaround for bugged scripts: ignore all closing tags
-		   except </SCRIPT> */
-		return false;
+	return WidgetContainerParser::OnXmlTagStart(xml_tag);
+}
 
-	tag = Tag::IGNORE;
-
-	if (widget.widget != nullptr)
-		return OnStartElementInWidget(xml_tag.type, xml_tag.name);
-
-	if (xml_tag.type == XmlParserTagType::PI)
-		return OnProcessingInstruction(xml_tag.name);
-
-	if (xml_tag.name.Equals("c:widget")) {
-		if ((options & PROCESSOR_CONTAINER) == 0 ||
-		    ctx->widget_registry == nullptr)
-			return false;
-
-		if (xml_tag.type == XmlParserTagType::CLOSE) {
-			assert(widget.widget == nullptr);
-			return false;
-		}
-
-		tag = Tag::WIDGET;
-		widget.widget = MakeWidget(widget.pool, nullptr);
-		widget.params.Clear();
-
-		widget.widget->parent = &container;
-
-		return true;
-	} else if (xml_tag.name.EqualsIgnoreCase("script")) {
+bool
+XmlProcessor::OnXmlTagStart2(const XmlParserTag &xml_tag) noexcept
+{
+	if (xml_tag.name.EqualsIgnoreCase("script")) {
 		InitUriRewrite(Tag::SCRIPT);
 		return true;
 	} else if (!IsQuiet() && HasOptionStyle() &&
@@ -820,7 +690,6 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag) noexcept
 		tag = Tag::OTHER;
 		return true;
 	} else {
-		tag = Tag::IGNORE;
 		return false;
 	}
 }
@@ -916,35 +785,6 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 	}
 
 	ReplaceAttributeValue(attr, std::move(istream));
-}
-
-static void
-parser_widget_attr_finished(Widget &widget,
-			    StringView name, StringView value)
-{
-	if (name.Equals("type")) {
-		if (value.empty())
-			throw std::runtime_error("empty widget class name");
-
-		widget.SetClassName(value);
-	} else if (name.Equals("id")) {
-		if (!value.empty())
-			widget.SetId(value);
-	} else if (name.Equals("display")) {
-		if (value.Equals("inline"))
-			widget.display = Widget::Display::INLINE;
-		else if (value.Equals("none"))
-			widget.display = Widget::Display::NONE;
-		else
-			throw std::runtime_error("Invalid widget 'display' attribute");
-	} else if (name.Equals("session")) {
-		if (value.Equals("resource"))
-			widget.session_scope = Widget::SessionScope::RESOURCE;
-		else if (value.Equals("site"))
-			widget.session_scope = Widget::SessionScope::SITE;
-		else
-			throw std::runtime_error("Invalid widget 'session' attribute");
-	}
 }
 
 gcc_pure
@@ -1200,55 +1040,12 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
 	case Tag::NONE:
 	case Tag::IGNORE:
 	case Tag::OTHER:
-		break;
-
 	case Tag::WIDGET:
-		assert(widget.widget != nullptr);
-
-		try {
-			parser_widget_attr_finished(*widget.widget,
-						    attr.name, attr.value);
-		} catch (...) {
-			container.logger(2, std::current_exception());
-			// TODO: discard errored widget?
-		}
-
-		break;
-
 	case Tag::WIDGET_PARAM:
 	case Tag::WIDGET_HEADER:
-		assert(widget.widget != nullptr);
-
-		if (attr.name.Equals("name")) {
-			widget.param.name.Set(attr.value);
-		} else if (attr.name.Equals("value")) {
-			widget.param.value.Set(attr.value);
-		}
-
-		break;
-
 	case Tag::WIDGET_PATH_INFO:
-		assert(widget.widget != nullptr);
-
-		if (attr.name.Equals("value"))
-			widget.widget->from_template.path_info
-				= p_strdup(widget.pool, attr.value);
-
-		break;
-
 	case Tag::WIDGET_VIEW:
-		assert(widget.widget != nullptr);
-
-		if (attr.name.Equals("name")) {
-			if (attr.value.empty()) {
-				container.logger(2, "empty view name");
-				return;
-			}
-
-			widget.widget->from_template.view_name =
-				p_strdup(widget.pool, attr.value);
-		}
-
+		WidgetContainerParser::OnXmlAttributeFinished(attr);
 		break;
 
 	case Tag::IMG:
@@ -1430,34 +1227,6 @@ XmlProcessor::WidgetElementFinished(const XmlParserTag &widget_tag,
 		return CheckWidgetLookup(std::move(child_widget));
 }
 
-gcc_pure
-static bool
-header_name_valid(const char *name, size_t length) noexcept
-{
-	/* name must start with "X-" */
-	if (length < 3 ||
-	    (name[0] != 'x' && name[0] != 'X') ||
-	    name[1] != '-')
-		return false;
-
-	/* the rest must be letters, digits or dash */
-	for (size_t i = 2; i < length;  ++i)
-		if (!IsAlphaNumericASCII(name[i]) && name[i] != '-')
-			return false;
-
-	return true;
-}
-
-static void
-expansible_buffer_append_uri_escaped(ExpansibleBuffer &buffer,
-				     struct pool &tpool,
-				     StringView value) noexcept
-{
-	char *escaped = (char *)p_malloc(&tpool, value.size * 3);
-	size_t length = uri_escape(escaped, StringView(value.data, value.size));
-	buffer.Write(escaped, length);
-}
-
 bool
 XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 {
@@ -1466,79 +1235,18 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 	if (postponed_rewrite.pending)
 		CommitUriRewrite();
 
-	if (tag == Tag::WIDGET) {
-		if (xml_tag.type == XmlParserTagType::OPEN || xml_tag.type == XmlParserTagType::SHORT)
-			widget.start_offset = xml_tag.start;
-		else if (widget.widget == nullptr)
-			return true;
-
-		assert(widget.widget != nullptr);
-
-		if (xml_tag.type == XmlParserTagType::OPEN)
-			return true;
-
-		return WidgetElementFinished(xml_tag,
-					     std::exchange(widget.widget,
-							   nullptr));
-	} else if (tag == Tag::WIDGET_PARAM) {
-		assert(widget.widget != nullptr);
-
-		if (widget.param.name.IsEmpty())
-			return true;
-
-		const TempPoolLease tpool;
-
-		auto value = widget.param.value.ReadStringView();
-		if (value.Find('&') != nullptr) {
-			char *q = (char *)p_memdup(tpool, value.data, value.size);
-			value.size = unescape_inplace(&html_escape_class, q, value.size);
-			value.data = q;
-		}
-
-		if (!widget.params.IsEmpty())
-			widget.params.Write("&", 1);
-
-		const auto name = widget.param.name.ReadStringView();
-		expansible_buffer_append_uri_escaped(widget.params, tpool, name);
-
-		widget.params.Write("=", 1);
-
-		expansible_buffer_append_uri_escaped(widget.params, tpool, value);
-	} else if (tag == Tag::WIDGET_HEADER) {
-		assert(widget.widget != nullptr);
-
-		if (xml_tag.type == XmlParserTagType::CLOSE)
-			return true;
-
-		const auto name = widget.param.name.ReadStringView();
-		if (!header_name_valid(name.data, name.size)) {
-			container.logger(3, "invalid widget HTTP header name");
-			return true;
-		}
-
-		if (widget.widget->from_template.headers == nullptr)
-			widget.widget->from_template.headers = strmap_new(&widget.pool);
-
-		char *value = widget.param.value.StringDup(widget.pool);
-		if (strchr(value, '&') != nullptr) {
-			size_t length = unescape_inplace(&html_escape_class,
-							 value, strlen(value));
-			value[length] = 0;
-		}
-
-		widget.widget->from_template.headers->Add(widget.pool,
-							  widget.param.name.StringDup(widget.pool),
-							  value);
-	} else if (tag == Tag::SCRIPT) {
+	if (tag == Tag::SCRIPT) {
 		if (xml_tag.type == XmlParserTagType::OPEN)
 			parser.Script();
 		else
 			tag = Tag::NONE;
+		return true;
 	} else if (tag == Tag::REWRITE_URI) {
 		/* the settings of this tag become the new default */
 		default_uri_rewrite = uri_rewrite;
 
 		Replace(xml_tag.start, xml_tag.end, nullptr);
+		return true;
 	} else if (tag == Tag::STYLE) {
 		if (xml_tag.type == XmlParserTagType::OPEN && !IsQuiet() &&
 		    HasOptionStyle()) {
@@ -1566,9 +1274,10 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 			cdata_start = xml_tag.end;
 			Replace(xml_tag.end, xml_tag.end, std::move(istream));
 		}
-	}
 
-	return true;
+		return true;
+	} else
+		return WidgetContainerParser::OnXmlTagFinished(xml_tag);
 }
 
 size_t
