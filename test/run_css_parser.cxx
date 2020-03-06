@@ -142,11 +142,11 @@ try {
 	Istream *istream = istream_file_new(instance.event_loop, *pool,
 					    "/dev/stdin", (off_t)-1);
 	auto *parser =
-		css_parser_new(*pool, UnusedIstreamPtr(istream), false,
-			       my_parser_handler, nullptr);
+		NewFromPool<CssParser>(*pool, UnusedIstreamPtr(istream), false,
+				       my_parser_handler, nullptr);
 
 	while (!should_exit)
-		css_parser_read(parser);
+		parser->Read();
 } catch (...) {
 	PrintException(std::current_exception());
 	return EXIT_FAILURE;

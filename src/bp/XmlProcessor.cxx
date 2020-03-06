@@ -244,7 +244,8 @@ struct XmlProcessor final : PoolHolder, XmlParserHandler, Cancellable {
 	}
 
 	void InitParser(UnusedIstreamPtr input) noexcept {
-		parser = parser_new(pool, std::move(input), *this);
+		parser = NewFromPool<XmlParser>(pool, pool, std::move(input),
+						*this);
 	}
 
 	bool IsQuiet() const noexcept {
@@ -281,7 +282,7 @@ private:
 	}
 
 	void Close() noexcept {
-		parser_close(parser);
+		parser->Close();
 		Destroy();
 	}
 
@@ -522,7 +523,7 @@ processor_lookup_widget(struct pool &caller_pool,
 
 	do {
 		processor->had_input = false;
-	} while (parser_read(processor->parser) && processor->had_input);
+	} while (processor->parser->Read() && processor->had_input);
 }
 
 void
@@ -645,7 +646,7 @@ XmlProcessor::CdataIstream::_Read() noexcept
 {
 	assert(processor.tag == Tag::STYLE_PROCESS);
 
-	parser_read(processor.parser);
+	processor.parser->Read();
 }
 
 void
@@ -1508,7 +1509,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 							  value);
 	} else if (tag == Tag::SCRIPT) {
 		if (xml_tag.type == XmlParserTagType::OPEN)
-			parser_script(parser);
+			parser->Script();
 		else
 			tag = Tag::NONE;
 	} else if (tag == Tag::REWRITE_URI) {

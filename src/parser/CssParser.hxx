@@ -91,6 +91,9 @@ struct CssParserHandler {
 	void (*error)(std::exception_ptr ep, void *ctx) noexcept;
 };
 
+/**
+ * Simple parser for CSS (Cascading Style Sheets).
+ */
 class CssParser final : IstreamSink, DestructAnchor {
 	template<size_t max>
 	class StringBuffer : public TrivialArray<char, max> {
@@ -165,6 +168,9 @@ class CssParser final : IstreamSink, DestructAnchor {
 	StringBuffer<1024> url_buffer;
 
 public:
+	/**
+	 * @param block true when the input consists of only one block
+	 */
 	CssParser(UnusedIstreamPtr input, bool block,
 		  const CssParserHandler &handler, void *handler_ctx) noexcept;
 
@@ -172,12 +178,21 @@ public:
 		this->~CssParser();
 	}
 
+	/**
+	 * Ask the CSS parser to read and parse more CSS source code.
+	 * Does nothing if the istream blocks.
+	 */
 	void Read() noexcept {
 		input.Read();
 	}
 
+	/**
+	 * Force-closen the CSS parser, don't invoke any handler
+	 * methods.
+	 */
 	void Close() noexcept {
 		input.Close();
+		Destroy();
 	}
 
 private:
@@ -201,25 +216,3 @@ private:
 		Destroy();
 	}
 };
-
-/**
- * Simple parser for CSS (Cascading Style Sheets).
- *
- * @param block true when the input consists of only one block
- */
-CssParser *
-css_parser_new(struct pool &pool, UnusedIstreamPtr input, bool block,
-	       const CssParserHandler &handler, void *handler_ctx) noexcept;
-
-/**
- * Force-closen the CSS parser, don't invoke any handler methods.
- */
-void
-css_parser_close(CssParser *parser) noexcept;
-
-/**
- * Ask the CSS parser to read and parse more CSS source code.  Does
- * nothing if the istream blocks.
- */
-void
-css_parser_read(CssParser *parser) noexcept;

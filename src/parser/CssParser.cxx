@@ -461,31 +461,3 @@ CssParser::CssParser(UnusedIstreamPtr _input, bool _block,
 	 state(block ? State::BLOCK : State::NONE)
 {
 }
-
-CssParser *
-css_parser_new(struct pool &pool, UnusedIstreamPtr input, bool block,
-	       const CssParserHandler &handler, void *handler_ctx) noexcept
-{
-	assert(handler.eof != nullptr);
-	assert(handler.error != nullptr);
-
-	return NewFromPool<CssParser>(pool, std::move(input), block,
-				      handler, handler_ctx);
-}
-
-void
-css_parser_close(CssParser *parser) noexcept
-{
-	assert(parser != nullptr);
-
-	parser->Close();
-	parser->Destroy();
-}
-
-void
-css_parser_read(CssParser *parser) noexcept
-{
-	assert(parser != nullptr);
-
-	parser->Read();
-}

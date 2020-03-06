@@ -170,6 +170,11 @@ public:
 		this->~XmlParser();
 	}
 
+	/**
+	 * Close the parser object.  This function will not invoke
+	 * XmlParserHandler::OnXmlEof() and
+	 * XmlParserHandler::OnXmlError().
+	 */
 	void Close() noexcept {
 		assert(input.IsDefined());
 
@@ -177,6 +182,9 @@ public:
 		Destroy();
 	}
 
+	/**
+	 * @return false if the #XmlParser has been closed
+	 */
 	bool Read() noexcept {
 		assert(input.IsDefined());
 
@@ -224,23 +232,3 @@ private:
 		_handler.OnXmlError(ep);
 	}
 };
-
-XmlParser *
-parser_new(struct pool &pool, UnusedIstreamPtr input,
-	   XmlParserHandler &handler) noexcept;
-
-/**
- * Close the parser object.  This function will not invoke
- * XmlParserHandler::OnXmlEof() and XmlParserHandler::OnXmlError().
- */
-void
-parser_close(XmlParser *parser) noexcept;
-
-/**
- * @return false if the #XmlParser has been closed
- */
-bool
-parser_read(XmlParser *parser) noexcept;
-
-void
-parser_script(XmlParser *parser) noexcept;

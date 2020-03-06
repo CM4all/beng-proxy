@@ -92,10 +92,10 @@ try {
 				   "/dev/stdin", (off_t)-1);
 
 	MyXmlParserHandler handler;
-	auto *parser = parser_new(pool, UnusedIstreamPtr(istream), handler);
+	auto *parser = NewFromPool<XmlParser>(pool, pool, UnusedIstreamPtr(istream), handler);
 
 	while (!should_exit)
-		parser_read(parser);
+		parser->Read();
 } catch (...) {
 	PrintException(std::current_exception());
 	return EXIT_FAILURE;
