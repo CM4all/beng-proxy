@@ -32,7 +32,9 @@
 
 #pragma once
 
+#include "istream/Sink.hxx"
 #include "util/StringView.hxx"
+#include "util/TrivialArray.hxx"
 
 #include <exception>
 
@@ -40,7 +42,6 @@
 
 struct pool;
 class UnusedIstreamPtr;
-class CssParser;
 
 struct CssParserValue {
 	off_t start, end;
@@ -88,6 +89,117 @@ struct CssParserHandler {
 	 * An I/O error has occurred.
 	 */
 	void (*error)(std::exception_ptr ep, void *ctx) noexcept;
+};
+
+class CssParser final : IstreamSink, DestructAnchor {
+	template<size_t max>
+	class StringBuffer : public TrivialArray<char, max> {
+	public:
+		using TrivialArray<char, max>::capacity;
+		using TrivialArray<char, max>::size;
+		using TrivialArray<char, max>::raw;
+		using TrivialArray<char, max>::end;
+
+		size_t GetRemainingSpace() const noexcept {
+			return capacity() - size();
+		}
+
+		void AppendTruncated(StringView p) noexcept {
+			size_t n = std::min(p.size, GetRemainingSpace());
+			std::copy_n(p.data, n, end());
+			this->the_size += n;
+		}
+
+		constexpr operator StringView() const noexcept {
+			return {raw(), size()};
+		}
+
+		gcc_pure
+		bool Equals(StringView other) const noexcept {
+			return other.Equals(*this);
+		}
+
+		template<size_t n>
+		bool EqualsLiteral(const char (&value)[n]) const noexcept {
+			return Equals({value, n - 1});
+		}
+	};
+
+	const bool block;
+
+	off_t position;
+
+	const CssParserHandler &handler;
+	void *const handler_ctx;
+
+	/* internal state */
+	enum class State {
+		NONE,
+		BLOCK,
+		CLASS_NAME,
+		XML_ID,
+		DISCARD_QUOTED,
+		PROPERTY,
+		POST_PROPERTY,
+		PRE_VALUE,
+		VALUE,
+		PRE_URL,
+		URL,
+
+		/**
+		 * An '@' was found.  Feeding characters into "name".
+		 */
+		AT,
+		PRE_IMPORT,
+		IMPORT,
+	} state;
+
+	char quote;
+
+	off_t name_start;
+	StringBuffer<64> name_buffer;
+
+	StringBuffer<64> value_buffer;
+
+	off_t url_start;
+	StringBuffer<1024> url_buffer;
+
+public:
+	CssParser(UnusedIstreamPtr input, bool block,
+		  const CssParserHandler &handler, void *handler_ctx) noexcept;
+
+	void Destroy() noexcept {
+		this->~CssParser();
+	}
+
+	void Read() noexcept {
+		input.Read();
+	}
+
+	void Close() noexcept {
+		input.Close();
+	}
+
+private:
+	size_t Feed(const char *start, size_t length) noexcept;
+
+	/* virtual methods from class IstreamHandler */
+
+	size_t OnData(const void *data, size_t length) noexcept override {
+		return Feed((const char *)data, length);
+	}
+
+	void OnEof() noexcept override {
+		input.Clear();
+		handler.eof(handler_ctx, position);
+		Destroy();
+	}
+
+	void OnError(std::exception_ptr ep) noexcept override {
+		input.Clear();
+		handler.error(ep, handler_ctx);
+		Destroy();
+	}
 };
 
 /**

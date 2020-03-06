@@ -33,163 +33,29 @@
 #include "XmlParser.hxx"
 #include "HtmlSyntax.hxx"
 #include "pool/pool.hxx"
-#include "expansible_buffer.hxx"
-#include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "util/CharUtil.hxx"
-#include "util/DestructObserver.hxx"
 #include "util/Poison.hxx"
 
-#include <assert.h>
 #include <string.h>
 
-class XmlParser final : IstreamSink, DestructAnchor {
-	off_t position = 0;
+XmlParser::XmlParser(struct pool &pool, UnusedIstreamPtr _input,
+		     XmlParserHandler &_handler) noexcept
+	:IstreamSink(std::move(_input)),
+	 attr_value(pool, 512, 8192),
+	 handler(_handler)
+{
+}
 
-	/* internal state */
-	enum class State {
-		NONE,
+inline void
+XmlParser::InvokeAttributeFinished() noexcept
+{
+	attr.name = {attr_name, attr_name_length};
+	attr.value = attr_value.ReadStringView();
 
-		/** within a SCRIPT element; only accept "</" to break out */
-		SCRIPT,
-
-		/** found '<' within a SCRIPT element */
-		SCRIPT_ELEMENT_NAME,
-
-		/** parsing an element name */
-		ELEMENT_NAME,
-
-		/** inside the element tag */
-		ELEMENT_TAG,
-
-		/** inside the element tag, but ignore attributes */
-		ELEMENT_BORING,
-
-		/** parsing attribute name */
-		ATTR_NAME,
-
-		/** after the attribute name, waiting for '=' */
-		AFTER_ATTR_NAME,
-
-		/** after the '=', waiting for the attribute value */
-		BEFORE_ATTR_VALUE,
-
-		/** parsing the quoted attribute value */
-		ATTR_VALUE,
-
-		/** compatibility with older and broken HTML: attribute value
-		    without quotes */
-		ATTR_VALUE_COMPAT,
-
-		/** found a slash, waiting for the '>' */
-		SHORT,
-
-		/** inside the element, currently unused */
-		INSIDE,
-
-		/** parsing a declaration name beginning with "<!" */
-		DECLARATION_NAME,
-
-		/** within a CDATA section */
-		CDATA_SECTION,
-
-		/** within a comment */
-		COMMENT,
-	} state = State::NONE;
-
-	/* element */
-	XmlParserTag tag;
-	char tag_name[64];
-	size_t tag_name_length;
-
-	/* attribute */
-	char attr_name[64];
-	size_t attr_name_length;
-	char attr_value_delimiter;
-	ExpansibleBuffer attr_value;
-	XmlParserAttribute attr;
-
-	/** in a CDATA section, how many characters have been matching
-	    CDEnd ("]]>")? */
-	size_t cdend_match;
-
-	/** in a comment, how many consecutive minus are there? */
-	unsigned minus_count;
-
-	XmlParserHandler &handler;
-
-public:
-	XmlParser(struct pool &pool, UnusedIstreamPtr _input,
-		  XmlParserHandler &_handler) noexcept
-		:IstreamSink(std::move(_input)),
-		 attr_value(pool, 512, 8192),
-		 handler(_handler) {
-	}
-
-	void Destroy() noexcept {
-		this->~XmlParser();
-	}
-
-	void Close() noexcept {
-		assert(input.IsDefined());
-
-		ClearAndCloseInput();
-		Destroy();
-	}
-
-	bool Read() noexcept {
-		assert(input.IsDefined());
-
-		const DestructObserver destructed(*this);
-		input.Read();
-		return !destructed;
-	}
-
-	void Script() noexcept {
-		assert(state == State::NONE ||
-		       state == State::INSIDE);
-
-		state = State::SCRIPT;
-	}
-
-private:
-	void InvokeAttributeFinished() noexcept {
-		attr.name = {attr_name, attr_name_length};
-		attr.value = attr_value.ReadStringView();
-
-		handler.OnXmlAttributeFinished(attr);
-		PoisonUndefinedT(attr);
-	}
-
-	size_t Feed(const char *start, size_t length) noexcept;
-
-	/* virtual methods from class IstreamHandler */
-
-	size_t OnData(const void *data, size_t length) noexcept override {
-		return Feed((const char *)data, length);
-	}
-
-	void OnEof() noexcept override {
-		assert(input.IsDefined());
-
-		input.Clear();
-
-		auto &_handler = handler;
-		const auto _position = position;
-		Destroy();
-		_handler.OnXmlEof(_position);
-	}
-
-	void OnError(std::exception_ptr ep) noexcept override {
-		assert(input.IsDefined());
-
-		input.Clear();
-
-		auto &_handler = handler;
-		Destroy();
-		_handler.OnXmlError(ep);
-	}
-};
+	handler.OnXmlAttributeFinished(attr);
+	PoisonUndefinedT(attr);
+}
 
 inline size_t
 XmlParser::Feed(const char *start, size_t length) noexcept
