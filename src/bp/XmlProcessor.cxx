@@ -285,6 +285,15 @@ struct XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellab
 		input.Read();
 	}
 
+	void ReadLoop() noexcept {
+		const DestructObserver destructed(*this);
+
+		do {
+			had_input = false;
+			Read();
+		} while (!destructed && had_input);
+	}
+
 	bool IsQuiet() const noexcept {
 		return !replace;
 	}
@@ -535,13 +544,7 @@ processor_lookup_widget(struct pool &caller_pool,
 					  widget, std::move(ctx), options,
 					  id, handler,
 					  cancel_ptr);
-
-	const DestructObserver destructed(*processor);
-
-	do {
-		processor->had_input = false;
-		processor->Read();
-	} while (!destructed && processor->had_input);
+	processor->ReadLoop();
 }
 
 void
