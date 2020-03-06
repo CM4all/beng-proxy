@@ -48,55 +48,55 @@ static bool should_exit;
 
 class MyXmlParserHandler final : public XmlParserHandler {
 public:
-    /* virtual methods from class XmlParserHandler */
-    bool OnXmlTagStart(gcc_unused const XmlParserTag &tag) noexcept override {
-        return false;
-    }
+	/* virtual methods from class XmlParserHandler */
+	bool OnXmlTagStart(gcc_unused const XmlParserTag &tag) noexcept override {
+		return false;
+	}
 
-    bool OnXmlTagFinished(const XmlParserTag &) noexcept override {
-        return true;
-    }
+	bool OnXmlTagFinished(const XmlParserTag &) noexcept override {
+		return true;
+	}
 
-    void OnXmlAttributeFinished(gcc_unused const XmlParserAttribute &attr) noexcept override {}
+	void OnXmlAttributeFinished(gcc_unused const XmlParserAttribute &attr) noexcept override {}
 
-    size_t OnXmlCdata(StringView text, gcc_unused bool escaped,
-                      gcc_unused off_t start) noexcept override {
-        (void)write(STDOUT_FILENO, text.data, text.size);
-        return text.size;
-    }
+	size_t OnXmlCdata(StringView text, gcc_unused bool escaped,
+			  gcc_unused off_t start) noexcept override {
+		(void)write(STDOUT_FILENO, text.data, text.size);
+		return text.size;
+	}
 
-    void OnXmlEof(gcc_unused off_t length) noexcept override {
-        should_exit = true;
-    }
+	void OnXmlEof(gcc_unused off_t length) noexcept override {
+		should_exit = true;
+	}
 
-    void OnXmlError(std::exception_ptr ep) noexcept override {
-        fprintf(stderr, "ABORT: %s\n", GetFullMessage(ep).c_str());
-        exit(2);
-    }
+	void OnXmlError(std::exception_ptr ep) noexcept override {
+		fprintf(stderr, "ABORT: %s\n", GetFullMessage(ep).c_str());
+		exit(2);
+	}
 };
 
 int
 main(int argc, char **argv)
 try {
-    Istream *istream;
+	Istream *istream;
 
-    (void)argc;
-    (void)argv;
+	(void)argc;
+	(void)argv;
 
-    const ScopeFbPoolInit fb_pool_init;
-    PInstance instance;
+	const ScopeFbPoolInit fb_pool_init;
+	PInstance instance;
 
-    const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    istream = istream_file_new(instance.event_loop, pool,
-                               "/dev/stdin", (off_t)-1);
+	istream = istream_file_new(instance.event_loop, pool,
+				   "/dev/stdin", (off_t)-1);
 
-    MyXmlParserHandler handler;
-    auto *parser = parser_new(pool, UnusedIstreamPtr(istream), handler);
+	MyXmlParserHandler handler;
+	auto *parser = parser_new(pool, UnusedIstreamPtr(istream), handler);
 
-    while (!should_exit)
-        parser_read(parser);
+	while (!should_exit)
+		parser_read(parser);
 } catch (...) {
-    PrintException(std::current_exception());
-    return EXIT_FAILURE;
+	PrintException(std::current_exception());
+	return EXIT_FAILURE;
 }

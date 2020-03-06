@@ -54,72 +54,72 @@ static bool should_exit;
 static void
 my_parser_class_name(const CssParserValue *name, void *ctx) noexcept
 {
-    (void)ctx;
+	(void)ctx;
 
-    printf(".%.*s\n", (int)name->value.size, name->value.data);
+	printf(".%.*s\n", (int)name->value.size, name->value.data);
 }
 
 static void
 my_parser_xml_id(const CssParserValue *id, void *ctx) noexcept
 {
-    (void)ctx;
+	(void)ctx;
 
-    printf("#%.*s\n", (int)id->value.size, id->value.data);
+	printf("#%.*s\n", (int)id->value.size, id->value.data);
 }
 
 static void
 my_parser_property_keyword(const char *name, StringView value,
-                           gcc_unused off_t start, gcc_unused off_t end,
-                           void *ctx) noexcept
+			   gcc_unused off_t start, gcc_unused off_t end,
+			   void *ctx) noexcept
 {
-    (void)ctx;
+	(void)ctx;
 
-    printf("%s = %.*s\n", name, int(value.size), value.data);
+	printf("%s = %.*s\n", name, int(value.size), value.data);
 }
 
 static void
 my_parser_url(const CssParserValue *url, void *ctx) noexcept
 {
-    (void)ctx;
+	(void)ctx;
 
-    printf("%.*s\n", (int)url->value.size, url->value.data);
+	printf("%.*s\n", (int)url->value.size, url->value.data);
 }
 
 static void
 my_parser_import(const CssParserValue *url, void *ctx) noexcept
 {
-    (void)ctx;
+	(void)ctx;
 
-    printf("import %.*s\n", (int)url->value.size, url->value.data);
+	printf("import %.*s\n", (int)url->value.size, url->value.data);
 }
 
 static void
 my_parser_eof(void *ctx, off_t length) noexcept
 {
-    (void)ctx;
-    (void)length;
+	(void)ctx;
+	(void)length;
 
-    should_exit = true;
+	should_exit = true;
 }
 
 static gcc_noreturn void
 my_parser_error(std::exception_ptr ep, void *ctx) noexcept
 {
-    (void)ctx;
+	(void)ctx;
 
-    fprintf(stderr, "ABORT: %s\n", GetFullMessage(ep).c_str());
-    exit(2);
+	fprintf(stderr, "ABORT: %s\n", GetFullMessage(ep).c_str());
+	exit(2);
 }
 
 static constexpr CssParserHandler my_parser_handler = {
-    my_parser_class_name,
-    my_parser_xml_id,
-    nullptr,
-    my_parser_property_keyword,
-    my_parser_url,
-    my_parser_import,
-    my_parser_eof,
-    my_parser_error,
+	my_parser_class_name,
+	my_parser_xml_id,
+	nullptr,
+	my_parser_property_keyword,
+	my_parser_url,
+	my_parser_import,
+	my_parser_eof,
+	my_parser_error,
 };
 
 
@@ -131,23 +131,23 @@ static constexpr CssParserHandler my_parser_handler = {
 int
 main(int argc, char **argv)
 try {
-    (void)argc;
-    (void)argv;
+	(void)argc;
+	(void)argv;
 
-    const ScopeFbPoolInit fb_pool_init;
+	const ScopeFbPoolInit fb_pool_init;
 
-    PInstance instance;
-    const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	PInstance instance;
+	const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-    Istream *istream = istream_file_new(instance.event_loop, *pool,
-                                        "/dev/stdin", (off_t)-1);
-    auto *parser =
-        css_parser_new(*pool, UnusedIstreamPtr(istream), false,
-                       my_parser_handler, nullptr);
+	Istream *istream = istream_file_new(instance.event_loop, *pool,
+					    "/dev/stdin", (off_t)-1);
+	auto *parser =
+		css_parser_new(*pool, UnusedIstreamPtr(istream), false,
+			       my_parser_handler, nullptr);
 
-    while (!should_exit)
-        css_parser_read(parser);
+	while (!should_exit)
+		css_parser_read(parser);
 } catch (...) {
-    PrintException(std::current_exception());
-    return EXIT_FAILURE;
+	PrintException(std::current_exception());
+	return EXIT_FAILURE;
 }
