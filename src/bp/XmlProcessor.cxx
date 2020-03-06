@@ -57,9 +57,7 @@
 #include "istream/istream_catch.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/TeeIstream.hxx"
 #include "pool/pool.hxx"
-#include "pool/Holder.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StringView.hxx"
 #include "stopwatch.hxx"
@@ -81,7 +79,7 @@ struct UriRewrite {
 	char view[64];
 };
 
-class XmlProcessor final : PoolHolder, IstreamSink, WidgetContainerParser {
+class XmlProcessor final : public ReplaceIstream, WidgetContainerParser {
 	class CdataIstream final : public Istream {
 		friend class XmlProcessor;
 		XmlProcessor &processor;
@@ -98,8 +96,6 @@ class XmlProcessor final : PoolHolder, IstreamSink, WidgetContainerParser {
 	const StopwatchPtr stopwatch;
 
 	const unsigned options;
-
-	SharedPoolPtr<ReplaceIstreamControl> replace;
 
 	XmlParser parser;
 	bool had_input;
@@ -150,13 +146,11 @@ public:
 	XmlProcessor(PoolPtr &&_pool, const StopwatchPtr &parent_stopwatch,
 		     UnusedIstreamPtr &&_input,
 		     Widget &_widget, SharedPoolPtr<WidgetContext> &&_ctx,
-		     unsigned _options,
-		     SharedPoolPtr<ReplaceIstreamControl> &&_replace) noexcept
-		:PoolHolder(std::move(_pool)), IstreamSink(std::move(_input)),
+		     unsigned _options) noexcept
+		:ReplaceIstream(std::move(_pool), _ctx->event_loop, std::move(_input)),
 		 WidgetContainerParser(GetPool(), _widget, std::move(_ctx)),
 		 stopwatch(parent_stopwatch, "XmlProcessor"),
 		 options(_options),
-		 replace(std::move(_replace)),
 		 parser(GetPool(), *this),
 		 buffer(GetPool(), 128, 2048),
 		 postponed_rewrite(GetPool())
@@ -173,9 +167,7 @@ public:
 		}
 	}
 
-	struct pool &GetPool() const noexcept {
-		return pool;
-	}
+	using ReplaceIstream::GetPool;
 
 	void Read() noexcept {
 		input.Read();
@@ -206,12 +198,8 @@ private:
 		return tag == Tag::FORM;
 	}
 
-	void Destroy() noexcept {
-		this->~XmlProcessor();
-	}
-
 	void Replace(off_t start, off_t end, UnusedIstreamPtr istream) noexcept {
-		replace->Add(start, end, std::move(istream));
+		ReplaceIstream::Add(start, end, std::move(istream));
 	}
 
 	void ReplaceAttributeValue(const XmlParserAttribute &attr,
@@ -262,7 +250,11 @@ private:
 	/* virtual methods from class IstreamHandler */
 
 	size_t OnData(const void *data, size_t length) noexcept override {
-		return parser.Feed((const char *)data, length);
+		size_t nbytes = ReplaceIstream::OnData(data, length);
+		if (nbytes > 0)
+			parser.Feed((const char *)data, nbytes);
+
+		return nbytes;
 	}
 
 	void OnEof() noexcept override;
@@ -1096,9 +1088,9 @@ XmlProcessor::OnXmlCdata(StringView text,
 		/* XXX unescape? */
 		size_t length = cdata_istream->InvokeData(text.data, text.size);
 		if (length > 0)
-			replace->Extend(cdata_start, start + length);
+			ReplaceIstream::Extend(cdata_start, start + length);
 	} else if (widget.widget == nullptr)
-		replace->Settle(start + text.size);
+		ReplaceIstream::Settle(start + text.size);
 
 	return text.size;
 }
@@ -1114,25 +1106,20 @@ XmlProcessor::OnEof() noexcept
 	   because we didn't find it; dispose it now */
 	container.DiscardForFocused();
 
-	auto _replace = std::move(replace);
-	Destroy();
-	_replace->Finish();
+	ReplaceIstream::SetFinished();
+	ReplaceIstream::OnEof();
 }
 
 void
 XmlProcessor::OnError(std::exception_ptr ep) noexcept
 {
-	container.logger(3, ep);
-
-	input.Clear();
-
 	StopCdataIstream();
 
 	/* the request body could not be submitted to the focused widget,
 	   because we didn't find it; dispose it now */
 	container.DiscardForFocused();
 
-	Destroy();
+	ReplaceIstream::OnError(ep);
 }
 
 /*
@@ -1162,22 +1149,13 @@ processor_process(struct pool &caller_pool,
 	auto pool = pool_new_linear(&caller_pool, "WidgetLookupProcessor", 32768);
 
 	/* the text processor will expand entities */
-	auto tee = NewTeeIstream(pool,
-				 text_processor(pool,
-						std::move(input),
-						widget, *ctx),
-				 ctx->event_loop,
-				 true);
+	input = text_processor(pool,
+			       std::move(input),
+			       widget, *ctx);
 
-	auto tee2 = AddTeeIstream(tee, true);
-
-	auto r = istream_replace_new(ctx->event_loop, pool,
-				     std::move(tee));
-	NewFromPool<XmlProcessor>(std::move(pool), parent_stopwatch,
-				  std::move(tee2),
-				  widget, std::move(ctx), options,
-				  std::move(r.second));
-
-	//XXX headers = processor_header_forward(pool, headers);
-	return std::move(r.first);
+	auto *processor =
+		NewFromPool<XmlProcessor>(std::move(pool), parent_stopwatch,
+					  std::move(input),
+					  widget, std::move(ctx), options);
+	return UnusedIstreamPtr(processor);
 }
