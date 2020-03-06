@@ -231,15 +231,50 @@ struct XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellab
 	XmlProcessor(PoolPtr &&_pool, const StopwatchPtr &parent_stopwatch,
 		     UnusedIstreamPtr &&_input,
 		     Widget &_widget, SharedPoolPtr<WidgetContext> &&_ctx,
-		     unsigned _options) noexcept
+		     unsigned _options,
+		     SharedPoolPtr<ReplaceIstreamControl> &&_replace) noexcept
 		:PoolHolder(std::move(_pool)), IstreamSink(std::move(_input)),
 		 stopwatch(parent_stopwatch, "XmlProcessor"),
 		 container(_widget),
+		 lookup_id(nullptr),
+		 ctx(std::move(_ctx)), options(_options),
+		 replace(std::move(_replace)),
+		 parser(pool, *this),
+		 buffer(pool, 128, 2048),
+		 postponed_rewrite(pool),
+		 widget(_widget.pool, pool)
+	{
+		if (HasOptionRewriteUrl()) {
+			default_uri_rewrite.base = UriBase::TEMPLATE;
+			default_uri_rewrite.mode = RewriteUriMode::PARTIAL;
+			default_uri_rewrite.view[0] = 0;
+
+			if (options & PROCESSOR_FOCUS_WIDGET) {
+				default_uri_rewrite.base = UriBase::WIDGET;
+				default_uri_rewrite.mode = RewriteUriMode::FOCUS;
+			}
+		}
+	}
+
+	XmlProcessor(PoolPtr &&_pool, const StopwatchPtr &parent_stopwatch,
+		     UnusedIstreamPtr &&_input,
+		     Widget &_widget, SharedPoolPtr<WidgetContext> &&_ctx,
+		     unsigned _options,
+		     const char *_lookup_id,
+		     WidgetLookupHandler &_handler,
+		     CancellablePointer &caller_cancel_ptr) noexcept
+		:PoolHolder(std::move(_pool)), IstreamSink(std::move(_input)),
+		 stopwatch(parent_stopwatch, "XmlProcessor"),
+		 container(_widget),
+		 lookup_id(_lookup_id),
 		 ctx(std::move(_ctx)), options(_options),
 		 parser(pool, *this),
 		 buffer(pool, 128, 2048),
 		 postponed_rewrite(pool),
-		 widget(_widget.pool, pool) {
+		 widget(_widget.pool, pool),
+		 handler(&_handler), cancel_ptr(&caller_cancel_ptr)
+	{
+		caller_cancel_ptr = *this;
 	}
 
 	struct pool &GetPool() const noexcept {
@@ -465,26 +500,10 @@ processor_process(struct pool &caller_pool,
 
 	auto r = istream_replace_new(ctx->event_loop, pool,
 				     std::move(tee));
-
-	auto *processor =
-		NewFromPool<XmlProcessor>(std::move(pool), parent_stopwatch,
-					  std::move(tee2),
-					  widget, std::move(ctx), options);
-
-	processor->lookup_id = nullptr;
-
-	processor->replace = std::move(r.second);
-
-	if (processor->HasOptionRewriteUrl()) {
-		processor->default_uri_rewrite.base = UriBase::TEMPLATE;
-		processor->default_uri_rewrite.mode = RewriteUriMode::PARTIAL;
-		processor->default_uri_rewrite.view[0] = 0;
-
-		if (options & PROCESSOR_FOCUS_WIDGET) {
-			processor->default_uri_rewrite.base = UriBase::WIDGET;
-			processor->default_uri_rewrite.mode = RewriteUriMode::FOCUS;
-		}
-	}
+	NewFromPool<XmlProcessor>(std::move(pool), parent_stopwatch,
+				  std::move(tee2),
+				  widget, std::move(ctx), options,
+				  std::move(r.second));
 
 	//XXX headers = processor_header_forward(pool, headers);
 	return std::move(r.first);
@@ -513,14 +532,9 @@ processor_lookup_widget(struct pool &caller_pool,
 	auto *processor =
 		NewFromPool<XmlProcessor>(std::move(pool), parent_stopwatch,
 					  std::move(istream),
-					  widget, std::move(ctx), options);
-
-	processor->lookup_id = id;
-
-	processor->handler = &handler;
-
-	cancel_ptr = *processor;
-	processor->cancel_ptr = &cancel_ptr;
+					  widget, std::move(ctx), options,
+					  id, handler,
+					  cancel_ptr);
 
 	const DestructObserver destructed(*processor);
 
