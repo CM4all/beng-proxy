@@ -989,7 +989,7 @@ find_underscore(const char *p, const char *end) noexcept
 	if (p == end)
 		return nullptr;
 
-	if (is_underscore_prefix(p, end))
+	if (is_underscore_prefix({p, end}))
 		return p;
 
 	while (true) {
@@ -998,7 +998,7 @@ find_underscore(const char *p, const char *end) noexcept
 			return nullptr;
 
 		if (IsWhitespaceOrNull(p[-1]) &&
-		    is_underscore_prefix(p, end))
+		    is_underscore_prefix({p, end}))
 			return p;
 	}
 }
@@ -1021,7 +1021,7 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr) noexcept
 
 		p = u;
 
-		const unsigned n = underscore_prefix(p, end);
+		const unsigned n = underscore_prefix({p, end});
 		const char *prefix;
 		if (n == 3 && (prefix = container.GetPrefix()) != nullptr) {
 			if (!buffer.Write(prefix))
@@ -1062,7 +1062,7 @@ XmlProcessor::HandleIdAttribute(const XmlParserAttribute &attr) noexcept
 	auto p = attr.value.begin();
 	const auto end = attr.value.end();
 
-	const unsigned n = underscore_prefix(p, end);
+	const unsigned n = underscore_prefix({p, end});
 	if (n == 3) {
 		/* triple underscore: add widget path prefix */
 

@@ -37,6 +37,9 @@
  */
 
 #include "CssSyntax.hxx"
+#include "util/StringView.hxx"
+
+#include <algorithm>
 
 /**
  * Count the number of leading underscores.  Returns 0 if the
@@ -44,19 +47,18 @@
  */
 gcc_pure
 static inline unsigned
-underscore_prefix(const char *p, const char *end) noexcept
+underscore_prefix(StringView s) noexcept
 {
-	const char *q = p;
-	while (q < end && *q == '_')
-		++q;
+	const char *q = std::find_if(s.begin(), s.end(),
+				     [](char ch){ return ch != '_'; });
 
-	return q - p;
+	return q - s.data;
 }
 
 gcc_pure
 static inline bool
-is_underscore_prefix(const char *p, const char *end) noexcept
+is_underscore_prefix(StringView s) noexcept
 {
-	unsigned n = underscore_prefix(p, end);
+	unsigned n = underscore_prefix(s);
 	return n == 2 || n == 3;
 }

@@ -125,7 +125,7 @@ css_processor_parser_class_name(const CssParserValue *name, void *ctx) noexcept
 	if (!css_processor_option_prefix_class(processor))
 		return;
 
-	unsigned n = underscore_prefix(name->value.begin(), name->value.end());
+	unsigned n = underscore_prefix(name->value);
 	if (n == 3) {
 		/* triple underscore: add widget path prefix */
 
@@ -158,7 +158,7 @@ css_processor_parser_xml_id(const CssParserValue *name, void *ctx) noexcept
 	if (!css_processor_option_prefix_id(processor))
 		return;
 
-	unsigned n = underscore_prefix(name->value.begin(), name->value.end());
+	unsigned n = underscore_prefix(name->value);
 	if (n == 3) {
 		/* triple underscore: add widget path prefix */
 
