@@ -36,6 +36,7 @@
 #include "widget/Context.hxx"
 #include "pool/pool.hxx"
 #include "pool/tpool.hxx"
+#include "istream/New.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_memory.hxx"
@@ -107,8 +108,7 @@ css_rewrite_block_uris(struct pool &pool,
 
 	auto input =
 		istream_memory_new(pool, p_strdup(pool, block), block.size);
-	auto replace = istream_replace_new(ctx->event_loop, pool,
-					   std::move(input));
+	auto replace = NewIstream<ReplaceIstream>(pool, ctx->event_loop, std::move(input));
 
 	bool modified = false;
 	for (unsigned i = 0; i < rewrite.n_urls; ++i) {
@@ -123,13 +123,13 @@ css_rewrite_block_uris(struct pool &pool,
 		if (!value)
 			continue;
 
-		replace.second->Add(url->start, url->end, std::move(value));
+		replace->Add(url->start, url->end, std::move(value));
 		modified = true;
 	}
 
 	if (!modified)
 		return nullptr;
 
-	replace.second->Finish();
-	return std::move(replace.first);
+	replace->Finish();
+	return UnusedIstreamPtr(replace);
 }
