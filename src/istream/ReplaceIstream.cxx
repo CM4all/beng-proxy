@@ -31,12 +31,8 @@
  */
 
 #include "ReplaceIstream.hxx"
-#include "FacadeIstream.hxx"
-#include "Sink.hxx"
 #include "UnusedPtr.hxx"
 #include "New.hxx"
-#include "GrowingBuffer.hxx"
-#include "event/DeferEvent.hxx"
 #include "pool/pool.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/DestructObserver.hxx"
@@ -45,206 +41,15 @@
 
 #include <assert.h>
 
-class ReplaceIstream final : public FacadeIstream, DestructAnchor {
-	struct Substitution final : IstreamSink {
-		Substitution *next = nullptr;
-		ReplaceIstream &replace;
-		const off_t start;
-		off_t end;
 
-		Substitution(ReplaceIstream &_replace, off_t _start, off_t _end,
-			     UnusedIstreamPtr _input) noexcept
-			:IstreamSink(std::move(_input)),
-			 replace(_replace),
-			 start(_start), end(_end)
-		{
-		}
-
-		void Destroy() noexcept {
-			this->~Substitution();
-		}
-
-		bool IsDefined() const noexcept {
-			return input.IsDefined();
-		}
-
-		off_t GetAvailable(bool partial) const noexcept {
-			return input.GetAvailable(partial);
-		}
-
-		void Read() noexcept {
-			input.Read();
-		}
-
-		using IstreamSink::ClearAndCloseInput;
-
-		gcc_pure
-		bool IsActive() const noexcept;
-
-		/* virtual methods from class IstreamHandler */
-
-		bool OnIstreamReady() noexcept override {
-			return IsActive() && replace.InvokeReady();
-		}
-
-		size_t OnData(const void *data, size_t length) noexcept override;
-		void OnEof() noexcept override;
-		void OnError(std::exception_ptr ep) noexcept override;
-	};
-
-	/**
-	 * This event is scheduled when a #ReplaceIstreamControl method
-	 * call allows us to submit more data to the #IstreamHandler.
-	 * This avoids stalling the transfer when the last Read() call did
-	 * not return any data.
-	 */
-	DeferEvent defer_read;
-
-	bool finished = false;
-	bool had_input, had_output;
-
-	GrowingBuffer buffer;
-	off_t source_length = 0, position = 0;
-
-	/**
-	 * The offset given by istream_replace_settle() or the end offset
-	 * of the last substitution (whichever is bigger).
-	 */
-	off_t settled_position = 0;
-
-	Substitution *first_substitution = nullptr,
-		**append_substitution_p = &first_substitution;
-
-#ifndef NDEBUG
-	off_t last_substitution_end = 0;
-#endif
-
-	const SharedPoolPtr<ReplaceIstreamControl> control;
-
-public:
-	ReplaceIstream(struct pool &p, EventLoop &event_loop,
-		       UnusedIstreamPtr _input) noexcept
-		:FacadeIstream(p, std::move(_input)),
-		 defer_read(event_loop, BIND_THIS_METHOD(DeferredRead)),
-		 control(SharedPoolPtr<ReplaceIstreamControl>::Make(p, *this))
-	{
-	}
-
-	~ReplaceIstream() noexcept {
-		assert(control);
-		assert(control->replace == this);
-
-		control->replace = nullptr;
-	}
-
-	auto GetControl() noexcept {
-		return control;
-	}
-
-	void Add(off_t start, off_t end, UnusedIstreamPtr contents) noexcept;
-	void Extend(off_t start, off_t end) noexcept;
-	void Settle(off_t offset) noexcept;
-	void Finish() noexcept;
-
-private:
-	using FacadeIstream::GetPool;
-	using FacadeIstream::HasInput;
-
-	void DestroyReplace() noexcept;
-
-	/**
-	 * Is the buffer at the end-of-file position?
-	 */
-	bool IsBufferAtEOF() const noexcept {
-		return position == source_length;
-	}
-
-	/**
-	 * Is the object at end-of-file?
-	 */
-	bool IsEOF() const noexcept {
-		return !input.IsDefined() && finished &&
-			first_substitution == nullptr &&
-			IsBufferAtEOF();
-	}
-
-	gcc_pure
-	off_t GetBufferEndOffsetUntil(const Substitution *s) const noexcept {
-		if (s != nullptr)
-			return std::min(s->start, source_length);
-		else if (finished)
-			return source_length;
-		else if (position < settled_position)
-			return settled_position;
-		else
-			/* block after the last substitution, unless
-			   the caller has already set the "finished"
-			   flag */
-			return -1;
-	}
-
-	/**
-	 * Copy the next chunk from the source buffer to the istream
-	 * handler.
-	 *
-	 * @return true if all pending data has been consumed, false if
-	 * the handler is blocking or if this object has been destroyed
-	 */
-	bool TryReadFromBuffer() noexcept;
-
-	void DeferredRead() noexcept {
-		TryRead();
-	}
-
-	/**
-	 * Copy data from the source buffer to the istream handler.
-	 *
-	 * @return 0 if the istream handler is not blocking; the number of
-	 * bytes remaining in the buffer if it is blocking
-	 */
-	size_t ReadFromBuffer(size_t max_length) noexcept;
-
-	/**
-	 * @return true if all data until #end has been consumed, false if
-	 * the handler is blocking or if this object has been destroyed
-	 */
-	bool ReadFromBufferLoop(off_t end) noexcept;
-
-	/**
-	 * @return true if all pending data has been consumed, false if
-	 * the handler is blocking or if this object has been destroyed
-	 */
-	bool TryRead() noexcept;
-
-	void ReadCheckEmpty() noexcept;
-
-	/**
-	 * Read data from substitution objects.
-	 *
-	 * @return true if there is no active substitution and reading
-	 * shall continue; false if the active substitution blocks or this
-	 * object was destroyed
-	 */
-	bool ReadSubstitution() noexcept;
-
-	/**
-	 * Activate the next substitution object after s.
-	 */
-	void ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept;
-
-	Substitution *GetLastSubstitution() noexcept;
-
-	/* virtual methods from class IstreamHandler */
-	size_t OnData(const void *data, size_t length) noexcept override;
-	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
-
-public:
-	/* virtual methods from class Istream */
-	off_t _GetAvailable(bool partial) noexcept override;
-	void _Read() noexcept override;
-	void _Close() noexcept override;
-};
+ReplaceIstream::Substitution::Substitution(ReplaceIstream &_replace,
+					   off_t _start, off_t _end,
+					   UnusedIstreamPtr &&_input) noexcept
+	:IstreamSink(std::move(_input)),
+	 replace(_replace),
+	 start(_start), end(_end)
+{
+}
 
 /**
  * Is this substitution object is active, i.e. its data is the next
@@ -330,6 +135,14 @@ ReplaceIstream::Substitution::OnError(std::exception_ptr ep) noexcept
  * misc methods
  *
  */
+
+ReplaceIstream::ReplaceIstream(struct pool &p, EventLoop &event_loop,
+			       UnusedIstreamPtr _input) noexcept
+	:FacadeIstream(p, std::move(_input)),
+	 defer_read(event_loop, BIND_THIS_METHOD(DeferredRead)),
+	 control(SharedPoolPtr<ReplaceIstreamControl>::Make(p, *this))
+{
+}
 
 void
 ReplaceIstream::DestroyReplace() noexcept
