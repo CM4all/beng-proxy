@@ -111,7 +111,7 @@ struct XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellab
 
 	SharedPoolPtr<ReplaceIstreamControl> replace;
 
-	XmlParser *parser;
+	XmlParser parser;
 	bool had_input;
 
 	enum class Tag {
@@ -236,6 +236,7 @@ struct XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellab
 		 stopwatch(parent_stopwatch, "XmlProcessor"),
 		 container(_widget),
 		 ctx(std::move(_ctx)), options(_options),
+		 parser(pool, *this),
 		 buffer(pool, 128, 2048),
 		 postponed_rewrite(pool),
 		 widget(_widget.pool, pool) {
@@ -243,10 +244,6 @@ struct XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellab
 
 	struct pool &GetPool() const noexcept {
 		return pool;
-	}
-
-	void InitParser() noexcept {
-		parser = NewFromPool<XmlParser>(pool, pool, *this);
 	}
 
 	void Read() noexcept {
@@ -287,7 +284,6 @@ private:
 	}
 
 	void Close() noexcept {
-		parser->Destroy();
 		ClearAndCloseInput();
 		Destroy();
 	}
@@ -355,7 +351,7 @@ private:
 	/* virtual methods from class IstreamHandler */
 
 	size_t OnData(const void *data, size_t length) noexcept override {
-		return parser->Feed((const char *)data, length);
+		return parser.Feed((const char *)data, length);
 	}
 
 	void OnEof() noexcept override;
@@ -489,7 +485,6 @@ processor_process(struct pool &caller_pool,
 	processor->lookup_id = nullptr;
 
 	processor->replace = std::move(r.second);
-	processor->InitParser();
 
 	if (processor->HasOptionRewriteUrl()) {
 		processor->default_uri_rewrite.base = UriBase::TEMPLATE;
@@ -531,8 +526,6 @@ processor_lookup_widget(struct pool &caller_pool,
 					widget, std::move(ctx), options);
 
 	processor->lookup_id = id;
-
-	processor->InitParser();
 
 	processor->handler = &handler;
 
@@ -1530,7 +1523,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 							  value);
 	} else if (tag == Tag::SCRIPT) {
 		if (xml_tag.type == XmlParserTagType::OPEN)
-			parser->Script();
+			parser.Script();
 		else
 			tag = Tag::NONE;
 	} else if (tag == Tag::REWRITE_URI) {
@@ -1592,9 +1585,6 @@ XmlProcessor::OnEof() noexcept
 {
 	input.Clear();
 
-	assert(parser != nullptr);
-	parser->Destroy();
-
 	StopCdataIstream();
 
 	/* the request body could not be submitted to the focused widget,
@@ -1623,9 +1613,6 @@ void
 XmlProcessor::OnError(std::exception_ptr ep) noexcept
 {
 	input.Clear();
-
-	assert(parser != nullptr);
-	parser->Destroy();
 
 	StopCdataIstream();
 

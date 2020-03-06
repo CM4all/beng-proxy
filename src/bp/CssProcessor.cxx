@@ -60,7 +60,7 @@ struct CssProcessor final : PoolHolder, IstreamSink {
 
 	SharedPoolPtr<ReplaceIstreamControl> replace;
 
-	CssParser *parser;
+	CssParser parser;
 	bool had_input;
 
 	struct UriRewrite {
@@ -87,7 +87,7 @@ struct CssProcessor final : PoolHolder, IstreamSink {
 	/* virtual methods from class IstreamHandler */
 
 	size_t OnData(const void *data, size_t length) noexcept override {
-		return parser->Feed((const char *)data, length);
+		return parser.Feed((const char *)data, length);
 	}
 
 	void OnEof() noexcept override;
@@ -271,7 +271,6 @@ void
 CssProcessor::OnEof() noexcept
 {
 	input.Clear();
-	parser->Destroy();
 
 	auto _replace = std::move(replace);
 	Destroy();
@@ -283,7 +282,6 @@ void
 CssProcessor::OnError(std::exception_ptr) noexcept
 {
 	input.Clear();
-	parser->Destroy();
 
 	Destroy();
 }
@@ -315,8 +313,9 @@ CssProcessor::CssProcessor(PoolPtr &&_pool,
 	 container(_container), ctx(std::move(_ctx)),
 	 options(_options),
 	 replace(std::move(_replace)),
-	 parser(NewFromPool<CssParser>(pool, false,
-				       css_processor_parser_handler, this)) {}
+	 parser(false, css_processor_parser_handler, this)
+{
+}
 
 UnusedIstreamPtr
 css_processor(struct pool &caller_pool,
