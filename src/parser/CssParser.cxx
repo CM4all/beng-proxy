@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "css_parser.hxx"
-#include "css_syntax.hxx"
+#include "CssParser.hxx"
+#include "CssSyntax.hxx"
 #include "pool/pool.hxx"
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,23 +34,20 @@
  * Classify characters in a HTML/XML document.
  */
 
-#ifndef HTML_CHARS_HXX
-#define HTML_CHARS_HXX
+#pragma once
 
 #include "util/CharUtil.hxx"
 
 constexpr bool
 is_html_name_start_char(char ch) noexcept
 {
-    return IsAlphaASCII(ch) ||
-        ch == ':' || ch == '_';
+	return IsAlphaASCII(ch) ||
+		ch == ':' || ch == '_';
 }
 
 constexpr bool
 is_html_name_char(char ch) noexcept
 {
-    return is_html_name_start_char(ch) || IsDigitASCII(ch) ||
-        ch == '-' || ch == '.';
+	return is_html_name_start_char(ch) || IsDigitASCII(ch) ||
+		ch == '-' || ch == '.';
 }
-
-#endif

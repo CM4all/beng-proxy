@@ -36,7 +36,7 @@
  * CSS utility functions.
  */
 
-#include "css_syntax.hxx"
+#include "CssSyntax.hxx"
 
 /**
  * Count the number of leading underscores.  Returns 0 if the

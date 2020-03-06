@@ -770,10 +770,10 @@ widget_dep = declare_dependency(link_with: widget,
                                               translation_dep])
 
 processor = static_library('processor',
-  'src/xml_parser.cxx',
+  'src/parser/XmlParser.cxx',
+  'src/parser/CssParser.cxx',
   'src/bp/XmlProcessor.cxx',
   'src/pheaders.cxx',
-  'src/css_parser.cxx',
   'src/bp/CssProcessor.cxx',
   'src/bp/CssRewrite.cxx',
   'src/bp/TextProcessor.cxx',

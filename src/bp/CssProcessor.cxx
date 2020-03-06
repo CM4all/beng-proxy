@@ -31,8 +31,8 @@
  */
 
 #include "CssProcessor.hxx"
-#include "css_parser.hxx"
-#include "css_util.hxx"
+#include "parser/CssParser.hxx"
+#include "parser/CssUtil.hxx"
 #include "strmap.hxx"
 #include "widget/Widget.hxx"
 #include "widget/RewriteUri.hxx"

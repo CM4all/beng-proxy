@@ -31,7 +31,7 @@
  */
 
 #include "CssRewrite.hxx"
-#include "css_parser.hxx"
+#include "parser/CssParser.hxx"
 #include "widget/RewriteUri.hxx"
 #include "widget/Context.hxx"
 #include "pool/pool.hxx"
