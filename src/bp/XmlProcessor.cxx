@@ -88,7 +88,7 @@ struct UriRewrite {
 	char view[64];
 };
 
-struct XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellable, DestructAnchor {
+class XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellable, DestructAnchor {
 	class CdataIstream final : public Istream {
 		friend struct XmlProcessor;
 		XmlProcessor &processor;
@@ -228,6 +228,7 @@ struct XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellab
 
 	CancellablePointer *cancel_ptr;
 
+public:
 	XmlProcessor(PoolPtr &&_pool, const StopwatchPtr &parent_stopwatch,
 		     UnusedIstreamPtr &&_input,
 		     Widget &_widget, SharedPoolPtr<WidgetContext> &&_ctx,
@@ -294,6 +295,7 @@ struct XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellab
 		} while (!destructed && had_input);
 	}
 
+private:
 	bool IsQuiet() const noexcept {
 		return !replace;
 	}
@@ -302,7 +304,6 @@ struct XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellab
 		return (options & PROCESSOR_REWRITE_URL) != 0;
 	}
 
-private:
 	bool HasOptionPrefixClass() const noexcept {
 		return (options & PROCESSOR_PREFIX_CSS_CLASS) != 0;
 	}
