@@ -95,7 +95,7 @@ class XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellabl
 
 	public:
 		explicit CdataIstream(XmlProcessor &_processor)
-			:Istream(_processor.pool), processor(_processor) {}
+			:Istream(_processor.GetPool()), processor(_processor) {}
 
 		/* virtual methods from class Istream */
 		void _Read() noexcept override;
@@ -240,10 +240,10 @@ public:
 		 lookup_id(nullptr),
 		 ctx(std::move(_ctx)), options(_options),
 		 replace(std::move(_replace)),
-		 parser(pool, *this),
-		 buffer(pool, 128, 2048),
-		 postponed_rewrite(pool),
-		 widget(_widget.pool, pool)
+		 parser(GetPool(), *this),
+		 buffer(GetPool(), 128, 2048),
+		 postponed_rewrite(GetPool()),
+		 widget(_widget.pool, GetPool())
 	{
 		if (HasOptionRewriteUrl()) {
 			default_uri_rewrite.base = UriBase::TEMPLATE;
@@ -269,10 +269,10 @@ public:
 		 container(_widget),
 		 lookup_id(_lookup_id),
 		 ctx(std::move(_ctx)), options(_options),
-		 parser(pool, *this),
-		 buffer(pool, 128, 2048),
-		 postponed_rewrite(pool),
-		 widget(_widget.pool, pool),
+		 parser(GetPool(), *this),
+		 buffer(GetPool(), 128, 2048),
+		 postponed_rewrite(GetPool()),
+		 widget(_widget.pool, GetPool()),
 		 handler(&_handler), cancel_ptr(&caller_cancel_ptr)
 	{
 		caller_cancel_ptr = *this;
