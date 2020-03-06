@@ -159,10 +159,6 @@ public:
 	CssParser(bool block,
 		  const CssParserHandler &handler, void *handler_ctx) noexcept;
 
-	void Destroy() noexcept {
-		this->~CssParser();
-	}
-
 	/**
 	 * Ask the CSS parser to read and parse more CSS source code.
 	 *

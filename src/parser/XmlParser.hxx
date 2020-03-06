@@ -162,10 +162,6 @@ public:
 	XmlParser(struct pool &pool,
 		  XmlParserHandler &_handler) noexcept;
 
-	void Destroy() noexcept {
-		this->~XmlParser();
-	}
-
 	/**
 	 * @return the number of bytes consumed or 0 if this object
 	 * has been destroyed
