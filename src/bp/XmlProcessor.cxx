@@ -297,7 +297,7 @@ public:
 
 private:
 	bool IsQuiet() const noexcept {
-		return !replace;
+		return lookup_id != nullptr;
 	}
 
 	bool HasOptionRewriteUrl() const noexcept {
