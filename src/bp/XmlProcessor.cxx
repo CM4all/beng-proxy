@@ -443,19 +443,6 @@ XmlProcessor::Cancel() noexcept
  *
  */
 
-static XmlProcessor *
-processor_new(PoolPtr &&pool,
-	      const StopwatchPtr &parent_stopwatch,
-	      UnusedIstreamPtr &&input,
-	      Widget &widget,
-	      SharedPoolPtr<WidgetContext> ctx,
-	      unsigned options) noexcept
-{
-	return NewFromPool<XmlProcessor>(std::move(pool), parent_stopwatch,
-					 std::move(input),
-					 widget, std::move(ctx), options);
-}
-
 UnusedIstreamPtr
 processor_process(struct pool &caller_pool,
 		  const StopwatchPtr &parent_stopwatch,
@@ -479,9 +466,11 @@ processor_process(struct pool &caller_pool,
 	auto r = istream_replace_new(ctx->event_loop, pool,
 				     std::move(tee));
 
-	auto *processor = processor_new(std::move(pool), parent_stopwatch,
-					std::move(tee2),
-					widget, ctx, options);
+	auto *processor =
+		NewFromPool<XmlProcessor>(std::move(pool), parent_stopwatch,
+					  std::move(tee2),
+					  widget, std::move(ctx), options);
+
 	processor->lookup_id = nullptr;
 
 	processor->replace = std::move(r.second);
@@ -521,9 +510,10 @@ processor_lookup_widget(struct pool &caller_pool,
 	}
 
 	auto pool = pool_new_linear(&caller_pool, "XmlProcessor", 32768);
-	auto *processor = processor_new(std::move(pool), parent_stopwatch,
-					std::move(istream),
-					widget, std::move(ctx), options);
+	auto *processor =
+		NewFromPool<XmlProcessor>(std::move(pool), parent_stopwatch,
+					  std::move(istream),
+					  widget, std::move(ctx), options);
 
 	processor->lookup_id = id;
 
