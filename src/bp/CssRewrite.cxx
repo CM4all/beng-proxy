@@ -49,8 +49,6 @@ struct css_url {
 };
 
 struct css_rewrite {
-	CssParser *parser;
-
 	unsigned n_urls = 0;
 	struct css_url urls[16];
 };
@@ -64,36 +62,12 @@ static void
 css_rewrite_parser_url(const CssParserValue *url, void *ctx) noexcept
 {
 	struct css_rewrite *rewrite = (struct css_rewrite *)ctx;
-	assert(rewrite->parser != nullptr);
 
 	if (rewrite->n_urls < std::size(rewrite->urls)) {
 		struct css_url *p = &rewrite->urls[rewrite->n_urls++];
 		p->start = url->start;
 		p->end = url->end;
 	}
-}
-
-static void
-css_rewrite_parser_eof(void *ctx, off_t length gcc_unused) noexcept
-{
-	struct css_rewrite *rewrite = (struct css_rewrite *)ctx;
-	assert(rewrite->parser != nullptr);
-
-	rewrite->parser = nullptr;
-}
-
-#ifndef NDEBUG
-gcc_noreturn
-#endif
-static void
-css_rewrite_parser_error(std::exception_ptr, void *ctx) noexcept
-{
-	struct css_rewrite *rewrite = (struct css_rewrite *)ctx;
-	(void)rewrite;
-
-	/* shouldn't happen - input is an istream_memory which never
-	   fails */
-	assert(false);
 }
 
 static constexpr CssParserHandler css_rewrite_parser_handler = {
@@ -103,8 +77,6 @@ static constexpr CssParserHandler css_rewrite_parser_handler = {
 	nullptr,
 	css_rewrite_parser_url,
 	nullptr,
-	css_rewrite_parser_eof,
-	css_rewrite_parser_error,
 };
 
 /*
@@ -125,15 +97,9 @@ css_rewrite_block_uris(struct pool &pool,
 	{
 		const TempPoolLease tpool;
 
-		rewrite.parser = NewFromPool<CssParser>(*tpool,
-							istream_memory_new(*tpool, block.data,
-									   block.size),
-							true,
-							css_rewrite_parser_handler, &rewrite);
-		rewrite.parser->Read();
+		CssParser parser(true, css_rewrite_parser_handler, &rewrite);
+		parser.Feed(block.data, block.size);
 	}
-
-	assert(rewrite.parser == nullptr);
 
 	if (rewrite.n_urls == 0)
 		/* no URLs found, no rewriting necessary */

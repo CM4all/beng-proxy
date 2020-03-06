@@ -32,16 +32,11 @@
 
 #pragma once
 
-#include "istream/Sink.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/StringView.hxx"
 #include "util/TrivialArray.hxx"
 
-#include <exception>
-
 #include <sys/types.h>
-
-struct pool;
-class UnusedIstreamPtr;
 
 struct CssParserValue {
 	off_t start, end;
@@ -79,22 +74,12 @@ struct CssParserHandler {
 	 * The command "@import" was found.  Optional method.
 	 */
 	void (*import)(const CssParserValue *url, void *ctx) noexcept;
-
-	/**
-	 * The CSS end-of-file was reached.
-	 */
-	void (*eof)(void *ctx, off_t length) noexcept;
-
-	/**
-	 * An I/O error has occurred.
-	 */
-	void (*error)(std::exception_ptr ep, void *ctx) noexcept;
 };
 
 /**
  * Simple parser for CSS (Cascading Style Sheets).
  */
-class CssParser final : IstreamSink, DestructAnchor {
+class CssParser final : DestructAnchor {
 	template<size_t max>
 	class StringBuffer : public TrivialArray<char, max> {
 	public:
@@ -171,7 +156,7 @@ public:
 	/**
 	 * @param block true when the input consists of only one block
 	 */
-	CssParser(UnusedIstreamPtr input, bool block,
+	CssParser(bool block,
 		  const CssParserHandler &handler, void *handler_ctx) noexcept;
 
 	void Destroy() noexcept {
@@ -180,39 +165,9 @@ public:
 
 	/**
 	 * Ask the CSS parser to read and parse more CSS source code.
-	 * Does nothing if the istream blocks.
+	 *
+	 * @return the number of bytes consumed or 0 if this object
+	 * has been destroyed
 	 */
-	void Read() noexcept {
-		input.Read();
-	}
-
-	/**
-	 * Force-closen the CSS parser, don't invoke any handler
-	 * methods.
-	 */
-	void Close() noexcept {
-		input.Close();
-		Destroy();
-	}
-
-private:
 	size_t Feed(const char *start, size_t length) noexcept;
-
-	/* virtual methods from class IstreamHandler */
-
-	size_t OnData(const void *data, size_t length) noexcept override {
-		return Feed((const char *)data, length);
-	}
-
-	void OnEof() noexcept override {
-		input.Clear();
-		handler.eof(handler_ctx, position);
-		Destroy();
-	}
-
-	void OnError(std::exception_ptr ep) noexcept override {
-		input.Clear();
-		handler.error(ep, handler_ctx);
-		Destroy();
-	}
 };

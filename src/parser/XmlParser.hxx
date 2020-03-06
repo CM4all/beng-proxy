@@ -33,7 +33,6 @@
 #pragma once
 
 #include "expansible_buffer.hxx"
-#include "istream/Sink.hxx"
 #include "util/StringView.hxx"
 
 #include <exception>
@@ -42,7 +41,6 @@
 #include <sys/types.h>
 
 struct pool;
-class UnusedIstreamPtr;
 
 enum class XmlParserTagType {
 	OPEN,
@@ -83,11 +81,9 @@ public:
 	virtual void OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept = 0;
 	virtual size_t OnXmlCdata(StringView text, bool escaped,
 				  off_t start) noexcept = 0;
-	virtual void OnXmlEof(off_t length) noexcept = 0;
-	virtual void OnXmlError(std::exception_ptr ep) noexcept = 0;
 };
 
-class XmlParser final : IstreamSink, DestructAnchor {
+class XmlParser final {
 	off_t position = 0;
 
 	/* internal state */
@@ -163,7 +159,7 @@ class XmlParser final : IstreamSink, DestructAnchor {
 	XmlParserHandler &handler;
 
 public:
-	XmlParser(struct pool &pool, UnusedIstreamPtr _input,
+	XmlParser(struct pool &pool,
 		  XmlParserHandler &_handler) noexcept;
 
 	void Destroy() noexcept {
@@ -171,27 +167,10 @@ public:
 	}
 
 	/**
-	 * Close the parser object.  This function will not invoke
-	 * XmlParserHandler::OnXmlEof() and
-	 * XmlParserHandler::OnXmlError().
+	 * @return the number of bytes consumed or 0 if this object
+	 * has been destroyed
 	 */
-	void Close() noexcept {
-		assert(input.IsDefined());
-
-		ClearAndCloseInput();
-		Destroy();
-	}
-
-	/**
-	 * @return false if the #XmlParser has been closed
-	 */
-	bool Read() noexcept {
-		assert(input.IsDefined());
-
-		const DestructObserver destructed(*this);
-		input.Read();
-		return !destructed;
-	}
+	size_t Feed(const char *start, size_t length) noexcept;
 
 	void Script() noexcept {
 		assert(state == State::NONE ||
@@ -202,33 +181,4 @@ public:
 
 private:
 	void InvokeAttributeFinished() noexcept;
-
-	size_t Feed(const char *start, size_t length) noexcept;
-
-	/* virtual methods from class IstreamHandler */
-
-	size_t OnData(const void *data, size_t length) noexcept override {
-		return Feed((const char *)data, length);
-	}
-
-	void OnEof() noexcept override {
-		assert(input.IsDefined());
-
-		input.Clear();
-
-		auto &_handler = handler;
-		const auto _position = position;
-		Destroy();
-		_handler.OnXmlEof(_position);
-	}
-
-	void OnError(std::exception_ptr ep) noexcept override {
-		assert(input.IsDefined());
-
-		input.Clear();
-
-		auto &_handler = handler;
-		Destroy();
-		_handler.OnXmlError(ep);
-	}
 };

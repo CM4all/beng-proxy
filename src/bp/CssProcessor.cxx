@@ -41,6 +41,7 @@
 #include "pool/tpool.hxx"
 #include "escape_css.hxx"
 #include "istream/istream.hxx"
+#include "istream/Sink.hxx"
 #include "istream/ReplaceIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/TeeIstream.hxx"
@@ -50,7 +51,7 @@
 #include <assert.h>
 #include <string.h>
 
-struct CssProcessor final : PoolHolder {
+struct CssProcessor final : PoolHolder, IstreamSink {
 	const StopwatchPtr stopwatch;
 
 	Widget &container;
@@ -82,6 +83,15 @@ struct CssProcessor final : PoolHolder {
 	}
 
 	using PoolHolder::GetPool;
+
+	/* virtual methods from class IstreamHandler */
+
+	size_t OnData(const void *data, size_t length) noexcept override {
+		return parser->Feed((const char *)data, length);
+	}
+
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
 };
 
 static inline bool
@@ -257,31 +267,25 @@ css_processor_parser_import(const CssParserValue *url, void *ctx) noexcept
 					  std::move(istream));
 }
 
-static void
-css_processor_parser_eof(void *ctx, off_t length gcc_unused) noexcept
+void
+CssProcessor::OnEof() noexcept
 {
-	CssProcessor *processor = (CssProcessor *)ctx;
+	input.Clear();
+	parser->Destroy();
 
-	assert(processor->parser != nullptr);
-
-	processor->parser = nullptr;
-
-	auto _replace = std::move(processor->replace);
-	processor->Destroy();
+	auto _replace = std::move(replace);
+	Destroy();
 
 	_replace->Finish();
 }
 
-static void
-css_processor_parser_error(std::exception_ptr, void *ctx) noexcept
+void
+CssProcessor::OnError(std::exception_ptr) noexcept
 {
-	CssProcessor *processor = (CssProcessor *)ctx;
+	input.Clear();
+	parser->Destroy();
 
-	assert(processor->parser != nullptr);
-
-	processor->parser = nullptr;
-
-	processor->Destroy();
+	Destroy();
 }
 
 static constexpr CssParserHandler css_processor_parser_handler = {
@@ -291,8 +295,6 @@ static constexpr CssParserHandler css_processor_parser_handler = {
 	css_processor_parser_property_keyword,
 	css_processor_parser_url,
 	css_processor_parser_import,
-	css_processor_parser_eof,
-	css_processor_parser_error,
 };
 
 /*
@@ -303,17 +305,17 @@ static constexpr CssParserHandler css_processor_parser_handler = {
 inline
 CssProcessor::CssProcessor(PoolPtr &&_pool,
 			   const StopwatchPtr &parent_stopwatch,
-			   UnusedIstreamPtr input,
+			   UnusedIstreamPtr _input,
 			   SharedPoolPtr<ReplaceIstreamControl> _replace,
 			   Widget &_container,
 			   SharedPoolPtr<WidgetContext> &&_ctx,
 			   unsigned _options) noexcept
-	:PoolHolder(std::move(_pool)),
+	:PoolHolder(std::move(_pool)), IstreamSink(std::move(_input)),
 	 stopwatch(parent_stopwatch, "CssProcessor"),
 	 container(_container), ctx(std::move(_ctx)),
 	 options(_options),
 	 replace(std::move(_replace)),
-	 parser(NewFromPool<CssParser>(pool, std::move(input), false,
+	 parser(NewFromPool<CssParser>(pool, false,
 				       css_processor_parser_handler, this)) {}
 
 UnusedIstreamPtr

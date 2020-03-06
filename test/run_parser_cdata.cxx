@@ -31,6 +31,7 @@
  */
 
 #include "parser/XmlParser.hxx"
+#include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/FileIstream.hxx"
 #include "PInstance.hxx"
@@ -46,8 +47,18 @@
 
 static bool should_exit;
 
-class MyXmlParserHandler final : public XmlParserHandler {
+class MyXmlParserHandler final : public XmlParserHandler, IstreamSink {
+	XmlParser parser;
+
 public:
+	MyXmlParserHandler(struct pool &pool, UnusedIstreamPtr &&_input) noexcept
+		:IstreamSink(std::move(_input)),
+		 parser(pool, *this) {}
+
+	void Read() noexcept {
+		input.Read();
+	}
+
 	/* virtual methods from class XmlParserHandler */
 	bool OnXmlTagStart(gcc_unused const XmlParserTag &tag) noexcept override {
 		return false;
@@ -65,11 +76,16 @@ public:
 		return text.size;
 	}
 
-	void OnXmlEof(gcc_unused off_t length) noexcept override {
+	/* virtual methods from class IstreamHandler */
+	size_t OnData(const void *data, size_t length) noexcept override {
+		return parser.Feed((const char *)data, length);
+	}
+
+	void OnEof() noexcept override {
 		should_exit = true;
 	}
 
-	void OnXmlError(std::exception_ptr ep) noexcept override {
+	void OnError(std::exception_ptr ep) noexcept override {
 		fprintf(stderr, "ABORT: %s\n", GetFullMessage(ep).c_str());
 		exit(2);
 	}
@@ -78,8 +94,6 @@ public:
 int
 main(int argc, char **argv)
 try {
-	Istream *istream;
-
 	(void)argc;
 	(void)argv;
 
@@ -88,14 +102,12 @@ try {
 
 	const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-	istream = istream_file_new(instance.event_loop, pool,
-				   "/dev/stdin", (off_t)-1);
+	UnusedIstreamPtr istream(istream_file_new(instance.event_loop, pool,
+						  "/dev/stdin", (off_t)-1));
 
-	MyXmlParserHandler handler;
-	auto *parser = NewFromPool<XmlParser>(pool, pool, UnusedIstreamPtr(istream), handler);
-
+	MyXmlParserHandler handler(pool, std::move(istream));
 	while (!should_exit)
-		parser->Read();
+		handler.Read();
 } catch (...) {
 	PrintException(std::current_exception());
 	return EXIT_FAILURE;

@@ -33,16 +33,14 @@
 #include "XmlParser.hxx"
 #include "HtmlSyntax.hxx"
 #include "pool/pool.hxx"
-#include "istream/UnusedPtr.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Poison.hxx"
 
 #include <string.h>
 
-XmlParser::XmlParser(struct pool &pool, UnusedIstreamPtr _input,
+XmlParser::XmlParser(struct pool &pool,
 		     XmlParserHandler &_handler) noexcept
-	:IstreamSink(std::move(_input)),
-	 attr_value(pool, 512, 8192),
+	:attr_value(pool, 512, 8192),
 	 handler(_handler)
 {
 }
@@ -57,13 +55,12 @@ XmlParser::InvokeAttributeFinished() noexcept
 	PoisonUndefinedT(attr);
 }
 
-inline size_t
+size_t
 XmlParser::Feed(const char *start, size_t length) noexcept
 {
 	const char *buffer = start, *end = start + length, *p;
 	size_t nbytes;
 
-	assert(input.IsDefined());
 	assert(buffer != nullptr);
 	assert(length > 0);
 
@@ -522,8 +519,6 @@ XmlParser::Feed(const char *start, size_t length) noexcept
 			break;
 		}
 	}
-
-	assert(input.IsDefined());
 
 	position += length;
 	return length;

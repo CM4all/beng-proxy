@@ -32,10 +32,10 @@
 
 #include "CssParser.hxx"
 #include "CssSyntax.hxx"
-#include "pool/pool.hxx"
-#include "istream/UnusedPtr.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/StringStrip.hxx"
+
+#include <assert.h>
 
 gcc_pure
 static bool
@@ -47,7 +47,7 @@ at_url_start(const char *p, size_t length) noexcept
 		 IsWhitespaceOrNull(p[length - 5]));
 }
 
-inline size_t
+size_t
 CssParser::Feed(const char *start, size_t length) noexcept
 {
 	assert(start != nullptr);
@@ -452,10 +452,10 @@ CssParser::Feed(const char *start, size_t length) noexcept
  *
  */
 
-CssParser::CssParser(UnusedIstreamPtr _input, bool _block,
+CssParser::CssParser(bool _block,
 		     const CssParserHandler &_handler,
 		     void *_handler_ctx) noexcept
-	:IstreamSink(std::move(_input)), block(_block),
+	:block(_block),
 	 position(0),
 	 handler(_handler), handler_ctx(_handler_ctx),
 	 state(block ? State::BLOCK : State::NONE)

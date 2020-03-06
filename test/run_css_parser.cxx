@@ -32,6 +32,7 @@
 
 #include "parser/CssParser.hxx"
 #include "istream/FileIstream.hxx"
+#include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
@@ -93,24 +94,6 @@ my_parser_import(const CssParserValue *url, void *ctx) noexcept
 	printf("import %.*s\n", (int)url->value.size, url->value.data);
 }
 
-static void
-my_parser_eof(void *ctx, off_t length) noexcept
-{
-	(void)ctx;
-	(void)length;
-
-	should_exit = true;
-}
-
-static gcc_noreturn void
-my_parser_error(std::exception_ptr ep, void *ctx) noexcept
-{
-	(void)ctx;
-
-	fprintf(stderr, "ABORT: %s\n", GetFullMessage(ep).c_str());
-	exit(2);
-}
-
 static constexpr CssParserHandler my_parser_handler = {
 	my_parser_class_name,
 	my_parser_xml_id,
@@ -118,15 +101,36 @@ static constexpr CssParserHandler my_parser_handler = {
 	my_parser_property_keyword,
 	my_parser_url,
 	my_parser_import,
-	my_parser_eof,
-	my_parser_error,
 };
 
+class CssParserIstreamHandler final : IstreamSink {
+	CssParser parser;
 
-/*
- * main
- *
- */
+public:
+	explicit CssParserIstreamHandler(UnusedIstreamPtr &&_input) noexcept
+		:IstreamSink(std::move(_input)),
+		 parser(false, my_parser_handler, nullptr)
+	{
+	}
+
+	void Read() noexcept {
+		input.Read();
+	}
+
+	size_t OnData(const void *data, size_t length) noexcept override {
+		return parser.Feed((const char *)data, length);
+	}
+
+	void OnEof() noexcept override {
+		input.Clear();
+		should_exit = true;
+	}
+
+	void OnError(std::exception_ptr ep) noexcept override {
+		fprintf(stderr, "ABORT: %s\n", GetFullMessage(ep).c_str());
+		exit(2);
+	}
+};
 
 int
 main(int argc, char **argv)
@@ -139,14 +143,12 @@ try {
 	PInstance instance;
 	const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-	Istream *istream = istream_file_new(instance.event_loop, *pool,
-					    "/dev/stdin", (off_t)-1);
-	auto *parser =
-		NewFromPool<CssParser>(*pool, UnusedIstreamPtr(istream), false,
-				       my_parser_handler, nullptr);
+	UnusedIstreamPtr istream(istream_file_new(instance.event_loop, *pool,
+						  "/dev/stdin", (off_t)-1));
 
+	CssParserIstreamHandler parser(std::move(istream));
 	while (!should_exit)
-		parser->Read();
+		parser.Read();
 } catch (...) {
 	PrintException(std::current_exception());
 	return EXIT_FAILURE;

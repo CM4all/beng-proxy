@@ -54,7 +54,7 @@
 #include "strmap.hxx"
 #include "istream_html_escape.hxx"
 #include "istream/istream.hxx"
-#include "istream/istream.hxx"
+#include "istream/Sink.hxx"
 #include "istream/ReplaceIstream.hxx"
 #include "istream/ConcatIstream.hxx"
 #include "istream/istream_catch.hxx"
@@ -64,6 +64,7 @@
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
 #include "util/CharUtil.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
@@ -87,7 +88,7 @@ struct UriRewrite {
 	char view[64];
 };
 
-struct XmlProcessor final : PoolHolder, XmlParserHandler, Cancellable {
+struct XmlProcessor final : PoolHolder, IstreamSink, XmlParserHandler, Cancellable, DestructAnchor {
 	class CdataIstream final : public Istream {
 		friend struct XmlProcessor;
 		XmlProcessor &processor;
@@ -243,9 +244,14 @@ struct XmlProcessor final : PoolHolder, XmlParserHandler, Cancellable {
 		return pool;
 	}
 
-	void InitParser(UnusedIstreamPtr input) noexcept {
-		parser = NewFromPool<XmlParser>(pool, pool, std::move(input),
-						*this);
+	void InitParser(UnusedIstreamPtr _input) noexcept {
+		SetInput(std::move(_input));
+
+		parser = NewFromPool<XmlParser>(pool, pool, *this);
+	}
+
+	void Read() noexcept {
+		input.Read();
 	}
 
 	bool IsQuiet() const noexcept {
@@ -282,7 +288,8 @@ private:
 	}
 
 	void Close() noexcept {
-		parser->Close();
+		parser->Destroy();
+		ClearAndCloseInput();
 		Destroy();
 	}
 
@@ -346,14 +353,21 @@ private:
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override;
 
+	/* virtual methods from class IstreamHandler */
+
+	size_t OnData(const void *data, size_t length) noexcept override {
+		return parser->Feed((const char *)data, length);
+	}
+
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
+
 	/* virtual methods from class XmlParserHandler */
 	bool OnXmlTagStart(const XmlParserTag &tag) noexcept override;
 	bool OnXmlTagFinished(const XmlParserTag &tag) noexcept override;
 	void OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept override;
 	size_t OnXmlCdata(StringView text, bool escaped,
 			  off_t start) noexcept override;
-	void OnXmlEof(off_t length) noexcept override;
-	void OnXmlError(std::exception_ptr ep) noexcept override;
 
 	/**
 	 * Is this a tag which can have a link attribute?
@@ -521,9 +535,12 @@ processor_lookup_widget(struct pool &caller_pool,
 	cancel_ptr = *processor;
 	processor->cancel_ptr = &cancel_ptr;
 
+	const DestructObserver destructed(*processor);
+
 	do {
 		processor->had_input = false;
-	} while (processor->parser->Read() && processor->had_input);
+		processor->Read();
+	} while (!destructed && processor->had_input);
 }
 
 void
@@ -646,7 +663,7 @@ XmlProcessor::CdataIstream::_Read() noexcept
 {
 	assert(processor.tag == Tag::STYLE_PROCESS);
 
-	processor.parser->Read();
+	processor.Read();
 }
 
 void
@@ -1567,9 +1584,12 @@ XmlProcessor::OnXmlCdata(StringView text,
 }
 
 void
-XmlProcessor::OnXmlEof(gcc_unused off_t length) noexcept
+XmlProcessor::OnEof() noexcept
 {
+	input.Clear();
+
 	assert(parser != nullptr);
+	parser->Destroy();
 
 	StopCdataIstream();
 
@@ -1596,9 +1616,12 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length) noexcept
 }
 
 void
-XmlProcessor::OnXmlError(std::exception_ptr ep) noexcept
+XmlProcessor::OnError(std::exception_ptr ep) noexcept
 {
+	input.Clear();
+
 	assert(parser != nullptr);
+	parser->Destroy();
 
 	StopCdataIstream();
 
