@@ -449,14 +449,12 @@ XmlProcessor::Cancel() noexcept
  */
 
 static XmlProcessor *
-processor_new(struct pool &caller_pool,
+processor_new(PoolPtr &&pool,
 	      const StopwatchPtr &parent_stopwatch,
 	      Widget &widget,
 	      SharedPoolPtr<WidgetContext> ctx,
 	      unsigned options) noexcept
 {
-	auto pool = pool_new_linear(&caller_pool, "processor", 32768);
-
 	return NewFromPool<XmlProcessor>(std::move(pool), parent_stopwatch,
 					 widget, std::move(ctx), options);
 }
@@ -469,7 +467,9 @@ processor_process(struct pool &caller_pool,
 		  SharedPoolPtr<WidgetContext> ctx,
 		  unsigned options)
 {
-	auto *processor = processor_new(caller_pool, parent_stopwatch,
+	auto pool = pool_new_linear(&caller_pool, "XmlProcessor", 32768);
+
+	auto *processor = processor_new(std::move(pool), parent_stopwatch,
 					widget, ctx, options);
 	processor->lookup_id = nullptr;
 
@@ -523,7 +523,8 @@ processor_lookup_widget(struct pool &caller_pool,
 		return;
 	}
 
-	auto *processor = processor_new(caller_pool, parent_stopwatch,
+	auto pool = pool_new_linear(&caller_pool, "XmlProcessor", 32768);
+	auto *processor = processor_new(std::move(pool), parent_stopwatch,
 					widget, std::move(ctx), options);
 
 	processor->lookup_id = id;
