@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,32 +30,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_FACADE_HXX
-#define BENG_PROXY_ISTREAM_FACADE_HXX
+#pragma once
 
 #include "istream.hxx"
 #include "Sink.hxx"
 
 class FacadeIstream : public Istream, protected IstreamSink {
 protected:
-    template<typename I>
-    FacadeIstream(struct pool &_pool, I &&_input,
-                  FdTypeMask direct=0) noexcept
-        :Istream(_pool), IstreamSink(std::forward<I>(_input), direct) {}
+	template<typename I>
+	FacadeIstream(struct pool &_pool, I &&_input,
+		      FdTypeMask direct=0) noexcept
+		:Istream(_pool), IstreamSink(std::forward<I>(_input), direct) {}
 
-    explicit FacadeIstream(struct pool &_pool) noexcept
-        :Istream(_pool) {}
+	explicit FacadeIstream(struct pool &_pool) noexcept
+		:Istream(_pool) {}
 
-    void CopyDirect() noexcept {
-        input.SetDirect(GetHandlerDirect());
-    }
+	void CopyDirect() noexcept {
+		input.SetDirect(GetHandlerDirect());
+	}
 
-    template<typename I>
-    void ReplaceInputDirect(I &&_input) noexcept {
-        assert(input.IsDefined());
+	template<typename I>
+	void ReplaceInputDirect(I &&_input) noexcept {
+		assert(input.IsDefined());
 
-        input.Replace(std::forward<I>(_input), *this, GetHandlerDirect());
-    }
+		input.Replace(std::forward<I>(_input), *this, GetHandlerDirect());
+	}
 };
-
-#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __BENG_ISTREAM_FORWARD_H
-#define __BENG_ISTREAM_FORWARD_H
+#pragma once
 
 #include "FacadeIstream.hxx"
 
@@ -40,73 +39,71 @@
 
 class ForwardIstream : public FacadeIstream {
 protected:
-    template<typename I>
-    ForwardIstream(struct pool &_pool, I &&_input,
-                   FdTypeMask direct=0)
-        :FacadeIstream(_pool, std::forward<I>(_input), direct) {}
+	template<typename I>
+	ForwardIstream(struct pool &_pool, I &&_input,
+		       FdTypeMask direct=0)
+		:FacadeIstream(_pool, std::forward<I>(_input), direct) {}
 
-    explicit ForwardIstream(struct pool &_pool)
-        :FacadeIstream(_pool) {}
+	explicit ForwardIstream(struct pool &_pool)
+		:FacadeIstream(_pool) {}
 
 public:
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) noexcept override {
-        return input.GetAvailable(partial);
-    }
+	off_t _GetAvailable(bool partial) noexcept override {
+		return input.GetAvailable(partial);
+	}
 
-    off_t _Skip(off_t length) noexcept override {
-        off_t nbytes = input.Skip(length);
-        if (nbytes > 0)
-            Consumed(nbytes);
-        return nbytes;
-    }
+	off_t _Skip(off_t length) noexcept override {
+		off_t nbytes = input.Skip(length);
+		if (nbytes > 0)
+			Consumed(nbytes);
+		return nbytes;
+	}
 
-    void _Read() noexcept override {
-        CopyDirect();
-        input.Read();
-    }
+	void _Read() noexcept override {
+		CopyDirect();
+		input.Read();
+	}
 
-    size_t _ConsumeBucketList(size_t nbytes) noexcept override {
-        auto consumed = input.ConsumeBucketList(nbytes);
-        Consumed(consumed);
-        return consumed;
-    }
+	size_t _ConsumeBucketList(size_t nbytes) noexcept override {
+		auto consumed = input.ConsumeBucketList(nbytes);
+		Consumed(consumed);
+		return consumed;
+	}
 
-    int _AsFd() noexcept override {
-        int fd = input.AsFd();
-        if (fd >= 0)
-            Destroy();
-        return fd;
-    }
+	int _AsFd() noexcept override {
+		int fd = input.AsFd();
+		if (fd >= 0)
+			Destroy();
+		return fd;
+	}
 
-    void _Close() noexcept override {
-        input.Close();
-        Istream::_Close();
-    }
+	void _Close() noexcept override {
+		input.Close();
+		Istream::_Close();
+	}
 
-    /* virtual methods from class IstreamHandler */
+	/* virtual methods from class IstreamHandler */
 
-    bool OnIstreamReady() noexcept override {
-        return InvokeReady();
-    }
+	bool OnIstreamReady() noexcept override {
+		return InvokeReady();
+	}
 
-    size_t OnData(const void *data, size_t length) noexcept override {
-        return InvokeData(data, length);
-    }
+	size_t OnData(const void *data, size_t length) noexcept override {
+		return InvokeData(data, length);
+	}
 
-    ssize_t OnDirect(FdType type, int fd,
-                     size_t max_length) noexcept override {
-        return InvokeDirect(type, fd, max_length);
-    }
+	ssize_t OnDirect(FdType type, int fd,
+			 size_t max_length) noexcept override {
+		return InvokeDirect(type, fd, max_length);
+	}
 
-    void OnEof() noexcept override {
-        DestroyEof();
-    }
+	void OnEof() noexcept override {
+		DestroyEof();
+	}
 
-    void OnError(std::exception_ptr ep) noexcept override {
-        DestroyError(ep);
-    }
+	void OnError(std::exception_ptr ep) noexcept override {
+		DestroyError(ep);
+	}
 };
-
-#endif

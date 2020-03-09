@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,30 +35,30 @@
 #include "New.hxx"
 
 class FailIstream final : public Istream {
-    const std::exception_ptr error;
+	const std::exception_ptr error;
 
 public:
-    FailIstream(struct pool &p, std::exception_ptr _error)
-        :Istream(p), error(_error) {}
+	FailIstream(struct pool &p, std::exception_ptr _error)
+		:Istream(p), error(_error) {}
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    void _Read() noexcept override {
-        assert(error);
-        DestroyError(error);
-    }
+	void _Read() noexcept override {
+		assert(error);
+		DestroyError(error);
+	}
 
-    void _FillBucketList(gcc_unused IstreamBucketList &list) override {
-        auto copy = error;
-        Destroy();
-        std::rethrow_exception(copy);
-    }
+	void _FillBucketList(gcc_unused IstreamBucketList &list) override {
+		auto copy = error;
+		Destroy();
+		std::rethrow_exception(copy);
+	}
 };
 
 UnusedIstreamPtr
 istream_fail_new(struct pool &pool, std::exception_ptr ep) noexcept
 {
-    assert(ep);
+	assert(ep);
 
-    return NewIstreamPtr<FailIstream>(pool, ep);
+	return NewIstreamPtr<FailIstream>(pool, ep);
 }

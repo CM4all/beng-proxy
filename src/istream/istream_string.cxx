@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,5 +39,5 @@
 UnusedIstreamPtr
 istream_string_new(struct pool &pool, const char *s) noexcept
 {
-    return istream_memory_new(pool, s, strlen(s));
+	return istream_memory_new(pool, s, strlen(s));
 }

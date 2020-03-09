@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,47 +37,47 @@
 
 class SinkClose final : IstreamSink {
 public:
-    explicit SinkClose(UnusedIstreamPtr &&_input)
-        :IstreamSink(std::move(_input)) {}
+	explicit SinkClose(UnusedIstreamPtr &&_input)
+		:IstreamSink(std::move(_input)) {}
 
-    void Read() noexcept {
-        input.Read();
-    }
+	void Read() noexcept {
+		input.Read();
+	}
 
-    /* request istream handler */
-    size_t OnData(gcc_unused const void *data, gcc_unused size_t length) noexcept {
-        input.Close();
-        return 0;
-    }
+	/* request istream handler */
+	size_t OnData(gcc_unused const void *data, gcc_unused size_t length) noexcept {
+		input.Close();
+		return 0;
+	}
 
-    ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                     gcc_unused size_t max_length) noexcept {
-        gcc_unreachable();
-    }
+	ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+			 gcc_unused size_t max_length) noexcept {
+		gcc_unreachable();
+	}
 
-    void OnEof() noexcept {
-        /* should not be reachable, because we expect the Istream to
-           call the OnData() callback at least once */
+	void OnEof() noexcept {
+		/* should not be reachable, because we expect the Istream to
+		   call the OnData() callback at least once */
 
-        abort();
-    }
+		abort();
+	}
 
-    void OnError(std::exception_ptr) noexcept {
-        /* should not be reachable, because we expect the Istream to
-           call the OnData() callback at least once */
+	void OnError(std::exception_ptr) noexcept {
+		/* should not be reachable, because we expect the Istream to
+		   call the OnData() callback at least once */
 
-        abort();
-    }
+		abort();
+	}
 };
 
 SinkClose &
 sink_close_new(struct pool &p, UnusedIstreamPtr istream)
 {
-    return *NewFromPool<SinkClose>(p, std::move(istream));
+	return *NewFromPool<SinkClose>(p, std::move(istream));
 }
 
 void
 sink_close_read(SinkClose &sink) noexcept
 {
-    sink.Read();
+	sink.Read();
 }

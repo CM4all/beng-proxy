@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -44,25 +44,25 @@ struct SubstNode;
 struct StringView;
 
 class SubstTree {
-    SubstNode *root = nullptr;
+	SubstNode *root = nullptr;
 
 public:
-    SubstTree() = default;
+	SubstTree() = default;
 
-    SubstTree(SubstTree &&src) noexcept
-        :root(std::exchange(src.root, nullptr)) {}
+	SubstTree(SubstTree &&src) noexcept
+		:root(std::exchange(src.root, nullptr)) {}
 
-    SubstTree &operator=(SubstTree &&src) noexcept {
-        using std::swap;
-        swap(root, src.root);
-        return *this;
-    }
+	SubstTree &operator=(SubstTree &&src) noexcept {
+		using std::swap;
+		swap(root, src.root);
+		return *this;
+	}
 
-    bool Add(struct pool &pool, const char *a0, StringView b) noexcept;
+	bool Add(struct pool &pool, const char *a0, StringView b) noexcept;
 
-    gcc_pure
-    std::pair<const SubstNode *, const char *> FindFirstChar(const char *data,
-                                                             size_t length) const noexcept;
+	gcc_pure
+	std::pair<const SubstNode *, const char *> FindFirstChar(const char *data,
+								 size_t length) const noexcept;
 };
 
 /**
@@ -70,4 +70,4 @@ public:
  */
 UnusedIstreamPtr
 istream_subst_new(struct pool *pool, UnusedIstreamPtr input,
-                  SubstTree tree) noexcept;
+		  SubstTree tree) noexcept;

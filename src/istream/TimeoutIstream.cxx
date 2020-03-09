@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,80 +40,80 @@
 #include <stdexcept>
 
 class TimeoutIstream final : public ForwardIstream {
-    TimerEvent timeout_event;
+	TimerEvent timeout_event;
 
-    Event::Duration timeout;
+	Event::Duration timeout;
 
 public:
-    explicit TimeoutIstream(struct pool &p, UnusedIstreamPtr _input,
-                            EventLoop &event_loop,
-                            Event::Duration _timeout) noexcept
-        :ForwardIstream(p, std::move(_input)),
-         timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
-         timeout(_timeout) {}
+	explicit TimeoutIstream(struct pool &p, UnusedIstreamPtr _input,
+				EventLoop &event_loop,
+				Event::Duration _timeout) noexcept
+		:ForwardIstream(p, std::move(_input)),
+		 timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
+		 timeout(_timeout) {}
 
 private:
-    void OnTimeout() noexcept {
-        input.Close();
-        DestroyError(std::make_exception_ptr(std::runtime_error("timeout")));
-    }
+	void OnTimeout() noexcept {
+		input.Close();
+		DestroyError(std::make_exception_ptr(std::runtime_error("timeout")));
+	}
 
 public:
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    void _Read() noexcept override {
-        if (timeout > Event::Duration{}) {
-            /* enable the timeout on the first Read() call (if one was
-               specified) */
-            timeout_event.Schedule(timeout);
-            timeout = Event::Duration{};
-        }
+	void _Read() noexcept override {
+		if (timeout > Event::Duration{}) {
+			/* enable the timeout on the first Read() call (if one was
+			   specified) */
+			timeout_event.Schedule(timeout);
+			timeout = Event::Duration{};
+		}
 
-        ForwardIstream::_Read();
-    }
+		ForwardIstream::_Read();
+	}
 
-    void _FillBucketList(IstreamBucketList &list) override {
-        IstreamBucketList tmp;
+	void _FillBucketList(IstreamBucketList &list) override {
+		IstreamBucketList tmp;
 
-        try {
-            input.FillBucketList(tmp);
-        } catch (...) {
-            Destroy();
-            throw;
-        }
+		try {
+			input.FillBucketList(tmp);
+		} catch (...) {
+			Destroy();
+			throw;
+		}
 
-        if (!tmp.IsEmpty())
-            /* disable the timeout as soon as the first data byte
-               arrives */
-            timeout_event.Cancel();
+		if (!tmp.IsEmpty())
+			/* disable the timeout as soon as the first data byte
+			   arrives */
+			timeout_event.Cancel();
 
-        list.SpliceBuffersFrom(tmp);
-    }
+		list.SpliceBuffersFrom(tmp);
+	}
 
-    /* virtual methods from class IstreamHandler */
+	/* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *data, size_t length) noexcept override {
-        /* disable the timeout as soon as the first data byte
-           arrives */
-        timeout_event.Cancel();
+	size_t OnData(const void *data, size_t length) noexcept override {
+		/* disable the timeout as soon as the first data byte
+		   arrives */
+		timeout_event.Cancel();
 
-        return ForwardIstream::OnData(data, length);
-    }
+		return ForwardIstream::OnData(data, length);
+	}
 
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override {
-        /* disable the timeout as soon as the first data byte
-           arrives */
-        timeout_event.Cancel();
+	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override {
+		/* disable the timeout as soon as the first data byte
+		   arrives */
+		timeout_event.Cancel();
 
-        return ForwardIstream::OnDirect(type, fd, max_length);
-    }
+		return ForwardIstream::OnDirect(type, fd, max_length);
+	}
 };
 
 UnusedIstreamPtr
 NewTimeoutIstream(struct pool &pool, UnusedIstreamPtr input,
-                  EventLoop &event_loop,
-                  Event::Duration timeout) noexcept
+		  EventLoop &event_loop,
+		  Event::Duration timeout) noexcept
 {
-    return NewIstreamPtr<TimeoutIstream>(pool, std::move(input),
-                                         event_loop, timeout);
+	return NewIstreamPtr<TimeoutIstream>(pool, std::move(input),
+					     event_loop, timeout);
 }

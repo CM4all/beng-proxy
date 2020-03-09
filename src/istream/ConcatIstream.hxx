@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -47,6 +47,6 @@ template<typename... Args>
 auto
 istream_cat_new(struct pool &pool, Args&&... args)
 {
-    UnusedIstreamPtr inputs[]{std::forward<Args>(args)...};
-    return _istream_cat_new(pool, inputs, sizeof...(args));
+	UnusedIstreamPtr inputs[]{std::forward<Args>(args)...};
+	return _istream_cat_new(pool, inputs, sizeof...(args));
 }

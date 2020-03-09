@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,25 +37,25 @@
  * IstreamHandler::OnDirect().
  */
 enum istream_result {
-    /**
-     * No more data available in the specified socket.
-     */
-    ISTREAM_RESULT_EOF = 0,
+	/**
+	 * No more data available in the specified socket.
+	 */
+	ISTREAM_RESULT_EOF = 0,
 
-    /**
-     * I/O error, errno set.
-     */
-    ISTREAM_RESULT_ERRNO = -1,
+	/**
+	 * I/O error, errno set.
+	 */
+	ISTREAM_RESULT_ERRNO = -1,
 
-    /**
-     * Writing would block, callee is responsible for registering an
-     * event and calling istream_read().
-     */
-    ISTREAM_RESULT_BLOCKING = -2,
+	/**
+	 * Writing would block, callee is responsible for registering an
+	 * event and calling istream_read().
+	 */
+	ISTREAM_RESULT_BLOCKING = -2,
 
-    /**
-     * The stream has ben closed.  This state supersedes all other
-     * states.
-     */
-    ISTREAM_RESULT_CLOSED = -3,
+	/**
+	 * The stream has ben closed.  This state supersedes all other
+	 * states.
+	 */
+	ISTREAM_RESULT_CLOSED = -3,
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,111 +41,111 @@
 #include <string.h>
 
 class DelayedIstream final
-    : public ForwardIstream, public DelayedIstreamControl {
+	: public ForwardIstream, public DelayedIstreamControl {
 
-    DeferEvent defer_read;
+	DeferEvent defer_read;
 
 public:
-    explicit DelayedIstream(struct pool &p, EventLoop &event_loop) noexcept
-        :ForwardIstream(p),
-         defer_read(event_loop, BIND_THIS_METHOD(DeferredRead)) {
-    }
+	explicit DelayedIstream(struct pool &p, EventLoop &event_loop) noexcept
+		:ForwardIstream(p),
+		 defer_read(event_loop, BIND_THIS_METHOD(DeferredRead)) {
+	}
 
-    void Set(UnusedIstreamPtr _input) noexcept {
-        assert(!HasInput());
+	void Set(UnusedIstreamPtr _input) noexcept {
+		assert(!HasInput());
 
-        SetInput(std::move(_input), GetHandlerDirect());
+		SetInput(std::move(_input), GetHandlerDirect());
 
-        if (HasHandler())
-            defer_read.Schedule();
-    }
+		if (HasHandler())
+			defer_read.Schedule();
+	}
 
-    void SetEof() noexcept {
-        assert(!HasInput());
+	void SetEof() noexcept {
+		assert(!HasInput());
 
-        DestroyEof();
-    }
+		DestroyEof();
+	}
 
-    void SetError(std::exception_ptr ep) noexcept {
-        assert(!HasInput());
+	void SetError(std::exception_ptr ep) noexcept {
+		assert(!HasInput());
 
-        DestroyError(ep);
-    }
+		DestroyError(ep);
+	}
 
 private:
-    void DeferredRead() noexcept {
-        input.Read();
-    }
+	void DeferredRead() noexcept {
+		input.Read();
+	}
 
 public:
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) noexcept override {
-        return HasInput()
-            ? ForwardIstream::_GetAvailable(partial)
-            : -1;
-    }
+	off_t _GetAvailable(bool partial) noexcept override {
+		return HasInput()
+			? ForwardIstream::_GetAvailable(partial)
+			: -1;
+	}
 
-    void _Read() noexcept override {
-        if (HasInput())
-            ForwardIstream::_Read();
-    }
+	void _Read() noexcept override {
+		if (HasInput())
+			ForwardIstream::_Read();
+	}
 
-    void _FillBucketList(IstreamBucketList &list) override {
-        if (HasInput()) {
-            try {
-                input.FillBucketList(list);
-            } catch (...) {
-                Destroy();
-                throw;
-            }
-        } else
-            list.SetMore();
-    }
+	void _FillBucketList(IstreamBucketList &list) override {
+		if (HasInput()) {
+			try {
+				input.FillBucketList(list);
+			} catch (...) {
+				Destroy();
+				throw;
+			}
+		} else
+			list.SetMore();
+	}
 
-    int _AsFd() noexcept override {
-        return HasInput()
-            ? ForwardIstream::_AsFd()
-            : -1;
-    }
+	int _AsFd() noexcept override {
+		return HasInput()
+			? ForwardIstream::_AsFd()
+			: -1;
+	}
 
-    void _Close() noexcept override {
-        if (HasInput())
-            ForwardIstream::_Close();
-        else {
-            if (cancel_ptr)
-                cancel_ptr.Cancel();
+	void _Close() noexcept override {
+		if (HasInput())
+			ForwardIstream::_Close();
+		else {
+			if (cancel_ptr)
+				cancel_ptr.Cancel();
 
-            Destroy();
-        }
-    }
+			Destroy();
+		}
+	}
 };
 
 void
 DelayedIstreamControl::Set(UnusedIstreamPtr _input) noexcept
 {
-    auto &d = *(DelayedIstream *)this;
-    d.Set(std::move(_input));
+	auto &d = *(DelayedIstream *)this;
+	d.Set(std::move(_input));
 }
 
 void
 DelayedIstreamControl::SetEof() noexcept
 {
-    auto &d = *(DelayedIstream *)this;
-    d.SetEof();
+	auto &d = *(DelayedIstream *)this;
+	d.SetEof();
 }
 
 void
 DelayedIstreamControl::SetError(std::exception_ptr e) noexcept
 {
-    auto &d = *(DelayedIstream *)this;
-    d.SetError(std::move(e));
+	auto &d = *(DelayedIstream *)this;
+	d.SetError(std::move(e));
 }
 
 std::pair<UnusedIstreamPtr, DelayedIstreamControl &>
 istream_delayed_new(struct pool &pool, EventLoop &event_loop) noexcept
 {
-    auto *i = NewIstream<DelayedIstream>(pool, event_loop);
-    DelayedIstreamControl &control = *i;
-    return {UnusedIstreamPtr(i), control};
+	auto *i = NewIstream<DelayedIstream>(pool, event_loop);
+	DelayedIstreamControl &control = *i;
+	return {UnusedIstreamPtr(i), control};
 }

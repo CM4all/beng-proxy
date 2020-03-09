@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_TIMEOUT_HXX
-#define BENG_PROXY_ISTREAM_TIMEOUT_HXX
+#pragma once
 
 #include "event/Chrono.hxx"
 
@@ -46,7 +45,5 @@ class EventLoop;
  */
 UnusedIstreamPtr
 NewTimeoutIstream(struct pool &pool, UnusedIstreamPtr input,
-                  EventLoop &event_loop,
-                  Event::Duration timeout) noexcept;
-
-#endif
+		  EventLoop &event_loop,
+		  Event::Duration timeout) noexcept;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -44,22 +44,22 @@ class EventLoop;
 
 class DelayedIstreamControl {
 protected:
-    DelayedIstreamControl() = default;
-    ~DelayedIstreamControl() = default;
+	DelayedIstreamControl() = default;
+	~DelayedIstreamControl() = default;
 
-    DelayedIstreamControl(const DelayedIstreamControl &) = delete;
-    DelayedIstreamControl &operator=(const DelayedIstreamControl &) = delete;
+	DelayedIstreamControl(const DelayedIstreamControl &) = delete;
+	DelayedIstreamControl &operator=(const DelayedIstreamControl &) = delete;
 
 public:
-    CancellablePointer cancel_ptr;
+	CancellablePointer cancel_ptr;
 
-    void Set(UnusedIstreamPtr input) noexcept;
-    void SetEof() noexcept;
+	void Set(UnusedIstreamPtr input) noexcept;
+	void SetEof() noexcept;
 
-    /**
-     * Injects a failure, to be called instead of Set().
-     */
-void SetError(std::exception_ptr e) noexcept;
+	/**
+	 * Injects a failure, to be called instead of Set().
+	 */
+	void SetError(std::exception_ptr e) noexcept;
 };
 
 /**

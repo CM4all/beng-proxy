@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,14 +41,14 @@ template<typename T, typename... Args>
 static inline T *
 NewIstream(struct pool &pool, Args&&... args)
 {
-    return NewFromPool<T>(pool, pool,
-                          std::forward<Args>(args)...);
+	return NewFromPool<T>(pool, pool,
+			      std::forward<Args>(args)...);
 }
 
 template<typename T, typename... Args>
 static inline UnusedIstreamPtr
 NewIstreamPtr(struct pool &pool, Args&&... args)
 {
-    return UnusedIstreamPtr(NewIstream<T>(pool,
-                                          std::forward<Args>(args)...));
+	return UnusedIstreamPtr(NewIstream<T>(pool,
+					      std::forward<Args>(args)...));
 }

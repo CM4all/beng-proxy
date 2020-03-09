@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,5 +37,5 @@
 UnusedIstreamPtr
 istream_memory_new(struct pool &pool, const void *data, size_t length) noexcept
 {
-    return NewIstreamPtr<MemoryIstream>(pool, data, length);
+	return NewIstreamPtr<MemoryIstream>(pool, data, length);
 }

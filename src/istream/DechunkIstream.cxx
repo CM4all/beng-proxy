@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -45,296 +45,296 @@
 #include <string.h>
 
 class DechunkIstream final : public FacadeIstream, DestructAnchor {
-    /* DeferEvent is used to defer an
-       DechunkHandler::OnDechunkEnd() call */
+	/* DeferEvent is used to defer an
+	   DechunkHandler::OnDechunkEnd() call */
 
-    HttpChunkParser parser;
+	HttpChunkParser parser;
 
-    bool eof = false;
+	bool eof = false;
 
-    bool had_input, had_output;
+	bool had_input, had_output;
 
-    /**
-     * Copy chunked data verbatim to handler?
-     *
-     * @see istream_dechunk_check_verbatim()
-     */
-    bool verbatim = false;
+	/**
+	 * Copy chunked data verbatim to handler?
+	 *
+	 * @see istream_dechunk_check_verbatim()
+	 */
+	bool verbatim = false;
 
-    /**
-     * Was the end-of-file chunk seen at the end of #pending_verbatim?
-     */
-    bool eof_verbatim;
+	/**
+	 * Was the end-of-file chunk seen at the end of #pending_verbatim?
+	 */
+	bool eof_verbatim;
 
-    bool seen_eof = false;
+	bool seen_eof = false;
 
-    /**
-     * Number of data chunk bytes already seen, but not yet consumed
-     * by our #IstreamHandler.  In verbatim mode, this attribute is
-     * unused.
-     */
-    size_t seen_data = 0;
+	/**
+	 * Number of data chunk bytes already seen, but not yet consumed
+	 * by our #IstreamHandler.  In verbatim mode, this attribute is
+	 * unused.
+	 */
+	size_t seen_data = 0;
 
-    /**
-     * Number of bytes to be passed to handler verbatim, which have
-     * already been parsed but have not yet been consumed by the
-     * handler.
-     */
-    size_t pending_verbatim;
+	/**
+	 * Number of bytes to be passed to handler verbatim, which have
+	 * already been parsed but have not yet been consumed by the
+	 * handler.
+	 */
+	size_t pending_verbatim;
 
-    /**
-     * This event is used to defer an DechunkHandler::OnDechunkEnd()
-     * call.
-     */
-    DeferEvent defer_eof_event;
+	/**
+	 * This event is used to defer an DechunkHandler::OnDechunkEnd()
+	 * call.
+	 */
+	DeferEvent defer_eof_event;
 
-    DechunkHandler &dechunk_handler;
+	DechunkHandler &dechunk_handler;
 
 public:
-    DechunkIstream(struct pool &p, UnusedIstreamPtr &&_input,
-                   EventLoop &event_loop,
-                   DechunkHandler &_dechunk_handler) noexcept
-        :FacadeIstream(p, std::move(_input)),
-         defer_eof_event(event_loop, BIND_THIS_METHOD(DeferredEof)),
-         dechunk_handler(_dechunk_handler)
-    {
-    }
+	DechunkIstream(struct pool &p, UnusedIstreamPtr &&_input,
+		       EventLoop &event_loop,
+		       DechunkHandler &_dechunk_handler) noexcept
+		:FacadeIstream(p, std::move(_input)),
+		 defer_eof_event(event_loop, BIND_THIS_METHOD(DeferredEof)),
+		 dechunk_handler(_dechunk_handler)
+	{
+	}
 
-    void SetVerbatim() noexcept {
-        verbatim = true;
-        eof_verbatim = false;
-        pending_verbatim = 0;
-    }
+	void SetVerbatim() noexcept {
+		verbatim = true;
+		eof_verbatim = false;
+		pending_verbatim = 0;
+	}
 
 private:
-    void Abort(std::exception_ptr ep) noexcept;
+	void Abort(std::exception_ptr ep) noexcept;
 
-    gcc_pure
-    bool IsEofPending() const noexcept {
-        return defer_eof_event.IsPending();
-    }
+	gcc_pure
+	bool IsEofPending() const noexcept {
+		return defer_eof_event.IsPending();
+	}
 
-    void DeferredEof() noexcept;
+	void DeferredEof() noexcept;
 
-    /**
-     * @return false if the input has been closed
-     */
-    bool EofDetected() noexcept;
+	/**
+	 * @return false if the input has been closed
+	 */
+	bool EofDetected() noexcept;
 
-    bool CalculateRemainingDataSize(const uint8_t *src, const uint8_t *src_end) noexcept;
+	bool CalculateRemainingDataSize(const uint8_t *src, const uint8_t *src_end) noexcept;
 
-    size_t Feed(const void *data, size_t length) noexcept;
+	size_t Feed(const void *data, size_t length) noexcept;
 
 public:
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) noexcept override;
-    void _Read() noexcept override;
-    void _Close() noexcept override;
+	off_t _GetAvailable(bool partial) noexcept override;
+	void _Read() noexcept override;
+	void _Close() noexcept override;
 
 protected:
-    /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) noexcept override;
-    void OnEof() noexcept override;
-    void OnError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class IstreamHandler */
+	size_t OnData(const void *data, size_t length) noexcept override;
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
 };
 
 void
 DechunkIstream::Abort(std::exception_ptr ep) noexcept
 {
-    assert(!parser.HasEnded());
-    assert(input.IsDefined());
-    assert(!IsEofPending());
+	assert(!parser.HasEnded());
+	assert(input.IsDefined());
+	assert(!IsEofPending());
 
-    if (input.IsDefined())
-        input.ClearAndClose();
+	if (input.IsDefined())
+		input.ClearAndClose();
 
-    DestroyError(ep);
+	DestroyError(ep);
 }
 
 void
 DechunkIstream::DeferredEof() noexcept
 {
-    assert(parser.HasEnded());
-    assert(!input.IsDefined());
-    assert(!eof);
+	assert(parser.HasEnded());
+	assert(!input.IsDefined());
+	assert(!eof);
 
-    eof = true;
+	eof = true;
 
-    DestroyEof();
+	DestroyEof();
 }
 
 bool
 DechunkIstream::EofDetected() noexcept
 {
-    assert(input.IsDefined());
-    assert(parser.HasEnded());
+	assert(input.IsDefined());
+	assert(parser.HasEnded());
 
-    defer_eof_event.Schedule();
+	defer_eof_event.Schedule();
 
-    bool result = dechunk_handler.OnDechunkEnd();
-    if (result)
-        input.Clear();
-    else
-        /* this code path is only used by the unit test */
-        input.ClearAndClose();
+	bool result = dechunk_handler.OnDechunkEnd();
+	if (result)
+		input.Clear();
+	else
+		/* this code path is only used by the unit test */
+		input.ClearAndClose();
 
-    return result;
+	return result;
 }
 
 inline bool
 DechunkIstream::CalculateRemainingDataSize(const uint8_t *src,
-                                           const uint8_t *const src_end) noexcept
+					   const uint8_t *const src_end) noexcept
 {
-    assert(!IsEofPending());
-    assert(!eof);
+	assert(!IsEofPending());
+	assert(!eof);
 
-    seen_data = 0;
+	seen_data = 0;
 
-    if (parser.HasEnded()) {
-        if (!seen_eof) {
-            seen_eof = true;
-            dechunk_handler.OnDechunkEndSeen();
-        }
+	if (parser.HasEnded()) {
+		if (!seen_eof) {
+			seen_eof = true;
+			dechunk_handler.OnDechunkEndSeen();
+		}
 
-        return true;
-    }
+		return true;
+	}
 
-    /* work with a copy of our HttpChunkParser */
-    HttpChunkParser p(parser);
+	/* work with a copy of our HttpChunkParser */
+	HttpChunkParser p(parser);
 
-    while (src != src_end) {
-        const ConstBuffer<uint8_t> src_remaining(src, src_end - src);
+	while (src != src_end) {
+		const ConstBuffer<uint8_t> src_remaining(src, src_end - src);
 
-        ConstBuffer<uint8_t> data;
+		ConstBuffer<uint8_t> data;
 
-        try {
-            data = ConstBuffer<uint8_t>::FromVoid(p.Parse(src_remaining.ToVoid()));
-        } catch (...) {
-            Abort(std::current_exception());
-            return false;
-        }
+		try {
+			data = ConstBuffer<uint8_t>::FromVoid(p.Parse(src_remaining.ToVoid()));
+		} catch (...) {
+			Abort(std::current_exception());
+			return false;
+		}
 
-        if (data.empty()) {
-            if (p.HasEnded() && !seen_eof) {
-                seen_eof = true;
-                dechunk_handler.OnDechunkEndSeen();
-            }
+		if (data.empty()) {
+			if (p.HasEnded() && !seen_eof) {
+				seen_eof = true;
+				dechunk_handler.OnDechunkEndSeen();
+			}
 
-            break;
-        }
+			break;
+		}
 
-        seen_data += data.size;
-        p.Consume(data.size);
-        src = data.end();
-    }
+		seen_data += data.size;
+		p.Consume(data.size);
+		src = data.end();
+	}
 
-    return true;
+	return true;
 }
 
 size_t
 DechunkIstream::Feed(const void *data0, size_t length) noexcept
 {
-    assert(input.IsDefined());
-    assert(!IsEofPending());
-    assert(!verbatim || !eof_verbatim);
+	assert(input.IsDefined());
+	assert(!IsEofPending());
+	assert(!verbatim || !eof_verbatim);
 
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 
-    had_input = true;
+	had_input = true;
 
-    const auto src_begin = (const uint8_t *)data0;
-    const auto src_end = src_begin + length;
+	const auto src_begin = (const uint8_t *)data0;
+	const auto src_end = src_begin + length;
 
-    auto src = src_begin;
-    if (verbatim)
-        /* skip the part that has already been parsed in the last
-           invocation, but could not be consumed by the handler */
-        src += pending_verbatim;
+	auto src = src_begin;
+	if (verbatim)
+		/* skip the part that has already been parsed in the last
+		   invocation, but could not be consumed by the handler */
+		src += pending_verbatim;
 
-    while (src != src_end) {
-        const ConstBuffer<uint8_t> src_remaining(src, src_end - src);
+	while (src != src_end) {
+		const ConstBuffer<uint8_t> src_remaining(src, src_end - src);
 
-        ConstBuffer<uint8_t> data;
+		ConstBuffer<uint8_t> data;
 
-        try {
-            data = ConstBuffer<uint8_t>::FromVoid(parser.Parse(src_remaining.ToVoid()));
-        } catch (...) {
-            Abort(std::current_exception());
-            return 0;
-        }
+		try {
+			data = ConstBuffer<uint8_t>::FromVoid(parser.Parse(src_remaining.ToVoid()));
+		} catch (...) {
+			Abort(std::current_exception());
+			return 0;
+		}
 
-        assert(data.data >= src);
-        assert(data.data <= src_end);
-        assert(data.end() <= src_end);
+		assert(data.data >= src);
+		assert(data.data <= src_end);
+		assert(data.end() <= src_end);
 
-        src = data.data;
+		src = data.data;
 
-        if (!data.empty()) {
-            assert(!parser.HasEnded());
+		if (!data.empty()) {
+			assert(!parser.HasEnded());
 
-            size_t nbytes;
+			size_t nbytes;
 
-            if (verbatim) {
-                /* postpone this data chunk; try to send it all later in
-                   one big block */
-                nbytes = data.size;
-            } else {
-                had_output = true;
-                seen_data += data.size;
-                nbytes = InvokeData(src, data.size);
-                assert(nbytes <= data.size);
+			if (verbatim) {
+				/* postpone this data chunk; try to send it all later in
+				   one big block */
+				nbytes = data.size;
+			} else {
+				had_output = true;
+				seen_data += data.size;
+				nbytes = InvokeData(src, data.size);
+				assert(nbytes <= data.size);
 
-                if (destructed)
-                    return 0;
+				if (destructed)
+					return 0;
 
-                if (nbytes == 0)
-                    break;
-            }
+				if (nbytes == 0)
+					break;
+			}
 
-            src += nbytes;
+			src += nbytes;
 
-            bool finished = parser.Consume(nbytes);
-            if (!finished && !verbatim)
-                break;
-        } else if (parser.HasEnded()) {
-            break;
-        } else {
-            assert(src == src_end);
-        }
-    }
+			bool finished = parser.Consume(nbytes);
+			if (!finished && !verbatim)
+				break;
+		} else if (parser.HasEnded()) {
+			break;
+		} else {
+			assert(src == src_end);
+		}
+	}
 
-    const size_t position = src - src_begin;
-    if (verbatim && position > 0) {
-        /* send all chunks in one big block */
-        had_output = true;
-        size_t nbytes = InvokeData(src_begin, position);
-        if (destructed)
-            return 0;
+	const size_t position = src - src_begin;
+	if (verbatim && position > 0) {
+		/* send all chunks in one big block */
+		had_output = true;
+		size_t nbytes = InvokeData(src_begin, position);
+		if (destructed)
+			return 0;
 
-        /* postpone the rest that was not handled; it will not be
-           parsed again */
-        pending_verbatim = position - nbytes;
-        if (parser.HasEnded()) {
-            if (pending_verbatim > 0)
-                /* not everything could be sent; postpone to
-                   next call */
-                eof_verbatim = true;
-            else if (!EofDetected())
-                return 0;
-        }
+		/* postpone the rest that was not handled; it will not be
+		   parsed again */
+		pending_verbatim = position - nbytes;
+		if (parser.HasEnded()) {
+			if (pending_verbatim > 0)
+				/* not everything could be sent; postpone to
+				   next call */
+				eof_verbatim = true;
+			else if (!EofDetected())
+				return 0;
+		}
 
-        return nbytes;
-    } else if (parser.HasEnded()) {
-        return EofDetected()
-            ? position
-            : 0;
-    }
+		return nbytes;
+	} else if (parser.HasEnded()) {
+		return EofDetected()
+			? position
+			: 0;
+	}
 
-    if (!verbatim && !CalculateRemainingDataSize(src, src_end))
-        return 0;
+	if (!verbatim && !CalculateRemainingDataSize(src, src_end))
+		return 0;
 
-    return position;
+	return position;
 }
 
 
@@ -346,62 +346,62 @@ DechunkIstream::Feed(const void *data0, size_t length) noexcept
 size_t
 DechunkIstream::OnData(const void *data, size_t length) noexcept
 {
-    assert(!verbatim || length >= pending_verbatim);
+	assert(!verbatim || length >= pending_verbatim);
 
-    if (IsEofPending())
-        /* don't accept any more data after the EOF chunk */
-        return 0;
+	if (IsEofPending())
+		/* don't accept any more data after the EOF chunk */
+		return 0;
 
-    if (verbatim && eof_verbatim) {
-        /* during the last call, the EOF chunk was parsed, but we
-           could not handle it yet, because the handler did not
-           consume all data yet; try to send the remaining pre-EOF
-           data again and then handle the EOF chunk */
+	if (verbatim && eof_verbatim) {
+		/* during the last call, the EOF chunk was parsed, but we
+		   could not handle it yet, because the handler did not
+		   consume all data yet; try to send the remaining pre-EOF
+		   data again and then handle the EOF chunk */
 
-        assert(pending_verbatim > 0);
+		assert(pending_verbatim > 0);
 
-        assert(length >= pending_verbatim);
+		assert(length >= pending_verbatim);
 
-        had_output = true;
-        size_t nbytes = InvokeData(data, pending_verbatim);
-        if (nbytes == 0)
-            return 0;
+		had_output = true;
+		size_t nbytes = InvokeData(data, pending_verbatim);
+		if (nbytes == 0)
+			return 0;
 
-        pending_verbatim -= nbytes;
-        if (pending_verbatim == 0 && !EofDetected())
-            return 0;
+		pending_verbatim -= nbytes;
+		if (pending_verbatim == 0 && !EofDetected())
+			return 0;
 
-        return nbytes;
-    }
+		return nbytes;
+	}
 
-    return Feed(data, length);
+	return Feed(data, length);
 }
 
 void
 DechunkIstream::OnEof() noexcept
 {
-    input.Clear();
+	input.Clear();
 
-    if (IsEofPending())
-        /* let DeferEvent handle this */
-        return;
+	if (IsEofPending())
+		/* let DeferEvent handle this */
+		return;
 
-    if (eof)
-        return;
+	if (eof)
+		return;
 
-    DestroyError(std::make_exception_ptr(std::runtime_error("premature EOF in dechunker")));
+	DestroyError(std::make_exception_ptr(std::runtime_error("premature EOF in dechunker")));
 }
 
 void
 DechunkIstream::OnError(std::exception_ptr ep) noexcept
 {
-    input.Clear();
+	input.Clear();
 
-    if (IsEofPending())
-        /* let DeferEvent handle this */
-        return;
+	if (IsEofPending())
+		/* let DeferEvent handle this */
+		return;
 
-    DestroyError(ep);
+	DestroyError(ep);
 }
 
 /*
@@ -412,47 +412,47 @@ DechunkIstream::OnError(std::exception_ptr ep) noexcept
 off_t
 DechunkIstream::_GetAvailable(bool partial) noexcept
 {
-    if (IsEofPending())
-        return 0;
+	if (IsEofPending())
+		return 0;
 
-    if (verbatim) {
-        if (!partial && !eof_verbatim)
-            return -1;
+	if (verbatim) {
+		if (!partial && !eof_verbatim)
+			return -1;
 
-        return pending_verbatim;
-    } else {
-        if (!partial && !seen_eof)
-            return -1;
+		return pending_verbatim;
+	} else {
+		if (!partial && !seen_eof)
+			return -1;
 
-        return seen_data;
-    }
+		return seen_data;
+	}
 }
 
 void
 DechunkIstream::_Read() noexcept
 {
-    if (IsEofPending())
-        return;
+	if (IsEofPending())
+		return;
 
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 
-    had_output = false;
+	had_output = false;
 
-    do {
-        had_input = false;
-        input.Read();
-    } while (!destructed && input.IsDefined() && had_input && !had_output &&
-             !IsEofPending());
+	do {
+		had_input = false;
+		input.Read();
+	} while (!destructed && input.IsDefined() && had_input && !had_output &&
+		 !IsEofPending());
 }
 
 void
 DechunkIstream::_Close() noexcept
 {
-    assert(!eof);
+	assert(!eof);
 
-    if (input.IsDefined())
-        input.ClearAndClose();
-    Destroy();
+	if (input.IsDefined())
+		input.ClearAndClose();
+	Destroy();
 }
 
 /*
@@ -462,22 +462,22 @@ DechunkIstream::_Close() noexcept
 
 UnusedIstreamPtr
 istream_dechunk_new(struct pool &pool, UnusedIstreamPtr input,
-                    EventLoop &event_loop,
-                    DechunkHandler &dechunk_handler) noexcept
+		    EventLoop &event_loop,
+		    DechunkHandler &dechunk_handler) noexcept
 {
-    return NewIstreamPtr<DechunkIstream>(pool, std::move(input),
-                                         event_loop,
-                                         dechunk_handler);
+	return NewIstreamPtr<DechunkIstream>(pool, std::move(input),
+					     event_loop,
+					     dechunk_handler);
 }
 
 bool
 istream_dechunk_check_verbatim(UnusedIstreamPtr &i) noexcept
 {
-    auto *dechunk = i.DynamicCast<DechunkIstream>();
-    if (dechunk == nullptr)
-        /* not a DechunkIstream instance */
-        return false;
+	auto *dechunk = i.DynamicCast<DechunkIstream>();
+	if (dechunk == nullptr)
+		/* not a DechunkIstream instance */
+		return false;
 
-    dechunk->SetVerbatim();
-    return true;
+	dechunk->SetVerbatim();
+	return true;
 }
