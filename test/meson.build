@@ -781,8 +781,6 @@ test(
     't_istream_iconv.cxx',
     't_istream_replace.cxx',
     't_istream_subst.cxx',
-    't_sink_header.cxx',
-    't_sink_header_empty.cxx',
     'TestAutoPipeIstream.cxx',
     '../src/pipe_stock.cxx',
     '../src/PipeLease.cxx',
