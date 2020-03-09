@@ -138,7 +138,7 @@ struct TeeIstream final : IstreamHandler, DestructAnchor {
 				throw;
 			}
 
-			bucket_list_size = list.SpliceBuffersFrom(sub);
+			bucket_list_size = list.SpliceBuffersFrom(std::move(sub));
 
 			if (!parent.IsSingleOutput())
 				/* if there are more outputs, they may

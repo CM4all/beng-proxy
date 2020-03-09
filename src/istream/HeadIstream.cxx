@@ -115,7 +115,7 @@ HeadIstream::_FillBucketList(IstreamBucketList &list)
 		throw;
 	}
 
-	size_t nbytes = list.SpliceBuffersFrom(tmp1, rest);
+	size_t nbytes = list.SpliceBuffersFrom(std::move(tmp1), rest);
 	if ((off_t)nbytes >= rest)
 		list.SetMore(false);
 }

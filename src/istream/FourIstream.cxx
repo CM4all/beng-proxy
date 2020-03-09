@@ -63,7 +63,7 @@ public:
 			throw;
 		}
 
-		list.SpliceBuffersFrom(tmp, 4);
+		list.SpliceBuffersFrom(std::move(tmp), 4);
 	}
 
 	int _AsFd() noexcept override {

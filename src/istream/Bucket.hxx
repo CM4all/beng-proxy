@@ -153,7 +153,7 @@ public:
 	 *
 	 * @return the number of bytes in all moved buffers
 	 */
-	size_t SpliceBuffersFrom(IstreamBucketList &src,
+	size_t SpliceBuffersFrom(IstreamBucketList &&src,
 				 size_t max_size) noexcept {
 		if (src.HasMore())
 			SetMore();
@@ -186,7 +186,7 @@ public:
 	 *
 	 * @return the number of bytes in all moved buffers
 	 */
-	size_t SpliceBuffersFrom(IstreamBucketList &src) noexcept {
+	size_t SpliceBuffersFrom(IstreamBucketList &&src) noexcept {
 		if (src.HasMore())
 			SetMore();
 

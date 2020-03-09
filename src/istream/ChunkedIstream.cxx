@@ -356,7 +356,8 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 			throw;
 		}
 
-		size_t nbytes = list.SpliceBuffersFrom(sub, missing_from_current_chunk);
+		size_t nbytes = list.SpliceBuffersFrom(std::move(sub),
+						       missing_from_current_chunk);
 		if (nbytes >= missing_from_current_chunk)
 			list.Push(StringView("\r\n").ToVoid());
 	}
