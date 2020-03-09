@@ -464,7 +464,7 @@ XmlProcessor::CdataIstream::_Close() noexcept
 inline Istream *
 XmlProcessor::StartCdataIstream() noexcept
 {
-	return cdata_istream = NewFromPool<CdataIstream>(pool, *this);
+	return cdata_istream = NewFromPool<CdataIstream>(GetPool(), *this);
 }
 
 /*
@@ -589,7 +589,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 	case UriBase::CHILD:
 		SplitString(value, '/', child_id, suffix);
 
-		target_widget = container.FindChild(p_strdup(pool, child_id));
+		target_widget = container.FindChild(p_strdup(GetPool(), child_id));
 		if (target_widget == nullptr)
 			return;
 
@@ -620,7 +620,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 		fragment = nullptr;
 
 	auto istream =
-		rewrite_widget_uri(pool, ctx, stopwatch,
+		rewrite_widget_uri(GetPool(), ctx, stopwatch,
 				   *target_widget,
 				   value, mode, target_widget == &container,
 				   view,
@@ -630,12 +630,12 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 
 	if (!fragment.empty()) {
 		/* escape and append the fragment to the new URI */
-		auto s = istream_memory_new(pool,
-					    p_strdup(pool, fragment),
+		auto s = istream_memory_new(GetPool(),
+					    p_strdup(GetPool(), fragment),
 					    fragment.size);
-		s = istream_html_escape_new(pool, std::move(s));
+		s = istream_html_escape_new(GetPool(), std::move(s));
 
-		istream = istream_cat_new(pool, std::move(istream), std::move(s));
+		istream = istream_cat_new(GetPool(), std::move(istream), std::move(s));
 	}
 
 	ReplaceAttributeValue(attr, std::move(istream));
@@ -769,8 +769,8 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr) noexcept
 		return;
 
 	const size_t length = buffer.GetSize();
-	void *q = buffer.Dup(pool);
-	ReplaceAttributeValue(attr, istream_memory_new(pool, q, length));
+	void *q = buffer.Dup(GetPool());
+	ReplaceAttributeValue(attr, istream_memory_new(GetPool(), q, length));
 }
 
 void
@@ -788,7 +788,7 @@ XmlProcessor::HandleIdAttribute(const XmlParserAttribute &attr) noexcept
 			return;
 
 		Replace(attr.value_start, attr.value_start + 3,
-			istream_string_new(pool, prefix));
+			istream_string_new(GetPool(), prefix));
 	} else if (n == 2) {
 		/* double underscore: add class name prefix */
 
@@ -797,7 +797,7 @@ XmlProcessor::HandleIdAttribute(const XmlParserAttribute &attr) noexcept
 			return;
 
 		Replace(attr.value_start, attr.value_start + 2,
-			istream_string_new(pool, class_name));
+			istream_string_new(GetPool(), class_name));
 	}
 }
 
@@ -805,7 +805,7 @@ void
 XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr) noexcept
 {
 	auto result =
-		css_rewrite_block_uris(pool, ctx, stopwatch,
+		css_rewrite_block_uris(GetPool(), ctx, stopwatch,
 				       container,
 				       attr.value,
 				       &html_escape_class);
@@ -1002,10 +1002,10 @@ XmlProcessor::EmbedWidget(Widget &child_widget) noexcept
 	StopwatchPtr widget_stopwatch(stopwatch, "widget ",
 				      child_widget.class_name);
 
-	auto istream = embed_inline_widget(pool, ctx, widget_stopwatch,
+	auto istream = embed_inline_widget(GetPool(), ctx, widget_stopwatch,
 					   false, child_widget);
 	if (istream)
-		istream = istream_catch_new(pool, std::move(istream),
+		istream = istream_catch_new(&GetPool(), std::move(istream),
 					    widget_catch_callback, &child_widget);
 
 	return istream;
@@ -1070,7 +1070,7 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 				css_options |= CSS_PROCESSOR_PREFIX_ID;
 
 			auto istream =
-				css_processor(pool, stopwatch,
+				css_processor(GetPool(), stopwatch,
 					      UnusedIstreamPtr(StartCdataIstream()),
 					      container, ctx,
 					      css_options);
