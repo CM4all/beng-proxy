@@ -305,8 +305,6 @@ private:
 	UnusedIstreamPtr OpenWidgetElement(WidgetPtr &&child_widget) noexcept;
 	void FoundWidget(WidgetPtr &&child_widget) noexcept;
 	bool CheckWidgetLookup(WidgetPtr &&child_widget) noexcept;
-	bool WidgetElementFinished(const XmlParserTag &tag,
-				   WidgetPtr &&child_widget) noexcept;
 
 	Istream *StartCdataIstream() noexcept;
 	void StopCdataIstream() noexcept;
@@ -324,6 +322,8 @@ private:
 	void OnError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class WidgetContainerParser */
+	bool WidgetElementFinished(const XmlParserTag &tag,
+				   WidgetPtr &&child_widget) noexcept override;
 	bool OnProcessingInstruction(StringView name) noexcept override;
 	bool OnXmlTagStart2(const XmlParserTag &tag) noexcept override;
 
@@ -1213,7 +1213,7 @@ XmlProcessor::CheckWidgetLookup(WidgetPtr &&child_widget) noexcept
 	}
 }
 
-inline bool
+bool
 XmlProcessor::WidgetElementFinished(const XmlParserTag &widget_tag,
 				    WidgetPtr &&child_widget) noexcept
 {
