@@ -32,6 +32,7 @@
 
 #include "FailingResourceLoader.hxx"
 #include "bp/XmlProcessor.hxx"
+#include "bp/WidgetLookupProcessor.hxx"
 #include "PInstance.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Widget.hxx"

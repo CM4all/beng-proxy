@@ -49,6 +49,7 @@
 #include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"
 #include "XmlProcessor.hxx"
+#include "WidgetLookupProcessor.hxx"
 #include "istream/istream.hxx"
 #include "istream/AutoPipeIstream.hxx"
 #include "translation/Vary.hxx"

@@ -40,6 +40,7 @@
 #include "FilterStatus.hxx"
 #include "pheaders.hxx"
 #include "bp/XmlProcessor.hxx"
+#include "bp/WidgetLookupProcessor.hxx"
 #include "bp/CssProcessor.hxx"
 #include "bp/TextProcessor.hxx"
 #include "bp/session/Session.hxx"
