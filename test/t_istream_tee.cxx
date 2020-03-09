@@ -174,8 +174,6 @@ test_close_data(EventLoop &event_loop, struct pool *_pool)
 	auto &sink = NewStringSink(*pool, std::move(tee2), ctx, cancel_ptr);
 	assert(ctx.value.empty());
 
-	pool.reset();
-
 	ReadStringSink(sink);
 
 	/* at this point, sink_close has closed itself, and istream_tee
@@ -204,7 +202,6 @@ test_close_skipped(EventLoop &event_loop, struct pool *_pool)
 	auto &sink = NewStringSink(*pool, std::move(tee1), ctx, cancel_ptr);
 
 	sink_close_new(*pool, std::move(tee2));
-	pool.reset();
 
 	assert(ctx.value.empty());
 
