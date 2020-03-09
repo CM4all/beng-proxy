@@ -206,7 +206,8 @@ public:
 	 */
 	void Consume(size_t length) noexcept;
 
-	void FillBucketList(IstreamBucketList &list) const noexcept;
+	void FillBucketList(IstreamBucketList &list,
+			    size_t skip) const noexcept;
 	size_t ConsumeBucketList(size_t nbytes) noexcept;
 
 private:

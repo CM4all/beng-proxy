@@ -311,10 +311,21 @@ GrowingBuffer::Dup(struct pool &_pool) const noexcept
 }
 
 void
-GrowingBuffer::FillBucketList(IstreamBucketList &list) const noexcept
+GrowingBuffer::FillBucketList(IstreamBucketList &list, size_t skip) const noexcept
 {
-	ForEachBuffer([&list](ConstBuffer<void> b){
-		list.Push(b);
+	ForEachBuffer([&list, &skip](ConstBuffer<void> b){
+		if (skip >= b.size) {
+			skip -= b.size;
+			return;
+		}
+
+		auto c = ConstBuffer<uint8_t>::FromVoid(b);
+		if (skip > 0) {
+			c.skip_front(skip);
+			skip = 0;
+		}
+
+		list.Push(c.ToVoid());
 	});
 }
 
