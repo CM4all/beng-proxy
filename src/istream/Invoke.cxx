@@ -162,6 +162,14 @@ Istream::InvokeEof() noexcept
 	PrepareEof().OnEof();
 }
 
+void
+Istream::DestroyEof() noexcept
+{
+	auto &_handler = PrepareEof();
+	Destroy();
+	_handler.OnEof();
+}
+
 IstreamHandler &
 Istream::PrepareError() noexcept
 {
@@ -183,4 +191,12 @@ Istream::InvokeError(std::exception_ptr ep) noexcept
 	assert(ep);
 
 	PrepareError().OnError(ep);
+}
+
+void
+Istream::DestroyError(std::exception_ptr ep) noexcept
+{
+	auto &_handler = PrepareError();
+	Destroy();
+	_handler.OnError(ep);
 }

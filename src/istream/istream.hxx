@@ -154,15 +154,8 @@ protected:
 		/* no need to free memory from the pool */
 	}
 
-	void DestroyEof() noexcept {
-		InvokeEof();
-		Destroy();
-	}
-
-	void DestroyError(std::exception_ptr ep) noexcept {
-		InvokeError(ep);
-		Destroy();
-	}
+	void DestroyEof() noexcept;
+	void DestroyError(std::exception_ptr ep) noexcept;
 
 	/**
 	 * @return the number of bytes still in the buffer
