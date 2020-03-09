@@ -206,7 +206,7 @@ public:
 			}
 
 			auto buffer = bucket.GetBuffer();
-			Push(bucket.GetBuffer());
+			Push(buffer);
 			total_size += buffer.size;
 		}
 
