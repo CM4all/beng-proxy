@@ -212,4 +212,36 @@ public:
 
 		return total_size;
 	}
+
+	/**
+	 * Copy buffer buckets from the given list, stopping at the first
+	 * no-buffer bucket.
+	 *
+	 * @param skip skip this number of bytes at the beginning
+	 * @return the number of bytes in all moved buffers
+	 */
+	size_t CopyBuffersFrom(size_t skip,
+			       const IstreamBucketList &src) noexcept {
+		if (src.HasMore())
+			SetMore();
+
+		size_t total_size = 0;
+		for (const auto &bucket : src) {
+			if (bucket.GetType() != IstreamBucket::Type::BUFFER) {
+				SetMore();
+				break;
+			}
+
+			auto buffer = ConstBuffer<uint8_t>::FromVoid(bucket.GetBuffer());
+			if (buffer.size > skip) {
+				buffer.skip_front(skip);
+				skip = 0;
+				Push(buffer.ToVoid());
+				total_size += buffer.size;
+			} else
+				skip -= buffer.size;
+		}
+
+		return total_size;
+	}
 };
