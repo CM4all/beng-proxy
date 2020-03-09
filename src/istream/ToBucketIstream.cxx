@@ -79,7 +79,7 @@ ToBucketIstream::_FillBucketList(IstreamBucketList &list)
 		return;
 	}
 
-	list.SpliceBuffersFrom(std::move(tmp));
+	list.SpliceFrom(std::move(tmp));
 }
 
 size_t

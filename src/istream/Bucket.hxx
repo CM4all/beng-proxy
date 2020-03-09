@@ -147,6 +147,14 @@ public:
 		return !HasMore() && consumed == GetTotalBufferSize();
 	}
 
+	void SpliceFrom(IstreamBucketList &&src) noexcept {
+		if (src.HasMore())
+			SetMore();
+
+		for (const auto &bucket : src)
+			Push(bucket);
+	}
+
 	/**
 	 * Move buffer buckets from the given list, stopping at the first
 	 * no-buffer bucket or after #max_size bytes have been moved.

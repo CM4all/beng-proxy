@@ -87,7 +87,7 @@ public:
 			   arrives */
 			timeout_event.Cancel();
 
-		list.SpliceBuffersFrom(std::move(tmp));
+		list.SpliceFrom(std::move(tmp));
 	}
 
 	/* virtual methods from class IstreamHandler */
