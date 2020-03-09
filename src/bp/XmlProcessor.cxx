@@ -155,8 +155,6 @@ class XmlProcessor final : PoolHolder, IstreamSink, WidgetContainerParser, Cance
 
 	WidgetLookupHandler *handler;
 
-	CancellablePointer *cancel_ptr;
-
 public:
 	XmlProcessor(PoolPtr &&_pool, const StopwatchPtr &parent_stopwatch,
 		     UnusedIstreamPtr &&_input,
@@ -200,7 +198,7 @@ public:
 		 parser(GetPool(), *this),
 		 buffer(GetPool(), 128, 2048),
 		 postponed_rewrite(GetPool()),
-		 handler(&_handler), cancel_ptr(&caller_cancel_ptr)
+		 handler(&_handler)
 	{
 		caller_cancel_ptr = *this;
 	}
