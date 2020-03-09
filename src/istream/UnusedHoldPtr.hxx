@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_UNUSED_HOLD_ISTREAM_PTR_HXX
-#define BENG_PROXY_UNUSED_HOLD_ISTREAM_PTR_HXX
+#pragma once
 
 #include "UnusedPtr.hxx"
 #include "istream_hold.hxx"
@@ -43,17 +42,15 @@
  */
 class UnusedHoldIstreamPtr : public UnusedIstreamPtr {
 public:
-    UnusedHoldIstreamPtr() = default;
-    UnusedHoldIstreamPtr(std::nullptr_t) noexcept {}
+	UnusedHoldIstreamPtr() = default;
+	UnusedHoldIstreamPtr(std::nullptr_t) noexcept {}
 
-    explicit UnusedHoldIstreamPtr(struct pool &p, UnusedIstreamPtr &&_stream) noexcept
-        :UnusedIstreamPtr(_stream
-                          ? istream_hold_new(p, std::move(_stream))
-                          : nullptr) {}
+	explicit UnusedHoldIstreamPtr(struct pool &p, UnusedIstreamPtr &&_stream) noexcept
+		:UnusedIstreamPtr(_stream
+				  ? istream_hold_new(p, std::move(_stream))
+				  : nullptr) {}
 
-    UnusedHoldIstreamPtr(UnusedHoldIstreamPtr &&src) = default;
+	UnusedHoldIstreamPtr(UnusedHoldIstreamPtr &&src) = default;
 
-    UnusedHoldIstreamPtr &operator=(UnusedHoldIstreamPtr &&src) = default;
+	UnusedHoldIstreamPtr &operator=(UnusedHoldIstreamPtr &&src) = default;
 };
-
-#endif

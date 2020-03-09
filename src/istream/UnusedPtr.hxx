@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_UNUSED_ISTREAM_PTR_HXX
-#define BENG_PROXY_UNUSED_ISTREAM_PTR_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -48,73 +47,71 @@ class Istream;
  * "stolen" using Steal() to actually use it.
  */
 class UnusedIstreamPtr {
-    Istream *stream = nullptr;
+	Istream *stream = nullptr;
 
 public:
-    UnusedIstreamPtr() = default;
-    UnusedIstreamPtr(std::nullptr_t) noexcept {}
+	UnusedIstreamPtr() = default;
+	UnusedIstreamPtr(std::nullptr_t) noexcept {}
 
-    explicit UnusedIstreamPtr(Istream *_stream) noexcept
-        :stream(_stream) {}
+	explicit UnusedIstreamPtr(Istream *_stream) noexcept
+		:stream(_stream) {}
 
-    UnusedIstreamPtr(UnusedIstreamPtr &&src) noexcept
-        :stream(std::exchange(src.stream, nullptr)) {}
+	UnusedIstreamPtr(UnusedIstreamPtr &&src) noexcept
+		:stream(std::exchange(src.stream, nullptr)) {}
 
-    ~UnusedIstreamPtr() noexcept {
-        if (stream != nullptr)
-            Close(*stream);
-    }
+	~UnusedIstreamPtr() noexcept {
+		if (stream != nullptr)
+			Close(*stream);
+	}
 
-    UnusedIstreamPtr &operator=(UnusedIstreamPtr &&src) noexcept {
-        using std::swap;
-        swap(stream, src.stream);
-        return *this;
-    }
+	UnusedIstreamPtr &operator=(UnusedIstreamPtr &&src) noexcept {
+		using std::swap;
+		swap(stream, src.stream);
+		return *this;
+	}
 
-    operator bool() const noexcept {
-        return stream != nullptr;
-    }
+	operator bool() const noexcept {
+		return stream != nullptr;
+	}
 
-    Istream *Steal() noexcept {
-        return std::exchange(stream, nullptr);
-    }
+	Istream *Steal() noexcept {
+		return std::exchange(stream, nullptr);
+	}
 
-    /**
-     * This is a kludge to allow checking and inspecting a specific
-     * #Istream implementation.  Use with care.
-     */
-    template<typename T>
-    T *DynamicCast() noexcept {
-        return dynamic_cast<T *>(stream);
-    }
+	/**
+	 * This is a kludge to allow checking and inspecting a specific
+	 * #Istream implementation.  Use with care.
+	 */
+	template<typename T>
+	T *DynamicCast() noexcept {
+		return dynamic_cast<T *>(stream);
+	}
 
-    /**
-     * Like DynamicCast(), but omits the RTTI check.
-     */
-    template<typename T>
-    T &StaticCast() noexcept {
-        assert(DynamicCast<T>() != nullptr);
+	/**
+	 * Like DynamicCast(), but omits the RTTI check.
+	 */
+	template<typename T>
+	T &StaticCast() noexcept {
+		assert(DynamicCast<T>() != nullptr);
 
-        return *static_cast<T *>(stream);
-    }
+		return *static_cast<T *>(stream);
+	}
 
-    void Clear() noexcept {
-        auto *s = Steal();
-        if (s != nullptr)
-            Close(*s);
-    }
+	void Clear() noexcept {
+		auto *s = Steal();
+		if (s != nullptr)
+			Close(*s);
+	}
 
-    gcc_pure
-    off_t GetAvailable(bool partial) const noexcept;
+	gcc_pure
+	off_t GetAvailable(bool partial) const noexcept;
 
-    /**
-     * Calls Istream::AsFd().  On successful (non-negative) return
-     * value, this object is cleared.
-     */
-    int AsFd() noexcept;
+	/**
+	 * Calls Istream::AsFd().  On successful (non-negative) return
+	 * value, this object is cleared.
+	 */
+	int AsFd() noexcept;
 
 private:
-    static void Close(Istream &i) noexcept;
+	static void Close(Istream &i) noexcept;
 };
-
-#endif

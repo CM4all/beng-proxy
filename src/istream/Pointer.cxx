@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,30 +34,30 @@
 #include "UnusedPtr.hxx"
 
 IstreamPointer::IstreamPointer(UnusedIstreamPtr src,
-                               IstreamHandler &handler,
-                               FdTypeMask direct) noexcept
-    :stream(src.Steal())
+			       IstreamHandler &handler,
+			       FdTypeMask direct) noexcept
+	:stream(src.Steal())
 {
-    if (stream != nullptr)
-        stream->SetHandler(handler, direct);
+	if (stream != nullptr)
+		stream->SetHandler(handler, direct);
 }
 
 void
 IstreamPointer::Set(UnusedIstreamPtr _stream,
-                    IstreamHandler &handler,
-                    FdTypeMask direct) noexcept
+		    IstreamHandler &handler,
+		    FdTypeMask direct) noexcept
 {
-        assert(!IsDefined());
-        assert(_stream);
+	assert(!IsDefined());
+	assert(_stream);
 
-        stream = _stream.Steal();
-        stream->SetHandler(handler, direct);
+	stream = _stream.Steal();
+	stream->SetHandler(handler, direct);
 }
 
 UnusedIstreamPtr
 IstreamPointer::Steal() noexcept
 {
-    if (stream != nullptr)
-        stream->ClearHandler();
-    return UnusedIstreamPtr(std::exchange(stream, nullptr));
+	if (stream != nullptr)
+		stream->ClearHandler();
+	return UnusedIstreamPtr(std::exchange(stream, nullptr));
 }

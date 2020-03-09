@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,149 +38,149 @@
 bool
 Istream::InvokeReady() noexcept
 {
-    assert(!destroyed);
-    assert(handler != nullptr);
-    assert(!in_data);
-    assert(!eof);
-    assert(!closing);
+	assert(!destroyed);
+	assert(handler != nullptr);
+	assert(!in_data);
+	assert(!eof);
+	assert(!closing);
 
 #ifndef NDEBUG
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 #endif
 
-    bool result = handler->OnIstreamReady();
+	bool result = handler->OnIstreamReady();
 
 #ifndef NDEBUG
-    if (destructed || destroyed) {
-        assert(!result);
-    }
+	if (destructed || destroyed) {
+		assert(!result);
+	}
 #endif
 
-    return result;
+	return result;
 }
 
 size_t
 Istream::InvokeData(const void *data, size_t length) noexcept
 {
-    assert(!destroyed);
-    assert(handler != nullptr);
-    assert(data != nullptr);
-    assert(length > 0);
-    assert(!in_data);
-    assert(!eof);
-    assert(!closing);
-    assert(length >= data_available);
-    assert(!available_full_set ||
-           (off_t)length <= available_full);
+	assert(!destroyed);
+	assert(handler != nullptr);
+	assert(data != nullptr);
+	assert(length > 0);
+	assert(!in_data);
+	assert(!eof);
+	assert(!closing);
+	assert(length >= data_available);
+	assert(!available_full_set ||
+	       (off_t)length <= available_full);
 
 #ifndef NDEBUG
-    const DestructObserver destructed(*this);
-    in_data = true;
+	const DestructObserver destructed(*this);
+	in_data = true;
 #endif
 
-    size_t nbytes = handler->OnData(data, length);
-    assert(nbytes <= length);
-    assert(nbytes == 0 || !eof);
+	size_t nbytes = handler->OnData(data, length);
+	assert(nbytes <= length);
+	assert(nbytes == 0 || !eof);
 
 #ifndef NDEBUG
-    if (destructed || destroyed) {
-        assert(nbytes == 0);
-        return nbytes;
-    }
+	if (destructed || destroyed) {
+		assert(nbytes == 0);
+		return nbytes;
+	}
 
-    in_data = false;
+	in_data = false;
 
-    if (nbytes > 0)
-        Consumed(nbytes);
+	if (nbytes > 0)
+		Consumed(nbytes);
 
-    data_available = length - nbytes;
+	data_available = length - nbytes;
 #endif
 
-    return nbytes;
+	return nbytes;
 }
 
 ssize_t
 Istream::InvokeDirect(FdType type, int fd, size_t max_length) noexcept
 {
-    assert(!destroyed);
-    assert(handler != nullptr);
-    assert((handler_direct & type) == type);
-    assert(fd >= 0);
-    assert(max_length > 0);
-    assert(!in_data);
-    assert(!eof);
-    assert(!closing);
+	assert(!destroyed);
+	assert(handler != nullptr);
+	assert((handler_direct & type) == type);
+	assert(fd >= 0);
+	assert(max_length > 0);
+	assert(!in_data);
+	assert(!eof);
+	assert(!closing);
 
 #ifndef NDEBUG
-    const DestructObserver destructed(*this);
-    in_data = true;
+	const DestructObserver destructed(*this);
+	in_data = true;
 #endif
 
-    ssize_t nbytes = handler->OnDirect(type, fd, max_length);
-    assert(nbytes >= -3);
-    assert(nbytes < 0 || (size_t)nbytes <= max_length);
-    assert(nbytes == ISTREAM_RESULT_CLOSED || !eof);
+	ssize_t nbytes = handler->OnDirect(type, fd, max_length);
+	assert(nbytes >= -3);
+	assert(nbytes < 0 || (size_t)nbytes <= max_length);
+	assert(nbytes == ISTREAM_RESULT_CLOSED || !eof);
 
 #ifndef NDEBUG
-    if (destructed || destroyed) {
-        assert(nbytes == ISTREAM_RESULT_CLOSED);
-        return nbytes;
-    }
+	if (destructed || destroyed) {
+		assert(nbytes == ISTREAM_RESULT_CLOSED);
+		return nbytes;
+	}
 
-    assert(nbytes != ISTREAM_RESULT_CLOSED);
+	assert(nbytes != ISTREAM_RESULT_CLOSED);
 
-    in_data = false;
+	in_data = false;
 
-    if (nbytes > 0)
-        Consumed(nbytes);
+	if (nbytes > 0)
+		Consumed(nbytes);
 #endif
 
-    return nbytes;
+	return nbytes;
 }
 
 IstreamHandler &
 Istream::PrepareEof() noexcept
 {
-    assert(!destroyed);
-    assert(!eof);
-    assert(!closing);
-    assert(data_available == 0);
-    assert(available_partial == 0);
-    assert(!available_full_set || available_full == 0);
-    assert(handler != nullptr);
+	assert(!destroyed);
+	assert(!eof);
+	assert(!closing);
+	assert(data_available == 0);
+	assert(available_partial == 0);
+	assert(!available_full_set || available_full == 0);
+	assert(handler != nullptr);
 
 #ifndef NDEBUG
-    eof = true;
+	eof = true;
 #endif
 
-    return *handler;
+	return *handler;
 }
 
 void
 Istream::InvokeEof() noexcept
 {
-    PrepareEof().OnEof();
+	PrepareEof().OnEof();
 }
 
 IstreamHandler &
 Istream::PrepareError() noexcept
 {
-    assert(!destroyed);
-    assert(!eof);
-    assert(!closing);
-    assert(handler != nullptr);
+	assert(!destroyed);
+	assert(!eof);
+	assert(!closing);
+	assert(handler != nullptr);
 
 #ifndef NDEBUG
-    eof = true;
+	eof = true;
 #endif
 
-    return *handler;
+	return *handler;
 }
 
 void
 Istream::InvokeError(std::exception_ptr ep) noexcept
 {
-    assert(ep);
+	assert(ep);
 
-    PrepareError().OnError(ep);
+	PrepareError().OnError(ep);
 }

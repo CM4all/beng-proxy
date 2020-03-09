@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,25 +38,25 @@
 off_t
 UnusedIstreamPtr::GetAvailable(bool partial) const noexcept
 {
-    assert(stream != nullptr);
+	assert(stream != nullptr);
 
-    return stream->GetAvailable(partial);
+	return stream->GetAvailable(partial);
 }
 
 int
 UnusedIstreamPtr::AsFd() noexcept
 {
-    assert(stream != nullptr);
+	assert(stream != nullptr);
 
-    int fd = stream->AsFd();
-    if (fd >= 0)
-        stream = nullptr;
+	int fd = stream->AsFd();
+	if (fd >= 0)
+		stream = nullptr;
 
-    return fd;
+	return fd;
 }
 
 void
 UnusedIstreamPtr::Close(Istream &i) noexcept
 {
-    i.CloseUnused();
+	i.CloseUnused();
 }

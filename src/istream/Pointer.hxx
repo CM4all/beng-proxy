@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_POINTER_HXX
-#define BENG_PROXY_ISTREAM_POINTER_HXX
+#pragma once
 
 #include "istream.hxx"
 
@@ -42,127 +41,125 @@
 class UnusedIstreamPtr;
 
 class IstreamPointer {
-    Istream *stream;
+	Istream *stream;
 
 public:
-    IstreamPointer() = default;
-    explicit IstreamPointer(std::nullptr_t) noexcept:stream(nullptr) {}
+	IstreamPointer() = default;
+	explicit IstreamPointer(std::nullptr_t) noexcept:stream(nullptr) {}
 
-    IstreamPointer(UnusedIstreamPtr src,
-                   IstreamHandler &handler,
-                   FdTypeMask direct=0) noexcept;
+	IstreamPointer(UnusedIstreamPtr src,
+		       IstreamHandler &handler,
+		       FdTypeMask direct=0) noexcept;
 
-    IstreamPointer(IstreamPointer &&other) noexcept
-        :stream(std::exchange(other.stream, nullptr)) {}
+	IstreamPointer(IstreamPointer &&other) noexcept
+		:stream(std::exchange(other.stream, nullptr)) {}
 
-    IstreamPointer(const IstreamPointer &) = delete;
-    IstreamPointer &operator=(const IstreamPointer &) = delete;
+	IstreamPointer(const IstreamPointer &) = delete;
+	IstreamPointer &operator=(const IstreamPointer &) = delete;
 
-    bool IsDefined() const noexcept {
-        return stream != nullptr;
-    }
+	bool IsDefined() const noexcept {
+		return stream != nullptr;
+	}
 
-    void Clear() noexcept {
-        stream = nullptr;
-    }
+	void Clear() noexcept {
+		stream = nullptr;
+	}
 
-    void Close() noexcept {
-        assert(IsDefined());
+	void Close() noexcept {
+		assert(IsDefined());
 
-        stream->Close();
-    }
+		stream->Close();
+	}
 
-    void ClearAndClose() noexcept {
-        assert(IsDefined());
+	void ClearAndClose() noexcept {
+		assert(IsDefined());
 
-        auto *old = stream;
-        Clear();
-        old->Close();
-    }
+		auto *old = stream;
+		Clear();
+		old->Close();
+	}
 
-    UnusedIstreamPtr Steal() noexcept;
+	UnusedIstreamPtr Steal() noexcept;
 
-    void Set(UnusedIstreamPtr _stream,
-             IstreamHandler &handler,
-             FdTypeMask direct=0) noexcept;
+	void Set(UnusedIstreamPtr _stream,
+		 IstreamHandler &handler,
+		 FdTypeMask direct=0) noexcept;
 
-    void Set(Istream &_stream,
-             IstreamHandler &handler,
-             FdTypeMask direct=0) noexcept {
-        assert(!IsDefined());
+	void Set(Istream &_stream,
+		 IstreamHandler &handler,
+		 FdTypeMask direct=0) noexcept {
+		assert(!IsDefined());
 
-        stream = &_stream;
-        stream->SetHandler(handler, direct);
-    }
+		stream = &_stream;
+		stream->SetHandler(handler, direct);
+	}
 
-    template<typename I>
-    void Replace(I &&_stream,
-                 IstreamHandler &handler,
-                 FdTypeMask direct=0) noexcept {
-        Close();
+	template<typename I>
+	void Replace(I &&_stream,
+		     IstreamHandler &handler,
+		     FdTypeMask direct=0) noexcept {
+		Close();
 
 #ifndef NDEBUG
-        /* must clear the pointer in the debug build to avoid
-           assertion failure in Set() */
-        Clear();
+		/* must clear the pointer in the debug build to avoid
+		   assertion failure in Set() */
+		Clear();
 #endif
 
-        Set(std::forward<I>(_stream), handler, direct);
-    }
+		Set(std::forward<I>(_stream), handler, direct);
+	}
 
-    void SetDirect(FdTypeMask direct) noexcept {
-        assert(IsDefined());
+	void SetDirect(FdTypeMask direct) noexcept {
+		assert(IsDefined());
 
-        stream->SetDirect(direct);
-    }
+		stream->SetDirect(direct);
+	}
 
-    void SetDirect(const Istream &src) noexcept {
-        SetDirect(src.GetHandlerDirect());
-    }
+	void SetDirect(const Istream &src) noexcept {
+		SetDirect(src.GetHandlerDirect());
+	}
 
-    void Read() noexcept {
-        assert(IsDefined());
+	void Read() noexcept {
+		assert(IsDefined());
 
-        stream->Read();
-    }
+		stream->Read();
+	}
 
-    void FillBucketList(IstreamBucketList &list) {
-        assert(IsDefined());
+	void FillBucketList(IstreamBucketList &list) {
+		assert(IsDefined());
 
-        try {
-            stream->FillBucketList(list);
-        } catch (...) {
-            /* if FillBucketList() fails, the Istream is destroyed, so
-               clear the pointer here */
-            Clear();
-            throw;
-        }
-    }
+		try {
+			stream->FillBucketList(list);
+		} catch (...) {
+			/* if FillBucketList() fails, the Istream is destroyed, so
+			   clear the pointer here */
+			Clear();
+			throw;
+		}
+	}
 
-    size_t ConsumeBucketList(size_t nbytes) noexcept {
-        assert(IsDefined());
+	size_t ConsumeBucketList(size_t nbytes) noexcept {
+		assert(IsDefined());
 
-        return stream->ConsumeBucketList(nbytes);
-    }
+		return stream->ConsumeBucketList(nbytes);
+	}
 
-    gcc_pure
-    off_t GetAvailable(bool partial) const noexcept {
-        assert(IsDefined());
+	gcc_pure
+	off_t GetAvailable(bool partial) const noexcept {
+		assert(IsDefined());
 
-        return stream->GetAvailable(partial);
-    }
+		return stream->GetAvailable(partial);
+	}
 
-    off_t Skip(off_t length) noexcept {
-        assert(IsDefined());
+	off_t Skip(off_t length) noexcept {
+		assert(IsDefined());
 
-        return stream->Skip(length);
-    }
+		return stream->Skip(length);
+	}
 
-    int AsFd() noexcept {
-        assert(IsDefined());
+	int AsFd() noexcept {
+		assert(IsDefined());
 
-        return stream->AsFd();
-    }
+		return stream->AsFd();
+	}
 };
-
-#endif
