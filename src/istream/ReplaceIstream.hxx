@@ -170,8 +170,10 @@ public:
 	void Settle(off_t offset) noexcept;
 	void Finish() noexcept;
 
-private:
+protected:
 	using FacadeIstream::GetPool;
+
+private:
 	using FacadeIstream::HasInput;
 
 	void DestroyReplace() noexcept;
