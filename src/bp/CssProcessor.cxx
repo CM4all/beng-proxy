@@ -37,28 +37,22 @@
 #include "widget/Widget.hxx"
 #include "widget/RewriteUri.hxx"
 #include "widget/Context.hxx"
-#include "pool/Holder.hxx"
-#include "pool/tpool.hxx"
 #include "escape_css.hxx"
 #include "istream/istream.hxx"
-#include "istream/Sink.hxx"
 #include "istream/ReplaceIstream.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/TeeIstream.hxx"
 #include "pool/pool.hxx"
 #include "stopwatch.hxx"
 
 #include <assert.h>
 #include <string.h>
 
-struct CssProcessor final : PoolHolder, IstreamSink {
+struct CssProcessor final : public ReplaceIstream {
 	const StopwatchPtr stopwatch;
 
 	Widget &container;
 	const SharedPoolPtr<WidgetContext> ctx;
 	const unsigned options;
-
-	SharedPoolPtr<ReplaceIstreamControl> replace;
 
 	CssParser parser;
 	bool had_input;
@@ -73,25 +67,23 @@ struct CssProcessor final : PoolHolder, IstreamSink {
 
 	CssProcessor(PoolPtr &&_pool, const StopwatchPtr &parent_stopwatch,
 		     UnusedIstreamPtr input,
-		     SharedPoolPtr<ReplaceIstreamControl> _replace,
 		     Widget &_container,
 		     SharedPoolPtr<WidgetContext> &&_ctx,
 		     unsigned _options) noexcept;
 
-	void Destroy() noexcept {
-		this->~CssProcessor();
-	}
-
-	using PoolHolder::GetPool;
+	using ReplaceIstream::GetPool;
 
 	/* virtual methods from class IstreamHandler */
 
 	size_t OnData(const void *data, size_t length) noexcept override {
-		return parser.Feed((const char *)data, length);
+		size_t nbytes = ReplaceIstream::OnData(data, length);
+		if (nbytes > 0)
+			parser.Feed((const char *)data, nbytes);
+
+		return nbytes;
 	}
 
 	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
 };
 
 static inline bool
@@ -113,11 +105,11 @@ css_processor_option_prefix_id(const CssProcessor *processor) noexcept
 }
 
 static void
-css_processor_replace_add(CssProcessor *processor,
+css_processor_replace_add(ReplaceIstream *processor,
 			  off_t start, off_t end,
 			  UnusedIstreamPtr istream) noexcept
 {
-	processor->replace->Add(start, end, std::move(istream));
+	processor->Add(start, end, std::move(istream));
 }
 
 /*
@@ -270,20 +262,8 @@ css_processor_parser_import(const CssParserValue *url, void *ctx) noexcept
 void
 CssProcessor::OnEof() noexcept
 {
-	input.Clear();
-
-	auto _replace = std::move(replace);
-	Destroy();
-
-	_replace->Finish();
-}
-
-void
-CssProcessor::OnError(std::exception_ptr) noexcept
-{
-	input.Clear();
-
-	Destroy();
+	ReplaceIstream::SetFinished();
+	ReplaceIstream::OnEof();
 }
 
 static constexpr CssParserHandler css_processor_parser_handler = {
@@ -304,15 +284,13 @@ inline
 CssProcessor::CssProcessor(PoolPtr &&_pool,
 			   const StopwatchPtr &parent_stopwatch,
 			   UnusedIstreamPtr _input,
-			   SharedPoolPtr<ReplaceIstreamControl> _replace,
 			   Widget &_container,
 			   SharedPoolPtr<WidgetContext> &&_ctx,
 			   unsigned _options) noexcept
-	:PoolHolder(std::move(_pool)), IstreamSink(std::move(_input)),
+	:ReplaceIstream(std::move(_pool), _ctx->event_loop, std::move(_input)),
 	 stopwatch(parent_stopwatch, "CssProcessor"),
 	 container(_container), ctx(std::move(_ctx)),
 	 options(_options),
-	 replace(std::move(_replace)),
 	 parser(false, css_processor_parser_handler, this)
 {
 }
@@ -327,20 +305,10 @@ css_processor(struct pool &caller_pool,
 {
 	auto pool = pool_new_linear(&caller_pool, "css_processor", 32768);
 
-	auto tee = NewTeeIstream(pool, std::move(input),
-				 ctx->event_loop,
-				 true);
-
-	auto tee2 = AddTeeIstream(tee, true);
-
-	auto replace = istream_replace_new(ctx->event_loop, pool,
-					   std::move(tee));
-
-	NewFromPool<CssProcessor>(std::move(pool), parent_stopwatch,
-				  std::move(tee2),
-				  std::move(replace.second),
-				  widget, std::move(ctx),
-				  options);
-
-	return std::move(replace.first);
+	auto *processor =
+		NewFromPool<CssProcessor>(std::move(pool), parent_stopwatch,
+					  std::move(input),
+					  widget, std::move(ctx),
+					  options);
+	return UnusedIstreamPtr(processor);
 }
