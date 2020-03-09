@@ -57,6 +57,7 @@ Context::ReadBuckets(size_t limit)
 
 		if (expected_result && record) {
 			assert(skipped + buffer.size() == offset);
+			assert(offset + b.size <= strlen(expected_result));
 			assert(memcmp((const char *)expected_result + skipped + buffer.size(),
 				      b.data, b.size) == 0);
 
@@ -123,6 +124,7 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
 
 	if (expected_result && record) {
 		assert(skipped + buffer.size() == offset);
+		assert(offset + length <= strlen(expected_result));
 		assert(memcmp((const char *)expected_result + skipped + buffer.size(), data, length) == 0);
 
 		buffer.append((const char *)data, length);
