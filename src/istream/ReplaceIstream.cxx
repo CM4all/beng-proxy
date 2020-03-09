@@ -441,7 +441,7 @@ istream_replace_new(EventLoop &event_loop, struct pool &pool,
 	return std::make_pair(UnusedIstreamPtr(i), i->GetControl());
 }
 
-inline void
+void
 ReplaceIstream::Add(off_t start, off_t end,
 		    UnusedIstreamPtr contents) noexcept
 {
@@ -534,7 +534,7 @@ ReplaceIstreamControl::Settle(off_t offset) noexcept
 		replace->Settle(offset);
 }
 
-inline void
+void
 ReplaceIstream::Finish() noexcept
 {
 	assert(!finished);
