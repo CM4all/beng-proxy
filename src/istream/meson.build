@@ -38,7 +38,6 @@ istream_basic = static_library(
   'istream_memory.cxx',
   'istream_null.cxx',
   'istream_string.cxx',
-  'istream_trace.cxx',
 
   # IstreamSink implementations
   'StringSink.cxx',
