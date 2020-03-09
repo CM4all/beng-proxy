@@ -34,6 +34,7 @@
 #include "istream/ReplaceIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/New.hxx"
 
 class IstreamReplaceTestTraits {
 public:
@@ -50,11 +51,11 @@ public:
 
 	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
 				    UnusedIstreamPtr input) const noexcept {
-		auto replace = istream_replace_new(event_loop, pool, std::move(input));
-		replace.second->Add(0, 0, nullptr);
-		replace.second->Add(3, 3, nullptr);
-		replace.second->Finish();
-		return std::move(replace.first);
+		auto *replace = NewIstream<ReplaceIstream>(pool, event_loop, std::move(input));
+		replace->Add(0, 0, nullptr);
+		replace->Add(3, 3, nullptr);
+		replace->Finish();
+		return UnusedIstreamPtr(replace);
 	}
 };
 
@@ -79,12 +80,12 @@ public:
 				    UnusedIstreamPtr input) const noexcept {
 		auto istream =
 			istream_string_new(pool, "abcdefghijklmnopqrstuvwxyz");
-		auto replace = istream_replace_new(event_loop, pool, std::move(istream));
-		replace.second->Add(3, 3, std::move(input));
-		replace.second->Extend(3, 4);
-		replace.second->Extend(3, 5);
-		replace.second->Finish();
-		return std::move(replace.first);
+		auto *replace = NewIstream<ReplaceIstream>(pool, event_loop, std::move(istream));
+		replace->Add(3, 3, std::move(input));
+		replace->Extend(3, 4);
+		replace->Extend(3, 5);
+		replace->Finish();
+		return UnusedIstreamPtr(replace);
 	}
 };
 

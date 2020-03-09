@@ -139,8 +139,7 @@ ReplaceIstream::Substitution::OnError(std::exception_ptr ep) noexcept
 ReplaceIstream::ReplaceIstream(struct pool &p, EventLoop &event_loop,
 			       UnusedIstreamPtr _input) noexcept
 	:FacadeIstream(p, std::move(_input)),
-	 defer_read(event_loop, BIND_THIS_METHOD(DeferredRead)),
-	 control(SharedPoolPtr<ReplaceIstreamControl>::Make(p, *this))
+	 defer_read(event_loop, BIND_THIS_METHOD(DeferredRead))
 {
 }
 
@@ -428,19 +427,6 @@ ReplaceIstream::_Close() noexcept
 	Destroy();
 }
 
-/*
- * constructor
- *
- */
-
-std::pair<UnusedIstreamPtr, SharedPoolPtr<ReplaceIstreamControl>>
-istream_replace_new(EventLoop &event_loop, struct pool &pool,
-		    UnusedIstreamPtr input) noexcept
-{
-	auto *i = NewIstream<ReplaceIstream>(pool, event_loop, std::move(input));
-	return std::make_pair(UnusedIstreamPtr(i), i->GetControl());
-}
-
 void
 ReplaceIstream::Add(off_t start, off_t end,
 		    UnusedIstreamPtr contents) noexcept
@@ -469,14 +455,6 @@ ReplaceIstream::Add(off_t start, off_t end,
 	defer_read.Schedule();
 }
 
-void
-ReplaceIstreamControl::Add(off_t start, off_t end,
-			   UnusedIstreamPtr contents) noexcept
-{
-	if (replace != nullptr)
-		replace->Add(start, end, std::move(contents));
-}
-
 inline ReplaceIstream::Substitution *
 ReplaceIstream::GetLastSubstitution() noexcept
 {
@@ -491,7 +469,7 @@ ReplaceIstream::GetLastSubstitution() noexcept
 	return substitution;
 }
 
-inline void
+void
 ReplaceIstream::Extend(gcc_unused off_t start, off_t end) noexcept
 {
 	assert(!finished);
@@ -510,13 +488,6 @@ ReplaceIstream::Extend(gcc_unused off_t start, off_t end) noexcept
 }
 
 void
-ReplaceIstreamControl::Extend(off_t start, off_t end) noexcept
-{
-	if (replace != nullptr)
-		replace->Extend(start, end);
-}
-
-inline void
 ReplaceIstream::Settle(off_t offset) noexcept
 {
 	assert(!finished);
@@ -528,13 +499,6 @@ ReplaceIstream::Settle(off_t offset) noexcept
 }
 
 void
-ReplaceIstreamControl::Settle(off_t offset) noexcept
-{
-	if (replace != nullptr)
-		replace->Settle(offset);
-}
-
-void
 ReplaceIstream::Finish() noexcept
 {
 	assert(!finished);
@@ -543,11 +507,4 @@ ReplaceIstream::Finish() noexcept
 
 	if (!HasInput())
 		ReadCheckEmpty();
-}
-
-void
-ReplaceIstreamControl::Finish() noexcept
-{
-	if (replace != nullptr)
-		replace->Finish();
 }
