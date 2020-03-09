@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,21 +38,21 @@ class UnusedIstreamPtr;
 
 class DechunkHandler {
 public:
-    /**
-     * Called as soon as the dechunker has seen the end chunk in data
-     * provided by the input.  At this time, the end chunk may not yet
-     * ready to be processed, but it's an indicator that input's
-     * underlying socket is done.
-     */
-    virtual void OnDechunkEndSeen() noexcept = 0;
+	/**
+	 * Called as soon as the dechunker has seen the end chunk in data
+	 * provided by the input.  At this time, the end chunk may not yet
+	 * ready to be processed, but it's an indicator that input's
+	 * underlying socket is done.
+	 */
+	virtual void OnDechunkEndSeen() noexcept = 0;
 
-    /**
-     * Called after the end chunk has been consumed from the input,
-     * right before calling IstreamHandler::OnEof().
-     *
-     * @return false if the caller shall close its input
-     */
-    virtual bool OnDechunkEnd() noexcept = 0;
+	/**
+	 * Called after the end chunk has been consumed from the input,
+	 * right before calling IstreamHandler::OnEof().
+	 *
+	 * @return false if the caller shall close its input
+	 */
+	virtual bool OnDechunkEnd() noexcept = 0;
 };
 
 /**
@@ -65,8 +65,8 @@ public:
  */
 UnusedIstreamPtr
 istream_dechunk_new(struct pool &pool, UnusedIstreamPtr input,
-                    EventLoop &event_loop,
-                    DechunkHandler &dechunk_handler) noexcept;
+		    EventLoop &event_loop,
+		    DechunkHandler &dechunk_handler) noexcept;
 
 /**
  * Check if the parameter is an istream_dechunk, and if so, switch to

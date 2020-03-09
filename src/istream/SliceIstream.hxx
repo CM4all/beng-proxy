@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,13 +41,13 @@ class SliceBuffer;
  * A variant of #MemoryIstream which frees memory to a #SlicePool.
  */
 class SliceIstream final : public MemoryIstream {
-    SliceAllocation allocation;
+	SliceAllocation allocation;
 
 public:
-    SliceIstream(struct pool &p, SliceAllocation &&_allocation,
-                 size_t _size) noexcept
-        :MemoryIstream(p, {_allocation.data, _size}),
-         allocation(std::move(_allocation)) {}
+	SliceIstream(struct pool &p, SliceAllocation &&_allocation,
+		     size_t _size) noexcept
+		:MemoryIstream(p, {_allocation.data, _size}),
+		 allocation(std::move(_allocation)) {}
 
-    SliceIstream(struct pool &p, SliceBuffer &&src) noexcept;
+	SliceIstream(struct pool &p, SliceBuffer &&src) noexcept;
 };

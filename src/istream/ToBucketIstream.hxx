@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -43,31 +43,31 @@
  * into its own buffer and make it available in a bucket.
  */
 class ToBucketIstream final : public FacadeIstream {
-    SliceFifoBuffer buffer;
+	SliceFifoBuffer buffer;
 
-    DeferEvent defer_read;
+	DeferEvent defer_read;
 
 public:
-    ToBucketIstream(struct pool &_pool, EventLoop &_event_loop,
-                    UnusedIstreamPtr &&_input) noexcept;
+	ToBucketIstream(struct pool &_pool, EventLoop &_event_loop,
+			UnusedIstreamPtr &&_input) noexcept;
 
 private:
-    void DeferredRead() noexcept {
-        input.Read();
-    }
+	void DeferredRead() noexcept {
+		input.Read();
+	}
 
 protected:
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    void _Read() noexcept override;
-    void _FillBucketList(IstreamBucketList &list) override;
-    size_t _ConsumeBucketList(size_t nbytes) noexcept override;
-    void _Close() noexcept override;
+	void _Read() noexcept override;
+	void _FillBucketList(IstreamBucketList &list) override;
+	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
+	void _Close() noexcept override;
 
-    /* virtual methods from class IstreamHandler */
+	/* virtual methods from class IstreamHandler */
 
-    bool OnIstreamReady() noexcept override;
-    size_t OnData(const void *data, size_t length) noexcept override;
-    void OnEof() noexcept override;
-    void OnError(std::exception_ptr ep) noexcept override;
+	bool OnIstreamReady() noexcept override;
+	size_t OnData(const void *data, size_t length) noexcept override;
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,40 +38,40 @@
 off_t
 MemoryIstream::_Skip(off_t length) noexcept
 {
-    size_t nbytes = std::min(off_t(data.size), length);
-    data.skip_front(nbytes);
-    Consumed(nbytes);
-    return nbytes;
+	size_t nbytes = std::min(off_t(data.size), length);
+	data.skip_front(nbytes);
+	Consumed(nbytes);
+	return nbytes;
 }
 
 void
 MemoryIstream::_Read() noexcept
 {
-    if (!data.empty()) {
-        auto nbytes = InvokeData(data.data, data.size);
-        if (nbytes == 0)
-            return;
+	if (!data.empty()) {
+		auto nbytes = InvokeData(data.data, data.size);
+		if (nbytes == 0)
+			return;
 
-        data.skip_front(nbytes);
-    }
+		data.skip_front(nbytes);
+	}
 
-    if (data.empty())
-        DestroyEof();
+	if (data.empty())
+		DestroyEof();
 }
 
 void
 MemoryIstream::_FillBucketList(IstreamBucketList &list) noexcept
 {
-    if (!data.empty())
-        list.Push(data.ToVoid());
+	if (!data.empty())
+		list.Push(data.ToVoid());
 }
 
 size_t
 MemoryIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
-    if (nbytes > data.size)
-        nbytes = data.size;
-    data.skip_front(nbytes);
-    Consumed(nbytes);
-    return nbytes;
+	if (nbytes > data.size)
+		nbytes = data.size;
+	data.skip_front(nbytes);
+	Consumed(nbytes);
+	return nbytes;
 }

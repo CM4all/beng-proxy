@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_SINK_CLOSE_HXX
-#define BENG_PROXY_SINK_CLOSE_HXX
+#pragma once
 
 struct pool;
 class UnusedIstreamPtr;
@@ -46,5 +45,3 @@ sink_close_new(struct pool &p, UnusedIstreamPtr istream);
 
 void
 sink_close_read(SinkClose &sink) noexcept;
-
-#endif

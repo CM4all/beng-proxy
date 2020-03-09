@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,16 +37,16 @@
 
 class BlockIstream final : public Istream {
 public:
-    explicit BlockIstream(struct pool &p):Istream(p) {}
+	explicit BlockIstream(struct pool &p):Istream(p) {}
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    void _Read() noexcept override {
-    }
+	void _Read() noexcept override {
+	}
 };
 
 UnusedIstreamPtr
 istream_block_new(struct pool &pool) noexcept
 {
-    return NewIstreamPtr<BlockIstream>(pool);
+	return NewIstreamPtr<BlockIstream>(pool);
 }

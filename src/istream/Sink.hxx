@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_SINK_HXX
-#define BENG_PROXY_ISTREAM_SINK_HXX
+#pragma once
 
 #include "Handler.hxx"
 #include "Pointer.hxx"
@@ -42,31 +41,29 @@
  */
 class IstreamSink : protected IstreamHandler {
 protected:
-    IstreamPointer input;
+	IstreamPointer input;
 
-    IstreamSink() noexcept
-        :input(nullptr) {}
+	IstreamSink() noexcept
+	:input(nullptr) {}
 
-    template<typename I>
-    explicit IstreamSink(I &&_input, FdTypeMask direct=0) noexcept
-        :input(std::forward<I>(_input), *this, direct) {}
+	template<typename I>
+	explicit IstreamSink(I &&_input, FdTypeMask direct=0) noexcept
+		:input(std::forward<I>(_input), *this, direct) {}
 
-    bool HasInput() const noexcept {
-        return input.IsDefined();
-    }
+	bool HasInput() const noexcept {
+		return input.IsDefined();
+	}
 
-    template<typename I>
-    void SetInput(I &&_input, FdTypeMask direct=0) noexcept  {
-        input.Set(std::forward<I>(_input), *this, direct);
-    }
+	template<typename I>
+	void SetInput(I &&_input, FdTypeMask direct=0) noexcept  {
+		input.Set(std::forward<I>(_input), *this, direct);
+	}
 
-    void ClearInput() noexcept {
-        input.Clear();
-    }
+	void ClearInput() noexcept {
+		input.Clear();
+	}
 
-    void ClearAndCloseInput() noexcept {
-        input.ClearAndClose();
-    }
+	void ClearAndCloseInput() noexcept {
+		input.ClearAndClose();
+	}
 };
-
-#endif

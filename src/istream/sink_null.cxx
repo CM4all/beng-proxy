@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,24 +37,24 @@
 
 class SinkNull final : IstreamSink {
 public:
-    explicit SinkNull(UnusedIstreamPtr &&_input)
-        :IstreamSink(std::move(_input)) {}
+	explicit SinkNull(UnusedIstreamPtr &&_input)
+		:IstreamSink(std::move(_input)) {}
 
-    /* virtual methods from class IstreamHandler */
+	/* virtual methods from class IstreamHandler */
 
-    size_t OnData(const void *, size_t length) noexcept override {
-        return length;
-    }
+	size_t OnData(const void *, size_t length) noexcept override {
+		return length;
+	}
 
-    void OnEof() noexcept override {
-    }
+	void OnEof() noexcept override {
+	}
 
-    void OnError(std::exception_ptr) noexcept override {
-    }
+	void OnError(std::exception_ptr) noexcept override {
+	}
 };
 
 void
 sink_null_new(struct pool &p, UnusedIstreamPtr istream)
 {
-    NewFromPool<SinkNull>(p, std::move(istream));
+	NewFromPool<SinkNull>(p, std::move(istream));
 }

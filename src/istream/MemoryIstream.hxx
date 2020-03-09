@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,27 +38,27 @@
 #include <stdint.h>
 
 class MemoryIstream : public Istream {
-    ConstBuffer<uint8_t> data;
+	ConstBuffer<uint8_t> data;
 
 public:
-    MemoryIstream(struct pool &p, const void *_data, size_t length) noexcept
-        :Istream(p),
-         data((const uint8_t *)_data, length) {}
+	MemoryIstream(struct pool &p, const void *_data, size_t length) noexcept
+		:Istream(p),
+		 data((const uint8_t *)_data, length) {}
 
-    MemoryIstream(struct pool &p, ConstBuffer<uint8_t> _data) noexcept
-        :Istream(p), data(_data) {}
+	MemoryIstream(struct pool &p, ConstBuffer<uint8_t> _data) noexcept
+		:Istream(p), data(_data) {}
 
-    MemoryIstream(struct pool &p, ConstBuffer<void> _data) noexcept
-        :MemoryIstream(p, ConstBuffer<uint8_t>::FromVoid(_data)) {}
+	MemoryIstream(struct pool &p, ConstBuffer<void> _data) noexcept
+		:MemoryIstream(p, ConstBuffer<uint8_t>::FromVoid(_data)) {}
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(gcc_unused bool partial) noexcept override {
-        return data.size;
-    }
+	off_t _GetAvailable(gcc_unused bool partial) noexcept override {
+		return data.size;
+	}
 
-    off_t _Skip(off_t length) noexcept override;
-    void _Read() noexcept override;
-    void _FillBucketList(IstreamBucketList &list) noexcept override;
-    size_t _ConsumeBucketList(size_t nbytes) noexcept override;
+	off_t _Skip(off_t length) noexcept override;
+	void _Read() noexcept override;
+	void _FillBucketList(IstreamBucketList &list) noexcept override;
+	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
 };

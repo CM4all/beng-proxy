@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,105 +38,105 @@
 #include <string.h>
 
 ToBucketIstream::ToBucketIstream(struct pool &_pool,
-                                 EventLoop &_event_loop,
-                                 UnusedIstreamPtr &&_input) noexcept
-    :FacadeIstream(_pool, std::move(_input)),
-     defer_read(_event_loop, BIND_THIS_METHOD(DeferredRead)) {}
+				 EventLoop &_event_loop,
+				 UnusedIstreamPtr &&_input) noexcept
+	:FacadeIstream(_pool, std::move(_input)),
+	 defer_read(_event_loop, BIND_THIS_METHOD(DeferredRead)) {}
 
 gcc_noreturn
 void
 ToBucketIstream::_Read() noexcept
 {
-    gcc_unreachable();
+	gcc_unreachable();
 }
 
 void
 ToBucketIstream::_FillBucketList(IstreamBucketList &list)
 {
-    auto r = buffer.Read();
-    if (!r.empty()) {
-        list.Push(r.ToVoid());
-        list.SetMore();
-        return;
-    }
+	auto r = buffer.Read();
+	if (!r.empty()) {
+		list.Push(r.ToVoid());
+		list.SetMore();
+		return;
+	}
 
-    if (!HasInput())
-        return;
+	if (!HasInput())
+		return;
 
-    IstreamBucketList tmp;
-    input.FillBucketList(tmp);
-    if (tmp.IsEmpty()) {
-        if (tmp.HasMore()) {
-            /* no data yet or FillBucketList() not implemented: invoke
-               its old-style Read() method */
-            defer_read.Schedule();
-            list.SetMore();
-        } else {
-            /* end of file */
-            ClearAndCloseInput();
-        }
+	IstreamBucketList tmp;
+	input.FillBucketList(tmp);
+	if (tmp.IsEmpty()) {
+		if (tmp.HasMore()) {
+			/* no data yet or FillBucketList() not implemented: invoke
+			   its old-style Read() method */
+			defer_read.Schedule();
+			list.SetMore();
+		} else {
+			/* end of file */
+			ClearAndCloseInput();
+		}
 
-        return;
-    }
+		return;
+	}
 
-    list.SpliceBuffersFrom(tmp);
+	list.SpliceBuffersFrom(tmp);
 }
 
 size_t
 ToBucketIstream::_ConsumeBucketList(size_t nbytes) noexcept
 {
-    if (!buffer.empty()) {
-        size_t available = buffer.GetAvailable();
-        size_t consumed = std::min(nbytes, available);
-        buffer.Consume(consumed);
-        buffer.FreeIfEmpty();
-        return consumed;
-    }
+	if (!buffer.empty()) {
+		size_t available = buffer.GetAvailable();
+		size_t consumed = std::min(nbytes, available);
+		buffer.Consume(consumed);
+		buffer.FreeIfEmpty();
+		return consumed;
+	}
 
-    if (HasInput())
-        return input.ConsumeBucketList(nbytes);
+	if (HasInput())
+		return input.ConsumeBucketList(nbytes);
 
-    return 0;
+	return 0;
 }
 
 void
 ToBucketIstream::_Close() noexcept
 {
-    if (HasInput())
-        input.Close();
+	if (HasInput())
+		input.Close();
 
-    Destroy();
+	Destroy();
 }
 
 bool
 ToBucketIstream::OnIstreamReady() noexcept
 {
-    defer_read.Cancel();
-    return InvokeReady();
+	defer_read.Cancel();
+	return InvokeReady();
 }
 
 size_t
 ToBucketIstream::OnData(const void *data, size_t length) noexcept
 {
-    defer_read.Cancel();
+	defer_read.Cancel();
 
-    buffer.AllocateIfNull(fb_pool_get());
-    auto w = buffer.Write();
-    size_t nbytes = std::min(length, w.size);
-    memcpy(w.data, data, nbytes);
-    return nbytes;
+	buffer.AllocateIfNull(fb_pool_get());
+	auto w = buffer.Write();
+	size_t nbytes = std::min(length, w.size);
+	memcpy(w.data, data, nbytes);
+	return nbytes;
 }
 
 void
 ToBucketIstream::OnEof() noexcept
 {
-    ClearInput();
-    DestroyEof();
+	ClearInput();
+	DestroyEof();
 }
 
 void
 ToBucketIstream::OnError(std::exception_ptr ep) noexcept
 {
-    ClearInput();
-    DestroyError(std::move(ep));
+	ClearInput();
+	DestroyError(std::move(ep));
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,39 +42,39 @@ static constexpr uint8_t zero_buffer[4096]{};
 
 class ZeroIstream final : public Istream {
 public:
-    explicit ZeroIstream(struct pool &_pool):Istream(_pool) {}
+	explicit ZeroIstream(struct pool &_pool):Istream(_pool) {}
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) noexcept override {
-        return partial
-            ? INT_MAX
-            : -1;
-    }
+	off_t _GetAvailable(bool partial) noexcept override {
+		return partial
+			? INT_MAX
+			: -1;
+	}
 
-    off_t _Skip(off_t length) noexcept override {
-        Consumed(length);
-        return length;
-    }
+	off_t _Skip(off_t length) noexcept override {
+		Consumed(length);
+		return length;
+	}
 
-    void _Read() noexcept override {
-        InvokeData(zero_buffer, sizeof(zero_buffer));
-    }
+	void _Read() noexcept override {
+		InvokeData(zero_buffer, sizeof(zero_buffer));
+	}
 
-    void _FillBucketList(IstreamBucketList &list) noexcept override {
-        list.SetMore();
+	void _FillBucketList(IstreamBucketList &list) noexcept override {
+		list.SetMore();
 
-        while (!list.IsFull())
-            list.Push({zero_buffer, sizeof(zero_buffer)});
-    }
+		while (!list.IsFull())
+			list.Push({zero_buffer, sizeof(zero_buffer)});
+	}
 
-    size_t _ConsumeBucketList(size_t nbytes) noexcept override {
-        return nbytes;
-    }
+	size_t _ConsumeBucketList(size_t nbytes) noexcept override {
+		return nbytes;
+	}
 };
 
 UnusedIstreamPtr
 istream_zero_new(struct pool &pool) noexcept
 {
-    return NewIstreamPtr<ZeroIstream>(pool);
+	return NewIstreamPtr<ZeroIstream>(pool);
 }

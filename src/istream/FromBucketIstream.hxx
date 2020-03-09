@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -43,12 +43,12 @@
  */
 class FromBucketIstream final : public ForwardIstream, DestructAnchor {
 public:
-    FromBucketIstream(struct pool &_pool, UnusedIstreamPtr &&_input) noexcept;
+	FromBucketIstream(struct pool &_pool, UnusedIstreamPtr &&_input) noexcept;
 
 protected:
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    void _Read() noexcept override;
-    void _FillBucketList(IstreamBucketList &list) override;
-    void _Close() noexcept override;
+	void _Read() noexcept override;
+	void _FillBucketList(IstreamBucketList &list) override;
+	void _Close() noexcept override;
 };

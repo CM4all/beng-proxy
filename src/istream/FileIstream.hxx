@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -45,9 +45,9 @@ class UniqueFileDescriptor;
 
 Istream *
 istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
-                    const char *path,
-                    UniqueFileDescriptor fd, FdType fd_type,
-                    off_t length) noexcept;
+		    const char *path,
+		    UniqueFileDescriptor fd, FdType fd_type,
+		    off_t length) noexcept;
 
 /**
  * Opens a file and stats it.
@@ -56,14 +56,14 @@ istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
  */
 Istream *
 istream_file_stat_new(EventLoop &event_loop, struct pool &pool,
-                      const char *path, struct stat &st);
+		      const char *path, struct stat &st);
 
 /**
  * Throws exception on error.
  */
 Istream *
 istream_file_new(EventLoop &event_loop, struct pool &pool,
-                 const char *path, off_t length);
+		 const char *path, off_t length);
 
 FileDescriptor
 istream_file_fd(Istream &istream) noexcept;

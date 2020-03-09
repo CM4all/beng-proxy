@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -43,82 +43,82 @@
 
 /* ternary search tree */
 struct SubstNode {
-    SubstNode *parent, *left, *right, *equals;
-    char ch;
+	SubstNode *parent, *left, *right, *equals;
+	char ch;
 
-    struct {
-        const char *a;
-        size_t b_length;
-        char b[1];
-    } leaf;
+	struct {
+		const char *a;
+		size_t b_length;
+		char b[1];
+	} leaf;
 };
 
 class SubstIstream final : public FacadeIstream, DestructAnchor {
-    bool had_input, had_output;
+	bool had_input, had_output;
 
-    bool send_first;
+	bool send_first;
 
-    SubstTree tree;
+	SubstTree tree;
 
-    const SubstNode *match;
-    StringView mismatch = nullptr;
+	const SubstNode *match;
+	StringView mismatch = nullptr;
 
-    enum class State {
-        /** searching the first matching character */
-        NONE,
+	enum class State {
+		/** searching the first matching character */
+		NONE,
 
-        /** at least the first character was found, checking for the
-            rest */
-        MATCH,
+		/** at least the first character was found, checking for the
+		    rest */
+		MATCH,
 
-        /** inserting the substitution */
-        INSERT,
-    } state = State::NONE;
-    size_t a_match, b_sent;
-
- public:
-    SubstIstream(struct pool &p, UnusedIstreamPtr &&_input, SubstTree &&_tree) noexcept
-        :FacadeIstream(p, std::move(_input)), tree(std::move(_tree)) {}
-
-private:
-    /** find the first occurence of a "first character" in the buffer */
-    const char *FindFirstChar(const char *data, size_t length) noexcept;
-
-    /**
-     * Write data from "b".
-     *
-     * @return the number of bytes remaining
-     */
-    size_t TryWriteB() noexcept;
-
-    bool FeedMismatch() noexcept;
-    bool WriteMismatch() noexcept;
-
-    /**
-     * Forwards source data to the istream handler.
-     *
-     * @return (size_t)-1 when everything has been consumed, or the
-     * correct return value for the data() callback.
-     */
-    size_t ForwardSourceData(const char *start,
-                             const char *p, size_t length) noexcept;
-    size_t ForwardSourceDataFinal(const char *start,
-                                  const char *end, const char *p) noexcept;
-
-    size_t Feed(const void *data, size_t length) noexcept;
+		/** inserting the substitution */
+		INSERT,
+	} state = State::NONE;
+	size_t a_match, b_sent;
 
 public:
-    /* virtual methods from class Istream */
+	SubstIstream(struct pool &p, UnusedIstreamPtr &&_input, SubstTree &&_tree) noexcept
+		:FacadeIstream(p, std::move(_input)), tree(std::move(_tree)) {}
 
-    void _Read() noexcept override;
-    void _Close() noexcept override;
+private:
+	/** find the first occurence of a "first character" in the buffer */
+	const char *FindFirstChar(const char *data, size_t length) noexcept;
 
-    /* istream handler */
+	/**
+	 * Write data from "b".
+	 *
+	 * @return the number of bytes remaining
+	 */
+	size_t TryWriteB() noexcept;
 
-    size_t OnData(const void *data, size_t length) noexcept override;
+	bool FeedMismatch() noexcept;
+	bool WriteMismatch() noexcept;
 
-    void OnEof() noexcept override;
-    void OnError(std::exception_ptr ep) noexcept override;
+	/**
+	 * Forwards source data to the istream handler.
+	 *
+	 * @return (size_t)-1 when everything has been consumed, or the
+	 * correct return value for the data() callback.
+	 */
+	size_t ForwardSourceData(const char *start,
+				 const char *p, size_t length) noexcept;
+	size_t ForwardSourceDataFinal(const char *start,
+				      const char *end, const char *p) noexcept;
+
+	size_t Feed(const void *data, size_t length) noexcept;
+
+public:
+	/* virtual methods from class Istream */
+
+	void _Read() noexcept override;
+	void _Close() noexcept override;
+
+	/* istream handler */
+
+	size_t OnData(const void *data, size_t length) noexcept override;
+
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
 };
 
 /*
@@ -131,25 +131,25 @@ gcc_pure
 static const SubstNode *
 subst_find_char(const SubstNode *node, char ch) noexcept
 {
-    assert(node != nullptr);
+	assert(node != nullptr);
 
-    if (ch == 0)
-        /* we cannot support null bytes */
-        return nullptr;
+	if (ch == 0)
+		/* we cannot support null bytes */
+		return nullptr;
 
-    do {
-        if (node->ch == ch) {
-            assert(node->equals != nullptr);
-            return node->equals;
-        }
+	do {
+		if (node->ch == ch) {
+			assert(node->equals != nullptr);
+			return node->equals;
+		}
 
-        if (ch < node->ch)
-            node = node->left;
-        else
-            node = node->right;
-    } while (node != nullptr);
+		if (ch < node->ch)
+			node = node->left;
+		else
+			node = node->right;
+	} while (node != nullptr);
 
-    return nullptr;
+	return nullptr;
 }
 
 /** find the leaf ending the current search word */
@@ -157,19 +157,19 @@ gcc_pure
 static const SubstNode *
 subst_find_leaf(const SubstNode *node) noexcept
 {
-    assert(node != nullptr);
+	assert(node != nullptr);
 
-    do {
-        if (node->ch == 0)
-            return node;
+	do {
+		if (node->ch == 0)
+			return node;
 
-        if (0 < node->ch)
-            node = node->left;
-        else
-            node = node->right;
-    } while (node != nullptr);
+		if (0 < node->ch)
+			node = node->left;
+		else
+			node = node->right;
+	} while (node != nullptr);
 
-    return nullptr;
+	return nullptr;
 }
 
 /**
@@ -185,18 +185,18 @@ gcc_pure
 static bool
 CheckMatch(const SubstNode *match, ConstBuffer<char> input) noexcept
 {
-    const char *p = input.data, *const end = p + input.size;
+	const char *p = input.data, *const end = p + input.size;
 
-    while (p < end) {
-        if (subst_find_leaf(match) != nullptr)
-            return true;
+	while (p < end) {
+		if (subst_find_leaf(match) != nullptr)
+			return true;
 
-        match = subst_find_char(match, *p++);
-        if (match == nullptr)
-            return false;
-    }
+		match = subst_find_char(match, *p++);
+		if (match == nullptr)
+			return false;
+	}
 
-    return true;
+	return true;
 }
 
 /** find any leaf which begins with the current partial match, used to
@@ -206,14 +206,14 @@ gcc_pure
 static const SubstNode *
 subst_find_any_leaf(const SubstNode *node) noexcept
 {
-    while (true) {
-        assert(node != nullptr);
+	while (true) {
+		assert(node != nullptr);
 
-        if (node->ch == 0)
-            return node;
+		if (node->ch == 0)
+			return node;
 
-        node = node->equals;
-    }
+		node = node->equals;
+	}
 }
 
 /** iterates over the current depth */
@@ -221,381 +221,381 @@ gcc_pure
 static const SubstNode *
 subst_next_non_leaf_node(const SubstNode *node, const SubstNode *root) noexcept
 {
-    /* dive into left wing first */
-    if (node->left != nullptr && node->left->ch != 0)
-        return node->left;
+	/* dive into left wing first */
+	if (node->left != nullptr && node->left->ch != 0)
+		return node->left;
 
-    /* if left does not exist, go right */
-    if (node->right != nullptr && node->right->ch != 0)
-        return node->right;
+	/* if left does not exist, go right */
+	if (node->right != nullptr && node->right->ch != 0)
+		return node->right;
 
-    /* this subtree is finished, go up */
-    while (true) {
-        /* don't go above our root */
-        if (node == root)
-            return nullptr;
+	/* this subtree is finished, go up */
+	while (true) {
+		/* don't go above our root */
+		if (node == root)
+			return nullptr;
 
-        assert(node->parent != nullptr);
+		assert(node->parent != nullptr);
 
-        if (node->parent->left == node) {
-            node = node->parent;
+		if (node->parent->left == node) {
+			node = node->parent;
 
-            /* only go to parent->right if we came from
-               parent->left */
-            if (node->right != nullptr && node->right->ch != 0)
-                return node;
-        } else {
-            node = node->parent;
-        }
-    }
+			/* only go to parent->right if we came from
+			   parent->left */
+			if (node->right != nullptr && node->right->ch != 0)
+				return node;
+		} else {
+			node = node->parent;
+		}
+	}
 }
 
 inline std::pair<const SubstNode *, const char *>
 SubstTree::FindFirstChar(const char *data, size_t length) const noexcept
 {
-    const char *const end = data + length;
-    const SubstNode *n = root;
-    const SubstNode *match = nullptr;
-    const char *min = nullptr;
+	const char *const end = data + length;
+	const SubstNode *n = root;
+	const SubstNode *match = nullptr;
+	const char *min = nullptr;
 
-    while (n != nullptr) {
-        assert(n->ch != 0);
+	while (n != nullptr) {
+		assert(n->ch != 0);
 
-        /* loop to find all instances of this start character, until
-           there is one where the rest also matches */
-        const char *p = data;
-        while (true) {
-            p = (const char *)memchr(p, n->ch, end - p);
-            if (p != nullptr && (min == nullptr || p < min)) {
-                if (!CheckMatch(n->equals, {p + 1, end})) {
-                    /* late mismatch; continue the loop to check if
-                       there are more of the current start
-                       character */
-                    ++p;
-                    continue;
-                }
+		/* loop to find all instances of this start character, until
+		   there is one where the rest also matches */
+		const char *p = data;
+		while (true) {
+			p = (const char *)memchr(p, n->ch, end - p);
+			if (p != nullptr && (min == nullptr || p < min)) {
+				if (!CheckMatch(n->equals, {p + 1, end})) {
+					/* late mismatch; continue the loop to check if
+					   there are more of the current start
+					   character */
+					++p;
+					continue;
+				}
 
-                assert(n->equals != nullptr);
-                match = n->equals;
-                min = p;
-            }
+				assert(n->equals != nullptr);
+				match = n->equals;
+				min = p;
+			}
 
-            break;
-        }
+			break;
+		}
 
-        /* check the next start character in the #SubstTree */
-        n = subst_next_non_leaf_node(n, root);
-    }
+		/* check the next start character in the #SubstTree */
+		n = subst_next_non_leaf_node(n, root);
+	}
 
-    return std::make_pair(match, min);
+	return std::make_pair(match, min);
 }
 
 inline const char *
 SubstIstream::FindFirstChar(const char *data, size_t length) noexcept
 {
-    auto x = tree.FindFirstChar(data, length);
-    match = x.first;
-    return x.second;
+	auto x = tree.FindFirstChar(data, length);
+	match = x.first;
+	return x.second;
 }
 
 size_t
 SubstIstream::TryWriteB() noexcept
 {
-    assert(state == State::INSERT);
-    assert(a_match > 0);
-    assert(match != nullptr);
-    assert(match->ch == 0);
-    assert(a_match == strlen(match->leaf.a));
+	assert(state == State::INSERT);
+	assert(a_match > 0);
+	assert(match != nullptr);
+	assert(match->ch == 0);
+	assert(a_match == strlen(match->leaf.a));
 
-    const size_t length = match->leaf.b_length - b_sent;
-    assert(length > 0);
+	const size_t length = match->leaf.b_length - b_sent;
+	assert(length > 0);
 
-    const size_t nbytes = InvokeData(match->leaf.b + b_sent, length);
-    assert(nbytes <= length);
-    if (nbytes > 0) {
-        /* note progress */
-        b_sent += nbytes;
+	const size_t nbytes = InvokeData(match->leaf.b + b_sent, length);
+	assert(nbytes <= length);
+	if (nbytes > 0) {
+		/* note progress */
+		b_sent += nbytes;
 
-        /* finished sending substitution? */
-        if (nbytes == length)
-            state = State::NONE;
-    }
+		/* finished sending substitution? */
+		if (nbytes == length)
+			state = State::NONE;
+	}
 
-    return length - nbytes;
+	return length - nbytes;
 }
 
 bool
 SubstIstream::FeedMismatch() noexcept
 {
-    assert(state == State::NONE);
-    assert(input.IsDefined());
-    assert(!mismatch.empty());
+	assert(state == State::NONE);
+	assert(input.IsDefined());
+	assert(!mismatch.empty());
 
-    if (send_first) {
-        const size_t nbytes = InvokeData(mismatch.data, 1);
-        if (nbytes == 0)
-            return true;
+	if (send_first) {
+		const size_t nbytes = InvokeData(mismatch.data, 1);
+		if (nbytes == 0)
+			return true;
 
-        mismatch.skip_front(1);
+		mismatch.skip_front(1);
 
-        if (mismatch.empty())
-            return false;
+		if (mismatch.empty())
+			return false;
 
-        send_first = false;
-    }
+		send_first = false;
+	}
 
-    const size_t nbytes = Feed(mismatch.data, mismatch.size);
-    if (nbytes == 0)
-        return true;
+	const size_t nbytes = Feed(mismatch.data, mismatch.size);
+	if (nbytes == 0)
+		return true;
 
-    assert(nbytes <= mismatch.size);
+	assert(nbytes <= mismatch.size);
 
-    mismatch.skip_front(nbytes);
+	mismatch.skip_front(nbytes);
 
-    return !mismatch.empty();
+	return !mismatch.empty();
 }
 
 bool
 SubstIstream::WriteMismatch() noexcept
 {
-    assert(!input.IsDefined() || state == State::NONE);
-    assert(!mismatch.empty());
+	assert(!input.IsDefined() || state == State::NONE);
+	assert(!mismatch.empty());
 
-    size_t nbytes = InvokeData(mismatch.data, mismatch.size);
-    if (nbytes == 0)
-        return true;
+	size_t nbytes = InvokeData(mismatch.data, mismatch.size);
+	if (nbytes == 0)
+		return true;
 
-    assert(nbytes <= mismatch.size);
+	assert(nbytes <= mismatch.size);
 
-    mismatch.skip_front(nbytes);
+	mismatch.skip_front(nbytes);
 
-    if (!mismatch.empty())
-        return true;
+	if (!mismatch.empty())
+		return true;
 
-    if (!input.IsDefined()) {
-        DestroyEof();
-        return true;
-    }
+	if (!input.IsDefined()) {
+		DestroyEof();
+		return true;
+	}
 
-    return false;
+	return false;
 }
 
 size_t
 SubstIstream::ForwardSourceData(const char *start,
-                                const char *p, size_t length) noexcept
+				const char *p, size_t length) noexcept
 {
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 
-    size_t nbytes = InvokeData(p, length);
-    if (destructed) {
-        /* stream has been closed - we must return 0 */
-        assert(nbytes == 0);
-        return 0;
-    }
+	size_t nbytes = InvokeData(p, length);
+	if (destructed) {
+		/* stream has been closed - we must return 0 */
+		assert(nbytes == 0);
+		return 0;
+	}
 
-    had_output = true;
+	had_output = true;
 
-    if (nbytes < length) {
-        /* blocking */
-        state = State::NONE;
-        return (p - start) + nbytes;
-    } else
-        /* everything has been consumed */
-        return (size_t)-1;
+	if (nbytes < length) {
+		/* blocking */
+		state = State::NONE;
+		return (p - start) + nbytes;
+	} else
+		/* everything has been consumed */
+		return (size_t)-1;
 }
 
 inline size_t
 SubstIstream::ForwardSourceDataFinal(const char *start,
-                                     const char *end, const char *p) noexcept
+				     const char *end, const char *p) noexcept
 {
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 
-    size_t nbytes = InvokeData(p, end - p);
-    if (nbytes > 0 || !destructed) {
-        had_output = true;
-        nbytes += (p - start);
-    }
+	size_t nbytes = InvokeData(p, end - p);
+	if (nbytes > 0 || !destructed) {
+		had_output = true;
+		nbytes += (p - start);
+	}
 
-    return nbytes;
+	return nbytes;
 }
 
 size_t
 SubstIstream::Feed(const void *_data, size_t length) noexcept
 {
-    assert(input.IsDefined());
+	assert(input.IsDefined());
 
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 
-    const char *const data0 = (const char *)_data, *data = data0, *p = data0,
-        *const end = p + length, *first = nullptr;
-    const SubstNode *n;
+	const char *const data0 = (const char *)_data, *data = data0, *p = data0,
+		*const end = p + length, *first = nullptr;
+	const SubstNode *n;
 
-    had_input = true;
+	had_input = true;
 
-    /* find new match */
+	/* find new match */
 
-    do {
-        assert(data >= data0);
-        assert(p >= data);
-        assert(p <= end);
+	do {
+		assert(data >= data0);
+		assert(p >= data);
+		assert(p <= end);
 
-        switch (state) {
-        case State::NONE:
-            /* find matching first char */
+		switch (state) {
+		case State::NONE:
+			/* find matching first char */
 
-            assert(first == nullptr);
+			assert(first == nullptr);
 
-            first = FindFirstChar(p, end - p);
-            if (first == nullptr)
-                /* no match, try to write and return */
-                return ForwardSourceDataFinal(data0, end, data);
+			first = FindFirstChar(p, end - p);
+			if (first == nullptr)
+				/* no match, try to write and return */
+				return ForwardSourceDataFinal(data0, end, data);
 
-            state = State::MATCH;
-            a_match = 1;
+			state = State::MATCH;
+			a_match = 1;
 
-            p = first + 1;
+			p = first + 1;
 
-            /* XXX check if match is full */
-            break;
+			/* XXX check if match is full */
+			break;
 
-        case State::MATCH:
-            /* now see if the rest matches; note that max_compare may be
-               0, but that isn't a problem */
+		case State::MATCH:
+			/* now see if the rest matches; note that max_compare may be
+			   0, but that isn't a problem */
 
-            n = subst_find_char(match, *p);
-            if (n != nullptr) {
-                /* next character matches */
+			n = subst_find_char(match, *p);
+			if (n != nullptr) {
+				/* next character matches */
 
-                ++a_match;
-                ++p;
-                match = n;
+				++a_match;
+				++p;
+				match = n;
 
-                n = subst_find_leaf(n);
-                if (n != nullptr) {
-                    /* full match */
+				n = subst_find_leaf(n);
+				if (n != nullptr) {
+					/* full match */
 
-                    match = n;
+					match = n;
 
-                    if (first != nullptr && first > data) {
-                        /* write the data chunk before the match */
+					if (first != nullptr && first > data) {
+						/* write the data chunk before the match */
 
-                        had_output = true;
+						had_output = true;
 
-                        const size_t chunk_length = first - data;
-                        const size_t nbytes =
-                            ForwardSourceData(data0, data, chunk_length);
-                        if (nbytes != (size_t)-1)
-                            return nbytes;
-                    }
+						const size_t chunk_length = first - data;
+						const size_t nbytes =
+							ForwardSourceData(data0, data, chunk_length);
+						if (nbytes != (size_t)-1)
+							return nbytes;
+					}
 
-                    /* move data pointer */
+					/* move data pointer */
 
-                    data = p;
-                    first = nullptr;
+					data = p;
+					first = nullptr;
 
-                    /* switch state */
+					/* switch state */
 
-                    if (n->leaf.b_length > 0) {
-                        state = State::INSERT;
-                        b_sent = 0;
-                    } else {
-                        state = State::NONE;
-                    }
-                }
-            } else {
-                /* mismatch. reset match indicator and find new one */
+					if (n->leaf.b_length > 0) {
+						state = State::INSERT;
+						b_sent = 0;
+					} else {
+						state = State::NONE;
+					}
+				}
+			} else {
+				/* mismatch. reset match indicator and find new one */
 
-                if (first != nullptr && (first > data ||
-                                         !mismatch.empty())) {
-                    /* write the data chunk before the (mis-)match */
+				if (first != nullptr && (first > data ||
+							 !mismatch.empty())) {
+					/* write the data chunk before the (mis-)match */
 
-                    had_output = true;
+					had_output = true;
 
-                    size_t chunk_length = first - data;
-                    if (!mismatch.empty())
-                        ++chunk_length;
+					size_t chunk_length = first - data;
+					if (!mismatch.empty())
+						++chunk_length;
 
-                    const size_t nbytes =
-                        ForwardSourceData(data0, data, chunk_length);
-                    if (nbytes != (size_t)-1)
-                        return nbytes;
-                } else {
-                    /* when re-parsing a mismatch, "first" must not be
-                       nullptr because we entered this function with
-                       state=NONE */
-                    assert(mismatch.empty());
-                }
+					const size_t nbytes =
+						ForwardSourceData(data0, data, chunk_length);
+					if (nbytes != (size_t)-1)
+						return nbytes;
+				} else {
+					/* when re-parsing a mismatch, "first" must not be
+					   nullptr because we entered this function with
+					   state=NONE */
+					assert(mismatch.empty());
+				}
 
-                /* move data pointer */
+				/* move data pointer */
 
-                data = p;
-                first = nullptr;
+				data = p;
+				first = nullptr;
 
-                /* switch state */
+				/* switch state */
 
-                /* seek any leaf to get a valid match->leaf.a which we
-                   can use to re-insert the partial match into the
-                   stream */
+				/* seek any leaf to get a valid match->leaf.a which we
+				   can use to re-insert the partial match into the
+				   stream */
 
-                state = State::NONE;
+				state = State::NONE;
 
-                if (mismatch.empty()) {
-                    send_first = true;
+				if (mismatch.empty()) {
+					send_first = true;
 
-                    n = subst_find_any_leaf(match);
-                    assert(n != nullptr);
-                    assert(n->ch == 0);
-                    mismatch = {n->leaf.a, a_match};
+					n = subst_find_any_leaf(match);
+					assert(n != nullptr);
+					assert(n->ch == 0);
+					mismatch = {n->leaf.a, a_match};
 
-                    if (FeedMismatch())
-                        return destructed ? 0 : data - data0;
-                }
-            }
+					if (FeedMismatch())
+						return destructed ? 0 : data - data0;
+				}
+			}
 
-            break;
+			break;
 
-        case State::INSERT:
-            /* there is a previous full match, copy data from b */
+		case State::INSERT:
+			/* there is a previous full match, copy data from b */
 
-            const size_t nbytes = TryWriteB();
-            if (nbytes > 0) {
-                if (destructed)
-                    return 0;
+			const size_t nbytes = TryWriteB();
+			if (nbytes > 0) {
+				if (destructed)
+					return 0;
 
-                assert(state == State::INSERT);
-                /* blocking */
-                return data - data0;
-            }
+				assert(state == State::INSERT);
+				/* blocking */
+				return data - data0;
+			}
 
-            assert(state == State::NONE);
+			assert(state == State::NONE);
 
-            break;
-        }
-    } while (p < end || state == State::INSERT);
+			break;
+		}
+	} while (p < end || state == State::INSERT);
 
-    size_t chunk_length;
-    if (first != nullptr)
-        /* we have found a partial match which we discard now, instead
-           we will write the chunk right before this match */
-        chunk_length = first - data;
-    else if (state == State::MATCH || state == State::INSERT)
-        chunk_length = 0;
-    else
-        /* there was no match (maybe a partial match which mismatched
-           at a later stage): pass everything */
-        chunk_length = end - data;
+	size_t chunk_length;
+	if (first != nullptr)
+		/* we have found a partial match which we discard now, instead
+		   we will write the chunk right before this match */
+		chunk_length = first - data;
+	else if (state == State::MATCH || state == State::INSERT)
+		chunk_length = 0;
+	else
+		/* there was no match (maybe a partial match which mismatched
+		   at a later stage): pass everything */
+		chunk_length = end - data;
 
-    if (chunk_length > 0) {
-        /* write chunk */
+	if (chunk_length > 0) {
+		/* write chunk */
 
-        had_output = true;
+		had_output = true;
 
-        const size_t nbytes = ForwardSourceData(data0, data, chunk_length);
-        if (nbytes != (size_t)-1)
-            return nbytes;
-    }
+		const size_t nbytes = ForwardSourceData(data0, data, chunk_length);
+		if (nbytes != (size_t)-1)
+			return nbytes;
+	}
 
-    return p - data0;
+	return p - data0;
 }
 
 /*
@@ -606,58 +606,58 @@ SubstIstream::Feed(const void *_data, size_t length) noexcept
 inline size_t
 SubstIstream::OnData(const void *data, size_t length) noexcept
 {
-    if (!mismatch.empty() && FeedMismatch())
-        return 0;
+	if (!mismatch.empty() && FeedMismatch())
+		return 0;
 
-    return Feed(data, length);
+	return Feed(data, length);
 }
 
 void
 SubstIstream::OnEof() noexcept
 {
-    assert(input.IsDefined());
+	assert(input.IsDefined());
 
-    input.Clear();
+	input.Clear();
 
-    switch (state) {
-        size_t nbytes;
+	switch (state) {
+		size_t nbytes;
 
-    case State::NONE:
-        break;
+	case State::NONE:
+		break;
 
-    case State::MATCH:
-        /* we're in the middle of a match, technically making this a
-           mismatch because we reach end of file before end of
-           match */
-        if (mismatch.empty()) {
-            const SubstNode *n = subst_find_any_leaf(match);
-            assert(n != nullptr);
-            assert(n->ch == 0);
+	case State::MATCH:
+		/* we're in the middle of a match, technically making this a
+		   mismatch because we reach end of file before end of
+		   match */
+		if (mismatch.empty()) {
+			const SubstNode *n = subst_find_any_leaf(match);
+			assert(n != nullptr);
+			assert(n->ch == 0);
 
-            mismatch = {n->leaf.a, a_match};
-            WriteMismatch();
-            return;
-        }
-        break;
+			mismatch = {n->leaf.a, a_match};
+			WriteMismatch();
+			return;
+		}
+		break;
 
-    case State::INSERT:
-        nbytes = TryWriteB();
-        if (nbytes > 0)
-            return;
-        break;
-    }
+	case State::INSERT:
+		nbytes = TryWriteB();
+		if (nbytes > 0)
+			return;
+		break;
+	}
 
-    if (state == State::NONE)
-        DestroyEof();
+	if (state == State::NONE)
+		DestroyEof();
 }
 
 void
 SubstIstream::OnError(std::exception_ptr ep) noexcept
 {
-    assert(input.IsDefined());
+	assert(input.IsDefined());
 
-    input.Clear();
-    DestroyError(ep);
+	input.Clear();
+	DestroyError(ep);
 }
 
 /*
@@ -668,55 +668,55 @@ SubstIstream::OnError(std::exception_ptr ep) noexcept
 void
 SubstIstream::_Read() noexcept
 {
-    if (!mismatch.empty()) {
-        bool ret = input.IsDefined()
-            ? FeedMismatch()
-            : WriteMismatch();
+	if (!mismatch.empty()) {
+		bool ret = input.IsDefined()
+			? FeedMismatch()
+			: WriteMismatch();
 
-        if (ret || !input.IsDefined())
-            return;
-    } else {
-        assert(input.IsDefined());
-    }
+		if (ret || !input.IsDefined())
+			return;
+	} else {
+		assert(input.IsDefined());
+	}
 
-    switch (state) {
-        size_t nbytes;
+	switch (state) {
+		size_t nbytes;
 
-    case State::NONE:
-    case State::MATCH: {
-        assert(input.IsDefined());
+	case State::NONE:
+	case State::MATCH: {
+		assert(input.IsDefined());
 
-        had_output = false;
+		had_output = false;
 
-        const DestructObserver destructed(*this);
+		const DestructObserver destructed(*this);
 
-        do {
-            had_input = false;
-            input.Read();
-        } while (!destructed && input.IsDefined() && had_input &&
-                 !had_output && state != State::INSERT);
+		do {
+			had_input = false;
+			input.Read();
+		} while (!destructed && input.IsDefined() && had_input &&
+			 !had_output && state != State::INSERT);
 
-        return;
-    }
+		return;
+	}
 
-    case State::INSERT:
-        nbytes = TryWriteB();
-        if (nbytes > 0)
-            return;
-        break;
-    }
+	case State::INSERT:
+		nbytes = TryWriteB();
+		if (nbytes > 0)
+			return;
+		break;
+	}
 
-    if (state == State::NONE && !input.IsDefined())
-        DestroyEof();
+	if (state == State::NONE && !input.IsDefined())
+		DestroyEof();
 }
 
 void
 SubstIstream::_Close() noexcept
 {
-    if (input.IsDefined())
-        input.ClearAndClose();
+	if (input.IsDefined())
+		input.ClearAndClose();
 
-    Destroy();
+	Destroy();
 }
 
 /*
@@ -726,69 +726,69 @@ SubstIstream::_Close() noexcept
 
 UnusedIstreamPtr
 istream_subst_new(struct pool *pool, UnusedIstreamPtr input,
-                  SubstTree tree) noexcept
+		  SubstTree tree) noexcept
 {
-    return NewIstreamPtr<SubstIstream>(*pool, std::move(input),
-                                       std::move(tree));
+	return NewIstreamPtr<SubstIstream>(*pool, std::move(input),
+					   std::move(tree));
 }
 
 bool
 SubstTree::Add(struct pool &pool, const char *a0, StringView b) noexcept
 {
-    SubstNode *parent = nullptr;
-    const char *a = a0;
+	SubstNode *parent = nullptr;
+	const char *a = a0;
 
-    assert(a0 != nullptr);
-    assert(*a0 != 0);
+	assert(a0 != nullptr);
+	assert(*a0 != 0);
 
-    auto **pp = &root;
-    do {
-        auto *p = *pp;
-        if (p == nullptr) {
-            /* create new tree node */
+	auto **pp = &root;
+	do {
+		auto *p = *pp;
+		if (p == nullptr) {
+			/* create new tree node */
 
-            p = (SubstNode *)p_malloc(&pool, sizeof(*p) - sizeof(p->leaf));
-            p->parent = parent;
-            p->left = nullptr;
-            p->right = nullptr;
-            p->equals = nullptr;
-            p->ch = *a++;
+			p = (SubstNode *)p_malloc(&pool, sizeof(*p) - sizeof(p->leaf));
+			p->parent = parent;
+			p->left = nullptr;
+			p->right = nullptr;
+			p->equals = nullptr;
+			p->ch = *a++;
 
-            *pp = parent = p;
-            pp = &p->equals;
-        } else if (*a < p->ch) {
-            pp = &p->left;
-            parent = p;
-        } else if (*a > p->ch) {
-            pp = &p->right;
-            parent = p;
-        } else {
-            /* tree node exists and matches, enter new level (next
-               character) */
-            pp = &p->equals;
-            parent = p;
-            ++a;
-        }
-    } while (*a);
+			*pp = parent = p;
+			pp = &p->equals;
+		} else if (*a < p->ch) {
+			pp = &p->left;
+			parent = p;
+		} else if (*a > p->ch) {
+			pp = &p->right;
+			parent = p;
+		} else {
+			/* tree node exists and matches, enter new level (next
+			   character) */
+			pp = &p->equals;
+			parent = p;
+			++a;
+		}
+	} while (*a);
 
-    /* this keyword already exists */
-    if (*pp != nullptr)
-        return false;
+	/* this keyword already exists */
+	if (*pp != nullptr)
+		return false;
 
-    /* create new leaf node */
+	/* create new leaf node */
 
-    SubstNode *p = (SubstNode *)
-        p_malloc(&pool, sizeof(*p) + b.size - sizeof(p->leaf.b));
-    p->parent = parent;
-    p->left = nullptr;
-    p->right = nullptr;
-    p->equals = nullptr;
-    p->ch = 0;
-    p->leaf.a = a0;
-    p->leaf.b_length = b.size;
-    memcpy(p->leaf.b, b.data, b.size);
+	SubstNode *p = (SubstNode *)
+		p_malloc(&pool, sizeof(*p) + b.size - sizeof(p->leaf.b));
+	p->parent = parent;
+	p->left = nullptr;
+	p->right = nullptr;
+	p->equals = nullptr;
+	p->ch = 0;
+	p->leaf.a = a0;
+	p->leaf.b_length = b.size;
+	memcpy(p->leaf.b, b.data, b.size);
 
-    *pp = p;
+	*pp = p;
 
-    return true;
+	return true;
 }
