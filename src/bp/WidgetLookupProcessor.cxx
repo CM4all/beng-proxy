@@ -40,7 +40,6 @@
 #include "widget/Error.hxx"
 #include "istream/Sink.hxx"
 #include "pool/pool.hxx"
-#include "pool/Holder.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StringView.hxx"
@@ -51,7 +50,7 @@
 #include <assert.h>
 #include <string.h>
 
-class WidgetLookupProcessor final : PoolHolder, IstreamSink, WidgetContainerParser, Cancellable, DestructAnchor {
+class WidgetLookupProcessor final : IstreamSink, WidgetContainerParser, Cancellable, DestructAnchor {
 	const StopwatchPtr stopwatch;
 
 	const char *const lookup_id;
@@ -63,26 +62,22 @@ class WidgetLookupProcessor final : PoolHolder, IstreamSink, WidgetContainerPars
 	WidgetLookupHandler &handler;
 
 public:
-	WidgetLookupProcessor(PoolPtr &&_pool, const StopwatchPtr &parent_stopwatch,
+	WidgetLookupProcessor(struct pool &pool, const StopwatchPtr &parent_stopwatch,
 			      UnusedIstreamPtr &&_input,
 			      Widget &_widget, SharedPoolPtr<WidgetContext> &&_ctx,
 			      unsigned _options,
 			      const char *_lookup_id,
 			      WidgetLookupHandler &_handler,
 			      CancellablePointer &caller_cancel_ptr) noexcept
-		:PoolHolder(std::move(_pool)), IstreamSink(std::move(_input)),
-		 WidgetContainerParser(GetPool(), _widget, std::move(_ctx)),
+		:IstreamSink(std::move(_input)),
+		 WidgetContainerParser(pool, _widget, std::move(_ctx)),
 		 stopwatch(parent_stopwatch, "WidgetLookupProcessor"),
 		 lookup_id(_lookup_id),
 		 options(_options),
-		 parser(GetPool(), *this),
+		 parser(pool, *this),
 		 handler(_handler)
 	{
 		caller_cancel_ptr = *this;
-	}
-
-	struct pool &GetPool() const noexcept {
-		return pool;
 	}
 
 	void Read() noexcept {
@@ -312,7 +307,7 @@ WidgetLookupProcessor::OnError(std::exception_ptr ep) noexcept
 }
 
 void
-processor_lookup_widget(struct pool &caller_pool,
+processor_lookup_widget(struct pool &pool,
 			const StopwatchPtr &parent_stopwatch,
 			UnusedIstreamPtr istream,
 			Widget &widget, const char *id,
@@ -330,9 +325,8 @@ processor_lookup_widget(struct pool &caller_pool,
 		return;
 	}
 
-	auto pool = pool_new_linear(&caller_pool, "WidgetLookupProcessor", 32768);
 	auto *processor =
-		NewFromPool<WidgetLookupProcessor>(std::move(pool), parent_stopwatch,
+		NewFromPool<WidgetLookupProcessor>(pool, pool, parent_stopwatch,
 						   std::move(istream),
 						   widget, std::move(ctx), options,
 						   id, handler,
