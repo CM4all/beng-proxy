@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ISTREAM_HXX
-#define ISTREAM_HXX
+#pragma once
 
 #include "pool/Holder.hxx"
 #include "io/FdType.hxx"
@@ -51,12 +50,12 @@ class IstreamBucketList;
  */
 class IstreamDestructAnchor {
 #ifndef NDEBUG
-    DestructAnchor destruct_anchor;
+	DestructAnchor destruct_anchor;
 
 public:
-    operator DestructAnchor &() noexcept {
-        return destruct_anchor;
-    }
+	operator DestructAnchor &() noexcept {
+		return destruct_anchor;
+	}
 #endif
 };
 
@@ -72,450 +71,448 @@ public:
  * - an error has occurred
  */
 class Istream : PoolHolder, LeakDetector, IstreamDestructAnchor {
-    /** data sink */
-    IstreamHandler *handler = nullptr;
+	/** data sink */
+	IstreamHandler *handler = nullptr;
 
-    /** which types of file descriptors are accepted by the handler? */
-    FdTypeMask handler_direct = 0;
+	/** which types of file descriptors are accepted by the handler? */
+	FdTypeMask handler_direct = 0;
 
 #ifndef NDEBUG
-    bool reading = false, destroyed = false;
+	bool reading = false, destroyed = false;
 
-    bool closing = false, eof = false;
+	bool closing = false, eof = false;
 
-    bool in_data = false, available_full_set = false;
+	bool in_data = false, available_full_set = false;
 
-    /** how much data was available in the previous invocation? */
-    size_t data_available = 0;
+	/** how much data was available in the previous invocation? */
+	size_t data_available = 0;
 
-    off_t available_partial = 0, available_full = 0;
+	off_t available_partial = 0, available_full = 0;
 #endif
 
 protected:
-    template<typename P>
-    explicit Istream(P &&_pool) noexcept
-        :PoolHolder(std::forward<P>(_pool)) {}
+	template<typename P>
+	explicit Istream(P &&_pool) noexcept
+		:PoolHolder(std::forward<P>(_pool)) {}
 
-    Istream(const Istream &) = delete;
-    Istream &operator=(const Istream &) = delete;
+	Istream(const Istream &) = delete;
+	Istream &operator=(const Istream &) = delete;
 
-    virtual ~Istream() noexcept;
+	virtual ~Istream() noexcept;
 
-    using PoolHolder::GetPool;
+	using PoolHolder::GetPool;
 
 public:
-    FdTypeMask GetHandlerDirect() const {
-        return handler_direct;
-    }
+	FdTypeMask GetHandlerDirect() const {
+		return handler_direct;
+	}
 
 protected:
-    bool CheckDirect(FdType type) const {
-        return (handler_direct & FdTypeMask(type)) != 0;
-    }
+	bool CheckDirect(FdType type) const {
+		return (handler_direct & FdTypeMask(type)) != 0;
+	}
 
-    void Consumed(size_t nbytes) {
+	void Consumed(size_t nbytes) {
 #ifdef NDEBUG
-        (void)nbytes;
+		(void)nbytes;
 #else
-        if ((off_t)nbytes >= available_partial)
-            available_partial = 0;
-        else
-            available_partial -= nbytes;
+		if ((off_t)nbytes >= available_partial)
+			available_partial = 0;
+		else
+			available_partial -= nbytes;
 
-        if (available_full_set) {
-            assert((off_t)nbytes <= available_full);
+		if (available_full_set) {
+			assert((off_t)nbytes <= available_full);
 
-            available_full -= (off_t)nbytes;
-        }
+			available_full -= (off_t)nbytes;
+		}
 
-        data_available -= std::min(nbytes, data_available);
+		data_available -= std::min(nbytes, data_available);
 #endif
-    }
+	}
 
-    bool InvokeReady() noexcept;
-    size_t InvokeData(const void *data, size_t length) noexcept;
-    ssize_t InvokeDirect(FdType type, int fd, size_t max_length) noexcept;
-    void InvokeEof() noexcept;
-    void InvokeError(std::exception_ptr ep) noexcept;
+	bool InvokeReady() noexcept;
+	size_t InvokeData(const void *data, size_t length) noexcept;
+	ssize_t InvokeDirect(FdType type, int fd, size_t max_length) noexcept;
+	void InvokeEof() noexcept;
+	void InvokeError(std::exception_ptr ep) noexcept;
 
-    /**
-     * Prepare a call to IstreamHandler::OnEof(); the caller is
-     * responsible for actually calling it.
-     */
-    IstreamHandler &PrepareEof() noexcept;
+	/**
+	 * Prepare a call to IstreamHandler::OnEof(); the caller is
+	 * responsible for actually calling it.
+	 */
+	IstreamHandler &PrepareEof() noexcept;
 
-    /**
-     * Prepare a call to IstreamHandler::OnError(); the caller is
-     * response for actually calling it.
-     */
-    IstreamHandler &PrepareError() noexcept;
+	/**
+	 * Prepare a call to IstreamHandler::OnError(); the caller is
+	 * response for actually calling it.
+	 */
+	IstreamHandler &PrepareError() noexcept;
 
-    void Destroy() noexcept {
-        this->~Istream();
-        /* no need to free memory from the pool */
-    }
+	void Destroy() noexcept {
+		this->~Istream();
+		/* no need to free memory from the pool */
+	}
 
-    void DestroyEof() noexcept {
-        InvokeEof();
-        Destroy();
-    }
+	void DestroyEof() noexcept {
+		InvokeEof();
+		Destroy();
+	}
 
-    void DestroyError(std::exception_ptr ep) noexcept {
-        InvokeError(ep);
-        Destroy();
-    }
+	void DestroyError(std::exception_ptr ep) noexcept {
+		InvokeError(ep);
+		Destroy();
+	}
 
-    /**
-     * @return the number of bytes still in the buffer
-     */
-    template<typename Buffer>
-    size_t ConsumeFromBuffer(Buffer &buffer) noexcept {
-        auto r = buffer.Read().ToVoid();
-        if (r.empty())
-            return 0;
+	/**
+	 * @return the number of bytes still in the buffer
+	 */
+	template<typename Buffer>
+	size_t ConsumeFromBuffer(Buffer &buffer) noexcept {
+		auto r = buffer.Read().ToVoid();
+		if (r.empty())
+			return 0;
 
-        size_t consumed = InvokeData(r.data, r.size);
-        if (consumed > 0)
-            buffer.Consume(consumed);
-        return r.size - consumed;
-    }
+		size_t consumed = InvokeData(r.data, r.size);
+		if (consumed > 0)
+			buffer.Consume(consumed);
+		return r.size - consumed;
+	}
 
-    /**
-     * @return the number of bytes consumed
-     */
-    template<typename Buffer>
-    size_t SendFromBuffer(Buffer &buffer) noexcept {
-        auto r = buffer.Read().ToVoid();
-        if (r.empty())
-            return 0;
+	/**
+	 * @return the number of bytes consumed
+	 */
+	template<typename Buffer>
+	size_t SendFromBuffer(Buffer &buffer) noexcept {
+		auto r = buffer.Read().ToVoid();
+		if (r.empty())
+			return 0;
 
-        size_t consumed = InvokeData(r.data, r.size);
-        if (consumed > 0)
-            buffer.Consume(consumed);
-        return consumed;
-    }
+		size_t consumed = InvokeData(r.data, r.size);
+		if (consumed > 0)
+			buffer.Consume(consumed);
+		return consumed;
+	}
 
 public:
-    bool HasHandler() const noexcept {
-        assert(!destroyed);
+	bool HasHandler() const noexcept {
+		assert(!destroyed);
 
-        return handler != nullptr;
-    }
+		return handler != nullptr;
+	}
 
-    void SetHandler(IstreamHandler &_handler,
-                    FdTypeMask _handler_direct=0) noexcept {
-        assert(!destroyed);
+	void SetHandler(IstreamHandler &_handler,
+			FdTypeMask _handler_direct=0) noexcept {
+		assert(!destroyed);
 
-        handler = &_handler;
-        handler_direct = _handler_direct;
-    }
+		handler = &_handler;
+		handler_direct = _handler_direct;
+	}
 
-    /**
-     * Detach the handler from this object.  This should only be done
-     * if it is going to be reattached to a new handler right after
-     * this call.
-     */
-    void ClearHandler() noexcept {
-        handler = nullptr;
-        handler_direct = 0;
-    }
+	/**
+	 * Detach the handler from this object.  This should only be done
+	 * if it is going to be reattached to a new handler right after
+	 * this call.
+	 */
+	void ClearHandler() noexcept {
+		handler = nullptr;
+		handler_direct = 0;
+	}
 
-    void SetDirect(FdTypeMask _handler_direct) noexcept {
-        assert(!destroyed);
+	void SetDirect(FdTypeMask _handler_direct) noexcept {
+		assert(!destroyed);
 
-        handler_direct = _handler_direct;
-    }
+		handler_direct = _handler_direct;
+	}
 
-    /**
-     * How much data is available?
-     *
-     * @param partial if false, the stream must provide the data size
-     * until the end of the stream; for partial, a minimum estimate is
-     * ok
-     * @return the number of bytes available or -1 if the object does
-     * not know
-     */
-    gcc_pure
-    off_t GetAvailable(bool partial) noexcept {
+	/**
+	 * How much data is available?
+	 *
+	 * @param partial if false, the stream must provide the data size
+	 * until the end of the stream; for partial, a minimum estimate is
+	 * ok
+	 * @return the number of bytes available or -1 if the object does
+	 * not know
+	 */
+	gcc_pure
+	off_t GetAvailable(bool partial) noexcept {
 #ifndef NDEBUG
-        assert(!destroyed);
-        assert(!closing);
-        assert(!eof);
-        assert(!reading);
+		assert(!destroyed);
+		assert(!closing);
+		assert(!eof);
+		assert(!reading);
 
-        const DestructObserver destructed(*this);
-        reading = true;
+		const DestructObserver destructed(*this);
+		reading = true;
 #endif
 
-        off_t available = _GetAvailable(partial);
+		off_t available = _GetAvailable(partial);
 
 #ifndef NDEBUG
-        assert(available >= -1);
-        assert(!destructed);
-        assert(!destroyed);
-        assert(reading);
+		assert(available >= -1);
+		assert(!destructed);
+		assert(!destroyed);
+		assert(reading);
 
-        reading = false;
+		reading = false;
 
-        if (partial) {
-            assert(available_partial == 0 ||
-                   available >= available_partial);
-            if (available > available_partial)
-                available_partial = available;
-        } else {
-            assert(!available_full_set ||
-                   available_full == available);
-            if (!available_full_set && available != (off_t)-1) {
-                available_full = available;
-                available_full_set = true;
-            }
-        }
+		if (partial) {
+			assert(available_partial == 0 ||
+			       available >= available_partial);
+			if (available > available_partial)
+				available_partial = available;
+		} else {
+			assert(!available_full_set ||
+			       available_full == available);
+			if (!available_full_set && available != (off_t)-1) {
+				available_full = available;
+				available_full_set = true;
+			}
+		}
 #endif
 
-        return available;
-    }
+		return available;
+	}
 
-    /**
-     * Skip data without processing it.  By skipping 0 bytes, you can
-     * test whether the stream is able to skip at all.
-     *
-     * @return the number of bytes skipped or -1 if skipping is not supported
-     */
-    off_t Skip(off_t length) noexcept {
+	/**
+	 * Skip data without processing it.  By skipping 0 bytes, you can
+	 * test whether the stream is able to skip at all.
+	 *
+	 * @return the number of bytes skipped or -1 if skipping is not supported
+	 */
+	off_t Skip(off_t length) noexcept {
 #ifndef NDEBUG
-        assert(!destroyed);
-        assert(!closing);
-        assert(!eof);
-        assert(!reading);
+		assert(!destroyed);
+		assert(!closing);
+		assert(!eof);
+		assert(!reading);
 
-        const DestructObserver destructed(*this);
-        reading = true;
+		const DestructObserver destructed(*this);
+		reading = true;
 #endif
 
-        off_t nbytes = _Skip(length);
-        assert(nbytes <= length);
+		off_t nbytes = _Skip(length);
+		assert(nbytes <= length);
 
 #ifndef NDEBUG
-        if (destructed || destroyed)
-            return nbytes;
+		if (destructed || destroyed)
+			return nbytes;
 
-        reading = false;
+		reading = false;
 
-        if (nbytes > 0) {
-            if (nbytes > available_partial)
-                available_partial = 0;
-            else
-                available_partial -= nbytes;
+		if (nbytes > 0) {
+			if (nbytes > available_partial)
+				available_partial = 0;
+			else
+				available_partial -= nbytes;
 
-            assert(!available_full_set ||
-                   nbytes < available_full);
-            if (available_full_set)
-                available_full -= nbytes;
-        }
+			assert(!available_full_set ||
+			       nbytes < available_full);
+			if (available_full_set)
+				available_full -= nbytes;
+		}
 #endif
 
-        return nbytes;
-    }
+		return nbytes;
+	}
 
-    /**
-     * Try to read from the stream.  If the stream can read data
-     * without blocking, it must provide data.  It may invoke the
-     * callbacks any number of times, supposed that the handler itself
-     * doesn't block.
-     *
-     * If the stream does not provide data immediately (and it is not
-     * at EOF yet), it must install an event and invoke the handler
-     * later, whenever data becomes available.
-     *
-     * Whenever the handler reports it is blocking, the responsibility
-     * for calling back (and calling this function) is handed back to
-     * the istream handler.
-     */
-    void Read() noexcept  {
+	/**
+	 * Try to read from the stream.  If the stream can read data
+	 * without blocking, it must provide data.  It may invoke the
+	 * callbacks any number of times, supposed that the handler itself
+	 * doesn't block.
+	 *
+	 * If the stream does not provide data immediately (and it is not
+	 * at EOF yet), it must install an event and invoke the handler
+	 * later, whenever data becomes available.
+	 *
+	 * Whenever the handler reports it is blocking, the responsibility
+	 * for calling back (and calling this function) is handed back to
+	 * the istream handler.
+	 */
+	void Read() noexcept  {
 #ifndef NDEBUG
-        assert(!destroyed);
-        assert(!closing);
-        assert(!eof);
-        assert(!reading);
-        assert(!in_data);
+		assert(!destroyed);
+		assert(!closing);
+		assert(!eof);
+		assert(!reading);
+		assert(!in_data);
 
-        const DestructObserver destructed(*this);
-        reading = true;
+		const DestructObserver destructed(*this);
+		reading = true;
 #endif
 
-        _Read();
+		_Read();
 
 #ifndef NDEBUG
-        if (destructed || destroyed)
-            return;
+		if (destructed || destroyed)
+			return;
 
-        reading = false;
+		reading = false;
 #endif
-    }
+	}
 
-    /**
-     * Append #IstreamBucket instances with consecutive data from this
-     * #Istream to the end of the given #IstreamBucketList.  Unless
-     * the returned data marks the end of the stream,
-     * IstreamBucketList::SetMore() must be called.
-     *
-     * On error, this method destroys the #Istream instance and throws
-     * std::runtime_error.
-     */
-    void FillBucketList(IstreamBucketList &list) {
+	/**
+	 * Append #IstreamBucket instances with consecutive data from this
+	 * #Istream to the end of the given #IstreamBucketList.  Unless
+	 * the returned data marks the end of the stream,
+	 * IstreamBucketList::SetMore() must be called.
+	 *
+	 * On error, this method destroys the #Istream instance and throws
+	 * std::runtime_error.
+	 */
+	void FillBucketList(IstreamBucketList &list) {
 #ifndef NDEBUG
-        assert(!destroyed);
-        assert(!closing);
-        assert(!eof);
-        assert(!reading);
-        assert(!in_data);
+		assert(!destroyed);
+		assert(!closing);
+		assert(!eof);
+		assert(!reading);
+		assert(!in_data);
 
-        const DestructObserver destructed(*this);
-        reading = true;
+		const DestructObserver destructed(*this);
+		reading = true;
 
-        try {
+		try {
 #endif
 
-            _FillBucketList(list);
+			_FillBucketList(list);
 
 #ifndef NDEBUG
-        } catch (...) {
-            if (!destructed) {
-                assert(destroyed);
-            }
+		} catch (...) {
+			if (!destructed) {
+				assert(destroyed);
+			}
 
-            throw;
-        }
+			throw;
+		}
 
-        assert(!destructed);
-        assert(!destroyed);
-        assert(reading);
+		assert(!destructed);
+		assert(!destroyed);
+		assert(reading);
 
-        reading = false;
+		reading = false;
 
 #if 0
-        // TODO: not possible currently due to include dependencies
-        size_t total_size = list.GetTotalBufferSize();
-        if ((off_t)total_size > available_partial)
-            available_partial = total_size;
+		// TODO: not possible currently due to include dependencies
+		size_t total_size = list.GetTotalBufferSize();
+		if ((off_t)total_size > available_partial)
+			available_partial = total_size;
 
-        if (!list.HasMore() && !list.HasNonBuffer()) {
-            if (available_full_set)
-                assert((off_t)total_size == available_full);
-            else
-                available_full = total_size;
-        }
+		if (!list.HasMore() && !list.HasNonBuffer()) {
+			if (available_full_set)
+				assert((off_t)total_size == available_full);
+			else
+				available_full = total_size;
+		}
 #endif
 #endif
-    }
+	}
 
-    /**
-     * Consume data from the #IstreamBucketList filled by
-     * FillBucketList().
-     *
-     * @param nbytes the number of bytes to be consumed; may be more
-     * than returned by FillBucketList(), because some of the data may
-     * be returned by this Istream's successive siblings
-     *
-     * @return the number of bytes really consumed by this instance
-     * (the rest will be consumed by its siblings)
-     */
-    size_t ConsumeBucketList(size_t nbytes) noexcept {
+	/**
+	 * Consume data from the #IstreamBucketList filled by
+	 * FillBucketList().
+	 *
+	 * @param nbytes the number of bytes to be consumed; may be more
+	 * than returned by FillBucketList(), because some of the data may
+	 * be returned by this Istream's successive siblings
+	 *
+	 * @return the number of bytes really consumed by this instance
+	 * (the rest will be consumed by its siblings)
+	 */
+	size_t ConsumeBucketList(size_t nbytes) noexcept {
 #ifndef NDEBUG
-        assert(!destroyed);
-        assert(!closing);
-        assert(!eof);
-        assert(!reading);
-        assert(!in_data);
+		assert(!destroyed);
+		assert(!closing);
+		assert(!eof);
+		assert(!reading);
+		assert(!in_data);
 #endif
 
-        auto result = _ConsumeBucketList(nbytes);
-
-#ifndef NDEBUG
-        assert(!destroyed);
-        assert(result <= nbytes);
-#endif
-
-        return result;
-    }
-
-    /**
-     * Close the istream object, and return the remaining data as a
-     * file descriptor.  This fd can be read until end-of-stream.
-     * Returns -1 if this is not possible (the stream object is still
-     * usable).
-     */
-    int AsFd() noexcept {
-#ifndef NDEBUG
-        assert(!destroyed);
-        assert(!closing);
-        assert(!eof);
-        assert(!reading);
-        assert(!in_data);
-
-        const DestructObserver destructed(*this);
-        reading = true;
-#endif
-
-        int fd = _AsFd();
+		auto result = _ConsumeBucketList(nbytes);
 
 #ifndef NDEBUG
-        assert((destructed || destroyed) == (fd >= 0));
-
-        if (fd < 0)
-            reading = false;
+		assert(!destroyed);
+		assert(result <= nbytes);
 #endif
 
-        return fd;
-    }
+		return result;
+	}
 
-    /**
-     * Close the stream and free resources.  This must not be called
-     * after the handler's eof() / abort() callbacks were invoked.
-     */
-    void Close() noexcept {
+	/**
+	 * Close the istream object, and return the remaining data as a
+	 * file descriptor.  This fd can be read until end-of-stream.
+	 * Returns -1 if this is not possible (the stream object is still
+	 * usable).
+	 */
+	int AsFd() noexcept {
 #ifndef NDEBUG
-        assert(!destroyed);
-        assert(!closing);
-        assert(!eof);
+		assert(!destroyed);
+		assert(!closing);
+		assert(!eof);
+		assert(!reading);
+		assert(!in_data);
 
-        closing = true;
+		const DestructObserver destructed(*this);
+		reading = true;
 #endif
 
-        _Close();
-    }
+		int fd = _AsFd();
 
-    /**
-     * Close an istream which was never used, i.e. it does not have a
-     * handler yet.
-     */
-    void CloseUnused() noexcept {
-        assert(!HasHandler());
+#ifndef NDEBUG
+		assert((destructed || destroyed) == (fd >= 0));
 
-        Close();
-    }
+		if (fd < 0)
+			reading = false;
+#endif
+
+		return fd;
+	}
+
+	/**
+	 * Close the stream and free resources.  This must not be called
+	 * after the handler's eof() / abort() callbacks were invoked.
+	 */
+	void Close() noexcept {
+#ifndef NDEBUG
+		assert(!destroyed);
+		assert(!closing);
+		assert(!eof);
+
+		closing = true;
+#endif
+
+		_Close();
+	}
+
+	/**
+	 * Close an istream which was never used, i.e. it does not have a
+	 * handler yet.
+	 */
+	void CloseUnused() noexcept {
+		assert(!HasHandler());
+
+		Close();
+	}
 
 protected:
-    virtual off_t _GetAvailable(gcc_unused bool partial) noexcept {
-        return -1;
-    }
+	virtual off_t _GetAvailable(gcc_unused bool partial) noexcept {
+		return -1;
+	}
 
-    virtual off_t _Skip(gcc_unused off_t length) noexcept {
-        return -1;
-    }
+	virtual off_t _Skip(gcc_unused off_t length) noexcept {
+		return -1;
+	}
 
-    virtual void _Read() noexcept = 0;
+	virtual void _Read() noexcept = 0;
 
-    virtual void _FillBucketList(IstreamBucketList &list);
-    virtual size_t _ConsumeBucketList(size_t nbytes) noexcept;
+	virtual void _FillBucketList(IstreamBucketList &list);
+	virtual size_t _ConsumeBucketList(size_t nbytes) noexcept;
 
-    virtual int _AsFd() noexcept {
-        return -1;
-    }
+	virtual int _AsFd() noexcept {
+		return -1;
+	}
 
-    virtual void _Close() noexcept {
-        Destroy();
-    }
+	virtual void _Close() noexcept {
+		Destroy();
+	}
 };
-
-#endif

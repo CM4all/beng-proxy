@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,21 +36,21 @@
 Istream::~Istream() noexcept
 {
 #ifndef NDEBUG
-    assert(!destroyed);
-    destroyed = true;
+	assert(!destroyed);
+	destroyed = true;
 #endif
 }
 
 void
 Istream::_FillBucketList(IstreamBucketList &list)
 {
-    list.SetMore();
+	list.SetMore();
 }
 
 gcc_noreturn
 size_t
 Istream::_ConsumeBucketList(gcc_unused size_t nbytes) noexcept
 {
-    assert(false);
-    gcc_unreachable();
+	assert(false);
+	gcc_unreachable();
 }

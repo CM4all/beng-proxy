@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ISTREAM_HANDLER_HXX
-#define ISTREAM_HANDLER_HXX
+#pragma once
 
 #include "Result.hxx"
 #include "io/FdType.hxx"
@@ -44,63 +43,61 @@
 /** data sink for an istream */
 class IstreamHandler {
 public:
-    /**
-     * Data is available and the callee shall invoke
-     * Istream::FillBucketList() and Istream::ConsumeBucketList().
-     *
-     * This is the successor to OnData() and OnDirect().  Once
-     * everything has been migrated to #IstreamBucketList, these
-     * methods can be removed.
-     *
-     * @return true if the caller shall invoke OnData() or OnDirect(),
-     * false if data has already been handled or if the #Istream has
-     * been closed
-     */
-    virtual bool OnIstreamReady() noexcept {
-        return true;
-    }
+	/**
+	 * Data is available and the callee shall invoke
+	 * Istream::FillBucketList() and Istream::ConsumeBucketList().
+	 *
+	 * This is the successor to OnData() and OnDirect().  Once
+	 * everything has been migrated to #IstreamBucketList, these
+	 * methods can be removed.
+	 *
+	 * @return true if the caller shall invoke OnData() or OnDirect(),
+	 * false if data has already been handled or if the #Istream has
+	 * been closed
+	 */
+	virtual bool OnIstreamReady() noexcept {
+		return true;
+	}
 
-    /**
-     * Data is available as a buffer.
-     * This function must return 0 if it has closed the stream.
-     *
-     * @param data the buffer
-     * @param length the number of bytes available in the buffer, greater than 0
-     * @return the number of bytes consumed, 0 if writing would block
-     * (caller is responsible for registering an event) or if the
-     * stream has been closed
-     */
-    virtual size_t OnData(const void *data, size_t length) noexcept = 0;
+	/**
+	 * Data is available as a buffer.
+	 * This function must return 0 if it has closed the stream.
+	 *
+	 * @param data the buffer
+	 * @param length the number of bytes available in the buffer, greater than 0
+	 * @return the number of bytes consumed, 0 if writing would block
+	 * (caller is responsible for registering an event) or if the
+	 * stream has been closed
+	 */
+	virtual size_t OnData(const void *data, size_t length) noexcept = 0;
 
-    /**
-     * Data is available in a file descriptor.
-     * This function must return 0 if it has closed the stream.
-     *
-     * @param type what kind of file descriptor?
-     * @param fd the file descriptor
-     * @param max_length don't read more than this number of bytes
-     * @return the number of bytes consumed, or one of the
-     * #istream_result values
-     */
-    virtual ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-                             gcc_unused size_t max_length) noexcept {
-        gcc_unreachable();
-    }
+	/**
+	 * Data is available in a file descriptor.
+	 * This function must return 0 if it has closed the stream.
+	 *
+	 * @param type what kind of file descriptor?
+	 * @param fd the file descriptor
+	 * @param max_length don't read more than this number of bytes
+	 * @return the number of bytes consumed, or one of the
+	 * #istream_result values
+	 */
+	virtual ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
+				 gcc_unused size_t max_length) noexcept {
+		gcc_unreachable();
+	}
 
-    /**
-     * End of file encountered.
-     */
-    virtual void OnEof() noexcept = 0;
+	/**
+	 * End of file encountered.
+	 */
+	virtual void OnEof() noexcept = 0;
 
-    /**
-     * The istream has ended unexpectedly, e.g. an I/O error.
-     *
-     * The method close() will not result in a call to this callback,
-     * since the caller is assumed to be the istream handler.
-     *
-     * @param error an exception describing the error condition
-     */
-    virtual void OnError(std::exception_ptr error) noexcept = 0;
+	/**
+	 * The istream has ended unexpectedly, e.g. an I/O error.
+	 *
+	 * The method close() will not result in a call to this callback,
+	 * since the caller is assumed to be the istream handler.
+	 *
+	 * @param error an exception describing the error condition
+	 */
+	virtual void OnError(std::exception_ptr error) noexcept = 0;
 };
-
-#endif

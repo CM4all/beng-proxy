@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_PAUSE_HXX
-#define BENG_PROXY_ISTREAM_PAUSE_HXX
+#pragma once
 
 #include "pool/SharedPtr.hxx"
 
@@ -41,18 +40,17 @@ class UnusedIstreamPtr;
 class PauseIstream;
 
 class PauseIstreamControl {
-    friend class PauseIstream;
+	friend class PauseIstream;
 
-    PauseIstream *pause;
+	PauseIstream *pause;
 
 public:
-    explicit constexpr PauseIstreamControl(PauseIstream &_pause) noexcept:pause(&_pause) {}
+	explicit constexpr PauseIstreamControl(PauseIstream &_pause) noexcept
+		:pause(&_pause) {}
 
-    void Resume() noexcept;
+	void Resume() noexcept;
 };
 
 std::pair<UnusedIstreamPtr, SharedPoolPtr<PauseIstreamControl>>
 istream_pause_new(struct pool &pool, EventLoop &event_loop,
-                  UnusedIstreamPtr input);
-
-#endif
+		  UnusedIstreamPtr input) noexcept;
