@@ -89,7 +89,7 @@ struct UriRewrite {
 
 class XmlProcessor final : PoolHolder, IstreamSink, WidgetContainerParser, Cancellable, DestructAnchor {
 	class CdataIstream final : public Istream {
-		friend struct XmlProcessor;
+		friend class XmlProcessor;
 		XmlProcessor &processor;
 
 	public:
