@@ -64,12 +64,12 @@ class WidgetLookupProcessor final : PoolHolder, IstreamSink, WidgetContainerPars
 
 public:
 	WidgetLookupProcessor(PoolPtr &&_pool, const StopwatchPtr &parent_stopwatch,
-			   UnusedIstreamPtr &&_input,
-			   Widget &_widget, SharedPoolPtr<WidgetContext> &&_ctx,
-			   unsigned _options,
-			   const char *_lookup_id,
-			   WidgetLookupHandler &_handler,
-			   CancellablePointer &caller_cancel_ptr) noexcept
+			      UnusedIstreamPtr &&_input,
+			      Widget &_widget, SharedPoolPtr<WidgetContext> &&_ctx,
+			      unsigned _options,
+			      const char *_lookup_id,
+			      WidgetLookupHandler &_handler,
+			      CancellablePointer &caller_cancel_ptr) noexcept
 		:PoolHolder(std::move(_pool)), IstreamSink(std::move(_input)),
 		 WidgetContainerParser(GetPool(), _widget, std::move(_ctx)),
 		 stopwatch(parent_stopwatch, "WidgetLookupProcessor"),
@@ -333,9 +333,9 @@ processor_lookup_widget(struct pool &caller_pool,
 	auto pool = pool_new_linear(&caller_pool, "WidgetLookupProcessor", 32768);
 	auto *processor =
 		NewFromPool<WidgetLookupProcessor>(std::move(pool), parent_stopwatch,
-						std::move(istream),
-						widget, std::move(ctx), options,
-						id, handler,
-						cancel_ptr);
+						   std::move(istream),
+						   widget, std::move(ctx), options,
+						   id, handler,
+						   cancel_ptr);
 	processor->ReadLoop();
 }
