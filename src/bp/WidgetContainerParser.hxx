@@ -37,7 +37,7 @@
 #include "pool/SharedPtr.hxx"
 
 class Widget;
-class WidgetContext;
+struct WidgetContext;
 
 class WidgetContainerParser : public XmlParserHandler {
 protected:
