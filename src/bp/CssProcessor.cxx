@@ -74,16 +74,12 @@ struct CssProcessor final : public ReplaceIstream {
 	using ReplaceIstream::GetPool;
 
 	/* virtual methods from class IstreamHandler */
-
-	size_t OnData(const void *data, size_t length) noexcept override {
-		size_t nbytes = ReplaceIstream::OnData(data, length);
-		if (nbytes > 0)
-			parser.Feed((const char *)data, nbytes);
-
-		return nbytes;
-	}
-
 	void OnEof() noexcept override;
+
+	/* virtual methods from class ReplaceIstream */
+	void Parse(ConstBuffer<void> b) {
+		parser.Feed((const char *)b.data, b.size);
+	}
 };
 
 static inline bool

@@ -220,6 +220,20 @@ private:
 
 	Substitution *GetLastSubstitution() noexcept;
 
+protected:
+	/**
+	 * This method is called after new input data has been
+	 * appended to the buffer.  It may be used to parse the new
+	 * data and add substitutions.
+	 *
+	 * On error, it may throw an exception which will be forwarded
+	 * to our handler's OnError() method, but this method must not
+	 * destroy this #ReplaceIstream instance.
+	 */
+	virtual void Parse(ConstBuffer<void> b) {
+		(void) b;
+	}
+
 public:
 	/* virtual methods from class IstreamHandler */
 	size_t OnData(const void *data, size_t length) noexcept override;

@@ -312,6 +312,15 @@ ReplaceIstream::OnData(const void *data, size_t length) noexcept
 	buffer.Write(data, length);
 	source_length += (off_t)length;
 
+	try {
+		Parse({data, length});
+	} catch (...) {
+		DestroyReplace();
+		ClearAndCloseInput();
+		DestroyError(std::current_exception());
+		return 0;
+	}
+
 	const DestructObserver destructed(*this);
 
 	TryReadFromBuffer();
