@@ -700,6 +700,5 @@ ReplaceIstream::Finish() noexcept
 
 	finished = true;
 
-	if (!HasInput())
-		ReadCheckEmpty();
+	defer_read.Schedule();
 }

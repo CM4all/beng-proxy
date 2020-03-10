@@ -258,7 +258,7 @@ private:
 	}
 
 	void ParseEnd() {
-		ReplaceIstream::SetFinished();
+		ReplaceIstream::Finish();
 	}
 
 	/* virtual methods from class WidgetContainerParser */

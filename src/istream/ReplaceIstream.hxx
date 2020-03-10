@@ -143,12 +143,6 @@ public:
 	void Settle(off_t offset) noexcept;
 	void Finish() noexcept;
 
-	void SetFinished() noexcept {
-		assert(!finished);
-
-		finished = true;
-	}
-
 protected:
 	using FacadeIstream::GetPool;
 

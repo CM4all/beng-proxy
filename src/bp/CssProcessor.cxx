@@ -79,7 +79,7 @@ struct CssProcessor final : public ReplaceIstream {
 	}
 
 	void ParseEnd() {
-		ReplaceIstream::SetFinished();
+		ReplaceIstream::Finish();
 	}
 };
 
