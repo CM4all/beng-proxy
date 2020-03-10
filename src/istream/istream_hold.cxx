@@ -126,6 +126,10 @@ public:
 
 	/* virtual methods from class IstreamHandler */
 
+	bool OnIstreamReady() noexcept override {
+		return !HasHandler() || ForwardIstream::OnIstreamReady();
+	}
+
 	size_t OnData(const void *data, size_t length) noexcept override {
 		return HasHandler() ? ForwardIstream::OnData(data, length) : 0;
 	}
