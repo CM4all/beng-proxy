@@ -57,7 +57,7 @@ FifoBufferSink::OnIstreamReady() noexcept
 	bool more = list.HasMore();
 
 	for (const auto &bucket : list) {
-		if (bucket.GetType() != IstreamBucket::Type::BUFFER) {
+		if (!bucket.IsBuffer()) {
 			more = true;
 			break;
 		}

@@ -110,7 +110,7 @@ HttpServerConnection::TryWriteBuckets2()
 
 	StaticArray<struct iovec, 64> v;
 	for (const auto &bucket : list) {
-		if (bucket.GetType() != IstreamBucket::Type::BUFFER)
+		if (!bucket.IsBuffer())
 			break;
 
 		const auto buffer = bucket.GetBuffer();

@@ -47,7 +47,7 @@ Context::ReadBuckets(size_t limit)
 	size_t consumed = 0;
 
 	for (const auto &i : list) {
-		if (i.GetType() != IstreamBucket::Type::BUFFER) {
+		if (!i.IsBuffer()) {
 			result = false;
 			break;
 		}

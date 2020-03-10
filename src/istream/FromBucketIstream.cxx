@@ -52,7 +52,7 @@ FromBucketIstream::_Read() noexcept
 	/* submit each bucket to InvokeData() */
 	for (const auto &i : list) {
 		// TODO: support more buffer types once they're implemented
-		assert(i.GetType() == IstreamBucket::Type::BUFFER);
+		assert(i.IsBuffer());
 
 		const auto buffer = i.GetBuffer();
 		size_t consumed = InvokeData(buffer.data, buffer.size);

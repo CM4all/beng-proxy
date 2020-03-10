@@ -219,7 +219,7 @@ WasOutput::OnIstreamReady() noexcept
 	size_t total = 0;
 
 	for (const auto &i : list) {
-		if (i.GetType() != IstreamBucket::Type::BUFFER) {
+		if (!i.IsBuffer()) {
 			result = true;
 			more = true;
 			break;

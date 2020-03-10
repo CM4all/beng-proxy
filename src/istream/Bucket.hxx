@@ -55,6 +55,10 @@ public:
 		return type;
 	}
 
+	bool IsBuffer() const noexcept {
+		return type == Type::BUFFER;
+	}
+
 	ConstBuffer<void> GetBuffer() const noexcept {
 		assert(type == Type::BUFFER);
 
@@ -128,7 +132,7 @@ public:
 	gcc_pure
 	bool HasNonBuffer() const noexcept {
 		for (const auto &bucket : list)
-			if (bucket.GetType() != IstreamBucket::Type::BUFFER)
+			if (!bucket.IsBuffer())
 				return true;
 		return false;
 	}
@@ -137,7 +141,7 @@ public:
 	size_t GetTotalBufferSize() const noexcept {
 		size_t size = 0;
 		for (const auto &bucket : list)
-			if (bucket.GetType() == IstreamBucket::Type::BUFFER)
+			if (bucket.IsBuffer())
 				size += bucket.GetBuffer().size;
 		return size;
 	}
@@ -169,7 +173,7 @@ public:
 		size_t total_size = 0;
 		for (const auto &bucket : src) {
 			if (max_size == 0 ||
-			    bucket.GetType() != IstreamBucket::Type::BUFFER) {
+			    !bucket.IsBuffer()) {
 				SetMore();
 				break;
 			}
@@ -200,7 +204,7 @@ public:
 
 		size_t total_size = 0;
 		for (const auto &bucket : src) {
-			if (bucket.GetType() != IstreamBucket::Type::BUFFER) {
+			if (!bucket.IsBuffer()) {
 				SetMore();
 				break;
 			}
@@ -227,7 +231,7 @@ public:
 
 		size_t total_size = 0;
 		for (const auto &bucket : src) {
-			if (bucket.GetType() != IstreamBucket::Type::BUFFER) {
+			if (!bucket.IsBuffer()) {
 				SetMore();
 				break;
 			}
