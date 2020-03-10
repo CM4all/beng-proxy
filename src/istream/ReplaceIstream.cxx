@@ -339,7 +339,7 @@ ReplaceIstream::OnEof() noexcept
 
 	if (IsEOF())
 		DestroyEof();
-	else if (!InvokeReady())
+	else if (InvokeReady())
 		TryRead();
 }
 

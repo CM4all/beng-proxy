@@ -197,7 +197,7 @@ private:
 	bool TryReadFromBuffer() noexcept;
 
 	void DeferredRead() noexcept {
-		if (!InvokeReady())
+		if (InvokeReady())
 			TryRead();
 	}
 
