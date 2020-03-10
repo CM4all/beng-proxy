@@ -280,18 +280,6 @@ ReplaceIstream::TryRead() noexcept
 	return true;
 }
 
-void
-ReplaceIstream::ReadCheckEmpty() noexcept
-{
-	assert(finished);
-	assert(!input.IsDefined());
-
-	if (IsEOF())
-		DestroyEof();
-	else
-		TryRead();
-}
-
 
 /*
  * input handler
@@ -349,7 +337,10 @@ ReplaceIstream::OnEof() noexcept
 
 	assert(finished);
 
-	ReadCheckEmpty();
+	if (IsEOF())
+		DestroyEof();
+	else
+		TryRead();
 }
 
 void

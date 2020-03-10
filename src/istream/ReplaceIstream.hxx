@@ -221,8 +221,6 @@ private:
 	 */
 	bool TryRead() noexcept;
 
-	void ReadCheckEmpty() noexcept;
-
 	/**
 	 * Read data from substitution objects.
 	 *
