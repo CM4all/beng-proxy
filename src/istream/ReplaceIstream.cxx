@@ -299,6 +299,8 @@ ReplaceIstream::OnData(const void *data, size_t length) noexcept
 		return 0;
 	}
 
+	const auto old_source_length = source_length;
+
 	buffer.Write(data, length);
 	source_length += (off_t)length;
 
@@ -311,13 +313,10 @@ ReplaceIstream::OnData(const void *data, size_t length) noexcept
 		return 0;
 	}
 
-	const DestructObserver destructed(*this);
-
-	TryReadFromBuffer();
-	if (destructed || !input.IsDefined())
-		/* the istream API mandates that we must return 0 if the
-		   stream is finished */
-		length = 0;
+	if (GetBufferEndOffsetUntil(first_substitution) > old_source_length) {
+		defer_read.Schedule();
+		had_output = true;
+	}
 
 	return length;
 }
