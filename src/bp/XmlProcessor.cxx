@@ -256,6 +256,10 @@ private:
 		parser.Feed((const char *)b.data, b.size);
 	}
 
+	void ParseEnd() {
+		ReplaceIstream::SetFinished();
+	}
+
 	/* virtual methods from class WidgetContainerParser */
 	bool WidgetElementFinished(const XmlParserTag &tag,
 				   WidgetPtr &&child_widget) noexcept override;
@@ -1102,7 +1106,6 @@ XmlProcessor::OnEof() noexcept
 	   because we didn't find it; dispose it now */
 	container.DiscardForFocused();
 
-	ReplaceIstream::SetFinished();
 	ReplaceIstream::OnEof();
 }
 

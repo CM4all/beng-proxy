@@ -234,6 +234,19 @@ protected:
 		(void) b;
 	}
 
+	/**
+	 * This method is called after all data has been passed to
+	 * Parse() at the end of all input.  This method must either
+	 * fail or must "finish" this #ReplaceIstream instance by
+	 * calling Finish().
+	 *
+	 * On error, it may throw an exception which will be forwarded
+	 * to our handler's OnError() method, but this method must not
+	 * destroy this #ReplaceIstream instance.
+	 */
+	virtual void ParseEnd() {
+	}
+
 public:
 	/* virtual methods from class IstreamHandler */
 	size_t OnData(const void *data, size_t length) noexcept override;

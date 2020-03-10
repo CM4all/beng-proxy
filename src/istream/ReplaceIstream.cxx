@@ -337,8 +337,17 @@ ReplaceIstream::OnEof() noexcept
 {
 	input.Clear();
 
-	if (finished)
-		ReadCheckEmpty();
+	try {
+		ParseEnd();
+	} catch (...) {
+		DestroyReplace();
+		DestroyError(std::current_exception());
+		return;
+	}
+
+	assert(finished);
+
+	ReadCheckEmpty();
 }
 
 void

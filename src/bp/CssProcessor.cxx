@@ -73,12 +73,13 @@ struct CssProcessor final : public ReplaceIstream {
 
 	using ReplaceIstream::GetPool;
 
-	/* virtual methods from class IstreamHandler */
-	void OnEof() noexcept override;
-
 	/* virtual methods from class ReplaceIstream */
 	void Parse(ConstBuffer<void> b) {
 		parser.Feed((const char *)b.data, b.size);
+	}
+
+	void ParseEnd() {
+		ReplaceIstream::SetFinished();
 	}
 };
 
@@ -253,13 +254,6 @@ css_processor_parser_import(const CssParserValue *url, void *ctx) noexcept
 	if (istream)
 		css_processor_replace_add(processor, url->start, url->end,
 					  std::move(istream));
-}
-
-void
-CssProcessor::OnEof() noexcept
-{
-	ReplaceIstream::SetFinished();
-	ReplaceIstream::OnEof();
 }
 
 static constexpr CssParserHandler css_processor_parser_handler = {
