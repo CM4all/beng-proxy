@@ -34,6 +34,7 @@
 #include "FacadeIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "New.hxx"
+#include "Bucket.hxx"
 #include "pool/pool.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/StringView.hxx"
@@ -111,6 +112,8 @@ public:
 	/* virtual methods from class Istream */
 
 	void _Read() noexcept override;
+	void _FillBucketList(IstreamBucketList &list) override;
+	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
 	void _Close() noexcept override;
 
 	/* istream handler */
@@ -708,6 +711,151 @@ SubstIstream::_Read() noexcept
 
 	if (state == State::NONE && !input.IsDefined())
 		DestroyEof();
+}
+
+void
+SubstIstream::_FillBucketList(IstreamBucketList &list)
+{
+	if (!mismatch.empty()) {
+		if (input.IsDefined()) {
+			// FeedMismatch()
+
+			if (send_first)
+				list.Push(mismatch.substr(0, 1).ToVoid());
+
+			// TODO: re-parse the rest of the mismatch buffer
+			list.SetMore();
+			return;
+		} else {
+			// WriteMismatch()
+			list.Push(mismatch.ToVoid());
+			return;
+		}
+	} else {
+		assert(input.IsDefined());
+	}
+
+	switch (state) {
+	case State::NONE: {
+		IstreamBucketList tmp;
+
+		try {
+			input.FillBucketList(tmp);
+		} catch (...) {
+			input.Clear();
+			Destroy();
+			throw;
+		}
+
+		if (tmp.HasMore())
+			list.SetMore();
+
+		for (const auto &bucket : tmp) {
+			if (!bucket.IsBuffer()) {
+				list.SetMore();
+				return;
+			}
+
+			const auto b = bucket.GetBuffer();
+			StringView s{(const char *)b.data, b.size};
+
+			const char *first = FindFirstChar(s.data,
+							  s.size);
+			if (first != nullptr) {
+				s.SetEnd(first);
+				if (!s.empty())
+					list.Push(s.ToVoid());
+				list.SetMore();
+				return;
+			}
+
+			list.Push(s.ToVoid());
+		}
+
+		return;
+	}
+
+	case State::MATCH:
+		// TODO: read from input
+		list.SetMore();
+		return;
+
+	case State::INSERT: {
+		// TryWriteB
+		assert(state == State::INSERT);
+		assert(a_match > 0);
+		assert(match != nullptr);
+		assert(match->ch == 0);
+		assert(a_match == strlen(match->leaf.a));
+
+		const size_t length = match->leaf.b_length - b_sent;
+		assert(length > 0);
+
+		list.Push({match->leaf.b + b_sent, length});
+		list.SetMore();
+
+		// TODO: read more
+		return;
+	}
+	}
+}
+
+size_t
+SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
+{
+	assert(nbytes > 0);
+
+	if (!mismatch.empty()) {
+		if (input.IsDefined()) {
+			// FeedMismatch()
+
+			if (send_first) {
+				send_first = false;
+				return 1;
+			}
+
+			return 0;
+		} else {
+			// WriteMismatch()
+			nbytes = std::min(nbytes, mismatch.size);
+			mismatch.skip_front(nbytes);
+			return nbytes;
+		}
+	} else {
+		assert(input.IsDefined());
+	}
+
+	switch (state) {
+	case State::NONE:
+		return input.ConsumeBucketList(nbytes);
+
+	case State::MATCH:
+		return 0;
+
+	case State::INSERT: {
+		// TryWriteB
+		assert(state == State::INSERT);
+		assert(a_match > 0);
+		assert(match != nullptr);
+		assert(match->ch == 0);
+		assert(a_match == strlen(match->leaf.a));
+
+		const size_t length = match->leaf.b_length - b_sent;
+		assert(length > 0);
+
+		size_t consumed = std::min(nbytes, length);
+
+		/* note progress */
+		b_sent += consumed;
+
+		/* finished sending substitution? */
+		if (consumed == length)
+			state = State::NONE;
+		return consumed;
+	}
+	}
+
+	gcc_unreachable();
 }
 
 void
