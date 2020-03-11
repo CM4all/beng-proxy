@@ -40,6 +40,7 @@ FormatJson(const Json::Value &value) noexcept
 {
 	std::stringstream out(std::ios_base::out);
 	Json::StreamWriterBuilder builder;
+	builder["indentation"] = "";
 	std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
 	writer->write(value, &out);
 	return std::move(out).str();
