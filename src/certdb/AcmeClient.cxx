@@ -75,14 +75,25 @@ ParseJson(GlueHttpResponse &&response)
  * element.
  */
 static void
-CheckThrowError(const Json::Value &root, const char *msg)
+CheckThrowError(const Json::Value &root)
 {
 	const auto &error = root["error"];
-	if (error.isNull())
-		return;
+	if (!error.isNull())
+		throw AcmeError(error);
+}
 
-	std::rethrow_exception(NestException(std::make_exception_ptr(AcmeError(error)),
-					     std::runtime_error(msg)));
+/**
+ * Throw an exception if the given JSON document contains an "error"
+ * element.
+ */
+static void
+CheckThrowError(const Json::Value &root, const char *msg)
+{
+	try {
+		CheckThrowError(root);
+	} catch (...) {
+		std::throw_with_nested(std::runtime_error(msg));
+	}
 }
 
 /**
