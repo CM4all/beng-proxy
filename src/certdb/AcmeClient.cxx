@@ -369,7 +369,7 @@ WithLocation(T &&t, const GlueHttpResponse &response) noexcept
 	if (location != response.headers.end())
 		t.location = std::move(location->second);
 
-	return t;
+	return std::move(t);
 }
 
 AcmeClient::Account
