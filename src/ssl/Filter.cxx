@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -49,151 +49,151 @@
 #include <string.h>
 
 struct SslFilter final : ThreadSocketFilterHandler {
-    /**
-     * Buffers which can be accessed from within the thread without
-     * holding locks.  These will be copied to/from the according
-     * #thread_socket_filter buffers.
-     */
-    SliceFifoBuffer encrypted_input, decrypted_input,
-        plain_output, encrypted_output;
+	/**
+	 * Buffers which can be accessed from within the thread without
+	 * holding locks.  These will be copied to/from the according
+	 * #thread_socket_filter buffers.
+	 */
+	SliceFifoBuffer encrypted_input, decrypted_input,
+		plain_output, encrypted_output;
 
-    const UniqueSSL ssl;
+	const UniqueSSL ssl;
 
-    bool handshaking = true;
+	bool handshaking = true;
 
-    AllocatedString<> peer_subject = nullptr, peer_issuer_subject = nullptr;
+	AllocatedString<> peer_subject = nullptr, peer_issuer_subject = nullptr;
 
-    SslFilter(UniqueSSL &&_ssl)
-        :ssl(std::move(_ssl)) {
-        SSL_set_bio(ssl.get(),
-                    NewFifoBufferBio(encrypted_input),
-                    NewFifoBufferBio(encrypted_output));
-    }
+	SslFilter(UniqueSSL &&_ssl)
+		:ssl(std::move(_ssl)) {
+		SSL_set_bio(ssl.get(),
+			    NewFifoBufferBio(encrypted_input),
+			    NewFifoBufferBio(encrypted_output));
+	}
 
-    void Encrypt();
+	void Encrypt();
 
-    /* virtual methods from class ThreadSocketFilterHandler */
-    void PreRun(ThreadSocketFilterInternal &f) noexcept override;
-    void Run(ThreadSocketFilterInternal &f) override;
-    void PostRun(ThreadSocketFilterInternal &f) noexcept override;
+	/* virtual methods from class ThreadSocketFilterHandler */
+	void PreRun(ThreadSocketFilterInternal &f) noexcept override;
+	void Run(ThreadSocketFilterInternal &f) override;
+	void PostRun(ThreadSocketFilterInternal &f) noexcept override;
 };
 
 static std::runtime_error
 MakeSslError()
 {
-    unsigned long error = ERR_get_error();
-    char buffer[120];
-    return std::runtime_error(ERR_error_string(error, buffer));
+	unsigned long error = ERR_get_error();
+	char buffer[120];
+	return std::runtime_error(ERR_error_string(error, buffer));
 }
 
 static AllocatedString<>
 format_subject_name(X509 *cert)
 {
-    return ToString(X509_get_subject_name(cert));
+	return ToString(X509_get_subject_name(cert));
 }
 
 static AllocatedString<>
 format_issuer_subject_name(X509 *cert)
 {
-    return ToString(X509_get_issuer_name(cert));
+	return ToString(X509_get_issuer_name(cert));
 }
 
 gcc_pure
 static bool
 is_ssl_error(SSL *ssl, int ret)
 {
-    if (ret == 0)
-        /* this is always an error according to the documentation of
-           SSL_read(), SSL_write() and SSL_do_handshake() */
-        return true;
+	if (ret == 0)
+		/* this is always an error according to the documentation of
+		   SSL_read(), SSL_write() and SSL_do_handshake() */
+		return true;
 
-    switch (SSL_get_error(ssl, ret)) {
-    case SSL_ERROR_NONE:
-    case SSL_ERROR_WANT_READ:
-    case SSL_ERROR_WANT_WRITE:
-    case SSL_ERROR_WANT_CONNECT:
-    case SSL_ERROR_WANT_ACCEPT:
-        return false;
+	switch (SSL_get_error(ssl, ret)) {
+	case SSL_ERROR_NONE:
+	case SSL_ERROR_WANT_READ:
+	case SSL_ERROR_WANT_WRITE:
+	case SSL_ERROR_WANT_CONNECT:
+	case SSL_ERROR_WANT_ACCEPT:
+		return false;
 
-    default:
-        return true;
-    }
+	default:
+		return true;
+	}
 }
 
 static void
 CheckThrowSslError(SSL *ssl, int result)
 {
-    if (is_ssl_error(ssl, result))
-        throw MakeSslError();
+	if (is_ssl_error(ssl, result))
+		throw MakeSslError();
 }
 
 enum class SslDecryptResult {
-    SUCCESS,
+	SUCCESS,
 
-    /**
-     * More encrypted_input data is required.
-     */
-    MORE,
+	/**
+	 * More encrypted_input data is required.
+	 */
+	MORE,
 
-    CLOSE_NOTIFY_ALERT,
+	CLOSE_NOTIFY_ALERT,
 };
 
 static SslDecryptResult
 ssl_decrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer)
 {
-    /* SSL_read() must be called repeatedly until there is no more
-       data (or until the buffer is full) */
+	/* SSL_read() must be called repeatedly until there is no more
+	   data (or until the buffer is full) */
 
-    while (true) {
-        auto w = buffer.Write();
-        if (w.empty())
-            return SslDecryptResult::SUCCESS;
+	while (true) {
+		auto w = buffer.Write();
+		if (w.empty())
+			return SslDecryptResult::SUCCESS;
 
-        int result = SSL_read(ssl, w.data, w.size);
-        if (result < 0 && SSL_get_error(ssl, result) == SSL_ERROR_WANT_READ)
-            return SslDecryptResult::MORE;
+		int result = SSL_read(ssl, w.data, w.size);
+		if (result < 0 && SSL_get_error(ssl, result) == SSL_ERROR_WANT_READ)
+			return SslDecryptResult::MORE;
 
-        if (result <= 0) {
-            if (SSL_get_error(ssl, result) == SSL_ERROR_ZERO_RETURN)
-                /* got a "close notify" alert from the peer */
-                return SslDecryptResult::CLOSE_NOTIFY_ALERT;
+		if (result <= 0) {
+			if (SSL_get_error(ssl, result) == SSL_ERROR_ZERO_RETURN)
+				/* got a "close notify" alert from the peer */
+				return SslDecryptResult::CLOSE_NOTIFY_ALERT;
 
-            CheckThrowSslError(ssl, result);
-            return SslDecryptResult::SUCCESS;
-        }
+			CheckThrowSslError(ssl, result);
+			return SslDecryptResult::SUCCESS;
+		}
 
-        buffer.Append(result);
-    }
+		buffer.Append(result);
+	}
 }
 
 static void
 ssl_encrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer)
 {
-    /* SSL_write() must be called repeatedly until there is no more
-       data; with SSL_MODE_ENABLE_PARTIAL_WRITE, SSL_write() finishes
-       only the current incomplete record, and additional data which
-       has been submitted more recently will only be considered in the
-       next SSL_write() call */
+	/* SSL_write() must be called repeatedly until there is no more
+	   data; with SSL_MODE_ENABLE_PARTIAL_WRITE, SSL_write() finishes
+	   only the current incomplete record, and additional data which
+	   has been submitted more recently will only be considered in the
+	   next SSL_write() call */
 
-    while (true) {
-        auto r = buffer.Read();
-        if (r.empty())
-            return;
+	while (true) {
+		auto r = buffer.Read();
+		if (r.empty())
+			return;
 
-        int result = SSL_write(ssl, r.data, r.size);
-        if (result <= 0) {
-            CheckThrowSslError(ssl, result);
-            return;
-        }
+		int result = SSL_write(ssl, r.data, r.size);
+		if (result <= 0) {
+			CheckThrowSslError(ssl, result);
+			return;
+		}
 
-        buffer.Consume(result);
-    }
+		buffer.Consume(result);
+	}
 }
 
 inline void
 SslFilter::Encrypt()
 {
-    ssl_encrypt(ssl.get(), plain_output);
+	ssl_encrypt(ssl.get(), plain_output);
 }
 
 /*
@@ -204,123 +204,123 @@ SslFilter::Encrypt()
 void
 SslFilter::PreRun(ThreadSocketFilterInternal &f) noexcept
 {
-    if (f.IsIdle()) {
-        decrypted_input.AllocateIfNull(fb_pool_get());
-        encrypted_output.AllocateIfNull(fb_pool_get());
-    }
+	if (f.IsIdle()) {
+		decrypted_input.AllocateIfNull(fb_pool_get());
+		encrypted_output.AllocateIfNull(fb_pool_get());
+	}
 }
 
 void
 SslFilter::Run(ThreadSocketFilterInternal &f)
 {
-    /* copy input (and output to make room for more output) */
+	/* copy input (and output to make room for more output) */
 
-    {
-        std::unique_lock<std::mutex> lock(f.mutex);
+	{
+		std::unique_lock<std::mutex> lock(f.mutex);
 
-        if (f.decrypted_input.IsNull() || f.encrypted_output.IsNull()) {
-            /* retry, let PreRun() allocate the missing buffer */
-            f.again = true;
-            return;
-        }
+		if (f.decrypted_input.IsNull() || f.encrypted_output.IsNull()) {
+			/* retry, let PreRun() allocate the missing buffer */
+			f.again = true;
+			return;
+		}
 
-        f.decrypted_input.MoveFromAllowNull(decrypted_input);
+		f.decrypted_input.MoveFromAllowNull(decrypted_input);
 
-        plain_output.MoveFromAllowNull(f.plain_output);
-        encrypted_input.MoveFromAllowSrcNull(f.encrypted_input);
-        if (!f.encrypted_input.empty())
-            /* the destination buffer is full, and data still remains
-               in the source buffer; after completing this iteration,
-               we need to do another iteration to process the
-               remaining data */
-            f.again = true;
+		plain_output.MoveFromAllowNull(f.plain_output);
+		encrypted_input.MoveFromAllowSrcNull(f.encrypted_input);
+		if (!f.encrypted_input.empty())
+			/* the destination buffer is full, and data still remains
+			   in the source buffer; after completing this iteration,
+			   we need to do another iteration to process the
+			   remaining data */
+			f.again = true;
 
-        f.encrypted_output.MoveFromAllowNull(encrypted_output);
+		f.encrypted_output.MoveFromAllowNull(encrypted_output);
 
-        if (decrypted_input.IsNull() || encrypted_output.IsNull()) {
-            /* retry, let PreRun() allocate the missing buffer */
-            f.again = true;
-            return;
-        }
-    }
+		if (decrypted_input.IsNull() || encrypted_output.IsNull()) {
+			/* retry, let PreRun() allocate the missing buffer */
+			f.again = true;
+			return;
+		}
+	}
 
-    /* let OpenSSL work */
+	/* let OpenSSL work */
 
-    ERR_clear_error();
+	ERR_clear_error();
 
-    if (gcc_unlikely(handshaking)) {
-        int result = SSL_do_handshake(ssl.get());
-        if (result == 1) {
-            handshaking = false;
+	if (gcc_unlikely(handshaking)) {
+		int result = SSL_do_handshake(ssl.get());
+		if (result == 1) {
+			handshaking = false;
 
-            UniqueX509 cert(SSL_get_peer_certificate(ssl.get()));
-            if (cert != nullptr) {
-                peer_subject = format_subject_name(cert.get());
-                peer_issuer_subject = format_issuer_subject_name(cert.get());
-            }
-        } else {
-            try {
-                CheckThrowSslError(ssl.get(), result);
-                /* flush the encrypted_output buffer, because it may
-                   contain a "TLS alert" */
-            } catch (...) {
-                const std::lock_guard<std::mutex> lock(f.mutex);
-                f.encrypted_output.MoveFromAllowNull(encrypted_output);
-                throw;
-            }
-        }
-    }
+			UniqueX509 cert(SSL_get_peer_certificate(ssl.get()));
+			if (cert != nullptr) {
+				peer_subject = format_subject_name(cert.get());
+				peer_issuer_subject = format_issuer_subject_name(cert.get());
+			}
+		} else {
+			try {
+				CheckThrowSslError(ssl.get(), result);
+				/* flush the encrypted_output buffer, because it may
+				   contain a "TLS alert" */
+			} catch (...) {
+				const std::lock_guard<std::mutex> lock(f.mutex);
+				f.encrypted_output.MoveFromAllowNull(encrypted_output);
+				throw;
+			}
+		}
+	}
 
-    if (gcc_likely(!handshaking)) {
-        Encrypt();
+	if (gcc_likely(!handshaking)) {
+		Encrypt();
 
-        switch (ssl_decrypt(ssl.get(), decrypted_input)) {
-        case SslDecryptResult::SUCCESS:
-            break;
+		switch (ssl_decrypt(ssl.get(), decrypted_input)) {
+		case SslDecryptResult::SUCCESS:
+			break;
 
-        case SslDecryptResult::MORE:
-            if (encrypted_input.IsDefinedAndFull())
-                throw std::runtime_error("SSL encrypted_input buffer is full");
+		case SslDecryptResult::MORE:
+			if (encrypted_input.IsDefinedAndFull())
+				throw std::runtime_error("SSL encrypted_input buffer is full");
 
-            break;
+			break;
 
-        case SslDecryptResult::CLOSE_NOTIFY_ALERT:
-            {
-                std::unique_lock<std::mutex> lock(f.mutex);
-                f.input_eof = true;
-            }
-            break;
-        }
-    }
+		case SslDecryptResult::CLOSE_NOTIFY_ALERT:
+			{
+				std::unique_lock<std::mutex> lock(f.mutex);
+				f.input_eof = true;
+			}
+			break;
+		}
+	}
 
-    /* copy output */
+	/* copy output */
 
-    {
-        std::unique_lock<std::mutex> lock(f.mutex);
+	{
+		std::unique_lock<std::mutex> lock(f.mutex);
 
-        f.decrypted_input.MoveFromAllowNull(decrypted_input);
-        f.encrypted_output.MoveFromAllowNull(encrypted_output);
-        f.drained = plain_output.empty() && encrypted_output.empty();
+		f.decrypted_input.MoveFromAllowNull(decrypted_input);
+		f.encrypted_output.MoveFromAllowNull(encrypted_output);
+		f.drained = plain_output.empty() && encrypted_output.empty();
 
-        if (!f.plain_output.empty() && !plain_output.IsDefinedAndFull() &&
-            !encrypted_output.IsDefinedAndFull())
-            /* there's more data, and we're ready to handle it: try
-               again */
-            f.again = true;
+		if (!f.plain_output.empty() && !plain_output.IsDefinedAndFull() &&
+		    !encrypted_output.IsDefinedAndFull())
+			/* there's more data, and we're ready to handle it: try
+			   again */
+			f.again = true;
 
-        f.handshaking = handshaking;
-    }
+		f.handshaking = handshaking;
+	}
 }
 
 void
 SslFilter::PostRun(ThreadSocketFilterInternal &f) noexcept
 {
-    if (f.IsIdle()) {
-        plain_output.FreeIfEmpty();
-        encrypted_input.FreeIfEmpty();
-        decrypted_input.FreeIfEmpty();
-        encrypted_output.FreeIfEmpty();
-    }
+	if (f.IsIdle()) {
+		plain_output.FreeIfEmpty();
+		encrypted_input.FreeIfEmpty();
+		decrypted_input.FreeIfEmpty();
+		encrypted_output.FreeIfEmpty();
+	}
 }
 
 /*
@@ -331,33 +331,33 @@ SslFilter::PostRun(ThreadSocketFilterInternal &f) noexcept
 SslFilter *
 ssl_filter_new(UniqueSSL &&ssl)
 {
-    return new SslFilter(std::move(ssl));
+	return new SslFilter(std::move(ssl));
 }
 
 SslFilter *
 ssl_filter_new(SslFactory &factory)
 {
-    return new SslFilter(ssl_factory_make(factory));
+	return new SslFilter(ssl_factory_make(factory));
 }
 
 ThreadSocketFilterHandler &
 ssl_filter_get_handler(SslFilter &ssl)
 {
-    return ssl;
+	return ssl;
 }
 
 const char *
 ssl_filter_get_peer_subject(SslFilter *ssl)
 {
-    assert(ssl != nullptr);
+	assert(ssl != nullptr);
 
-    return ssl->peer_subject.c_str();
+	return ssl->peer_subject.c_str();
 }
 
 const char *
 ssl_filter_get_peer_issuer_subject(SslFilter *ssl)
 {
-    assert(ssl != nullptr);
+	assert(ssl != nullptr);
 
-    return ssl->peer_issuer_subject.c_str();
+	return ssl->peer_issuer_subject.c_str();
 }
