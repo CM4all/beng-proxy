@@ -568,11 +568,13 @@ HttpClient::TryWriteBuckets2()
 			   OnBufferedBroken() */
 			throw RequestBodyCanceled{};
 
+		const int _errno = errno;
+
 		request.istream.ClearAndClose();
 
 		throw HttpClientError(HttpClientErrorCode::IO,
 				      StringFormat<64>("write error (%s)",
-						       strerror(errno)));
+						       strerror(_errno)));
 	}
 
 	size_t consumed = request.istream.ConsumeBucketList(nbytes);
