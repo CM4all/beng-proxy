@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * HTTP client implementation.
  */
 
-#ifndef BENG_PROXY_HTTP_CLIENT_HXX
-#define BENG_PROXY_HTTP_CLIENT_HXX
+#pragma once
 
 #include "http/Method.h"
 
@@ -53,45 +52,45 @@ class HttpHeaders;
  * Error codes for #HttpClientError.
  */
 enum class HttpClientErrorCode {
-    UNSPECIFIED,
+	UNSPECIFIED,
 
-    /**
-     * The server has closed the connection before the first response
-     * byte.
-     */
-    REFUSED,
+	/**
+	 * The server has closed the connection before the first response
+	 * byte.
+	 */
+	REFUSED,
 
-    /**
-     * The server has closed the connection prematurely.
-     */
-    PREMATURE,
+	/**
+	 * The server has closed the connection prematurely.
+	 */
+	PREMATURE,
 
-    /**
-     * A socket I/O error has occurred.
-     */
-    IO,
+	/**
+	 * A socket I/O error has occurred.
+	 */
+	IO,
 
-    /**
-     * Non-HTTP garbage was received.
-     */
-    GARBAGE,
+	/**
+	 * Non-HTTP garbage was received.
+	 */
+	GARBAGE,
 
-    /**
-     * The server has failed to respond or accept data in time.
-     */
-    TIMEOUT,
+	/**
+	 * The server has failed to respond or accept data in time.
+	 */
+	TIMEOUT,
 };
 
 class HttpClientError : public std::runtime_error {
-    HttpClientErrorCode code;
+	HttpClientErrorCode code;
 
 public:
-    HttpClientError(HttpClientErrorCode _code, const char *_msg)
-        :std::runtime_error(_msg), code(_code) {}
+	HttpClientError(HttpClientErrorCode _code, const char *_msg)
+		:std::runtime_error(_msg), code(_code) {}
 
-    HttpClientErrorCode GetCode() const {
-        return code;
-    }
+	HttpClientErrorCode GetCode() const {
+		return code;
+	}
 };
 
 /**
@@ -120,12 +119,10 @@ IsHttpClientServerFailure(std::exception_ptr ep);
  */
 void
 http_client_request(struct pool &pool,
-                    FilteredSocket &socket, Lease &lease,
-                    const char *peer_name,
-                    http_method_t method, const char *uri,
-                    HttpHeaders &&headers,
-                    UnusedIstreamPtr body, bool expect_100,
-                    HttpResponseHandler &handler,
-                    CancellablePointer &cancel_ptr);
-
-#endif
+		    FilteredSocket &socket, Lease &lease,
+		    const char *peer_name,
+		    http_method_t method, const char *uri,
+		    HttpHeaders &&headers,
+		    UnusedIstreamPtr body, bool expect_100,
+		    HttpResponseHandler &handler,
+		    CancellablePointer &cancel_ptr);
