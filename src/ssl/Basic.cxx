@@ -70,7 +70,8 @@ SetupBasicSslCtx(SSL_CTX &ssl_ctx, bool server)
 	SSL_CTX_set_min_proto_version(&ssl_ctx, TLS1_2_VERSION);
 
 	/* disable weak ciphers */
-	SSL_CTX_set_cipher_list(&ssl_ctx, "DEFAULT:!EXPORT:!LOW:!RC4");
+	/* "!SHA1:!SHA256:!SHA384" disables insecure CBC ciphers */
+	SSL_CTX_set_cipher_list(&ssl_ctx, "DEFAULT:!EXPORT:!LOW:!RC4:!SHA1:!SHA256:!SHA384");
 
 	/* let us choose the cipher based on our own priority; so if a
 	   client prefers to use a weak cipher (which would be rather
