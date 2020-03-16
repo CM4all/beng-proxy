@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * SSL/TLS initialisation.
  */
 
-#ifndef BENG_PROXY_SSL_BASIC_HXX
-#define BENG_PROXY_SSL_BASIC_HXX
+#pragma once
 
 #include <openssl/ossl_typ.h>
 
@@ -47,5 +46,3 @@ CreateBasicSslCtx(bool server);
 
 void
 ApplyServerConfig(SSL_CTX &ssl_ctx, const SslConfig &config);
-
-#endif

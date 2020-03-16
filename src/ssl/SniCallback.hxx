@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * SSL/TLS certificate database and cache.
  */
 
-#ifndef BENG_PROXY_SSL_SNI_CALLBACK_HXX
-#define BENG_PROXY_SSL_SNI_CALLBACK_HXX
+#pragma once
 
 #include <openssl/ossl_typ.h>
 
@@ -45,5 +44,3 @@ public:
 
 	virtual void OnSni(SSL *ssl, const char *name) = 0;
 };
-
-#endif
