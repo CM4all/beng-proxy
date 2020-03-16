@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,25 +34,25 @@
 #include "system/LinuxFD.hxx"
 
 Notify::Notify(EventLoop &event_loop, Callback _callback) noexcept
-    :callback(_callback),
-     fd(CreateEventFD()),
-     event(event_loop, BIND_THIS_METHOD(EventFdCallback),
-           SocketDescriptor::FromFileDescriptor(fd)),
-     pending(false) {
-    event.ScheduleRead();
+	:callback(_callback),
+	 fd(CreateEventFD()),
+	 event(event_loop, BIND_THIS_METHOD(EventFdCallback),
+	       SocketDescriptor::FromFileDescriptor(fd)),
+	 pending(false) {
+	event.ScheduleRead();
 }
 
 Notify::~Notify() noexcept
 {
-    event.Cancel();
+	event.Cancel();
 }
 
 inline void
 Notify::EventFdCallback(unsigned) noexcept
 {
-    uint64_t value;
-    (void)fd.Read(&value, sizeof(value));
+	uint64_t value;
+	(void)fd.Read(&value, sizeof(value));
 
-    if (pending.exchange(false))
-        callback();
+	if (pending.exchange(false))
+		callback();
 }

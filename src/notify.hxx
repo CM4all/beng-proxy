@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_NOTIFY_HXX
-#define BENG_PROXY_NOTIFY_HXX
+#pragma once
 
 #include "event/SocketEvent.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -43,35 +42,33 @@
  * Send notifications from a worker thread to the main thread.
  */
 class Notify {
-    typedef BoundMethod<void() noexcept> Callback;
-    Callback callback;
+	typedef BoundMethod<void() noexcept> Callback;
+	Callback callback;
 
-    UniqueFileDescriptor fd;
-    SocketEvent event;
+	UniqueFileDescriptor fd;
+	SocketEvent event;
 
-    std::atomic_bool pending;
+	std::atomic_bool pending;
 
 public:
-    Notify(EventLoop &event_loop, Callback _callback) noexcept;
-    ~Notify() noexcept;
+	Notify(EventLoop &event_loop, Callback _callback) noexcept;
+	~Notify() noexcept;
 
-    void Enable() noexcept {
-        event.ScheduleRead();
-    }
+	void Enable() noexcept {
+		event.ScheduleRead();
+	}
 
-    void Disable() noexcept {
-        event.Cancel();
-    }
+	void Disable() noexcept {
+		event.Cancel();
+	}
 
-    void Signal() noexcept {
-        if (!pending.exchange(true)) {
-            static constexpr uint64_t value = 1;
-            (void)fd.Write(&value, sizeof(value));
-        }
-    }
+	void Signal() noexcept {
+		if (!pending.exchange(true)) {
+			static constexpr uint64_t value = 1;
+			(void)fd.Write(&value, sizeof(value));
+		}
+	}
 
 private:
-    void EventFdCallback(unsigned events) noexcept;
+	void EventFdCallback(unsigned events) noexcept;
 };
-
-#endif
