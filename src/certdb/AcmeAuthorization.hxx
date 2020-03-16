@@ -52,6 +52,8 @@ struct AcmeAuthorization {
 	std::string identifier;
 	std::forward_list<AcmeChallenge> challenges;
 
+	bool wildcard;
+
 	gcc_pure
 	const AcmeChallenge *FindChallengeByType(const char *type) const noexcept;
 

@@ -608,6 +608,9 @@ ToAuthorization(const Json::Value &root)
 	for (const auto &i : challenges)
 		response.challenges.emplace_front(ToChallenge(i));
 
+	const auto &wildcard = root["wildcard"];
+	response.wildcard = wildcard.isBool() && wildcard.asBool();
+
 	return response;
 }
 
