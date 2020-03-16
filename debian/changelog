@@ -3,7 +3,7 @@ cm4all-beng-proxy (15.35) unstable; urgency=low
   * ssl: require TLS 1.2 or newer
   * ssl: disable insecure CBC ciphers
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 16 Mar 2020 16:39:51 +0100
 
 cm4all-beng-proxy (15.34) unstable; urgency=low
 
