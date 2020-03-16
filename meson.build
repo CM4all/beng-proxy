@@ -223,7 +223,6 @@ subdir('libcommon/src/event')
 
 # Utility library using libevent
 eutil = static_library('eutil',
-  'src/notify.cxx',
   'src/cache.cxx',
   include_directories: inc,
 )
@@ -512,6 +511,7 @@ thread_pool = static_library('thread_queue',
   'src/thread/Queue.cxx',
   'src/thread/Worker.cxx',
   'src/thread/Pool.cxx',
+  'src/thread/Notify.cxx',
   include_directories: inc,
   dependencies: [
     event_dep,

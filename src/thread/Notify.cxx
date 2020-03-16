@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "notify.hxx"
+#include "Notify.hxx"
 #include "system/LinuxFD.hxx"
 
 Notify::Notify(EventLoop &event_loop, Callback _callback) noexcept

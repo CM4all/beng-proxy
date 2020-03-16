@@ -32,7 +32,7 @@
 
 #include "Queue.hxx"
 #include "Job.hxx"
-#include "notify.hxx"
+#include "Notify.hxx"
 
 #include "util/Compiler.h"
 
