@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,6 +31,7 @@
  */
 
 #include "IncomingRequest.hxx"
+#include "Logger.hxx"
 #include "pool/pool.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
@@ -67,6 +68,12 @@ IncomingHttpRequest::IncomingHttpRequest(PoolPtr &&_pool,
 	 method(_method),
 	 uri(p_strdup(pool, _uri))
 {
+}
+
+IncomingHttpRequest::~IncomingHttpRequest() noexcept
+{
+	if (logger != nullptr)
+		logger->~IncomingHttpRequestLogger();
 }
 
 void

@@ -31,6 +31,7 @@
  */
 
 #include "ForwardHttpRequest.hxx"
+#include "RLogger.hxx"
 #include "HttpConnection.hxx"
 #include "Cluster.hxx"
 #include "ClusterConfig.hxx"
@@ -168,7 +169,8 @@ private:
 
 	void SetForwardedTo() noexcept {
 		// TODO: optimize this operation
-		connection.per_request.forwarded_to =
+		auto &rl = *(LbRequestLogger *)request.logger;
+		rl.forwarded_to =
 			address_to_string(pool,
 					  GetFailureManager().GetAddress(*failure));
 	}
@@ -182,7 +184,8 @@ private:
 	}
 
 	const char *GetCanonicalHost() const noexcept {
-		return connection.per_request.GetCanonicalHost();
+		auto &rl = *(LbRequestLogger *)request.logger;
+		return rl.GetCanonicalHost();
 	}
 
 	sticky_hash_t GetStickyHash() noexcept;

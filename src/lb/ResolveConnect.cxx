@@ -31,6 +31,7 @@
  */
 
 #include "HttpConnection.hxx"
+#include "RLogger.hxx"
 #include "Headers.hxx"
 #include "Instance.hxx"
 #include "pool/PSocketAddress.hxx"
@@ -250,7 +251,8 @@ LbHttpConnection::ResolveConnect(const char *host,
 				 IncomingHttpRequest &request,
 				 CancellablePointer &cancel_ptr)
 {
-	per_request.forwarded_to = host;
+	auto &rl = *(LbRequestLogger *)request.logger;
+	rl.forwarded_to = host;
 
 	SocketAddress address;
 

@@ -32,33 +32,48 @@
 
 #pragma once
 
-#include <exception>
+#include "http/Logger.hxx"
+#include "pool/Holder.hxx"
 
-struct IncomingHttpRequest;
-class CancellablePointer;
-class StopwatchPtr;
+#include <boost/intrusive/list.hpp>
 
-class HttpServerConnectionHandler {
-public:
+#include <chrono>
+
+#include <stdint.h>
+
+struct BpInstance;
+
+/**
+ * Attributes which are specific to the current request.  They are
+ * only valid while a request is being handled (i.e. during the
+ * lifetime of the #IncomingHttpRequest instance).  Strings are
+ * allocated from the request pool.
+ */
+struct BpRequestLogger final : IncomingHttpRequestLogger {
+	BpInstance &instance;
+
 	/**
-	 * Called after the empty line after the last header has been
-	 * parsed.  Several attributes can be evaluated (method, uri,
-	 * headers; but not the body).  This can be used to collect
-	 * metadata for LogHttpRequest().
+	 * The time stamp at the start of the request.  Used to calculate
+	 * the request duration.
 	 */
-	virtual void RequestHeadersFinished(IncomingHttpRequest &) noexcept {};
-
-	virtual void HandleHttpRequest(IncomingHttpRequest &request,
-				       const StopwatchPtr &parent_stopwatch,
-				       CancellablePointer &cancel_ptr) noexcept = 0;
+	const std::chrono::steady_clock::time_point start_time;
 
 	/**
-	 * A fatal protocol level error has occurred, and the connection
-	 * was closed.
-	 *
-	 * This will be called instead of HttpConnectionClosed().
+	 * The name of the site being accessed by the current HTTP
+	 * request (from #TRANSLATE_SITE).  It is a hack to allow the
+	 * "log" callback to see this information.
 	 */
-	virtual void HttpConnectionError(std::exception_ptr e) noexcept = 0;
+	const char *site_name = nullptr;
 
-	virtual void HttpConnectionClosed() noexcept = 0;
+	explicit BpRequestLogger(BpInstance &_instance) noexcept;
+
+	std::chrono::steady_clock::duration GetDuration(std::chrono::steady_clock::time_point now) const noexcept {
+		return now - start_time;
+	}
+
+	/* virtual methods from class IncomingHttpRequestLogger */
+	void LogHttpRequest(IncomingHttpRequest &request,
+			    http_status_t status, off_t length,
+			    uint64_t bytes_received,
+			    uint64_t bytes_sent) noexcept override;
 };

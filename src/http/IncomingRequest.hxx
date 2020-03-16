@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -43,7 +43,7 @@ struct pool;
 struct StringView;
 class StringMap;
 class HttpHeaders;
-class Istream;
+class IncomingHttpRequestLogger;
 
 struct IncomingHttpRequest {
 	const PoolPtr pool;
@@ -71,6 +71,8 @@ struct IncomingHttpRequest {
 	 */
 	UnusedIstreamPtr body;
 
+	IncomingHttpRequestLogger *logger = nullptr;
+
 protected:
 	IncomingHttpRequest(PoolPtr &&_pool,
 			    SocketAddress _local_address,
@@ -86,7 +88,7 @@ protected:
 			    http_method_t _method,
 			    StringView _uri) noexcept;
 
-	~IncomingHttpRequest() noexcept = default;
+	~IncomingHttpRequest() noexcept;
 
 	IncomingHttpRequest(const IncomingHttpRequest &) = delete;
 	IncomingHttpRequest &operator=(const IncomingHttpRequest &) = delete;

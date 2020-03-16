@@ -35,6 +35,7 @@
 #include "Request.hxx"
 #include "strmap.hxx"
 #include "address_string.hxx"
+#include "http/Logger.hxx"
 #include "pool/pool.hxx"
 #include "pool/PSocketAddress.hxx"
 #include "istream/Bucket.hxx"
@@ -54,16 +55,16 @@ const Event::Duration http_server_write_timeout = std::chrono::seconds(30);
 void
 HttpServerConnection::Log() noexcept
 {
-	if (handler == nullptr)
-		/* this can happen when called via
-		   http_server_connection_close() (during daemon shutdown) */
+	auto &r = *request.request;
+	auto *logger = r.logger;
+	if (logger == nullptr)
 		return;
 
-	handler->LogHttpRequest(*request.request,
-				response.status,
-				response.length,
-				request.bytes_received,
-				response.bytes_sent);
+	logger->LogHttpRequest(r,
+			       response.status,
+			       response.length,
+			       request.bytes_received,
+			       response.bytes_sent);
 }
 
 HttpServerRequest *

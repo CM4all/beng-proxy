@@ -33,6 +33,7 @@
 #include "Handler.hxx"
 #include "Connection.hxx"
 #include "Config.hxx"
+#include "RLogger.hxx"
 #include "Instance.hxx"
 #include "load_file.hxx"
 #include "file_enotdir.hxx"
@@ -159,8 +160,10 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 		MakeStateless();
 	}
 
-	if (response.site != nullptr)
-		connection.per_request.site_name = response.site;
+	if (response.site != nullptr) {
+		auto &rl = *(BpRequestLogger *)request.logger;
+		rl.site_name = response.site;
+	}
 
 	{
 		auto session = ApplyTranslateResponseSession(response);

@@ -31,6 +31,7 @@
  */
 
 #include "Request.hxx"
+#include "RLogger.hxx"
 #include "Connection.hxx"
 #include "Instance.hxx"
 #include "session/Session.hxx"
@@ -296,10 +297,13 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
 			if (session)
 				session->SetSite(response.session_site);
 
-			connection.per_request.site_name = response.session_site;
+			auto &rl = *(BpRequestLogger *)request.logger;
+			rl.site_name = response.session_site;
 		}
-	} else if (session && session->site != nullptr)
-		connection.per_request.site_name = p_strdup(&pool, session->site);
+	} else if (session && session->site != nullptr) {
+		auto &rl = *(BpRequestLogger *)request.logger;
+		rl.site_name = p_strdup(&pool, session->site);
+	}
 
 	if (response.user != nullptr) {
 		if (*response.user == 0) {

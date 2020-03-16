@@ -31,6 +31,7 @@
  */
 
 #include "Connection.hxx"
+#include "RLogger.hxx"
 #include "Handler.hxx"
 #include "Instance.hxx"
 #include "strmap.hxx"
@@ -38,7 +39,6 @@
 #include "http/IncomingRequest.hxx"
 #include "http_server/Handler.hxx"
 #include "http_server/Error.hxx"
-#include "access_log/Glue.hxx"
 #include "drop.hxx"
 #include "address_string.hxx"
 #include "thread/Pool.hxx"
@@ -127,19 +127,12 @@ HttpServerLogLevel(std::exception_ptr e) noexcept
  *
  */
 
-inline void
-BpConnection::PerRequest::Begin(std::chrono::steady_clock::time_point now) noexcept
-{
-	start_time = now;
-	site_name = nullptr;
-}
-
 void
-BpConnection::RequestHeadersFinished(const IncomingHttpRequest &) noexcept
+BpConnection::RequestHeadersFinished(IncomingHttpRequest &request) noexcept
 {
 	++instance.http_request_counter;
 
-	per_request.Begin(instance.event_loop.SteadyNow());
+	request.logger = NewFromPool<BpRequestLogger>(request.pool, instance);
 }
 
 void
@@ -148,24 +141,6 @@ BpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 				CancellablePointer &cancel_ptr) noexcept
 {
 	handle_http_request(*this, request, parent_stopwatch, cancel_ptr);
-}
-
-void
-BpConnection::LogHttpRequest(IncomingHttpRequest &request,
-			     http_status_t status, int64_t length,
-			     uint64_t bytes_received, uint64_t bytes_sent) noexcept
-{
-	instance.http_traffic_received_counter += bytes_received;
-	instance.http_traffic_sent_counter += bytes_sent;
-	if (instance.access_log != nullptr)
-		instance.access_log->Log(instance.event_loop.SystemNow(),
-					 request, per_request.site_name,
-					 nullptr,
-					 request.headers.Get("referer"),
-					 request.headers.Get("user-agent"),
-					 status, length,
-					 bytes_received, bytes_sent,
-					 per_request.GetDuration(instance.event_loop.SteadyNow()));
 }
 
 void

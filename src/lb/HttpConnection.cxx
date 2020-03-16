@@ -31,6 +31,7 @@
  */
 
 #include "HttpConnection.hxx"
+#include "RLogger.hxx"
 #include "Config.hxx"
 #include "Check.hxx"
 #include "ClusterConfig.hxx"
@@ -209,26 +210,13 @@ SendResponse(IncomingHttpRequest &request,
  *
  */
 
-inline void
-LbHttpConnection::PerRequest::Begin(const IncomingHttpRequest &request,
-				    std::chrono::steady_clock::time_point now)
-{
-	start_time = now;
-	host = request.headers.Get("host");
-	x_forwarded_for = request.headers.Get("x-forwarded-for");
-	referer = request.headers.Get("referer");
-	user_agent = request.headers.Get("user-agent");
-	canonical_host = nullptr;
-	site_name = nullptr;
-	forwarded_to = nullptr;
-}
-
 void
-LbHttpConnection::RequestHeadersFinished(const IncomingHttpRequest &request) noexcept
+LbHttpConnection::RequestHeadersFinished(IncomingHttpRequest &request) noexcept
 {
 	++instance.http_request_counter;
 
-	per_request.Begin(request, instance.event_loop.SteadyNow());
+	request.logger = NewFromPool<LbRequestLogger>(request.pool,
+						      instance, request);
 }
 
 void
@@ -242,8 +230,10 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 		return;
 	}
 
+	auto &rl = *(LbRequestLogger *)request.logger;
+
 	if (instance.config.global_http_check &&
-	    instance.config.global_http_check->Match(request.uri, per_request.host) &&
+	    instance.config.global_http_check->Match(request.uri, rl.host) &&
 	    instance.config.global_http_check->MatchClientAddress(request.remote_address)) {
 		request.body.Clear();
 
@@ -297,26 +287,6 @@ LbHttpConnection::ForwardHttpRequest(LbCluster &cluster,
 				     CancellablePointer &cancel_ptr)
 {
 	::ForwardHttpRequest(*this, request, cluster, cancel_ptr);
-}
-
-void
-LbHttpConnection::LogHttpRequest(IncomingHttpRequest &request,
-				 http_status_t status, int64_t length,
-				 uint64_t bytes_received, uint64_t bytes_sent) noexcept
-{
-	instance.http_traffic_received_counter += bytes_received;
-	instance.http_traffic_sent_counter += bytes_sent;
-	if (instance.access_log != nullptr)
-		instance.access_log->Log(instance.event_loop.SystemNow(),
-					 request, per_request.site_name,
-					 per_request.forwarded_to,
-					 per_request.host,
-					 per_request.x_forwarded_for,
-					 per_request.referer,
-					 per_request.user_agent,
-					 status, length,
-					 bytes_received, bytes_sent,
-					 per_request.GetDuration(instance.event_loop.SteadyNow()));
 }
 
 void

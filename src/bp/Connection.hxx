@@ -72,33 +72,6 @@ struct BpConnection final
 
 	HttpServerConnection *http;
 
-	/**
-	 * Attributes which are specific to the current request.  They are
-	 * only valid while a request is being handled (i.e. during the
-	 * lifetime of the #IncomingHttpRequest instance).  Strings are
-	 * allocated from the request pool.
-	 */
-	struct PerRequest {
-		/**
-		 * The time stamp at the start of the request.  Used to calculate
-		 * the request duration.
-		 */
-		std::chrono::steady_clock::time_point start_time;
-
-		/**
-		 * The name of the site being accessed by the current HTTP
-		 * request (from #TRANSLATE_SITE).  It is a hack to allow the
-		 * "log" callback to see this information.
-		 */
-		const char *site_name;
-
-		void Begin(std::chrono::steady_clock::time_point now) noexcept;
-
-		std::chrono::steady_clock::duration GetDuration(std::chrono::steady_clock::time_point now) const noexcept {
-			return now - start_time;
-		}
-	} per_request;
-
 	BpConnection(PoolPtr &&_pool, BpInstance &_instance,
 		     const char *_listener_tag, bool _auth_alt_host,
 		     SocketAddress remote_address) noexcept;
@@ -111,15 +84,10 @@ struct BpConnection final
 	};
 
 	/* virtual methods from class HttpServerConnectionHandler */
-	void RequestHeadersFinished(const IncomingHttpRequest &request) noexcept override;
+	void RequestHeadersFinished(IncomingHttpRequest &request) noexcept override;
 	void HandleHttpRequest(IncomingHttpRequest &request,
 			       const StopwatchPtr &parent_stopwatch,
 			       CancellablePointer &cancel_ptr) noexcept override;
-
-	void LogHttpRequest(IncomingHttpRequest &request,
-			    http_status_t status, off_t length,
-			    uint64_t bytes_received,
-			    uint64_t bytes_sent) noexcept override;
 
 	void HttpConnectionError(std::exception_ptr e) noexcept override;
 	void HttpConnectionClosed() noexcept override;

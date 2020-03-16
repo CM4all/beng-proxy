@@ -35,6 +35,7 @@
  */
 
 #include "Request.hxx"
+#include "RLogger.hxx"
 #include "Connection.hxx"
 #include "ProxyWidget.hxx"
 #include "Instance.hxx"
@@ -172,12 +173,14 @@ Request::NewWidgetContext() const noexcept
 		? translate.response->uri
 		: request.uri;
 
+	auto &rl = *(BpRequestLogger *)request.logger;
+
 	return SharedPoolPtr<WidgetContext>::Make
 		(pool, instance.event_loop,
 		 *instance.cached_resource_loader,
 		 *instance.buffered_filter_resource_loader,
 		 instance.widget_registry,
-		 connection.per_request.site_name,
+		 rl.site_name,
 		 translate.response->untrusted,
 		 request.local_host_and_port, request.remote_host,
 		 uri,

@@ -32,33 +32,27 @@
 
 #pragma once
 
-#include <exception>
+#include "http/Status.h"
+
+#include <stdint.h>
 
 struct IncomingHttpRequest;
-class CancellablePointer;
-class StopwatchPtr;
 
-class HttpServerConnectionHandler {
+class IncomingHttpRequestLogger {
 public:
-	/**
-	 * Called after the empty line after the last header has been
-	 * parsed.  Several attributes can be evaluated (method, uri,
-	 * headers; but not the body).  This can be used to collect
-	 * metadata for LogHttpRequest().
-	 */
-	virtual void RequestHeadersFinished(IncomingHttpRequest &) noexcept {};
-
-	virtual void HandleHttpRequest(IncomingHttpRequest &request,
-				       const StopwatchPtr &parent_stopwatch,
-				       CancellablePointer &cancel_ptr) noexcept = 0;
+	virtual ~IncomingHttpRequestLogger() noexcept = default;
 
 	/**
-	 * A fatal protocol level error has occurred, and the connection
-	 * was closed.
-	 *
-	 * This will be called instead of HttpConnectionClosed().
+	 * @param length the number of response body (payload) bytes sent
+	 * to our HTTP client, or negative if there was no response body
+	 * (which is different from "empty response body")
+	 * @param bytes_received the number of raw bytes received from our
+	 * HTTP client
+	 * @param bytes_sent the number of raw bytes sent to our HTTP
+	 * client (which includes status line, headers and transport
+	 * encoding overhead such as chunk headers)
 	 */
-	virtual void HttpConnectionError(std::exception_ptr e) noexcept = 0;
-
-	virtual void HttpConnectionClosed() noexcept = 0;
+	virtual void LogHttpRequest(IncomingHttpRequest &request,
+				    http_status_t status, int64_t length,
+				    uint64_t bytes_received, uint64_t bytes_sent) noexcept = 0;
 };

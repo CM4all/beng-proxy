@@ -30,35 +30,33 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "RLogger.hxx"
+#include "Connection.hxx"
+#include "Instance.hxx"
+#include "access_log/Glue.hxx"
+#include "http/IncomingRequest.hxx"
 
-#include <exception>
+BpRequestLogger::BpRequestLogger(BpInstance &_instance) noexcept
+	:instance(_instance),
+	 start_time(instance.event_loop.SteadyNow())
+{
+}
 
-struct IncomingHttpRequest;
-class CancellablePointer;
-class StopwatchPtr;
+void
+BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
+				http_status_t status, int64_t length,
+				uint64_t bytes_received, uint64_t bytes_sent) noexcept
+{
+	instance.http_traffic_received_counter += bytes_received;
+	instance.http_traffic_sent_counter += bytes_sent;
 
-class HttpServerConnectionHandler {
-public:
-	/**
-	 * Called after the empty line after the last header has been
-	 * parsed.  Several attributes can be evaluated (method, uri,
-	 * headers; but not the body).  This can be used to collect
-	 * metadata for LogHttpRequest().
-	 */
-	virtual void RequestHeadersFinished(IncomingHttpRequest &) noexcept {};
-
-	virtual void HandleHttpRequest(IncomingHttpRequest &request,
-				       const StopwatchPtr &parent_stopwatch,
-				       CancellablePointer &cancel_ptr) noexcept = 0;
-
-	/**
-	 * A fatal protocol level error has occurred, and the connection
-	 * was closed.
-	 *
-	 * This will be called instead of HttpConnectionClosed().
-	 */
-	virtual void HttpConnectionError(std::exception_ptr e) noexcept = 0;
-
-	virtual void HttpConnectionClosed() noexcept = 0;
-};
+	if (instance.access_log != nullptr)
+		instance.access_log->Log(instance.event_loop.SystemNow(),
+					 request, site_name,
+					 nullptr,
+					 request.headers.Get("referer"),
+					 request.headers.Get("user-agent"),
+					 status, length,
+					 bytes_received, bytes_sent,
+					 GetDuration(instance.event_loop.SteadyNow()));
+}

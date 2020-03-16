@@ -31,6 +31,7 @@
  */
 
 #include "HttpConnection.hxx"
+#include "RLogger.hxx"
 #include "GotoConfig.hxx"
 #include "TranslationHandler.hxx"
 #include "Config.hxx"
@@ -97,14 +98,15 @@ LbHttpRequest::OnTranslateResponse(TranslateResponse &response) noexcept
 {
 	auto &_request = request;
 	auto &c = connection;
+	auto &rl = *(LbRequestLogger *)request.logger;
 
 	if (response.site != nullptr)
-		c.per_request.site_name = p_strdup(request.pool, response.site);
+		rl.site_name = p_strdup(request.pool, response.site);
 
 	if (response.https_only != 0 && !c.IsEncrypted()) {
 		Destroy();
 
-		const char *host = c.per_request.host;
+		const char *host = rl.host;
 		if (host == nullptr) {
 			_request.SendMessage(HTTP_STATUS_BAD_REQUEST, "No Host header");
 			return;
@@ -141,7 +143,7 @@ LbHttpRequest::OnTranslateResponse(TranslateResponse &response) noexcept
 		}
 
 		if (response.canonical_host != nullptr)
-			c.per_request.canonical_host = response.canonical_host;
+			rl.canonical_host = response.canonical_host;
 
 		request.body = std::move(request_body);
 

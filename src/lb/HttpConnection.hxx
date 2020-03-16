@@ -77,76 +77,6 @@ struct LbHttpConnection final
 
 	HttpServerConnection *http;
 
-	/**
-	 * Attributes which are specific to the current request.  They are
-	 * only valid while a request is being handled (i.e. during the
-	 * lifetime of the #IncomingHttpRequest instance).  Strings are
-	 * allocated from the request pool.
-	 *
-	 * The request header pointers are here because our
-	 * http_client_request() call invalidates the original request
-	 * header StringMap instance, but after that, the access logger
-	 * needs these header values.
-	 */
-	struct PerRequest {
-		/**
-		 * The time stamp at the start of the request.  Used to calculate
-		 * the request duration.
-		 */
-		std::chrono::steady_clock::time_point start_time;
-
-		/**
-		 * The "Host" request header.
-		 */
-		const char *host;
-
-		/**
-		 * The "X-Forwarded-For" request header.
-		 */
-		const char *x_forwarded_for;
-
-		/**
-		 * The "Referer" [sic] request header.
-		 */
-		const char *referer;
-
-		/**
-		 * The "User-Agent" request header.
-		 */
-		const char *user_agent;
-
-		/**
-		 * The current request's canonical host name (from
-		 * #TRANSLATE_CANONICAL_HOST).
-		 */
-		const char *canonical_host;
-
-		/**
-		 * The name of the site being accessed by the current HTTP
-		 * request (from #TRANSLATE_SITE).  It is a hack to allow the
-		 * "log" callback to see this information.
-		 */
-		const char *site_name;
-
-		/**
-		 * @see LOG_FORWARDED_TO
-		 */
-		const char *forwarded_to;
-
-		void Begin(const IncomingHttpRequest &request,
-			   std::chrono::steady_clock::time_point now);
-
-		constexpr const char *GetCanonicalHost() const {
-			return canonical_host != nullptr
-				? canonical_host
-				: host;
-		}
-
-		std::chrono::steady_clock::duration GetDuration(std::chrono::steady_clock::time_point now) const {
-			return now - start_time;
-		}
-	} per_request;
-
 	LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 			 const LbListenerConfig &_listener,
 			 const LbGoto &_destination,
@@ -165,15 +95,10 @@ struct LbHttpConnection final
 	void LogSendError(IncomingHttpRequest &request, std::exception_ptr ep);
 
 	/* virtual methods from class HttpServerConnectionHandler */
-	void RequestHeadersFinished(const IncomingHttpRequest &request) noexcept override;
+	void RequestHeadersFinished(IncomingHttpRequest &request) noexcept override;
 	void HandleHttpRequest(IncomingHttpRequest &request,
 			       const StopwatchPtr &parent_stopwatch,
 			       CancellablePointer &cancel_ptr) noexcept override;
-
-	void LogHttpRequest(IncomingHttpRequest &request,
-			    http_status_t status, off_t length,
-			    uint64_t bytes_received,
-			    uint64_t bytes_sent) noexcept override;
 
 	void HttpConnectionError(std::exception_ptr e) noexcept override;
 	void HttpConnectionClosed() noexcept override;

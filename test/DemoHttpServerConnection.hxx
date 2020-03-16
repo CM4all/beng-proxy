@@ -99,11 +99,6 @@ protected:
 	void HandleHttpRequest(IncomingHttpRequest &request,
 			       const StopwatchPtr &parent_stopwatch,
 			       CancellablePointer &cancel_ptr) noexcept override;
-
-	void LogHttpRequest(IncomingHttpRequest &,
-			    http_status_t, int64_t,
-			    uint64_t, uint64_t) noexcept override {}
-
 	void HttpConnectionError(std::exception_ptr e) noexcept override;
 	void HttpConnectionClosed() noexcept override;
 };

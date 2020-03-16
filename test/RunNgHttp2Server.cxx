@@ -68,11 +68,6 @@ public:
 			request.SendMessage(HTTP_STATUS_OK, "Hello, world!\n");
 	}
 
-	void LogHttpRequest(IncomingHttpRequest &,
-			    http_status_t, off_t,
-			    uint64_t,
-			    uint64_t) noexcept override {}
-
 	void HttpConnectionError(std::exception_ptr e) noexcept override {
 		PrintException(e);
 		delete this;
