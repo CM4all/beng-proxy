@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,7 +42,7 @@ class SslSniCallback;
 
 SslFactory *
 ssl_factory_new_server(const SslConfig &config,
-                       std::unique_ptr<SslSniCallback> &&sni);
+		       std::unique_ptr<SslSniCallback> &&sni);
 
 void
 ssl_factory_free(SslFactory *factory);
@@ -54,7 +54,7 @@ ssl_factory_free(SslFactory *factory);
  */
 void
 ssl_factory_set_session_id_context(SslFactory &factory,
-                                   ConstBuffer<void> sid_ctx);
+				   ConstBuffer<void> sid_ctx);
 
 UniqueSSL
 ssl_factory_make(SslFactory &factory);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -56,5 +56,5 @@ ssl_client_deinit();
  */
 SocketFilterPtr
 ssl_client_create(EventLoop &event_loop,
-                  const char *hostname,
-                  const char *certificate);
+		  const char *hostname,
+		  const char *certificate);

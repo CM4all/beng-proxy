@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_SSL_CERT_CACHE_HXX
-#define BENG_PROXY_SSL_CERT_CACHE_HXX
+#pragma once
 
 #include "NameCache.hxx"
 #include "ssl/Hash.hxx"
@@ -60,92 +59,90 @@ class CertDatabase;
  * by worker threads (via #SslFilter).
  */
 class CertCache final : CertNameCacheHandler {
-    const LLogger logger;
+	const LLogger logger;
 
-    const CertDatabaseConfig config;
+	const CertDatabaseConfig config;
 
-    CertNameCache name_cache;
+	CertNameCache name_cache;
 
-    struct SHA1Compare {
-        gcc_pure
-        bool operator()(const SHA1Digest &a,
-                        const SHA1Digest &b) const noexcept {
-            return memcmp(&a, &b, sizeof(a)) < 0;
-        }
-    };
+	struct SHA1Compare {
+		gcc_pure
+		bool operator()(const SHA1Digest &a,
+				const SHA1Digest &b) const noexcept {
+			return memcmp(&a, &b, sizeof(a)) < 0;
+		}
+	};
 
-    std::map<SHA1Digest, std::forward_list<UniqueX509>, SHA1Compare> ca_certs;
+	std::map<SHA1Digest, std::forward_list<UniqueX509>, SHA1Compare> ca_certs;
 
-    /**
-     * Database connections used by worker threads.
-     */
-    ThreadedStock<CertDatabase> dbs;
+	/**
+	 * Database connections used by worker threads.
+	 */
+	ThreadedStock<CertDatabase> dbs;
 
-    std::mutex mutex;
+	std::mutex mutex;
 
-    struct Item {
-        SslCtx ssl_ctx;
+	struct Item {
+		SslCtx ssl_ctx;
 
-        std::chrono::steady_clock::time_point expires;
+		std::chrono::steady_clock::time_point expires;
 
-        template<typename T>
-        Item(T &&_ssl_ctx, std::chrono::steady_clock::time_point now) noexcept
-            :ssl_ctx(std::forward<T>(_ssl_ctx)),
-             /* the initial expiration is 6 hours; it will be raised
-                to 24 hours if the certificate is used again */
-             expires(now + std::chrono::hours(6)) {}
-    };
+		template<typename T>
+		Item(T &&_ssl_ctx, std::chrono::steady_clock::time_point now) noexcept
+			:ssl_ctx(std::forward<T>(_ssl_ctx)),
+			 /* the initial expiration is 6 hours; it will be raised
+			    to 24 hours if the certificate is used again */
+			 expires(now + std::chrono::hours(6)) {}
+	};
 
-    /**
-     * Map host names to SSL_CTX instances.  The key may be a
-     * wildcard.
-     */
-    std::unordered_map<std::string, Item> map;
+	/**
+	 * Map host names to SSL_CTX instances.  The key may be a
+	 * wildcard.
+	 */
+	std::unordered_map<std::string, Item> map;
 
 public:
-    explicit CertCache(EventLoop &event_loop,
-                       const CertDatabaseConfig &_config) noexcept
-        :logger("CertCache"), config(_config),
-         name_cache(event_loop, _config, *this) {}
+	explicit CertCache(EventLoop &event_loop,
+			   const CertDatabaseConfig &_config) noexcept
+		:logger("CertCache"), config(_config),
+		 name_cache(event_loop, _config, *this) {}
 
-    auto &GetEventLoop() const noexcept {
-        return name_cache.GetEventLoop();
-    }
+	auto &GetEventLoop() const noexcept {
+		return name_cache.GetEventLoop();
+	}
 
-    void LoadCaCertificate(const char *path);
+	void LoadCaCertificate(const char *path);
 
-    void Connect() noexcept {
-        name_cache.Connect();
-    }
+	void Connect() noexcept {
+		name_cache.Connect();
+	}
 
-    void Disconnect() noexcept {
-        name_cache.Disconnect();
-    }
+	void Disconnect() noexcept {
+		name_cache.Disconnect();
+	}
 
-    /**
-     * Flush expired sessions from the OpenSSL session cache.
-     *
-     * @return the number of expired sessions
-     */
-    unsigned FlushSessionCache(long tm) noexcept;
+	/**
+	 * Flush expired sessions from the OpenSSL session cache.
+	 *
+	 * @return the number of expired sessions
+	 */
+	unsigned FlushSessionCache(long tm) noexcept;
 
-    void Expire() noexcept;
+	void Expire() noexcept;
 
-    /**
-     * Look up a certificate by host name.  Returns the SSL_CTX
-     * pointer on success, nullptr if no matching certificate was
-     * found, and throws an exception on error.
-     */
-    SslCtx Get(const char *host);
+	/**
+	 * Look up a certificate by host name.  Returns the SSL_CTX
+	 * pointer on success, nullptr if no matching certificate was
+	 * found, and throws an exception on error.
+	 */
+	SslCtx Get(const char *host);
 
 private:
-    SslCtx Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key);
-    SslCtx Query(const char *host);
-    SslCtx GetNoWildCard(const char *host);
+	SslCtx Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key);
+	SslCtx Query(const char *host);
+	SslCtx GetNoWildCard(const char *host);
 
-    /* virtual methods from class CertNameCacheHandler */
-    void OnCertModified(const std::string &name,
-                        bool deleted) noexcept override;
+	/* virtual methods from class CertNameCacheHandler */
+	void OnCertModified(const std::string &name,
+			    bool deleted) noexcept override;
 };
-
-#endif

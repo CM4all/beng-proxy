@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -48,14 +48,14 @@ void
 ssl_thread_deinit();
 
 struct ScopeSslGlobalInit {
-    ScopeSslGlobalInit() {
-        ssl_global_init();
-    }
+	ScopeSslGlobalInit() {
+		ssl_global_init();
+	}
 
-    ~ScopeSslGlobalInit() {
-        ssl_global_deinit();
-    }
+	~ScopeSslGlobalInit() {
+		ssl_global_deinit();
+	}
 
-    ScopeSslGlobalInit(const ScopeSslGlobalInit &) = delete;
-    ScopeSslGlobalInit &operator=(const ScopeSslGlobalInit &) = delete;
+	ScopeSslGlobalInit(const ScopeSslGlobalInit &) = delete;
+	ScopeSslGlobalInit &operator=(const ScopeSslGlobalInit &) = delete;
 };

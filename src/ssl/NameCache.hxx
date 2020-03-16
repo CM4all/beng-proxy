@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_SSL_CERT_NAME_CACHE_HXX
-#define BENG_PROXY_SSL_CERT_NAME_CACHE_HXX
+#pragma once
 
 #include "pg/AsyncConnection.hxx"
 #include "event/TimerEvent.hxx"
@@ -47,8 +46,8 @@ struct CertDatabaseConfig;
 
 class CertNameCacheHandler {
 public:
-    virtual void OnCertModified(const std::string &name,
-                                bool deleted) noexcept = 0;
+	virtual void OnCertModified(const std::string &name,
+				    bool deleted) noexcept = 0;
 };
 
 /**
@@ -60,90 +59,88 @@ public:
  * (protected by the mutex).
  */
 class CertNameCache final : Pg::AsyncConnectionHandler, Pg::AsyncResultHandler {
-    const LLogger logger;
+	const LLogger logger;
 
-    CertNameCacheHandler &handler;
+	CertNameCacheHandler &handler;
 
-    Pg::AsyncConnection conn;
+	Pg::AsyncConnection conn;
 
-    TimerEvent update_timer;
+	TimerEvent update_timer;
 
-    mutable std::mutex mutex;
+	mutable std::mutex mutex;
 
-    /**
-     * A list of host names found in the database.
-     */
-    std::unordered_set<std::string> names;
+	/**
+	 * A list of host names found in the database.
+	 */
+	std::unordered_set<std::string> names;
 
-    /**
-     * A list of alt_names found in the database.  Each alt_name maps
-     * to a list of common_name values it appears in.
-     */
-    std::unordered_map<std::string, std::set<std::string>> alt_names;
+	/**
+	 * A list of alt_names found in the database.  Each alt_name maps
+	 * to a list of common_name values it appears in.
+	 */
+	std::unordered_map<std::string, std::set<std::string>> alt_names;
 
-    /**
-     * The latest timestamp seen in a record.  This is used for
-     * incremental updates.
-     */
-    std::string latest = "1971-01-01";
+	/**
+	 * The latest timestamp seen in a record.  This is used for
+	 * incremental updates.
+	 */
+	std::string latest = "1971-01-01";
 
-    unsigned n_added, n_updated, n_deleted;
+	unsigned n_added, n_updated, n_deleted;
 
-    /**
-     * This flag is set to true as soon as the cached name list has
-     * become complete for the first time.  With an incomplete cache,
-     * Lookup() will always return true, because we don't know yet if
-     * the desired name is just not yet loaded.
-     */
-    bool complete = false;
+	/**
+	 * This flag is set to true as soon as the cached name list has
+	 * become complete for the first time.  With an incomplete cache,
+	 * Lookup() will always return true, because we don't know yet if
+	 * the desired name is just not yet loaded.
+	 */
+	bool complete = false;
 
 public:
-    CertNameCache(EventLoop &event_loop,
-                  const CertDatabaseConfig &config,
-                  CertNameCacheHandler &_handler) noexcept;
+	CertNameCache(EventLoop &event_loop,
+		      const CertDatabaseConfig &config,
+		      CertNameCacheHandler &_handler) noexcept;
 
-    auto &GetEventLoop() const noexcept {
-        return update_timer.GetEventLoop();
-    }
+	auto &GetEventLoop() const noexcept {
+		return update_timer.GetEventLoop();
+	}
 
-    void Connect() noexcept {
-        conn.Connect();
-    }
+	void Connect() noexcept {
+		conn.Connect();
+	}
 
-    void Disconnect() noexcept {
-        conn.Disconnect();
-        update_timer.Cancel();
-    }
+	void Disconnect() noexcept {
+		conn.Disconnect();
+		update_timer.Cancel();
+	}
 
-    /**
-     * Check if the given name exists in the database.
-     */
-    bool Lookup(const char *host) const noexcept;
+	/**
+	 * Check if the given name exists in the database.
+	 */
+	bool Lookup(const char *host) const noexcept;
 
 private:
-    void OnUpdateTimer() noexcept;
+	void OnUpdateTimer() noexcept;
 
-    void ScheduleUpdate() noexcept;
+	void ScheduleUpdate() noexcept;
 
-    void UnscheduleUpdate() noexcept {
-        update_timer.Cancel();
-    }
+	void UnscheduleUpdate() noexcept {
+		update_timer.Cancel();
+	}
 
-    void AddAltNames(const std::string &common_name,
-                     std::forward_list<std::string> &&list) noexcept;
-    void RemoveAltNames(const std::string &common_name,
-                        std::forward_list<std::string> &&list) noexcept;
+	void AddAltNames(const std::string &common_name,
+			 std::forward_list<std::string> &&list) noexcept;
+	void RemoveAltNames(const std::string &common_name,
+			    std::forward_list<std::string> &&list) noexcept;
 
-    /* virtual methods from Pg::AsyncConnectionHandler */
-    void OnConnect() override;
-    void OnDisconnect() noexcept override;
-    void OnNotify(const char *name) override;
-    void OnError(std::exception_ptr e) noexcept override;
+	/* virtual methods from Pg::AsyncConnectionHandler */
+	void OnConnect() override;
+	void OnDisconnect() noexcept override;
+	void OnNotify(const char *name) override;
+	void OnError(std::exception_ptr e) noexcept override;
 
-    /* virtual methods from Pg::AsyncResultHandler */
-    void OnResult(Pg::Result &&result) override;
-    void OnResultEnd() override;
-    void OnResultError() noexcept override;
+	/* virtual methods from Pg::AsyncResultHandler */
+	void OnResult(Pg::Result &&result) override;
+	void OnResultEnd() override;
+	void OnResultError() noexcept override;
 };
-
-#endif

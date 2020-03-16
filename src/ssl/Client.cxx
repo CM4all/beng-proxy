@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -45,33 +45,33 @@
 #include <map>
 
 class SslClientCerts {
-    struct X509NameCompare {
-        gcc_pure
-        bool operator()(const UniqueX509_NAME &a,
-                        const UniqueX509_NAME &b) const noexcept {
-            return X509_NAME_cmp(a.get(), b.get()) < 0;
-        }
-    };
+	struct X509NameCompare {
+		gcc_pure
+		bool operator()(const UniqueX509_NAME &a,
+				const UniqueX509_NAME &b) const noexcept {
+			return X509_NAME_cmp(a.get(), b.get()) < 0;
+		}
+	};
 
-    std::map<UniqueX509_NAME,
-             std::pair<UniqueX509, UniqueEVP_PKEY>,
-             X509NameCompare> by_issuer;
+	std::map<UniqueX509_NAME,
+		 std::pair<UniqueX509, UniqueEVP_PKEY>,
+		 X509NameCompare> by_issuer;
 
-    std::map<std::string,
-             std::pair<UniqueX509, UniqueEVP_PKEY>> by_name;
+	std::map<std::string,
+		 std::pair<UniqueX509, UniqueEVP_PKEY>> by_name;
 
 public:
-    explicit SslClientCerts(const std::vector<NamedSslCertKeyConfig> &config);
+	explicit SslClientCerts(const std::vector<NamedSslCertKeyConfig> &config);
 
-    bool Find(X509_NAME &name, X509 **x509, EVP_PKEY **pkey) const noexcept;
+	bool Find(X509_NAME &name, X509 **x509, EVP_PKEY **pkey) const noexcept;
 
-    gcc_pure
-    const auto *FindByConfiguredName(const char *name) const {
-        auto i = by_name.find(name);
-        return i != by_name.end()
-            ? &i->second
-            : nullptr;
-    }
+	gcc_pure
+	const auto *FindByConfiguredName(const char *name) const {
+		auto i = by_name.find(name);
+		return i != by_name.end()
+			? &i->second
+			: nullptr;
+	}
 };
 
 static SslCtx ssl_client_ctx;
@@ -80,123 +80,123 @@ static SslClientCerts *ssl_client_certs;
 static int
 ssl_client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey) noexcept
 {
-    assert(ssl_client_certs != nullptr);
+	assert(ssl_client_certs != nullptr);
 
-    const auto cas = SSL_get_client_CA_list(ssl);
-    if (cas == nullptr)
-        return 0;
+	const auto cas = SSL_get_client_CA_list(ssl);
+	if (cas == nullptr)
+		return 0;
 
-    for (unsigned i = 0, n = sk_X509_NAME_num(cas); i < n; ++i)
-        if (ssl_client_certs->Find(*sk_X509_NAME_value(cas, i), x509, pkey))
-            return 1;
+	for (unsigned i = 0, n = sk_X509_NAME_num(cas); i < n; ++i)
+		if (ssl_client_certs->Find(*sk_X509_NAME_value(cas, i), x509, pkey))
+			return 1;
 
-    return 0;
+	return 0;
 }
 
 static auto
 LoadCertKey(const SslCertKeyConfig &config)
 {
-    return LoadCertKeyFile(config.cert_file.c_str(), config.key_file.c_str());
+	return LoadCertKeyFile(config.cert_file.c_str(), config.key_file.c_str());
 }
 
 SslClientCerts::SslClientCerts(const std::vector<NamedSslCertKeyConfig> &config)
 {
-    for (const auto &i : config) {
-        try {
-            auto ck = LoadCertKey(i);
-            if (!i.name.empty()) {
-                auto j = by_name.emplace(std::piecewise_construct,
-                                         std::forward_as_tuple(i.name),
-                                         std::forward_as_tuple(UpRef(*ck.first), UpRef(*ck.second)));
-                if (!j.second)
-                    throw FormatRuntimeError("Duplicate certificate name '%s'",
-                                             i.name.c_str());
-            }
+	for (const auto &i : config) {
+		try {
+			auto ck = LoadCertKey(i);
+			if (!i.name.empty()) {
+				auto j = by_name.emplace(std::piecewise_construct,
+							 std::forward_as_tuple(i.name),
+							 std::forward_as_tuple(UpRef(*ck.first), UpRef(*ck.second)));
+				if (!j.second)
+					throw FormatRuntimeError("Duplicate certificate name '%s'",
+								 i.name.c_str());
+			}
 
-            X509_NAME *issuer = X509_get_issuer_name(ck.first.get());
-            if (issuer != nullptr) {
-                UniqueX509_NAME issuer2(X509_NAME_dup(issuer));
-                if (issuer2)
-                    by_issuer.emplace(std::move(issuer2),
-                                      std::make_pair(std::move(ck.first),
-                                                     std::move(ck.second)));
-            }
-        } catch (...) {
-            std::throw_with_nested(FormatRuntimeError("Failed to load certificate '%s'/'%s'",
-                                                      i.cert_file.c_str(),
-                                                      i.key_file.c_str()));
-        }
-    }
+			X509_NAME *issuer = X509_get_issuer_name(ck.first.get());
+			if (issuer != nullptr) {
+				UniqueX509_NAME issuer2(X509_NAME_dup(issuer));
+				if (issuer2)
+					by_issuer.emplace(std::move(issuer2),
+							  std::make_pair(std::move(ck.first),
+									 std::move(ck.second)));
+			}
+		} catch (...) {
+			std::throw_with_nested(FormatRuntimeError("Failed to load certificate '%s'/'%s'",
+								  i.cert_file.c_str(),
+								  i.key_file.c_str()));
+		}
+	}
 }
 
 bool
 SslClientCerts::Find(X509_NAME &name,
-                     X509 **x509, EVP_PKEY **pkey) const noexcept
+		     X509 **x509, EVP_PKEY **pkey) const noexcept
 {
-    UniqueX509_NAME name2(X509_NAME_dup(&name));
-    if (!name2)
-        return false;
+	UniqueX509_NAME name2(X509_NAME_dup(&name));
+	if (!name2)
+		return false;
 
-    auto i = by_issuer.find(name2);
-    if (i == by_issuer.end())
-        return false;
+	auto i = by_issuer.find(name2);
+	if (i == by_issuer.end())
+		return false;
 
-    *x509 = UpRef(*i->second.first).release();
-    *pkey = UpRef(*i->second.second).release();
-    return true;
+	*x509 = UpRef(*i->second.first).release();
+	*pkey = UpRef(*i->second.second).release();
+	return true;
 }
 
 void
 ssl_client_init(const SslClientConfig &config)
 {
-    try {
-        ssl_client_ctx = CreateBasicSslCtx(false);
-    } catch (const SslError &e) {
-        LogConcat(1, "ssl_client", "ssl_factory_new() failed: ", e.what());
-    }
+	try {
+		ssl_client_ctx = CreateBasicSslCtx(false);
+	} catch (const SslError &e) {
+		LogConcat(1, "ssl_client", "ssl_factory_new() failed: ", e.what());
+	}
 
-    if (!config.cert_key.empty()) {
-        ssl_client_certs = new SslClientCerts(config.cert_key);
-        SSL_CTX_set_client_cert_cb(ssl_client_ctx.get(), ssl_client_cert_cb);
-    }
+	if (!config.cert_key.empty()) {
+		ssl_client_certs = new SslClientCerts(config.cert_key);
+		SSL_CTX_set_client_cert_cb(ssl_client_ctx.get(), ssl_client_cert_cb);
+	}
 }
 
 void
 ssl_client_deinit()
 {
-    ssl_client_ctx.reset();
-    delete std::exchange(ssl_client_certs, nullptr);
+	ssl_client_ctx.reset();
+	delete std::exchange(ssl_client_certs, nullptr);
 }
 
 SocketFilterPtr
 ssl_client_create(EventLoop &event_loop,
-                  const char *hostname,
-                  const char *certificate)
+		  const char *hostname,
+		  const char *certificate)
 {
-    UniqueSSL ssl(SSL_new(ssl_client_ctx.get()));
-    if (!ssl)
-        throw SslError("SSL_new() failed");
+	UniqueSSL ssl(SSL_new(ssl_client_ctx.get()));
+	if (!ssl)
+		throw SslError("SSL_new() failed");
 
-    SSL_set_connect_state(ssl.get());
+	SSL_set_connect_state(ssl.get());
 
-    if (hostname != nullptr)
-        /* why the fuck does OpenSSL want a non-const string? */
-        SSL_set_tlsext_host_name(ssl.get(), const_cast<char *>(hostname));
+	if (hostname != nullptr)
+		/* why the fuck does OpenSSL want a non-const string? */
+		SSL_set_tlsext_host_name(ssl.get(), const_cast<char *>(hostname));
 
-    if (certificate != nullptr) {
-        const auto *c = ssl_client_certs != nullptr
-            ? ssl_client_certs->FindByConfiguredName(certificate)
-            : nullptr;
-        if (c == nullptr)
-            throw std::runtime_error("Selected certificate not found in configuration");
+	if (certificate != nullptr) {
+		const auto *c = ssl_client_certs != nullptr
+			? ssl_client_certs->FindByConfiguredName(certificate)
+			: nullptr;
+		if (c == nullptr)
+			throw std::runtime_error("Selected certificate not found in configuration");
 
-        SSL_use_PrivateKey(ssl.get(), c->second.get());
-        SSL_use_certificate(ssl.get(), c->first.get());
-    }
+		SSL_use_PrivateKey(ssl.get(), c->second.get());
+		SSL_use_certificate(ssl.get(), c->first.get());
+	}
 
-    auto f = ssl_filter_new(std::move(ssl));
+	auto f = ssl_filter_new(std::move(ssl));
 
-    auto &queue = thread_pool_get_queue(event_loop);
-    return SocketFilterPtr(new ThreadSocketFilter(event_loop, queue,
-                                                  &ssl_filter_get_handler(*f)));
+	auto &queue = thread_pool_get_queue(event_loop);
+	return SocketFilterPtr(new ThreadSocketFilter(event_loop, queue,
+						      &ssl_filter_get_handler(*f)));
 }
