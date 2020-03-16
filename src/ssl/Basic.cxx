@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -87,10 +87,11 @@ SetupBasicSslCtx(SSL_CTX &ssl_ctx, bool server)
 	}
 
 	/* disable protocols that are known to be insecure */
-	SSL_CTX_set_options(&ssl_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
+	SSL_CTX_set_min_proto_version(&ssl_ctx, TLS1_2_VERSION);
 
 	/* disable weak ciphers */
-	SSL_CTX_set_cipher_list(&ssl_ctx, "DEFAULT:!EXPORT:!LOW:!RC4");
+	/* "!SHA1:!SHA256:!SHA384" disables insecure CBC ciphers */
+	SSL_CTX_set_cipher_list(&ssl_ctx, "DEFAULT:!EXPORT:!LOW:!RC4:!SHA1:!SHA256:!SHA384");
 
 	/* let us choose the cipher based on our own priority; so if a
 	   client prefers to use a weak cipher (which would be rather
@@ -112,13 +113,9 @@ CreateBasicSslCtx(bool server)
 {
 	ERR_clear_error();
 
-	/* don't be fooled - we want TLS, not SSL - but TLSv1_method()
-	   will only allow TLSv1.0 and will refuse TLSv1.1 and TLSv1.2;
-	   only SSLv23_method() supports all (future) TLS protocol
-	   versions, even if we don't want any SSL at all */
 	auto method = server
-		? SSLv23_server_method()
-		: SSLv23_client_method();
+		? TLS_server_method()
+		: TLS_client_method();
 
 	SslCtx ssl_ctx(method);
 	SetupBasicSslCtx(*ssl_ctx, server);

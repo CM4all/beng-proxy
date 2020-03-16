@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef FIFO_BUFFER_BIO_HJXX
-#define FIFO_BUFFER_BIO_HJXX
+#pragma once
 
 #include <stdint.h>
 
@@ -49,5 +48,3 @@ NewFifoBufferBio(ForeignFifoBuffer<uint8_t> &buffer);
  */
 void
 DeinitFifoBufferBio();
-
-#endif

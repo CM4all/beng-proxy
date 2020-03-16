@@ -47,12 +47,7 @@ MakeJwk(EVP_PKEY &key)
 		throw std::runtime_error("RSA key expected");
 
 	const BIGNUM *n, *e;
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	RSA_get0_key(EVP_PKEY_get0_RSA(&key), &n, &e, nullptr);
-#else
-	n = key.pkey.rsa->n;
-	e = key.pkey.rsa->e;
-#endif
 
 	Json::Value root(Json::objectValue);
 	root["kty"] = "RSA";

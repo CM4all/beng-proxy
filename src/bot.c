@@ -58,5 +58,6 @@ user_agent_is_bot(const char *user_agent)
 		strstr(user_agent, "adscanner") != NULL || /* http://seocompany.store */
 		strstr(user_agent, "DotBot") != NULL || /* http://www.opensiteexplorer.org/dotbot */
 		strstr(user_agent, "serpstatbot") != NULL || /* http://serpstatbot.com/ */
+		strstr(user_agent, "AspiegelBot") != NULL || /* Huawei */
 		false;
 }
