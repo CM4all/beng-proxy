@@ -51,7 +51,7 @@ HttpServerConnection::FeedRequestBody(const void *data, size_t length)
 	}
 
 	request.bytes_received += nbytes;
-	socket.DisposeConsumed(nbytes);
+	socket->DisposeConsumed(nbytes);
 
 	if (request.read_state == Request::BODY && request_body_reader->IsEOF()) {
 		request.read_state = Request::END;
@@ -61,7 +61,7 @@ HttpServerConnection::FeedRequestBody(const void *data, size_t length)
 
 		/* re-enable the event, to detect client disconnect while
 		   we're processing the request */
-		socket.ScheduleReadNoTimeout(false);
+		socket->ScheduleReadNoTimeout(false);
 
 		request.request->stopwatch.RecordEvent("request_end");
 
@@ -81,8 +81,7 @@ HttpServerConnection::DiscardRequestBody() noexcept
 	assert(!request_body_reader->IsEOF());
 	assert(!response.pending_drained);
 
-	if (!socket.IsValid() ||
-	    !socket.IsConnected()) {
+	if (!socket->IsValid() || !socket->IsConnected()) {
 		/* this happens when there's an error on the socket while
 		   reading the request body before the response gets
 		   submitted, and this HTTP server library invokes the
@@ -101,7 +100,7 @@ HttpServerConnection::DiscardRequestBody() noexcept
 		   Continue" response (yet): pretend there never was a request
 		   body */
 		request.expect_100_continue = false;
-	else if (request_body_reader->Discard(socket))
+	else if (request_body_reader->Discard(*socket))
 		/* the remaining data has already been received into the input
 		   buffer, and we only need to discard it from there to have a
 		   "clean" connection */
@@ -120,7 +119,7 @@ HttpServerConnection::RequestBodyReader::_GetAvailable(bool partial) noexcept
 	assert(connection.request.body_state == Request::BodyState::READING);
 	assert(!connection.response.pending_drained);
 
-	return HttpBodyReader::GetAvailable(connection.socket, partial);
+	return HttpBodyReader::GetAvailable(*connection.socket, partial);
 }
 
 void
@@ -138,7 +137,7 @@ HttpServerConnection::RequestBodyReader::_Read() noexcept
 		/* avoid recursion */
 		return;
 
-	connection.socket.Read(RequireMore());
+	connection.socket->Read(RequireMore());
 }
 
 void

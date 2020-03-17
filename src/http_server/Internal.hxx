@@ -42,10 +42,15 @@
 #include "event/DeferEvent.hxx"
 #include "istream/Handler.hxx"
 #include "istream/Pointer.hxx"
+#include "pool/UniquePtr.hxx"
 #include "http/Method.h"
+#include "http/Status.h"
 #include "util/Cancellable.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
+
+struct HttpServerRequest;
+class HttpHeaders;
 
 struct HttpServerConnection final
 	: BufferedSocketHandler, IstreamHandler, DestructAnchor {
@@ -96,7 +101,7 @@ struct HttpServerConnection final
 	struct pool *const pool;
 
 	/* I/O */
-	FilteredSocket socket;
+	UniquePoolPtr<FilteredSocket> socket;
 
 	/**
 	 * Track the total time for idle periods plus receiving all
@@ -203,9 +208,7 @@ struct HttpServerConnection final
 	bool keep_alive;
 
 	HttpServerConnection(struct pool &_pool,
-			     EventLoop &_loop,
-			     UniqueSocketDescriptor &&fd, FdType fd_type,
-			     SocketFilterPtr &&filter,
+			     UniquePoolPtr<FilteredSocket> &&_socket,
 			     SocketAddress _local_address,
 			     SocketAddress _remote_address,
 			     bool _date_header,
@@ -219,7 +222,7 @@ struct HttpServerConnection final
 
 	gcc_pure
 	bool IsValid() const {
-		return socket.IsValid() && socket.IsConnected();
+		return socket->IsValid() && socket->IsConnected();
 	}
 
 	void IdleTimeoutCallback() noexcept;
@@ -297,7 +300,7 @@ struct HttpServerConnection final
 
 	void ScheduleWrite() {
 		response.want_write = true;
-		socket.ScheduleWrite();
+		socket->ScheduleWrite();
 	}
 
 	/**

@@ -60,14 +60,14 @@ HttpServerConnection::OnIstreamReady() noexcept
 size_t
 HttpServerConnection::OnData(const void *data, size_t length) noexcept
 {
-	assert(socket.IsConnected() || request.request == nullptr);
+	assert(socket->IsConnected() || request.request == nullptr);
 	assert(response.istream.IsDefined());
 	assert(!response.pending_drained);
 
-	if (!socket.IsConnected())
+	if (!socket->IsConnected())
 		return 0;
 
-	ssize_t nbytes = socket.Write(data, length);
+	ssize_t nbytes = socket->Write(data, length);
 
 	if (gcc_likely(nbytes >= 0)) {
 		response.bytes_sent += nbytes;
@@ -91,14 +91,14 @@ HttpServerConnection::OnData(const void *data, size_t length) noexcept
 ssize_t
 HttpServerConnection::OnDirect(FdType type, int fd, size_t max_length) noexcept
 {
-	assert(socket.IsConnected() || request.request == nullptr);
+	assert(socket->IsConnected() || request.request == nullptr);
 	assert(response.istream.IsDefined());
 	assert(!response.pending_drained);
 
-	if (!socket.IsConnected())
+	if (!socket->IsConnected())
 		return 0;
 
-	ssize_t nbytes = socket.WriteFrom(fd, type, max_length);
+	ssize_t nbytes = socket->WriteFrom(fd, type, max_length);
 	if (gcc_likely(nbytes > 0)) {
 		response.bytes_sent += nbytes;
 		response.length += (off_t)nbytes;
@@ -109,7 +109,7 @@ HttpServerConnection::OnDirect(FdType type, int fd, size_t max_length) noexcept
 	} else if (nbytes == WRITE_DESTROYED)
 		return ISTREAM_RESULT_CLOSED;
 	else if (gcc_likely(nbytes < 0) && errno == EAGAIN)
-		socket.UnscheduleWrite();
+		socket->UnscheduleWrite();
 
 	return nbytes;
 }
@@ -147,13 +147,13 @@ void
 HttpServerConnection::SetResponseIstream(UnusedIstreamPtr r)
 {
 	response.istream.Set(std::move(r), *this,
-			     istream_direct_mask_to(socket.GetType()));
+			     istream_direct_mask_to(socket->GetType()));
 }
 
 bool
 HttpServerConnection::ResponseIstreamFinished()
 {
-	socket.UnscheduleWrite();
+	socket->UnscheduleWrite();
 
 	Log();
 
@@ -199,7 +199,7 @@ HttpServerConnection::ResponseIstreamFinished()
 		/* handle pipelined request (if any), or set up events for
 		   next request */
 
-		socket.ScheduleReadNoTimeout(false);
+		socket->ScheduleReadNoTimeout(false);
 		idle_timeout.Schedule(http_server_idle_timeout);
 
 		return true;
@@ -207,7 +207,7 @@ HttpServerConnection::ResponseIstreamFinished()
 		/* keepalive disabled and response is finished: we must close
 		   the connection */
 
-		if (socket.IsDrained()) {
+		if (socket->IsDrained()) {
 			Done();
 			return false;
 		} else {

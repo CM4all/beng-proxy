@@ -48,6 +48,7 @@
 #include "system/Error.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "fb_pool.hxx"
+#include "pool/UniquePtr.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "stopwatch.hxx"
 
@@ -67,8 +68,11 @@ public:
 			throw MakeErrno("socketpair() failed");
 
 		auto server = std::make_unique<Server>(pool, event_loop,
-						       std::move(server_socket),
-						       FdType::FD_SOCKET, nullptr,
+						       UniquePoolPtr<FilteredSocket>::Make(pool,
+											   event_loop,
+											   std::move(server_socket),
+											   FdType::FD_SOCKET),
+						       nullptr,
 						       mode);
 		return std::make_pair(std::move(server), std::move(client_socket));
 	}

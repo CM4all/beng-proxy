@@ -178,7 +178,7 @@ HttpServerConnection::ParseRequestLine(const char *line, size_t length)
 		static const char msg[] =
 			"This server requires HTTP 1.1.";
 
-		ssize_t nbytes = socket.Write(msg, sizeof(msg) - 1);
+		ssize_t nbytes = socket->Write(msg, sizeof(msg) - 1);
 		if (nbytes != WRITE_DESTROYED)
 			Done();
 		return false;
@@ -290,7 +290,7 @@ HttpServerConnection::HeadersFinished()
 
 	/* for the request body, the FilteredSocket class tracks
 	   inactivity timeout */
-	socket.ScheduleReadTimeout(false, read_timeout);
+	socket->ScheduleReadTimeout(false, read_timeout);
 
 	return true;
 }
@@ -363,7 +363,7 @@ HttpServerConnection::FeedHeaders(const void *_data, size_t length)
 	if (next != nullptr) {
 		consumed = next - buffer;
 		request.bytes_received += consumed;
-		socket.DisposeConsumed(consumed);
+		socket->DisposeConsumed(consumed);
 	}
 
 	return request.read_state == Request::HEADERS
@@ -377,7 +377,7 @@ HttpServerConnection::SubmitRequest()
 	if (request.read_state == Request::END)
 		/* re-enable the event, to detect client disconnect while
 		   we're processing the request */
-		socket.ScheduleReadNoTimeout(false);
+		socket->ScheduleReadNoTimeout(false);
 
 	const DestructObserver destructed(*this);
 
@@ -440,7 +440,7 @@ HttpServerConnection::Feed(const void *data, size_t length)
 		/* check if the connection was closed by the client while we
 		   were processing the request */
 
-		if (socket.IsFull())
+		if (socket->IsFull())
 			/* the buffer is full, the peer has been pipelining too
 			   much - that would disallow us to detect a disconnect;
 			   let's disable keep-alive now and discard all data */
@@ -449,7 +449,7 @@ HttpServerConnection::Feed(const void *data, size_t length)
 		if (!keep_alive) {
 			/* discard all pipelined input when keep-alive has been
 			   disabled */
-			socket.DisposeConsumed(length);
+			socket->DisposeConsumed(length);
 			return BufferedResult::OK;
 		}
 
@@ -511,5 +511,5 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type)
 void
 HttpServerConnection::OnDeferredRead() noexcept
 {
-	socket.Read(false);
+	socket->Read(false);
 }

@@ -67,7 +67,7 @@ HttpServerConnection::MaybeSend100Continue()
 	   of response to the peer */
 	static const char *const response_string = "HTTP/1.1 100 Continue\r\n\r\n";
 	const size_t length = strlen(response_string);
-	ssize_t nbytes = socket.Write(response_string, length);
+	ssize_t nbytes = socket->Write(response_string, length);
 	if (gcc_likely(nbytes == (ssize_t)length))
 		return true;
 
@@ -103,7 +103,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
 {
 	assert(http_status_is_valid(status));
 	assert(score != HTTP_SERVER_NEW);
-	assert(socket.IsConnected());
+	assert(socket->IsConnected());
 	assert(request.read_state == Request::END ||
 	       request.body_state == Request::BodyState::READING);
 

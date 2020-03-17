@@ -38,8 +38,9 @@
 #include "io/FdType.hxx"
 #include "util/Cancellable.hxx"
 
+template<typename T> class UniquePoolPtr;
 struct HttpServerConnection;
-class UniqueSocketDescriptor;
+class FilteredSocket;
 class SocketAddress;
 
 class DemoHttpServerConnection : protected HttpServerConnectionHandler, Cancellable
@@ -72,10 +73,8 @@ private:
 	const Mode mode;
 
 public:
-	DemoHttpServerConnection(struct pool &pool,
-				 EventLoop &event_loop,
-				 UniqueSocketDescriptor fd,
-				 FdType fd_type,
+	DemoHttpServerConnection(struct pool &pool, EventLoop &event_loop,
+				 UniquePoolPtr<FilteredSocket> socket,
 				 SocketAddress address,
 				 Mode _mode) noexcept;
 

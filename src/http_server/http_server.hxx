@@ -32,18 +32,11 @@
 
 #pragma once
 
-#include "fs/Ptr.hxx"
-#include "io/FdType.hxx"
-#include "http/Status.h"
-
 struct pool;
-class EventLoop;
-class UnusedIstreamPtr;
-class UniqueSocketDescriptor;
+template<typename T> class UniquePoolPtr;
+class FilteredSocket;
 class SocketAddress;
-class HttpHeaders;
 
-struct HttpServerRequest;
 struct HttpServerConnection;
 class HttpServerConnectionHandler;
 
@@ -79,10 +72,8 @@ enum http_server_score {
  * @param date_header generate Date response headers?
  */
 HttpServerConnection *
-http_server_connection_new(struct pool *pool,
-			   EventLoop &loop,
-			   UniqueSocketDescriptor fd, FdType fd_type,
-			   SocketFilterPtr filter,
+http_server_connection_new(struct pool &pool,
+			   UniquePoolPtr<FilteredSocket> socket,
 			   SocketAddress local_address,
 			   SocketAddress remote_address,
 			   bool date_header,

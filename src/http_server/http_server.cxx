@@ -98,7 +98,7 @@ HttpServerConnection::TryWriteBuckets2()
 	assert(request.request != nullptr);
 	assert(response.istream.IsDefined());
 
-	if (socket.HasFilter())
+	if (socket->HasFilter())
 		return BucketResult::UNAVAILABLE;
 
 	IstreamBucketList list;
@@ -129,7 +129,7 @@ HttpServerConnection::TryWriteBuckets2()
 			: BucketResult::DEPLETED;
 	}
 
-	ssize_t nbytes = socket.WriteV(v.begin(), v.size());
+	ssize_t nbytes = socket->WriteV(v.begin(), v.size());
 	if (nbytes < 0) {
 		if (gcc_likely(nbytes == WRITE_BLOCKING))
 			return BucketResult::BLOCKING;
@@ -231,13 +231,13 @@ HttpServerConnection::TryWrite() noexcept
 BufferedResult
 HttpServerConnection::OnBufferedData()
 {
-	auto r = socket.ReadBuffer();
+	auto r = socket->ReadBuffer();
 	assert(!r.empty());
 
 	if (response.pending_drained) {
 		/* discard all incoming data while we're waiting for the
 		   (filtered) response to be drained */
-		socket.DisposeConsumed(r.size);
+		socket->DisposeConsumed(r.size);
 		return BufferedResult::OK;
 	}
 
@@ -264,7 +264,7 @@ HttpServerConnection::OnBufferedWrite()
 		return false;
 
 	if (!response.want_write)
-		socket.UnscheduleWrite();
+		socket->UnscheduleWrite();
 
 	return true;
 }
@@ -304,16 +304,15 @@ HttpServerConnection::IdleTimeoutCallback() noexcept
 
 inline
 HttpServerConnection::HttpServerConnection(struct pool &_pool,
-					   EventLoop &_loop,
-					   UniqueSocketDescriptor &&fd, FdType fd_type,
-					   SocketFilterPtr &&filter,
+					   UniquePoolPtr<FilteredSocket> &&_socket,
 					   SocketAddress _local_address,
 					   SocketAddress _remote_address,
 					   bool _date_header,
 					   HttpServerConnectionHandler &_handler)
-	:pool(&_pool), socket(_loop),
-	 idle_timeout(_loop, BIND_THIS_METHOD(IdleTimeoutCallback)),
-	 defer_read(_loop, BIND_THIS_METHOD(OnDeferredRead)),
+	:pool(&_pool), socket(std::move(_socket)),
+	 idle_timeout(socket->GetEventLoop(),
+		      BIND_THIS_METHOD(IdleTimeoutCallback)),
+	 defer_read(socket->GetEventLoop(), BIND_THIS_METHOD(OnDeferredRead)),
 	 handler(&_handler),
 	 local_address(DupAddress(*pool, _local_address)),
 	 remote_address(DupAddress(*pool, _remote_address)),
@@ -321,10 +320,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 	 remote_host(address_to_host_string(*pool, _remote_address)),
 	 date_header(_date_header)
 {
-	socket.Init(fd.Release(), fd_type,
-		    Event::Duration(-1), http_server_write_timeout,
-		    std::move(filter),
-		    *this);
+	socket->Reinit(Event::Duration(-1), http_server_write_timeout, *this);
 
 	idle_timeout.Schedule(http_server_idle_timeout);
 
@@ -341,20 +337,17 @@ HttpServerConnection::Delete() noexcept
 }
 
 HttpServerConnection *
-http_server_connection_new(struct pool *pool,
-			   EventLoop &loop,
-			   UniqueSocketDescriptor fd, FdType fd_type,
-			   SocketFilterPtr filter,
+http_server_connection_new(struct pool &pool,
+			   UniquePoolPtr<FilteredSocket> socket,
 			   SocketAddress local_address,
 			   SocketAddress remote_address,
 			   bool date_header,
 			   HttpServerConnectionHandler &handler) noexcept
 {
-	assert(fd.IsDefined());
+	assert(socket);
 
-	return NewFromPool<HttpServerConnection>(*pool, *pool, loop,
-						 std::move(fd), fd_type,
-						 std::move(filter),
+	return NewFromPool<HttpServerConnection>(pool, pool,
+						 std::move(socket),
 						 local_address, remote_address,
 						 date_header,
 						 handler);
@@ -395,7 +388,7 @@ HttpServerConnection::Done() noexcept
 
 	/* shut down the socket gracefully to allow the TCP stack to
 	   transfer remaining response data */
-	socket.Shutdown();
+	socket->Shutdown();
 
 	auto *_handler = handler;
 	handler = nullptr;

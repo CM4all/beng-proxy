@@ -41,13 +41,17 @@
 #include "http_server/Error.hxx"
 #include "drop.hxx"
 #include "address_string.hxx"
+#include "pool/UniquePtr.hxx"
 #include "thread/Pool.hxx"
+#include "fs/FilteredSocket.hxx"
 #include "fs/ThreadSocketFilter.hxx"
+#include "fs/Ptr.hxx"
 #include "ssl/Filter.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
+#include "io/FdType.hxx"
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
 #include "pool/pool.hxx"
@@ -203,10 +207,11 @@ new_connection(BpInstance &instance,
 	instance.connections.push_front(*connection);
 
 	connection->http =
-		http_server_connection_new(&connection->GetPool(),
-					   instance.event_loop,
-					   std::move(fd), FdType::FD_TCP,
-					   std::move(filter),
+		http_server_connection_new(connection->GetPool(),
+					   UniquePoolPtr<FilteredSocket>::Make(connection->GetPool(),
+									       instance.event_loop,
+									       std::move(fd), FdType::FD_TCP,
+									       std::move(filter)),
 					   local_address.IsDefined()
 					   ? (SocketAddress)local_address
 					   : nullptr,

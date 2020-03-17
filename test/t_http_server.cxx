@@ -40,6 +40,7 @@
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
+#include "pool/UniquePtr.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "istream/HeadIstream.hxx"
@@ -258,10 +259,11 @@ Server::Server(struct pool &_pool, EventLoop &event_loop)
 						      client_socket, server_socket))
 		throw MakeErrno("socketpair() failed");
 
-	connection = http_server_connection_new(pool, event_loop,
-						std::move(server_socket),
-						FdType::FD_SOCKET,
-						nullptr,
+	connection = http_server_connection_new(pool,
+						UniquePoolPtr<FilteredSocket>::Make(pool,
+										    event_loop,
+										    std::move(server_socket),
+										    FdType::FD_SOCKET),
 						nullptr, nullptr,
 						true, *this);
 

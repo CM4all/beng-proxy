@@ -34,6 +34,7 @@
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "http_server/http_server.hxx"
+#include "fs/FilteredSocket.hxx"
 #include "istream/sink_null.hxx"
 #include "istream/ByteIstream.hxx"
 #include "istream/DelayedIstream.hxx"
@@ -42,18 +43,17 @@
 #include "istream/istream_memory.hxx"
 #include "istream/ZeroIstream.hxx"
 #include "istream/istream.hxx"
+#include "pool/UniquePtr.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/PrintException.hxx"
 
 DemoHttpServerConnection::DemoHttpServerConnection(struct pool &pool,
 						   EventLoop &event_loop,
-						   UniqueSocketDescriptor fd,
-						   FdType fd_type,
+						   UniquePoolPtr<FilteredSocket> socket,
 						   SocketAddress address,
 						   Mode _mode) noexcept
-	:connection(http_server_connection_new(&pool, event_loop,
-					       std::move(fd), fd_type,
-					       nullptr,
+	:connection(http_server_connection_new(pool,
+					       std::move(socket),
 					       nullptr,
 					       address,
 					       true,

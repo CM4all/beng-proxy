@@ -47,14 +47,18 @@
 #include "http_server/Error.hxx"
 #include "access_log/Glue.hxx"
 #include "pool/pool.hxx"
+#include "pool/UniquePtr.hxx"
 #include "address_string.hxx"
+#include "fs/FilteredSocket.hxx"
 #include "fs/ThreadSocketFilter.hxx"
+#include "fs/Ptr.hxx"
 #include "thread/Pool.hxx"
 #include "uri/Verify.hxx"
 #include "ssl/Filter.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "io/FdType.hxx"
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
 
@@ -141,10 +145,11 @@ NewLbHttpConnection(LbInstance &instance,
 
 	instance.http_connections.push_back(*connection);
 
-	connection->http = http_server_connection_new(&connection->GetPool(),
-						      instance.event_loop,
-						      std::move(fd), fd_type,
-						      std::move(filter),
+	connection->http = http_server_connection_new(connection->GetPool(),
+						      UniquePoolPtr<FilteredSocket>::Make(connection->GetPool(),
+											  instance.event_loop,
+											  std::move(fd), fd_type,
+											  std::move(filter)),
 						      local_address.IsDefined()
 						      ? (SocketAddress)local_address
 						      : nullptr,

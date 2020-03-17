@@ -35,8 +35,10 @@
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
+#include "pool/UniquePtr.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/net/TemplateServerSocket.hxx"
+#include "fs/FilteredSocket.hxx"
 #include "fb_pool.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -91,7 +93,10 @@ Connection::Connection(Instance &_instance, Mode _mode,
 		       SocketAddress address) noexcept
 	:PoolHolder(pool_new_linear(_instance.root_pool, "connection", 2048)),
 	 DemoHttpServerConnection(pool, _instance.event_loop,
-				  std::move(fd), FD_SOCKET,
+				  UniquePoolPtr<FilteredSocket>::Make(pool,
+								      _instance.event_loop,
+								      std::move(fd),
+								      FdType::FD_SOCKET),
 				  address, _mode),
 	 instance(_instance)
 {
