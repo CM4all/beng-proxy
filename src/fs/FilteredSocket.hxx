@@ -101,6 +101,15 @@ public:
 		return filter.get();
 	}
 
+	/**
+	 * Returns the underlying socket.  It may only be used to
+	 * obtain metadata (socket options, addresses).  Don't do
+	 * anything else with it.
+	 */
+	SocketDescriptor GetSocket() const noexcept {
+		return base.GetSocket();
+	}
+
 	FdType GetType() const noexcept {
 		return filter == nullptr
 			? base.GetType()
