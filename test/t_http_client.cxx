@@ -90,8 +90,8 @@ struct Connection {
 	Connection(EventLoop &_event_loop, std::pair<std::unique_ptr<Server>, UniqueSocketDescriptor> _server)
 		:event_loop(_event_loop),
 		 server(std::move(_server.first)),
-		 socket(_event_loop) {
-		socket.InitDummy(_server.second.Release(), FdType::FD_SOCKET);
+		 socket(_event_loop, std::move(_server.second), FdType::FD_SOCKET)
+	{
 	}
 
 	static Connection *New(EventLoop &event_loop,
