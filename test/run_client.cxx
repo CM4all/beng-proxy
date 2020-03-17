@@ -389,9 +389,9 @@ try {
 	case parsed_url::HTTP2:
 		reuse = false;
 
-		fsp = std::make_unique<FilteredSocket>(event_loop);
-		fsp->InitDummy(fd.Release(), FdType::FD_TCP,
-			     std::move(socket_filter));
+		fsp = std::make_unique<FilteredSocket>(event_loop,
+						       std::move(fd), FdType::FD_TCP,
+						       std::move(socket_filter));
 
 		nghttp2_client = std::make_unique<NgHttp2::ClientConnection>(event_loop,
 									     std::move(fsp),

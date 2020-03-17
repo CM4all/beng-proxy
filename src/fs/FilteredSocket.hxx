@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,6 +37,8 @@
 #include "event/net/BufferedSocket.hxx"
 #include "util/BindMethod.hxx"
 
+class UniqueSocketDescriptor;
+
 /**
  * A wrapper for #BufferedSocket that can filter input and output.
  *
@@ -68,6 +70,13 @@ class FilteredSocket final : BufferedSocketHandler {
 public:
 	explicit FilteredSocket(EventLoop &_event_loop) noexcept
 		:base(_event_loop) {}
+
+	/**
+	 * Wrapper for InitDummy().
+	 */
+	FilteredSocket(EventLoop &_event_loop,
+		       UniqueSocketDescriptor _fd, FdType _fd_type,
+		       SocketFilterPtr _filter={});
 
 	~FilteredSocket() noexcept;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,12 +31,21 @@
  */
 
 #include "FilteredSocket.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 
 #include <utility>
 #include <stdexcept>
 
 #include <string.h>
 #include <errno.h>
+
+FilteredSocket::FilteredSocket(EventLoop &_event_loop,
+			       UniqueSocketDescriptor _fd, FdType _fd_type,
+			       SocketFilterPtr _filter)
+	:FilteredSocket(_event_loop)
+{
+	InitDummy(_fd.Release(), _fd_type, std::move(_filter));
+}
 
 FilteredSocket::~FilteredSocket() noexcept
 {
