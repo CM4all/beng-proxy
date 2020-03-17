@@ -50,7 +50,9 @@ class Connection final
 public:
 	Connection(struct pool &pool, EventLoop &event_loop,
 		   UniqueSocketDescriptor fd, SocketAddress address)
-		:http(pool, event_loop, std::move(fd), FD_TCP, nullptr,
+		:http(pool,
+		      UniquePoolPtr<FilteredSocket>::Make(pool, event_loop,
+							  std::move(fd), FD_TCP),
 		      address,
 		      *this) {}
 

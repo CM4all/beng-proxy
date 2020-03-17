@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -33,8 +33,8 @@
 #pragma once
 
 #include "Session.hxx"
+#include "pool/UniquePtr.hxx"
 #include "fs/FilteredSocket.hxx"
-#include "fs/Ptr.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <boost/intrusive/list.hpp>
@@ -48,7 +48,7 @@ namespace NgHttp2 {
 class ServerConnection final : BufferedSocketHandler {
 	struct pool &pool;
 
-	FilteredSocket socket;
+	const UniquePoolPtr<FilteredSocket> socket;
 
 	HttpServerConnectionHandler &handler;
 
@@ -68,9 +68,8 @@ class ServerConnection final : BufferedSocketHandler {
 	RequestList requests;
 
 public:
-	ServerConnection(struct pool &_pool, EventLoop &loop,
-			 UniqueSocketDescriptor fd, FdType fd_type,
-			 SocketFilterPtr filter,
+	ServerConnection(struct pool &_pool,
+			 UniquePoolPtr<FilteredSocket> _socket,
 			 SocketAddress remote_address,
 			 HttpServerConnectionHandler &_handler);
 
