@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -346,23 +346,19 @@ ServerConnection::Request::SendResponse(http_status_t status,
 				dpp);
 }
 
-ServerConnection::ServerConnection(struct pool &_pool, EventLoop &loop,
-				   UniqueSocketDescriptor fd,
-				   FdType fd_type,
-				   SocketFilterPtr filter,
+ServerConnection::ServerConnection(struct pool &_pool,
+				   UniquePoolPtr<FilteredSocket> _socket,
 				   SocketAddress _remote_address,
 				   HttpServerConnectionHandler &_handler)
-	:pool(_pool), socket(loop),
+	:pool(_pool), socket(std::move(_socket)),
 	 handler(_handler),
-	 local_address(DupAddress(pool, fd.GetLocalAddress())),
+	 local_address(DupAddress(pool, socket->GetSocket().GetLocalAddress())),
 	 remote_address(DupAddress(pool, _remote_address)),
 	 local_host_and_port(address_to_string(pool, local_address)),
 	 remote_host(address_to_host_string(pool, remote_address))
 {
-	socket.Init(fd.Release(), fd_type,
-		    Event::Duration(-1), write_timeout,
-		    std::move(filter),
-		    *this);
+	socket->Reinit(Event::Duration(-1), write_timeout,
+		       *this);
 
 	NgHttp2::Option option;
 	//nghttp2_option_set_recv_client_preface(option.get(), 1);
@@ -393,7 +389,7 @@ ServerConnection::ServerConnection(struct pool &_pool, EventLoop &loop,
 
 	// TODO: idle_timeout.Schedule(http_server_idle_timeout);
 
-	socket.ScheduleReadNoTimeout(false);
+	socket->ScheduleReadNoTimeout(false);
 }
 
 ServerConnection::~ServerConnection() noexcept
@@ -404,12 +400,12 @@ ServerConnection::~ServerConnection() noexcept
 ssize_t
 ServerConnection::SendCallback(const void *data, size_t length) noexcept
 {
-	const auto nbytes = socket.Write(data, length);
+	const auto nbytes = socket->Write(data, length);
 	if (nbytes < 0) {
 		const int e = errno;
 		switch (e) {
 		case EAGAIN:
-			socket.ScheduleWrite();
+			socket->ScheduleWrite();
 			return NGHTTP2_ERR_WOULDBLOCK;
 		}
 	}
@@ -476,7 +472,7 @@ ServerConnection::OnBeginHeaderCallback(const nghttp2_frame *frame) noexcept
 BufferedResult
 ServerConnection::OnBufferedData()
 {
-	auto r = socket.ReadBuffer();
+	auto r = socket->ReadBuffer();
 
 	auto nbytes = nghttp2_session_mem_recv(session.get(),
 					       (const uint8_t *)r.data, r.size);
@@ -484,7 +480,7 @@ ServerConnection::OnBufferedData()
 		throw FormatRuntimeError("nghttp2_session_mem_recv() failed: %s",
 					 nghttp2_strerror((int)nbytes));
 
-	socket.DisposeConsumed(nbytes);
+	socket->DisposeConsumed(nbytes);
 
 	const auto rv = nghttp2_session_send(session.get());
 	if (rv != 0)
@@ -511,7 +507,7 @@ ServerConnection::OnBufferedWrite()
 					 nghttp2_strerror(rv));
 
 	if (!nghttp2_session_want_write(session.get()))
-		socket.UnscheduleWrite();
+		socket->UnscheduleWrite();
 
 	return true;
 }
