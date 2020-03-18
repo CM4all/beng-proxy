@@ -73,7 +73,7 @@ struct LbHttpConnection final
 
 	const LazyDomainLogger logger;
 
-	SslFilter *ssl_filter = nullptr;
+	const SslFilter *ssl_filter = nullptr;
 
 	HttpServerConnection *http;
 
