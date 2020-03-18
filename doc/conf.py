@@ -58,7 +58,7 @@ author = 'Max Kellermann'
 # built documents.
 #
 # The short X.Y version.
-version = '17.0.1'
+version = '17.0.2'
 # The full version, including alpha/beta/rc tags.
 release = version
 
