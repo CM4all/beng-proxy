@@ -99,13 +99,13 @@ LbTcpConnection::Inbound::OnBufferedData()
 		return BufferedResult::CLOSED;
 	}
 
-	auto r = socket.ReadBuffer();
+	auto r = socket->ReadBuffer();
 	assert(!r.empty());
 
 	ssize_t nbytes = tcp.outbound.socket.Write(r.data, r.size);
 	if (nbytes > 0) {
 		tcp.outbound.socket.ScheduleWrite();
-		socket.DisposeConsumed(nbytes);
+		socket->DisposeConsumed(nbytes);
 		return BufferedResult::OK;
 	}
 
@@ -156,7 +156,7 @@ LbTcpConnection::Inbound::OnBufferedWrite()
 		return false;
 
 	if (!tcp.got_outbound_data)
-		socket.UnscheduleWrite();
+		socket->UnscheduleWrite();
 	return true;
 }
 
@@ -208,9 +208,9 @@ LbTcpConnection::Outbound::OnBufferedData()
 	auto r = socket.ReadBuffer();
 	assert(!r.empty());
 
-	ssize_t nbytes = tcp.inbound.socket.Write(r.data, r.size);
+	ssize_t nbytes = tcp.inbound.socket->Write(r.data, r.size);
 	if (nbytes > 0) {
-		tcp.inbound.socket.ScheduleWrite();
+		tcp.inbound.socket->ScheduleWrite();
 		socket.DisposeConsumed(nbytes);
 		return BufferedResult::OK;
 	}
@@ -256,9 +256,9 @@ LbTcpConnection::Outbound::OnBufferedEnd() noexcept
 
 	socket.Destroy();
 
-	tcp.inbound.socket.UnscheduleWrite();
+	tcp.inbound.socket->UnscheduleWrite();
 
-	if (tcp.inbound.socket.IsDrained()) {
+	if (tcp.inbound.socket->IsDrained()) {
 		/* all output buffers to "inbound" are drained; close the
 		   connection, because there's nothing left to do */
 		tcp.OnTcpEnd();
@@ -278,7 +278,7 @@ LbTcpConnection::Outbound::OnBufferedWrite()
 
 	tcp.got_inbound_data = false;
 
-	if (!tcp.inbound.socket.Read(false))
+	if (!tcp.inbound.socket->Read(false))
 		return false;
 
 	if (!tcp.got_inbound_data)
@@ -377,7 +377,7 @@ LbTcpConnection::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
 	   (istream_direct_mask_to(inbound.base.base.fd_type) & FdType::FD_PIPE) != 0;
 	*/
 
-	if (inbound.socket.Read(false))
+	if (inbound.socket->Read(false))
 		outbound.socket.Read(false);
 }
 
@@ -441,15 +441,11 @@ LbTcpConnection::ConnectOutbound()
  */
 
 inline
-LbTcpConnection::Inbound::Inbound(EventLoop &event_loop,
-				  UniqueSocketDescriptor &&fd, FdType fd_type,
-				  SocketFilterPtr &&filter)
-	:socket(event_loop)
+LbTcpConnection::Inbound::Inbound(UniquePoolPtr<FilteredSocket> &&_socket) noexcept
+	:socket(std::move(_socket))
 {
-	socket.Init(fd.Release(), fd_type,
-		    Event::Duration(-1), write_timeout,
-		    std::move(filter),
-		    *this);
+	socket->Reinit(Event::Duration(-1), write_timeout,
+		       *this);
 	/* TODO
 	   socket.base.direct = pipe_stock != nullptr &&
 	   (ISTREAM_TO_PIPE & fd_type) != 0 &&
@@ -462,8 +458,7 @@ inline
 LbTcpConnection::LbTcpConnection(PoolPtr &&_pool, LbInstance &_instance,
 				 const LbListenerConfig &_listener,
 				 LbCluster &_cluster,
-				 UniqueSocketDescriptor &&fd, FdType fd_type,
-				 SocketFilterPtr &&filter,
+				 UniquePoolPtr<FilteredSocket> &&_socket,
 				 SocketAddress _client_address)
 	:PoolHolder(std::move(_pool)),
 	 instance(_instance), listener(_listener), cluster(_cluster),
@@ -471,7 +466,7 @@ LbTcpConnection::LbTcpConnection(PoolPtr &&_pool, LbInstance &_instance,
 	 session_sticky(lb_tcp_sticky(cluster.GetConfig().sticky_mode,
 				      _client_address)),
 	 logger(*this),
-	 inbound(instance.event_loop, std::move(fd), fd_type, std::move(filter)),
+	 inbound(std::move(_socket)),
 	 outbound(instance.event_loop),
 	 defer_connect(instance.event_loop, BIND_THIS_METHOD(OnDeferredHandshake))
 {
@@ -527,8 +522,10 @@ LbTcpConnection::New(LbInstance &instance,
 
 	return NewFromPool<LbTcpConnection>(std::move(pool), instance,
 					    listener, cluster,
-					    std::move(fd), fd_type,
-					    std::move(filter),
+					    UniquePoolPtr<FilteredSocket>::Make(pool,
+										instance.event_loop,
+										std::move(fd), fd_type,
+										std::move(filter)),
 					    address);
 }
 

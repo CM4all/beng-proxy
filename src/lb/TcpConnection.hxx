@@ -35,6 +35,7 @@
 #include "fs/FilteredSocket.hxx"
 #include "cluster/StickyHash.hxx"
 #include "pool/Holder.hxx"
+#include "pool/UniquePtr.hxx"
 #include "event/DeferEvent.hxx"
 #include "io/Logger.hxx"
 #include "net/StaticSocketAddress.hxx"
@@ -79,15 +80,13 @@ class LbTcpConnection final
 
 public:
 	struct Inbound final : BufferedSocketHandler {
-		FilteredSocket socket;
+		UniquePoolPtr<FilteredSocket> socket;
 
-		Inbound(EventLoop &event_loop,
-			UniqueSocketDescriptor &&fd, FdType fd_type,
-			SocketFilterPtr &&filter);
+		explicit Inbound(UniquePoolPtr<FilteredSocket> &&_socket) noexcept;
 
 		void ScheduleHandshakeCallback(BoundMethod<void() noexcept> callback) {
-			socket.ScheduleReadNoTimeout(false);
-			socket.SetHandshakeCallback(callback);
+			socket->ScheduleReadNoTimeout(false);
+			socket->SetHandshakeCallback(callback);
 		}
 
 	private:
@@ -144,8 +143,7 @@ public:
 	LbTcpConnection(PoolPtr &&pool, LbInstance &_instance,
 			const LbListenerConfig &_listener,
 			LbCluster &_cluster,
-			UniqueSocketDescriptor &&fd, FdType fd_type,
-			SocketFilterPtr &&filter,
+			UniquePoolPtr<FilteredSocket> &&_socket,
 			SocketAddress _client_address);
 
 	~LbTcpConnection();
@@ -158,7 +156,7 @@ public:
 				    SocketAddress address);
 
 	EventLoop &GetEventLoop() {
-		return inbound.socket.GetEventLoop();
+		return outbound.socket.GetEventLoop();
 	}
 
 	void Destroy();
