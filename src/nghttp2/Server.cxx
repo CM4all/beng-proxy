@@ -265,6 +265,8 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 		return 0;
 	}
 
+	connection.handler.RequestHeadersFinished(*this);
+
 	if (has_request_body) {
 		MultiFifoBufferIstreamHandler &fbi_handler = *this;
 		request_body_control = NewFromPool<MultiFifoBufferIstream>(pool, pool, fbi_handler);
