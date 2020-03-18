@@ -48,6 +48,8 @@
 
 #include "util/Compiler.h"
 
+#include <nghttp2/nghttp2.h>
+
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
@@ -55,6 +57,11 @@
 #include <forward_list>
 
 #include <assert.h>
+
+static constexpr unsigned char alpn_http_any[] = {
+	2, 'h', '2',
+	8, 'h', 't', 't', 'p', '/', '1', '.', '1',
+};
 
 struct SslFactoryCertKey {
 	struct Name {
@@ -111,6 +118,28 @@ struct SslFactoryCertKey {
 			throw SslError("SSL_CTX_set_session_id_context() failed");
 	}
 
+	void EnableAlpnH2() noexcept {
+		SSL_CTX_set_next_protos_advertised_cb(ssl_ctx.get(), [](SSL *, const unsigned char **data, unsigned int *len, void *) {
+			*data = alpn_http_any;
+			*len = std::size(alpn_http_any);
+			return SSL_TLSEXT_ERR_OK;
+		}, nullptr);
+
+		SSL_CTX_set_alpn_select_cb(ssl_ctx.get(), [](SSL *, const unsigned char **out, unsigned char *outlen, const unsigned char *in, unsigned int inlen, void *){
+			// TODO: don't use libnghttp2 here (layering violation)
+			switch (nghttp2_select_next_protocol(const_cast<unsigned char **>(out), outlen, in, inlen)) {
+			case -1:
+				return SSL_TLSEXT_ERR_NOACK;
+
+			case 1:
+				// HTTP/2 enabled
+				break;
+			}
+
+			return SSL_TLSEXT_ERR_OK;
+		}, nullptr);
+	}
+
 	UniqueSSL Make() const {
 		UniqueSSL ssl(SSL_new(ssl_ctx.get()));
 		if (!ssl)
@@ -144,6 +173,11 @@ struct SslFactory {
 	void SetSessionIdContext(ConstBuffer<void> sid_ctx) {
 		for (auto &i : cert_key)
 			i.SetSessionIdContext(sid_ctx);
+	}
+
+	void EnableAlpnH2() {
+		for (auto &i : cert_key)
+			i.EnableAlpnH2();
 	}
 
 	UniqueSSL Make();
@@ -346,6 +380,12 @@ ssl_factory_set_session_id_context(SslFactory &factory,
 				   ConstBuffer<void> sid_ctx)
 {
 	factory.SetSessionIdContext(sid_ctx);
+}
+
+void
+ssl_factory_enable_alpn_h2(SslFactory &factory) noexcept
+{
+	factory.EnableAlpnH2();
 }
 
 UniqueSSL

@@ -56,6 +56,9 @@ void
 ssl_factory_set_session_id_context(SslFactory &factory,
 				   ConstBuffer<void> sid_ctx);
 
+void
+ssl_factory_enable_alpn_h2(SslFactory &factory) noexcept;
+
 UniqueSSL
 ssl_factory_make(SslFactory &factory);
 
