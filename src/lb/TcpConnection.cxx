@@ -38,9 +38,6 @@
 #include "AllocatorPtr.hxx"
 #include "cluster/ConnectBalancer.hxx"
 #include "cluster/AddressSticky.hxx"
-#include "ssl/Filter.hxx"
-#include "fs/ThreadSocketFilter.hxx"
-#include "thread/Pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "address_string.hxx"
@@ -500,32 +497,15 @@ LbTcpConnection *
 LbTcpConnection::New(LbInstance &instance,
 		     const LbListenerConfig &listener,
 		     LbCluster &cluster,
-		     SslFactory *ssl_factory,
-		     UniqueSocketDescriptor &&fd, SocketAddress address)
+		     PoolPtr pool,
+		     UniquePoolPtr<FilteredSocket> socket,
+		     SocketAddress address)
 {
 	assert(listener.destination.GetProtocol() == LbProtocol::TCP);
 
-	auto fd_type = FdType::FD_TCP;
-
-	SocketFilterPtr filter;
-
-	if (ssl_factory != nullptr) {
-		auto *ssl_filter = ssl_filter_new(*ssl_factory);
-
-		filter.reset(new ThreadSocketFilter(instance.event_loop,
-						    thread_pool_get_queue(instance.event_loop),
-						    &ssl_filter_get_handler(*ssl_filter)));
-	}
-
-	auto pool = pool_new_linear(instance.root_pool, "client_connection", 2048);
-	pool_set_major(pool);
-
 	return NewFromPool<LbTcpConnection>(std::move(pool), instance,
 					    listener, cluster,
-					    UniquePoolPtr<FilteredSocket>::Make(pool,
-										instance.event_loop,
-										std::move(fd), fd_type,
-										std::move(filter)),
+					    std::move(socket),
 					    address);
 }
 

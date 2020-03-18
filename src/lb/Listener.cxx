@@ -35,8 +35,14 @@
 #include "ListenerConfig.hxx"
 #include "HttpConnection.hxx"
 #include "TcpConnection.hxx"
+#include "pool/UniquePtr.hxx"
 #include "ssl/Factory.hxx"
+#include "ssl/Filter.hxx"
 #include "ssl/DbSniCallback.hxx"
+#include "fs/FilteredSocket.hxx"
+#include "fs/ThreadSocketFilter.hxx"
+#include "fs/Ptr.hxx"
+#include "thread/Pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/RuntimeError.hxx"
 
@@ -44,19 +50,41 @@ void
 LbListener::OnAccept(UniqueSocketDescriptor &&new_fd,
 		     SocketAddress address) noexcept
 try {
+	auto fd_type = FdType::FD_TCP;
+
+	SslFilter *ssl_filter = nullptr;
+	SocketFilterPtr filter;
+
+	if (ssl_factory != nullptr) {
+		ssl_filter = ssl_filter_new(*ssl_factory);
+		filter.reset(new ThreadSocketFilter(instance.event_loop,
+						    thread_pool_get_queue(instance.event_loop),
+						    &ssl_filter_get_handler(*ssl_filter)));
+	}
+
+	auto pool = pool_new_linear(instance.root_pool, "Connection", 2048);
+	pool_set_major(pool);
+
+	auto socket = UniquePoolPtr<FilteredSocket>::Make(pool,
+							  instance.event_loop,
+							  std::move(new_fd), fd_type,
+							  std::move(filter));
+
 	switch (config.destination.GetProtocol()) {
 	case LbProtocol::HTTP:
 		NewLbHttpConnection(instance, config, destination,
-				    ssl_factory,
-				    std::move(new_fd), address);
+				    std::move(pool),
+				    std::move(socket), ssl_filter,
+				    address);
 		break;
 
 	case LbProtocol::TCP:
 		assert(destination.cluster != nullptr);
 
 		LbTcpConnection::New(instance, config, *destination.cluster,
-				     ssl_factory,
-				     std::move(new_fd), address);
+				     std::move(pool),
+				     std::move(socket),
+				     address);
 		break;
 	}
 } catch (...) {

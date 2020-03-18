@@ -50,11 +50,7 @@
 #include "pool/UniquePtr.hxx"
 #include "address_string.hxx"
 #include "fs/FilteredSocket.hxx"
-#include "fs/ThreadSocketFilter.hxx"
-#include "fs/Ptr.hxx"
-#include "thread/Pool.hxx"
 #include "uri/Verify.hxx"
-#include "ssl/Filter.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -116,27 +112,15 @@ LbHttpConnection *
 NewLbHttpConnection(LbInstance &instance,
 		    const LbListenerConfig &listener,
 		    const LbGoto &destination,
-		    SslFactory *ssl_factory,
-		    UniqueSocketDescriptor &&fd, SocketAddress address)
+		    PoolPtr pool,
+		    UniquePoolPtr<FilteredSocket> socket,
+		    const SslFilter *ssl_filter,
+		    SocketAddress address)
 {
 	assert(listener.destination.GetProtocol() == LbProtocol::HTTP);
 
 	/* determine the local socket address */
-	StaticSocketAddress local_address = fd.GetLocalAddress();
-
-	auto fd_type = FdType::FD_TCP;
-
-	SslFilter *ssl_filter = nullptr;
-	SocketFilterPtr filter;
-
-	if (ssl_factory != nullptr) {
-		ssl_filter = ssl_filter_new(*ssl_factory);
-		filter.reset(new ThreadSocketFilter(instance.event_loop,
-						    thread_pool_get_queue(instance.event_loop),
-						    &ssl_filter_get_handler(*ssl_filter)));
-	}
-
-	auto pool = pool_new_linear(instance.root_pool, "http_connection", 2048);
+	StaticSocketAddress local_address = socket->GetSocket().GetLocalAddress();
 
 	auto *connection = NewFromPool<LbHttpConnection>(std::move(pool), instance,
 							 listener, destination,
@@ -146,10 +130,7 @@ NewLbHttpConnection(LbInstance &instance,
 	instance.http_connections.push_back(*connection);
 
 	connection->http = http_server_connection_new(connection->GetPool(),
-						      UniquePoolPtr<FilteredSocket>::Make(connection->GetPool(),
-											  instance.event_loop,
-											  std::move(fd), fd_type,
-											  std::move(filter)),
+						      std::move(socket),
 						      local_address.IsDefined()
 						      ? (SocketAddress)local_address
 						      : nullptr,

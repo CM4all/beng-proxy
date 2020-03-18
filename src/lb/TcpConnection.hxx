@@ -40,7 +40,6 @@
 #include "io/Logger.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/PConnectSocket.hxx"
-#include "io/FdType.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 
@@ -50,8 +49,8 @@
 
 #include <stdint.h>
 
-struct SslFactory;
-struct SslFilter;
+template<typename T> class UniquePoolPtr;
+class FilteredSocket;
 class UniqueSocketDescriptor;
 class SocketAddress;
 struct LbListenerConfig;
@@ -151,8 +150,8 @@ public:
 	static LbTcpConnection *New(LbInstance &instance,
 				    const LbListenerConfig &listener,
 				    LbCluster &cluster,
-				    SslFactory *ssl_factory,
-				    UniqueSocketDescriptor &&fd,
+				    PoolPtr pool,
+				    UniquePoolPtr<FilteredSocket> socket,
 				    SocketAddress address);
 
 	EventLoop &GetEventLoop() {

@@ -42,7 +42,8 @@
 
 #include <stdint.h>
 
-struct SslFactory;
+template<typename T> class UniquePoolPtr;
+class FilteredSocket;
 struct SslFilter;
 class UniqueSocketDescriptor;
 class SocketAddress;
@@ -134,5 +135,7 @@ LbHttpConnection *
 NewLbHttpConnection(LbInstance &instance,
 		    const LbListenerConfig &listener,
 		    const LbGoto &destination,
-		    SslFactory *ssl_factory,
-		    UniqueSocketDescriptor &&fd, SocketAddress address);
+		    PoolPtr pool,
+		    UniquePoolPtr<FilteredSocket> socket,
+		    const SslFilter *ssl_filter,
+		    SocketAddress address);
