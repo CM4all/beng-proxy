@@ -49,7 +49,7 @@
 #include <assert.h>
 #include <string.h>
 
-struct SslFilter final : ThreadSocketFilterHandler {
+class SslFilter final : public ThreadSocketFilterHandler {
 	/**
 	 * Buffers which can be accessed from within the thread without
 	 * holding locks.  These will be copied to/from the according
@@ -64,6 +64,7 @@ struct SslFilter final : ThreadSocketFilterHandler {
 
 	AllocatedArray<unsigned char> alpn_selected;
 
+public:
 	AllocatedString<> peer_subject = nullptr, peer_issuer_subject = nullptr;
 
 	SslFilter(UniqueSSL &&_ssl)

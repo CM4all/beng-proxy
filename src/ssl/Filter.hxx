@@ -36,7 +36,7 @@
 #include "util/Compiler.h"
 
 class SslFactory;
-struct SslFilter;
+class SslFilter;
 template<typename T> struct ConstBuffer;
 class SocketFilter;
 class ThreadSocketFilterHandler;

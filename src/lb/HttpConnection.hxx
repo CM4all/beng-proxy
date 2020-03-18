@@ -44,7 +44,7 @@
 
 template<typename T> class UniquePoolPtr;
 class FilteredSocket;
-struct SslFilter;
+class SslFilter;
 class UniqueSocketDescriptor;
 class SocketAddress;
 struct HttpServerConnection;
