@@ -37,7 +37,7 @@
 
 struct BpInstance;
 struct SslConfig;
-struct SslFactory;
+class SslFactory;
 
 /**
  * Listener for incoming HTTP connections.

@@ -46,7 +46,7 @@ struct BpConfig;
 struct BpInstance;
 class UniqueSocketDescriptor;
 class SocketAddress;
-struct SslFactory;
+class SslFactory;
 struct HttpServerConnection;
 
 /*

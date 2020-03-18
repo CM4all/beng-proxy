@@ -35,7 +35,7 @@
 #include "ssl/Unique.hxx"
 #include "util/Compiler.h"
 
-struct SslFactory;
+class SslFactory;
 struct SslFilter;
 template<typename T> struct ConstBuffer;
 class SocketFilter;

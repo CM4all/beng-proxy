@@ -157,7 +157,8 @@ struct SslFactoryCertKey {
 	}
 };
 
-struct SslFactory {
+class SslFactory {
+public:
 	std::vector<SslFactoryCertKey> cert_key;
 
 	const std::unique_ptr<SslSniCallback> sni;

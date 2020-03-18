@@ -36,7 +36,7 @@
 
 struct pool;
 struct SslConfig;
-struct SslFactory;
+class SslFactory;
 template<typename T> struct ConstBuffer;
 class SslSniCallback;
 
