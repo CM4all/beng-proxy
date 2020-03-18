@@ -250,21 +250,19 @@ Stock::Item::OnConnectFilteredSocket(std::unique_ptr<FilteredSocket> socket) noe
 	assert(!connection);
 
 	const auto *ssl_filter = ssl_filter_cast_from(socket->GetFilter());
-	if (ssl_filter != nullptr) {
-		const auto alpn = ssl_filter_get_alpn_selected(*ssl_filter);
-		if (!IsAlpnHttp2(alpn)) {
-			alpn_failure = true;
+	if (ssl_filter != nullptr &&
+	    !IsAlpnHttp2(ssl_filter_get_alpn_selected(*ssl_filter))) {
+		alpn_failure = true;
 
-			auto _socket = std::move(socket);
-			get_requests.clear_and_dispose([&_socket](GetRequest *request){
-				request->stopwatch.RecordEvent("alpn");
-				request->handler.OnNgHttp2StockAlpn(std::move(_socket));
-			});
+		auto _socket = std::move(socket);
+		get_requests.clear_and_dispose([&_socket](GetRequest *request){
+			request->stopwatch.RecordEvent("alpn");
+			request->handler.OnNgHttp2StockAlpn(std::move(_socket));
+		});
 
-			/* this item stays in the map so it can serve
-			   future requests quickly */
-			return;
-		}
+		/* this item stays in the map so it can serve
+		   future requests quickly */
+		return;
 	}
 
 	NgHttp2::ConnectionHandler &handler = *this;
