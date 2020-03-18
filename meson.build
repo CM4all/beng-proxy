@@ -1021,6 +1021,7 @@ executable(
     net_dep,
     ssl_dep,
     pg_dep,
+    nghttp2_dep,
     http_server_dep,
     http_client_dep,
     putil_dep,

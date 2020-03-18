@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 CM4all GmbH
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -45,11 +45,12 @@
 #include "http/IncomingRequest.hxx"
 #include "http_server/Handler.hxx"
 #include "http_server/Error.hxx"
+#include "nghttp2/Server.hxx"
 #include "access_log/Glue.hxx"
 #include "pool/pool.hxx"
-#include "pool/UniquePtr.hxx"
 #include "address_string.hxx"
 #include "fs/FilteredSocket.hxx"
+#include "ssl/Filter.hxx"
 #include "uri/Verify.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/StaticSocketAddress.hxx"
@@ -108,6 +109,13 @@ HttpServerLogLevel(std::exception_ptr e)
  *
  */
 
+static bool
+IsAlpnHttp2(ConstBuffer<unsigned char> alpn) noexcept
+{
+	return alpn != nullptr && alpn.size == 2 &&
+		alpn[0] == 'h' && alpn[1] == '2';
+}
+
 LbHttpConnection *
 NewLbHttpConnection(LbInstance &instance,
 		    const LbListenerConfig &listener,
@@ -129,14 +137,23 @@ NewLbHttpConnection(LbInstance &instance,
 
 	instance.http_connections.push_back(*connection);
 
-	connection->http = http_server_connection_new(connection->GetPool(),
-						      std::move(socket),
-						      local_address.IsDefined()
-						      ? (SocketAddress)local_address
-						      : nullptr,
-						      address,
-						      false,
-						      *connection);
+	if (ssl_filter != nullptr &&
+	    IsAlpnHttp2(ssl_filter_get_alpn_selected(*ssl_filter)))
+		connection->http2 = UniquePoolPtr<NgHttp2::ServerConnection>::Make(connection->GetPool(),
+										   connection->GetPool(),
+										   std::move(socket),
+										   address,
+										   *connection);
+	else
+		connection->http = http_server_connection_new(connection->GetPool(),
+							      std::move(socket),
+							      local_address.IsDefined()
+							      ? (SocketAddress)local_address
+							      : nullptr,
+							      address,
+							      false,
+							      *connection);
+
 	return connection;
 }
 
@@ -155,9 +172,10 @@ void
 LbHttpConnection::CloseAndDestroy()
 {
 	assert(listener.destination.GetProtocol() == LbProtocol::HTTP);
-	assert(http != nullptr);
+	assert(http != nullptr || http2);
 
-	http_server_connection_close(http);
+	if (http != nullptr)
+		http_server_connection_close(http);
 
 	Destroy();
 }
@@ -280,7 +298,7 @@ LbHttpConnection::HttpConnectionError(std::exception_ptr e) noexcept
 {
 	logger(HttpServerLogLevel(e), e);
 
-	assert(http != nullptr);
+	assert(http != nullptr || http2);
 	http = nullptr;
 
 	Destroy();
@@ -289,7 +307,7 @@ LbHttpConnection::HttpConnectionError(std::exception_ptr e) noexcept
 void
 LbHttpConnection::HttpConnectionClosed() noexcept
 {
-	assert(http != nullptr);
+	assert(http != nullptr || http2);
 	http = nullptr;
 
 	Destroy();

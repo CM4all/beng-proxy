@@ -110,6 +110,9 @@ try {
 		   because listener names are unique, so I hope this should be
 		   good enough */
 		ssl_factory_set_session_id_context(*ssl_factory, {config.name.data(), config.name.size()});
+
+		if (config.destination.GetProtocol() == LbProtocol::HTTP)
+			ssl_factory_enable_alpn_h2(*ssl_factory);
 	}
 
 	FilteredSocketListenerHandler &handler = *this;

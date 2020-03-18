@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 CM4all GmbH
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,6 +34,7 @@
 
 #include "http_server/Handler.hxx"
 #include "pool/Holder.hxx"
+#include "pool/UniquePtr.hxx"
 #include "io/Logger.hxx"
 
 #include <boost/intrusive/list.hpp>
@@ -48,6 +49,7 @@ class SslFilter;
 class UniqueSocketDescriptor;
 class SocketAddress;
 struct HttpServerConnection;
+namespace NgHttp2 { class ServerConnection; }
 struct LbListenerConfig;
 class LbCluster;
 class LbLuaHandler;
@@ -76,7 +78,8 @@ struct LbHttpConnection final
 
 	const SslFilter *ssl_filter = nullptr;
 
-	HttpServerConnection *http;
+	HttpServerConnection *http = nullptr;
+	UniquePoolPtr<NgHttp2::ServerConnection> http2;
 
 	LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 			 const LbListenerConfig &_listener,
