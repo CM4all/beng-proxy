@@ -83,11 +83,6 @@ public:
 
 		explicit Inbound(UniquePoolPtr<FilteredSocket> &&_socket) noexcept;
 
-		void ScheduleHandshakeCallback(BoundMethod<void() noexcept> callback) {
-			socket->ScheduleReadNoTimeout(false);
-			socket->SetHandshakeCallback(callback);
-		}
-
 	private:
 		/* virtual methods from class BufferedSocketHandler */
 		BufferedResult OnBufferedData() override;
@@ -165,17 +160,9 @@ protected:
 	std::string MakeLoggerDomain() const noexcept override;
 
 private:
-	void ScheduleHandshakeCallback() {
-		inbound.ScheduleHandshakeCallback(BIND_THIS_METHOD(OnHandshake));
-	}
-
 	void ConnectOutbound();
 
 public:
-	void OnHandshake() noexcept {
-		defer_connect.Schedule();
-	}
-
 	void OnDeferredHandshake() noexcept;
 
 	void OnTcpEnd();

@@ -40,36 +40,15 @@
 #include "ssl/Filter.hxx"
 #include "ssl/DbSniCallback.hxx"
 #include "fs/FilteredSocket.hxx"
-#include "fs/ThreadSocketFilter.hxx"
-#include "fs/Ptr.hxx"
-#include "thread/Pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/RuntimeError.hxx"
 
 void
-LbListener::OnAccept(UniqueSocketDescriptor &&new_fd,
-		     SocketAddress address) noexcept
+LbListener::OnFilteredSocketConnect(PoolPtr pool,
+				    UniquePoolPtr<FilteredSocket> socket,
+				    SocketAddress address,
+				    const SslFilter *ssl_filter) noexcept
 try {
-	auto fd_type = FdType::FD_TCP;
-
-	SslFilter *ssl_filter = nullptr;
-	SocketFilterPtr filter;
-
-	if (ssl_factory != nullptr) {
-		ssl_filter = ssl_filter_new(*ssl_factory);
-		filter.reset(new ThreadSocketFilter(instance.event_loop,
-						    thread_pool_get_queue(instance.event_loop),
-						    &ssl_filter_get_handler(*ssl_filter)));
-	}
-
-	auto pool = pool_new_linear(instance.root_pool, "Connection", 2048);
-	pool_set_major(pool);
-
-	auto socket = UniquePoolPtr<FilteredSocket>::Make(pool,
-							  instance.event_loop,
-							  std::move(new_fd), fd_type,
-							  std::move(filter));
-
 	switch (config.destination.GetProtocol()) {
 	case LbProtocol::HTTP:
 		NewLbHttpConnection(instance, config, destination,
@@ -93,7 +72,7 @@ try {
 }
 
 void
-LbListener::OnAcceptError(std::exception_ptr ep) noexcept
+LbListener::OnFilteredSocketError(std::exception_ptr ep) noexcept
 {
 	logger(2, "Failed to accept: ", ep);
 }
@@ -105,8 +84,7 @@ LbListener::OnAcceptError(std::exception_ptr ep) noexcept
 
 LbListener::LbListener(LbInstance &_instance,
 		       const LbListenerConfig &_config)
-	:ServerSocket(_instance.event_loop),
-	 instance(_instance), config(_config),
+	:instance(_instance), config(_config),
 	 logger("listener " + config.name)
 {
 }
@@ -114,7 +92,7 @@ LbListener::LbListener(LbInstance &_instance,
 void
 LbListener::Setup()
 try {
-	assert(ssl_factory == nullptr);
+	SslFactory *ssl_factory = nullptr;
 
 	if (config.ssl) {
 		/* prepare SSL support */
@@ -134,7 +112,13 @@ try {
 		ssl_factory_set_session_id_context(*ssl_factory, {config.name.data(), config.name.size()});
 	}
 
-	Listen(config.Create(SOCK_STREAM));
+	FilteredSocketListenerHandler &handler = *this;
+	listener = std::make_unique<FilteredSocketListener>(instance.root_pool,
+							    instance.event_loop,
+							    ssl_factory,
+							    handler);
+
+	listener->Listen(config.Create(SOCK_STREAM));
 } catch (...) {
 	std::throw_with_nested(FormatRuntimeError("Failed to set up listener '%s'",
 						  config.name.c_str()));
@@ -146,16 +130,8 @@ LbListener::Scan(LbGotoMap &goto_map)
 	destination = goto_map.GetInstance(config.destination);
 }
 
-LbListener::~LbListener()
-{
-	if (ssl_factory != nullptr)
-		ssl_factory_free(ssl_factory);
-}
-
 unsigned
 LbListener::FlushSSLSessionCache(long tm)
 {
-	return ssl_factory != nullptr
-		? ssl_factory_flush(*ssl_factory, tm)
-		: 0;
+	return listener->FlushSSLSessionCache(tm);
 }

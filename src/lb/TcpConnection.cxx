@@ -478,7 +478,7 @@ LbTcpConnection::LbTcpConnection(PoolPtr &&_pool, LbInstance &_instance,
 
 	instance.tcp_connections.push_back(*this);
 
-	ScheduleHandshakeCallback();
+	defer_connect.Schedule();
 }
 
 LbTcpConnection::~LbTcpConnection()

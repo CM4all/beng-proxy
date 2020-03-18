@@ -34,9 +34,10 @@
 
 #include "Goto.hxx"
 #include "io/Logger.hxx"
-#include "event/net/ServerSocket.hxx"
+#include "fs/Listener.hxx"
 
-struct SslFactory;
+#include <memory>
+
 struct LbListenerConfig;
 struct LbInstance;
 class LbGotoMap;
@@ -44,29 +45,32 @@ class LbGotoMap;
 /**
  * Listener on a TCP port.
  */
-class LbListener final : public ServerSocket {
+class LbListener final : FilteredSocketListenerHandler {
 	LbInstance &instance;
 
 	const LbListenerConfig &config;
 
-	LbGoto destination;
+	std::unique_ptr<FilteredSocketListener> listener;
 
-	SslFactory *ssl_factory = nullptr;
+	LbGoto destination;
 
 	const Logger logger;
 
 public:
 	LbListener(LbInstance &_instance,
 		   const LbListenerConfig &_config);
-	~LbListener();
 
 	void Setup();
 	void Scan(LbGotoMap &goto_map);
 
 	unsigned FlushSSLSessionCache(long tm);
 
-protected:
-	void OnAccept(UniqueSocketDescriptor &&fd,
-		      SocketAddress address) noexcept override;
-	void OnAcceptError(std::exception_ptr ep) noexcept override;
+private:
+	/* virtual methods from class FilteredSocketListenerHandler */
+	void OnFilteredSocketConnect(PoolPtr pool,
+				     UniquePoolPtr<FilteredSocket> socket,
+				     SocketAddress address,
+				     const SslFilter *ssl_filter) noexcept override;
+	void OnFilteredSocketError(std::exception_ptr e) noexcept override;
+
 };
