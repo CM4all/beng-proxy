@@ -33,8 +33,9 @@
 #pragma once
 
 #include "http_server/Handler.hxx"
-#include "io/Logger.hxx"
 #include "pool/Holder.hxx"
+#include "pool/UniquePtr.hxx"
+#include "io/Logger.hxx"
 
 #include <boost/intrusive/list.hpp>
 
@@ -44,10 +45,12 @@
 
 template<typename T> class UniquePoolPtr;
 class FilteredSocket;
+class SslFilter;
 struct BpConfig;
 struct BpInstance;
 class SocketAddress;
 struct HttpServerConnection;
+namespace NgHttp2 { class ServerConnection; }
 
 /*
  * A connection from a HTTP client.
@@ -71,6 +74,10 @@ struct BpConnection final
 	const LLogger logger;
 
 	HttpServerConnection *http;
+
+#ifdef HAVE_NGHTTP2
+	UniquePoolPtr<NgHttp2::ServerConnection> http2;
+#endif
 
 	BpConnection(PoolPtr &&_pool, BpInstance &_instance,
 		     const char *_listener_tag, bool _auth_alt_host,
@@ -96,6 +103,7 @@ struct BpConnection final
 void
 new_connection(PoolPtr pool, BpInstance &instance,
 	       UniquePoolPtr<FilteredSocket> socket,
+	       const SslFilter *ssl_filter,
 	       SocketAddress address,
 	       const char *listener_tag, bool auth_alt_host) noexcept;
 

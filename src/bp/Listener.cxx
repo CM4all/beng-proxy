@@ -54,6 +54,11 @@ MakeSslFactory(const SslConfig *ssl_config)
 
 	auto ssl_factory = ssl_factory_new_server(*ssl_config, nullptr);
 	// TODO: call SetSessionIdContext()
+
+#ifdef HAVE_NGHTTP2
+	ssl_factory->EnableAlpnH2();
+#endif
+
 	return ssl_factory;
 }
 
@@ -75,10 +80,10 @@ void
 BPListener::OnFilteredSocketConnect(PoolPtr pool,
 				    UniquePoolPtr<FilteredSocket> socket,
 				    SocketAddress address,
-				    const SslFilter *) noexcept
+				    const SslFilter *ssl_filter) noexcept
 {
 	new_connection(std::move(pool), instance,
-		       std::move(socket),
+		       std::move(socket), ssl_filter,
 		       address,
 		       tag, auth_alt_host);
 }

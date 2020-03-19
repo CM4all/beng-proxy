@@ -39,10 +39,12 @@
 #include "http/IncomingRequest.hxx"
 #include "http_server/Handler.hxx"
 #include "http_server/Error.hxx"
+#include "nghttp2/Server.hxx"
 #include "drop.hxx"
 #include "address_string.hxx"
 #include "pool/UniquePtr.hxx"
 #include "fs/FilteredSocket.hxx"
+#include "ssl/Filter.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
@@ -165,9 +167,21 @@ BpConnection::HttpConnectionClosed() noexcept
  *
  */
 
+#ifdef HAVE_NGHTTP2
+
+static bool
+IsAlpnHttp2(ConstBuffer<unsigned char> alpn) noexcept
+{
+	return alpn != nullptr && alpn.size == 2 &&
+		alpn[0] == 'h' && alpn[1] == '2';
+}
+
+#endif
+
 void
 new_connection(PoolPtr pool, BpInstance &instance,
 	       UniquePoolPtr<FilteredSocket> socket,
+	       const SslFilter *ssl_filter,
 	       SocketAddress address,
 	       const char *listener_tag, bool auth_alt_host) noexcept
 {
@@ -190,13 +204,27 @@ new_connection(PoolPtr pool, BpInstance &instance,
 						     address);
 	instance.connections.push_front(*connection);
 
-	connection->http =
-		http_server_connection_new(connection->GetPool(),
-					   std::move(socket),
-					   local_address.IsDefined()
-					   ? (SocketAddress)local_address
-					   : nullptr,
-					   address,
-					   true,
-					   *connection);
+#ifdef HAVE_NGHTTP2
+	if (ssl_filter != nullptr &&
+	    IsAlpnHttp2(ssl_filter_get_alpn_selected(*ssl_filter)))
+		connection->http2 = UniquePoolPtr<NgHttp2::ServerConnection>::Make(connection->GetPool(),
+										   connection->GetPool(),
+										   std::move(socket),
+										   address,
+										   *connection);
+	else
+#endif
+		connection->http =
+			http_server_connection_new(connection->GetPool(),
+						   std::move(socket),
+						   local_address.IsDefined()
+						   ? (SocketAddress)local_address
+						   : nullptr,
+						   address,
+						   true,
+						   *connection);
+
+#ifndef HAVE_NGHTTP2
+	(void)ssl_filter;
+#endif
 }
