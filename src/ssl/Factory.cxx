@@ -157,45 +157,16 @@ struct SslFactoryCertKey {
 	}
 };
 
-class SslFactory {
-public:
-	std::vector<SslFactoryCertKey> cert_key;
-
-	const std::unique_ptr<SslSniCallback> sni;
-
-	SslFactory(std::unique_ptr<SslSniCallback> &&_sni)
-		:sni(std::move(_sni)) {}
-
-	gcc_pure
-	const SslFactoryCertKey *FindCommonName(StringView host_name) const;
-
-	void EnableSNI();
-
-	void SetSessionIdContext(ConstBuffer<void> sid_ctx) {
-		for (auto &i : cert_key)
-			i.SetSessionIdContext(sid_ctx);
-	}
-
-	void EnableAlpnH2() {
-		for (auto &i : cert_key)
-			i.EnableAlpnH2();
-	}
-
-	UniqueSSL Make();
-
-	unsigned Flush(long tm);
-};
-
-static void
-load_certs_keys(SslFactory &factory, const SslConfig &config)
+void
+SslFactory::LoadCertsKeys(const SslConfig &config)
 {
-	factory.cert_key.reserve(config.cert_key.size());
+	cert_key.reserve(config.cert_key.size());
 
 	for (const auto &c : config.cert_key) {
 		SslFactoryCertKey ck;
 		ck.LoadServer(config, c);
 
-		factory.cert_key.emplace_back(std::move(ck));
+		cert_key.emplace_back(std::move(ck));
 	}
 }
 
@@ -254,6 +225,14 @@ SslFactoryCertKey::MatchCommonName(StringView host_name) const
 	return false;
 }
 
+inline
+SslFactory::SslFactory(std::unique_ptr<SslSniCallback> &&_sni) noexcept
+	:sni(std::move(_sni))
+{
+}
+
+SslFactory::~SslFactory() noexcept = default;
+
 inline const SslFactoryCertKey *
 SslFactory::FindCommonName(StringView host_name) const
 {
@@ -280,9 +259,9 @@ ssl_servername_callback(SSL *ssl, gcc_unused int *al,
 	if (ck != nullptr) {
 		/* found it - now use it */
 		ck->Apply(ssl);
-	} else if (factory.sni) {
+	} else if (factory.GetSNI()) {
 		try {
-			factory.sni->OnSni(ssl, host_name.data);
+			factory.GetSNI()->OnSni(ssl, host_name.data);
 		} catch (const std::exception &e) {
 			PrintException(e);
 		}
@@ -302,7 +281,28 @@ SslFactory::EnableSNI()
 		throw SslError("SSL_CTX_set_tlsext_servername_callback() failed");
 }
 
-inline UniqueSSL
+inline void
+SslFactory::AutoEnableSNI()
+{
+	if (cert_key.size() > 1 || sni)
+		EnableSNI();
+}
+
+void
+SslFactory::SetSessionIdContext(ConstBuffer<void> sid_ctx)
+{
+	for (auto &i : cert_key)
+		i.SetSessionIdContext(sid_ctx);
+}
+
+void
+SslFactory::EnableAlpnH2()
+{
+	for (auto &i : cert_key)
+		i.EnableAlpnH2();
+}
+
+UniqueSSL
 SslFactory::Make()
 {
 	auto ssl = cert_key.front().Make();
@@ -312,7 +312,7 @@ SslFactory::Make()
 	return ssl;
 }
 
-inline unsigned
+unsigned
 SslFactory::Flush(long tm)
 {
 	unsigned n = 0;
@@ -362,41 +362,8 @@ ssl_factory_new_server(const SslConfig &config,
 
 	std::unique_ptr<SslFactory> factory(new SslFactory(std::move(sni)));
 
-	load_certs_keys(*factory, config);
-
-	if (factory->cert_key.size() > 1 || factory->sni)
-		factory->EnableSNI();
+	factory->LoadCertsKeys(config);
+	factory->AutoEnableSNI();
 
 	return factory.release();
-}
-
-void
-ssl_factory_free(SslFactory *factory)
-{
-	delete factory;
-}
-
-void
-ssl_factory_set_session_id_context(SslFactory &factory,
-				   ConstBuffer<void> sid_ctx)
-{
-	factory.SetSessionIdContext(sid_ctx);
-}
-
-void
-ssl_factory_enable_alpn_h2(SslFactory &factory) noexcept
-{
-	factory.EnableAlpnH2();
-}
-
-UniqueSSL
-ssl_factory_make(SslFactory &factory)
-{
-	return factory.Make();
-}
-
-unsigned
-ssl_factory_flush(SslFactory &factory, long tm)
-{
-	return factory.Flush(tm);
 }

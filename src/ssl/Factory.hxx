@@ -33,39 +33,57 @@
 #pragma once
 
 #include "ssl/Unique.hxx"
+#include "util/Compiler.h"
 
+#include <vector>
+
+struct StringView;
 struct pool;
 struct SslConfig;
-class SslFactory;
 template<typename T> struct ConstBuffer;
+struct SslFactoryCertKey;
 class SslSniCallback;
+
+class SslFactory {
+	std::vector<SslFactoryCertKey> cert_key;
+
+	const std::unique_ptr<SslSniCallback> sni;
+
+public:
+	explicit SslFactory(std::unique_ptr<SslSniCallback> &&_sni) noexcept;
+	~SslFactory() noexcept;
+
+	void LoadCertsKeys(const SslConfig &config);
+
+	gcc_pure
+	const SslFactoryCertKey *FindCommonName(StringView host_name) const;
+
+	void EnableSNI();
+	void AutoEnableSNI();
+
+	const auto &GetSNI() const noexcept {
+		return sni;
+	}
+
+	/**
+	 * Wrapper for SSL_CTX_set_session_id_context().
+	 *
+	 * Throws on error.
+	 */
+	void SetSessionIdContext(ConstBuffer<void> sid_ctx);
+
+	void EnableAlpnH2();
+
+	UniqueSSL Make();
+
+	/**
+	 * Flush expired sessions from the session cache.
+	 *
+	 * @return the number of expired sessions
+	 */
+	unsigned Flush(long tm);
+};
 
 SslFactory *
 ssl_factory_new_server(const SslConfig &config,
 		       std::unique_ptr<SslSniCallback> &&sni);
-
-void
-ssl_factory_free(SslFactory *factory);
-
-/**
- * Wrapper for SSL_CTX_set_session_id_context().
- *
- * Throws on error.
- */
-void
-ssl_factory_set_session_id_context(SslFactory &factory,
-				   ConstBuffer<void> sid_ctx);
-
-void
-ssl_factory_enable_alpn_h2(SslFactory &factory) noexcept;
-
-UniqueSSL
-ssl_factory_make(SslFactory &factory);
-
-/**
- * Flush expired sessions from the session cache.
- *
- * @return the number of expired sessions
- */
-unsigned
-ssl_factory_flush(SslFactory &factory, long tm);

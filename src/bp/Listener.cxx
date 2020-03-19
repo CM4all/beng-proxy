@@ -52,8 +52,7 @@ BPListener::BPListener(BpInstance &_instance, const char *_tag,
 
 BPListener::~BPListener()
 {
-	if (ssl_factory != nullptr)
-		ssl_factory_free(ssl_factory);
+	delete ssl_factory;
 }
 
 void

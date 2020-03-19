@@ -122,15 +122,14 @@ FilteredSocketListener::~FilteredSocketListener() noexcept
 {
 	pending.clear_and_dispose(NoPoolDisposer{});
 
-	if (ssl_factory != nullptr)
-		ssl_factory_free(ssl_factory);
+	delete ssl_factory;
 }
 
 unsigned
 FilteredSocketListener::FlushSSLSessionCache(long tm) noexcept
 {
 	return ssl_factory != nullptr
-		? ssl_factory_flush(*ssl_factory, tm)
+		? ssl_factory->Flush(tm)
 		: 0;
 }
 

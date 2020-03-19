@@ -365,7 +365,7 @@ ssl_filter_new(UniqueSSL &&ssl) noexcept
 SslFilter *
 ssl_filter_new(SslFactory &factory)
 {
-	return new SslFilter(ssl_factory_make(factory));
+	return new SslFilter(factory.Make());
 }
 
 ThreadSocketFilterHandler &
