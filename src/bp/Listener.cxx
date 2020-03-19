@@ -46,6 +46,17 @@
 #include "thread/Pool.hxx"
 #include "util/Exception.hxx"
 
+static std::unique_ptr<SslFactory>
+MakeSslFactory(const SslConfig *ssl_config)
+{
+	if (ssl_config == nullptr)
+		return nullptr;
+
+	auto ssl_factory = ssl_factory_new_server(*ssl_config, nullptr);
+	// TODO: call SetSessionIdContext()
+	return ssl_factory;
+}
+
 BPListener::BPListener(BpInstance &_instance, const char *_tag,
 		       bool _auth_alt_host,
 		       const SslConfig *ssl_config)
@@ -53,7 +64,7 @@ BPListener::BPListener(BpInstance &_instance, const char *_tag,
 	 tag(_tag),
 	 auth_alt_host(_auth_alt_host),
 	 listener(instance.root_pool, instance.event_loop,
-		  ssl_config ? ssl_factory_new_server(*ssl_config, nullptr) : nullptr,
+		  MakeSslFactory(ssl_config),
 		  *this)
 {
 }
