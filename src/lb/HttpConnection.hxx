@@ -79,7 +79,10 @@ struct LbHttpConnection final
 	const SslFilter *ssl_filter = nullptr;
 
 	HttpServerConnection *http = nullptr;
+
+#ifdef HAVE_NGHTTP2
 	UniquePoolPtr<NgHttp2::ServerConnection> http2;
+#endif
 
 	LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 			 const LbListenerConfig &_listener,

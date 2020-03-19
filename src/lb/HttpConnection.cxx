@@ -109,12 +109,16 @@ HttpServerLogLevel(std::exception_ptr e)
  *
  */
 
+#ifdef HAVE_NGHTTP2
+
 static bool
 IsAlpnHttp2(ConstBuffer<unsigned char> alpn) noexcept
 {
 	return alpn != nullptr && alpn.size == 2 &&
 		alpn[0] == 'h' && alpn[1] == '2';
 }
+
+#endif
 
 LbHttpConnection *
 NewLbHttpConnection(LbInstance &instance,
@@ -137,6 +141,7 @@ NewLbHttpConnection(LbInstance &instance,
 
 	instance.http_connections.push_back(*connection);
 
+#ifdef HAVE_NGHTTP2
 	if (ssl_filter != nullptr &&
 	    IsAlpnHttp2(ssl_filter_get_alpn_selected(*ssl_filter)))
 		connection->http2 = UniquePoolPtr<NgHttp2::ServerConnection>::Make(connection->GetPool(),
@@ -145,6 +150,7 @@ NewLbHttpConnection(LbInstance &instance,
 										   address,
 										   *connection);
 	else
+#endif
 		connection->http = http_server_connection_new(connection->GetPool(),
 							      std::move(socket),
 							      local_address.IsDefined()
@@ -172,7 +178,9 @@ void
 LbHttpConnection::CloseAndDestroy()
 {
 	assert(listener.destination.GetProtocol() == LbProtocol::HTTP);
+#ifdef HAVE_NGHTTP2
 	assert(http != nullptr || http2);
+#endif
 
 	if (http != nullptr)
 		http_server_connection_close(http);
@@ -298,7 +306,9 @@ LbHttpConnection::HttpConnectionError(std::exception_ptr e) noexcept
 {
 	logger(HttpServerLogLevel(e), e);
 
+#ifdef HAVE_NGHTTP2
 	assert(http != nullptr || http2);
+#endif
 	http = nullptr;
 
 	Destroy();
@@ -307,7 +317,9 @@ LbHttpConnection::HttpConnectionError(std::exception_ptr e) noexcept
 void
 LbHttpConnection::HttpConnectionClosed() noexcept
 {
+#ifdef HAVE_NGHTTP2
 	assert(http != nullptr || http2);
+#endif
 	http = nullptr;
 
 	Destroy();
