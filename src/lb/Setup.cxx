@@ -35,14 +35,18 @@
 #include "Listener.hxx"
 #include "Control.hxx"
 #include "ssl/Cache.hxx"
+#include "util/RuntimeError.hxx"
 
 void
 LbInstance::InitAllListeners()
 {
 	for (const auto &i : config.listeners) {
-		listeners.emplace_front(*this, i);
-		auto &listener = listeners.front();
-		listener.Setup();
+		try {
+			listeners.emplace_front(*this, i);
+		} catch (...) {
+			std::throw_with_nested(FormatRuntimeError("Failed to set up listener '%s'",
+								  i.name.c_str()));
+		}
 	}
 }
 

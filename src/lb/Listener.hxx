@@ -60,7 +60,6 @@ public:
 	LbListener(LbInstance &_instance,
 		   const LbListenerConfig &_config);
 
-	void Setup();
 	void Scan(LbGotoMap &goto_map);
 
 	unsigned FlushSSLSessionCache(long tm);

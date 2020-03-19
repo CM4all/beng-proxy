@@ -41,7 +41,6 @@
 #include "ssl/DbSniCallback.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "net/SocketAddress.hxx"
-#include "util/RuntimeError.hxx"
 
 static std::unique_ptr<SslFactory>
 MakeSslFactory(const LbListenerConfig &config,
@@ -116,25 +115,13 @@ LbListener::OnFilteredSocketError(std::exception_ptr ep) noexcept
 LbListener::LbListener(LbInstance &_instance,
 		       const LbListenerConfig &_config)
 	:instance(_instance), config(_config),
+	 listener(std::make_unique<FilteredSocketListener>(instance.root_pool,
+							   instance.event_loop,
+							   MakeSslFactory(config, instance),
+							   (FilteredSocketListenerHandler &)*this)),
 	 logger("listener " + config.name)
 {
-}
-
-void
-LbListener::Setup()
-try {
-	auto ssl_factory = MakeSslFactory(config, instance);
-
-	FilteredSocketListenerHandler &handler = *this;
-	listener = std::make_unique<FilteredSocketListener>(instance.root_pool,
-							    instance.event_loop,
-							    std::move(ssl_factory),
-							    handler);
-
 	listener->Listen(config.Create(SOCK_STREAM));
-} catch (...) {
-	std::throw_with_nested(FormatRuntimeError("Failed to set up listener '%s'",
-						  config.name.c_str()));
 }
 
 void
