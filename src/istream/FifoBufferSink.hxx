@@ -56,6 +56,11 @@ public:
 		:IstreamSink(std::forward<I>(_input), FD_ANY),
 		 handler(_handler) {}
 
+	~FifoBufferSink() noexcept {
+		if (input.IsDefined())
+			input.Close();
+	}
+
 	auto &GetBuffer() noexcept {
 		return buffer;
 	}
