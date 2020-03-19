@@ -51,9 +51,8 @@ static void
 lb_check(const LbListenerConfig &config)
 {
 	if (config.ssl) {
-		auto *ssl = ssl_factory_new_server(config.ssl_config,
-						   std::unique_ptr<SslSniCallback>());
-		delete ssl;
+		ssl_factory_new_server(config.ssl_config,
+				       std::unique_ptr<SslSniCallback>());
 	}
 }
 

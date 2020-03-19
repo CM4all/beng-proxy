@@ -50,16 +50,13 @@ BPListener::BPListener(BpInstance &_instance, const char *_tag,
 		ssl_factory = ssl_factory_new_server(*ssl_config, nullptr);
 }
 
-BPListener::~BPListener()
-{
-	delete ssl_factory;
-}
+BPListener::~BPListener() noexcept = default;
 
 void
 BPListener::OnAccept(UniqueSocketDescriptor &&_fd,
 		     SocketAddress address) noexcept
 {
-	new_connection(instance, std::move(_fd), address, ssl_factory,
+	new_connection(instance, std::move(_fd), address, ssl_factory.get(),
 		       tag, auth_alt_host);
 }
 

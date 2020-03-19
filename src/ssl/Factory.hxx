@@ -35,6 +35,7 @@
 #include "ssl/Unique.hxx"
 #include "util/Compiler.h"
 
+#include <memory>
 #include <vector>
 
 struct StringView;
@@ -84,6 +85,6 @@ public:
 	unsigned Flush(long tm);
 };
 
-SslFactory *
+std::unique_ptr<SslFactory>
 ssl_factory_new_server(const SslConfig &config,
 		       std::unique_ptr<SslSniCallback> &&sni);

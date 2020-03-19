@@ -36,6 +36,8 @@
 
 #include <boost/intrusive/list.hpp>
 
+#include <memory>
+
 class PoolPtr;
 template<typename T> class UniquePoolPtr;
 class FilteredSocket;
@@ -57,7 +59,7 @@ public:
 class FilteredSocketListener final : public ServerSocket {
 	struct pool &parent_pool;
 
-	SslFactory *ssl_factory = nullptr;
+	std::unique_ptr<SslFactory> ssl_factory;
 
 	FilteredSocketListenerHandler &handler;
 
@@ -68,7 +70,7 @@ class FilteredSocketListener final : public ServerSocket {
 
 public:
 	FilteredSocketListener(struct pool &_pool, EventLoop &event_loop,
-			       SslFactory *_ssl_factory,
+			       std::unique_ptr<SslFactory> _ssl_factory,
 			       FilteredSocketListenerHandler &_handler) noexcept;
 	~FilteredSocketListener() noexcept;
 

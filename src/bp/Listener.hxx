@@ -35,6 +35,8 @@
 
 #include "event/net/ServerSocket.hxx"
 
+#include <memory>
+
 struct BpInstance;
 struct SslConfig;
 class SslFactory;
@@ -49,13 +51,13 @@ class BPListener final : public ServerSocket {
 
 	const bool auth_alt_host;
 
-	SslFactory *ssl_factory = nullptr;
+	std::unique_ptr<SslFactory> ssl_factory;
 
 public:
 	BPListener(BpInstance &_instance, const char *_tag,
 		   bool _auth_alt_host,
 		   const SslConfig *ssl_config);
-	~BPListener();
+	~BPListener() noexcept;
 
 protected:
 	void OnAccept(UniqueSocketDescriptor &&fd, SocketAddress address) noexcept override;

@@ -111,18 +111,16 @@ private:
 
 FilteredSocketListener::FilteredSocketListener(struct pool &_pool,
 					       EventLoop &event_loop,
-					       SslFactory *_ssl_factory,
+					       std::unique_ptr<SslFactory> _ssl_factory,
 					       FilteredSocketListenerHandler &_handler) noexcept
 	:ServerSocket(event_loop),
-	 parent_pool(_pool), ssl_factory(_ssl_factory), handler(_handler)
+	 parent_pool(_pool), ssl_factory(std::move(_ssl_factory)), handler(_handler)
 {
 }
 
 FilteredSocketListener::~FilteredSocketListener() noexcept
 {
 	pending.clear_and_dispose(NoPoolDisposer{});
-
-	delete ssl_factory;
 }
 
 unsigned

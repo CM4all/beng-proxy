@@ -354,7 +354,7 @@ SslFactoryCertKey::LoadServer(const SslConfig &parent_config,
 	CacheCommonName(*cert);
 }
 
-SslFactory *
+std::unique_ptr<SslFactory>
 ssl_factory_new_server(const SslConfig &config,
 		       std::unique_ptr<SslSniCallback> &&sni)
 {
@@ -365,5 +365,5 @@ ssl_factory_new_server(const SslConfig &config,
 	factory->LoadCertsKeys(config);
 	factory->AutoEnableSNI();
 
-	return factory.release();
+	return factory;
 }

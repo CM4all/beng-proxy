@@ -92,7 +92,7 @@ LbListener::LbListener(LbInstance &_instance,
 void
 LbListener::Setup()
 try {
-	SslFactory *ssl_factory = nullptr;
+	std::unique_ptr<SslFactory> ssl_factory;
 
 	if (config.ssl) {
 		/* prepare SSL support */
@@ -118,7 +118,7 @@ try {
 	FilteredSocketListenerHandler &handler = *this;
 	listener = std::make_unique<FilteredSocketListener>(instance.root_pool,
 							    instance.event_loop,
-							    ssl_factory,
+							    std::move(ssl_factory),
 							    handler);
 
 	listener->Listen(config.Create(SOCK_STREAM));
