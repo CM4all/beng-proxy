@@ -42,11 +42,11 @@
 
 #include <stdint.h>
 
+template<typename T> class UniquePoolPtr;
+class FilteredSocket;
 struct BpConfig;
 struct BpInstance;
-class UniqueSocketDescriptor;
 class SocketAddress;
-class SslFactory;
 struct HttpServerConnection;
 
 /*
@@ -94,9 +94,9 @@ struct BpConnection final
 };
 
 void
-new_connection(BpInstance &instance,
-	       UniqueSocketDescriptor &&fd, SocketAddress address,
-	       SslFactory *ssl_factory,
+new_connection(PoolPtr pool, BpInstance &instance,
+	       UniquePoolPtr<FilteredSocket> socket,
+	       SocketAddress address,
 	       const char *listener_tag, bool auth_alt_host) noexcept;
 
 void

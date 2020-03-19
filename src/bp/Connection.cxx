@@ -42,16 +42,11 @@
 #include "drop.hxx"
 #include "address_string.hxx"
 #include "pool/UniquePtr.hxx"
-#include "thread/Pool.hxx"
 #include "fs/FilteredSocket.hxx"
-#include "fs/ThreadSocketFilter.hxx"
-#include "fs/Ptr.hxx"
-#include "ssl/Filter.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
-#include "io/FdType.hxx"
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
 #include "pool/pool.hxx"
@@ -171,9 +166,9 @@ BpConnection::HttpConnectionClosed() noexcept
  */
 
 void
-new_connection(BpInstance &instance,
-	       UniqueSocketDescriptor &&fd, SocketAddress address,
-	       SslFactory *ssl_factory,
+new_connection(PoolPtr pool, BpInstance &instance,
+	       UniquePoolPtr<FilteredSocket> socket,
+	       SocketAddress address,
 	       const char *listener_tag, bool auth_alt_host) noexcept
 {
 	if (instance.connections.size() >= instance.config.max_connections) {
@@ -187,19 +182,8 @@ new_connection(BpInstance &instance,
 		}
 	}
 
-	SocketFilterPtr filter;
-	if (ssl_factory != nullptr) {
-		auto *ssl_filter = ssl_filter_new(*ssl_factory);
-		filter.reset(new ThreadSocketFilter(instance.event_loop,
-						    thread_pool_get_queue(instance.event_loop),
-						    &ssl_filter_get_handler(*ssl_filter)));
-	}
-
 	/* determine the local socket address */
-	const StaticSocketAddress local_address = fd.GetLocalAddress();
-
-	auto pool = pool_new_linear(instance.root_pool, "connection", 2048);
-	pool_set_major(pool);
+	const auto local_address = socket->GetSocket().GetLocalAddress();
 
 	auto *connection = NewFromPool<BpConnection>(std::move(pool), instance,
 						     listener_tag, auth_alt_host,
@@ -208,10 +192,7 @@ new_connection(BpInstance &instance,
 
 	connection->http =
 		http_server_connection_new(connection->GetPool(),
-					   UniquePoolPtr<FilteredSocket>::Make(connection->GetPool(),
-									       instance.event_loop,
-									       std::move(fd), FdType::FD_TCP,
-									       std::move(filter)),
+					   std::move(socket),
 					   local_address.IsDefined()
 					   ? (SocketAddress)local_address
 					   : nullptr,

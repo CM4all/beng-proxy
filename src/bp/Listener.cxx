@@ -33,10 +33,17 @@
 #include "Listener.hxx"
 #include "Connection.hxx"
 #include "Instance.hxx"
+#include "pool/UniquePtr.hxx"
 #include "ssl/Factory.hxx"
+#include "ssl/Filter.hxx"
 #include "ssl/SniCallback.hxx"
+#include "fs/FilteredSocket.hxx"
+#include "fs/Ptr.hxx"
+#include "fs/ThreadSocketFilter.hxx"
 #include "net/SocketAddress.hxx"
+#include "io/FdType.hxx"
 #include "io/Logger.hxx"
+#include "thread/Pool.hxx"
 #include "util/Exception.hxx"
 
 BPListener::BPListener(BpInstance &_instance, const char *_tag,
@@ -56,7 +63,26 @@ void
 BPListener::OnAccept(UniqueSocketDescriptor &&_fd,
 		     SocketAddress address) noexcept
 {
-	new_connection(instance, std::move(_fd), address, ssl_factory.get(),
+	auto pool = pool_new_linear(instance.root_pool, "connection", 2048);
+	pool_set_major(pool);
+
+	SocketFilterPtr filter;
+	if (ssl_factory != nullptr) {
+		auto *ssl_filter = ssl_filter_new(*ssl_factory);
+		filter.reset(new ThreadSocketFilter(instance.event_loop,
+						    thread_pool_get_queue(instance.event_loop),
+						    &ssl_filter_get_handler(*ssl_filter)));
+	}
+
+	auto socket = UniquePoolPtr<FilteredSocket>::Make(pool,
+							  instance.event_loop,
+							  std::move(_fd),
+							  FdType::FD_TCP,
+							  std::move(filter));
+
+	new_connection(std::move(pool), instance,
+		       std::move(socket),
+		       address,
 		       tag, auth_alt_host);
 }
 
