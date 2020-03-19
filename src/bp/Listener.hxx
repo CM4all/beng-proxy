@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,10 +30,10 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_LISTENER_HXX
-#define BENG_PROXY_LISTENER_HXX
+#pragma once
 
-#include "event/net/ServerSocket.hxx"
+#include "fs/Listener.hxx"
+#include "net/StaticSocketAddress.hxx"
 
 #include <memory>
 
@@ -44,14 +44,14 @@ class SslFactory;
 /**
  * Listener for incoming HTTP connections.
  */
-class BPListener final : public ServerSocket {
+class BPListener final : FilteredSocketListenerHandler {
 	BpInstance &instance;
 
 	const char *const tag;
 
 	const bool auth_alt_host;
 
-	std::unique_ptr<SslFactory> ssl_factory;
+	FilteredSocketListener listener;
 
 public:
 	BPListener(BpInstance &_instance, const char *_tag,
@@ -59,9 +59,36 @@ public:
 		   const SslConfig *ssl_config);
 	~BPListener() noexcept;
 
-protected:
-	void OnAccept(UniqueSocketDescriptor &&fd, SocketAddress address) noexcept override;
-	void OnAcceptError(std::exception_ptr ep) noexcept override;
-};
+	void Listen(UniqueSocketDescriptor &&_fd) noexcept {
+		listener.Listen(std::move(_fd));
+	}
 
-#endif
+	void ListenTCP(unsigned port) {
+		listener.ListenTCP(port);
+	}
+
+	auto GetLocalAddress() const noexcept {
+		return listener.GetLocalAddress();
+	}
+
+	bool SetTcpDeferAccept(const int &seconds) noexcept {
+		return listener.SetTcpDeferAccept(seconds);
+	}
+
+	void AddEvent() noexcept {
+		listener.AddEvent();
+	}
+
+	void RemoveEvent() noexcept {
+		listener.RemoveEvent();
+	}
+
+private:
+	/* virtual methods from class FilteredSocketListenerHandler */
+	void OnFilteredSocketConnect(PoolPtr pool,
+				     UniquePoolPtr<FilteredSocket> socket,
+				     SocketAddress address,
+				     const SslFilter *ssl_filter) noexcept override;
+	void OnFilteredSocketError(std::exception_ptr e) noexcept override;
+
+};

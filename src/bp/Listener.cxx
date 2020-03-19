@@ -49,37 +49,23 @@
 BPListener::BPListener(BpInstance &_instance, const char *_tag,
 		       bool _auth_alt_host,
 		       const SslConfig *ssl_config)
-	:ServerSocket(_instance.event_loop), instance(_instance),
+	:instance(_instance),
 	 tag(_tag),
-	 auth_alt_host(_auth_alt_host)
+	 auth_alt_host(_auth_alt_host),
+	 listener(instance.root_pool, instance.event_loop,
+		  ssl_config ? ssl_factory_new_server(*ssl_config, nullptr) : nullptr,
+		  *this)
 {
-	if (ssl_config != nullptr)
-		ssl_factory = ssl_factory_new_server(*ssl_config, nullptr);
 }
 
 BPListener::~BPListener() noexcept = default;
 
 void
-BPListener::OnAccept(UniqueSocketDescriptor &&_fd,
-		     SocketAddress address) noexcept
+BPListener::OnFilteredSocketConnect(PoolPtr pool,
+				    UniquePoolPtr<FilteredSocket> socket,
+				    SocketAddress address,
+				    const SslFilter *) noexcept
 {
-	auto pool = pool_new_linear(instance.root_pool, "connection", 2048);
-	pool_set_major(pool);
-
-	SocketFilterPtr filter;
-	if (ssl_factory != nullptr) {
-		auto *ssl_filter = ssl_filter_new(*ssl_factory);
-		filter.reset(new ThreadSocketFilter(instance.event_loop,
-						    thread_pool_get_queue(instance.event_loop),
-						    &ssl_filter_get_handler(*ssl_filter)));
-	}
-
-	auto socket = UniquePoolPtr<FilteredSocket>::Make(pool,
-							  instance.event_loop,
-							  std::move(_fd),
-							  FdType::FD_TCP,
-							  std::move(filter));
-
 	new_connection(std::move(pool), instance,
 		       std::move(socket),
 		       address,
@@ -87,7 +73,7 @@ BPListener::OnAccept(UniqueSocketDescriptor &&_fd,
 }
 
 void
-BPListener::OnAcceptError(std::exception_ptr ep) noexcept
+BPListener::OnFilteredSocketError(std::exception_ptr ep) noexcept
 {
 	LogConcat(2, "listener", ep);
 }
