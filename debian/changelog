@@ -4,7 +4,7 @@ cm4all-beng-proxy (17.0.2) unstable; urgency=low
   * bp: support incoming HTTP/2 connections via TLS-ALPN
   * processor: fix assertion failure
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 19 Mar 2020 20:19:58 +0100
 
 cm4all-beng-proxy (17.0.1) unstable; urgency=low
 
