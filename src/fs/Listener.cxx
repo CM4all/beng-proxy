@@ -84,10 +84,11 @@ public:
 
 private:
 	void OnHandshake() noexcept {
-		handler.OnFilteredSocketConnect(std::move(pool),
+		handler.OnFilteredSocketConnect(pool,
 						std::move(socket),
 						address,
 						ssl_filter);
+		Destroy();
 	}
 
 	/* virtual methods from class BufferedSocketHandler */
