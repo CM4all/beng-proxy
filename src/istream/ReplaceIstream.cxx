@@ -339,8 +339,8 @@ ReplaceIstream::OnEof() noexcept
 
 	if (IsEOF())
 		DestroyEof();
-	else if (InvokeReady())
-		TryRead();
+	else
+		defer_read.Schedule();
 }
 
 void
