@@ -50,7 +50,7 @@ class LbListener final : FilteredSocketListenerHandler {
 
 	const LbListenerConfig &config;
 
-	std::unique_ptr<FilteredSocketListener> listener;
+	FilteredSocketListener listener;
 
 	LbGoto destination;
 

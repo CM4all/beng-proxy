@@ -115,13 +115,12 @@ LbListener::OnFilteredSocketError(std::exception_ptr ep) noexcept
 LbListener::LbListener(LbInstance &_instance,
 		       const LbListenerConfig &_config)
 	:instance(_instance), config(_config),
-	 listener(std::make_unique<FilteredSocketListener>(instance.root_pool,
-							   instance.event_loop,
-							   MakeSslFactory(config, instance),
-							   (FilteredSocketListenerHandler &)*this)),
+	 listener(instance.root_pool, instance.event_loop,
+		  MakeSslFactory(config, instance),
+		  *this),
 	 logger("listener " + config.name)
 {
-	listener->Listen(config.Create(SOCK_STREAM));
+	listener.Listen(config.Create(SOCK_STREAM));
 }
 
 void
@@ -133,5 +132,5 @@ LbListener::Scan(LbGotoMap &goto_map)
 unsigned
 LbListener::FlushSSLSessionCache(long tm)
 {
-	return listener->FlushSSLSessionCache(tm);
+	return listener.FlushSSLSessionCache(tm);
 }
