@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_LB_CHECK_HXX
-#define BENG_PROXY_LB_CHECK_HXX
+#pragma once
 
 class EventLoop;
 struct LbConfig;
@@ -41,5 +40,3 @@ struct LbConfig;
  */
 void
 lb_check(EventLoop &event_loop, const LbConfig &config);
-
-#endif
