@@ -43,6 +43,35 @@
 #include "net/SocketAddress.hxx"
 #include "util/RuntimeError.hxx"
 
+static std::unique_ptr<SslFactory>
+MakeSslFactory(const LbListenerConfig &config,
+	       LbInstance &instance)
+{
+	if (!config.ssl)
+		return nullptr;
+
+	/* prepare SSL support */
+
+	std::unique_ptr<SslSniCallback> sni_callback;
+	if (config.cert_db != nullptr) {
+		auto &cert_cache = instance.GetCertCache(*config.cert_db);
+		sni_callback.reset(new DbSslSniCallback(cert_cache));
+	}
+
+	auto ssl_factory = ssl_factory_new_server(config.ssl_config,
+						  std::move(sni_callback));
+
+	/* we use the listener name as OpenSSL session_id_context,
+	   because listener names are unique, so I hope this should be
+	   good enough */
+	ssl_factory->SetSessionIdContext({config.name.data(), config.name.size()});
+
+	if (config.destination.GetProtocol() == LbProtocol::HTTP)
+		ssl_factory->EnableAlpnH2();
+
+	return ssl_factory;
+}
+
 void
 LbListener::OnFilteredSocketConnect(PoolPtr pool,
 				    UniquePoolPtr<FilteredSocket> socket,
@@ -92,28 +121,7 @@ LbListener::LbListener(LbInstance &_instance,
 void
 LbListener::Setup()
 try {
-	std::unique_ptr<SslFactory> ssl_factory;
-
-	if (config.ssl) {
-		/* prepare SSL support */
-
-		std::unique_ptr<SslSniCallback> sni_callback;
-		if (config.cert_db != nullptr) {
-			auto &cert_cache = instance.GetCertCache(*config.cert_db);
-			sni_callback.reset(new DbSslSniCallback(cert_cache));
-		}
-
-		ssl_factory = ssl_factory_new_server(config.ssl_config,
-						     std::move(sni_callback));
-
-		/* we use the listener name as OpenSSL session_id_context,
-		   because listener names are unique, so I hope this should be
-		   good enough */
-		ssl_factory->SetSessionIdContext({config.name.data(), config.name.size()});
-
-		if (config.destination.GetProtocol() == LbProtocol::HTTP)
-			ssl_factory->EnableAlpnH2();
-	}
+	auto ssl_factory = MakeSslFactory(config, instance);
 
 	FilteredSocketListenerHandler &handler = *this;
 	listener = std::make_unique<FilteredSocketListener>(instance.root_pool,
