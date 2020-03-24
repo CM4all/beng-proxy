@@ -40,6 +40,7 @@
 #include "io/Logger.hxx"
 #include "util/StringView.hxx"
 #include "util/IterableSplitString.hxx"
+#include "version.h"
 
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
