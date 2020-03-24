@@ -146,6 +146,9 @@ Known attributes:
   This causes some traffic for the keepalive probes, but allows
   detecting disappeared clients even when there is no traffic.
 
+- ``v6only``: ``no`` disables IPv4 support on IPv6 listeners
+  (``IPV6_V6ONLY``).  The default is ``yes``.
+
 - ``reuse_port``: ``yes`` enables the socket option ``SO_REUSEPORT``,
   which allows multiple sockets to bind to the same port.
 
