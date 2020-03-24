@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,10 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_PRODUCT_H
-#define BENG_PROXY_PRODUCT_H
+#pragma once
+
+#include "version.h"
 
 #define PRODUCT_TOKEN "CM4all Webserver v" VERSION
 #define BRIEF_PRODUCT_TOKEN "CM4all Webserver"
-
-#endif

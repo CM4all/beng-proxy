@@ -6,6 +6,11 @@ project('CM4all beng-proxy', ['c', 'cpp'], version: '17.0.3',
   ],
 )
 
+version_h = configuration_data()
+version_h.set_quoted('PACKAGE', meson.project_name())
+version_h.set_quoted('VERSION', meson.project_version())
+configure_file(output: 'version.h', configuration: version_h)
+
 compiler = meson.get_compiler('cpp')
 c_compiler = meson.get_compiler('c')
 
@@ -19,8 +24,6 @@ debug = get_option('b_ndebug') != 'true'
 
 common_flags = [
   '-D_REENTRANT', '-D_GNU_SOURCE',
-  '-DPACKAGE="' + meson.project_name() + '"',
-  '-DVERSION="' + meson.project_version() + '"',
   '-DCACHE_LOG',
   '-Wwrite-strings', '-Wcast-qual', '-Wcast-align', '-Wfloat-equal',
   '-Wshadow', '-Wpointer-arith',
@@ -110,7 +113,7 @@ libcrypt = compiler.find_library('crypt')
 
 libwas = dependency('libcm4all-was-protocol', version: '>= 1.0', required: get_option('was'))
 
-inc = include_directories('src', 'include', 'libcommon/src')
+inc = include_directories('src', 'include', 'libcommon/src', '.')
 
 subdir('libcommon/src/util')
 

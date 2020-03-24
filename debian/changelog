@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.3) unstable; urgency=low
 
-  * 
+  * merge release 16.10
 
  --   
 
@@ -21,6 +21,12 @@ cm4all-beng-proxy (17.0.1) unstable; urgency=low
   * certdb: implement ACMEv2
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 18 Mar 2020 16:54:20 +0100
+
+cm4all-beng-proxy (16.10) unstable; urgency=low
+
+  * add listener option "v6only"
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 24 Mar 2020 17:01:12 +0100
 
 cm4all-beng-proxy (16.9) unstable; urgency=low
 

@@ -34,6 +34,7 @@
 #include "Config.hxx"
 #include "stopwatch.hxx"
 #include "io/Logger.hxx"
+#include "version.h"
 
 #include <stdio.h>
 #include <stdlib.h>
