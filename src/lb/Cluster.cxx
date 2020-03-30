@@ -36,6 +36,7 @@
 #include "MonitorRef.hxx"
 #include "fs/Balancer.hxx"
 #include "cluster/StickyCache.hxx"
+#include "cluster/ConnectBalancer.hxx"
 #include "sodium/GenericHash.hxx"
 #include "system/Error.hxx"
 #include "net/FailureManager.hxx"
@@ -93,6 +94,7 @@ LbCluster::Member::GetLogName() const noexcept
 
 LbCluster::LbCluster(const LbClusterConfig &_config,
 		     FailureManager &_failure_manager,
+		     BalancerMap &_tcp_balancer,
 		     FilteredSocketBalancer &_fs_balancer,
 		     LbMonitorStock *_monitors
 #ifdef HAVE_AVAHI
@@ -100,6 +102,7 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 #endif
 		     )
 	:config(_config), failure_manager(_failure_manager),
+	 tcp_balancer(_tcp_balancer),
 	 fs_balancer(_fs_balancer),
 	 monitors(_monitors),
 	 logger("cluster " + config.name)
@@ -161,6 +164,28 @@ LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
 			timeout,
 			filter_factory,
 			handler, cancel_ptr);
+}
+
+void
+LbCluster::ConnectStaticTcp(AllocatorPtr alloc,
+			    SocketAddress bind_address,
+			    sticky_hash_t session_sticky,
+			    Event::Duration timeout,
+			    ConnectSocketHandler &handler,
+			    CancellablePointer &cancel_ptr) noexcept
+{
+	assert(config.protocol == LbProtocol::TCP);
+
+	client_balancer_connect(fs_balancer.GetEventLoop(), alloc,
+				tcp_balancer,
+				failure_manager,
+				config.transparent_source,
+				bind_address,
+				session_sticky,
+				config.address_list,
+				timeout,
+				handler,
+				cancel_ptr);
 }
 
 #ifdef HAVE_AVAHI

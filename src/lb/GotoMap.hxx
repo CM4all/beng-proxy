@@ -46,6 +46,7 @@ struct LbTranslationHandlerConfig;
 struct LbLuaHandlerConfig;
 struct TranslationInvalidateRequest;
 class FailureManager;
+class BalancerMap;
 class FilteredSocketBalancer;
 class MyAvahiClient;
 class EventLoop;
@@ -58,6 +59,7 @@ class LbMonitorManager;
 class LbGotoMap final {
 	const LbConfig &root_config;
 	FailureManager &failure_manager;
+	BalancerMap &tcp_balancer;
 	FilteredSocketBalancer &fs_balancer;
 	LbMonitorManager &monitors;
 #ifdef HAVE_AVAHI
@@ -77,6 +79,7 @@ class LbGotoMap final {
 public:
 	LbGotoMap(const LbConfig &_config,
 		  FailureManager &_failure_manager,
+		  BalancerMap &_tcp_balancer,
 		  FilteredSocketBalancer &_fs_balancer,
 		  LbMonitorManager &_monitors,
 #ifdef HAVE_AVAHI

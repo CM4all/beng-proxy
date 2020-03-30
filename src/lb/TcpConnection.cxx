@@ -36,7 +36,6 @@
 #include "ListenerConfig.hxx"
 #include "Instance.hxx"
 #include "AllocatorPtr.hxx"
-#include "cluster/ConnectBalancer.hxx"
 #include "cluster/AddressSticky.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -420,17 +419,16 @@ LbTcpConnection::ConnectOutbound()
 				  cancel_connect);
 		return;
 	}
+#else
+	(void)cluster_config;
 #endif
 
-	client_balancer_connect(GetEventLoop(), *pool, *instance.balancer,
-				instance.failure_manager,
-				cluster_config.transparent_source,
-				bind_address,
-				session_sticky,
-				cluster_config.address_list,
-				LB_TCP_CONNECT_TIMEOUT,
-				*this,
-				cancel_connect);
+	cluster.ConnectStaticTcp(*pool,
+				 bind_address,
+				 session_sticky,
+				 LB_TCP_CONNECT_TIMEOUT,
+				 *this,
+				 cancel_connect);
 }
 
 /*

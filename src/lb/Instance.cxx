@@ -61,7 +61,8 @@ LbInstance::LbInstance(const LbCmdLine &cmdline,
 #ifdef HAVE_AVAHI
 	 avahi_client(event_loop, "beng-lb"),
 #endif
-	 goto_map(config, failure_manager, *fs_balancer,
+	 goto_map(config, failure_manager,
+		  *balancer, *fs_balancer,
 		  monitors,
 #ifdef HAVE_AVAHI
 		  avahi_client,

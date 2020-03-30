@@ -46,6 +46,7 @@
 
 LbGotoMap::LbGotoMap(const LbConfig &_config,
 		     FailureManager &_failure_manager,
+		     BalancerMap &_tcp_balancer,
 		     FilteredSocketBalancer &_fs_balancer,
 		     LbMonitorManager &_monitors,
 #ifdef HAVE_AVAHI
@@ -53,6 +54,7 @@ LbGotoMap::LbGotoMap(const LbConfig &_config,
 #endif
 		     EventLoop &_event_loop) noexcept
 	:root_config(_config), failure_manager(_failure_manager),
+	 tcp_balancer(_tcp_balancer),
 	 fs_balancer(_fs_balancer),
 	 monitors(_monitors),
 #ifdef HAVE_AVAHI
@@ -128,6 +130,7 @@ LbGotoMap::GetInstance(const LbClusterConfig &config)
 	return clusters.emplace(std::piecewise_construct,
 				std::forward_as_tuple(&config),
 				std::forward_as_tuple(config, failure_manager,
+						      tcp_balancer,
 						      fs_balancer,
 						      monitor_stock
 #ifdef HAVE_AVAHI
