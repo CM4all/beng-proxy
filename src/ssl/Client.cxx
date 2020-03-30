@@ -33,6 +33,7 @@
 #include "Client.hxx"
 #include "Config.hxx"
 #include "Filter.hxx"
+#include "AlpnProtos.hxx"
 #include "ssl/Basic.hxx"
 #include "ssl/Ctx.hxx"
 #include "ssl/LoadFile.hxx"
@@ -167,15 +168,6 @@ ssl_client_deinit()
 	ssl_client_ctx.reset();
 	delete std::exchange(ssl_client_certs, nullptr);
 }
-
-static constexpr unsigned char alpn_h2[] = {
-	2, 'h', '2',
-};
-
-static constexpr unsigned char alpn_http_any[] = {
-	2, 'h', '2',
-	8, 'h', 't', 't', 'p', '/', '1', '.', '1',
-};
 
 SocketFilterPtr
 ssl_client_create(EventLoop &event_loop,

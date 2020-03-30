@@ -34,6 +34,7 @@
 #include "Config.hxx"
 #include "SessionCache.hxx"
 #include "SniCallback.hxx"
+#include "AlpnProtos.hxx"
 #include "ssl/Error.hxx"
 #include "ssl/Basic.hxx"
 #include "ssl/Ctx.hxx"
@@ -57,11 +58,6 @@
 #include <forward_list>
 
 #include <assert.h>
-
-static constexpr unsigned char alpn_http_any[] = {
-	2, 'h', '2',
-	8, 'h', 't', 't', 'p', '/', '1', '.', '1',
-};
 
 struct SslFactoryCertKey {
 	struct Name {
