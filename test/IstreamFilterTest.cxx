@@ -35,6 +35,12 @@
 bool
 Context::ReadBuckets(size_t limit)
 {
+	if (abort_istream != nullptr)
+		/* don't attempt to read buckets when this option is
+		   set, because it's only properly implemented in
+		   OnData() */
+		return false;
+
 	IstreamBucketList list;
 	input.FillBucketList(list);
 
