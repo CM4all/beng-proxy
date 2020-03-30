@@ -33,8 +33,9 @@
 #include "Queue.hxx"
 #include "Job.hxx"
 #include "Notify.hxx"
-
 #include "util/Compiler.h"
+
+#include <boost/intrusive/list.hpp>
 
 #include <mutex>
 #include <condition_variable>

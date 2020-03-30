@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include <boost/intrusive/list.hpp>
+#include <boost/intrusive/list_hook.hpp>
 
 /*8
  * A job that shall be executed in a worker thread.
