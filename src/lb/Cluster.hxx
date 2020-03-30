@@ -122,8 +122,6 @@ class LbCluster final
 
 		mutable std::string log_name;
 
-		unsigned refs = 1;
-
 	public:
 		Member(const std::string &_key, SocketAddress _address,
 		       ReferencedFailureInfo &_failure,
@@ -132,15 +130,6 @@ class LbCluster final
 
 		Member(const Member &) = delete;
 		Member &operator=(const Member &) = delete;
-
-		void Ref() noexcept {
-			++refs;
-		}
-
-		void Unref() noexcept {
-			if (--refs == 0)
-				delete this;
-		}
 
 		const std::string &GetKey() const noexcept {
 			return key;
@@ -179,12 +168,6 @@ class LbCluster final
 
 			bool operator()(const std::string &a, const Member &b) const noexcept {
 				return a < b.key;
-			}
-		};
-
-		struct UnrefDisposer {
-			void operator()(Member *member) const noexcept {
-				member->Unref();
 			}
 		};
 	};

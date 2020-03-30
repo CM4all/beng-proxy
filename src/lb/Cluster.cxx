@@ -45,6 +45,7 @@
 #include "net/ToString.hxx"
 #include "util/HashRing.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/DeleteDisposer.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
@@ -143,7 +144,7 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 LbCluster::~LbCluster() noexcept
 {
 #ifdef HAVE_AVAHI
-	members.clear_and_dispose(Member::UnrefDisposer());
+	members.clear_and_dispose(DeleteDisposer());
 #endif
 }
 
@@ -404,7 +405,7 @@ LbCluster::OnAvahiRemoveObject(const std::string &key) noexcept
 	/* TODO: purge entry from the "failure" map, because it
 	   will never be used again anyway */
 
-	members.erase_and_dispose(i, Member::UnrefDisposer());
+	members.erase_and_dispose(i, DeleteDisposer());
 	dirty = true;
 }
 
