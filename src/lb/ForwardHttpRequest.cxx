@@ -91,15 +91,6 @@ class LbRequest final
 
 	CancellablePointer cancel_ptr;
 
-#ifdef HAVE_AVAHI
-	/**
-	 * The cluster member we're currently connecting to (waiting for
-	 * #StockGetHandler to be called).  Only used for Zeroconf to be
-	 * able to call failure_set().
-	 */
-	LbCluster::MemberPtr current_member;
-#endif
-
 	StockItem *stock_item = nullptr;
 	FailurePtr failure;
 
@@ -411,8 +402,6 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
 
 #ifdef HAVE_AVAHI
 	if (cluster_config.HasZeroConf()) {
-		failure = current_member->GetFailureRef();
-
 		/* without the fs_balancer, we have to roll our own failure
 		   updates */
 		failure->UnsetConnect();
@@ -457,8 +446,8 @@ LbRequest::OnStockItemError(std::exception_ptr ep) noexcept
 	if (cluster_config.HasZeroConf()) {
 		/* without the tcp_balancer, we have to roll our own failure
 		   updates and retries */
-		current_member->GetFailureInfo().SetConnect(GetEventLoop().SteadyNow(),
-							    std::chrono::seconds(20));
+		failure->SetConnect(GetEventLoop().SteadyNow(),
+				    std::chrono::seconds(20));
 
 		if (retries-- > 0) {
 			/* try the next Zeroconf member */
@@ -544,7 +533,7 @@ LbRequest::Start() noexcept
 			return;
 		}
 
-		current_member = *member;
+		failure = member->GetFailureRef();
 
 		connection.instance.fs_stock->Get(pool,
 						  nullptr,
