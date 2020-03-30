@@ -122,12 +122,12 @@ LbInstance::ShutdownCallback() noexcept
 
 	pool_commit();
 
-	delete std::exchange(fs_balancer, nullptr);
-	delete std::exchange(fs_stock, nullptr);
+	fs_balancer.reset();
+	fs_stock.reset();
 
-	delete std::exchange(balancer, nullptr);
+	balancer.reset();
 
-	delete std::exchange(pipe_stock, nullptr);
+	pipe_stock.reset();
 
 	pool_commit();
 }
@@ -200,14 +200,14 @@ try {
 	instance.InitAllControls();
 	instance.InitAllListeners();
 
-	instance.balancer = new BalancerMap();
+	instance.balancer = std::make_unique<BalancerMap>();
 
-	instance.fs_stock = new FilteredSocketStock(instance.event_loop,
-						    cmdline.tcp_stock_limit);
-	instance.fs_balancer = new FilteredSocketBalancer(*instance.fs_stock,
-							  instance.failure_manager);
+	instance.fs_stock = std::make_unique<FilteredSocketStock>(instance.event_loop,
+								  cmdline.tcp_stock_limit);
+	instance.fs_balancer = std::make_unique<FilteredSocketBalancer>(*instance.fs_stock,
+									instance.failure_manager);
 
-	instance.pipe_stock = new PipeStock(instance.event_loop);
+	instance.pipe_stock = std::make_unique<PipeStock>(instance.event_loop);
 
 	/* launch the access logger */
 

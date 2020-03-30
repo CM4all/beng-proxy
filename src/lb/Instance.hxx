@@ -35,11 +35,15 @@
 #include "PInstance.hxx"
 #include "GotoMap.hxx"
 #include "MonitorManager.hxx"
+#include "fs/Stock.hxx"
+#include "fs/Balancer.hxx"
+#include "cluster/BalancerMap.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "net/FailureManager.hxx"
 #include "io/Logger.hxx"
+#include "pipe_stock.hxx"
 
 #ifdef HAVE_AVAHI
 #include "avahi/Client.hxx"
@@ -82,12 +86,12 @@ struct LbInstance final : PInstance {
 
 	/* stock */
 	FailureManager failure_manager;
-	BalancerMap *balancer;
+	std::unique_ptr<BalancerMap> balancer;
 
-	FilteredSocketStock *fs_stock = nullptr;
-	FilteredSocketBalancer *fs_balancer = nullptr;
+	std::unique_ptr<FilteredSocketStock> fs_stock;
+	std::unique_ptr<FilteredSocketBalancer> fs_balancer;
 
-	PipeStock *pipe_stock;
+	std::unique_ptr<PipeStock> pipe_stock;
 
 	LbMonitorManager monitors;
 
