@@ -35,6 +35,7 @@
 #include "SessionCache.hxx"
 #include "SniCallback.hxx"
 #include "AlpnProtos.hxx"
+#include "AlpnSelect.hxx"
 #include "ssl/Error.hxx"
 #include "ssl/Basic.hxx"
 #include "ssl/Ctx.hxx"
@@ -46,10 +47,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/StringView.hxx"
 #include "util/PrintException.hxx"
-
 #include "util/Compiler.h"
-
-#include <nghttp2/nghttp2.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -122,16 +120,15 @@ struct SslFactoryCertKey {
 		}, nullptr);
 
 		SSL_CTX_set_alpn_select_cb(ssl_ctx.get(), [](SSL *, const unsigned char **out, unsigned char *outlen, const unsigned char *in, unsigned int inlen, void *){
-			// TODO: don't use libnghttp2 here (layering violation)
-			switch (nghttp2_select_next_protocol(const_cast<unsigned char **>(out), outlen, in, inlen)) {
-			case -1:
+			ConstBuffer<unsigned char> haystack(in, inlen);
+			auto found = FindAlpn(haystack, alpn_h2);
+			if (found.IsNull())
+				found = FindAlpn(haystack, alpn_http_1_1);
+			if (found.IsNull())
 				return SSL_TLSEXT_ERR_NOACK;
 
-			case 1:
-				// HTTP/2 enabled
-				break;
-			}
-
+			*out = found.data;
+			*outlen = found.size;
 			return SSL_TLSEXT_ERR_OK;
 		}, nullptr);
 	}

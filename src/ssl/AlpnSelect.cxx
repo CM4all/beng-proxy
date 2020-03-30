@@ -30,34 +30,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "AlpnSelect.hxx"
+#include "util/ConstBuffer.hxx"
 
-#include "util/Compiler.h"
+#include <assert.h>
+#include <string.h>
 
-#if GCC_OLDER_THAN(7,0)
-gcc_unused
-#else
-inline
-#endif
-constexpr unsigned char alpn_http_1_1[] = {
-	8, 'h', 't', 't', 'p', '/', '1', '.', '1',
-};
+ConstBuffer<unsigned char>
+FindAlpn(ConstBuffer<unsigned char> haystack,
+	 ConstBuffer<unsigned char> needle) noexcept
+{
+	assert(!needle.empty());
+	assert((size_t)needle.front() + 1 == needle.size);
 
-#if GCC_OLDER_THAN(7,0)
-gcc_unused
-#else
-inline
-#endif
-constexpr unsigned char alpn_h2[] = {
-	2, 'h', '2',
-};
+	while (haystack.size >= needle.size) {
+		if (memcmp(haystack.data, needle.data, needle.size) == 0)
+			return {haystack.data + 1, needle.size - 1};
 
-#if GCC_OLDER_THAN(7,0)
-gcc_unused
-#else
-inline
-#endif
-constexpr unsigned char alpn_http_any[] = {
-	2, 'h', '2',
-	8, 'h', 't', 't', 'p', '/', '1', '.', '1',
-};
+		size_t skip = (size_t)haystack.front() + 1;
+		if (skip > haystack.size)
+			break;
+
+		haystack.skip_front(skip);
+	}
+
+	return nullptr;
+}
