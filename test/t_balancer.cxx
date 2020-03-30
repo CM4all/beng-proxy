@@ -33,6 +33,8 @@
 #include "TestPool.hxx"
 #include "cluster/BalancerMap.hxx"
 #include "cluster/AddressList.hxx"
+#include "cluster/AddressListWrapper.hxx"
+#include "cluster/PickGeneric.hxx"
 #include "AllocatorPtr.hxx"
 #include "event/Loop.hxx"
 #include "net/Resolver.hxx"
@@ -59,7 +61,10 @@ public:
 	}
 
 	SocketAddress Get(const AddressList &al, unsigned session=0) {
-		return balancer.Get(Expiry::Now(), al, session);
+		return PickGeneric(Expiry::Now(), al.sticky_mode,
+				   balancer.MakeAddressListWrapper(AddressListWrapper(balancer.GetFailureManager(),
+										      al.addresses)),
+				   session);
 	}
 };
 

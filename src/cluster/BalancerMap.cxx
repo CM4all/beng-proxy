@@ -31,19 +31,6 @@
  */
 
 #include "BalancerMap.hxx"
-#include "AddressListWrapper.hxx"
-#include "PickGeneric.hxx"
-#include "AddressList.hxx"
-
-SocketAddress
-BalancerMap::Get(const Expiry now,
-		 const AddressList &list, sticky_hash_t sticky_hash) noexcept
-{
-	return PickGeneric(now, list.sticky_mode,
-			   MakeAddressListWrapper(AddressListWrapper(failure_manager,
-								     list.addresses)),
-			   sticky_hash);
-}
 
 RoundRobinBalancer &
 BalancerMap::MakeRoundRobinBalancer(HashKey key) noexcept
