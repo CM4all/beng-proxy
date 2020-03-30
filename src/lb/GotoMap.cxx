@@ -46,12 +46,14 @@
 
 LbGotoMap::LbGotoMap(const LbConfig &_config,
 		     FailureManager &_failure_manager,
+		     FilteredSocketBalancer &_fs_balancer,
 		     LbMonitorManager &_monitors,
 #ifdef HAVE_AVAHI
 		     MyAvahiClient &_avahi_client,
 #endif
 		     EventLoop &_event_loop) noexcept
 	:root_config(_config), failure_manager(_failure_manager),
+	 fs_balancer(_fs_balancer),
 	 monitors(_monitors),
 #ifdef HAVE_AVAHI
 	 avahi_client(_avahi_client),
@@ -126,6 +128,7 @@ LbGotoMap::GetInstance(const LbClusterConfig &config)
 	return clusters.emplace(std::piecewise_construct,
 				std::forward_as_tuple(&config),
 				std::forward_as_tuple(config, failure_manager,
+						      fs_balancer,
 						      monitor_stock
 #ifdef HAVE_AVAHI
 						      , avahi_client

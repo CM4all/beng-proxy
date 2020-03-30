@@ -33,6 +33,7 @@
 #pragma once
 
 #include "cluster/StickyHash.hxx"
+#include "event/Chrono.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/FailureRef.hxx"
 #include "io/Logger.hxx"
@@ -56,9 +57,15 @@ struct LbClusterConfig;
 class LbMonitorStock;
 class LbMonitorRef;
 class FailureManager;
+class FilteredSocketBalancer;
 class MyAvahiClient;
 class StickyCache;
 class AvahiServiceExplorer;
+class StopwatchPtr;
+class SocketFilterFactory;
+class StockGetHandler;
+class CancellablePointer;
+class AllocatorPtr;
 
 class LbCluster final
 #ifdef HAVE_AVAHI
@@ -67,6 +74,7 @@ class LbCluster final
 {
 	const LbClusterConfig &config;
 	FailureManager &failure_manager;
+	FilteredSocketBalancer &fs_balancer;
 	LbMonitorStock *const monitors;
 
 	const Logger logger;
@@ -267,6 +275,7 @@ private:
 
 public:
 	LbCluster(const LbClusterConfig &_config, FailureManager &_failure_manager,
+		  FilteredSocketBalancer &_fs_balancer,
 		  LbMonitorStock *_monitors
 #ifdef HAVE_AVAHI
 		  , MyAvahiClient &avahi_client
@@ -277,6 +286,19 @@ public:
 	const LbClusterConfig &GetConfig() const noexcept {
 		return config;
 	}
+
+	/**
+	 * Obtian a HTTP connection to a statically configured member
+	 * (not Zeroconf).
+	 */
+	void ConnectStaticHttp(AllocatorPtr alloc,
+			       const StopwatchPtr &parent_stopwatch,
+			       SocketAddress bind_address,
+			       sticky_hash_t session_sticky,
+			       Event::Duration timeout,
+			       SocketFilterFactory *filter_factory,
+			       StockGetHandler &handler,
+			       CancellablePointer &cancel_ptr) noexcept;
 
 #ifdef HAVE_AVAHI
 	gcc_pure

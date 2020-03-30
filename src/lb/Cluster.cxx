@@ -34,6 +34,7 @@
 #include "ClusterConfig.hxx"
 #include "MonitorStock.hxx"
 #include "MonitorRef.hxx"
+#include "fs/Balancer.hxx"
 #include "cluster/StickyCache.hxx"
 #include "sodium/GenericHash.hxx"
 #include "system/Error.hxx"
@@ -41,6 +42,7 @@
 #include "net/ToString.hxx"
 #include "util/HashRing.hxx"
 #include "util/ConstBuffer.hxx"
+#include "AllocatorPtr.hxx"
 
 #ifdef HAVE_AVAHI
 #include "avahi/Explorer.hxx"
@@ -91,12 +93,15 @@ LbCluster::Member::GetLogName() const noexcept
 
 LbCluster::LbCluster(const LbClusterConfig &_config,
 		     FailureManager &_failure_manager,
+		     FilteredSocketBalancer &_fs_balancer,
 		     LbMonitorStock *_monitors
 #ifdef HAVE_AVAHI
 		     , MyAvahiClient &avahi_client
 #endif
 		     )
-	:config(_config), failure_manager(_failure_manager), monitors(_monitors),
+	:config(_config), failure_manager(_failure_manager),
+	 fs_balancer(_fs_balancer),
+	 monitors(_monitors),
 	 logger("cluster " + config.name)
 {
 #ifdef HAVE_AVAHI
@@ -134,6 +139,26 @@ LbCluster::~LbCluster() noexcept
 #ifdef HAVE_AVAHI
 	members.clear_and_dispose(Member::UnrefDisposer());
 #endif
+}
+
+void
+LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
+			     const StopwatchPtr &parent_stopwatch,
+			     SocketAddress bind_address,
+			     sticky_hash_t session_sticky,
+			     Event::Duration timeout,
+			     SocketFilterFactory *filter_factory,
+			     StockGetHandler &handler,
+			     CancellablePointer &cancel_ptr) noexcept
+{
+	fs_balancer.Get(alloc, parent_stopwatch,
+			config.transparent_source,
+			bind_address,
+			session_sticky,
+			config.address_list,
+			timeout,
+			filter_factory,
+			handler, cancel_ptr);
 }
 
 #ifdef HAVE_AVAHI

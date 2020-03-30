@@ -49,7 +49,6 @@
 #include "http_server/Handler.hxx"
 #include "http_client.hxx"
 #include "fs/Stock.hxx"
-#include "fs/Balancer.hxx"
 #include "HttpResponseHandler.hxx"
 #include "http/Headers.hxx"
 #include "stock/GetHandler.hxx"
@@ -82,8 +81,6 @@ class LbRequest final
 	LbHttpConnection &connection;
 	LbCluster &cluster;
 	const LbClusterConfig &cluster_config;
-
-	FilteredSocketBalancer &balancer;
 
 	IncomingHttpRequest &request;
 
@@ -120,12 +117,10 @@ class LbRequest final
 
 public:
 	LbRequest(LbHttpConnection &_connection, LbCluster &_cluster,
-		  FilteredSocketBalancer &_balancer,
 		  IncomingHttpRequest &_request,
 		  CancellablePointer &_cancel_ptr) noexcept
 		:pool(_request.pool), connection(_connection), cluster(_cluster),
 		 cluster_config(cluster.GetConfig()),
-		 balancer(_balancer),
 		 request(_request),
 		 body(pool, std::move(request.body)) {
 		_cancel_ptr = *this;
@@ -565,14 +560,12 @@ LbRequest::Start() noexcept
 	}
 #endif
 
-	balancer.Get(pool, nullptr,
-		     cluster_config.transparent_source,
-		     bind_address,
-		     GetStickyHash(),
-		     cluster_config.address_list,
-		     LB_HTTP_CONNECT_TIMEOUT,
-		     nullptr,
-		     *this, cancel_ptr);
+	cluster.ConnectStaticHttp(pool, nullptr,
+				  bind_address,
+				  GetStickyHash(),
+				  LB_HTTP_CONNECT_TIMEOUT,
+				  nullptr,
+				  *this, cancel_ptr);
 }
 
 void
@@ -584,7 +577,6 @@ ForwardHttpRequest(LbHttpConnection &connection,
 	const auto request2 =
 		NewFromPool<LbRequest>(request.pool,
 				       connection, cluster,
-				       *connection.instance.fs_balancer,
 				       request, cancel_ptr);
 	request2->Start();
 }
