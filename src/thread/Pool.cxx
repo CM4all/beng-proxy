@@ -59,9 +59,7 @@ try {
 	assert(global_thread_queue != nullptr);
 
 	for (unsigned i = 0; i < 8; ++i) {
-		worker_threads.emplace_front();
-		thread_worker_create(worker_threads.front(),
-				     *global_thread_queue);
+		worker_threads.emplace_front(*global_thread_queue);
 	}
 } catch (...) {
 	LogConcat(1, "thread_pool", "Failed to launch worker thread: ",
@@ -98,7 +96,7 @@ thread_pool_join() noexcept
 		return;
 
 	while (!worker_threads.empty()) {
-		thread_worker_join(worker_threads.front());
+		worker_threads.front().Join();
 		worker_threads.pop_front();
 	}
 }

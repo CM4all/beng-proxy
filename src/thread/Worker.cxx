@@ -37,31 +37,32 @@
 #include "system/Error.hxx"
 #include "util/ScopeExit.hxx"
 
-static void *
-thread_worker_run(void *ctx) noexcept
+inline void
+ThreadWorker::Run() noexcept
+{
+	ThreadJob *job;
+	while ((job = thread_queue_wait(queue)) != nullptr) {
+		job->Run();
+		thread_queue_done(queue, *job);
+	}
+}
+
+void *
+ThreadWorker::Run(void *ctx) noexcept
 {
 	/* reduce glibc's thread cancellation overhead */
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, nullptr);
 
 	auto &w = *(ThreadWorker *)ctx;
-	ThreadQueue &q = *w.queue;
-
-	ThreadJob *job;
-	while ((job = thread_queue_wait(q)) != nullptr) {
-		job->Run();
-		thread_queue_done(q, *job);
-	}
+	w.Run();
 
 	ssl_thread_deinit();
-
 	return nullptr;
 }
 
-void
-thread_worker_create(ThreadWorker &w, ThreadQueue &q)
+ThreadWorker::ThreadWorker(ThreadQueue &_queue)
+	:queue(_queue)
 {
-	w.queue = &q;
-
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 	AtScopeExit(&attr) { pthread_attr_destroy(&attr); };
@@ -69,7 +70,7 @@ thread_worker_create(ThreadWorker &w, ThreadQueue &q)
 	/* 64 kB stack ought to be enough */
 	pthread_attr_setstacksize(&attr, 65536);
 
-	int error = pthread_create(&w.thread, &attr, thread_worker_run, &w);
+	int error = pthread_create(&thread, &attr, Run, this);
 	if (error != 0)
 		throw MakeErrno(error, "Failed to create worker thread");
 }

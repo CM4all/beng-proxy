@@ -39,24 +39,23 @@ class ThreadQueue;
 /**
  * A thread that performs queued work.
  */
-struct ThreadWorker {
+class ThreadWorker {
 	pthread_t thread;
 
-	ThreadQueue *queue;
+	ThreadQueue &queue;
+
+public:
+	ThreadWorker(ThreadQueue &_queue);
+
+	/**
+	 * Wait for the thread to exit.  You must call
+	 * thread_queue_stop() prior to this function.
+	 */
+	void Join() noexcept {
+		pthread_join(thread, nullptr);
+	}
+
+private:
+	void Run() noexcept;
+	static void *Run(void *ctx) noexcept;
 };
-
-/**
- * Throws exception on error.
- */
-void
-thread_worker_create(ThreadWorker &w, ThreadQueue &q);
-
-/**
- * Wait for the thread to exit.  You must call thread_queue_stop()
- * prior to this function.
- */
-static inline void
-thread_worker_join(ThreadWorker &w) noexcept
-{
-	pthread_join(w.thread, nullptr);
-}
