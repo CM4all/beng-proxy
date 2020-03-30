@@ -33,6 +33,7 @@
 #pragma once
 
 #include "cluster/StickyHash.hxx"
+#include "cluster/RoundRobinBalancer.hxx"
 #include "event/Chrono.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/FailureRef.hxx"
@@ -192,6 +193,8 @@ class LbCluster final
 				      boost::intrusive::compare<Member::Compare>,
 				      boost::intrusive::constant_time_size<false>> MemberMap;
 
+	struct ZeroconfListWrapper;
+
 	/**
 	 * All Zeroconf members.  Managed by our
 	 * AvahiServiceExplorerListener virtual method overrides.
@@ -204,9 +207,13 @@ class LbCluster final
 	 */
 	std::vector<MemberMap::pointer> active_members;
 
-	bool dirty = false;
+	/**
+	 * This object selects the next Zeroconf member if
+	 * StickyMode::NONE is configured.
+	 */
+	RoundRobinBalancer round_robin_balancer;
 
-	unsigned last_pick = 0;
+	bool dirty = false;
 
 	class ZeroconfHttpConnect;
 #endif
@@ -317,12 +324,6 @@ private:
 	 * Zeroconf only.
 	 */
 	void FillActive() noexcept;
-
-	/**
-	 * Pick the next active Zeroconf member in a round-robin way.
-	 * Does not update the #StickyCache.
-	 */
-	MemberMap::const_reference PickNextZeroconf() noexcept;
 
 	/**
 	 * Like PickNextZeroconf(), but skips members which are bad

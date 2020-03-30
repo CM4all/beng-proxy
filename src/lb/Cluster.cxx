@@ -40,6 +40,7 @@
 #include "fs/Handler.hxx"
 #include "cluster/StickyCache.hxx"
 #include "cluster/ConnectBalancer.hxx"
+#include "cluster/RoundRobinBalancer.cxx"
 #include "stock/GetHandler.hxx"
 #include "sodium/GenericHash.hxx"
 #include "system/Error.hxx"
@@ -50,6 +51,7 @@
 #include "util/HashRing.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/DeleteDisposer.hxx"
+#include "util/DereferenceIterator.hxx"
 #include "AllocatorPtr.hxx"
 #include "HttpMessageResponse.hxx"
 #include "lease.hxx"
@@ -252,31 +254,38 @@ LbCluster::ConnectStaticTcp(AllocatorPtr alloc,
 
 #ifdef HAVE_AVAHI
 
-LbCluster::MemberMap::const_reference
-LbCluster::PickNextZeroconf() noexcept
-{
-	assert(!active_members.empty());
+struct LbCluster::ZeroconfListWrapper {
+	const std::vector<MemberMap::pointer> &active_members;
 
-	++last_pick;
-	if (last_pick >= active_members.size())
-		last_pick = 0;
+	using const_reference = const Member &;
 
-	return *active_members[last_pick];
-}
+	auto size() const noexcept {
+		return active_members.size();
+	}
+
+	auto begin() const noexcept {
+		return DereferenceIterator{active_members.begin()};
+	}
+
+	auto end() const noexcept {
+		return DereferenceIterator{active_members.end()};
+	}
+
+	gcc_pure
+	bool Check(const Expiry now, const_reference member,
+		   bool allow_fade) const noexcept {
+		return member.GetFailureInfo().Check(now, allow_fade);
+	}
+};
 
 LbCluster::MemberMap::const_reference
 LbCluster::PickNextGoodZeroconf(const Expiry now) noexcept
 {
 	assert(!active_members.empty());
 
-	unsigned remaining = active_members.size();
-
-	while (true) {
-		auto &m = PickNextZeroconf();
-		if (--remaining == 0 ||
-		    m.GetFailureInfo().Check(now))
-			return m;
-	}
+	return round_robin_balancer.Get(now,
+					ZeroconfListWrapper{active_members},
+					false);
 }
 
 const LbCluster::Member *
