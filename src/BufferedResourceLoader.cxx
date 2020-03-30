@@ -160,13 +160,9 @@ private:
 
 	/* virtual methods from class BufferedIstreamHandler */
 	void OnBufferedIstreamReady(UnusedIstreamPtr i) noexcept override {
-		// TODO: eliminate this reference
-		const ScopePoolRef _ref(GetPool() TRACE_ARGS);
-
-		postponed_request.Send(std::move(i));
-
-		// TODO: destruct before invoking next.SendRequest()
+		auto _pr = std::move(postponed_request);
 		Destroy();
+		_pr.Send(std::move(i));
 	}
 
 	void OnBufferedIstreamError(std::exception_ptr e) noexcept override {
