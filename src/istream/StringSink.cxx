@@ -74,13 +74,16 @@ private:
 	}
 
 	void OnEof() noexcept override {
-		handler.OnStringSinkSuccess(std::move(value));
+		auto &_handler = handler;
+		auto _value = std::move(value);
 		Destroy();
+		_handler.OnStringSinkSuccess(std::move(_value));
 	}
 
 	void OnError(std::exception_ptr ep) noexcept override {
-		handler.OnStringSinkError(std::move(ep));
+		auto &_handler = handler;
 		Destroy();
+		_handler.OnStringSinkError(std::move(ep));
 	}
 };
 
