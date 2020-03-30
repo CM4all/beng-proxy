@@ -82,7 +82,7 @@ public:
 		 const StopwatchPtr &parent_stopwatch,
 		 bool ip_transparent,
 		 SocketAddress bind_address,
-		 unsigned session_sticky,
+		 sticky_hash_t session_sticky,
 		 const AddressList &address_list,
 		 Event::Duration timeout,
 		 SocketFilterFactory *filter_factory,
