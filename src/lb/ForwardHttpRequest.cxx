@@ -140,8 +140,8 @@ public:
 		return connection.instance.event_loop;
 	}
 
-	FailureManager &GetFailureManager() noexcept {
-		return balancer.GetFailureManager();
+	FailureManager &GetFailureManager() const noexcept {
+		return connection.instance.failure_manager;
 	}
 
 	void Start() noexcept;
