@@ -40,7 +40,6 @@
 #include "net/SocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "address_string.hxx"
-#include "stopwatch.hxx"
 
 #include <assert.h>
 
@@ -400,23 +399,11 @@ LbTcpConnection::ConnectOutbound()
 
 #ifdef HAVE_AVAHI
 	if (cluster_config.HasZeroConf()) {
-		const auto *member = cluster.Pick(GetEventLoop().SteadyNow(),
-						  session_sticky);
-		if (member == nullptr) {
-			OnTcpError("Zeroconf error", "Zeroconf cluster is empty");
-			return;
-		}
-
-		const auto address = member->GetAddress();
-		assert(address.IsDefined());
-
-		client_socket_new(GetEventLoop(), *pool, nullptr,
-				  address.GetFamily(), SOCK_STREAM, 0,
-				  cluster_config.transparent_source, bind_address,
-				  address,
-				  LB_TCP_CONNECT_TIMEOUT,
-				  *this,
-				  cancel_connect);
+		cluster.ConnectZeroconfTcp(*pool,
+					   bind_address,
+					   session_sticky,
+					   LB_TCP_CONNECT_TIMEOUT,
+					   *this, cancel_connect);
 		return;
 	}
 #else

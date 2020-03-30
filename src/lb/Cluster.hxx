@@ -333,6 +333,16 @@ public:
 	 */
 	Member *Pick(Expiry now, sticky_hash_t sticky_hash) noexcept;
 
+	/**
+	 * Create a new TCP connection to a Zeroconf member.
+	 */
+	void ConnectZeroconfTcp(AllocatorPtr alloc,
+				SocketAddress bind_address,
+				sticky_hash_t session_sticky,
+				Event::Duration timeout,
+				ConnectSocketHandler &handler,
+				CancellablePointer &cancel_ptr) noexcept;
+
 private:
 	/**
 	 * Fill #active_members and #sticky_ring.

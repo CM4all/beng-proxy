@@ -39,11 +39,14 @@
 #include "cluster/ConnectBalancer.hxx"
 #include "sodium/GenericHash.hxx"
 #include "system/Error.hxx"
+#include "event/Loop.hxx"
+#include "net/PConnectSocket.hxx"
 #include "net/FailureManager.hxx"
 #include "net/ToString.hxx"
 #include "util/HashRing.hxx"
 #include "util/ConstBuffer.hxx"
 #include "AllocatorPtr.hxx"
+#include "stopwatch.hxx"
 
 #ifdef HAVE_AVAHI
 #include "avahi/Explorer.hxx"
@@ -321,6 +324,36 @@ LbCluster::FillActive() noexcept
 
 		sticky_ring->Build(active_members, MemberHasher());
 	}
+}
+
+void
+LbCluster::ConnectZeroconfTcp(AllocatorPtr alloc,
+			      SocketAddress bind_address,
+			      sticky_hash_t session_sticky,
+			      Event::Duration timeout,
+			      ConnectSocketHandler &handler,
+			      CancellablePointer &cancel_ptr) noexcept
+{
+	assert(config.HasZeroConf());
+	assert(config.protocol == LbProtocol::TCP);
+
+	auto &event_loop = fs_balancer.GetEventLoop();
+
+	const auto *member = Pick(event_loop.SteadyNow(), session_sticky);
+	if (member == nullptr) {
+		handler.OnSocketConnectError(std::make_exception_ptr(std::runtime_error("Zeroconf cluster is empty")));
+		return;
+	}
+
+	const auto address = member->GetAddress();
+	assert(address.IsDefined());
+
+	client_socket_new(event_loop, alloc, nullptr,
+			  address.GetFamily(), SOCK_STREAM, 0,
+			  config.transparent_source, bind_address,
+			  address,
+			  timeout,
+			  handler, cancel_ptr);
 }
 
 void
