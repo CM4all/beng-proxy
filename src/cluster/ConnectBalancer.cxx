@@ -139,7 +139,7 @@ ClientBalancerRequest::OnSocketConnectError(std::exception_ptr ep) noexcept
 
 void
 client_balancer_connect(EventLoop &event_loop,
-			struct pool &pool, BalancerMap &balancer,
+			AllocatorPtr alloc, BalancerMap &balancer,
 			FailureManager &failure_manager,
 			bool ip_transparent,
 			SocketAddress bind_address,
@@ -149,7 +149,7 @@ client_balancer_connect(EventLoop &event_loop,
 			ConnectSocketHandler &handler,
 			CancellablePointer &cancel_ptr)
 {
-	BR::Start(pool, event_loop.SteadyNow(),
+	BR::Start(alloc, event_loop.SteadyNow(),
 		  address_list.sticky_mode,
 		  balancer.MakeAddressListWrapper(AddressListWrapper(failure_manager,
 								     address_list.addresses)),

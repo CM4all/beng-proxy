@@ -35,7 +35,7 @@
 #include "StickyHash.hxx"
 #include "event/Chrono.hxx"
 
-struct pool;
+class AllocatorPtr;
 class BalancerMap;
 class FailureManager;
 struct AddressList;
@@ -52,7 +52,7 @@ class SocketAddress;
  * @param timeout the connect timeout for each attempt [seconds]
  */
 void
-client_balancer_connect(EventLoop &event_loop, struct pool &pool,
+client_balancer_connect(EventLoop &event_loop, AllocatorPtr alloc,
 			BalancerMap &balancer,
 			FailureManager &failure_manager,
 			bool ip_transparent,
