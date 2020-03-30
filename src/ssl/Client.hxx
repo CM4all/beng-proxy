@@ -36,7 +36,7 @@
 
 #pragma once
 
-#include "Alpn.hxx"
+#include "AlpnClient.hxx"
 #include "fs/Ptr.hxx"
 
 #include <memory>
