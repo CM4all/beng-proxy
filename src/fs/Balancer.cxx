@@ -42,7 +42,7 @@
 
 #include <type_traits>
 
-class FilteredSocketBalancerRequest : public StockGetHandler {
+class FilteredSocketBalancer::Request : public StockGetHandler {
 	FilteredSocketStock &stock;
 
 	const StopwatchPtr parent_stopwatch;
@@ -57,13 +57,13 @@ class FilteredSocketBalancerRequest : public StockGetHandler {
 	StockGetHandler &handler;
 
 public:
-	FilteredSocketBalancerRequest(FilteredSocketStock &_stock,
-				      const StopwatchPtr &_parent_stopwatch,
-				      bool _ip_transparent,
-				      SocketAddress _bind_address,
-				      Event::Duration _timeout,
-				      SocketFilterFactory *_filter_factory,
-				      StockGetHandler &_handler) noexcept
+	Request(FilteredSocketStock &_stock,
+		const StopwatchPtr &_parent_stopwatch,
+		bool _ip_transparent,
+		SocketAddress _bind_address,
+		Event::Duration _timeout,
+		SocketFilterFactory *_filter_factory,
+		StockGetHandler &_handler) noexcept
 		:stock(_stock),
 		 parent_stopwatch(_parent_stopwatch),
 		 ip_transparent(_ip_transparent),
@@ -81,12 +81,12 @@ private:
 	void OnStockItemError(std::exception_ptr ep) noexcept override;
 };
 
-using BR = BalancerRequest<FilteredSocketBalancerRequest,
+using BR = BalancerRequest<FilteredSocketBalancer::Request,
 			   BalancerMap::Wrapper<AddressListWrapper>>;
 
 inline void
-FilteredSocketBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
-				    CancellablePointer &cancel_ptr) noexcept
+FilteredSocketBalancer::Request::Send(AllocatorPtr alloc, SocketAddress address,
+				      CancellablePointer &cancel_ptr) noexcept
 {
 	stock.Get(alloc,
 		  StopwatchPtr(parent_stopwatch, "connect"),
@@ -104,7 +104,7 @@ FilteredSocketBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
  */
 
 void
-FilteredSocketBalancerRequest::OnStockItemReady(StockItem &item) noexcept
+FilteredSocketBalancer::Request::OnStockItemReady(StockItem &item) noexcept
 {
 	auto &base = BR::Cast(*this);
 	base.ConnectSuccess();
@@ -115,7 +115,7 @@ FilteredSocketBalancerRequest::OnStockItemReady(StockItem &item) noexcept
 }
 
 void
-FilteredSocketBalancerRequest::OnStockItemError(std::exception_ptr ep) noexcept
+FilteredSocketBalancer::Request::OnStockItemError(std::exception_ptr ep) noexcept
 {
 	auto &base = BR::Cast(*this);
 	if (!base.ConnectFailure(stock.GetEventLoop().SteadyNow())) {

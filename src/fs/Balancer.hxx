@@ -53,8 +53,6 @@ class FailureManager;
  * balancing.
  */
 class FilteredSocketBalancer {
-	friend class FilteredSocketBalancerRequest;
-
 	FilteredSocketStock &stock;
 
 	FailureManager &failure_manager;
@@ -72,6 +70,8 @@ public:
 	FailureManager &GetFailureManager() {
 		return failure_manager;
 	}
+
+	class Request;
 
 	/**
 	 * @param session_sticky a portion of the session id that is used to
