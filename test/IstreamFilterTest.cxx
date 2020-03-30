@@ -111,6 +111,11 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
 			return 0;
 	}
 
+	if (abort_istream != nullptr)
+		/* to ensure that the abort_after counter works
+		   properly, throttle input */
+		length = 1;
+
 	if (abort_istream != nullptr && abort_after-- == 0) {
 		DeferInject(*abort_istream,
 			    std::make_exception_ptr(std::runtime_error("abort_istream")));
