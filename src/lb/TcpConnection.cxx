@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 CM4all GmbH
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -395,27 +395,9 @@ LbTcpConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
 void
 LbTcpConnection::ConnectOutbound()
 {
-	const auto &cluster_config = cluster.GetConfig();
-
-#ifdef HAVE_AVAHI
-	if (cluster_config.HasZeroConf()) {
-		cluster.ConnectZeroconfTcp(*pool,
-					   bind_address,
-					   session_sticky,
-					   LB_TCP_CONNECT_TIMEOUT,
-					   *this, cancel_connect);
-		return;
-	}
-#else
-	(void)cluster_config;
-#endif
-
-	cluster.ConnectStaticTcp(*pool,
-				 bind_address,
-				 session_sticky,
-				 LB_TCP_CONNECT_TIMEOUT,
-				 *this,
-				 cancel_connect);
+	cluster.ConnectTcp(*pool, bind_address, session_sticky,
+			   LB_TCP_CONNECT_TIMEOUT,
+			   *this, cancel_connect);
 }
 
 /*

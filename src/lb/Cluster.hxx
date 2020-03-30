@@ -292,6 +292,17 @@ public:
 	}
 
 	/**
+	 * Create a new TCP connection to a member (Zeroconf or
+	 * static).
+	 */
+	void ConnectTcp(AllocatorPtr alloc,
+			SocketAddress bind_address,
+			sticky_hash_t session_sticky,
+			Event::Duration timeout,
+			ConnectSocketHandler &handler,
+			CancellablePointer &cancel_ptr) noexcept;
+
+	/**
 	 * Obtain a HTTP connection to a statically configured member
 	 * (not Zeroconf).
 	 */

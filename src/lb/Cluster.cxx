@@ -148,6 +148,26 @@ LbCluster::~LbCluster() noexcept
 }
 
 void
+LbCluster::ConnectTcp(AllocatorPtr alloc,
+		      SocketAddress bind_address,
+		      sticky_hash_t session_sticky,
+		      Event::Duration timeout,
+		      ConnectSocketHandler &handler,
+		      CancellablePointer &cancel_ptr) noexcept
+{
+#ifdef HAVE_AVAHI
+	if (config.HasZeroConf()) {
+		ConnectZeroconfTcp(alloc, bind_address, session_sticky,
+				   timeout, handler, cancel_ptr);
+		return;
+	}
+#endif
+
+	ConnectStaticTcp(alloc, bind_address, session_sticky,
+			 timeout, handler, cancel_ptr);
+}
+
+void
 LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
 			     const StopwatchPtr &parent_stopwatch,
 			     SocketAddress bind_address,
