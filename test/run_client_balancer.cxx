@@ -63,11 +63,6 @@ struct Context final : PInstance, ConnectSocketHandler {
 	UniqueSocketDescriptor fd;
 	std::exception_ptr error;
 
-	Context()
-		:balancer(failure_manager)
-	{
-	}
-
 	/* virtual methods from class ConnectSocketHandler */
 	void OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) noexcept override {
 		result = SUCCESS;
@@ -116,6 +111,7 @@ try {
 
 	CancellablePointer cancel_ptr;
 	client_balancer_connect(ctx.event_loop, *pool, ctx.balancer,
+				ctx.failure_manager,
 				false, SocketAddress::Null(),
 				0, address_list, std::chrono::seconds(30),
 				ctx, cancel_ptr);

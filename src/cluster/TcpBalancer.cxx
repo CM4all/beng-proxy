@@ -142,7 +142,7 @@ TcpBalancer::Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
 {
 	BR::Start(alloc, GetEventLoop().SteadyNow(),
 		  address_list.sticky_mode,
-		  balancer.MakeAddressListWrapper(AddressListWrapper(balancer.GetFailureManager(),
+		  balancer.MakeAddressListWrapper(AddressListWrapper(GetFailureManager(),
 								     address_list.addresses)),
 		  cancel_ptr,
 		  session_sticky,

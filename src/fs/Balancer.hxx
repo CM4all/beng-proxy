@@ -46,6 +46,7 @@ class SocketFilterFactory;
 class FilteredSocketStock;
 class StopwatchPtr;
 class AllocatorPtr;
+class FailureManager;
 
 /*
  * Wrapper for the #FilteredSocketStock class to support load
@@ -56,18 +57,20 @@ class FilteredSocketBalancer {
 
 	FilteredSocketStock &stock;
 
+	FailureManager &failure_manager;
+
 	BalancerMap balancer;
 
 public:
 	FilteredSocketBalancer(FilteredSocketStock &_stock,
-			       FailureManager &failure_manager) noexcept
-		:stock(_stock), balancer(failure_manager) {}
+			       FailureManager &_failure_manager) noexcept
+		:stock(_stock), failure_manager(_failure_manager) {}
 
 	gcc_pure
 	EventLoop &GetEventLoop() noexcept;
 
 	FailureManager &GetFailureManager() {
-		return balancer.GetFailureManager();
+		return failure_manager;
 	}
 
 	/**

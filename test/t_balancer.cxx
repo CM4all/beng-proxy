@@ -52,9 +52,11 @@
 class MyBalancer {
 	BalancerMap balancer;
 
+	FailureManager &failure_manager;
+
 public:
-	explicit MyBalancer(FailureManager &failure_manager)
-		:balancer(failure_manager) {}
+	explicit MyBalancer(FailureManager &_failure_manager) noexcept
+		:failure_manager(_failure_manager) {}
 
 	operator BalancerMap *() {
 		return &balancer;
@@ -62,7 +64,7 @@ public:
 
 	SocketAddress Get(const AddressList &al, unsigned session=0) {
 		return PickGeneric(Expiry::Now(), al.sticky_mode,
-				   balancer.MakeAddressListWrapper(AddressListWrapper(balancer.GetFailureManager(),
+				   balancer.MakeAddressListWrapper(AddressListWrapper(failure_manager,
 										      al.addresses)),
 				   session);
 	}

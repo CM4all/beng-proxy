@@ -45,6 +45,7 @@ class CancellablePointer;
 class SocketAddress;
 class EventLoop;
 class StopwatchPtr;
+class FailureManager;
 
 /**
  * Wrapper for #TcpStock to support load balancing.
@@ -54,19 +55,22 @@ class TcpBalancer {
 
 	TcpStock &tcp_stock;
 
+	FailureManager &failure_manager;
+
 	BalancerMap balancer;
 
 public:
 	/**
 	 * @param tcp_stock the underlying #TcpStock object
 	 */
-	TcpBalancer(TcpStock &_tcp_stock, FailureManager &failure_manager)
-		:tcp_stock(_tcp_stock), balancer(failure_manager) {}
+	TcpBalancer(TcpStock &_tcp_stock,
+		    FailureManager &_failure_manager) noexcept
+		:tcp_stock(_tcp_stock), failure_manager(_failure_manager) {}
 
 	EventLoop &GetEventLoop() noexcept;
 
 	FailureManager &GetFailureManager() {
-		return balancer.GetFailureManager();
+		return failure_manager;
 	}
 
 	/**

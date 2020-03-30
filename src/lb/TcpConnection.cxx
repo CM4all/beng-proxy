@@ -423,6 +423,7 @@ LbTcpConnection::ConnectOutbound()
 #endif
 
 	client_balancer_connect(GetEventLoop(), pool, *instance.balancer,
+				instance.failure_manager,
 				cluster_config.transparent_source,
 				bind_address,
 				session_sticky,

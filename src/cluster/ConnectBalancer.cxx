@@ -140,6 +140,7 @@ ClientBalancerRequest::OnSocketConnectError(std::exception_ptr ep) noexcept
 void
 client_balancer_connect(EventLoop &event_loop,
 			struct pool &pool, BalancerMap &balancer,
+			FailureManager &failure_manager,
 			bool ip_transparent,
 			SocketAddress bind_address,
 			sticky_hash_t session_sticky,
@@ -150,7 +151,7 @@ client_balancer_connect(EventLoop &event_loop,
 {
 	BR::Start(pool, event_loop.SteadyNow(),
 		  address_list.sticky_mode,
-		  balancer.MakeAddressListWrapper(AddressListWrapper(balancer.GetFailureManager(),
+		  balancer.MakeAddressListWrapper(AddressListWrapper(failure_manager,
 								     address_list.addresses)),
 		  cancel_ptr,
 		  session_sticky,

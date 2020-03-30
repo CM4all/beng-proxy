@@ -39,25 +39,15 @@
 
 struct AddressList;
 class SocketAddress;
-class FailureManager;
 class Expiry;
 
 /**
  * Load balancer for AddressList.
  */
 class BalancerMap {
-	FailureManager &failure_manager;
-
 	Cache<HashKey, RoundRobinBalancer, 2048, 1021> cache;
 
 public:
-	explicit BalancerMap(FailureManager &_failure_manager) noexcept
-		:failure_manager(_failure_manager) {}
-
-	FailureManager &GetFailureManager() const noexcept {
-		return failure_manager;
-	}
-
 	RoundRobinBalancer &MakeRoundRobinBalancer(HashKey key) noexcept;
 
 	/**
