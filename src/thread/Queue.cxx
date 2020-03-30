@@ -32,48 +32,19 @@
 
 #include "Queue.hxx"
 #include "Job.hxx"
-#include "Notify.hxx"
 #include "util/Compiler.h"
-
-#include <boost/intrusive/list.hpp>
-
-#include <mutex>
-#include <condition_variable>
 
 #include <assert.h>
 
-class ThreadQueue {
-public:
-	std::mutex mutex;
-	std::condition_variable cond;
+ThreadQueue::ThreadQueue(EventLoop &event_loop) noexcept
+	:notify(event_loop, BIND_THIS_METHOD(WakeupCallback))
+{
+}
 
-	bool alive = true;
-
-	/**
-	 * Was the #wakeup_event triggered?  This avoids duplicate events.
-	 */
-	bool pending = false;
-
-	typedef boost::intrusive::list<ThreadJob,
-				       boost::intrusive::constant_time_size<false>> JobList;
-
-	JobList waiting, busy, done;
-
-	Notify notify;
-
-	explicit ThreadQueue(EventLoop &event_loop) noexcept
-		:notify(event_loop, BIND_THIS_METHOD(WakeupCallback)) {}
-
-	~ThreadQueue() noexcept {
-		assert(!alive);
-	}
-
-	bool IsEmpty() const noexcept {
-		return waiting.empty() && busy.empty() && done.empty();
-	}
-
-	void WakeupCallback() noexcept;
-};
+ThreadQueue::~ThreadQueue() noexcept
+{
+	assert(!alive);
+}
 
 void
 ThreadQueue::WakeupCallback() noexcept
@@ -110,93 +81,81 @@ ThreadQueue::WakeupCallback() noexcept
 		notify.Disable();
 }
 
-ThreadQueue *
-thread_queue_new(EventLoop &event_loop) noexcept
+void
+ThreadQueue::Stop() noexcept
 {
-	return new ThreadQueue(event_loop);
+	std::unique_lock<std::mutex> lock(mutex);
+	alive = false;
+	cond.notify_all();
 }
 
 void
-thread_queue_stop(ThreadQueue &q) noexcept
+ThreadQueue::Add(ThreadJob &job) noexcept
 {
-	std::unique_lock<std::mutex> lock(q.mutex);
-	q.alive = false;
-	q.cond.notify_all();
-}
-
-void
-thread_queue_free(ThreadQueue *q) noexcept
-{
-	delete q;
-}
-
-void
-thread_queue_add(ThreadQueue &q, ThreadJob &job) noexcept
-{
-	q.mutex.lock();
-	assert(q.alive);
+	mutex.lock();
+	assert(alive);
 
 	if (job.state == ThreadJob::State::INITIAL) {
 		job.state = ThreadJob::State::WAITING;
 		job.again = false;
-		q.waiting.push_back(job);
-		q.cond.notify_one();
+		waiting.push_back(job);
+		cond.notify_one();
 	} else if (job.state != ThreadJob::State::WAITING) {
 		job.again = true;
 	}
 
-	q.mutex.unlock();
+	mutex.unlock();
 
-	q.notify.Enable();
+	notify.Enable();
 }
 
 ThreadJob *
-thread_queue_wait(ThreadQueue &q) noexcept
+ThreadQueue::Wait() noexcept
 {
-	std::unique_lock<std::mutex> lock(q.mutex);
+	std::unique_lock<std::mutex> lock(mutex);
 
 	while (true) {
-		if (!q.alive)
+		if (!alive)
 			return nullptr;
 
-		auto i = q.waiting.begin();
-		if (i != q.waiting.end()) {
+		auto i = waiting.begin();
+		if (i != waiting.end()) {
 			auto &job = *i;
 			assert(job.state == ThreadJob::State::WAITING);
 
 			job.state = ThreadJob::State::BUSY;
-			q.waiting.erase(i);
-			q.busy.push_back(job);
+			waiting.erase(i);
+			busy.push_back(job);
 			return &job;
 		}
 
 		/* queue is empty, wait for a new job to be added */
-		q.cond.wait(lock);
+		cond.wait(lock);
 	}
 }
 
 void
-thread_queue_done(ThreadQueue &q, ThreadJob &job) noexcept
+ThreadQueue::Done(ThreadJob &job) noexcept
 {
 	assert(job.state == ThreadJob::State::BUSY);
 
-	q.mutex.lock();
+	mutex.lock();
 
 	job.state = ThreadJob::State::DONE;
-	q.busy.erase(q.busy.iterator_to(job));
-	q.done.push_back(job);
+	busy.erase(busy.iterator_to(job));
+	done.push_back(job);
 
-	q.pending = true;
+	pending = true;
 
-	q.mutex.unlock();
+	mutex.unlock();
 
-	q.notify.Signal();
+	notify.Signal();
 }
 
 bool
-thread_queue_cancel(ThreadQueue &q, ThreadJob &job) noexcept
+ThreadQueue::Cancel(ThreadJob &job) noexcept
 {
-	std::unique_lock<std::mutex> lock(q.mutex);
+	std::unique_lock<std::mutex> lock(mutex);
 
 	switch (job.state) {
 	case ThreadJob::State::INITIAL:
@@ -205,7 +164,7 @@ thread_queue_cancel(ThreadQueue &q, ThreadJob &job) noexcept
 
 	case ThreadJob::State::WAITING:
 		/* cancel it */
-		q.waiting.erase(q.waiting.iterator_to(job));
+		waiting.erase(waiting.iterator_to(job));
 		job.state = ThreadJob::State::INITIAL;
 		return true;
 

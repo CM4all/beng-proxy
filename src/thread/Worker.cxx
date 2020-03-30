@@ -41,9 +41,9 @@ inline void
 ThreadWorker::Run() noexcept
 {
 	ThreadJob *job;
-	while ((job = thread_queue_wait(queue)) != nullptr) {
+	while ((job = queue.Wait()) != nullptr) {
 		job->Run();
-		thread_queue_done(queue, *job);
+		queue.Done(*job);
 	}
 }
 

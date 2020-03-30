@@ -50,7 +50,7 @@ static std::forward_list<ThreadWorker> worker_threads;
 static void
 thread_pool_init(EventLoop &event_loop) noexcept
 {
-	global_thread_queue = thread_queue_new(event_loop);
+	global_thread_queue = new ThreadQueue(event_loop);
 }
 
 static void
@@ -86,7 +86,7 @@ thread_pool_stop() noexcept
 	if (global_thread_queue == nullptr)
 		return;
 
-	thread_queue_stop(*global_thread_queue);
+	global_thread_queue->Stop();
 }
 
 void
@@ -107,6 +107,6 @@ thread_pool_deinit() noexcept
 	if (global_thread_queue == nullptr)
 		return;
 
-	thread_queue_free(global_thread_queue);
+	delete global_thread_queue;
 	global_thread_queue = nullptr;
 }

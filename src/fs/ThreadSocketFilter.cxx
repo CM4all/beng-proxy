@@ -74,7 +74,7 @@ ThreadSocketFilter::Schedule() noexcept
 
 	PreRun();
 
-	thread_queue_add(queue, *this);
+	queue.Add(*this);
 }
 
 void
@@ -748,7 +748,7 @@ ThreadSocketFilter::Close() noexcept
 {
 	defer_event.Cancel();
 
-	if (!thread_queue_cancel(queue, *this)) {
+	if (!queue.Cancel(*this)) {
 		/* postpone the destruction */
 		postponed_destroy = true;
 		return;

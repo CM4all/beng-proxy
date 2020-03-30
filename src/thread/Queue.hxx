@@ -36,49 +36,76 @@
 
 #pragma once
 
+#include "Notify.hxx"
+
+#include <boost/intrusive/list.hpp>
+
+#include <mutex>
+#include <condition_variable>
+
 class EventLoop;
 class ThreadQueue;
 class ThreadJob;
 
-ThreadQueue *
-thread_queue_new(EventLoop &event_loop) noexcept;
+class ThreadQueue {
+	std::mutex mutex;
+	std::condition_variable cond;
 
-/**
- * Cancel all thread_queue_wait() calls and refuse all further calls.
- * This is used to initiate shutdown of all threads connected to this
- * queue.
- */
-void
-thread_queue_stop(ThreadQueue &q) noexcept;
+	bool alive = true;
 
-void
-thread_queue_free(ThreadQueue *q) noexcept;
+	/**
+	 * Was the #wakeup_event triggered?  This avoids duplicate events.
+	 */
+	bool pending = false;
 
-/**
- * Enqueue a job, and wake up an idle thread (if there is any).
- */
-void
-thread_queue_add(ThreadQueue &q, ThreadJob &job) noexcept;
+	typedef boost::intrusive::list<ThreadJob,
+				       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
+				       boost::intrusive::constant_time_size<false>> JobList;
 
-/**
- * Dequeue an existing job or wait for a new job, and reserve it.
- *
- * @return NULL if thread_queue_stop() has been called
- */
-ThreadJob *
-thread_queue_wait(ThreadQueue &q) noexcept;
+	JobList waiting, busy, done;
 
-/**
- * Mark the specified job (returned by thread_queue_wait()) as "done".
- */
-void
-thread_queue_done(ThreadQueue &q, ThreadJob &job) noexcept;
+	Notify notify;
 
-/**
- * Cancel a job that has been queued.
- *
- * @return true if the job is now canceled, false if the job is
- * currently being processed
- */
-bool
-thread_queue_cancel(ThreadQueue &q, ThreadJob &job) noexcept;
+public:
+	explicit ThreadQueue(EventLoop &event_loop) noexcept;
+	~ThreadQueue() noexcept;
+
+	bool IsEmpty() const noexcept {
+		return waiting.empty() && busy.empty() && done.empty();
+	}
+
+	/**
+	 * Cancel all Wait() calls and refuse all further calls.
+	 * This is used to initiate shutdown of all threads connected to this
+	 * queue.
+	 */
+	void Stop() noexcept;
+
+	/**
+	 * Enqueue a job, and wake up an idle thread (if there is any).
+	 */
+	void Add(ThreadJob &job) noexcept;
+
+	/**
+	 * Dequeue an existing job or wait for a new job, and reserve it.
+	 *
+	 * @return NULL if thread_queue_stop() has been called
+	 */
+	ThreadJob *Wait() noexcept;
+
+	/**
+	 * Mark the specified job (returned by thread_queue_wait()) as "done".
+	 */
+	void Done(ThreadJob &job) noexcept;
+
+	/**
+	 * Cancel a job that has been queued.
+	 *
+	 * @return true if the job is now canceled, false if the job is
+	 * currently being processed
+	 */
+	bool Cancel(ThreadJob &job) noexcept;
+
+private:
+	void WakeupCallback() noexcept;
+};
