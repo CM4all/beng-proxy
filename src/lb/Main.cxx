@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 CM4all GmbH
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -170,7 +170,7 @@ try {
 
 	LoadConfigFile(config, cmdline.config_path);
 
-	LbInstance instance(config);
+	LbInstance instance(cmdline, config);
 
 	if (cmdline.check) {
 		const ScopeSslGlobalInit ssl_init;
@@ -199,15 +199,6 @@ try {
 
 	instance.InitAllControls();
 	instance.InitAllListeners();
-
-	instance.balancer = std::make_unique<BalancerMap>();
-
-	instance.fs_stock = std::make_unique<FilteredSocketStock>(instance.event_loop,
-								  cmdline.tcp_stock_limit);
-	instance.fs_balancer = std::make_unique<FilteredSocketBalancer>(*instance.fs_stock,
-									instance.failure_manager);
-
-	instance.pipe_stock = std::make_unique<PipeStock>(instance.event_loop);
 
 	/* launch the access logger */
 

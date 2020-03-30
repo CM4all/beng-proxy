@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 CM4all GmbH
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -58,6 +58,7 @@ class PipeStock;
 class BalancerMap;
 class FilteredSocketStock;
 class FilteredSocketBalancer;
+struct LbCmdLine;
 struct LbConfig;
 struct LbCertDatabaseConfig;
 struct LbHttpConnection;
@@ -115,7 +116,7 @@ struct LbInstance final : PInstance {
 
 	std::unique_ptr<AccessLogGlue> access_log;
 
-	explicit LbInstance(const LbConfig &_config) noexcept;
+	LbInstance(const LbCmdLine &cmdline, const LbConfig &_config) noexcept;
 	~LbInstance() noexcept;
 
 	/**

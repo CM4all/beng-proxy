@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 CM4all GmbH
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,6 +35,7 @@
 #include "TcpConnection.hxx"
 #include "Control.hxx"
 #include "Config.hxx"
+#include "CommandLine.hxx"
 #include "Listener.hxx"
 #include "ssl/Cache.hxx"
 #include "fb_pool.hxx"
@@ -45,11 +46,17 @@
 
 static constexpr Event::Duration COMPRESS_INTERVAL = std::chrono::minutes(10);
 
-LbInstance::LbInstance(const LbConfig &_config) noexcept
+LbInstance::LbInstance(const LbCmdLine &cmdline,
+		       const LbConfig &_config) noexcept
 	:config(_config),
 	 shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
 	 sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback)),
 	 compress_event(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
+	 balancer(new BalancerMap()),
+	 fs_stock(new FilteredSocketStock(event_loop,
+					  cmdline.tcp_stock_limit)),
+	 fs_balancer(new FilteredSocketBalancer(*fs_stock, failure_manager)),
+	 pipe_stock(new PipeStock(event_loop)),
 	 monitors(event_loop, failure_manager),
 #ifdef HAVE_AVAHI
 	 avahi_client(event_loop, "beng-lb"),
