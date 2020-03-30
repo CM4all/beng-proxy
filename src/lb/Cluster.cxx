@@ -151,6 +151,8 @@ LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
 			     StockGetHandler &handler,
 			     CancellablePointer &cancel_ptr) noexcept
 {
+	assert(config.protocol == LbProtocol::HTTP);
+
 	fs_balancer.Get(alloc, parent_stopwatch,
 			config.transparent_source,
 			bind_address,
