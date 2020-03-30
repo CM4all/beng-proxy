@@ -68,11 +68,26 @@ struct LbInstance final : PInstance {
 
 	const Logger logger;
 
+	bool should_exit = false;
+	ShutdownListener shutdown_listener;
+	SignalEvent sighup_event;
+
+	TimerEvent compress_event;
+
 	uint64_t http_request_counter = 0;
 	uint64_t http_traffic_received_counter = 0;
 	uint64_t http_traffic_sent_counter = 0;
 
 	std::forward_list<LbControl> controls;
+
+	/* stock */
+	FailureManager failure_manager;
+	BalancerMap *balancer;
+
+	FilteredSocketStock *fs_stock = nullptr;
+	FilteredSocketBalancer *fs_balancer = nullptr;
+
+	PipeStock *pipe_stock;
 
 	LbMonitorManager monitors;
 
@@ -86,8 +101,6 @@ struct LbInstance final : PInstance {
 
 	std::map<std::string, CertCache> cert_dbs;
 
-	TimerEvent compress_event;
-
 	boost::intrusive::list<LbHttpConnection,
 			       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
 			       boost::intrusive::constant_time_size<true>> http_connections;
@@ -97,19 +110,6 @@ struct LbInstance final : PInstance {
 			       boost::intrusive::constant_time_size<true>> tcp_connections;
 
 	std::unique_ptr<AccessLogGlue> access_log;
-
-	bool should_exit = false;
-	ShutdownListener shutdown_listener;
-	SignalEvent sighup_event;
-
-	/* stock */
-	FailureManager failure_manager;
-	BalancerMap *balancer;
-
-	FilteredSocketStock *fs_stock = nullptr;
-	FilteredSocketBalancer *fs_balancer = nullptr;
-
-	PipeStock *pipe_stock;
 
 	explicit LbInstance(const LbConfig &_config) noexcept;
 	~LbInstance() noexcept;

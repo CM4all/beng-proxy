@@ -47,6 +47,9 @@ static constexpr Event::Duration COMPRESS_INTERVAL = std::chrono::minutes(10);
 
 LbInstance::LbInstance(const LbConfig &_config) noexcept
 	:config(_config),
+	 shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
+	 sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback)),
+	 compress_event(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
 	 monitors(event_loop, failure_manager),
 #ifdef HAVE_AVAHI
 	 avahi_client(event_loop, "beng-lb"),
@@ -55,10 +58,7 @@ LbInstance::LbInstance(const LbConfig &_config) noexcept
 #ifdef HAVE_AVAHI
 		  avahi_client,
 #endif
-		  event_loop),
-	 compress_event(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
-	 shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
-	 sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback))
+		  event_loop)
 {
 }
 
