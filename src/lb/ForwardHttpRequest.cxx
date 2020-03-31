@@ -528,7 +528,7 @@ LbRequest::Start() noexcept
 		if (member == nullptr) {
 			auto &_request = request;
 			Destroy();
-			_request.SendMessage(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+			_request.SendMessage(HTTP_STATUS_SERVICE_UNAVAILABLE,
 					     "Zeroconf cluster is empty");
 			return;
 		}
