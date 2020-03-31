@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 CM4all GmbH
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -53,7 +53,7 @@
 #include "http/Headers.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
-#include "lease.hxx"
+#include "stock/Lease.hxx"
 #include "strmap.hxx"
 #include "pool/pool.hxx"
 #include "net/IPv4Address.hxx"
@@ -74,7 +74,7 @@ static constexpr Event::Duration LB_HTTP_CONNECT_TIMEOUT =
 	std::chrono::seconds(20);
 
 class LbRequest final
-	: LeakDetector, Cancellable, StockGetHandler, Lease, HttpResponseHandler {
+	: LeakDetector, Cancellable, StockGetHandler, HttpResponseHandler {
 
 	struct pool &pool;
 
@@ -91,7 +91,6 @@ class LbRequest final
 
 	CancellablePointer cancel_ptr;
 
-	StockItem *stock_item = nullptr;
 	FailurePtr failure;
 
 #ifdef HAVE_AVAHI
@@ -103,8 +102,6 @@ class LbRequest final
 #endif
 
 	unsigned new_cookie = 0;
-
-	bool response_sent = false;
 
 public:
 	LbRequest(LbHttpConnection &_connection, LbCluster &_cluster,
@@ -148,8 +145,6 @@ private:
 #endif
 
 	void Destroy() noexcept {
-		assert(stock_item == nullptr);
-
 		DeleteFromPool(pool, this);
 	}
 
@@ -159,14 +154,6 @@ private:
 		rl.forwarded_to =
 			address_to_string(pool,
 					  GetFailureManager().GetAddress(*failure));
-	}
-
-	void ResponseSent() noexcept {
-		assert(!response_sent);
-		response_sent = true;
-
-		if (stock_item == nullptr)
-			Destroy();
 	}
 
 	const char *GetCanonicalHost() const noexcept {
@@ -183,8 +170,6 @@ private:
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
-		assert(!response_sent);
-
 		cancel_ptr.Cancel();
 		Destroy();
 	}
@@ -192,9 +177,6 @@ private:
 	/* virtual methods from class StockGetHandler */
 	void OnStockItemReady(StockItem &item) noexcept override;
 	void OnStockItemError(std::exception_ptr ep) noexcept override;
-
-	/* virtual methods from class Lease */
-	void ReleaseLease(bool reuse) noexcept override;
 
 	/* virtual methods from class HttpResponseHandler */
 	void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -333,8 +315,6 @@ void
 LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 			  UnusedIstreamPtr response_body) noexcept
 {
-	assert(!response_sent);
-
 	failure->UnsetProtocol();
 
 	SetForwardedTo();
@@ -358,7 +338,7 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 	}
 
 	auto &_request = request;
-	ResponseSent();
+	Destroy();
 
 	_request.SendResponse(status, std::move(headers),
 			      std::move(response_body));
@@ -367,8 +347,6 @@ LbRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 void
 LbRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
-	assert(!response_sent);
-
 	if (IsHttpClientServerFailure(ep))
 		failure->SetProtocol(GetEventLoop().SteadyNow(),
 				     std::chrono::seconds(20));
@@ -381,7 +359,7 @@ LbRequest::OnHttpError(std::exception_ptr ep) noexcept
 	auto &_request = request;
 	const auto &fallback = cluster_config.fallback;
 
-	ResponseSent();
+	Destroy();
 
 	if (!send_fallback(_request, fallback))
 		_connection.SendError(_request, ep);
@@ -395,11 +373,6 @@ LbRequest::OnHttpError(std::exception_ptr ep) noexcept
 void
 LbRequest::OnStockItemReady(StockItem &item) noexcept
 {
-	assert(stock_item == nullptr);
-	assert(!response_sent);
-
-	stock_item = &item;
-
 #ifdef HAVE_AVAHI
 	if (cluster_config.HasZeroConf()) {
 		/* without the fs_balancer, we have to roll our own failure
@@ -407,7 +380,7 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
 		failure->UnsetConnect();
 	} else
 #endif
-		failure = GetFailureManager().Make(fs_stock_item_get_address(*stock_item));
+		failure = GetFailureManager().Make(fs_stock_item_get_address(item));
 
 	const char *peer_subject = connection.ssl_filter != nullptr
 		? ssl_filter_get_peer_subject(*connection.ssl_filter)
@@ -426,7 +399,7 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
 
 	http_client_request(pool, nullptr,
 			    fs_stock_item_get(item),
-			    *this,
+			    *NewFromPool<StockItemLease>(pool, item),
 			    item.GetStockName(),
 			    request.method, request.uri,
 			    HttpHeaders(std::move(headers)),
@@ -437,9 +410,6 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
 void
 LbRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
-	assert(stock_item == nullptr);
-	assert(!response_sent);
-
 	connection.logger(2, "Connect error: ", ep);
 
 #ifdef HAVE_AVAHI
@@ -463,28 +433,10 @@ LbRequest::OnStockItemError(std::exception_ptr ep) noexcept
 	auto &_request = request;
 	const auto &fallback = cluster_config.fallback;
 
-	ResponseSent();
+	Destroy();
 
 	if (!send_fallback(_request, fallback))
 		_connection.SendError(_request, ep);
-}
-
-/*
- * Lease
- *
- */
-
-void
-LbRequest::ReleaseLease(bool reuse) noexcept
-{
-	assert(stock_item != nullptr);
-
-	stock_item->Put(!reuse);
-	stock_item = nullptr;
-
-	if (response_sent) {
-		Destroy();
-	}
 }
 
 /*
