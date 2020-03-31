@@ -73,14 +73,14 @@ void
 http_cache_flush(HttpCache &cache) noexcept;
 
 /**
- * @param session_sticky a portion of the session id that is used to
+ * @param sticky_hash a portion of the session id that is used to
  * select the worker; 0 means disable stickiness
  */
 void
 http_cache_request(HttpCache &cache,
 		   struct pool &pool,
 		   const StopwatchPtr &parent_stopwatch,
-		   sticky_hash_t session_sticky,
+		   sticky_hash_t sticky_hash,
 		   const char *cache_tag,
 		   const char *site_name,
 		   http_method_t method,

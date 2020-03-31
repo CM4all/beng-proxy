@@ -284,29 +284,29 @@ LbRequest::GetStickyHash() noexcept
 		return 0;
 
 	case StickyMode::SOURCE_IP:
-		/* calculate session_sticky from remote address */
+		/* calculate the sticky hash from remote address */
 		return socket_address_sticky(request.remote_address);
 
 	case StickyMode::HOST:
-		/* calculate session_sticky from "Host" request header */
+		/* calculate the sticky hash from "Host" request header */
 		return GetHostHash();
 
 	case StickyMode::XHOST:
-		/* calculate session_sticky from "X-CM4all-Host" request
+		/* calculate the sticky hash from "X-CM4all-Host" request
 		   header */
 		return GetXHostHash();
 
 	case StickyMode::SESSION_MODULO:
-		/* calculate session_sticky from beng-proxy session id */
+		/* calculate the sticky hash from beng-proxy session id */
 		return lb_session_get(request.headers,
 				      cluster_config.session_cookie.c_str());
 
 	case StickyMode::COOKIE:
-		/* calculate session_sticky from beng-lb cookie */
+		/* calculate the sticky hash from beng-lb cookie */
 		return MakeCookieHash();
 
 	case StickyMode::JVM_ROUTE:
-		/* calculate session_sticky from JSESSIONID cookie suffix */
+		/* calculate the sticky hash from JSESSIONID cookie suffix */
 		return lb_jvm_route_get(request.headers, cluster_config);
 	}
 

@@ -74,7 +74,7 @@ public:
 	class Request;
 
 	/**
-	 * @param session_sticky a portion of the session id that is used to
+	 * @param sticky_hash a portion of the session id that is used to
 	 * select the worker; 0 means disable stickiness
 	 * @param timeout the connect timeout for each attempt [seconds]
 	 */
@@ -82,7 +82,7 @@ public:
 		 const StopwatchPtr &parent_stopwatch,
 		 bool ip_transparent,
 		 SocketAddress bind_address,
-		 sticky_hash_t session_sticky,
+		 sticky_hash_t sticky_hash,
 		 const AddressList &address_list,
 		 Event::Duration timeout,
 		 SocketFilterFactory *filter_factory,

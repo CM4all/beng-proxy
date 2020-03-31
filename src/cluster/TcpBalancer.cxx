@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -134,7 +134,7 @@ void
 TcpBalancer::Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
 		 bool ip_transparent,
 		 SocketAddress bind_address,
-		 sticky_hash_t session_sticky,
+		 sticky_hash_t sticky_hash,
 		 const AddressList &address_list,
 		 Event::Duration timeout,
 		 StockGetHandler &handler,
@@ -145,7 +145,7 @@ TcpBalancer::Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
 		  balancer.MakeAddressListWrapper(AddressListWrapper(GetFailureManager(),
 								     address_list.addresses)),
 		  cancel_ptr,
-		  session_sticky,
+		  sticky_hash,
 		  *this,
 		  parent_stopwatch,
 		  ip_transparent,

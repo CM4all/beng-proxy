@@ -119,7 +119,7 @@ GetHostWithoutPort(struct pool &pool, const HttpAddress &address) noexcept
 void
 DirectResourceLoader::SendRequest(struct pool &pool,
 				  const StopwatchPtr &parent_stopwatch,
-				  sticky_hash_t session_sticky,
+				  sticky_hash_t sticky_hash,
 				  gcc_unused const char *cache_tag,
 				  const char *site_name,
 				  http_method_t method,
@@ -290,7 +290,7 @@ try {
 #endif
 			http_request(pool, event_loop, fs_balancer,
 				     parent_stopwatch,
-				     session_sticky,
+				     sticky_hash,
 				     filter_factory,
 				     method, address.GetHttp(),
 				     HttpHeaders(std::move(headers)),

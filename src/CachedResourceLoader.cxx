@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,7 +39,7 @@
 void
 CachedResourceLoader::SendRequest(struct pool &pool,
 				  const StopwatchPtr &parent_stopwatch,
-				  sticky_hash_t session_sticky,
+				  sticky_hash_t sticky_hash,
 				  const char *cache_tag,
 				  const char *site_name,
 				  http_method_t method,
@@ -52,7 +52,7 @@ CachedResourceLoader::SendRequest(struct pool &pool,
 				  CancellablePointer &cancel_ptr) noexcept
 {
 	http_cache_request(cache, pool, parent_stopwatch,
-			   session_sticky, cache_tag, site_name,
+			   sticky_hash, cache_tag, site_name,
 			   method, address,
 			   std::move(headers), std::move(body),
 			   handler, cancel_ptr);

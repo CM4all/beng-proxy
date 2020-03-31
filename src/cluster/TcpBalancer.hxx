@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -74,14 +74,14 @@ public:
 	}
 
 	/**
-	 * @param session_sticky a portion of the session id that is used to
+	 * @param sticky_hash a portion of the session id that is used to
 	 * select the worker; 0 means disable stickiness
 	 * @param timeout the connect timeout for each attempt
 	 */
 	void Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
 		 bool ip_transparent,
 		 SocketAddress bind_address,
-		 sticky_hash_t session_sticky,
+		 sticky_hash_t sticky_hash,
 		 const AddressList &address_list,
 		 Event::Duration timeout,
 		 StockGetHandler &handler,

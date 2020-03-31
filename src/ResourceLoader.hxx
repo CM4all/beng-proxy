@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -52,7 +52,7 @@ public:
 	/**
 	 * Requests a resource.
 	 *
-	 * @param session_sticky a portion of the session id that is used to
+	 * @param sticky_hash a portion of the session id that is used to
 	 * select the worker; 0 means disable stickiness
 	 *
 	 * @param cache_tag an opaque tag string to be assigned to the
@@ -69,7 +69,7 @@ public:
 	 */
 	virtual void SendRequest(struct pool &pool,
 				 const StopwatchPtr &parent_stopwatch,
-				 sticky_hash_t session_sticky,
+				 sticky_hash_t sticky_hash,
 				 const char *cache_tag,
 				 const char *site_name,
 				 http_method_t method,

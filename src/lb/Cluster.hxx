@@ -214,7 +214,7 @@ public:
 	 */
 	void ConnectTcp(AllocatorPtr alloc,
 			SocketAddress bind_address,
-			sticky_hash_t session_sticky,
+			sticky_hash_t sticky_hash,
 			Event::Duration timeout,
 			ConnectSocketHandler &handler,
 			CancellablePointer &cancel_ptr) noexcept;
@@ -226,7 +226,7 @@ public:
 	void ConnectStaticHttp(AllocatorPtr alloc,
 			       const StopwatchPtr &parent_stopwatch,
 			       SocketAddress bind_address,
-			       sticky_hash_t session_sticky,
+			       sticky_hash_t sticky_hash,
 			       Event::Duration timeout,
 			       SocketFilterFactory *filter_factory,
 			       FilteredSocketBalancerHandler &handler,
@@ -238,7 +238,7 @@ public:
 	 */
 	void ConnectStaticTcp(AllocatorPtr alloc,
 			      SocketAddress bind_address,
-			      sticky_hash_t session_sticky,
+			      sticky_hash_t sticky_hash,
 			      Event::Duration timeout,
 			      ConnectSocketHandler &handler,
 			      CancellablePointer &cancel_ptr) noexcept;
@@ -266,7 +266,7 @@ public:
 	 */
 	void ConnectZeroconfTcp(AllocatorPtr alloc,
 				SocketAddress bind_address,
-				sticky_hash_t session_sticky,
+				sticky_hash_t sticky_hash,
 				Event::Duration timeout,
 				ConnectSocketHandler &handler,
 				CancellablePointer &cancel_ptr) noexcept;

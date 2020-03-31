@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -143,7 +143,7 @@ client_balancer_connect(EventLoop &event_loop,
 			FailureManager &failure_manager,
 			bool ip_transparent,
 			SocketAddress bind_address,
-			sticky_hash_t session_sticky,
+			sticky_hash_t sticky_hash,
 			const AddressList &address_list,
 			Event::Duration timeout,
 			ConnectSocketHandler &handler,
@@ -154,7 +154,7 @@ client_balancer_connect(EventLoop &event_loop,
 		  balancer.MakeAddressListWrapper(AddressListWrapper(failure_manager,
 								     address_list.addresses)),
 		  cancel_ptr,
-		  session_sticky,
+		  sticky_hash,
 		  event_loop,
 		  ip_transparent,
 		  bind_address,

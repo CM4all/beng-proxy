@@ -49,14 +49,14 @@ class HttpHeaders;
 /**
  * High level HTTP client.
  *
- * @param session_sticky a portion of the session id that is used to
+ * @param sticky_hash a portion of the session id that is used to
  * select the worker; 0 means disable stickiness
  */
 void
 http_request(struct pool &pool, EventLoop &event_loop,
 	     FilteredSocketBalancer &fs_balancer,
 	     const StopwatchPtr &parent_stopwatch,
-	     sticky_hash_t session_sticky,
+	     sticky_hash_t sticky_hash,
 	     SocketFilterFactory *filter_factory,
 	     http_method_t method,
 	     const HttpAddress &address,

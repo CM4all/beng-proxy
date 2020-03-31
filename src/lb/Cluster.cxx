@@ -151,20 +151,20 @@ LbCluster::~LbCluster() noexcept
 void
 LbCluster::ConnectTcp(AllocatorPtr alloc,
 		      SocketAddress bind_address,
-		      sticky_hash_t session_sticky,
+		      sticky_hash_t sticky_hash,
 		      Event::Duration timeout,
 		      ConnectSocketHandler &handler,
 		      CancellablePointer &cancel_ptr) noexcept
 {
 #ifdef HAVE_AVAHI
 	if (config.HasZeroConf()) {
-		ConnectZeroconfTcp(alloc, bind_address, session_sticky,
+		ConnectZeroconfTcp(alloc, bind_address, sticky_hash,
 				   timeout, handler, cancel_ptr);
 		return;
 	}
 #endif
 
-	ConnectStaticTcp(alloc, bind_address, session_sticky,
+	ConnectStaticTcp(alloc, bind_address, sticky_hash,
 			 timeout, handler, cancel_ptr);
 }
 
@@ -172,7 +172,7 @@ void
 LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
 			     const StopwatchPtr &parent_stopwatch,
 			     SocketAddress bind_address,
-			     sticky_hash_t session_sticky,
+			     sticky_hash_t sticky_hash,
 			     Event::Duration timeout,
 			     SocketFilterFactory *filter_factory,
 			     FilteredSocketBalancerHandler &handler,
@@ -183,7 +183,7 @@ LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
 	fs_balancer.Get(alloc, parent_stopwatch,
 			config.transparent_source,
 			bind_address,
-			session_sticky,
+			sticky_hash,
 			config.address_list,
 			timeout,
 			filter_factory,
@@ -193,7 +193,7 @@ LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
 void
 LbCluster::ConnectStaticTcp(AllocatorPtr alloc,
 			    SocketAddress bind_address,
-			    sticky_hash_t session_sticky,
+			    sticky_hash_t sticky_hash,
 			    Event::Duration timeout,
 			    ConnectSocketHandler &handler,
 			    CancellablePointer &cancel_ptr) noexcept
@@ -205,7 +205,7 @@ LbCluster::ConnectStaticTcp(AllocatorPtr alloc,
 				failure_manager,
 				config.transparent_source,
 				bind_address,
-				session_sticky,
+				sticky_hash,
 				config.address_list,
 				timeout,
 				handler,
@@ -350,7 +350,7 @@ LbCluster::FillActive() noexcept
 void
 LbCluster::ConnectZeroconfTcp(AllocatorPtr alloc,
 			      SocketAddress bind_address,
-			      sticky_hash_t session_sticky,
+			      sticky_hash_t sticky_hash,
 			      Event::Duration timeout,
 			      ConnectSocketHandler &handler,
 			      CancellablePointer &cancel_ptr) noexcept
@@ -360,7 +360,7 @@ LbCluster::ConnectZeroconfTcp(AllocatorPtr alloc,
 
 	auto &event_loop = fs_balancer.GetEventLoop();
 
-	const auto *member = Pick(event_loop.SteadyNow(), session_sticky);
+	const auto *member = Pick(event_loop.SteadyNow(), sticky_hash);
 	if (member == nullptr) {
 		handler.OnSocketConnectError(std::make_exception_ptr(std::runtime_error("Zeroconf cluster is empty")));
 		return;

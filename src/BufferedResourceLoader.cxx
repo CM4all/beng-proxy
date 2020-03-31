@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -46,7 +46,7 @@ class PostponedRequest {
 	struct pool &pool;
 	ResourceLoader &next;
 	const StopwatchPtr parent_stopwatch;
-	const sticky_hash_t session_sticky;
+	const sticky_hash_t sticky_hash;
 	const char *const cache_tag;
 	const char *const site_name;
 	const http_method_t method;
@@ -61,7 +61,7 @@ class PostponedRequest {
 public:
 	PostponedRequest(struct pool &_pool, ResourceLoader &_next,
 			 const StopwatchPtr &_parent_stopwatch,
-			 sticky_hash_t _session_sticky,
+			 sticky_hash_t _sticky_hash,
 			 const char *_cache_tag,
 			 const char *_site_name,
 			 http_method_t _method,
@@ -72,7 +72,7 @@ public:
 			 CancellablePointer &_caller_cancel_ptr) noexcept
 		:pool(_pool),
 		 next(_next), parent_stopwatch(_parent_stopwatch),
-		 session_sticky(_session_sticky),
+		 sticky_hash(_sticky_hash),
 		 cache_tag(_cache_tag),
 		 site_name(_site_name),
 		 method(_method), address(_address),
@@ -96,7 +96,7 @@ public:
 
 	void Send(UnusedIstreamPtr body) noexcept {
 		next.SendRequest(pool, parent_stopwatch,
-				 session_sticky, cache_tag, site_name,
+				 sticky_hash, cache_tag, site_name,
 				 method, address, status, std::move(headers),
 				 std::move(body), body_etag,
 				 handler, caller_cancel_ptr);
@@ -115,7 +115,7 @@ class BufferedResourceLoader::Request final
 public:
 	Request(struct pool &_pool, ResourceLoader &_next,
 		const StopwatchPtr &_parent_stopwatch,
-		sticky_hash_t _session_sticky,
+		sticky_hash_t _sticky_hash,
 		const char *_cache_tag,
 		const char *_site_name,
 		http_method_t _method, const ResourceAddress &_address,
@@ -126,7 +126,7 @@ public:
 		:PoolLeakDetector(_pool),
 		 postponed_request(_pool, _next,
 				   _parent_stopwatch,
-				   _session_sticky,
+				   _sticky_hash,
 				   _cache_tag, _site_name,
 				   _method, _address,
 				   _status, std::move(_headers),
@@ -175,7 +175,7 @@ private:
 void
 BufferedResourceLoader::SendRequest(struct pool &pool,
 				    const StopwatchPtr &parent_stopwatch,
-				    sticky_hash_t session_sticky,
+				    sticky_hash_t sticky_hash,
 				    const char *cache_tag,
 				    const char *site_name,
 				    http_method_t method,
@@ -187,7 +187,7 @@ BufferedResourceLoader::SendRequest(struct pool &pool,
 {
 	if (body) {
 		auto *request = NewFromPool<Request>(pool, pool, next, parent_stopwatch,
-						     session_sticky,
+						     sticky_hash,
 						     cache_tag, site_name,
 						     method, address,
 						     status, std::move(headers),
@@ -195,7 +195,7 @@ BufferedResourceLoader::SendRequest(struct pool &pool,
 		request->Start(event_loop, pipe_stock, std::move(body));
 	} else {
 		next.SendRequest(pool, parent_stopwatch,
-				 session_sticky, cache_tag, site_name,
+				 sticky_hash, cache_tag, site_name,
 				 method, address, status, std::move(headers),
 				 std::move(body), body_etag,
 				 handler, cancel_ptr);

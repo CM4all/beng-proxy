@@ -395,7 +395,7 @@ LbTcpConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
 void
 LbTcpConnection::ConnectOutbound()
 {
-	cluster.ConnectTcp(*pool, bind_address, session_sticky,
+	cluster.ConnectTcp(*pool, bind_address, sticky_hash,
 			   LB_TCP_CONNECT_TIMEOUT,
 			   *this, cancel_connect);
 }
@@ -428,8 +428,8 @@ LbTcpConnection::LbTcpConnection(PoolPtr &&_pool, LbInstance &_instance,
 	:PoolHolder(std::move(_pool)),
 	 instance(_instance), listener(_listener), cluster(_cluster),
 	 client_address(address_to_string(pool, _client_address)),
-	 session_sticky(lb_tcp_sticky(cluster.GetConfig().sticky_mode,
-				      _client_address)),
+	 sticky_hash(lb_tcp_sticky(cluster.GetConfig().sticky_mode,
+				   _client_address)),
 	 logger(*this),
 	 inbound(std::move(_socket)),
 	 outbound(instance.event_loop),

@@ -76,7 +76,7 @@ class HttpRequest final
 
 	FailurePtr failure;
 
-	const sticky_hash_t session_sticky;
+	const sticky_hash_t sticky_hash;
 
 	unsigned retries;
 
@@ -92,7 +92,7 @@ public:
 	HttpRequest(struct pool &_pool, EventLoop &_event_loop,
 		    FilteredSocketBalancer &_fs_balancer,
 		    const StopwatchPtr &parent_stopwatch,
-		    sticky_hash_t _session_sticky,
+		    sticky_hash_t _sticky_hash,
 		    SocketFilterFactory *_filter_factory,
 		    http_method_t _method,
 		    const HttpAddress &_address,
@@ -104,7 +104,7 @@ public:
 		 pool(_pool), event_loop(_event_loop), fs_balancer(_fs_balancer),
 		 stopwatch(parent_stopwatch, _address.path),
 		 filter_factory(_filter_factory),
-		 session_sticky(_session_sticky),
+		 sticky_hash(_sticky_hash),
 		 /* can only retry if there is no request body */
 		 retries(_body ? 0 : 2),
 		 method(_method), address(_address),
@@ -120,7 +120,7 @@ public:
 	void BeginConnect() {
 		fs_balancer.Get(pool, stopwatch,
 				false, SocketAddress::Null(),
-				session_sticky,
+				sticky_hash,
 				address.addresses,
 				HTTP_CONNECT_TIMEOUT,
 				filter_factory,
@@ -246,7 +246,7 @@ void
 http_request(struct pool &pool, EventLoop &event_loop,
 	     FilteredSocketBalancer &fs_balancer,
 	     const StopwatchPtr &parent_stopwatch,
-	     sticky_hash_t session_sticky,
+	     sticky_hash_t sticky_hash,
 	     SocketFilterFactory *filter_factory,
 	     http_method_t method,
 	     const HttpAddress &uwa,
@@ -260,7 +260,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
 
 	auto hr = NewFromPool<HttpRequest>(pool, pool, event_loop, fs_balancer,
 					   parent_stopwatch,
-					   session_sticky,
+					   sticky_hash,
 					   filter_factory,
 					   method, uwa,
 					   std::move(headers), std::move(body),

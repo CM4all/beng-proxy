@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,7 +39,7 @@
 void
 FilterResourceLoader::SendRequest(struct pool &pool,
 				  const StopwatchPtr &parent_stopwatch,
-				  gcc_unused sticky_hash_t session_sticky,
+				  sticky_hash_t,
 				  const char *cache_tag,
 				  gcc_unused const char *site_name,
 				  gcc_unused http_method_t method,

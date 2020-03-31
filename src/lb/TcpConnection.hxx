@@ -73,7 +73,7 @@ class LbTcpConnection final
 	 */
 	const char *client_address;
 
-	const sticky_hash_t session_sticky;
+	const sticky_hash_t sticky_hash;
 
 	const LazyDomainLogger logger;
 

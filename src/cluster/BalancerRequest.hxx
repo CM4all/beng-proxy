@@ -61,7 +61,7 @@ class BalancerRequest final : Cancellable {
 	/**
 	 * The "sticky id" of the incoming HTTP request.
 	 */
-	const sticky_hash_t session_sticky;
+	const sticky_hash_t sticky_hash;
 
 	/**
 	 * The number of remaining connection attempts.  We give up when
@@ -77,12 +77,12 @@ public:
 			StickyMode _sticky_mode,
 			List &&_list,
 			CancellablePointer &_cancel_ptr,
-			sticky_hash_t _session_sticky,
+			sticky_hash_t _sticky_hash,
 			Args&&... args) noexcept
 		:request(std::forward<Args>(args)...),
 		 alloc(_alloc),
 		 list(std::move(_list)), sticky_mode(_sticky_mode),
-		 session_sticky(_session_sticky),
+		 sticky_hash(_sticky_hash),
 		 retries(CalculateRetries(list))
 	{
 		_cancel_ptr = *this;
@@ -123,7 +123,7 @@ public:
 
 	void Next(Expiry now) noexcept {
 		const SocketAddress current_address =
-			PickGeneric(now, sticky_mode, list, session_sticky);
+			PickGeneric(now, sticky_mode, list, sticky_hash);
 
 		failure = list.MakeFailureInfo(current_address);
 		request.Send(alloc, current_address, cancel_ptr);
