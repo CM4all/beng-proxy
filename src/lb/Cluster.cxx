@@ -35,9 +35,12 @@
 #include "Context.hxx"
 #include "MonitorStock.hxx"
 #include "MonitorRef.hxx"
+#include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
+#include "fs/Handler.hxx"
 #include "cluster/StickyCache.hxx"
 #include "cluster/ConnectBalancer.hxx"
+#include "stock/GetHandler.hxx"
 #include "sodium/GenericHash.hxx"
 #include "system/Error.hxx"
 #include "event/Loop.hxx"
@@ -48,6 +51,8 @@
 #include "util/ConstBuffer.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "AllocatorPtr.hxx"
+#include "HttpMessageResponse.hxx"
+#include "lease.hxx"
 #include "stopwatch.hxx"
 
 #ifdef HAVE_AVAHI
@@ -102,6 +107,7 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 		     LbMonitorStock *_monitors)
 	:config(_config), failure_manager(context.failure_manager),
 	 tcp_balancer(context.tcp_balancer),
+	 fs_stock(context.fs_stock),
 	 fs_balancer(context.fs_balancer),
 	 monitors(_monitors),
 	 logger("cluster " + config.name)
@@ -141,6 +147,32 @@ LbCluster::~LbCluster() noexcept
 #ifdef HAVE_AVAHI
 	members.clear_and_dispose(DeleteDisposer());
 #endif
+}
+
+void
+LbCluster::ConnectHttp(AllocatorPtr alloc,
+		       const StopwatchPtr &parent_stopwatch,
+		       SocketAddress bind_address,
+		       sticky_hash_t sticky_hash,
+		       Event::Duration timeout,
+		       SocketFilterFactory *filter_factory,
+		       FilteredSocketBalancerHandler &handler,
+		       CancellablePointer &cancel_ptr) noexcept
+{
+#ifdef HAVE_AVAHI
+	if (config.HasZeroConf()) {
+		ConnectZeroconfHttp(alloc, parent_stopwatch,
+				    bind_address, sticky_hash,
+				    timeout, filter_factory,
+				    handler, cancel_ptr);
+		return;
+	}
+#endif
+
+	ConnectStaticHttp(alloc, parent_stopwatch,
+			  bind_address, sticky_hash,
+			  timeout, filter_factory,
+			  handler, cancel_ptr);
 }
 
 void
@@ -340,6 +372,168 @@ LbCluster::FillActive() noexcept
 
 		sticky_ring->Build(active_members, MemberHasher());
 	}
+}
+
+class LbCluster::ZeroconfHttpConnect final : StockGetHandler, Lease, Cancellable {
+	LbCluster &cluster;
+
+	AllocatorPtr alloc;
+
+	const SocketAddress bind_address;
+	const sticky_hash_t sticky_hash;
+	const Event::Duration timeout;
+	SocketFilterFactory *const filter_factory;
+
+	FilteredSocketBalancerHandler &handler;
+
+	FailurePtr failure;
+
+	CancellablePointer cancel_ptr;
+
+	StockItem *stock_item;
+
+	/**
+	 * The number of remaining connection attempts.  We give up when
+	 * we get an error and this attribute is already zero.
+	 */
+	unsigned retries;
+
+public:
+	ZeroconfHttpConnect(LbCluster &_cluster, AllocatorPtr _alloc,
+			    SocketAddress _bind_address,
+			    sticky_hash_t _sticky_hash,
+			    Event::Duration _timeout,
+			    SocketFilterFactory *_filter_factory,
+			    FilteredSocketBalancerHandler &_handler,
+			    CancellablePointer &caller_cancel_ptr) noexcept
+		:cluster(_cluster), alloc(_alloc),
+		 bind_address(_bind_address),
+		 sticky_hash(_sticky_hash),
+		 timeout(_timeout),
+		 filter_factory(_filter_factory),
+		 handler(_handler),
+		 retries(CalculateRetries(cluster.GetZeroconfCount()))
+	{
+		caller_cancel_ptr = *this;
+	}
+
+	void Destroy() noexcept {
+		this->~ZeroconfHttpConnect();
+	}
+
+	auto &GetEventLoop() const noexcept {
+		return cluster.fs_balancer.GetEventLoop();
+	}
+
+	void Start() noexcept;
+
+private:
+	/* code copied from generic_balancer.hxx */
+	static constexpr unsigned CalculateRetries(size_t size) noexcept {
+		if (size <= 1)
+			return 0;
+		else if (size == 2)
+			return 1;
+		else if (size == 3)
+			return 2;
+		else
+			return 3;
+	}
+
+	/* virtual methods from class StockGetHandler */
+	void OnStockItemReady(StockItem &item) noexcept override;
+	void OnStockItemError(std::exception_ptr ep) noexcept override;
+
+	/* virtual methods from class Lease */
+	void ReleaseLease(bool reuse) noexcept final;
+
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		cancel_ptr.Cancel();
+		Destroy();
+	}
+};
+
+void
+LbCluster::ZeroconfHttpConnect::Start() noexcept
+{
+	auto *member = cluster.Pick(GetEventLoop().SteadyNow(),
+				    sticky_hash);
+	if (member == nullptr) {
+		auto &_handler = handler;
+		Destroy();
+		_handler.OnFilteredSocketError(std::make_exception_ptr(HttpMessageResponse(HTTP_STATUS_SERVICE_UNAVAILABLE,
+											   "Zeroconf cluster is empty")));
+		return;
+	}
+
+	failure = member->GetFailureRef();
+
+	cluster.fs_stock.Get(alloc,
+			     nullptr,
+			     member->GetLogName(),
+			     cluster.config.transparent_source,
+			     bind_address,
+			     member->GetAddress(),
+			     timeout, filter_factory,
+			     *this, cancel_ptr);
+}
+
+void
+LbCluster::ZeroconfHttpConnect::OnStockItemReady(StockItem &item) noexcept
+{
+	failure->UnsetConnect();
+
+	stock_item = &item;
+
+	handler.OnFilteredSocketReady(*this, fs_stock_item_get(item),
+				      fs_stock_item_get_address(item),
+				      item.GetStockName(),
+				      *failure);
+}
+
+void
+LbCluster::ZeroconfHttpConnect::OnStockItemError(std::exception_ptr ep) noexcept
+{
+	failure->SetConnect(GetEventLoop().SteadyNow(),
+			    std::chrono::seconds(20));
+
+	if (retries-- > 0) {
+		/* try the next Zeroconf member */
+		Start();
+		return;
+	}
+
+	auto &_handler = handler;
+	Destroy();
+	_handler.OnFilteredSocketError(std::move(ep));
+}
+
+void
+LbCluster::ZeroconfHttpConnect::ReleaseLease(bool reuse) noexcept
+{
+	stock_item->Put(!reuse);
+	Destroy();
+}
+
+void
+LbCluster::ConnectZeroconfHttp(AllocatorPtr alloc,
+			       const StopwatchPtr &,
+			       SocketAddress bind_address,
+			       sticky_hash_t sticky_hash,
+			       Event::Duration timeout,
+			       SocketFilterFactory *filter_factory,
+			       FilteredSocketBalancerHandler &handler,
+			       CancellablePointer &cancel_ptr) noexcept
+{
+	assert(config.HasZeroConf());
+
+	auto *c = alloc.New<ZeroconfHttpConnect>(*this, alloc,
+						 bind_address,
+						 sticky_hash, timeout,
+						 filter_factory,
+						 handler, cancel_ptr);
+	c->Start();
 }
 
 void

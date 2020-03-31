@@ -59,6 +59,7 @@ class LbMonitorStock;
 class LbMonitorRef;
 class FailureManager;
 class BalancerMap;
+class FilteredSocketStock;
 class FilteredSocketBalancer;
 class MyAvahiClient;
 class StickyCache;
@@ -78,6 +79,7 @@ class LbCluster final
 	const LbClusterConfig &config;
 	FailureManager &failure_manager;
 	BalancerMap &tcp_balancer;
+	FilteredSocketStock &fs_stock;
 	FilteredSocketBalancer &fs_balancer;
 	LbMonitorStock *const monitors;
 
@@ -192,6 +194,8 @@ class LbCluster final
 	bool dirty = false;
 
 	unsigned last_pick = 0;
+
+	class ZeroconfHttpConnect;
 #endif
 
 public:
@@ -203,6 +207,20 @@ public:
 	const LbClusterConfig &GetConfig() const noexcept {
 		return config;
 	}
+
+	/**
+	 * Obtain a HTTP connection to a statically configured member
+	 * (Zeroconf or
+	 * static).
+	 */
+	void ConnectHttp(AllocatorPtr alloc,
+			 const StopwatchPtr &parent_stopwatch,
+			 SocketAddress bind_address,
+			 sticky_hash_t sticky_hash,
+			 Event::Duration timeout,
+			 SocketFilterFactory *filter_factory,
+			 FilteredSocketBalancerHandler &handler,
+			 CancellablePointer &cancel_ptr) noexcept;
 
 	/**
 	 * Create a new TCP connection to a member (Zeroconf or
@@ -256,6 +274,18 @@ public:
 	 * Zeroconf only.
 	 */
 	Member *Pick(Expiry now, sticky_hash_t sticky_hash) noexcept;
+
+	/**
+	 * Obtain a HTTP connection to a Zeroconf member.
+	 */
+	void ConnectZeroconfHttp(AllocatorPtr alloc,
+				 const StopwatchPtr &parent_stopwatch,
+				 SocketAddress bind_address,
+				 sticky_hash_t sticky_hash,
+				 Event::Duration timeout,
+				 SocketFilterFactory *filter_factory,
+				 FilteredSocketBalancerHandler &handler,
+				 CancellablePointer &cancel_ptr) noexcept;
 
 	/**
 	 * Create a new TCP connection to a Zeroconf member.

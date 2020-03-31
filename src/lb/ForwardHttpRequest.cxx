@@ -48,7 +48,6 @@
 #include "http/IncomingRequest.hxx"
 #include "http_server/Handler.hxx"
 #include "http_client.hxx"
-#include "fs/Stock.hxx"
 #include "fs/Handler.hxx"
 #include "HttpResponseHandler.hxx"
 #include "http/Headers.hxx"
@@ -75,7 +74,7 @@ static constexpr Event::Duration LB_HTTP_CONNECT_TIMEOUT =
 	std::chrono::seconds(20);
 
 class LbRequest final
-	: LeakDetector, Cancellable, StockGetHandler, FilteredSocketBalancerHandler, HttpResponseHandler {
+	: LeakDetector, Cancellable, FilteredSocketBalancerHandler, HttpResponseHandler {
 
 	struct pool &pool;
 
@@ -94,14 +93,6 @@ class LbRequest final
 
 	FailurePtr failure;
 
-#ifdef HAVE_AVAHI
-	/**
-	 * The number of remaining connection attempts.  We give up when
-	 * we get an error and this attribute is already zero.
-	 */
-	unsigned retries;
-#endif
-
 	unsigned new_cookie = 0;
 
 public:
@@ -113,11 +104,6 @@ public:
 		 request(_request),
 		 body(pool, std::move(request.body)) {
 		_cancel_ptr = *this;
-
-#ifdef HAVE_AVAHI
-		if (cluster_config.HasZeroConf())
-			retries = CalculateRetries(cluster.GetZeroconfCount());
-#endif
 	}
 
 	EventLoop &GetEventLoop() const noexcept {
@@ -131,20 +117,6 @@ public:
 	void Start() noexcept;
 
 private:
-#ifdef HAVE_AVAHI
-	/* code copied from generic_balancer.hxx */
-	static constexpr unsigned CalculateRetries(size_t size) noexcept {
-		if (size <= 1)
-			return 0;
-		else if (size == 2)
-			return 1;
-		else if (size == 3)
-			return 2;
-		else
-			return 3;
-	}
-#endif
-
 	void Destroy() noexcept {
 		DeleteFromPool(pool, this);
 	}
@@ -174,10 +146,6 @@ private:
 		cancel_ptr.Cancel();
 		Destroy();
 	}
-
-	/* virtual methods from class StockGetHandler */
-	void OnStockItemReady(StockItem &item) noexcept override;
-	void OnStockItemError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class FilteredSocketBalancerHandler */
 	void OnFilteredSocketReady(Lease &lease,
@@ -373,53 +341,6 @@ LbRequest::OnHttpError(std::exception_ptr ep) noexcept
 		_connection.SendError(_request, ep);
 }
 
-/*
- * stock callback
- *
- */
-
-void
-LbRequest::OnStockItemReady(StockItem &item) noexcept
-{
-#ifdef HAVE_AVAHI
-	assert(cluster_config.HasZeroConf());
-
-	/* without the fs_balancer, we have to roll our own failure
-	   updates */
-	failure->UnsetConnect();
-#endif
-
-	const char *peer_subject = connection.ssl_filter != nullptr
-		? ssl_filter_get_peer_subject(*connection.ssl_filter)
-		: nullptr;
-	const char *peer_issuer_subject = connection.ssl_filter != nullptr
-		? ssl_filter_get_peer_issuer_subject(*connection.ssl_filter)
-		: nullptr;
-
-	auto &headers = request.headers;
-	lb_forward_request_headers(pool, headers,
-				   request.local_host_and_port,
-				   request.remote_host,
-				   connection.IsEncrypted(),
-				   peer_subject, peer_issuer_subject,
-				   cluster_config.mangle_via);
-
-	http_client_request(pool, nullptr,
-			    fs_stock_item_get(item),
-			    *NewFromPool<StockItemLease>(pool, item),
-			    item.GetStockName(),
-			    request.method, request.uri,
-			    HttpHeaders(std::move(headers)),
-			    std::move(body), true,
-			    *this, cancel_ptr);
-}
-
-void
-LbRequest::OnStockItemError(std::exception_ptr ep) noexcept
-{
-	OnFilteredSocketError(std::move(ep));
-}
-
 void
 LbRequest::OnFilteredSocketReady(Lease &lease,
 				 FilteredSocket &socket,
@@ -455,21 +376,6 @@ void
 LbRequest::OnFilteredSocketError(std::exception_ptr ep) noexcept
 {
 	connection.logger(2, "Connect error: ", ep);
-
-#ifdef HAVE_AVAHI
-	if (cluster_config.HasZeroConf()) {
-		/* without the tcp_balancer, we have to roll our own failure
-		   updates and retries */
-		failure->SetConnect(GetEventLoop().SteadyNow(),
-				    std::chrono::seconds(20));
-
-		if (retries-- > 0) {
-			/* try the next Zeroconf member */
-			Start();
-			return;
-		}
-	}
-#endif
 
 	body.Clear();
 
@@ -515,42 +421,12 @@ LbRequest::MakeBindAddress() const noexcept
 inline void
 LbRequest::Start() noexcept
 {
-	const auto bind_address = MakeBindAddress();
-
-#ifdef HAVE_AVAHI
-	if (cluster_config.HasZeroConf()) {
-		auto *member = cluster.Pick(GetEventLoop().SteadyNow(),
-					    GetStickyHash());
-		if (member == nullptr) {
-			auto &_request = request;
-			Destroy();
-			_request.SendMessage(HTTP_STATUS_SERVICE_UNAVAILABLE,
-					     "Zeroconf cluster is empty");
-			return;
-		}
-
-		failure = member->GetFailureRef();
-
-		connection.instance.fs_stock->Get(pool,
-						  nullptr,
-						  member->GetLogName(),
-						  cluster_config.transparent_source,
-						  bind_address,
-						  member->GetAddress(),
-						  LB_HTTP_CONNECT_TIMEOUT,
-						  nullptr,
-						  *this, cancel_ptr);
-
-		return;
-	}
-#endif
-
-	cluster.ConnectStaticHttp(pool, nullptr,
-				  bind_address,
-				  GetStickyHash(),
-				  LB_HTTP_CONNECT_TIMEOUT,
-				  nullptr,
-				  *this, cancel_ptr);
+	cluster.ConnectHttp(pool, nullptr,
+			    MakeBindAddress(),
+			    GetStickyHash(),
+			    LB_HTTP_CONNECT_TIMEOUT,
+			    nullptr,
+			    *this, cancel_ptr);
 }
 
 void

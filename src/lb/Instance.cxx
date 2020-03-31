@@ -63,7 +63,7 @@ LbInstance::LbInstance(const LbCmdLine &cmdline,
 #endif
 	 goto_map(config,
 		  {failure_manager,
-		   *balancer, *fs_balancer,
+		   *balancer, *fs_stock, *fs_balancer,
 		   monitors,
 #ifdef HAVE_AVAHI
 		   avahi_client,
