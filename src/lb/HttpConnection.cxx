@@ -58,6 +58,7 @@
 #include "io/FdType.hxx"
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
+#include "HttpMessageResponse.hxx"
 
 #include <assert.h>
 
@@ -191,6 +192,13 @@ LbHttpConnection::CloseAndDestroy()
 void
 LbHttpConnection::SendError(IncomingHttpRequest &request, std::exception_ptr ep)
 {
+	try {
+		FindRetrowNested<HttpMessageResponse>(ep);
+	} catch (const HttpMessageResponse &e) {
+		request.SendMessage(e.GetStatus(), e.what());
+		return;
+	}
+
 	const char *msg = listener.verbose_response
 		? p_strdup(request.pool, GetFullMessage(ep).c_str())
 		: "Bad gateway";
