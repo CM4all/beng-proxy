@@ -37,4 +37,5 @@ void
 StockItemLease::ReleaseLease(bool reuse) noexcept
 {
 	item.Put(!reuse);
+	Destroy();
 }
