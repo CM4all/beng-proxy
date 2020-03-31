@@ -112,20 +112,16 @@ LbGotoMap::GetInstance(const LbGotoConfig &config)
 LbCluster &
 LbGotoMap::GetInstance(const LbClusterConfig &config)
 {
+	const LbContext &context = *this;
+
 	auto *monitor_stock = config.monitor != nullptr
 		? &monitors[*config.monitor]
 		: nullptr;
 
 	return clusters.emplace(std::piecewise_construct,
 				std::forward_as_tuple(&config),
-				std::forward_as_tuple(config, failure_manager,
-						      tcp_balancer,
-						      fs_balancer,
-						      monitor_stock
-#ifdef HAVE_AVAHI
-						      , avahi_client
-#endif
-						      ))
+				std::forward_as_tuple(config, context,
+						      monitor_stock))
 		.first->second;
 }
 

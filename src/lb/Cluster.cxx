@@ -32,6 +32,7 @@
 
 #include "Cluster.hxx"
 #include "ClusterConfig.hxx"
+#include "Context.hxx"
 #include "MonitorStock.hxx"
 #include "MonitorRef.hxx"
 #include "fs/Balancer.hxx"
@@ -97,17 +98,11 @@ LbCluster::Member::GetLogName() const noexcept
 #endif
 
 LbCluster::LbCluster(const LbClusterConfig &_config,
-		     FailureManager &_failure_manager,
-		     BalancerMap &_tcp_balancer,
-		     FilteredSocketBalancer &_fs_balancer,
-		     LbMonitorStock *_monitors
-#ifdef HAVE_AVAHI
-		     , MyAvahiClient &avahi_client
-#endif
-		     )
-	:config(_config), failure_manager(_failure_manager),
-	 tcp_balancer(_tcp_balancer),
-	 fs_balancer(_fs_balancer),
+		     const LbContext &context,
+		     LbMonitorStock *_monitors)
+	:config(_config), failure_manager(context.failure_manager),
+	 tcp_balancer(context.tcp_balancer),
+	 fs_balancer(context.fs_balancer),
 	 monitors(_monitors),
 	 logger("cluster " + config.name)
 {
@@ -124,7 +119,7 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 			interface = AvahiIfIndex(i);
 		}
 
-		explorer.reset(new AvahiServiceExplorer(avahi_client, *this,
+		explorer.reset(new AvahiServiceExplorer(context.avahi_client, *this,
 							interface,
 							AVAHI_PROTO_UNSPEC,
 							config.zeroconf_service.c_str(),

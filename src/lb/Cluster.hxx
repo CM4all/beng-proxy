@@ -54,6 +54,7 @@ struct LbConfig;
 struct LbGotoIfConfig;
 struct LbListenerConfig;
 struct LbClusterConfig;
+struct LbContext;
 class LbMonitorStock;
 class LbMonitorRef;
 class FailureManager;
@@ -194,14 +195,9 @@ class LbCluster final
 #endif
 
 public:
-	LbCluster(const LbClusterConfig &_config, FailureManager &_failure_manager,
-		  BalancerMap &_tcp_balancer,
-		  FilteredSocketBalancer &_fs_balancer,
-		  LbMonitorStock *_monitors
-#ifdef HAVE_AVAHI
-		  , MyAvahiClient &avahi_client
-#endif
-		  );
+	LbCluster(const LbClusterConfig &_config,
+		  const LbContext &context,
+		  LbMonitorStock *_monitors);
 	~LbCluster() noexcept;
 
 	const LbClusterConfig &GetConfig() const noexcept {
