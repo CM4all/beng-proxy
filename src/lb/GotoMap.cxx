@@ -45,21 +45,10 @@
 #endif
 
 LbGotoMap::LbGotoMap(const LbConfig &_config,
-		     FailureManager &_failure_manager,
-		     BalancerMap &_tcp_balancer,
-		     FilteredSocketBalancer &_fs_balancer,
-		     LbMonitorManager &_monitors,
-#ifdef HAVE_AVAHI
-		     MyAvahiClient &_avahi_client,
-#endif
+		     LbContext _context,
 		     EventLoop &_event_loop) noexcept
-	:root_config(_config), failure_manager(_failure_manager),
-	 tcp_balancer(_tcp_balancer),
-	 fs_balancer(_fs_balancer),
-	 monitors(_monitors),
-#ifdef HAVE_AVAHI
-	 avahi_client(_avahi_client),
-#endif
+	:LbContext(_context),
+	 root_config(_config),
 	 event_loop(_event_loop),
 	 lua_init_hook(this) {}
 

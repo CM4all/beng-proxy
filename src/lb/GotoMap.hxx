@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include "Context.hxx"
 #include "LuaInitHook.hxx"
 #include "util/Compiler.h"
 
@@ -45,26 +46,14 @@ struct LbBranchConfig;
 struct LbTranslationHandlerConfig;
 struct LbLuaHandlerConfig;
 struct TranslationInvalidateRequest;
-class FailureManager;
-class BalancerMap;
-class FilteredSocketBalancer;
-class MyAvahiClient;
 class EventLoop;
 class LbCluster;
 class LbBranch;
 class LbTranslationHandler;
 class LbLuaHandler;
-class LbMonitorManager;
 
-class LbGotoMap final {
+class LbGotoMap final : LbContext {
 	const LbConfig &root_config;
-	FailureManager &failure_manager;
-	BalancerMap &tcp_balancer;
-	FilteredSocketBalancer &fs_balancer;
-	LbMonitorManager &monitors;
-#ifdef HAVE_AVAHI
-	MyAvahiClient &avahi_client;
-#endif
 	EventLoop &event_loop;
 
 	LbLuaInitHook lua_init_hook;
@@ -78,13 +67,7 @@ class LbGotoMap final {
 
 public:
 	LbGotoMap(const LbConfig &_config,
-		  FailureManager &_failure_manager,
-		  BalancerMap &_tcp_balancer,
-		  FilteredSocketBalancer &_fs_balancer,
-		  LbMonitorManager &_monitors,
-#ifdef HAVE_AVAHI
-		  MyAvahiClient &_avahi_client,
-#endif
+		  LbContext _context,
 		  EventLoop &_event_loop) noexcept;
 
 	~LbGotoMap() noexcept;
