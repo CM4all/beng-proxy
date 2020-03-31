@@ -36,13 +36,11 @@
 #include "http/Address.hxx"
 #include "HttpResponseHandler.hxx"
 #include "http/HeaderWriter.hxx"
-#include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
-#include "stock/Lease.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
-#include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
+#include "fs/Handler.hxx"
 #include "fs/Factory.hxx"
 #include "fs/SocketFilter.hxx"
 #include "pool/pool.hxx"
@@ -64,7 +62,7 @@ static constexpr Event::Duration HTTP_CONNECT_TIMEOUT =
 	std::chrono::seconds(30);
 
 class HttpRequest final
-	: Cancellable, StockGetHandler, HttpResponseHandler, PoolLeakDetector {
+	: Cancellable, FilteredSocketBalancerHandler, HttpResponseHandler, PoolLeakDetector {
 
 	struct pool &pool;
 
@@ -147,9 +145,12 @@ private:
 		Destroy();
 	}
 
-	/* virtual methods from class StockGetHandler */
-	void OnStockItemReady(StockItem &item) noexcept override;
-	void OnStockItemError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class FilteredSocketBalancerHandler */
+	void OnFilteredSocketReady(Lease &lease,
+				   FilteredSocket &socket,
+				   SocketAddress address, const char *name,
+				   ReferencedFailureInfo &failure) noexcept override;
+	void OnFilteredSocketError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class HttpResponseHandler */
 	void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -212,24 +213,24 @@ HttpRequest::OnHttpError(std::exception_ptr ep) noexcept
  */
 
 void
-HttpRequest::OnStockItemReady(StockItem &item) noexcept
+HttpRequest::OnFilteredSocketReady(Lease &lease,
+				   FilteredSocket &socket,
+				   SocketAddress, const char *name,
+				   ReferencedFailureInfo &_failure) noexcept
 {
 	stopwatch.RecordEvent("connect");
 
-	failure = fs_balancer.GetFailureManager()
-		.Make(fs_stock_item_get_address(item));
+	failure = _failure;
 
 	http_client_request(pool, std::move(stopwatch),
-			    fs_stock_item_get(item),
-			    *NewFromPool<StockItemLease>(pool, item),
-			    item.GetStockName(),
+			    socket, lease, name,
 			    method, address.path, std::move(headers),
 			    std::move(body), true,
 			    *this, cancel_ptr);
 }
 
 void
-HttpRequest::OnStockItemError(std::exception_ptr ep) noexcept
+HttpRequest::OnFilteredSocketError(std::exception_ptr ep) noexcept
 {
 	stopwatch.RecordEvent("connect_error");
 

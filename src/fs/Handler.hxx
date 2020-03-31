@@ -32,60 +32,17 @@
 
 #pragma once
 
-#include "cluster/BalancerMap.hxx"
-#include "event/Chrono.hxx"
-#include "util/Compiler.h"
-
-struct AddressList;
-class EventLoop;
-class FilteredSocketBalancerHandler;
-struct StockItem;
-class CancellablePointer;
+class Lease;
+class FilteredSocket;
 class SocketAddress;
-class SocketFilterFactory;
-class FilteredSocketStock;
-class StopwatchPtr;
-class AllocatorPtr;
-class FailureManager;
+class ReferencedFailureInfo;
 
-/*
- * Wrapper for the #FilteredSocketStock class to support load
- * balancing.
- */
-class FilteredSocketBalancer {
-	FilteredSocketStock &stock;
-
-	FailureManager &failure_manager;
-
-	BalancerMap balancer;
-
+class FilteredSocketBalancerHandler {
 public:
-	FilteredSocketBalancer(FilteredSocketStock &_stock,
-			       FailureManager &_failure_manager) noexcept
-		:stock(_stock), failure_manager(_failure_manager) {}
-
-	gcc_pure
-	EventLoop &GetEventLoop() noexcept;
-
-	FailureManager &GetFailureManager() {
-		return failure_manager;
-	}
-
-	class Request;
-
-	/**
-	 * @param session_sticky a portion of the session id that is used to
-	 * select the worker; 0 means disable stickiness
-	 * @param timeout the connect timeout for each attempt [seconds]
-	 */
-	void Get(AllocatorPtr alloc,
-		 const StopwatchPtr &parent_stopwatch,
-		 bool ip_transparent,
-		 SocketAddress bind_address,
-		 sticky_hash_t session_sticky,
-		 const AddressList &address_list,
-		 Event::Duration timeout,
-		 SocketFilterFactory *filter_factory,
-		 FilteredSocketBalancerHandler &handler,
-		 CancellablePointer &cancel_ptr) noexcept;
+	virtual void OnFilteredSocketReady(Lease &lease,
+					   FilteredSocket &socket,
+					   SocketAddress address,
+					   const char *name,
+					   ReferencedFailureInfo &failure) noexcept = 0;
+	virtual void OnFilteredSocketError(std::exception_ptr e) noexcept = 0;
 };

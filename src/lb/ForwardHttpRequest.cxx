@@ -49,6 +49,7 @@
 #include "http_server/Handler.hxx"
 #include "http_client.hxx"
 #include "fs/Stock.hxx"
+#include "fs/Handler.hxx"
 #include "HttpResponseHandler.hxx"
 #include "http/Headers.hxx"
 #include "stock/GetHandler.hxx"
@@ -74,7 +75,7 @@ static constexpr Event::Duration LB_HTTP_CONNECT_TIMEOUT =
 	std::chrono::seconds(20);
 
 class LbRequest final
-	: LeakDetector, Cancellable, StockGetHandler, HttpResponseHandler {
+	: LeakDetector, Cancellable, StockGetHandler, FilteredSocketBalancerHandler, HttpResponseHandler {
 
 	struct pool &pool;
 
@@ -177,6 +178,13 @@ private:
 	/* virtual methods from class StockGetHandler */
 	void OnStockItemReady(StockItem &item) noexcept override;
 	void OnStockItemError(std::exception_ptr ep) noexcept override;
+
+	/* virtual methods from class FilteredSocketBalancerHandler */
+	void OnFilteredSocketReady(Lease &lease,
+				   FilteredSocket &socket,
+				   SocketAddress address, const char *name,
+				   ReferencedFailureInfo &failure) noexcept override;
+	void OnFilteredSocketError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class HttpResponseHandler */
 	void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -374,13 +382,12 @@ void
 LbRequest::OnStockItemReady(StockItem &item) noexcept
 {
 #ifdef HAVE_AVAHI
-	if (cluster_config.HasZeroConf()) {
-		/* without the fs_balancer, we have to roll our own failure
-		   updates */
-		failure->UnsetConnect();
-	} else
+	assert(cluster_config.HasZeroConf());
+
+	/* without the fs_balancer, we have to roll our own failure
+	   updates */
+	failure->UnsetConnect();
 #endif
-		failure = GetFailureManager().Make(fs_stock_item_get_address(item));
 
 	const char *peer_subject = connection.ssl_filter != nullptr
 		? ssl_filter_get_peer_subject(*connection.ssl_filter)
@@ -409,6 +416,43 @@ LbRequest::OnStockItemReady(StockItem &item) noexcept
 
 void
 LbRequest::OnStockItemError(std::exception_ptr ep) noexcept
+{
+	OnFilteredSocketError(std::move(ep));
+}
+
+void
+LbRequest::OnFilteredSocketReady(Lease &lease,
+				 FilteredSocket &socket,
+				 SocketAddress, const char *name,
+				 ReferencedFailureInfo &_failure) noexcept
+{
+	failure = _failure;
+
+	const char *peer_subject = connection.ssl_filter != nullptr
+		? ssl_filter_get_peer_subject(*connection.ssl_filter)
+		: nullptr;
+	const char *peer_issuer_subject = connection.ssl_filter != nullptr
+		? ssl_filter_get_peer_issuer_subject(*connection.ssl_filter)
+		: nullptr;
+
+	auto &headers = request.headers;
+	lb_forward_request_headers(pool, headers,
+				   request.local_host_and_port,
+				   request.remote_host,
+				   connection.IsEncrypted(),
+				   peer_subject, peer_issuer_subject,
+				   cluster_config.mangle_via);
+
+	http_client_request(pool, nullptr,
+			    socket, lease, name,
+			    request.method, request.uri,
+			    HttpHeaders(std::move(headers)),
+			    std::move(body), true,
+			    *this, cancel_ptr);
+}
+
+void
+LbRequest::OnFilteredSocketError(std::exception_ptr ep) noexcept
 {
 	connection.logger(2, "Connect error: ", ep);
 

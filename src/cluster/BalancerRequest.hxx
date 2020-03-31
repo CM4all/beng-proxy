@@ -94,6 +94,10 @@ public:
 		this->~BalancerRequest();
 	}
 
+	auto &GetFailureInfo() noexcept {
+		return *failure;
+	}
+
 private:
 	void Cancel() noexcept override {
 		cancel_ptr.Cancel();

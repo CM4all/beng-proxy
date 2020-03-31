@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,6 +31,7 @@
  */
 
 #include "Balancer.hxx"
+#include "Handler.hxx"
 #include "Stock.hxx"
 #include "cluster/BalancerRequest.hxx"
 #include "cluster/AddressListWrapper.hxx"
@@ -39,10 +40,11 @@
 #include "stock/GetHandler.hxx"
 #include "event/Loop.hxx"
 #include "stopwatch.hxx"
+#include "lease.hxx"
 
 #include <type_traits>
 
-class FilteredSocketBalancer::Request : public StockGetHandler {
+class FilteredSocketBalancer::Request : public StockGetHandler, Lease {
 	FilteredSocketStock &stock;
 
 	const StopwatchPtr parent_stopwatch;
@@ -54,7 +56,9 @@ class FilteredSocketBalancer::Request : public StockGetHandler {
 
 	SocketFilterFactory *const filter_factory;
 
-	StockGetHandler &handler;
+	FilteredSocketBalancerHandler &handler;
+
+	StockItem *stock_item;
 
 public:
 	Request(FilteredSocketStock &_stock,
@@ -63,7 +67,7 @@ public:
 		SocketAddress _bind_address,
 		Event::Duration _timeout,
 		SocketFilterFactory *_filter_factory,
-		StockGetHandler &_handler) noexcept
+		FilteredSocketBalancerHandler &_handler) noexcept
 		:stock(_stock),
 		 parent_stopwatch(_parent_stopwatch),
 		 ip_transparent(_ip_transparent),
@@ -79,6 +83,9 @@ private:
 	/* virtual methods from class StockGetHandler */
 	void OnStockItemReady(StockItem &item) noexcept final;
 	void OnStockItemError(std::exception_ptr ep) noexcept override;
+
+	/* virtual methods from class Lease */
+	void ReleaseLease(bool reuse) noexcept final;
 };
 
 using BR = BalancerRequest<FilteredSocketBalancer::Request,
@@ -109,9 +116,12 @@ FilteredSocketBalancer::Request::OnStockItemReady(StockItem &item) noexcept
 	auto &base = BR::Cast(*this);
 	base.ConnectSuccess();
 
-	auto &_handler = handler;
-	base.Destroy();
-	_handler.OnStockItemReady(item);
+	stock_item = &item;
+
+	handler.OnFilteredSocketReady(*this, fs_stock_item_get(item),
+				      fs_stock_item_get_address(item),
+				      item.GetStockName(),
+				      base.GetFailureInfo());
 }
 
 void
@@ -121,8 +131,17 @@ FilteredSocketBalancer::Request::OnStockItemError(std::exception_ptr ep) noexcep
 	if (!base.ConnectFailure(stock.GetEventLoop().SteadyNow())) {
 		auto &_handler = handler;
 		base.Destroy();
-		_handler.OnStockItemError(ep);
+		_handler.OnFilteredSocketError(std::move(ep));
 	}
+}
+
+void
+FilteredSocketBalancer::Request::ReleaseLease(bool reuse) noexcept
+{
+	stock_item->Put(!reuse);
+
+	auto &base = BR::Cast(*this);
+	base.Destroy();
 }
 
 /*
@@ -145,7 +164,7 @@ FilteredSocketBalancer::Get(AllocatorPtr alloc,
 			    const AddressList &address_list,
 			    Event::Duration timeout,
 			    SocketFilterFactory *filter_factory,
-			    StockGetHandler &handler,
+			    FilteredSocketBalancerHandler &handler,
 			    CancellablePointer &cancel_ptr) noexcept
 {
 	BR::Start(alloc, GetEventLoop().SteadyNow(),

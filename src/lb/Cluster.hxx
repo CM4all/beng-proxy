@@ -64,7 +64,7 @@ class StickyCache;
 class AvahiServiceExplorer;
 class StopwatchPtr;
 class SocketFilterFactory;
-class StockGetHandler;
+class FilteredSocketBalancerHandler;
 class ConnectSocketHandler;
 class CancellablePointer;
 class AllocatorPtr;
@@ -229,7 +229,7 @@ public:
 			       sticky_hash_t session_sticky,
 			       Event::Duration timeout,
 			       SocketFilterFactory *filter_factory,
-			       StockGetHandler &handler,
+			       FilteredSocketBalancerHandler &handler,
 			       CancellablePointer &cancel_ptr) noexcept;
 
 	/**

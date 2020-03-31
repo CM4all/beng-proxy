@@ -175,7 +175,7 @@ LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
 			     sticky_hash_t session_sticky,
 			     Event::Duration timeout,
 			     SocketFilterFactory *filter_factory,
-			     StockGetHandler &handler,
+			     FilteredSocketBalancerHandler &handler,
 			     CancellablePointer &cancel_ptr) noexcept
 {
 	assert(config.protocol == LbProtocol::HTTP);

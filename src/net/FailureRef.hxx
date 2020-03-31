@@ -136,7 +136,7 @@ public:
 		return info;
 	}
 
-	FailureInfo &operator*() {
+	ReferencedFailureInfo &operator*() noexcept {
 		return *info;
 	}
 };
