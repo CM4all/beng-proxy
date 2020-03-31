@@ -38,7 +38,7 @@
 #include "http/HeaderWriter.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
-#include "lease.hxx"
+#include "stock/Lease.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "fs/Stock.hxx"
@@ -64,7 +64,7 @@ static constexpr Event::Duration HTTP_CONNECT_TIMEOUT =
 	std::chrono::seconds(30);
 
 class HttpRequest final
-	: Cancellable, StockGetHandler, Lease, HttpResponseHandler, PoolLeakDetector {
+	: Cancellable, StockGetHandler, HttpResponseHandler, PoolLeakDetector {
 
 	struct pool &pool;
 
@@ -76,14 +76,11 @@ class HttpRequest final
 
 	SocketFilterFactory *const filter_factory;
 
-	StockItem *stock_item = nullptr;
 	FailurePtr failure;
 
 	const sticky_hash_t session_sticky;
 
 	unsigned retries;
-
-	bool response_sent = false;
 
 	const http_method_t method;
 	const HttpAddress &address;
@@ -134,30 +131,18 @@ public:
 
 private:
 	void Destroy() noexcept {
-		assert(stock_item == nullptr);
-
 		DeleteFromPool(pool, this);
-	}
-
-	void ResponseSent() {
-		assert(!response_sent);
-		response_sent = true;
-
-		if (stock_item == nullptr)
-			Destroy();
 	}
 
 	void Failed(std::exception_ptr ep) {
 		body.Clear();
 		auto &_handler = handler;
-		ResponseSent();
+		Destroy();
 		_handler.InvokeError(ep);
 	}
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
-		assert(!response_sent);
-
 		cancel_ptr.Cancel();
 		Destroy();
 	}
@@ -165,9 +150,6 @@ private:
 	/* virtual methods from class StockGetHandler */
 	void OnStockItemReady(StockItem &item) noexcept override;
 	void OnStockItemError(std::exception_ptr ep) noexcept override;
-
-	/* virtual methods from class Lease */
-	void ReleaseLease(bool reuse) noexcept override;
 
 	/* virtual methods from class HttpResponseHandler */
 	void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -184,12 +166,10 @@ void
 HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 			    UnusedIstreamPtr _body) noexcept
 {
-	assert(!response_sent);
-
 	failure->UnsetProtocol();
 
 	auto &_handler = handler;
-	ResponseSent();
+	Destroy();
 	_handler.InvokeResponse(status, std::move(_headers), std::move(_body));
 }
 
@@ -208,8 +188,6 @@ HasHttpClientErrorCode(std::exception_ptr ep,
 void
 HttpRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
-	assert(!response_sent);
-
 	if (retries > 0 &&
 	    HasHttpClientErrorCode(ep, HttpClientErrorCode::REFUSED)) {
 		/* the server has closed the connection prematurely, maybe
@@ -236,19 +214,14 @@ HttpRequest::OnHttpError(std::exception_ptr ep) noexcept
 void
 HttpRequest::OnStockItemReady(StockItem &item) noexcept
 {
-	assert(stock_item == nullptr);
-	assert(!response_sent);
-
 	stopwatch.RecordEvent("connect");
 
-	stock_item = &item;
-
 	failure = fs_balancer.GetFailureManager()
-		.Make(fs_stock_item_get_address(*stock_item));
+		.Make(fs_stock_item_get_address(item));
 
 	http_client_request(pool, std::move(stopwatch),
 			    fs_stock_item_get(item),
-			    *this,
+			    *NewFromPool<StockItemLease>(pool, item),
 			    item.GetStockName(),
 			    method, address.path, std::move(headers),
 			    std::move(body), true,
@@ -258,30 +231,9 @@ HttpRequest::OnStockItemReady(StockItem &item) noexcept
 void
 HttpRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
-	assert(stock_item == nullptr);
-	assert(!response_sent);
-
 	stopwatch.RecordEvent("connect_error");
 
 	Failed(ep);
-}
-
-/*
- * Lease
- *
- */
-
-void
-HttpRequest::ReleaseLease(bool reuse) noexcept
-{
-	assert(stock_item != nullptr);
-
-	stock_item->Put(!reuse);
-	stock_item = nullptr;
-
-	if (response_sent) {
-		Destroy();
-	}
 }
 
 /*
