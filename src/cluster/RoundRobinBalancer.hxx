@@ -44,10 +44,10 @@ class RoundRobinBalancer final {
 
 public:
 	template<typename List>
-	SocketAddress Get(Expiry now, const List &list,
-			  bool allow_fade) noexcept;
+	typename List::const_reference Get(Expiry now, const List &list,
+					   bool allow_fade) noexcept;
 
 private:
 	template<typename List>
-	const SocketAddress &NextAddress(const List &list) noexcept;
+	typename List::const_reference Next(const List &list) noexcept;
 };

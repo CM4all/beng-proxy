@@ -32,7 +32,6 @@
 
 #pragma once
 
-#include "net/SocketAddress.hxx"
 #include "util/Compiler.h"
 #include "util/Expiry.hxx"
 
@@ -46,7 +45,7 @@
  */
 template<typename List>
 gcc_pure
-SocketAddress
+const auto &
 PickModulo(Expiry now, const List &list, sticky_hash_t sticky_hash) noexcept
 {
 	const size_t n = std::size(list);

@@ -39,13 +39,13 @@
 #include <assert.h>
 
 template<typename List>
-inline const SocketAddress &
-RoundRobinBalancer::NextAddress(const List &list) noexcept
+inline typename List::const_reference
+RoundRobinBalancer::Next(const List &list) noexcept
 {
 	assert(list.size() >= 2);
 	assert(next < list.size());
 
-	const SocketAddress &address = *std::next(list.begin(), next);
+	const auto &address = *std::next(list.begin(), next);
 
 	++next;
 	if (next >= list.size())
@@ -55,18 +55,18 @@ RoundRobinBalancer::NextAddress(const List &list) noexcept
 }
 
 template<typename List>
-SocketAddress
+typename List::const_reference
 RoundRobinBalancer::Get(const Expiry now,
 			const List &list,
 			bool allow_fade) noexcept
 {
-	const auto &first = NextAddress(list);
-	const SocketAddress *ret = &first;
+	const auto &first = Next(list);
+	const auto *ret = &first;
 	do {
 		if (list.Check(now, *ret, allow_fade))
 			return *ret;
 
-		ret = &NextAddress(list);
+		ret = &Next(list);
 	} while (ret != &first);
 
 	/* all addresses failed: */

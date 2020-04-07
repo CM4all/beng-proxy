@@ -32,7 +32,6 @@
 
 #pragma once
 
-#include "net/SocketAddress.hxx"
 #include "util/Compiler.h"
 #include "util/Expiry.hxx"
 
@@ -46,7 +45,7 @@
  */
 template<typename List>
 gcc_pure
-SocketAddress
+const auto &
 PickFailover(Expiry now, const List &list) noexcept
 {
 	assert(std::begin(list) != std::end(list)); /* must not be empty */
@@ -54,9 +53,9 @@ PickFailover(Expiry now, const List &list) noexcept
 	/* ignore "fade" status here */
 	constexpr bool allow_fade = true;
 
-	for (const SocketAddress address : list)
-		if (list.Check(now, address, allow_fade))
-			return address;
+	for (const auto &i : list)
+		if (list.Check(now, i, allow_fade))
+			return i;
 
 	/* none available - return first node as last resort */
 	return *std::begin(list);

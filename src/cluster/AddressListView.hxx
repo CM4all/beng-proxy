@@ -46,6 +46,8 @@ public:
 	explicit constexpr AddressListView(ConstBuffer<SocketAddress> _list) noexcept
 		:list(_list) {}
 
+	using const_reference = ConstBuffer<SocketAddress>::const_reference;
+
 	constexpr auto size() const noexcept {
 		return list.size;
 	}

@@ -45,7 +45,7 @@
  */
 template<typename List>
 gcc_pure
-SocketAddress
+const auto &
 PickGeneric(Expiry now, StickyMode sticky_mode,
 	    const List &list, sticky_hash_t sticky_hash) noexcept
 {
