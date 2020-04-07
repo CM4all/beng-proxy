@@ -252,7 +252,7 @@ LbCluster::ConnectStaticTcp(AllocatorPtr alloc,
 
 #ifdef HAVE_AVAHI
 
-LbCluster::MemberMap::reference
+LbCluster::MemberMap::const_reference
 LbCluster::PickNextZeroconf() noexcept
 {
 	assert(!active_members.empty());
@@ -264,7 +264,7 @@ LbCluster::PickNextZeroconf() noexcept
 	return *active_members[last_pick];
 }
 
-LbCluster::MemberMap::reference
+LbCluster::MemberMap::const_reference
 LbCluster::PickNextGoodZeroconf(const Expiry now) noexcept
 {
 	assert(!active_members.empty());
@@ -279,7 +279,7 @@ LbCluster::PickNextGoodZeroconf(const Expiry now) noexcept
 	}
 }
 
-LbCluster::Member *
+const LbCluster::Member *
 LbCluster::Pick(const Expiry now, sticky_hash_t sticky_hash) noexcept
 {
 	if (dirty) {

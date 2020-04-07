@@ -159,11 +159,11 @@ class LbCluster final
 			address = _address;
 		}
 
-		auto &GetFailureRef() noexcept {
+		auto &GetFailureRef() const noexcept {
 			return failure;
 		}
 
-		FailureInfo &GetFailureInfo() noexcept {
+		FailureInfo &GetFailureInfo() const noexcept {
 			return *failure;
 		}
 
@@ -286,7 +286,7 @@ public:
 	 *
 	 * Zeroconf only.
 	 */
-	Member *Pick(Expiry now, sticky_hash_t sticky_hash) noexcept;
+	const Member *Pick(Expiry now, sticky_hash_t sticky_hash) noexcept;
 
 	/**
 	 * Obtain a HTTP connection to a Zeroconf member.
@@ -322,14 +322,14 @@ private:
 	 * Pick the next active Zeroconf member in a round-robin way.
 	 * Does not update the #StickyCache.
 	 */
-	MemberMap::reference PickNextZeroconf() noexcept;
+	MemberMap::const_reference PickNextZeroconf() noexcept;
 
 	/**
 	 * Like PickNextZeroconf(), but skips members which are bad
 	 * according to failure_get_status().  If all are bad, a random
 	 * (bad) one is returned.
 	 */
-	MemberMap::reference PickNextGoodZeroconf(Expiry now) noexcept;
+	MemberMap::const_reference PickNextGoodZeroconf(Expiry now) noexcept;
 
 	/* virtual methods from class AvahiServiceExplorerListener */
 	void OnAvahiNewObject(const std::string &key,
