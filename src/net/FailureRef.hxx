@@ -76,11 +76,11 @@ public:
 	FailureRef(const FailureRef &) = delete;
 	FailureRef &operator=(const FailureRef &) = delete;
 
-	FailureInfo *operator->() {
+	FailureInfo *operator->() const noexcept {
 		return &info;
 	}
 
-	FailureInfo &operator*() {
+	FailureInfo &operator*() const noexcept {
 		return info;
 	}
 };
@@ -128,15 +128,15 @@ public:
 		return *this;
 	}
 
-	FailurePtr &operator=(FailureRef &new_ref) noexcept {
+	FailurePtr &operator=(const FailureRef &new_ref) noexcept {
 		return *this = new_ref.info;
 	}
 
-	FailureInfo *operator->() {
+	FailureInfo *operator->() const noexcept {
 		return info;
 	}
 
-	ReferencedFailureInfo &operator*() noexcept {
+	ReferencedFailureInfo &operator*() const noexcept {
 		return *info;
 	}
 };
