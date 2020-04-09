@@ -302,6 +302,16 @@ public:
 	const ZeroconfMember *PickZeroconf(Expiry now, sticky_hash_t sticky_hash) noexcept;
 
 	/**
+	 * Like PickZeroconf(), but pick using Consistent Hashing (via
+	 * #HashRing).
+	 *
+	 * To be called by PickZeroconf(), which has already
+	 * lazy-initialized and verified everything.
+	 */
+	const ZeroconfMember &PickZeroconfHashRing(Expiry now,
+						   sticky_hash_t sticky_hash) noexcept;
+
+	/**
 	 * Obtain a HTTP connection to a Zeroconf member.
 	 */
 	void ConnectZeroconfHttp(AllocatorPtr alloc,

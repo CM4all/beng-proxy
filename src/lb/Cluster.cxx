@@ -290,6 +290,29 @@ LbCluster::PickNextGoodZeroconf(const Expiry now) noexcept
 					false);
 }
 
+inline const LbCluster::ZeroconfMember &
+LbCluster::PickZeroconfHashRing(Expiry now,
+				sticky_hash_t sticky_hash) noexcept
+{
+	assert(!active_zeroconf_members.empty());
+	assert(sticky_ring != nullptr);
+
+	auto *i = sticky_ring->Pick(sticky_hash);
+	assert(i != nullptr);
+
+	unsigned retries = active_zeroconf_members.size();
+	while (true) {
+		if (--retries == 0 ||
+		    i->GetFailureInfo().Check(now))
+			return *i;
+
+		/* the node is known-bad; pick the next one in the ring */
+		const auto next = sticky_ring->FindNext(sticky_hash);
+		sticky_hash = next.first;
+		i = next.second;
+	}
+}
+
 const LbCluster::ZeroconfMember *
 LbCluster::PickZeroconf(const Expiry now, sticky_hash_t sticky_hash) noexcept
 {
@@ -329,22 +352,7 @@ LbCluster::PickZeroconf(const Expiry now, sticky_hash_t sticky_hash) noexcept
 	} else if (sticky_hash != 0) {
 		/* use consistent hashing */
 
-		assert(sticky_ring != nullptr);
-
-		auto *i = sticky_ring->Pick(sticky_hash);
-		assert(i != nullptr);
-
-		unsigned retries = active_zeroconf_members.size();
-		while (true) {
-			if (--retries == 0 ||
-			    i->GetFailureInfo().Check(now))
-				return &*i;
-
-			/* the node is known-bad; pick the next one in the ring */
-			const auto next = sticky_ring->FindNext(sticky_hash);
-			sticky_hash = next.first;
-			i = next.second;
-		}
+		return &PickZeroconfHashRing(now, sticky_hash);
 	}
 
 	auto &i = PickNextGoodZeroconf(now);
