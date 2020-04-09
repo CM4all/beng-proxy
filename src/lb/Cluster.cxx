@@ -256,7 +256,7 @@ LbCluster::ConnectStaticTcp(AllocatorPtr alloc,
 #ifdef HAVE_AVAHI
 
 struct LbCluster::ZeroconfListWrapper {
-	const std::vector<ZeroconfMemberMap::pointer> &active_members;
+	const ZeroconfMemberList &active_members;
 
 	using const_reference = const ZeroconfMember &;
 

@@ -197,6 +197,8 @@ class LbCluster final
 				      boost::intrusive::compare<ZeroconfMember::Compare>,
 				      boost::intrusive::constant_time_size<false>>;
 
+	using ZeroconfMemberList = std::vector<ZeroconfMemberMap::pointer>;
+
 	struct ZeroconfListWrapper;
 
 	/**
@@ -209,7 +211,7 @@ class LbCluster final
 	 * All #members pointers in a std::vector.  Populated by
 	 * FillActive().
 	 */
-	std::vector<ZeroconfMemberMap::pointer> active_zeroconf_members;
+	ZeroconfMemberList active_zeroconf_members;
 
 	/**
 	 * This object selects the next Zeroconf member if
