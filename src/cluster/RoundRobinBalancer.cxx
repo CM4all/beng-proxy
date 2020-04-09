@@ -31,12 +31,10 @@
  */
 
 #include "RoundRobinBalancer.hxx"
-#include "net/SocketAddress.hxx"
 #include "util/Expiry.hxx"
 
+#include <cassert>
 #include <iterator>
-
-#include <assert.h>
 
 template<typename List>
 inline typename List::const_reference
