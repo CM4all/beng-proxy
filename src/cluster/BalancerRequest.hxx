@@ -32,7 +32,6 @@
 
 #pragma once
 
-#include "PickGeneric.hxx"
 #include "net/FailureRef.hxx"
 #include "util/Cancellable.hxx"
 #include "AllocatorPtr.hxx"
@@ -54,8 +53,6 @@ class BalancerRequest final : Cancellable {
 
 	CancellablePointer cancel_ptr;
 
-	const StickyMode sticky_mode;
-
 	/**
 	 * The "sticky id" of the incoming HTTP request.
 	 */
@@ -72,14 +69,13 @@ class BalancerRequest final : Cancellable {
 public:
 	template<typename... Args>
 	BalancerRequest(AllocatorPtr _alloc,
-			StickyMode _sticky_mode,
 			List &&_list,
 			CancellablePointer &_cancel_ptr,
 			sticky_hash_t _sticky_hash,
 			Args&&... args) noexcept
 		:request(std::forward<Args>(args)...),
 		 alloc(_alloc),
-		 list(std::move(_list)), sticky_mode(_sticky_mode),
+		 list(std::move(_list)),
 		 sticky_hash(_sticky_hash),
 		 retries(CalculateRetries(list))
 	{
@@ -120,8 +116,7 @@ public:
 	}
 
 	void Next(Expiry now) noexcept {
-		auto current_address =
-			PickGeneric(now, sticky_mode, list, sticky_hash);
+		auto current_address = list.Pick(now, sticky_hash);
 
 		failure = list.MakeFailureInfo(current_address);
 		request.Send(alloc, std::move(current_address), cancel_ptr);

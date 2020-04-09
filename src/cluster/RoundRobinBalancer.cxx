@@ -30,6 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#pragma once
+
 #include "RoundRobinBalancer.hxx"
 #include "util/Expiry.hxx"
 

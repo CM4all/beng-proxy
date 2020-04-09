@@ -33,6 +33,7 @@
 #pragma once
 
 #include "RoundRobinBalancer.hxx"
+#include "PickGeneric.hxx"
 #include "StickyHash.hxx"
 #include "HashKey.hxx"
 #include "util/Cache.hxx"
@@ -56,21 +57,30 @@ public:
 	 * to PickGeneric().
 	 */
 	template<typename Base>
-	auto MakeAddressListWrapper(Base &&base) noexcept {
-		return Wrapper<Base>(std::move(base), *this);
+	auto MakeAddressListWrapper(Base &&base,
+				    StickyMode sticky_mode) noexcept {
+		return Wrapper<Base>(std::move(base), *this, sticky_mode);
 	}
 
 	template<typename Base>
 	class Wrapper : public Base {
 		BalancerMap &balancer;
 
+		const StickyMode sticky_mode;
+
 	public:
-		Wrapper(Base &&base, BalancerMap &_balancer) noexcept
-			:Base(std::move(base)), balancer(_balancer) {}
+		Wrapper(Base &&base, BalancerMap &_balancer,
+			StickyMode _sticky_mode) noexcept
+			:Base(std::move(base)), balancer(_balancer),
+			 sticky_mode(_sticky_mode) {}
 
 		gcc_pure
 		auto &GetRoundRobinBalancer() const noexcept {
 			return balancer.MakeRoundRobinBalancer(GetHashKey(*this));
+		}
+
+		auto Pick(Expiry now, sticky_hash_t sticky_hash) const noexcept {
+			return PickGeneric(now, sticky_mode, *this, sticky_hash);
 		}
 	};
 };

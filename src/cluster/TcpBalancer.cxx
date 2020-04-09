@@ -141,9 +141,9 @@ TcpBalancer::Get(AllocatorPtr alloc, const StopwatchPtr &parent_stopwatch,
 		 CancellablePointer &cancel_ptr)
 {
 	BR::Start(alloc, GetEventLoop().SteadyNow(),
-		  address_list.sticky_mode,
 		  balancer.MakeAddressListWrapper(AddressListWrapper(GetFailureManager(),
-								     address_list.addresses)),
+								     address_list.addresses),
+						  address_list.sticky_mode),
 		  cancel_ptr,
 		  sticky_hash,
 		  *this,

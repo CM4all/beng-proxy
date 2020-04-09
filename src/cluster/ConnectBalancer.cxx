@@ -150,9 +150,9 @@ client_balancer_connect(EventLoop &event_loop,
 			CancellablePointer &cancel_ptr)
 {
 	BR::Start(alloc, event_loop.SteadyNow(),
-		  address_list.sticky_mode,
 		  balancer.MakeAddressListWrapper(AddressListWrapper(failure_manager,
-								     address_list.addresses)),
+								     address_list.addresses),
+						  address_list.sticky_mode),
 		  cancel_ptr,
 		  sticky_hash,
 		  event_loop,
