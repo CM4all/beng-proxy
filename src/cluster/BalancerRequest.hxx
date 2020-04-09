@@ -33,8 +33,6 @@
 #pragma once
 
 #include "PickGeneric.hxx"
-#include "net/SocketAddress.hxx"
-#include "net/FailureManager.hxx"
 #include "net/FailureRef.hxx"
 #include "util/Cancellable.hxx"
 #include "AllocatorPtr.hxx"
@@ -122,11 +120,11 @@ public:
 	}
 
 	void Next(Expiry now) noexcept {
-		const SocketAddress current_address =
+		auto current_address =
 			PickGeneric(now, sticky_mode, list, sticky_hash);
 
 		failure = list.MakeFailureInfo(current_address);
-		request.Send(alloc, current_address, cancel_ptr);
+		request.Send(alloc, std::move(current_address), cancel_ptr);
 	}
 
 	void ConnectSuccess() noexcept {
