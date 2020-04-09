@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include "StickyHash.hxx"
 #include "util/Compiler.h"
 #include "util/Expiry.hxx"
 
