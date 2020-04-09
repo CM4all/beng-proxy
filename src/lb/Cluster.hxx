@@ -299,7 +299,7 @@ public:
 	 *
 	 * Zeroconf only.
 	 */
-	const ZeroconfMember *Pick(Expiry now, sticky_hash_t sticky_hash) noexcept;
+	const ZeroconfMember *PickZeroconf(Expiry now, sticky_hash_t sticky_hash) noexcept;
 
 	/**
 	 * Obtain a HTTP connection to a Zeroconf member.

@@ -291,7 +291,7 @@ LbCluster::PickNextGoodZeroconf(const Expiry now) noexcept
 }
 
 const LbCluster::ZeroconfMember *
-LbCluster::Pick(const Expiry now, sticky_hash_t sticky_hash) noexcept
+LbCluster::PickZeroconf(const Expiry now, sticky_hash_t sticky_hash) noexcept
 {
 	if (dirty) {
 		dirty = false;
@@ -480,8 +480,8 @@ private:
 void
 LbCluster::ZeroconfHttpConnect::Start() noexcept
 {
-	auto *member = cluster.Pick(GetEventLoop().SteadyNow(),
-				    sticky_hash);
+	auto *member = cluster.PickZeroconf(GetEventLoop().SteadyNow(),
+					    sticky_hash);
 	if (member == nullptr) {
 		auto &_handler = handler;
 		Destroy();
@@ -572,7 +572,7 @@ LbCluster::ConnectZeroconfTcp(AllocatorPtr alloc,
 
 	auto &event_loop = fs_balancer.GetEventLoop();
 
-	const auto *member = Pick(event_loop.SteadyNow(), sticky_hash);
+	const auto *member = PickZeroconf(event_loop.SteadyNow(), sticky_hash);
 	if (member == nullptr) {
 		handler.OnSocketConnectError(std::make_exception_ptr(std::runtime_error("Zeroconf cluster is empty")));
 		return;
