@@ -65,13 +65,14 @@
 
 #ifdef HAVE_AVAHI
 
-class LbCluster::StickyRing final : public HashRing<MemberMap::pointer,
+class LbCluster::StickyRing final : public HashRing<ZeroconfMemberMap::pointer,
 						    sticky_hash_t,
 						    4096, 8> {};
 
-LbCluster::Member::Member(const std::string &_key, SocketAddress _address,
-			  ReferencedFailureInfo &_failure,
-			  LbMonitorStock *monitors)
+LbCluster::ZeroconfMember::ZeroconfMember(const std::string &_key,
+					  SocketAddress _address,
+					  ReferencedFailureInfo &_failure,
+					  LbMonitorStock *monitors) noexcept
 	:key(_key), address(_address), failure(_failure),
 	 monitor(monitors != nullptr
 		 ? std::make_unique<LbMonitorRef>(monitors->Add(key.c_str(),
@@ -80,10 +81,10 @@ LbCluster::Member::Member(const std::string &_key, SocketAddress _address,
 {
 }
 
-LbCluster::Member::~Member() noexcept = default;
+LbCluster::ZeroconfMember::~ZeroconfMember() noexcept = default;
 
 const char *
-LbCluster::Member::GetLogName() const noexcept
+LbCluster::ZeroconfMember::GetLogName() const noexcept
 {
 	if (log_name.empty()) {
 		if (address.IsNull())
@@ -158,7 +159,7 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 LbCluster::~LbCluster() noexcept
 {
 #ifdef HAVE_AVAHI
-	members.clear_and_dispose(DeleteDisposer());
+	zeroconf_members.clear_and_dispose(DeleteDisposer());
 #endif
 }
 
@@ -255,9 +256,9 @@ LbCluster::ConnectStaticTcp(AllocatorPtr alloc,
 #ifdef HAVE_AVAHI
 
 struct LbCluster::ZeroconfListWrapper {
-	const std::vector<MemberMap::pointer> &active_members;
+	const std::vector<ZeroconfMemberMap::pointer> &active_members;
 
-	using const_reference = const Member &;
+	using const_reference = const ZeroconfMember &;
 
 	auto size() const noexcept {
 		return active_members.size();
@@ -278,17 +279,17 @@ struct LbCluster::ZeroconfListWrapper {
 	}
 };
 
-LbCluster::MemberMap::const_reference
+LbCluster::ZeroconfMemberMap::const_reference
 LbCluster::PickNextGoodZeroconf(const Expiry now) noexcept
 {
-	assert(!active_members.empty());
+	assert(!active_zeroconf_members.empty());
 
 	return round_robin_balancer.Get(now,
-					ZeroconfListWrapper{active_members},
+					ZeroconfListWrapper{active_zeroconf_members},
 					false);
 }
 
-const LbCluster::Member *
+const LbCluster::ZeroconfMember *
 LbCluster::Pick(const Expiry now, sticky_hash_t sticky_hash) noexcept
 {
 	if (dirty) {
@@ -296,7 +297,7 @@ LbCluster::Pick(const Expiry now, sticky_hash_t sticky_hash) noexcept
 		FillActive();
 	}
 
-	if (active_members.empty())
+	if (active_zeroconf_members.empty())
 		return nullptr;
 
 	if (sticky_hash != 0 && config.sticky_cache) {
@@ -311,8 +312,9 @@ LbCluster::Pick(const Expiry now, sticky_hash_t sticky_hash) noexcept
 		const auto *cached = sticky_cache->Get(sticky_hash);
 		if (cached != nullptr) {
 			/* cache hit */
-			auto i = members.find(*cached, members.key_comp());
-			if (i != members.end() &&
+			auto i = zeroconf_members.find(*cached,
+						       zeroconf_members.key_comp());
+			if (i != zeroconf_members.end() &&
 			    // TODO: allow FAILURE_FADE here?
 			    i->GetFailureInfo().Check(now))
 				/* the node is active, we can use it */
@@ -331,7 +333,7 @@ LbCluster::Pick(const Expiry now, sticky_hash_t sticky_hash) noexcept
 		auto *i = sticky_ring->Pick(sticky_hash);
 		assert(i != nullptr);
 
-		unsigned retries = active_members.size();
+		unsigned retries = active_zeroconf_members.size();
 		while (true) {
 			if (--retries == 0 ||
 			    i->GetFailureInfo().Check(now))
@@ -355,11 +357,11 @@ LbCluster::Pick(const Expiry now, sticky_hash_t sticky_hash) noexcept
 void
 LbCluster::FillActive() noexcept
 {
-	active_members.clear();
-	active_members.reserve(members.size());
+	active_zeroconf_members.clear();
+	active_zeroconf_members.reserve(zeroconf_members.size());
 
-	for (auto &i : members)
-		active_members.push_back(&i);
+	for (auto &i : zeroconf_members)
+		active_zeroconf_members.push_back(&i);
 
 	if (!config.sticky_cache) {
 		if (sticky_ring == nullptr)
@@ -372,7 +374,7 @@ LbCluster::FillActive() noexcept
 		 */
 		struct MemberHasher {
 			gcc_pure
-			sticky_hash_t operator()(MemberMap::const_pointer member,
+			sticky_hash_t operator()(ZeroconfMemberMap::const_pointer member,
 						 size_t replica) const {
 				/* use libsodium's "generichash" (BLAKE2b) which is
 				   secure enough for class HashRing */
@@ -390,7 +392,7 @@ LbCluster::FillActive() noexcept
 			}
 		};
 
-		sticky_ring->Build(active_members, MemberHasher());
+		sticky_ring->Build(active_zeroconf_members, MemberHasher());
 	}
 }
 
@@ -590,12 +592,14 @@ void
 LbCluster::OnAvahiNewObject(const std::string &key,
 			    SocketAddress address) noexcept
 {
-	MemberMap::insert_commit_data hint;
-	auto result = members.insert_check(key, members.key_comp(), hint);
+	ZeroconfMemberMap::insert_commit_data hint;
+	auto result = zeroconf_members.insert_check(key,
+						    zeroconf_members.key_comp(),
+						    hint);
 	if (result.second) {
-		auto *member = new Member(key, address, failure_manager.Make(address),
-					  monitors);
-		members.insert_commit(*member, hint);
+		auto *member = new ZeroconfMember(key, address, failure_manager.Make(address),
+						  monitors);
+		zeroconf_members.insert_commit(*member, hint);
 	} else {
 		/* update existing member */
 		result.first->SetAddress(address);
@@ -607,14 +611,14 @@ LbCluster::OnAvahiNewObject(const std::string &key,
 void
 LbCluster::OnAvahiRemoveObject(const std::string &key) noexcept
 {
-	auto i = members.find(key, members.key_comp());
-	if (i == members.end())
+	auto i = zeroconf_members.find(key, zeroconf_members.key_comp());
+	if (i == zeroconf_members.end())
 		return;
 
 	/* TODO: purge entry from the "failure" map, because it
 	   will never be used again anyway */
 
-	members.erase_and_dispose(i, DeleteDisposer());
+	zeroconf_members.erase_and_dispose(i, DeleteDisposer());
 	dirty = true;
 }
 

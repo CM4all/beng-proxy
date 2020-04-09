@@ -125,7 +125,7 @@ class LbCluster final
 	std::forward_list<LbMonitorRef> static_member_monitors;
 
 #ifdef HAVE_AVAHI
-	class Member
+	class ZeroconfMember
 		: LeakDetector,
 		  public boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
@@ -140,13 +140,13 @@ class LbCluster final
 		mutable std::string log_name;
 
 	public:
-		Member(const std::string &_key, SocketAddress _address,
-		       ReferencedFailureInfo &_failure,
-		       LbMonitorStock *monitors);
-		~Member() noexcept;
+		ZeroconfMember(const std::string &_key, SocketAddress _address,
+			       ReferencedFailureInfo &_failure,
+			       LbMonitorStock *monitors) noexcept;
+		~ZeroconfMember() noexcept;
 
-		Member(const Member &) = delete;
-		Member &operator=(const Member &) = delete;
+		ZeroconfMember(const ZeroconfMember &) = delete;
+		ZeroconfMember &operator=(const ZeroconfMember &) = delete;
 
 		const std::string &GetKey() const noexcept {
 			return key;
@@ -175,23 +175,27 @@ class LbCluster final
 		const char *GetLogName() const noexcept;
 
 		struct Compare {
-			bool operator()(const Member &a, const Member &b) const noexcept {
+			bool operator()(const ZeroconfMember &a,
+					const ZeroconfMember &b) const noexcept {
 				return a.key < b.key;
 			}
 
-			bool operator()(const Member &a, const std::string &b) const noexcept {
+			bool operator()(const ZeroconfMember &a,
+					const std::string &b) const noexcept {
 				return a.key < b;
 			}
 
-			bool operator()(const std::string &a, const Member &b) const noexcept {
+			bool operator()(const std::string &a,
+					const ZeroconfMember &b) const noexcept {
 				return a < b.key;
 			}
 		};
 	};
 
-	typedef boost::intrusive::set<Member,
-				      boost::intrusive::compare<Member::Compare>,
-				      boost::intrusive::constant_time_size<false>> MemberMap;
+	using ZeroconfMemberMap =
+		boost::intrusive::set<ZeroconfMember,
+				      boost::intrusive::compare<ZeroconfMember::Compare>,
+				      boost::intrusive::constant_time_size<false>>;
 
 	struct ZeroconfListWrapper;
 
@@ -199,13 +203,13 @@ class LbCluster final
 	 * All Zeroconf members.  Managed by our
 	 * AvahiServiceExplorerListener virtual method overrides.
 	 */
-	MemberMap members;
+	ZeroconfMemberMap zeroconf_members;
 
 	/**
 	 * All #members pointers in a std::vector.  Populated by
 	 * FillActive().
 	 */
-	std::vector<MemberMap::pointer> active_members;
+	std::vector<ZeroconfMemberMap::pointer> active_zeroconf_members;
 
 	/**
 	 * This object selects the next Zeroconf member if
@@ -285,7 +289,7 @@ public:
 			FillActive();
 		}
 
-		return active_members.size();
+		return active_zeroconf_members.size();
 	}
 
 	/**
@@ -293,7 +297,7 @@ public:
 	 *
 	 * Zeroconf only.
 	 */
-	const Member *Pick(Expiry now, sticky_hash_t sticky_hash) noexcept;
+	const ZeroconfMember *Pick(Expiry now, sticky_hash_t sticky_hash) noexcept;
 
 	/**
 	 * Obtain a HTTP connection to a Zeroconf member.
@@ -330,7 +334,7 @@ private:
 	 * according to failure_get_status().  If all are bad, a random
 	 * (bad) one is returned.
 	 */
-	MemberMap::const_reference PickNextGoodZeroconf(Expiry now) noexcept;
+	ZeroconfMemberMap::const_reference PickNextGoodZeroconf(Expiry now) noexcept;
 
 	/* virtual methods from class AvahiServiceExplorerListener */
 	void OnAvahiNewObject(const std::string &key,
