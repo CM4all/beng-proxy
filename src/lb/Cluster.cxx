@@ -259,17 +259,18 @@ struct LbCluster::ZeroconfListWrapper {
 	const ZeroconfMemberList &active_members;
 
 	using const_reference = const ZeroconfMember &;
+	using const_iterator = DereferenceIterator<ZeroconfMemberList::const_iterator>;
 
 	auto size() const noexcept {
 		return active_members.size();
 	}
 
-	auto begin() const noexcept {
-		return DereferenceIterator{active_members.begin()};
+	const_iterator begin() const noexcept {
+		return active_members.begin();
 	}
 
-	auto end() const noexcept {
-		return DereferenceIterator{active_members.end()};
+	const_iterator end() const noexcept {
+		return active_members.end();
 	}
 
 	gcc_pure
