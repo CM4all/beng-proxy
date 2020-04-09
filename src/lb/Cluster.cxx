@@ -324,11 +324,14 @@ LbCluster::PickZeroconf(const Expiry now, sticky_hash_t sticky_hash) noexcept
 	if (active_zeroconf_members.empty())
 		return nullptr;
 
-	if (sticky_hash != 0 && config.sticky_cache) {
-		/* look up the sticky_hash in the StickyCache */
-
+	if (sticky_hash != 0) {
 		assert(config.sticky_mode != StickyMode::NONE);
 
+		if (!config.sticky_cache)
+			/* use consistent hashing */
+			return &PickZeroconfHashRing(now, sticky_hash);
+
+		/* look up the sticky_hash in the StickyCache */
 		if (sticky_cache == nullptr)
 			/* lazy cache allocation */
 			sticky_cache = std::make_unique<StickyCache>();
@@ -349,10 +352,6 @@ LbCluster::PickZeroconf(const Expiry now, sticky_hash_t sticky_hash) noexcept
 
 		/* cache miss or cached node not active: fall back to
 		   round-robin and remember the new pick in the cache */
-	} else if (sticky_hash != 0) {
-		/* use consistent hashing */
-
-		return &PickZeroconfHashRing(now, sticky_hash);
 	}
 
 	auto &i = PickNextGoodZeroconf(now);
