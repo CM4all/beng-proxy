@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include "StickyHash.hxx"
 #include "net/FailureRef.hxx"
 #include "util/Cancellable.hxx"
 #include "AllocatorPtr.hxx"
