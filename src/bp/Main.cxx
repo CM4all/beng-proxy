@@ -316,18 +316,18 @@ try {
 	/* note: this function call passes a temporary SpawnConfig copy,
 	   because the reference will be evaluated in the child process
 	   after ~BpInstance() has been called */
-	instance.spawn.reset(StartSpawnServer(SpawnConfig(instance.config.spawn),
-					      instance.child_process_registry,
-					      nullptr,
-					      [&instance](){
-						      instance.event_loop.Reinit();
+	instance.spawn = StartSpawnServer(SpawnConfig(instance.config.spawn),
+					  instance.child_process_registry,
+					  nullptr,
+					  [&instance](){
+						  instance.event_loop.Reinit();
 
-						      global_control_handler_deinit(&instance);
-						      instance.listeners.clear();
-						      instance.DisableSignals();
+						  global_control_handler_deinit(&instance);
+						  instance.listeners.clear();
+						  instance.DisableSignals();
 
-						      instance.~BpInstance();
-					      }));
+						  instance.~BpInstance();
+					  });
 	instance.spawn_service = instance.spawn.get();
 
 	const ScopeCrashGlobalInit crash_init;
