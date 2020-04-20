@@ -328,6 +328,7 @@ try {
 
 						  instance.~BpInstance();
 					  });
+	instance.spawn->SetHandler(instance);
 	instance.spawn_service = instance.spawn.get();
 
 	const ScopeCrashGlobalInit crash_init;
