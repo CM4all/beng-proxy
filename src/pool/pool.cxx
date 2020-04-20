@@ -471,6 +471,9 @@ pool_new_linear(struct pool *parent, const char *name,
 		size_t initial_size) noexcept
 {
 	if (HaveAddressSanitizer() || HaveValgrind())
+		/* Valgrind cannot verify allocations and memory accesses with
+		   this library; therefore use the "libc" pool when running on
+		   valgrind */
 		return pool_new_libc(parent, name);
 
 #ifdef POOL_LIBC_ONLY
@@ -478,14 +481,6 @@ pool_new_linear(struct pool *parent, const char *name,
 
 	return pool_new_libc(parent, name);
 #else
-
-#ifdef VALGRIND
-	if (RUNNING_ON_VALGRIND)
-		/* Valgrind cannot verify allocations and memory accesses with
-		   this library; therefore use the "libc" pool when running on
-		   valgrind */
-		return pool_new_libc(parent, name);
-#endif
 
 	struct pool *pool = pool_new(parent, name);
 	pool->type = POOL_LINEAR;
