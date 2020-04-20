@@ -1,6 +1,6 @@
 cm4all-beng-proxy (16.11) unstable; urgency=low
 
-  * 
+  * lb/systemd: implement "reload"
 
  --   
 
