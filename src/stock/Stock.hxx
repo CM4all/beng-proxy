@@ -193,6 +193,12 @@ public:
 	}
 
 	/**
+	 * Discard all items which are idle and havn't been used in a
+	 * while.
+	 */
+	void DiscardUnused() noexcept;
+
+	/**
 	 * Destroy all idle items and don't reuse any of the current busy
 	 * items.
 	 */

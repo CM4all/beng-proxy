@@ -55,6 +55,19 @@ Stock::Waiting::Destroy() noexcept
 }
 
 void
+Stock::DiscardUnused() noexcept
+{
+	if (clear_interval > Event::Duration::zero() && !may_clear)
+		return;
+
+	ClearIdle();
+
+	may_clear = true;
+	ScheduleClear();
+	ScheduleCheckEmpty();
+}
+
+void
 Stock::FadeAll() noexcept
 {
 	for (auto &i : busy)
