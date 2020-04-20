@@ -65,6 +65,11 @@ public:
 		   SocketDescriptor log_socket,
 		   const ChildErrorLogOptions &log_options) noexcept;
 
+	void DiscardSome() noexcept {
+		// TODO: finish this implementation
+		hstock.DiscardUnused();
+	}
+
 	void FadeAll() noexcept {
 		hstock.FadeAll();
 		child_stock.GetStockMap().FadeAll();
@@ -347,6 +352,12 @@ void
 lhttp_stock_free(LhttpStock *ls) noexcept
 {
 	delete ls;
+}
+
+void
+lhttp_stock_discard_some(LhttpStock &ls) noexcept
+{
+	ls.DiscardSome();
 }
 
 void
