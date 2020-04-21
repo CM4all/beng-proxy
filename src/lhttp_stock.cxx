@@ -66,8 +66,12 @@ public:
 		   const ChildErrorLogOptions &log_options) noexcept;
 
 	void DiscardSome() noexcept {
-		// TODO: finish this implementation
+		/* first close idle connections, hopefully turning
+		   child processes idle */
 		hstock.DiscardUnused();
+
+		/* kill the oldest child process */
+		child_stock.DiscardOldestIdle();
 	}
 
 	void FadeAll() noexcept {
