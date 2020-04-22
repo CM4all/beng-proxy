@@ -136,7 +136,8 @@ LbHttpRequest::OnTranslateResponse(TranslateResponse &response) noexcept
 			Destroy();
 
 			c.LogSendError(_request,
-				       std::make_exception_ptr(std::runtime_error("No such pool")));
+				       std::make_exception_ptr(std::runtime_error("No such pool")),
+				       1);
 			return;
 		}
 
@@ -153,7 +154,8 @@ LbHttpRequest::OnTranslateResponse(TranslateResponse &response) noexcept
 		Destroy();
 
 		c.LogSendError(_request,
-			       std::make_exception_ptr(std::runtime_error("Invalid translation server response")));
+			       std::make_exception_ptr(std::runtime_error("Invalid translation server response")),
+			       1);
 	}
 }
 
@@ -165,7 +167,7 @@ LbHttpRequest::OnTranslateError(std::exception_ptr ep) noexcept
 
 	Destroy();
 
-	_connection.LogSendError(_request, ep);
+	_connection.LogSendError(_request, ep, 1);
 }
 
 /*
