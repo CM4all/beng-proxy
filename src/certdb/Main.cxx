@@ -601,9 +601,7 @@ Acme(ConstBuffer<const char *> args)
 	if (args.empty())
 		throw "acme commands:\n"
 			"  new-reg EMAIL\n"
-			"  new-authz HOST\n"
-			"  new-cert HANDLE HOST...\n"
-			"  new-authz-cert HANDLE HOST...\n"
+			"  new-order HANDLE HOST...\n"
 			"  renew-cert HANDLE\n"
 			"\n"
 			"options:\n"
