@@ -90,6 +90,29 @@ IsHttpClientServerFailure(std::exception_ptr ep) noexcept
 	}
 }
 
+bool
+IsHttpClientRetryFailure(std::exception_ptr ep) noexcept
+{
+	try {
+		FindRetrowNested<HttpClientError>(ep);
+		return false;
+	} catch (const HttpClientError &e) {
+		switch (e.GetCode()) {
+		case HttpClientErrorCode::UNSPECIFIED:
+		case HttpClientErrorCode::TIMEOUT:
+			return false;
+
+		case HttpClientErrorCode::REFUSED:
+		case HttpClientErrorCode::PREMATURE:
+		case HttpClientErrorCode::IO:
+		case HttpClientErrorCode::GARBAGE:
+			return true;
+		}
+
+		return false;
+	}
+}
+
 /**
  * With a request body of this size or larger, we send "Expect:
  * 100-continue".

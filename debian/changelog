@@ -3,6 +3,7 @@ cm4all-beng-proxy (16.11) unstable; urgency=low
   * bp: discard LHTTP processes on memory shortage
   * bp: fix memory leak
   * bp: fix "Malformed URI" response status (and don't log it)
+  * bp: retry after I/O error on outgoing HTTP connection
   * lb: lower log level for translation server errors
   * lb/systemd: implement "reload"
   * spawn: higher OOM score adjustment for jailed processes

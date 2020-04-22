@@ -104,6 +104,12 @@ bool
 IsHttpClientServerFailure(std::exception_ptr ep) noexcept;
 
 /**
+ * Is it worth retrying after this error?
+ */
+bool
+IsHttpClientRetryFailure(std::exception_ptr ep) noexcept;
+
+/**
  * Sends a HTTP request on a socket, and passes the response to the
  * handler.
  *
