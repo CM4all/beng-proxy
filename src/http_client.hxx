@@ -37,6 +37,7 @@
 #pragma once
 
 #include "http/Method.h"
+#include "util/Compiler.h"
 
 #include <stdexcept>
 
@@ -98,8 +99,9 @@ public:
  * Is the specified error a server failure, that justifies
  * blacklisting the server for a while?
  */
+gcc_pure
 bool
-IsHttpClientServerFailure(std::exception_ptr ep);
+IsHttpClientServerFailure(std::exception_ptr ep) noexcept;
 
 /**
  * Sends a HTTP request on a socket, and passes the response to the
@@ -127,4 +129,4 @@ http_client_request(struct pool &pool,
 		    HttpHeaders &&headers,
 		    UnusedIstreamPtr body, bool expect_100,
 		    HttpResponseHandler &handler,
-		    CancellablePointer &cancel_ptr);
+		    CancellablePointer &cancel_ptr) noexcept;
