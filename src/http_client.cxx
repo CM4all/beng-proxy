@@ -80,13 +80,36 @@
 #include <unistd.h>
 
 bool
-IsHttpClientServerFailure(std::exception_ptr ep)
+IsHttpClientServerFailure(std::exception_ptr ep) noexcept
 {
 	try {
 		FindRetrowNested<HttpClientError>(ep);
 		return false;
 	} catch (const HttpClientError &e) {
 		return e.GetCode() != HttpClientErrorCode::UNSPECIFIED;
+	}
+}
+
+bool
+IsHttpClientRetryFailure(std::exception_ptr ep) noexcept
+{
+	try {
+		FindRetrowNested<HttpClientError>(ep);
+		return false;
+	} catch (const HttpClientError &e) {
+		switch (e.GetCode()) {
+		case HttpClientErrorCode::UNSPECIFIED:
+		case HttpClientErrorCode::TIMEOUT:
+			return false;
+
+		case HttpClientErrorCode::REFUSED:
+		case HttpClientErrorCode::PREMATURE:
+		case HttpClientErrorCode::IO:
+		case HttpClientErrorCode::GARBAGE:
+			return true;
+		}
+
+		return false;
 	}
 }
 
@@ -174,7 +197,7 @@ class HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, Des
 
 		HttpResponseHandler &handler;
 
-		explicit Request(HttpResponseHandler &_handler)
+		explicit Request(HttpResponseHandler &_handler) noexcept
 			:istream(nullptr), handler(_handler) {}
 	} request;
 
@@ -226,7 +249,7 @@ public:
 		   HttpHeaders &&headers,
 		   UnusedIstreamPtr body, bool expect_100,
 		   HttpResponseHandler &handler,
-		   CancellablePointer &cancel_ptr);
+		   CancellablePointer &cancel_ptr) noexcept;
 
 	~HttpClient() noexcept {
 		if (!socket.IsReleased())
@@ -242,19 +265,19 @@ private:
 	 * @return false if the #HttpClient has released the socket
 	 */
 	gcc_pure
-	bool IsConnected() const {
+	bool IsConnected() const noexcept {
 		return socket.IsConnected();
 	}
 
 	gcc_pure
-	bool CheckDirect() const {
+	bool CheckDirect() const noexcept {
 		assert(socket.GetType() == FdType::FD_NONE || IsConnected());
 		assert(response.state == Response::State::BODY);
 
 		return response_body_reader.CheckDirect(socket.GetType());
 	}
 
-	void ScheduleWrite() {
+	void ScheduleWrite() noexcept {
 		assert(IsConnected());
 
 		socket.ScheduleWrite();
@@ -263,7 +286,7 @@ private:
 	/**
 	 * Release the socket held by this object.
 	 */
-	void ReleaseSocket(bool preserve, bool reuse) {
+	void ReleaseSocket(bool preserve, bool reuse) noexcept {
 		socket.Release(preserve, reuse);
 	}
 
@@ -283,24 +306,24 @@ private:
 		_handler.InvokeError(ep);
 	}
 
-	std::exception_ptr PrefixError(std::exception_ptr ep) const {
+	std::exception_ptr PrefixError(std::exception_ptr ep) const noexcept {
 		return NestException(ep,
 				     FormatRuntimeError("error on HTTP connection to '%s'",
 							peer_name));
 	}
 
-	void AbortResponseHeaders(std::exception_ptr ep);
-	void AbortResponseBody(std::exception_ptr ep);
-	void AbortResponse(std::exception_ptr ep);
+	void AbortResponseHeaders(std::exception_ptr ep) noexcept;
+	void AbortResponseBody(std::exception_ptr ep) noexcept;
+	void AbortResponse(std::exception_ptr ep) noexcept;
 
-	void AbortResponse(HttpClientErrorCode code, const char *msg) {
+	void AbortResponse(HttpClientErrorCode code, const char *msg) noexcept {
 		AbortResponse(std::make_exception_ptr(HttpClientError(code, msg)));
 	}
 
 	void ResponseFinished() noexcept;
 
 	gcc_pure
-	off_t GetAvailable(bool partial) const;
+	off_t GetAvailable(bool partial) const noexcept;
 
 	void Read();
 
@@ -367,7 +390,7 @@ private:
  * Abort receiving the response status/headers from the HTTP server.
  */
 void
-HttpClient::AbortResponseHeaders(std::exception_ptr ep)
+HttpClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
 {
 	assert(response.state == Response::State::STATUS ||
 	       response.state == Response::State::HEADERS);
@@ -385,7 +408,7 @@ HttpClient::AbortResponseHeaders(std::exception_ptr ep)
  * Abort receiving the response status/headers from the HTTP server.
  */
 void
-HttpClient::AbortResponseBody(std::exception_ptr ep)
+HttpClient::AbortResponseBody(std::exception_ptr ep) noexcept
 {
 	assert(response.state == Response::State::BODY);
 
@@ -409,7 +432,7 @@ HttpClient::AbortResponseBody(std::exception_ptr ep)
  * server.
  */
 void
-HttpClient::AbortResponse(std::exception_ptr ep)
+HttpClient::AbortResponse(std::exception_ptr ep) noexcept
 {
 	assert(response.state == Response::State::STATUS ||
 	       response.state == Response::State::HEADERS ||
@@ -428,7 +451,7 @@ HttpClient::AbortResponse(std::exception_ptr ep)
  */
 
 inline off_t
-HttpClient::GetAvailable(bool partial) const
+HttpClient::GetAvailable(bool partial) const noexcept
 {
 	assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
 	assert(response.state == Response::State::BODY);
@@ -1293,7 +1316,7 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 		       HttpHeaders &&headers,
 		       UnusedIstreamPtr body, bool expect_100,
 		       HttpResponseHandler &handler,
-		       CancellablePointer &cancel_ptr)
+		       CancellablePointer &cancel_ptr) noexcept
 	:PoolLeakDetector(_pool),
 	 pool(_pool), caller_pool(_caller_pool),
 	 peer_name(_peer_name),
@@ -1396,7 +1419,7 @@ http_client_request(struct pool &caller_pool,
 		    HttpHeaders &&headers,
 		    UnusedIstreamPtr body, bool expect_100,
 		    HttpResponseHandler &handler,
-		    CancellablePointer &cancel_ptr)
+		    CancellablePointer &cancel_ptr) noexcept
 {
 	assert(http_method_is_valid(method));
 

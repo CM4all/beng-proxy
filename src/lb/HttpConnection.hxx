@@ -99,7 +99,8 @@ struct LbHttpConnection final
 	}
 
 	void SendError(IncomingHttpRequest &request, std::exception_ptr ep);
-	void LogSendError(IncomingHttpRequest &request, std::exception_ptr ep);
+	void LogSendError(IncomingHttpRequest &request, std::exception_ptr ep,
+			  unsigned log_level=2);
 
 	/* virtual methods from class HttpServerConnectionHandler */
 	void RequestHeadersFinished(IncomingHttpRequest &request) noexcept override;

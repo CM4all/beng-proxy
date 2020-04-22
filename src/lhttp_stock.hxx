@@ -57,6 +57,12 @@ lhttp_stock_new(unsigned limit, unsigned max_idle,
 void
 lhttp_stock_free(LhttpStock *lhttp_stock) noexcept;
 
+/**
+ * Discard one or more processes to free some memory.
+ */
+void
+lhttp_stock_discard_some(LhttpStock &ls) noexcept;
+
 void
 lhttp_stock_fade_all(LhttpStock &ls) noexcept;
 

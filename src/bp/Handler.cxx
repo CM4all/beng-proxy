@@ -63,6 +63,7 @@
 #include "ua_classification.hxx"
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
+#include "HttpMessageResponse.hxx"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -735,6 +736,17 @@ void
 Request::OnTranslateError(std::exception_ptr ep) noexcept
 {
 	InstallErrorTranslateResponse();
+
+	try {
+		std::rethrow_exception(ep);
+	} catch (const HttpMessageResponse &response) {
+		/* don't log this, just send the response directly and
+		   return */
+		DispatchResponse(response.GetStatus(), response.what());
+		return;
+	} catch (...) {
+	}
+
 	LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
 			 "Configuration server failed", ep, 1);
 }

@@ -734,12 +734,22 @@ class SocketEventPrinter:
     def to_string(self):
         return 'SocketEvent{%d, scheduled=0x%x, callback=%s}' % (self.val['fd']['fd'], self.val['scheduled_flags'], self.val['callback'])
 
+def format_steady_tp(tp, event_loop):
+    steady_cache = event_loop['steady_clock_cache']
+    now = steady_cache['value']
+    delta = int(tp['__d']['__r'] - now['__d']['__r'])
+    return '%fs' % (delta / 1000000000)
+
 class TimerEventPrinter:
     def __init__(self, val):
         self.val = val
 
     def to_string(self):
-        return 'TimerEvent{scheduled=%s, callback=%s}' % (not is_null(self.val['parent_']), self.val['callback'])
+        if is_null(self.val['parent_']):
+            due = 'none'
+        else:
+            due = format_steady_tp(self.val['due'], self.val['loop'])
+        return 'TimerEvent{%s, callback=%s}' % (due, self.val['callback'])
 
 class DeferEventPrinter:
     def __init__(self, val):

@@ -64,7 +64,12 @@ ChildStockClass::GetChildTag(void *) const noexcept
 	return nullptr;
 }
 
-class ChildStockItem final : public StockItem, ExitListener {
+class ChildStockItem final
+	: public StockItem,
+	  public ChildStockItemHook,
+	  ExitListener
+{
+	ChildStock &child_stock;
 	SpawnService &spawn_service;
 
 	const std::string tag;
@@ -78,9 +83,11 @@ class ChildStockItem final : public StockItem, ExitListener {
 
 public:
 	ChildStockItem(CreateStockItem c,
+		       ChildStock &_child_stock,
 		       SpawnService &_spawn_service,
 		       const char *_tag) noexcept
 		:StockItem(c),
+		 child_stock(_child_stock),
 		 spawn_service(_spawn_service),
 		 tag(_tag != nullptr ? _tag : "") {}
 
@@ -129,6 +136,10 @@ public:
 		assert(!busy);
 		busy = true;
 
+		/* remove from ChildStock::idle list */
+		assert(ChildStockItemHook::is_linked());
+		ChildStockItemHook::unlink();
+
 		return true;
 	}
 
@@ -139,6 +150,9 @@ public:
 		/* reuse this item only if the child process hasn't exited */
 		if (pid <= 0)
 			return false;
+
+		assert(!ChildStockItemHook::is_linked());
+		child_stock.AddIdle(*this);
 
 		return true;
 	}
@@ -183,7 +197,7 @@ void
 ChildStock::Create(CreateStockItem c, StockRequest request,
 		   CancellablePointer &)
 {
-	auto *item = new ChildStockItem(c, spawn_service,
+	auto *item = new ChildStockItem(c, *this, spawn_service,
 					cls.GetChildTag(request.get()));
 
 	try {
@@ -226,6 +240,8 @@ ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
 {
 }
 
+ChildStock::~ChildStock() noexcept = default;
+
 void
 ChildStock::FadeTag(const char *tag)
 {
@@ -233,6 +249,25 @@ ChildStock::FadeTag(const char *tag)
 		const auto &item = (const ChildStockItem &)_item;
 		return item.IsTag(tag);
 	});
+}
+
+inline void
+ChildStock::AddIdle(ChildStockItem &item) noexcept
+{
+	idle.push_back(item);
+}
+
+void
+ChildStock::DiscardOldestIdle() noexcept
+{
+	if (idle.empty())
+		return;
+
+	/* the list front is the oldest item (the one that hasn't been
+	   used for the longest time) */
+	auto &item = idle.front();
+	assert(item.is_idle);
+	item.InvokeIdleDisconnect();
 }
 
 UniqueSocketDescriptor

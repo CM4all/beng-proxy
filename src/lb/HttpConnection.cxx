@@ -208,9 +208,10 @@ LbHttpConnection::SendError(IncomingHttpRequest &request, std::exception_ptr ep)
 
 void
 LbHttpConnection::LogSendError(IncomingHttpRequest &request,
-			       std::exception_ptr ep)
+			       std::exception_ptr ep,
+			       unsigned log_level)
 {
-	logger(2, ep);
+	logger(log_level, ep);
 	SendError(request, ep);
 }
 

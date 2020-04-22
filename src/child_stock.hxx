@@ -42,6 +42,7 @@ struct PreparedChildProcess;
 class UniqueSocketDescriptor;
 class EventLoop;
 class SpawnService;
+class ChildStockItem;
 
 /*
  * Launch processes and connect a stream socket to them.
@@ -72,6 +73,10 @@ public:
 				  PreparedChildProcess &p) = 0;
 };
 
+using ChildStockItemHook =
+	boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>,
+					 boost::intrusive::tag<ChildStockClass>>;
+
 /**
  * A stock which spawns and manages reusable child processes
  * (e.g. FastCGI servers).  It is based on #StockMap.  The meaning of
@@ -96,6 +101,14 @@ class ChildStock final : StockClass {
 		}
 	};
 
+	/**
+	 * A list of idle items, the most recently used at the end.
+	 * This is used by DiscardOldestIdle().
+	 */
+	boost::intrusive::list<ChildStockItem,
+			       boost::intrusive::base_hook<ChildStockItemHook>,
+			       boost::intrusive::constant_time_size<false>> idle;
+
 	MyStockMap map;
 
 	SpawnService &spawn_service;
@@ -115,6 +128,8 @@ public:
 		   const ChildErrorLogOptions &_log_options,
 		   unsigned _limit, unsigned _max_idle) noexcept;
 
+	~ChildStock() noexcept;
+
 	StockMap &GetStockMap() noexcept {
 		return map;
 	}
@@ -131,6 +146,16 @@ public:
 	 * "Fade" all child processes with the given tag.
 	 */
 	void FadeTag(const char *tag);
+
+	/**
+	 * For internal use only.
+	 */
+	void AddIdle(ChildStockItem &item) noexcept;
+
+	/**
+	 * Kill the oldest idle child process across all stocks.
+	 */
+	void DiscardOldestIdle() noexcept;
 
 private:
 	/* virtual methods from class StockClass */

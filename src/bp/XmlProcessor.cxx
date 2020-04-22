@@ -239,8 +239,12 @@ private:
 
 	/**
 	 * Throws an exception if the widget is not allowed here.
+	 *
+	 * @param child_widget the #Widget to be embedded; it is
+	 * passed by value to guarantee it gets freed by this method,
+	 * even if an exception gets thrown
 	 */
-	Widget &PrepareEmbedWidget(WidgetPtr &&child_widget);
+	Widget &PrepareEmbedWidget(WidgetPtr child_widget);
 
 	UnusedIstreamPtr EmbedWidget(Widget &child_widget) noexcept;
 	UnusedIstreamPtr OpenWidgetElement(WidgetPtr &&child_widget) noexcept;
@@ -951,7 +955,7 @@ widget_catch_callback(std::exception_ptr ep, void *ctx) noexcept
 }
 
 inline Widget &
-XmlProcessor::PrepareEmbedWidget(WidgetPtr &&child_widget)
+XmlProcessor::PrepareEmbedWidget(WidgetPtr child_widget)
 {
 	if (child_widget->class_name == nullptr)
 		throw std::runtime_error("widget without a class");

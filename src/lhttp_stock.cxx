@@ -65,6 +65,15 @@ public:
 		   SocketDescriptor log_socket,
 		   const ChildErrorLogOptions &log_options) noexcept;
 
+	void DiscardSome() noexcept {
+		/* first close idle connections, hopefully turning
+		   child processes idle */
+		hstock.DiscardUnused();
+
+		/* kill the oldest child process */
+		child_stock.DiscardOldestIdle();
+	}
+
 	void FadeAll() noexcept {
 		hstock.FadeAll();
 		child_stock.GetStockMap().FadeAll();
@@ -347,6 +356,12 @@ void
 lhttp_stock_free(LhttpStock *ls) noexcept
 {
 	delete ls;
+}
+
+void
+lhttp_stock_discard_some(LhttpStock &ls) noexcept
+{
+	ls.DiscardSome();
 }
 
 void

@@ -237,6 +237,19 @@ BpInstance::FadeTaggedChildren(const char *tag) noexcept
 }
 
 void
+BpInstance::OnMemoryWarning(uint64_t memory_usage,
+			    uint64_t memory_max) noexcept
+{
+	fprintf(stderr, "Spawner memory warning: %" PRIu64 " of %" PRIu64 " bytes used\n",
+		memory_usage, memory_max);
+
+	if (lhttp_stock != nullptr)
+		lhttp_stock_discard_some(*lhttp_stock);
+
+	// TODO: stop unused child processes
+}
+
+void
 BpInstance::SaveSessions() noexcept
 {
 	session_save();

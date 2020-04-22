@@ -174,23 +174,10 @@ HttpRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 	_handler.InvokeResponse(status, std::move(_headers), std::move(_body));
 }
 
-static bool
-HasHttpClientErrorCode(std::exception_ptr ep,
-		       HttpClientErrorCode code) noexcept
-{
-	try {
-		FindRetrowNested<HttpClientError>(ep);
-		return false;
-	} catch (const HttpClientError &e) {
-		return e.GetCode() == code;
-	}
-}
-
 void
 HttpRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
-	if (retries > 0 &&
-	    HasHttpClientErrorCode(ep, HttpClientErrorCode::REFUSED)) {
+	if (retries > 0 && IsHttpClientRetryFailure(ep)) {
 		/* the server has closed the connection prematurely, maybe
 		   because it didn't want to get any further requests on that
 		   TCP connection.  Let's try again. */

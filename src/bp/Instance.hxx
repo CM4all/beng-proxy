@@ -39,6 +39,7 @@
 #include "event/ShutdownListener.hxx"
 #include "event/TimerEvent.hxx"
 #include "spawn/Registry.hxx"
+#include "spawn/Handler.hxx"
 #include "control/Handler.hxx"
 #include "net/FailureManager.hxx"
 #include "util/Background.hxx"
@@ -83,7 +84,7 @@ class BPListener;
 struct BpConnection;
 namespace NgHttp2 { class Stock; }
 
-struct BpInstance final : PInstance, ControlHandler {
+struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	BpCmdLine cmdline;
 	BpConfig config;
 
@@ -244,6 +245,10 @@ struct BpInstance final : PInstance, ControlHandler {
 			     SocketAddress address, int uid) override;
 
 	void OnControlError(std::exception_ptr ep) noexcept override;
+
+	/* virtual methods from class SpawnServerClientHandler */
+	void OnMemoryWarning(uint64_t memory_usage,
+			     uint64_t memory_max) noexcept override;
 
 private:
 	void RespawnWorkerCallback() noexcept;
