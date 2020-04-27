@@ -386,7 +386,12 @@ static bool
 ValidateIdentifier(const AcmeAuthorization &authz,
 		   const std::set<std::string> &identifiers) noexcept
 {
-	return identifiers.find(authz.identifier) != identifiers.end();
+	return identifiers.find(authz.identifier) != identifiers.end() ||
+		/* if a wildcard certificate is requested, the ACME
+		   server strips the "*." from the specified
+		   identifier; this search re-adds it for the
+		   lookup */
+		identifiers.find("*." + authz.identifier) != identifiers.end();
 }
 
 static auto
