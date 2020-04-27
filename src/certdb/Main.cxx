@@ -387,12 +387,16 @@ CollectPendingAuthorizations(const AcmeConfig &config,
 			     EVP_PKEY &account_key,
 			     AcmeClient &client,
 			     StepProgress &progress,
+			     const std::set<std::string> &identifiers,
 			     const std::forward_list<std::string> &authorizations)
 {
 	std::forward_list<PendingAuthorization> pending_authz;
 
 	for (const auto &i : authorizations) {
 		auto ar = client.Authorize(account_key, i.c_str());
+		if (identifiers.find(ar.identifier) == identifiers.end())
+			throw FormatRuntimeError("Invalid identifier received: '%s'",
+						 ar.identifier.c_str());
 
 		const auto *challenge = SelectChallenge(config, account_key,
 							i, ar,
@@ -415,10 +419,12 @@ AcmeAuthorize(const AcmeConfig &config,
 	      EVP_PKEY &account_key,
 	      AcmeClient &client,
 	      StepProgress &progress,
+	      const std::set<std::string> &identifiers,
 	      const std::forward_list<std::string> &authorizations)
 {
 	auto pending_authz = CollectPendingAuthorizations(config, account_key,
 							  client, progress,
+							  identifiers,
 							  authorizations);
 	progress();
 
@@ -481,7 +487,7 @@ AcmeNewOrder(const AcmeConfig &config,
 	progress();
 
 	AcmeAuthorize(config, account_key, client, progress,
-		      order.authorizations);
+		      identifiers, order.authorizations);
 
 	const auto cert_key = GenerateRsaKey();
 	const auto req = MakeCertRequest(*cert_key, identifiers);
@@ -551,7 +557,7 @@ AcmeRenewCert(const AcmeConfig &config, EVP_PKEY &account_key,
 	progress();
 
 	AcmeAuthorize(config, account_key, client, progress,
-		      order.authorizations);
+		      names, order.authorizations);
 
 	const auto req = MakeCertRequest(old_key, old_cert);
 
