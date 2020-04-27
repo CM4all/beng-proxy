@@ -382,6 +382,13 @@ SelectChallenge(const AcmeConfig &config,
 	return nullptr;
 }
 
+static bool
+ValidateIdentifier(const AcmeAuthorization &authz,
+		   const std::set<std::string> &identifiers) noexcept
+{
+	return identifiers.find(authz.identifier) != identifiers.end();
+}
+
 static auto
 CollectPendingAuthorizations(const AcmeConfig &config,
 			     EVP_PKEY &account_key,
@@ -394,7 +401,7 @@ CollectPendingAuthorizations(const AcmeConfig &config,
 
 	for (const auto &i : authorizations) {
 		auto ar = client.Authorize(account_key, i.c_str());
-		if (identifiers.find(ar.identifier) == identifiers.end())
+		if (!ValidateIdentifier(ar, identifiers))
 			throw FormatRuntimeError("Invalid identifier received: '%s'",
 						 ar.identifier.c_str());
 
