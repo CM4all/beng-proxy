@@ -362,6 +362,27 @@ struct PendingAuthorization {
 		:url(_url), file(directory, challenge, account_key) {}
 };
 
+static const AcmeChallenge *
+SelectChallenge(const AcmeConfig &config,
+		EVP_PKEY &account_key,
+		const std::string &authz_url,
+		const AcmeAuthorization &authz_response,
+		std::forward_list<PendingAuthorization> &pending_authz)
+{
+	if (!config.challenge_directory.empty()) {
+		const auto *challenge =
+			authz_response.FindChallengeByType("http-01");
+		if (challenge != nullptr) {
+			pending_authz.emplace_front(authz_url,
+						    config.challenge_directory,
+						    *challenge, account_key);
+			return challenge;
+		}
+	}
+
+	return nullptr;
+}
+
 static auto
 CollectPendingAuthorizations(const AcmeConfig &config,
 			     EVP_PKEY &account_key,
@@ -374,12 +395,12 @@ CollectPendingAuthorizations(const AcmeConfig &config,
 	for (const auto &i : authorizations) {
 		auto ar = client.Authorize(account_key, i.c_str());
 
-		const auto *challenge = ar.FindChallengeByType("http-01");
+		const auto *challenge = SelectChallenge(config, account_key,
+							i, ar,
+							pending_authz);
 		if (challenge == nullptr)
-			throw std::runtime_error("No http-01 challenge found");
+			throw std::runtime_error("No compatible challenge found");
 
-		pending_authz.emplace_front(i, config.challenge_directory,
-					    *challenge, account_key);
 		progress();
 
 		auto challenge2 = client.UpdateChallenge(account_key, *challenge);
