@@ -1063,6 +1063,7 @@ executable(
   'src/certdb/JsonUtil.cxx',
   'src/certdb/AcmeError.cxx',
   'src/certdb/AcmeHttp.cxx',
+  'src/certdb/AcmeDns.cxx',
   'src/certdb/AcmeClient.cxx',
   'src/certdb/AcmeChallenge.cxx',
   'src/certdb/AcmeAuthorization.cxx',

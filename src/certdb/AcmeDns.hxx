@@ -32,23 +32,32 @@
 
 #pragma once
 
+#include "openssl/ossl_typ.h"
+
 #include <string>
 
-struct AcmeConfig {
-	std::string account_key_path = "/etc/cm4all/acme/account.key";
-	std::string account_key_id;
+struct AcmeConfig;
+struct AcmeChallenge;
 
-	/**
-	 * Specifies the directory mapped to
-	 * "http://example.com/.well-known/acme-challenge/".
-	 */
-	std::string challenge_directory;
+void
+SetDnsTxt(const AcmeConfig &config, const char *host, const char *value);
 
-	std::string dns_txt_program;
+void
+SetDns01(const AcmeConfig &config, const char *host,
+	 const AcmeChallenge &challenge, EVP_PKEY &account_key);
 
-	bool debug = false;
+class Dns01ChallengeRecord {
+	const AcmeConfig &config;
+	const std::string host;
 
-	bool staging = false;
+public:
+	Dns01ChallengeRecord(const AcmeConfig &_config,
+			     const std::string &_host,
+			     const AcmeChallenge &challenge,
+			     EVP_PKEY &account_key);
 
-	bool fake = false;
+	~Dns01ChallengeRecord() noexcept;
+
+	Dns01ChallengeRecord(const Dns01ChallengeRecord &) = delete;
+	Dns01ChallengeRecord &operator=(const Dns01ChallengeRecord &) = delete;
 };

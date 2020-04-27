@@ -777,3 +777,28 @@ specified ``--challenge-directory`` path (on all domains).
 
 After the program finishes, the new certificate should be usable
 immediately.
+
+Wildcards
+~~~~~~~~~
+
+To obtain a certificate for a wildcard, the ACME client needs to use
+DNS-based authorization (``dns-01``) instead of HTTP-based
+(``http-01``).  Use the command-line option ``--dns-txt-program`` to
+specify a program which updates the ``TXT`` record of an ACME
+challenge host::
+
+   cm4all-certdb acme --staging \
+     --dns-txt-program /usr/lib/cm4all/bin/set-acme-challenge-dns-txt \
+     --account-key-id https://staging.api.letsencrypt.org/acme/acct/42 \
+     new-order example *.example.com
+
+This program is invoked twice: once to set a ``TXT`` record and again
+to delete the ``TXT`` record after finishing authorization.  It has
+two parameters:
+
+1. the full-qualified DNS host name (the program shall prepend the
+   prefix ``_acme-challenge.``)
+2. the ``TXT`` record value
+
+If the second parameter is an empty string, the program shall delete
+the ``TXT`` record (or restore its original value).

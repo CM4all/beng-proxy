@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.4) unstable; urgency=low
 
-  * 
+  * certdb: support ACME wild card requests using dns-01
 
  --   
 

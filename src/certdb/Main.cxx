@@ -39,6 +39,7 @@
 #include "AcmeChallenge.hxx"
 #include "AcmeKey.hxx"
 #include "AcmeHttp.hxx"
+#include "AcmeDns.hxx"
 #include "AcmeConfig.hxx"
 #include "Config.hxx"
 #include "CertDatabase.hxx"
@@ -352,13 +353,33 @@ MakeCertRequest(EVP_PKEY &key, X509 &src)
 
 struct PendingAuthorization {
 	std::string url;
-	Http01ChallengeFile file;
+	std::unique_ptr<Http01ChallengeFile> file;
+	std::unique_ptr<Dns01ChallengeRecord> dns;
 
-	PendingAuthorization(const std::string &_url,
+	struct Http01 {};
+
+	PendingAuthorization(Http01,
+			     const std::string &_url,
 			     const std::string &directory,
 			     const AcmeChallenge &challenge,
 			     EVP_PKEY &account_key)
-		:url(_url), file(directory, challenge, account_key) {}
+		:url(_url),
+		 file(std::make_unique<Http01ChallengeFile>(directory, challenge,
+							    account_key)) {}
+	struct Dns01 {};
+
+	template<typename H>
+	PendingAuthorization(Dns01,
+			     const AcmeConfig &config,
+			     const std::string &_url,
+			     H &&host,
+			     const AcmeChallenge &challenge,
+			     EVP_PKEY &account_key)
+		:url(_url),
+		 dns(std::make_unique<Dns01ChallengeRecord>(config,
+							    std::forward<H>(host),
+							    challenge,
+							    account_key)) {}
 };
 
 static const AcmeChallenge *
@@ -372,8 +393,21 @@ SelectChallenge(const AcmeConfig &config,
 		const auto *challenge =
 			authz_response.FindChallengeByType("http-01");
 		if (challenge != nullptr) {
-			pending_authz.emplace_front(authz_url,
+			pending_authz.emplace_front(PendingAuthorization::Http01{},
+						    authz_url,
 						    config.challenge_directory,
+						    *challenge, account_key);
+			return challenge;
+		}
+	}
+
+	if (!config.dns_txt_program.empty()) {
+		const auto *challenge =
+			authz_response.FindChallengeByType("dns-01");
+		if (challenge != nullptr) {
+			pending_authz.emplace_front(PendingAuthorization::Dns01{},
+						    config, authz_url,
+						    authz_response.identifier,
 						    *challenge, account_key);
 			return challenge;
 		}
@@ -481,8 +515,9 @@ AcmeNewOrder(const AcmeConfig &config,
 	     const char *handle,
 	     const std::set<std::string> &identifiers)
 {
-	if (config.challenge_directory.empty())
-		throw "No --challenge-directory specified";
+	if (config.challenge_directory.empty() &&
+	    config.dns_txt_program.empty())
+		throw "Neither --challenge-directory nor --dns-txt-program specified";
 
 	AcmeClient::OrderRequest order_request;
 	size_t n_identifiers = 0;
@@ -546,8 +581,9 @@ AcmeRenewCert(const AcmeConfig &config, EVP_PKEY &account_key,
 	      WorkshopProgress _progress,
 	      const char *handle)
 {
-	if (config.challenge_directory.empty())
-		throw "No --challenge-directory specified";
+	if (config.challenge_directory.empty() &&
+	    config.dns_txt_program.empty())
+		throw "Neither --challenge-directory nor --dns-txt-program specified";
 
 	const auto old_cert_key = db.GetServerCertificateKeyByHandle(handle);
 	if (!old_cert_key.second)
@@ -635,6 +671,14 @@ Acme(ConstBuffer<const char *> args)
 
 			config.challenge_directory = args.front();
 			args.shift();
+		} else if (StringIsEqual(arg, "--dns-txt-program")) {
+			args.shift();
+
+			if (args.empty())
+				throw std::runtime_error("Program missing");
+
+			config.dns_txt_program = args.front();
+			args.shift();
 		} else
 			break;
 	}
@@ -650,6 +694,8 @@ Acme(ConstBuffer<const char *> args)
 			"  --debug       enable debug mode\n"
 			"  --account-key FILE\n"
 			"                load the ACME account key from this file\n"
+			"  --dns-txt-program PATH\n"
+			"                use this program to set TXT records for dns-01\n"
 			"  --challenge-directory PATH\n"
 			"                use http-01 with this challenge directory\n";
 
