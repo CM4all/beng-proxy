@@ -286,7 +286,7 @@ AddDnsAltNames(X509_REQ &req, const L &hosts)
 {
 	OpenSSL::UniqueGeneralNames ns;
 	for (const auto &host : hosts)
-		ns.push_back(OpenSSL::ToDnsName(host));
+		ns.push_back(OpenSSL::ToDnsName(host.c_str()));
 
 	AddAltNames(req, ns);
 }
@@ -315,8 +315,7 @@ CopyDnsAltNames(X509_REQ &req, X509 &src)
 }
 
 static UniqueX509_REQ
-MakeCertRequest(EVP_PKEY &key,
-		ConstBuffer<const char *> alt_hosts)
+MakeCertRequest(EVP_PKEY &key, const std::set<std::string> &alt_hosts)
 {
 	UniqueX509_REQ req(X509_REQ_new());
 	if (req == nullptr)
@@ -462,17 +461,20 @@ AcmeNewOrder(const AcmeConfig &config,
 	     AcmeClient &client,
 	     WorkshopProgress _progress,
 	     const char *handle,
-	     ConstBuffer<const char *> alt_hosts)
+	     const std::set<std::string> &identifiers)
 {
 	if (config.challenge_directory.empty())
 		throw "No --challenge-directory specified";
 
 	AcmeClient::OrderRequest order_request;
-	for (const char *host : alt_hosts)
-		order_request.identifiers.emplace_front(host);
+	size_t n_identifiers = 0;
+	for (const auto &i : identifiers) {
+		order_request.identifiers.emplace_front(i);
+		++n_identifiers;
+	}
 
 	StepProgress progress(_progress,
-			      alt_hosts.size * 3 + 5);
+			      n_identifiers * 3 + 5);
 
 	const auto order = client.NewOrder(account_key,
 					   std::move(order_request));
@@ -482,7 +484,7 @@ AcmeNewOrder(const AcmeConfig &config,
 		      order.authorizations);
 
 	const auto cert_key = GenerateRsaKey();
-	const auto req = MakeCertRequest(*cert_key, alt_hosts);
+	const auto req = MakeCertRequest(*cert_key, identifiers);
 
 	const auto order2 = client.FinalizeOrder(account_key, order, *req);
 	progress();
@@ -654,6 +656,10 @@ Acme(ConstBuffer<const char *> args)
 
 		const char *handle = args.shift();
 
+		std::set<std::string> identifiers;
+		for (const char *i : args)
+			identifiers.emplace(i);
+
 		const ScopeSslGlobalInit ssl_init;
 		const AcmeKey key(key_path);
 
@@ -661,7 +667,7 @@ Acme(ConstBuffer<const char *> args)
 		AcmeClient client(config);
 
 		AcmeNewOrder(config, *key, db, client, root_progress,
-			     handle, args);
+			     handle, identifiers);
 		printf("OK\n");
 	} else if (strcmp(cmd, "renew-cert") == 0) {
 		if (args.size != 1)
