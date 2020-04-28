@@ -60,6 +60,12 @@ public:
 		HUGE_,
 		HOLD,
 		NOP,
+
+		/**
+		 * Close the kept-alive connection when the second
+		 * request is received.
+		 */
+		FAILING_KEEPALIVE,
 	};
 
 private:
@@ -70,6 +76,8 @@ private:
 	TimerEvent timer;
 
 	const Mode mode;
+
+	bool first = true;
 
 public:
 	DemoHttpServerConnection(struct pool &pool,

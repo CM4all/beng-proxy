@@ -158,6 +158,19 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 	case Mode::NOP:
 		cancel_ptr = *this;
 		break;
+
+	case Mode::FAILING_KEEPALIVE:
+		if (first) {
+			first = false;
+			request.SendResponse(HTTP_STATUS_OK, {},
+					     istream_memory_new(request.pool,
+								data, sizeof(data)));
+		} else {
+			http_server_connection_close(connection);
+			HttpConnectionClosed();
+		}
+
+		break;
 	}
 }
 

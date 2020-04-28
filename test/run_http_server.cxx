@@ -174,6 +174,8 @@ try {
 		parsed_mode = DemoHttpServerConnection::Mode::HOLD;
 	else if (strcmp(mode, "nop") == 0)
 		parsed_mode = DemoHttpServerConnection::Mode::NOP;
+	else if (strcmp(mode, "failing-keepalive") == 0)
+		parsed_mode = DemoHttpServerConnection::Mode::FAILING_KEEPALIVE;
 	else {
 		fprintf(stderr, "Unknown mode: %s\n", mode);
 		return EXIT_FAILURE;

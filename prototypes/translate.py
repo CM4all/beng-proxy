@@ -564,6 +564,14 @@ class Translation(Protocol):
             response.packet(TRANSLATE_APPEND, 'mirror')
             response.packet(TRANSLATE_LHTTP_URI, uri)
             response.packet(TRANSLATE_CONCURRENCY, '\x04\x00')
+        elif uri == '/lhttp/failing-keepalive':
+            response.packet(TRANSLATE_LHTTP_PATH,
+                            os.path.join(test_binary_path, 'run_http_server'))
+            response.packet(TRANSLATE_APPEND, 'accept')
+            response.packet(TRANSLATE_APPEND, '0')
+            response.packet(TRANSLATE_APPEND, 'failing-keepalive')
+            response.packet(TRANSLATE_LHTTP_URI, uri)
+            response.packet(TRANSLATE_CONCURRENCY, '\x04\x00')
         elif uri[:8] == '/apache/':
             response.packet(TRANSLATE_LHTTP_PATH, apache_lhttpd)
             response.packet(TRANSLATE_APPEND, '-DFOREGROUND')
