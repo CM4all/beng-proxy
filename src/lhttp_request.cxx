@@ -106,7 +106,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
 	      const StopwatchPtr &parent_stopwatch,
 	      const char *site_name,
 	      const LhttpAddress &address,
-	      http_method_t method, HttpHeaders &&headers,
+	      http_method_t method, StringMap &&_headers,
 	      UnusedIstreamPtr body,
 	      HttpResponseHandler &handler,
 	      CancellablePointer &cancel_ptr) noexcept
@@ -145,6 +145,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
 	auto request = NewFromPool<LhttpRequest>(pool, pool,
 						 event_loop, *stock_item);
 
+	HttpHeaders headers(std::move(_headers));
 	if (address.host_and_port != nullptr)
 		headers.Write("host", address.host_and_port);
 

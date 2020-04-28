@@ -41,7 +41,6 @@
 #include "file_address.hxx"
 #include "lhttp_request.hxx"
 #include "http/Address.hxx"
-#include "http/Headers.hxx"
 #include "cgi/Glue.hxx"
 #include "cgi/Address.hxx"
 #include "fcgi/Request.hxx"
@@ -49,7 +48,6 @@
 #include "was/Glue.hxx"
 #include "nfs/Address.hxx"
 #include "nfs/Glue.hxx"
-#include "http/HeaderWriter.hxx"
 #include "pipe_filter.hxx"
 #include "delegate/Address.hxx"
 #include "delegate/HttpRequest.hxx"
@@ -293,7 +291,7 @@ try {
 				     session_sticky,
 				     filter_factory,
 				     method, address.GetHttp(),
-				     HttpHeaders(std::move(headers)),
+				     std::move(headers),
 				     std::move(body),
 				     handler, cancel_ptr);
 		return;
@@ -303,7 +301,7 @@ try {
 			      parent_stopwatch,
 			      site_name,
 			      address.GetLhttp(),
-			      method, HttpHeaders(std::move(headers)),
+			      method, std::move(headers),
 			      std::move(body),
 			      handler, cancel_ptr);
 		return;

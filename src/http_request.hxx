@@ -44,7 +44,7 @@ class SocketFilterFactory;
 struct HttpAddress;
 class HttpResponseHandler;
 class CancellablePointer;
-class HttpHeaders;
+class StringMap;
 
 /**
  * High level HTTP client.
@@ -60,6 +60,6 @@ http_request(struct pool &pool, EventLoop &event_loop,
 	     SocketFilterFactory *filter_factory,
 	     http_method_t method,
 	     const HttpAddress &address,
-	     HttpHeaders &&headers, UnusedIstreamPtr body,
+	     StringMap &&headers, UnusedIstreamPtr body,
 	     HttpResponseHandler &handler,
 	     CancellablePointer &cancel_ptr);

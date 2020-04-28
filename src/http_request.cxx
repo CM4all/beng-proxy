@@ -101,7 +101,7 @@ public:
 		    SocketFilterFactory *_filter_factory,
 		    http_method_t _method,
 		    const HttpAddress &_address,
-		    HttpHeaders &&_headers,
+		    StringMap &&_headers,
 		    UnusedIstreamPtr _body,
 		    HttpResponseHandler &_handler,
 		    CancellablePointer &_cancel_ptr)
@@ -284,7 +284,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
 	     SocketFilterFactory *filter_factory,
 	     http_method_t method,
 	     const HttpAddress &uwa,
-	     HttpHeaders &&headers,
+	     StringMap &&headers,
 	     UnusedIstreamPtr body,
 	     HttpResponseHandler &handler,
 	     CancellablePointer &_cancel_ptr)
