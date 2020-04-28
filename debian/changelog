@@ -1,6 +1,6 @@
 cm4all-beng-proxy (16.12) unstable; urgency=low
 
-  * 
+  * lhttp: retry after temporary failures
 
  --   
 
