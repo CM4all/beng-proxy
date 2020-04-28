@@ -102,7 +102,7 @@ struct Connection {
 	void Request(struct pool *pool,
 		     Lease &lease,
 		     http_method_t method, const char *uri,
-		     StringMap &&headers,
+		     const StringMap &headers,
 		     UnusedIstreamPtr body,
 		     bool expect_100,
 		     HttpResponseHandler &handler,
@@ -110,7 +110,7 @@ struct Connection {
 		http_client_request(*pool, nullptr,
 				    socket, lease,
 				    "localhost",
-				    method, uri, HttpHeaders(std::move(headers)),
+				    method, uri, headers, {},
 				    std::move(body), expect_100,
 				    handler, cancel_ptr);
 	}

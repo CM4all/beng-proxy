@@ -171,7 +171,7 @@ LbResolveConnectRequest::OnStockItemReady(StockItem &item) noexcept
 			    *this,
 			    item.GetStockName(),
 			    request.method, request.uri,
-			    HttpHeaders(std::move(headers)),
+			    headers, {},
 			    std::move(body), true,
 			    *this, cancel_ptr);
 }

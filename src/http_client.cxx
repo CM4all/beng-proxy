@@ -31,7 +31,6 @@
  */
 
 #include "http_client.hxx"
-#include "http/Headers.hxx"
 #include "http/Upgrade.hxx"
 #include "http/List.hxx"
 #include "HttpResponseHandler.hxx"
@@ -246,7 +245,8 @@ public:
 		   FilteredSocket &_socket, Lease &lease,
 		   const char *_peer_name,
 		   http_method_t method, const char *uri,
-		   HttpHeaders &&headers,
+		   const StringMap &headers,
+		   GrowingBuffer &&more_headers,
 		   UnusedIstreamPtr body, bool expect_100,
 		   HttpResponseHandler &handler,
 		   CancellablePointer &cancel_ptr) noexcept;
@@ -1323,7 +1323,8 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 		       FilteredSocket &_socket, Lease &lease,
 		       const char *_peer_name,
 		       http_method_t method, const char *uri,
-		       HttpHeaders &&headers,
+		       const StringMap &headers,
+		       GrowingBuffer &&headers2,
 		       UnusedIstreamPtr body, bool expect_100,
 		       HttpResponseHandler &handler,
 		       CancellablePointer &cancel_ptr) noexcept
@@ -1352,14 +1353,15 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 
 	/* headers */
 
-	GrowingBuffer &headers2 = headers.GetBuffer();
-
 	const bool upgrade = body && http_is_upgrade(headers);
 	if (upgrade) {
 		/* forward hop-by-hop headers requesting the protocol
 		   upgrade */
-		headers.Write("connection", "upgrade");
-		headers.MoveToBuffer("upgrade");
+		header_write(headers2, "connection", "upgrade");
+
+		const char *value = headers.Get("upgrade");
+		if (value != nullptr)
+			header_write(headers2, "upgrade", value);
 	} else if (body) {
 		off_t content_length = body.GetAvailable(false);
 		if (content_length == (off_t)-1) {
@@ -1392,10 +1394,9 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 		}
 	}
 
-	GrowingBuffer headers3 = headers.ToBuffer();
-	headers3.Write("\r\n", 2);
+	headers2.Write("\r\n", 2);
 
-	auto header_stream = istream_gb_new(GetPool(), std::move(headers3));
+	auto header_stream = istream_gb_new(GetPool(), std::move(headers2));
 
 	/* request istream */
 
@@ -1426,7 +1427,8 @@ http_client_request(struct pool &caller_pool,
 		    FilteredSocket &socket, Lease &lease,
 		    const char *peer_name,
 		    http_method_t method, const char *uri,
-		    HttpHeaders &&headers,
+		    const StringMap &headers,
+		    GrowingBuffer &&more_headers,
 		    UnusedIstreamPtr body, bool expect_100,
 		    HttpResponseHandler &handler,
 		    CancellablePointer &cancel_ptr) noexcept
@@ -1448,6 +1450,7 @@ http_client_request(struct pool &caller_pool,
 				lease,
 				peer_name,
 				method, uri,
-				std::move(headers), std::move(body), expect_100,
+				headers, std::move(more_headers),
+				std::move(body), expect_100,
 				handler, cancel_ptr);
 }

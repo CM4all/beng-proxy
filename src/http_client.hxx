@@ -48,7 +48,8 @@ class FilteredSocket;
 class Lease;
 class HttpResponseHandler;
 class CancellablePointer;
-class HttpHeaders;
+class StringMap;
+class GrowingBuffer;
 
 /**
  * Error codes for #HttpClientError.
@@ -132,7 +133,8 @@ http_client_request(struct pool &pool,
 		    FilteredSocket &socket, Lease &lease,
 		    const char *peer_name,
 		    http_method_t method, const char *uri,
-		    HttpHeaders &&headers,
+		    const StringMap &headers,
+		    GrowingBuffer &&more_headers,
 		    UnusedIstreamPtr body, bool expect_100,
 		    HttpResponseHandler &handler,
 		    CancellablePointer &cancel_ptr) noexcept;

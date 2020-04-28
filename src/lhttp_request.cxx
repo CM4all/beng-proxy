@@ -34,8 +34,8 @@
 #include "lhttp_stock.hxx"
 #include "lhttp_address.hxx"
 #include "http_client.hxx"
-#include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"
+#include "GrowingBuffer.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "stock/Item.hxx"
 #include "lease.hxx"
@@ -66,15 +66,22 @@ public:
 	void Start(struct pool &pool,
 		   StopwatchPtr &&stopwatch,
 		   const LhttpAddress &address,
-		   http_method_t method, HttpHeaders &&headers,
+		   http_method_t method,
+		   const StringMap &headers,
 		   UnusedIstreamPtr body,
 		   HttpResponseHandler &handler,
 		   CancellablePointer &cancel_ptr) noexcept {
+		GrowingBuffer more_headers;
+		if (address.host_and_port != nullptr)
+			header_write(more_headers, "host",
+				     address.host_and_port);
+
 		http_client_request(pool, std::move(stopwatch),
 				    socket,
 				    *this,
 				    stock_item.GetStockName(),
-				    method, address.uri, std::move(headers),
+				    method, address.uri,
+				    headers, std::move(more_headers),
 				    std::move(body), true,
 				    handler, cancel_ptr);
 	}
@@ -106,7 +113,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
 	      const StopwatchPtr &parent_stopwatch,
 	      const char *site_name,
 	      const LhttpAddress &address,
-	      http_method_t method, StringMap &&_headers,
+	      http_method_t method, const StringMap &headers,
 	      UnusedIstreamPtr body,
 	      HttpResponseHandler &handler,
 	      CancellablePointer &cancel_ptr) noexcept
@@ -145,12 +152,8 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
 	auto request = NewFromPool<LhttpRequest>(pool, pool,
 						 event_loop, *stock_item);
 
-	HttpHeaders headers(std::move(_headers));
-	if (address.host_and_port != nullptr)
-		headers.Write("host", address.host_and_port);
-
 	request->Start(pool, std::move(stopwatch), address,
-		       method, std::move(headers),
+		       method, headers,
 		       std::move(body),
 		       handler, cancel_ptr);
 }
