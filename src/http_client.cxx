@@ -316,6 +316,10 @@ private:
 	void AbortResponseBody(std::exception_ptr ep) noexcept;
 	void AbortResponse(std::exception_ptr ep) noexcept;
 
+	void AbortResponseHeaders(HttpClientErrorCode code, const char *msg) noexcept {
+		AbortResponseHeaders(std::make_exception_ptr(HttpClientError(code, msg)));
+	}
+
 	void AbortResponse(HttpClientErrorCode code, const char *msg) noexcept {
 		AbortResponse(std::make_exception_ptr(HttpClientError(code, msg)));
 	}
@@ -1109,6 +1113,12 @@ HttpClient::OnBufferedRemaining(size_t remaining) noexcept
 		   the peer; this method gets called only after
 		   OnBufferedClosed() */
 		ReleaseSocket(true, false);
+
+	if (remaining == 0 && response.state == Response::State::STATUS) {
+		AbortResponseHeaders(HttpClientErrorCode::REFUSED,
+				     "Server closed the socket without sending any response data");
+		return false;
+	}
 
 	if (response.state < Response::State::BODY)
 		/* this information comes too early, we can't use it */
