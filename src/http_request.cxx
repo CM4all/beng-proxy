@@ -82,7 +82,7 @@ class HttpRequest final
 
 	const http_method_t method;
 	const HttpAddress &address;
-	HttpHeaders headers;
+	const StringMap &headers;
 	UnusedHoldIstreamPtr body;
 
 	HttpResponseHandler &handler;
@@ -96,7 +96,7 @@ public:
 		    SocketFilterFactory *_filter_factory,
 		    http_method_t _method,
 		    const HttpAddress &_address,
-		    HttpHeaders &&_headers,
+		    const StringMap &_headers,
 		    UnusedIstreamPtr _body,
 		    HttpResponseHandler &_handler,
 		    CancellablePointer &_cancel_ptr)
@@ -108,13 +108,10 @@ public:
 		 /* can only retry if there is no request body */
 		 retries(_body ? 0 : 2),
 		 method(_method), address(_address),
-		 headers(std::move(_headers)), body(pool, std::move(_body)),
+		 headers(_headers), body(pool, std::move(_body)),
 		 handler(_handler)
 	{
 		_cancel_ptr = *this;
-
-		if (address.host_and_port != nullptr)
-			headers.Write("host", address.host_and_port);
 	}
 
 	void BeginConnect() {
@@ -209,9 +206,14 @@ HttpRequest::OnFilteredSocketReady(Lease &lease,
 
 	failure = _failure;
 
+	GrowingBuffer more_headers;
+	if (address.host_and_port != nullptr)
+		header_write(more_headers, "host", address.host_and_port);
+
 	http_client_request(pool, std::move(stopwatch),
 			    socket, lease, name,
-			    method, address.path, std::move(headers),
+			    method, address.path,
+			    headers, std::move(more_headers),
 			    std::move(body), true,
 			    *this, cancel_ptr);
 }
@@ -237,7 +239,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
 	     SocketFilterFactory *filter_factory,
 	     http_method_t method,
 	     const HttpAddress &uwa,
-	     HttpHeaders &&headers,
+	     const StringMap &headers,
 	     UnusedIstreamPtr body,
 	     HttpResponseHandler &handler,
 	     CancellablePointer &_cancel_ptr)
@@ -250,7 +252,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
 					   sticky_hash,
 					   filter_factory,
 					   method, uwa,
-					   std::move(headers), std::move(body),
+					   headers, std::move(body),
 					   handler, _cancel_ptr);
 
 	hr->BeginConnect();

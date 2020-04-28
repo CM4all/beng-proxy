@@ -379,7 +379,7 @@ try {
 				    *this,
 				    "localhost",
 				    method, url.uri,
-				    HttpHeaders(std::move(headers)),
+				    headers, {},
 				    std::move(request_body), false,
 				    *this,
 				    cancel_ptr);

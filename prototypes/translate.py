@@ -24,7 +24,8 @@ helpers_path = default_helpers_path
 cgi_path = '/usr/lib/cgi-bin'
 was_path = '/usr/lib/cm4all/was/bin'
 demo_path = '/usr/share/cm4all/beng-proxy/demo/htdocs'
-test_path = os.path.join(os.getcwd(), 'test')
+test_script_path = os.path.join(os.getcwd(), 'test')
+test_binary_path = test_script_path
 was_examples_path = was_path
 was_examples = ['hello', 'random', 'mirror', 'cookie']
 coma_was = os.path.join(was_path, 'coma-was')
@@ -433,7 +434,7 @@ class Translation(Protocol):
         elif raw_uri[:5] == '/nfs/':
             response.nfs('172.28.0.8', '/srv/nfs4/foo', raw_uri[4:])
         elif uri[:8] == '/fcgi.rb':
-            response.packet(TRANSLATE_FASTCGI, os.path.join(test_path, 'fcgi.rb'))
+            response.packet(TRANSLATE_FASTCGI, os.path.join(test_script_path, 'fcgi.rb'))
         elif uri == '/discard':
             response.packet(TRANSLATE_DISCARD_SESSION)
             response.status(204)
@@ -548,17 +549,27 @@ class Translation(Protocol):
             response.packet(TRANSLATE_PATH_INFO, path_info)
             response.packet(TRANSLATE_EXPAND_PATH_INFO, r"/\2")
         elif uri == '/lhttp/':
-            response.packet(TRANSLATE_LHTTP_PATH, os.path.join(test_path, 'run_http_server'))
+            response.packet(TRANSLATE_LHTTP_PATH,
+                            os.path.join(test_binary_path, 'run_http_server'))
             response.packet(TRANSLATE_APPEND, 'accept')
             response.packet(TRANSLATE_APPEND, '0')
             response.packet(TRANSLATE_APPEND, 'fixed')
             response.packet(TRANSLATE_LHTTP_URI, uri)
             response.packet(TRANSLATE_CONCURRENCY, '\x04\x00')
         elif uri == '/lhttp/mirror':
-            response.packet(TRANSLATE_LHTTP_PATH, os.path.join(test_path, 'run_http_server'))
+            response.packet(TRANSLATE_LHTTP_PATH,
+                            os.path.join(test_binary_path, 'run_http_server'))
             response.packet(TRANSLATE_APPEND, 'accept')
             response.packet(TRANSLATE_APPEND, '0')
             response.packet(TRANSLATE_APPEND, 'mirror')
+            response.packet(TRANSLATE_LHTTP_URI, uri)
+            response.packet(TRANSLATE_CONCURRENCY, '\x04\x00')
+        elif uri == '/lhttp/failing-keepalive':
+            response.packet(TRANSLATE_LHTTP_PATH,
+                            os.path.join(test_binary_path, 'run_http_server'))
+            response.packet(TRANSLATE_APPEND, 'accept')
+            response.packet(TRANSLATE_APPEND, '0')
+            response.packet(TRANSLATE_APPEND, 'failing-keepalive')
             response.packet(TRANSLATE_LHTTP_URI, uri)
             response.packet(TRANSLATE_CONCURRENCY, '\x04\x00')
         elif uri[:8] == '/apache/':
@@ -1033,6 +1044,7 @@ if __name__ == '__main__':
         import os
         widgets_path = 'demo/widgets'
         helpers_path = os.path.join(os.getcwd(), 'output/debug')
+        test_binary_path = os.path.join(os.getcwd(), 'output/debug/test')
         cgi_path = os.path.join(os.getcwd(), 'demo/cgi-bin')
         demo_path = os.path.join(os.getcwd(), 'demo', 'htdocs')
 

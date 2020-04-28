@@ -105,13 +105,13 @@ public:
 	}
 
 	void SendRequest(http_method_t method, const char *uri,
-			 HttpHeaders &&headers,
+			 const StringMap &headers,
 			 UnusedIstreamPtr body, bool expect_100,
 			 HttpResponseHandler &handler,
 			 CancellablePointer &cancel_ptr) noexcept {
 		http_client_request(*pool, nullptr, client_fs, *this,
 				    "foo",
-				    method, uri, std::move(headers),
+				    method, uri, headers, {},
 				    std::move(body), expect_100,
 				    handler, cancel_ptr);
 	}
@@ -180,9 +180,9 @@ class Client final : HttpResponseHandler, IstreamSink {
 public:
 	void SendRequest(Server &server,
 			 http_method_t method, const char *uri,
-			 HttpHeaders &&headers,
+			 const StringMap &headers,
 			 UnusedIstreamPtr body, bool expect_100=false) noexcept {
-		server.SendRequest(method, uri, std::move(headers),
+		server.SendRequest(method, uri, headers,
 				   std::move(body), expect_100,
 				   *this, client_cancel_ptr);
 	}
