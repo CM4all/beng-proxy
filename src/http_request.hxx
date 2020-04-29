@@ -60,6 +60,6 @@ http_request(struct pool &pool, EventLoop &event_loop,
 	     SocketFilterFactory *filter_factory,
 	     http_method_t method,
 	     const HttpAddress &address,
-	     const StringMap &headers, UnusedIstreamPtr body,
+	     StringMap &&headers, UnusedIstreamPtr body,
 	     HttpResponseHandler &handler,
 	     CancellablePointer &cancel_ptr);
