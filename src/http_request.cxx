@@ -57,6 +57,7 @@
 #include "util/Compiler.h"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
+#include "strmap.hxx"
 
 #include <string.h>
 
@@ -84,7 +85,7 @@ class HttpRequest final
 
 	const http_method_t method;
 	const HttpAddress &address;
-	const StringMap &headers;
+	const StringMap headers;
 	UnusedHoldIstreamPtr body;
 
 	HttpResponseHandler &handler;
@@ -98,7 +99,7 @@ public:
 		    SocketFilterFactory *_filter_factory,
 		    http_method_t _method,
 		    const HttpAddress &_address,
-		    const StringMap &_headers,
+		    StringMap &&_headers,
 		    UnusedIstreamPtr _body,
 		    HttpResponseHandler &_handler,
 		    CancellablePointer &_cancel_ptr)
@@ -110,7 +111,7 @@ public:
 		 /* can only retry if there is no request body */
 		 retries(_body ? 0 : 2),
 		 method(_method), address(_address),
-		 headers(_headers), body(pool, std::move(_body)),
+		 headers(std::move(_headers)), body(pool, std::move(_body)),
 		 handler(_handler)
 	{
 		_cancel_ptr = *this;
@@ -238,7 +239,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
 	     SocketFilterFactory *filter_factory,
 	     http_method_t method,
 	     const HttpAddress &uwa,
-	     const StringMap &headers,
+	     StringMap &&headers,
 	     UnusedIstreamPtr body,
 	     HttpResponseHandler &handler,
 	     CancellablePointer &_cancel_ptr)
@@ -251,7 +252,7 @@ http_request(struct pool &pool, EventLoop &event_loop,
 					   session_sticky,
 					   filter_factory,
 					   method, uwa,
-					   headers, std::move(body),
+					   std::move(headers), std::move(body),
 					   handler, _cancel_ptr);
 
 	hr->BeginConnect();

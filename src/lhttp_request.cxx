@@ -46,6 +46,7 @@
 #include "net/SocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
+#include "strmap.hxx"
 
 #include <stdexcept>
 
@@ -97,7 +98,7 @@ class LhttpRequest final : Cancellable, HttpResponseHandler, PoolLeakDetector {
 
 	const http_method_t method;
 	const LhttpAddress &address;
-	const StringMap &headers;
+	const StringMap headers;
 
 	HttpResponseHandler &handler;
 	CancellablePointer cancel_ptr;
@@ -110,7 +111,7 @@ public:
 			      const char *_site_name,
 			      http_method_t _method,
 			      const LhttpAddress &_address,
-			      const StringMap &_headers,
+			      StringMap &&_headers,
 			      const UnusedIstreamPtr &body,
 			      HttpResponseHandler &_handler,
 			      CancellablePointer &_cancel_ptr) noexcept
@@ -121,7 +122,7 @@ public:
 		 /* can only retry if there is no request body */
 		 retries(body ? 0 : 1),
 		 method(_method), address(_address),
-		 headers(_headers),
+		 headers(std::move(_headers)),
 		 handler(_handler)
 	{
 		_cancel_ptr = *this;
@@ -226,7 +227,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
 	      const StopwatchPtr &parent_stopwatch,
 	      const char *site_name,
 	      const LhttpAddress &address,
-	      http_method_t method, const StringMap &headers,
+	      http_method_t method, StringMap &&headers,
 	      UnusedIstreamPtr body,
 	      HttpResponseHandler &handler,
 	      CancellablePointer &cancel_ptr) noexcept
@@ -248,7 +249,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
 						 lhttp_stock,
 						 std::move(stopwatch),
 						 site_name, method, address,
-						 headers, body,
+						 std::move(headers), body,
 						 handler, cancel_ptr);
 
 	request->Start(std::move(body));

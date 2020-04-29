@@ -55,7 +55,7 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
 	      const char *site_name,
 	      const LhttpAddress &address,
 	      http_method_t method,
-	      const StringMap &headers, UnusedIstreamPtr body,
+	      StringMap &&headers, UnusedIstreamPtr body,
 	      HttpResponseHandler &handler,
 	      CancellablePointer &cancel_ptr) noexcept;
 
