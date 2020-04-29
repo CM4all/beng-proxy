@@ -2,7 +2,7 @@ cm4all-beng-proxy (16.14) unstable; urgency=low
 
   * http_client: fix use-after-free bug (16.12 regression)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 29 Apr 2020 14:05:43 +0200
 
 cm4all-beng-proxy (16.13) unstable; urgency=low
 
