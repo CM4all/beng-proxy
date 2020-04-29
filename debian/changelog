@@ -1,6 +1,7 @@
 cm4all-beng-proxy (16.13) unstable; urgency=low
 
   * spawn: fix compatibility with kernels without clone3()
+  * http_client: fix missing request headers (16.12 regression)
 
  --   
 
