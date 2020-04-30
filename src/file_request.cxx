@@ -36,6 +36,7 @@
 #include "strmap.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/FileIstream.hxx"
+#include "istream/FdIstream.hxx"
 #include "pool/pool.hxx"
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -65,12 +66,12 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
 		return;
 	}
 
-	FdType fd_type = FdType::FD_FILE;
-	off_t size = st.st_size;
-
 	if (S_ISCHR(st.st_mode)) {
-		fd_type = FdType::FD_CHARDEV;
-		size = -1;
+		handler.InvokeResponse(HTTP_STATUS_OK, {},
+				       NewFdIstream(event_loop, pool, path,
+						    std::move(fd),
+						    FdType::FD_CHARDEV));
+		return;
 	} else if (!S_ISREG(st.st_mode)) {
 		handler.InvokeResponse(pool, HTTP_STATUS_NOT_FOUND,
 				       "Not a regular file");
@@ -82,6 +83,6 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
 	handler.InvokeResponse(HTTP_STATUS_OK,
 			       std::move(headers),
 			       istream_file_fd_new(event_loop, pool, path,
-						   std::move(fd), fd_type,
-						   size));
+						   std::move(fd), FdType::FD_FILE,
+						   st.st_size));
 }
