@@ -282,13 +282,11 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 
 	http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
 
-	auto *body = istream_file_fd_new(instance.event_loop, pool,
-					 address.path,
-					 std::move(fd), FdType::FD_FILE,
-					 st.st_size);
-
 	DispatchResponse(status, std::move(headers),
-			 UnusedIstreamPtr(body));
+			 istream_file_fd_new(instance.event_loop, pool,
+					     address.path,
+					     std::move(fd), FdType::FD_FILE,
+					     st.st_size));
 
 	return true;
 }

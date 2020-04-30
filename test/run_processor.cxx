@@ -125,9 +125,9 @@ try {
 
 	auto result =
 		processor_process(instance.root_pool, nullptr,
-				  UnusedIstreamPtr(istream_file_new(instance.event_loop,
-								    instance.root_pool,
-								    "/dev/stdin", (off_t)-1)),
+				  istream_file_new(instance.event_loop,
+						   instance.root_pool,
+						   "/dev/stdin", (off_t)-1),
 				  widget, std::move(ctx), PROCESSOR_CONTAINER);
 
 	StdioSink sink(std::move(result));

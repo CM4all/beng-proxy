@@ -63,8 +63,8 @@ try {
 	}
 
 	StdioSink sink(istream_subst_new(pool,
-					 UnusedIstreamPtr(istream_file_new(instance.event_loop, pool,
-									   "/dev/stdin", (off_t)-1)),
+					 istream_file_new(instance.event_loop, pool,
+							  "/dev/stdin", (off_t)-1),
 					 std::move(tree)));
 
 	pool.reset();

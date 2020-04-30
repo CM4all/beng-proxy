@@ -99,12 +99,12 @@ DelegateHttpRequest::OnDelegateSuccess(UniqueFileDescriptor fd)
 	auto response_headers = static_response_headers(pool, fd, st,
 							content_type);
 
-	Istream *body = istream_file_fd_new(event_loop, pool, path,
-					    std::move(fd), FdType::FD_FILE,
-					    st.st_size);
 	handler.InvokeResponse(HTTP_STATUS_OK,
 			       std::move(response_headers),
-			       UnusedIstreamPtr(body));
+			       istream_file_fd_new(event_loop, pool, path,
+						   std::move(fd),
+						   FdType::FD_FILE,
+						   st.st_size));
 }
 
 void

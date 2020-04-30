@@ -157,7 +157,7 @@ Context::OnHttpError(std::exception_ptr ep) noexcept
 	error = true;
 }
 
-static Istream *
+static auto
 request_body(EventLoop &event_loop, struct pool &pool)
 {
 	struct stat st;
@@ -223,8 +223,7 @@ try {
 			   nullptr,
 			   nullptr, nullptr,
 			   *strmap_new(context.root_pool),
-			   UnusedIstreamPtr(request_body(context.event_loop,
-							 context.root_pool)),
+			   request_body(context.event_loop, context.root_pool),
 			   params,
 			   context, context.cancel_ptr);
 

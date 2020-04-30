@@ -79,11 +79,9 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
 
 	auto headers = static_response_headers(pool, fd, st, content_type);
 
-	auto *body = istream_file_fd_new(event_loop, pool, path,
-					 std::move(fd),
-					 fd_type, size);
-
 	handler.InvokeResponse(HTTP_STATUS_OK,
 			       std::move(headers),
-			       UnusedIstreamPtr(body));
+			       istream_file_fd_new(event_loop, pool, path,
+						   std::move(fd), fd_type,
+						   size));
 }

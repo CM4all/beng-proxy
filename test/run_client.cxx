@@ -475,8 +475,8 @@ try {
 
 		ctx.method = HTTP_METHOD_POST;
 
-		ctx.request_body = UnusedIstreamPtr(istream_file_new(ctx.event_loop, ctx.pool,
-								     argv[2], st.st_size));
+		ctx.request_body = istream_file_new(ctx.event_loop, ctx.pool,
+						    argv[2], st.st_size);
 	} else {
 		ctx.method = HTTP_METHOD_GET;
 	}

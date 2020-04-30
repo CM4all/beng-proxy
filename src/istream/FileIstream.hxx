@@ -37,12 +37,12 @@
 #include <sys/types.h>
 
 struct pool;
-class Istream;
+class UnusedIstreamPtr;
 class EventLoop;
 class FileDescriptor;
 class UniqueFileDescriptor;
 
-Istream *
+UnusedIstreamPtr
 istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
 		    const char *path,
 		    UniqueFileDescriptor fd, FdType fd_type,
@@ -51,6 +51,6 @@ istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
 /**
  * Throws exception on error.
  */
-Istream *
+UnusedIstreamPtr
 istream_file_new(EventLoop &event_loop, struct pool &pool,
 		 const char *path, off_t length);

@@ -114,12 +114,10 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 
 	/* finished, dispatch this response */
 
-	auto *body = istream_file_fd_new(instance.event_loop, pool, path,
-					 std::move(fd), FdType::FD_FILE,
-					 size);
-
 	DispatchResponse(status, std::move(headers),
-			 UnusedIstreamPtr(body));
+			 istream_file_fd_new(instance.event_loop, pool, path,
+					     std::move(fd), FdType::FD_FILE,
+					     size));
 }
 
 bool
@@ -167,15 +165,12 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 
 	compressed = true;
 
-	auto *compressed_body = istream_file_fd_new(instance.event_loop, pool,
-						    path,
-						    std::move(compressed_fd),
-						    FdType::FD_FILE,
-						    st2.st_size);
-
 	http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
 	DispatchResponse(status, std::move(headers),
-			 UnusedIstreamPtr(compressed_body));
+			 istream_file_fd_new(instance.event_loop, pool,
+					     path, std::move(compressed_fd),
+					     FdType::FD_FILE,
+					     st2.st_size));
 	return true;
 }
 
@@ -267,13 +262,12 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 
 	if (S_ISCHR(st.st_mode)) {
 		/* allow character devices, but skip range etc. */
-		auto *body = istream_file_fd_new(instance.event_loop,
-						 pool, address.path,
-						 std::move(fd),
-						 FdType::FD_CHARDEV,
-						 -1);
 		DispatchResponse(HTTP_STATUS_OK, {},
-				 UnusedIstreamPtr(body));
+				 istream_file_fd_new(instance.event_loop,
+						     pool, address.path,
+						     std::move(fd),
+						     FdType::FD_CHARDEV,
+						     -1));
 		return;
 	}
 

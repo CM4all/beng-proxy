@@ -330,7 +330,7 @@ FileIstream::_AsFd() noexcept
  *
  */
 
-Istream *
+UnusedIstreamPtr
 istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
 		    const char *path,
 		    UniqueFileDescriptor fd, FdType fd_type, off_t length) noexcept
@@ -338,12 +338,12 @@ istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
 	assert(fd.IsDefined());
 	assert(length >= -1);
 
-	return NewIstream<FileIstream>(pool, event_loop,
-				       std::move(fd), fd_type,
-				       length, path);
+	return NewIstreamPtr<FileIstream>(pool, event_loop,
+					  std::move(fd), fd_type,
+					  length, path);
 }
 
-Istream *
+UnusedIstreamPtr
 istream_file_new(EventLoop &event_loop, struct pool &pool,
 		 const char *path, off_t length)
 {

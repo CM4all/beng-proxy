@@ -67,8 +67,8 @@ try {
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
 	StdioSink sink(NewYamlSubstIstream(pool,
-					   UnusedIstreamPtr(istream_file_new(instance.event_loop, *pool,
-									     "/dev/stdin", (off_t)-1)),
+					   istream_file_new(instance.event_loop, *pool,
+							    "/dev/stdin", (off_t)-1),
 					   true,
 					   prefix, yaml_file, yaml_map_path));
 
