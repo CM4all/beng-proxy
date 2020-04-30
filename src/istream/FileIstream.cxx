@@ -102,7 +102,7 @@ private:
 
 	gcc_pure
 	size_t GetMaxRead() const noexcept {
-		if (rest != (off_t)-1 && rest < (off_t)INT_MAX)
+		if (rest < (off_t)INT_MAX)
 			return (size_t)rest;
 		else
 			return INT_MAX;
@@ -165,20 +165,14 @@ FileIstream::TryData() noexcept
 
 	ssize_t nbytes = read_to_buffer(fd.Get(), buffer, GetMaxRead());
 	if (nbytes == 0) {
-		if (rest == (off_t)-1) {
-			rest = 0;
-			if (buffer_rest == 0)
-				EofDetected();
-		} else {
-			DestroyError(std::make_exception_ptr(FormatRuntimeError("premature end of file in '%s'",
-										path)));
-		}
+		DestroyError(std::make_exception_ptr(FormatRuntimeError("premature end of file in '%s'",
+									path)));
 		return;
 	} else if (nbytes == -1) {
 		DestroyError(std::make_exception_ptr(FormatErrno("Failed to read from '%s'",
 								 path)));
 		return;
-	} else if (nbytes > 0 && rest != (off_t)-1) {
+	} else if (nbytes > 0) {
 		rest -= (off_t)nbytes;
 		assert(rest >= 0);
 	}
@@ -210,19 +204,15 @@ FileIstream::TryDirect() noexcept
 	if (nbytes > 0 || nbytes == ISTREAM_RESULT_BLOCKING) {
 		/* -2 means the callback wasn't able to consume any data right
 		   now */
-		if (nbytes > 0 && rest != (off_t)-1) {
+		if (nbytes > 0) {
 			rest -= (off_t)nbytes;
 			assert(rest >= 0);
 			if (rest == 0)
 				EofDetected();
 		}
 	} else if (nbytes == ISTREAM_RESULT_EOF) {
-		if (rest == (off_t)-1) {
-			EofDetected();
-		} else {
-			DestroyError(std::make_exception_ptr(FormatRuntimeError("premature end of file in '%s'",
-										path)));
-		}
+		DestroyError(std::make_exception_ptr(FormatRuntimeError("premature end of file in '%s'",
+									path)));
 	} else if (errno == EAGAIN) {
 		/* this should only happen for splice(SPLICE_F_NONBLOCK) from
 		   NFS files - unfortunately we cannot use SocketEvent::READ
@@ -243,27 +233,15 @@ FileIstream::TryDirect() noexcept
  */
 
 off_t
-FileIstream::_GetAvailable(bool partial) noexcept
+FileIstream::_GetAvailable(bool) noexcept
 {
-	off_t available;
-	if (rest != (off_t)-1)
-		available = rest;
-	else if (!partial)
-		return (off_t)-1;
-	else
-		available = 0;
-
-	available += buffer.GetAvailable();
-	return available;
+	return rest + buffer.GetAvailable();
 }
 
 off_t
 FileIstream::_Skip(off_t length) noexcept
 {
 	retry_event.Cancel();
-
-	if (rest == (off_t)-1)
-		return (off_t)-1;
 
 	if (length == 0)
 		return 0;
