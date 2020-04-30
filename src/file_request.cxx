@@ -37,7 +37,8 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/FileIstream.hxx"
 #include "pool/pool.hxx"
-#include "io/FileDescriptor.hxx"
+#include "io/Open.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "http/Status.h"
 
@@ -63,21 +64,30 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
 		return;
 	}
 
-	const off_t size = S_ISCHR(st.st_mode)
-		? -1 : st.st_size;
-
-	Istream *body;
+	UniqueFileDescriptor fd;
 
 	try {
-		body = istream_file_new(event_loop, pool, path, size);
+		fd = OpenReadOnly(path);
 	} catch (...) {
 		handler.InvokeError(std::current_exception());
 		return;
 	}
 
+	FdType fd_type = FdType::FD_FILE;
+	off_t size = st.st_size;
+
+	if (S_ISCHR(st.st_mode)) {
+		fd_type = FdType::FD_CHARDEV;
+		size = -1;
+	}
+
+	auto headers = static_response_headers(pool, fd, st, content_type);
+
+	auto *body = istream_file_fd_new(event_loop, pool, path,
+					 std::move(fd),
+					 fd_type, size);
+
 	handler.InvokeResponse(HTTP_STATUS_OK,
-			       static_response_headers(pool,
-						       istream_file_fd(*body), st,
-						       content_type),
+			       std::move(headers),
 			       UnusedIstreamPtr(body));
 }
