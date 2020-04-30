@@ -60,7 +60,7 @@
 static constexpr Event::Duration file_retry_timeout = std::chrono::milliseconds(100);
 
 class FileIstream final : public Istream {
-	FileDescriptor fd;
+	UniqueFileDescriptor fd;
 
 	FdType fd_type;
 
@@ -78,17 +78,13 @@ public:
 		    UniqueFileDescriptor &&_fd, FdType _fd_type, off_t _length,
 		    const char *_path) noexcept
 		:Istream(p),
-		 fd(_fd.Steal()), fd_type(_fd_type),
+		 fd(std::move(_fd)), fd_type(_fd_type),
 		 retry_event(event_loop, BIND_THIS_METHOD(EventCallback)),
 		 rest(_length),
 		 path(_path) {}
 
 	~FileIstream() noexcept {
 		retry_event.Cancel();
-
-		if (fd.IsDefined())
-			fd.Close();
-
 		buffer.FreeIfDefined();
 	}
 
