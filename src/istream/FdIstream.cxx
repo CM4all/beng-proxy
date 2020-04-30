@@ -84,16 +84,20 @@ public:
 	}
 
 private:
-	void TryData() noexcept;
-	void TryDirect() noexcept;
+	void TryData();
+	void TryDirect();
 
 	void TryRead() noexcept {
-		if (!fd.IsDefined())
-			SendFromBuffer(buffer);
-		else if (CheckDirect(fd_type))
-			TryDirect();
-		else
-			TryData();
+		try {
+			if (!fd.IsDefined())
+				SendFromBuffer(buffer);
+			else if (CheckDirect(fd_type))
+				TryDirect();
+			else
+				TryData();
+		} catch (...) {
+			DestroyError(std::current_exception());
+		}
 	}
 
 	void EventCallback() noexcept {
@@ -116,7 +120,7 @@ private:
 };
 
 inline void
-FdIstream::TryData() noexcept
+FdIstream::TryData()
 {
 	if (buffer.IsNull()) {
 		buffer.Allocate(fb_pool_get());
@@ -137,9 +141,7 @@ FdIstream::TryData() noexcept
 			DestroyEof();
 		return;
 	} else if (nbytes == -1) {
-		DestroyError(std::make_exception_ptr(FormatErrno("Failed to read from '%s'",
-								 path)));
-		return;
+		throw FormatErrno("Failed to read from '%s'", path);
 	}
 
 	assert(!buffer.empty());
@@ -148,7 +150,7 @@ FdIstream::TryData() noexcept
 }
 
 inline void
-FdIstream::TryDirect() noexcept
+FdIstream::TryDirect()
 {
 	/* first consume the rest of the buffer */
 	if (ConsumeFromBuffer(buffer) > 0)
@@ -171,8 +173,7 @@ FdIstream::TryDirect() noexcept
 		retry_event.Schedule(file_retry_timeout);
 	} else {
 		/* XXX */
-		DestroyError(std::make_exception_ptr(FormatErrno("Failed to read from '%s'",
-								 path)));
+		throw FormatErrno("Failed to read from '%s'", path);
 	}
 }
 
