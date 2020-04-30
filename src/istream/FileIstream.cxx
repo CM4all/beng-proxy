@@ -68,21 +68,26 @@ class FileIstream final : public Istream {
 	 */
 	TimerEvent retry_event;
 
-	off_t rest;
+	off_t offset;
+
+	const off_t end_offset;
+
 	SliceFifoBuffer buffer;
 	const char *path;
 
 public:
 	FileIstream(struct pool &p, EventLoop &event_loop,
-		    UniqueFileDescriptor &&_fd, off_t _length,
+		    UniqueFileDescriptor &&_fd,
+		    off_t _start_offset, off_t _end_offset,
 		    const char *_path) noexcept
 		:Istream(p),
 		 fd(std::move(_fd)),
 		 retry_event(event_loop, BIND_THIS_METHOD(EventCallback)),
-		 rest(_length),
+		 offset(_start_offset), end_offset(_end_offset),
 		 path(_path) {}
 
 	~FileIstream() noexcept {
+		buffer.FreeIfDefined();
 		buffer.FreeIfDefined();
 	}
 
@@ -95,10 +100,7 @@ private:
 
 	gcc_pure
 	size_t GetMaxRead() const noexcept {
-		if (rest < (off_t)INT_MAX)
-			return (size_t)rest;
-		else
-			return INT_MAX;
+		return std::min(end_offset - offset, off_t(INT_MAX));
 	}
 
 	void TryData();
@@ -139,8 +141,12 @@ inline void
 FileIstream::TryData()
 {
 	if (buffer.IsNull()) {
-		if (rest != 0)
-			buffer.Allocate(fb_pool_get());
+		if (offset >= end_offset) {
+			EofDetected();
+			return;
+		}
+
+		buffer.Allocate(fb_pool_get());
 	} else if (!buffer.empty()) {
 		if (SendFromBuffer(buffer) == 0)
 			/* not a single byte was consumed: we may have
@@ -148,26 +154,32 @@ FileIstream::TryData()
 			return;
 	}
 
-	if (rest == 0) {
+	if (offset >= end_offset) {
 		if (buffer.empty())
 			EofDetected();
 		return;
 	}
 
-	ssize_t nbytes = read_to_buffer(fd.Get(), buffer, GetMaxRead());
+	auto w = buffer.Write();
+	assert(!w.empty());
+
+	if (end_offset - offset < off_t(w.size))
+		w.size = end_offset - offset;
+
+	ssize_t nbytes = pread(fd.Get(), w.data, w.size, offset);
 	if (nbytes == 0) {
 		throw FormatRuntimeError("premature end of file in '%s'",
 					 path);
 	} else if (nbytes == -1) {
 		throw FormatErrno("Failed to read from '%s'", path);
 	} else if (nbytes > 0) {
-		rest -= (off_t)nbytes;
-		assert(rest >= 0);
+		buffer.Append(nbytes);
+		offset += nbytes;
 	}
 
 	assert(!buffer.empty());
 
-	if (ConsumeFromBuffer(buffer) == 0 && rest == 0)
+	if (ConsumeFromBuffer(buffer) == 0 && offset >= end_offset)
 		EofDetected();
 }
 
@@ -178,10 +190,15 @@ FileIstream::TryDirect()
 	if (ConsumeFromBuffer(buffer) > 0)
 		return;
 
-	if (rest == 0) {
+	if (offset >= end_offset) {
 		EofDetected();
 		return;
 	}
+
+	// TODO: eliminate the lseek() call by passing the offset to
+	// InvokeDirect() (requires an IstreamHandler API change)
+	if (fd.Seek(offset) < 0)
+		throw FormatErrno("Failed to seek '%s'", path);
 
 	ssize_t nbytes = InvokeDirect(FdType::FD_FILE, fd.Get(), GetMaxRead());
 	if (nbytes == ISTREAM_RESULT_CLOSED)
@@ -192,9 +209,8 @@ FileIstream::TryDirect()
 		/* -2 means the callback wasn't able to consume any data right
 		   now */
 		if (nbytes > 0) {
-			rest -= (off_t)nbytes;
-			assert(rest >= 0);
-			if (rest == 0)
+			offset += nbytes;
+			if (offset >= end_offset)
 				EofDetected();
 		}
 	} else if (nbytes == ISTREAM_RESULT_EOF) {
@@ -220,7 +236,7 @@ FileIstream::TryDirect()
 off_t
 FileIstream::_GetAvailable(bool) noexcept
 {
-	return rest + buffer.GetAvailable();
+	return (end_offset - offset) + buffer.GetAvailable();
 }
 
 off_t
@@ -241,17 +257,15 @@ FileIstream::_Skip(off_t length) noexcept
 	length -= buffer_available;
 	buffer.Clear();
 
-	if (length >= rest) {
+	if (length >= end_offset - offset) {
 		/* skip beyond EOF */
 
-		length = rest;
-		rest = 0;
+		length = end_offset - offset;
+		offset = end_offset;
 	} else {
 		/* seek the file descriptor */
 
-		if (fd.Skip(length) < 0)
-			return -1;
-		rest -= length;
+		offset += length;
 	}
 
 	off_t result = buffer_available + length;
@@ -277,14 +291,14 @@ FileIstream::_AsFd() noexcept
 UnusedIstreamPtr
 istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
 		    const char *path, UniqueFileDescriptor fd,
-		    off_t length) noexcept
+		    off_t start_offset, off_t end_offset) noexcept
 {
 	assert(fd.IsDefined());
-	assert(length >= -1);
+	assert(start_offset <= end_offset);
 
 	return NewIstreamPtr<FileIstream>(pool, event_loop,
 					  std::move(fd),
-					  length, path);
+					  start_offset, end_offset, path);
 }
 
 UnusedIstreamPtr
@@ -310,5 +324,5 @@ istream_file_new(EventLoop &event_loop, struct pool &pool,
 	}
 
 	return istream_file_fd_new(event_loop, pool, path,
-				   std::move(fd), st.st_size);
+				   std::move(fd), 0, st.st_size);
 }

@@ -43,7 +43,7 @@ class UniqueFileDescriptor;
 UnusedIstreamPtr
 istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
 		    const char *path, UniqueFileDescriptor fd,
-		    off_t length) noexcept;
+		    off_t start_offset, off_t end_offset) noexcept;
 
 /**
  * Throws exception on error.

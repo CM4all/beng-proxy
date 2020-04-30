@@ -83,5 +83,6 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
 	handler.InvokeResponse(HTTP_STATUS_OK,
 			       std::move(headers),
 			       istream_file_fd_new(event_loop, pool, path,
-						   std::move(fd), st.st_size));
+						   std::move(fd),
+						   0, st.st_size));
 }

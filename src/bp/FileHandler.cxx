@@ -83,15 +83,15 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 
 	header_write(headers2, "accept-ranges", "bytes");
 
-	off_t size = st.st_size;
+	off_t start_offset = 0, end_offset = st.st_size;
 
 	switch (file_request.range.type) {
 	case HttpRangeRequest::Type::NONE:
 		break;
 
 	case HttpRangeRequest::Type::VALID:
-		fd.Skip(file_request.range.skip);
-		size = file_request.range.size;
+		start_offset = file_request.range.skip;
+		end_offset = start_offset + file_request.range.size;
 
 		status = HTTP_STATUS_PARTIAL_CONTENT;
 
@@ -117,7 +117,8 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 
 	DispatchResponse(status, std::move(headers),
 			 istream_file_fd_new(instance.event_loop, pool, path,
-					     std::move(fd), size));
+					     std::move(fd),
+					     start_offset, end_offset));
 }
 
 bool
@@ -169,7 +170,7 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 	DispatchResponse(status, std::move(headers),
 			 istream_file_fd_new(instance.event_loop, pool,
 					     path, std::move(compressed_fd),
-					     st2.st_size));
+					     0, st2.st_size));
 	return true;
 }
 
