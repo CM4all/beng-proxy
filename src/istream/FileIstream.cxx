@@ -87,13 +87,6 @@ public:
 	}
 
 private:
-	/**
-	 * @return the number of bytes still in the buffer
-	 */
-	size_t SubmitBuffer() noexcept {
-		return ConsumeFromBuffer(buffer);
-	}
-
 	void EofDetected() noexcept {
 		assert(fd.IsDefined());
 
@@ -141,24 +134,18 @@ private:
 inline void
 FileIstream::TryData() noexcept
 {
-	size_t buffer_rest = 0;
-
 	if (buffer.IsNull()) {
 		if (rest != 0)
 			buffer.Allocate(fb_pool_get());
-	} else {
-		const size_t available = buffer.GetAvailable();
-		if (available > 0) {
-			buffer_rest = SubmitBuffer();
-			if (buffer_rest == available)
-				/* not a single byte was consumed: we may have been
-				   closed, and we must bail out now */
-				return;
-		}
+	} else if (!buffer.empty()) {
+		if (SendFromBuffer(buffer) == 0)
+			/* not a single byte was consumed: we may have
+			   been closed, and we must bail out now */
+			return;
 	}
 
 	if (rest == 0) {
-		if (buffer_rest == 0)
+		if (buffer.empty())
 			EofDetected();
 		return;
 	}
@@ -179,8 +166,7 @@ FileIstream::TryData() noexcept
 
 	assert(!buffer.empty());
 
-	buffer_rest = SubmitBuffer();
-	if (buffer_rest == 0 && rest == 0)
+	if (ConsumeFromBuffer(buffer) == 0 && rest == 0)
 		EofDetected();
 }
 
@@ -188,7 +174,7 @@ inline void
 FileIstream::TryDirect() noexcept
 {
 	/* first consume the rest of the buffer */
-	if (SubmitBuffer() > 0)
+	if (ConsumeFromBuffer(buffer) > 0)
 		return;
 
 	if (rest == 0) {
