@@ -84,7 +84,6 @@ public:
 		 path(_path) {}
 
 	~FileIstream() noexcept {
-		retry_event.Cancel();
 		buffer.FreeIfDefined();
 	}
 
