@@ -285,8 +285,7 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 	DispatchResponse(status, std::move(headers),
 			 istream_file_fd_new(instance.event_loop, pool,
 					     address.path,
-					     std::move(fd), FdType::FD_FILE,
-					     st.st_size));
+					     std::move(fd), st.st_size));
 
 	return true;
 }

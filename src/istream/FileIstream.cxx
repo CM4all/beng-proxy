@@ -63,8 +63,6 @@ static constexpr Event::Duration file_retry_timeout = std::chrono::milliseconds(
 class FileIstream final : public Istream {
 	UniqueFileDescriptor fd;
 
-	FdType fd_type;
-
 	/**
 	 * A timer to retry reading after EAGAIN.
 	 */
@@ -76,10 +74,10 @@ class FileIstream final : public Istream {
 
 public:
 	FileIstream(struct pool &p, EventLoop &event_loop,
-		    UniqueFileDescriptor &&_fd, FdType _fd_type, off_t _length,
+		    UniqueFileDescriptor &&_fd, off_t _length,
 		    const char *_path) noexcept
 		:Istream(p),
-		 fd(std::move(_fd)), fd_type(_fd_type),
+		 fd(std::move(_fd)),
 		 retry_event(event_loop, BIND_THIS_METHOD(EventCallback)),
 		 rest(_length),
 		 path(_path) {}
@@ -114,7 +112,7 @@ private:
 	void TryDirect() noexcept;
 
 	void TryRead() noexcept {
-		if (CheckDirect(fd_type))
+		if (CheckDirect(FdType::FD_FILE))
 			TryDirect();
 		else
 			TryData();
@@ -204,7 +202,7 @@ FileIstream::TryDirect() noexcept
 		return;
 	}
 
-	ssize_t nbytes = InvokeDirect(fd_type, fd.Get(), GetMaxRead());
+	ssize_t nbytes = InvokeDirect(FdType::FD_FILE, fd.Get(), GetMaxRead());
 	if (nbytes == ISTREAM_RESULT_CLOSED)
 		/* this stream was closed during the direct() callback */
 		return;
@@ -315,14 +313,14 @@ FileIstream::_AsFd() noexcept
 
 UnusedIstreamPtr
 istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
-		    const char *path,
-		    UniqueFileDescriptor fd, FdType fd_type, off_t length) noexcept
+		    const char *path, UniqueFileDescriptor fd,
+		    off_t length) noexcept
 {
 	assert(fd.IsDefined());
 	assert(length >= -1);
 
 	return NewIstreamPtr<FileIstream>(pool, event_loop,
-					  std::move(fd), fd_type,
+					  std::move(fd),
 					  length, path);
 }
 
@@ -349,5 +347,5 @@ istream_file_new(EventLoop &event_loop, struct pool &pool,
 	}
 
 	return istream_file_fd_new(event_loop, pool, path,
-				   std::move(fd), FdType::FD_FILE, st.st_size);
+				   std::move(fd), st.st_size);
 }

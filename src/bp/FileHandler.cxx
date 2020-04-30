@@ -117,8 +117,7 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 
 	DispatchResponse(status, std::move(headers),
 			 istream_file_fd_new(instance.event_loop, pool, path,
-					     std::move(fd), FdType::FD_FILE,
-					     size));
+					     std::move(fd), size));
 }
 
 bool
@@ -170,7 +169,6 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 	DispatchResponse(status, std::move(headers),
 			 istream_file_fd_new(instance.event_loop, pool,
 					     path, std::move(compressed_fd),
-					     FdType::FD_FILE,
 					     st2.st_size));
 	return true;
 }

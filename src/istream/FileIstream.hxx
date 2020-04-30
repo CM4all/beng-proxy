@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "io/FdType.hxx"
-
 #include <sys/types.h>
 
 struct pool;
@@ -44,8 +42,7 @@ class UniqueFileDescriptor;
 
 UnusedIstreamPtr
 istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
-		    const char *path,
-		    UniqueFileDescriptor fd, FdType fd_type,
+		    const char *path, UniqueFileDescriptor fd,
 		    off_t length) noexcept;
 
 /**
