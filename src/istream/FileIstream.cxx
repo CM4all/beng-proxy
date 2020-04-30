@@ -87,26 +87,6 @@ public:
 		retry_event.Cancel();
 	}
 
-	FileDescriptor GetFileDescriptor() const noexcept {
-		assert(fd.IsDefined());
-		return fd;
-	}
-
-	bool SetRange(off_t start, off_t end) noexcept {
-		assert(start >= 0);
-		assert(end >= start);
-		assert(fd.IsDefined());
-		assert(rest >= 0);
-		assert(buffer.IsNull());
-		assert(end <= rest);
-
-		if (start > 0 && fd.Skip(start) < 0)
-			return false;
-
-		rest = end - start;
-		return true;
-	}
-
 private:
 	void CloseHandle() noexcept {
 		if (!fd.IsDefined())
@@ -394,18 +374,4 @@ istream_file_new(EventLoop &event_loop, struct pool &pool,
 
 	return istream_file_fd_new(event_loop, pool, path,
 				   OpenReadOnly(path), FdType::FD_FILE, length);
-}
-
-FileDescriptor
-istream_file_fd(Istream &istream) noexcept
-{
-	auto &file = (FileIstream &)istream;
-	return file.GetFileDescriptor();
-}
-
-bool
-istream_file_set_range(Istream &istream, off_t start, off_t end) noexcept
-{
-	auto &file = (FileIstream &)istream;
-	return file.SetRange(start, end);
 }

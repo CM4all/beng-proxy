@@ -64,13 +64,3 @@ istream_file_stat_new(EventLoop &event_loop, struct pool &pool,
 Istream *
 istream_file_new(EventLoop &event_loop, struct pool &pool,
 		 const char *path, off_t length);
-
-FileDescriptor
-istream_file_fd(Istream &istream) noexcept;
-
-/**
- * Select a range of the file.  This must be the first call after
- * creating the object.
- */
-bool
-istream_file_set_range(Istream &istream, off_t start, off_t end) noexcept;
