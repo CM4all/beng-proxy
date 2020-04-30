@@ -31,6 +31,7 @@
  */
 
 #include "FileIstream.hxx"
+#include "FdIstream.hxx"
 #include "istream.hxx"
 #include "New.hxx"
 #include "Result.hxx"
@@ -335,16 +336,18 @@ istream_file_new(EventLoop &event_loop, struct pool &pool,
 	if (fstat(fd.Get(), &st) < 0)
 		throw FormatErrno("Failed to stat %s", path);
 
-	off_t size = S_ISREG(st.st_mode) ? st.st_size : -1;
-
-	FdType fd_type = FdType::FD_FILE;
-	if (S_ISCHR(st.st_mode))
-		fd_type = FdType::FD_CHARDEV;
-	else if (S_ISFIFO(st.st_mode))
-		fd_type = FdType::FD_PIPE;
-	else if (S_ISSOCK(st.st_mode))
-		fd_type = FdType::FD_SOCKET;
+	if (!S_ISREG(st.st_mode)) {
+		FdType fd_type = FdType::FD_NONE;
+		if (S_ISCHR(st.st_mode))
+			fd_type = FdType::FD_CHARDEV;
+		else if (S_ISFIFO(st.st_mode))
+			fd_type = FdType::FD_PIPE;
+		else if (S_ISSOCK(st.st_mode))
+			fd_type = FdType::FD_SOCKET;
+		return NewFdIstream(event_loop, pool, path,
+				    std::move(fd), fd_type);
+	}
 
 	return istream_file_fd_new(event_loop, pool, path,
-				   std::move(fd), fd_type, size);
+				   std::move(fd), FdType::FD_FILE, st.st_size);
 }
