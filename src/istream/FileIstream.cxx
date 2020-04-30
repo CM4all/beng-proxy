@@ -344,29 +344,6 @@ istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
 }
 
 Istream *
-istream_file_stat_new(EventLoop &event_loop, struct pool &pool,
-		      const char *path, struct stat &st)
-{
-	assert(path != nullptr);
-
-	auto fd = OpenReadOnly(path);
-
-	if (fstat(fd.Get(), &st) < 0)
-		throw FormatErrno("Failed to stat %s", path);
-
-	FdType fd_type = FdType::FD_FILE;
-	off_t size = st.st_size;
-
-	if (S_ISCHR(st.st_mode)) {
-		fd_type = FdType::FD_CHARDEV;
-		size = -1;
-	}
-
-	return istream_file_fd_new(event_loop, pool, path,
-				   std::move(fd), fd_type, size);
-}
-
-Istream *
 istream_file_new(EventLoop &event_loop, struct pool &pool,
 		 const char *path, off_t length)
 {

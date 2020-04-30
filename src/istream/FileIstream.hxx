@@ -37,7 +37,6 @@
 #include <sys/types.h>
 
 struct pool;
-struct stat;
 class Istream;
 class EventLoop;
 class FileDescriptor;
@@ -48,15 +47,6 @@ istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
 		    const char *path,
 		    UniqueFileDescriptor fd, FdType fd_type,
 		    off_t length) noexcept;
-
-/**
- * Opens a file and stats it.
- *
- * Throws exception on error.
- */
-Istream *
-istream_file_stat_new(EventLoop &event_loop, struct pool &pool,
-		      const char *path, struct stat &st);
 
 /**
  * Throws exception on error.
