@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_FILE_REQUEST_HXX
-#define BENG_PROXY_FILE_REQUEST_HXX
+#pragma once
 
 struct pool;
 class HttpResponseHandler;
@@ -42,7 +41,5 @@ class EventLoop;
  */
 void
 static_file_get(EventLoop &event_loop, struct pool &pool,
-                const char *path, const char *content_type,
-                HttpResponseHandler &_handler);
-
-#endif
+		const char *path, const char *content_type,
+		HttpResponseHandler &_handler);

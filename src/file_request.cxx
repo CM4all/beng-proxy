@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -46,38 +46,38 @@
 
 void
 static_file_get(EventLoop &event_loop, struct pool &pool,
-                const char *path, const char *content_type,
-                HttpResponseHandler &handler)
+		const char *path, const char *content_type,
+		HttpResponseHandler &handler)
 {
-    assert(path != nullptr);
+	assert(path != nullptr);
 
-    struct stat st;
-    if (lstat(path, &st) != 0) {
-        handler.InvokeError(std::make_exception_ptr(FormatErrno("Failed to open %s", path)));
-        return;
-    }
+	struct stat st;
+	if (lstat(path, &st) != 0) {
+		handler.InvokeError(std::make_exception_ptr(FormatErrno("Failed to open %s", path)));
+		return;
+	}
 
-    if (!S_ISREG(st.st_mode) && !S_ISCHR(st.st_mode)) {
-        handler.InvokeResponse(pool, HTTP_STATUS_NOT_FOUND,
-                               "Not a regular file");
-        return;
-    }
+	if (!S_ISREG(st.st_mode) && !S_ISCHR(st.st_mode)) {
+		handler.InvokeResponse(pool, HTTP_STATUS_NOT_FOUND,
+				       "Not a regular file");
+		return;
+	}
 
-    const off_t size = S_ISCHR(st.st_mode)
-        ? -1 : st.st_size;
+	const off_t size = S_ISCHR(st.st_mode)
+		? -1 : st.st_size;
 
-    Istream *body;
+	Istream *body;
 
-    try {
-        body = istream_file_new(event_loop, pool, path, size);
-    } catch (...) {
-        handler.InvokeError(std::current_exception());
-        return;
-    }
+	try {
+		body = istream_file_new(event_loop, pool, path, size);
+	} catch (...) {
+		handler.InvokeError(std::current_exception());
+		return;
+	}
 
-    handler.InvokeResponse(HTTP_STATUS_OK,
-                           static_response_headers(pool,
-                                                   istream_file_fd(*body), st,
-                                                   content_type),
-                           UnusedIstreamPtr(body));
+	handler.InvokeResponse(HTTP_STATUS_OK,
+			       static_response_headers(pool,
+						       istream_file_fd(*body), st,
+						       content_type),
+			       UnusedIstreamPtr(body));
 }
