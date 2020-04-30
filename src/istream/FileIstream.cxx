@@ -85,22 +85,15 @@ public:
 
 	~FileIstream() noexcept {
 		retry_event.Cancel();
-	}
 
-private:
-	void CloseHandle() noexcept {
-		if (!fd.IsDefined())
-			return;
-
-		retry_event.Cancel();
-
-		fd.Close();
+		if (fd.IsDefined())
+			fd.Close();
 
 		buffer.FreeIfDefined();
 	}
 
+private:
 	void Abort(std::exception_ptr ep) noexcept {
-		CloseHandle();
 		DestroyError(ep);
 	}
 
@@ -114,7 +107,6 @@ private:
 	void EofDetected() noexcept {
 		assert(fd.IsDefined());
 
-		CloseHandle();
 		DestroyEof();
 	}
 
@@ -152,7 +144,6 @@ private:
 
 	int _AsFd() noexcept override;
 	void _Close() noexcept override {
-		CloseHandle();
 		Destroy();
 	}
 };
