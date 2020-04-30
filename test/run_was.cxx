@@ -162,9 +162,7 @@ request_body(EventLoop &event_loop, struct pool &pool)
 {
 	struct stat st;
 	return fstat(0, &st) == 0 && S_ISREG(st.st_mode)
-		? istream_file_fd_new(event_loop, pool,
-				      "/dev/stdin", UniqueFileDescriptor(STDIN_FILENO),
-				      FdType::FD_FILE, -1)
+		? istream_file_new(event_loop, pool, "/dev/stdin")
 		: nullptr;
 }
 
