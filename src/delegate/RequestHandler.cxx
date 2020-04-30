@@ -40,7 +40,6 @@
 #include "file_address.hxx"
 #include "http/IncomingRequest.hxx"
 #include "HttpResponseHandler.hxx"
-#include "istream/FileIstream.hxx"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -77,11 +76,7 @@ Request::OnDelegateSuccess(UniqueFileDescriptor fd)
 
 	/* build the response */
 
-	DispatchFile(st, file_request,
-		     istream_file_fd_new(instance.event_loop, pool,
-					 handler.delegate.path,
-					 std::move(fd), FdType::FD_FILE,
-					 file_request.range.size));
+	DispatchFile(handler.delegate.path, std::move(fd), st, file_request);
 }
 
 void

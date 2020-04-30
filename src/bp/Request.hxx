@@ -54,6 +54,7 @@
 #include <exception>
 
 class FileDescriptor;
+class UniqueFileDescriptor;
 class Istream;
 class HttpHeaders;
 class GrowingBuffer;
@@ -397,28 +398,30 @@ public:
 	bool EvaluateFileRequest(FileDescriptor fd, const struct stat &st,
 				 struct file_request &file_request) noexcept;
 
-	void DispatchFile(const struct stat &st,
-			  const struct file_request &file_request,
-			  Istream *body) noexcept;
+	void DispatchFile(const char *path, UniqueFileDescriptor fd,
+			  const struct stat &st,
+			  const struct file_request &file_request) noexcept;
 
-	bool DispatchCompressedFile(const struct stat &st,
-				    Istream &body, const char *encoding,
-				    const char *path);
+	bool DispatchCompressedFile(const char *path, FileDescriptor fd,
+				    const struct stat &st,
+				    const char *encoding) noexcept;
 
-	bool CheckCompressedFile(const struct stat &st,
-				 Istream &body, const char *encoding,
-				 const char *path) noexcept;
+	bool CheckCompressedFile(const char *path, FileDescriptor fd,
+				 const struct stat &st,
+				 const char *encoding) noexcept;
 
-	bool CheckAutoCompressedFile(const struct stat &st,
-				     Istream &body, const char *encoding,
-				     const char *path,
+	bool CheckAutoCompressedFile(const char *path, FileDescriptor fd,
+				     const struct stat &st,
+				     const char *encoding,
 				     const char *suffix) noexcept;
 
 	bool EmulateModAuthEasy(const FileAddress &address,
-				const struct stat &st, Istream *body) noexcept;
+				UniqueFileDescriptor &fd,
+				const struct stat &st) noexcept;
 
 	bool MaybeEmulateModAuthEasy(const FileAddress &address,
-				     const struct stat &st, Istream *body) noexcept;
+				     UniqueFileDescriptor &fd,
+				     const struct stat &st) noexcept;
 
 	void HandleFileAddress(const FileAddress &address) noexcept;
 

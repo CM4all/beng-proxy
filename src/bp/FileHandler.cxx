@@ -44,6 +44,8 @@
 #include "istream/istream.hxx"
 #include "pool/pool.hxx"
 #include "translation/Vary.hxx"
+#include "system/Error.hxx"
+#include "io/Open.hxx"
 #include "util/DecimalFormat.h"
 #include "util/StringCompare.hxx"
 
@@ -53,9 +55,9 @@
 #include <stdlib.h>
 
 void
-Request::DispatchFile(const struct stat &st,
-		      const struct file_request &file_request,
-		      Istream *body) noexcept
+Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
+		      const struct stat &st,
+		      const struct file_request &file_request) noexcept
 {
 	const TranslateResponse &tr = *translate.response;
 	const auto &address = *handler.file.address;
@@ -69,7 +71,7 @@ Request::DispatchFile(const struct stat &st,
 	file_response_headers(headers2,
 			      instance.event_loop.GetSystemClockCache(),
 			      override_content_type,
-			      istream_file_fd(*body), st,
+			      fd, st,
 			      tr.expires_relative,
 			      IsProcessorFirst());
 	write_translation_vary_header(headers2, tr);
@@ -80,16 +82,15 @@ Request::DispatchFile(const struct stat &st,
 
 	header_write(headers2, "accept-ranges", "bytes");
 
+	off_t size = st.st_size;
+
 	switch (file_request.range.type) {
 	case HttpRangeRequest::Type::NONE:
 		break;
 
 	case HttpRangeRequest::Type::VALID:
-		istream_file_set_range(*body, file_request.range.skip,
-				       file_request.range.size);
-
-		assert(body->GetAvailable(false) ==
-		       off_t(file_request.range.size - file_request.range.skip));
+		fd.Skip(file_request.range.skip);
+		size = file_request.range.size;
 
 		status = HTTP_STATUS_PARTIAL_CONTENT;
 
@@ -107,39 +108,40 @@ Request::DispatchFile(const struct stat &st,
 			     p_sprintf(&pool, "bytes */%lu",
 				       (unsigned long)st.st_size));
 
-		body->CloseUnused();
-		body = nullptr;
+		fd.Close();
 		break;
 	}
 
 	/* finished, dispatch this response */
+
+	auto *body = istream_file_fd_new(instance.event_loop, pool, path,
+					 std::move(fd), FdType::FD_FILE,
+					 size);
 
 	DispatchResponse(status, std::move(headers),
 			 UnusedIstreamPtr(body));
 }
 
 bool
-Request::DispatchCompressedFile(const struct stat &st,
-				Istream &body, const char *encoding,
-				const char *path)
+Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
+				const struct stat &st,
+				const char *encoding) noexcept
 {
 	const TranslateResponse &tr = *translate.response;
 	const auto &address = *handler.file.address;
 
 	/* open compressed file */
 
+	UniqueFileDescriptor compressed_fd;
 	struct stat st2;
-	UnusedIstreamPtr compressed_body;
 
 	try {
-		compressed_body = UnusedIstreamPtr(istream_file_stat_new(instance.event_loop,
-									 pool,
-									 path, st2));
+		compressed_fd = OpenReadOnly(path);
 	} catch (...) {
 		return false;
 	}
 
-	if (!S_ISREG(st2.st_mode))
+	if (fstat(compressed_fd.Get(), &st2) < 0 || S_ISREG(st2.st_mode))
 		return false;
 
 	/* response headers with information from uncompressed file */
@@ -153,7 +155,7 @@ Request::DispatchCompressedFile(const struct stat &st,
 	file_response_headers(headers2,
 			      instance.event_loop.GetSystemClockCache(),
 			      override_content_type,
-			      istream_file_fd(body), st,
+			      fd, st,
 			      tr.expires_relative,
 			      IsProcessorFirst());
 	write_translation_vary_header(headers2, tr);
@@ -161,34 +163,36 @@ Request::DispatchCompressedFile(const struct stat &st,
 	header_write(headers2, "content-encoding", encoding);
 	header_write(headers2, "vary", "accept-encoding");
 
-	/* close original file */
-
-	body.CloseUnused();
-
 	/* finished, dispatch this response */
 
 	compressed = true;
 
+	auto *compressed_body = istream_file_fd_new(instance.event_loop, pool,
+						    path,
+						    std::move(compressed_fd),
+						    FdType::FD_FILE,
+						    st2.st_size);
+
 	http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
 	DispatchResponse(status, std::move(headers),
-			 std::move(compressed_body));
+			 UnusedIstreamPtr(compressed_body));
 	return true;
 }
 
 bool
-Request::CheckCompressedFile(const struct stat &st,
-			     Istream &body, const char *encoding,
-			     const char *path) noexcept
+Request::CheckCompressedFile(const char *path, FileDescriptor fd,
+			     const struct stat &st,
+			     const char *encoding) noexcept
 {
 	return path != nullptr &&
 		http_client_accepts_encoding(request.headers, encoding) &&
-		DispatchCompressedFile(st, body, encoding, path);
+		DispatchCompressedFile(path, fd, st, encoding);
 }
 
 bool
-Request::CheckAutoCompressedFile(const struct stat &st,
-				 Istream &body, const char *encoding,
-				 const char *path, const char *suffix) noexcept
+Request::CheckAutoCompressedFile(const char *path, FileDescriptor fd,
+				 const struct stat &st,
+				 const char *encoding, const char *suffix) noexcept
 {
 	assert(encoding != nullptr);
 	assert(path != nullptr);
@@ -201,12 +205,13 @@ Request::CheckAutoCompressedFile(const struct stat &st,
 
 	const AllocatorPtr alloc(pool);
 	const char *compressed_path = alloc.Concat(path, suffix);
-	return DispatchCompressedFile(st, body, encoding, compressed_path);
+	return DispatchCompressedFile(compressed_path, fd, st, encoding);
 }
 
 inline bool
 Request::MaybeEmulateModAuthEasy(const FileAddress &address,
-				 const struct stat &st, Istream *body) noexcept
+				 UniqueFileDescriptor &fd,
+				 const struct stat &st) noexcept
 {
 	assert(S_ISREG(st.st_mode));
 
@@ -222,7 +227,7 @@ Request::MaybeEmulateModAuthEasy(const FileAddress &address,
 	if (strstr(address.path, "/pr_0001/public_html/") == nullptr)
 		return false;
 
-	return EmulateModAuthEasy(address, st, body);
+	return EmulateModAuthEasy(address, fd, st);
 }
 
 void
@@ -246,11 +251,13 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 
 	/* open the file */
 
+	UniqueFileDescriptor fd;
 	struct stat st;
-	Istream *body;
 
 	try {
-		body = istream_file_stat_new(instance.event_loop, pool, path, st);
+		fd = OpenReadOnly(path);
+		if (fstat(fd.Get(), &st) < 0)
+			throw FormatErrno("Failed to stat %s", path);
 	} catch (...) {
 		LogDispatchError(std::current_exception());
 		return;
@@ -260,42 +267,44 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 
 	if (S_ISCHR(st.st_mode)) {
 		/* allow character devices, but skip range etc. */
+		auto *body = istream_file_fd_new(instance.event_loop,
+						 pool, address.path,
+						 std::move(fd),
+						 FdType::FD_CHARDEV,
+						 -1);
 		DispatchResponse(HTTP_STATUS_OK, {},
 				 UnusedIstreamPtr(body));
 		return;
 	}
 
 	if (!S_ISREG(st.st_mode)) {
-		body->CloseUnused();
 		DispatchResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR,
 				 "Not a regular file");
 		return;
 	}
 
-	if (MaybeEmulateModAuthEasy(address, st, body))
+	if (MaybeEmulateModAuthEasy(address, fd, st))
 		return;
 
 	struct file_request file_request(st.st_size);
 
 	/* request options */
 
-	if (!EvaluateFileRequest(istream_file_fd(*body), st, file_request)) {
-		body->CloseUnused();
+	if (!EvaluateFileRequest(fd, st, file_request))
 		return;
-	}
 
 	/* precompressed? */
 
 	if (!compressed &&
 	    file_request.range.type == HttpRangeRequest::Type::NONE &&
 	    !IsTransformationEnabled() &&
-	    (CheckCompressedFile(st, *body, "deflate", address.deflated) ||
+	    (CheckCompressedFile(address.deflated, fd, st, "deflate") ||
 	     (address.auto_gzipped &&
-	      CheckAutoCompressedFile(st, *body, "gzip", address.path, ".gz")) ||
-	     CheckCompressedFile(st, *body, "gzip", address.gzipped)))
+	      CheckAutoCompressedFile(address.path, fd, st, "gzip", ".gz")) ||
+	     CheckCompressedFile(address.gzipped, fd, st, "gzip")))
 		return;
 
 	/* build the response */
 
-	DispatchFile(st, file_request, body);
+	DispatchFile(address.path, std::move(fd), st, file_request);
 }

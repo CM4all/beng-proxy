@@ -52,6 +52,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/stat.h>
 
 static void
 DispatchUnauthorized(Request &request2) noexcept
@@ -215,11 +216,10 @@ CheckAccessFileFor(const StringMap &request_headers, const char *html_path)
 
 bool
 Request::EmulateModAuthEasy(const FileAddress &address,
-			    const struct stat &st, Istream *body) noexcept
+			    UniqueFileDescriptor &fd, const struct stat &st) noexcept
 {
 	if (!CheckAccessFileFor(request.headers, address.path)) {
 		DispatchUnauthorized(*this);
-		body->Close();
 		return true;
 	}
 
@@ -227,7 +227,7 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 		return false;
 
 	char buffer[4096];
-	char *line = ReadFirstLine(istream_file_fd(*body), buffer, sizeof(buffer));
+	char *line = ReadFirstLine(fd, buffer, sizeof(buffer));
 	if (line == nullptr)
 		return false;
 
@@ -247,14 +247,12 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 	const char *authorization = request.headers.Get("authorization");
 	if (authorization == nullptr) {
 		DispatchUnauthorized(*this);
-		body->Close();
 		return true;
 	}
 
 	const auto basic_auth = ParseBasicAuth(authorization);
 	if (basic_auth.first.empty()) {
 		DispatchUnauthorized(*this);
-		body->Close();
 		return true;
 	}
 
@@ -263,7 +261,6 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 	if (password == nullptr ||
 	    !VerifyPassword(password, basic_auth.second.c_str())) {
 		DispatchUnauthorized(*this);
-		body->Close();
 		return true;
 	}
 
@@ -278,12 +275,17 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 	file_response_headers(headers2,
 			      instance.event_loop.GetSystemClockCache(),
 			      override_content_type,
-			      istream_file_fd(*body), st,
+			      fd, st,
 			      tr.expires_relative,
 			      IsProcessorFirst());
 	write_translation_vary_header(headers2, tr);
 
 	http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
+
+	auto *body = istream_file_fd_new(instance.event_loop, pool,
+					 address.path,
+					 std::move(fd), FdType::FD_FILE,
+					 st.st_size);
 
 	DispatchResponse(status, std::move(headers),
 			 UnusedIstreamPtr(body));
