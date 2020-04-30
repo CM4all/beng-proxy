@@ -157,6 +157,7 @@ io_dep = declare_dependency(
   ],
 )
 
+subdir('libcommon/src/io/uring')
 subdir('libcommon/src/system')
 
 system2 = static_library(
@@ -819,6 +820,12 @@ if nfs_client_dep.found()
   ]
 endif
 
+if uring_dep.found()
+  sources += [
+    'src/io/UringManager.cxx',
+  ]
+endif
+
 executable(
   'cm4all-beng-proxy',
   sources,
@@ -919,6 +926,7 @@ executable(
   include_directories: inc,
   dependencies: [
     threads,
+    uring_dep,
     avahi_dep,
     pool_dep,
     net_dep,

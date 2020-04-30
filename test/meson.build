@@ -890,3 +890,17 @@ if avahi_dep.found()
     ],
   )
 endif
+
+if uring_dep.found()
+  executable(
+    'RunUringIstream',
+    'RunUringIstream.cxx',
+    '../src/io/UringManager.cxx',
+    '../src/PInstance.cxx',
+    include_directories: inc,
+    dependencies: [
+      istream_dep,
+      uring_dep,
+    ],
+  )
+endif

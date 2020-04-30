@@ -53,6 +53,12 @@ istream_basic_dep = declare_dependency(
   ],
 )
 
+istream_sources = []
+
+if uring_dep.found()
+  istream_sources += 'UringIstream.cxx'
+endif
+
 istream = static_library(
   'istream',
 
@@ -84,6 +90,8 @@ istream = static_library(
 
   # IstreamSink implementations
   'sink_fd.cxx',
+
+  istream_sources,
 
   include_directories: inc,
   dependencies: [

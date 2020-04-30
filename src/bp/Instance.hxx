@@ -79,6 +79,7 @@ class NfsCache;
 class HttpCache;
 class FilterCache;
 class UserAgentClassList;
+class UringManager;
 struct BpWorker;
 class BPListener;
 struct BpConnection;
@@ -93,6 +94,10 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	uint64_t http_traffic_sent_counter = 0;
 
 	std::unique_ptr<UserAgentClassList> ua_classification;
+
+#ifdef HAVE_URING
+	std::unique_ptr<UringManager> uring;
+#endif
 
 	std::forward_list<BPListener> listeners;
 

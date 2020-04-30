@@ -64,6 +64,10 @@
 #include "access_log/Glue.hxx"
 #include "ua_classification.hxx"
 
+#ifdef HAVE_URING
+#include "io/UringManager.hxx"
+#endif
+
 #include <sys/signal.h>
 
 static constexpr auto COMPRESS_INTERVAL = std::chrono::minutes(10);

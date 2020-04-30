@@ -83,6 +83,10 @@
 #include "io/SpliceSupport.hxx"
 #include "util/PrintException.hxx"
 
+#ifdef HAVE_URING
+#include "io/UringManager.hxx"
+#endif
+
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
 #include "odbus/Init.hxx"
 #include "odbus/Connection.hxx"
@@ -132,6 +136,11 @@ BpInstance::ShutdownCallback() noexcept
 {
 	if (should_exit)
 		return;
+
+#ifdef HAVE_URING
+	if (uring)
+		uring->SetVolatile();
+#endif
 
 	should_exit = true;
 	DisableSignals();
@@ -297,6 +306,15 @@ try {
 	ssl_client_init(instance.config.ssl_client);
 
 	direct_global_init();
+
+#ifdef HAVE_URING
+	try {
+		instance.uring = std::make_unique<UringManager>(instance.event_loop);
+	} catch (...) {
+		fprintf(stderr, "Failed to initialize io_uring: ");
+		PrintException(std::current_exception());
+	}
+#endif
 
 	instance.EnableSignals();
 
