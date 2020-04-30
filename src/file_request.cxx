@@ -44,6 +44,7 @@
 
 #include <assert.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 void
 static_file_get(EventLoop &event_loop, struct pool &pool,
@@ -52,22 +53,13 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
 {
 	assert(path != nullptr);
 
-	struct stat st;
-	if (lstat(path, &st) != 0) {
-		handler.InvokeError(std::make_exception_ptr(FormatErrno("Failed to open %s", path)));
-		return;
-	}
-
-	if (!S_ISREG(st.st_mode) && !S_ISCHR(st.st_mode)) {
-		handler.InvokeResponse(pool, HTTP_STATUS_NOT_FOUND,
-				       "Not a regular file");
-		return;
-	}
-
 	UniqueFileDescriptor fd;
+	struct stat st;
 
 	try {
-		fd = OpenReadOnly(path);
+		fd = OpenReadOnly(path, O_NOFOLLOW);
+		if (fstat(fd.Get(), &st) < 0)
+			throw FormatErrno("Failed to stat %s", path);
 	} catch (...) {
 		handler.InvokeError(std::current_exception());
 		return;
@@ -79,6 +71,10 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
 	if (S_ISCHR(st.st_mode)) {
 		fd_type = FdType::FD_CHARDEV;
 		size = -1;
+	} else if (!S_ISREG(st.st_mode)) {
+		handler.InvokeResponse(pool, HTTP_STATUS_NOT_FOUND,
+				       "Not a regular file");
+		return;
 	}
 
 	auto headers = static_response_headers(pool, fd, st, content_type);
