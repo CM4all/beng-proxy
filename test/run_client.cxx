@@ -465,18 +465,10 @@ try {
 	/* open request body */
 
 	if (argc >= 3) {
-		struct stat st;
-
-		if (stat(argv[2], &st) < 0) {
-			fprintf(stderr, "Failed to stat %s: %s\n",
-				argv[2], strerror(errno));
-			return EXIT_FAILURE;
-		}
-
 		ctx.method = HTTP_METHOD_POST;
 
 		ctx.request_body = istream_file_new(ctx.event_loop, ctx.pool,
-						    argv[2], st.st_size);
+						    argv[2]);
 	} else {
 		ctx.method = HTTP_METHOD_GET;
 	}

@@ -127,7 +127,7 @@ try {
 		processor_process(instance.root_pool, nullptr,
 				  istream_file_new(instance.event_loop,
 						   instance.root_pool,
-						   "/dev/stdin", (off_t)-1),
+						   "/dev/stdin"),
 				  widget, std::move(ctx), PROCESSOR_CONTAINER);
 
 	StdioSink sink(std::move(result));

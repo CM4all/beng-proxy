@@ -103,7 +103,7 @@ try {
 	const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
 	auto istream = istream_file_new(instance.event_loop, pool,
-					"/dev/stdin", (off_t)-1);
+					"/dev/stdin");
 
 	MyXmlParserHandler handler(pool, std::move(istream));
 	while (!should_exit)

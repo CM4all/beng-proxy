@@ -64,7 +64,7 @@ try {
 
 	StdioSink sink(istream_subst_new(pool,
 					 istream_file_new(instance.event_loop, pool,
-							  "/dev/stdin", (off_t)-1),
+							  "/dev/stdin"),
 					 std::move(tree)));
 
 	pool.reset();

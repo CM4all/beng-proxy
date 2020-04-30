@@ -373,7 +373,7 @@ test_post(PoolPtr pool, Context *c)
 		pool, nullptr, HTTP_METHOD_POST, &address,
 		nullptr, {},
 		UnusedIstreamPtr(istream_file_new(c->event_loop, *pool,
-						  "build.ninja", 8192)),
+						  "build.ninja")),
 		*c, c->cancel_ptr);
 
 	pool.reset();

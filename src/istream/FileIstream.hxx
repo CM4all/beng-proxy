@@ -53,4 +53,4 @@ istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
  */
 UnusedIstreamPtr
 istream_file_new(EventLoop &event_loop, struct pool &pool,
-		 const char *path, off_t length);
+		 const char *path);
