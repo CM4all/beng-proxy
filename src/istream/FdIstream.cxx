@@ -62,8 +62,6 @@ class FdIstream final : public Istream {
 
 	FdType fd_type;
 
-	bool eof = false;
-
 	/**
 	 * A timer to retry reading after EAGAIN.
 	 */
