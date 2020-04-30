@@ -101,14 +101,18 @@ private:
 			return INT_MAX;
 	}
 
-	void TryData() noexcept;
-	void TryDirect() noexcept;
+	void TryData();
+	void TryDirect();
 
 	void TryRead() noexcept {
-		if (CheckDirect(FdType::FD_FILE))
-			TryDirect();
-		else
-			TryData();
+		try {
+			if (CheckDirect(FdType::FD_FILE))
+				TryDirect();
+			else
+				TryData();
+		} catch (...) {
+			DestroyError(std::current_exception());
+		}
 	}
 
 	void EventCallback() noexcept {
@@ -132,7 +136,7 @@ private:
 };
 
 inline void
-FileIstream::TryData() noexcept
+FileIstream::TryData()
 {
 	if (buffer.IsNull()) {
 		if (rest != 0)
@@ -152,13 +156,10 @@ FileIstream::TryData() noexcept
 
 	ssize_t nbytes = read_to_buffer(fd.Get(), buffer, GetMaxRead());
 	if (nbytes == 0) {
-		DestroyError(std::make_exception_ptr(FormatRuntimeError("premature end of file in '%s'",
-									path)));
-		return;
+		throw FormatRuntimeError("premature end of file in '%s'",
+					 path);
 	} else if (nbytes == -1) {
-		DestroyError(std::make_exception_ptr(FormatErrno("Failed to read from '%s'",
-								 path)));
-		return;
+		throw FormatErrno("Failed to read from '%s'", path);
 	} else if (nbytes > 0) {
 		rest -= (off_t)nbytes;
 		assert(rest >= 0);
@@ -171,7 +172,7 @@ FileIstream::TryData() noexcept
 }
 
 inline void
-FileIstream::TryDirect() noexcept
+FileIstream::TryDirect()
 {
 	/* first consume the rest of the buffer */
 	if (ConsumeFromBuffer(buffer) > 0)
@@ -197,8 +198,7 @@ FileIstream::TryDirect() noexcept
 				EofDetected();
 		}
 	} else if (nbytes == ISTREAM_RESULT_EOF) {
-		DestroyError(std::make_exception_ptr(FormatRuntimeError("premature end of file in '%s'",
-									path)));
+		throw FormatRuntimeError("premature end of file in '%s'", path);
 	} else if (errno == EAGAIN) {
 		/* this should only happen for splice(SPLICE_F_NONBLOCK) from
 		   NFS files - unfortunately we cannot use SocketEvent::READ
@@ -208,8 +208,7 @@ FileIstream::TryDirect() noexcept
 		retry_event.Schedule(file_retry_timeout);
 	} else {
 		/* XXX */
-		DestroyError(std::make_exception_ptr(FormatErrno("Failed to read from '%s'",
-								 path)));
+		throw FormatErrno("Failed to read from '%s'", path);
 	}
 }
 
