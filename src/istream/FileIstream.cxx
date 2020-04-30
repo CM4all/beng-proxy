@@ -93,10 +93,6 @@ public:
 	}
 
 private:
-	void Abort(std::exception_ptr ep) noexcept {
-		DestroyError(ep);
-	}
-
 	/**
 	 * @return the number of bytes still in the buffer
 	 */
@@ -180,13 +176,13 @@ FileIstream::TryData() noexcept
 			if (buffer_rest == 0)
 				EofDetected();
 		} else {
-			Abort(std::make_exception_ptr(FormatRuntimeError("premature end of file in '%s'",
-									 path)));
+			DestroyError(std::make_exception_ptr(FormatRuntimeError("premature end of file in '%s'",
+										path)));
 		}
 		return;
 	} else if (nbytes == -1) {
-		Abort(std::make_exception_ptr(FormatErrno("Failed to read from '%s'",
-							  path)));
+		DestroyError(std::make_exception_ptr(FormatErrno("Failed to read from '%s'",
+								 path)));
 		return;
 	} else if (nbytes > 0 && rest != (off_t)-1) {
 		rest -= (off_t)nbytes;
@@ -230,8 +226,8 @@ FileIstream::TryDirect() noexcept
 		if (rest == (off_t)-1) {
 			EofDetected();
 		} else {
-			Abort(std::make_exception_ptr(FormatRuntimeError("premature end of file in '%s'",
-									 path)));
+			DestroyError(std::make_exception_ptr(FormatRuntimeError("premature end of file in '%s'",
+										path)));
 		}
 	} else if (errno == EAGAIN) {
 		/* this should only happen for splice(SPLICE_F_NONBLOCK) from
@@ -242,8 +238,8 @@ FileIstream::TryDirect() noexcept
 		retry_event.Schedule(file_retry_timeout);
 	} else {
 		/* XXX */
-		Abort(std::make_exception_ptr(FormatErrno("Failed to read from '%s'",
-							  path)));
+		DestroyError(std::make_exception_ptr(FormatErrno("Failed to read from '%s'",
+								 path)));
 	}
 }
 
