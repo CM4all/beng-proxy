@@ -41,6 +41,7 @@
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
 #include "istream/FileIstream.hxx"
+#include "istream/FdIstream.hxx"
 #include "istream/istream.hxx"
 #include "pool/pool.hxx"
 #include "translation/Vary.hxx"
@@ -263,11 +264,10 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 	if (S_ISCHR(st.st_mode)) {
 		/* allow character devices, but skip range etc. */
 		DispatchResponse(HTTP_STATUS_OK, {},
-				 istream_file_fd_new(instance.event_loop,
-						     pool, address.path,
-						     std::move(fd),
-						     FdType::FD_CHARDEV,
-						     -1));
+				 NewFdIstream(instance.event_loop,
+					      pool, address.path,
+					      std::move(fd),
+					      FdType::FD_CHARDEV));
 		return;
 	}
 
