@@ -208,13 +208,12 @@ inline bool
 Request::MaybeEmulateModAuthEasy(const FileAddress &address,
 				 const struct stat &st, Istream *body) noexcept
 {
+	assert(S_ISREG(st.st_mode));
+
 	if (!instance.config.emulate_mod_auth_easy)
 		return false;
 
 	if (IsTransformationEnabled())
-		return false;
-
-	if (!S_ISREG(st.st_mode))
 		return false;
 
 	if (!StringStartsWith(address.path, "/var/www/vol"))
@@ -257,9 +256,6 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 		return;
 	}
 
-	if (MaybeEmulateModAuthEasy(address, st, body))
-		return;
-
 	/* check file type */
 
 	if (S_ISCHR(st.st_mode)) {
@@ -275,6 +271,9 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 				 "Not a regular file");
 		return;
 	}
+
+	if (MaybeEmulateModAuthEasy(address, st, body))
+		return;
 
 	struct file_request file_request(st.st_size);
 
