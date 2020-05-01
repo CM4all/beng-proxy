@@ -73,7 +73,6 @@ public:
 
 	~UringIstream() noexcept {
 		buffer.FreeIfDefined();
-		buffer.FreeIfDefined();
 	}
 
 private:
