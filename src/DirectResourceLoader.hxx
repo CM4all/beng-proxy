@@ -43,6 +43,7 @@ class LhttpStock;
 class FcgiStock;
 class NfsCache;
 class TcpBalancer;
+class UringManager;
 class FilteredSocketBalancer;
 namespace NgHttp2 { class Stock; }
 
@@ -52,6 +53,9 @@ namespace NgHttp2 { class Stock; }
  */
 class DirectResourceLoader final : public ResourceLoader {
 	EventLoop &event_loop;
+#ifdef HAVE_URING
+	UringManager *const uring;
+#endif
 	TcpBalancer *tcp_balancer;
 	FilteredSocketBalancer &fs_balancer;
 #ifdef HAVE_NGHTTP2
@@ -70,6 +74,9 @@ class DirectResourceLoader final : public ResourceLoader {
 
 public:
 	DirectResourceLoader(EventLoop &_event_loop,
+#ifdef HAVE_URING
+			     UringManager *_uring,
+#endif
 			     TcpBalancer *_tcp_balancer,
 			     FilteredSocketBalancer &_fs_balancer,
 #ifdef HAVE_NGHTTP2
@@ -87,6 +94,9 @@ public:
 #endif
 			     ) noexcept
 		:event_loop(_event_loop),
+#ifdef HAVE_URING
+		 uring(_uring),
+#endif
 		 tcp_balancer(_tcp_balancer),
 		 fs_balancer(_fs_balancer),
 #ifdef HAVE_NGHTTP2

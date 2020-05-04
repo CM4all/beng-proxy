@@ -158,7 +158,11 @@ try {
 			return;
 		}
 
-		static_file_get(event_loop, pool, file->path,
+		static_file_get(event_loop,
+#ifdef HAVE_URING
+				uring,
+#endif
+				pool, file->path,
 				file->content_type,
 				handler);
 		return;

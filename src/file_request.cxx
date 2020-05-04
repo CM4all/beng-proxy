@@ -37,6 +37,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/FileIstream.hxx"
 #include "istream/FdIstream.hxx"
+#include "istream/UringIstream.hxx"
 #include "pool/pool.hxx"
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -48,7 +49,11 @@
 #include <fcntl.h>
 
 void
-static_file_get(EventLoop &event_loop, struct pool &pool,
+static_file_get(EventLoop &event_loop,
+#ifdef HAVE_URING
+		UringManager *uring,
+#endif
+		struct pool &pool,
 		const char *path, const char *content_type,
 		HttpResponseHandler &handler)
 {
@@ -82,6 +87,12 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
 
 	handler.InvokeResponse(HTTP_STATUS_OK,
 			       std::move(headers),
+#ifdef HAVE_URING
+			       uring != nullptr
+			       ? NewUringIstream(*uring, pool, path,
+						 std::move(fd), 0, st.st_size)
+			       :
+#endif
 			       istream_file_fd_new(event_loop, pool, path,
 						   std::move(fd),
 						   0, st.st_size));

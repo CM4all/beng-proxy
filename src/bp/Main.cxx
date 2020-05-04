@@ -460,6 +460,9 @@ try {
 
 	instance.direct_resource_loader =
 		new DirectResourceLoader(instance.event_loop,
+#ifdef HAVE_URING
+					 instance.uring.get(),
+#endif
 					 instance.tcp_balancer,
 					 *instance.fs_balancer,
 #ifdef HAVE_NGHTTP2
