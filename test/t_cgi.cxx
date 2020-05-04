@@ -36,7 +36,7 @@
 #include "HttpResponseHandler.hxx"
 #include "crash.hxx"
 #include "strmap.hxx"
-#include "istream/FileIstream.hxx"
+#include "istream/OpenFileIstream.hxx"
 #include "istream/Handler.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -372,8 +372,8 @@ test_post(PoolPtr pool, Context *c)
 	cgi_new(c->spawn_service, c->event_loop,
 		pool, nullptr, HTTP_METHOD_POST, &address,
 		nullptr, {},
-		UnusedIstreamPtr(istream_file_new(c->event_loop, *pool,
-						  "build.ninja")),
+		UnusedIstreamPtr(OpenFileIstream(c->event_loop, *pool,
+						 "build.ninja")),
 		*c, c->cancel_ptr);
 
 	pool.reset();

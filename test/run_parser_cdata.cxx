@@ -33,7 +33,7 @@
 #include "parser/XmlParser.hxx"
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/FileIstream.hxx"
+#include "istream/OpenFileIstream.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
 #include "pool/pool.hxx"
@@ -102,8 +102,8 @@ try {
 
 	const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-	auto istream = istream_file_new(instance.event_loop, pool,
-					"/dev/stdin");
+	auto istream = OpenFileIstream(instance.event_loop, pool,
+				       "/dev/stdin");
 
 	MyXmlParserHandler handler(pool, std::move(istream));
 	while (!should_exit)

@@ -33,7 +33,7 @@
 #include "StdioSink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/YamlSubstIstream.hxx"
-#include "istream/FileIstream.hxx"
+#include "istream/OpenFileIstream.hxx"
 #include "fb_pool.hxx"
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
@@ -67,8 +67,8 @@ try {
 	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
 	StdioSink sink(NewYamlSubstIstream(pool,
-					   istream_file_new(instance.event_loop, *pool,
-							    "/dev/stdin"),
+					   OpenFileIstream(instance.event_loop, *pool,
+							   "/dev/stdin"),
 					   true,
 					   prefix, yaml_file, yaml_map_path));
 

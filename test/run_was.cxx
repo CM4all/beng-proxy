@@ -40,7 +40,7 @@
 #include "istream/sink_fd.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/FileIstream.hxx"
+#include "istream/OpenFileIstream.hxx"
 #include "fb_pool.hxx"
 #include "PInstance.hxx"
 #include "spawn/Config.hxx"
@@ -162,7 +162,7 @@ request_body(EventLoop &event_loop, struct pool &pool)
 {
 	struct stat st;
 	return fstat(0, &st) == 0 && S_ISREG(st.st_mode)
-		? istream_file_new(event_loop, pool, "/dev/stdin")
+		? OpenFileIstream(event_loop, pool, "/dev/stdin")
 		: nullptr;
 }
 

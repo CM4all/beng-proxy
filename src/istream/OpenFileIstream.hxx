@@ -32,15 +32,12 @@
 
 #pragma once
 
-#include <sys/types.h>
-
 struct pool;
 class UnusedIstreamPtr;
 class EventLoop;
-class FileDescriptor;
-class UniqueFileDescriptor;
 
+/**
+ * Throws exception on error.
+ */
 UnusedIstreamPtr
-istream_file_fd_new(EventLoop &event_loop, struct pool &pool,
-		    const char *path, UniqueFileDescriptor fd,
-		    off_t start_offset, off_t end_offset) noexcept;
+OpenFileIstream(EventLoop &event_loop, struct pool &pool, const char *path);

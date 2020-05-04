@@ -31,7 +31,7 @@
  */
 
 #include "parser/CssParser.hxx"
-#include "istream/FileIstream.hxx"
+#include "istream/OpenFileIstream.hxx"
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "PInstance.hxx"
@@ -143,8 +143,8 @@ try {
 	PInstance instance;
 	const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
 
-	auto istream = istream_file_new(instance.event_loop, *pool,
-					"/dev/stdin");
+	auto istream = OpenFileIstream(instance.event_loop, *pool,
+				       "/dev/stdin");
 
 	CssParserIstreamHandler parser(std::move(istream));
 	while (!should_exit)

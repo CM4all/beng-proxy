@@ -40,7 +40,7 @@
 #include "widget/Widget.hxx"
 #include "widget/Ptr.hxx"
 #include "widget/RewriteUri.hxx"
-#include "istream/FileIstream.hxx"
+#include "istream/OpenFileIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "pool/SharedPtr.hxx"
 #include "util/StringView.hxx"
@@ -125,9 +125,9 @@ try {
 
 	auto result =
 		processor_process(instance.root_pool, nullptr,
-				  istream_file_new(instance.event_loop,
-						   instance.root_pool,
-						   "/dev/stdin"),
+				  OpenFileIstream(instance.event_loop,
+						  instance.root_pool,
+						  "/dev/stdin"),
 				  widget, std::move(ctx), PROCESSOR_CONTAINER);
 
 	StdioSink sink(std::move(result));

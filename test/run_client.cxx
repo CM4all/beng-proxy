@@ -35,7 +35,7 @@
 #include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"
 #include "lease.hxx"
-#include "istream/FileIstream.hxx"
+#include "istream/OpenFileIstream.hxx"
 #include "istream/AutoPipeIstream.hxx"
 #include "istream/istream.hxx"
 #include "istream/sink_fd.hxx"
@@ -467,8 +467,8 @@ try {
 	if (argc >= 3) {
 		ctx.method = HTTP_METHOD_POST;
 
-		ctx.request_body = istream_file_new(ctx.event_loop, ctx.pool,
-						    argv[2]);
+		ctx.request_body = OpenFileIstream(ctx.event_loop, ctx.pool,
+						   argv[2]);
 	} else {
 		ctx.method = HTTP_METHOD_GET;
 	}

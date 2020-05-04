@@ -33,7 +33,7 @@
 #include "StdioSink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/SubstIstream.hxx"
-#include "istream/FileIstream.hxx"
+#include "istream/OpenFileIstream.hxx"
 #include "fb_pool.hxx"
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
@@ -63,8 +63,8 @@ try {
 	}
 
 	StdioSink sink(istream_subst_new(pool,
-					 istream_file_new(instance.event_loop, pool,
-							  "/dev/stdin"),
+					 OpenFileIstream(instance.event_loop, pool,
+							 "/dev/stdin"),
 					 std::move(tree)));
 
 	pool.reset();
