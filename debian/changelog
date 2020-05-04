@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.6) unstable; urgency=low
 
-  * 
+  * bp: read from files using io_uring
 
  --   
 

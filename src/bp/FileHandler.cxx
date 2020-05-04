@@ -42,6 +42,7 @@
 #include "http/IncomingRequest.hxx"
 #include "istream/FileIstream.hxx"
 #include "istream/FdIstream.hxx"
+#include "istream/UringIstream.hxx"
 #include "istream/istream.hxx"
 #include "pool/pool.hxx"
 #include "translation/Vary.hxx"
@@ -116,6 +117,13 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 	/* finished, dispatch this response */
 
 	DispatchResponse(status, std::move(headers),
+#ifdef HAVE_URING
+			 instance.uring
+			 ? NewUringIstream(*instance.uring, pool, path,
+					   std::move(fd),
+					   start_offset, end_offset)
+			 :
+#endif
 			 istream_file_fd_new(instance.event_loop, pool, path,
 					     std::move(fd),
 					     start_offset, end_offset));
@@ -168,6 +176,13 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 
 	http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
 	DispatchResponse(status, std::move(headers),
+#ifdef HAVE_URING
+			 instance.uring
+			 ? NewUringIstream(*instance.uring, pool, path,
+					   std::move(compressed_fd),
+					   0, st2.st_size)
+			 :
+#endif
 			 istream_file_fd_new(instance.event_loop, pool,
 					     path, std::move(compressed_fd),
 					     0, st2.st_size));
