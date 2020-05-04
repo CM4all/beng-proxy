@@ -34,9 +34,12 @@
 #include "istream/sink_fd.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "system/Error.hxx"
+#include "system/KernelVersion.hxx"
 #include "io/Open.hxx"
 #include "io/SpliceSupport.hxx"
 #include "event/uring/Manager.hxx"
+#include "event/uring/Handler.hxx"
+#include "event/uring/OpenStat.hxx"
 #include "util/PrintException.hxx"
 #include "fb_pool.hxx"
 #include "PInstance.hxx"
@@ -46,19 +49,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct Context final : PInstance, SinkFdHandler {
+struct Context final : PInstance, Uring::OpenStatHandler, SinkFdHandler {
 	Uring::Manager uring_manager;
+	Uring::OpenStat open_stat;
+
+	const char *_path;
 
 	SinkFd *sink = nullptr;
 	std::exception_ptr error;
 
-	Context():uring_manager(event_loop) {}
+	Context()
+		:uring_manager(event_loop),
+		 open_stat(uring_manager, *this) {}
 
 	void BeginShutdown() noexcept {
 		uring_manager.SetVolatile();
 	}
 
 	void Open(const char *path);
+	void OpenCompat(const char *path);
+	void OpenUring(const char *path) noexcept;
+
+	void CreateSinkFd(const char *path,
+			  UniqueFileDescriptor &&fd,
+			  off_t size) noexcept;
+
+	/* virtual methods from class Uring::OpenStatHandler */
+	void OnOpenStat(UniqueFileDescriptor fd,
+			struct statx &st) noexcept override;
+	void OnOpenStatError(std::exception_ptr e) noexcept override;
 
 	/* virtual methods from class SinkFdHandler */
 	void OnInputEof() noexcept override;
@@ -67,7 +86,7 @@ struct Context final : PInstance, SinkFdHandler {
 };
 
 inline void
-Context::Open(const char *path)
+Context::OpenCompat(const char *path)
 {
 	auto fd = OpenReadOnly(path);
 	struct stat st;
@@ -77,14 +96,58 @@ Context::Open(const char *path)
 	if (!S_ISREG(st.st_mode))
 		throw std::runtime_error("Not a regular file");
 
+	CreateSinkFd(path, std::move(fd), st.st_size);
+}
+
+inline void
+Context::OpenUring(const char *path) noexcept
+{
+	_path = path;
+	open_stat.StartOpenStatReadOnly(path);
+}
+
+inline void
+Context::Open(const char *path)
+{
+	if (IsKernelVersionOrNewer({5, 6}))
+		OpenUring(path);
+	else
+		OpenCompat(path);
+
+}
+
+void
+Context::CreateSinkFd(const char *path, UniqueFileDescriptor &&fd,
+		      off_t size) noexcept
+{
 	sink = sink_fd_new(event_loop, root_pool,
 			   NewUringIstream(uring_manager,
 					   root_pool, path,
 					   std::move(fd),
-					   0, st.st_size),
+					   0, size),
 			   FileDescriptor(STDOUT_FILENO),
 			   guess_fd_type(STDOUT_FILENO),
 			   *this);
+}
+
+void
+Context::OnOpenStat(UniqueFileDescriptor fd,
+		    struct statx &st) noexcept
+try {
+	if (!S_ISREG(st.stx_mode))
+		throw std::runtime_error("Not a regular file");
+
+	CreateSinkFd(_path, std::move(fd), st.stx_size);
+} catch (...) {
+	error = std::current_exception();
+	BeginShutdown();
+}
+
+void
+Context::OnOpenStatError(std::exception_ptr e) noexcept
+{
+	error = std::move(e);
+	BeginShutdown();
 }
 
 void
