@@ -47,7 +47,7 @@
 #include <limits.h>
 
 class UringIstream final : public Istream, Uring::Operation {
-	UringManager &uring;
+	Uring::Manager &uring;
 
 	UniqueFileDescriptor fd;
 
@@ -61,7 +61,7 @@ class UringIstream final : public Istream, Uring::Operation {
 	const char *const path;
 
 public:
-	UringIstream(struct pool &p, UringManager &_uring,
+	UringIstream(struct pool &p, Uring::Manager &_uring,
 		     const char *_path, UniqueFileDescriptor &&_fd,
 		     off_t _start_offset, off_t _end_offset) noexcept
 		:Istream(p), uring(_uring),
@@ -199,7 +199,7 @@ UringIstream::_AsFd() noexcept
  */
 
 UnusedIstreamPtr
-NewUringIstream(UringManager &uring, struct pool &pool,
+NewUringIstream(Uring::Manager &uring, struct pool &pool,
 		const char *path, UniqueFileDescriptor fd,
 		off_t start_offset, off_t end_offset) noexcept
 {

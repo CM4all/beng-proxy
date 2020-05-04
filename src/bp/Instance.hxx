@@ -79,7 +79,7 @@ class NfsCache;
 class HttpCache;
 class FilterCache;
 class UserAgentClassList;
-class UringManager;
+namespace Uring { class Manager; }
 struct BpWorker;
 class BPListener;
 struct BpConnection;
@@ -96,7 +96,7 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	std::unique_ptr<UserAgentClassList> ua_classification;
 
 #ifdef HAVE_URING
-	std::unique_ptr<UringManager> uring;
+	std::unique_ptr<Uring::Manager> uring;
 #endif
 
 	std::forward_list<BPListener> listeners;

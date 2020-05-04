@@ -51,7 +51,7 @@
 void
 static_file_get(EventLoop &event_loop,
 #ifdef HAVE_URING
-		UringManager *uring,
+		Uring::Manager *uring,
 #endif
 		struct pool &pool,
 		const char *path, const char *content_type,

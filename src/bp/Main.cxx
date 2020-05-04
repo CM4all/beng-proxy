@@ -309,7 +309,7 @@ try {
 
 #ifdef HAVE_URING
 	try {
-		instance.uring = std::make_unique<UringManager>(instance.event_loop);
+		instance.uring = std::make_unique<Uring::Manager>(instance.event_loop);
 	} catch (...) {
 		fprintf(stderr, "Failed to initialize io_uring: ");
 		PrintException(std::current_exception());

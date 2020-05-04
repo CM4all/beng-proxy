@@ -35,7 +35,7 @@
 struct pool;
 class HttpResponseHandler;
 class EventLoop;
-class UringManager;
+namespace Uring { class Manager; }
 
 /**
  * Static file support for DirectResourceLoader.
@@ -43,7 +43,7 @@ class UringManager;
 void
 static_file_get(EventLoop &event_loop,
 #ifdef HAVE_URING
-		UringManager *uring,
+		Uring::Manager *uring,
 #endif
 		struct pool &pool,
 		const char *path, const char *content_type,

@@ -47,7 +47,7 @@
 #include <stdlib.h>
 
 struct Context final : PInstance, SinkFdHandler {
-	UringManager uring_manager;
+	Uring::Manager uring_manager;
 
 	SinkFd *sink = nullptr;
 	std::exception_ptr error;
