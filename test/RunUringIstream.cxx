@@ -36,7 +36,7 @@
 #include "system/Error.hxx"
 #include "io/Open.hxx"
 #include "io/SpliceSupport.hxx"
-#include "io/UringManager.hxx"
+#include "event/uring/Manager.hxx"
 #include "util/PrintException.hxx"
 #include "fb_pool.hxx"
 #include "PInstance.hxx"

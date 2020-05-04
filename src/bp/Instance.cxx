@@ -65,7 +65,7 @@
 #include "ua_classification.hxx"
 
 #ifdef HAVE_URING
-#include "io/UringManager.hxx"
+#include "event/uring/Manager.hxx"
 #endif
 
 #include <sys/signal.h>

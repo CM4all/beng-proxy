@@ -250,6 +250,7 @@ net_dep = declare_dependency(
 )
 
 subdir('libcommon/src/event/net')
+subdir('libcommon/src/event/uring')
 
 event_net2 = static_library(
   'event_net2',
@@ -820,12 +821,6 @@ if nfs_client_dep.found()
   ]
 endif
 
-if uring_dep.found()
-  sources += [
-    'src/io/UringManager.cxx',
-  ]
-endif
-
 executable(
   'cm4all-beng-proxy',
   sources,
@@ -926,7 +921,7 @@ executable(
   include_directories: inc,
   dependencies: [
     threads,
-    uring_dep,
+    event_uring_dep,
     avahi_dep,
     pool_dep,
     net_dep,

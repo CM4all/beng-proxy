@@ -84,7 +84,7 @@
 #include "util/PrintException.hxx"
 
 #ifdef HAVE_URING
-#include "io/UringManager.hxx"
+#include "event/uring/Manager.hxx"
 #endif
 
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
