@@ -58,11 +58,34 @@ struct Context final : PInstance, SinkFdHandler {
 		uring_manager.SetVolatile();
 	}
 
+	void Open(const char *path);
+
 	/* virtual methods from class SinkFdHandler */
 	void OnInputEof() noexcept override;
 	void OnInputError(std::exception_ptr ep) noexcept override;
 	bool OnSendError(int error) noexcept override;
 };
+
+inline void
+Context::Open(const char *path)
+{
+	auto fd = OpenReadOnly(path);
+	struct stat st;
+	if (fstat(fd.Get(), &st) < 0)
+		throw FormatErrno("Failed to stat %s", path);
+
+	if (!S_ISREG(st.st_mode))
+		throw std::runtime_error("Not a regular file");
+
+	sink = sink_fd_new(event_loop, root_pool,
+			   NewUringIstream(uring_manager,
+					   root_pool, path,
+					   std::move(fd),
+					   0, st.st_size),
+			   FileDescriptor(STDOUT_FILENO),
+			   guess_fd_type(STDOUT_FILENO),
+			   *this);
+}
 
 void
 Context::OnInputEof() noexcept
@@ -104,23 +127,7 @@ try {
 	const ScopeFbPoolInit fb_pool_init;
 
 	Context context;
-
-	auto fd = OpenReadOnly(path);
-	struct stat st;
-	if (fstat(fd.Get(), &st) < 0)
-		throw FormatErrno("Failed to stat %s", path);
-
-	if (!S_ISREG(st.st_mode))
-		throw std::runtime_error("Not a regular file");
-
-	context.sink = sink_fd_new(context.event_loop, context.root_pool,
-				   NewUringIstream(context.uring_manager,
-						   context.root_pool, path,
-						   std::move(fd),
-						   0, st.st_size),
-				   FileDescriptor(STDOUT_FILENO),
-				   guess_fd_type(STDOUT_FILENO),
-				   context);
+	context.Open(path);
 
 	context.event_loop.Dispatch();
 
