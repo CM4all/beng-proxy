@@ -814,6 +814,10 @@ control_server_dep = declare_dependency(
 sources = [
 ]
 
+if uring_dep.found()
+  sources += 'src/io/UringOpenStat.cxx'
+endif
+
 if nfs_client_dep.found()
   sources += [
     'src/nfs/RequestHandler.cxx',
