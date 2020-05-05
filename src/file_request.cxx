@@ -45,8 +45,8 @@
 #include "http/Status.h"
 
 #ifdef HAVE_URING
-#include "event/uring/Handler.hxx"
-#include "event/uring/OpenStat.hxx"
+#include "io/uring/Handler.hxx"
+#include "io/uring/OpenStat.hxx"
 #include "util/Cancellable.hxx"
 #include <sys/sysmacros.h> // for makedev()
 #endif

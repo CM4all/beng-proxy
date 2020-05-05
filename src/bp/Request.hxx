@@ -52,7 +52,7 @@
 #include "stopwatch.hxx"
 
 #ifdef HAVE_URING
-#include "event/uring/Handler.hxx"
+#include "io/uring/Handler.hxx"
 #endif
 
 #include <exception>

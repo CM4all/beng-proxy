@@ -32,8 +32,8 @@
 
 #include "UringOpenStat.hxx"
 #include "io/uring/Queue.hxx"
-#include "event/uring/OpenStat.hxx"
-#include "event/uring/Handler.hxx"
+#include "io/uring/OpenStat.hxx"
+#include "io/uring/Handler.hxx"
 #include "util/Cancellable.hxx"
 #include "AllocatorPtr.hxx"
 
