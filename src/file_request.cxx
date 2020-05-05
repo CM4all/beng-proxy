@@ -44,9 +44,108 @@
 #include "system/Error.hxx"
 #include "http/Status.h"
 
+#ifdef HAVE_URING
+#include "event/uring/Handler.hxx"
+#include "event/uring/OpenStat.hxx"
+#include "util/Cancellable.hxx"
+#include <sys/sysmacros.h> // for makedev()
+#endif
+
 #include <assert.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+#ifdef HAVE_URING
+
+class UringStaticFileGet final : Uring::OpenStatHandler, Cancellable {
+	struct pool &pool;
+	EventLoop &event_loop;
+
+	const char *const path;
+	const char *const content_type;
+
+	Uring::OpenStat open_stat;
+
+	HttpResponseHandler &handler;
+
+public:
+	UringStaticFileGet(EventLoop &_event_loop, Uring::Manager &uring,
+			   struct pool &_pool,
+			   const char *_path,
+			   const char *_content_type,
+			   HttpResponseHandler &_handler) noexcept
+		:pool(_pool), event_loop(_event_loop),
+		 path(_path),
+		 content_type(_content_type),
+		 open_stat(uring, *this),
+		 handler(_handler) {}
+
+	void Start(CancellablePointer &cancel_ptr) noexcept {
+		cancel_ptr = *this;
+		open_stat.StartOpenStatReadOnly(path);
+	}
+
+private:
+	void Destroy() noexcept {
+		this->~UringStaticFileGet();
+	}
+
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		Destroy();
+	}
+
+	/* virtual methods from class Uring::OpenStatHandler */
+	void OnOpenStat(UniqueFileDescriptor fd,
+			struct statx &st) noexcept override;
+
+	void OnOpenStatError(std::exception_ptr e) noexcept override {
+		auto &_handler = handler;
+		Destroy();
+		_handler.InvokeError(std::move(e));
+	}
+};
+
+void
+UringStaticFileGet::OnOpenStat(UniqueFileDescriptor fd,
+			       struct statx &stx) noexcept
+{
+	const char *_content_type = content_type;
+	auto &_handler = handler;
+
+	Destroy();
+
+	if (S_ISCHR(stx.stx_mode)) {
+		_handler.InvokeResponse(HTTP_STATUS_OK, {},
+					NewFdIstream(event_loop, pool, path,
+						     std::move(fd),
+						     FdType::FD_CHARDEV));
+		return;
+	} else if (!S_ISREG(stx.stx_mode)) {
+		_handler.InvokeResponse(pool, HTTP_STATUS_NOT_FOUND,
+					"Not a regular file");
+		return;
+	}
+
+	/* copy the struct statx to an old-style struct stat (this can
+	   be removed once be migrate everything to struct statx) */
+	struct stat st;
+	st.st_mode = stx.stx_mode;
+	st.st_size = stx.stx_size;
+	st.st_mtime = stx.stx_mtime.tv_sec;
+	st.st_dev = makedev(stx.stx_dev_major, stx.stx_dev_minor);
+	st.st_ino = stx.stx_ino;
+
+	auto headers = static_response_headers(pool, fd, st, _content_type);
+
+	_handler.InvokeResponse(HTTP_STATUS_OK,
+				std::move(headers),
+				NewUringIstream(open_stat.GetUring(), pool,
+						path, std::move(fd),
+						0, stx.stx_size));
+}
+
+#endif
 
 void
 static_file_get(EventLoop &event_loop,
@@ -55,9 +154,22 @@ static_file_get(EventLoop &event_loop,
 #endif
 		struct pool &pool,
 		const char *path, const char *content_type,
-		HttpResponseHandler &handler)
+		HttpResponseHandler &handler, CancellablePointer &cancel_ptr)
 {
 	assert(path != nullptr);
+
+#ifdef HAVE_URING
+	if (uring != nullptr) {
+		auto *o = NewFromPool<UringStaticFileGet>(pool, event_loop,
+							  *uring, pool,
+							  path, content_type,
+							  handler);
+		o->Start(cancel_ptr);
+		return;
+	}
+#else
+	(void)cancel_ptr;
+#endif
 
 	UniqueFileDescriptor fd;
 	struct stat st;

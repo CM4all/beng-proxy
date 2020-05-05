@@ -35,6 +35,7 @@
 struct pool;
 class HttpResponseHandler;
 class EventLoop;
+class CancellablePointer;
 namespace Uring { class Manager; }
 
 /**
@@ -47,4 +48,4 @@ static_file_get(EventLoop &event_loop,
 #endif
 		struct pool &pool,
 		const char *path, const char *content_type,
-		HttpResponseHandler &_handler);
+		HttpResponseHandler &handler, CancellablePointer &cancel_ptr);

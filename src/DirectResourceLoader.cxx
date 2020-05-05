@@ -164,7 +164,7 @@ try {
 #endif
 				pool, file->path,
 				file->content_type,
-				handler);
+				handler, cancel_ptr);
 		return;
 
 	case ResourceAddress::Type::NFS:
