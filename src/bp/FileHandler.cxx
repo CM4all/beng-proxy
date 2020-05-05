@@ -51,6 +51,11 @@
 #include "util/DecimalFormat.h"
 #include "util/StringCompare.hxx"
 
+#ifdef HAVE_URING
+#include "io/UringOpenStat.hxx"
+#include <sys/sysmacros.h> // for makedev()
+#endif
+
 #include <assert.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -240,6 +245,32 @@ Request::MaybeEmulateModAuthEasy(const FileAddress &address,
 	return EmulateModAuthEasy(address, fd, st);
 }
 
+#ifdef HAVE_URING
+
+void
+Request::OnOpenStat(UniqueFileDescriptor fd,
+		    struct statx &stx) noexcept
+{
+	/* copy the struct statx to an old-style struct stat (this can
+	   be removed once be migrate everything to struct statx) */
+	struct stat st;
+	st.st_mode = stx.stx_mode;
+	st.st_size = stx.stx_size;
+	st.st_mtime = stx.stx_mtime.tv_sec;
+	st.st_dev = makedev(stx.stx_dev_major, stx.stx_dev_minor);
+	st.st_ino = stx.stx_ino;
+
+	HandleFileAddress(*handler.file.address, std::move(fd), st);
+}
+
+void
+Request::OnOpenStatError(std::exception_ptr e) noexcept
+{
+	LogDispatchError(std::move(e));
+}
+
+#endif
+
 void
 Request::HandleFileAddress(const FileAddress &address) noexcept
 {
@@ -261,6 +292,14 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 
 	/* open the file */
 
+#ifdef HAVE_URING
+	if (instance.uring) {
+		UringOpenStat(*instance.uring, pool, path,
+			      *this, cancel_ptr);
+		return;
+	}
+#endif
+
 	UniqueFileDescriptor fd;
 	struct stat st;
 
@@ -273,6 +312,14 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 		return;
 	}
 
+	HandleFileAddress(address, std::move(fd), st);
+}
+
+void
+Request::HandleFileAddress(const FileAddress &address,
+			   UniqueFileDescriptor fd,
+			   const struct stat &st) noexcept
+{
 	/* check file type */
 
 	if (S_ISCHR(st.st_mode)) {

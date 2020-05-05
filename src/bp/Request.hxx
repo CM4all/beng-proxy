@@ -51,6 +51,10 @@
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
 
+#ifdef HAVE_URING
+#include "event/uring/Handler.hxx"
+#endif
+
 #include <exception>
 
 class FileDescriptor;
@@ -72,6 +76,9 @@ struct WidgetContext;
  */
 class Request final : public HttpResponseHandler, DelegateHandler,
 		      TranslateHandler,
+#ifdef HAVE_URING
+		      Uring::OpenStatHandler,
+#endif
 #ifdef HAVE_LIBNFS
 		      NfsCacheHandler,
 #endif
@@ -424,6 +431,9 @@ public:
 				     const struct stat &st) noexcept;
 
 	void HandleFileAddress(const FileAddress &address) noexcept;
+	void HandleFileAddress(const FileAddress &address,
+			       UniqueFileDescriptor fd,
+			       const struct stat &st) noexcept;
 
 	void HandleDelegateAddress(const DelegateAddress &address,
 				   const char *path) noexcept;
@@ -640,6 +650,13 @@ private:
 	/* virtual methods from class DelegateHandler */
 	void OnDelegateSuccess(UniqueFileDescriptor fd) override;
 	void OnDelegateError(std::exception_ptr ep) override;
+
+#ifdef HAVE_URING
+	/* virtual methods from class Uring::OpenStatHandler */
+	void OnOpenStat(UniqueFileDescriptor fd,
+			struct statx &st) noexcept override;
+	void OnOpenStatError(std::exception_ptr e) noexcept override;
+#endif
 
 #ifdef HAVE_LIBNFS
 	/* virtual methods from class NfsCacheHandler */
