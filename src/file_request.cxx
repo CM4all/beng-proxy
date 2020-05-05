@@ -69,7 +69,7 @@ class UringStaticFileGet final : Uring::OpenStatHandler, Cancellable {
 	HttpResponseHandler &handler;
 
 public:
-	UringStaticFileGet(EventLoop &_event_loop, Uring::Manager &uring,
+	UringStaticFileGet(EventLoop &_event_loop, Uring::Queue &uring,
 			   struct pool &_pool,
 			   const char *_path,
 			   const char *_content_type,
@@ -140,7 +140,7 @@ UringStaticFileGet::OnOpenStat(UniqueFileDescriptor fd,
 
 	_handler.InvokeResponse(HTTP_STATUS_OK,
 				std::move(headers),
-				NewUringIstream(open_stat.GetUring(), pool,
+				NewUringIstream(open_stat.GetQueue(), pool,
 						path, std::move(fd),
 						0, stx.stx_size));
 }
@@ -150,7 +150,7 @@ UringStaticFileGet::OnOpenStat(UniqueFileDescriptor fd,
 void
 static_file_get(EventLoop &event_loop,
 #ifdef HAVE_URING
-		Uring::Manager *uring,
+		Uring::Queue *uring,
 #endif
 		struct pool &pool,
 		const char *path, const char *content_type,

@@ -36,7 +36,7 @@
 #include "io/Iovec.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/uring/Operation.hxx"
-#include "event/uring/Manager.hxx"
+#include "io/uring/Queue.hxx"
 #include "pool/pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
@@ -47,7 +47,7 @@
 #include <limits.h>
 
 class UringIstream final : public Istream, Uring::Operation {
-	Uring::Manager &uring;
+	Uring::Queue &uring;
 
 	UniqueFileDescriptor fd;
 
@@ -61,7 +61,7 @@ class UringIstream final : public Istream, Uring::Operation {
 	const char *const path;
 
 public:
-	UringIstream(struct pool &p, Uring::Manager &_uring,
+	UringIstream(struct pool &p, Uring::Queue &_uring,
 		     const char *_path, UniqueFileDescriptor &&_fd,
 		     off_t _start_offset, off_t _end_offset) noexcept
 		:Istream(p), uring(_uring),
@@ -134,7 +134,7 @@ UringIstream::StartRead() noexcept
 	iov = MakeIovec(w);
 	io_uring_prep_readv(s, fd.Get(), &iov, 1, offset);
 
-	uring.AddPending(*s, *this);
+	uring.Push(*s, *this);
 }
 
 void
@@ -199,7 +199,7 @@ UringIstream::_AsFd() noexcept
  */
 
 UnusedIstreamPtr
-NewUringIstream(Uring::Manager &uring, struct pool &pool,
+NewUringIstream(Uring::Queue &uring, struct pool &pool,
 		const char *path, UniqueFileDescriptor fd,
 		off_t start_offset, off_t end_offset) noexcept
 {

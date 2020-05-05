@@ -34,10 +34,10 @@
 
 class AllocatorPtr;
 class CancellablePointer;
-namespace Uring { class Manager; class OpenStatHandler; }
+namespace Uring { class Queue; class OpenStatHandler; }
 
 void
-UringOpenStat(Uring::Manager &uring, AllocatorPtr alloc,
+UringOpenStat(Uring::Queue &uring, AllocatorPtr alloc,
 	      const char *path,
 	      Uring::OpenStatHandler &handler,
 	      CancellablePointer &cancel_ptr) noexcept;

@@ -43,7 +43,7 @@ class LhttpStock;
 class FcgiStock;
 class NfsCache;
 class TcpBalancer;
-namespace Uring { class Manager; }
+namespace Uring { class Queue; }
 class FilteredSocketBalancer;
 namespace NgHttp2 { class Stock; }
 
@@ -54,7 +54,7 @@ namespace NgHttp2 { class Stock; }
 class DirectResourceLoader final : public ResourceLoader {
 	EventLoop &event_loop;
 #ifdef HAVE_URING
-	Uring::Manager *const uring;
+	Uring::Queue *const uring;
 #endif
 	TcpBalancer *tcp_balancer;
 	FilteredSocketBalancer &fs_balancer;
@@ -75,7 +75,7 @@ class DirectResourceLoader final : public ResourceLoader {
 public:
 	DirectResourceLoader(EventLoop &_event_loop,
 #ifdef HAVE_URING
-			     Uring::Manager *_uring,
+			     Uring::Queue *_uring,
 #endif
 			     TcpBalancer *_tcp_balancer,
 			     FilteredSocketBalancer &_fs_balancer,

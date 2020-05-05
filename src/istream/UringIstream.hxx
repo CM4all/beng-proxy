@@ -39,9 +39,9 @@ class UnusedIstreamPtr;
 class EventLoop;
 class FileDescriptor;
 class UniqueFileDescriptor;
-namespace Uring { class Manager; }
+namespace Uring { class Queue; }
 
 UnusedIstreamPtr
-NewUringIstream(Uring::Manager &uring, struct pool &pool,
+NewUringIstream(Uring::Queue &uring, struct pool &pool,
 		const char *path, UniqueFileDescriptor fd,
 		off_t start_offset, off_t end_offset) noexcept;

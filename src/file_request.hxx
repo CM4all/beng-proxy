@@ -36,7 +36,7 @@ struct pool;
 class HttpResponseHandler;
 class EventLoop;
 class CancellablePointer;
-namespace Uring { class Manager; }
+namespace Uring { class Queue; }
 
 /**
  * Static file support for DirectResourceLoader.
@@ -44,7 +44,7 @@ namespace Uring { class Manager; }
 void
 static_file_get(EventLoop &event_loop,
 #ifdef HAVE_URING
-		Uring::Manager *uring,
+		Uring::Queue *uring,
 #endif
 		struct pool &pool,
 		const char *path, const char *content_type,

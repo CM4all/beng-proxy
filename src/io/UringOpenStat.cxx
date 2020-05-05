@@ -31,7 +31,7 @@
  */
 
 #include "UringOpenStat.hxx"
-#include "event/uring/Manager.hxx"
+#include "io/uring/Queue.hxx"
 #include "event/uring/OpenStat.hxx"
 #include "event/uring/Handler.hxx"
 #include "util/Cancellable.hxx"
@@ -43,7 +43,7 @@ class UringOpenStatOperation final : Cancellable, Uring::OpenStatHandler {
 	Uring::OpenStatHandler &handler;
 
 public:
-	UringOpenStatOperation(Uring::Manager &uring, const char *path,
+	UringOpenStatOperation(Uring::Queue &uring, const char *path,
 			       Uring::OpenStatHandler &_handler,
 			       CancellablePointer &cancel_ptr) noexcept
 		:open_stat(uring, *this),
@@ -80,7 +80,7 @@ private:
 };
 
 void
-UringOpenStat(Uring::Manager &uring, AllocatorPtr alloc,
+UringOpenStat(Uring::Queue &uring, AllocatorPtr alloc,
 	      const char *path,
 	      Uring::OpenStatHandler &handler,
 	      CancellablePointer &cancel_ptr) noexcept
