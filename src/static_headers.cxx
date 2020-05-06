@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -46,88 +46,88 @@
 static bool
 ReadETag(FileDescriptor fd, char *buffer, size_t size) noexcept
 {
-    assert(fd.IsDefined());
-    assert(size > 4);
+	assert(fd.IsDefined());
+	assert(size > 4);
 
-    const auto nbytes = fgetxattr(fd.Get(), "user.ETag", buffer + 1, size - 3);
-    if (nbytes <= 0)
-        return false;
+	const auto nbytes = fgetxattr(fd.Get(), "user.ETag", buffer + 1, size - 3);
+	if (nbytes <= 0)
+		return false;
 
-    assert((size_t)nbytes < size);
+	assert((size_t)nbytes < size);
 
-    buffer[0] = '"';
-    buffer[nbytes + 1] = '"';
-    buffer[nbytes + 2] = 0;
-    return true;
+	buffer[0] = '"';
+	buffer[nbytes + 1] = '"';
+	buffer[nbytes + 2] = 0;
+	return true;
 }
 
 static void
 static_etag(char *p, const struct stat &st)
 {
-    *p++ = '"';
+	*p++ = '"';
 
-    p += format_uint32_hex(p, (uint32_t)st.st_dev);
+	p += format_uint32_hex(p, (uint32_t)st.st_dev);
 
-    *p++ = '-';
+	*p++ = '-';
 
-    p += format_uint32_hex(p, (uint32_t)st.st_ino);
+	p += format_uint32_hex(p, (uint32_t)st.st_ino);
 
-    *p++ = '-';
+	*p++ = '-';
 
-    p += format_uint32_hex(p, (uint32_t)st.st_mtime);
+	p += format_uint32_hex(p, (uint32_t)st.st_mtime);
 
-    *p++ = '"';
-    *p = 0;
+	*p++ = '"';
+	*p = 0;
 }
 
 void
 GetAnyETag(char *buffer, size_t size,
-           FileDescriptor fd, const struct stat &st) noexcept
+	   FileDescriptor fd, const struct stat &st) noexcept
 {
-    if (!fd.IsDefined() || !ReadETag(fd, buffer, size))
-        static_etag(buffer, st);
+	if (!fd.IsDefined() || !ReadETag(fd, buffer, size))
+		static_etag(buffer, st);
 }
 
 bool
 load_xattr_content_type(char *buffer, size_t size, FileDescriptor fd) noexcept
 {
-    if (!fd.IsDefined())
-        return false;
+	if (!fd.IsDefined())
+		return false;
 
-    ssize_t nbytes = fgetxattr(fd.Get(), "user.Content-Type",
-                               buffer, size - 1);
-    if (nbytes <= 0)
-        return false;
+	ssize_t nbytes = fgetxattr(fd.Get(), "user.Content-Type",
+				   buffer, size - 1);
+	if (nbytes <= 0)
+		return false;
 
-    assert((size_t)nbytes < size);
-    buffer[nbytes] = 0;
-    return true;
+	assert((size_t)nbytes < size);
+	buffer[nbytes] = 0;
+	return true;
 }
 
 StringMap
 static_response_headers(struct pool &pool,
-                        FileDescriptor fd, const struct stat &st,
-                        const char *content_type)
+			FileDescriptor fd, const struct stat &st,
+			const char *content_type)
 {
-    StringMap headers;
+	StringMap headers;
 
-    if (S_ISCHR(st.st_mode))
-        return headers;
+	if (S_ISCHR(st.st_mode))
+		return headers;
 
-    char buffer[256];
+	char buffer[256];
 
-    if (content_type == nullptr)
-        content_type = load_xattr_content_type(buffer, sizeof(buffer), fd)
-            ? p_strdup(&pool, buffer)
-            : "application/octet-stream";
+	if (content_type == nullptr)
+		content_type = load_xattr_content_type(buffer, sizeof(buffer), fd)
+			? p_strdup(&pool, buffer)
+			: "application/octet-stream";
 
-    headers.Add(pool, "content-type", content_type);
+	headers.Add(pool, "content-type", content_type);
 
-    headers.Add(pool, "last-modified",
-                p_strdup(&pool, http_date_format(std::chrono::system_clock::from_time_t(st.st_mtime))));
+	headers.Add(pool, "last-modified",
+		    p_strdup(&pool, http_date_format(std::chrono::system_clock::from_time_t(st.st_mtime))));
 
-    GetAnyETag(buffer, sizeof(buffer), fd, st);
-    headers.Add(pool, "etag", p_strdup(&pool, buffer));
+	GetAnyETag(buffer, sizeof(buffer), fd, st);
+	headers.Add(pool, "etag", p_strdup(&pool, buffer));
 
-    return headers;
+	return headers;
 }

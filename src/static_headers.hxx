@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Handle the request/response headers for static files.
  */
 
-#ifndef BENG_PROXY_STATIC_HEADERS_HXX
-#define BENG_PROXY_STATIC_HEADERS_HXX
+#pragma once
 
 #include <sys/stat.h>
 #include <stddef.h>
@@ -48,7 +47,7 @@ struct file_request;
 
 void
 GetAnyETag(char *buffer, size_t size,
-           FileDescriptor fd, const struct stat &st) noexcept;
+	   FileDescriptor fd, const struct stat &st) noexcept;
 
 bool
 load_xattr_content_type(char *buffer, size_t size, FileDescriptor fd) noexcept;
@@ -59,7 +58,5 @@ load_xattr_content_type(char *buffer, size_t size, FileDescriptor fd) noexcept;
  */
 StringMap
 static_response_headers(struct pool &pool,
-                        FileDescriptor fd, const struct stat &st,
-                        const char *content_type);
-
-#endif
+			FileDescriptor fd, const struct stat &st,
+			const char *content_type);
