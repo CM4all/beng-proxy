@@ -199,12 +199,6 @@ static_file_get(EventLoop &event_loop,
 
 	handler.InvokeResponse(HTTP_STATUS_OK,
 			       std::move(headers),
-#ifdef HAVE_URING
-			       uring != nullptr
-			       ? NewUringIstream(*uring, pool, path,
-						 std::move(fd), 0, st.st_size)
-			       :
-#endif
 			       istream_file_fd_new(event_loop, pool, path,
 						   std::move(fd),
 						   0, st.st_size));
