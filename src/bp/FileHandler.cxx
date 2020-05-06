@@ -58,13 +58,14 @@
 #endif
 
 #include <assert.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <stdlib.h>
 
 void
 Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
-		      const struct stat &st,
+		      const struct statx &st,
 		      const struct file_request &file_request) noexcept
 {
 	const TranslateResponse &tr = *translate.response;
@@ -90,7 +91,7 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 
 	header_write(headers2, "accept-ranges", "bytes");
 
-	off_t start_offset = 0, end_offset = st.st_size;
+	off_t start_offset = 0, end_offset = st.stx_size;
 
 	switch (file_request.range.type) {
 	case HttpRangeRequest::Type::NONE:
@@ -106,7 +107,7 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 			     p_sprintf(&pool, "bytes %lu-%lu/%lu",
 				       (unsigned long)file_request.range.skip,
 				       (unsigned long)(file_request.range.size - 1),
-				       (unsigned long)st.st_size));
+				       (unsigned long)st.stx_size));
 		break;
 
 	case HttpRangeRequest::Type::INVALID:
@@ -114,7 +115,7 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 
 		header_write(headers2, "content-range",
 			     p_sprintf(&pool, "bytes */%lu",
-				       (unsigned long)st.st_size));
+				       (unsigned long)st.stx_size));
 
 		fd.Close();
 		break;
@@ -137,7 +138,7 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 
 bool
 Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
-				const struct stat &st,
+				const struct statx &st,
 				const char *encoding) noexcept
 {
 	const TranslateResponse &tr = *translate.response;
@@ -146,7 +147,6 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 	/* open compressed file */
 
 	UniqueFileDescriptor compressed_fd;
-	struct stat st2;
 
 	try {
 		compressed_fd = OpenReadOnly(path);
@@ -154,8 +154,10 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 		return false;
 	}
 
-	if (fstat(compressed_fd.Get(), &st2) < 0 ||
-	    !S_ISREG(st2.st_mode))
+	struct statx st2;
+	if (statx(compressed_fd.Get(), "", AT_EMPTY_PATH,
+		  STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE, &st2) < 0 ||
+	    !S_ISREG(st2.stx_mode))
 		return false;
 
 	/* response headers with information from uncompressed file */
@@ -187,18 +189,18 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 			 instance.uring
 			 ? NewUringIstream(*instance.uring, pool, path,
 					   std::move(compressed_fd),
-					   0, st2.st_size)
+					   0, st2.stx_size)
 			 :
 #endif
 			 istream_file_fd_new(instance.event_loop, pool,
 					     path, std::move(compressed_fd),
-					     0, st2.st_size));
+					     0, st2.stx_size));
 	return true;
 }
 
 bool
 Request::CheckCompressedFile(const char *path, FileDescriptor fd,
-			     const struct stat &st,
+			     const struct statx &st,
 			     const char *encoding) noexcept
 {
 	return path != nullptr &&
@@ -208,7 +210,7 @@ Request::CheckCompressedFile(const char *path, FileDescriptor fd,
 
 bool
 Request::CheckAutoCompressedFile(const char *path, FileDescriptor fd,
-				 const struct stat &st,
+				 const struct statx &st,
 				 const char *encoding, const char *suffix) noexcept
 {
 	assert(encoding != nullptr);
@@ -228,9 +230,9 @@ Request::CheckAutoCompressedFile(const char *path, FileDescriptor fd,
 inline bool
 Request::MaybeEmulateModAuthEasy(const FileAddress &address,
 				 UniqueFileDescriptor &fd,
-				 const struct stat &st) noexcept
+				 const struct statx &st) noexcept
 {
-	assert(S_ISREG(st.st_mode));
+	assert(S_ISREG(st.stx_mode));
 
 	if (!instance.config.emulate_mod_auth_easy)
 		return false;
@@ -251,17 +253,8 @@ Request::MaybeEmulateModAuthEasy(const FileAddress &address,
 
 void
 Request::OnOpenStat(UniqueFileDescriptor fd,
-		    struct statx &stx) noexcept
+		    struct statx &st) noexcept
 {
-	/* copy the struct statx to an old-style struct stat (this can
-	   be removed once be migrate everything to struct statx) */
-	struct stat st;
-	st.st_mode = stx.stx_mode;
-	st.st_size = stx.stx_size;
-	st.st_mtime = stx.stx_mtime.tv_sec;
-	st.st_dev = makedev(stx.stx_dev_major, stx.stx_dev_minor);
-	st.st_ino = stx.stx_ino;
-
 	HandleFileAddress(*handler.file.address, std::move(fd), st);
 }
 
@@ -303,11 +296,13 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 #endif
 
 	UniqueFileDescriptor fd;
-	struct stat st;
+	struct statx st;
 
 	try {
 		fd = OpenReadOnly(path);
-		if (fstat(fd.Get(), &st) < 0)
+		if (statx(fd.Get(), "", AT_EMPTY_PATH,
+			  STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE,
+			  &st) < 0)
 			throw FormatErrno("Failed to stat %s", path);
 	} catch (...) {
 		LogDispatchError(std::current_exception());
@@ -320,11 +315,11 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 void
 Request::HandleFileAddress(const FileAddress &address,
 			   UniqueFileDescriptor fd,
-			   const struct stat &st) noexcept
+			   const struct statx &st) noexcept
 {
 	/* check file type */
 
-	if (S_ISCHR(st.st_mode)) {
+	if (S_ISCHR(st.stx_mode)) {
 		/* allow character devices, but skip range etc. */
 		DispatchResponse(HTTP_STATUS_OK, {},
 				 NewFdIstream(instance.event_loop,
@@ -334,7 +329,7 @@ Request::HandleFileAddress(const FileAddress &address,
 		return;
 	}
 
-	if (!S_ISREG(st.st_mode)) {
+	if (!S_ISREG(st.stx_mode)) {
 		DispatchResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR,
 				 "Not a regular file");
 		return;
@@ -343,7 +338,7 @@ Request::HandleFileAddress(const FileAddress &address,
 	if (MaybeEmulateModAuthEasy(address, fd, st))
 		return;
 
-	struct file_request file_request(st.st_size);
+	struct file_request file_request(st.stx_size);
 
 	/* request options */
 

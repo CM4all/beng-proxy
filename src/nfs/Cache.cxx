@@ -76,13 +76,13 @@ struct NfsCacheStore final
 
 	const char *key;
 
-	struct stat stat;
+	struct statx stat;
 
 	TimerEvent timeout_event;
 	CancellablePointer cancel_ptr;
 
 	NfsCacheStore(PoolPtr &&_pool, NfsCache &_cache,
-		      const char *_key, const struct stat &_st);
+		      const char *_key, const struct statx &_st) noexcept;
 
 	~NfsCacheStore() noexcept;
 
@@ -175,7 +175,7 @@ public:
 
 	UnusedIstreamPtr OpenFile(struct pool &caller_pool,
 				  const char *key,
-				  NfsFileHandle &file, const struct stat &st,
+				  NfsFileHandle &file, const struct statx &st,
 				  uint64_t start, uint64_t end) noexcept;
 
 private:
@@ -213,7 +213,7 @@ struct NfsCacheRequest final : NfsStockGetHandler, NfsClientOpenFileHandler {
 
 	/* virtual methods from class NfsClientOpenFileHandler */
 	void OnNfsOpen(NfsFileHandle *handle,
-		       const struct stat *st) noexcept override;
+		       const struct statx &st) noexcept override;
 	void OnNfsOpenError(std::exception_ptr ep) noexcept override {
 		Error(ep);
 	}
@@ -225,11 +225,11 @@ struct NfsCacheHandle {
 
 	NfsFileHandle *file;
 	NfsCacheItem *item;
-	const struct stat &stat;
+	const struct statx &stat;
 };
 
 struct NfsCacheItem final : PoolHolder, CacheItem {
-	struct stat stat;
+	struct statx stat;
 
 	const RubberAllocation body;
 
@@ -238,7 +238,7 @@ struct NfsCacheItem final : PoolHolder, CacheItem {
 		     const NfsCacheStore &store,
 		     RubberAllocation &&_body) noexcept
 		:PoolHolder(std::move(_pool)),
-		 CacheItem(now, std::chrono::minutes(1), store.stat.st_size),
+		 CacheItem(now, std::chrono::minutes(1), store.stat.stx_size),
 		 stat(store.stat),
 		 body(std::move(_body)) {
 	}
@@ -264,7 +264,7 @@ nfs_cache_key(AllocatorPtr alloc, const char *server,
 }
 
 NfsCacheStore::NfsCacheStore(PoolPtr &&_pool, NfsCache &_cache,
-			     const char *_key, const struct stat &_st)
+			     const char *_key, const struct statx &_st) noexcept
 	:PoolHolder(std::move(_pool)), cache(_cache),
 	 key(_key),
 	 stat(_st),
@@ -305,7 +305,7 @@ NfsCacheStore::Put(RubberAllocation &&a) noexcept
 void
 NfsCacheStore::RubberDone(RubberAllocation &&a, gcc_unused size_t size) noexcept
 {
-	assert((off_t)size == stat.st_size);
+	assert(size == stat.stx_size);
 
 	cancel_ptr = nullptr;
 
@@ -351,17 +351,17 @@ NfsCacheStore::RubberError(std::exception_ptr ep) noexcept
 
 void
 NfsCacheRequest::OnNfsOpen(NfsFileHandle *handle,
-			   const struct stat *st) noexcept
+			   const struct statx &st) noexcept
 {
 	NfsCacheHandle handle2{
 		cache,
 		key,
 		handle,
 		nullptr,
-		*st,
+		st,
 	};
 
-	handler.OnNfsCacheResponse(handle2, *st);
+	handler.OnNfsCacheResponse(handle2, st);
 
 	if (handle2.file != nullptr)
 		nfs_client_close_file(*handle2.file);
@@ -482,7 +482,7 @@ nfs_cache_item_open(struct pool &pool,
 		    uint64_t start, uint64_t end) noexcept
 {
 	assert(start <= end);
-	assert(end <= (uint64_t)item.stat.st_size);
+	assert(end <= item.stat.stx_size);
 
 	assert(item.body);
 
@@ -497,15 +497,14 @@ nfs_cache_item_open(struct pool &pool,
 inline UnusedIstreamPtr
 NfsCache::OpenFile(struct pool &caller_pool,
 		   const char *key,
-		   NfsFileHandle &file, const struct stat &st,
+		   NfsFileHandle &file, const struct statx &st,
 		   uint64_t start, uint64_t end) noexcept
 {
 	assert(start <= end);
-	assert(end <= (uint64_t)st.st_size);
+	assert(end <= st.stx_size);
 
 	auto body = istream_nfs_new(caller_pool, file, start, end);
-	if (st.st_size > cacheable_size_limit || start != 0 ||
-	    end != (uint64_t)st.st_size) {
+	if (st.stx_size > cacheable_size_limit || start != 0 || end != st.stx_size) {
 		/* don't cache */
 		LogConcat(4, "NfsCache", "nocache ", key);
 		return body;
@@ -547,7 +546,7 @@ nfs_cache_handle_open(struct pool &pool, NfsCacheHandle &handle,
 {
 	assert((handle.file == nullptr) != (handle.item == nullptr));
 	assert(start <= end);
-	assert(end <= (uint64_t)handle.stat.st_size);
+	assert(end <= handle.stat.stx_size);
 
 	if (start == end)
 		return istream_null_new(pool);

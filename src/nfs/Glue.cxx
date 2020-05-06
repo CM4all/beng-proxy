@@ -58,7 +58,7 @@ struct NfsRequest final : NfsCacheHandler {
 
 	/* virtual methods from NfsCacheHandler */
 	void OnNfsCacheResponse(NfsCacheHandle &handle,
-				const struct stat &st) noexcept override;
+				const struct statx &st) noexcept override;
 
 	void OnNfsCacheError(std::exception_ptr ep) noexcept override {
 		handler.InvokeError(ep);
@@ -67,7 +67,7 @@ struct NfsRequest final : NfsCacheHandler {
 
 void
 NfsRequest::OnNfsCacheResponse(NfsCacheHandle &handle,
-			       const struct stat &st) noexcept
+			       const struct statx &st) noexcept
 {
 	auto headers = static_response_headers(pool, FileDescriptor::Undefined(),
 					       st, content_type);
@@ -75,7 +75,8 @@ NfsRequest::OnNfsCacheResponse(NfsCacheHandle &handle,
 
 	// TODO: handle revalidation etc.
 	handler.InvokeResponse(HTTP_STATUS_OK, std::move(headers),
-			       nfs_cache_handle_open(pool, handle, 0, st.st_size));
+			       nfs_cache_handle_open(pool, handle,
+						     0, st.stx_size));
 }
 
 /*

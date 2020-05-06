@@ -42,6 +42,7 @@
 #include "HttpResponseHandler.hxx"
 
 #include <assert.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -55,21 +56,22 @@ Request::OnDelegateSuccess(UniqueFileDescriptor fd)
 {
 	/* get file information */
 
-	struct stat st;
-	if (fstat(fd.Get(), &st) < 0) {
+	struct statx st;
+	if (statx(fd.Get(), "", AT_EMPTY_PATH,
+		  STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE, &st) < 0) {
 		DispatchResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR,
 				 "Internal server error");
 		return;
 	}
 
-	if (!S_ISREG(st.st_mode)) {
+	if (!S_ISREG(st.stx_mode)) {
 		DispatchResponse(HTTP_STATUS_NOT_FOUND, "Not a regular file");
 		return;
 	}
 
 	/* request options */
 
-	struct file_request file_request(st.st_size);
+	struct file_request file_request(st.stx_size);
 	if (!EvaluateFileRequest(fd, st, file_request)) {
 		return;
 	}

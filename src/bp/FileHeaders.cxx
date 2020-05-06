@@ -92,7 +92,7 @@ generate_expires(GrowingBuffer &headers,
 gcc_pure
 static bool
 CheckETagList(const char *list, FileDescriptor fd,
-	      const struct stat &st) noexcept
+	      const struct statx &st) noexcept
 {
 	assert(list != nullptr);
 
@@ -105,7 +105,7 @@ CheckETagList(const char *list, FileDescriptor fd,
 }
 
 static void
-MakeETag(GrowingBuffer &headers, FileDescriptor fd, const struct stat &st)
+MakeETag(GrowingBuffer &headers, FileDescriptor fd, const struct statx &st)
 {
 	char buffer[512];
 	GetAnyETag(buffer, sizeof(buffer), fd, st);
@@ -116,11 +116,11 @@ MakeETag(GrowingBuffer &headers, FileDescriptor fd, const struct stat &st)
 static void
 file_cache_headers(GrowingBuffer &headers,
 		   const ClockCache<std::chrono::system_clock> &system_clock,
-		   FileDescriptor fd, const struct stat &st,
+		   FileDescriptor fd, const struct statx &st,
 		   std::chrono::seconds max_age)
 {
 	header_write(headers, "last-modified",
-		     http_date_format(std::chrono::system_clock::from_time_t(st.st_mtime)));
+		     http_date_format(std::chrono::system_clock::from_time_t(st.stx_mtime.tv_sec)));
 
 	MakeETag(headers, fd, st);
 
@@ -136,14 +136,14 @@ file_cache_headers(GrowingBuffer &headers,
  */
 static bool
 check_if_range(const char *if_range,
-	       FileDescriptor fd, const struct stat &st) noexcept
+	       FileDescriptor fd, const struct statx &st) noexcept
 {
 	if (if_range == nullptr)
 		return true;
 
 	const auto t = http_date_parse(if_range);
 	if (t != std::chrono::system_clock::from_time_t(-1))
-		return std::chrono::system_clock::from_time_t(st.st_mtime) == t;
+		return std::chrono::system_clock::from_time_t(st.stx_mtime.tv_sec) == t;
 
 	char etag[256];
 	GetAnyETag(etag, sizeof(etag), fd, st);
@@ -155,7 +155,7 @@ check_if_range(const char *if_range,
  */
 static void
 DispatchNotModified(Request &request2, const TranslateResponse &tr,
-		    FileDescriptor fd, const struct stat &st)
+		    FileDescriptor fd, const struct statx &st)
 {
 	HttpHeaders headers;
 	auto &headers2 = headers.GetBuffer();
@@ -171,7 +171,7 @@ DispatchNotModified(Request &request2, const TranslateResponse &tr,
 }
 
 bool
-Request::EvaluateFileRequest(FileDescriptor fd, const struct stat &st,
+Request::EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 			     struct file_request &file_request) noexcept
 {
 	const auto &request_headers = request.headers;
@@ -218,7 +218,7 @@ Request::EvaluateFileRequest(FileDescriptor fd, const struct stat &st,
 		if (p != nullptr) {
 			const auto t = http_date_parse(p);
 			if (t != std::chrono::system_clock::from_time_t(-1) &&
-			    std::chrono::system_clock::from_time_t(st.st_mtime) <= t) {
+			    std::chrono::system_clock::from_time_t(st.stx_mtime.tv_sec) <= t) {
 				DispatchNotModified(*this, tr, fd, st);
 				return false;
 			}
@@ -228,7 +228,7 @@ Request::EvaluateFileRequest(FileDescriptor fd, const struct stat &st,
 		if (p != nullptr) {
 			const auto t = http_date_parse(p);
 			if (t != std::chrono::system_clock::from_time_t(-1) &&
-			    std::chrono::system_clock::from_time_t(st.st_mtime) > t) {
+			    std::chrono::system_clock::from_time_t(st.stx_mtime.tv_sec) > t) {
 				DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
 						 {}, nullptr);
 				return false;
@@ -243,7 +243,7 @@ void
 file_response_headers(GrowingBuffer &headers,
 		      const ClockCache<std::chrono::system_clock> &system_clock,
 		      const char *override_content_type,
-		      FileDescriptor fd, const struct stat &st,
+		      FileDescriptor fd, const struct statx &st,
 		      std::chrono::seconds expires_relative,
 		      bool processor_first)
 {

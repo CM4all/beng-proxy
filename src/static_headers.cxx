@@ -62,19 +62,20 @@ ReadETag(FileDescriptor fd, char *buffer, size_t size) noexcept
 }
 
 static void
-static_etag(char *p, const struct stat &st)
+static_etag(char *p, const struct statx &st)
 {
 	*p++ = '"';
 
-	p += format_uint32_hex(p, (uint32_t)st.st_dev);
+	p += format_uint32_hex(p, (uint32_t)st.stx_dev_major);
+	p += format_uint32_hex(p, (uint32_t)st.stx_dev_minor);
 
 	*p++ = '-';
 
-	p += format_uint32_hex(p, (uint32_t)st.st_ino);
+	p += format_uint32_hex(p, (uint32_t)st.stx_ino);
 
 	*p++ = '-';
 
-	p += format_uint32_hex(p, (uint32_t)st.st_mtime);
+	p += format_uint32_hex(p, (uint32_t)st.stx_mtime.tv_sec);
 
 	*p++ = '"';
 	*p = 0;
@@ -82,7 +83,7 @@ static_etag(char *p, const struct stat &st)
 
 void
 GetAnyETag(char *buffer, size_t size,
-	   FileDescriptor fd, const struct stat &st) noexcept
+	   FileDescriptor fd, const struct statx &st) noexcept
 {
 	if (!fd.IsDefined() || !ReadETag(fd, buffer, size))
 		static_etag(buffer, st);
@@ -106,12 +107,12 @@ load_xattr_content_type(char *buffer, size_t size, FileDescriptor fd) noexcept
 
 StringMap
 static_response_headers(struct pool &pool,
-			FileDescriptor fd, const struct stat &st,
+			FileDescriptor fd, const struct statx &st,
 			const char *content_type)
 {
 	StringMap headers;
 
-	if (S_ISCHR(st.st_mode))
+	if (S_ISCHR(st.stx_mode))
 		return headers;
 
 	char buffer[256];
@@ -124,7 +125,7 @@ static_response_headers(struct pool &pool,
 	headers.Add(pool, "content-type", content_type);
 
 	headers.Add(pool, "last-modified",
-		    p_strdup(&pool, http_date_format(std::chrono::system_clock::from_time_t(st.st_mtime))));
+		    p_strdup(&pool, http_date_format(std::chrono::system_clock::from_time_t(st.stx_mtime.tv_sec))));
 
 	GetAnyETag(buffer, sizeof(buffer), fd, st);
 	headers.Add(pool, "etag", p_strdup(&pool, buffer));

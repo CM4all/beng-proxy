@@ -46,13 +46,13 @@ class NfsCache;
 class NfsStock;
 struct NfsCacheHandle;
 class CancellablePointer;
-struct stat;
+struct statx;
 struct AllocatorStats;
 
 class NfsCacheHandler {
 public:
 	virtual void OnNfsCacheResponse(NfsCacheHandle &handle,
-					const struct stat &st) noexcept = 0;
+					const struct statx &st) noexcept = 0;
 	virtual void OnNfsCacheError(std::exception_ptr ep) noexcept = 0;
 };
 

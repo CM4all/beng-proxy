@@ -54,11 +54,11 @@
 
 void
 Request::OnNfsCacheResponse(NfsCacheHandle &handle,
-			    const struct stat &st) noexcept
+			    const struct statx &st) noexcept
 {
 	const TranslateResponse *const tr = translate.response;
 
-	struct file_request file_request(st.st_size);
+	struct file_request file_request(st.stx_size);
 	if (!EvaluateFileRequest(FileDescriptor::Undefined(), st, file_request))
 		return;
 
@@ -97,7 +97,7 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle,
 			     p_sprintf(&pool, "bytes %lu-%lu/%lu",
 				       (unsigned long)file_request.range.skip,
 				       (unsigned long)(file_request.range.size - 1),
-				       (unsigned long)st.st_size));
+				       (unsigned long)st.stx_size));
 		break;
 
 	case HttpRangeRequest::Type::INVALID:
@@ -105,7 +105,7 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle,
 
 		header_write(headers2, "content-range",
 			     p_sprintf(&pool, "bytes */%lu",
-				       (unsigned long)st.st_size));
+				       (unsigned long)st.stx_size));
 
 		no_body = true;
 		break;

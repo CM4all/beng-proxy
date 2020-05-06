@@ -127,16 +127,7 @@ UringStaticFileGet::OnOpenStat(UniqueFileDescriptor fd,
 		return;
 	}
 
-	/* copy the struct statx to an old-style struct stat (this can
-	   be removed once be migrate everything to struct statx) */
-	struct stat st;
-	st.st_mode = stx.stx_mode;
-	st.st_size = stx.stx_size;
-	st.st_mtime = stx.stx_mtime.tv_sec;
-	st.st_dev = makedev(stx.stx_dev_major, stx.stx_dev_minor);
-	st.st_ino = stx.stx_ino;
-
-	auto headers = static_response_headers(pool, fd, st, _content_type);
+	auto headers = static_response_headers(pool, fd, stx, _content_type);
 
 	_handler.InvokeResponse(HTTP_STATUS_OK,
 				std::move(headers),
@@ -172,24 +163,26 @@ static_file_get(EventLoop &event_loop,
 #endif
 
 	UniqueFileDescriptor fd;
-	struct stat st;
+	struct statx st;
 
 	try {
 		fd = OpenReadOnly(path, O_NOFOLLOW);
-		if (fstat(fd.Get(), &st) < 0)
+		if (statx(fd.Get(), "", AT_EMPTY_PATH,
+			  STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE,
+			  &st) < 0)
 			throw FormatErrno("Failed to stat %s", path);
 	} catch (...) {
 		handler.InvokeError(std::current_exception());
 		return;
 	}
 
-	if (S_ISCHR(st.st_mode)) {
+	if (S_ISCHR(st.stx_mode)) {
 		handler.InvokeResponse(HTTP_STATUS_OK, {},
 				       NewFdIstream(event_loop, pool, path,
 						    std::move(fd),
 						    FdType::FD_CHARDEV));
 		return;
-	} else if (!S_ISREG(st.st_mode)) {
+	} else if (!S_ISREG(st.stx_mode)) {
 		handler.InvokeResponse(pool, HTTP_STATUS_NOT_FOUND,
 				       "Not a regular file");
 		return;
@@ -201,5 +194,5 @@ static_file_get(EventLoop &event_loop,
 			       std::move(headers),
 			       istream_file_fd_new(event_loop, pool, path,
 						   std::move(fd),
-						   0, st.st_size));
+						   0, st.stx_size));
 }

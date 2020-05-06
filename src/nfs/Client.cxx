@@ -35,6 +35,7 @@
 #include "Handler.hxx"
 #include "pool/pool.hxx"
 #include "system/Error.hxx"
+#include "system/Stat.hxx"
 #include "io/FileDescriptor.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
@@ -117,7 +118,7 @@ public:
 		assert(state == WAITING);
 		state = IDLE;
 
-		open_handler->OnNfsOpen(this, &st);
+		open_handler->OnNfsOpen(this, ToStatx(st));
 	}
 
 	void Continue(NfsClientOpenFileHandler &_handler,
@@ -125,7 +126,7 @@ public:
 		assert(state == WAITING);
 		state = IDLE;
 
-		_handler.OnNfsOpen(this, &st);
+		_handler.OnNfsOpen(this, ToStatx(st));
 	}
 
 	void Wait(NfsClientOpenFileHandler &_handler,

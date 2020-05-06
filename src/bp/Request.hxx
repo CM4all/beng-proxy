@@ -57,6 +57,7 @@
 
 #include <exception>
 
+struct statx;
 class FileDescriptor;
 class UniqueFileDescriptor;
 class Istream;
@@ -402,38 +403,38 @@ public:
 	 */
 	void HandleAuth(const TranslateResponse &response);
 
-	bool EvaluateFileRequest(FileDescriptor fd, const struct stat &st,
+	bool EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 				 struct file_request &file_request) noexcept;
 
 	void DispatchFile(const char *path, UniqueFileDescriptor fd,
-			  const struct stat &st,
+			  const struct statx &st,
 			  const struct file_request &file_request) noexcept;
 
 	bool DispatchCompressedFile(const char *path, FileDescriptor fd,
-				    const struct stat &st,
+				    const struct statx &st,
 				    const char *encoding) noexcept;
 
 	bool CheckCompressedFile(const char *path, FileDescriptor fd,
-				 const struct stat &st,
+				 const struct statx &st,
 				 const char *encoding) noexcept;
 
 	bool CheckAutoCompressedFile(const char *path, FileDescriptor fd,
-				     const struct stat &st,
+				     const struct statx &st,
 				     const char *encoding,
 				     const char *suffix) noexcept;
 
 	bool EmulateModAuthEasy(const FileAddress &address,
 				UniqueFileDescriptor &fd,
-				const struct stat &st) noexcept;
+				const struct statx &st) noexcept;
 
 	bool MaybeEmulateModAuthEasy(const FileAddress &address,
 				     UniqueFileDescriptor &fd,
-				     const struct stat &st) noexcept;
+				     const struct statx &st) noexcept;
 
 	void HandleFileAddress(const FileAddress &address) noexcept;
 	void HandleFileAddress(const FileAddress &address,
 			       UniqueFileDescriptor fd,
-			       const struct stat &st) noexcept;
+			       const struct statx &st) noexcept;
 
 	void HandleDelegateAddress(const DelegateAddress &address,
 				   const char *path) noexcept;
@@ -661,7 +662,7 @@ private:
 #ifdef HAVE_LIBNFS
 	/* virtual methods from class NfsCacheHandler */
 	void OnNfsCacheResponse(NfsCacheHandle &handle,
-				const struct stat &st) noexcept override;
+				const struct statx &st) noexcept override;
 	void OnNfsCacheError(std::exception_ptr ep) noexcept override;
 #endif
 

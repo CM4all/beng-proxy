@@ -81,7 +81,7 @@ struct Context final
 
 	/* virtual methods from class NfsClientOpenFileHandler */
 	void OnNfsOpen(NfsFileHandle *handle,
-		       const struct stat *st) noexcept override;
+		       const struct statx &st) noexcept override;
 	void OnNfsOpenError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class SinkFdHandler */
@@ -150,7 +150,7 @@ Context::OnSendError(int error) noexcept
  */
 
 void
-Context::OnNfsOpen(NfsFileHandle *handle, const struct stat *st) noexcept
+Context::OnNfsOpen(NfsFileHandle *handle, const struct statx &st) noexcept
 {
 	assert(!aborted);
 	assert(!failed);
@@ -159,7 +159,7 @@ Context::OnNfsOpen(NfsFileHandle *handle, const struct stat *st) noexcept
 	body = sink_fd_new(event_loop, *pool,
 			   NewAutoPipeIstream(pool,
 					      istream_nfs_new(*pool, *handle,
-							      0, st->st_size),
+							      0, st.stx_size),
 					      nullptr),
 			   FileDescriptor(STDOUT_FILENO),
 			   guess_fd_type(STDOUT_FILENO),

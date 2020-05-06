@@ -216,7 +216,8 @@ CheckAccessFileFor(const StringMap &request_headers, const char *html_path)
 
 bool
 Request::EmulateModAuthEasy(const FileAddress &address,
-			    UniqueFileDescriptor &fd, const struct stat &st) noexcept
+			    UniqueFileDescriptor &fd,
+			    const struct statx &st) noexcept
 {
 	if (!CheckAccessFileFor(request.headers, address.path)) {
 		DispatchUnauthorized(*this);
@@ -285,7 +286,7 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 	DispatchResponse(status, std::move(headers),
 			 istream_file_fd_new(instance.event_loop, pool,
 					     address.path,
-					     std::move(fd), 0, st.st_size));
+					     std::move(fd), 0, st.stx_size));
 
 	return true;
 }

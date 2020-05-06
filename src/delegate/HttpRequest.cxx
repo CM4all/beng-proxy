@@ -42,6 +42,7 @@
 #include "system/Error.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -82,13 +83,14 @@ private:
 void
 DelegateHttpRequest::OnDelegateSuccess(UniqueFileDescriptor fd)
 {
-	struct stat st;
-	if (fstat(fd.Get(), &st) < 0) {
+	struct statx st;
+	if (statx(fd.Get(), "", AT_EMPTY_PATH,
+		  STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE, &st) < 0) {
 		handler.InvokeError(std::make_exception_ptr(FormatErrno("Failed to stat %s: ", path)));
 		return;
 	}
 
-	if (!S_ISREG(st.st_mode)) {
+	if (!S_ISREG(st.stx_mode)) {
 		handler.InvokeResponse(pool, HTTP_STATUS_NOT_FOUND,
 				       "Not a regular file");
 		return;
@@ -103,7 +105,7 @@ DelegateHttpRequest::OnDelegateSuccess(UniqueFileDescriptor fd)
 			       std::move(response_headers),
 			       istream_file_fd_new(event_loop, pool, path,
 						   std::move(fd),
-						   0, st.st_size));
+						   0, st.stx_size));
 }
 
 void

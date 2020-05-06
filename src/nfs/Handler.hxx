@@ -36,7 +36,7 @@
 
 #include <stddef.h>
 
-struct stat;
+struct statx;
 class NfsClient;
 class NfsFileHandle;
 
@@ -69,7 +69,7 @@ public:
 	 * consumer may now start I/O operations.
 	 */
 	virtual void OnNfsOpen(NfsFileHandle *handle,
-			       const struct stat *st) noexcept = 0;
+			       const struct statx &st) noexcept = 0;
 
 	/**
 	 * An error has occurred while opening the file.
