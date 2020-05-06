@@ -69,6 +69,7 @@
 #include "ua_classification.hxx"
 #include "ssl/Init.hxx"
 #include "ssl/Client.hxx"
+#include "system/KernelVersion.hxx"
 #include "system/SetupProcess.hxx"
 #include "system/ProcessName.hxx"
 #include "system/Error.hxx"
@@ -268,6 +269,9 @@ BpInstance::AddTcpListener(int port)
 
 int main(int argc, char **argv)
 try {
+	if (!IsKernelVersionOrNewer({4, 11}))
+		throw "Your Linux kernel is too old; this program requires at least 4.11";
+
 	InitProcessName(argc, argv);
 
 #ifndef NDEBUG
