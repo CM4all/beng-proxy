@@ -154,7 +154,8 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 		return false;
 	}
 
-	if (fstat(compressed_fd.Get(), &st2) < 0 || S_ISREG(st2.st_mode))
+	if (fstat(compressed_fd.Get(), &st2) < 0 ||
+	    !S_ISREG(st2.st_mode))
 		return false;
 
 	/* response headers with information from uncompressed file */
