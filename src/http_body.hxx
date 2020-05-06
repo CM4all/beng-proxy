@@ -94,6 +94,13 @@ public:
 			: nullptr;
 	}
 
+	void InvokeEof() noexcept {
+		/* suppress InvokeEof() if rest==REST_EOF_CHUNK because in
+		   that case, the dechunker has already emitted that event */
+		if (rest == 0)
+			Istream::InvokeEof();
+	}
+
 	void DestroyEof() {
 		InvokeEof();
 		Destroy();

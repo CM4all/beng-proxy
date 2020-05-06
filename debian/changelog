@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.6) unstable; urgency=low
 
+  * merge release 16.15
   * bp: read from files using io_uring
 
  --   
@@ -40,6 +41,12 @@ cm4all-beng-proxy (17.0.1) unstable; urgency=low
   * certdb: implement ACMEv2
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 18 Mar 2020 16:54:20 +0100
+
+cm4all-beng-proxy (16.15) unstable; urgency=low
+
+  * http_server: fix crash when garbage is received after end chunk
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 06 May 2020 15:49:53 +0200
 
 cm4all-beng-proxy (16.14) unstable; urgency=low
 
