@@ -1,6 +1,6 @@
 cm4all-beng-proxy (16.15) unstable; urgency=low
 
-  * 
+  * http_server: fix crash when garbage is received after end chunk
 
  --   
 
