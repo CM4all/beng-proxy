@@ -48,48 +48,54 @@ is_enoent(const char *path)
 	return lstat(path, &st) < 0 && errno == ENOENT;
 }
 
+gcc_pure
+static const char *
+get_file_path(const TranslateResponse &response)
+{
+	if (response.test_path != nullptr)
+		return response.test_path;
+
+	const auto &address = response.address;
+	switch (address.type) {
+	case ResourceAddress::Type::NONE:
+	case ResourceAddress::Type::HTTP:
+	case ResourceAddress::Type::PIPE:
+	case ResourceAddress::Type::NFS:
+		return nullptr;
+
+	case ResourceAddress::Type::CGI:
+	case ResourceAddress::Type::FASTCGI:
+	case ResourceAddress::Type::WAS:
+		return address.GetCgi().path;
+
+	case ResourceAddress::Type::LHTTP:
+		return address.GetLhttp().path;
+
+	case ResourceAddress::Type::LOCAL:
+		return address.GetFile().path;
+
+		// TODO: implement NFS
+	}
+
+	assert(false);
+	gcc_unreachable();
+}
+
 bool
 Request::CheckFileNotFound(const TranslateResponse &response) noexcept
 {
 	assert(!response.file_not_found.IsNull());
 
-	if (response.test_path != nullptr) {
-		if (!is_enoent(response.test_path))
-			return true;
-	} else {
-		switch (response.address.type) {
-		case ResourceAddress::Type::NONE:
-		case ResourceAddress::Type::HTTP:
-		case ResourceAddress::Type::PIPE:
-		case ResourceAddress::Type::NFS:
-			LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+	const char *path = get_file_path(response);
+	if (path == nullptr) {
+		request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
 					 "Resource address not compatible with TRANSLATE_FILE_NOT_FOUND",
 					 1);
-			return false;
-
-		case ResourceAddress::Type::CGI:
-		case ResourceAddress::Type::FASTCGI:
-		case ResourceAddress::Type::WAS:
-			if (!is_enoent(response.address.GetCgi().path))
-				return true;
-
-			break;
-
-		case ResourceAddress::Type::LHTTP:
-			if (!is_enoent(response.address.GetLhttp().path))
-				return true;
-
-			break;
-
-		case ResourceAddress::Type::LOCAL:
-			if (!is_enoent(response.address.GetFile().path))
-				return true;
-
-			break;
-
-			// TODO: implement NFS
-		}
+		return false;
 	}
+
+	if (!is_enoent(path))
+		return true;
 
 	if (++translate.n_file_not_found > 20) {
 		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
