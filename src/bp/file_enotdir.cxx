@@ -41,6 +41,7 @@
 #include "AllocatorPtr.hxx"
 
 #include <assert.h>
+#include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -116,8 +117,9 @@ check_file_enotdir(Request &request,
 		return false;
 	}
 
-	struct stat st;
-	if (stat(path, &st) < 0 && errno == ENOTDIR)
+	struct statx st;
+	if (statx(AT_FDCWD, path, AT_STATX_DONT_SYNC,
+		  STATX_TYPE, &st) < 0 && errno == ENOTDIR)
 		return submit_enotdir(request, response);
 
 	return true;
