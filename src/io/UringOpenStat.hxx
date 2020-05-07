@@ -33,11 +33,13 @@
 #pragma once
 
 class AllocatorPtr;
+class FileDescriptor;
 class CancellablePointer;
 namespace Uring { class Queue; class OpenStatHandler; }
 
 void
 UringOpenStat(Uring::Queue &uring, AllocatorPtr alloc,
+	      FileDescriptor directory,
 	      const char *path,
 	      Uring::OpenStatHandler &handler,
 	      CancellablePointer &cancel_ptr) noexcept;

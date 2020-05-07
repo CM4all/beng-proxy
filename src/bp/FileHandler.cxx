@@ -289,7 +289,9 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 
 #ifdef HAVE_URING
 	if (instance.uring) {
-		UringOpenStat(*instance.uring, pool, path,
+		UringOpenStat(*instance.uring, pool,
+			      FileDescriptor(AT_FDCWD),
+			      path,
 			      *this, cancel_ptr);
 		return;
 	}

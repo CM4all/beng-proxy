@@ -43,7 +43,9 @@ class UringOpenStatOperation final : Cancellable, Uring::OpenStatHandler {
 	Uring::OpenStatHandler &handler;
 
 public:
-	UringOpenStatOperation(Uring::Queue &uring, const char *path,
+	UringOpenStatOperation(Uring::Queue &uring,
+			       FileDescriptor directory,
+			       const char *path,
 			       Uring::OpenStatHandler &_handler,
 			       CancellablePointer &cancel_ptr) noexcept
 		:open_stat(uring, *this),
@@ -51,7 +53,7 @@ public:
 	{
 		cancel_ptr = *this;
 
-		open_stat.StartOpenStatReadOnly(path);
+		open_stat.StartOpenStatReadOnly(directory, path);
 	}
 
 private:
@@ -81,9 +83,11 @@ private:
 
 void
 UringOpenStat(Uring::Queue &uring, AllocatorPtr alloc,
+	      FileDescriptor directory,
 	      const char *path,
 	      Uring::OpenStatHandler &handler,
 	      CancellablePointer &cancel_ptr) noexcept
 {
-	alloc.New<UringOpenStatOperation>(uring, path, handler, cancel_ptr);
+	alloc.New<UringOpenStatOperation>(uring, directory, path,
+					  handler, cancel_ptr);
 }
