@@ -1260,7 +1260,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 
 void
 TranslateCacheRequest::OnTranslateResponse(TranslateResponse &response) noexcept
-{
+try {
 	tcache->active = true;
 
 	if (!response.invalidate.empty())
@@ -1271,34 +1271,19 @@ TranslateCacheRequest::OnTranslateResponse(TranslateResponse &response) noexcept
 	if (!cacheable) {
 		LogConcat(4, "TranslationCache", "ignore ", key);
 	} else if (tcache_response_evaluate(response)) {
-		try {
-			tcache_store(*this, response);
-		} catch (...) {
-			handler->OnTranslateError(std::current_exception());
-			return;
-		}
+		tcache_store(*this, response);
 	} else {
 		LogConcat(4, "TranslationCache", "nocache ", key);
 	}
 
 	if (request.uri != nullptr && response.IsExpandable()) {
-		try {
-			tcache_expand_response(*pool, response,
-					       response.CompileRegex(),
-					       request.uri, request.host,
-					       request.user);
-		} catch (...) {
-			handler->OnTranslateError(std::current_exception());
-			return;
-		}
+		tcache_expand_response(*pool, response,
+				       response.CompileRegex(),
+				       request.uri, request.host,
+				       request.user);
 	} else if (response.easy_base) {
 		/* create a writable copy and apply the BASE */
-		try {
-			response.CacheLoad(*pool, response, request.uri);
-		} catch (...) {
-			handler->OnTranslateError(std::current_exception());
-			return;
-		}
+		response.CacheLoad(*pool, response, request.uri);
 	} else if (response.base != nullptr) {
 		const char *uri = request.uri;
 		const char *tail = require_base_tail(uri, response.base);
@@ -1310,6 +1295,8 @@ TranslateCacheRequest::OnTranslateResponse(TranslateResponse &response) noexcept
 	}
 
 	handler->OnTranslateResponse(response);
+} catch (...) {
+	handler->OnTranslateError(std::current_exception());
 }
 
 void
