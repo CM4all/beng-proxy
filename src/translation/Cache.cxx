@@ -55,6 +55,7 @@
 #include "util/djbhash.h"
 #include "util/RuntimeError.hxx"
 #include "util/StringView.hxx"
+#include "file_address.hxx"
 
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/unordered_set.hpp>

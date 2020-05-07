@@ -148,6 +148,7 @@ io2 = static_library(
   'src/io/Buffered.cxx',
   'src/io/StringFile.cxx',
   'src/io/SpliceSupport.cxx',
+  'src/io/StatAt.cxx',
   include_directories: inc,
 )
 io_dep = declare_dependency(

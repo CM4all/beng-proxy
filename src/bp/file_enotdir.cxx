@@ -38,6 +38,7 @@
 #include "lhttp_address.hxx"
 #include "http/IncomingRequest.hxx"
 #include "pool/pool.hxx"
+#include "io/StatAt.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <assert.h>
@@ -45,6 +46,15 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <errno.h>
+
+gcc_pure
+static bool
+IsEnotdir(const char *base, const char *path) noexcept
+{
+	struct statx st;
+	return !StatAt(base, path, AT_STATX_DONT_SYNC, STATX_TYPE, &st) &&
+		errno == ENOTDIR;
+}
 
 gcc_pure
 static const char *
@@ -73,6 +83,33 @@ get_file_path(const TranslateResponse &response)
 		return address.GetFile().path;
 
 		// TODO: implement NFS
+	}
+
+	assert(false);
+	gcc_unreachable();
+}
+
+gcc_pure
+static const char *
+get_file_base(const TranslateResponse &response) noexcept
+{
+	if (response.test_path != nullptr)
+		return nullptr;
+
+	const auto &address = response.address;
+	switch (address.type) {
+	case ResourceAddress::Type::NONE:
+	case ResourceAddress::Type::HTTP:
+	case ResourceAddress::Type::PIPE:
+	case ResourceAddress::Type::NFS:
+	case ResourceAddress::Type::CGI:
+	case ResourceAddress::Type::FASTCGI:
+	case ResourceAddress::Type::WAS:
+	case ResourceAddress::Type::LHTTP:
+		return nullptr;
+
+	case ResourceAddress::Type::LOCAL:
+		return address.GetFile().base;
 	}
 
 	assert(false);
@@ -117,9 +154,7 @@ check_file_enotdir(Request &request,
 		return false;
 	}
 
-	struct statx st;
-	if (statx(AT_FDCWD, path, AT_STATX_DONT_SYNC,
-		  STATX_TYPE, &st) < 0 && errno == ENOTDIR)
+	if (IsEnotdir(get_file_base(response), path))
 		return submit_enotdir(request, response);
 
 	return true;

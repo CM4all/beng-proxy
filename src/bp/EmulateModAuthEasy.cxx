@@ -50,6 +50,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -169,24 +170,32 @@ VerifyPassword(const char *crypted_password,
 }
 
 static FILE *
-OpenSiblingFile(const char *path, const char *sibling_name)
+OpenSiblingFile(FileDescriptor directory, const char *path,
+		const char *sibling_name)
 {
-	const char *slash = strrchr(path, '/');
-	if (slash == nullptr)
-		return nullptr;
-
 	char buffer[4096];
-	if (size_t(slash + 1 - path) + strlen(sibling_name) >= sizeof(buffer))
+
+	const char *slash = strrchr(path, '/');
+	if (slash != nullptr) {
+		if (size_t(slash + 1 - path) + strlen(sibling_name) >= sizeof(buffer))
+			return nullptr;
+
+		strcpy((char *)mempcpy(buffer, path, slash + 1 - path), sibling_name);
+		path = buffer;
+	}
+
+	FileDescriptor fd;
+	if (!fd.Open(directory, path, O_RDONLY))
 		return nullptr;
 
-	strcpy((char *)mempcpy(buffer, path, slash + 1 - path), sibling_name);
-	return fopen(buffer, "r");
+	return fdopen(fd.Get(), "r");
 }
 
 static bool
-CheckAccessFileFor(const StringMap &request_headers, const char *html_path)
+CheckAccessFileFor(FileDescriptor directory,
+		   const StringMap &request_headers, const char *html_path)
 {
-	FILE *file = OpenSiblingFile(html_path, ".access");
+	FILE *file = OpenSiblingFile(directory, html_path, ".access");
 	if (file == nullptr)
 		return true;
 
@@ -219,7 +228,8 @@ Request::EmulateModAuthEasy(const FileAddress &address,
 			    UniqueFileDescriptor &fd,
 			    const struct statx &st) noexcept
 {
-	if (!CheckAccessFileFor(request.headers, address.path)) {
+	if (!CheckAccessFileFor(handler.file.base, request.headers,
+				address.path)) {
 		DispatchUnauthorized(*this);
 		return true;
 	}

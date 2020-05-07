@@ -172,8 +172,10 @@ struct MakeResponse : TranslateResponse {
 		return File(*NewFromPool<FileAddress>(pool, pool, _file));
 	}
 
-	MakeResponse &&File(const char *_path) {
+	MakeResponse &&File(const char *_path,
+			    const char *_base=nullptr) noexcept {
 		auto f = NewFromPool<FileAddress>(pool, _path);
+		f->base = _base;
 		address = *f;
 		return std::move(*this);
 	}

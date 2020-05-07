@@ -48,6 +48,7 @@ FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src,
 	:path(_path),
 	 deflated(alloc.CheckDup(src.deflated)),
 	 gzipped(alloc.CheckDup(src.gzipped)),
+	 base(alloc.CheckDup(src.base)),
 	 content_type(alloc.CheckDup(src.content_type)),
 	 content_type_lookup(alloc.Dup(src.content_type_lookup)),
 	 document_root(alloc.CheckDup(src.document_root)),
@@ -73,7 +74,25 @@ FileAddress::Check() const
 bool
 FileAddress::IsValidBase() const noexcept
 {
-	return IsExpandable() || is_base(path);
+	return IsExpandable() ||
+		(delegate == nullptr ? base != nullptr : is_base(path));
+}
+
+bool
+FileAddress::SplitBase(AllocatorPtr alloc, const char *suffix) noexcept
+{
+	if (base != nullptr || delegate != nullptr || expand_path)
+		/* no-op and no error */
+		return true;
+
+	const char *end = UriFindUnescapedSuffix(path, suffix);
+	if (end == nullptr)
+		/* base mismatch */
+		return false;
+
+	base = alloc.DupZ({path, end});
+	path = *end == 0 ? "." : end;
+	return true;
 }
 
 FileAddress *
@@ -81,12 +100,28 @@ FileAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const noexcept
 {
 	assert(suffix != nullptr);
 
+	if (base != nullptr && *suffix == 0)
+		return strcmp(path, ".") == 0
+			? alloc.New<FileAddress>(alloc, *this)
+			: nullptr;
+
 	const char *end = UriFindUnescapedSuffix(path, suffix);
 	if (end == nullptr)
 		return nullptr;
 
-	auto *dest = alloc.New<FileAddress>(alloc, *this,
-					    alloc.DupZ({path, end}));
+	if (base != nullptr && end == path)
+		return alloc.New<FileAddress>(alloc, *this, ".");
+
+	const char *new_path = alloc.DupZ({path, end});
+	const char *new_base = nullptr;
+
+	if (delegate == nullptr) {
+		new_base = new_path;
+		new_path = ".";
+	}
+
+	auto *dest = alloc.New<FileAddress>(alloc, *this, new_path);
+	dest->base = new_base;
 
 	/* BASE+DEFLATED is not supported */
 	dest->deflated = nullptr;
@@ -99,15 +134,49 @@ FileAddress *
 FileAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const noexcept
 {
 	assert(path != nullptr);
-	assert(*path != 0);
-	assert(path[strlen(path) - 1] == '/');
 	assert(suffix != nullptr);
 
-	char *new_path = uri_unescape_concat(alloc, path, suffix);
+	if (delegate != nullptr) {
+		/* no "base" support for delegates */
+		assert(*path != 0);
+		assert(path[strlen(path) - 1] == '/');
+
+		char *new_path = uri_unescape_concat(alloc, path, suffix);
+		if (new_path == nullptr)
+			return nullptr;
+
+		return alloc.New<FileAddress>(alloc, *this, new_path);
+	}
+
+	const char *src_base = base;
+	if (base == nullptr) {
+		/* special case: this is an EASY_BASE call */
+		assert(*path != 0);
+		assert(path[strlen(path) - 1] == '/');
+
+		src_base = path;
+	} else {
+		assert(strcmp(path, ".") == 0);
+		assert(base != nullptr);
+		assert(*base == '/');
+		assert(base[strlen(base) - 1] == '/');
+	}
+
+	/* store the our path as "base" for the new instance */
+
+	const char *new_path = uri_unescape_dup(alloc, suffix);
 	if (new_path == nullptr)
 		return nullptr;
 
-	return alloc.New<FileAddress>(alloc, *this, new_path);
+	if (*new_path == 0)
+		new_path = ".";
+	else
+		while (*new_path == '/')
+			++new_path;
+
+	auto *dest = alloc.New<FileAddress>(alloc, *this, new_path);
+	dest->base = alloc.Dup(src_base);
+	return dest;
 }
 
 bool

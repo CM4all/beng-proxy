@@ -135,22 +135,26 @@ TEST(ResourceAddressTest, Basic)
 	auto a = ra1.SaveBase(*pool, "bar.html");
 	ASSERT_TRUE(a.IsDefined());
 	ASSERT_EQ(a.type, ResourceAddress::Type::LOCAL);
-	ASSERT_STREQ(a.GetFile().path, "/var/www/foo/");
+	ASSERT_STREQ(a.GetFile().base, "/var/www/foo/");
+	ASSERT_STREQ(a.GetFile().path, ".");
 
 	auto b = a.LoadBase(*pool, "index.html");
 	ASSERT_TRUE(b.IsDefined());
 	ASSERT_EQ(b.type, ResourceAddress::Type::LOCAL);
-	ASSERT_STREQ(b.GetFile().path, "/var/www/foo/index.html");
+	ASSERT_STREQ(b.GetFile().base, "/var/www/foo/");
+	ASSERT_STREQ(b.GetFile().path, "index.html");
 
 	a = ra2.SaveBase(*pool, "space%20.txt");
 	ASSERT_TRUE(a.IsDefined());
 	ASSERT_EQ(a.type, ResourceAddress::Type::LOCAL);
-	ASSERT_STREQ(a.GetFile().path, "/var/www/foo/");
+	ASSERT_STREQ(a.GetFile().base, "/var/www/foo/");
+	ASSERT_STREQ(a.GetFile().path, ".");
 
 	b = a.LoadBase(*pool, "index%2ehtml");
 	ASSERT_TRUE(b.IsDefined());
 	ASSERT_EQ(b.type, ResourceAddress::Type::LOCAL);
-	ASSERT_STREQ(b.GetFile().path, "/var/www/foo/index.html");
+	ASSERT_STREQ(b.GetFile().base, "/var/www/foo/");
+	ASSERT_STREQ(b.GetFile().path, "index.html");
 
 	a = ra3.SaveBase(*pool, "bar/baz");
 	ASSERT_TRUE(a.IsDefined());

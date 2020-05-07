@@ -48,6 +48,7 @@
 #include "widget/View.hxx"
 #include "HttpResponseHandler.hxx"
 #include "io/Logger.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
 
@@ -213,9 +214,13 @@ private:
 	 * Area for handler-specific state variables.  This is a union to
 	 * save memory.
 	 */
-	union {
+	struct { // TODO: convert this back to union
 		struct {
 			const FileAddress *address;
+
+			UniqueFileDescriptor base_;
+
+			FileDescriptor base;
 		} file;
 
 		struct {

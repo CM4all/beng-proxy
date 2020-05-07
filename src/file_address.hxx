@@ -49,6 +49,12 @@ struct FileAddress {
 	const char *deflated = nullptr;
 	const char *gzipped = nullptr;
 
+	/**
+	 * Absolute path of a directory below which the other paths
+	 * (#path, #deflated, #gzipped) are located.
+	 */
+	const char *base = nullptr;
+
 	const char *content_type = nullptr;
 
 	ConstBuffer<void> content_type_lookup = nullptr;
@@ -105,6 +111,8 @@ struct FileAddress {
 
 	gcc_pure
 	bool IsValidBase() const noexcept;
+
+	bool SplitBase(AllocatorPtr alloc, const char *suffix) noexcept;
 
 	FileAddress *SaveBase(AllocatorPtr alloc,
 			      const char *suffix) const noexcept;

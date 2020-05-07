@@ -179,6 +179,7 @@ resource_address_equals(const ResourceAddress *a,
 		return string_equals(a->GetFile().path, b->GetFile().path) &&
 			string_equals(a->GetFile().deflated, b->GetFile().deflated) &&
 			string_equals(a->GetFile().gzipped, b->GetFile().gzipped) &&
+			string_equals(a->GetFile().base, b->GetFile().base) &&
 			string_equals(a->GetFile().content_type, b->GetFile().content_type) &&
 			string_equals(a->GetFile().document_root, b->GetFile().document_root) &&
 			(a->GetFile().delegate == nullptr) == (b->GetFile().delegate == nullptr) &&
@@ -344,20 +345,23 @@ TEST(TranslationCache, Basic)
 			  my_translate_handler, cancel_ptr);
 
 	const auto request2 = MakeRequest("/foo/bar.html");
-	const auto response2 = MakeResponse(*pool).Base("/foo/").File("/srv/foo/bar.html");
+	const auto response2 = MakeResponse(*pool).Base("/foo/")
+		.File("bar.html", "/srv/foo/");
 	next_response = expected_response = &response2;
 	cache.SendRequest(*pool, request2, nullptr,
 			  my_translate_handler, cancel_ptr);
 
 	const auto request3 = MakeRequest("/foo/index.html");
-	const auto response3 = MakeResponse(*pool).Base("/foo/").File("/srv/foo/index.html");
+	const auto response3 = MakeResponse(*pool).Base("/foo/")
+		.File("index.html", "/srv/foo/");
 	next_response = nullptr;
 	expected_response = &response3;
 	cache.SendRequest(*pool, request3, nullptr,
 			  my_translate_handler, cancel_ptr);
 
 	const auto request4 = MakeRequest("/foo/");
-	const auto response4 = MakeResponse(*pool).Base("/foo/").File("/srv/foo/");
+	const auto response4 = MakeResponse(*pool).Base("/foo/")
+		.File(".", "/srv/foo/");
 	expected_response = &response4;
 	cache.SendRequest(*pool, request4, nullptr,
 			  my_translate_handler, cancel_ptr);
@@ -368,7 +372,8 @@ TEST(TranslationCache, Basic)
 			  my_translate_handler, cancel_ptr);
 
 	const auto request10 = MakeRequest("/foo//bar");
-	const auto response10 = MakeResponse(*pool).Base("/foo/").File("/srv/foo//bar");
+	const auto response10 = MakeResponse(*pool).Base("/foo/")
+		.File("bar", "/srv/foo/");
 	expected_response = &response10;
 	cache.SendRequest(*pool, request10, nullptr,
 			  my_translate_handler, cancel_ptr);
@@ -422,13 +427,15 @@ TEST(TranslationCache, BaseRoot)
 	CancellablePointer cancel_ptr;
 
 	const auto request1 = MakeRequest("/base_root/");
-	const auto response1 = MakeResponse(*pool).Base("/base_root/").File("/var/www/");
+	const auto response1 = MakeResponse(*pool).Base("/base_root/")
+		.File(".", "/var/www/");
 	next_response = expected_response = &response1;
 	cache.SendRequest(*pool, request1, nullptr,
 			  my_translate_handler, cancel_ptr);
 
 	const auto request2 = MakeRequest("/base_root/hansi");
-	const auto response2 = MakeResponse(*pool).Base("/base_root/").File("/var/www/hansi");
+	const auto response2 = MakeResponse(*pool).Base("/base_root/")
+		.File("hansi", "/var/www/");
 	next_response = nullptr;
 	expected_response = &response2;
 	cache.SendRequest(*pool, request2, nullptr,
@@ -467,7 +474,7 @@ TEST(TranslationCache, BaseUri)
 
 	const auto request1 = MakeRequest("/base_uri/foo");
 	const auto response1 = MakeResponse(*pool).Base("/base_uri/")
-		.File("/var/www/foo")
+		.File("foo", "/var/www/")
 		.Uri("/modified/foo");
 
 	next_response = expected_response = &response1;
@@ -476,7 +483,7 @@ TEST(TranslationCache, BaseUri)
 
 	const auto request2 = MakeRequest("/base_uri/hansi");
 	const auto response2 = MakeResponse(*pool).Base("/base_uri/")
-		.File("/var/www/hansi")
+		.File("hansi", "/var/www/")
 		.Uri("/modified/hansi");
 
 	next_response = nullptr;
@@ -499,7 +506,7 @@ TEST(TranslationCache, BaseRedirect)
 
 	const auto request1 = MakeRequest("/base_redirect/foo");
 	const auto response1 = MakeResponse(*pool).Base("/base_redirect/")
-		.File("/var/www/foo")
+		.File("foo", "/var/www/")
 		.Redirect("http://modified/foo");
 
 	next_response = expected_response = &response1;
@@ -508,7 +515,7 @@ TEST(TranslationCache, BaseRedirect)
 
 	const auto request2 = MakeRequest("/base_redirect/hansi");
 	const auto response2 = MakeResponse(*pool).Base("/base_redirect/")
-		.File("/var/www/hansi")
+		.File("hansi", "/var/www/")
 		.Redirect("http://modified/hansi");
 
 	next_response = nullptr;
@@ -531,7 +538,7 @@ TEST(TranslationCache, BaseTestPath)
 
 	const auto request1 = MakeRequest("/base_test_path/foo");
 	const auto response1 = MakeResponse(*pool).Base("/base_test_path/")
-		.File("/var/www/foo")
+		.File("foo", "/var/www/")
 		.TestPath("/modified/foo");
 
 	next_response = expected_response = &response1;
@@ -540,7 +547,7 @@ TEST(TranslationCache, BaseTestPath)
 
 	const auto request2 = MakeRequest("/base_test_path/hansi");
 	const auto response2 = MakeResponse(*pool).Base("/base_test_path/")
-		.File("/var/www/hansi")
+		.File("hansi", "/var/www/")
 		.TestPath("/modified/hansi");
 
 	next_response = nullptr;
@@ -557,8 +564,10 @@ TEST(TranslationCache, EasyBase)
 
 	const auto request1 = MakeRequest("/easy/bar.html");
 
-	const auto response1 = MakeResponse(*pool).EasyBase("/easy/").File("/var/www/");
-	const auto response1b = MakeResponse(*pool).EasyBase("/easy/").File("/var/www/bar.html");
+	const auto response1 = MakeResponse(*pool).EasyBase("/easy/")
+		.File(".", "/var/www/");
+	const auto response1b = MakeResponse(*pool).EasyBase("/easy/")
+		.File("bar.html", "/var/www/");
 
 	MyTranslateHandler my_translate_handler;
 	CancellablePointer cancel_ptr;
@@ -574,7 +583,7 @@ TEST(TranslationCache, EasyBase)
 
 	const auto request2 = MakeRequest("/easy/index.html");
 	const auto response2 = MakeResponse(*pool).EasyBase("/easy/")
-		.File("/var/www/index.html");
+		.File("index.html", "/var/www/");
 	expected_response = &response2;
 	cache.SendRequest(*pool, request2, nullptr,
 			  my_translate_handler, cancel_ptr);
@@ -594,10 +603,10 @@ TEST(TranslationCache, EasyBaseUri)
 
 	const auto request1 = MakeRequest("/easy_base_uri/foo");
 	const auto response1 = MakeResponse(*pool).EasyBase("/easy_base_uri/")
-		.File("/var/www/")
+		.File(".", "/var/www/")
 		.Uri("/modified/");
 	const auto response1b = MakeResponse(*pool).EasyBase("/easy_base_uri/")
-		.File("/var/www/foo")
+		.File("foo", "/var/www/")
 		.Uri("/modified/foo");
 
 	next_response = &response1;
@@ -607,7 +616,7 @@ TEST(TranslationCache, EasyBaseUri)
 
 	const auto request2 = MakeRequest("/easy_base_uri/hansi");
 	const auto response2 = MakeResponse(*pool).EasyBase("/easy_base_uri/")
-		.File("/var/www/hansi")
+		.File("hansi", "/var/www/")
 		.Uri("/modified/hansi");
 
 	next_response = nullptr;
@@ -630,10 +639,10 @@ TEST(TranslationCache, EasyBaseTestPath)
 
 	const auto request1 = MakeRequest("/easy_base_test_path/foo");
 	const auto response1 = MakeResponse(*pool).EasyBase("/easy_base_test_path/")
-		.File("/var/www/")
+		.File(".", "/var/www/")
 		.TestPath("/modified/");
 	const auto response1b = MakeResponse(*pool).EasyBase("/easy_base_test_path/")
-		.File("/var/www/foo")
+		.File("foo", "/var/www/")
 		.TestPath("/modified/foo");
 
 	next_response = &response1;
@@ -643,7 +652,7 @@ TEST(TranslationCache, EasyBaseTestPath)
 
 	const auto request2 = MakeRequest("/easy_base_test_path/hansi");
 	const auto response2 = MakeResponse(*pool).EasyBase("/easy_base_test_path/")
-		.File("/var/www/hansi")
+		.File("hansi", "/var/www/")
 		.TestPath("/modified/hansi");
 
 	next_response = nullptr;
@@ -833,7 +842,8 @@ TEST(TranslationCache, Regex)
 
 	/* add the "inverse_regex" test to the cache first */
 	const auto request_i1 = MakeRequest("/regex/foo");
-	const auto response_i1 = MakeResponse(*pool).File("/var/www/regex/other/foo")
+	const auto response_i1 = MakeResponse(*pool)
+		.File("foo", "/var/www/regex/other/")
 		.Base("/regex/").InverseRegex("\\.(jpg|html)$");
 	next_response = expected_response = &response_i1;
 	cache.SendRequest(*pool, request_i1, nullptr,
@@ -841,7 +851,8 @@ TEST(TranslationCache, Regex)
 
 	/* fill the cache */
 	const auto request1 = MakeRequest("/regex/a/foo.jpg");
-	const auto response1 = MakeResponse(*pool).File("/var/www/regex/images/a/foo.jpg")
+	const auto response1 = MakeResponse(*pool)
+		.File("a/foo.jpg", "/var/www/regex/images/")
 		.Base("/regex/").Regex("\\.jpg$");
 	next_response = expected_response = &response1;
 	cache.SendRequest(*pool, request1, nullptr,
@@ -849,7 +860,8 @@ TEST(TranslationCache, Regex)
 
 	/* regex mismatch */
 	const auto request2 = MakeRequest("/regex/b/foo.html");
-	const auto response2 = MakeResponse(*pool).File("/var/www/regex/html/b/foo.html")
+	const auto response2 = MakeResponse(*pool)
+		.File("b/foo.html", "/var/www/regex/html/")
 		.Base("/regex/").Regex("\\.html$");
 	next_response = expected_response = &response2;
 	cache.SendRequest(*pool, request2, nullptr,
@@ -857,7 +869,8 @@ TEST(TranslationCache, Regex)
 
 	/* regex match */
 	const auto request3 = MakeRequest("/regex/c/bar.jpg");
-	const auto response3 = MakeResponse(*pool).File("/var/www/regex/images/c/bar.jpg")
+	const auto response3 = MakeResponse(*pool)
+		.File("c/bar.jpg", "/var/www/regex/images/")
 		.Base("/regex/").Regex("\\.jpg$");
 	next_response = nullptr;
 	expected_response = &response3;
@@ -866,7 +879,8 @@ TEST(TranslationCache, Regex)
 
 	/* second regex match */
 	const auto request4 = MakeRequest("/regex/d/bar.html");
-	const auto response4 = MakeResponse(*pool).File("/var/www/regex/html/d/bar.html")
+	const auto response4 = MakeResponse(*pool)
+		.File("d/bar.html", "/var/www/regex/html/")
 		.Base("/regex/").Regex("\\.html$");
 	next_response = nullptr;
 	expected_response = &response4;
@@ -875,7 +889,8 @@ TEST(TranslationCache, Regex)
 
 	/* see if the "inverse_regex" cache item is still there */
 	const auto request_i2 = MakeRequest("/regex/bar");
-	const auto response_i2 = MakeResponse(*pool).File("/var/www/regex/other/bar")
+	const auto response_i2 = MakeResponse(*pool)
+		.File("bar", "/var/www/regex/other/")
 		.Base("/regex/").InverseRegex("\\.(jpg|html)$");
 	next_response = nullptr;
 	expected_response = &response_i2;
@@ -913,7 +928,8 @@ TEST(TranslationCache, RegexTail)
 	CancellablePointer cancel_ptr;
 
 	const auto request1 = MakeRequest("/regex_tail/a/foo.jpg");
-	const auto response1 = MakeResponse(*pool).File("/var/www/regex/images/a/foo.jpg")
+	const auto response1 = MakeResponse(*pool)
+		.File("a/foo.jpg", "/var/www/regex/images/")
 		.Base("/regex_tail/").RegexTail("^a/");
 	next_response = expected_response = &response1;
 	cache.SendRequest(*pool, request1, nullptr,
@@ -925,7 +941,8 @@ TEST(TranslationCache, RegexTail)
 			  my_translate_handler, cancel_ptr);
 
 	const auto request3 = MakeRequest("/regex_tail/a/bar.jpg");
-	const auto response3 = MakeResponse(*pool).File("/var/www/regex/images/a/bar.jpg")
+	const auto response3 = MakeResponse(*pool)
+		.File("a/bar.jpg", "/var/www/regex/images/")
 		.Base("/regex_tail/").RegexTail("^a/");
 	next_response = nullptr;
 	expected_response = &response3;
@@ -949,7 +966,8 @@ TEST(TranslationCache, RegexTailUnescape)
 	CancellablePointer cancel_ptr;
 
 	const auto request1 = MakeRequest("/regex_unescape/a/foo.jpg");
-	const auto response1 = MakeResponse(*pool).File("/var/www/regex/images/a/foo.jpg")
+	const auto response1 = MakeResponse(*pool)
+		.File("a/foo.jpg", "/var/www/regex/images/")
 		.Base("/regex_unescape/").RegexTailUnescape("^a/");
 
 	next_response = expected_response = &response1;
@@ -963,7 +981,8 @@ TEST(TranslationCache, RegexTailUnescape)
 			  my_translate_handler, cancel_ptr);
 
 	const auto request3 = MakeRequest("/regex_unescape/a/bar.jpg");
-	const auto response3 = MakeResponse(*pool).File("/var/www/regex/images/a/bar.jpg")
+	const auto response3 = MakeResponse(*pool)
+		.File("a/bar.jpg", "/var/www/regex/images/")
 		.Base("/regex_unescape/").RegexTailUnescape("^a/");
 
 	next_response = nullptr;
@@ -972,7 +991,8 @@ TEST(TranslationCache, RegexTailUnescape)
 			  my_translate_handler, cancel_ptr);
 
 	const auto request4 = MakeRequest("/regex_unescape/%61/escaped.html");
-	const auto response4 = MakeResponse(*pool).File("/var/www/regex/images/a/escaped.html")
+	const auto response4 = MakeResponse(*pool)
+		.File("a/escaped.html", "/var/www/regex/images/")
 		.Base("/regex_unescape/").RegexTailUnescape("^a/");
 	next_response = nullptr;
 	expected_response = &response4;
@@ -1204,7 +1224,7 @@ TEST(TranslationCache, BaseCheck)
 
 	const auto request2 = MakeRequest("/a/b/c.html").Check("x");
 	const auto response2 = MakeResponse(*pool).Base("/a/b/")
-		.File("/var/www/vol0/a/b/c.html");
+		.File("c.html", "/var/www/vol0/a/b/");
 
 	next_response = expected_response = &response2;
 	cache.SendRequest(*pool, request2, nullptr,
@@ -1212,7 +1232,7 @@ TEST(TranslationCache, BaseCheck)
 
 	const auto request3 = MakeRequest("/a/d/e.html").Check("x");
 	const auto response3 = MakeResponse(*pool).Base("/a/d/")
-		.File("/var/www/vol1/a/d/e.html");
+		.File("e.html", "/var/www/vol1/a/d/");
 
 	next_response = expected_response = &response3;
 	cache.SendRequest(*pool, request3, nullptr,
@@ -1237,7 +1257,7 @@ TEST(TranslationCache, BaseCheck)
 
 	const auto request6 = MakeRequest("/a/b/0/1.html").Check("x");
 	const auto response6 = MakeResponse(*pool).Base("/a/b/")
-		.File("/var/www/vol0/a/b/0/1.html");
+		.File("0/1.html", "/var/www/vol0/a/b/");
 
 	expected_response = &response6;
 	cache.SendRequest(*pool, request6, nullptr,
@@ -1245,7 +1265,7 @@ TEST(TranslationCache, BaseCheck)
 
 	const auto request7 = MakeRequest("/a/d/2/3.html").Check("x");
 	const auto response7 = MakeResponse(*pool).Base("/a/d/")
-		.File("/var/www/vol1/a/d/2/3.html");
+		.File("2/3.html", "/var/www/vol1/a/d/");
 
 	expected_response = &response7;
 	cache.SendRequest(*pool, request7, nullptr,
@@ -1283,7 +1303,7 @@ TEST(TranslationCache, BaseWantFullUri)
 
 	const auto request2 = MakeRequest("/wfu/a/b/c.html").WantFullUri("x");
 	const auto response2 = MakeResponse(*pool).Base("/wfu/a/b/")
-		.File("/var/www/vol0/a/b/c.html");
+		.File("c.html", "/var/www/vol0/a/b/");
 
 	next_response = expected_response = &response2;
 	cache.SendRequest(*pool, request2, nullptr,
@@ -1291,7 +1311,7 @@ TEST(TranslationCache, BaseWantFullUri)
 
 	const auto request3 = MakeRequest("/wfu/a/d/e.html").WantFullUri("x");
 	const auto response3 = MakeResponse(*pool).Base("/wfu/a/d/")
-		.File("/var/www/vol1/a/d/e.html");
+		.File("e.html", "/var/www/vol1/a/d/");
 
 	next_response = expected_response = &response3;
 	cache.SendRequest(*pool, request3, nullptr,
@@ -1316,7 +1336,7 @@ TEST(TranslationCache, BaseWantFullUri)
 
 	const auto request6 = MakeRequest("/wfu/a/b/0/1.html").WantFullUri("x");
 	const auto response6 = MakeResponse(*pool).Base("/wfu/a/b/")
-		.File("/var/www/vol0/a/b/0/1.html");
+		.File("0/1.html", "/var/www/vol0/a/b/");
 
 	expected_response = &response6;
 	cache.SendRequest(*pool, request6, nullptr,
@@ -1324,7 +1344,7 @@ TEST(TranslationCache, BaseWantFullUri)
 
 	const auto request7 = MakeRequest("/wfu/a/d/2/3.html").WantFullUri("x");
 	const auto response7 = MakeResponse(*pool).Base("/wfu/a/d/")
-		.File("/var/www/vol1/a/d/2/3.html");
+		.File("2/3.html", "/var/www/vol1/a/d/");
 
 	expected_response = &response7;
 	cache.SendRequest(*pool, request7, nullptr,
@@ -1353,7 +1373,7 @@ TEST(TranslationCache, UnsafeBase)
 	/* feed */
 	const auto request1 = MakeRequest("/unsafe_base1/foo");
 	const auto response1 = MakeResponse(*pool).Base("/unsafe_base1/")
-		.File("/var/www/foo");
+		.File("foo", "/var/www/");
 
 	next_response = expected_response = &response1;
 	cache.SendRequest(*pool, request1, nullptr,
@@ -1361,7 +1381,7 @@ TEST(TranslationCache, UnsafeBase)
 
 	const auto request2 = MakeRequest("/unsafe_base2/foo");
 	const auto response2 = MakeResponse(*pool).UnsafeBase("/unsafe_base2/")
-		.File("/var/www/foo");
+		.File("foo", "/var/www/");
 
 	next_response = expected_response = &response2;
 	cache.SendRequest(*pool, request2, nullptr,
@@ -1379,7 +1399,7 @@ TEST(TranslationCache, UnsafeBase)
 
 	const auto request4 = MakeRequest("/unsafe_base2/../x");
 	const auto response4 = MakeResponse(*pool).UnsafeBase("/unsafe_base2/")
-		.File("/var/www/../x");
+		.File("../x", "/var/www/");
 
 	next_response = nullptr;
 	expected_response = &response4;

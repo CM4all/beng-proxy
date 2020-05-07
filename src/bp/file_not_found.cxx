@@ -35,6 +35,7 @@
 #include "file_address.hxx"
 #include "cgi/Address.hxx"
 #include "lhttp_address.hxx"
+#include "io/StatAt.hxx"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -43,12 +44,13 @@
 
 gcc_pure
 static bool
-is_enoent(const char *path)
+IsEnoent(const char *base, const char *path) noexcept
 {
 	struct statx st;
-	return statx(AT_FDCWD, path,
-		     AT_SYMLINK_NOFOLLOW|AT_STATX_DONT_SYNC,
-		     STATX_TYPE, &st) < 0 && errno == ENOENT;
+	return !StatAt(base, path,
+		       AT_SYMLINK_NOFOLLOW|AT_STATX_DONT_SYNC,
+		       STATX_TYPE, &st) &&
+		errno == ENOENT;
 }
 
 gcc_pure
@@ -84,6 +86,33 @@ get_file_path(const TranslateResponse &response)
 	gcc_unreachable();
 }
 
+gcc_pure
+static const char *
+get_file_base(const TranslateResponse &response) noexcept
+{
+	if (response.test_path != nullptr)
+		return nullptr;
+
+	const auto &address = response.address;
+	switch (address.type) {
+	case ResourceAddress::Type::NONE:
+	case ResourceAddress::Type::HTTP:
+	case ResourceAddress::Type::PIPE:
+	case ResourceAddress::Type::NFS:
+	case ResourceAddress::Type::CGI:
+	case ResourceAddress::Type::FASTCGI:
+	case ResourceAddress::Type::WAS:
+	case ResourceAddress::Type::LHTTP:
+		return nullptr;
+
+	case ResourceAddress::Type::LOCAL:
+		return address.GetFile().base;
+	}
+
+	assert(false);
+	gcc_unreachable();
+}
+
 bool
 Request::CheckFileNotFound(const TranslateResponse &response) noexcept
 {
@@ -97,7 +126,7 @@ Request::CheckFileNotFound(const TranslateResponse &response) noexcept
 		return false;
 	}
 
-	if (!is_enoent(path))
+	if (!IsEnoent(get_file_base(response), path))
 		return true;
 
 	if (++translate.n_file_not_found > 20) {

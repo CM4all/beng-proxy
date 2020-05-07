@@ -34,6 +34,7 @@
 #include "Request.hxx"
 #include "translation/Response.hxx"
 #include "file_address.hxx"
+#include "io/StatAt.hxx"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -42,18 +43,18 @@
 
 gcc_pure
 static bool
-is_dir(const char *path)
+IsDirectory(const char *base, const char *path) noexcept
 {
 	struct statx st;
-	return statx(AT_FDCWD, path, AT_STATX_DONT_SYNC,
-		     STATX_TYPE, &st) == 0 && S_ISDIR(st.stx_mode);
+	return StatAt(base, path, AT_STATX_DONT_SYNC, STATX_TYPE, &st) &&
+		S_ISDIR(st.stx_mode);
 }
 
 gcc_pure
 static bool
 IsDirectory(const FileAddress &address) noexcept
 {
-	return is_dir(address.path);
+	return IsDirectory(address.base, address.path);
 }
 
 bool
@@ -63,7 +64,7 @@ check_directory_index(Request &request,
 	assert(!response.directory_index.IsNull());
 
 	if (response.test_path != nullptr) {
-		if (!is_dir(response.test_path))
+		if (!IsDirectory(nullptr, response.test_path))
 			return true;
 	} else {
 		switch (response.address.type) {
