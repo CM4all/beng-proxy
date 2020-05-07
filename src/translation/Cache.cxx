@@ -1268,14 +1268,11 @@ TranslateCacheRequest::OnTranslateResponse(TranslateResponse &response) noexcept
 				   response.invalidate,
 				   nullptr);
 
-	RegexPointer regex;
-
 	if (!cacheable) {
 		LogConcat(4, "TranslationCache", "ignore ", key);
 	} else if (tcache_response_evaluate(response)) {
 		try {
-			auto item = tcache_store(*this, response);
-			regex = item->regex;
+			tcache_store(*this, response);
 		} catch (...) {
 			handler->OnTranslateError(std::current_exception());
 			return;
@@ -1285,12 +1282,9 @@ TranslateCacheRequest::OnTranslateResponse(TranslateResponse &response) noexcept
 	}
 
 	if (request.uri != nullptr && response.IsExpandable()) {
-		UniqueRegex unref_regex;
-
 		try {
-			regex = unref_regex = response.CompileRegex();
-
-			tcache_expand_response(*pool, response, regex,
+			tcache_expand_response(*pool, response,
+					       response.CompileRegex(),
 					       request.uri, request.host,
 					       request.user);
 		} catch (...) {
