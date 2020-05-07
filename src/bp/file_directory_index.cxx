@@ -36,6 +36,7 @@
 #include "file_address.hxx"
 
 #include <assert.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <errno.h>
 
@@ -43,8 +44,9 @@ gcc_pure
 static bool
 is_dir(const char *path)
 {
-	struct stat st;
-	return stat(path, &st) == 0 && S_ISDIR(st.st_mode);
+	struct statx st;
+	return statx(AT_FDCWD, path, AT_STATX_DONT_SYNC,
+		     STATX_TYPE, &st) == 0 && S_ISDIR(st.stx_mode);
 }
 
 gcc_pure
