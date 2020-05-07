@@ -37,6 +37,7 @@
 #include "lhttp_address.hxx"
 
 #include <assert.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <errno.h>
 
@@ -44,8 +45,10 @@ gcc_pure
 static bool
 is_enoent(const char *path)
 {
-	struct stat st;
-	return lstat(path, &st) < 0 && errno == ENOENT;
+	struct statx st;
+	return statx(AT_FDCWD, path,
+		     AT_SYMLINK_NOFOLLOW|AT_STATX_DONT_SYNC,
+		     STATX_TYPE, &st) < 0 && errno == ENOENT;
 }
 
 gcc_pure
