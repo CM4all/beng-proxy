@@ -47,6 +47,13 @@ is_dir(const char *path)
 	return stat(path, &st) == 0 && S_ISDIR(st.st_mode);
 }
 
+gcc_pure
+static bool
+IsDirectory(const FileAddress &address) noexcept
+{
+	return is_dir(address.path);
+}
+
 bool
 check_directory_index(Request &request,
 		      const TranslateResponse &response)
@@ -72,7 +79,7 @@ check_directory_index(Request &request,
 			return false;
 
 		case ResourceAddress::Type::LOCAL:
-			if (!is_dir(response.address.GetFile().path))
+			if (!IsDirectory(response.address.GetFile()))
 				return true;
 
 			break;
