@@ -88,9 +88,9 @@ Request::CheckFileNotFound(const TranslateResponse &response) noexcept
 
 	const char *path = get_file_path(response);
 	if (path == nullptr) {
-		request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-					 "Resource address not compatible with TRANSLATE_FILE_NOT_FOUND",
-					 1);
+		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+				 "Resource address not compatible with TRANSLATE_FILE_NOT_FOUND",
+				 1);
 		return false;
 	}
 
