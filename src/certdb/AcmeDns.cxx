@@ -33,6 +33,7 @@
 #include "AcmeDns.hxx"
 #include "AcmeConfig.hxx"
 #include "AcmeHttp.hxx"
+#include "ssl/Base64.hxx"
 #include "system/Error.hxx"
 #include "util/PrintException.hxx"
 #include "util/RuntimeError.hxx"
@@ -85,7 +86,7 @@ SetDns01(const AcmeConfig &config, const char *host,
 	 const AcmeChallenge &challenge, EVP_PKEY &account_key)
 {
 	SetDnsTxt(config, host,
-		  MakeHttp01(challenge, account_key).c_str());
+		  UrlSafeBase64SHA256(MakeHttp01(challenge, account_key)).c_str());
 }
 
 Dns01ChallengeRecord::Dns01ChallengeRecord(const AcmeConfig &_config,

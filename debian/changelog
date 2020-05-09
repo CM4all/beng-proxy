@@ -3,6 +3,7 @@ cm4all-beng-proxy (17.0.6) unstable; urgency=low
   * merge release 16.15
   * require Linux kernel 4.11 (Debian Buster)
   * bp: read from files using io_uring
+  * certdb: fix dns-01 key authorization bug
 
  --   
 
