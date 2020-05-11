@@ -355,8 +355,7 @@ MakeCertRequest(EVP_PKEY &key, X509 &src)
 struct PendingAuthorization {
 	std::string url;
 
-	std::variant<bool,
-		     Http01ChallengeFile,
+	std::variant<Http01ChallengeFile,
 		     Dns01ChallengeRecord> challenge;
 
 	struct Http01 {};
