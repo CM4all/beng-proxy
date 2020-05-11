@@ -69,6 +69,7 @@
 #include <thread>
 #include <stdexcept>
 #include <set>
+#include <variant>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -354,20 +355,20 @@ MakeCertRequest(EVP_PKEY &key, X509 &src)
 struct PendingAuthorization {
 	std::string url;
 
-	// TODO: use std::variant (requires GCC 7 or later)
-	std::unique_ptr<Http01ChallengeFile> file;
-	std::unique_ptr<Dns01ChallengeRecord> dns;
+	std::variant<bool,
+		     Http01ChallengeFile,
+		     Dns01ChallengeRecord> challenge;
 
 	struct Http01 {};
 
 	PendingAuthorization(Http01,
 			     const std::string &_url,
 			     const std::string &directory,
-			     const AcmeChallenge &challenge,
+			     const AcmeChallenge &_challenge,
 			     EVP_PKEY &account_key)
 		:url(_url),
-		 file(std::make_unique<Http01ChallengeFile>(directory, challenge,
-							    account_key)) {}
+		 challenge(std::in_place_type_t<Http01ChallengeFile>{},
+			   directory, _challenge, account_key) {}
 	struct Dns01 {};
 
 	template<typename H>
@@ -375,13 +376,12 @@ struct PendingAuthorization {
 			     const AcmeConfig &config,
 			     const std::string &_url,
 			     H &&host,
-			     const AcmeChallenge &challenge,
+			     const AcmeChallenge &_challenge,
 			     EVP_PKEY &account_key)
 		:url(_url),
-		 dns(std::make_unique<Dns01ChallengeRecord>(config,
-							    std::forward<H>(host),
-							    challenge,
-							    account_key)) {}
+		 challenge(std::in_place_type_t<Dns01ChallengeRecord>{},
+			   config, std::forward<H>(host),
+			   _challenge, account_key) {}
 };
 
 static const AcmeChallenge *
