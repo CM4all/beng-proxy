@@ -101,7 +101,7 @@ Dns01ChallengeRecord::Dns01ChallengeRecord(const AcmeConfig &_config,
 Dns01ChallengeRecord::~Dns01ChallengeRecord() noexcept
 {
 	try {
-		SetDnsTxt(config, host.c_str(), "");
+		SetDnsTxt(config, host.c_str(), nullptr);
 	} catch (...) {
 		fprintf(stderr, "Failed to remove TXT record of '%s': ",
 			host.c_str());

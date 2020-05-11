@@ -793,12 +793,13 @@ challenge host::
      new-order example *.example.com
 
 This program is invoked twice: once to set a ``TXT`` record and again
-to delete the ``TXT`` record after finishing authorization.  It has
-two parameters:
+to delete the ``TXT`` record after finishing authorization.  It
+accepts the following parameters:
 
 1. the full-qualified DNS host name (the program shall prepend the
    prefix ``_acme-challenge.``)
-2. the ``TXT`` record value
+2. ``TXT`` record values
 
-If the second parameter is an empty string, the program shall delete
-the ``TXT`` record (or restore its original value).
+All ``TXT`` records but the given ones are removed.  If given just the
+DNS host name and no ``TXT`` record value, then all existing ``TXT``
+records are deleted.
