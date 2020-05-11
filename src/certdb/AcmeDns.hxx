@@ -39,13 +39,6 @@
 struct AcmeConfig;
 struct AcmeChallenge;
 
-void
-SetDnsTxt(const AcmeConfig &config, const char *host, const char *value);
-
-void
-SetDns01(const AcmeConfig &config, const char *host,
-	 const AcmeChallenge &challenge, EVP_PKEY &account_key);
-
 class Dns01ChallengeRecord {
 	const AcmeConfig &config;
 	const std::string host;

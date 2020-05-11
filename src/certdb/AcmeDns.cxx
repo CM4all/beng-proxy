@@ -43,7 +43,7 @@
 
 struct AcmeConfig;
 
-void
+static void
 SetDnsTxt(const AcmeConfig &config, const char *host, const char *value)
 {
 	pid_t pid = fork();
@@ -81,7 +81,7 @@ SetDnsTxt(const AcmeConfig &config, const char *host, const char *value)
 					 args[0], status);
 }
 
-void
+static void
 SetDns01(const AcmeConfig &config, const char *host,
 	 const AcmeChallenge &challenge, EVP_PKEY &account_key)
 {
