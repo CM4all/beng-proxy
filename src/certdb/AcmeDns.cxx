@@ -38,9 +38,6 @@
 #include "util/PrintException.hxx"
 #include "util/RuntimeError.hxx"
 
-#include <set>
-#include <string>
-
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -92,25 +89,11 @@ SetDnsTxt(const AcmeConfig &config, const char *host,
 					 args[0], status);
 }
 
-static void
-SetDns01(const AcmeConfig &config, const char *host,
-	 const AcmeChallenge &challenge, EVP_PKEY &account_key)
-{
-	SetDnsTxt(config, host,
-		  {UrlSafeBase64SHA256(MakeHttp01(challenge, account_key)).c_str()});
-}
-
-Dns01ChallengeRecord::Dns01ChallengeRecord(const AcmeConfig &_config,
-					   const std::string &_host,
-					   const AcmeChallenge &challenge,
-					   EVP_PKEY &account_key)
-	:config(_config), host(_host)
-{
-	SetDns01(config, host.c_str(), challenge, account_key);
-}
-
 Dns01ChallengeRecord::~Dns01ChallengeRecord() noexcept
 {
+	if (!must_clear)
+		return;
+
 	try {
 		SetDnsTxt(config, host.c_str(), {});
 	} catch (...) {
@@ -118,4 +101,18 @@ Dns01ChallengeRecord::~Dns01ChallengeRecord() noexcept
 			host.c_str());
 		PrintException(std::current_exception());
 	}
+}
+
+void
+Dns01ChallengeRecord::AddChallenge(const AcmeChallenge &challenge,
+				   EVP_PKEY &account_key)
+{
+	values.emplace(UrlSafeBase64SHA256(MakeHttp01(challenge, account_key)).c_str());
+}
+
+void
+Dns01ChallengeRecord::Commit()
+{
+	must_clear = true;
+	SetDnsTxt(config, host.c_str(), values);
 }

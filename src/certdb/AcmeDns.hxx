@@ -34,6 +34,7 @@
 
 #include "openssl/ossl_typ.h"
 
+#include <set>
 #include <string>
 
 struct AcmeConfig;
@@ -43,14 +44,22 @@ class Dns01ChallengeRecord {
 	const AcmeConfig &config;
 	const std::string host;
 
+	std::set<std::string> values;
+
+	bool must_clear = false;
+
 public:
 	Dns01ChallengeRecord(const AcmeConfig &_config,
-			     const std::string &_host,
-			     const AcmeChallenge &challenge,
-			     EVP_PKEY &account_key);
+			     const std::string &_host) noexcept
+		:config(_config), host(_host) {}
 
 	~Dns01ChallengeRecord() noexcept;
 
 	Dns01ChallengeRecord(const Dns01ChallengeRecord &) = delete;
 	Dns01ChallengeRecord &operator=(const Dns01ChallengeRecord &) = delete;
+
+	void AddChallenge(const AcmeChallenge &challenge,
+			  EVP_PKEY &account_key);
+
+	void Commit();
 };

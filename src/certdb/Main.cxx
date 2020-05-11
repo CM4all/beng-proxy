@@ -66,6 +66,8 @@
 #include "util/RuntimeError.hxx"
 #include "util/Compiler.h"
 
+#include <map>
+#include <memory>
 #include <thread>
 #include <stdexcept>
 #include <set>
@@ -352,11 +354,14 @@ MakeCertRequest(EVP_PKEY &key, X509 &src)
 	return req;
 }
 
+using Dns01ChallengeRecordPtr = std::shared_ptr<Dns01ChallengeRecord>;
+using Dns01ChallengeRecordMap = std::map<std::string, Dns01ChallengeRecordPtr>;
+
 struct PendingAuthorization {
 	std::string url;
 
 	std::variant<Http01ChallengeFile,
-		     Dns01ChallengeRecord> challenge;
+		     Dns01ChallengeRecordPtr> challenge;
 
 	struct Http01 {};
 
@@ -370,17 +375,12 @@ struct PendingAuthorization {
 			   directory, _challenge, account_key) {}
 	struct Dns01 {};
 
-	template<typename H>
 	PendingAuthorization(Dns01,
-			     const AcmeConfig &config,
 			     const std::string &_url,
-			     H &&host,
-			     const AcmeChallenge &_challenge,
-			     EVP_PKEY &account_key)
-		:url(_url),
-		 challenge(std::in_place_type_t<Dns01ChallengeRecord>{},
-			   config, std::forward<H>(host),
-			   _challenge, account_key) {}
+			     const Dns01ChallengeRecordPtr &ptr) noexcept
+		:url(_url), challenge(ptr)
+	{
+	}
 };
 
 static const AcmeChallenge *
@@ -388,6 +388,7 @@ SelectChallenge(const AcmeConfig &config,
 		EVP_PKEY &account_key,
 		const std::string &authz_url,
 		const AcmeAuthorization &authz_response,
+		Dns01ChallengeRecordMap &dns_map,
 		std::forward_list<PendingAuthorization> &pending_authz)
 {
 	if (!config.challenge_directory.empty()) {
@@ -406,10 +407,12 @@ SelectChallenge(const AcmeConfig &config,
 		const auto *challenge =
 			authz_response.FindChallengeByType("dns-01");
 		if (challenge != nullptr) {
+			auto e = dns_map.emplace(authz_response.identifier,
+						 std::make_shared<Dns01ChallengeRecord>(config,
+											authz_response.identifier));
+			e.first->second->AddChallenge(*challenge, account_key);
 			pending_authz.emplace_front(PendingAuthorization::Dns01{},
-						    config, authz_url,
-						    authz_response.identifier,
-						    *challenge, account_key);
+						    authz_url, e.first->second);
 			return challenge;
 		}
 	}
@@ -439,6 +442,13 @@ CollectPendingAuthorizations(const AcmeConfig &config,
 {
 	std::forward_list<PendingAuthorization> pending_authz;
 
+	/* this map is used to construct exactly one
+	   Dns01ChallengeRecord instance for each domain, to be shared
+	   by multiple authorizations for the same domain, with
+	   different values for each authorization; this creates
+	   multiple TXT records (and removes the when finished) */
+	Dns01ChallengeRecordMap dns_map;
+
 	for (const auto &i : authorizations) {
 		auto ar = client.Authorize(account_key, i.c_str());
 		if (!ValidateIdentifier(ar, identifiers))
@@ -446,7 +456,7 @@ CollectPendingAuthorizations(const AcmeConfig &config,
 						 ar.identifier.c_str());
 
 		const auto *challenge = SelectChallenge(config, account_key,
-							i, ar,
+							i, ar, dns_map,
 							pending_authz);
 		if (challenge == nullptr)
 			throw std::runtime_error("No compatible challenge found");
@@ -457,6 +467,15 @@ CollectPendingAuthorizations(const AcmeConfig &config,
 		challenge2.Check();
 		progress();
 	}
+
+	/* now actually set the TXT records we collected previously;
+	   after that, the map will be removed, but the
+	   std::shared_ptr references will live on in the
+	   PendingAuthorization instances, and ~Dns01ChallengeRecord()
+	   will be called when the last PendingAuthorization for that
+	   domain has finished */
+	for (auto &i : dns_map)
+		i.second->Commit();
 
 	return pending_authz;
 }
