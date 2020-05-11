@@ -31,6 +31,8 @@
  */
 
 #include "tconstruct.hxx"
+#include "tprint.hxx"
+#include "RecordingTranslateHandler.hxx"
 #include "translation/Cache.hxx"
 #include "translation/Stock.hxx"
 #include "translation/Handler.hxx"
@@ -72,7 +74,7 @@ struct Instance : PInstance {
 		:cache(root_pool, event_loop, ts, 1024) {}
 };
 
-const TranslateResponse *next_response, *expected_response;
+const TranslateResponse *next_response;
 
 void
 MyTranslationService::SendRequest(struct pool &pool,
@@ -290,112 +292,146 @@ operator==(const TranslateResponse &a, const TranslateResponse &b) noexcept
 		view_chain_equals(a.views, b.views);
 }
 
-class MyTranslateHandler final : public TranslateHandler {
-public:
-	/* virtual methods from TranslateHandler */
-	void OnTranslateResponse(TranslateResponse &response) noexcept override;
-	void OnTranslateError(std::exception_ptr error) noexcept override;
-};
-
-void
-MyTranslateHandler::OnTranslateResponse(TranslateResponse &response) noexcept
+static void
+ExpectResponse(const RecordingTranslateHandler &handler,
+	       const TranslateResponse &expected) noexcept
 {
-	ASSERT_NE(expected_response, nullptr);
-	EXPECT_EQ(response, *expected_response);
+	EXPECT_TRUE(handler.finished);
+	EXPECT_TRUE(!handler.error);
+	ASSERT_NE(handler.response, nullptr);
+	EXPECT_EQ(*handler.response, expected);
 }
 
-void
-MyTranslateHandler::OnTranslateError(std::exception_ptr) noexcept
+static void
+ExpectError(const RecordingTranslateHandler &handler) noexcept
 {
-	EXPECT_EQ(expected_response, nullptr);
+	EXPECT_TRUE(handler.finished);
+	EXPECT_EQ(handler.response, nullptr);
+	EXPECT_TRUE(!!handler.error);
+}
+
+static void
+Feed(struct pool &parent_pool, TranslationService &service,
+     const TranslateRequest &request,
+     const TranslateResponse &response) noexcept
+{
+	RecordingTranslateHandler handler(parent_pool);
+	CancellablePointer cancel_ptr;
+
+	next_response = &response;
+	service.SendRequest(handler.pool, request, nullptr,
+			    handler, cancel_ptr);
+
+	ExpectResponse(handler, response);
+
+}
+
+static void
+Feed(struct pool &parent_pool, TranslationService &service,
+     const TranslateRequest &request,
+     const TranslateResponse &feed_response,
+     const TranslateResponse &expected_response) noexcept
+{
+	RecordingTranslateHandler handler(parent_pool);
+	CancellablePointer cancel_ptr;
+
+	next_response = &feed_response;
+	service.SendRequest(handler.pool, request, nullptr,
+			    handler, cancel_ptr);
+
+	ExpectResponse(handler, expected_response);
+
+}
+
+static void
+FeedError(struct pool &parent_pool, TranslationService &service,
+	  const TranslateRequest &request,
+	  const TranslateResponse &response) noexcept
+{
+	RecordingTranslateHandler handler(parent_pool);
+	CancellablePointer cancel_ptr;
+
+	next_response = &response;
+	service.SendRequest(handler.pool, request, nullptr,
+			    handler, cancel_ptr);
+
+	ExpectError(handler);
+
+}
+
+static void
+Cached(struct pool &parent_pool, TranslationService &service,
+       const TranslateRequest &request,
+       const TranslateResponse &response) noexcept
+{
+	RecordingTranslateHandler handler(parent_pool);
+	CancellablePointer cancel_ptr;
+
+	next_response = nullptr;
+	service.SendRequest(handler.pool, request, nullptr,
+			    handler, cancel_ptr);
+
+	ExpectResponse(handler, response);
+}
+
+static void
+CachedError(struct pool &parent_pool, TranslationService &service,
+	    const TranslateRequest &request) noexcept
+{
+	RecordingTranslateHandler handler(parent_pool);
+	CancellablePointer cancel_ptr;
+
+	next_response = nullptr;
+	service.SendRequest(handler.pool, request, nullptr,
+			    handler, cancel_ptr);
+
+	ExpectError(handler);
+
 }
 
 TEST(TranslationCache, Basic)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
 
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
+	const auto response1 = MakeResponse(pool).File("/var/www/index.html");
+	Feed(pool, cache, MakeRequest("/"), response1);
+	Cached(pool, cache, MakeRequest("/"), response1);
 
-	const auto request1 = MakeRequest("/");
-	const auto response1 = MakeResponse(*pool).File("/var/www/index.html");
-	next_response = expected_response = &response1;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, MakeRequest("/foo/bar.html"),
+	     MakeResponse(pool).Base("/foo/")
+	     .File("bar.html", "/srv/foo/"));
 
-	next_response = nullptr;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/foo/index.html"),
+	       MakeResponse(pool).Base("/foo/")
+	       .File("index.html", "/srv/foo/"));
 
-	const auto request2 = MakeRequest("/foo/bar.html");
-	const auto response2 = MakeResponse(*pool).Base("/foo/")
-		.File("bar.html", "/srv/foo/");
-	next_response = expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/foo/"),
+	       MakeResponse(pool).Base("/foo/")
+	       .File(".", "/srv/foo/"));
 
-	const auto request3 = MakeRequest("/foo/index.html");
-	const auto response3 = MakeResponse(*pool).Base("/foo/")
-		.File("index.html", "/srv/foo/");
-	next_response = nullptr;
-	expected_response = &response3;
-	cache.SendRequest(*pool, request3, nullptr,
-			  my_translate_handler, cancel_ptr);
+	CachedError(pool, cache, MakeRequest("/foo"));
 
-	const auto request4 = MakeRequest("/foo/");
-	const auto response4 = MakeResponse(*pool).Base("/foo/")
-		.File(".", "/srv/foo/");
-	expected_response = &response4;
-	cache.SendRequest(*pool, request4, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/foo//bar"),
+	       MakeResponse(pool).Base("/foo/")
+	       .File("bar", "/srv/foo/"));
 
-	const auto request5 = MakeRequest("/foo");
-	expected_response = nullptr;
-	cache.SendRequest(*pool, request5, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, MakeRequest("/cgi1/foo"),
+	     MakeResponse(pool).Base("/cgi1/")
+	     .Cgi("/usr/lib/cgi-bin/cgi.pl", "/cgi1/foo", "x/foo"));
 
-	const auto request10 = MakeRequest("/foo//bar");
-	const auto response10 = MakeResponse(*pool).Base("/foo/")
-		.File("bar", "/srv/foo/");
-	expected_response = &response10;
-	cache.SendRequest(*pool, request10, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/cgi1/a/b/c"),
+	       MakeResponse(pool).Base("/cgi1/")
+	       .Cgi("/usr/lib/cgi-bin/cgi.pl", "/cgi1/a/b/c", "x/a/b/c"));
 
-	const auto request6 = MakeRequest("/cgi1/foo");
-	const auto response6 = MakeResponse(*pool).Base("/cgi1/")
-		.Cgi("/usr/lib/cgi-bin/cgi.pl", "/cgi1/foo", "x/foo");
+	Feed(pool, cache, MakeRequest("/cgi2/foo"),
+	     MakeResponse(pool).Base("/cgi2/")
+	     .Cgi("/usr/lib/cgi-bin/cgi.pl", "/cgi2/foo", "foo"));
 
-	next_response = expected_response = &response6;
-	cache.SendRequest(*pool, request6, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request7 = MakeRequest("/cgi1/a/b/c");
-	const auto response7 = MakeResponse(*pool).Base("/cgi1/")
-		.Cgi("/usr/lib/cgi-bin/cgi.pl", "/cgi1/a/b/c", "x/a/b/c");
-
-	next_response = nullptr;
-	expected_response = &response7;
-	cache.SendRequest(*pool, request7, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request8 = MakeRequest("/cgi2/foo");
-	const auto response8 = MakeResponse(*pool).Base("/cgi2/")
-		.Cgi("/usr/lib/cgi-bin/cgi.pl", "/cgi2/foo", "foo");
-
-	next_response = expected_response = &response8;
-	cache.SendRequest(*pool, request8, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request9 = MakeRequest("/cgi2/a/b/c");
-	const auto response9 = MakeResponse(*pool).Base("/cgi2/")
-		.Cgi("/usr/lib/cgi-bin/cgi.pl", "/cgi2/a/b/c", "a/b/c");
-
-	next_response = nullptr;
-	expected_response = &response9;
-	cache.SendRequest(*pool, request9, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/cgi2/a/b/c"),
+	       MakeResponse(pool).Base("/cgi2/")
+	       .Cgi("/usr/lib/cgi-bin/cgi.pl", "/cgi2/a/b/c", "a/b/c"));
 }
 
 /**
@@ -405,44 +441,26 @@ TEST(TranslationCache, Basic)
 TEST(TranslationCache, BaseRoot)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
 
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
+	Feed(pool, cache, MakeRequest("/base_root/"),
+	     MakeResponse(pool).Base("/base_root/")
+	     .File(".", "/var/www/"));
 
-	const auto request1 = MakeRequest("/base_root/");
-	const auto response1 = MakeResponse(*pool).Base("/base_root/")
-		.File(".", "/var/www/");
-	next_response = expected_response = &response1;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request2 = MakeRequest("/base_root/hansi");
-	const auto response2 = MakeResponse(*pool).Base("/base_root/")
-		.File("hansi", "/var/www/");
-	next_response = nullptr;
-	expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/base_root/hansi"),
+	       MakeResponse(pool).Base("/base_root/")
+	       .File("hansi", "/var/www/"));
 }
 
 TEST(TranslationCache, BaseMismatch)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
 
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
-
-	const auto request1 = MakeRequest("/base_mismatch/hansi");
-	const auto response1 = MakeResponse(*pool).Base("/different_base/").File("/var/www/");
-
-	next_response = &response1;
-	expected_response = nullptr;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	FeedError(pool, cache, MakeRequest("/base_mismatch/hansi"),
+		  MakeResponse(pool).Base("/different_base/").File("/var/www/"));
 }
 
 /**
@@ -451,30 +469,18 @@ TEST(TranslationCache, BaseMismatch)
 TEST(TranslationCache, BaseUri)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
 
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
+	Feed(pool, cache, MakeRequest("/base_uri/foo"),
+	     MakeResponse(pool).Base("/base_uri/")
+	     .File("foo", "/var/www/")
+	     .Uri("/modified/foo"));
 
-	const auto request1 = MakeRequest("/base_uri/foo");
-	const auto response1 = MakeResponse(*pool).Base("/base_uri/")
-		.File("foo", "/var/www/")
-		.Uri("/modified/foo");
-
-	next_response = expected_response = &response1;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request2 = MakeRequest("/base_uri/hansi");
-	const auto response2 = MakeResponse(*pool).Base("/base_uri/")
-		.File("hansi", "/var/www/")
-		.Uri("/modified/hansi");
-
-	next_response = nullptr;
-	expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/base_uri/hansi"),
+	       MakeResponse(pool).Base("/base_uri/")
+	       .File("hansi", "/var/www/")
+	       .Uri("/modified/hansi"));
 }
 
 /**
@@ -483,30 +489,18 @@ TEST(TranslationCache, BaseUri)
 TEST(TranslationCache, BaseRedirect)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
 
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ref;
+	Feed(pool, cache, MakeRequest("/base_redirect/foo"),
+	     MakeResponse(pool).Base("/base_redirect/")
+	     .File("foo", "/var/www/")
+	     .Redirect("http://modified/foo"));
 
-	const auto request1 = MakeRequest("/base_redirect/foo");
-	const auto response1 = MakeResponse(*pool).Base("/base_redirect/")
-		.File("foo", "/var/www/")
-		.Redirect("http://modified/foo");
-
-	next_response = expected_response = &response1;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ref);
-
-	const auto request2 = MakeRequest("/base_redirect/hansi");
-	const auto response2 = MakeResponse(*pool).Base("/base_redirect/")
-		.File("hansi", "/var/www/")
-		.Redirect("http://modified/hansi");
-
-	next_response = nullptr;
-	expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ref);
+	Cached(pool, cache, MakeRequest("/base_redirect/hansi"),
+	       MakeResponse(pool).Base("/base_redirect/")
+	       .File("hansi", "/var/www/")
+	       .Redirect("http://modified/hansi"));
 }
 
 /**
@@ -515,63 +509,39 @@ TEST(TranslationCache, BaseRedirect)
 TEST(TranslationCache, BaseTestPath)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
 
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
+	Feed(pool, cache, MakeRequest("/base_test_path/foo"),
+	     MakeResponse(pool).Base("/base_test_path/")
+	     .File("foo", "/var/www/")
+	     .TestPath("/modified/foo"));
 
-	const auto request1 = MakeRequest("/base_test_path/foo");
-	const auto response1 = MakeResponse(*pool).Base("/base_test_path/")
-		.File("foo", "/var/www/")
-		.TestPath("/modified/foo");
-
-	next_response = expected_response = &response1;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request2 = MakeRequest("/base_test_path/hansi");
-	const auto response2 = MakeResponse(*pool).Base("/base_test_path/")
-		.File("hansi", "/var/www/")
-		.TestPath("/modified/hansi");
-
-	next_response = nullptr;
-	expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/base_test_path/hansi"),
+	       MakeResponse(pool).Base("/base_test_path/")
+	       .File("hansi", "/var/www/")
+	       .TestPath("/modified/hansi"));
 }
 
 TEST(TranslationCache, EasyBase)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
 
 	const auto request1 = MakeRequest("/easy/bar.html");
 
-	const auto response1 = MakeResponse(*pool).EasyBase("/easy/")
+	const auto response1 = MakeResponse(pool).EasyBase("/easy/")
 		.File(".", "/var/www/");
-	const auto response1b = MakeResponse(*pool).EasyBase("/easy/")
+	const auto response1b = MakeResponse(pool).EasyBase("/easy/")
 		.File("bar.html", "/var/www/");
 
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
+	Feed(pool, cache, request1, response1, response1b);
+	Cached(pool, cache, request1, response1b);
 
-	next_response = &response1;
-	expected_response = &response1b;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	next_response = nullptr;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request2 = MakeRequest("/easy/index.html");
-	const auto response2 = MakeResponse(*pool).EasyBase("/easy/")
-		.File("index.html", "/var/www/");
-	expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/easy/index.html"),
+	       MakeResponse(pool).EasyBase("/easy/")
+	       .File("index.html", "/var/www/"));
 }
 
 /**
@@ -580,34 +550,21 @@ TEST(TranslationCache, EasyBase)
 TEST(TranslationCache, EasyBaseUri)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
 
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
+	Feed(pool, cache, MakeRequest("/easy_base_uri/foo"),
+	     MakeResponse(pool).EasyBase("/easy_base_uri/")
+	     .File(".", "/var/www/")
+	     .Uri("/modified/"),
+	     MakeResponse(pool).EasyBase("/easy_base_uri/")
+	     .File("foo", "/var/www/")
+	     .Uri("/modified/foo"));
 
-	const auto request1 = MakeRequest("/easy_base_uri/foo");
-	const auto response1 = MakeResponse(*pool).EasyBase("/easy_base_uri/")
-		.File(".", "/var/www/")
-		.Uri("/modified/");
-	const auto response1b = MakeResponse(*pool).EasyBase("/easy_base_uri/")
-		.File("foo", "/var/www/")
-		.Uri("/modified/foo");
-
-	next_response = &response1;
-	expected_response = &response1b;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request2 = MakeRequest("/easy_base_uri/hansi");
-	const auto response2 = MakeResponse(*pool).EasyBase("/easy_base_uri/")
-		.File("hansi", "/var/www/")
-		.Uri("/modified/hansi");
-
-	next_response = nullptr;
-	expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/easy_base_uri/hansi"),
+	       MakeResponse(pool).EasyBase("/easy_base_uri/")
+	       .File("hansi", "/var/www/")
+	       .Uri("/modified/hansi"));
 }
 
 /**
@@ -616,40 +573,27 @@ TEST(TranslationCache, EasyBaseUri)
 TEST(TranslationCache, EasyBaseTestPath)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
 
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
+	Feed(pool, cache, MakeRequest("/easy_base_test_path/foo"),
+	     MakeResponse(pool).EasyBase("/easy_base_test_path/")
+	     .File(".", "/var/www/")
+	     .TestPath("/modified/"),
+	     MakeResponse(pool).EasyBase("/easy_base_test_path/")
+	     .File("foo", "/var/www/")
+	     .TestPath("/modified/foo"));
 
-	const auto request1 = MakeRequest("/easy_base_test_path/foo");
-	const auto response1 = MakeResponse(*pool).EasyBase("/easy_base_test_path/")
-		.File(".", "/var/www/")
-		.TestPath("/modified/");
-	const auto response1b = MakeResponse(*pool).EasyBase("/easy_base_test_path/")
-		.File("foo", "/var/www/")
-		.TestPath("/modified/foo");
-
-	next_response = &response1;
-	expected_response = &response1b;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request2 = MakeRequest("/easy_base_test_path/hansi");
-	const auto response2 = MakeResponse(*pool).EasyBase("/easy_base_test_path/")
-		.File("hansi", "/var/www/")
-		.TestPath("/modified/hansi");
-
-	next_response = nullptr;
-	expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/easy_base_test_path/hansi"),
+	       MakeResponse(pool).EasyBase("/easy_base_test_path/")
+	       .File("hansi", "/var/www/")
+	       .TestPath("/modified/hansi"));
 }
 
 TEST(TranslationCache, VaryInvalidate)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
 
 	static const TranslationCommand response5_vary[] = {
@@ -660,530 +604,334 @@ TEST(TranslationCache, VaryInvalidate)
 		TranslationCommand::QUERY_STRING,
 	};
 
-	const auto response5c = MakeResponse(*pool).File("/srv/qs3")
+	const auto response5c = MakeResponse(pool).File("/srv/qs3")
 		.Vary(response5_vary).Invalidate(response5_invalidate);
 
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
-
 	const auto request6 = MakeRequest("/qs").QueryString("abc");
-	const auto response5a = MakeResponse(*pool).File("/srv/qs1")
+	const auto response5a = MakeResponse(pool).File("/srv/qs1")
 		.Vary(response5_vary);
-	next_response = expected_response = &response5a;
-	cache.SendRequest(*pool, request6, nullptr,
-			  my_translate_handler, cancel_ptr);
+
+	Feed(pool, cache, request6, response5a);
 
 	const auto request7 = MakeRequest("/qs").QueryString("xyz");
-	const auto response5b = MakeResponse(*pool).File("/srv/qs2")
+	const auto response5b = MakeResponse(pool).File("/srv/qs2")
 		.Vary(response5_vary);
-	next_response = expected_response = &response5b;
-	cache.SendRequest(*pool, request7, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, request7, response5b);
 
-	next_response = nullptr;
-	expected_response = &response5a;
-	cache.SendRequest(*pool, request6, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	next_response = nullptr;
-	expected_response = &response5b;
-	cache.SendRequest(*pool, request7, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, request6, response5a);
+	Cached(pool, cache, request7, response5b);
 
 	const auto request8 = MakeRequest("/qs/").QueryString("xyz");
-	next_response = expected_response = &response5c;
-	cache.SendRequest(*pool, request8, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, request8, response5c);
 
-	next_response = nullptr;
-	expected_response = &response5a;
-	cache.SendRequest(*pool, request6, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, request6, response5a);
 
-	next_response = expected_response = &response5c;
-	cache.SendRequest(*pool, request7, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	next_response = expected_response = &response5c;
-	cache.SendRequest(*pool, request8, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	expected_response = &response5c;
-	cache.SendRequest(*pool, request7, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, request7, response5c);
+	Feed(pool, cache, request8, response5c);
+	Feed(pool, cache, request7, response5c);
 }
 
 TEST(TranslationCache, InvalidateUri)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
-
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
 
 	/* feed the cache */
 
 	const auto request1 = MakeRequest("/invalidate/uri");
-	const auto response1 = MakeResponse(*pool).File("/var/www/invalidate/uri");
-
-	next_response = expected_response = &response1;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	const auto response1 = MakeResponse(pool).File("/var/www/invalidate/uri");
+	Feed(pool, cache, request1, response1);
 
 	const auto request2 = MakeRequest("/invalidate/uri").Check("x");
-	const auto response2 = MakeResponse(*pool).File("/var/www/invalidate/uri");
-	next_response = expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	const auto response2 = MakeResponse(pool).File("/var/www/invalidate/uri");
+	Feed(pool, cache, request2, response2);
 
 	const auto request3 = MakeRequest("/invalidate/uri")
 		.ErrorDocumentStatus(HTTP_STATUS_INTERNAL_SERVER_ERROR);
-	const auto response3 = MakeResponse(*pool).File("/var/www/500/invalidate/uri");
-	next_response = expected_response = &response3;
-	cache.SendRequest(*pool, request3, nullptr,
-			  my_translate_handler, cancel_ptr);
+	const auto response3 = MakeResponse(pool).File("/var/www/500/invalidate/uri");
+	Feed(pool, cache, request3, response3);
 
 	const auto request4 = MakeRequest("/invalidate/uri")
 		.ErrorDocumentStatus(HTTP_STATUS_INTERNAL_SERVER_ERROR)
 		.Check("x");
-	const auto response4 = MakeResponse(*pool).File("/var/www/500/check/invalidate/uri");
-
-	next_response = expected_response = &response4;
-	cache.SendRequest(*pool, request4, nullptr,
-			  my_translate_handler, cancel_ptr);
+	const auto response4 = MakeResponse(pool).File("/var/www/500/check/invalidate/uri");
+	Feed(pool, cache, request4, response4);
 
 	const auto request4b = MakeRequest("/invalidate/uri")
 		.ErrorDocumentStatus(HTTP_STATUS_INTERNAL_SERVER_ERROR)
 		.Check("x")
 		.WantFullUri({ "a\0/b", 4 });
-	const auto response4b = MakeResponse(*pool).File("/var/www/500/check/wfu/invalidate/uri");
-	next_response = expected_response = &response4b;
-	cache.SendRequest(*pool, request4b, nullptr,
-			  my_translate_handler, cancel_ptr);
+	const auto response4b = MakeResponse(pool).File("/var/www/500/check/wfu/invalidate/uri");
+	Feed(pool, cache, request4b, response4b);
 
 	/* verify the cache items */
 
-	next_response = nullptr;
-
-	expected_response = &response1;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	expected_response = &response3;
-	cache.SendRequest(*pool, request3, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	expected_response = &response4;
-	cache.SendRequest(*pool, request4, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	expected_response = &response4b;
-	cache.SendRequest(*pool, request4b, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, request1, response1);
+	Cached(pool, cache, request2, response2);
+	Cached(pool, cache, request3, response3);
+	Cached(pool, cache, request4, response4);
+	Cached(pool, cache, request4b, response4b);
 
 	/* invalidate all cache items */
 
-	const auto request5 = MakeRequest("/invalidate/uri")
-		.ErrorDocumentStatus(HTTP_STATUS_NOT_FOUND);
 	static const TranslationCommand response5_invalidate[] = {
 		TranslationCommand::URI,
 	};
-	const auto response5 = MakeResponse(*pool).File("/var/www/404/invalidate/uri")
-		.Invalidate(response5_invalidate);
 
-	next_response = expected_response = &response5;
-	cache.SendRequest(*pool, request5, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache,
+	     MakeRequest("/invalidate/uri").ErrorDocumentStatus(HTTP_STATUS_NOT_FOUND),
+	     MakeResponse(pool).File("/var/www/404/invalidate/uri")
+	     .Invalidate(response5_invalidate));
 
 	/* check if all cache items have really been deleted */
 
-	next_response = expected_response = nullptr;
-
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
-	cache.SendRequest(*pool, request3, nullptr,
-			  my_translate_handler, cancel_ptr);
-	cache.SendRequest(*pool, request4, nullptr,
-			  my_translate_handler, cancel_ptr);
-	cache.SendRequest(*pool, request4b, nullptr,
-			  my_translate_handler, cancel_ptr);
+	CachedError(pool, cache, request1);
+	CachedError(pool, cache, request2);
+	CachedError(pool, cache, request3);
+	CachedError(pool, cache, request4);
+	CachedError(pool, cache, request4b);
 }
 
 TEST(TranslationCache, Regex)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
-
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
 
 	/* add the "inverse_regex" test to the cache first */
 	const auto request_i1 = MakeRequest("/regex/foo");
-	const auto response_i1 = MakeResponse(*pool)
+	const auto response_i1 = MakeResponse(pool)
 		.File("foo", "/var/www/regex/other/")
 		.Base("/regex/").InverseRegex("\\.(jpg|html)$");
-	next_response = expected_response = &response_i1;
-	cache.SendRequest(*pool, request_i1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, request_i1, response_i1);
 
 	/* fill the cache */
 	const auto request1 = MakeRequest("/regex/a/foo.jpg");
-	const auto response1 = MakeResponse(*pool)
+	const auto response1 = MakeResponse(pool)
 		.File("a/foo.jpg", "/var/www/regex/images/")
 		.Base("/regex/").Regex("\\.jpg$");
-	next_response = expected_response = &response1;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, request1, response1);
 
 	/* regex mismatch */
 	const auto request2 = MakeRequest("/regex/b/foo.html");
-	const auto response2 = MakeResponse(*pool)
+	const auto response2 = MakeResponse(pool)
 		.File("b/foo.html", "/var/www/regex/html/")
 		.Base("/regex/").Regex("\\.html$");
-	next_response = expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, request2, response2);
 
 	/* regex match */
 	const auto request3 = MakeRequest("/regex/c/bar.jpg");
-	const auto response3 = MakeResponse(*pool)
+	const auto response3 = MakeResponse(pool)
 		.File("c/bar.jpg", "/var/www/regex/images/")
 		.Base("/regex/").Regex("\\.jpg$");
-	next_response = nullptr;
-	expected_response = &response3;
-	cache.SendRequest(*pool, request3, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, request3, response3);
 
 	/* second regex match */
 	const auto request4 = MakeRequest("/regex/d/bar.html");
-	const auto response4 = MakeResponse(*pool)
+	const auto response4 = MakeResponse(pool)
 		.File("d/bar.html", "/var/www/regex/html/")
 		.Base("/regex/").Regex("\\.html$");
-	next_response = nullptr;
-	expected_response = &response4;
-	cache.SendRequest(*pool, request4, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, request4, response4);
 
 	/* see if the "inverse_regex" cache item is still there */
 	const auto request_i2 = MakeRequest("/regex/bar");
-	const auto response_i2 = MakeResponse(*pool)
+	const auto response_i2 = MakeResponse(pool)
 		.File("bar", "/var/www/regex/other/")
 		.Base("/regex/").InverseRegex("\\.(jpg|html)$");
-	next_response = nullptr;
-	expected_response = &response_i2;
-	cache.SendRequest(*pool, request_i2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, request_i2, response_i2);
 }
 
 TEST(TranslationCache, RegexError)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
 
 	const auto request = MakeRequest("/regex-error");
-	const auto response = MakeResponse(*pool).File("/error")
+	const auto response = MakeResponse(pool).File("/error")
 		.Base("/regex/").Regex("(");
 
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
-
 	/* this must fail */
-	next_response = &response;
-	expected_response = nullptr;
-	cache.SendRequest(*pool, request, nullptr,
-			  my_translate_handler, cancel_ptr);
+	FeedError(pool, cache, request, response);
 }
 
 TEST(TranslationCache, RegexTail)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
 
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
-
-	const auto request1 = MakeRequest("/regex_tail/a/foo.jpg");
-	const auto response1 = MakeResponse(*pool)
+	Feed(pool, cache, MakeRequest("/regex_tail/a/foo.jpg"),
+	     MakeResponse(pool)
 		.File("a/foo.jpg", "/var/www/regex/images/")
-		.Base("/regex_tail/").RegexTail("^a/");
-	next_response = expected_response = &response1;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	     .Base("/regex_tail/").RegexTail("^a/"));
 
-	const auto request2 = MakeRequest("/regex_tail/b/foo.html");
-	next_response = expected_response = nullptr;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	CachedError(pool, cache, MakeRequest("/regex_tail/b/foo.html"));
 
-	const auto request3 = MakeRequest("/regex_tail/a/bar.jpg");
-	const auto response3 = MakeResponse(*pool)
-		.File("a/bar.jpg", "/var/www/regex/images/")
-		.Base("/regex_tail/").RegexTail("^a/");
-	next_response = nullptr;
-	expected_response = &response3;
-	cache.SendRequest(*pool, request3, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/regex_tail/a/bar.jpg"),
+	       MakeResponse(pool)
+	       .File("a/bar.jpg", "/var/www/regex/images/")
+	       .Base("/regex_tail/").RegexTail("^a/"));
 
-	const auto request4 = MakeRequest("/regex_tail/%61/escaped.html");
-
-	next_response = expected_response = nullptr;
-	cache.SendRequest(*pool, request4, nullptr,
-			  my_translate_handler, cancel_ptr);
+	CachedError(pool, cache, MakeRequest("/regex_tail/%61/escaped.html"));
 }
 
 TEST(TranslationCache, RegexTailUnescape)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
 
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
+	Feed(pool, cache, MakeRequest("/regex_unescape/a/foo.jpg"),
+	     MakeResponse(pool)
+	     .File("a/foo.jpg", "/var/www/regex/images/")
+	     .Base("/regex_unescape/").RegexTailUnescape("^a/"));
 
-	const auto request1 = MakeRequest("/regex_unescape/a/foo.jpg");
-	const auto response1 = MakeResponse(*pool)
-		.File("a/foo.jpg", "/var/www/regex/images/")
-		.Base("/regex_unescape/").RegexTailUnescape("^a/");
+	CachedError(pool, cache, MakeRequest("/regex_unescape/b/foo.html"));
 
-	next_response = expected_response = &response1;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/regex_unescape/a/bar.jpg"),
+	       MakeResponse(pool)
+	       .File("a/bar.jpg", "/var/www/regex/images/")
+	       .Base("/regex_unescape/").RegexTailUnescape("^a/"));
 
-	const auto request2 = MakeRequest("/regex_unescape/b/foo.html");
-
-	next_response = expected_response = nullptr;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request3 = MakeRequest("/regex_unescape/a/bar.jpg");
-	const auto response3 = MakeResponse(*pool)
-		.File("a/bar.jpg", "/var/www/regex/images/")
-		.Base("/regex_unescape/").RegexTailUnescape("^a/");
-
-	next_response = nullptr;
-	expected_response = &response3;
-	cache.SendRequest(*pool, request3, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request4 = MakeRequest("/regex_unescape/%61/escaped.html");
-	const auto response4 = MakeResponse(*pool)
-		.File("a/escaped.html", "/var/www/regex/images/")
-		.Base("/regex_unescape/").RegexTailUnescape("^a/");
-	next_response = nullptr;
-	expected_response = &response4;
-	cache.SendRequest(*pool, request4, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/regex_unescape/%61/escaped.html"),
+	       MakeResponse(pool)
+	       .File("a/escaped.html", "/var/www/regex/images/")
+	       .Base("/regex_unescape/").RegexTailUnescape("^a/"));
 }
 
 TEST(TranslationCache, Expand)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
-
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
 
 	/* add to cache */
 
-	const auto request1 = MakeRequest("/regex-expand/b=c");
-	const auto response1n = MakeResponse(*pool)
-		.Base("/regex-expand/").Regex("^/regex-expand/(.+=.+)$")
-		.Cgi(MakeCgiAddress(*pool, "/usr/lib/cgi-bin/foo.cgi").ExpandPathInfo("/a/\\1"));
-
-	const auto response1e = MakeResponse(*pool)
-		.Base("/regex-expand/").Regex("^/regex-expand/(.+=.+)$")
-		.Cgi(MakeCgiAddress(*pool, "/usr/lib/cgi-bin/foo.cgi", nullptr,
-				    "/a/b=c"));
-
-	next_response = &response1n;
-	expected_response = &response1e;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, MakeRequest("/regex-expand/b=c"),
+	     MakeResponse(pool)
+	     .Base("/regex-expand/").Regex("^/regex-expand/(.+=.+)$")
+	     .Cgi(MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.cgi").ExpandPathInfo("/a/\\1")),
+	     MakeResponse(pool)
+	     .Base("/regex-expand/").Regex("^/regex-expand/(.+=.+)$")
+	     .Cgi(MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.cgi", nullptr,
+				 "/a/b=c")));
 
 	/* check match */
 
-	const auto request2 = MakeRequest("/regex-expand/d=e");
-	const auto response2 = MakeResponse(*pool)
-		.Base("/regex-expand/").Regex("^/regex-expand/(.+=.+)$")
-		.Cgi(MakeCgiAddress(*pool, "/usr/lib/cgi-bin/foo.cgi", nullptr,
-				    "/a/d=e"));
-
-	next_response = nullptr;
-	expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/regex-expand/d=e"),
+	       MakeResponse(pool)
+	       .Base("/regex-expand/").Regex("^/regex-expand/(.+=.+)$")
+	       .Cgi(MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.cgi", nullptr,
+				   "/a/d=e")));
 }
 
 TEST(TranslationCache, ExpandLocal)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
-
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
 
 	/* add to cache */
 
-	const auto request1 = MakeRequest("/regex-expand2/foo/bar.jpg/b=c");
-	const auto response1n = MakeResponse(*pool)
-		.Base("/regex-expand2/")
-		.Regex("^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$")
-		.File(MakeFileAddress("/dummy").ExpandPath("/var/www/\\1"));
-
-	const auto response1e = MakeResponse(*pool)
-		.Base("/regex-expand2/")
-		.Regex("^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$")
-		.File(MakeFileAddress("/var/www/foo/bar.jpg"));
-
-	next_response = &response1n;
-	expected_response = &response1e;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, MakeRequest("/regex-expand2/foo/bar.jpg/b=c"),
+	     MakeResponse(pool)
+	     .Base("/regex-expand2/")
+	     .Regex("^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$")
+	     .File(MakeFileAddress("/dummy").ExpandPath("/var/www/\\1")),
+	     MakeResponse(pool)
+	     .Base("/regex-expand2/")
+	     .Regex("^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$")
+	     .File(MakeFileAddress("/var/www/foo/bar.jpg")));
 
 	/* check match */
 
-	const auto request2 = MakeRequest("/regex-expand2/x/y/z.jpg/d=e");
-	const auto response2 = MakeResponse(*pool)
-		.Base("/regex-expand2/")
-		.Regex("^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$")
-		.File("/var/www/x/y/z.jpg");
-
-	next_response = nullptr;
-	expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/regex-expand2/x/y/z.jpg/d=e"),
+	       MakeResponse(pool)
+	       .Base("/regex-expand2/")
+	       .Regex("^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$")
+	       .File("/var/www/x/y/z.jpg"));
 }
 
 TEST(TranslationCache, ExpandLocalFilter)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
-
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
 
 	/* add to cache */
 
-	const auto request1 = MakeRequest("/regex-expand3/foo/bar.jpg/b=c");
-
-	const auto response1n = MakeResponse(*pool)
-		.Base("/regex-expand3/")
-		.Regex("^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$")
-		.Filter(MakeCgiAddress(*pool, "/usr/lib/cgi-bin/image-processor.cgi").ExpandPathInfo("/\\2"))
-		.File(MakeFileAddress("/dummy").ExpandPath("/var/www/\\1"));
-
-	const auto response1e = MakeResponse(*pool)
-		.Base("/regex-expand3/")
-		.Regex("^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$")
-		.Filter(MakeCgiAddress(*pool, "/usr/lib/cgi-bin/image-processor.cgi", nullptr,
-				       "/b=c"))
-		.File(MakeFileAddress("/var/www/foo/bar.jpg"));
-
-	next_response = &response1n;
-	expected_response = &response1e;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, MakeRequest("/regex-expand3/foo/bar.jpg/b=c"),
+	     MakeResponse(pool)
+	     .Base("/regex-expand3/")
+	     .Regex("^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$")
+	     .Filter(MakeCgiAddress(pool, "/usr/lib/cgi-bin/image-processor.cgi").ExpandPathInfo("/\\2"))
+	     .File(MakeFileAddress("/dummy").ExpandPath("/var/www/\\1")),
+	     MakeResponse(pool)
+	     .Base("/regex-expand3/")
+	     .Regex("^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$")
+	     .Filter(MakeCgiAddress(pool, "/usr/lib/cgi-bin/image-processor.cgi", nullptr,
+				    "/b=c"))
+	     .File(MakeFileAddress("/var/www/foo/bar.jpg")));
 
 	/* check match */
 
-	const auto request2 = MakeRequest("/regex-expand3/x/y/z.jpg/d=e");
-	const auto response2 = MakeResponse(*pool)
-		.Base("/regex-expand3/")
-		.Regex("^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$")
-		.Filter(MakeCgiAddress(*pool, "/usr/lib/cgi-bin/image-processor.cgi", nullptr,
-				       "/d=e"))
-		.File("/var/www/x/y/z.jpg");
-
-	next_response = nullptr;
-	expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/regex-expand3/x/y/z.jpg/d=e"),
+	       MakeResponse(pool)
+	       .Base("/regex-expand3/")
+	       .Regex("^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$")
+	       .Filter(MakeCgiAddress(pool, "/usr/lib/cgi-bin/image-processor.cgi", nullptr,
+				      "/d=e"))
+	       .File("/var/www/x/y/z.jpg"));
 }
 
 TEST(TranslationCache, ExpandUri)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
-
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
 
 	/* add to cache */
 
-	const auto request1 = MakeRequest("/regex-expand4/foo/bar.jpg/b=c");
-	const auto response1n = MakeResponse(*pool)
-		.Base("/regex-expand4/")
-		.Regex("^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$")
-		.Http(MakeHttpAddress("/foo/bar.jpg").ExpandPath("/\\1"));
-	const auto response1e = MakeResponse(*pool)
-		.Base("/regex-expand4/")
-		.Regex("^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$")
-		.Http(MakeHttpAddress("/foo/bar.jpg"));
-
-	next_response = &response1n;
-	expected_response = &response1e;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, MakeRequest("/regex-expand4/foo/bar.jpg/b=c"),
+	     MakeResponse(pool)
+	     .Base("/regex-expand4/")
+	     .Regex("^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$")
+	     .Http(MakeHttpAddress("/foo/bar.jpg").ExpandPath("/\\1")),
+	     MakeResponse(pool)
+	     .Base("/regex-expand4/")
+	     .Regex("^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$")
+	     .Http(MakeHttpAddress("/foo/bar.jpg")));
 
 	/* check match */
 
-	const auto request2 = MakeRequest("/regex-expand4/x/y/z.jpg/d=e");
-	const auto response2 = MakeResponse(*pool)
-		.Base("/regex-expand4/")
-		.Regex("^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$")
-		.Http(MakeHttpAddress("/x/y/z.jpg"));
-
-	next_response = nullptr;
-	expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/regex-expand4/x/y/z.jpg/d=e"),
+	       MakeResponse(pool)
+	       .Base("/regex-expand4/")
+	       .Regex("^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$")
+	       .Http(MakeHttpAddress("/x/y/z.jpg")));
 }
 
 TEST(TranslationCache, AutoBase)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
-
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
 
 	/* store response */
 
-	const auto request1 = MakeRequest("/auto-base/foo.cgi/bar");
-	const auto response1 = MakeResponse(*pool)
-		.AutoBase()
-		.Cgi("/usr/lib/cgi-bin/foo.cgi", "/auto-base/foo.cgi/bar", "/bar");
-
-	next_response = expected_response = &response1;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, MakeRequest("/auto-base/foo.cgi/bar"),
+	     MakeResponse(pool)
+	     .AutoBase()
+	     .Cgi("/usr/lib/cgi-bin/foo.cgi", "/auto-base/foo.cgi/bar", "/bar"));
 
 	/* check if BASE was auto-detected */
 
-	const auto request2 = MakeRequest("/auto-base/foo.cgi/check");
-	const auto response2 = MakeResponse(*pool)
-		.AutoBase().Base("/auto-base/foo.cgi/")
-		.Cgi("/usr/lib/cgi-bin/foo.cgi", "/auto-base/foo.cgi/check", "/check");
-
-	next_response = nullptr;
-	expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/auto-base/foo.cgi/check"),
+	       MakeResponse(pool)
+	       .AutoBase().Base("/auto-base/foo.cgi/")
+	       .Cgi("/usr/lib/cgi-bin/foo.cgi", "/auto-base/foo.cgi/check", "/check"));
 }
 
 /**
@@ -1192,77 +940,41 @@ TEST(TranslationCache, AutoBase)
 TEST(TranslationCache, BaseCheck)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
-
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
 
 	/* feed the cache */
 
-	const auto request1 = MakeRequest("/a/b/c.html");
-	const auto response1 = MakeResponse(*pool).Base("/a/").Check("x");
+	Feed(pool, cache, MakeRequest("/a/b/c.html"),
+	     MakeResponse(pool).Base("/a/").Check("x"));
 
-	next_response = expected_response = &response1;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, MakeRequest("/a/b/c.html").Check("x"),
+	     MakeResponse(pool).Base("/a/b/")
+	     .File("c.html", "/var/www/vol0/a/b/"));
 
-	const auto request2 = MakeRequest("/a/b/c.html").Check("x");
-	const auto response2 = MakeResponse(*pool).Base("/a/b/")
-		.File("c.html", "/var/www/vol0/a/b/");
-
-	next_response = expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request3 = MakeRequest("/a/d/e.html").Check("x");
-	const auto response3 = MakeResponse(*pool).Base("/a/d/")
-		.File("e.html", "/var/www/vol1/a/d/");
-
-	next_response = expected_response = &response3;
-	cache.SendRequest(*pool, request3, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, MakeRequest("/a/d/e.html").Check("x"),
+	     MakeResponse(pool).Base("/a/d/")
+	     .File("e.html", "/var/www/vol1/a/d/"));
 
 	/* now check whether the translate cache matches the BASE
 	   correctly */
 
-	next_response = nullptr;
+	const auto response4 = MakeResponse(pool).Base("/a/").Check("x");
 
-	const auto request4 = MakeRequest("/a/f/g.html");
-	const auto response4 = MakeResponse(*pool).Base("/a/").Check("x");
+	Cached(pool, cache, MakeRequest("/a/f/g.html"), response4);
+	Cached(pool, cache, MakeRequest("/a/b/0/1.html"), response4);
 
-	expected_response = &response4;
-	cache.SendRequest(*pool, request4, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/a/b/0/1.html").Check("x"),
+	       MakeResponse(pool).Base("/a/b/")
+	       .File("0/1.html", "/var/www/vol0/a/b/"));
 
-	const auto request5 = MakeRequest("/a/b/0/1.html");
-
-	cache.SendRequest(*pool, request5, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request6 = MakeRequest("/a/b/0/1.html").Check("x");
-	const auto response6 = MakeResponse(*pool).Base("/a/b/")
-		.File("0/1.html", "/var/www/vol0/a/b/");
-
-	expected_response = &response6;
-	cache.SendRequest(*pool, request6, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request7 = MakeRequest("/a/d/2/3.html").Check("x");
-	const auto response7 = MakeResponse(*pool).Base("/a/d/")
-		.File("2/3.html", "/var/www/vol1/a/d/");
-
-	expected_response = &response7;
-	cache.SendRequest(*pool, request7, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/a/d/2/3.html").Check("x"),
+	       MakeResponse(pool).Base("/a/d/")
+	       .File("2/3.html", "/var/www/vol1/a/d/"));
 
 	/* expect cache misses */
 
-	expected_response = nullptr;
-
-	const auto miss1 = MakeRequest("/a/f/g.html").Check("y");
-	cache.SendRequest(*pool, miss1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	CachedError(pool, cache, MakeRequest("/a/f/g.html").Check("y"));
 }
 
 /**
@@ -1271,76 +983,42 @@ TEST(TranslationCache, BaseCheck)
 TEST(TranslationCache, BaseWantFullUri)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
-
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
 
 	/* feed the cache */
 
-	const auto request1 = MakeRequest("/wfu/a/b/c.html");
-	const auto response1 = MakeResponse(*pool).Base("/wfu/a/").WantFullUri("x");
+	Feed(pool, cache, MakeRequest("/wfu/a/b/c.html"),
+	     MakeResponse(pool).Base("/wfu/a/").WantFullUri("x"));
 
-	next_response = expected_response = &response1;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, MakeRequest("/wfu/a/b/c.html").WantFullUri("x"),
+	     MakeResponse(pool).Base("/wfu/a/b/")
+	     .File("c.html", "/var/www/vol0/a/b/"));
 
-	const auto request2 = MakeRequest("/wfu/a/b/c.html").WantFullUri("x");
-	const auto response2 = MakeResponse(*pool).Base("/wfu/a/b/")
-		.File("c.html", "/var/www/vol0/a/b/");
-
-	next_response = expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request3 = MakeRequest("/wfu/a/d/e.html").WantFullUri("x");
-	const auto response3 = MakeResponse(*pool).Base("/wfu/a/d/")
-		.File("e.html", "/var/www/vol1/a/d/");
-
-	next_response = expected_response = &response3;
-	cache.SendRequest(*pool, request3, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, MakeRequest("/wfu/a/d/e.html").WantFullUri("x"),
+	     MakeResponse(pool).Base("/wfu/a/d/")
+	     .File("e.html", "/var/www/vol1/a/d/"));
 
 	/* now check whether the translate cache matches the BASE
 	   correctly */
 
-	next_response = nullptr;
+	const auto response4 = MakeResponse(pool).Base("/wfu/a/").WantFullUri("x");
 
-	const auto request4 = MakeRequest("/wfu/a/f/g.html");
-	const auto response4 = MakeResponse(*pool).Base("/wfu/a/").WantFullUri("x");
+	Cached(pool, cache, MakeRequest("/wfu/a/f/g.html"), response4);
+	Cached(pool, cache, MakeRequest("/wfu/a/b/0/1.html"), response4);
 
-	expected_response = &response4;
-	cache.SendRequest(*pool, request4, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/wfu/a/b/0/1.html").WantFullUri("x"),
+	       MakeResponse(pool).Base("/wfu/a/b/")
+	       .File("0/1.html", "/var/www/vol0/a/b/"));
 
-	const auto request5 = MakeRequest("/wfu/a/b/0/1.html");
-
-	cache.SendRequest(*pool, request5, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request6 = MakeRequest("/wfu/a/b/0/1.html").WantFullUri("x");
-	const auto response6 = MakeResponse(*pool).Base("/wfu/a/b/")
-		.File("0/1.html", "/var/www/vol0/a/b/");
-
-	expected_response = &response6;
-	cache.SendRequest(*pool, request6, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request7 = MakeRequest("/wfu/a/d/2/3.html").WantFullUri("x");
-	const auto response7 = MakeResponse(*pool).Base("/wfu/a/d/")
-		.File("2/3.html", "/var/www/vol1/a/d/");
-
-	expected_response = &response7;
-	cache.SendRequest(*pool, request7, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/wfu/a/d/2/3.html").WantFullUri("x"),
+	       MakeResponse(pool).Base("/wfu/a/d/")
+	       .File("2/3.html", "/var/www/vol1/a/d/"));
 
 	/* expect cache misses */
 
-	const auto miss1 = MakeRequest("/wfu/a/f/g.html").WantFullUri("y");
-	expected_response = nullptr;
-	cache.SendRequest(*pool, miss1, nullptr,
-			  my_translate_handler, cancel_ptr);
+	CachedError(pool, cache,
+		    MakeRequest("/wfu/a/f/g.html").WantFullUri("y"));
 }
 
 /**
@@ -1349,47 +1027,27 @@ TEST(TranslationCache, BaseWantFullUri)
 TEST(TranslationCache, UnsafeBase)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
 
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
-
 	/* feed */
-	const auto request1 = MakeRequest("/unsafe_base1/foo");
-	const auto response1 = MakeResponse(*pool).Base("/unsafe_base1/")
-		.File("foo", "/var/www/");
+	Feed(pool, cache, MakeRequest("/unsafe_base1/foo"),
+	     MakeResponse(pool).Base("/unsafe_base1/")
+	     .File("foo", "/var/www/"));
 
-	next_response = expected_response = &response1;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request2 = MakeRequest("/unsafe_base2/foo");
-	const auto response2 = MakeResponse(*pool).UnsafeBase("/unsafe_base2/")
-		.File("foo", "/var/www/");
-
-	next_response = expected_response = &response2;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, MakeRequest("/unsafe_base2/foo"),
+	     MakeResponse(pool).UnsafeBase("/unsafe_base2/")
+	     .File("foo", "/var/www/"));
 
 	/* fail (no UNSAFE_BASE) */
 
-	const auto request3 = MakeRequest("/unsafe_base1/../x");
-
-	next_response = expected_response = nullptr;
-	cache.SendRequest(*pool, request3, nullptr,
-			  my_translate_handler, cancel_ptr);
+	CachedError(pool, cache, MakeRequest("/unsafe_base1/../x"));
 
 	/* success (with UNSAFE_BASE) */
 
-	const auto request4 = MakeRequest("/unsafe_base2/../x");
-	const auto response4 = MakeResponse(*pool).UnsafeBase("/unsafe_base2/")
-		.File("../x", "/var/www/");
-
-	next_response = nullptr;
-	expected_response = &response4;
-	cache.SendRequest(*pool, request4, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/unsafe_base2/../x"),
+	       MakeResponse(pool).UnsafeBase("/unsafe_base2/")
+	       .File("../x", "/var/www/"));
 }
 
 /**
@@ -1398,100 +1056,63 @@ TEST(TranslationCache, UnsafeBase)
 TEST(TranslationCache, ExpandUnsafeBase)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
-
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
 
 	/* feed */
 
-	const auto request1 = MakeRequest("/expand_unsafe_base1/foo");
-	const auto response1 = MakeResponse(*pool).Base("/expand_unsafe_base1/")
-		.Regex("^/expand_unsafe_base1/(.*)$")
-		.File(MakeFileAddress("/var/www/foo.html").ExpandPath("/var/www/\\1.html"));
-	const auto response1e = MakeResponse(*pool).Base("/expand_unsafe_base1/")
-		.Regex("^/expand_unsafe_base1/(.*)$")
-		.File(MakeFileAddress("/var/www/foo.html"));
+	Feed(pool, cache, MakeRequest("/expand_unsafe_base1/foo"),
+	     MakeResponse(pool).Base("/expand_unsafe_base1/")
+	     .Regex("^/expand_unsafe_base1/(.*)$")
+	     .File(MakeFileAddress("/var/www/foo.html").ExpandPath("/var/www/\\1.html")),
+	     MakeResponse(pool).Base("/expand_unsafe_base1/")
+	     .Regex("^/expand_unsafe_base1/(.*)$")
+	     .File(MakeFileAddress("/var/www/foo.html")));
 
-	next_response = &response1;
-	expected_response = &response1e;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request2 = MakeRequest("/expand_unsafe_base2/foo");
-	const auto response2 = MakeResponse(*pool).UnsafeBase("/expand_unsafe_base2/")
-		.Regex("^/expand_unsafe_base2/(.*)$")
-		.File(MakeFileAddress("/var/www/foo.html").ExpandPath("/var/www/\\1.html"));
-	const auto response2e = MakeResponse(*pool).UnsafeBase("/expand_unsafe_base2/")
-		.Regex("^/expand_unsafe_base2/(.*)$")
-		.File(MakeFileAddress("/var/www/foo.html"));
-
-	next_response = &response2;
-	expected_response = &response2e;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Feed(pool, cache, MakeRequest("/expand_unsafe_base2/foo"),
+	     MakeResponse(pool).UnsafeBase("/expand_unsafe_base2/")
+	     .Regex("^/expand_unsafe_base2/(.*)$")
+	     .File(MakeFileAddress("/var/www/foo.html").ExpandPath("/var/www/\\1.html")),
+	     MakeResponse(pool).UnsafeBase("/expand_unsafe_base2/")
+	     .Regex("^/expand_unsafe_base2/(.*)$")
+	     .File(MakeFileAddress("/var/www/foo.html")));
 
 	/* fail (no UNSAFE_BASE) */
 
-	const auto request3 = MakeRequest("/expand_unsafe_base1/../x");
-
-	next_response = expected_response = nullptr;
-	cache.SendRequest(*pool, request3, nullptr,
-			  my_translate_handler, cancel_ptr);
+	CachedError(pool, cache, MakeRequest("/expand_unsafe_base1/../x"));
 
 	/* success (with UNSAFE_BASE) */
 
-	const auto request4 = MakeRequest("/expand_unsafe_base2/../x");
-	const auto response4 = MakeResponse(*pool).UnsafeBase("/expand_unsafe_base2/")
-		.Regex("^/expand_unsafe_base2/(.*)$")
-		.File(MakeFileAddress("/var/www/../x.html"));
-
-	next_response = nullptr;
-	expected_response = &response4;
-	cache.SendRequest(*pool, request4, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/expand_unsafe_base2/../x"),
+	       MakeResponse(pool).UnsafeBase("/expand_unsafe_base2/")
+	       .Regex("^/expand_unsafe_base2/(.*)$")
+	       .File(MakeFileAddress("/var/www/../x.html")));
 }
 
 TEST(TranslationCache, ExpandBindMount)
 {
 	Instance instance;
-	struct pool *pool = instance.root_pool;
+	struct pool &pool = instance.root_pool;
 	auto &cache = instance.cache;
-
-	MyTranslateHandler my_translate_handler;
-	CancellablePointer cancel_ptr;
 
 	/* add to cache */
 
-	const auto request1 = MakeRequest("/expand_bind_mount/foo");
+	Feed(pool, cache, MakeRequest("/expand_bind_mount/foo"),
+	     MakeResponse(pool).Base("/expand_bind_mount/")
+	     .Regex("^/expand_bind_mount/(.+)$")
+	     .Cgi(MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.cgi")
+		  .BindMount("/home/\\1", "/mnt", true)
+		  .BindMount("/etc", "/etc")),
+	     MakeResponse(pool).Base("/expand_bind_mount/")
+	     .Regex("^/expand_bind_mount/(.+)$")
+	     .Cgi(MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.cgi")
+		  .BindMount("/home/foo", "/mnt")
+		  .BindMount("/etc", "/etc")));
 
-	const auto response1n = MakeResponse(*pool).Base("/expand_bind_mount/")
-		.Regex("^/expand_bind_mount/(.+)$")
-		.Cgi(MakeCgiAddress(*pool, "/usr/lib/cgi-bin/foo.cgi")
-		     .BindMount("/home/\\1", "/mnt", true)
-		     .BindMount("/etc", "/etc"));
-
-	const auto response1e = MakeResponse(*pool).Base("/expand_bind_mount/")
-		.Regex("^/expand_bind_mount/(.+)$")
-		.Cgi(MakeCgiAddress(*pool, "/usr/lib/cgi-bin/foo.cgi")
-		     .BindMount("/home/foo", "/mnt")
-		     .BindMount("/etc", "/etc"));
-
-	next_response = &response1n;
-	expected_response = &response1e;
-	cache.SendRequest(*pool, request1, nullptr,
-			  my_translate_handler, cancel_ptr);
-
-	const auto request2 = MakeRequest("/expand_bind_mount/bar");
-	const auto response2e = MakeResponse(*pool).Base("/expand_bind_mount/")
-		.Regex("^/expand_bind_mount/(.+)$")
-		.Cgi(MakeCgiAddress(*pool, "/usr/lib/cgi-bin/foo.cgi")
-		     .BindMount("/home/bar", "/mnt")
-		     .BindMount("/etc", "/etc"));
-
-	next_response = nullptr;
-	expected_response = &response2e;
-	cache.SendRequest(*pool, request2, nullptr,
-			  my_translate_handler, cancel_ptr);
+	Cached(pool, cache, MakeRequest("/expand_bind_mount/bar"),
+	       MakeResponse(pool).Base("/expand_bind_mount/")
+	       .Regex("^/expand_bind_mount/(.+)$")
+	       .Cgi(MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.cgi")
+		    .BindMount("/home/bar", "/mnt")
+		    .BindMount("/etc", "/etc")));
 }

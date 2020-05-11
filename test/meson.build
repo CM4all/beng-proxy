@@ -320,18 +320,24 @@ test('t_cache', executable('t_cache',
     pool_dep,
   ]))
 
-test('t_tcache', executable('t_tcache',
-  't_tcache.cxx',
-  '../src/PInstance.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    libcommon_translation_dep,
-    eutil_dep,
-    raddress_dep,
-    stopwatch_dep,
-    widget_dep,
-  ]))
+test(
+  't_tcache',
+  executable(
+    't_tcache',
+    't_tcache.cxx',
+    'RecordingTranslateHandler.cxx',
+    '../src/PInstance.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      libcommon_translation_dep,
+      eutil_dep,
+      raddress_dep,
+      stopwatch_dep,
+      widget_dep,
+    ],
+  ),
+)
 
 test('t_regex', executable('t_regex',
   't_regex.cxx',
