@@ -38,24 +38,35 @@
 #include "util/PrintException.hxx"
 #include "util/RuntimeError.hxx"
 
+#include <set>
+#include <string>
+
 #include <sys/wait.h>
 #include <unistd.h>
 
 struct AcmeConfig;
 
 static void
-SetDnsTxt(const AcmeConfig &config, const char *host, const char *value)
+SetDnsTxt(const AcmeConfig &config, const char *host,
+	  const std::set<std::string> &values)
 {
 	pid_t pid = fork();
 	if (pid < 0)
 		throw MakeErrno("fork() failed");
 
-	char *const args[] = {
-		const_cast<char *>(config.dns_txt_program.c_str()),
-		const_cast<char *>(host),
-		const_cast<char *>(value),
-		nullptr
-	};
+	char *args[32];
+	size_t n = 0;
+
+	args[n++] = const_cast<char *>(config.dns_txt_program.c_str());
+	args[n++] = const_cast<char *>(host);
+
+	for (const auto &i : values) {
+		args[n++] = const_cast<char *>(i.c_str());
+		if (n >= std::size(args))
+			throw std::runtime_error("Too many TXT records");
+	}
+
+	args[n] = nullptr;
 
 	if (pid == 0) {
 		execve(args[0], args, nullptr);
@@ -86,7 +97,7 @@ SetDns01(const AcmeConfig &config, const char *host,
 	 const AcmeChallenge &challenge, EVP_PKEY &account_key)
 {
 	SetDnsTxt(config, host,
-		  UrlSafeBase64SHA256(MakeHttp01(challenge, account_key)).c_str());
+		  {UrlSafeBase64SHA256(MakeHttp01(challenge, account_key)).c_str()});
 }
 
 Dns01ChallengeRecord::Dns01ChallengeRecord(const AcmeConfig &_config,
@@ -101,7 +112,7 @@ Dns01ChallengeRecord::Dns01ChallengeRecord(const AcmeConfig &_config,
 Dns01ChallengeRecord::~Dns01ChallengeRecord() noexcept
 {
 	try {
-		SetDnsTxt(config, host.c_str(), nullptr);
+		SetDnsTxt(config, host.c_str(), {});
 	} catch (...) {
 		fprintf(stderr, "Failed to remove TXT record of '%s': ",
 			host.c_str());
