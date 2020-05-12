@@ -40,7 +40,7 @@ base_tail(const char *uri, StringView base) noexcept
 {
 	assert(uri != nullptr);
 
-	if (base.empty() || base.back() != '/')
+	if (!is_base(base))
 		/* not a valid base */
 		return nullptr;
 
@@ -51,6 +51,7 @@ const char *
 require_base_tail(const char *uri, StringView base) noexcept
 {
 	assert(uri != nullptr);
+	assert(is_base(base));
 	assert(StringStartsWith(uri, base));
 
 	return uri + base.size;
