@@ -929,6 +929,8 @@ class Translation(Protocol):
             response.packet(TRANSLATE_URI, '/proxy/' + uri[19:])
         elif uri[:9] == '/message/':
             response.packet(TRANSLATE_MESSAGE, uri[9:])
+        elif uri[:7] == '/defer/':
+            response.packet(TRANSLATE_DEFER)
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)

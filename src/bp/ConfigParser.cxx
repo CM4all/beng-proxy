@@ -284,6 +284,9 @@ BpConfigParser::ParseLine2(FileLineParser &line)
 	} else if (StringIsEqual(word, "emulate_mod_auth_easy")) {
 		config.emulate_mod_auth_easy = line.NextBool();
 		line.ExpectEnd();
+	} else if (StringIsEqual(word, "translation_socket")) {
+		config.translation_sockets.emplace_front(ParseSocketAddress(line.ExpectValueAndEnd(),
+									    0, false));
 	} else
 		throw LineParser::Error("Unknown option");
 }

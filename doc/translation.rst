@@ -594,6 +594,8 @@ Response
 
 - ``EXPAND_READ_FILE``: Expansion for ``READ_FILE``.
 
+.. _tdefer:
+
 - ``DEFER``: Defer the request to the next translation server.
 
 - ``PREVIOUS``: Tells beng-proxy to use the resource address of the

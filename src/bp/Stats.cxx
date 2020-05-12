@@ -57,9 +57,9 @@ BpInstance::GetStats() const noexcept
 	tcp_stock->AddStats(tcp_stock_stats);
 	fs_stock->AddStats(tcp_stock_stats);
 
-	const auto tcache_stats = translation_cache != nullptr
-		? translation_cache->GetStats()
-		: AllocatorStats::Zero();
+	AllocatorStats tcache_stats = AllocatorStats::Zero();
+	for (const auto &i : translation_caches)
+		tcache_stats += i.GetStats();
 	const auto http_cache_stats = http_cache != nullptr
 		? http_cache_get_stats(*http_cache)
 		: AllocatorStats::Zero();

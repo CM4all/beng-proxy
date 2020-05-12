@@ -112,6 +112,18 @@ well-implemented. For example, (backslash) escape sequences don’t work,
 and the scope of variables is not defined. For now, use variables only
 for very simple things.
 
+Translation Servers
+-------------------
+
+The setting ``translation_socket`` specifies the translation server's
+socket.  It can be specified multiple times to support
+:ref:`translation deferral <tdefer>`.  Example::
+
+  translation_socket @translation1
+  translation_socket @translation2
+
+The default is ``@translation``.
+
 ``listener``
 ------------
 

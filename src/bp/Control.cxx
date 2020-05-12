@@ -61,12 +61,13 @@ using namespace BengProxy;
 static void
 control_tcache_invalidate(BpInstance *instance, ConstBuffer<void> payload)
 {
-	if (instance->translation_cache == nullptr)
+	if (instance->translation_caches.empty())
 		return;
 
 	if (payload.empty()) {
 		/* flush the translation cache if the payload is empty */
-		instance->translation_cache->Flush();
+		for (auto &i : instance->translation_caches)
+			i.Flush();
 		return;
 	}
 
@@ -84,10 +85,11 @@ control_tcache_invalidate(BpInstance *instance, ConstBuffer<void> payload)
 		return;
 	}
 
-	instance->translation_cache->Invalidate(request,
-						ConstBuffer<TranslationCommand>(request.commands.raw(),
-										request.commands.size()),
-						request.site);
+	for (auto &i : instance->translation_caches)
+		i.Invalidate(request,
+			     ConstBuffer<TranslationCommand>(request.commands.raw(),
+							     request.commands.size()),
+			     request.site);
 }
 
 static void

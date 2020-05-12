@@ -44,6 +44,7 @@
 #include "tcp_stock.hxx"
 #include "translation/Stock.hxx"
 #include "translation/Cache.hxx"
+#include "translation/Multi.hxx"
 #include "cluster/TcpBalancer.hxx"
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
@@ -194,8 +195,8 @@ BpInstance::ReloadEventCallback(int) noexcept
 	if (widget_registry != nullptr)
 		widget_registry->FlushCache();
 
-	if (translation_cache != nullptr)
-		translation_cache->Flush();
+	for (auto &i : translation_caches)
+		i.Flush();
 
 	if (http_cache != nullptr)
 		http_cache_flush(*http_cache);
@@ -265,6 +266,34 @@ BpInstance::AddTcpListener(int port)
 	auto &listener = listeners.front();
 	listener.ListenTCP(port);
 	listener.SetTcpDeferAccept(10);
+}
+
+template<typename T>
+static auto
+ConstructTranslationStocks(EventLoop &event_loop, const T &configs, unsigned limit)
+{
+	std::forward_list<TranslationStock> list;
+	auto i = list.before_begin();
+	for (const auto &config : configs)
+		i = list.emplace_after(i, event_loop,
+				       config, limit);
+
+	return list;
+}
+
+template<typename T>
+static auto
+ConstructTranslationCaches(struct pool &pool, EventLoop &event_loop,
+			   T &stocks, unsigned max_size,
+			   bool handshake_cacheable)
+{
+	std::forward_list<TranslationCache> list;
+	auto i = list.before_begin();
+	for (auto &stock : stocks)
+		i = list.emplace_after(i, pool, event_loop,
+				       stock, max_size, handshake_cacheable);
+
+	return list;
 }
 
 int main(int argc, char **argv)
@@ -407,28 +436,33 @@ try {
 	instance.nghttp2_stock = new NgHttp2::Stock();
 #endif
 
-	if (instance.config.translation_socket != nullptr) {
-		instance.translation_stock =
-			new TranslationStock(instance.event_loop,
-					     instance.config.translation_socket,
-					     instance.config.translate_stock_limit);
-		instance.translation_service = instance.translation_stock;
+	if (!instance.config.translation_sockets.empty()) {
+		instance.translation_stocks =
+			ConstructTranslationStocks(instance.event_loop,
+						   instance.config.translation_sockets,
+						   instance.config.translate_stock_limit);
+
+		instance.uncached_translation_service =
+			std::make_unique<MultiTranslationService>(instance.translation_stocks);
+		instance.translation_service = instance.uncached_translation_service.get();
 
 		if (instance.config.translate_cache_size > 0) {
-			instance.translation_cache =
-				new TranslationCache(instance.root_pool,
-						     instance.event_loop,
-						     *instance.translation_stock,
-						     instance.config.translate_cache_size,
-						     false);
-			instance.translation_service = instance.translation_cache;
+			instance.translation_caches =
+				ConstructTranslationCaches(instance.root_pool,
+							   instance.event_loop,
+							   instance.translation_stocks,
+							   instance.config.translate_cache_size,
+							   false);
+			instance.cached_translation_service =
+				std::make_unique<MultiTranslationService>(instance.translation_caches);
+			instance.translation_service = instance.cached_translation_service.get();
 		}
 
 		/* the WidgetRegistry class has its own cache and doesn't need
 		   the TranslationCache */
 		instance.widget_registry =
 			new WidgetRegistry(instance.root_pool,
-					   *instance.translation_stock);
+					   *instance.uncached_translation_service);
 	}
 
 	instance.lhttp_stock = lhttp_stock_new(0, 8, instance.event_loop,

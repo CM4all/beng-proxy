@@ -108,7 +108,7 @@ struct BpConfig {
 
 	const char *document_root = "/var/www";
 
-	AllocatedSocketAddress translation_socket;
+	std::forward_list<AllocatedSocketAddress> translation_sockets;
 
 	unsigned num_workers = 0;
 
@@ -151,7 +151,6 @@ struct BpConfig {
 	SslClientConfig ssl_client;
 
 	BpConfig() {
-		translation_socket.SetLocal("@translation");
 #ifdef HAVE_LIBSYSTEMD
 		spawn.systemd_scope = "bp-spawn.scope";
 		spawn.systemd_scope_description = "The cm4all-beng-proxy child process spawner";
