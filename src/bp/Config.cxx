@@ -101,3 +101,10 @@ BpConfig::HandleSet(StringView name, const char *value)
 	} else
 		throw std::runtime_error("Unknown variable");
 }
+
+void
+BpConfig::Finish(unsigned default_port)
+{
+	if (ports.empty() && listen.empty())
+		ports.push_back(default_port);
+}

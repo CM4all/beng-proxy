@@ -296,8 +296,7 @@ try {
 	if (instance.cmdline.config_file != nullptr)
 		LoadConfigFile(instance.config, instance.cmdline.config_file);
 
-	if (instance.config.ports.empty() && instance.config.listen.empty())
-		instance.config.ports.push_back(debug_mode ? 8080 : 80);
+	instance.config.Finish(debug_mode ? 8080 : 80);
 
 	/* initialize */
 

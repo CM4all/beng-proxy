@@ -160,6 +160,8 @@ struct BpConfig {
 	}
 
 	void HandleSet(StringView name, const char *value);
+
+	void Finish(unsigned default_port);
 };
 
 /**
