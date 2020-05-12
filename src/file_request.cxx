@@ -42,6 +42,7 @@
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
+#include "system/KernelVersion.hxx"
 #include "http/Status.h"
 
 #ifdef HAVE_URING
@@ -61,6 +62,8 @@ class UringStaticFileGet final : Uring::OpenStatHandler, Cancellable {
 	struct pool &pool;
 	EventLoop &event_loop;
 
+	UniqueFileDescriptor base;
+
 	const char *const path;
 	const char *const content_type;
 
@@ -71,10 +74,12 @@ class UringStaticFileGet final : Uring::OpenStatHandler, Cancellable {
 public:
 	UringStaticFileGet(EventLoop &_event_loop, Uring::Queue &uring,
 			   struct pool &_pool,
+			   UniqueFileDescriptor &&_base,
 			   const char *_path,
 			   const char *_content_type,
 			   HttpResponseHandler &_handler) noexcept
 		:pool(_pool), event_loop(_event_loop),
+		 base(std::move(_base)), // TODO: use io_uring to open it
 		 path(_path),
 		 content_type(_content_type),
 		 open_stat(uring, *this),
@@ -82,7 +87,11 @@ public:
 
 	void Start(CancellablePointer &cancel_ptr) noexcept {
 		cancel_ptr = *this;
-		open_stat.StartOpenStatReadOnly(path);
+
+		if (base.IsDefined())
+			open_stat.StartOpenStatReadOnly(base, path);
+		else
+			open_stat.StartOpenStatReadOnly(path);
 	}
 
 private:
@@ -144,15 +153,34 @@ static_file_get(EventLoop &event_loop,
 		Uring::Queue *uring,
 #endif
 		struct pool &pool,
+		const char *_base,
 		const char *path, const char *content_type,
 		HttpResponseHandler &handler, CancellablePointer &cancel_ptr)
 {
 	assert(path != nullptr);
 
+	UniqueFileDescriptor base;
+
+	if (_base != nullptr) {
+		try {
+			base = IsKernelVersionOrNewer({5, 6, 13})
+				? OpenPath(_base)
+				/* O_PATH file descriptors are broken
+				   in io_uring until at least 5.6.12,
+				   see
+				   https://lkml.org/lkml/2020/5/7/1287 */
+				: OpenDirectory(_base);
+		} catch (...) {
+			handler.InvokeError(std::current_exception());
+			return;
+		}
+	}
+
 #ifdef HAVE_URING
 	if (uring != nullptr) {
 		auto *o = NewFromPool<UringStaticFileGet>(pool, event_loop,
 							  *uring, pool,
+							  std::move(base),
 							  path, content_type,
 							  handler);
 		o->Start(cancel_ptr);
@@ -166,7 +194,8 @@ static_file_get(EventLoop &event_loop,
 	struct statx st;
 
 	try {
-		fd = OpenReadOnly(path, O_NOFOLLOW);
+		fd = OpenReadOnly(base.IsDefined() ? base : FileDescriptor(AT_FDCWD),
+				  path, O_NOFOLLOW);
 		if (statx(fd.Get(), "", AT_EMPTY_PATH,
 			  STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE,
 			  &st) < 0)

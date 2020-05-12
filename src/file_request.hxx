@@ -47,5 +47,6 @@ static_file_get(EventLoop &event_loop,
 		Uring::Queue *uring,
 #endif
 		struct pool &pool,
+		const char *base,
 		const char *path, const char *content_type,
 		HttpResponseHandler &handler, CancellablePointer &cancel_ptr);

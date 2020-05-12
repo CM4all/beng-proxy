@@ -162,7 +162,7 @@ try {
 #ifdef HAVE_URING
 				uring,
 #endif
-				pool, file->path,
+				pool, file->base, file->path,
 				file->content_type,
 				handler, cancel_ptr);
 		return;
