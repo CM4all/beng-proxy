@@ -80,6 +80,9 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
 			switch (e.code().value()) {
 			case ENOENT:
 			case ENOTDIR:
+
+			case ELOOP: /* RESOLVE_NO_SYMLINKS failed */
+			case EXDEV: /* RESOLVE_BENEATH failed */
 				return {HTTP_STATUS_NOT_FOUND,
 					"The requested file does not exist."};
 
