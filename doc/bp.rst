@@ -119,8 +119,8 @@ The setting ``translation_socket`` specifies the translation server's
 socket.  It can be specified multiple times to support
 :ref:`translation deferral <tdefer>`.  Example::
 
-  translation_socket @translation1
-  translation_socket @translation2
+  translation_socket "@translation1"
+  translation_socket "@translation2"
 
 The default is ``@translation``.
 
