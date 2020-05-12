@@ -594,6 +594,8 @@ Response
 
 - ``EXPAND_READ_FILE``: Expansion for ``READ_FILE``.
 
+- ``DEFER``: Defer the request to the next translation server.
+
 - ``PREVIOUS``: Tells beng-proxy to use the resource address of the
   previous translation response. Only allowed if the request contains a
   ``CHECK`` packet.
