@@ -34,58 +34,45 @@
 #include "util/StringCompare.hxx"
 
 #include <assert.h>
-#include <string.h>
 
 const char *
-base_tail(const char *uri, const char *base)
+base_tail(const char *uri, StringView base) noexcept
 {
 	assert(uri != nullptr);
-	assert(base != nullptr);
 
-	const size_t base_length = strlen(base);
-
-	if (base_length == 0 || base[base_length - 1] != '/')
+	if (base.empty() || base.back() != '/')
 		/* not a valid base */
 		return nullptr;
 
-	return StringAfterPrefix(uri, {base, base_length});
+	return StringAfterPrefix(uri, base);
 }
 
 const char *
-require_base_tail(const char *uri, const char *base)
+require_base_tail(const char *uri, StringView base) noexcept
 {
 	assert(uri != nullptr);
-	assert(base != nullptr);
 	assert(StringStartsWith(uri, base));
 
-	return uri + strlen(base);
+	return uri + base.size;
 }
 
 size_t
-base_string(const char *p, const char *tail)
+base_string(StringView uri, StringView tail) noexcept
 {
-	assert(p != nullptr);
-	assert(tail != nullptr);
-
-	size_t length = strlen(p), tail_length = strlen(tail);
-
-	if (length == tail_length)
+	if (uri.size == tail.size)
 		/* special case: zero-length prefix (not followed by a
 		   slash) */
-		return memcmp(p, tail, length) == 0
+		return memcmp(uri.data, tail.data, uri.size) == 0
 			? 0 : (size_t)-1;
 
-	return length > tail_length && p[length - tail_length - 1] == '/' &&
-		memcmp(p + length - tail_length, tail, tail_length) == 0
-		? length - tail_length
+	return uri.size > tail.size && uri[uri.size - tail.size - 1] == '/' &&
+		memcmp(uri.data + uri.size - tail.size, tail.data, tail.size) == 0
+		? uri.size - tail.size
 		: (size_t)-1;
 }
 
 bool
-is_base(const char *uri)
+is_base(StringView uri) noexcept
 {
-	assert(uri != nullptr);
-
-	size_t length = strlen(uri);
-	return length > 0 && uri[length - 1] == '/';
+	return !uri.empty() && uri.back() == '/';
 }

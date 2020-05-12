@@ -41,6 +41,8 @@
 
 #include <stddef.h>
 
+struct StringView;
+
 /**
  * Calculate the URI tail after a base URI from a request URI.
  * Returns nullptr if no such tail URI is possible (e.g. if the
@@ -53,14 +55,14 @@
  */
 gcc_pure
 const char *
-base_tail(const char *uri, const char *base);
+base_tail(const char *uri, StringView base) noexcept;
 
 /**
  * Similar to base_tail(), but assert that there is a base match.
  */
 gcc_pure
 const char *
-require_base_tail(const char *uri, const char *base);
+require_base_tail(const char *uri, StringView base) noexcept;
 
 /**
  * Determine the length of the base prefix in the given string.
@@ -69,7 +71,7 @@ require_base_tail(const char *uri, const char *base);
  */
 gcc_pure
 size_t
-base_string(const char *p, const char *tail);
+base_string(StringView uri, StringView tail) noexcept;
 
 /**
  * Is the given string a valid base string?  That is, does it end with
@@ -77,6 +79,6 @@ base_string(const char *p, const char *tail);
  */
 gcc_pure
 bool
-is_base(const char *uri);
+is_base(StringView uri) noexcept;
 
 #endif
