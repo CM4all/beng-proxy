@@ -37,6 +37,10 @@ class FileDescriptor;
 class CancellablePointer;
 namespace Uring { class Queue; class OpenStatHandler; }
 
+/**
+ * If #directory is a valid file descriptor, then RESOLVE_BENEATH is
+ * used.
+ */
 void
 UringOpenStat(Uring::Queue &uring, AllocatorPtr alloc,
 	      FileDescriptor directory,

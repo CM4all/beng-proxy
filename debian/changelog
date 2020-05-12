@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.7) unstable; urgency=low
 
-  * 
+  * bp: use RESOLVE_BENEATH to restrict symlinks to the base directory
 
  --   
 

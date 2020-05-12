@@ -89,7 +89,7 @@ public:
 		cancel_ptr = *this;
 
 		if (base.IsDefined())
-			open_stat.StartOpenStatReadOnly(base, path);
+			open_stat.StartOpenStatReadOnlyBeneath(base, path);
 		else
 			open_stat.StartOpenStatReadOnly(path);
 	}

@@ -37,6 +37,8 @@
 #include "util/Cancellable.hxx"
 #include "AllocatorPtr.hxx"
 
+#include <fcntl.h>
+
 class UringOpenStatOperation final : Cancellable, Uring::OpenStatHandler {
 	Uring::OpenStat open_stat;
 
@@ -53,7 +55,10 @@ public:
 	{
 		cancel_ptr = *this;
 
-		open_stat.StartOpenStatReadOnly(directory, path);
+		if (directory.IsDefined() && directory != FileDescriptor(AT_FDCWD))
+			open_stat.StartOpenStatReadOnlyBeneath(directory, path);
+		else
+			open_stat.StartOpenStatReadOnly(directory, path);
 	}
 
 private:
