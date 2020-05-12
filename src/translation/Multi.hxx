@@ -48,6 +48,14 @@ class MultiTranslationService final : public TranslationService {
 	class Request;
 
 public:
+	MultiTranslationService() = default;
+
+	template<typename T>
+	explicit MultiTranslationService(T &&t) noexcept {
+		for (auto &i : t)
+			Add(&i);
+	}
+
 	void Add(TranslationService *service) noexcept {
 		items.push_back(service);
 	}
