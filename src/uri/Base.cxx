@@ -31,6 +31,7 @@
  */
 
 #include "Base.hxx"
+#include "util/StringCompare.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -41,13 +42,13 @@ base_tail(const char *uri, const char *base)
 	assert(uri != nullptr);
 	assert(base != nullptr);
 
-	const size_t uri_length = strlen(uri);
 	const size_t base_length = strlen(base);
 
-	return base_length > 0 && base[base_length - 1] == '/' &&
-		uri_length >= base_length && memcmp(uri, base, base_length) == 0
-		? uri + base_length
-		: nullptr;
+	if (base_length == 0 || base[base_length - 1] != '/')
+		/* not a valid base */
+		return nullptr;
+
+	return StringAfterPrefix(uri, {base, base_length});
 }
 
 const char *
@@ -55,7 +56,7 @@ require_base_tail(const char *uri, const char *base)
 {
 	assert(uri != nullptr);
 	assert(base != nullptr);
-	assert(memcmp(base, uri, strlen(base)) == 0);
+	assert(StringStartsWith(uri, base));
 
 	return uri + strlen(base);
 }
