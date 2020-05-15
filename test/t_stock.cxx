@@ -121,21 +121,20 @@ public:
 int
 main(int, char **)
 {
-	Stock *stock;
 	CancellablePointer cancel_ptr;
 	StockItem *item, *second, *third;
 
 	EventLoop event_loop;
 
 	MyStockClass cls;
-	stock = new Stock(event_loop, cls, "test", 3, 8,
-			  Event::Duration::zero());
+	Stock stock(event_loop, cls, "test", 3, 8,
+		    Event::Duration::zero());
 
 	MyStockGetHandler handler;
 
 	/* create first item */
 
-	stock->Get(nullptr, handler, cancel_ptr);
+	stock.Get(nullptr, handler, cancel_ptr);
 	assert(got_item);
 	assert(last_item != nullptr);
 	assert(num_create == 1 && num_fail == 0);
@@ -144,7 +143,7 @@ main(int, char **)
 
 	/* release first item */
 
-	stock->Put(*item, false);
+	stock.Put(*item, false);
 	event_loop.LoopNonBlock();
 	assert(num_create == 1 && num_fail == 0);
 	assert(num_borrow == 0 && num_release == 1 && num_destroy == 0);
@@ -153,7 +152,7 @@ main(int, char **)
 
 	got_item = false;
 	last_item = nullptr;
-	stock->Get(nullptr, handler, cancel_ptr);
+	stock.Get(nullptr, handler, cancel_ptr);
 	assert(got_item);
 	assert(last_item == item);
 	assert(num_create == 1 && num_fail == 0);
@@ -163,7 +162,7 @@ main(int, char **)
 
 	got_item = false;
 	last_item = nullptr;
-	stock->Get(nullptr, handler, cancel_ptr);
+	stock.Get(nullptr, handler, cancel_ptr);
 	assert(got_item);
 	assert(last_item != nullptr);
 	assert(last_item != item);
@@ -176,7 +175,7 @@ main(int, char **)
 	next_fail = true;
 	got_item = false;
 	last_item = nullptr;
-	stock->Get(nullptr, handler, cancel_ptr);
+	stock.Get(nullptr, handler, cancel_ptr);
 	assert(got_item);
 	assert(last_item == nullptr);
 	assert(num_create == 2 && num_fail == 1);
@@ -187,7 +186,7 @@ main(int, char **)
 	next_fail = false;
 	got_item = false;
 	last_item = nullptr;
-	stock->Get(nullptr, handler, cancel_ptr);
+	stock.Get(nullptr, handler, cancel_ptr);
 	assert(got_item);
 	assert(last_item != nullptr);
 	assert(num_create == 3 && num_fail == 1);
@@ -198,21 +197,21 @@ main(int, char **)
 
 	got_item = false;
 	last_item = nullptr;
-	stock->Get(nullptr, handler, cancel_ptr);
+	stock.Get(nullptr, handler, cancel_ptr);
 	assert(!got_item);
 	assert(num_create == 3 && num_fail == 1);
 	assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
 
 	/* fifth item waiting */
 
-	stock->Get(nullptr, handler, cancel_ptr);
+	stock.Get(nullptr, handler, cancel_ptr);
 	assert(!got_item);
 	assert(num_create == 3 && num_fail == 1);
 	assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
 
 	/* return third item */
 
-	stock->Put(*third, false);
+	stock.Put(*third, false);
 	event_loop.LoopNonBlock();
 	assert(num_create == 3 && num_fail == 1);
 	assert(num_borrow == 2 && num_release == 2 && num_destroy == 1);
@@ -223,7 +222,7 @@ main(int, char **)
 
 	got_item = false;
 	last_item = nullptr;
-	stock->Put(*second, true);
+	stock.Put(*second, true);
 	event_loop.LoopNonBlock();
 	assert(num_create == 4 && num_fail == 1);
 	assert(num_borrow == 2 && num_release == 2 && num_destroy == 2);
@@ -233,23 +232,19 @@ main(int, char **)
 
 	/* destroy first item */
 
-	stock->Put(*item, true);
+	stock.Put(*item, true);
 	assert(num_create == 4 && num_fail == 1);
 	assert(num_borrow == 2 && num_release == 2 && num_destroy == 3);
 
 	/* destroy second item */
 
-	stock->Put(*second, true);
+	stock.Put(*second, true);
 	assert(num_create == 4 && num_fail == 1);
 	assert(num_borrow == 2 && num_release == 2 && num_destroy == 4);
 
 	/* destroy third item */
 
-	stock->Put(*third, true);
+	stock.Put(*third, true);
 	assert(num_create == 4 && num_fail == 1);
 	assert(num_borrow == 2 && num_release == 2 && num_destroy == 5);
-
-	/* cleanup */
-
-	delete stock;
 }
