@@ -39,6 +39,8 @@
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
+#include <gtest/gtest.h>
+
 #include <stdexcept>
 
 #include <assert.h>
@@ -118,8 +120,7 @@ public:
 	}
 };
 
-int
-main(int, char **)
+TEST(Stock, Basic)
 {
 	CancellablePointer cancel_ptr;
 	StockItem *item, *second, *third;
@@ -135,39 +136,51 @@ main(int, char **)
 	/* create first item */
 
 	stock.Get(nullptr, handler, cancel_ptr);
-	assert(got_item);
-	assert(last_item != nullptr);
-	assert(num_create == 1 && num_fail == 0);
-	assert(num_borrow == 0 && num_release == 0 && num_destroy == 0);
+	ASSERT_TRUE(got_item);
+	ASSERT_NE(last_item, nullptr);
+	ASSERT_EQ(num_create, 1);
+	ASSERT_EQ(num_fail, 0);
+	ASSERT_EQ(num_borrow, 0);
+	ASSERT_EQ(num_release, 0);
+	ASSERT_EQ(num_destroy, 0);
 	item = last_item;
 
 	/* release first item */
 
 	stock.Put(*item, false);
 	event_loop.LoopNonBlock();
-	assert(num_create == 1 && num_fail == 0);
-	assert(num_borrow == 0 && num_release == 1 && num_destroy == 0);
+	ASSERT_EQ(num_create, 1);
+	ASSERT_EQ(num_fail, 0);
+	ASSERT_EQ(num_borrow, 0);
+	ASSERT_EQ(num_release, 1);
+	ASSERT_EQ(num_destroy, 0);
 
 	/* reuse first item */
 
 	got_item = false;
 	last_item = nullptr;
 	stock.Get(nullptr, handler, cancel_ptr);
-	assert(got_item);
-	assert(last_item == item);
-	assert(num_create == 1 && num_fail == 0);
-	assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
+	ASSERT_TRUE(got_item);
+	ASSERT_EQ(last_item, item);
+	ASSERT_EQ(num_create, 1);
+	ASSERT_EQ(num_fail, 0);
+	ASSERT_EQ(num_borrow, 1);
+	ASSERT_EQ(num_release, 1);
+	ASSERT_EQ(num_destroy, 0);
 
 	/* create second item */
 
 	got_item = false;
 	last_item = nullptr;
 	stock.Get(nullptr, handler, cancel_ptr);
-	assert(got_item);
-	assert(last_item != nullptr);
-	assert(last_item != item);
-	assert(num_create == 2 && num_fail == 0);
-	assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
+	ASSERT_TRUE(got_item);
+	ASSERT_NE(last_item, nullptr);
+	ASSERT_NE(last_item, item);
+	ASSERT_EQ(num_create, 2);
+	ASSERT_EQ(num_fail, 0);
+	ASSERT_EQ(num_borrow, 1);
+	ASSERT_EQ(num_release, 1);
+	ASSERT_EQ(num_destroy, 0);
 	second = last_item;
 
 	/* fail to create third item */
@@ -176,10 +189,13 @@ main(int, char **)
 	got_item = false;
 	last_item = nullptr;
 	stock.Get(nullptr, handler, cancel_ptr);
-	assert(got_item);
-	assert(last_item == nullptr);
-	assert(num_create == 2 && num_fail == 1);
-	assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
+	ASSERT_TRUE(got_item);
+	ASSERT_EQ(last_item, nullptr);
+	ASSERT_EQ(num_create, 2);
+	ASSERT_EQ(num_fail, 1);
+	ASSERT_EQ(num_borrow, 1);
+	ASSERT_EQ(num_release, 1);
+	ASSERT_EQ(num_destroy, 1);
 
 	/* create third item */
 
@@ -187,10 +203,13 @@ main(int, char **)
 	got_item = false;
 	last_item = nullptr;
 	stock.Get(nullptr, handler, cancel_ptr);
-	assert(got_item);
-	assert(last_item != nullptr);
-	assert(num_create == 3 && num_fail == 1);
-	assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
+	ASSERT_TRUE(got_item);
+	ASSERT_NE(last_item, nullptr);
+	ASSERT_EQ(num_create, 3);
+	ASSERT_EQ(num_fail, 1);
+	ASSERT_EQ(num_borrow, 1);
+	ASSERT_EQ(num_release, 1);
+	ASSERT_EQ(num_destroy, 1);
 	third = last_item;
 
 	/* fourth item waiting */
@@ -198,25 +217,34 @@ main(int, char **)
 	got_item = false;
 	last_item = nullptr;
 	stock.Get(nullptr, handler, cancel_ptr);
-	assert(!got_item);
-	assert(num_create == 3 && num_fail == 1);
-	assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
+	ASSERT_FALSE(got_item);
+	ASSERT_EQ(num_create, 3);
+	ASSERT_EQ(num_fail, 1);
+	ASSERT_EQ(num_borrow, 1);
+	ASSERT_EQ(num_release, 1);
+	ASSERT_EQ(num_destroy, 1);
 
 	/* fifth item waiting */
 
 	stock.Get(nullptr, handler, cancel_ptr);
-	assert(!got_item);
-	assert(num_create == 3 && num_fail == 1);
-	assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
+	ASSERT_FALSE(got_item);
+	ASSERT_EQ(num_create, 3);
+	ASSERT_EQ(num_fail, 1);
+	ASSERT_EQ(num_borrow, 1);
+	ASSERT_EQ(num_release, 1);
+	ASSERT_EQ(num_destroy, 1);
 
 	/* return third item */
 
 	stock.Put(*third, false);
 	event_loop.LoopNonBlock();
-	assert(num_create == 3 && num_fail == 1);
-	assert(num_borrow == 2 && num_release == 2 && num_destroy == 1);
-	assert(got_item);
-	assert(last_item == third);
+	ASSERT_EQ(num_create, 3);
+	ASSERT_EQ(num_fail, 1);
+	ASSERT_EQ(num_borrow, 2);
+	ASSERT_EQ(num_release, 2);
+	ASSERT_EQ(num_destroy, 1);
+	ASSERT_TRUE(got_item);
+	ASSERT_EQ(last_item, third);
 
 	/* destroy second item */
 
@@ -224,27 +252,39 @@ main(int, char **)
 	last_item = nullptr;
 	stock.Put(*second, true);
 	event_loop.LoopNonBlock();
-	assert(num_create == 4 && num_fail == 1);
-	assert(num_borrow == 2 && num_release == 2 && num_destroy == 2);
-	assert(got_item);
-	assert(last_item != nullptr);
+	ASSERT_EQ(num_create, 4);
+	ASSERT_EQ(num_fail, 1);
+	ASSERT_EQ(num_borrow, 2);
+	ASSERT_EQ(num_release, 2);
+	ASSERT_EQ(num_destroy, 2);
+	ASSERT_TRUE(got_item);
+	ASSERT_NE(last_item, nullptr);
 	second = last_item;
 
 	/* destroy first item */
 
 	stock.Put(*item, true);
-	assert(num_create == 4 && num_fail == 1);
-	assert(num_borrow == 2 && num_release == 2 && num_destroy == 3);
+	ASSERT_EQ(num_create, 4);
+	ASSERT_EQ(num_fail, 1);
+	ASSERT_EQ(num_borrow, 2);
+	ASSERT_EQ(num_release, 2);
+	ASSERT_EQ(num_destroy, 3);
 
 	/* destroy second item */
 
 	stock.Put(*second, true);
-	assert(num_create == 4 && num_fail == 1);
-	assert(num_borrow == 2 && num_release == 2 && num_destroy == 4);
+	ASSERT_EQ(num_create, 4);
+	ASSERT_EQ(num_fail, 1);
+	ASSERT_EQ(num_borrow, 2);
+	ASSERT_EQ(num_release, 2);
+	ASSERT_EQ(num_destroy, 4);
 
 	/* destroy third item */
 
 	stock.Put(*third, true);
-	assert(num_create == 4 && num_fail == 1);
-	assert(num_borrow == 2 && num_release == 2 && num_destroy == 5);
+	ASSERT_EQ(num_create, 4);
+	ASSERT_EQ(num_fail, 1);
+	ASSERT_EQ(num_borrow, 2);
+	ASSERT_EQ(num_release, 2);
+	ASSERT_EQ(num_destroy, 5);
 }

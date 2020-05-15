@@ -379,12 +379,18 @@ test('TestRedirectHttps', executable('TestRedirectHttps',
     net_dep,
   ]))
 
-test('t_stock', executable('t_stock',
-  't_stock.cxx',
-  include_directories: inc,
-  dependencies: [
-    stock_dep,
-  ]))
+test(
+  't_stock',
+  executable(
+    't_stock',
+    't_stock.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      stock_dep,
+    ],
+  ),
+)
 
 test('t_resource_address', executable('t_resource_address',
   't_resource_address.cxx',
