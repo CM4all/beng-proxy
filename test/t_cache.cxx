@@ -91,29 +91,29 @@ main(int, char **)
 
 	PInstance instance;
 
-	auto *cache = new Cache(instance.event_loop, 1024, 4);
+	Cache cache(instance.event_loop, 1024, 4);
 
 	/* add first item */
 
 	i = my_cache_item_new(instance.root_pool, 1, 0);
-	cache->Put("foo", *i);
+	cache.Put("foo", *i);
 
 	/* overwrite first item */
 
 	i = my_cache_item_new(instance.root_pool, 2, 0);
-	cache->Put("foo", *i);
+	cache.Put("foo", *i);
 
 	/* check overwrite result */
 
-	i = (MyCacheItem *)cache->Get("foo");
+	i = (MyCacheItem *)cache.Get("foo");
 	assert(i != nullptr);
 	assert(i->match == 2);
 	assert(i->value == 0);
 
-	i = (MyCacheItem *)cache->GetMatch("foo", my_match, match_to_ptr(1));
+	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(1));
 	assert(i == nullptr);
 
-	i = (MyCacheItem *)cache->GetMatch("foo", my_match, match_to_ptr(2));
+	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(2));
 	assert(i != nullptr);
 	assert(i->match == 2);
 	assert(i->value == 0);
@@ -121,18 +121,18 @@ main(int, char **)
 	/* add new item */
 
 	i = my_cache_item_new(instance.root_pool, 1, 1);
-	cache->PutMatch("foo", *i, my_match, match_to_ptr(1));
+	cache.PutMatch("foo", *i, my_match, match_to_ptr(1));
 
 	/* check second item */
 
-	i = (MyCacheItem *)cache->GetMatch("foo", my_match, match_to_ptr(1));
+	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(1));
 	assert(i != nullptr);
 	assert(i->match == 1);
 	assert(i->value == 1);
 
 	/* check first item */
 
-	i = (MyCacheItem *)cache->GetMatch("foo", my_match, match_to_ptr(2));
+	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(2));
 	assert(i != nullptr);
 	assert(i->match == 2);
 	assert(i->value == 0);
@@ -140,14 +140,14 @@ main(int, char **)
 	/* overwrite first item */
 
 	i = my_cache_item_new(instance.root_pool, 1, 3);
-	cache->PutMatch("foo", *i, my_match, match_to_ptr(1));
+	cache.PutMatch("foo", *i, my_match, match_to_ptr(1));
 
-	i = (MyCacheItem *)cache->GetMatch("foo", my_match, match_to_ptr(1));
+	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(1));
 	assert(i != nullptr);
 	assert(i->match == 1);
 	assert(i->value == 3);
 
-	i = (MyCacheItem *)cache->GetMatch("foo", my_match, match_to_ptr(2));
+	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(2));
 	assert(i != nullptr);
 	assert(i->match == 2);
 	assert(i->value == 0);
@@ -155,19 +155,15 @@ main(int, char **)
 	/* overwrite second item */
 
 	i = my_cache_item_new(instance.root_pool, 2, 4);
-	cache->PutMatch("foo", *i, my_match, match_to_ptr(2));
+	cache.PutMatch("foo", *i, my_match, match_to_ptr(2));
 
-	i = (MyCacheItem *)cache->GetMatch("foo", my_match, match_to_ptr(1));
+	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(1));
 	assert(i != nullptr);
 	assert(i->match == 1);
 	assert(i->value == 3);
 
-	i = (MyCacheItem *)cache->GetMatch("foo", my_match, match_to_ptr(2));
+	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(2));
 	assert(i != nullptr);
 	assert(i->match == 2);
 	assert(i->value == 4);
-
-	/* cleanup */
-
-	delete cache;
 }
