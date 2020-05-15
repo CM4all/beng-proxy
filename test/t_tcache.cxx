@@ -108,7 +108,7 @@ buffer_equals(ConstBuffer<T> a, ConstBuffer<T> b)
 }
 
 static bool
-Equals(const MountList &a, const MountList &b)
+operator==(const MountList &a, const MountList &b) noexcept
 {
 	return strcmp(a.source, b.source) == 0 &&
 		strcmp(a.target, b.target) == 0 &&
@@ -119,89 +119,85 @@ static bool
 Equals(const MountList *a, const MountList *b)
 {
 	for (; a != nullptr; a = a->next, b = b->next)
-		if (b == nullptr || !Equals(*a, *b))
+		if (b == nullptr || !(*a == *b))
 			return false;
 
 	return b == nullptr;
 }
 
 static bool
-Equals(const MountNamespaceOptions &a, const MountNamespaceOptions &b) noexcept
+operator==(const MountNamespaceOptions &a,
+	   const MountNamespaceOptions &b) noexcept
 {
 	return Equals(a.mounts, b.mounts);
 }
 
 static bool
-Equals(const NamespaceOptions &a, const NamespaceOptions &b)
+operator==(const NamespaceOptions &a, const NamespaceOptions &b) noexcept
 {
-	return Equals(a.mount, b.mount);
+	return a.mount == b.mount;
 }
 
 static bool
-Equals(const ChildOptions &a, const ChildOptions &b)
+operator==(const ChildOptions &a, const ChildOptions &b) noexcept
 {
-	return Equals(a.ns, b.ns);
+	return a.ns == b.ns;
 }
 
 static bool
-Equals(const DelegateAddress &a, const DelegateAddress &b)
+operator==(const DelegateAddress &a, const DelegateAddress &b) noexcept
 {
 	return string_equals(a.delegate, b.delegate) &&
-		Equals(a.child_options, b.child_options);
+		a.child_options == b.child_options;
 }
 
 static bool
-http_address_equals(const HttpAddress *a,
-		    const HttpAddress *b)
+operator==(const HttpAddress &a, const HttpAddress &b) noexcept
 {
-	return string_equals(a->host_and_port, b->host_and_port) &&
-		string_equals(a->path, b->path);
+	return string_equals(a.host_and_port, b.host_and_port) &&
+		string_equals(a.path, b.path);
 }
 
 static bool
-resource_address_equals(const ResourceAddress *a,
-			const ResourceAddress *b)
+operator==(const ResourceAddress &a, const ResourceAddress &b) noexcept
 {
-	EXPECT_NE(a, nullptr);
-	EXPECT_NE(b, nullptr);
-
-	if (a->type != b->type)
+	if (a.type != b.type)
 		return false;
 
-	switch (a->type) {
+	switch (a.type) {
 	case ResourceAddress::Type::NONE:
 		return true;
 
 	case ResourceAddress::Type::LOCAL:
-		EXPECT_NE(a->GetFile().path, nullptr);
-		EXPECT_NE(b->GetFile().path, nullptr);
+		EXPECT_NE(a.GetFile().path, nullptr);
+		EXPECT_NE(b.GetFile().path, nullptr);
 
-		return string_equals(a->GetFile().path, b->GetFile().path) &&
-			string_equals(a->GetFile().deflated, b->GetFile().deflated) &&
-			string_equals(a->GetFile().gzipped, b->GetFile().gzipped) &&
-			string_equals(a->GetFile().base, b->GetFile().base) &&
-			string_equals(a->GetFile().content_type, b->GetFile().content_type) &&
-			string_equals(a->GetFile().document_root, b->GetFile().document_root) &&
-			(a->GetFile().delegate == nullptr) == (b->GetFile().delegate == nullptr) &&
-			(a->GetFile().delegate == nullptr ||
-			 Equals(*a->GetFile().delegate, *b->GetFile().delegate));
+		return string_equals(a.GetFile().path, b.GetFile().path) &&
+			string_equals(a.GetFile().deflated, b.GetFile().deflated) &&
+			string_equals(a.GetFile().gzipped, b.GetFile().gzipped) &&
+			string_equals(a.GetFile().base, b.GetFile().base) &&
+			string_equals(a.GetFile().content_type, b.GetFile().content_type) &&
+			string_equals(a.GetFile().document_root, b.GetFile().document_root) &&
+			(a.GetFile().delegate == nullptr) == (b.GetFile().delegate == nullptr) &&
+			(a.GetFile().delegate == nullptr ||
+			 *a.GetFile().delegate == *b.GetFile().delegate);
 
 	case ResourceAddress::Type::CGI:
-		EXPECT_NE(a->GetCgi().path, nullptr);
-		EXPECT_NE(b->GetCgi().path, nullptr);
+		EXPECT_NE(a.GetCgi().path, nullptr);
+		EXPECT_NE(b.GetCgi().path, nullptr);
 
-		return Equals(a->GetCgi().options, b->GetCgi().options) &&
-			string_equals(a->GetCgi().path, b->GetCgi().path) &&
-			string_equals(a->GetCgi().interpreter, b->GetCgi().interpreter) &&
-			string_equals(a->GetCgi().action, b->GetCgi().action) &&
-			string_equals(a->GetCgi().uri, b->GetCgi().uri) &&
-			string_equals(a->GetCgi().script_name, b->GetCgi().script_name) &&
-			string_equals(a->GetCgi().path_info, b->GetCgi().path_info) &&
-			string_equals(a->GetCgi().query_string, b->GetCgi().query_string) &&
-			string_equals(a->GetCgi().document_root, b->GetCgi().document_root);
+		return a.GetCgi().options == b.GetCgi().options &&
+			string_equals(a.GetCgi().path, b.GetCgi().path) &&
+			string_equals(a.GetCgi().interpreter, b.GetCgi().interpreter) &&
+			string_equals(a.GetCgi().action, b.GetCgi().action) &&
+			string_equals(a.GetCgi().uri, b.GetCgi().uri) &&
+			string_equals(a.GetCgi().script_name, b.GetCgi().script_name) &&
+			string_equals(a.GetCgi().path_info, b.GetCgi().path_info) &&
+			string_equals(a.GetCgi().query_string, b.GetCgi().query_string) &&
+			string_equals(a.GetCgi().document_root, b.GetCgi().document_root);
 
 	case ResourceAddress::Type::HTTP:
-		return http_address_equals(&a->GetHttp(), &b->GetHttp());
+		return a.GetHttp() == b.GetHttp();
 
 	default:
 		/* not implemented */
@@ -211,31 +207,26 @@ resource_address_equals(const ResourceAddress *a,
 }
 
 static bool
-transformation_equals(const Transformation *a,
-		      const Transformation *b)
+operator==(const Transformation &a, const Transformation &b) noexcept
 {
-	EXPECT_NE(a, nullptr);
-	EXPECT_NE(b, nullptr);
-
-	if (a->type != b->type)
+	if (a.type != b.type)
 		return false;
 
-	switch (a->type) {
+	switch (a.type) {
 	case Transformation::Type::PROCESS:
-		return a->u.processor.options == b->u.processor.options;
+		return a.u.processor.options == b.u.processor.options;
 
 	case Transformation::Type::PROCESS_CSS:
-		return a->u.css_processor.options == b->u.css_processor.options;
+		return a.u.css_processor.options == b.u.css_processor.options;
 
 	case Transformation::Type::PROCESS_TEXT:
 		return true;
 
 	case Transformation::Type::FILTER:
-		return resource_address_equals(&a->u.filter.address,
-					       &b->u.filter.address);
+		return a.u.filter.address == b.u.filter.address;
 
 	case Transformation::Type::SUBST:
-		return string_equals(a->u.subst.yaml_file, b->u.subst.yaml_file);
+		return string_equals(a.u.subst.yaml_file, b.u.subst.yaml_file);
 	}
 
 	/* unreachable */
@@ -248,7 +239,7 @@ transformation_chain_equals(const Transformation *a,
 			    const Transformation *b)
 {
 	while (a != nullptr && b != nullptr) {
-		if (!transformation_equals(a, b))
+		if (!(*a == *b))
 			return false;
 
 		a = a->next;
@@ -259,22 +250,19 @@ transformation_chain_equals(const Transformation *a,
 }
 
 static bool
-view_equals(const WidgetView *a, const WidgetView *b)
+operator==(const WidgetView &a, const WidgetView &b) noexcept
 {
-	EXPECT_NE(a, nullptr);
-	EXPECT_NE(b, nullptr);
-
-	return string_equals(a->name, b->name) &&
-		resource_address_equals(&a->address, &b->address) &&
-		a->filter_4xx == b->filter_4xx &&
-		transformation_chain_equals(a->transformation, b->transformation);
+	return string_equals(a.name, b.name) &&
+		a.address == b.address &&
+		a.filter_4xx == b.filter_4xx &&
+		transformation_chain_equals(a.transformation, b.transformation);
 }
 
 static bool
 view_chain_equals(const WidgetView *a, const WidgetView *b)
 {
 	while (a != nullptr && b != nullptr) {
-		if (!view_equals(a, b))
+		if (!(*a == *b))
 			return false;
 
 		a = a->next;
@@ -285,25 +273,21 @@ view_chain_equals(const WidgetView *a, const WidgetView *b)
 }
 
 static bool
-translate_response_equals(const TranslateResponse *a,
-			  const TranslateResponse *b)
+operator==(const TranslateResponse &a, const TranslateResponse &b) noexcept
 {
-	if (a == nullptr || b == nullptr)
-		return a == nullptr && b == nullptr;
-
-	return string_equals(a->base, b->base) &&
-		a->regex_tail == b->regex_tail &&
-		string_equals(a->regex, b->regex) &&
-		string_equals(a->inverse_regex, b->inverse_regex) &&
-		a->easy_base == b->easy_base &&
-		a->unsafe_base == b->unsafe_base &&
-		string_equals(a->uri, b->uri) &&
-		string_equals(a->redirect, b->redirect) &&
-		string_equals(a->test_path, b->test_path) &&
-		buffer_equals(a->check, b->check) &&
-		buffer_equals(a->want_full_uri, b->want_full_uri) &&
-		resource_address_equals(&a->address, &b->address) &&
-		view_chain_equals(a->views, b->views);
+	return string_equals(a.base, b.base) &&
+		a.regex_tail == b.regex_tail &&
+		string_equals(a.regex, b.regex) &&
+		string_equals(a.inverse_regex, b.inverse_regex) &&
+		a.easy_base == b.easy_base &&
+		a.unsafe_base == b.unsafe_base &&
+		string_equals(a.uri, b.uri) &&
+		string_equals(a.redirect, b.redirect) &&
+		string_equals(a.test_path, b.test_path) &&
+		buffer_equals(a.check, b.check) &&
+		buffer_equals(a.want_full_uri, b.want_full_uri) &&
+		a.address == b.address &&
+		view_chain_equals(a.views, b.views);
 }
 
 class MyTranslateHandler final : public TranslateHandler {
@@ -316,7 +300,8 @@ public:
 void
 MyTranslateHandler::OnTranslateResponse(TranslateResponse &response) noexcept
 {
-	EXPECT_TRUE(translate_response_equals(&response, expected_response));
+	ASSERT_NE(expected_response, nullptr);
+	EXPECT_EQ(response, *expected_response);
 }
 
 void
