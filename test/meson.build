@@ -311,14 +311,20 @@ if nfs_client_dep.found()
   )
 endif
 
-test('t_cache', executable('t_cache',
-  't_cache.cxx',
-  '../src/PInstance.cxx',
-  include_directories: inc,
-  dependencies: [
-    eutil_dep,
-    pool_dep,
-  ]))
+test(
+  't_cache',
+  executable(
+    't_cache',
+    't_cache.cxx',
+    '../src/PInstance.cxx',
+    include_directories: inc,
+    dependencies: [
+      gtest,
+      eutil_dep,
+      pool_dep,
+    ],
+  ),
+)
 
 test(
   't_tcache',

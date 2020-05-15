@@ -35,7 +35,8 @@
 #include "pool/Holder.hxx"
 #include "PInstance.hxx"
 
-#include <assert.h>
+#include <gtest/gtest.h>
+
 #include <time.h>
 
 static void *
@@ -84,8 +85,7 @@ my_match(const CacheItem *item, void *ctx)
 	return i->match == match;
 }
 
-int
-main(int, char **)
+TEST(TranslationCache, Basic)
 {
 	MyCacheItem *i;
 
@@ -106,17 +106,17 @@ main(int, char **)
 	/* check overwrite result */
 
 	i = (MyCacheItem *)cache.Get("foo");
-	assert(i != nullptr);
-	assert(i->match == 2);
-	assert(i->value == 0);
+	ASSERT_NE(i, nullptr);
+	ASSERT_EQ(i->match, 2);
+	ASSERT_EQ(i->value, 0);
 
 	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(1));
-	assert(i == nullptr);
+	ASSERT_EQ(i, nullptr);
 
 	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(2));
-	assert(i != nullptr);
-	assert(i->match == 2);
-	assert(i->value == 0);
+	ASSERT_NE(i, nullptr);
+	ASSERT_EQ(i->match, 2);
+	ASSERT_EQ(i->value, 0);
 
 	/* add new item */
 
@@ -126,16 +126,16 @@ main(int, char **)
 	/* check second item */
 
 	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(1));
-	assert(i != nullptr);
-	assert(i->match == 1);
-	assert(i->value == 1);
+	ASSERT_NE(i, nullptr);
+	ASSERT_EQ(i->match, 1);
+	ASSERT_EQ(i->value, 1);
 
 	/* check first item */
 
 	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(2));
-	assert(i != nullptr);
-	assert(i->match == 2);
-	assert(i->value == 0);
+	ASSERT_NE(i, nullptr);
+	ASSERT_EQ(i->match, 2);
+	ASSERT_EQ(i->value, 0);
 
 	/* overwrite first item */
 
@@ -143,14 +143,14 @@ main(int, char **)
 	cache.PutMatch("foo", *i, my_match, match_to_ptr(1));
 
 	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(1));
-	assert(i != nullptr);
-	assert(i->match == 1);
-	assert(i->value == 3);
+	ASSERT_NE(i, nullptr);
+	ASSERT_EQ(i->match, 1);
+	ASSERT_EQ(i->value, 3);
 
 	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(2));
-	assert(i != nullptr);
-	assert(i->match == 2);
-	assert(i->value == 0);
+	ASSERT_NE(i, nullptr);
+	ASSERT_EQ(i->match, 2);
+	ASSERT_EQ(i->value, 0);
 
 	/* overwrite second item */
 
@@ -158,12 +158,12 @@ main(int, char **)
 	cache.PutMatch("foo", *i, my_match, match_to_ptr(2));
 
 	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(1));
-	assert(i != nullptr);
-	assert(i->match == 1);
-	assert(i->value == 3);
+	ASSERT_NE(i, nullptr);
+	ASSERT_EQ(i->match, 1);
+	ASSERT_EQ(i->value, 3);
 
 	i = (MyCacheItem *)cache.GetMatch("foo", my_match, match_to_ptr(2));
-	assert(i != nullptr);
-	assert(i->match == 2);
-	assert(i->value == 4);
+	ASSERT_NE(i, nullptr);
+	ASSERT_EQ(i->match, 2);
+	ASSERT_EQ(i->value, 4);
 }
