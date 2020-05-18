@@ -61,5 +61,5 @@ struct HttpCacheDocument {
 	 * This is not true if the Vary headers mismatch.
 	 */
 	gcc_pure
-	bool VaryFits(const StringMap *request_headers) const noexcept;
+	bool VaryFits(const StringMap &request_headers) const noexcept;
 };

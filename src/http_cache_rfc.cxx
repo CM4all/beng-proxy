@@ -102,10 +102,10 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
 }
 
 bool
-http_cache_vary_fits(const StringMap &vary, const StringMap *headers) noexcept
+http_cache_vary_fits(const StringMap &vary, const StringMap &headers) noexcept
 {
 	for (const auto &i : vary) {
-		const char *value = strmap_get_checked(headers, i.key);
+		const char *value = headers.Get(i.key);
 		if (value == nullptr)
 			value = "";
 
@@ -118,7 +118,7 @@ http_cache_vary_fits(const StringMap &vary, const StringMap *headers) noexcept
 }
 
 bool
-http_cache_vary_fits(const StringMap *vary, const StringMap *headers) noexcept
+http_cache_vary_fits(const StringMap *vary, const StringMap &headers) noexcept
 {
 	return vary == nullptr || http_cache_vary_fits(*vary, headers);
 }

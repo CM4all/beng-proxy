@@ -64,11 +64,11 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
 
 gcc_pure
 bool
-http_cache_vary_fits(const StringMap &vary, const StringMap *headers) noexcept;
+http_cache_vary_fits(const StringMap &vary, const StringMap &headers) noexcept;
 
 gcc_pure
 bool
-http_cache_vary_fits(const StringMap *vary, const StringMap *headers) noexcept;
+http_cache_vary_fits(const StringMap *vary, const StringMap &headers) noexcept;
 
 /**
  * Check whether the request should invalidate the existing cache.
