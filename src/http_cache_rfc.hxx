@@ -83,6 +83,7 @@ http_cache_request_invalidate(http_method_t method) noexcept;
 bool
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 			     HttpCacheResponseInfo &info,
+			     AllocatorPtr alloc,
 			     http_status_t status, const StringMap &headers,
 			     off_t body_available) noexcept;
 

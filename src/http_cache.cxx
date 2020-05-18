@@ -483,7 +483,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 	if (document != nullptr && status == HTTP_STATUS_NOT_MODIFIED) {
 		assert(!body);
 
-		if (http_cache_response_evaluate(request_info, info,
+		if (http_cache_response_evaluate(request_info, info, GetPool(),
 						 HTTP_STATUS_OK, _headers, -1) &&
 		    info.expires >= GetEventLoop().SystemNow()) {
 			/* copy the new "Expires" (or "max-age") value from the
@@ -532,7 +532,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 		? body.GetAvailable(true)
 		: 0;
 
-	if (!http_cache_response_evaluate(request_info, info,
+	if (!http_cache_response_evaluate(request_info, info, GetPool(),
 					  status, _headers, available)) {
 		/* don't cache response */
 		LogConcat(4, "HttpCache", "nocache ", key);

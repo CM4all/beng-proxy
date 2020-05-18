@@ -318,3 +318,138 @@ TEST(HttpCache, Basic)
 	run_cache_test(instance, requests[3], false);
 	run_cache_test(instance, requests[3], true);
 }
+
+TEST(HttpCache, MultiVary)
+{
+	const ScopeFbPoolInit fb_pool_init;
+	Instance instance;
+
+	/* request one resource, cold and warm cache */
+	static constexpr Request r0{
+		"/foo", nullptr,
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n"
+		"vary: x-bar, x-abc\n",
+		"1",
+	};
+
+	run_cache_test(instance, r0, false);
+	run_cache_test(instance, r0, true);
+
+	/* another resource, different header 1 */
+	static constexpr Request r1{
+		"/foo",
+		"x-foo: foo\n",
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n"
+		"vary: x-bar, x-abc\n",
+		"2",
+	};
+
+	run_cache_test(instance, r1, false);
+	run_cache_test(instance, r1, true);
+
+	/* another resource, different header 2 */
+	static constexpr Request r2{
+		"/foo",
+		"x-bar: bar\n",
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n"
+		"vary: x-bar, x-abc\n",
+		"3",
+	};
+
+	run_cache_test(instance, r2, false);
+	run_cache_test(instance, r2, true);
+
+	/* another resource, different header 3 */
+	static constexpr Request r3{
+		"/foo",
+		"x-abc: abc\n",
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n"
+		"vary: x-bar, x-abc\n",
+		"4",
+	};
+
+	run_cache_test(instance, r3, false);
+	run_cache_test(instance, r3, true);
+
+	/* another resource, different header combined 1+2 */
+	static constexpr Request r4{
+		"/foo",
+		"x-foo: foo\n"
+		"x-abc: abc\n",
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n"
+		"vary: x-bar, x-abc\n",
+		"5",
+	};
+
+	run_cache_test(instance, r4, false);
+	run_cache_test(instance, r4, true);
+
+	/* another resource, different header combined 2+3 */
+	static constexpr Request r5{
+		"/foo",
+		"x-bar: bar\n"
+		"x-abc: abc\n",
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n"
+		"vary: x-bar, x-abc\n",
+		"5",
+	};
+
+	run_cache_test(instance, r5, false);
+	run_cache_test(instance, r5, true);
+
+	static constexpr Request r5b{
+		"/foo",
+		"x-abc: abc\n"
+		"x-bar: bar\n",
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n"
+		"vary: x-bar, x-abc\n",
+		"5",
+	};
+
+	run_cache_test(instance, r5b, true);
+
+	/* another resource, different header 1 value */
+	static constexpr Request r6{
+		"/foo",
+		"x-foo: xyz\n",
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n"
+		"vary: x-bar, x-abc\n",
+		"6",
+	};
+
+	run_cache_test(instance, r6, false);
+	run_cache_test(instance, r6, true);
+
+	/* check all cache items again */
+	run_cache_test(instance, r1, true);
+	run_cache_test(instance, r2, true);
+	run_cache_test(instance, r3, true);
+	run_cache_test(instance, r4, true);
+	run_cache_test(instance, r5, true);
+	run_cache_test(instance, r5b, true);
+	run_cache_test(instance, r6, true);
+}
