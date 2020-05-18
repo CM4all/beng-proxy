@@ -46,6 +46,7 @@
 #include "util/Exception.hxx"
 
 #include <memory>
+#include <stdexcept>
 
 #include <string.h>
 
