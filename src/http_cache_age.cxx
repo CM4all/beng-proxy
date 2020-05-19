@@ -68,11 +68,10 @@ http_cache_age_limit(const StringMap &vary) noexcept
 }
 
 std::chrono::system_clock::time_point
-http_cache_calc_expires(const HttpCacheResponseInfo &info,
+http_cache_calc_expires(std::chrono::system_clock::time_point now,
+			const HttpCacheResponseInfo &info,
 			const StringMap &vary) noexcept
 {
-	const std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-
 	std::chrono::system_clock::duration max_age;
 	if (info.expires == std::chrono::system_clock::from_time_t(-1))
 		/* there is no Expires response header; keep it in the cache
