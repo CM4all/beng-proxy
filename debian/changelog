@@ -1,6 +1,6 @@
 cm4all-beng-proxy (16.16) unstable; urgency=low
 
-  * 
+  * http_cache: update expiry from "304" responses
 
  --   
 
