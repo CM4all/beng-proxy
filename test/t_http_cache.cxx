@@ -280,11 +280,11 @@ Context::OnHttpError(std::exception_ptr ep) noexcept
 }
 
 static void
-run_cache_test(struct pool *root_pool, unsigned num, bool cached)
+run_cache_test(struct pool &root_pool, unsigned num, bool cached)
 {
-	const Request *request = &requests[num];
-	auto pool = pool_new_linear(root_pool, "t_http_cache", 8192);
-	const auto uwa = MakeHttpAddress(request->uri).Host("foo");
+	const auto &request = requests[num];
+	auto pool = pool_new_linear(&root_pool, "t_http_cache", 8192);
+	const auto uwa = MakeHttpAddress(request.uri).Host("foo");
 	const ResourceAddress address(uwa);
 
 	CancellablePointer cancel_ptr;
@@ -292,9 +292,9 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
 	current_request = num;
 
 	StringMap headers;
-	if (request->request_headers != NULL) {
+	if (request.request_headers != NULL) {
 		GrowingBuffer gb;
-		gb.Write(request->request_headers);
+		gb.Write(request.request_headers);
 
 		header_parse_buffer(pool, headers, std::move(gb));
 	}
@@ -305,7 +305,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
 	Context context(pool);
 	http_cache_request(*cache, pool, nullptr,
 			   0, nullptr, nullptr,
-			   request->method, address,
+			   request.method, address,
 			   std::move(headers), nullptr,
 			   context, cancel_ptr);
 
