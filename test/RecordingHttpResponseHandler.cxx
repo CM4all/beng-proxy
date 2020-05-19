@@ -34,6 +34,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "event/Loop.hxx"
+#include "strmap.hxx"
 
 #include <assert.h>
 
@@ -52,13 +53,17 @@ RecordingHttpResponseHandler::ReadBody() noexcept
 }
 
 void
-RecordingHttpResponseHandler::OnHttpResponse(http_status_t _status, StringMap &&,
+RecordingHttpResponseHandler::OnHttpResponse(http_status_t _status,
+					     StringMap &&_headers,
 					     UnusedIstreamPtr _body) noexcept
 {
 	assert(state == State::WAITING);
 	assert(pool);
 
 	status = _status;
+
+	for (const auto &i : _headers)
+		headers.emplace(i.key, i.value);
 
 	if (_body) {
 		state = State::READING_BODY;

@@ -38,6 +38,9 @@
 #include "pool/Ptr.hxx"
 #include "util/Cancellable.hxx"
 
+#include <map>
+#include <string>
+
 class EventLoop;
 
 struct RecordingHttpResponseHandler : HttpResponseHandler, StringSinkHandler {
@@ -54,6 +57,7 @@ struct RecordingHttpResponseHandler : HttpResponseHandler, StringSinkHandler {
 	EventLoop &event_loop;
 
 	http_status_t status{};
+	std::multimap<std::string, std::string> headers;
 	std::string body;
 
 	std::exception_ptr error;
@@ -83,7 +87,7 @@ struct RecordingHttpResponseHandler : HttpResponseHandler, StringSinkHandler {
 	void ReadBody() noexcept;
 
 	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t _status, StringMap &&,
+	void OnHttpResponse(http_status_t _status, StringMap &&_headers,
 			    UnusedIstreamPtr) noexcept override;
 	void OnHttpError(std::exception_ptr _error) noexcept override;
 
