@@ -483,6 +483,7 @@ test('t_memcached_client', executable('t_memcached_client',
 
 test('t_http_cache', executable('t_http_cache',
   't_http_cache.cxx',
+  'RecordingHttpResponseHandler.cxx',
   '../src/PInstance.cxx',
   '../src/istream_unlock.cxx',
   '../src/istream_rubber.cxx',
