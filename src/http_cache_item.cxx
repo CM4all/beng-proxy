@@ -49,8 +49,7 @@ HttpCacheItem::HttpCacheItem(PoolPtr &&_pool,
 	:PoolHolder(std::move(_pool)),
 	 HttpCacheDocument(pool, _info, _request_headers,
 			   _status, _response_headers),
-	 CacheItem(now, system_now,
-		   http_cache_calc_expires(system_now, _info.expires, vary),
+	 CacheItem(http_cache_calc_expires(now, system_now, _info.expires, vary),
 		   pool_netto_size(pool) + _size),
 	 size(_size),
 	 body(std::move(_body))
@@ -63,8 +62,8 @@ HttpCacheItem::SetExpires(std::chrono::steady_clock::time_point steady_now,
 			  std::chrono::system_clock::time_point _expires) noexcept
 {
 	info.expires = _expires;
-	CacheItem::SetExpires(steady_now, system_now,
-			      http_cache_calc_expires(system_now, _expires, vary));
+	CacheItem::SetExpires(http_cache_calc_expires(steady_now, system_now,
+						      _expires, vary));
 }
 
 UnusedIstreamPtr
