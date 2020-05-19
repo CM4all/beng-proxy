@@ -59,6 +59,10 @@ struct HttpCacheItem final : PoolHolder, HttpCacheDocument, CacheItem {
 
 	using PoolHolder::GetPool;
 
+	void SetExpires(std::chrono::steady_clock::time_point steady_now,
+			std::chrono::system_clock::time_point system_now,
+			std::chrono::system_clock::time_point _expires) noexcept;
+
 	UnusedIstreamPtr OpenStream(struct pool &_pool) noexcept;
 
 	/* virtual methods from class CacheItem */

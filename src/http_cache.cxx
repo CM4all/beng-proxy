@@ -488,8 +488,6 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 		    info.expires >= GetEventLoop().SystemNow()) {
 			/* copy the new "Expires" (or "max-age") value from the
 			   "304 Not Modified" response */
-			document->info.expires = info.expires;
-
 			auto &item = *(HttpCacheItem *)document;
 			item.SetExpires(GetEventLoop().SteadyNow(),
 					GetEventLoop().SystemNow(),

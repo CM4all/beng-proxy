@@ -57,6 +57,16 @@ HttpCacheItem::HttpCacheItem(PoolPtr &&_pool,
 {
 }
 
+void
+HttpCacheItem::SetExpires(std::chrono::steady_clock::time_point steady_now,
+			  std::chrono::system_clock::time_point system_now,
+			  std::chrono::system_clock::time_point _expires) noexcept
+{
+	info.expires = _expires;
+	CacheItem::SetExpires(steady_now, system_now,
+			      http_cache_calc_expires(system_now, info, vary));
+}
+
 UnusedIstreamPtr
 HttpCacheItem::OpenStream(struct pool &_pool) noexcept
 {
