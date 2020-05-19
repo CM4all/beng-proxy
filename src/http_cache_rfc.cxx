@@ -284,18 +284,18 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 }
 
 void
-http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
+http_cache_copy_vary(StringMap &dest, AllocatorPtr alloc, const char *vary,
 		     const StringMap &request_headers) noexcept
 {
-	for (char **list = http_list_split(pool, vary);
+	for (const char *const*list = http_list_split(alloc, vary);
 	     *list != nullptr; ++list) {
 		const char *name = *list;
 		const char *value = request_headers.Get(name);
 		if (value == nullptr)
 			value = "";
 		else
-			value = p_strdup(&pool, value);
-		dest.Set(pool, name, value);
+			value = alloc.Dup(value);
+		dest.Set(alloc, name, value);
 	}
 }
 

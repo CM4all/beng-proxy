@@ -43,6 +43,7 @@
 
 #include <sys/types.h> /* for off_t */
 
+class AllocatorPtr;
 class Istream;
 class StringMap;
 struct ResourceAddress;
@@ -90,7 +91,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
  * new strmap.
  */
 void
-http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
+http_cache_copy_vary(StringMap &dest, AllocatorPtr alloc, const char *vary,
 		     const StringMap &request_headers) noexcept;
 
 /**

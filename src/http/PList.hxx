@@ -36,11 +36,11 @@
 
 #pragma once
 
-struct pool;
+class AllocatorPtr;
 
 /**
  * Splits a comma separated list into a string array.  The return
  * value is nullptr terminated.
  */
-char **
-http_list_split(struct pool &pool, const char *p) noexcept;
+const char *const*
+http_list_split(AllocatorPtr alloc, const char *p) noexcept;
