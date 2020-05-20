@@ -694,6 +694,12 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 }
 
 static void
+PrintAccount(const AcmeAccount &account) noexcept
+{
+	printf("location: %s\n", account.location.c_str());
+}
+
+static void
 Acme(ConstBuffer<const char *> args)
 {
 	AcmeConfig config;
@@ -779,7 +785,7 @@ Acme(ConstBuffer<const char *> args)
 		const AcmeKey key(key_path);
 
 		const auto account = AcmeClient(config).NewAccount(*key, email);
-		printf("location: %s\n", account.location.c_str());
+		PrintAccount(account);
 	} else if (strcmp(cmd, "get-account") == 0) {
 		if (!args.empty())
 			throw Usage("acme get-account");
@@ -790,7 +796,7 @@ Acme(ConstBuffer<const char *> args)
 		const auto account = AcmeClient(config).NewAccount(*key,
 								   nullptr,
 								   true);
-		printf("location: %s\n", account.location.c_str());
+		PrintAccount(account);
 	} else if (strcmp(cmd, "new-order") == 0) {
 		if (args.size < 2)
 			throw Usage("acme new-order HANDLE HOST ...");
