@@ -30,19 +30,28 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "AcmeAccount.hxx"
+#include "util/RuntimeError.hxx"
 
-#include <string>
-
-struct AcmeAccount {
-	enum class Status {
-		VALID,
-		DEACTIVATED,
-		REVOKED,
-	} status = Status::VALID;
-
-	std::string location;
-
-	static Status ParseStatus(const std::string &s);
-	static const char *FormatStatus(Status s) noexcept;
+static constexpr const char *acme_account_status_strings[] = {
+	"valid",
+	"deactivated",
+	"revoked",
+	nullptr
 };
+
+AcmeAccount::Status
+AcmeAccount::ParseStatus(const std::string &s)
+{
+	for (size_t i = 0; acme_account_status_strings[i] != nullptr; ++i)
+		if (s == acme_account_status_strings[i])
+			return Status(i);
+
+	throw FormatRuntimeError("Invalid account status: %s", s.c_str());
+}
+
+const char *
+AcmeAccount::FormatStatus(Status s) noexcept
+{
+	return acme_account_status_strings[size_t(s)];
+}

@@ -407,8 +407,12 @@ ToAccount(const Json::Value &root)
 	if (!root.isObject())
 		throw std::runtime_error("Response is not an object");
 
-	AcmeAccount account;
+	const auto &status = root["status"];
+	if (!status.isString())
+		throw std::runtime_error("No status");
 
+	AcmeAccount account;
+	account.status = AcmeAccount::ParseStatus(status.asString());
 	return account;
 }
 

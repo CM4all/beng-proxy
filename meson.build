@@ -1076,6 +1076,7 @@ executable(
   'src/certdb/AcmeDns.cxx',
   'src/certdb/AcmeClient.cxx',
   'src/certdb/AcmeChallenge.cxx',
+  'src/certdb/AcmeAccount.cxx',
   'src/certdb/AcmeAuthorization.cxx',
   'src/certdb/AcmeKey.cxx',
   'src/certdb/FakeAcmeClient.cxx',
