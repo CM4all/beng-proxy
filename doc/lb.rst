@@ -752,9 +752,9 @@ To get started, register an account::
 
 This prints the account "location", which must be specified with the
 ``--account-key-id`` option in every successive call.  To look up the
-location of an existing account by its email address, type::
+location of an existing account, type::
 
-  cm4all-certdb acme --staging get-account foo@example.com
+  cm4all-certdb acme --staging get-account
 
 Note: examples listed here will use the “staging” server. Omit the
 ``–-staging`` option to use the Let’s Encrypt production server.

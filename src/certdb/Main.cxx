@@ -780,15 +780,14 @@ Acme(ConstBuffer<const char *> args)
 		const auto account = AcmeClient(config).NewAccount(*key, email);
 		printf("location: %s\n", account.location.c_str());
 	} else if (strcmp(cmd, "get-account") == 0) {
-		if (args.size != 1)
-			throw Usage("acme get-account EMAIL");
-
-		const char *email = args[0];
+		if (!args.empty())
+			throw Usage("acme get-account");
 
 		const ScopeSslGlobalInit ssl_init;
 		const AcmeKey key(key_path);
 
-		const auto account = AcmeClient(config).NewAccount(*key, email,
+		const auto account = AcmeClient(config).NewAccount(*key,
+								   nullptr,
 								   true);
 		printf("location: %s\n", account.location.c_str());
 	} else if (strcmp(cmd, "new-order") == 0) {
