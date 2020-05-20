@@ -40,6 +40,8 @@
 #include "escape_html.hxx"
 #include "strmap.hxx"
 
+#include <stdexcept>
+
 WidgetContainerParser::WidgetContainerParser(struct pool &_pool,
 					     Widget &_container,
 					     SharedPoolPtr<WidgetContext> &&_ctx) noexcept
