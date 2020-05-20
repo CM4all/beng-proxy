@@ -7,7 +7,7 @@ cm4all-beng-proxy (17.0.7) unstable; urgency=low
   * certdb: add command "acme get-account"
   * certdb: print ACME account status
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 20 May 2020 19:10:35 +0200
 
 cm4all-beng-proxy (17.0.6) unstable; urgency=low
 
