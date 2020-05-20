@@ -401,6 +401,17 @@ MakeNewAccountRequest(const char *email, bool only_return_existing) noexcept
 	return root;
 }
 
+static auto
+ToAccount(const Json::Value &root)
+{
+	if (!root.isObject())
+		throw std::runtime_error("Response is not an object");
+
+	AcmeAccount account;
+
+	return account;
+}
+
 AcmeAccount
 AcmeClient::NewAccount(EVP_PKEY &key, const char *email,
 		       bool only_return_existing)
@@ -434,7 +445,9 @@ AcmeClient::NewAccount(EVP_PKEY &key, const char *email,
 					 "Failed to register account");
 	}
 
-	return WithLocation(AcmeAccount{}, response);
+	const auto root = ParseJson(std::move(response));
+	CheckThrowError(root, "Failed to create account");
+	return WithLocation(ToAccount(root), response);
 }
 
 static Json::Value
