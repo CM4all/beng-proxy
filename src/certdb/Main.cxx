@@ -84,12 +84,55 @@ struct Usage {
 
 struct AutoUsage {};
 
-static const CertDatabaseConfig *db_config;
-
 static WorkshopProgress root_progress;
 
+static CertDatabaseConfig
+LoadCertDatabaseConfig(const char *path)
+{
+	LbConfig lb_config;
+	LoadConfigFile(lb_config, path);
+
+	auto i = lb_config.cert_dbs.begin();
+	if (i == lb_config.cert_dbs.end())
+		throw "/etc/cm4all/beng/lb.conf contains no cert_db section";
+
+	if (std::next(i) != lb_config.cert_dbs.end())
+		fprintf(stderr, "Warning: %s contains multiple cert_db sections\n",
+			path);
+
+	return std::move(i->second);
+}
+
+static CertDatabaseConfig
+LoadCertDatabaseConfig()
+{
+	return LoadCertDatabaseConfig("/etc/cm4all/beng/lb.conf");
+}
+
+/**
+ * Load the "cert_db" section from "/etc/cm4all/beng/lb.conf", and
+ * allow overriding the "connect" value from
+ * "/etc/cm4all/beng/certdb.connect".
+ */
+static CertDatabaseConfig
+LoadPatchCertDatabaseConfig()
+{
+	CertDatabaseConfig config = LoadCertDatabaseConfig();
+
+	try {
+		config.connect = LoadStringFile("/etc/cm4all/beng/certdb.connect");
+	} catch (const std::system_error &e) {
+		/* ignore ENOENT */
+		if (!IsFileNotFound(e))
+			throw;
+	}
+
+	return config;
+}
+
 static void
-LoadCertificate(const char *handle,
+LoadCertificate(const CertDatabaseConfig &db_config,
+		const char *handle,
 		const char *cert_path, const char *key_path)
 {
 	const ScopeSslGlobalInit ssl_init;
@@ -104,9 +147,9 @@ LoadCertificate(const char *handle,
 		throw "Key and certificate do not match.";
 
 	WrapKeyHelper wrap_key_helper;
-	const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
+	const auto wrap_key = wrap_key_helper.SetEncryptKey(db_config);
 
-	CertDatabase db(*db_config);
+	CertDatabase db(db_config);
 
 	bool inserted;
 
@@ -121,18 +164,18 @@ LoadCertificate(const char *handle,
 }
 
 static void
-ReloadCertificate(const char *handle)
+ReloadCertificate(const CertDatabaseConfig &db_config, const char *handle)
 {
 	const ScopeSslGlobalInit ssl_init;
 
-	CertDatabase db(*db_config);
+	CertDatabase db(db_config);
 
 	auto cert_key = db.GetServerCertificateKeyByHandle(handle);
 	if (!cert_key.second)
 		throw "Certificate not found";
 
 	WrapKeyHelper wrap_key_helper;
-	const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
+	const auto wrap_key = wrap_key_helper.SetEncryptKey(db_config);
 
 	db.LoadServerCertificate(handle,
 				 *cert_key.first, *cert_key.second,
@@ -140,9 +183,9 @@ ReloadCertificate(const char *handle)
 }
 
 static void
-DeleteCertificate(const char *handle)
+DeleteCertificate(const CertDatabaseConfig &db_config, const char *handle)
 {
-	CertDatabase db(*db_config);
+	CertDatabase db(db_config);
 
 	const auto result = db.DeleteServerCertificateByHandle(handle);
 	if (result.GetAffectedRows() == 0)
@@ -152,10 +195,10 @@ DeleteCertificate(const char *handle)
 }
 
 static void
-GetCertificate(const char *handle)
+GetCertificate(const CertDatabaseConfig &db_config, const char *handle)
 {
 	const ScopeSslGlobalInit ssl_init;
-	CertDatabase db(*db_config);
+	CertDatabase db(db_config);
 	auto cert = db.GetServerCertificateByHandle(handle);
 	if (!cert)
 		throw "Certificate not found";
@@ -186,13 +229,13 @@ FindPrintCertificates(CertDatabase &db, const char *name)
 }
 
 static void
-FindCertificate(const char *host, bool headers)
+FindCertificate(const CertDatabaseConfig &db_config, const char *host, bool headers)
 {
 	if (headers)
 		printf("id\thandle\tissuer\tnot_after\n");
 
 	const ScopeSslGlobalInit ssl_init;
-	CertDatabase db(*db_config);
+	CertDatabase db(db_config);
 
 	FindPrintCertificates(db, host);
 
@@ -202,10 +245,10 @@ FindCertificate(const char *host, bool headers)
 }
 
 static void
-DumpKey(const char *host)
+DumpKey(const CertDatabaseConfig &db_config, const char *host)
 {
 	const ScopeSslGlobalInit ssl_init;
-	CertDatabase db(*db_config);
+	CertDatabase db(db_config);
 
 	auto key = FindKeyByName(db, host);
 	if (!key)
@@ -218,9 +261,9 @@ DumpKey(const char *host)
 
 gcc_noreturn
 static void
-Monitor()
+Monitor(const CertDatabaseConfig &db_config)
 {
-	CertDatabase db(*db_config);
+	CertDatabase db(db_config);
 	db.ListenModified();
 
 	std::string last_modified = db.GetLastModified();
@@ -254,9 +297,9 @@ Monitor()
 }
 
 static void
-Tail()
+Tail(const CertDatabaseConfig &db_config)
 {
-	CertDatabase db(*db_config);
+	CertDatabase db(db_config);
 
 	for (auto &row : db.TailModifiedServerCertificatesMeta())
 		printf("%s %s %s\n",
@@ -527,7 +570,7 @@ AcmeAuthorize(const AcmeConfig &config,
 }
 
 static void
-AcmeNewOrder(const AcmeConfig &config,
+AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	     EVP_PKEY &account_key,
 	     CertDatabase &db,
 	     AcmeClient &client,
@@ -566,7 +609,7 @@ AcmeNewOrder(const AcmeConfig &config,
 	progress();
 
 	WrapKeyHelper wrap_key_helper;
-	const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
+	const auto wrap_key = wrap_key_helper.SetEncryptKey(db_config);
 
 	db.DoSerializableRepeat(8, [&](){
 		db.LoadServerCertificate(handle, *cert, *cert_key,
@@ -596,7 +639,8 @@ AllNames(X509 &cert)
 }
 
 static void
-AcmeRenewCert(const AcmeConfig &config, EVP_PKEY &account_key,
+AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
+	      EVP_PKEY &account_key,
 	      CertDatabase &db, AcmeClient &client,
 	      WorkshopProgress _progress,
 	      const char *handle)
@@ -636,7 +680,7 @@ AcmeRenewCert(const AcmeConfig &config, EVP_PKEY &account_key,
 	progress();
 
 	WrapKeyHelper wrap_key_helper;
-	const auto wrap_key = wrap_key_helper.SetEncryptKey(*db_config);
+	const auto wrap_key = wrap_key_helper.SetEncryptKey(db_config);
 
 	db.DoSerializableRepeat(8, [&](){
 		db.LoadServerCertificate(handle, *cert, old_key,
@@ -747,10 +791,11 @@ Acme(ConstBuffer<const char *> args)
 		const ScopeSslGlobalInit ssl_init;
 		const AcmeKey key(key_path);
 
-		CertDatabase db(*db_config);
+		const auto db_config = LoadPatchCertDatabaseConfig();
+		CertDatabase db(db_config);
 		AcmeClient client(config);
 
-		AcmeNewOrder(config, *key, db, client, root_progress,
+		AcmeNewOrder(db_config, config, *key, db, client, root_progress,
 			     handle, identifiers);
 		printf("OK\n");
 	} else if (strcmp(cmd, "renew-cert") == 0) {
@@ -762,10 +807,12 @@ Acme(ConstBuffer<const char *> args)
 		const ScopeSslGlobalInit ssl_init;
 		const AcmeKey key(key_path);
 
-		CertDatabase db(*db_config);
+		const auto db_config = LoadPatchCertDatabaseConfig();
+		CertDatabase db(db_config);
 		AcmeClient client(config);
 
-		AcmeRenewCert(config, *key, db, client, root_progress, handle);
+		AcmeRenewCert(db_config, config, *key,
+			      db, client, root_progress, handle);
 
 		printf("OK\n");
 	} else
@@ -790,7 +837,8 @@ Populate(CertDatabase &db, EVP_PKEY *key, ConstBuffer<void> key_der,
 }
 
 static void
-Populate(const char *key_path, const char *suffix, unsigned n)
+Populate(const CertDatabaseConfig &db_config,
+	 const char *key_path, const char *suffix, unsigned n)
 {
 	const ScopeSslGlobalInit ssl_init;
 
@@ -798,7 +846,7 @@ Populate(const char *key_path, const char *suffix, unsigned n)
 
 	const SslBuffer key_buffer(*key);
 
-	CertDatabase db(*db_config);
+	CertDatabase db(db_config);
 
 	if (n == 0) {
 		Populate(db, key.get(), key_buffer.get(), suffix);
@@ -815,57 +863,14 @@ Populate(const char *key_path, const char *suffix, unsigned n)
 	db.NotifyModified();
 }
 
-static CertDatabaseConfig
-LoadCertDatabaseConfig(const char *path)
-{
-	LbConfig lb_config;
-	LoadConfigFile(lb_config, path);
-
-	auto i = lb_config.cert_dbs.begin();
-	if (i == lb_config.cert_dbs.end())
-		throw "/etc/cm4all/beng/lb.conf contains no cert_db section";
-
-	if (std::next(i) != lb_config.cert_dbs.end())
-		fprintf(stderr, "Warning: %s contains multiple cert_db sections\n",
-			path);
-
-	return std::move(i->second);
-}
-
-static CertDatabaseConfig
-LoadCertDatabaseConfig()
-{
-	return LoadCertDatabaseConfig("/etc/cm4all/beng/lb.conf");
-}
-
-/**
- * Load the "cert_db" section from "/etc/cm4all/beng/lb.conf", and
- * allow overriding the "connect" value from
- * "/etc/cm4all/beng/certdb.connect".
- */
-static CertDatabaseConfig
-LoadPatchCertDatabaseConfig()
-{
-	CertDatabaseConfig config = LoadCertDatabaseConfig();
-
-	try {
-		config.connect = LoadStringFile("/etc/cm4all/beng/certdb.connect");
-	} catch (const std::system_error &e) {
-		/* ignore ENOENT */
-		if (!IsFileNotFound(e))
-			throw;
-	}
-
-	return config;
-}
-
 static void
 HandleLoad(ConstBuffer<const char *> args)
 {
 	if (args.size != 3)
 		throw AutoUsage();
 
-	LoadCertificate(args[0], args[1], args[2]);
+	const auto db_config = LoadPatchCertDatabaseConfig();
+	LoadCertificate(db_config, args[0], args[1], args[2]);
 }
 
 static void
@@ -874,7 +879,8 @@ HandleReload(ConstBuffer<const char *> args)
 	if (args.size != 1)
 		throw AutoUsage();
 
-	ReloadCertificate(args[0]);
+	const auto db_config = LoadPatchCertDatabaseConfig();
+	ReloadCertificate(db_config, args[0]);
 }
 
 static void
@@ -883,13 +889,14 @@ HandleDelete(ConstBuffer<const char *> args)
 	if (args.size != 1)
 		throw AutoUsage();
 
-	DeleteCertificate(args[0]);
+	const auto db_config = LoadPatchCertDatabaseConfig();
+	DeleteCertificate(db_config, args[0]);
 }
 
 static void
-PrintNames(const char *handle)
+PrintNames(const CertDatabaseConfig &db_config, const char *handle)
 {
-	CertDatabase db(*db_config);
+	CertDatabase db(db_config);
 	for (const auto &name : db.GetNamesByHandle(handle))
 		printf("%s\n", name.c_str());
 }
@@ -900,7 +907,8 @@ HandleNames(ConstBuffer<const char *> args)
 	if (args.size != 1)
 		throw AutoUsage();
 
-	PrintNames(args[0]);
+	const auto db_config = LoadPatchCertDatabaseConfig();
+	PrintNames(db_config, args[0]);
 }
 
 static void
@@ -909,7 +917,8 @@ HandleGet(ConstBuffer<const char *> args)
 	if (args.size != 1)
 		throw AutoUsage();
 
-	GetCertificate(args[0]);
+	const auto db_config = LoadPatchCertDatabaseConfig();
+	GetCertificate(db_config, args[0]);
 }
 
 static void
@@ -930,13 +939,15 @@ HandleFind(ConstBuffer<const char *> args)
 	if (args.size != 1)
 		throw AutoUsage();
 
-	FindCertificate(args[0], headers);
+	const auto db_config = LoadPatchCertDatabaseConfig();
+	FindCertificate(db_config, args[0], headers);
 }
 
 static void
-SetHandle(Pg::Serial id, const char *handle)
+SetHandle(const CertDatabaseConfig &db_config,
+	  Pg::Serial id, const char *handle)
 {
-	CertDatabase db(*db_config);
+	CertDatabase db(db_config);
 	db.SetHandle(id, handle);
 }
 
@@ -946,7 +957,8 @@ HandleSetHandle(ConstBuffer<const char *> args)
 	if (args.size != 2)
 		throw AutoUsage();
 
-	SetHandle(Pg::Serial::Parse(args[0]), args[1]);
+	const auto db_config = LoadPatchCertDatabaseConfig();
+	SetHandle(db_config, Pg::Serial::Parse(args[0]), args[1]);
 }
 
 static void
@@ -955,7 +967,8 @@ HandleDumpKey(ConstBuffer<const char *> args)
 	if (args.size != 1)
 		throw AutoUsage();
 
-	DumpKey(args[0]);
+	const auto db_config = LoadPatchCertDatabaseConfig();
+	DumpKey(db_config, args[0]);
 }
 
 gcc_noreturn
@@ -965,7 +978,8 @@ HandleMonitor(ConstBuffer<const char *> args)
 	if (args.size != 0)
 		throw AutoUsage();
 
-	Monitor();
+	const auto db_config = LoadPatchCertDatabaseConfig();
+	Monitor(db_config);
 }
 
 static void
@@ -974,7 +988,8 @@ HandleTail(ConstBuffer<const char *> args)
 	if (args.size != 0)
 		throw AutoUsage();
 
-	Tail();
+	const auto db_config = LoadPatchCertDatabaseConfig();
+	Tail(db_config);
 }
 
 static void
@@ -1013,7 +1028,8 @@ HandlePopulate(ConstBuffer<const char *> args)
 			throw std::runtime_error("Invalid COUNT parameter");
 	}
 
-	Populate(key, suffix, count);
+	const auto db_config = LoadPatchCertDatabaseConfig();
+	Populate(db_config, key, suffix, count);
 }
 
 static void
@@ -1022,7 +1038,8 @@ HandleMigrate(ConstBuffer<const char *> args)
 	if (args.size != 0)
 		throw AutoUsage();
 
-	CertDatabase db(*db_config);
+	const auto db_config = LoadPatchCertDatabaseConfig();
+	CertDatabase db(db_config);
 	db.Migrate();
 }
 
@@ -1128,9 +1145,6 @@ try {
 	setvbuf(stderr, nullptr, _IOLBF, 0);
 
 	const auto cmd = args.shift();
-
-	const auto _db_config = LoadPatchCertDatabaseConfig();
-	db_config = &_db_config;
 
 	const auto *cmd2 = FindCommand(cmd);
 	if (cmd2 == nullptr) {
