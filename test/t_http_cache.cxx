@@ -264,10 +264,18 @@ run_cache_test(Instance &instance, const Request &request, bool cached)
 	const auto *expected_rh = parse_response_headers(pool, request);
 	if (expected_rh != nullptr) {
 		for (const auto &i : *expected_rh) {
-			auto h = handler.headers.find(i.key);
-			ASSERT_NE(h, handler.headers.end());
-			ASSERT_STREQ(h->second.c_str(), i.value);
+			auto h = handler.headers.equal_range(i.key);
+			ASSERT_NE(h.first, h.second);
+
+			auto j = std::find_if(h.first, h.second, [&i](const auto &p){
+				return p.second == i.value;
+			});
+
+			ASSERT_NE(j, h.second);
+			handler.headers.erase(j);
 		}
+
+		ASSERT_TRUE(handler.headers.empty());
 	}
 
 	if (request.response_body != nullptr) {
