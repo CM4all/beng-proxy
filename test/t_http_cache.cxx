@@ -109,10 +109,6 @@ static constexpr Request requests[] = {
 	},
 };
 
-static unsigned current_request;
-static bool got_request;
-static bool validated;
-
 static StringMap *
 parse_headers(struct pool &pool, const char *raw)
 {
@@ -141,6 +137,10 @@ parse_response_headers(struct pool &pool, const Request &request)
 
 class MyResourceLoader final : public ResourceLoader {
 public:
+	unsigned current_request;
+	bool got_request;
+	bool validated;
+
 	/* virtual methods from class ResourceLoader */
 	void SendRequest(struct pool &pool,
 			 const StopwatchPtr &parent_stopwatch,
@@ -234,7 +234,7 @@ run_cache_test(Instance &instance, unsigned num, bool cached)
 
 	CancellablePointer cancel_ptr;
 
-	current_request = num;
+	instance.resource_loader.current_request = num;
 
 	StringMap headers;
 	if (request.request_headers != NULL) {
@@ -244,7 +244,7 @@ run_cache_test(Instance &instance, unsigned num, bool cached)
 		header_parse_buffer(pool, headers, std::move(gb));
 	}
 
-	got_request = cached;
+	instance.resource_loader.got_request = cached;
 
 	RecordingHttpResponseHandler handler(instance.root_pool,
 					     instance.event_loop);
@@ -258,7 +258,7 @@ run_cache_test(Instance &instance, unsigned num, bool cached)
 	if (handler.IsAlive())
 		instance.event_loop.Dispatch();
 
-	ASSERT_TRUE(got_request);
+	ASSERT_TRUE(instance.resource_loader.got_request);
 	ASSERT_FALSE(handler.IsAlive());
 	ASSERT_EQ(handler.error, nullptr);
 
@@ -302,9 +302,9 @@ TEST(HttpCache, Basic)
 
 	run_cache_test(instance, 2, false);
 
-	validated = false;
+	instance.resource_loader.validated = false;
 	run_cache_test(instance, 2, false);
-	ASSERT_FALSE(validated);
+	ASSERT_FALSE(instance.resource_loader.validated);
 
 	/* double check with a cacheable query string ("Expires" is
 	   set) */
