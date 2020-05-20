@@ -31,6 +31,7 @@
  */
 
 #include "http_cache_heap.hxx"
+#include "http_cache_item.hxx"
 #include "http_cache_rfc.hxx"
 #include "http_cache_document.hxx"
 #include "http_cache_age.hxx"
@@ -43,51 +44,11 @@
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
 
-struct HttpCacheItem final : PoolHolder, HttpCacheDocument, CacheItem {
-	size_t size;
-
-	const RubberAllocation body;
-
-	HttpCacheItem(PoolPtr &&_pool,
-		      std::chrono::steady_clock::time_point now,
-		      std::chrono::system_clock::time_point system_now,
-		      const HttpCacheResponseInfo &_info,
-		      const StringMap &_request_headers,
-		      http_status_t _status,
-		      const StringMap &_response_headers,
-		      size_t _size,
-		      RubberAllocation &&_body) noexcept
-		:PoolHolder(std::move(_pool)),
-		 HttpCacheDocument(pool, _info, _request_headers,
-				   _status, _response_headers),
-		 CacheItem(now, system_now, http_cache_calc_expires(_info, vary),
-			   pool_netto_size(pool) + _size),
-		 size(_size),
-		 body(std::move(_body)) {
-	}
-
-	HttpCacheItem(const HttpCacheItem &) = delete;
-	HttpCacheItem &operator=(const HttpCacheItem &) = delete;
-
-	using PoolHolder::GetPool;
-
-	UnusedIstreamPtr OpenStream(struct pool &_pool) noexcept {
-		return istream_rubber_new(_pool, body.GetRubber(), body.GetId(),
-					  0, size, false);
-	}
-
-	/* virtual methods from class CacheItem */
-	void Destroy() noexcept override {
-		pool_trash(pool);
-		this->~HttpCacheItem();
-	}
-};
-
 static bool
 http_cache_item_match(const CacheItem *_item, void *ctx) noexcept
 {
 	const auto &item = *(const HttpCacheItem *)_item;
-	const StringMap *headers = (const StringMap *)ctx;
+	const auto &headers = *(const StringMap *)ctx;
 
 	return item.VaryFits(headers);
 }

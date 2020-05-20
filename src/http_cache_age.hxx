@@ -44,6 +44,8 @@ class StringMap;
  * "Expires" response header.
  */
 gcc_pure
-std::chrono::system_clock::time_point
-http_cache_calc_expires(const HttpCacheResponseInfo &info,
+std::chrono::steady_clock::time_point
+http_cache_calc_expires(std::chrono::steady_clock::time_point steady_now,
+			std::chrono::system_clock::time_point system_now,
+			std::chrono::system_clock::time_point expires,
 			const StringMap &vary) noexcept;

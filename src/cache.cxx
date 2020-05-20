@@ -375,6 +375,14 @@ CacheItem::Unlock() noexcept
 		Destroy();
 }
 
+void
+CacheItem::SetExpires(std::chrono::steady_clock::time_point steady_now,
+		      std::chrono::system_clock::time_point system_now,
+		      std::chrono::system_clock::time_point _expires) noexcept
+{
+	expires = ToSteady(steady_now, system_now, _expires);
+}
+
 /** clean up expired cache items every 60 seconds */
 bool
 Cache::ExpireCallback() noexcept

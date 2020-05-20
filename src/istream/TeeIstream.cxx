@@ -43,6 +43,8 @@
 
 #include <boost/intrusive/list.hpp>
 
+#include <stdexcept>
+
 #include <assert.h>
 
 namespace bi = boost::intrusive;

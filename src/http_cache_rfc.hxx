@@ -43,6 +43,7 @@
 
 #include <sys/types.h> /* for off_t */
 
+class AllocatorPtr;
 class Istream;
 class StringMap;
 struct ResourceAddress;
@@ -64,11 +65,11 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
 
 gcc_pure
 bool
-http_cache_vary_fits(const StringMap &vary, const StringMap *headers) noexcept;
+http_cache_vary_fits(const StringMap &vary, const StringMap &headers) noexcept;
 
 gcc_pure
 bool
-http_cache_vary_fits(const StringMap *vary, const StringMap *headers) noexcept;
+http_cache_vary_fits(const StringMap *vary, const StringMap &headers) noexcept;
 
 /**
  * Check whether the request should invalidate the existing cache.
@@ -82,6 +83,7 @@ http_cache_request_invalidate(http_method_t method) noexcept;
 bool
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 			     HttpCacheResponseInfo &info,
+			     AllocatorPtr alloc,
 			     http_status_t status, const StringMap &headers,
 			     off_t body_available) noexcept;
 
@@ -90,7 +92,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
  * new strmap.
  */
 void
-http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
+http_cache_copy_vary(StringMap &dest, AllocatorPtr alloc, const char *vary,
 		     const StringMap &request_headers) noexcept;
 
 /**

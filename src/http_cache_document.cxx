@@ -51,7 +51,7 @@ HttpCacheDocument::HttpCacheDocument(struct pool &pool,
 }
 
 bool
-HttpCacheDocument::VaryFits(const StringMap *request_headers) const noexcept
+HttpCacheDocument::VaryFits(const StringMap &request_headers) const noexcept
 {
 	return http_cache_vary_fits(vary, request_headers);
 }

@@ -102,10 +102,10 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
 }
 
 bool
-http_cache_vary_fits(const StringMap &vary, const StringMap *headers) noexcept
+http_cache_vary_fits(const StringMap &vary, const StringMap &headers) noexcept
 {
 	for (const auto &i : vary) {
-		const char *value = strmap_get_checked(headers, i.key);
+		const char *value = headers.Get(i.key);
 		if (value == nullptr)
 			value = "";
 
@@ -118,7 +118,7 @@ http_cache_vary_fits(const StringMap &vary, const StringMap *headers) noexcept
 }
 
 bool
-http_cache_vary_fits(const StringMap *vary, const StringMap *headers) noexcept
+http_cache_vary_fits(const StringMap *vary, const StringMap &headers) noexcept
 {
 	return vary == nullptr || http_cache_vary_fits(*vary, headers);
 }
@@ -160,16 +160,6 @@ http_status_cacheable(http_status_t status) noexcept
 		status == HTTP_STATUS_GONE;
 }
 
-gcc_pure
-static const char *
-strmap_get_non_empty(const StringMap &map, const char *key) noexcept
-{
-	const char *value = map.Get(key);
-	if (value != nullptr && *value == 0)
-		value = nullptr;
-	return value;
-}
-
 /**
  * Determine the difference between this host's real-time clock and
  * the server's clock.  This is used to adjust the "Expires" time
@@ -198,6 +188,7 @@ GetServerDateOffset(const HttpCacheRequestInfo &request_info,
 bool
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 			     HttpCacheResponseInfo &info,
+			     AllocatorPtr alloc,
 			     http_status_t status, const StringMap &headers,
 			     off_t body_available) noexcept
 {
@@ -271,12 +262,26 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 	info.last_modified = headers.Get("last-modified");
 	info.etag = headers.Get("etag");
 
-	info.vary = strmap_get_non_empty(headers, "vary");
-	if (info.vary != nullptr && strcmp(info.vary, "*") == 0)
-		/* RFC 2616 13.6: A Vary header field-value of "*" always
-		   fails to match and subsequent requests on that resource can
-		   only be properly interpreted by the origin server. */
-		return false;
+	info.vary = nullptr;
+	const auto vary = headers.EqualRange("vary");
+	for (auto i = vary.first; i != vary.second; ++i) {
+		const char *value = i->value;
+		if (*value == 0)
+			continue;
+
+		if (strcmp(value, "*") == 0)
+			/* RFC 2616 13.6: A Vary header field-value of
+			   "*" always fails to match and subsequent
+			   requests on that resource can only be
+			   properly interpreted by the origin
+			   server. */
+			return false;
+
+		if (info.vary == nullptr)
+			info.vary = value;
+		else
+			info.vary = alloc.Concat(info.vary, ", ", value);
+	}
 
 	return info.expires != std::chrono::system_clock::from_time_t(-1) ||
 		info.last_modified != nullptr ||
@@ -284,18 +289,18 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 }
 
 void
-http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
+http_cache_copy_vary(StringMap &dest, AllocatorPtr alloc, const char *vary,
 		     const StringMap &request_headers) noexcept
 {
-	for (char **list = http_list_split(pool, vary);
+	for (const char *const*list = http_list_split(alloc, vary);
 	     *list != nullptr; ++list) {
 		const char *name = *list;
 		const char *value = request_headers.Get(name);
 		if (value == nullptr)
 			value = "";
 		else
-			value = p_strdup(&pool, value);
-		dest.Set(pool, name, value);
+			value = alloc.Dup(value);
+		dest.Set(alloc, name, value);
 	}
 }
 

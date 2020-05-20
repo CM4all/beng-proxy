@@ -32,6 +32,7 @@
 
 #include "http_cache_internal.hxx"
 #include "http_cache_document.hxx"
+#include "http_cache_item.hxx"
 #include "http_cache_rfc.hxx"
 #include "http_cache_heap.hxx"
 #include "strmap.hxx"
@@ -482,12 +483,15 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 	if (document != nullptr && status == HTTP_STATUS_NOT_MODIFIED) {
 		assert(!body);
 
-		if (http_cache_response_evaluate(request_info, info,
+		if (http_cache_response_evaluate(request_info, info, GetPool(),
 						 HTTP_STATUS_OK, _headers, -1) &&
 		    info.expires >= GetEventLoop().SystemNow()) {
 			/* copy the new "Expires" (or "max-age") value from the
 			   "304 Not Modified" response */
-			document->info.expires = info.expires;
+			auto &item = *(HttpCacheItem *)document;
+			item.SetExpires(GetEventLoop().SteadyNow(),
+					GetEventLoop().SystemNow(),
+					info.expires);
 
 			/* TODO: this leaks pool memory each time we update
 			   headers; how to fix this? */
@@ -528,7 +532,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 		? body.GetAvailable(true)
 		: 0;
 
-	if (!http_cache_response_evaluate(request_info, info,
+	if (!http_cache_response_evaluate(request_info, info, GetPool(),
 					  status, _headers, available)) {
 		/* don't cache response */
 		LogConcat(4, "HttpCache", "nocache ", key);

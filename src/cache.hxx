@@ -66,7 +66,7 @@ class CacheItem {
 	 */
 	const char *key;
 
-	const std::chrono::steady_clock::time_point expires;
+	std::chrono::steady_clock::time_point expires;
 
 	const size_t size;
 
@@ -114,6 +114,14 @@ public:
 	const char *GetKey() const noexcept {
 		return key;
 	}
+
+	void SetExpires(std::chrono::steady_clock::time_point _expires) noexcept {
+		expires = _expires;
+	}
+
+	void SetExpires(std::chrono::steady_clock::time_point steady_now,
+			std::chrono::system_clock::time_point system_now,
+			std::chrono::system_clock::time_point _expires) noexcept;
 
 	size_t GetSize() const noexcept {
 		return size;

@@ -30,17 +30,44 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Various utilities for working with HTTP objects.
- */
-
 #pragma once
 
-class AllocatorPtr;
+#include "http_cache_document.hxx"
+#include "pool/Holder.hxx"
+#include "cache.hxx"
+#include "rubber.hxx"
 
-/**
- * Splits a comma separated list into a string array.  The return
- * value is nullptr terminated.
- */
-const char *const*
-http_list_split(AllocatorPtr alloc, const char *p) noexcept;
+class UnusedIstreamPtr;
+
+struct HttpCacheItem final : PoolHolder, HttpCacheDocument, CacheItem {
+	size_t size;
+
+	const RubberAllocation body;
+
+	HttpCacheItem(PoolPtr &&_pool,
+		      std::chrono::steady_clock::time_point now,
+		      std::chrono::system_clock::time_point system_now,
+		      const HttpCacheResponseInfo &_info,
+		      const StringMap &_request_headers,
+		      http_status_t _status,
+		      const StringMap &_response_headers,
+		      size_t _size,
+		      RubberAllocation &&_body) noexcept;
+
+	HttpCacheItem(const HttpCacheItem &) = delete;
+	HttpCacheItem &operator=(const HttpCacheItem &) = delete;
+
+	using PoolHolder::GetPool;
+
+	void SetExpires(std::chrono::steady_clock::time_point steady_now,
+			std::chrono::system_clock::time_point system_now,
+			std::chrono::system_clock::time_point _expires) noexcept;
+
+	UnusedIstreamPtr OpenStream(struct pool &_pool) noexcept;
+
+	/* virtual methods from class CacheItem */
+	void Destroy() noexcept override {
+		pool_trash(pool);
+		this->~HttpCacheItem();
+	}
+};

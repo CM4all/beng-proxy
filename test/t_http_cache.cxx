@@ -34,6 +34,7 @@
 #include "http_cache.hxx"
 #include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
+#include "RecordingHttpResponseHandler.hxx"
 #include "http/Address.hxx"
 #include "GrowingBuffer.hxx"
 #include "http/HeaderParser.hxx"
@@ -41,12 +42,10 @@
 #include "HttpResponseHandler.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
-#include "istream/Handler.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
 #include "util/Cancellable.hxx"
-#include "util/PrintException.hxx"
 #include "util/Compiler.h"
 #include "stopwatch.hxx"
 
@@ -60,8 +59,7 @@
 #include <string.h>
 #include <signal.h>
 
-struct Request final : IstreamHandler {
-	bool cached = false;
+struct Request final {
 	http_method_t method = HTTP_METHOD_GET;
 	const char *uri;
 	const char *request_headers;
@@ -70,32 +68,12 @@ struct Request final : IstreamHandler {
 	const char *response_headers;
 	const char *response_body;
 
-	bool eof = false;
-	size_t body_read = 0;
-
 	constexpr Request(const char *_uri, const char *_request_headers,
 			  const char *_response_headers,
 			  const char *_response_body) noexcept
 		:uri(_uri), request_headers(_request_headers),
 		 response_headers(_response_headers),
 		 response_body(_response_body) {}
-
-	/* virtual methods from class IstreamHandler */
-	size_t OnData(gcc_unused const void *data, size_t length) noexcept override {
-		EXPECT_LE(body_read + length, strlen(response_body));
-		EXPECT_EQ(memcmp(response_body + body_read, data, length), 0);
-
-		body_read += length;
-		return length;
-	}
-
-	void OnEof() noexcept override {
-		eof = true;
-	}
-
-	void OnError(std::exception_ptr) noexcept override {
-		FAIL();
-	}
 };
 
 #define DATE "Fri, 30 Jan 2009 10:53:30 GMT"
@@ -103,7 +81,7 @@ struct Request final : IstreamHandler {
 #define STAMP2 "Fri, 20 Jan 2009 08:53:30 GMT"
 #define EXPIRES "Fri, 20 Jan 2029 08:53:30 GMT"
 
-static Request requests[] = {
+static constexpr Request requests[] = {
 	{ "/foo", nullptr,
 	  "date: " DATE "\n"
 	  "last-modified: " STAMP1 "\n"
@@ -130,11 +108,6 @@ static Request requests[] = {
 	  "foo",
 	},
 };
-
-static HttpCache *cache;
-static unsigned current_request;
-static bool got_request, got_response;
-static bool validated;
 
 static StringMap *
 parse_headers(struct pool &pool, const char *raw)
@@ -164,6 +137,10 @@ parse_response_headers(struct pool &pool, const Request &request)
 
 class MyResourceLoader final : public ResourceLoader {
 public:
+	const Request *current_request;
+	bool got_request;
+	bool validated;
+
 	/* virtual methods from class ResourceLoader */
 	void SendRequest(struct pool &pool,
 			 const StopwatchPtr &parent_stopwatch,
@@ -193,18 +170,17 @@ MyResourceLoader::SendRequest(struct pool &pool,
 			      HttpResponseHandler &handler,
 			      CancellablePointer &) noexcept
 {
-	const auto *request = &requests[current_request];
-	StringMap *expected_rh;
+	const auto *request = current_request;
+	ASSERT_NE(request, nullptr);
 
 	ASSERT_FALSE(got_request);
-	ASSERT_FALSE(got_response);
 	ASSERT_EQ(method, request->method);
 
 	got_request = true;
 
 	validated = headers.Get("if-modified-since") != nullptr;
 
-	expected_rh = parse_request_headers(pool, *request);
+	auto *expected_rh = parse_request_headers(pool, *request);
 	if (expected_rh != NULL) {
 		for (const auto &i : headers) {
 			const char *value = headers.Get(i.key);
@@ -232,123 +208,248 @@ MyResourceLoader::SendRequest(struct pool &pool,
 			       std::move(response_body));
 }
 
-struct Context final : HttpResponseHandler {
-	struct pool &pool;
+struct Instance final : PInstance {
+	MyResourceLoader resource_loader;
 
-	explicit Context(struct pool &_pool):pool(_pool) {}
+	HttpCache *const cache;
 
-	/* virtual methods from class HttpResponseHandler */
-	void OnHttpResponse(http_status_t status, StringMap &&headers,
-			    UnusedIstreamPtr body) noexcept override;
-	void OnHttpError(std::exception_ptr ep) noexcept override;
+	Instance()
+		:cache(http_cache_new(root_pool, 1024 * 1024, true,
+				      event_loop, resource_loader))
+	{
+	}
+
+	~Instance() noexcept {
+		http_cache_close(cache);
+	}
 };
 
-void
-Context::OnHttpResponse(http_status_t status, StringMap &&headers,
-			UnusedIstreamPtr body) noexcept
-{
-	Request *request = &requests[current_request];
-	StringMap *expected_rh;
-
-	ASSERT_EQ(status, request->status);
-
-	expected_rh = parse_response_headers(pool, *request);
-	if (expected_rh != NULL) {
-		for (const auto &i : *expected_rh) {
-			const char *value = headers.Get(i.key);
-			ASSERT_NE(value, nullptr);
-			ASSERT_STREQ(value, i.value);
-		}
-	}
-
-	if (body) {
-		request->body_read = 0;
-		auto *b = body.Steal();
-		b->SetHandler(*request);
-		b->Read();
-	}
-
-	got_response = true;
-}
-
-void
-Context::OnHttpError(std::exception_ptr ep) noexcept
-{
-	PrintException(ep);
-
-	FAIL();
-}
-
 static void
-run_cache_test(struct pool *root_pool, unsigned num, bool cached)
+run_cache_test(Instance &instance, const Request &request, bool cached)
 {
-	const Request *request = &requests[num];
-	auto pool = pool_new_linear(root_pool, "t_http_cache", 8192);
-	const auto uwa = MakeHttpAddress(request->uri).Host("foo");
+	auto pool = pool_new_linear(instance.root_pool, "t_http_cache", 8192);
+	const auto uwa = MakeHttpAddress(request.uri).Host("foo");
 	const ResourceAddress address(uwa);
 
 	CancellablePointer cancel_ptr;
 
-	current_request = num;
+	instance.resource_loader.current_request = cached ? nullptr : &request;
 
 	StringMap headers;
-	if (request->request_headers != NULL) {
+	if (request.request_headers != NULL) {
 		GrowingBuffer gb;
-		gb.Write(request->request_headers);
+		gb.Write(request.request_headers);
 
 		header_parse_buffer(pool, headers, std::move(gb));
 	}
 
-	got_request = cached;
-	got_response = false;
+	instance.resource_loader.got_request = false;
 
-	Context context(pool);
-	http_cache_request(*cache, pool, nullptr,
+	RecordingHttpResponseHandler handler(instance.root_pool,
+					     instance.event_loop);
+
+	http_cache_request(*instance.cache, pool, nullptr,
 			   0, nullptr, nullptr,
-			   request->method, address,
+			   request.method, address,
 			   std::move(headers), nullptr,
-			   context, cancel_ptr);
+			   handler, cancel_ptr);
 
-	ASSERT_TRUE(got_request);
-	ASSERT_TRUE(got_response);
+	if (handler.IsAlive())
+		instance.event_loop.Dispatch();
+
+	ASSERT_NE(instance.resource_loader.got_request, cached);
+	ASSERT_FALSE(handler.IsAlive());
+	ASSERT_EQ(handler.error, nullptr);
+
+	const auto *expected_rh = parse_response_headers(pool, request);
+	if (expected_rh != nullptr) {
+		for (const auto &i : *expected_rh) {
+			auto h = handler.headers.equal_range(i.key);
+			ASSERT_NE(h.first, h.second);
+
+			auto j = std::find_if(h.first, h.second, [&i](const auto &p){
+				return p.second == i.value;
+			});
+
+			ASSERT_NE(j, h.second);
+			handler.headers.erase(j);
+		}
+
+		ASSERT_TRUE(handler.headers.empty());
+	}
+
+	if (request.response_body != nullptr) {
+		ASSERT_EQ(handler.state, RecordingHttpResponseHandler::State::END);
+		ASSERT_STREQ(handler.body.c_str(), request.response_body);
+	} else {
+		ASSERT_EQ(handler.state, RecordingHttpResponseHandler::State::NO_BODY);
+	}
 }
 
 TEST(HttpCache, Basic)
 {
 	const ScopeFbPoolInit fb_pool_init;
-	PInstance instance;
-
-	MyResourceLoader resource_loader;
-
-	cache = http_cache_new(instance.root_pool, 1024 * 1024, true,
-			       instance.event_loop, resource_loader);
+	Instance instance;
 
 	/* request one resource, cold and warm cache */
-	run_cache_test(instance.root_pool, 0, false);
-	run_cache_test(instance.root_pool, 0, true);
+	run_cache_test(instance, requests[0], false);
+	run_cache_test(instance, requests[0], true);
 
 	/* another resource, different header */
-	run_cache_test(instance.root_pool, 1, false);
-	run_cache_test(instance.root_pool, 1, true);
+	run_cache_test(instance, requests[1], false);
+	run_cache_test(instance, requests[1], true);
 
 	/* see if the first resource is still cached */
-	run_cache_test(instance.root_pool, 0, true);
+	run_cache_test(instance, requests[0], true);
 
 	/* see if the second resource is still cached */
-	run_cache_test(instance.root_pool, 1, true);
+	run_cache_test(instance, requests[1], true);
 
 	/* query string: should not be cached */
 
-	run_cache_test(instance.root_pool, 2, false);
+	run_cache_test(instance, requests[2], false);
 
-	validated = false;
-	run_cache_test(instance.root_pool, 2, false);
-	ASSERT_FALSE(validated);
+	instance.resource_loader.validated = false;
+	run_cache_test(instance, requests[2], false);
+	ASSERT_FALSE(instance.resource_loader.validated);
 
 	/* double check with a cacheable query string ("Expires" is
 	   set) */
-	run_cache_test(instance.root_pool, 3, false);
-	run_cache_test(instance.root_pool, 3, true);
+	run_cache_test(instance, requests[3], false);
+	run_cache_test(instance, requests[3], true);
+}
 
-	http_cache_close(cache);
+TEST(HttpCache, MultiVary)
+{
+	const ScopeFbPoolInit fb_pool_init;
+	Instance instance;
+
+	/* request one resource, cold and warm cache */
+	static constexpr Request r0{
+		"/foo", nullptr,
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n"
+		"vary: x-bar, x-abc\n",
+		"1",
+	};
+
+	run_cache_test(instance, r0, false);
+	run_cache_test(instance, r0, true);
+
+	/* another resource, different header 1 */
+	static constexpr Request r1{
+		"/foo",
+		"x-foo: foo\n",
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n"
+		"vary: x-bar, x-abc\n",
+		"2",
+	};
+
+	run_cache_test(instance, r1, false);
+	run_cache_test(instance, r1, true);
+
+	/* another resource, different header 2 */
+	static constexpr Request r2{
+		"/foo",
+		"x-bar: bar\n",
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n"
+		"vary: x-bar, x-abc\n",
+		"3",
+	};
+
+	run_cache_test(instance, r2, false);
+	run_cache_test(instance, r2, true);
+
+	/* another resource, different header 3 */
+	static constexpr Request r3{
+		"/foo",
+		"x-abc: abc\n",
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n"
+		"vary: x-bar, x-abc\n",
+		"4",
+	};
+
+	run_cache_test(instance, r3, false);
+	run_cache_test(instance, r3, true);
+
+	/* another resource, different header combined 1+2 */
+	static constexpr Request r4{
+		"/foo",
+		"x-foo: foo\n"
+		"x-abc: abc\n",
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n"
+		"vary: x-bar, x-abc\n",
+		"5",
+	};
+
+	run_cache_test(instance, r4, false);
+	run_cache_test(instance, r4, true);
+
+	/* another resource, different header combined 2+3 */
+	static constexpr Request r5{
+		"/foo",
+		"x-bar: bar\n"
+		"x-abc: abc\n",
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n"
+		"vary: x-bar, x-abc\n",
+		"5",
+	};
+
+	run_cache_test(instance, r5, false);
+	run_cache_test(instance, r5, true);
+
+	static constexpr Request r5b{
+		"/foo",
+		"x-abc: abc\n"
+		"x-bar: bar\n",
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n"
+		"vary: x-bar, x-abc\n",
+		"5",
+	};
+
+	run_cache_test(instance, r5b, true);
+
+	/* another resource, different header 1 value */
+	static constexpr Request r6{
+		"/foo",
+		"x-foo: xyz\n",
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n"
+		"vary: x-bar, x-abc\n",
+		"6",
+	};
+
+	run_cache_test(instance, r6, false);
+	run_cache_test(instance, r6, true);
+
+	/* check all cache items again */
+	run_cache_test(instance, r1, true);
+	run_cache_test(instance, r2, true);
+	run_cache_test(instance, r3, true);
+	run_cache_test(instance, r4, true);
+	run_cache_test(instance, r5, true);
+	run_cache_test(instance, r5b, true);
+	run_cache_test(instance, r6, true);
 }
