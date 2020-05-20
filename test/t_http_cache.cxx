@@ -137,7 +137,7 @@ parse_response_headers(struct pool &pool, const Request &request)
 
 class MyResourceLoader final : public ResourceLoader {
 public:
-	unsigned current_request;
+	const Request *current_request;
 	bool got_request;
 	bool validated;
 
@@ -170,7 +170,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 			      HttpResponseHandler &handler,
 			      CancellablePointer &) noexcept
 {
-	const auto *request = &requests[current_request];
+	const auto *request = current_request;
 	StringMap *expected_rh;
 
 	ASSERT_FALSE(got_request);
@@ -225,16 +225,15 @@ struct Instance final : PInstance {
 };
 
 static void
-run_cache_test(Instance &instance, unsigned num, bool cached)
+run_cache_test(Instance &instance, const Request &request, bool cached)
 {
-	const auto &request = requests[num];
 	auto pool = pool_new_linear(instance.root_pool, "t_http_cache", 8192);
 	const auto uwa = MakeHttpAddress(request.uri).Host("foo");
 	const ResourceAddress address(uwa);
 
 	CancellablePointer cancel_ptr;
 
-	instance.resource_loader.current_request = num;
+	instance.resource_loader.current_request = &request;
 
 	StringMap headers;
 	if (request.request_headers != NULL) {
@@ -285,29 +284,29 @@ TEST(HttpCache, Basic)
 	Instance instance;
 
 	/* request one resource, cold and warm cache */
-	run_cache_test(instance, 0, false);
-	run_cache_test(instance, 0, true);
+	run_cache_test(instance, requests[0], false);
+	run_cache_test(instance, requests[0], true);
 
 	/* another resource, different header */
-	run_cache_test(instance, 1, false);
-	run_cache_test(instance, 1, true);
+	run_cache_test(instance, requests[1], false);
+	run_cache_test(instance, requests[1], true);
 
 	/* see if the first resource is still cached */
-	run_cache_test(instance, 0, true);
+	run_cache_test(instance, requests[0], true);
 
 	/* see if the second resource is still cached */
-	run_cache_test(instance, 1, true);
+	run_cache_test(instance, requests[1], true);
 
 	/* query string: should not be cached */
 
-	run_cache_test(instance, 2, false);
+	run_cache_test(instance, requests[2], false);
 
 	instance.resource_loader.validated = false;
-	run_cache_test(instance, 2, false);
+	run_cache_test(instance, requests[2], false);
 	ASSERT_FALSE(instance.resource_loader.validated);
 
 	/* double check with a cacheable query string ("Expires" is
 	   set) */
-	run_cache_test(instance, 3, false);
-	run_cache_test(instance, 3, true);
+	run_cache_test(instance, requests[3], false);
+	run_cache_test(instance, requests[3], true);
 }
