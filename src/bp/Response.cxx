@@ -257,6 +257,7 @@ Request::InvokeXmlProcessor(http_status_t status,
 	if (translate.response->untrusted != nullptr && proxy_ref == nullptr) {
 		logger(2, "refusing to render template on untrusted domain '",
 		       translate.response->untrusted, "'");
+		ctx.reset();
 		response_body.Clear();
 		DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
 		return;
