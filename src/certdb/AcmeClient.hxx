@@ -45,6 +45,7 @@
 namespace Json { class Value; }
 
 struct AcmeConfig;
+struct AcmeAccount;
 struct AcmeOrder;
 struct AcmeAuthorization;
 struct AcmeChallenge;
@@ -89,18 +90,14 @@ public:
 		return fake;
 	}
 
-	struct Account {
-		std::string location;
-	};
-
 	/**
 	 * Register a new account.
 	 *
 	 * @param key the account key
 	 * @param email an email address to be associated with the account
 	 */
-	Account NewAccount(EVP_PKEY &key, const char *email,
-			   bool only_return_existing=false);
+	AcmeAccount NewAccount(EVP_PKEY &key, const char *email,
+			       bool only_return_existing=false);
 
 	struct OrderRequest {
 		std::forward_list<std::string> identifiers;

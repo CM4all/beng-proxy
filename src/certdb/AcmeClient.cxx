@@ -31,6 +31,7 @@
  */
 
 #include "AcmeClient.hxx"
+#include "AcmeAccount.hxx"
 #include "AcmeOrder.hxx"
 #include "AcmeAuthorization.hxx"
 #include "AcmeChallenge.hxx"
@@ -400,7 +401,7 @@ MakeNewAccountRequest(const char *email, bool only_return_existing) noexcept
 	return root;
 }
 
-AcmeClient::Account
+AcmeAccount
 AcmeClient::NewAccount(EVP_PKEY &key, const char *email,
 		       bool only_return_existing)
 {
@@ -433,9 +434,7 @@ AcmeClient::NewAccount(EVP_PKEY &key, const char *email,
 					 "Failed to register account");
 	}
 
-	Account account;
-
-	return WithLocation(Account{}, response);
+	return WithLocation(AcmeAccount{}, response);
 }
 
 static Json::Value

@@ -34,6 +34,7 @@
 #include "AcmeUtil.hxx"
 #include "AcmeError.hxx"
 #include "AcmeClient.hxx"
+#include "AcmeAccount.hxx"
 #include "AcmeOrder.hxx"
 #include "AcmeAuthorization.hxx"
 #include "AcmeChallenge.hxx"
