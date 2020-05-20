@@ -109,7 +109,6 @@ static constexpr Request requests[] = {
 	},
 };
 
-static HttpCache *cache;
 static unsigned current_request;
 static bool got_request;
 static bool validated;
@@ -209,12 +208,27 @@ MyResourceLoader::SendRequest(struct pool &pool,
 			       std::move(response_body));
 }
 
+struct Instance final : PInstance {
+	MyResourceLoader resource_loader;
+
+	HttpCache *const cache;
+
+	Instance()
+		:cache(http_cache_new(root_pool, 1024 * 1024, true,
+				      event_loop, resource_loader))
+	{
+	}
+
+	~Instance() noexcept {
+		http_cache_close(cache);
+	}
+};
+
 static void
-run_cache_test(struct pool &root_pool, EventLoop &event_loop,
-	       unsigned num, bool cached)
+run_cache_test(Instance &instance, unsigned num, bool cached)
 {
 	const auto &request = requests[num];
-	auto pool = pool_new_linear(&root_pool, "t_http_cache", 8192);
+	auto pool = pool_new_linear(instance.root_pool, "t_http_cache", 8192);
 	const auto uwa = MakeHttpAddress(request.uri).Host("foo");
 	const ResourceAddress address(uwa);
 
@@ -232,16 +246,17 @@ run_cache_test(struct pool &root_pool, EventLoop &event_loop,
 
 	got_request = cached;
 
-	RecordingHttpResponseHandler handler(root_pool, event_loop);
+	RecordingHttpResponseHandler handler(instance.root_pool,
+					     instance.event_loop);
 
-	http_cache_request(*cache, pool, nullptr,
+	http_cache_request(*instance.cache, pool, nullptr,
 			   0, nullptr, nullptr,
 			   request.method, address,
 			   std::move(headers), nullptr,
 			   handler, cancel_ptr);
 
 	if (handler.IsAlive())
-		event_loop.Dispatch();
+		instance.event_loop.Dispatch();
 
 	ASSERT_TRUE(got_request);
 	ASSERT_FALSE(handler.IsAlive());
@@ -267,39 +282,32 @@ run_cache_test(struct pool &root_pool, EventLoop &event_loop,
 TEST(HttpCache, Basic)
 {
 	const ScopeFbPoolInit fb_pool_init;
-	PInstance instance;
-
-	MyResourceLoader resource_loader;
-
-	cache = http_cache_new(instance.root_pool, 1024 * 1024, true,
-			       instance.event_loop, resource_loader);
+	Instance instance;
 
 	/* request one resource, cold and warm cache */
-	run_cache_test(instance.root_pool, instance.event_loop, 0, false);
-	run_cache_test(instance.root_pool, instance.event_loop, 0, true);
+	run_cache_test(instance, 0, false);
+	run_cache_test(instance, 0, true);
 
 	/* another resource, different header */
-	run_cache_test(instance.root_pool, instance.event_loop, 1, false);
-	run_cache_test(instance.root_pool, instance.event_loop, 1, true);
+	run_cache_test(instance, 1, false);
+	run_cache_test(instance, 1, true);
 
 	/* see if the first resource is still cached */
-	run_cache_test(instance.root_pool, instance.event_loop, 0, true);
+	run_cache_test(instance, 0, true);
 
 	/* see if the second resource is still cached */
-	run_cache_test(instance.root_pool, instance.event_loop, 1, true);
+	run_cache_test(instance, 1, true);
 
 	/* query string: should not be cached */
 
-	run_cache_test(instance.root_pool, instance.event_loop, 2, false);
+	run_cache_test(instance, 2, false);
 
 	validated = false;
-	run_cache_test(instance.root_pool, instance.event_loop, 2, false);
+	run_cache_test(instance, 2, false);
 	ASSERT_FALSE(validated);
 
 	/* double check with a cacheable query string ("Expires" is
 	   set) */
-	run_cache_test(instance.root_pool, instance.event_loop, 3, false);
-	run_cache_test(instance.root_pool, instance.event_loop, 3, true);
-
-	http_cache_close(cache);
+	run_cache_test(instance, 3, false);
+	run_cache_test(instance, 3, true);
 }
