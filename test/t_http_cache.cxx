@@ -171,7 +171,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 			      CancellablePointer &) noexcept
 {
 	const auto *request = current_request;
-	StringMap *expected_rh;
+	ASSERT_NE(request, nullptr);
 
 	ASSERT_FALSE(got_request);
 	ASSERT_EQ(method, request->method);
@@ -180,7 +180,7 @@ MyResourceLoader::SendRequest(struct pool &pool,
 
 	validated = headers.Get("if-modified-since") != nullptr;
 
-	expected_rh = parse_request_headers(pool, *request);
+	auto *expected_rh = parse_request_headers(pool, *request);
 	if (expected_rh != NULL) {
 		for (const auto &i : headers) {
 			const char *value = headers.Get(i.key);
@@ -233,7 +233,7 @@ run_cache_test(Instance &instance, const Request &request, bool cached)
 
 	CancellablePointer cancel_ptr;
 
-	instance.resource_loader.current_request = &request;
+	instance.resource_loader.current_request = cached ? nullptr : &request;
 
 	StringMap headers;
 	if (request.request_headers != NULL) {
@@ -243,7 +243,7 @@ run_cache_test(Instance &instance, const Request &request, bool cached)
 		header_parse_buffer(pool, headers, std::move(gb));
 	}
 
-	instance.resource_loader.got_request = cached;
+	instance.resource_loader.got_request = false;
 
 	RecordingHttpResponseHandler handler(instance.root_pool,
 					     instance.event_loop);
@@ -257,7 +257,7 @@ run_cache_test(Instance &instance, const Request &request, bool cached)
 	if (handler.IsAlive())
 		instance.event_loop.Dispatch();
 
-	ASSERT_TRUE(instance.resource_loader.got_request);
+	ASSERT_NE(instance.resource_loader.got_request, cached);
 	ASSERT_FALSE(handler.IsAlive());
 	ASSERT_EQ(handler.error, nullptr);
 
