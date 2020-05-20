@@ -387,41 +387,51 @@ MakeMailToArray(const char *email) noexcept
 }
 
 static auto
-MakeNewAccountRequest(const char *email) noexcept
+MakeNewAccountRequest(const char *email, bool only_return_existing) noexcept
 {
 	Json::Value root(Json::objectValue);
 	if (email != nullptr)
 		root["contact"] = MakeMailToArray(email);
+
+	if (only_return_existing)
+		root["onlyReturnExisting"] = true;
 
 	root["termsOfServiceAgreed"] = true;
 	return root;
 }
 
 AcmeClient::Account
-AcmeClient::NewAccount(EVP_PKEY &key, const char *email)
+AcmeClient::NewAccount(EVP_PKEY &key, const char *email,
+		       bool only_return_existing)
 {
 	EnsureDirectory();
 	if (directory.new_account.empty())
 		throw std::runtime_error("No newAccount in directory");
 
-	const auto payload = MakeNewAccountRequest(email);
+	const auto payload = MakeNewAccountRequest(email, only_return_existing);
 
 	auto response = SignedRequestRetry(key,
 					   HTTP_METHOD_POST,
 					   directory.new_account.c_str(),
 					   payload);
-	if (response.status == HTTP_STATUS_OK) {
-		const auto location = response.headers.find("location");
-		if (location != response.headers.end())
-			throw FormatRuntimeError("This key is already registered: %s",
-						 location->second.c_str());
-		else
-			throw std::runtime_error("This key is already registered");
-	}
+	if (only_return_existing) {
+		if (response.status != HTTP_STATUS_OK)
+			ThrowStatusError(std::move(response),
+					 "Failed to look up account");
+	} else {
+		if (response.status == HTTP_STATUS_OK) {
+			const auto location = response.headers.find("location");
+			if (location != response.headers.end())
+				throw FormatRuntimeError("This key is already registered: %s",
+							 location->second.c_str());
+			else
+				throw std::runtime_error("This key is already registered");
+		}
 
-	if (response.status != HTTP_STATUS_CREATED)
-		ThrowStatusError(std::move(response),
-				 "Failed to register account");
+		if (response.status != HTTP_STATUS_CREATED)
+			ThrowStatusError(std::move(response),
+					 "Failed to register account");
+	}
 
 	Account account;
 

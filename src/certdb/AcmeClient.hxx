@@ -99,7 +99,8 @@ public:
 	 * @param key the account key
 	 * @param email an email address to be associated with the account
 	 */
-	Account NewAccount(EVP_PKEY &key, const char *email);
+	Account NewAccount(EVP_PKEY &key, const char *email,
+			   bool only_return_existing=false);
 
 	struct OrderRequest {
 		std::forward_list<std::string> identifiers;

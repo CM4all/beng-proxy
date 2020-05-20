@@ -750,6 +750,7 @@ Acme(ConstBuffer<const char *> args)
 	if (args.empty())
 		throw "acme commands:\n"
 			"  new-reg EMAIL\n"
+			"  get-account EMAIL\n"
 			"  new-order HANDLE HOST...\n"
 			"  renew-cert HANDLE\n"
 			"\n"
@@ -777,6 +778,18 @@ Acme(ConstBuffer<const char *> args)
 		const AcmeKey key(key_path);
 
 		const auto account = AcmeClient(config).NewAccount(*key, email);
+		printf("location: %s\n", account.location.c_str());
+	} else if (strcmp(cmd, "get-account") == 0) {
+		if (args.size != 1)
+			throw Usage("acme get-account EMAIL");
+
+		const char *email = args[0];
+
+		const ScopeSslGlobalInit ssl_init;
+		const AcmeKey key(key_path);
+
+		const auto account = AcmeClient(config).NewAccount(*key, email,
+								   true);
 		printf("location: %s\n", account.location.c_str());
 	} else if (strcmp(cmd, "new-order") == 0) {
 		if (args.size < 2)
