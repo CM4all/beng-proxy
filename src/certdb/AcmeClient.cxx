@@ -372,6 +372,31 @@ WithLocation(T &&t, const GlueHttpResponse &response) noexcept
 	return std::move(t);
 }
 
+static Json::Value
+MakeMailToString(const char *email) noexcept
+{
+	return std::string("mailto:") + email;
+}
+
+static Json::Value
+MakeMailToArray(const char *email) noexcept
+{
+	Json::Value a(Json::arrayValue);
+	a.append(MakeMailToString(email));
+	return a;
+}
+
+static auto
+MakeNewAccountRequest(const char *email) noexcept
+{
+	Json::Value root(Json::objectValue);
+	if (email != nullptr)
+		root["contact"] = MakeMailToArray(email);
+
+	root["termsOfServiceAgreed"] = true;
+	return root;
+}
+
 AcmeClient::Account
 AcmeClient::NewAccount(EVP_PKEY &key, const char *email)
 {
@@ -379,20 +404,12 @@ AcmeClient::NewAccount(EVP_PKEY &key, const char *email)
 	if (directory.new_account.empty())
 		throw std::runtime_error("No newAccount in directory");
 
-	std::string payload("{ ");
-
-	if (email != nullptr) {
-		payload += "\"contact\": [ \"mailto:";
-		payload += email;
-		payload += "\" ], ";
-	}
-
-	payload += "\"termsOfServiceAgreed\": true }";
+	const auto payload = MakeNewAccountRequest(email);
 
 	auto response = SignedRequestRetry(key,
 					   HTTP_METHOD_POST,
 					   directory.new_account.c_str(),
-					   payload.c_str());
+					   payload);
 	if (response.status == HTTP_STATUS_OK) {
 		const auto location = response.headers.find("location");
 		if (location != response.headers.end())
