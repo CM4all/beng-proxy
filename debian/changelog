@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.8) unstable; urgency=low
 
-  * 
+  * certdb: print only the account location in `acme new-reg`
 
  --   
 

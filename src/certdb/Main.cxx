@@ -788,7 +788,7 @@ Acme(ConstBuffer<const char *> args)
 		const AcmeKey key(key_path);
 
 		const auto account = AcmeClient(config).NewAccount(*key, email);
-		PrintAccount(account);
+		printf("%s\n", account.location.c_str());
 	} else if (strcmp(cmd, "get-account") == 0) {
 		if (!args.empty())
 			throw Usage("acme get-account");
