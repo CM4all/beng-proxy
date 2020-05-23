@@ -200,7 +200,8 @@ try {
 		cgi = &address.GetCgi();
 
 		UniqueFileDescriptor stderr_fd;
-		if (cgi->options.stderr_path != nullptr) {
+		if (cgi->options.stderr_path != nullptr &&
+		    !cgi->options.stderr_jailed) {
 			stderr_fd = cgi->options.OpenStderrPath();
 		}
 
