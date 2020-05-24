@@ -235,7 +235,10 @@ Configures the process spawner. Example::
      IOWeight "50"
    }
 
-- ``allow_user``: allow child processes to impersonate the given user.
+- ``allow_user``: allow child processes to impersonate the given
+  user.  This can be a user name (from :file:`/etc/passwd`), a
+  numeric user id or an open range (e.g. `2147483648-` which allows
+  all user ids from 2147483648 on).
 
 - ``allow_group``: allow child processes to impersonate the given
   group.
