@@ -285,6 +285,12 @@ LbCluster::PickNextGoodZeroconf(const Expiry now) noexcept
 {
 	assert(!active_zeroconf_members.empty());
 
+	if (active_zeroconf_members.size() < 2)
+		/* since RoundRobinBalancer expects at least 2
+		   members, this special case returns the one and only
+		   member without consulting RoundRobinBalancer */
+		return *active_zeroconf_members.front();
+
 	return round_robin_balancer.Get(now,
 					ZeroconfListWrapper{active_zeroconf_members},
 					false);
