@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SPAWN_ISTREAM_HXX
-#define SPAWN_ISTREAM_HXX
+#pragma once
 
 #include <sys/types.h>
 
@@ -58,8 +57,6 @@ class UnusedIstreamPtr;
  */
 UnusedIstreamPtr
 SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
-                  UnusedIstreamPtr input,
-                  PreparedChildProcess &&prepared,
-                  SpawnService &spawn_service);
-
-#endif
+		  UnusedIstreamPtr input,
+		  PreparedChildProcess &&prepared,
+		  SpawnService &spawn_service);

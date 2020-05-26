@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -63,117 +63,117 @@
 #include <limits.h>
 
 struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
-    const LLogger logger;
-    SpawnService &spawn_service;
+	const LLogger logger;
+	SpawnService &spawn_service;
 
-    UniqueFileDescriptor output_fd;
-    SocketEvent output_event;
+	UniqueFileDescriptor output_fd;
+	SocketEvent output_event;
 
-    SliceFifoBuffer buffer;
+	SliceFifoBuffer buffer;
 
-    IstreamPointer input;
-    UniqueFileDescriptor input_fd;
-    SocketEvent input_event;
+	IstreamPointer input;
+	UniqueFileDescriptor input_fd;
+	SocketEvent input_event;
 
-    int pid;
+	int pid;
 
-    SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
-                 struct pool &p,
-                 UnusedIstreamPtr _input, UniqueFileDescriptor _input_fd,
-                 UniqueFileDescriptor _output_fd,
-                 pid_t _pid) noexcept;
+	SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
+		     struct pool &p,
+		     UnusedIstreamPtr _input, UniqueFileDescriptor _input_fd,
+		     UniqueFileDescriptor _output_fd,
+		     pid_t _pid) noexcept;
 
-    bool CheckDirect() const noexcept {
-        return Istream::CheckDirect(FdType::FD_PIPE);
-    }
+	bool CheckDirect() const noexcept {
+		return Istream::CheckDirect(FdType::FD_PIPE);
+	}
 
-    void Cancel() noexcept;
+	void Cancel() noexcept;
 
-    void FreeBuffer() noexcept {
-        buffer.FreeIfDefined();
-    }
+	void FreeBuffer() noexcept {
+		buffer.FreeIfDefined();
+	}
 
-    /**
-     * Send data from the buffer.  Invokes the "eof" callback when the
-     * buffer becomes empty and the pipe has been closed already.
-     *
-     * @return true if the caller shall read more data from the pipe
-     */
-    bool SendFromBuffer() noexcept;
+	/**
+	 * Send data from the buffer.  Invokes the "eof" callback when the
+	 * buffer becomes empty and the pipe has been closed already.
+	 *
+	 * @return true if the caller shall read more data from the pipe
+	 */
+	bool SendFromBuffer() noexcept;
 
-    void ReadFromOutput() noexcept;
+	void ReadFromOutput() noexcept;
 
-    void InputEventCallback(unsigned) noexcept {
-        input_event.Cancel(); // TODO: take advantage of EV_PERSIST
+	void InputEventCallback(unsigned) noexcept {
+		input_event.Cancel(); // TODO: take advantage of EV_PERSIST
 
-        input.Read();
-    }
+		input.Read();
+	}
 
-    void OutputEventCallback(unsigned) noexcept {
-        output_event.Cancel(); // TODO: take advantage of EV_PERSIST
+	void OutputEventCallback(unsigned) noexcept {
+		output_event.Cancel(); // TODO: take advantage of EV_PERSIST
 
-        ReadFromOutput();
-    }
+		ReadFromOutput();
+	}
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    void _Read() noexcept override;
-    // TODO: implement int AsFd() override;
-    void _Close() noexcept override;
+	void _Read() noexcept override;
+	// TODO: implement int AsFd() override;
+	void _Close() noexcept override;
 
-    /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) noexcept override;
-    ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
-    void OnEof() noexcept override;
-    void OnError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class IstreamHandler */
+	size_t OnData(const void *data, size_t length) noexcept override;
+	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
 
-    /* virtual methods from class ExitListener */
-    void OnChildProcessExit(int status) noexcept override;
+	/* virtual methods from class ExitListener */
+	void OnChildProcessExit(int status) noexcept override;
 };
 
 void
 SpawnIstream::Cancel() noexcept
 {
-    assert(output_fd.IsDefined());
+	assert(output_fd.IsDefined());
 
-    if (input.IsDefined()) {
-        assert(input_fd.IsDefined());
+	if (input.IsDefined()) {
+		assert(input_fd.IsDefined());
 
-        input_event.Cancel();
-        input_fd.Close();
-        input.Close();
-    }
+		input_event.Cancel();
+		input_fd.Close();
+		input.Close();
+	}
 
-    output_event.Cancel();
+	output_event.Cancel();
 
-    output_fd.Close();
+	output_fd.Close();
 
-    if (pid >= 0) {
-        spawn_service.KillChildProcess(pid);
-        pid = -1;
-    }
+	if (pid >= 0) {
+		spawn_service.KillChildProcess(pid);
+		pid = -1;
+	}
 }
 
 inline bool
 SpawnIstream::SendFromBuffer() noexcept
 {
-    assert(buffer.IsDefined());
+	assert(buffer.IsDefined());
 
-    if (Istream::SendFromBuffer(buffer) == 0)
-        return false;
+	if (Istream::SendFromBuffer(buffer) == 0)
+		return false;
 
-    if (!output_fd.IsDefined()) {
-        if (buffer.empty()) {
-            FreeBuffer();
-            DestroyEof();
-        }
+	if (!output_fd.IsDefined()) {
+		if (buffer.empty()) {
+			FreeBuffer();
+			DestroyEof();
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    buffer.FreeIfEmpty();
+	buffer.FreeIfEmpty();
 
-    return true;
+	return true;
 }
 
 /*
@@ -184,78 +184,78 @@ SpawnIstream::SendFromBuffer() noexcept
 size_t
 SpawnIstream::OnData(const void *data, size_t length) noexcept
 {
-    assert(input_fd.IsDefined());
+	assert(input_fd.IsDefined());
 
-    ssize_t nbytes = input_fd.Write(data, length);
-    if (nbytes > 0)
-        input_event.ScheduleWrite();
-    else if (nbytes < 0) {
-        if (errno == EAGAIN) {
-            input_event.ScheduleWrite();
-            return 0;
-        }
+	ssize_t nbytes = input_fd.Write(data, length);
+	if (nbytes > 0)
+		input_event.ScheduleWrite();
+	else if (nbytes < 0) {
+		if (errno == EAGAIN) {
+			input_event.ScheduleWrite();
+			return 0;
+		}
 
-        logger(1, "write() to subprocess failed: ", strerror(errno));
-        input_event.Cancel();
-        input_fd.Close();
-        input.ClearAndClose();
-        return 0;
-    }
+		logger(1, "write() to subprocess failed: ", strerror(errno));
+		input_event.Cancel();
+		input_fd.Close();
+		input.ClearAndClose();
+		return 0;
+	}
 
-    return (size_t)nbytes;
+	return (size_t)nbytes;
 }
 
 ssize_t
 SpawnIstream::OnDirect(gcc_unused FdType type, int fd, size_t max_length) noexcept
 {
-    assert(input_fd.IsDefined());
+	assert(input_fd.IsDefined());
 
-    ssize_t nbytes = SpliceToPipe(fd, input_fd.Get(), max_length);
-    if (nbytes > 0)
-        input_event.ScheduleWrite();
-    else if (nbytes < 0) {
-        if (errno == EAGAIN) {
-            if (!input_fd.IsReadyForWriting()) {
-                input_event.ScheduleWrite();
-                return ISTREAM_RESULT_BLOCKING;
-            }
+	ssize_t nbytes = SpliceToPipe(fd, input_fd.Get(), max_length);
+	if (nbytes > 0)
+		input_event.ScheduleWrite();
+	else if (nbytes < 0) {
+		if (errno == EAGAIN) {
+			if (!input_fd.IsReadyForWriting()) {
+				input_event.ScheduleWrite();
+				return ISTREAM_RESULT_BLOCKING;
+			}
 
-            /* try again, just in case connection->fd has become ready
-               between the first splice() call and
-               fd_ready_for_writing() */
-            nbytes = SpliceToPipe(fd, input_fd.Get(), max_length);
-        }
-    }
+			/* try again, just in case connection->fd has become ready
+			   between the first splice() call and
+			   fd_ready_for_writing() */
+			nbytes = SpliceToPipe(fd, input_fd.Get(), max_length);
+		}
+	}
 
-    return nbytes;
+	return nbytes;
 }
 
 inline void
 SpawnIstream::OnEof() noexcept
 {
-    assert(input.IsDefined());
-    assert(input_fd.IsDefined());
+	assert(input.IsDefined());
+	assert(input_fd.IsDefined());
 
-    input_event.Cancel();
-    input_fd.Close();
+	input_event.Cancel();
+	input_fd.Close();
 
-    input.Clear();
+	input.Clear();
 }
 
 void
 SpawnIstream::OnError(std::exception_ptr ep) noexcept
 {
-    assert(input.IsDefined());
-    assert(input_fd.IsDefined());
+	assert(input.IsDefined());
+	assert(input_fd.IsDefined());
 
-    FreeBuffer();
+	FreeBuffer();
 
-    input_event.Cancel();
-    input_fd.Close();
-    input.Clear();
+	input_event.Cancel();
+	input_fd.Close();
+	input.Clear();
 
-    Cancel();
-    DestroyError(ep);
+	Cancel();
+	DestroyError(ep);
 }
 
 /*
@@ -265,80 +265,80 @@ SpawnIstream::OnError(std::exception_ptr ep) noexcept
 void
 SpawnIstream::ReadFromOutput() noexcept
 {
-    assert(output_fd.IsDefined());
+	assert(output_fd.IsDefined());
 
-    if (!CheckDirect()) {
-        buffer.AllocateIfNull(fb_pool_get());
+	if (!CheckDirect()) {
+		buffer.AllocateIfNull(fb_pool_get());
 
-        ssize_t nbytes = read_to_buffer(output_fd.Get(), buffer, INT_MAX);
-        if (nbytes == -2) {
-            /* XXX should not happen */
-        } else if (nbytes > 0) {
-            if (Istream::SendFromBuffer(buffer) > 0) {
-                buffer.FreeIfEmpty();
-                output_event.ScheduleRead();
-            }
-        } else if (nbytes == 0) {
-            Cancel();
+		ssize_t nbytes = read_to_buffer(output_fd.Get(), buffer, INT_MAX);
+		if (nbytes == -2) {
+			/* XXX should not happen */
+		} else if (nbytes > 0) {
+			if (Istream::SendFromBuffer(buffer) > 0) {
+				buffer.FreeIfEmpty();
+				output_event.ScheduleRead();
+			}
+		} else if (nbytes == 0) {
+			Cancel();
 
-            if (buffer.empty()) {
-                FreeBuffer();
-                DestroyEof();
-            }
-        } else if (errno == EAGAIN) {
-            buffer.FreeIfEmpty();
-            output_event.ScheduleRead();
+			if (buffer.empty()) {
+				FreeBuffer();
+				DestroyEof();
+			}
+		} else if (errno == EAGAIN) {
+			buffer.FreeIfEmpty();
+			output_event.ScheduleRead();
 
-            if (input.IsDefined())
-                /* the CGI may be waiting for more data from stdin */
-                input.Read();
-        } else {
-            auto error = MakeErrno("failed to read from sub process");
-            FreeBuffer();
-            Cancel();
-            DestroyError(std::make_exception_ptr(error));
-        }
-    } else {
-        if (Istream::ConsumeFromBuffer(buffer) > 0)
-            /* there's data left in the buffer, which must be consumed
-               before we can switch to "direct" transfer */
-            return;
+			if (input.IsDefined())
+				/* the CGI may be waiting for more data from stdin */
+				input.Read();
+		} else {
+			auto error = MakeErrno("failed to read from sub process");
+			FreeBuffer();
+			Cancel();
+			DestroyError(std::make_exception_ptr(error));
+		}
+	} else {
+		if (Istream::ConsumeFromBuffer(buffer) > 0)
+			/* there's data left in the buffer, which must be consumed
+			   before we can switch to "direct" transfer */
+			return;
 
-        buffer.FreeIfDefined();
+		buffer.FreeIfDefined();
 
-        /* at this point, the handler might have changed inside
-           Istream::ConsumeFromBuffer(), and the new handler might not
-           support "direct" transfer - check again */
-        if (!CheckDirect()) {
-            output_event.ScheduleRead();
-            return;
-        }
+		/* at this point, the handler might have changed inside
+		   Istream::ConsumeFromBuffer(), and the new handler might not
+		   support "direct" transfer - check again */
+		if (!CheckDirect()) {
+			output_event.ScheduleRead();
+			return;
+		}
 
-        ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, output_fd.Get(),
-                                      INT_MAX);
-        if (nbytes == ISTREAM_RESULT_BLOCKING ||
-            nbytes == ISTREAM_RESULT_CLOSED) {
-            /* -2 means the callback wasn't able to consume any data right
-               now */
-        } else if (nbytes > 0) {
-            output_event.ScheduleRead();
-        } else if (nbytes == ISTREAM_RESULT_EOF) {
-            FreeBuffer();
-            Cancel();
-            DestroyEof();
-        } else if (errno == EAGAIN) {
-            output_event.ScheduleRead();
+		ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, output_fd.Get(),
+					      INT_MAX);
+		if (nbytes == ISTREAM_RESULT_BLOCKING ||
+		    nbytes == ISTREAM_RESULT_CLOSED) {
+			/* -2 means the callback wasn't able to consume any data right
+			   now */
+		} else if (nbytes > 0) {
+			output_event.ScheduleRead();
+		} else if (nbytes == ISTREAM_RESULT_EOF) {
+			FreeBuffer();
+			Cancel();
+			DestroyEof();
+		} else if (errno == EAGAIN) {
+			output_event.ScheduleRead();
 
-            if (input.IsDefined())
-                /* the CGI may be waiting for more data from stdin */
-                input.Read();
-        } else {
-            auto error = MakeErrno("failed to read from sub process");
-            FreeBuffer();
-            Cancel();
-            DestroyError(std::make_exception_ptr(error));
-        }
-    }
+			if (input.IsDefined())
+				/* the CGI may be waiting for more data from stdin */
+				input.Read();
+		} else {
+			auto error = MakeErrno("failed to read from sub process");
+			FreeBuffer();
+			Cancel();
+			DestroyError(std::make_exception_ptr(error));
+		}
+	}
 }
 
 
@@ -350,19 +350,19 @@ SpawnIstream::ReadFromOutput() noexcept
 void
 SpawnIstream::_Read() noexcept
 {
-    if (buffer.empty() || SendFromBuffer())
-        ReadFromOutput();
+	if (buffer.empty() || SendFromBuffer())
+		ReadFromOutput();
 }
 
 void
 SpawnIstream::_Close() noexcept
 {
-    FreeBuffer();
+	FreeBuffer();
 
-    if (output_fd.IsDefined())
-        Cancel();
+	if (output_fd.IsDefined())
+		Cancel();
 
-    Destroy();
+	Destroy();
 }
 
 /*
@@ -373,9 +373,9 @@ SpawnIstream::_Close() noexcept
 void
 SpawnIstream::OnChildProcessExit(gcc_unused int status) noexcept
 {
-    assert(pid >= 0);
+	assert(pid >= 0);
 
-    pid = -1;
+	pid = -1;
 }
 
 
@@ -386,69 +386,69 @@ SpawnIstream::OnChildProcessExit(gcc_unused int status) noexcept
 
 inline
 SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
-                           struct pool &p,
-                           UnusedIstreamPtr _input,
-                           UniqueFileDescriptor _input_fd,
-                           UniqueFileDescriptor _output_fd,
-                           pid_t _pid) noexcept
-    :Istream(p),
-     logger("spawn"),
-     spawn_service(_spawn_service),
-     output_fd(std::move(_output_fd)),
-     output_event(event_loop, BIND_THIS_METHOD(OutputEventCallback),
-                  SocketDescriptor::FromFileDescriptor(output_fd)),
-     input(std::move(_input), *this, ISTREAM_TO_PIPE),
-     input_fd(std::move(_input_fd)),
-     input_event(event_loop, BIND_THIS_METHOD(InputEventCallback),
-                  SocketDescriptor::FromFileDescriptor(input_fd)),
-     pid(_pid)
+			   struct pool &p,
+			   UnusedIstreamPtr _input,
+			   UniqueFileDescriptor _input_fd,
+			   UniqueFileDescriptor _output_fd,
+			   pid_t _pid) noexcept
+	:Istream(p),
+	 logger("spawn"),
+	 spawn_service(_spawn_service),
+	 output_fd(std::move(_output_fd)),
+	 output_event(event_loop, BIND_THIS_METHOD(OutputEventCallback),
+		      SocketDescriptor::FromFileDescriptor(output_fd)),
+	 input(std::move(_input), *this, ISTREAM_TO_PIPE),
+	 input_fd(std::move(_input_fd)),
+	 input_event(event_loop, BIND_THIS_METHOD(InputEventCallback),
+		     SocketDescriptor::FromFileDescriptor(input_fd)),
+	 pid(_pid)
 {
-    if (input.IsDefined())
-        input_event.ScheduleWrite();
+	if (input.IsDefined())
+		input_event.ScheduleWrite();
 
-    spawn_service.SetExitListener(pid, this);
+	spawn_service.SetExitListener(pid, this);
 }
 
 UnusedIstreamPtr
 SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
-                  UnusedIstreamPtr input,
-                  PreparedChildProcess &&prepared,
-                  SpawnService &spawn_service)
+		  UnusedIstreamPtr input,
+		  PreparedChildProcess &&prepared,
+		  SpawnService &spawn_service)
 {
-    if (input) {
-        int fd = input.AsFd();
-        if (fd >= 0)
-            prepared.SetStdin(fd);
-    }
+	if (input) {
+		int fd = input.AsFd();
+		if (fd >= 0)
+			prepared.SetStdin(fd);
+	}
 
-    UniqueFileDescriptor stdin_pipe;
-    if (input) {
-        UniqueFileDescriptor stdin_r;
-        if (!UniqueFileDescriptor::CreatePipe(stdin_r, stdin_pipe))
-            throw MakeErrno("pipe() failed");
+	UniqueFileDescriptor stdin_pipe;
+	if (input) {
+		UniqueFileDescriptor stdin_r;
+		if (!UniqueFileDescriptor::CreatePipe(stdin_r, stdin_pipe))
+			throw MakeErrno("pipe() failed");
 
-        prepared.SetStdin(std::move(stdin_r));
+		prepared.SetStdin(std::move(stdin_r));
 
-        stdin_pipe.SetNonBlocking();
-    }
+		stdin_pipe.SetNonBlocking();
+	}
 
-    UniqueFileDescriptor stdout_pipe, stdout_w;
-    if (!UniqueFileDescriptor::CreatePipe(stdout_pipe, stdout_w))
-        throw MakeErrno("pipe() failed");
+	UniqueFileDescriptor stdout_pipe, stdout_w;
+	if (!UniqueFileDescriptor::CreatePipe(stdout_pipe, stdout_w))
+		throw MakeErrno("pipe() failed");
 
-    prepared.SetStdout(std::move(stdout_w));
+	prepared.SetStdout(std::move(stdout_w));
 
-    stdout_pipe.SetNonBlocking();
+	stdout_pipe.SetNonBlocking();
 
-    const int pid = spawn_service.SpawnChildProcess(name, std::move(prepared),
-                                                    nullptr);
-    auto f = NewFromPool<SpawnIstream>(*pool, spawn_service, event_loop,
-                                       *pool,
-                                       std::move(input), std::move(stdin_pipe),
-                                       std::move(stdout_pipe),
-                                       pid);
+	const int pid = spawn_service.SpawnChildProcess(name, std::move(prepared),
+							nullptr);
+	auto f = NewFromPool<SpawnIstream>(*pool, spawn_service, event_loop,
+					   *pool,
+					   std::move(input), std::move(stdin_pipe),
+					   std::move(stdout_pipe),
+					   pid);
 
-    /* XXX CLOEXEC */
+	/* XXX CLOEXEC */
 
-    return UnusedIstreamPtr(f);
+	return UnusedIstreamPtr(f);
 }
