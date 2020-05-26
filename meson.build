@@ -1201,6 +1201,8 @@ executable(
   'src/delegate/Helper.cxx',
   include_directories: inc,
   dependencies: [
+    net_dep,
+    util_dep,
   ],
   install: true,
   install_dir: 'lib/cm4all/beng-proxy/delegate/bin',

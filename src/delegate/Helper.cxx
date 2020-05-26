@@ -36,10 +36,12 @@
  */
 
 #include "Protocol.hxx"
+#include "net/SendMessage.hxx"
 #include "net/ScmRightsBuilder.hxx"
-#include "net/MsgHdr.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "io/Iovec.hxx"
 #include "util/Compiler.h"
+#include "util/PrintException.hxx"
 
 #include <stdbool.h>
 #include <sys/socket.h>
@@ -92,15 +94,16 @@ delegate_send_fd(DelegateResponseCommand command, int fd)
 		command,
 	};
 	auto vec = MakeIovecT(header);
-	auto msg = MakeMsgHdr({&vec, 1});
+	MessageHeader msg({&vec, 1});
 
 	ScmRightsBuilder<1> srb(msg);
 	srb.push_back(fd);
 	srb.Finish(msg);
 
-	if (sendmsg(0, &msg, 0) < 0) {
-		fprintf(stderr, "failed to send fd: %s\n", strerror(errno));
-		return false;
+	try {
+		SendMessage(SocketDescriptor(0), msg, 0);
+	} catch (...) {
+		PrintException(std::current_exception());
 	}
 
 	return true;
