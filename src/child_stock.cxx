@@ -38,7 +38,10 @@
 #include "stock/Item.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
+#include "system/Error.hxx"
+#include "net/EasyMessage.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "pool/pool.hxx"
 
 #include <string>
@@ -76,6 +79,8 @@ class ChildStockItem final
 
 	ChildErrorLog log;
 
+	UniqueFileDescriptor stderr_fd;
+
 	ChildSocket socket;
 	int pid = -1;
 
@@ -110,6 +115,12 @@ public:
 	gcc_pure
 	bool IsTag(const char *_tag) const {
 		return tag == _tag;
+	}
+
+	UniqueFileDescriptor GetStderr() const noexcept {
+		return stderr_fd.IsDefined()
+			? UniqueFileDescriptor(dup(stderr_fd.Get()))
+			: UniqueFileDescriptor{};
 	}
 
 	void SetSite(const char *site) noexcept {
@@ -179,7 +190,20 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 	    p.stderr_path == nullptr)
 		log.EnableClient(p, GetEventLoop(), log_socket, log_options);
 
-	pid = spawn_service.SpawnChildProcess(GetStockName(), std::move(p), this);
+	UniqueSocketDescriptor stderr_socket1, stderr_socket2;
+	if (cls.WantReturnStderr(info) &&
+	    !UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
+						      stderr_socket1, stderr_socket2))
+		throw MakeErrno("socketpair() failed");
+
+	pid = spawn_service.SpawnChildProcess(GetStockName(), std::move(p),
+					      stderr_socket2,
+					      this);
+
+	if (stderr_socket1.IsDefined()) {
+		stderr_socket2.Close();
+		stderr_fd = EasyReceiveMessageWithOneFD(stderr_socket1);
+	}
 }
 
 void
@@ -286,6 +310,14 @@ child_stock_item_get_tag(const StockItem &_item)
 	const auto &item = (const ChildStockItem &)_item;
 
 	return item.GetTag();
+}
+
+UniqueFileDescriptor
+child_stock_item_get_stderr(const StockItem &_item) noexcept
+{
+	const auto &item = (const ChildStockItem &)_item;
+
+	return item.GetStderr();
 }
 
 void

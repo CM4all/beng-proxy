@@ -172,7 +172,9 @@ DelegateStock::Create(CreateStockItem c,
 	p.SetStdin(std::move(server_fd));
 
 	spawn_service.SpawnChildProcess(info.executable_path,
-					std::move(p), nullptr);
+					std::move(p),
+					SocketDescriptor::Undefined(),
+					nullptr);
 
 	/* invoke the DelegateArgs destructor before invoking the
 	   callback, because the latter may destroy the pool */

@@ -39,6 +39,7 @@
 #include "net/SocketDescriptor.hxx"
 
 struct PreparedChildProcess;
+class UniqueFileDescriptor;
 class UniqueSocketDescriptor;
 class EventLoop;
 class SpawnService;
@@ -63,6 +64,15 @@ public:
 	virtual int GetChildSocketType(void *info) const noexcept;
 
 	virtual unsigned GetChildBacklog(void *info) const noexcept;
+
+	/**
+	 * Implement this if you wish the child process to return the
+         * stderr file descriptor it opened to the returned socket.
+         * This allows calling child_stock_item_get_stderr().
+	 */
+	virtual bool WantReturnStderr(void *) const noexcept {
+		return false;
+	}
 
 	virtual const char *GetChildTag(void *info) const noexcept;
 
@@ -182,6 +192,9 @@ child_stock_item_get_type(const StockItem &) noexcept
 
 const char *
 child_stock_item_get_tag(const StockItem &item);
+
+UniqueFileDescriptor
+child_stock_item_get_stderr(const StockItem &item) noexcept;
 
 void
 child_stock_item_set_site(StockItem &item, const char *site) noexcept;

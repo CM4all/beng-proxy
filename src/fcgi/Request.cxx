@@ -88,6 +88,9 @@ public:
 		fcgi_stock_item_set_site(*stock_item, site_name);
 		fcgi_stock_item_set_uri(*stock_item, uri);
 
+		if (!stderr_fd.IsDefined())
+			stderr_fd = fcgi_stock_item_get_stderr(*stock_item);
+
 		if (log_socket.IsDefined() && !stderr_fd.IsDefined())
 			stderr_fd = log.EnableClient(event_loop, log_socket, log_options);
 

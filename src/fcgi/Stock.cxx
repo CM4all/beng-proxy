@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -114,6 +114,7 @@ private:
 
 	/* virtual methods from class ChildStockClass */
 	Event::Duration GetChildClearInterval(void *info) const noexcept override;
+	bool WantReturnStderr(void *info) const noexcept override;
 	const char *GetChildTag(void *info) const noexcept override;
 	void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
 			  PreparedChildProcess &p) override;
@@ -147,6 +148,8 @@ struct FcgiConnection final : StockItem {
 	UniqueSocketDescriptor fd;
 	SocketEvent event;
 
+	UniqueFileDescriptor stderr_fd;
+
 	/**
 	 * Is this a fresh connection to the FastCGI child process?
 	 */
@@ -173,6 +176,12 @@ struct FcgiConnection final : StockItem {
 		assert(child != nullptr);
 
 		return child_stock_item_get_tag(*child);
+	}
+
+	UniqueFileDescriptor GetStderr() const noexcept {
+		assert(child != nullptr);
+
+		return child_stock_item_get_stderr(*child);
 	}
 
 	void SetSite(const char *site) noexcept {
@@ -247,6 +256,16 @@ FcgiStock::GetChildClearInterval(void *info) const noexcept
 		/* lower clear_interval for jailed (per-account?)
 		   processes */
 		: std::chrono::minutes(5);
+}
+
+bool
+FcgiStock::WantReturnStderr(void *info) const noexcept
+{
+	const auto &params = *(const FcgiChildParams *)info;
+	/* we need the child process to return the stderr_fd to us if
+	   the given path is "jailed" */
+	return params.options.stderr_path != nullptr &&
+		params.options.stderr_jailed;
 }
 
 const char *
@@ -481,6 +500,13 @@ int
 fcgi_stock_item_get_domain(gcc_unused const StockItem &item) noexcept
 {
 	return AF_LOCAL;
+}
+
+UniqueFileDescriptor
+fcgi_stock_item_get_stderr(const StockItem &item) noexcept
+{
+	const auto &connection = (const FcgiConnection &)item;
+	return connection.GetStderr();
 }
 
 void

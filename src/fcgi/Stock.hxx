@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,6 +42,7 @@ class AllocatorPtr;
 class EventLoop;
 class SpawnService;
 class SocketDescriptor;
+class UniqueFileDescriptor;
 
 /**
  * Launch and manage FastCGI child processes.
@@ -92,6 +93,9 @@ fcgi_stock_item_get(const StockItem &item) noexcept;
 
 int
 fcgi_stock_item_get_domain(const StockItem &item) noexcept;
+
+UniqueFileDescriptor
+fcgi_stock_item_get_stderr(const StockItem &item) noexcept;
 
 /**
  * Translates a path into the application's namespace.

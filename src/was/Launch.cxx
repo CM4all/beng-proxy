@@ -35,6 +35,7 @@
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "system/Error.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include "util/Compiler.h"
@@ -95,6 +96,7 @@ was_launch(SpawnService &spawn_service,
 		p.SetStderr(std::move(stderr_fd));
 
 	process.pid = spawn_service.SpawnChildProcess(name, std::move(p),
+						      SocketDescriptor::Undefined(),
 						      listener);
 	return process;
 }
