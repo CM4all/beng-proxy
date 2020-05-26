@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.0.10) unstable; urgency=low
 
   * lb: fix assertion failure
+  * fcgi: fix STDERR_PATH_JAILED with child_error_logger
 
  --   
 

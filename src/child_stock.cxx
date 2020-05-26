@@ -175,7 +175,8 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 	PreparedChildProcess p;
 	cls.PrepareChild(info, socket.Create(socket_type, backlog), p);
 
-	if (log_socket.IsDefined() && p.stderr_fd < 0)
+	if (log_socket.IsDefined() && p.stderr_fd < 0 &&
+	    p.stderr_path == nullptr)
 		log.EnableClient(p, GetEventLoop(), log_socket, log_options);
 
 	pid = spawn_service.SpawnChildProcess(GetStockName(), std::move(p), this);
