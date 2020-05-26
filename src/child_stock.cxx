@@ -98,7 +98,7 @@ public:
 	}
 
 	void Spawn(ChildStockClass &cls, void *info,
-		   int backlog,
+		   unsigned backlog,
 		   SocketDescriptor log_socket,
 		   const ChildErrorLogOptions &log_options);
 
@@ -164,11 +164,13 @@ private:
 
 void
 ChildStockItem::Spawn(ChildStockClass &cls, void *info,
-		      int backlog,
+		      unsigned backlog,
 		      SocketDescriptor log_socket,
 		      const ChildErrorLogOptions &log_options)
 {
 	int socket_type = cls.GetChildSocketType(info);
+
+	backlog = std::max(backlog, cls.GetChildBacklog(info));
 
 	PreparedChildProcess p;
 	cls.PrepareChild(info, socket.Create(socket_type, backlog), p);
@@ -201,8 +203,7 @@ ChildStock::Create(CreateStockItem c, StockRequest request,
 					cls.GetChildTag(request.get()));
 
 	try {
-		item->Spawn(cls, request.get(),
-			    std::max(backlog, cls.GetChildBacklog(request.get())),
+		item->Spawn(cls, request.get(), backlog,
 			    log_socket, log_options);
 	} catch (...) {
 		delete item;
