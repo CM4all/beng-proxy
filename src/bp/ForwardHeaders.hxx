@@ -48,8 +48,6 @@ struct HeaderForwardSettings {
 
 	Mode modes[size_t(Group::MAX)];
 
-	HeaderForwardSettings() = default;
-
 	static constexpr HeaderForwardSettings AllNo() noexcept {
 		static_assert(Mode::NO == Mode(),
 			      "Wrong default value");
