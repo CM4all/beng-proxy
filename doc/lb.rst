@@ -370,6 +370,8 @@ Known attributes:
 - ``verbose_response``: ``yes`` exposes internal error messages in
   HTTP responses.
 
+.. _sticky:
+
 Sticky
 ------
 
