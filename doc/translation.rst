@@ -226,8 +226,8 @@ Response
   is usually not used
 
 - ``HTTP``: load the resource from a remote HTTP server (see
-  :ref:`http`).  Payload is an absolute URI starting with ``http://`
-  or `https://`.
+  :ref:`http`).  Payload is an absolute URI starting with ``http://``
+  or ``https://``.
 
 - ``HTTP2``: force HTTP/2 for the preceding ``HTTP`` packet.  No
   payload.
