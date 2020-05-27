@@ -42,7 +42,16 @@
 #include "util/Exception.hxx"
 #include "util/RuntimeError.hxx"
 
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-volatile"
+#endif
+
 #include <json/json.h>
+
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
 
 #include <memory>
 #include <sstream>
