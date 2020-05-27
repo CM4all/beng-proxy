@@ -3,6 +3,7 @@ project('CM4all beng-proxy', ['c', 'cpp'], version: '16.17',
   default_options: [
     'c_std=c11',
     'cpp_std=c++2a',
+    'warning_level=3',
   ],
 )
 
