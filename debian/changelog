@@ -1,5 +1,6 @@
 cm4all-beng-proxy (16.17) unstable; urgency=low
 
+  * switch to C++20
   * fcgi: fix STDERR_PATH_JAILED
 
  --   
