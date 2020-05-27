@@ -33,7 +33,16 @@
 #include "AcmeError.hxx"
 #include "util/Exception.hxx"
 
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-volatile"
+#endif
+
 #include <json/json.h>
+
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
 
 AcmeError::AcmeError(const Json::Value &error)
 	:std::runtime_error("Server error: " + error["detail"].asString()),
