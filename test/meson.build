@@ -14,6 +14,9 @@ if compiler.get_id() == 'clang'
   gtest_compile_args += [
     # TYPED_TEST_CASE_P got deprecated in GTest 1.9.0
     '-Wno-deprecated-declarations',
+
+    # clang throws this when using INSTANTIATE_TYPED_TEST_SUITE_P()
+    '-Wno-gnu-zero-variadic-macro-arguments',
   ]
 endif
 
