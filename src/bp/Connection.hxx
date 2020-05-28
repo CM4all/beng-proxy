@@ -75,7 +75,7 @@ struct BpConnection final
 
 	const char *const peer_subject, *const peer_issuer_subject;
 
-	HttpServerConnection *http;
+	HttpServerConnection *http = nullptr;
 
 #ifdef HAVE_NGHTTP2
 	UniquePoolPtr<NgHttp2::ServerConnection> http2;
