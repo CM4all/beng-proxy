@@ -181,6 +181,27 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 		line.ExpectEnd();
 
 		config.ssl_config.cert_key.emplace_back(path, key_path);
+	} else if (strcmp(word, "ssl_ca_cert") == 0) {
+		if (!config.ssl)
+			throw LineParser::Error("SSL is not enabled");
+
+		if (!config.ssl_config.ca_cert_file.empty())
+			throw LineParser::Error("Certificate already configured");
+
+		config.ssl_config.ca_cert_file = line.ExpectValueAndEnd();
+	} else if (strcmp(word, "ssl_verify") == 0) {
+		if (!config.ssl)
+			throw LineParser::Error("SSL is not enabled");
+
+		const char *value = line.ExpectValueAndEnd();
+		if (strcmp(value, "yes") == 0)
+			config.ssl_config.verify = SslVerify::YES;
+		else if (strcmp(value, "no") == 0)
+			config.ssl_config.verify = SslVerify::NO;
+		else if (strcmp(value, "optional") == 0)
+			config.ssl_config.verify = SslVerify::OPTIONAL;
+		else
+			throw LineParser::Error("yes/no expected");
 	} else
 		throw LineParser::Error("Unknown option");
 }

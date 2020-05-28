@@ -58,14 +58,21 @@
 BpConnection::BpConnection(PoolPtr &&_pool, BpInstance &_instance,
 			   const char *_listener_tag,
 			   bool _auth_alt_host,
-			   SocketAddress remote_address) noexcept
+			   SocketAddress remote_address,
+			   const SslFilter *ssl_filter) noexcept
 	:PoolHolder(std::move(_pool)),
 	 instance(_instance),
 	 config(_instance.config),
 	 listener_tag(_listener_tag),
 	 auth_alt_host(_auth_alt_host),
 	 remote_host_and_port(address_to_string(pool, remote_address)),
-	 logger(remote_host_and_port)
+	 logger(remote_host_and_port),
+	 peer_subject(ssl_filter != nullptr
+		      ? ssl_filter_get_peer_subject(*ssl_filter)
+		      : nullptr),
+	 peer_issuer_subject(ssl_filter != nullptr
+			     ? ssl_filter_get_peer_issuer_subject(*ssl_filter)
+			     : nullptr)
 {
 }
 
@@ -208,9 +215,11 @@ new_connection(BpInstance &instance,
 		}
 	}
 
+	SslFilter *ssl_filter = nullptr;
+
 	SocketFilterPtr filter;
 	if (ssl_factory != nullptr) {
-		auto *ssl_filter = ssl_filter_new(*ssl_factory);
+		ssl_filter = ssl_filter_new(*ssl_factory);
 		filter.reset(new ThreadSocketFilter(instance.event_loop,
 						    thread_pool_get_queue(instance.event_loop),
 						    &ssl_filter_get_handler(*ssl_filter)));
@@ -224,7 +233,7 @@ new_connection(BpInstance &instance,
 
 	auto *connection = NewFromPool<BpConnection>(std::move(pool), instance,
 						     listener_tag, auth_alt_host,
-						     address);
+						     address, ssl_filter);
 	instance.connections.push_front(*connection);
 
 	connection->http =

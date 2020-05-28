@@ -46,6 +46,7 @@ struct BpConfig;
 struct BpInstance;
 class UniqueSocketDescriptor;
 class SocketAddress;
+class SslFilter;
 struct SslFactory;
 struct HttpServerConnection;
 
@@ -69,6 +70,8 @@ struct BpConnection final
 	const char *const remote_host_and_port;
 
 	const LLogger logger;
+
+	const char *const peer_subject, *const peer_issuer_subject;
 
 	HttpServerConnection *http;
 
@@ -101,7 +104,8 @@ struct BpConnection final
 
 	BpConnection(PoolPtr &&_pool, BpInstance &_instance,
 		     const char *_listener_tag, bool _auth_alt_host,
-		     SocketAddress remote_address) noexcept;
+		     SocketAddress remote_address,
+		     const SslFilter *_ssl_filter) noexcept;
 	~BpConnection() noexcept;
 
 	using PoolHolder::GetPool;
