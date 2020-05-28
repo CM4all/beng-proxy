@@ -175,7 +175,7 @@ Request::NewWidgetContext() const noexcept
 
 	auto &rl = *(BpRequestLogger *)request.logger;
 
-	return SharedPoolPtr<WidgetContext>::Make
+	auto ctx = SharedPoolPtr<WidgetContext>::Make
 		(pool, instance.event_loop,
 		 *instance.cached_resource_loader,
 		 *instance.buffered_filter_resource_loader,
@@ -193,6 +193,11 @@ Request::NewWidgetContext() const noexcept
 		 session_cookie,
 		 session_id, realm,
 		 &request.headers);
+
+	ctx->peer_subject = connection.peer_subject;
+	ctx->peer_issuer_subject = connection.peer_issuer_subject;
+
+	return ctx;
 }
 
 SharedPoolPtr<WidgetContext>

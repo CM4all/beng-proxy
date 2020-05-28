@@ -32,6 +32,7 @@
 
 #include "ForwardRequest.hxx"
 #include "Request.hxx"
+#include "Connection.hxx"
 #include "http/IncomingRequest.hxx"
 #include "ForwardHeaders.hxx"
 
@@ -64,12 +65,17 @@ request_forward(Request &request2,
 
 	/* generate request headers */
 
+	const char *peer_subject = request2.connection.peer_subject;
+	const char *peer_issuer_subject = request2.connection.peer_issuer_subject;
+
 	const bool has_body = body;
 
 	return ForwardRequest(method,
 			      forward_request_headers(request2.pool, request.headers,
 						      request.local_host_and_port,
 						      request.remote_host,
+						      peer_subject,
+						      peer_issuer_subject,
 						      exclude_host,
 						      has_body,
 						      !request2.IsProcessorEnabled(),

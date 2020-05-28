@@ -65,6 +65,8 @@ struct WidgetContext {
 	const char *local_host;
 	const char *remote_host;
 
+	const char *peer_subject = nullptr, *peer_issuer_subject = nullptr;
+
 	const char *uri;
 
 	const char *absolute_uri;

@@ -534,6 +534,8 @@ handshake.
 See :ref:`certdb` for instructions on how to create and manage the
 database.
 
+.. _ssl_verify:
+
 Client Certificates
 ~~~~~~~~~~~~~~~~~~~
 

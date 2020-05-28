@@ -265,10 +265,14 @@ WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
 {
 	const AllocatorPtr alloc(pool);
 
+	const char *peer_subject = ctx->peer_subject;
+	const char *peer_issuer_subject = ctx->peer_issuer_subject;
+
 	auto headers =
 		forward_request_headers(alloc, *ctx->request_headers,
 					ctx->local_host,
 					ctx->remote_host,
+					peer_subject, peer_issuer_subject,
 					exclude_host, with_body,
 					widget.from_request.frame && !t_view.HasProcessor(),
 					widget.from_request.frame && t_view.transformation == nullptr,

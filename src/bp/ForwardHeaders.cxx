@@ -276,6 +276,8 @@ compare_set_cookie_name(const char *set_cookie, const char *name) noexcept
 StringMap
 forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 			const char *local_host, const char *remote_host,
+			const char *peer_subject,
+			const char *peer_issuer_subject,
 			bool exclude_host,
 			bool with_body, bool forward_charset,
 			bool forward_encoding,
@@ -391,6 +393,16 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 	if (settings[HeaderGroup::IDENTITY] != HeaderForwardMode::NO)
 		forward_identity(alloc, dest, src, local_host, remote_host,
 				 settings[HeaderGroup::IDENTITY] == HeaderForwardMode::MANGLE);
+
+	if (settings[HeaderGroup::SSL] == HeaderForwardMode::MANGLE) {
+		if (peer_subject != nullptr)
+			dest.Add(alloc, "x-cm4all-beng-peer-subject",
+				 peer_subject);
+
+		if (peer_issuer_subject != nullptr)
+			dest.Add(alloc, "x-cm4all-beng-peer-issuer-subject",
+				 peer_issuer_subject);
+	}
 
 	return dest;
 }

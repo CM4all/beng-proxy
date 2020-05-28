@@ -81,6 +81,7 @@ TEST(HeaderForwardTest, BasicRequestHeader)
 				}};
 	auto a = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -88,6 +89,7 @@ TEST(HeaderForwardTest, BasicRequestHeader)
 
 	a = forward_request_headers(alloc, headers,
 				    "192.168.0.2", "192.168.0.3",
+				    nullptr, nullptr,
 				    true, true, true, true, true,
 				    settings,
 				    nullptr, nullptr, nullptr, nullptr);
@@ -97,6 +99,7 @@ TEST(HeaderForwardTest, BasicRequestHeader)
 		    HeaderForwardMode::YES);
 	a = forward_request_headers(alloc, headers,
 				    "192.168.0.2", "192.168.0.3",
+				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
 				    nullptr, nullptr, nullptr, nullptr);
@@ -106,6 +109,7 @@ TEST(HeaderForwardTest, BasicRequestHeader)
 		    HeaderForwardMode::MANGLE);
 	a = forward_request_headers(alloc, headers,
 				    "192.168.0.2", "192.168.0.3",
+				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
 				    nullptr, nullptr, nullptr, nullptr);
@@ -115,6 +119,7 @@ TEST(HeaderForwardTest, BasicRequestHeader)
 		    HeaderForwardMode::BOTH);
 	a = forward_request_headers(alloc, headers,
 				    "192.168.0.2", "192.168.0.3",
+				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
 				    nullptr, nullptr, nullptr, nullptr);
@@ -130,6 +135,7 @@ TEST(HeaderForwardTest, HostRequestHeader)
 	const StringMap headers{alloc, {{"host", "foo"}}};
 	auto a = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 true, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -137,6 +143,7 @@ TEST(HeaderForwardTest, HostRequestHeader)
 
 	a = forward_request_headers(alloc, headers,
 				    "192.168.0.2", "192.168.0.3",
+				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
 				    nullptr, nullptr, nullptr, nullptr);
@@ -145,6 +152,7 @@ TEST(HeaderForwardTest, HostRequestHeader)
 	settings[HeaderGroup::FORWARD] = HeaderForwardMode::MANGLE;
 	a = forward_request_headers(alloc, headers,
 				    "192.168.0.2", "192.168.0.3",
+				    nullptr, nullptr,
 				    true, false, false, false, false,
 				    settings,
 				    nullptr, nullptr, nullptr, nullptr);
@@ -153,6 +161,7 @@ TEST(HeaderForwardTest, HostRequestHeader)
 	settings[HeaderGroup::FORWARD] = HeaderForwardMode::MANGLE;
 	a = forward_request_headers(alloc, headers,
 				    "192.168.0.2", "192.168.0.3",
+				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
 				    nullptr, nullptr, nullptr, nullptr);
@@ -168,6 +177,7 @@ TEST(HeaderForwardTest, AuthRequestHeaders)
 	const StringMap headers{alloc, {{"authorization", "foo"}}};
 	auto a = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -176,6 +186,7 @@ TEST(HeaderForwardTest, AuthRequestHeaders)
 	settings[HeaderGroup::AUTH] = HeaderForwardMode::MANGLE;
 	a = forward_request_headers(alloc, headers,
 				    "192.168.0.2", "192.168.0.3",
+				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
 				    nullptr, nullptr, nullptr, nullptr);
@@ -184,6 +195,7 @@ TEST(HeaderForwardTest, AuthRequestHeaders)
 	settings[HeaderGroup::AUTH] = HeaderForwardMode::BOTH;
 	a = forward_request_headers(alloc, headers,
 				    "192.168.0.2", "192.168.0.3",
+				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
 				    nullptr, nullptr, nullptr, nullptr);
@@ -192,6 +204,7 @@ TEST(HeaderForwardTest, AuthRequestHeaders)
 	settings[HeaderGroup::AUTH] = HeaderForwardMode::YES;
 	a = forward_request_headers(alloc, headers,
 				    "192.168.0.2", "192.168.0.3",
+				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
 				    nullptr, nullptr, nullptr, nullptr);
@@ -207,6 +220,7 @@ TEST(HeaderForwardTest, RangeRequestHeader)
 	const StringMap headers{alloc, {{"range", "1-42"}}};
 	auto a = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -214,6 +228,7 @@ TEST(HeaderForwardTest, RangeRequestHeader)
 
 	a = forward_request_headers(alloc, headers,
 				    "192.168.0.2", "192.168.0.3",
+				    nullptr, nullptr,
 				    false, false, false, false, true,
 				    settings,
 				    nullptr, nullptr, nullptr, nullptr);
@@ -221,6 +236,7 @@ TEST(HeaderForwardTest, RangeRequestHeader)
 
 	a = forward_request_headers(alloc, {},
 				    "192.168.0.2", "192.168.0.3",
+				    nullptr, nullptr,
 				    false, false, false, false, true,
 				    settings,
 				    nullptr, nullptr, nullptr, nullptr);
@@ -243,6 +259,7 @@ TEST(HeaderForwardTest, CacheRequestHeaders)
 				}};
 	auto a = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -250,6 +267,7 @@ TEST(HeaderForwardTest, CacheRequestHeaders)
 
 	a = forward_request_headers(alloc, headers,
 				    "192.168.0.2", "192.168.0.3",
+				    nullptr, nullptr,
 				    false, false, false, false, true,
 				    settings,
 				    nullptr, nullptr, nullptr, nullptr);
@@ -257,6 +275,7 @@ TEST(HeaderForwardTest, CacheRequestHeaders)
 
 	a = forward_request_headers(alloc, {},
 				    "192.168.0.2", "192.168.0.3",
+				    nullptr, nullptr,
 				    false, false, false, false, true,
 				    settings,
 				    nullptr, nullptr, nullptr, nullptr);
@@ -300,6 +319,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 	/* nullptr test */
 	auto a = forward_request_headers(alloc, {},
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -311,6 +331,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 	headers.Add(alloc, "user-agent", "firesomething");
 	auto b = forward_request_headers(*pool, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -324,6 +345,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
 	auto c = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -335,6 +357,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 	/* now accept-charset is forwarded */
 	auto d = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, true, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -346,6 +369,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 	/* with request body */
 	auto e = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, true, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -360,6 +384,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 	settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::NO;
 	auto f = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -373,6 +398,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 	settings[HeaderGroup::CAPABILITIES] = HeaderForwardMode::MANGLE;
 	auto g = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -389,6 +415,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
 	auto h = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -403,6 +430,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
 	auto i = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -415,6 +443,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
 	auto j = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -428,6 +457,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
 	auto k = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -441,6 +471,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
 	auto l = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 "c", nullptr, nullptr, nullptr);
@@ -455,6 +486,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
 	auto m = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -468,6 +500,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
 	auto n = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -478,6 +511,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
 	auto o = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -492,6 +526,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
 	auto p = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -508,6 +543,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
 	auto q = forward_request_headers(alloc, headers,
 					 "192.168.0.2", "192.168.0.3",
+					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
 					 nullptr, nullptr, nullptr, nullptr);
@@ -524,6 +560,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 
 	q = forward_request_headers(alloc, headers,
 				    "192.168.0.2", "192.168.0.3",
+				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
 				    nullptr, nullptr, nullptr, nullptr);
