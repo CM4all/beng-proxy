@@ -285,16 +285,18 @@ else
   stopwatch_dep = declare_dependency()
 endif
 
-stock = static_library('stock',
-  'src/stock/Item.cxx',
-  'src/stock/Stock.cxx',
-  'src/stock/MapStock.cxx',
+subdir('libcommon/src/stock')
+
+stock2 = static_library(
+  'stock2',
   'src/stock/MultiStock.cxx',
   'src/stock/Lease.cxx',
   include_directories: inc,
 )
-stock_dep = declare_dependency(link_with: stock,
-                               dependencies: [event_dep])
+stock_dep = declare_dependency(
+  link_with: stock2,
+  dependencies: [stock_dep, event_dep],
+)
 
 shm = static_library('shm',
   'src/shm/dpool.cxx',

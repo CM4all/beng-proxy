@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "Stock.hxx"
+#include "stock/Stock.hxx"
 
 class StockLoggerDomain {
 	const Stock &stock;

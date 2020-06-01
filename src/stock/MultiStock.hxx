@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "Request.hxx"
+#include "stock/Request.hxx"
 #include "lease.hxx"
 #include "util/Compiler.h"
 #include "util/DeleteDisposer.hxx"

@@ -31,9 +31,9 @@
  */
 
 #include "MultiStock.hxx"
-#include "MapStock.hxx"
-#include "GetHandler.hxx"
-#include "Item.hxx"
+#include "stock/MapStock.hxx"
+#include "stock/GetHandler.hxx"
+#include "stock/Item.hxx"
 
 bool
 MultiStock::Item::Compare::Less(const char *a, const char *b) const

@@ -31,7 +31,7 @@
  */
 
 #include "Lease.hxx"
-#include "Item.hxx"
+#include "stock/Item.hxx"
 
 void
 StockItemLease::ReleaseLease(bool reuse) noexcept
