@@ -1,6 +1,9 @@
 option('documentation', type: 'feature',
   description: 'Build documentation')
 
+option('coroutines', type: 'boolean', value: false,
+       description: 'Enable C++20 coroutines')
+
 option('http2', type: 'feature', description: 'HTTP2 protocol support')
 option('nfs', type: 'feature', description: 'userspace NFS client')
 option('stopwatch', type: 'boolean', value: true, description: 'enable stopwatch support')

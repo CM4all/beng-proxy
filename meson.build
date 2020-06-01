@@ -105,6 +105,10 @@ endif
 add_global_arguments(debug_flags, language: 'c')
 add_global_arguments(debug_flags, language: 'cpp')
 
+if get_option('coroutines')
+  add_global_arguments('-fcoroutines', language: 'cpp')
+endif
+
 threads = dependency('threads')
 libsodium = dependency('libsodium', version: '>= 1.0.16')
 libjsoncpp = dependency('jsoncpp')
