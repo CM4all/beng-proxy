@@ -56,6 +56,12 @@
 
 #include <sys/wait.h>
 
+#ifdef __GNUC__
+/* ignore "ISO C++ does not allow C99 designated initializers" until
+   we switch to C++20 */
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
+
 static void
 mirror_data(size_t length)
 {

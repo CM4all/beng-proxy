@@ -63,6 +63,12 @@ my_sink_header_error(std::exception_ptr ep, void *ctx)
 	delayed.SetError(ep);
 }
 
+#ifdef __GNUC__
+/* ignore "ISO C++ does not allow C99 designated initializers" until
+   we switch to C++20 */
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
+
 static const struct sink_header_handler my_sink_header_handler = {
 	.done = my_sink_header_done,
 	.error = my_sink_header_error,

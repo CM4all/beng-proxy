@@ -95,6 +95,12 @@ write_full_or_abort(int fd, const void *dest0, size_t length)
 	}
 }
 
+#ifdef __GNUC__
+/* ignore "ISO C++ does not allow C99 designated initializers" until
+   we switch to C++20 */
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
+
 int
 main(int argc, char **argv)
 {

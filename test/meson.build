@@ -10,6 +10,14 @@ if compiler.get_id() == 'gcc'
   ]
 endif
 
+if compiler.get_id() == 'gcc' and compiler.version().version_compare('<8')
+  gtest_compile_args += [
+    # ignore "ISO C++11 requires at least one argument for the "..."
+    # in a variadic macro"
+    '-Wno-pedantic',
+  ]
+endif
+
 if compiler.get_id() == 'clang'
   gtest_compile_args += [
     # TYPED_TEST_CASE_P got deprecated in GTest 1.9.0

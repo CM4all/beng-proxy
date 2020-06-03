@@ -38,6 +38,12 @@
 
 #include <stdio.h>
 
+#ifdef __GNUC__
+/* ignore "ISO C++ does not allow C99 designated initializers" until
+   we switch to C++20 */
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
+
 void
 read_fcgi_header(struct fcgi_record_header *header)
 {
