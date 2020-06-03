@@ -35,6 +35,8 @@
 #include "FilteredSocket.hxx"
 #include "lease.hxx"
 
+#include <array>
+
 /**
  * Wrapper for a #FilteredSocket which may be released at some point.
  * After that, remaining data in the input buffer can still be read.
