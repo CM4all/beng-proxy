@@ -436,10 +436,21 @@ Request::InvokeSubst(http_status_t status,
 		     const char *yaml_map_path) noexcept
 {
 	try {
+#ifdef HAVE_YAML
 		InvokeResponse(status, std::move(response_headers),
 			       NewYamlSubstIstream(pool, std::move(response_body),
 						   alt_syntax,
 						   prefix, yaml_file, yaml_map_path));
+#else
+		(void)status;
+		(void)response_headers;
+		(void)response_body;
+		(void)alt_syntax;
+		(void)prefix;
+		(void)yaml_file;
+		(void)yaml_map_path;
+		throw std::runtime_error("YAML support is disabled");
+#endif
 	} catch (...) {
 		LogDispatchError(std::current_exception());
 	}

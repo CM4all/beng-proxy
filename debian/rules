@@ -9,6 +9,7 @@ MESON_OPTIONS = \
 	-Dnfs=enabled \
 	-Dsystemd=true \
 	-Dwas=enabled \
+	-Dyaml=enabled \
 	-Dzeroconf=enabled \
 	--warnlevel=2 \
 	--werror

@@ -54,9 +54,16 @@ istream_basic_dep = declare_dependency(
 )
 
 istream_sources = []
+istream_compile_args = []
 
 if uring_dep.found()
   istream_sources += 'UringIstream.cxx'
+endif
+
+libyamlcpp = dependency('yaml-cpp', required: get_option('yaml'))
+if libyamlcpp.found()
+  istream_compile_args += '-DHAVE_YAML'
+  istream_sources += 'YamlSubstIstream.cxx'
 endif
 
 istream = static_library(
@@ -78,7 +85,6 @@ istream = static_library(
   'SliceIstream.cxx',
   'TeeIstream.cxx',
   'TimeoutIstream.cxx',
-  'YamlSubstIstream.cxx',
   'AutoPipeIstream.cxx',
 
   'ToBucketIstream.cxx',
@@ -102,6 +108,7 @@ istream = static_library(
 )
 
 istream_dep = declare_dependency(
+  compile_args: istream_compile_args,
   link_with: istream,
   dependencies: [
     istream_api_dep,

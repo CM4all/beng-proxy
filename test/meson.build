@@ -219,14 +219,17 @@ executable('run_subst',
     istream_dep,
   ])
 
-executable(
-  'RunYamlSubst',
-  'RunYamlSubst.cxx',
-  '../src/PInstance.cxx',
-  include_directories: inc,
-  dependencies: [
-    istream_dep,
-  ])
+if libyamlcpp.found()
+  executable(
+    'RunYamlSubst',
+    'RunYamlSubst.cxx',
+    '../src/PInstance.cxx',
+    include_directories: inc,
+    dependencies: [
+      istream_dep,
+    ],
+  )
+endif
 
 executable('run_cookie_client',
   'run_cookie_client.cxx',
@@ -783,6 +786,11 @@ test(
   ),
 )  
 
+istream_test_sources = []
+if libyamlcpp.found()
+  istream_test_sources += 'TestYamlSubstIstream.cxx'
+endif
+
 test(
   'IstreamFilterTest',
   executable(
@@ -807,7 +815,7 @@ test(
     'TestAutoPipeIstream.cxx',
     '../src/pipe_stock.cxx',
     '../src/PipeLease.cxx',
-    'TestYamlSubstIstream.cxx',
+    istream_test_sources,
     include_directories: inc,
     dependencies: [
       t_istream_filter_deps,

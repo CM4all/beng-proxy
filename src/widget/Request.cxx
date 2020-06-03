@@ -502,10 +502,20 @@ WidgetRequest::SubstResponse(http_status_t status,
 			     const char *yaml_map_path) noexcept
 {
 	try {
+#ifdef HAVE_YAML
 		InvokeResponse(status, std::move(headers),
 			       NewYamlSubstIstream(pool, std::move(body),
 						   subst_alt_syntax,
 						   prefix, yaml_file, yaml_map_path));
+#else
+		(void)status;
+		(void)headers;
+		(void)body;
+		(void)prefix;
+		(void)yaml_file;
+		(void)yaml_map_path;
+		throw std::runtime_error("YAML support is disabled");
+#endif
 	} catch (...) {
 		DispatchError(std::current_exception());
 	}
