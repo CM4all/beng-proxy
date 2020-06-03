@@ -115,7 +115,7 @@ endif
 
 threads = dependency('threads')
 libsodium = dependency('libsodium', version: '>= 1.0.16')
-libjsoncpp = dependency('jsoncpp')
+libjsoncpp = dependency('jsoncpp', fallback: ['jsoncpp', 'jsoncpp_dep'])
 libyamlcpp = dependency('yaml-cpp')
 zlib = dependency('zlib')
 libcrypt = compiler.find_library('crypt')

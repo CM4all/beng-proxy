@@ -1,0 +1,10 @@
+[wrap-file]
+directory = jsoncpp-1.9.3
+
+source_url = https://github.com/open-source-parsers/jsoncpp/archive/1.9.3.tar.gz
+source_filename = jsoncpp-1.9.3.tar.gz
+source_hash = 8593c1d69e703563d94d8c12244e2e18893eeb9a8a9f8aa3d09a327aa45c8f7d
+
+patch_url = https://wrapdb.mesonbuild.com/v1/projects/jsoncpp/1.8.4/1/get_zip
+patch_filename = jsoncpp-1.8.4-1-wrap.zip
+patch_hash = 4503fcbfd31ee903a6bcfc898fdb4be1ebc3e2a71add8f24eecbd390dcf386a9
