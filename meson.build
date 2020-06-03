@@ -106,7 +106,11 @@ add_global_arguments(debug_flags, language: 'c')
 add_global_arguments(debug_flags, language: 'cpp')
 
 if get_option('coroutines')
-  add_global_arguments('-fcoroutines', language: 'cpp')
+  if compiler.get_id() == 'clang'
+    add_global_arguments('-fcoroutines-ts', language: 'cpp')
+  else
+    add_global_arguments('-fcoroutines', language: 'cpp')
+  endif
 endif
 
 threads = dependency('threads')
