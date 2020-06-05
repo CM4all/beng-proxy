@@ -517,7 +517,7 @@ Acme(ConstBuffer<const char *> args)
 
 	if (args.empty())
 		throw "acme commands:\n"
-			"  new-reg EMAIL\n"
+			"  new-account EMAIL\n"
 			"  get-account EMAIL\n"
 			"  new-order HANDLE HOST...\n"
 			"  renew-cert HANDLE\n"
@@ -536,9 +536,10 @@ Acme(ConstBuffer<const char *> args)
 
 	const auto cmd = args.shift();
 
-	if (StringIsEqual(cmd, "new-reg")) {
+	if (StringIsEqual(cmd, "new-account") ||
+	    /* deprecated alias: */ StringIsEqual(cmd, "new-reg")) {
 		if (args.size != 1)
-			throw Usage("acme new-reg EMAIL");
+			throw Usage("acme new-account EMAIL");
 
 		const char *email = args[0];
 

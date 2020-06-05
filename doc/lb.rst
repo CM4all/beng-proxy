@@ -752,7 +752,7 @@ Encrypt* project.
 To get started, register an account::
 
    openssl genrsa -out /etc/cm4all/acme/account.key  4096
-   cm4all-certdb acme --staging new-reg foo@example.com
+   cm4all-certdb acme --staging new-account foo@example.com
 
 This prints the account "location", which must be specified with the
 ``--account-key-id`` option in every successive call.  To look up the
