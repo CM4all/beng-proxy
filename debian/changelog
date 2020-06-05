@@ -4,6 +4,7 @@ cm4all-beng-proxy (17.0.11) unstable; urgency=low
   * switch to C++20
   * bp: support SSL client certificates (setting "ssl_verify")
   * bp: fix crash when closing HTTP/2 connection
+  * spawn: drop JailCGI support
   * certdb: allow --workshop-control before --progress
   * certdb: rename "new-reg" to "new-account"
   * certdb: manage ACME account keys in a new database table

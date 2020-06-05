@@ -444,8 +444,6 @@ Response
 
 - ``SECURE_COOKIE``: Set the "secure" flag on the session cookie.
 
-- ``JAILCGI``: enable JailCGI
-
 - ``HOME``: home directory of the account this site belongs to; will be
   mounted in the jail; defaults to ``DOCUMENT_ROOT``
 
@@ -666,8 +664,6 @@ explanation.
 - ``DOCUMENT_ROOT``: See :ref:`tresponse`.
 
 - ``HOME``: See :ref:`tresponse`.
-
-- ``JAILCGI``: enable JailCGI
 
 See :ref:`rlimits` for how to configure resource limits and :ref:`ns`
 for how to configure namespaces.
@@ -1078,8 +1074,7 @@ Namespaces Summary
 ~~~~~~~~~~~~~~~~~~
 
 The following example describes part of a translation packets that
-attempts to execute a child process as securely as possible (without
-using JailCGI and Refence)::
+attempts to execute a child process as securely as possible::
 
    USER_NAMESPACE
    PID_NAMESPACE
@@ -1331,7 +1326,6 @@ The translation server’s response consists of these packets:
 - ``PATH``, ``CGI``, ``HTTP``: choose one of these packets: a static
   widget (local file path), a local CGI script, or a HTTP server
 
-- ``DOCUMENT_ROOT``, ``JAILCGI``: optional flags for CGI widgets
 - ``PROCESS``: enable the BENG processor
 
 - ``UNTRUSTED``: sets the externally visible host name for requests

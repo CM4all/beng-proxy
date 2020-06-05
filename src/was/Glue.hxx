@@ -47,7 +47,6 @@ template<typename T> struct ConstBuffer;
 /**
  * High level WAS client.
  *
- * @param jail run the WAS application with JailCGI?
  * @param args command-line arguments
  */
 void

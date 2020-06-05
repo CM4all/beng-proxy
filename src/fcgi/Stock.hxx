@@ -98,13 +98,6 @@ UniqueFileDescriptor
 fcgi_stock_item_get_stderr(const StockItem &item) noexcept;
 
 /**
- * Translates a path into the application's namespace.
- */
-const char *
-fcgi_stock_translate_path(const StockItem &item,
-			  const char *path, AllocatorPtr alloc) noexcept;
-
-/**
  * Let the fcgi_stock know that the client is being aborted.  The
  * fcgi_stock may then figure out that the client process is faulty
  * and kill it at the next chance.  Note that this function will not

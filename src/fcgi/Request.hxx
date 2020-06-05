@@ -49,7 +49,6 @@ template<typename T> struct ConstBuffer;
 /**
  * High level FastCGI client.
  *
- * @param jail run the FastCGI application with JailCGI?
  * @param args command-line arguments
  */
 void

@@ -219,5 +219,5 @@ LhttpAddress::CopyTo(PreparedChildProcess &dest) const noexcept
 	for (const char *i : args)
 		dest.Append(i);
 
-	options.CopyTo(dest, true, nullptr);
+	options.CopyTo(dest);
 }

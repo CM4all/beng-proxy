@@ -94,10 +94,7 @@ public:
 		if (log_socket.IsDefined() && !stderr_fd.IsDefined())
 			stderr_fd = log.EnableClient(event_loop, log_socket, log_options);
 
-		const char *script_filename = fcgi_stock_translate_path(*stock_item, path,
-									pool);
-		document_root = fcgi_stock_translate_path(*stock_item, document_root,
-							  pool);
+		const char *script_filename = path;
 
 		fcgi_client_request(&pool, event_loop, std::move(stopwatch),
 				    fcgi_stock_item_get(*stock_item),

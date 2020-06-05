@@ -269,7 +269,7 @@ class Translation(Protocol):
                     response.packet(TRANSLATE_PATH, path)
                 response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1' + request.probe_suffix)
 
-    def _handle_local_file(self, path, response, delegate=False, jail=False, fastcgi=True, error_document=False):
+    def _handle_local_file(self, path, response, delegate=False, fastcgi=True, error_document=False):
         response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
         if error_document:
             response.packet(TRANSLATE_ERROR_DOCUMENT)
@@ -285,13 +285,8 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_FASTCGI, m.group(1))
             else:
                 response.packet(TRANSLATE_CGI, m.group(1))
-            if jail:
-                response.packet(TRANSLATE_ACTION, '/usr/bin/php-cgi5')
-            else:
-                response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
+            response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
             response.packet(TRANSLATE_PATH_INFO, m.group(2))
-            if jail:
-                response.packet(TRANSLATE_JAILCGI)
             response.packet(TRANSLATE_AUTO_BASE)
             return
 
@@ -299,16 +294,10 @@ class Translation(Protocol):
             response.packet(TRANSLATE_WAS, coma_was)
             response.pair('COMA_CLASS', path)
             response.pair('UPLOAD_BUFFER_SIZE', '4M')
-            if jail:
-                response.packet(TRANSLATE_JAILCGI)
         else:
             response.path(path)
             response.expires_relative(1800)
-            if delegate and jail:
-                response.delegate(os.path.join(default_helpers_path,
-                                               'delegate-helper'))
-                response.packet(TRANSLATE_JAILCGI)
-            elif delegate:
+            if delegate:
                 response.delegate(os.path.join(helpers_path,
                                                'delegate-helper'))
             if path[-5:] == '.html':
@@ -442,20 +431,6 @@ class Translation(Protocol):
             response.path('/dev' + uri)
         elif uri[:10] == '/delegate/':
             self._handle_local_file('/var/www' + uri[9:], response, True)
-        elif uri[:15] == '/jail-delegate/':
-            self._handle_local_file('/home/www' + uri[14:], response, True, True)
-        elif uri[:6] == '/jail/':
-            self._handle_local_file('/home/www' + uri[5:], response, False, True)
-        elif uri[:11] == '/jail-slow/':
-            # execute PHP as CGI, not FastCGI
-            self._handle_local_file('/home/www' + uri[10:], response, jail=True, fastcgi=False)
-        elif uri[:11] == '/jail-home/':
-            # execute PHP with DOCUMENT_ROOT below HOME
-            response.packet(TRANSLATE_DOCUMENT_ROOT, '/var/www/htdocs')
-            response.packet(TRANSLATE_FASTCGI, '/var/www/htdocs' + uri[10:])
-            response.packet(TRANSLATE_ACTION, '/usr/bin/php-cgi5')
-            response.packet(TRANSLATE_JAILCGI)
-            response.packet(TRANSLATE_HOME, '/var/www')
         elif uri[:6] == '/demo/':
             self._handle_local_file(demo_path + uri[5:], response)
         elif uri[:6] == '/base/':

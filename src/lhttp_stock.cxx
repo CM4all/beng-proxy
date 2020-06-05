@@ -41,7 +41,6 @@
 #include "AllocatorPtr.hxx"
 #include "lease.hxx"
 #include "child_stock.hxx"
-#include "spawn/JailParams.hxx"
 #include "spawn/Prepared.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -380,10 +379,6 @@ StockItem *
 lhttp_stock_get(LhttpStock *lhttp_stock,
 		const LhttpAddress *address)
 {
-	const auto *const jail = address->options.jail;
-	if (jail != nullptr)
-		jail->Check();
-
 	const TempPoolLease tpool;
 	return lhttp_stock->GetConnectionStock().GetNow(lhttp_stock_key(tpool, address),
 							ToNopPointer(const_cast<LhttpAddress *>(address)));

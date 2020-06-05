@@ -126,7 +126,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
     UnusedIstreamPtr response;
 
     try {
-        options.CopyTo(p, true, nullptr);
+        options.CopyTo(p);
         response = SpawnChildProcess(event_loop, &pool, path, std::move(body),
                                      std::move(p),
                                      spawn_service);

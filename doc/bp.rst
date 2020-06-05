@@ -599,8 +599,7 @@ to the translation protocol. The file descriptor is sent to
 If the ``DELEGATE`` translation packet was followed by a
 ``DOCUMENT_ROOT`` packet, then all helper processes are grouped by
 their document root, and the ``DOCUMENT_ROOT`` environment variable is
-set. In this case, it is possible to run the delegate helper inside
-JailCGI by specifying the ``JAILCGI`` packet.
+set.
 
 .. _http:
 
@@ -701,7 +700,6 @@ CGI and FastCGI
 ---------------
 
 Local CGI programs may be used to generate dynamic resources.
-:program:`beng-proxy` supports running these with JailCGI.
 
 CGI/FastCGI resources are cached in the same manner as remote HTTP
 resources.
@@ -766,8 +764,6 @@ Optional attributes:
 - command-line arguments (one or more ``APPEND`` packets)
 
 - a “Host” request header (packet ``LHTTP_HOST``)
-
-- JailCGI configuration (packet ``JAILCGI``)
 
 - concurrency (packet ``CONCURRENCY``)
 
@@ -1547,4 +1543,4 @@ of a CGI script which will serve the widget, or ``path`` for a static
 widget.
 
 For CGI widgets, you can also specify the options ``script_name``,
-``document_root``, ``action``, ``interpreter`` and ``jailcgi``.
+``document_root``, ``action``, ``interpreter``.

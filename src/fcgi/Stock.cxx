@@ -39,8 +39,6 @@
 #include "child_stock.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
-#include "spawn/JailParams.hxx"
-#include "spawn/JailConfig.hxx"
 #include "pool/DisposablePointer.hxx"
 #include "pool/tpool.hxx"
 #include "pool/StringBuilder.hxx"
@@ -138,10 +136,6 @@ struct FcgiChildParams {
 
 struct FcgiConnection final : StockItem {
 	const LLogger logger;
-
-	std::string jail_home_directory;
-
-	JailConfig jail_config;
 
 	StockItem *child = nullptr;
 
@@ -298,7 +292,7 @@ FcgiStock::PrepareChild(void *info, UniqueSocketDescriptor &&fd,
 	for (auto i : params.args)
 		p.Append(i);
 
-	options.CopyTo(p, true, nullptr);
+	options.CopyTo(p);
 }
 
 /*
@@ -310,21 +304,10 @@ void
 FcgiStock::Create(CreateStockItem c, StockRequest request,
 		  gcc_unused CancellablePointer &cancel_ptr)
 {
-	auto &params = *(FcgiChildParams *)request.get();
-
+	[[maybe_unused]] auto &params = *(FcgiChildParams *)request.get();
 	assert(params.executable_path != nullptr);
 
 	auto *connection = new FcgiConnection(GetEventLoop(), c);
-
-	const ChildOptions &options = params.options;
-	if (options.jail != nullptr && options.jail->enabled) {
-		connection->jail_home_directory = options.jail->home_directory;
-
-		if (!connection->jail_config.Load("/etc/cm4all/jailcgi/jail.conf")) {
-			delete connection;
-			throw FcgiClientError("Failed to load /etc/cm4all/jailcgi/jail.conf");
-		}
-	}
 
 	const char *key = c.GetStockName();
 
@@ -531,23 +514,6 @@ fcgi_stock_item_get(const StockItem &item) noexcept
 	assert(connection->fd.IsDefined());
 
 	return connection->fd;
-}
-
-const char *
-fcgi_stock_translate_path(const StockItem &item,
-			  const char *path, AllocatorPtr alloc) noexcept
-{
-	const auto *connection = (const FcgiConnection *)&item;
-
-	if (connection->jail_home_directory.empty())
-		/* no JailCGI - application's namespace is the same as ours,
-		   no translation needed */
-		return path;
-
-	const char *jailed = connection->jail_config.TranslatePath(path,
-								   connection->jail_home_directory.c_str(),
-								   alloc);
-	return jailed != nullptr ? jailed : path;
 }
 
 void

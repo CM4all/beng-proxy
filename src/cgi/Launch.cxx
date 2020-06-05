@@ -37,7 +37,6 @@
 #include "strmap.hxx"
 #include "product.h"
 #include "spawn/IstreamSpawn.hxx"
-#include "spawn/JailParams.hxx"
 #include "spawn/Prepared.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/CharUtil.hxx"
@@ -97,26 +96,12 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 		p.SetEnv("REMOTE_ADDR", remote_addr);
 
 	const char *arg = nullptr;
-	if (address.options.jail != nullptr && address.options.jail->enabled) {
-		p.SetEnv("JAILCGI_FILENAME", path);
-		path = "/usr/lib/cm4all/jailcgi/bin/wrapper";
+	if (address.action != nullptr)
+		path = address.action;
 
-		if (address.options.jail->home_directory != nullptr)
-			p.SetEnv("JETSERV_HOME", address.options.jail->home_directory);
-
-		if (address.interpreter != nullptr)
-			p.SetEnv("JAILCGI_INTERPRETER", address.interpreter);
-
-		if (address.action != nullptr)
-			p.SetEnv("JAILCGI_ACTION", address.action);
-	} else {
-		if (address.action != nullptr)
-			path = address.action;
-
-		if (address.interpreter != nullptr) {
-			arg = path;
-			path = address.interpreter;
-		}
+	if (address.interpreter != nullptr) {
+		arg = path;
+		path = address.interpreter;
 	}
 
 	const char *content_type = nullptr;
@@ -173,7 +158,7 @@ PrepareCgi(struct pool &pool, PreparedChildProcess &p,
 	if (arg != nullptr)
 		p.Append(arg);
 
-	address.options.CopyTo(p, false, nullptr);
+	address.options.CopyTo(p);
 }
 
 UnusedIstreamPtr

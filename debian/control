@@ -43,14 +43,13 @@ Depends: ${shlibs:Depends}, adduser,
 Recommends: cm4all-beng-proxy-translation | cm4all-jetserv-daemon,
  cm4all-spawn (>= 0.6),
  libcm4all-beng-proxy-js (= ${source:Version})
-Suggests: attr, cm4all-jailcgi-wrapper, cm4all-coma-cgi,
+Suggests: attr, cm4all-coma-cgi,
  cm4all-beng-proxy-logging (= ${source:Version}),
  cm4all-beng-proxy-delegate-helper
 Provides: httpd, httpd-cgi
 Conflicts: cm4all-beng-proxy-toi-dbg,
  cm4all-beng-proxy-toi,
- cm4all-beng-proxy-optimized,
- cm4all-jailcgi-wrapper (<< 1.4)
+ cm4all-beng-proxy-optimized
 Breaks: libcm4all-beng-proxy-js (<< 0.9.14),
  libcm4all-was-simple1 (<< 1.8),
  cm4all-coma-fastcgi (<< 2.11),

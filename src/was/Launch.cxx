@@ -90,7 +90,7 @@ was_launch(SpawnService &spawn_service,
 	for (auto i : args)
 		p.Append(i);
 
-	options.CopyTo(p, true, nullptr);
+	options.CopyTo(p);
 
 	if (p.stderr_fd < 0 && stderr_fd.IsDefined())
 		p.SetStderr(std::move(stderr_fd));

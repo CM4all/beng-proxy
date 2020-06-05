@@ -162,7 +162,7 @@ DelegateStock::Create(CreateStockItem c,
 	PreparedChildProcess p;
 	p.Append(info.executable_path);
 
-	info.options.CopyTo(p, true, nullptr);
+	info.options.CopyTo(p);
 
 	UniqueSocketDescriptor server_fd, client_fd;
 	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
