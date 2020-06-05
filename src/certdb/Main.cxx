@@ -52,6 +52,7 @@
 #include "io/StringFile.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/PrintException.hxx"
+#include "util/StringCompare.hxx"
 #include "util/Compiler.h"
 
 #include <stdexcept>
@@ -390,7 +391,7 @@ HandleFind(ConstBuffer<const char *> args)
 	while (!args.empty() && args.front()[0] == '-') {
 		const char *arg = args.front();
 
-		if (strcmp(arg, "--headers") == 0) {
+		if (StringIsEqual(arg, "--headers")) {
 			args.shift();
 			headers = true;
 		} else
@@ -536,7 +537,7 @@ static const Command *
 FindCommand(const char *name)
 {
 	for (const auto &i : commands)
-		if (strcmp(i.name, name) == 0)
+		if (StringIsEqual(i.name, name))
 			return &i;
 
 	return nullptr;
@@ -548,11 +549,10 @@ try {
 	ConstBuffer<const char *> args(argv + 1, argc - 1);
 
 	while (!args.empty() && *args.front() == '-') {
-		if (strcmp(args.front(), "--progress") == 0) {
+		if (StringIsEqual(args.front(), "--progress")) {
 			args.shift();
 			root_progress.Enable(0, 100);
-		} else if (strncmp(args.front(), "--progress=", 11) == 0) {
-			const char *range = args.front() + 11;
+		} else if (auto range = StringAfterPrefix(args.front(), "--progress=")) {
 			args.shift();
 
 			char *endptr;
@@ -566,7 +566,7 @@ try {
 				throw "Failed to parse progress range";
 
 			root_progress = WorkshopProgress(min, max);
-		} else if (strcmp(args.front(), "--workshop-control") == 0) {
+		} else if (StringIsEqual(args.front(), "--workshop-control")) {
 			args.shift();
 			root_progress.UseControlChannel();
 		} else {

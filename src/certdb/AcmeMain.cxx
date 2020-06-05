@@ -56,6 +56,7 @@
 #include "ssl/Error.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
+#include "util/StringCompare.hxx"
 
 #include <map>
 #include <memory>
@@ -467,18 +468,18 @@ Acme(ConstBuffer<const char *> args)
 	while (!args.empty() && args.front()[0] == '-') {
 		const char *arg = args.front();
 
-		if (strcmp(arg, "--staging") == 0) {
+		if (StringIsEqual(arg, "--staging")) {
 			args.shift();
 			config.staging = true;
-		} else if (strcmp(arg, "--debug") == 0) {
+		} else if (StringIsEqual(arg, "--debug")) {
 			args.shift();
 			config.debug = true;
-		} else if (strcmp(arg, "--fake") == 0) {
+		} else if (StringIsEqual(arg, "--fake")) {
 			/* undocumented debugging option: no HTTP requests, fake
 			   ACME responses */
 			args.shift();
 			config.fake = true;
-		} else if (strcmp(arg, "--account-key") == 0) {
+		} else if (StringIsEqual(arg, "--account-key")) {
 			args.shift();
 
 			if (args.empty())
@@ -486,7 +487,7 @@ Acme(ConstBuffer<const char *> args)
 
 			config.account_key_path = args.front();
 			args.shift();
-		} else if (strcmp(arg, "--account-key-id") == 0) {
+		} else if (StringIsEqual(arg, "--account-key-id")) {
 			args.shift();
 
 			if (args.empty())
@@ -494,7 +495,7 @@ Acme(ConstBuffer<const char *> args)
 
 			config.account_key_id = args.front();
 			args.shift();
-		} else if (strcmp(arg, "--challenge-directory") == 0) {
+		} else if (StringIsEqual(arg, "--challenge-directory")) {
 			args.shift();
 
 			if (args.empty())
@@ -535,7 +536,7 @@ Acme(ConstBuffer<const char *> args)
 
 	const auto cmd = args.shift();
 
-	if (strcmp(cmd, "new-reg") == 0) {
+	if (StringIsEqual(cmd, "new-reg")) {
 		if (args.size != 1)
 			throw Usage("acme new-reg EMAIL");
 
@@ -546,7 +547,7 @@ Acme(ConstBuffer<const char *> args)
 
 		const auto account = AcmeClient(config).NewAccount(*key, email);
 		printf("%s\n", account.location.c_str());
-	} else if (strcmp(cmd, "get-account") == 0) {
+	} else if (StringIsEqual(cmd, "get-account")) {
 		if (!args.empty())
 			throw Usage("acme get-account");
 
@@ -557,7 +558,7 @@ Acme(ConstBuffer<const char *> args)
 								   nullptr,
 								   true);
 		PrintAccount(account);
-	} else if (strcmp(cmd, "new-order") == 0) {
+	} else if (StringIsEqual(cmd, "new-order")) {
 		if (args.size < 2)
 			throw Usage("acme new-order HANDLE HOST ...");
 
@@ -577,7 +578,7 @@ Acme(ConstBuffer<const char *> args)
 		AcmeNewOrder(db_config, config, *key, db, client, root_progress,
 			     handle, identifiers);
 		printf("OK\n");
-	} else if (strcmp(cmd, "renew-cert") == 0) {
+	} else if (StringIsEqual(cmd, "renew-cert")) {
 		if (args.size != 1)
 			throw Usage("acme renew-cert HANDLE");
 
