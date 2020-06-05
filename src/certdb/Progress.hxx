@@ -55,6 +55,11 @@ public:
 		:min(parent.Scale(_min)), max(parent.Scale(_max)),
 		 use_control_channel(parent.use_control_channel) {}
 
+	void Enable(unsigned _min, unsigned _max) noexcept {
+		min = _min;
+		max = _max;
+	}
+
 	/**
 	 * Send progress to the Workshop control channel on fd=3.
 	 */

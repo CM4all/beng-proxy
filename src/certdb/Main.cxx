@@ -550,7 +550,7 @@ try {
 	while (!args.empty() && *args.front() == '-') {
 		if (strcmp(args.front(), "--progress") == 0) {
 			args.shift();
-			root_progress = WorkshopProgress(0, 100);
+			root_progress.Enable(0, 100);
 		} else if (strncmp(args.front(), "--progress=", 11) == 0) {
 			const char *range = args.front() + 11;
 			args.shift();
