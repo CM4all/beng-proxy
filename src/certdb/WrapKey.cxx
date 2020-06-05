@@ -34,6 +34,40 @@
 
 #include <openssl/err.h>
 
+#include <algorithm>
+
+Pg::BinaryValue
+WapKey(Pg::BinaryValue key_der, AES_KEY *wrap_key,
+       std::unique_ptr<unsigned char[]> &wrapped)
+{
+	std::unique_ptr<unsigned char[]> padded;
+	size_t padded_size = ((key_der.size - 1) | 7) + 1;
+	if (padded_size != key_der.size) {
+		/* pad with zeroes */
+		padded.reset(new unsigned char[padded_size]);
+
+		unsigned char *p = padded.get();
+		p = std::copy_n((const unsigned char *)key_der.data,
+				key_der.size, p);
+		std::fill(p, padded.get() + padded_size, 0);
+
+		key_der.data = padded.get();
+		key_der.size = padded_size;
+	}
+
+	wrapped.reset(new unsigned char[key_der.size + 8]);
+	int result = AES_wrap_key(wrap_key, nullptr,
+				  wrapped.get(),
+				  (const unsigned char *)key_der.data,
+				  key_der.size);
+	if (result <= 0)
+		throw SslError("AES_wrap_key() failed");
+
+	key_der.data = wrapped.get();
+	key_der.size = result;
+	return key_der;
+}
+
 Pg::BinaryValue
 UnwrapKey(Pg::BinaryValue key_der,
 	  const CertDatabaseConfig &config, const std::string &key_wrap_name,

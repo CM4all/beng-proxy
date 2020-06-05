@@ -33,6 +33,7 @@
 #include "CertDatabase.hxx"
 #include "FromResult.hxx"
 #include "Config.hxx"
+#include "WrapKey.hxx"
 #include "ssl/Buffer.hxx"
 #include "ssl/Time.hxx"
 #include "ssl/Name.hxx"
@@ -172,36 +173,8 @@ CertDatabase::LoadServerCertificate(const char *handle,
 	Pg::BinaryValue key_der(key_buffer.get());
 
 	std::unique_ptr<unsigned char[]> wrapped;
-
-	if (wrap_key != nullptr) {
-		/* encrypt the private key */
-
-		std::unique_ptr<unsigned char[]> padded;
-		size_t padded_size = ((key_der.size - 1) | 7) + 1;
-		if (padded_size != key_der.size) {
-			/* pad with zeroes */
-			padded.reset(new unsigned char[padded_size]);
-
-			unsigned char *p = padded.get();
-			p = std::copy_n((const unsigned char *)key_der.data,
-					key_der.size, p);
-			std::fill(p, padded.get() + padded_size, 0);
-
-			key_der.data = padded.get();
-			key_der.size = padded_size;
-		}
-
-		wrapped.reset(new unsigned char[key_der.size + 8]);
-		int result = AES_wrap_key(wrap_key, nullptr,
-					  wrapped.get(),
-					  (const unsigned char *)key_der.data,
-					  key_der.size);
-		if (result <= 0)
-			throw SslError("AES_wrap_key() failed");
-
-		key_der.data = wrapped.get();
-		key_der.size = result;
-	}
+	if (wrap_key != nullptr)
+		key_der = WapKey(key_der, wrap_key, wrapped);
 
 	const auto alt_names = GetSubjectAltNames(cert);
 

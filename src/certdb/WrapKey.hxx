@@ -87,6 +87,10 @@ public:
 };
 
 Pg::BinaryValue
+WapKey(Pg::BinaryValue key_der, AES_KEY *wrap_key,
+       std::unique_ptr<unsigned char[]> &wrapped);
+
+Pg::BinaryValue
 UnwrapKey(Pg::BinaryValue key_der,
 	  const CertDatabaseConfig &config, const std::string &key_wrap_name,
 	  std::unique_ptr<unsigned char[]> &unwrapped);
