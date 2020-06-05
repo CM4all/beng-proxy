@@ -13,6 +13,7 @@ custom_target(
     'log.rst',
     'control.rst',
     'translation.rst',
+    'certdb.rst',
   ],
   command: [sphinx, '-q', '-b', 'html', '-d', '@OUTDIR@/doctrees', meson.current_source_dir(), '@OUTPUT@'],
   build_by_default: true,

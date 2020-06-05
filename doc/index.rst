@@ -7,6 +7,7 @@ beng-proxy/lb
 
    bp
    lb
+   certdb
    log
    control
    translation
