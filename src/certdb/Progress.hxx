@@ -47,11 +47,11 @@ class WorkshopProgress {
 public:
 	WorkshopProgress() = default;
 
-	constexpr WorkshopProgress(unsigned _min, unsigned _max)
+	constexpr WorkshopProgress(unsigned _min, unsigned _max) noexcept
 		:min(_min), max(_max) {}
 
 	constexpr WorkshopProgress(WorkshopProgress parent,
-				   unsigned _min, unsigned _max)
+				   unsigned _min, unsigned _max) noexcept
 		:min(parent.Scale(_min)), max(parent.Scale(_max)),
 		 use_control_channel(parent.use_control_channel) {}
 
@@ -63,11 +63,11 @@ public:
 	/**
 	 * Send progress to the Workshop control channel on fd=3.
 	 */
-	void UseControlChannel() {
+	void UseControlChannel() noexcept {
 		use_control_channel = true;
 	}
 
-	bool IsEnabled() const {
+	constexpr bool IsEnabled() const noexcept {
 		return min < max;
 	}
 
@@ -78,7 +78,7 @@ private:
 		return std::min(100u, (unsigned)std::max(0, x));
 	}
 
-	constexpr unsigned Scale(unsigned x) const {
+	constexpr unsigned Scale(unsigned x) const noexcept {
 		return (min * (100u - x) + max * x) / 100u;
 	}
 };
@@ -95,10 +95,10 @@ class StepProgress {
 	unsigned i = 0;
 
 public:
-	StepProgress(WorkshopProgress _parent, unsigned _n)
+	StepProgress(WorkshopProgress _parent, unsigned _n) noexcept
 		:parent(_parent), n(_n) {}
 
-	void operator()() {
+	void operator()() noexcept {
 		++i;
 		parent(i * 100u / n);
 	}
