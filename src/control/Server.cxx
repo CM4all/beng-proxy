@@ -68,28 +68,22 @@ control_server_decode(ControlServer &control_server,
 
 	const uint32_t *magic = (const uint32_t *)data;
 
-	if (length < sizeof(*magic) || FromBE32(*magic) != BengProxy::control_magic) {
-		handler.OnControlError(std::make_exception_ptr(std::runtime_error("wrong magic")));
-		return;
-	}
+	if (length < sizeof(*magic) || FromBE32(*magic) != BengProxy::control_magic)
+		throw std::runtime_error("wrong magic");
 
 	data = magic + 1;
 	length -= sizeof(*magic);
 
-	if (length % 4 != 0) {
-		handler.OnControlError(std::make_exception_ptr(FormatRuntimeError("odd control packet (length=%zu)", length)));
-		return;
-	}
+	if (length % 4 != 0)
+		throw FormatRuntimeError("odd control packet (length=%zu)", length);
 
 	/* now decode all commands */
 
 	while (length > 0) {
 		const auto *header = (const BengProxy::ControlHeader *)data;
-		if (length < sizeof(*header)) {
-			handler.OnControlError(std::make_exception_ptr(FormatRuntimeError("partial header (length=%zu)",
-											  length)));
-			return;
-		}
+		if (length < sizeof(*header))
+			throw FormatRuntimeError("partial header (length=%zu)",
+						 length);
 
 		size_t payload_length = FromBE16(header->length);
 		const auto command = (BengProxy::ControlCommand)
@@ -99,11 +93,9 @@ control_server_decode(ControlServer &control_server,
 		length -= sizeof(*header);
 
 		const char *payload = (const char *)data;
-		if (length < payload_length) {
-			handler.OnControlError(std::make_exception_ptr(FormatRuntimeError("partial payload (length=%zu, expected=%zu)",
-											  length, payload_length)));
-			return;
-		}
+		if (length < payload_length)
+			throw FormatRuntimeError("partial payload (length=%zu, expected=%zu)",
+						 length, payload_length);
 
 		/* this command is ok, pass it to the callback */
 
