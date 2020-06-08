@@ -922,19 +922,6 @@ Explanation:
 
 - ``n512``: maximum 256 file descriptors (hard)
 
-
-.. _refence:
-
-Refence
--------
-
-*Refence* is a Linux security module that can put additional limits on
-processes. The packet ``REFENCE`` enables it for a certain child
-process. The payload is a null-byte separated list of *Refence*
-commands to be written to :file:`/proc/cm4all/refence/self`. Example::
-
-   limit fork 10\0limit kill enclosure\0limit ptrace deny
-
 .. _ns:
 
 Namespaces
@@ -1463,7 +1450,7 @@ A successful response must contain at least ``HOME`` and ``UID_GID``:
   child process. Payload is an array of 32 bit integers.
 
 Additional packets may configure resource limits (:ref:`rlimits`,
-:ref:`refence`, :ref:`ns`) and so on (:ref:`childoptions`).
+:ref:`ns`) and so on (:ref:`childoptions`).
 
 The client may assume that all responses may be cached indefinitely.
 
