@@ -344,6 +344,8 @@ ssl_dep = declare_dependency(
   ],
 )
 
+libcommon_require_uring = true
+
 libcommon_require_avahi = get_option('zeroconf')
 subdir('libcommon/src/avahi')
 if avahi_dep.found()
