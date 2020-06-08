@@ -10,7 +10,7 @@ cm4all-beng-proxy (17.0.11) unstable; urgency=low
   * certdb: rename "new-reg" to "new-account"
   * certdb: manage ACME account keys in a new database table
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 08 Jun 2020 18:19:21 +0200
 
 cm4all-beng-proxy (17.0.10) unstable; urgency=low
 
