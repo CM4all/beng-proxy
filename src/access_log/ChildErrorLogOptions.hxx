@@ -37,4 +37,6 @@
  */
 struct ChildErrorLogOptions {
 	double rate_limit = -1, burst = -1;
+
+	bool is_default = true;
 };

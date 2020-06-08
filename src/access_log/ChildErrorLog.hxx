@@ -61,7 +61,8 @@ public:
 	 */
 	ChildErrorLog(PreparedChildProcess &p,
 		      EventLoop &event_loop, SocketDescriptor socket,
-		      const ChildErrorLogOptions &options);
+		      const ChildErrorLogOptions &options,
+		      bool force);
 
 	~ChildErrorLog() noexcept;
 
@@ -85,12 +86,14 @@ public:
 	 */
 	UniqueFileDescriptor EnableClient(EventLoop &event_loop,
 					  SocketDescriptor socket,
-					  const ChildErrorLogOptions &options);
+					  const ChildErrorLogOptions &options,
+					  bool force);
 
 	/**
 	 * Throws on error.
 	 */
 	void EnableClient(PreparedChildProcess &p,
 			  EventLoop &event_loop, SocketDescriptor socket,
-			  const ChildErrorLogOptions &log_options);
+			  const ChildErrorLogOptions &log_options,
+			  bool force);
 };

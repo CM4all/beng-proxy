@@ -45,17 +45,22 @@ ChildErrorLog &ChildErrorLog::operator=(ChildErrorLog &&) = default;
 
 ChildErrorLog::ChildErrorLog(PreparedChildProcess &p,
 			     EventLoop &event_loop, SocketDescriptor socket,
-			     const ChildErrorLogOptions &options)
+			     const ChildErrorLogOptions &options,
+			     bool force)
 {
 	if (socket.IsDefined())
-		EnableClient(p, event_loop, socket, options);
+		EnableClient(p, event_loop, socket, options, force);
 }
 
 UniqueFileDescriptor
 ChildErrorLog::EnableClient(EventLoop &event_loop, SocketDescriptor socket,
-			    const ChildErrorLogOptions &options)
+			    const ChildErrorLogOptions &options,
+			    bool force)
 {
 	assert(!adapter);
+
+	if (!options.is_default && !force)
+		return UniqueFileDescriptor{};
 
 	if (!socket.IsDefined())
 		return UniqueFileDescriptor();
@@ -74,7 +79,8 @@ ChildErrorLog::EnableClient(EventLoop &event_loop, SocketDescriptor socket,
 void
 ChildErrorLog::EnableClient(PreparedChildProcess &p,
 			    EventLoop &event_loop, SocketDescriptor socket,
-			    const ChildErrorLogOptions &options)
+			    const ChildErrorLogOptions &options,
+			    bool force)
 {
 	assert(!adapter);
 
@@ -82,7 +88,7 @@ ChildErrorLog::EnableClient(PreparedChildProcess &p,
 		/* already set */
 		return;
 
-	auto w = EnableClient(event_loop, socket, options);
+	auto w = EnableClient(event_loop, socket, options, force);
 	if (w.IsDefined())
 		p.SetStderr(std::move(w));
 }

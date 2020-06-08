@@ -77,6 +77,12 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
 			throw LineParser::Error("Burst must not be smaller than the rate");
 
 		line.ExpectEnd();
+	} else if (strcmp(word, is_child_error_logger ? "is_default" : "child_error_is_default") == 0) {
+		if (!is_child_error_logger && !config.forward_child_errors)
+			throw LineParser::Error("Requires forward_child_errors");
+
+		config.child_error_options.is_default = line.NextBool();
+		line.ExpectEnd();
 	} else
 		throw LineParser::Error("Unknown option");
 }

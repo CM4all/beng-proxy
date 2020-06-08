@@ -113,6 +113,7 @@ private:
 	/* virtual methods from class ChildStockClass */
 	Event::Duration GetChildClearInterval(void *info) const noexcept override;
 	bool WantReturnStderr(void *info) const noexcept override;
+	bool WantStderrPond(void *info) const noexcept override;
 	const char *GetChildTag(void *info) const noexcept override;
 	void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
 			  PreparedChildProcess &p) override;
@@ -260,6 +261,13 @@ FcgiStock::WantReturnStderr(void *info) const noexcept
 	   the given path is "jailed" */
 	return params.options.stderr_path != nullptr &&
 		params.options.stderr_jailed;
+}
+
+bool
+FcgiStock::WantStderrPond(void *info) const noexcept
+{
+	const auto &params = *(const FcgiChildParams *)info;
+	return params.options.stderr_pond;
 }
 
 const char *

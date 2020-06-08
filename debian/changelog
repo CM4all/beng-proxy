@@ -4,6 +4,7 @@ cm4all-beng-proxy (17.0.11) unstable; urgency=low
   * switch to C++20
   * bp: support SSL client certificates (setting "ssl_verify")
   * bp: fix crash when closing HTTP/2 connection
+  * translation: add option to enable/disable the child_error_logger
   * spawn: drop JailCGI/Refence support
   * certdb: allow --workshop-control before --progress
   * certdb: rename "new-reg" to "new-account"

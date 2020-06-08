@@ -89,7 +89,14 @@ The following ``access_logger`` options are available:
   child processes.  Expects two values: the number of lines per
   second, and the burst count.
 
-Child Erorr Logger
+- ``child_error_is_default``: :samp:`no` disables
+  ``forward_child_errors`` by default, and allow the translation
+  server to enable it for each child process with the ``STDERR_POND``
+  packet (see :ref:`childoptions`).
+
+.. _child_error_logger:
+
+Child Error Logger
 ~~~~~~~~~~~~~~~~~~
 
 To be able to use the ``forward_child_errors`` feature without logging
@@ -104,7 +111,8 @@ This section contains either ``send_to`` or ``shell``, as described in
 the previous section.
 
 The option ``child_error_rate_limit`` must be called just
-``rate_limit`` in this section.
+``rate_limit`` in this section, and ``child_error_is_default`` becomes
+``is_default``.
 
 Included Loggers
 ----------------

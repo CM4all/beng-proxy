@@ -74,6 +74,11 @@ public:
 		return false;
 	}
 
+	/**
+	 * Obtain the value of #ChildOptions::stderr_pond.
+	 */
+	virtual bool WantStderrPond(void *) const noexcept = 0;
+
 	virtual const char *GetChildTag(void *info) const noexcept;
 
 	/**

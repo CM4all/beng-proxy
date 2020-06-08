@@ -92,7 +92,9 @@ public:
 			stderr_fd = fcgi_stock_item_get_stderr(*stock_item);
 
 		if (log_socket.IsDefined() && !stderr_fd.IsDefined())
-			stderr_fd = log.EnableClient(event_loop, log_socket, log_options);
+			stderr_fd = log.EnableClient(event_loop, log_socket,
+						     log_options,
+						     /* TODO? */ true);
 
 		const char *script_filename = path;
 

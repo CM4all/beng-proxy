@@ -188,7 +188,8 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 
 	if (log_socket.IsDefined() && p.stderr_fd < 0 &&
 	    p.stderr_path == nullptr)
-		log.EnableClient(p, GetEventLoop(), log_socket, log_options);
+		log.EnableClient(p, GetEventLoop(), log_socket, log_options,
+				 cls.WantStderrPond(info));
 
 	UniqueSocketDescriptor stderr_socket1, stderr_socket2;
 	if (cls.WantReturnStderr(info) &&

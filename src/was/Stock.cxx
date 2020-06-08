@@ -135,7 +135,8 @@ public:
 				     params.args,
 				     params.options,
 				     log.EnableClient(GetEventLoop(),
-						      log_socket, log_options),
+						      log_socket, log_options,
+						      params.options.stderr_pond),
 				     this);
 		event.Open(process.control);
 	}

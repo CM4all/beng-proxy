@@ -92,6 +92,7 @@ private:
 
 	/* virtual methods from class ChildStockClass */
 	Event::Duration GetChildClearInterval(void *info) const noexcept override;
+	bool WantStderrPond(void *info) const noexcept override;
 	int GetChildSocketType(void *info) const noexcept override;
 	unsigned GetChildBacklog(void *info) const noexcept override;
 	const char *GetChildTag(void *info) const noexcept override;
@@ -227,6 +228,13 @@ LhttpStock::GetChildClearInterval(void *info) const noexcept
 		/* lower clear_interval for jailed (per-account?)
 		   processes */
 		: std::chrono::minutes(5);
+}
+
+bool
+LhttpStock::WantStderrPond(void *info) const noexcept
+{
+	const auto &address = *(const LhttpAddress *)info;
+	return address.options.stderr_pond;
 }
 
 int

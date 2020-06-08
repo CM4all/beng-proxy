@@ -1126,6 +1126,9 @@ Other Child Process Options
   child’s error messages will be appended there. ``STDERR_NULL``
   redirects standard error to :file:`/dev/null` instead.
 
+- ``STDERR_POND`` enables the ``child_error_logger`` when it was
+  disabled with ``is_default="no"`` (see :ref:`child_error_logger`).
+
 - ``CHILD_TAG`` specifies a “tag” string for the child process. This
   can be used to address groups of child processes.
 
