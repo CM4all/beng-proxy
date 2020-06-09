@@ -110,8 +110,6 @@ struct BpConfig {
 
 	std::forward_list<AllocatedSocketAddress> translation_sockets;
 
-	unsigned num_workers = 0;
-
 	/** maximum number of simultaneous connections */
 	unsigned max_connections = 32768;
 

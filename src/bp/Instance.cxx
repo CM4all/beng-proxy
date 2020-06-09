@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -31,7 +31,6 @@
  */
 
 #include "Instance.hxx"
-#include "Worker.hxx"
 #include "Listener.hxx"
 #include "Connection.hxx"
 #include "fb_pool.hxx"
@@ -78,13 +77,13 @@ BpInstance::BpInstance() noexcept
 	 sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback)),
 	 compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
 	 child_process_registry(event_loop),
-	 spawn_worker_event(event_loop,
-			    BIND_THIS_METHOD(RespawnWorkerCallback)),
 #ifdef HAVE_AVAHI
 	 avahi_client(event_loop, "beng-proxy"),
 #endif
 	 session_save_timer(event_loop, BIND_THIS_METHOD(SaveSessions))
 {
+	ForkCow(false);
+	ScheduleCompress();
 }
 
 BpInstance::~BpInstance() noexcept

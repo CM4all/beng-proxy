@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -81,7 +81,6 @@ class HttpCache;
 class FilterCache;
 class UserAgentClassList;
 namespace Uring { class Manager; }
-struct BpWorker;
 class BPListener;
 struct BpConnection;
 namespace NgHttp2 { class Stock; }
@@ -123,13 +122,8 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	/* child management */
 	ChildProcessRegistry child_process_registry;
 	SpawnService *spawn_service;
-	TimerEvent spawn_worker_event;
 
 	std::unique_ptr<SpawnServerClient> spawn;
-
-	boost::intrusive::list<BpWorker,
-			       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
-			       boost::intrusive::constant_time_size<true>> workers;
 
 	/**
 	 * This object distributes all control packets received by the
@@ -217,16 +211,6 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	void ScheduleSaveSessions() noexcept;
 
 	/**
-	 * Transition the current process from "master" to "worker".  Call
-	 * this after forking in the new worker process.
-	 */
-	void InitWorker();
-
-	pid_t SpawnWorker() noexcept;
-	void ScheduleSpawnWorker() noexcept;
-	void KillAllWorkers() noexcept;
-
-	/**
 	 * Handler for #CONTROL_FADE_CHILDREN
 	 */
 	void FadeChildren() noexcept;
@@ -259,8 +243,6 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 			     uint64_t memory_max) noexcept override;
 
 private:
-	void RespawnWorkerCallback() noexcept;
-
 	bool AllocatorCompressCallback() noexcept;
 
 	void SaveSessions() noexcept;
