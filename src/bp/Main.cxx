@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,7 +34,6 @@
 #include "Instance.hxx"
 #include "Listener.hxx"
 #include "Connection.hxx"
-#include "Worker.hxx"
 #include "Global.hxx"
 #include "crash.hxx"
 #include "pool/pool.hxx"
@@ -151,13 +150,9 @@ BpInstance::ShutdownCallback() noexcept
 
 	compress_timer.Cancel();
 
-	spawn_worker_event.Cancel();
-
 	child_process_registry.SetVolatile();
 
 	thread_pool_join();
-
-	KillAllWorkers();
 
 	background_manager.AbortAll();
 
@@ -306,11 +301,6 @@ try {
 		instance.AddListener(i);
 
 	global_control_handler_init(&instance);
-
-	if (instance.config.num_workers == 1)
-		/* in single-worker mode with watchdog master process, let
-		   only the one worker handle control commands */
-		global_control_handler_disable(instance);
 
 	/* note: this function call passes a temporary SpawnConfig copy,
 	   because the reference will be evaluated in the child process
@@ -512,18 +502,6 @@ try {
 
 	if (!instance.cmdline.user.IsEmpty())
 		capabilities_post_setuid(cap_keep_list, std::size(cap_keep_list));
-
-	/* create worker processes */
-
-	if (instance.config.num_workers > 0) {
-		/* the master process shouldn't work */
-		instance.DisableListeners();
-
-		/* spawn the first worker really soon */
-		instance.spawn_worker_event.Schedule(std::chrono::milliseconds(10));
-	} else {
-		instance.InitWorker();
-	}
 
 #ifdef HAVE_LIBSYSTEMD
 	/* tell systemd we're ready */

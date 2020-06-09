@@ -110,8 +110,6 @@ struct BpConfig {
 
 	AllocatedSocketAddress translation_socket;
 
-	unsigned num_workers = 0;
-
 	/** maximum number of simultaneous connections */
 	unsigned max_connections = 32768;
 

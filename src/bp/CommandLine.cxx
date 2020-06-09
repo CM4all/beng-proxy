@@ -398,19 +398,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 			break;
 
 		case 'w':
-			config.num_workers = (unsigned)strtoul(optarg, &endptr, 10);
-			if (*endptr != 0)
-				arg_error(argv[0], "invalid number after --workers");
-			if (config.num_workers > 1024)
-				arg_error(argv[0], "too many workers configured");
-
-#ifdef HAVE_LIBSYSTEMD
-			if (config.num_workers == 1 && sd_booted())
-				/* we don't need a watchdog process if systemd watches
-				   on us */
-				config.num_workers = 0;
-#endif
-
+			/* obsolete */
 			break;
 
 		case 'r':

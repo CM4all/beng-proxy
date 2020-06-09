@@ -15,9 +15,6 @@
 # Which port does beng-proxy listen on?
 #PORT=80
 
-# Number of worker processes; 0 = don't fork
-#WORKERS=4
-
 # Base directory for HTML documents.
 # This is ignored if a translation server is being used.
 #DOCUMENT_ROOT=/var/www

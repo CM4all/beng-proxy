@@ -12,7 +12,6 @@ LOGGER_USER=cm4all-logger
 ACCESS_LOGGER="null"
 PORT=""
 LISTEN=""
-WORKERS=0
 DOCUMENT_ROOT=/var/www
 TRANSLATION_SOCKET=""
 UA_CLASSES=
@@ -49,6 +48,5 @@ exec /usr/sbin/cm4all-beng-proxy \
     --logger-user "$LOGGER_USER" \
     --access-logger "$ACCESS_LOGGER" \
     $PORTSPEC $LISTENSPEC $UASPEC \
-    --workers "$WORKERS" \
     --document-root "$DOCUMENT_ROOT" \
     $OPTIONS
