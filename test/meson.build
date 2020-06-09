@@ -789,6 +789,7 @@ test(
 istream_test_sources = []
 if libyamlcpp.found()
   istream_test_sources += 'TestYamlSubstIstream.cxx'
+  t_istream_filter_deps += libyamlcpp
 endif
 
 test(
