@@ -110,7 +110,12 @@ add_global_arguments(debug_flags, language: 'cpp')
 
 if get_option('coroutines')
   if compiler.get_id() == 'clang'
-    add_global_arguments('-fcoroutines-ts', language: 'cpp')
+    add_global_arguments(
+      '-fcoroutines-ts',
+      '-stdlib=libc++',
+      '-D__cpp_impl_coroutine',
+      language: 'cpp')
+    add_global_link_arguments('-stdlib=libc++', language: 'cpp')
   else
     add_global_arguments('-fcoroutines', language: 'cpp')
   endif
