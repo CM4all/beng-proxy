@@ -103,7 +103,7 @@ BpConfig::HandleSet(StringView name, const char *value)
 }
 
 void
-BpConfig::Finish(unsigned default_port)
+BpConfig::Finish(const UidGid &user, unsigned default_port)
 {
 	if (listen.empty())
 		listen.emplace_front(ParseSocketAddress("*", default_port, true));
@@ -115,4 +115,11 @@ BpConfig::Finish(unsigned default_port)
 		/* reverse the list because our ConfigParse always
 		   inserts at the front */
 		translation_sockets.reverse();
+
+	if (spawn.default_uid_gid.IsEmpty()) {
+		if (user.IsEmpty())
+			spawn.default_uid_gid.LoadEffective();
+		else
+			spawn.default_uid_gid = user;
+	}
 }

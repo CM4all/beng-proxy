@@ -46,11 +46,6 @@
 #include <getopt.h>
 #include <string.h>
 
-enum Options {
-	START = 0x100,
-	SPAWN_USER,
-};
-
 static void
 PrintUsage()
 {
@@ -80,8 +75,6 @@ PrintUsage()
 	     " --user name\n"
 #endif
 	     " -u name        switch to another user id\n"
-	     " --spawn-user USER[:GROUP]\n"
-	     "                spawn child processes as this user/group by default\n"
 #ifdef __GLIBC__
 	     " --logger-user name\n"
 #endif
@@ -184,7 +177,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 		{"config-file", 1, nullptr, 'f'},
 		{"user", 1, NULL, 'u'},
 		{"logger-user", 1, NULL, 'U'},
-		{"spawn-user", 1, nullptr, SPAWN_USER},
 		{"document-root", 1, NULL, 'r'},
 		{"translation-socket", 1, NULL, 't'},
 		{"cluster-size", 1, NULL, 'C'},
@@ -195,7 +187,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 	};
 #endif
 	const char *user_name = NULL;
-	const char *spawn_user = nullptr;
 	unsigned verbose = 1;
 
 	while (1) {
@@ -238,11 +229,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 				arg_error(argv[0], "cannot specify a user in debug mode");
 
 			user_name = optarg;
-			break;
-
-		case SPAWN_USER:
-			if (*optarg != 0)
-				spawn_user = optarg;
 			break;
 
 		case 'U':
@@ -311,25 +297,4 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 			arg_error(argv[0], "refusing to run as root");
 	} else if (!debug_mode)
 		arg_error(argv[0], "no user name specified (-u)");
-
-	if (debug_mode) {
-		if (spawn_user != nullptr)
-			arg_error(argv[0], "cannot set --spawn-user in debug mode");
-
-		config.spawn.default_uid_gid.LoadEffective();
-	} else if (spawn_user != nullptr) {
-		auto &u = config.spawn.default_uid_gid;
-		u.Lookup(spawn_user);
-		if (!u.IsComplete())
-			arg_error(argv[0], "refusing to spawn child processes as root");
-
-		config.spawn.allowed_uids.insert(u.uid);
-		config.spawn.allowed_gids.insert(u.gid);
-		for (size_t i = 0; i < u.groups.size() && u.groups[i] != 0; ++i)
-			config.spawn.allowed_gids.insert(u.groups[i]);
-	} else {
-		config.spawn.default_uid_gid = cmdline.user;
-	}
-
-	assert(config.spawn.default_uid_gid.IsComplete());
 }

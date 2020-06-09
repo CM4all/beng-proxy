@@ -320,7 +320,8 @@ try {
 	if (instance.cmdline.config_file != nullptr)
 		LoadConfigFile(instance.config, instance.cmdline.config_file);
 
-	instance.config.Finish(debug_mode ? 8080 : 80);
+	instance.config.Finish(instance.cmdline.user,
+			       debug_mode ? 8080 : 80);
 
 	/* initialize */
 

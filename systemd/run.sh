@@ -7,7 +7,7 @@ DAEMON_USER=cm4all-beng-proxy
 DAEMON_GROUP=
 ALLOW_USER=
 ALLOW_GROUP=
-SPAWN_USER=www-data
+SPAWN_USER=
 LOGGER_USER=cm4all-logger
 ACCESS_LOGGER=""
 PORT=""
@@ -19,7 +19,7 @@ OPTIONS=""
 
 test -f /etc/default/cm4all-beng-proxy && source /etc/default/cm4all-beng-proxy
 
-for i in ALLOW_USER ALLOW_GROUP ACCESS_LOGGER PORT LISTEN; do
+for i in ALLOW_USER ALLOW_GROUP SPAWN_USER ACCESS_LOGGER PORT LISTEN; do
     if eval test -n \"\${$i}\"; then
         echo "Variable $i in /etc/default/cm4all-beng-proxy has been removed, please configure /etc/cm4all/beng/proxy/beng-proxy.conf instead" >&2
         exit 1
@@ -46,7 +46,6 @@ fi
 
 exec /usr/sbin/cm4all-beng-proxy \
     --user "$DAEMON_USER" \
-    --spawn-user "$SPAWN_USER" \
     --logger-user "$LOGGER_USER" \
     $UASPEC \
     $OPTIONS

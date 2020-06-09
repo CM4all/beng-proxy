@@ -233,6 +233,7 @@ See :ref:`config.control`.
 Configures the process spawner. Example::
 
    spawn {
+     default_user "www-data"
      allow_user "www-data"
      allow_group "www-data"
      CPUWeight "50"
@@ -240,6 +241,9 @@ Configures the process spawner. Example::
      MemoryMax "16 GB"
      IOWeight "50"
    }
+
+- ``default_user``: a user name which is used if the translation
+  server does not specify a user id.
 
 - ``allow_user``: allow child processes to impersonate the given
   user.  This can be a user name (from :file:`/etc/passwd`), a
