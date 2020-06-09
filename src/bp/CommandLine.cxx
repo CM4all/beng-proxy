@@ -118,10 +118,6 @@ PrintUsage()
 #endif
 	     " -m IP          join this multicast group\n"
 #ifdef __GLIBC__
-	     " --workers COUNT\n"
-#endif
-	     " -w COUNT       set the number of worker processes; 0=don't fork\n"
-#ifdef __GLIBC__
 	     " --document-root DIR\n"
 #endif
 	     " -r DIR         set the document root\n"
@@ -294,7 +290,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 		{"listen", 1, NULL, 'L'},
 		{"control-listen", 1, NULL, 'c'},
 		{"multicast-group", 1, NULL, 'm'},
-		{"workers", 1, NULL, 'w'},
 		{"document-root", 1, NULL, 'r'},
 		{"translation-socket", 1, NULL, 't'},
 		{"cluster-size", 1, NULL, 'C'},
@@ -395,10 +390,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 
 		case 'm':
 			config.multicast_group = ParseSocketAddress(optarg, 0, false);
-			break;
-
-		case 'w':
-			/* obsolete */
 			break;
 
 		case 'r':
