@@ -2,6 +2,7 @@ cm4all-beng-proxy (17.0.12) unstable; urgency=low
 
   * bp: remove support for multiple worker processes
   * remove several obsolete command-line options
+  * debian: build with clang-10 and enable C++20 coroutines
 
  --   
 
