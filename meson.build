@@ -816,7 +816,6 @@ control_server = static_library('control_server',
   'src/control/Server.cxx',
   'src/control/Handler.cxx',
   'src/control/Local.cxx',
-  'src/control/Distribute.cxx',
   include_directories: inc,
 )
 control_server_dep = declare_dependency(

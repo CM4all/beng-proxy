@@ -34,7 +34,6 @@
 #include "Instance.hxx"
 #include "fcache.hxx"
 #include "nfs/Cache.hxx"
-#include "control/Distribute.hxx"
 #include "control/Server.hxx"
 #include "control/Local.hxx"
 #include "translation/Request.hxx"
@@ -43,7 +42,6 @@
 #include "translation/InvalidateParser.hxx"
 #include "pool/tpool.hxx"
 #include "pool/pool.hxx"
-#include "net/UdpDistribute.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/IPv4Address.hxx"
 #include "io/Logger.hxx"
@@ -224,15 +222,9 @@ BpInstance::OnControlError(std::exception_ptr ep) noexcept
 void
 global_control_handler_init(BpInstance *instance)
 {
-	if (instance->config.control_listen.empty())
-		return;
-
-	instance->control_distribute = new ControlDistribute(instance->event_loop,
-							     *instance);
-
 	for (const auto &control_listen : instance->config.control_listen) {
 		instance->control_servers.emplace_front(instance->event_loop,
-							*instance->control_distribute,
+							*instance,
 							control_listen);
 	}
 }
@@ -241,48 +233,6 @@ void
 global_control_handler_deinit(BpInstance *instance)
 {
 	instance->control_servers.clear();
-	delete instance->control_distribute;
-}
-
-void
-global_control_handler_enable(BpInstance &instance)
-{
-	for (auto &c : instance.control_servers)
-		c.Enable();
-}
-
-void
-global_control_handler_disable(BpInstance &instance)
-{
-	for (auto &c : instance.control_servers)
-		c.Disable();
-}
-
-UniqueSocketDescriptor
-global_control_handler_add_fd(BpInstance *instance)
-{
-	assert(!instance->control_servers.empty());
-	assert(instance->control_distribute != nullptr);
-
-	return instance->control_distribute->Add();
-}
-
-void
-global_control_handler_set_fd(BpInstance *instance,
-			      UniqueSocketDescriptor &&fd)
-{
-	assert(!instance->control_servers.empty());
-	assert(instance->control_distribute != nullptr);
-
-	instance->control_distribute->Clear();
-
-	/* erase all */
-	instance->control_servers.clear();
-
-	/* create new one with the given socket */
-	instance->control_servers.emplace_front(instance->event_loop,
-						std::move(fd),
-						*instance->control_distribute);
 }
 
 /*

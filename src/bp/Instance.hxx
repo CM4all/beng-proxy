@@ -64,7 +64,6 @@ class TcpBalancer;
 class FilteredSocketStock;
 class FilteredSocketBalancer;
 class SpawnService;
-class ControlDistribute;
 class ControlServer;
 class LocalControl;
 class SpawnServerClient;
@@ -124,12 +123,6 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	SpawnService *spawn_service;
 
 	std::unique_ptr<SpawnServerClient> spawn;
-
-	/**
-	 * This object distributes all control packets received by the
-	 * master process to all worker processes.
-	 */
-	ControlDistribute *control_distribute = nullptr;
 
 	/**
 	 * The configured control channel servers (see
