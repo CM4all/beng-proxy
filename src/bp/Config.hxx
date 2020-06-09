@@ -50,10 +50,6 @@ struct StringView;
  * Configuration.
  */
 struct BpConfig {
-	static constexpr unsigned MAX_PORTS = 32;
-
-	StaticArray<unsigned, MAX_PORTS> ports;
-
 	struct Listener : SocketConfig {
 		std::string tag;
 
@@ -72,8 +68,9 @@ struct BpConfig {
 			tcp_defer_accept = 10;
 		}
 
-		Listener(SocketAddress _address, const std::string &_tag)
-			:SocketConfig(_address), tag(_tag) {
+		explicit Listener(SocketAddress _address) noexcept
+			:SocketConfig(_address)
+		{
 			listen = 64;
 			tcp_defer_accept = 10;
 		}
@@ -103,8 +100,6 @@ struct BpConfig {
 	};
 
 	std::forward_list<ControlListener> control_listen;
-
-	AllocatedSocketAddress multicast_group;
 
 	const char *document_root = "/var/www";
 

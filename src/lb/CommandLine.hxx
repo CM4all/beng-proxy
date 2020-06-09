@@ -34,8 +34,6 @@
 
 #include "spawn/UidGid.hxx"
 
-struct LbConfig;
-
 struct LbCmdLine {
 	UidGid user;
 
@@ -59,5 +57,5 @@ struct LbCmdLine {
  * Parse command line options.
  */
 void
-ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
+ParseCommandLine(LbCmdLine &cmdline,
 		 int argc, char **argv);

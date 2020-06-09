@@ -12,9 +12,6 @@
 # Which user should the beng-proxy logger run as?
 #LOGGER_USER=cm4all-logger
 
-# Which port does beng-proxy listen on?
-#PORT=80
-
 # Path of the translation server socket.
 #TRANSLATION_SOCKET=@translation
 

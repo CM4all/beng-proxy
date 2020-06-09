@@ -9,7 +9,7 @@ ALLOW_USER=
 ALLOW_GROUP=
 SPAWN_USER=www-data
 LOGGER_USER=cm4all-logger
-ACCESS_LOGGER="null"
+ACCESS_LOGGER=""
 PORT=""
 LISTEN=""
 TRANSLATION_SOCKET=""
@@ -19,8 +19,13 @@ OPTIONS=""
 
 test -f /etc/default/cm4all-beng-proxy && source /etc/default/cm4all-beng-proxy
 
-test -n "$PORT" && PORTSPEC=`echo "$PORT" | xargs -rd, -n1 -- echo -n " --port"`
-test -n "$LISTEN" && LISTENSPEC=`echo "$LISTEN" | xargs -rd, -n1 -- echo -n " --listen"`
+for i in ALLOW_USER ALLOW_GROUP ACCESS_LOGGER PORT LISTEN; do
+    if eval test -n \"\${$i}\"; then
+        echo "Variable $i in /etc/default/cm4all-beng-proxy has been removed, please configure /etc/cm4all/beng/proxy/beng-proxy.conf instead" >&2
+        exit 1
+    fi
+done
+
 test -n "$UA_CLASSES" && UASPEC="--ua-classes=${UA_CLASSES}"
 
 if test -n "$DAEMON_GROUP"; then
@@ -41,10 +46,7 @@ fi
 
 exec /usr/sbin/cm4all-beng-proxy \
     --user "$DAEMON_USER" \
-    --allow-user "$ALLOW_USER" \
-    --allow-group "$ALLOW_GROUP" \
     --spawn-user "$SPAWN_USER" \
     --logger-user "$LOGGER_USER" \
-    --access-logger "$ACCESS_LOGGER" \
-    $PORTSPEC $LISTENSPEC $UASPEC \
+    $UASPEC \
     $OPTIONS

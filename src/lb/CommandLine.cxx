@@ -31,7 +31,6 @@
  */
 
 #include "CommandLine.hxx"
-#include "Config.hxx"
 #include "stopwatch.hxx"
 #include "io/Logger.hxx"
 #include "version.h"
@@ -144,7 +143,7 @@ HandleSet(LbCmdLine &cmdline, const char *argv0, const char *p)
 
 /** read configuration options from the command line */
 void
-ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
+ParseCommandLine(LbCmdLine &cmdline,
 		 int argc, char **argv)
 {
 	int ret;
@@ -156,7 +155,6 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
 		{"quiet", 0, NULL, 'q'},
 		{"config-file", 1, NULL, 'f'},
 		{"check", 0, NULL, 'C'},
-		{"access-logger", 1, NULL, 'A'},
 		{"user", 1, NULL, 'u'},
 		{"logger-user", 1, NULL, 'U'},
 		{"set", 1, NULL, 's'},
@@ -170,10 +168,10 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
 #ifdef __GLIBC__
 		int option_index = 0;
 
-		ret = getopt_long(argc, argv, "hVvqf:CA:u:U:B:s:",
+		ret = getopt_long(argc, argv, "hVvqf:Cu:U:B:s:",
 				  long_options, &option_index);
 #else
-		ret = getopt(argc, argv, "hVvqf:CA:u:U:B:s:");
+		ret = getopt(argc, argv, "hVvqf:Cu:U:B:s:");
 #endif
 		if (ret == -1)
 			break;
@@ -201,10 +199,6 @@ ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
 
 		case 'C':
 			cmdline.check = true;
-			break;
-
-		case 'A':
-			config.access_log.SetLegacy(optarg);
 			break;
 
 		case 'u':

@@ -251,12 +251,6 @@ BpConfigParser::Control::Finish()
 	if (config.bind_address.IsNull())
 		throw LineParser::Error("Bind address is missing");
 
-	if (config.multicast_group.IsNull() &&
-	    !parent.config.multicast_group.IsNull())
-		/* default to the --multicast-group setting (for backwards
-		   compatibility) */
-		config.multicast_group = parent.config.multicast_group;
-
 	config.Fixup();
 
 	parent.config.control_listen.emplace_front(std::move(config));

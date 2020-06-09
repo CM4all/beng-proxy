@@ -345,9 +345,6 @@ try {
 
 	instance.EnableSignals();
 
-	for (auto i : instance.config.ports)
-		instance.AddTcpListener(i);
-
 	for (const auto &i : instance.config.listen)
 		instance.AddListener(i);
 

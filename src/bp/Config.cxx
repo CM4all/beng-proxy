@@ -105,8 +105,8 @@ BpConfig::HandleSet(StringView name, const char *value)
 void
 BpConfig::Finish(unsigned default_port)
 {
-	if (ports.empty() && listen.empty())
-		ports.push_back(default_port);
+	if (listen.empty())
+		listen.emplace_front(ParseSocketAddress("*", default_port, true));
 
 	if (translation_sockets.empty()) {
 		translation_sockets.emplace_front();

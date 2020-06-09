@@ -165,9 +165,9 @@ try {
 	/* configuration */
 
 	LbCmdLine cmdline;
-	LbConfig config;
-	ParseCommandLine(cmdline, config, argc, argv);
+	ParseCommandLine(cmdline, argc, argv);
 
+	LbConfig config;
 	LoadConfigFile(config, cmdline.config_path);
 
 	LbInstance instance(cmdline, config);

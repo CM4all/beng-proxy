@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.0.12) unstable; urgency=low
 
   * bp: remove support for multiple worker processes
+  * remove several obsolete command-line options
 
  --   
 
