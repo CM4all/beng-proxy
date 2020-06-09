@@ -60,7 +60,9 @@ if uring_dep.found()
   istream_sources += 'UringIstream.cxx'
 endif
 
-libyamlcpp = dependency('yaml-cpp', required: get_option('yaml'))
+libyamlcpp = dependency('yaml-cpp',
+                        fallback: ['yaml-cpp', 'libyamlcpp_dep'],
+                        required: get_option('yaml'))
 if libyamlcpp.found()
   istream_compile_args += '-DHAVE_YAML'
   istream_sources += 'YamlSubstIstream.cxx'
