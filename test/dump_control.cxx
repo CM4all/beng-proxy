@@ -31,6 +31,7 @@
  */
 
 #include "control/Server.hxx"
+#include "control/Handler.hxx"
 #include "net/SocketConfig.hxx"
 #include "net/Parser.hxx"
 #include "event/Loop.hxx"

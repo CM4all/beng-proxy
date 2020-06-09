@@ -33,7 +33,6 @@
 #pragma once
 
 #include "beng-proxy/Control.hxx"
-#include "Handler.hxx"
 #include "event/net/FullUdpHandler.hxx"
 #include "event/net/UdpListener.hxx"
 
@@ -41,8 +40,8 @@
 
 class SocketAddress;
 class UniqueSocketDescriptor;
-class UdpListener;
 class EventLoop;
+class ControlHandler;
 struct SocketConfig;
 
 /**

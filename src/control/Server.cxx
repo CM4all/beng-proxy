@@ -31,6 +31,7 @@
  */
 
 #include "Server.hxx"
+#include "Handler.hxx"
 #include "net/SocketConfig.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SendMessage.hxx"
@@ -40,10 +41,6 @@
 #include "util/WritableBuffer.hxx"
 
 #include <stdexcept>
-
-#include <assert.h>
-#include <string.h>
-#include <alloca.h>
 
 ControlServer::ControlServer(EventLoop &event_loop, UniqueSocketDescriptor s,
 			     ControlHandler &_handler) noexcept
