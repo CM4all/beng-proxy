@@ -15,10 +15,6 @@
 # Which port does beng-proxy listen on?
 #PORT=80
 
-# Base directory for HTML documents.
-# This is ignored if a translation server is being used.
-#DOCUMENT_ROOT=/var/www
-
 # Path of the translation server socket.
 #TRANSLATION_SOCKET=@translation
 
