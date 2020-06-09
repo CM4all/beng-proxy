@@ -9,9 +9,7 @@ MESON_OPTIONS = \
 	-Dsystemd=true \
 	-Dwas=enabled \
 	-Dyaml=enabled \
-	-Dzeroconf=enabled \
-	--warnlevel=2 \
-	--werror
+	-Dzeroconf=enabled
 
 %:
 	dh $@ --with=python2 --with=python3 --with sphinxdoc --no-start
