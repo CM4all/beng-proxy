@@ -40,19 +40,6 @@
 #include <sys/un.h>
 #include <stdio.h>
 
-bool
-LocalControl::OnControlRaw(ConstBuffer<void> payload,
-			   SocketAddress address,
-			   int uid)
-{
-	if (uid < 0 || (uid != 0 && (uid_t)uid != geteuid()))
-		/* only root and the beng-proxy user are allowed to send
-		   commands to the implicit control channel */
-		return false;
-
-	return handler.OnControlRaw(payload, address, uid);
-}
-
 void
 LocalControl::OnControlPacket(ControlServer &control_server,
 			      BengProxy::ControlCommand command,
@@ -60,6 +47,11 @@ LocalControl::OnControlPacket(ControlServer &control_server,
 			      WritableBuffer<UniqueFileDescriptor> fds,
 			      SocketAddress address, int uid)
 {
+	if (uid < 0 || (uid != 0 && (uid_t)uid != geteuid()))
+		/* only root and the beng-proxy user are allowed to send
+		   commands to the implicit control channel */
+		return;
+
 	handler.OnControlPacket(control_server, command,
 				payload, fds, address, uid);
 }

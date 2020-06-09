@@ -55,10 +55,6 @@ public:
 	void Open(EventLoop &event_loop);
 
 	/* virtual methods from class ControlHandler */
-	bool OnControlRaw(ConstBuffer<void> payload,
-			  SocketAddress address,
-			  int uid) override;
-
 	void OnControlPacket(ControlServer &control_server,
 			     BengProxy::ControlCommand command,
 			     ConstBuffer<void> payload,

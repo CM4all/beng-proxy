@@ -44,13 +44,6 @@ class ControlServer;
 
 class ControlHandler {
 public:
-	/**
-	 * @return false if the datagram shall be discarded
-	 */
-	virtual bool OnControlRaw(ConstBuffer<void> payload,
-				  SocketAddress address,
-				  int uid);
-
 	virtual void OnControlPacket(ControlServer &control_server,
 				     BengProxy::ControlCommand command,
 				     ConstBuffer<void> payload,

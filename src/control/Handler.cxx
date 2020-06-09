@@ -31,13 +31,3 @@
  */
 
 #include "Handler.hxx"
-#include "net/SocketAddress.hxx"
-#include "util/ConstBuffer.hxx"
-
-bool
-ControlHandler::OnControlRaw(gcc_unused ConstBuffer<void> payload,
-			     gcc_unused SocketAddress address,
-			     gcc_unused int uid)
-{
-	return true;
-}

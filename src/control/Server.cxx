@@ -113,10 +113,6 @@ ControlServer::OnUdpDatagram(ConstBuffer<void> payload,
 			     WritableBuffer<UniqueFileDescriptor> fds,
 			     SocketAddress address, int uid)
 {
-	if (!handler.OnControlRaw(payload, address, uid))
-		/* discard datagram if raw() returns false */
-		return true;
-
 	control_server_decode(*this, payload.data, payload.size,
 			      fds, address, uid, handler);
 	return true;
