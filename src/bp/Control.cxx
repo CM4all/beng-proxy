@@ -105,7 +105,7 @@ query_stats(BpInstance *instance, ControlServer *server,
 
 	try {
 		server->Reply(address,
-			      ControlCommand::STATS, &stats, sizeof(stats));
+			      ControlCommand::STATS, {&stats, sizeof(stats)});
 	} catch (...) {
 		LogConcat(3, "control", std::current_exception());
 	}

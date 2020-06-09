@@ -36,8 +36,6 @@
 #include "event/net/FullUdpHandler.hxx"
 #include "event/net/UdpListener.hxx"
 
-#include <stddef.h>
-
 class SocketAddress;
 class UniqueSocketDescriptor;
 class EventLoop;
@@ -76,7 +74,7 @@ public:
 	 */
 	void Reply(SocketAddress address,
 		   BengProxy::ControlCommand command,
-		   const void *payload, size_t payload_length);
+		   ConstBuffer<void> payload);
 
 private:
 	/* virtual methods from class UdpHandler */

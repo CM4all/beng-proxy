@@ -127,13 +127,13 @@ ControlServer::OnUdpError(std::exception_ptr ep) noexcept
 void
 ControlServer::Reply(SocketAddress address,
 		     BengProxy::ControlCommand command,
-		     const void *payload, size_t payload_length)
+		     ConstBuffer<void> payload)
 {
-	const struct BengProxy::ControlHeader header{ToBE16(payload_length), ToBE16(uint16_t(command))};
+	const struct BengProxy::ControlHeader header{ToBE16(payload.size), ToBE16(uint16_t(command))};
 
 	struct iovec v[] = {
 		{ const_cast<BengProxy::ControlHeader *>(&header), sizeof(header) },
-		{ const_cast<void *>(payload), payload_length },
+		{ const_cast<void *>(payload.data), payload.size },
 	};
 
 	SendMessage(socket.GetSocket(),
