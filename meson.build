@@ -122,7 +122,6 @@ if get_option('coroutines')
 endif
 
 threads = dependency('threads')
-libsodium = dependency('libsodium', version: '>= 1.0.16')
 libjsoncpp = dependency('jsoncpp', fallback: ['jsoncpp', 'jsoncpp_dep'])
 zlib = dependency('zlib')
 libcrypt = compiler.find_library('crypt')
@@ -156,6 +155,7 @@ util_dep = declare_dependency(
 )
 
 subdir('libcommon/src/pcre')
+subdir('libcommon/src/sodium')
 subdir('libcommon/src/time')
 subdir('libcommon/src/io')
 
@@ -416,7 +416,7 @@ cluster = static_library(
   'src/cluster/FailureManagerProxy.cxx',
   include_directories: inc,
   dependencies: [
-    libsodium,
+    sodium_dep,
   ],
 )
 cluster_dep = declare_dependency(
@@ -437,7 +437,7 @@ raddress = static_library('raddress',
   include_directories: inc,
   dependencies: [
     libpcre,
-    libsodium,
+    sodium_dep,
   ])
 raddress_dep = declare_dependency(
   link_with: raddress,
@@ -971,7 +971,7 @@ executable(
     control_server_dep,
     nghttp2_dep,
     cluster_dep,
-    libsodium,
+    sodium_dep,
     libcrypt,
   ],
   install: true,
@@ -1044,7 +1044,7 @@ executable(
     threads,
     liblua,
     libpcre,
-    libsodium,
+    sodium_dep,
     avahi_dep,
     pool_dep,
     io_dep,
@@ -1251,3 +1251,4 @@ subdir('libcommon/test/util')
 subdir('libcommon/test/http')
 subdir('libcommon/test/io')
 subdir('libcommon/test/pg')
+subdir('libcommon/test/sodium')
