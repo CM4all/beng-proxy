@@ -34,6 +34,8 @@
 #include "net/Parser.hxx"
 #include "io/FileLineParser.hxx"
 
+#include <cstring>
+
 void
 AccessLogConfigParser::ParseLine(FileLineParser &line)
 {

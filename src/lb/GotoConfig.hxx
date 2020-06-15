@@ -39,8 +39,7 @@
 
 #include "util/Compiler.h"
 
-#include <boost/filesystem/path.hpp>
-
+#include <filesystem>
 #include <string>
 #include <list>
 #include <map>
@@ -234,7 +233,7 @@ struct LbBranchConfig {
 struct LbLuaHandlerConfig {
 	std::string name;
 
-	boost::filesystem::path path;
+	std::filesystem::path path;
 	std::string function;
 
 	explicit LbLuaHandlerConfig(const char *_name)
