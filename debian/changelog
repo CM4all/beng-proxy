@@ -1,6 +1,6 @@
 cm4all-beng-proxy (16.18) unstable; urgency=low
 
-  * http2: fix stall bug
+  * http2: fix two stall bugs
 
  --   
 
