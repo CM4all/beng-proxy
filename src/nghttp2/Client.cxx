@@ -227,6 +227,7 @@ private:
 		nghttp2_submit_rst_stream(connection.session.get(),
 					  NGHTTP2_FLAG_NONE,
 					  id, NGHTTP2_CANCEL);
+		connection.socket->ScheduleWrite();
 		Destroy();
 	}
 };
@@ -307,6 +308,7 @@ ClientConnection::Request::Cancel() noexcept
 {
 	nghttp2_submit_rst_stream(connection.session.get(), NGHTTP2_FLAG_NONE,
 				  id, NGHTTP2_CANCEL);
+	connection.socket->ScheduleWrite();
 	Destroy();
 }
 
@@ -455,6 +457,7 @@ ClientConnection::ClientConnection(EventLoop &loop,
 		throw FormatRuntimeError("nghttp2_submit_settings() failed: %s",
 					 nghttp2_strerror(rv));
 
+	socket->ScheduleWrite();
 	socket->ScheduleReadNoTimeout(false);
 }
 

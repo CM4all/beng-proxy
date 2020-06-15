@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.12) unstable; urgency=low
 
+  * merge release 16.18
   * bp: remove support for multiple worker processes
   * translation: fix bogus "Invalid base address" error
   * remove several obsolete command-line options
@@ -100,6 +101,12 @@ cm4all-beng-proxy (17.0.1) unstable; urgency=low
   * certdb: implement ACMEv2
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 18 Mar 2020 16:54:20 +0100
+
+cm4all-beng-proxy (16.18) unstable; urgency=low
+
+  * http2: fix two stall bugs
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 15 Jun 2020 14:14:33 +0200
 
 cm4all-beng-proxy (16.17) unstable; urgency=low
 

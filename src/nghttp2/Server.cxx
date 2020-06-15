@@ -261,6 +261,7 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 		nghttp2_submit_rst_stream(connection.session.get(),
 					  NGHTTP2_FLAG_NONE,
 					  id, NGHTTP2_CANCEL);
+		connection.socket->ScheduleWrite();
 		Destroy();
 		return 0;
 	}
@@ -346,6 +347,7 @@ ServerConnection::Request::SendResponse(http_status_t status,
 	nghttp2_submit_response(connection.session.get(), id,
 				hdrs.raw(), hdrs.size(),
 				dpp);
+	connection.socket->ScheduleWrite();
 }
 
 ServerConnection::ServerConnection(struct pool &_pool,
@@ -391,6 +393,7 @@ ServerConnection::ServerConnection(struct pool &_pool,
 
 	// TODO: idle_timeout.Schedule(http_server_idle_timeout);
 
+	socket->ScheduleWrite();
 	socket->ScheduleReadNoTimeout(false);
 }
 
