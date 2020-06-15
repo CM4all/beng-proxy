@@ -33,7 +33,7 @@
 #include "AcmeDns.hxx"
 #include "AcmeConfig.hxx"
 #include "AcmeHttp.hxx"
-#include "ssl/Base64.hxx"
+#include "sodium/UrlSafeBase64SHA256.hxx"
 #include "system/Error.hxx"
 #include "util/PrintException.hxx"
 #include "util/RuntimeError.hxx"
@@ -107,7 +107,7 @@ void
 Dns01ChallengeRecord::AddChallenge(const AcmeChallenge &challenge,
 				   EVP_PKEY &account_key)
 {
-	values.emplace(UrlSafeBase64SHA256(MakeHttp01(challenge, account_key)).c_str());
+	values.emplace(UrlSafeBase64SHA256(MakeHttp01(challenge, account_key)));
 }
 
 void

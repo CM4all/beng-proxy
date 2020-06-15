@@ -34,7 +34,7 @@
 #include "AcmeChallenge.hxx"
 #include "JWS.hxx"
 #include "JsonUtil.hxx"
-#include "ssl/Base64.hxx"
+#include "sodium/UrlSafeBase64SHA256.hxx"
 #include "io/FileWriter.hxx"
 #include "util/ConstBuffer.hxx"
 

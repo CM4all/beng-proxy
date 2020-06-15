@@ -1106,6 +1106,7 @@ executable(
     libjsoncpp,
     pcre_dep,
     avahi_dep,
+    sodium_dep,
     ssl_dep,
     pg_dep,
     curl_dep,
