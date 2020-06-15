@@ -121,6 +121,20 @@ if get_option('coroutines')
   endif
 endif
 
+if get_option('static_libcxx')
+  link_args = ['-static-libstdc++']
+
+  if compiler.get_id() == 'clang'
+    # clang uses only "-lc++" when "-static-libstdc++" is used, but we
+    # also need "-lc++abi" and "-pthread"
+    link_args += ['-Wl,-Bstatic,-lc++,-lc++abi,-Bdynamic', '-pthread']
+  endif
+
+  libcxx = declare_dependency(link_args: link_args)
+else
+  libcxx = dependency('', required: false)
+endif
+
 threads = dependency('threads')
 libjsoncpp = dependency('jsoncpp', fallback: ['jsoncpp', 'jsoncpp_dep'])
 zlib = dependency('zlib')
@@ -973,6 +987,7 @@ executable(
     cluster_dep,
     sodium_dep,
     libcrypt,
+    libcxx,
   ],
   install: true,
   install_dir: 'sbin',
@@ -1069,6 +1084,7 @@ executable(
     thread_pool_dep,
     pcre_dep,
     cluster_dep,
+    libcxx,
   ],
   install: true,
   install_dir: 'sbin',
@@ -1113,6 +1129,7 @@ executable(
     net_dep,
     http_dep,
     io_dep,
+    libcxx,
   ],
   install: true,
 )
@@ -1125,6 +1142,7 @@ executable(
   dependencies: [
     net_dep,
     http_dep,
+    libcxx,
   ],
   install: true,
 )
@@ -1137,6 +1155,7 @@ executable(
   dependencies: [
     net_dep,
     http_dep,
+    libcxx,
   ],
   install: true,
 )
@@ -1153,6 +1172,7 @@ executable(
     net_dep,
     http_dep,
     liblua,
+    libcxx,
   ],
   install: true,
 )
@@ -1165,6 +1185,7 @@ executable(
   dependencies: [
     net_dep,
     http_dep,
+    libcxx,
   ],
   install: true,
 )
@@ -1178,6 +1199,7 @@ executable(
     system_dep,
     net_dep,
     http_dep,
+    libcxx,
   ],
   install: true,
 )
@@ -1189,6 +1211,7 @@ executable(
   dependencies: [
     net_dep,
     http_dep,
+    libcxx,
   ],
   install: true,
 )
@@ -1199,6 +1222,7 @@ executable(
   include_directories: inc,
   dependencies: [
     net_dep,
+    libcxx,
   ],
   install: true,
 )
@@ -1212,6 +1236,7 @@ executable(
     spawn_dep,
     system_dep,
     net_dep,
+    libcxx,
   ],
   install: true,
 )
@@ -1223,6 +1248,7 @@ executable(
   dependencies: [
     net_dep,
     util_dep,
+    libcxx,
   ],
   install: true,
   install_dir: 'lib/cm4all/beng-proxy/delegate/bin',
@@ -1236,6 +1262,7 @@ executable(
     net_dep,
     io_dep,
     util_dep,
+    libcxx,
   ],
   install: true,
 )

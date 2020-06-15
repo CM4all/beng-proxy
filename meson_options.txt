@@ -4,6 +4,9 @@ option('documentation', type: 'feature',
 option('coroutines', type: 'boolean', value: false,
        description: 'Enable C++20 coroutines')
 
+option('static_libcxx', type: 'boolean', value: true,
+  description: 'Link libc++/libstdc++ statically')
+
 option('http2', type: 'feature', description: 'HTTP2 protocol support')
 option('nfs', type: 'feature', description: 'userspace NFS client')
 option('stopwatch', type: 'boolean', value: true, description: 'enable stopwatch support')
