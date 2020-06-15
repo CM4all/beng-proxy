@@ -59,8 +59,14 @@ IstreamDataSource::ReadCallback(uint8_t *buf, size_t length,
 			}
 
 			r = buffer.Read();
-			if (r.empty())
+			if (r.empty()) {
+				if (eof) {
+					data_flags |= NGHTTP2_DATA_FLAG_EOF;
+					return 0;
+				}
+
 				return NGHTTP2_ERR_DEFERRED;
+			}
 		}
 	}
 
