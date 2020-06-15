@@ -41,10 +41,12 @@ bool
 StatAt(const char *directory, const char *pathname, int flags,
        unsigned mask, struct statx *statxbuf) noexcept
 {
-	if (directory != nullptr)
-		return statx(OpenPath(directory).Get(), pathname,
-			     flags, mask, statxbuf) == 0;
-	else
+	if (directory != nullptr) {
+		UniqueFileDescriptor directory_fd;
+		return directory_fd.Open(directory, O_PATH) &&
+			statx(directory_fd.Get(), pathname,
+			      flags, mask, statxbuf) == 0;
+	} else
 		return statx(AT_FDCWD, pathname,
 			     flags, mask, statxbuf) == 0;
 }
