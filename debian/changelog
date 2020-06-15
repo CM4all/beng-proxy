@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.13) unstable; urgency=low
 
-  * 
+  * debian: link libc++ statically
 
  --   
 
