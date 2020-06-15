@@ -22,5 +22,4 @@ exec /usr/sbin/cm4all-beng-lb \
     --user "$DAEMON_USER" \
     --config-file "$CONFIG_FILE" \
     --logger-user "$LOGGER_USER" \
-    --access-logger "$ACCESS_LOGGER" \
     $OPTIONS
