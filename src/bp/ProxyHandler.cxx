@@ -99,7 +99,7 @@ Request::HandleProxyAddress() noexcept
 		address = address.WithQueryStringFrom(pool, request.uri);
 
 	if (address.IsCgiAlike() &&
-	    (address.GetCgi().request_uri_verbatim &&
+	    (address.GetCgi().request_uri_verbatim ||
 	     address.GetCgi().script_name == nullptr) &&
 	    address.GetCgi().uri == nullptr)
 		/* pass the "real" request URI to the CGI (but without the
