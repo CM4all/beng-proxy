@@ -71,6 +71,7 @@
 static constexpr size_t MAX_CONTENT_TYPE_LOOKUP = 256;
 static constexpr size_t MAX_PROBE_PATH_SUFFIXES = 256;
 static constexpr size_t MAX_FILE_NOT_FOUND = 256;
+static constexpr size_t MAX_ENOTDIR = 256;
 static constexpr size_t MAX_DIRECTORY_INDEX = 256;
 static constexpr size_t MAX_READ_FILE = 256;
 
@@ -539,6 +540,7 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	       ConstBuffer<void> want_full_uri,
 	       ConstBuffer<void> probe_path_suffixes,
 	       const char *probe_suffix,
+	       ConstBuffer<void> enotdir,
 	       ConstBuffer<void> directory_index,
 	       ConstBuffer<void> file_not_found,
 	       ConstBuffer<void> read_file,
@@ -550,6 +552,12 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	if (!read_file.IsNull()) {
 		b.emplace_back(rf_buffer, uri_escape(rf_buffer, read_file));
 		b.push_back("=RF]");
+	}
+
+	char end_buffer[MAX_ENOTDIR * 3];
+	if (!enotdir.IsNull()) {
+		b.emplace_back(end_buffer, uri_escape(end_buffer, enotdir));
+		b.push_back("=END]");
 	}
 
 	char di_buffer[MAX_DIRECTORY_INDEX * 3];
@@ -645,6 +653,7 @@ tcache_request_key(AllocatorPtr alloc, const TranslateRequest &request)
 				 request.error_document_status,
 				 request.check, request.want_full_uri,
 				 request.probe_path_suffixes, request.probe_suffix,
+				 request.enotdir,
 				 request.directory_index,
 				 request.file_not_found,
 				 request.read_file,
@@ -663,6 +672,7 @@ tcache_request_evaluate(const TranslateRequest &request)
 		request.want_full_uri.size <= MAX_CACHE_WFU &&
 		request.probe_path_suffixes.size <= MAX_PROBE_PATH_SUFFIXES &&
 		request.file_not_found.size <= MAX_FILE_NOT_FOUND &&
+		request.enotdir.size <= MAX_ENOTDIR &&
 		request.directory_index.size <= MAX_DIRECTORY_INDEX &&
 		request.read_file.size <= MAX_READ_FILE &&
 		request.authorization == nullptr;
@@ -768,6 +778,7 @@ tcache_store_response(AllocatorPtr alloc, TranslateResponse &dest,
 				 request.error_document_status,
 				 request.check, request.want_full_uri,
 				 request.probe_path_suffixes, request.probe_suffix,
+				 request.enotdir,
 				 request.directory_index,
 				 request.file_not_found,
 				 request.read_file,
