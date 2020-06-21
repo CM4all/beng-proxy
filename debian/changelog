@@ -1,7 +1,6 @@
 cm4all-beng-proxy (17.0.14) unstable; urgency=low
 
   * bp: fix REQUEST_URI_VERBATIM
-  * translation: fix ENOTDIR
 
  --   
 
