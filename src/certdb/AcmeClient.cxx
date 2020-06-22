@@ -672,7 +672,7 @@ AcmeClient::Authorize(EVP_PKEY &key, const char *url)
 	auto response = SignedRequestRetry(key,
 					   HTTP_METHOD_POST,
 					   url,
-					   Json::Value(Json::stringValue));
+					   "");
 	if (response.status != HTTP_STATUS_OK)
 		ThrowStatusError(std::move(response),
 				 "Failed to request authorization");
