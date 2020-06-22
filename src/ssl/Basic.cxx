@@ -134,11 +134,18 @@ ApplyServerConfig(SSL_CTX &ssl_ctx, const SslConfig &config)
 	ERR_clear_error();
 
 	if (!config.ca_cert_file.empty()) {
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+		if (SSL_CTX_load_verify_file(&ssl_ctx,
+					     config.ca_cert_file.c_str()) != 1)
+			throw SslError("Failed to load CA certificate file " +
+				       config.ca_cert_file);
+#else
 		if (SSL_CTX_load_verify_locations(&ssl_ctx,
 						  config.ca_cert_file.c_str(),
 						  nullptr) != 1)
 			throw SslError("Failed to load CA certificate file " +
 				       config.ca_cert_file);
+#endif
 
 		/* send all certificates from this file to the client (list of
 		   acceptable CA certificates) */
