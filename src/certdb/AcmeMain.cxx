@@ -533,6 +533,7 @@ Acme(ConstBuffer<const char *> args)
 		throw "acme commands:\n"
 			"  new-account EMAIL\n"
 			"  get-account\n"
+			"  import-account KEYFILE\n"
 			"  new-order HANDLE HOST...\n"
 			"  renew-cert HANDLE\n"
 			"\n"
@@ -605,6 +606,36 @@ Acme(ConstBuffer<const char *> args)
 									   true);
 			PrintAccount(account);
 		}
+	} else if (StringIsEqual(cmd, "import-account")) {
+		if (!config.account_db)
+			throw std::runtime_error("import-account requires --account-db");
+
+		if (args.size != 1)
+			throw Usage("acme import-account KEYFILE");
+
+		const char *import_key_path = args.shift();
+
+		const auto db_config = LoadPatchCertDatabaseConfig();
+
+		const ScopeSslGlobalInit ssl_init;
+		const AcmeKey key(import_key_path);
+
+		const auto account = AcmeClient(config).NewAccount(*key,
+								   nullptr,
+								   true);
+
+		if (account.status != AcmeAccount::Status::VALID)
+			throw Usage("Account is not valid");
+
+		WrapKeyHelper wrap_key_helper;
+		const auto wrap_key = wrap_key_helper.SetEncryptKey(db_config);
+
+		CertDatabase db(db_config);
+		db.InsertAcmeAccount(config.staging, nullptr,
+				     account.location.c_str(), *key,
+				     wrap_key.first, wrap_key.second);
+
+		PrintAccount(account);
 	} else if (StringIsEqual(cmd, "new-order")) {
 		if (args.size < 2)
 			throw Usage("acme new-order HANDLE HOST ...");

@@ -77,6 +77,10 @@ Encrypt, encrypts the key with the ``wrap_key`` settings from the
 :program:`beng-lb` configuration file, and inserts everything into the
 database.
 
+To import an existing account, type::
+
+   cm4all-certdb acme --staging --account-db import-account /path/to/key.pem
+
 Note: examples listed here will use the “staging” server. Omit the
 ``–-staging`` option to use the Let’s Encrypt production server.
 
