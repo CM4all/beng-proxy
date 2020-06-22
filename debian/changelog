@@ -5,7 +5,7 @@ cm4all-beng-proxy (17.0.14) unstable; urgency=low
   * certdb: add command "import-account"
   * OpenSSL 3.0.0 compatibility
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 22 Jun 2020 20:08:59 +0200
 
 cm4all-beng-proxy (17.0.13) unstable; urgency=low
 
