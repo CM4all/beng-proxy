@@ -60,6 +60,14 @@ The ``cm4all-certdb`` program includes an ACME (Automatic Certificate
 Management Environment) client, the protocol implemented by the *Let’s
 Encrypt* project.
 
+Before you start, you need to create the ``acme_account`` table using
+the file :file:`/usr/share/cm4all/beng-lb/sql/acme_account.sql` from
+the Debian package ``cm4all-certdb-sql``.  Make sure to allow the user
+running ``cm4all-certdb`` to access the table, e.g.::
+
+ GRANT INSERT, UPDATE, SELECT, DELETE ON acme_account TO "cm4all-certdb-admin";
+ GRANT UPDATE, SELECT ON acme_account_id_seq TO "cm4all-certdb-admin";
+
 To get started, register one or more accounts::
 
    cm4all-certdb acme --staging --account-db new-account foo@example.com
