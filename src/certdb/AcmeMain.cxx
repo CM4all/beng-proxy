@@ -532,7 +532,7 @@ Acme(ConstBuffer<const char *> args)
 	if (args.empty())
 		throw "acme commands:\n"
 			"  new-account EMAIL\n"
-			"  get-account EMAIL\n"
+			"  get-account\n"
 			"  new-order HANDLE HOST...\n"
 			"  renew-cert HANDLE\n"
 			"\n"
