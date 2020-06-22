@@ -135,6 +135,14 @@ else
   libcxx = dependency('', required: false)
 endif
 
+if compiler.get_id() == 'gcc'
+  # libstdc++ has std::filesystem in a separate library and requires
+  # this linker flag.
+
+  # TODO: move this to libcommon, because libcommon uses std::filesystem
+  libcxx = declare_dependency(link_args: '-lstdc++fs')
+endif
+
 threads = dependency('threads')
 libjsoncpp = dependency('jsoncpp', fallback: ['jsoncpp', 'jsoncpp_dep'])
 zlib = dependency('zlib')
