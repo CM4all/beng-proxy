@@ -154,6 +154,14 @@ CertDatabase::InsertServerCertificate(const char *handle,
 				cert_der, key_der, key_wrap_name);
 }
 
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+/* the AES_wrap_key() API was deprecated in OpenSSL 3.0.0, but its
+   replacement is more complicated, so let's ignore the warnings until
+   we have migrated to libsodium */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 bool
 CertDatabase::LoadServerCertificate(const char *handle,
 				    X509 &cert, EVP_PKEY &key,
@@ -243,6 +251,10 @@ CertDatabase::LoadServerCertificate(const char *handle,
 		return true;
 	}
 }
+
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#pragma GCC diagnostic pop
+#endif
 
 UniqueX509
 CertDatabase::GetServerCertificateByHandle(const char *handle)

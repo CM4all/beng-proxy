@@ -34,6 +34,13 @@
 
 #include <openssl/err.h>
 
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+/* the AES_wrap_key() API was deprecated in OpenSSL 3.0.0, but its
+   replacement is more complicated, so let's ignore the warnings until
+   we have migrated to libsodium */
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 Pg::BinaryValue
 UnwrapKey(Pg::BinaryValue key_der,
 	  const CertDatabaseConfig &config, const std::string &key_wrap_name,
