@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include <forward_list>
 #include <string>
 
 struct AcmeAccount {
@@ -42,6 +43,8 @@ struct AcmeAccount {
 	} status = Status::VALID;
 
 	std::string location;
+
+	std::forward_list<std::string> contact;
 
 	static Status ParseStatus(const std::string &s);
 	static const char *FormatStatus(Status s) noexcept;

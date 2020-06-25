@@ -448,6 +448,7 @@ ToAccount(const Json::Value &root)
 
 	AcmeAccount account;
 	account.status = AcmeAccount::ParseStatus(status.asString());
+	account.contact = ToStringList(root["contact"]);
 	return account;
 }
 

@@ -465,10 +465,12 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 static void
 PrintAccount(const AcmeAccount &account) noexcept
 {
-	printf("status: %s\n"
-	       "location: %s\n",
-	       AcmeAccount::FormatStatus(account.status),
-	       account.location.c_str());
+	printf("status: %s\n", AcmeAccount::FormatStatus(account.status));
+
+	for (const auto &i : account.contact)
+		printf("contact: %s\n", i.c_str());
+
+	printf("location: %s\n", account.location.c_str());
 }
 
 void
