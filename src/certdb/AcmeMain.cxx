@@ -633,7 +633,8 @@ Acme(ConstBuffer<const char *> args)
 		const auto wrap_key = wrap_key_helper.SetEncryptKey(db_config);
 
 		CertDatabase db(db_config);
-		db.InsertAcmeAccount(config.staging, nullptr,
+		db.InsertAcmeAccount(config.staging,
+				     account.GetEmail(),
 				     account.location.c_str(), *key,
 				     wrap_key.first, wrap_key.second);
 

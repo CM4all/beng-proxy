@@ -32,6 +32,19 @@
 
 #include "AcmeAccount.hxx"
 #include "util/RuntimeError.hxx"
+#include "util/StringCompare.hxx"
+
+const char *
+AcmeAccount::GetEmail() const noexcept
+{
+	for (const auto &i : contact) {
+		const char *email = StringAfterPrefix(i.c_str(), "mailto:");
+		if (email != nullptr)
+			return email;
+	}
+
+	return nullptr;
+}
 
 static constexpr const char *acme_account_status_strings[] = {
 	"valid",

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.15) unstable; urgency=low
 
-  * 
+  * certdb: import-account obtains contact email address
 
  --   
 
