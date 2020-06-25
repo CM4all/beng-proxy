@@ -141,6 +141,32 @@ ThrowStatusError(GlueHttpResponse &&response, const char *msg)
 	ThrowError(std::move(response), what.c_str());
 }
 
+/**
+ * Convert a JSON array containing strings to a
+ * std::forward_list<std::string>.
+ */
+static auto
+ToStringList(const Json::Value &array)
+{
+	std::forward_list<std::string> result;
+
+	if (array.isNull())
+		return result;
+
+	if (!array.isArray())
+		throw std::runtime_error("Array expected");
+
+	auto j = result.before_begin();
+	for (const auto &i : array) {
+		if (!i.isString())
+			throw std::runtime_error("String expected");
+
+		j = result.emplace_after(j, i.asString());
+	}
+
+	return result;
+}
+
 AcmeClient::AcmeClient(const AcmeConfig &config) noexcept
 	:glue_http_client(event_loop),
 	 server(config.staging
@@ -499,10 +525,6 @@ ToOrder(const Json::Value &root)
 	if (!status.isString())
 		throw std::runtime_error("No status");
 
-	const auto &authorizations = root["authorizations"];
-	if (!authorizations.isArray() || authorizations.size() == 0)
-		throw std::runtime_error("No authorizations");
-
 	const auto &finalize = root["finalize"];
 	if (!finalize.isString())
 		throw std::runtime_error("No finalize URL");
@@ -510,14 +532,7 @@ ToOrder(const Json::Value &root)
 	AcmeOrder order;
 
 	order.status = status.asString();
-
-	for (const auto &i : authorizations) {
-		if (!i.isString())
-			throw std::runtime_error("Authorization is not a string");
-
-		order.authorizations.emplace_front(i.asString());
-	}
-
+	order.authorizations = ToStringList(root["authorizations"]);
 	order.finalize = finalize.asString();
 
 	const auto &certificate = root["certificate"];
