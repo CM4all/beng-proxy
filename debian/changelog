@@ -1,6 +1,7 @@
 cm4all-beng-proxy (16.19) unstable; urgency=low
 
   * http_client: fix crash bug
+  * OpenSSL 3.0.0 compatibility
 
  --   
 
