@@ -3,7 +3,7 @@ cm4all-beng-proxy (16.19) unstable; urgency=low
   * http_client: fix crash bug
   * OpenSSL 3.0.0 compatibility
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 30 Jun 2020 16:38:47 +0200
 
 cm4all-beng-proxy (16.18) unstable; urgency=low
 
