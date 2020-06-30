@@ -878,6 +878,16 @@ HttpClient::FeedBody(ConstBuffer<void> b)
 	{
 		const DestructObserver destructed(*this);
 		nbytes = response_body_reader.FeedBody(b.data, b.size);
+
+		if (!destructed && IsConnected())
+			/* if BufferedSocket is currently flushing the
+			   input buffer to start the "direct"
+			   (=splice) transfer, and our response body
+			   handler has just cleared its "direct" flag,
+			   we need to keep BufferedSocket from doing
+			   the "direct" transfer */
+			socket.SetDirect(CheckDirect());
+
 		if (nbytes == 0)
 			return destructed
 				? BufferedResult::CLOSED

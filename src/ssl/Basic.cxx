@@ -39,6 +39,7 @@
 #include "util/Compiler.h"
 
 #include <openssl/err.h>
+#include <openssl/opensslv.h>
 
 #include <stdio.h>
 

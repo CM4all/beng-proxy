@@ -37,6 +37,7 @@
 #include "pg/BinaryValue.hxx"
 
 #include <openssl/aes.h>
+#include <openssl/opensslv.h>
 
 #include <memory>
 
