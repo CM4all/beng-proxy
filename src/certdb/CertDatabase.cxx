@@ -41,6 +41,7 @@
 #include "io/FileDescriptor.hxx"
 
 #include <openssl/aes.h>
+#include <openssl/opensslv.h>
 
 CertDatabase::CertDatabase(const CertDatabaseConfig &_config)
 	:config(_config), conn(config.connect.c_str())
