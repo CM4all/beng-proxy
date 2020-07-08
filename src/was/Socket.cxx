@@ -30,25 +30,28 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "Socket.hxx"
+#include "system/Error.hxx"
 
-#include "io/UniqueFileDescriptor.hxx"
-#include "net/UniqueSocketDescriptor.hxx"
+#include <sys/socket.h>
 
-#include <utility>
+std::pair<WasSocket, WasSocket>
+WasSocket::CreatePair()
+{
+	std::pair<WasSocket, WasSocket> result;
 
-struct WasSocket {
-	UniqueSocketDescriptor control;
-	UniqueFileDescriptor input, output;
+	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+						      result.first.control,
+						      result.second.control))
+		throw MakeErrno("Failed to create socket pair");
 
-	void Close() noexcept {
-		control.Close();
-		input.Close();
-		output.Close();
-	}
+	if (!UniqueFileDescriptor::CreatePipe(result.first.input,
+					      result.second.output))
+		throw MakeErrno("Failed to create first pipe");
 
-	/**
-	 * Throws on error.
-	 */
-	static std::pair<WasSocket, WasSocket> CreatePair();
-};
+	if (!UniqueFileDescriptor::CreatePipe(result.second.input,
+					      result.first.output))
+		throw MakeErrno("Failed to create second pipe");
+
+	return result;
+}
