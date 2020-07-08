@@ -79,7 +79,7 @@ WasServer::ReleaseError(std::exception_ptr ep) noexcept
 		request.pool.reset();
 	}
 
-	this->~WasServer();
+	Destroy();
 }
 
 void
@@ -105,7 +105,7 @@ WasServer::ReleaseUnused() noexcept
 		request.pool.reset();
 	}
 
-	this->~WasServer();
+	Destroy();
 }
 
 void

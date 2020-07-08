@@ -138,6 +138,10 @@ public:
 			  StringMap &&headers, UnusedIstreamPtr body) noexcept;
 
 private:
+	void Destroy() noexcept {
+		this->~WasServer();
+	}
+
 	void ReleaseError(std::exception_ptr ep) noexcept;
 	void ReleaseError(const char *msg) noexcept;
 
