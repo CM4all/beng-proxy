@@ -32,32 +32,16 @@
 
 #pragma once
 
-#include "Socket.hxx"
+#include "io/UniqueFileDescriptor.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 
-class SpawnService;
-class ExitListener;
-struct ChildOptions;
-template<typename T> struct ConstBuffer;
+struct WasSocket {
+	UniqueSocketDescriptor control;
+	UniqueFileDescriptor input, output;
 
-struct WasProcess : WasSocket {
-	int pid;
-
-	WasProcess() = default;
-
-	explicit WasProcess(WasSocket &&_socket) noexcept
-		:WasSocket(std::move(_socket)) {}
+	void Close() noexcept {
+		control.Close();
+		input.Close();
+		output.Close();
+	}
 };
-
-/**
- * Launch WAS child processes.
- *
- * Throws std::runtime_error on error.
- */
-WasProcess
-was_launch(SpawnService &spawn_service,
-	   const char *name,
-	   const char *executable_path,
-	   ConstBuffer<const char *> args,
-	   const ChildOptions &options,
-	   UniqueFileDescriptor stderr_fd,
-	   ExitListener *listener);
