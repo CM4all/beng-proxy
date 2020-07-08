@@ -40,6 +40,7 @@
 #include "was/Client.hxx"
 #include "was/Server.hxx"
 #include "was/Lease.hxx"
+#include "was/Socket.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
 #include "io/SpliceSupport.hxx"
@@ -152,8 +153,7 @@ RunMalformedHeaderValue(WasServer &server, gcc_unused struct pool &pool,
 class WasConnection final : WasServerHandler, WasLease {
 	EventLoop &event_loop;
 
-	SocketDescriptor control_fd;
-	FileDescriptor input_fd, output_fd;
+	WasSocket socket;
 
 	WasServer *server;
 
@@ -170,37 +170,24 @@ public:
 	WasConnection(struct pool &pool, EventLoop &_event_loop,
 		      Callback &&_callback)
 		:event_loop(_event_loop), callback(std::move(_callback)) {
-		FileDescriptor input_w;
-		if (!FileDescriptor::CreatePipeNonBlock(input_fd, input_w)) {
-			perror("pipe");
-			exit(EXIT_FAILURE);
-		}
+		auto s = WasSocket::CreatePair();
 
-		FileDescriptor output_r;
-		if (!FileDescriptor::CreatePipeNonBlock(output_r, output_fd)) {
-			perror("pipe");
-			exit(EXIT_FAILURE);
-		}
+		socket = std::move(s.first);
+		socket.input.SetNonBlocking();
+		socket.output.SetNonBlocking();
 
-		SocketDescriptor control_server;
-		if (!SocketDescriptor::CreateSocketPairNonBlock(AF_LOCAL, SOCK_STREAM, 0,
-								control_fd,
-								control_server)) {
-			perror("socketpair");
-			exit(EXIT_FAILURE);
-		}
+		s.second.input.SetNonBlocking();
+		s.second.output.SetNonBlocking();
 
 		WasServerHandler &handler = *this;
 		server = NewFromPool<WasServer>(pool, pool, event_loop,
-						control_server,
-						output_r, input_w, handler);
+						s.second.control.Release(),
+						FileDescriptor(s.second.input.Steal()),
+						FileDescriptor(s.second.output.Steal()),
+						handler);
 	}
 
 	~WasConnection() {
-		control_fd.Close();
-		input_fd.Close();
-		output_fd.Close();
-
 		if (server != nullptr)
 			server->Free();
 	}
@@ -213,7 +200,7 @@ public:
 		     CancellablePointer &cancel_ptr) {
 		lease = &_lease;
 		was_client_request(*pool, event_loop, nullptr,
-				   control_fd, input_fd, output_fd,
+				   socket.control, socket.input, socket.output,
 				   *this,
 				   method, uri, uri, nullptr, nullptr,
 				   headers, std::move(body), nullptr,
@@ -221,7 +208,7 @@ public:
 	}
 
 	void InjectSocketFailure() noexcept {
-		control_fd.Shutdown();
+		socket.control.Shutdown();
 	}
 
 	/* virtual methods from class WasServerHandler */
