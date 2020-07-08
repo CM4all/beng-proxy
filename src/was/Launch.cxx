@@ -43,6 +43,33 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+static int
+WasLaunch(SpawnService &spawn_service,
+	  const char *name,
+	  const char *executable_path,
+	  ConstBuffer<const char *> args,
+	  const ChildOptions &options,
+	  UniqueFileDescriptor &&stderr_fd,
+	  ExitListener *listener,
+	  WasSocket &&socket)
+{
+	PreparedChildProcess p;
+	p.SetControl(std::move(socket.control));
+	p.SetStdout(std::move(socket.output));
+	p.SetStdin(std::move(socket.input));
+
+	p.Append(executable_path);
+	for (auto i : args)
+		p.Append(i);
+
+	options.CopyTo(p, true, nullptr);
+
+	if (p.stderr_fd < 0 && stderr_fd.IsDefined())
+		p.SetStderr(std::move(stderr_fd));
+
+	return spawn_service.SpawnChildProcess(name, std::move(p), listener);
+}
+
 WasProcess
 was_launch(SpawnService &spawn_service,
 	   const char *name,
@@ -64,21 +91,8 @@ was_launch(SpawnService &spawn_service,
 	fcntl(process.input.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
 	fcntl(process.output.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
 
-	PreparedChildProcess p;
-	p.SetControl(std::move(s.second.control));
-	p.SetStdout(std::move(s.second.output));
-	p.SetStdin(std::move(s.second.input));
-
-	p.Append(executable_path);
-	for (auto i : args)
-		p.Append(i);
-
-	options.CopyTo(p, true, nullptr);
-
-	if (p.stderr_fd < 0 && stderr_fd.IsDefined())
-		p.SetStderr(std::move(stderr_fd));
-
-	process.pid = spawn_service.SpawnChildProcess(name, std::move(p),
-						      listener);
+	process.pid = WasLaunch(spawn_service, name, executable_path, args,
+				options, std::move(stderr_fd),
+				listener, std::move(s.second));
 	return process;
 }
