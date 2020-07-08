@@ -79,8 +79,6 @@ WasServer::ReleaseError(std::exception_ptr ep) noexcept
 		request.pool.reset();
 	}
 
-	socket.Close();
-
 	this->~WasServer();
 }
 
@@ -106,8 +104,6 @@ WasServer::ReleaseUnused() noexcept
 
 		request.pool.reset();
 	}
-
-	socket.Close();
 
 	this->~WasServer();
 }
