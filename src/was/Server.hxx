@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include "Socket.hxx"
 #include "Control.hxx"
 #include "Output.hxx"
 #include "Input.hxx"
@@ -60,8 +61,7 @@ public:
 class WasServer : WasControlHandler, WasOutputHandler, WasInputHandler {
 	struct pool &pool;
 
-	SocketDescriptor control_fd;
-	FileDescriptor input_fd, output_fd;
+	WasSocket socket;
 
 	WasControl control;
 
@@ -127,8 +127,7 @@ public:
 	 * @param _handler a callback function which receives events
 	 */
 	WasServer(struct pool &_pool, EventLoop &event_loop,
-		  SocketDescriptor _control_fd,
-		  FileDescriptor _input_fd, FileDescriptor _output_fd,
+		  WasSocket &&_socket,
 		  WasServerHandler &_handler) noexcept;
 
 	void Free() noexcept {
@@ -139,12 +138,6 @@ public:
 			  StringMap &&headers, UnusedIstreamPtr body) noexcept;
 
 private:
-	void CloseFiles() noexcept {
-		control_fd.Close();
-		input_fd.Close();
-		output_fd.Close();
-	}
-
 	void ReleaseError(std::exception_ptr ep) noexcept;
 	void ReleaseError(const char *msg) noexcept;
 

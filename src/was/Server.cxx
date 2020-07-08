@@ -50,17 +50,16 @@
 #include <unistd.h>
 
 WasServer::WasServer(struct pool &_pool, EventLoop &event_loop,
-		     SocketDescriptor _control_fd,
-		     FileDescriptor _input_fd, FileDescriptor _output_fd,
+		     WasSocket &&_socket,
 		     WasServerHandler &_handler) noexcept
 	:pool(_pool),
-	 control_fd(_control_fd), input_fd(_input_fd), output_fd(_output_fd),
-	 control(event_loop, control_fd, *this),
+	 socket(std::move(_socket)),
+	 control(event_loop, socket.control, *this),
 	 handler(_handler)
 {
-	assert(control_fd.IsDefined());
-	assert(input_fd.IsDefined());
-	assert(output_fd.IsDefined());
+	assert(socket.control.IsDefined());
+	assert(socket.input.IsDefined());
+	assert(socket.output.IsDefined());
 }
 
 void
@@ -80,7 +79,7 @@ WasServer::ReleaseError(std::exception_ptr ep) noexcept
 		request.pool.reset();
 	}
 
-	CloseFiles();
+	socket.Close();
 
 	this->~WasServer();
 }
@@ -108,7 +107,7 @@ WasServer::ReleaseUnused() noexcept
 		request.pool.reset();
 	}
 
-	CloseFiles();
+	socket.Close();
 
 	this->~WasServer();
 }
@@ -351,7 +350,7 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 		}
 
 		request.body = was_input_new(*request.pool, control.GetEventLoop(),
-					     input_fd, *this);
+					     socket.input, *this);
 		request.state = Request::State::PENDING;
 		break;
 
@@ -455,7 +454,7 @@ WasServer::SendResponse(http_status_t status,
 	if (body) {
 		response.body = was_output_new(*request.pool,
 					       control.GetEventLoop(),
-					       output_fd, std::move(body),
+					       socket.output, std::move(body),
 					       *this);
 		if (!control.SendEmpty(WAS_COMMAND_DATA) ||
 		    !was_output_check_length(*response.body))

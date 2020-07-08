@@ -62,9 +62,11 @@ main(int, char **)
 {
 	SetLogLevel(5);
 
-	const FileDescriptor in_fd(0);
-	const FileDescriptor out_fd(1);
-	const SocketDescriptor control_fd(3);
+	WasSocket socket{
+		UniqueSocketDescriptor(3),
+		UniqueFileDescriptor(STDIN_FILENO),
+		UniqueFileDescriptor(STDOUT_FILENO),
+	};
 
 	direct_global_init();
 	const ScopeFbPoolInit fb_pool_init;
@@ -74,7 +76,7 @@ main(int, char **)
 	instance.server = NewFromPool<WasServer>(instance.root_pool,
 						 instance.root_pool,
 						 instance.event_loop,
-						 control_fd, in_fd, out_fd,
+						 std::move(socket),
 						 instance);
 
 	instance.event_loop.Dispatch();

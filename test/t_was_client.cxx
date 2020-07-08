@@ -181,9 +181,7 @@ public:
 
 		WasServerHandler &handler = *this;
 		server = NewFromPool<WasServer>(pool, pool, event_loop,
-						s.second.control.Release(),
-						FileDescriptor(s.second.input.Steal()),
-						FileDescriptor(s.second.output.Steal()),
+						std::move(s.second),
 						handler);
 	}
 
