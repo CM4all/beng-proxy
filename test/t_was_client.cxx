@@ -63,8 +63,7 @@ RunNull(WasServer &server, struct pool &,
 {
 	body.Clear();
 
-	was_server_response(server, HTTP_STATUS_NO_CONTENT,
-			    {}, nullptr);
+	server.SendResponse(HTTP_STATUS_NO_CONTENT, {}, nullptr);
 }
 
 static void
@@ -75,7 +74,7 @@ RunHello(WasServer &server, struct pool &pool,
 {
 	body.Clear();
 
-	was_server_response(server, HTTP_STATUS_OK, {},
+	server.SendResponse(HTTP_STATUS_OK, {},
 			    istream_string_new(pool, "hello"));
 }
 
@@ -87,7 +86,7 @@ RunHuge(WasServer &server, struct pool &pool,
 {
 	body.Clear();
 
-	was_server_response(server, HTTP_STATUS_OK, {},
+	server.SendResponse(HTTP_STATUS_OK, {},
 			    istream_head_new(pool,
 					     istream_zero_new(pool),
 					     524288, true));
@@ -101,7 +100,7 @@ RunHold(WasServer &server, struct pool &pool,
 {
 	body.Clear();
 
-	was_server_response(server, HTTP_STATUS_OK, {},
+	server.SendResponse(HTTP_STATUS_OK, {},
 			    istream_block_new(pool));
 }
 
@@ -120,8 +119,7 @@ RunMirror(WasServer &server, gcc_unused struct pool &pool,
 	  UnusedIstreamPtr body)
 {
 	const bool has_body = body;
-	was_server_response(server,
-			    has_body ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
+	server.SendResponse(has_body ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
 			    std::move(headers), std::move(body));
 }
 
@@ -134,8 +132,7 @@ RunMalformedHeaderName(WasServer &server, gcc_unused struct pool &pool,
 
 	StringMap response_headers(pool, {{"header name", "foo"}});
 
-	was_server_response(server,
-			    HTTP_STATUS_NO_CONTENT,
+	server.SendResponse(HTTP_STATUS_NO_CONTENT,
 			    std::move(response_headers), nullptr);
 }
 
@@ -148,8 +145,7 @@ RunMalformedHeaderValue(WasServer &server, gcc_unused struct pool &pool,
 
 	StringMap response_headers(pool, {{"name", "foo\nbar"}});
 
-	was_server_response(server,
-			    HTTP_STATUS_NO_CONTENT,
+	server.SendResponse(HTTP_STATUS_NO_CONTENT,
 			    std::move(response_headers), nullptr);
 }
 
@@ -194,8 +190,10 @@ public:
 			exit(EXIT_FAILURE);
 		}
 
-		server = was_server_new(pool, event_loop, control_server,
-					output_r, input_w.Get(), *this);
+		WasServerHandler &handler = *this;
+		server = NewFromPool<WasServer>(pool, pool, event_loop,
+						control_server,
+						output_r, input_w, handler);
 	}
 
 	~WasConnection() {
@@ -204,7 +202,7 @@ public:
 		output_fd.Close();
 
 		if (server != nullptr)
-			was_server_free(server);
+			server->Free();
 	}
 
 	void Request(struct pool *pool,

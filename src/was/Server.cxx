@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,15 +32,11 @@
 
 #include "Server.hxx"
 #include "Error.hxx"
-#include "Control.hxx"
-#include "Output.hxx"
-#include "Input.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
 #include "pool/pool.hxx"
-#include "pool/Ptr.hxx"
 #include "io/FileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringFormat.hxx"
@@ -53,163 +49,19 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-class WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
-	struct pool &pool;
-
-	SocketDescriptor control_fd;
-	FileDescriptor input_fd, output_fd;
-
-	WasControl control;
-
-	WasServerHandler &handler;
-
-	struct Request {
-		PoolPtr pool;
-
-		http_method_t method;
-
-		const char *uri;
-
-		/**
-		 * Request headers being assembled.  This pointer is set to
-		 * nullptr before before the request is dispatched to the
-		 * handler.
-		 */
-		StringMap *headers;
-
-		WasInput *body;
-
-		bool released = false;
-
-		enum class State : uint8_t {
-			/**
-			 * No request is being processed currently.
-			 */
-			NONE,
-
-			/**
-			 * Receiving headers.
-			 */
-			HEADERS,
-
-			/**
-			 * Receiving headers.
-			 */
-			PENDING,
-
-			/**
-			 * Request metadata already submitted to
-			 * WasServerHandler::OnWasRequest().
-			 */
-			SUBMITTED,
-		} state = State::NONE;
-	} request;
-
-	struct {
-		http_status_t status;
-
-		WasOutput *body;
-	} response;
-
-public:
-	WasServer(struct pool &_pool, EventLoop &event_loop,
-		  SocketDescriptor _control_fd,
-		  FileDescriptor _input_fd, FileDescriptor _output_fd,
-		  WasServerHandler &_handler)
-		:pool(_pool),
-		 control_fd(_control_fd), input_fd(_input_fd), output_fd(_output_fd),
-		 control(event_loop, control_fd, *this),
-		 handler(_handler) {}
-
-	void Free() {
-		ReleaseError("shutting down WAS connection");
-	}
-
-	void SendResponse(http_status_t status,
-			  StringMap &&headers, UnusedIstreamPtr body) noexcept;
-
-private:
-	void CloseFiles() {
-		control_fd.Close();
-		input_fd.Close();
-		output_fd.Close();
-	}
-
-	void ReleaseError(std::exception_ptr ep);
-
-	void ReleaseError(const char *msg) {
-		ReleaseError(std::make_exception_ptr(WasProtocolError(msg)));
-	}
-
-	void ReleaseUnused();
-
-	/**
-	 * Abort receiving the response status/headers from the WAS server.
-	 */
-	void AbortError(std::exception_ptr ep) {
-		auto &handler2 = handler;
-		ReleaseError(ep);
-		handler2.OnWasClosed();
-	}
-
-	void AbortError(const char *msg) {
-		AbortError(std::make_exception_ptr(WasProtocolError(msg)));
-	}
-
-	/**
-	 * Abort receiving the response status/headers from the WAS server.
-	 */
-	void AbortUnused() {
-		auto &handler2 = handler;
-		ReleaseUnused();
-		handler2.OnWasClosed();
-	}
-
-	/* virtual methods from class WasControlHandler */
-	bool OnWasControlPacket(enum was_command cmd,
-				ConstBuffer<void> payload) noexcept override;
-
-	bool OnWasControlDrained() noexcept override {
-		if (request.state == Request::State::PENDING) {
-			request.state = Request::State::SUBMITTED;
-
-			UnusedIstreamPtr body;
-			if (request.released) {
-				was_input_free_unused(request.body);
-				request.body = nullptr;
-
-				body = istream_null_new(*request.pool);
-			} else if (request.body != nullptr)
-				body = was_input_enable(*request.body);
-
-			handler.OnWasRequest(*request.pool, request.method,
-					     request.uri, std::move(*request.headers),
-					     std::move(body));
-			/* XXX check if connection has been closed */
-		}
-
-		return true;
-	}
-
-	void OnWasControlDone() noexcept override {
-		assert(!control.IsDefined());
-	}
-
-	void OnWasControlError(std::exception_ptr ep) noexcept override;
-
-	/* virtual methods from class WasOutputHandler */
-	bool WasOutputLength(uint64_t length) noexcept override;
-	bool WasOutputPremature(uint64_t length,
-				std::exception_ptr ep) noexcept override;
-	void WasOutputEof() noexcept override;
-	void WasOutputError(std::exception_ptr ep) noexcept override;
-
-	/* virtual methods from class WasInputHandler */
-	void WasInputClose(uint64_t received) noexcept override;
-	bool WasInputRelease() noexcept override;
-	void WasInputEof() noexcept override;
-	void WasInputError() noexcept override;
-};
+WasServer::WasServer(struct pool &_pool, EventLoop &event_loop,
+		     SocketDescriptor _control_fd,
+		     FileDescriptor _input_fd, FileDescriptor _output_fd,
+		     WasServerHandler &_handler)
+	:pool(_pool),
+	 control_fd(_control_fd), input_fd(_input_fd), output_fd(_output_fd),
+	 control(event_loop, control_fd, *this),
+	 handler(_handler)
+{
+	assert(control_fd.IsDefined());
+	assert(input_fd.IsDefined());
+	assert(output_fd.IsDefined());
+}
 
 void
 WasServer::ReleaseError(std::exception_ptr ep)
@@ -234,6 +86,12 @@ WasServer::ReleaseError(std::exception_ptr ep)
 }
 
 void
+WasServer::ReleaseError(const char *msg)
+{
+	ReleaseError(std::make_exception_ptr(WasProtocolError(msg)));
+}
+
+void
 WasServer::ReleaseUnused()
 {
 	if (control.IsDefined())
@@ -253,6 +111,28 @@ WasServer::ReleaseUnused()
 	CloseFiles();
 
 	this->~WasServer();
+}
+
+void
+WasServer::AbortError(std::exception_ptr ep)
+{
+	auto &handler2 = handler;
+	ReleaseError(ep);
+	handler2.OnWasClosed();
+}
+
+void
+WasServer::AbortError(const char *msg)
+{
+	AbortError(std::make_exception_ptr(WasProtocolError(msg)));
+}
+
+void
+WasServer::AbortUnused()
+{
+	auto &handler2 = handler;
+	ReleaseUnused();
+	handler2.OnWasClosed();
 }
 
 /*
@@ -505,6 +385,36 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 	return true;
 }
 
+bool
+WasServer::OnWasControlDrained() noexcept
+{
+	if (request.state == Request::State::PENDING) {
+		request.state = Request::State::SUBMITTED;
+
+		UnusedIstreamPtr body;
+		if (request.released) {
+			was_input_free_unused(request.body);
+			request.body = nullptr;
+
+			body = istream_null_new(*request.pool);
+		} else if (request.body != nullptr)
+			body = was_input_enable(*request.body);
+
+		handler.OnWasRequest(*request.pool, request.method,
+				     request.uri, std::move(*request.headers),
+				     std::move(body));
+		/* XXX check if connection has been closed */
+	}
+
+	return true;
+}
+
+void
+WasServer::OnWasControlDone() noexcept
+{
+	assert(!control.IsDefined());
+}
+
 void
 WasServer::OnWasControlError(std::exception_ptr ep) noexcept
 {
@@ -513,34 +423,7 @@ WasServer::OnWasControlError(std::exception_ptr ep) noexcept
 	AbortError(ep);
 }
 
-/*
- * constructor
- *
- */
-
-WasServer *
-was_server_new(struct pool &pool, EventLoop &event_loop,
-	       SocketDescriptor control_fd,
-	       FileDescriptor input_fd, int output_fd,
-	       WasServerHandler &handler)
-{
-	assert(control_fd.IsDefined());
-	assert(input_fd.IsDefined());
-	assert(output_fd >= 0);
-
-	return NewFromPool<WasServer>(pool, pool, event_loop,
-				      control_fd, input_fd,
-				      FileDescriptor(output_fd),
-				      handler);
-}
-
 void
-was_server_free(WasServer *server)
-{
-	server->Free();
-}
-
-inline void
 WasServer::SendResponse(http_status_t status,
 			StringMap &&headers, UnusedIstreamPtr body) noexcept
 {
@@ -583,11 +466,4 @@ WasServer::SendResponse(http_status_t status,
 	}
 
 	control.BulkOff();
-}
-
-void
-was_server_response(WasServer &server, http_status_t status,
-		    StringMap &&headers, UnusedIstreamPtr body) noexcept
-{
-	server.SendResponse(status, std::move(headers), std::move(body));
 }
