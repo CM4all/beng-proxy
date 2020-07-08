@@ -52,7 +52,7 @@
 WasServer::WasServer(struct pool &_pool, EventLoop &event_loop,
 		     SocketDescriptor _control_fd,
 		     FileDescriptor _input_fd, FileDescriptor _output_fd,
-		     WasServerHandler &_handler)
+		     WasServerHandler &_handler) noexcept
 	:pool(_pool),
 	 control_fd(_control_fd), input_fd(_input_fd), output_fd(_output_fd),
 	 control(event_loop, control_fd, *this),
@@ -64,7 +64,7 @@ WasServer::WasServer(struct pool &_pool, EventLoop &event_loop,
 }
 
 void
-WasServer::ReleaseError(std::exception_ptr ep)
+WasServer::ReleaseError(std::exception_ptr ep) noexcept
 {
 	if (control.IsDefined())
 		control.ReleaseSocket();
@@ -86,13 +86,13 @@ WasServer::ReleaseError(std::exception_ptr ep)
 }
 
 void
-WasServer::ReleaseError(const char *msg)
+WasServer::ReleaseError(const char *msg) noexcept
 {
 	ReleaseError(std::make_exception_ptr(WasProtocolError(msg)));
 }
 
 void
-WasServer::ReleaseUnused()
+WasServer::ReleaseUnused() noexcept
 {
 	if (control.IsDefined())
 		control.ReleaseSocket();
@@ -114,7 +114,7 @@ WasServer::ReleaseUnused()
 }
 
 void
-WasServer::AbortError(std::exception_ptr ep)
+WasServer::AbortError(std::exception_ptr ep) noexcept
 {
 	auto &handler2 = handler;
 	ReleaseError(ep);
@@ -122,13 +122,13 @@ WasServer::AbortError(std::exception_ptr ep)
 }
 
 void
-WasServer::AbortError(const char *msg)
+WasServer::AbortError(const char *msg) noexcept
 {
 	AbortError(std::make_exception_ptr(WasProtocolError(msg)));
 }
 
 void
-WasServer::AbortUnused()
+WasServer::AbortUnused() noexcept
 {
 	auto &handler2 = handler;
 	ReleaseUnused();

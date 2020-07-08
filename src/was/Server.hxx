@@ -129,9 +129,9 @@ public:
 	WasServer(struct pool &_pool, EventLoop &event_loop,
 		  SocketDescriptor _control_fd,
 		  FileDescriptor _input_fd, FileDescriptor _output_fd,
-		  WasServerHandler &_handler);
+		  WasServerHandler &_handler) noexcept;
 
-	void Free() {
+	void Free() noexcept {
 		ReleaseError("shutting down WAS connection");
 	}
 
@@ -139,28 +139,28 @@ public:
 			  StringMap &&headers, UnusedIstreamPtr body) noexcept;
 
 private:
-	void CloseFiles() {
+	void CloseFiles() noexcept {
 		control_fd.Close();
 		input_fd.Close();
 		output_fd.Close();
 	}
 
-	void ReleaseError(std::exception_ptr ep);
-	void ReleaseError(const char *msg);
+	void ReleaseError(std::exception_ptr ep) noexcept;
+	void ReleaseError(const char *msg) noexcept;
 
-	void ReleaseUnused();
-
-	/**
-	 * Abort receiving the response status/headers from the WAS server.
-	 */
-	void AbortError(std::exception_ptr ep);
-
-	void AbortError(const char *msg);
+	void ReleaseUnused() noexcept;
 
 	/**
 	 * Abort receiving the response status/headers from the WAS server.
 	 */
-	void AbortUnused();
+	void AbortError(std::exception_ptr ep) noexcept;
+
+	void AbortError(const char *msg) noexcept;
+
+	/**
+	 * Abort receiving the response status/headers from the WAS server.
+	 */
+	void AbortUnused() noexcept;
 
 	/* virtual methods from class WasControlHandler */
 	bool OnWasControlPacket(enum was_command cmd,
