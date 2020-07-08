@@ -32,6 +32,7 @@
 
 #define HAVE_CHUNKED_REQUEST_BODY
 #define ENABLE_HUGE_BODY
+#define ENABLE_MALFORMED_PREMATURE
 #define NO_EARLY_RELEASE_SOCKET // TODO: improve the WAS client
 
 #include "t_client.hxx"
@@ -150,12 +151,133 @@ RunMalformedHeaderValue(WasServer &server, gcc_unused struct pool &pool,
 			    std::move(response_headers), nullptr);
 }
 
+class MalformedPrematureWasServer : WasControlHandler {
+	WasSocket socket;
+
+	WasControl control;
+
+	TimerEvent defer_premature;
+
+	WasServerHandler &handler;
+
+public:
+	MalformedPrematureWasServer(EventLoop &event_loop,
+				    WasSocket &&_socket,
+				    WasServerHandler &_handler) noexcept
+		:socket(std::move(_socket)),
+		 control(event_loop, socket.control, *this),
+		 defer_premature(event_loop, BIND_THIS_METHOD(SendPremature)),
+		 handler(_handler)
+	{
+	}
+
+	void Free() noexcept {
+		ReleaseError();
+	}
+
+	void SendResponse(http_status_t status,
+			  StringMap &&headers, UnusedIstreamPtr body) noexcept;
+
+private:
+	void Destroy() noexcept {
+		this->~MalformedPrematureWasServer();
+	}
+
+	void ReleaseError() noexcept {
+		if (control.IsDefined())
+			control.ReleaseSocket();
+
+		socket.Close();
+		Destroy();
+	}
+
+	void ReleaseUnused() noexcept;
+
+	void AbortError() noexcept {
+		auto &handler2 = handler;
+		ReleaseError();
+		handler2.OnWasClosed();
+	}
+
+	/**
+	 * Abort receiving the response status/headers from the WAS server.
+	 */
+	void AbortUnused() noexcept {
+		auto &handler2 = handler;
+		ReleaseUnused();
+		handler2.OnWasClosed();
+	}
+
+protected:
+	void SendPremature() noexcept {
+		/* the response body was announced as 1 kB - and now
+		   we tell the client he already sent 4 kB */
+		control.SendUint64(WAS_COMMAND_PREMATURE, 4096);
+	}
+
+	/* virtual methods from class WasControlHandler */
+	bool OnWasControlPacket(enum was_command cmd,
+				ConstBuffer<void> payload) noexcept override;
+	bool OnWasControlDrained() noexcept override {
+		return true;
+	}
+	void OnWasControlDone() noexcept override {}
+	void OnWasControlError(std::exception_ptr) noexcept override {
+		AbortError();
+	}
+};
+
+bool
+MalformedPrematureWasServer::OnWasControlPacket(enum was_command cmd,
+						ConstBuffer<void> payload) noexcept
+{
+	(void)payload;
+
+	switch (cmd) {
+	case WAS_COMMAND_NOP:
+	case WAS_COMMAND_REQUEST:
+	case WAS_COMMAND_METHOD:
+	case WAS_COMMAND_URI:
+	case WAS_COMMAND_SCRIPT_NAME:
+	case WAS_COMMAND_PATH_INFO:
+	case WAS_COMMAND_QUERY_STRING:
+	case WAS_COMMAND_HEADER:
+	case WAS_COMMAND_PARAMETER:
+		break;
+
+	case WAS_COMMAND_STATUS:
+		AbortError();
+		return false;
+
+	case WAS_COMMAND_NO_DATA:
+	case WAS_COMMAND_DATA:
+		/* announce a response body of 1 kB */
+		if (!control.SendEmpty(WAS_COMMAND_DATA) ||
+		    !control.SendUint64(WAS_COMMAND_LENGTH, 1024))
+			return false;
+
+		defer_premature.Schedule(std::chrono::milliseconds(1));
+		return true;
+
+	case WAS_COMMAND_LENGTH:
+		break;
+
+	case WAS_COMMAND_STOP:
+	case WAS_COMMAND_PREMATURE:
+		break;
+	}
+
+	return true;
+}
+
 class WasConnection final : WasServerHandler, WasLease {
 	EventLoop &event_loop;
 
 	WasSocket socket;
 
-	WasServer *server;
+	WasServer *server = nullptr;
+
+	MalformedPrematureWasServer *server2 = nullptr;
 
 	Lease *lease;
 
@@ -185,9 +307,31 @@ public:
 						handler);
 	}
 
+	struct MalformedPremature{};
+
+	WasConnection(struct pool &pool, EventLoop &_event_loop,
+		      MalformedPremature)
+		:event_loop(_event_loop) {
+		auto s = WasSocket::CreatePair();
+
+		socket = std::move(s.first);
+		socket.input.SetNonBlocking();
+		socket.output.SetNonBlocking();
+
+		s.second.input.SetNonBlocking();
+		s.second.output.SetNonBlocking();
+
+		WasServerHandler &handler = *this;
+		server2 = NewFromPool<MalformedPrematureWasServer>(pool, event_loop,
+								   std::move(s.second),
+								   handler);
+	}
+
 	~WasConnection() {
 		if (server != nullptr)
 			server->Free();
+		if (server2 != nullptr)
+			server2->Free();
 	}
 
 	void Request(struct pool *pool,
@@ -220,6 +364,7 @@ public:
 
 	void OnWasClosed() noexcept override {
 		server = nullptr;
+		server2 = nullptr;
 	}
 
 	/* constructors */
@@ -262,6 +407,11 @@ public:
 
 	static WasConnection *NewMalformedHeaderValue(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunMalformedHeaderValue);
+	}
+
+	static WasConnection *NewMalformedPremature(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop,
+					 WasConnection::MalformedPremature{});
 	}
 
 private:

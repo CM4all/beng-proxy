@@ -1516,6 +1516,33 @@ test_excess_data(Context<Connection> &c)
 
 #endif
 
+#ifdef ENABLE_MALFORMED_PREMATURE
+
+template<class Connection>
+static void
+TestMalformedPremature(Context<Connection> &c)
+{
+	c.connection = Connection::NewMalformedPremature(*c.pool, c.event_loop);
+
+	c.connection->Request(c.pool, c,
+			      HTTP_METHOD_GET, "/foo", {},
+			      nullptr,
+#ifdef HAVE_EXPECT_100
+			      false,
+#endif
+			      c, c.cancel_ptr);
+
+	c.event_loop.Dispatch();
+
+	assert(c.released);
+	assert(c.status == HTTP_STATUS_OK);
+	assert(c.available == 1024);
+	assert(!c.body_eof);
+	assert(c.body_error != nullptr);
+}
+
+#endif
+
 template<class Connection>
 static void
 TestCancelNop(Context<Connection> &c)
@@ -1719,6 +1746,9 @@ run_all_tests()
 #endif
 #ifdef ENABLE_EXCESS_DATA
 	run_test_and_buckets(test_excess_data<Connection>);
+#endif
+#ifdef ENABLE_MALFORMED_PREMATURE
+	run_test_and_buckets(TestMalformedPremature<Connection>);
 #endif
 	run_test(test_post_empty<Connection>);
 	run_test_and_buckets(TestCancelWithFailedSocketGet<Connection>);
