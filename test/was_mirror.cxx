@@ -34,6 +34,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "PInstance.hxx"
 #include "fb_pool.hxx"
+#include "pool/pool.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "io/Logger.hxx"
 #include "io/SpliceSupport.hxx"
@@ -49,9 +50,8 @@ struct Instance final : PInstance, WasServerHandler {
 			  gcc_unused const char *uri, StringMap &&headers,
 			  UnusedIstreamPtr body) noexcept override {
 		const bool has_body = body;
-		was_server_response(*server,
-				    has_body ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
-				    std::move(headers), std::move(body));
+		server->SendResponse(has_body ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
+				     std::move(headers), std::move(body));
 	}
 
 	void OnWasClosed() noexcept override {}
@@ -63,18 +63,21 @@ main(int, char **)
 	SetLogLevel(5);
 
 	const FileDescriptor in_fd(0);
-	int out_fd = 1;
+	const FileDescriptor out_fd(1);
 	const SocketDescriptor control_fd(3);
 
 	direct_global_init();
 	const ScopeFbPoolInit fb_pool_init;
 
 	Instance instance;
-	instance.server = was_server_new(instance.root_pool, instance.event_loop,
-					 control_fd, in_fd, out_fd,
-					 instance);
+
+	instance.server = NewFromPool<WasServer>(instance.root_pool,
+						 instance.root_pool,
+						 instance.event_loop,
+						 control_fd, in_fd, out_fd,
+						 instance);
 
 	instance.event_loop.Dispatch();
 
-	was_server_free(instance.server);
+	instance.server->Free();
 }
