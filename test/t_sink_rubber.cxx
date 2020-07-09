@@ -86,6 +86,10 @@ Data::RubberDone(RubberAllocation &&a, size_t _size) noexcept
 	result = DONE;
 	allocation = std::move(a);
 	size = _size;
+
+	/* see if RubberSink can cope with destroying his pool from
+	   within the callback */
+	pool.Steal();
 }
 
 void
@@ -94,6 +98,10 @@ Data::RubberOutOfMemory() noexcept
 	assert(result == NONE);
 
 	result = OOM;
+
+	/* see if RubberSink can cope with destroying his pool from
+	   within the callback */
+	pool.Steal();
 }
 
 void
@@ -102,6 +110,10 @@ Data::RubberTooLarge() noexcept
 	assert(result == NONE);
 
 	result = TOO_LARGE;
+
+	/* see if RubberSink can cope with destroying his pool from
+	   within the callback */
+	pool.Steal();
 }
 
 void
@@ -111,6 +123,10 @@ Data::RubberError(std::exception_ptr ep) noexcept
 
 	result = ERROR;
 	error = ep;
+
+	/* see if RubberSink can cope with destroying his pool from
+	   within the callback */
+	pool.Steal();
 }
 
 TEST(SinkRubberTest, Empty)
