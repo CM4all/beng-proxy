@@ -114,7 +114,7 @@ struct Context final
 	bool response_body_byte = false;
 	CancellablePointer cancel_ptr;
 	Connection *connection = nullptr;
-	bool released = false, aborted = false;
+	bool released = false, reuse, aborted = false;
 	http_status_t status = http_status_t(0);
 	std::exception_ptr request_error;
 
@@ -264,12 +264,13 @@ struct Context final
 	void OnError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(gcc_unused bool reuse) noexcept override {
+	void ReleaseLease(bool _reuse) noexcept override {
 		assert(connection != nullptr);
 
 		delete connection;
 		connection = nullptr;
 		released = true;
+		reuse = _reuse;
 	}
 
 	/* virtual methods from class HttpResponseHandler */
@@ -457,6 +458,7 @@ test_empty(Context<Connection> &c)
 	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
+	assert(c.reuse);
 }
 
 template<class Connection>
@@ -486,6 +488,7 @@ test_body(Context<Connection> &c)
 	assert(c.body_eof);
 	assert(c.body_data == 6);
 	assert(c.body_error == nullptr);
+	assert(c.reuse);
 }
 
 /**
@@ -516,6 +519,7 @@ test_read_body(Context<Connection> &c)
 	assert(c.body_data == 6);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
+	assert(c.reuse);
 }
 
 #ifdef ENABLE_HUGE_BODY
@@ -935,6 +939,7 @@ test_head(Context<Connection> &c)
 	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
+	assert(c.reuse);
 }
 
 /**
@@ -964,6 +969,7 @@ test_head_discard(Context<Connection> &c)
 	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
+	assert(c.reuse);
 }
 
 /**
@@ -1022,6 +1028,7 @@ test_ignored_body(Context<Connection> &c)
 	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
+	assert(c.reuse);
 }
 
 #ifdef ENABLE_CLOSE_IGNORED_REQUEST_BODY
@@ -1181,6 +1188,7 @@ test_bogus_100(Context<Connection> &c)
 
 	assert(strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100") != nullptr);
 	assert(c.body_error == nullptr);
+	assert(!c.reuse);
 }
 
 /**
@@ -1216,6 +1224,7 @@ test_twice_100(Context<Connection> &c)
 
 	assert(strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100") != nullptr);
 	assert(c.body_error == nullptr);
+	assert(!c.reuse);
 }
 
 /**
@@ -1241,6 +1250,7 @@ test_close_100(Context<Connection> &c)
 	assert(c.request_error != nullptr);
 	assert(strstr(GetFullMessage(c.request_error).c_str(), "closed the socket prematurely") != nullptr);
 	assert(c.body_error == nullptr);
+	assert(!c.reuse);
 }
 
 #endif
@@ -1324,6 +1334,7 @@ test_premature_close_headers(Context<Connection> &c)
 	assert(!c.body_eof);
 	assert(!c.body_abort);
 	assert(c.request_error != nullptr);
+	assert(!c.reuse);
 }
 
 #endif
@@ -1354,6 +1365,7 @@ test_premature_close_body(Context<Connection> &c)
 	assert(c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error != nullptr);
+	assert(!c.reuse);
 }
 
 #endif
@@ -1394,6 +1406,7 @@ test_post_empty(Context<Connection> &c)
 	assert(!c.body_abort);
 	assert(c.body_data == 0);
 	assert(c.body_error == nullptr);
+	assert(c.reuse);
 }
 
 #ifdef USE_BUCKETS
@@ -1426,6 +1439,7 @@ test_buckets(Context<Connection> &c)
 	assert(c.total_buckets == (size_t)c.available);
 	assert(c.available_after_bucket == 0);
 	assert(c.available_after_bucket_partial == 0);
+	assert(c.reuse);
 }
 
 template<class Connection>
@@ -1538,6 +1552,7 @@ TestValidPremature(Context<Connection> &c)
 	assert(c.status == HTTP_STATUS_OK);
 	assert(!c.body_eof);
 	assert(c.body_error != nullptr);
+	assert(c.reuse);
 }
 
 #endif
@@ -1566,6 +1581,7 @@ TestMalformedPremature(Context<Connection> &c)
 	assert(c.body_data == 0);
 	assert(!c.body_eof);
 	assert(c.body_error != nullptr);
+	assert(!c.reuse);
 }
 
 #endif
