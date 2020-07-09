@@ -134,6 +134,10 @@ public:
 		ReleaseError("shutting down WAS connection");
 	}
 
+	auto &GetEventLoop() const noexcept {
+		return control.GetEventLoop();
+	}
+
 	void SendResponse(http_status_t status,
 			  StringMap &&headers, UnusedIstreamPtr body) noexcept;
 
