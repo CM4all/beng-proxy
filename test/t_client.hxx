@@ -1516,6 +1516,32 @@ test_excess_data(Context<Connection> &c)
 
 #endif
 
+#ifdef ENABLE_VALID_PREMATURE
+
+template<class Connection>
+static void
+TestValidPremature(Context<Connection> &c)
+{
+	c.connection = Connection::NewValidPremature(*c.pool, c.event_loop);
+
+	c.connection->Request(c.pool, c,
+			      HTTP_METHOD_GET, "/foo", {},
+			      nullptr,
+#ifdef HAVE_EXPECT_100
+			      false,
+#endif
+			      c, c.cancel_ptr);
+
+	c.event_loop.Dispatch();
+
+	assert(c.released);
+	assert(c.status == HTTP_STATUS_OK);
+	assert(!c.body_eof);
+	assert(c.body_error != nullptr);
+}
+
+#endif
+
 #ifdef ENABLE_MALFORMED_PREMATURE
 
 template<class Connection>
@@ -1537,6 +1563,7 @@ TestMalformedPremature(Context<Connection> &c)
 	assert(c.released);
 	assert(c.status == HTTP_STATUS_OK);
 	assert(c.available == 1024);
+	assert(c.body_data == 0);
 	assert(!c.body_eof);
 	assert(c.body_error != nullptr);
 }
@@ -1746,6 +1773,9 @@ run_all_tests()
 #endif
 #ifdef ENABLE_EXCESS_DATA
 	run_test_and_buckets(test_excess_data<Connection>);
+#endif
+#ifdef ENABLE_VALID_PREMATURE
+	run_test_and_buckets(TestValidPremature<Connection>);
 #endif
 #ifdef ENABLE_MALFORMED_PREMATURE
 	run_test_and_buckets(TestMalformedPremature<Connection>);

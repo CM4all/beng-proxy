@@ -32,6 +32,7 @@
 
 #define HAVE_CHUNKED_REQUEST_BODY
 #define ENABLE_HUGE_BODY
+#define ENABLE_VALID_PREMATURE
 #define ENABLE_MALFORMED_PREMATURE
 #define NO_EARLY_RELEASE_SOCKET // TODO: improve the WAS client
 
@@ -48,6 +49,7 @@
 #include "net/SocketDescriptor.hxx"
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/istream_later.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
 #include "util/ConstBuffer.hxx"
@@ -149,6 +151,23 @@ RunMalformedHeaderValue(WasServer &server, gcc_unused struct pool &pool,
 
 	server.SendResponse(HTTP_STATUS_NO_CONTENT,
 			    std::move(response_headers), nullptr);
+}
+
+static void
+RunValidPremature(WasServer &server, struct pool &pool,
+		  gcc_unused http_method_t method,
+		  gcc_unused const char *uri, gcc_unused StringMap &&headers,
+		  UnusedIstreamPtr body)
+{
+	body.Clear();
+
+	server.SendResponse(HTTP_STATUS_OK, {},
+			    istream_cat_new(pool,
+					    istream_head_new(pool,
+							     istream_zero_new(pool),
+							     512, true),
+					    istream_later_new(pool, istream_fail_new(pool, std::make_exception_ptr(std::runtime_error("Error"))),
+							      server.GetEventLoop())));
 }
 
 class MalformedPrematureWasServer : WasControlHandler {
@@ -407,6 +426,10 @@ public:
 
 	static WasConnection *NewMalformedHeaderValue(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunMalformedHeaderValue);
+	}
+
+	static WasConnection *NewValidPremature(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunValidPremature);
 	}
 
 	static WasConnection *NewMalformedPremature(struct pool &pool, EventLoop &event_loop) {
