@@ -59,3 +59,9 @@ was_server = static_library(
     was_common_dep,
   ],
 )
+was_server_dep = declare_dependency(
+  link_with: was_server,
+  dependencies: [
+    libwas,
+  ],
+)
