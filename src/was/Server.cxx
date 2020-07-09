@@ -153,13 +153,11 @@ WasServer::WasOutputPremature(uint64_t length, std::exception_ptr ep) noexcept
 		return true;
 
 	assert(response.body != nullptr);
-
 	response.body = nullptr;
 
-	/* XXX send PREMATURE, recover */
-	(void)length;
-	AbortError(ep);
-	return false;
+	(void)ep; // TODO: log?
+
+	return control.SendUint64(WAS_COMMAND_PREMATURE, length);
 }
 
 void
