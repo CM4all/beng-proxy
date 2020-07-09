@@ -99,7 +99,7 @@ public:
 
 	bool SetLength(uint64_t _length) noexcept;
 	void PrematureThrow(uint64_t _length);
-	bool Premature(uint64_t _length) noexcept;
+	void Premature(uint64_t _length) noexcept;
 
 private:
 	bool CanRelease() const {
@@ -490,7 +490,7 @@ WasInput::PrematureThrow(uint64_t _length)
 	}
 }
 
-inline bool
+inline void
 WasInput::Premature(uint64_t _length) noexcept
 {
 	try {
@@ -499,19 +499,31 @@ WasInput::Premature(uint64_t _length) noexcept
 		/* protocol error - notify our WasInputHandler */
 		handler.WasInputError();
 		DestroyError(std::current_exception());
-		return false;
+		return;
 	}
 
-	/* recovery was successful - let our IstreamHandler know that
-	   the stream was closed prematurely and return success */
+	/* recovery was successful */
+
+	/* first, release the pipe (which cannot be released
+	   already) */
+	if (!ReleasePipe())
+		/* WasInputHandler::WasInputRelease() has failed and
+		   everything has been cleaned up already */
+		return;
+
+	/* pretend this is end-of-file, which will cause the
+	   WasInputHandler to allow reusing the connection */
+	handler.WasInputEof();
+
+	/* finall let our IstreamHandler know that the stream was
+	   closed prematurely */
 	DestroyError(std::make_exception_ptr(WasProtocolError("premature end of WAS response")));
-	return true;
 }
 
-bool
+void
 was_input_premature(WasInput *input, uint64_t length) noexcept
 {
-	return input->Premature(length);
+	input->Premature(length);
 }
 
 void
