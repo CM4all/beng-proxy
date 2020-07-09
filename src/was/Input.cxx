@@ -473,7 +473,7 @@ WasInput::PrematureThrow(uint64_t _length)
 	if (_length < received)
 		throw WasProtocolError("announced premature length is too small");
 
-	uint64_t remaining = received - _length;
+	uint64_t remaining = _length - received;
 
 	while (remaining > 0) {
 		uint8_t discard_buffer[4096];
