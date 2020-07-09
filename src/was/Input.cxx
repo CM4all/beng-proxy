@@ -493,16 +493,19 @@ WasInput::PrematureThrow(uint64_t _length)
 inline bool
 WasInput::Premature(uint64_t _length) noexcept
 {
-	bool result = false;
 	try {
 		PrematureThrow(_length);
-		result = true;
-		throw WasProtocolError("premature end of WAS response");
 	} catch (...) {
+		/* protocol - notify our WasInputHandler */
+		handler.WasInputError();
 		DestroyError(std::current_exception());
+		return false;
 	}
 
-	return result;
+	/* recovery was successful - let our IstreamHandler know that
+	   the stream was closed prematurely and return success */
+	DestroyError(std::make_exception_ptr(WasProtocolError("premature end of WAS response")));
+	return true;
 }
 
 bool

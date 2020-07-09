@@ -149,8 +149,8 @@ was_input_set_length(WasInput *input, uint64_t length) noexcept;
  *
  * @param length the total number of bytes the peer has written to the
  * pipe
- * @return true if recovery was successful, false if the object has
- * been closed
+ * @return true if recovery was successful, false if
+ * WasInputHandler::WasInputError() has been invoked been closed
  */
 bool
 was_input_premature(WasInput *input, uint64_t length) noexcept;
