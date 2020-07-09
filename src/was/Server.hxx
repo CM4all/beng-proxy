@@ -58,7 +58,7 @@ public:
 	virtual void OnWasClosed() noexcept = 0;
 };
 
-class WasServer : WasControlHandler, WasOutputHandler, WasInputHandler {
+class WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
 	struct pool &pool;
 
 	WasSocket socket;
