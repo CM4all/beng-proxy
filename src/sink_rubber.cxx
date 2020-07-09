@@ -76,7 +76,7 @@ private:
 	}
 
 	void FailTooLarge() noexcept;
-	void InvokeEof() noexcept;
+	void DestroyEof() noexcept;
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override;
@@ -104,11 +104,13 @@ RubberSink::FailTooLarge() noexcept
 	if (input.IsDefined())
 		input.ClearAndClose();
 
-	handler.RubberTooLarge();
+	auto &_handler = handler;
+	Destroy();
+	_handler.RubberTooLarge();
 }
 
 void
-RubberSink::InvokeEof() noexcept
+RubberSink::DestroyEof() noexcept
 {
 	if (input.IsDefined())
 		input.ClearAndClose();
@@ -120,7 +122,11 @@ RubberSink::InvokeEof() noexcept
 	} else
 		allocation.Shrink(position);
 
-	handler.RubberDone(std::move(allocation), position);
+	auto &_handler = handler;
+	auto _allocation = std::move(allocation);
+	auto _position = position;
+	Destroy();
+	_handler.RubberDone(std::move(_allocation), _position);
 }
 
 /*
@@ -137,7 +143,6 @@ RubberSink::OnData(const void *data, size_t length) noexcept
 		/* too large, abort and invoke handler */
 
 		FailTooLarge();
-		Destroy();
 		return 0;
 	}
 
@@ -161,13 +166,11 @@ RubberSink::OnDirect(FdType type, int fd, size_t max_length) noexcept
 		ssize_t nbytes = fd_read(type, fd, &dummy, sizeof(dummy));
 		if (nbytes > 0) {
 			FailTooLarge();
-			Destroy();
 			return ISTREAM_RESULT_CLOSED;
 		}
 
 		if (nbytes == 0) {
-			InvokeEof();
-			Destroy();
+			DestroyEof();
 			return ISTREAM_RESULT_CLOSED;
 		}
 
@@ -193,8 +196,7 @@ RubberSink::OnEof() noexcept
 	assert(input.IsDefined());
 	input.Clear();
 
-	InvokeEof();
-	Destroy();
+	DestroyEof();
 }
 
 void
@@ -203,9 +205,9 @@ RubberSink::OnError(std::exception_ptr ep) noexcept
 	assert(input.IsDefined());
 	input.Clear();
 
-	allocation = {};
-	handler.RubberError(ep);
+	auto &_handler = handler;
 	Destroy();
+	_handler.RubberError(ep);
 }
 
 /*

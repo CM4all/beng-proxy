@@ -30,34 +30,28 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
-
 #include "Socket.hxx"
+#include "system/Error.hxx"
 
-class SpawnService;
-class ExitListener;
-struct ChildOptions;
-template<typename T> struct ConstBuffer;
+#include <sys/socket.h>
 
-struct WasProcess : WasSocket {
-	int pid;
+std::pair<WasSocket, WasSocket>
+WasSocket::CreatePair()
+{
+	std::pair<WasSocket, WasSocket> result;
 
-	WasProcess() = default;
+	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+						      result.first.control,
+						      result.second.control))
+		throw MakeErrno("Failed to create socket pair");
 
-	explicit WasProcess(WasSocket &&_socket) noexcept
-		:WasSocket(std::move(_socket)) {}
-};
+	if (!UniqueFileDescriptor::CreatePipe(result.first.input,
+					      result.second.output))
+		throw MakeErrno("Failed to create first pipe");
 
-/**
- * Launch WAS child processes.
- *
- * Throws std::runtime_error on error.
- */
-WasProcess
-was_launch(SpawnService &spawn_service,
-	   const char *name,
-	   const char *executable_path,
-	   ConstBuffer<const char *> args,
-	   const ChildOptions &options,
-	   UniqueFileDescriptor stderr_fd,
-	   ExitListener *listener);
+	if (!UniqueFileDescriptor::CreatePipe(result.second.input,
+					      result.first.output))
+		throw MakeErrno("Failed to create second pipe");
+
+	return result;
+}

@@ -145,14 +145,14 @@ bool
 was_input_set_length(WasInput *input, uint64_t length) noexcept;
 
 /**
- * Signals premature end of this stream.
+ * Signals premature end of this stream.  This method attempts to
+ * recover and invokes the appropriate WasInputHandler method
+ * (WasInputRelease()+WasInputEof() or WasInputError()).
  *
  * @param length the total number of bytes the peer has written to the
  * pipe
- * @return true if recovery was successful, false if the object has
- * been closed
  */
-bool
+void
 was_input_premature(WasInput *input, uint64_t length) noexcept;
 
 /**

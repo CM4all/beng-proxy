@@ -84,7 +84,7 @@ public:
 	WasControl(EventLoop &event_loop, SocketDescriptor _fd,
 		   WasControlHandler &_handler) noexcept;
 
-	EventLoop &GetEventLoop() noexcept {
+	auto &GetEventLoop() const noexcept {
 		return socket.GetEventLoop();
 	}
 

@@ -187,7 +187,7 @@ if libwas.found()
     '../src/PInstance.cxx',
     include_directories: inc,
     dependencies: [
-      declare_dependency(link_with: was_server),
+      was_server_dep,
     ],
   )
 endif
@@ -491,7 +491,7 @@ if libwas.found()
       include_directories: inc,
       dependencies: [
         was_client_dep,
-        declare_dependency(link_with: was_server),
+        was_server_dep,
       ],
     ),
   )

@@ -95,6 +95,8 @@ struct Context final
 
 	unsigned data_blocking = 0;
 
+	off_t close_response_body_after = -1;
+
 	/**
 	 * Call istream_read() on the response body from inside the
 	 * response callback.
@@ -112,7 +114,7 @@ struct Context final
 	bool response_body_byte = false;
 	CancellablePointer cancel_ptr;
 	Connection *connection = nullptr;
-	bool released = false, aborted = false;
+	bool released = false, reuse, aborted = false;
 	http_status_t status = http_status_t(0);
 	std::exception_ptr request_error;
 
@@ -262,12 +264,13 @@ struct Context final
 	void OnError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class Lease */
-	void ReleaseLease(gcc_unused bool reuse) noexcept override {
+	void ReleaseLease(bool _reuse) noexcept override {
 		assert(connection != nullptr);
 
 		delete connection;
 		connection = nullptr;
 		released = true;
+		reuse = _reuse;
 	}
 
 	/* virtual methods from class HttpResponseHandler */
@@ -297,6 +300,10 @@ size_t
 Context<Connection>::OnData(gcc_unused const void *data, size_t length) noexcept
 {
 	body_data += length;
+
+	if (close_response_body_after >= 0 &&
+	    body_data >= close_response_body_after)
+		close_response_body_data = true;
 
 	if (close_response_body_data) {
 		body_closed = true;
@@ -451,6 +458,7 @@ test_empty(Context<Connection> &c)
 	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
+	assert(c.reuse);
 }
 
 template<class Connection>
@@ -480,6 +488,7 @@ test_body(Context<Connection> &c)
 	assert(c.body_eof);
 	assert(c.body_data == 6);
 	assert(c.body_error == nullptr);
+	assert(c.reuse);
 }
 
 /**
@@ -510,6 +519,7 @@ test_read_body(Context<Connection> &c)
 	assert(c.body_data == 6);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
+	assert(c.reuse);
 }
 
 #ifdef ENABLE_HUGE_BODY
@@ -627,6 +637,38 @@ test_close_response_body_data(Context<Connection> &c)
 	assert(c.released);
 	assert(!c.body.IsDefined());
 	assert(c.body_data == 6);
+	assert(!c.body_eof);
+	assert(!c.body_abort);
+	assert(c.body_closed);
+	assert(c.body_error == nullptr);
+}
+
+template<class Connection>
+static void
+test_close_response_body_after(Context<Connection> &c)
+{
+	c.close_response_body_after = 16384;
+	c.connection = Connection::NewHuge(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HTTP_METHOD_GET, "/foo", {},
+			      nullptr,
+#ifdef HAVE_EXPECT_100
+			      false,
+#endif
+			      c, c.cancel_ptr);
+
+	c.WaitForResponse();
+
+	assert(c.status == HTTP_STATUS_OK);
+	assert(!c.request_error);
+	assert(c.content_length == nullptr);
+	assert(c.available == 524288);
+
+	c.event_loop.Dispatch();
+
+	assert(c.released);
+	assert(!c.body.IsDefined());
+	assert(c.body_data >= 16384);
 	assert(!c.body_eof);
 	assert(!c.body_abort);
 	assert(c.body_closed);
@@ -897,6 +939,7 @@ test_head(Context<Connection> &c)
 	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
+	assert(c.reuse);
 }
 
 /**
@@ -926,6 +969,7 @@ test_head_discard(Context<Connection> &c)
 	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
+	assert(c.reuse);
 }
 
 /**
@@ -984,6 +1028,7 @@ test_ignored_body(Context<Connection> &c)
 	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
+	assert(c.reuse);
 }
 
 #ifdef ENABLE_CLOSE_IGNORED_REQUEST_BODY
@@ -1143,6 +1188,7 @@ test_bogus_100(Context<Connection> &c)
 
 	assert(strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100") != nullptr);
 	assert(c.body_error == nullptr);
+	assert(!c.reuse);
 }
 
 /**
@@ -1178,6 +1224,7 @@ test_twice_100(Context<Connection> &c)
 
 	assert(strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100") != nullptr);
 	assert(c.body_error == nullptr);
+	assert(!c.reuse);
 }
 
 /**
@@ -1203,6 +1250,7 @@ test_close_100(Context<Connection> &c)
 	assert(c.request_error != nullptr);
 	assert(strstr(GetFullMessage(c.request_error).c_str(), "closed the socket prematurely") != nullptr);
 	assert(c.body_error == nullptr);
+	assert(!c.reuse);
 }
 
 #endif
@@ -1286,6 +1334,7 @@ test_premature_close_headers(Context<Connection> &c)
 	assert(!c.body_eof);
 	assert(!c.body_abort);
 	assert(c.request_error != nullptr);
+	assert(!c.reuse);
 }
 
 #endif
@@ -1316,6 +1365,7 @@ test_premature_close_body(Context<Connection> &c)
 	assert(c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error != nullptr);
+	assert(!c.reuse);
 }
 
 #endif
@@ -1356,6 +1406,7 @@ test_post_empty(Context<Connection> &c)
 	assert(!c.body_abort);
 	assert(c.body_data == 0);
 	assert(c.body_error == nullptr);
+	assert(c.reuse);
 }
 
 #ifdef USE_BUCKETS
@@ -1388,6 +1439,7 @@ test_buckets(Context<Connection> &c)
 	assert(c.total_buckets == (size_t)c.available);
 	assert(c.available_after_bucket == 0);
 	assert(c.available_after_bucket_partial == 0);
+	assert(c.reuse);
 }
 
 template<class Connection>
@@ -1474,6 +1526,62 @@ test_excess_data(Context<Connection> &c)
 	assert(c.available > 0);
 	assert(!c.body_eof);
 	assert(c.body_error != nullptr);
+}
+
+#endif
+
+#ifdef ENABLE_VALID_PREMATURE
+
+template<class Connection>
+static void
+TestValidPremature(Context<Connection> &c)
+{
+	c.connection = Connection::NewValidPremature(*c.pool, c.event_loop);
+
+	c.connection->Request(c.pool, c,
+			      HTTP_METHOD_GET, "/foo", {},
+			      nullptr,
+#ifdef HAVE_EXPECT_100
+			      false,
+#endif
+			      c, c.cancel_ptr);
+
+	c.event_loop.Dispatch();
+
+	assert(c.released);
+	assert(c.status == HTTP_STATUS_OK);
+	assert(!c.body_eof);
+	assert(c.body_error != nullptr);
+	assert(c.reuse);
+}
+
+#endif
+
+#ifdef ENABLE_MALFORMED_PREMATURE
+
+template<class Connection>
+static void
+TestMalformedPremature(Context<Connection> &c)
+{
+	c.connection = Connection::NewMalformedPremature(*c.pool, c.event_loop);
+
+	c.connection->Request(c.pool, c,
+			      HTTP_METHOD_GET, "/foo", {},
+			      nullptr,
+#ifdef HAVE_EXPECT_100
+			      false,
+#endif
+			      c, c.cancel_ptr);
+
+	c.event_loop.Dispatch();
+
+	assert(c.released);
+	assert(c.status == HTTP_STATUS_OK);
+	assert(c.available == 1024);
+	assert(c.body_data == 0);
+	assert(!c.body_eof);
+	assert(c.body_error != nullptr);
+	assert(!c.reuse);
 }
 
 #endif
@@ -1643,6 +1751,7 @@ run_all_tests()
 	run_test(test_close_response_body_early<Connection>);
 	run_test(test_close_response_body_late<Connection>);
 	run_test(test_close_response_body_data<Connection>);
+	run_test(test_close_response_body_after<Connection>);
 	run_test(test_close_request_body_early<Connection>);
 	run_test(test_close_request_body_fail<Connection>);
 	run_test(test_data_blocking<Connection>);
@@ -1680,6 +1789,12 @@ run_all_tests()
 #endif
 #ifdef ENABLE_EXCESS_DATA
 	run_test_and_buckets(test_excess_data<Connection>);
+#endif
+#ifdef ENABLE_VALID_PREMATURE
+	run_test_and_buckets(TestValidPremature<Connection>);
+#endif
+#ifdef ENABLE_MALFORMED_PREMATURE
+	run_test_and_buckets(TestMalformedPremature<Connection>);
 #endif
 	run_test(test_post_empty<Connection>);
 	run_test_and_buckets(TestCancelWithFailedSocketGet<Connection>);

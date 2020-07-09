@@ -653,16 +653,10 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
 			} catch (...) {
 				AbortPending(std::current_exception());
 			}
-			return false;
 		} else {
-			if (!was_input_premature(response.body, *length_p)) {
-				WasInputError();
-				return false;
-			}
+			was_input_premature(response.body, *length_p);
 		}
 
-		response.body = nullptr;
-		ResponseEof();
 		return false;
 	}
 

@@ -32,6 +32,8 @@
 
 #define HAVE_CHUNKED_REQUEST_BODY
 #define ENABLE_HUGE_BODY
+#define ENABLE_VALID_PREMATURE
+#define ENABLE_MALFORMED_PREMATURE
 #define NO_EARLY_RELEASE_SOCKET // TODO: improve the WAS client
 
 #include "t_client.hxx"
@@ -40,12 +42,14 @@
 #include "was/Client.hxx"
 #include "was/Server.hxx"
 #include "was/Lease.hxx"
+#include "was/Socket.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
 #include "io/SpliceSupport.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/istream_later.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
 #include "util/ConstBuffer.hxx"
@@ -63,8 +67,7 @@ RunNull(WasServer &server, struct pool &,
 {
 	body.Clear();
 
-	was_server_response(server, HTTP_STATUS_NO_CONTENT,
-			    {}, nullptr);
+	server.SendResponse(HTTP_STATUS_NO_CONTENT, {}, nullptr);
 }
 
 static void
@@ -75,7 +78,7 @@ RunHello(WasServer &server, struct pool &pool,
 {
 	body.Clear();
 
-	was_server_response(server, HTTP_STATUS_OK, {},
+	server.SendResponse(HTTP_STATUS_OK, {},
 			    istream_string_new(pool, "hello"));
 }
 
@@ -87,7 +90,7 @@ RunHuge(WasServer &server, struct pool &pool,
 {
 	body.Clear();
 
-	was_server_response(server, HTTP_STATUS_OK, {},
+	server.SendResponse(HTTP_STATUS_OK, {},
 			    istream_head_new(pool,
 					     istream_zero_new(pool),
 					     524288, true));
@@ -101,7 +104,7 @@ RunHold(WasServer &server, struct pool &pool,
 {
 	body.Clear();
 
-	was_server_response(server, HTTP_STATUS_OK, {},
+	server.SendResponse(HTTP_STATUS_OK, {},
 			    istream_block_new(pool));
 }
 
@@ -120,8 +123,7 @@ RunMirror(WasServer &server, gcc_unused struct pool &pool,
 	  UnusedIstreamPtr body)
 {
 	const bool has_body = body;
-	was_server_response(server,
-			    has_body ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
+	server.SendResponse(has_body ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT,
 			    std::move(headers), std::move(body));
 }
 
@@ -134,8 +136,7 @@ RunMalformedHeaderName(WasServer &server, gcc_unused struct pool &pool,
 
 	StringMap response_headers(pool, {{"header name", "foo"}});
 
-	was_server_response(server,
-			    HTTP_STATUS_NO_CONTENT,
+	server.SendResponse(HTTP_STATUS_NO_CONTENT,
 			    std::move(response_headers), nullptr);
 }
 
@@ -148,18 +149,154 @@ RunMalformedHeaderValue(WasServer &server, gcc_unused struct pool &pool,
 
 	StringMap response_headers(pool, {{"name", "foo\nbar"}});
 
-	was_server_response(server,
-			    HTTP_STATUS_NO_CONTENT,
+	server.SendResponse(HTTP_STATUS_NO_CONTENT,
 			    std::move(response_headers), nullptr);
+}
+
+static void
+RunValidPremature(WasServer &server, struct pool &pool,
+		  gcc_unused http_method_t method,
+		  gcc_unused const char *uri, gcc_unused StringMap &&headers,
+		  UnusedIstreamPtr body)
+{
+	body.Clear();
+
+	server.SendResponse(HTTP_STATUS_OK, {},
+			    istream_cat_new(pool,
+					    istream_head_new(pool,
+							     istream_zero_new(pool),
+							     512, true),
+					    istream_later_new(pool, istream_fail_new(pool, std::make_exception_ptr(std::runtime_error("Error"))),
+							      server.GetEventLoop())));
+}
+
+class MalformedPrematureWasServer : WasControlHandler {
+	WasSocket socket;
+
+	WasControl control;
+
+	TimerEvent defer_premature;
+
+	WasServerHandler &handler;
+
+public:
+	MalformedPrematureWasServer(EventLoop &event_loop,
+				    WasSocket &&_socket,
+				    WasServerHandler &_handler) noexcept
+		:socket(std::move(_socket)),
+		 control(event_loop, socket.control, *this),
+		 defer_premature(event_loop, BIND_THIS_METHOD(SendPremature)),
+		 handler(_handler)
+	{
+	}
+
+	void Free() noexcept {
+		ReleaseError();
+	}
+
+	void SendResponse(http_status_t status,
+			  StringMap &&headers, UnusedIstreamPtr body) noexcept;
+
+private:
+	void Destroy() noexcept {
+		this->~MalformedPrematureWasServer();
+	}
+
+	void ReleaseError() noexcept {
+		if (control.IsDefined())
+			control.ReleaseSocket();
+
+		socket.Close();
+		Destroy();
+	}
+
+	void ReleaseUnused() noexcept;
+
+	void AbortError() noexcept {
+		auto &handler2 = handler;
+		ReleaseError();
+		handler2.OnWasClosed();
+	}
+
+	/**
+	 * Abort receiving the response status/headers from the WAS server.
+	 */
+	void AbortUnused() noexcept {
+		auto &handler2 = handler;
+		ReleaseUnused();
+		handler2.OnWasClosed();
+	}
+
+protected:
+	void SendPremature() noexcept {
+		/* the response body was announced as 1 kB - and now
+		   we tell the client he already sent 4 kB */
+		control.SendUint64(WAS_COMMAND_PREMATURE, 4096);
+	}
+
+	/* virtual methods from class WasControlHandler */
+	bool OnWasControlPacket(enum was_command cmd,
+				ConstBuffer<void> payload) noexcept override;
+	bool OnWasControlDrained() noexcept override {
+		return true;
+	}
+	void OnWasControlDone() noexcept override {}
+	void OnWasControlError(std::exception_ptr) noexcept override {
+		AbortError();
+	}
+};
+
+bool
+MalformedPrematureWasServer::OnWasControlPacket(enum was_command cmd,
+						ConstBuffer<void> payload) noexcept
+{
+	(void)payload;
+
+	switch (cmd) {
+	case WAS_COMMAND_NOP:
+	case WAS_COMMAND_REQUEST:
+	case WAS_COMMAND_METHOD:
+	case WAS_COMMAND_URI:
+	case WAS_COMMAND_SCRIPT_NAME:
+	case WAS_COMMAND_PATH_INFO:
+	case WAS_COMMAND_QUERY_STRING:
+	case WAS_COMMAND_HEADER:
+	case WAS_COMMAND_PARAMETER:
+		break;
+
+	case WAS_COMMAND_STATUS:
+		AbortError();
+		return false;
+
+	case WAS_COMMAND_NO_DATA:
+	case WAS_COMMAND_DATA:
+		/* announce a response body of 1 kB */
+		if (!control.SendEmpty(WAS_COMMAND_DATA) ||
+		    !control.SendUint64(WAS_COMMAND_LENGTH, 1024))
+			return false;
+
+		defer_premature.Schedule(std::chrono::milliseconds(1));
+		return true;
+
+	case WAS_COMMAND_LENGTH:
+		break;
+
+	case WAS_COMMAND_STOP:
+	case WAS_COMMAND_PREMATURE:
+		break;
+	}
+
+	return true;
 }
 
 class WasConnection final : WasServerHandler, WasLease {
 	EventLoop &event_loop;
 
-	SocketDescriptor control_fd;
-	FileDescriptor input_fd, output_fd;
+	WasSocket socket;
 
-	WasServer *server;
+	WasServer *server = nullptr;
+
+	MalformedPrematureWasServer *server2 = nullptr;
 
 	Lease *lease;
 
@@ -174,37 +311,46 @@ public:
 	WasConnection(struct pool &pool, EventLoop &_event_loop,
 		      Callback &&_callback)
 		:event_loop(_event_loop), callback(std::move(_callback)) {
-		FileDescriptor input_w;
-		if (!FileDescriptor::CreatePipeNonBlock(input_fd, input_w)) {
-			perror("pipe");
-			exit(EXIT_FAILURE);
-		}
+		auto s = WasSocket::CreatePair();
 
-		FileDescriptor output_r;
-		if (!FileDescriptor::CreatePipeNonBlock(output_r, output_fd)) {
-			perror("pipe");
-			exit(EXIT_FAILURE);
-		}
+		socket = std::move(s.first);
+		socket.input.SetNonBlocking();
+		socket.output.SetNonBlocking();
 
-		SocketDescriptor control_server;
-		if (!SocketDescriptor::CreateSocketPairNonBlock(AF_LOCAL, SOCK_STREAM, 0,
-								control_fd,
-								control_server)) {
-			perror("socketpair");
-			exit(EXIT_FAILURE);
-		}
+		s.second.input.SetNonBlocking();
+		s.second.output.SetNonBlocking();
 
-		server = was_server_new(pool, event_loop, control_server,
-					output_r, input_w.Get(), *this);
+		WasServerHandler &handler = *this;
+		server = NewFromPool<WasServer>(pool, pool, event_loop,
+						std::move(s.second),
+						handler);
+	}
+
+	struct MalformedPremature{};
+
+	WasConnection(struct pool &pool, EventLoop &_event_loop,
+		      MalformedPremature)
+		:event_loop(_event_loop) {
+		auto s = WasSocket::CreatePair();
+
+		socket = std::move(s.first);
+		socket.input.SetNonBlocking();
+		socket.output.SetNonBlocking();
+
+		s.second.input.SetNonBlocking();
+		s.second.output.SetNonBlocking();
+
+		WasServerHandler &handler = *this;
+		server2 = NewFromPool<MalformedPrematureWasServer>(pool, event_loop,
+								   std::move(s.second),
+								   handler);
 	}
 
 	~WasConnection() {
-		control_fd.Close();
-		input_fd.Close();
-		output_fd.Close();
-
 		if (server != nullptr)
-			was_server_free(server);
+			server->Free();
+		if (server2 != nullptr)
+			server2->Free();
 	}
 
 	void Request(struct pool *pool,
@@ -215,7 +361,7 @@ public:
 		     CancellablePointer &cancel_ptr) {
 		lease = &_lease;
 		was_client_request(*pool, event_loop, nullptr,
-				   control_fd, input_fd, output_fd,
+				   socket.control, socket.input, socket.output,
 				   *this,
 				   method, uri, uri, nullptr, nullptr,
 				   headers, std::move(body), nullptr,
@@ -223,7 +369,7 @@ public:
 	}
 
 	void InjectSocketFailure() noexcept {
-		control_fd.Shutdown();
+		socket.control.Shutdown();
 	}
 
 	/* virtual methods from class WasServerHandler */
@@ -237,6 +383,7 @@ public:
 
 	void OnWasClosed() noexcept override {
 		server = nullptr;
+		server2 = nullptr;
 	}
 
 	/* constructors */
@@ -279,6 +426,15 @@ public:
 
 	static WasConnection *NewMalformedHeaderValue(struct pool &pool, EventLoop &event_loop) {
 		return new WasConnection(pool, event_loop, RunMalformedHeaderValue);
+	}
+
+	static WasConnection *NewValidPremature(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunValidPremature);
+	}
+
+	static WasConnection *NewMalformedPremature(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop,
+					 WasConnection::MalformedPremature{});
 	}
 
 private:
