@@ -574,7 +574,7 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 	   the sink_rubber_new() call may destroy this object */
 	auto &_handler = handler;
 
-	/* pool reference necessary because our constructor will free
+	/* pool reference necessary because our destructor will free
 	   the pool, which will free all "headers" strings, which we
 	   are going to pass to our handler - destroy the pool only
 	   after the handler has returned */
