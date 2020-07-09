@@ -496,7 +496,7 @@ WasInput::Premature(uint64_t _length) noexcept
 	try {
 		PrematureThrow(_length);
 	} catch (...) {
-		/* protocol - notify our WasInputHandler */
+		/* protocol error - notify our WasInputHandler */
 		handler.WasInputError();
 		DestroyError(std::current_exception());
 		return false;
