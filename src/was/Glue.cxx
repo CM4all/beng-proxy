@@ -49,6 +49,7 @@
 #include "util/Cancellable.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringCompare.hxx"
+#include "strmap.hxx"
 
 #include <assert.h>
 #include <sys/socket.h>
@@ -70,7 +71,7 @@ class WasRequest final : StockGetHandler, Cancellable, WasLease, PoolLeakDetecto
 	const char *script_name;
 	const char *path_info;
 	const char *query_string;
-	const StringMap &headers;
+	const StringMap headers;
 	UnusedHoldIstreamPtr body;
 
 	ConstBuffer<const char *> parameters;
@@ -86,7 +87,7 @@ public:
 		   http_method_t _method, const char *_uri,
 		   const char *_script_name, const char *_path_info,
 		   const char *_query_string,
-		   const StringMap &_headers,
+		   StringMap &&_headers,
 		   UnusedIstreamPtr _body,
 		   ConstBuffer<const char *> _parameters,
 		   HttpResponseHandler &_handler,
@@ -98,7 +99,7 @@ public:
 		 method(_method),
 		 uri(_uri), script_name(_script_name),
 		 path_info(_path_info), query_string(_query_string),
-		 headers(_headers),
+		 headers(std::move(_headers)),
 		 body(pool, std::move(_body)),
 		 parameters(_parameters),
 		 handler(_handler), caller_cancel_ptr(_cancel_ptr) {
@@ -250,7 +251,7 @@ was_request(struct pool &pool, WasStock &was_stock,
 	    http_method_t method, const char *uri,
 	    const char *script_name, const char *path_info,
 	    const char *query_string,
-	    const StringMap &headers, UnusedIstreamPtr body,
+	    StringMap &&headers, UnusedIstreamPtr body,
 	    ConstBuffer<const char *> parameters,
 	    HttpResponseHandler &handler,
 	    CancellablePointer &cancel_ptr)
@@ -266,7 +267,8 @@ was_request(struct pool &pool, WasStock &was_stock,
 					       site_name,
 					       method, uri, script_name,
 					       path_info, query_string,
-					       headers, std::move(body),
+					       std::move(headers),
+					       std::move(body),
 					       parameters,
 					       handler, cancel_ptr);
 	request->Start(was_stock, options, action, args);

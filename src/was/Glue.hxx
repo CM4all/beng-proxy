@@ -60,7 +60,7 @@ was_request(struct pool &pool, WasStock &was_stock,
 	    http_method_t method, const char *uri,
 	    const char *script_name, const char *path_info,
 	    const char *query_string,
-	    const StringMap &headers, UnusedIstreamPtr body,
+	    StringMap &&headers, UnusedIstreamPtr body,
 	    ConstBuffer<const char *> params,
 	    HttpResponseHandler &handler,
 	    CancellablePointer &cancel_ptr);
