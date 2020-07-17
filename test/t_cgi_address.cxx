@@ -42,7 +42,7 @@ TEST(CgiAddressTest, Uri)
 	AllocatorPtr alloc(pool);
 
 	CgiAddress a("/usr/bin/cgi");
-	ASSERT_EQ(false, a.IsExpandable());
+	ASSERT_FALSE(a.IsExpandable());
 	ASSERT_STREQ(a.GetURI(alloc), "/");
 
 	a.script_name = "/";
@@ -96,7 +96,7 @@ TEST(CgiAddressTest, Apply)
 	b = a.Apply(alloc, "bar");
 	ASSERT_NE(b, nullptr);
 	ASSERT_NE(b, &a);
-	ASSERT_EQ(false, b->IsValidBase());
+	ASSERT_FALSE(b->IsValidBase());
 	ASSERT_STREQ(b->path, a.path);
 	ASSERT_STREQ(b->script_name, a.script_name);
 	ASSERT_STREQ(b->path_info, "/bar");
@@ -107,7 +107,7 @@ TEST(CgiAddressTest, Apply)
 	b = a.Apply(alloc, "bar");
 	ASSERT_NE(b, nullptr);
 	ASSERT_NE(b, &a);
-	ASSERT_EQ(false, b->IsValidBase());
+	ASSERT_FALSE(b->IsValidBase());
 	ASSERT_STREQ(b->path, a.path);
 	ASSERT_STREQ(b->script_name, a.script_name);
 	ASSERT_STREQ(b->path_info, "/foo/bar");
@@ -115,7 +115,7 @@ TEST(CgiAddressTest, Apply)
 	b = a.Apply(alloc, "/bar");
 	ASSERT_NE(b, nullptr);
 	ASSERT_NE(b, &a);
-	ASSERT_EQ(false, b->IsValidBase());
+	ASSERT_FALSE(b->IsValidBase());
 	ASSERT_STREQ(b->path, a.path);
 	ASSERT_STREQ(b->script_name, a.script_name);
 	ASSERT_STREQ(b->path_info, "/bar");
