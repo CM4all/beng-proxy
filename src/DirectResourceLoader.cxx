@@ -253,7 +253,7 @@ try {
 			    cgi->script_name,
 			    cgi->path_info,
 			    cgi->query_string,
-			    headers, std::move(body),
+			    std::move(headers), std::move(body),
 			    cgi->params.ToArray(pool),
 			    handler, cancel_ptr);
 		return;
