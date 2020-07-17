@@ -434,22 +434,22 @@ public:
 	 */
 	void CheckHost(const char *host, const char *site_name) const;
 
-	const ResourceAddress *DetermineAddress(bool stateful) const noexcept;
+	const ResourceAddress &DetermineAddress(bool stateful) const noexcept;
 
 	gcc_pure
-	const ResourceAddress *GetAddress() const noexcept {
+	const ResourceAddress &GetAddress() const noexcept {
 		if (lazy.address == nullptr)
-			lazy.address = DetermineAddress(true);
+			lazy.address = &DetermineAddress(true);
 
-		return lazy.address;
+		return *lazy.address;
 	}
 
 	gcc_pure
-	const ResourceAddress *GetStatelessAddress() const noexcept {
+	const ResourceAddress &GetStatelessAddress() const noexcept {
 		if (lazy.stateless_address == nullptr)
-			lazy.stateless_address = DetermineAddress(false);
+			lazy.stateless_address = &DetermineAddress(false);
 
-		return lazy.stateless_address;
+		return *lazy.stateless_address;
 	}
 
 	gcc_pure

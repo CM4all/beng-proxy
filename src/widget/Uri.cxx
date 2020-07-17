@@ -52,14 +52,14 @@
 ResourceAddress
 Widget::GetBaseAddress(AllocatorPtr alloc, bool stateful) const noexcept
 {
-	const ResourceAddress *src = stateful
+	const ResourceAddress &src = stateful
 		? GetAddress()
 		: GetStatelessAddress();
 
-	if (!src->IsHttp() || from_template.query_string == nullptr)
-		return {ShallowCopy(), *src};
+	if (!src.IsHttp() || from_template.query_string == nullptr)
+		return {ShallowCopy(), src};
 
-	const auto &src_http = src->GetHttp();
+	const auto &src_http = src.GetHttp();
 	const char *const src_path = src_http.path;
 
 	const char *uri = uri_delete_query_string(alloc, src_path,
@@ -70,21 +70,21 @@ Widget::GetBaseAddress(AllocatorPtr alloc, bool stateful) const noexcept
 					      from_request.query_string);
 
 	if (uri == src_path)
-		return {ShallowCopy(), *src};
+		return {ShallowCopy(), src};
 
-	return src->WithPath(alloc, uri);
+	return src.WithPath(alloc, uri);
 }
 
-static const ResourceAddress *
-widget_get_original_address(const Widget *widget) noexcept
+gcc_pure
+static const ResourceAddress &
+widget_get_original_address(const Widget &widget) noexcept
 {
-	assert(widget != nullptr);
-	assert(widget->cls != nullptr);
+	assert(widget.cls != nullptr);
 
-	const WidgetView *view = widget->GetAddressView();
+	const WidgetView *view = widget.GetAddressView();
 	assert(view != nullptr);
 
-	return &view->address;
+	return view->address;
 }
 
 gcc_pure
@@ -95,7 +95,7 @@ HasTrailingSlash(const char *p) noexcept
 	return length > 0 && p[length - 1] == '/';
 }
 
-const ResourceAddress *
+const ResourceAddress &
 Widget::DetermineAddress(bool stateful) const noexcept
 {
 	const AllocatorPtr alloc(pool);
@@ -108,13 +108,13 @@ Widget::DetermineAddress(bool stateful) const noexcept
 	path_info = GetPathInfo(stateful);
 	assert(path_info != nullptr);
 
-	const auto *original_address = widget_get_original_address(this);
+	const auto &original_address = widget_get_original_address(*this);
 	if ((!stateful || from_request.query_string.empty()) &&
 	    *path_info == 0 &&
 	    from_template.query_string == nullptr)
 		return original_address;
 
-	switch (original_address->type) {
+	switch (original_address.type) {
 		CgiAddress *cgi;
 
 	case ResourceAddress::Type::NONE:
@@ -124,9 +124,9 @@ Widget::DetermineAddress(bool stateful) const noexcept
 		break;
 
 	case ResourceAddress::Type::HTTP:
-		assert(original_address->GetHttp().path != nullptr);
+		assert(original_address.GetHttp().path != nullptr);
 
-		uri = original_address->GetHttp().path;
+		uri = original_address.GetHttp().path;
 
 		if (*path_info != 0) {
 			if (*path_info == '/' && HasTrailingSlash(uri))
@@ -145,12 +145,12 @@ Widget::DetermineAddress(bool stateful) const noexcept
 			uri = uri_append_query_string_n(alloc, uri,
 							from_request.query_string);
 
-		return alloc.New<ResourceAddress>(original_address->WithPath(alloc, uri));
+		return *alloc.New<ResourceAddress>(original_address.WithPath(alloc, uri));
 
 	case ResourceAddress::Type::LHTTP:
-		assert(original_address->GetLhttp().uri != nullptr);
+		assert(original_address.GetLhttp().uri != nullptr);
 
-		uri = original_address->GetLhttp().uri;
+		uri = original_address.GetLhttp().uri;
 
 		if (*path_info != 0) {
 			if (*path_info == '/' && HasTrailingSlash(uri))
@@ -169,12 +169,12 @@ Widget::DetermineAddress(bool stateful) const noexcept
 			uri = uri_append_query_string_n(alloc, uri,
 							from_request.query_string);
 
-		return alloc.New<ResourceAddress>(original_address->WithPath(alloc, uri));
+		return *alloc.New<ResourceAddress>(original_address.WithPath(alloc, uri));
 
 	case ResourceAddress::Type::CGI:
 	case ResourceAddress::Type::FASTCGI:
 	case ResourceAddress::Type::WAS:
-		address = original_address->Dup(alloc);
+		address = original_address.Dup(alloc);
 		cgi = &address->GetCgi();
 
 		if (*path_info != 0)
@@ -192,7 +192,7 @@ Widget::DetermineAddress(bool stateful) const noexcept
 					     '&',
 					     from_template.query_string);
 
-		return address;
+		return *address;
 	}
 
 	return original_address;
@@ -202,7 +202,7 @@ const char *
 Widget::AbsoluteUri(AllocatorPtr alloc, bool stateful,
 		    StringView relative_uri) const noexcept
 {
-	assert(GetAddress()->IsHttp());
+	assert(GetAddress().IsHttp());
 
 	if (relative_uri.SkipPrefix("~/")) {
 		stateful = false;
@@ -215,7 +215,7 @@ Widget::AbsoluteUri(AllocatorPtr alloc, bool stateful,
 	const auto *uwa =
 		&(stateful
 		  ? GetAddress()
-		  : GetStatelessAddress())->GetHttp();
+		  : GetStatelessAddress()).GetHttp();
 	const char *base = uwa->path;
 	if (relative_uri.IsNull())
 		return uwa->GetAbsoluteURI(alloc);
@@ -239,11 +239,11 @@ Widget::RelativeUri(AllocatorPtr alloc, bool stateful,
 {
 	const ResourceAddress *base;
 	if (relative_uri.SkipPrefix("~/")) {
-		base = widget_get_original_address(this);
+		base = &widget_get_original_address(*this);
 	} else if (relative_uri.size >= 1 && relative_uri[0] == '/' &&
 		   cls != nullptr && cls->anchor_absolute) {
 		relative_uri.skip_front(1);
-		base = widget_get_original_address(this);
+		base = &widget_get_original_address(*this);
 	} else
 		base = alloc.New<ResourceAddress>(GetBaseAddress(alloc, stateful));
 
@@ -251,8 +251,8 @@ Widget::RelativeUri(AllocatorPtr alloc, bool stateful,
 	if (!address.IsDefined())
 		return nullptr;
 
-	const auto *original_address = widget_get_original_address(this);
-	return address.RelativeTo(*original_address);
+	const auto &original_address = widget_get_original_address(*this);
+	return address.RelativeTo(original_address);
 }
 
 /**

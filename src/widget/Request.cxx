@@ -248,16 +248,6 @@ private:
 	void OnSuffixRegistryError(std::exception_ptr ep) noexcept override;
 };
 
-static const char *
-widget_uri(Widget *widget)
-{
-	const auto *address = widget->GetAddress();
-	if (address == nullptr)
-		return nullptr;
-
-	return address->GetUriPath();
-}
-
 StringMap
 WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
 				  const WidgetView &t_view,
@@ -281,7 +271,7 @@ WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
 					ctx->session_cookie,
 					ctx->GetRealmSession().get(),
 					host_and_port,
-					widget_uri(&widget));
+					widget.GetAddress().GetUriPath());
 
 	if (widget.cls->info_headers) {
 		if (widget.id != nullptr)
@@ -324,7 +314,7 @@ WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body) noex
 
 	++num_redirects;
 
-	const auto address = widget.GetAddress()->Apply(pool, location);
+	const auto address = widget.GetAddress().Apply(pool, location);
 	if (!address.IsDefined())
 		return false;
 
@@ -747,9 +737,9 @@ WidgetRequest::SendRequest() noexcept
 	transformation = t_view->transformation;
 	subst_alt_syntax = t_view->subst_alt_syntax;
 
-	const auto *address = widget.GetAddress();
+	const auto &address = widget.GetAddress();
 
-	if (!address->IsDefined()) {
+	if (!address.IsDefined()) {
 		const char *view_name = widget.from_template.view_name;
 		if (view_name == nullptr)
 			view_name = "[default]";
@@ -760,12 +750,12 @@ WidgetRequest::SendRequest() noexcept
 		return;
 	}
 
-	resource_tag = address->GetId(pool);
+	resource_tag = address.GetId(pool);
 
 	UnusedIstreamPtr request_body(std::move(widget.from_request.body));
 
 	auto headers = MakeRequestHeaders(*a_view, *t_view,
-					  address->IsAnyHttp(),
+					  address.IsAnyHttp(),
 					  request_body);
 
 	if (widget.cls->dump_headers) {
@@ -780,7 +770,7 @@ WidgetRequest::SendRequest() noexcept
 					 nullptr,
 					 ctx->site_name,
 					 widget.from_request.method,
-					 *address, HTTP_STATUS_OK,
+					 address, HTTP_STATUS_OK,
 					 std::move(headers),
 					 std::move(request_body), nullptr,
 					 *this, cancel_ptr);
@@ -806,7 +796,7 @@ bool
 WidgetRequest::ContentTypeLookup() noexcept
 {
 	return suffix_registry_lookup(pool, *global_translation_service,
-				      *widget.GetAddress(),
+				      widget.GetAddress(),
 				      parent_stopwatch,
 				      *this, cancel_ptr);
 }
