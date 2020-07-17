@@ -273,6 +273,33 @@ CgiAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 	return dest;
 }
 
+gcc_pure
+static const char *
+UnescapeApplyPathInfo(AllocatorPtr alloc, const char *base_path_info,
+		      StringView relative_escaped) noexcept
+{
+	if (base_path_info == nullptr)
+		base_path_info = "";
+
+	if (relative_escaped.empty())
+		return base_path_info;
+
+	if (uri_has_authority(relative_escaped))
+		return nullptr;
+
+	const TempPoolLease tpool;
+
+	char *unescaped = (char *)p_malloc(tpool, relative_escaped.size);
+	char *unescaped_end = uri_unescape(unescaped, relative_escaped);
+	if (unescaped_end == nullptr)
+		return nullptr;
+
+	size_t unescaped_length = unescaped_end - unescaped;
+
+	return uri_absolute(alloc, base_path_info,
+			    {unescaped, unescaped_length});
+}
+
 const CgiAddress *
 CgiAddress::Apply(AllocatorPtr alloc,
 		  StringView relative) const
@@ -280,24 +307,13 @@ CgiAddress::Apply(AllocatorPtr alloc,
 	if (relative.empty())
 		return this;
 
-	if (uri_has_authority(relative))
+	const char *new_path_info = UnescapeApplyPathInfo(alloc, path_info,
+							  relative);
+	if (new_path_info == nullptr)
 		return nullptr;
-
-	const TempPoolLease tpool;
-
-	char *unescaped = (char *)p_malloc(tpool, relative.size);
-	char *unescaped_end = uri_unescape(unescaped, relative);
-	if (unescaped_end == nullptr)
-		return nullptr;
-
-	size_t unescaped_length = unescaped_end - unescaped;
-
-	const char *new_path_info = path_info != nullptr ? path_info : "";
 
 	auto *dest = alloc.New<CgiAddress>(ShallowCopy(), *this);
-	dest->path_info = uri_absolute(alloc, new_path_info,
-				       {unescaped, unescaped_length});
-	assert(dest->path_info != nullptr);
+	dest->path_info = new_path_info;
 	return dest;
 }
 
