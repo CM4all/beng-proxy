@@ -388,6 +388,7 @@ test('t_stock', executable('t_stock',
 test('t_resource_address', executable('t_resource_address',
   't_resource_address.cxx',
   't_http_address.cxx',
+  't_lhttp_address.cxx',
   't_cgi_address.cxx',
   include_directories: inc,
   dependencies: [
