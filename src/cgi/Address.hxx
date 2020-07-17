@@ -155,6 +155,13 @@ struct CgiAddress {
 	const CgiAddress *Apply(AllocatorPtr alloc, StringView relative) const;
 
 	/**
+	 * Check if this instance is relative to the base, and return the
+	 * relative part.  Returns nullptr on mismatch.
+	 */
+	gcc_pure
+	StringView RelativeTo(const CgiAddress &base) const;
+
+	/**
 	 * Does this address need to be expanded with Expand()?
 	 */
 	gcc_pure

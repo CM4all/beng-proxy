@@ -39,6 +39,7 @@
 #include "uri/Escape.hxx"
 #include "uri/Extract.hxx"
 #include "uri/Compare.hxx"
+#include "uri/Relative.hxx"
 #include "util/StringView.hxx"
 #include "puri_relative.hxx"
 #include "puri_escape.hxx"
@@ -298,6 +299,12 @@ CgiAddress::Apply(AllocatorPtr alloc,
 				       {unescaped, unescaped_length});
 	assert(dest->path_info != nullptr);
 	return dest;
+}
+
+StringView
+CgiAddress::RelativeTo(const CgiAddress &base) const
+{
+	return uri_relative(base.path_info, path_info);
 }
 
 void

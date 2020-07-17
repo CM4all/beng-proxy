@@ -36,7 +36,6 @@
 #include "http/Address.hxx"
 #include "cgi/Address.hxx"
 #include "nfs/Address.hxx"
-#include "uri/Relative.hxx"
 #include "uri/Extract.hxx"
 #include "uri/Verify.hxx"
 #include "uri/Base.hxx"
@@ -490,7 +489,7 @@ ResourceAddress::RelativeTo(const ResourceAddress &base) const noexcept
 	case Type::CGI:
 	case Type::FASTCGI:
 	case Type::WAS:
-		return uri_relative(base.u.cgi->path_info, u.cgi->path_info);
+		return u.cgi->RelativeTo(*base.u.cgi);
 	}
 
 	assert(false);
