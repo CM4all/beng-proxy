@@ -41,6 +41,7 @@
 #include "uri/Compare.hxx"
 #include "uri/Relative.hxx"
 #include "util/StringView.hxx"
+#include "util/StringCompare.hxx"
 #include "puri_relative.hxx"
 #include "puri_escape.hxx"
 #include "puri_edit.hxx"
@@ -177,6 +178,20 @@ CgiAddress *
 CgiAddress::Clone(AllocatorPtr alloc) const
 {
 	return alloc.New<CgiAddress>(alloc, *this);
+}
+
+bool
+CgiAddress::IsSameProgram(const CgiAddress &other) const noexcept
+{
+	// TODO: check args, params, options?
+	return strcmp(path, other.path) == 0;
+}
+
+bool
+CgiAddress::IsSameBase(const CgiAddress &other) const noexcept
+{
+	return IsSameProgram(other) &&
+		StringView(script_name).Equals(other.script_name);
 }
 
 void
@@ -320,6 +335,9 @@ CgiAddress::Apply(AllocatorPtr alloc,
 StringView
 CgiAddress::RelativeTo(const CgiAddress &base) const
 {
+	if (!IsSameProgram(base))
+		return nullptr;
+
 	return uri_relative(base.path_info, path_info);
 }
 
@@ -328,6 +346,9 @@ CgiAddress::RelativeToApplied(AllocatorPtr alloc,
 			      const CgiAddress &apply_base,
 			      StringView relative) const
 {
+	if (!IsSameProgram(apply_base))
+		return nullptr;
+
 	const char *new_path_info =
 		UnescapeApplyPathInfo(alloc, apply_base.path_info, relative);
 	if (new_path_info == nullptr)

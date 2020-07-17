@@ -128,6 +128,12 @@ struct CgiAddress {
 	}
 
 	gcc_pure
+	bool IsSameProgram(const CgiAddress &other) const noexcept;
+
+	gcc_pure
+	bool IsSameBase(const CgiAddress &other) const noexcept;
+
+	gcc_pure
 	bool HasQueryString() const {
 		return query_string != nullptr && *query_string != 0;
 	}
