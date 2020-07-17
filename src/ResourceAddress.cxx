@@ -509,8 +509,11 @@ ResourceAddress::RelativeToApplied(AllocatorPtr alloc,
 	case Type::PIPE:
 	case Type::NFS:
 	case Type::HTTP:
-	case Type::LHTTP:
 		break;
+
+	case Type::LHTTP:
+		return u.lhttp->RelativeToApplied(alloc, *apply_base.u.lhttp,
+						  relative);
 
 	case Type::CGI:
 	case Type::FASTCGI:

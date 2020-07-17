@@ -217,6 +217,17 @@ LhttpAddress::RelativeTo(const LhttpAddress &base) const noexcept
 	return uri_relative(base.uri, uri);
 }
 
+StringView
+LhttpAddress::RelativeToApplied(AllocatorPtr alloc,
+				const LhttpAddress &apply_base,
+				StringView relative) const
+{
+	if (!IsSameProgram(apply_base))
+		return nullptr;
+
+	return ApplyUri(alloc, apply_base.uri, relative);
+}
+
 void
 LhttpAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info) noexcept
 {

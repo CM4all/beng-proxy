@@ -177,6 +177,16 @@ struct LhttpAddress {
 	StringView RelativeTo(const LhttpAddress &base) const noexcept;
 
 	/**
+	 * A combination of Apply() and RelativeTo(), i.e. calls
+	 * apply_base.Apply(relative).RelativeTo(*this). It is cheaper
+	 * because it needs copy only a small part of the object.
+	 */
+	gcc_pure
+	StringView RelativeToApplied(AllocatorPtr alloc,
+				     const LhttpAddress &apply_base,
+				     StringView relative) const;
+
+	/**
 	 * Does this address need to be expanded with lhttp_address_expand()?
 	 */
 	gcc_pure
