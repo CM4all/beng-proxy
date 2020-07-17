@@ -181,19 +181,31 @@ LhttpAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const noexcept
 	return DupWithUri(alloc, alloc.Concat(uri, suffix));
 }
 
+gcc_pure
+static const char *
+ApplyUri(AllocatorPtr alloc, const char *base_uri,
+	 StringView relative) noexcept
+{
+	if (relative.empty())
+		return base_uri;
+
+	if (uri_has_authority(relative))
+		return nullptr;
+
+	return uri_absolute(alloc, base_uri, relative);
+}
+
 const LhttpAddress *
 LhttpAddress::Apply(AllocatorPtr alloc, StringView relative) const noexcept
 {
 	if (relative.empty())
 		return this;
 
-	if (uri_has_authority(relative))
+	const char *new_uri = ApplyUri(alloc, uri, relative);
+	if (new_uri == nullptr)
 		return nullptr;
 
-	const char *p = uri_absolute(alloc, uri, relative);
-	assert(p != nullptr);
-
-	return alloc.New<LhttpAddress>(ShallowCopy(), *this, p);
+	return alloc.New<LhttpAddress>(ShallowCopy(), *this, new_uri);
 }
 
 StringView
