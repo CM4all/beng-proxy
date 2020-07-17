@@ -323,6 +323,19 @@ CgiAddress::RelativeTo(const CgiAddress &base) const
 	return uri_relative(base.path_info, path_info);
 }
 
+StringView
+CgiAddress::RelativeToApplied(AllocatorPtr alloc,
+			      const CgiAddress &apply_base,
+			      StringView relative) const
+{
+	const char *new_path_info =
+		UnescapeApplyPathInfo(alloc, apply_base.path_info, relative);
+	if (new_path_info == nullptr)
+		return nullptr;
+
+	return uri_relative(path_info, new_path_info);
+}
+
 void
 CgiAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 {

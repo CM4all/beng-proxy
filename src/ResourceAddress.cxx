@@ -503,6 +503,22 @@ ResourceAddress::RelativeToApplied(AllocatorPtr alloc,
 {
 	assert(apply_base.type == type);
 
+	switch (type) {
+	case Type::NONE:
+	case Type::LOCAL:
+	case Type::PIPE:
+	case Type::NFS:
+	case Type::HTTP:
+	case Type::LHTTP:
+		break;
+
+	case Type::CGI:
+	case Type::FASTCGI:
+	case Type::WAS:
+		return u.cgi->RelativeToApplied(alloc, *apply_base.u.cgi,
+						relative);
+	}
+
 	auto applied = apply_base.Apply(alloc, relative);
 	return applied.IsDefined()
 		? applied.RelativeTo(*this)
