@@ -130,6 +130,9 @@ struct LhttpAddress {
 	void Check() const;
 
 	gcc_pure
+	bool IsSameProgram(const LhttpAddress &other) const noexcept;
+
+	gcc_pure
 	bool HasQueryString() const noexcept;
 
 	LhttpAddress *Dup(AllocatorPtr alloc) const noexcept;

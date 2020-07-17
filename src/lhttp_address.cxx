@@ -111,6 +111,13 @@ LhttpAddress::Check() const
 	options.Check();
 }
 
+bool
+LhttpAddress::IsSameProgram(const LhttpAddress &other) const noexcept
+{
+	// TODO: check args, params, options?
+	return strcmp(path, other.path) == 0;
+}
+
 LhttpAddress *
 LhttpAddress::DupWithUri(AllocatorPtr alloc, const char *new_uri) const noexcept
 {
@@ -192,7 +199,7 @@ LhttpAddress::Apply(AllocatorPtr alloc, StringView relative) const noexcept
 StringView
 LhttpAddress::RelativeTo(const LhttpAddress &base) const noexcept
 {
-	if (strcmp(base.path, path) != 0)
+	if (!IsSameProgram(base))
 		return nullptr;
 
 	return uri_relative(base.uri, uri);
