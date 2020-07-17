@@ -120,3 +120,54 @@ TEST(CgiAddressTest, Apply)
 	ASSERT_STREQ(b->script_name, a.script_name);
 	ASSERT_STREQ(b->path_info, "/bar");
 }
+
+gcc_pure
+static auto
+MakeCgiAddress(const char *executable_path, const char *script_name,
+	       const char *path_info) noexcept
+{
+	CgiAddress address(executable_path);
+	address.script_name = script_name;
+	address.path_info = path_info;
+	return address;
+}
+
+static bool
+operator==(const StringView a, const StringView b) noexcept
+{
+	if (a.IsNull() || b.IsNull())
+		return a.IsNull() && b.IsNull();
+
+	if (a.size != b.size)
+		return false;
+
+	return memcmp(a.data, b.data, a.size) == 0;
+}
+
+static bool
+operator==(const StringView a, const char *b) noexcept
+{
+	return a == StringView(b);
+}
+
+static bool
+operator==(const StringView a, std::nullptr_t b) noexcept
+{
+	return a == StringView(b);
+}
+
+TEST(CgiAddressTest, RelativeTo)
+{
+	TestPool pool;
+	AllocatorPtr alloc(pool);
+
+	const auto base = MakeCgiAddress("/usr/bin/cgi", "/test.pl", "/foo/");
+
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/other-cgi", "/test.pl", "/foo/").RelativeTo(base), nullptr);
+
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", "/test.pl", nullptr).RelativeTo(base), nullptr);
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", "/test.pl", "/").RelativeTo(base), nullptr);
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", "/test.pl", "/foo").RelativeTo(base), nullptr);
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", "/test.pl", "/foo/").RelativeTo(base), "");
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", "/test.pl", "/foo/bar").RelativeTo(base), "bar");
+}
