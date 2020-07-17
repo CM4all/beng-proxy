@@ -183,7 +183,7 @@ LhttpAddress::Apply(AllocatorPtr alloc, StringView relative) const noexcept
 	if (uri_has_authority(relative))
 		return nullptr;
 
-	const char *p = uri_absolute(alloc, path, relative);
+	const char *p = uri_absolute(alloc, uri, relative);
 	assert(p != nullptr);
 
 	return alloc.New<LhttpAddress>(ShallowCopy(), *this, p);
