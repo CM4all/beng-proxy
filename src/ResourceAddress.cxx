@@ -496,6 +496,19 @@ ResourceAddress::RelativeTo(const ResourceAddress &base) const noexcept
 	gcc_unreachable();
 }
 
+StringView
+ResourceAddress::RelativeToApplied(AllocatorPtr alloc,
+				   const ResourceAddress &apply_base,
+				   StringView relative) const
+{
+	assert(apply_base.type == type);
+
+	auto applied = apply_base.Apply(alloc, relative);
+	return applied.IsDefined()
+		? applied.RelativeTo(*this)
+		: nullptr;
+}
+
 const char *
 ResourceAddress::GetId(AllocatorPtr alloc) const noexcept
 {

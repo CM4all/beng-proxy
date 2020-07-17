@@ -247,12 +247,8 @@ Widget::RelativeUri(AllocatorPtr alloc, bool stateful,
 	} else
 		base = alloc.New<ResourceAddress>(GetBaseAddress(alloc, stateful));
 
-	const auto address = base->Apply(alloc, relative_uri);
-	if (!address.IsDefined())
-		return nullptr;
-
 	const auto &original_address = widget_get_original_address(*this);
-	return address.RelativeTo(original_address);
+	return original_address.RelativeToApplied(alloc, *base, relative_uri);
 }
 
 /**
