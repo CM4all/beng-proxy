@@ -170,7 +170,7 @@ RunValidPremature(WasServer &server, struct pool &pool,
 							      server.GetEventLoop())));
 }
 
-class MalformedPrematureWasServer : WasControlHandler {
+class MalformedPrematureWasServer final : WasControlHandler {
 	WasSocket socket;
 
 	WasControl control;
