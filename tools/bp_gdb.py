@@ -418,11 +418,11 @@ class SlicePool:
 
         self.pool = pool
         self.page_size = 4096
-        self.slice_size = long(pool['slice_size'])
-        self.header_pages = long(pool['header_pages'])
-        self.slices_per_area = long(pool['slices_per_area'])
-        self.slices_per_page = long(pool['slices_per_page'])
-        self.pages_per_slice = long(pool['pages_per_slice'])
+        self.slice_size = int(pool['slice_size'])
+        self.header_pages = int(pool['header_pages'])
+        self.slices_per_area = int(pool['slices_per_area'])
+        self.slices_per_page = int(pool['slices_per_page'])
+        self.pages_per_slice = int(pool['pages_per_slice'])
 
     def areas(self):
         for area in for_each_intrusive_list_item(self.pool['areas']):
@@ -487,7 +487,7 @@ class FindSliceFifoBuffer(gdb.Command):
         ptr = 0x7f332c403000
 
         for x in iter_fifo_buffers(instance):
-            if long(x[1]) == ptr:
+            if int(x[1]) == ptr:
                 print(x)
                 break
 
