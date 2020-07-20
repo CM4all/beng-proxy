@@ -39,7 +39,7 @@ def pool_size(pool):
 
 def pool_sizes(pool):
     netto_size = pool_size(pool)
-    if pool['type'] == 1:
+    if pool['type'] == 2:
         # linear pool
         brutto_size = 0
         area = pool['current_area']['linear']
