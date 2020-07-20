@@ -280,6 +280,21 @@ class PoolTree(gdb.Command):
         for x in for_each_recursive_pool(pool):
             print(x, x['name'])
 
+class PoolChildren(gdb.Command):
+    def __init__(self):
+        gdb.Command.__init__(self, "bp_pool_children", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
+
+    def invoke(self, arg, from_tty):
+        arg_list = gdb.string_to_argv(arg)
+        if len(arg_list) != 1:
+            print("usage: bp_pool_children pool")
+            return
+
+        pool = gdb.parse_and_eval(arg_list[0])
+
+        for child in for_each_intrusive_list_item(pool['children']):
+            print(child.address, child['name'])
+
 class DumpPoolStats(gdb.Command):
     def __init__(self):
         gdb.Command.__init__(self, "bp_dump_pool_stats", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
@@ -579,6 +594,7 @@ class LbStats(gdb.Command):
         print("n_buffers", n_buffers)
 
 PoolTree()
+PoolChildren()
 DumpPoolStats()
 DumpPoolRefs()
 DumpPoolAllocations()
