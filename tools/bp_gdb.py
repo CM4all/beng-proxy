@@ -278,7 +278,7 @@ class PoolTree(gdb.Command):
         pool = gdb.parse_and_eval(arg_list[0])
 
         for x in for_each_recursive_pool(pool):
-            print(x, x['name'])
+            print(x.address, x['name'])
 
 class PoolChildren(gdb.Command):
     def __init__(self):
