@@ -49,6 +49,10 @@ struct LbListenerConfig : SocketConfig {
 
 	bool verbose_response = false;
 
+#ifdef HAVE_NGHTTP2
+	bool alpn_http2 = true;
+#endif
+
 	bool ssl = false;
 
 	SslConfig ssl_config;

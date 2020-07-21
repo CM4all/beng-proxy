@@ -66,7 +66,8 @@ MakeSslFactory(const LbListenerConfig &config,
 	ssl_factory->SetSessionIdContext({config.name.data(), config.name.size()});
 
 #ifdef HAVE_NGHTTP2
-	if (config.destination.GetProtocol() == LbProtocol::HTTP)
+	if (config.destination.GetProtocol() == LbProtocol::HTTP &&
+	    config.alpn_http2)
 		ssl_factory->EnableAlpnH2();
 #endif
 
