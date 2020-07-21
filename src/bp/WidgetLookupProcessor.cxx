@@ -161,6 +161,8 @@ private:
 void
 WidgetLookupProcessor::Cancel() noexcept
 {
+	stopwatch.RecordEvent("cancel");
+
 	/* the request body was not yet submitted to the focused widget;
 	   dispose it now */
 	container.DiscardForFocused();
@@ -281,6 +283,8 @@ WidgetLookupProcessor::OnEof() noexcept
 {
 	input.Clear();
 
+	stopwatch.RecordEvent("eof");
+
 	/* the request body could not be submitted to the focused widget,
 	   because we didn't find it; dispose it now */
 	container.DiscardForFocused();
@@ -296,6 +300,8 @@ void
 WidgetLookupProcessor::OnError(std::exception_ptr ep) noexcept
 {
 	input.Clear();
+
+	stopwatch.RecordEvent("error");
 
 	/* the request body could not be submitted to the focused widget,
 	   because we didn't find it; dispose it now */

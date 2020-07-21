@@ -1105,6 +1105,8 @@ XmlProcessor::OnEof() noexcept
 {
 	input.Clear();
 
+	stopwatch.RecordEvent("eof");
+
 	StopCdataIstream();
 
 	/* the request body could not be submitted to the focused widget,
@@ -1117,6 +1119,8 @@ XmlProcessor::OnEof() noexcept
 void
 XmlProcessor::OnError(std::exception_ptr ep) noexcept
 {
+	stopwatch.RecordEvent("error");
+
 	StopCdataIstream();
 
 	/* the request body could not be submitted to the focused widget,
