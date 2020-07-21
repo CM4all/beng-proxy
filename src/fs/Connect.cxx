@@ -98,6 +98,8 @@ private:
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
+		stopwatch.RecordEvent("cancel");
+
 		if (!socket)
 			connect_socket.Cancel();
 
