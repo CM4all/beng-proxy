@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,51 +39,51 @@
 #include "pool/pool.hxx"
 
 struct SuffixRegistryLookup final : TranslateHandler {
-    TranslateRequest request;
+	TranslateRequest request;
 
-    SuffixRegistryHandler &handler;
+	SuffixRegistryHandler &handler;
 
-    SuffixRegistryLookup(ConstBuffer<void> payload,
-                         const char *suffix,
-                         SuffixRegistryHandler &_handler) noexcept
-        :handler(_handler) {
-        request.content_type_lookup = payload;
-        request.suffix = suffix;
-    }
+	SuffixRegistryLookup(ConstBuffer<void> payload,
+			     const char *suffix,
+			     SuffixRegistryHandler &_handler) noexcept
+		:handler(_handler) {
+		request.content_type_lookup = payload;
+		request.suffix = suffix;
+	}
 
-    /* virtual methods from TranslateHandler */
-    void OnTranslateResponse(TranslateResponse &response) noexcept override;
-    void OnTranslateError(std::exception_ptr error) noexcept override;
+	/* virtual methods from TranslateHandler */
+	void OnTranslateResponse(TranslateResponse &response) noexcept override;
+	void OnTranslateError(std::exception_ptr error) noexcept override;
 };
 
 void
 SuffixRegistryLookup::OnTranslateResponse(TranslateResponse &response) noexcept
 {
-    handler.OnSuffixRegistrySuccess(response.content_type,
-                                    response.views != nullptr
-                                    ? response.views->transformation
-                                    : nullptr);
+	handler.OnSuffixRegistrySuccess(response.content_type,
+					response.views != nullptr
+					? response.views->transformation
+					: nullptr);
 }
 
 void
 SuffixRegistryLookup::OnTranslateError(std::exception_ptr ep) noexcept
 {
-    handler.OnSuffixRegistryError(ep);
+	handler.OnSuffixRegistryError(ep);
 }
 
 void
 suffix_registry_lookup(struct pool &pool,
-                       TranslationService &service,
-                       ConstBuffer<void> payload,
-                       const char *suffix,
-                       const StopwatchPtr &parent_stopwatch,
-                       SuffixRegistryHandler &handler,
-                       CancellablePointer &cancel_ptr) noexcept
+		       TranslationService &service,
+		       ConstBuffer<void> payload,
+		       const char *suffix,
+		       const StopwatchPtr &parent_stopwatch,
+		       SuffixRegistryHandler &handler,
+		       CancellablePointer &cancel_ptr) noexcept
 {
-    auto lookup = NewFromPool<SuffixRegistryLookup>(pool,
-                                                    payload, suffix,
-                                                    handler);
+	auto lookup = NewFromPool<SuffixRegistryLookup>(pool,
+							payload, suffix,
+							handler);
 
-    service.SendRequest(pool, lookup->request, parent_stopwatch,
-                        *lookup, cancel_ptr);
+	service.SendRequest(pool, lookup->request, parent_stopwatch,
+			    *lookup, cancel_ptr);
 }

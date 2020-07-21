@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -43,14 +43,14 @@ struct Transformation;
 
 class SuffixRegistryHandler {
 public:
-    /**
-     * @param transformations an optional #Transformation chain for
-     * all files of this type
-     */
-    virtual void OnSuffixRegistrySuccess(const char *content_type,
-                                         const Transformation *transformations) noexcept = 0;
+	/**
+	 * @param transformations an optional #Transformation chain for
+	 * all files of this type
+	 */
+	virtual void OnSuffixRegistrySuccess(const char *content_type,
+					     const Transformation *transformations) noexcept = 0;
 
-    virtual void OnSuffixRegistryError(std::exception_ptr ep) noexcept = 0;
+	virtual void OnSuffixRegistryError(std::exception_ptr ep) noexcept = 0;
 };
 
 /**
@@ -58,9 +58,9 @@ public:
  */
 void
 suffix_registry_lookup(struct pool &pool,
-                       TranslationService &service,
-                       ConstBuffer<void> payload,
-                       const char *suffix,
-                       const StopwatchPtr &parent_stopwatch,
-                       SuffixRegistryHandler &handler,
-                       CancellablePointer &cancel_ptr) noexcept;
+		       TranslationService &service,
+		       ConstBuffer<void> payload,
+		       const char *suffix,
+		       const StopwatchPtr &parent_stopwatch,
+		       SuffixRegistryHandler &handler,
+		       CancellablePointer &cancel_ptr) noexcept;
