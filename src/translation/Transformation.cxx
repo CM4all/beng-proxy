@@ -64,21 +64,21 @@ Transformation::Transformation(AllocatorPtr alloc,
 }
 
 bool
-Transformation::HasProcessor(const Transformation *t) noexcept
+Transformation::HasProcessor(const IntrusiveForwardList<Transformation> &list) noexcept
 {
-	for (; t != nullptr; t = t->next)
-		if (t->type == Type::PROCESS)
+	for (const auto &i : list)
+		if (i.type == Type::PROCESS)
 			return true;
 
 	return false;
 }
 
 bool
-Transformation::IsContainer(const Transformation *t) noexcept
+Transformation::IsContainer(const IntrusiveForwardList<Transformation> &list) noexcept
 {
-	for (; t != nullptr; t = t->next)
-		if (t->type == Type::PROCESS)
-			return (t->u.processor.options & PROCESSOR_CONTAINER) != 0;
+	for (const auto &i : list)
+		if (i.type == Type::PROCESS)
+			return (i.u.processor.options & PROCESSOR_CONTAINER) != 0;
 
 	return false;
 }
@@ -89,26 +89,24 @@ Transformation::Dup(AllocatorPtr alloc) const noexcept
 	return alloc.New<Transformation>(alloc, *this);
 }
 
-Transformation *
+IntrusiveForwardList<Transformation>
 Transformation::DupChain(AllocatorPtr alloc,
-			 const Transformation *src) noexcept
+			 const IntrusiveForwardList<Transformation> &src) noexcept
 {
-	Transformation *dest = nullptr, **tail_p = &dest;
+	IntrusiveForwardList<Transformation> dest;
+	auto tail = dest.before_begin();
 
-	for (; src != nullptr; src = src->next) {
-		Transformation *p = src->Dup(alloc);
-		*tail_p = p;
-		tail_p = &p->next;
-	}
+	for (const auto &i : src)
+		tail = dest.insert_after(tail, *i.Dup(alloc));
 
 	return dest;
 }
 
 bool
-Transformation::IsChainExpandable() const noexcept
+Transformation::IsChainExpandable(const IntrusiveForwardList<Transformation> &list) noexcept
 {
-	for (auto t = this; t != nullptr; t = t->next)
-		if (t->IsExpandable())
+	for (const auto &i : list)
+		if (i.IsExpandable())
 			return true;
 
 	return false;
@@ -133,8 +131,10 @@ Transformation::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 }
 
 void
-Transformation::ExpandChain(AllocatorPtr alloc, const MatchInfo &match_info)
+Transformation::ExpandChain(AllocatorPtr alloc,
+			    IntrusiveForwardList<Transformation> &list,
+			    const MatchInfo &match_info)
 {
-	for (auto t = this; t != nullptr; t = t->next)
-		t->Expand(alloc, match_info);
+	for (auto &i : list)
+		i.Expand(alloc, match_info);
 }

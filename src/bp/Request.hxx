@@ -145,14 +145,14 @@ public:
 		/**
 		 * The next transformation.
 		 */
-		const Transformation *transformation;
+		IntrusiveForwardList<Transformation> transformations;
 
 		/**
 		 * The next transformation from the
 		 * #TRANSLATE_CONTENT_TYPE_LOOKUP response.  These are applied
 		 * before other transformations.
 		 */
-		const Transformation *suffix_transformation;
+		IntrusiveForwardList<Transformation> suffix_transformations;
 
 		/**
 		 * A pointer to the "previous" translate response, non-nullptr
@@ -474,7 +474,7 @@ public:
 	void HandleTranslatedRequest(const TranslateResponse &response) noexcept;
 
 	bool IsTransformationEnabled() const {
-		return translate.response->views->transformation != nullptr;
+		return !translate.response->views->transformations.empty();
 	}
 
 	/**
@@ -483,33 +483,33 @@ public:
 	 */
 	bool IsProcessorFirst() const {
 		return IsTransformationEnabled() &&
-			translate.response->views->transformation->type
+			translate.response->views->transformations.front().type
 			== Transformation::Type::PROCESS;
 	}
 
 	bool IsProcessorEnabled() const;
 
 	bool HasTransformations() const {
-		return translate.transformation != nullptr ||
-			translate.suffix_transformation != nullptr;
+		return !translate.transformations.empty() ||
+			translate.suffix_transformations.empty();
 	}
 
 	void CancelTransformations() {
-		translate.transformation = nullptr;
-		translate.suffix_transformation = nullptr;
+		translate.transformations.clear();
+		translate.suffix_transformations.clear();
 	}
 
 	const Transformation *PopTransformation() {
-		const Transformation *t = translate.suffix_transformation;
-		if (t != nullptr)
-			translate.suffix_transformation = t->next;
-		else {
-			t = translate.transformation;
-			if (t != nullptr)
-				translate.transformation = t->next;
-		}
-
-		return t;
+		if (!translate.suffix_transformations.empty()) {
+			const auto &result = translate.suffix_transformations.front();
+			translate.suffix_transformations.pop_front();
+			return &result;
+		} else if (!translate.transformations.empty()) {
+			const auto &result = translate.transformations.front();
+			translate.transformations.pop_front();
+			return &result;
+		} else
+			return nullptr;
 	}
 
 	/**
@@ -673,6 +673,6 @@ private:
 
 	/* virtual methods from class SuffixRegistryHandler */
 	void OnSuffixRegistrySuccess(const char *content_type,
-				     const Transformation *transformations) noexcept override;
+				     const IntrusiveForwardList<Transformation> &transformations) noexcept override;
 	void OnSuffixRegistryError(std::exception_ptr ep) noexcept override;
 };

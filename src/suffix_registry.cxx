@@ -61,8 +61,8 @@ SuffixRegistryLookup::OnTranslateResponse(TranslateResponse &response) noexcept
 {
 	handler.OnSuffixRegistrySuccess(response.content_type,
 					response.views != nullptr
-					? response.views->transformation
-					: nullptr);
+					? IntrusiveForwardList<Transformation>{ShallowCopy{}, response.views->transformations}
+					: IntrusiveForwardList<Transformation>{});
 }
 
 void

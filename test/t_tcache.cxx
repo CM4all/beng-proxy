@@ -117,14 +117,24 @@ operator==(const MountList &a, const MountList &b) noexcept
 		a.expand_source == b.expand_source;
 }
 
+template <typename T>
+gcc_pure
 static bool
-Equals(const MountList *a, const MountList *b)
+Equals(const IntrusiveForwardList<T> &a,
+       const IntrusiveForwardList<T> &b) noexcept
 {
-	for (; a != nullptr; a = a->next, b = b->next)
-		if (b == nullptr || !(*a == *b))
+	auto i = a.begin();
+	for (const auto &j : b) {
+		if (i == a.end())
 			return false;
 
-	return b == nullptr;
+		if (!(*i == j))
+			return false;
+
+		++i;
+	}
+
+	return i == a.end();
 }
 
 static bool
@@ -237,27 +247,12 @@ operator==(const Transformation &a, const Transformation &b) noexcept
 }
 
 static bool
-transformation_chain_equals(const Transformation *a,
-			    const Transformation *b)
-{
-	while (a != nullptr && b != nullptr) {
-		if (!(*a == *b))
-			return false;
-
-		a = a->next;
-		b = b->next;
-	}
-
-	return a == nullptr && b == nullptr;
-}
-
-static bool
 operator==(const WidgetView &a, const WidgetView &b) noexcept
 {
 	return string_equals(a.name, b.name) &&
 		a.address == b.address &&
 		a.filter_4xx == b.filter_4xx &&
-		transformation_chain_equals(a.transformation, b.transformation);
+		Equals(a.transformations, b.transformations);
 }
 
 static bool

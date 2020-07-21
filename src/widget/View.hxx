@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,8 @@
 
 #include "ResourceAddress.hxx"
 #include "bp/ForwardHeaders.hxx"
-
 #include "util/Compiler.h"
+#include "util/IntrusiveForwardList.hxx"
 
 struct Transformation;
 class AllocatorPtr;
@@ -68,7 +68,7 @@ struct WidgetView {
 	 */
 	bool inherited = false;
 
-	Transformation *transformation = nullptr;
+	IntrusiveForwardList<Transformation> transformations;
 
 	/**
 	 * Which request headers are forwarded?

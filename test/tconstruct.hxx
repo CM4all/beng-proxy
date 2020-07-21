@@ -211,11 +211,11 @@ struct MakeResponse : TranslateResponse {
 			views = NewFromPool<WidgetView>(pool, nullptr);
 		}
 
-		Transformation **tail = &views->transformation;
-		while (*tail != nullptr)
-			tail = &(*tail)->next;
+		auto i = views->transformations.before_begin();
+		while (std::next(i) != views->transformations.end())
+			++i;
 
-		*tail = t;
+		views->transformations.insert_after(i, *t);
 	}
 
 	MakeResponse &&Filter(const CgiAddress &_cgi) {
@@ -311,8 +311,7 @@ struct MakeCgiAddress : CgiAddress {
 				   bool _writable=false) {
 		auto *m = NewFromPool<MountList>(pool, _source, _target,
 						 _expand_source, _writable);
-		m->next = options.ns.mount.mounts;
-		options.ns.mount.mounts = m;
+		options.ns.mount.mounts.push_front(*m);
 		return std::move(*this);
 	}
 };

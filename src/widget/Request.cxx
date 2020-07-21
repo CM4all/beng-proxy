@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -98,7 +98,7 @@ class WidgetRequest final
 	/**
 	 * the next transformation to be applied to the widget response
 	 */
-	const Transformation *transformation;
+	IntrusiveForwardList<Transformation> transformations;
 
 	/**
 	 * An identifier for the source stream of the current
@@ -244,7 +244,7 @@ private:
 
 	/* virtual methods from class SuffixRegistryHandler */
 	void OnSuffixRegistrySuccess(const char *content_type,
-				     const Transformation *transformations) noexcept override;
+				     const IntrusiveForwardList<Transformation> &transformations) noexcept override;
 	void OnSuffixRegistryError(std::exception_ptr ep) noexcept override;
 };
 
@@ -265,8 +265,8 @@ WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
 					peer_subject, peer_issuer_subject,
 					exclude_host, with_body,
 					widget.from_request.frame && !t_view.HasProcessor(),
-					widget.from_request.frame && t_view.transformation == nullptr,
-					widget.from_request.frame && t_view.transformation == nullptr,
+					widget.from_request.frame && t_view.transformations.empty(),
+					widget.from_request.frame && t_view.transformations.empty(),
 					a_view.request_header_forward,
 					ctx->session_cookie,
 					ctx->GetRealmSession().get(),
@@ -516,8 +516,6 @@ WidgetRequest::TransformResponse(http_status_t status,
 				 StringMap &&headers, UnusedIstreamPtr body,
 				 const Transformation &t) noexcept
 {
-	assert(transformation == t.next);
-
 	const char *p = headers.Get("content-encoding");
 	if (p != nullptr && strcmp(p, "identity") != 0) {
 		body.Clear();
@@ -579,14 +577,13 @@ void
 WidgetRequest::DispatchResponse(http_status_t status, StringMap &&headers,
 				UnusedIstreamPtr body) noexcept
 {
-	const Transformation *t = transformation;
-
-	if (t != nullptr && widget_transformation_enabled(&widget, status)) {
+	if (!transformations.empty() && widget_transformation_enabled(&widget, status)) {
 		/* transform this response */
 
-		transformation = t->next;
+		const auto &t = transformations.front();
+		transformations.pop_front();
 
-		TransformResponse(status, std::move(headers), std::move(body), *t);
+		TransformResponse(status, std::move(headers), std::move(body), t);
 	} else if (lookup_id != nullptr) {
 		body.Clear();
 
@@ -637,7 +634,7 @@ WidgetRequest::UpdateView(StringMap &headers)
 		}
 
 		/* install the new view */
-		transformation = view->transformation;
+		transformations = {ShallowCopy{}, view->transformations};
 		subst_alt_syntax = view->subst_alt_syntax;
 	} else if (widget.from_request.unauthorized_view &&
 		   processable(headers) &&
@@ -707,7 +704,7 @@ WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 		headers.Set(pool, "content-type", content_type);
 
 	if (widget.session_save_pending &&
-	    Transformation::HasProcessor(transformation)) {
+	    Transformation::HasProcessor(transformations)) {
 		auto session = ctx->GetRealmSession();
 		if (session)
 			widget.SaveToSession(*session);
@@ -734,7 +731,7 @@ WidgetRequest::SendRequest() noexcept
 	host_and_port = widget.cls->cookie_host != nullptr
 		? widget.cls->cookie_host
 		: a_view->address.GetHostAndPort();
-	transformation = t_view->transformation;
+	transformations = {ShallowCopy{}, t_view->transformations};
 	subst_alt_syntax = t_view->subst_alt_syntax;
 
 	const auto &address = widget.GetAddress();
@@ -779,7 +776,7 @@ WidgetRequest::SendRequest() noexcept
 void
 WidgetRequest::OnSuffixRegistrySuccess(const char *_content_type,
 				       // TODO: apply transformations
-				       gcc_unused const Transformation *transformations) noexcept
+				       gcc_unused const IntrusiveForwardList<Transformation> &_transformations) noexcept
 {
 	content_type = _content_type;
 	SendRequest();

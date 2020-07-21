@@ -118,10 +118,8 @@ MyHandler::OnTranslateResponse(TranslateResponse &response) noexcept
 		if (view->name != nullptr)
 			printf("view=%s\n", view->name);
 
-		for (const Transformation *transformation = view->transformation;
-		     transformation != nullptr;
-		     transformation = transformation->next) {
-			switch (transformation->type) {
+		for (const auto &transformation : view->transformations) {
+			switch (transformation.type) {
 			case Transformation::Type::PROCESS:
 				printf("process\n");
 				break;
@@ -136,11 +134,11 @@ MyHandler::OnTranslateResponse(TranslateResponse &response) noexcept
 
 			case Transformation::Type::FILTER:
 				printf("filter\n");
-				print_resource_address(&transformation->u.filter.address);
+				print_resource_address(&transformation.u.filter.address);
 				break;
 
 			case Transformation::Type::SUBST:
-				printf("subst '%s'\n", transformation->u.subst.yaml_file);
+				printf("subst '%s'\n", transformation.u.subst.yaml_file);
 				break;
 			}
 		}

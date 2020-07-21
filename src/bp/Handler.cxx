@@ -147,9 +147,10 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 {
 	const ResourceAddress address(ShallowCopy(), translate.address);
 
-	translate.transformation = response.views != nullptr
-		? response.views->transformation
-		: nullptr;
+	if (response.views != nullptr)
+		translate.transformations = {ShallowCopy{}, response.views->transformations};
+	else
+		translate.transformations.clear();
 
 	using namespace BengProxy;
 	if ((response.request_header_forward[HeaderGroup::COOKIE] != HeaderForwardMode::MANGLE &&
@@ -333,10 +334,10 @@ Request::CheckHandleProbePathSuffixes(const TranslateResponse &response)
 
 void
 Request::OnSuffixRegistrySuccess(const char *content_type,
-				 const Transformation *transformations) noexcept
+				 const IntrusiveForwardList<Transformation> &transformations) noexcept
 {
 	translate.content_type = content_type;
-	translate.suffix_transformation = transformations;
+	translate.suffix_transformations = {ShallowCopy{}, transformations};
 
 	HandleTranslatedRequest2(*translate.response);
 }
@@ -364,12 +365,12 @@ Request::HandleTranslatedRequest(const TranslateResponse &response) noexcept
 {
 	translate.response = &response;
 	translate.address = {ShallowCopy(), response.address};
-	translate.transformation = nullptr;
+	translate.transformations.clear();
 
 	apply_file_enotdir(*this);
 
 	if (!DoContentTypeLookup(response.address)) {
-		translate.suffix_transformation = nullptr;
+		translate.suffix_transformations.clear();
 		HandleTranslatedRequest2(response);
 	}
 }
@@ -382,8 +383,8 @@ Request::InstallErrorTranslateResponse() noexcept
 
 	translate.response = &error_response;
 	translate.address = {ShallowCopy(), error_response.address};
-	translate.transformation = nullptr;
-	translate.suffix_transformation = nullptr;
+	translate.transformations.clear();
+	translate.suffix_transformations.clear();
 }
 
 static const char *
@@ -862,8 +863,8 @@ Request::ServeDocumentRootFile(const BpConfig &config) noexcept
 	tr->views = view;
 	tr->transparent = true;
 
-	translate.transformation = tr->views->transformation;
-	translate.suffix_transformation = nullptr;
+	translate.transformations = {ShallowCopy{}, tr->views->transformations};
+	translate.suffix_transformations.clear();
 
 	const char *path = alloc.Concat(config.document_root,
 					dissected_uri.base,

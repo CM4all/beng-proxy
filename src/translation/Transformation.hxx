@@ -35,6 +35,7 @@
 #include "FilterTransformation.hxx"
 #include "SubstTransformation.hxx"
 #include "util/Compiler.h"
+#include "util/IntrusiveForwardList.hxx"
 
 #include <new>
 #include <type_traits>
@@ -55,9 +56,7 @@ struct TextProcessorTransformation {
 /**
  * Transformations which can be applied to resources.
  */
-struct Transformation {
-	Transformation *next = nullptr;
-
+struct Transformation : IntrusiveForwardListHook {
 	enum class Type {
 		PROCESS,
 		PROCESS_CSS,
@@ -127,14 +126,14 @@ struct Transformation {
 	 * transformation.
 	 */
 	gcc_pure
-	static bool HasProcessor(const Transformation *head) noexcept;
+	static bool HasProcessor(const IntrusiveForwardList<Transformation> &list) noexcept;
 
 	/**
 	 * Returns true if the first "PROCESS" transformation in the chain (if
 	 * any) includes the "CONTAINER" processor option.
 	 */
 	gcc_pure
-	static bool IsContainer(const Transformation *head) noexcept;
+	static bool IsContainer(const IntrusiveForwardList<Transformation> &list) noexcept;
 
 	/**
 	 * Does this transformation need to be expanded with
@@ -151,14 +150,13 @@ struct Transformation {
 	 * transformation_expand()?
 	 */
 	gcc_pure
-	bool IsChainExpandable() const noexcept;
+	static bool IsChainExpandable(const IntrusiveForwardList<Transformation> &list) noexcept;
 
 	gcc_malloc
 	Transformation *Dup(AllocatorPtr alloc) const noexcept;
 
-	gcc_malloc
-	static Transformation *DupChain(AllocatorPtr alloc,
-					const Transformation *src) noexcept;
+	static IntrusiveForwardList<Transformation> DupChain(AllocatorPtr alloc,
+							     const IntrusiveForwardList<Transformation> &src) noexcept;
 
 	/**
 	 * Expand the strings in this transformation (not following the linked
@@ -172,5 +170,7 @@ struct Transformation {
 	 * The same as Expand(), but expand all transformations in the
 	 * linked list.
 	 */
-	void ExpandChain(AllocatorPtr alloc, const MatchInfo &match_info);
+	static void ExpandChain(AllocatorPtr alloc,
+				IntrusiveForwardList<Transformation> &list,
+				const MatchInfo &match_info);
 };

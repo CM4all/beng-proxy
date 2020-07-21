@@ -868,7 +868,7 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
 					return;
 				}
 
-				translate.transformation = view->transformation;
+				translate.transformations = {ShallowCopy{}, view->transformations};
 			}
 		}
 

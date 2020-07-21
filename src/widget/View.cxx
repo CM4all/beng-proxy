@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -43,7 +43,7 @@ WidgetView::CopyFrom(AllocatorPtr alloc, const WidgetView &src) noexcept
 	address.CopyFrom(alloc, src.address);
 	filter_4xx = src.filter_4xx;
 	inherited = src.inherited;
-	transformation = Transformation::DupChain(alloc, src.transformation);
+	transformations = Transformation::DupChain(alloc, src.transformations);
 	request_header_forward = src.request_header_forward;
 	response_header_forward = src.response_header_forward;
 }
@@ -138,21 +138,20 @@ widget_view_lookup(const WidgetView *view, const char *name) noexcept
 bool
 WidgetView::HasProcessor() const noexcept
 {
-	return Transformation::HasProcessor(transformation);
+	return Transformation::HasProcessor(transformations);
 }
 
 bool
 WidgetView::IsContainer() const noexcept
 {
-	return Transformation::IsContainer(transformation);
+	return Transformation::IsContainer(transformations);
 }
 
 bool
 WidgetView::IsExpandable() const noexcept
 {
 	return address.IsExpandable() ||
-		(transformation != nullptr &&
-		 transformation->IsChainExpandable());
+		Transformation::IsChainExpandable(transformations);
 }
 
 bool
@@ -172,8 +171,7 @@ void
 WidgetView::Expand(AllocatorPtr alloc, const MatchInfo &match_info) noexcept
 {
 	address.Expand(alloc, match_info);
-	if (transformation != nullptr)
-		transformation->ExpandChain(alloc, match_info);
+	Transformation::ExpandChain(alloc, transformations, match_info);
 }
 
 void

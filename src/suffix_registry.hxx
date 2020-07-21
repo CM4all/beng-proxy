@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include "util/IntrusiveForwardList.hxx"
+
 #include <exception>
 
 struct pool;
@@ -48,7 +50,7 @@ public:
 	 * all files of this type
 	 */
 	virtual void OnSuffixRegistrySuccess(const char *content_type,
-					     const Transformation *transformations) noexcept = 0;
+					     const IntrusiveForwardList<Transformation> &transformations) noexcept = 0;
 
 	virtual void OnSuffixRegistryError(std::exception_ptr ep) noexcept = 0;
 };

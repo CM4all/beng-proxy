@@ -133,7 +133,7 @@ TEST(WidgetRegistry, Normal)
 	ASSERT_STREQ(data.cls->views.address.GetHttp().host_and_port, "foo");
 	ASSERT_STREQ(data.cls->views.address.GetHttp().path, "/");
 	ASSERT_EQ(data.cls->views.next, nullptr);
-	ASSERT_EQ(data.cls->views.transformation, nullptr);
+	ASSERT_TRUE(data.cls->views.transformations.empty());
 
 	pool.reset();
 	pool_commit();
