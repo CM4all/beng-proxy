@@ -425,6 +425,8 @@ CanRewriteUri(StringView uri, bool rewrite_empty) noexcept
 void
 XmlProcessor::Cancel() noexcept
 {
+	stopwatch.RecordEvent("cancel");
+
 	/* the request body was not yet submitted to the focused widget;
 	   dispose it now */
 	container.DiscardForFocused();
@@ -1574,6 +1576,8 @@ XmlProcessor::OnXmlEof(gcc_unused off_t length) noexcept
 {
 	assert(parser != nullptr);
 
+	stopwatch.RecordEvent("eof");
+
 	StopCdataIstream();
 
 	/* the request body could not be submitted to the focused widget,
@@ -1602,6 +1606,8 @@ void
 XmlProcessor::OnXmlError(std::exception_ptr ep) noexcept
 {
 	assert(parser != nullptr);
+
+	stopwatch.RecordEvent("error");
 
 	StopCdataIstream();
 
