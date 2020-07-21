@@ -1103,8 +1103,6 @@ XmlProcessor::OnXmlCdata(StringView text,
 void
 XmlProcessor::OnEof() noexcept
 {
-	input.Clear();
-
 	stopwatch.RecordEvent("eof");
 
 	StopCdataIstream();
