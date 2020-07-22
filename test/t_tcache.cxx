@@ -45,7 +45,7 @@
 #include "file_address.hxx"
 #include "delegate/Address.hxx"
 #include "cgi/Address.hxx"
-#include "spawn/MountList.hxx"
+#include "spawn/Mount.hxx"
 #include "spawn/NamespaceOptions.hxx"
 #include "pool/pool.hxx"
 #include "PInstance.hxx"
@@ -110,7 +110,7 @@ buffer_equals(ConstBuffer<T> a, ConstBuffer<T> b)
 }
 
 static bool
-operator==(const MountList &a, const MountList &b) noexcept
+operator==(const Mount &a, const Mount &b) noexcept
 {
 	return strcmp(a.source, b.source) == 0 &&
 		strcmp(a.target, b.target) == 0 &&

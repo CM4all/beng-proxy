@@ -37,7 +37,7 @@
 #include "http/Address.hxx"
 #include "file_address.hxx"
 #include "cgi/Address.hxx"
-#include "spawn/MountList.hxx"
+#include "spawn/Mount.hxx"
 #include "spawn/NamespaceOptions.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool/pool.hxx"
@@ -309,8 +309,8 @@ struct MakeCgiAddress : CgiAddress {
 	MakeCgiAddress &&BindMount(const char *_source, const char *_target,
 				   bool _expand_source=false,
 				   bool _writable=false) {
-		auto *m = NewFromPool<MountList>(pool, _source, _target,
-						 _expand_source, _writable);
+		auto *m = NewFromPool<Mount>(pool, _source, _target,
+					     _expand_source, _writable);
 		options.ns.mount.mounts.push_front(*m);
 		return std::move(*this);
 	}
