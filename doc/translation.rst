@@ -1031,6 +1031,7 @@ described in this section.
 
 - ``MOUNT_TMPFS`` mounts a new ``tmpfs`` on the given path. This is
   private to the namespace and is deleted when the process exits.
+  Inside this filesystem, mount points will be created automatically.
 
 - ``BIND_MOUNT`` mounts arbitrary directories from the old root into
   the new root. The payload is the source directory (absolute path
