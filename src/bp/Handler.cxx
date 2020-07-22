@@ -597,6 +597,12 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 void
 Request::OnTranslateResponse(TranslateResponse &response) noexcept
 {
+	if (response.defer) {
+		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+				 "Unexpected DEFER", 1);
+		return;
+	}
+
 	if (response.https_only != 0) {
 		const char *https = request.headers.Get("x-cm4all-https");
 		if (https == nullptr || strcmp(https, "on") != 0) {
