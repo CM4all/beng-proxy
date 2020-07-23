@@ -310,7 +310,8 @@ struct MakeCgiAddress : CgiAddress {
 				   bool _expand_source=false,
 				   bool _writable=false) {
 		auto *m = NewFromPool<Mount>(pool, _source, _target,
-					     _expand_source, _writable);
+					     _writable);
+		m->expand_source = _expand_source;
 		options.ns.mount.mounts.push_front(*m);
 		return std::move(*this);
 	}
