@@ -1288,11 +1288,9 @@ try {
 	} else if (response.base != nullptr) {
 		const char *uri = request.uri;
 		const char *tail = require_base_tail(uri, response.base);
-		if (!response.unsafe_base && !uri_path_verify_paranoid(tail)) {
-			handler->OnTranslateError(std::make_exception_ptr(HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
-											      "Malformed URI")));
-			return;
-		}
+		if (!response.unsafe_base && !uri_path_verify_paranoid(tail))
+			throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
+						  "Malformed URI");
 	}
 
 	handler->OnTranslateResponse(response);
