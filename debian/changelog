@@ -4,7 +4,7 @@ cm4all-beng-proxy (17.0.16) unstable; urgency=low
   * bp: improve error message on unexpected DEFER
   * spawn: allow multiple MOUNT_TMPFS
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 23 Jul 2020 12:29:37 +0200
 
 cm4all-beng-proxy (17.0.15) unstable; urgency=low
 
