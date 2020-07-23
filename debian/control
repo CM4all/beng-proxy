@@ -27,7 +27,7 @@ Build-Depends: debhelper (>= 12~), dh-python,
  libcm4all-was-protocol-dev (>= 1.0),
  python3-sphinx,
  valgrind
-Build-Conflicts: libgtest-dev, libjsoncpp-dev, libyaml-cpp-dev
+Build-Conflicts: libgtest-dev, googletest, libjsoncpp-dev, libyaml-cpp-dev
 Standards-Version: 3.9.1
 Vcs-Browser: https://github.com/CM4all/beng-proxy
 Vcs-Git: git://github.com/CM4all/beng-proxy
