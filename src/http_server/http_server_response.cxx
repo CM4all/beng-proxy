@@ -48,6 +48,10 @@ HttpServerConnection::OnIstreamReady() noexcept
 		return true;
 
 	case BucketResult::MORE:
+		/* it's out responsibility now to ask for more data */
+		socket->ScheduleWrite();
+		return false;
+
 	case BucketResult::BLOCKING:
 	case BucketResult::DEPLETED:
 	case BucketResult::DESTROYED:
