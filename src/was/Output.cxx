@@ -271,6 +271,7 @@ WasOutput::OnIstreamReady() noexcept
 		return false;
 	}
 
+	ScheduleWrite();
 	return result;
 }
 
