@@ -154,12 +154,14 @@ Stock::RetryWaiting() noexcept
 
 		waiting.erase(i);
 
-		if (GetIdle(w.request, w.handler))
-			w.Destroy();
-		else
+		if (!GetIdle(w.request, w.handler)) {
 			/* didn't work (probably because borrowing the item has
 			   failed) - re-add to "waiting" list */
 			waiting.push_front(w);
+			break;
+		}
+
+		w.Destroy();
 	}
 
 	/* if we're below the limit, create a bunch of new items */
