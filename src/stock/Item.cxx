@@ -90,3 +90,12 @@ StockItem::InvokeIdleDisconnect() noexcept
 {
 	stock.ItemIdleDisconnect(*this);
 }
+
+void
+StockItem::ClearUncleanFlag() noexcept
+{
+	assert(unclean);
+	unclean = false;
+
+	stock.ScheduleRetryWaiting();
+}

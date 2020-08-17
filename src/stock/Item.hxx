@@ -146,4 +146,6 @@ struct StockItem
 	 * it was idle.
 	 */
 	void InvokeIdleDisconnect() noexcept;
+
+	void ClearUncleanFlag() noexcept;
 };

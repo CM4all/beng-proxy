@@ -369,7 +369,7 @@ WasChild::RecoverStop() noexcept
 	}
 
 	stopping = false;
-	unclean = false;
+	ClearUncleanFlag();
 }
 
 /*
