@@ -95,6 +95,8 @@ struct Context final : IstreamSink {
 	bool got_data;
 	bool eof = false;
 
+	int close_after = -1;
+
 	const char *const expected_result;
 	bool record = false;
 	std::string buffer;
@@ -548,6 +550,27 @@ TYPED_TEST_P(IstreamFilterTest, FailAfterFirstByte)
 		    std::move(istream), false);
 }
 
+TYPED_TEST_P(IstreamFilterTest, CloseInHandler)
+{
+	TypeParam traits;
+	Instance instance;
+
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto input_pool = pool_new_linear(instance.root_pool, "input", 8192);
+
+	auto input = traits.CreateInput(input_pool);
+	input_pool.reset();
+
+	auto istream = traits.CreateTest(instance.event_loop, pool, std::move(input));
+
+	Context ctx(instance, std::move(pool),
+		    traits.expected_result,
+		    std::move(istream));
+	ctx.close_after = 0;
+
+	run_istream_ctx(traits, ctx);
+}
+
 /** abort without handler */
 TYPED_TEST_P(IstreamFilterTest, AbortWithoutHandler)
 {
@@ -708,6 +731,7 @@ REGISTER_TYPED_TEST_CASE_P(IstreamFilterTest,
 			   Half,
 			   Fail,
 			   FailAfterFirstByte,
+			   CloseInHandler,
 			   AbortWithoutHandler,
 			   AbortInHandler,
 			   AbortInHandlerHalf,
