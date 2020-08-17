@@ -126,7 +126,7 @@ FcgiIstream::StartRecord(size_t length) noexcept
 	missing_from_current_record = length;
 }
 
-size_t
+inline size_t
 FcgiIstream::Feed(const char *data, size_t length) noexcept
 {
 	const DestructObserver destructed(*this);
@@ -134,7 +134,7 @@ FcgiIstream::Feed(const char *data, size_t length) noexcept
 	size_t total = 0;
 	while (true) {
 		if (!WriteHeader())
-			return HasInput() ? total : 0;
+			return destructed ? 0 : total;
 
 		if (missing_from_current_record > 0) {
 			/* send the record header */

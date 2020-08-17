@@ -51,6 +51,7 @@ coma_apps_re = re.compile(r'^/coma-apps/([-\w]+)/(\w+\.cls(?:/.*)?)$')
 content_types = {
     'html': 'text/html',
     'txt': 'text/plain',
+    'css': 'text/css',
     'jpg': 'image/jpeg',
     'jpeg': 'image/jpeg',
     'png': 'image/png',

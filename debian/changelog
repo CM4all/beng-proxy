@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.17) unstable; urgency=low
 
+  * merge release 16.22
   * http_server: fix stall bug
   * was: fix stall bug
 
@@ -139,6 +140,13 @@ cm4all-beng-proxy (17.0.1) unstable; urgency=low
   * certdb: implement ACMEv2
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 18 Mar 2020 16:54:20 +0100
+
+cm4all-beng-proxy (16.22) unstable; urgency=low
+
+  * fcgi: fix use-after-free bug
+  * was: fix endless busy loop after cancellation
+
+ --   
 
 cm4all-beng-proxy (16.21) unstable; urgency=low
 
