@@ -126,7 +126,7 @@ FcgiIstream::StartRecord(size_t length) noexcept
 	missing_from_current_record = length;
 }
 
-size_t
+inline size_t
 FcgiIstream::Feed(const char *data, size_t length) noexcept
 {
 	const DestructObserver destructed(*this);
