@@ -147,7 +147,7 @@ cm4all-beng-proxy (16.22) unstable; urgency=low
   * fcgi: fix use-after-free bug
   * was: fix endless busy loop after cancellation
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 18 Aug 2020 13:31:39 +0200
 
 cm4all-beng-proxy (16.21) unstable; urgency=low
 
