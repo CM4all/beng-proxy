@@ -96,18 +96,18 @@ uri_after_protocol(const char *uri) noexcept
 }
 
 gcc_pure
-static const char *
+static StringView
 uri_after_protocol(StringView uri) noexcept
 {
 	if (uri.size > 2 && uri[0] == '/' && uri[1] == '/' && uri[2] != '/')
-		return uri.data + 2;
+		return uri.substr(2);
 
 	const char *colon = uri.Find(':');
 	return colon != nullptr &&
 		IsValidScheme({uri.data, colon}) &&
 		colon < uri.data + uri.size - 2 &&
 		colon[1] == '/' && colon[2] == '/'
-		? colon + 3
+		? uri.substr(colon + 3)
 		: nullptr;
 }
 
