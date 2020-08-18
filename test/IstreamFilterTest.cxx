@@ -131,8 +131,8 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
 	offset += length;
 
 	if (close_after >= 0 && offset >= size_t(close_after)) {
-		test_pool.reset();
 		ClearAndCloseInput();
+		test_pool.reset(); // TODO: move this before ClearAndCloseInput()
 		eof = true;
 		return 0;
 	}
