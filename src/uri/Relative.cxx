@@ -31,6 +31,7 @@
  */
 
 #include "Relative.hxx"
+#include "Extract.hxx"
 #include "util/StringView.hxx"
 
 #include <string.h>
@@ -46,8 +47,10 @@ uri_relative(StringView base, StringView uri) noexcept
 
 	/* special case: http://hostname without trailing slash */
 	if (uri.size == base.size - 1 &&
-	    memcmp(uri.data, base.data, base.size) &&
-	    memchr(uri.data + 7, '/', uri.size - 7) == nullptr)
+	    uri.StartsWith(base) &&
+	    base.back() == '/' &&
+	    uri_after_protocol(uri) != nullptr &&
+	    uri_after_protocol(uri).Find('/') == nullptr)
 		return "";
 
 	return nullptr;
