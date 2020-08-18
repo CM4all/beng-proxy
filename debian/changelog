@@ -3,6 +3,7 @@ cm4all-beng-proxy (17.0.17) unstable; urgency=low
   * merge release 16.22
   * http_server: fix stall bug
   * was: fix stall bug
+  * spawn: enable NO_NEW_PRIVS only if enabled by translation server
 
  --   
 
