@@ -38,7 +38,8 @@
 
 #include "util/Compiler.h"
 
-#include <stddef.h>
+#include <cstddef>
+#include <utility>
 
 struct StringView;
 
@@ -47,11 +48,27 @@ bool
 uri_has_protocol(StringView uri) noexcept;
 
 /**
- * Does this URI have an authority part?
+ * Return the URI part after the protocol specification (and after the
+ * double slash).
  */
 gcc_pure
-bool
-uri_has_authority(StringView uri) noexcept;
+const char *
+uri_after_protocol(const char *uri) noexcept;
+
+gcc_pure
+StringView
+uri_after_protocol(StringView uri) noexcept;
+
+/**
+ * Does this URI have an authority part?
+ */
+template<typename U>
+gcc_pure
+inline bool
+uri_has_authority(U &&uri) noexcept
+{
+	return uri_after_protocol(std::forward<U>(uri)) != nullptr;
+}
 
 gcc_pure
 StringView

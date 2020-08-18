@@ -76,12 +76,7 @@ uri_has_protocol(StringView uri) noexcept
 		colon[1] == '/' && colon[2] == '/';
 }
 
-/**
- * Return the URI part after the protocol specification (and after the
- * double slash).
- */
-gcc_pure
-static const char *
+const char *
 uri_after_protocol(const char *uri) noexcept
 {
 	if (uri[0] == '/' && uri[1] == '/' && uri[2] != '/')
@@ -95,8 +90,7 @@ uri_after_protocol(const char *uri) noexcept
 		: nullptr;
 }
 
-gcc_pure
-static StringView
+StringView
 uri_after_protocol(StringView uri) noexcept
 {
 	if (uri.size > 2 && uri[0] == '/' && uri[1] == '/' && uri[2] != '/')
@@ -109,12 +103,6 @@ uri_after_protocol(StringView uri) noexcept
 		colon[1] == '/' && colon[2] == '/'
 		? uri.substr(colon + 3)
 		: nullptr;
-}
-
-bool
-uri_has_authority(StringView uri) noexcept
-{
-	return uri_after_protocol(uri) != nullptr;
 }
 
 StringView
