@@ -38,13 +38,13 @@
 #include <string.h>
 
 static constexpr bool
-IsValidSchemeStart(char ch)
+IsValidSchemeStart(char ch) noexcept
 {
 	return IsLowerAlphaASCII(ch);
 }
 
 static constexpr bool
-IsValidSchemeChar(char ch)
+IsValidSchemeChar(char ch) noexcept
 {
 	return IsLowerAlphaASCII(ch) || IsDigitASCII(ch) ||
 		ch == '+' || ch == '.' || ch == '-';
@@ -52,7 +52,7 @@ IsValidSchemeChar(char ch)
 
 gcc_pure
 static bool
-IsValidScheme(StringView p)
+IsValidScheme(StringView p) noexcept
 {
 	if (p.empty() || !IsValidSchemeStart(p.front()))
 		return false;
@@ -65,7 +65,7 @@ IsValidScheme(StringView p)
 }
 
 bool
-uri_has_protocol(StringView uri)
+uri_has_protocol(StringView uri) noexcept
 {
 	assert(!uri.IsNull());
 
@@ -82,7 +82,7 @@ uri_has_protocol(StringView uri)
  */
 gcc_pure
 static const char *
-uri_after_protocol(const char *uri)
+uri_after_protocol(const char *uri) noexcept
 {
 	if (uri[0] == '/' && uri[1] == '/' && uri[2] != '/')
 		return uri + 2;
@@ -97,7 +97,7 @@ uri_after_protocol(const char *uri)
 
 gcc_pure
 static const char *
-uri_after_protocol(StringView uri)
+uri_after_protocol(StringView uri) noexcept
 {
 	if (uri.size > 2 && uri[0] == '/' && uri[1] == '/' && uri[2] != '/')
 		return uri.data + 2;
@@ -112,13 +112,13 @@ uri_after_protocol(StringView uri)
 }
 
 bool
-uri_has_authority(StringView uri)
+uri_has_authority(StringView uri) noexcept
 {
 	return uri_after_protocol(uri) != nullptr;
 }
 
 StringView
-uri_host_and_port(const char *uri)
+uri_host_and_port(const char *uri) noexcept
 {
 	assert(uri != nullptr);
 
@@ -134,7 +134,7 @@ uri_host_and_port(const char *uri)
 }
 
 const char *
-uri_path(const char *uri)
+uri_path(const char *uri) noexcept
 {
 	assert(uri != nullptr);
 
@@ -146,7 +146,7 @@ uri_path(const char *uri)
 }
 
 const char *
-uri_query_string(const char *uri)
+uri_query_string(const char *uri) noexcept
 {
 	assert(uri != nullptr);
 
