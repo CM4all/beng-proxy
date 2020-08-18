@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,7 +36,7 @@
 #include <string.h>
 
 StringView
-uri_relative(StringView base, StringView uri)
+uri_relative(StringView base, StringView uri) noexcept
 {
 	if (base.empty() || uri.empty())
 		return nullptr;

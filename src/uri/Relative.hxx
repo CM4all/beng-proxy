@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Functions for working with relative URIs.
  */
 
-#ifndef BENG_URI_RELATIVE_HXX
-#define BENG_URI_RELATIVE_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -48,6 +47,4 @@ struct StringView;
  */
 gcc_pure
 StringView
-uri_relative(StringView base, StringView uri);
-
-#endif
+uri_relative(StringView base, StringView uri) noexcept;
