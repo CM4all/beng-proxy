@@ -35,6 +35,7 @@
 #include "uri/Dissect.hxx"
 #include "pool/LeakDetector.hxx"
 #include "pool/SharedPtr.hxx"
+#include "pool/UniquePtr.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Request.hxx"
@@ -68,6 +69,7 @@ struct BpInstance;
 struct BpConfig;
 struct BpConnection;
 struct IncomingHttpRequest;
+struct PendingResponse;
 struct FilterTransformation;
 struct DelegateAddress;
 struct WidgetContext;
@@ -154,6 +156,8 @@ public:
 		 */
 		IntrusiveForwardList<Transformation> suffix_transformations;
 
+		ConstBuffer<void> chain = nullptr;
+
 		/**
 		 * A pointer to the "previous" translate response, non-nullptr
 		 * only if beng-proxy sends a second translate request with a
@@ -184,6 +188,8 @@ public:
 		unsigned n_directory_index;
 
 		unsigned n_probe_path_suffixes;
+
+		unsigned n_chain = 0;
 
 		/**
 		 * The Content-Type returned by suffix_registry_lookup().
@@ -227,6 +233,12 @@ private:
 			const char *path;
 		} delegate;
 	} handler;
+
+	/**
+         * This response is pending, waiting for the CHAIN translation
+         * request to be finished, so we know where to send it.
+	 */
+	UniquePoolPtr<PendingResponse> pending_response;
 
 	/**
 	 * The URI used for the cookie jar.  This is only used by
@@ -472,6 +484,8 @@ public:
 	void HandleTranslatedRequest2(const TranslateResponse &response) noexcept;
 
 	void HandleTranslatedRequest(const TranslateResponse &response) noexcept;
+
+	void HandleChainResponse(const TranslateResponse &response) noexcept;
 
 	bool IsTransformationEnabled() const {
 		return !translate.response->views->transformations.empty();

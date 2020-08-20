@@ -69,6 +69,7 @@
 #define MAX_CACHE_CHECK 256
 #define MAX_CACHE_WFU 256
 static constexpr size_t MAX_CONTENT_TYPE_LOOKUP = 256;
+static constexpr size_t MAX_CHAIN = 256;
 static constexpr size_t MAX_PROBE_PATH_SUFFIXES = 256;
 static constexpr size_t MAX_FILE_NOT_FOUND = 256;
 static constexpr size_t MAX_DIRECTORY_INDEX = 256;
@@ -635,10 +636,31 @@ tcache_content_type_lookup_key(AllocatorPtr alloc,
 }
 
 static const char *
+tcache_chain_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
+{
+	char buffer[MAX_CHAIN * 3];
+	size_t length = uri_escape(buffer, request.chain);
+
+	char status_buffer[32];
+	if (unsigned(request.status) != 0)
+		sprintf(status_buffer, "%u", unsigned(request.status));
+	else
+		*status_buffer = 0;
+
+	return alloc.Concat("CHAIN|",
+			    StringView{buffer, length},
+			    '=',
+			    status_buffer);
+}
+
+static const char *
 tcache_request_key(AllocatorPtr alloc, const TranslateRequest &request)
 {
 	if (tcache_is_content_type_lookup(request))
 		return tcache_content_type_lookup_key(alloc, request);
+
+	if (!request.chain.IsNull())
+		return tcache_chain_key(alloc, request);
 
 	return request.uri != nullptr
 		? tcache_uri_key(alloc, request.uri, request.host,
@@ -657,6 +679,7 @@ static bool
 tcache_request_evaluate(const TranslateRequest &request)
 {
 	return (request.uri != nullptr || request.widget_type != nullptr ||
+		request.chain != nullptr ||
 		tcache_is_content_type_lookup(request)) &&
 		request.auth.IsNull() &&
 		request.check.size < MAX_CACHE_CHECK &&

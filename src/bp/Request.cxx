@@ -32,6 +32,7 @@
 
 #include "Request.hxx"
 #include "Connection.hxx"
+#include "PendingResponse.hxx"
 #include "http/IncomingRequest.hxx"
 #include "widget/Context.hxx"
 #include "args.hxx"

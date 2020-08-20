@@ -64,6 +64,16 @@ class Translation(Protocol):
         self._packet = None
         self.widget_registry = WidgetRegistry(widgets_path)
 
+    def _handle_chain(self, chain, status):
+        print("chain", chain, status)
+        response = Response(protocol_version=2)
+        if chain == 'foo':
+            response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
+            response.packet(TRANSLATE_ACTION, sed_fastcgi)
+        else:
+            response.packet(TRANSLATE_BREAK_CHAIN)
+        return response
+
     def _handle_widget_lookup(self, widget_type):
         try:
             return self.widget_registry.lookup(widget_type)
@@ -905,6 +915,9 @@ class Translation(Protocol):
             response.packet(TRANSLATE_URI, '/proxy/' + uri[19:])
         elif uri[:9] == '/message/':
             response.packet(TRANSLATE_MESSAGE, uri[9:])
+        elif uri == '/chain/':
+            response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'hello.sh'))
+            response.packet(TRANSLATE_CHAIN, 'foo')
         elif uri[:7] == '/defer/':
             response.packet(TRANSLATE_DEFER)
         else:
@@ -921,6 +934,9 @@ class Translation(Protocol):
 
         if request.widget_type is not None:
             return self._handle_widget_lookup(request.widget_type)
+
+        if request.chain is not None:
+            return self._handle_chain(request.chain, request.status)
 
         if request.login:
             return self._handle_login(request.user, request.password,

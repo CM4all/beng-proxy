@@ -105,6 +105,8 @@ struct TranslateRequest {
 	 * was received.
 	 */
 	ConstBuffer<void> want_full_uri = nullptr;
+
+	ConstBuffer<void> chain = nullptr;
 #endif
 
 	ConstBuffer<TranslationCommand> want = nullptr;

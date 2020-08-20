@@ -31,6 +31,7 @@
  */
 
 #include "Handler.hxx"
+#include "PendingResponse.hxx"
 #include "Connection.hxx"
 #include "Config.hxx"
 #include "RLogger.hxx"
@@ -64,6 +65,7 @@
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
 #include "HttpMessageResponse.hxx"
+#include "ResourceLoader.hxx"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -152,6 +154,14 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 	else
 		translate.transformations.clear();
 
+	translate.chain = response.chain;
+	if (!translate.chain.IsNull() && ++translate.n_chain > 4) {
+		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+				 "Too many consecutive CHAIN packets", 1);
+		return;
+	}
+
+
 	using namespace BengProxy;
 	if ((response.request_header_forward[HeaderGroup::COOKIE] != HeaderForwardMode::MANGLE &&
 	     response.request_header_forward[HeaderGroup::COOKIE] != HeaderForwardMode::BOTH) ||
@@ -195,6 +205,9 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 		/* done */
 	} else if (response.www_authenticate != nullptr) {
 		DispatchError(HTTP_STATUS_UNAUTHORIZED, "Unauthorized");
+	} else if (response.break_chain) {
+		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+				 "BREAK_CHAIN without CHAIN", 1);
 	} else {
 		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
 				 "Empty response from configuration server", 1);
@@ -594,12 +607,51 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 	SubmitTranslateRequest();
 }
 
+inline void
+Request::HandleChainResponse(const TranslateResponse &response) noexcept
+{
+	assert(pending_response);
+
+	if (response.break_chain) {
+		auto pr = std::move(pending_response);
+		DispatchResponse(pr->status, std::move(pr->headers),
+				 std::move(pr->body));
+	}
+
+	if (!response.address.IsDefined()) {
+		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+				 "Empty CHAIN response", 1);
+		return;
+	}
+
+	/* no caching for chained requests */
+	auto &rl = *instance.direct_resource_loader;
+
+	auto pr = std::move(pending_response);
+	rl.SendRequest(pool, stopwatch,
+		       session_id.GetClusterHash(),
+		       nullptr, nullptr,
+		       HTTP_METHOD_POST, response.address,
+		       pr->status,
+		       std::move(pr->headers).ToMap(pool),
+		       std::move(pr->body),
+		       nullptr,
+		       *this, cancel_ptr);
+
+}
+
 void
 Request::OnTranslateResponse(TranslateResponse &response) noexcept
 {
 	if (response.defer) {
 		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
 				 "Unexpected DEFER", 1);
+		return;
+	}
+
+	if (pending_response) {
+		/* this is the response for a CHAIN request */
+		HandleChainResponse(response);
 		return;
 	}
 
