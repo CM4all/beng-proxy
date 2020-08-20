@@ -642,7 +642,7 @@ tcache_request_key(AllocatorPtr alloc, const TranslateRequest &request)
 
 	return request.uri != nullptr
 		? tcache_uri_key(alloc, request.uri, request.host,
-				 request.error_document_status,
+				 request.status,
 				 request.check, request.want_full_uri,
 				 request.probe_path_suffixes, request.probe_suffix,
 				 request.directory_index,
@@ -765,7 +765,7 @@ tcache_store_response(AllocatorPtr alloc, TranslateResponse &dest,
 	return dest.base != nullptr
 		/* generate a new cache key for the BASE */
 		? tcache_uri_key(alloc, dest.base, request.host,
-				 request.error_document_status,
+				 request.status,
 				 request.check, request.want_full_uri,
 				 request.probe_path_suffixes, request.probe_suffix,
 				 request.directory_index,

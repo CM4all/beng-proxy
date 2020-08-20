@@ -98,8 +98,8 @@ MarshalTranslateRequest(uint8_t PROTOCOL_VERSION,
 	m.WriteOptional(TranslationCommand::ERROR_DOCUMENT,
 			request.error_document);
 
-	if (request.error_document_status != 0)
-		m.Write16(TranslationCommand::STATUS, request.error_document_status);
+	if (request.status != 0)
+		m.Write16(TranslationCommand::STATUS, request.status);
 
 	m.WriteOptional(TranslationCommand::LISTENER_TAG,
 			request.listener_tag);

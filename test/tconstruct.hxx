@@ -69,8 +69,8 @@ struct MakeRequest : TranslateRequest {
 		return std::move(*this);
 	}
 
-	MakeRequest &&ErrorDocumentStatus(http_status_t value) {
-		error_document_status = value;
+	MakeRequest &&Status(http_status_t value) noexcept {
+		status = value;
 		return std::move(*this);
 	}
 };

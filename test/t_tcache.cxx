@@ -643,18 +643,18 @@ TEST(TranslationCache, InvalidateUri)
 	Feed(pool, cache, request2, response2);
 
 	const auto request3 = MakeRequest("/invalidate/uri")
-		.ErrorDocumentStatus(HTTP_STATUS_INTERNAL_SERVER_ERROR);
+		.Status(HTTP_STATUS_INTERNAL_SERVER_ERROR);
 	const auto response3 = MakeResponse(pool).File("/var/www/500/invalidate/uri");
 	Feed(pool, cache, request3, response3);
 
 	const auto request4 = MakeRequest("/invalidate/uri")
-		.ErrorDocumentStatus(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+		.Status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
 		.Check("x");
 	const auto response4 = MakeResponse(pool).File("/var/www/500/check/invalidate/uri");
 	Feed(pool, cache, request4, response4);
 
 	const auto request4b = MakeRequest("/invalidate/uri")
-		.ErrorDocumentStatus(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+		.Status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
 		.Check("x")
 		.WantFullUri({ "a\0/b", 4 });
 	const auto response4b = MakeResponse(pool).File("/var/www/500/check/wfu/invalidate/uri");
@@ -675,7 +675,7 @@ TEST(TranslationCache, InvalidateUri)
 	};
 
 	Feed(pool, cache,
-	     MakeRequest("/invalidate/uri").ErrorDocumentStatus(HTTP_STATUS_NOT_FOUND),
+	     MakeRequest("/invalidate/uri").Status(HTTP_STATUS_NOT_FOUND),
 	     MakeResponse(pool).File("/var/www/404/invalidate/uri")
 	     .Invalidate(response5_invalidate));
 

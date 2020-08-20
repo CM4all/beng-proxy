@@ -121,8 +121,6 @@ struct TranslateRequest {
 
 #if TRANSLATION_ENABLE_HTTP
 	ConstBuffer<void> error_document = nullptr;
-
-	http_status_t error_document_status = http_status_t(0);
 #endif
 
 	ConstBuffer<void> probe_path_suffixes = nullptr;
@@ -136,6 +134,10 @@ struct TranslateRequest {
 	const char *user = nullptr;
 
 	const char *pool = nullptr;
+
+#if TRANSLATION_ENABLE_HTTP
+	http_status_t status = http_status_t(0);
+#endif
 
 	bool cron = false;
 

@@ -175,7 +175,7 @@ fill_translate_request(TranslateRequest *t,
 {
 	*t = *src;
 	t->error_document = error_document;
-	t->error_document_status = status;
+	t->status = status;
 }
 
 /*
