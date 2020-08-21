@@ -217,15 +217,15 @@ Request::InvokeXmlProcessor(http_status_t status,
 	assert(!response_sent);
 
 	if (!response_body) {
-		DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-				 "Empty template cannot be processed");
+		DispatchError(HTTP_STATUS_BAD_GATEWAY,
+			      "Empty template cannot be processed");
 		return;
 	}
 
 	if (!processable(response_headers)) {
 		response_body.Clear();
-		DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-				 "Invalid template content type");
+		DispatchError(HTTP_STATUS_BAD_GATEWAY,
+			      "Invalid template content type");
 		return;
 	}
 
@@ -267,7 +267,7 @@ Request::InvokeXmlProcessor(http_status_t status,
 		       translate.response->untrusted, "'");
 		ctx.reset();
 		response_body.Clear();
-		DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
+		DispatchError(HTTP_STATUS_FORBIDDEN, "Forbidden");
 		return;
 	}
 
@@ -340,15 +340,15 @@ Request::InvokeCssProcessor(http_status_t status,
 	assert(!response_sent);
 
 	if (!response_body) {
-		DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-				 "Empty template cannot be processed");
+		DispatchError(HTTP_STATUS_BAD_GATEWAY,
+			      "Empty template cannot be processed");
 		return;
 	}
 
 	if (!css_processable(response_headers)) {
 		response_body.Clear();
-		DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-				 "Invalid template content type");
+		DispatchError(HTTP_STATUS_BAD_GATEWAY,
+			      "Invalid template content type");
 		return;
 	}
 
@@ -361,7 +361,7 @@ Request::InvokeCssProcessor(http_status_t status,
 		logger(2, "refusing to render template on untrusted domain '",
 		       translate.response->untrusted, "'");
 		response_body.Clear();
-		DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
+		DispatchError(HTTP_STATUS_FORBIDDEN, "Forbidden");
 		return;
 	}
 
@@ -387,15 +387,15 @@ Request::InvokeTextProcessor(http_status_t status,
 	assert(!response_sent);
 
 	if (!response_body) {
-		DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-				 "Empty template cannot be processed");
+		DispatchError(HTTP_STATUS_BAD_GATEWAY,
+			      "Empty template cannot be processed");
 		return;
 	}
 
 	if (!text_processor_allowed(response_headers)) {
 		response_body.Clear();
-		DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-				 "Invalid template content type");
+		DispatchError(HTTP_STATUS_BAD_GATEWAY,
+			      "Invalid template content type");
 		return;
 	}
 
@@ -408,7 +408,7 @@ Request::InvokeTextProcessor(http_status_t status,
 		logger(2, "refusing to render template on untrusted domain '",
 		       translate.response->untrusted, "'");
 		response_body.Clear();
-		DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
+		DispatchError(HTTP_STATUS_FORBIDDEN, "Forbidden");
 		return;
 	}
 
@@ -608,8 +608,8 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
 			   send requests, then this undermindes our CSRF
 			   protection; thus, enabling both CORS headers and
 			   SEND_CSRF_TOKEN is a bug */
-			DispatchResponse(HTTP_STATUS_BAD_GATEWAY,
-					 "Conflicting CSRF/CORS configuration");
+			DispatchError(HTTP_STATUS_BAD_GATEWAY,
+				      "Conflicting CSRF/CORS configuration");
 			return;
 		}
 
@@ -755,27 +755,35 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
 }
 
 void
-Request::DispatchResponse(http_status_t status,
-			  HttpHeaders &&headers, const char *msg)
+Request::DispatchError(http_status_t status, HttpHeaders &&headers,
+		       UnusedIstreamPtr response_body) noexcept
+{
+	DispatchResponse(status, std::move(headers),
+			 std::move(response_body));
+}
+
+void
+Request::DispatchError(http_status_t status,
+		       HttpHeaders &&headers, const char *msg) noexcept
 {
 	assert(http_status_is_valid(status));
 	assert(msg != nullptr);
 
 	headers.Write("content-type", "text/plain");
 
-	DispatchResponse(status, std::move(headers),
-			 istream_string_new(pool, msg));
+	DispatchError(status, std::move(headers),
+		      istream_string_new(pool, msg));
 }
 
 void
-Request::DispatchResponse(http_status_t status, const char *msg)
+Request::DispatchError(http_status_t status, const char *msg) noexcept
 {
-	DispatchResponse(status, {}, msg);
+	DispatchError(status, {}, msg);
 }
 
 void
 Request::DispatchRedirect(http_status_t status,
-			  const char *location, const char *msg)
+			  const char *location, const char *msg) noexcept
 {
 	assert(status >= 300 && status < 400);
 	assert(location != nullptr);
@@ -786,7 +794,7 @@ Request::DispatchRedirect(http_status_t status,
 	HttpHeaders headers;
 	headers.Write("location", location);
 
-	DispatchResponse(status, std::move(headers), msg);
+	DispatchError(status, std::move(headers), msg);
 }
 
 const char *
@@ -864,7 +872,7 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
 					body.Clear();
 
 					logger(4, "No such view: ", view_name);
-					DispatchResponse(HTTP_STATUS_NOT_FOUND, "No such view");
+					DispatchError(HTTP_STATUS_NOT_FOUND, "No such view");
 					return;
 				}
 

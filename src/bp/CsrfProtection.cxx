@@ -74,7 +74,7 @@ Request::CheckCsrfToken() noexcept
 {
 	bool result = HasValidCsrfToken();
 	if (!result)
-		DispatchResponse(HTTP_STATUS_FORBIDDEN, "Bad CSRF token");
+		DispatchError(HTTP_STATUS_FORBIDDEN, "Bad CSRF token");
 	return result;
 }
 

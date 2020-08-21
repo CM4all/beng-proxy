@@ -63,7 +63,7 @@ Request::OnAuthTranslateResponse(const TranslateResponse &response) noexcept
 		   REDIRECT/BOUNCE/STATUS, but we still don't have a user -
 		   this should not happen; bail out, don't dare to accept the
 		   client */
-		DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
+		DispatchError(HTTP_STATUS_FORBIDDEN, "Forbidden");
 		return;
 	}
 

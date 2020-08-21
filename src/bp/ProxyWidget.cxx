@@ -211,8 +211,7 @@ ProxyWidget::Continue()
 		widget->Cancel();
 		auto &_request = request;
 		Destroy();
-		_request.DispatchResponse(HTTP_STATUS_NOT_FOUND,
-					  "No such view");
+		_request.DispatchError(HTTP_STATUS_NOT_FOUND, "No such view");
 		return;
 	}
 
@@ -244,8 +243,8 @@ ProxyWidget::Continue()
 				widget->Cancel();
 				auto &_request = request;
 				Destroy();
-				_request.DispatchResponse(HTTP_STATUS_NOT_FOUND,
-							  "No such view");
+				_request.DispatchError(HTTP_STATUS_NOT_FOUND,
+						       "No such view");
 				return;
 			}
 
@@ -253,8 +252,8 @@ ProxyWidget::Continue()
 				widget->Cancel();
 				auto &_request = request;
 				Destroy();
-				_request.DispatchResponse(HTTP_STATUS_FORBIDDEN,
-							  "Forbidden");
+				_request.DispatchError(HTTP_STATUS_FORBIDDEN,
+						       "Forbidden");
 				return;
 			}
 

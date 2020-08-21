@@ -59,13 +59,13 @@ Request::OnDelegateSuccess(UniqueFileDescriptor fd)
 	struct statx st;
 	if (statx(fd.Get(), "", AT_EMPTY_PATH,
 		  STATX_TYPE|STATX_MTIME|STATX_INO|STATX_SIZE, &st) < 0) {
-		DispatchResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR,
-				 "Internal server error");
+		DispatchError(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+			      "Internal server error");
 		return;
 	}
 
 	if (!S_ISREG(st.stx_mode)) {
-		DispatchResponse(HTTP_STATUS_NOT_FOUND, "Not a regular file");
+		DispatchError(HTTP_STATUS_NOT_FOUND, "Not a regular file");
 		return;
 	}
 

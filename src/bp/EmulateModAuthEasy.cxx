@@ -61,8 +61,8 @@ DispatchUnauthorized(Request &request2) noexcept
 	HttpHeaders headers;
 	headers.Write("www-authenticate",
 		      "Basic realm=\"Geschuetzter Bereich\"");
-	request2.DispatchResponse(HTTP_STATUS_UNAUTHORIZED, std::move(headers),
-				  "Unauthorized");
+	request2.DispatchError(HTTP_STATUS_UNAUTHORIZED, std::move(headers),
+			       "Unauthorized");
 }
 
 static char *

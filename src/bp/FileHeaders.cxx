@@ -166,8 +166,8 @@ DispatchNotModified(Request &request2, const TranslateResponse &tr,
 
 	write_translation_vary_header(headers2, tr);
 
-	request2.DispatchResponse(HTTP_STATUS_NOT_MODIFIED,
-				  std::move(headers), nullptr);
+	request2.DispatchError(HTTP_STATUS_NOT_MODIFIED,
+			       std::move(headers), nullptr);
 }
 
 bool
@@ -190,8 +190,8 @@ Request::EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 	if (!IsTransformationEnabled()) {
 		const char *p = request_headers.Get("if-match");
 		if (p != nullptr && !CheckETagList(p, fd, st)) {
-			DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
-					 {}, nullptr);
+			DispatchError(HTTP_STATUS_PRECONDITION_FAILED,
+				      {}, nullptr);
 			return false;
 		}
 
@@ -229,8 +229,8 @@ Request::EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 			const auto t = http_date_parse(p);
 			if (t != std::chrono::system_clock::from_time_t(-1) &&
 			    std::chrono::system_clock::from_time_t(st.stx_mtime.tv_sec) > t) {
-				DispatchResponse(HTTP_STATUS_PRECONDITION_FAILED,
-						 {}, nullptr);
+				DispatchError(HTTP_STATUS_PRECONDITION_FAILED,
+					      {}, nullptr);
 				return false;
 			}
 		}

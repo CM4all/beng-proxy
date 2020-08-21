@@ -48,8 +48,7 @@ method_not_allowed(Request &request2, const char *allow)
 	headers.Write("content-type", "text/plain");
 	headers.Write("allow", allow);
 
-	request2.DispatchResponse(HTTP_STATUS_METHOD_NOT_ALLOWED,
-				  std::move(headers),
-				  istream_string_new(request2.pool,
-						     "This method is not allowed."));
+	request2.DispatchError(HTTP_STATUS_METHOD_NOT_ALLOWED,
+			       std::move(headers),
+			       "This method is not allowed.");
 }

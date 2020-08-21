@@ -166,7 +166,7 @@ Request::LogDispatchError(http_status_t status,
 	if (instance.config.verbose_response)
 		msg = p_strdup(&pool, log_msg);
 
-	DispatchResponse(status, msg);
+	DispatchError(status, msg);
 }
 
 void
@@ -187,7 +187,7 @@ Request::LogDispatchError(std::exception_ptr ep)
 	logger(response.status == HTTP_STATUS_INTERNAL_SERVER_ERROR ? 1 : 2,
 	       "error on '", request.uri, "': ", ep);
 
-	DispatchResponse(response.status, response.message);
+	DispatchError(response.status, response.message);
 }
 
 void
@@ -199,5 +199,5 @@ Request::LogDispatchError(http_status_t status, const char *msg,
 	if (instance.config.verbose_response)
 		msg = p_strdup(&pool, GetFullMessage(ep).c_str());
 
-	DispatchResponse(status, msg);
+	DispatchError(status, msg);
 }

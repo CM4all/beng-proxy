@@ -194,7 +194,7 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 	} else if (CheckHandleRedirectBounceStatus(response)) {
 		/* done */
 	} else if (response.www_authenticate != nullptr) {
-		DispatchResponse(HTTP_STATUS_UNAUTHORIZED, "Unauthorized");
+		DispatchError(HTTP_STATUS_UNAUTHORIZED, "Unauthorized");
 	} else {
 		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
 				 "Empty response from configuration server", 1);
@@ -246,7 +246,7 @@ Request::CheckHandleStatus(const TranslateResponse &response)
 	if (response.status == (http_status_t)0)
 		return false;
 
-	DispatchResponse(response.status, {}, nullptr);
+	DispatchError(response.status, {}, nullptr);
 	return true;
 }
 
@@ -260,7 +260,7 @@ Request::CheckHandleMessage(const TranslateResponse &response)
 		? response.status
 		: HTTP_STATUS_OK;
 
-	DispatchResponse(status, response.message);
+	DispatchError(status, response.message);
 	return true;
 }
 
@@ -610,7 +610,7 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 
 			const char *host = request.headers.Get("host");
 			if (host == nullptr) {
-				DispatchResponse(HTTP_STATUS_BAD_REQUEST, "No Host header");
+				DispatchError(HTTP_STATUS_BAD_REQUEST, "No Host header");
 				return;
 			}
 
@@ -749,7 +749,7 @@ Request::OnTranslateError(std::exception_ptr ep) noexcept
 	} catch (const HttpMessageResponse &response) {
 		/* don't log this, just send the response directly and
 		   return */
-		DispatchResponse(response.GetStatus(), response.what());
+		DispatchError(response.GetStatus(), response.what());
 		return;
 	} catch (...) {
 	}
@@ -784,7 +784,7 @@ Request::ParseRequestUri() noexcept
 		   session-related attributes have not been initialized yet */
 		stateless = true;
 
-		DispatchResponse(HTTP_STATUS_BAD_REQUEST, "Malformed URI");
+		DispatchError(HTTP_STATUS_BAD_REQUEST, "Malformed URI");
 		return false;
 	}
 
