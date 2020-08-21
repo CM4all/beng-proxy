@@ -32,6 +32,7 @@
 
 #include "errdoc.hxx"
 #include "Request.hxx"
+#include "PendingResponse.hxx"
 #include "Instance.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
@@ -49,46 +50,29 @@ struct ErrorResponseLoader final : TranslateHandler, HttpResponseHandler, Cancel
 
 	Request &request;
 
-	struct OriginalResponse {
-		http_status_t status;
-		HttpHeaders headers;
-		UnusedHoldIstreamPtr body;
-
-		OriginalResponse(Request &r,
-				 http_status_t _status, HttpHeaders &&_headers,
-				 UnusedIstreamPtr _body) noexcept
-			:status(_status), headers(std::move(_headers)),
-			 body(r.pool, std::move(_body)) {}
-
-		void Resubmit(Request &r) noexcept {
-			r.DispatchResponse(status, std::move(headers), std::move(body));
-		}
-	};
-
-	OriginalResponse original_response;
+	PendingResponse original_response;
 
 	TranslateRequest translate_request;
 
 	ErrorResponseLoader(Request &_request, http_status_t _status,
 			    HttpHeaders &&_headers, UnusedIstreamPtr _body)
 		:request(_request),
-		 original_response(request, _status, std::move(_headers),
-				   std::move(_body)) {}
+		 original_response(_status, std::move(_headers),
+				   UnusedHoldIstreamPtr{request.pool, std::move(_body)}) {}
 
 	void Destroy() {
 		this->~ErrorResponseLoader();
 	}
 
-	void Resubmit() noexcept {
-		original_response.Resubmit(request);
-	}
-
 	void ResubmitAndDestroy() noexcept {
 		auto &_request = request;
-		OriginalResponse _response(std::move(original_response));
+		auto _response = std::move(original_response);
 
 		Destroy();
-		_response.Resubmit(_request);
+
+		_request.DispatchResponse(_response.status,
+					  std::move(_response.headers),
+					  std::move(_response.body));
 	}
 
 	/* virtual methods from class Cancellable */
