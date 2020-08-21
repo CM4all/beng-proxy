@@ -64,8 +64,8 @@ class Translation(Protocol):
         self._packet = None
         self.widget_registry = WidgetRegistry(widgets_path)
 
-    def _handle_chain(self, chain, status):
-        print("chain", chain, status)
+    def _handle_chain(self, chain, chain_header, status):
+        print "chain", chain, chain_header, status
         response = Response(protocol_version=2)
         if chain == 'foo':
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
@@ -936,7 +936,7 @@ class Translation(Protocol):
             return self._handle_widget_lookup(request.widget_type)
 
         if request.chain is not None:
-            return self._handle_chain(request.chain, request.status)
+            return self._handle_chain(request.chain, request.chain_header, request.status)
 
         if request.login:
             return self._handle_login(request.user, request.password,

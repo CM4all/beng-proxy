@@ -107,6 +107,8 @@ struct TranslateRequest {
 	ConstBuffer<void> want_full_uri = nullptr;
 
 	ConstBuffer<void> chain = nullptr;
+
+	const char *chain_header = nullptr;
 #endif
 
 	ConstBuffer<TranslationCommand> want = nullptr;

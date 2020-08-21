@@ -158,6 +158,8 @@ public:
 
 		ConstBuffer<void> chain = nullptr;
 
+		const char *chain_header = nullptr;
+
 		/**
 		 * A pointer to the "previous" translate response, non-nullptr
 		 * only if beng-proxy sends a second translate request with a

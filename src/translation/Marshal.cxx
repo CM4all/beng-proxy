@@ -125,6 +125,7 @@ MarshalTranslateRequest(uint8_t PROTOCOL_VERSION,
 	m.WriteOptional(TranslationCommand::AUTH, request.auth);
 	m.WriteOptional(TranslationCommand::WANT_FULL_URI, request.want_full_uri);
 	m.WriteOptional(TranslationCommand::CHAIN, request.chain);
+	m.WriteOptional(TranslationCommand::CHAIN_HEADER, request.chain_header);
 	m.WriteOptional(TranslationCommand::WANT, request.want);
 	m.WriteOptional(TranslationCommand::FILE_NOT_FOUND,
 			request.file_not_found);

@@ -759,6 +759,8 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
 
 		TranslateRequest chain_request;
 		chain_request.chain = std::exchange(translate.chain, nullptr);
+		chain_request.chain_header =
+			std::exchange(translate.chain_header, nullptr);
 		chain_request.status = status;
 
 		instance.translation_service->SendRequest(pool, chain_request,
@@ -877,6 +879,12 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
 		collect_cookies = false;
 		CollectCookies(headers);
 	}
+
+	if (translate.chain != nullptr)
+		/* get the X-CM4all-Chain header from the unfiltered
+		   response headers, to be sent to the translation
+		   server later when CHAIN is evaluated */
+		translate.chain_header = headers.Remove("x-cm4all-chain");
 
 	if (http_status_is_success(status)) {
 		using namespace BengProxy;

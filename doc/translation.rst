@@ -1185,9 +1185,12 @@ To enable chaining, the translation sends a response specifying the
 request handler plus a ``CHAIN`` packet with opaque payload.  Once
 that request handler has generated the response, :program:`beng-proxy`
 sends another translation request containing a copy of the ``CHAIN``
-packet and a ``STATUS`` packet.  Now the translation server generates
-another request handler, or ``BREAK_CHAIN`` to send the pending
-response to the browser as-is.
+packet and a ``STATUS`` packet.  Additionally, the ``CHAIN_HEADER``
+may contain the value of the ``X-CM4all-Chain`` response header, if
+one exists in the current HTTP response.
+
+Now the translation server generates another request handler, or
+``BREAK_CHAIN`` to send the pending response to the browser as-is.
 
 Example::
 
@@ -1202,6 +1205,7 @@ Example::
 
  request 2:
   CHAIN "42"
+  CHAIN_HEADER "xyz"
   STATUS "200"
 
  response 2:

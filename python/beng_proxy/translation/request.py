@@ -52,6 +52,7 @@ class Request:
         self.auth = None
         self.want_full_uri = None
         self.chain = None
+        self.chain_header = None
         self.param = None
         self.listener_tag = None
         self.local_address = None
@@ -121,6 +122,8 @@ class Request:
             self.want_full_uri = packet.payload
         elif packet.command == TRANSLATE_CHAIN:
             self.chain = packet.payload
+        elif packet.command == TRANSLATE_CHAIN_HEADER:
+            self.chain_header = packet.payload
         elif packet.command == TRANSLATE_PARAM:
             self.param = packet.payload
         elif packet.command == TRANSLATE_LISTENER_TAG:
