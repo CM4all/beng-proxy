@@ -161,7 +161,6 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 		return;
 	}
 
-
 	using namespace BengProxy;
 	if ((response.request_header_forward[HeaderGroup::COOKIE] != HeaderForwardMode::MANGLE &&
 	     response.request_header_forward[HeaderGroup::COOKIE] != HeaderForwardMode::BOTH) ||
@@ -621,6 +620,18 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 	if (!response.address.IsDefined()) {
 		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
 				 "Empty CHAIN response", 1);
+		return;
+	}
+
+	if (response.views != nullptr)
+		translate.transformations = {ShallowCopy{}, response.views->transformations};
+	else
+		translate.transformations.clear();
+
+	translate.chain = response.chain;
+	if (!translate.chain.IsNull() && ++translate.n_chain > 4) {
+		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+				 "Too many consecutive CHAIN packets", 1);
 		return;
 	}
 
