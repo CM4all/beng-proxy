@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.18) unstable; urgency=low
 
+  * translation: add packet CHAIN
   * spawn: fix seccomp regression
 
  --   

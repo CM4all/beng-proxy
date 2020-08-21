@@ -376,7 +376,11 @@ Response
   ’@’ to the string used with ``REGEX`` and ``INVERSE_REGEX``.
 
 - ``FILTER``: the next resource address (``HTTP``, ``CGI``) will denote
-  an output filter, see section `7.16 <#filter>`__
+  an output filter, see section :ref:`filter` for details.
+
+- ``CHAIN``: similar to ``FILTER``, but the translation server is
+  asked again after the current response has been generated.  See
+  section :ref:`chain` for details.
 
 .. _cache_tag:
 
@@ -1163,6 +1167,45 @@ caches filter results, extending the HTTP specification. This is
 limited to resources which have an *ETag* response header, because
 :program:`beng-proxy` uses the *ETag* internally to address cache
 items.
+
+.. _chain:
+
+Chains
+------
+
+Chained request handlers behave similar to ``FILTER``: the current
+handler's response is passed to the next handler as ``POST`` request.
+But unlike ``FILTER``, :program:`beng-proxy` waits for the current
+handler to generate the response, and only then asks the translation
+server for further instructions.  This is useful in situations where
+one handler prepares something which the translation server needs to
+decide about the next stage.
+
+To enable chaining, the translation sends a response specifying the
+request handler plus a ``CHAIN`` packet with opaque payload.  Once
+that request handler has generated the response, :program:`beng-proxy`
+sends another translation request containing a copy of the ``CHAIN``
+packet and a ``STATUS`` packet.  Now the translation server generates
+another request handler, or ``BREAK_CHAIN`` to send the pending
+response to the browser as-is.
+
+Example::
+
+ request 1:
+  URI "/chain/"
+  HOST "example.com"
+  ...
+
+ response 1:
+  HTTP "http://foo/bar/"
+  CHAIN "42"
+
+ request 2:
+  CHAIN "42"
+  STATUS "200"
+
+ response 2:
+  WAS "/the/filter/program"
 
 .. _sessions:
 
