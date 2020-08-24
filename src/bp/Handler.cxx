@@ -617,6 +617,10 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 				 std::move(pr->body));
 	}
 
+	if (CheckHandleRedirectBounceStatus(response))
+		/* done */
+		return;
+
 	if (!response.address.IsDefined()) {
 		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
 				 "Empty CHAIN response", 1);
