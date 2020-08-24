@@ -69,6 +69,7 @@ class Translation(Protocol):
         response = Response(protocol_version=2)
         if chain == 'foo':
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_ACTION, sed_fastcgi)
         else:
             response.packet(TRANSLATE_BREAK_CHAIN)
@@ -189,6 +190,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_REGEX, r'^(.*)$')
             response.packet(TRANSLATE_REGEX_TAIL)
             response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'directory_index.py'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_PATH_INFO, os.path.join(cgi_path, 'directory_index.py'))
             response.pair('DIRECTORY', '/dummy')
             response.packet(TRANSLATE_EXPAND_PAIR, r'DIRECTORY=%s/\1' % document_root)
@@ -202,6 +204,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_REGEX, r'^(.*\.cls)$')
             response.packet(TRANSLATE_REGEX_TAIL)
             response.packet(TRANSLATE_WAS, coma_was)
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.pair('COMA_CLASS', path)
             response.expand_pair('COMA_CLASS', document_root + r'/\1')
             response.pair('UPLOAD_BUFFER_SIZE', '4M')
@@ -213,6 +216,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_REGEX, r'^(.*\.php)$')
             response.packet(TRANSLATE_REGEX_TAIL)
             response.packet(TRANSLATE_FASTCGI, easy_path)
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1')
             response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
             response.packet(TRANSLATE_FILE_NOT_FOUND, '404')
@@ -223,6 +227,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_REGEX, r'^(.*\.py)$')
             response.packet(TRANSLATE_REGEX_TAIL)
             response.packet(TRANSLATE_CGI, easy_path)
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1')
             response.packet(TRANSLATE_INTERPRETER, '/usr/bin/python')
             response.packet(TRANSLATE_FILE_NOT_FOUND, '404')
@@ -269,12 +274,15 @@ class Translation(Protocol):
                 path = document_root + uri + request.probe_suffix
                 if request.probe_suffix == '.py':
                     response.packet(TRANSLATE_CGI, path)
+                    response.packet(TRANSLATE_NO_NEW_PRIVS)
                     response.packet(TRANSLATE_INTERPRETER, '/usr/bin/python')
                 elif request.probe_suffix == '.php':
                     response.packet(TRANSLATE_FASTCGI, path)
+                    response.packet(TRANSLATE_NO_NEW_PRIVS)
                     response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
                 elif request.probe_suffix == '.cls':
                     response.packet(TRANSLATE_WAS, coma_was)
+                    response.packet(TRANSLATE_NO_NEW_PRIVS)
                     response.pair('COMA_CLASS', path)
                 else:
                     response.packet(TRANSLATE_PATH, path)
@@ -288,6 +296,7 @@ class Translation(Protocol):
         cgi = cgi_re.search(path, 1)
         if cgi:
             response.packet(TRANSLATE_CGI, path)
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             return
 
         m = php_re.match(path)
@@ -296,6 +305,7 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_FASTCGI, m.group(1))
             else:
                 response.packet(TRANSLATE_CGI, m.group(1))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
             response.packet(TRANSLATE_PATH_INFO, m.group(2))
             response.packet(TRANSLATE_AUTO_BASE)
@@ -303,6 +313,7 @@ class Translation(Protocol):
 
         if path[-4:] == '.cls':
             response.packet(TRANSLATE_WAS, coma_was)
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.pair('COMA_CLASS', path)
             response.pair('UPLOAD_BUFFER_SIZE', '4M')
         else:
@@ -382,6 +393,7 @@ class Translation(Protocol):
                 path_info = None
 
             response.packet(TRANSLATE_CGI, os.path.join(cgi_path, script))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_SCRIPT_NAME, script_name)
             if path_info is not None:
                 response.packet(TRANSLATE_PATH_INFO, path_info)
@@ -398,6 +410,7 @@ class Translation(Protocol):
                 path_info = None
 
             response.packet(TRANSLATE_CGI, os.path.join(cgi_path, script))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_SCRIPT_NAME, script_name)
             if path_info is not None:
                 response.packet(TRANSLATE_PATH_INFO, path_info)
@@ -435,6 +448,7 @@ class Translation(Protocol):
             response.nfs('172.28.0.8', '/srv/nfs4/foo', raw_uri[4:])
         elif uri[:8] == '/fcgi.rb':
             response.packet(TRANSLATE_FASTCGI, os.path.join(test_script_path, 'fcgi.rb'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
         elif uri == '/discard':
             response.packet(TRANSLATE_DISCARD_SESSION)
             response.status(204)
@@ -475,6 +489,7 @@ class Translation(Protocol):
                 home = '/home'
 
             response.packet(TRANSLATE_CGI, os.path.join(home, 'nsinfo.sh'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_HOME, cgi_path)
 
             if pivot_root is not None:
@@ -531,6 +546,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_EXPAND_PATH, r"/var/www/\1")
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_WAS, coma_was)
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.pair('COMA_CLASS', os.path.join(image_processor_path, 'filter.cls'))
             response.packet(TRANSLATE_PATH_INFO, path_info)
             response.packet(TRANSLATE_EXPAND_PATH_INFO, r"/\2")
@@ -567,6 +583,7 @@ class Translation(Protocol):
         elif uri[:15] == '/ticket/create/':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'create'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_DOCUMENT_ROOT, '/var/www')
             response.packet(TRANSLATE_PATH_INFO, uri[14:])
             response.packet(TRANSLATE_BASE, '/ticket/create/')
@@ -578,12 +595,14 @@ class Translation(Protocol):
             response.packet(TRANSLATE_REGEX_TAIL)
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'create'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.pair('TICKET_VAR', ticket_database_uri)
             response.pair('TICKET_URI', 'ftp://' + uri[16:])
             response.packet(TRANSLATE_EXPAND_PAIR, r'TICKET_URI=ftp://\1')
         elif uri[:15] == '/ticket/upload/':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'upload'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_DOCUMENT_ROOT, '/var/www')
             response.packet(TRANSLATE_PATH_INFO, uri[14:])
             response.packet(TRANSLATE_BASE, '/ticket/upload/')
@@ -592,12 +611,14 @@ class Translation(Protocol):
         elif uri[:16] == '/ticket/control/':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'control'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_PATH_INFO, uri[15:])
             response.packet(TRANSLATE_BASE, '/ticket/control/')
             response.pair('TICKET_VAR', ticket_database_uri)
         elif uri == '/ticket/cleanup':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'cleanup'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_PATH_INFO, uri[15:])
             response.pair('TICKET_VAR', ticket_database_uri)
         elif uri == '/filter':
@@ -645,56 +666,68 @@ class Translation(Protocol):
             name = uri[5:]
             if name in was_examples:
                 response.packet(TRANSLATE_WAS, os.path.join(was_examples_path, name))
+                response.packet(TRANSLATE_NO_NEW_PRIVS)
             else:
                 response.status(404)
         elif uri == '/xslt':
             response.packet(TRANSLATE_FASTCGI, xslt_fastcgi)
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.pair('STYLESHEET_PATH', os.path.join(demo_path, '../filter.xsl'))
             response.pair('DOCUMENT_PATH', os.path.join(demo_path, '../filter.xml'))
         elif uri == '/xslt-filter':
             response.path(os.path.join(demo_path, '../filter.xml'))
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_FASTCGI, xslt_fastcgi)
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.pair('STYLESHEET_PATH', os.path.join(demo_path, '../filter.xsl'))
         elif uri == '/xmlstrip':
             response.path(os.path.join(demo_path, 'xmlstrip2.html'))
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_WAS, xmlstrip)
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
         elif uri == '/clear-html':
             response.path(os.path.join(demo_path, 'xmlstrip2.html'))
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_WAS, clear_html)
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
         elif uri == '/sed':
             response.path(os.path.join(demo_path, 'xmlstrip2.html'))
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_PIPE, os.path.join(cgi_path, 'xmlstrip.sed'))
         elif uri == '/sed':
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe.sed'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_ACTION, sed_fastcgi)
             response.pair('DOCUMENT_PATH', os.path.join(demo_path, 'hello.txt'))
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_ACTION, sed_fastcgi)
         elif uri == '/sed-filter':
             response.path(os.path.join(demo_path, 'hello.txt'))
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe.sed'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_ACTION, sed_fastcgi)
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_ACTION, sed_fastcgi)
         elif uri[:11] == '/filter4xx/':
             response.path(os.path.join('/var/www', uri[11:]))
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'underscore.sed'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_ACTION, sed_fastcgi)
             response.packet(TRANSLATE_FILTER_4XX)
         elif uri == '/remote-sed':
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe.sed'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_ADDRESS_STRING, '/tmp/sed.socket')
             response.pair('DOCUMENT_PATH', os.path.join(demo_path, 'hello.txt'))
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_ACTION, sed_fastcgi)
         elif uri == '/subst':
             response.path(os.path.join(demo_path, 'subst.txt'))
@@ -712,6 +745,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_SUBST_ALT_SYNTAX)
         elif uri == '/dav':
             response.packet(TRANSLATE_WAS, davos_plain)
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.pair('DAVOS_DOCUMENT_ROOT', '/var/www')
             response.pair('DAVOS_MOUNT', '/dav/')
             response.pair('DAVOS_DAV_HEADER', '3')
@@ -720,6 +754,7 @@ class Translation(Protocol):
         elif uri[:5] == '/dav/':
             response.packet(TRANSLATE_BASE, "/dav/")
             response.packet(TRANSLATE_WAS, davos_plain)
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.pair('DAVOS_DOCUMENT_ROOT', '/var/www')
             response.pair('DAVOS_MOUNT', '/dav/')
             response.request_header_forward((HEADER_GROUP_OTHER, HEADER_FORWARD_YES))
@@ -742,6 +777,7 @@ class Translation(Protocol):
 
             response.packet(TRANSLATE_REGEX, "^/dav-od/([^/]+)")
             response.packet(TRANSLATE_WAS, davos_od)
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_APPEND, od_conf)
             response.packet(TRANSLATE_APPEND, od_section)
             response.pair('DAVOS_MOUNT', '/dav-od/' + site + '/')
@@ -777,6 +813,7 @@ class Translation(Protocol):
             elif want_full_uri == 'foo':
                 response.max_age(20)
                 response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'env.py'))
+                response.packet(TRANSLATE_NO_NEW_PRIVS)
                 response.packet(TRANSLATE_SCRIPT_NAME, uri)
             else:
                 # invalid request
@@ -803,6 +840,7 @@ class Translation(Protocol):
 
             response.vary(TRANSLATE_UA_CLASS, TRANSLATE_WANT)
             response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'env.py'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_SCRIPT_NAME, uri)
             if ua_class is not None:
                 response.packet(TRANSLATE_PATH_INFO, ua_class)
@@ -813,6 +851,7 @@ class Translation(Protocol):
 
             response.vary(TRANSLATE_LISTENER_TAG)
             response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'env.py'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_SCRIPT_NAME, uri)
             if request.listener_tag is not None:
                 response.packet(TRANSLATE_PATH_INFO, request.listener_tag)
@@ -860,6 +899,7 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_REGEX, "^(.*)$")
                 response.packet(TRANSLATE_REGEX_TAIL)
                 response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'directory_index.py'))
+                response.packet(TRANSLATE_NO_NEW_PRIVS)
                 response.pair('DIRECTORY', 'dummy')
                 response.packet(TRANSLATE_EXPAND_PAIR, r'DIRECTORY=/var/www/\1')
                 return
@@ -877,6 +917,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_BASE, '/view/')
             response.packet(TRANSLATE_EASY_BASE)
             response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'view.py'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_PATH_INFO, '/')
             response.packet(TRANSLATE_FILTER)
             response.pipe(os.path.join(cgi_path, 'pipe.sed'))
@@ -917,6 +958,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_MESSAGE, uri[9:])
         elif uri == '/chain/':
             response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'hello.sh'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_CHAIN, 'foo')
         elif uri[:7] == '/defer/':
             response.packet(TRANSLATE_DEFER)
