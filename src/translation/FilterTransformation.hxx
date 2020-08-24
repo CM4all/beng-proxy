@@ -53,6 +53,11 @@ struct FilterTransformation {
 	 */
 	bool reveal_user = false;
 
+	/**
+	 * Don't send a request body to the filter?
+	 */
+	bool no_body = false;
+
 	FilterTransformation() = default;
 
 	FilterTransformation(AllocatorPtr alloc,

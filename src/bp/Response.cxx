@@ -635,6 +635,8 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
 		     UnusedIstreamPtr body,
 		     const FilterTransformation &filter) noexcept
 {
+	assert(!pending_filter_response);
+
 	const AllocatorPtr alloc(pool);
 
 	previous_status = status;
@@ -647,6 +649,12 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
 
 	if (filter.reveal_user)
 		forward_reveal_user(pool, headers2, GetRealmSession().get());
+
+	if (filter.no_body)
+		pending_filter_response =
+			UniquePoolPtr<PendingResponse>::Make(pool, status,
+							     StringMap{ShallowCopy{}, pool, headers2},
+							     UnusedHoldIstreamPtr{pool, std::move(body)});
 
 	if (body)
 		body = NewAutoPipeIstream(&pool, std::move(body), instance.pipe_stock);
@@ -869,6 +877,23 @@ Request::OnHttpResponse(http_status_t status, StringMap &&headers,
 			UnusedIstreamPtr body) noexcept
 {
 	assert(!response_sent);
+
+	if (pending_filter_response) {
+		/* this is the response of a filter with
+		   TranslationCommand::FILTER_NO_BODY */
+		if (http_status_is_success(status)) {
+			/* discard successful responses and use the
+			   pending response */
+			status = pending_filter_response->status;
+			headers = std::move(pending_filter_response->headers).ToMap(pool);
+			body = std::move(pending_filter_response->body);
+		} else {
+			/* unsucessful response: use that one and
+			   discard the pending response */
+		}
+
+		pending_filter_response.reset();
+	}
 
 	if (previous_status != http_status_t(0)) {
 		status = ApplyFilterStatus(previous_status, status, !!body);

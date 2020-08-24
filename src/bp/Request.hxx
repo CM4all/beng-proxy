@@ -237,6 +237,13 @@ private:
 	} handler;
 
 	/**
+	 * A filter with TranslationCommand::FILTER_NO_BODY is
+         * running, and this response will be sent as soon as it
+         * finishes successfully.
+	 */
+	UniquePoolPtr<PendingResponse> pending_filter_response;
+
+	/**
          * This response is pending, waiting for the CHAIN translation
          * request to be finished, so we know where to send it.
 	 */
