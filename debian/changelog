@@ -4,7 +4,7 @@ cm4all-beng-proxy (17.0.19) unstable; urgency=low
   * bp: support CHAIN with STATUS/MESSAGE
   * translation: add packet FILTER_NO_BODY
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 24 Aug 2020 16:26:21 +0200
 
 cm4all-beng-proxy (17.0.18) unstable; urgency=low
 
