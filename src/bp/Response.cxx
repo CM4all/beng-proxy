@@ -750,9 +750,9 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
 				    std::move(response_body),
 				    *transformation);
 	} else if (!translate.chain.IsNull()) {
-		assert(!pending_response);
+		assert(!pending_chain_response);
 
-		pending_response =
+		pending_chain_response =
 			UniquePoolPtr<PendingResponse>::Make(pool, status,
 							     std::move(headers),
 							     UnusedHoldIstreamPtr{pool, std::move(response_body)});

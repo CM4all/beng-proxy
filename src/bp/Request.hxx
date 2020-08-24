@@ -240,7 +240,7 @@ private:
          * This response is pending, waiting for the CHAIN translation
          * request to be finished, so we know where to send it.
 	 */
-	UniquePoolPtr<PendingResponse> pending_response;
+	UniquePoolPtr<PendingResponse> pending_chain_response;
 
 	/**
 	 * The URI used for the cookie jar.  This is only used by

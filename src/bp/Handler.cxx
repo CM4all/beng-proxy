@@ -609,10 +609,10 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 inline void
 Request::HandleChainResponse(const TranslateResponse &response) noexcept
 {
-	assert(pending_response);
+	assert(pending_chain_response);
 
 	if (response.break_chain) {
-		auto pr = std::move(pending_response);
+		auto pr = std::move(pending_chain_response);
 		DispatchResponse(pr->status, std::move(pr->headers),
 				 std::move(pr->body));
 	}
@@ -642,7 +642,7 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 	/* no caching for chained requests */
 	auto &rl = *instance.direct_resource_loader;
 
-	auto pr = std::move(pending_response);
+	auto pr = std::move(pending_chain_response);
 	rl.SendRequest(pool, stopwatch,
 		       session_id.GetClusterHash(),
 		       nullptr, nullptr,
@@ -664,7 +664,7 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 		return;
 	}
 
-	if (pending_response) {
+	if (pending_chain_response) {
 		/* this is the response for a CHAIN request */
 		HandleChainResponse(response);
 		return;
