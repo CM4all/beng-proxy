@@ -45,7 +45,6 @@
 #include "http/IncomingRequest.hxx"
 #include "http_server/Handler.hxx"
 #include "http_server/Error.hxx"
-#include "nghttp2/Server.hxx"
 #include "access_log/Glue.hxx"
 #include "pool/pool.hxx"
 #include "address_string.hxx"
@@ -59,6 +58,10 @@
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
 #include "HttpMessageResponse.hxx"
+
+#ifdef HAVE_NGHTTP2
+#include "nghttp2/Server.hxx"
+#endif
 
 #include <assert.h>
 
