@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.20) unstable; urgency=low
 
-  * 
+  * bp: fix BREAK_CHAIN crash bug
 
  --   
 

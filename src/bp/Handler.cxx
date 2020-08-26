@@ -612,9 +612,10 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 	assert(pending_chain_response);
 
 	if (response.break_chain) {
-		auto pr = std::move(pending_chain_response);
-		DispatchResponse(pr->status, std::move(pr->headers),
-				 std::move(pr->body));
+		auto pr = std::move(*pending_chain_response);
+		pending_chain_response.reset();
+		DispatchResponse(pr.status, std::move(pr.headers),
+				 std::move(pr.body));
 	}
 
 	if (CheckHandleRedirectBounceStatus(response))
@@ -642,14 +643,16 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 	/* no caching for chained requests */
 	auto &rl = *instance.direct_resource_loader;
 
-	auto pr = std::move(pending_chain_response);
+	auto pr = std::move(*pending_chain_response);
+	pending_chain_response.reset();
+
 	rl.SendRequest(pool, stopwatch,
 		       session_id.GetClusterHash(),
 		       nullptr, nullptr,
 		       HTTP_METHOD_POST, response.address,
-		       pr->status,
-		       std::move(pr->headers).ToMap(pool),
-		       std::move(pr->body),
+		       pr.status,
+		       std::move(pr.headers).ToMap(pool),
+		       std::move(pr.body),
 		       nullptr,
 		       *this, cancel_ptr);
 
