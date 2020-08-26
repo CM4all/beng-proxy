@@ -616,6 +616,7 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 		pending_chain_response.reset();
 		DispatchResponse(pr.status, std::move(pr.headers),
 				 std::move(pr.body));
+		return;
 	}
 
 	if (CheckHandleRedirectBounceStatus(response))
