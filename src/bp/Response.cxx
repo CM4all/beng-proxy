@@ -873,10 +873,16 @@ Request::RelocateCallback(const char *const uri, void *ctx) noexcept
  */
 
 void
-Request::OnHttpResponse(http_status_t status, StringMap &&headers,
+Request::OnHttpResponse(http_status_t status, StringMap &&_headers,
 			UnusedIstreamPtr body) noexcept
 {
 	assert(!response_sent);
+
+	/* move the StringMap rvalue reference to the stack to avoid
+	   use-after-free bugs when pending_filter_response gets moved
+	   into it, which, by closing the given response body, may
+	   free the pool where the StringMap parameter points to */
+	auto headers = std::move(_headers);
 
 	if (pending_filter_response) {
 		/* this is the response of a filter with
