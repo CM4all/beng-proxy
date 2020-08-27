@@ -100,10 +100,10 @@ struct CGIParser {
 		return status;
 	}
 
-	StringMap &GetHeaders() {
+	StringMap GetHeaders() && noexcept {
 		assert(finished);
 
-		return headers;
+		return std::move(headers);
 	}
 
 	bool KnownLength() const {

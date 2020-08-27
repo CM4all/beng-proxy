@@ -129,7 +129,7 @@ inline bool
 CGIClient::ReturnResponse()
 {
 	http_status_t status = parser.GetStatus();
-	StringMap &headers = parser.GetHeaders();
+	auto headers = std::move(parser).GetHeaders();
 
 	if (http_status_is_empty(status)) {
 		/* this response does not have a response body, as indicated
