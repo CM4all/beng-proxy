@@ -39,21 +39,25 @@
 
 namespace NgHttp2 {
 
+class IstreamDataSourceHandler {
+public:
+	virtual void OnIstreamDataSourceReady() noexcept = 0;
+};
+
 /**
  * Adapter between an #Istream and a #nghttp2_data_source.
  */
 class IstreamDataSource final : FifoBufferSinkHandler {
-	nghttp2_session *const session;
-	const int32_t stream_id;
+	IstreamDataSourceHandler &handler;
 
 	FifoBufferSink sink;
 
 	bool eof = false, error = false;
 
 public:
-	IstreamDataSource(nghttp2_session *_session, int32_t _stream_id,
-			  UnusedIstreamPtr &&_input) noexcept
-		:session(_session), stream_id(_stream_id),
+	IstreamDataSource(UnusedIstreamPtr &&_input,
+			  IstreamDataSourceHandler &_handler) noexcept
+		:handler(_handler),
 		 sink(std::move(_input), *this) {}
 
 	nghttp2_data_provider MakeDataProvider() noexcept {
@@ -66,20 +70,21 @@ public:
 private:
 	/* virtual methods from class FifoBufferSinkHandler */
 	bool OnFifoBufferSinkData() noexcept override {
-		nghttp2_session_resume_data(session, stream_id);
+		handler.OnIstreamDataSourceReady();
 		return true;
 	}
 
 	void OnFifoBufferSinkEof() noexcept override {
 		eof = true;
-		nghttp2_session_resume_data(session, stream_id);
+		handler.OnIstreamDataSourceReady();
 	}
 
 	void OnFifoBufferSinkError(std::exception_ptr ep) noexcept override {
 		// TODO how to propagate the exception details?
 		(void)ep;
 		error = true;
-		nghttp2_session_resume_data(session, stream_id);
+
+		handler.OnIstreamDataSourceReady();
 
 		// TODO: use nghttp2_submit_rst_stream()?
 	}

@@ -64,6 +64,7 @@ constexpr size_t ClientConnection::MAX_CONCURRENT_STREAMS;
 
 class ClientConnection::Request final
 	: Cancellable, MultiFifoBufferIstreamHandler,
+	  IstreamDataSourceHandler,
 	  public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>
 {
 	struct pool &pool;
@@ -210,8 +211,9 @@ private:
 		assert(!request_body);
 		assert(istream);
 
-		request_body = std::make_unique<IstreamDataSource>(connection.session.get(), id,
-								   std::move(istream));
+		IstreamDataSourceHandler &h = *this;
+		request_body = std::make_unique<IstreamDataSource>(std::move(istream),
+								   h);
 		return request_body->MakeDataProvider();
 	}
 
@@ -229,6 +231,14 @@ private:
 					  id, NGHTTP2_CANCEL);
 		connection.socket->ScheduleWrite();
 		Destroy();
+	}
+
+	/* virtual methods from class IstreamDataSourceHandler */
+	void OnIstreamDataSourceReady() noexcept override {
+		assert(request_body);
+		assert(connection.socket);
+
+		nghttp2_session_resume_data(connection.session.get(), id);
 	}
 };
 

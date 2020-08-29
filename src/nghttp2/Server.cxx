@@ -62,6 +62,7 @@ static constexpr Event::Duration write_timeout = std::chrono::seconds(30);
 
 class ServerConnection::Request final
 	: public IncomingHttpRequest, MultiFifoBufferIstreamHandler,
+	  IstreamDataSourceHandler,
 	  public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>
 {
 	ServerConnection &connection;
@@ -113,8 +114,9 @@ public:
 		assert(!response_body);
 		assert(istream);
 
-		response_body = std::make_unique<IstreamDataSource>(connection.session.get(), id,
-								    std::move(istream));
+		IstreamDataSourceHandler &handler = *this;
+		response_body = std::make_unique<IstreamDataSource>(std::move(istream),
+								    handler);
 		return response_body->MakeDataProvider();
 	}
 
@@ -192,6 +194,14 @@ private:
 		assert(request_body_control);
 
 		request_body_control = nullptr;
+	}
+
+	/* virtual methods from class IstreamDataSourceHandler */
+	void OnIstreamDataSourceReady() noexcept override {
+		assert(response_body);
+		assert(connection.socket);
+
+		nghttp2_session_resume_data(connection.session.get(), id);
 	}
 
 	/* virtual methods from class IncomingHttpRequest */
