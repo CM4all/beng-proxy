@@ -516,14 +516,8 @@ ssize_t
 ClientConnection::SendCallback(const void *data, size_t length) noexcept
 {
 	const auto nbytes = socket->Write(data, length);
-	if (nbytes < 0) {
-		const int e = errno;
-		switch (e) {
-		case EAGAIN:
-			socket->ScheduleWrite();
-			return NGHTTP2_ERR_WOULDBLOCK;
-		}
-	}
+	if (nbytes == WRITE_BLOCKING)
+		return NGHTTP2_ERR_WOULDBLOCK;
 
 	return nbytes;
 }
