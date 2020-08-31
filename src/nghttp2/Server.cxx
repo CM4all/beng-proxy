@@ -114,9 +114,9 @@ public:
 		assert(!response_body);
 		assert(istream);
 
-		IstreamDataSourceHandler &handler = *this;
+		IstreamDataSourceHandler &h = *this;
 		response_body = std::make_unique<IstreamDataSource>(std::move(istream),
-								    handler);
+								    h);
 		return response_body->MakeDataProvider();
 	}
 
