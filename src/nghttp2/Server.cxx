@@ -254,7 +254,7 @@ ServerConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data
 
 	eof = (flags & NGHTTP2_FLAG_END_STREAM) != 0;
 	if (eof) {
-		request_body_control->SetEof();
+		std::exchange(request_body_control, nullptr)->SetEof();
 		return 0;
 	}
 
@@ -312,7 +312,7 @@ ServerConnection::Request::OnEndDataFrame() noexcept
 
 	eof = true;
 
-	request_body_control->SetEof();
+	std::exchange(request_body_control, nullptr)->SetEof();
 	return 0;
 }
 
