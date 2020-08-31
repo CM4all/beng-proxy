@@ -239,6 +239,7 @@ private:
 		assert(connection.socket);
 
 		nghttp2_session_resume_data(connection.session.get(), id);
+		connection.socket->ScheduleWrite();
 	}
 };
 
