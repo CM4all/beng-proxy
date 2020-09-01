@@ -31,7 +31,7 @@
  */
 
 #include "Escape.hxx"
-#include "Chars.hxx"
+#include "uri/Chars.hxx"
 #include "util/StringView.hxx"
 #include "util/HexFormat.h"
 #include "util/HexParse.hxx"

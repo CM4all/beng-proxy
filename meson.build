@@ -143,6 +143,7 @@ libcrypt = compiler.find_library('crypt')
 inc = include_directories('src', 'include', 'libcommon/src', '.')
 
 subdir('libcommon/src/util')
+subdir('libcommon/src/uri')
 
 util2 = static_library(
   'util2',
@@ -151,7 +152,6 @@ util2 = static_library(
   'src/uri/Base.cxx',
   'src/uri/Compare.cxx',
   'src/uri/Dissect.cxx',
-  'src/uri/Verify.cxx',
   'src/uri/Escape.cxx',
   'src/uri/Extract.cxx',
   'src/uri/Relative.cxx',
@@ -163,6 +163,7 @@ util_dep = declare_dependency(
   link_with: util2,
   dependencies: [
     util_dep,
+    uri_dep,
   ],
 )
 
@@ -1217,6 +1218,7 @@ install_headers(
 subdir('doc')
 subdir('test')
 subdir('libcommon/test/util')
+subdir('libcommon/test/uri')
 subdir('libcommon/test/http')
 subdir('libcommon/test/io')
 subdir('libcommon/test/pg')

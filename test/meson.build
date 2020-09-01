@@ -710,7 +710,6 @@ test('t_uri', executable('t_uri',
   't_uri_escape.cxx',
   't_uri_extract.cxx',
   't_uri_relative.cxx',
-  't_uri_verify.cxx',
   't_uri_compare.cxx',
   include_directories: inc,
   dependencies: [
