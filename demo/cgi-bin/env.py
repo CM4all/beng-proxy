@@ -1,10 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 from os import environ
 
-print "Content-Type: text/html"
-print
-print """
+print("Content-Type: text/html")
+print()
+print("""
 <table>
   <thead>
     <tr>
@@ -13,12 +13,12 @@ print """
     </tr>
   </thead>
   <tbody>
-"""
+""")
 
-for x in environ.iteritems():
-    print "<tr><td>%s</td><td>%s</td></tr>" % x
+for x in environ.items():
+    print("<tr><td>%s</td><td>%s</td></tr>" % x)
 
-print """
+print("""
   </tbody>
 </table>
-"""
+""")
