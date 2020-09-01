@@ -102,7 +102,7 @@ uri_path_verify_paranoid(const char *uri) noexcept
 	if (IsEncodedDot(uri))
 		return false;
 
-	while (*uri != 0 && *uri != '?') {
+	while (*uri != 0) {
 		if (*uri == '%') {
 			if (/* don't allow an encoded NUL character */
 			    IsEncodedNul(uri) ||
