@@ -34,7 +34,7 @@
 
 #include "util/Compiler.h"
 
-#include <stddef.h>
+#include <cstddef>
 
 template<typename T> struct ConstBuffer;
 struct StringView;
@@ -43,11 +43,11 @@ struct StringView;
  * @param escape_char the character that is used to escape; use '%'
  * for normal URIs
  */
-size_t
+std::size_t
 uri_escape(char *dest, StringView src,
 	   char escape_char='%') noexcept;
 
-size_t
+std::size_t
 uri_escape(char *dest, ConstBuffer<void> src,
 	   char escape_char='%') noexcept;
 

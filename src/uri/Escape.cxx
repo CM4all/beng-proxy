@@ -38,15 +38,13 @@
 
 #include <algorithm>
 
-#include <string.h>
-
-size_t
+std::size_t
 uri_escape(char *dest, StringView src,
 	   char escape_char) noexcept
 {
-	size_t dest_length = 0;
+	std::size_t dest_length = 0;
 
-	for (size_t i = 0; i < src.size; ++i) {
+	for (std::size_t i = 0; i < src.size; ++i) {
 		if (IsUriUnreservedChar(src[i])) {
 			dest[dest_length++] = src[i];
 		} else {
@@ -59,7 +57,7 @@ uri_escape(char *dest, StringView src,
 	return dest_length;
 }
 
-size_t
+std::size_t
 uri_escape(char *dest, ConstBuffer<void> src,
 	   char escape_char) noexcept
 {

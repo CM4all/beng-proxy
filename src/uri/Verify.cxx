@@ -34,8 +34,6 @@
 #include "Chars.hxx"
 #include "util/StringView.hxx"
 
-#include <string.h>
-
 bool
 uri_segment_verify(StringView segment) noexcept
 {
