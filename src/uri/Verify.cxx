@@ -56,19 +56,15 @@ uri_path_verify(StringView uri) noexcept
 		/* path must begin with slash */
 		return false;
 
-	auto src = uri.begin(), end = uri.end();
-	const char *slash;
-	++src;
-	while (src < end) {
-		slash = (const char *)memchr(src, '/', end - src);
-		if (slash == nullptr)
-			slash = end;
+	uri.pop_front(); // strip the leading slash
 
-		if (!uri_segment_verify({src, slash}))
+	do {
+		auto s = uri.Split('/');
+		if (!uri_segment_verify(s.first))
 			return false;
 
-		src = slash + 1;
-	}
+		uri = s.second;
+	} while (!uri.empty());
 
 	return true;
 }
