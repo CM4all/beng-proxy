@@ -288,6 +288,7 @@ struct MakeCgiAddress : CgiAddress {
 	{
 		uri = _uri;
 		path_info = _path_info;
+		options.no_new_privs = true;
 	}
 
 	MakeCgiAddress &&ScriptName(const char *value) {
