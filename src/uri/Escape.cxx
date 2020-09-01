@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,7 +42,7 @@
 
 size_t
 uri_escape(char *dest, StringView src,
-	   char escape_char)
+	   char escape_char) noexcept
 {
 	size_t dest_length = 0;
 
@@ -61,14 +61,14 @@ uri_escape(char *dest, StringView src,
 
 size_t
 uri_escape(char *dest, ConstBuffer<void> src,
-	   char escape_char)
+	   char escape_char) noexcept
 {
 	return uri_escape(dest, StringView((const char *)src.data, src.size),
 			  escape_char);
 }
 
 char *
-uri_unescape(char *dest, StringView _src, char escape_char)
+uri_unescape(char *dest, StringView _src, char escape_char) noexcept
 {
 	auto src = _src.begin();
 	const auto end = _src.end();

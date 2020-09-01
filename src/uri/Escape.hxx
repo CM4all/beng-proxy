@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -45,11 +45,11 @@ struct StringView;
  */
 size_t
 uri_escape(char *dest, StringView src,
-	   char escape_char='%');
+	   char escape_char='%') noexcept;
 
 size_t
 uri_escape(char *dest, ConstBuffer<void> src,
-	   char escape_char='%');
+	   char escape_char='%') noexcept;
 
 /**
  * @param escape_char the character that is used to escape; use '%'
@@ -59,4 +59,4 @@ uri_escape(char *dest, ConstBuffer<void> src,
  */
 char *
 uri_unescape(char *dest, StringView src,
-	     char escape_char='%');
+	     char escape_char='%') noexcept;
