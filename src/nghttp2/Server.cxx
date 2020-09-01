@@ -62,6 +62,7 @@ static constexpr Event::Duration write_timeout = std::chrono::seconds(30);
 
 class ServerConnection::Request final
 	: public IncomingHttpRequest, MultiFifoBufferIstreamHandler,
+	  IstreamDataSourceHandler,
 	  public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>
 {
 	ServerConnection &connection;
@@ -113,8 +114,9 @@ public:
 		assert(!response_body);
 		assert(istream);
 
-		response_body = std::make_unique<IstreamDataSource>(connection.session.get(), id,
-								    std::move(istream));
+		IstreamDataSourceHandler &h = *this;
+		response_body = std::make_unique<IstreamDataSource>(std::move(istream),
+								    h);
 		return response_body->MakeDataProvider();
 	}
 
@@ -194,6 +196,15 @@ private:
 		request_body_control = nullptr;
 	}
 
+	/* virtual methods from class IstreamDataSourceHandler */
+	void OnIstreamDataSourceReady() noexcept override {
+		assert(response_body);
+		assert(connection.socket);
+
+		nghttp2_session_resume_data(connection.session.get(), id);
+		connection.socket->ScheduleWrite();
+	}
+
 	/* virtual methods from class IncomingHttpRequest */
 	void SendResponse(http_status_t status,
 			  HttpHeaders &&response_headers,
@@ -243,7 +254,7 @@ ServerConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data
 
 	eof = (flags & NGHTTP2_FLAG_END_STREAM) != 0;
 	if (eof) {
-		request_body_control->SetEof();
+		std::exchange(request_body_control, nullptr)->SetEof();
 		return 0;
 	}
 
@@ -301,7 +312,7 @@ ServerConnection::Request::OnEndDataFrame() noexcept
 
 	eof = true;
 
-	request_body_control->SetEof();
+	std::exchange(request_body_control, nullptr)->SetEof();
 	return 0;
 }
 
@@ -406,14 +417,8 @@ ssize_t
 ServerConnection::SendCallback(const void *data, size_t length) noexcept
 {
 	const auto nbytes = socket->Write(data, length);
-	if (nbytes < 0) {
-		const int e = errno;
-		switch (e) {
-		case EAGAIN:
-			socket->ScheduleWrite();
-			return NGHTTP2_ERR_WOULDBLOCK;
-		}
-	}
+	if (nbytes == WRITE_BLOCKING)
+		return NGHTTP2_ERR_WOULDBLOCK;
 
 	return nbytes;
 }

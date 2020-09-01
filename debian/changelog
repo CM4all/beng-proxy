@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.20) unstable; urgency=low
 
+  * merge release 16.23
   * bp: fix BREAK_CHAIN crash bug
   * bp: fix FILTER_NO_BODY crash bug
 
@@ -163,6 +164,14 @@ cm4all-beng-proxy (17.0.1) unstable; urgency=low
   * certdb: implement ACMEv2
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 18 Mar 2020 16:54:20 +0100
+
+cm4all-beng-proxy (16.23) unstable; urgency=low
+
+  * cgi: fix use-after-free bug
+  * http2: fix four stall bugs
+  * http2: fix use-after-free bug
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 01 Sep 2020 13:45:30 +0200
 
 cm4all-beng-proxy (16.22) unstable; urgency=low
 
