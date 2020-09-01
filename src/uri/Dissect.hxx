@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -65,5 +65,5 @@ struct DissectedUri {
 	 * Split the URI into its parts.  The result contains pointers
 	 * into the original string.
 	 */
-	bool Parse(const char *src);
+	bool Parse(const char *src) noexcept;
 };

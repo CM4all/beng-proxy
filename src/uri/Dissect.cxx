@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,7 +36,7 @@
 #include <string.h>
 
 bool
-DissectedUri::Parse(const char *src)
+DissectedUri::Parse(const char *src) noexcept
 {
 	const char *qmark = strchr(src, '?');
 
