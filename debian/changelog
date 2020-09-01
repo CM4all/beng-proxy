@@ -4,7 +4,7 @@ cm4all-beng-proxy (16.23) unstable; urgency=low
   * http2: fix four stall bugs
   * http2: fix use-after-free bug
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 01 Sep 2020 13:45:30 +0200
 
 cm4all-beng-proxy (16.22) unstable; urgency=low
 
