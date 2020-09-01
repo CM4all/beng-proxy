@@ -45,7 +45,7 @@ struct StringView;
  */
 gcc_pure
 bool
-uri_segment_verify(const char *src, const char *end) noexcept;
+uri_segment_verify(StringView segment) noexcept;
 
 /**
  * Verifies the path portion of an URI according to RFC 2396.

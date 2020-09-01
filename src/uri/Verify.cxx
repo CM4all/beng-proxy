@@ -37,12 +37,12 @@
 #include <string.h>
 
 bool
-uri_segment_verify(const char *src, const char *end) noexcept
+uri_segment_verify(StringView segment) noexcept
 {
-	for (; src < end; ++src) {
+	for (char ch : segment) {
 		/* XXX check for invalid escaped characters? */
 
-		if (!IsUriPchar(*src))
+		if (!IsUriPchar(ch))
 			return false;
 	}
 
@@ -64,7 +64,7 @@ uri_path_verify(StringView uri) noexcept
 		if (slash == nullptr)
 			slash = end;
 
-		if (!uri_segment_verify(src, slash))
+		if (!uri_segment_verify({src, slash}))
 			return false;
 
 		src = slash + 1;
