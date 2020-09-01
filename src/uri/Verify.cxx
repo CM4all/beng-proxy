@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,7 +37,7 @@
 #include <string.h>
 
 bool
-uri_segment_verify(const char *src, const char *end)
+uri_segment_verify(const char *src, const char *end) noexcept
 {
 	for (; src < end; ++src) {
 		/* XXX check for invalid escaped characters? */
@@ -50,7 +50,7 @@ uri_segment_verify(const char *src, const char *end)
 }
 
 bool
-uri_path_verify(StringView uri)
+uri_path_verify(StringView uri) noexcept
 {
 	if (uri.empty() || uri.front() != '/')
 		/* path must begin with slash */
@@ -74,27 +74,27 @@ uri_path_verify(StringView uri)
 }
 
 static constexpr bool
-IsEncodedNul(const char *p)
+IsEncodedNul(const char *p) noexcept
 {
 	return p[0] == '%' && p[1] == '0' && p[2] == '0';
 }
 
 static constexpr bool
-IsEncodedDot(const char *p)
+IsEncodedDot(const char *p) noexcept
 {
 	return p[0] == '%' && p[1] == '2' &&
 		(p[2] == 'e' || p[2] == 'E');
 }
 
 static constexpr bool
-IsEncodedSlash(const char *p)
+IsEncodedSlash(const char *p) noexcept
 {
 	return p[0] == '%' && p[1] == '2' &&
 		(p[2] == 'f' || p[2] == 'F');
 }
 
 bool
-uri_path_verify_paranoid(const char *uri)
+uri_path_verify_paranoid(const char *uri) noexcept
 {
 	if (uri[0] == '.' &&
 	    (uri[1] == 0 || uri[1] == '/' ||
@@ -148,7 +148,7 @@ uri_path_verify_paranoid(const char *uri)
 }
 
 bool
-uri_path_verify_quick(const char *uri)
+uri_path_verify_quick(const char *uri) noexcept
 {
 	if (*uri != '/')
 		/* must begin with a slash */

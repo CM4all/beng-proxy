@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Verify URI parts.
  */
 
-#ifndef BENG_PROXY_URI_VERIFY_HXX
-#define BENG_PROXY_URI_VERIFY_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -46,14 +45,14 @@ struct StringView;
  */
 gcc_pure
 bool
-uri_segment_verify(const char *src, const char *end);
+uri_segment_verify(const char *src, const char *end) noexcept;
 
 /**
  * Verifies the path portion of an URI according to RFC 2396.
  */
 gcc_pure
 bool
-uri_path_verify(StringView uri);
+uri_path_verify(StringView uri) noexcept;
 
 /**
  * Performs some paranoid checks on the URI; the following is not
@@ -69,7 +68,7 @@ uri_path_verify(StringView uri);
  */
 gcc_pure
 bool
-uri_path_verify_paranoid(const char *uri);
+uri_path_verify_paranoid(const char *uri) noexcept;
 
 /**
  * Quickly verify the validity of an URI (path plus query).  This may
@@ -78,6 +77,4 @@ uri_path_verify_paranoid(const char *uri);
  */
 gcc_pure
 bool
-uri_path_verify_quick(const char *uri);
-
-#endif
+uri_path_verify_quick(const char *uri) noexcept;
