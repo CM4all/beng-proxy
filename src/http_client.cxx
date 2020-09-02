@@ -1155,7 +1155,11 @@ HttpClient::OnBufferedWrite()
 		break;
 
 	case HttpClient::BucketResult::BLOCKING:
+		return true;
+
 	case HttpClient::BucketResult::DEPLETED:
+		assert(!request.istream.IsDefined());
+		socket.UnscheduleWrite();
 		return true;
 
 	case HttpClient::BucketResult::DESTROYED:
