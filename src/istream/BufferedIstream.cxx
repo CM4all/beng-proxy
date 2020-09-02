@@ -90,7 +90,7 @@ public:
 			BufferedIstreamHandler &_handler,
 			UnusedIstreamPtr &&_input,
 			CancellablePointer &cancel_ptr) noexcept
-		:PoolHolder(_p), IstreamSink(std::move(_input), ISTREAM_TO_PIPE),
+		:PoolHolder(_p), IstreamSink(std::move(_input), FD_ANY),
 		 handler(_handler),
 		 pipe(_pipe_stock),
 		 defer_ready(_event_loop, BIND_THIS_METHOD(DeferredReady))
@@ -123,6 +123,8 @@ private:
 		Destroy();
 		_handler.OnBufferedIstreamError(std::move(e));
 	}
+
+	ssize_t ReadToBuffer(int fd, size_t max_length) noexcept;
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
@@ -172,6 +174,29 @@ BufferedIstream::DeferredReady() noexcept
 	_handler.OnBufferedIstreamReady(std::move(i));
 }
 
+inline ssize_t
+BufferedIstream::ReadToBuffer(int fd, size_t max_length) noexcept
+{
+	if (!buffer.IsDefined())
+		buffer = fb_pool_get().Alloc();
+
+	const auto w = buffer.Write();
+	if (w.empty())
+		/* buffer is full - the "ready" call is pending */
+		return ISTREAM_RESULT_BLOCKING;
+
+	ssize_t nbytes = read(fd, w.data, std::min(w.size, max_length));
+	if (nbytes > 0) {
+		buffer.Append(nbytes);
+
+		if ((size_t)nbytes == w.size)
+			/* buffer has become full - we can report to handler */
+			defer_ready.Schedule();
+}
+
+	return nbytes;
+}
+
 size_t
 BufferedIstream::OnData(const void *data, size_t length) noexcept
 {
@@ -181,9 +206,6 @@ BufferedIstream::OnData(const void *data, size_t length) noexcept
 		defer_ready.Schedule();
 		return 0;
 	}
-
-	/* disable direct transfer to the pipe from here on */
-	input.SetDirect(0);
 
 	if (!buffer.IsDefined())
 		buffer = fb_pool_get().Alloc();
@@ -205,9 +227,14 @@ BufferedIstream::OnData(const void *data, size_t length) noexcept
 }
 
 ssize_t
-BufferedIstream::OnDirect(FdType, int fd, size_t max_length) noexcept
+BufferedIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 {
-	assert(!buffer.IsDefined());
+	if (buffer.IsDefined() || (type & ISTREAM_TO_PIPE) == 0)
+		/* if we have already read something into the buffer,
+		   we must continue to do so, even if we suddenly get
+		   a file descriptor, because this class is incapable
+		   of mixing both */
+		return ReadToBuffer(fd, max_length);
 
 	if (!pipe.IsDefined()) {
 		/* create the pipe */

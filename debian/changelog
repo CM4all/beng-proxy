@@ -1,6 +1,6 @@
 cm4all-beng-proxy (16.24) unstable; urgency=low
 
-  * 
+  * bp: fix assertion failure
 
  --   
 
