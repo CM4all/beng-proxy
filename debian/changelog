@@ -2,7 +2,7 @@ cm4all-beng-proxy (16.24) unstable; urgency=low
 
   * bp: fix assertion failure
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 02 Sep 2020 12:07:03 +0200
 
 cm4all-beng-proxy (16.23) unstable; urgency=low
 
