@@ -189,11 +189,9 @@ BufferedIstream::OnData(const void *data, size_t length) noexcept
 		buffer = fb_pool_get().Alloc();
 
 	auto w = buffer.Write();
-	if (w.empty()) {
-		/* buffer is full - we can report to handler */
-		defer_ready.Schedule();
+	if (w.empty())
+		/* buffer is full - the "ready" call is pending */
 		return 0;
-	}
 
 	size_t nbytes = std::min(length, w.size);
 	memcpy(w.data, data, nbytes);
