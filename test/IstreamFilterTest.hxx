@@ -694,6 +694,7 @@ TYPED_TEST_P(IstreamFilterTest, Later)
 /** test with large input and blocking handler */
 TYPED_TEST_P(IstreamFilterTest, BigHold)
 {
+#ifndef ISTREAM_TEST_NO_BIG
 	TypeParam traits;
 	if (!traits.expected_result)
 		return;
@@ -716,6 +717,7 @@ TYPED_TEST_P(IstreamFilterTest, BigHold)
 	inner->Read();
 
 	hold.Clear();
+#endif
 }
 
 REGISTER_TYPED_TEST_CASE_P(IstreamFilterTest,

@@ -797,6 +797,7 @@ test(
     't_sink_header.cxx',
     't_sink_header_empty.cxx',
     'TestAutoPipeIstream.cxx',
+    'TestBufferedIstream.cxx',
     '../src/pipe_stock.cxx',
     '../src/PipeLease.cxx',
     'TestYamlSubstIstream.cxx',
