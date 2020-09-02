@@ -119,7 +119,8 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 				       (unsigned long)st.stx_size));
 
 		fd.Close();
-		break;
+		DispatchResponse(status, std::move(headers), nullptr);
+		return;
 	}
 
 	/* finished, dispatch this response */

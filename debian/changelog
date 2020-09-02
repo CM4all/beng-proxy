@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.0.21) unstable; urgency=low
 
   * merge release 16.24
+  * bp: fix crash on invalid range request
 
  --   
 
