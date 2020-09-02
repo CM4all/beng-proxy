@@ -542,11 +542,18 @@ WasInput::_FillBucketList(IstreamBucketList &list)
 		if (!fd.IsDefined())
 			return;
 
-		ReadToBuffer();
+		try {
+			ReadToBuffer();
+		} catch (...) {
+			Destroy();
+			throw;
+		}
 
-		if (!CheckReleasePipe())
+		if (!CheckReleasePipe()) {
 			// TODO: deal with this condition properly or improve error message
+			Destroy();
 			throw std::runtime_error("WAS peer failed");
+		}
 
 		r = buffer.Read();
 		if (r.empty()) {
