@@ -33,6 +33,7 @@
 #pragma once
 
 #include "util/Compiler.h"
+#include "trace.h"
 
 #include <utility>
 
@@ -44,11 +45,16 @@
 class PoolPtr {
 	struct pool *value = nullptr;
 
+#ifdef TRACE
+	const char *file = nullptr;
+	unsigned line = 0;
+#endif
+
 public:
 	PoolPtr() = default;
 
-	explicit PoolPtr(struct pool &_value) noexcept;
-	PoolPtr(const PoolPtr &src) noexcept;
+	explicit PoolPtr(struct pool &_value TRACE_ARGS_DEFAULT) noexcept;
+	PoolPtr(const PoolPtr &src TRACE_ARGS_DEFAULT) noexcept;
 
 	struct Donate {};
 	static Donate donate;
@@ -58,13 +64,19 @@ public:
 	 * will not create another reference, but will unreference it in
 	 * its destructor.
 	 */
-	PoolPtr(Donate, struct pool &_value) noexcept
-		:value(&_value) {}
+	PoolPtr(Donate, struct pool &_value TRACE_ARGS_DEFAULT_) noexcept
+		:value(&_value)
+		 TRACE_ARGS_INIT
+	{
+	}
 
 	PoolPtr(Donate, const PoolPtr &_value) noexcept = delete;
 
 	PoolPtr(PoolPtr &&src) noexcept
-		:value(std::exchange(src.value, nullptr)) {}
+		:value(std::exchange(src.value, nullptr))
+		 TRACE_ARGS_INIT_FROM(src)
+	{
+	}
 
 	~PoolPtr() noexcept;
 
@@ -73,6 +85,10 @@ public:
 	PoolPtr &operator=(PoolPtr &&src) noexcept {
 		using std::swap;
 		swap(value, src.value);
+#ifdef TRACE
+		file = src.file;
+		line = src.line;
+#endif
 		return *this;
 	}
 

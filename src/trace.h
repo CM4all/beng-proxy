@@ -46,6 +46,7 @@
 #define TRACE_ARGS_FWD , file, line
 #define TRACE_ARGS_IGNORE { (void)file; (void)line; }
 #define TRACE_ARGS_INIT , file(_file), line(_line)
+#define TRACE_ARGS_INIT_FROM(src) , file((src).file), line((src).line)
 
 #else
 
@@ -56,6 +57,7 @@
 #define TRACE_ARGS_FWD
 #define TRACE_ARGS_IGNORE
 #define TRACE_ARGS_INIT
+#define TRACE_ARGS_INIT_FROM(src)
 
 #endif
 
