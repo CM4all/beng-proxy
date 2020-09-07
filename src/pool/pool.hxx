@@ -154,7 +154,7 @@ class ScopePoolRef {
 
 #ifdef TRACE
 	const char *const file;
-	unsigned line;
+	const unsigned line;
 #endif
 
 public:
