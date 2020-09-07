@@ -93,24 +93,18 @@ pool_set_major(struct pool *pool) noexcept;
 #endif
 
 void
-pool_ref_impl(struct pool *pool TRACE_ARGS_DECL) noexcept;
-
-#define pool_ref(pool) pool_ref_impl(pool TRACE_ARGS)
-#define pool_ref_fwd(pool) pool_ref_impl(pool TRACE_ARGS_FWD)
+pool_ref(struct pool *pool TRACE_ARGS_DEFAULT) noexcept;
 
 unsigned
-pool_unref_impl(struct pool *pool TRACE_ARGS_DECL) noexcept;
-
-#define pool_unref(pool) pool_unref_impl(pool TRACE_ARGS)
-#define pool_unref_fwd(pool) pool_unref_impl(pool TRACE_ARGS_FWD)
+pool_unref(struct pool *pool TRACE_ARGS_DEFAULT) noexcept;
 
 /* not implemented - just here to detect bugs */
 void
-pool_ref_impl(const PoolPtr &pool TRACE_ARGS_DECL) noexcept;
+pool_ref(const PoolPtr &pool TRACE_ARGS_DEFAULT) noexcept;
 
 /* not implemented - just here to detect bugs */
 void
-pool_unref_impl(const PoolPtr &pool TRACE_ARGS_DECL) noexcept;
+pool_unref(const PoolPtr &pool TRACE_ARGS_DEFAULT) noexcept;
 
 /**
  * Returns the total size of all allocations in this pool.
@@ -164,17 +158,17 @@ class ScopePoolRef {
 #endif
 
 public:
-	explicit ScopePoolRef(struct pool &_pool TRACE_ARGS_DECL_) noexcept
+	explicit ScopePoolRef(struct pool &_pool TRACE_ARGS_DEFAULT_) noexcept
 		:pool(_pool)
 		 TRACE_ARGS_INIT
 	{
-		pool_ref_fwd(&_pool);
+		pool_ref(&_pool TRACE_ARGS_FWD);
 	}
 
 	ScopePoolRef(const ScopePoolRef &) = delete;
 
 	~ScopePoolRef() noexcept {
-		pool_unref_fwd(&pool);
+		pool_unref(&pool TRACE_ARGS_FWD);
 	}
 
 	operator struct pool &() noexcept {
@@ -225,76 +219,71 @@ pool_clear(struct pool &pool) noexcept;
 
 gcc_malloc gcc_returns_nonnull
 void *
-p_malloc_impl(struct pool *pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DECL) noexcept;
+p_malloc(struct pool *pool, size_t size
+	 TYPE_ARG_DECL TRACE_ARGS_DEFAULT) noexcept;
 
 gcc_malloc gcc_returns_nonnull
 static inline void *
-p_malloc_type(struct pool &pool, size_t size TYPE_ARG_DECL) noexcept
+p_malloc_type(struct pool &pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DEFAULT) noexcept
 {
-	return p_malloc_impl(&pool, size TYPE_ARG_FWD TRACE_ARGS);
+	return p_malloc(&pool, size TYPE_ARG_FWD TRACE_ARGS_FWD);
 }
 
 #ifndef NDEBUG
 
 gcc_malloc gcc_returns_nonnull
 static inline void *
-p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL) noexcept
+p_malloc(struct pool *pool, size_t size TRACE_ARGS_DEFAULT) noexcept
 {
-	return p_malloc_impl(pool, size TYPE_ARG_NULL TRACE_ARGS_FWD);
+	return p_malloc(pool, size TYPE_ARG_NULL TRACE_ARGS_FWD);
 }
 
 #endif
 
-#define p_malloc(pool, size) p_malloc_impl(pool, size TRACE_ARGS)
-#define p_malloc_fwd(pool, size) p_malloc_impl(pool, size TRACE_ARGS_FWD)
+#define p_malloc_fwd(pool, size) p_malloc(pool, size TRACE_ARGS_FWD)
 
 void
 p_free(struct pool *pool, const void *ptr, size_t size) noexcept;
 
 gcc_malloc gcc_returns_nonnull
 void *
-p_memdup_impl(struct pool *pool, const void *src, size_t length
-	      TRACE_ARGS_DECL) noexcept;
+p_memdup(struct pool *pool, const void *src, size_t length
+	 TRACE_ARGS_DEFAULT) noexcept;
 
-#define p_memdup(pool, src, length) p_memdup_impl(pool, src, length TRACE_ARGS)
-#define p_memdup_fwd(pool, src, length) p_memdup_impl(pool, src, length TRACE_ARGS_FWD)
+#define p_memdup_fwd(pool, src, length) p_memdup(pool, src, length TRACE_ARGS_FWD)
 
 gcc_malloc gcc_returns_nonnull
 char *
-p_strdup_impl(struct pool *pool, const char *src TRACE_ARGS_DECL) noexcept;
+p_strdup(struct pool *pool, const char *src TRACE_ARGS_DEFAULT) noexcept;
 
-#define p_strdup(pool, src) p_strdup_impl(pool, src TRACE_ARGS)
-#define p_strdup_fwd(pool, src) p_strdup_impl(pool, src TRACE_ARGS_FWD)
+#define p_strdup_fwd(pool, src) p_strdup(pool, src TRACE_ARGS_FWD)
 
 static inline const char *
-p_strdup_checked(struct pool *pool, const char *s) noexcept
+p_strdup_checked(struct pool *pool, const char *s TRACE_ARGS_DEFAULT) noexcept
 {
-	return s == NULL ? NULL : p_strdup(pool, s);
+	return s == NULL ? NULL : p_strdup_fwd(pool, s);
 }
 
 gcc_malloc gcc_returns_nonnull
 char *
-p_strdup_lower_impl(struct pool *pool, const char *src
-		    TRACE_ARGS_DECL) noexcept;
+p_strdup_lower(struct pool *pool, const char *src
+	       TRACE_ARGS_DEFAULT) noexcept;
 
-#define p_strdup_lower(pool, src) p_strdup_lower_impl(pool, src TRACE_ARGS)
-#define p_strdup_lower_fwd(pool, src) p_strdup_lower_impl(pool, src TRACE_ARGS_FWD)
-
-gcc_malloc gcc_returns_nonnull
-char *
-p_strndup_impl(struct pool *pool, const char *src, size_t length
-	       TRACE_ARGS_DECL) noexcept;
-
-#define p_strndup(pool, src, length) p_strndup_impl(pool, src, length TRACE_ARGS)
-#define p_strndup_fwd(pool, src, length) p_strndup_impl(pool, src, length TRACE_ARGS_FWD)
+#define p_strdup_lower_fwd(pool, src) p_strdup_lower(pool, src TRACE_ARGS_FWD)
 
 gcc_malloc gcc_returns_nonnull
 char *
-p_strndup_lower_impl(struct pool *pool, const char *src, size_t length
-		     TRACE_ARGS_DECL) noexcept;
+p_strndup(struct pool *pool, const char *src, size_t length
+	  TRACE_ARGS_DEFAULT) noexcept;
 
-#define p_strndup_lower(pool, src, length) p_strndup_lower_impl(pool, src, length TRACE_ARGS)
-#define p_strndup_lower_fwd(pool, src, length) p_strndup_lower_impl(pool, src, length TRACE_ARGS_FWD)
+#define p_strndup_fwd(pool, src, length) p_strndup(pool, src, length TRACE_ARGS_FWD)
+
+gcc_malloc gcc_returns_nonnull
+char *
+p_strndup_lower(struct pool *pool, const char *src, size_t length
+		TRACE_ARGS_DEFAULT) noexcept;
+
+#define p_strndup_lower_fwd(pool, src, length) p_strndup_lower(pool, src, length TRACE_ARGS_FWD)
 
 gcc_malloc gcc_returns_nonnull gcc_printf(2, 3)
 char *
@@ -391,9 +380,9 @@ public:
 
 gcc_malloc gcc_returns_nonnull
 char *
-p_strdup_impl(struct pool &pool, StringView src TRACE_ARGS_DECL) noexcept;
+p_strdup(struct pool &pool, StringView src TRACE_ARGS_DEFAULT) noexcept;
 
 gcc_malloc gcc_returns_nonnull
 char *
-p_strdup_lower_impl(struct pool &pool, StringView src
-		    TRACE_ARGS_DECL) noexcept;
+p_strdup_lower(struct pool &pool, StringView src
+	       TRACE_ARGS_DEFAULT) noexcept;

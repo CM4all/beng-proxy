@@ -108,7 +108,7 @@ private:
 	/* virtual methods from class BufferedIstreamHandler */
 	void OnBufferedIstreamReady(UnusedIstreamPtr i) noexcept override {
 		// TODO: eliminate this reference
-		const ScopePoolRef _ref(pool TRACE_ARGS);
+		const ScopePoolRef _ref(pool);
 
 		next.SendRequest(pool, parent_stopwatch,
 				 session_sticky, cache_tag, site_name,

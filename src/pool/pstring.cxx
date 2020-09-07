@@ -54,8 +54,8 @@ CopyLower(char *dest, const char *src, size_t n) noexcept
 }
 
 void *
-p_memdup_impl(struct pool *pool, const void *src, size_t length
-	      TRACE_ARGS_DECL) noexcept
+p_memdup(struct pool *pool, const void *src, size_t length
+	 TRACE_ARGS_DECL) noexcept
 {
 	void *dest = p_malloc_fwd(pool, length);
 	memcpy(dest, src, length);
@@ -63,22 +63,22 @@ p_memdup_impl(struct pool *pool, const void *src, size_t length
 }
 
 char *
-p_strdup_impl(struct pool *pool, const char *src
-	      TRACE_ARGS_DECL) noexcept
+p_strdup(struct pool *pool, const char *src
+	 TRACE_ARGS_DECL) noexcept
 {
 	return (char *)p_memdup_fwd(pool, src, strlen(src) + 1);
 }
 
 char *
-p_strdup_lower_impl(struct pool *pool, const char *src
-		    TRACE_ARGS_DECL) noexcept
+p_strdup_lower(struct pool *pool, const char *src
+	       TRACE_ARGS_DECL) noexcept
 {
 	return p_strndup_lower_fwd(pool, src, strlen(src));
 }
 
 char *
-p_strndup_impl(struct pool *pool, const char *src, size_t length
-	       TRACE_ARGS_DECL) noexcept
+p_strndup(struct pool *pool, const char *src, size_t length
+	  TRACE_ARGS_DECL) noexcept
 {
 	char *dest = (char *)p_malloc_fwd(pool, length + 1);
 	*Copy(dest, src, length) = 0;
@@ -86,8 +86,8 @@ p_strndup_impl(struct pool *pool, const char *src, size_t length
 }
 
 char *
-p_strndup_lower_impl(struct pool *pool, const char *src, size_t length
-		     TRACE_ARGS_DECL) noexcept
+p_strndup_lower(struct pool *pool, const char *src, size_t length
+		TRACE_ARGS_DECL) noexcept
 {
 	char *dest = (char *)p_malloc_fwd(pool, length + 1);
 	*CopyLower(dest, src, length) = 0;
@@ -95,7 +95,7 @@ p_strndup_lower_impl(struct pool *pool, const char *src, size_t length
 }
 
 char *
-p_strdup_impl(struct pool &pool, StringView src TRACE_ARGS_DECL) noexcept
+p_strdup(struct pool &pool, StringView src TRACE_ARGS_DECL) noexcept
 {
 	char *dest = (char *)p_malloc_fwd(&pool, src.size + 1);
 	*Copy(dest, src.data, src.size) = 0;
@@ -103,7 +103,7 @@ p_strdup_impl(struct pool &pool, StringView src TRACE_ARGS_DECL) noexcept
 }
 
 char *
-p_strdup_lower_impl(struct pool &pool, StringView src TRACE_ARGS_DECL) noexcept
+p_strdup_lower(struct pool &pool, StringView src TRACE_ARGS_DECL) noexcept
 {
 	char *dest = (char *)p_malloc_fwd(&pool, src.size + 1);
 	*CopyLower(dest, src.data, src.size) = 0;

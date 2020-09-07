@@ -561,7 +561,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 	   strings stay valid untilt he handler returns, just in case
 	   sink_rubber_new() destroys this object and the pool; TODO:
 	   find a better solution for this */
-	const ScopePoolRef ref(pool TRACE_ARGS);
+	const ScopePoolRef ref(pool);
 
 	bool destroy = false;
 	if (!body) {

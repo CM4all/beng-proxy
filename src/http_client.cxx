@@ -295,7 +295,7 @@ private:
 		   execution even if HttpBodyReader's reference is released in
 		   its destructor (which is called from within our
 		   destructor) */
-		const ScopePoolRef ref(pool TRACE_ARGS);
+		const ScopePoolRef ref(pool);
 
 		DeleteFromPool(pool, this);
 	}
