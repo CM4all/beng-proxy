@@ -167,9 +167,9 @@ public:
 	explicit ScopePoolRef(struct pool &_pool TRACE_ARGS_DECL_) noexcept
 		:pool(_pool)
 		 TRACE_ARGS_INIT
-		{
-			pool_ref_fwd(&_pool);
-		}
+	{
+		pool_ref_fwd(&_pool);
+	}
 
 	ScopePoolRef(const ScopePoolRef &) = delete;
 
