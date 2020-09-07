@@ -669,7 +669,7 @@ pool_dump_refs(const struct pool &pool) noexcept
 #endif
 
 void
-pool_ref_impl(struct pool *pool TRACE_ARGS_DECL) noexcept
+pool_ref(struct pool *pool TRACE_ARGS_DECL) noexcept
 {
 	assert(pool->ref > 0);
 	++pool->ref;
@@ -684,7 +684,7 @@ pool_ref_impl(struct pool *pool TRACE_ARGS_DECL) noexcept
 }
 
 unsigned
-pool_unref_impl(struct pool *pool TRACE_ARGS_DECL) noexcept
+pool_unref(struct pool *pool TRACE_ARGS_DECL) noexcept
 {
 	assert(pool->ref > 0);
 	--pool->ref;
@@ -1047,7 +1047,7 @@ internal_malloc(struct pool *pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DECL) no
 }
 
 void *
-p_malloc_impl(struct pool *pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DECL) noexcept
+p_malloc(struct pool *pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DECL) noexcept
 {
 	return internal_malloc(pool, size TYPE_ARG_FWD TRACE_ARGS_FWD);
 }

@@ -228,7 +228,7 @@ ProxyWidget::Continue()
 			   Request::CheckCsrfToken() may destroy the
 			   pool and leave us unable to call our
 			   destructor */
-			const ScopePoolRef _ref(request.pool TRACE_ARGS);
+			const ScopePoolRef _ref(request.pool);
 			if (!request.CheckCsrfToken()) {
 				Destroy();
 				return;

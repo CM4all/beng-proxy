@@ -33,14 +33,16 @@
 #include "Ptr.hxx"
 #include "pool.hxx"
 
-PoolPtr::PoolPtr(struct pool &_value) noexcept
+PoolPtr::PoolPtr(struct pool &_value TRACE_ARGS_DECL_) noexcept
 	:value(&_value)
+	 TRACE_ARGS_INIT
 {
 	pool_ref(value);
 }
 
-PoolPtr::PoolPtr(const PoolPtr &src) noexcept
+PoolPtr::PoolPtr(const PoolPtr &src TRACE_ARGS_DECL_) noexcept
 	:value(src.value)
+	 TRACE_ARGS_INIT
 {
 	if (value != nullptr)
 		pool_ref(value);
@@ -60,6 +62,12 @@ PoolPtr::operator=(const PoolPtr &src) noexcept
 	value = src.value;
 	if (value != nullptr)
 		pool_ref(value);
+
+#ifdef TRACE
+	file = src.file;
+	line = src.line;
+#endif
+
 	return *this;
 }
 
