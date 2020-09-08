@@ -115,10 +115,6 @@ public:
 		stream->SetDirect(direct);
 	}
 
-	void SetDirect(const Istream &src) noexcept {
-		SetDirect(src.GetHandlerDirect());
-	}
-
 	void Read() noexcept {
 		assert(IsDefined());
 
