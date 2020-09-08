@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -51,10 +51,10 @@ class MemcachedResponseHandler;
 
 MemachedStock *
 memcached_stock_new(EventLoop &event_loop, TcpBalancer &tcp_balancer,
-                    const AddressList &address);
+		    const AddressList &address) noexcept;
 
 void
-memcached_stock_free(MemachedStock *stock);
+memcached_stock_free(MemachedStock *stock) noexcept;
 
 /**
  * Invoke a call to the memcached server, on a socket to be obtained
@@ -63,9 +63,9 @@ memcached_stock_free(MemachedStock *stock);
  */
 void
 memcached_stock_invoke(struct pool &pool, MemachedStock &stock,
-                       enum memcached_opcode opcode,
-                       const void *extras, size_t extras_length,
-                       const void *key, size_t key_length,
-                       UnusedIstreamPtr value,
-                       MemcachedResponseHandler &handler,
-                       CancellablePointer &cancel_ptr);
+		       enum memcached_opcode opcode,
+		       const void *extras, size_t extras_length,
+		       const void *key, size_t key_length,
+		       UnusedIstreamPtr value,
+		       MemcachedResponseHandler &handler,
+		       CancellablePointer &cancel_ptr) noexcept;

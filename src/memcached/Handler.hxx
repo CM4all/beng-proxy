@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,10 +42,10 @@ class UnusedIstreamPtr;
 
 class MemcachedResponseHandler {
 public:
-    virtual void OnMemcachedResponse(enum memcached_response_status status,
-                                     const void *extras, size_t extras_length,
-                                     const void *key, size_t key_length,
-                                     UnusedIstreamPtr value) noexcept = 0;
+	virtual void OnMemcachedResponse(enum memcached_response_status status,
+					 const void *extras, size_t extras_length,
+					 const void *key, size_t key_length,
+					 UnusedIstreamPtr value) noexcept = 0;
 
-    virtual void OnMemcachedError(std::exception_ptr ep) noexcept = 0;
+	virtual void OnMemcachedError(std::exception_ptr ep) noexcept = 0;
 };
