@@ -369,9 +369,22 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 		break;
 
 	case WAS_COMMAND_STOP:
-	case WAS_COMMAND_PREMATURE:
 		// XXX
 		AbortError(StringFormat<64>("unexpected packet: %d", cmd));
+		return false;
+
+	case WAS_COMMAND_PREMATURE:
+		length_p = (const uint64_t *)payload.data;
+		if (payload.size != sizeof(*length_p)) {
+			AbortError(std::make_exception_ptr("malformed PREMATURE packet"));
+			return false;
+		}
+		fprintf(stderr, "WAS_SERVER[%p] premature=%u body=%p\n", (const void *)this, (unsigned)*length_p, (const void *)request.body);
+
+		if (request.body == nullptr)
+			break;
+
+		was_input_premature(request.body, *length_p);
 		return false;
 	}
 
