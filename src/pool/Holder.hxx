@@ -50,8 +50,9 @@ protected:
 	const PoolPtr pool;
 
 	template<typename P>
-	explicit PoolHolder(P &&_pool) noexcept
-		:pool(std::forward<P>(_pool))
+	explicit PoolHolder(P &&_pool
+			    TRACE_ARGS_DEFAULT) noexcept
+		:pool(std::forward<P>(_pool) TRACE_ARGS_FWD)
 	{
 	}
 
