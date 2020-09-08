@@ -44,6 +44,7 @@
 #include "pool/LeakDetector.hxx"
 #include "stopwatch.hxx"
 #include "io/FileDescriptor.hxx"
+#include "event/TimerEvent.hxx"
 #include "http/HeaderName.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
@@ -76,6 +77,16 @@ class WasClient final
 
 	HttpResponseHandler &handler;
 
+	/**
+	 * When we don't known the response length yet, this timer is
+	 * used to delay submitting the response to
+	 * #HttpResponseHandler a bit.  Chances are that we'll receive
+	 * a WAS_COMMAND_LENGTH packet meanwhile (which can allow
+	 * forwarding this response without HTTP/1.1 chunking), and if
+	 * not, we're going to continue without a length.
+	 */
+	TimerEvent submit_response_timer;
+
 	struct Request {
 		WasOutput *body;
 
@@ -105,6 +116,12 @@ class WasClient final
 		 * evaluated.
 		 */
 		bool pending = false;
+
+		/**
+		 * If set, then the response body length has been
+		 * announced via WAS_COMMAND_LENGTH.
+		 */
+		bool known_length = false;
 
 		/**
 		 * Did the #WasInput release its pipe yet?  If this happens
@@ -337,6 +354,8 @@ private:
 	 */
 	bool SubmitPendingResponse();
 
+	void OnSubmitResponseTimer() noexcept;
+
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
 		/* Cancellable::Cancel() can only be used before the
@@ -407,6 +426,10 @@ WasClient::SubmitPendingResponse()
 	assert(response.pending);
 	assert(!response.WasSubmitted());
 
+	/* just in case WAS_COMMAND_LENGTH was received while the
+	   submit_response_timer was pending */
+	submit_response_timer.Cancel();
+
 	stopwatch.RecordEvent("headers");
 
 	response.pending = false;
@@ -426,6 +449,16 @@ WasClient::SubmitPendingResponse()
 				       was_input_enable(*response.body));
 		return !destructed && control.IsDefined();
 	}
+}
+
+inline void
+WasClient::OnSubmitResponseTimer() noexcept
+{
+	/* we have response metadata, but after this timeout, we still
+	   havn't received WAS_COMMAND_LENGTH - give up and submit the
+	   response without a known total length */
+
+	SubmitPendingResponse();
 }
 
 /*
@@ -621,6 +654,10 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
 			return false;
 		}
 
+		/* now that we know the length, we can finally submit
+		   the response (and don't need to wait for
+		   submit_response_timer to trigger that) */
+		response.known_length = true;
 		break;
 
 	case WAS_COMMAND_STOP:
@@ -666,9 +703,17 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
 bool
 WasClient::OnWasControlDrained() noexcept
 {
-	if (response.pending)
-		return SubmitPendingResponse();
-	else
+	if (response.pending) {
+		if (response.known_length)
+			return SubmitPendingResponse();
+		else {
+			/* we don't know the length yet - wait a bit
+			   before submitting the response, maybe we'll
+			   receive WAS_COMMAND_LENGTH really soon */
+			submit_response_timer.Schedule(std::chrono::milliseconds(5));
+			return true;
+		}
+	} else
 		return true;
 }
 
@@ -817,6 +862,8 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 	 lease(_lease),
 	 control(event_loop, control_fd, *this),
 	 handler(_handler),
+	 submit_response_timer(event_loop,
+			       BIND_THIS_METHOD(OnSubmitResponseTimer)),
 	 request(body
 		 ? was_output_new(pool, event_loop, output_fd,
 				  std::move(body), *this)
