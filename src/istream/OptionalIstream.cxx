@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,91 +40,91 @@
 #include <assert.h>
 
 class OptionalIstream final : public ForwardIstream {
-    const SharedPoolPtr<OptionalIstreamControl> control;
+	const SharedPoolPtr<OptionalIstreamControl> control;
 
-    bool resumed = false;
+	bool resumed = false;
 
 public:
-    OptionalIstream(struct pool &p, UnusedIstreamPtr &&_input) noexcept
-        :ForwardIstream(p, std::move(_input)),
-         control(SharedPoolPtr<OptionalIstreamControl>::Make(p, *this)) {}
+	OptionalIstream(struct pool &p, UnusedIstreamPtr &&_input) noexcept
+		:ForwardIstream(p, std::move(_input)),
+		 control(SharedPoolPtr<OptionalIstreamControl>::Make(p, *this)) {}
 
-    ~OptionalIstream() noexcept {
-        control->optional = nullptr;
-    }
+	~OptionalIstream() noexcept {
+		control->optional = nullptr;
+	}
 
-    auto GetControl() noexcept {
-        return control;
-    }
+	auto GetControl() noexcept {
+		return control;
+	}
 
-    void Resume() noexcept {
-        resumed = true;
-    }
+	void Resume() noexcept {
+		resumed = true;
+	}
 
-    void Discard() noexcept {
-        assert(!resumed);
+	void Discard() noexcept {
+		assert(!resumed);
 
-        resumed = true;
+		resumed = true;
 
-        /* replace the input with a "null" istream */
-        ReplaceInputDirect(istream_null_new(GetPool()));
-    }
+		/* replace the input with a "null" istream */
+		ReplaceInputDirect(istream_null_new(GetPool()));
+	}
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) noexcept override {
-        /* can't respond to this until we're resumed, because the
-           original input can be discarded */
-        return resumed ? ForwardIstream::_GetAvailable(partial) : -1;
-    }
+	off_t _GetAvailable(bool partial) noexcept override {
+		/* can't respond to this until we're resumed, because the
+		   original input can be discarded */
+		return resumed ? ForwardIstream::_GetAvailable(partial) : -1;
+	}
 
-    void _Read() noexcept override {
-        if (resumed)
-            ForwardIstream::_Read();
-    }
+	void _Read() noexcept override {
+		if (resumed)
+			ForwardIstream::_Read();
+	}
 
-    void _FillBucketList(IstreamBucketList &list) override {
-        if (resumed) {
-            try {
-                input.FillBucketList(list);
-            } catch (...) {
-                Destroy();
-                throw;
-            }
-        } else
-            list.SetMore();
-    }
+	void _FillBucketList(IstreamBucketList &list) override {
+		if (resumed) {
+			try {
+				input.FillBucketList(list);
+			} catch (...) {
+				Destroy();
+				throw;
+			}
+		} else
+			list.SetMore();
+	}
 
-    int _AsFd() noexcept override {
-        return resumed
-            ? ForwardIstream::_AsFd()
-            : -1;
-    }
+	int _AsFd() noexcept override {
+		return resumed
+			? ForwardIstream::_AsFd()
+			: -1;
+	}
 
-    /* handler */
+	/* handler */
 
-    size_t OnData(const void *data, size_t length) noexcept override {
-        return resumed ? InvokeData(data, length) : 0;
-    }
+	size_t OnData(const void *data, size_t length) noexcept override {
+		return resumed ? InvokeData(data, length) : 0;
+	}
 };
 
 void
 OptionalIstreamControl::Resume() noexcept
 {
-    if (optional != nullptr)
-        optional->Resume();
+	if (optional != nullptr)
+		optional->Resume();
 }
 
 void
 OptionalIstreamControl::Discard() noexcept
 {
-    if (optional != nullptr)
-        optional->Discard();
+	if (optional != nullptr)
+		optional->Discard();
 }
 
 std::pair<UnusedIstreamPtr, SharedPoolPtr<OptionalIstreamControl>>
 istream_optional_new(struct pool &pool, UnusedIstreamPtr input) noexcept
 {
-    auto *i = NewIstream<OptionalIstream>(pool, std::move(input));
-    return std::make_pair(UnusedIstreamPtr(i), i->GetControl());
+	auto *i = NewIstream<OptionalIstream>(pool, std::move(input));
+	return std::make_pair(UnusedIstreamPtr(i), i->GetControl());
 }

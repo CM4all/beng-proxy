@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,12 +36,12 @@
 
 class RefIstream final : public ForwardIstream {
 public:
-    RefIstream(struct pool &p, UnusedIstreamPtr _input)
-        :ForwardIstream(p, std::move(_input)) {}
+	RefIstream(struct pool &p, UnusedIstreamPtr _input)
+		:ForwardIstream(p, std::move(_input)) {}
 };
 
 UnusedIstreamPtr
 NewRefIstream(struct pool &pool, UnusedIstreamPtr input) noexcept
 {
-    return NewIstreamPtr<RefIstream>(pool, std::move(input));
+	return NewIstreamPtr<RefIstream>(pool, std::move(input));
 }

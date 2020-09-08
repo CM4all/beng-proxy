@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_DEFLATE_HXX
-#define BENG_PROXY_ISTREAM_DEFLATE_HXX
+#pragma once
 
 struct pool;
 class UnusedIstreamPtr;
@@ -42,6 +41,4 @@ class EventLoop;
  */
 UnusedIstreamPtr
 istream_deflate_new(struct pool &pool, UnusedIstreamPtr input,
-                    EventLoop &event_loop, bool gzip=false) noexcept;
-
-#endif
+		    EventLoop &event_loop, bool gzip=false) noexcept;
