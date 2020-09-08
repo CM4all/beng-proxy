@@ -52,6 +52,10 @@ class CatIstream final : public Istream, DestructAnchor {
 		Input(CatIstream &_cat, UnusedIstreamPtr &&_istream) noexcept
 			:IstreamSink(std::move(_istream)), cat(_cat) {}
 
+		void SetDirect(FdTypeMask direct) noexcept {
+			input.SetDirect(direct);
+		}
+
 		off_t GetAvailable(bool partial) const noexcept {
 			return input.GetAvailable(partial);
 		}
@@ -60,8 +64,7 @@ class CatIstream final : public Istream, DestructAnchor {
 			return input.Skip(length);
 		}
 
-		void Read(FdTypeMask direct) noexcept {
-			input.SetDirect(direct);
+		void Read() noexcept {
 			input.Read();
 		}
 
@@ -156,9 +159,9 @@ private:
 
 	ssize_t OnInputDirect(gcc_unused Input &i, FdType type, int fd,
 			      size_t max_length) noexcept {
-		assert(IsCurrent(i));
-
-		return InvokeDirect(type, fd, max_length);
+		return IsCurrent(i)
+			? InvokeDirect(type, fd, max_length)
+			: (ssize_t)ISTREAM_RESULT_BLOCKING;
 	}
 
 	void OnInputEof(Input &i) noexcept {
@@ -173,7 +176,7 @@ private:
 			   from CatIstream:Read() - in this case,
 			   istream_cat_read() would provide the loop.  This is
 			   advantageous because we avoid unnecessary recursing. */
-			GetCurrent().Read(GetHandlerDirect());
+			GetCurrent().Read();
 		}
 	}
 
@@ -185,6 +188,13 @@ private:
 
 public:
 	/* virtual methods from class Istream */
+
+	void _SetDirect(FdTypeMask mask) noexcept override {
+		Istream::_SetDirect(mask);
+
+		for (auto &i : inputs)
+			i.SetDirect(mask);
+	}
 
 	off_t _GetAvailable(bool partial) noexcept override;
 	off_t _Skip(gcc_unused off_t length) noexcept override;
@@ -247,7 +257,7 @@ CatIstream::_Read() noexcept
 	CatIstream::InputList::const_iterator prev;
 	do {
 		prev = inputs.begin();
-		GetCurrent().Read(GetHandlerDirect());
+		GetCurrent().Read();
 		if (destructed)
 			return;
 	} while (!IsEOF() && inputs.begin() != prev);

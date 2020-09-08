@@ -80,6 +80,16 @@ private:
 public:
 	/* virtual methods from class Istream */
 
+	void _SetDirect(FdTypeMask mask) noexcept override {
+		/* call FacadeIstream::_SetDirect(), not
+		   ForwardIstream::_SetDirect(), because we need to
+		   check if we already have an input */
+		FacadeIstream::_SetDirect(mask);
+
+		if (HasInput())
+			input.SetDirect(mask);
+	}
+
 	off_t _GetAvailable(bool partial) noexcept override {
 		return HasInput()
 			? ForwardIstream::_GetAvailable(partial)

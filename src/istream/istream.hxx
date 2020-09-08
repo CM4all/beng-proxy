@@ -199,7 +199,7 @@ public:
 		assert(!destroyed);
 
 		handler = &_handler;
-		handler_direct = _handler_direct;
+		SetDirect(_handler_direct);
 	}
 
 	/**
@@ -209,13 +209,13 @@ public:
 	 */
 	void ClearHandler() noexcept {
 		handler = nullptr;
-		handler_direct = 0;
+		SetDirect(0);
 	}
 
-	void SetDirect(FdTypeMask _handler_direct) noexcept {
+	void SetDirect(FdTypeMask mask) noexcept {
 		assert(!destroyed);
 
-		handler_direct = _handler_direct;
+		_SetDirect(mask);
 	}
 
 	/**
@@ -488,6 +488,14 @@ public:
 	}
 
 protected:
+	/**
+	 * This method can be implemented by subclasses to propagate
+	 * the new tag to their inputs.
+	 */
+	virtual void _SetDirect(FdTypeMask _handler_direct) noexcept {
+		handler_direct = _handler_direct;
+	}
+
 	virtual off_t _GetAvailable(gcc_unused bool partial) noexcept {
 		return -1;
 	}

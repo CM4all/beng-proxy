@@ -45,10 +45,6 @@ protected:
 	explicit FacadeIstream(struct pool &_pool) noexcept
 		:Istream(_pool) {}
 
-	void CopyDirect() noexcept {
-		input.SetDirect(GetHandlerDirect());
-	}
-
 	template<typename I>
 	void ReplaceInputDirect(I &&_input) noexcept {
 		assert(input.IsDefined());
