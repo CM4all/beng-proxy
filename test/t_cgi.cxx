@@ -585,7 +585,11 @@ test_length_too_small_late(PoolPtr pool, Context *c)
 	c->event_loop.Dispatch();
 
 	assert(!c->aborted);
-	assert(c->body_abort);
+	assert(c->body_abort ||
+	       /* this error cannot be caught in the "direct" mode,
+		  because in that mode, the CGI client limits the
+		  number of bytes which can be read */
+	       my_handler_direct != 0);
 }
 
 /**
