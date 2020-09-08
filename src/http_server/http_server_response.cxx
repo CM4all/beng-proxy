@@ -48,7 +48,7 @@ HttpServerConnection::OnIstreamReady() noexcept
 		return true;
 
 	case BucketResult::MORE:
-		/* it's out responsibility now to ask for more data */
+		/* it's our responsibility now to ask for more data */
 		socket->ScheduleWrite();
 		return false;
 
