@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -51,123 +51,123 @@
 static YAML::Node
 ResolveYamlPathSegment(const YAML::Node &parent, StringView segment)
 {
-    if (parent.IsMap()) {
-        auto result = parent[std::string(segment.data, segment.size).c_str()];
-        if (!result)
-            throw FormatRuntimeError("YAML path segment '%.*s' does not exist",
-                                     int(segment.size), segment.data);
+	if (parent.IsMap()) {
+		auto result = parent[std::string(segment.data, segment.size).c_str()];
+		if (!result)
+			throw FormatRuntimeError("YAML path segment '%.*s' does not exist",
+						 int(segment.size), segment.data);
 
-        return result;
-    } else
-        throw FormatRuntimeError("Failed to resolve YAML path segment '%.*s'",
-                                 int(segment.size), segment.data);
+		return result;
+	} else
+		throw FormatRuntimeError("Failed to resolve YAML path segment '%.*s'",
+					 int(segment.size), segment.data);
 }
 
 static YAML::Node
 ResolveYamlPath(YAML::Node node, StringView path)
 {
-    for (StringView s : IterableSplitString(path, '.')) {
-        if (s.empty())
-            continue;
+	for (StringView s : IterableSplitString(path, '.')) {
+		if (s.empty())
+			continue;
 
-        node = ResolveYamlPathSegment(node, s);
-    }
+		node = ResolveYamlPathSegment(node, s);
+	}
 
-    return node;
+	return node;
 }
 
 static YAML::Node
 ResolveYamlMap(YAML::Node node, StringView path)
 {
-    node = ResolveYamlPath(node, path);
-    if (!node.IsMap())
-        throw path.empty()
-            ? std::runtime_error("Not a YAML map")
-            : FormatRuntimeError("Path '%.*s' is not a YAML map",
-                                 int(path.size), path.data);
+	node = ResolveYamlPath(node, path);
+	if (!node.IsMap())
+		throw path.empty()
+			? std::runtime_error("Not a YAML map")
+			: FormatRuntimeError("Path '%.*s' is not a YAML map",
+					     int(path.size), path.data);
 
-    return node;
+	return node;
 }
 
 static auto
 MakePrefix(bool alt_syntax, const char *_prefix)
 {
-    std::string prefix = alt_syntax ? "{[" : "{%";
-    if (_prefix != nullptr)
-        prefix += _prefix;
-    return prefix;
+	std::string prefix = alt_syntax ? "{[" : "{%";
+	if (_prefix != nullptr)
+		prefix += _prefix;
+	return prefix;
 }
 
 static void
 LoadYamlMap(struct pool &pool, SubstTree &tree,
-            const std::string &prefix,
-            const std::string &suffix,
-            const YAML::Node &node) noexcept
+	    const std::string &prefix,
+	    const std::string &suffix,
+	    const YAML::Node &node) noexcept
 {
-    assert(node.IsMap());
+	assert(node.IsMap());
 
-    for (const auto &i : node) {
-        if (!i.first.IsScalar())
-            continue;
+	for (const auto &i : node) {
+		if (!i.first.IsScalar())
+			continue;
 
-        if (i.second.IsScalar()) {
-            const auto name = prefix + i.first.as<std::string>() + suffix;
-            const auto value = i.second.as<std::string>();
-            tree.Add(pool, p_strndup(&pool, name.data(), name.length()),
-                     {p_strndup(&pool, value.data(), value.length()), value.length()});
-        } else if (i.second.IsMap()) {
-            LoadYamlMap(pool, tree, prefix + i.first.as<std::string>() + ".",
-                        suffix,
-                        i.second);
-        }
-    }
+		if (i.second.IsScalar()) {
+			const auto name = prefix + i.first.as<std::string>() + suffix;
+			const auto value = i.second.as<std::string>();
+			tree.Add(pool, p_strndup(&pool, name.data(), name.length()),
+				 {p_strndup(&pool, value.data(), value.length()), value.length()});
+		} else if (i.second.IsMap()) {
+			LoadYamlMap(pool, tree, prefix + i.first.as<std::string>() + ".",
+				    suffix,
+				    i.second);
+		}
+	}
 }
 
 static SubstTree
 LoadYamlMap(struct pool &pool, bool alt_syntax, const char *_prefix,
-            const YAML::Node &node) noexcept
+	    const YAML::Node &node) noexcept
 {
-    assert(node.IsMap());
+	assert(node.IsMap());
 
-    const auto prefix = MakePrefix(alt_syntax, _prefix);
-    const std::string suffix(alt_syntax ? "]}" : "%}");
+	const auto prefix = MakePrefix(alt_syntax, _prefix);
+	const std::string suffix(alt_syntax ? "]}" : "%}");
 
-    SubstTree tree;
-    LoadYamlMap(pool, tree, prefix, suffix, node);
-    return tree;
+	SubstTree tree;
+	LoadYamlMap(pool, tree, prefix, suffix, node);
+	return tree;
 }
 
 UnusedIstreamPtr
 NewYamlSubstIstream(struct pool &pool, UnusedIstreamPtr input,
-                    bool alt_syntax,
-                    const char *prefix,
-                    const YAML::Node &yaml_node, const char *yaml_map_path)
+		    bool alt_syntax,
+		    const char *prefix,
+		    const YAML::Node &yaml_node, const char *yaml_map_path)
 {
-    return istream_subst_new(&pool, std::move(input),
-                             LoadYamlMap(pool, alt_syntax, prefix,
-                                         ResolveYamlMap(yaml_node,
-                                                        yaml_map_path)));
+	return istream_subst_new(&pool, std::move(input),
+				 LoadYamlMap(pool, alt_syntax, prefix,
+					     ResolveYamlMap(yaml_node,
+							    yaml_map_path)));
 }
 
 static SubstTree
 LoadYamlFile(struct pool &pool, bool alt_syntax,
-             const char *prefix,
-             const char *file_path, const char *map_path)
-try {
-    return LoadYamlMap(pool, alt_syntax, prefix,
-                       ResolveYamlMap(YAML::LoadFile(file_path), map_path));
-} catch (...) {
-    std::throw_with_nested(FormatRuntimeError("Failed to load YAML file '%s'",
-                                              file_path));
-}
+	     const char *prefix,
+	     const char *file_path, const char *map_path)
+	try {
+		return LoadYamlMap(pool, alt_syntax, prefix,
+				   ResolveYamlMap(YAML::LoadFile(file_path), map_path));
+	} catch (...) {
+		std::throw_with_nested(FormatRuntimeError("Failed to load YAML file '%s'",
+							  file_path));
+	}
 
 UnusedIstreamPtr
 NewYamlSubstIstream(struct pool &pool, UnusedIstreamPtr input,
-                    bool alt_syntax,
-                    const char *prefix,
-                    const char *yaml_file, const char *yaml_map_path)
+		    bool alt_syntax,
+		    const char *prefix,
+		    const char *yaml_file, const char *yaml_map_path)
 {
-    return istream_subst_new(&pool, std::move(input),
-                             LoadYamlFile(pool, alt_syntax, prefix,
-                                          yaml_file, yaml_map_path));
+	return istream_subst_new(&pool, std::move(input),
+				 LoadYamlFile(pool, alt_syntax, prefix,
+					      yaml_file, yaml_map_path));
 }

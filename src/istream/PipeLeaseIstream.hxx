@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -43,38 +43,38 @@ class SliceBuffer;
  * and no more new data must be written to it.
  */
 class PipeLeaseIstream final : public Istream {
-    PipeLease pipe;
+	PipeLease pipe;
 
-    /**
-     * Remaining data in the pipe.  Data which has been transferred
-     * into our buffer doesn't count.
-     */
-    size_t remaining;
+	/**
+	 * Remaining data in the pipe.  Data which has been transferred
+	 * into our buffer doesn't count.
+	 */
+	size_t remaining;
 
-    SliceFifoBuffer buffer;
+	SliceFifoBuffer buffer;
 
 public:
-    PipeLeaseIstream(struct pool &p, PipeLease &&_pipe, size_t size) noexcept
-        :Istream(p), pipe(std::move(_pipe)), remaining(size) {}
+	PipeLeaseIstream(struct pool &p, PipeLease &&_pipe, size_t size) noexcept
+		:Istream(p), pipe(std::move(_pipe)), remaining(size) {}
 
-    ~PipeLeaseIstream() noexcept override {
-        pipe.Release(remaining == 0);
-    }
+	~PipeLeaseIstream() noexcept override {
+		pipe.Release(remaining == 0);
+	}
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool) noexcept override {
-        return remaining;
-    }
+	off_t _GetAvailable(bool) noexcept override {
+		return remaining;
+	}
 
-    off_t _Skip(off_t length) noexcept override;
+	off_t _Skip(off_t length) noexcept override;
 
-    void _Read() noexcept override;
+	void _Read() noexcept override;
 
 private:
-    /**
-     * @return true if the buffer is now empty; false if data remains
-     * in the buffer or if the #Istream has been closed
-     */
-    bool FeedBuffer() noexcept;
+	/**
+	 * @return true if the buffer is now empty; false if data remains
+	 * in the buffer or if the #Istream has been closed
+	 */
+	bool FeedBuffer() noexcept;
 };

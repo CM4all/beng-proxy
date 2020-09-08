@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,23 +40,23 @@ class UnusedIstreamPtr;
 class OptionalIstream;
 
 class OptionalIstreamControl {
-    friend class OptionalIstream;
+	friend class OptionalIstream;
 
-    OptionalIstream *optional;
+	OptionalIstream *optional;
 
 public:
-    explicit constexpr OptionalIstreamControl(OptionalIstream &_optional) noexcept
-        :optional(&_optional) {}
+	explicit constexpr OptionalIstreamControl(OptionalIstream &_optional) noexcept
+		:optional(&_optional) {}
 
-    /**
-     * Allows the #Istream to resume, but does not trigger reading.
-     */
-    void Resume() noexcept;
+	/**
+	 * Allows the #Istream to resume, but does not trigger reading.
+	 */
+	void Resume() noexcept;
 
-    /**
-     * Discard the stream contents.
-     */
-    void Discard() noexcept;
+	/**
+	 * Discard the stream contents.
+	 */
+	void Discard() noexcept;
 };
 
 /**

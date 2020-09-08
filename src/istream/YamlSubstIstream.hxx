@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -38,8 +38,8 @@ namespace YAML { class Node; }
 
 UnusedIstreamPtr
 NewYamlSubstIstream(struct pool &pool, UnusedIstreamPtr input, bool alt_syntax,
-                    const char *prefix,
-                    const YAML::Node &yaml_node, const char *yaml_map_path);
+		    const char *prefix,
+		    const YAML::Node &yaml_node, const char *yaml_map_path);
 
 /**
  * Substitute variables in the form "{[NAME]}" with values from the
@@ -49,5 +49,5 @@ NewYamlSubstIstream(struct pool &pool, UnusedIstreamPtr input, bool alt_syntax,
  */
 UnusedIstreamPtr
 NewYamlSubstIstream(struct pool &pool, UnusedIstreamPtr input, bool alt_syntax,
-                    const char *prefix,
-                    const char *yaml_file, const char *yaml_map_path);
+		    const char *prefix,
+		    const char *yaml_file, const char *yaml_map_path);

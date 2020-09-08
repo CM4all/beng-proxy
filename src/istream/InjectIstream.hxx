@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -40,17 +40,17 @@ class UnusedIstreamPtr;
 
 class InjectIstreamControl {
 protected:
-    InjectIstreamControl() = default;
-    ~InjectIstreamControl() = default;
+	InjectIstreamControl() = default;
+	~InjectIstreamControl() = default;
 
-    InjectIstreamControl(const InjectIstreamControl &) = delete;
-    InjectIstreamControl &operator=(const InjectIstreamControl &) = delete;
+	InjectIstreamControl(const InjectIstreamControl &) = delete;
+	InjectIstreamControl &operator=(const InjectIstreamControl &) = delete;
 
 public:
-    /**
-     * Injects a failure.
-     */
-    void InjectFault(std::exception_ptr e) noexcept;
+	/**
+	 * Injects a failure.
+	 */
+	void InjectFault(std::exception_ptr e) noexcept;
 };
 
 /**

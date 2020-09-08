@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -46,47 +46,47 @@
 #include <errno.h>
 
 class IconvIstream final : public FacadeIstream, DestructAnchor {
-    const iconv_t iconv;
-    SliceFifoBuffer buffer;
+	const iconv_t iconv;
+	SliceFifoBuffer buffer;
 
 public:
-    IconvIstream(struct pool &p, UnusedIstreamPtr _input,
-                 iconv_t _iconv) noexcept
-        :FacadeIstream(p, std::move(_input)),
-         iconv(_iconv)
-    {
-    }
+	IconvIstream(struct pool &p, UnusedIstreamPtr _input,
+		     iconv_t _iconv) noexcept
+		:FacadeIstream(p, std::move(_input)),
+		 iconv(_iconv)
+	{
+	}
 
-    ~IconvIstream() noexcept {
-        iconv_close(iconv);
-    }
+	~IconvIstream() noexcept {
+		iconv_close(iconv);
+	}
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) noexcept override {
-        if (partial)
-            return buffer.GetAvailable();
+	off_t _GetAvailable(bool partial) noexcept override {
+		if (partial)
+			return buffer.GetAvailable();
 
-        return -1;
-    }
+		return -1;
+	}
 
-    void _Read() noexcept override;
-    void _Close() noexcept override;
+	void _Read() noexcept override;
+	void _Close() noexcept override;
 
-    /* handler */
+	/* handler */
 
-    size_t OnData(const void *data, size_t length) noexcept override;
-    void OnEof() noexcept override;
-    void OnError(std::exception_ptr ep) noexcept override;
+	size_t OnData(const void *data, size_t length) noexcept override;
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
 };
 
 static inline size_t
 deconst_iconv(iconv_t cd,
-              const char **inbuf, size_t *inbytesleft,
-              char **outbuf, size_t *outbytesleft) noexcept
+	      const char **inbuf, size_t *inbytesleft,
+	      char **outbuf, size_t *outbytesleft) noexcept
 {
-    char **inbuf2 = const_cast<char **>(inbuf);
-    return iconv(cd, inbuf2, inbytesleft, outbuf, outbytesleft);
+	char **inbuf2 = const_cast<char **>(inbuf);
+	return iconv(cd, inbuf2, inbytesleft, outbuf, outbytesleft);
 }
 
 /*
@@ -97,111 +97,111 @@ deconst_iconv(iconv_t cd,
 size_t
 IconvIstream::OnData(const void *_data, size_t length) noexcept
 {
-    assert(input.IsDefined());
+	assert(input.IsDefined());
 
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 
-    buffer.AllocateIfNull(fb_pool_get());
+	buffer.AllocateIfNull(fb_pool_get());
 
-    const char *data = (const char *)_data, *src = data;
+	const char *data = (const char *)_data, *src = data;
 
-    do {
-        auto w = buffer.Write();
-        if (w.empty()) {
-            /* no space left in the buffer: attempt to flush it */
+	do {
+		auto w = buffer.Write();
+		if (w.empty()) {
+			/* no space left in the buffer: attempt to flush it */
 
-            size_t nbytes = SendFromBuffer(buffer);
-            if (nbytes == 0) {
-                if (destructed)
-                    return 0;
-                break;
-            }
+			size_t nbytes = SendFromBuffer(buffer);
+			if (nbytes == 0) {
+				if (destructed)
+					return 0;
+				break;
+			}
 
-            assert(!destructed);
+			assert(!destructed);
 
-            continue;
-        }
+			continue;
+		}
 
-        char *const dest0 = (char *)w.data;
-        char *dest = dest0;
-        size_t dest_left = w.size;
+		char *const dest0 = (char *)w.data;
+		char *dest = dest0;
+		size_t dest_left = w.size;
 
-        size_t ret = deconst_iconv(iconv, &src, &length, &dest, &dest_left);
-        if (dest > dest0)
-            buffer.Append(dest - dest0);
+		size_t ret = deconst_iconv(iconv, &src, &length, &dest, &dest_left);
+		if (dest > dest0)
+			buffer.Append(dest - dest0);
 
-        if (ret == (size_t)-1) {
-            switch (errno) {
-                size_t nbytes;
+		if (ret == (size_t)-1) {
+			switch (errno) {
+				size_t nbytes;
 
-            case EILSEQ:
-                /* invalid sequence: skip this byte */
-                ++src;
-                --length;
-                break;
+			case EILSEQ:
+				/* invalid sequence: skip this byte */
+				++src;
+				--length;
+				break;
 
-            case EINVAL:
-                /* incomplete sequence: leave it in the buffer */
-                if (src == data) {
-                    /* XXX we abort here, because we believe if the
-                       incomplete sequence is at the start of the
-                       buffer, this might be EOF; we should rather
-                       buffer this incomplete sequence and report the
-                       caller that we consumed it */
-                    input.Close();
+			case EINVAL:
+				/* incomplete sequence: leave it in the buffer */
+				if (src == data) {
+					/* XXX we abort here, because we believe if the
+					   incomplete sequence is at the start of the
+					   buffer, this might be EOF; we should rather
+					   buffer this incomplete sequence and report the
+					   caller that we consumed it */
+					input.Close();
 
-                    DestroyError(std::make_exception_ptr(std::runtime_error("incomplete sequence")));
-                    return 0;
-                }
+					DestroyError(std::make_exception_ptr(std::runtime_error("incomplete sequence")));
+					return 0;
+				}
 
-                length = 0;
-                break;
+				length = 0;
+				break;
 
-            case E2BIG:
-                /* output buffer is full: flush dest */
-                nbytes = SendFromBuffer(buffer);
-                if (nbytes == 0) {
-                    if (destructed)
-                        return 0;
+			case E2BIG:
+				/* output buffer is full: flush dest */
+				nbytes = SendFromBuffer(buffer);
+				if (nbytes == 0) {
+					if (destructed)
+						return 0;
 
-                    /* reset length to 0, to make the loop quit
-                       (there's no "double break" to break out of the
-                       while loop in C) */
-                    length = 0;
-                    break;
-                }
+					/* reset length to 0, to make the loop quit
+					   (there's no "double break" to break out of the
+					   while loop in C) */
+					length = 0;
+					break;
+				}
 
-                assert(!destructed);
-                break;
-            }
-        }
-    } while (length > 0);
+				assert(!destructed);
+				break;
+			}
+		}
+	} while (length > 0);
 
-    SendFromBuffer(buffer);
-    if (destructed)
-        return 0;
+	SendFromBuffer(buffer);
+	if (destructed)
+		return 0;
 
-    buffer.FreeIfEmpty();
+	buffer.FreeIfEmpty();
 
-    return src - data;
+	return src - data;
 }
 
 void
 IconvIstream::OnEof() noexcept
 {
-    assert(input.IsDefined());
-    input.Clear();
+	assert(input.IsDefined());
+	input.Clear();
 
-    if (buffer.empty())
-        DestroyEof();
+	if (buffer.empty())
+		DestroyEof();
 }
 
 void
 IconvIstream::OnError(std::exception_ptr ep) noexcept
 {
-    assert(input.IsDefined());
+	assert(input.IsDefined());
 
-    DestroyError(ep);
+	DestroyError(ep);
 }
 
 /*
@@ -212,21 +212,21 @@ IconvIstream::OnError(std::exception_ptr ep) noexcept
 void
 IconvIstream::_Read() noexcept
 {
-    if (input.IsDefined())
-        input.Read();
-    else {
-        size_t rest = ConsumeFromBuffer(buffer);
-        if (rest == 0)
-            DestroyEof();
-    }
+	if (input.IsDefined())
+		input.Read();
+	else {
+		size_t rest = ConsumeFromBuffer(buffer);
+		if (rest == 0)
+			DestroyEof();
+	}
 }
 
 void
 IconvIstream::_Close() noexcept
 {
-    if (input.IsDefined())
-        input.Close();
-    Destroy();
+	if (input.IsDefined())
+		input.Close();
+	Destroy();
 }
 
 /*
@@ -236,11 +236,11 @@ IconvIstream::_Close() noexcept
 
 UnusedIstreamPtr
 istream_iconv_new(struct pool &pool, UnusedIstreamPtr input,
-                  const char *tocode, const char *fromcode) noexcept
+		  const char *tocode, const char *fromcode) noexcept
 {
-    const iconv_t iconv = iconv_open(tocode, fromcode);
-    if (iconv == (iconv_t)-1)
-        return nullptr;
+	const iconv_t iconv = iconv_open(tocode, fromcode);
+	if (iconv == (iconv_t)-1)
+		return nullptr;
 
-    return NewIstreamPtr<IconvIstream>(pool, std::move(input), iconv);
+	return NewIstreamPtr<IconvIstream>(pool, std::move(input), iconv);
 }
