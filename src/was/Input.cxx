@@ -260,7 +260,7 @@ WasInput::ReadToBuffer()
 {
 	buffer.AllocateIfNull(fb_pool_get());
 
-	size_t max_length = 4096;
+	size_t max_length = FB_SIZE;
 	if (known_length) {
 		uint64_t rest = length - received;
 		if (rest < (uint64_t)max_length)
