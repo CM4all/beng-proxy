@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -66,11 +66,11 @@ class MemcachedResponseHandler;
  */
 void
 memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
-                        SocketDescriptor fd, FdType fd_type,
-                        Lease &lease,
-                        enum memcached_opcode opcode,
-                        const void *extras, size_t extras_length,
-                        const void *key, size_t key_length,
-                        UnusedIstreamPtr value,
-                        MemcachedResponseHandler &handler,
-                        CancellablePointer &cancel_ptr);
+			SocketDescriptor fd, FdType fd_type,
+			Lease &lease,
+			enum memcached_opcode opcode,
+			const void *extras, size_t extras_length,
+			const void *key, size_t key_length,
+			UnusedIstreamPtr value,
+			MemcachedResponseHandler &handler,
+			CancellablePointer &cancel_ptr);

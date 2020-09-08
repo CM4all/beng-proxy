@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -58,7 +58,7 @@ class UnusedIstreamPtr;
  */
 UnusedIstreamPtr
 memcached_request_packet(struct pool &pool, enum memcached_opcode opcode,
-                         const void *extras, size_t extras_length,
-                         const void *key, size_t key_length,
-                         UnusedIstreamPtr value,
-                         uint32_t message_id);
+			 const void *extras, size_t extras_length,
+			 const void *key, size_t key_length,
+			 UnusedIstreamPtr value,
+			 uint32_t message_id) noexcept;

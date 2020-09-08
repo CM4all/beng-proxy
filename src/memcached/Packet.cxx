@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -42,39 +42,39 @@
 
 UnusedIstreamPtr
 memcached_request_packet(struct pool &pool, enum memcached_opcode opcode,
-                         const void *extras, size_t extras_length,
-                         const void *key, size_t key_length,
-                         UnusedIstreamPtr value,
-                         uint32_t message_id)
+			 const void *extras, size_t extras_length,
+			 const void *key, size_t key_length,
+			 UnusedIstreamPtr value,
+			 uint32_t message_id) noexcept
 {
-    off_t value_length = value
-        ? value.GetAvailable(false)
-        : 0;
-    if (value_length == -1 || value_length >= 0x10000000)
-        return nullptr;
+	off_t value_length = value
+		? value.GetAvailable(false)
+		: 0;
+	if (value_length == -1 || value_length >= 0x10000000)
+		return nullptr;
 
-    auto header = NewFromPool<memcached_request_header>(pool);
-    header->magic = MEMCACHED_MAGIC_REQUEST;
-    header->opcode = opcode;
-    header->key_length = ToBE16(key_length);
-    header->extras_length = extras_length;
-    header->data_type = 0;
-    header->reserved = 0;
-    header->body_length =
-        ToBE32(extras_length + key_length + value_length);
-    header->message_id = message_id;
-    memset(header->cas, 0, sizeof(header->cas));
+	auto header = NewFromPool<memcached_request_header>(pool);
+	header->magic = MEMCACHED_MAGIC_REQUEST;
+	header->opcode = opcode;
+	header->key_length = ToBE16(key_length);
+	header->extras_length = extras_length;
+	header->data_type = 0;
+	header->reserved = 0;
+	header->body_length =
+		ToBE32(extras_length + key_length + value_length);
+	header->message_id = message_id;
+	memset(header->cas, 0, sizeof(header->cas));
 
-    auto header_stream =
-        istream_memory_new(pool, header, sizeof(*header));
-    auto extras_stream = extras_length > 0
-        ? istream_memory_new(pool, extras, extras_length)
-        : nullptr;
+	auto header_stream =
+		istream_memory_new(pool, header, sizeof(*header));
+	auto extras_stream = extras_length > 0
+		? istream_memory_new(pool, extras, extras_length)
+		: nullptr;
 
-    return istream_cat_new(pool, std::move(header_stream),
-                           std::move(extras_stream),
-                           key_length == 0
-                           ? nullptr
-                           : istream_memory_new(pool, key, key_length),
-                           std::move(value));
+	return istream_cat_new(pool, std::move(header_stream),
+			       std::move(extras_stream),
+			       key_length == 0
+			       ? nullptr
+			       : istream_memory_new(pool, key, key_length),
+			       std::move(value));
 }

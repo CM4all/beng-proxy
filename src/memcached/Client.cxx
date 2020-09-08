@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -53,143 +53,143 @@
 #include <string.h>
 
 struct MemcachedClient final
-    : BufferedSocketHandler, Istream, IstreamHandler, Cancellable, DestructAnchor {
+	: BufferedSocketHandler, Istream, IstreamHandler, Cancellable, DestructAnchor {
 
-    enum class ReadState {
-        HEADER,
-        EXTRAS,
-        KEY,
-        VALUE,
-        END,
-    };
+	enum class ReadState {
+		HEADER,
+		EXTRAS,
+		KEY,
+		VALUE,
+		END,
+	};
 
-    /* I/O */
-    BufferedSocket socket;
-    LeasePtr lease_ref;
+	/* I/O */
+	BufferedSocket socket;
+	LeasePtr lease_ref;
 
-    /* request */
-    struct Request {
-        MemcachedResponseHandler &handler;
+	/* request */
+	struct Request {
+		MemcachedResponseHandler &handler;
 
-        IstreamPointer istream;
+		IstreamPointer istream;
 
-        Request(UnusedIstreamPtr _istream,
-                IstreamHandler &i_handler,
-                MemcachedResponseHandler &_handler) noexcept
-            :handler(_handler),
-             istream(std::move(_istream), i_handler) {}
+		Request(UnusedIstreamPtr _istream,
+			IstreamHandler &i_handler,
+			MemcachedResponseHandler &_handler) noexcept
+			:handler(_handler),
+			 istream(std::move(_istream), i_handler) {}
 
-    } request;
+	} request;
 
-    /* response */
-    struct {
-        ReadState read_state;
+	/* response */
+	struct {
+		ReadState read_state;
 
-        /**
-         * This flag is true if we are currently calling the
-         * #memcached_client_handler.  During this period,
-         * memcached_client_socket_read() does nothing, to prevent
-         * recursion.
-         */
-        bool in_handler;
+		/**
+		 * This flag is true if we are currently calling the
+		 * #memcached_client_handler.  During this period,
+		 * memcached_client_socket_read() does nothing, to prevent
+		 * recursion.
+		 */
+		bool in_handler;
 
-        struct memcached_response_header header;
+		struct memcached_response_header header;
 
-        unsigned char *extras;
+		unsigned char *extras;
 
-        struct {
-            void *buffer;
-            unsigned char *tail;
-            size_t remaining;
-        } key;
+		struct {
+			void *buffer;
+			unsigned char *tail;
+			size_t remaining;
+		} key;
 
-        /**
-         * Total number of bytes remaining to read from the response,
-         * including extras and key.
-         */
-        size_t remaining;
-    } response;
+		/**
+		 * Total number of bytes remaining to read from the response,
+		 * including extras and key.
+		 */
+		size_t remaining;
+	} response;
 
-    MemcachedClient(struct pool &_pool, EventLoop &event_loop,
-                    SocketDescriptor fd, FdType fd_type,
-                    Lease &lease,
-                    UnusedIstreamPtr _request,
-                    MemcachedResponseHandler &handler,
-                    CancellablePointer &cancel_ptr);
+	MemcachedClient(struct pool &_pool, EventLoop &event_loop,
+			SocketDescriptor fd, FdType fd_type,
+			Lease &lease,
+			UnusedIstreamPtr _request,
+			MemcachedResponseHandler &handler,
+			CancellablePointer &cancel_ptr);
 
-    using Istream::GetPool;
+	using Istream::GetPool;
 
-    bool CheckDirect() const {
-        assert(socket.IsConnected());
-        assert(response.read_state == ReadState::VALUE);
+	bool CheckDirect() const {
+		assert(socket.IsConnected());
+		assert(response.read_state == ReadState::VALUE);
 
-        return Istream::CheckDirect(socket.GetType());
-    }
+		return Istream::CheckDirect(socket.GetType());
+	}
 
-    void ScheduleWrite() {
-        socket.ScheduleWrite();
-    }
+	void ScheduleWrite() {
+		socket.ScheduleWrite();
+	}
 
-    /**
-     * Release the socket held by this object.
-     */
-    void ReleaseSocket(bool reuse) noexcept {
-        socket.Abandon();
-        lease_ref.Release(reuse);
-    }
+	/**
+	 * Release the socket held by this object.
+	 */
+	void ReleaseSocket(bool reuse) noexcept {
+		socket.Abandon();
+		lease_ref.Release(reuse);
+	}
 
-    void DestroySocket(bool reuse) noexcept {
-        if (socket.IsConnected())
-            ReleaseSocket(reuse);
-        socket.Destroy();
-    }
+	void DestroySocket(bool reuse) noexcept {
+		if (socket.IsConnected())
+			ReleaseSocket(reuse);
+		socket.Destroy();
+	}
 
-    /**
-     * Release resources held by this object: the event object, the
-     * socket lease, and the pool reference.
-     */
-    void Release(bool reuse) noexcept {
-        if (socket.IsValid())
-            DestroySocket(reuse);
+	/**
+	 * Release resources held by this object: the event object, the
+	 * socket lease, and the pool reference.
+	 */
+	void Release(bool reuse) noexcept {
+		if (socket.IsValid())
+			DestroySocket(reuse);
 
-        Destroy();
-    }
+		Destroy();
+	}
 
-    void AbortResponseHeaders(std::exception_ptr ep);
-    void AbortResponseValue(std::exception_ptr ep);
-    void AbortResponse(std::exception_ptr ep);
+	void AbortResponseHeaders(std::exception_ptr ep);
+	void AbortResponseValue(std::exception_ptr ep);
+	void AbortResponse(std::exception_ptr ep);
 
-    BufferedResult SubmitResponse();
-    BufferedResult BeginKey();
-    BufferedResult FeedHeader(const void *data, size_t length);
-    BufferedResult FeedExtras(const void *data, size_t length);
-    BufferedResult FeedKey(const void *data, size_t length);
-    BufferedResult FeedValue(const void *data, size_t length);
-    BufferedResult Feed(const void *data, size_t length);
+	BufferedResult SubmitResponse();
+	BufferedResult BeginKey();
+	BufferedResult FeedHeader(const void *data, size_t length);
+	BufferedResult FeedExtras(const void *data, size_t length);
+	BufferedResult FeedKey(const void *data, size_t length);
+	BufferedResult FeedValue(const void *data, size_t length);
+	BufferedResult Feed(const void *data, size_t length);
 
-    DirectResult TryReadDirect(SocketDescriptor fd, FdType type);
+	DirectResult TryReadDirect(SocketDescriptor fd, FdType type);
 
-    /* virtual methods from class BufferedSocketHandler */
-    BufferedResult OnBufferedData() override;
-    DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
-    bool OnBufferedClosed() noexcept override;
-    bool OnBufferedRemaining(size_t remaining) noexcept override;
-    bool OnBufferedWrite() override;
-    void OnBufferedError(std::exception_ptr e) noexcept override;
+	/* virtual methods from class BufferedSocketHandler */
+	BufferedResult OnBufferedData() override;
+	DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
+	bool OnBufferedClosed() noexcept override;
+	bool OnBufferedRemaining(size_t remaining) noexcept override;
+	bool OnBufferedWrite() override;
+	void OnBufferedError(std::exception_ptr e) noexcept override;
 
-    /* virtual methods from class Cancellable */
-    void Cancel() noexcept override;
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override;
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) noexcept override;
-    void _Read() noexcept override;
-    void _Close() noexcept override;
+	off_t _GetAvailable(bool partial) noexcept override;
+	void _Read() noexcept override;
+	void _Close() noexcept override;
 
-    /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) noexcept override;
-    void OnEof() noexcept override;
-    void OnError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class IstreamHandler */
+	size_t OnData(const void *data, size_t length) noexcept override;
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
 };
 
 static constexpr auto memcached_client_timeout = std::chrono::seconds(5);
@@ -197,56 +197,56 @@ static constexpr auto memcached_client_timeout = std::chrono::seconds(5);
 void
 MemcachedClient::AbortResponseHeaders(std::exception_ptr ep)
 {
-    assert(response.read_state == ReadState::HEADER ||
-           response.read_state == ReadState::EXTRAS ||
-           response.read_state == ReadState::KEY);
+	assert(response.read_state == ReadState::HEADER ||
+	       response.read_state == ReadState::EXTRAS ||
+	       response.read_state == ReadState::KEY);
 
-    if (socket.IsValid())
-        DestroySocket(false);
+	if (socket.IsValid())
+		DestroySocket(false);
 
-    request.handler.OnMemcachedError(ep);
-    response.read_state = ReadState::END;
+	request.handler.OnMemcachedError(ep);
+	response.read_state = ReadState::END;
 
-    if (request.istream.IsDefined())
-        request.istream.ClearAndClose();
+	if (request.istream.IsDefined())
+		request.istream.ClearAndClose();
 
-    Destroy();
+	Destroy();
 }
 
 void
 MemcachedClient::AbortResponseValue(std::exception_ptr ep)
 {
-    assert(response.read_state == ReadState::VALUE);
-    assert(!request.istream.IsDefined());
+	assert(response.read_state == ReadState::VALUE);
+	assert(!request.istream.IsDefined());
 
-    if (socket.IsValid())
-        DestroySocket(false);
+	if (socket.IsValid())
+		DestroySocket(false);
 
-    response.read_state = ReadState::END;
-    DestroyError(ep);
+	response.read_state = ReadState::END;
+	DestroyError(ep);
 }
 
 void
 MemcachedClient::AbortResponse(std::exception_ptr ep)
 {
-    assert(response.read_state != ReadState::END);
+	assert(response.read_state != ReadState::END);
 
-    switch (response.read_state) {
-    case ReadState::HEADER:
-    case ReadState::EXTRAS:
-    case ReadState::KEY:
-        AbortResponseHeaders(ep);
-        return;
+	switch (response.read_state) {
+	case ReadState::HEADER:
+	case ReadState::EXTRAS:
+	case ReadState::KEY:
+		AbortResponseHeaders(ep);
+		return;
 
-    case ReadState::VALUE:
-        AbortResponseValue(ep);
-        return;
+	case ReadState::VALUE:
+		AbortResponseValue(ep);
+		return;
 
-    case ReadState::END:
-        gcc_unreachable();
-    }
+	case ReadState::END:
+		gcc_unreachable();
+	}
 
-    gcc_unreachable();
+	gcc_unreachable();
 }
 
 /*
@@ -257,36 +257,36 @@ MemcachedClient::AbortResponse(std::exception_ptr ep)
 off_t
 MemcachedClient::_GetAvailable(gcc_unused bool partial) noexcept
 {
-    assert(response.read_state == ReadState::VALUE);
-    assert(!request.istream.IsDefined());
+	assert(response.read_state == ReadState::VALUE);
+	assert(!request.istream.IsDefined());
 
-    return response.remaining;
+	return response.remaining;
 }
 
 void
 MemcachedClient::_Read() noexcept
 {
-    assert(response.read_state == ReadState::VALUE);
-    assert(!request.istream.IsDefined());
+	assert(response.read_state == ReadState::VALUE);
+	assert(!request.istream.IsDefined());
 
-    if (response.in_handler)
-        /* avoid recursion; the memcached_client_handler caller will
-           continue parsing the response if possible */
-        return;
+	if (response.in_handler)
+		/* avoid recursion; the memcached_client_handler caller will
+		   continue parsing the response if possible */
+		return;
 
-    if (socket.IsConnected())
-        socket.SetDirect(CheckDirect());
+	if (socket.IsConnected())
+		socket.SetDirect(CheckDirect());
 
-    socket.Read(true);
+	socket.Read(true);
 }
 
 void
 MemcachedClient::_Close() noexcept
 {
-    assert(response.read_state == ReadState::VALUE);
-    assert(!request.istream.IsDefined());
+	assert(response.read_state == ReadState::VALUE);
+	assert(!request.istream.IsDefined());
 
-    Release(false);
+	Release(false);
 }
 
 /*
@@ -297,242 +297,242 @@ MemcachedClient::_Close() noexcept
 BufferedResult
 MemcachedClient::SubmitResponse()
 {
-    assert(response.read_state == ReadState::KEY);
+	assert(response.read_state == ReadState::KEY);
 
-    if (request.istream.IsDefined()) {
-        /* at this point, the request must have been sent */
-        AbortResponseHeaders(std::make_exception_ptr(MemcachedClientError("memcached server sends response too early")));
-        return BufferedResult::CLOSED;
-    }
+	if (request.istream.IsDefined()) {
+		/* at this point, the request must have been sent */
+		AbortResponseHeaders(std::make_exception_ptr(MemcachedClientError("memcached server sends response too early")));
+		return BufferedResult::CLOSED;
+	}
 
-    if (response.remaining > 0) {
-        /* there's a value: pass it to the callback, continue
-           reading */
+	if (response.remaining > 0) {
+		/* there's a value: pass it to the callback, continue
+		   reading */
 
-        response.read_state = ReadState::VALUE;
+		response.read_state = ReadState::VALUE;
 
-        const DestructObserver destructed(*this);
+		const DestructObserver destructed(*this);
 
-        response.in_handler = true;
-        request.handler.OnMemcachedResponse((memcached_response_status)FromBE16(response.header.status),
-                                            response.extras,
-                                            response.header.extras_length,
-                                            response.key.buffer,
-                                            FromBE16(response.header.key_length),
-                                            UnusedIstreamPtr(this));
-        if (destructed)
-            return BufferedResult::CLOSED;
+		response.in_handler = true;
+		request.handler.OnMemcachedResponse((memcached_response_status)FromBE16(response.header.status),
+						    response.extras,
+						    response.header.extras_length,
+						    response.key.buffer,
+						    FromBE16(response.header.key_length),
+						    UnusedIstreamPtr(this));
+		if (destructed)
+			return BufferedResult::CLOSED;
 
-        response.in_handler = false;
+		response.in_handler = false;
 
-        if (socket.IsConnected())
-            socket.SetDirect(CheckDirect());
+		if (socket.IsConnected())
+			socket.SetDirect(CheckDirect());
 
-        return BufferedResult::AGAIN_EXPECT;
-    } else {
-        /* no value: invoke the callback, quit */
+		return BufferedResult::AGAIN_EXPECT;
+	} else {
+		/* no value: invoke the callback, quit */
 
-        DestroySocket(socket.IsEmpty());
+		DestroySocket(socket.IsEmpty());
 
-        response.read_state = ReadState::END;
+		response.read_state = ReadState::END;
 
-        request.handler.OnMemcachedResponse((memcached_response_status)FromBE16(response.header.status),
-                                            response.extras,
-                                            response.header.extras_length,
-                                            response.key.buffer,
-                                            FromBE16(response.header.key_length),
-                                            nullptr);
+		request.handler.OnMemcachedResponse((memcached_response_status)FromBE16(response.header.status),
+						    response.extras,
+						    response.header.extras_length,
+						    response.key.buffer,
+						    FromBE16(response.header.key_length),
+						    nullptr);
 
-        Release(false);
-        return BufferedResult::CLOSED;
-    }
+		Release(false);
+		return BufferedResult::CLOSED;
+	}
 }
 
 BufferedResult
 MemcachedClient::BeginKey()
 {
-    assert(response.read_state == ReadState::EXTRAS);
+	assert(response.read_state == ReadState::EXTRAS);
 
-    response.read_state = ReadState::KEY;
+	response.read_state = ReadState::KEY;
 
-    response.key.remaining =
-        FromBE16(response.header.key_length);
-    if (response.key.remaining == 0) {
-        response.key.buffer = nullptr;
-        return SubmitResponse();
-    }
+	response.key.remaining =
+		FromBE16(response.header.key_length);
+	if (response.key.remaining == 0) {
+		response.key.buffer = nullptr;
+		return SubmitResponse();
+	}
 
-    response.key.buffer
-        = response.key.tail
-        = (unsigned char *)p_malloc(&GetPool(),
-                                    response.key.remaining);
+	response.key.buffer
+		= response.key.tail
+		= (unsigned char *)p_malloc(&GetPool(),
+					    response.key.remaining);
 
-    return BufferedResult::AGAIN_EXPECT;
+	return BufferedResult::AGAIN_EXPECT;
 }
 
 BufferedResult
 MemcachedClient::FeedHeader(const void *data, size_t length)
 {
-    assert(response.read_state == ReadState::HEADER);
+	assert(response.read_state == ReadState::HEADER);
 
-    if (length < sizeof(response.header))
-        /* not enough data yet */
-        return BufferedResult::MORE;
+	if (length < sizeof(response.header))
+		/* not enough data yet */
+		return BufferedResult::MORE;
 
-    memcpy(&response.header, data, sizeof(response.header));
-    socket.DisposeConsumed(sizeof(response.header));
+	memcpy(&response.header, data, sizeof(response.header));
+	socket.DisposeConsumed(sizeof(response.header));
 
-    response.read_state = ReadState::EXTRAS;
+	response.read_state = ReadState::EXTRAS;
 
-    response.remaining = FromBE32(response.header.body_length);
-    if (response.header.magic != MEMCACHED_MAGIC_RESPONSE ||
-        FromBE16(response.header.key_length) +
-        response.header.extras_length > response.remaining) {
-        /* protocol error: abort the connection */
-        AbortResponseHeaders(std::make_exception_ptr(MemcachedClientError("memcached protocol error")));
-        return BufferedResult::CLOSED;
-    }
+	response.remaining = FromBE32(response.header.body_length);
+	if (response.header.magic != MEMCACHED_MAGIC_RESPONSE ||
+	    FromBE16(response.header.key_length) +
+	    response.header.extras_length > response.remaining) {
+		/* protocol error: abort the connection */
+		AbortResponseHeaders(std::make_exception_ptr(MemcachedClientError("memcached protocol error")));
+		return BufferedResult::CLOSED;
+	}
 
-    if (response.header.extras_length == 0) {
-        response.extras = nullptr;
-        return BeginKey();
-    }
+	if (response.header.extras_length == 0) {
+		response.extras = nullptr;
+		return BeginKey();
+	}
 
-    return BufferedResult::AGAIN_EXPECT;
+	return BufferedResult::AGAIN_EXPECT;
 }
 
 BufferedResult
 MemcachedClient::FeedExtras(const void *data, size_t length)
 {
-    assert(response.read_state == ReadState::EXTRAS);
-    assert(response.header.extras_length > 0);
+	assert(response.read_state == ReadState::EXTRAS);
+	assert(response.header.extras_length > 0);
 
-    if (data == nullptr ||
-        length < sizeof(response.header.extras_length))
-        return BufferedResult::MORE;
+	if (data == nullptr ||
+	    length < sizeof(response.header.extras_length))
+		return BufferedResult::MORE;
 
-    response.extras = (unsigned char *)
-        p_malloc(&GetPool(), response.header.extras_length);
-    memcpy(response.extras, data,
-           response.header.extras_length);
+	response.extras = (unsigned char *)
+		p_malloc(&GetPool(), response.header.extras_length);
+	memcpy(response.extras, data,
+	       response.header.extras_length);
 
-    socket.DisposeConsumed(response.header.extras_length);
-    response.remaining -= response.header.extras_length;
+	socket.DisposeConsumed(response.header.extras_length);
+	response.remaining -= response.header.extras_length;
 
-    return BeginKey();
+	return BeginKey();
 }
 
 BufferedResult
 MemcachedClient::FeedKey(const void *data, size_t length)
 {
-    assert(response.read_state == ReadState::KEY);
-    assert(response.key.remaining > 0);
+	assert(response.read_state == ReadState::KEY);
+	assert(response.key.remaining > 0);
 
-    if (length > response.key.remaining)
-        length = response.key.remaining;
+	if (length > response.key.remaining)
+		length = response.key.remaining;
 
-    memcpy(response.key.tail, data, length);
-    response.key.tail += length;
-    response.key.remaining -= length;
-    response.remaining -= FromBE16(response.header.key_length);
+	memcpy(response.key.tail, data, length);
+	response.key.tail += length;
+	response.key.remaining -= length;
+	response.remaining -= FromBE16(response.header.key_length);
 
-    socket.DisposeConsumed(length);
+	socket.DisposeConsumed(length);
 
-    if (response.key.remaining == 0)
-        return SubmitResponse();
+	if (response.key.remaining == 0)
+		return SubmitResponse();
 
-    return BufferedResult::MORE;
+	return BufferedResult::MORE;
 }
 
 BufferedResult
 MemcachedClient::FeedValue(const void *data, size_t length)
 {
-    assert(response.read_state == ReadState::VALUE);
-    assert(response.remaining > 0);
+	assert(response.read_state == ReadState::VALUE);
+	assert(response.remaining > 0);
 
-    if (socket.IsConnected() &&
-        length >= response.remaining)
-        ReleaseSocket(length == response.remaining);
+	if (socket.IsConnected() &&
+	    length >= response.remaining)
+		ReleaseSocket(length == response.remaining);
 
-    if (length > response.remaining)
-        length = response.remaining;
+	if (length > response.remaining)
+		length = response.remaining;
 
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 
-    size_t nbytes = InvokeData(data, length);
-    if (nbytes == 0)
-        return destructed
-            ? BufferedResult::CLOSED
-            : BufferedResult::BLOCKING;
+	size_t nbytes = InvokeData(data, length);
+	if (nbytes == 0)
+		return destructed
+			? BufferedResult::CLOSED
+			: BufferedResult::BLOCKING;
 
-    socket.DisposeConsumed(nbytes);
+	socket.DisposeConsumed(nbytes);
 
-    response.remaining -= nbytes;
-    if (response.remaining > 0)
-        return nbytes < length
-            ? BufferedResult::OK
-            : BufferedResult::MORE;
+	response.remaining -= nbytes;
+	if (response.remaining > 0)
+		return nbytes < length
+			? BufferedResult::OK
+			: BufferedResult::MORE;
 
-    assert(!socket.IsConnected());
-    assert(!request.istream.IsDefined());
+	assert(!socket.IsConnected());
+	assert(!request.istream.IsDefined());
 
-    response.read_state = ReadState::END;
-    InvokeEof();
+	response.read_state = ReadState::END;
+	InvokeEof();
 
-    Release(false);
-    return BufferedResult::CLOSED;
+	Release(false);
+	return BufferedResult::CLOSED;
 }
 
 BufferedResult
 MemcachedClient::Feed(const void *data, size_t length)
 {
-    switch (response.read_state) {
-    case ReadState::HEADER:
-        return FeedHeader(data, length);
+	switch (response.read_state) {
+	case ReadState::HEADER:
+		return FeedHeader(data, length);
 
-    case ReadState::EXTRAS:
-        return FeedExtras(data, length);
+	case ReadState::EXTRAS:
+		return FeedExtras(data, length);
 
-    case ReadState::KEY:
-        return FeedKey(data, length);
+	case ReadState::KEY:
+		return FeedKey(data, length);
 
-    case ReadState::VALUE:
-        return FeedValue(data, length);
+	case ReadState::VALUE:
+		return FeedValue(data, length);
 
-    case ReadState::END:
-        gcc_unreachable();
-    }
+	case ReadState::END:
+		gcc_unreachable();
+	}
 
-    gcc_unreachable();
+	gcc_unreachable();
 }
 
 DirectResult
 MemcachedClient::TryReadDirect(SocketDescriptor fd, FdType type)
 {
-    assert(response.read_state == ReadState::VALUE);
-    assert(response.remaining > 0);
+	assert(response.read_state == ReadState::VALUE);
+	assert(response.remaining > 0);
 
-    ssize_t nbytes = InvokeDirect(type, fd.Get(), response.remaining);
-    if (gcc_likely(nbytes > 0)) {
-        response.remaining -= nbytes;
+	ssize_t nbytes = InvokeDirect(type, fd.Get(), response.remaining);
+	if (gcc_likely(nbytes > 0)) {
+		response.remaining -= nbytes;
 
-        if (response.remaining == 0) {
-            DestroySocket(true);
-            DestroyEof();
-            return DirectResult::CLOSED;
-        } else
-            return DirectResult::OK;
-    } else if (gcc_unlikely(nbytes == ISTREAM_RESULT_EOF)) {
-        return DirectResult::END;
-    } else if (nbytes == ISTREAM_RESULT_BLOCKING) {
-        return DirectResult::BLOCKING;
-    } else if (nbytes == ISTREAM_RESULT_CLOSED) {
-        return DirectResult::CLOSED;
-    } else if (errno == EAGAIN) {
-        return DirectResult::EMPTY;
-    } else {
-        return DirectResult::ERRNO;
-    }
+		if (response.remaining == 0) {
+			DestroySocket(true);
+			DestroyEof();
+			return DirectResult::CLOSED;
+		} else
+			return DirectResult::OK;
+	} else if (gcc_unlikely(nbytes == ISTREAM_RESULT_EOF)) {
+		return DirectResult::END;
+	} else if (nbytes == ISTREAM_RESULT_BLOCKING) {
+		return DirectResult::BLOCKING;
+	} else if (nbytes == ISTREAM_RESULT_CLOSED) {
+		return DirectResult::CLOSED;
+	} else if (errno == EAGAIN) {
+		return DirectResult::EMPTY;
+	} else {
+		return DirectResult::ERRNO;
+	}
 }
 
 /*
@@ -543,59 +543,59 @@ MemcachedClient::TryReadDirect(SocketDescriptor fd, FdType type)
 bool
 MemcachedClient::OnBufferedWrite()
 {
-    assert(response.read_state != ReadState::END);
+	assert(response.read_state != ReadState::END);
 
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 
-    request.istream.Read();
+	request.istream.Read();
 
-    return !destructed && socket.IsConnected();
+	return !destructed && socket.IsConnected();
 }
 
 BufferedResult
 MemcachedClient::OnBufferedData()
 {
-    assert(response.read_state != ReadState::END);
+	assert(response.read_state != ReadState::END);
 
-    const auto r = socket.ReadBuffer();
-    assert(!r.empty());
+	const auto r = socket.ReadBuffer();
+	assert(!r.empty());
 
-    return Feed(r.data, r.size);
+	return Feed(r.data, r.size);
 }
 
 DirectResult
 MemcachedClient::OnBufferedDirect(SocketDescriptor fd, FdType type)
 {
-    assert(response.read_state == ReadState::VALUE);
-    assert(response.remaining > 0);
-    assert(CheckDirect());
+	assert(response.read_state == ReadState::VALUE);
+	assert(response.remaining > 0);
+	assert(CheckDirect());
 
-    return TryReadDirect(fd, type);
+	return TryReadDirect(fd, type);
 }
 
 bool
 MemcachedClient::OnBufferedClosed() noexcept
 {
-    /* the rest of the response may already be in the input buffer */
-    ReleaseSocket(false);
-    return true;
+	/* the rest of the response may already be in the input buffer */
+	ReleaseSocket(false);
+	return true;
 }
 
 bool
 MemcachedClient::OnBufferedRemaining(gcc_unused size_t remaining) noexcept
 {
-    /* only READ_VALUE could have blocked */
-    assert(response.read_state == ReadState::VALUE);
+	/* only READ_VALUE could have blocked */
+	assert(response.read_state == ReadState::VALUE);
 
-    /* the rest of the response may already be in the input buffer */
-    return true;
+	/* the rest of the response may already be in the input buffer */
+	return true;
 }
 
 void
 MemcachedClient::OnBufferedError(std::exception_ptr ep) noexcept
 {
-    AbortResponse(NestException(ep,
-                                MemcachedClientError("memcached connection failed")));
+	AbortResponse(NestException(ep,
+				    MemcachedClientError("memcached connection failed")));
 }
 
 /*
@@ -606,50 +606,50 @@ MemcachedClient::OnBufferedError(std::exception_ptr ep) noexcept
 inline size_t
 MemcachedClient::OnData(const void *data, size_t length) noexcept
 {
-    assert(request.istream.IsDefined());
-    assert(response.read_state == ReadState::HEADER ||
-           response.read_state == ReadState::EXTRAS ||
-           response.read_state == ReadState::KEY);
-    assert(data != nullptr);
-    assert(length > 0);
+	assert(request.istream.IsDefined());
+	assert(response.read_state == ReadState::HEADER ||
+	       response.read_state == ReadState::EXTRAS ||
+	       response.read_state == ReadState::KEY);
+	assert(data != nullptr);
+	assert(length > 0);
 
-    ssize_t nbytes = socket.Write(data, length);
-    if (nbytes < 0) {
-        if (nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED)
-            return 0;
+	ssize_t nbytes = socket.Write(data, length);
+	if (nbytes < 0) {
+		if (nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED)
+			return 0;
 
-        AbortResponseHeaders(std::make_exception_ptr(MakeErrno("write error on memcached connection")));
-        return 0;
-    }
+		AbortResponseHeaders(std::make_exception_ptr(MakeErrno("write error on memcached connection")));
+		return 0;
+	}
 
-    ScheduleWrite();
-    return (size_t)nbytes;
+	ScheduleWrite();
+	return (size_t)nbytes;
 }
 
 void
 MemcachedClient::OnEof() noexcept
 {
-    assert(request.istream.IsDefined());
-    assert(response.read_state == ReadState::HEADER ||
-           response.read_state == ReadState::EXTRAS ||
-           response.read_state == ReadState::KEY);
+	assert(request.istream.IsDefined());
+	assert(response.read_state == ReadState::HEADER ||
+	       response.read_state == ReadState::EXTRAS ||
+	       response.read_state == ReadState::KEY);
 
-    request.istream.Clear();
+	request.istream.Clear();
 
-    socket.UnscheduleWrite();
-    socket.Read(true);
+	socket.UnscheduleWrite();
+	socket.Read(true);
 }
 
 void
 MemcachedClient::OnError(std::exception_ptr ep) noexcept
 {
-    assert(request.istream.IsDefined());
-    assert(response.read_state == ReadState::HEADER ||
-           response.read_state == ReadState::EXTRAS ||
-           response.read_state == ReadState::KEY);
+	assert(request.istream.IsDefined());
+	assert(response.read_state == ReadState::HEADER ||
+	       response.read_state == ReadState::EXTRAS ||
+	       response.read_state == ReadState::KEY);
 
-    request.istream.Clear();
-    AbortResponse(ep);
+	request.istream.Clear();
+	AbortResponse(ep);
 }
 
 /*
@@ -660,18 +660,18 @@ MemcachedClient::OnError(std::exception_ptr ep) noexcept
 void
 MemcachedClient::Cancel() noexcept
 {
-    IstreamPointer request_istream = std::move(request.istream);
+	IstreamPointer request_istream = std::move(request.istream);
 
-    /* Cancellable::Cancel() can only be used before the
-       response was delivered to our callback */
-    assert(response.read_state == ReadState::HEADER ||
-           response.read_state == ReadState::EXTRAS ||
-           response.read_state == ReadState::KEY);
+	/* Cancellable::Cancel() can only be used before the
+	   response was delivered to our callback */
+	assert(response.read_state == ReadState::HEADER ||
+	       response.read_state == ReadState::EXTRAS ||
+	       response.read_state == ReadState::KEY);
 
-    Release(false);
+	Release(false);
 
-    if (request_istream.IsDefined())
-        request_istream.Close();
+	if (request_istream.IsDefined())
+		request_istream.Close();
 }
 
 /*
@@ -681,53 +681,53 @@ MemcachedClient::Cancel() noexcept
 
 inline
 MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
-                                 SocketDescriptor fd, FdType fd_type,
-                                 Lease &lease,
-                                 UnusedIstreamPtr _request,
-                                 MemcachedResponseHandler &_handler,
-                                 CancellablePointer &cancel_ptr)
-    :Istream(_pool),
-     socket(event_loop), lease_ref(lease),
-     request(std::move(_request), *this, _handler)
+				 SocketDescriptor fd, FdType fd_type,
+				 Lease &lease,
+				 UnusedIstreamPtr _request,
+				 MemcachedResponseHandler &_handler,
+				 CancellablePointer &cancel_ptr)
+	:Istream(_pool),
+	 socket(event_loop), lease_ref(lease),
+	 request(std::move(_request), *this, _handler)
 {
-    socket.Init(fd, fd_type,
-                Event::Duration(-1), memcached_client_timeout,
-                *this);
+	socket.Init(fd, fd_type,
+		    Event::Duration(-1), memcached_client_timeout,
+		    *this);
 
-    cancel_ptr = *this;
+	cancel_ptr = *this;
 
-    response.read_state = MemcachedClient::ReadState::HEADER;
+	response.read_state = MemcachedClient::ReadState::HEADER;
 
-    request.istream.Read();
+	request.istream.Read();
 }
 
 void
 memcached_client_invoke(struct pool *pool, EventLoop &event_loop,
-                        SocketDescriptor fd, FdType fd_type,
-                        Lease &lease,
-                        enum memcached_opcode opcode,
-                        const void *extras, size_t extras_length,
-                        const void *key, size_t key_length,
-                        UnusedIstreamPtr value,
-                        MemcachedResponseHandler &handler,
-                        CancellablePointer &cancel_ptr)
+			SocketDescriptor fd, FdType fd_type,
+			Lease &lease,
+			enum memcached_opcode opcode,
+			const void *extras, size_t extras_length,
+			const void *key, size_t key_length,
+			UnusedIstreamPtr value,
+			MemcachedResponseHandler &handler,
+			CancellablePointer &cancel_ptr)
 {
-    assert(extras_length <= MEMCACHED_EXTRAS_MAX);
-    assert(key_length <= MEMCACHED_KEY_MAX);
+	assert(extras_length <= MEMCACHED_EXTRAS_MAX);
+	assert(key_length <= MEMCACHED_KEY_MAX);
 
-    auto request = memcached_request_packet(*pool, opcode,
-                                            extras, extras_length,
-                                            key, key_length, std::move(value),
-                                            0x1234 /* XXX? */);
-    if (!request) {
-        lease.ReleaseLease(true);
+	auto request = memcached_request_packet(*pool, opcode,
+						extras, extras_length,
+						key, key_length, std::move(value),
+						0x1234 /* XXX? */);
+	if (!request) {
+		lease.ReleaseLease(true);
 
-        handler.OnMemcachedError(std::make_exception_ptr(MemcachedClientError("failed to generate memcached request packet")));
-        return;
-    }
+		handler.OnMemcachedError(std::make_exception_ptr(MemcachedClientError("failed to generate memcached request packet")));
+		return;
+	}
 
-    NewFromPool<MemcachedClient>(*pool, *pool, event_loop,
-                                 fd, fd_type, lease,
-                                 std::move(request),
-                                 handler, cancel_ptr);
+	NewFromPool<MemcachedClient>(*pool, *pool, event_loop,
+				     fd, fd_type, lease,
+				     std::move(request),
+				     handler, cancel_ptr);
 }

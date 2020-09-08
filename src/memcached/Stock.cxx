@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -51,76 +51,76 @@
 #include <sys/socket.h>
 
 struct MemachedStock {
-    EventLoop &event_loop;
+	EventLoop &event_loop;
 
-    TcpBalancer &tcp_balancer;
+	TcpBalancer &tcp_balancer;
 
-    const AddressList &address;
+	const AddressList &address;
 
-    MemachedStock(EventLoop &_event_loop,
-                  TcpBalancer &_tcp_balancer,
-                  const AddressList &_address)
-        :event_loop(_event_loop),
-         tcp_balancer(_tcp_balancer),
-         address(_address) {}
+	MemachedStock(EventLoop &_event_loop,
+		      TcpBalancer &_tcp_balancer,
+		      const AddressList &_address) noexcept
+		:event_loop(_event_loop),
+		 tcp_balancer(_tcp_balancer),
+		 address(_address) {}
 };
 
 MemachedStock *
 memcached_stock_new(EventLoop &event_loop, TcpBalancer &tcp_balancer,
-                    const AddressList &address)
+		    const AddressList &address) noexcept
 {
-    return new MemachedStock(event_loop, tcp_balancer, address);
+	return new MemachedStock(event_loop, tcp_balancer, address);
 }
 
 void
-memcached_stock_free(MemachedStock *stock)
+memcached_stock_free(MemachedStock *stock) noexcept
 {
-    delete stock;
+	delete stock;
 }
 
 struct MemcachedStockRequest final : public StockGetHandler, Lease {
-    struct pool &pool;
-    EventLoop &event_loop;
+	struct pool &pool;
+	EventLoop &event_loop;
 
-    StockItem *item;
+	StockItem *item;
 
-    const enum memcached_opcode opcode;
+	const enum memcached_opcode opcode;
 
-    const void *const extras;
-    const size_t extras_length;
+	const void *const extras;
+	const size_t extras_length;
 
-    const void *const key;
-    const size_t key_length;
+	const void *const key;
+	const size_t key_length;
 
-    UnusedHoldIstreamPtr value;
+	UnusedHoldIstreamPtr value;
 
-    MemcachedResponseHandler &handler;
+	MemcachedResponseHandler &handler;
 
-    CancellablePointer &cancel_ptr;
+	CancellablePointer &cancel_ptr;
 
-    MemcachedStockRequest(struct pool &_pool, EventLoop &_event_loop,
-                          enum memcached_opcode _opcode,
-                          const void *_extras, size_t _extras_length,
-                          const void *_key, size_t _key_length,
-                          UnusedIstreamPtr _value,
-                          MemcachedResponseHandler &_handler,
-                          CancellablePointer &_cancel_ptr)
-        :pool(_pool), event_loop(_event_loop),
-         opcode(_opcode),
-         extras(_extras), extras_length(_extras_length),
-         key(_key), key_length(_key_length),
-         value(pool, std::move(_value)),
-         handler(_handler),
-         cancel_ptr(_cancel_ptr) {}
+	MemcachedStockRequest(struct pool &_pool, EventLoop &_event_loop,
+			      enum memcached_opcode _opcode,
+			      const void *_extras, size_t _extras_length,
+			      const void *_key, size_t _key_length,
+			      UnusedIstreamPtr _value,
+			      MemcachedResponseHandler &_handler,
+			      CancellablePointer &_cancel_ptr)
+		:pool(_pool), event_loop(_event_loop),
+		 opcode(_opcode),
+		 extras(_extras), extras_length(_extras_length),
+		 key(_key), key_length(_key_length),
+		 value(pool, std::move(_value)),
+		 handler(_handler),
+		 cancel_ptr(_cancel_ptr) {}
 
-    /* virtual methods from class StockGetHandler */
-    void OnStockItemReady(StockItem &item) noexcept override;
-    void OnStockItemError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class StockGetHandler */
+	void OnStockItemReady(StockItem &item) noexcept override;
+	void OnStockItemError(std::exception_ptr ep) noexcept override;
 
-    /* virtual methods from class Lease */
-    void ReleaseLease(bool reuse) noexcept override {
-        item->Put(!reuse);
-    }
+	/* virtual methods from class Lease */
+	void ReleaseLease(bool reuse) noexcept override {
+		item->Put(!reuse);
+	}
 };
 
 /*
@@ -131,52 +131,52 @@ struct MemcachedStockRequest final : public StockGetHandler, Lease {
 void
 MemcachedStockRequest::OnStockItemReady(StockItem &_item) noexcept
 {
-    item = &_item;
+	item = &_item;
 
-    memcached_client_invoke(&pool, event_loop,
-                            tcp_stock_item_get(_item),
-                            tcp_stock_item_get_domain(_item) == AF_LOCAL
-                            ? FdType::FD_SOCKET : FdType::FD_TCP,
-                            *this,
-                            opcode,
-                            extras, extras_length,
-                            key, key_length,
-                            std::move(value),
-                            handler, cancel_ptr);
+	memcached_client_invoke(&pool, event_loop,
+				tcp_stock_item_get(_item),
+				tcp_stock_item_get_domain(_item) == AF_LOCAL
+				? FdType::FD_SOCKET : FdType::FD_TCP,
+				*this,
+				opcode,
+				extras, extras_length,
+				key, key_length,
+				std::move(value),
+				handler, cancel_ptr);
 }
 
 void
 MemcachedStockRequest::OnStockItemError(std::exception_ptr ep) noexcept
 {
-    handler.OnMemcachedError(ep);
+	handler.OnMemcachedError(ep);
 
-    value.Clear();
+	value.Clear();
 }
 
 void
 memcached_stock_invoke(struct pool &pool, MemachedStock &stock,
-                       enum memcached_opcode opcode,
-                       const void *extras, size_t extras_length,
-                       const void *key, size_t key_length,
-                       UnusedIstreamPtr value,
-                       MemcachedResponseHandler &handler,
-                       CancellablePointer &cancel_ptr)
+		       enum memcached_opcode opcode,
+		       const void *extras, size_t extras_length,
+		       const void *key, size_t key_length,
+		       UnusedIstreamPtr value,
+		       MemcachedResponseHandler &handler,
+		       CancellablePointer &cancel_ptr) noexcept
 {
-    assert(extras_length <= MEMCACHED_EXTRAS_MAX);
-    assert(key_length <= MEMCACHED_KEY_MAX);
+	assert(extras_length <= MEMCACHED_EXTRAS_MAX);
+	assert(key_length <= MEMCACHED_KEY_MAX);
 
-    auto request = NewFromPool<MemcachedStockRequest>(pool, pool,
-                                                      stock.event_loop,
-                                                      opcode,
-                                                      extras, extras_length,
-                                                      key, key_length,
-                                                      std::move(value),
-                                                      handler, cancel_ptr);
+	auto request = NewFromPool<MemcachedStockRequest>(pool, pool,
+							  stock.event_loop,
+							  opcode,
+							  extras, extras_length,
+							  key, key_length,
+							  std::move(value),
+							  handler, cancel_ptr);
 
-    stock.tcp_balancer.Get(pool,
-                           nullptr, // TODO: stopwatch support
-                           false, SocketAddress::Null(),
-                           0, stock.address,
-                           std::chrono::seconds(10),
-                           *request, cancel_ptr);
+	stock.tcp_balancer.Get(pool,
+			       nullptr, // TODO: stopwatch support
+			       false, SocketAddress::Null(),
+			       0, stock.address,
+			       std::chrono::seconds(10),
+			       *request, cancel_ptr);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,6 +36,6 @@
 
 class MemcachedClientError : public std::runtime_error {
 public:
-    explicit MemcachedClientError(const char *_msg)
-        :std::runtime_error(_msg) {}
+	explicit MemcachedClientError(const char *_msg)
+		:std::runtime_error(_msg) {}
 };
