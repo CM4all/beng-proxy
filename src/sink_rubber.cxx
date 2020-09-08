@@ -58,11 +58,13 @@ public:
 		   RubberSinkHandler &_handler,
 		   I &&_input,
 		   CancellablePointer &cancel_ptr) noexcept
-		:IstreamSink(std::forward<I>(_input), FD_ANY),
+		:IstreamSink(std::forward<I>(_input)),
 		 PoolLeakDetector(_pool),
 		 allocation(std::move(_a)),
 		 max_size(_max_size),
-		 handler(_handler) {
+		 handler(_handler)
+	{
+		input.SetDirect(FD_ANY);
 		cancel_ptr = *this;
 	}
 

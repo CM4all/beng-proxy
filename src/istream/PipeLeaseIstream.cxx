@@ -84,7 +84,7 @@ PipeLeaseIstream::_Read() noexcept
 
 		assert(pipe.IsDefined());
 
-		if (CheckDirect(FD_PIPE)) {
+		if (direct) {
 			auto nbytes = InvokeDirect(FD_PIPE, pipe.GetReadFd().Get(),
 						   remaining);
 			if (nbytes <= 0) {

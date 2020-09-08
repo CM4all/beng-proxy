@@ -38,9 +38,8 @@
 class FacadeIstream : public Istream, protected IstreamSink {
 protected:
 	template<typename I>
-	FacadeIstream(struct pool &_pool, I &&_input,
-		      FdTypeMask direct=0) noexcept
-		:Istream(_pool), IstreamSink(std::forward<I>(_input), direct) {}
+	FacadeIstream(struct pool &_pool, I &&_input) noexcept
+		:Istream(_pool), IstreamSink(std::forward<I>(_input)) {}
 
 	explicit FacadeIstream(struct pool &_pool) noexcept
 		:Istream(_pool) {}
@@ -49,6 +48,6 @@ protected:
 	void ReplaceInputDirect(I &&_input) noexcept {
 		assert(input.IsDefined());
 
-		input.Replace(std::forward<I>(_input), *this, GetHandlerDirect());
+		input.Replace(std::forward<I>(_input), *this);
 	}
 };

@@ -104,7 +104,6 @@ Istream::InvokeDirect(FdType type, int fd, size_t max_length) noexcept
 {
 	assert(!destroyed);
 	assert(handler != nullptr);
-	assert((handler_direct & type) == type);
 	assert(fd >= 0);
 	assert(max_length > 0);
 	assert(!in_data);

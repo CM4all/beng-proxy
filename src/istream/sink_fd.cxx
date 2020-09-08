@@ -48,7 +48,7 @@
 
 class SinkFd final : IstreamSink, DestructAnchor, LeakDetector {
 	FileDescriptor fd;
-	FdType fd_type;
+	const FdType fd_type;
 	SinkFdHandler &handler;
 
 	SocketEvent event;
@@ -75,12 +75,14 @@ public:
 	       UnusedIstreamPtr &&_istream,
 	       FileDescriptor _fd, FdType _fd_type,
 	       SinkFdHandler &_handler) noexcept
-		:IstreamSink(std::move(_istream), istream_direct_mask_to(_fd_type)),
+		:IstreamSink(std::move(_istream)),
 		 fd(_fd), fd_type(_fd_type),
 		 handler(_handler),
 		 event(event_loop, BIND_THIS_METHOD(EventCallback),
 		       SocketDescriptor::FromFileDescriptor(fd))
 	{
+		input.SetDirect(istream_direct_mask_to(fd_type));
+
 		ScheduleWrite();
 	}
 

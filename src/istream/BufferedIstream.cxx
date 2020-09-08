@@ -90,12 +90,14 @@ public:
 			BufferedIstreamHandler &_handler,
 			UnusedIstreamPtr &&_input,
 			CancellablePointer &cancel_ptr) noexcept
-		:PoolHolder(_p), IstreamSink(std::move(_input), FD_ANY),
+		:PoolHolder(_p), IstreamSink(std::move(_input)),
 		 handler(_handler),
 		 pipe(_pipe_stock),
 		 defer_ready(_event_loop, BIND_THIS_METHOD(DeferredReady))
 	{
 		cancel_ptr = *this;
+
+		input.SetDirect(FD_ANY);
 	}
 
 	void Start() noexcept {

@@ -47,16 +47,16 @@ protected:
 	:input(nullptr) {}
 
 	template<typename I>
-	explicit IstreamSink(I &&_input, FdTypeMask direct=0) noexcept
-		:input(std::forward<I>(_input), *this, direct) {}
+	explicit IstreamSink(I &&_input) noexcept
+		:input(std::forward<I>(_input), *this) {}
 
 	bool HasInput() const noexcept {
 		return input.IsDefined();
 	}
 
 	template<typename I>
-	void SetInput(I &&_input, FdTypeMask direct=0) noexcept  {
-		input.Set(std::forward<I>(_input), *this, direct);
+	void SetInput(I &&_input) noexcept  {
+		input.Set(std::forward<I>(_input), *this);
 	}
 
 	void ClearInput() noexcept {

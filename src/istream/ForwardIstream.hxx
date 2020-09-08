@@ -40,9 +40,8 @@
 class ForwardIstream : public FacadeIstream {
 protected:
 	template<typename I>
-	ForwardIstream(struct pool &_pool, I &&_input,
-		       FdTypeMask direct=0)
-		:FacadeIstream(_pool, std::forward<I>(_input), direct) {}
+	ForwardIstream(struct pool &_pool, I &&_input)
+		:FacadeIstream(_pool, std::forward<I>(_input)) {}
 
 	explicit ForwardIstream(struct pool &_pool)
 		:FacadeIstream(_pool) {}
@@ -51,7 +50,6 @@ public:
 	/* virtual methods from class Istream */
 
 	void _SetDirect(FdTypeMask mask) noexcept override {
-		FacadeIstream::_SetDirect(mask);
 		input.SetDirect(mask);
 	}
 

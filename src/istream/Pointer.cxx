@@ -34,24 +34,22 @@
 #include "UnusedPtr.hxx"
 
 IstreamPointer::IstreamPointer(UnusedIstreamPtr src,
-			       IstreamHandler &handler,
-			       FdTypeMask direct) noexcept
+			       IstreamHandler &handler) noexcept
 	:stream(src.Steal())
 {
 	if (stream != nullptr)
-		stream->SetHandler(handler, direct);
+		stream->SetHandler(handler);
 }
 
 void
 IstreamPointer::Set(UnusedIstreamPtr _stream,
-		    IstreamHandler &handler,
-		    FdTypeMask direct) noexcept
+		    IstreamHandler &handler) noexcept
 {
 	assert(!IsDefined());
 	assert(_stream);
 
 	stream = _stream.Steal();
-	stream->SetHandler(handler, direct);
+	stream->SetHandler(handler);
 }
 
 UnusedIstreamPtr

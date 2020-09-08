@@ -162,8 +162,8 @@ public:
 	using Istream::GetPool;
 
 	void Start(UnusedIstreamPtr &&request_istream) noexcept {
-		request.input.Set(std::move(request_istream), *this,
-				  istream_direct_mask_to(socket.GetType()));
+		request.input.Set(std::move(request_istream), *this);
+		request.input.SetDirect(istream_direct_mask_to(socket.GetType()));
 
 		socket.ScheduleReadNoTimeout(true);
 		request.input.Read();

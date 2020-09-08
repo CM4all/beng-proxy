@@ -53,8 +53,11 @@ class FifoBufferSink final : public IstreamSink {
 public:
 	template<typename I>
 	FifoBufferSink(I &&_input, FifoBufferSinkHandler &_handler) noexcept
-		:IstreamSink(std::forward<I>(_input), FD_ANY),
-		 handler(_handler) {}
+		:IstreamSink(std::forward<I>(_input)),
+		 handler(_handler)
+	{
+		input.SetDirect(FD_ANY);
+	}
 
 	~FifoBufferSink() noexcept {
 		if (input.IsDefined())

@@ -182,7 +182,8 @@ Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
 	if (close_response_body_early) {
 		_body.Clear();
 	} else if (_body) {
-		body.Set(std::move(_body), *this, my_handler_direct);
+		body.Set(std::move(_body), *this);
+		body.SetDirect(my_handler_direct);
 		body_available = body.GetAvailable(false);
 	}
 

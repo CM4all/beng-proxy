@@ -77,7 +77,10 @@ public:
 		       SocketDescriptor::FromFileDescriptor(fd)),
 		 timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
 		 handler(_handler),
-		 input(std::move(_input), *this, ISTREAM_TO_PIPE) {
+		 input(std::move(_input), *this)
+	{
+		input.SetDirect(ISTREAM_TO_PIPE);
+
 		ScheduleWrite();
 	}
 

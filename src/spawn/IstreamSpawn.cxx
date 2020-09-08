@@ -78,6 +78,8 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
 
 	int pid;
 
+	bool direct = false;
+
 	SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
 		     struct pool &p,
 		     UnusedIstreamPtr _input, UniqueFileDescriptor _input_fd,
@@ -85,7 +87,7 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
 		     pid_t _pid) noexcept;
 
 	bool CheckDirect() const noexcept {
-		return Istream::CheckDirect(FdType::FD_PIPE);
+		return direct;
 	}
 
 	void Cancel() noexcept;
@@ -117,6 +119,10 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
 	}
 
 	/* virtual methods from class Istream */
+
+	void _SetDirect(FdTypeMask mask) noexcept override {
+		direct = (mask & ISTREAM_TO_PIPE) != 0;
+	}
 
 	void _Read() noexcept override;
 	// TODO: implement int AsFd() override;
@@ -398,7 +404,7 @@ SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
 	 output_fd(std::move(_output_fd)),
 	 output_event(event_loop, BIND_THIS_METHOD(OutputEventCallback),
 		      SocketDescriptor::FromFileDescriptor(output_fd)),
-	 input(std::move(_input), *this, ISTREAM_TO_PIPE),
+	 input(std::move(_input), *this),
 	 input_fd(std::move(_input_fd)),
 	 input_event(event_loop, BIND_THIS_METHOD(InputEventCallback),
 		     SocketDescriptor::FromFileDescriptor(input_fd)),

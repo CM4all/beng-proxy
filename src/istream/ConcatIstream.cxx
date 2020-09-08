@@ -190,8 +190,6 @@ public:
 	/* virtual methods from class Istream */
 
 	void _SetDirect(FdTypeMask mask) noexcept override {
-		Istream::_SetDirect(mask);
-
 		for (auto &i : inputs)
 			i.SetDirect(mask);
 	}

@@ -73,6 +73,8 @@ class FileIstream final : public Istream {
 	SliceFifoBuffer buffer;
 	const char *path;
 
+	bool direct = false;
+
 public:
 	FileIstream(struct pool &p, EventLoop &event_loop,
 		    UniqueFileDescriptor &&_fd,
@@ -106,7 +108,7 @@ private:
 
 	void TryRead() noexcept {
 		try {
-			if (CheckDirect(FdType::FD_FILE))
+			if (direct)
 				TryDirect();
 			else
 				TryData();
@@ -120,6 +122,10 @@ private:
 	}
 
 	/* virtual methods from class Istream */
+
+	void _SetDirect(FdTypeMask mask) noexcept override {
+		direct = (mask & FdTypeMask(FdType::FD_FILE)) != 0;
+	}
 
 	off_t _GetAvailable(bool partial) noexcept override;
 	off_t _Skip(gcc_unused off_t length) noexcept override;

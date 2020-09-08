@@ -53,6 +53,8 @@ class PipeLeaseIstream final : public Istream {
 
 	SliceFifoBuffer buffer;
 
+	bool direct = false;
+
 public:
 	PipeLeaseIstream(struct pool &p, PipeLease &&_pipe, size_t size) noexcept
 		:Istream(p), pipe(std::move(_pipe)), remaining(size) {}
@@ -62,6 +64,10 @@ public:
 	}
 
 	/* virtual methods from class Istream */
+
+	void _SetDirect(FdTypeMask mask) noexcept override {
+		direct = (mask & FdTypeMask(FdType::FD_PIPE)) != 0;
+	}
 
 	off_t _GetAvailable(bool) noexcept override {
 		return remaining;

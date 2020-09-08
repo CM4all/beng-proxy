@@ -1419,8 +1419,8 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 					    std::move(request_line_stream),
 					    std::move(header_stream),
 					    std::move(body)),
-			    *this,
-			    istream_direct_mask_to(socket.GetType()));
+			    *this);
+	request.istream.SetDirect(istream_direct_mask_to(socket.GetType()));
 
 	socket.ScheduleReadNoTimeout(true);
 

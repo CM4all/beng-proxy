@@ -74,9 +74,6 @@ class Istream : PoolHolder, LeakDetector, IstreamDestructAnchor {
 	/** data sink */
 	IstreamHandler *handler = nullptr;
 
-	/** which types of file descriptors are accepted by the handler? */
-	FdTypeMask handler_direct = 0;
-
 #ifndef NDEBUG
 	bool reading = false, destroyed = false;
 
@@ -101,16 +98,6 @@ protected:
 	virtual ~Istream() noexcept;
 
 	using PoolHolder::GetPool;
-
-public:
-	FdTypeMask GetHandlerDirect() const {
-		return handler_direct;
-	}
-
-protected:
-	bool CheckDirect(FdType type) const {
-		return (handler_direct & FdTypeMask(type)) != 0;
-	}
 
 	void Consumed(size_t nbytes) {
 #ifdef NDEBUG
@@ -194,12 +181,10 @@ public:
 		return handler != nullptr;
 	}
 
-	void SetHandler(IstreamHandler &_handler,
-			FdTypeMask _handler_direct=0) noexcept {
+	void SetHandler(IstreamHandler &_handler) noexcept {
 		assert(!destroyed);
 
 		handler = &_handler;
-		SetDirect(_handler_direct);
 	}
 
 	/**
@@ -492,8 +477,7 @@ protected:
 	 * This method can be implemented by subclasses to propagate
 	 * the new tag to their inputs.
 	 */
-	virtual void _SetDirect(FdTypeMask _handler_direct) noexcept {
-		handler_direct = _handler_direct;
+	virtual void _SetDirect(gcc_unused FdTypeMask _handler_direct) noexcept {
 	}
 
 	virtual off_t _GetAvailable(gcc_unused bool partial) noexcept {

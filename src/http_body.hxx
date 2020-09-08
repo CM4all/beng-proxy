@@ -73,6 +73,8 @@ class HttpBodyReader : public Istream, DechunkHandler {
 	 */
 	off_t rest;
 
+	FdTypeMask direct_mask = 0;
+
 	bool end_seen;
 
 public:
@@ -186,7 +188,9 @@ public:
 
 	size_t FeedBody(const void *data, size_t length);
 
-	using Istream::CheckDirect;
+	bool CheckDirect(FdType type) const noexcept {
+		return (direct_mask & FdTypeMask(type)) != 0;
+       }
 
 	ssize_t TryDirect(SocketDescriptor fd, FdType fd_type);
 
@@ -242,6 +246,13 @@ private:
 	size_t GetMaxRead(size_t length) const;
 
 	void Consumed(size_t nbytes);
+
+public:
+	/* virtual methods from class Istream */
+
+	void _SetDirect(FdTypeMask mask) noexcept override {
+		direct_mask = mask;
+	}
 
 protected:
 	/* virtual methods from class DechunkHandler */

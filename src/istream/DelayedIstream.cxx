@@ -45,6 +45,8 @@ class DelayedIstream final
 
 	DeferEvent defer_read;
 
+	FdTypeMask direct_mask = 0;
+
 public:
 	explicit DelayedIstream(struct pool &p, EventLoop &event_loop) noexcept
 		:ForwardIstream(p),
@@ -54,7 +56,8 @@ public:
 	void Set(UnusedIstreamPtr _input) noexcept {
 		assert(!HasInput());
 
-		SetInput(std::move(_input), GetHandlerDirect());
+		SetInput(std::move(_input));
+		input.SetDirect(direct_mask);
 
 		if (HasHandler())
 			defer_read.Schedule();
@@ -81,10 +84,7 @@ public:
 	/* virtual methods from class Istream */
 
 	void _SetDirect(FdTypeMask mask) noexcept override {
-		/* call FacadeIstream::_SetDirect(), not
-		   ForwardIstream::_SetDirect(), because we need to
-		   check if we already have an input */
-		FacadeIstream::_SetDirect(mask);
+		direct_mask = mask;
 
 		if (HasInput())
 			input.SetDirect(mask);

@@ -48,8 +48,7 @@ public:
 	explicit IstreamPointer(std::nullptr_t) noexcept:stream(nullptr) {}
 
 	IstreamPointer(UnusedIstreamPtr src,
-		       IstreamHandler &handler,
-		       FdTypeMask direct=0) noexcept;
+		       IstreamHandler &handler) noexcept;
 
 	IstreamPointer(IstreamPointer &&other) noexcept
 		:stream(std::exchange(other.stream, nullptr)) {}
@@ -82,22 +81,19 @@ public:
 	UnusedIstreamPtr Steal() noexcept;
 
 	void Set(UnusedIstreamPtr _stream,
-		 IstreamHandler &handler,
-		 FdTypeMask direct=0) noexcept;
+		 IstreamHandler &handler) noexcept;
 
 	void Set(Istream &_stream,
-		 IstreamHandler &handler,
-		 FdTypeMask direct=0) noexcept {
+		 IstreamHandler &handler) noexcept {
 		assert(!IsDefined());
 
 		stream = &_stream;
-		stream->SetHandler(handler, direct);
+		stream->SetHandler(handler);
 	}
 
 	template<typename I>
 	void Replace(I &&_stream,
-		     IstreamHandler &handler,
-		     FdTypeMask direct=0) noexcept {
+		     IstreamHandler &handler) noexcept {
 		Close();
 
 #ifndef NDEBUG
@@ -106,7 +102,7 @@ public:
 		Clear();
 #endif
 
-		Set(std::forward<I>(_stream), handler, direct);
+		Set(std::forward<I>(_stream), handler);
 	}
 
 	void SetDirect(FdTypeMask direct) noexcept {

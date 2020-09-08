@@ -49,6 +49,8 @@ class AutoPipeIstream final : public ForwardIstream {
 	PipeLease pipe;
 	size_t piped = 0;
 
+	bool direct = false;
+
 public:
 	AutoPipeIstream(struct pool &p, UnusedIstreamPtr _input,
 			PipeStock *_pipe_stock) noexcept
@@ -174,7 +176,6 @@ inline ssize_t
 AutoPipeIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 {
 	assert(HasHandler());
-	assert(CheckDirect(FdType::FD_PIPE));
 
 	if (piped > 0) {
 		ssize_t nbytes = Consume();
@@ -187,7 +188,7 @@ AutoPipeIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 			return ISTREAM_RESULT_BLOCKING;
 	}
 
-	if (CheckDirect(type))
+	if (direct)
 		/* already supported by handler (maybe already a pipe) - no
 		   need for wrapping it into a pipe */
 		return InvokeDirect(type, fd, max_length);
@@ -249,12 +250,8 @@ AutoPipeIstream::OnError(std::exception_ptr ep) noexcept
 void
 AutoPipeIstream::_SetDirect(FdTypeMask mask) noexcept
 {
-	/* call FacadeIstream::_SetDirect(), not
-	   ForwardIstream::_SetDirect(), because we need to modify the
-	   mask for our handler */
-	FacadeIstream::_SetDirect(mask);
-
-	if (mask & FdType::FD_PIPE)
+	direct = (mask & FdType::FD_PIPE) != 0;
+	if (direct)
 		/* if the handler supports the pipe, we offer our
 		   services */
 		mask |= ISTREAM_TO_PIPE;

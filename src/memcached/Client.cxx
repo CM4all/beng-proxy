@@ -85,6 +85,8 @@ struct MemcachedClient final
 	struct {
 		ReadState read_state;
 
+		bool direct = false;
+
 		/**
 		 * This flag is true if we are currently calling the
 		 * #memcached_client_handler.  During this period,
@@ -123,7 +125,7 @@ struct MemcachedClient final
 		assert(socket.IsConnected());
 		assert(response.read_state == ReadState::VALUE);
 
-		return Istream::CheckDirect(socket.GetType());
+		return response.direct;
 	}
 
 	void ScheduleWrite() {
@@ -181,6 +183,11 @@ struct MemcachedClient final
 	void Cancel() noexcept override;
 
 	/* virtual methods from class Istream */
+
+	void _SetDirect(FdTypeMask mask) noexcept override {
+		response.direct = socket.IsConnected() &&
+			(mask & FdTypeMask(socket.GetType())) != 0;
+	}
 
 	off_t _GetAvailable(bool partial) noexcept override;
 	void _Read() noexcept override;

@@ -41,6 +41,7 @@
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "io/Buffered.hxx"
+#include "io/SpliceSupport.hxx"
 #include "system/Error.hxx"
 #include "util/ScopeExit.hxx"
 #include "util/Exception.hxx"
@@ -60,6 +61,8 @@ class WasInput final : Istream {
 	SliceFifoBuffer buffer;
 
 	uint64_t received = 0, length;
+
+	bool direct = false;
 
 	bool enabled = false;
 
@@ -203,7 +206,7 @@ private:
 	bool TryDirect() noexcept;
 
 	void TryRead() noexcept {
-		if (CheckDirect(FdType::FD_PIPE)) {
+		if (direct) {
 			if (SubmitBuffer() && buffer.empty())
 				TryDirect();
 		} else {
@@ -214,6 +217,10 @@ private:
 	void EventCallback(unsigned events) noexcept;
 
 	/* virtual methods from class Istream */
+
+	void _SetDirect(FdTypeMask mask) noexcept override {
+		direct = (mask & ISTREAM_TO_PIPE) != 0;
+	}
 
 	off_t _GetAvailable(bool partial) noexcept override {
 		if (known_length)

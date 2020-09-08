@@ -45,7 +45,7 @@ public:
 	StringSink(UnusedIstreamPtr &&_input,
 		   StringSinkHandler &_handler,
 		   CancellablePointer &cancel_ptr)
-		:IstreamSink(std::move(_input), FD_ANY),
+		:IstreamSink(std::move(_input)),
 		 handler(_handler)
 	{
 		cancel_ptr = *this;
