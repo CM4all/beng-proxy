@@ -84,7 +84,6 @@ protected:
 		} else {
 			/* we'll try again after Resume() gets called */
 			want_read = true;
-			CopyDirect();
 		}
 	}
 

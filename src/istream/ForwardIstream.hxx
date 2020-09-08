@@ -50,6 +50,11 @@ protected:
 public:
 	/* virtual methods from class Istream */
 
+	void _SetDirect(FdTypeMask mask) noexcept override {
+		FacadeIstream::_SetDirect(mask);
+		input.SetDirect(mask);
+	}
+
 	off_t _GetAvailable(bool partial) noexcept override {
 		return input.GetAvailable(partial);
 	}
@@ -62,7 +67,6 @@ public:
 	}
 
 	void _Read() noexcept override {
-		CopyDirect();
 		input.Read();
 	}
 

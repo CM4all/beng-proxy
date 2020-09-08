@@ -57,6 +57,7 @@ public:
 
 	/* virtual methods from class Istream */
 
+	void _SetDirect(FdTypeMask mask) noexcept override;
 	off_t _GetAvailable(bool partial) noexcept override;
 	void _Read() noexcept override;
 
@@ -245,6 +246,22 @@ AutoPipeIstream::OnError(std::exception_ptr ep) noexcept
  *
  */
 
+void
+AutoPipeIstream::_SetDirect(FdTypeMask mask) noexcept
+{
+	/* call FacadeIstream::_SetDirect(), not
+	   ForwardIstream::_SetDirect(), because we need to modify the
+	   mask for our handler */
+	FacadeIstream::_SetDirect(mask);
+
+	if (mask & FdType::FD_PIPE)
+		/* if the handler supports the pipe, we offer our
+		   services */
+		mask |= ISTREAM_TO_PIPE;
+
+	input.SetDirect(mask);
+}
+
 off_t
 AutoPipeIstream::_GetAvailable(bool partial) noexcept
 {
@@ -276,12 +293,6 @@ AutoPipeIstream::_Read() noexcept
 	   stream */
 	assert(input.IsDefined());
 
-	auto mask = GetHandlerDirect();
-	if (mask & FdType::FD_PIPE)
-		/* if the handler supports the pipe, we offer our services */
-		mask |= ISTREAM_TO_PIPE;
-
-	input.SetDirect(mask);
 	input.Read();
 }
 

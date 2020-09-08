@@ -114,6 +114,11 @@ public:
 	void Cancel() noexcept override;
 
 	/* virtual methods from class Istream */
+	void _SetDirect(FdTypeMask mask) noexcept override {
+		Istream::_SetDirect(mask);
+		input.SetDirect(mask);
+	}
+
 	off_t _GetAvailable(bool partial) noexcept override;
 	void _Read() noexcept override;
 	void _Close() noexcept override;
@@ -428,8 +433,6 @@ void
 CGIClient::_Read() noexcept
 {
 	if (input.IsDefined()) {
-		input.SetDirect(GetHandlerDirect());
-
 		/* this condition catches the case in cgi_parse_headers():
 		   HttpResponseHandler::InvokeResponse() might
 		   recursively call input.Read() */

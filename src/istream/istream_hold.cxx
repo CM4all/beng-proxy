@@ -59,6 +59,11 @@ private:
 public:
 	/* virtual methods from class Istream */
 
+	void _SetDirect(FdTypeMask mask) noexcept override {
+		if (HasInput())
+			ForwardIstream::_SetDirect(mask);
+	}
+
 	off_t _GetAvailable(bool partial) noexcept override {
 		if (gcc_likely(HasInput()))
 			return ForwardIstream::_GetAvailable(partial);
