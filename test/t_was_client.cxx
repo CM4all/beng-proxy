@@ -49,7 +49,7 @@
 #include "net/SocketDescriptor.hxx"
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/istream_later.hxx"
+#include "istream/SuspendIstream.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
 #include "util/ConstBuffer.hxx"
@@ -178,8 +178,9 @@ RunValidPremature(WasServer &server, struct pool &pool,
 					    istream_head_new(pool,
 							     istream_zero_new(pool),
 							     512, true),
-					    istream_later_new(pool, istream_fail_new(pool, std::make_exception_ptr(std::runtime_error("Error"))),
-							      server.GetEventLoop())));
+					    NewSuspendIstream(pool, istream_fail_new(pool, std::make_exception_ptr(std::runtime_error("Error"))),
+							      server.GetEventLoop(),
+							      std::chrono::milliseconds(10))));
 }
 
 class MalformedPrematureWasServer final : WasControlHandler {
