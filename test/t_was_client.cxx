@@ -311,18 +311,9 @@ public:
 	WasConnection(struct pool &pool, EventLoop &_event_loop,
 		      Callback &&_callback)
 		:event_loop(_event_loop), callback(std::move(_callback)) {
-		auto s = WasSocket::CreatePair();
-
-		socket = std::move(s.first);
-		socket.input.SetNonBlocking();
-		socket.output.SetNonBlocking();
-
-		s.second.input.SetNonBlocking();
-		s.second.output.SetNonBlocking();
-
 		WasServerHandler &handler = *this;
 		server = NewFromPool<WasServer>(pool, pool, event_loop,
-						std::move(s.second),
+						MakeWasSocket(),
 						handler);
 	}
 
@@ -331,18 +322,9 @@ public:
 	WasConnection(struct pool &pool, EventLoop &_event_loop,
 		      MalformedPremature)
 		:event_loop(_event_loop) {
-		auto s = WasSocket::CreatePair();
-
-		socket = std::move(s.first);
-		socket.input.SetNonBlocking();
-		socket.output.SetNonBlocking();
-
-		s.second.input.SetNonBlocking();
-		s.second.output.SetNonBlocking();
-
 		WasServerHandler &handler = *this;
 		server2 = NewFromPool<MalformedPrematureWasServer>(pool, event_loop,
-								   std::move(s.second),
+								   MakeWasSocket(),
 								   handler);
 	}
 
@@ -438,6 +420,18 @@ public:
 	}
 
 private:
+	WasSocket MakeWasSocket() {
+		auto s = WasSocket::CreatePair();
+
+		socket = std::move(s.first);
+		socket.input.SetNonBlocking();
+		socket.output.SetNonBlocking();
+
+		s.second.input.SetNonBlocking();
+		s.second.output.SetNonBlocking();
+		return std::move(s.second);
+	}
+
 	/* virtual methods from class WasLease */
 	void ReleaseWas(bool reuse) override {
 		lease->ReleaseLease(reuse);
