@@ -181,11 +181,11 @@ OpenSiblingFile(FileDescriptor directory, const char *path,
 			return nullptr;
 
 		strcpy((char *)mempcpy(buffer, path, slash + 1 - path), sibling_name);
-		path = buffer;
+		sibling_name = buffer;
 	}
 
 	FileDescriptor fd;
-	if (!fd.Open(directory, path, O_RDONLY))
+	if (!fd.Open(directory, sibling_name, O_RDONLY))
 		return nullptr;
 
 	return fdopen(fd.Get(), "r");
