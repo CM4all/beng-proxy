@@ -290,7 +290,7 @@ MalformedPrematureWasServer::OnWasControlPacket(enum was_command cmd,
 }
 
 class WasConnection final : WasServerHandler, WasLease {
-	EventLoop &event_loop;
+	TimerEvent close_timer;
 
 	WasSocket socket;
 
@@ -308,9 +308,11 @@ class WasConnection final : WasServerHandler, WasLease {
 	const Callback callback;
 
 public:
-	WasConnection(struct pool &pool, EventLoop &_event_loop,
+	WasConnection(struct pool &pool, EventLoop &event_loop,
 		      Callback &&_callback)
-		:event_loop(_event_loop), callback(std::move(_callback)) {
+		:close_timer(event_loop, BIND_THIS_METHOD(OnCloseTimer)),
+		 callback(std::move(_callback))
+	{
 		WasServerHandler &handler = *this;
 		server = NewFromPool<WasServer>(pool, pool, event_loop,
 						MakeWasSocket(),
@@ -319,9 +321,10 @@ public:
 
 	struct MalformedPremature{};
 
-	WasConnection(struct pool &pool, EventLoop &_event_loop,
+	WasConnection(struct pool &pool, EventLoop &event_loop,
 		      MalformedPremature)
-		:event_loop(_event_loop) {
+		:close_timer(event_loop, BIND_THIS_METHOD(OnCloseTimer))
+	{
 		WasServerHandler &handler = *this;
 		server2 = NewFromPool<MalformedPrematureWasServer>(pool, event_loop,
 								   MakeWasSocket(),
@@ -336,7 +339,11 @@ public:
 	}
 
 	auto &GetEventLoop() const noexcept {
-		return event_loop;
+		return close_timer.GetEventLoop();
+	}
+
+	void ScheduleClose() noexcept {
+		close_timer.Schedule(std::chrono::milliseconds(10));
 	}
 
 	void Request(struct pool *pool,
@@ -399,7 +406,9 @@ public:
 	}
 
 	static WasConnection *NewHold(struct pool &pool, EventLoop &event_loop) {
-		return new WasConnection(pool, event_loop, RunHold);
+		auto *c = new WasConnection(pool, event_loop, RunHold);
+		c->ScheduleClose();
+		return c;
 	}
 
 	static WasConnection *NewNop(struct pool &pool, EventLoop &event_loop) {
@@ -434,6 +443,13 @@ private:
 		s.second.input.SetNonBlocking();
 		s.second.output.SetNonBlocking();
 		return std::move(s.second);
+	}
+
+	void OnCloseTimer() noexcept {
+		if (server != nullptr)
+			std::exchange(server, nullptr)->Free();
+		if (server2 != nullptr)
+			std::exchange(server2, nullptr)->Free();
 	}
 
 	/* virtual methods from class WasLease */
