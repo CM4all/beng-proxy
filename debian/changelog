@@ -3,7 +3,7 @@ cm4all-beng-proxy (17.0.22) unstable; urgency=low
   * was: optimistic wait for response length
   * was: fix memory leak
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 09 Sep 2020 11:05:22 +0200
 
 cm4all-beng-proxy (17.0.21) unstable; urgency=low
 
