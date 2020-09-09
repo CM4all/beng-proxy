@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.23) unstable; urgency=low
 
+  * merge release 16.27
   * bp/mod_auth_easy: fix false negatives in the root directory
   * bp: fix assertion failure with EASY_BASE and malformed PATH
   * was: fix protocol error on WAS filters
@@ -9,6 +10,7 @@ cm4all-beng-proxy (17.0.23) unstable; urgency=low
 
 cm4all-beng-proxy (17.0.22) unstable; urgency=low
 
+  * merge release 16.26
   * was: optimistic wait for response length
   * was: fix memory leak
 
@@ -187,6 +189,13 @@ cm4all-beng-proxy (17.0.1) unstable; urgency=low
   * certdb: implement ACMEv2
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 18 Mar 2020 16:54:20 +0100
+
+cm4all-beng-proxy (16.27) unstable; urgency=low
+
+  * was: fix memory leak
+  * was: fix protocol error on WAS filters
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 09 Sep 2020 23:14:33 +0200
 
 cm4all-beng-proxy (16.26) unstable; urgency=low
 
