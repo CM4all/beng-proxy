@@ -31,6 +31,7 @@
  */
 
 #include "SlicePool.hxx"
+#include "util/Sanitizer.hxx"
 
 #include <gtest/gtest.h>
 
@@ -65,7 +66,9 @@ TEST(SliceTest, Small)
 
 	auto allocation0 = pool.Alloc();
 	auto *area0 = allocation0.area;
-	ASSERT_NE(area0, nullptr);
+	if (!HaveAddressSanitizer()) {
+		ASSERT_NE(area0, nullptr);
+	}
 	allocation0.Free();
 
 	SliceAllocation allocations[per_area];
@@ -92,7 +95,9 @@ TEST(SliceTest, Small)
 		Fill(more[i].data, slice_size, per_area + i);
 	}
 
-	ASSERT_NE(more[per_area - 1].area, area0);
+	if (!HaveAddressSanitizer()) {
+		ASSERT_NE(more[per_area - 1].area, area0);
+	}
 
 	for (unsigned i = 0; i < per_area; ++i) {
 		ASSERT_TRUE(Check(allocations[i].data, slice_size, i));
@@ -112,7 +117,9 @@ TEST(SliceTest, Medium)
 
 	auto allocation0 = pool.Alloc();
 	auto *area0 = allocation0.area;
-	ASSERT_NE(area0, nullptr);
+	if (!HaveAddressSanitizer()) {
+		ASSERT_NE(area0, nullptr);
+	}
 	allocation0.Free();
 
 	SliceAllocation allocations[per_area];
@@ -159,7 +166,9 @@ TEST(SliceTest, Large)
 
 	auto allocation0 = pool.Alloc();
 	auto *area0 = allocation0.area;
-	ASSERT_NE(area0, nullptr);
+	if (!HaveAddressSanitizer()) {
+		ASSERT_NE(area0, nullptr);
+	}
 	allocation0.Free();
 
 	SliceAllocation allocations[per_area];

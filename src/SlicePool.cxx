@@ -35,6 +35,7 @@
 #include "system/mmap.h"
 #include "AllocatorStats.hxx"
 #include "util/Poison.h"
+#include "util/Sanitizer.hxx"
 
 #include <new>
 
@@ -355,6 +356,9 @@ SliceArea::Alloc() noexcept
 SliceAllocation
 SlicePool::Alloc() noexcept
 {
+	if (HaveAddressSanitizer())
+		return { *(SliceArea *)nullptr, malloc(slice_size), slice_size };
+
 	auto &area = MakeNonFullArea();
 
 	const bool was_empty = area.IsEmpty();
@@ -393,6 +397,11 @@ SliceArea::_Free(void *p) noexcept
 void
 SlicePool::Free(SliceArea &area, void *p) noexcept
 {
+	if (HaveAddressSanitizer()) {
+		free(p);
+		return;
+	}
+
 	const bool was_full = area.IsFull();
 
 	area._Free(p);
@@ -414,6 +423,11 @@ SlicePool::Free(SliceArea &area, void *p) noexcept
 void
 SliceArea::Free(void *p) noexcept
 {
+	if (HaveAddressSanitizer()) {
+		free(p);
+		return;
+	}
+
 	pool.Free(*this, p);
 }
 
