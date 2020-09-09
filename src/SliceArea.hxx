@@ -36,8 +36,8 @@
 
 #include <boost/intrusive/list_hook.hpp>
 
-#include <assert.h>
-#include <stddef.h>
+#include <cassert>
+#include <cstddef>
 
 class SlicePool;
 
@@ -80,7 +80,7 @@ public:
 	static SliceArea *New(SlicePool &pool) noexcept;
 	void Delete() noexcept;
 
-	static constexpr size_t GetHeaderSize(unsigned slices_per_area) noexcept {
+	static constexpr std::size_t GetHeaderSize(unsigned slices_per_area) noexcept {
 		return sizeof(SliceArea) + sizeof(Slot) * (slices_per_area - 1);
 	}
 
@@ -92,7 +92,7 @@ public:
 
 	bool IsFull() const noexcept;
 
-	size_t GetNettoSize(size_t slice_size) const noexcept {
+	std::size_t GetNettoSize(std::size_t slice_size) const noexcept {
 		return allocated_count * slice_size;
 	}
 

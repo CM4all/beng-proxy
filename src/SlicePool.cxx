@@ -42,15 +42,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-static constexpr size_t
-align_size(size_t size) noexcept
+static constexpr std::size_t
+align_size(std::size_t size) noexcept
 {
 	return ((size - 1) | 0x1f) + 1;
 }
 
 gcc_const
-static inline size_t
-align_page_size(size_t size) noexcept
+static inline std::size_t
+align_page_size(std::size_t size) noexcept
 {
 	return ((size - 1) | (mmap_page_size() - 1)) + 1;
 }
@@ -152,7 +152,7 @@ SliceArea::IndexOf(const void *_p) noexcept
 	assert(p >= (uint8_t *)GetPage(0));
 	assert(p < (uint8_t *)GetPage(pool.pages_per_area));
 
-	size_t offset = p - (const uint8_t *)this;
+	std::size_t offset = p - (const uint8_t *)this;
 	const unsigned page = offset / mmap_page_size() - pool.header_pages;
 	offset %= mmap_page_size();
 	assert(offset % pool.slice_size == 0);
@@ -237,7 +237,7 @@ SliceArea::Compress() noexcept
  *
  */
 
-SlicePool::SlicePool(size_t _slice_size, unsigned _slices_per_area) noexcept
+SlicePool::SlicePool(std::size_t _slice_size, unsigned _slices_per_area) noexcept
 {
 	assert(_slice_size > 0);
 	assert(_slices_per_area > 0);
@@ -261,7 +261,7 @@ SlicePool::SlicePool(size_t _slice_size, unsigned _slices_per_area) noexcept
 
 	slices_per_area = (pages_per_area / pages_per_slice) * slices_per_page;
 
-	const size_t header_size = SliceArea::GetHeaderSize(slices_per_area);
+	const std::size_t header_size = SliceArea::GetHeaderSize(slices_per_area);
 	header_pages = divide_round_up(header_size, mmap_page_size());
 
 	area_size = mmap_page_size() * (header_pages + pages_per_area);

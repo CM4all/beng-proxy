@@ -37,7 +37,7 @@
 
 #include <boost/intrusive/list.hpp>
 
-#include <stddef.h>
+#include <cstddef>
 
 struct AllocatorStats;
 class SliceArea;
@@ -49,7 +49,7 @@ class SliceArea;
 class SlicePool {
 	friend class SliceArea;
 
-	size_t slice_size;
+	std::size_t slice_size;
 
 	/**
 	 * Number of slices that fit on one MMU page (4 kB).
@@ -67,7 +67,7 @@ class SlicePool {
 	 */
 	unsigned header_pages;
 
-	size_t area_size;
+	std::size_t area_size;
 
 	typedef boost::intrusive::list<SliceArea,
 				       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
@@ -92,10 +92,10 @@ class SlicePool {
 	bool fork_cow = true;
 
 public:
-	SlicePool(size_t _slice_size, unsigned _slices_per_area) noexcept;
+	SlicePool(std::size_t _slice_size, unsigned _slices_per_area) noexcept;
 	~SlicePool() noexcept;
 
-	size_t GetSliceSize() const noexcept {
+	std::size_t GetSliceSize() const noexcept {
 		return slice_size;
 	}
 

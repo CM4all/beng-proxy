@@ -34,8 +34,8 @@
 
 #include <algorithm>
 
-#include <assert.h>
-#include <stddef.h>
+#include <cassert>
+#include <cstddef>
 
 class SliceArea;
 
@@ -44,11 +44,11 @@ public:
 	SliceArea *area;
 
 	void *data = nullptr;
-	size_t size;
+	std::size_t size;
 
 	SliceAllocation() = default;
 
-	SliceAllocation(SliceArea &_area, void *_data, size_t _size) noexcept
+	SliceAllocation(SliceArea &_area, void *_data, std::size_t _size) noexcept
 		:area(&_area), data(_data), size(_size) {}
 
 	SliceAllocation(SliceAllocation &&src) noexcept
