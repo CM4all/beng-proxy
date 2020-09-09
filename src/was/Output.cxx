@@ -255,6 +255,7 @@ WasOutput::OnIstreamReady() noexcept
 		return false;
 	}
 
+	sent += nbytes;
 	input.ConsumeBucketList(nbytes);
 
 	if (!more && size_t(nbytes) == total) {
