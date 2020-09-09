@@ -371,6 +371,8 @@ LbCluster::PickZeroconf(const Expiry now, sticky_hash_t sticky_hash) noexcept
 void
 LbCluster::FillActive() noexcept
 {
+	round_robin_balancer.Reset();
+
 	active_zeroconf_members.clear();
 	active_zeroconf_members.reserve(zeroconf_members.size());
 

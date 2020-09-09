@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.23) unstable; urgency=low
 
-  * 
+  * lb: fix Zeroconf crash bug
 
  --   
 

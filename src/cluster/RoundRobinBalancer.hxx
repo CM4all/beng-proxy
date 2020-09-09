@@ -43,6 +43,14 @@ class RoundRobinBalancer final {
 	unsigned next = 0;
 
 public:
+	/**
+	 * Reset the state.  Call this after the list has been
+	 * modified.
+	 */
+	void Reset() noexcept {
+		next = 0;
+	}
+
 	template<typename List>
 	typename List::const_reference Get(Expiry now, const List &list,
 					   bool allow_fade) noexcept;
