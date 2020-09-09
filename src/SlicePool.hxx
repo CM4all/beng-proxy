@@ -112,11 +112,12 @@ public:
 
 	void Compress() noexcept;
 
+	SliceAllocation Alloc() noexcept;
+	void Free(SliceArea &area, void *p) noexcept;
+
+private:
 	gcc_pure
 	SliceArea *FindNonFullArea() noexcept;
 
 	SliceArea &MakeNonFullArea() noexcept;
-
-	SliceAllocation Alloc() noexcept;
-	void Free(SliceArea &area, void *p) noexcept;
 };
