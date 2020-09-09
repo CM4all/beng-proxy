@@ -62,3 +62,9 @@ DefaultChunkAllocator::Free() noexcept
 
 	allocation.Free();
 }
+
+std::size_t
+DefaultChunkAllocator::GetChunkSize() noexcept
+{
+	return FB_SIZE;
+}

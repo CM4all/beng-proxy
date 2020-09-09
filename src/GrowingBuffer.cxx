@@ -56,6 +56,8 @@ GrowingBuffer::BufferPtr::Free() noexcept
 {
 	assert(buffer != nullptr);
 
+	Check();
+
 	buffer->~Buffer();
 	allocator.Free();
 	buffer = nullptr;
@@ -66,13 +68,20 @@ GrowingBuffer::BufferPtr::Pop() noexcept
 {
 	assert(buffer != nullptr);
 
+	Check();
+	buffer->next.Check();
+
 	auto next = std::move(buffer->next);
 	*this = std::move(next);
+
+	Check();
 }
 
 WritableBuffer<void>
 GrowingBuffer::Buffer::Write() noexcept
 {
+	Check();
+
 	return {data + fill, size - fill};
 }
 
@@ -102,6 +111,10 @@ GrowingBuffer::Write(size_t length) noexcept
 	/* this method is only allowed with "tiny" sizes which fit well
 	   into any buffer */
 	assert(tail == nullptr || length <= tail->size);
+
+	head.Check();
+	if (tail != nullptr)
+		tail->Check();
 
 	auto *buffer = tail;
 	if (buffer == nullptr || buffer->fill + length > buffer->size)
@@ -170,6 +183,7 @@ GrowingBuffer::Read() const noexcept
 	if (!head)
 		return nullptr;
 
+	head.Check();
 	assert(position < head->size);
 
 	return { head->data + position, head->fill - position };
@@ -182,6 +196,7 @@ GrowingBuffer::Consume(size_t length) noexcept
 		return;
 
 	assert(head);
+	head.Check();
 
 	position += length;
 
@@ -201,6 +216,7 @@ GrowingBuffer::Skip(size_t length) noexcept
 {
 	while (length > 0) {
 		assert(head);
+		head.Check();
 
 		size_t remaining = head->fill - position;
 		if (length < remaining) {
@@ -334,6 +350,8 @@ GrowingBuffer::ConsumeBucketList(size_t nbytes) noexcept
 {
 	size_t result = 0;
 	while (nbytes > 0 && head) {
+		head.Check();
+
 		size_t available = head->fill - position;
 		if (nbytes < available) {
 			position += nbytes;

@@ -34,6 +34,7 @@
 
 #include "SliceAllocation.hxx"
 
+#include <cassert>
 #include <utility>
 
 template<typename T> struct WritableBuffer;
@@ -60,4 +61,16 @@ public:
 
 	WritableBuffer<void> Allocate() noexcept;
 	void Free() noexcept;
+
+	bool IsDefined() const noexcept {
+		return allocation.IsDefined();
+	}
+
+	std::size_t size() const noexcept {
+		assert(allocation.IsDefined());
+
+		return allocation.size;
+	}
+
+	static std::size_t GetChunkSize() noexcept;
 };

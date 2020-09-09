@@ -80,6 +80,11 @@ class GrowingBuffer {
 			return buffer != nullptr;
 		}
 
+		/**
+		 * Debug checks.
+		 */
+		void Check() const noexcept;
+
 		Buffer &Allocate() noexcept;
 		void Free() noexcept;
 
@@ -125,6 +130,14 @@ class GrowingBuffer {
 
 		bool IsFull() const noexcept {
 			return fill == size;
+		}
+
+		/**
+		 * Debug checks.
+		 */
+		void Check() const noexcept {
+			assert(size == DefaultChunkAllocator::GetChunkSize() - sizeof(*this) + sizeof(data));
+			assert(fill <= size);
 		}
 
 		WritableBuffer<void> Write() noexcept;
@@ -221,11 +234,22 @@ private:
 	}
 };
 
+inline void
+GrowingBuffer::BufferPtr::Check() const noexcept
+{
+	assert((buffer != nullptr) == allocator.IsDefined());
+	if (buffer != nullptr)
+		buffer->Check();
+}
+
 template<typename F>
 void
 GrowingBuffer::BufferPtr::ForEachBuffer(size_t skip, F &&f) const
 {
 	for (const auto *i = get(); i != nullptr; i = i->next.get()) {
+		i->Check();
+		i->next.Check();
+
 		ConstBuffer<uint8_t> b(i->data, i->fill);
 		if (skip > 0) {
 			if (skip >= b.size) {
