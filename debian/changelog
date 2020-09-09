@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.0.23) unstable; urgency=low
 
   * bp/mod_auth_easy: fix false negatives in the root directory
+  * was: fix protocol error on WAS filters
   * lb: fix Zeroconf crash bug
 
  --   
