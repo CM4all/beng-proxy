@@ -49,7 +49,7 @@ class AutoPipeIstream final : public ForwardIstream {
 	PipeLease pipe;
 	size_t piped = 0;
 
-	bool direct = false;
+	FdTypeMask direct_mask = 0;
 
 public:
 	AutoPipeIstream(struct pool &p, UnusedIstreamPtr _input,
@@ -188,7 +188,7 @@ AutoPipeIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 			return ISTREAM_RESULT_BLOCKING;
 	}
 
-	if (direct)
+	if (direct_mask & FdTypeMask(type))
 		/* already supported by handler (maybe already a pipe) - no
 		   need for wrapping it into a pipe */
 		return InvokeDirect(type, fd, max_length);
@@ -250,8 +250,9 @@ AutoPipeIstream::OnError(std::exception_ptr ep) noexcept
 void
 AutoPipeIstream::_SetDirect(FdTypeMask mask) noexcept
 {
-	direct = (mask & FdType::FD_PIPE) != 0;
-	if (direct)
+	direct_mask = mask;
+
+	if (mask & FdType::FD_PIPE)
 		/* if the handler supports the pipe, we offer our
 		   services */
 		mask |= ISTREAM_TO_PIPE;
