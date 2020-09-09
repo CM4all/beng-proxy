@@ -334,6 +334,9 @@ GrowingBuffer::ConsumeBucketList(size_t nbytes) noexcept
 		nbytes -= available;
 
 		head.Pop();
+		if (!head)
+			tail = nullptr;
+
 		position = 0;
 	}
 
