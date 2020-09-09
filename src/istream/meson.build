@@ -86,6 +86,7 @@ istream = static_library(
   'ReplaceIstream.cxx',
   'SliceIstream.cxx',
   'TeeIstream.cxx',
+  'SuspendIstream.cxx',
   'TimeoutIstream.cxx',
   'AutoPipeIstream.cxx',
 
