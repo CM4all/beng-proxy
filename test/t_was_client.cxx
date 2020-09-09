@@ -335,6 +335,10 @@ public:
 			server2->Free();
 	}
 
+	auto &GetEventLoop() const noexcept {
+		return event_loop;
+	}
+
 	void Request(struct pool *pool,
 		     Lease &_lease,
 		     http_method_t method, const char *uri,
@@ -342,7 +346,7 @@ public:
 		     HttpResponseHandler &handler,
 		     CancellablePointer &cancel_ptr) {
 		lease = &_lease;
-		was_client_request(*pool, event_loop, nullptr,
+		was_client_request(*pool, GetEventLoop(), nullptr,
 				   socket.control, socket.input, socket.output,
 				   *this,
 				   method, uri, uri, nullptr, nullptr,
