@@ -60,6 +60,7 @@ public:
 		FIXED,
 		HUGE_,
 		HOLD,
+		BLOCK,
 		NOP,
 
 		/**

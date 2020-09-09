@@ -1646,7 +1646,7 @@ template<class Connection>
 static void
 TestCloseWithFailedSocketGet(Context<Connection> &c)
 {
-	c.connection = Connection::NewHold(*c.pool, c.event_loop);
+	c.connection = Connection::NewBlock(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
 			      HTTP_METHOD_GET, "/foo", {},
 			      nullptr,

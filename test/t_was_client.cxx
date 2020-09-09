@@ -109,6 +109,18 @@ RunHold(WasServer &server, struct pool &pool,
 }
 
 static void
+RunBlock(WasServer &server, struct pool &pool,
+	gcc_unused http_method_t method,
+	gcc_unused const char *uri, gcc_unused StringMap &&headers,
+	UnusedIstreamPtr body)
+{
+	body.Clear();
+
+	server.SendResponse(HTTP_STATUS_OK, {},
+			    istream_block_new(pool));
+}
+
+static void
 RunNop(WasServer &, struct pool &,
        http_method_t ,
        const char *, StringMap &&,
@@ -409,6 +421,10 @@ public:
 		auto *c = new WasConnection(pool, event_loop, RunHold);
 		c->ScheduleClose();
 		return c;
+	}
+
+	static WasConnection *NewBlock(struct pool &pool, EventLoop &event_loop) {
+		return new WasConnection(pool, event_loop, RunBlock);
 	}
 
 	static WasConnection *NewNop(struct pool &pool, EventLoop &event_loop) {

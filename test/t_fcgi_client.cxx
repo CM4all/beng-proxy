@@ -347,6 +347,10 @@ struct Connection {
 		return New(event_loop, fcgi_server_hold);
 	}
 
+	static Connection *NewBlock(struct pool &, EventLoop &event_loop) {
+		return New(event_loop, fcgi_server_hold);
+	}
+
 	static Connection *NewPrematureCloseHeaders(struct pool &,
 						    EventLoop &event_loop) {
 		return New(event_loop, fcgi_server_premature_close_headers);

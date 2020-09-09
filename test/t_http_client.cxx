@@ -175,6 +175,12 @@ struct Connection {
 				     DemoHttpServerConnection::Mode::HOLD);
 	}
 
+	static Connection *NewBlock(struct pool &pool,
+				    EventLoop &event_loop) noexcept {
+		return NewWithServer(pool, event_loop,
+				     DemoHttpServerConnection::Mode::BLOCK);
+	}
+
 	static auto *NewNop(struct pool &pool, EventLoop &event_loop) {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::NOP);

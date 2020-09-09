@@ -36,6 +36,7 @@
 #include "http_server/http_server.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "istream/sink_null.hxx"
+#include "istream/BlockIstream.hxx"
 #include "istream/ByteIstream.hxx"
 #include "istream/DelayedIstream.hxx"
 #include "istream/HeadIstream.hxx"
@@ -153,6 +154,13 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 		}
 
 		timer.Schedule(std::chrono::seconds(0));
+		break;
+
+	case Mode::BLOCK:
+		request_body = UnusedHoldIstreamPtr(request.pool,
+						    std::move(request.body));
+		request.SendResponse(HTTP_STATUS_OK, {},
+				     istream_block_new(request.pool));
 		break;
 
 	case Mode::NOP:
