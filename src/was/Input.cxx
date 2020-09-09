@@ -545,12 +545,14 @@ WasInput::_FillBucketList(IstreamBucketList &list)
 		try {
 			ReadToBuffer();
 		} catch (...) {
+			handler.WasInputError();
 			Destroy();
 			throw;
 		}
 
 		if (!CheckReleasePipe()) {
 			// TODO: deal with this condition properly or improve error message
+			handler.WasInputError();
 			Destroy();
 			throw std::runtime_error("WAS peer failed");
 		}
