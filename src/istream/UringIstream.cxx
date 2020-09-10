@@ -51,13 +51,28 @@ class UringIstream final : public Istream, Uring::Operation {
 
 	UniqueFileDescriptor fd;
 
+	/**
+	 * Passed to the io_uring read operation.
+	 */
 	struct iovec iov;
 
+	/**
+	 * The file offset of the next/pending read operation.  If
+	 * there is data in the #buffer, it precedes this offset.
+	 */
 	off_t offset;
 
+	/**
+	 * We'll stop reading at this file offset.  This is usually
+	 * the file size (or the end of the requested range).
+	 */
 	const off_t end_offset;
 
 	SliceFifoBuffer buffer;
+
+	/**
+	 * The path name.  Only used for error messages.
+	 */
 	const char *const path;
 
 public:
