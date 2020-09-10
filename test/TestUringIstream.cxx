@@ -107,12 +107,16 @@ TEST(UringIstream, Basic)
 
 	auto [i, size] = MakeUringIstream(root_pool, uring);
 
-	MyHandler h(std::move(i));
-	h.Read();
-	while (!h.IsDone())
-		uring.WaitDispatchOneCompletion();
+	{
+		MyHandler h(std::move(i));
+		h.Read();
+		while (!h.IsDone())
+			uring.WaitDispatchOneCompletion();
 
-	EXPECT_EQ(h.got_data, size);
+		EXPECT_EQ(h.got_data, size);
+	}
+
+	uring.DispatchCompletions();
 }
 
 TEST(UringIstream, Cancel)
@@ -123,8 +127,12 @@ TEST(UringIstream, Cancel)
 
 	auto [i, size] = MakeUringIstream(root_pool, uring);
 
-	MyHandler h(std::move(i));
-	h.Read();
+	{
+		MyHandler h(std::move(i));
+		h.Read();
+	}
+
+	uring.DispatchCompletions();
 }
 
 TEST(UringIstream, CancelLate)
@@ -135,9 +143,13 @@ TEST(UringIstream, CancelLate)
 
 	auto [i, size] = MakeUringIstream(root_pool, uring);
 
-	MyHandler h(std::move(i));
-	h.Read();
+	{
+		MyHandler h(std::move(i));
+		h.Read();
 
-	while (!h.IsDone() && h.got_data == 0)
-		uring.WaitDispatchOneCompletion();
+		while (!h.IsDone() && h.got_data == 0)
+			uring.WaitDispatchOneCompletion();
+	}
+
+	uring.DispatchCompletions();
 }
