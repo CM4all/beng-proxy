@@ -96,6 +96,14 @@ public:
 	bool CheckLength() noexcept;
 
 private:
+	bool HasPipe() const noexcept {
+		return fd.IsDefined();
+	}
+
+	FileDescriptor GetPipe() noexcept {
+		return fd;
+	}
+
 	void Destroy() noexcept {
 		this->~WasOutput();
 	}
@@ -167,7 +175,7 @@ WasOutput::CheckLength() noexcept
 inline void
 WasOutput::WriteEventCallback(unsigned) noexcept
 {
-	assert(fd.IsDefined());
+	assert(HasPipe());
 	assert(input.IsDefined());
 
 	event.CancelWrite();
@@ -186,7 +194,7 @@ WasOutput::WriteEventCallback(unsigned) noexcept
 bool
 WasOutput::OnIstreamReady() noexcept
 {
-	assert(fd.IsDefined());
+	assert(HasPipe());
 	assert(input.IsDefined());
 
 	/* collect buckets */
@@ -246,7 +254,7 @@ WasOutput::OnIstreamReady() noexcept
 
 	/* write this struct iovec array */
 
-	ssize_t nbytes = writev(fd.Get(), &v.front(), v.size());
+	ssize_t nbytes = writev(GetPipe().Get(), &v.front(), v.size());
 	if (nbytes < 0) {
 		int e = errno;
 		if (e == EAGAIN) {
@@ -282,10 +290,10 @@ WasOutput::OnIstreamReady() noexcept
 inline size_t
 WasOutput::OnData(const void *p, size_t length) noexcept
 {
-	assert(fd.IsDefined());
+	assert(HasPipe());
 	assert(input.IsDefined());
 
-	ssize_t nbytes = fd.Write(p, length);
+	ssize_t nbytes = GetPipe().Write(p, length);
 	if (gcc_likely(nbytes > 0)) {
 		sent += nbytes;
 		ScheduleWrite();
@@ -305,14 +313,14 @@ WasOutput::OnData(const void *p, size_t length) noexcept
 inline ssize_t
 WasOutput::OnDirect(gcc_unused FdType type, int source_fd, size_t max_length) noexcept
 {
-	assert(fd.IsDefined());
+	assert(HasPipe());
 
-	ssize_t nbytes = SpliceToPipe(source_fd, fd.Get(), max_length);
+	ssize_t nbytes = SpliceToPipe(source_fd, GetPipe().Get(), max_length);
 	if (gcc_likely(nbytes > 0)) {
 		sent += nbytes;
 		ScheduleWrite();
 	} else if (nbytes < 0 && errno == EAGAIN) {
-		if (!fd.IsReadyForWriting()) {
+		if (!GetPipe().IsReadyForWriting()) {
 			ScheduleWrite();
 			return ISTREAM_RESULT_BLOCKING;
 		}
@@ -320,7 +328,7 @@ WasOutput::OnDirect(gcc_unused FdType type, int source_fd, size_t max_length) no
 		/* try again, just in case fd has become ready between
 		   the first istream_direct_to_pipe() call and
 		   fd.IsReadyForWriting() */
-		nbytes = SpliceToPipe(source_fd, fd.Get(), max_length);
+		nbytes = SpliceToPipe(source_fd, GetPipe().Get(), max_length);
 	}
 
 	return nbytes;
