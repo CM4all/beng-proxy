@@ -69,7 +69,7 @@ public:
 	}
 
 	size_t _ConsumeBucketList(size_t nbytes) noexcept override {
-		return nbytes;
+		return Consumed(nbytes);
 	}
 };
 
