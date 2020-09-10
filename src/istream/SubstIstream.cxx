@@ -811,7 +811,7 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 
 			if (send_first) {
 				send_first = false;
-				return 1;
+				return Consumed(1);
 			}
 
 			return 0;
@@ -819,7 +819,7 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 			// WriteMismatch()
 			nbytes = std::min(nbytes, mismatch.size);
 			mismatch.skip_front(nbytes);
-			return nbytes;
+			return Consumed(nbytes);
 		}
 	} else {
 		assert(input.IsDefined());
@@ -827,7 +827,7 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 
 	switch (state) {
 	case State::NONE:
-		return input.ConsumeBucketList(nbytes);
+		return Consumed(input.ConsumeBucketList(nbytes));
 
 	case State::MATCH:
 		return 0;
@@ -851,7 +851,7 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		/* finished sending substitution? */
 		if (consumed == length)
 			state = State::NONE;
-		return consumed;
+		return Consumed(consumed);
 	}
 	}
 
