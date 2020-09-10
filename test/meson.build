@@ -889,6 +889,22 @@ test('t_growing_buffer', executable('t_growing_buffer',
     istream_api_dep,
   ]))
 
+if uring_dep.found()
+  test(
+    'TestUringIstream',
+    executable(
+      'TestUringIstream',
+      'TestUringIstream.cxx',
+      include_directories: inc,
+      dependencies: [
+        gtest,
+        uring_dep,
+        istream_dep,
+      ],
+    ),
+  )
+endif
+
 test(
   'TestAprMd5',
   executable(
