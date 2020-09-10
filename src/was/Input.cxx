@@ -53,7 +53,6 @@
 #include <unistd.h>
 
 class WasInput final : Istream {
-	FileDescriptor fd;
 	SocketEvent event;
 
 	WasInputHandler &handler;
@@ -69,9 +68,9 @@ class WasInput final : Istream {
 	bool closed = false, known_length = false;
 
 public:
-	WasInput(struct pool &p, EventLoop &event_loop, FileDescriptor _fd,
+	WasInput(struct pool &p, EventLoop &event_loop, FileDescriptor fd,
 		 WasInputHandler &_handler) noexcept
-		:Istream(p), fd(_fd),
+		:Istream(p),
 		 event(event_loop, BIND_THIS_METHOD(EventCallback),
 		       SocketDescriptor::FromFileDescriptor(fd)),
 		 handler(_handler) {
@@ -106,11 +105,11 @@ public:
 
 private:
 	bool HasPipe() const noexcept {
-		return fd.IsDefined();
+		return event.IsDefined();
 	}
 
 	FileDescriptor GetPipe() noexcept {
-		return fd;
+		return event.GetSocket().ToFileDescriptor();
 	}
 
 	bool CanRelease() const {
@@ -122,8 +121,9 @@ private:
 	 */
 	bool ReleasePipe() noexcept {
 		assert(HasPipe());
-		fd.SetUndefined();
+
 		event.Cancel();
+		event.ReleaseSocket();
 
 		return handler.WasInputRelease();
 	}
