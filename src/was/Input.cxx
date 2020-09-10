@@ -105,6 +105,14 @@ public:
 	void Premature(uint64_t _length) noexcept;
 
 private:
+	bool HasPipe() const noexcept {
+		return fd.IsDefined();
+	}
+
+	FileDescriptor GetPipe() noexcept {
+		return fd;
+	}
+
 	bool CanRelease() const {
 		return known_length && received == length;
 	}
@@ -113,7 +121,7 @@ private:
 	 * @return false if the #WasInput has been destroyed
 	 */
 	bool ReleasePipe() noexcept {
-		assert(fd.IsDefined());
+		assert(HasPipe());
 		fd.SetUndefined();
 		event.Cancel();
 
@@ -128,7 +136,7 @@ private:
 	}
 
 	void ScheduleRead() noexcept {
-		assert(fd.IsDefined());
+		assert(HasPipe());
 		assert(!buffer.IsDefined() || !buffer.IsFull());
 
 		event.ScheduleRead();
@@ -271,7 +279,7 @@ WasInput::ReadToBuffer()
 			return;
 	}
 
-	ssize_t nbytes = read_to_buffer(fd.Get(), buffer, max_length);
+	ssize_t nbytes = read_to_buffer(GetPipe().Get(), buffer, max_length);
 	assert(nbytes != -2);
 
 	if (nbytes == 0)
@@ -298,7 +306,7 @@ WasInput::ReadToBuffer()
 inline bool
 WasInput::TryBuffered() noexcept
 {
-	if (fd.IsDefined()) {
+	if (HasPipe()) {
 		try {
 			ReadToBuffer();
 		} catch (...) {
@@ -313,7 +321,7 @@ WasInput::TryBuffered() noexcept
 	if (SubmitBuffer()) {
 		assert(!buffer.IsDefinedAndFull());
 
-		if (fd.IsDefined())
+		if (HasPipe())
 			ScheduleRead();
 	}
 
@@ -333,7 +341,7 @@ WasInput::TryDirect() noexcept
 			max_length = rest;
 	}
 
-	ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, fd.Get(), max_length);
+	ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, GetPipe().Get(), max_length);
 	if (nbytes == ISTREAM_RESULT_BLOCKING) {
 		event.CancelRead();
 		return false;
@@ -375,7 +383,7 @@ WasInput::TryDirect() noexcept
 inline void
 WasInput::EventCallback(unsigned) noexcept
 {
-	assert(fd.IsDefined());
+	assert(HasPipe());
 
 	TryRead();
 }
@@ -485,7 +493,7 @@ WasInput::PrematureThrow(uint64_t _length)
 	while (remaining > 0) {
 		uint8_t discard_buffer[4096];
 		size_t size = std::min(remaining, uint64_t(sizeof(discard_buffer)));
-		ssize_t nbytes = fd.Read(discard_buffer, size);
+		ssize_t nbytes = GetPipe().Read(discard_buffer, size);
 		if (nbytes < 0)
 			throw NestException(std::make_exception_ptr(MakeErrno("Read error")),
 					    WasError("read error on WAS data connection"));
@@ -546,7 +554,7 @@ WasInput::_FillBucketList(IstreamBucketList &list)
 {
 	auto r = buffer.Read();
 	if (r.empty()) {
-		if (!fd.IsDefined())
+		if (!HasPipe())
 			return;
 
 		try {
