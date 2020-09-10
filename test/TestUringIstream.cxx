@@ -36,6 +36,7 @@
 #include "io/uring/Queue.hxx"
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "system/Error.hxx"
 #include "pool/RootPool.hxx"
 #include "fb_pool.hxx"
 
@@ -100,7 +101,7 @@ MakeUringIstream(struct pool &pool, Uring::Queue &uring)
 }
 
 TEST(UringIstream, Basic)
-{
+try {
 	const ScopeFbPoolInit fb_pool_init;
 	RootPool root_pool;
 	Uring::Queue uring(1024, 0);
@@ -117,10 +118,15 @@ TEST(UringIstream, Basic)
 	}
 
 	uring.DispatchCompletions();
+} catch (const std::system_error &e) {
+	if (IsErrno(e, ENOSYS))
+		GTEST_SKIP();
+	else
+		throw;
 }
 
 TEST(UringIstream, Cancel)
-{
+try {
 	const ScopeFbPoolInit fb_pool_init;
 	RootPool root_pool;
 	Uring::Queue uring(1024, 0);
@@ -133,10 +139,15 @@ TEST(UringIstream, Cancel)
 	}
 
 	uring.DispatchCompletions();
+} catch (const std::system_error &e) {
+	if (IsErrno(e, ENOSYS))
+		GTEST_SKIP();
+	else
+		throw;
 }
 
 TEST(UringIstream, CancelLate)
-{
+try {
 	const ScopeFbPoolInit fb_pool_init;
 	RootPool root_pool;
 	Uring::Queue uring(1024, 0);
@@ -152,4 +163,9 @@ TEST(UringIstream, CancelLate)
 	}
 
 	uring.DispatchCompletions();
+} catch (const std::system_error &e) {
+	if (IsErrno(e, ENOSYS))
+		GTEST_SKIP();
+	else
+		throw;
 }
