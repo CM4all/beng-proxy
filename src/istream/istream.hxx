@@ -84,6 +84,12 @@ class Istream : PoolHolder, LeakDetector, IstreamDestructAnchor {
 	/** how much data was available in the previous invocation? */
 	size_t data_available = 0;
 
+	/**
+	 * Sum of all recent Consumed() calls.  This is used for
+	 * assertions in ConsumeBucketList().
+	 */
+	size_t consumed_sum;
+
 	off_t available_partial = 0, available_full = 0;
 #endif
 
@@ -101,6 +107,8 @@ protected:
 
 	size_t Consumed(size_t nbytes) noexcept {
 #ifndef NDEBUG
+		consumed_sum += nbytes;
+
 		if ((off_t)nbytes >= available_partial)
 			available_partial = 0;
 		else
@@ -403,6 +411,8 @@ public:
 		assert(!eof);
 		assert(!reading);
 		assert(!in_data);
+
+		consumed_sum = 0;
 #endif
 
 		auto result = _ConsumeBucketList(nbytes);
@@ -410,6 +420,7 @@ public:
 #ifndef NDEBUG
 		assert(!destroyed);
 		assert(result <= nbytes);
+		assert(consumed_sum == result);
 #endif
 
 		return result;
