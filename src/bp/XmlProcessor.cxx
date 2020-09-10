@@ -497,6 +497,9 @@ XmlProcessor::OnXmlTagStart2(const XmlParserTag &xml_tag) noexcept
 	if (xml_tag.name.EqualsIgnoreCase("script")) {
 		InitUriRewrite(Tag::SCRIPT);
 		return true;
+	} else if (xml_tag.name.Equals("c:widget")) {
+		/* let WidgetContainerParser handle those */
+		return false;
 	} else if (HasOptionStyle() &&
 		   xml_tag.name.EqualsIgnoreCase("style")) {
 		tag = Tag::STYLE;
