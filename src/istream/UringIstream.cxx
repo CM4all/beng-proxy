@@ -46,6 +46,24 @@
 #include <assert.h>
 #include <limits.h>
 
+class CanceledUringIstream final : public Uring::Operation {
+	SliceFifoBuffer buffer;
+
+public:
+	explicit CanceledUringIstream(SliceFifoBuffer &&_buffer) noexcept
+		:buffer(std::move(_buffer)) {}
+
+	~CanceledUringIstream() noexcept {
+		buffer.Free();
+	}
+
+	void OnUringCompletion(int) noexcept override {
+		/* ignore the result and delete this object, which
+		   will free the buffer */
+		delete this;
+	}
+};
+
 class UringIstream final : public Istream, Uring::Operation {
 	Uring::Queue &uring;
 
@@ -86,6 +104,8 @@ public:
 	{
 	}
 
+	~UringIstream() noexcept;
+
 private:
 	gcc_pure
 	size_t GetMaxRead() const noexcept {
@@ -116,6 +136,21 @@ private:
 		Destroy();
 	}
 };
+
+UringIstream::~UringIstream() noexcept
+{
+	if (IsUringPending()) {
+		/* the operation is still pending, and we must not
+		   release the buffer yet, or the kernel will later
+		   write into this buffer which then belongs somebody
+		   else */
+
+		assert(buffer.IsDefined());
+
+		auto *c = new CanceledUringIstream(std::move(buffer));
+		ReplaceUring(*c);
+	}
+}
 
 void
 UringIstream::StartRead() noexcept
