@@ -57,8 +57,6 @@ ThreadSocketFilter::ThreadSocketFilter(EventLoop &_event_loop,
 ThreadSocketFilter::~ThreadSocketFilter() noexcept
 {
 	delete handler;
-
-	unprotected_decrypted_input.FreeIfDefined();
 }
 
 void

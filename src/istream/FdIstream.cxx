@@ -81,10 +81,6 @@ public:
 		 retry_event(event_loop, BIND_THIS_METHOD(EventCallback)),
 		 path(_path) {}
 
-	~FdIstream() noexcept {
-		buffer.FreeIfDefined();
-	}
-
 private:
 	void TryData();
 	void TryDirect();

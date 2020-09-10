@@ -86,11 +86,6 @@ public:
 		 offset(_start_offset), end_offset(_end_offset),
 		 path(_path) {}
 
-	~FileIstream() noexcept {
-		buffer.FreeIfDefined();
-		buffer.FreeIfDefined();
-	}
-
 private:
 	void EofDetected() noexcept {
 		assert(fd.IsDefined());

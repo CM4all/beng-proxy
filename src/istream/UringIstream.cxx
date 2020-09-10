@@ -86,10 +86,6 @@ public:
 	{
 	}
 
-	~UringIstream() noexcept {
-		buffer.FreeIfDefined();
-	}
-
 private:
 	gcc_pure
 	size_t GetMaxRead() const noexcept {
