@@ -62,8 +62,7 @@ public:
 			: size_t(_nbytes);
 
 		reader.Skip(nbytes);
-		Consumed(nbytes);
-		return nbytes;
+		return Consumed(nbytes);
 	}
 
 	void _Read() noexcept override {
@@ -95,8 +94,7 @@ public:
 
 	size_t _ConsumeBucketList(size_t nbytes) noexcept override {
 		size_t consumed = reader.ConsumeBucketList(nbytes);
-		Consumed(consumed);
-		return consumed;
+		return Consumed(consumed);
 	}
 };
 

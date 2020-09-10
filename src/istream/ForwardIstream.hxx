@@ -69,9 +69,7 @@ public:
 	}
 
 	size_t _ConsumeBucketList(size_t nbytes) noexcept override {
-		auto consumed = input.ConsumeBucketList(nbytes);
-		Consumed(consumed);
-		return consumed;
+		return Consumed(input.ConsumeBucketList(nbytes));
 	}
 
 	int _AsFd() noexcept override {

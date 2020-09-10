@@ -111,8 +111,7 @@ public:
         const size_t remaining = end - position;
         size_t consumed = std::min(nbytes, remaining);
         position += consumed;
-        Consumed(consumed);
-        return consumed;
+        return Consumed(consumed);
     }
 };
 

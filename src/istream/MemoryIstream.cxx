@@ -72,6 +72,5 @@ MemoryIstream::_ConsumeBucketList(size_t nbytes) noexcept
 	if (nbytes > data.size)
 		nbytes = data.size;
 	data.skip_front(nbytes);
-	Consumed(nbytes);
-	return nbytes;
+	return Consumed(nbytes);
 }

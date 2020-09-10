@@ -182,8 +182,7 @@ public:
 
 		s.DisposeConsumed(nbytes);
 		Consumed(nbytes);
-		Istream::Consumed(nbytes);
-		return nbytes;
+		return Istream::Consumed(nbytes);
 	}
 
 	size_t FeedBody(const void *data, size_t length);

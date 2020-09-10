@@ -99,10 +99,8 @@ protected:
 
 	using PoolHolder::GetPool;
 
-	void Consumed(size_t nbytes) {
-#ifdef NDEBUG
-		(void)nbytes;
-#else
+	size_t Consumed(size_t nbytes) noexcept {
+#ifndef NDEBUG
 		if ((off_t)nbytes >= available_partial)
 			available_partial = 0;
 		else
@@ -116,6 +114,7 @@ protected:
 
 		data_available -= std::min(nbytes, data_available);
 #endif
+		return nbytes;
 	}
 
 	bool InvokeReady() noexcept;

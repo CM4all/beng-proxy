@@ -234,9 +234,7 @@ CatIstream::_Skip(off_t length) noexcept
 		return 0;
 
 	off_t nbytes = inputs.front().Skip(length);
-	if (nbytes > 0)
-		Consumed(nbytes);
-
+	Consumed(nbytes);
 	return nbytes;
 }
 

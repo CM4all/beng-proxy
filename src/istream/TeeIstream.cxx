@@ -161,9 +161,8 @@ struct TeeIstream final : IstreamHandler, DestructAnchor {
 			   consume this portion of "bytes" */
 
 			size_t consumed = std::min(nbytes, bucket_list_size);
-			Istream::Consumed(consumed);
 			skip = consumed;
-			return consumed;
+			return Istream::Consumed(consumed);
 		}
 
 		void _Close() noexcept override;

@@ -585,6 +585,5 @@ WasInput::_ConsumeBucketList(size_t nbytes) noexcept
 	buffer.Consume(consumed);
 	buffer.FreeIfEmpty();
 
-	Consumed(consumed);
-	return consumed;
+	return Consumed(consumed);
 }

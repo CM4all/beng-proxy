@@ -956,8 +956,7 @@ FcgiClient::_ConsumeBucketList(size_t nbytes) noexcept
 
 	assert(nbytes == 0);
 
-	Consumed(total);
-	return total;
+	return Consumed(total);
 }
 
 /*
