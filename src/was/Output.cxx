@@ -56,7 +56,6 @@
 static constexpr Event::Duration was_output_timeout = std::chrono::minutes(2);
 
 class WasOutput final : IstreamHandler, PoolLeakDetector {
-	FileDescriptor fd;
 	SocketEvent event;
 	TimerEvent timeout_event;
 
@@ -69,10 +68,10 @@ class WasOutput final : IstreamHandler, PoolLeakDetector {
 	bool known_length = false;
 
 public:
-	WasOutput(struct pool &pool, EventLoop &event_loop, FileDescriptor _fd,
+	WasOutput(struct pool &pool, EventLoop &event_loop, FileDescriptor fd,
 		  UnusedIstreamPtr _input,
 		  WasOutputHandler &_handler) noexcept
-		:PoolLeakDetector(pool), fd(_fd),
+		:PoolLeakDetector(pool),
 		 event(event_loop, BIND_THIS_METHOD(WriteEventCallback),
 		       SocketDescriptor::FromFileDescriptor(fd)),
 		 timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
@@ -97,11 +96,11 @@ public:
 
 private:
 	bool HasPipe() const noexcept {
-		return fd.IsDefined();
+		return event.IsDefined();
 	}
 
 	FileDescriptor GetPipe() noexcept {
-		return fd;
+		return event.GetSocket().ToFileDescriptor();
 	}
 
 	void Destroy() noexcept {
