@@ -106,7 +106,6 @@ public:
 		valid = false;
 #endif
 
-		event.Cancel();
 		input.Close();
 		Destroy();
 	}
