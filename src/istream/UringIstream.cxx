@@ -53,10 +53,6 @@ public:
 	explicit CanceledUringIstream(SliceFifoBuffer &&_buffer) noexcept
 		:buffer(std::move(_buffer)) {}
 
-	~CanceledUringIstream() noexcept {
-		buffer.Free();
-	}
-
 	void OnUringCompletion(int) noexcept override {
 		/* ignore the result and delete this object, which
 		   will free the buffer */
