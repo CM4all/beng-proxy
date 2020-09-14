@@ -138,6 +138,8 @@ public:
 	ReplaceIstream(struct pool &p, EventLoop &event_loop,
 		       UnusedIstreamPtr _input) noexcept;
 
+	~ReplaceIstream() noexcept override;
+
 	void Add(off_t start, off_t end, UnusedIstreamPtr contents) noexcept;
 	void Extend(off_t start, off_t end) noexcept;
 	void Settle(off_t offset) noexcept;
@@ -148,8 +150,6 @@ protected:
 
 private:
 	using FacadeIstream::HasInput;
-
-	void DestroyReplace() noexcept;
 
 	/**
 	 * Is the buffer at the end-of-file position?

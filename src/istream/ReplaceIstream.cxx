@@ -43,7 +43,6 @@
 
 #include <assert.h>
 
-
 ReplaceIstream::Substitution::Substitution(ReplaceIstream &_replace,
 					   off_t _start, off_t _end,
 					   UnusedIstreamPtr &&_input) noexcept
@@ -125,8 +124,6 @@ ReplaceIstream::Substitution::OnError(std::exception_ptr ep) noexcept
 {
 	ClearInput();
 
-	replace.DestroyReplace();
-
 	if (replace.HasInput())
 		replace.ClearAndCloseInput();
 
@@ -145,8 +142,7 @@ ReplaceIstream::ReplaceIstream(struct pool &p, EventLoop &event_loop,
 {
 }
 
-void
-ReplaceIstream::DestroyReplace() noexcept
+ReplaceIstream::~ReplaceIstream() noexcept
 {
 	while (first_substitution != nullptr) {
 		auto *s = first_substitution;
@@ -294,7 +290,6 @@ ReplaceIstream::OnData(const void *data, size_t length) noexcept
 
 	if (source_length >= 8 * 1024 * 1024) {
 		ClearAndCloseInput();
-		DestroyReplace();
 
 		DestroyError(std::make_exception_ptr(std::runtime_error("file too large for processor")));
 		return 0;
@@ -308,7 +303,6 @@ ReplaceIstream::OnData(const void *data, size_t length) noexcept
 	try {
 		Parse({data, length});
 	} catch (...) {
-		DestroyReplace();
 		ClearAndCloseInput();
 		DestroyError(std::current_exception());
 		return 0;
@@ -330,7 +324,6 @@ ReplaceIstream::OnEof() noexcept
 	try {
 		ParseEnd();
 	} catch (...) {
-		DestroyReplace();
 		DestroyError(std::current_exception());
 		return;
 	}
@@ -346,7 +339,6 @@ ReplaceIstream::OnEof() noexcept
 void
 ReplaceIstream::OnError(std::exception_ptr ep) noexcept
 {
-	DestroyReplace();
 	input.Clear();
 	DestroyError(ep);
 }
@@ -440,7 +432,6 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			input.FillBucketList(tmp);
 		} catch (...) {
 			input.Clear();
-			DestroyReplace();
 			Destroy();
 			throw;
 		}
@@ -459,7 +450,6 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 
 			if (source_length >= 8 * 1024 * 1024) {
 				ClearAndCloseInput();
-				DestroyReplace();
 				Destroy();
 				throw std::runtime_error("file too large for processor");
 			}
@@ -467,7 +457,6 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			try {
 				Parse(b);
 			} catch (...) {
-				DestroyReplace();
 				ClearAndCloseInput();
 				Destroy();
 				throw;
@@ -482,7 +471,6 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			try {
 				ParseEnd();
 			} catch (...) {
-				DestroyReplace();
 				Destroy();
 				throw;
 			}
@@ -534,7 +522,6 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 		try {
 			s->FillBucketList(tmp);
 		} catch (...) {
-			DestroyReplace();
 			if (HasInput())
 				ClearAndCloseInput();
 			Destroy();
@@ -605,8 +592,6 @@ ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 void
 ReplaceIstream::_Close() noexcept
 {
-	DestroyReplace();
-
 	if (HasInput())
 		ClearAndCloseInput();
 
