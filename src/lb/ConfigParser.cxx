@@ -1089,8 +1089,8 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 		line.ExpectEnd();
 
 		config.verbose_response = value;
-#ifdef HAVE_NGHTTP2
 	} else if (strcmp(word, "alpn_http2") == 0) {
+#ifdef HAVE_NGHTTP2
 		config.alpn_http2 = line.NextBool();
 #endif
 	} else if (strcmp(word, "ssl") == 0) {
