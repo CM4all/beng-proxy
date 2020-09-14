@@ -68,9 +68,9 @@
 
 gcc_pure
 static const char *
-extract_remote_addr(const StringMap *headers) noexcept
+extract_remote_addr(const StringMap &headers) noexcept
 {
-	const char *xff = strmap_get_checked(headers, "x-forwarded-for");
+	const char *xff = headers.Get("x-forwarded-for");
 	if (xff == nullptr)
 		return nullptr;
 
@@ -86,7 +86,7 @@ extract_remote_addr(const StringMap *headers) noexcept
 
 gcc_pure
 static const char *
-extract_remote_ip(struct pool *pool, const StringMap *headers) noexcept
+extract_remote_ip(struct pool &pool, const StringMap &headers) noexcept
 {
 	const char *p = extract_remote_addr(headers);
 	if (p == nullptr)
@@ -96,7 +96,7 @@ extract_remote_ip(struct pool *pool, const StringMap *headers) noexcept
 	if (eh.HasFailed() || eh.host.size == strlen(p))
 		return p;
 
-	return p_strdup(*pool, eh.host);
+	return p_strdup(pool, eh.host);
 }
 
 gcc_pure
@@ -195,7 +195,7 @@ try {
 	case ResourceAddress::Type::CGI:
 		cgi_new(spawn_service, event_loop, &pool, parent_stopwatch,
 			method, &address.GetCgi(),
-			extract_remote_ip(&pool, &headers),
+			extract_remote_ip(pool, headers),
 			headers, std::move(body),
 			handler, cancel_ptr);
 		return;
@@ -209,7 +209,7 @@ try {
 			stderr_fd = cgi->options.OpenStderrPath();
 		}
 
-		const char *remote_ip = extract_remote_ip(&pool, &headers);
+		const char *remote_ip = extract_remote_ip(pool, headers);
 
 		if (cgi->address_list.IsEmpty())
 			fcgi_request(&pool, event_loop, fcgi_stock, parent_stopwatch,
