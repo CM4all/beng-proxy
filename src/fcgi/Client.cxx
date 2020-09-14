@@ -154,6 +154,7 @@ public:
 		   SocketDescriptor fd, FdType fd_type, Lease &lease,
 		   UniqueFileDescriptor &&_stderr_fd,
 		   uint16_t _id, http_method_t method,
+		   UnusedIstreamPtr &&request_istream,
 		   HttpResponseHandler &_handler,
 		   CancellablePointer &cancel_ptr);
 
@@ -161,10 +162,7 @@ public:
 
 	using Istream::GetPool;
 
-	void Start(UnusedIstreamPtr &&request_istream) noexcept {
-		request.input.Set(std::move(request_istream), *this);
-		request.input.SetDirect(istream_direct_mask_to(socket.GetType()));
-
+	void Start() noexcept {
 		socket.ScheduleReadNoTimeout(true);
 		request.input.Read();
 	}
@@ -1074,6 +1072,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
 		       SocketDescriptor fd, FdType fd_type, Lease &lease,
 		       UniqueFileDescriptor &&_stderr_fd,
 		       uint16_t _id, http_method_t method,
+		       UnusedIstreamPtr &&request_istream,
 		       HttpResponseHandler &_handler,
 		       CancellablePointer &cancel_ptr)
 	:Istream(_pool),
@@ -1088,6 +1087,9 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
 	socket.Init(fd, fd_type,
 		    fcgi_client_timeout, fcgi_client_timeout,
 		    *this);
+
+	request.input.Set(std::move(request_istream), *this);
+	request.input.SetDirect(istream_direct_mask_to(fd_type));
 
 	cancel_ptr = *this;
 }
@@ -1122,13 +1124,6 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 	};
 
 	assert(http_method_is_valid(method));
-
-	auto client = NewFromPool<FcgiClient>(*pool, *pool, event_loop,
-					      std::move(stopwatch),
-					      fd, fd_type, lease,
-					      std::move(stderr_fd),
-					      header.request_id, method,
-					      handler, cancel_ptr);
 
 	GrowingBuffer buffer;
 	header.content_length = ToBE16(sizeof(begin_request));
@@ -1211,5 +1206,12 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 		request = istream_gb_new(*pool, std::move(buffer));
 	}
 
-	client->Start(std::move(request));
+	auto client = NewFromPool<FcgiClient>(*pool, *pool, event_loop,
+					      std::move(stopwatch),
+					      fd, fd_type, lease,
+					      std::move(stderr_fd),
+					      header.request_id, method,
+					      std::move(request),
+					      handler, cancel_ptr);
+	client->Start();
 }
