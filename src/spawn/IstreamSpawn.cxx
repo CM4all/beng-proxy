@@ -36,8 +36,7 @@
 #include "spawn/ExitListener.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
-#include "istream/Pointer.hxx"
-#include "istream/Handler.hxx"
+#include "istream/Sink.hxx"
 #include "io/Splice.hxx"
 #include "io/SpliceSupport.hxx"
 #include "io/Buffered.hxx"
@@ -63,7 +62,7 @@
 #include <signal.h>
 #include <limits.h>
 
-struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
+struct SpawnIstream final : Istream, IstreamSink, ExitListener {
 	const LLogger logger;
 	SpawnService &spawn_service;
 
@@ -72,7 +71,6 @@ struct SpawnIstream final : Istream, IstreamHandler, ExitListener {
 
 	SliceFifoBuffer buffer;
 
-	IstreamPointer input;
 	UniqueFileDescriptor input_fd;
 	SocketEvent input_event;
 
@@ -143,12 +141,12 @@ SpawnIstream::Cancel() noexcept
 {
 	assert(output_fd.IsDefined());
 
-	if (input.IsDefined()) {
+	if (HasInput()) {
 		assert(input_fd.IsDefined());
 
 		input_event.Cancel();
 		input_fd.Close();
-		input.ClearAndClose();
+		ClearAndCloseInput();
 	}
 
 	output_event.Cancel();
@@ -205,7 +203,7 @@ SpawnIstream::OnData(const void *data, size_t length) noexcept
 		logger(1, "write() to subprocess failed: ", strerror(errno));
 		input_event.Cancel();
 		input_fd.Close();
-		input.ClearAndClose();
+		ClearAndCloseInput();
 		return 0;
 	}
 
@@ -240,26 +238,26 @@ SpawnIstream::OnDirect(gcc_unused FdType type, int fd, size_t max_length) noexce
 inline void
 SpawnIstream::OnEof() noexcept
 {
-	assert(input.IsDefined());
+	assert(HasInput());
 	assert(input_fd.IsDefined());
 
 	input_event.Cancel();
 	input_fd.Close();
 
-	input.Clear();
+	ClearInput();
 }
 
 void
 SpawnIstream::OnError(std::exception_ptr ep) noexcept
 {
-	assert(input.IsDefined());
+	assert(HasInput());
 	assert(input_fd.IsDefined());
 
 	FreeBuffer();
 
 	input_event.Cancel();
 	input_fd.Close();
-	input.Clear();
+	ClearInput();
 
 	Cancel();
 	DestroyError(ep);
@@ -296,7 +294,7 @@ SpawnIstream::ReadFromOutput() noexcept
 			buffer.FreeIfEmpty();
 			output_event.ScheduleRead();
 
-			if (input.IsDefined())
+			if (HasInput())
 				/* the CGI may be waiting for more data from stdin */
 				input.Read();
 		} else {
@@ -336,7 +334,7 @@ SpawnIstream::ReadFromOutput() noexcept
 		} else if (errno == EAGAIN) {
 			output_event.ScheduleRead();
 
-			if (input.IsDefined())
+			if (HasInput())
 				/* the CGI may be waiting for more data from stdin */
 				input.Read();
 		} else {
@@ -399,18 +397,18 @@ SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
 			   UniqueFileDescriptor _output_fd,
 			   pid_t _pid) noexcept
 	:Istream(p),
+	 IstreamSink(std::move(_input)),
 	 logger("spawn"),
 	 spawn_service(_spawn_service),
 	 output_fd(std::move(_output_fd)),
 	 output_event(event_loop, BIND_THIS_METHOD(OutputEventCallback),
 		      SocketDescriptor::FromFileDescriptor(output_fd)),
-	 input(std::move(_input), *this),
 	 input_fd(std::move(_input_fd)),
 	 input_event(event_loop, BIND_THIS_METHOD(InputEventCallback),
 		     SocketDescriptor::FromFileDescriptor(input_fd)),
 	 pid(_pid)
 {
-	if (input.IsDefined()) {
+	if (HasInput()) {
 		input.SetDirect(ISTREAM_TO_PIPE);
 		input_event.ScheduleWrite();
 	}
