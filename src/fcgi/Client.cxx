@@ -156,7 +156,7 @@ public:
 		   HttpResponseHandler &_handler,
 		   CancellablePointer &cancel_ptr);
 
-	~FcgiClient();
+	~FcgiClient() noexcept override;
 
 	using Istream::GetPool;
 
@@ -288,6 +288,9 @@ static constexpr auto fcgi_client_timeout = std::chrono::minutes(2);
 
 inline FcgiClient::~FcgiClient()
 {
+	if (socket.IsConnected())
+		ReleaseSocket(false);
+
 	socket.Destroy();
 }
 
@@ -296,9 +299,6 @@ FcgiClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
 {
 	assert(response.read_state == Response::READ_HEADERS ||
 	       response.read_state == Response::READ_NO_BODY);
-
-	if (socket.IsConnected())
-		ReleaseSocket(false);
 
 	auto &_handler = handler;
 	Destroy();
@@ -309,9 +309,6 @@ void
 FcgiClient::AbortResponseBody(std::exception_ptr ep) noexcept
 {
 	assert(response.read_state == Response::READ_BODY);
-
-	if (socket.IsConnected())
-		ReleaseSocket(false);
 
 	DestroyError(ep);
 }
@@ -335,9 +332,6 @@ FcgiClient::_Close() noexcept
 	assert(response.read_state == Response::READ_BODY);
 
 	stopwatch.RecordEvent("close");
-
-	if (socket.IsConnected())
-		ReleaseSocket(false);
 
 	Istream::_Close();
 }
@@ -811,9 +805,6 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 				/* the DATA packet was larger than the Content-Length
 				   declaration - fail */
 
-				if (socket.IsConnected())
-					ReleaseSocket(false);
-
 				Destroy();
 
 				throw FcgiClientError("excess data at end of body "
@@ -1037,8 +1028,6 @@ FcgiClient::Cancel() noexcept
 	assert(socket.IsConnected());
 
 	stopwatch.RecordEvent("cancel");
-
-	ReleaseSocket(false);
 
 	Destroy();
 }
