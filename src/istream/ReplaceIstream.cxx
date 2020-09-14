@@ -154,6 +154,7 @@ ReplaceIstream::DestroyReplace() noexcept
 
 		if (s->IsDefined())
 			s->ClearAndCloseInput();
+		s->Destroy();
 	}
 }
 
