@@ -110,7 +110,7 @@ class CatIstream final : public Istream, DestructAnchor {
 
 		struct Disposer {
 			void operator()(Input *input) noexcept {
-				input->input.Close();
+				input->input.ClearAndClose();
 			}
 		};
 	};

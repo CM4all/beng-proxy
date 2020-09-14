@@ -106,7 +106,7 @@ public:
 		valid = false;
 #endif
 
-		input.Close();
+		input.ClearAndClose();
 		Destroy();
 	}
 
@@ -150,7 +150,7 @@ SinkFd::OnData(const void *data, size_t length) noexcept
 	} else {
 		event.Cancel();
 		if (handler.OnSendError(errno)) {
-			input.Close();
+			input.ClearAndClose();
 			Destroy();
 		}
 		return 0;

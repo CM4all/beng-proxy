@@ -54,7 +54,7 @@ public:
 
 private:
 	void OnTimeout() noexcept {
-		input.Close();
+		input.ClearAndClose();
 		DestroyError(std::make_exception_ptr(std::runtime_error("timeout")));
 	}
 

@@ -103,7 +103,7 @@ void
 ToBucketIstream::_Close() noexcept
 {
 	if (HasInput())
-		input.Close();
+		input.ClearAndClose();
 
 	Destroy();
 }

@@ -62,7 +62,7 @@ private:
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
-		input.Close();
+		input.ClearAndClose();
 		Destroy();
 	}
 

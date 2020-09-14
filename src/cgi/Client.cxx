@@ -338,7 +338,7 @@ CGIClient::OnDirect(FdType type, int fd, size_t max_length) noexcept
 	if (nbytes > 0 && parser.BodyConsumed(nbytes)) {
 		stopwatch.RecordEvent("end");
 
-		input.Close();
+		input.ClearAndClose();
 		DestroyEof();
 		return ISTREAM_RESULT_CLOSED;
 	}
@@ -455,7 +455,7 @@ CGIClient::Cancel() noexcept
 {
 	assert(input.IsDefined());
 
-	input.Close();
+	input.ClearAndClose();
 	Destroy();
 }
 

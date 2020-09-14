@@ -77,7 +77,7 @@ size_t
 HeadIstream::OnData(const void *data, size_t length) noexcept
 {
 	if (rest == 0) {
-		input.Close();
+		input.ClearAndClose();
 		DestroyEof();
 		return 0;
 	}
@@ -91,7 +91,7 @@ HeadIstream::OnData(const void *data, size_t length) noexcept
 	if (nbytes > 0) {
 		rest -= nbytes;
 		if (rest == 0) {
-			input.Close();
+			input.ClearAndClose();
 			DestroyEof();
 			return 0;
 		}
@@ -124,7 +124,7 @@ ssize_t
 HeadIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 {
 	if (rest == 0) {
-		input.Close();
+		input.ClearAndClose();
 		DestroyEof();
 		return ISTREAM_RESULT_CLOSED;
 	}
@@ -138,7 +138,7 @@ HeadIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 	if (nbytes > 0) {
 		rest -= (size_t)nbytes;
 		if (rest == 0) {
-			input.Close();
+			input.ClearAndClose();
 			DestroyEof();
 			return ISTREAM_RESULT_CLOSED;
 		}
@@ -185,7 +185,7 @@ void
 HeadIstream::_Read() noexcept
 {
 	if (rest == 0) {
-		input.Close();
+		input.ClearAndClose();
 		DestroyEof();
 	} else {
 		ForwardIstream::_Read();

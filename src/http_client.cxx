@@ -403,7 +403,7 @@ HttpClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
 		ReleaseSocket(false, false);
 
 	if (request.istream.IsDefined())
-		request.istream.Close();
+		request.istream.ClearAndClose();
 
 	DestroyInvokeError(PrefixError(ep));
 }
@@ -417,7 +417,7 @@ HttpClient::AbortResponseBody(std::exception_ptr ep) noexcept
 	assert(response.state == Response::State::BODY);
 
 	if (request.istream.IsDefined())
-		request.istream.Close();
+		request.istream.ClearAndClose();
 
 	if (response_body_reader.GotEndChunk()) {
 		/* avoid recursing from DechunkIstream: when DechunkIstream
@@ -543,7 +543,7 @@ HttpClient::Close()
 	stopwatch.RecordEvent("close");
 
 	if (request.istream.IsDefined())
-		request.istream.Close();
+		request.istream.ClearAndClose();
 
 	Destroy();
 }
@@ -808,7 +808,7 @@ HttpClient::ResponseFinished() noexcept
 	}
 
 	if (request.istream.IsDefined())
-		request.istream.Close();
+		request.istream.ClearAndClose();
 	else if (IsConnected())
 		ReleaseSocket(false, keep_alive);
 
@@ -1039,7 +1039,7 @@ HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type)
 
 	if (nbytes == ISTREAM_RESULT_EOF) {
 		if (request.istream.IsDefined())
-			request.istream.Close();
+			request.istream.ClearAndClose();
 
 		response_body_reader.SocketEOF(0);
 		Destroy();
@@ -1321,7 +1321,7 @@ HttpClient::Cancel() noexcept
 	       response.state == Response::State::HEADERS);
 
 	if (request.istream.IsDefined())
-		request.istream.Close();
+		request.istream.ClearAndClose();
 
 	Destroy();
 }

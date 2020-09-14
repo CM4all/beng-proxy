@@ -809,7 +809,7 @@ test_data_blocking(Context<Connection> &c)
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 
-	c.body.Close();
+	c.body.ClearAndClose();
 
 	assert(c.released);
 	assert(!c.body_eof);

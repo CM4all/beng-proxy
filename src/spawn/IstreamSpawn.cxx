@@ -148,7 +148,7 @@ SpawnIstream::Cancel() noexcept
 
 		input_event.Cancel();
 		input_fd.Close();
-		input.Close();
+		input.ClearAndClose();
 	}
 
 	output_event.Cancel();

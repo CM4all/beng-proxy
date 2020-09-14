@@ -149,7 +149,7 @@ public:
 
 	void _Close() noexcept override {
 		if (HasInput())
-			input.Close();
+			input.ClearAndClose();
 
 		Destroy();
 	}

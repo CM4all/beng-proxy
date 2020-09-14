@@ -64,12 +64,6 @@ public:
 		stream = nullptr;
 	}
 
-	void Close() noexcept {
-		assert(IsDefined());
-
-		stream->Close();
-	}
-
 	void ClearAndClose() noexcept {
 		assert(IsDefined());
 
@@ -94,14 +88,7 @@ public:
 	template<typename I>
 	void Replace(I &&_stream,
 		     IstreamHandler &handler) noexcept {
-		Close();
-
-#ifndef NDEBUG
-		/* must clear the pointer in the debug build to avoid
-		   assertion failure in Set() */
-		Clear();
-#endif
-
+		ClearAndClose();
 		Set(std::forward<I>(_stream), handler);
 	}
 

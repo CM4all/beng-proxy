@@ -148,7 +148,7 @@ IconvIstream::OnData(const void *_data, size_t length) noexcept
 					   buffer, this might be EOF; we should rather
 					   buffer this incomplete sequence and report the
 					   caller that we consumed it */
-					input.Close();
+					input.ClearAndClose();
 
 					DestroyError(std::make_exception_ptr(std::runtime_error("incomplete sequence")));
 					return 0;
@@ -225,7 +225,7 @@ void
 IconvIstream::_Close() noexcept
 {
 	if (input.IsDefined())
-		input.Close();
+		input.ClearAndClose();
 	Destroy();
 }
 

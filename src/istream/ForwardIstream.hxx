@@ -80,7 +80,7 @@ public:
 	}
 
 	void _Close() noexcept override {
-		input.Close();
+		input.ClearAndClose();
 		Istream::_Close();
 	}
 

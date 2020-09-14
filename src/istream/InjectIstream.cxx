@@ -45,7 +45,7 @@ public:
 
 	void InjectFault(std::exception_ptr ep) noexcept {
 		if (HasInput())
-			input.Close();
+			input.ClearAndClose();
 
 		DestroyError(ep);
 	}

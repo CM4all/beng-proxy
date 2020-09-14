@@ -103,7 +103,7 @@ AutoPipeIstream::Abort(std::exception_ptr ep) noexcept
 	CloseInternal();
 
 	if (input.IsDefined())
-		input.Close();
+		input.ClearAndClose();
 
 	DestroyError(ep);
 }
@@ -316,7 +316,7 @@ AutoPipeIstream::_Close() noexcept
 	CloseInternal();
 
 	if (input.IsDefined())
-		input.Close();
+		input.ClearAndClose();
 
 	Destroy();
 }

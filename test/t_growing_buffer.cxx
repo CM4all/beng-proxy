@@ -131,7 +131,7 @@ run_istream_ctx(Context *ctx, PoolPtr pool, UnusedIstreamPtr _istream)
 #endif
 
 	if (!ctx->eof && !ctx->abort)
-		istream.Close();
+		istream.ClearAndClose();
 
 	if (!ctx->eof) {
 		pool_trash(pool);

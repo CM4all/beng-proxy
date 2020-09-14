@@ -543,7 +543,7 @@ FcgiClient::HandleEnd()
 	}
 
 	if (request.input.IsDefined())
-		request.input.Close();
+		request.input.ClearAndClose();
 
 	if (response.read_state == FcgiClient::Response::READ_NO_BODY) {
 		handler.InvokeResponse(response.status, std::move(response.headers),
@@ -1058,7 +1058,7 @@ FcgiClient::Cancel() noexcept
 	ReleaseSocket(false);
 
 	if (request.input.IsDefined())
-		request.input.Close();
+		request.input.ClearAndClose();
 
 	Destroy();
 }

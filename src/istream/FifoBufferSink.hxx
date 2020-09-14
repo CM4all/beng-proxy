@@ -61,7 +61,7 @@ public:
 
 	~FifoBufferSink() noexcept {
 		if (input.IsDefined())
-			input.Close();
+			input.ClearAndClose();
 	}
 
 	auto &GetBuffer() noexcept {

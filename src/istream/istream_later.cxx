@@ -68,7 +68,7 @@ public:
 	void _Close() noexcept override {
 		/* input can only be nullptr during the eof callback delay */
 		if (HasInput())
-			input.Close();
+			input.ClearAndClose();
 
 		Destroy();
 	}
