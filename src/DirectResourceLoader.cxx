@@ -209,6 +209,8 @@ try {
 			stderr_fd = cgi->options.OpenStderrPath();
 		}
 
+		const char *remote_ip = extract_remote_ip(&pool, &headers);
+
 		if (cgi->address_list.IsEmpty())
 			fcgi_request(&pool, event_loop, fcgi_stock, parent_stopwatch,
 				     site_name,
@@ -221,7 +223,7 @@ try {
 				     cgi->path_info,
 				     cgi->query_string,
 				     cgi->document_root,
-				     extract_remote_ip(&pool, &headers),
+				     remote_ip,
 				     headers, std::move(body),
 				     cgi->params.ToArray(pool),
 				     std::move(stderr_fd),
@@ -236,7 +238,7 @@ try {
 					    cgi->path_info,
 					    cgi->query_string,
 					    cgi->document_root,
-					    extract_remote_ip(&pool, &headers),
+					    remote_ip,
 					    std::move(headers), std::move(body),
 					    cgi->params.ToArray(pool),
 					    std::move(stderr_fd),
