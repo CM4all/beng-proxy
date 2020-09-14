@@ -62,7 +62,6 @@ private:
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
-		input.ClearAndClose();
 		Destroy();
 	}
 
@@ -74,6 +73,8 @@ private:
 	}
 
 	void OnEof() noexcept override {
+		ClearInput();
+
 		auto &_handler = handler;
 		auto _value = std::move(value);
 		Destroy();
@@ -81,6 +82,8 @@ private:
 	}
 
 	void OnError(std::exception_ptr ep) noexcept override {
+		ClearInput();
+
 		auto &_handler = handler;
 		Destroy();
 		_handler.OnStringSinkError(std::move(ep));

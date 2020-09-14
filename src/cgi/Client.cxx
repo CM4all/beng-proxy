@@ -78,6 +78,11 @@ public:
 		  HttpResponseHandler &_handler,
 		  CancellablePointer &cancel_ptr);
 
+	~CGIClient() noexcept {
+		if (input.IsDefined())
+			input.ClearAndClose();
+	}
+
 	/**
 	 * @return false if the connection has been closed
 	 */
@@ -121,7 +126,6 @@ public:
 
 	off_t _GetAvailable(bool partial) noexcept override;
 	void _Read() noexcept override;
-	void _Close() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
 	size_t OnData(const void *data, size_t length) noexcept override;
@@ -142,8 +146,6 @@ CGIClient::ReturnResponse()
 
 		stopwatch.RecordEvent("empty");
 
-		input.ClearAndClose();
-
 		auto &_handler = handler;
 		Destroy();
 		_handler.InvokeResponse(status, std::move(headers), UnusedIstreamPtr());
@@ -153,7 +155,6 @@ CGIClient::ReturnResponse()
 
 		stopwatch.RecordEvent("empty");
 
-		input.ClearAndClose();
 		auto &_handler = handler;
 		Destroy();
 		_handler.InvokeResponse(status, std::move(headers),
@@ -217,7 +218,6 @@ try {
 	assert(false);
 	return 0;
 } catch (...) {
-	input.ClearAndClose();
 	auto &_handler = handler;
 	Destroy();
 	_handler.InvokeError(std::current_exception());
@@ -265,9 +265,6 @@ CGIClient::FeedBody(const char *data, size_t length)
 {
 	if (parser.IsTooMuch(length)) {
 		stopwatch.RecordEvent("malformed");
-
-		input.ClearAndClose();
-
 		DestroyError(std::make_exception_ptr(CgiError("too much data from CGI script")));
 		return 0;
 	}
@@ -277,8 +274,6 @@ CGIClient::FeedBody(const char *data, size_t length)
 	size_t nbytes = InvokeData(data, length);
 	if (nbytes > 0 && parser.BodyConsumed(nbytes)) {
 		stopwatch.RecordEvent("end");
-
-		input.ClearAndClose();
 		DestroyEof();
 		return 0;
 	}
@@ -337,8 +332,6 @@ CGIClient::OnDirect(FdType type, int fd, size_t max_length) noexcept
 	ssize_t nbytes = InvokeDirect(type, fd, max_length);
 	if (nbytes > 0 && parser.BodyConsumed(nbytes)) {
 		stopwatch.RecordEvent("end");
-
-		input.ClearAndClose();
 		DestroyEof();
 		return ISTREAM_RESULT_CLOSED;
 	}
@@ -436,15 +429,6 @@ CGIClient::_Read() noexcept
 	}
 }
 
-void
-CGIClient::_Close() noexcept
-{
-	if (input.IsDefined())
-		input.ClearAndClose();
-
-	Destroy();
-}
-
 /*
  * async operation
  *
@@ -455,7 +439,6 @@ CGIClient::Cancel() noexcept
 {
 	assert(input.IsDefined());
 
-	input.ClearAndClose();
 	Destroy();
 }
 

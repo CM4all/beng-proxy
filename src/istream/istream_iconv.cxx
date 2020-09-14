@@ -71,7 +71,6 @@ public:
 	}
 
 	void _Read() noexcept override;
-	void _Close() noexcept override;
 
 	/* handler */
 
@@ -148,7 +147,6 @@ IconvIstream::OnData(const void *_data, size_t length) noexcept
 					   buffer, this might be EOF; we should rather
 					   buffer this incomplete sequence and report the
 					   caller that we consumed it */
-					input.ClearAndClose();
 
 					DestroyError(std::make_exception_ptr(std::runtime_error("incomplete sequence")));
 					return 0;
@@ -200,6 +198,7 @@ void
 IconvIstream::OnError(std::exception_ptr ep) noexcept
 {
 	assert(input.IsDefined());
+	input.Clear();
 
 	DestroyError(ep);
 }
@@ -219,14 +218,6 @@ IconvIstream::_Read() noexcept
 		if (rest == 0)
 			DestroyEof();
 	}
-}
-
-void
-IconvIstream::_Close() noexcept
-{
-	if (input.IsDefined())
-		input.ClearAndClose();
-	Destroy();
 }
 
 /*

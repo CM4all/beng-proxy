@@ -79,11 +79,6 @@ public:
 		return fd;
 	}
 
-	void _Close() noexcept override {
-		input.ClearAndClose();
-		Istream::_Close();
-	}
-
 	/* virtual methods from class IstreamHandler */
 
 	bool OnIstreamReady() noexcept override {
@@ -100,10 +95,12 @@ public:
 	}
 
 	void OnEof() noexcept override {
+		ClearInput();
 		DestroyEof();
 	}
 
 	void OnError(std::exception_ptr ep) noexcept override {
+		ClearInput();
 		DestroyError(ep);
 	}
 };

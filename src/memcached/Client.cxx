@@ -214,9 +214,6 @@ MemcachedClient::AbortResponseHeaders(std::exception_ptr ep)
 	request.handler.OnMemcachedError(ep);
 	response.read_state = ReadState::END;
 
-	if (request.istream.IsDefined())
-		request.istream.ClearAndClose();
-
 	Destroy();
 }
 

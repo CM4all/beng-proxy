@@ -65,14 +65,6 @@ public:
 		return -1;
 	}
 
-	void _Close() noexcept override {
-		/* input can only be nullptr during the eof callback delay */
-		if (HasInput())
-			input.ClearAndClose();
-
-		Destroy();
-	}
-
 	/* virtual methods from class IstreamHandler */
 
 	void OnEof() noexcept override {

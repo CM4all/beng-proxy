@@ -99,7 +99,6 @@ private:
 	}
 
 	void Close() noexcept {
-		ClearAndCloseInput();
 		Destroy();
 	}
 

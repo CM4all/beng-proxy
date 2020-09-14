@@ -78,8 +78,6 @@ public:
 		return -1;
 	}
 
-	void _Close() noexcept override;
-
 	/* virtual methods from class IstreamHandler */
 
 	size_t OnData(const void *data, size_t length) noexcept override {
@@ -216,15 +214,6 @@ FcgiIstream::_Read() noexcept
 	}
 
 	input.Read();
-}
-
-void
-FcgiIstream::_Close() noexcept
-{
-	if (HasInput())
-		input.ClearAndClose();
-
-	Destroy();
 }
 
 /*

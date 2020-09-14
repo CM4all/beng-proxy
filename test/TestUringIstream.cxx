@@ -51,11 +51,6 @@ public:
 	MyHandler(UnusedIstreamPtr _input) noexcept
 		:IstreamSink(std::move(_input)) {}
 
-	~MyHandler() noexcept {
-		if (HasInput())
-			ClearAndCloseInput();
-	}
-
 	bool IsDone() const noexcept {
 		return !HasInput();
 	}

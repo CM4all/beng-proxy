@@ -62,7 +62,6 @@ protected:
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
 	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
-	void _Close() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
 

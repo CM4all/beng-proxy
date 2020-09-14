@@ -130,7 +130,6 @@ public:
 
 	off_t _GetAvailable(bool partial) noexcept override;
 	void _Read() noexcept override;
-	void _Close() noexcept override;
 
 protected:
 	/* virtual methods from class IstreamHandler */
@@ -145,9 +144,6 @@ DechunkIstream::Abort(std::exception_ptr ep) noexcept
 	assert(!parser.HasEnded());
 	assert(input.IsDefined());
 	assert(!IsEofPending());
-
-	if (input.IsDefined())
-		input.ClearAndClose();
 
 	DestroyError(ep);
 }
@@ -443,16 +439,6 @@ DechunkIstream::_Read() noexcept
 		input.Read();
 	} while (!destructed && input.IsDefined() && had_input && !had_output &&
 		 !IsEofPending());
-}
-
-void
-DechunkIstream::_Close() noexcept
-{
-	assert(!eof);
-
-	if (input.IsDefined())
-		input.ClearAndClose();
-	Destroy();
 }
 
 /*

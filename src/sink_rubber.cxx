@@ -103,9 +103,6 @@ RubberSink::FailTooLarge() noexcept
 {
 	allocation = {};
 
-	if (input.IsDefined())
-		input.ClearAndClose();
-
 	auto &_handler = handler;
 	Destroy();
 	_handler.RubberTooLarge();
@@ -114,9 +111,6 @@ RubberSink::FailTooLarge() noexcept
 void
 RubberSink::DestroyEof() noexcept
 {
-	if (input.IsDefined())
-		input.ClearAndClose();
-
 	if (position == 0) {
 		/* the stream was empty; remove the object from the rubber
 		   allocator */
@@ -220,12 +214,7 @@ RubberSink::OnError(std::exception_ptr ep) noexcept
 void
 RubberSink::Cancel() noexcept
 {
-	IstreamPointer i(std::move(input));
-
 	Destroy();
-
-	if (i.IsDefined())
-		i.ClearAndClose();
 }
 
 /*

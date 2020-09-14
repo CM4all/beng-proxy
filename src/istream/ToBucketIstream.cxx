@@ -99,15 +99,6 @@ ToBucketIstream::_ConsumeBucketList(size_t nbytes) noexcept
 	return 0;
 }
 
-void
-ToBucketIstream::_Close() noexcept
-{
-	if (HasInput())
-		input.ClearAndClose();
-
-	Destroy();
-}
-
 bool
 ToBucketIstream::OnIstreamReady() noexcept
 {

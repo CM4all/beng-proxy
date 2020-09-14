@@ -87,7 +87,6 @@ public:
 
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
-	void _Close() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
 
@@ -269,16 +268,6 @@ CatchIstream::_FillBucketList(IstreamBucketList &list)
 		// TODO: return space bucket here
 	}
 }
-
-void
-CatchIstream::_Close() noexcept
-{
-	if (HasInput())
-		input.ClearAndClose();
-
-	Destroy();
-}
-
 
 /*
  * constructor

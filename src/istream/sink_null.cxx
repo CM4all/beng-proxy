@@ -47,9 +47,11 @@ public:
 	}
 
 	void OnEof() noexcept override {
+		ClearInput();
 	}
 
 	void OnError(std::exception_ptr) noexcept override {
+		ClearInput();
 	}
 };
 

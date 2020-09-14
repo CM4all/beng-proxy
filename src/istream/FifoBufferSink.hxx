@@ -59,11 +59,6 @@ public:
 		input.SetDirect(FD_ANY);
 	}
 
-	~FifoBufferSink() noexcept {
-		if (input.IsDefined())
-			input.ClearAndClose();
-	}
-
 	auto &GetBuffer() noexcept {
 		return buffer;
 	}

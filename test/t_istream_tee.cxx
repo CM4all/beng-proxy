@@ -80,10 +80,12 @@ struct StatsIstreamSink : IstreamSink {
 	}
 
 	void OnEof() noexcept override {
+		ClearInput();
 		eof = true;
 	}
 
 	void OnError(std::exception_ptr ep) noexcept override {
+		ClearInput();
 		error = ep;
 	}
 };

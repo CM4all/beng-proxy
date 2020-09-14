@@ -82,6 +82,7 @@ public:
 	}
 
 	void OnEof() noexcept override {
+		ClearInput();
 		should_exit = true;
 	}
 

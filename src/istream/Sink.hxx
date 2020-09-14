@@ -44,7 +44,12 @@ protected:
 	IstreamPointer input;
 
 	IstreamSink() noexcept
-	:input(nullptr) {}
+		:input(nullptr) {}
+
+	~IstreamSink() noexcept {
+		if (HasInput())
+			ClearAndCloseInput();
+	}
 
 	template<typename I>
 	explicit IstreamSink(I &&_input) noexcept

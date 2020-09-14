@@ -71,7 +71,6 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept
 {
 	assert(first_substitution == s);
 	assert(s->IsActive());
-	assert(!s->IsDefined());
 	assert(s->start <= s->end);
 
 	buffer.Skip(s->end - s->start);
@@ -124,9 +123,6 @@ ReplaceIstream::Substitution::OnError(std::exception_ptr ep) noexcept
 {
 	ClearInput();
 
-	if (replace.HasInput())
-		replace.ClearAndCloseInput();
-
 	replace.DestroyError(ep);
 }
 
@@ -148,8 +144,6 @@ ReplaceIstream::~ReplaceIstream() noexcept
 		auto *s = first_substitution;
 		first_substitution = s->next;
 
-		if (s->IsDefined())
-			s->ClearAndCloseInput();
 		s->Destroy();
 	}
 }
@@ -289,8 +283,6 @@ ReplaceIstream::OnData(const void *data, size_t length) noexcept
 	had_input = true;
 
 	if (source_length >= 8 * 1024 * 1024) {
-		ClearAndCloseInput();
-
 		DestroyError(std::make_exception_ptr(std::runtime_error("file too large for processor")));
 		return 0;
 	}
@@ -303,7 +295,6 @@ ReplaceIstream::OnData(const void *data, size_t length) noexcept
 	try {
 		Parse({data, length});
 	} catch (...) {
-		ClearAndCloseInput();
 		DestroyError(std::current_exception());
 		return 0;
 	}
@@ -449,7 +440,6 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			source_length += (off_t)b.size;
 
 			if (source_length >= 8 * 1024 * 1024) {
-				ClearAndCloseInput();
 				Destroy();
 				throw std::runtime_error("file too large for processor");
 			}
@@ -457,7 +447,6 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			try {
 				Parse(b);
 			} catch (...) {
-				ClearAndCloseInput();
 				Destroy();
 				throw;
 			}
@@ -522,8 +511,6 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 		try {
 			s->FillBucketList(tmp);
 		} catch (...) {
-			if (HasInput())
-				ClearAndCloseInput();
 			Destroy();
 			throw;
 		}
@@ -581,8 +568,6 @@ ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		/* if there is still data to be consumed, it must mean
 		   that the substitution Istream has reached the
 		   end */
-		if (s->IsDefined())
-			s->ClearAndCloseInput();
 		ToNextSubstitution(s);
 	}
 
@@ -592,9 +577,6 @@ ReplaceIstream::_ConsumeBucketList(size_t nbytes) noexcept
 void
 ReplaceIstream::_Close() noexcept
 {
-	if (HasInput())
-		ClearAndCloseInput();
-
 	Destroy();
 }
 

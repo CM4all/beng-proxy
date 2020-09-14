@@ -106,8 +106,6 @@ public:
 
 private:
 	~BufferedIstream() noexcept {
-		assert(!input.IsDefined());
-
 		pipe.Release(in_pipe == 0);
 	}
 
@@ -130,10 +128,6 @@ private:
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
-		/* the input may be gone already if #defer_ready is pending */
-		if (HasInput())
-			ClearAndCloseInput();
-
 		Destroy();
 	}
 
@@ -243,7 +237,6 @@ BufferedIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 		try {
 			pipe.Create();
 		} catch (...) {
-			ClearAndCloseInput();
 			InvokeError(std::current_exception());
 			return ISTREAM_RESULT_CLOSED;
 		}

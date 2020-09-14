@@ -106,7 +106,6 @@ public:
 		valid = false;
 #endif
 
-		input.ClearAndClose();
 		Destroy();
 	}
 
@@ -150,7 +149,6 @@ SinkFd::OnData(const void *data, size_t length) noexcept
 	} else {
 		event.Cancel();
 		if (handler.OnSendError(errno)) {
-			input.ClearAndClose();
 			Destroy();
 		}
 		return 0;
@@ -187,6 +185,8 @@ SinkFd::OnDirect(FdType type, int _fd, size_t max_length) noexcept
 void
 SinkFd::OnEof() noexcept
 {
+	ClearInput();
+
 	got_data = true;
 
 #ifndef NDEBUG
@@ -202,6 +202,8 @@ SinkFd::OnEof() noexcept
 void
 SinkFd::OnError(std::exception_ptr ep) noexcept
 {
+	ClearInput();
+
 	got_data = true;
 
 #ifndef NDEBUG

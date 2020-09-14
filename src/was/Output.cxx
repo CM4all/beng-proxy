@@ -83,10 +83,12 @@ public:
 		ScheduleWrite();
 	}
 
-	uint64_t Close() noexcept {
+	~WasOutput() noexcept {
 		if (input.IsDefined())
 			input.ClearAndClose();
+	}
 
+	uint64_t Close() noexcept {
 		const auto _sent = sent;
 		Destroy();
 		return _sent;
@@ -131,17 +133,10 @@ private:
 		timeout_event.Schedule(was_output_timeout);
 	}
 
-	void AbortError(std::exception_ptr ep) noexcept {
-		if (input.IsDefined())
-			input.ClearAndClose();
-
-		DestroyError(ep);
-	}
-
 	void WriteEventCallback(unsigned events) noexcept;
 
 	void OnTimeout() noexcept {
-		AbortError(std::make_exception_ptr(WasError("send timeout")));
+		DestroyError(std::make_exception_ptr(WasError("send timeout")));
 	}
 
 	/* virtual methods from class IstreamHandler */
@@ -204,7 +199,7 @@ WasOutput::OnIstreamReady() noexcept
 		input.FillBucketList(list);
 	} catch (...) {
 		input.Clear();
-		AbortError(std::current_exception());
+		DestroyError(std::current_exception());
 		return false;
 	}
 
@@ -261,7 +256,7 @@ WasOutput::OnIstreamReady() noexcept
 			return false;
 		}
 
-		AbortError(std::make_exception_ptr(MakeErrno("Write to WAS process failed")));
+		DestroyError(std::make_exception_ptr(MakeErrno("Write to WAS process failed")));
 		return false;
 	}
 
@@ -302,7 +297,7 @@ WasOutput::OnData(const void *p, size_t length) noexcept
 			return 0;
 		}
 
-		AbortError(std::make_exception_ptr(MakeErrno("Write to WAS process failed")));
+		DestroyError(std::make_exception_ptr(MakeErrno("Write to WAS process failed")));
 		return 0;
 	}
 

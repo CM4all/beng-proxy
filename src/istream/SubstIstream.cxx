@@ -114,7 +114,6 @@ public:
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
 	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
-	void _Close() noexcept override;
 
 	/* istream handler */
 
@@ -856,15 +855,6 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 	}
 
 	gcc_unreachable();
-}
-
-void
-SubstIstream::_Close() noexcept
-{
-	if (input.IsDefined())
-		input.ClearAndClose();
-
-	Destroy();
 }
 
 /*

@@ -92,15 +92,8 @@ public:
 
 	bool InitZlib() noexcept;
 
-	void Abort(std::exception_ptr ep) noexcept {
-		if (HasInput())
-			ClearAndCloseInput();
-
-		DestroyError(ep);
-	}
-
 	void Abort(int code, const char *msg) noexcept {
-		Abort(std::make_exception_ptr(ZlibError(code, msg)));
+		DestroyError(std::make_exception_ptr(ZlibError(code, msg)));
 	}
 
 	/**
@@ -145,13 +138,6 @@ public:
 			ForceRead();
 		else
 			TryFinish();
-	}
-
-	void _Close() noexcept override {
-		if (HasInput())
-			input.ClearAndClose();
-
-		Destroy();
 	}
 
 	/* virtual methods from class IstreamHandler */

@@ -194,9 +194,6 @@ EscapeIstream::_Read() noexcept
 void
 EscapeIstream::_Close() noexcept
 {
-    if (HasInput())
-        ClearAndCloseInput();
-
     Destroy();
 }
 
