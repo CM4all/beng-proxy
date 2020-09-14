@@ -95,8 +95,8 @@ class Istream : PoolHolder, LeakDetector, IstreamDestructAnchor {
 
 protected:
 	template<typename P>
-	explicit Istream(P &&_pool) noexcept
-		:PoolHolder(std::forward<P>(_pool)) {}
+	explicit Istream(P &&_pool TRACE_ARGS_DEFAULT) noexcept
+		:PoolHolder(std::forward<P>(_pool) TRACE_ARGS_FWD) {}
 
 	Istream(const Istream &) = delete;
 	Istream &operator=(const Istream &) = delete;
