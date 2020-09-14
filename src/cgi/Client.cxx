@@ -142,7 +142,6 @@ CGIClient::ReturnResponse()
 
 		stopwatch.RecordEvent("empty");
 
-		buffer.Free();
 		input.ClearAndClose();
 
 		auto &_handler = handler;
@@ -154,7 +153,6 @@ CGIClient::ReturnResponse()
 
 		stopwatch.RecordEvent("empty");
 
-		buffer.Free();
 		input.ClearAndClose();
 		auto &_handler = handler;
 		Destroy();
@@ -219,7 +217,6 @@ try {
 	assert(false);
 	return 0;
 } catch (...) {
-	buffer.Free();
 	input.ClearAndClose();
 	auto &_handler = handler;
 	Destroy();
@@ -269,7 +266,6 @@ CGIClient::FeedBody(const char *data, size_t length)
 	if (parser.IsTooMuch(length)) {
 		stopwatch.RecordEvent("malformed");
 
-		buffer.Free();
 		input.ClearAndClose();
 
 		DestroyError(std::make_exception_ptr(CgiError("too much data from CGI script")));
@@ -282,7 +278,6 @@ CGIClient::FeedBody(const char *data, size_t length)
 	if (nbytes > 0 && parser.BodyConsumed(nbytes)) {
 		stopwatch.RecordEvent("end");
 
-		buffer.Free();
 		input.ClearAndClose();
 		DestroyEof();
 		return 0;
@@ -343,7 +338,6 @@ CGIClient::OnDirect(FdType type, int fd, size_t max_length) noexcept
 	if (nbytes > 0 && parser.BodyConsumed(nbytes)) {
 		stopwatch.RecordEvent("end");
 
-		buffer.Free();
 		input.Close();
 		DestroyEof();
 		return ISTREAM_RESULT_CLOSED;
@@ -362,21 +356,16 @@ CGIClient::OnEof() noexcept
 
 		assert(!HasHandler());
 
-		buffer.Free();
-
 		auto &_handler = handler;
 		Destroy();
 		_handler.InvokeError(std::make_exception_ptr(CgiError("premature end of headers from CGI script")));
 	} else if (parser.DoesRequireMore()) {
 		stopwatch.RecordEvent("malformed");
 
-		buffer.Free();
-
 		DestroyError(std::make_exception_ptr(CgiError("premature end of response body from CGI script")));
 	} else {
 		stopwatch.RecordEvent("end");
 
-		buffer.Free();
 		DestroyEof();
 	}
 }
@@ -393,15 +382,12 @@ CGIClient::OnError(std::exception_ptr ep) noexcept
 		   handler */
 		assert(!HasHandler());
 
-		buffer.Free();
-
 		auto &_handler = handler;
 		Destroy();
 		_handler.InvokeError(NestException(ep,
 						   std::runtime_error("CGI request body failed")));
 	} else {
 		/* response has been sent: abort only the output stream */
-		buffer.Free();
 		DestroyError(ep);
 	}
 }
@@ -453,8 +439,6 @@ CGIClient::_Read() noexcept
 void
 CGIClient::_Close() noexcept
 {
-	buffer.Free();
-
 	if (input.IsDefined())
 		input.ClearAndClose();
 
@@ -471,7 +455,6 @@ CGIClient::Cancel() noexcept
 {
 	assert(input.IsDefined());
 
-	buffer.Free();
 	input.Close();
 	Destroy();
 }
