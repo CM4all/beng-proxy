@@ -301,7 +301,7 @@ struct Connection {
 				    lease,
 				    method, uri, uri, nullptr, nullptr, nullptr,
 				    nullptr, "192.168.1.100",
-				    headers, std::move(body),
+				    std::move(headers), std::move(body),
 				    nullptr,
 				    {},
 				    handler, cancel_ptr);

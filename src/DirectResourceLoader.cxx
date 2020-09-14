@@ -224,7 +224,7 @@ try {
 				     cgi->query_string,
 				     cgi->document_root,
 				     remote_ip,
-				     headers, std::move(body),
+				     std::move(headers), std::move(body),
 				     cgi->params.ToArray(pool),
 				     std::move(stderr_fd),
 				     handler, cancel_ptr);

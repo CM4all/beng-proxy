@@ -1075,7 +1075,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 		    const char *query_string,
 		    const char *document_root,
 		    const char *remote_addr,
-		    const StringMap &headers, UnusedIstreamPtr body,
+		    StringMap &&headers, UnusedIstreamPtr body,
 		    ConstBuffer<const char *> params,
 		    UniqueFileDescriptor &&stderr_fd,
 		    HttpResponseHandler &handler,
@@ -1136,11 +1136,11 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 			ps("CONTENT_TYPE", content_type);
 	}
 
-	ps.Headers(headers);
-
-	const char *https = headers.Get("x-cm4all-https");
+	const char *https = headers.Remove("x-cm4all-https");
 	if (https != nullptr && strcmp(https, "on") == 0)
 		ps("HTTPS", https);
+
+	ps.Headers(headers);
 
 	for (const StringView param : params) {
 		const char *separator = param.Find('=');

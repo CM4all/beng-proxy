@@ -72,7 +72,7 @@ class FcgiRemoteRequest final : StockGetHandler, Cancellable, Lease, PoolLeakDet
 	const char *const query_string;
 	const char *const document_root;
 	const char *const remote_addr;
-	const StringMap headers;
+	StringMap headers;
 
 	UnusedHoldIstreamPtr body;
 
@@ -167,7 +167,7 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item) noexcept
 			    query_string,
 			    document_root,
 			    remote_addr,
-			    headers, std::move(body),
+			    std::move(headers), std::move(body),
 			    params,
 			    std::move(stderr_fd),
 			    handler,
