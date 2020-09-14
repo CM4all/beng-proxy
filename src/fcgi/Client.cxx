@@ -1136,13 +1136,11 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 			ps("CONTENT_TYPE", content_type);
 	}
 
-	if (!headers.IsEmpty()) {
-		ps.Headers(headers);
+	ps.Headers(headers);
 
-		const char *https = headers.Get("x-cm4all-https");
-		if (https != nullptr && strcmp(https, "on") == 0)
-			ps("HTTPS", "on");
-	}
+	const char *https = headers.Get("x-cm4all-https");
+	if (https != nullptr && strcmp(https, "on") == 0)
+		ps("HTTPS", https);
 
 	for (const StringView param : params) {
 		const char *separator = param.Find('=');
