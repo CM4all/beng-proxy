@@ -37,7 +37,7 @@ PoolPtr::PoolPtr(struct pool &_value TRACE_ARGS_DECL_) noexcept
 	:value(&_value)
 	 TRACE_ARGS_INIT
 {
-	pool_ref(value);
+	pool_ref(value TRACE_ARGS_FWD);
 }
 
 PoolPtr::PoolPtr(const PoolPtr &src TRACE_ARGS_DECL_) noexcept
@@ -45,13 +45,13 @@ PoolPtr::PoolPtr(const PoolPtr &src TRACE_ARGS_DECL_) noexcept
 	 TRACE_ARGS_INIT
 {
 	if (value != nullptr)
-		pool_ref(value);
+		pool_ref(value TRACE_ARGS_FWD);
 }
 
 PoolPtr::~PoolPtr() noexcept
 {
 	if (value != nullptr)
-		pool_unref(value);
+		pool_unref(value TRACE_ARGS_FWD);
 }
 
 PoolPtr &
@@ -75,7 +75,7 @@ void
 PoolPtr::reset() noexcept
 {
 	if (value != nullptr)
-		pool_unref(std::exchange(value, nullptr));
+		pool_unref(std::exchange(value, nullptr) TRACE_ARGS_FWD);
 }
 
 void *
