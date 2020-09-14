@@ -38,7 +38,7 @@
 #include "HttpResponseHandler.hxx"
 #include "istream_fcgi.hxx"
 #include "istream_gb.hxx"
-#include "istream/Handler.hxx"
+#include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/ConcatIstream.hxx"
@@ -72,7 +72,7 @@
 #include <unistd.h>
 
 class FcgiClient final
-	: BufferedSocketHandler, Cancellable, Istream, IstreamHandler,
+	: BufferedSocketHandler, Cancellable, Istream, IstreamSink,
 	  WithInstanceList<FcgiClient>, DestructAnchor {
 
 	BufferedSocket socket;
@@ -88,8 +88,6 @@ class FcgiClient final
 	const uint16_t id;
 
 	struct Request {
-		IstreamPointer input{nullptr};
-
 		/**
 		 * This flag is set when the request istream has submitted
 		 * data.  It is used to check whether the request istream is
@@ -164,7 +162,7 @@ public:
 
 	void Start() noexcept {
 		socket.ScheduleReadNoTimeout(true);
-		request.input.Read();
+		input.Read();
 	}
 
 private:
@@ -302,8 +300,8 @@ FcgiClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
 	if (socket.IsConnected())
 		ReleaseSocket(false);
 
-	if (request.input.IsDefined())
-		request.input.ClearAndClose();
+	if (HasInput())
+		ClearAndCloseInput();
 
 	handler.InvokeError(ep);
 	Destroy();
@@ -317,8 +315,8 @@ FcgiClient::AbortResponseBody(std::exception_ptr ep) noexcept
 	if (socket.IsConnected())
 		ReleaseSocket(false);
 
-	if (request.input.IsDefined())
-		request.input.ClearAndClose();
+	if (HasInput())
+		ClearAndCloseInput();
 
 	DestroyError(ep);
 }
@@ -345,9 +343,6 @@ FcgiClient::_Close() noexcept
 
 	if (socket.IsConnected())
 		ReleaseSocket(false);
-
-	if (request.input.IsDefined())
-		request.input.ClearAndClose();
 
 	Istream::_Close();
 }
@@ -540,8 +535,8 @@ FcgiClient::HandleEnd()
 		return;
 	}
 
-	if (request.input.IsDefined())
-		request.input.ClearAndClose();
+	if (HasInput())
+		ClearAndCloseInput();
 
 	if (response.read_state == FcgiClient::Response::READ_NO_BODY) {
 		handler.InvokeResponse(response.status, std::move(response.headers),
@@ -700,7 +695,7 @@ size_t
 FcgiClient::OnData(const void *data, size_t length) noexcept
 {
 	assert(socket.IsConnected());
-	assert(request.input.IsDefined());
+	assert(HasInput());
 
 	request.got_data = true;
 
@@ -743,11 +738,10 @@ FcgiClient::OnDirect(FdType type, int fd, size_t max_length) noexcept
 void
 FcgiClient::OnEof() noexcept
 {
-	assert(request.input.IsDefined());
+	assert(HasInput());
+	ClearInput();
 
 	stopwatch.RecordEvent("request_end");
-
-	request.input.Clear();
 
 	socket.UnscheduleWrite();
 }
@@ -755,9 +749,10 @@ FcgiClient::OnEof() noexcept
 void
 FcgiClient::OnError(std::exception_ptr ep) noexcept
 {
-	assert(request.input.IsDefined());
+	assert(HasInput());
+	ClearInput();
 
-	request.input.Clear();
+	stopwatch.RecordEvent("request_error");
 
 	AbortResponse(NestException(ep,
 				    std::runtime_error("FastCGI request stream failed")));
@@ -825,9 +820,6 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 
 				if (socket.IsConnected())
 					ReleaseSocket(false);
-
-				if (request.input.IsDefined())
-					request.input.ClearAndClose();
 
 				Destroy();
 
@@ -1007,10 +999,10 @@ FcgiClient::OnBufferedWrite()
 	const DestructObserver destructed(*this);
 
 	request.got_data = false;
-	request.input.Read();
+	input.Read();
 
 	const bool result = !destructed;
-	if (result && request.input.IsDefined()) {
+	if (result && HasInput()) {
 		if (request.got_data)
 			socket.ScheduleWrite();
 		else
@@ -1055,9 +1047,6 @@ FcgiClient::Cancel() noexcept
 
 	ReleaseSocket(false);
 
-	if (request.input.IsDefined())
-		request.input.ClearAndClose();
-
 	Destroy();
 }
 
@@ -1076,6 +1065,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
 		       HttpResponseHandler &_handler,
 		       CancellablePointer &cancel_ptr)
 	:Istream(_pool),
+	 IstreamSink(std::move(request_istream)),
 	 socket(event_loop),
 	 lease_ref(lease),
 	 stderr_fd(std::move(_stderr_fd)),
@@ -1088,8 +1078,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
 		    fcgi_client_timeout, fcgi_client_timeout,
 		    *this);
 
-	request.input.Set(std::move(request_istream), *this);
-	request.input.SetDirect(istream_direct_mask_to(fd_type));
+	input.SetDirect(istream_direct_mask_to(fd_type));
 
 	cancel_ptr = *this;
 }
