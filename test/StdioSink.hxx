@@ -32,8 +32,7 @@
 
 #pragma once
 
-#include "istream/Handler.hxx"
-#include "istream/Pointer.hxx"
+#include "istream/Sink.hxx"
 #include "util/PrintException.hxx"
 
 #include <stdlib.h>
@@ -42,12 +41,10 @@
 #include <errno.h>
 #include <string.h>
 
-struct StdioSink final : IstreamHandler {
-	IstreamPointer input;
-
+struct StdioSink final : IstreamSink {
 	template<typename I>
 	explicit StdioSink(I &&_input)
-		:input(std::forward<I>(_input), *this) {}
+		:IstreamSink(std::forward<I>(_input)) {}
 
 	void LoopRead() {
 		while (input.IsDefined())
@@ -59,11 +56,11 @@ struct StdioSink final : IstreamHandler {
 	size_t OnData(const void *data, size_t length) noexcept override;
 
 	void OnEof() noexcept override {
-		input.Clear();
+		ClearInput();
 	}
 
 	void OnError(std::exception_ptr ep) noexcept override {
-		input.Clear();
+		ClearInput();
 
 		PrintException(ep);
 	}
