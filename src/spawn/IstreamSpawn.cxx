@@ -410,8 +410,10 @@ SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
 		     SocketDescriptor::FromFileDescriptor(input_fd)),
 	 pid(_pid)
 {
-	if (input.IsDefined())
+	if (input.IsDefined()) {
+		input.SetDirect(ISTREAM_TO_PIPE);
 		input_event.ScheduleWrite();
+	}
 
 	spawn_service.SetExitListener(pid, this);
 }
