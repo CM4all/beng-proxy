@@ -300,11 +300,9 @@ FcgiClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
 	if (socket.IsConnected())
 		ReleaseSocket(false);
 
-	if (HasInput())
-		ClearAndCloseInput();
-
-	handler.InvokeError(ep);
+	auto &_handler = handler;
 	Destroy();
+	_handler.InvokeError(ep);
 }
 
 void
@@ -314,9 +312,6 @@ FcgiClient::AbortResponseBody(std::exception_ptr ep) noexcept
 
 	if (socket.IsConnected())
 		ReleaseSocket(false);
-
-	if (HasInput())
-		ClearAndCloseInput();
 
 	DestroyError(ep);
 }
@@ -535,13 +530,11 @@ FcgiClient::HandleEnd()
 		return;
 	}
 
-	if (HasInput())
-		ClearAndCloseInput();
-
 	if (response.read_state == FcgiClient::Response::READ_NO_BODY) {
-		handler.InvokeResponse(response.status, std::move(response.headers),
-				       UnusedIstreamPtr());
+		auto &_handler = handler;
 		Destroy();
+		_handler.InvokeResponse(response.status, std::move(response.headers),
+					UnusedIstreamPtr{});
 	} else if (response.available > 0) {
 		AbortResponseBody(std::make_exception_ptr(FcgiClientError("premature end of body "
 									  "from FastCGI application")));
