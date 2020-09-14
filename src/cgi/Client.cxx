@@ -34,7 +34,7 @@
 #include "Error.hxx"
 #include "Parser.hxx"
 #include "pool/pool.hxx"
-#include "istream/Handler.hxx"
+#include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/Pointer.hxx"
 #include "istream/istream_null.hxx"
@@ -52,10 +52,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-class CGIClient final : Istream, IstreamHandler, Cancellable, DestructAnchor {
+class CGIClient final : Istream, IstreamSink, Cancellable, DestructAnchor {
 	const StopwatchPtr stopwatch;
 
-	IstreamPointer input;
 	SliceFifoBuffer buffer;
 
 	CGIParser parser;
@@ -77,11 +76,6 @@ public:
 		  UnusedIstreamPtr _input,
 		  HttpResponseHandler &_handler,
 		  CancellablePointer &cancel_ptr);
-
-	~CGIClient() noexcept {
-		if (input.IsDefined())
-			input.ClearAndClose();
-	}
 
 	/**
 	 * @return false if the connection has been closed
@@ -453,9 +447,8 @@ CGIClient::CGIClient(struct pool &_pool, StopwatchPtr &&_stopwatch,
 		     UnusedIstreamPtr _input,
 		     HttpResponseHandler &_handler,
 		     CancellablePointer &cancel_ptr)
-	:Istream(_pool),
+	:Istream(_pool), IstreamSink(std::move(_input)),
 	 stopwatch(std::move(_stopwatch)),
-	 input(std::move(_input), *this),
 	 buffer(fb_pool_get()),
 	 handler(_handler)
 {
