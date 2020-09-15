@@ -34,8 +34,7 @@
 #include "GrowingBuffer.hxx"
 #include "istream_gb.hxx"
 #include "istream/istream.hxx"
-#include "istream/Handler.hxx"
-#include "istream/Pointer.hxx"
+#include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "fb_pool.hxx"
 #include "io/SpliceSupport.hxx"
@@ -44,17 +43,27 @@
 
 #include <gtest/gtest.h>
 
+#include <cassert>
+
 #include <string.h>
 #include <stdio.h>
 
-struct Context final : IstreamHandler {
+struct Context final : IstreamSink {
 	PoolPtr pool;
 	bool got_data = false, eof = false, abort = false, closed = false;
-	IstreamPointer abort_istream;
+	bool abort_istream = false;
 
 	template<typename P>
 	explicit Context(P &&_pool) noexcept
-		:pool(std::forward<P>(_pool)), abort_istream(nullptr) {}
+		:pool(std::forward<P>(_pool)) {}
+
+	using IstreamSink::HasInput;
+	using IstreamSink::SetInput;
+	using IstreamSink::ClearAndCloseInput;
+
+	void ReadExpect();
+
+	void Run(PoolPtr _pool, UnusedIstreamPtr _istream);
 
 	/* virtual methods from class IstreamHandler */
 	size_t OnData(const void *data, size_t length) noexcept override;
@@ -70,11 +79,13 @@ struct Context final : IstreamHandler {
 size_t
 Context::OnData(gcc_unused const void *data, size_t length) noexcept
 {
+	assert(HasInput());
+
 	got_data = true;
 
-	if (abort_istream.IsDefined()) {
+	if (abort_istream) {
 		closed = true;
-		abort_istream.ClearAndClose();
+		ClearAndCloseInput();
 		pool.reset();
 		return 0;
 	}
@@ -85,6 +96,9 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
 void
 Context::OnEof() noexcept
 {
+	assert(HasInput());
+	ClearInput();
+
 	eof = true;
 
 	pool.reset();
@@ -93,6 +107,9 @@ Context::OnEof() noexcept
 void
 Context::OnError(std::exception_ptr) noexcept
 {
+	assert(HasInput());
+	ClearInput();
+
 	abort = true;
 
 	pool.reset();
@@ -103,39 +120,34 @@ Context::OnError(std::exception_ptr) noexcept
  *
  */
 
-static void
-istream_read_expect(Context *ctx, IstreamPointer &istream)
+void
+Context::ReadExpect()
 {
-	ASSERT_FALSE(ctx->eof);
+	ASSERT_FALSE(eof);
 
-	ctx->got_data = false;
+	got_data = false;
 
-	istream.Read();
-	ASSERT_TRUE(ctx->eof || ctx->got_data);
+	input.Read();
+	ASSERT_TRUE(eof || got_data);
 }
 
-static void
-run_istream_ctx(Context *ctx, PoolPtr pool, UnusedIstreamPtr _istream)
+void
+Context::Run(PoolPtr _pool, UnusedIstreamPtr _istream)
 {
 	gcc_unused off_t a1 = _istream.GetAvailable(false);
 	gcc_unused off_t a2 = _istream.GetAvailable(true);
 
-	IstreamPointer istream(std::move(_istream), *ctx);
+	SetInput(std::move(_istream));
 
-#ifndef NO_GOT_DATA_ASSERT
-	while (!ctx->eof)
-		istream_read_expect(ctx, istream);
-#else
-	for (int i = 0; i < 1000 && !ctx->eof; ++i)
-		istream->Read();
-#endif
+	while (!eof)
+		ReadExpect();
 
-	if (!ctx->eof && !ctx->abort)
-		istream.ClearAndClose();
+	if (!eof && !abort)
+		ClearAndCloseInput();
 
-	if (!ctx->eof) {
-		pool_trash(pool);
-		pool.reset();
+	if (!eof) {
+		pool_trash(_pool);
+		_pool.reset();
 	}
 
 	pool_commit();
@@ -145,7 +157,7 @@ static void
 run_istream(PoolPtr pool, UnusedIstreamPtr istream)
 {
 	Context ctx(pool);
-	run_istream_ctx(&ctx, std::move(pool), std::move(istream));
+	ctx.Run(std::move(pool), std::move(istream));
 }
 
 static UnusedIstreamPtr
@@ -322,10 +334,9 @@ TEST(GrowingBufferTest, AbortWithHandler)
 	TestPool pool;
 	Context ctx(pool.Steal());
 
-	Istream *istream = create_test(ctx.pool).Steal();
-	istream->SetHandler(ctx);
+	ctx.SetInput(create_test(ctx.pool));
+	ctx.ClearAndCloseInput();
 
-	istream->Close();
 	ctx.pool.reset();
 
 	ASSERT_FALSE(ctx.abort);
@@ -337,13 +348,13 @@ TEST(GrowingBufferTest, AbortInHandler)
 	const ScopeFbPoolInit fb_pool_init;
 	TestPool pool;
 	Context ctx(pool.Steal());
-
-	ctx.abort_istream.Set(create_test(ctx.pool), ctx);
+	ctx.abort_istream = true;
+	ctx.SetInput(create_test(ctx.pool));
 
 	while (!ctx.eof && !ctx.abort && !ctx.closed)
-		istream_read_expect(&ctx, ctx.abort_istream);
+		ctx.ReadExpect();
 
-	ASSERT_FALSE(ctx.abort_istream.IsDefined());
+	ASSERT_FALSE(ctx.HasInput());
 	ASSERT_FALSE(ctx.abort);
 	ASSERT_TRUE(ctx.closed);
 }
