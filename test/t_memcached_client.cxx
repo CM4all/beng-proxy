@@ -38,8 +38,7 @@
 #include "io/SpliceSupport.hxx"
 #include "http/HeaderWriter.hxx"
 #include "lease.hxx"
-#include "istream/Handler.hxx"
-#include "istream/Pointer.hxx"
+#include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/New.hxx"
 #include "fb_pool.hxx"
@@ -89,7 +88,7 @@ connect_fake_server()
 	return client_socket;
 }
 
-struct Context final : PInstance, Lease, MemcachedResponseHandler, IstreamHandler {
+struct Context final : PInstance, Lease, MemcachedResponseHandler, IstreamSink {
 	unsigned data_blocking = 0;
 	bool close_value_early = false;
 	bool close_value_late = false;
@@ -99,11 +98,10 @@ struct Context final : PInstance, Lease, MemcachedResponseHandler, IstreamHandle
 	bool released = false, reuse = false, got_response = false;
 	enum memcached_response_status status;
 
-	IstreamPointer value;
 	off_t value_data = 0, consumed_value_data = 0;
 	bool value_eof = false, value_abort = false, value_closed = false;
 
-	Context():value(nullptr) {}
+	using IstreamSink::HasInput;
 
 	/* virtual methods from class MemcachedResponseHandler */
 	void OnMemcachedResponse(enum memcached_response_status status,
@@ -197,7 +195,7 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
 
 	if (close_value_data) {
 		value_closed = true;
-		value.ClearAndClose();
+		ClearAndCloseInput();
 		return 0;
 	}
 
@@ -213,14 +211,14 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
 void
 Context::OnEof() noexcept
 {
-	value.Clear();
+	ClearInput();
 	value_eof = true;
 }
 
 void
 Context::OnError(std::exception_ptr) noexcept
 {
-	value.Clear();
+	ClearInput();
 	value_abort = true;
 }
 
@@ -243,11 +241,11 @@ Context::OnMemcachedResponse(enum memcached_response_status _status,
 	if (close_value_early)
 		_value.Clear();
 	else if (_value)
-		value.Set(std::move(_value), *this);
+		SetInput(std::move(_value));
 
 	if (close_value_late) {
 		value_closed = true;
-		value.ClearAndClose();
+		ClearAndCloseInput();
 	}
 }
 
@@ -284,7 +282,7 @@ test_basic(struct pool *pool, Context *c)
 	assert(c->reuse);
 	assert(!c->fd.IsDefined());
 	assert(c->status == MEMCACHED_STATUS_NO_ERROR);
-	assert(!c->value.IsDefined());
+	assert(!c->HasInput());
 	assert(c->value_eof);
 	assert(!c->value_abort);
 }
@@ -309,7 +307,7 @@ test_close_early(struct pool *pool, Context *c)
 	assert(!c->reuse);
 	assert(!c->fd.IsDefined());
 	assert(c->status == MEMCACHED_STATUS_NO_ERROR);
-	assert(!c->value.IsDefined());
+	assert(!c->HasInput());
 	assert(!c->value_eof);
 	assert(!c->value_abort);
 	assert(c->value_data == 0);
@@ -335,7 +333,7 @@ test_close_late(struct pool *pool, Context *c)
 	assert(!c->reuse);
 	assert(!c->fd.IsDefined());
 	assert(c->status == MEMCACHED_STATUS_NO_ERROR);
-	assert(!c->value.IsDefined());
+	assert(!c->HasInput());
 	assert(!c->value_eof);
 	assert(!c->value_abort);
 	assert(c->value_closed);
@@ -362,7 +360,7 @@ test_close_data(struct pool *pool, Context *c)
 	assert(!c->reuse);
 	assert(!c->fd.IsDefined());
 	assert(c->status == MEMCACHED_STATUS_NO_ERROR);
-	assert(!c->value.IsDefined());
+	assert(!c->HasInput());
 	assert(!c->value_eof);
 	assert(!c->value_abort);
 	assert(c->value_closed);
@@ -389,7 +387,7 @@ test_abort(struct pool *pool, Context *c)
 	assert(c->released);
 	assert(!c->reuse);
 	assert(!c->fd.IsDefined());
-	assert(!c->value.IsDefined());
+	assert(!c->HasInput());
 	assert(!c->value_eof);
 	assert(!c->value_abort);
 }
@@ -417,7 +415,7 @@ test_request_value(struct pool *pool, Context *c)
 	assert(c->reuse);
 	assert(!c->fd.IsDefined());
 	assert(c->status == MEMCACHED_STATUS_NO_ERROR);
-	assert(!c->value.IsDefined());
+	assert(!c->HasInput());
 	assert(c->value_eof);
 	assert(!c->value_abort);
 }
