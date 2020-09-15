@@ -32,9 +32,8 @@
 
 #include "TeeIstream.hxx"
 #include "UnusedPtr.hxx"
-#include "Pointer.hxx"
+#include "Sink.hxx"
 #include "Bucket.hxx"
-#include "Handler.hxx"
 #include "New.hxx"
 #include "pool/pool.hxx"
 #include "event/DeferEvent.hxx"
@@ -49,7 +48,7 @@
 
 namespace bi = boost::intrusive;
 
-struct TeeIstream final : IstreamHandler, DestructAnchor {
+struct TeeIstream final : IstreamSink, DestructAnchor {
 
 	struct Output
 		: bi::list_base_hook<bi::link_mode<bi::normal_link>>,
@@ -179,8 +178,6 @@ struct TeeIstream final : IstreamHandler, DestructAnchor {
 
 	unsigned n_strong = 0;
 
-	IstreamPointer input;
-
 	/**
 	 * This event is used to defer an input.Read() call.
 	 */
@@ -193,7 +190,7 @@ struct TeeIstream final : IstreamHandler, DestructAnchor {
 
 	TeeIstream(UnusedIstreamPtr _input, EventLoop &event_loop,
 		   bool defer_read) noexcept
-		:input(std::move(_input), *this),
+		:IstreamSink(std::move(_input)),
 		 defer_event(event_loop, BIND_THIS_METHOD(ReadInput))
 	{
 		if (defer_read)
@@ -234,7 +231,7 @@ struct TeeIstream final : IstreamHandler, DestructAnchor {
 		assert(!outputs.empty());
 
 		if (postponed_error) {
-			assert(!input.IsDefined());
+			assert(!HasInput());
 
 			defer_event.Cancel();
 
@@ -252,7 +249,7 @@ struct TeeIstream final : IstreamHandler, DestructAnchor {
 	}
 
 	void DeferRead() noexcept {
-		assert(input.IsDefined() || postponed_error);
+		assert(HasInput() || postponed_error);
 
 		defer_event.Schedule();
 	}
@@ -321,7 +318,7 @@ TeeIstream::Remove(Output &output) noexcept
 	if (!output.weak)
 		--n_strong;
 
-	if (!input.IsDefined()) {
+	if (!HasInput()) {
 		/* this can happen during OnEof() or OnError(); and over
 		   there, this #TeeIstream and its remaining outputs will be
 		   destructed properly, so we can just do nothing here */
@@ -337,7 +334,7 @@ TeeIstream::Remove(Output &output) noexcept
 		return;
 	}
 
-	input.ClearAndClose();
+	ClearAndCloseInput();
 	defer_event.Cancel();
 
 	if (outputs.empty()) {
@@ -362,7 +359,7 @@ TeeIstream::Remove(Output &output) noexcept
 size_t
 TeeIstream::OnData(const void *data, size_t length) noexcept
 {
-	assert(input.IsDefined());
+	assert(HasInput());
 
 	for (auto i = outputs.begin(); i != outputs.end(); i = next_output) {
 		next_output = std::next(i);
@@ -384,8 +381,8 @@ TeeIstream::OnData(const void *data, size_t length) noexcept
 void
 TeeIstream::OnEof() noexcept
 {
-	assert(input.IsDefined());
-	input.Clear();
+	assert(HasInput());
+	ClearInput();
 	defer_event.Cancel();
 
 	const DestructObserver destructed(*this);
@@ -402,8 +399,8 @@ TeeIstream::OnEof() noexcept
 void
 TeeIstream::OnError(std::exception_ptr ep) noexcept
 {
-	assert(input.IsDefined());
-	input.Clear();
+	assert(HasInput());
+	ClearInput();
 	defer_event.Cancel();
 
 	const DestructObserver destructed(*this);
