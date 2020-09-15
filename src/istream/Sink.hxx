@@ -47,7 +47,7 @@ protected:
 
 	~IstreamSink() noexcept {
 		if (HasInput())
-			ClearAndCloseInput();
+			CloseInput();
 	}
 
 	template<typename I>
@@ -67,7 +67,7 @@ protected:
 		input.Clear();
 	}
 
-	void ClearAndCloseInput() noexcept {
-		input.ClearAndClose();
+	void CloseInput() noexcept {
+		input.Close();
 	}
 };

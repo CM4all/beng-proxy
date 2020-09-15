@@ -91,8 +91,6 @@ class ReplaceIstream : public FacadeIstream, DestructAnchor {
 				: 0;
 		}
 
-		using IstreamSink::ClearAndCloseInput;
-
 		gcc_pure
 		bool IsActive() const noexcept;
 

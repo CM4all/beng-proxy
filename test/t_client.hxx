@@ -153,7 +153,7 @@ struct Context final
 	}
 
 	using IstreamSink::HasInput;
-	using IstreamSink::ClearAndCloseInput;
+	using IstreamSink::CloseInput;
 
 	bool WaitingForResponse() const {
 		return status == http_status_t(0) && !request_error;
@@ -222,7 +222,7 @@ struct Context final
 
 		if (close_after_buckets) {
 			body_closed = true;
-			ClearAndCloseInput();
+			CloseInput();
 			close_response_body_late = false;
 		}
 	}
@@ -307,7 +307,7 @@ Context<Connection>::OnData(gcc_unused const void *data, size_t length) noexcept
 
 	if (close_response_body_data) {
 		body_closed = true;
-		ClearAndCloseInput();
+		CloseInput();
 		return 0;
 	}
 
@@ -403,7 +403,7 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
 
 	if (close_response_body_late) {
 		body_closed = true;
-		ClearAndCloseInput();
+		CloseInput();
 	}
 
 	if (delayed != nullptr) {
@@ -809,7 +809,7 @@ test_data_blocking(Context<Connection> &c)
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 
-	c.ClearAndCloseInput();
+	c.CloseInput();
 
 	assert(c.released);
 	assert(!c.body_eof);
@@ -1662,7 +1662,7 @@ TestCloseWithFailedSocketGet(Context<Connection> &c)
 	assert(c.HasInput());
 
 	c.connection->InjectSocketFailure();
-	c.ClearAndCloseInput();
+	c.CloseInput();
 	c.defer_event.Cancel();
 
 	c.event_loop.Dispatch();
@@ -1690,7 +1690,7 @@ TestCloseWithFailedSocketPost(Context<Connection> &c)
 	assert(c.HasInput());
 
 	c.connection->InjectSocketFailure();
-	c.ClearAndCloseInput();
+	c.CloseInput();
 	c.defer_event.Cancel();
 
 	c.event_loop.Dispatch();

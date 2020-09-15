@@ -412,7 +412,7 @@ HttpClient::AbortResponseBody(std::exception_ptr ep) noexcept
 	assert(response.state == Response::State::BODY);
 
 	if (HasInput())
-		ClearAndCloseInput();
+		CloseInput();
 
 	if (response_body_reader.GotEndChunk()) {
 		/* avoid recursing from DechunkIstream: when DechunkIstream
@@ -634,7 +634,7 @@ HttpClient::TryWriteBuckets()
 		assert(HasInput());
 
 		stopwatch.RecordEvent("request_end");
-		ClearAndCloseInput();
+		CloseInput();
 		socket.ScheduleReadNoTimeout(true);
 		break;
 
@@ -1027,7 +1027,7 @@ HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type)
 
 	if (nbytes == ISTREAM_RESULT_EOF) {
 		if (HasInput())
-			ClearAndCloseInput();
+			CloseInput();
 
 		response_body_reader.SocketEOF(0);
 		Destroy();
@@ -1089,7 +1089,7 @@ HttpClient::OnBufferedClosed() noexcept
 	stopwatch.RecordEvent("end");
 
 	if (HasInput())
-		ClearAndCloseInput();
+		CloseInput();
 
 	/* close the socket, but don't release it just yet; data may be
 	   still in flight in a SocketFilter (e.g. SSL/TLS); we'll do that
@@ -1179,7 +1179,7 @@ HttpClient::OnBufferedBroken() noexcept
 	keep_alive = false;
 
 	if (HasInput())
-		ClearAndCloseInput();
+		CloseInput();
 
 	socket.ScheduleReadNoTimeout(true);
 

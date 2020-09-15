@@ -334,7 +334,7 @@ TeeIstream::Remove(Output &output) noexcept
 		return;
 	}
 
-	ClearAndCloseInput();
+	CloseInput();
 	defer_event.Cancel();
 
 	if (outputs.empty()) {

@@ -668,7 +668,7 @@ MemcachedClient::Cancel() noexcept
 	Release(false);
 
 	if (request_istream.IsDefined())
-		request_istream.ClearAndClose();
+		request_istream.Close();
 }
 
 /*

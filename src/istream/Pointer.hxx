@@ -63,11 +63,10 @@ public:
 		stream = nullptr;
 	}
 
-	void ClearAndClose() noexcept {
+	void Close() noexcept {
 		assert(IsDefined());
 
-		auto *old = stream;
-		Clear();
+		auto *old = std::exchange(stream, nullptr);
 		old->Close();
 	}
 
@@ -87,7 +86,7 @@ public:
 	template<typename I>
 	void Replace(I &&_stream,
 		     IstreamHandler &handler) noexcept {
-		ClearAndClose();
+		Close();
 		Set(std::forward<I>(_stream), handler);
 	}
 

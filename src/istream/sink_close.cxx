@@ -46,7 +46,7 @@ public:
 
 	/* request istream handler */
 	size_t OnData(gcc_unused const void *data, gcc_unused size_t length) noexcept {
-		input.ClearAndClose();
+		CloseInput();
 		return 0;
 	}
 

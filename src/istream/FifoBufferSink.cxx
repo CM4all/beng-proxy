@@ -79,7 +79,7 @@ FifoBufferSink::OnIstreamReady() noexcept
 		input.ConsumeBucketList(nbytes);
 
 	if (!more) {
-		input.ClearAndClose();
+		CloseInput();
 		handler.OnFifoBufferSinkEof();
 		return false;
 	}

@@ -146,7 +146,7 @@ SpawnIstream::Cancel() noexcept
 
 		input_event.Cancel();
 		input_fd.Close();
-		ClearAndCloseInput();
+		CloseInput();
 	}
 
 	output_event.Cancel();
@@ -203,7 +203,7 @@ SpawnIstream::OnData(const void *data, size_t length) noexcept
 		logger(1, "write() to subprocess failed: ", strerror(errno));
 		input_event.Cancel();
 		input_fd.Close();
-		ClearAndCloseInput();
+		CloseInput();
 		return 0;
 	}
 

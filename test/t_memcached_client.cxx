@@ -195,7 +195,7 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
 
 	if (close_value_data) {
 		value_closed = true;
-		ClearAndCloseInput();
+		CloseInput();
 		return 0;
 	}
 
@@ -245,7 +245,7 @@ Context::OnMemcachedResponse(enum memcached_response_status _status,
 
 	if (close_value_late) {
 		value_closed = true;
-		ClearAndCloseInput();
+		CloseInput();
 	}
 }
 

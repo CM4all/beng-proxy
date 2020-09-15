@@ -81,7 +81,7 @@ Context::ReadBuckets(size_t limit)
 	assert(consumed2 == consumed);
 
 	if (result && !list.HasMore()) {
-		ClearAndCloseInput();
+		CloseInput();
 		result = false;
 	}
 
@@ -144,8 +144,8 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
 	offset += length;
 
 	if (close_after >= 0 && offset >= size_t(close_after)) {
-		ClearAndCloseInput();
-		test_pool.reset(); // TODO: move this before ClearAndCloseInput()
+		CloseInput();
+		test_pool.reset(); // TODO: move this before CloseInput()
 		eof = true;
 		return 0;
 	}

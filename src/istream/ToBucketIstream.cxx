@@ -73,7 +73,7 @@ ToBucketIstream::_FillBucketList(IstreamBucketList &list)
 			list.SetMore();
 		} else {
 			/* end of file */
-			ClearAndCloseInput();
+			CloseInput();
 		}
 
 		return;

@@ -62,7 +62,7 @@ struct StatsIstreamSink : IstreamSink {
 	/* only here to work around -Wdelete-non-virtual-dtor */
 	virtual ~StatsIstreamSink() = default;
 
-	using IstreamSink::ClearAndCloseInput;
+	using IstreamSink::CloseInput;
 
 	void Read() noexcept {
 		input.Read();
@@ -151,7 +151,7 @@ test_block1(EventLoop &event_loop)
 	/* close the blocking output, this should release the "tee"
 	   object and restart reading (into the second output) */
 	assert(ctx.error == nullptr && !ctx.eof);
-	ctx.ClearAndCloseInput();
+	ctx.CloseInput();
 	event_loop.LoopOnceNonBlock();
 
 	assert(ctx.error == nullptr && !ctx.eof);
@@ -282,7 +282,7 @@ test_bucket_error(EventLoop &event_loop, struct pool *_pool,
 		: nullptr;
 	if (close_second_early) {
 		if (second)
-			second->ClearAndCloseInput();
+			second->CloseInput();
 		else
 			tee2.Clear();
 	}

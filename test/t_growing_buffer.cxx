@@ -59,7 +59,7 @@ struct Context final : IstreamSink {
 
 	using IstreamSink::HasInput;
 	using IstreamSink::SetInput;
-	using IstreamSink::ClearAndCloseInput;
+	using IstreamSink::CloseInput;
 
 	void ReadExpect();
 
@@ -85,7 +85,7 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
 
 	if (abort_istream) {
 		closed = true;
-		ClearAndCloseInput();
+		CloseInput();
 		pool.reset();
 		return 0;
 	}
@@ -143,7 +143,7 @@ Context::Run(PoolPtr _pool, UnusedIstreamPtr _istream)
 		ReadExpect();
 
 	if (!eof && !abort)
-		ClearAndCloseInput();
+		CloseInput();
 
 	if (!eof) {
 		pool_trash(_pool);
@@ -335,7 +335,7 @@ TEST(GrowingBufferTest, AbortWithHandler)
 	Context ctx(pool.Steal());
 
 	ctx.SetInput(create_test(ctx.pool));
-	ctx.ClearAndCloseInput();
+	ctx.CloseInput();
 
 	ctx.pool.reset();
 

@@ -198,7 +198,7 @@ WasOutput::OnIstreamReady() noexcept
 	if (list.IsEmpty() && !list.HasMore()) {
 		/* our input has ended */
 
-		ClearAndCloseInput();
+		CloseInput();
 		event.Cancel();
 		timeout_event.Cancel();
 
@@ -258,7 +258,7 @@ WasOutput::OnIstreamReady() noexcept
 	if (!more && size_t(nbytes) == total) {
 		/* we've just reached end of our input */
 
-		ClearAndCloseInput();
+		CloseInput();
 		event.Cancel();
 		timeout_event.Cancel();
 

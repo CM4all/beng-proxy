@@ -138,6 +138,8 @@ struct Context final : IstreamSink {
 		assert(test_pool);
 	}
 
+	using IstreamSink::CloseInput;
+
 	void Skip(off_t nbytes) noexcept {
 		assert(skipped == 0);
 		auto s = input.Skip(nbytes);
@@ -355,7 +357,7 @@ TYPED_TEST_P(IstreamFilterTest, BucketError)
 		/* this is only reachable if the Istream doesn't support
 		   FillBucketList() */
 		ASSERT_TRUE(ctx.input.IsDefined());
-		ctx.input.ClearAndClose();
+		ctx.CloseInput();
 	} catch (...) {
 		ASSERT_FALSE(ctx.input.IsDefined());
 	}

@@ -170,10 +170,10 @@ DechunkIstream::EofDetected() noexcept
 
 	bool result = dechunk_handler.OnDechunkEnd();
 	if (result)
-		input.Clear();
+		ClearInput();
 	else
 		/* this code path is only used by the unit test */
-		input.ClearAndClose();
+		CloseInput();
 
 	return result;
 }

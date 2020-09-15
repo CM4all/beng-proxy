@@ -72,13 +72,13 @@ StdioSink::OnData(const void *data, size_t length) noexcept
 	ssize_t nbytes = write(STDOUT_FILENO, data, length);
 	if (nbytes < 0) {
 		perror("failed to write to stdout");
-		input.ClearAndClose();
+		CloseInput();
 		return 0;
 	}
 
 	if (nbytes == 0) {
 		fprintf(stderr, "failed to write to stdout\n");
-		input.ClearAndClose();
+		CloseInput();
 		return 0;
 	}
 

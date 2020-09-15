@@ -397,7 +397,7 @@ ChunkedIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		if (nbytes > 0)
 			/* if data still remains, then our input must
 			   have reached end-of-file */
-			input.ClearAndClose();
+			CloseInput();
 	}
 
 	return total;

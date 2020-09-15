@@ -44,9 +44,6 @@ public:
 		:ForwardIstream(p, std::move(_input)) {}
 
 	void InjectFault(std::exception_ptr ep) noexcept {
-		if (HasInput())
-			input.ClearAndClose();
-
 		DestroyError(ep);
 	}
 

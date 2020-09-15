@@ -114,7 +114,7 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
 
 	if (close_response_body_data) {
 		body_closed = true;
-		ClearAndCloseInput();
+		CloseInput();
 		return 0;
 	}
 
@@ -131,7 +131,7 @@ Context::OnDirect(gcc_unused FdType type, int fd, size_t max_length) noexcept
 {
 	if (close_response_body_data) {
 		body_closed = true;
-		ClearAndCloseInput();
+		CloseInput();
 		return 0;
 	}
 
@@ -189,7 +189,7 @@ Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
 
 	if (close_response_body_late) {
 		body_closed = true;
-		ClearAndCloseInput();
+		CloseInput();
 	}
 
 	if (body_read) {

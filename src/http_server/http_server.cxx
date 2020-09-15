@@ -184,7 +184,7 @@ HttpServerConnection::TryWriteBuckets() noexcept
 
 	case BucketResult::DEPLETED:
 		assert(HasInput());
-		ClearAndCloseInput();
+		CloseInput();
 		if (!ResponseIstreamFinished())
 			result = BucketResult::DESTROYED;
 		break;
@@ -367,7 +367,7 @@ HttpServerConnection::CloseRequest() noexcept
 	if ((request.read_state == Request::BODY ||
 	     request.read_state == Request::END)) {
 		if (HasInput())
-			ClearAndCloseInput();
+			CloseInput();
 		else if (request.cancel_ptr)
 			/* don't call this if coming from
 			   _response_stream_abort() */

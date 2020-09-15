@@ -455,7 +455,7 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 		}
 
 		if (only_buffers && !tmp.HasMore()) {
-			ClearAndCloseInput();
+			CloseInput();
 
 			try {
 				ParseEnd();
