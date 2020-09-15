@@ -38,9 +38,8 @@
 #include "http/HeaderWriter.hxx"
 #include "http_body.hxx"
 #include "istream_gb.hxx"
-#include "istream/Handler.hxx"
 #include "istream/Bucket.hxx"
-#include "istream/Pointer.hxx"
+#include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/ConcatIstream.hxx"
 #include "istream/OptionalIstream.hxx"
@@ -120,7 +119,7 @@ static constexpr off_t EXPECT_100_THRESHOLD = 1024;
 
 static constexpr auto http_client_timeout = std::chrono::seconds(30);
 
-class HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, DestructAnchor, PoolLeakDetector {
+class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, DestructAnchor, PoolLeakDetector {
 	enum class BucketResult {
 		MORE,
 		BLOCKING,
@@ -184,7 +183,6 @@ class HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, Des
 		 */
 		SharedPoolPtr<OptionalIstreamControl> pending_body;
 
-		IstreamPointer istream;
 		char content_length_buffer[32];
 
 		/**
@@ -197,7 +195,7 @@ class HttpClient final : BufferedSocketHandler, IstreamHandler, Cancellable, Des
 		HttpResponseHandler &handler;
 
 		explicit Request(HttpResponseHandler &_handler) noexcept
-			:istream(nullptr), handler(_handler) {}
+			:handler(_handler) {}
 	} request;
 
 	/* response */
@@ -402,9 +400,6 @@ HttpClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
 	if (IsConnected())
 		ReleaseSocket(false, false);
 
-	if (request.istream.IsDefined())
-		request.istream.ClearAndClose();
-
 	DestroyInvokeError(PrefixError(ep));
 }
 
@@ -416,8 +411,8 @@ HttpClient::AbortResponseBody(std::exception_ptr ep) noexcept
 {
 	assert(response.state == Response::State::BODY);
 
-	if (request.istream.IsDefined())
-		request.istream.ClearAndClose();
+	if (HasInput())
+		ClearAndCloseInput();
 
 	if (response_body_reader.GotEndChunk()) {
 		/* avoid recursing from DechunkIstream: when DechunkIstream
@@ -542,9 +537,6 @@ HttpClient::Close()
 
 	stopwatch.RecordEvent("close");
 
-	if (request.istream.IsDefined())
-		request.istream.ClearAndClose();
-
 	Destroy();
 }
 
@@ -559,7 +551,7 @@ HttpClient::TryWriteBuckets2()
 		return BucketResult::MORE;
 
 	IstreamBucketList list;
-	request.istream.FillBucketList(list);
+	input.FillBucketList(list);
 
 	StaticArray<struct iovec, 64> v;
 	for (const auto &bucket : list) {
@@ -591,20 +583,18 @@ HttpClient::TryWriteBuckets2()
 			return BucketResult::DESTROYED;
 
 		if (nbytes == WRITE_BROKEN)
-			/* request.istream has already been closed by
+			/* our input has already been closed by
 			   OnBufferedBroken() */
 			throw RequestBodyCanceled{};
 
 		const int _errno = errno;
-
-		request.istream.ClearAndClose();
 
 		throw HttpClientError(HttpClientErrorCode::IO,
 				      StringFormat<64>("write error (%s)",
 						       strerror(_errno)));
 	}
 
-	size_t consumed = request.istream.ConsumeBucketList(nbytes);
+	size_t consumed = input.ConsumeBucketList(nbytes);
 	assert(consumed == (size_t)nbytes);
 
 	return list.IsDepleted(consumed)
@@ -620,11 +610,11 @@ HttpClient::TryWriteBuckets()
 	try {
 		result = TryWriteBuckets2();
 	} catch (RequestBodyCanceled) {
-		assert(!request.istream.IsDefined());
+		assert(!HasInput());
 		stopwatch.RecordEvent("request_canceled");
 		return BucketResult::DEPLETED;
 	} catch (...) {
-		assert(!request.istream.IsDefined());
+		assert(!HasInput());
 		stopwatch.RecordEvent("send_error");
 		AbortResponse(std::current_exception());
 		return BucketResult::DESTROYED;
@@ -632,19 +622,19 @@ HttpClient::TryWriteBuckets()
 
 	switch (result) {
 	case BucketResult::MORE:
-		assert(request.istream.IsDefined());
+		assert(HasInput());
 		break;
 
 	case BucketResult::BLOCKING:
-		assert(request.istream.IsDefined());
+		assert(HasInput());
 		ScheduleWrite();
 		break;
 
 	case BucketResult::DEPLETED:
-		assert(request.istream.IsDefined());
+		assert(HasInput());
 
 		stopwatch.RecordEvent("request_end");
-		request.istream.ClearAndClose();
+		ClearAndCloseInput();
 		socket.ScheduleReadNoTimeout(true);
 		break;
 
@@ -807,9 +797,7 @@ HttpClient::ResponseFinished() noexcept
 		keep_alive = false;
 	}
 
-	if (request.istream.IsDefined())
-		request.istream.ClearAndClose();
-	else if (IsConnected())
+	if (!HasInput() && IsConnected())
 		ReleaseSocket(false, keep_alive);
 
 	Destroy();
@@ -1038,8 +1026,8 @@ HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type)
 	}
 
 	if (nbytes == ISTREAM_RESULT_EOF) {
-		if (request.istream.IsDefined())
-			request.istream.ClearAndClose();
+		if (HasInput())
+			ClearAndCloseInput();
 
 		response_body_reader.SocketEOF(0);
 		Destroy();
@@ -1100,8 +1088,8 @@ HttpClient::OnBufferedClosed() noexcept
 {
 	stopwatch.RecordEvent("end");
 
-	if (request.istream.IsDefined())
-		request.istream.ClearAndClose();
+	if (HasInput())
+		ClearAndCloseInput();
 
 	/* close the socket, but don't release it just yet; data may be
 	   still in flight in a SocketFilter (e.g. SSL/TLS); we'll do that
@@ -1158,7 +1146,7 @@ HttpClient::OnBufferedWrite()
 		return true;
 
 	case HttpClient::BucketResult::DEPLETED:
-		assert(!request.istream.IsDefined());
+		assert(!HasInput());
 		socket.UnscheduleWrite();
 		return true;
 
@@ -1168,10 +1156,10 @@ HttpClient::OnBufferedWrite()
 
 	const DestructObserver destructed(*this);
 
-	request.istream.Read();
+	input.Read();
 
 	const bool result = !destructed && IsConnected();
-	if (result && request.istream.IsDefined()) {
+	if (result && HasInput()) {
 		if (request.got_data)
 			ScheduleWrite();
 		else
@@ -1190,8 +1178,8 @@ HttpClient::OnBufferedBroken() noexcept
 
 	keep_alive = false;
 
-	if (request.istream.IsDefined())
-		request.istream.ClearAndClose();
+	if (HasInput())
+		ClearAndCloseInput();
 
 	socket.ScheduleReadNoTimeout(true);
 
@@ -1269,8 +1257,8 @@ HttpClient::OnEof() noexcept
 {
 	stopwatch.RecordEvent("request_end");
 
-	assert(request.istream.IsDefined());
-	request.istream.Clear();
+	assert(HasInput());
+	ClearInput();
 
 	socket.UnscheduleWrite();
 	socket.ScheduleReadNoTimeout(response.state == Response::State::BODY &&
@@ -1287,8 +1275,8 @@ HttpClient::OnError(std::exception_ptr ep) noexcept
 
 	stopwatch.RecordEvent("request_error");
 
-	assert(request.istream.IsDefined());
-	request.istream.Clear();
+	assert(HasInput());
+	ClearInput();
 
 	switch (response.state) {
 	case Response::State::STATUS:
@@ -1319,9 +1307,6 @@ HttpClient::Cancel() noexcept
 	   delivered to our callback */
 	assert(response.state == Response::State::STATUS ||
 	       response.state == Response::State::HEADERS);
-
-	if (request.istream.IsDefined())
-		request.istream.ClearAndClose();
 
 	Destroy();
 }
@@ -1415,18 +1400,17 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 
 	/* request istream */
 
-	request.istream.Set(istream_cat_new(GetPool(),
-					    std::move(request_line_stream),
-					    std::move(header_stream),
-					    std::move(body)),
-			    *this);
-	request.istream.SetDirect(istream_direct_mask_to(socket.GetType()));
+	SetInput(istream_cat_new(GetPool(),
+				 std::move(request_line_stream),
+				 std::move(header_stream),
+				 std::move(body)));
+	input.SetDirect(istream_direct_mask_to(socket.GetType()));
 
 	socket.ScheduleReadNoTimeout(true);
 
 	switch (TryWriteBuckets()) {
 	case HttpClient::BucketResult::MORE:
-		request.istream.Read();
+		input.Read();
 		break;
 
 	case HttpClient::BucketResult::BLOCKING:
