@@ -96,7 +96,7 @@ HttpServerConnection::TryWriteBuckets2()
 	assert(request.read_state != Request::START &&
 	       request.read_state != Request::HEADERS);
 	assert(request.request != nullptr);
-	assert(response.istream.IsDefined());
+	assert(HasInput());
 
 	if (socket->HasFilter())
 		return BucketResult::UNAVAILABLE;
@@ -104,7 +104,7 @@ HttpServerConnection::TryWriteBuckets2()
 	IstreamBucketList list;
 
 	try {
-		response.istream.FillBucketList(list);
+		input.FillBucketList(list);
 	} catch (...) {
 		std::throw_with_nested(std::runtime_error("error on HTTP response stream"));
 	}
@@ -144,7 +144,7 @@ HttpServerConnection::TryWriteBuckets2()
 	response.bytes_sent += nbytes;
 	response.length += nbytes;
 
-	size_t consumed = response.istream.ConsumeBucketList(nbytes);
+	size_t consumed = input.ConsumeBucketList(nbytes);
 	assert(consumed == (size_t)nbytes);
 
 	return list.IsDepleted(consumed)
@@ -160,7 +160,7 @@ HttpServerConnection::TryWriteBuckets() noexcept
 	try {
 		result = TryWriteBuckets2();
 	} catch (...) {
-		assert(!response.istream.IsDefined());
+		assert(!HasInput());
 
 		/* we clear this CancellablePointer here so CloseRequest()
 		   won't think we havn't sent a response yet */
@@ -173,18 +173,18 @@ HttpServerConnection::TryWriteBuckets() noexcept
 	switch (result) {
 	case BucketResult::UNAVAILABLE:
 	case BucketResult::MORE:
-		assert(response.istream.IsDefined());
+		assert(HasInput());
 		break;
 
 	case BucketResult::BLOCKING:
-		assert(response.istream.IsDefined());
+		assert(HasInput());
 		response.want_write = true;
 		ScheduleWrite();
 		break;
 
 	case BucketResult::DEPLETED:
-		assert(response.istream.IsDefined());
-		response.istream.ClearAndClose();
+		assert(HasInput());
+		ClearAndCloseInput();
 		if (!ResponseIstreamFinished())
 			result = BucketResult::DESTROYED;
 		break;
@@ -203,7 +203,7 @@ HttpServerConnection::TryWrite() noexcept
 	assert(request.read_state != Request::START &&
 	       request.read_state != Request::HEADERS);
 	assert(request.request != nullptr);
-	assert(response.istream.IsDefined());
+	assert(HasInput());
 
 	switch (TryWriteBuckets()) {
 	case BucketResult::UNAVAILABLE:
@@ -219,7 +219,7 @@ HttpServerConnection::TryWrite() noexcept
 	}
 
 	const DestructObserver destructed(*this);
-	response.istream.Read();
+	input.Read();
 	return !destructed;
 }
 
@@ -366,8 +366,8 @@ HttpServerConnection::CloseRequest() noexcept
 
 	if ((request.read_state == Request::BODY ||
 	     request.read_state == Request::END)) {
-		if (response.istream.IsDefined())
-			response.istream.ClearAndClose();
+		if (HasInput())
+			ClearAndCloseInput();
 		else if (request.cancel_ptr)
 			/* don't call this if coming from
 			   _response_stream_abort() */

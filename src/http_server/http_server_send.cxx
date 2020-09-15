@@ -58,7 +58,7 @@ HttpServerConnection::MaybeSend100Continue()
 	if (!request.expect_100_continue)
 		return true;
 
-	assert(!response.istream.IsDefined());
+	assert(!HasInput());
 
 	request.expect_100_continue = false;
 

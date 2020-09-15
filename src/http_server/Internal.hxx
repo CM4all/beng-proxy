@@ -40,8 +40,7 @@
 #include "net/SocketAddress.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/DeferEvent.hxx"
-#include "istream/Handler.hxx"
-#include "istream/Pointer.hxx"
+#include "istream/Sink.hxx"
 #include "pool/UniquePtr.hxx"
 #include "http/Method.h"
 #include "http/Status.h"
@@ -53,7 +52,7 @@ struct HttpServerRequest;
 class HttpHeaders;
 
 struct HttpServerConnection final
-	: BufferedSocketHandler, IstreamHandler, DestructAnchor {
+	: BufferedSocketHandler, IstreamSink, DestructAnchor {
 
 	enum class BucketResult {
 		/**
@@ -193,13 +192,9 @@ struct HttpServerConnection final
 		http_status_t status;
 		char status_buffer[64];
 		char content_length_buffer[32];
-		IstreamPointer istream;
 		off_t length;
 
 		uint64_t bytes_sent = 0;
-
-		Response()
-			:istream(nullptr) {}
 	} response;
 
 	bool date_header;

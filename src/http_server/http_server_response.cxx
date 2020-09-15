@@ -65,7 +65,7 @@ size_t
 HttpServerConnection::OnData(const void *data, size_t length) noexcept
 {
 	assert(socket->IsConnected() || request.request == nullptr);
-	assert(response.istream.IsDefined());
+	assert(HasInput());
 	assert(!response.pending_drained);
 
 	if (!socket->IsConnected())
@@ -96,7 +96,7 @@ ssize_t
 HttpServerConnection::OnDirect(FdType type, int fd, size_t max_length) noexcept
 {
 	assert(socket->IsConnected() || request.request == nullptr);
-	assert(response.istream.IsDefined());
+	assert(HasInput());
 	assert(!response.pending_drained);
 
 	if (!socket->IsConnected())
@@ -124,10 +124,10 @@ HttpServerConnection::OnEof() noexcept
 	assert(request.read_state != Request::START &&
 	       request.read_state != Request::HEADERS);
 	assert(request.request != nullptr);
-	assert(response.istream.IsDefined());
+	assert(HasInput());
 	assert(!response.pending_drained);
 
-	response.istream.Clear();
+	ClearInput();
 
 	ResponseIstreamFinished();
 }
@@ -135,9 +135,9 @@ HttpServerConnection::OnEof() noexcept
 void
 HttpServerConnection::OnError(std::exception_ptr ep) noexcept
 {
-	assert(response.istream.IsDefined());
+	assert(HasInput());
 
-	response.istream.Clear();
+	ClearInput();
 
 	/* we clear this cancel_ptr here so http_server_request_close()
 	   won't think we havn't sent a response yet */
@@ -150,8 +150,8 @@ HttpServerConnection::OnError(std::exception_ptr ep) noexcept
 void
 HttpServerConnection::SetResponseIstream(UnusedIstreamPtr r)
 {
-	response.istream.Set(std::move(r), *this);
-	response.istream.SetDirect(istream_direct_mask_to(socket->GetType()));
+	SetInput(std::move(r));
+	input.SetDirect(istream_direct_mask_to(socket->GetType()));
 }
 
 bool
