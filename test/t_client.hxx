@@ -33,8 +33,7 @@
 #include "HttpResponseHandler.hxx"
 #include "lease.hxx"
 #include "istream/istream.hxx"
-#include "istream/Handler.hxx"
-#include "istream/Pointer.hxx"
+#include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/BlockIstream.hxx"
 #include "istream/ByteIstream.hxx"
@@ -87,7 +86,7 @@ NewMajorPool(struct pool &parent, const char *name)
 
 template<class Connection>
 struct Context final
-	: PInstance, Cancellable, Lease, HttpResponseHandler, IstreamHandler {
+	: PInstance, Cancellable, Lease, HttpResponseHandler, IstreamSink {
 
 	PoolPtr parent_pool;
 
@@ -123,7 +122,6 @@ struct Context final
 
 	DelayedIstreamControl *delayed = nullptr;
 
-	IstreamPointer body;
 	off_t body_data = 0, consumed_body_data = 0;
 	bool body_eof = false, body_abort = false, body_closed = false;
 
@@ -146,7 +144,6 @@ struct Context final
 	Context()
 		:parent_pool(NewMajorPool(root_pool, "parent")),
 		 pool(pool_new_linear(parent_pool, "test", 16384)),
-		 body(nullptr),
 		 defer_event(event_loop, BIND_THIS_METHOD(OnDeferred)) {
 	}
 
@@ -154,6 +151,9 @@ struct Context final
 		free(content_length);
 		parent_pool.reset();
 	}
+
+	using IstreamSink::HasInput;
+	using IstreamSink::ClearAndCloseInput;
 
 	bool WaitingForResponse() const {
 		return status == http_status_t(0) && !request_error;
@@ -168,7 +168,7 @@ struct Context final
 		assert(status != http_status_t(0));
 		assert(!request_error);
 
-		while (body_data == 0 && body.IsDefined()) {
+		while (body_data == 0 && HasInput()) {
 			assert(!body_eof);
 			assert(body_error == nullptr);
 
@@ -178,7 +178,7 @@ struct Context final
 	}
 
 	void WaitForEndOfBody() {
-		while (body.IsDefined()) {
+		while (HasInput()) {
 			ReadBody();
 			event_loop.LoopOnceNonBlock();
 		}
@@ -199,7 +199,7 @@ struct Context final
 		IstreamBucketList list;
 
 		try {
-			body.FillBucketList(list);
+			input.FillBucketList(list);
 		} catch (...) {
 			body_error = std::current_exception();
 			return;
@@ -209,20 +209,20 @@ struct Context final
 		total_buckets = list.GetTotalBufferSize();
 
 		if (total_buckets > 0) {
-			size_t buckets_consumed = body.ConsumeBucketList(total_buckets);
+			size_t buckets_consumed = input.ConsumeBucketList(total_buckets);
 			assert(buckets_consumed == total_buckets);
 			body_data += buckets_consumed;
 		}
 
-		available_after_bucket = body.GetAvailable(false);
-		available_after_bucket_partial = body.GetAvailable(true);
+		available_after_bucket = input.GetAvailable(false);
+		available_after_bucket_partial = input.GetAvailable(true);
 
 		if (read_after_buckets)
-			body.Read();
+			input.Read();
 
 		if (close_after_buckets) {
 			body_closed = true;
-			body.ClearAndClose();
+			ClearAndCloseInput();
 			close_response_body_late = false;
 		}
 	}
@@ -231,13 +231,13 @@ struct Context final
 	void OnDeferred() noexcept {
 		if (defer_read_response_body) {
 			deferred = false;
-			body.Read();
+			input.Read();
 			return;
 		}
 
 #ifdef USE_BUCKETS
 		if (use_buckets) {
-			available = body.GetAvailable(false);
+			available = input.GetAvailable(false);
 			DoBuckets();
 		} else
 #endif
@@ -245,14 +245,14 @@ struct Context final
 	}
 
 	void ReadBody() {
-		assert(body.IsDefined());
+		assert(HasInput());
 
 #ifdef USE_BUCKETS
 		if (use_buckets)
 			DoBuckets();
 		else
 #endif
-			body.Read();
+			input.Read();
 	}
 
 	/* virtual methods from class Cancellable */
@@ -307,7 +307,7 @@ Context<Connection>::OnData(gcc_unused const void *data, size_t length) noexcept
 
 	if (close_response_body_data) {
 		body_closed = true;
-		body.ClearAndClose();
+		ClearAndCloseInput();
 		return 0;
 	}
 
@@ -327,7 +327,7 @@ template<class Connection>
 void
 Context<Connection>::OnEof() noexcept
 {
-	body.Clear();
+	ClearInput();
 	body_eof = true;
 
 	if (close_request_body_eof && !aborted_request_body) {
@@ -339,7 +339,7 @@ template<class Connection>
 void
 Context<Connection>::OnError(std::exception_ptr ep) noexcept
 {
-	body.Clear();
+	ClearInput();
 	body_abort = true;
 
 	assert(!body_error);
@@ -377,7 +377,7 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
 	if (close_response_body_early)
 		_body.Clear();
 	else if (_body)
-		body.Set(std::move(_body), *this);
+		SetInput(std::move(_body));
 
 #ifdef USE_BUCKETS
 	if (use_buckets) {
@@ -403,7 +403,7 @@ Context<Connection>::OnHttpResponse(http_status_t _status,
 
 	if (close_response_body_late) {
 		body_closed = true;
-		body.ClearAndClose();
+		ClearAndCloseInput();
 	}
 
 	if (delayed != nullptr) {
@@ -453,7 +453,7 @@ test_empty(Context<Connection> &c)
 	assert(c.connection == nullptr);
 	assert(c.status == HTTP_STATUS_NO_CONTENT);
 	assert(c.content_length == nullptr);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(!c.body_abort);
 	assert(!c.request_error);
@@ -575,7 +575,7 @@ test_close_response_body_early(Context<Connection> &c)
 	assert(c.status == HTTP_STATUS_OK);
 	assert(c.content_length == nullptr);
 	assert(c.available == 6);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(c.body_data == 0);
 	assert(!c.body_eof);
 	assert(!c.body_abort);
@@ -603,7 +603,7 @@ test_close_response_body_late(Context<Connection> &c)
 	assert(c.status == HTTP_STATUS_OK);
 	assert(c.content_length == nullptr);
 	assert(c.available == 6);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(c.body_data == 0);
 	assert(!c.body_eof);
 	assert(c.body_abort || c.body_closed);
@@ -635,7 +635,7 @@ test_close_response_body_data(Context<Connection> &c)
 	c.WaitForFirstBodyByte();
 
 	assert(c.released);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(c.body_data == 6);
 	assert(!c.body_eof);
 	assert(!c.body_abort);
@@ -667,7 +667,7 @@ test_close_response_body_after(Context<Connection> &c)
 	c.event_loop.Dispatch();
 
 	assert(c.released);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(c.body_data >= 16384);
 	assert(!c.body_eof);
 	assert(!c.body_abort);
@@ -715,7 +715,7 @@ test_close_request_body_early(Context<Connection> &c)
 
 	assert(c.released);
 	assert(c.status == 0);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(!c.body_abort);
 	assert(c.body_error == nullptr);
@@ -754,7 +754,7 @@ test_close_request_body_fail(Context<Connection> &c)
 #else
 	assert(c.available == HEAD_SIZE);
 #endif
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(c.body_abort);
 
@@ -787,7 +787,7 @@ test_data_blocking(Context<Connection> &c)
 			      c, c.cancel_ptr);
 
 	while (c.data_blocking > 0) {
-		if (c.body.IsDefined()) {
+		if (c.HasInput()) {
 			c.ReadBody();
 			c.event_loop.LoopOnceNonBlock();
 		} else
@@ -802,14 +802,14 @@ test_data_blocking(Context<Connection> &c)
 #else
 	assert(c.available == HEAD_SIZE);
 #endif
-	assert(c.body.IsDefined());
+	assert(c.HasInput());
 	assert(c.body_data > 0);
 	assert(!c.body_eof);
 	assert(!c.body_abort);
 	assert(!c.request_error);
 	assert(c.body_error == nullptr);
 
-	c.body.ClearAndClose();
+	c.ClearAndCloseInput();
 
 	assert(c.released);
 	assert(!c.body_eof);
@@ -867,7 +867,7 @@ test_data_blocking2(Context<Connection> &c)
 #endif
 	assert(c.content_length == nullptr);
 	assert(c.available == body_size);
-	assert(c.body.IsDefined());
+	assert(c.HasInput());
 	assert(!c.body_eof);
 	assert(!c.body_abort);
 	assert(c.consumed_body_data < (off_t)body_size);
@@ -934,7 +934,7 @@ test_head(Context<Connection> &c)
 	assert(c.status == HTTP_STATUS_OK);
 	assert(c.content_length != nullptr);
 	assert(strcmp(c.content_length, "6") == 0);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(!c.body_abort);
 	assert(!c.request_error);
@@ -964,7 +964,7 @@ test_head_discard(Context<Connection> &c)
 	assert(c.released);
 	assert(c.connection == nullptr);
 	assert(c.status == HTTP_STATUS_OK);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(!c.body_abort);
 	assert(!c.request_error);
@@ -997,7 +997,7 @@ test_head_discard2(Context<Connection> &c)
 	gcc_unused
 		unsigned long content_length = strtoul(c.content_length, nullptr, 10);
 	assert(content_length == 5 || content_length == 256);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(!c.body_abort);
 	assert(!c.request_error);
@@ -1023,7 +1023,7 @@ test_ignored_body(Context<Connection> &c)
 	assert(c.connection == nullptr);
 	assert(c.status == HTTP_STATUS_NO_CONTENT);
 	assert(c.content_length == nullptr);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(!c.body_abort);
 	assert(!c.request_error);
@@ -1056,7 +1056,7 @@ test_close_ignored_request_body(Context<Connection> &c)
 	assert(c.connection == nullptr);
 	assert(c.status == HTTP_STATUS_NO_CONTENT);
 	assert(c.content_length == nullptr);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(!c.body_abort);
 	assert(!c.request_error);
@@ -1087,7 +1087,7 @@ test_head_close_ignored_request_body(Context<Connection> &c)
 	assert(c.connection == nullptr);
 	assert(c.status == HTTP_STATUS_NO_CONTENT);
 	assert(c.content_length == nullptr);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(!c.body_abort);
 	assert(!c.request_error);
@@ -1117,7 +1117,7 @@ test_close_request_body_eor(Context<Connection> &c)
 	assert(c.connection == nullptr);
 	assert(c.status == HTTP_STATUS_OK);
 	assert(c.content_length == nullptr);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(c.body_eof);
 	assert(!c.body_abort);
 	assert(!c.request_error);
@@ -1147,7 +1147,7 @@ test_close_request_body_eor2(Context<Connection> &c)
 	assert(c.connection == nullptr);
 	assert(c.status == HTTP_STATUS_OK);
 	assert(c.content_length == nullptr);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(c.body_eof);
 	assert(!c.body_abort);
 	assert(!c.request_error);
@@ -1276,7 +1276,7 @@ test_no_body_while_sending(Context<Connection> &c)
 
 	assert(c.released);
 	assert(c.status == HTTP_STATUS_NO_CONTENT);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(!c.body_abort);
 	assert(!c.request_error);
@@ -1300,7 +1300,7 @@ test_hold(Context<Connection> &c)
 
 	assert(c.released);
 	assert(c.status == HTTP_STATUS_OK);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(c.body_abort);
 	assert(!c.request_error);
@@ -1330,7 +1330,7 @@ test_premature_close_headers(Context<Connection> &c)
 
 	assert(c.released);
 	assert(c.status == 0);
-	assert(!c.body.IsDefined());
+	assert(!c.HasInput());
 	assert(!c.body_eof);
 	assert(!c.body_abort);
 	assert(c.request_error != nullptr);
@@ -1659,10 +1659,10 @@ TestCloseWithFailedSocketGet(Context<Connection> &c)
 
 	assert(!c.released);
 	assert(c.status == HTTP_STATUS_OK);
-	assert(c.body.IsDefined());
+	assert(c.HasInput());
 
 	c.connection->InjectSocketFailure();
-	c.body.ClearAndClose();
+	c.ClearAndCloseInput();
 	c.defer_event.Cancel();
 
 	c.event_loop.Dispatch();
@@ -1687,10 +1687,10 @@ TestCloseWithFailedSocketPost(Context<Connection> &c)
 
 	assert(!c.released);
 	assert(c.status == HTTP_STATUS_OK);
-	assert(c.body.IsDefined());
+	assert(c.HasInput());
 
 	c.connection->InjectSocketFailure();
-	c.body.ClearAndClose();
+	c.ClearAndCloseInput();
 	c.defer_event.Cancel();
 
 	c.event_loop.Dispatch();
