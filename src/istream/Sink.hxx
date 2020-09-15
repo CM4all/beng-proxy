@@ -43,8 +43,7 @@ class IstreamSink : protected IstreamHandler {
 protected:
 	IstreamPointer input;
 
-	IstreamSink() noexcept
-		:input(nullptr) {}
+	IstreamSink() noexcept = default;
 
 	~IstreamSink() noexcept {
 		if (HasInput())

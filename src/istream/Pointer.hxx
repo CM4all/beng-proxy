@@ -41,11 +41,10 @@
 class UnusedIstreamPtr;
 
 class IstreamPointer {
-	Istream *stream;
+	Istream *stream = nullptr;
 
 public:
 	IstreamPointer() = default;
-	explicit IstreamPointer(std::nullptr_t) noexcept:stream(nullptr) {}
 
 	IstreamPointer(UnusedIstreamPtr src,
 		       IstreamHandler &handler) noexcept;
