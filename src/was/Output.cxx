@@ -39,8 +39,7 @@
 #include "io/FileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "istream/Bucket.hxx"
-#include "istream/Handler.hxx"
-#include "istream/Pointer.hxx"
+#include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
@@ -55,13 +54,11 @@
 
 static constexpr Event::Duration was_output_timeout = std::chrono::minutes(2);
 
-class WasOutput final : IstreamHandler, PoolLeakDetector {
+class WasOutput final : PoolLeakDetector, IstreamSink {
 	SocketEvent event;
 	TimerEvent timeout_event;
 
 	WasOutputHandler &handler;
-
-	IstreamPointer input;
 
 	uint64_t sent = 0;
 
@@ -72,20 +69,15 @@ public:
 		  UnusedIstreamPtr _input,
 		  WasOutputHandler &_handler) noexcept
 		:PoolLeakDetector(pool),
+		 IstreamSink(std::move(_input)),
 		 event(event_loop, BIND_THIS_METHOD(WriteEventCallback),
 		       SocketDescriptor::FromFileDescriptor(fd)),
 		 timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
-		 handler(_handler),
-		 input(std::move(_input), *this)
+		 handler(_handler)
 	{
 		input.SetDirect(ISTREAM_TO_PIPE);
 
 		ScheduleWrite();
-	}
-
-	~WasOutput() noexcept {
-		if (input.IsDefined())
-			input.ClearAndClose();
 	}
 
 	uint64_t Close() noexcept {
@@ -170,7 +162,7 @@ inline void
 WasOutput::WriteEventCallback(unsigned) noexcept
 {
 	assert(HasPipe());
-	assert(input.IsDefined());
+	assert(HasInput());
 
 	event.CancelWrite();
 	timeout_event.Cancel();
@@ -189,7 +181,7 @@ bool
 WasOutput::OnIstreamReady() noexcept
 {
 	assert(HasPipe());
-	assert(input.IsDefined());
+	assert(HasInput());
 
 	/* collect buckets */
 
@@ -198,7 +190,7 @@ WasOutput::OnIstreamReady() noexcept
 	try {
 		input.FillBucketList(list);
 	} catch (...) {
-		input.Clear();
+		ClearInput();
 		DestroyError(std::current_exception());
 		return false;
 	}
@@ -206,7 +198,7 @@ WasOutput::OnIstreamReady() noexcept
 	if (list.IsEmpty() && !list.HasMore()) {
 		/* our input has ended */
 
-		input.ClearAndClose();
+		ClearAndCloseInput();
 		event.Cancel();
 		timeout_event.Cancel();
 
@@ -266,7 +258,7 @@ WasOutput::OnIstreamReady() noexcept
 	if (!more && size_t(nbytes) == total) {
 		/* we've just reached end of our input */
 
-		input.ClearAndClose();
+		ClearAndCloseInput();
 		event.Cancel();
 		timeout_event.Cancel();
 
@@ -285,7 +277,7 @@ inline size_t
 WasOutput::OnData(const void *p, size_t length) noexcept
 {
 	assert(HasPipe());
-	assert(input.IsDefined());
+	assert(HasInput());
 
 	ssize_t nbytes = GetPipe().Write(p, length);
 	if (gcc_likely(nbytes > 0)) {
@@ -331,9 +323,9 @@ WasOutput::OnDirect(gcc_unused FdType type, int source_fd, size_t max_length) no
 void
 WasOutput::OnEof() noexcept
 {
-	assert(input.IsDefined());
+	assert(HasInput());
 
-	input.Clear();
+	ClearInput();
 	event.Cancel();
 	timeout_event.Cancel();
 
@@ -346,9 +338,9 @@ WasOutput::OnEof() noexcept
 void
 WasOutput::OnError(std::exception_ptr ep) noexcept
 {
-	assert(input.IsDefined());
+	assert(HasInput());
 
-	input.Clear();
+	ClearInput();
 
 	DestroyPremature(ep);
 }

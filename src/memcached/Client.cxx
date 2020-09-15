@@ -34,9 +34,8 @@
 #include "Handler.hxx"
 #include "Packet.hxx"
 #include "Error.hxx"
-#include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/Handler.hxx"
+#include "istream/Sink.hxx"
 #include "istream/Result.hxx"
 #include "pool/pool.hxx"
 #include "system/Error.hxx"
@@ -53,7 +52,7 @@
 #include <string.h>
 
 struct MemcachedClient final
-	: BufferedSocketHandler, Istream, IstreamHandler, Cancellable, DestructAnchor {
+	: BufferedSocketHandler, Istream, IstreamSink, Cancellable, DestructAnchor {
 
 	enum class ReadState {
 		HEADER,
@@ -71,14 +70,8 @@ struct MemcachedClient final
 	struct Request {
 		MemcachedResponseHandler &handler;
 
-		IstreamPointer istream;
-
-		Request(UnusedIstreamPtr _istream,
-			IstreamHandler &i_handler,
-			MemcachedResponseHandler &_handler) noexcept
-			:handler(_handler),
-			 istream(std::move(_istream), i_handler) {}
-
+		explicit Request(MemcachedResponseHandler &_handler) noexcept
+			:handler(_handler) {}
 	} request;
 
 	/* response */
@@ -221,7 +214,7 @@ void
 MemcachedClient::AbortResponseValue(std::exception_ptr ep)
 {
 	assert(response.read_state == ReadState::VALUE);
-	assert(!request.istream.IsDefined());
+	assert(!HasInput());
 
 	if (socket.IsValid())
 		DestroySocket(false);
@@ -262,7 +255,7 @@ off_t
 MemcachedClient::_GetAvailable(gcc_unused bool partial) noexcept
 {
 	assert(response.read_state == ReadState::VALUE);
-	assert(!request.istream.IsDefined());
+	assert(!HasInput());
 
 	return response.remaining;
 }
@@ -271,7 +264,7 @@ void
 MemcachedClient::_Read() noexcept
 {
 	assert(response.read_state == ReadState::VALUE);
-	assert(!request.istream.IsDefined());
+	assert(!HasInput());
 
 	if (response.in_handler)
 		/* avoid recursion; the memcached_client_handler caller will
@@ -288,7 +281,7 @@ void
 MemcachedClient::_Close() noexcept
 {
 	assert(response.read_state == ReadState::VALUE);
-	assert(!request.istream.IsDefined());
+	assert(!HasInput());
 
 	Release(false);
 }
@@ -303,7 +296,7 @@ MemcachedClient::SubmitResponse()
 {
 	assert(response.read_state == ReadState::KEY);
 
-	if (request.istream.IsDefined()) {
+	if (HasInput()) {
 		/* at this point, the request must have been sent */
 		AbortResponseHeaders(std::make_exception_ptr(MemcachedClientError("memcached server sends response too early")));
 		return BufferedResult::CLOSED;
@@ -478,7 +471,7 @@ MemcachedClient::FeedValue(const void *data, size_t length)
 			: BufferedResult::MORE;
 
 	assert(!socket.IsConnected());
-	assert(!request.istream.IsDefined());
+	assert(!HasInput());
 
 	response.read_state = ReadState::END;
 	InvokeEof();
@@ -551,7 +544,7 @@ MemcachedClient::OnBufferedWrite()
 
 	const DestructObserver destructed(*this);
 
-	request.istream.Read();
+	input.Read();
 
 	return !destructed && socket.IsConnected();
 }
@@ -610,7 +603,7 @@ MemcachedClient::OnBufferedError(std::exception_ptr ep) noexcept
 inline size_t
 MemcachedClient::OnData(const void *data, size_t length) noexcept
 {
-	assert(request.istream.IsDefined());
+	assert(HasInput());
 	assert(response.read_state == ReadState::HEADER ||
 	       response.read_state == ReadState::EXTRAS ||
 	       response.read_state == ReadState::KEY);
@@ -633,12 +626,12 @@ MemcachedClient::OnData(const void *data, size_t length) noexcept
 void
 MemcachedClient::OnEof() noexcept
 {
-	assert(request.istream.IsDefined());
+	assert(HasInput());
 	assert(response.read_state == ReadState::HEADER ||
 	       response.read_state == ReadState::EXTRAS ||
 	       response.read_state == ReadState::KEY);
 
-	request.istream.Clear();
+	ClearInput();
 
 	socket.UnscheduleWrite();
 	socket.Read(true);
@@ -647,12 +640,12 @@ MemcachedClient::OnEof() noexcept
 void
 MemcachedClient::OnError(std::exception_ptr ep) noexcept
 {
-	assert(request.istream.IsDefined());
+	assert(HasInput());
 	assert(response.read_state == ReadState::HEADER ||
 	       response.read_state == ReadState::EXTRAS ||
 	       response.read_state == ReadState::KEY);
 
-	request.istream.Clear();
+	ClearInput();
 	AbortResponse(ep);
 }
 
@@ -664,7 +657,7 @@ MemcachedClient::OnError(std::exception_ptr ep) noexcept
 void
 MemcachedClient::Cancel() noexcept
 {
-	IstreamPointer request_istream = std::move(request.istream);
+	IstreamPointer request_istream = std::move(input);
 
 	/* Cancellable::Cancel() can only be used before the
 	   response was delivered to our callback */
@@ -690,9 +683,9 @@ MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
 				 UnusedIstreamPtr _request,
 				 MemcachedResponseHandler &_handler,
 				 CancellablePointer &cancel_ptr)
-	:Istream(_pool),
+	:Istream(_pool), IstreamSink(std::move(_request)),
 	 socket(event_loop), lease_ref(lease),
-	 request(std::move(_request), *this, _handler)
+	 request(_handler)
 {
 	socket.Init(fd, fd_type,
 		    Event::Duration(-1), memcached_client_timeout,
@@ -702,7 +695,7 @@ MemcachedClient::MemcachedClient(struct pool &_pool, EventLoop &event_loop,
 
 	response.read_state = MemcachedClient::ReadState::HEADER;
 
-	request.istream.Read();
+	input.Read();
 }
 
 void
