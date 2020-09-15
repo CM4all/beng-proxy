@@ -37,8 +37,7 @@
 #include "crash.hxx"
 #include "strmap.hxx"
 #include "istream/OpenFileIstream.hxx"
-#include "istream/Handler.hxx"
-#include "istream/Pointer.hxx"
+#include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "PInstance.hxx"
@@ -63,7 +62,7 @@
 
 static SpawnConfig spawn_config;
 
-struct Context final : PInstance, HttpResponseHandler, IstreamHandler {
+struct Context final : PInstance, HttpResponseHandler, IstreamSink {
 	ChildProcessRegistry child_process_registry;
 	LocalSpawnService spawn_service;
 
@@ -77,16 +76,17 @@ struct Context final : PInstance, HttpResponseHandler, IstreamHandler {
 	bool released = false, aborted = false;
 	http_status_t status = http_status_t(0);
 
-	IstreamPointer body;
 	off_t body_data = 0, body_available = 0;
 	bool body_eof = false, body_abort = false, body_closed = false;
 
 	Context()
 		:child_process_registry(event_loop),
-		 spawn_service(spawn_config, child_process_registry),
-		 body(nullptr) {
+		 spawn_service(spawn_config, child_process_registry)
+	{
 		child_process_registry.SetVolatile();
 	}
+
+	using IstreamSink::HasInput;
 
 	/* virtual methods from class HttpResponseHandler */
 	void OnHttpResponse(http_status_t status, StringMap &&headers,
@@ -114,7 +114,7 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
 
 	if (close_response_body_data) {
 		body_closed = true;
-		body.ClearAndClose();
+		ClearAndCloseInput();
 		return 0;
 	}
 
@@ -131,7 +131,7 @@ Context::OnDirect(gcc_unused FdType type, int fd, size_t max_length) noexcept
 {
 	if (close_response_body_data) {
 		body_closed = true;
-		body.ClearAndClose();
+		ClearAndCloseInput();
 		return 0;
 	}
 
@@ -155,14 +155,14 @@ Context::OnDirect(gcc_unused FdType type, int fd, size_t max_length) noexcept
 void
 Context::OnEof() noexcept
 {
-	body.Clear();
+	ClearInput();
 	body_eof = true;
 }
 
 void
 Context::OnError(std::exception_ptr) noexcept
 {
-	body.Clear();
+	ClearInput();
 	body_abort = true;
 }
 
@@ -182,19 +182,19 @@ Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
 	if (close_response_body_early) {
 		_body.Clear();
 	} else if (_body) {
-		body.Set(std::move(_body), *this);
-		body.SetDirect(my_handler_direct);
-		body_available = body.GetAvailable(false);
+		SetInput(std::move(_body));
+		input.SetDirect(my_handler_direct);
+		body_available = input.GetAvailable(false);
 	}
 
 	if (close_response_body_late) {
 		body_closed = true;
-		body.ClearAndClose();
+		ClearAndCloseInput();
 	}
 
 	if (body_read) {
-		assert(body.IsDefined());
-		body.Read();
+		assert(HasInput());
+		input.Read();
 	}
 }
 
@@ -243,7 +243,7 @@ test_normal(PoolPtr pool, Context *c)
 	c->event_loop.Dispatch();
 
 	assert(c->status == HTTP_STATUS_OK);
-	assert(!c->body.IsDefined());
+	assert(!c->HasInput());
 	assert(c->body_eof);
 	assert(!c->body_abort);
 }
@@ -269,7 +269,7 @@ test_tiny(PoolPtr pool, Context *c)
 	c->event_loop.Dispatch();
 
 	assert(c->status == HTTP_STATUS_OK);
-	assert(!c->body.IsDefined());
+	assert(!c->HasInput());
 	assert(c->body_eof);
 	assert(!c->body_abort);
 }
@@ -297,7 +297,7 @@ test_close_early(PoolPtr pool, Context *c)
 	c->event_loop.Dispatch();
 
 	assert(c->status == HTTP_STATUS_OK);
-	assert(!c->body.IsDefined());
+	assert(!c->HasInput());
 	assert(!c->body_eof);
 	assert(!c->body_abort);
 }
@@ -325,7 +325,7 @@ test_close_late(PoolPtr pool, Context *c)
 	c->event_loop.Dispatch();
 
 	assert(c->status == HTTP_STATUS_OK);
-	assert(!c->body.IsDefined());
+	assert(!c->HasInput());
 	assert(!c->body_eof);
 	assert(c->body_abort || c->body_closed);
 }
@@ -383,7 +383,7 @@ test_post(PoolPtr pool, Context *c)
 	c->event_loop.Dispatch();
 
 	assert(c->status == HTTP_STATUS_OK);
-	assert(!c->body.IsDefined());
+	assert(!c->HasInput());
 	assert(c->body_eof);
 	assert(!c->body_abort);
 }
@@ -411,7 +411,7 @@ test_status(PoolPtr pool, Context *c)
 	c->event_loop.Dispatch();
 
 	assert(c->status == HTTP_STATUS_CREATED);
-	assert(!c->body.IsDefined());
+	assert(!c->HasInput());
 	assert(c->body_eof);
 	assert(!c->body_abort);
 }
@@ -439,7 +439,7 @@ test_no_content(PoolPtr pool, Context *c)
 	c->event_loop.Dispatch();
 
 	assert(c->status == HTTP_STATUS_NO_CONTENT);
-	assert(!c->body.IsDefined());
+	assert(!c->HasInput());
 	assert(!c->body_eof);
 	assert(!c->body_abort);
 }
