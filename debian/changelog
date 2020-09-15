@@ -2,7 +2,7 @@ cm4all-beng-proxy (17.0.25) unstable; urgency=low
 
   * certdb: don't fail if option "alpn_http2" is present
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 15 Sep 2020 18:18:50 +0200
 
 cm4all-beng-proxy (17.0.24) unstable; urgency=low
 
