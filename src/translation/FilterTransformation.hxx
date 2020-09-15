@@ -33,10 +33,7 @@
 #pragma once
 
 #include "ResourceAddress.hxx"
-
 #include "util/Compiler.h"
-
-#include <assert.h>
 
 class AllocatorPtr;
 

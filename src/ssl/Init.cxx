@@ -33,16 +33,10 @@
 #include "Init.hxx"
 #include "FifoBufferBio.hxx"
 
-#include "util/Compiler.h"
-
 #include <openssl/ssl.h>
 #include <openssl/crypto.h>
 #include <openssl/engine.h>
 #include <openssl/err.h>
-
-#include <mutex>
-
-#include <pthread.h>
 
 void
 ssl_global_init()

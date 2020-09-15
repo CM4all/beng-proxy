@@ -43,10 +43,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 
 #include <fcntl.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <errno.h>
 
 class DelegateHttpRequest final : DelegateHandler {
 	EventLoop &event_loop;

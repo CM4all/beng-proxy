@@ -44,7 +44,6 @@ class FailureManager;
 class SocketAddress;
 struct LbMonitorConfig;
 struct LbMonitorClass;
-class LbMonitorController;
 
 class LbMonitorController final : public LbMonitorHandler {
 	EventLoop &event_loop;

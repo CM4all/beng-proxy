@@ -40,8 +40,6 @@
 #include "util/RuntimeError.hxx"
 #include "util/WritableBuffer.hxx"
 
-#include <stdexcept>
-
 ControlServer::ControlServer(EventLoop &event_loop, UniqueSocketDescriptor s,
 			     ControlHandler &_handler) noexcept
 	:handler(_handler), socket(event_loop, std::move(s), *this)

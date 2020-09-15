@@ -46,7 +46,6 @@
 #include "io/SpliceSupport.hxx"
 #include "util/Cancellable.hxx"
 
-#include <assert.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>

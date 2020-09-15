@@ -36,7 +36,6 @@
 #include "lease.hxx"
 #include "tcp_stock.hxx"
 #include "cluster/TcpBalancer.hxx"
-#include "cluster/AddressList.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 #include "pool/pool.hxx"
@@ -50,11 +49,6 @@
 #include "util/Cancellable.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
-
-#include <sys/socket.h>
-#include <errno.h>
-#include <string.h>
-#include <unistd.h>
 
 class FcgiRemoteRequest final : StockGetHandler, Cancellable, Lease, PoolLeakDetector {
 	struct pool &pool;

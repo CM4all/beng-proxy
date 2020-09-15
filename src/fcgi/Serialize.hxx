@@ -42,7 +42,6 @@
 class GrowingBuffer;
 class StringMap;
 struct StringView;
-template<typename T> struct ConstBuffer;
 
 class FcgiRecordSerializer {
 	GrowingBuffer &buffer;

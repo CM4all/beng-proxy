@@ -36,7 +36,6 @@
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
 
-#include <sys/socket.h>
 #include <sys/un.h>
 #include <stdio.h>
 

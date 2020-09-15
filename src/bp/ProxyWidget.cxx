@@ -39,23 +39,18 @@
 #include "widget/Ref.hxx"
 #include "widget/Class.hxx"
 #include "widget/Context.hxx"
-#include "widget/Request.hxx"
 #include "widget/LookupHandler.hxx"
 #include "widget/Resolver.hxx"
 #include "widget/Frame.hxx"
-#include "http/HeaderWriter.hxx"
 #include "ForwardHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"
-#include "XmlProcessor.hxx"
 #include "WidgetLookupProcessor.hxx"
-#include "istream/istream.hxx"
 #include "istream/AutoPipeIstream.hxx"
 #include "translation/Vary.hxx"
 #include "pool/pool.hxx"
 #include "io/Logger.hxx"
-#include "util/Cast.hxx"
 
 struct ProxyWidget final : PoolLeakDetector, WidgetLookupHandler, HttpResponseHandler, Cancellable {
 	Request &request;

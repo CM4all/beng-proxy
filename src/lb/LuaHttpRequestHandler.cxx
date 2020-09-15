@@ -32,9 +32,6 @@
 
 #include "HttpConnection.hxx"
 #include "LuaHandler.hxx"
-#include "ListenerConfig.hxx"
-#include "HttpResponseHandler.hxx"
-#include "http_server/http_server.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"

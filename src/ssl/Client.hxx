@@ -39,8 +39,6 @@
 #include "AlpnClient.hxx"
 #include "fs/Ptr.hxx"
 
-#include <memory>
-
 struct SslClientConfig;
 class EventLoop;
 

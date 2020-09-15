@@ -33,7 +33,6 @@
 #include "Isolate.hxx"
 #include "system/pivot_root.h"
 #include "io/WriteFile.hxx"
-#include "util/ScopeExit.hxx"
 
 #include <sched.h>
 #include <stdio.h>

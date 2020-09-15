@@ -34,14 +34,9 @@
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
-#include "system/Error.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 
-#include "util/Compiler.h"
-
-#include <sys/socket.h>
-#include <unistd.h>
 #include <fcntl.h>
 
 static int

@@ -47,7 +47,6 @@
 #include "istream/istream_memory.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/istream_string.hxx"
-#include "istream/istream.hxx"
 #include "strmap.hxx"
 #include "bp/session/Session.hxx"
 #include "pool/pbuffer.hxx"

@@ -36,7 +36,6 @@
 
 #include <chrono>
 
-struct HttpCacheResponseInfo;
 class StringMap;
 
 /**

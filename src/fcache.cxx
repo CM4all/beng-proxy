@@ -32,16 +32,12 @@
 
 #include "fcache.hxx"
 #include "cache.hxx"
-#include "http_request.hxx"
-#include "http/HeaderWriter.hxx"
 #include "strmap.hxx"
 #include "HttpResponseHandler.hxx"
 #include "AllocatorPtr.hxx"
-#include "pool/tpool.hxx"
 #include "ResourceAddress.hxx"
 #include "ResourceLoader.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/TeeIstream.hxx"
 #include "istream/RefIstream.hxx"
@@ -68,10 +64,7 @@
 
 #include <unordered_map>
 
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <errno.h>
 #include <unistd.h>
 
 static constexpr off_t cacheable_size_limit = 512 * 1024;

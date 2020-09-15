@@ -33,7 +33,6 @@
 #include "PipeLease.hxx"
 #include "pipe_stock.hxx"
 #include "stock/Item.hxx"
-#include "stock/Stock.hxx"
 #include "system/Error.hxx"
 
 #include <assert.h>

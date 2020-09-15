@@ -37,23 +37,17 @@
 #include "pool/UniquePtr.hxx"
 #include "io/Logger.hxx"
 
-#include <boost/intrusive/list.hpp>
-
-#include <chrono>
-
-#include <stdint.h>
+#include <boost/intrusive/list_hook.hpp>
 
 template<typename T> class UniquePoolPtr;
 class FilteredSocket;
 class SslFilter;
-class UniqueSocketDescriptor;
 class SocketAddress;
 struct HttpServerConnection;
 namespace NgHttp2 { class ServerConnection; }
 struct LbListenerConfig;
 class LbCluster;
 class LbLuaHandler;
-class LbTranslationHandler;
 struct LbGoto;
 class LbTranslationHandler;
 struct LbInstance;

@@ -32,7 +32,6 @@
 
 #include "Internal.hxx"
 #include "Request.hxx"
-#include "pool/pool.hxx"
 
 BufferedResult
 HttpServerConnection::FeedRequestBody(const void *data, size_t length)

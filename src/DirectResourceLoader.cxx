@@ -33,8 +33,6 @@
 #include "DirectResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "HttpResponseHandler.hxx"
-#include "fs/SocketFilter.hxx"
-#include "fs/Factory.hxx"
 #include "nghttp2/Glue.hxx"
 #include "http_request.hxx"
 #include "file_request.hxx"
@@ -52,19 +50,16 @@
 #include "delegate/Address.hxx"
 #include "delegate/HttpRequest.hxx"
 #include "strmap.hxx"
-#include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "ssl/SslSocketFilterFactory.hxx"
 #include "pool/pool.hxx"
 #include "AllocatorPtr.hxx"
-#include "system/Error.hxx"
 #include "net/HostParser.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringStrip.hxx"
 
 #include <string.h>
-#include <stdlib.h>
 
 gcc_pure
 static const char *

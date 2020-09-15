@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 template<typename T> struct ConstBuffer;
 
 ConstBuffer<unsigned char>

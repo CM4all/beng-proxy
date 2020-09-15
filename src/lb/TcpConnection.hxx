@@ -38,24 +38,19 @@
 #include "pool/UniquePtr.hxx"
 #include "event/DeferEvent.hxx"
 #include "io/Logger.hxx"
+#include "event/net/ConnectSocket.hxx"
 #include "net/StaticSocketAddress.hxx"
-#include "net/PConnectSocket.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
 
-#include <boost/intrusive/list.hpp>
+#include <boost/intrusive/list_hook.hpp>
 
 #include <exception>
 
-#include <stdint.h>
-
-template<typename T> class UniquePoolPtr;
-class FilteredSocket;
 class UniqueSocketDescriptor;
 class SocketAddress;
 struct LbListenerConfig;
 class LbCluster;
-struct LbGoto;
 struct LbInstance;
 
 class LbTcpConnection final

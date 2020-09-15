@@ -37,11 +37,7 @@
 #include "pool/UniquePtr.hxx"
 #include "io/Logger.hxx"
 
-#include <boost/intrusive/list.hpp>
-
-#include <chrono>
-
-#include <stdint.h>
+#include <boost/intrusive/list_hook.hpp>
 
 template<typename T> class UniquePoolPtr;
 class FilteredSocket;

@@ -34,13 +34,11 @@
 #include "FilteredSocket.hxx"
 #include "fb_pool.hxx"
 #include "thread/Queue.hxx"
-#include "pool/pool.hxx"
 #include "system/Error.hxx"
 
 #include <algorithm>
 
 #include <string.h>
-#include <errno.h>
 
 ThreadSocketFilter::ThreadSocketFilter(EventLoop &_event_loop,
 				       ThreadQueue &_queue,

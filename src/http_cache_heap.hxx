@@ -42,9 +42,7 @@
 
 struct pool;
 class UnusedIstreamPtr;
-class Rubber;
 class EventLoop;
-class Cache;
 class StringMap;
 struct AllocatorStats;
 struct HttpCacheResponseInfo;

@@ -37,19 +37,16 @@
 #include "GenerateResponse.hxx"
 #include "http/HeaderWriter.hxx"
 #include "http/PHeaderUtil.hxx"
-#include "http/Date.hxx"
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
 #include "istream/FileIstream.hxx"
 #include "istream/FdIstream.hxx"
 #include "istream/UringIstream.hxx"
-#include "istream/istream.hxx"
 #include "pool/pool.hxx"
 #include "translation/Vary.hxx"
 #include "system/Error.hxx"
 #include "system/KernelVersion.hxx"
 #include "io/Open.hxx"
-#include "util/DecimalFormat.h"
 #include "util/StringCompare.hxx"
 
 #ifdef HAVE_URING
@@ -61,8 +58,6 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <errno.h>
-#include <stdlib.h>
 
 void
 Request::DispatchFile(const char *path, UniqueFileDescriptor fd,

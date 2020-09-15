@@ -41,7 +41,6 @@ class NfsClientHandler;
 class NfsClientOpenFileHandler;
 class NfsClientReadFileHandler;
 class NfsFileHandle;
-class HttpResponseHandler;
 class CancellablePointer;
 class EventLoop;
 

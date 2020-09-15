@@ -34,7 +34,6 @@
 #include "strmap.hxx"
 #include "pool/tpool.hxx"
 #include "http/CookieServer.hxx"
-#include "pool/pool.hxx"
 #include "util/StringCompare.hxx"
 
 #include <assert.h>

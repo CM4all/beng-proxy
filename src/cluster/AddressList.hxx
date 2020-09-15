@@ -37,15 +37,11 @@
 #include "util/ShallowCopy.hxx"
 #include "StickyMode.hxx"
 
-#include "util/Compiler.h"
-
 #include <stddef.h>
 #include <assert.h>
 
 struct dpool;
-struct HashKey;
 class AllocatorPtr;
-class SocketAddress;
 class AddressInfoList;
 
 /**

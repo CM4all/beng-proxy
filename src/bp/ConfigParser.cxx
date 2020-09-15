@@ -37,7 +37,6 @@
 #include "io/ConfigParser.hxx"
 #include "net/Parser.hxx"
 #include "util/StringView.hxx"
-#include "util/StringParser.hxx"
 
 #ifdef HAVE_AVAHI
 #include "avahi/Check.hxx"

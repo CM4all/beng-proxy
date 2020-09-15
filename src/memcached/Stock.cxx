@@ -36,7 +36,6 @@
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 #include "cluster/TcpBalancer.hxx"
-#include "cluster/AddressList.hxx"
 #include "tcp_stock.hxx"
 #include "lease.hxx"
 #include "pool/pool.hxx"
@@ -47,8 +46,6 @@
 #include "stopwatch.hxx"
 
 #include <assert.h>
-#include <string.h>
-#include <sys/socket.h>
 
 struct MemachedStock {
 	EventLoop &event_loop;

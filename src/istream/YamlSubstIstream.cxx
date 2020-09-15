@@ -32,7 +32,6 @@
 
 #include "YamlSubstIstream.hxx"
 #include "SubstIstream.hxx"
-#include "FailIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "util/IterableSplitString.hxx"

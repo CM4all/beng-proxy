@@ -35,15 +35,11 @@
 #include "PInstance.hxx"
 #include "GotoMap.hxx"
 #include "MonitorManager.hxx"
-#include "fs/Stock.hxx"
-#include "fs/Balancer.hxx"
-#include "cluster/BalancerMap.hxx"
 #include "event/TimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "net/FailureManager.hxx"
 #include "io/Logger.hxx"
-#include "pipe_stock.hxx"
 
 #ifdef HAVE_AVAHI
 #include "avahi/Client.hxx"
@@ -162,8 +158,6 @@ struct LbInstance final : PInstance {
 private:
 	void OnCompressTimer() noexcept;
 };
-
-struct client_connection;
 
 void
 init_signals(LbInstance *instance);

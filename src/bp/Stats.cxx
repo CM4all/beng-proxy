@@ -33,7 +33,6 @@
 #include "Instance.hxx"
 #include "tcp_stock.hxx"
 #include "fs/Stock.hxx"
-#include "stock/MapStock.hxx"
 #include "stock/Stats.hxx"
 #include "fb_pool.hxx"
 #include "SlicePool.hxx"

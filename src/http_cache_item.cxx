@@ -31,9 +31,7 @@
  */
 
 #include "http_cache_item.hxx"
-#include "http_cache_rfc.hxx"
 #include "http_cache_age.hxx"
-#include "AllocatorPtr.hxx"
 #include "istream_rubber.hxx"
 #include "istream/UnusedPtr.hxx"
 

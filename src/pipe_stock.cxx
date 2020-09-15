@@ -35,10 +35,6 @@
 #include "system/Error.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 
-#include <assert.h>
-#include <unistd.h>
-#include <fcntl.h>
-
 struct PipeStockItem final : StockItem {
 	UniqueFileDescriptor fds[2];
 

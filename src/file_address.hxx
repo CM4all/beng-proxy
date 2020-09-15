@@ -32,9 +32,7 @@
 
 #pragma once
 
-#include "spawn/ChildOptions.hxx"
 #include "util/ConstBuffer.hxx"
-
 #include "util/Compiler.h"
 
 class AllocatorPtr;

@@ -37,8 +37,6 @@
 #include <utility>
 
 class Stopwatch;
-class SocketAddress;
-class SocketDescriptor;
 class UniqueFileDescriptor;
 
 #ifdef ENABLE_STOPWATCH

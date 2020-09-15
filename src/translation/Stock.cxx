@@ -46,8 +46,6 @@
 #include "io/Logger.hxx"
 #include "stopwatch.hxx"
 
-#include <stdexcept>
-
 #include <string.h>
 #include <errno.h>
 

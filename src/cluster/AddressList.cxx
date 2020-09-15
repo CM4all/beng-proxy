@@ -32,7 +32,6 @@
 
 #include "AddressList.hxx"
 #include "net/AddressInfo.hxx"
-#include "net/ToString.hxx"
 #include "AllocatorPtr.hxx"
 
 AddressList::AddressList(ShallowCopy, const AddressInfoList &src) noexcept

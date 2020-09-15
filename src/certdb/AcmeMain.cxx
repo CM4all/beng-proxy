@@ -56,12 +56,10 @@
 #include "ssl/Error.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
-#include "util/StringCompare.hxx"
 
 #include <map>
 #include <memory>
 #include <thread>
-#include <stdexcept>
 #include <set>
 #include <variant>
 

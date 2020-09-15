@@ -54,7 +54,6 @@
 #include <memory>
 
 class AccessLogGlue;
-class Stock;
 class WasStock;
 class PipeStock;
 class ResourceLoader;

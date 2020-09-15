@@ -34,8 +34,6 @@
 
 #include "util/Compiler.h"
 
-#include <stddef.h>
-
 struct pool;
 class StringMap;
 struct StringView;

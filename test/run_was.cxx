@@ -38,7 +38,6 @@
 #include "HttpResponseHandler.hxx"
 #include "strmap.hxx"
 #include "istream/sink_fd.hxx"
-#include "istream/Pointer.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/OpenFileIstream.hxx"
 #include "fb_pool.hxx"

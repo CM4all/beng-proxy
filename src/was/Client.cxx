@@ -46,7 +46,6 @@
 #include "io/FileDescriptor.hxx"
 #include "event/TimerEvent.hxx"
 #include "http/HeaderName.hxx"
-#include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 #include "util/DestructObserver.hxx"
@@ -57,9 +56,7 @@
 
 #include <was/protocol.h>
 
-#include <errno.h>
-#include <string.h>
-#include <sys/socket.h>
+#include <cassert>
 
 class WasClient final
 	: WasControlHandler, WasOutputHandler, WasInputHandler,

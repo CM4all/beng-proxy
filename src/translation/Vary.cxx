@@ -38,7 +38,6 @@
 #include "http/HeaderWriter.hxx"
 #include "AllocatorPtr.hxx"
 
-#include <assert.h>
 #include <string.h>
 
 static const char *

@@ -32,7 +32,6 @@
 
 #include "MonitorManager.hxx"
 #include "MonitorStock.hxx"
-#include "MonitorConfig.hxx"
 
 LbMonitorManager::LbMonitorManager(EventLoop &_event_loop,
 				   FailureManager &_failure_manager)

@@ -39,7 +39,6 @@
 #include <algorithm>
 
 #include <assert.h>
-#include <string.h>
 
 class HeadIstream final : public ForwardIstream {
 	off_t rest;

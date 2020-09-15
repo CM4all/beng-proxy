@@ -36,14 +36,10 @@
 #include "Client.hxx"
 #include "HttpResponseHandler.hxx"
 #include "Lease.hxx"
-#include "tcp_stock.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
-#include "spawn/ChildOptions.hxx"
-#include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
-#include "AllocatorPtr.hxx"
 #include "pool/LeakDetector.hxx"
 #include "stopwatch.hxx"
 #include "util/Cancellable.hxx"
@@ -52,10 +48,7 @@
 #include "strmap.hxx"
 
 #include <assert.h>
-#include <sys/socket.h>
-#include <errno.h>
 #include <string.h>
-#include <unistd.h>
 
 class WasRequest final : StockGetHandler, Cancellable, WasLease, PoolLeakDetector {
 	struct pool &pool;

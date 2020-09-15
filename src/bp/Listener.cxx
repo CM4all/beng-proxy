@@ -38,13 +38,8 @@
 #include "ssl/Filter.hxx"
 #include "ssl/SniCallback.hxx"
 #include "fs/FilteredSocket.hxx"
-#include "fs/Ptr.hxx"
-#include "fs/ThreadSocketFilter.hxx"
 #include "net/SocketAddress.hxx"
-#include "io/FdType.hxx"
 #include "io/Logger.hxx"
-#include "thread/Pool.hxx"
-#include "util/Exception.hxx"
 
 static std::unique_ptr<SslFactory>
 MakeSslFactory(const SslConfig *ssl_config)

@@ -33,9 +33,6 @@
 #pragma once
 
 #include "http/Logger.hxx"
-#include "pool/Holder.hxx"
-
-#include <boost/intrusive/list.hpp>
 
 #include <chrono>
 
@@ -116,7 +113,7 @@ struct LbRequestLogger final : IncomingHttpRequestLogger {
 
 	/* virtual methods from class IncomingHttpRequestLogger */
 	void LogHttpRequest(IncomingHttpRequest &request,
-			    http_status_t status, off_t length,
+			    http_status_t status, int64_t length,
 			    uint64_t bytes_received,
 			    uint64_t bytes_sent) noexcept override;
 };

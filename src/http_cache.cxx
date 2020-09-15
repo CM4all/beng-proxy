@@ -39,14 +39,11 @@
 #include "HttpResponseHandler.hxx"
 #include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
-#include "cache.hxx"
 #include "sink_rubber.hxx"
 #include "AllocatorStats.hxx"
 #include "http/Date.hxx"
 #include "http/List.hxx"
-#include "istream_rubber.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/UnusedHoldPtr.hxx"
 #include "istream/TeeIstream.hxx"
 #include "istream/RefIstream.hxx"
 #include "pool/Holder.hxx"
@@ -55,7 +52,6 @@
 #include "event/Loop.hxx"
 #include "io/Logger.hxx"
 #include "util/Background.hxx"
-#include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "util/RuntimeError.hxx"
@@ -65,10 +61,7 @@
 #include <functional>
 
 #include <string.h>
-#include <time.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <errno.h>
 
 static constexpr Event::Duration http_cache_compress_interval = std::chrono::minutes(10);
 

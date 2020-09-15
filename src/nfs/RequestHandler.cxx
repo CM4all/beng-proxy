@@ -34,7 +34,6 @@
 #include "Address.hxx"
 #include "translation/Vary.hxx"
 #include "http/HeaderWriter.hxx"
-#include "GrowingBuffer.hxx"
 #include "bp/FileHeaders.hxx"
 #include "bp/Request.hxx"
 #include "bp/GenerateResponse.hxx"
@@ -45,7 +44,6 @@
 
 #include <assert.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 /*
  * nfs_cache_handler

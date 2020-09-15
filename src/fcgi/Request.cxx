@@ -35,22 +35,18 @@
 #include "Client.hxx"
 #include "HttpResponseHandler.hxx"
 #include "lease.hxx"
-#include "tcp_stock.hxx"
 #include "access_log/ChildErrorLog.hxx"
 #include "stock/Item.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
-#include "AllocatorPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
 
 #include <sys/socket.h>
-#include <unistd.h>
 
 class FcgiRequest final : Lease, Cancellable, PoolLeakDetector {
 	struct pool &pool;

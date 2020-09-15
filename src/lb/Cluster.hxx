@@ -51,9 +51,6 @@
 #include <string>
 #include <memory>
 
-struct LbConfig;
-struct LbGotoIfConfig;
-struct LbListenerConfig;
 struct LbClusterConfig;
 struct LbContext;
 class LbMonitorStock;
@@ -62,7 +59,6 @@ class FailureManager;
 class BalancerMap;
 class FilteredSocketStock;
 class FilteredSocketBalancer;
-class MyAvahiClient;
 class StickyCache;
 class AvahiServiceExplorer;
 class StopwatchPtr;

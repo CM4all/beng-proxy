@@ -34,14 +34,12 @@
 #include "Protocol.hxx"
 #include "GrowingBuffer.hxx"
 #include "strmap.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/CharUtil.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/StringView.hxx"
 
-#include <assert.h>
-#include <stdint.h>
-#include <string.h>
+#include <cassert>
+#include <cstdint>
 
 FcgiRecordSerializer::FcgiRecordSerializer(GrowingBuffer &_buffer,
 					   uint8_t type,

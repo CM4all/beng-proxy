@@ -38,7 +38,6 @@
 
 #include "util/Compiler.h"
 
-#include <cstddef>
 #include <utility>
 
 struct StringView;

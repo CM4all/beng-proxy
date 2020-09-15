@@ -35,7 +35,6 @@
 
 #include "util/Compiler.h"
 
-struct HttpAddress;
 struct StringView;
 class AllocatorPtr;
 

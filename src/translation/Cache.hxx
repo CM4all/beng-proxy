@@ -37,8 +37,6 @@
 
 #include <memory>
 
-#include <stdint.h>
-
 enum class TranslationCommand : uint16_t;
 class EventLoop;
 struct AllocatorStats;

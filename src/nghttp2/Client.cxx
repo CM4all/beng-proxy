@@ -36,21 +36,17 @@
 #include "Option.hxx"
 #include "Callbacks.hxx"
 #include "pool/pool.hxx"
-#include "pool/PSocketAddress.hxx"
-#include "http/IncomingRequest.hxx"
-#include "http/Headers.hxx"
 #include "istream/LengthIstream.hxx"
 #include "istream/MultiFifoBufferIstream.hxx"
 #include "istream/New.hxx"
 #include "fs/FilteredSocket.hxx"
-#include "net/StaticSocketAddress.hxx"
-#include "net/UniqueSocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StaticArray.hxx"
 #include "util/StringView.hxx"
 #include "HttpResponseHandler.hxx"
 #include "stopwatch.hxx"
+#include "strmap.hxx"
 
 #include <nghttp2/nghttp2.h>
 

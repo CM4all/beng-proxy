@@ -31,7 +31,6 @@
  */
 
 #include "Cache.hxx"
-#include "Stock.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
@@ -49,13 +48,10 @@
 #include "pool/PSocketAddress.hxx"
 #include "SlicePool.hxx"
 #include "AllocatorStats.hxx"
-#include "load_file.hxx"
 #include "pcre/Regex.hxx"
 #include "io/Logger.hxx"
 #include "util/djbhash.h"
-#include "util/RuntimeError.hxx"
 #include "util/StringView.hxx"
-#include "file_address.hxx"
 
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/unordered_set.hpp>

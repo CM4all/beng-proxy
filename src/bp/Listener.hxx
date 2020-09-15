@@ -35,11 +35,8 @@
 #include "fs/Listener.hxx"
 #include "net/StaticSocketAddress.hxx"
 
-#include <memory>
-
 struct BpInstance;
 struct SslConfig;
-class SslFactory;
 
 /**
  * Listener for incoming HTTP connections.

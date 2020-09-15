@@ -42,9 +42,8 @@
 #include <boost/interprocess/sync/interprocess_sharable_mutex.hpp>
 #include <boost/interprocess/sync/sharable_lock.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
+#include <boost/intrusive/unordered_set.hpp>
 
-#include <errno.h>
-#include <string.h>
 #include <stdlib.h>
 
 constexpr Event::Duration SessionManager::cleanup_interval;

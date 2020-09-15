@@ -46,7 +46,6 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Logger.hxx"
 #include "util/RuntimeError.hxx"
-#include "util/Exception.hxx"
 
 #include <assert.h>
 #include <sys/socket.h>

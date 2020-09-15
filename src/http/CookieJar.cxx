@@ -33,8 +33,6 @@
 #include "CookieJar.hxx"
 #include "shm/dpool.hxx"
 
-#include <string.h>
-
 Cookie::Cookie(struct dpool &pool, StringView _name, StringView _value)
     :name(DupStringView(pool, _name)),
      value(DupStringView(pool, _value)) {}

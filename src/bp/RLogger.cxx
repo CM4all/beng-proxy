@@ -31,7 +31,6 @@
  */
 
 #include "RLogger.hxx"
-#include "Connection.hxx"
 #include "Instance.hxx"
 #include "access_log/Glue.hxx"
 #include "http/IncomingRequest.hxx"

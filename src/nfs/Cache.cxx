@@ -35,9 +35,9 @@
 #include "Client.hxx"
 #include "Handler.hxx"
 #include "Istream.hxx"
-#include "strmap.hxx"
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
+#include "AllocatorPtr.hxx"
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
 #include "istream_unlock.hxx"
@@ -56,16 +56,11 @@
 #include <boost/intrusive/list.hpp>
 
 #include <sys/stat.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
 
 static constexpr Event::Duration nfs_cache_compress_interval = std::chrono::minutes(10);
 
 class NfsCache;
 struct NfsCacheItem;
-struct NfsCacheStore;
 
 struct NfsCacheStore final
 	: PoolHolder,

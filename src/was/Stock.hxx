@@ -45,7 +45,6 @@ struct ChildOptions;
 struct WasProcess;
 template<typename T> struct ConstBuffer;
 class SpawnService;
-class WasChild;
 
 /**
  * Launch and manage WAS child processes.

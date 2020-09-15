@@ -43,9 +43,7 @@
 #include "util/Cancellable.hxx"
 
 #include <unistd.h>
-#include <sys/socket.h>
 #include <string.h>
-#include <errno.h>
 
 class ExpectMonitor final : ConnectSocketHandler, Cancellable {
 	const LbMonitorConfig &config;

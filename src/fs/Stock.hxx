@@ -40,7 +40,6 @@
 #include "stock/MapStock.hxx"
 #include "util/Compiler.h"
 
-class StockMap;
 struct StockItem;
 class StockGetHandler;
 class CancellablePointer;

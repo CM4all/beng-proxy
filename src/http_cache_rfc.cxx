@@ -33,11 +33,8 @@
 #include "http_cache_rfc.hxx"
 #include "http_cache_document.hxx"
 #include "http_cache_internal.hxx"
-#include "http/Address.hxx"
 #include "strmap.hxx"
 #include "ResourceAddress.hxx"
-#include "lhttp_address.hxx"
-#include "pool/pool.hxx"
 #include "io/Logger.hxx"
 #include "http/Date.hxx"
 #include "http/PHeaderUtil.hxx"
@@ -45,7 +42,6 @@
 #include "util/StringView.hxx"
 #include "util/IterableSplitString.hxx"
 
-#include <assert.h>
 #include <stdlib.h>
 
 /* check whether the request could produce a cacheable response */

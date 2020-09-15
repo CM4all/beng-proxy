@@ -44,12 +44,7 @@
 #include <utility>
 #include <new>
 
-#ifndef NDEBUG
-#include <assert.h>
-#endif
-
 #include <stddef.h>
-#include <stdbool.h>
 
 struct pool;
 class SlicePool;
@@ -57,7 +52,6 @@ struct AllocatorStats;
 class PoolPtr;
 class PoolLeakDetector;
 
-template<typename T> struct ConstBuffer;
 struct StringView;
 
 void

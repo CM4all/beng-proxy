@@ -37,7 +37,6 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/uring/Operation.hxx"
 #include "io/uring/Queue.hxx"
-#include "pool/pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "system/Error.hxx"

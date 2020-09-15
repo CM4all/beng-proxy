@@ -32,7 +32,6 @@
 
 #include "XmlParser.hxx"
 #include "HtmlSyntax.hxx"
-#include "pool/pool.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Poison.hxx"
 

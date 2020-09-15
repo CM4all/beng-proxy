@@ -35,7 +35,6 @@
  */
 
 #include "Request.hxx"
-#include "AllocatorPtr.hxx"
 #include "pool/pool.hxx"
 #include "util/StringView.hxx"
 

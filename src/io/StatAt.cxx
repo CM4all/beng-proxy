@@ -31,7 +31,6 @@
  */
 
 #include "StatAt.hxx"
-#include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 
 #include <fcntl.h>

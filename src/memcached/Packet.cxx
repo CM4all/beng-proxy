@@ -33,7 +33,6 @@
 #include "Packet.hxx"
 #include "istream/ConcatIstream.hxx"
 #include "istream/istream_memory.hxx"
-#include "istream/istream_null.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "util/ByteOrder.hxx"

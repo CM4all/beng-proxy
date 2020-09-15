@@ -35,20 +35,14 @@
  */
 
 #include "Handler.hxx"
-#include "Connection.hxx"
 #include "Instance.hxx"
 #include "Request.hxx"
 #include "ForwardRequest.hxx"
 #include "CsrfProtection.hxx"
 #include "ResourceLoader.hxx"
-#include "HttpResponseHandler.hxx"
 #include "http/IncomingRequest.hxx"
-#include "http/Address.hxx"
 #include "cgi/Address.hxx"
-#include "uri/Extract.hxx"
 #include "istream/AutoPipeIstream.hxx"
-#include "lhttp_address.hxx"
-#include "pool/pool.hxx"
 #include "AllocatorPtr.hxx"
 
 /**

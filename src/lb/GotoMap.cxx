@@ -37,12 +37,7 @@
 #include "TranslationHandler.hxx"
 #include "LuaHandler.hxx"
 #include "Config.hxx"
-#include "LuaInitHook.hxx"
 #include "MonitorManager.hxx"
-
-#ifdef HAVE_AVAHI
-#include "avahi/Client.hxx"
-#endif
 
 LbGotoMap::LbGotoMap(const LbConfig &_config,
 		     LbContext _context,

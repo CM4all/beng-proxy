@@ -60,8 +60,6 @@
 #include <exception>
 
 struct statx;
-class FileDescriptor;
-class UniqueFileDescriptor;
 class Istream;
 class HttpHeaders;
 class GrowingBuffer;

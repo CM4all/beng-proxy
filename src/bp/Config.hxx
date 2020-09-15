@@ -35,8 +35,6 @@
 #include "access_log/Config.hxx"
 #include "ssl/Config.hxx"
 #include "net/SocketConfig.hxx"
-#include "net/AddressInfo.hxx"
-#include "util/StaticArray.hxx"
 #include "spawn/Config.hxx"
 
 #include <forward_list>

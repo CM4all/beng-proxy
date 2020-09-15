@@ -31,12 +31,8 @@
  */
 
 #include "Headers.hxx"
-#include "http/Headers.hxx"
 #include "strmap.hxx"
-#include "http/HeaderName.hxx"
 #include "AllocatorPtr.hxx"
-
-#include <string.h>
 
 static void
 forward_via(AllocatorPtr alloc, StringMap &headers,

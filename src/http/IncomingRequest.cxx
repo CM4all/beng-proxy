@@ -33,7 +33,6 @@
 #include "IncomingRequest.hxx"
 #include "Logger.hxx"
 #include "pool/pool.hxx"
-#include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
 #include "http/Headers.hxx"
 #include "util/StringView.hxx"

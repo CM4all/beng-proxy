@@ -36,13 +36,10 @@
 #include "cluster/BalancerRequest.hxx"
 #include "cluster/AddressListWrapper.hxx"
 #include "cluster/AddressList.hxx"
-#include "stock/Stock.hxx"
 #include "stock/GetHandler.hxx"
 #include "event/Loop.hxx"
 #include "stopwatch.hxx"
 #include "lease.hxx"
-
-#include <type_traits>
 
 class FilteredSocketBalancer::Request : public StockGetHandler, Lease {
 	FilteredSocketStock &stock;

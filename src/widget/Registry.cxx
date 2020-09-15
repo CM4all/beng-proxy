@@ -36,10 +36,8 @@
 #include "translation/Handler.hxx"
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
-#include "translation/Transformation.hxx"
 #include "AllocatorPtr.hxx"
 #include "io/Logger.hxx"
-#include "util/Exception.hxx"
 #include "stopwatch.hxx"
 
 static void

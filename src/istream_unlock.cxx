@@ -36,8 +36,6 @@
 #include "istream/New.hxx"
 #include "cache.hxx"
 
-#include <assert.h>
-
 class UnlockIstream final : public ForwardIstream {
     CacheItem &item;
 

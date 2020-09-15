@@ -37,7 +37,6 @@
 #include "New.hxx"
 #include "pool/pool.hxx"
 #include "event/DeferEvent.hxx"
-#include "util/Cast.hxx"
 #include "util/DestructObserver.hxx"
 
 #include <boost/intrusive/list.hpp>

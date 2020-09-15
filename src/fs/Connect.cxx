@@ -43,7 +43,6 @@
 
 #include <exception>
 
-#include <sys/socket.h>
 #include <netinet/in.h>
 
 class ConnectFilteredSocketOperation final

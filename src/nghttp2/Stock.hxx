@@ -33,13 +33,11 @@
 #pragma once
 
 #include "event/Chrono.hxx"
-#include "util/Cancellable.hxx"
 #include "util/Compiler.h"
 
 #include <exception>
 #include <memory>
 
-#include <boost/intrusive/list.hpp>
 #include <boost/intrusive/unordered_set.hpp>
 
 class EventLoop;

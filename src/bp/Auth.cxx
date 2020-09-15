@@ -40,10 +40,9 @@
 #include "http/IncomingRequest.hxx"
 #include "pool/pool.hxx"
 #include "pool/pbuffer.hxx"
-#include "translation/Cache.hxx"
 #include "translation/Handler.hxx"
+#include "translation/Service.hxx"
 #include "load_file.hxx"
-#include "util/Exception.hxx"
 
 inline void
 Request::OnAuthTranslateResponse(const TranslateResponse &response) noexcept

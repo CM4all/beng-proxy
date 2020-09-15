@@ -36,8 +36,6 @@
 #include "PipeLease.hxx"
 #include "SliceFifoBuffer.hxx"
 
-class SliceBuffer;
-
 /**
  * Read data from a #PipeLease.  The data must be in the pipe already,
  * and no more new data must be written to it.

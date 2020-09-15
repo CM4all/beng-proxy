@@ -32,7 +32,6 @@
 
 #include "PList.hxx"
 #include "util/StringStrip.hxx"
-#include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <string.h>

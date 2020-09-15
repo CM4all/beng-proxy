@@ -37,8 +37,7 @@
 #include "New.hxx"
 #include "event/DeferEvent.hxx"
 
-#include <assert.h>
-#include <string.h>
+#include <cassert>
 
 class DelayedIstream final
 	: public ForwardIstream, public DelayedIstreamControl {

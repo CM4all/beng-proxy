@@ -36,8 +36,6 @@
 
 #include <utility>
 
-class FailureInfo;
-
 class ReferencedFailureInfo : public FailureInfo {
 	unsigned refs = 1;
 

@@ -36,8 +36,6 @@
 
 struct pool;
 class UnusedIstreamPtr;
-class EventLoop;
-class FileDescriptor;
 class UniqueFileDescriptor;
 namespace Uring { class Queue; }
 

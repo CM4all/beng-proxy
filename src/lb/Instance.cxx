@@ -38,7 +38,11 @@
 #include "CommandLine.hxx"
 #include "Listener.hxx"
 #include "ssl/Cache.hxx"
+#include "fs/Stock.hxx"
+#include "fs/Balancer.hxx"
+#include "cluster/BalancerMap.hxx"
 #include "fb_pool.hxx"
+#include "pipe_stock.hxx"
 #include "access_log/Glue.hxx"
 
 #include <assert.h>

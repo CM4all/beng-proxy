@@ -33,8 +33,6 @@
 #include "NopThreadSocketFilter.hxx"
 #include "ThreadSocketFilter.hxx"
 
-#include <string.h>
-
 class NopThreadSocketFilter final : public ThreadSocketFilterHandler {
 public:
 	/* virtual methods from class ThreadSocketFilterHandler */

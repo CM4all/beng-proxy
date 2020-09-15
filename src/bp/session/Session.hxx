@@ -46,7 +46,7 @@
 #include "util/Compiler.h"
 
 #include <boost/intrusive/set.hpp>
-#include <boost/intrusive/unordered_set.hpp>
+#include <boost/intrusive/unordered_set_hook.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 
 #include <chrono>

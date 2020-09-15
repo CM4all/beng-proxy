@@ -48,7 +48,6 @@
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
 #include "nghttp2/Stock.hxx"
-#include "stock/MapStock.hxx"
 #include "http_cache.hxx"
 #include "lhttp_stock.hxx"
 #include "fcgi/Stock.hxx"
@@ -72,14 +71,11 @@
 #include "system/KernelVersion.hxx"
 #include "system/SetupProcess.hxx"
 #include "system/ProcessName.hxx"
-#include "system/Error.hxx"
 #include "capabilities.hxx"
-#include "spawn/Local.hxx"
 #include "spawn/Glue.hxx"
 #include "spawn/Client.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
-#include "net/FailureManager.hxx"
 #include "io/Logger.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/PrintException.hxx"
@@ -97,10 +93,7 @@
 #include <systemd/sd-daemon.h>
 #endif
 
-#include <assert.h>
-#include <string.h>
 #include <unistd.h>
-#include <sys/signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 

@@ -39,7 +39,6 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <errno.h>
 
 gcc_pure
 static bool

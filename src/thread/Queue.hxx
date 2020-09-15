@@ -44,7 +44,6 @@
 #include <condition_variable>
 
 class EventLoop;
-class ThreadQueue;
 class ThreadJob;
 
 class ThreadQueue {

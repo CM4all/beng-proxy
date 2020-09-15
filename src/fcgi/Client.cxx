@@ -40,7 +40,6 @@
 #include "istream_gb.hxx"
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/Pointer.hxx"
 #include "istream/ConcatIstream.hxx"
 #include "istream/Bucket.hxx"
 #include "http/HeaderParser.hxx"
@@ -51,8 +50,6 @@
 #include "event/net/BufferedSocket.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/SpliceSupport.hxx"
-#include "util/ByteOrder.hxx"
-#include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/StringStrip.hxx"
@@ -64,7 +61,6 @@
 #include "stopwatch.hxx"
 #include "lease.hxx"
 
-#include <sys/socket.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>

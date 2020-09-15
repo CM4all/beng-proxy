@@ -32,7 +32,6 @@
 
 #include "Widget.hxx"
 #include "Class.hxx"
-#include "uri/Dissect.hxx"
 #include "puri_edit.hxx"
 #include "puri_relative.hxx"
 #include "args.hxx"

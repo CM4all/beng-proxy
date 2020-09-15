@@ -35,8 +35,6 @@
 #include "cluster/AddressList.hxx"
 #include "util/Compiler.h"
 
-#include <stddef.h>
-
 struct dpool;
 struct StringView;
 class AllocatorPtr;

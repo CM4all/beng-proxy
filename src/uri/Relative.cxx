@@ -34,8 +34,6 @@
 #include "Extract.hxx"
 #include "util/StringView.hxx"
 
-#include <string.h>
-
 StringView
 uri_relative(StringView base, StringView uri) noexcept
 {

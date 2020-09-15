@@ -37,10 +37,7 @@
 #include "StickyHash.hxx"
 #include "HashKey.hxx"
 #include "util/Cache.hxx"
-
-struct AddressList;
-class SocketAddress;
-class Expiry;
+#include "util/Expiry.hxx"
 
 /**
  * Load balancer for AddressList.

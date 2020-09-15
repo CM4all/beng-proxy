@@ -31,7 +31,6 @@
  */
 
 #include "FailureRef.hxx"
-#include "FailureInfo.hxx"
 
 FailureRef::FailureRef(ReferencedFailureInfo &_info) noexcept
 	:info(_info)

@@ -34,7 +34,6 @@
 #include "RLogger.hxx"
 #include "Handler.hxx"
 #include "Instance.hxx"
-#include "strmap.hxx"
 #include "http_server/http_server.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http_server/Handler.hxx"
@@ -45,7 +44,6 @@
 #include "fs/FilteredSocket.hxx"
 #include "ssl/Filter.hxx"
 #include "net/SocketProtocolError.hxx"
-#include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "system/Error.hxx"
@@ -57,7 +55,6 @@
 #endif
 
 #include <assert.h>
-#include <unistd.h>
 
 BpConnection::BpConnection(PoolPtr &&_pool, BpInstance &_instance,
 			   const char *_listener_tag,

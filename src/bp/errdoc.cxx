@@ -40,7 +40,6 @@
 #include "translation/Service.hxx"
 #include "translation/Handler.hxx"
 #include "ResourceLoader.hxx"
-#include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "pool/pool.hxx"
 #include "io/Logger.hxx"

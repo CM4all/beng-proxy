@@ -33,8 +33,7 @@
 #include "NameCache.hxx"
 #include "certdb/Config.hxx"
 
-#include <assert.h>
-#include <string.h>
+#include <cassert>
 
 CertNameCache::CertNameCache(EventLoop &event_loop,
 			     const CertDatabaseConfig &config,

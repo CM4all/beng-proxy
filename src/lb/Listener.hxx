@@ -36,8 +36,6 @@
 #include "io/Logger.hxx"
 #include "fs/Listener.hxx"
 
-#include <memory>
-
 struct LbListenerConfig;
 struct LbInstance;
 class LbGotoMap;

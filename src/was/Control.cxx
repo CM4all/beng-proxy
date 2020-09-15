@@ -34,14 +34,11 @@
 #include "Error.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
-#include "net/Buffered.hxx"
 #include "system/Error.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/StringFormat.hxx"
 
 #include <was/protocol.h>
 
-#include <errno.h>
 #include <string.h>
 
 #include <stdio.h>

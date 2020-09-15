@@ -33,20 +33,16 @@
 #include "Server.hxx"
 #include "Error.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
 #include "pool/pool.hxx"
-#include "io/FileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringFormat.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <was/protocol.h>
 
-#include <errno.h>
 #include <string.h>
-#include <sys/socket.h>
 #include <unistd.h>
 
 WasServer::WasServer(struct pool &_pool, EventLoop &event_loop,

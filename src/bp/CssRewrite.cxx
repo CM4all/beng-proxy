@@ -36,14 +36,12 @@
 #include "widget/Context.hxx"
 #include "pool/pool.hxx"
 #include "pool/tpool.hxx"
+#include "pool/SharedPtr.hxx"
 #include "istream/New.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/istream.hxx"
 #include "istream/istream_memory.hxx"
 #include "istream/ReplaceIstream.hxx"
 #include "util/StringView.hxx"
-
-#include <assert.h>
 
 struct css_url {
 	size_t start, end;

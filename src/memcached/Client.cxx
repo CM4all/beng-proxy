@@ -41,14 +41,12 @@
 #include "system/Error.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "util/Cancellable.hxx"
-#include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
 #include "lease.hxx"
 
 #include <errno.h>
-#include <sys/socket.h>
 #include <string.h>
 
 struct MemcachedClient final

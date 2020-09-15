@@ -40,7 +40,6 @@
 #include <stdint.h>
 
 template<typename T> struct ConstBuffer;
-class DefaultFifoBuffer;
 class IstreamBucketList;
 
 class MultiFifoBuffer {

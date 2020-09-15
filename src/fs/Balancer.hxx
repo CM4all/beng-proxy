@@ -39,7 +39,6 @@
 struct AddressList;
 class EventLoop;
 class FilteredSocketBalancerHandler;
-struct StockItem;
 class CancellablePointer;
 class SocketAddress;
 class SocketFilterFactory;

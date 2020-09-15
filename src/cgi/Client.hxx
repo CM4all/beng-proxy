@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "http/Method.h"
-
 struct pool;
 class StopwatchPtr;
 class UnusedIstreamPtr;

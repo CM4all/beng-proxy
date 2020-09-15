@@ -42,17 +42,12 @@
 #include "pool/DisposablePointer.hxx"
 #include "pool/tpool.hxx"
 #include "pool/StringBuilder.hxx"
-#include "AllocatorPtr.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/Logger.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/RuntimeError.hxx"
-#include "util/Exception.hxx"
 #include "util/StringFormat.hxx"
-
-#include <string>
 
 #include <assert.h>
 #include <sys/socket.h>

@@ -31,7 +31,6 @@
  */
 
 #include "http_cache_age.hxx"
-#include "http_cache_info.hxx"
 #include "strmap.hxx"
 
 static constexpr std::chrono::hours HOUR(1);

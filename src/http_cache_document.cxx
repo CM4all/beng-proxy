@@ -32,7 +32,6 @@
 
 #include "http_cache_document.hxx"
 #include "http_cache_rfc.hxx"
-#include "strmap.hxx"
 #include "AllocatorPtr.hxx"
 
 HttpCacheDocument::HttpCacheDocument(struct pool &pool,

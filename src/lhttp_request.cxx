@@ -48,8 +48,6 @@
 #include "stopwatch.hxx"
 #include "strmap.hxx"
 
-#include <stdexcept>
-
 class LhttpLease final : public Lease, PoolLeakDetector {
 	StockItem &stock_item;
 

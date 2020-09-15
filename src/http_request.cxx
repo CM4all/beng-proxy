@@ -32,32 +32,22 @@
 
 #include "http_request.hxx"
 #include "http_client.hxx"
-#include "http/Headers.hxx"
 #include "http/Address.hxx"
 #include "HttpResponseHandler.hxx"
 #include "http/HeaderWriter.hxx"
-#include "stock/Item.hxx"
-#include "istream/istream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "fs/Balancer.hxx"
 #include "fs/Handler.hxx"
-#include "fs/Factory.hxx"
-#include "fs/SocketFilter.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "event/Loop.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/SocketDescriptor.hxx"
-#include "net/FailureManager.hxx"
 #include "net/FailureRef.hxx"
 #include "util/Cancellable.hxx"
-#include "util/Exception.hxx"
-#include "util/Compiler.h"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
-
-#include <string.h>
+#include "GrowingBuffer.hxx"
 
 static constexpr Event::Duration HTTP_CONNECT_TIMEOUT =
 	std::chrono::seconds(30);

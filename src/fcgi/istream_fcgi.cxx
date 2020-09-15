@@ -35,7 +35,6 @@
 #include "istream/FacadeIstream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/New.hxx"
-#include "util/Cast.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/DestructObserver.hxx"
 

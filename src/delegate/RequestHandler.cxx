@@ -37,14 +37,11 @@
 #include "bp/GenerateResponse.hxx"
 #include "bp/Request.hxx"
 #include "bp/Instance.hxx"
-#include "file_address.hxx"
 #include "http/IncomingRequest.hxx"
-#include "HttpResponseHandler.hxx"
 
 #include <assert.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 /*
  * delegate_handler

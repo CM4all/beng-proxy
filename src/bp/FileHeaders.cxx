@@ -34,7 +34,6 @@
 #include "Request.hxx"
 #include "Instance.hxx"
 #include "static_headers.hxx"
-#include "GrowingBuffer.hxx"
 #include "http/HeaderWriter.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
@@ -43,7 +42,6 @@
 #include "http/Date.hxx"
 #include "event/Loop.hxx"
 #include "io/FileDescriptor.hxx"
-#include "util/DecimalFormat.h"
 
 #include <attr/xattr.h>
 

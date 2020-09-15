@@ -31,7 +31,6 @@
  */
 
 #include "CommandLine.hxx"
-#include "stopwatch.hxx"
 #include "io/Logger.hxx"
 #include "version.h"
 

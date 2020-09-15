@@ -32,17 +32,14 @@
 
 #include "Launch.hxx"
 #include "Address.hxx"
-#include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"
 #include "product.h"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
-#include "io/UniqueFileDescriptor.hxx"
 #include "util/CharUtil.hxx"
 #include "AllocatorPtr.hxx"
 
-#include <sys/wait.h>
 #include <string.h>
 
 static const char *

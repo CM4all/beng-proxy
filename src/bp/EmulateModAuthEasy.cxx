@@ -38,7 +38,6 @@
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
 #include "translation/Vary.hxx"
-#include "istream/istream.hxx"
 #include "istream/FileIstream.hxx"
 #include "io/FileDescriptor.hxx"
 #include "util/StringCompare.hxx"
@@ -49,7 +48,6 @@
 #include <sodium.h>
 
 #include <assert.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>

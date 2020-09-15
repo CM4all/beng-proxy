@@ -37,9 +37,8 @@
 
 #include <array>
 #include <algorithm>
-
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 
 /**
  * The session id data structure.
@@ -78,7 +77,7 @@ public:
 	}
 
 	gcc_pure
-	size_t Hash() const noexcept {
+	std::size_t Hash() const noexcept {
 		return data[0];
 	}
 

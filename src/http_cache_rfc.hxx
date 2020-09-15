@@ -44,7 +44,6 @@
 #include <sys/types.h> /* for off_t */
 
 class AllocatorPtr;
-class Istream;
 class StringMap;
 struct ResourceAddress;
 struct HttpCacheDocument;

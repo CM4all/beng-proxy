@@ -42,7 +42,6 @@
 #include "net/EasyMessage.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "pool/pool.hxx"
 
 #include <string>
 

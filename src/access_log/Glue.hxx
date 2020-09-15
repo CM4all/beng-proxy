@@ -37,11 +37,9 @@
 #pragma once
 
 #include "Config.hxx"
-#include "http/Method.h"
 #include "http/Status.h"
 
 #include <chrono>
-#include <string>
 #include <memory>
 
 #include <stdint.h>

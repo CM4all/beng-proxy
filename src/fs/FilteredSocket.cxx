@@ -34,10 +34,8 @@
 #include "net/UniqueSocketDescriptor.hxx"
 
 #include <utility>
-#include <stdexcept>
 
 #include <string.h>
-#include <errno.h>
 
 FilteredSocket::FilteredSocket(EventLoop &_event_loop,
 			       UniqueSocketDescriptor _fd, FdType _fd_type,

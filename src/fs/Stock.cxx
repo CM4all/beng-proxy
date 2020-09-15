@@ -33,15 +33,12 @@
 #include "Stock.hxx"
 #include "Key.hxx"
 #include "Connect.hxx"
-#include "Factory.hxx"
 #include "FilteredSocket.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool/DisposablePointer.hxx"
 #include "stock/Stock.hxx"
-#include "stock/Class.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/LoggerDomain.hxx"
-#include "cluster/AddressList.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "io/Logger.hxx"
@@ -51,14 +48,8 @@
 #include "util/Exception.hxx"
 #include "stopwatch.hxx"
 
+#include <cassert>
 #include <memory>
-
-#include <assert.h>
-#include <errno.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/un.h>
-#include <sys/socket.h>
 
 struct FilteredSocketStockRequest {
 	StopwatchPtr stopwatch;

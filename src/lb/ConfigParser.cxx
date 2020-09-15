@@ -32,17 +32,13 @@
 
 #include "Config.hxx"
 #include "Check.hxx"
-#include "AllocatorPtr.hxx"
 #include "access_log/ConfigParser.hxx"
 #include "io/FileLineParser.hxx"
 #include "io/ConfigParser.hxx"
-#include "system/Error.hxx"
 #include "net/Parser.hxx"
 #include "net/AddressInfo.hxx"
 #include "util/StringCompare.hxx"
-#include "util/StringStrip.hxx"
 #include "util/CharUtil.hxx"
-#include "util/ScopeExit.hxx"
 #include "util/RuntimeError.hxx"
 
 #ifdef HAVE_AVAHI
@@ -50,10 +46,8 @@
 #endif
 
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <netdb.h>
 
 class LbConfigParser final : public NestedConfigParser {
 	LbConfig &config;

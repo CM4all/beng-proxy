@@ -37,8 +37,6 @@
 #include "util/RuntimeError.hxx"
 #include "util/StringView.hxx"
 
-#include <string.h>
-
 void
 TranslationMarshaller::Write(TranslationCommand command,
 			     ConstBuffer<void> payload)

@@ -36,7 +36,6 @@ struct ChildOptions;
 class StockMap;
 class EventLoop;
 class SpawnService;
-class StockGetHandler;
 class SocketDescriptor;
 struct StockItem;
 

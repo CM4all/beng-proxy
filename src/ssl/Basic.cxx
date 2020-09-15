@@ -34,7 +34,6 @@
 #include "Config.hxx"
 #include "ssl/Error.hxx"
 #include "ssl/Ctx.hxx"
-#include "ssl/Unique.hxx"
 
 #include "util/Compiler.h"
 

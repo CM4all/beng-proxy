@@ -33,7 +33,6 @@
 #include "Client.hxx"
 #include "Error.hxx"
 #include "Handler.hxx"
-#include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "system/Stat.hxx"
 #include "io/FileDescriptor.hxx"
@@ -52,7 +51,6 @@ extern "C" {
 #include <iterator>
 #include <string>
 
-#include <string.h>
 #include <fcntl.h>
 #include <sys/poll.h>
 #include <sys/stat.h>

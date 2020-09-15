@@ -38,8 +38,6 @@
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "event/DeferEvent.hxx"
-#include "util/Cast.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/WritableBuffer.hxx"
 

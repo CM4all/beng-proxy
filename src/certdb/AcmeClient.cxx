@@ -40,9 +40,6 @@
 #include "JWS.hxx"
 #include "JsonUtil.hxx"
 #include "ssl/Base64.hxx"
-#include "ssl/Certificate.hxx"
-#include "ssl/Key.hxx"
-#include "uri/Extract.hxx"
 #include "util/Exception.hxx"
 #include "util/RuntimeError.hxx"
 

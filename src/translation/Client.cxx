@@ -48,7 +48,6 @@
 
 #include <assert.h>
 #include <string.h>
-#include <errno.h>
 
 static const uint8_t PROTOCOL_VERSION = 3;
 

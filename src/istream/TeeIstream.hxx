@@ -34,7 +34,6 @@
 
 struct pool;
 class UnusedIstreamPtr;
-class Istream;
 class EventLoop;
 
 /**

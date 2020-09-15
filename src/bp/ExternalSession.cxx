@@ -35,16 +35,14 @@
 #include "Instance.hxx"
 #include "http/Address.hxx"
 #include "http_request.hxx"
-#include "http/Headers.hxx"
 #include "HttpResponseHandler.hxx"
-#include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool/Holder.hxx"
 #include "io/Logger.hxx"
 #include "util/Background.hxx"
-#include "util/Exception.hxx"
 #include "stopwatch.hxx"
+#include "strmap.hxx"
 
 class ExternalSessionRefresh final
 	: PoolHolder, public LinkedBackgroundJob, HttpResponseHandler {

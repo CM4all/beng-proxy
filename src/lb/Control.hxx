@@ -36,13 +36,10 @@
 #include "control/Server.hxx"
 #include "io/Logger.hxx"
 
-#include <memory>
-
 struct StringView;
 struct LbInstance;
 struct LbControlConfig;
 template<typename T> struct ConstBuffer;
-class EventLoop;
 
 class LbControl final : ControlHandler {
 	const LLogger logger;

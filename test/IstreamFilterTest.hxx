@@ -44,7 +44,6 @@
 #include "istream/HeadIstream.hxx"
 #include "istream/InjectIstream.hxx"
 #include "istream/istream_later.hxx"
-#include "istream/Pointer.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "pool/pool.hxx"
 #include "io/SpliceSupport.hxx"

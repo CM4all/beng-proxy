@@ -40,17 +40,12 @@
 #include "spawn/ChildOptions.hxx"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
-#include "io/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/HexFormat.h"
 #include "util/djbhash.h"
 
-#include <sys/wait.h>
-#include <unistd.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
 static const char *
 append_etag(AllocatorPtr alloc, const char *in, const char *suffix)

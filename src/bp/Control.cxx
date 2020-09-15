@@ -36,23 +36,16 @@
 #include "nfs/Cache.hxx"
 #include "control/Server.hxx"
 #include "control/Local.hxx"
-#include "translation/Request.hxx"
 #include "translation/Cache.hxx"
 #include "translation/Protocol.hxx"
 #include "translation/InvalidateParser.hxx"
 #include "pool/tpool.hxx"
 #include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/IPv4Address.hxx"
 #include "io/Logger.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/Exception.hxx"
-#include "util/Macros.hxx"
 #include "util/WritableBuffer.hxx"
 #include "stopwatch.hxx"
-
-#include <assert.h>
-#include <string.h>
 
 using namespace BengProxy;
 

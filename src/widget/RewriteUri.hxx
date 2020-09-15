@@ -43,8 +43,6 @@ struct WidgetContext;
 template<typename T> class SharedPoolPtr;
 class StopwatchPtr;
 class UnusedIstreamPtr;
-struct parsed_uri;
-class StringMap;
 class Widget;
 struct StringView;
 struct escape_class;

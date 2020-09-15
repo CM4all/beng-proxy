@@ -40,7 +40,6 @@
 #include <boost/intrusive/list.hpp>
 
 struct pool;
-class UniqueSocketDescriptor;
 class HttpServerConnectionHandler;
 
 namespace NgHttp2 {

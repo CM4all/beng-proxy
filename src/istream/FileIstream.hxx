@@ -37,7 +37,6 @@
 struct pool;
 class UnusedIstreamPtr;
 class EventLoop;
-class FileDescriptor;
 class UniqueFileDescriptor;
 
 UnusedIstreamPtr

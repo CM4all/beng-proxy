@@ -42,11 +42,8 @@
 #include "pool/tpool.hxx"
 #include "pool/StringBuilder.hxx"
 #include "event/SocketEvent.hxx"
-#include "net/log/Datagram.hxx"
 #include "io/Logger.hxx"
-#include "util/Cancellable.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/Cast.hxx"
 
 #include <was/protocol.h>
 

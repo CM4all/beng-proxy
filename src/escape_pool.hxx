@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include <stddef.h>
-
 struct pool;
 struct escape_class;
 struct StringView;

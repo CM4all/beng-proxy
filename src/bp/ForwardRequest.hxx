@@ -40,10 +40,8 @@
 #include "http/Method.h"
 #include "istream/UnusedPtr.hxx"
 
-class StringMap;
 struct HeaderForwardSettings;
 class Request;
-class Istream;
 
 struct ForwardRequest {
 	http_method_t method;

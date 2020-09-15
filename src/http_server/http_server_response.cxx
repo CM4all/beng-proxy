@@ -32,11 +32,9 @@
 
 #include "Internal.hxx"
 #include "Request.hxx"
-#include "pool/pool.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/Exception.hxx"
 
-#include <sys/socket.h>
 #include <errno.h>
 #include <string.h>
 

@@ -31,7 +31,6 @@
  */
 
 #include "Glue.hxx"
-#include "AllocatorPtr.hxx"
 #include "Address.hxx"
 #include "Client.hxx"
 #include "Launch.hxx"

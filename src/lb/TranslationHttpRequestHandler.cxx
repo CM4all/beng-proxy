@@ -32,10 +32,8 @@
 
 #include "HttpConnection.hxx"
 #include "RLogger.hxx"
-#include "GotoConfig.hxx"
+#include "ListenerConfig.hxx"
 #include "TranslationHandler.hxx"
-#include "Config.hxx"
-#include "http_server/http_server.hxx"
 #include "http/IncomingRequest.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Response.hxx"

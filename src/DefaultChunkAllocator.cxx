@@ -35,7 +35,7 @@
 #include "fb_pool.hxx"
 #include "util/WritableBuffer.hxx"
 
-#include <assert.h>
+#include <cassert>
 
 #ifndef NDEBUG
 

@@ -37,7 +37,6 @@
 #include "util/StringView.hxx"
 #include "puri_escape.hxx"
 #include "pexpand.hxx"
-#include "pool/pbuffer.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <assert.h>

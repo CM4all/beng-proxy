@@ -36,7 +36,6 @@
 
 #include "util/Compiler.h"
 
-#include <assert.h>
 #include <stddef.h>
 #include <sys/types.h>
 

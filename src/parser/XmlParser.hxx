@@ -35,8 +35,6 @@
 #include "expansible_buffer.hxx"
 #include "util/StringView.hxx"
 
-#include <exception>
-
 #include <assert.h>
 #include <sys/types.h>
 

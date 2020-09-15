@@ -36,8 +36,6 @@
 
 #pragma once
 
-#include "http/Status.h"
-
 class UnusedIstreamPtr;
 class Request;
 class Widget;

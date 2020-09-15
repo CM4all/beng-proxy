@@ -36,9 +36,9 @@
 #include "shm/dbuffer.hxx"
 #include "crash.hxx"
 
+#include <boost/intrusive/unordered_set.hpp>
+
 #include <assert.h>
-#include <stdlib.h>
-#include <errno.h>
 #include <string.h>
 
 static constexpr std::chrono::seconds SESSION_TTL_NEW(120);

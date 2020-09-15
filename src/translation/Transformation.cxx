@@ -34,8 +34,6 @@
 #include "bp/XmlProcessor.hxx"
 #include "AllocatorPtr.hxx"
 
-#include <string.h>
-
 Transformation::Transformation(AllocatorPtr alloc,
 			       const Transformation &src) noexcept
 	:type(src.type)

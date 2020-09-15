@@ -44,11 +44,9 @@
 #include "util/StringView.hxx"
 #include "util/StringFormat.hxx"
 
-#include <limits.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <sys/socket.h>
 
 inline bool
 HttpServerConnection::ParseRequestLine(const char *line, size_t length)

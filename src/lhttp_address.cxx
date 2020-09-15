@@ -31,12 +31,10 @@
  */
 
 #include "lhttp_address.hxx"
-#include "pool/pool.hxx"
 #include "pool/StringBuilder.hxx"
 #include "AllocatorPtr.hxx"
 #include "uri/Base.hxx"
 #include "uri/Relative.hxx"
-#include "uri/Escape.hxx"
 #include "uri/Extract.hxx"
 #include "puri_edit.hxx"
 #include "puri_relative.hxx"

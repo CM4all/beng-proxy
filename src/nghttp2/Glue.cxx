@@ -35,6 +35,7 @@
 #include "Client.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "http/Address.hxx"
+#include "util/Cancellable.hxx"
 #include "AllocatorPtr.hxx"
 #include "HttpResponseHandler.hxx"
 #include "stopwatch.hxx"

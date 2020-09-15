@@ -31,9 +31,6 @@
  */
 
 #include "MultiFifoBufferIstream.hxx"
-#include "Bucket.hxx"
-#include "SliceFifoBuffer.hxx"
-#include "fb_pool.hxx"
 
 #include <string.h>
 

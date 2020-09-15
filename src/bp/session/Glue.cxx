@@ -33,20 +33,8 @@
 #include "Glue.hxx"
 #include "Manager.hxx"
 #include "Session.hxx"
-#include "shm/shm.hxx"
-#include "shm/dpool.hxx"
 #include "random.hxx"
 #include "crash.hxx"
-#include "io/Logger.hxx"
-#include "util/RefCount.hxx"
-
-#include <boost/interprocess/sync/interprocess_sharable_mutex.hpp>
-#include <boost/interprocess/sync/sharable_lock.hpp>
-#include <boost/interprocess/sync/scoped_lock.hpp>
-
-#include <errno.h>
-#include <string.h>
-#include <stdlib.h>
 
 SessionManager *session_manager;
 

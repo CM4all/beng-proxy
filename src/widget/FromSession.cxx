@@ -31,15 +31,9 @@
  */
 
 #include "Widget.hxx"
-#include "Error.hxx"
 #include "Class.hxx"
-#include "Ref.hxx"
 #include "bp/session/Session.hxx"
-#include "puri_relative.hxx"
-#include "AllocatorPtr.hxx"
-#include "shm/dpool.hxx"
 
-#include <string.h>
 #include <assert.h>
 
 void

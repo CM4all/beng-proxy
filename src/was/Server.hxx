@@ -40,14 +40,9 @@
 #include "http/Method.h"
 #include "http/Status.h"
 
-class FileDescriptor;
-class SocketDescriptor;
 class EventLoop;
 class UnusedIstreamPtr;
-struct lease;
 class StringMap;
-class HttpResponseHandler;
-class WasServer;
 
 class WasServerHandler {
 public:

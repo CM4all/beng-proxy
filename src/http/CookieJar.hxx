@@ -39,7 +39,6 @@
 
 struct pool;
 struct dpool;
-struct CookieJar;
 
 struct Cookie
     : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {

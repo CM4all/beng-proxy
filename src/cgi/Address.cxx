@@ -41,7 +41,6 @@
 #include "uri/Compare.hxx"
 #include "uri/Relative.hxx"
 #include "util/StringView.hxx"
-#include "util/StringCompare.hxx"
 #include "puri_relative.hxx"
 #include "puri_escape.hxx"
 #include "puri_edit.hxx"

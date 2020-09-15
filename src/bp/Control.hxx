@@ -37,7 +37,6 @@
 #pragma once
 
 struct BpInstance;
-class UniqueSocketDescriptor;
 
 void
 global_control_handler_init(BpInstance *instance);

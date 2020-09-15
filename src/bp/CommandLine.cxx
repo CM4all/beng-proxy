@@ -38,8 +38,6 @@
 #include "util/IterableSplitString.hxx"
 #include "version.h"
 
-#include <cassert>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>

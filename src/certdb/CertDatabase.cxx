@@ -38,7 +38,6 @@
 #include "ssl/Time.hxx"
 #include "ssl/Name.hxx"
 #include "ssl/AltName.hxx"
-#include "ssl/Error.hxx"
 #include "io/FileDescriptor.hxx"
 
 #include <openssl/aes.h>

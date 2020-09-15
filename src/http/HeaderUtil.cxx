@@ -31,7 +31,6 @@
  */
 
 #include "HeaderUtil.hxx"
-#include "pool/pool.hxx"
 #include "util/StringStrip.hxx"
 #include "util/StringView.hxx"
 

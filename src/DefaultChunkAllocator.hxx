@@ -35,6 +35,7 @@
 #include "SliceAllocation.hxx"
 
 #include <cassert>
+#include <cstddef>
 #include <utility>
 
 template<typename T> struct WritableBuffer;

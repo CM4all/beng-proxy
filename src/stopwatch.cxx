@@ -36,13 +36,12 @@
 #include "util/StringBuilder.hxx"
 
 #include <boost/container/static_vector.hpp>
-#include <boost/intrusive/slist.hpp>
+#include <boost/intrusive/slist_hook.hpp>
 
 #include <chrono>
 #include <list>
 #include <string>
 
-#include <time.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>

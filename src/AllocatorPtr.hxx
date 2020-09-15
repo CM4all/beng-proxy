@@ -38,8 +38,6 @@
 
 #include <string.h>
 
-struct StringView;
-template<typename T> struct ConstBuffer;
 class SocketAddress;
 
 class AllocatorPtr {

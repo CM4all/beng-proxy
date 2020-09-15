@@ -44,8 +44,6 @@
 #include "was/Error.hxx"
 #include "widget/Error.hxx"
 #include "ssl/Error.hxx"
-#include "HttpResponseHandler.hxx"
-#include "http_server/http_server.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/MessageHttpResponse.hxx"
 #include "HttpMessageResponse.hxx"

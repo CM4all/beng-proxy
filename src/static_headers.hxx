@@ -43,7 +43,6 @@ struct pool;
 class FileDescriptor;
 class StringMap;
 struct statx;
-struct file_request;
 
 void
 GetAnyETag(char *buffer, size_t size,

@@ -36,10 +36,7 @@
 #include "spawn/ChildOptions.hxx"
 #include "adata/ExpandableStringList.hxx"
 #include "util/ShallowCopy.hxx"
-
 #include "util/Compiler.h"
-
-#include <assert.h>
 
 class AllocatorPtr;
 struct StringView;

@@ -32,14 +32,12 @@
 
 #include "istream_gb.hxx"
 #include "istream/istream.hxx"
-#include "istream/Bucket.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/New.hxx"
 #include "GrowingBuffer.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/Cast.hxx"
 
-#include <algorithm>
+#include <utility>
 
 class GrowingBufferIstream final : public Istream {
 	GrowingBufferReader reader;

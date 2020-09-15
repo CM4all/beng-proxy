@@ -32,7 +32,6 @@
 
 #include "Stock.hxx"
 #include "Client.hxx"
-#include "fs/Factory.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "fs/Connect.hxx"
 #include "fs/Key.hxx"
@@ -40,6 +39,7 @@
 #include "event/TimerEvent.hxx"
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
+#include "util/Cancellable.hxx"
 #include "util/djbhash.h"
 #include "util/DeleteDisposer.hxx"
 #include "util/StringBuilder.hxx"

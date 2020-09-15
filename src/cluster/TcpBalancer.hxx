@@ -40,7 +40,6 @@ class AllocatorPtr;
 struct AddressList;
 class TcpStock;
 class StockGetHandler;
-struct StockItem;
 class CancellablePointer;
 class SocketAddress;
 class EventLoop;

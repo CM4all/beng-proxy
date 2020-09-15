@@ -34,7 +34,6 @@
 
 #include "net/SocketAddress.hxx"
 
-#include <sys/socket.h>
 #include <sys/un.h>
 
 class UniqueSocketDescriptor;

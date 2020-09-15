@@ -46,8 +46,6 @@
 #include "io/Logger.hxx"
 #endif
 
-#include <string.h>
-
 using namespace BengProxy;
 
 gcc_pure

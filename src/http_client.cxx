@@ -53,7 +53,6 @@
 #include "strmap.hxx"
 #include "fs/Lease.hxx"
 #include "AllocatorPtr.hxx"
-#include "pool/Holder.hxx"
 #include "system/Error.hxx"
 #include "io/Logger.hxx"
 #include "io/SpliceSupport.hxx"
@@ -70,9 +69,8 @@
 #include "util/Compiler.h"
 
 #include <assert.h>
-#include <limits.h>
 #include <stdlib.h>
-#include <sys/socket.h>
+#include <sys/uio.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>

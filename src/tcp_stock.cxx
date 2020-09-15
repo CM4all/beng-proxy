@@ -36,7 +36,6 @@
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
 #include "stock/LoggerDomain.hxx"
-#include "cluster/AddressList.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "net/PConnectSocket.hxx"
@@ -53,8 +52,6 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/un.h>
-#include <sys/socket.h>
 
 struct TcpStockRequest {
 	AllocatorPtr alloc;

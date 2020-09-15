@@ -42,8 +42,6 @@
 
 #include <string>
 
-#include <string.h>
-
 struct NfsStockConnection;
 
 struct NfsStockRequest final

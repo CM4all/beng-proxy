@@ -44,7 +44,6 @@
 #include "istream/MultiFifoBufferIstream.hxx"
 #include "istream/New.hxx"
 #include "net/StaticSocketAddress.hxx"
-#include "net/UniqueSocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StaticArray.hxx"

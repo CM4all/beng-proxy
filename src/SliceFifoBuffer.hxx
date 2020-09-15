@@ -35,7 +35,6 @@
 #include "SliceAllocation.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 
-#include <assert.h>
 #include <stdint.h>
 
 class SlicePool;

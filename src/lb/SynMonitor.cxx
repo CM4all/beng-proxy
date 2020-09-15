@@ -38,9 +38,6 @@
 #include "net/SocketAddress.hxx"
 #include "util/Cancellable.hxx"
 
-#include <unistd.h>
-#include <sys/socket.h>
-
 class LbSynMonitor final : ConnectSocketHandler, Cancellable {
 	ConnectSocket connect;
 

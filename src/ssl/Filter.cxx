@@ -32,10 +32,8 @@
 
 #include "Filter.hxx"
 #include "Factory.hxx"
-#include "Config.hxx"
 #include "ssl/Unique.hxx"
 #include "ssl/Name.hxx"
-#include "ssl/Error.hxx"
 #include "FifoBufferBio.hxx"
 #include "fs/ThreadSocketFilter.hxx"
 #include "fb_pool.hxx"

@@ -34,7 +34,6 @@
 
 class AllocatorPtr;
 class StringMap;
-class HttpHeaders;
 
 /**
  * Which headers should be forwarded to/from remote HTTP servers?

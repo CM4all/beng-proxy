@@ -37,7 +37,6 @@
 #include "TcpConnection.hxx"
 #include "pool/UniquePtr.hxx"
 #include "ssl/Factory.hxx"
-#include "ssl/Filter.hxx"
 #include "ssl/DbSniCallback.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "net/SocketAddress.hxx"

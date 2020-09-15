@@ -36,8 +36,6 @@
 
 #include <boost/intrusive/slist.hpp>
 
-#include <stddef.h>
-
 class AllocatorPtr;
 
 /**

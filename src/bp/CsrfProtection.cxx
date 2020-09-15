@@ -37,8 +37,6 @@
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 
-#include <string.h>
-
 bool
 Request::HasValidCsrfToken() noexcept
 {

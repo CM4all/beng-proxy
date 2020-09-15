@@ -32,7 +32,6 @@
 
 #include "Request.hxx"
 #include "RLogger.hxx"
-#include "Connection.hxx"
 #include "Instance.hxx"
 #include "session/Session.hxx"
 #include "session/Glue.hxx"

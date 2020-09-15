@@ -37,9 +37,7 @@
 #include <exception>
 
 struct pool;
-class Istream;
 class UnusedIstreamPtr;
-class CancellablePointer;
 class EventLoop;
 
 class DelayedIstreamControl {

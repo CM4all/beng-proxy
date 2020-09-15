@@ -41,15 +41,12 @@
 
 #include <boost/intrusive/slist.hpp>
 
+#include <cstdint>
 #include <memory>
-
-#include <stdint.h>
 
 struct pool;
 class AllocatorPtr;
 class StringMap;
-struct StringView;
-struct DissectedUri;
 struct RealmSession;
 struct WidgetSession;
 struct WidgetView;

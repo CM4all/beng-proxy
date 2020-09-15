@@ -45,7 +45,6 @@
 #include "thread/Pool.hxx"
 #include "fb_pool.hxx"
 #include "capabilities.hxx"
-#include "net/FailureManager.hxx"
 #include "system/Isolate.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/SpliceSupport.hxx"
@@ -62,15 +61,7 @@
 
 #include <libpq-fe.h>
 
-#include <assert.h>
-#include <unistd.h>
-#include <sys/signal.h>
-#include <sys/wait.h>
 #include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
-#include <netdb.h>
 
 #ifdef __linux
 #include <sys/prctl.h>

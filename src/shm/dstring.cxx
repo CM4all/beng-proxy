@@ -37,7 +37,6 @@
 #include "dpool.hxx"
 #include "util/StringView.hxx"
 
-#include <assert.h>
 #include <string.h>
 
 char *

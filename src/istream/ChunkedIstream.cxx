@@ -36,7 +36,6 @@
 #include "New.hxx"
 #include "UnusedPtr.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/Cast.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/HexFormat.h"
 #include "util/StringView.hxx"

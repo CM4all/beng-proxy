@@ -31,7 +31,7 @@
  */
 
 #include "suffix_registry.hxx"
-#include "translation/Cache.hxx"
+#include "translation/Service.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
