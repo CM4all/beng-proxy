@@ -286,7 +286,7 @@ private:
 
 static constexpr auto fcgi_client_timeout = std::chrono::minutes(2);
 
-inline FcgiClient::~FcgiClient()
+inline FcgiClient::~FcgiClient() noexcept
 {
 	if (socket.IsConnected())
 		ReleaseSocket(false);
