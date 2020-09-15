@@ -38,7 +38,6 @@
 #define BENG_PROXY_SESSION_WRITE_HXX
 
 #include <stdint.h>
-#include <stdio.h>
 
 struct Session;
 class BufferedOutputStream;

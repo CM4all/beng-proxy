@@ -38,7 +38,6 @@
 #include <utility>
 
 struct Session;
-class SessionId;
 class EventLoop;
 
 class SessionManager;
