@@ -665,6 +665,15 @@ class StringViewPrinter:
 
         return '"%s"' % data.string(length=self.val['size'])
 
+class StringMapItemPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        k = self.val['key']
+        v = self.val['value']
+        return '{"%s"="%s"}' % (k.string(), v.string())
+
 class BoundMethodPrinter:
     def __init__(self, val):
         self.val = val
@@ -859,6 +868,7 @@ def build_pretty_printer():
     pp.add_printer('boost::intrusive::unordered_set', 'boost::intrusive::unordered_(multi)?set<', IntrusiveUnorderedSetPrinter)
     pp.add_printer('StringView', '^BasicStringView<char>$', StringViewPrinter)
     pp.add_printer('StringView', '^StringView$', StringViewPrinter)
+    pp.add_printer('StringMap::Item', '^StringMap::Item$', StringMapItemPrinter)
     pp.add_printer('BoundMethod', '^BoundMethod<', BoundMethodPrinter)
     pp.add_printer('CancellablePointer', '^CancellablePointer$', CancellablePointerPrinter)
     pp.add_printer('PoolPtr', '^PoolPtr$', PoolPtrPrinter)
