@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.26) unstable; urgency=low
 
-  * 
+  * bp: fix miscalculcated end offset in Range requests
 
  --   
 

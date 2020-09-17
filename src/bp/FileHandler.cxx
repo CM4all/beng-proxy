@@ -95,7 +95,7 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 
 	case HttpRangeRequest::Type::VALID:
 		start_offset = file_request.range.skip;
-		end_offset = start_offset + file_request.range.size;
+		end_offset = file_request.range.size;
 
 		status = HTTP_STATUS_PARTIAL_CONTENT;
 
