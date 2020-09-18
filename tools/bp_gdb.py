@@ -674,6 +674,19 @@ class StringMapItemPrinter:
         v = self.val['value']
         return '{"%s"="%s"}' % (k.string(), v.string())
 
+class StringMapPrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def display_hint(self):
+        return 'array'
+
+    def children(self):
+        return IntrusiveSetPrinter(self.val['map']).children()
+
+    def to_string(self):
+        return 'StringMap'
+
 class BoundMethodPrinter:
     def __init__(self, val):
         self.val = val
@@ -869,6 +882,7 @@ def build_pretty_printer():
     pp.add_printer('StringView', '^BasicStringView<char>$', StringViewPrinter)
     pp.add_printer('StringView', '^StringView$', StringViewPrinter)
     pp.add_printer('StringMap::Item', '^StringMap::Item$', StringMapItemPrinter)
+    pp.add_printer('StringMap', '^StringMap$', StringMapPrinter)
     pp.add_printer('BoundMethod', '^BoundMethod<', BoundMethodPrinter)
     pp.add_printer('CancellablePointer', '^CancellablePointer$', CancellablePointerPrinter)
     pp.add_printer('PoolPtr', '^PoolPtr$', PoolPtrPrinter)
