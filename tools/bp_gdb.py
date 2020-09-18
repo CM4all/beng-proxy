@@ -716,7 +716,7 @@ class PoolPtrPrinter:
         self.val = val
 
     def to_string(self):
-        pool = self.val['value']
+        pool = self.val['value'].dereference()
 
         if pool.address != 0:
             return 'PoolPtr{"%s"}' % pool['name'].string()
@@ -730,7 +730,7 @@ class PoolHolderPrinter:
     def to_string(self):
         pool = self.val['pool']
         if 'value' in pool.type:
-            pool = pool['value']
+            pool = pool['value'].dereference()
 
         if pool.address != 0:
             return 'PoolHolder{"%s"}' % pool['name'].string()
