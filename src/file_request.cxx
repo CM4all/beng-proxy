@@ -49,6 +49,7 @@
 #include "io/uring/Handler.hxx"
 #include "io/uring/OpenStat.hxx"
 #include "util/Cancellable.hxx"
+#include <memory>
 #include <sys/sysmacros.h> // for makedev()
 #endif
 
@@ -67,7 +68,7 @@ class UringStaticFileGet final : Uring::OpenStatHandler, Cancellable {
 	const char *const path;
 	const char *const content_type;
 
-	Uring::OpenStat open_stat;
+	std::unique_ptr<Uring::OpenStat> open_stat;
 
 	HttpResponseHandler &handler;
 
@@ -82,16 +83,16 @@ public:
 		 base(std::move(_base)), // TODO: use io_uring to open it
 		 path(_path),
 		 content_type(_content_type),
-		 open_stat(uring, *this),
+		 open_stat(new Uring::OpenStat(uring, *this)),
 		 handler(_handler) {}
 
 	void Start(CancellablePointer &cancel_ptr) noexcept {
 		cancel_ptr = *this;
 
 		if (base.IsDefined())
-			open_stat.StartOpenStatReadOnlyBeneath(base, path);
+			open_stat->StartOpenStatReadOnlyBeneath(base, path);
 		else
-			open_stat.StartOpenStatReadOnly(path);
+			open_stat->StartOpenStatReadOnly(path);
 	}
 
 private:
@@ -101,6 +102,14 @@ private:
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
+		/* keep the Uring::OpenStat allocated until the kernel
+		   finishes the operation, or else the kernel may
+		   overwrite the memory when something else occupies
+		   it; also, the canceled object will take care for
+		   closing the new file descriptor */
+		open_stat->Cancel();
+		open_stat.release();
+
 		Destroy();
 	}
 
@@ -122,6 +131,10 @@ UringStaticFileGet::OnOpenStat(UniqueFileDescriptor fd,
 	const char *_content_type = content_type;
 	auto &_handler = handler;
 
+	/* delay destruction, because this object owns the
+	   memory pointed to by "st" */
+	const auto operation = std::move(open_stat);
+
 	Destroy();
 
 	if (S_ISCHR(stx.stx_mode)) {
@@ -140,7 +153,7 @@ UringStaticFileGet::OnOpenStat(UniqueFileDescriptor fd,
 
 	_handler.InvokeResponse(HTTP_STATUS_OK,
 				std::move(headers),
-				NewUringIstream(open_stat.GetQueue(), pool,
+				NewUringIstream(operation->GetQueue(), pool,
 						path, std::move(fd),
 						0, stx.stx_size));
 }

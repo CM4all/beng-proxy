@@ -36,10 +36,12 @@
 #include "util/Cancellable.hxx"
 #include "AllocatorPtr.hxx"
 
+#include <memory>
+
 #include <fcntl.h>
 
 class UringOpenStatOperation final : Cancellable, Uring::OpenStatHandler {
-	Uring::OpenStat open_stat;
+	std::unique_ptr<Uring::OpenStat> open_stat;
 
 	Uring::OpenStatHandler &handler;
 
@@ -49,15 +51,15 @@ public:
 			       const char *path,
 			       Uring::OpenStatHandler &_handler,
 			       CancellablePointer &cancel_ptr) noexcept
-		:open_stat(uring, *this),
+		:open_stat(new Uring::OpenStat(uring, *this)),
 		 handler(_handler)
 	{
 		cancel_ptr = *this;
 
 		if (directory.IsDefined() && directory != FileDescriptor(AT_FDCWD))
-			open_stat.StartOpenStatReadOnlyBeneath(directory, path);
+			open_stat->StartOpenStatReadOnlyBeneath(directory, path);
 		else
-			open_stat.StartOpenStatReadOnly(directory, path);
+			open_stat->StartOpenStatReadOnly(directory, path);
 	}
 
 private:
@@ -67,6 +69,14 @@ private:
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
+		/* keep the Uring::OpenStat allocated until the kernel
+		   finishes the operation, or else the kernel may
+		   overwrite the memory when something else occupies
+		   it; also, the canceled object will take care for
+		   closing the new file descriptor */
+		open_stat->Cancel();
+		open_stat.release();
+
 		Destroy();
 	}
 
@@ -74,6 +84,11 @@ private:
 	void OnOpenStat(UniqueFileDescriptor fd,
 			struct statx &st) noexcept override {
 		auto &_handler = handler;
+
+		/* delay destruction, because this object owns the
+		   memory pointed to by "st" */
+		const auto operation = std::move(open_stat);
+
 		Destroy();
 		_handler.OnOpenStat(std::move(fd), st);
 	}
