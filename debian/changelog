@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.0.27) unstable; urgency=low
 
   * processor: skip incorrect widget declarations
+  * processor: reduce memory overhead
 
  --   
 

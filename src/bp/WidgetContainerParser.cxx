@@ -264,9 +264,14 @@ bool
 WidgetContainerParser::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 {
 	if (tag == Tag::WIDGET) {
-		if (xml_tag.type == XmlParserTagType::OPEN || xml_tag.type == XmlParserTagType::SHORT)
+		if (xml_tag.type == XmlParserTagType::OPEN || xml_tag.type == XmlParserTagType::SHORT) {
+			if (!WantWidget(*widget.widget)) {
+				CancelWidget();
+				return true;
+			}
+
 			widget.start_offset = xml_tag.start;
-		else if (widget.widget == nullptr)
+		} else if (widget.widget == nullptr)
 			return true;
 
 		assert(widget.widget != nullptr);

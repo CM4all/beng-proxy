@@ -108,7 +108,6 @@ private:
 	Widget &PrepareEmbedWidget(WidgetPtr &&child_widget);
 
 	void FoundWidget(WidgetPtr &&child_widget) noexcept;
-	bool CheckWidgetLookup(WidgetPtr &&child_widget) noexcept;
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override;
@@ -123,6 +122,10 @@ private:
 	void OnError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class WidgetContainerParser */
+	bool WantWidget(const Widget &w) const noexcept override {
+		return w.id != nullptr && StringIsEqual(w.id, lookup_id);
+	}
+
 	bool WidgetElementFinished(const XmlParserTag &tag,
 				   WidgetPtr &&child_widget) noexcept override;
 
@@ -239,26 +242,15 @@ WidgetLookupProcessor::FoundWidget(WidgetPtr &&child_widget) noexcept
 	}
 }
 
-inline bool
-WidgetLookupProcessor::CheckWidgetLookup(WidgetPtr &&child_widget) noexcept
-{
-	assert(child_widget->parent == &container);
-
-	if (child_widget->id != nullptr &&
-	    strcmp(lookup_id, child_widget->id) == 0) {
-		FoundWidget(std::move(child_widget));
-		return false;
-	} else {
-		child_widget->Cancel();
-		return true;
-	}
-}
-
 bool
 WidgetLookupProcessor::WidgetElementFinished(const XmlParserTag &,
 					  WidgetPtr &&child_widget) noexcept
 {
-	return CheckWidgetLookup(std::move(child_widget));
+	assert(child_widget->id != nullptr);
+	assert(StringIsEqual(child_widget->id, lookup_id));
+
+	FoundWidget(std::move(child_widget));
+	return false;
 }
 
 bool

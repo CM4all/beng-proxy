@@ -261,6 +261,10 @@ private:
 	}
 
 	/* virtual methods from class WidgetContainerParser */
+	bool WantWidget(const Widget &) const noexcept override {
+		return true;
+	}
+
 	bool WidgetElementFinished(const XmlParserTag &tag,
 				   WidgetPtr &&child_widget) noexcept override;
 	bool OnProcessingInstruction(StringView name) noexcept override;

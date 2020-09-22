@@ -117,6 +117,8 @@ public:
 			      SharedPoolPtr<WidgetContext> &&_ctx) noexcept;
 
 protected:
+	virtual bool WantWidget(const Widget &w) const noexcept = 0;
+
 	virtual bool WidgetElementFinished(const XmlParserTag &widget_tag,
 					   WidgetPtr &&child_widget) noexcept = 0;
 
