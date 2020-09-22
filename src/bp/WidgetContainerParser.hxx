@@ -131,6 +131,8 @@ protected:
 	}
 
 private:
+	void CancelWidget() noexcept;
+
 	bool OnStartElementInWidget(XmlParserTagType type,
 				    StringView name) noexcept;
 

@@ -48,6 +48,16 @@ WidgetContainerParser::WidgetContainerParser(struct pool &_pool,
 	:container(_container), ctx(std::move(_ctx)),
 	 widget(container.pool, _pool) {}
 
+inline void
+WidgetContainerParser::CancelWidget() noexcept
+{
+	assert(tag == Tag::WIDGET);
+	assert(widget.widget != nullptr);
+
+	widget.widget.reset();
+	tag = Tag::IGNORE;
+}
+
 inline bool
 WidgetContainerParser::OnStartElementInWidget(XmlParserTagType type,
 					      StringView name) noexcept
@@ -166,7 +176,7 @@ WidgetContainerParser::OnXmlAttributeFinished(const XmlParserAttribute &attr) no
 						    attr.name, attr.value);
 		} catch (...) {
 			container.logger(2, std::current_exception());
-			// TODO: discard errored widget?
+			CancelWidget();
 		}
 
 		break;
