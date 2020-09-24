@@ -4,7 +4,7 @@ cm4all-beng-proxy (17.0.27) unstable; urgency=low
   * processor: reduce memory overhead
   * io_uring: fix another buffer corruption after cancel
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 24 Sep 2020 16:14:39 +0200
 
 cm4all-beng-proxy (17.0.26) unstable; urgency=low
 
