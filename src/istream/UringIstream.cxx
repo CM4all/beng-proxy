@@ -42,15 +42,20 @@
 #include "system/Error.hxx"
 #include "util/RuntimeError.hxx"
 
+#include <memory>
+
 #include <assert.h>
 #include <limits.h>
 
 class CanceledUringIstream final : public Uring::Operation {
+	std::unique_ptr<struct iovec> iov;
+
 	SliceFifoBuffer buffer;
 
 public:
-	explicit CanceledUringIstream(SliceFifoBuffer &&_buffer) noexcept
-		:buffer(std::move(_buffer)) {}
+	CanceledUringIstream(std::unique_ptr<struct iovec> &&_iov,
+			     SliceFifoBuffer &&_buffer) noexcept
+		:iov(std::move(_iov)), buffer(std::move(_buffer)) {}
 
 	void OnUringCompletion(int) noexcept override {
 		/* ignore the result and delete this object, which
@@ -66,8 +71,13 @@ class UringIstream final : public Istream, Uring::Operation {
 
 	/**
 	 * Passed to the io_uring read operation.
+	 *
+	 * It is allocated on the heap, because the kernel may access
+	 * it if a read is still in flight and this object is
+	 * destroyed; ownership will be passed to
+	 * #CanceledUringIstream.
 	 */
-	struct iovec iov;
+	std::unique_ptr<struct iovec> iov = std::make_unique<struct iovec>();
 
 	/**
 	 * The file offset of the next/pending read operation.  If
@@ -142,7 +152,8 @@ UringIstream::~UringIstream() noexcept
 
 		assert(buffer.IsDefined());
 
-		auto *c = new CanceledUringIstream(std::move(buffer));
+		auto *c = new CanceledUringIstream(std::move(iov),
+						   std::move(buffer));
 		ReplaceUring(*c);
 	}
 }
@@ -172,8 +183,8 @@ UringIstream::StartRead() noexcept
 	if (w.size > GetMaxRead())
 		w.size = GetMaxRead();
 
-	iov = MakeIovec(w);
-	io_uring_prep_readv(s, fd.Get(), &iov, 1, offset);
+	*iov = MakeIovec(w);
+	io_uring_prep_readv(s, fd.Get(), iov.get(), 1, offset);
 
 	uring.Push(*s, *this);
 }

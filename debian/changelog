@@ -2,6 +2,7 @@ cm4all-beng-proxy (17.0.27) unstable; urgency=low
 
   * processor: skip incorrect widget declarations
   * processor: reduce memory overhead
+  * io_uring: fix another buffer corruption after cancel
 
  --   
 
