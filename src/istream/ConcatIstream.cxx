@@ -36,16 +36,13 @@
 #include "UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "util/DestructObserver.hxx"
+#include "util/IntrusiveList.hxx"
 #include "util/WritableBuffer.hxx"
-
-#include <boost/intrusive/slist.hpp>
 
 #include <assert.h>
 
 class CatIstream final : public Istream, DestructAnchor {
-	struct Input final
-		: IstreamSink,
-		  boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+	struct Input final : IstreamSink, IntrusiveListHook {
 
 		CatIstream &cat;
 
@@ -117,8 +114,7 @@ class CatIstream final : public Istream, DestructAnchor {
 
 	bool reading = false;
 
-	typedef boost::intrusive::slist<Input,
-					boost::intrusive::constant_time_size<false>> InputList;
+	using InputList = IntrusiveList<Input>;
 	InputList inputs;
 
 public:
@@ -166,7 +162,7 @@ private:
 
 	void OnInputEof(Input &i) noexcept {
 		const bool current = IsCurrent(i);
-		inputs.erase(inputs.iterator_to(i));
+		i.unlink();
 
 		if (IsEOF()) {
 			assert(current);
@@ -181,7 +177,7 @@ private:
 	}
 
 	void OnInputError(Input &i, std::exception_ptr ep) noexcept {
-		inputs.erase(inputs.iterator_to(i));
+		i.unlink();
 		CloseAllInputs();
 		DestroyError(ep);
 	}
@@ -270,7 +266,7 @@ CatIstream::_FillBucketList(IstreamBucketList &list)
 		try {
 			input.FillBucketList(list);
 		} catch (...) {
-			inputs.erase(inputs.iterator_to(input));
+			input.unlink();
 			CloseAllInputs();
 			Destroy();
 			throw;
@@ -331,14 +327,12 @@ CatIstream::_Close() noexcept
 inline CatIstream::CatIstream(struct pool &p, WritableBuffer<UnusedIstreamPtr> _inputs) noexcept
 	:Istream(p)
 {
-	auto i = inputs.before_begin();
-
 	for (UnusedIstreamPtr &_input : _inputs) {
 		if (!_input)
 			continue;
 
 		auto *input = NewFromPool<Input>(p, *this, std::move(_input));
-		i = inputs.insert_after(i, *input);
+		inputs.push_back(*input);
 	}
 }
 
