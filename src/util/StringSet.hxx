@@ -33,8 +33,7 @@
 #pragma once
 
 #include "util/Compiler.h"
-
-#include <boost/intrusive/slist.hpp>
+#include "util/IntrusiveForwardList.hxx"
 
 class AllocatorPtr;
 
@@ -42,12 +41,11 @@ class AllocatorPtr;
  * An unordered set of strings.
  */
 class StringSet {
-	struct Item : boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+	struct Item : IntrusiveForwardListHook {
 		const char *value;
 	};
 
-	typedef boost::intrusive::slist<Item,
-					boost::intrusive::constant_time_size<false>> List;
+	using List = IntrusiveForwardList<Item>;
 
 	List list;
 
@@ -90,13 +88,13 @@ public:
 		List::const_iterator i;
 
 	public:
-		const_iterator(List::const_iterator _i) noexcept:i(_i) {}
+		constexpr const_iterator(List::const_iterator _i) noexcept:i(_i) {}
 
-		bool operator!=(const const_iterator &other) const noexcept {
+		constexpr bool operator!=(const const_iterator &other) const noexcept {
 			return i != other.i;
 		}
 
-		const char *operator*() const noexcept {
+		constexpr const char *operator*() const noexcept {
 			return i->value;
 		}
 
@@ -111,6 +109,6 @@ public:
 	}
 
 	const_iterator end() const noexcept {
-		return list.end();
+		return const_iterator{list.end()};
 	}
 };
