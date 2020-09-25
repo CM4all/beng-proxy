@@ -32,10 +32,7 @@
 
 #pragma once
 
-#include "util/Compiler.h"
 #include "util/IntrusiveForwardList.hxx"
-
-#include <boost/intrusive/slist.hpp>
 
 /**
  * List of key/value pairs.
@@ -81,7 +78,6 @@ public:
 		return list.end();
 	}
 
-	gcc_pure
 	bool IsEmpty() const noexcept {
 		return list.empty();
 	}
