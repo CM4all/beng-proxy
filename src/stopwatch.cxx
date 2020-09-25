@@ -36,7 +36,6 @@
 #include "util/StringBuilder.hxx"
 
 #include <boost/container/static_vector.hpp>
-#include <boost/intrusive/slist_hook.hpp>
 
 #include <chrono>
 #include <list>
@@ -63,8 +62,7 @@ struct StopwatchEvent {
 		:name(std::forward<N>(_name)) {}
 };
 
-class Stopwatch final : LeakDetector,
-			public boost::intrusive::slist_base_hook<>
+class Stopwatch final : LeakDetector
 {
 	const std::string name;
 
@@ -97,8 +95,6 @@ public:
 	}
 
 	~Stopwatch() noexcept {
-		assert(!is_linked());
-
 		if (dump)
 			Dump(time, 0);
 	}
