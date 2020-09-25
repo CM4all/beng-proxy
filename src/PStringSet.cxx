@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,7 +34,7 @@
 #include "AllocatorPtr.hxx"
 
 void
-StringSet::Add(AllocatorPtr alloc, const char *p)
+StringSet::Add(AllocatorPtr alloc, const char *p) noexcept
 {
 	auto *item = alloc.New<Item>();
 	item->value = p;
@@ -42,7 +42,7 @@ StringSet::Add(AllocatorPtr alloc, const char *p)
 }
 
 void
-StringSet::CopyFrom(AllocatorPtr alloc, const StringSet &s)
+StringSet::CopyFrom(AllocatorPtr alloc, const StringSet &s) noexcept
 {
 	for (auto i : s)
 		Add(alloc, alloc.Dup(i));

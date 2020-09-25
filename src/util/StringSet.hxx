@@ -58,17 +58,17 @@ public:
 	StringSet &operator=(const StringSet &) = delete;
 	StringSet &operator=(StringSet &&src) = default;
 
-	void Init() {
+	void Init() noexcept {
 		list.clear();
 	}
 
 	gcc_pure
-	bool IsEmpty() const {
+	bool IsEmpty() const noexcept {
 		return list.empty();
 	}
 
 	gcc_pure
-	bool Contains(const char *p) const;
+	bool Contains(const char *p) const noexcept;
 
 	/**
 	 * Add a string to the set.  It does not check whether the string
@@ -78,39 +78,39 @@ public:
 	 * @param alloc an allocator that is used to allocate the node
 	 * (not the value)
 	 */
-	void Add(AllocatorPtr alloc, const char *p);
+	void Add(AllocatorPtr alloc, const char *p) noexcept;
 
 	/**
 	 * Copy all strings from one set to this, creating duplicates of
 	 * all values from the specified allocator.
 	 */
-	void CopyFrom(AllocatorPtr alloc, const StringSet &s);
+	void CopyFrom(AllocatorPtr alloc, const StringSet &s) noexcept;
 
 	class const_iterator {
 		List::const_iterator i;
 
 	public:
-		const_iterator(List::const_iterator _i):i(_i) {}
+		const_iterator(List::const_iterator _i) noexcept:i(_i) {}
 
-		bool operator!=(const const_iterator &other) const {
+		bool operator!=(const const_iterator &other) const noexcept {
 			return i != other.i;
 		}
 
-		const char *operator*() const {
+		const char *operator*() const noexcept {
 			return i->value;
 		}
 
-		const_iterator &operator++() {
+		const_iterator &operator++() noexcept {
 			++i;
 			return *this;
 		}
 	};
 
-	const_iterator begin() const {
+	const_iterator begin() const noexcept {
 		return list.begin();
 	}
 
-	const_iterator end() const {
+	const_iterator end() const noexcept {
 		return list.end();
 	}
 };

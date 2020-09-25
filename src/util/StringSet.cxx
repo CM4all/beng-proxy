@@ -35,7 +35,7 @@
 #include <string.h>
 
 bool
-StringSet::Contains(const char *p) const
+StringSet::Contains(const char *p) const noexcept
 {
 	for (auto i : *this)
 		if (strcmp(i, p) == 0)
