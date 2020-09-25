@@ -33,6 +33,7 @@
 #pragma once
 
 #include "util/Compiler.h"
+#include "util/IntrusiveForwardList.hxx"
 
 #include <boost/intrusive/slist.hpp>
 
@@ -41,7 +42,7 @@
  */
 class KeyValueList {
 public:
-	struct Item : boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+	struct Item : IntrusiveForwardListHook {
 		const char *key, *value;
 
 		Item(const char *_key, const char *_value) noexcept
@@ -49,8 +50,7 @@ public:
 	};
 
 private:
-	typedef boost::intrusive::slist<Item,
-					boost::intrusive::constant_time_size<false>> List;
+	using List = IntrusiveForwardList<Item>;
 
 	typedef List::const_iterator const_iterator;
 
@@ -59,9 +59,8 @@ private:
 public:
 	KeyValueList() = default;
 	KeyValueList(const KeyValueList &) = delete;
-	KeyValueList(KeyValueList &&src) noexcept {
-		list.swap(src.list);
-	}
+	KeyValueList(KeyValueList &&src) noexcept
+		:list(std::move(src.list)) {}
 
 	template<typename Alloc>
 	KeyValueList(Alloc &&alloc, const KeyValueList &src) noexcept {
@@ -70,7 +69,7 @@ public:
 	}
 
 	KeyValueList &operator=(KeyValueList &&src) noexcept {
-		list.swap(src.list);
+		list = std::move(src.list);
 		return *this;
 	}
 
