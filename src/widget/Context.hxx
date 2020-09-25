@@ -34,9 +34,8 @@
 
 #include "Ptr.hxx"
 #include "bp/session/Id.hxx"
+#include "util/IntrusiveForwardList.hxx"
 #include "util/StringView.hxx"
-
-#include <boost/intrusive/slist.hpp>
 
 class EventLoop;
 class ResourceLoader;
@@ -87,9 +86,7 @@ struct WidgetContext {
 	SessionId session_id;
 	const char *realm;
 
-	boost::intrusive::slist<Widget,
-				boost::intrusive::base_hook<boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
-				boost::intrusive::constant_time_size<false>> root_widgets;
+	IntrusiveForwardList<Widget> root_widgets;
 
 	WidgetContext(EventLoop &_event_loop,
 		      ResourceLoader &_resource_loader,

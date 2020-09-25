@@ -36,10 +36,9 @@
 #include "pool/LeakDetector.hxx"
 #include "io/Logger.hxx"
 #include "http/Method.h"
+#include "util/IntrusiveForwardList.hxx"
 #include "util/StringView.hxx"
 #include "util/Compiler.h"
-
-#include <boost/intrusive/slist.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -61,11 +60,10 @@ class LimitedConcurrencyQueue;
  */
 class Widget final
 	: PoolLeakDetector,
-	  public boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>
+	  public IntrusiveForwardListHook
 {
 public:
-	boost::intrusive::slist<Widget,
-				boost::intrusive::constant_time_size<false>> children;
+	IntrusiveForwardList<Widget> children;
 
 	Widget *parent = nullptr;
 
