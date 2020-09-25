@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.28) unstable; urgency=low
 
-  * 
+  * merge release 16.28
 
  --   
 
@@ -225,6 +225,12 @@ cm4all-beng-proxy (17.0.1) unstable; urgency=low
   * certdb: implement ACMEv2
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 18 Mar 2020 16:54:20 +0100
+
+cm4all-beng-proxy (16.28) unstable; urgency=low
+
+  * bp: fix translation response URI regression
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 25 Sep 2020 13:32:34 +0200
 
 cm4all-beng-proxy (16.27) unstable; urgency=low
 
