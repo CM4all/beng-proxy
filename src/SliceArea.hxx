@@ -33,8 +33,7 @@
 #pragma once
 
 #include "util/Compiler.h"
-
-#include <boost/intrusive/list_hook.hpp>
+#include "util/IntrusiveList.hxx"
 
 #include <cassert>
 #include <cstddef>
@@ -44,8 +43,7 @@ class SlicePool;
 /**
  * @see #SlicePool
  */
-class SliceArea
-	: public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+class SliceArea : public IntrusiveListHook {
 
 	SlicePool &pool;
 

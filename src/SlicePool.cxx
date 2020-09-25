@@ -365,10 +365,10 @@ SlicePool::Alloc() noexcept
 		/* if the area has become full, move it to the back of the
 		   linked list, to avoid iterating over a long list of full
 		   areas in the next call */
-		areas.erase(areas.iterator_to(area));
+		area.unlink();
 		full_areas.push_back(area);
 	} else if (was_empty) {
-		empty_areas.erase(empty_areas.iterator_to(area));
+		area.unlink();
 		areas.push_back(area);
 	}
 
@@ -403,10 +403,10 @@ SlicePool::Free(SliceArea &area, void *p) noexcept
 		   here; this attempts to keep as many areas as possible
 		   completely empty, so the next Compress() call can dispose
 		   them */
-		full_areas.erase(full_areas.iterator_to(area));
+		area.unlink();
 		areas.push_front(area);
 	} else if (area.IsEmpty()) {
-		areas.erase(areas.iterator_to(area));
+		area.unlink();
 		empty_areas.push_front(area);
 	}
 }

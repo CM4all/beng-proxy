@@ -34,8 +34,7 @@
 
 #include "SliceAllocation.hxx"
 #include "util/Compiler.h"
-
-#include <boost/intrusive/list.hpp>
+#include "util/IntrusiveList.hxx"
 
 #include <cstddef>
 
@@ -69,9 +68,7 @@ class SlicePool {
 
 	std::size_t area_size;
 
-	typedef boost::intrusive::list<SliceArea,
-				       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
-				       boost::intrusive::constant_time_size<false>> AreaList;
+	using AreaList = IntrusiveList<SliceArea>;
 
 	AreaList areas;
 
