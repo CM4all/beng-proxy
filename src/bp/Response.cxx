@@ -221,6 +221,9 @@ Request::InvokeXmlProcessor(http_status_t status,
 		return;
 	}
 
+	if (translate.response->uri != nullptr)
+		dissected_uri.base = translate.response->uri;
+
 	auto ctx = MakeWidgetContext();
 	auto &widget = ctx->AddRootWidget
 		(MakeRootWidget(pool,
@@ -277,9 +280,6 @@ Request::InvokeXmlProcessor(http_status_t status,
 								     std::move(request_body));
 		widget.for_focused = &for_focused;
 	}
-
-	if (translate.response->uri != nullptr)
-		dissected_uri.base = translate.response->uri;
 
 	/* make sure we have a session */
 	{
@@ -344,6 +344,9 @@ Request::InvokeCssProcessor(http_status_t status,
 		return;
 	}
 
+	if (translate.response->uri != nullptr)
+		dissected_uri.base = translate.response->uri;
+
 	auto ctx = MakeWidgetContext();
 	auto &widget = ctx->AddRootWidget(MakeRootWidget(pool,
 							 p_strdup(pool,
@@ -356,9 +359,6 @@ Request::InvokeCssProcessor(http_status_t status,
 		DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
 		return;
 	}
-
-	if (translate.response->uri != nullptr)
-		dissected_uri.base = translate.response->uri;
 
 	response_body = css_processor(pool, stopwatch, std::move(response_body),
 				      widget, std::move(ctx),
@@ -391,6 +391,9 @@ Request::InvokeTextProcessor(http_status_t status,
 		return;
 	}
 
+	if (translate.response->uri != nullptr)
+		dissected_uri.base = translate.response->uri;
+
 	auto ctx = MakeWidgetContext();
 	auto &widget = ctx->AddRootWidget(MakeRootWidget(pool,
 							 p_strdup(pool,
@@ -403,9 +406,6 @@ Request::InvokeTextProcessor(http_status_t status,
 		DispatchResponse(HTTP_STATUS_FORBIDDEN, "Forbidden");
 		return;
 	}
-
-	if (translate.response->uri != nullptr)
-		dissected_uri.base = translate.response->uri;
 
 	response_body = text_processor(pool, std::move(response_body),
 				       widget, *ctx);
