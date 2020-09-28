@@ -37,7 +37,6 @@
 
 #include <boost/intrusive/list.hpp>
 
-struct pool;
 struct dpool;
 
 struct Cookie
@@ -50,9 +49,10 @@ struct Cookie
 	struct Disposer {
 		struct dpool &pool;
 
-		explicit Disposer(struct dpool &_pool):pool(_pool) {}
+		explicit constexpr Disposer(struct dpool &_pool) noexcept
+			:pool(_pool) {}
 
-		void operator()(Cookie *cookie) const {
+		void operator()(Cookie *cookie) const noexcept {
 			cookie->Free(pool);
 		}
 	};
@@ -63,7 +63,7 @@ struct Cookie
 	Cookie(const Cookie &) = delete;
 	Cookie &operator=(const Cookie &) = delete;
 
-	void Free(struct dpool &pool);
+	void Free(struct dpool &pool) noexcept;
 };
 
 /**
@@ -76,7 +76,7 @@ struct CookieJar {
 				       boost::intrusive::constant_time_size<false>> List;
 	List cookies;
 
-	explicit CookieJar(struct dpool &_pool)
+	explicit CookieJar(struct dpool &_pool) noexcept
 		:pool(_pool) {
 	}
 
@@ -85,16 +85,16 @@ struct CookieJar {
 	CookieJar(const CookieJar &) = delete;
 	CookieJar &operator=(const CookieJar &) = delete;
 
-	void Free();
+	void Free() noexcept;
 
-	void Add(Cookie &cookie) {
+	void Add(Cookie &cookie) noexcept {
 		cookies.push_front(cookie);
 	}
 
-	void EraseAndDispose(Cookie &cookie);
+	void EraseAndDispose(Cookie &cookie) noexcept;
 
 	/**
 	 * Delete expired cookies.
 	 */
-	void Expire(Expiry now);
+	void Expire(Expiry now) noexcept;
 };

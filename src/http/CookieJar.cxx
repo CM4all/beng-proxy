@@ -45,7 +45,7 @@ Cookie::Cookie(struct dpool &pool, const Cookie &src)
 	 expires(src.expires) {}
 
 void
-Cookie::Free(struct dpool &pool)
+Cookie::Free(struct dpool &pool) noexcept
 {
 	if (!name.empty())
 		d_free(pool, name.data);
@@ -72,14 +72,14 @@ CookieJar::CookieJar(struct dpool &_pool, const CookieJar &src)
 }
 
 void
-CookieJar::EraseAndDispose(Cookie &cookie)
+CookieJar::EraseAndDispose(Cookie &cookie) noexcept
 {
 	cookies.erase_and_dispose(cookies.iterator_to(cookie),
 				  Cookie::Disposer(pool));
 }
 
 void
-CookieJar::Expire(Expiry now)
+CookieJar::Expire(Expiry now) noexcept
 
 {
 	cookies.remove_and_dispose_if([now](const Cookie &cookie){
@@ -88,7 +88,7 @@ CookieJar::Expire(Expiry now)
 }
 
 void
-CookieJar::Free()
+CookieJar::Free() noexcept
 {
 	cookies.clear_and_dispose(Cookie::Disposer(pool));
 
