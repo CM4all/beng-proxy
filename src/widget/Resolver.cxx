@@ -38,13 +38,12 @@
 #include "pool/Holder.hxx"
 #include "util/Cancellable.hxx"
 #include "util/DestructObserver.hxx"
-
-#include <boost/intrusive/list.hpp>
+#include "util/IntrusiveList.hxx"
 
 class WidgetResolver;
 
 class WidgetResolverListener final
-	: public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+	: public IntrusiveListHook,
 	  PoolHolder,
 	  Cancellable {
 
@@ -80,8 +79,7 @@ private:
 class WidgetResolver final : DestructAnchor {
 	Widget &widget;
 
-	boost::intrusive::list<WidgetResolverListener,
-			       boost::intrusive::constant_time_size<false>> listeners;
+	IntrusiveList<WidgetResolverListener> listeners;
 
 	CancellablePointer cancel_ptr;
 
@@ -133,7 +131,7 @@ WidgetResolver::RemoveListener(WidgetResolverListener &listener) noexcept
 	assert(!listeners.empty());
 	assert(!aborted);
 
-	listeners.erase(listeners.iterator_to(listener));
+	listener.unlink();
 
 	if (listeners.empty()) {
 		/* the last listener has been aborted: abort the widget
