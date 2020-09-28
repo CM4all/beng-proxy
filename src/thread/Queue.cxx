@@ -122,7 +122,7 @@ ThreadQueue::Wait() noexcept
 			assert(job.state == ThreadJob::State::WAITING);
 
 			job.state = ThreadJob::State::BUSY;
-			waiting.erase(i);
+			job.unlink();
 			busy.push_back(job);
 			return &job;
 		}
@@ -140,7 +140,7 @@ ThreadQueue::Done(ThreadJob &job) noexcept
 	mutex.lock();
 
 	job.state = ThreadJob::State::DONE;
-	busy.erase(busy.iterator_to(job));
+	job.unlink();
 	done.push_back(job);
 
 	pending = true;
@@ -162,7 +162,7 @@ ThreadQueue::Cancel(ThreadJob &job) noexcept
 
 	case ThreadJob::State::WAITING:
 		/* cancel it */
-		waiting.erase(waiting.iterator_to(job));
+		job.unlink();
 		job.state = ThreadJob::State::INITIAL;
 		return true;
 

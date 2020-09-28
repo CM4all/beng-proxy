@@ -37,8 +37,7 @@
 #pragma once
 
 #include "Notify.hxx"
-
-#include <boost/intrusive/list.hpp>
+#include "util/IntrusiveList.hxx"
 
 #include <mutex>
 #include <condition_variable>
@@ -57,9 +56,7 @@ class ThreadQueue {
 	 */
 	bool pending = false;
 
-	typedef boost::intrusive::list<ThreadJob,
-				       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
-				       boost::intrusive::constant_time_size<false>> JobList;
+	using JobList = IntrusiveList<ThreadJob>;
 
 	JobList waiting, busy, done;
 

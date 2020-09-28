@@ -32,13 +32,12 @@
 
 #pragma once
 
-#include <boost/intrusive/list_hook.hpp>
+#include "util/IntrusiveList.hxx"
 
 /*8
  * A job that shall be executed in a worker thread.
  */
-class ThreadJob
-	: public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+class ThreadJob : public IntrusiveListHook {
 public:
 	enum class State {
 		/**
