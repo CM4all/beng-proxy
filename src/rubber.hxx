@@ -34,8 +34,7 @@
 
 #include "system/LargeObject.hxx"
 #include "util/Compiler.h"
-
-#include <boost/intrusive/list.hpp>
+#include "util/IntrusiveList.hxx"
 
 #include <array>
 #include <algorithm>
@@ -81,9 +80,7 @@ class Rubber {
 
 	static constexpr size_t N_HOLE_THRESHOLDS = std::size(HOLE_THRESHOLDS);
 
-	struct Hole final
-		: boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-
+	struct Hole final : IntrusiveListHook {
 		/**
 		 * The size of this hole (including the size of this struct).
 		 */
@@ -95,8 +92,7 @@ class Rubber {
 		unsigned previous_id, next_id;
 	};
 
-	typedef boost::intrusive::list<Hole,
-				       boost::intrusive::constant_time_size<false>> HoleList;
+	using HoleList = IntrusiveList<Hole>;
 
 	/**
 	 * A list of all holes in the buffer.  Each array element hosts
@@ -288,7 +284,7 @@ private:
 	}
 
 	void RemoveHole(Hole &hole) noexcept {
-		GetHoleList(hole).erase(HoleList::s_iterator_to(hole));
+		hole.unlink();
 	}
 };
 
