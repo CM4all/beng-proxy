@@ -246,7 +246,7 @@ CatIstream::_Read() noexcept
 
 	reading = true;
 
-	CatIstream::InputList::const_iterator prev;
+	CatIstream::InputList::iterator prev;
 	do {
 		prev = inputs.begin();
 		GetCurrent().Read();
