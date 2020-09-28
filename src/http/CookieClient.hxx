@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -47,7 +47,7 @@ struct CookieJar;
  */
 void
 cookie_jar_set_cookie2(CookieJar &jar, const char *value,
-                       const char *domain, const char *path) noexcept;
+		       const char *domain, const char *path) noexcept;
 
 /**
  * Generate the HTTP request header for cookies in the jar.
@@ -55,8 +55,8 @@ cookie_jar_set_cookie2(CookieJar &jar, const char *value,
 gcc_pure
 const char *
 cookie_jar_http_header_value(const CookieJar &jar,
-                             const char *domain, const char *path,
-                             AllocatorPtr alloc) noexcept;
+			     const char *domain, const char *path,
+			     AllocatorPtr alloc) noexcept;
 
 /**
  * Generate HTTP request headers passing for all cookies in the linked
@@ -64,5 +64,5 @@ cookie_jar_http_header_value(const CookieJar &jar,
  */
 void
 cookie_jar_http_header(const CookieJar &jar,
-                       const char *domain, const char *path,
-                       StringMap &headers, AllocatorPtr alloc) noexcept;
+		       const char *domain, const char *path,
+		       StringMap &headers, AllocatorPtr alloc) noexcept;

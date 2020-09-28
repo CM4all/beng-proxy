@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,5 +41,5 @@ class AllocatorPtr;
 
 void
 cookie_next_name_value(AllocatorPtr alloc, StringView &input,
-                       StringView &name, StringView &value,
-                       bool rfc_ignorant) noexcept;
+		       StringView &name, StringView &value,
+		       bool rfc_ignorant) noexcept;
