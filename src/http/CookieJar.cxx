@@ -74,8 +74,8 @@ CookieJar::CookieJar(struct dpool &_pool, const CookieJar &src)
 void
 CookieJar::EraseAndDispose(Cookie &cookie) noexcept
 {
-	cookies.erase_and_dispose(cookies.iterator_to(cookie),
-				  Cookie::Disposer(pool));
+	cookie.unlink();
+	cookie.Free(pool);
 }
 
 void

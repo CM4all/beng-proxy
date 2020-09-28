@@ -35,12 +35,11 @@
 #include "util/Expiry.hxx"
 #include "util/StringView.hxx"
 
-#include <boost/intrusive/list.hpp>
+#include "util/IntrusiveList.hxx"
 
 struct dpool;
 
-struct Cookie
-	: boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+struct Cookie : IntrusiveListHook {
 	StringView name;
 	StringView value;
 	const char *domain = nullptr, *path = nullptr;
@@ -72,9 +71,7 @@ struct Cookie
 struct CookieJar {
 	struct dpool &pool;
 
-	typedef boost::intrusive::list<Cookie,
-				       boost::intrusive::constant_time_size<false>> List;
-	List cookies;
+	IntrusiveList<Cookie> cookies;
 
 	explicit CookieJar(struct dpool &_pool) noexcept
 		:pool(_pool) {
