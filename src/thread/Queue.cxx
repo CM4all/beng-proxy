@@ -54,21 +54,21 @@ ThreadQueue::WakeupCallback() noexcept
 	pending = false;
 
 	for (auto i = done.begin(), end = done.end(); i != end;) {
-		ThreadJob *job = &*i;
-		assert(job->state == ThreadJob::State::DONE);
+		auto &job = *i;
+		assert(job.state == ThreadJob::State::DONE);
 
 		i = done.erase(i);
 
-		if (job->again) {
+		if (job.again) {
 			/* schedule this job again */
-			job->state = ThreadJob::State::WAITING;
-			job->again = false;
-			waiting.push_back(*job);
+			job.state = ThreadJob::State::WAITING;
+			job.again = false;
+			waiting.push_back(job);
 			cond.notify_one();
 		} else {
-			job->state = ThreadJob::State::INITIAL;
+			job.state = ThreadJob::State::INITIAL;
 			mutex.unlock();
-			job->Done();
+			job.Done();
 			mutex.lock();
 		}
 	}
