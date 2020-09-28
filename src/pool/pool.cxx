@@ -36,6 +36,7 @@
 #include "SlicePool.hxx"
 #include "AllocatorStats.hxx"
 #include "io/Logger.hxx"
+#include "util/IntrusiveList.hxx"
 #include "util/Recycler.hxx"
 #include "util/Poison.hxx"
 #include "util/Sanitizer.hxx"
@@ -153,13 +154,12 @@ struct PoolRef {
 #endif
 
 struct pool final
-	: boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+	: IntrusiveListHook,
 	  LoggerDomainFactory {
 
 	const LazyDomainLogger logger;
 
-	typedef boost::intrusive::list<struct pool,
-				       boost::intrusive::constant_time_size<false>> List;
+	using List = IntrusiveList<struct pool>;
 
 	List children;
 #ifdef DEBUG_POOL_REF
@@ -199,11 +199,7 @@ struct pool final
 							     &allocation_info::siblings>,
 			       boost::intrusive::constant_time_size<false>> allocations;
 
-	boost::intrusive::list<PoolLeakDetector,
-			       boost::intrusive::member_hook<PoolLeakDetector,
-							     PoolLeakDetector::PoolLeakDetectorSiblingsHook,
-							     &PoolLeakDetector::pool_leak_detector_siblings>,
-			       boost::intrusive::constant_time_size<false>> leaks;
+	IntrusiveList<PoolLeakDetector> leaks;
 #endif
 
 	SlicePool *slice_pool;
@@ -372,11 +368,11 @@ pool_add_child(struct pool *pool, struct pool *child) noexcept
 }
 
 static inline void
-pool_remove_child(struct pool *pool, struct pool *child) noexcept
+pool_remove_child(gcc_unused struct pool *pool, struct pool *child) noexcept
 {
 	assert(child->parent == pool);
 
-	pool->children.erase(pool->children.iterator_to(*child));
+	child->unlink();
 	child->parent = nullptr;
 }
 
@@ -584,7 +580,7 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
 
 #ifndef NDEBUG
 	if (pool->trashed)
-		trash.erase(trash.iterator_to(*pool));
+		pool->unlink();
 #else
 	TRACE_ARGS_IGNORE;
 #endif

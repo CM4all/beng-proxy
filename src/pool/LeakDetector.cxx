@@ -41,6 +41,9 @@ PoolLeakDetector::PoolLeakDetector(struct pool &_pool) noexcept
 	pool_register_leak_detector(ldp, *this);
 }
 
-PoolLeakDetector::~PoolLeakDetector() noexcept = default;
+PoolLeakDetector::~PoolLeakDetector() noexcept
+{
+	unlink();
+}
 
 #endif
