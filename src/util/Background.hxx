@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -64,7 +64,7 @@ public:
 	/**
 	 * Register a job to the manager.
 	 */
-	void Add(BackgroundJob &job) {
+	void Add(BackgroundJob &job) noexcept {
 		jobs.push_front(job);
 	}
 
@@ -72,7 +72,7 @@ public:
 	 * Add a background job to the manager, and return its
 	 * #CancellablePointer.  This is a convenience function.
 	 */
-	CancellablePointer &Add2(BackgroundJob &job) {
+	CancellablePointer &Add2(BackgroundJob &job) noexcept {
 		Add(job);
 		return job.cancel_ptr;
 	}
@@ -81,14 +81,14 @@ public:
 	 * Leave the job registered in the manager, and reuse its
 	 * #CancellablePointer for another job iteration.
 	 */
-	CancellablePointer &Reuse(BackgroundJob &job) {
+	CancellablePointer &Reuse(BackgroundJob &job) noexcept {
 		return job.cancel_ptr;
 	}
 
 	/**
 	 * Unregister a job from the manager.
 	 */
-	void Remove(BackgroundJob &job) {
+	void Remove(BackgroundJob &job) noexcept {
 		jobs.erase(jobs.iterator_to(job));
 	}
 
@@ -96,7 +96,7 @@ public:
 	 * Abort all background jobs in the manager.  This is called on
 	 * shutdown.
 	 */
-	void AbortAll() {
+	void AbortAll() noexcept {
 		jobs.clear_and_dispose([](BackgroundJob *job){
 			job->cancel_ptr.Cancel();
 		});
@@ -107,9 +107,10 @@ class LinkedBackgroundJob : public BackgroundJob {
 	BackgroundManager &manager;
 
 public:
-	LinkedBackgroundJob(BackgroundManager &_manager):manager(_manager) {}
+	LinkedBackgroundJob(BackgroundManager &_manager) noexcept
+		:manager(_manager) {}
 
-	void Remove() {
+	void Remove() noexcept {
 		manager.Remove(*this);
 	}
 };
