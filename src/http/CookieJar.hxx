@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,60 +41,60 @@ struct pool;
 struct dpool;
 
 struct Cookie
-    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-    StringView name;
-    StringView value;
-    const char *domain = nullptr, *path = nullptr;
-    Expiry expires = Expiry::Never();
+	: boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+	StringView name;
+	StringView value;
+	const char *domain = nullptr, *path = nullptr;
+	Expiry expires = Expiry::Never();
 
-    struct Disposer {
-        struct dpool &pool;
+	struct Disposer {
+		struct dpool &pool;
 
-        explicit Disposer(struct dpool &_pool):pool(_pool) {}
+		explicit Disposer(struct dpool &_pool):pool(_pool) {}
 
-        void operator()(Cookie *cookie) const {
-            cookie->Free(pool);
-        }
-    };
+		void operator()(Cookie *cookie) const {
+			cookie->Free(pool);
+		}
+	};
 
-    Cookie(struct dpool &pool, StringView _name, StringView _value);
-    Cookie(struct dpool &pool, const Cookie &src);
+	Cookie(struct dpool &pool, StringView _name, StringView _value);
+	Cookie(struct dpool &pool, const Cookie &src);
 
-    Cookie(const Cookie &) = delete;
-    Cookie &operator=(const Cookie &) = delete;
+	Cookie(const Cookie &) = delete;
+	Cookie &operator=(const Cookie &) = delete;
 
-    void Free(struct dpool &pool);
+	void Free(struct dpool &pool);
 };
 
 /**
  * Container for cookies received from other HTTP servers.
  */
 struct CookieJar {
-    struct dpool &pool;
+	struct dpool &pool;
 
-    typedef boost::intrusive::list<Cookie,
-                                   boost::intrusive::constant_time_size<false>> List;
-    List cookies;
+	typedef boost::intrusive::list<Cookie,
+				       boost::intrusive::constant_time_size<false>> List;
+	List cookies;
 
-    explicit CookieJar(struct dpool &_pool)
-        :pool(_pool) {
-    }
+	explicit CookieJar(struct dpool &_pool)
+		:pool(_pool) {
+	}
 
-    CookieJar(struct dpool &_pool, const CookieJar &src);
+	CookieJar(struct dpool &_pool, const CookieJar &src);
 
-    CookieJar(const CookieJar &) = delete;
-    CookieJar &operator=(const CookieJar &) = delete;
+	CookieJar(const CookieJar &) = delete;
+	CookieJar &operator=(const CookieJar &) = delete;
 
-    void Free();
+	void Free();
 
-    void Add(Cookie &cookie) {
-        cookies.push_front(cookie);
-    }
+	void Add(Cookie &cookie) {
+		cookies.push_front(cookie);
+	}
 
-    void EraseAndDispose(Cookie &cookie);
+	void EraseAndDispose(Cookie &cookie);
 
-    /**
-     * Delete expired cookies.
-     */
-    void Expire(Expiry now);
+	/**
+	 * Delete expired cookies.
+	 */
+	void Expire(Expiry now);
 };

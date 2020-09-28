@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -39,83 +39,83 @@
 StringMap
 cookie_map_parse(AllocatorPtr alloc, const char *p) noexcept
 {
-    assert(p != nullptr);
+	assert(p != nullptr);
 
-    StringMap cookies;
+	StringMap cookies;
 
-    StringView input = p;
+	StringView input = p;
 
-    while (true) {
-        StringView name, value;
-        cookie_next_name_value(alloc, input, name, value, true);
-        if (name.empty())
-            break;
+	while (true) {
+		StringView name, value;
+		cookie_next_name_value(alloc, input, name, value, true);
+		if (name.empty())
+			break;
 
-        cookies.Add(alloc, alloc.DupZ(name), alloc.DupZ(value));
+		cookies.Add(alloc, alloc.DupZ(name), alloc.DupZ(value));
 
-        input.StripLeft();
-        if (input.empty() || input.front() != ';')
-            break;
+		input.StripLeft();
+		if (input.empty() || input.front() != ';')
+			break;
 
-        input.pop_front();
-        input.StripLeft();
-    }
+		input.pop_front();
+		input.StripLeft();
+	}
 
-    return cookies;
+	return cookies;
 }
 
 const char *
 cookie_exclude(const char *p, const char *_exclude,
-               AllocatorPtr alloc) noexcept
+	       AllocatorPtr alloc) noexcept
 {
-    assert(p != nullptr);
-    assert(_exclude != nullptr);
+	assert(p != nullptr);
+	assert(_exclude != nullptr);
 
-    const char *const p0 = p;
-    char *const dest0 = alloc.NewArray<char>(strlen(p) + 1);
-    char *dest = dest0;
+	const char *const p0 = p;
+	char *const dest0 = alloc.NewArray<char>(strlen(p) + 1);
+	char *dest = dest0;
 
-    StringView input = p;
+	StringView input = p;
 
-    const StringView exclude = _exclude;
-    const char *src = p;
+	const StringView exclude = _exclude;
+	const char *src = p;
 
-    bool empty = true, found = false;
+	bool empty = true, found = false;
 
-    while (true) {
-        StringView name, value;
-        cookie_next_name_value(alloc, input, name, value, true);
-        if (name.empty())
-            break;
+	while (true) {
+		StringView name, value;
+		cookie_next_name_value(alloc, input, name, value, true);
+		if (name.empty())
+			break;
 
-        const bool skip = name.Equals(exclude);
-        if (skip) {
-            found = true;
-            dest = (char *)mempcpy(dest, src, name.data - src);
-        } else
-            empty = false;
+		const bool skip = name.Equals(exclude);
+		if (skip) {
+			found = true;
+			dest = (char *)mempcpy(dest, src, name.data - src);
+		} else
+			empty = false;
 
-        input.StripLeft();
-        if (input.empty() || input.front() != ';') {
-            if (skip)
-                src = input.data;
-            break;
-        }
+		input.StripLeft();
+		if (input.empty() || input.front() != ';') {
+			if (skip)
+				src = input.data;
+			break;
+		}
 
-        input.pop_front();
-        input.StripLeft();
+		input.pop_front();
+		input.StripLeft();
 
-        if (skip)
-            src = input.data;
-    }
+		if (skip)
+			src = input.data;
+	}
 
-    if (!found)
-        return p0;
+	if (!found)
+		return p0;
 
-    if (empty)
-        return nullptr;
+	if (empty)
+		return nullptr;
 
-    dest = (char *)mempcpy(dest, src, input.data - src);
-    *dest = 0;
-    return dest0;
+	dest = (char *)mempcpy(dest, src, input.data - src);
+	*dest = 0;
+	return dest0;
 }

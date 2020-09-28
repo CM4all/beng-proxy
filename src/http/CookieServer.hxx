@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -57,4 +57,4 @@ cookie_map_parse(AllocatorPtr alloc, const char *p) noexcept;
  */
 const char *
 cookie_exclude(const char *p, const char *exclude,
-               AllocatorPtr alloc) noexcept;
+	       AllocatorPtr alloc) noexcept;
