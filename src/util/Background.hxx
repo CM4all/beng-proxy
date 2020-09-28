@@ -33,20 +33,14 @@
 #pragma once
 
 #include "util/Cancellable.hxx"
-
-#include <boost/intrusive/list.hpp>
+#include "util/IntrusiveList.hxx"
 
 /**
  * A job running in the background, which shall be aborted when
  * beng-proxy is shut down.  The job holds a reference to an
  * #Cancellable object, which may be used to stop it.
  */
-struct BackgroundJob {
-	static constexpr auto link_mode = boost::intrusive::normal_link;
-	typedef boost::intrusive::link_mode<link_mode> LinkMode;
-	typedef boost::intrusive::list_member_hook<LinkMode> SiblingsListHook;
-	SiblingsListHook siblings;
-
+struct BackgroundJob : IntrusiveListHook {
 	CancellablePointer cancel_ptr;
 };
 
@@ -54,11 +48,7 @@ struct BackgroundJob {
  * A container for background jobs.
  */
 class BackgroundManager {
-	boost::intrusive::list<BackgroundJob,
-			       boost::intrusive::member_hook<BackgroundJob,
-							     BackgroundJob::SiblingsListHook,
-							     &BackgroundJob::siblings>,
-			       boost::intrusive::constant_time_size<false>> jobs;
+	IntrusiveList<BackgroundJob> jobs;
 
 public:
 	/**
@@ -89,7 +79,7 @@ public:
 	 * Unregister a job from the manager.
 	 */
 	void Remove(BackgroundJob &job) noexcept {
-		jobs.erase(jobs.iterator_to(job));
+		job.unlink();
 	}
 
 	/**
