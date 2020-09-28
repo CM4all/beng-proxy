@@ -45,16 +45,14 @@
 #include "strmap.hxx"
 
 class ExternalSessionRefresh final
-	: PoolHolder, public LinkedBackgroundJob, HttpResponseHandler {
+	: PoolHolder, public BackgroundJob, HttpResponseHandler {
 
 	const HttpAddress address;
 
 public:
 	ExternalSessionRefresh(PoolPtr &&_pool,
-			       BackgroundManager &_manager,
 			       const HttpAddress &_address)
 		:PoolHolder(std::move(_pool)),
-		 LinkedBackgroundJob(_manager),
 		 address(GetPool(), _address) {}
 
 	void SendRequest(BpInstance &instance, const SessionId session_id) {
@@ -77,13 +75,13 @@ public:
 			LogConcat(3, "ExternalSessionManager", "Status ", int(status),
 				  " from manager '", address.path, "'");
 
-		Remove();
+		unlink();
 	}
 
 	void OnHttpError(std::exception_ptr ep) noexcept override {
 		LogConcat(2, "ExternalSessionManager", "Failed to refresh external session: ", ep);
 
-		Remove();
+		unlink();
 	}
 };
 
@@ -109,7 +107,6 @@ RefreshExternalSession(BpInstance &instance, Session &session)
 				    4096);
 
 	auto *refresh = NewFromPool<ExternalSessionRefresh>(std::move(pool),
-							    instance.background_manager,
 							    *session.external_manager);
 	instance.background_manager.Add(*refresh);
 

@@ -92,15 +92,3 @@ public:
 		});
 	}
 };
-
-class LinkedBackgroundJob : public BackgroundJob {
-	BackgroundManager &manager;
-
-public:
-	LinkedBackgroundJob(BackgroundManager &_manager) noexcept
-		:manager(_manager) {}
-
-	void Remove() noexcept {
-		manager.Remove(*this);
-	}
-};
