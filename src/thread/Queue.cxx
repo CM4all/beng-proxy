@@ -53,11 +53,9 @@ ThreadQueue::WakeupCallback() noexcept
 
 	pending = false;
 
-	for (auto i = done.begin(), end = done.end(); i != end;) {
-		auto &job = *i;
+	done.clear_and_dispose([this](auto *_job){
+		auto &job = *_job;
 		assert(job.state == ThreadJob::State::DONE);
-
-		i = done.erase(i);
 
 		if (job.again) {
 			/* schedule this job again */
@@ -71,7 +69,7 @@ ThreadQueue::WakeupCallback() noexcept
 			job.Done();
 			mutex.lock();
 		}
-	}
+	});
 
 	const bool empty = IsEmpty();
 
