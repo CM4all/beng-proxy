@@ -45,6 +45,8 @@
 #include "avahi/Client.hxx"
 #endif
 
+#include <boost/intrusive/list.hpp>
+
 #include <forward_list>
 #include <memory>
 #include <map>
