@@ -11,7 +11,7 @@ Widget::Widget(struct pool &_pool,
 	:PoolLeakDetector(_pool), pool(_pool), cls(_cls)
 {
 	if (_cls != nullptr)
-		from_template.view = from_request.view = &_cls->views;
+		from_template.view = from_request.view = _cls->views;
 }
 
 Widget::~Widget() noexcept

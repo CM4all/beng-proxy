@@ -101,11 +101,14 @@ TEST(WidgetRegistry, Normal)
 	ASSERT_FALSE(ts.aborted);
 	ASSERT_TRUE(data.got_class);
 	ASSERT_NE(data.cls, nullptr);
-	ASSERT_EQ(data.cls->views.address.type, ResourceAddress::Type::HTTP);
-	ASSERT_STREQ(data.cls->views.address.GetHttp().host_and_port, "foo");
-	ASSERT_STREQ(data.cls->views.address.GetHttp().path, "/");
-	ASSERT_EQ(data.cls->views.next, nullptr);
-	ASSERT_TRUE(data.cls->views.transformations.empty());
+	ASSERT_NE(data.cls->views, nullptr);
+
+	auto &view = *data.cls->views;
+	ASSERT_EQ(view.address.type, ResourceAddress::Type::HTTP);
+	ASSERT_STREQ(view.address.GetHttp().host_and_port, "foo");
+	ASSERT_STREQ(view.address.GetHttp().path, "/");
+	ASSERT_EQ(view.next, nullptr);
+	ASSERT_TRUE(view.transformations.empty());
 
 	pool.reset();
 	pool_commit();

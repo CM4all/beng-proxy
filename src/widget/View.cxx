@@ -28,21 +28,6 @@ WidgetView::Clone(AllocatorPtr alloc) const noexcept
 	return dest;
 }
 
-void
-WidgetView::CopyChainFrom(AllocatorPtr alloc, const WidgetView &_src) noexcept
-{
-	CopyFrom(alloc, _src);
-
-	next = nullptr;
-	WidgetView **tail_p = &next;
-
-	for (const WidgetView *src = _src.next; src != nullptr; src = src->next) {
-		WidgetView *p = src->Clone(alloc);
-		*tail_p = p;
-		tail_p = &p->next;
-	}
-}
-
 WidgetView *
 WidgetView::CloneChain(AllocatorPtr alloc) const noexcept
 {

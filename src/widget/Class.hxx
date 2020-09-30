@@ -14,7 +14,7 @@ struct WidgetClass {
 	/**
 	 * A linked list of view descriptions.
 	 */
-	WidgetView views{nullptr};
+	WidgetView *views = nullptr;
 
 	/**
 	 * The URI prefix that represents '@/'.
@@ -106,7 +106,7 @@ struct WidgetClass {
 	void CheckHost(const char *host, const char *site_name) const;
 
 	const WidgetView *FindViewByName(const char *name) const noexcept {
-		return widget_view_lookup(&views, name);
+		return widget_view_lookup(views, name);
 	}
 
 	[[gnu::pure]]

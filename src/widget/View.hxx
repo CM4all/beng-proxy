@@ -61,7 +61,6 @@ struct WidgetView {
 
 	WidgetView *Clone(AllocatorPtr alloc) const noexcept;
 
-	void CopyChainFrom(AllocatorPtr alloc, const WidgetView &src) noexcept;
 	WidgetView *CloneChain(AllocatorPtr alloc) const noexcept;
 
 	/**

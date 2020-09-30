@@ -253,7 +253,7 @@ TEST(WidgetHttpTest, CookieClient)
 
 	const auto address = MakeHttpAddress("/bar/").Host("foo");
 	WidgetClass cls;
-	cls.views.address = address;
+	cls.views = NewFromPool<WidgetView>(*pool, address);
 	cls.stateful = true;
 
 	CancellablePointer cancel_ptr;

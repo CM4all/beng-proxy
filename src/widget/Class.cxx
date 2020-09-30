@@ -20,6 +20,8 @@ WidgetClass::WidgetClass(AllocatorPtr alloc, const WidgetClass &src) noexcept
 	 info_headers(src.info_headers),
 	 dump_headers(src.dump_headers)
 {
-	views.CopyChainFrom(alloc, src.views);
+	if (src.views != nullptr)
+		views = src.views->CloneChain(alloc);
+
 	container_groups.CopyFrom(alloc, src.container_groups);
 }
