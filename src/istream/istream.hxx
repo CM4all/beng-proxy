@@ -62,13 +62,13 @@ public:
 /**
  * An asynchronous input stream.
  *
- * The lifetime of an #istream begins when it is created, and ends
+ * The lifetime of an #Istream begins when it is created, and ends
  * with one of the following events:
  *
- * - it is closed manually using istream_close()
- * - it is invalidated by a successful istream_as_fd() call
- * - it has reached end-of-file
- * - an error has occurred
+ * - it is closed manually using Close()
+ * - it is invalidated by a successful AsFd() call
+ * - it has reached end-of-file (when IstreamHandler::OnEof() is called)
+ * - an error has occurred (when IstreamHandler::OnError() is called)
  */
 class Istream : PoolHolder, LeakDetector, IstreamDestructAnchor {
 	/** data sink */

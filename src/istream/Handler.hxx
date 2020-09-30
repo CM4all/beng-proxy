@@ -94,8 +94,9 @@ public:
 	/**
 	 * The istream has ended unexpectedly, e.g. an I/O error.
 	 *
-	 * The method close() will not result in a call to this callback,
-	 * since the caller is assumed to be the istream handler.
+	 * The method Istream::Close() will not result in a call to
+	 * this callback, since the caller is assumed to be the
+	 * istream handler.
 	 *
 	 * @param error an exception describing the error condition
 	 */
