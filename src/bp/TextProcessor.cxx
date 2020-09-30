@@ -134,7 +134,6 @@ processor_subst_beng_widget(struct pool &pool,
 {
 	SubstTree subst;
 	subst.Add(pool, "&c:type;", widget.class_name);
-	subst.Add(pool, "&c:type;", widget.class_name);
 	subst.Add(pool, "&c:class;", widget.GetQuotedClassName());
 	subst.Add(pool, "&c:local;", widget.cls->local_uri);
 	subst.Add(pool, "&c:id;", widget.id);
