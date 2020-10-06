@@ -339,7 +339,7 @@ private:
 	/**
 	 * Throws on error.
 	 */
-	void ParseStatusLine(const char *line, size_t length);
+	void ParseStatusLine(StringView line);
 
 	/**
 	 * Throws on error.
@@ -349,12 +349,12 @@ private:
 	/**
 	 * Throws on error.
 	 */
-	void HandleLine(const char *line, size_t length);
+	void HandleLine(StringView line);
 
 	/**
 	 * Throws on error.
 	 */
-	BufferedResult ParseHeaders(ConstBuffer<char> b);
+	BufferedResult ParseHeaders(StringView b);
 
 	/**
 	 * Throws on error.
@@ -644,23 +644,21 @@ HttpClient::TryWriteBuckets()
 }
 
 inline void
-HttpClient::ParseStatusLine(const char *line, size_t length)
+HttpClient::ParseStatusLine(StringView line)
 {
 	assert(response.state == Response::State::STATUS);
 
 	const char *space;
-	if (length < 10 || memcmp(line, "HTTP/", 5) != 0 ||
-	    (space = (const char *)memchr(line + 6, ' ', length - 6)) == nullptr) {
+	if (!line.SkipPrefix("HTTP/") || (space = line.Find(' ')) == nullptr) {
 		stopwatch.RecordEvent("malformed");
 
 		throw HttpClientError(HttpClientErrorCode::GARBAGE,
 				      "malformed HTTP status line");
 	}
 
-	length = line + length - space - 1;
-	line = space + 1;
+	line.MoveFront(space + 1);
 
-	if (gcc_unlikely(length < 3 || !IsDigitASCII(line[0]) ||
+	if (gcc_unlikely(line.size < 3 || !IsDigitASCII(line[0]) ||
 			 !IsDigitASCII(line[1]) || !IsDigitASCII(line[2]))) {
 		stopwatch.RecordEvent("malformed");
 
@@ -767,16 +765,15 @@ HttpClient::HeadersFinished()
 }
 
 inline void
-HttpClient::HandleLine(const char *line, size_t length)
+HttpClient::HandleLine(StringView line)
 {
 	assert(response.state == Response::State::STATUS ||
 	       response.state == Response::State::HEADERS);
 
 	if (response.state == Response::State::STATUS)
-		ParseStatusLine(line, length);
-	else if (length > 0) {
-		if (!header_parse_line(caller_pool, response.headers,
-				       {line, length}))
+		ParseStatusLine(line);
+	else if (!line.empty()) {
+		if (!header_parse_line(caller_pool, response.headers, line))
 			throw HttpClientError(HttpClientErrorCode::GARBAGE,
 					      "malformed HTTP header line");
 	} else
@@ -802,39 +799,38 @@ HttpClient::ResponseFinished() noexcept
 }
 
 inline BufferedResult
-HttpClient::ParseHeaders(ConstBuffer<char> b)
+HttpClient::ParseHeaders(const StringView b)
 {
 	assert(response.state == Response::State::STATUS ||
 	       response.state == Response::State::HEADERS);
 	assert(!b.IsNull());
 	assert(!b.empty());
 
-	const char *const buffer = b.data;
-	const char *buffer_end = buffer + b.size;
-
 	/* parse line by line */
-	const char *start = buffer, *end;
-	while ((end = (const char *)memchr(start, '\n',
-					   buffer_end - start)) != nullptr) {
-		const char *const next = end + 1;
+	StringView remaining = b;
+	while (true) {
+		auto s = remaining.Split('\n');
+		if (s.second == nullptr)
+			break;
+
+		StringView line = s.first;
+		remaining = s.second;
 
 		/* strip the line */
-		end = StripRight(start, end);
+		line.StripRight();
 
 		/* handle this line */
-		HandleLine(start, end - start);
+		HandleLine(line);
 
 		if (response.state != Response::State::HEADERS) {
 			/* header parsing is finished */
-			socket.DisposeConsumed(next - buffer);
+			socket.DisposeConsumed(remaining.data - b.data);
 			return BufferedResult::AGAIN_EXPECT;
 		}
-
-		start = next;
 	}
 
 	/* remove the parsed part of the buffer */
-	socket.DisposeConsumed(start - buffer);
+	socket.DisposeConsumed(remaining.data - b.data);
 	return BufferedResult::MORE;
 }
 
@@ -907,7 +903,7 @@ HttpClient::FeedHeaders(ConstBuffer<void> b)
 	assert(response.state == Response::State::STATUS ||
 	       response.state == Response::State::HEADERS);
 
-	const BufferedResult result = ParseHeaders(ConstBuffer<char>::FromVoid(b));
+	const BufferedResult result = ParseHeaders(StringView(b));
 	if (result != BufferedResult::AGAIN_EXPECT)
 		return result;
 
