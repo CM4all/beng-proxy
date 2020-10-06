@@ -128,19 +128,23 @@ struct LbConfig {
 	template<typename T>
 	gcc_pure
 	LbGotoConfig FindGoto(T &&t) const noexcept {
-		LbGotoConfig g;
+		const auto *cluster = FindCluster(t);
+		if (cluster != nullptr)
+			return LbGotoConfig(*cluster);
 
-		g.cluster = FindCluster(t);
-		if (g.cluster == nullptr) {
-			g.branch = FindBranch(t);
-			if (g.branch == nullptr) {
-				g.lua = FindLuaHandler(t);
-				if (g.lua == nullptr)
-					g.translation = FindTranslationHandler(t);
-			}
-		}
+		const auto *branch = FindBranch(t);
+		if (branch != nullptr)
+			return LbGotoConfig(*branch);
 
-		return g;
+		const auto *lua = FindLuaHandler(t);
+		if (lua != nullptr)
+			return LbGotoConfig(*lua);
+
+		const auto *translation = FindTranslationHandler(t);
+		if (translation != nullptr)
+			return LbGotoConfig(*translation);
+
+		return {};
 	}
 
 	template<typename T>
