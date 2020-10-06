@@ -805,20 +805,19 @@ ParseCondition(FileLineParser &line)
 
 	auto a = ParseAttributeReference(attribute);
 
-	LbConditionConfig::Operator op;
-	bool negate;
+	bool re, negate;
 
 	if (line.SkipSymbol('=', '=')) {
-		op = LbConditionConfig::Operator::EQUALS;
+		re = false;
 		negate = false;
 	} else if (line.SkipSymbol('!', '=')) {
-		op = LbConditionConfig::Operator::EQUALS;
+		re = false;
 		negate = true;
 	} else if (line.SkipSymbol('=', '~')) {
-		op = LbConditionConfig::Operator::REGEX;
+		re = true;
 		negate = false;
 	} else if (line.SkipSymbol('!', '~')) {
-		op = LbConditionConfig::Operator::REGEX;
+		re = true;
 		negate = true;
 	} else
 		throw LineParser::Error("Comparison operator expected");
@@ -829,15 +828,10 @@ ParseCondition(FileLineParser &line)
 	if (string == nullptr)
 		throw LineParser::Error("Regular expression expected");
 
-	switch (op) {
-	case LbConditionConfig::Operator::EQUALS:
-		return {std::move(a), negate, string};
-
-	case LbConditionConfig::Operator::REGEX:
+	if (re)
 		return {std::move(a), negate, UniqueRegex(string, false, false)};
-	}
-
-	gcc_unreachable();
+	else
+		return {std::move(a), negate, string};
 }
 
 static http_status_t

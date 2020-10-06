@@ -43,6 +43,7 @@
 #include <string>
 #include <list>
 #include <map>
+#include <variant>
 
 struct LbAttributeReference {
 	enum class Type {
@@ -129,27 +130,19 @@ struct LbGotoConfig {
 struct LbConditionConfig {
 	LbAttributeReference attribute_reference;
 
-	enum class Operator {
-		EQUALS,
-		REGEX,
-	};
-
-	Operator op;
-
 	bool negate;
 
-	std::string string;
-	UniqueRegex regex;
+	std::variant<std::string, UniqueRegex> value;
 
 	LbConditionConfig(LbAttributeReference &&a, bool _negate,
 			  const char *_string) noexcept
-		:attribute_reference(std::move(a)), op(Operator::EQUALS),
-		 negate(_negate), string(_string) {}
+		:attribute_reference(std::move(a)),
+		 negate(_negate), value(_string) {}
 
 	LbConditionConfig(LbAttributeReference &&a, bool _negate,
 			  UniqueRegex &&_regex) noexcept
-		:attribute_reference(std::move(a)), op(Operator::REGEX),
-		 negate(_negate), regex(std::move(_regex)) {}
+		:attribute_reference(std::move(a)),
+		 negate(_negate), value(std::move(_regex)) {}
 
 	LbConditionConfig(LbConditionConfig &&other) = default;
 
@@ -157,27 +150,32 @@ struct LbConditionConfig {
 	LbConditionConfig &operator=(const LbConditionConfig &) = delete;
 
 	gcc_pure
-	bool Match(const char *value) const noexcept {
-		switch (op) {
-		case Operator::EQUALS:
-			return (string == value) ^ negate;
-
-		case Operator::REGEX:
-			return regex.Match(value) ^ negate;
-		}
-
-		gcc_unreachable();
+	bool Match(const char *s) const noexcept {
+		return std::visit(MatchHelper{s}, value) ^ negate;
 	}
 
 	template<typename R>
 	gcc_pure
 	bool MatchRequest(const R &request) const noexcept {
-		const char *value = attribute_reference.GetRequestAttribute(request);
-		if (value == nullptr)
-			value = "";
+		const char *s = attribute_reference.GetRequestAttribute(request);
+		if (s == nullptr)
+			s = "";
 
-		return Match(value);
+		return Match(s);
 	}
+
+private:
+	struct MatchHelper {
+		const char *s;
+
+		bool operator()(const std::string &v) const noexcept {
+			return v == s;
+		}
+
+		bool operator()(const UniqueRegex &v) const noexcept {
+			return v.Match(s);
+		}
+	};
 };
 
 struct LbGotoIfConfig {
