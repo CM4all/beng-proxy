@@ -54,12 +54,34 @@ LbGotoConfig::GetProtocol() const noexcept
 {
 	assert(IsDefined());
 
-	if (response.IsDefined() || lua != nullptr || translation != nullptr)
-		return LbProtocol::HTTP;
+	struct GetProtocolHelper {
+		LbProtocol operator()(std::nullptr_t) const noexcept {
+			assert(false);
+			gcc_unreachable();
+		}
 
-	return cluster != nullptr
-		? cluster->protocol
-		: branch->GetProtocol();
+		LbProtocol operator()(const LbClusterConfig *cluster) const noexcept {
+			return cluster->protocol;
+		}
+
+		LbProtocol operator()(const LbBranchConfig *branch) const noexcept {
+			return branch->GetProtocol();
+		}
+
+		LbProtocol operator()(const LbLuaHandlerConfig *) const noexcept {
+			return LbProtocol::HTTP;
+		}
+
+		LbProtocol operator()(const LbTranslationHandlerConfig *) const noexcept {
+			return LbProtocol::HTTP;
+		}
+
+		LbProtocol operator()(const LbSimpleHttpResponse &) const noexcept {
+			return LbProtocol::HTTP;
+		}
+	};
+
+	return std::visit(GetProtocolHelper{}, destination);
 }
 
 const char *
@@ -67,15 +89,34 @@ LbGotoConfig::GetName() const noexcept
 {
 	assert(IsDefined());
 
-	if (lua != nullptr)
-		return lua->name.c_str();
+	struct GetNameHelper {
+		const char *operator()(std::nullptr_t) const noexcept {
+			assert(false);
+			gcc_unreachable();
+		}
 
-	if (translation != nullptr)
-		return translation->name.c_str();
+		const char *operator()(const LbClusterConfig *cluster) const noexcept {
+			return cluster->name.c_str();
+		}
 
-	return cluster != nullptr
-		? cluster->name.c_str()
-		: branch->name.c_str();
+		const char *operator()(const LbBranchConfig *branch) const noexcept {
+			return branch->name.c_str();
+		}
+
+		const char *operator()(const LbLuaHandlerConfig *lua) const noexcept {
+			return lua->name.c_str();
+		}
+
+		const char *operator()(const LbTranslationHandlerConfig *translation) const noexcept {
+			return translation->name.c_str();
+		}
+
+		const char *operator()(const LbSimpleHttpResponse &) const noexcept {
+			return "response";
+		}
+	};
+
+	return std::visit(GetNameHelper{}, destination);
 }
 
 #ifdef HAVE_AVAHI
@@ -83,8 +124,33 @@ LbGotoConfig::GetName() const noexcept
 bool
 LbGotoConfig::HasZeroConf() const noexcept
 {
-	return (cluster != nullptr && cluster->HasZeroConf()) ||
-		(branch != nullptr && branch->HasZeroConf());
+	struct HasZeroConfHelper {
+		bool operator()(std::nullptr_t) const noexcept {
+			return false;
+		}
+
+		bool operator()(const LbClusterConfig *cluster) const noexcept {
+			return cluster->HasZeroConf();
+		}
+
+		bool operator()(const LbBranchConfig *branch) const noexcept {
+			return branch->HasZeroConf();
+		}
+
+		bool operator()(const LbLuaHandlerConfig *) const noexcept {
+			return false;
+		}
+
+		bool operator()(const LbTranslationHandlerConfig *) const noexcept {
+			return false;
+		}
+
+		bool operator()(const LbSimpleHttpResponse &) const noexcept {
+			return false;
+		}
+	};
+
+	return std::visit(HasZeroConfHelper{}, destination);
 }
 
 #endif

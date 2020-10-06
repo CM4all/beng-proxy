@@ -90,18 +90,35 @@ LbGotoMap::GetInstance(const char *name)
 LbGoto
 LbGotoMap::GetInstance(const LbGotoConfig &config)
 {
-	if (config.cluster != nullptr)
-		return GetInstance(*config.cluster);
-	else if (config.branch != nullptr)
-		return GetInstance(*config.branch);
-	else if (config.lua != nullptr)
-		return GetInstance(*config.lua);
-	else if (config.translation != nullptr)
-		return GetInstance(*config.translation);
-	else if (config.response.IsDefined())
-		return config.response;
-	else
-		return LbGoto();
+	struct GetInstanceHelper {
+		LbGotoMap &map;
+
+		LbGoto operator()(std::nullptr_t) const noexcept {
+			return {};
+		}
+
+		LbGoto operator()(const LbClusterConfig *cluster) const {
+			return map.GetInstance(*cluster);
+		}
+
+		LbGoto operator()(const LbBranchConfig *branch) const {
+			return map.GetInstance(*branch);
+		}
+
+		LbGoto operator()(const LbLuaHandlerConfig *lua) const {
+			return map.GetInstance(*lua);
+		}
+
+		LbGoto operator()(const LbTranslationHandlerConfig *translation) const {
+			return map.GetInstance(*translation);
+		}
+
+		LbGoto operator()(const LbSimpleHttpResponse &response) const noexcept {
+			return response;
+		}
+	};
+
+	return std::visit(GetInstanceHelper{*this}, config.destination);
 }
 
 LbCluster &

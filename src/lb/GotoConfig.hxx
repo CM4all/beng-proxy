@@ -36,9 +36,9 @@
 #include "SimpleHttpResponse.hxx"
 #include "pcre/Regex.hxx"
 #include "util/StringLess.hxx"
-
 #include "util/Compiler.h"
 
+#include <cassert>
 #include <filesystem>
 #include <string>
 #include <list>
@@ -86,34 +86,32 @@ struct LbLuaHandlerConfig;
 struct LbTranslationHandlerConfig;
 
 struct LbGotoConfig {
-	const LbClusterConfig *cluster = nullptr;
-	const LbBranchConfig *branch = nullptr;
-	const LbLuaHandlerConfig *lua = nullptr;
-	const LbTranslationHandlerConfig *translation = nullptr;
-	LbSimpleHttpResponse response;
+	std::variant<std::nullptr_t,
+		     const LbClusterConfig *,
+		     const LbBranchConfig *,
+		     const LbLuaHandlerConfig *,
+		     const LbTranslationHandlerConfig *,
+		     LbSimpleHttpResponse> destination{nullptr};
 
 	LbGotoConfig() = default;
 
 	explicit LbGotoConfig(const LbClusterConfig &_cluster) noexcept
-		:cluster(&_cluster) {}
+		:destination(&_cluster) {}
 
 	explicit LbGotoConfig(const LbBranchConfig &_branch) noexcept
-		:branch(&_branch) {}
+		:destination(&_branch) {}
 
 	explicit LbGotoConfig(const LbLuaHandlerConfig &_lua) noexcept
-		:lua(&_lua) {}
+		:destination(&_lua) {}
 
 	explicit LbGotoConfig(const LbTranslationHandlerConfig &_translation) noexcept
-		:translation(&_translation) {}
+		:destination(&_translation) {}
 
 	explicit LbGotoConfig(http_status_t _status) noexcept
-		:response(_status) {}
+		:destination(LbSimpleHttpResponse{_status}) {}
 
 	bool IsDefined() const noexcept {
-		return cluster != nullptr || branch != nullptr ||
-			lua != nullptr ||
-			translation != nullptr ||
-			response.IsDefined();
+		return !std::holds_alternative<std::nullptr_t>(destination);
 	}
 
 	gcc_pure

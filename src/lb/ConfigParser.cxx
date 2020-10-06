@@ -900,7 +900,7 @@ LbConfigParser::Branch::ParseLine(FileLineParser &line)
 		AddGoto(std::move(destination), line);
 	} else if (strcmp(word, "redirect") == 0) {
 		LbGotoConfig destination(HTTP_STATUS_FOUND);
-		destination.response.location = line.ExpectValue();
+		std::get<LbSimpleHttpResponse>(destination.destination).location = line.ExpectValue();
 
 		AddGoto(std::move(destination), line);
 	} else
