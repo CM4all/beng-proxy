@@ -297,28 +297,28 @@ HttpServerConnection::HeadersFinished()
  * @return false if the connection has been closed
  */
 inline bool
-HttpServerConnection::HandleLine(const char *line, size_t length)
+HttpServerConnection::HandleLine(StringView line) noexcept
 {
 	assert(request.read_state == Request::START ||
 	       request.read_state == Request::HEADERS);
 
-	if (length >= 8192) {
+	if (line.size >= 8192) {
 		ProtocolError(StringFormat<64>("Request header is too large (%zu)",
-					       length));
+					       line.size));
 		return false;
 	}
 
 	if (gcc_unlikely(request.read_state == Request::START)) {
 		assert(request.request == nullptr);
 
-		return ParseRequestLine(line, length);
-	} else if (gcc_likely(length > 0)) {
+		return ParseRequestLine(line.data, line.size);
+	} else if (gcc_likely(!line.empty())) {
 		assert(request.read_state == Request::HEADERS);
 		assert(request.request != nullptr);
 
 		header_parse_line(request.request->pool,
 				  request.request->headers,
-				  {line, length});
+				  line);
 		return true;
 	} else {
 		assert(request.read_state == Request::HEADERS);
@@ -329,7 +329,7 @@ HttpServerConnection::HandleLine(const char *line, size_t length)
 }
 
 inline BufferedResult
-HttpServerConnection::FeedHeaders(const void *_data, size_t length)
+HttpServerConnection::FeedHeaders(const StringView b) noexcept
 {
 	assert(request.read_state == Request::START ||
 	       request.read_state == Request::HEADERS);
@@ -339,30 +339,27 @@ HttpServerConnection::FeedHeaders(const void *_data, size_t length)
 		return BufferedResult::CLOSED;
 	}
 
-	const char *const buffer = (const char *)_data;
-	const char *const buffer_end = buffer + length;
-	const char *start = buffer, *end, *next = nullptr;
-	while ((end = (const char *)memchr(start, '\n',
-					   buffer_end - start)) != nullptr) {
-		next = end + 1;
+	StringView remaining = b;
+	while (true) {
+		auto s = remaining.Split('\n');
+		if (s.second == nullptr)
+			break;
 
-		end = StripRight(start, end);
+		StringView line = s.first;
+		remaining = s.second;
 
-		if (!HandleLine(start, end - start))
+		line.StripRight();
+
+		if (!HandleLine(line))
 			return BufferedResult::CLOSED;
 
 		if (request.read_state != Request::HEADERS)
 			break;
-
-		start = next;
 	}
 
-	size_t consumed = 0;
-	if (next != nullptr) {
-		consumed = next - buffer;
-		request.bytes_received += consumed;
-		socket->DisposeConsumed(consumed);
-	}
+	const size_t consumed = remaining.data - b.data;
+	request.bytes_received += consumed;
+	socket->DisposeConsumed(consumed);
 
 	return request.read_state == Request::HEADERS
 		? BufferedResult::MORE
@@ -400,7 +397,7 @@ HttpServerConnection::SubmitRequest()
 }
 
 BufferedResult
-HttpServerConnection::Feed(const void *data, size_t length)
+HttpServerConnection::Feed(ConstBuffer<void> b) noexcept
 {
 	assert(!response.pending_drained);
 
@@ -416,7 +413,7 @@ HttpServerConnection::Feed(const void *data, size_t length)
 #endif
 
 	case Request::HEADERS:
-		result = FeedHeaders(data, length);
+		result = FeedHeaders(StringView(b));
 		if (result == BufferedResult::OK &&
 		    (request.read_state == Request::BODY ||
 		     request.read_state == Request::END)) {
@@ -432,7 +429,7 @@ HttpServerConnection::Feed(const void *data, size_t length)
 		return result;
 
 	case Request::BODY:
-		return FeedRequestBody(data, length);
+		return FeedRequestBody(b.data, b.size);
 
 	case Request::END:
 		/* check if the connection was closed by the client while we
@@ -447,7 +444,7 @@ HttpServerConnection::Feed(const void *data, size_t length)
 		if (!keep_alive) {
 			/* discard all pipelined input when keep-alive has been
 			   disabled */
-			socket->DisposeConsumed(length);
+			socket->DisposeConsumed(b.size);
 			return BufferedResult::OK;
 		}
 

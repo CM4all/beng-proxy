@@ -239,9 +239,9 @@ struct HttpServerConnection final
 	/**
 	 * @return false if the connection has been closed
 	 */
-	bool HandleLine(const char *line, size_t length);
+	bool HandleLine(StringView line) noexcept;
 
-	BufferedResult FeedHeaders(const void *_data, size_t length);
+	BufferedResult FeedHeaders(StringView b) noexcept;
 
 	/**
 	 * @return false if the connection has been closed
@@ -251,7 +251,7 @@ struct HttpServerConnection final
 	/**
 	 * @return false if the connection has been closed
 	 */
-	BufferedResult Feed(const void *data, size_t size);
+	BufferedResult Feed(ConstBuffer<void> b) noexcept;
 
 	/**
 	 * Send data from the input buffer to the request body istream

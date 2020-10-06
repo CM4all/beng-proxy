@@ -239,7 +239,7 @@ HttpServerConnection::OnBufferedData()
 		return BufferedResult::OK;
 	}
 
-	return Feed(r.data, r.size);
+	return Feed(r);
 }
 
 DirectResult
