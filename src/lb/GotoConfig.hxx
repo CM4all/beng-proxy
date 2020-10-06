@@ -93,17 +93,17 @@ struct LbGotoConfig {
 
 	LbGotoConfig() = default;
 
-	explicit LbGotoConfig(LbClusterConfig *_cluster) noexcept
-		:cluster(_cluster) {}
+	explicit LbGotoConfig(const LbClusterConfig &_cluster) noexcept
+		:cluster(&_cluster) {}
 
-	explicit LbGotoConfig(LbBranchConfig *_branch) noexcept
-		:branch(_branch) {}
+	explicit LbGotoConfig(const LbBranchConfig &_branch) noexcept
+		:branch(&_branch) {}
 
-	explicit LbGotoConfig(LbLuaHandlerConfig *_lua) noexcept
-		:lua(_lua) {}
+	explicit LbGotoConfig(const LbLuaHandlerConfig &_lua) noexcept
+		:lua(&_lua) {}
 
-	explicit LbGotoConfig(LbTranslationHandlerConfig *_translation) noexcept
-		:translation(_translation) {}
+	explicit LbGotoConfig(const LbTranslationHandlerConfig &_translation) noexcept
+		:translation(&_translation) {}
 
 	explicit LbGotoConfig(http_status_t _status) noexcept
 		:response(_status) {}
