@@ -53,16 +53,16 @@ struct LbAttributeReference {
 
 	std::string name;
 
-	LbAttributeReference(Type _type)
+	LbAttributeReference(Type _type) noexcept
 		:type(_type) {}
 
 	template<typename N>
-	LbAttributeReference(Type _type, N &&_name)
+	LbAttributeReference(Type _type, N &&_name) noexcept
 		:type(_type), name(std::forward<N>(_name)) {}
 
 	template<typename R>
 	gcc_pure
-	const char *GetRequestAttribute(const R &request) const {
+	const char *GetRequestAttribute(const R &request) const noexcept {
 		switch (type) {
 		case Type::METHOD:
 			return http_method_to_string(request.method);
@@ -93,22 +93,22 @@ struct LbGotoConfig {
 
 	LbGotoConfig() = default;
 
-	explicit LbGotoConfig(LbClusterConfig *_cluster)
+	explicit LbGotoConfig(LbClusterConfig *_cluster) noexcept
 		:cluster(_cluster) {}
 
-	explicit LbGotoConfig(LbBranchConfig *_branch)
+	explicit LbGotoConfig(LbBranchConfig *_branch) noexcept
 		:branch(_branch) {}
 
-	explicit LbGotoConfig(LbLuaHandlerConfig *_lua)
+	explicit LbGotoConfig(LbLuaHandlerConfig *_lua) noexcept
 		:lua(_lua) {}
 
-	explicit LbGotoConfig(LbTranslationHandlerConfig *_translation)
+	explicit LbGotoConfig(LbTranslationHandlerConfig *_translation) noexcept
 		:translation(_translation) {}
 
-	explicit LbGotoConfig(http_status_t _status)
+	explicit LbGotoConfig(http_status_t _status) noexcept
 		:response(_status) {}
 
-	bool IsDefined() const {
+	bool IsDefined() const noexcept {
 		return cluster != nullptr || branch != nullptr ||
 			lua != nullptr ||
 			translation != nullptr ||
@@ -116,13 +116,13 @@ struct LbGotoConfig {
 	}
 
 	gcc_pure
-	LbProtocol GetProtocol() const;
+	LbProtocol GetProtocol() const noexcept;
 
 	gcc_pure
-	const char *GetName() const;
+	const char *GetName() const noexcept;
 
 #ifdef HAVE_AVAHI
-	bool HasZeroConf() const;
+	bool HasZeroConf() const noexcept;
 #endif
 };
 
@@ -142,12 +142,12 @@ struct LbConditionConfig {
 	UniqueRegex regex;
 
 	LbConditionConfig(LbAttributeReference &&a, bool _negate,
-			  const char *_string)
+			  const char *_string) noexcept
 		:attribute_reference(std::move(a)), op(Operator::EQUALS),
 		 negate(_negate), string(_string) {}
 
 	LbConditionConfig(LbAttributeReference &&a, bool _negate,
-			  UniqueRegex &&_regex)
+			  UniqueRegex &&_regex) noexcept
 		:attribute_reference(std::move(a)), op(Operator::REGEX),
 		 negate(_negate), regex(std::move(_regex)) {}
 
@@ -157,7 +157,7 @@ struct LbConditionConfig {
 	LbConditionConfig &operator=(const LbConditionConfig &) = delete;
 
 	gcc_pure
-	bool Match(const char *value) const {
+	bool Match(const char *value) const noexcept {
 		switch (op) {
 		case Operator::EQUALS:
 			return (string == value) ^ negate;
@@ -171,7 +171,7 @@ struct LbConditionConfig {
 
 	template<typename R>
 	gcc_pure
-	bool MatchRequest(const R &request) const {
+	bool MatchRequest(const R &request) const noexcept {
 		const char *value = attribute_reference.GetRequestAttribute(request);
 		if (value == nullptr)
 			value = "";
@@ -185,7 +185,7 @@ struct LbGotoIfConfig {
 
 	LbGotoConfig destination;
 
-	LbGotoIfConfig(LbConditionConfig &&c, LbGotoConfig d)
+	LbGotoIfConfig(LbConditionConfig &&c, LbGotoConfig d) noexcept
 		:condition(std::move(c)), destination(d) {}
 
 #ifdef HAVE_AVAHI
@@ -206,7 +206,7 @@ struct LbBranchConfig {
 
 	std::list<LbGotoIfConfig> conditions;
 
-	explicit LbBranchConfig(const char *_name)
+	explicit LbBranchConfig(const char *_name) noexcept
 		:name(_name) {}
 
 	LbBranchConfig(LbBranchConfig &&) = default;
@@ -214,16 +214,16 @@ struct LbBranchConfig {
 	LbBranchConfig(const LbBranchConfig &) = delete;
 	LbBranchConfig &operator=(const LbBranchConfig &) = delete;
 
-	bool HasFallback() const {
+	bool HasFallback() const noexcept {
 		return fallback.IsDefined();
 	}
 
-	LbProtocol GetProtocol() const {
+	LbProtocol GetProtocol() const noexcept {
 		return fallback.GetProtocol();
 	}
 
 #ifdef HAVE_AVAHI
-	bool HasZeroConf() const;
+	bool HasZeroConf() const noexcept;
 #endif
 };
 
@@ -236,7 +236,7 @@ struct LbLuaHandlerConfig {
 	std::filesystem::path path;
 	std::string function;
 
-	explicit LbLuaHandlerConfig(const char *_name)
+	explicit LbLuaHandlerConfig(const char *_name) noexcept
 		:name(_name) {}
 
 	LbLuaHandlerConfig(LbLuaHandlerConfig &&) = default;
@@ -252,6 +252,6 @@ struct LbTranslationHandlerConfig {
 
 	std::map<const char *, LbGotoConfig, StringLess> destinations;
 
-	explicit LbTranslationHandlerConfig(const char *_name)
+	explicit LbTranslationHandlerConfig(const char *_name) noexcept
 		:name(_name) {}
 };

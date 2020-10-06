@@ -48,7 +48,7 @@
 struct LbHttpCheckConfig;
 
 struct LbControlConfig : SocketConfig {
-	LbControlConfig() {
+	LbControlConfig() noexcept {
 		pass_cred = true;
 	}
 };
@@ -62,7 +62,8 @@ struct LbCertDatabaseConfig : CertDatabaseConfig {
 	 */
 	std::list<std::string> ca_certs;
 
-	explicit LbCertDatabaseConfig(const char *_name):name(_name) {}
+	explicit LbCertDatabaseConfig(const char *_name) noexcept
+		:name(_name) {}
 };
 
 struct LbConfig {
@@ -85,12 +86,12 @@ struct LbConfig {
 
 	std::unique_ptr<LbHttpCheckConfig> global_http_check;
 
-	LbConfig();
-	~LbConfig();
+	LbConfig() noexcept;
+	~LbConfig() noexcept;
 
 	template<typename T>
 	gcc_pure
-	const LbMonitorConfig *FindMonitor(T &&t) const {
+	const LbMonitorConfig *FindMonitor(T &&t) const noexcept {
 		const auto i = monitors.find(std::forward<T>(t));
 		return i != monitors.end()
 			? &i->second
@@ -99,7 +100,7 @@ struct LbConfig {
 
 	template<typename T>
 	gcc_pure
-	const LbCertDatabaseConfig *FindCertDb(T &&t) const {
+	const LbCertDatabaseConfig *FindCertDb(T &&t) const noexcept {
 		const auto i = cert_dbs.find(std::forward<T>(t));
 		return i != cert_dbs.end()
 			? &i->second
@@ -108,7 +109,7 @@ struct LbConfig {
 
 	template<typename T>
 	gcc_pure
-	const LbNodeConfig *FindNode(T &&t) const {
+	const LbNodeConfig *FindNode(T &&t) const noexcept {
 		const auto i = nodes.find(std::forward<T>(t));
 		return i != nodes.end()
 			? &i->second
@@ -117,7 +118,7 @@ struct LbConfig {
 
 	template<typename T>
 	gcc_pure
-	const LbClusterConfig *FindCluster(T &&t) const {
+	const LbClusterConfig *FindCluster(T &&t) const noexcept {
 		const auto i = clusters.find(std::forward<T>(t));
 		return i != clusters.end()
 			? &i->second
@@ -126,7 +127,7 @@ struct LbConfig {
 
 	template<typename T>
 	gcc_pure
-	const LbGotoConfig FindGoto(T &&t) const {
+	LbGotoConfig FindGoto(T &&t) const noexcept {
 		LbGotoConfig g;
 
 		g.cluster = FindCluster(t);
@@ -144,7 +145,7 @@ struct LbConfig {
 
 	template<typename T>
 	gcc_pure
-	const LbBranchConfig *FindBranch(T &&t) const {
+	const LbBranchConfig *FindBranch(T &&t) const noexcept {
 		const auto i = branches.find(std::forward<T>(t));
 		return i != branches.end()
 			? &i->second
@@ -153,7 +154,7 @@ struct LbConfig {
 
 	template<typename T>
 	gcc_pure
-	const LbLuaHandlerConfig *FindLuaHandler(T &&t) const {
+	const LbLuaHandlerConfig *FindLuaHandler(T &&t) const noexcept {
 		const auto i = lua_handlers.find(std::forward<T>(t));
 		return i != lua_handlers.end()
 			? &i->second
@@ -162,7 +163,7 @@ struct LbConfig {
 
 	template<typename T>
 	gcc_pure
-	const LbTranslationHandlerConfig *FindTranslationHandler(T &&t) const {
+	const LbTranslationHandlerConfig *FindTranslationHandler(T &&t) const noexcept {
 		const auto i = translation_handlers.find(std::forward<T>(t));
 		return i != translation_handlers.end()
 			? &i->second
@@ -171,7 +172,7 @@ struct LbConfig {
 
 	template<typename T>
 	gcc_pure
-	const LbListenerConfig *FindListener(T &&t) const {
+	const LbListenerConfig *FindListener(T &&t) const noexcept {
 		for (const auto &i : listeners)
 			if (i.name == t)
 				return &i;
@@ -179,7 +180,7 @@ struct LbConfig {
 		return nullptr;
 	}
 
-	bool HasCertDatabase() const {
+	bool HasCertDatabase() const noexcept {
 		for (const auto &i : listeners)
 			if (i.cert_db != nullptr)
 				return true;
@@ -188,7 +189,7 @@ struct LbConfig {
 	}
 
 	gcc_pure
-	bool HasZeroConf() const {
+	bool HasZeroConf() const noexcept {
 #ifdef HAVE_AVAHI
 		for (const auto &i : listeners)
 			if (i.HasZeroConf())

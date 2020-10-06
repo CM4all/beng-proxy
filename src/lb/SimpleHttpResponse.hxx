@@ -47,10 +47,10 @@ struct LbSimpleHttpResponse {
 	std::string message;
 
 	LbSimpleHttpResponse() = default;
-	explicit LbSimpleHttpResponse(http_status_t _status)
+	explicit LbSimpleHttpResponse(http_status_t _status) noexcept
 		:status(_status) {}
 
-	bool IsDefined() const {
+	bool IsDefined() const noexcept {
 		return status != http_status_t(0);
 	}
 };

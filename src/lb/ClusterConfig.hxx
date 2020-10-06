@@ -59,13 +59,14 @@ struct LbNodeConfig {
 	 */
 	std::string jvm_route;
 
-	explicit LbNodeConfig(const char *_name)
+	explicit LbNodeConfig(const char *_name) noexcept
 		:name(_name) {}
 
-	LbNodeConfig(const char *_name, AllocatedSocketAddress &&_address)
+	LbNodeConfig(const char *_name,
+		     AllocatedSocketAddress &&_address) noexcept
 		:name(_name), address(std::move(_address)) {}
 
-	LbNodeConfig(LbNodeConfig &&src)
+	LbNodeConfig(LbNodeConfig &&src) noexcept
 		:name(std::move(src.name)), address(std::move(src.address)),
 		 jvm_route(std::move(src.jvm_route)) {}
 };
@@ -123,7 +124,7 @@ struct LbClusterConfig {
 	 */
 	AddressList address_list;
 
-	explicit LbClusterConfig(const char *_name)
+	explicit LbClusterConfig(const char *_name) noexcept
 		:name(_name) {}
 
 	LbClusterConfig(LbClusterConfig &&) = default;
@@ -134,6 +135,8 @@ struct LbClusterConfig {
 	/**
 	 * Copy addresses of all members into the #AddressList.  This
 	 * needs to be called before using this instance.
+	 *
+	 * Throws on error.
 	 */
 	void FillAddressList();
 
@@ -142,9 +145,9 @@ struct LbClusterConfig {
 	 * jvm_route value, or -1 if not found.
 	 */
 	gcc_pure
-	int FindJVMRoute(const char *jvm_route) const;
+	int FindJVMRoute(const char *jvm_route) const noexcept;
 
-	bool HasZeroConf() const {
+	bool HasZeroConf() const noexcept {
 #ifdef HAVE_AVAHI
 		return !zeroconf_service.empty();
 #else

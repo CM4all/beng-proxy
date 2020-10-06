@@ -59,14 +59,15 @@ struct LbListenerConfig : SocketConfig {
 
 	const LbCertDatabaseConfig *cert_db = nullptr;
 
-	explicit LbListenerConfig(const char *_name)
-		:name(_name) {
+	explicit LbListenerConfig(const char *_name) noexcept
+		:name(_name)
+	{
 		listen = 64;
 	}
 
 #ifdef HAVE_AVAHI
 	gcc_pure
-	bool HasZeroConf() const {
+	bool HasZeroConf() const noexcept {
 		return destination.HasZeroConf();
 	}
 #endif

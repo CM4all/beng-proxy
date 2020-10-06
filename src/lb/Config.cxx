@@ -33,10 +33,5 @@
 #include "Config.hxx"
 #include "Check.hxx"
 
-LbConfig::LbConfig()
-{
-}
-
-LbConfig::~LbConfig()
-{
-}
+LbConfig::LbConfig() noexcept = default;
+LbConfig::~LbConfig() noexcept = default;

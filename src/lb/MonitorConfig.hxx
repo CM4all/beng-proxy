@@ -82,10 +82,10 @@ struct LbMonitorConfig {
 	 */
 	std::string fade_expect;
 
-	explicit LbMonitorConfig(const char *_name)
+	explicit LbMonitorConfig(const char *_name) noexcept
 		:name(_name) {}
 
-	bool IsDefined() const {
+	bool IsDefined() const noexcept {
 		return type != Type::NONE;
 	}
 };

@@ -35,7 +35,7 @@
 #ifdef HAVE_AVAHI
 
 bool
-LbBranchConfig::HasZeroConf() const
+LbBranchConfig::HasZeroConf() const noexcept
 {
 	if (fallback.HasZeroConf())
 		return true;
@@ -50,7 +50,7 @@ LbBranchConfig::HasZeroConf() const
 #endif
 
 LbProtocol
-LbGotoConfig::GetProtocol() const
+LbGotoConfig::GetProtocol() const noexcept
 {
 	assert(IsDefined());
 
@@ -63,7 +63,7 @@ LbGotoConfig::GetProtocol() const
 }
 
 const char *
-LbGotoConfig::GetName() const
+LbGotoConfig::GetName() const noexcept
 {
 	assert(IsDefined());
 
@@ -81,7 +81,7 @@ LbGotoConfig::GetName() const
 #ifdef HAVE_AVAHI
 
 bool
-LbGotoConfig::HasZeroConf() const
+LbGotoConfig::HasZeroConf() const noexcept
 {
 	return (cluster != nullptr && cluster->HasZeroConf()) ||
 		(branch != nullptr && branch->HasZeroConf());

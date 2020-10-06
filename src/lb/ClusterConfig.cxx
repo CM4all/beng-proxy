@@ -53,7 +53,7 @@ LbClusterConfig::FillAddressList()
 }
 
 int
-LbClusterConfig::FindJVMRoute(const char *jvm_route) const
+LbClusterConfig::FindJVMRoute(const char *jvm_route) const noexcept
 {
 	assert(jvm_route != nullptr);
 
