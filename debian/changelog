@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.29) unstable; urgency=low
 
-  * 
+  * child_error_logger: make the pipe non-blocking (workaround)
 
  --   
 

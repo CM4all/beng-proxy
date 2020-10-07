@@ -69,6 +69,13 @@ ChildErrorLog::EnableClient(EventLoop &event_loop, SocketDescriptor socket,
 	if (!UniqueFileDescriptor::CreatePipe(r, w))
 		throw MakeErrno("Failed to create pipe");
 
+	/* this should not be necessary because Net::Log::PipeAdapter
+	   reads only after epoll signals that the pipe is readable,
+	   but we saw blocking reads on several servers, no idea why -
+	   so to be 100% sure, we waste one extra system call to make
+	   one pipe end non-blocking */
+	r.SetNonBlocking();
+
 	adapter = std::make_unique<Net::Log::PipeAdapter>(event_loop, std::move(r),
 							  socket);
 	if (options.rate_limit > 0)
