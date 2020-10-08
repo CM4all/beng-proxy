@@ -25,6 +25,7 @@ You need:
 - `Meson 0.47 <http://mesonbuild.com/>`__ and `Ninja <https://ninja-build.org/>`__
 
 Optional dependencies:
+
 - `nghttp2 <https://nghttp2.org/>`__
 - `libnfs <https://github.com/sahlberg/libnfs>`__
 - `libwas <https://github.com/CM4all/libwas>`__
