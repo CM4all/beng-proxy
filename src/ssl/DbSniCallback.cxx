@@ -36,7 +36,7 @@
 void
 DbSslSniCallback::OnSni(SSL *ssl, const char *name)
 {
-	auto ssl_ctx = cache.Get(name);
+	auto ssl_ctx = cache.Get(name, alpn_h2);
 	if (ssl_ctx)
 		SSL_set_SSL_CTX(ssl, ssl_ctx.get());
 }

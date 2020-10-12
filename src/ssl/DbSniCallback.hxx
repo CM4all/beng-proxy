@@ -40,8 +40,11 @@ class CertCache;
 class DbSslSniCallback final : public SslSniCallback {
 	CertCache &cache;
 
+	const bool alpn_h2;
+
 public:
-	explicit DbSslSniCallback(CertCache &_cache):cache(_cache) {}
+	DbSslSniCallback(CertCache &_cache, bool _alpn_h2) noexcept
+		:cache(_cache), alpn_h2(_alpn_h2) {}
 
 	void OnSni(SSL *ssl, const char *name) override;
 };

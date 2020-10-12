@@ -135,12 +135,20 @@ public:
 	 * pointer on success, nullptr if no matching certificate was
 	 * found, and throws an exception on error.
 	 */
-	SslCtx Get(const char *host);
+	SslCtx Get(const char *host, bool alpn_h2);
 
 private:
-	SslCtx Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key);
-	SslCtx Query(const char *host);
-	SslCtx GetNoWildCard(const char *host);
+	template<typename H>
+	std::string MakeCacheKey(H &&host, bool alpn_h2) noexcept {
+		std::string result(std::forward<H>(host));
+		if (alpn_h2)
+			result.append("|h2");
+		return result;
+	}
+
+	SslCtx Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key, bool alpn_h2);
+	SslCtx Query(const char *host, bool alpn_h2);
+	SslCtx GetNoWildCard(const char *host, bool alpn_h2);
 
 	/* virtual methods from class CertNameCacheHandler */
 	void OnCertModified(const std::string &name,

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.30) unstable; urgency=low
 
-  * 
+  * lb: fix ALPN-HTTP/2 with certdb
 
  --   
 
