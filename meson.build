@@ -349,6 +349,7 @@ ssl2 = static_library(
   'src/ssl/Client.cxx',
   'src/ssl/Factory.cxx',
   'src/ssl/AlpnSelect.cxx',
+  'src/ssl/AlpnEnable.cxx',
   'src/ssl/DbSniCallback.cxx',
   'src/ssl/FifoBufferBio.cxx',
   'src/ssl/Filter.cxx',

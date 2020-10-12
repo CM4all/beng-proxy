@@ -34,8 +34,7 @@
 #include "Config.hxx"
 #include "SessionCache.hxx"
 #include "SniCallback.hxx"
-#include "AlpnProtos.hxx"
-#include "AlpnSelect.hxx"
+#include "AlpnEnable.hxx"
 #include "ssl/Error.hxx"
 #include "ssl/Basic.hxx"
 #include "ssl/Ctx.hxx"
@@ -113,24 +112,7 @@ struct SslFactoryCertKey {
 	}
 
 	void EnableAlpnH2() noexcept {
-		SSL_CTX_set_next_protos_advertised_cb(ssl_ctx.get(), [](SSL *, const unsigned char **data, unsigned int *len, void *) {
-			*data = alpn_http_any;
-			*len = std::size(alpn_http_any);
-			return SSL_TLSEXT_ERR_OK;
-		}, nullptr);
-
-		SSL_CTX_set_alpn_select_cb(ssl_ctx.get(), [](SSL *, const unsigned char **out, unsigned char *outlen, const unsigned char *in, unsigned int inlen, void *){
-			ConstBuffer<unsigned char> haystack(in, inlen);
-			auto found = FindAlpn(haystack, alpn_h2);
-			if (found.IsNull())
-				found = FindAlpn(haystack, alpn_http_1_1);
-			if (found.IsNull())
-				return SSL_TLSEXT_ERR_NOACK;
-
-			*out = found.data;
-			*outlen = found.size;
-			return SSL_TLSEXT_ERR_OK;
-		}, nullptr);
+		::EnableAlpnH2(*ssl_ctx);
 	}
 
 	UniqueSSL Make() const {
