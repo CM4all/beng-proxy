@@ -71,4 +71,13 @@ struct LbListenerConfig : SocketConfig {
 		return destination.HasZeroConf();
 	}
 #endif
+
+	bool GetAlpnHttp2() const noexcept {
+#ifdef HAVE_NGHTTP2
+		return destination.GetProtocol() == LbProtocol::HTTP &&
+			alpn_http2;
+#else
+		return false;
+#endif
+	}
 };
