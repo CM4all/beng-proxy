@@ -75,7 +75,6 @@ test_cflags = test_common_flags + [
   '-Wbad-function-cast',
   '-Waggregate-return',
   '-Wnested-externs',
-  '-pedantic',
 ]
 
 add_global_arguments(common_flags, language: 'c')
