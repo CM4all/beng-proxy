@@ -2,7 +2,7 @@ cm4all-beng-proxy (17.0.30) unstable; urgency=low
 
   * lb: fix ALPN-HTTP/2 with certdb
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 21 Oct 2020 13:48:11 +0200
 
 cm4all-beng-proxy (17.0.29) unstable; urgency=low
 
