@@ -39,6 +39,7 @@
 #include "AcmeConfig.hxx"
 #include "JWS.hxx"
 #include "JsonUtil.hxx"
+#include "jwt/RS256.hxx"
 #include "ssl/Base64.hxx"
 #include "util/Exception.hxx"
 #include "util/RuntimeError.hxx"
@@ -294,50 +295,6 @@ MakeHeader(EVP_PKEY &key, const char *url, const char *kid,
 	return root;
 }
 
-static AllocatedString<>
-Sign(EVP_PKEY &key, ConstBuffer<void> data)
-{
-	UniqueEVP_PKEY_CTX ctx(EVP_PKEY_CTX_new(&key, nullptr));
-	if (!ctx)
-		throw SslError("EVP_PKEY_CTX_new() failed");
-
-	if (EVP_PKEY_sign_init(ctx.get()) <= 0)
-		throw SslError("EVP_PKEY_sign_init() failed");
-
-	if (EVP_PKEY_CTX_set_rsa_padding(ctx.get(), RSA_PKCS1_PADDING) <= 0)
-		throw SslError("EVP_PKEY_CTX_set_rsa_padding() failed");
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wcast-qual"
-
-	if (EVP_PKEY_CTX_set_signature_md(ctx.get(), EVP_sha256()) <= 0)
-		throw SslError("EVP_PKEY_CTX_set_signature_md() failed");
-
-#pragma GCC diagnostic pop
-
-	unsigned char md[SHA256_DIGEST_LENGTH];
-	SHA256((const unsigned char *)data.data, data.size, md);
-
-	size_t length;
-	if (EVP_PKEY_sign(ctx.get(), nullptr, &length, md, sizeof(md)) <= 0)
-		throw SslError("EVP_PKEY_sign() failed");
-
-	std::unique_ptr<unsigned char[]> buffer(new unsigned char[length]);
-	if (EVP_PKEY_sign(ctx.get(), buffer.get(), &length, md, sizeof(md)) <= 0)
-		throw SslError("EVP_PKEY_sign() failed");
-
-	return UrlSafeBase64(ConstBuffer<void>(buffer.get(), length));
-}
-
-static AllocatedString<>
-Sign(EVP_PKEY &key, const char *protected_header_b64, const char *payload_b64)
-{
-	std::string data(protected_header_b64);
-	data += '.';
-	data += payload_b64;
-	return Sign(key, ConstBuffer<void>(data.data(), data.length()));
-}
-
 GlueHttpResponse
 AcmeClient::Request(http_method_t method, const char *uri,
 		    ConstBuffer<void> body)
@@ -378,8 +335,8 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 	const auto protected_header_b64 = UrlSafeBase64(protected_header);
 	root["payload"] = payload_b64.c_str();
 
-	root["signature"] = Sign(key, protected_header_b64.c_str(),
-				 payload_b64.c_str()).c_str();
+	root["signature"] = JWT::SignRS256(key, protected_header_b64.c_str(),
+					   payload_b64.c_str()).c_str();
 
 	root["protected"] = protected_header_b64.c_str();
 

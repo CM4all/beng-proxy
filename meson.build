@@ -334,6 +334,7 @@ shm_dep = declare_dependency(link_with: shm,
                              dependencies: [io_dep])
 
 subdir('libcommon/src/ssl')
+subdir('libcommon/src/jwt')
 subdir('libcommon/src/pg')
 
 ssl2 = static_library(
@@ -1071,6 +1072,7 @@ executable(
     net_dep,
     http_dep,
     io_dep,
+    jwt_dep,
     libcxx,
   ],
   install: true,
