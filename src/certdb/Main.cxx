@@ -259,7 +259,7 @@ Monitor(const CertDatabaseConfig &db_config)
 		if (new_last_modified.empty())
 			throw "No MAX(modified) found";
 
-		for (auto &row : db.GetModifiedServerCertificatesMeta(last_modified.c_str()))
+		for (const auto &row : db.GetModifiedServerCertificatesMeta(last_modified.c_str()))
 			printf("%s %s %s\n",
 			       row.GetValue(1),
 			       *row.GetValue(0) == 't' ? "deleted" : "modified",
@@ -274,7 +274,7 @@ Tail(const CertDatabaseConfig &db_config)
 {
 	CertDatabase db(db_config);
 
-	for (auto &row : db.TailModifiedServerCertificatesMeta())
+	for (const auto &row : db.TailModifiedServerCertificatesMeta())
 		printf("%s %s %s\n",
 		       row.GetValue(1),
 		       *row.GetValue(0) == 't' ? "deleted" : "modified",
