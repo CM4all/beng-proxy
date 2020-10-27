@@ -32,6 +32,7 @@
 
 #include "Cluster.hxx"
 #include "ClusterConfig.hxx"
+#include "MemberHash.hxx"
 #include "Context.hxx"
 #include "MonitorStock.hxx"
 #include "MonitorRef.hxx"
@@ -42,13 +43,11 @@
 #include "cluster/ConnectBalancer.hxx"
 #include "cluster/RoundRobinBalancer.cxx"
 #include "stock/GetHandler.hxx"
-#include "sodium/GenericHash.hxx"
 #include "system/Error.hxx"
 #include "event/Loop.hxx"
 #include "net/PConnectSocket.hxx"
 #include "net/FailureManager.hxx"
 #include "net/ToString.hxx"
-#include "util/HashRing.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/DereferenceIterator.hxx"
@@ -65,9 +64,8 @@
 
 #ifdef HAVE_AVAHI
 
-class LbCluster::StickyRing final : public HashRing<ZeroconfMemberMap::pointer,
-						    sticky_hash_t,
-						    4096, 8> {};
+class LbCluster::StickyRing final
+	: public MemberHashRing<ZeroconfMemberMap::pointer> {};
 
 LbCluster::ZeroconfMember::ZeroconfMember(const std::string &_key,
 					  SocketAddress _address,
@@ -384,31 +382,10 @@ LbCluster::FillActive() noexcept
 			/* lazy allocation */
 			sticky_ring = std::make_unique<StickyRing>();
 
-		/**
-		 * Functor class which generates a #HashRing hash for a
-		 * cluster member combined with a replica number.
-		 */
-		struct MemberHasher {
-			gcc_pure
-			sticky_hash_t operator()(ZeroconfMemberMap::const_pointer member,
-						 size_t replica) const {
-				/* use libsodium's "generichash" (BLAKE2b) which is
-				   secure enough for class HashRing */
-				union {
-					unsigned char hash[crypto_generichash_BYTES];
-					sticky_hash_t result;
-				} u;
-
-				GenericHashState state(sizeof(u.hash));
-				state.Update(member->GetAddress().GetSteadyPart());
-				state.UpdateT(replica);
-				state.Final(u.hash, sizeof(u.hash));
-
-				return u.result;
-			}
-		};
-
-		sticky_ring->Build(active_zeroconf_members, MemberHasher());
+		BuildMemberHashRing(*sticky_ring, active_zeroconf_members,
+				    [](ZeroconfMemberMap::const_pointer member) noexcept {
+					    return member->GetAddress();
+				    });
 	}
 }
 
