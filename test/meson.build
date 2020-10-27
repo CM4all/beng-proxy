@@ -300,6 +300,20 @@ executable('run_client_balancer',
     cluster_dep,
   ])
 
+executable(
+  'DumpZeroconfHashRing',
+  'DumpZeroconfHashRing.cxx',
+  '../src/PInstance.cxx',
+  '../src/lb/MemberHash.cxx',
+  include_directories: inc,
+  dependencies: [
+    pool_dep,
+    avahi_dep,
+    net_dep,
+    sodium_dep,
+  ],
+)
+
 if nfs_client_dep.found()
   executable(
     'run_nfs_client',
