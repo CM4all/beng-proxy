@@ -45,7 +45,7 @@ sticky_hash_t
 MemberAddressHash(SocketAddress address, std::size_t replica) noexcept;
 
 template<typename Node>
-using MemberHashRing = HashRing<Node, sticky_hash_t, 4096, 8>;
+using MemberHashRing = HashRing<Node, sticky_hash_t, 8192, 64>;
 
 template<typename Node, typename C, typename F>
 void

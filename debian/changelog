@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.0.31) unstable; urgency=low
 
   * spawn: don't apply resource limits twice
+  * lb: improve consistent hashing distribution
 
  --   
 
