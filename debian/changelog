@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.32) unstable; urgency=low
 
-  * 
+  * spawn: fix stack overflow (disable ld.so lazy binding)
 
  --   
 

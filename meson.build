@@ -43,6 +43,17 @@ test_common_flags = [
   '-fvisibility=hidden',
 ]
 
+add_global_link_arguments(
+  compiler.get_supported_link_arguments(
+    # make relocations read-only (hardening)
+    '-Wl,-z,relro',
+
+    # no lazy binding, please - not worth it for a daemon
+    '-Wl,-z,now',
+  ),
+  language: 'cpp'
+)
+
 if not debug
   test_common_flags += [
     '-ffunction-sections',
