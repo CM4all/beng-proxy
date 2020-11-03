@@ -31,7 +31,9 @@
  */
 
 #include "JWS.hxx"
-#include "ssl/Base64.hxx"
+#include "sodium/Base64.hxx"
+#include "ssl/Buffer.hxx"
+#include "util/AllocatedString.hxx"
 
 #include "openssl/evp.h"
 #include "openssl/rsa.h"
@@ -60,7 +62,7 @@ MakeJwk(EVP_PKEY &key)
 
 	Json::Value root(Json::objectValue);
 	root["kty"] = "RSA";
-	root["e"] = UrlSafeBase64(*e).c_str();
-	root["n"] = UrlSafeBase64(*n).c_str();
+	root["e"] = UrlSafeBase64(SslBuffer(*e).get()).c_str();
+	root["n"] = UrlSafeBase64(SslBuffer(*n).get()).c_str();
 	return root;
 }
