@@ -40,7 +40,8 @@
 #include "JWS.hxx"
 #include "JsonUtil.hxx"
 #include "jwt/RS256.hxx"
-#include "ssl/Base64.hxx"
+#include "ssl/Buffer.hxx"
+#include "sodium/Base64.hxx"
 #include "util/Exception.hxx"
 #include "util/RuntimeError.hxx"
 
@@ -521,7 +522,7 @@ static Json::Value
 ToJson(X509_REQ &req) noexcept
 {
 	Json::Value root(Json::objectValue);
-	root["csr"] = UrlSafeBase64(req).c_str();
+	root["csr"] = UrlSafeBase64(SslBuffer(req).get()).c_str();
 	return root;
 }
 
