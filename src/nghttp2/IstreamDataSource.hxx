@@ -52,6 +52,8 @@ class IstreamDataSource final : FifoBufferSinkHandler {
 
 	FifoBufferSink sink;
 
+	uint64_t transmitted = 0;
+
 	bool eof = false, error = false;
 
 public:
@@ -65,6 +67,14 @@ public:
 		dp.source.ptr = this;
 		dp.read_callback = ReadCallback;
 		return dp;
+	}
+
+	/**
+	 * Returns the number of bytes transmitted to libnghttp2 in
+	 * the read callback.
+	 */
+	uint64_t GetTransmitted() const noexcept {
+		return transmitted;
 	}
 
 private:

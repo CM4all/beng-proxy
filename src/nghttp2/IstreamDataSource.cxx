@@ -73,6 +73,7 @@ IstreamDataSource::ReadCallback(uint8_t *buf, size_t length,
 	size_t nbytes = std::min(r.size, length);
 	memcpy(buf, r.data, nbytes);
 	buffer.Consume(nbytes);
+	transmitted += nbytes;
 
 	if (buffer.empty()) {
 		buffer.Free();

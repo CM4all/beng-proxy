@@ -40,6 +40,7 @@
 #include "http_server/Handler.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
+#include "http/Logger.hxx"
 #include "istream/LengthIstream.hxx"
 #include "istream/MultiFifoBufferIstream.hxx"
 #include "istream/New.hxx"
@@ -69,6 +70,12 @@ class ServerConnection::Request final
 	const uint32_t id;
 
 	bool eof = false;
+
+	/**
+	 * The response body status.  This is set by SendResponse(),
+	 * and is used later for the access logger.
+	 */
+	http_status_t the_status{};
 
 	CancellablePointer cancel_ptr;
 
@@ -129,6 +136,15 @@ public:
 							nghttp2_http2_strerror(error_code));
 			request_body_control->DestroyError(std::make_exception_ptr(std::move(error)));
 			request_body_control = nullptr;
+		}
+
+		if (logger != nullptr && the_status != http_status_t{}) {
+			int64_t length = -1;
+			if (response_body)
+				length = response_body->GetTransmitted();
+
+			logger->LogHttpRequest(*this, the_status, length,
+					       /* TODO: */ 0, 0);
 		}
 
 		Destroy();
@@ -321,6 +337,8 @@ ServerConnection::Request::SendResponse(http_status_t status,
 					UnusedIstreamPtr _response_body) noexcept
 {
 	cancel_ptr = nullptr;
+
+	the_status = status;
 
 	char status_string[16];
 	sprintf(status_string, "%u", unsigned(status));
