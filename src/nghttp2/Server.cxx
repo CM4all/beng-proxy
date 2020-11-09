@@ -434,8 +434,12 @@ ssize_t
 ServerConnection::SendCallback(const void *data, size_t length) noexcept
 {
 	const auto nbytes = socket->Write(data, length);
-	if (nbytes == WRITE_BLOCKING)
-		return NGHTTP2_ERR_WOULDBLOCK;
+	if (nbytes < 0) {
+		if (nbytes == WRITE_BLOCKING)
+			return NGHTTP2_ERR_WOULDBLOCK;
+		else
+			return NGHTTP2_ERR_CALLBACK_FAILURE;
+	}
 
 	return nbytes;
 }
