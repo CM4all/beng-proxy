@@ -104,16 +104,24 @@ public:
 		nghttp2_session_set_stream_user_data(connection.session.get(),
 						     id, nullptr);
 
-		if (request_body_control)
+		if (request_body_control) {
+			Consume(request_body_control->GetAvailable());
 			request_body_control->DestroyError(std::make_exception_ptr(std::runtime_error("Canceled")));
+		}
 
 		if (cancel_ptr)
 			cancel_ptr.Cancel();
 	}
 
 	void Destroy() noexcept {
+#ifndef NDEBUG
+		auto &c = connection;
+#endif
+
 		pool_trash(pool);
 		this->~Request();
+
+		assert(!c.requests.empty() || c.unconsumed == 0);
 	}
 
 	nghttp2_data_provider MakeResponseDataProvider(UnusedIstreamPtr &&istream) noexcept {
@@ -132,6 +140,8 @@ public:
 
 	int OnStreamCloseCallback(uint32_t error_code) noexcept {
 		if (request_body_control) {
+			Consume(request_body_control->GetAvailable());
+
 			auto error = FormatRuntimeError("Stream closed: %s",
 							nghttp2_http2_strerror(error_code));
 			request_body_control->DestroyError(std::make_exception_ptr(std::move(error)));
@@ -190,24 +200,44 @@ public:
 					       int32_t stream_id,
 					       const uint8_t *data,
 					       size_t len,
-					       void */*user_data*/) noexcept {
+					       [[maybe_unused]] void *user_data) noexcept {
+#ifndef NDEBUG
+		auto &c = *(ServerConnection *)user_data;
+		c.unconsumed += len;
+#endif
+
 		auto *request = (Request *)
 			nghttp2_session_get_stream_user_data(session, stream_id);
-		if (request == nullptr)
+		if (request == nullptr) {
+#ifndef NDEBUG
+			c.unconsumed -= len;
+#endif
+			nghttp2_session_consume(session, stream_id, len);
 			return 0;
+		}
 
 		return request->OnDataChunkReceivedCallback({data, len}, flags);
 	}
 
 private:
+	void Consume(size_t nbytes) noexcept {
+#ifndef NDEBUG
+		assert(connection.unconsumed >= nbytes);
+		connection.unconsumed -= nbytes;
+#endif
+
+		nghttp2_session_consume(connection.session.get(), id, nbytes);
+	}
+
 	/* virtual methods from class MultiFifoBufferIstreamHandler */
 	void OnFifoBufferIstreamConsumed(size_t nbytes) noexcept override {
-		nghttp2_session_consume(connection.session.get(), id, nbytes);
+		Consume(nbytes);
 	}
 
 	void OnFifoBufferIstreamClosed() noexcept override {
 		assert(request_body_control);
 
+		Consume(request_body_control->GetAvailable());
 		request_body_control = nullptr;
 	}
 
@@ -262,13 +292,16 @@ ServerConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data
 {
 	// TODO: limit the MultiFifoBuffer size
 
-	if (!request_body_control)
+	if (!request_body_control) {
+		Consume(data.size);
 		return 0;
+	}
 
 	request_body_control->Push(data.ToVoid());
 
 	eof = (flags & NGHTTP2_FLAG_END_STREAM) != 0;
 	if (eof) {
+		Consume(request_body_control->GetAvailable());
 		std::exchange(request_body_control, nullptr)->SetEof();
 		return 0;
 	}
@@ -327,6 +360,7 @@ ServerConnection::Request::OnEndDataFrame() noexcept
 
 	eof = true;
 
+	Consume(request_body_control->GetAvailable());
 	std::exchange(request_body_control, nullptr)->SetEof();
 	return 0;
 }
@@ -428,6 +462,8 @@ ServerConnection::ServerConnection(struct pool &_pool,
 ServerConnection::~ServerConnection() noexcept
 {
 	requests.clear_and_dispose([](Request *request) { request->Destroy(); });
+
+	assert(unconsumed == 0);
 }
 
 ssize_t

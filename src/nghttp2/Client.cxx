@@ -110,11 +110,15 @@ public:
 	}
 
 	~Request() noexcept {
-		if (id >= 0)
+		if (id >= 0) {
+			if (response_body_control)
+				Consume(response_body_control->GetAvailable());
+
 			/* clear stream_user_data to ignore future
 			   callbacks on this stream */
 			nghttp2_session_set_stream_user_data(connection.session.get(),
 							     id, nullptr);
+		}
 
 		connection.RemoveRequest(*this);
 	}
@@ -180,16 +184,35 @@ public:
 					       int32_t stream_id,
 					       const uint8_t *data,
 					       size_t len,
-					       void */*user_data*/) noexcept {
+					       [[maybe_unused]] void *user_data) noexcept {
+#ifndef NDEBUG
+		auto &c = *(ClientConnection *)user_data;
+		c.unconsumed += len;
+#endif
+
 		auto *request = (Request *)
 			nghttp2_session_get_stream_user_data(session, stream_id);
-		if (request == nullptr)
+		if (request == nullptr) {
+#ifndef NDEBUG
+			c.unconsumed -= len;
+#endif
+			nghttp2_session_consume(session, stream_id, len);
 			return 0;
+		}
 
 		return request->OnDataChunkReceivedCallback({data, len}, flags);
 	}
 
 private:
+	void Consume(size_t nbytes) noexcept {
+#ifndef NDEBUG
+		assert(connection.unconsumed >= nbytes);
+		connection.unconsumed -= nbytes;
+#endif
+
+		nghttp2_session_consume(connection.session.get(), id, nbytes);
+	}
+
 	void AbortResponseHeaders(std::exception_ptr e) noexcept {
 		auto &_handler = handler;
 		Destroy();
@@ -197,7 +220,9 @@ private:
 	}
 
 	void AbortResponseBody(std::exception_ptr e) noexcept {
+		Consume(response_body_control->GetAvailable());
 		response_body_control->DestroyError(std::move(e));
+		response_body_control = nullptr;
 		Destroy();
 	}
 
@@ -216,7 +241,7 @@ private:
 
 	/* virtual methods from class MultiFifoBufferIstreamHandler */
 	void OnFifoBufferIstreamConsumed(size_t nbytes) noexcept override {
-		nghttp2_session_consume(connection.session.get(), id, nbytes);
+		Consume(nbytes);
 	}
 
 	void OnFifoBufferIstreamClosed() noexcept override {
@@ -352,8 +377,10 @@ ClientConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data
 {
 	// TODO: limit the MultiFifoBuffer size
 
-	if (!response_body_control)
+	if (!response_body_control) {
+		Consume(data.size);
 		return 0;
+	}
 
 	response_body_control->Push(data.ToVoid());
 
@@ -471,6 +498,7 @@ ClientConnection::~ClientConnection() noexcept
 	/* all requests must be finished/canceled before this object
 	   gets destructed */
 	assert(requests.empty());
+	assert(unconsumed == 0);
 }
 
 void
@@ -495,8 +523,10 @@ ClientConnection::RemoveRequest(Request &request) noexcept
 {
 	requests.erase(requests.iterator_to(request));
 
-	if (requests.empty())
+	if (requests.empty()) {
+		assert(unconsumed == 0);
 		defer_invoke_idle.ScheduleIdle();
+	}
 }
 
 void

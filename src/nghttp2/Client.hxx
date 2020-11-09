@@ -80,6 +80,15 @@ class ClientConnection final : BufferedSocketHandler {
 
 	size_t max_concurrent_streams = MAX_CONCURRENT_STREAMS;
 
+#ifndef NDEBUG
+	/**
+	 * The total number of bytes passed to our
+	 * data_chunk_recv_callback() which needs to be reported to
+	 * nghttp2_session_consume().
+	 */
+	size_t unconsumed = 0;
+#endif
+
 public:
 	ClientConnection(EventLoop &loop,
 			 std::unique_ptr<FilteredSocket> socket,

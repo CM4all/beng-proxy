@@ -69,6 +69,10 @@ public:
 		:Istream(p),
 		 handler(_handler) {}
 
+	size_t GetAvailable() const noexcept {
+		return buffer.GetAvailable();
+	}
+
 	/**
 	 * Copy data into the FIFO buffer.  This will not invoke the
 	 * #IstreamHandler and thus will never destroy the object.  To

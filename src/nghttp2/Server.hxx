@@ -66,6 +66,15 @@ class ServerConnection final : BufferedSocketHandler {
 
 	RequestList requests;
 
+#ifndef NDEBUG
+	/**
+	 * The total number of bytes passed to our
+	 * data_chunk_recv_callback() which needs to be reported to
+	 * nghttp2_session_consume().
+	 */
+	size_t unconsumed = 0;
+#endif
+
 public:
 	ServerConnection(struct pool &_pool,
 			 UniquePoolPtr<FilteredSocket> _socket,

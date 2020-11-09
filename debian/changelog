@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.0.33) unstable; urgency=low
 
   * http2: implement access logging
+  * http2: fix window updates on failed/canceled requests
   * lb: add listener option "force_http2"
 
  --   
