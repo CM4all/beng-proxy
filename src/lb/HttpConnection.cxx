@@ -141,8 +141,9 @@ NewLbHttpConnection(LbInstance &instance,
 	instance.http_connections.push_back(*connection);
 
 #ifdef HAVE_NGHTTP2
-	if (ssl_filter != nullptr &&
-	    IsAlpnHttp2(ssl_filter_get_alpn_selected(*ssl_filter)))
+	if (listener.force_http2 ||
+	    (ssl_filter != nullptr &&
+	     IsAlpnHttp2(ssl_filter_get_alpn_selected(*ssl_filter))))
 		connection->http2 = UniquePoolPtr<NgHttp2::ServerConnection>::Make(connection->GetPool(),
 										   connection->GetPool(),
 										   std::move(socket),

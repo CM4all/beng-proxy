@@ -50,6 +50,8 @@ struct LbListenerConfig : SocketConfig {
 	bool verbose_response = false;
 
 #ifdef HAVE_NGHTTP2
+	bool force_http2 = false;
+
 	bool alpn_http2 = true;
 #endif
 
