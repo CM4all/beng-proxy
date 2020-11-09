@@ -478,7 +478,7 @@ ServerConnection::OnFrameRecvCallback(const nghttp2_frame *frame) noexcept
 int
 ServerConnection::OnBeginHeaderCallback(const nghttp2_frame *frame) noexcept
 {
-	if (frame->hd.type == NGHTTP2_HEADERS ||
+	if (frame->hd.type == NGHTTP2_HEADERS &&
 	    frame->headers.cat == NGHTTP2_HCAT_REQUEST) {
 
 		auto stream_pool = pool_new_linear(&pool,
