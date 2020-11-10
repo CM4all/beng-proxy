@@ -46,8 +46,6 @@
 
 #include <stdlib.h>
 
-constexpr Event::Duration SessionManager::cleanup_interval;
-
 struct SessionHash {
     gcc_pure
     size_t operator()(const SessionId &id) const {
