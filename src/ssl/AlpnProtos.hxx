@@ -34,29 +34,14 @@
 
 #include "util/Compiler.h"
 
-#if GCC_OLDER_THAN(7,0)
-gcc_unused
-#else
-inline
-#endif
 constexpr unsigned char alpn_http_1_1[] = {
 	8, 'h', 't', 't', 'p', '/', '1', '.', '1',
 };
 
-#if GCC_OLDER_THAN(7,0)
-gcc_unused
-#else
-inline
-#endif
 constexpr unsigned char alpn_h2[] = {
 	2, 'h', '2',
 };
 
-#if GCC_OLDER_THAN(7,0)
-gcc_unused
-#else
-inline
-#endif
 constexpr unsigned char alpn_http_any[] = {
 	2, 'h', '2',
 	8, 'h', 't', 't', 'p', '/', '1', '.', '1',

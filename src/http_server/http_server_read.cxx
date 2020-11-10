@@ -408,9 +408,7 @@ HttpServerConnection::Feed(ConstBuffer<void> b) noexcept
 		if (score == HTTP_SERVER_NEW)
 			score = HTTP_SERVER_FIRST;
 
-#if !GCC_OLDER_THAN(7,0)
 		[[fallthrough]];
-#endif
 
 	case Request::HEADERS:
 		result = FeedHeaders(StringView(b));
