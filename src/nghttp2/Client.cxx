@@ -498,7 +498,7 @@ ClientConnection::RemoveRequest(Request &request) noexcept
 	requests.erase(requests.iterator_to(request));
 
 	if (requests.empty())
-		defer_invoke_idle.Schedule();
+		defer_invoke_idle.ScheduleIdle();
 }
 
 void
