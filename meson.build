@@ -36,6 +36,7 @@ common_flags = [
   '-Wunused',
   '-Wno-unused-result',
   '-Wundef',
+  '-Wvla',
 ]
 
 test_common_flags = [
