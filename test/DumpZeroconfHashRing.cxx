@@ -32,6 +32,11 @@
 
 #include <array>
 
+#include "util/Compiler.h"
+#if CLANG_VERSION >= GCC_MAKE_VERSION(11,0,0)
+#pragma GCC diagnostic ignored "-Wkeyword-macro"
+#endif
+
 /* horrible kludge which allows us to access private members */
 #define class struct
 #include "util/HashRing.hxx"
