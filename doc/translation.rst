@@ -763,7 +763,7 @@ The following packets can be used to specify more details:
 
 - ``REQUEST_URI_VERBATIM``: Pass the CGI parameter ``REQUEST_URI``
   verbatim instead of building it from ``SCRIPT_NAME``, ``PATH_INFO``
-  and ``QUERY_STRING``. (Since version 17.0.1)
+  and ``QUERY_STRING``. (Since version 16.29)
 
 See :ref:`rlimits` for how to configure resource limits and :ref:`ns`
 for how to configure namespaces.
