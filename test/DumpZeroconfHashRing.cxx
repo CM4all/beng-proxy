@@ -33,7 +33,7 @@
 #include <array>
 
 #include "util/Compiler.h"
-#if CLANG_VERSION >= GCC_MAKE_VERSION(11,0,0)
+#if CLANG_VERSION >= GCC_MAKE_VERSION(10,0,0)
 #pragma GCC diagnostic ignored "-Wkeyword-macro"
 #endif
 
