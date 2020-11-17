@@ -48,16 +48,9 @@ args_parse(struct pool &pool, const StringView p) noexcept
 	StringMap args;
 
 	for (const auto s : IterableSplitString(p, '&')) {
-		const char *equals = s.Find('=');
-		if (equals == nullptr)
+		const auto [name, escaped_value] = s.Split('=');
+		if (name.empty() || escaped_value.IsNull())
 			continue;
-
-		StringView name(s);
-		name.SetEnd(equals);
-		if (name.empty())
-			continue;
-
-		auto escaped_value = s.substr(equals + 1);
 
 		char *value = uri_unescape_dup(pool, escaped_value,
 					       ARGS_ESCAPE_CHAR);
