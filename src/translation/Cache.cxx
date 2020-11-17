@@ -545,26 +545,26 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 
 	char rf_buffer[MAX_READ_FILE * 3];
 	if (!read_file.IsNull()) {
-		b.emplace_back(rf_buffer, uri_escape(rf_buffer, read_file));
+		b.emplace_back(rf_buffer, UriEscape(rf_buffer, read_file));
 		b.push_back("=RF]");
 	}
 
 	char di_buffer[MAX_DIRECTORY_INDEX * 3];
 	if (!directory_index.IsNull()) {
-		b.emplace_back(di_buffer, uri_escape(di_buffer, directory_index));
+		b.emplace_back(di_buffer, UriEscape(di_buffer, directory_index));
 		b.push_back("=DIR]");
 	}
 
 	char fnf_buffer[MAX_FILE_NOT_FOUND * 3];
 	if (!file_not_found.IsNull()) {
-		b.emplace_back(fnf_buffer, uri_escape(fnf_buffer, file_not_found));
+		b.emplace_back(fnf_buffer, UriEscape(fnf_buffer, file_not_found));
 		b.push_back("=FNF]");
 	}
 
 	char pps_buffer[MAX_PROBE_PATH_SUFFIXES * 3];
 	if (!probe_path_suffixes.IsNull()) {
 		b.emplace_back(pps_buffer,
-			       uri_escape(pps_buffer, probe_path_suffixes));
+			       UriEscape(pps_buffer, probe_path_suffixes));
 		b.push_back("=PPS");
 
 		if (probe_suffix != nullptr) {
@@ -582,13 +582,13 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	char wfu_buffer[MAX_CACHE_WFU * 3];
 	if (!want_full_uri.IsNull()) {
 		b.push_back("|WFU=");
-		b.emplace_back(wfu_buffer, uri_escape(wfu_buffer, want_full_uri));
+		b.emplace_back(wfu_buffer, UriEscape(wfu_buffer, want_full_uri));
 	}
 
 	char check_buffer[MAX_CACHE_CHECK * 3];
 	if (!check.IsNull()) {
 		b.push_back("|CHECK=");
-		b.emplace_back(check_buffer, uri_escape(check_buffer, check));
+		b.emplace_back(check_buffer, UriEscape(check_buffer, check));
 	}
 
 	if (host != nullptr) {
@@ -624,7 +624,7 @@ tcache_content_type_lookup_key(AllocatorPtr alloc,
 			       const TranslateRequest &request) noexcept
 {
 	char buffer[MAX_CONTENT_TYPE_LOOKUP * 3];
-	size_t length = uri_escape(buffer, request.content_type_lookup);
+	size_t length = UriEscape(buffer, request.content_type_lookup);
 	return alloc.Concat("CTL|",
 			    StringView{buffer, length},
 			    '|',
@@ -635,7 +635,7 @@ static const char *
 tcache_chain_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
 {
 	char buffer[MAX_CHAIN * 3];
-	size_t length = uri_escape(buffer, request.chain);
+	size_t length = UriEscape(buffer, request.chain);
 
 	char status_buffer[32];
 	if (unsigned(request.status) != 0)

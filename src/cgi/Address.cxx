@@ -36,7 +36,7 @@
 #include "pool/StringBuilder.hxx"
 #include "AllocatorPtr.hxx"
 #include "uri/Base.hxx"
-#include "uri/Escape.hxx"
+#include "uri/Unescape.hxx"
 #include "uri/Extract.hxx"
 #include "uri/Compare.hxx"
 #include "uri/Relative.hxx"
@@ -304,7 +304,7 @@ UnescapeApplyPathInfo(AllocatorPtr alloc, const char *base_path_info,
 	const TempPoolLease tpool;
 
 	char *unescaped = (char *)p_malloc(tpool, relative_escaped.size);
-	char *unescaped_end = uri_unescape(unescaped, relative_escaped);
+	char *unescaped_end = UriUnescape(unescaped, relative_escaped);
 	if (unescaped_end == nullptr)
 		return nullptr;
 

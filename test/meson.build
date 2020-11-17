@@ -723,7 +723,6 @@ test('t_widget_http', executable('t_widget_http',
   ]))
 
 test('t_uri', executable('t_uri',
-  't_uri_escape.cxx',
   't_uri_extract.cxx',
   't_uri_relative.cxx',
   't_uri_compare.cxx',

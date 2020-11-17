@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Escape and unescape in URI style ('%20').
  */
 
-#ifndef BENG_PROXY_PURI_ESCAPE_HXX
-#define BENG_PROXY_PURI_ESCAPE_HXX
+#pragma once
 
 #include "util/Compiler.h"
 
@@ -63,5 +62,3 @@ uri_unescape_dup(AllocatorPtr alloc, StringView src,
 char *
 uri_unescape_concat(AllocatorPtr alloc, StringView uri,
                     StringView escaped_tail) noexcept;
-
-#endif

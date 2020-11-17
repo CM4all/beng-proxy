@@ -256,7 +256,7 @@ expansible_buffer_append_uri_escaped(ExpansibleBuffer &buffer,
 				     StringView value) noexcept
 {
 	char *escaped = (char *)p_malloc(&tpool, value.size * 3);
-	size_t length = uri_escape(escaped, StringView(value.data, value.size));
+	size_t length = UriEscape(escaped, value);
 	buffer.Write(escaped, length);
 }
 

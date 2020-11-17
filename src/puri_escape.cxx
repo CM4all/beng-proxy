@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,6 +32,7 @@
 
 #include "puri_escape.hxx"
 #include "uri/Escape.hxx"
+#include "uri/Unescape.hxx"
 #include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -42,7 +43,7 @@ uri_escape_dup(AllocatorPtr alloc, StringView src,
                char escape_char)
 {
     char *dest = alloc.NewArray<char>(src.size * 3 + 1);
-    size_t dest_length = uri_escape(dest, src, escape_char);
+    size_t dest_length = UriEscape(dest, src, escape_char);
     dest[dest_length] = 0;
     return dest;
 }
@@ -52,7 +53,7 @@ uri_unescape_dup(AllocatorPtr alloc, StringView src,
                  char escape_char)
 {
     char *dest = alloc.NewArray<char>(src.size + 1);
-    char *end = uri_unescape(dest, src, escape_char);
+    char *end = UriUnescape(dest, src, escape_char);
     if (end == nullptr)
         return nullptr;
 
@@ -72,7 +73,7 @@ uri_unescape_concat(AllocatorPtr alloc, StringView uri,
 
     /* append "escaped_tail", and fail this function if unescaping
        fails */
-    p = uri_unescape(p, escaped_tail);
+    p = UriUnescape(p, escaped_tail);
     if (p == nullptr)
         return nullptr;
 

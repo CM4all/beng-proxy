@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,7 +34,7 @@
 #include "expand.hxx"
 #include "AllocatorPtr.hxx"
 #include "regex.hxx"
-#include "uri/Escape.hxx"
+#include "uri/Unescape.hxx"
 #include "pcre/MatchInfo.hxx"
 #include "util/StringView.hxx"
 
@@ -110,7 +110,7 @@ expand_string_unescaped(AllocatorPtr alloc, const char *src,
         }
 
         void AppendValue(const char *p, size_t _length) {
-            q = uri_unescape(q, {p, _length});
+            q = UriUnescape(q, {p, _length});
             if (q == nullptr)
                 throw std::runtime_error("Malformed URI escape");
         }

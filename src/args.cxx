@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -110,8 +110,7 @@ args_format_n(struct pool &pool, const StringMap *args,
 			memcpy(p, i.key, length);
 			p += length;
 			*p++ = '=';
-			p += uri_escape(p, i.value,
-					ARGS_ESCAPE_CHAR);
+			p += UriEscape(p, i.value, ARGS_ESCAPE_CHAR);
 		}
 	}
 
@@ -122,7 +121,7 @@ args_format_n(struct pool &pool, const StringMap *args,
 		memcpy(p, replace_key, length);
 		p += length;
 		*p++ = '=';
-		p += uri_escape(p, replace_value, ARGS_ESCAPE_CHAR);
+		p += UriEscape(p, replace_value, ARGS_ESCAPE_CHAR);
 	}
 
 	if (replace_key2 != nullptr) {
@@ -132,7 +131,7 @@ args_format_n(struct pool &pool, const StringMap *args,
 		memcpy(p, replace_key2, length);
 		p += length;
 		*p++ = '=';
-		p += uri_escape(p, replace_value2, ARGS_ESCAPE_CHAR);
+		p += UriEscape(p, replace_value2, ARGS_ESCAPE_CHAR);
 	}
 
 	if (replace_key3 != nullptr) {
@@ -142,7 +141,7 @@ args_format_n(struct pool &pool, const StringMap *args,
 		memcpy(p, replace_key3, length);
 		p += length;
 		*p++ = '=';
-		p += uri_escape(p, replace_value3, ARGS_ESCAPE_CHAR);
+		p += UriEscape(p, replace_value3, ARGS_ESCAPE_CHAR);
 	}
 
 	*p = 0;
