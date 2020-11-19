@@ -35,6 +35,7 @@
 #include "PendingResponse.hxx"
 #include "http/IncomingRequest.hxx"
 #include "widget/Context.hxx"
+#include "translation/Vary.hxx"
 #include "args.hxx"
 #include "strmap.hxx"
 
@@ -78,4 +79,29 @@ Request::ParseArgs()
 
 	translate.request.param = args.Remove("translate");
 	translate.request.session = nullptr;
+}
+
+StringMap
+Request::ForwardResponseHeaders(http_status_t status,
+				const StringMap &src,
+				const char *(*relocate)(const char *uri,
+							void *ctx) noexcept,
+				void *relocate_ctx,
+				const HeaderForwardSettings &settings) noexcept
+{
+	auto headers = forward_response_headers(pool, status, src,
+						request.local_host_and_port,
+						session_cookie,
+						relocate, relocate_ctx,
+						settings);
+
+	add_translation_vary_header(pool, headers, *translate.response);
+
+	product_token = headers.Remove("server");
+
+#ifdef NO_DATE_HEADER
+	date = headers.Remove("date");
+#endif
+
+	return headers;
 }

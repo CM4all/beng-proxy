@@ -48,7 +48,6 @@
 #include "HttpResponseHandler.hxx"
 #include "WidgetLookupProcessor.hxx"
 #include "istream/AutoPipeIstream.hxx"
-#include "translation/Vary.hxx"
 #include "pool/pool.hxx"
 #include "io/Logger.hxx"
 
@@ -118,20 +117,9 @@ ProxyWidget::OnHttpResponse(http_status_t status, StringMap &&_headers,
 	const WidgetView *view = widget->GetTransformationView();
 	assert(view != nullptr);
 
-	auto headers = forward_response_headers(request.pool, status, _headers,
-						request.request.local_host_and_port,
-						request.session_cookie,
-						nullptr, nullptr,
-						view->response_header_forward);
-
-	add_translation_vary_header(request.pool, headers,
-				    *request.translate.response);
-
-	request.product_token = headers.Remove("server");
-
-#ifdef NO_DATE_HEADER
-	request.date = headers.Remove("date");
-#endif
+	auto headers = request.ForwardResponseHeaders(status, _headers,
+						      nullptr, nullptr,
+						      view->response_header_forward);
 
 	HttpHeaders headers2(std::move(headers));
 

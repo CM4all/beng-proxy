@@ -569,6 +569,13 @@ public:
 	const char *GetCookieHost() const;
 	void CollectCookies(const StringMap &headers);
 
+	StringMap ForwardResponseHeaders(http_status_t status,
+					 const StringMap &src,
+					 const char *(*relocate)(const char *uri,
+								 void *ctx) noexcept,
+					 void *relocate_ctx,
+					 const HeaderForwardSettings &settings) noexcept;
+
 	void DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
 				    UnusedIstreamPtr body);
 

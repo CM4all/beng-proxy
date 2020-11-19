@@ -66,7 +66,6 @@
 #include "istream/istream_string.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool/pool.hxx"
-#include "translation/Vary.hxx"
 #include "translation/Transformation.hxx"
 #include "translation/Service.hxx"
 #include "http/Address.hxx"
@@ -946,20 +945,9 @@ Request::OnHttpResponse(http_status_t status, StringMap &&_headers,
 		}
 	}
 
-	auto new_headers = forward_response_headers(pool, status, headers,
-						    request.local_host_and_port,
-						    session_cookie,
-						    RelocateCallback, this,
-						    translate.response->response_header_forward);
-
-	add_translation_vary_header(pool, new_headers,
-				    *translate.response);
-
-	product_token = new_headers.Remove("server");
-
-#ifdef NO_DATE_HEADER
-	date = new_headers.Remove("date");
-#endif
+	auto new_headers = ForwardResponseHeaders(status, headers,
+						  RelocateCallback, this,
+						  translate.response->response_header_forward);
 
 	HttpHeaders headers2(std::move(new_headers));
 
