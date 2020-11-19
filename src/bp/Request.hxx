@@ -107,13 +107,11 @@ public:
 private:
 	StringMap *cookies = nullptr;
 
-public:
 	/**
 	 * The name of the session cookie.
 	 */
 	const char *session_cookie;
 
-private:
 	SessionId session_id;
 	bool send_session_cookie = false;
 
@@ -253,14 +251,12 @@ private:
 	 */
 	const char *cookie_uri;
 
-public:
 	/**
 	 * The product token (RFC 2616 3.8) being forwarded; nullptr if
 	 * beng-proxy shall generate one.
 	 */
 	const char *product_token = nullptr;
 
-private:
 #ifndef NO_DATE_HEADER
 	/**
 	 * The "date" response header (RFC 2616 14.18) being forwarded;
@@ -276,7 +272,6 @@ private:
 	 */
 	const char *resource_tag;
 
-private:
 	SharedPoolPtr<WidgetContext> widget_context;
 
 public:
@@ -286,6 +281,7 @@ public:
 	 */
 	UnusedHoldIstreamPtr request_body;
 
+private:
 	/**
 	 * This attribute remembers the previous status for
 	 * ApplyFilterStatus().  Zero means the response was not generated
@@ -299,11 +295,13 @@ public:
 	 */
 	bool collect_cookies = false;
 
+public:
 	/**
 	 * Is the processor active, and is there a focused widget?
 	 */
 	bool processor_focus;
 
+private:
 	/**
 	 * Was the response already transformed?  The error document only
 	 * applies to the original, untransformed response.
@@ -320,6 +318,7 @@ public:
 	bool response_sent = false;
 #endif
 
+public:
 	CancellablePointer cancel_ptr;
 
 public:
