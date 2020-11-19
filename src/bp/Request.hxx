@@ -662,6 +662,18 @@ public:
 			      std::exception_ptr ep, unsigned log_level=2);
 
 private:
+	/* FILE_DIRECTORY_INDEX handler */
+
+	/**
+	 * The #TranslateResponse contains #TRANSLATE_DIRECTORY_INDEX.
+	 * Check if the file is a directory, and if it is,
+	 * retranslate.
+	 *
+	 * @return true to continue handling the request, false on
+	 * error or if retranslation has been triggered
+	 */
+	bool CheckDirectoryIndex(const TranslateResponse &response) noexcept;
+
 	/* FILE_ENOTDIR handler */
 
 	bool SubmitEnotdir(const TranslateResponse &response) noexcept;

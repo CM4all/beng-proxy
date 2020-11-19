@@ -37,7 +37,6 @@
 #include "RLogger.hxx"
 #include "Instance.hxx"
 #include "load_file.hxx"
-#include "file_directory_index.hxx"
 #include "file_address.hxx"
 #include "nfs/Address.hxx"
 #include "Request.hxx"
@@ -767,7 +766,7 @@ Request::OnTranslateResponse2(const TranslateResponse &response)
 
 	/* check if it's a directory */
 	if (!response.directory_index.IsNull() &&
-	    !check_directory_index(*this, response))
+	    !CheckDirectoryIndex(response))
 		return;
 
 	HandleTranslatedRequest(response);

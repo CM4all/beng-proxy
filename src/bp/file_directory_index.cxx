@@ -30,7 +30,6 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "file_directory_index.hxx"
 #include "Request.hxx"
 #include "translation/Response.hxx"
 #include "file_address.hxx"
@@ -57,8 +56,7 @@ IsDirectory(const FileAddress &address) noexcept
 }
 
 bool
-check_directory_index(Request &request,
-		      const TranslateResponse &response)
+Request::CheckDirectoryIndex(const TranslateResponse &response) noexcept
 {
 	assert(!response.directory_index.IsNull());
 
@@ -75,9 +73,9 @@ check_directory_index(Request &request,
 		case ResourceAddress::Type::FASTCGI:
 		case ResourceAddress::Type::WAS:
 		case ResourceAddress::Type::NFS:
-			request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-						 "Resource address not compatible with DIRECTORY_INDEX",
-						 1);
+			LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+					 "Resource address not compatible with DIRECTORY_INDEX",
+					 1);
 			return false;
 
 		case ResourceAddress::Type::LOCAL:
@@ -90,14 +88,14 @@ check_directory_index(Request &request,
 		}
 	}
 
-	if (++request.translate.n_directory_index > 4) {
-		request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-					 "Got too many consecutive DIRECTORY_INDEX packets",
-					 1);
+	if (++translate.n_directory_index > 4) {
+		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+				 "Got too many consecutive DIRECTORY_INDEX packets",
+				 1);
 		return false;
 	}
 
-	request.translate.request.directory_index = response.directory_index;
-	request.SubmitTranslateRequest();
+	translate.request.directory_index = response.directory_index;
+	SubmitTranslateRequest();
 	return false;
 }
