@@ -557,7 +557,7 @@ forward_response_headers(AllocatorPtr alloc, http_status_t status,
 			 const StringMap &src,
 			 const char *local_host,
 			 const char *session_cookie,
-			 const char *(*relocate)(const char *uri, void *ctx),
+			 const char *(*relocate)(const char *uri, void *ctx) noexcept,
 			 void *relocate_ctx,
 			 const HeaderForwardSettings &settings) noexcept
 {
