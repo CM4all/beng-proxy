@@ -44,6 +44,8 @@ class StringMap;
 class SessionLease;
 class RealmSessionLease;
 class Widget;
+class AllocatorPtr;
+struct HeaderForwardSettings;
 
 struct WidgetContext {
 	EventLoop &event_loop;
@@ -111,4 +113,14 @@ struct WidgetContext {
 	RealmSessionLease GetRealmSession() const;
 
 	Widget &AddRootWidget(WidgetPtr widget) noexcept;
+
+	StringMap ForwardRequestHeaders(AllocatorPtr alloc,
+					bool exclude_host,
+					bool with_body,
+					bool forward_charset,
+					bool forward_encoding,
+					bool forward_range,
+					const HeaderForwardSettings &settings,
+					const char *host_and_port,
+					const char *uri) noexcept;
 };

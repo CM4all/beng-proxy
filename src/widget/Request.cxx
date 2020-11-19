@@ -46,7 +46,6 @@
 #include "bp/session/Session.hxx"
 #include "http/CookieClient.hxx"
 #include "ResourceLoader.hxx"
-#include "bp/ForwardHeaders.hxx"
 #include "bp/Global.hxx"
 #include "translation/Transformation.hxx"
 #include "resource_tag.hxx"
@@ -251,23 +250,15 @@ WidgetRequest::MakeRequestHeaders(const WidgetView &a_view,
 {
 	const AllocatorPtr alloc(pool);
 
-	const char *peer_subject = ctx->peer_subject;
-	const char *peer_issuer_subject = ctx->peer_issuer_subject;
-
 	auto headers =
-		forward_request_headers(alloc, *ctx->request_headers,
-					ctx->local_host,
-					ctx->remote_host,
-					peer_subject, peer_issuer_subject,
-					exclude_host, with_body,
-					widget.from_request.frame && !t_view.HasProcessor(),
-					widget.from_request.frame && t_view.transformations.empty(),
-					widget.from_request.frame && t_view.transformations.empty(),
-					a_view.request_header_forward,
-					ctx->session_cookie,
-					ctx->GetRealmSession().get(),
-					host_and_port,
-					widget.GetAddress().GetUriPath());
+		ctx->ForwardRequestHeaders(alloc,
+					   exclude_host, with_body,
+					   widget.from_request.frame && !t_view.HasProcessor(),
+					   widget.from_request.frame && t_view.transformations.empty(),
+					   widget.from_request.frame && t_view.transformations.empty(),
+					   a_view.request_header_forward,
+					   host_and_port,
+					   widget.GetAddress().GetUriPath());
 
 	if (widget.cls->info_headers) {
 		if (widget.id != nullptr)
