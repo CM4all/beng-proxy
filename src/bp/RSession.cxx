@@ -264,6 +264,9 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
 {
 	auto session = GetRealmSession();
 
+	if (user == nullptr && session)
+		user = p_strdup_checked(&pool, session->user);
+
 	if (!response.session.IsNull()) {
 		if (response.session.empty()) {
 			/* clear translate session */
@@ -308,10 +311,14 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
 		if (*response.user == 0) {
 			/* log out */
 
+			user = nullptr;
+
 			if (session)
 				session->ClearUser();
 		} else {
 			/* log in */
+
+			user = response.user;
 
 			if (!session)
 				session = MakeRealmSession();

@@ -193,6 +193,7 @@ Request::NewWidgetContext() const noexcept
 
 	ctx->peer_subject = connection.peer_subject;
 	ctx->peer_issuer_subject = connection.peer_issuer_subject;
+	ctx->user = user;
 
 	return ctx;
 }
@@ -643,7 +644,7 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
 		: nullptr;
 
 	if (filter.reveal_user)
-		forward_reveal_user(pool, headers2, GetRealmSession().get());
+		forward_reveal_user(pool, headers2, user);
 
 	if (filter.no_body)
 		pending_filter_response =

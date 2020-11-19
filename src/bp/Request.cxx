@@ -105,6 +105,7 @@ Request::ForwardRequestHeaders(const StringMap &src,
 				       settings,
 				       session_cookie,
 				       GetRealmSession().get(),
+				       user,
 				       host_and_port, uri);
 }
 

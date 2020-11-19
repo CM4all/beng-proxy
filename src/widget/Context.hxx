@@ -68,6 +68,12 @@ struct WidgetContext {
 
 	const char *peer_subject = nullptr, *peer_issuer_subject = nullptr;
 
+	/**
+	 * The authenticated user, for generating the
+	 * "X-CM4all-BENG-User" request header.
+	 */
+	const char *user = nullptr;
+
 	const char *uri;
 
 	const char *absolute_uri;

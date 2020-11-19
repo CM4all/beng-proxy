@@ -104,6 +104,7 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 			const HeaderForwardSettings &settings,
 			const char *session_cookie,
 			const RealmSession *session,
+			const char *user,
 			const char *host_and_port, const char *uri) noexcept;
 
 StringMap
@@ -120,4 +121,4 @@ forward_response_headers(AllocatorPtr alloc, http_status_t status,
  */
 void
 forward_reveal_user(AllocatorPtr alloc, StringMap &headers,
-		    const RealmSession *session) noexcept;
+		    const char *user) noexcept;

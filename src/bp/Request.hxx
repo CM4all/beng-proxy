@@ -127,6 +127,14 @@ private:
 	const char *realm = nullptr;
 
 	/**
+	 * The authenticated user, announced by the translation server
+	 * in the #TranslationCommand::USER packet.  This pointer is
+	 * allocated from this object's pool, and is usually a copy
+	 * from the session.
+	 */
+	const char *user = nullptr;
+
+	/**
 	 * Is this request "stateless", i.e. is session management
 	 * disabled?  This is initialized by request_determine_session(),
 	 * and may be disabled later by handle_translated_request().

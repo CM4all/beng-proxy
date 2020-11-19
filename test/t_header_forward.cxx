@@ -84,7 +84,7 @@ TEST(HeaderForwardTest, BasicRequestHeader)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept=1;accept-charset=utf-8;cache-control=3;from=2;");
 
 	a = forward_request_headers(alloc, headers,
@@ -92,7 +92,7 @@ TEST(HeaderForwardTest, BasicRequestHeader)
 				    nullptr, nullptr,
 				    true, true, true, true, true,
 				    settings,
-				    nullptr, nullptr, nullptr, nullptr);
+				    nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept=1;accept-charset=utf-8;cache-control=3;from=2;");
 
 	std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
@@ -102,7 +102,7 @@ TEST(HeaderForwardTest, BasicRequestHeader)
 				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
-				    nullptr, nullptr, nullptr, nullptr);
+				    nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept=1;accept-charset=utf-8;cache-control=3;from=2;user-agent=" PRODUCT_TOKEN ";");
 
 	std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
@@ -112,7 +112,7 @@ TEST(HeaderForwardTest, BasicRequestHeader)
 				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
-				    nullptr, nullptr, nullptr, nullptr);
+				    nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept=1;accept-charset=utf-8;cache-control=3;from=2;user-agent=" PRODUCT_TOKEN ";via=1.1 192.168.0.2;x-forwarded-for=192.168.0.3;");
 
 	std::fill_n(settings.modes, size_t(HeaderGroup::MAX),
@@ -122,7 +122,7 @@ TEST(HeaderForwardTest, BasicRequestHeader)
 				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
-				    nullptr, nullptr, nullptr, nullptr);
+				    nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept=1;accept-charset=utf-8;cache-control=3;from=2;user-agent=" PRODUCT_TOKEN ";");
 }
 
@@ -138,7 +138,7 @@ TEST(HeaderForwardTest, HostRequestHeader)
 					 nullptr, nullptr,
 					 true, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept-charset=utf-8;");
 
 	a = forward_request_headers(alloc, headers,
@@ -146,7 +146,7 @@ TEST(HeaderForwardTest, HostRequestHeader)
 				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
-				    nullptr, nullptr, nullptr, nullptr);
+				    nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept-charset=utf-8;host=foo;");
 
 	settings[HeaderGroup::FORWARD] = HeaderForwardMode::MANGLE;
@@ -155,7 +155,7 @@ TEST(HeaderForwardTest, HostRequestHeader)
 				    nullptr, nullptr,
 				    true, false, false, false, false,
 				    settings,
-				    nullptr, nullptr, nullptr, nullptr);
+				    nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept-charset=utf-8;x-forwarded-host=foo;");
 
 	settings[HeaderGroup::FORWARD] = HeaderForwardMode::MANGLE;
@@ -164,7 +164,7 @@ TEST(HeaderForwardTest, HostRequestHeader)
 				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
-				    nullptr, nullptr, nullptr, nullptr);
+				    nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept-charset=utf-8;host=foo;x-forwarded-host=foo;");
 }
 
@@ -180,7 +180,7 @@ TEST(HeaderForwardTest, AuthRequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept-charset=utf-8;");
 
 	settings[HeaderGroup::AUTH] = HeaderForwardMode::MANGLE;
@@ -189,7 +189,7 @@ TEST(HeaderForwardTest, AuthRequestHeaders)
 				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
-				    nullptr, nullptr, nullptr, nullptr);
+				    nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept-charset=utf-8;");
 
 	settings[HeaderGroup::AUTH] = HeaderForwardMode::BOTH;
@@ -198,7 +198,7 @@ TEST(HeaderForwardTest, AuthRequestHeaders)
 				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
-				    nullptr, nullptr, nullptr, nullptr);
+				    nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept-charset=utf-8;");
 
 	settings[HeaderGroup::AUTH] = HeaderForwardMode::YES;
@@ -207,7 +207,7 @@ TEST(HeaderForwardTest, AuthRequestHeaders)
 				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
-				    nullptr, nullptr, nullptr, nullptr);
+				    nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept-charset=utf-8;authorization=foo;");
 }
 
@@ -223,7 +223,7 @@ TEST(HeaderForwardTest, RangeRequestHeader)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept-charset=utf-8;");
 
 	a = forward_request_headers(alloc, headers,
@@ -231,7 +231,7 @@ TEST(HeaderForwardTest, RangeRequestHeader)
 				    nullptr, nullptr,
 				    false, false, false, false, true,
 				    settings,
-				    nullptr, nullptr, nullptr, nullptr);
+				    nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept-charset=utf-8;range=1-42;");
 
 	a = forward_request_headers(alloc, {},
@@ -239,7 +239,7 @@ TEST(HeaderForwardTest, RangeRequestHeader)
 				    nullptr, nullptr,
 				    false, false, false, false, true,
 				    settings,
-				    nullptr, nullptr, nullptr, nullptr);
+				    nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept-charset=utf-8;");
 }
 
@@ -262,7 +262,7 @@ TEST(HeaderForwardTest, CacheRequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept-charset=utf-8;");
 
 	a = forward_request_headers(alloc, headers,
@@ -270,7 +270,7 @@ TEST(HeaderForwardTest, CacheRequestHeaders)
 				    nullptr, nullptr,
 				    false, false, false, false, true,
 				    settings,
-				    nullptr, nullptr, nullptr, nullptr);
+				    nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept-charset=utf-8;if-match=c;if-modified-since=a;if-none-match=d;if-unmodified-since=b;");
 
 	a = forward_request_headers(alloc, {},
@@ -278,7 +278,7 @@ TEST(HeaderForwardTest, CacheRequestHeaders)
 				    nullptr, nullptr,
 				    false, false, false, false, true,
 				    settings,
-				    nullptr, nullptr, nullptr, nullptr);
+				    nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(a, "accept-charset=utf-8;");
 }
 
@@ -322,7 +322,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	ASSERT_STREQ(a.Remove("user-agent"), PRODUCT_TOKEN);
 	check_strmap(a, "accept-charset=utf-8;"
 		     "via=1.1 192.168.0.2;x-forwarded-for=192.168.0.3;");
@@ -334,7 +334,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(b, "accept=text/*;accept-charset=utf-8;"
 		     "from=foo;user-agent=firesomething;"
 		     "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
@@ -348,7 +348,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(c, "accept=text/*;accept-charset=utf-8;"
 		     "from=foo;user-agent=firesomething;"
 		     "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
@@ -360,7 +360,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, false, true, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(d, "accept=text/*;accept-charset=iso-8859-1;"
 		     "from=foo;user-agent=firesomething;"
 		     "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
@@ -372,7 +372,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, true, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(e, "accept=text/*;accept-charset=utf-8;"
 		     "content-type=image/jpeg;from=foo;"
 		     "user-agent=firesomething;"
@@ -387,7 +387,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(f, "accept=text/*;accept-charset=utf-8;"
 		     "from=foo;"
 		     "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
@@ -401,7 +401,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	ASSERT_STREQ(g.Remove("user-agent"), PRODUCT_TOKEN);
 	check_strmap(g, "accept=text/*;accept-charset=utf-8;"
 		     "from=foo;"
@@ -418,7 +418,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(h, "accept=text/*;accept-charset=utf-8;"
 		     "from=foo;"
 		     "via=1.1 192.168.0.1;"
@@ -433,7 +433,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(i, "accept=text/*;accept-charset=utf-8;"
 		     "from=foo;");
 
@@ -446,7 +446,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(j, "accept=text/*;accept-charset=utf-8;"
 		     "cookie=a=b;"
 		     "from=foo;");
@@ -460,7 +460,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(k, "accept=text/*;accept-charset=utf-8;"
 		     "cookie=a=b;cookie=c=d;"
 		     "from=foo;");
@@ -474,7 +474,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 "c", nullptr, nullptr, nullptr);
+					 "c", nullptr, nullptr, nullptr, nullptr);
 	check_strmap(l, "accept=text/*;accept-charset=utf-8;"
 		     "cookie=a=b;"
 		     "from=foo;");
@@ -489,7 +489,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(m, "abc=def;accept=text/*;accept-charset=utf-8;"
 		     "from=foo;");
 
@@ -503,7 +503,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(n, "abc=def;accept=text/*;accept-charset=utf-8;"
 		     "from=foo;");
 
@@ -514,7 +514,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(o, "abc=def;accept=text/*;accept-charset=utf-8;"
 		     "access-control-request-method=POST;"
 		     "from=foo;"
@@ -529,7 +529,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(p, "abc=def;accept=text/*;accept-charset=utf-8;"
 		     "access-control-request-method=POST;"
 		     "from=foo;"
@@ -546,7 +546,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 					 nullptr, nullptr,
 					 false, false, false, false, false,
 					 settings,
-					 nullptr, nullptr, nullptr, nullptr);
+					 nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(q, "abc=def;accept=text/*;accept-charset=utf-8;"
 		     "access-control-request-method=POST;"
 		     "from=foo;"
@@ -563,7 +563,7 @@ TEST(HeaderForwardTest, RequestHeaders)
 				    nullptr, nullptr,
 				    false, false, false, false, false,
 				    settings,
-				    nullptr, nullptr, nullptr, nullptr);
+				    nullptr, nullptr, nullptr, nullptr, nullptr);
 	check_strmap(q, "abc=def;accept=text/*;accept-charset=utf-8;"
 		     "access-control-request-method=POST;"
 		     "from=foo;"

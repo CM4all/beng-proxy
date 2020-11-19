@@ -454,7 +454,7 @@ WidgetRequest::FilterResponse(http_status_t status,
 		: nullptr;
 
 	if (filter.reveal_user)
-		forward_reveal_user(alloc, headers, GetSessionIfStateful().get());
+		forward_reveal_user(alloc, headers, ctx->user);
 
 	if (body)
 		body = NewAutoPipeIstream(&pool, std::move(body), global_pipe_stock);

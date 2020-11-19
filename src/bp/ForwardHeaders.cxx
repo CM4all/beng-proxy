@@ -283,6 +283,7 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 			const HeaderForwardSettings &settings,
 			const char *session_cookie,
 			const RealmSession *session,
+			const char *user,
 			const char *host_and_port, const char *uri) noexcept
 {
 #ifndef NDEBUG
@@ -292,7 +293,7 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 			  "host='%s' uri='%s' session=%s user='%s' cookie='%s'",
 			  remote_host, host_and_port, uri,
 			  session->parent.id.Format().c_str(),
-			  session->user.c_str(),
+			  user,
 			  host_and_port != nullptr && uri != nullptr
 			  ? cookie_jar_http_header_value(session->cookies,
 							 host_and_port, uri, alloc)
@@ -382,8 +383,8 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 			 alloc.DupZ(session->parent.language));
 
 	if (settings[HeaderGroup::SECURE] == HeaderForwardMode::MANGLE &&
-	    session != nullptr && session->user != nullptr)
-		dest.Add(alloc, "x-cm4all-beng-user", alloc.DupZ(session->user));
+	    user != nullptr)
+		dest.Add(alloc, "x-cm4all-beng-user", user);
 
 	if (settings[HeaderGroup::CAPABILITIES] != HeaderForwardMode::NO)
 		forward_user_agent(alloc, dest, src,
@@ -616,11 +617,9 @@ forward_response_headers(AllocatorPtr alloc, http_status_t status,
 
 void
 forward_reveal_user(AllocatorPtr alloc, StringMap &headers,
-		    const RealmSession *session) noexcept
+		    const char *user) noexcept
 {
 	headers.SecureSet(alloc,
 			  "x-cm4all-beng-user",
-			  session != nullptr && session->user != nullptr
-			  ? alloc.DupZ(session->user)
-			  : nullptr);
+			  user);
 }
