@@ -34,7 +34,6 @@
 #include "Request.hxx"
 #include "Connection.hxx"
 #include "http/IncomingRequest.hxx"
-#include "ForwardHeaders.hxx"
 
 ForwardRequest
 request_forward(Request &request2,
@@ -65,25 +64,16 @@ request_forward(Request &request2,
 
 	/* generate request headers */
 
-	const char *peer_subject = request2.connection.peer_subject;
-	const char *peer_issuer_subject = request2.connection.peer_issuer_subject;
-
 	const bool has_body = body;
 
 	return ForwardRequest(method,
-			      forward_request_headers(request2.pool, request.headers,
-						      request.local_host_and_port,
-						      request.remote_host,
-						      peer_subject,
-						      peer_issuer_subject,
-						      exclude_host,
-						      has_body,
-						      !request2.IsProcessorEnabled(),
-						      !request2.IsTransformationEnabled(),
-						      !request2.IsTransformationEnabled(),
-						      header_forward,
-						      request2.session_cookie,
-						      request2.GetRealmSession().get(),
-						      host_and_port, uri),
+			      request2.ForwardRequestHeaders(request.headers,
+							     exclude_host,
+							     has_body,
+							     !request2.IsProcessorEnabled(),
+							     !request2.IsTransformationEnabled(),
+							     !request2.IsTransformationEnabled(),
+							     header_forward,
+							     host_and_port, uri),
 			      std::move(body));
 }

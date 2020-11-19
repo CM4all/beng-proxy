@@ -82,6 +82,33 @@ Request::ParseArgs()
 }
 
 StringMap
+Request::ForwardRequestHeaders(const StringMap &src,
+			       bool exclude_host,
+			       bool with_body,
+			       bool forward_charset,
+			       bool forward_encoding,
+			       bool forward_range,
+			       const HeaderForwardSettings &settings,
+			       const char *host_and_port,
+			       const char *uri) noexcept
+{
+	return forward_request_headers(pool, src,
+				       request.local_host_and_port,
+				       request.remote_host,
+				       connection.peer_subject,
+				       connection.peer_issuer_subject,
+				       exclude_host,
+				       with_body,
+				       forward_charset,
+				       forward_encoding,
+				       forward_range,
+				       settings,
+				       session_cookie,
+				       GetRealmSession().get(),
+				       host_and_port, uri);
+}
+
+StringMap
 Request::ForwardResponseHeaders(http_status_t status,
 				const StringMap &src,
 				const char *(*relocate)(const char *uri,

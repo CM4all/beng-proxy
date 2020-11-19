@@ -569,6 +569,16 @@ public:
 	const char *GetCookieHost() const;
 	void CollectCookies(const StringMap &headers);
 
+	StringMap ForwardRequestHeaders(const StringMap &src,
+					bool exclude_host,
+					bool with_body,
+					bool forward_charset,
+					bool forward_encoding,
+					bool forward_range,
+					const HeaderForwardSettings &settings,
+					const char *host_and_port,
+					const char *uri) noexcept;
+
 	StringMap ForwardResponseHeaders(http_status_t status,
 					 const StringMap &src,
 					 const char *(*relocate)(const char *uri,
