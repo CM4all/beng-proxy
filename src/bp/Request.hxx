@@ -141,7 +141,6 @@ private:
 	 */
 	bool stateless;
 
-public:
 	struct {
 		TranslateRequest request;
 		const TranslateResponse *response;
@@ -221,7 +220,6 @@ public:
 		bool user_modified = false;
 	} translate;
 
-private:
 	/**
 	 * Area for handler-specific state variables.  This is a union to
 	 * save memory.
