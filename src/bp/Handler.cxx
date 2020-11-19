@@ -192,7 +192,10 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 		HandleAddress(address);
 	} else if (CheckHandleRedirectBounceStatus(response)) {
 		/* done */
-	} else if (response.www_authenticate != nullptr) {
+	} else if (response.www_authenticate != nullptr &&
+		   /* disable the deprecated HTTP-auth if the new
+		      HTTP_AUTH is enabled: */
+		   response.http_auth.IsNull()) {
 		DispatchError(HTTP_STATUS_UNAUTHORIZED, "Unauthorized");
 	} else if (response.break_chain) {
 		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
@@ -699,6 +702,8 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 
 	if (response.HasAuth())
 		HandleAuth(response);
+	else if (!response.http_auth.IsNull())
+		HandleHttpAuth(response);
 	else
 		OnTranslateResponseAfterAuth(response);
 }

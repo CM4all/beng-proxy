@@ -99,6 +99,8 @@ struct TranslateRequest {
 #endif
 
 #if TRANSLATION_ENABLE_HTTP
+	ConstBuffer<void> http_auth = nullptr;
+
 	/**
 	 * The payload of the #TRANSLATE_WANT_FULL_URI packet.  If
 	 * ConstBuffer::IsNull(), then no #TRANSLATE_WANT_FULL_URI packet

@@ -156,6 +156,20 @@ class Translation(Protocol):
         response.max_age(20)
         return response
 
+    def _handle_http_auth(self, http_auth, authorization):
+        log.msg("http_auth '%s' authorization='%s'" % (http_auth, authorization))
+
+        response = Response(protocol_version=2)
+        response.max_age(0)
+
+        if authorization[:6] == 'Basic ':
+            username, password = authorization[6:].decode('base64').split(':', 1)
+            if password == 'testtest':
+                response.packet(TRANSLATE_USER, username)
+                response.max_age(20)
+
+        return response
+
     def _handle_pool(self, name, listener_tag, host):
         log.msg("pool '%s' tag=%s host=%s" % (name, repr(listener_tag), repr(host)))
 
@@ -659,6 +673,10 @@ class Translation(Protocol):
         elif raw_uri[:7] == '/auth2/':
             response.packet(TRANSLATE_AUTH, 'dummy')
             self._handle_hosting(request, response, '/auth2/', raw_uri[7:])
+        elif uri[:11] == '/http-auth/':
+            response.packet(TRANSLATE_HTTP_AUTH, 'http-auth-demo')
+            response.packet(TRANSLATE_WWW_AUTHENTICATE, 'Basic realm="http-auth-demo-realm"')
+            self._handle_local_file('/var/www' + uri[10:], response)
         elif uri[:8] == '/header/':
             response.header('X-Foo', 'Bar')
             self._handle_local_file('/var/www' + uri[7:], response)
@@ -989,6 +1007,10 @@ class Translation(Protocol):
 
         if request.auth is not None:
             return self._handle_auth(request.auth, request.uri, request.session, request.alt_host)
+
+        if request.http_auth is not None:
+            return self._handle_http_auth(request.http_auth,
+                                          request.authorization)
 
         if request.pool is not None:
             return self._handle_pool(request.pool, request.listener_tag, request.host)

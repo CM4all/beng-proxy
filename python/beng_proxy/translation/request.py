@@ -50,6 +50,7 @@ class Request:
         self.session = None
         self.check = None
         self.auth = None
+        self.http_auth = None
         self.want_full_uri = None
         self.chain = None
         self.chain_header = None
@@ -118,6 +119,8 @@ class Request:
             self.check = packet.payload
         elif packet.command == TRANSLATE_AUTH:
             self.auth = packet.payload
+        elif packet.command == TRANSLATE_HTTP_AUTH:
+            self.http_auth = packet.payload
         elif packet.command == TRANSLATE_WANT_FULL_URI:
             self.want_full_uri = packet.payload
         elif packet.command == TRANSLATE_CHAIN:

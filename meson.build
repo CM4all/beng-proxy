@@ -848,6 +848,7 @@ executable(
   'src/bp/Global.cxx',
   'src/bp/Handler.cxx',
   'src/bp/Auth.cxx',
+  'src/bp/HttpAuth.cxx',
   'src/load_file.cxx',
   'src/bp/file_not_found.cxx',
   'src/bp/file_enotdir.cxx',

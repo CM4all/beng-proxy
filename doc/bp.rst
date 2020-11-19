@@ -870,6 +870,46 @@ Authentication
 HTTP-level Authentication
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
+A translation response containing ``HTTP_AUTH`` enables HTTP-based
+authentication according to RFC 2617.  The packet may contain an
+opaque payload.  Additionally, the translation server should send
+``WWW_AUTHENTICATE`` and ``AUTHENTICATION_INFO``, which will be sent
+to the client in the ``WWW-Authenticate`` and ``Authentication-Info``
+response headers.
+
+Without an ``Authorization`` request header, the HTTP request will
+result in a ``401 Unauthorized`` response (with headers
+``WWW-Authenticate`` and ``Authentication-Info``).
+
+If the ``Authorization`` header is available, :program:`beng-proxy`
+submits it to the translation server in an ``AUTHORIZATION`` packet
+and echoes the ``HTTP_AUTH`` packet.  The translation server
+responds with one of:
+
+- ``USER`` specifying the user handle to be forwarded in
+  ``X-CM4all-BENG-User`` request headers (optionally followed by
+  ``MAX_AGE``, because :program:`beng-proxy` is allowed to cache these
+  responses)
+
+- ``STATUS=401`` if the ``Authorization`` value was rejected
+
+Example conversation:
+
+#. :program:`beng-proxy`: ``URI=/protected/foo.html``
+
+#. translation server:
+   ``PATH=/var/www/protected/foo.html HTTP_AUTH=opaque
+   WWW_AUTHENTICATE='Basic realm="Foo"'``
+
+#. :program:`beng-proxy`: ``HTTP_AUTH=opaque AUTHORIZATION='Basic
+   QWxhZGRpbjpvcGVuIHNlc2FtZQ=='``
+
+#. translation server:
+   ``USER=Aladdin MAX_AGE=300``
+
+HTTP-level Authentication (old)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 :program:`beng-proxy` supports HTTP-level authentication according to RFC 2617.
 It forwards the ``Authorization`` request header to the translation
 server wrapped in a ``AUTHORIZATION`` packet, and allows the translation

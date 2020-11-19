@@ -2,6 +2,7 @@ cm4all-beng-proxy (17.0.34) unstable; urgency=low
 
   * merge release 16.29
   * bp: generate header "X-CM4all-BENG-User" only if SECURE=MANGLE
+  * translation: add packet HTTP_AUTH
 
  --   
 

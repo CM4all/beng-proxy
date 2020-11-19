@@ -429,10 +429,18 @@ public:
 	void OnAuthTranslateResponse(const TranslateResponse &response) noexcept;
 	void OnAuthTranslateError(std::exception_ptr ep) noexcept;
 
+	void OnHttpAuthTranslateResponse(const TranslateResponse &response) noexcept;
+	void OnHttpAuthTranslateError(std::exception_ptr ep) noexcept;
+
 	/**
 	 * Handle #TRANSLATE_AUTH.
 	 */
 	void HandleAuth(const TranslateResponse &response);
+
+	/**
+	 * Handle #TranslationCommand::HTTP_AUTH.
+	 */
+	void HandleHttpAuth(const TranslateResponse &response) noexcept;
 
 	bool EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 				 struct file_request &file_request) noexcept;
