@@ -381,7 +381,8 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 		dest.Add(alloc, "accept-language",
 			 alloc.DupZ(session->parent.language));
 
-	if (session != nullptr && session->user != nullptr)
+	if (settings[HeaderGroup::SECURE] == HeaderForwardMode::MANGLE &&
+	    session != nullptr && session->user != nullptr)
 		dest.Add(alloc, "x-cm4all-beng-user", alloc.DupZ(session->user));
 
 	if (settings[HeaderGroup::CAPABILITIES] != HeaderForwardMode::NO)
