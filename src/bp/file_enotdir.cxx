@@ -30,7 +30,6 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "file_enotdir.hxx"
 #include "Request.hxx"
 #include "translation/Response.hxx"
 #include "file_address.hxx"
@@ -116,60 +115,58 @@ get_file_base(const TranslateResponse &response) noexcept
 	gcc_unreachable();
 }
 
-static bool
-submit_enotdir(Request &request, const TranslateResponse &response)
+inline bool
+Request::SubmitEnotdir(const TranslateResponse &response) noexcept
 {
-	request.translate.request.enotdir = response.enotdir;
+	translate.request.enotdir = response.enotdir;
 
-	const char *const uri = request.request.uri;
-	if (request.translate.enotdir_uri == nullptr) {
-		request.translate.request.uri = request.translate.enotdir_uri =
-			p_strdup(&request.pool, uri);
-		request.translate.enotdir_path_info = uri + strlen(uri);
+	const char *const uri = request.uri;
+	if (translate.enotdir_uri == nullptr) {
+		translate.request.uri = translate.enotdir_uri =
+			p_strdup(&pool, uri);
+		translate.enotdir_path_info = uri + strlen(uri);
 	}
 
 	const char *slash = (const char *)
-		memrchr(uri, '/', request.translate.enotdir_path_info - uri);
+		memrchr(uri, '/', translate.enotdir_path_info - uri);
 	if (slash == nullptr || slash == uri)
 		return true;
 
-	request.translate.enotdir_uri[slash - uri] = 0;
-	request.translate.enotdir_path_info = slash;
+	translate.enotdir_uri[slash - uri] = 0;
+	translate.enotdir_path_info = slash;
 
-	request.SubmitTranslateRequest();
+	SubmitTranslateRequest();
 	return false;
 }
 
 bool
-check_file_enotdir(Request &request,
-		   const TranslateResponse &response)
+Request::CheckFileEnotdir(const TranslateResponse &response) noexcept
 {
 	assert(!response.enotdir.IsNull());
 
 	const char *path = get_file_path(response);
 	if (path == nullptr) {
-		request.LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-					 "Resource address not compatible with ENOTDIR",
-					 1);
+		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+				 "Resource address not compatible with ENOTDIR",
+				 1);
 		return false;
 	}
 
 	if (IsEnotdir(get_file_base(response), path))
-		return submit_enotdir(request, response);
+		return SubmitEnotdir(response);
 
 	return true;
 }
 
 void
-apply_file_enotdir(Request &request)
+Request::ApplyFileEnotdir() noexcept
 {
-	if (request.translate.enotdir_path_info != nullptr) {
+	if (translate.enotdir_path_info != nullptr) {
 		/* append the path_info to the resource address */
 
 		auto address =
-			request.translate.address.Apply(request.pool,
-							request.translate.enotdir_path_info);
+			translate.address.Apply(pool, translate.enotdir_path_info);
 		if (address.IsDefined())
-			request.translate.address = std::move(address);
+			translate.address = std::move(address);
 	}
 }

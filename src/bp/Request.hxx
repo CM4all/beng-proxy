@@ -662,6 +662,24 @@ public:
 			      std::exception_ptr ep, unsigned log_level=2);
 
 private:
+	/* FILE_ENOTDIR handler */
+
+	bool SubmitEnotdir(const TranslateResponse &response) noexcept;
+
+	/**
+	 * The #TranslateResponse contains #TRANSLATE_ENOTDIR.  Check this
+	 * condition and retranslate.
+	 *
+	 * @return true to continue handling the request, false on error or if
+	 * retranslation has been triggered
+	 */
+	bool CheckFileEnotdir(const TranslateResponse &response) noexcept;
+
+	/**
+	 * Append the ENOTDIR PATH_INFO to the resource address.
+	 */
+	void ApplyFileEnotdir() noexcept;
+
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
 		DiscardRequestBody();

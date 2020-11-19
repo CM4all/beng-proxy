@@ -37,7 +37,6 @@
 #include "RLogger.hxx"
 #include "Instance.hxx"
 #include "load_file.hxx"
-#include "file_enotdir.hxx"
 #include "file_directory_index.hxx"
 #include "file_address.hxx"
 #include "nfs/Address.hxx"
@@ -371,7 +370,7 @@ Request::HandleTranslatedRequest(const TranslateResponse &response) noexcept
 	translate.address = {ShallowCopy(), response.address};
 	translate.transformations.clear();
 
-	apply_file_enotdir(*this);
+	ApplyFileEnotdir();
 
 	if (!DoContentTypeLookup(response.address)) {
 		translate.suffix_transformations.clear();
@@ -758,7 +757,7 @@ Request::OnTranslateResponse2(const TranslateResponse &response)
 		return;
 
 	/* check ENOTDIR */
-	if (!response.enotdir.IsNull() && !check_file_enotdir(*this, response))
+	if (!response.enotdir.IsNull() && !CheckFileEnotdir(response))
 		return;
 
 	/* check if the file exists */
