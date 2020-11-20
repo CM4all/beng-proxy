@@ -694,6 +694,19 @@ public:
 			      std::exception_ptr ep, unsigned log_level=2);
 
 private:
+	/**
+	 * Asks the translation server for an error document, and submits it
+	 * to InvokeResponse().  If there is no error document, or the
+	 * error document resource fails, it resubmits the original response.
+	 *
+	 * @param error_document the payload of the #TRANSLATE_ERROR_DOCUMENT
+	 * translate response packet
+	 */
+	void DisaptchErrdocResponse(http_status_t status,
+				    ConstBuffer<void> error_document,
+				    HttpHeaders &&headers,
+				    UnusedIstreamPtr body) noexcept;
+
 	/* FILE_DIRECTORY_INDEX handler */
 
 	/**

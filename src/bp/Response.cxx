@@ -54,7 +54,6 @@
 #include "ResourceLoader.hxx"
 #include "resource_tag.hxx"
 #include "hostname.hxx"
-#include "errdoc.hxx"
 #include "strmap.hxx"
 #include "pheaders.hxx"
 #include "XmlProcessor.hxx"
@@ -738,10 +737,10 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
 		   discard it as early as possible */
 		DiscardRequestBody();
 
-		errdoc_dispatch_response(*this, status,
-					 translate.response->error_document,
-					 std::move(headers),
-					 std::move(response_body));
+		DisaptchErrdocResponse(status,
+				       translate.response->error_document,
+				       std::move(headers),
+				       std::move(response_body));
 		return;
 	}
 
