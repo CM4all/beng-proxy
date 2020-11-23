@@ -1214,6 +1214,7 @@ executable(
 
 executable(
   'cm4all-beng-control',
+  'src/control/Main.cxx',
   'src/control/Client.cxx',
   include_directories: inc,
   dependencies: [
