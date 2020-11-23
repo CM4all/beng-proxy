@@ -36,8 +36,10 @@
 #include "translation/Protocol.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/StringView.hxx"
 
 #include <string>
+#include <string_view>
 
 class BengControlClient {
 	UniqueSocketDescriptor socket;
@@ -52,6 +54,16 @@ public:
 
 	void Send(BengProxy::ControlCommand cmd, ConstBuffer<void> payload=nullptr,
 		  ConstBuffer<FileDescriptor> fds=nullptr);
+
+	void Send(BengProxy::ControlCommand cmd, std::nullptr_t n,
+		  ConstBuffer<FileDescriptor> fds=nullptr) {
+		Send(cmd, ConstBuffer<void>{n}, fds);
+	}
+
+	void Send(BengProxy::ControlCommand cmd, std::string_view payload,
+		  ConstBuffer<FileDescriptor> fds=nullptr) {
+		Send(cmd, StringView(payload).ToVoid(), fds);
+	}
 
 	std::pair<BengProxy::ControlCommand, std::string> Receive();
 

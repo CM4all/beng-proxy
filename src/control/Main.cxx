@@ -116,8 +116,7 @@ TcacheInvalidate(const char *server, ConstBuffer<const char *> args)
 		payload += ParseTcacheInvalidate(s);
 
 	BengControlClient client(server);
-	client.Send(BengProxy::ControlCommand::TCACHE_INVALIDATE,
-		    {payload.data(), payload.size()});
+	client.Send(BengProxy::ControlCommand::TCACHE_INVALIDATE, payload);
 }
 
 static void
@@ -150,7 +149,7 @@ EnableNode(const char *server, ConstBuffer<const char *> args)
 		throw Usage{"Too many arguments"};
 
 	BengControlClient client(server);
-	client.Send(BengProxy::ControlCommand::ENABLE_NODE, name.ToVoid());
+	client.Send(BengProxy::ControlCommand::ENABLE_NODE, name);
 }
 
 static void
@@ -165,7 +164,7 @@ FadeNode(const char *server, ConstBuffer<const char *> args)
 		throw Usage{"Too many arguments"};
 
 	BengControlClient client(server);
-	client.Send(BengProxy::ControlCommand::FADE_NODE, name.ToVoid());
+	client.Send(BengProxy::ControlCommand::FADE_NODE, name);
 }
 
 static void
@@ -181,7 +180,7 @@ NodeStatus(const char *server, ConstBuffer<const char *> args)
 
 	BengControlClient client(server);
 	client.AutoBind();
-	client.Send(BengProxy::ControlCommand::NODE_STATUS, name.ToVoid());
+	client.Send(BengProxy::ControlCommand::NODE_STATUS, name);
 
 	const auto response = client.Receive();
 	if (response.first != BengProxy::ControlCommand::NODE_STATUS)
@@ -258,7 +257,7 @@ FadeChildren(const char *server, ConstBuffer<const char *> args)
 		throw Usage{"Too many arguments"};
 
 	BengControlClient client(server);
-	client.Send(BengProxy::ControlCommand::FADE_CHILDREN, tag.ToVoid());
+	client.Send(BengProxy::ControlCommand::FADE_CHILDREN, tag);
 }
 
 static void
@@ -273,7 +272,7 @@ FlushFilterCache(const char *server, ConstBuffer<const char *> args)
 		throw Usage{"Too many arguments"};
 
 	BengControlClient client(server);
-	client.Send(BengProxy::ControlCommand::FLUSH_FILTER_CACHE, tag.ToVoid());
+	client.Send(BengProxy::ControlCommand::FLUSH_FILTER_CACHE, tag);
 }
 
 static void
