@@ -95,7 +95,7 @@ GetBounceUri(AllocatorPtr alloc, const IncomingHttpRequest &request,
  * Apply session-specific data from the #TranslateResponse.  Returns
  * the session object or nullptr.
  */
-RealmSessionLease
+inline RealmSessionLease
 Request::ApplyTranslateResponseSession(const TranslateResponse &response) noexcept
 {
 	ApplyTranslateRealm(response, nullptr);
