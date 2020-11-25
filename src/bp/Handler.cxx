@@ -100,12 +100,6 @@ Request::ApplyTranslateResponseSession(const TranslateResponse &response) noexce
 {
 	ApplyTranslateRealm(response, nullptr);
 
-	if (response.transparent) {
-		MakeStateless();
-		args.Clear();
-	} else if (response.discard_session)
-		DiscardSession();
-
 	return ApplyTranslateSession(response);
 }
 
@@ -686,6 +680,12 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 			return;
 		}
 	}
+
+	if (response.transparent) {
+		MakeStateless();
+		args.Clear();
+	} else if (response.discard_session)
+		DiscardSession();
 
 	if (!response.session.IsNull())
 		/* must apply SESSION early so it gets used by
