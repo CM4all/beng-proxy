@@ -217,6 +217,8 @@ Request::DiscardSession()
 
 	session_delete(session_id);
 	session_id.Clear();
+
+	translate.request.session = nullptr;
 	send_session_cookie = false;
 }
 
