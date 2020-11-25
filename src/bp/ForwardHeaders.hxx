@@ -63,6 +63,10 @@ struct HeaderForwardSettings {
 		return modes[size_t(group)];
 	}
 
+	constexpr bool IsCookieMangle() const noexcept {
+		return (*this)[Group::COOKIE] == Mode::MANGLE;
+	}
+
 	static constexpr auto MakeDefaultRequest() noexcept {
 		auto s = AllNo();
 		s[Group::IDENTITY] = Mode::MANGLE;

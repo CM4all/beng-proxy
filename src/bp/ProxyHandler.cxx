@@ -120,7 +120,7 @@ Request::HandleProxyAddress() noexcept
 	for (const auto &i : tr.request_headers)
 		forward.headers.SecureSet(pool, i.key, i.value);
 
-	collect_cookies = true;
+	collect_cookies = tr.response_header_forward.IsCookieMangle();
 
 	auto &rl = tr.uncached
 		? *instance.direct_resource_loader

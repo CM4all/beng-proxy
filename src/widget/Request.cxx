@@ -654,19 +654,27 @@ WidgetRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 			widget.logger(4, "  ", i.key, ": ", i.value);
 	}
 
-	if (host_and_port != nullptr) {
-		auto session = ctx->GetRealmSession();
-		if (session)
-			widget_collect_cookies(session->cookies, headers,
-					       host_and_port);
-	} else {
+	/* TODO shall the address view or the transformation view be used
+	   to control response header forwarding? */
+	/* TODO do this after X-CM4all-View was applied */
+	const WidgetView *view = widget.GetTransformationView();
+	assert(view != nullptr);
+
+	if (view->response_header_forward.IsCookieMangle()) {
+		if (host_and_port != nullptr) {
+			auto session = ctx->GetRealmSession();
+			if (session)
+				widget_collect_cookies(session->cookies, headers,
+						       host_and_port);
+		} else {
 #ifndef NDEBUG
-		auto r = headers.EqualRange("set-cookie2");
-		if (r.first == r.second)
-			r = headers.EqualRange("set-cookie");
-		if (r.first != r.second)
-			widget.logger(4, "ignoring Set-Cookie from widget: no host");
+			auto r = headers.EqualRange("set-cookie2");
+			if (r.first == r.second)
+				r = headers.EqualRange("set-cookie");
+			if (r.first != r.second)
+				widget.logger(4, "ignoring Set-Cookie from widget: no host");
 #endif
+		}
 	}
 
 	if (http_status_is_redirect(status)) {
