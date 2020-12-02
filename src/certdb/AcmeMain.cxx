@@ -257,7 +257,7 @@ CollectPendingAuthorizations(const AcmeConfig &config,
 	   Dns01ChallengeRecord instance for each domain, to be shared
 	   by multiple authorizations for the same domain, with
 	   different values for each authorization; this creates
-	   multiple TXT records (and removes the when finished) */
+	   multiple TXT records (and removes them when finished) */
 	Dns01ChallengeRecordMap dns_map;
 
 	for (const auto &i : authorizations) {
