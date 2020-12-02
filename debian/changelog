@@ -4,6 +4,7 @@ cm4all-beng-proxy (17.0.35) unstable; urgency=low
   * bp: handle DISCARD_SESSION before AUTH
   * bp: clear the SESSION translation request packet on DISCARD_SESSION
   * bp: collect cookies from response headers only if COOKIE=MANGLE
+  * certdb: create DNS TXT record before updating the ACME dns-01 challenge
 
  --   
 

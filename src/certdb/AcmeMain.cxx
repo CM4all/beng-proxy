@@ -260,6 +260,8 @@ CollectPendingAuthorizations(const AcmeConfig &config,
 	   multiple TXT records (and removes them when finished) */
 	Dns01ChallengeRecordMap dns_map;
 
+	std::forward_list<AcmeChallenge> challenges;
+
 	for (const auto &i : authorizations) {
 		auto ar = client.Authorize(account_key, i.c_str());
 		if (!ValidateIdentifier(ar, identifiers))
@@ -274,9 +276,8 @@ CollectPendingAuthorizations(const AcmeConfig &config,
 
 		progress();
 
-		auto challenge2 = client.UpdateChallenge(account_key, *challenge);
-		challenge2.Check();
-		progress();
+		/* postpone the challenge update to after the commit */
+		challenges.emplace_front(*challenge);
 	}
 
 	/* now actually set the TXT records we collected previously;
@@ -287,6 +288,17 @@ CollectPendingAuthorizations(const AcmeConfig &config,
 	   domain has finished */
 	for (auto &i : dns_map)
 		i.second->Commit();
+
+	/* update all challenges, which triggers the server-side
+	   check */
+	while (!challenges.empty()) {
+		const auto &challenge = challenges.front();
+		auto challenge2 = client.UpdateChallenge(account_key, challenge);
+		challenges.pop_front();
+
+		challenge2.Check();
+		progress();
+	}
 
 	return pending_authz;
 }
