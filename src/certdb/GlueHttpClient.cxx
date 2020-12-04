@@ -102,23 +102,22 @@ GlueHttpClient::Request(EventLoop &event_loop,
 {
 	CurlSlist header_list;
 
-	CurlEasy easy(uri);
-	easy.SetOption(CURLOPT_VERBOSE, long(verbose));
+	GlueHttpResponseHandler handler;
+	CurlRequest request(curl_global, uri, handler);
+
+	request.SetOption(CURLOPT_VERBOSE, long(verbose));
 
 	if (method == HTTP_METHOD_HEAD)
-		easy.SetNoBody();
+		request.SetNoBody();
 	else if (method == HTTP_METHOD_POST)
-		easy.SetPost();
+		request.SetPost();
 
 	if (!body.IsNull()) {
-		easy.SetRequestBody(body.data, body.size);
+		request.SetRequestBody(body.data, body.size);
 		header_list.Append("Content-Type: application/jose+json");
 	}
 
-	easy.SetRequestHeaders(header_list.Get());
-
-	GlueHttpResponseHandler handler;
-	CurlRequest request(curl_global, std::move(easy), handler);
+	request.SetRequestHeaders(header_list.Get());
 
 	request.Start();
 
