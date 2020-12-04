@@ -1,8 +1,8 @@
 #!/usr/bin/make -f
 # -*- mode: makefile; coding: utf-8 -*-
 
-export CXX="clang++-10"
-export CC="clang-10"
+export CXX="clang++-11"
+export CC="clang-11"
 
 MESON_OPTIONS = \
 	--includedir=include/cm4all/libbeng-proxy-3 \

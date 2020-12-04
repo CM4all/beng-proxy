@@ -5,7 +5,7 @@ Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 12~), dh-python,
  python3,
  meson (>= 0.47),
- clang-10, libc++-10-dev, libc++abi-10-dev,
+ clang-11, libc++-11-dev, libc++abi-11-dev,
  libc6-dev (>= 2.28),
  libsystemd-dev, libdbus-1-dev,
  libseccomp-dev,

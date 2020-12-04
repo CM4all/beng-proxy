@@ -5,6 +5,7 @@ cm4all-beng-proxy (17.0.35) unstable; urgency=low
   * bp: clear the SESSION translation request packet on DISCARD_SESSION
   * bp: collect cookies from response headers only if COOKIE=MANGLE
   * certdb: create DNS TXT record before updating the ACME dns-01 challenge
+  * debian: build with clang 11
 
  --   
 
