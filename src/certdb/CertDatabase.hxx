@@ -167,7 +167,7 @@ private:
 					   const char *not_after,
 					   Pg::BinaryValue cert, Pg::BinaryValue key,
 					   const char *key_wrap_name) {
-		return conn.ExecuteBinary("INSERT INTO server_certificate("
+		return conn.ExecuteParams("INSERT INTO server_certificate("
 					  "handle, common_name, issuer_common_name, "
 					  "not_before, not_after, "
 					  "certificate_der, key_der, key_wrap_name) "
@@ -186,7 +186,7 @@ private:
 					   Pg::BinaryValue cert, Pg::BinaryValue key,
 					   const char *key_wrap_name) {
 		// TODO: remove handle==nullptr support eventually
-		return conn.ExecuteBinary(handle != nullptr
+		return conn.ExecuteParams(handle != nullptr
 					  ? "UPDATE server_certificate SET "
 					  "common_name=$1, "
 					  "not_before=$2, not_after=$3, "

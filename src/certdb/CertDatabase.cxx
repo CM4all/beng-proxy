@@ -321,7 +321,7 @@ CertDatabase::InsertAcmeAccount(bool staging,
 	if (wrap_key != nullptr)
 		key_der = WapKey(key_der, wrap_key, wrapped);
 
-	conn.ExecuteBinary("INSERT INTO acme_account("
+	conn.ExecuteParams("INSERT INTO acme_account("
 			   "staging, email, location, key_der, key_wrap_name) "
 			   "VALUES($1, $2, $3, $4, $5)",
 			   staging, email, location, key_der, key_wrap_name);
