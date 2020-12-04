@@ -261,6 +261,7 @@ try {
 	assert(fd.IsDefined());
 	assert(request.uri != nullptr || request.widget_type != nullptr ||
 	       request.http_auth != nullptr ||
+	       request.token_auth != nullptr ||
 	       request.chain != nullptr ||
 	       request.pool != nullptr ||
 	       (!request.content_type_lookup.IsNull() &&

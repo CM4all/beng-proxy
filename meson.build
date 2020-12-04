@@ -856,6 +856,7 @@ executable(
   'src/bp/Handler.cxx',
   'src/bp/Auth.cxx',
   'src/bp/HttpAuth.cxx',
+  'src/bp/TokenAuth.cxx',
   'src/load_file.cxx',
   'src/bp/file_not_found.cxx',
   'src/bp/file_enotdir.cxx',

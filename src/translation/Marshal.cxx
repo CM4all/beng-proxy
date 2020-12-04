@@ -122,6 +122,8 @@ MarshalTranslateRequest(uint8_t PROTOCOL_VERSION,
 	m.WriteOptional(TranslationCommand::CHECK, request.check);
 	m.WriteOptional(TranslationCommand::AUTH, request.auth);
 	m.WriteOptional(TranslationCommand::HTTP_AUTH, request.http_auth);
+	m.WriteOptional(TranslationCommand::TOKEN_AUTH, request.token_auth);
+	m.WriteOptional(TranslationCommand::AUTH_TOKEN, request.auth_token);
 	m.WriteOptional(TranslationCommand::WANT_FULL_URI, request.want_full_uri);
 	m.WriteOptional(TranslationCommand::CHAIN, request.chain);
 	m.WriteOptional(TranslationCommand::CHAIN_HEADER, request.chain_header);

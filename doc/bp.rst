@@ -917,6 +917,39 @@ server to send ``WWW-Authenticate`` and ``Authentication-Info`` response
 headers back to the client, wrapped in ``WWW_AUTHENTICATE`` and
 ``AUTHENTICATION_INFO``.
 
+Token Authentication
+~~~~~~~~~~~~~~~~~~~~
+
+A translation response containing ``TOKEN_AUTH`` enables token-based
+authentication.  The packet may contain an opaque payload.
+
+The token is extracted from the ``auth_token`` query string parameter.
+To check it, :program:`beng-proxy` sends a new request with the
+following packets:
+
+- ``TOKEN_AUTH`` (echoing the response packet)
+- ``AUTH_TOKEN`` contains the ``auth_token`` query string parameter
+  (unescaped)
+- ``URI`` is the full request URI with only the ``auth_token`` query
+  string parameter removed
+- ``HOST``
+
+If no ``auth_token`` parameter was present, :program:`beng-proxy`
+checks if a ``USER`` is already set in the current session; if yes,
+then translation request will be skipped completely.  If not, then the
+``TOKEN_AUTH`` request will be sent, but without an ``AUTH_TOKEN``
+packet.
+
+The translation server may now reply:
+
+- ``STATUS`` (optionally with ``MESSAGE``) on error
+- ``REDIRECT`` (optionally with ``STATUS``), e.g. to redirect to a
+  login page
+- ``DISCARD_SESSION``, ``SESSION``, ``USER``: the session is updated
+  and the client will be redirected to the current URI, but without
+  the ``auth_token`` query string parameter
+
+
 Application level Authentication
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -431,15 +431,20 @@ public:
 	void OnHttpAuthTranslateResponse(const TranslateResponse &response) noexcept;
 	void OnHttpAuthTranslateError(std::exception_ptr ep) noexcept;
 
+	void OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcept;
+	void OnTokenAuthTranslateError(std::exception_ptr ep) noexcept;
+
 	/**
 	 * Handle #TRANSLATE_AUTH.
 	 */
 	void HandleAuth(const TranslateResponse &response);
 
 	/**
-	 * Handle #TranslationCommand::HTTP_AUTH.
+	 * Handle #TranslationCommand::TOKEN_AUTH.
 	 */
 	void HandleHttpAuth(const TranslateResponse &response) noexcept;
+
+	void HandleTokenAuth(const TranslateResponse &response) noexcept;
 
 	bool EvaluateFileRequest(FileDescriptor fd, const struct statx &st,
 				 struct file_request &file_request) noexcept;

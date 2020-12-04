@@ -706,6 +706,8 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 		HandleAuth(response);
 	else if (!response.http_auth.IsNull())
 		HandleHttpAuth(response);
+	else if (!response.token_auth.IsNull())
+		HandleTokenAuth(response);
 	else
 		OnTranslateResponseAfterAuth(response);
 }

@@ -170,6 +170,18 @@ class Translation(Protocol):
 
         return response
 
+    def _handle_token_auth(self, token_auth, auth_token):
+        log.msg("token_auth '%s' auth_token='%s'" % (token_auth, auth_token))
+
+        response = Response(protocol_version=2)
+        response.max_age(0)
+
+        if auth_token == 'foo' or auth_token == 'bar':
+            response.packet(TRANSLATE_USER, auth_token)
+            response.max_age(20)
+
+        return response
+
     def _handle_pool(self, name, listener_tag, host):
         log.msg("pool '%s' tag=%s host=%s" % (name, repr(listener_tag), repr(host)))
 
@@ -677,6 +689,9 @@ class Translation(Protocol):
             response.packet(TRANSLATE_HTTP_AUTH, 'http-auth-demo')
             response.packet(TRANSLATE_WWW_AUTHENTICATE, 'Basic realm="http-auth-demo-realm"')
             self._handle_local_file('/var/www' + uri[10:], response)
+        elif uri[:12] == '/token-auth/':
+            response.packet(TRANSLATE_TOKEN_AUTH, 'token-auth-demo')
+            self._handle_local_file('/var/www' + uri[11:], response)
         elif uri[:8] == '/header/':
             response.header('X-Foo', 'Bar')
             self._handle_local_file('/var/www' + uri[7:], response)
@@ -1011,6 +1026,10 @@ class Translation(Protocol):
         if request.http_auth is not None:
             return self._handle_http_auth(request.http_auth,
                                           request.authorization)
+
+        if request.token_auth is not None:
+            return self._handle_token_auth(request.token_auth,
+                                           request.auth_token)
 
         if request.pool is not None:
             return self._handle_pool(request.pool, request.listener_tag, request.host)
