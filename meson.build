@@ -556,6 +556,11 @@ subdir('libcommon/src/translation/server')
 
 libcommon_translation_dep = translation_dep
 
+translation2_sources = []
+if get_option('coroutines')
+  translation2_sources += 'src/translation/CoTranslate.cxx'
+endif
+
 translation2 = static_library(
   'translation2',
   'src/translation/Multi.cxx',
@@ -568,6 +573,7 @@ translation2 = static_library(
   'src/translation/SubstTransformation.cxx',
   'src/translation/Vary.cxx',
   'src/translation/InvalidateParser.cxx',
+  translation2_sources,
   include_directories: inc,
 )
 
