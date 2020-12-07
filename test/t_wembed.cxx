@@ -47,6 +47,7 @@
 #include "bp/session/Session.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -123,13 +124,13 @@ struct TestOperation final : Cancellable {
 };
 
 void
-ResolveWidget(struct pool &pool,
+ResolveWidget(AllocatorPtr alloc,
 	      gcc_unused Widget &widget,
 	      WidgetRegistry &,
 	      gcc_unused WidgetResolverCallback callback,
 	      CancellablePointer &cancel_ptr) noexcept
 {
-	auto to = NewFromPool<TestOperation>(pool);
+	auto to = alloc.New<TestOperation>();
 	cancel_ptr = *to;
 }
 

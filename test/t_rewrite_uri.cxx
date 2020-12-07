@@ -49,6 +49,7 @@
 #include "widget/Inline.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <gtest/gtest.h>
 
@@ -104,7 +105,7 @@ embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext>,
  */
 
 void
-ResolveWidget(gcc_unused struct pool &pool,
+ResolveWidget(AllocatorPtr,
 	      Widget &widget,
 	      WidgetRegistry &,
 	      WidgetResolverCallback callback,

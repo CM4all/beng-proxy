@@ -40,6 +40,7 @@
 #include "pool/RootPool.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <gtest/gtest.h>
 
@@ -165,11 +166,12 @@ TEST(WidgetResolver, Normal)
 				*(TranslationService *)(size_t)0x1);
 
 	auto pool = pool_new_linear(data.root_pool, "test", 8192);
+	const AllocatorPtr alloc(pool);
 
 	auto widget = MakeWidget(pool, nullptr);
 	widget->class_name = "foo";
 
-	ResolveWidget(pool, *widget, registry,
+	ResolveWidget(alloc, *widget, registry,
 		      BIND_METHOD(data, &Context::ResolverCallback1),
 		      data.first.cancel_ptr);
 
@@ -199,11 +201,12 @@ TEST(WidgetResolver, Abort)
 				*(TranslationService *)(size_t)0x1);
 
 	auto pool = pool_new_linear(data.root_pool, "test", 8192);
+	const AllocatorPtr alloc(pool);
 
 	auto widget = MakeWidget(pool, nullptr);
 	widget->class_name = "foo";
 
-	ResolveWidget(pool, *widget, registry,
+	ResolveWidget(alloc, *widget, registry,
 		      BIND_METHOD(data, &Context::ResolverCallback1),
 		      data.first.cancel_ptr);
 
@@ -233,15 +236,16 @@ TEST(WidgetResolver, TwoClients)
 				*(TranslationService *)(size_t)0x1);
 
 	auto pool = pool_new_linear(data.root_pool, "test", 8192);
+	const AllocatorPtr alloc(pool);
 
 	auto widget = MakeWidget(pool, nullptr);
 	widget->class_name = "foo";
 
-	ResolveWidget(pool, *widget, registry,
+	ResolveWidget(alloc, *widget, registry,
 		      BIND_METHOD(data, &Context::ResolverCallback1),
 		      data.first.cancel_ptr);
 
-	ResolveWidget(pool, *widget, registry,
+	ResolveWidget(alloc, *widget, registry,
 		      BIND_METHOD(data, &Context::ResolverCallback2),
 		      data.second.cancel_ptr);
 
@@ -273,15 +277,16 @@ TEST(WidgetResolver, TwoAbort)
 				*(TranslationService *)(size_t)0x1);
 
 	auto pool = pool_new_linear(data.root_pool, "test", 8192);
+	const AllocatorPtr alloc(pool);
 
 	auto widget = MakeWidget(pool, nullptr);
 	widget->class_name = "foo";
 
-	ResolveWidget(pool, *widget, registry,
+	ResolveWidget(alloc, *widget, registry,
 		      BIND_METHOD(data, &Context::ResolverCallback1),
 		      data.first.cancel_ptr);
 
-	ResolveWidget(pool, *widget, registry,
+	ResolveWidget(alloc, *widget, registry,
 		      BIND_METHOD(data, &Context::ResolverCallback2),
 		      data.second.cancel_ptr);
 
