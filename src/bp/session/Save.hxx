@@ -37,10 +37,10 @@
 #pragma once
 
 void
-session_save_init(const char *path);
+session_save_init(const char *path) noexcept;
 
 void
-session_save_deinit();
+session_save_deinit() noexcept;
 
 void
-session_save();
+session_save() noexcept;

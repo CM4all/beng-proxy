@@ -127,7 +127,7 @@ Session::Session(struct dpool &_pool, const Session &src)
 }
 
 void
-Session::Destroy()
+Session::Destroy() noexcept
 {
 	DeleteDestroyPool(pool, this);
 }
@@ -148,7 +148,7 @@ Session::GetPurgeScore() const noexcept
 }
 
 void
-Session::ClearTranslate()
+Session::ClearTranslate() noexcept
 {
 	assert(crash_in_unsafe());
 
@@ -159,7 +159,7 @@ Session::ClearTranslate()
 }
 
 void
-RealmSession::ClearSite()
+RealmSession::ClearSite() noexcept
 {
 	assert(crash_in_unsafe());
 
@@ -167,7 +167,7 @@ RealmSession::ClearSite()
 }
 
 void
-RealmSession::ClearUser()
+RealmSession::ClearUser() noexcept
 {
 	assert(crash_in_unsafe());
 
@@ -175,7 +175,7 @@ RealmSession::ClearUser()
 }
 
 void
-Session::ClearLanguage()
+Session::ClearLanguage() noexcept
 {
 	assert(crash_in_unsafe());
 
@@ -314,7 +314,7 @@ try {
 }
 
 void
-WidgetSession::Destroy(struct dpool &pool)
+WidgetSession::Destroy(struct dpool &pool) noexcept
 {
 	assert(crash_in_unsafe());
 
@@ -334,7 +334,7 @@ WidgetSession::Destroy(struct dpool &pool)
 }
 
 void
-RealmSession::Expire(Expiry now)
+RealmSession::Expire(Expiry now) noexcept
 {
 	if (user != nullptr && user_expires.IsExpired(now))
 		ClearUser();
@@ -343,7 +343,7 @@ RealmSession::Expire(Expiry now)
 }
 
 void
-Session::Expire(Expiry now)
+Session::Expire(Expiry now) noexcept
 {
 	for (auto &realm : realms)
 		realm.Expire(now);

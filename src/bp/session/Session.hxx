@@ -105,7 +105,7 @@ struct WidgetSession
 	WidgetSession(struct dpool &pool, const WidgetSession &src,
 		      RealmSession &_session);
 
-	void Destroy(struct dpool &pool);
+	void Destroy(struct dpool &pool) noexcept;
 
 	gcc_pure
 	WidgetSession *GetChild(const char *child_id, bool create);
@@ -174,7 +174,7 @@ struct RealmSession
 	 */
 	RealmSession(Session &_parent, const RealmSession &src);
 
-	void ClearSite();
+	void ClearSite() noexcept;
 	bool SetSite(const char *_site);
 
 	/**
@@ -182,9 +182,9 @@ struct RealmSession
 	 * expires.
 	 */
 	bool SetUser(const char *user, std::chrono::seconds max_age);
-	void ClearUser();
+	void ClearUser() noexcept;
 
-	void Expire(Expiry now);
+	void Expire(Expiry now) noexcept;
 
 	gcc_pure
 	WidgetSession *GetWidget(const char *widget_id, bool create);
@@ -255,7 +255,7 @@ struct Session {
 	 */
 	Session(struct dpool &_pool, const Session &src);
 
-	void Destroy();
+	void Destroy() noexcept;
 
 	/**
 	 * Calculates the score for purging the session: higher score
@@ -265,7 +265,7 @@ struct Session {
 	unsigned GetPurgeScore() const noexcept;
 
 	gcc_pure
-	bool HasUser() const {
+	bool HasUser() const noexcept {
 		for (auto &realm : realms)
 			if (realm.user != nullptr)
 				return true;
@@ -274,16 +274,16 @@ struct Session {
 	}
 
 	bool SetTranslate(ConstBuffer<void> translate);
-	void ClearTranslate();
+	void ClearTranslate() noexcept;
 
 	bool SetLanguage(const char *language);
-	void ClearLanguage();
+	void ClearLanguage() noexcept;
 
 	bool SetExternalManager(const HttpAddress &address,
 				std::chrono::steady_clock::time_point now,
 				std::chrono::duration<uint16_t> keepalive);
 
-	void Expire(Expiry now);
+	void Expire(Expiry now) noexcept;
 
 	gcc_pure
 	RealmSession *GetRealm(const char *realm);

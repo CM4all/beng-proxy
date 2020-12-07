@@ -63,7 +63,7 @@ public:
 	/**
 	 * Re-add all libevent events after DisableEvents().
 	 */
-	void EnableEvents() {
+	void EnableEvents() noexcept {
 		cleanup_timer.Schedule(cleanup_interval);
 	}
 
@@ -72,7 +72,7 @@ public:
 	 * before creating a new event base.  Don't forget to call
 	 * EnableEvents() afterwards.
 	 */
-	void DisableEvents() {
+	void DisableEvents() noexcept {
 		cleanup_timer.Cancel();
 	}
 
@@ -130,7 +130,7 @@ public:
 	 */
 	struct dpool *NewDpool() noexcept;
 
-	struct dpool *NewDpoolHarder() {
+	struct dpool *NewDpoolHarder() noexcept {
 		auto *pool = NewDpool();
 		if (pool == nullptr && Purge())
 			/* at least one session has been purged: try again */
