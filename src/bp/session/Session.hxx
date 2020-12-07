@@ -76,9 +76,9 @@ struct WidgetSession
 		}
 	};
 
-	typedef boost::intrusive::set<WidgetSession,
-				      boost::intrusive::compare<Compare>,
-				      boost::intrusive::constant_time_size<false>> Set;
+	using Set = boost::intrusive::set<WidgetSession,
+					  boost::intrusive::compare<Compare>,
+					  boost::intrusive::constant_time_size<false>>;
 
 	RealmSession &session;
 
@@ -120,8 +120,8 @@ struct RealmSession
 	: boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
 	static constexpr auto link_mode = boost::intrusive::normal_link;
-	typedef boost::intrusive::link_mode<link_mode> LinkMode;
-	typedef boost::intrusive::unordered_set_member_hook<LinkMode> SetHook;
+	using LinkMode = boost::intrusive::link_mode<link_mode>;
+	using SetHook = boost::intrusive::unordered_set_member_hook<LinkMode>;
 	SetHook set_hook;
 
 	Session &parent;
@@ -192,8 +192,8 @@ struct RealmSession
 
 struct Session {
 	static constexpr auto link_mode = boost::intrusive::normal_link;
-	typedef boost::intrusive::link_mode<link_mode> LinkMode;
-	typedef boost::intrusive::unordered_set_member_hook<LinkMode> SetHook;
+	using LinkMode = boost::intrusive::link_mode<link_mode>;
+	using SetHook = boost::intrusive::unordered_set_member_hook<LinkMode>;
 	SetHook set_hook;
 
 	struct dpool &pool;
@@ -241,9 +241,10 @@ struct Session {
 
 	std::chrono::steady_clock::time_point next_external_keepalive;
 
-	typedef boost::intrusive::set<RealmSession,
+	using RealmSessionSet =
+		boost::intrusive::set<RealmSession,
 				      boost::intrusive::compare<RealmSession::Compare>,
-				      boost::intrusive::constant_time_size<false>> RealmSessionSet;
+				      boost::intrusive::constant_time_size<false>>;
 
 	RealmSessionSet realms;
 

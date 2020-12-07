@@ -102,13 +102,14 @@ struct SessionContainer {
 	 */
 	bool abandoned = false;
 
-	typedef boost::intrusive::unordered_set<Session,
+	using Set =
+		boost::intrusive::unordered_set<Session,
 						boost::intrusive::member_hook<Session,
 									      Session::SetHook,
 									      &Session::set_hook>,
 						boost::intrusive::hash<SessionHash>,
 						boost::intrusive::equal<SessionEqual>,
-						boost::intrusive::constant_time_size<true>> Set;
+						boost::intrusive::constant_time_size<true>>;
 	Set sessions;
 
 	static constexpr unsigned N_BUCKETS = 16381;
