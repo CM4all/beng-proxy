@@ -38,7 +38,6 @@
 #include "http/IncomingRequest.hxx"
 #include "http/CookieServer.hxx"
 #include "bot.h"
-#include "pool/pbuffer.hxx"
 #include "strmap.hxx"
 #include "util/HexFormat.h"
 #include "util/djbhash.h"
@@ -67,10 +66,12 @@ Request::LoadSession(const char *_session_id)
 	if (!session_id.Parse(_session_id))
 		return nullptr;
 
+	const AllocatorPtr alloc(pool);
+
 	auto session = GetSession();
 	if (session) {
 		if (!session->translate.IsNull())
-			translate.request.session = DupBuffer(pool, session->translate);
+			translate.request.session = alloc.Dup(session->translate);
 
 		if (!session->cookie_sent)
 			send_session_cookie = true;
