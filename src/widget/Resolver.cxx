@@ -38,6 +38,7 @@
 #include "util/Cancellable.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/IntrusiveList.hxx"
+#include "AllocatorPtr.hxx"
 
 class WidgetResolver;
 
@@ -255,7 +256,7 @@ widget_resolver_alloc(Widget &widget) noexcept
 }
 
 void
-ResolveWidget(struct pool &pool,
+ResolveWidget(AllocatorPtr alloc,
 	      Widget &widget,
 	      WidgetRegistry &registry,
 	      WidgetResolverCallback callback,
@@ -290,9 +291,9 @@ ResolveWidget(struct pool &pool,
 
 	/* add a new listener to the resolver */
 
-	auto listener = NewFromPool<WidgetResolverListener>(pool, *resolver,
-							    callback,
-							    cancel_ptr);
+	auto listener = alloc.New<WidgetResolverListener>(*resolver,
+							  callback,
+							  cancel_ptr);
 
 	resolver->AddListener(*listener);
 

@@ -34,7 +34,7 @@
 
 #include "util/BindMethod.hxx"
 
-struct pool;
+class AllocatorPtr;
 class Widget;
 class WidgetRegistry;
 class CancellablePointer;
@@ -47,7 +47,7 @@ typedef BoundMethod<void() noexcept> WidgetResolverCallback;
  * object.
  */
 void
-ResolveWidget(struct pool &pool,
+ResolveWidget(AllocatorPtr alloc,
 	      Widget &widget,
 	      WidgetRegistry &registry,
 	      WidgetResolverCallback callback,
