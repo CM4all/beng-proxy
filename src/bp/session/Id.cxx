@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -41,66 +41,66 @@
 void
 SessionId::Generate() noexcept
 {
-    for (auto &i : data)
-        i = random_uint64();
+	for (auto &i : data)
+		i = random_uint64();
 }
 
 static auto
 ToClusterNode(uint64_t id,
-              unsigned cluster_size, unsigned cluster_node) noexcept
+	      unsigned cluster_size, unsigned cluster_node) noexcept
 {
-    uint64_t remainder = id % (uint64_t)cluster_size;
-    assert(remainder < cluster_size);
+	uint64_t remainder = id % (uint64_t)cluster_size;
+	assert(remainder < cluster_size);
 
-    id -= remainder;
-    id += cluster_node;
-    return id;
+	id -= remainder;
+	id += cluster_node;
+	return id;
 }
 
 void
 SessionId::SetClusterNode(unsigned cluster_size,
-                          unsigned cluster_node) noexcept
+			  unsigned cluster_node) noexcept
 {
-    assert(cluster_size > 0);
-    assert(cluster_node < cluster_size);
+	assert(cluster_size > 0);
+	assert(cluster_node < cluster_size);
 
-    const auto old_hash = GetClusterHash();
-    const auto new_hash = ToClusterNode(old_hash, cluster_size, cluster_node);
-    data.back() = new_hash;
+	const auto old_hash = GetClusterHash();
+	const auto new_hash = ToClusterNode(old_hash, cluster_size, cluster_node);
+	data.back() = new_hash;
 }
 
 bool
 SessionId::Parse(const char *p) noexcept
 {
-    if (strlen(p) != sizeof(data) * 2)
-        return false;
+	if (strlen(p) != sizeof(data) * 2)
+		return false;
 
-    constexpr size_t segment_size = sizeof(data.front()) * 2;
-    std::array<char, segment_size + 1> segment;
-    segment.back() = 0;
-    for (auto &i : data) {
-        std::copy_n(p, segment_size, segment.begin());
-        p += segment_size;
-        char *endptr;
-        i = strtoul(&segment.front(), &endptr, 16);
-        if (endptr != &segment.back())
-            return false;
-    }
+	constexpr size_t segment_size = sizeof(data.front()) * 2;
+	std::array<char, segment_size + 1> segment;
+	segment.back() = 0;
+	for (auto &i : data) {
+		std::copy_n(p, segment_size, segment.begin());
+		p += segment_size;
+		char *endptr;
+		i = strtoul(&segment.front(), &endptr, 16);
+		if (endptr != &segment.back())
+			return false;
+	}
 
-    return true;
+	return true;
 }
 
 StringBuffer<sizeof(SessionId::data) * 2 + 1>
 SessionId::Format() const noexcept
 {
-    StringBuffer<sizeof(data) * 2 + 1> result;
+	StringBuffer<sizeof(data) * 2 + 1> result;
 
-    char *p = result.data();
-    for (const auto i : data) {
-        format_uint64_hex_fixed(p, i);
-        p += sizeof(i) * 2;
-    }
+	char *p = result.data();
+	for (const auto i : data) {
+		format_uint64_hex_fixed(p, i);
+		p += sizeof(i) * 2;
+	}
 
-    *p = 0;
-    return result;
+	*p = 0;
+	return result;
 }

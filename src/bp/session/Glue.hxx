@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -55,7 +55,7 @@ extern SessionManager *session_manager;
  */
 void
 session_manager_init(EventLoop &event_loop, std::chrono::seconds idle_timeout,
-                     unsigned cluster_size, unsigned cluster_node);
+		     unsigned cluster_size, unsigned cluster_node);
 
 /**
  * Decrease the reference counter and destroy the global session
@@ -82,15 +82,15 @@ session_new() noexcept;
 
 class ScopeSessionManagerInit {
 public:
-    template<typename... Args>
-    ScopeSessionManagerInit(Args&&... args) {
-        session_manager_init(std::forward<Args>(args)...);
-    }
+	template<typename... Args>
+	ScopeSessionManagerInit(Args&&... args) {
+		session_manager_init(std::forward<Args>(args)...);
+	}
 
-    ~ScopeSessionManagerInit() noexcept {
-        session_manager_deinit();
-    }
+	~ScopeSessionManagerInit() noexcept {
+		session_manager_deinit();
+	}
 
-    ScopeSessionManagerInit(const ScopeSessionManagerInit &) = delete;
-    ScopeSessionManagerInit &operator=(const ScopeSessionManagerInit &) = delete;
+	ScopeSessionManagerInit(const ScopeSessionManagerInit &) = delete;
+	ScopeSessionManagerInit &operator=(const ScopeSessionManagerInit &) = delete;
 };

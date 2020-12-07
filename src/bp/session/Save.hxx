@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Saving all sessions into a file.
  */
 
-#ifndef BENG_PROXY_SESSION_SAVE_HXX
-#define BENG_PROXY_SESSION_SAVE_HXX
+#pragma once
 
 void
 session_save_init(const char *path);
@@ -45,5 +44,3 @@ session_save_deinit();
 
 void
 session_save();
-
-#endif

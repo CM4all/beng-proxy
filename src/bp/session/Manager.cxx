@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -47,152 +47,152 @@
 #include <stdlib.h>
 
 struct SessionHash {
-    gcc_pure
-    size_t operator()(const SessionId &id) const {
-        return id.Hash();
-    }
+	gcc_pure
+	size_t operator()(const SessionId &id) const {
+		return id.Hash();
+	}
 
-    gcc_pure
-    size_t operator()(const Session &session) const {
-        return session.id.Hash();
-    }
+	gcc_pure
+	size_t operator()(const Session &session) const {
+		return session.id.Hash();
+	}
 };
 
 struct SessionEqual {
-    gcc_pure
-    bool operator()(const Session &a, const Session &b) const {
-        return a.id == b.id;
-    }
+	gcc_pure
+	bool operator()(const Session &a, const Session &b) const {
+		return a.id == b.id;
+	}
 
-    gcc_pure
-    bool operator()(const SessionId &a, const Session &b) const {
-        return a == b.id;
-    }
+	gcc_pure
+	bool operator()(const SessionId &a, const Session &b) const {
+		return a == b.id;
+	}
 };
 
 template<typename Container, typename Pred, typename Disposer>
 static void
 EraseAndDisposeIf(Container &container, Pred pred, Disposer disposer)
 {
-    for (auto i = container.begin(), end = container.end(); i != end;) {
-        const auto next = std::next(i);
+	for (auto i = container.begin(), end = container.end(); i != end;) {
+		const auto next = std::next(i);
 
-        if (pred(*i))
-            container.erase_and_dispose(i, disposer);
+		if (pred(*i))
+			container.erase_and_dispose(i, disposer);
 
-        i = next;
-    }
+		i = next;
+	}
 }
 
 struct SessionContainer {
-    RefCount ref;
+	RefCount ref;
 
-    /**
-     * The idle timeout of sessions [seconds].
-     */
-    const std::chrono::seconds idle_timeout;
+	/**
+	 * The idle timeout of sessions [seconds].
+	 */
+	const std::chrono::seconds idle_timeout;
 
-    /** this lock protects the following hash table */
-    boost::interprocess::interprocess_sharable_mutex mutex;
+	/** this lock protects the following hash table */
+	boost::interprocess::interprocess_sharable_mutex mutex;
 
-    /**
-     * Has the session manager been abandoned after the crash of one
-     * worker?  If this is true, then the session manager is disabled,
-     * and the remaining workers will be shut down soon.
-     */
-    bool abandoned = false;
+	/**
+	 * Has the session manager been abandoned after the crash of one
+	 * worker?  If this is true, then the session manager is disabled,
+	 * and the remaining workers will be shut down soon.
+	 */
+	bool abandoned = false;
 
-    typedef boost::intrusive::unordered_set<Session,
-                                            boost::intrusive::member_hook<Session,
-                                                                          Session::SetHook,
-                                                                          &Session::set_hook>,
-                                            boost::intrusive::hash<SessionHash>,
-                                            boost::intrusive::equal<SessionEqual>,
-                                            boost::intrusive::constant_time_size<true>> Set;
-    Set sessions;
+	typedef boost::intrusive::unordered_set<Session,
+						boost::intrusive::member_hook<Session,
+									      Session::SetHook,
+									      &Session::set_hook>,
+						boost::intrusive::hash<SessionHash>,
+						boost::intrusive::equal<SessionEqual>,
+						boost::intrusive::constant_time_size<true>> Set;
+	Set sessions;
 
-    static constexpr unsigned N_BUCKETS = 16381;
-    Set::bucket_type buckets[N_BUCKETS];
+	static constexpr unsigned N_BUCKETS = 16381;
+	Set::bucket_type buckets[N_BUCKETS];
 
-    explicit SessionContainer(std::chrono::seconds _idle_timeout)
-        :idle_timeout(_idle_timeout),
-         sessions(Set::bucket_traits(buckets, N_BUCKETS)) {
-    }
+	explicit SessionContainer(std::chrono::seconds _idle_timeout)
+		:idle_timeout(_idle_timeout),
+		 sessions(Set::bucket_traits(buckets, N_BUCKETS)) {
+	}
 
-    ~SessionContainer();
+	~SessionContainer();
 
-    void Ref() {
-        ref.Get();
-    }
+	void Ref() {
+		ref.Get();
+	}
 
-    void Unref() {
-        if (ref.Put())
-            this->~SessionContainer();
-    }
+	void Unref() {
+		if (ref.Put())
+			this->~SessionContainer();
+	}
 
-    void Abandon() {
-        abandoned = true;
-    }
+	void Abandon() {
+		abandoned = true;
+	}
 
-    bool IsAbandoned() const {
-        return abandoned;
-    }
+	bool IsAbandoned() const {
+		return abandoned;
+	}
 
-    unsigned Count() {
-        return sessions.size();
-    }
+	unsigned Count() {
+		return sessions.size();
+	}
 
-    unsigned LockCount() {
-        boost::interprocess::sharable_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
-        return sessions.size();
-    }
+	unsigned LockCount() {
+		boost::interprocess::sharable_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
+		return sessions.size();
+	}
 
-    Session *Find(SessionId id);
+	Session *Find(SessionId id);
 
-    Session *LockFind(SessionId id) {
-        boost::interprocess::sharable_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
-        return Find(id);
-    }
+	Session *LockFind(SessionId id) {
+		boost::interprocess::sharable_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
+		return Find(id);
+	}
 
-    void Put(Session &session) noexcept;
+	void Put(Session &session) noexcept;
 
-    void Insert(Session &session) {
-        sessions.insert(session);
-    }
+	void Insert(Session &session) {
+		sessions.insert(session);
+	}
 
-    void LockInsert(Session &session) {
-        boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
-        Insert(session);
-    }
+	void LockInsert(Session &session) {
+		boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
+		Insert(session);
+	}
 
-    void EraseAndDispose(Session &session);
-    void LockEraseAndDispose(SessionId id);
+	void EraseAndDispose(Session &session);
+	void LockEraseAndDispose(SessionId id);
 
-    void ReplaceAndDispose(Session &old_session, Session &new_session) {
-        EraseAndDispose(old_session);
-        Insert(new_session);
-    }
+	void ReplaceAndDispose(Session &old_session, Session &new_session) {
+		EraseAndDispose(old_session);
+		Insert(new_session);
+	}
 
-    void Defragment(Session &src, struct shm &shm);
-    void Defragment(SessionId id, struct shm &shm);
+	void Defragment(Session &src, struct shm &shm);
+	void Defragment(SessionId id, struct shm &shm);
 
-    void LockDefragment(SessionId id, struct shm &shm) {
-        boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
-        Defragment(id, shm);
-    }
+	void LockDefragment(SessionId id, struct shm &shm) {
+		boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
+		Defragment(id, shm);
+	}
 
-    /**
-     * @return true if there is at least one session
-     */
-    bool Cleanup() noexcept;
+	/**
+	 * @return true if there is at least one session
+	 */
+	bool Cleanup() noexcept;
 
-    /**
-     * Forcefully deletes at least one session.
-     */
-    bool Purge() noexcept;
+	/**
+	 * Forcefully deletes at least one session.
+	 */
+	bool Purge() noexcept;
 
-    bool Visit(bool (*callback)(const Session *session,
-                                void *ctx), void *ctx);
+	bool Visit(bool (*callback)(const Session *session,
+				    void *ctx), void *ctx);
 };
 
 static constexpr size_t SHM_PAGE_SIZE = 4096;
@@ -211,269 +211,269 @@ static const Session *locked_session;
 void
 SessionContainer::EraseAndDispose(Session &session)
 {
-    assert(crash_in_unsafe());
-    assert(!sessions.empty());
+	assert(crash_in_unsafe());
+	assert(!sessions.empty());
 
-    auto i = sessions.iterator_to(session);
-    sessions.erase_and_dispose(i, Session::Disposer());
+	auto i = sessions.iterator_to(session);
+	sessions.erase_and_dispose(i, Session::Disposer());
 }
 
 inline bool
 SessionContainer::Cleanup() noexcept
 {
-    assert(!crash_in_unsafe());
-    assert(locked_session == nullptr);
+	assert(!crash_in_unsafe());
+	assert(locked_session == nullptr);
 
-    const Expiry now = Expiry::Now();
+	const Expiry now = Expiry::Now();
 
-    const ScopeCrashUnsafe crash_unsafe;
-    boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
+	const ScopeCrashUnsafe crash_unsafe;
+	boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
-    if (abandoned) {
-        assert(!crash_in_unsafe());
-        return false;
-    }
+	if (abandoned) {
+		assert(!crash_in_unsafe());
+		return false;
+	}
 
-    EraseAndDisposeIf(sessions, [now](const Session &session){
-            return session.expires.IsExpired(now);
-        }, Session::Disposer());
+	EraseAndDisposeIf(sessions, [now](const Session &session){
+		return session.expires.IsExpired(now);
+	}, Session::Disposer());
 
-    return !sessions.empty();
+	return !sessions.empty();
 }
 
 SessionManager::SessionManager(EventLoop &event_loop,
-                               std::chrono::seconds idle_timeout,
-                               unsigned _cluster_size,
-                               unsigned _cluster_node) noexcept
-    :cluster_size(_cluster_size), cluster_node(_cluster_node),
-     shm(shm_new(SHM_PAGE_SIZE, SHM_NUM_PAGES)),
-     container(NewFromShm<SessionContainer>(shm, SM_PAGES, idle_timeout)),
-     cleanup_timer(event_loop, BIND_THIS_METHOD(Cleanup)) {}
+			       std::chrono::seconds idle_timeout,
+			       unsigned _cluster_size,
+			       unsigned _cluster_node) noexcept
+	:cluster_size(_cluster_size), cluster_node(_cluster_node),
+	 shm(shm_new(SHM_PAGE_SIZE, SHM_NUM_PAGES)),
+	 container(NewFromShm<SessionContainer>(shm, SM_PAGES, idle_timeout)),
+	 cleanup_timer(event_loop, BIND_THIS_METHOD(Cleanup)) {}
 
 SessionManager::~SessionManager() noexcept
 {
-    if (container != nullptr)
-        container->Unref();
+	if (container != nullptr)
+		container->Unref();
 
-    if (shm != nullptr)
-        shm_close(shm);
+	if (shm != nullptr)
+		shm_close(shm);
 }
 
 void
 SessionManager::Ref() noexcept
 {
-    assert(container != nullptr);
-    assert(shm != nullptr);
+	assert(container != nullptr);
+	assert(shm != nullptr);
 
-    container->Ref();
-    shm_ref(shm);
+	container->Ref();
+	shm_ref(shm);
 }
 
 void
 SessionManager::Abandon() noexcept
 {
-    assert(container != nullptr);
-    assert(shm != nullptr);
+	assert(container != nullptr);
+	assert(shm != nullptr);
 
-    container->Abandon();
+	container->Abandon();
 }
 
 bool
 SessionManager::IsAbandoned() const noexcept
 {
-    return container == nullptr || container->abandoned;
+	return container == nullptr || container->abandoned;
 }
 
 void
 SessionManager::AdjustNewSessionId(SessionId &id) const noexcept
 {
-    if (cluster_size > 0)
-        id.SetClusterNode(cluster_size, cluster_node);
+	if (cluster_size > 0)
+		id.SetClusterNode(cluster_size, cluster_node);
 }
 
 unsigned
 SessionManager::LockCount() noexcept
 {
-    assert(container != nullptr);
+	assert(container != nullptr);
 
-    return container->LockCount();
+	return container->LockCount();
 }
 
 bool
 SessionManager::Visit(bool (*callback)(const Session *session,
-                                       void *ctx), void *ctx)
+				       void *ctx), void *ctx)
 {
-    assert(container != nullptr);
+	assert(container != nullptr);
 
-    return container->Visit(callback, ctx);
+	return container->Visit(callback, ctx);
 }
 
 Session *
 SessionManager::LockFind(SessionId id) noexcept
 {
-    assert(container != nullptr);
+	assert(container != nullptr);
 
-    return container->LockFind(id);
+	return container->LockFind(id);
 }
 
 void
 SessionManager::Insert(Session &session) noexcept
 {
-    container->LockInsert(session);
+	container->LockInsert(session);
 
-    if (!cleanup_timer.IsPending())
-        cleanup_timer.Schedule(cleanup_interval);
+	if (!cleanup_timer.IsPending())
+		cleanup_timer.Schedule(cleanup_interval);
 }
 
 void
 SessionManager::EraseAndDispose(SessionId id) noexcept
 {
-    assert(container != nullptr);
+	assert(container != nullptr);
 
-    container->LockEraseAndDispose(id);
+	container->LockEraseAndDispose(id);
 }
 
 void
 SessionManager::ReplaceAndDispose(Session &old_session,
-                                  Session &new_session) noexcept
+				  Session &new_session) noexcept
 {
-    container->ReplaceAndDispose(old_session, new_session);
+	container->ReplaceAndDispose(old_session, new_session);
 }
 
 void
 SessionManager::Defragment(SessionId id) noexcept
 {
-    assert(container != nullptr);
-    assert(shm != nullptr);
+	assert(container != nullptr);
+	assert(shm != nullptr);
 
-    container->LockDefragment(id, *shm);
+	container->LockDefragment(id, *shm);
 }
 
 bool
 SessionManager::Purge() noexcept
 {
-    return container->Purge();
+	return container->Purge();
 }
 
 void
 SessionManager::Cleanup() noexcept
 {
-    if (container->Cleanup())
-        cleanup_timer.Schedule(cleanup_interval);
+	if (container->Cleanup())
+		cleanup_timer.Schedule(cleanup_interval);
 
-    assert(!crash_in_unsafe());
+	assert(!crash_in_unsafe());
 }
 
 struct dpool *
 SessionManager::NewDpool() noexcept
 {
-    return dpool_new(*shm);
+	return dpool_new(*shm);
 }
 
 inline
 SessionContainer::~SessionContainer()
 {
-    const ScopeCrashUnsafe crash_unsafe;
-    boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
+	const ScopeCrashUnsafe crash_unsafe;
+	boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
-    sessions.clear_and_dispose(Session::Disposer());
+	sessions.clear_and_dispose(Session::Disposer());
 }
 
 bool
 SessionContainer::Purge() noexcept
 {
-    /* collect at most 256 sessions */
-    StaticArray<Session *, 256> purge_sessions;
-    unsigned highest_score = 0;
+	/* collect at most 256 sessions */
+	StaticArray<Session *, 256> purge_sessions;
+	unsigned highest_score = 0;
 
-    assert(locked_session == nullptr);
+	assert(locked_session == nullptr);
 
-    const ScopeCrashUnsafe crash_unsafe;
-    boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
+	const ScopeCrashUnsafe crash_unsafe;
+	boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
-    for (auto &session : sessions) {
-        unsigned score = session.GetPurgeScore();
-        if (score > highest_score) {
-            purge_sessions.clear();
-            highest_score = score;
-        }
+	for (auto &session : sessions) {
+		unsigned score = session.GetPurgeScore();
+		if (score > highest_score) {
+			purge_sessions.clear();
+			highest_score = score;
+		}
 
-        if (score == highest_score)
-            purge_sessions.checked_append(&session);
-    }
+		if (score == highest_score)
+			purge_sessions.checked_append(&session);
+	}
 
-    if (purge_sessions.empty())
-        return false;
+	if (purge_sessions.empty())
+		return false;
 
-    LogConcat(3, "SessionManager", "purging ", (unsigned)purge_sessions.size(),
-              " sessions (score=", highest_score, ")");
+	LogConcat(3, "SessionManager", "purging ", (unsigned)purge_sessions.size(),
+		  " sessions (score=", highest_score, ")");
 
-    for (auto session : purge_sessions) {
-        /* lock the session to make sure it's not currently in use by
-           another worker (will wait for the other worker) */
-        session->mutex.lock();
-        /* release the mutex right after that to avoid assertion
-           failure in the mutex destructor; meanwhile, no other worker
-           can get a reference to this unlocked session, because the
-           SessionContainer is locked */
-        session->mutex.unlock();
+	for (auto session : purge_sessions) {
+		/* lock the session to make sure it's not currently in use by
+		   another worker (will wait for the other worker) */
+		session->mutex.lock();
+		/* release the mutex right after that to avoid assertion
+		   failure in the mutex destructor; meanwhile, no other worker
+		   can get a reference to this unlocked session, because the
+		   SessionContainer is locked */
+		session->mutex.unlock();
 
-        EraseAndDispose(*session);
-    }
+		EraseAndDispose(*session);
+	}
 
-    /* purge again if the highest score group has only very few items,
-       which would lead to calling this (very expensive) function too
-       often */
-    bool again = purge_sessions.size() < 16 &&
-        Count() > SHM_NUM_PAGES - 256;
+	/* purge again if the highest score group has only very few items,
+	   which would lead to calling this (very expensive) function too
+	   often */
+	bool again = purge_sessions.size() < 16 &&
+					     Count() > SHM_NUM_PAGES - 256;
 
-    lock.unlock();
+	lock.unlock();
 
-    if (again)
-        Purge();
+	if (again)
+		Purge();
 
-    return true;
+	return true;
 }
 
 inline SessionId
 SessionManager::GenerateSessionId() const noexcept
 {
-    SessionId id;
-    id.Generate();
-    AdjustNewSessionId(id);
-    return id;
+	SessionId id;
+	id.Generate();
+	AdjustNewSessionId(id);
+	return id;
 }
 
 Session *
 SessionManager::CreateSession() noexcept
 {
-    assert(crash_in_unsafe());
-    assert(locked_session == nullptr);
+	assert(crash_in_unsafe());
+	assert(locked_session == nullptr);
 
-    if (IsAbandoned())
-        return nullptr;
+	if (IsAbandoned())
+		return nullptr;
 
-    struct dpool *pool = NewDpoolHarder();
-    if (pool == nullptr)
-        return nullptr;
+	struct dpool *pool = NewDpoolHarder();
+	if (pool == nullptr)
+		return nullptr;
 
-    Session *session;
+	Session *session;
 
-    try {
-        session = NewFromPool<Session>(*pool, *pool, GenerateSessionId());
-    } catch (const std::bad_alloc &) {
-        dpool_destroy(pool);
-        return nullptr;
-    }
+	try {
+		session = NewFromPool<Session>(*pool, *pool, GenerateSessionId());
+	} catch (const std::bad_alloc &) {
+		dpool_destroy(pool);
+		return nullptr;
+	}
 
 #ifndef NDEBUG
-    locked_session = session;
+	locked_session = session;
 #endif
-    session->mutex.lock();
+	session->mutex.lock();
 
-    Insert(*session);
+	Insert(*session);
 
-    return session;
+	return session;
 }
 
 /**
@@ -485,140 +485,140 @@ SessionManager::CreateSession() noexcept
 void
 SessionContainer::Defragment(Session &src, struct shm &shm)
 {
-    assert(crash_in_unsafe());
+	assert(crash_in_unsafe());
 
-    struct dpool *pool = dpool_new(shm);
-    if (pool == nullptr)
-        return;
+	struct dpool *pool = dpool_new(shm);
+	if (pool == nullptr)
+		return;
 
-    Session *dest;
-    try {
-        dest = NewFromPool<Session>(*pool, *pool, src);
-    } catch (const std::bad_alloc &) {
-        dpool_destroy(pool);
-        return;
-    }
+	Session *dest;
+	try {
+		dest = NewFromPool<Session>(*pool, *pool, src);
+	} catch (const std::bad_alloc &) {
+		dpool_destroy(pool);
+		return;
+	}
 
-    ReplaceAndDispose(src, *dest);
+	ReplaceAndDispose(src, *dest);
 }
 
 Session *
 SessionContainer::Find(SessionId id)
 {
-    if (abandoned)
-        return nullptr;
+	if (abandoned)
+		return nullptr;
 
-    assert(crash_in_unsafe());
-    assert(locked_session == nullptr);
+	assert(crash_in_unsafe());
+	assert(locked_session == nullptr);
 
-    auto i = sessions.find(id, SessionHash(), SessionEqual());
-    if (i == sessions.end())
-        return nullptr;
+	auto i = sessions.find(id, SessionHash(), SessionEqual());
+	if (i == sessions.end())
+		return nullptr;
 
-    Session &session = *i;
+	Session &session = *i;
 
 #ifndef NDEBUG
-    locked_session = &session;
+	locked_session = &session;
 #endif
-    session.mutex.lock();
+	session.mutex.lock();
 
-    session.expires.Touch(idle_timeout);
-    ++session.counter;
-    return &session;
+	session.expires.Touch(idle_timeout);
+	++session.counter;
+	return &session;
 }
 
 void
 SessionContainer::Put(Session &session) noexcept
 {
-    assert(crash_in_unsafe());
-    assert(&session == locked_session);
+	assert(crash_in_unsafe());
+	assert(&session == locked_session);
 
-    session.mutex.unlock();
+	session.mutex.unlock();
 
 #ifndef NDEBUG
-    locked_session = nullptr;
+	locked_session = nullptr;
 #endif
 }
 
 void
 SessionManager::Put(Session &session) noexcept
 {
-    assert(crash_in_unsafe());
+	assert(crash_in_unsafe());
 
-    SessionId defragment;
+	SessionId defragment;
 
-    if ((session.counter % 1024) == 0 &&
-        dpool_is_fragmented(session.pool))
-        defragment = session.id;
-    else
-        defragment.Clear();
+	if ((session.counter % 1024) == 0 &&
+	    dpool_is_fragmented(session.pool))
+		defragment = session.id;
+	else
+		defragment.Clear();
 
-    container->Put(session);
+	container->Put(session);
 
-    if (defragment.IsDefined())
-        /* the shared memory pool has become too fragmented;
-           defragment the session by duplicating it into a new shared
-           memory pool */
-        Defragment(defragment);
+	if (defragment.IsDefined())
+		/* the shared memory pool has become too fragmented;
+		   defragment the session by duplicating it into a new shared
+		   memory pool */
+		Defragment(defragment);
 }
 
 void
 SessionContainer::Defragment(SessionId id, struct shm &shm)
 {
-    assert(crash_in_unsafe());
+	assert(crash_in_unsafe());
 
-    Session *session = Find(id);
-    if (session == nullptr)
-        return;
+	Session *session = Find(id);
+	if (session == nullptr)
+		return;
 
-    /* unlock the session, because session_defragment() may call
-       SessionContainer::EraseAndDispose(), and
-       SessionContainer::EraseAndDispose() expects the session to be
-       unlocked.  This is ok, because we're holding the session
-       manager lock at this point. */
-    Put(*session);
+	/* unlock the session, because session_defragment() may call
+	   SessionContainer::EraseAndDispose(), and
+	   SessionContainer::EraseAndDispose() expects the session to be
+	   unlocked.  This is ok, because we're holding the session
+	   manager lock at this point. */
+	Put(*session);
 
-    Defragment(*session, shm);
+	Defragment(*session, shm);
 }
 
 void
 SessionContainer::LockEraseAndDispose(SessionId id)
 {
-    assert(locked_session == nullptr);
+	assert(locked_session == nullptr);
 
-    const ScopeCrashUnsafe crash_unsafe;
-    boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
+	const ScopeCrashUnsafe crash_unsafe;
+	boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
-    Session *session = Find(id);
-    if (session != nullptr) {
-        Put(*session);
-        EraseAndDispose(*session);
-    }
+	Session *session = Find(id);
+	if (session != nullptr) {
+		Put(*session);
+		EraseAndDispose(*session);
+	}
 }
 
 inline bool
 SessionContainer::Visit(bool (*callback)(const Session *session,
-                                         void *ctx), void *ctx)
+					 void *ctx), void *ctx)
 {
-    const ScopeCrashUnsafe crash_unsafe;
-    boost::interprocess::sharable_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
+	const ScopeCrashUnsafe crash_unsafe;
+	boost::interprocess::sharable_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
-    if (abandoned) {
-        return false;
-    }
+	if (abandoned) {
+		return false;
+	}
 
-    const Expiry now = Expiry::Now();
+	const Expiry now = Expiry::Now();
 
-    for (auto &session : sessions) {
-        if (session.expires.IsExpired(now))
-            continue;
+	for (auto &session : sessions) {
+		if (session.expires.IsExpired(now))
+			continue;
 
-        {
-            boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(session.mutex);
-            if (!callback(&session, ctx))
-                return false;
-        }
-    }
+		{
+			boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(session.mutex);
+			if (!callback(&session, ctx))
+				return false;
+		}
+	}
 
-    return true;
+	return true;
 }

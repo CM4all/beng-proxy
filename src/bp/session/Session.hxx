@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Session management.
  */
 
-#ifndef BENG_PROXY_SESSION_HXX
-#define BENG_PROXY_SESSION_HXX
+#pragma once
 
 #include "Id.hxx"
 #include "http/CookieJar.hxx"
@@ -61,55 +60,55 @@ struct HttpAddress;
  * Session data associated with a widget instance (struct widget).
  */
 struct WidgetSession
-    : boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+	: boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
-    struct Compare {
-        bool operator()(const WidgetSession &a, const WidgetSession &b) const {
-            return strcmp(a.id, b.id) < 0;
-        }
+	struct Compare {
+		bool operator()(const WidgetSession &a, const WidgetSession &b) const {
+			return strcmp(a.id, b.id) < 0;
+		}
 
-        bool operator()(const WidgetSession &a, const char *b) const {
-            return strcmp(a.id, b) < 0;
-        }
+		bool operator()(const WidgetSession &a, const char *b) const {
+			return strcmp(a.id, b) < 0;
+		}
 
-        bool operator()(const char *a, const WidgetSession &b) const {
-            return strcmp(a, b.id) < 0;
-        }
-    };
+		bool operator()(const char *a, const WidgetSession &b) const {
+			return strcmp(a, b.id) < 0;
+		}
+	};
 
-    typedef boost::intrusive::set<WidgetSession,
-                                  boost::intrusive::compare<Compare>,
-                                  boost::intrusive::constant_time_size<false>> Set;
+	typedef boost::intrusive::set<WidgetSession,
+				      boost::intrusive::compare<Compare>,
+				      boost::intrusive::constant_time_size<false>> Set;
 
-    RealmSession &session;
+	RealmSession &session;
 
-    /** local id of this widget; must not be nullptr since widgets
-        without an id cannot have a session */
-    const DString id;
+	/** local id of this widget; must not be nullptr since widgets
+	    without an id cannot have a session */
+	const DString id;
 
-    Set children;
+	Set children;
 
-    /** last relative URI */
-    DString path_info;
+	/** last relative URI */
+	DString path_info;
 
-    /** last query string */
-    DString query_string;
+	/** last query string */
+	DString query_string;
 
-    /**
-     * Throws std::bad_alloc on error.
-     */
-    WidgetSession(RealmSession &_session, const char *_id);
+	/**
+	 * Throws std::bad_alloc on error.
+	 */
+	WidgetSession(RealmSession &_session, const char *_id);
 
-    /**
-     * Throws std::bad_alloc on error.
-     */
-    WidgetSession(struct dpool &pool, const WidgetSession &src,
-                  RealmSession &_session);
+	/**
+	 * Throws std::bad_alloc on error.
+	 */
+	WidgetSession(struct dpool &pool, const WidgetSession &src,
+		      RealmSession &_session);
 
-    void Destroy(struct dpool &pool);
+	void Destroy(struct dpool &pool);
 
-    gcc_pure
-    WidgetSession *GetChild(const char *child_id, bool create);
+	gcc_pure
+	WidgetSession *GetChild(const char *child_id, bool create);
 };
 
 struct Session;
@@ -118,181 +117,181 @@ struct Session;
  * A session associated with a user.
  */
 struct RealmSession
-    : boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+	: boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
-    static constexpr auto link_mode = boost::intrusive::normal_link;
-    typedef boost::intrusive::link_mode<link_mode> LinkMode;
-    typedef boost::intrusive::unordered_set_member_hook<LinkMode> SetHook;
-    SetHook set_hook;
+	static constexpr auto link_mode = boost::intrusive::normal_link;
+	typedef boost::intrusive::link_mode<link_mode> LinkMode;
+	typedef boost::intrusive::unordered_set_member_hook<LinkMode> SetHook;
+	SetHook set_hook;
 
-    Session &parent;
+	Session &parent;
 
-    struct Compare {
-        bool operator()(const RealmSession &a, const RealmSession &b) const {
-            return strcmp(a.realm, b.realm) < 0;
-        }
+	struct Compare {
+		bool operator()(const RealmSession &a, const RealmSession &b) const {
+			return strcmp(a.realm, b.realm) < 0;
+		}
 
-        bool operator()(const RealmSession &a, const char *b) const {
-            return strcmp(a.realm, b) < 0;
-        }
+		bool operator()(const RealmSession &a, const char *b) const {
+			return strcmp(a.realm, b) < 0;
+		}
 
-        bool operator()(const char *a, const RealmSession &b) const {
-            return strcmp(a, b.realm) < 0;
-        }
-    };
+		bool operator()(const char *a, const RealmSession &b) const {
+			return strcmp(a, b.realm) < 0;
+		}
+	};
 
-    /**
-     * The name of this session's realm.  It is always non-nullptr.
-     */
-    const DString realm;
+	/**
+	 * The name of this session's realm.  It is always non-nullptr.
+	 */
+	const DString realm;
 
-    /**
-     * The site name as provided by the translation server in the
-     * packet #TRANSLATE_SESSION_SITE.
-     */
-    DString site;
+	/**
+	 * The site name as provided by the translation server in the
+	 * packet #TRANSLATE_SESSION_SITE.
+	 */
+	DString site;
 
-    /** the user name which is logged in (nullptr if anonymous), provided
-        by the translation server */
-    DString user;
+	/** the user name which is logged in (nullptr if anonymous), provided
+	    by the translation server */
+	DString user;
 
-    /** when will the #user attribute expire? */
-    Expiry user_expires = Expiry::Never();
+	/** when will the #user attribute expire? */
+	Expiry user_expires = Expiry::Never();
 
-    /** a map of widget path to WidgetSession */
-    WidgetSession::Set widgets;
+	/** a map of widget path to WidgetSession */
+	WidgetSession::Set widgets;
 
-    /** all cookies received by widget servers */
-    CookieJar cookies;
+	/** all cookies received by widget servers */
+	CookieJar cookies;
 
-    /**
-     * Throws std::bad_alloc on error.
-     */
-    RealmSession(Session &_parent, const char *realm);
+	/**
+	 * Throws std::bad_alloc on error.
+	 */
+	RealmSession(Session &_parent, const char *realm);
 
-    /**
-     * Throws std::bad_alloc on error.
-     */
-    RealmSession(Session &_parent, const RealmSession &src);
+	/**
+	 * Throws std::bad_alloc on error.
+	 */
+	RealmSession(Session &_parent, const RealmSession &src);
 
-    void ClearSite();
-    bool SetSite(const char *_site);
+	void ClearSite();
+	bool SetSite(const char *_site);
 
-    /**
-     * @param max_age 0 = expires immediately; negative = never
-     * expires.
-     */
-    bool SetUser(const char *user, std::chrono::seconds max_age);
-    void ClearUser();
+	/**
+	 * @param max_age 0 = expires immediately; negative = never
+	 * expires.
+	 */
+	bool SetUser(const char *user, std::chrono::seconds max_age);
+	void ClearUser();
 
-    void Expire(Expiry now);
+	void Expire(Expiry now);
 
-    gcc_pure
-    WidgetSession *GetWidget(const char *widget_id, bool create);
+	gcc_pure
+	WidgetSession *GetWidget(const char *widget_id, bool create);
 };
 
 struct Session {
-    static constexpr auto link_mode = boost::intrusive::normal_link;
-    typedef boost::intrusive::link_mode<link_mode> LinkMode;
-    typedef boost::intrusive::unordered_set_member_hook<LinkMode> SetHook;
-    SetHook set_hook;
+	static constexpr auto link_mode = boost::intrusive::normal_link;
+	typedef boost::intrusive::link_mode<link_mode> LinkMode;
+	typedef boost::intrusive::unordered_set_member_hook<LinkMode> SetHook;
+	SetHook set_hook;
 
-    struct dpool &pool;
+	struct dpool &pool;
 
-    /** this lock protects the bit fields, all widget session hash
-        maps and the cookie jar */
-    boost::interprocess::interprocess_mutex mutex;
+	/** this lock protects the bit fields, all widget session hash
+	    maps and the cookie jar */
+	boost::interprocess::interprocess_mutex mutex;
 
-    /** identification number of this session */
-    const SessionId id;
+	/** identification number of this session */
+	const SessionId id;
 
-    /** a secret used to generate CSRF tokens */
-    SessionId csrf_salt;
+	/** a secret used to generate CSRF tokens */
+	SessionId csrf_salt;
 
-    /** when will this session expire? */
-    Expiry expires;
+	/** when will this session expire? */
+	Expiry expires;
 
-    /**
-     * Counts how often this session has been used.
-     */
-    unsigned counter = 1;
+	/**
+	 * Counts how often this session has been used.
+	 */
+	unsigned counter = 1;
 
-    /** is this a new session, i.e. there hasn't been a second request
-        yet? */
-    bool is_new = true;
+	/** is this a new session, i.e. there hasn't been a second request
+	    yet? */
+	bool is_new = true;
 
-    /** has a HTTP cookie with this session id already been sent? */
-    bool cookie_sent = false;
+	/** has a HTTP cookie with this session id already been sent? */
+	bool cookie_sent = false;
 
-    /** has a HTTP cookie with this session id already been received? */
-    bool cookie_received = false;
+	/** has a HTTP cookie with this session id already been received? */
+	bool cookie_received = false;
 
-    /** an opaque string for the translation server */
-    ConstBuffer<void> translate = nullptr;
+	/** an opaque string for the translation server */
+	ConstBuffer<void> translate = nullptr;
 
-    /** optional  for the "Accept-Language" header, provided
-        by the translation server */
-    DString language;
+	/** optional  for the "Accept-Language" header, provided
+	    by the translation server */
+	DString language;
 
-    /** @see #TRANSLATE_EXTERNAL_SESSION_MANAGER */
-    HttpAddress *external_manager = nullptr;
+	/** @see #TRANSLATE_EXTERNAL_SESSION_MANAGER */
+	HttpAddress *external_manager = nullptr;
 
-    /** @see #TRANSLATE_EXTERNAL_SESSION_KEEPALIVE */
-    std::chrono::duration<uint16_t> external_keepalive;
+	/** @see #TRANSLATE_EXTERNAL_SESSION_KEEPALIVE */
+	std::chrono::duration<uint16_t> external_keepalive;
 
-    std::chrono::steady_clock::time_point next_external_keepalive;
+	std::chrono::steady_clock::time_point next_external_keepalive;
 
-    typedef boost::intrusive::set<RealmSession,
-                                  boost::intrusive::compare<RealmSession::Compare>,
-                                  boost::intrusive::constant_time_size<false>> RealmSessionSet;
+	typedef boost::intrusive::set<RealmSession,
+				      boost::intrusive::compare<RealmSession::Compare>,
+				      boost::intrusive::constant_time_size<false>> RealmSessionSet;
 
-    RealmSessionSet realms;
+	RealmSessionSet realms;
 
-    Session(struct dpool &_pool, SessionId _id);
+	Session(struct dpool &_pool, SessionId _id);
 
-    /**
-     * Throws std::bad_alloc on error.
-     */
-    Session(struct dpool &_pool, const Session &src);
+	/**
+	 * Throws std::bad_alloc on error.
+	 */
+	Session(struct dpool &_pool, const Session &src);
 
-    void Destroy();
+	void Destroy();
 
-    /**
-     * Calculates the score for purging the session: higher score
-     * means more likely to be purged.
-     */
-    gcc_pure
-    unsigned GetPurgeScore() const noexcept;
+	/**
+	 * Calculates the score for purging the session: higher score
+	 * means more likely to be purged.
+	 */
+	gcc_pure
+	unsigned GetPurgeScore() const noexcept;
 
-    gcc_pure
-    bool HasUser() const {
-        for (auto &realm : realms)
-            if (realm.user != nullptr)
-                return true;
+	gcc_pure
+	bool HasUser() const {
+		for (auto &realm : realms)
+			if (realm.user != nullptr)
+				return true;
 
-        return false;
-    }
+		return false;
+	}
 
-    bool SetTranslate(ConstBuffer<void> translate);
-    void ClearTranslate();
+	bool SetTranslate(ConstBuffer<void> translate);
+	void ClearTranslate();
 
-    bool SetLanguage(const char *language);
-    void ClearLanguage();
+	bool SetLanguage(const char *language);
+	void ClearLanguage();
 
-    bool SetExternalManager(const HttpAddress &address,
-                            std::chrono::steady_clock::time_point now,
-                            std::chrono::duration<uint16_t> keepalive);
+	bool SetExternalManager(const HttpAddress &address,
+				std::chrono::steady_clock::time_point now,
+				std::chrono::duration<uint16_t> keepalive);
 
-    void Expire(Expiry now);
+	void Expire(Expiry now);
 
-    gcc_pure
-    RealmSession *GetRealm(const char *realm);
+	gcc_pure
+	RealmSession *GetRealm(const char *realm);
 
-    struct Disposer {
-        void operator()(Session *session) {
-            session->Destroy();
-        }
-    };
+	struct Disposer {
+		void operator()(Session *session) {
+			session->Destroy();
+		}
+	};
 };
 
 /**
@@ -311,27 +310,27 @@ session_put(Session *session) noexcept;
 static inline void
 session_put(RealmSession &session) noexcept
 {
-    session_put(&session.parent);
+	session_put(&session.parent);
 }
 
 static inline void
 session_put(RealmSession *session) noexcept
 {
-    session_put(&session->parent);
+	session_put(&session->parent);
 }
 
 inline RealmSession *
 session_get_realm(SessionId id, const char *realm) noexcept
 {
-    auto *session = session_get(id);
-    if (session == nullptr)
-        return nullptr;
+	auto *session = session_get(id);
+	if (session == nullptr)
+		return nullptr;
 
-    auto *realm_session = session->GetRealm(realm);
-    if (realm_session == nullptr)
-        session_put(session);
+	auto *realm_session = session->GetRealm(realm);
+	if (realm_session == nullptr)
+		session_put(session);
 
-    return realm_session;
+	return realm_session;
 }
 
 /**
@@ -342,111 +341,109 @@ void
 session_delete(SessionId id) noexcept;
 
 class SessionLease {
-    friend class RealmSessionLease;
+	friend class RealmSessionLease;
 
-    Session *session;
+	Session *session;
 
 public:
-    SessionLease() noexcept:session(nullptr) {}
-    SessionLease(std::nullptr_t) noexcept:session(nullptr) {}
+	SessionLease() noexcept:session(nullptr) {}
+	SessionLease(std::nullptr_t) noexcept:session(nullptr) {}
 
-    explicit SessionLease(SessionId id) noexcept
-        :session(session_get(id)) {}
+	explicit SessionLease(SessionId id) noexcept
+		:session(session_get(id)) {}
 
-    explicit SessionLease(Session *_session) noexcept
-        :session(_session) {}
+	explicit SessionLease(Session *_session) noexcept
+		:session(_session) {}
 
-    SessionLease(SessionLease &&src) noexcept
-        :session(src.session) {
-        src.session = nullptr;
-    }
+	SessionLease(SessionLease &&src) noexcept
+		:session(src.session) {
+		src.session = nullptr;
+	}
 
-    ~SessionLease() noexcept {
-        if (session != nullptr)
-            session_put(session);
-    }
+	~SessionLease() noexcept {
+		if (session != nullptr)
+			session_put(session);
+	}
 
-    SessionLease &operator=(SessionLease &&src) noexcept {
-        std::swap(session, src.session);
-        return *this;
-    }
+	SessionLease &operator=(SessionLease &&src) noexcept {
+		std::swap(session, src.session);
+		return *this;
+	}
 
-    operator bool() const noexcept {
-        return session != nullptr;
-    }
+	operator bool() const noexcept {
+		return session != nullptr;
+	}
 
-    Session &operator *() const noexcept {
-        return *session;
-    }
+	Session &operator *() const noexcept {
+		return *session;
+	}
 
-    Session *operator->() const noexcept {
-        return session;
-    }
+	Session *operator->() const noexcept {
+		return session;
+	}
 
-    Session *get() const noexcept {
-        return session;
-    }
+	Session *get() const noexcept {
+		return session;
+	}
 };
 
 class RealmSessionLease {
-    RealmSession *session;
+	RealmSession *session;
 
 public:
-    RealmSessionLease() noexcept:session(nullptr) {}
-    RealmSessionLease(std::nullptr_t) noexcept:session(nullptr) {}
+	RealmSessionLease() noexcept:session(nullptr) {}
+	RealmSessionLease(std::nullptr_t) noexcept:session(nullptr) {}
 
-    RealmSessionLease(SessionLease &&src, const char *realm) noexcept
-        :session(src.session != nullptr
-                 ? src.session->GetRealm(realm)
-                 : nullptr) {
-        if (session != nullptr)
-            src.session = nullptr;
-    }
+	RealmSessionLease(SessionLease &&src, const char *realm) noexcept
+		:session(src.session != nullptr
+			 ? src.session->GetRealm(realm)
+			 : nullptr) {
+		if (session != nullptr)
+			src.session = nullptr;
+	}
 
-    RealmSessionLease(SessionId id, const char *realm) noexcept
-        :session(nullptr) {
-        SessionLease parent(id);
-        if (!parent)
-            return;
+	RealmSessionLease(SessionId id, const char *realm) noexcept
+		:session(nullptr) {
+		SessionLease parent(id);
+		if (!parent)
+			return;
 
-        session = parent.session->GetRealm(realm);
-        if (session != nullptr)
-            parent.session = nullptr;
-    }
+		session = parent.session->GetRealm(realm);
+		if (session != nullptr)
+			parent.session = nullptr;
+	}
 
-    explicit RealmSessionLease(RealmSession *_session) noexcept
-        :session(_session) {}
+	explicit RealmSessionLease(RealmSession *_session) noexcept
+		:session(_session) {}
 
-    RealmSessionLease(RealmSessionLease &&src) noexcept
-        :session(src.session) {
-        src.session = nullptr;
-    }
+	RealmSessionLease(RealmSessionLease &&src) noexcept
+		:session(src.session) {
+		src.session = nullptr;
+	}
 
-    ~RealmSessionLease() noexcept {
-        if (session != nullptr)
-            session_put(&session->parent);
-    }
+	~RealmSessionLease() noexcept {
+		if (session != nullptr)
+			session_put(&session->parent);
+	}
 
-    RealmSessionLease &operator=(RealmSessionLease &&src) noexcept {
-        std::swap(session, src.session);
-        return *this;
-    }
+	RealmSessionLease &operator=(RealmSessionLease &&src) noexcept {
+		std::swap(session, src.session);
+		return *this;
+	}
 
-    operator bool() const noexcept {
-        return session != nullptr;
-    }
+	operator bool() const noexcept {
+		return session != nullptr;
+	}
 
-    RealmSession &operator *() const noexcept {
-        return *session;
-    }
+	RealmSession &operator *() const noexcept {
+		return *session;
+	}
 
-    RealmSession *operator->() const noexcept {
-        return session;
-    }
+	RealmSession *operator->() const noexcept {
+		return session;
+	}
 
-    RealmSession *get() const noexcept {
-        return session;
-    }
+	RealmSession *get() const noexcept {
+		return session;
+	}
 };
-
-#endif

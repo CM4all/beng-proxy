@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,30 +34,30 @@
 #include "shm/dpool.hxx"
 
 AddressList::AddressList(struct dpool &pool, const AddressList &src) noexcept
-    :sticky_mode(src.sticky_mode)
+	:sticky_mode(src.sticky_mode)
 {
-    addresses.clear();
+	addresses.clear();
 
-    for (const auto &i : src)
-        Add(pool, i);
+	for (const auto &i : src)
+		Add(pool, i);
 }
 
 bool
 AddressList::Add(struct dpool &pool, const SocketAddress address) noexcept
 {
-    if (addresses.full())
-        return false;
+	if (addresses.full())
+		return false;
 
-    const struct sockaddr *new_address = (const struct sockaddr *)
-        (const void *)
-        d_memdup(pool, address.GetAddress(), address.GetSize());
-    addresses.push_back({new_address, address.GetSize()});
-    return true;
+	const struct sockaddr *new_address = (const struct sockaddr *)
+		(const void *)
+		d_memdup(pool, address.GetAddress(), address.GetSize());
+	addresses.push_back({new_address, address.GetSize()});
+	return true;
 }
 
 void
 AddressList::Free(struct dpool &pool) noexcept
 {
-    for (const auto &i : *this)
-        d_free(pool, i.GetAddress());
+	for (const auto &i : *this)
+		d_free(pool, i.GetAddress());
 }

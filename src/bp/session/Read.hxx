@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Read sessions from a file.
  */
 
-#ifndef BENG_PROXY_SESSION_READ_HXX
-#define BENG_PROXY_SESSION_READ_HXX
+#pragma once
 
 #include <stdint.h>
 #include <stdio.h>
@@ -56,5 +55,3 @@ session_read_file_header(FILE *file);
  */
 Session *
 session_read(FILE *file, struct dpool &pool);
-
-#endif
