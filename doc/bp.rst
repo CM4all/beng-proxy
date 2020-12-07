@@ -923,18 +923,18 @@ Token Authentication
 A translation response containing ``TOKEN_AUTH`` enables token-based
 authentication.  The packet may contain an opaque payload.
 
-The token is extracted from the ``auth_token`` query string parameter.
+The token is extracted from the ``access_token`` query string parameter.
 To check it, :program:`beng-proxy` sends a new request with the
 following packets:
 
 - ``TOKEN_AUTH`` (echoing the response packet)
-- ``AUTH_TOKEN`` contains the ``auth_token`` query string parameter
+- ``AUTH_TOKEN`` contains the ``access_token`` query string parameter
   (unescaped)
 - ``URI`` is the full request URI with only the ``auth_token`` query
   string parameter removed
 - ``HOST``
 
-If no ``auth_token`` parameter was present, :program:`beng-proxy`
+If no ``access_token`` parameter was present, :program:`beng-proxy`
 checks if a ``USER`` is already set in the current session; if yes,
 then translation request will be skipped completely.  If not, then the
 ``TOKEN_AUTH`` request will be sent, but without an ``AUTH_TOKEN``

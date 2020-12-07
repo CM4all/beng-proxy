@@ -174,14 +174,15 @@ ExtractAuthToken(AllocatorPtr alloc, DissectedUri &dissected_uri)
 
 	for (const auto i : IterableSplitString(dissected_uri.query, '&')) {
 		const auto [name, escaped_value] = i.Split('=');
-		if (!StringView("auth_token").Equals(name))
+		if (!StringView("access_token").Equals(name))
 			continue;
 
 		auth_token = uri_unescape_dup(alloc, escaped_value);
 		if (auth_token == nullptr)
 			throw std::invalid_argument("Malformed auth token");
 
-		/* remove the "auth_token" parameter from the query string */
+		/* remove the "access_token" parameter from the query
+		   string */
 		dissected_uri.query =
 			RemoveFromQueryString(alloc, dissected_uri.query,
 					      name, escaped_value);
