@@ -1033,9 +1033,14 @@ described in this section.
   payload may specify additional ``tmpfs`` mount options such as
   ``size=64M``.
 
-- ``MOUNT_TMPFS`` mounts a new ``tmpfs`` on the given path. This is
-  private to the namespace and is deleted when the process exits.
-  Inside this filesystem, mount points will be created automatically.
+- ``MOUNT_TMPFS`` mounts a new (user-writable) ``tmpfs`` on the given
+  path. This is private to the namespace and is deleted when the
+  process exits.
+
+- ``MOUNT_EMPTY`` mounts a new (read-only) ``tmpfs`` on the given
+  path. Inside this filesystem, mount points will be created
+  automatically.  Other than that, it can be used to hide parts of an
+  existing filesystem.
 
 - ``BIND_MOUNT`` mounts arbitrary directories from the old root into
   the new root. The payload is the source directory (absolute path
