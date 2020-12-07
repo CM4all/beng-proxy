@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -35,7 +35,6 @@
 #include "Widget.hxx"
 #include "Class.hxx"
 #include "pool/pool.hxx"
-#include "pool/Holder.hxx"
 #include "util/Cancellable.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/IntrusiveList.hxx"
@@ -44,7 +43,6 @@ class WidgetResolver;
 
 class WidgetResolverListener final
 	: public IntrusiveListHook,
-	  PoolHolder,
 	  Cancellable {
 
 	WidgetResolver &resolver;
@@ -56,11 +54,10 @@ class WidgetResolverListener final
 #endif
 
 public:
-	template<typename P>
-	WidgetResolverListener(P &&_pool, WidgetResolver &_resolver,
+	WidgetResolverListener(WidgetResolver &_resolver,
 			       WidgetResolverCallback _callback,
 			       CancellablePointer &cancel_ptr) noexcept
-		:PoolHolder(std::forward<P>(_pool)), resolver(_resolver),
+		:resolver(_resolver),
 		 callback(_callback) {
 		cancel_ptr = *this;
 	}
@@ -293,7 +290,7 @@ ResolveWidget(struct pool &pool,
 
 	/* add a new listener to the resolver */
 
-	auto listener = NewFromPool<WidgetResolverListener>(pool, pool, *resolver,
+	auto listener = NewFromPool<WidgetResolverListener>(pool, *resolver,
 							    callback,
 							    cancel_ptr);
 
