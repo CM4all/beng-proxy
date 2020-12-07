@@ -43,6 +43,7 @@
 #include "http/IncomingRequest.hxx"
 #include "cgi/Address.hxx"
 #include "istream/AutoPipeIstream.hxx"
+#include "uri/Recompose.hxx"
 #include "AllocatorPtr.hxx"
 
 /**
@@ -51,12 +52,10 @@
  */
 gcc_pure
 static const char *
-ForwardURI(AllocatorPtr alloc, const DissectedUri &uri) noexcept
+ForwardURI(AllocatorPtr alloc, DissectedUri uri) noexcept
 {
-	if (uri.query.empty())
-		return alloc.DupZ(uri.base);
-	else
-		return alloc.Concat(uri.base, '?', uri.query);
+	uri.args = nullptr;
+	return RecomposeUri(alloc, uri);
 }
 
 inline const char *

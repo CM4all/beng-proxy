@@ -48,6 +48,7 @@
 #include "AllocatorPtr.hxx"
 #include "puri_edit.hxx"
 #include "puri_escape.hxx"
+#include "uri/Recompose.hxx"
 #include "uri/Verify.hxx"
 #include "RedirectHttps.hxx"
 #include "strmap.hxx"
@@ -76,13 +77,14 @@ GetBounceUri(AllocatorPtr alloc, const IncomingHttpRequest &request,
 	if (host == nullptr)
 		host = "localhost";
 
-	const char *uri_path = response.uri != nullptr
-		? alloc.Concat(response.uri,
-			       StringView{";", dissected_uri.args == nullptr ? (size_t)0 : 1},
-			       dissected_uri.args,
-			       StringView{"?", dissected_uri.query == nullptr ? (size_t)0 : 1},
-			       dissected_uri.query)
-		: request.uri;
+	const char *uri_path = request.uri;
+
+	if (response.uri != nullptr) {
+		auto new_du = dissected_uri;
+		new_du.base = response.uri;
+		new_du.path_info = nullptr;
+		uri_path = RecomposeUri(alloc, dissected_uri);
+	}
 
 	const char *current_uri = alloc.Concat(scheme, "://", host, uri_path);
 	const char *escaped_uri = uri_escape_dup(alloc, current_uri,
