@@ -115,7 +115,7 @@ session_manager_load(FILE *file)
 }
 
 void
-session_save()
+session_save() noexcept
 try {
 	LogConcat(5, "SessionManager", "saving sessions to ", session_save_path);
 
@@ -136,7 +136,7 @@ try {
 }
 
 void
-session_save_init(const char *path)
+session_save_init(const char *path) noexcept
 {
 	assert(session_save_path == nullptr);
 
@@ -153,7 +153,7 @@ session_save_init(const char *path)
 }
 
 void
-session_save_deinit()
+session_save_deinit() noexcept
 {
 	if (session_save_path == nullptr)
 		return;
