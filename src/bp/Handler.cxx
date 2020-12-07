@@ -83,7 +83,7 @@ GetBounceUri(AllocatorPtr alloc, const IncomingHttpRequest &request,
 		auto new_du = dissected_uri;
 		new_du.base = response.uri;
 		new_du.path_info = nullptr;
-		uri_path = RecomposeUri(alloc, dissected_uri);
+		uri_path = RecomposeUri(alloc, new_du);
 	}
 
 	const char *current_uri = alloc.Concat(scheme, "://", host, uri_path);
