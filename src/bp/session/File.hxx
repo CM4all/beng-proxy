@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Definitions for the session file format.
  */
 
-#ifndef BENG_PROXY_SESSION_FILE_H
-#define BENG_PROXY_SESSION_FILE_H
+#pragma once
 
 #include <stdint.h>
 
@@ -46,5 +45,3 @@ static constexpr uint32_t MAGIC_WIDGET_SESSION = 983957472;
 static constexpr uint32_t MAGIC_COOKIE = 860919820;
 static constexpr uint32_t MAGIC_END_OF_RECORD = 1588449078;
 static constexpr uint32_t MAGIC_END_OF_LIST = 1556616445;
-
-#endif

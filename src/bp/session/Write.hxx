@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,8 +34,7 @@
  * Write a session to a file.
  */
 
-#ifndef BENG_PROXY_SESSION_WRITE_HXX
-#define BENG_PROXY_SESSION_WRITE_HXX
+#pragma once
 
 #include <stdint.h>
 
@@ -65,5 +64,3 @@ session_write_file_tail(BufferedOutputStream &os);
  */
 void
 session_write(BufferedOutputStream &os, const Session *session);
-
-#endif
