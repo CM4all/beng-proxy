@@ -113,7 +113,6 @@ private:
 	const char *session_cookie;
 
 	SessionId session_id;
-	bool send_session_cookie = false;
 
 	/**
 	 * The realm name of the request.  This is valid only after the
@@ -133,13 +132,6 @@ private:
 	 * from the session.
 	 */
 	const char *user = nullptr;
-
-	/**
-	 * Is this request "stateless", i.e. is session management
-	 * disabled?  This is initialized by request_determine_session(),
-	 * and may be disabled later by handle_translated_request().
-	 */
-	bool stateless;
 
 	struct {
 		TranslateRequest request;
@@ -294,6 +286,15 @@ private:
 	 * by a filter.
 	 */
 	http_status_t previous_status = http_status_t(0);
+
+	/**
+	 * Is this request "stateless", i.e. is session management
+	 * disabled?  This is initialized by request_determine_session(),
+	 * and may be disabled later by handle_translated_request().
+	 */
+	bool stateless;
+
+	bool send_session_cookie = false;
 
 	/**
 	 * Shall the Set-Cookie2 header received from the next server be
