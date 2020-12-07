@@ -44,7 +44,7 @@
 #include "util/djbhash.h"
 
 inline const StringMap *
-Request::GetCookies()
+Request::GetCookies() noexcept
 {
 	if (cookies != nullptr)
 		return cookies;
@@ -85,7 +85,7 @@ Request::LoadSession(const char *_session_id)
 
 static const char *
 build_session_cookie_name(struct pool *pool, const BpConfig *config,
-			  const StringMap &headers)
+			  const StringMap &headers) noexcept
 {
 	if (!config->dynamic_session_cookie)
 		return config->session_cookie.c_str();
@@ -103,7 +103,7 @@ build_session_cookie_name(struct pool *pool, const BpConfig *config,
 }
 
 inline const char *
-Request::GetCookieSessionId()
+Request::GetCookieSessionId() noexcept
 {
 	assert(!stateless);
 	assert(session_cookie != nullptr);
@@ -196,7 +196,7 @@ Request::MakeRealmSession()
 }
 
 void
-Request::IgnoreSession()
+Request::IgnoreSession() noexcept
 {
 	if (!session_id.IsDefined())
 		return;
@@ -208,7 +208,7 @@ Request::IgnoreSession()
 }
 
 void
-Request::DiscardSession()
+Request::DiscardSession() noexcept
 {
 	if (!session_id.IsDefined())
 		return;
@@ -229,7 +229,7 @@ Request::DiscardSession()
 static const char *
 get_request_realm(struct pool *pool, const StringMap &request_headers,
 		  const TranslateResponse &response,
-		  ConstBuffer<void> auth_base)
+		  ConstBuffer<void> auth_base) noexcept
 {
 	if (response.realm != nullptr)
 		return response.realm;
@@ -251,7 +251,7 @@ get_request_realm(struct pool *pool, const StringMap &request_headers,
 
 void
 Request::ApplyTranslateRealm(const TranslateResponse &response,
-			     ConstBuffer<void> auth_base)
+			     ConstBuffer<void> auth_base) noexcept
 {
 	if (realm != nullptr)
 		/* was already called by Request::HandleAuth(), and no need to

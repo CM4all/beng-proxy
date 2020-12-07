@@ -73,7 +73,8 @@
 
 static const char *
 request_absolute_uri(const IncomingHttpRequest &request,
-		     const char *scheme, const char *host, const char *uri)
+		     const char *scheme, const char *host,
+		     const char *uri) noexcept
 {
 	assert(uri != nullptr);
 
@@ -98,7 +99,7 @@ request_absolute_uri(const IncomingHttpRequest &request,
  */
 static void
 session_drop_widgets(RealmSession &session, const char *uri,
-		     const WidgetRef *ref)
+		     const WidgetRef *ref) noexcept
 {
 	WidgetSession::Set *map = &session.widgets;
 	const char *id = uri;
@@ -126,7 +127,7 @@ session_drop_widgets(RealmSession &session, const char *uri,
 
 inline UnusedIstreamPtr
 Request::AutoDeflate(HttpHeaders &response_headers,
-		     UnusedIstreamPtr response_body)
+		     UnusedIstreamPtr response_body) noexcept
 {
 	if (compressed) {
 		/* already compressed */
@@ -209,7 +210,7 @@ inline void
 Request::InvokeXmlProcessor(http_status_t status,
 			    StringMap &response_headers,
 			    UnusedIstreamPtr response_body,
-			    const Transformation &transformation)
+			    const Transformation &transformation) noexcept
 {
 	assert(!response_sent);
 
@@ -320,8 +321,9 @@ Request::InvokeXmlProcessor(http_status_t status,
 	}
 }
 
+gcc_pure
 static bool
-css_processable(const StringMap &headers)
+css_processable(const StringMap &headers) noexcept
 {
 	const char *content_type = headers.Get("content-type");
 	return content_type != nullptr &&
@@ -332,7 +334,7 @@ inline void
 Request::InvokeCssProcessor(http_status_t status,
 			    StringMap &response_headers,
 			    UnusedIstreamPtr response_body,
-			    const Transformation &transformation)
+			    const Transformation &transformation) noexcept
 {
 	assert(!response_sent);
 
@@ -379,7 +381,7 @@ Request::InvokeCssProcessor(http_status_t status,
 inline void
 Request::InvokeTextProcessor(http_status_t status,
 			     StringMap &response_headers,
-			     UnusedIstreamPtr response_body)
+			     UnusedIstreamPtr response_body) noexcept
 {
 	assert(!response_sent);
 
@@ -458,7 +460,7 @@ Request::InvokeSubst(http_status_t status,
  */
 static void
 translation_response_headers(HttpHeaders &headers,
-			     const TranslateResponse &tr)
+			     const TranslateResponse &tr) noexcept
 {
 	if (tr.response_header_forward[BengProxy::HeaderGroup::AUTH] == BengProxy::HeaderForwardMode::MANGLE) {
 		if (tr.www_authenticate != nullptr)
@@ -493,7 +495,7 @@ Request::MoreResponseHeaders(HttpHeaders &headers) const noexcept
 }
 
 inline void
-Request::GenerateSetCookie(GrowingBuffer &headers)
+Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 {
 	assert(!stateless);
 	assert(session_cookie != nullptr);
@@ -582,7 +584,7 @@ Request::GenerateSetCookie(GrowingBuffer &headers)
 
 inline void
 Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
-				UnusedIstreamPtr body)
+				UnusedIstreamPtr body) noexcept
 {
 	assert(!response_sent);
 
@@ -668,7 +670,7 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
 void
 Request::ApplyTransformation(http_status_t status, StringMap &&headers,
 			     UnusedIstreamPtr response_body,
-			     const Transformation &transformation)
+			     const Transformation &transformation) noexcept
 {
 	transformed = true;
 
@@ -715,9 +717,10 @@ Request::ApplyTransformation(http_status_t status, StringMap &&headers,
 	}
 }
 
+gcc_pure
 static bool
 filter_enabled(const TranslateResponse &tr,
-	       http_status_t status)
+	       http_status_t status) noexcept
 {
 	return http_status_is_success(status) ||
 		(http_status_is_client_error(status) && tr.filter_4xx);
@@ -725,7 +728,7 @@ filter_enabled(const TranslateResponse &tr,
 
 void
 Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
-			  UnusedIstreamPtr response_body)
+			  UnusedIstreamPtr response_body) noexcept
 {
 	assert(!response_sent);
 

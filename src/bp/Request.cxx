@@ -56,13 +56,13 @@ Request::Request(BpConnection &_connection,
 Request::~Request() noexcept = default;
 
 bool
-Request::IsProcessorEnabled() const
+Request::IsProcessorEnabled() const noexcept
 {
 	return translate.response->views->HasProcessor();
 }
 
 void
-Request::ParseArgs()
+Request::ParseArgs() noexcept
 {
 	assert(args.IsEmpty());
 

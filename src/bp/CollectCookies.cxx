@@ -35,7 +35,7 @@
 #include "http/CookieClient.hxx"
 
 const char *
-Request::GetCookieHost() const
+Request::GetCookieHost() const noexcept
 {
 	if (translate.response->cookie_host != nullptr)
 		return translate.response->cookie_host;
@@ -44,7 +44,7 @@ Request::GetCookieHost() const
 }
 
 void
-Request::CollectCookies(const StringMap &headers)
+Request::CollectCookies(const StringMap &headers) noexcept
 {
 	auto r = headers.EqualRange("set-cookie2");
 	if (r.first == r.second) {

@@ -827,7 +827,7 @@ Request::OnTranslateError(std::exception_ptr ep) noexcept
 }
 
 void
-Request::SubmitTranslateRequest()
+Request::SubmitTranslateRequest() noexcept
 {
 	instance.translation_service->SendRequest(pool,
 						  translate.request,

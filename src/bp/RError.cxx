@@ -56,14 +56,14 @@
 #endif
 
 static MessageHttpResponse
-Dup(struct pool &pool, http_status_t status, const char *msg)
+Dup(struct pool &pool, http_status_t status, const char *msg) noexcept
 {
 	return {status, p_strdup(&pool, msg)};
 }
 
 gcc_pure
 static MessageHttpResponse
-ToResponse(struct pool &pool, std::exception_ptr ep)
+ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 {
 	try {
 		FindRetrowNested<HttpMessageResponse>(ep);
@@ -157,7 +157,7 @@ ToResponse(struct pool &pool, std::exception_ptr ep)
 void
 Request::LogDispatchError(http_status_t status,
 			  const char *msg, const char *log_msg,
-			  unsigned log_level)
+			  unsigned log_level) noexcept
 {
 	logger(log_level, "error on '", request.uri, "': ", log_msg);
 
@@ -169,14 +169,14 @@ Request::LogDispatchError(http_status_t status,
 
 void
 Request::LogDispatchError(http_status_t status, const char *log_msg,
-			  unsigned log_level)
+			  unsigned log_level) noexcept
 {
 	LogDispatchError(status, http_status_to_string(status),
 			 log_msg, log_level);
 }
 
 void
-Request::LogDispatchError(std::exception_ptr ep)
+Request::LogDispatchError(std::exception_ptr ep) noexcept
 {
 	auto response = ToResponse(pool, ep);
 	if (instance.config.verbose_response)
@@ -190,7 +190,7 @@ Request::LogDispatchError(std::exception_ptr ep)
 
 void
 Request::LogDispatchError(http_status_t status, const char *msg,
-			  std::exception_ptr ep, unsigned log_level)
+			  std::exception_ptr ep, unsigned log_level) noexcept
 {
 	logger(log_level, "error on '", request.uri, "': ", ep);
 
