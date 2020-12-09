@@ -318,6 +318,19 @@ try {
 
 	/* initialize */
 
+	if (!instance.cmdline.user.IsEmpty()) {
+		const char *runtime_directory = getenv("RUNTIME_DIRECTORY");
+		if (runtime_directory != nullptr)
+			/* since systemd starts beng-proxy as root, we
+			   need to chown the RuntimeDirectory to the
+			   final beng-proxy user; this should be fixed
+			   eventually by launching beng-proxy as its
+			   own user */
+			chown(runtime_directory,
+			      instance.cmdline.user.uid,
+			      instance.cmdline.user.gid);
+	}
+
 	SetupProcess();
 
 	if (instance.cmdline.ua_classification_file != nullptr)

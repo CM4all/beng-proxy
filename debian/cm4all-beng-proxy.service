@@ -11,6 +11,14 @@ Restart=on-failure
 
 SyslogIdentifier=cm4all-beng-proxy
 
+RuntimeDirectory=cm4all/beng-proxy
+RuntimeDirectoryMode=0700
+
+# We need to preserve the RuntimeDirectory across restarts currently,
+# because all beng-proxy installations configure the
+# "session_save_path" file there.  This should be fixed eventually.
+RuntimeDirectoryPreserve=restart
+
 # enable crash dumps
 LimitCORE=infinity
 
