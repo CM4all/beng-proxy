@@ -49,6 +49,9 @@ public:
 		address.sun_family = AF_UNSPEC;
 	}
 
+	TempListener(const TempListener &) = delete;
+	TempListener &operator=(const TempListener &) = delete;
+
 	bool IsDefined() const noexcept {
 		return GetAddress().IsDefined();
 	}
