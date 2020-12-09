@@ -22,6 +22,9 @@ LimitRSS=8G
 LimitDATA=8G
 MemoryMax=8G
 
+# 1 MB is more than enough; the default is 8 MB, which is excessive
+LimitSTACK=1M
+
 TasksMax=32
 
 [Install]
