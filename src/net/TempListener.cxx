@@ -34,12 +34,19 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
 
+#include <stdlib.h>
 #include <sys/stat.h>
 
 static void
 make_child_socket_path(struct sockaddr_un *address)
 {
-	strcpy(address->sun_path, "/tmp/cm4all-beng-proxy-socket-XXXXXX");
+	const char *runtime_directory = getenv("RUNTIME_DIRECTORY");
+	if (runtime_directory != nullptr)
+		sprintf(address->sun_path, "%s/temp-socket-XXXXXX",
+			runtime_directory);
+	else
+		strcpy(address->sun_path, "/tmp/cm4all-beng-proxy-socket-XXXXXX");
+
 	if (*mktemp(address->sun_path) == 0)
 		throw MakeErrno("mktemp() failed");
 
