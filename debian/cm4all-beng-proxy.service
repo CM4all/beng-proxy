@@ -24,6 +24,14 @@ LimitCORE=infinity
 
 LimitNOFILE=262144
 
+# Limit memory usage to avoid the global oomkiller when this service
+# leaks; this does not include spawned processes which live in their
+# own systemd slice/scope.  These limits may need to be raised if you
+# want beng-proxy to maintain larger caches.
+LimitRSS=8G
+LimitDATA=8G
+MemoryMax=8G
+
 # systemd's default is only 15% which can be too low
 TasksMax=50%
 
