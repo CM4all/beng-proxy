@@ -32,6 +32,9 @@ LimitRSS=8G
 LimitDATA=8G
 MemoryMax=8G
 
+# 1 MB is more than enough; the default is 8 MB, which is excessive
+LimitSTACK=1M
+
 # systemd's default is only 15% which can be too low
 TasksMax=50%
 
