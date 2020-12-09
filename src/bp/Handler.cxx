@@ -45,6 +45,7 @@
 #include "ExternalSession.hxx"
 #include "address_suffix_registry.hxx"
 #include "http/IncomingRequest.hxx"
+#include "istream/istream_memory.hxx"
 #include "AllocatorPtr.hxx"
 #include "puri_edit.hxx"
 #include "puri_escape.hxx"
@@ -252,6 +253,27 @@ Request::CheckHandleStatus(const TranslateResponse &response)
 }
 
 inline bool
+Request::CheckHandleTinyImage(const TranslateResponse &response)
+{
+	if (!response.tiny_image)
+		return false;
+
+	http_status_t status = response.status != (http_status_t)0
+		? response.status
+		: HTTP_STATUS_OK;
+
+	HttpHeaders headers;
+	headers.Write("content-type", "image/gif");
+
+	static constexpr char tiny_gif[] =
+		"GIF89a\x01\x00\x01\x00\x80\xff\x00\xff\xff\xff\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00;";
+
+	DispatchError(status, std::move(headers),
+		      istream_memory_new(pool, tiny_gif, sizeof(tiny_gif) - 1));
+	return true;
+}
+
+inline bool
 Request::CheckHandleMessage(const TranslateResponse &response)
 {
 	if (response.message == nullptr)
@@ -270,6 +292,7 @@ Request::CheckHandleRedirectBounceStatus(const TranslateResponse &response)
 {
 	return CheckHandleRedirect(response) ||
 		CheckHandleBounce(response) ||
+		CheckHandleTinyImage(response) ||
 		CheckHandleMessage(response) ||
 		CheckHandleStatus(response);
 }

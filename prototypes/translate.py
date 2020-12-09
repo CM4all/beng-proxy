@@ -995,6 +995,8 @@ class Translation(Protocol):
             response.packet(TRANSLATE_CHAIN, 'foo')
         elif uri[:7] == '/defer/':
             response.packet(TRANSLATE_DEFER)
+        elif uri == '/tiny.gif':
+            response.packet(TRANSLATE_TINY_IMAGE)
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)

@@ -301,6 +301,8 @@ Response
 - ``MESSAGE``: Generate a response with the given body (``text/plain``
   and US-ASCII).
 
+- ``TINY_IMAGE``: Generate a response with a tiny (one-pixel GIF) image.
+
 - ``EXPAND_PATH``: Override the ``PATH`` with the given value
   (applicable to static files, CGI, FastCGI, WAS, ``HTTP``). Backslash
   references are expanded to the value of the match group of ``REGEX``.

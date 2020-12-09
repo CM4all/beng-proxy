@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.0.37) unstable; urgency=low
 
   * spawn: remount MOUNT_EMPTY read-only
+  * translation: add packet TINY_IMAGE
 
  --   
 
