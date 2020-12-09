@@ -39,7 +39,8 @@
 class UniqueSocketDescriptor;
 
 /**
- * Create a listener socket on a temporary socket file
+ * Create a listener socket on a temporary socket file.  The file will
+ * be deleted automatically by the destructor.
  */
 class TempListener {
 	struct sockaddr_un address;
@@ -48,6 +49,8 @@ public:
 	TempListener() noexcept {
 		address.sun_family = AF_UNSPEC;
 	}
+
+	~TempListener() noexcept;
 
 	TempListener(const TempListener &) = delete;
 	TempListener &operator=(const TempListener &) = delete;
@@ -60,8 +63,6 @@ public:
 	 * Throws std::runtime_error on error.
 	 */
 	UniqueSocketDescriptor Create(int socket_type, int backlog);
-
-	void Unlink() noexcept;
 
 	SocketAddress GetAddress() const noexcept {
 		return SocketAddress((const struct sockaddr *)&address,

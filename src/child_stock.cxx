@@ -242,9 +242,6 @@ ChildStockItem::~ChildStockItem()
 {
 	if (pid >= 0)
 		spawn_service.KillChildProcess(pid);
-
-	if (socket.IsDefined())
-		socket.Unlink();
 }
 
 /*
