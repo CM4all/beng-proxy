@@ -30,63 +30,43 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "child_socket.hxx"
-#include "net/UniqueSocketDescriptor.hxx"
-#include "system/Error.hxx"
+#pragma once
 
-#include <sys/stat.h>
+#include "net/SocketAddress.hxx"
 
-static void
-make_child_socket_path(struct sockaddr_un *address)
-{
-	address->sun_family = AF_LOCAL;
+#include <sys/un.h>
 
-	strcpy(address->sun_path, "/tmp/cm4all-beng-proxy-socket-XXXXXX");
-	if (*mktemp(address->sun_path) == 0)
-		throw MakeErrno("mktemp() failed");
-}
+class UniqueSocketDescriptor;
 
-UniqueSocketDescriptor
-ChildSocket::Create(int socket_type, int backlog)
-{
-	make_child_socket_path(&address);
+/**
+ * Create a listener socket on a temporary socket file
+ */
+class TempListener {
+	struct sockaddr_un address;
 
-	unlink(address.sun_path);
-
-	UniqueSocketDescriptor fd;
-	if (!fd.Create(AF_LOCAL, socket_type, 0))
-		throw MakeErrno("failed to create local socket");
-
-	/* allow only beng-proxy to connect to it */
-	fchmod(fd.Get(), 0600);
-
-	if (!fd.Bind(GetAddress()))
-		throw MakeErrno("failed to bind local socket");
-
-	if (!fd.Listen(backlog))
-		throw MakeErrno("failed to listen on local socket");
-
-	return fd;
-}
-
-void
-ChildSocket::Unlink() noexcept
-{
-	unlink(address.sun_path);
-}
-
-UniqueSocketDescriptor
-ChildSocket::Connect() const
-{
-	UniqueSocketDescriptor fd;
-	if (!fd.CreateNonBlock(AF_LOCAL, SOCK_STREAM, 0))
-		throw MakeErrno("Failed to create socket");
-
-	if (!fd.Connect(GetAddress())) {
-		int e = errno;
-		fd.Close();
-		throw MakeErrno(e, "Failed to connect");
+public:
+	TempListener() noexcept {
+		address.sun_family = AF_UNSPEC;
 	}
 
-	return fd;
-}
+	bool IsDefined() const noexcept {
+		return GetAddress().IsDefined();
+	}
+
+	/**
+	 * Throws std::runtime_error on error.
+	 */
+	UniqueSocketDescriptor Create(int socket_type, int backlog);
+
+	void Unlink() noexcept;
+
+	SocketAddress GetAddress() const noexcept {
+		return SocketAddress((const struct sockaddr *)&address,
+				     SUN_LEN(&address));
+	}
+
+	/**
+	 * Throws std::runtime_error on error.
+	 */
+	UniqueSocketDescriptor Connect() const;
+};

@@ -281,6 +281,7 @@ net2 = static_library(
   'src/net/FailureManager.cxx',
   'src/net/FailureInfo.cxx',
   'src/net/FailureRef.cxx',
+  'src/net/TempListener.cxx',
   include_directories: inc,
 )
 net_dep = declare_dependency(
@@ -836,7 +837,6 @@ executable(
   'libcommon/src/spawn/Client.cxx',
   'libcommon/src/spawn/Glue.cxx',
   'libcommon/src/pg/Interval.cxx',
-  'src/child_socket.cxx',
   'src/child_stock.cxx',
   'src/bp/CommandLine.cxx',
   'src/bp/Config.cxx',

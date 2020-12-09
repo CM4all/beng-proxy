@@ -31,7 +31,6 @@
  */
 
 #include "child_stock.hxx"
-#include "child_socket.hxx"
 #include "spawn/ExitListener.hxx"
 #include "access_log/ChildErrorLog.hxx"
 #include "stock/Stock.hxx"
@@ -40,6 +39,7 @@
 #include "spawn/Prepared.hxx"
 #include "system/Error.hxx"
 #include "net/EasyMessage.hxx"
+#include "net/TempListener.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 
@@ -80,7 +80,7 @@ class ChildStockItem final
 
 	UniqueFileDescriptor stderr_fd;
 
-	ChildSocket socket;
+	TempListener socket;
 	int pid = -1;
 
 	bool busy = true;
