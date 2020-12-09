@@ -39,11 +39,11 @@
 static void
 make_child_socket_path(struct sockaddr_un *address)
 {
-	address->sun_family = AF_LOCAL;
-
 	strcpy(address->sun_path, "/tmp/cm4all-beng-proxy-socket-XXXXXX");
 	if (*mktemp(address->sun_path) == 0)
 		throw MakeErrno("mktemp() failed");
+
+	address->sun_family = AF_LOCAL;
 }
 
 TempListener::~TempListener() noexcept
