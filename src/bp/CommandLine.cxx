@@ -167,7 +167,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 	int ret;
 	char *endptr;
 #ifdef __GLIBC__
-	static const struct option long_options[] = {
+	static constexpr struct option long_options[] = {
 		{"help", 0, nullptr, 'h'},
 		{"version", 0, nullptr, 'V'},
 		{"verbose", 0, nullptr, 'v'},
