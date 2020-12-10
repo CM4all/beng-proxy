@@ -52,7 +52,12 @@ public:
 
 	~TempListener() noexcept;
 
-	TempListener(const TempListener &) = delete;
+	constexpr TempListener(TempListener &&src) noexcept
+		:address(src.address)
+	{
+		src.address.sun_family = AF_UNSPEC;
+	}
+
 	TempListener &operator=(const TempListener &) = delete;
 
 	bool IsDefined() const noexcept {
