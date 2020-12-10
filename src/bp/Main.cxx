@@ -343,8 +343,18 @@ try {
 
 	instance.EnableSignals();
 
-	for (const auto &i : instance.config.listen)
-		instance.AddListener(i);
+	if (instance.cmdline.debug_listener_tag == nullptr) {
+		for (const auto &i : instance.config.listen)
+			instance.AddListener(i);
+	} else {
+		const char *tag = instance.cmdline.debug_listener_tag;
+		if (*tag == 0)
+			tag = nullptr;
+
+		instance.listeners.emplace_front(instance, tag,
+						 false, nullptr);
+		instance.listeners.front().Listen(UniqueSocketDescriptor(STDIN_FILENO));
+	}
 
 	global_control_handler_init(&instance);
 

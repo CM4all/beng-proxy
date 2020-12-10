@@ -54,6 +54,8 @@ struct BpCmdLine {
 	const char *config_file = "/etc/cm4all/beng/proxy/beng-proxy.conf";
 
 	const char *ua_classification_file = nullptr;
+
+	const char *debug_listener_tag = nullptr;
 };
 
 void

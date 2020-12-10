@@ -181,6 +181,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 		{"cluster-node", 1, nullptr, 'N'},
 		{"ua-classes", 1, nullptr, 'a'},
 		{"set", 1, nullptr, 's'},
+		{"debug-listener-tag", 1, nullptr, 'L'},
 		{nullptr, 0, nullptr, 0}
 	};
 #endif
@@ -270,6 +271,10 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 
 		case 's':
 			HandleSet(config, argv[0], optarg);
+			break;
+
+		case 'L':
+			cmdline.debug_listener_tag = optarg;
 			break;
 
 		case '?':
