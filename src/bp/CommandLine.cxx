@@ -109,7 +109,7 @@ static void arg_error(const char *argv0, const char *fmt, ...)
 	__attribute__ ((noreturn))
 	__attribute__((format(printf,2,3)));
 static void arg_error(const char *argv0, const char *fmt, ...) {
-	if (fmt != NULL) {
+	if (fmt != nullptr) {
 		va_list ap;
 
 		fputs(argv0, stderr);
@@ -143,7 +143,7 @@ HandleSet(BpConfig &config,
 	const char *eq;
 
 	eq = strchr(p, '=');
-	if (eq == NULL)
+	if (eq == nullptr)
 		arg_error(argv0, "No '=' found in --set argument");
 
 	if (eq == p)
@@ -168,23 +168,23 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 	char *endptr;
 #ifdef __GLIBC__
 	static const struct option long_options[] = {
-		{"help", 0, NULL, 'h'},
-		{"version", 0, NULL, 'V'},
-		{"verbose", 0, NULL, 'v'},
-		{"quiet", 0, NULL, 'q'},
+		{"help", 0, nullptr, 'h'},
+		{"version", 0, nullptr, 'V'},
+		{"verbose", 0, nullptr, 'v'},
+		{"quiet", 0, nullptr, 'q'},
 		{"config-file", 1, nullptr, 'f'},
-		{"user", 1, NULL, 'u'},
-		{"logger-user", 1, NULL, 'U'},
-		{"document-root", 1, NULL, 'r'},
-		{"translation-socket", 1, NULL, 't'},
-		{"cluster-size", 1, NULL, 'C'},
-		{"cluster-node", 1, NULL, 'N'},
-		{"ua-classes", 1, NULL, 'a'},
-		{"set", 1, NULL, 's'},
-		{NULL,0,NULL,0}
+		{"user", 1, nullptr, 'u'},
+		{"logger-user", 1, nullptr, 'U'},
+		{"document-root", 1, nullptr, 'r'},
+		{"translation-socket", 1, nullptr, 't'},
+		{"cluster-size", 1, nullptr, 'C'},
+		{"cluster-node", 1, nullptr, 'N'},
+		{"ua-classes", 1, nullptr, 'a'},
+		{"set", 1, nullptr, 's'},
+		{nullptr, 0, nullptr, 0}
 	};
 #endif
-	const char *user_name = NULL;
+	const char *user_name = nullptr;
 	unsigned verbose = 1;
 
 	while (1) {
@@ -273,7 +273,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 			break;
 
 		case '?':
-			arg_error(argv[0], NULL);
+			arg_error(argv[0], nullptr);
 
 		default:
 			exit(1);
@@ -289,7 +289,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 
 	/* check completeness */
 
-	if (user_name != NULL) {
+	if (user_name != nullptr) {
 		cmdline.user.Lookup(user_name);
 		if (!cmdline.user.IsComplete())
 			arg_error(argv[0], "refusing to run as root");
