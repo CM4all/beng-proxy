@@ -29,7 +29,6 @@ LimitNOFILE=262144
 # own systemd slice/scope.  These limits may need to be raised if you
 # want beng-proxy to maintain larger caches.
 LimitRSS=8G
-LimitDATA=8G
 MemoryMax=8G
 
 # 1 MB is more than enough; the default is 8 MB, which is excessive
