@@ -60,16 +60,8 @@ public:
 		listener.Listen(std::move(_fd));
 	}
 
-	void ListenTCP(unsigned port) {
-		listener.ListenTCP(port);
-	}
-
 	auto GetLocalAddress() const noexcept {
 		return listener.GetLocalAddress();
-	}
-
-	bool SetTcpDeferAccept(const int &seconds) noexcept {
-		return listener.SetTcpDeferAccept(seconds);
 	}
 
 	void AddEvent() noexcept {
