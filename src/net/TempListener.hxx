@@ -64,6 +64,10 @@ public:
 		return GetAddress().IsDefined();
 	}
 
+	const char *GetPath() const noexcept {
+		return address.sun_path;
+	}
+
 	/**
 	 * Throws std::runtime_error on error.
 	 */
