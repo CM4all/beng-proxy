@@ -247,15 +247,6 @@ BpInstance::AddListener(const BpConfig::Listener &c)
 #endif
 }
 
-void
-BpInstance::AddTcpListener(int port)
-{
-	listeners.emplace_front(*this, nullptr, false, nullptr);
-	auto &listener = listeners.front();
-	listener.ListenTCP(port);
-	listener.SetTcpDeferAccept(10);
-}
-
 template<typename T>
 static auto
 ConstructTranslationStocks(EventLoop &event_loop, const T &configs, unsigned limit)

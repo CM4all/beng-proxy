@@ -213,7 +213,6 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	void ReloadEventCallback(int signo) noexcept;
 
 	void AddListener(const BpConfig::Listener &c);
-	void AddTcpListener(int port);
 
 	void EnableListeners() noexcept;
 	void DisableListeners() noexcept;
