@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.38) unstable; urgency=low
 
+  * spawn: support "T" suffix for Terabytes in RLIMITS
   * systemd: remove LimitDATA, as it affects mmap() since Linux 4.7
 
  --   
