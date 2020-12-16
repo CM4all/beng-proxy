@@ -1,21 +1,24 @@
 #!/usr/bin/make -f
 # -*- mode: makefile; coding: utf-8 -*-
 
-export CXX="clang++-11"
-export CC="clang-11"
-
 MESON_OPTIONS = \
-	--force-fallback-for=gtest,jsoncpp,yaml-cpp \
 	--includedir=include/cm4all/libbeng-proxy-3 \
 	-Ddocumentation=enabled \
 	-Dcoroutines=true \
-	-Dstatic_libcxx=true \
 	-Dhttp2=enabled \
 	-Dnfs=enabled \
 	-Dsystemd=true \
 	-Dwas=enabled \
 	-Dyaml=enabled \
 	-Dzeroconf=enabled
+
+ifeq ($(wildcard /usr/bin/g++-10),)
+export CXX="clang++-11"
+export CC="clang-11"
+MESON_OPTIONS += \
+	--force-fallback-for=gtest,jsoncpp,yaml-cpp \
+	-Dstatic_libcxx=true
+endif
 
 %:
 	dh $@ --with=python2 --with=python3 --with sphinxdoc --no-start
