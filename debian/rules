@@ -5,6 +5,7 @@ export CXX="clang++-11"
 export CC="clang-11"
 
 MESON_OPTIONS = \
+	--force-fallback-for=gtest,jsoncpp,yaml-cpp \
 	--includedir=include/cm4all/libbeng-proxy-3 \
 	-Ddocumentation=enabled \
 	-Dcoroutines=true \

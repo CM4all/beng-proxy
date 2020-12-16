@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 12~), dh-python,
  python3,
- meson (>= 0.47),
+ meson (>= 0.55),
  clang-11, libc++-11-dev, libc++abi-11-dev,
  libc6-dev (>= 2.28),
  libsystemd-dev, libdbus-1-dev,
@@ -27,7 +27,6 @@ Build-Depends: debhelper (>= 12~), dh-python,
  libcm4all-was-protocol-dev (>= 1.0),
  python3-sphinx,
  valgrind
-Build-Conflicts: libgtest-dev, googletest, libjsoncpp-dev, libyaml-cpp-dev
 Standards-Version: 3.9.1
 Vcs-Browser: https://github.com/CM4all/beng-proxy
 Vcs-Git: git://github.com/CM4all/beng-proxy
