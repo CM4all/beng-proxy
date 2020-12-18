@@ -835,6 +835,13 @@ Group is one of:
   authentication.  The default is ``NO`` for request headers and
   ``MANGLE`` for response headers.
 
+  ``MANGLE`` on the request header settings generates an
+  ``Autorization`` request header containing :samp:`bearer USER`,
+  where ``USER`` is the current user as specified by the ``USER``
+  translation response packet.  This can be used for servers which do
+  not understand the ``X-CM4all-BENG-User`` request header (from
+  header group ``SECURE``).
+
 - ``OTHER``: other end-to-end headers not explicitly mentioned here
 
 - ``ALL``: all of the above except for ``SECURE`` and ``SSL``

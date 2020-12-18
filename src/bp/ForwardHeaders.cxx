@@ -386,6 +386,10 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 	    user != nullptr)
 		dest.Add(alloc, "x-cm4all-beng-user", user);
 
+	if (settings[HeaderGroup::AUTH] == HeaderForwardMode::MANGLE &&
+	    user != nullptr)
+		dest.Add(alloc, "authorization", alloc.Concat("bearer ", user));
+
 	if (settings[HeaderGroup::CAPABILITIES] != HeaderForwardMode::NO)
 		forward_user_agent(alloc, dest, src,
 				   settings[HeaderGroup::CAPABILITIES] == HeaderForwardMode::MANGLE);
