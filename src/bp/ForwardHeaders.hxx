@@ -72,7 +72,6 @@ struct HeaderForwardSettings {
 		s[Group::IDENTITY] = Mode::MANGLE;
 		s[Group::CAPABILITIES] = Mode::YES;
 		s[Group::COOKIE] = Mode::MANGLE;
-		s[Group::AUTH] = Mode::MANGLE;
 		return s;
 	}
 

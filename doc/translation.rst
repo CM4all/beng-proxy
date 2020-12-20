@@ -830,9 +830,10 @@ Group is one of:
 
 - ``AUTH``: forward HTTP authentication headers (e.g. basic/digest
   auth), such as ``WWW-Authenticate``, ``Authentication-Info`` and
-  ``authorization``; if set to ``MANGLE`` (the default), then
+  ``authorization``; if set to ``MANGLE``, then
   :program:`beng-proxy` allows the translation server to handle HTTP
-  authentication
+  authentication.  The default is ``NO`` for request headers and
+  ``MANGLE`` for response headers.
 
 - ``OTHER``: other end-to-end headers not explicitly mentioned here
 
