@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.39) unstable; urgency=low
 
-  * 
+  * spawn: use close_range() on Linux 5.8+
 
  --   
 
