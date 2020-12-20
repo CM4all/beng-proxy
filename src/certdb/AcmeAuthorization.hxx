@@ -36,6 +36,7 @@
 
 #include <forward_list>
 #include <string>
+#include <string_view>
 
 struct AcmeChallenge;
 
@@ -57,6 +58,6 @@ struct AcmeAuthorization {
 	gcc_pure
 	const AcmeChallenge *FindChallengeByType(const char *type) const noexcept;
 
-	static Status ParseStatus(const std::string &s);
+	static Status ParseStatus(std::string_view s);
 	static const char *FormatStatus(Status s) noexcept;
 };

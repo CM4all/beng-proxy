@@ -45,13 +45,14 @@ static constexpr const char *acme_authorization_status_strings[] = {
 };
 
 AcmeAuthorization::Status
-AcmeAuthorization::ParseStatus(const std::string &s)
+AcmeAuthorization::ParseStatus(const std::string_view s)
 {
 	for (size_t i = 0; acme_authorization_status_strings[i] != nullptr; ++i)
 		if (s == acme_authorization_status_strings[i])
 			return Status(i);
 
-	throw FormatRuntimeError("Invalid authorization status: %s", s.c_str());
+	throw FormatRuntimeError("Invalid authorization status: %.*s",
+				 int(s.size()), s.data());
 }
 
 const char *
