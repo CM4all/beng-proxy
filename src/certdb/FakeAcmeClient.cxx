@@ -116,22 +116,16 @@ static AllocatedArray<char>
 ParseSignedBody(ConstBuffer<void> body)
 {
 	const auto root = ParseJson(body);
-	const auto *payload = root.as_object().if_contains("playload");
-	if (payload == nullptr)
-		throw std::runtime_error("No 'payload'");
-
-	return DecodeUrlSafeBase64(payload->as_string().c_str());
+	const auto &payload = root.as_object().at("playload");
+	return DecodeUrlSafeBase64(payload.as_string().c_str());
 }
 
 static UniqueX509_REQ
 ParseNewCertBody(ConstBuffer<void> body)
 {
 	const auto payload = ParseJson(ParseSignedBody(body));
-	const auto *csr = payload.as_object().if_contains("csr");
-	if (csr == nullptr)
-		throw std::runtime_error("No 'csr'");
-
-	const auto req_der = DecodeUrlSafeBase64(csr->as_string().c_str());
+	const auto &csr = payload.as_object().at("csr");
+	const auto req_der = DecodeUrlSafeBase64(csr.as_string().c_str());
 	return DecodeDerCertificateRequest(ConstBuffer<void>(&req_der.front(), req_der.size()));
 }
 

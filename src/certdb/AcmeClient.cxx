@@ -543,27 +543,11 @@ tag_invoke(boost::json::value_to_tag<AcmeChallenge>,
 {
 	const auto &root = jv.as_object();
 
-	const auto *type = root.if_contains("type");
-	if (type == nullptr)
-		throw std::runtime_error("No type");
-
-	const auto *url = root.if_contains("url");
-	if (url == nullptr)
-		throw std::runtime_error("No url");
-
-	const auto *status = root.if_contains("status");
-	if (status == nullptr)
-		throw std::runtime_error("No status");
-
-	const auto *token = root.if_contains("token");
-	if (token == nullptr)
-		throw std::runtime_error("No token");
-
 	AcmeChallenge challenge;
-	challenge.type = type->as_string();
-	challenge.uri = url->as_string();
-	challenge.status = AcmeChallenge::ParseStatus(status->as_string());
-	challenge.token = token->as_string();
+	challenge.type = root.at("type").as_string();
+	challenge.uri = root.at("url").as_string();
+	challenge.status = AcmeChallenge::ParseStatus(root.at("status").as_string());
+	challenge.token = root.at("token").as_string();
 
 	try {
 		CheckThrowError(root);
