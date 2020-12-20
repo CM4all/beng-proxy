@@ -652,9 +652,6 @@ Not all request and response headers are forwarded, for various reasons:
 
 - headers describing the body are not forwarded if there is no body
 
-- cookie forwarding and ``beng-proxy``\ ’s own session management are
-  mutually exclusive
-
 - some headers reveal otherwise private information about the
   communication partner at the other end (e.g. IP address)
 
