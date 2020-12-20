@@ -147,11 +147,26 @@ else
 endif
 
 threads = dependency('threads')
-libjsoncpp = dependency('jsoncpp', fallback: ['jsoncpp', 'jsoncpp_dep'])
 zlib = dependency('zlib')
 libcrypt = compiler.find_library('crypt')
 
 inc = include_directories('src', 'include', 'libcommon/src', '.')
+
+boost_json_inc = include_directories('boost/json/include')
+boost_json_dep = declare_dependency(
+  compile_args: ['-DBOOST_JSON_STANDALONE'],
+  include_directories: boost_json_inc,
+)
+boost_json = static_library(
+  'boost_json',
+  'src/json/Boost.cxx',
+  dependencies: boost_json_dep,
+  include_directories: boost_json_inc,
+)
+boost_json_dep = declare_dependency(
+  link_with: boost_json,
+  dependencies: boost_json_dep,
+)
 
 subdir('libcommon/src/util')
 subdir('libcommon/src/uri')
@@ -1084,7 +1099,7 @@ executable(
   'src/access_log/ConfigParser.cxx',
   include_directories: inc,
   dependencies: [
-    libjsoncpp,
+    boost_json_dep,
     pcre_dep,
     avahi_dep,
     sodium_dep,

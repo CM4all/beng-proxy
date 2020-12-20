@@ -1,3 +1,6 @@
 [submodule "libcommon"]
 	path = libcommon
 	url = git://github.com/CM4all/libcommon
+[submodule "boost/json"]
+	path = boost/json
+	url = git://github.com/boostorg/json

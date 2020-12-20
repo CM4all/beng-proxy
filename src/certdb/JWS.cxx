@@ -38,20 +38,11 @@
 #include "openssl/evp.h"
 #include "openssl/rsa.h"
 
-#ifdef __clang__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-volatile"
-#endif
-
-#include <json/json.h>
-
-#ifdef __clang__
-#pragma GCC diagnostic pop
-#endif
+#include <boost/json.hpp>
 
 #include <stdexcept>
 
-Json::Value
+boost::json::object
 MakeJwk(EVP_PKEY &key)
 {
 	if (EVP_PKEY_base_id(&key) != EVP_PKEY_RSA)
@@ -60,9 +51,9 @@ MakeJwk(EVP_PKEY &key)
 	const BIGNUM *n, *e;
 	RSA_get0_key(EVP_PKEY_get0_RSA(&key), &n, &e, nullptr);
 
-	Json::Value root(Json::objectValue);
-	root["kty"] = "RSA";
-	root["e"] = UrlSafeBase64(SslBuffer(*e).get()).c_str();
-	root["n"] = UrlSafeBase64(SslBuffer(*n).get()).c_str();
+	boost::json::object root;
+	root.emplace("e", UrlSafeBase64(SslBuffer(*e).get()).c_str());
+	root.emplace("kty", "RSA");
+	root.emplace("n", UrlSafeBase64(SslBuffer(*n).get()).c_str());
 	return root;
 }

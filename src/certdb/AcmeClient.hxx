@@ -37,12 +37,12 @@
 #include "ssl/Unique.hxx"
 #include "util/ConstBuffer.hxx"
 
+#include <boost/json/fwd.hpp>
+
 #include <forward_list>
 #include <string>
 
 #include <string.h>
-
-namespace Json { class Value; }
 
 struct AcmeConfig;
 struct AcmeAccount;
@@ -160,7 +160,7 @@ private:
 	}
 
 	GlueHttpResponse Request(http_method_t method, const char *uri,
-				 const Json::Value &body);
+				 const boost::json::value &body);
 
 	GlueHttpResponse SignedRequest(EVP_PKEY &key,
 				       http_method_t method, const char *uri,
@@ -175,7 +175,7 @@ private:
 
 	GlueHttpResponse SignedRequest(EVP_PKEY &key,
 				       http_method_t method, const char *uri,
-				       const Json::Value &payload);
+				       const boost::json::value &payload);
 
 	template<typename P>
 	GlueHttpResponse SignedRequestRetry(EVP_PKEY &key,

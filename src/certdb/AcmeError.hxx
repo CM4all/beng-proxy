@@ -34,16 +34,16 @@
 
 #include "util/Compiler.h"
 
+#include <boost/json/fwd.hpp>
+
 #include <stdexcept>
 #include <string>
-
-namespace Json { class Value; }
 
 class AcmeError : public std::runtime_error {
 	std::string type;
 
 public:
-	AcmeError(const Json::Value &error);
+	AcmeError(const boost::json::object &error);
 
 	const std::string &GetType() const {
 		return type;

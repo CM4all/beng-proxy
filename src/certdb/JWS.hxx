@@ -36,12 +36,12 @@
 
 #include <openssl/ossl_typ.h>
 
-#include <string>
+#include <boost/json/fwd.hpp>
 
-namespace Json { class Value; }
+#include <string>
 
 /**
  * Throws on error.
  */
-Json::Value
+boost::json::object
 MakeJwk(EVP_PKEY &key);

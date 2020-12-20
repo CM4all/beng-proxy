@@ -31,22 +31,26 @@
  */
 
 #include "AcmeError.hxx"
+#include "JsonUtil.hxx"
 #include "util/Exception.hxx"
 
-#ifdef __clang__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-volatile"
-#endif
+#include <boost/json.hpp>
 
-#include <json/json.h>
+static std::string
+MakeAcmeErrorMessage(const boost::json::object &error) noexcept
+{
+	const auto *detail = error.if_contains("detail");
+	if (detail == nullptr)
+		return "Server error";
 
-#ifdef __clang__
-#pragma GCC diagnostic pop
-#endif
+	std::string msg = "Server error: ";
+	msg.append(detail->as_string());
+	return msg;
+}
 
-AcmeError::AcmeError(const Json::Value &error)
-	:std::runtime_error("Server error: " + error["detail"].asString()),
-	 type(error["type"].asString())
+AcmeError::AcmeError(const boost::json::object &error)
+	:std::runtime_error(MakeAcmeErrorMessage(error)),
+	 type(GetString(error.if_contains("type")))
 {
 }
 

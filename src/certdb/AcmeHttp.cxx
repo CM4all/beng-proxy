@@ -33,10 +33,11 @@
 #include "AcmeHttp.hxx"
 #include "AcmeChallenge.hxx"
 #include "JWS.hxx"
-#include "JsonUtil.hxx"
 #include "sodium/UrlSafeBase64SHA256.hxx"
 #include "io/FileWriter.hxx"
 #include "util/ConstBuffer.hxx"
+
+#include <boost/json.hpp>
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -45,7 +46,7 @@ std::string
 MakeHttp01(const AcmeChallenge &challenge, EVP_PKEY &account_key)
 {
 	return challenge.token + "." +
-		UrlSafeBase64SHA256(FormatJson(MakeJwk(account_key))).c_str();
+		UrlSafeBase64SHA256(boost::json::serialize(MakeJwk(account_key))).c_str();
 }
 
 static void

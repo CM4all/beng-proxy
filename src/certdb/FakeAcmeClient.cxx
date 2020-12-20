@@ -38,29 +38,18 @@
 #include "util/AllocatedArray.hxx"
 #include "util/Exception.hxx"
 
-#ifdef __clang__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-volatile"
-#endif
-
-#include <json/json.h>
-
-#ifdef __clang__
-#pragma GCC diagnostic pop
-#endif
+#include <boost/json.hpp>
 
 #include <sstream>
 
-static Json::Value
+static boost::json::value
 ParseJson(ConstBuffer<void> buffer)
 {
-	Json::Value root;
-	std::stringstream(std::string((const char *)buffer.data, buffer.size)) >> root;
-	return root;
+	return boost::json::parse(std::string_view((const char *)buffer.data, buffer.size));
 }
 
 template<typename T>
-static Json::Value
+static boost::json::value
 ParseJson(const AllocatedArray<T> &src)
 {
 	return ParseJson(ConstBuffer<T>(&src.front(), src.size()).ToVoid());
@@ -126,14 +115,23 @@ DecodeUrlSafeBase64(const char *src)
 static AllocatedArray<char>
 ParseSignedBody(ConstBuffer<void> body)
 {
-	return DecodeUrlSafeBase64(ParseJson(body)["payload"].asString().c_str());
+	const auto root = ParseJson(body);
+	const auto *payload = root.as_object().if_contains("playload");
+	if (payload == nullptr)
+		throw std::runtime_error("No 'payload'");
+
+	return DecodeUrlSafeBase64(payload->as_string().c_str());
 }
 
 static UniqueX509_REQ
 ParseNewCertBody(ConstBuffer<void> body)
 {
 	const auto payload = ParseJson(ParseSignedBody(body));
-	const auto req_der = DecodeUrlSafeBase64(payload["csr"].asString().c_str());
+	const auto *csr = payload.as_object().if_contains("csr");
+	if (csr == nullptr)
+		throw std::runtime_error("No 'csr'");
+
+	const auto req_der = DecodeUrlSafeBase64(csr->as_string().c_str());
 	return DecodeDerCertificateRequest(ConstBuffer<void>(&req_der.front(), req_der.size()));
 }
 

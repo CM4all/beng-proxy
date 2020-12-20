@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 CM4all GmbH
+ * Copyright 2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,58 +30,12 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#pragma GCC diagnostic ignored "-Wcast-align"
+#endif
 
-#include "util/Compiler.h"
+/* suppress -Wundef */
+#define BOOST_VERSION 0
 
-#include <boost/json.hpp>
-
-#include <forward_list>
-#include <string>
-
-gcc_pure
-static inline std::string_view
-GetString(const boost::json::value &json) noexcept
-{
-	const auto *s = json.if_string();
-	return s != nullptr
-		? (std::string_view)*s
-		: std::string_view{};
-}
-
-gcc_pure
-static inline std::string_view
-GetString(const boost::json::value *json) noexcept
-{
-	return json != nullptr
-		? GetString(*json)
-		: std::string_view{};
-}
-
-gcc_pure
-static inline std::string_view
-GetString(const boost::json::object &parent, const char *key) noexcept
-{
-	return GetString(parent.if_contains(key));
-}
-
-namespace std {
-
-/**
- * Convert a JSON array to a std::forward_list<T>.
- */
-template<typename T>
-auto
-tag_invoke(boost::json::value_to_tag<forward_list<T>>,
-	   const boost::json::value &jv)
-{
-	const auto &array = jv.as_array();
-	forward_list<T> result;
-	auto j = result.before_begin();
-	for (const auto &i : array)
-		j = result.emplace_after(j, boost::json::value_to<T>(i));
-
-	return result;
-}
-
-} // namespace std
+#include <boost/json/src.hpp>
