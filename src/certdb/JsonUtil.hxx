@@ -63,16 +63,3 @@ GetString(const Json::Value &json) noexcept
 		? json.asString()
 		: std::string{};
 }
-
-gcc_pure
-static inline const Json::Value &
-FindInArray(const Json::Value &v, const char *key, const char *value) noexcept
-{
-	for (const auto &i : v) {
-		const auto &l = i[key];
-		if (!l.isNull() && l.asString() == value)
-			return i;
-	}
-
-	return Json::Value::null;
-}
