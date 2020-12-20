@@ -32,8 +32,9 @@
 
 #pragma once
 
-#include <string>
 #include <exception>
+#include <string>
+#include <string_view>
 
 class AcmeError;
 
@@ -54,6 +55,6 @@ struct AcmeChallenge {
 
 	void Check() const;
 
-	static Status ParseStatus(const std::string &s);
+	static Status ParseStatus(std::string_view s);
 	static const char *FormatStatus(Status s) noexcept;
 };

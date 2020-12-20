@@ -42,13 +42,14 @@ static constexpr const char *acme_challenge_status_strings[] = {
 };
 
 AcmeChallenge::Status
-AcmeChallenge::ParseStatus(const std::string &s)
+AcmeChallenge::ParseStatus(const std::string_view s)
 {
 	for (size_t i = 0; acme_challenge_status_strings[i] != nullptr; ++i)
 		if (s == acme_challenge_status_strings[i])
 			return Status(i);
 
-	throw FormatRuntimeError("Invalid challenge status: %s", s.c_str());
+	throw FormatRuntimeError("Invalid challenge status: %.*s",
+				 int(s.size()), s.data());
 }
 
 const char *
