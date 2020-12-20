@@ -54,13 +54,14 @@ static constexpr const char *acme_account_status_strings[] = {
 };
 
 AcmeAccount::Status
-AcmeAccount::ParseStatus(const std::string &s)
+AcmeAccount::ParseStatus(const std::string_view s)
 {
 	for (size_t i = 0; acme_account_status_strings[i] != nullptr; ++i)
 		if (s == acme_account_status_strings[i])
 			return Status(i);
 
-	throw FormatRuntimeError("Invalid account status: %s", s.c_str());
+	throw FormatRuntimeError("Invalid account status: %.*s",
+				 int(s.size()), s.data());
 }
 
 const char *

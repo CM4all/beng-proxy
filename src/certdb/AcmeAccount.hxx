@@ -34,6 +34,7 @@
 
 #include <forward_list>
 #include <string>
+#include <string_view>
 
 struct AcmeAccount {
 	enum class Status {
@@ -54,6 +55,6 @@ struct AcmeAccount {
 	 */
 	const char *GetEmail() const noexcept;
 
-	static Status ParseStatus(const std::string &s);
+	static Status ParseStatus(const std::string_view s);
 	static const char *FormatStatus(Status s) noexcept;
 };
