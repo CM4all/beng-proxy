@@ -152,22 +152,6 @@ libcrypt = compiler.find_library('crypt')
 
 inc = include_directories('src', 'include', 'libcommon/src', '.')
 
-boost_json_inc = include_directories('boost/json/include')
-boost_json_dep = declare_dependency(
-  compile_args: ['-DBOOST_JSON_STANDALONE'],
-  include_directories: boost_json_inc,
-)
-boost_json = static_library(
-  'boost_json',
-  'src/json/Boost.cxx',
-  dependencies: boost_json_dep,
-  include_directories: boost_json_inc,
-)
-boost_json_dep = declare_dependency(
-  link_with: boost_json,
-  dependencies: boost_json_dep,
-)
-
 subdir('libcommon/src/util')
 subdir('libcommon/src/uri')
 
@@ -230,6 +214,7 @@ system_dep = declare_dependency(
 )
 
 subdir('libcommon/src/http')
+subdir('libcommon/src/json')
 subdir('libcommon/src/lua')
 
 memory = static_library('memory',
