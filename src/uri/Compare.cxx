@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,22 +32,21 @@
 
 #include "Compare.hxx"
 #include "util/HexParse.hxx"
-
-#include <string.h>
+#include "util/StringView.hxx"
 
 const char *
-UriFindUnescapedSuffix(const char *const uri_start,
-		       const char *const suffix_start) noexcept
+UriFindUnescapedSuffix(const StringView uri_start,
+		       const StringView suffix_start) noexcept
 {
-	const char *uri_i = (const char *)rawmemchr(uri_start, '\0');
-	const char *suffix_i = (const char *)rawmemchr(suffix_start, '\0');
+	auto uri_i = uri_start.end();
+	auto suffix_i = suffix_start.end();
 
 	while (true) {
-		if (suffix_i == suffix_start)
+		if (suffix_i == suffix_start.begin())
 			/* full match - success */
 			return uri_i;
 
-		if (uri_i == uri_start)
+		if (uri_i == uri_start.begin())
 			/* URI is too short - fail */
 			return nullptr;
 
@@ -60,7 +59,7 @@ UriFindUnescapedSuffix(const char *const uri_start,
 			/* malformed escape */
 			return nullptr;
 
-		if (suffix_start + 2 <= suffix_i &&
+		if (suffix_start.begin() + 2 <= suffix_i &&
 		    suffix_i[-2] == '%') {
 			const int digit1 = ParseHexDigit(suffix_ch);
 			if (digit1 < 0)

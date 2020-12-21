@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2018 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,6 +34,8 @@
 
 #include "util/Compiler.h"
 
+struct StringView;
+
 /**
  * Compare the end of the given (unescaped) URI with the given
  * (escaped) suffix.
@@ -43,4 +45,4 @@
  */
 gcc_pure gcc_nonnull_all
 const char *
-UriFindUnescapedSuffix(const char *uri, const char *suffix) noexcept;
+UriFindUnescapedSuffix(StringView uri, StringView suffix) noexcept;
