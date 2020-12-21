@@ -31,7 +31,7 @@
  */
 
 #include "AcmeError.hxx"
-#include "json/Util.hxx"
+#include "json/String.hxx"
 #include "util/Exception.hxx"
 
 #include <boost/json.hpp>

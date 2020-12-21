@@ -38,7 +38,7 @@
 #include "AcmeError.hxx"
 #include "AcmeConfig.hxx"
 #include "JWS.hxx"
-#include "json/Util.hxx"
+#include "json/String.hxx"
 #include "json/ForwardList.hxx"
 #include "jwt/RS256.hxx"
 #include "ssl/Buffer.hxx"
