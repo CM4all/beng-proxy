@@ -50,7 +50,7 @@ MakeAcmeErrorMessage(const boost::json::object &error) noexcept
 
 AcmeError::AcmeError(const boost::json::object &error)
 	:std::runtime_error(MakeAcmeErrorMessage(error)),
-	 type(GetString(error.if_contains("type")))
+	 type(Json::GetString(error.if_contains("type")))
 {
 }
 
