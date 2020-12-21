@@ -388,7 +388,7 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 
 	if (settings[HeaderGroup::AUTH] == HeaderForwardMode::MANGLE &&
 	    user != nullptr)
-		dest.Add(alloc, "authorization", alloc.Concat("bearer ", user));
+		dest.Add(alloc, "authorization", alloc.Concat("Bearer ", user));
 
 	if (settings[HeaderGroup::CAPABILITIES] != HeaderForwardMode::NO)
 		forward_user_agent(alloc, dest, src,
