@@ -584,6 +584,8 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 							    dissected_uri);
 
 		if (response.Wants(TranslationCommand::USER) || translate.want_user) {
+			ApplyTranslateRealm(response, nullptr);
+
 			translate.want_user = true;
 			fill_translate_request_user(*this, translate.request, pool);
 		}
