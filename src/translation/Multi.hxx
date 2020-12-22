@@ -34,14 +34,14 @@
 
 #include "Service.hxx"
 
-#include <vector>
+#include <list>
 
 /**
  * Wrapper for multiple #TranslationService.  This class implements
  * #TranslationCommand::DEFER.
  */
 class MultiTranslationService final : public TranslationService {
-	using List = std::vector<TranslationService *>;
+	using List = std::list<TranslationService *>;
 
 	List items;
 
