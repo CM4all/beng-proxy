@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,7 +36,7 @@
 #include "stock/Stats.hxx"
 #include "fb_pool.hxx"
 #include "SlicePool.hxx"
-#include "translation/Cache.hxx"
+#include "translation/Builder.hxx"
 #include "http_cache.hxx"
 #include "fcache.hxx"
 #include "nfs/Cache.hxx"
@@ -57,8 +57,8 @@ BpInstance::GetStats() const noexcept
 	fs_stock->AddStats(tcp_stock_stats);
 
 	AllocatorStats tcache_stats = AllocatorStats::Zero();
-	for (const auto &i : translation_caches)
-		tcache_stats += i.GetStats();
+	if (translation_caches)
+		tcache_stats += translation_caches->GetStats();
 	const auto http_cache_stats = http_cache != nullptr
 		? http_cache_get_stats(*http_cache)
 		: AllocatorStats::Zero();

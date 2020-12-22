@@ -44,6 +44,7 @@
 #include "translation/Stock.hxx"
 #include "translation/Cache.hxx"
 #include "translation/Multi.hxx"
+#include "translation/Builder.hxx"
 #include "cluster/TcpBalancer.hxx"
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
@@ -183,8 +184,8 @@ BpInstance::ReloadEventCallback(int) noexcept
 	if (widget_registry != nullptr)
 		widget_registry->FlushCache();
 
-	for (auto &i : translation_caches)
-		i.Flush();
+	if (translation_caches)
+		translation_caches->Flush();
 
 	if (http_cache != nullptr)
 		http_cache_flush(*http_cache);
@@ -245,34 +246,6 @@ BpInstance::AddListener(const BpConfig::Listener &c)
 						c.v6only);
 	}
 #endif
-}
-
-template<typename T>
-static auto
-ConstructTranslationStocks(EventLoop &event_loop, const T &configs, unsigned limit)
-{
-	std::forward_list<TranslationStock> list;
-	auto i = list.before_begin();
-	for (const auto &config : configs)
-		i = list.emplace_after(i, event_loop,
-				       config, limit);
-
-	return list;
-}
-
-template<typename T>
-static auto
-ConstructTranslationCaches(struct pool &pool, EventLoop &event_loop,
-			   T &stocks, unsigned max_size,
-			   bool handshake_cacheable)
-{
-	std::forward_list<TranslationCache> list;
-	auto i = list.before_begin();
-	for (auto &stock : stocks)
-		i = list.emplace_after(i, pool, event_loop,
-				       stock, max_size, handshake_cacheable);
-
-	return list;
 }
 
 int main(int argc, char **argv)
@@ -433,25 +406,34 @@ try {
 
 	if (!instance.config.translation_sockets.empty()) {
 		instance.translation_stocks =
-			ConstructTranslationStocks(instance.event_loop,
-						   instance.config.translation_sockets,
-						   instance.config.translate_stock_limit);
-
+			std::make_unique<TranslationStockBuilder>(instance.config.translate_stock_limit);
 		instance.uncached_translation_service =
-			std::make_unique<MultiTranslationService>(instance.translation_stocks);
-		instance.translation_service = instance.uncached_translation_service.get();
+			std::make_unique<MultiTranslationService>();
 
 		if (instance.config.translate_cache_size > 0) {
 			instance.translation_caches =
-				ConstructTranslationCaches(instance.root_pool,
-							   instance.event_loop,
-							   instance.translation_stocks,
-							   instance.config.translate_cache_size,
-							   false);
+				std::make_unique<TranslationCacheBuilder>(*instance.translation_stocks,
+									  instance.root_pool,
+									  instance.config.translate_cache_size);
 			instance.cached_translation_service =
-				std::make_unique<MultiTranslationService>(instance.translation_caches);
-			instance.translation_service = instance.cached_translation_service.get();
+				std::make_unique<MultiTranslationService>();
 		}
+
+		for (const auto &config : instance.config.translation_sockets) {
+			instance.uncached_translation_service
+				->Add(instance.translation_stocks->Get(config,
+								       instance.event_loop));
+
+			if (instance.config.translate_cache_size > 0)
+				instance.cached_translation_service
+					->Add(instance.translation_caches->Get(config,
+									       instance.event_loop));
+		}
+
+		instance.translation_service = instance.uncached_translation_service.get();
+
+		if (instance.config.translate_cache_size > 0)
+			instance.translation_service = instance.cached_translation_service.get();
 
 		/* the WidgetRegistry class has its own cache and doesn't need
 		   the TranslationCache */

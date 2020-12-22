@@ -565,6 +565,7 @@ endif
 
 translation2 = static_library(
   'translation2',
+  'src/translation/Builder.cxx',
   'src/translation/Multi.cxx',
   'src/translation/Cache.cxx',
   'src/translation/Stock.cxx',

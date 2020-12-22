@@ -36,7 +36,7 @@
 #include "nfs/Cache.hxx"
 #include "control/Server.hxx"
 #include "control/Local.hxx"
-#include "translation/Cache.hxx"
+#include "translation/Builder.hxx"
 #include "translation/Protocol.hxx"
 #include "translation/InvalidateParser.hxx"
 #include "pool/tpool.hxx"
@@ -52,13 +52,12 @@ using namespace BengProxy;
 static void
 control_tcache_invalidate(BpInstance *instance, ConstBuffer<void> payload)
 {
-	if (instance->translation_caches.empty())
+	if (!instance->translation_caches)
 		return;
 
 	if (payload.empty()) {
 		/* flush the translation cache if the payload is empty */
-		for (auto &i : instance->translation_caches)
-			i.Flush();
+		instance->translation_caches->Flush();
 		return;
 	}
 
@@ -76,8 +75,8 @@ control_tcache_invalidate(BpInstance *instance, ConstBuffer<void> payload)
 		return;
 	}
 
-	for (auto &i : instance->translation_caches)
-		i.Invalidate(request,
+	instance->translation_caches
+		->Invalidate(request,
 			     ConstBuffer<TranslationCommand>(request.commands.raw(),
 							     request.commands.size()),
 			     request.site);

@@ -69,6 +69,8 @@ class SpawnServerClient;
 class TranslationStock;
 class TranslationCache;
 class TranslationService;
+class TranslationStockBuilder;
+class TranslationCacheBuilder;
 class MultiTranslationService;
 class WidgetRegistry;
 class LhttpStock;
@@ -143,12 +145,16 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 
 	/* stock */
 	FailureManager failure_manager;
-	std::forward_list<TranslationStock> translation_stocks;
+
+	std::unique_ptr<TranslationStockBuilder> translation_stocks;
 	std::unique_ptr<MultiTranslationService> uncached_translation_service;
-	std::forward_list<TranslationCache> translation_caches;
+
+	std::unique_ptr<TranslationCacheBuilder> translation_caches;
 	std::unique_ptr<MultiTranslationService> cached_translation_service;
+
 	TranslationService *translation_service = nullptr;
 	WidgetRegistry *widget_registry = nullptr;
+
 	TcpStock *tcp_stock = nullptr;
 	TcpBalancer *tcp_balancer = nullptr;
 

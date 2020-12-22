@@ -47,6 +47,7 @@
 #include "translation/Stock.hxx"
 #include "translation/Cache.hxx"
 #include "translation/Multi.hxx"
+#include "translation/Builder.hxx"
 #include "widget/Registry.hxx"
 #include "lhttp_stock.hxx"
 #include "fcgi/Stock.hxx"
@@ -104,9 +105,9 @@ BpInstance::FreeStocksAndCaches() noexcept
 	delete std::exchange(widget_registry, nullptr);
 	translation_service = nullptr;
 	cached_translation_service.reset();
-	translation_caches.clear();
+	translation_caches.reset();
 	uncached_translation_service.reset();
-	translation_stocks.clear();
+	translation_stocks.reset();
 
 	if (http_cache != nullptr) {
 		delete (CachedResourceLoader *)cached_resource_loader;
@@ -171,8 +172,8 @@ BpInstance::ForkCow(bool inherit) noexcept
 {
 	fb_pool_fork_cow(inherit);
 
-	for (auto &i : translation_caches)
-		i.ForkCow(inherit);
+	if (translation_caches)
+		translation_caches->ForkCow(inherit);
 
 	if (http_cache != nullptr)
 		http_cache_fork_cow(*http_cache, inherit);
