@@ -103,7 +103,7 @@ void
 BpInstance::FreeStocksAndCaches() noexcept
 {
 	delete std::exchange(widget_registry, nullptr);
-	translation_service = nullptr;
+	translation_service.reset();
 	cached_translation_service.reset();
 	translation_caches.reset();
 	uncached_translation_service.reset();

@@ -147,12 +147,12 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	FailureManager failure_manager;
 
 	std::unique_ptr<TranslationStockBuilder> translation_stocks;
-	std::unique_ptr<MultiTranslationService> uncached_translation_service;
+	std::shared_ptr<MultiTranslationService> uncached_translation_service;
 
 	std::unique_ptr<TranslationCacheBuilder> translation_caches;
-	std::unique_ptr<MultiTranslationService> cached_translation_service;
+	std::shared_ptr<MultiTranslationService> cached_translation_service;
 
-	TranslationService *translation_service = nullptr;
+	std::shared_ptr<TranslationService> translation_service;
 	WidgetRegistry *widget_registry = nullptr;
 
 	TcpStock *tcp_stock = nullptr;

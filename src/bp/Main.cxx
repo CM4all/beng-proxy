@@ -420,10 +420,10 @@ try {
 								       instance.event_loop));
 	}
 
-	instance.translation_service = instance.uncached_translation_service.get();
+	instance.translation_service = instance.config.translate_cache_size > 0
+		? instance.cached_translation_service
+		: instance.uncached_translation_service;
 
-	if (instance.config.translate_cache_size > 0)
-		instance.translation_service = instance.cached_translation_service.get();
 
 	/* the WidgetRegistry class has its own cache and doesn't need
 	   the TranslationCache */
@@ -512,7 +512,7 @@ try {
 					   *instance.filter_resource_loader,
 					   instance.pipe_stock);
 
-	global_translation_service = instance.translation_service;
+	global_translation_service = instance.translation_service.get();
 	global_pipe_stock = instance.pipe_stock;
 
 	if (instance.cmdline.debug_listener_tag == nullptr) {
