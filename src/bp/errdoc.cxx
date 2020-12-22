@@ -185,8 +185,6 @@ Request::DisaptchErrdocResponse(http_status_t status,
 {
 	assert(!error_document.IsNull());
 
-	assert(instance.translation_service != nullptr);
-
 	auto *er = NewFromPool<ErrorResponseLoader>(pool, *this,
 						    status, std::move(headers),
 						    std::move(body));
@@ -196,7 +194,7 @@ Request::DisaptchErrdocResponse(http_status_t status,
 	fill_translate_request(&er->translate_request,
 			       &translate.request,
 			       error_document, status);
-	instance.translation_service->SendRequest(pool, er->translate_request,
-						  stopwatch, *er,
-						  er->cancel_ptr);
+	GetTranslationService().SendRequest(pool, er->translate_request,
+					    stopwatch, *er,
+					    er->cancel_ptr);
 }

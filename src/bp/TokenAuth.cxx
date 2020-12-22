@@ -235,8 +235,8 @@ Request::HandleTokenAuth(const TranslateResponse &response) noexcept
 	auto *http_auth_translate_handler =
 		NewFromPool<TokenAuthTranslateHandler>(pool, *this);
 
-	instance.translation_service->SendRequest(pool, *t,
-						  stopwatch,
-						  *http_auth_translate_handler,
-						  cancel_ptr);
+	GetTranslationService().SendRequest(pool, *t,
+					    stopwatch,
+					    *http_auth_translate_handler,
+					    cancel_ptr);
 }

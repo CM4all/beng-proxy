@@ -32,6 +32,7 @@
 
 #include "Request.hxx"
 #include "Connection.hxx"
+#include "Instance.hxx"
 #include "PendingResponse.hxx"
 #include "http/IncomingRequest.hxx"
 #include "widget/Context.hxx"
@@ -54,6 +55,13 @@ Request::Request(BpConnection &_connection,
 }
 
 Request::~Request() noexcept = default;
+
+TranslationService &
+Request::GetTranslationService() const noexcept
+{
+	assert(instance.translation_service != nullptr);
+	return *instance.translation_service;
+}
 
 bool
 Request::IsProcessorEnabled() const noexcept

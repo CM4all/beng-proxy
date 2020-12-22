@@ -769,10 +769,10 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
 			std::exchange(translate.chain_header, nullptr);
 		chain_request.status = status;
 
-		instance.translation_service->SendRequest(pool, chain_request,
-							  stopwatch,
-							  *this,
-							  cancel_ptr);
+		GetTranslationService().SendRequest(pool, chain_request,
+						    stopwatch,
+						    *this,
+						    cancel_ptr);
 	} else {
 		response_body = AutoDeflate(headers, std::move(response_body));
 		DispatchResponseDirect(status, std::move(headers),

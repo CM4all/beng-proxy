@@ -371,7 +371,7 @@ bool
 Request::DoContentTypeLookup(const ResourceAddress &address) noexcept
 {
 	return suffix_registry_lookup(pool,
-				      *instance.translation_service,
+				      GetTranslationService(),
 				      address,
 				      stopwatch,
 				      *this, cancel_ptr);
@@ -849,11 +849,11 @@ Request::OnTranslateError(std::exception_ptr ep) noexcept
 void
 Request::SubmitTranslateRequest() noexcept
 {
-	instance.translation_service->SendRequest(pool,
-						  translate.request,
-						  stopwatch,
-						  *this,
-						  cancel_ptr);
+	GetTranslationService().SendRequest(pool,
+					    translate.request,
+					    stopwatch,
+					    *this,
+					    cancel_ptr);
 }
 
 bool

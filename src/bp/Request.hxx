@@ -339,6 +339,9 @@ private:
 		this->~Request();
 	}
 
+	gcc_const
+	TranslationService &GetTranslationService() const noexcept;
+
 public:
 	void HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept;
 

@@ -158,9 +158,9 @@ Request::HandleAuth(const TranslateResponse &response)
 	auto *auth_translate_handler =
 		NewFromPool<AuthTranslateHandler>(pool, *this);
 
-	instance.translation_service->SendRequest(pool, *t,
-						  stopwatch,
-						  *auth_translate_handler,
-						  cancel_ptr);
+	GetTranslationService().SendRequest(pool, *t,
+					    stopwatch,
+					    *auth_translate_handler,
+					    cancel_ptr);
 }
 
