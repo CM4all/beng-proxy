@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.40) unstable; urgency=low
 
+  * bp: fix DEFER crash bug
   * bp: upper case "Bearer" prefix for "Authorization" header
   * debian: move postinst code to sysusers.d and tmpfiles.d
 

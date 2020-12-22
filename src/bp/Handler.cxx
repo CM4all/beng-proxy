@@ -670,6 +670,10 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 void
 Request::OnTranslateResponse(TranslateResponse &response) noexcept
 {
+	/* just in case we error out before HandleTranslatedRequest()
+	   assigns the real response */
+	InstallErrorTranslateResponse();
+
 	if (response.defer) {
 		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
 				 "Unexpected DEFER", 1);
@@ -716,10 +720,6 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 	translation_protocol_version_received = true;
 	if (response.protocol_version > translation_protocol_version)
 		translation_protocol_version = response.protocol_version;
-
-	/* just in case we error out before HandleTranslatedRequest()
-	   assigns the real response */
-	InstallErrorTranslateResponse();
 
 	if (response.HasAuth())
 		HandleAuth(response);
