@@ -2,7 +2,7 @@ Source: cm4all-beng-proxy
 Section: web
 Priority: optional
 Maintainer: Max Kellermann <mk@cm4all.com>
-Build-Depends: debhelper (>= 12~), dh-python,
+Build-Depends: debhelper (>= 13~), dh-python,
  python3,
  meson (>= 0.55),
  g++ (>= 4:10.2) | clang-11,
