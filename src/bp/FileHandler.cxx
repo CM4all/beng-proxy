@@ -273,7 +273,6 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 	handler.file.address = &address;
 
 	assert(address.path != nullptr);
-	assert(address.delegate == nullptr);
 
 	const char *const path = address.path;
 
@@ -283,6 +282,11 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 	    request.method != HTTP_METHOD_GET &&
 	    !processor_focus) {
 		method_not_allowed(*this, "GET, HEAD");
+		return;
+	}
+
+	if (address.delegate != nullptr) {
+		HandleDelegateAddress(*address.delegate, path);
 		return;
 	}
 

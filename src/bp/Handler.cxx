@@ -106,11 +106,7 @@ Request::HandleAddress(const ResourceAddress &address)
 
 	switch (address.type) {
 	case ResourceAddress::Type::LOCAL:
-		if (address.GetFile().delegate != nullptr)
-			HandleDelegateAddress(*address.GetFile().delegate,
-					      address.GetFile().path);
-		else
-			HandleFileAddress(address.GetFile());
+		HandleFileAddress(address.GetFile());
 		break;
 
 #ifdef HAVE_LIBNFS

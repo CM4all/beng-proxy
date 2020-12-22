@@ -213,10 +213,9 @@ private:
 	} translate;
 
 	/**
-	 * Area for handler-specific state variables.  This is a union to
-	 * save memory.
+	 * Area for handler-specific state variables.
 	 */
-	struct { // TODO: convert this back to union
+	struct {
 		struct {
 			const FileAddress *address;
 
