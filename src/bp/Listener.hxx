@@ -72,6 +72,14 @@ public:
 		listener.RemoveEvent();
 	}
 
+	const char *GetTag() const noexcept {
+		return tag;
+	}
+
+	bool GetAuthAltHost() const noexcept {
+		return auth_alt_host;
+	}
+
 private:
 	/* virtual methods from class FilteredSocketListenerHandler */
 	void OnFilteredSocketConnect(PoolPtr pool,

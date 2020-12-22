@@ -44,6 +44,7 @@ class FilteredSocket;
 class SslFilter;
 struct BpConfig;
 struct BpInstance;
+class BPListener;
 class SocketAddress;
 struct HttpServerConnection;
 namespace NgHttp2 { class ServerConnection; }
@@ -56,11 +57,8 @@ struct BpConnection final
 	  boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
 	BpInstance &instance;
+	BPListener &listener;
 	const BpConfig &config;
-
-	const char *const listener_tag;
-
-	const bool auth_alt_host;
 
 	/**
 	 * The address (host and port) of the client.
@@ -78,7 +76,7 @@ struct BpConnection final
 #endif
 
 	BpConnection(PoolPtr &&_pool, BpInstance &_instance,
-		     const char *_listener_tag, bool _auth_alt_host,
+		     BPListener &_listener,
 		     SocketAddress remote_address,
 		     const SslFilter *_ssl_filter) noexcept;
 	~BpConnection() noexcept;
@@ -101,10 +99,10 @@ struct BpConnection final
 
 void
 new_connection(PoolPtr pool, BpInstance &instance,
+	       BPListener &listener,
 	       UniquePoolPtr<FilteredSocket> socket,
 	       const SslFilter *ssl_filter,
-	       SocketAddress address,
-	       const char *listener_tag, bool auth_alt_host) noexcept;
+	       SocketAddress address) noexcept;
 
 void
 close_connection(BpConnection *connection) noexcept;

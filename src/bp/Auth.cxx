@@ -36,6 +36,7 @@
 
 #include "Request.hxx"
 #include "Connection.hxx"
+#include "Listener.hxx"
 #include "Instance.hxx"
 #include "http/IncomingRequest.hxx"
 #include "pool/pool.hxx"
@@ -146,9 +147,9 @@ Request::HandleAuth(const TranslateResponse &response)
 	t->session = translate.request.session;
 
 	if (response.protocol_version >= 2) {
-		t->listener_tag = connection.listener_tag;
+		t->listener_tag = connection.listener.GetTag();
 
-		if (connection.auth_alt_host)
+		if (connection.listener.GetAuthAltHost())
 			t->alt_host = request.headers.Get("x-cm4all-althost");
 	}
 

@@ -33,6 +33,7 @@
 #include "Handler.hxx"
 #include "PendingResponse.hxx"
 #include "Connection.hxx"
+#include "Listener.hxx"
 #include "Config.hxx"
 #include "RLogger.hxx"
 #include "Instance.hxx"
@@ -419,7 +420,7 @@ static void
 fill_translate_request_listener_tag(TranslateRequest &t,
 				    const Request &r)
 {
-	t.listener_tag = r.connection.listener_tag;
+	t.listener_tag = r.connection.listener.GetTag();
 }
 
 static void
@@ -933,7 +934,7 @@ Request::AskTranslationServer() noexcept
 			       instance,
 			       request,
 			       dissected_uri, args,
-			       connection.listener_tag,
+			       connection.listener.GetTag(),
 			       connection.remote_host_and_port);
 	SubmitTranslateRequest();
 }

@@ -77,10 +77,9 @@ BPListener::OnFilteredSocketConnect(PoolPtr pool,
 				    SocketAddress address,
 				    const SslFilter *ssl_filter) noexcept
 {
-	new_connection(std::move(pool), instance,
+	new_connection(std::move(pool), instance, *this,
 		       std::move(socket), ssl_filter,
-		       address,
-		       tag, auth_alt_host);
+		       address);
 }
 
 void

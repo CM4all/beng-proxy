@@ -57,15 +57,13 @@
 #include <assert.h>
 
 BpConnection::BpConnection(PoolPtr &&_pool, BpInstance &_instance,
-			   const char *_listener_tag,
-			   bool _auth_alt_host,
+			   BPListener &_listener,
 			   SocketAddress remote_address,
 			   const SslFilter *ssl_filter) noexcept
 	:PoolHolder(std::move(_pool)),
 	 instance(_instance),
+	 listener(_listener),
 	 config(_instance.config),
-	 listener_tag(_listener_tag),
-	 auth_alt_host(_auth_alt_host),
 	 remote_host_and_port(address_to_string(pool, remote_address)),
 	 logger(remote_host_and_port),
 	 peer_subject(ssl_filter != nullptr
@@ -186,11 +184,10 @@ IsAlpnHttp2(ConstBuffer<unsigned char> alpn) noexcept
 #endif
 
 void
-new_connection(PoolPtr pool, BpInstance &instance,
+new_connection(PoolPtr pool, BpInstance &instance, BPListener &listener,
 	       UniquePoolPtr<FilteredSocket> socket,
 	       const SslFilter *ssl_filter,
-	       SocketAddress address,
-	       const char *listener_tag, bool auth_alt_host) noexcept
+	       SocketAddress address) noexcept
 {
 	if (instance.connections.size() >= instance.config.max_connections) {
 		unsigned num_dropped = drop_some_connections(&instance);
@@ -207,7 +204,7 @@ new_connection(PoolPtr pool, BpInstance &instance,
 	const auto local_address = socket->GetSocket().GetLocalAddress();
 
 	auto *connection = NewFromPool<BpConnection>(std::move(pool), instance,
-						     listener_tag, auth_alt_host,
+						     listener,
 						     address, ssl_filter);
 	instance.connections.push_front(*connection);
 
