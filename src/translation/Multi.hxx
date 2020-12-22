@@ -53,11 +53,11 @@ public:
 	template<typename T>
 	explicit MultiTranslationService(T &&t) noexcept {
 		for (auto &i : t)
-			Add(&i);
+			Add(i);
 	}
 
-	void Add(TranslationService *service) noexcept {
-		items.push_back(service);
+	void Add(TranslationService &service) noexcept {
+		items.push_back(&service);
 	}
 
 	/* virtual methods from class TranslationService */
