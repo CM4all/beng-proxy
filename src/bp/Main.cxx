@@ -316,19 +316,6 @@ try {
 
 	instance.EnableSignals();
 
-	if (instance.cmdline.debug_listener_tag == nullptr) {
-		for (const auto &i : instance.config.listen)
-			instance.AddListener(i);
-	} else {
-		const char *tag = instance.cmdline.debug_listener_tag;
-		if (*tag == 0)
-			tag = nullptr;
-
-		instance.listeners.emplace_front(instance, tag,
-						 false, nullptr);
-		instance.listeners.front().Listen(UniqueSocketDescriptor(STDIN_FILENO));
-	}
-
 	global_control_handler_init(&instance);
 
 	/* note: this function call passes a temporary SpawnConfig copy,
@@ -525,6 +512,19 @@ try {
 
 	global_translation_service = instance.translation_service;
 	global_pipe_stock = instance.pipe_stock;
+
+	if (instance.cmdline.debug_listener_tag == nullptr) {
+		for (const auto &i : instance.config.listen)
+			instance.AddListener(i);
+	} else {
+		const char *tag = instance.cmdline.debug_listener_tag;
+		if (*tag == 0)
+			tag = nullptr;
+
+		instance.listeners.emplace_front(instance, tag,
+						 false, nullptr);
+		instance.listeners.front().Listen(UniqueSocketDescriptor(STDIN_FILENO));
+	}
 
 	/* daemonize II */
 
