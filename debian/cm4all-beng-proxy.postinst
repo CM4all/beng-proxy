@@ -1,30 +1,7 @@
 #! /bin/sh -e
 # Author: Max Kellermann <mk@cm4all.com>
 
-if [ "$1" = "configure" ]; then
-    if ! getent passwd cm4all-beng-proxy >/dev/null; then
-	adduser --quiet \
-            --system --ingroup www-data \
-            --no-create-home \
-            --home /var/lib/cm4all/beng-proxy \
-            --shell /usr/sbin/nologin \
-            cm4all-beng-proxy
-    fi
-
-    if ! getent passwd cm4all-logger >/dev/null; then
-	adduser --quiet \
-            --system --ingroup nogroup \
-            --no-create-home \
-            --home /var/log/cm4all \
-            --shell /usr/sbin/nologin \
-            cm4all-logger
-    fi
-
-    if [ -d /var/log/cm4all/beng-proxy ]; then
-        chown cm4all-logger:adm /var/log/cm4all/beng-proxy
-        chmod 2750 /var/log/cm4all/beng-proxy
-    fi
-elif [ "$1" = "triggered" ]; then
+if [ "$1" = "triggered" ]; then
     if systemctl --quiet is-active cm4all-beng-proxy; then
         systemctl reload cm4all-beng-proxy
     fi

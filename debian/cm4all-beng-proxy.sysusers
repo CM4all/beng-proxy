@@ -1,0 +1,2 @@
+u cm4all-beng-proxy - "CM4all beng-proxy" /run/cm4all/beng-proxy
+u cm4all-logger - "CM4all logger" /var/log/cm4all
