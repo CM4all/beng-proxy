@@ -224,7 +224,7 @@ void
 BpInstance::AddListener(const BpConfig::Listener &c)
 {
 	listeners.emplace_front(*this,
-				*translation_service,
+				translation_service,
 				c.tag.empty() ? nullptr : c.tag.c_str(),
 				c.auth_alt_host,
 				c.ssl ? &c.ssl_config : nullptr);
@@ -524,7 +524,7 @@ try {
 			tag = nullptr;
 
 		instance.listeners.emplace_front(instance,
-						 *instance.translation_service,
+						 instance.translation_service,
 						 tag,
 						 false, nullptr);
 		instance.listeners.front().Listen(UniqueSocketDescriptor(STDIN_FILENO));

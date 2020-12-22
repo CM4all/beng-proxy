@@ -58,7 +58,7 @@ MakeSslFactory(const SslConfig *ssl_config)
 }
 
 BPListener::BPListener(BpInstance &_instance,
-		       TranslationService &_translation_service,
+		       std::shared_ptr<TranslationService> _translation_service,
 		       const char *_tag,
 		       bool _auth_alt_host,
 		       const SslConfig *ssl_config)

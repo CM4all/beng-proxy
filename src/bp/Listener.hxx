@@ -35,6 +35,8 @@
 #include "fs/Listener.hxx"
 #include "net/StaticSocketAddress.hxx"
 
+#include <memory>
+
 struct BpInstance;
 struct SslConfig;
 class TranslationService;
@@ -45,7 +47,7 @@ class TranslationService;
 class BPListener final : FilteredSocketListenerHandler {
 	BpInstance &instance;
 
-	TranslationService &translation_service;
+	const std::shared_ptr<TranslationService> translation_service;
 
 	const char *const tag;
 
@@ -55,7 +57,7 @@ class BPListener final : FilteredSocketListenerHandler {
 
 public:
 	BPListener(BpInstance &_instance,
-		   TranslationService &_translation_service,
+		   std::shared_ptr<TranslationService> _translation_service,
 		   const char *_tag,
 		   bool _auth_alt_host,
 		   const SslConfig *ssl_config);
@@ -86,7 +88,7 @@ public:
 	}
 
 	TranslationService &GetTranslationService() const noexcept {
-		return translation_service;
+		return *translation_service;
 	}
 
 private:
