@@ -4,6 +4,7 @@ cm4all-beng-proxy (17.0.40) unstable; urgency=low
   * bp: fix DELEGATE crash bug
   * bp: fix WANT_USER crash bug
   * bp: upper case "Bearer" prefix for "Authorization" header
+  * bp: require a translation server, remove fallback code
   * python: full Python 3 compatibility
   * debian: move postinst code to sysusers.d and tmpfiles.d
 

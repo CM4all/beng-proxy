@@ -404,43 +404,43 @@ try {
 	instance.nghttp2_stock = new NgHttp2::Stock();
 #endif
 
-	if (!instance.config.translation_sockets.empty()) {
-		instance.translation_stocks =
-			std::make_unique<TranslationStockBuilder>(instance.config.translate_stock_limit);
-		instance.uncached_translation_service =
+	assert(!instance.config.translation_sockets.empty());
+
+	instance.translation_stocks =
+		std::make_unique<TranslationStockBuilder>(instance.config.translate_stock_limit);
+	instance.uncached_translation_service =
+		std::make_unique<MultiTranslationService>();
+
+	if (instance.config.translate_cache_size > 0) {
+		instance.translation_caches =
+			std::make_unique<TranslationCacheBuilder>(*instance.translation_stocks,
+								  instance.root_pool,
+								  instance.config.translate_cache_size);
+		instance.cached_translation_service =
 			std::make_unique<MultiTranslationService>();
+	}
 
-		if (instance.config.translate_cache_size > 0) {
-			instance.translation_caches =
-				std::make_unique<TranslationCacheBuilder>(*instance.translation_stocks,
-									  instance.root_pool,
-									  instance.config.translate_cache_size);
-			instance.cached_translation_service =
-				std::make_unique<MultiTranslationService>();
-		}
-
-		for (const auto &config : instance.config.translation_sockets) {
-			instance.uncached_translation_service
-				->Add(instance.translation_stocks->Get(config,
-								       instance.event_loop));
-
-			if (instance.config.translate_cache_size > 0)
-				instance.cached_translation_service
-					->Add(instance.translation_caches->Get(config,
-									       instance.event_loop));
-		}
-
-		instance.translation_service = instance.uncached_translation_service.get();
+	for (const auto &config : instance.config.translation_sockets) {
+		instance.uncached_translation_service
+			->Add(instance.translation_stocks->Get(config,
+							       instance.event_loop));
 
 		if (instance.config.translate_cache_size > 0)
-			instance.translation_service = instance.cached_translation_service.get();
-
-		/* the WidgetRegistry class has its own cache and doesn't need
-		   the TranslationCache */
-		instance.widget_registry =
-			new WidgetRegistry(instance.root_pool,
-					   *instance.uncached_translation_service);
+			instance.cached_translation_service
+				->Add(instance.translation_caches->Get(config,
+								       instance.event_loop));
 	}
+
+	instance.translation_service = instance.uncached_translation_service.get();
+
+	if (instance.config.translate_cache_size > 0)
+		instance.translation_service = instance.cached_translation_service.get();
+
+	/* the WidgetRegistry class has its own cache and doesn't need
+	   the TranslationCache */
+	instance.widget_registry =
+		new WidgetRegistry(instance.root_pool,
+				   *instance.uncached_translation_service);
 
 	instance.lhttp_stock = lhttp_stock_new(0, 8, instance.event_loop,
 					       *instance.spawn_service,

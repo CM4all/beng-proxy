@@ -939,44 +939,6 @@ Request::AskTranslationServer() noexcept
 	SubmitTranslateRequest();
 }
 
-inline void
-Request::ServeDocumentRootFile(const BpConfig &config) noexcept
-{
-	const AllocatorPtr alloc(pool);
-
-	auto tr = alloc.New<TranslateResponse>();
-	tr->Clear();
-	translate.response = tr;
-
-	StringView index_file = nullptr;
-	if (dissected_uri.base.back() == '/')
-		index_file = "index.html";
-
-	auto view = alloc.New<WidgetView>(nullptr);
-
-	tr->views = view;
-	tr->transparent = true;
-
-	translate.transformations = {ShallowCopy{}, tr->views->transformations};
-	translate.suffix_transformations.clear();
-
-	const char *path = alloc.Concat(config.document_root,
-					dissected_uri.base,
-					index_file);
-	auto *fa = alloc.New<FileAddress>(path);
-	tr->address = *fa;
-
-	translate.address = {ShallowCopy(), tr->address};
-
-	using namespace BengProxy;
-	tr->request_header_forward = HeaderForwardSettings::MakeDefaultRequest();
-	tr->response_header_forward = HeaderForwardSettings::MakeDefaultResponse();
-
-	resource_tag = translate.address.GetFile().path;
-
-	HandleFileAddress(*fa);
-}
-
 void
 Request::HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept
 {
@@ -991,10 +953,7 @@ Request::HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept
 	ParseArgs();
 	DetermineSession();
 
-	if (instance.translation_service == nullptr)
-		ServeDocumentRootFile(connection.config);
-	else
-		AskTranslationServer();
+	AskTranslationServer();
 }
 
 void
