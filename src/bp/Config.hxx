@@ -99,8 +99,6 @@ struct BpConfig {
 
 	std::forward_list<ControlListener> control_listen;
 
-	const char *document_root = "/var/www";
-
 	std::forward_list<AllocatedSocketAddress> translation_sockets;
 
 	/** maximum number of simultaneous connections */

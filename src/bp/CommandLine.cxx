@@ -175,7 +175,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 		{"config-file", 1, nullptr, 'f'},
 		{"user", 1, nullptr, 'u'},
 		{"logger-user", 1, nullptr, 'U'},
-		{"document-root", 1, nullptr, 'r'},
 		{"translation-socket", 1, nullptr, 't'},
 		{"cluster-size", 1, nullptr, 'C'},
 		{"cluster-node", 1, nullptr, 'N'},
@@ -193,11 +192,11 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 		int option_index = 0;
 
 		ret = getopt_long(argc, argv,
-				  "hVvqf:u:U:r:t:B:C:N:s:",
+				  "hVvqf:u:U:t:B:C:N:s:",
 				  long_options, &option_index);
 #else
 		ret = getopt(argc, argv,
-			     "hVvqf:u:U:r:t:B:C:N:s:");
+			     "hVvqf:u:U:t:B:C:N:s:");
 #endif
 		if (ret == -1)
 			break;
@@ -235,10 +234,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 				arg_error(argv[0], "cannot specify a user in debug mode");
 
 			cmdline.logger_user.Lookup(optarg);
-			break;
-
-		case 'r':
-			config.document_root = optarg;
 			break;
 
 		case 't':
