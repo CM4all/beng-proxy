@@ -582,6 +582,20 @@ public:
 	void IgnoreSession() noexcept;
 	void DiscardSession() noexcept;
 
+	/**
+	 * Determine the URI scheme to build absolute external URIs to
+	 * this server, e.g. "https" or "http".
+	 */
+	gcc_pure
+	const char *GetExternalUriScheme(const TranslateResponse &tr) const noexcept;
+
+	/**
+	 * Determine the URI host (and port) to build absolute
+	 * external URIs to this server, e.g. "www.example.com:80".
+	 */
+	gcc_pure
+	const char *GetExternalUriHost(const TranslateResponse &tr) const noexcept;
+
 	const char *GetCookieURI() const noexcept {
 		return cookie_uri;
 	}

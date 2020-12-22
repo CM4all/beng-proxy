@@ -81,6 +81,29 @@ Request::ParseArgs() noexcept
 	translate.request.session = nullptr;
 }
 
+const char *
+Request::GetExternalUriScheme(const TranslateResponse &tr) const noexcept
+{
+	if (tr.scheme != nullptr)
+		return tr.scheme;
+
+	return "http";
+}
+
+const char *
+Request::GetExternalUriHost(const TranslateResponse &tr) const noexcept
+{
+	if (tr.host != nullptr)
+		return tr.host;
+
+	const char *host = request.headers.Get("host");
+	if (host == nullptr)
+		/* lousy fallback for an RFC-ignorant browser */
+		host = "localhost";
+
+	return host;
+}
+
 StringMap
 Request::ForwardRequestHeaders(const StringMap &src,
 			       bool exclude_host,

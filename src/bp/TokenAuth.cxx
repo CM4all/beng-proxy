@@ -48,19 +48,12 @@
 #include <stdexcept>
 
 static const char *
-GetTokenAuthRedirectUri(AllocatorPtr alloc, const IncomingHttpRequest &request,
+GetTokenAuthRedirectUri(AllocatorPtr alloc,
+			const char *scheme, const char *host,
 			DissectedUri dissected_uri,
 			const TranslateResponse &response) noexcept
 {
 	/* TODO: deduplicate code from GetBounceUri() */
-
-	const char *scheme = response.scheme != nullptr
-		? response.scheme : "http";
-	const char *host = response.host != nullptr
-		? response.host
-		: request.headers.Get("host");
-	if (host == nullptr)
-		host = "localhost";
 
 	if (response.uri != nullptr) {
 		dissected_uri.base = response.uri;
@@ -99,16 +92,18 @@ Request::OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcep
 
 	translate.user_modified = response.user != nullptr;
 
+	/* using the original translation response, because it may
+	   have information about the original request */
+	const auto &tr = *translate.response;
+
 	/* don't call OnTranslateResponseAfterAuth() here, instead
 	   redirect to the URI with auth_token removed */
 
 	const char *redirect_uri =
-		GetTokenAuthRedirectUri(pool, request, dissected_uri,
-					/* using the original
-					   translation response,
-					   because it may have
-					   information about the
-					   original request */
+		GetTokenAuthRedirectUri(pool,
+					GetExternalUriScheme(tr),
+					GetExternalUriHost(tr),
+					dissected_uri,
 					*translate.response);
 
 	DispatchRedirect(HTTP_STATUS_SEE_OTHER, redirect_uri, nullptr);

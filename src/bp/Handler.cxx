@@ -67,17 +67,10 @@ static bool translation_protocol_version_received = false;
 
 static const char *
 GetBounceUri(AllocatorPtr alloc, const IncomingHttpRequest &request,
+	     const char *scheme, const char *host,
 	     const DissectedUri &dissected_uri,
 	     const TranslateResponse &response) noexcept
 {
-	const char *scheme = response.scheme != nullptr
-		? response.scheme : "http";
-	const char *host = response.host != nullptr
-		? response.host
-		: request.headers.Get("host");
-	if (host == nullptr)
-		host = "localhost";
-
 	const char *uri_path = request.uri;
 
 	if (response.uri != nullptr) {
@@ -237,7 +230,10 @@ Request::CheckHandleBounce(const TranslateResponse &response)
 		return false;
 
 	DispatchRedirect(HTTP_STATUS_SEE_OTHER,
-			 GetBounceUri(pool, request, dissected_uri, response),
+			 GetBounceUri(pool, request,
+				      GetExternalUriScheme(response),
+				      GetExternalUriHost(response),
+				      dissected_uri, response),
 			 nullptr);
 	return true;
 }

@@ -837,11 +837,8 @@ Request::RelocateCallback(const char *const uri, void *ctx) noexcept
 	if (tr.base == nullptr || tr.IsExpandable() || !tr.address.IsHttp())
 		return uri;
 
-	const char *external_scheme = tr.scheme != nullptr
-		? tr.scheme : "http";
-	const char *external_host = tr.host != nullptr
-		? tr.host
-		: request.request.headers.Get("host");
+	const char *external_scheme = request.GetExternalUriScheme(tr);
+	const char *external_host = request.GetExternalUriHost(tr);
 
 	const auto &address = tr.address.GetHttp();
 
