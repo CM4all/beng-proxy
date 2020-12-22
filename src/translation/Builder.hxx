@@ -40,6 +40,7 @@
 
 #include <cstdint>
 #include <map>
+#include <memory>
 
 template<typename T> struct ConstBuffer;
 struct AllocatorStats;
@@ -58,15 +59,15 @@ struct SocketAddressCompare {
 class TranslationStockBuilder {
 	const unsigned limit;
 
-	std::map<SocketAddress, TranslationStock,
+	std::map<SocketAddress, std::shared_ptr<TranslationStock>,
 		 SocketAddressCompare> m;
 
 public:
 	explicit TranslationStockBuilder(unsigned _limit) noexcept;
 	~TranslationStockBuilder() noexcept;
 
-	TranslationService &Get(SocketAddress address,
-				EventLoop &event_loop) noexcept;
+	std::shared_ptr<TranslationService> Get(SocketAddress address,
+						EventLoop &event_loop) noexcept;
 };
 
 class TranslationCacheBuilder {
@@ -76,7 +77,7 @@ class TranslationCacheBuilder {
 
 	const unsigned max_size;
 
-	std::map<SocketAddress, TranslationCache,
+	std::map<SocketAddress, std::shared_ptr<TranslationCache>,
 		 SocketAddressCompare> m;
 
 public:
@@ -95,6 +96,6 @@ public:
 			ConstBuffer<TranslationCommand> vary,
 			const char *site) noexcept;
 
-	TranslationService &Get(SocketAddress address,
-				EventLoop &event_loop) noexcept;
+	std::shared_ptr<TranslationService> Get(SocketAddress address,
+						EventLoop &event_loop) noexcept;
 };

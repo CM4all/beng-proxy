@@ -69,12 +69,16 @@ TranslationStockBuilder::TranslationStockBuilder(unsigned _limit) noexcept
 
 TranslationStockBuilder::~TranslationStockBuilder() noexcept = default;
 
-TranslationService &
+std::shared_ptr<TranslationService>
 TranslationStockBuilder::Get(SocketAddress address,
 			     EventLoop &event_loop) noexcept
 {
-	return m.try_emplace(address, event_loop, address, limit)
-		.first->second;
+	auto e = m.emplace(address, nullptr);
+	if (e.second)
+		e.first->second = std::make_shared<TranslationStock>
+			(event_loop, address, limit);
+
+	return e.first->second;
 }
 
 TranslationCacheBuilder::TranslationCacheBuilder(TranslationStockBuilder &_builder,
@@ -91,7 +95,7 @@ void
 TranslationCacheBuilder::ForkCow(bool inherit) noexcept
 {
 	for (auto &i : m)
-		i.second.ForkCow(inherit);
+		i.second->ForkCow(inherit);
 }
 
 AllocatorStats
@@ -100,7 +104,7 @@ TranslationCacheBuilder::GetStats() const noexcept
 	AllocatorStats stats = AllocatorStats::Zero();
 
 	for (const auto &i : m)
-		stats += i.second.GetStats();
+		stats += i.second->GetStats();
 
 	return stats;
 }
@@ -109,7 +113,7 @@ void
 TranslationCacheBuilder::Flush() noexcept
 {
 	for (auto &i : m)
-		i.second.Flush();
+		i.second->Flush();
 }
 
 void
@@ -118,15 +122,20 @@ TranslationCacheBuilder::Invalidate(const TranslateRequest &request,
 				    const char *site) noexcept
 {
 	for (auto &i : m)
-		i.second.Invalidate(request, vary, site);
+		i.second->Invalidate(request, vary, site);
 }
 
-TranslationService &
+std::shared_ptr<TranslationService>
 TranslationCacheBuilder::Get(SocketAddress address,
 			     EventLoop &event_loop) noexcept
 {
-	return m.try_emplace(address, pool, event_loop,
-			     builder.Get(address, event_loop),
-			     max_size, false)
-		.first->second;
+	auto e = m.emplace(address, nullptr);
+	if (e.second)
+		e.first->second = std::make_shared<TranslationCache>
+			(pool, event_loop,
+			 // TODO: refactor to std::shared_ptr?
+			 *builder.Get(address, event_loop),
+			 max_size, false);
+
+	return e.first->second;
 }

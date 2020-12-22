@@ -35,13 +35,14 @@
 #include "Service.hxx"
 
 #include <list>
+#include <memory>
 
 /**
  * Wrapper for multiple #TranslationService.  This class implements
  * #TranslationCommand::DEFER.
  */
 class MultiTranslationService final : public TranslationService {
-	using List = std::list<TranslationService *>;
+	using List = std::list<std::shared_ptr<TranslationService>>;
 
 	List items;
 
@@ -56,8 +57,9 @@ public:
 			Add(i);
 	}
 
-	void Add(TranslationService &service) noexcept {
-		items.push_back(&service);
+	template<typename T>
+	void Add(T &&service) noexcept {
+		items.emplace_back(std::forward<T>(service));
 	}
 
 	/* virtual methods from class TranslationService */
