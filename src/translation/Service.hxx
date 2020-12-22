@@ -40,6 +40,8 @@ class CancellablePointer;
 
 class TranslationService {
 public:
+	virtual ~TranslationService() noexcept = default;
+
 	virtual void SendRequest(struct pool &pool,
 				 const TranslateRequest &request,
 				 const StopwatchPtr &parent_stopwatch,
