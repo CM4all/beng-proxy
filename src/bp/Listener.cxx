@@ -57,10 +57,12 @@ MakeSslFactory(const SslConfig *ssl_config)
 	return ssl_factory;
 }
 
-BPListener::BPListener(BpInstance &_instance, const char *_tag,
+BPListener::BPListener(BpInstance &_instance,
+		       TranslationService &_translation_service,
+		       const char *_tag,
 		       bool _auth_alt_host,
 		       const SslConfig *ssl_config)
-	:instance(_instance),
+	:instance(_instance), translation_service(_translation_service),
 	 tag(_tag),
 	 auth_alt_host(_auth_alt_host),
 	 listener(instance.root_pool, instance.event_loop,

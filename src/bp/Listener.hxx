@@ -37,12 +37,15 @@
 
 struct BpInstance;
 struct SslConfig;
+class TranslationService;
 
 /**
  * Listener for incoming HTTP connections.
  */
 class BPListener final : FilteredSocketListenerHandler {
 	BpInstance &instance;
+
+	TranslationService &translation_service;
 
 	const char *const tag;
 
@@ -51,7 +54,9 @@ class BPListener final : FilteredSocketListenerHandler {
 	FilteredSocketListener listener;
 
 public:
-	BPListener(BpInstance &_instance, const char *_tag,
+	BPListener(BpInstance &_instance,
+		   TranslationService &_translation_service,
+		   const char *_tag,
 		   bool _auth_alt_host,
 		   const SslConfig *ssl_config);
 	~BPListener() noexcept;
@@ -78,6 +83,10 @@ public:
 
 	bool GetAuthAltHost() const noexcept {
 		return auth_alt_host;
+	}
+
+	TranslationService &GetTranslationService() const noexcept {
+		return translation_service;
 	}
 
 private:

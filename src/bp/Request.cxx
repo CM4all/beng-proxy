@@ -32,7 +32,7 @@
 
 #include "Request.hxx"
 #include "Connection.hxx"
-#include "Instance.hxx"
+#include "Listener.hxx"
 #include "PendingResponse.hxx"
 #include "http/IncomingRequest.hxx"
 #include "widget/Context.hxx"
@@ -59,8 +59,7 @@ Request::~Request() noexcept = default;
 TranslationService &
 Request::GetTranslationService() const noexcept
 {
-	assert(instance.translation_service != nullptr);
-	return *instance.translation_service;
+	return connection.listener.GetTranslationService();
 }
 
 bool
