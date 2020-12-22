@@ -37,7 +37,7 @@ Vcs-Git: git://github.com/CM4all/beng-proxy
 
 Package: cm4all-beng-proxy
 Architecture: any
-Depends: ${shlibs:Depends}, adduser,
+Depends: ${shlibs:Depends},
  cm4all-slice (>= 0.6),
  systemd-sysv
 Recommends: cm4all-beng-proxy-translation | cm4all-jetserv-daemon,
@@ -164,7 +164,7 @@ Description: Documentation for cm4all-beng-proxy
 
 Package: cm4all-beng-lb
 Architecture: any
-Depends: ${shlibs:Depends}, adduser,
+Depends: ${shlibs:Depends},
  systemd-sysv
 Suggests: cm4all-certdb2, avahi-daemon
 Provides: httpd
