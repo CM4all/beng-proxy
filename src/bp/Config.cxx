@@ -105,6 +105,12 @@ BpConfig::HandleSet(StringView name, const char *value)
 void
 BpConfig::Finish(const UidGid &user, unsigned default_port)
 {
+	for (auto &i : listen) {
+		/* reverse the list because our ConfigParser always
+		   inserts at the front */
+		i.translation_sockets.reverse();
+	}
+
 	if (listen.empty())
 		listen.emplace_front(ParseSocketAddress("*", default_port, true));
 
@@ -112,7 +118,7 @@ BpConfig::Finish(const UidGid &user, unsigned default_port)
 		translation_sockets.emplace_front();
 		translation_sockets.front().SetLocal("@translation");
 	} else
-		/* reverse the list because our ConfigParse always
+		/* reverse the list because our ConfigParser always
 		   inserts at the front */
 		translation_sockets.reverse();
 

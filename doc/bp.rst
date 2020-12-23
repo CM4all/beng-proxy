@@ -112,6 +112,8 @@ well-implemented. For example, (backslash) escape sequences don’t work,
 and the scope of variables is not defined. For now, use variables only
 for very simple things.
 
+.. _translation_servers:
+
 Translation Servers
 -------------------
 
@@ -192,6 +194,10 @@ Known attributes:
 - ``zeroconf_service``: if specified, then register this listener as
   Zeroconf service in the local Avahi daemon. This can be used by
   :program:`beng-lb` to discover pool members.
+
+- ``translation_socket``: if at least one is specified, then this
+  translation server is used instead of one from the global
+  configuration (see :ref:`translation_servers`).
 
 ``ssl_client``
 --------------

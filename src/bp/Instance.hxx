@@ -70,6 +70,7 @@ class SpawnServerClient;
 class TranslationStock;
 class TranslationCache;
 class TranslationService;
+class TranslationServiceBuilder;
 class TranslationStockBuilder;
 class TranslationCacheBuilder;
 class MultiTranslationService;
@@ -197,6 +198,9 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 
 	explicit BpInstance(BpConfig &&_config) noexcept;
 	~BpInstance() noexcept;
+
+	gcc_pure
+	TranslationServiceBuilder &GetTranslationServiceBuilder() const noexcept;
 
 	void EnableSignals() noexcept;
 	void DisableSignals() noexcept;

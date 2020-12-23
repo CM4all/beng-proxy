@@ -111,6 +111,14 @@ static constexpr cap_value_t cap_keep_list[] = {
 	CAP_NET_BIND_SERVICE,
 };
 
+inline TranslationServiceBuilder &
+BpInstance::GetTranslationServiceBuilder() const noexcept
+{
+	return translation_caches
+		? (TranslationServiceBuilder &)*translation_caches
+		: *translation_stocks;
+}
+
 void
 BpInstance::EnableListeners() noexcept
 {
@@ -215,11 +223,27 @@ BpInstance::DisableSignals() noexcept
 	sighup_event.Disable();
 }
 
+static std::shared_ptr<TranslationService>
+MakeTranslationService(EventLoop &event_loop, TranslationServiceBuilder &b,
+		       const std::forward_list<AllocatedSocketAddress> &l)
+{
+	auto multi = std::make_shared<MultiTranslationService>();
+	for (const SocketAddress a : l)
+		multi->Add(b.Get(a, event_loop));
+
+	return multi;
+}
+
 void
 BpInstance::AddListener(const BpConfig::Listener &c)
 {
-	listeners.emplace_front(*this,
-				translation_service,
+	auto ts = c.translation_sockets.empty()
+		? translation_service
+		: MakeTranslationService(event_loop,
+					 GetTranslationServiceBuilder(),
+					 c.translation_sockets);
+
+	listeners.emplace_front(*this, std::move(ts),
 				c.tag.empty() ? nullptr : c.tag.c_str(),
 				c.auth_alt_host,
 				c.ssl ? &c.ssl_config : nullptr);

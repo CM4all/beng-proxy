@@ -201,6 +201,9 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 			config.ssl_config.verify = SslVerify::OPTIONAL;
 		else
 			throw LineParser::Error("yes/no expected");
+	} else if (StringIsEqual(word, "translation_socket")) {
+		config.translation_sockets.emplace_front(ParseSocketAddress(line.ExpectValueAndEnd(),
+									    0, false));
 	} else
 		throw LineParser::Error("Unknown option");
 }

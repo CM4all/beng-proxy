@@ -55,6 +55,13 @@ struct BpConfig {
 		std::string zeroconf_service;
 #endif
 
+		/**
+		 * If non-empty, then this listener has its own
+		 * translation server(s) and doesn't use the global
+		 * server.
+		 */
+		std::forward_list<AllocatedSocketAddress> translation_sockets;
+
 		bool auth_alt_host = false;
 
 		bool ssl = false;
