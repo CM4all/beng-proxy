@@ -122,7 +122,7 @@ Request
   submitted if requested via ``WANT``, see page )
 
 - ``AUTHORIZATION``: the ``Authorization`` request header sent by the
-  client (see RFC 2617)
+  client (see RFC 2617); only for :ref:`http_auth`.
 
 - ``CONTENT_TYPE_LOOKUP``: Look up the ``Content-Type`` of a file name
   suffix. See :ref:`ctlookup` for a detailed description.

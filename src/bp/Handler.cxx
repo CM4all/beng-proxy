@@ -878,7 +878,6 @@ fill_translate_request(TranslateRequest &t,
 	t.param = param;
 
 	t.host = request.headers.Get("host");
-	t.authorization = request.headers.Get("authorization");
 	t.uri = p_strdup(request.pool, uri.base);
 
 	if (translation_protocol_version < 1) {

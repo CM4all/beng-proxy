@@ -864,6 +864,8 @@ storing the current state of a widget in its current URI (path info).
 Authentication
 --------------
 
+.. _http_auth:
+
 HTTP-level Authentication
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
