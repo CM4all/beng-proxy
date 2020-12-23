@@ -80,10 +80,6 @@ static constexpr cap_value_t cap_keep_list[1] = {
 void
 LbInstance::ShutdownCallback() noexcept
 {
-	if (should_exit)
-		return;
-
-	should_exit = true;
 	deinit_signals(this);
 	thread_pool_stop();
 

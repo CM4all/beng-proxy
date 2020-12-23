@@ -71,7 +71,6 @@ struct LbInstance final : PInstance {
 
 	const Logger logger;
 
-	bool should_exit = false;
 	ShutdownListener shutdown_listener;
 	SignalEvent sighup_event;
 

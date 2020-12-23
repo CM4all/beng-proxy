@@ -129,15 +129,11 @@ BpInstance::DisableListeners() noexcept
 void
 BpInstance::ShutdownCallback() noexcept
 {
-	if (should_exit)
-		return;
-
 #ifdef HAVE_URING
 	if (uring)
 		uring->SetVolatile();
 #endif
 
-	should_exit = true;
 	DisableSignals();
 	thread_pool_stop();
 

@@ -107,7 +107,6 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 
 	std::unique_ptr<AccessLogGlue> access_log, child_error_log;
 
-	bool should_exit = false;
 	ShutdownListener shutdown_listener;
 	SignalEvent sighup_event;
 
