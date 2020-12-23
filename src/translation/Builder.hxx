@@ -56,7 +56,13 @@ struct SocketAddressCompare {
 	bool operator()(SocketAddress a, SocketAddress b) const noexcept;
 };
 
-class TranslationStockBuilder {
+class TranslationServiceBuilder {
+public:
+	virtual std::shared_ptr<TranslationService> Get(SocketAddress address,
+							EventLoop &event_loop) noexcept = 0;
+};
+
+class TranslationStockBuilder final : public TranslationServiceBuilder {
 	const unsigned limit;
 
 	std::map<SocketAddress, std::shared_ptr<TranslationStock>,
@@ -67,10 +73,10 @@ public:
 	~TranslationStockBuilder() noexcept;
 
 	std::shared_ptr<TranslationService> Get(SocketAddress address,
-						EventLoop &event_loop) noexcept;
+						EventLoop &event_loop) noexcept override;
 };
 
-class TranslationCacheBuilder {
+class TranslationCacheBuilder final : public TranslationServiceBuilder {
 	TranslationStockBuilder &builder;
 
 	struct pool &pool;
@@ -97,5 +103,5 @@ public:
 			const char *site) noexcept;
 
 	std::shared_ptr<TranslationService> Get(SocketAddress address,
-						EventLoop &event_loop) noexcept;
+						EventLoop &event_loop) noexcept override;
 };
