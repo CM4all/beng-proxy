@@ -86,7 +86,6 @@ struct BpConnection;
 namespace NgHttp2 { class Stock; }
 
 struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
-	BpCmdLine cmdline;
 	BpConfig config;
 
 	uint64_t http_request_counter = 0;

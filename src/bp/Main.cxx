@@ -269,18 +269,18 @@ try {
 	BpInstance instance;
 
 	/* configuration */
+	BpCmdLine cmdline;
+	ParseCommandLine(cmdline, instance.config, argc, argv);
 
-	ParseCommandLine(instance.cmdline, instance.config, argc, argv);
+	if (cmdline.config_file != nullptr)
+		LoadConfigFile(instance.config, cmdline.config_file);
 
-	if (instance.cmdline.config_file != nullptr)
-		LoadConfigFile(instance.config, instance.cmdline.config_file);
-
-	instance.config.Finish(instance.cmdline.user,
+	instance.config.Finish(cmdline.user,
 			       debug_mode ? 8080 : 80);
 
 	/* initialize */
 
-	if (!instance.cmdline.user.IsEmpty()) {
+	if (!cmdline.user.IsEmpty()) {
 		const char *runtime_directory = getenv("RUNTIME_DIRECTORY");
 		if (runtime_directory != nullptr)
 			/* since systemd starts beng-proxy as root, we
@@ -289,14 +289,14 @@ try {
 			   eventually by launching beng-proxy as its
 			   own user */
 			chown(runtime_directory,
-			      instance.cmdline.user.uid,
-			      instance.cmdline.user.gid);
+			      cmdline.user.uid,
+			      cmdline.user.gid);
 	}
 
 	SetupProcess();
 
-	if (instance.cmdline.ua_classification_file != nullptr)
-		instance.ua_classification = std::make_unique<UserAgentClassList>(ua_classification_init(instance.cmdline.ua_classification_file));
+	if (cmdline.ua_classification_file != nullptr)
+		instance.ua_classification = std::make_unique<UserAgentClassList>(ua_classification_init(cmdline.ua_classification_file));
 
 	const ScopeSslGlobalInit ssl_init;
 	ssl_client_init(instance.config.ssl_client);
@@ -357,11 +357,11 @@ try {
 	/* launch the access logger */
 
 	instance.access_log.reset(AccessLogGlue::Create(instance.config.access_log,
-							&instance.cmdline.logger_user));
+							&cmdline.logger_user));
 
 	if (instance.config.child_error_log.type != AccessLogConfig::Type::INTERNAL)
 		instance.child_error_log.reset(AccessLogGlue::Create(instance.config.child_error_log,
-								     &instance.cmdline.logger_user));
+								     &cmdline.logger_user));
 
 	const auto child_log_socket = instance.child_error_log
 		? instance.child_error_log->GetChildSocket()
@@ -511,11 +511,11 @@ try {
 	global_translation_service = instance.translation_service.get();
 	global_pipe_stock = instance.pipe_stock;
 
-	if (instance.cmdline.debug_listener_tag == nullptr) {
+	if (cmdline.debug_listener_tag == nullptr) {
 		for (const auto &i : instance.config.listen)
 			instance.AddListener(i);
 	} else {
-		const char *tag = instance.cmdline.debug_listener_tag;
+		const char *tag = cmdline.debug_listener_tag;
 		if (*tag == 0)
 			tag = nullptr;
 
@@ -528,10 +528,10 @@ try {
 
 	/* daemonize II */
 
-	if (!instance.cmdline.user.IsEmpty())
+	if (!cmdline.user.IsEmpty())
 		capabilities_pre_setuid();
 
-	instance.cmdline.user.Apply();
+	cmdline.user.Apply();
 
 #ifdef __linux
 	/* revert the "dumpable" flag to "true" after it was cleared by
@@ -540,7 +540,7 @@ try {
 	prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
 #endif
 
-	if (!instance.cmdline.user.IsEmpty())
+	if (!cmdline.user.IsEmpty())
 		capabilities_post_setuid(cap_keep_list, std::size(cap_keep_list));
 
 #ifdef HAVE_LIBSYSTEMD
