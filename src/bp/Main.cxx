@@ -35,7 +35,6 @@
 #include "Listener.hxx"
 #include "Connection.hxx"
 #include "Global.hxx"
-#include "crash.hxx"
 #include "pool/pool.hxx"
 #include "fb_pool.hxx"
 #include "session/Glue.hxx"
@@ -334,8 +333,6 @@ try {
 					  });
 	instance.spawn->SetHandler(instance);
 	instance.spawn_service = instance.spawn.get();
-
-	const ScopeCrashGlobalInit crash_init;
 
 	session_manager_init(instance.event_loop,
 			     instance.config.session_idle_timeout,

@@ -34,7 +34,6 @@
 #include "cgi/Glue.hxx"
 #include "cgi/Address.hxx"
 #include "HttpResponseHandler.hxx"
-#include "crash.hxx"
 #include "strmap.hxx"
 #include "istream/OpenFileIstream.hxx"
 #include "istream/Sink.hxx"
@@ -663,7 +662,6 @@ try {
 	SetupProcess();
 
 	direct_global_init();
-	const ScopeCrashGlobalInit crash_init;
 	const ScopeFbPoolInit fb_pool_init;
 
 	run_all_tests();

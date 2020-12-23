@@ -34,7 +34,6 @@
 #include "http/Address.hxx"
 #include "shm/dpool.hxx"
 #include "shm/dbuffer.hxx"
-#include "crash.hxx"
 
 #include <boost/intrusive/unordered_set.hpp>
 
@@ -47,8 +46,6 @@ static WidgetSession::Set
 widget_session_map_dup(struct dpool &pool, const WidgetSession::Set &src,
 		       RealmSession *session)
 {
-	assert(crash_in_unsafe());
-
 	WidgetSession::Set dest;
 
 	for (const auto &src_ws : src) {
@@ -150,8 +147,6 @@ Session::GetPurgeScore() const noexcept
 void
 Session::ClearTranslate() noexcept
 {
-	assert(crash_in_unsafe());
-
 	if (!translate.empty()) {
 		d_free(pool, translate.data);
 		translate = nullptr;
@@ -161,31 +156,24 @@ Session::ClearTranslate() noexcept
 void
 RealmSession::ClearSite() noexcept
 {
-	assert(crash_in_unsafe());
-
 	site.Clear(parent.pool);
 }
 
 void
 RealmSession::ClearUser() noexcept
 {
-	assert(crash_in_unsafe());
-
 	user.Clear(parent.pool);
 }
 
 void
 Session::ClearLanguage() noexcept
 {
-	assert(crash_in_unsafe());
-
 	language.Clear(pool);
 }
 
 bool
 Session::SetTranslate(ConstBuffer<void> _translate)
 {
-	assert(crash_in_unsafe());
 	assert(!_translate.IsNull());
 
 	if (!translate.IsNull() &&
@@ -207,7 +195,6 @@ Session::SetTranslate(ConstBuffer<void> _translate)
 bool
 RealmSession::SetSite(const char *_site)
 {
-	assert(crash_in_unsafe());
 	assert(_site != nullptr);
 
 	return site.SetNoExcept(parent.pool, _site);
@@ -216,7 +203,6 @@ RealmSession::SetSite(const char *_site)
 bool
 RealmSession::SetUser(const char *_user, std::chrono::seconds max_age)
 {
-	assert(crash_in_unsafe());
 	assert(_user != nullptr);
 
 	if (!user.SetNoExcept(parent.pool, _user))
@@ -237,7 +223,6 @@ RealmSession::SetUser(const char *_user, std::chrono::seconds max_age)
 bool
 Session::SetLanguage(const char *_language)
 {
-	assert(crash_in_unsafe());
 	assert(_language != nullptr);
 
 	return language.SetNoExcept(pool, _language);
@@ -248,8 +233,6 @@ Session::SetExternalManager(const HttpAddress &address,
 			    std::chrono::steady_clock::time_point now,
 			    std::chrono::duration<uint16_t> keepalive)
 {
-	assert(crash_in_unsafe());
-
 	if (external_manager != nullptr) {
 		external_manager->Free(pool);
 		DeleteFromPool(pool, external_manager);
@@ -276,7 +259,6 @@ static WidgetSession *
 hashmap_r_get_widget_session(RealmSession &session, WidgetSession::Set &set,
 			     const char *id, bool create)
 {
-	assert(crash_in_unsafe());
 	assert(id != nullptr);
 
 	auto i = set.find(id, WidgetSession::Compare());
@@ -294,7 +276,6 @@ hashmap_r_get_widget_session(RealmSession &session, WidgetSession::Set &set,
 WidgetSession *
 RealmSession::GetWidget(const char *widget_id, bool create)
 try {
-	assert(crash_in_unsafe());
 	assert(widget_id != nullptr);
 
 	return hashmap_r_get_widget_session(*this, widgets, widget_id, create);
@@ -305,7 +286,6 @@ try {
 WidgetSession *
 WidgetSession::GetChild(const char *child_id, bool create)
 try {
-	assert(crash_in_unsafe());
 	assert(child_id != nullptr);
 
 	return hashmap_r_get_widget_session(session, children, child_id, create);
@@ -316,8 +296,6 @@ try {
 void
 WidgetSession::Destroy(struct dpool &pool) noexcept
 {
-	assert(crash_in_unsafe());
-
 	children.clear_and_dispose([&pool](WidgetSession *ws){
 		ws->Destroy(pool);
 	});

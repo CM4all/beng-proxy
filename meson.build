@@ -890,7 +890,6 @@ executable(
   'src/suffix_registry.cxx',
   'src/address_suffix_registry.cxx',
   'src/tcp_stock.cxx',
-  'src/crash.cxx',
   'src/istream_rubber.cxx',
   'src/sink_rubber.cxx',
   'src/lhttp_stock.cxx',
