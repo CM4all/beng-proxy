@@ -86,7 +86,7 @@ struct BpConnection;
 namespace NgHttp2 { class Stock; }
 
 struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
-	BpConfig config;
+	const BpConfig config;
 
 	uint64_t http_request_counter = 0;
 	uint64_t http_traffic_received_counter = 0;
@@ -192,7 +192,7 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	/* session */
 	TimerEvent session_save_timer;
 
-	BpInstance() noexcept;
+	explicit BpInstance(BpConfig &&_config) noexcept;
 	~BpInstance() noexcept;
 
 	void EnableSignals() noexcept;

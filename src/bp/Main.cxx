@@ -264,21 +264,21 @@ try {
 					       false);
 #endif
 
-	const ScopeFbPoolInit fb_pool_init;
-
-	BpInstance instance;
-
 	/* configuration */
 	BpCmdLine cmdline;
-	ParseCommandLine(cmdline, instance.config, argc, argv);
+	BpConfig _config;
+	ParseCommandLine(cmdline, _config, argc, argv);
 
 	if (cmdline.config_file != nullptr)
-		LoadConfigFile(instance.config, cmdline.config_file);
+		LoadConfigFile(_config, cmdline.config_file);
 
-	instance.config.Finish(cmdline.user,
-			       debug_mode ? 8080 : 80);
+	_config.Finish(cmdline.user, debug_mode ? 8080 : 80);
 
 	/* initialize */
+
+	const ScopeFbPoolInit fb_pool_init;
+
+	BpInstance instance(std::move(_config));
 
 	if (!cmdline.user.IsEmpty()) {
 		const char *runtime_directory = getenv("RUNTIME_DIRECTORY");
