@@ -34,7 +34,6 @@
 #include "Manager.hxx"
 #include "Session.hxx"
 #include "random.hxx"
-#include "crash.hxx"
 
 SessionManager *session_manager;
 
@@ -64,24 +63,10 @@ session_manager_deinit() noexcept
 	session_manager = nullptr;
 }
 
-void
-session_manager_abandon() noexcept
-{
-	assert(session_manager != nullptr);
-
-	session_manager->Abandon();
-	delete session_manager;
-	session_manager = nullptr;
-}
-
 Session *
 session_new() noexcept
 {
-	crash_unsafe_enter();
-	Session *session = session_manager->CreateSession();
-	if (session == nullptr)
-		crash_unsafe_leave();
-	return session;
+	return session_manager->CreateSession();
 }
 
 Session *
@@ -90,21 +75,13 @@ session_get(SessionId id) noexcept
 	if (!id.IsDefined())
 		return nullptr;
 
-	crash_unsafe_enter();
-
-	Session *session = session_manager->LockFind(id);
-
-	if (session == nullptr)
-		crash_unsafe_leave();
-
-	return session;
+	return session_manager->LockFind(id);
 }
 
 void
 session_put(Session *session) noexcept
 {
 	session_manager->Put(*session);
-	crash_unsafe_leave();
 }
 
 void

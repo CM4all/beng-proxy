@@ -46,7 +46,6 @@
 #include "widget/Inline.hxx"
 #include "widget/Registry.hxx"
 #include "bp/Global.hxx"
-#include "crash.hxx"
 #include "util/ScopeExit.hxx"
 #include "stopwatch.hxx"
 
@@ -94,9 +93,6 @@ public:
 
 	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
 				    UnusedIstreamPtr input) const noexcept {
-		crash_global_init();
-		AtScopeExit() { crash_global_deinit(); };
-
 		session_manager_init(event_loop, std::chrono::minutes(30), 0, 0);
 		AtScopeExit() { session_manager_deinit(); };
 

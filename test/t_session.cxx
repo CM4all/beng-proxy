@@ -33,7 +33,6 @@
 #include "bp/session/Session.hxx"
 #include "bp/session/Glue.hxx"
 #include "shm/dpool.hxx"
-#include "crash.hxx"
 #include "event/Loop.hxx"
 
 #include <gtest/gtest.h>
@@ -44,7 +43,6 @@
 
 TEST(SessionTest, Basic)
 {
-	const ScopeCrashGlobalInit crash_init;
 	EventLoop event_loop;
 
 	const ScopeSessionManagerInit sm_init(event_loop, std::chrono::minutes(30),

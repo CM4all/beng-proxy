@@ -78,11 +78,6 @@ public:
 
 	void Ref() noexcept;
 
-	void Abandon() noexcept;
-
-	gcc_pure
-	bool IsAbandoned() const noexcept;
-
 	void AdjustNewSessionId(SessionId &id) const noexcept;
 
 	/**

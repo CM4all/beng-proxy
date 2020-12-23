@@ -34,7 +34,6 @@
 #include "Session.hxx"
 #include "shm/shm.hxx"
 #include "shm/dpool.hxx"
-#include "crash.hxx"
 #include "io/Logger.hxx"
 #include "util/StaticArray.hxx"
 #include "util/RefCount.hxx"
@@ -97,13 +96,6 @@ struct SessionContainer {
 	/** this lock protects the following hash table */
 	boost::interprocess::interprocess_sharable_mutex mutex;
 
-	/**
-	 * Has the session manager been abandoned after the crash of one
-	 * worker?  If this is true, then the session manager is disabled,
-	 * and the remaining workers will be shut down soon.
-	 */
-	bool abandoned = false;
-
 	using Set =
 		boost::intrusive::unordered_set<Session,
 						boost::intrusive::member_hook<Session,
@@ -131,14 +123,6 @@ struct SessionContainer {
 	void Unref() {
 		if (ref.Put())
 			this->~SessionContainer();
-	}
-
-	void Abandon() {
-		abandoned = true;
-	}
-
-	bool IsAbandoned() const {
-		return abandoned;
 	}
 
 	unsigned Count() {
@@ -214,7 +198,6 @@ static const Session *locked_session;
 void
 SessionContainer::EraseAndDispose(Session &session)
 {
-	assert(crash_in_unsafe());
 	assert(!sessions.empty());
 
 	auto i = sessions.iterator_to(session);
@@ -224,18 +207,11 @@ SessionContainer::EraseAndDispose(Session &session)
 inline bool
 SessionContainer::Cleanup() noexcept
 {
-	assert(!crash_in_unsafe());
 	assert(locked_session == nullptr);
 
 	const Expiry now = Expiry::Now();
 
-	const ScopeCrashUnsafe crash_unsafe;
 	boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
-
-	if (abandoned) {
-		assert(!crash_in_unsafe());
-		return false;
-	}
 
 	EraseAndDisposeIf(sessions, [now](const Session &session){
 		return session.expires.IsExpired(now);
@@ -270,21 +246,6 @@ SessionManager::Ref() noexcept
 
 	container->Ref();
 	shm_ref(shm);
-}
-
-void
-SessionManager::Abandon() noexcept
-{
-	assert(container != nullptr);
-	assert(shm != nullptr);
-
-	container->Abandon();
-}
-
-bool
-SessionManager::IsAbandoned() const noexcept
-{
-	return container == nullptr || container->abandoned;
 }
 
 void
@@ -363,8 +324,6 @@ SessionManager::Cleanup() noexcept
 {
 	if (container->Cleanup())
 		cleanup_timer.Schedule(cleanup_interval);
-
-	assert(!crash_in_unsafe());
 }
 
 struct dpool *
@@ -376,7 +335,6 @@ SessionManager::NewDpool() noexcept
 inline
 SessionContainer::~SessionContainer()
 {
-	const ScopeCrashUnsafe crash_unsafe;
 	boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
 	sessions.clear_and_dispose(Session::Disposer());
@@ -391,7 +349,6 @@ SessionContainer::Purge() noexcept
 
 	assert(locked_session == nullptr);
 
-	const ScopeCrashUnsafe crash_unsafe;
 	boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
 	for (auto &session : sessions) {
@@ -450,11 +407,7 @@ SessionManager::GenerateSessionId() const noexcept
 Session *
 SessionManager::CreateSession() noexcept
 {
-	assert(crash_in_unsafe());
 	assert(locked_session == nullptr);
-
-	if (IsAbandoned())
-		return nullptr;
 
 	struct dpool *pool = NewDpoolHarder();
 	if (pool == nullptr)
@@ -488,8 +441,6 @@ SessionManager::CreateSession() noexcept
 void
 SessionContainer::Defragment(Session &src, struct shm &shm)
 {
-	assert(crash_in_unsafe());
-
 	struct dpool *pool = dpool_new(shm);
 	if (pool == nullptr)
 		return;
@@ -508,10 +459,6 @@ SessionContainer::Defragment(Session &src, struct shm &shm)
 Session *
 SessionContainer::Find(SessionId id)
 {
-	if (abandoned)
-		return nullptr;
-
-	assert(crash_in_unsafe());
 	assert(locked_session == nullptr);
 
 	if (!id.IsDefined())
@@ -536,7 +483,6 @@ SessionContainer::Find(SessionId id)
 void
 SessionContainer::Put(Session &session) noexcept
 {
-	assert(crash_in_unsafe());
 	assert(&session == locked_session);
 
 	session.mutex.unlock();
@@ -549,8 +495,6 @@ SessionContainer::Put(Session &session) noexcept
 void
 SessionManager::Put(Session &session) noexcept
 {
-	assert(crash_in_unsafe());
-
 	SessionId defragment;
 
 	if ((session.counter % 1024) == 0 &&
@@ -571,8 +515,6 @@ SessionManager::Put(Session &session) noexcept
 void
 SessionContainer::Defragment(SessionId id, struct shm &shm)
 {
-	assert(crash_in_unsafe());
-
 	Session *session = Find(id);
 	if (session == nullptr)
 		return;
@@ -592,7 +534,6 @@ SessionContainer::LockEraseAndDispose(SessionId id)
 {
 	assert(locked_session == nullptr);
 
-	const ScopeCrashUnsafe crash_unsafe;
 	boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
 	Session *session = Find(id);
@@ -606,12 +547,7 @@ inline bool
 SessionContainer::Visit(bool (*callback)(const Session *session,
 					 void *ctx), void *ctx)
 {
-	const ScopeCrashUnsafe crash_unsafe;
 	boost::interprocess::sharable_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
-
-	if (abandoned) {
-		return false;
-	}
 
 	const Expiry now = Expiry::Now();
 

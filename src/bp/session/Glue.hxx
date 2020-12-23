@@ -65,13 +65,6 @@ void
 session_manager_deinit() noexcept;
 
 /**
- * Release the session manager and try not to access the shared
- * memory, because we assume it may be corrupted.
- */
-void
-session_manager_abandon() noexcept;
-
-/**
  * Create a new session with a random session id.
  *
  * The returned session object is locked and must be unlocked with

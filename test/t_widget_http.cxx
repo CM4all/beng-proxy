@@ -46,7 +46,6 @@
 #include "bp/CssProcessor.hxx"
 #include "bp/TextProcessor.hxx"
 #include "translation/Transformation.hxx"
-#include "crash.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_null.hxx"
@@ -280,7 +279,6 @@ TEST(WidgetHttpTest, CookieClient)
 	PInstance instance;
 	struct pool *pool = instance.root_pool;
 
-	const ScopeCrashGlobalInit crash_init;
 	const ScopeSessionManagerInit sm_init(instance.event_loop,
 					      std::chrono::minutes(30),
 					      0, 0);
