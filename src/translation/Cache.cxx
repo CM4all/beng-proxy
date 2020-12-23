@@ -62,7 +62,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#define MAX_CACHE_CHECK 256
 #define MAX_CACHE_WFU 256
 static constexpr size_t MAX_CONTENT_TYPE_LOOKUP = 256;
 static constexpr size_t MAX_CHAIN = 256;
@@ -532,7 +531,6 @@ TranslateCachePerSite::Erase(TranslateCacheItem &item)
 static const char *
 tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	       http_status_t status,
-	       ConstBuffer<void> check,
 	       ConstBuffer<void> want_full_uri,
 	       ConstBuffer<void> probe_path_suffixes,
 	       const char *probe_suffix,
@@ -583,12 +581,6 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	if (!want_full_uri.IsNull()) {
 		b.push_back("|WFU=");
 		b.emplace_back(wfu_buffer, UriEscape(wfu_buffer, want_full_uri));
-	}
-
-	char check_buffer[MAX_CACHE_CHECK * 3];
-	if (!check.IsNull()) {
-		b.push_back("|CHECK=");
-		b.emplace_back(check_buffer, UriEscape(check_buffer, check));
 	}
 
 	if (host != nullptr) {
@@ -661,7 +653,7 @@ tcache_request_key(AllocatorPtr alloc, const TranslateRequest &request)
 	return request.uri != nullptr
 		? tcache_uri_key(alloc, request.uri, request.host,
 				 request.status,
-				 request.check, request.want_full_uri,
+				 request.want_full_uri,
 				 request.probe_path_suffixes, request.probe_suffix,
 				 request.directory_index,
 				 request.file_not_found,
@@ -681,7 +673,6 @@ tcache_request_evaluate(const TranslateRequest &request)
 		request.http_auth.IsNull() && // TODO: allow caching HTTP_AUTH
 		request.token_auth.IsNull() && // TODO: allow caching TOKEN_AUTH
 		request.auth.IsNull() &&
-		request.check.size < MAX_CACHE_CHECK &&
 		request.want_full_uri.size <= MAX_CACHE_WFU &&
 		request.probe_path_suffixes.size <= MAX_PROBE_PATH_SUFFIXES &&
 		request.file_not_found.size <= MAX_FILE_NOT_FOUND &&
@@ -788,7 +779,7 @@ tcache_store_response(AllocatorPtr alloc, TranslateResponse &dest,
 		/* generate a new cache key for the BASE */
 		? tcache_uri_key(alloc, dest.base, request.host,
 				 request.status,
-				 request.check, request.want_full_uri,
+				 request.want_full_uri,
 				 request.probe_path_suffixes, request.probe_suffix,
 				 request.directory_index,
 				 request.file_not_found,

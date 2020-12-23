@@ -54,11 +54,6 @@ struct MakeRequest : TranslateRequest {
 		return std::move(*this);
 	}
 
-	MakeRequest &&Check(const char *value) {
-		check = {value, strlen(value)};
-		return std::move(*this);
-	}
-
 	MakeRequest &&WantFullUri(const char *value) {
 		want_full_uri = {value, strlen(value)};
 		return std::move(*this);
@@ -238,11 +233,6 @@ struct MakeResponse : TranslateResponse {
 	template<size_t n>
 	MakeResponse &&Invalidate(const TranslationCommand (&_invalidate)[n]) {
 		invalidate = {_invalidate, n};
-		return std::move(*this);
-	}
-
-	MakeResponse &&Check(const char *value) {
-		check = {value, strlen(value)};
 		return std::move(*this);
 	}
 
