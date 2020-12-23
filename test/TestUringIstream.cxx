@@ -134,6 +134,10 @@ try {
 	}
 
 	uring.DispatchCompletions();
+
+	// TODO: fix this race properly
+	if (uring.HasPending())
+		uring.WaitDispatchOneCompletion();
 } catch (const std::system_error &e) {
 	if (IsErrno(e, ENOSYS))
 		GTEST_SKIP();
@@ -158,6 +162,10 @@ try {
 	}
 
 	uring.DispatchCompletions();
+
+	// TODO: fix this race properly
+	if (uring.HasPending())
+	    uring.WaitDispatchOneCompletion();
 } catch (const std::system_error &e) {
 	if (IsErrno(e, ENOSYS))
 		GTEST_SKIP();
