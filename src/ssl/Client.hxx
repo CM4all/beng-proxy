@@ -37,24 +37,50 @@
 #pragma once
 
 #include "AlpnClient.hxx"
+#include "ssl/Ctx.hxx"
 #include "fs/Ptr.hxx"
+#include "util/Compiler.h"
+
+#include <memory>
 
 struct SslClientConfig;
 class EventLoop;
+class SslClientCerts;
 
-void
-ssl_client_init(const SslClientConfig &config);
+class SslClientFactory {
+	SslCtx ctx;
+	std::unique_ptr<SslClientCerts> certs;
 
-void
-ssl_client_deinit();
+	static inline int idx = -1;
 
-/**
- * Throws std::runtime_error on error.
- *
- * @param certificate the name of the client certificate to be used
- */
-SocketFilterPtr
-ssl_client_create(EventLoop &event_loop,
-		  const char *hostname,
-		  const char *certificate,
-		  SslClientAlpn alpn=SslClientAlpn::NONE);
+public:
+	explicit SslClientFactory(const SslClientConfig &config);
+	~SslClientFactory() noexcept;
+
+	/**
+	 * Throws on error.
+	 *
+	 * @param certificate the name of the client certificate to be
+	 * used
+	 */
+	SocketFilterPtr Create(EventLoop &event_loop,
+			       const char *hostname,
+			       const char *certificate,
+			       SslClientAlpn alpn=SslClientAlpn::NONE);
+
+private:
+	gcc_const
+	static SslClientFactory &GetFactory(SSL_CTX *ssl_ctx) noexcept {
+		return *(SslClientFactory *)SSL_CTX_get_ex_data(ssl_ctx, idx);
+	}
+
+	gcc_const
+	static SslClientFactory &GetFactory(SSL *ssl) noexcept {
+		return GetFactory(SSL_get_SSL_CTX(ssl));
+	}
+
+	int ClientCertCallback_(SSL *ssl, X509 **x509,
+				EVP_PKEY **pkey) noexcept;
+	static int ClientCertCallback(SSL *ssl, X509 **x509,
+				      EVP_PKEY **pkey) noexcept;
+};

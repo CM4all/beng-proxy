@@ -60,6 +60,7 @@ class ResourceLoader;
 class StockMap;
 class TcpStock;
 class TcpBalancer;
+class SslClientFactory;
 class FilteredSocketStock;
 class FilteredSocketBalancer;
 class SpawnService;
@@ -155,6 +156,8 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 
 	TcpStock *tcp_stock = nullptr;
 	TcpBalancer *tcp_balancer = nullptr;
+
+	std::unique_ptr<SslClientFactory> ssl_client_factory;
 
 	FilteredSocketStock *fs_stock = nullptr;
 	FilteredSocketBalancer *fs_balancer = nullptr;

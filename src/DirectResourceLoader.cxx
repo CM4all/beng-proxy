@@ -264,12 +264,16 @@ try {
 
 	case ResourceAddress::Type::HTTP:
 		if (address.GetHttp().ssl) {
+			if (ssl_client_factory == nullptr)
+				throw std::runtime_error("SSL support is disabled");
+
 			auto alpn = address.GetHttp().http2
 				? SslClientAlpn::HTTP_2
 				: SslClientAlpn::NONE;
 
 			filter_factory = NewFromPool<SslSocketFilterFactory>(pool,
 									     event_loop,
+									     *ssl_client_factory,
 									     GetHostWithoutPort(pool, address.GetHttp()),
 									     address.GetHttp().certificate,
 									     alpn);

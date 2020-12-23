@@ -54,6 +54,7 @@
 #include "was/Stock.hxx"
 #include "delegate/Stock.hxx"
 #include "tcp_stock.hxx"
+#include "ssl/Client.hxx"
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
 #include "nghttp2/Stock.hxx"
@@ -142,6 +143,7 @@ BpInstance::FreeStocksAndCaches() noexcept
 #ifdef HAVE_NGHTTP2
 	delete std::exchange(nghttp2_stock, nullptr);
 #endif
+	ssl_client_factory.reset();
 
 	delete std::exchange(tcp_balancer, nullptr);
 

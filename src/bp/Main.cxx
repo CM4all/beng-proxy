@@ -299,7 +299,8 @@ try {
 		instance.ua_classification = std::make_unique<UserAgentClassList>(ua_classification_init(cmdline.ua_classification_file));
 
 	const ScopeSslGlobalInit ssl_init;
-	ssl_client_init(instance.config.ssl_client);
+	instance.ssl_client_factory =
+		std::make_unique<SslClientFactory>(instance.config.ssl_client);
 
 	direct_global_init();
 
@@ -473,11 +474,11 @@ try {
 #ifdef HAVE_LIBWAS
 					 instance.was_stock,
 #endif
-					 instance.delegate_stock
+					 instance.delegate_stock,
 #ifdef HAVE_LIBNFS
-					 , instance.nfs_cache
+					 instance.nfs_cache,
 #endif
-					 );
+					 instance.ssl_client_factory.get());
 
 	if (instance.config.http_cache_size > 0) {
 		instance.http_cache = http_cache_new(instance.root_pool,
@@ -555,8 +556,6 @@ try {
 	/* cleanup */
 
 	thread_pool_deinit();
-
-	ssl_client_deinit();
 } catch (...) {
 	PrintException(std::current_exception());
 	return EXIT_FAILURE;

@@ -45,6 +45,7 @@ class NfsCache;
 class TcpBalancer;
 namespace Uring { class Queue; }
 class FilteredSocketBalancer;
+class SslClientFactory;
 namespace NgHttp2 { class Stock; }
 
 /**
@@ -71,6 +72,7 @@ class DirectResourceLoader final : public ResourceLoader {
 #ifdef HAVE_LIBNFS
 	NfsCache *nfs_cache;
 #endif
+	SslClientFactory *const ssl_client_factory;
 
 public:
 	DirectResourceLoader(EventLoop &_event_loop,
@@ -88,11 +90,11 @@ public:
 #ifdef HAVE_LIBWAS
 			     WasStock *_was_stock,
 #endif
-			     StockMap *_delegate_stock
+			     StockMap *_delegate_stock,
 #ifdef HAVE_LIBNFS
-			     , NfsCache *_nfs_cache
+			     NfsCache *_nfs_cache,
 #endif
-			     ) noexcept
+			     SslClientFactory *_ssl_client_factory) noexcept
 		:event_loop(_event_loop),
 #ifdef HAVE_URING
 		 uring(_uring),
@@ -108,10 +110,11 @@ public:
 #ifdef HAVE_LIBWAS
 		 was_stock(_was_stock),
 #endif
-		 delegate_stock(_delegate_stock)
+		 delegate_stock(_delegate_stock),
 #ifdef HAVE_LIBNFS
-		, nfs_cache(_nfs_cache)
+		 nfs_cache(_nfs_cache),
 #endif
+		 ssl_client_factory(_ssl_client_factory)
 	{
 	}
 

@@ -35,7 +35,6 @@
 #include "Filter.hxx"
 #include "AlpnProtos.hxx"
 #include "ssl/Basic.hxx"
-#include "ssl/Ctx.hxx"
 #include "ssl/LoadFile.hxx"
 #include "ssl/Error.hxx"
 #include "io/Logger.hxx"
@@ -75,23 +74,28 @@ public:
 	}
 };
 
-static SslCtx ssl_client_ctx;
-static SslClientCerts *ssl_client_certs;
-
-static int
-ssl_client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey) noexcept
+inline int
+SslClientFactory::ClientCertCallback_(SSL *ssl, X509 **x509,
+				      EVP_PKEY **pkey) noexcept
 {
-	assert(ssl_client_certs != nullptr);
+	assert(certs != nullptr);
 
 	const auto cas = SSL_get_client_CA_list(ssl);
 	if (cas == nullptr)
 		return 0;
 
 	for (unsigned i = 0, n = sk_X509_NAME_num(cas); i < n; ++i)
-		if (ssl_client_certs->Find(*sk_X509_NAME_value(cas, i), x509, pkey))
+		if (certs->Find(*sk_X509_NAME_value(cas, i), x509, pkey))
 			return 1;
 
 	return 0;
+}
+
+int
+SslClientFactory::ClientCertCallback(SSL *ssl, X509 **x509,
+				     EVP_PKEY **pkey) noexcept
+{
+	return GetFactory(ssl).ClientCertCallback_(ssl, x509, pkey);
 }
 
 static auto
@@ -147,35 +151,29 @@ SslClientCerts::Find(X509_NAME &name,
 	return true;
 }
 
-void
-ssl_client_init(const SslClientConfig &config)
+SslClientFactory::SslClientFactory(const SslClientConfig &config)
+	:ctx(CreateBasicSslCtx(false))
 {
-	try {
-		ssl_client_ctx = CreateBasicSslCtx(false);
-	} catch (const SslError &e) {
-		LogConcat(1, "ssl_client", "ssl_factory_new() failed: ", e.what());
-	}
+	if (idx < 0)
+		idx = SSL_CTX_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+
+	SSL_CTX_set_ex_data(ctx.get(), idx, this);
 
 	if (!config.cert_key.empty()) {
-		ssl_client_certs = new SslClientCerts(config.cert_key);
-		SSL_CTX_set_client_cert_cb(ssl_client_ctx.get(), ssl_client_cert_cb);
+		certs = std::make_unique<SslClientCerts>(config.cert_key);
+		SSL_CTX_set_client_cert_cb(ctx.get(), ClientCertCallback);
 	}
 }
 
-void
-ssl_client_deinit()
-{
-	ssl_client_ctx.reset();
-	delete std::exchange(ssl_client_certs, nullptr);
-}
+SslClientFactory::~SslClientFactory() noexcept = default;
 
 SocketFilterPtr
-ssl_client_create(EventLoop &event_loop,
-		  const char *hostname,
-		  const char *certificate,
-		  SslClientAlpn alpn)
+SslClientFactory::Create(EventLoop &event_loop,
+			 const char *hostname,
+			 const char *certificate,
+			 SslClientAlpn alpn)
 {
-	UniqueSSL ssl(SSL_new(ssl_client_ctx.get()));
+	UniqueSSL ssl(SSL_new(ctx.get()));
 	if (!ssl)
 		throw SslError("SSL_new() failed");
 
@@ -200,8 +198,8 @@ ssl_client_create(EventLoop &event_loop,
 		SSL_set_tlsext_host_name(ssl.get(), const_cast<char *>(hostname));
 
 	if (certificate != nullptr) {
-		const auto *c = ssl_client_certs != nullptr
-			? ssl_client_certs->FindByConfiguredName(certificate)
+		const auto *c = certs != nullptr
+			? certs->FindByConfiguredName(certificate)
 			: nullptr;
 		if (c == nullptr)
 			throw std::runtime_error("Selected certificate not found in configuration");

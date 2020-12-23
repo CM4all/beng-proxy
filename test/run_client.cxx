@@ -159,6 +159,9 @@ struct Context final
 
 	PoolPtr pool;
 
+	const ScopeSslGlobalInit ssl_init;
+	SslClientFactory ssl_client_factory{SslClientConfig{}};
+
 #ifdef HAVE_NGHTTP2
 	std::unique_ptr<NgHttp2::ClientConnection> nghttp2_client;
 #endif
@@ -363,9 +366,9 @@ try {
 #endif
 		}
 
-		socket_filter = ssl_client_create(event_loop,
-						  GetHostWithoutPort(*pool, url),
-						  nullptr, alpn);
+		socket_filter = ssl_client_factory.Create(event_loop,
+							  GetHostWithoutPort(*pool, url),
+							  nullptr, alpn);
 	}
 
 	std::unique_ptr<FilteredSocket> fsp;
@@ -446,9 +449,6 @@ try {
 	SetupProcess();
 	const ScopeFbPoolInit fb_pool_init;
 
-	const ScopeSslGlobalInit ssl_init;
-	ssl_client_init(SslClientConfig());
-
 	/* connect socket */
 
 	static constexpr auto hints = MakeAddrInfo(AI_ADDRCONFIG, AF_UNSPEC,
@@ -492,8 +492,6 @@ try {
 
 	ctx.pool.reset();
 	pool_commit();
-
-	ssl_client_deinit();
 
 	return ctx.got_response && ctx.body_eof ? EXIT_SUCCESS : EXIT_FAILURE;
 } catch (const std::exception &e) {
