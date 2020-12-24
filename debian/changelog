@@ -11,7 +11,7 @@ cm4all-beng-proxy (17.0.40) unstable; urgency=low
   * python: full Python 3 compatibility
   * debian: move postinst code to sysusers.d and tmpfiles.d
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 24 Dec 2020 07:38:27 +0100
 
 cm4all-beng-proxy (17.0.39) unstable; urgency=low
 
