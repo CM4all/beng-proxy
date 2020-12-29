@@ -69,14 +69,17 @@ struct ProxyWidget final : PoolLeakDetector, WidgetLookupHandler, HttpResponseHa
 	 */
 	const WidgetRef *ref;
 
+	const SharedPoolPtr<WidgetContext> ctx;
+
 	CancellablePointer cancel_ptr;
 
 	ProxyWidget(Request &_request, Widget &_widget,
-		    const WidgetRef *_ref)
+		    const WidgetRef *_ref,
+		    SharedPoolPtr<WidgetContext> _ctx) noexcept
 		:PoolLeakDetector(_request.pool),
 		 request(_request),
 		 view_name(request.args.Remove("view")),
-		 widget(&_widget), ref(_ref) {
+		 widget(&_widget), ref(_ref), ctx(std::move(_ctx)) {
 	}
 
 	void Destroy() noexcept {
@@ -199,9 +202,7 @@ ProxyWidget::Continue()
 	}
 
 	if (ref != nullptr) {
-		frame_parent_widget(request.pool, *widget,
-				    ref->id,
-				    request.MakeWidgetContext(),
+		frame_parent_widget(request.pool, *widget, ref->id, ctx,
 				    request.stopwatch,
 				    *this, cancel_ptr);
 	} else {
@@ -254,8 +255,7 @@ ProxyWidget::Continue()
 
 		widget->from_request.frame = true;
 
-		frame_top_widget(request.pool, *widget,
-				 request.MakeWidgetContext(),
+		frame_top_widget(request.pool, *widget, ctx,
 				 request.stopwatch,
 				 *this,
 				 cancel_ptr);
@@ -353,6 +353,7 @@ void
 proxy_widget(Request &request2,
 	     UnusedIstreamPtr body,
 	     Widget &widget, const WidgetRef *proxy_ref,
+	     SharedPoolPtr<WidgetContext> ctx,
 	     unsigned options)
 {
 	assert(!widget.from_request.frame);
@@ -360,13 +361,13 @@ proxy_widget(Request &request2,
 	assert(body);
 
 	auto proxy = NewFromPool<ProxyWidget>(request2.pool, request2,
-					      widget, proxy_ref);
+					      widget, proxy_ref, ctx);
 
 	request2.cancel_ptr = *proxy;
 
 	processor_lookup_widget(request2.pool, request2.stopwatch,
 				std::move(body),
 				widget, proxy_ref->id,
-				request2.MakeWidgetContext(), options,
+				std::move(ctx), options,
 				*proxy, proxy->cancel_ptr);
 }

@@ -301,10 +301,9 @@ Request::InvokeXmlProcessor(http_status_t status,
 	if (proxy_ref != nullptr) {
 		/* the client requests a widget in proxy mode */
 
-		ctx.reset();
-
 		proxy_widget(*this, std::move(response_body),
 			     widget, proxy_ref,
+			     std::move(ctx),
 			     transformation.u.processor.options);
 	} else {
 		/* the client requests the whole template */

@@ -38,11 +38,14 @@
 
 class UnusedIstreamPtr;
 class Request;
+template<typename T> class SharedPoolPtr;
 class Widget;
 struct WidgetRef;
+struct WidgetContext;
 
 void
 proxy_widget(Request &request2,
 	     UnusedIstreamPtr body,
 	     Widget &widget, const WidgetRef *proxy_ref,
+	     SharedPoolPtr<WidgetContext> ctx,
 	     unsigned options);
