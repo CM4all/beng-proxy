@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -55,7 +55,6 @@
 #include "util/LimitedConcurrencyQueue.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringFormat.hxx"
-#include "util/Exception.hxx"
 #include "stopwatch.hxx"
 
 #include <assert.h>
@@ -298,35 +297,26 @@ InlineWidget::Cancel() noexcept
 
 void
 InlineWidget::SendRequest() noexcept
-{
+try {
 	assert(throttle_job.IsRunning());
 
-	if (!widget.CheckApproval()) {
-		WidgetError error(*widget.parent, WidgetErrorCode::FORBIDDEN,
+	if (!widget.CheckApproval())
+		throw WidgetError(*widget.parent, WidgetErrorCode::FORBIDDEN,
 				  StringFormat<256>("not allowed to embed widget class '%s'",
 						    widget.class_name));
-		widget.Cancel();
-		Fail(std::make_exception_ptr(error));
-		return;
-	}
 
 	try {
 		widget.CheckHost(ctx->untrusted_host, ctx->site_name);
-	} catch (const std::runtime_error &e) {
-		WidgetError error(widget, WidgetErrorCode::FORBIDDEN, "Untrusted host");
-		widget.Cancel();
-		Fail(NestException(std::current_exception(), error));
-		return;
+	} catch (...) {
+		std::throw_with_nested(WidgetError(widget,
+						   WidgetErrorCode::FORBIDDEN,
+						   "Untrusted host"));
 	}
 
-	if (!widget.HasDefaultView()) {
-		WidgetError error(widget, WidgetErrorCode::NO_SUCH_VIEW,
+	if (!widget.HasDefaultView())
+		throw WidgetError(widget, WidgetErrorCode::NO_SUCH_VIEW,
 				  StringFormat<256>("No such view: %s",
 						    widget.from_template.view_name));
-		widget.Cancel();
-		Fail(std::make_exception_ptr(error));
-		return;
-	}
 
 	if (widget.session_sync_pending) {
 		auto session = ctx->GetRealmSession();
@@ -340,6 +330,9 @@ InlineWidget::SendRequest() noexcept
 	widget_http_request(pool, widget, ctx,
 			    parent_stopwatch,
 			    *this, cancel_ptr);
+} catch (...) {
+	widget.Cancel();
+	Fail(std::current_exception());
 }
 
 
