@@ -32,6 +32,8 @@
 
 #include "Widget.hxx"
 #include "Class.hxx"
+#include "Error.hxx"
+#include "util/StringFormat.hxx"
 
 bool
 Widget::InitApproval(bool self_container) noexcept
@@ -86,8 +88,8 @@ widget_check_group_approval(const Widget *widget) noexcept
 	return widget->parent->cls->MayEmbed(*widget->cls);
 }
 
-bool
-Widget::CheckApproval() noexcept
+void
+Widget::CheckApproval()
 {
 	assert(parent != nullptr);
 
@@ -96,5 +98,8 @@ Widget::CheckApproval() noexcept
 			? Approval::GIVEN
 			: Approval::DENIED;
 
-	return approval == Approval::GIVEN;
+	if (approval != Approval::GIVEN)
+		throw WidgetError(*parent, WidgetErrorCode::FORBIDDEN,
+				  StringFormat<256>("not allowed to embed widget class '%s'",
+						    class_name));
 }

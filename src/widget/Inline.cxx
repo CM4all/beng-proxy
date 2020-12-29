@@ -300,10 +300,7 @@ InlineWidget::SendRequest() noexcept
 try {
 	assert(throttle_job.IsRunning());
 
-	if (!widget.CheckApproval())
-		throw WidgetError(*widget.parent, WidgetErrorCode::FORBIDDEN,
-				  StringFormat<256>("not allowed to embed widget class '%s'",
-						    widget.class_name));
+	widget.CheckApproval();
 
 	try {
 		widget.CheckHost(ctx->untrusted_host, ctx->site_name);

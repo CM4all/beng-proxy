@@ -39,7 +39,6 @@
 #include "HttpResponseHandler.hxx"
 #include "pool/SharedPtr.hxx"
 #include "bp/session/Session.hxx"
-#include "util/StringFormat.hxx"
 
 #include <assert.h>
 
@@ -54,11 +53,7 @@ try {
 	assert(widget.HasDefaultView());
 	assert(widget.from_request.frame);
 
-	if (!widget.CheckApproval())
-		throw WidgetError(*widget.parent, WidgetErrorCode::FORBIDDEN,
-				  StringFormat<256>("widget '%s' is not allowed to embed widget '%s'",
-						    widget.parent->GetLogName(),
-						    widget.GetLogName()));
+	widget.CheckApproval();
 
 	try {
 		widget.CheckHost(ctx->untrusted_host, ctx->site_name);
@@ -102,14 +97,7 @@ frame_parent_widget(struct pool &pool, Widget &widget, const char *id,
 					  "frame within non-container requested");
 		}
 
-		if (!widget.CheckApproval()) {
-			char msg[256];
-			snprintf(msg, sizeof(msg),
-				 "widget '%s' is not allowed to embed widget '%s'",
-				 widget.parent->GetLogName(),
-				 widget.GetLogName());
-			throw WidgetError(WidgetErrorCode::FORBIDDEN, msg);
-		}
+		widget.CheckApproval();
 	} catch (...) {
 		widget.Cancel();
 		handler.WidgetLookupError(std::current_exception());

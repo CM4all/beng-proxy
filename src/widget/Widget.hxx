@@ -486,10 +486,9 @@ public:
 	 * widget's group is only known after its widget class has
 	 * been looked up.
 	 *
-	 * @return true if the widget is approved
+	 * Throws if the widget is not approved.
 	 */
-	gcc_pure
-	bool CheckApproval() noexcept;
+	void CheckApproval();
 
 	/**
 	 * Free important resources associated with the widget.  A widget
