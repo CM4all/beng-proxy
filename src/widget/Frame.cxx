@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -103,9 +103,6 @@ frame_parent_widget(struct pool &pool, Widget &widget, const char *id,
 		if (!widget.IsContainer()) {
 			/* this widget cannot possibly be the parent of a framed
 			   widget if it is not a container */
-
-			widget.Cancel();
-
 			throw WidgetError(WidgetErrorCode::NOT_A_CONTAINER,
 					  "frame within non-container requested");
 		}
@@ -116,12 +113,10 @@ frame_parent_widget(struct pool &pool, Widget &widget, const char *id,
 				 "widget '%s' is not allowed to embed widget '%s'",
 				 widget.parent->GetLogName(),
 				 widget.GetLogName());
-
-			widget.Cancel();
-
 			throw WidgetError(WidgetErrorCode::FORBIDDEN, msg);
 		}
 	} catch (...) {
+		widget.Cancel();
 		handler.WidgetLookupError(std::current_exception());
 		return;
 	}
