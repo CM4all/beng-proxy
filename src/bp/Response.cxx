@@ -363,6 +363,7 @@ Request::InvokeCssProcessor(http_status_t status,
 		logger(2, "refusing to render template on untrusted domain '",
 		       translate.response->untrusted, "'");
 		response_body.Clear();
+		ctx.reset();
 		DispatchError(HTTP_STATUS_FORBIDDEN, "Forbidden");
 		return;
 	}
@@ -410,6 +411,7 @@ Request::InvokeTextProcessor(http_status_t status,
 		logger(2, "refusing to render template on untrusted domain '",
 		       translate.response->untrusted, "'");
 		response_body.Clear();
+		ctx.reset();
 		DispatchError(HTTP_STATUS_FORBIDDEN, "Forbidden");
 		return;
 	}
