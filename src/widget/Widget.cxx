@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 Content Management AG
+ * Copyright 2007-2020 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,6 +34,7 @@
 #include "Class.hxx"
 #include "View.hxx"
 #include "Ref.hxx"
+#include "Error.hxx"
 #include "pool/tpool.hxx"
 #include "util/HexFormat.h"
 #include "util/Cast.hxx"
@@ -216,7 +217,13 @@ Widget::CheckHost(const char *host, const char *site_name) const
 {
 	assert(cls != nullptr);
 
-	cls->CheckHost(host, site_name);
+	try {
+		cls->CheckHost(host, site_name);
+	} catch (...) {
+		std::throw_with_nested(WidgetError(*this,
+						   WidgetErrorCode::FORBIDDEN,
+						   "Untrusted host"));
+	}
 }
 
 bool

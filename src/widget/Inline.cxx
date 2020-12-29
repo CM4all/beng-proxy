@@ -301,14 +301,7 @@ try {
 	assert(throttle_job.IsRunning());
 
 	widget.CheckApproval();
-
-	try {
-		widget.CheckHost(ctx->untrusted_host, ctx->site_name);
-	} catch (...) {
-		std::throw_with_nested(WidgetError(widget,
-						   WidgetErrorCode::FORBIDDEN,
-						   "Untrusted host"));
-	}
+	widget.CheckHost(ctx->untrusted_host, ctx->site_name);
 
 	if (!widget.HasDefaultView())
 		throw WidgetError(widget, WidgetErrorCode::NO_SUCH_VIEW,

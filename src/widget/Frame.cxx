@@ -54,13 +54,7 @@ try {
 	assert(widget.from_request.frame);
 
 	widget.CheckApproval();
-
-	try {
-		widget.CheckHost(ctx->untrusted_host, ctx->site_name);
-	} catch (...) {
-		std::throw_with_nested(WidgetError(widget, WidgetErrorCode::FORBIDDEN,
-						   "Untrusted host"));
-	}
+	widget.CheckHost(ctx->untrusted_host, ctx->site_name);
 
 	if (widget.session_sync_pending) {
 		auto session = ctx->GetRealmSession();
