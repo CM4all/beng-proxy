@@ -64,6 +64,7 @@ frame_top_widget(struct pool &pool, Widget &widget,
 						    widget.parent->GetLogName(),
 						    widget.GetLogName()));
 		widget.Cancel();
+		ctx.reset();
 		handler.InvokeError(std::make_exception_ptr(error));
 		return;
 	}
@@ -74,6 +75,7 @@ frame_top_widget(struct pool &pool, Widget &widget,
 		WidgetError error(widget, WidgetErrorCode::FORBIDDEN,
 				  "Untrusted host");
 		widget.Cancel();
+		ctx.reset();
 		handler.InvokeError(NestException(std::current_exception(), error));
 		return;
 	}
@@ -108,6 +110,7 @@ frame_parent_widget(struct pool &pool, Widget &widget, const char *id,
 			   widget if it is not a container */
 
 			widget.Cancel();
+			ctx.reset();
 
 			throw WidgetError(WidgetErrorCode::NOT_A_CONTAINER,
 					  "frame within non-container requested");
@@ -121,6 +124,7 @@ frame_parent_widget(struct pool &pool, Widget &widget, const char *id,
 				 widget.GetLogName());
 
 			widget.Cancel();
+			ctx.reset();
 
 			throw WidgetError(WidgetErrorCode::FORBIDDEN, msg);
 		}

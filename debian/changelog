@@ -5,6 +5,7 @@ cm4all-beng-proxy (16.30) unstable; urgency=low
   * bp/control: flush widget cache in TCACHE_INVALIDATE
   * bp: parse all "Cookie" request headers
   * bp: reseed the session id PRNG periodically
+  * bp: fix assertion failure
   * ssl: at most one worker thread per CPU
   * spawn: don't share DBus connection with main process
   * debian: restart after upgrade
