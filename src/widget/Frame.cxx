@@ -39,7 +39,6 @@
 #include "HttpResponseHandler.hxx"
 #include "pool/SharedPtr.hxx"
 #include "bp/session/Session.hxx"
-#include "util/Exception.hxx"
 #include "util/StringFormat.hxx"
 
 #include <assert.h>
@@ -50,29 +49,22 @@ frame_top_widget(struct pool &pool, Widget &widget,
 		 const StopwatchPtr &parent_stopwatch,
 		 HttpResponseHandler &handler,
 		 CancellablePointer &cancel_ptr)
-{
+try {
 	assert(widget.cls != nullptr);
 	assert(widget.HasDefaultView());
 	assert(widget.from_request.frame);
 
-	if (!widget.CheckApproval()) {
-		WidgetError error(*widget.parent, WidgetErrorCode::FORBIDDEN,
+	if (!widget.CheckApproval())
+		throw WidgetError(*widget.parent, WidgetErrorCode::FORBIDDEN,
 				  StringFormat<256>("widget '%s' is not allowed to embed widget '%s'",
 						    widget.parent->GetLogName(),
 						    widget.GetLogName()));
-		widget.Cancel();
-		handler.InvokeError(std::make_exception_ptr(error));
-		return;
-	}
 
 	try {
 		widget.CheckHost(ctx->untrusted_host, ctx->site_name);
 	} catch (...) {
-		WidgetError error(widget, WidgetErrorCode::FORBIDDEN,
-				  "Untrusted host");
-		widget.Cancel();
-		handler.InvokeError(NestException(std::current_exception(), error));
-		return;
+		std::throw_with_nested(WidgetError(widget, WidgetErrorCode::FORBIDDEN,
+						   "Untrusted host"));
 	}
 
 	if (widget.session_sync_pending) {
@@ -85,6 +77,9 @@ frame_top_widget(struct pool &pool, Widget &widget,
 
 	widget_http_request(pool, widget, std::move(ctx), parent_stopwatch,
 			    handler, cancel_ptr);
+} catch (...) {
+	widget.Cancel();
+	handler.InvokeError(std::current_exception());
 }
 
 void
