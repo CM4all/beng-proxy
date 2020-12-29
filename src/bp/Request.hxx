@@ -646,9 +646,9 @@ public:
 	void DispatchRedirect(http_status_t status, const char *location,
 			      const char *msg) noexcept;
 
+private:
 	SharedPoolPtr<WidgetContext> MakeWidgetContext() noexcept;
 
-private:
 	UnusedIstreamPtr AutoDeflate(HttpHeaders &response_headers,
 				     UnusedIstreamPtr response_body) noexcept;
 
