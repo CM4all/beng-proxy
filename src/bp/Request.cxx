@@ -38,6 +38,7 @@
 #include "widget/Context.hxx"
 #include "util/StringAPI.hxx"
 #include "translation/Vary.hxx"
+#include "util/StringAPI.hxx"
 #include "args.hxx"
 #include "strmap.hxx"
 
@@ -101,6 +102,9 @@ Request::GetExternalUriScheme(const TranslateResponse &tr) const noexcept
 {
 	if (tr.scheme != nullptr)
 		return tr.scheme;
+
+	if (IsHttps())
+		return "https";
 
 	return "http";
 }
