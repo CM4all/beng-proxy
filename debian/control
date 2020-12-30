@@ -156,6 +156,7 @@ Package: cm4all-beng-proxy-doc
 Architecture: all
 Section: doc
 Depends: ${misc:Depends}, ${sphinxdoc:Depends}
+Built-Using: ${sphinxdoc:Built-Using}
 Description: Documentation for cm4all-beng-proxy
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
