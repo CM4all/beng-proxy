@@ -36,7 +36,6 @@
 #include "PendingResponse.hxx"
 #include "http/IncomingRequest.hxx"
 #include "widget/Context.hxx"
-#include "util/StringAPI.hxx"
 #include "translation/Vary.hxx"
 #include "util/StringAPI.hxx"
 #include "args.hxx"
