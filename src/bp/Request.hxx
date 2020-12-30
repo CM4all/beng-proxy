@@ -583,6 +583,16 @@ public:
 	void DiscardSession() noexcept;
 
 	/**
+	 * Is the HTTP connection from the browser encrypted with
+	 * HTTPS/SSL/TLS?
+	 *
+	 * Note: this ignores the deprecated "SCHEME" translation
+	 * response packet.
+	 */
+	gcc_pure
+	bool IsHttps() const noexcept;
+
+	/**
 	 * Determine the URI scheme to build absolute external URIs to
 	 * this server, e.g. "https" or "http".
 	 */

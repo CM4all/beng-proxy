@@ -36,6 +36,7 @@
 #include "PendingResponse.hxx"
 #include "http/IncomingRequest.hxx"
 #include "widget/Context.hxx"
+#include "util/StringAPI.hxx"
 #include "translation/Vary.hxx"
 #include "args.hxx"
 #include "strmap.hxx"
@@ -86,6 +87,13 @@ Request::ParseArgs() noexcept
 
 	translate.request.param = args.Remove("translate");
 	translate.request.session = nullptr;
+}
+
+bool
+Request::IsHttps() const noexcept
+{
+	const char *https = request.headers.Get("x-cm4all-https");
+	return https != nullptr && StringIsEqual(https, "on");
 }
 
 const char *

@@ -671,24 +671,21 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 		return;
 	}
 
-	if (response.https_only != 0) {
-		const char *https = request.headers.Get("x-cm4all-https");
-		if (https == nullptr || strcmp(https, "on") != 0) {
-			/* not encrypted: redirect to https:// */
+	if (response.https_only != 0 && !IsHttps()) {
+		/* not encrypted: redirect to https:// */
 
-			const char *host = request.headers.Get("host");
-			if (host == nullptr) {
-				DispatchError(HTTP_STATUS_BAD_REQUEST, "No Host header");
-				return;
-			}
-
-			DispatchRedirect(HTTP_STATUS_MOVED_PERMANENTLY,
-					 MakeHttpsRedirect(pool, host,
-							   response.https_only,
-							   request.uri),
-					 "This page requires \"https\"");
+		const char *host = request.headers.Get("host");
+		if (host == nullptr) {
+			DispatchError(HTTP_STATUS_BAD_REQUEST, "No Host header");
 			return;
 		}
+
+		DispatchRedirect(HTTP_STATUS_MOVED_PERMANENTLY,
+				 MakeHttpsRedirect(pool, host,
+						   response.https_only,
+						   request.uri),
+				 "This page requires \"https\"");
+		return;
 	}
 
 	if (response.transparent) {
