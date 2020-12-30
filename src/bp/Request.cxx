@@ -93,6 +93,11 @@ Request::ParseArgs() noexcept
 bool
 Request::IsHttps() const noexcept
 {
+	if (connection.ssl)
+		/* the connection to beng-proxy is already
+		   SSL/TLS-encrypted */
+		return true;
+
 	const char *https = request.headers.Get("x-cm4all-https");
 	return https != nullptr && StringIsEqual(https, "on");
 }

@@ -71,7 +71,8 @@ BpConnection::BpConnection(PoolPtr &&_pool, BpInstance &_instance,
 		      : nullptr),
 	 peer_issuer_subject(ssl_filter != nullptr
 			     ? ssl_filter_get_peer_issuer_subject(*ssl_filter)
-			     : nullptr)
+			     : nullptr),
+	 ssl(ssl_filter != nullptr)
 {
 }
 

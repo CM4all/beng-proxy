@@ -75,6 +75,8 @@ struct BpConnection final
 	UniquePoolPtr<NgHttp2::ServerConnection> http2;
 #endif
 
+	const bool ssl;
+
 	BpConnection(PoolPtr &&_pool, BpInstance &_instance,
 		     BPListener &_listener,
 		     SocketAddress remote_address,
