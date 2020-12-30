@@ -227,8 +227,4 @@ new_connection(PoolPtr pool, BpInstance &instance, BPListener &listener,
 						   address,
 						   true,
 						   *connection);
-
-#ifndef HAVE_NGHTTP2
-	(void)ssl_filter;
-#endif
 }
