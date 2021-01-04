@@ -37,6 +37,15 @@
 #include <sys/prctl.h>
 
 void
+capabilities_init()
+{
+	/* don't inherit any capabilities to spawned processes */
+	auto state = CapabilityState::Current();
+	state.ClearFlag(CAP_INHERITABLE);
+	state.Install();
+}
+
+void
 capabilities_pre_setuid()
 {
 	/* we want to keep all capabilities after switching to an

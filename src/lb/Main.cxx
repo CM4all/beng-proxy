@@ -168,6 +168,7 @@ try {
 	/* initialize */
 
 	SetupProcess();
+	capabilities_init();
 
 	const ScopeSslGlobalInit ssl_init;
 

@@ -39,6 +39,14 @@
 #include <sys/capability.h>
 
 /**
+ * Prepare the process for further calls of this library.  Do this
+ * right after startup, before initializing anything and before
+ * spawning child processes.
+ */
+void
+capabilities_init();
+
+/**
  * Prepare the setuid() call.  Configures beng-proxy to keep certain
  * capabilities after switching to an unprivileged uid.
  */

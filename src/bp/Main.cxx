@@ -317,6 +317,7 @@ try {
 	}
 
 	SetupProcess();
+	capabilities_init();
 
 	if (cmdline.ua_classification_file != nullptr)
 		instance.ua_classification = std::make_unique<UserAgentClassList>(ua_classification_init(cmdline.ua_classification_file));
