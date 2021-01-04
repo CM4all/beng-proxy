@@ -43,7 +43,7 @@
  * capabilities after switching to an unprivileged uid.
  */
 void
-capabilities_pre_setuid() noexcept;
+capabilities_pre_setuid();
 
 /**
  * Call after setuid().
