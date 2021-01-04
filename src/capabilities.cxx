@@ -53,7 +53,7 @@ capabilities_pre_setuid() noexcept
 }
 
 void
-capabilities_post_setuid(const cap_value_t *keep_list, unsigned n) noexcept
+capabilities_post_setuid(const cap_value_t *keep_list, unsigned n)
 {
 	/* restore the KEEPCAPS flag */
 
