@@ -46,24 +46,9 @@ capabilities_init()
 }
 
 void
-capabilities_pre_setuid()
-{
-	/* we want to keep all capabilities after switching to an
-	   unprivileged uid */
-
-	if (prctl(PR_SET_KEEPCAPS, 1) < 0)
-		throw MakeErrno("prctl(PR_SET_KEEPCAPS) failed");
-}
-
-void
 capabilities_post_setuid(const cap_value_t *keep_list, unsigned n)
 {
-	/* restore the KEEPCAPS flag */
-
-	if (prctl(PR_SET_KEEPCAPS, 0) < 0)
-		throw MakeErrno("prctl(PR_SET_KEEPCAPS) failed");
-
-	/* now drop all capabilities but the ones we want */
+	/* drop all capabilities but the ones we want */
 
 	CapabilityState state = CapabilityState::Empty();
 	state.SetFlag(CAP_EFFECTIVE, {keep_list, n}, CAP_SET);

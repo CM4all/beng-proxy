@@ -69,10 +69,6 @@ PrintUsage()
 	     " -C             check configuration file syntax\n"
 #endif
 #ifdef __GLIBC__
-	     " --user name\n"
-#endif
-	     " -u name        switch to another user id\n"
-#ifdef __GLIBC__
 	     " --logger-user name\n"
 #endif
 	     " -U name        execute the access logger program with this user id\n"
@@ -160,17 +156,16 @@ ParseCommandLine(LbCmdLine &cmdline,
 		{NULL,0,NULL,0}
 	};
 #endif
-	const char *user_name = NULL;
 	unsigned verbose = 1;
 
 	while (1) {
 #ifdef __GLIBC__
 		int option_index = 0;
 
-		ret = getopt_long(argc, argv, "hVvqf:Cu:U:B:s:",
+		ret = getopt_long(argc, argv, "hVvqf:CU:B:s:",
 				  long_options, &option_index);
 #else
-		ret = getopt(argc, argv, "hVvqf:Cu:U:B:s:");
+		ret = getopt(argc, argv, "hVvqf:CU:B:s:");
 #endif
 		if (ret == -1)
 			break;
@@ -200,10 +195,6 @@ ParseCommandLine(LbCmdLine &cmdline,
 			cmdline.check = true;
 			break;
 
-		case 'u':
-			user_name = optarg;
-			break;
-
 		case 'U':
 			cmdline.logger_user.Lookup(optarg);
 			break;
@@ -226,13 +217,4 @@ ParseCommandLine(LbCmdLine &cmdline,
 
 	if (optind < argc)
 		arg_error(argv[0], "unrecognized argument: %s", argv[optind]);
-
-	/* check completeness */
-
-	if (user_name != NULL) {
-		cmdline.user.Lookup(user_name);
-		if (!cmdline.user.IsComplete())
-			arg_error(argv[0], "refusing to run as root");
-	} else if (geteuid() == 0)
-		arg_error(argv[0], "no user name specified (-u)");
 }

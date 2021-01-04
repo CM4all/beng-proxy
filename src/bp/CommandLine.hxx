@@ -47,8 +47,6 @@ extern bool debug_mode;
 #endif
 
 struct BpCmdLine {
-	UidGid user;
-
 	UidGid logger_user;
 
 	const char *config_file = "/etc/cm4all/beng/proxy/beng-proxy.conf";

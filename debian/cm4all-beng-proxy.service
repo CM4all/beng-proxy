@@ -11,6 +11,8 @@ Restart=on-failure
 
 SyslogIdentifier=cm4all-beng-proxy
 
+User=cm4all-beng-proxy
+
 RuntimeDirectory=cm4all/beng-proxy
 RuntimeDirectoryMode=0700
 
@@ -19,8 +21,31 @@ RuntimeDirectoryMode=0700
 # "session_save_path" file there.  This should be fixed eventually.
 RuntimeDirectoryPreserve=restart
 
+# Allow reading TLS key files
+AmbientCapabilities=CAP_DAC_READ_SEARCH
+
+# Allow the spawner to write cgroup files
+AmbientCapabilities=CAP_DAC_OVERRIDE
+
+# Allow binding to privileged ports
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+# Needed to start logger processes as user "cm4all-logger"
+AmbientCapabilities=CAP_SETUID CAP_SETGID
+
+# Needed by the spawner
+AmbientCapabilities=CAP_KILL
+#TODO: check CAP_SYS_NICE CAP_SYS_PTRACE CAP_SYS_RESOURCE
+
+# The spawner needs this sledge hammer for setns() (and for other
+# things that could probably be fixed)
+AmbientCapabilities=CAP_SYS_ADMIN
+
 # enable crash dumps
 LimitCORE=infinity
+
+# for io_uring
+LimitMEMLOCK=64M
 
 LimitNOFILE=262144
 

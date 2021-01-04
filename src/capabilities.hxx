@@ -47,13 +47,6 @@ void
 capabilities_init();
 
 /**
- * Prepare the setuid() call.  Configures beng-proxy to keep certain
- * capabilities after switching to an unprivileged uid.
- */
-void
-capabilities_pre_setuid();
-
-/**
  * Call after setuid().
  */
 void

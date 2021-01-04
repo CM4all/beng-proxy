@@ -156,7 +156,7 @@ struct BpConfig {
 
 	void HandleSet(StringView name, const char *value);
 
-	void Finish(const UidGid &user, unsigned default_port);
+	void Finish(unsigned default_port);
 };
 
 /**

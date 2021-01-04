@@ -1,8 +1,5 @@
 # -*- shell-script -*-
 
-# Which user should beng-lb run as?
-#DAEMON_USER=cm4all-beng-lb
-
 # Which user should the beng-lb logger run as?
 #LOGGER_USER=cm4all-logger
 

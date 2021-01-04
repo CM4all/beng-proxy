@@ -274,6 +274,9 @@ try {
 	if (!IsKernelVersionOrNewer({4, 11}))
 		throw "Your Linux kernel is too old; this program requires at least 4.11";
 
+	if (geteuid() == 0)
+		throw "Refusing to run as root";
+
 	InitProcessName(argc, argv);
 
 #ifndef NDEBUG
@@ -295,26 +298,13 @@ try {
 	if (cmdline.config_file != nullptr)
 		LoadConfigFile(_config, cmdline.config_file);
 
-	_config.Finish(cmdline.user, debug_mode ? 8080 : 80);
+	_config.Finish(debug_mode ? 8080 : 80);
 
 	/* initialize */
 
 	const ScopeFbPoolInit fb_pool_init;
 
 	BpInstance instance(std::move(_config));
-
-	if (!cmdline.user.IsEmpty()) {
-		const char *runtime_directory = getenv("RUNTIME_DIRECTORY");
-		if (runtime_directory != nullptr)
-			/* since systemd starts beng-proxy as root, we
-			   need to chown the RuntimeDirectory to the
-			   final beng-proxy user; this should be fixed
-			   eventually by launching beng-proxy as its
-			   own user */
-			chown(runtime_directory,
-			      cmdline.user.uid,
-			      cmdline.user.gid);
-	}
 
 	SetupProcess();
 	capabilities_init();
@@ -551,11 +541,6 @@ try {
 
 	/* daemonize II */
 
-	if (!cmdline.user.IsEmpty())
-		capabilities_pre_setuid();
-
-	cmdline.user.Apply();
-
 #ifdef __linux
 	/* revert the "dumpable" flag to "true" after it was cleared by
 	   setreuid() because we want core dumps to be able to analyze
@@ -563,8 +548,7 @@ try {
 	prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
 #endif
 
-	if (!cmdline.user.IsEmpty())
-		capabilities_post_setuid(cap_keep_list, std::size(cap_keep_list));
+	capabilities_post_setuid(cap_keep_list, std::size(cap_keep_list));
 
 #ifdef HAVE_LIBSYSTEMD
 	/* tell systemd we're ready */

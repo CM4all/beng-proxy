@@ -1,14 +1,5 @@
 # -*- shell-script -*-
 
-# Which user should beng-proxy run as?
-#DAEMON_USER=cm4all-beng-proxy
-
-# Which group should beng-proxy run as?
-#DAEMON_GROUP=
-
-# Spawn child processes as this user/group by default.
-#SPAWN_USER=www-data
-
 # Which user should the beng-proxy logger run as?
 #LOGGER_USER=cm4all-logger
 

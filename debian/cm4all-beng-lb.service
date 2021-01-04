@@ -11,6 +11,20 @@ Restart=on-failure
 
 SyslogIdentifier=cm4all-beng-lb
 
+User=cm4all-beng-lb
+
+# Allow reading TLS key files
+AmbientCapabilities=CAP_DAC_READ_SEARCH
+
+# Allow binding to privileged ports
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+# Needed for IP_TRANSPARENT
+AmbientCapabilities=CAP_NET_RAW
+
+# Needed to start logger processes as user "cm4all-logger"
+AmbientCapabilities=CAP_SETUID CAP_SETGID
+
 # enable crash dumps
 LimitCORE=infinity
 

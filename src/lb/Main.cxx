@@ -147,6 +147,9 @@ deinit_signals(LbInstance *instance)
 int
 main(int argc, char **argv)
 try {
+	if (geteuid() == 0)
+		throw "Refusing to run as root";
+
 	const ScopeFbPoolInit fb_pool_init;
 
 	/* configuration */
@@ -195,11 +198,6 @@ try {
 
 	/* daemonize II */
 
-	if (!cmdline.user.IsEmpty())
-		capabilities_pre_setuid();
-
-	cmdline.user.Apply();
-
 #ifdef __linux
 	/* revert the "dumpable" flag to "true" after it was cleared by
 	   setreuid(); this is necessary for two reasons: (1) we want core
@@ -216,8 +214,7 @@ try {
 	if (!config.HasCertDatabase())
 		isolate_from_filesystem(config.HasZeroConf());
 
-	if (!cmdline.user.IsEmpty())
-		capabilities_post_setuid(cap_keep_list, std::size(cap_keep_list));
+	capabilities_post_setuid(cap_keep_list, std::size(cap_keep_list));
 
 #ifdef __linux
 	prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);

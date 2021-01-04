@@ -70,10 +70,6 @@ PrintUsage()
 #endif
 	     " -f file        load this configuration file\n"
 #ifdef __GLIBC__
-	     " --user name\n"
-#endif
-	     " -u name        switch to another user id\n"
-#ifdef __GLIBC__
 	     " --logger-user name\n"
 #endif
 	     " -U name        execute the error logger program with this user id\n"
@@ -184,7 +180,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 		{nullptr, 0, nullptr, 0}
 	};
 #endif
-	const char *user_name = nullptr;
 	unsigned verbose = 1;
 
 	while (1) {
@@ -192,11 +187,11 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 		int option_index = 0;
 
 		ret = getopt_long(argc, argv,
-				  "hVvqf:u:U:t:B:C:N:s:",
+				  "hVvqf:U:t:B:C:N:s:",
 				  long_options, &option_index);
 #else
 		ret = getopt(argc, argv,
-			     "hVvqf:u:U:t:B:C:N:s:");
+			     "hVvqf:U:t:B:C:N:s:");
 #endif
 		if (ret == -1)
 			break;
@@ -222,17 +217,7 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 			cmdline.config_file = optarg;
 			break;
 
-		case 'u':
-			if (debug_mode)
-				arg_error(argv[0], "cannot specify a user in debug mode");
-
-			user_name = optarg;
-			break;
-
 		case 'U':
-			if (debug_mode)
-				arg_error(argv[0], "cannot specify a user in debug mode");
-
 			cmdline.logger_user.Lookup(optarg);
 			break;
 
@@ -286,13 +271,4 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 
 	if (optind < argc)
 		arg_error(argv[0], "unrecognized argument: %s", argv[optind]);
-
-	/* check completeness */
-
-	if (user_name != nullptr) {
-		cmdline.user.Lookup(user_name);
-		if (!cmdline.user.IsComplete())
-			arg_error(argv[0], "refusing to run as root");
-	} else if (!debug_mode)
-		arg_error(argv[0], "no user name specified (-u)");
 }

@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.42) unstable; urgency=low
 
+  * don't start as root, use Linux capabilities
   * spawn: always drop capabilities in pidns init
   * debian: restart after upgrade
 

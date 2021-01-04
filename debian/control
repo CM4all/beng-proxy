@@ -39,6 +39,7 @@ Package: cm4all-beng-proxy
 Architecture: any
 Depends: ${shlibs:Depends},
  cm4all-slice (>= 0.6),
+ policykit-1,
  systemd-sysv
 Recommends: cm4all-beng-proxy-translation | cm4all-jetserv-daemon,
  cm4all-spawn (>= 0.6),

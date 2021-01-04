@@ -3,7 +3,7 @@
 # work around the boost::locale::facet::_S_create_c_locale exception
 export LC_ALL=C
 
-DAEMON_USER=cm4all-beng-proxy
+DAEMON_USER=
 DAEMON_GROUP=
 ALLOW_USER=
 ALLOW_GROUP=
@@ -19,7 +19,7 @@ OPTIONS=""
 
 test -f /etc/default/cm4all-beng-proxy && source /etc/default/cm4all-beng-proxy
 
-for i in ALLOW_USER ALLOW_GROUP SPAWN_USER ACCESS_LOGGER PORT LISTEN; do
+for i in DAEMON_USER DAEMON_GROUP ALLOW_USER ALLOW_GROUP SPAWN_USER ACCESS_LOGGER PORT LISTEN; do
     if eval test -n \"\${$i}\"; then
         echo "Variable $i in /etc/default/cm4all-beng-proxy has been removed, please configure /etc/cm4all/beng/proxy/beng-proxy.conf instead" >&2
         exit 1
@@ -27,10 +27,6 @@ for i in ALLOW_USER ALLOW_GROUP SPAWN_USER ACCESS_LOGGER PORT LISTEN; do
 done
 
 test -n "$UA_CLASSES" && UASPEC="--ua-classes=${UA_CLASSES}"
-
-if test -n "$DAEMON_GROUP"; then
-    OPTIONS="$OPTIONS --group $DAEMON_GROUP"
-fi
 
 if test -n "$TRANSLATION_SOCKET"; then
     OPTIONS="$OPTIONS --translation-socket $TRANSLATION_SOCKET"
@@ -45,7 +41,6 @@ if test -n "$VERBOSE_RESPONSE"; then
 fi
 
 exec /usr/sbin/cm4all-beng-proxy \
-    --user "$DAEMON_USER" \
     --logger-user "$LOGGER_USER" \
     $UASPEC \
     $OPTIONS

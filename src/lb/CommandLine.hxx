@@ -35,8 +35,6 @@
 #include "spawn/UidGid.hxx"
 
 struct LbCmdLine {
-	UidGid user;
-
 	UidGid logger_user;
 
 	/**

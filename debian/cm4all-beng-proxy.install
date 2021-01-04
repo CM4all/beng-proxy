@@ -1,3 +1,4 @@
 usr/sbin/cm4all-beng-proxy
 debian/beng-proxy.conf debian/ua_classes.conf etc/cm4all/beng/proxy
 systemd/run.sh usr/lib/cm4all/beng-proxy/systemd
+debian/cm4all-beng-proxy.pkla var/lib/polkit-1/localauthority/10-vendor.d
