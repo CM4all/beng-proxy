@@ -71,12 +71,6 @@
 #endif
 #endif
 
-static constexpr cap_value_t cap_keep_list[1] = {
-	/* keep the NET_RAW capability to be able to to use the socket
-	   option IP_TRANSPARENT */
-	CAP_NET_RAW,
-};
-
 void
 LbInstance::ShutdownCallback() noexcept
 {
@@ -214,7 +208,18 @@ try {
 	if (!config.HasCertDatabase())
 		isolate_from_filesystem(config.HasZeroConf());
 
-	capabilities_post_setuid(cap_keep_list, std::size(cap_keep_list));
+	if (config.HasTransparentSource()) {
+		static constexpr cap_value_t cap_keep_list[] = {
+			/* keep the NET_RAW capability to be able to
+			   to use the socket option IP_TRANSPARENT */
+			CAP_NET_RAW,
+		};
+
+		capabilities_post_setuid(cap_keep_list, std::size(cap_keep_list));
+	} else {
+		static constexpr cap_value_t dummy{};
+		capabilities_post_setuid(&dummy, 0);
+	}
 
 #ifdef __linux
 	prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);

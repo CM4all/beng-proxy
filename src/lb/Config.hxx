@@ -202,6 +202,15 @@ struct LbConfig {
 
 		return false;
 	}
+
+	gcc_pure
+	bool HasTransparentSource() const noexcept {
+		for (const auto &i : clusters)
+			if (i.second.transparent_source)
+				return true;
+
+		return false;
+	}
 };
 
 /**

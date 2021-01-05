@@ -51,7 +51,11 @@ capabilities_post_setuid(const cap_value_t *keep_list, unsigned n)
 	/* drop all capabilities but the ones we want */
 
 	CapabilityState state = CapabilityState::Empty();
-	state.SetFlag(CAP_EFFECTIVE, {keep_list, n}, CAP_SET);
-	state.SetFlag(CAP_PERMITTED, {keep_list, n}, CAP_SET);
+
+	if (n > 0) {
+		state.SetFlag(CAP_EFFECTIVE, {keep_list, n}, CAP_SET);
+		state.SetFlag(CAP_PERMITTED, {keep_list, n}, CAP_SET);
+	}
+
 	state.Install();
 }
