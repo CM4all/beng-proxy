@@ -19,7 +19,7 @@ AmbientCapabilities=CAP_DAC_READ_SEARCH
 # Allow binding to privileged ports
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 
-# Needed for IP_TRANSPARENT
+# Needed for IP_TRANSPARENT, SO_BINDTODEVICE
 AmbientCapabilities=CAP_NET_RAW
 
 # Needed to start logger processes as user "cm4all-logger"
