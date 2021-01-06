@@ -221,6 +221,8 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 
 	void ShutdownCallback() noexcept;
 
+	void FlushTranslationCaches() noexcept;
+
 	void ReloadEventCallback(int signo) noexcept;
 
 	void AddListener(const BpConfig::Listener &c);
