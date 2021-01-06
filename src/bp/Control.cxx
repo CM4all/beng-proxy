@@ -86,13 +86,6 @@ static void
 query_stats(BpInstance *instance, ControlServer *server,
 	    SocketAddress address)
 {
-	if (address.GetSize() == 0)
-		/* TODO: this packet was forwarded by the master process, and
-		   has no source address; however, the master process must get
-		   statistics from all worker processes (even those that have
-		   exited already) */
-		return;
-
 	const auto stats = instance->GetStats();
 
 	try {
