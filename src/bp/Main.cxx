@@ -323,6 +323,12 @@ try {
 						  instance.DisableSignals();
 
 						  instance.~BpInstance();
+
+						  /* don't share the
+						     DBus connection
+						     with the
+						     spawner */
+						  dbus_shutdown();
 					  });
 	instance.spawn->SetHandler(instance);
 	instance.spawn_service = instance.spawn.get();
