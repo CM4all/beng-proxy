@@ -248,6 +248,16 @@ BpInstance::FadeTaggedChildren(const char *tag) noexcept
 }
 
 void
+BpInstance::FlushTranslationCaches() noexcept
+{
+	if (widget_registry != nullptr)
+		widget_registry->FlushCache();
+
+	if (translation_cache != nullptr)
+		translation_cache->Flush();
+}
+
+void
 BpInstance::OnMemoryWarning(uint64_t memory_usage,
 			    uint64_t memory_max) noexcept
 {

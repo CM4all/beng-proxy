@@ -181,11 +181,7 @@ BpInstance::ReloadEventCallback(int) noexcept
 
 	FadeChildren();
 
-	if (widget_registry != nullptr)
-		widget_registry->FlushCache();
-
-	if (translation_cache != nullptr)
-		translation_cache->Flush();
+	FlushTranslationCaches();
 
 	if (http_cache != nullptr)
 		http_cache_flush(*http_cache);
