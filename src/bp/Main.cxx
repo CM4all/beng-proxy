@@ -68,6 +68,7 @@
 #include "ua_classification.hxx"
 #include "ssl/Init.hxx"
 #include "ssl/Client.hxx"
+#include "system/CapabilityGlue.hxx"
 #include "system/KernelVersion.hxx"
 #include "system/SetupProcess.hxx"
 #include "system/ProcessName.hxx"
@@ -280,8 +281,7 @@ try {
 	InitProcessName(argc, argv);
 
 #ifndef NDEBUG
-	if (geteuid() != 0)
-		debug_mode = true;
+	debug_mode = !IsSysAdmin();
 #endif
 
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
