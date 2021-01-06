@@ -52,14 +52,14 @@ using namespace BengProxy;
 static void
 control_tcache_invalidate(BpInstance *instance, ConstBuffer<void> payload)
 {
-	if (!instance->translation_caches)
-		return;
-
 	if (payload.empty()) {
 		/* flush the translation cache if the payload is empty */
-		instance->translation_caches->Flush();
+		instance->FlushTranslationCaches();
 		return;
 	}
+
+	if (!instance->translation_caches)
+		return;
 
 	const TempPoolLease tpool;
 
