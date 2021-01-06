@@ -346,11 +346,13 @@ try {
 
 						  instance.~BpInstance();
 
+#if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
 						  /* don't share the
 						     DBus connection
 						     with the
 						     spawner */
 						  dbus_shutdown();
+#endif
 					  });
 	instance.spawn->SetHandler(instance);
 	instance.spawn_service = instance.spawn.get();
