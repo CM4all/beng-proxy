@@ -122,6 +122,11 @@ BpConfig::Finish(unsigned default_port)
 		   inserts at the front */
 		translation_sockets.reverse();
 
+	/* run the spawner as a separate user (privilege
+	   separation) */
+	if (spawn.spawner_uid_gid.IsEmpty())
+		spawn.spawner_uid_gid.Lookup("cm4all-beng-spawn");
+
 	if (spawn.default_uid_gid.IsEmpty())
 		spawn.default_uid_gid.LoadEffective();
 }
