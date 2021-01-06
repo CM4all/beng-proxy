@@ -154,7 +154,7 @@ public:
 				length = response_body->GetTransmitted();
 
 			logger->LogHttpRequest(*this, the_status, length,
-					       /* TODO: */ 0, 0);
+					       /* TODO: */ 0, length);
 		}
 
 		Destroy();
