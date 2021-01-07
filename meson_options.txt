@@ -1,6 +1,8 @@
 option('documentation', type: 'feature',
   description: 'Build documentation')
 
+option('certdb', type: 'boolean', value: true, description: 'Build with certdb support')
+
 option('coroutines', type: 'boolean', value: false,
        description: 'Enable C++20 coroutines')
 

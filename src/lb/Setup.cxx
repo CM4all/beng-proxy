@@ -34,8 +34,12 @@
 #include "Config.hxx"
 #include "Listener.hxx"
 #include "Control.hxx"
-#include "ssl/Cache.hxx"
 #include "util/RuntimeError.hxx"
+
+#include "lb_features.h"
+#ifdef ENABLE_CERTDB
+#include "ssl/Cache.hxx"
+#endif
 
 void
 LbInstance::InitAllListeners()
@@ -63,8 +67,10 @@ LbInstance::FlushSSLSessionCache(long tm) noexcept
 	for (auto &listener : listeners)
 		n += listener.FlushSSLSessionCache(tm);
 
+#ifdef ENABLE_CERTDB
 	for (auto &db : cert_dbs)
 		n += db.second.FlushSessionCache(tm);
+#endif
 
 	return n;
 }

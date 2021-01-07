@@ -929,13 +929,17 @@ test(
   ),
 )
 
-executable('RunNameCache',
-  'RunNameCache.cxx',
-  include_directories: inc,
-  dependencies: [
-    ssl_dep,
-    pg_dep,
-  ])
+if get_option('certdb')
+  executable(
+    'RunNameCache',
+    'RunNameCache.cxx',
+    include_directories: inc,
+    dependencies: [
+      ssl_dep,
+      pg_dep,
+    ],
+  )
+endif
 
 if avahi_dep.found()
   executable(

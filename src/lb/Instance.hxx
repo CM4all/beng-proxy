@@ -40,6 +40,7 @@
 #include "event/ShutdownListener.hxx"
 #include "net/FailureManager.hxx"
 #include "io/Logger.hxx"
+#include "lb_features.h"
 
 #ifdef HAVE_AVAHI
 #include "avahi/Client.hxx"
@@ -101,7 +102,9 @@ struct LbInstance final : PInstance {
 
 	std::forward_list<LbListener> listeners;
 
+#ifdef ENABLE_CERTDB
 	std::map<std::string, CertCache> cert_dbs;
+#endif
 
 	boost::intrusive::list<LbHttpConnection,
 			       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
@@ -138,9 +141,11 @@ struct LbInstance final : PInstance {
 	 */
 	void Compress() noexcept;
 
+#ifdef ENABLE_CERTDB
 	CertCache &GetCertCache(const LbCertDatabaseConfig &cert_db_config);
 	void ConnectCertCaches();
 	void DisconnectCertCaches() noexcept;
+#endif
 
 	void FlushTranslationCaches() noexcept {
 		goto_map.FlushCaches();

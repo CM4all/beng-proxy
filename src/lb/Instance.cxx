@@ -37,13 +37,17 @@
 #include "Config.hxx"
 #include "CommandLine.hxx"
 #include "Listener.hxx"
-#include "ssl/Cache.hxx"
 #include "fs/Stock.hxx"
 #include "fs/Balancer.hxx"
 #include "cluster/BalancerMap.hxx"
 #include "fb_pool.hxx"
 #include "pipe_stock.hxx"
 #include "access_log/Glue.hxx"
+
+#include "lb_features.h"
+#ifdef ENABLE_CERTDB
+#include "ssl/Cache.hxx"
+#endif
 
 #include <assert.h>
 #include <sys/signal.h>
@@ -91,7 +95,9 @@ LbInstance::InitWorker()
 	for (auto &listener : listeners)
 		listener.Scan(goto_map);
 
+#ifdef ENABLE_CERTDB
 	ConnectCertCaches();
+#endif
 }
 
 void
@@ -99,12 +105,16 @@ LbInstance::Compress() noexcept
 {
 	fb_pool_compress();
 
+#ifdef ENABLE_CERTDB
 	for (auto &i : cert_dbs)
 		i.second.Expire();
+#endif
 
 	unsigned n_ssl_sessions = FlushSSLSessionCache(time(nullptr));
 	logger(3, "flushed ", n_ssl_sessions, " SSL sessions");
 }
+
+#ifdef ENABLE_CERTDB
 
 CertCache &
 LbInstance::GetCertCache(const LbCertDatabaseConfig &cert_db_config)
@@ -133,6 +143,8 @@ LbInstance::DisconnectCertCaches() noexcept
 	for (auto &i : cert_dbs)
 		i.second.Disconnect();
 }
+
+#endif
 
 void
 LbInstance::OnCompressTimer() noexcept

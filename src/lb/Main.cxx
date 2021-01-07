@@ -59,7 +59,10 @@
 #include <systemd/sd-daemon.h>
 #endif
 
+#include "lb_features.h"
+#ifdef ENABLE_CERTDB
 #include <libpq-fe.h>
+#endif
 
 #include <stdlib.h>
 
@@ -93,7 +96,9 @@ LbInstance::ShutdownCallback() noexcept
 
 	goto_map.Clear();
 
+#ifdef ENABLE_CERTDB
 	DisconnectCertCaches();
+#endif
 
 	DeinitAllListeners();
 
@@ -175,8 +180,10 @@ try {
 					       false);
 #endif
 
+#ifdef ENABLE_CERTDB
 	/* prevent libpq from initializing libssl & libcrypto again */
 	PQinitOpenSSL(0, 0);
+#endif
 
 	direct_global_init();
 

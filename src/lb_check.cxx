@@ -36,15 +36,24 @@
 #include "lb/LuaInitHook.hxx"
 #include "ssl/Factory.hxx"
 #include "ssl/SniCallback.hxx"
+
+#include "lb_features.h"
+#ifdef ENABLE_CERTDB
 #include "ssl/Cache.hxx"
+#endif
 
 static void
 lb_check(EventLoop &event_loop, const LbCertDatabaseConfig &config)
 {
+#ifdef ENABLE_CERTDB
 	CertCache cache(event_loop, config);
 
 	for (const auto &ca_path : config.ca_certs)
 		cache.LoadCaCertificate(ca_path.c_str());
+#else
+	(void)event_loop;
+	(void)config;
+#endif
 }
 
 static void

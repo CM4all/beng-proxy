@@ -15,6 +15,10 @@ version_h.set_quoted('PACKAGE', meson.project_name())
 version_h.set_quoted('VERSION', meson.project_version())
 configure_file(output: 'version.h', configuration: version_h)
 
+lb_features_config = configuration_data()
+lb_features_config.set('ENABLE_CERTDB', get_option('certdb'))
+configure_file(output: 'lb_features.h', configuration: lb_features_config)
+
 compiler = meson.get_compiler('cpp')
 c_compiler = meson.get_compiler('c')
 
@@ -348,25 +352,36 @@ shm_dep = declare_dependency(link_with: shm,
 
 subdir('libcommon/src/ssl')
 subdir('libcommon/src/jwt')
-subdir('libcommon/src/pg')
+
+ssl2_sources = []
+
+if get_option('certdb')
+  subdir('libcommon/src/pg')
+
+  ssl2_sources += [
+    'src/certdb/CertDatabase.cxx',
+    'src/certdb/FromResult.cxx',
+    'src/certdb/WrapKey.cxx',
+    'src/certdb/Wildcard.cxx',
+    'src/ssl/Cache.cxx',
+    'src/ssl/NameCache.cxx',
+    'src/ssl/DbSniCallback.cxx',
+  ]
+else
+  pg_dep = declare_dependency(required: false)
+endif
 
 ssl2 = static_library(
   'ssl2',
-  'src/certdb/CertDatabase.cxx',
-  'src/certdb/FromResult.cxx',
-  'src/certdb/WrapKey.cxx',
-  'src/certdb/Wildcard.cxx',
   'src/ssl/Basic.cxx',
-  'src/ssl/Cache.cxx',
-  'src/ssl/NameCache.cxx',
   'src/ssl/Client.cxx',
   'src/ssl/Factory.cxx',
   'src/ssl/AlpnSelect.cxx',
   'src/ssl/AlpnEnable.cxx',
-  'src/ssl/DbSniCallback.cxx',
   'src/ssl/FifoBufferBio.cxx',
   'src/ssl/Filter.cxx',
   'src/ssl/Init.cxx',
+  ssl2_sources,
   include_directories: inc,
   dependencies: [
     pg_dep,
@@ -388,7 +403,9 @@ if avahi_dep.found()
                                  dependencies: avahi_dep)
 endif
 
-subdir('libcommon/src/curl')
+if get_option('certdb')
+  subdir('libcommon/src/curl')
+endif
 
 libcommon_enable_libsystemd = get_option('systemd')
 if libcommon_enable_libsystemd or avahi_dep.found()
@@ -1055,49 +1072,51 @@ executable(
   install_dir: 'sbin',
 )
 
-executable(
-  'cm4all-certdb',
-  'src/lb/Config.cxx',
-  'src/lb/ConfigParser.cxx',
-  'src/lb/GotoConfig.cxx',
-  'src/lb/ClusterConfig.cxx',
-  'src/certdb/Progress.cxx',
-  'src/certdb/WrapKey.cxx',
-  'src/certdb/CertDatabase.cxx',
-  'src/certdb/Migrate.cxx',
-  'src/certdb/FromResult.cxx',
-  'src/certdb/Wildcard.cxx',
-  'src/certdb/GlueHttpClient.cxx',
-  'src/certdb/JWS.cxx',
-  'src/certdb/AcmeError.cxx',
-  'src/certdb/AcmeHttp.cxx',
-  'src/certdb/AcmeDns.cxx',
-  'src/certdb/AcmeClient.cxx',
-  'src/certdb/AcmeChallenge.cxx',
-  'src/certdb/AcmeAccount.cxx',
-  'src/certdb/AcmeAuthorization.cxx',
-  'src/certdb/AcmeKey.cxx',
-  'src/certdb/FakeAcmeClient.cxx',
-  'src/certdb/AcmeMain.cxx',
-  'src/certdb/Main.cxx',
-  'src/access_log/ConfigParser.cxx',
-  include_directories: inc,
-  dependencies: [
-    boost_json_dep,
-    pcre_dep,
-    avahi_dep,
-    sodium_dep,
-    ssl_dep,
-    pg_dep,
-    curl_dep,
-    net_dep,
-    http_dep,
-    io_dep,
-    jwt_dep,
-    libcxx,
-  ],
-  install: true,
-)
+if get_option('certdb')
+  executable(
+    'cm4all-certdb',
+    'src/lb/Config.cxx',
+    'src/lb/ConfigParser.cxx',
+    'src/lb/GotoConfig.cxx',
+    'src/lb/ClusterConfig.cxx',
+    'src/certdb/Progress.cxx',
+    'src/certdb/WrapKey.cxx',
+    'src/certdb/CertDatabase.cxx',
+    'src/certdb/Migrate.cxx',
+    'src/certdb/FromResult.cxx',
+    'src/certdb/Wildcard.cxx',
+    'src/certdb/GlueHttpClient.cxx',
+    'src/certdb/JWS.cxx',
+    'src/certdb/AcmeError.cxx',
+    'src/certdb/AcmeHttp.cxx',
+    'src/certdb/AcmeDns.cxx',
+    'src/certdb/AcmeClient.cxx',
+    'src/certdb/AcmeChallenge.cxx',
+    'src/certdb/AcmeAccount.cxx',
+    'src/certdb/AcmeAuthorization.cxx',
+    'src/certdb/AcmeKey.cxx',
+    'src/certdb/FakeAcmeClient.cxx',
+    'src/certdb/AcmeMain.cxx',
+    'src/certdb/Main.cxx',
+    'src/access_log/ConfigParser.cxx',
+    include_directories: inc,
+    dependencies: [
+      boost_json_dep,
+      pcre_dep,
+      avahi_dep,
+      sodium_dep,
+      ssl_dep,
+      pg_dep,
+      curl_dep,
+      net_dep,
+      http_dep,
+      io_dep,
+      jwt_dep,
+      libcxx,
+    ],
+    install: true,
+  )
+endif
 
 executable(
   'cm4all-beng-proxy-log-cat',
@@ -1245,5 +1264,7 @@ subdir('libcommon/test/util')
 subdir('libcommon/test/uri')
 subdir('libcommon/test/http')
 subdir('libcommon/test/io')
-subdir('libcommon/test/pg')
+if get_option('certdb')
+  subdir('libcommon/test/pg')
+endif
 subdir('libcommon/test/sodium')
