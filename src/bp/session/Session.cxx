@@ -43,6 +43,49 @@
 
 static constexpr std::chrono::seconds SESSION_TTL_NEW(120);
 
+void
+WidgetSession::Attach(Set &dest, Set &&src) noexcept
+{
+	src.clear_and_dispose([&dest](WidgetSession *other_ws){
+		Set::insert_commit_data commit_data;
+		auto [existing, inserted] = dest.insert(*other_ws);
+		if (!inserted) {
+			/* this WidgetSession exists already - attach
+			   it (recursively) */
+			existing->Attach(std::move(*other_ws));
+			delete other_ws;
+		}
+	});
+}
+
+void
+WidgetSession::Attach(WidgetSession &&src) noexcept
+{
+	Attach(children, std::move(src.children));
+
+	/* the attached session is assumed to be more recent */
+	if (src.path_info != nullptr || src.query_string != nullptr) {
+		path_info = std::move(src.path_info);
+		query_string = std::move(src.query_string);
+	}
+}
+
+void
+RealmSession::Attach(RealmSession &&other) noexcept
+{
+	if (site == nullptr && other.site != nullptr)
+		site = std::move(other.site);
+
+	if (user == nullptr && other.user != nullptr) {
+		user = std::move(other.user);
+		user_expires = other.user_expires;
+	}
+
+	WidgetSession::Attach(widgets, std::move(other.widgets));
+
+	cookies.MoveFrom(std::move(other.cookies));
+}
+
 Session::Session(SessionId _id) noexcept
 	:id(_id),
 	 expires(Expiry::Touched(SESSION_TTL_NEW))
@@ -74,6 +117,61 @@ void
 Session::ClearTranslate() noexcept
 {
 	translate = nullptr;
+}
+
+bool
+Session::IsAttach(ConstBuffer<std::byte> other) const noexcept
+{
+	return attach.size() == other.size &&
+		memcmp(attach.data(), other.data, attach.size()) == 0;
+}
+
+void
+Session::Attach(Session &&other) noexcept
+{
+	if (other.expires > expires)
+		expires = other.expires;
+
+	++counter;
+
+	if (!other.is_new)
+		is_new = false;
+
+	if (translate == nullptr)
+		translate = std::move(other.translate);
+
+	if (language == nullptr)
+		language = std::move(other.language);
+
+	if (external_manager == nullptr && other.external_manager != nullptr) {
+		external_manager_pool = std::move(other.external_manager_pool);
+		external_manager = std::exchange(other.external_manager,
+						 nullptr);
+		external_keepalive = other.external_keepalive;
+		next_external_keepalive = other.next_external_keepalive;
+	}
+
+	other.realms.clear_and_dispose([this](RealmSession *other_realm){
+		RealmSessionSet::insert_commit_data hint;
+		auto [existing, inserted] = realms.insert_check(*other_realm, hint);
+		if (inserted) {
+			/* doesn't exist already: create a copy (with
+			   a new RealmSession::parent) and commit
+			   it */
+			auto *new_realm =
+				new RealmSession(*this,
+						 std::move(*other_realm));
+			realms.insert_commit(*new_realm, hint);
+		} else {
+			/* exists already: attach */
+			existing->Attach(std::move(*other_realm));
+		}
+
+		/* delete this RealmSession; we can't reuse it because
+		   its "parent" field points to the moved-from Session
+		   instance about to be deleted */
+		delete other_realm;
+	});
 }
 
 void

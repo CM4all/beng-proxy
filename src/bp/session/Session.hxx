@@ -97,6 +97,9 @@ struct WidgetSession
 
 	~WidgetSession() noexcept;
 
+	static void Attach(Set &dest, Set &&src) noexcept;
+	void Attach(WidgetSession &&other) noexcept;
+
 	gcc_pure
 	WidgetSession *GetChild(const char *child_id, bool create);
 };
@@ -113,6 +116,8 @@ struct RealmSession
 	using LinkMode = boost::intrusive::link_mode<link_mode>;
 	using SetHook = boost::intrusive::unordered_set_member_hook<LinkMode>;
 	SetHook set_hook;
+
+	SetHook by_attach_hook;
 
 	Session &parent;
 
@@ -164,6 +169,19 @@ struct RealmSession
 	{
 	}
 
+	RealmSession(Session &_parent, RealmSession &&src) noexcept
+		:parent(_parent),
+		 realm(src.realm),
+		 site(std::move(src.site)),
+		 user(std::move(src.user)),
+		 user_expires(src.user_expires),
+		 widgets(std::move(src.widgets)),
+		 cookies(std::move(src.cookies))
+	{
+	}
+
+	void Attach(RealmSession &&other) noexcept;
+
 	void ClearSite() noexcept {
 		site = nullptr;
 	}
@@ -193,6 +211,9 @@ struct Session {
 	using SetHook = boost::intrusive::unordered_set_member_hook<LinkMode>;
 	SetHook set_hook;
 
+	using ByAttachHook = boost::intrusive::unordered_set_member_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>;
+	ByAttachHook by_attach_hook;
+
 	/** identification number of this session */
 	const SessionId id;
 
@@ -219,6 +240,11 @@ struct Session {
 
 	/** an opaque string for the translation server */
 	AllocatedArray<std::byte> translate;
+
+	/** an opaque string for attaching sessions; if this is set,
+	    then the session is in
+	    SessionContainer::sessions_by_attach */
+	AllocatedArray<std::byte> attach;
 
 	/** optional  for the "Accept-Language" header, provided
 	    by the translation server */
@@ -262,6 +288,14 @@ struct Session {
 
 	void SetTranslate(ConstBuffer<void> translate);
 	void ClearTranslate() noexcept;
+
+	/**
+	 * Does this session have the specified "attach" value?
+	 */
+	gcc_pure
+	bool IsAttach(ConstBuffer<std::byte> other) const noexcept;
+
+	void Attach(Session &&other) noexcept;
 
 	void SetLanguage(const char *_language) {
 		language = _language;

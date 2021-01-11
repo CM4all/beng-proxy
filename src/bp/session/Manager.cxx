@@ -35,8 +35,23 @@
 #include "io/Logger.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/StaticArray.hxx"
+#include "util/djbhash.h"
+
+#include <cassert>
 
 static constexpr unsigned MAX_SESSIONS = 65536;
+
+inline size_t
+SessionManager::SessionAttachHash::operator()(ConstBuffer<std::byte> attach) const noexcept
+{
+	return djb_hash(attach.data, attach.size);
+}
+
+inline size_t
+SessionManager::SessionAttachHash::operator()(const Session &session) const noexcept
+{
+	return session.id.Hash();
+}
 
 template<typename Container, typename Pred, typename Disposer>
 static void
@@ -81,6 +96,7 @@ SessionManager::SessionManager(EventLoop &event_loop,
 	:cluster_size(_cluster_size), cluster_node(_cluster_node),
 	 idle_timeout(_idle_timeout),
 	 sessions(Set::bucket_traits(buckets, N_BUCKETS)),
+	 sessions_by_attach(ByAttach::bucket_traits(buckets_by_attach, N_BUCKETS)),
 	 cleanup_timer(event_loop, BIND_THIS_METHOD(Cleanup))
 {
 }
@@ -177,6 +193,66 @@ SessionManager::Find(SessionId id) noexcept
 	session.expires.Touch(idle_timeout);
 	++session.counter;
 	return {*this, &session};
+}
+
+RealmSessionLease
+SessionManager::Attach(RealmSessionLease lease, const char *realm,
+		       ConstBuffer<std::byte> attach) noexcept
+{
+	assert(attach != nullptr);
+	assert(!attach.empty());
+
+	if (lease && sessions_by_attach.key_eq()(attach, lease->parent))
+		/* already set, no-op */
+		return lease;
+
+	if (lease && lease->parent.attach != nullptr) {
+		sessions_by_attach.erase(sessions_by_attach.iterator_to(lease->parent));
+		lease->parent.attach = nullptr;
+	}
+
+	ByAttach::insert_commit_data commit_data;
+	const auto [it, inserted] =
+		sessions_by_attach.insert_check(attach,
+						sessions_by_attach.hash_function(),
+						sessions_by_attach.key_eq(),
+						commit_data);
+	if (inserted) {
+		/* doesn't exist already */
+
+		if (lease) {
+			/* assign new "attach" value to the given session */
+			lease->parent.attach = attach;
+			sessions_by_attach.insert_commit(lease->parent,
+							 commit_data);
+			return lease;
+		} else {
+			/* create new session */
+
+			auto l = CreateSession();
+			l->attach = attach;
+			sessions_by_attach.insert_commit(*l, commit_data);
+
+			return {std::move(l), realm};
+		}
+	} else {
+		/* exists already */
+
+		auto &existing = *it;
+
+		if (lease) {
+			auto &src = lease->parent;
+			lease = nullptr;
+
+			/* attach parameter session and to the
+			   existing session */
+			existing.Attach(std::move(src));
+
+			EraseAndDispose(src);
+		}
+
+		return {SessionLease{*this, &existing}, realm};
+	}
 }
 
 void

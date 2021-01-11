@@ -980,6 +980,10 @@ class Translation(Protocol):
         elif raw_uri[:14] == '/session_site/':
             response.packet(TRANSLATE_SESSION_SITE, raw_uri[14:])
             response.path('/var/www/')
+        elif uri[:16] == '/attach_session/':
+            response.max_age(0)
+            response.packet(TRANSLATE_ATTACH_SESSION, uri[16:])
+            response.status(201)
         elif uri == '/external_session_manager/':
             response.path('/var/www/index.html')
             response.external_session_manager('http://cfatest01.intern.cm-ag/session')

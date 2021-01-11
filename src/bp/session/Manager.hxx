@@ -40,8 +40,10 @@
 
 #include <chrono>
 
+template<typename T> struct ConstBuffer;
 class SessionId;
 class SessionLease;
+class RealmSessionLease;
 
 class SessionManager {
 	/** clean up expired sessions every 60 seconds */
@@ -78,6 +80,26 @@ class SessionManager {
 		}
 	};
 
+	struct SessionAttachHash {
+		gcc_pure
+		size_t operator()(ConstBuffer<std::byte> attach) const noexcept;
+
+		gcc_pure
+		size_t operator()(const Session &session) const noexcept;
+	};
+
+	struct SessionAttachEqual {
+		gcc_pure
+		bool operator()(const Session &a, const Session &b) const noexcept {
+			return b.IsAttach(a.attach);
+		}
+
+		gcc_pure
+		bool operator()(ConstBuffer<std::byte> a, const Session &b) const noexcept {
+			return b.IsAttach(a);
+		}
+	};
+
 	using Set =
 		boost::intrusive::unordered_set<Session,
 						boost::intrusive::member_hook<Session,
@@ -91,6 +113,19 @@ class SessionManager {
 	Set::bucket_type buckets[N_BUCKETS];
 
 	Set sessions;
+
+	using ByAttach =
+		boost::intrusive::unordered_set<Session,
+						boost::intrusive::member_hook<Session,
+									      Session::ByAttachHook,
+									      &Session::by_attach_hook>,
+						boost::intrusive::hash<SessionAttachHash>,
+						boost::intrusive::equal<SessionAttachEqual>,
+						boost::intrusive::constant_time_size<false>>;
+
+	ByAttach::bucket_type buckets_by_attach[N_BUCKETS];
+
+	ByAttach sessions_by_attach;
 
 	TimerEvent cleanup_timer;
 
@@ -134,6 +169,20 @@ public:
 
 	gcc_pure
 	SessionLease Find(SessionId id) noexcept;
+
+	/**
+	 * Attach the given session to an existing session with the
+	 * given #attach value.  If no such session exists already,
+	 * only the #attach value of the given session is modified.
+	 *
+	 * If the given lease is #nullptr, a new session is created
+	 * (or an existing one with the given #attach value is
+	 * returned).
+	 *
+	 * @return a new lease for the attached session
+	 */
+	RealmSessionLease Attach(RealmSessionLease lease, const char *realm,
+				 ConstBuffer<std::byte> attach) noexcept;
 
 	void Put(Session &session) noexcept;
 

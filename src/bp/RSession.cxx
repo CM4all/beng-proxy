@@ -281,6 +281,21 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
 	if (user == nullptr && session && session->user != nullptr)
 		user = alloc.DupZ((std::string_view)session->user);
 
+	const auto attach_session =
+		ConstBuffer<std::byte>::FromVoid(response.attach_session);
+	if (attach_session != nullptr &&
+	    (!session || !session->parent.IsAttach(attach_session))) {
+		session = instance.session_manager->Attach(std::move(session),
+							   realm,
+							   attach_session);
+		if (session && session->parent.id != session_id) {
+			/* if we have switched to a different session,
+			   send a new session cookie */
+			session_id = session->parent.id;
+			send_session_cookie = true;
+		}
+	}
+
 	if (!response.session.IsNull()) {
 		if (response.session.empty()) {
 			/* clear translate session */
