@@ -86,6 +86,12 @@ struct TranslateRequest {
 
 #if TRANSLATION_ENABLE_SESSION
 	/**
+	 * The payload of the CHECK packet.  If ConstBuffer::IsNull(),
+	 * then no CHECK packet will be sent.
+	 */
+	ConstBuffer<void> check = nullptr;
+
+	/**
 	 * The payload of the AUTH packet.  If ConstBuffer::IsNull(),
 	 * then no AUTH packet will be sent.
 	 */

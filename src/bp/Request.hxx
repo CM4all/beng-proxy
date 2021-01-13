@@ -162,12 +162,14 @@ private:
 		 */
 		const TranslateResponse *previous;
 
-		unsigned n_internal_redirects;
-
 		/**
-		 * Number of READ_FILE packets followed so far.  This variable is
+		 * Number of CHECK packets followed so far.  This variable is
 		 * used for loop detection.
 		 */
+		unsigned n_checks;
+
+		unsigned n_internal_redirects;
+
 		unsigned n_read_file;
 
 		/**

@@ -281,6 +281,7 @@ operator==(const TranslateResponse &a, const TranslateResponse &b) noexcept
 		string_equals(a.uri, b.uri) &&
 		string_equals(a.redirect, b.redirect) &&
 		string_equals(a.test_path, b.test_path) &&
+		buffer_equals(a.check, b.check) &&
 		buffer_equals(a.want_full_uri, b.want_full_uri) &&
 		a.address == b.address &&
 		view_chain_equals(a.views, b.views);
@@ -637,15 +638,35 @@ TEST(TranslationCache, InvalidateUri)
 	const auto response1 = MakeResponse(pool).File("/var/www/invalidate/uri");
 	Feed(pool, cache, request1, response1);
 
+	const auto request2 = MakeRequest("/invalidate/uri").Check("x");
+	const auto response2 = MakeResponse(pool).File("/var/www/invalidate/uri");
+	Feed(pool, cache, request2, response2);
+
 	const auto request3 = MakeRequest("/invalidate/uri")
 		.Status(HTTP_STATUS_INTERNAL_SERVER_ERROR);
 	const auto response3 = MakeResponse(pool).File("/var/www/500/invalidate/uri");
 	Feed(pool, cache, request3, response3);
 
+	const auto request4 = MakeRequest("/invalidate/uri")
+		.Status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+		.Check("x");
+	const auto response4 = MakeResponse(pool).File("/var/www/500/check/invalidate/uri");
+	Feed(pool, cache, request4, response4);
+
+	const auto request4b = MakeRequest("/invalidate/uri")
+		.Status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+		.Check("x")
+		.WantFullUri({ "a\0/b", 4 });
+	const auto response4b = MakeResponse(pool).File("/var/www/500/check/wfu/invalidate/uri");
+	Feed(pool, cache, request4b, response4b);
+
 	/* verify the cache items */
 
 	Cached(pool, cache, request1, response1);
+	Cached(pool, cache, request2, response2);
 	Cached(pool, cache, request3, response3);
+	Cached(pool, cache, request4, response4);
+	Cached(pool, cache, request4b, response4b);
 
 	/* invalidate all cache items */
 
@@ -661,7 +682,10 @@ TEST(TranslationCache, InvalidateUri)
 	/* check if all cache items have really been deleted */
 
 	CachedError(pool, cache, request1);
+	CachedError(pool, cache, request2);
 	CachedError(pool, cache, request3);
+	CachedError(pool, cache, request4);
+	CachedError(pool, cache, request4b);
 }
 
 TEST(TranslationCache, Regex)
@@ -903,6 +927,49 @@ TEST(TranslationCache, AutoBase)
 	       MakeResponse(pool)
 	       .AutoBase().Base("/auto-base/foo.cgi/")
 	       .Cgi("/usr/lib/cgi-bin/foo.cgi", "/auto-base/foo.cgi/check", "/check"));
+}
+
+/**
+ * Test CHECK + BASE.
+ */
+TEST(TranslationCache, BaseCheck)
+{
+	Instance instance;
+	struct pool &pool = instance.root_pool;
+	auto &cache = instance.cache;
+
+	/* feed the cache */
+
+	Feed(pool, cache, MakeRequest("/a/b/c.html"),
+	     MakeResponse(pool).Base("/a/").Check("x"));
+
+	Feed(pool, cache, MakeRequest("/a/b/c.html").Check("x"),
+	     MakeResponse(pool).Base("/a/b/")
+	     .File("c.html", "/var/www/vol0/a/b/"));
+
+	Feed(pool, cache, MakeRequest("/a/d/e.html").Check("x"),
+	     MakeResponse(pool).Base("/a/d/")
+	     .File("e.html", "/var/www/vol1/a/d/"));
+
+	/* now check whether the translate cache matches the BASE
+	   correctly */
+
+	const auto response4 = MakeResponse(pool).Base("/a/").Check("x");
+
+	Cached(pool, cache, MakeRequest("/a/f/g.html"), response4);
+	Cached(pool, cache, MakeRequest("/a/b/0/1.html"), response4);
+
+	Cached(pool, cache, MakeRequest("/a/b/0/1.html").Check("x"),
+	       MakeResponse(pool).Base("/a/b/")
+	       .File("0/1.html", "/var/www/vol0/a/b/"));
+
+	Cached(pool, cache, MakeRequest("/a/d/2/3.html").Check("x"),
+	       MakeResponse(pool).Base("/a/d/")
+	       .File("2/3.html", "/var/www/vol1/a/d/"));
+
+	/* expect cache misses */
+
+	CachedError(pool, cache, MakeRequest("/a/f/g.html").Check("y"));
 }
 
 /**

@@ -502,6 +502,20 @@ fill_translate_request_user(Request &request,
 inline void
 Request::RepeatTranslation(const TranslateResponse &response) noexcept
 {
+	if (!response.check.IsNull()) {
+		/* repeat request with CHECK set */
+
+		if (++translate.n_checks > 4) {
+			LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+					 "Too many consecutive CHECK packets",
+					 1);
+			return;
+		}
+
+		translate.previous = &response;
+		translate.request.check = response.check;
+	}
+
 	if (!response.internal_redirect.IsNull()) {
 		/* repeat request with INTERNAL_REDIRECT set */
 
@@ -716,7 +730,8 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 void
 Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 {
-	if (!response.internal_redirect.IsNull() ||
+	if (!response.check.IsNull() ||
+	    !response.internal_redirect.IsNull() ||
 	    !response.want.empty() ||
 	    /* after successful new authentication, repeat the translation
 	       if the translation server wishes to know the user */
@@ -731,8 +746,12 @@ Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 		return;
 	}
 
+	/* the CHECK is done by now; don't carry the CHECK value on to
+	   further translation requests */
+	translate.request.check = nullptr;
 	/* also reset the counter so we don't trigger the endless
 	   recursion detection by the ENOTDIR chain */
+	translate.n_checks = 0;
 	translate.n_internal_redirects = 0;
 
 	if (response.previous) {
@@ -898,6 +917,7 @@ inline void
 Request::AskTranslationServer() noexcept
 {
 	translate.previous = nullptr;
+	translate.n_checks = 0;
 	translate.n_internal_redirects = 0;
 	translate.n_file_not_found = 0;
 	translate.n_directory_index = 0;

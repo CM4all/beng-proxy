@@ -180,7 +180,11 @@ Request
   :program:`beng-proxy` uses the one from this responses’s ``URI`` or
   ``EXPAND_URI`` packet.
 
-- ``CHECK``: obsolete.
+- ``CHECK``: causes beng-proxy to submit the same translation request
+  again, with this packet appended (its payload is opaque to
+  :program:`beng-proxy`). The current response is remembered, to be
+  used when the second response contains the ``PREVIOUS`` packet. This
+  can be used to implement authentication (see :ref:`authentication`).
 
 - ``AUTH``: Indicates that authentication is necessary (see
   :ref:`auth`).
@@ -600,7 +604,7 @@ Response
 
 - ``PREVIOUS``: Tells beng-proxy to use the resource address of the
   previous translation response. Only allowed if the request contains a
-  ``AUTH`` packet.
+  ``CHECK`` or ``AUTH`` packet.
 
 - ``UNCACHED``: Disable the HTTP cache for the given resource address.
 
