@@ -37,9 +37,6 @@
 #include "io/Logger.hxx"
 #include "util/StaticArray.hxx"
 
-#include <boost/interprocess/sync/interprocess_sharable_mutex.hpp>
-#include <boost/interprocess/sync/sharable_lock.hpp>
-#include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/intrusive/unordered_set.hpp>
 
 #include <stdlib.h>
@@ -88,9 +85,6 @@ struct SessionContainer {
 	 */
 	const std::chrono::seconds idle_timeout;
 
-	/** this lock protects the following hash table */
-	boost::interprocess::interprocess_sharable_mutex mutex;
-
 	using Set =
 		boost::intrusive::unordered_set<Session,
 						boost::intrusive::member_hook<Session,
@@ -115,17 +109,7 @@ struct SessionContainer {
 		return sessions.size();
 	}
 
-	unsigned LockCount() {
-		boost::interprocess::sharable_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
-		return sessions.size();
-	}
-
 	Session *Find(SessionId id);
-
-	Session *LockFind(SessionId id) {
-		boost::interprocess::sharable_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
-		return Find(id);
-	}
 
 	void Put(Session &session) noexcept;
 
@@ -133,13 +117,8 @@ struct SessionContainer {
 		sessions.insert(session);
 	}
 
-	void LockInsert(Session &session) {
-		boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
-		Insert(session);
-	}
-
 	void EraseAndDispose(Session &session);
-	void LockEraseAndDispose(SessionId id);
+	void EraseAndDispose(SessionId id);
 
 	void ReplaceAndDispose(Session &old_session, Session &new_session) {
 		EraseAndDispose(old_session);
@@ -148,11 +127,6 @@ struct SessionContainer {
 
 	void Defragment(Session &src, struct shm &shm);
 	void Defragment(SessionId id, struct shm &shm);
-
-	void LockDefragment(SessionId id, struct shm &shm) {
-		boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
-		Defragment(id, shm);
-	}
 
 	/**
 	 * @return true if there is at least one session
@@ -197,8 +171,6 @@ SessionContainer::Cleanup() noexcept
 
 	const Expiry now = Expiry::Now();
 
-	boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
-
 	EraseAndDisposeIf(sessions, [now](const Session &session){
 		return session.expires.IsExpired(now);
 	}, Session::Disposer());
@@ -231,11 +203,11 @@ SessionManager::AdjustNewSessionId(SessionId &id) const noexcept
 }
 
 unsigned
-SessionManager::LockCount() noexcept
+SessionManager::Count() noexcept
 {
 	assert(container != nullptr);
 
-	return container->LockCount();
+	return container->Count();
 }
 
 bool
@@ -248,17 +220,17 @@ SessionManager::Visit(bool (*callback)(const Session *session,
 }
 
 Session *
-SessionManager::LockFind(SessionId id) noexcept
+SessionManager::Find(SessionId id) noexcept
 {
 	assert(container != nullptr);
 
-	return container->LockFind(id);
+	return container->Find(id);
 }
 
 void
 SessionManager::Insert(Session &session) noexcept
 {
-	container->LockInsert(session);
+	container->Insert(session);
 
 	if (!cleanup_timer.IsPending())
 		cleanup_timer.Schedule(cleanup_interval);
@@ -269,7 +241,7 @@ SessionManager::EraseAndDispose(SessionId id) noexcept
 {
 	assert(container != nullptr);
 
-	container->LockEraseAndDispose(id);
+	container->EraseAndDispose(id);
 }
 
 void
@@ -285,7 +257,7 @@ SessionManager::Defragment(SessionId id) noexcept
 	assert(container != nullptr);
 	assert(shm != nullptr);
 
-	container->LockDefragment(id, *shm);
+	container->Defragment(id, *shm);
 }
 
 bool
@@ -310,8 +282,6 @@ SessionManager::NewDpool() noexcept
 inline
 SessionContainer::~SessionContainer()
 {
-	boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
-
 	sessions.clear_and_dispose(Session::Disposer());
 }
 
@@ -323,8 +293,6 @@ SessionContainer::Purge() noexcept
 	unsigned highest_score = 0;
 
 	assert(locked_session == nullptr);
-
-	boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
 	for (auto &session : sessions) {
 		unsigned score = session.GetPurgeScore();
@@ -344,15 +312,6 @@ SessionContainer::Purge() noexcept
 		  " sessions (score=", highest_score, ")");
 
 	for (auto session : purge_sessions) {
-		/* lock the session to make sure it's not currently in use by
-		   another worker (will wait for the other worker) */
-		session->mutex.lock();
-		/* release the mutex right after that to avoid assertion
-		   failure in the mutex destructor; meanwhile, no other worker
-		   can get a reference to this unlocked session, because the
-		   SessionContainer is locked */
-		session->mutex.unlock();
-
 		EraseAndDispose(*session);
 	}
 
@@ -361,8 +320,6 @@ SessionContainer::Purge() noexcept
 	   often */
 	bool again = purge_sessions.size() < 16 &&
 					     Count() > SHM_NUM_PAGES - 256;
-
-	lock.unlock();
 
 	if (again)
 		Purge();
@@ -400,7 +357,6 @@ SessionManager::CreateSession() noexcept
 #ifndef NDEBUG
 	locked_session = session;
 #endif
-	session->mutex.lock();
 
 	Insert(*session);
 
@@ -445,7 +401,6 @@ SessionContainer::Find(SessionId id)
 #ifndef NDEBUG
 	locked_session = &session;
 #endif
-	session.mutex.lock();
 
 	session.expires.Touch(idle_timeout);
 	++session.counter;
@@ -456,8 +411,7 @@ void
 SessionContainer::Put(Session &session) noexcept
 {
 	assert(&session == locked_session);
-
-	session.mutex.unlock();
+	(void)session;
 
 #ifndef NDEBUG
 	locked_session = nullptr;
@@ -502,11 +456,9 @@ SessionContainer::Defragment(SessionId id, struct shm &shm)
 }
 
 void
-SessionContainer::LockEraseAndDispose(SessionId id)
+SessionContainer::EraseAndDispose(SessionId id)
 {
 	assert(locked_session == nullptr);
-
-	boost::interprocess::scoped_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
 
 	Session *session = Find(id);
 	if (session != nullptr) {
@@ -519,8 +471,6 @@ inline bool
 SessionContainer::Visit(bool (*callback)(const Session *session,
 					 void *ctx), void *ctx)
 {
-	boost::interprocess::sharable_lock<boost::interprocess::interprocess_sharable_mutex> lock(mutex);
-
 	const Expiry now = Expiry::Now();
 
 	for (auto &session : sessions) {
@@ -528,7 +478,6 @@ SessionContainer::Visit(bool (*callback)(const Session *session,
 			continue;
 
 		{
-			boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> scoped_lock(session.mutex);
 			if (!callback(&session, ctx))
 				return false;
 		}

@@ -72,7 +72,7 @@ session_get(SessionId id) noexcept
 	if (!id.IsDefined())
 		return nullptr;
 
-	return session_manager->LockFind(id);
+	return session_manager->Find(id);
 }
 
 void
