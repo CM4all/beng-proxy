@@ -36,6 +36,7 @@
 #include "LuaInitHook.hxx"
 #include "util/Compiler.h"
 
+#include <cstddef>
 #include <map>
 
 struct LbConfig;
@@ -81,7 +82,7 @@ public:
 	void InvalidateTranslationCaches(const TranslationInvalidateRequest &request);
 
 	gcc_pure
-	size_t GetAllocatedTranslationCacheMemory() const noexcept;
+	std::size_t GetAllocatedTranslationCacheMemory() const noexcept;
 
 	LbGoto GetInstance(const char *name);
 	LbGoto GetInstance(const LbGotoConfig &config);
