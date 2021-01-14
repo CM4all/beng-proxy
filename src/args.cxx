@@ -43,7 +43,7 @@
 static constexpr char ARGS_ESCAPE_CHAR = '$';
 
 StringMap
-args_parse(struct pool &pool, const StringView p) noexcept
+args_parse(AllocatorPtr alloc, const StringView p) noexcept
 {
 	StringMap args;
 
@@ -52,17 +52,17 @@ args_parse(struct pool &pool, const StringView p) noexcept
 		if (name.empty() || escaped_value.IsNull())
 			continue;
 
-		char *value = uri_unescape_dup(pool, escaped_value,
+		char *value = uri_unescape_dup(alloc, escaped_value,
 					       ARGS_ESCAPE_CHAR);
 		if (value != nullptr)
-			args.Add(pool, p_strdup(pool, name), value);
+			args.Add(alloc, alloc.DupZ(name), value);
 	}
 
 	return args;
 }
 
 const char *
-args_format_n(struct pool &pool, const StringMap *args,
+args_format_n(AllocatorPtr alloc, const StringMap *args,
 	      const char *replace_key, StringView replace_value,
 	      const char *replace_key2, StringView replace_value2,
 	      const char *replace_key3, StringView replace_value3,
@@ -87,7 +87,7 @@ args_format_n(struct pool &pool, const StringMap *args,
 
 	/* allocate memory, format it */
 
-	char *p = (char *)p_malloc(&pool, length + 1);
+	char *p = alloc.NewArray<char>(length + 1);
 	const char *const ret = p;
 
 	if (args != nullptr) {
@@ -142,12 +142,12 @@ args_format_n(struct pool &pool, const StringMap *args,
 }
 
 const char *
-args_format(struct pool &pool, const StringMap *args,
+args_format(AllocatorPtr alloc, const StringMap *args,
 	    const char *replace_key, StringView replace_value,
 	    const char *replace_key2, StringView replace_value2,
 	    const char *remove_key) noexcept
 {
-	return args_format_n(pool, args,
+	return args_format_n(alloc, args,
 			     replace_key, replace_value,
 			     replace_key2, replace_value2,
 			     nullptr, nullptr,

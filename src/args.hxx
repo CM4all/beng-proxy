@@ -34,7 +34,7 @@
 
 #include "util/Compiler.h"
 
-struct pool;
+class AllocatorPtr;
 class StringMap;
 struct StringView;
 
@@ -43,7 +43,7 @@ struct StringView;
  */
 gcc_pure
 StringMap
-args_parse(struct pool &pool, StringView p) noexcept;
+args_parse(AllocatorPtr alloc, StringView p) noexcept;
 
 /**
  * Format the arguments into a string in the form
@@ -54,7 +54,7 @@ args_parse(struct pool &pool, StringView p) noexcept;
  */
 gcc_pure
 const char *
-args_format_n(struct pool &pool, const StringMap *args,
+args_format_n(AllocatorPtr alloc, const StringMap *args,
 	      const char *replace_key, StringView replace_value,
 	      const char *replace_key2, StringView replace_value2,
 	      const char *replace_key3, StringView replace_value3,
@@ -62,7 +62,7 @@ args_format_n(struct pool &pool, const StringMap *args,
 
 gcc_pure
 const char *
-args_format(struct pool &pool, const StringMap *args,
+args_format(AllocatorPtr alloc, const StringMap *args,
 	    const char *replace_key, StringView replace_value,
 	    const char *replace_key2, StringView replace_value2,
 	    const char *remove_key) noexcept;
