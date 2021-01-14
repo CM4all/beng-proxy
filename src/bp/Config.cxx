@@ -31,6 +31,7 @@
  */
 
 #include "Config.hxx"
+#include "CommandLine.hxx"
 #include "pg/Interval.hxx"
 #include "net/Parser.hxx"
 #include "util/StringView.hxx"
@@ -124,7 +125,7 @@ BpConfig::Finish(unsigned default_port)
 
 	/* run the spawner as a separate user (privilege
 	   separation) */
-	if (spawn.spawner_uid_gid.IsEmpty())
+	if (!debug_mode && spawn.spawner_uid_gid.IsEmpty())
 		spawn.spawner_uid_gid.Lookup("cm4all-beng-spawn");
 
 	if (spawn.default_uid_gid.IsEmpty())
