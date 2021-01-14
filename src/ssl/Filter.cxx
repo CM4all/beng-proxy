@@ -63,7 +63,7 @@ class SslFilter final : public ThreadSocketFilterHandler {
 	AllocatedArray<unsigned char> alpn_selected;
 
 public:
-	AllocatedString<> peer_subject = nullptr, peer_issuer_subject = nullptr;
+	AllocatedString peer_subject = nullptr, peer_issuer_subject = nullptr;
 
 	SslFilter(UniqueSSL &&_ssl)
 		:ssl(std::move(_ssl)) {
@@ -100,13 +100,13 @@ MakeSslError()
 	return std::runtime_error(ERR_error_string(error, buffer));
 }
 
-static AllocatedString<>
+static AllocatedString
 format_subject_name(X509 *cert)
 {
 	return ToString(X509_get_subject_name(cert));
 }
 
-static AllocatedString<>
+static AllocatedString
 format_issuer_subject_name(X509 *cert)
 {
 	return ToString(X509_get_issuer_name(cert));

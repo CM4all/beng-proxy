@@ -43,6 +43,7 @@
 #include "jwt/RS256.hxx"
 #include "ssl/Buffer.hxx"
 #include "sodium/Base64.hxx"
+#include "util/AllocatedString.hxx"
 #include "util/Exception.hxx"
 #include "util/RuntimeError.hxx"
 

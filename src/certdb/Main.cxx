@@ -50,6 +50,7 @@
 #include "system/Error.hxx"
 #include "io/FileDescriptor.hxx"
 #include "io/StringFile.hxx"
+#include "util/AllocatedString.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/PrintException.hxx"
 #include "util/StringCompare.hxx"

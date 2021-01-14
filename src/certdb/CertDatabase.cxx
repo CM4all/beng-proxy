@@ -39,6 +39,7 @@
 #include "ssl/Name.hxx"
 #include "ssl/AltName.hxx"
 #include "io/FileDescriptor.hxx"
+#include "util/AllocatedString.hxx"
 
 #include <openssl/aes.h>
 

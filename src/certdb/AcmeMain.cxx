@@ -54,6 +54,7 @@
 #include "ssl/GeneralName.hxx"
 #include "ssl/Unique.hxx"
 #include "ssl/Error.hxx"
+#include "util/AllocatedString.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
 

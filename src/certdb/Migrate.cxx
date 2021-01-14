@@ -35,6 +35,7 @@
 #include "Config.hxx"
 #include "pg/Reflection.hxx"
 #include "ssl/Name.hxx"
+#include "util/AllocatedString.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/PrintException.hxx"
 

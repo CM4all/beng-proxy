@@ -58,14 +58,14 @@
 
 struct SslFactoryCertKey {
 	struct Name {
-		AllocatedString<> value;
+		AllocatedString value;
 		size_t length;
 
-		Name(AllocatedString<> &&_value)
+		Name(AllocatedString &&_value)
 			:value(std::move(_value)), length(strlen(value.c_str())) {}
 
 		Name(const char *_value)
-			:value(AllocatedString<>::Duplicate(_value)),
+			:value(AllocatedString::Duplicate(_value)),
 			 length(strlen(_value)) {}
 
 		gcc_pure
