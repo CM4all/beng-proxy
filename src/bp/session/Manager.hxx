@@ -48,8 +48,6 @@ class SessionManager {
 
 	const unsigned cluster_size, cluster_node;
 
-	struct shm *shm;
-
 	SessionContainer *container;
 
 	TimerEvent cleanup_timer;
@@ -97,8 +95,8 @@ public:
 	void Put(Session &session) noexcept;
 
 	/**
-	 * Add an initialized #Session object to the session manager.  Its
-	 * #dpool will be destroyed automatically when the session
+	 * Add an initialized #Session object to the session manager.  It
+	 * will be destroyed automatically when the session
 	 * expires.  After returning from this function, the session is
 	 * protected and the pointer must not be used, unless it is looked
 	 * up (and thus locked).
@@ -110,27 +108,9 @@ public:
 
 	Session *CreateSession() noexcept;
 
-	void Defragment(SessionId id) noexcept;
-
 	bool Purge() noexcept;
 
 	void Cleanup() noexcept;
-
-	/**
-	 * Create a new #dpool object.  The caller is responsible for
-	 * destroying it or adding a new session with this #dpool, see
-	 * Insert().
-	 */
-	struct dpool *NewDpool() noexcept;
-
-	struct dpool *NewDpoolHarder() noexcept {
-		auto *pool = NewDpool();
-		if (pool == nullptr && Purge())
-			/* at least one session has been purged: try again */
-			pool = NewDpool();
-
-		return pool;
-	}
 
 private:
 	SessionId GenerateSessionId() const noexcept;

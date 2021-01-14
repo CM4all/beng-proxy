@@ -42,14 +42,12 @@ try {
 	assert(cls != nullptr);
 	assert(cls->stateful); /* cannot save state for stateless widgets */
 
-	auto &p = ws.session.parent.pool;
-
-	ws.path_info.Set(p, from_request.path_info);
+	ws.path_info = from_request.path_info;
 
 	if (from_request.query_string.empty())
-		ws.query_string.Clear(p);
+		ws.query_string = nullptr;
 	else
-		ws.query_string.Set(p, from_request.query_string);
+		ws.query_string = from_request.query_string;
 } catch (const std::bad_alloc &) {
 }
 
@@ -60,10 +58,8 @@ Widget::LoadFromSession(const WidgetSession &ws) noexcept
 	assert(cls->stateful); /* cannot load state from stateless widgets */
 	assert(lazy.address == nullptr);
 
-	from_request.path_info = ws.path_info;
-
-	if (ws.query_string != nullptr)
-		from_request.query_string = ws.query_string.c_str();
+	from_request.path_info = ws.path_info.c_str();
+	from_request.query_string = (std::string_view)ws.query_string;
 }
 
 void

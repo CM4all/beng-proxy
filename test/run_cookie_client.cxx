@@ -35,8 +35,6 @@
 #include "http/HeaderWriter.hxx"
 #include "pool/RootPool.hxx"
 #include "fb_pool.hxx"
-#include "shm/shm.hxx"
-#include "shm/dpool.hxx"
 #include "strmap.hxx"
 #include "GrowingBuffer.hxx"
 #include "util/ConstBuffer.hxx"
@@ -51,10 +49,7 @@ int main(int argc, char **argv) {
     RootPool pool;
     const AllocatorPtr alloc(pool);
 
-    struct shm *shm = shm_new(1024, 512);
-    struct dpool *dpool = dpool_new(*shm);
-
-    CookieJar jar(*dpool);
+    CookieJar jar;
 
     for (int i = 1; i < argc; ++i)
         cookie_jar_set_cookie2(jar, argv[i], "foo.bar", nullptr);
@@ -77,7 +72,4 @@ int main(int argc, char **argv) {
 
         reader.Consume((size_t)nbytes);
     }
-
-    dpool_destroy(dpool);
-    shm_close(shm);
 }

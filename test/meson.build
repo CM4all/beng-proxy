@@ -562,7 +562,6 @@ test(
     include_directories: inc,
     dependencies: [
       gtest,
-      threads,
       cookie_dep,
     ],
   ),

@@ -70,8 +70,10 @@ Request::LoadSession(const char *_session_id)
 
 	auto session = GetSession();
 	if (session) {
-		if (!session->translate.IsNull())
-			translate.request.session = alloc.Dup(session->translate);
+		if (!session->translate.IsNull()) {
+			const ConstBuffer<std::byte> t(session->translate);
+			translate.request.session = alloc.Dup(t.ToVoid());
+		}
 
 		if (!session->cookie_sent)
 			send_session_cookie = true;
@@ -265,10 +267,11 @@ Request::ApplyTranslateRealm(const TranslateResponse &response,
 RealmSessionLease
 Request::ApplyTranslateSession(const TranslateResponse &response)
 {
+	const AllocatorPtr alloc(pool);
 	auto session = GetRealmSession();
 
 	if (user == nullptr && session)
-		user = p_strdup_checked(&pool, session->user);
+		user = alloc.DupZ((std::string_view)session->user);
 
 	if (!response.session.IsNull()) {
 		if (response.session.empty()) {
@@ -307,7 +310,7 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
 		}
 	} else if (session && session->site != nullptr) {
 		auto &rl = *(BpRequestLogger *)request.logger;
-		rl.site_name = p_strdup(&pool, session->site);
+		rl.site_name = alloc.DupZ((std::string_view)session->site);
 	}
 
 	if (response.user != nullptr) {

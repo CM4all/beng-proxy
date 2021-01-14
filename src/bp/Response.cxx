@@ -68,6 +68,7 @@
 #include "translation/Transformation.hxx"
 #include "translation/Service.hxx"
 #include "http/Address.hxx"
+#include "util/DeleteDisposer.hxx"
 #include "relocate_uri.hxx"
 #include "FilterStatus.hxx"
 
@@ -114,8 +115,7 @@ session_drop_widgets(RealmSession &session, const char *uri,
 
 		if (ref == nullptr) {
 			/* found the widget session */
-			map->erase(i);
-			ws.Destroy(session.parent.pool);
+			map->erase_and_dispose(i, DeleteDisposer{});
 			return;
 		}
 

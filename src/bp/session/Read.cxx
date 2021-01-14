@@ -33,7 +33,6 @@
 #include "Read.hxx"
 #include "File.hxx"
 #include "Session.hxx"
-#include "shm/dpool.hxx"
 
 #include <stdint.h>
 
@@ -84,47 +83,30 @@ public:
 		ReadT(value);
 	}
 
-	DString ReadString(struct dpool &pool) {
+	AllocatedString ReadString() {
 		uint16_t length;
 		ReadT(length);
 
 		if (length == (uint16_t)-1)
 			return nullptr;
 
-		char *s = (char *)d_malloc(pool, length + 1);
-		ReadBuffer(s, length);
-		s[length] = 0;
-		return DString::Donate(s);
+		auto data = new char[length + 1];
+		AllocatedString s = AllocatedString::Donate(data);
+		ReadBuffer(data, length);
+		data[length] = 0;
+		return s;
 	}
 
-	StringView ReadStringView(struct dpool &pool) {
-		uint16_t length;
-		ReadT(length);
-
-		if (length == (uint16_t)-1)
-			return nullptr;
-
-		if (length == 0)
-			return "";
-
-		char *s = (char *)d_malloc(pool, length);
-		ReadBuffer(s, length);
-		return {s, length};
-	}
-
-	ConstBuffer<void> ReadConstBuffer(struct dpool &pool) {
+	AllocatedArray<std::byte> ReadArray() {
 		uint16_t size;
 		ReadT(size);
 
 		if (size == (uint16_t)-1)
 			return nullptr;
 
-		if (size == 0)
-			return { "", 0 };
-
-		void *p = d_malloc(pool, size);
-		ReadBuffer(p, size);
-		return { p, size };
+		AllocatedArray<std::byte> a(size);
+		ReadBuffer(a.data(), size);
+		return a;
 	}
 };
 
@@ -163,19 +145,17 @@ ReadWidgetSessions(FileReader &file, RealmSession &session,
 static void
 DoReadWidgetSession(FileReader &file, RealmSession &session, WidgetSession &ws)
 {
-	struct dpool &pool = session.parent.pool;
-
 	ReadWidgetSessions(file, session, ws.children);
-	ws.path_info = file.ReadString(pool);
-	ws.query_string = file.ReadString(pool);
+	ws.path_info = file.ReadString();
+	ws.query_string = file.ReadString();
 	Expect32(file, MAGIC_END_OF_RECORD);
 }
 
-static WidgetSession *
+static std::unique_ptr<WidgetSession>
 ReadWidgetSession(FileReader &file, RealmSession &session)
 {
-	const char *id = file.ReadString(session.parent.pool);
-	auto *ws = NewFromPool<WidgetSession>(session.parent.pool, session, id);
+	auto id = file.ReadString();
+	auto ws = std::make_unique<WidgetSession>(session, std::move(id));
 	DoReadWidgetSession(file, session, *ws);
 	return ws;
 }
@@ -191,32 +171,29 @@ ReadWidgetSessions(FileReader &file, RealmSession &session,
 		} else if (magic != MAGIC_WIDGET_SESSION)
 			throw SessionDeserializerError();
 
-		auto *ws = ReadWidgetSession(file, session);
-		widgets.insert(*ws);
+		auto ws = ReadWidgetSession(file, session);
+		if (widgets.insert(*ws).second)
+			ws.release();
 	}
 }
 
-static void
-DoReadCookie(FileReader &file, struct dpool &pool, Cookie &cookie)
+static std::unique_ptr<Cookie>
+ReadCookie(FileReader &file)
 {
-	cookie.name = file.ReadStringView(pool);
-	cookie.value = file.ReadStringView(pool);
-	cookie.domain = file.ReadString(pool);
-	cookie.path = file.ReadString(pool);
-	file.Read(cookie.expires);
-	Expect32(file, MAGIC_END_OF_RECORD);
-}
+	auto name = file.ReadString();
+	auto value = file.ReadString();
 
-static Cookie *
-ReadCookie(FileReader &file, struct dpool &pool)
-{
-	auto *cookie = NewFromPool<Cookie>(pool, pool, nullptr, nullptr);
-	DoReadCookie(file, pool, *cookie);
+	auto cookie = std::make_unique<Cookie>(std::move(name),
+					       std::move(value));
+	cookie->domain = file.ReadString();
+	cookie->path = file.ReadString();
+	file.Read(cookie->expires);
+	Expect32(file, MAGIC_END_OF_RECORD);
 	return cookie;
 }
 
 static void
-ReadCookieJar(FileReader &file, struct dpool &pool, CookieJar &jar)
+ReadCookieJar(FileReader &file, CookieJar &jar)
 {
 	while (true) {
 		uint32_t magic = file.Read32();
@@ -225,32 +202,38 @@ ReadCookieJar(FileReader &file, struct dpool &pool, CookieJar &jar)
 		else if (magic != MAGIC_COOKIE)
 			throw SessionDeserializerError();
 
-		auto *cookie = ReadCookie(file, pool);
-		jar.Add(*cookie);
+		auto cookie = ReadCookie(file);
+		jar.Add(*cookie.release());
 	}
 }
 
-static void
-DoReadRealmSession(FileReader &file, struct dpool &pool, RealmSession &session)
+static std::unique_ptr<RealmSession>
+ReadRealmSession(FileReader &file, Session &parent)
 {
-	session.site = file.ReadString(pool);
-	session.user = file.ReadString(pool);
-	file.Read(session.user_expires);
-	ReadWidgetSessions(file, session, session.widgets);
-	ReadCookieJar(file, pool, session.cookies);
+	auto name = file.ReadString();
+	auto session = std::make_unique<RealmSession>(parent,
+						      std::move(name));
+
+	session->site = file.ReadString();
+	session->user = file.ReadString();
+	file.Read(session->user_expires);
+	ReadWidgetSessions(file, *session, session->widgets);
+	ReadCookieJar(file, session->cookies);
 	Expect32(file, MAGIC_END_OF_RECORD);
+
+	return session;
 }
 
 static void
-DoReadSession(FileReader &file, struct dpool &pool, Session &session)
+DoReadSession(FileReader &file, Session &session)
 {
 	file.Read(session.expires);
 	file.ReadT(session.counter);
 	session.is_new = file.ReadBool();
 	session.cookie_sent = file.ReadBool();
 	session.cookie_received = file.ReadBool();
-	session.translate = file.ReadConstBuffer(pool);
-	session.language = file.ReadString(pool);
+	session.translate = file.ReadArray();
+	session.language = file.ReadString();
 
 	while (true) {
 		uint32_t magic = file.Read32();
@@ -259,22 +242,21 @@ DoReadSession(FileReader &file, struct dpool &pool, Session &session)
 		} else if (magic != MAGIC_REALM_SESSION)
 			throw SessionDeserializerError();
 
-		const char *realm_name = file.ReadString(pool);
-		auto *realm_session = NewFromPool<RealmSession>(pool, session,
-								realm_name);
-		DoReadRealmSession(file, pool, *realm_session);
+		auto realm_session = ReadRealmSession(file, session);
+		if (session.realms.insert(*realm_session).second)
+			realm_session.release();
 	}
 
 	Expect32(file, MAGIC_END_OF_RECORD);
 }
 
-Session *
-session_read(FILE *_file, struct dpool &pool)
+std::unique_ptr<Session>
+session_read(FILE *_file)
 try {
 	FileReader file(_file);
 	const auto id = file.ReadT<SessionId>();
-	auto *session = NewFromPool<Session>(pool, pool, id);
-	DoReadSession(file, pool, *session);
+	auto session = std::make_unique<Session>(id);
+	DoReadSession(file, *session);
 	return session;
 } catch (SessionDeserializerError) {
 	return nullptr;

@@ -40,7 +40,6 @@
 #include <stddef.h>
 #include <assert.h>
 
-struct dpool;
 class AllocatorPtr;
 class AddressInfoList;
 
@@ -68,9 +67,6 @@ struct AddressList {
 	AddressList(ShallowCopy, const AddressInfoList &src) noexcept;
 
 	AddressList(AllocatorPtr alloc, const AddressList &src) noexcept;
-
-	AddressList(struct dpool &pool, const AddressList &src) noexcept;
-	void Free(struct dpool &pool) noexcept;
 
 	void SetStickyMode(StickyMode _sticky_mode) noexcept {
 		sticky_mode = _sticky_mode;
@@ -110,8 +106,6 @@ struct AddressList {
 
 	bool Add(AllocatorPtr alloc, SocketAddress address) noexcept;
 	bool Add(AllocatorPtr alloc, const AddressInfoList &list) noexcept;
-
-	bool Add(struct dpool &pool, SocketAddress address) noexcept;
 
 	const SocketAddress &operator[](unsigned n) const noexcept {
 		assert(addresses[n].IsDefined());

@@ -32,8 +32,9 @@
 
 #include "Session.hxx"
 #include "http/Address.hxx"
-#include "shm/dpool.hxx"
-#include "shm/dbuffer.hxx"
+#include "pool/pool.hxx"
+#include "util/DeleteDisposer.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <boost/intrusive/unordered_set.hpp>
 
@@ -42,91 +43,16 @@
 
 static constexpr std::chrono::seconds SESSION_TTL_NEW(120);
 
-static WidgetSession::Set
-widget_session_map_dup(struct dpool &pool, const WidgetSession::Set &src,
-		       RealmSession *session)
-{
-	WidgetSession::Set dest;
-
-	for (const auto &src_ws : src) {
-		auto *dest_ws = NewFromPool<WidgetSession>(pool, pool, src_ws,
-							   *session);
-		dest.insert(*dest_ws);
-	}
-
-	return dest;
-}
-
-WidgetSession::WidgetSession(RealmSession &_session,  const char *_id)
-	:session(_session),
-	 id(session.parent.pool, _id) {}
-
-WidgetSession::WidgetSession(struct dpool &pool, const WidgetSession &src,
-			     RealmSession &_session)
-	:session(_session),
-	 id(pool, src.id),
-	 children(widget_session_map_dup(pool, src.children, &session)),
-	 path_info(pool, src.path_info),
-	 query_string(pool, src.query_string)
-{
-}
-
-RealmSession::RealmSession(Session &_parent, const char *_realm)
-	:parent(_parent),
-	 realm(parent.pool, _realm),
-	 cookies(parent.pool)
-{
-}
-
-RealmSession::RealmSession(Session &_parent, const RealmSession &src)
-	:parent(_parent),
-	 realm(parent.pool, src.realm),
-	 site(parent.pool, src.site),
-	 user(parent.pool, src.user),
-	 user_expires(src.user_expires),
-	 widgets(widget_session_map_dup(parent.pool, widgets, this)),
-	 cookies(parent.pool, src.cookies)
-{
-}
-
-Session::Session(struct dpool &_pool, SessionId _id)
-	:pool(_pool),
-	 id(_id),
+Session::Session(SessionId _id) noexcept
+	:id(_id),
 	 expires(Expiry::Touched(SESSION_TTL_NEW))
 {
 	csrf_salt.Generate();
 }
 
-Session::Session(struct dpool &_pool, const Session &src)
-	:pool(_pool),
-	 id(src.id),
-	 expires(src.expires),
-	 counter(src.counter),
-	 is_new(src.is_new),
-	 cookie_sent(src.cookie_sent), cookie_received(src.cookie_received),
-	 translate(DupBuffer(pool, src.translate)),
-	 language(pool, src.language),
-	 external_manager(src.external_manager != nullptr
-			  ? NewFromPool<HttpAddress>(pool, pool,
-						     *src.external_manager)
-			  : nullptr),
-	 external_keepalive(src.external_keepalive),
-	 next_external_keepalive(src.next_external_keepalive)
+Session::~Session() noexcept
 {
-	realms.clone_from(src.realms,
-			  [&_pool, this](const RealmSession &src_realm){
-				  return NewFromPool<RealmSession>(_pool, *this,
-								   src_realm);
-			  },
-			  [&_pool](RealmSession *session){
-				  DeleteFromPool(_pool, session);
-			  });
-}
-
-void
-Session::Destroy() noexcept
-{
-	DeleteDestroyPool(pool, this);
+	realms.clear_and_dispose(DeleteDisposer{});
 }
 
 unsigned
@@ -147,66 +73,29 @@ Session::GetPurgeScore() const noexcept
 void
 Session::ClearTranslate() noexcept
 {
-	if (!translate.empty()) {
-		d_free(pool, translate.data);
-		translate = nullptr;
-	}
+	translate = nullptr;
 }
 
 void
-RealmSession::ClearSite() noexcept
-{
-	site.Clear(parent.pool);
-}
-
-void
-RealmSession::ClearUser() noexcept
-{
-	user.Clear(parent.pool);
-}
-
-void
-Session::ClearLanguage() noexcept
-{
-	language.Clear(pool);
-}
-
-bool
 Session::SetTranslate(ConstBuffer<void> _translate)
 {
 	assert(!_translate.IsNull());
 
 	if (!translate.IsNull() &&
-	    translate.size == _translate.size &&
-	    memcmp(translate.data, _translate.data, _translate.size) == 0)
+	    translate.size() == _translate.size &&
+	    memcmp(translate.data(), _translate.data, _translate.size) == 0)
 		/* same value as before: no-op */
-		return true;
+		return;
 
-	ClearTranslate();
-
-	try {
-		translate = DupBuffer(pool, _translate);
-		return true;
-	} catch (const std::bad_alloc &) {
-		return false;
-	}
+	translate = ConstBuffer<std::byte>::FromVoid(_translate);
 }
 
-bool
-RealmSession::SetSite(const char *_site)
-{
-	assert(_site != nullptr);
-
-	return site.SetNoExcept(parent.pool, _site);
-}
-
-bool
-RealmSession::SetUser(const char *_user, std::chrono::seconds max_age)
+void
+RealmSession::SetUser(const char *_user, std::chrono::seconds max_age) noexcept
 {
 	assert(_user != nullptr);
 
-	if (!user.SetNoExcept(parent.pool, _user))
-		return false;
+	user = _user;
 
 	if (max_age < std::chrono::seconds::zero())
 		/* never expires */
@@ -216,16 +105,6 @@ RealmSession::SetUser(const char *_user, std::chrono::seconds max_age)
 		user_expires = Expiry::AlreadyExpired();
 	else
 		user_expires.Touch(max_age);
-
-	return true;
-}
-
-bool
-Session::SetLanguage(const char *_language)
-{
-	assert(_language != nullptr);
-
-	return language.SetNoExcept(pool, _language);
 }
 
 bool
@@ -234,15 +113,19 @@ Session::SetExternalManager(const HttpAddress &address,
 			    std::chrono::duration<uint16_t> keepalive)
 {
 	if (external_manager != nullptr) {
-		external_manager->Free(pool);
-		DeleteFromPool(pool, external_manager);
+		delete external_manager;
 		external_manager = nullptr;
+		external_manager_pool.reset();
 	} else {
 		next_external_keepalive = std::chrono::steady_clock::time_point::min();
 	}
 
 	try {
-		external_manager = NewFromPool<HttpAddress>(pool, pool, address);
+		external_manager_pool =
+			PoolPtr(pool_new_libc(nullptr,
+					      "external_session_manager"));
+		external_manager = new HttpAddress(*external_manager_pool,
+						   address);
 		external_keepalive = keepalive;
 
 		/* assume the session is fresh now; postpone the first refresh
@@ -268,7 +151,7 @@ hashmap_r_get_widget_session(RealmSession &session, WidgetSession::Set &set,
 	if (!create)
 		return nullptr;
 
-	auto *ws = NewFromPool<WidgetSession>(session.parent.pool, session, id);
+	auto *ws = new WidgetSession(session, id);
 	set.insert(*ws);
 	return ws;
 }
@@ -293,22 +176,9 @@ try {
 	return nullptr;
 }
 
-void
-WidgetSession::Destroy(struct dpool &pool) noexcept
+WidgetSession::~WidgetSession() noexcept
 {
-	children.clear_and_dispose([&pool](WidgetSession *ws){
-		ws->Destroy(pool);
-	});
-
-	d_free(pool, id);
-
-	if (path_info != nullptr)
-		d_free(pool, path_info);
-
-	if (query_string != nullptr)
-		d_free(pool, query_string);
-
-	DeleteFromPool(pool, this);
+	children.clear_and_dispose(DeleteDisposer{});
 }
 
 void
@@ -336,7 +206,7 @@ try {
 	if (!result.second)
 		return &*result.first;
 
-	auto realm = NewFromPool<RealmSession>(pool, *this, realm_name);
+	auto realm = new RealmSession(*this, realm_name);
 	realms.insert_commit(*realm, commit_data);
 	return realm;
 } catch (const std::bad_alloc &) {

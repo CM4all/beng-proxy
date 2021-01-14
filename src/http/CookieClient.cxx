@@ -38,12 +38,13 @@
 #include "strmap.hxx"
 #include "pool/tpool.hxx"
 #include "pool/pool.hxx"
-#include "shm/dpool.hxx"
+#include "util/DeleteDisposer.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <iterator>
+#include <memory>
 
 #include <stdlib.h>
 #include <string.h>
@@ -74,24 +75,24 @@ path_matches(const char *path, const char *match) noexcept
 
 template<typename L>
 static void
-cookie_list_delete_match(struct dpool &dpool, L &list,
+cookie_list_delete_match(L &list,
 			 const char *domain, const char *path,
 			 StringView name) noexcept
 {
 	assert(domain != nullptr);
 
 	list.remove_and_dispose_if([=](const Cookie &cookie){
-		return domain_matches(domain, cookie.domain) &&
+		return domain_matches(domain, cookie.domain.c_str()) &&
 			(cookie.path == nullptr
 			 ? path == nullptr
-			 : path_matches(cookie.path, path)) &&
-			cookie.name.Equals(name);
+			 : path_matches(cookie.path.c_str(), path)) &&
+			name.Equals(cookie.name.c_str());
 	},
-		Cookie::Disposer(dpool));
+		DeleteDisposer{});
 }
 
-static Cookie *
-parse_next_cookie(struct dpool &pool, struct pool &tpool,
+static std::unique_ptr<Cookie>
+parse_next_cookie(struct pool &tpool,
 		  StringView &input) noexcept
 {
 	StringView name, value;
@@ -99,7 +100,7 @@ parse_next_cookie(struct dpool &pool, struct pool &tpool,
 	if (name.empty())
 		return nullptr;
 
-	auto *cookie = NewFromPool<Cookie>(pool, pool, name, value);
+	auto cookie = std::make_unique<Cookie>(name, value);
 
 	input.StripLeft();
 	while (!input.empty() && input.front() == ';') {
@@ -107,9 +108,9 @@ parse_next_cookie(struct dpool &pool, struct pool &tpool,
 
 		http_next_name_value(tpool, input, name, value);
 		if (name.EqualsIgnoreCase("domain"))
-			cookie->domain = d_strdup(pool, value);
+			cookie->domain = value;
 		else if (name.EqualsIgnoreCase("path"))
-			cookie->path = d_strdup(pool, value);
+			cookie->path = value;
 		else if (name.EqualsIgnoreCase("max-age")) {
 			unsigned long seconds;
 			char *endptr;
@@ -135,37 +136,32 @@ apply_next_cookie(CookieJar &jar, struct pool &tpool, StringView &input,
 {
 	assert(domain != nullptr);
 
-	auto *cookie = parse_next_cookie(jar.pool, tpool, input);
+	auto cookie = parse_next_cookie(tpool, input);
 	if (cookie == nullptr)
 		return false;
 
 	if (cookie->domain == nullptr) {
-		cookie->domain = d_strdup(jar.pool, domain);
-	} else if (!domain_matches(domain, cookie->domain)) {
+		cookie->domain = domain;
+	} else if (!domain_matches(domain, cookie->domain.c_str())) {
 		/* discard if domain mismatch */
-		cookie->Free(jar.pool);
 		return false;
 	}
 
 	if (path != nullptr && cookie->path != nullptr &&
-	    !path_matches(path, cookie->path)) {
+	    !path_matches(path, cookie->path.c_str())) {
 		/* discard if path mismatch */
-		cookie->Free(jar.pool);
 		return false;
 	}
 
 	/* delete the old cookie */
-	cookie_list_delete_match(jar.pool, jar.cookies, cookie->domain,
-				 cookie->path,
-				 cookie->name);
+	cookie_list_delete_match(jar.cookies, cookie->domain.c_str(),
+				 cookie->path.c_str(),
+				 (std::string_view)cookie->name);
 
 	/* add the new one */
 
-	if (cookie->expires == Expiry::AlreadyExpired())
-		/* discard expired cookie */
-		cookie->Free(jar.pool);
-	else
-		jar.Add(*cookie);
+	if (cookie->expires != Expiry::AlreadyExpired())
+		jar.Add(*cookie.release());
 
 	return true;
 }
@@ -220,11 +216,14 @@ cookie_jar_http_header_value(const CookieJar &jar,
 
 		auto *const cookie = &*i;
 
-		if (!domain_matches(domain, cookie->domain) ||
-		    !path_matches(path, cookie->path))
+		if (!domain_matches(domain, cookie->domain.c_str()) ||
+		    !path_matches(path, cookie->path.c_str()))
 			continue;
 
-		if (buffer_size - length < cookie->name.size + 1 + 1 + cookie->value.size * 2 + 1 + 2)
+		const StringView name(cookie->name.c_str());
+		const StringView value(cookie->value.c_str());
+
+		if (buffer_size - length < name.size + 1 + 1 + value.size * 2 + 1 + 2)
 			break;
 
 		if (length > 0) {
@@ -232,14 +231,14 @@ cookie_jar_http_header_value(const CookieJar &jar,
 			buffer[length++] = ' ';
 		}
 
-		memcpy(buffer + length, cookie->name.data, cookie->name.size);
-		length += cookie->name.size;
+		memcpy(buffer + length, name.data, name.size);
+		length += name.size;
 		buffer[length++] = '=';
-		if (http_must_quote_token(cookie->value))
-			length += http_quote_string(buffer + length, cookie->value);
+		if (http_must_quote_token(value))
+			length += http_quote_string(buffer + length, value);
 		else {
-			memcpy(buffer + length, cookie->value.data, cookie->value.size);
-			length += cookie->value.size;
+			memcpy(buffer + length, value.data, value.size);
+			length += value.size;
 		}
 	}
 

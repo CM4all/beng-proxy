@@ -31,51 +31,26 @@
  */
 
 #include "CookieJar.hxx"
-#include "shm/dpool.hxx"
+#include "util/DeleteDisposer.hxx"
 
-Cookie::Cookie(struct dpool &pool, StringView _name, StringView _value)
-	:name(DupStringView(pool, _name)),
-	 value(DupStringView(pool, _value)) {}
-
-Cookie::Cookie(struct dpool &pool, const Cookie &src)
-	:name(DupStringView(pool, src.name)),
-	 value(DupStringView(pool, src.value)),
-	 domain(d_strdup(pool, src.domain)),
-	 path(d_strdup_checked(pool, src.path)),
-	 expires(src.expires) {}
-
-void
-Cookie::Free(struct dpool &pool) noexcept
-{
-	if (!name.empty())
-		d_free(pool, name.data);
-
-	if (!value.empty())
-		d_free(pool, value.data);
-
-	if (domain != nullptr)
-		d_free(pool, domain);
-
-	if (path != nullptr)
-		d_free(pool, path);
-
-	d_free(pool, this);
-}
-
-CookieJar::CookieJar(struct dpool &_pool, const CookieJar &src)
-	:pool(_pool)
+CookieJar::CookieJar(const CookieJar &src)
 {
 	for (const auto &src_cookie : src.cookies) {
-		auto *dest_cookie = NewFromPool<Cookie>(pool, pool, src_cookie);
+		auto *dest_cookie = new Cookie(src_cookie);
 		Add(*dest_cookie);
 	}
+}
+
+CookieJar::~CookieJar() noexcept
+{
+	cookies.clear_and_dispose(DeleteDisposer{});
 }
 
 void
 CookieJar::EraseAndDispose(Cookie &cookie) noexcept
 {
 	cookie.unlink();
-	cookie.Free(pool);
+	delete &cookie;
 }
 
 void
@@ -84,13 +59,5 @@ CookieJar::Expire(Expiry now) noexcept
 {
 	cookies.remove_and_dispose_if([now](const Cookie &cookie){
 		return cookie.expires.IsExpired(now);
-	}, Cookie::Disposer(pool));
-}
-
-void
-CookieJar::Free() noexcept
-{
-	cookies.clear_and_dispose(Cookie::Disposer(pool));
-
-	d_free(pool, this);
+	}, DeleteDisposer{});
 }

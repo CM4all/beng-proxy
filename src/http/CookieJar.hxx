@@ -33,56 +33,32 @@
 #pragma once
 
 #include "util/Expiry.hxx"
+#include "util/AllocatedString.hxx"
 #include "util/StringView.hxx"
-
 #include "util/IntrusiveList.hxx"
 
-struct dpool;
-
 struct Cookie : IntrusiveListHook {
-	StringView name;
-	StringView value;
-	const char *domain = nullptr, *path = nullptr;
+	const AllocatedString name;
+	const AllocatedString value;
+	AllocatedString domain, path;
 	Expiry expires = Expiry::Never();
 
-	struct Disposer {
-		struct dpool &pool;
-
-		explicit constexpr Disposer(struct dpool &_pool) noexcept
-			:pool(_pool) {}
-
-		void operator()(Cookie *cookie) const noexcept {
-			cookie->Free(pool);
-		}
-	};
-
-	Cookie(struct dpool &pool, StringView _name, StringView _value);
-	Cookie(struct dpool &pool, const Cookie &src);
-
-	Cookie(const Cookie &) = delete;
-	Cookie &operator=(const Cookie &) = delete;
-
-	void Free(struct dpool &pool) noexcept;
+	template<typename N, typename V>
+	Cookie(N &&_name, V &&_value)
+		:name(std::forward<N>(_name)),
+		 value(std::forward<V>(_value)) {}
 };
 
 /**
  * Container for cookies received from other HTTP servers.
  */
 struct CookieJar {
-	struct dpool &pool;
-
 	IntrusiveList<Cookie> cookies;
 
-	explicit CookieJar(struct dpool &_pool) noexcept
-		:pool(_pool) {
-	}
+	CookieJar() = default;
 
-	CookieJar(struct dpool &_pool, const CookieJar &src);
-
-	CookieJar(const CookieJar &) = delete;
-	CookieJar &operator=(const CookieJar &) = delete;
-
-	void Free() noexcept;
+	CookieJar(const CookieJar &src);
+	~CookieJar() noexcept;
 
 	void Add(Cookie &cookie) noexcept {
 		cookies.push_front(cookie);

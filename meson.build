@@ -519,7 +519,7 @@ cookie = static_library('cookie',
   include_directories: inc,
 )
 cookie_dep = declare_dependency(link_with: cookie,
-                                dependencies: [shm_dep, http_util_dep, putil_dep])
+                                dependencies: [http_util_dep, putil_dep])
 
 thread_pool = static_library('thread_queue',
   'src/thread/Queue.cxx',
@@ -761,12 +761,10 @@ session = static_library('session',
   'src/bp/session/Write.cxx',
   'src/bp/session/Read.cxx',
   'src/bp/session/Save.cxx',
-  'src/bp/session/DHttpAddress.cxx',
-  'src/bp/session/DAddressList.cxx',
   include_directories: inc,
 )
 session_dep = declare_dependency(link_with: session,
-                                 dependencies: [shm_dep, event_dep,
+                                 dependencies: [event_dep,
                                                 cookie_dep,
                                                 raddress_dep])
 

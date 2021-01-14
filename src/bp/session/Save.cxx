@@ -37,7 +37,6 @@
 #include "Manager.hxx"
 #include "Glue.hxx"
 #include "Session.hxx"
-#include "shm/dpool.hxx"
 #include "io/BufferedOutputStream.hxx"
 #include "io/FdOutputStream.hxx"
 #include "io/FileWriter.hxx"
@@ -80,31 +79,18 @@ session_manager_load(FILE *file)
 		else if (magic != MAGIC_SESSION)
 			return false;
 
-		struct dpool *pool = session_manager->NewDpool();
-		if (pool == nullptr)
+		auto session = session_read(file);
+		if (session == nullptr)
 			return false;
-
-		Session *session;
-		try {
-			session = session_read(file, *pool);
-			if (session == nullptr) {
-				dpool_destroy(pool);
-				return false;
-			}
-		} catch (const std::bad_alloc &) {
-			dpool_destroy(pool);
-			return false;
-		}
 
 		if (session->expires.IsExpired(now)) {
 			/* this session is already expired, discard it
 			   immediately */
-			session->Destroy();
 			++num_expired;
 			continue;
 		}
 
-		session_manager->Insert(*session);
+		session_manager->Insert(*session.release());
 		++num_added;
 	}
 

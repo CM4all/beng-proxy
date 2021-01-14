@@ -380,7 +380,7 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 
 	if (session != nullptr && session->parent.language != nullptr)
 		dest.Add(alloc, "accept-language",
-			 alloc.DupZ(session->parent.language));
+			 alloc.DupZ((std::string_view)session->parent.language));
 
 	if (settings[HeaderGroup::SECURE] == HeaderForwardMode::MANGLE &&
 	    user != nullptr)

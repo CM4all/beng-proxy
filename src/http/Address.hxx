@@ -35,7 +35,6 @@
 #include "cluster/AddressList.hxx"
 #include "util/Compiler.h"
 
-struct dpool;
 struct StringView;
 class AllocatorPtr;
 class MatchInfo;
@@ -103,9 +102,6 @@ struct HttpAddress {
 		 addresses(shallow_copy, src.addresses)
 	{
 	}
-
-	HttpAddress(struct dpool &dpool, const HttpAddress &src);
-	void Free(struct dpool &pool);
 
 	HttpAddress &operator=(const HttpAddress &) = delete;
 

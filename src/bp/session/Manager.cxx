@@ -32,14 +32,15 @@
 
 #include "Manager.hxx"
 #include "Session.hxx"
-#include "shm/shm.hxx"
-#include "shm/dpool.hxx"
 #include "io/Logger.hxx"
+#include "util/DeleteDisposer.hxx"
 #include "util/StaticArray.hxx"
 
 #include <boost/intrusive/unordered_set.hpp>
 
 #include <stdlib.h>
+
+static constexpr unsigned MAX_SESSIONS = 65536;
 
 struct SessionHash {
 	gcc_pure
@@ -125,9 +126,6 @@ struct SessionContainer {
 		Insert(new_session);
 	}
 
-	void Defragment(Session &src, struct shm &shm);
-	void Defragment(SessionId id, struct shm &shm);
-
 	/**
 	 * @return true if there is at least one session
 	 */
@@ -141,10 +139,6 @@ struct SessionContainer {
 	bool Visit(bool (*callback)(const Session *session,
 				    void *ctx), void *ctx);
 };
-
-static constexpr size_t SHM_PAGE_SIZE = 4096;
-static constexpr unsigned SHM_NUM_PAGES = 65536;
-static constexpr unsigned SM_PAGES = (sizeof(SessionContainer) + SHM_PAGE_SIZE - 1) / SHM_PAGE_SIZE;
 
 #ifndef NDEBUG
 /**
@@ -161,7 +155,7 @@ SessionContainer::EraseAndDispose(Session &session)
 	assert(!sessions.empty());
 
 	auto i = sessions.iterator_to(session);
-	sessions.erase_and_dispose(i, Session::Disposer());
+	sessions.erase_and_dispose(i, DeleteDisposer{});
 }
 
 inline bool
@@ -173,7 +167,7 @@ SessionContainer::Cleanup() noexcept
 
 	EraseAndDisposeIf(sessions, [now](const Session &session){
 		return session.expires.IsExpired(now);
-	}, Session::Disposer());
+	}, DeleteDisposer{});
 
 	return !sessions.empty();
 }
@@ -183,16 +177,12 @@ SessionManager::SessionManager(EventLoop &event_loop,
 			       unsigned _cluster_size,
 			       unsigned _cluster_node) noexcept
 	:cluster_size(_cluster_size), cluster_node(_cluster_node),
-	 shm(shm_new(SHM_PAGE_SIZE, SHM_NUM_PAGES)),
-	 container(NewFromShm<SessionContainer>(shm, SM_PAGES, idle_timeout)),
+	 container(new SessionContainer(idle_timeout)),
 	 cleanup_timer(event_loop, BIND_THIS_METHOD(Cleanup)) {}
 
 SessionManager::~SessionManager() noexcept
 {
-	container->~SessionContainer();
-
-	if (shm != nullptr)
-		shm_close(shm);
+	delete container;
 }
 
 void
@@ -251,15 +241,6 @@ SessionManager::ReplaceAndDispose(Session &old_session,
 	container->ReplaceAndDispose(old_session, new_session);
 }
 
-void
-SessionManager::Defragment(SessionId id) noexcept
-{
-	assert(container != nullptr);
-	assert(shm != nullptr);
-
-	container->Defragment(id, *shm);
-}
-
 bool
 SessionManager::Purge() noexcept
 {
@@ -273,16 +254,10 @@ SessionManager::Cleanup() noexcept
 		cleanup_timer.Schedule(cleanup_interval);
 }
 
-struct dpool *
-SessionManager::NewDpool() noexcept
-{
-	return dpool_new(*shm);
-}
-
 inline
 SessionContainer::~SessionContainer()
 {
-	sessions.clear_and_dispose(Session::Disposer());
+	sessions.clear_and_dispose(DeleteDisposer{});
 }
 
 bool
@@ -319,8 +294,7 @@ SessionContainer::Purge() noexcept
 	   which would lead to calling this (very expensive) function too
 	   often */
 	bool again = purge_sessions.size() < 16 &&
-					     Count() > SHM_NUM_PAGES - 256;
-
+					     Count() > MAX_SESSIONS - 256;
 	if (again)
 		Purge();
 
@@ -341,50 +315,17 @@ SessionManager::CreateSession() noexcept
 {
 	assert(locked_session == nullptr);
 
-	struct dpool *pool = NewDpoolHarder();
-	if (pool == nullptr)
-		return nullptr;
+	if (Count() >= MAX_SESSIONS)
+		Purge();
 
-	Session *session;
-
-	try {
-		session = NewFromPool<Session>(*pool, *pool, GenerateSessionId());
-	} catch (const std::bad_alloc &) {
-		dpool_destroy(pool);
-		return nullptr;
-	}
+	Session *session = new Session(GenerateSessionId());
 
 #ifndef NDEBUG
 	locked_session = session;
 #endif
 
 	Insert(*session);
-
 	return session;
-}
-
-/**
- * After a while the dpool may have fragmentations, and memory is
- * wasted.  This function duplicates the session into a fresh dpool,
- * and frees the old session instance.  Of course, this requires that
- * there is enough free shared memory.
- */
-void
-SessionContainer::Defragment(Session &src, struct shm &shm)
-{
-	struct dpool *pool = dpool_new(shm);
-	if (pool == nullptr)
-		return;
-
-	Session *dest;
-	try {
-		dest = NewFromPool<Session>(*pool, *pool, src);
-	} catch (const std::bad_alloc &) {
-		dpool_destroy(pool);
-		return;
-	}
-
-	ReplaceAndDispose(src, *dest);
 }
 
 Session *
@@ -421,38 +362,7 @@ SessionContainer::Put(Session &session) noexcept
 void
 SessionManager::Put(Session &session) noexcept
 {
-	SessionId defragment;
-
-	if ((session.counter % 1024) == 0 &&
-	    dpool_is_fragmented(session.pool))
-		defragment = session.id;
-	else
-		defragment.Clear();
-
 	container->Put(session);
-
-	if (defragment.IsDefined())
-		/* the shared memory pool has become too fragmented;
-		   defragment the session by duplicating it into a new shared
-		   memory pool */
-		Defragment(defragment);
-}
-
-void
-SessionContainer::Defragment(SessionId id, struct shm &shm)
-{
-	Session *session = Find(id);
-	if (session == nullptr)
-		return;
-
-	/* unlock the session, because session_defragment() may call
-	   SessionContainer::EraseAndDispose(), and
-	   SessionContainer::EraseAndDispose() expects the session to be
-	   unlocked.  This is ok, because we're holding the session
-	   manager lock at this point. */
-	Put(*session);
-
-	Defragment(*session, shm);
 }
 
 void

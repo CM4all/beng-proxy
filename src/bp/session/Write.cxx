@@ -111,12 +111,16 @@ public:
 		WriteBuffer(buffer.data, buffer.size);
 	}
 
+	void Write(ConstBuffer<std::byte> buffer) {
+		Write(buffer.ToVoid());
+	}
+
 	void Write(StringView s) {
 		Write(s.ToVoid());
 	}
 
-	void Write(const DString &s) {
-		Write(s.ToStringView());
+	void Write(std::string_view s) {
+		Write(StringView(s));
 	}
 };
 

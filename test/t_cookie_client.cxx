@@ -34,8 +34,6 @@
 #include "http/CookieJar.hxx"
 #include "http/HeaderWriter.hxx"
 #include "pool/RootPool.hxx"
-#include "shm/shm.hxx"
-#include "shm/dpool.hxx"
 #include "AllocatorPtr.hxx"
 #include "strmap.hxx"
 
@@ -45,14 +43,11 @@
 
 TEST(CookieClientTest, Test1)
 {
-	const auto shm = shm_new(1024, 512);
-	const auto dpool = dpool_new(*shm);
-
 	RootPool pool;
 	const AllocatorPtr alloc(pool);
 	StringMap headers;
 
-	CookieJar jar(*dpool);
+	CookieJar jar;
 
 	/* empty cookie jar */
 	cookie_jar_http_header(jar, "foo.bar", "/", headers, alloc);
@@ -86,22 +81,16 @@ TEST(CookieClientTest, Test1)
 	headers.Clear();
 	cookie_jar_http_header(jar, "other.domain", "/some_path", headers, alloc);
 	EXPECT_STREQ(headers.Get("cookie"), "a=b");
-
-	dpool_destroy(dpool);
-	shm_close(shm);
 }
 
 TEST(CookieClientTest, Test2)
 {
-	const auto shm = shm_new(1024, 512);
-	const auto dpool = dpool_new(*shm);
-
 	RootPool pool;
 	const AllocatorPtr alloc(pool);
 	StringMap headers;
 
 	/* wrong path */
-	CookieJar jar(*dpool);
+	CookieJar jar;
 
 	cookie_jar_set_cookie2(jar, "a=b;path=\"/foo\"", "foo.bar", "/bar/x");
 	cookie_jar_http_header(jar, "foo.bar", "/", headers, alloc);
@@ -128,7 +117,4 @@ TEST(CookieClientTest, Test2)
 	cookie_jar_http_header(jar, "foo.bar", "/bar", headers, alloc);
 	EXPECT_EQ(headers.Get("cookie"), nullptr);
 	EXPECT_EQ(headers.Get("cookie2"), nullptr);
-
-	dpool_destroy(dpool);
-	shm_close(shm);
 }

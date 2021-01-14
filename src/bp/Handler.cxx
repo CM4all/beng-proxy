@@ -495,7 +495,7 @@ fill_translate_request_user(Request &request,
 	auto session = request.GetRealmSession();
 	if (session) {
 		if (session->user != nullptr)
-			t.user = alloc.DupZ(session->user);
+			t.user = alloc.DupZ((std::string_view)session->user);
 	}
 }
 

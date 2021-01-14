@@ -38,10 +38,11 @@
 
 #include "Id.hxx"
 #include "http/CookieJar.hxx"
-#include "shm/String.hxx"
+#include "pool/Ptr.hxx"
+#include "util/AllocatedArray.hxx"
+#include "util/AllocatedString.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Expiry.hxx"
-
 #include "util/Compiler.h"
 
 #include <boost/intrusive/set.hpp>
@@ -51,7 +52,6 @@
 
 #include <string.h>
 
-struct dpool;
 struct RealmSession;
 struct HttpAddress;
 
@@ -63,15 +63,15 @@ struct WidgetSession
 
 	struct Compare {
 		bool operator()(const WidgetSession &a, const WidgetSession &b) const {
-			return strcmp(a.id, b.id) < 0;
+			return strcmp(a.id.c_str(), b.id.c_str()) < 0;
 		}
 
 		bool operator()(const WidgetSession &a, const char *b) const {
-			return strcmp(a.id, b) < 0;
+			return strcmp(a.id.c_str(), b) < 0;
 		}
 
 		bool operator()(const char *a, const WidgetSession &b) const {
-			return strcmp(a, b.id) < 0;
+			return strcmp(a, b.id.c_str()) < 0;
 		}
 	};
 
@@ -83,28 +83,21 @@ struct WidgetSession
 
 	/** local id of this widget; must not be nullptr since widgets
 	    without an id cannot have a session */
-	const DString id;
+	const AllocatedString id;
 
 	Set children;
 
 	/** last relative URI */
-	DString path_info;
+	AllocatedString path_info;
 
 	/** last query string */
-	DString query_string;
+	AllocatedString query_string;
 
-	/**
-	 * Throws std::bad_alloc on error.
-	 */
-	WidgetSession(RealmSession &_session, const char *_id);
+	template<typename I>
+	WidgetSession(RealmSession &_session, I &&_id)
+		:session(_session), id(std::forward<I>(_id)) {}
 
-	/**
-	 * Throws std::bad_alloc on error.
-	 */
-	WidgetSession(struct dpool &pool, const WidgetSession &src,
-		      RealmSession &_session);
-
-	void Destroy(struct dpool &pool) noexcept;
+	~WidgetSession() noexcept;
 
 	gcc_pure
 	WidgetSession *GetChild(const char *child_id, bool create);
@@ -127,32 +120,32 @@ struct RealmSession
 
 	struct Compare {
 		bool operator()(const RealmSession &a, const RealmSession &b) const {
-			return strcmp(a.realm, b.realm) < 0;
+			return strcmp(a.realm.c_str(), b.realm.c_str()) < 0;
 		}
 
 		bool operator()(const RealmSession &a, const char *b) const {
-			return strcmp(a.realm, b) < 0;
+			return strcmp(a.realm.c_str(), b) < 0;
 		}
 
 		bool operator()(const char *a, const RealmSession &b) const {
-			return strcmp(a, b.realm) < 0;
+			return strcmp(a, b.realm.c_str()) < 0;
 		}
 	};
 
 	/**
 	 * The name of this session's realm.  It is always non-nullptr.
 	 */
-	const DString realm;
+	const AllocatedString realm;
 
 	/**
 	 * The site name as provided by the translation server in the
 	 * packet #TRANSLATE_SESSION_SITE.
 	 */
-	DString site;
+	AllocatedString site;
 
 	/** the user name which is logged in (nullptr if anonymous), provided
 	    by the translation server */
-	DString user;
+	AllocatedString user;
 
 	/** when will the #user attribute expire? */
 	Expiry user_expires = Expiry::Never();
@@ -166,22 +159,29 @@ struct RealmSession
 	/**
 	 * Throws std::bad_alloc on error.
 	 */
-	RealmSession(Session &_parent, const char *realm);
+	template<typename R>
+	RealmSession(Session &_parent, R &&_realm)
+		:parent(_parent),
+		 realm(std::forward<R>(_realm))
+	{
+	}
 
-	/**
-	 * Throws std::bad_alloc on error.
-	 */
-	RealmSession(Session &_parent, const RealmSession &src);
+	void ClearSite() noexcept {
+		site = nullptr;
+	}
 
-	void ClearSite() noexcept;
-	bool SetSite(const char *_site);
+	void SetSite(const char *_site) noexcept {
+		site = _site;
+	}
 
 	/**
 	 * @param max_age 0 = expires immediately; negative = never
 	 * expires.
 	 */
-	bool SetUser(const char *user, std::chrono::seconds max_age);
-	void ClearUser() noexcept;
+	void SetUser(const char *user, std::chrono::seconds max_age) noexcept;
+	void ClearUser() noexcept {
+		user = nullptr;
+	}
 
 	void Expire(Expiry now) noexcept;
 
@@ -194,8 +194,6 @@ struct Session {
 	using LinkMode = boost::intrusive::link_mode<link_mode>;
 	using SetHook = boost::intrusive::unordered_set_member_hook<LinkMode>;
 	SetHook set_hook;
-
-	struct dpool &pool;
 
 	/** identification number of this session */
 	const SessionId id;
@@ -222,11 +220,13 @@ struct Session {
 	bool cookie_received = false;
 
 	/** an opaque string for the translation server */
-	ConstBuffer<void> translate = nullptr;
+	AllocatedArray<std::byte> translate;
 
 	/** optional  for the "Accept-Language" header, provided
 	    by the translation server */
-	DString language;
+	AllocatedString language;
+
+	PoolPtr external_manager_pool;
 
 	/** @see #TRANSLATE_EXTERNAL_SESSION_MANAGER */
 	HttpAddress *external_manager = nullptr;
@@ -243,14 +243,8 @@ struct Session {
 
 	RealmSessionSet realms;
 
-	Session(struct dpool &_pool, SessionId _id);
-
-	/**
-	 * Throws std::bad_alloc on error.
-	 */
-	Session(struct dpool &_pool, const Session &src);
-
-	void Destroy() noexcept;
+	explicit Session(SessionId _id) noexcept;
+	~Session() noexcept;
 
 	/**
 	 * Calculates the score for purging the session: higher score
@@ -268,11 +262,16 @@ struct Session {
 		return false;
 	}
 
-	bool SetTranslate(ConstBuffer<void> translate);
+	void SetTranslate(ConstBuffer<void> translate);
 	void ClearTranslate() noexcept;
 
-	bool SetLanguage(const char *language);
-	void ClearLanguage() noexcept;
+	void SetLanguage(const char *_language) {
+		language = _language;
+	}
+
+	void ClearLanguage() noexcept {
+		language = nullptr;
+	}
 
 	bool SetExternalManager(const HttpAddress &address,
 				std::chrono::steady_clock::time_point now,
@@ -282,12 +281,6 @@ struct Session {
 
 	gcc_pure
 	RealmSession *GetRealm(const char *realm);
-
-	struct Disposer {
-		void operator()(Session *session) {
-			session->Destroy();
-		}
-	};
 };
 
 /**
