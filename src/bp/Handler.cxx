@@ -405,13 +405,13 @@ Request::InstallErrorTranslateResponse() noexcept
 }
 
 static const char *
-uri_without_query_string(struct pool &pool, const char *uri)
+uri_without_query_string(AllocatorPtr alloc, const char *uri)
 {
 	assert(uri != nullptr);
 
 	const char *qmark = strchr(uri, '?');
 	if (qmark != nullptr)
-		return p_strndup(&pool, uri, qmark - uri);
+		return alloc.DupZ(StringView{uri, qmark});
 
 	return uri;
 }
@@ -468,9 +468,9 @@ fill_translate_request_language(TranslateRequest &t,
 
 static void
 fill_translate_request_args(TranslateRequest &t,
-			    struct pool &pool, const StringMap &args)
+			    AllocatorPtr alloc, const StringMap &args)
 {
-	t.args = args_format(pool, &args,
+	t.args = args_format(alloc, &args,
 			     nullptr, nullptr, nullptr, nullptr,
 			     "translate");
 	if (t.args != nullptr && *t.args == 0)
@@ -479,29 +479,31 @@ fill_translate_request_args(TranslateRequest &t,
 
 static void
 fill_translate_request_query_string(TranslateRequest &t,
-				    struct pool &pool,
-				    const DissectedUri &uri)
+				    AllocatorPtr alloc,
+				    const DissectedUri &uri) noexcept
 {
 	t.query_string = uri.query.empty()
 		? nullptr
-		: p_strdup(pool, uri.query);
+		: alloc.DupZ(uri.query);
 }
 
 static void
 fill_translate_request_user(Request &request,
 			    TranslateRequest &t,
-			    struct pool &pool)
+			    AllocatorPtr alloc)
 {
 	auto session = request.GetRealmSession();
 	if (session) {
 		if (session->user != nullptr)
-			t.user = p_strdup(&pool, session->user);
+			t.user = alloc.DupZ(session->user);
 	}
 }
 
 inline void
 Request::RepeatTranslation(const TranslateResponse &response) noexcept
 {
+	const AllocatorPtr alloc(pool);
+
 	if (!response.check.IsNull()) {
 		/* repeat request with CHECK set */
 
@@ -574,21 +576,23 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 
 		if (response.Wants(TranslationCommand::ARGS) &&
 		    translate.request.args == nullptr)
-			fill_translate_request_args(translate.request, pool, args);
+			fill_translate_request_args(translate.request, alloc, args);
 
 		if (response.Wants(TranslationCommand::QUERY_STRING))
-			fill_translate_request_query_string(translate.request, pool,
+			fill_translate_request_query_string(translate.request,
+							    alloc,
 							    dissected_uri);
 
 		if (response.Wants(TranslationCommand::QUERY_STRING))
-			fill_translate_request_query_string(translate.request, pool,
+			fill_translate_request_query_string(translate.request,
+							    alloc,
 							    dissected_uri);
 
 		if (response.Wants(TranslationCommand::USER) || translate.want_user) {
 			ApplyTranslateRealm(response, nullptr);
 
 			translate.want_user = true;
-			fill_translate_request_user(*this, translate.request, pool);
+			fill_translate_request_user(*this, translate.request, alloc);
 		}
 	}
 
@@ -599,7 +603,7 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 		translate.request.want_full_uri = response.want_full_uri;
 
 		/* send the full URI this time */
-		translate.request.uri = uri_without_query_string(pool, request.uri);
+		translate.request.uri = uri_without_query_string(alloc, request.uri);
 
 		/* undo the uri_parse() call (but leave the query_string) */
 
@@ -885,6 +889,8 @@ fill_translate_request(TranslateRequest &t,
 		       const char *listener_tag,
 		       const char *remote_host_and_port)
 {
+	const AllocatorPtr alloc(request.pool);
+
 	/* these two were set by ParseArgs() */
 	const auto session = t.session;
 	const auto param = t.param;
@@ -895,7 +901,7 @@ fill_translate_request(TranslateRequest &t,
 
 	t.host = request.headers.Get("host");
 	t.authorization = request.headers.Get("authorization");
-	t.uri = p_strdup(request.pool, uri.base);
+	t.uri = alloc.DupZ(uri.base);
 
 	if (translation_protocol_version < 1) {
 		/* old translation server: send all packets that have become
@@ -905,8 +911,8 @@ fill_translate_request(TranslateRequest &t,
 		fill_translate_request_user_agent(t, request.headers);
 		fill_translate_request_ua_class(t, instance, request.headers);
 		fill_translate_request_language(t, request.headers);
-		fill_translate_request_args(t, request.pool, args);
-		fill_translate_request_query_string(t, request.pool, uri);
+		fill_translate_request_args(t, alloc, args);
+		fill_translate_request_query_string(t, alloc, uri);
 	}
 
 	if (translation_protocol_version >= 2 ||
