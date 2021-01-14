@@ -64,9 +64,9 @@ struct SslFactoryCertKey {
 		Name(AllocatedString &&_value)
 			:value(std::move(_value)), length(strlen(value.c_str())) {}
 
-		Name(const char *_value)
+		Name(std::string_view _value)
 			:value(AllocatedString::Duplicate(_value)),
-			 length(strlen(_value)) {}
+			 length(_value.size()) {}
 
 		gcc_pure
 		bool Match(StringView host_name) const;
