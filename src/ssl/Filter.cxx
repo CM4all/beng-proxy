@@ -63,7 +63,7 @@ class SslFilter final : public ThreadSocketFilterHandler {
 	AllocatedArray<unsigned char> alpn_selected;
 
 public:
-	AllocatedString peer_subject = nullptr, peer_issuer_subject = nullptr;
+	AllocatedString peer_subject, peer_issuer_subject;
 
 	SslFilter(UniqueSSL &&_ssl)
 		:ssl(std::move(_ssl)) {
