@@ -82,7 +82,7 @@ public:
 	 * Returns the number of sessions.
 	 */
 	gcc_pure
-	unsigned LockCount() noexcept;
+	unsigned Count() noexcept;
 
 	/**
 	 * Invoke the callback for each session.  The session and the
@@ -92,7 +92,7 @@ public:
 				    void *ctx), void *ctx);
 
 	gcc_pure
-	Session *LockFind(SessionId id) noexcept;
+	Session *Find(SessionId id) noexcept;
 
 	void Put(Session &session) noexcept;
 

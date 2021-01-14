@@ -46,7 +46,6 @@
 
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive/unordered_set_hook.hpp>
-#include <boost/interprocess/sync/interprocess_mutex.hpp>
 
 #include <chrono>
 
@@ -197,10 +196,6 @@ struct Session {
 	SetHook set_hook;
 
 	struct dpool &pool;
-
-	/** this lock protects the bit fields, all widget session hash
-	    maps and the cookie jar */
-	boost::interprocess::interprocess_mutex mutex;
 
 	/** identification number of this session */
 	const SessionId id;
