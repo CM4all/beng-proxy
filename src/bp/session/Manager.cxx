@@ -121,11 +121,6 @@ struct SessionContainer {
 	void EraseAndDispose(Session &session);
 	void EraseAndDispose(SessionId id);
 
-	void ReplaceAndDispose(Session &old_session, Session &new_session) {
-		EraseAndDispose(old_session);
-		Insert(new_session);
-	}
-
 	/**
 	 * @return true if there is at least one session
 	 */
@@ -232,13 +227,6 @@ SessionManager::EraseAndDispose(SessionId id) noexcept
 	assert(container != nullptr);
 
 	container->EraseAndDispose(id);
-}
-
-void
-SessionManager::ReplaceAndDispose(Session &old_session,
-				  Session &new_session) noexcept
-{
-	container->ReplaceAndDispose(old_session, new_session);
 }
 
 bool

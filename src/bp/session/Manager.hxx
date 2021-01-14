@@ -103,8 +103,6 @@ public:
 	 */
 	void Insert(Session &session) noexcept;
 	void EraseAndDispose(SessionId id) noexcept;
-	void ReplaceAndDispose(Session &old_session,
-			       Session &new_session) noexcept;
 
 	Session *CreateSession() noexcept;
 
