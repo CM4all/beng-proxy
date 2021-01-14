@@ -48,33 +48,11 @@ TEST(SessionTest, Basic)
 	const ScopeSessionManagerInit sm_init(event_loop, std::chrono::minutes(30),
 					      0, 0);
 
-	int fds[2];
-	(void)pipe(fds);
+	auto *s = session_new();
+	const auto session_id = s->id;
+	session_put(s);
 
-	pid_t pid = fork();
-	ASSERT_GE(pid, 0);
-
-	if (pid == 0) {
-		event_loop.Reinit();
-		session_manager_init(event_loop, std::chrono::minutes(30), 0, 0);
-
-		auto *session = session_new();
-		(void)write(fds[1], &session->id, sizeof(session->id));
-		session_put(session);
-	} else {
-		close(fds[1]);
-
-		int status;
-		pid_t pid2 = wait(&status);
-		ASSERT_EQ(pid2, pid);
-		ASSERT_TRUE(WIFEXITED(status));
-		ASSERT_EQ(WEXITSTATUS(status), 0);
-
-		SessionId session_id;
-		(void)read(fds[0], &session_id, sizeof(session_id));
-
-		SessionLease session(session_id);
-		ASSERT_TRUE(session);
-		ASSERT_EQ(session->id, session_id);
-	}
+	SessionLease session(session_id);
+	ASSERT_TRUE(session);
+	ASSERT_EQ(session->id, session_id);
 }

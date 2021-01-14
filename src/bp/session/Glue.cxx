@@ -41,17 +41,14 @@ void
 session_manager_init(EventLoop &event_loop, std::chrono::seconds idle_timeout,
 		     unsigned cluster_size, unsigned cluster_node)
 {
+	assert(session_manager == nullptr);
 	assert((cluster_size == 0 && cluster_node == 0) ||
 	       cluster_node < cluster_size);
 
 	random_seed();
 
-	if (session_manager == nullptr) {
-		session_manager = new SessionManager(event_loop, idle_timeout,
-						     cluster_size, cluster_node);
-	} else {
-		session_manager->Ref();
-	}
+	session_manager = new SessionManager(event_loop, idle_timeout,
+					     cluster_size, cluster_node);
 }
 
 void
