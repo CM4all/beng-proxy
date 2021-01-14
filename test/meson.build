@@ -567,16 +567,6 @@ test(
   ),
 )
 
-test('t_shm', executable('t_shm',
-  't_shm.cxx',
-  't_dpool.cxx',
-  include_directories: inc,
-  dependencies: [
-    gtest,
-    threads,
-    shm_dep,
-  ]))
-
 test('t_session', executable('t_session',
   't_session.cxx',
   'TestSessionId.cxx',

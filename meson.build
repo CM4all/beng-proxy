@@ -338,18 +338,6 @@ stock_dep = declare_dependency(
   dependencies: [stock_dep, event_dep],
 )
 
-shm = static_library('shm',
-  'src/shm/dpool.cxx',
-  'src/shm/dstring.cxx',
-  'src/shm/String.cxx',
-  'src/shm/shm.cxx',
-  include_directories: inc,
-  dependencies: [
-    threads,
-  ])
-shm_dep = declare_dependency(link_with: shm,
-                             dependencies: [io_dep])
-
 subdir('libcommon/src/ssl')
 subdir('libcommon/src/jwt')
 
