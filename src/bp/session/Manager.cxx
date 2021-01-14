@@ -36,7 +36,6 @@
 #include "shm/dpool.hxx"
 #include "io/Logger.hxx"
 #include "util/StaticArray.hxx"
-#include "util/RefCount.hxx"
 
 #include <boost/interprocess/sync/interprocess_sharable_mutex.hpp>
 #include <boost/interprocess/sync/sharable_lock.hpp>
@@ -86,8 +85,6 @@ EraseAndDisposeIf(Container &container, Pred pred, Disposer disposer)
 }
 
 struct SessionContainer {
-	RefCount ref;
-
 	/**
 	 * The idle timeout of sessions [seconds].
 	 */
@@ -115,15 +112,6 @@ struct SessionContainer {
 	}
 
 	~SessionContainer();
-
-	void Ref() {
-		ref.Get();
-	}
-
-	void Unref() {
-		if (ref.Put())
-			this->~SessionContainer();
-	}
 
 	unsigned Count() {
 		return sessions.size();
@@ -231,21 +219,10 @@ SessionManager::SessionManager(EventLoop &event_loop,
 
 SessionManager::~SessionManager() noexcept
 {
-	if (container != nullptr)
-		container->Unref();
+	container->~SessionContainer();
 
 	if (shm != nullptr)
 		shm_close(shm);
-}
-
-void
-SessionManager::Ref() noexcept
-{
-	assert(container != nullptr);
-	assert(shm != nullptr);
-
-	container->Ref();
-	shm_ref(shm);
 }
 
 void

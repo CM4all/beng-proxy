@@ -76,8 +76,6 @@ public:
 		cleanup_timer.Cancel();
 	}
 
-	void Ref() noexcept;
-
 	void AdjustNewSessionId(SessionId &id) const noexcept;
 
 	/**
