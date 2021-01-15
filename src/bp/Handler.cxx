@@ -910,5 +910,14 @@ Request::HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept
 			       dissected_uri, args,
 			       connection.listener.GetTag(),
 			       connection.remote_host_and_port);
+
+	if (translate.request.host == nullptr) {
+		DispatchError(HTTP_STATUS_BAD_REQUEST, "No Host header");
+		return;
+	} else if (!VerifyUriHostPort(translate.request.host)) {
+		DispatchError(HTTP_STATUS_BAD_REQUEST, "Malformed Host header");
+		return;
+	}
+
 	SubmitTranslateRequest();
 }

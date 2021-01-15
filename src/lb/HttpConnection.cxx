@@ -251,6 +251,15 @@ LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 	}
 
 	auto &rl = *(LbRequestLogger *)request.logger;
+	if (rl.host == nullptr) {
+		request.body.Clear();
+		request.SendMessage(HTTP_STATUS_BAD_REQUEST, "No Host header");
+		return;
+	} else if (!VerifyUriHostPort(rl.host)) {
+		request.body.Clear();
+		request.SendMessage(HTTP_STATUS_BAD_REQUEST, "Malformed Host header");
+		return;
+	}
 
 	if (instance.config.global_http_check &&
 	    instance.config.global_http_check->Match(request.uri, rl.host) &&
