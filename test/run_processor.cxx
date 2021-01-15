@@ -66,13 +66,6 @@ embed_inline_widget(struct pool &pool,
 	return istream_string_new(pool, s);
 }
 
-WidgetSession *
-Widget::GetSession(gcc_unused RealmSession &session,
-		   gcc_unused bool create) noexcept
-{
-	return nullptr;
-}
-
 RewriteUriMode
 parse_uri_mode(gcc_unused StringView s) noexcept
 {
@@ -101,9 +94,6 @@ try {
 	const ScopeFbPoolInit fb_pool_init;
 	PInstance instance;
 
-	SessionId session_id;
-	session_id.Generate();
-
 	FailingResourceLoader resource_loader;
 
 	auto ctx = SharedPoolPtr<WidgetContext>::Make
@@ -118,7 +108,7 @@ try {
 		 "/beng.html",
 		 nullptr,
 		 nullptr,
-		 session_id, "foo",
+		 SessionId{}, "foo",
 		 nullptr);
 	auto &widget = ctx->AddRootWidget(MakeRootWidget(instance.root_pool,
 							 nullptr));

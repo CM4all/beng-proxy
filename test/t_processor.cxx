@@ -76,13 +76,6 @@ embed_inline_widget(struct pool &pool,
 	return istream_string_new(pool, s);
 }
 
-WidgetSession *
-Widget::GetSession(gcc_unused RealmSession &session,
-		   gcc_unused bool create) noexcept
-{
-	return nullptr;
-}
-
 RewriteUriMode
 parse_uri_mode(gcc_unused StringView s) noexcept
 {
@@ -134,9 +127,6 @@ TEST(Processor, Abort)
 
 	auto pool = pool_new_libc(instance.root_pool, "test");
 
-	SessionId session_id;
-	session_id.Generate();
-
 	FailingResourceLoader resource_loader;
 
 	auto ctx = SharedPoolPtr<WidgetContext>::Make
@@ -150,7 +140,7 @@ TEST(Processor, Abort)
 		 "http://localhost:8080/beng.html",
 		 "/beng.html",
 		 nullptr,
-		 "bp_session", session_id, "foo",
+		 nullptr, SessionId{}, nullptr,
 		 nullptr);
 	auto &widget = ctx->AddRootWidget(MakeRootWidget(instance.root_pool,
 							 nullptr));
