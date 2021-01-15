@@ -34,9 +34,8 @@
  * Serve HTTP requests from another HTTP server.
  */
 
-#include "Handler.hxx"
-#include "Instance.hxx"
 #include "Request.hxx"
+#include "Instance.hxx"
 #include "ForwardRequest.hxx"
 #include "CsrfProtection.hxx"
 #include "ResourceLoader.hxx"

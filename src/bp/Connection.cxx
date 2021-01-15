@@ -32,7 +32,7 @@
 
 #include "Connection.hxx"
 #include "RLogger.hxx"
-#include "Handler.hxx"
+#include "Request.hxx"
 #include "Instance.hxx"
 #include "http_server/http_server.hxx"
 #include "http/IncomingRequest.hxx"
@@ -147,7 +147,10 @@ BpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 				const StopwatchPtr &parent_stopwatch,
 				CancellablePointer &cancel_ptr) noexcept
 {
-	handle_http_request(*this, request, parent_stopwatch, cancel_ptr);
+	auto *request2 = NewFromPool<Request>(request.pool,
+					      *this, request,
+					      parent_stopwatch);
+	request2->HandleHttpRequest(cancel_ptr);
 }
 
 void

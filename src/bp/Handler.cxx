@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Handler.hxx"
+#include "Request.hxx"
 #include "PendingResponse.hxx"
 #include "Connection.hxx"
 #include "Listener.hxx"
@@ -40,7 +40,6 @@
 #include "load_file.hxx"
 #include "file_address.hxx"
 #include "nfs/Address.hxx"
-#include "Request.hxx"
 #include "args.hxx"
 #include "session/Session.hxx"
 #include "ExternalSession.hxx"
@@ -957,16 +956,4 @@ Request::HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept
 	DetermineSession();
 
 	AskTranslationServer();
-}
-
-void
-handle_http_request(BpConnection &connection,
-		    IncomingHttpRequest &request,
-		    const StopwatchPtr &parent_stopwatch,
-		    CancellablePointer &cancel_ptr)
-{
-	auto *request2 = NewFromPool<Request>(request.pool,
-					      connection, request,
-					      parent_stopwatch);
-	request2->HandleHttpRequest(cancel_ptr);
 }

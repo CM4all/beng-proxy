@@ -30,12 +30,11 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bp/Handler.hxx"
+#include "bp/Request.hxx"
 #include "Address.hxx"
 #include "Glue.hxx"
 #include "bp/FileHeaders.hxx"
 #include "bp/GenerateResponse.hxx"
-#include "bp/Request.hxx"
 #include "bp/Instance.hxx"
 #include "http/IncomingRequest.hxx"
 
