@@ -71,8 +71,8 @@ struct PendingResponse;
 struct FilterTransformation;
 struct DelegateAddress;
 struct WidgetContext;
-struct SessionLease;
-struct RealmSessionLease;
+class SessionLease;
+class RealmSessionLease;
 
 /*
  * The BENG request struct.  This is only used by the handlers
