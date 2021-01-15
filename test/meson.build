@@ -625,6 +625,7 @@ test('t_rewrite_uri', executable('t_rewrite_uri',
   'FailingResourceLoader.cxx',
   '../src/PInstance.cxx',
   '../src/widget/RewriteUri.cxx',
+  '../src/bp/session/Lease.cxx',
   '../src/istream_escape.cxx',
   include_directories: inc,
   dependencies: [

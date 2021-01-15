@@ -34,7 +34,7 @@
 #include "Connection.hxx"
 #include "Listener.hxx"
 #include "PendingResponse.hxx"
-#include "session/Session.hxx"
+#include "session/Lease.hxx"
 #include "http/IncomingRequest.hxx"
 #include "widget/Context.hxx"
 #include "translation/Vary.hxx"

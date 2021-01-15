@@ -51,6 +51,7 @@
 #include "istream/istream_null.hxx"
 #include "istream/AutoPipeIstream.hxx"
 #include "pool/SharedPtr.hxx"
+#include "bp/session/Lease.hxx"
 #include "bp/session/Session.hxx"
 #include "bp/session/Glue.hxx"
 #include "suffix_registry.hxx"

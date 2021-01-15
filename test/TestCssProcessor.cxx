@@ -43,6 +43,7 @@
 #include "bp/CssProcessor.hxx"
 #include "bp/session/Glue.hxx"
 #include "bp/session/Session.hxx"
+#include "bp/session/Lease.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Registry.hxx"
 #include "bp/Global.hxx"

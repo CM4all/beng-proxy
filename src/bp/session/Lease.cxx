@@ -30,27 +30,37 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bp/session/Lease.hxx"
-#include "bp/session/Session.hxx"
-#include "bp/session/Glue.hxx"
-#include "event/Loop.hxx"
+/*
+ * Session management.
+ */
 
-#include <gtest/gtest.h>
+#include "Lease.hxx"
+#include "Session.hxx"
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
+class Session;
 
-TEST(SessionTest, Basic)
+void
+session_put(RealmSession &session) noexcept
 {
-	EventLoop event_loop;
+	session_put(&session.parent);
+}
 
-	const ScopeSessionManagerInit sm_init(event_loop, std::chrono::minutes(30),
-					      0, 0);
+RealmSessionLease::RealmSessionLease(SessionLease &&src, const char *realm) noexcept
+	:session(src.session != nullptr
+		 ? src.session->GetRealm(realm)
+		 : nullptr) {
+	if (session != nullptr)
+		src.session = nullptr;
+}
 
-	const auto session_id = SessionLease(session_new())->id;
+RealmSessionLease::RealmSessionLease(SessionId id, const char *realm) noexcept
+	:session(nullptr)
+{
+	SessionLease parent(id);
+	if (!parent)
+		return;
 
-	SessionLease session(session_id);
-	ASSERT_TRUE(session);
-	ASSERT_EQ(session->id, session_id);
+	session = parent.session->GetRealm(realm);
+	if (session != nullptr)
+		parent.session = nullptr;
 }

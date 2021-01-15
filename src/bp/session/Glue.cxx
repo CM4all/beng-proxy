@@ -33,6 +33,7 @@
 #include "Glue.hxx"
 #include "Manager.hxx"
 #include "Session.hxx"
+#include "Lease.hxx"
 #include "random.hxx"
 
 SessionManager *session_manager;

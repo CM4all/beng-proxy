@@ -43,6 +43,7 @@
 #include "bp/WidgetLookupProcessor.hxx"
 #include "bp/CssProcessor.hxx"
 #include "bp/TextProcessor.hxx"
+#include "bp/session/Lease.hxx"
 #include "bp/session/Session.hxx"
 #include "http/CookieClient.hxx"
 #include "ResourceLoader.hxx"

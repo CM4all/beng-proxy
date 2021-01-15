@@ -32,6 +32,7 @@
 
 #include "Request.hxx"
 #include "strmap.hxx"
+#include "session/Lease.hxx"
 #include "session/Session.hxx"
 #include "http/CookieClient.hxx"
 

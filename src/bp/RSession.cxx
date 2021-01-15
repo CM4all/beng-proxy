@@ -33,6 +33,7 @@
 #include "Request.hxx"
 #include "RLogger.hxx"
 #include "Instance.hxx"
+#include "session/Lease.hxx"
 #include "session/Session.hxx"
 #include "session/Glue.hxx"
 #include "http/IncomingRequest.hxx"

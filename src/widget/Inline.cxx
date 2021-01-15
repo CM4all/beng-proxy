@@ -47,7 +47,7 @@
 #include "istream/istream_pause.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/TimeoutIstream.hxx"
-#include "bp/session/Session.hxx"
+#include "bp/session/Lease.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "event/TimerEvent.hxx"

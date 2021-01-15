@@ -38,7 +38,7 @@
 #include "LookupHandler.hxx"
 #include "HttpResponseHandler.hxx"
 #include "pool/SharedPtr.hxx"
-#include "bp/session/Session.hxx"
+#include "bp/session/Lease.hxx"
 
 #include <assert.h>
 

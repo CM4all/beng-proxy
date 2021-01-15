@@ -743,6 +743,7 @@ delegate_client_dep = declare_dependency(
 
 session = static_library('session',
   'src/bp/session/Session.cxx',
+  'src/bp/session/Lease.cxx',
   'src/bp/session/Glue.cxx',
   'src/bp/session/Id.cxx',
   'src/bp/session/Manager.cxx',

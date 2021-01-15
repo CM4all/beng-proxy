@@ -44,7 +44,7 @@
 #include "pool/pool.hxx"
 #include "pool/SharedPtr.hxx"
 #include "PInstance.hxx"
-#include "bp/session/Session.hxx"
+#include "bp/session/Lease.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
 #include "AllocatorPtr.hxx"
@@ -98,6 +98,11 @@ WidgetContext::GetRealmSession() const
 
 void
 session_put(Session *session gcc_unused) noexcept
+{
+}
+
+void
+session_put(RealmSession &) noexcept
 {
 }
 

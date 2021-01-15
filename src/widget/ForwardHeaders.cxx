@@ -32,7 +32,7 @@
 
 #include "Context.hxx"
 #include "bp/ForwardHeaders.hxx"
-#include "bp/session/Session.hxx"
+#include "bp/session/Lease.hxx"
 #include "AllocatorPtr.hxx"
 #include "strmap.hxx"
 

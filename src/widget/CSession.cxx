@@ -31,7 +31,7 @@
  */
 
 #include "Context.hxx"
-#include "bp/session/Session.hxx"
+#include "bp/session/Lease.hxx"
 
 SessionLease
 WidgetContext::GetSession() const

@@ -49,6 +49,7 @@
 #include "widget/Ptr.hxx"
 #include "widget/Ref.hxx"
 #include "widget/Context.hxx"
+#include "session/Lease.hxx"
 #include "session/Session.hxx"
 #include "GrowingBuffer.hxx"
 #include "ResourceLoader.hxx"

@@ -41,6 +41,7 @@
 #include "file_address.hxx"
 #include "nfs/Address.hxx"
 #include "args.hxx"
+#include "session/Lease.hxx"
 #include "session/Session.hxx"
 #include "ExternalSession.hxx"
 #include "address_suffix_registry.hxx"

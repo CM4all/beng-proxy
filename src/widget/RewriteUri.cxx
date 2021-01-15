@@ -48,7 +48,7 @@
 #include "istream/istream_null.hxx"
 #include "istream/istream_string.hxx"
 #include "strmap.hxx"
-#include "bp/session/Session.hxx"
+#include "bp/session/Lease.hxx"
 #include "pool/pbuffer.hxx"
 #include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
