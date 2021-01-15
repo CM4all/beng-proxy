@@ -49,8 +49,8 @@ class SessionId {
 public:
 	gcc_pure
 	bool IsDefined() const noexcept {
-		return !std::all_of(data.begin(), data.end(), [](auto i){
-			return i == 0;
+		return std::any_of(data.begin(), data.end(), [](auto i){
+			return i != 0;
 		});
 	}
 
