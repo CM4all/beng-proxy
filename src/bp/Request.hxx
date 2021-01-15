@@ -135,7 +135,7 @@ private:
 
 	struct {
 		TranslateRequest request;
-		const TranslateResponse *response;
+		const TranslateResponse *response = nullptr;
 
 		ResourceAddress address;
 
@@ -357,16 +357,6 @@ public:
 	void SubmitTranslateRequest() noexcept;
 
 private:
-	/**
-	 * Install a fake #TranslateResponse.  This is sometimes necessary
-	 * when we don't have a "real" response (yet), because much of the
-	 * code in Response.cxx dereferences the #TranslateResponse
-	 * pointer.
-	 */
-	void InstallErrorTranslateResponse() noexcept;
-
-	void ServeDocumentRootFile(const BpConfig &config) noexcept;
-
 	bool ParseRequestUri() noexcept;
 
 public:

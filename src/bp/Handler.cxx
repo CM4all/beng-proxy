@@ -391,18 +391,6 @@ Request::HandleTranslatedRequest(const TranslateResponse &response) noexcept
 	}
 }
 
-void
-Request::InstallErrorTranslateResponse() noexcept
-{
-	static TranslateResponse error_response;
-	error_response.status = (http_status_t)-1;
-
-	translate.response = &error_response;
-	translate.address = {ShallowCopy(), error_response.address};
-	translate.transformations.clear();
-	translate.suffix_transformations.clear();
-}
-
 static const char *
 uri_without_query_string(AllocatorPtr alloc, const char *uri)
 {
@@ -672,10 +660,6 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 void
 Request::OnTranslateResponse(TranslateResponse &response) noexcept
 {
-	/* just in case we error out before HandleTranslatedRequest()
-	   assigns the real response */
-	InstallErrorTranslateResponse();
-
 	if (response.defer) {
 		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
 				 "Unexpected DEFER", 1);
@@ -830,8 +814,6 @@ Request::CheckHandleReadFile(const TranslateResponse &response)
 void
 Request::OnTranslateError(std::exception_ptr ep) noexcept
 {
-	InstallErrorTranslateResponse();
-
 	try {
 		std::rethrow_exception(ep);
 	} catch (const HttpMessageResponse &response) {
@@ -861,17 +843,6 @@ Request::ParseRequestUri() noexcept
 {
 	if (!uri_path_verify_quick(request.uri) ||
 	    !dissected_uri.Parse(request.uri)) {
-		/* DispatchRedirect() assumes that we have a translation
-		   response, and will dereference it - at this point, the
-		   translation server hasn't been queried yet, so we just
-		   insert an empty response here */
-		InstallErrorTranslateResponse();
-
-		/* enable the "stateless" flag because we're at a very early
-		   stage, before request_determine_session(), and the
-		   session-related attributes have not been initialized yet */
-		stateless = true;
-
 		DispatchError(HTTP_STATUS_BAD_REQUEST, "Malformed URI");
 		return false;
 	}

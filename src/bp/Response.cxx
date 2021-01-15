@@ -129,7 +129,7 @@ inline UnusedIstreamPtr
 Request::AutoDeflate(HttpHeaders &response_headers,
 		     UnusedIstreamPtr response_body) noexcept
 {
-	if (compressed) {
+	if (compressed || translate.response == nullptr) {
 		/* already compressed */
 	} else if (response_body &&
 		   translate.response->auto_deflate &&
@@ -492,7 +492,8 @@ Request::MoreResponseHeaders(HttpHeaders &headers) const noexcept
 		headers.generate_date_header = true;
 #endif
 
-	translation_response_headers(headers, *translate.response);
+	if (translate.response != nullptr)
+		translation_response_headers(headers, *translate.response);
 }
 
 inline void
@@ -551,7 +552,8 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 		auto session = MakeSession();
 		if (session)
 			session->cookie_sent = true;
-	} else if (translate.response->discard_session &&
+	} else if (translate.response != nullptr &&
+		   translate.response->discard_session &&
 		   !session_id.IsDefined()) {
 		/* delete the cookie for the discarded session */
 		header_write_begin(headers, "set-cookie");
@@ -601,7 +603,8 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
 	if (!stateless)
 		GenerateSetCookie(headers.GetBuffer());
 
-	if (translate.response->send_csrf_token &&
+	if (translate.response != nullptr &&
+	    translate.response->send_csrf_token &&
 	    http_status_is_success(status)) {
 		if (headers.Get("access-control-allow-origin") != nullptr) {
 			/* if this CORS header indicates that other origins may
@@ -734,6 +737,7 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
 	assert(!response_sent);
 
 	if (http_status_is_error(status) && !transformed &&
+	    translate.response != nullptr &&
 	    !translate.response->error_document.IsNull()) {
 		transformed = true;
 
