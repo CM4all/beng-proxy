@@ -922,16 +922,6 @@ fill_translate_request(TranslateRequest &t,
 inline void
 Request::AskTranslationServer() noexcept
 {
-	translate.previous = nullptr;
-	translate.n_checks = 0;
-	translate.n_internal_redirects = 0;
-	translate.n_file_not_found = 0;
-	translate.n_directory_index = 0;
-	translate.n_probe_path_suffixes = 0;
-	translate.n_read_file = 0;
-	translate.enotdir_uri = nullptr;
-	translate.enotdir_path_info = nullptr;
-
 	fill_translate_request(translate.request,
 			       instance,
 			       request,
