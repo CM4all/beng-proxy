@@ -304,6 +304,7 @@ TEST(WidgetHttpTest, CookieClient)
 		 nullptr, nullptr,
 		 nullptr,
 		 nullptr,
+		 session_manager,
 		 nullptr,
 		 session_id,
 		 "foo",

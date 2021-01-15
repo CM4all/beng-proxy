@@ -41,6 +41,7 @@ class EventLoop;
 class ResourceLoader;
 class WidgetRegistry;
 class StringMap;
+class SessionManager;
 class SessionLease;
 class RealmSessionLease;
 class Widget;
@@ -86,6 +87,8 @@ struct WidgetContext {
 
 	const StringMap *request_headers;
 
+	SessionManager *session_manager;
+
 	/**
 	 * The name of the session cookie.
 	 */
@@ -108,6 +111,7 @@ struct WidgetContext {
 		      const char *absolute_uri,
 		      StringView external_base_uri,
 		      const StringMap *args,
+		      SessionManager *session_manager,
 		      const char *session_cookie,
 		      SessionId session_id,
 		      const char *realm,

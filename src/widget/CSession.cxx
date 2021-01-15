@@ -32,15 +32,20 @@
 
 #include "Context.hxx"
 #include "bp/session/Lease.hxx"
+#include "bp/session/Manager.hxx"
 
 SessionLease
 WidgetContext::GetSession() const
 {
-	return SessionLease(session_id);
+	Session *session = nullptr;
+	if (session_manager != nullptr && session_id.IsDefined())
+		session = session_manager->Find(session_id);
+
+	return SessionLease(session);
 }
 
 RealmSessionLease
 WidgetContext::GetRealmSession() const
 {
-	return {session_id, realm};
+	return RealmSessionLease(GetSession(), realm);
 }

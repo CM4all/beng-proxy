@@ -34,6 +34,7 @@
 #include "tconstruct.hxx"
 #include "widget/RewriteUri.hxx"
 #include "http/Address.hxx"
+#include "bp/session/Lease.hxx"
 #include "bp/session/Session.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
@@ -67,6 +68,12 @@ struct MakeWidgetClass : WidgetClass {
  * dummy implementations to satisfy the linker
  *
  */
+
+RealmSessionLease
+WidgetContext::GetRealmSession() const
+{
+	return nullptr;
+}
 
 RealmSession *
 Session::GetRealm(const char *)
@@ -212,7 +219,7 @@ assert_rewrite_check4(EventLoop &event_loop,
 		 nullptr, nullptr,
 		 "/index.html",
 		 nullptr,
-		 nullptr, session_id, "foo",
+		 nullptr, nullptr, session_id, "foo",
 		 nullptr);
 
 	auto istream = rewrite_widget_uri(*pool, std::move(ctx), nullptr,

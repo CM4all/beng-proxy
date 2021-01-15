@@ -124,6 +124,7 @@ public:
 			 "http://localhost:8080/beng.html?'%\"<>",
 			 "/beng.html?'%\"<>",
 			 nullptr,
+			 session_manager,
 			 "bp_session", session_id, "foo",
 			 nullptr);
 		auto &widget = ctx->AddRootWidget(MakeRootWidget(pool,

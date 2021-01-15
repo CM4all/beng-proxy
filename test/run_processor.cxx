@@ -107,8 +107,7 @@ try {
 		 "http://localhost:8080/beng.html",
 		 "/beng.html",
 		 nullptr,
-		 nullptr,
-		 SessionId{}, "foo",
+		 nullptr, nullptr, SessionId{}, nullptr,
 		 nullptr);
 	auto &widget = ctx->AddRootWidget(MakeRootWidget(instance.root_pool,
 							 nullptr));
