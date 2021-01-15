@@ -136,15 +136,6 @@ struct SessionContainer {
 				    void *ctx), void *ctx);
 };
 
-#ifndef NDEBUG
-/**
- * A process must not lock more than one session at a time, or it will
- * risk deadlocking itself.  For the assertions in this source, this
- * variable holds a reference to the locked session.
- */
-static const Session *locked_session;
-#endif
-
 void
 SessionContainer::EraseAndDispose(Session &session)
 {
@@ -157,8 +148,6 @@ SessionContainer::EraseAndDispose(Session &session)
 inline bool
 SessionContainer::Cleanup() noexcept
 {
-	assert(locked_session == nullptr);
-
 	const Expiry now = Expiry::Now();
 
 	EraseAndDisposeIf(sessions, [now](const Session &session){
@@ -256,8 +245,6 @@ SessionContainer::Purge() noexcept
 	StaticArray<Session *, 256> purge_sessions;
 	unsigned highest_score = 0;
 
-	assert(locked_session == nullptr);
-
 	for (auto &session : sessions) {
 		unsigned score = session.GetPurgeScore();
 		if (score > highest_score) {
@@ -302,17 +289,10 @@ SessionManager::GenerateSessionId() const noexcept
 SessionLease
 SessionManager::CreateSession() noexcept
 {
-	assert(locked_session == nullptr);
-
 	if (Count() >= MAX_SESSIONS)
 		Purge();
 
 	Session *session = new Session(GenerateSessionId());
-
-#ifndef NDEBUG
-	locked_session = session;
-#endif
-
 	Insert(*session);
 	return {*this, session};
 }
@@ -320,17 +300,11 @@ SessionManager::CreateSession() noexcept
 Session *
 SessionContainer::Find(SessionId id)
 {
-	assert(locked_session == nullptr);
-
 	auto i = sessions.find(id, SessionHash(), SessionEqual());
 	if (i == sessions.end())
 		return nullptr;
 
 	Session &session = *i;
-
-#ifndef NDEBUG
-	locked_session = &session;
-#endif
 
 	session.expires.Touch(idle_timeout);
 	++session.counter;
@@ -340,12 +314,7 @@ SessionContainer::Find(SessionId id)
 void
 SessionContainer::Put(Session &session) noexcept
 {
-	assert(&session == locked_session);
 	(void)session;
-
-#ifndef NDEBUG
-	locked_session = nullptr;
-#endif
 }
 
 void
@@ -357,8 +326,6 @@ SessionManager::Put(Session &session) noexcept
 void
 SessionContainer::EraseAndDispose(SessionId id)
 {
-	assert(locked_session == nullptr);
-
 	Session *session = Find(id);
 	if (session != nullptr) {
 		Put(*session);

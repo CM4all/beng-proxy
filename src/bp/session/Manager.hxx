@@ -84,8 +84,7 @@ public:
 	unsigned Count() noexcept;
 
 	/**
-	 * Invoke the callback for each session.  The session and the
-	 * session manager will be locked during the callback.
+	 * Invoke the callback for each session.
 	 */
 	bool Visit(bool (*callback)(const Session *session,
 				    void *ctx), void *ctx);
