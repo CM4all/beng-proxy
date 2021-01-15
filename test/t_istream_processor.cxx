@@ -41,9 +41,6 @@
 #include "widget/Class.hxx"
 #include "widget/Context.hxx"
 #include "bp/XmlProcessor.hxx"
-#include "bp/session/Glue.hxx"
-#include "bp/session/Lease.hxx"
-#include "bp/session/Session.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Registry.hxx"
 #include "bp/Global.hxx"
@@ -94,11 +91,6 @@ public:
 
 	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
 				    UnusedIstreamPtr input) const noexcept {
-		session_manager_init(event_loop, std::chrono::minutes(30), 0, 0);
-		AtScopeExit() { session_manager_deinit(); };
-
-		const auto session_id = SessionLease(session_new())->id;
-
 		FailingResourceLoader resource_loader;
 		WidgetRegistry widget_registry(pool, *(TranslationService *)(size_t)0x1);
 
@@ -113,7 +105,7 @@ public:
 			 "http://localhost:8080/beng.html?'%\"<>",
 			 "/beng.html?'%\"<>",
 			 nullptr,
-			 "bp_session", session_id, "foo",
+			 nullptr, SessionId{}, nullptr,
 			 nullptr);
 		auto &widget = ctx->AddRootWidget(MakeRootWidget(pool,
 								 nullptr));
