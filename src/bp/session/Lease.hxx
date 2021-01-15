@@ -60,11 +60,11 @@ session_put(RealmSession &session) noexcept;
 class SessionLease {
 	friend class RealmSessionLease;
 
-	Session *session;
+	Session *session = nullptr;
 
 public:
-	SessionLease() noexcept:session(nullptr) {}
-	SessionLease(std::nullptr_t) noexcept:session(nullptr) {}
+	SessionLease() noexcept = default;
+	SessionLease(std::nullptr_t) noexcept {}
 
 	explicit SessionLease(SessionId id) noexcept
 		:session(session_get(id)) {}
@@ -73,9 +73,7 @@ public:
 		:session(_session) {}
 
 	SessionLease(SessionLease &&src) noexcept
-		:session(src.session) {
-		src.session = nullptr;
-	}
+		:session(std::exchange(src.session, nullptr)) {}
 
 	~SessionLease() noexcept {
 		if (session != nullptr)
@@ -83,7 +81,8 @@ public:
 	}
 
 	SessionLease &operator=(SessionLease &&src) noexcept {
-		std::swap(session, src.session);
+		using std::swap;
+		swap(session, src.session);
 		return *this;
 	}
 
@@ -105,11 +104,11 @@ public:
 };
 
 class RealmSessionLease {
-	RealmSession *session;
+	RealmSession *session = nullptr;
 
 public:
-	RealmSessionLease() noexcept:session(nullptr) {}
-	RealmSessionLease(std::nullptr_t) noexcept:session(nullptr) {}
+	RealmSessionLease() noexcept = default;
+	RealmSessionLease(std::nullptr_t) noexcept {}
 
 	RealmSessionLease(SessionLease &&src, const char *realm) noexcept;
 
@@ -119,9 +118,7 @@ public:
 		:session(_session) {}
 
 	RealmSessionLease(RealmSessionLease &&src) noexcept
-		:session(src.session) {
-		src.session = nullptr;
-	}
+		:session(std::exchange(src.session, nullptr)) {}
 
 	~RealmSessionLease() noexcept {
 		if (session != nullptr)
@@ -129,7 +126,8 @@ public:
 	}
 
 	RealmSessionLease &operator=(RealmSessionLease &&src) noexcept {
-		std::swap(session, src.session);
+		using std::swap;
+		swap(session, src.session);
 		return *this;
 	}
 
