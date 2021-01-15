@@ -32,16 +32,16 @@
 
 #pragma once
 
+#include "Session.hxx"
 #include "event/TimerEvent.hxx"
 #include "util/Compiler.h"
 
+#include <boost/intrusive/unordered_set.hpp>
+
 #include <chrono>
 
-struct Session;
-struct SessionContainer;
 class SessionId;
 class SessionLease;
-class EventLoop;
 
 class SessionManager {
 	/** clean up expired sessions every 60 seconds */
@@ -49,7 +49,47 @@ class SessionManager {
 
 	const unsigned cluster_size, cluster_node;
 
-	SessionContainer *container;
+	/**
+	 * The idle timeout of sessions [seconds].
+	 */
+	const std::chrono::seconds idle_timeout;
+
+	struct SessionHash {
+		gcc_pure
+		size_t operator()(const SessionId &id) const {
+			return id.Hash();
+		}
+
+		gcc_pure
+		size_t operator()(const Session &session) const {
+			return session.id.Hash();
+		}
+	};
+
+	struct SessionEqual {
+		gcc_pure
+		bool operator()(const Session &a, const Session &b) const {
+			return a.id == b.id;
+		}
+
+		gcc_pure
+		bool operator()(const SessionId &a, const Session &b) const {
+			return a == b.id;
+		}
+	};
+
+	using Set =
+		boost::intrusive::unordered_set<Session,
+						boost::intrusive::member_hook<Session,
+									      Session::SetHook,
+									      &Session::set_hook>,
+						boost::intrusive::hash<SessionHash>,
+						boost::intrusive::equal<SessionEqual>,
+						boost::intrusive::constant_time_size<true>>;
+	Set sessions;
+
+	static constexpr unsigned N_BUCKETS = 16381;
+	Set::bucket_type buckets[N_BUCKETS];
 
 	TimerEvent cleanup_timer;
 
@@ -81,7 +121,9 @@ public:
 	 * Returns the number of sessions.
 	 */
 	gcc_pure
-	unsigned Count() noexcept;
+	unsigned Count() const noexcept {
+		return sessions.size();
+	}
 
 	/**
 	 * Invoke the callback for each session.
@@ -102,14 +144,19 @@ public:
 	 * up (and thus locked).
 	 */
 	void Insert(Session &session) noexcept;
+
 	void EraseAndDispose(SessionId id) noexcept;
 
 	SessionLease CreateSession() noexcept;
 
+	/**
+	 * Forcefully deletes at least one session.
+	 */
 	bool Purge() noexcept;
 
 	void Cleanup() noexcept;
 
 private:
 	SessionId GenerateSessionId() const noexcept;
+	void EraseAndDispose(Session &session);
 };

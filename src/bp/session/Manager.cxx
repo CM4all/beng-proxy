@@ -31,41 +31,12 @@
  */
 
 #include "Manager.hxx"
-#include "Session.hxx"
 #include "Lease.hxx"
 #include "io/Logger.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/StaticArray.hxx"
 
-#include <boost/intrusive/unordered_set.hpp>
-
-#include <stdlib.h>
-
 static constexpr unsigned MAX_SESSIONS = 65536;
-
-struct SessionHash {
-	gcc_pure
-	size_t operator()(const SessionId &id) const {
-		return id.Hash();
-	}
-
-	gcc_pure
-	size_t operator()(const Session &session) const {
-		return session.id.Hash();
-	}
-};
-
-struct SessionEqual {
-	gcc_pure
-	bool operator()(const Session &a, const Session &b) const {
-		return a.id == b.id;
-	}
-
-	gcc_pure
-	bool operator()(const SessionId &a, const Session &b) const {
-		return a == b.id;
-	}
-};
 
 template<typename Container, typename Pred, typename Disposer>
 static void
@@ -81,63 +52,8 @@ EraseAndDisposeIf(Container &container, Pred pred, Disposer disposer)
 	}
 }
 
-struct SessionContainer {
-	/**
-	 * The idle timeout of sessions [seconds].
-	 */
-	const std::chrono::seconds idle_timeout;
-
-	using Set =
-		boost::intrusive::unordered_set<Session,
-						boost::intrusive::member_hook<Session,
-									      Session::SetHook,
-									      &Session::set_hook>,
-						boost::intrusive::hash<SessionHash>,
-						boost::intrusive::equal<SessionEqual>,
-						boost::intrusive::constant_time_size<true>>;
-	Set sessions;
-
-	static constexpr unsigned N_BUCKETS = 16381;
-	Set::bucket_type buckets[N_BUCKETS];
-
-	explicit SessionContainer(std::chrono::seconds _idle_timeout)
-		:idle_timeout(_idle_timeout),
-		 sessions(Set::bucket_traits(buckets, N_BUCKETS)) {
-	}
-
-	~SessionContainer();
-
-	unsigned Count() {
-		return sessions.size();
-	}
-
-	Session *Find(SessionId id);
-
-	void Put(Session &session) noexcept;
-
-	void Insert(Session &session) {
-		sessions.insert(session);
-	}
-
-	void EraseAndDispose(Session &session);
-	void EraseAndDispose(SessionId id);
-
-	/**
-	 * @return true if there is at least one session
-	 */
-	bool Cleanup() noexcept;
-
-	/**
-	 * Forcefully deletes at least one session.
-	 */
-	bool Purge() noexcept;
-
-	bool Visit(bool (*callback)(const Session *session,
-				    void *ctx), void *ctx);
-};
-
 void
-SessionContainer::EraseAndDispose(Session &session)
+SessionManager::EraseAndDispose(Session &session)
 {
 	assert(!sessions.empty());
 
@@ -145,8 +61,8 @@ SessionContainer::EraseAndDispose(Session &session)
 	sessions.erase_and_dispose(i, DeleteDisposer{});
 }
 
-inline bool
-SessionContainer::Cleanup() noexcept
+void
+SessionManager::Cleanup() noexcept
 {
 	const Expiry now = Expiry::Now();
 
@@ -154,20 +70,24 @@ SessionContainer::Cleanup() noexcept
 		return session.expires.IsExpired(now);
 	}, DeleteDisposer{});
 
-	return !sessions.empty();
+	if (!sessions.empty())
+		cleanup_timer.Schedule(cleanup_interval);
 }
 
 SessionManager::SessionManager(EventLoop &event_loop,
-			       std::chrono::seconds idle_timeout,
+			       std::chrono::seconds _idle_timeout,
 			       unsigned _cluster_size,
 			       unsigned _cluster_node) noexcept
 	:cluster_size(_cluster_size), cluster_node(_cluster_node),
-	 container(new SessionContainer(idle_timeout)),
-	 cleanup_timer(event_loop, BIND_THIS_METHOD(Cleanup)) {}
+	 idle_timeout(_idle_timeout),
+	 sessions(Set::bucket_traits(buckets, N_BUCKETS)),
+	 cleanup_timer(event_loop, BIND_THIS_METHOD(Cleanup))
+{
+}
 
 SessionManager::~SessionManager() noexcept
 {
-	delete container;
+	sessions.clear_and_dispose(DeleteDisposer{});
 }
 
 void
@@ -177,69 +97,17 @@ SessionManager::AdjustNewSessionId(SessionId &id) const noexcept
 		id.SetClusterNode(cluster_size, cluster_node);
 }
 
-unsigned
-SessionManager::Count() noexcept
-{
-	assert(container != nullptr);
-
-	return container->Count();
-}
-
-bool
-SessionManager::Visit(bool (*callback)(const Session *session,
-				       void *ctx), void *ctx)
-{
-	assert(container != nullptr);
-
-	return container->Visit(callback, ctx);
-}
-
-SessionLease
-SessionManager::Find(SessionId id) noexcept
-{
-	assert(container != nullptr);
-
-	return {*this, container->Find(id)};
-}
-
 void
 SessionManager::Insert(Session &session) noexcept
 {
-	container->Insert(session);
+	sessions.insert(session);
 
 	if (!cleanup_timer.IsPending())
 		cleanup_timer.Schedule(cleanup_interval);
 }
 
-void
-SessionManager::EraseAndDispose(SessionId id) noexcept
-{
-	assert(container != nullptr);
-
-	container->EraseAndDispose(id);
-}
-
 bool
 SessionManager::Purge() noexcept
-{
-	return container->Purge();
-}
-
-void
-SessionManager::Cleanup() noexcept
-{
-	if (container->Cleanup())
-		cleanup_timer.Schedule(cleanup_interval);
-}
-
-inline
-SessionContainer::~SessionContainer()
-{
-	sessions.clear_and_dispose(DeleteDisposer{});
-}
-
-bool
-SessionContainer::Purge() noexcept
 {
 	/* collect at most 256 sessions */
 	StaticArray<Session *, 256> purge_sessions;
@@ -297,8 +165,8 @@ SessionManager::CreateSession() noexcept
 	return {*this, session};
 }
 
-Session *
-SessionContainer::Find(SessionId id)
+SessionLease
+SessionManager::Find(SessionId id) noexcept
 {
 	auto i = sessions.find(id, SessionHash(), SessionEqual());
 	if (i == sessions.end())
@@ -308,34 +176,26 @@ SessionContainer::Find(SessionId id)
 
 	session.expires.Touch(idle_timeout);
 	++session.counter;
-	return &session;
-}
-
-void
-SessionContainer::Put(Session &session) noexcept
-{
-	(void)session;
+	return {*this, &session};
 }
 
 void
 SessionManager::Put(Session &session) noexcept
 {
-	container->Put(session);
+	(void)session;
 }
 
 void
-SessionContainer::EraseAndDispose(SessionId id)
+SessionManager::EraseAndDispose(SessionId id) noexcept
 {
-	Session *session = Find(id);
-	if (session != nullptr) {
-		Put(*session);
-		EraseAndDispose(*session);
-	}
+	auto i = sessions.find(id, SessionHash(), SessionEqual());
+	if (i != sessions.end())
+		EraseAndDispose(*i);
 }
 
-inline bool
-SessionContainer::Visit(bool (*callback)(const Session *session,
-					 void *ctx), void *ctx)
+bool
+SessionManager::Visit(bool (*callback)(const Session *session,
+				       void *ctx), void *ctx)
 {
 	const Expiry now = Expiry::Now();
 
