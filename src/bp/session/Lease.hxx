@@ -40,6 +40,7 @@
 
 struct Session;
 struct RealmSession;
+class SessionManager;
 
 /**
  * Finds the session with the specified id.  The returned object is
@@ -48,40 +49,33 @@ struct RealmSession;
 Session *
 session_get(SessionId id) noexcept;
 
-/**
- * Unlocks the specified session.
- */
-void
-session_put(Session *session) noexcept;
-
-void
-session_put(RealmSession &session) noexcept;
-
 class SessionLease {
 	friend class RealmSessionLease;
 
 	Session *session = nullptr;
+	SessionManager *manager;
 
 public:
 	SessionLease() noexcept = default;
 	SessionLease(std::nullptr_t) noexcept {}
 
-	explicit SessionLease(SessionId id) noexcept
-		:session(session_get(id)) {}
+	SessionLease(SessionManager &_manager, SessionId id) noexcept;
 
-	explicit SessionLease(Session *_session) noexcept
-		:session(_session) {}
+	SessionLease(SessionManager &_manager, Session *_session) noexcept
+		:session(_session), manager(&_manager) {}
 
 	SessionLease(SessionLease &&src) noexcept
-		:session(std::exchange(src.session, nullptr)) {}
+		:session(std::exchange(src.session, nullptr)),
+		 manager(src.manager) {}
 
 	~SessionLease() noexcept {
 		if (session != nullptr)
-			session_put(session);
+			Put(*manager, *session);
 	}
 
 	SessionLease &operator=(SessionLease &&src) noexcept {
 		using std::swap;
+		swap(manager, src.manager);
 		swap(session, src.session);
 		return *this;
 	}
@@ -101,10 +95,14 @@ public:
 	Session *get() const noexcept {
 		return session;
 	}
+
+private:
+	static void Put(SessionManager &manager, Session &session) noexcept;
 };
 
 class RealmSessionLease {
 	RealmSession *session = nullptr;
+	SessionManager *manager;
 
 public:
 	RealmSessionLease() noexcept = default;
@@ -112,21 +110,24 @@ public:
 
 	RealmSessionLease(SessionLease &&src, const char *realm) noexcept;
 
-	RealmSessionLease(SessionId id, const char *realm) noexcept;
+	RealmSessionLease(SessionManager &_manager,
+			  SessionId id, const char *realm) noexcept;
 
-	explicit RealmSessionLease(RealmSession *_session) noexcept
-		:session(_session) {}
+	explicit RealmSessionLease(SessionManager &_manager, RealmSession *_session) noexcept
+		:session(_session), manager(&_manager) {}
 
 	RealmSessionLease(RealmSessionLease &&src) noexcept
-		:session(std::exchange(src.session, nullptr)) {}
+		:session(std::exchange(src.session, nullptr)),
+		 manager(src.manager) {}
 
 	~RealmSessionLease() noexcept {
 		if (session != nullptr)
-			session_put(*session);
+			Put(*manager, *session);
 	}
 
 	RealmSessionLease &operator=(RealmSessionLease &&src) noexcept {
 		using std::swap;
+		swap(manager, src.manager);
 		swap(session, src.session);
 		return *this;
 	}
@@ -146,4 +147,7 @@ public:
 	RealmSession *get() const noexcept {
 		return session;
 	}
+
+private:
+	static void Put(SessionManager &manager, RealmSession &session) noexcept;
 };

@@ -32,7 +32,7 @@
 
 #include "bp/session/Lease.hxx"
 #include "bp/session/Session.hxx"
-#include "bp/session/Glue.hxx"
+#include "bp/session/Manager.hxx"
 #include "event/Loop.hxx"
 
 #include <gtest/gtest.h>
@@ -45,12 +45,12 @@ TEST(SessionTest, Basic)
 {
 	EventLoop event_loop;
 
-	const ScopeSessionManagerInit sm_init(event_loop, std::chrono::minutes(30),
-					      0, 0);
+	SessionManager session_manager(event_loop, std::chrono::minutes(30),
+				       0, 0);
 
-	const auto session_id = SessionLease(session_new())->id;
+	const auto session_id = SessionLease{session_manager, session_manager.CreateSession()}->id;
 
-	SessionLease session(session_id);
+	SessionLease session{session_manager, session_id};
 	ASSERT_TRUE(session);
 	ASSERT_EQ(session->id, session_id);
 }

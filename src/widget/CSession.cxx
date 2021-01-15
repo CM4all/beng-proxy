@@ -37,11 +37,10 @@
 SessionLease
 WidgetContext::GetSession() const
 {
-	Session *session = nullptr;
-	if (session_manager != nullptr && session_id.IsDefined())
-		session = session_manager->Find(session_id);
+	if (session_manager == nullptr || !session_id.IsDefined())
+		return nullptr;
 
-	return SessionLease(session);
+	return {*session_manager, session_id};
 }
 
 RealmSessionLease

@@ -35,7 +35,6 @@
 #include "Read.hxx"
 #include "File.hxx"
 #include "Manager.hxx"
-#include "Glue.hxx"
 #include "Session.hxx"
 #include "io/BufferedOutputStream.hxx"
 #include "io/FdOutputStream.hxx"
@@ -56,15 +55,15 @@ session_save_callback(const Session *session, void *ctx)
 }
 
 static void
-session_manager_save(BufferedOutputStream &file)
+session_manager_save(SessionManager &manager, BufferedOutputStream &file)
 {
 	session_write_file_header(file);
-	session_manager->Visit(session_save_callback, &file);
+	manager.Visit(session_save_callback, &file);
 	session_write_file_tail(file);
 }
 
 static bool
-session_manager_load(FILE *file)
+session_manager_load(SessionManager &manager, FILE *file)
 {
 	if (!session_read_file_header(file))
 		return false;
@@ -90,7 +89,7 @@ session_manager_load(FILE *file)
 			continue;
 		}
 
-		session_manager->Insert(*session.release());
+		manager.Insert(*session.release());
 		++num_added;
 	}
 
@@ -101,7 +100,7 @@ session_manager_load(FILE *file)
 }
 
 void
-session_save() noexcept
+session_save(SessionManager &manager) noexcept
 try {
 	LogConcat(5, "SessionManager", "saving sessions to ", session_save_path);
 
@@ -110,7 +109,7 @@ try {
 
 	{
 		BufferedOutputStream bos(fos);
-		session_manager_save(bos);
+		session_manager_save(manager, bos);
 		bos.Flush();
 	}
 
@@ -122,7 +121,7 @@ try {
 }
 
 void
-session_save_init(const char *path) noexcept
+session_save_init(SessionManager &manager, const char *path) noexcept
 {
 	assert(session_save_path == nullptr);
 
@@ -133,16 +132,16 @@ session_save_init(const char *path) noexcept
 
 	FILE *file = fopen(session_save_path, "rb");
 	if (file != nullptr) {
-		session_manager_load(file);
+		session_manager_load(manager, file);
 		fclose(file);
 	}
 }
 
 void
-session_save_deinit() noexcept
+session_save_deinit(SessionManager &manager) noexcept
 {
 	if (session_save_path == nullptr)
 		return;
 
-	session_save();
+	session_save(manager);
 }

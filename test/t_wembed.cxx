@@ -97,7 +97,7 @@ WidgetContext::GetRealmSession() const
 }
 
 void
-session_put(RealmSession &) noexcept
+RealmSessionLease::Put(SessionManager &, RealmSession &) noexcept
 {
 }
 

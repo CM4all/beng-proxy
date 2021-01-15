@@ -49,7 +49,6 @@
 #include "widget/Ptr.hxx"
 #include "widget/Ref.hxx"
 #include "widget/Context.hxx"
-#include "session/Glue.hxx"
 #include "session/Lease.hxx"
 #include "session/Session.hxx"
 #include "GrowingBuffer.hxx"
@@ -189,7 +188,7 @@ Request::NewWidgetContext() const noexcept
 				      uri),
 		 dissected_uri.base,
 		 &args,
-		 session_manager,
+		 instance.session_manager.get(),
 		 session_cookie,
 		 session_id, realm,
 		 &request.headers);

@@ -82,6 +82,7 @@ class NfsCache;
 class HttpCache;
 class FilterCache;
 class UserAgentClassList;
+class SessionManager;
 namespace Uring { class Manager; }
 class BPListener;
 struct BpConnection;
@@ -124,6 +125,8 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	SpawnService *spawn_service;
 
 	std::unique_ptr<SpawnServerClient> spawn;
+
+	std::unique_ptr<SessionManager> session_manager;
 
 	/**
 	 * The configured control channel servers (see

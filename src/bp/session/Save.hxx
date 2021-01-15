@@ -36,11 +36,13 @@
 
 #pragma once
 
-void
-session_save_init(const char *path) noexcept;
+class SessionManager;
 
 void
-session_save_deinit() noexcept;
+session_save_init(SessionManager &manager, const char *path) noexcept;
 
 void
-session_save() noexcept;
+session_save_deinit(SessionManager &manager) noexcept;
+
+void
+session_save(SessionManager &manager) noexcept;

@@ -37,7 +37,7 @@
 #include "Global.hxx"
 #include "pool/pool.hxx"
 #include "fb_pool.hxx"
-#include "session/Glue.hxx"
+#include "session/Manager.hxx"
 #include "session/Save.hxx"
 #include "tcp_stock.hxx"
 #include "translation/Stock.hxx"
@@ -80,6 +80,7 @@
 #include "io/Logger.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/PrintException.hxx"
+#include "random.hxx"
 
 #ifdef HAVE_URING
 #include "event/uring/Manager.hxx"
@@ -166,8 +167,9 @@ BpInstance::ShutdownCallback() noexcept
 	background_manager.AbortAll();
 
 	session_save_timer.Cancel();
-	session_save_deinit();
-	session_manager_deinit();
+	session_save_deinit(*session_manager);
+
+	session_manager.reset();
 
 	FreeStocksAndCaches();
 
@@ -353,13 +355,16 @@ try {
 	instance.spawn->SetHandler(instance);
 	instance.spawn_service = instance.spawn.get();
 
-	session_manager_init(instance.event_loop,
-			     instance.config.session_idle_timeout,
-			     instance.config.cluster_size,
-			     instance.config.cluster_node);
+	random_seed();
+	instance.session_manager =
+		std::make_unique<SessionManager>(instance.event_loop,
+						 instance.config.session_idle_timeout,
+						 instance.config.cluster_size,
+						 instance.config.cluster_node);
 
 	if (!instance.config.session_save_path.empty()) {
-		session_save_init(instance.config.session_save_path.c_str());
+		session_save_init(*instance.session_manager,
+				  instance.config.session_save_path.c_str());
 		instance.ScheduleSaveSessions();
 	}
 

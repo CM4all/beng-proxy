@@ -59,6 +59,7 @@
 #include "fs/Balancer.hxx"
 #include "nghttp2/Stock.hxx"
 #include "stock/MapStock.hxx"
+#include "session/Manager.hxx"
 #include "session/Save.hxx"
 #include "nfs/Stock.hxx"
 #include "nfs/Cache.hxx"
@@ -272,7 +273,7 @@ BpInstance::OnMemoryWarning(uint64_t memory_usage,
 void
 BpInstance::SaveSessions() noexcept
 {
-	session_save();
+	session_save(*session_manager);
 
 	ScheduleSaveSessions();
 }

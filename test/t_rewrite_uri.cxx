@@ -36,6 +36,7 @@
 #include "http/Address.hxx"
 #include "bp/session/Lease.hxx"
 #include "bp/session/Session.hxx"
+#include "bp/session/Manager.hxx"
 #include "widget/Widget.hxx"
 #include "widget/Class.hxx"
 #include "widget/Context.hxx"
@@ -82,13 +83,13 @@ Session::GetRealm(const char *)
 }
 
 Session *
-session_get(gcc_unused SessionId id) noexcept
+SessionManager::Find(SessionId) noexcept
 {
-	return NULL;
+	return nullptr;
 }
 
 void
-session_put(gcc_unused Session *session) noexcept
+SessionManager::Put(Session &) noexcept
 {
 }
 

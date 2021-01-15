@@ -52,8 +52,8 @@
 #include "istream/AutoPipeIstream.hxx"
 #include "pool/SharedPtr.hxx"
 #include "bp/session/Lease.hxx"
+#include "bp/session/Manager.hxx"
 #include "bp/session/Session.hxx"
-#include "bp/session/Glue.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
 #include "util/Cancellable.hxx"
@@ -280,9 +280,9 @@ TEST(WidgetHttpTest, CookieClient)
 	PInstance instance;
 	struct pool *pool = instance.root_pool;
 
-	const ScopeSessionManagerInit sm_init(instance.event_loop,
-					      std::chrono::minutes(30),
-					      0, 0);
+	SessionManager session_manager(instance.event_loop,
+				       std::chrono::minutes(30),
+				       0, 0);
 
 	const auto address = MakeHttpAddress("/bar/").Host("foo");
 	WidgetClass cls;
@@ -291,7 +291,7 @@ TEST(WidgetHttpTest, CookieClient)
 
 	CancellablePointer cancel_ptr;
 
-	const auto session_id = SessionLease(session_new())->id;
+	const auto session_id = SessionLease{session_manager, session_manager.CreateSession()}->id;
 
 	MyResourceLoader resource_loader;
 
@@ -304,7 +304,7 @@ TEST(WidgetHttpTest, CookieClient)
 		 nullptr, nullptr,
 		 nullptr,
 		 nullptr,
-		 session_manager,
+		 &session_manager,
 		 nullptr,
 		 session_id,
 		 "foo",

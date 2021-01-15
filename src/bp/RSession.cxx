@@ -34,8 +34,8 @@
 #include "RLogger.hxx"
 #include "Instance.hxx"
 #include "session/Lease.hxx"
+#include "session/Manager.hxx"
 #include "session/Session.hxx"
-#include "session/Glue.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/CookieServer.hxx"
 #include "bot.h"
@@ -158,7 +158,7 @@ Request::DetermineSession()
 SessionLease
 Request::GetSession() const noexcept
 {
-	return SessionLease(session_id);
+	return {*instance.session_manager, session_id};
 }
 
 RealmSessionLease
@@ -166,7 +166,7 @@ Request::GetRealmSession() const noexcept
 {
 	assert(realm != nullptr);
 
-	return {session_id, realm};
+	return {*instance.session_manager, session_id, realm};
 }
 
 SessionLease
@@ -181,7 +181,8 @@ Request::MakeSession()
 			return lease;
 	}
 
-	auto *session = session_new();
+	auto &session_manager = *instance.session_manager;
+	auto *session = session_manager.CreateSession();
 	if (session == nullptr) {
 		logger(1, "Failed to allocate a session");
 		return nullptr;
@@ -190,7 +191,7 @@ Request::MakeSession()
 	session_id = session->id;
 	send_session_cookie = true;
 
-	return SessionLease(session);
+	return {session_manager, session};
 }
 
 RealmSessionLease
@@ -225,7 +226,7 @@ Request::DiscardSession() noexcept
 
 	assert(!stateless);
 
-	session_delete(session_id);
+	instance.session_manager->EraseAndDispose(session_id);
 	session_id.Clear();
 
 	translate.request.session = nullptr;
