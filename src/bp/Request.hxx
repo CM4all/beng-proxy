@@ -365,7 +365,6 @@ private:
 	 */
 	void InstallErrorTranslateResponse() noexcept;
 
-	void AskTranslationServer() noexcept;
 	void ServeDocumentRootFile(const BpConfig &config) noexcept;
 
 	bool ParseRequestUri() noexcept;

@@ -919,18 +919,6 @@ fill_translate_request(TranslateRequest &t,
 		t.listener_tag = listener_tag;
 }
 
-inline void
-Request::AskTranslationServer() noexcept
-{
-	fill_translate_request(translate.request,
-			       instance,
-			       request,
-			       dissected_uri, args,
-			       connection.listener.GetTag(),
-			       connection.remote_host_and_port);
-	SubmitTranslateRequest();
-}
-
 void
 Request::HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept
 {
@@ -945,5 +933,11 @@ Request::HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept
 	ParseArgs();
 	DetermineSession();
 
-	AskTranslationServer();
+	fill_translate_request(translate.request,
+			       instance,
+			       request,
+			       dissected_uri, args,
+			       connection.listener.GetTag(),
+			       connection.remote_host_and_port);
+	SubmitTranslateRequest();
 }
