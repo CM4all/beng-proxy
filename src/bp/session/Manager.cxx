@@ -32,6 +32,7 @@
 
 #include "Manager.hxx"
 #include "Session.hxx"
+#include "Lease.hxx"
 #include "io/Logger.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/StaticArray.hxx"
@@ -204,12 +205,12 @@ SessionManager::Visit(bool (*callback)(const Session *session,
 	return container->Visit(callback, ctx);
 }
 
-Session *
+SessionLease
 SessionManager::Find(SessionId id) noexcept
 {
 	assert(container != nullptr);
 
-	return container->Find(id);
+	return {*this, container->Find(id)};
 }
 
 void
@@ -298,7 +299,7 @@ SessionManager::GenerateSessionId() const noexcept
 	return id;
 }
 
-Session *
+SessionLease
 SessionManager::CreateSession() noexcept
 {
 	assert(locked_session == nullptr);
@@ -313,7 +314,7 @@ SessionManager::CreateSession() noexcept
 #endif
 
 	Insert(*session);
-	return session;
+	return {*this, session};
 }
 
 Session *

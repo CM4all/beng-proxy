@@ -48,7 +48,7 @@ TEST(SessionTest, Basic)
 	SessionManager session_manager(event_loop, std::chrono::minutes(30),
 				       0, 0);
 
-	const auto session_id = SessionLease{session_manager, session_manager.CreateSession()}->id;
+	const auto session_id = session_manager.CreateSession()->id;
 
 	SessionLease session{session_manager, session_id};
 	ASSERT_TRUE(session);

@@ -39,7 +39,7 @@
 #include "Manager.hxx"
 
 SessionLease::SessionLease(SessionManager &_manager, SessionId id) noexcept
-	:session(_manager.Find(id)), manager(&_manager) {}
+	:SessionLease(_manager.Find(id)) {}
 
 void
 SessionLease::Put(SessionManager &manager, Session &session) noexcept

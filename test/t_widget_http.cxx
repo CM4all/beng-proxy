@@ -291,7 +291,7 @@ TEST(WidgetHttpTest, CookieClient)
 
 	CancellablePointer cancel_ptr;
 
-	const auto session_id = SessionLease{session_manager, session_manager.CreateSession()}->id;
+	const auto session_id = session_manager.CreateSession()->id;
 
 	MyResourceLoader resource_loader;
 

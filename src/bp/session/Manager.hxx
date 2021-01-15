@@ -40,6 +40,7 @@
 struct Session;
 struct SessionContainer;
 class SessionId;
+class SessionLease;
 class EventLoop;
 
 class SessionManager {
@@ -90,7 +91,7 @@ public:
 				    void *ctx), void *ctx);
 
 	gcc_pure
-	Session *Find(SessionId id) noexcept;
+	SessionLease Find(SessionId id) noexcept;
 
 	void Put(Session &session) noexcept;
 
@@ -104,7 +105,7 @@ public:
 	void Insert(Session &session) noexcept;
 	void EraseAndDispose(SessionId id) noexcept;
 
-	Session *CreateSession() noexcept;
+	SessionLease CreateSession() noexcept;
 
 	bool Purge() noexcept;
 

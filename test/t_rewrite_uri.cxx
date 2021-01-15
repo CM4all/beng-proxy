@@ -82,7 +82,7 @@ Session::GetRealm(const char *)
 	return nullptr;
 }
 
-Session *
+SessionLease
 SessionManager::Find(SessionId) noexcept
 {
 	return nullptr;
