@@ -347,7 +347,7 @@ UriRewriter::ResolverCallback() noexcept
 		const char *uri;
 
 		if (widget.session_sync_pending) {
-			RealmSessionLease session(ctx->session_id, ctx->realm);
+			auto session = ctx->GetRealmSession();
 			if (session)
 				widget.LoadFromSession(*session);
 			else
