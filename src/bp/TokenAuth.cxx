@@ -38,6 +38,7 @@
 #include "Connection.hxx"
 #include "Instance.hxx"
 #include "puri_escape.hxx"
+#include "session/Session.hxx"
 #include "http/IncomingRequest.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Service.hxx"

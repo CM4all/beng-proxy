@@ -34,6 +34,7 @@
 #include "CsrfToken.hxx"
 #include "Request.hxx"
 #include "Instance.hxx"
+#include "session/Session.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 

@@ -38,6 +38,7 @@
 #include "Connection.hxx"
 #include "Listener.hxx"
 #include "Instance.hxx"
+#include "session/Session.hxx"
 #include "http/IncomingRequest.hxx"
 #include "pool/pool.hxx"
 #include "pool/pbuffer.hxx"

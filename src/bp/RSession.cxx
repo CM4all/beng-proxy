@@ -154,8 +154,14 @@ Request::DetermineSession()
 	}
 }
 
+SessionLease
+Request::GetSession() const noexcept
+{
+	return SessionLease(session_id);
+}
+
 RealmSessionLease
-Request::GetRealmSession() const
+Request::GetRealmSession() const noexcept
 {
 	assert(realm != nullptr);
 

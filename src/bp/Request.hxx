@@ -45,7 +45,7 @@
 #include "delegate/Handler.hxx"
 #include "nfs/Cache.hxx"
 #include "strmap.hxx"
-#include "session/Session.hxx"
+#include "session/Id.hxx"
 #include "widget/View.hxx"
 #include "HttpResponseHandler.hxx"
 #include "io/Logger.hxx"
@@ -71,6 +71,8 @@ struct PendingResponse;
 struct FilterTransformation;
 struct DelegateAddress;
 struct WidgetContext;
+struct SessionLease;
+struct RealmSessionLease;
 
 /*
  * The BENG request struct.  This is only used by the handlers
@@ -561,11 +563,8 @@ private:
 public:
 	void DetermineSession();
 
-	SessionLease GetSession() const {
-		return SessionLease(session_id);
-	}
-
-	RealmSessionLease GetRealmSession() const;
+	SessionLease GetSession() const noexcept;
+	RealmSessionLease GetRealmSession() const noexcept;
 
 	SessionLease MakeSession();
 	RealmSessionLease MakeRealmSession();
