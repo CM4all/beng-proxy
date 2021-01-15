@@ -107,7 +107,7 @@ public:
 		session_manager_init(event_loop, std::chrono::minutes(30), 0, 0);
 		AtScopeExit() { session_manager_deinit(); };
 
-		auto *session = session_new();
+		const auto session_id = SessionLease(session_new())->id;
 
 		FailingResourceLoader resource_loader;
 		WidgetRegistry widget_registry(pool, *(TranslationService *)(size_t)0x1);
@@ -123,12 +123,10 @@ public:
 			 "http://localhost:8080/beng.html?'%\"<>",
 			 "/beng.html?'%\"<>",
 			 nullptr,
-			 "bp_session", session->id, "foo",
+			 "bp_session", session_id, "foo",
 			 nullptr);
 		auto &widget = ctx->AddRootWidget(MakeRootWidget(pool,
 								 nullptr));
-
-		session_put(session);
 
 		return css_processor(pool, nullptr,
 				     std::move(input), widget,

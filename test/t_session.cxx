@@ -47,9 +47,7 @@ TEST(SessionTest, Basic)
 	const ScopeSessionManagerInit sm_init(event_loop, std::chrono::minutes(30),
 					      0, 0);
 
-	auto *s = session_new();
-	const auto session_id = s->id;
-	session_put(s);
+	const auto session_id = SessionLease(session_new())->id;
 
 	SessionLease session(session_id);
 	ASSERT_TRUE(session);

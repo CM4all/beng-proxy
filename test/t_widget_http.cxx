@@ -290,7 +290,7 @@ TEST(WidgetHttpTest, CookieClient)
 
 	CancellablePointer cancel_ptr;
 
-	auto *session = session_new();
+	const auto session_id = SessionLease(session_new())->id;
 
 	MyResourceLoader resource_loader;
 
@@ -304,10 +304,9 @@ TEST(WidgetHttpTest, CookieClient)
 		 nullptr,
 		 nullptr,
 		 nullptr,
-		 session->id,
+		 session_id,
 		 "foo",
 		 strmap_new(pool));
-	session_put(session);
 
 	Widget widget(*pool, &cls);
 
