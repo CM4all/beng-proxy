@@ -139,7 +139,7 @@ Session::SetExternalManager(const HttpAddress &address,
 }
 
 static WidgetSession *
-hashmap_r_get_widget_session(RealmSession &session, WidgetSession::Set &set,
+hashmap_r_get_widget_session(WidgetSession::Set &set,
 			     const char *id, bool create)
 {
 	assert(id != nullptr);
@@ -151,7 +151,7 @@ hashmap_r_get_widget_session(RealmSession &session, WidgetSession::Set &set,
 	if (!create)
 		return nullptr;
 
-	auto *ws = new WidgetSession(session, id);
+	auto *ws = new WidgetSession(id);
 	set.insert(*ws);
 	return ws;
 }
@@ -161,7 +161,7 @@ RealmSession::GetWidget(const char *widget_id, bool create)
 try {
 	assert(widget_id != nullptr);
 
-	return hashmap_r_get_widget_session(*this, widgets, widget_id, create);
+	return hashmap_r_get_widget_session(widgets, widget_id, create);
 } catch (const std::bad_alloc &) {
 	return nullptr;
 }
@@ -171,7 +171,7 @@ WidgetSession::GetChild(const char *child_id, bool create)
 try {
 	assert(child_id != nullptr);
 
-	return hashmap_r_get_widget_session(session, children, child_id, create);
+	return hashmap_r_get_widget_session(children, child_id, create);
 } catch (const std::bad_alloc &) {
 	return nullptr;
 }

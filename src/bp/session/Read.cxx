@@ -139,30 +139,28 @@ try {
 }
 
 static void
-ReadWidgetSessions(FileReader &file, RealmSession &session,
-		   WidgetSession::Set &widgets);
+ReadWidgetSessions(FileReader &file, WidgetSession::Set &widgets);
 
 static void
-DoReadWidgetSession(FileReader &file, RealmSession &session, WidgetSession &ws)
+DoReadWidgetSession(FileReader &file, WidgetSession &ws)
 {
-	ReadWidgetSessions(file, session, ws.children);
+	ReadWidgetSessions(file, ws.children);
 	ws.path_info = file.ReadString();
 	ws.query_string = file.ReadString();
 	Expect32(file, MAGIC_END_OF_RECORD);
 }
 
 static std::unique_ptr<WidgetSession>
-ReadWidgetSession(FileReader &file, RealmSession &session)
+ReadWidgetSession(FileReader &file)
 {
 	auto id = file.ReadString();
-	auto ws = std::make_unique<WidgetSession>(session, std::move(id));
-	DoReadWidgetSession(file, session, *ws);
+	auto ws = std::make_unique<WidgetSession>(std::move(id));
+	DoReadWidgetSession(file, *ws);
 	return ws;
 }
 
 static void
-ReadWidgetSessions(FileReader &file, RealmSession &session,
-		   WidgetSession::Set &widgets)
+ReadWidgetSessions(FileReader &file, WidgetSession::Set &widgets)
 {
 	while (true) {
 		uint32_t magic = file.Read32();
@@ -171,7 +169,7 @@ ReadWidgetSessions(FileReader &file, RealmSession &session,
 		} else if (magic != MAGIC_WIDGET_SESSION)
 			throw SessionDeserializerError();
 
-		auto ws = ReadWidgetSession(file, session);
+		auto ws = ReadWidgetSession(file);
 		if (widgets.insert(*ws).second)
 			ws.release();
 	}
@@ -217,7 +215,7 @@ ReadRealmSession(FileReader &file, Session &parent)
 	session->site = file.ReadString();
 	session->user = file.ReadString();
 	file.Read(session->user_expires);
-	ReadWidgetSessions(file, *session, session->widgets);
+	ReadWidgetSessions(file, session->widgets);
 	ReadCookieJar(file, session->cookies);
 	Expect32(file, MAGIC_END_OF_RECORD);
 

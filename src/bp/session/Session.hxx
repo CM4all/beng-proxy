@@ -79,8 +79,6 @@ struct WidgetSession
 					  boost::intrusive::compare<Compare>,
 					  boost::intrusive::constant_time_size<false>>;
 
-	RealmSession &session;
-
 	/** local id of this widget; must not be nullptr since widgets
 	    without an id cannot have a session */
 	const AllocatedString id;
@@ -94,8 +92,8 @@ struct WidgetSession
 	AllocatedString query_string;
 
 	template<typename I>
-	WidgetSession(RealmSession &_session, I &&_id)
-		:session(_session), id(std::forward<I>(_id)) {}
+	explicit WidgetSession(I &&_id) noexcept
+		:id(std::forward<I>(_id)) {}
 
 	~WidgetSession() noexcept;
 
