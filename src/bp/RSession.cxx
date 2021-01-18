@@ -46,11 +46,22 @@
 static StringMap *
 ParseCookieHeaders(AllocatorPtr alloc, const StringMap &headers) noexcept
 {
-	const char *cookie = headers.Get("cookie");
-	if (cookie == nullptr)
-		return nullptr;
+	const auto r = headers.EqualRange("cookie");
 
-	return alloc.New<StringMap>(cookie_map_parse(alloc, cookie));
+	StringMap *cookies = nullptr;
+
+	for (auto i = r.first; i != r.second; ++i) {
+		auto c = cookie_map_parse(alloc, i->value);
+		if (c.IsEmpty())
+			continue;
+
+		if (cookies == nullptr)
+			cookies = alloc.New<StringMap>(std::move(c));
+		else
+			cookies->Merge(std::move(c));
+	}
+
+	return cookies;
 }
 
 inline const StringMap *
