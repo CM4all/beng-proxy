@@ -70,4 +70,10 @@ struct CookieJar {
 	 * Delete expired cookies.
 	 */
 	void Expire(Expiry now) noexcept;
+
+	/**
+	 * Move cookies from the given instance, overwriting existing
+	 * cookies in this instance.
+	 */
+	void MoveFrom(CookieJar &&src) noexcept;
 };
