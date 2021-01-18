@@ -43,18 +43,23 @@
 #include "util/HexFormat.h"
 #include "util/djbhash.h"
 
-inline const StringMap *
-Request::GetCookies()
+static StringMap *
+ParseCookieHeaders(AllocatorPtr alloc, const StringMap &headers) noexcept
 {
-	if (cookies != nullptr)
-		return cookies;
-
-	const char *cookie = request.headers.Get("cookie");
+	const char *cookie = headers.Get("cookie");
 	if (cookie == nullptr)
 		return nullptr;
 
-	return cookies = NewFromPool<StringMap>(pool,
-						cookie_map_parse(pool, cookie));
+	return alloc.New<StringMap>(cookie_map_parse(alloc, cookie));
+}
+
+inline const StringMap *
+Request::GetCookies()
+{
+	if (cookies == nullptr)
+		cookies = ParseCookieHeaders(pool, request.headers);
+
+	return cookies;
 }
 
 inline SessionLease
