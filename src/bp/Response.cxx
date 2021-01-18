@@ -509,6 +509,8 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 		   finalized */
 		return;
 
+	const auto &tr = *translate.response;
+
 	if (send_session_cookie) {
 		header_write_begin(headers, "set-cookie");
 		headers.Write(session_cookie);
@@ -516,14 +518,14 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 		headers.Write(session_id.Format());
 		headers.Write("; HttpOnly; Path=");
 
-		const char *cookie_path = translate.response->cookie_path;
+		const char *cookie_path = tr.cookie_path;
 		if (cookie_path == nullptr)
 			cookie_path = "/";
 
 		headers.Write(cookie_path);
 		headers.Write("; Version=1");
 
-		if (translate.response->secure_cookie)
+		if (tr.secure_cookie)
 			headers.Write("; Secure");
 
 		using SS = BpConfig::SessionCookieSameSite;
@@ -540,9 +542,9 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 			break;
 		}
 
-		if (translate.response->cookie_domain != nullptr) {
+		if (tr.cookie_domain != nullptr) {
 			headers.Write("; Domain=\"");
-			headers.Write(translate.response->cookie_domain);
+			headers.Write(tr.cookie_domain);
 			headers.Write("\"");
 		}
 
@@ -559,23 +561,23 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 		auto session = MakeSession();
 		if (session)
 			session->cookie_sent = true;
-	} else if (translate.response->discard_session &&
+	} else if (tr.discard_session &&
 		   !session_id.IsDefined()) {
 		/* delete the cookie for the discarded session */
 		header_write_begin(headers, "set-cookie");
 		headers.Write(session_cookie);
 		headers.Write("=; HttpOnly; Path=");
 
-		const char *cookie_path = translate.response->cookie_path;
+		const char *cookie_path = tr.cookie_path;
 		if (cookie_path == nullptr)
 			cookie_path = "/";
 
 		headers.Write(cookie_path);
 		headers.Write("; Version=1; Max-Age=0");
 
-		if (translate.response->cookie_domain != nullptr) {
+		if (tr.cookie_domain != nullptr) {
 			headers.Write("; Domain=\"");
-			headers.Write(translate.response->cookie_domain);
+			headers.Write(tr.cookie_domain);
 			headers.Write("\"");
 		}
 
