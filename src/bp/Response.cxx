@@ -600,6 +600,7 @@ Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
 	assert(!response_sent);
 
 	if (http_status_is_success(status) &&
+	    translate.response != nullptr &&
 	    translate.response->www_authenticate != nullptr)
 		/* default to "401 Unauthorized" */
 		status = HTTP_STATUS_UNAUTHORIZED;
