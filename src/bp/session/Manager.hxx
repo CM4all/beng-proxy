@@ -86,10 +86,11 @@ class SessionManager {
 						boost::intrusive::hash<SessionHash>,
 						boost::intrusive::equal<SessionEqual>,
 						boost::intrusive::constant_time_size<true>>;
-	Set sessions;
 
 	static constexpr unsigned N_BUCKETS = 16381;
 	Set::bucket_type buckets[N_BUCKETS];
+
+	Set sessions;
 
 	TimerEvent cleanup_timer;
 
