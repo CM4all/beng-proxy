@@ -101,6 +101,7 @@ public:
 void
 Request::HandleAuth(const TranslateResponse &response)
 {
+	assert(response.protocol_version >= 2);
 	assert(response.HasAuth());
 
 	auto auth = response.auth;
@@ -147,13 +148,10 @@ Request::HandleAuth(const TranslateResponse &response)
 	t->uri = request.uri;
 	t->host = translate.request.host;
 	t->session = translate.request.session;
+	t->listener_tag = connection.listener.GetTag();
 
-	if (response.protocol_version >= 2) {
-		t->listener_tag = connection.listener.GetTag();
-
-		if (connection.listener.GetAuthAltHost())
-			t->alt_host = request.headers.Get("x-cm4all-althost");
-	}
+	if (connection.listener.GetAuthAltHost())
+		t->alt_host = request.headers.Get("x-cm4all-althost");
 
 	translate.previous = &response;
 

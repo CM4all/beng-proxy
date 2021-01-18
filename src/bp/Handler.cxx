@@ -405,13 +405,6 @@ uri_without_query_string(AllocatorPtr alloc, const char *uri)
 }
 
 static void
-fill_translate_request_listener_tag(TranslateRequest &t,
-				    const Request &r)
-{
-	t.listener_tag = r.connection.listener.GetTag();
-}
-
-static void
 fill_translate_request_local_address(TranslateRequest &t,
 				     const IncomingHttpRequest &r)
 {
@@ -525,63 +518,57 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 		translate.request.uri = response.uri;
 	}
 
-	if (response.protocol_version >= 1) {
-		/* handle WANT */
+	/* handle WANT */
 
-		if (!response.want.IsNull())
-			translate.request.want = response.want;
+	if (!response.want.IsNull())
+		translate.request.want = response.want;
 
-		if (response.Wants(TranslationCommand::LISTENER_TAG)) {
-			if (response.protocol_version >= 2) {
-				LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
-						 "Translation protocol 2 doesn't allow WANT/LISTENER_TAG",
-						 1);
-				return;
-			}
+	if (response.Wants(TranslationCommand::LISTENER_TAG)) {
+		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+				 "Translation protocol 2 doesn't allow WANT/LISTENER_TAG",
+				 1);
+		return;
+	}
 
-			fill_translate_request_listener_tag(translate.request, *this);
-		}
+	if (response.Wants(TranslationCommand::LOCAL_ADDRESS))
+		fill_translate_request_local_address(translate.request, request);
 
-		if (response.Wants(TranslationCommand::LOCAL_ADDRESS))
-			fill_translate_request_local_address(translate.request, request);
+	if (response.Wants(TranslationCommand::REMOTE_HOST))
+		fill_translate_request_remote_host(translate.request,
+						   connection.remote_host_and_port);
 
-		if (response.Wants(TranslationCommand::REMOTE_HOST))
-			fill_translate_request_remote_host(translate.request,
-							   connection.remote_host_and_port);
+	if (response.Wants(TranslationCommand::USER_AGENT))
+		fill_translate_request_user_agent(translate.request,
+						  request.headers);
 
-		if (response.Wants(TranslationCommand::USER_AGENT))
-			fill_translate_request_user_agent(translate.request,
-							  request.headers);
+	if (response.Wants(TranslationCommand::UA_CLASS))
+		fill_translate_request_ua_class(translate.request,
+						instance,
+						request.headers);
 
-		if (response.Wants(TranslationCommand::UA_CLASS))
-			fill_translate_request_ua_class(translate.request,
-							instance,
-							request.headers);
+	if (response.Wants(TranslationCommand::LANGUAGE))
+		fill_translate_request_language(translate.request,
+						request.headers);
 
-		if (response.Wants(TranslationCommand::LANGUAGE))
-			fill_translate_request_language(translate.request,
-							request.headers);
+	if (response.Wants(TranslationCommand::ARGS) &&
+	    translate.request.args == nullptr)
+		fill_translate_request_args(translate.request, alloc, args);
 
-		if (response.Wants(TranslationCommand::ARGS) &&
-		    translate.request.args == nullptr)
-			fill_translate_request_args(translate.request, alloc, args);
+	if (response.Wants(TranslationCommand::QUERY_STRING))
+		fill_translate_request_query_string(translate.request,
+						    alloc,
+						    dissected_uri);
 
-		if (response.Wants(TranslationCommand::QUERY_STRING))
-			fill_translate_request_query_string(translate.request,
-							    alloc,
-							    dissected_uri);
+	if (response.Wants(TranslationCommand::QUERY_STRING))
+		fill_translate_request_query_string(translate.request,
+						    alloc,
+						    dissected_uri);
 
-		if (response.Wants(TranslationCommand::QUERY_STRING))
-			fill_translate_request_query_string(translate.request,
-							    alloc,
-							    dissected_uri);
+	if (response.Wants(TranslationCommand::USER) || translate.want_user) {
+		ApplyTranslateRealm(response, nullptr);
 
-		if (response.Wants(TranslationCommand::USER) || translate.want_user) {
-			ApplyTranslateRealm(response, nullptr);
-
-			translate.want_user = true;
-			fill_translate_request_user(*this, translate.request, alloc);
-		}
+		translate.want_user = true;
+		fill_translate_request_user(*this, translate.request, alloc);
 	}
 
 	if (!response.want_full_uri.IsNull()) {
@@ -661,6 +648,14 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 void
 Request::OnTranslateResponse(TranslateResponse &response) noexcept
 {
+	if (response.protocol_version < 2) {
+		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+				 "Unsupported configuration server",
+				 "Unsupported translation protocol version",
+				 1);
+		return;
+	}
+
 	if (response.defer) {
 		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
 				 "Unexpected DEFER", 1);
@@ -853,12 +848,9 @@ Request::ParseRequestUri() noexcept
 
 static void
 fill_translate_request(TranslateRequest &t,
-		       const BpInstance &instance,
 		       const IncomingHttpRequest &request,
 		       const DissectedUri &uri,
-		       const StringMap &args,
-		       const char *listener_tag,
-		       const char *remote_host_and_port)
+		       const char *listener_tag)
 {
 	const AllocatorPtr alloc(request.pool);
 
@@ -874,21 +866,7 @@ fill_translate_request(TranslateRequest &t,
 	t.authorization = request.headers.Get("authorization");
 	t.uri = alloc.DupZ(uri.base);
 
-	if (translation_protocol_version < 1) {
-		/* old translation server: send all packets that have become
-		   optional */
-		fill_translate_request_local_address(t, request);
-		fill_translate_request_remote_host(t, remote_host_and_port);
-		fill_translate_request_user_agent(t, request.headers);
-		fill_translate_request_ua_class(t, instance, request.headers);
-		fill_translate_request_language(t, request.headers);
-		fill_translate_request_args(t, alloc, args);
-		fill_translate_request_query_string(t, alloc, uri);
-	}
-
-	if (translation_protocol_version >= 2 ||
-	    !translation_protocol_version_received)
-		t.listener_tag = listener_tag;
+	t.listener_tag = listener_tag;
 }
 
 void
@@ -906,11 +884,9 @@ Request::HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept
 	DetermineSession();
 
 	fill_translate_request(translate.request,
-			       instance,
 			       request,
-			       dissected_uri, args,
-			       connection.listener.GetTag(),
-			       connection.remote_host_and_port);
+			       dissected_uri,
+			       connection.listener.GetTag());
 
 	if (translate.request.host == nullptr) {
 		DispatchError(HTTP_STATUS_BAD_REQUEST, "No Host header");

@@ -2,6 +2,7 @@ cm4all-beng-proxy (17.0.43) unstable; urgency=low
 
   * bp: re-add CHECK support
   * bp: revert "send AUTHORIZATION only with HTTP_AUTH"
+  * bp: require at least translation protocol version 2
   * translation: add packet ATTACH_SESSION
   * control: add command DISCARD_SESSION
   * verify the Host request header

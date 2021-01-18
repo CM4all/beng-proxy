@@ -56,7 +56,7 @@ Breaks: libcm4all-beng-proxy-js (<< 0.9.14),
  cm4all-coma-fastcgi (<< 2.11),
  cm4all-ticket-fastcgi (<< 2.6),
  cm4all-spawn (<< 0.6),
- python-cm4all-translation (<< 1.9.1),
+ python-cm4all-translation (<< 3~),
  python-cm4all-beng-translation,
  python-cm4all-beng-translation-common
 Description: HTTP proxy server
