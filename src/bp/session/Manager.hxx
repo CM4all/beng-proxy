@@ -206,6 +206,8 @@ public:
 
 	void Cleanup() noexcept;
 
+	void DiscardAttachSession(ConstBuffer<std::byte> attach) noexcept;
+
 private:
 	SessionId GenerateSessionId() const noexcept;
 	void EraseAndDispose(Session &session);

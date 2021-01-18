@@ -276,6 +276,21 @@ FlushFilterCache(const char *server, ConstBuffer<const char *> args)
 }
 
 static void
+DiscardSession(const char *server, ConstBuffer<const char *> args)
+{
+	if (args.empty())
+		throw Usage{"Not enough arguments"};
+
+	const StringView attach_id = args.shift();
+
+	if (!args.empty())
+		throw Usage{"Too many arguments"};
+
+	BengControlClient client(server);
+	client.Send(BengProxy::ControlCommand::DISCARD_SESSION, attach_id);
+}
+
+static void
 Stopwatch(const char *server, ConstBuffer<const char *> args)
 {
 	if (!args.empty())
@@ -365,6 +380,9 @@ try {
 	} else if (StringIsEqual(command, "flush-filter-cache")) {
 		FlushFilterCache(server, args);
 		return EXIT_SUCCESS;
+	} else if (StringIsEqual(command, "discard-session")) {
+		DiscardSession(server, args);
+		return EXIT_SUCCESS;
 	} else if (StringIsEqual(command, "stopwatch")) {
 		Stopwatch(server, args);
 		return EXIT_SUCCESS;
@@ -388,6 +406,7 @@ try {
 		"  enable-zeroconf\n"
 		"  flush-nfs-cache\n"
 		"  flush-filter-cache [TAG]\n"
+		"  discard-session ATTACH_ID\n"
 		"  stopwatch\n"
 		"\n"
 		"Names for tcache-invalidate:\n",

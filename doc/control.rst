@@ -96,6 +96,11 @@ Commands
   payload is given, then this is a tag which flushes only cache items
   with the given :ref:`CACHE_TAG <cache_tag>`.
 
+.. _discard_session:
+
+- ``DISCARD_SESSION``: Discard the session with the given
+  :ref:`ATTACH_SESSION <t_attach_session>` value.
+
 Only ``TCACHE_INVALIDATE``, ``FLUSH_NFS_CACHE``,
 ``FLUSH_FILTER_CACHE``, ``STATS`` and ``NODE_STATUS`` are allowed when
 received via IP. The other commands are only accepted from clients

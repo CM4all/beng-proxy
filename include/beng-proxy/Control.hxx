@@ -138,6 +138,12 @@ enum class ControlCommand {
      * given pipe.
      */
     STOPWATCH_PIPE = 13,
+
+    /**
+     * Discard the session with the given
+     * #TranslationCommand::ATTACH_SESSION value.
+     */
+    DISCARD_SESSION = 14,
 };
 
 struct ControlStats {

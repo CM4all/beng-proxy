@@ -287,3 +287,13 @@ SessionManager::Visit(bool (*callback)(const Session *session,
 
 	return true;
 }
+
+void
+SessionManager::DiscardAttachSession(ConstBuffer<std::byte> attach) noexcept
+{
+	auto i = sessions_by_attach.find(attach,
+					 sessions_by_attach.hash_function(),
+					 sessions_by_attach.key_eq());
+	if (i != sessions_by_attach.end())
+		EraseAndDispose(*i);
+}
