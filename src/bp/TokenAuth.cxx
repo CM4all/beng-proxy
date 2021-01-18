@@ -70,6 +70,8 @@ GetTokenAuthRedirectUri(AllocatorPtr alloc,
 inline void
 Request::OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcept
 {
+	assert(translate.previous != nullptr);
+
 	if (response.discard_session)
 		DiscardSession();
 
@@ -96,7 +98,7 @@ Request::OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcep
 
 	/* using the original translation response, because it may
 	   have information about the original request */
-	const auto &tr = *translate.response;
+	const auto &tr = *translate.previous;
 
 	/* don't call OnTranslateResponseAfterAuth() here, instead
 	   redirect to the URI with auth_token removed */
@@ -106,7 +108,7 @@ Request::OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcep
 					GetExternalUriScheme(tr),
 					GetExternalUriHost(tr),
 					dissected_uri,
-					*translate.response);
+					tr);
 
 	DispatchRedirect(HTTP_STATUS_SEE_OTHER, redirect_uri, nullptr);
 }
