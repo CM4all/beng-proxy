@@ -100,6 +100,10 @@ Request::OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcep
 	   have information about the original request */
 	const auto &tr = *translate.previous;
 
+	/* promote the "previous" response to the final response, so
+	   GenerateSetCookie() uses its settings */
+	translate.response = &tr;
+
 	/* don't call OnTranslateResponseAfterAuth() here, instead
 	   redirect to the URI with auth_token removed */
 
