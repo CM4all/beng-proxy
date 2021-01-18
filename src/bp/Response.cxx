@@ -504,6 +504,11 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 	assert(!stateless);
 	assert(session_cookie != nullptr);
 
+	if (translate.response == nullptr)
+		/* no cookies if the translation response was not yet
+		   finalized */
+		return;
+
 	if (send_session_cookie) {
 		header_write_begin(headers, "set-cookie");
 		headers.Write(session_cookie);
@@ -554,8 +559,7 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 		auto session = MakeSession();
 		if (session)
 			session->cookie_sent = true;
-	} else if (translate.response != nullptr &&
-		   translate.response->discard_session &&
+	} else if (translate.response->discard_session &&
 		   !session_id.IsDefined()) {
 		/* delete the cookie for the discarded session */
 		header_write_begin(headers, "set-cookie");
