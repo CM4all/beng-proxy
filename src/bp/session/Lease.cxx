@@ -62,7 +62,7 @@ RealmSessionLease::RealmSessionLease(SessionManager &_manager,
 	:manager(&_manager)
 {
 	SessionLease parent(_manager, id);
-	if (parent)
+	if (!parent)
 		return;
 
 	session = parent.session->GetRealm(realm);
