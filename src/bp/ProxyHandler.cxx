@@ -80,7 +80,7 @@ Request::HandleProxyAddress() noexcept
 	       address.type == ResourceAddress::Type::NFS ||
 	       address.IsCgiAlike());
 
-	if (translate.response->transparent &&
+	if (tr.transparent &&
 	    (!dissected_uri.args.IsNull() || !dissected_uri.path_info.empty()))
 		address = address.WithArgs(pool,
 					   dissected_uri.args,
