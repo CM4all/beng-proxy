@@ -65,7 +65,9 @@
 #include "nfs/Cache.hxx"
 #include "spawn/Client.hxx"
 #include "access_log/Glue.hxx"
+#include "util/PrintException.hxx"
 #include "ua_classification.hxx"
+#include "random.hxx"
 
 #ifdef HAVE_URING
 #include "event/uring/Manager.hxx"
@@ -206,6 +208,15 @@ BpInstance::ScheduleCompress() noexcept
 void
 BpInstance::OnCompressTimer() noexcept
 {
+	try {
+		/* reseed the session id generator every few minutes; this
+		   isn't about compressing, but this timer is a good hook for
+		   calling it */
+		random_seed();
+	} catch (...) {
+		PrintException(std::current_exception());
+	}
+
 	Compress();
 	ScheduleCompress();
 }
