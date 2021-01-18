@@ -732,6 +732,8 @@ used to generate a resource, but only for resource filters. The same can
 be achieved with CGI, but pipes are simpler to implement, because they
 do not need to bother with HTTP status code and headers.
 
+.. _nfs:
+
 NFS
 ---
 
