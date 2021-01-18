@@ -278,7 +278,7 @@ Request::ApplyTranslateSession(const TranslateResponse &response)
 	const AllocatorPtr alloc(pool);
 	auto session = GetRealmSession();
 
-	if (user == nullptr && session)
+	if (user == nullptr && session && session->user != nullptr)
 		user = alloc.DupZ((std::string_view)session->user);
 
 	if (!response.session.IsNull()) {
