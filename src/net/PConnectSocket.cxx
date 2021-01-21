@@ -32,16 +32,15 @@
 
 #include "PConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/SocketError.hxx"
 #include "stopwatch.hxx"
 #include "AllocatorPtr.hxx"
-#include "system/Error.hxx"
 #include "util/Cancellable.hxx"
 
 #include <assert.h>
 #include <stddef.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <errno.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -155,27 +154,27 @@ client_socket_new(EventLoop &event_loop, AllocatorPtr alloc,
 
 	UniqueSocketDescriptor fd;
 	if (!fd.CreateNonBlock(domain, type, protocol)) {
-		handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to create socket")));
+		handler.OnSocketConnectError(std::make_exception_ptr(MakeSocketError("Failed to create socket")));
 		return;
 	}
 
 	if ((domain == PF_INET || domain == PF_INET6) && type == SOCK_STREAM &&
 	    !fd.SetNoDelay()) {
-		handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to set TCP_NODELAY")));
+		handler.OnSocketConnectError(std::make_exception_ptr(MakeSocketError("Failed to set TCP_NODELAY")));
 		return;
 	}
 
 	if (ip_transparent) {
 		int on = 1;
 		if (setsockopt(fd.Get(), SOL_IP, IP_TRANSPARENT, &on, sizeof on) < 0) {
-			handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to set IP_TRANSPARENT")));
+			handler.OnSocketConnectError(std::make_exception_ptr(MakeSocketError("Failed to set IP_TRANSPARENT")));
 			return;
 		}
 	}
 
 	if (!bind_address.IsNull() && bind_address.IsDefined() &&
 	    !fd.Bind(bind_address)) {
-		handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to bind socket")));
+		handler.OnSocketConnectError(std::make_exception_ptr(MakeSocketError("Failed to bind socket")));
 		return;
 	}
 
@@ -183,12 +182,14 @@ client_socket_new(EventLoop &event_loop, AllocatorPtr alloc,
 		stopwatch.RecordEvent("connect");
 
 		handler.OnSocketConnectSuccess(std::move(fd));
-	} else if (errno == EINPROGRESS) {
-		alloc.New<PConnectSocket>(event_loop,
-					  std::move(fd), timeout,
-					  std::move(stopwatch),
-					  handler, cancel_ptr);
 	} else {
-		handler.OnSocketConnectError(std::make_exception_ptr(MakeErrno("Failed to connect")));
+		const auto e = GetSocketError();
+		if (IsSocketErrorConnectWouldBlock(e))
+			alloc.New<PConnectSocket>(event_loop,
+						  std::move(fd), timeout,
+						  std::move(stopwatch),
+						  handler, cancel_ptr);
+		else
+			handler.OnSocketConnectError(std::make_exception_ptr(MakeSocketError(e, "Failed to connect")));
 	}
 }
