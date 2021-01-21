@@ -58,7 +58,7 @@ FillIssuerCommonName(Pg::Connection &c)
 		}
 
 		auto issuer_common_name = GetIssuerCommonName(*cert);
-		if (issuer_common_name.IsNull())
+		if (issuer_common_name == nullptr)
 			continue;
 
 		auto r = c.ExecuteParams("UPDATE server_certificate "

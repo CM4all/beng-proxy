@@ -413,7 +413,7 @@ AllNames(X509 &cert)
 			result.emplace(std::move(i));
 
 	const auto cn = GetCommonName(cert);
-	if (!cn.IsNull())
+	if (cn != nullptr)
 		result.emplace(cn.c_str());
 
 	return result;
