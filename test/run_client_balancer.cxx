@@ -37,12 +37,13 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/FailureManager.hxx"
+#include "net/Resolver.hxx"
+#include "net/AddressInfo.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
 #include "pool/Ptr.hxx"
 #include "AllocatorPtr.hxx"
-#include "net/Resolver.hxx"
-#include "net/AddressInfo.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 
@@ -64,7 +65,7 @@ struct Context final : PInstance, ConnectSocketHandler {
 	std::exception_ptr error;
 
 	/* virtual methods from class ConnectSocketHandler */
-	void OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) noexcept override {
+	void OnSocketConnectSuccess(UniqueSocketDescriptor new_fd) noexcept override {
 		result = SUCCESS;
 		fd = std::move(new_fd);
 	}

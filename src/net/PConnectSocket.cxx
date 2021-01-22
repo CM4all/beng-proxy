@@ -33,6 +33,7 @@
 #include "PConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketError.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "stopwatch.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/Cancellable.hxx"
@@ -76,7 +77,7 @@ private:
 	void Cancel() noexcept override;
 
 	/* virtual methods from class ConnectSocketHandler */
-	void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
+	void OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept override;
 	void OnSocketConnectTimeout() noexcept override;
 	void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 };
@@ -102,7 +103,7 @@ PConnectSocket::Cancel() noexcept
  */
 
 void
-PConnectSocket::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
+PConnectSocket::OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept
 {
 	stopwatch.RecordEvent("connect");
 

@@ -94,7 +94,7 @@ private:
 	void Cancel() noexcept override;
 
 	/* virtual methods from class ConnectSocketHandler */
-	void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
+	void OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept override;
 
 	void OnSocketConnectTimeout() noexcept override {
 		handler.Timeout();
@@ -195,7 +195,7 @@ ExpectMonitor::DelayCallback() noexcept
  */
 
 void
-ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor &&new_fd) noexcept
+ExpectMonitor::OnSocketConnectSuccess(UniqueSocketDescriptor new_fd) noexcept
 {
 	if (!config.send.empty()) {
 		ssize_t nbytes = send(new_fd.Get(), config.send.data(),

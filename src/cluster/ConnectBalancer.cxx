@@ -38,6 +38,7 @@
 #include "net/PConnectSocket.hxx"
 #include "event/Loop.hxx"
 #include "net/StaticSocketAddress.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "stopwatch.hxx"
 
 class ClientBalancerRequest : ConnectSocketHandler {
@@ -72,7 +73,7 @@ public:
 
 private:
 	/* virtual methods from class ConnectSocketHandler */
-	void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
+	void OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept override;
 	void OnSocketConnectTimeout() noexcept override;
 	void OnSocketConnectError(std::exception_ptr ep) noexcept override;
 };
@@ -100,7 +101,7 @@ ClientBalancerRequest::Send(AllocatorPtr alloc, SocketAddress address,
  */
 
 void
-ClientBalancerRequest::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
+ClientBalancerRequest::OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept
 {
 	auto &base = BR::Cast(*this);
 	base.ConnectSuccess();

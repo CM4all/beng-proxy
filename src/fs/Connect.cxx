@@ -37,6 +37,7 @@
 #include "event/TimerEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/LeakDetector.hxx"
 #include "stopwatch.hxx"
@@ -106,7 +107,7 @@ private:
 	}
 
 	/* virtual methods from class ConnectSocketHandler */
-	void OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept override;
+	void OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept override;
 
 	void OnSocketConnectError(std::exception_ptr e) noexcept override {
 		stopwatch.RecordEvent("error");
@@ -173,7 +174,7 @@ try {
 }
 
 void
-ConnectFilteredSocketOperation::OnSocketConnectSuccess(UniqueSocketDescriptor &&fd) noexcept
+ConnectFilteredSocketOperation::OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept
 {
 	stopwatch.RecordEvent("connect");
 

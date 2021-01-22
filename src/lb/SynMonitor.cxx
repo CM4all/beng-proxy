@@ -36,6 +36,7 @@
 #include "MonitorConfig.hxx"
 #include "event/net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
 
 class LbSynMonitor final : ConnectSocketHandler, Cancellable {
@@ -67,7 +68,7 @@ private:
 	}
 
 	/* virtual methods from class ConnectSocketHandler */
-	void OnSocketConnectSuccess(UniqueSocketDescriptor &&) noexcept override {
+	void OnSocketConnectSuccess(UniqueSocketDescriptor) noexcept override {
 		/* ignore the socket, we don't need it */
 
 		handler.Success();
