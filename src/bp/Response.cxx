@@ -561,7 +561,7 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 		auto session = MakeSession();
 		if (session)
 			session->cookie_sent = true;
-	} else if (tr.discard_session &&
+	} else if ((tr.discard_session || tr.discard_realm_session) &&
 		   !session_id.IsDefined()) {
 		/* delete the cookie for the discarded session */
 		header_write_begin(headers, "set-cookie");

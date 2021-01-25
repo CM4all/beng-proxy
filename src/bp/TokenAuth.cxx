@@ -74,6 +74,8 @@ Request::OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcep
 
 	if (response.discard_session)
 		DiscardSession();
+	else if (response.discard_realm_session)
+		DiscardRealmSession();
 
 	bool is_authenticated = false;
 	{

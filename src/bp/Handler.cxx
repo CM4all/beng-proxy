@@ -690,6 +690,8 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 		args.Clear();
 	} else if (response.discard_session)
 		DiscardSession();
+	else if (response.discard_realm_session)
+		DiscardRealmSession();
 
 	if (!response.session.IsNull())
 		/* must apply SESSION early so it gets used by

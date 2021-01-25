@@ -197,6 +197,8 @@ public:
 
 	void EraseAndDispose(SessionId id) noexcept;
 
+	void DiscardRealmSession(SessionId id, const char *realm) noexcept;
+
 	SessionLease CreateSession() noexcept;
 
 	/**

@@ -571,6 +571,7 @@ public:
 
 	void IgnoreSession() noexcept;
 	void DiscardSession() noexcept;
+	void DiscardRealmSession() noexcept;
 
 	/**
 	 * Is the HTTP connection from the browser encrypted with

@@ -249,6 +249,21 @@ Request::DiscardSession() noexcept
 	send_session_cookie = false;
 }
 
+void
+Request::DiscardRealmSession() noexcept
+{
+	if (!session_id.IsDefined())
+		return;
+
+	assert(!stateless);
+
+	instance.session_manager->DiscardRealmSession(session_id, realm);
+	session_id.Clear();
+
+	translate.request.session = nullptr;
+	send_session_cookie = false;
+}
+
 /**
  * Determine the realm name, consider the override by the translation
  * server.  Guaranteed to return non-nullptr.

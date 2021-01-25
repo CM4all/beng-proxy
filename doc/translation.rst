@@ -438,6 +438,8 @@ Response
 
 - ``USER``: the user name associated with this session
 
+.. _t_realm:
+
 - ``REALM``: a realm name for this session. An existing session matches
   only if its realm matches the current request’s realm; on mismatch, a
   new session with the same public id is created for this realm. If this
@@ -455,6 +457,10 @@ Response
   this session
 
 - ``DISCARD_SESSION``: discard the current browser session
+
+- ``DISCARD_REALM_SESSION``: Like ``DISCARD_SESSION`, but discard only
+  the part of the session that is specific to the current realm (see
+  :ref:`t_realm`).
 
 - ``SECURE_COOKIE``: Set the "secure" flag on the session cookie.
 

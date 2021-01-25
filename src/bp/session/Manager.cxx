@@ -269,6 +269,23 @@ SessionManager::EraseAndDispose(SessionId id) noexcept
 		EraseAndDispose(*i);
 }
 
+void
+SessionManager::DiscardRealmSession(SessionId id, const char *realm_name) noexcept
+{
+	auto i = sessions.find(id, SessionHash(), SessionEqual());
+	if (i == sessions.end())
+		return;
+
+	auto *realm = i->GetRealm(realm_name);
+	if (realm == nullptr)
+		return;
+
+	i->realms.erase_and_dispose(i->realms.iterator_to(*realm),
+				    DeleteDisposer{});
+	if (i->realms.empty())
+		EraseAndDispose(*i);
+}
+
 bool
 SessionManager::Visit(bool (*callback)(const Session *session,
 				       void *ctx), void *ctx)
