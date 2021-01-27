@@ -158,6 +158,14 @@ private:
 		const char *chain_header = nullptr;
 
 		/**
+		 * The Content-Type returned by suffix_registry_lookup().
+		 */
+		const char *content_type = nullptr;
+
+		char *enotdir_uri = nullptr;
+		const char *enotdir_path_info = nullptr;
+
+		/**
 		 * A pointer to the "previous" translate response, non-nullptr
 		 * only if beng-proxy sends a second translate request with a
 		 * CHECK packet.
@@ -168,35 +176,27 @@ private:
 		 * Number of CHECK packets followed so far.  This variable is
 		 * used for loop detection.
 		 */
-		unsigned n_checks = 0;
+		uint_least8_t n_checks = 0;
 
-		unsigned n_internal_redirects = 0;
+		uint_least8_t n_internal_redirects = 0;
 
-		unsigned n_read_file = 0;
+		uint_least8_t n_read_file = 0;
 
 		/**
 		 * Number of FILE_NOT_FOUND packets followed so far.  This
 		 * variable is used for loop detection.
 		 */
-		unsigned n_file_not_found = 0;
+		uint_least8_t n_file_not_found = 0;
 
 		/**
 		 * Number of #TRANSLATE_DIRECTORY_INDEX packets followed so
 		 * far.  This variable is used for loop detection.
 		 */
-		unsigned n_directory_index = 0;
+		uint_least8_t n_directory_index = 0;
 
-		unsigned n_probe_path_suffixes = 0;
+		uint_least8_t n_probe_path_suffixes = 0;
 
-		unsigned n_chain = 0;
-
-		/**
-		 * The Content-Type returned by suffix_registry_lookup().
-		 */
-		const char *content_type = nullptr;
-
-		char *enotdir_uri = nullptr;
-		const char *enotdir_path_info = nullptr;
+		uint_least8_t n_chain = 0;
 
 		/**
 		 * Did we see #TRANSLATE_WANT with #TRANSLATE_USER?  If so,
