@@ -999,6 +999,12 @@ class Translation(Protocol):
             response.packet(TRANSLATE_CHAIN, 'foo')
         elif uri[:7] == '/defer/':
             response.packet(TRANSLATE_DEFER)
+        elif uri[:11] == '/like_host/':
+            if request.host == 'foo':
+                response.status(201)
+            else:
+                response.packet(TRANSLATE_BASE, '/like_host/')
+                response.packet(TRANSLATE_LIKE_HOST, 'foo')
         elif uri == '/tiny.gif':
             response.packet(TRANSLATE_TINY_IMAGE)
         else:

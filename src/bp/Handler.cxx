@@ -518,6 +518,19 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 		translate.request.uri = response.uri;
 	}
 
+	if (response.like_host != nullptr) {
+		/* repeat request with the given HOST */
+
+		if (++translate.n_like_host > 4) {
+			LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+					 "Too many consecutive LIKE_HOST packets",
+					 1);
+			return;
+		}
+
+		translate.request.host = response.like_host;
+	}
+
 	/* handle WANT */
 
 	if (!response.want.IsNull())
@@ -717,6 +730,7 @@ Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 {
 	if (!response.check.IsNull() ||
 	    !response.internal_redirect.IsNull() ||
+	    response.like_host != nullptr ||
 	    !response.want.empty() ||
 	    /* after successful new authentication, repeat the translation
 	       if the translation server wishes to know the user */

@@ -173,6 +173,12 @@ private:
 		const TranslateResponse *previous = nullptr;
 
 		/**
+		 * Number of LIKE_HOST packets followed so far.  This
+		 * variable is used for loop detection.
+		 */
+		uint_least8_t n_like_host = 0;
+
+		/**
 		 * Number of CHECK packets followed so far.  This variable is
 		 * used for loop detection.
 		 */

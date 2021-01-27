@@ -327,6 +327,12 @@ Response
   after a ``CGI``/``DELEGATE`` command, to set the document root only
   for this CGI/delegate
 
+- ``LIKE_HOST``: Repeat the translation, but with the specified
+  ``HOST`` value (which can be an artificial name, even one which is
+  not RFC-valid).  This allows sharing the translation cache between
+  different hosts.  It can be combined with ``BASE`` and ``REGEX`` to
+  share only a part of the URI location space.
+
 - ``BASE``: Defines a realm in the URI space. The payload specifies
   the URI prefix (of the original request URI, ending with a slash)
   which contains this realm. All resources in this realm can be
