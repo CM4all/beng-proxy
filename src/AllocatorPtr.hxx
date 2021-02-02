@@ -36,6 +36,8 @@
 #include "util/ConstBuffer.hxx"
 #include "util/StringView.hxx"
 
+#include <algorithm>
+
 #include <string.h>
 
 class SocketAddress;
@@ -92,9 +94,10 @@ public:
 		if (src == nullptr)
 			return nullptr;
 
-		auto *dest = NewArray<T>(src.size), *p = dest;
-		for (const auto &i : src)
-			*p++ = T{*this, i};
+		auto *dest = NewArray<T>(src.size);
+		std::transform(src.begin(), src.end(), dest, [this](const T &i){
+			return T{*this, i};
+		});
 
 		return ConstBuffer<T>{dest, src.size};
 	}
