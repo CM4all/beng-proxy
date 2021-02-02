@@ -37,6 +37,7 @@
 #include "util/StringView.hxx"
 
 #include <algorithm>
+#include <type_traits>
 
 #include <string.h>
 
@@ -71,6 +72,8 @@ public:
 
 	template<typename T>
 	T *NewArray(size_t n) const noexcept {
+		static_assert(std::is_trivial_v<T>);
+
 		return PoolAlloc<T>(pool, n);
 	}
 
@@ -82,6 +85,8 @@ public:
 
 	template<typename T>
 	ConstBuffer<T> Dup(ConstBuffer<T> src) const noexcept {
+		static_assert(std::is_trivial_v<T>);
+
 		return ConstBuffer<T>::FromVoid(Dup(src.ToVoid()));
 	}
 
@@ -91,6 +96,8 @@ public:
 	 */
 	template<typename T>
 	ConstBuffer<T> CloneArray(ConstBuffer<T> src) const noexcept {
+		static_assert(std::is_trivially_destructible_v<T>);
+
 		if (src == nullptr)
 			return nullptr;
 
