@@ -113,9 +113,11 @@ RawEquals(ConstBuffer<T> a, ConstBuffer<T> b) noexcept
 static bool
 operator==(const Mount &a, const Mount &b) noexcept
 {
-	return StringIsEqual(a.source, b.source) &&
+	return StringEquals(a.source, b.source) &&
 		StringIsEqual(a.target, b.target) &&
-		a.expand_source == b.expand_source;
+		a.type == b.type &&
+		a.expand_source == b.expand_source &&
+		a.writable == b.writable;
 }
 
 template<typename T>
