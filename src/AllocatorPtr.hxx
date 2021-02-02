@@ -91,6 +91,35 @@ public:
 	}
 
 	/**
+	 * Copy all items of a std::initializer_list to a newly
+	 * allocated array wrapped in a #ConstBuffer.
+	 */
+	template<typename T>
+	ConstBuffer<T> Dup(std::initializer_list<T> src) const noexcept {
+		static_assert(std::is_trivially_destructible_v<T>);
+
+		auto *dest = NewArray<T>(src.size());
+		std::copy(src.begin(), src.end(), dest);
+
+		return {dest, src.size()};
+	}
+
+	/**
+	 * Construct an array with items from a std::initializer_list.
+	 */
+	template<typename T, typename U>
+	ConstBuffer<T> ConstructArray(std::initializer_list<U> src) const noexcept {
+		static_assert(std::is_trivially_destructible_v<T>);
+
+		auto *dest = NewArray<T>(src.size());
+		std::transform(src.begin(), src.end(), dest, [](const U &i){
+			return T{i};
+		});
+
+		return {dest, src.size()};
+	}
+
+	/**
 	 * Clone an array, invoking a constructor accepting "const
 	 * AllocatorPtr &, const T &" for each item.
 	 */
