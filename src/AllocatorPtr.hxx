@@ -99,7 +99,7 @@ public:
 			return T{*this, i};
 		});
 
-		return ConstBuffer<T>{dest, src.size};
+		return {dest, src.size};
 	}
 
 	StringView Dup(StringView src) const noexcept;
