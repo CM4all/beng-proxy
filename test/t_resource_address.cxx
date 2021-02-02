@@ -43,29 +43,30 @@
 TEST(ResourceAddressTest, AutoBase)
 {
 	TestPool pool;
+	const AllocatorPtr alloc(pool);
 
 	static const auto cgi0 =
-		MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.pl", nullptr, "/");
+		MakeCgiAddress(alloc, "/usr/lib/cgi-bin/foo.pl", nullptr, "/");
 	static constexpr ResourceAddress ra0(ResourceAddress::Type::CGI, cgi0);
 
-	ASSERT_EQ(ra0.AutoBase(*pool, "/"), nullptr);
-	ASSERT_EQ(ra0.AutoBase(*pool, "/foo"), nullptr);
+	ASSERT_EQ(ra0.AutoBase(alloc, "/"), nullptr);
+	ASSERT_EQ(ra0.AutoBase(alloc, "/foo"), nullptr);
 
 	static const auto cgi1 =
-		MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.pl", nullptr, "foo/bar");
+		MakeCgiAddress(alloc, "/usr/lib/cgi-bin/foo.pl", nullptr, "foo/bar");
 	static constexpr ResourceAddress ra1(ResourceAddress::Type::CGI, cgi1);
 
-	ASSERT_EQ(ra1.AutoBase(*pool, "/"), nullptr);
-	ASSERT_EQ(ra1.AutoBase(*pool, "/foo/bar"), nullptr);
+	ASSERT_EQ(ra1.AutoBase(alloc, "/"), nullptr);
+	ASSERT_EQ(ra1.AutoBase(alloc, "/foo/bar"), nullptr);
 
 	static const auto cgi2 =
-		MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.pl", nullptr, "/bar/baz");
+		MakeCgiAddress(alloc, "/usr/lib/cgi-bin/foo.pl", nullptr, "/bar/baz");
 	static constexpr ResourceAddress ra2(ResourceAddress::Type::CGI, cgi2);
 
-	ASSERT_EQ(ra2.AutoBase(*pool, "/"), nullptr);
-	ASSERT_EQ(ra2.AutoBase(*pool, "/foobar/baz"), nullptr);
+	ASSERT_EQ(ra2.AutoBase(alloc, "/"), nullptr);
+	ASSERT_EQ(ra2.AutoBase(alloc, "/foobar/baz"), nullptr);
 
-	const char *a = ra2.AutoBase(*pool, "/foo/bar/baz");
+	const char *a = ra2.AutoBase(alloc, "/foo/bar/baz");
 	ASSERT_NE(a, nullptr);
 	ASSERT_STREQ(a, "/foo/");
 }
@@ -73,18 +74,19 @@ TEST(ResourceAddressTest, AutoBase)
 TEST(ResourceAddressTest, BaseNoPathInfo)
 {
 	TestPool pool;
+	const AllocatorPtr alloc(pool);
 
-	static const auto cgi0 = MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.pl");
+	static const auto cgi0 = MakeCgiAddress(alloc, "/usr/lib/cgi-bin/foo.pl");
 	static constexpr ResourceAddress ra0(ResourceAddress::Type::CGI, cgi0);
 
-	auto dest = ra0.SaveBase(*pool, "");
+	auto dest = ra0.SaveBase(alloc, "");
 	ASSERT_TRUE(dest.IsDefined());
 	ASSERT_EQ(dest.type, ResourceAddress::Type::CGI);
 	ASSERT_STREQ(dest.GetCgi().path, ra0.GetCgi().path);
 	ASSERT_TRUE(dest.GetCgi().path_info == nullptr ||
 		    strcmp(dest.GetCgi().path_info, "") == 0);
 
-	dest = ra0.LoadBase(*pool, "foo/bar");
+	dest = ra0.LoadBase(alloc, "foo/bar");
 	ASSERT_TRUE(dest.IsDefined());
 	ASSERT_EQ(dest.type, ResourceAddress::Type::CGI);
 	ASSERT_STREQ(dest.GetCgi().path, ra0.GetCgi().path);
@@ -94,31 +96,33 @@ TEST(ResourceAddressTest, BaseNoPathInfo)
 TEST(ResourceAddressTest, CgiApply)
 {
 	TestPool pool;
+	const AllocatorPtr alloc(pool);
 
 	static const auto cgi0 =
-		MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.pl", nullptr, "/foo/");
+		MakeCgiAddress(alloc, "/usr/lib/cgi-bin/foo.pl", nullptr, "/foo/");
 	static constexpr ResourceAddress ra0(ResourceAddress::Type::CGI, cgi0);
 
-	auto result = ra0.Apply(*pool, "");
+	auto result = ra0.Apply(alloc, "");
 	ASSERT_EQ(&result.GetCgi(), &ra0.GetCgi());
 
-	result = ra0.Apply(*pool, "bar");
+	result = ra0.Apply(alloc, "bar");
 	ASSERT_STREQ(result.GetCgi().path_info, "/foo/bar");
 
-	result = ra0.Apply(*pool, "/bar");
+	result = ra0.Apply(alloc, "/bar");
 	ASSERT_STREQ(result.GetCgi().path_info, "/bar");
 
 	/* PATH_INFO is unescaped (RFC 3875 4.1.5) */
-	result = ra0.Apply(*pool, "bar%2etxt");
+	result = ra0.Apply(alloc, "bar%2etxt");
 	ASSERT_STREQ(result.GetCgi().path_info, "/foo/bar.txt");
 
-	result = ra0.Apply(*pool, "http://localhost/");
+	result = ra0.Apply(alloc, "http://localhost/");
 	ASSERT_TRUE(!result.IsDefined());
 }
 
 TEST(ResourceAddressTest, Basic)
 {
 	TestPool pool;
+	const AllocatorPtr alloc(pool);
 
 	static const FileAddress file1("/var/www/foo/bar.html");
 	static constexpr ResourceAddress ra1(file1);
@@ -127,70 +131,70 @@ TEST(ResourceAddressTest, Basic)
 	static constexpr ResourceAddress ra2(file2);
 
 	static const auto cgi3 =
-		MakeCgiAddress(pool, "/usr/lib/cgi-bin/foo.pl",
+		MakeCgiAddress(alloc, "/usr/lib/cgi-bin/foo.pl",
 			       "/foo/bar/baz",
 			       "/bar/baz");
 	static constexpr ResourceAddress ra3(ResourceAddress::Type::CGI, cgi3);
 
-	auto a = ra1.SaveBase(*pool, "bar.html");
+	auto a = ra1.SaveBase(alloc, "bar.html");
 	ASSERT_TRUE(a.IsDefined());
 	ASSERT_EQ(a.type, ResourceAddress::Type::LOCAL);
 	ASSERT_STREQ(a.GetFile().base, "/var/www/foo/");
 	ASSERT_STREQ(a.GetFile().path, ".");
 
-	auto b = a.LoadBase(*pool, "index.html");
+	auto b = a.LoadBase(alloc, "index.html");
 	ASSERT_TRUE(b.IsDefined());
 	ASSERT_EQ(b.type, ResourceAddress::Type::LOCAL);
 	ASSERT_STREQ(b.GetFile().base, "/var/www/foo/");
 	ASSERT_STREQ(b.GetFile().path, "index.html");
 
-	a = ra2.SaveBase(*pool, "space%20.txt");
+	a = ra2.SaveBase(alloc, "space%20.txt");
 	ASSERT_TRUE(a.IsDefined());
 	ASSERT_EQ(a.type, ResourceAddress::Type::LOCAL);
 	ASSERT_STREQ(a.GetFile().base, "/var/www/foo/");
 	ASSERT_STREQ(a.GetFile().path, ".");
 
-	b = a.LoadBase(*pool, "index%2ehtml");
+	b = a.LoadBase(alloc, "index%2ehtml");
 	ASSERT_TRUE(b.IsDefined());
 	ASSERT_EQ(b.type, ResourceAddress::Type::LOCAL);
 	ASSERT_STREQ(b.GetFile().base, "/var/www/foo/");
 	ASSERT_STREQ(b.GetFile().path, "index.html");
 
-	a = ra3.SaveBase(*pool, "bar/baz");
+	a = ra3.SaveBase(alloc, "bar/baz");
 	ASSERT_TRUE(a.IsDefined());
 	ASSERT_EQ(a.type, ResourceAddress::Type::CGI);
 	ASSERT_STREQ(a.GetCgi().path, ra3.GetCgi().path);
 	ASSERT_STREQ(a.GetCgi().path_info, "/");
 
-	b = a.LoadBase(*pool, "");
+	b = a.LoadBase(alloc, "");
 	ASSERT_TRUE(b.IsDefined());
 	ASSERT_EQ(b.type, ResourceAddress::Type::CGI);
 	ASSERT_STREQ(b.GetCgi().path, ra3.GetCgi().path);
 	ASSERT_STREQ(b.GetCgi().uri, "/foo/");
 	ASSERT_STREQ(b.GetCgi().path_info, "/");
 
-	b = a.LoadBase(*pool, "xyz");
+	b = a.LoadBase(alloc, "xyz");
 	ASSERT_TRUE(b.IsDefined());
 	ASSERT_EQ(b.type, ResourceAddress::Type::CGI);
 	ASSERT_STREQ(b.GetCgi().path, ra3.GetCgi().path);
 	ASSERT_STREQ(b.GetCgi().uri, "/foo/xyz");
 	ASSERT_STREQ(b.GetCgi().path_info, "/xyz");
 
-	a = ra3.SaveBase(*pool, "baz");
+	a = ra3.SaveBase(alloc, "baz");
 	ASSERT_TRUE(a.IsDefined());
 	ASSERT_EQ(a.type, ResourceAddress::Type::CGI);
 	ASSERT_STREQ(a.GetCgi().path, ra3.GetCgi().path);
 	ASSERT_STREQ(a.GetCgi().uri, "/foo/bar/");
 	ASSERT_STREQ(a.GetCgi().path_info, "/bar/");
 
-	b = a.LoadBase(*pool, "bar/");
+	b = a.LoadBase(alloc, "bar/");
 	ASSERT_TRUE(b.IsDefined());
 	ASSERT_EQ(b.type, ResourceAddress::Type::CGI);
 	ASSERT_STREQ(b.GetCgi().path, ra3.GetCgi().path);
 	ASSERT_STREQ(b.GetCgi().uri, "/foo/bar/bar/");
 	ASSERT_STREQ(b.GetCgi().path_info, "/bar/bar/");
 
-	b = a.LoadBase(*pool, "bar/xyz");
+	b = a.LoadBase(alloc, "bar/xyz");
 	ASSERT_TRUE(b.IsDefined());
 	ASSERT_EQ(b.type, ResourceAddress::Type::CGI);
 	ASSERT_STREQ(b.GetCgi().path, ra3.GetCgi().path);

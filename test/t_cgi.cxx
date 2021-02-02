@@ -227,7 +227,7 @@ test_normal(PoolPtr pool, Context *c)
 	const AllocatorPtr alloc(pool);
 	const char *path = GetCgiPath(alloc, "env.py");
 
-	const auto address = MakeCgiAddress(pool, path, "/")
+	const auto address = MakeCgiAddress(alloc, path, "/")
 		.ScriptName("env.py")
 		.DocumentRoot("/var/www");
 
@@ -253,7 +253,7 @@ test_tiny(PoolPtr pool, Context *c)
 	const AllocatorPtr alloc(pool);
 	const char *path = GetCgiPath(alloc, "tiny.sh");
 
-	const auto address = MakeCgiAddress(pool, path, "/")
+	const auto address = MakeCgiAddress(alloc, path, "/")
 		.ScriptName("tiny.py")
 		.DocumentRoot("/var/www");
 
@@ -281,7 +281,7 @@ test_close_early(PoolPtr pool, Context *c)
 
 	c->close_response_body_early = true;
 
-	const auto address = MakeCgiAddress(pool, path, "/")
+	const auto address = MakeCgiAddress(alloc, path, "/")
 		.ScriptName("env.py")
 		.DocumentRoot("/var/www");
 
@@ -309,7 +309,7 @@ test_close_late(PoolPtr pool, Context *c)
 
 	c->close_response_body_late = true;
 
-	const auto address = MakeCgiAddress(pool, path, "/")
+	const auto address = MakeCgiAddress(alloc, path, "/")
 		.ScriptName("env.py")
 		.DocumentRoot("/var/www");
 
@@ -337,7 +337,7 @@ test_close_data(PoolPtr pool, Context *c)
 
 	c->close_response_body_data = true;
 
-	const auto address = MakeCgiAddress(pool, path, "/")
+	const auto address = MakeCgiAddress(alloc, path, "/")
 		.ScriptName("env.py")
 		.DocumentRoot("/var/www");
 
@@ -365,7 +365,7 @@ test_post(PoolPtr pool, Context *c)
 
 	c->body_read = true;
 
-	const auto address = MakeCgiAddress(pool, path, "/")
+	const auto address = MakeCgiAddress(alloc, path, "/")
 		.ScriptName("cat.py")
 		.DocumentRoot("/var/www");
 
@@ -395,7 +395,7 @@ test_status(PoolPtr pool, Context *c)
 
 	c->body_read = true;
 
-	const auto address = MakeCgiAddress(pool, path, "/")
+	const auto address = MakeCgiAddress(alloc, path, "/")
 		.ScriptName("status.py")
 		.DocumentRoot("/var/www");
 
@@ -423,7 +423,7 @@ test_no_content(PoolPtr pool, Context *c)
 
 	c->no_content = true;
 
-	const auto address = MakeCgiAddress(pool, path, "/")
+	const auto address = MakeCgiAddress(alloc, path, "/")
 		.ScriptName("no_content.sh")
 		.DocumentRoot("/var/www");
 
@@ -449,7 +449,7 @@ test_no_length(PoolPtr pool, Context *c)
 	const AllocatorPtr alloc(pool);
 	const char *path = GetCgiPath(alloc, "length0.sh");
 
-	const auto address = MakeCgiAddress(pool, path, "/")
+	const auto address = MakeCgiAddress(alloc, path, "/")
 		.ScriptName("length0.sh")
 		.DocumentRoot("/var/www");
 
@@ -473,7 +473,7 @@ test_length_ok(PoolPtr pool, Context *c)
 	const AllocatorPtr alloc(pool);
 	const char *path = GetCgiPath(alloc, "length1.sh");
 
-	const auto address = MakeCgiAddress(pool, path, "/")
+	const auto address = MakeCgiAddress(alloc, path, "/")
 		.ScriptName("length1.sh")
 		.DocumentRoot("/var/www");
 
@@ -499,7 +499,7 @@ test_length_ok_large(PoolPtr pool, Context *c)
 
 	c->body_read = true;
 
-	const auto address = MakeCgiAddress(pool, path, "/")
+	const auto address = MakeCgiAddress(alloc, path, "/")
 		.ScriptName("length5.sh")
 		.DocumentRoot("/var/www");
 
@@ -523,7 +523,7 @@ test_length_too_small(PoolPtr pool, Context *c)
 	const AllocatorPtr alloc(pool);
 	const char *path = GetCgiPath(alloc, "length2.sh");
 
-	const auto address = MakeCgiAddress(pool, path, "/")
+	const auto address = MakeCgiAddress(alloc, path, "/")
 		.ScriptName("length2.sh")
 		.DocumentRoot("/var/www");
 
@@ -546,7 +546,7 @@ test_length_too_big(PoolPtr pool, Context *c)
 	const AllocatorPtr alloc(pool);
 	const char *path = GetCgiPath(alloc, "length3.sh");
 
-	const auto address = MakeCgiAddress(pool, path, "/")
+	const auto address = MakeCgiAddress(alloc, path, "/")
 		.ScriptName("length3.sh")
 		.DocumentRoot("/var/www");
 
@@ -570,7 +570,7 @@ test_length_too_small_late(PoolPtr pool, Context *c)
 	const AllocatorPtr alloc(pool);
 	const char *path = GetCgiPath(alloc, "length4.sh");
 
-	const auto address = MakeCgiAddress(pool, path, "/")
+	const auto address = MakeCgiAddress(alloc, path, "/")
 		.ScriptName("length4.sh")
 		.DocumentRoot("/var/www");
 
@@ -601,7 +601,7 @@ test_large_header(PoolPtr pool, Context *c)
 	const AllocatorPtr alloc(pool);
 	const char *path = GetCgiPath(alloc, "large_header.sh");
 
-	const auto address = MakeCgiAddress(pool, path, "/")
+	const auto address = MakeCgiAddress(alloc, path, "/")
 		.ScriptName("large_header.py")
 		.DocumentRoot("/var/www");
 

@@ -40,7 +40,6 @@
 #include "spawn/Mount.hxx"
 #include "spawn/NamespaceOptions.hxx"
 #include "AllocatorPtr.hxx"
-#include "pool/pool.hxx"
 
 #include <string.h>
 
@@ -76,31 +75,31 @@ struct MakeRequest : TranslateRequest {
 };
 
 struct MakeResponse : TranslateResponse {
-	struct pool &pool;
+	const AllocatorPtr alloc;
 
-	explicit MakeResponse(struct pool &_pool) noexcept
-		:pool(_pool)
+	explicit MakeResponse(AllocatorPtr _alloc) noexcept
+		:alloc(_alloc)
 	{
 		Clear();
 	}
 
-	MakeResponse(struct pool &_pool, const TranslateResponse &src)
-		:pool(_pool)
+	MakeResponse(AllocatorPtr _alloc,
+		     const TranslateResponse &src) noexcept
+		:alloc(_alloc)
 	{
-		FullCopyFrom(pool, src);
+		FullCopyFrom(src);
 	}
 
-	explicit MakeResponse(struct pool &_pool,
+	explicit MakeResponse(AllocatorPtr _alloc,
 			      const ResourceAddress &_address,
-			      const char *_base=nullptr)
-		:MakeResponse(_pool)
+			      const char *_base=nullptr) noexcept
+		:MakeResponse(_alloc)
 	{
 		address = {ShallowCopy(), _address};
 		base = _base;
 	}
 
-	MakeResponse &&FullCopyFrom(AllocatorPtr alloc,
-				    const TranslateResponse &src) {
+	MakeResponse &&FullCopyFrom(const TranslateResponse &src) noexcept {
 		CopyFrom(alloc, src);
 		max_age = src.max_age;
 		address.CopyFrom(alloc, src.address);
@@ -169,12 +168,12 @@ struct MakeResponse : TranslateResponse {
 	}
 
 	MakeResponse &&File(FileAddress &&_file) {
-		return File(*NewFromPool<FileAddress>(pool, pool, _file));
+		return File(*alloc.New<FileAddress>(alloc, _file));
 	}
 
 	MakeResponse &&File(const char *_path,
 			    const char *_base=nullptr) noexcept {
-		auto f = NewFromPool<FileAddress>(pool, _path);
+		auto f = alloc.New<FileAddress>(_path);
 		f->base = _base;
 		address = *f;
 		return std::move(*this);
@@ -186,7 +185,7 @@ struct MakeResponse : TranslateResponse {
 	}
 
 	MakeResponse &&Http(struct HttpAddress &&_http) {
-		return Http(*NewFromPool<HttpAddress>(pool, pool, _http));
+		return Http(*alloc.New<HttpAddress>(alloc, _http));
 	}
 
 	MakeResponse &&Cgi(const CgiAddress &_cgi) {
@@ -195,12 +194,12 @@ struct MakeResponse : TranslateResponse {
 	}
 
 	MakeResponse &&Cgi(CgiAddress &&_cgi) {
-		return Cgi(*_cgi.Clone(pool));
+		return Cgi(*_cgi.Clone(alloc));
 	}
 
 	MakeResponse &&Cgi(const char *_path, const char *_uri=nullptr,
 			   const char *_path_info=nullptr) {
-		auto cgi = NewFromPool<CgiAddress>(pool, _path);
+		auto cgi = alloc.New<CgiAddress>(_path);
 		cgi->uri = _uri;
 		cgi->path_info = _path_info;
 		return Cgi(*cgi);
@@ -208,7 +207,7 @@ struct MakeResponse : TranslateResponse {
 
 	void AppendTransformation(Transformation *t) {
 		if (views == nullptr) {
-			views = NewFromPool<WidgetView>(pool, nullptr);
+			views = alloc.New<WidgetView>(nullptr);
 		}
 
 		auto i = views->transformations.before_begin();
@@ -219,14 +218,14 @@ struct MakeResponse : TranslateResponse {
 	}
 
 	MakeResponse &&Filter(const CgiAddress &_cgi) {
-		auto t = NewFromPool<Transformation>(pool, FilterTransformation{});
+		auto t = alloc.New<Transformation>(FilterTransformation{});
 		t->u.filter.address = ResourceAddress(ResourceAddress::Type::CGI, _cgi);
 		AppendTransformation(t);
 		return std::move(*this);
 	}
 
 	MakeResponse &&Filter(CgiAddress &&_cgi) {
-		return Filter(*_cgi.Clone(pool));
+		return Filter(*_cgi.Clone(alloc));
 	}
 
 	template<size_t n>
@@ -279,12 +278,12 @@ struct MakeHttpAddress : HttpAddress {
 };
 
 struct MakeCgiAddress : CgiAddress {
-	struct pool &pool;
+	const AllocatorPtr alloc;
 
-	explicit MakeCgiAddress(struct pool &_pool,
-				const char *_path, const char *_uri=nullptr,
-				const char *_path_info=nullptr)
-		:CgiAddress(_path), pool(_pool)
+	MakeCgiAddress(AllocatorPtr _alloc,
+		       const char *_path, const char *_uri=nullptr,
+		       const char *_path_info=nullptr) noexcept
+		:CgiAddress(_path), alloc(_alloc)
 	{
 		uri = _uri;
 		path_info = _path_info;
@@ -310,8 +309,7 @@ struct MakeCgiAddress : CgiAddress {
 	MakeCgiAddress &&BindMount(const char *_source, const char *_target,
 				   bool _expand_source=false,
 				   bool _writable=false) {
-		auto *m = NewFromPool<Mount>(pool, _source, _target,
-					     _writable);
+		auto *m = alloc.New<Mount>(_source, _target, _writable);
 		m->expand_source = _expand_source;
 		options.ns.mount.mounts.push_front(*m);
 		return std::move(*this);
