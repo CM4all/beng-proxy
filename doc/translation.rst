@@ -494,7 +494,8 @@ Response
   maximum age is not limited.  Currently, this is only supported for
   the following packets:
 
-- ``BEGIN`` (refers to the whole translate response), ``USER``
+  - ``BEGIN`` (refers to the whole translate response)
+  - ``USER``
 
 .. _tvary:
 
