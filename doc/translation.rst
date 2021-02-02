@@ -327,62 +327,6 @@ Response
   after a ``CGI``/``DELEGATE`` command, to set the document root only
   for this CGI/delegate
 
-- ``LIKE_HOST``: Repeat the translation, but with the specified
-  ``HOST`` value (which can be an artificial name, even one which is
-  not RFC-valid).  This allows sharing the translation cache between
-  different hosts.  It can be combined with ``BASE`` and ``REGEX`` to
-  share only a part of the URI location space.
-
-- ``BASE``: Defines a realm in the URI space. The payload specifies
-  the URI prefix (of the original request URI, ending with a slash)
-  which contains this realm. All resources in this realm can be
-  addressed by :program:`beng-proxy` with a trivial pattern: append
-  the relative URI (within the realm) to the resource address
-  (e.g. the ``PATH``, ``HTTP`` or ``PATH_INFO`` value).
-
-  The address in this response applies to request URI, not the base URI
-  (to allow backwards compatibility with translation clients which do not
-  support this packet).
-
-  Example: in the request, ``URI`` is ``/foo/bar/index.html``; in the
-  response, ``PATH`` is ``/var/www/foo/bar/index.html`` and ``BASE`` is
-  ``/foo/``. The :program:`beng-proxy` translation cache now knows: if a request
-  on ``/foo/test.png`` is received, it can serve
-  :file:`/var/www/foo/test.png` without querying the translation server.
-
-- ``UNSAFE_BASE``: Modifier for ``BASE``: omit the security checks.
-  This allows ``/../`` to be part of the remaining URI, possibly
-  allowing clients to break out of the given directory.
-
-- ``EASY_BASE``: Modifier ``BASE`` which aims to simplify its usage:
-  the resource address given in the response refers to the ``BASE``, not
-  to the actual request URI. It is important to include the trailing
-  slash which is part of ``BASE`` in the resource address (e.g.
-  ``BASE``\ =”/foo/”, ``PATH``\ =”/var/www/foo/”). :program:`beng-proxy` applies
-  the URI suffix before handling the HTTP request.
-
-- ``REGEX``: Reuse a cached response only if the request ``URI``
-  matches the specified regular expression (Perl compatible, anchored).
-  This works only when a BASE was specified. (Since version 1.3.2)
-
-- ``INVERSE_REGEX``: Don’t apply the cached response if the request
-  ``URI`` matches the specified regular expression (Perl compatible,
-  anchored). (Since version 1.3.2)
-
-- ``REGEX_TAIL``: Apply ``REGEX`` and ``INVERSE_REGEX`` to the URI
-  suffix following ``BASE`` instead of the whole request URI. (Since
-  version 4.0.21)
-
-- ``REGEX_UNESCAPE``: Unescape the URI for ``REGEX``.
-
-- ``INVERSE_REGEX_UNESCAPE``: Unescape the URI for ``INVERSE_REGEX``.
-
-- ``REGEX_ON_HOST_URI``: Prepend the ``Host`` header to the string used
-  with ``REGEX`` and ``INVERSE_REGEX``.
-
-- ``REGEX_ON_USER_URI``: Prepend the user name (from ``USER``) and a
-  ’@’ to the string used with ``REGEX`` and ``INVERSE_REGEX``.
-
 - ``FILTER``: the next resource address (``HTTP``, ``CGI``) will denote
   an output filter, see section :ref:`filter` for details.
 
@@ -638,6 +582,70 @@ containing only the ``STATUS`` parameter with the desired HTTP status.
 
 Sending a packet twice is regarded an error. It cannot be used to
 override a previous value.
+
+.. _tcache:
+
+Caching
+-------
+
+Almost all translation responses must be cacheable.  The following
+response packets allow reusing cache items for different requests:
+
+- ``LIKE_HOST``: Repeat the translation, but with the specified
+  ``HOST`` value (which can be an artificial name, even one which is
+  not RFC-valid).  This allows sharing the translation cache between
+  different hosts.  It can be combined with ``BASE`` and ``REGEX`` to
+  share only a part of the URI location space.
+
+- ``BASE``: Defines a realm in the URI space. The payload specifies
+  the URI prefix (of the original request URI, ending with a slash)
+  which contains this realm. All resources in this realm can be
+  addressed by :program:`beng-proxy` with a trivial pattern: append
+  the relative URI (within the realm) to the resource address
+  (e.g. the ``PATH``, ``HTTP`` or ``PATH_INFO`` value).
+
+  The address in this response applies to request URI, not the base URI
+  (to allow backwards compatibility with translation clients which do not
+  support this packet).
+
+  Example: in the request, ``URI`` is ``/foo/bar/index.html``; in the
+  response, ``PATH`` is ``/var/www/foo/bar/index.html`` and ``BASE`` is
+  ``/foo/``. The :program:`beng-proxy` translation cache now knows: if a request
+  on ``/foo/test.png`` is received, it can serve
+  :file:`/var/www/foo/test.png` without querying the translation server.
+
+- ``UNSAFE_BASE``: Modifier for ``BASE``: omit the security checks.
+  This allows ``/../`` to be part of the remaining URI, possibly
+  allowing clients to break out of the given directory.
+
+- ``EASY_BASE``: Modifier ``BASE`` which aims to simplify its usage:
+  the resource address given in the response refers to the ``BASE``, not
+  to the actual request URI. It is important to include the trailing
+  slash which is part of ``BASE`` in the resource address (e.g.
+  ``BASE``\ =”/foo/”, ``PATH``\ =”/var/www/foo/”). :program:`beng-proxy` applies
+  the URI suffix before handling the HTTP request.
+
+- ``REGEX``: Reuse a cached response only if the request ``URI``
+  matches the specified regular expression (Perl compatible, anchored).
+  This works only when a BASE was specified. (Since version 1.3.2)
+
+- ``INVERSE_REGEX``: Don’t apply the cached response if the request
+  ``URI`` matches the specified regular expression (Perl compatible,
+  anchored). (Since version 1.3.2)
+
+- ``REGEX_TAIL``: Apply ``REGEX`` and ``INVERSE_REGEX`` to the URI
+  suffix following ``BASE`` instead of the whole request URI. (Since
+  version 4.0.21)
+
+- ``REGEX_UNESCAPE``: Unescape the URI for ``REGEX``.
+
+- ``INVERSE_REGEX_UNESCAPE``: Unescape the URI for ``INVERSE_REGEX``.
+
+- ``REGEX_ON_HOST_URI``: Prepend the ``Host`` header to the string used
+  with ``REGEX`` and ``INVERSE_REGEX``.
+
+- ``REGEX_ON_USER_URI``: Prepend the user name (from ``USER``) and a
+  ’@’ to the string used with ``REGEX`` and ``INVERSE_REGEX``.
 
 .. _tstatic:
 
