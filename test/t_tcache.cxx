@@ -50,11 +50,10 @@
 #include "pool/pool.hxx"
 #include "PInstance.hxx"
 #include "util/Cancellable.hxx"
+#include "util/StringAPI.hxx"
 #include "stopwatch.hxx"
 
 #include <gtest/gtest.h>
-
-#include <string.h>
 
 class MyTranslationService final : public TranslationService {
 public:
@@ -90,21 +89,23 @@ MyTranslationService::SendRequest(struct pool &pool,
 		handler.OnTranslateError(std::make_exception_ptr(std::runtime_error("Error")));
 }
 
+[[gnu::pure]]
 static bool
-string_equals(const char *a, const char *b)
+StringEquals(const char *a, const char *b) noexcept
 {
 	if (a == nullptr || b == nullptr)
 		return a == nullptr && b == nullptr;
 
-	return strcmp(a, b) == 0;
+	return StringIsEqual(a, b);
 }
 
 template<typename T>
+[[gnu::pure]]
 static bool
-buffer_equals(ConstBuffer<T> a, ConstBuffer<T> b)
+RawEquals(ConstBuffer<T> a, ConstBuffer<T> b) noexcept
 {
-	if (a.IsNull() || b.IsNull())
-		return a.IsNull() == b.IsNull();
+	if (a == nullptr || b == nullptr)
+		return (a == nullptr) == (b == nullptr);
 
 	return a.size == b.size && memcmp(a.data, b.data, a.ToVoid().size) == 0;
 }
@@ -112,20 +113,21 @@ buffer_equals(ConstBuffer<T> a, ConstBuffer<T> b)
 static bool
 operator==(const Mount &a, const Mount &b) noexcept
 {
-	return strcmp(a.source, b.source) == 0 &&
-		strcmp(a.target, b.target) == 0 &&
+	return StringIsEqual(a.source, b.source) &&
+		StringIsEqual(a.target, b.target) &&
 		a.expand_source == b.expand_source;
 }
 
-template <typename T>
-gcc_pure
+template<typename T>
 static bool
-Equals(const IntrusiveForwardList<T> &a,
-       const IntrusiveForwardList<T> &b) noexcept
+AllEquals(const T &a, const T &b) noexcept
 {
-	auto i = a.begin();
+	using std::begin;
+	using std::end;
+
+	auto i = begin(a);
 	for (const auto &j : b) {
-		if (i == a.end())
+		if (i == end(a))
 			return false;
 
 		if (!(*i == j))
@@ -134,14 +136,14 @@ Equals(const IntrusiveForwardList<T> &a,
 		++i;
 	}
 
-	return i == a.end();
+	return i == end(a);
 }
 
 static bool
 operator==(const MountNamespaceOptions &a,
 	   const MountNamespaceOptions &b) noexcept
 {
-	return Equals(a.mounts, b.mounts);
+	return AllEquals(a.mounts, b.mounts);
 }
 
 static bool
@@ -159,15 +161,15 @@ operator==(const ChildOptions &a, const ChildOptions &b) noexcept
 static bool
 operator==(const DelegateAddress &a, const DelegateAddress &b) noexcept
 {
-	return string_equals(a.delegate, b.delegate) &&
+	return StringEquals(a.delegate, b.delegate) &&
 		a.child_options == b.child_options;
 }
 
 static bool
 operator==(const HttpAddress &a, const HttpAddress &b) noexcept
 {
-	return string_equals(a.host_and_port, b.host_and_port) &&
-		string_equals(a.path, b.path);
+	return StringEquals(a.host_and_port, b.host_and_port) &&
+		StringEquals(a.path, b.path);
 }
 
 static bool
@@ -184,12 +186,12 @@ operator==(const ResourceAddress &a, const ResourceAddress &b) noexcept
 		EXPECT_NE(a.GetFile().path, nullptr);
 		EXPECT_NE(b.GetFile().path, nullptr);
 
-		return string_equals(a.GetFile().path, b.GetFile().path) &&
-			string_equals(a.GetFile().deflated, b.GetFile().deflated) &&
-			string_equals(a.GetFile().gzipped, b.GetFile().gzipped) &&
-			string_equals(a.GetFile().base, b.GetFile().base) &&
-			string_equals(a.GetFile().content_type, b.GetFile().content_type) &&
-			string_equals(a.GetFile().document_root, b.GetFile().document_root) &&
+		return StringEquals(a.GetFile().path, b.GetFile().path) &&
+			StringEquals(a.GetFile().deflated, b.GetFile().deflated) &&
+			StringEquals(a.GetFile().gzipped, b.GetFile().gzipped) &&
+			StringEquals(a.GetFile().base, b.GetFile().base) &&
+			StringEquals(a.GetFile().content_type, b.GetFile().content_type) &&
+			StringEquals(a.GetFile().document_root, b.GetFile().document_root) &&
 			(a.GetFile().delegate == nullptr) == (b.GetFile().delegate == nullptr) &&
 			(a.GetFile().delegate == nullptr ||
 			 *a.GetFile().delegate == *b.GetFile().delegate);
@@ -199,14 +201,14 @@ operator==(const ResourceAddress &a, const ResourceAddress &b) noexcept
 		EXPECT_NE(b.GetCgi().path, nullptr);
 
 		return a.GetCgi().options == b.GetCgi().options &&
-			string_equals(a.GetCgi().path, b.GetCgi().path) &&
-			string_equals(a.GetCgi().interpreter, b.GetCgi().interpreter) &&
-			string_equals(a.GetCgi().action, b.GetCgi().action) &&
-			string_equals(a.GetCgi().uri, b.GetCgi().uri) &&
-			string_equals(a.GetCgi().script_name, b.GetCgi().script_name) &&
-			string_equals(a.GetCgi().path_info, b.GetCgi().path_info) &&
-			string_equals(a.GetCgi().query_string, b.GetCgi().query_string) &&
-			string_equals(a.GetCgi().document_root, b.GetCgi().document_root);
+			StringEquals(a.GetCgi().path, b.GetCgi().path) &&
+			StringEquals(a.GetCgi().interpreter, b.GetCgi().interpreter) &&
+			StringEquals(a.GetCgi().action, b.GetCgi().action) &&
+			StringEquals(a.GetCgi().uri, b.GetCgi().uri) &&
+			StringEquals(a.GetCgi().script_name, b.GetCgi().script_name) &&
+			StringEquals(a.GetCgi().path_info, b.GetCgi().path_info) &&
+			StringEquals(a.GetCgi().query_string, b.GetCgi().query_string) &&
+			StringEquals(a.GetCgi().document_root, b.GetCgi().document_root);
 
 	case ResourceAddress::Type::HTTP:
 		return a.GetHttp() == b.GetHttp();
@@ -238,7 +240,7 @@ operator==(const Transformation &a, const Transformation &b) noexcept
 		return a.u.filter.address == b.u.filter.address;
 
 	case Transformation::Type::SUBST:
-		return string_equals(a.u.subst.yaml_file, b.u.subst.yaml_file);
+		return StringEquals(a.u.subst.yaml_file, b.u.subst.yaml_file);
 	}
 
 	/* unreachable */
@@ -249,14 +251,15 @@ operator==(const Transformation &a, const Transformation &b) noexcept
 static bool
 operator==(const WidgetView &a, const WidgetView &b) noexcept
 {
-	return string_equals(a.name, b.name) &&
+	return StringEquals(a.name, b.name) &&
 		a.address == b.address &&
 		a.filter_4xx == b.filter_4xx &&
-		Equals(a.transformations, b.transformations);
+		AllEquals(a.transformations, b.transformations);
 }
 
+[[gnu::pure]]
 static bool
-view_chain_equals(const WidgetView *a, const WidgetView *b)
+AllEquals(WidgetView *a, WidgetView *b) noexcept
 {
 	while (a != nullptr && b != nullptr) {
 		if (!(*a == *b))
@@ -272,19 +275,19 @@ view_chain_equals(const WidgetView *a, const WidgetView *b)
 static bool
 operator==(const TranslateResponse &a, const TranslateResponse &b) noexcept
 {
-	return string_equals(a.base, b.base) &&
+	return StringEquals(a.base, b.base) &&
 		a.regex_tail == b.regex_tail &&
-		string_equals(a.regex, b.regex) &&
-		string_equals(a.inverse_regex, b.inverse_regex) &&
+		StringEquals(a.regex, b.regex) &&
+		StringEquals(a.inverse_regex, b.inverse_regex) &&
 		a.easy_base == b.easy_base &&
 		a.unsafe_base == b.unsafe_base &&
-		string_equals(a.uri, b.uri) &&
-		string_equals(a.redirect, b.redirect) &&
-		string_equals(a.test_path, b.test_path) &&
-		buffer_equals(a.check, b.check) &&
-		buffer_equals(a.want_full_uri, b.want_full_uri) &&
+		StringEquals(a.uri, b.uri) &&
+		StringEquals(a.redirect, b.redirect) &&
+		StringEquals(a.test_path, b.test_path) &&
+		RawEquals(a.check, b.check) &&
+		RawEquals(a.want_full_uri, b.want_full_uri) &&
 		a.address == b.address &&
-		view_chain_equals(a.views, b.views);
+		AllEquals(a.views, b.views);
 }
 
 static void
