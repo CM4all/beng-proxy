@@ -83,6 +83,22 @@ public:
 		return ConstBuffer<T>::FromVoid(Dup(src.ToVoid()));
 	}
 
+	/**
+	 * Duplicate an array, invoking a constructor accepting "const
+	 * AllocatorPtr &, const T &" for each item.
+	 */
+	template<typename T>
+	ConstBuffer<T> DupArray(ConstBuffer<T> src) const noexcept {
+		if (src == nullptr)
+			return nullptr;
+
+		auto *dest = NewArray<T>(src.size), *p = dest;
+		for (const auto &i : src)
+			*p++ = T{*this, i};
+
+		return ConstBuffer<T>{dest, src.size};
+	}
+
 	StringView Dup(StringView src) const noexcept;
 	const char *DupZ(StringView src) const noexcept;
 
