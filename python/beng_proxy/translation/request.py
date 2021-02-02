@@ -58,6 +58,7 @@ class Request:
         self.chain = None
         self.chain_header = None
         self.param = None
+        self.layout = None
         self.listener_tag = None
         self.local_address = None
         self.local_port = None
@@ -137,6 +138,8 @@ class Request:
             self.chain_header = packet.payload
         elif packet.command == TRANSLATE_PARAM:
             self.param = packet.payload.decode('ascii')
+        elif packet.command == TRANSLATE_LAYOUT:
+            self.layout = packet.payload
         elif packet.command == TRANSLATE_LISTENER_TAG:
             self.listener_tag = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_LOCAL_ADDRESS_STRING:

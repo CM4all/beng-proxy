@@ -574,6 +574,7 @@ translation2 = static_library(
   'src/translation/Multi.cxx',
   'src/translation/Cache.cxx',
   'src/translation/Stock.cxx',
+  'src/translation/Layout.cxx',
   'src/translation/Marshal.cxx',
   'src/translation/Client.cxx',
   'src/translation/Transformation.cxx',

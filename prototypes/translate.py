@@ -1005,6 +1005,25 @@ class Translation(Protocol):
             else:
                 response.packet(TRANSLATE_BASE, '/like_host/')
                 response.packet(TRANSLATE_LIKE_HOST, 'foo')
+        elif uri.startswith('/layout/'):
+            if request.layout == b'xxx':
+                if uri.startswith('/layout/foo/'):
+                    response.packet(TRANSLATE_BASE, '/layout/foo/')
+                    response.packet(TRANSLATE_EASY_BASE)
+                    response.packet(TRANSLATE_PATH, '/var/www/layout/FOO/')
+                elif uri.startswith('/layout/bar/'):
+                    response.packet(TRANSLATE_BASE, '/layout/bar/')
+                    response.packet(TRANSLATE_EASY_BASE)
+                    response.packet(TRANSLATE_PATH, '/var/www/layout/BAR/')
+                else:
+                    response.packet(TRANSLATE_BASE, '/layout/')
+                    response.packet(TRANSLATE_EASY_BASE)
+                    response.packet(TRANSLATE_PATH, '/var/www/layout/ROOT/')
+            else:
+                response.packet(TRANSLATE_BASE, '/layout/')
+                response.packet(TRANSLATE_LAYOUT, b'xxx')
+                response.packet(TRANSLATE_BASE, '/layout/foo/')
+                response.packet(TRANSLATE_BASE, '/layout/bar/')
         elif uri == '/tiny.gif':
             response.packet(TRANSLATE_TINY_IMAGE)
         else:

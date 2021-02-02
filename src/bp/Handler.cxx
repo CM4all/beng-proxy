@@ -56,6 +56,7 @@
 #include "strmap.hxx"
 #include "translation/Service.hxx"
 #include "translation/Protocol.hxx"
+#include "translation/Layout.hxx"
 #include "ua_classification.hxx"
 #include "HttpMessageResponse.hxx"
 #include "ResourceLoader.hxx"
@@ -480,10 +481,37 @@ fill_translate_request_user(Request &request,
 	}
 }
 
+gcc_pure
+static const TranslationLayoutItem *
+FindLayoutItem(ConstBuffer<TranslationLayoutItem> items,
+	       const char *uri) noexcept
+{
+	for (const auto &i : items)
+		if (i.Match(uri))
+			return &i;
+
+	return nullptr;
+}
+
 inline void
 Request::RepeatTranslation(const TranslateResponse &response) noexcept
 {
 	const AllocatorPtr alloc(pool);
+
+	if (response.layout != nullptr) {
+		/* repeat request with LAYOUT mirrored */
+
+		if (++translate.n_layout > 4) {
+			LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+					 "Too many consecutive LAYOUT packets",
+					 1);
+			return;
+		}
+
+		translate.request.layout = response.layout;
+		translate.request.layout_item = FindLayoutItem(response.layout_items,
+							       translate.request.uri);
+	}
 
 	if (!response.check.IsNull()) {
 		/* repeat request with CHECK set */
@@ -729,6 +757,7 @@ void
 Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 {
 	if (!response.check.IsNull() ||
+	    response.layout != nullptr ||
 	    !response.internal_redirect.IsNull() ||
 	    response.like_host != nullptr ||
 	    !response.want.empty() ||

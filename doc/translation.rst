@@ -647,6 +647,45 @@ response packets allow reusing cache items for different requests:
 - ``REGEX_ON_USER_URI``: Prepend the user name (from ``USER``) and a
   ’@’ to the string used with ``REGEX`` and ``INVERSE_REGEX``.
 
+- ``LAYOUT``: The translation server gives an overview of the URI
+  layout.  Its payload is a non-empty opaque value which is mirrored
+  in the next request.
+
+  This pakcet is followed by one or more ``BASE`` packets specifying
+  URI bases which shall not share cache items.  The first matching
+  base specfies where translation cache items will be stored; all URIs
+  without a match have their own cache.
+
+  This way, cacheable URI bases can be constructed easily without
+  excessively complex ``INVERSE_REGEX`` packets.
+
+  Example for a response after a request to ``/.cm4all/foo``:
+
+  - ``BASE=/``
+  - ``LAYOUT=[opaque]``
+  - ``BASE=/.cm4all/private/``
+  - ``BASE=/.cm4all/``
+  - ``BASE=/.well-known/``
+
+  Here, the whole host is separated into three bases (the three which
+  are specified, and everything else).  Responses don't need
+  ``INVERSE_REGEX`` to exclude the specified bases.
+
+  The following request will mirror the ``LAYOUT`` packet:
+
+  - ``URI=/.cm4all/foo``
+  - ``LAYOUT=[opaque]``
+
+  The server recognizes that this is a follow-up request, and
+  responds:
+
+  - ``BASE=/.cm4all/``
+  - ``EASY_BASE``
+  - ``PATH=/var/www/cm4all/``
+
+  This response can be cached and reused for everything below
+  ``/.cm4all/``, except for URIs below ``/.cm4all/private/``.
+
 .. _tstatic:
 
 Static files

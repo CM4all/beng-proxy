@@ -275,9 +275,17 @@ AllEquals(WidgetView *a, WidgetView *b) noexcept
 }
 
 static bool
+operator==(const TranslationLayoutItem &a, const TranslationLayoutItem &b) noexcept
+{
+	return StringIsEqual(a.base, b.base);
+}
+
+static bool
 operator==(const TranslateResponse &a, const TranslateResponse &b) noexcept
 {
 	return StringEquals(a.base, b.base) &&
+		RawEquals(a.layout, b.layout) &&
+		AllEquals(a.layout_items, b.layout_items) &&
 		a.regex_tail == b.regex_tail &&
 		StringEquals(a.regex, b.regex) &&
 		StringEquals(a.inverse_regex, b.inverse_regex) &&
@@ -1087,6 +1095,49 @@ TEST(TranslationCache, ExpandUnsafeBase)
 	       MakeResponse(pool).UnsafeBase("/expand_unsafe_base2/")
 	       .Regex("^/expand_unsafe_base2/(.*)$")
 	       .File(MakeFileAddress("/var/www/../x.html")));
+}
+
+TEST(TranslationCache, Layout)
+{
+	Instance instance;
+	struct pool &pool = instance.root_pool;
+	auto &cache = instance.cache;
+
+	Feed(pool, cache, MakeRequest("/foo/a/b"),
+	     MakeResponse(pool).Base("/")
+	     .Layout("_foo", {"/foo/", "/bar/"}));
+
+	Cached(pool, cache, MakeRequest("/bar/"),
+	       MakeResponse(pool).Base("/")
+	       .Layout("_foo", {"/foo/", "/bar/"}));
+
+	Cached(pool, cache, MakeRequest("/"),
+	       MakeResponse(pool).Base("/")
+	       .Layout("_foo", {"/foo/", "/bar/"}));
+
+	CachedError(pool, cache, MakeRequest("/").Layout("_foo", nullptr));
+
+	Feed(pool, cache, MakeRequest("/index").Layout("_foo", nullptr),
+	     MakeResponse(pool).EasyBase("/").File(".", "/mnt/root/"),
+	     MakeResponse(pool).EasyBase("/").File("index", "/mnt/root/"));
+	Feed(pool, cache, MakeRequest("/bar/c/d").Layout("_foo", "/bar/"),
+	     MakeResponse(pool).EasyBase("/bar/c/").File(".", "/mnt/bar/C/"),
+	     MakeResponse(pool).EasyBase("/bar/c/").File("d", "/mnt/bar/C/"));
+	Feed(pool, cache, MakeRequest("/bar/e/f").Layout("_foo", "/bar/"),
+	     MakeResponse(pool).EasyBase("/bar/e/").File(".", "/mnt/bar/E/"),
+	     MakeResponse(pool).EasyBase("/bar/e/").File("f", "/mnt/bar/E/"));
+	Feed(pool, cache, MakeRequest("/foo/a/b").Layout("_foo", "/foo/"),
+	     MakeResponse(pool).EasyBase("/foo/").File(".", "/mnt/foo/"),
+	     MakeResponse(pool).EasyBase("/foo/").File("a/b", "/mnt/foo/"));
+
+	Cached(pool, cache, MakeRequest("/x/y/z").Layout("_foo", nullptr),
+	       MakeResponse(pool).EasyBase("/").File("x/y/z", "/mnt/root/"));
+	Cached(pool, cache, MakeRequest("/bar/c/blubb").Layout("_foo", "/bar/"),
+	       MakeResponse(pool).EasyBase("/bar/c/").File("blubb", "/mnt/bar/C/"));
+	Cached(pool, cache, MakeRequest("/bar/e/blubb").Layout("_foo", "/bar/"),
+	       MakeResponse(pool).EasyBase("/bar/e/").File("blubb", "/mnt/bar/E/"));
+	Cached(pool, cache, MakeRequest("/foo/blubb").Layout("_foo", "/foo/"),
+	       MakeResponse(pool).EasyBase("/foo/").File("blubb", "/mnt/foo/"));
 }
 
 TEST(TranslationCache, ExpandBindMount)

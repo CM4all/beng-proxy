@@ -117,6 +117,7 @@ MarshalTranslateRequest(uint8_t PROTOCOL_VERSION,
 	m.WriteOptional(TranslationCommand::QUERY_STRING, request.query_string);
 	m.WriteOptional(TranslationCommand::WIDGET_TYPE, request.widget_type);
 	m.WriteOptional(TranslationCommand::SESSION, request.session);
+	m.WriteOptional(TranslationCommand::LAYOUT, request.layout);
 	m.WriteOptional(TranslationCommand::INTERNAL_REDIRECT,
 			request.internal_redirect);
 	m.WriteOptional(TranslationCommand::CHECK, request.check);

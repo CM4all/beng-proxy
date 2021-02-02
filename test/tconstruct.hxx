@@ -33,6 +33,7 @@
 #include "translation/Request.hxx"
 #include "translation/Transformation.hxx"
 #include "translation/Response.hxx"
+#include "translation/Layout.hxx"
 #include "widget/View.hxx"
 #include "http/Address.hxx"
 #include "file_address.hxx"
@@ -44,8 +45,21 @@
 #include <string.h>
 
 struct MakeRequest : TranslateRequest {
+	TranslationLayoutItem my_layout_item;
+
 	explicit MakeRequest(const char *_uri) {
 		uri = _uri;
+	}
+
+	auto &&Layout(StringView value, const char *item) && noexcept {
+		layout = value.ToVoid();
+
+		if (item != nullptr) {
+			my_layout_item = TranslationLayoutItem{item};
+			layout_item = &my_layout_item;
+		}
+
+		return std::move(*this);
 	}
 
 	MakeRequest &&QueryString(const char *value) {
@@ -104,6 +118,13 @@ struct MakeResponse : TranslateResponse {
 		max_age = src.max_age;
 		address.CopyFrom(alloc, src.address);
 		user = src.user;
+		return std::move(*this);
+	}
+
+	MakeResponse &&Layout(StringView value,
+			      std::initializer_list<const char *> items) && noexcept {
+		layout = value.ToVoid();
+		layout_items = alloc.ConstructArray<TranslationLayoutItem>(items);
 		return std::move(*this);
 	}
 

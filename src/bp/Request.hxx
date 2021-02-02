@@ -205,6 +205,12 @@ private:
 		uint_least8_t n_chain = 0;
 
 		/**
+		 * Number of #TranslationCommand::LAYOUT packets
+		 * followed so far.  Used for loop detection.
+		 */
+		uint_least8_t n_layout = 0;
+
+		/**
 		 * Did we see #TRANSLATE_WANT with #TRANSLATE_USER?  If so,
 		 * and the user gets modified (see #user_modified), then we
 		 * need to repeat the initial translation with the new user

@@ -31,6 +31,7 @@
  */
 
 #include "Cache.hxx"
+#include "Layout.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
@@ -62,6 +63,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+static constexpr std::size_t MAX_CACHE_LAYOUT = 256;
 #define MAX_CACHE_CHECK 256
 #define MAX_CACHE_WFU 256
 static constexpr size_t MAX_CONTENT_TYPE_LOOKUP = 256;
@@ -532,6 +534,8 @@ TranslateCachePerSite::Erase(TranslateCacheItem &item)
 static const char *
 tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	       http_status_t status,
+	       ConstBuffer<void> layout,
+	       const TranslationLayoutItem *layout_item,
 	       ConstBuffer<void> check,
 	       ConstBuffer<void> want_full_uri,
 	       ConstBuffer<void> probe_path_suffixes,
@@ -583,6 +587,21 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	if (!want_full_uri.IsNull()) {
 		b.push_back("|WFU=");
 		b.emplace_back(wfu_buffer, UriEscape(wfu_buffer, want_full_uri));
+	}
+
+	char layout_buffer[MAX_CACHE_LAYOUT * 3];
+	if (layout != nullptr) {
+		b.emplace_back(layout_buffer, UriEscape(layout_buffer, layout));
+
+		if (layout_item != nullptr) {
+			b.push_back("--");
+			assert(layout_item->base != nullptr);
+			b.emplace_back(layout_item->base);
+		}
+
+		b.push_back("=L|");
+	} else {
+		assert(layout_item == nullptr);
 	}
 
 	char check_buffer[MAX_CACHE_CHECK * 3];
@@ -661,6 +680,7 @@ tcache_request_key(AllocatorPtr alloc, const TranslateRequest &request)
 	return request.uri != nullptr
 		? tcache_uri_key(alloc, request.uri, request.host,
 				 request.status,
+				 request.layout, request.layout_item,
 				 request.check, request.want_full_uri,
 				 request.probe_path_suffixes, request.probe_suffix,
 				 request.directory_index,
@@ -788,6 +808,7 @@ tcache_store_response(AllocatorPtr alloc, TranslateResponse &dest,
 		/* generate a new cache key for the BASE */
 		? tcache_uri_key(alloc, dest.base, request.host,
 				 request.status,
+				 request.layout, request.layout_item,
 				 request.check, request.want_full_uri,
 				 request.probe_path_suffixes, request.probe_suffix,
 				 request.directory_index,

@@ -46,6 +46,7 @@
 #include <stdint.h>
 
 enum class TranslationCommand : uint16_t;
+struct TranslationLayoutItem;
 
 struct TranslateRequest {
 	const char *listener_tag = nullptr;
@@ -76,6 +77,20 @@ struct TranslateRequest {
 #endif
 
 	const char *param = nullptr;
+
+	/**
+	 * Mirror of the #TranslationCommand::LAYOUT packet.
+	 */
+	ConstBuffer<void> layout = nullptr;
+
+	/**
+	 * If #layout is set, then this is the #TranslationLayoutItem
+	 * which matches the request.  This is not transmitted to the
+	 * translation server, it is only evaluated by the
+	 * #TranslationCache to look up cache items.  If this is
+	 * nullptr, then there was no matching #TranslationLayoutItem.
+	 */
+	const TranslationLayoutItem *layout_item = nullptr;
 
 	/**
 	 * The payload of the #TRANSLATE_INTERNAL_REDIRECT packet.  If
