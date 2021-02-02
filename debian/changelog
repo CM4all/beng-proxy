@@ -4,7 +4,7 @@ cm4all-beng-proxy (17.0.45) unstable; urgency=low
   * translation: add packet LIKE_HOST
   * translation: add packet LAYOUT
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 02 Feb 2021 23:23:45 +0100
 
 cm4all-beng-proxy (17.0.44) unstable; urgency=low
 
