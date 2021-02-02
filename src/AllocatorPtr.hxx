@@ -84,11 +84,11 @@ public:
 	}
 
 	/**
-	 * Duplicate an array, invoking a constructor accepting "const
+	 * Clone an array, invoking a constructor accepting "const
 	 * AllocatorPtr &, const T &" for each item.
 	 */
 	template<typename T>
-	ConstBuffer<T> DupArray(ConstBuffer<T> src) const noexcept {
+	ConstBuffer<T> CloneArray(ConstBuffer<T> src) const noexcept {
 		if (src == nullptr)
 			return nullptr;
 
