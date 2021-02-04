@@ -33,7 +33,7 @@
 #include "Output.hxx"
 #include "Error.hxx"
 #include "event/SocketEvent.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "io/Splice.hxx"
 #include "io/SpliceSupport.hxx"
 #include "io/FileDescriptor.hxx"
@@ -56,7 +56,7 @@ static constexpr Event::Duration was_output_timeout = std::chrono::minutes(2);
 
 class WasOutput final : PoolLeakDetector, IstreamSink {
 	SocketEvent event;
-	TimerEvent timeout_event;
+	CoarseTimerEvent timeout_event;
 
 	WasOutputHandler &handler;
 

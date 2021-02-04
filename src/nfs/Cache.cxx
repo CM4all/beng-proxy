@@ -47,7 +47,8 @@
 #include "istream/TeeIstream.hxx"
 #include "AllocatorStats.hxx"
 #include "cache.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/CoarseTimerEvent.hxx"
+#include "event/FarTimerEvent.hxx"
 #include "event/Loop.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
@@ -73,7 +74,7 @@ struct NfsCacheStore final
 
 	struct statx stat;
 
-	TimerEvent timeout_event;
+	CoarseTimerEvent timeout_event;
 	CancellablePointer cancel_ptr;
 
 	NfsCacheStore(PoolPtr &&_pool, NfsCache &_cache,
@@ -121,7 +122,7 @@ class NfsCache {
 
 	Cache cache;
 
-	TimerEvent compress_timer;
+	FarTimerEvent compress_timer;
 
 	/**
 	 * A list of requests that are currently saving their contents to

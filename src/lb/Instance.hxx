@@ -35,7 +35,7 @@
 #include "PInstance.hxx"
 #include "GotoMap.hxx"
 #include "MonitorManager.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/FarTimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "net/FailureManager.hxx"
@@ -75,7 +75,7 @@ struct LbInstance final : PInstance {
 	ShutdownListener shutdown_listener;
 	SignalEvent sighup_event;
 
-	TimerEvent compress_event;
+	FarTimerEvent compress_event;
 
 	uint64_t http_request_counter = 0;
 	uint64_t http_traffic_received_counter = 0;

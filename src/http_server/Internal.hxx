@@ -38,7 +38,7 @@
 #include "fs/FilteredSocket.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/SocketAddress.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "istream/Sink.hxx"
 #include "pool/UniquePtr.hxx"
@@ -107,7 +107,7 @@ struct HttpServerConnection final
 	 * headers from the client.  Unlike the #filtered_socket read
 	 * timeout, it is not refreshed after receiving some header data.
 	 */
-	TimerEvent idle_timeout;
+	CoarseTimerEvent idle_timeout;
 
 	DeferEvent defer_read;
 

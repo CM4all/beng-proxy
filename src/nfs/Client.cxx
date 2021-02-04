@@ -37,7 +37,7 @@
 #include "system/Stat.hxx"
 #include "io/FileDescriptor.hxx"
 #include "event/SocketEvent.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "util/Cancellable.hxx"
 #include "util/LeakDetector.hxx"
 
@@ -222,7 +222,7 @@ class NfsFile final
 	 * Expire this object after #nfs_file_expiry.  This is only used
 	 * in state #IDLE.
 	 */
-	TimerEvent expire_event;
+	CoarseTimerEvent expire_event;
 
 public:
 	NfsFile(EventLoop &event_loop,
@@ -353,7 +353,7 @@ class NfsClient final : Cancellable, LeakDetector {
 	 * Track mount timeout (#nfs_client_mount_timeout) and idle
 	 * timeout (#nfs_client_idle_timeout).
 	 */
-	TimerEvent timeout_event;
+	CoarseTimerEvent timeout_event;
 
 	/**
 	 * An unordered list of all #NfsFile objects.  This includes all

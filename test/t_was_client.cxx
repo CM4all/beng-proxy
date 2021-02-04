@@ -52,6 +52,7 @@
 #include "istream/SuspendIstream.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
+#include "event/FineTimerEvent.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
 
@@ -188,7 +189,7 @@ class MalformedPrematureWasServer final : WasControlHandler {
 
 	WasControl control;
 
-	TimerEvent defer_premature;
+	FineTimerEvent defer_premature;
 
 	WasServerHandler &handler;
 
@@ -303,7 +304,7 @@ MalformedPrematureWasServer::OnWasControlPacket(enum was_command cmd,
 }
 
 class WasConnection final : WasServerHandler, WasLease {
-	TimerEvent close_timer;
+	FineTimerEvent close_timer;
 
 	WasSocket socket;
 

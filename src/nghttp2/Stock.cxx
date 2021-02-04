@@ -36,7 +36,7 @@
 #include "fs/Connect.hxx"
 #include "fs/Key.hxx"
 #include "ssl/Filter.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
 #include "util/Cancellable.hxx"
@@ -96,7 +96,7 @@ class Stock::Item final
 
 	CancellablePointer connect_cancel;
 
-	TimerEvent idle_timer;
+	CoarseTimerEvent idle_timer;
 
 	bool go_away = false;
 

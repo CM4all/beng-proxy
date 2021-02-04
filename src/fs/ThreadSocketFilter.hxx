@@ -35,7 +35,7 @@
 #include "SocketFilter.hxx"
 #include "thread/Job.hxx"
 #include "event/DeferEvent.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "SliceFifoBuffer.hxx"
 
 #include <mutex>
@@ -167,7 +167,7 @@ class ThreadSocketFilter final : public SocketFilter, ThreadSocketFilterInternal
 	/**
 	 *
 	 */
-	TimerEvent handshake_timeout_event;
+	CoarseTimerEvent handshake_timeout_event;
 
 	bool busy = false, done_pending = false;
 

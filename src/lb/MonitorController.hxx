@@ -34,7 +34,7 @@
 
 #include "MonitorHandler.hxx"
 #include "io/Logger.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/FailureRef.hxx"
 #include "util/Cancellable.hxx"
@@ -55,8 +55,8 @@ class LbMonitorController final : public LbMonitorHandler {
 
 	const Logger logger;
 
-	TimerEvent interval_event;
-	TimerEvent timeout_event;
+	CoarseTimerEvent interval_event;
+	CoarseTimerEvent timeout_event;
 
 	CancellablePointer cancel_ptr;
 

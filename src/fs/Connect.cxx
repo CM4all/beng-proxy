@@ -34,7 +34,7 @@
 #include "FilteredSocket.hxx"
 #include "Factory.hxx"
 #include "event/net/ConnectSocket.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -54,7 +54,7 @@ class ConnectFilteredSocketOperation final
 
 	const StopwatchPtr stopwatch;
 
-	TimerEvent timeout_event;
+	CoarseTimerEvent timeout_event;
 
 	DeferEvent defer_handshake_callback;
 

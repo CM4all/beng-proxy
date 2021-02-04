@@ -37,7 +37,7 @@
 #include "Config.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/FarTimerEvent.hxx"
 #include "spawn/Registry.hxx"
 #include "spawn/Handler.hxx"
 #include "control/Handler.hxx"
@@ -112,7 +112,7 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	ShutdownListener shutdown_listener;
 	SignalEvent sighup_event;
 
-	TimerEvent compress_timer;
+	FarTimerEvent compress_timer;
 
 	/**
 	 * Registry for jobs running in background, created by the request
@@ -197,7 +197,7 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	ResourceLoader *buffered_filter_resource_loader = nullptr;
 
 	/* session */
-	TimerEvent session_save_timer;
+	FarTimerEvent session_save_timer;
 
 	explicit BpInstance(BpConfig &&_config) noexcept;
 	~BpInstance() noexcept;

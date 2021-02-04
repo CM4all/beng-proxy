@@ -48,7 +48,7 @@
 #include "avahi/Explorer.hxx"
 #include "avahi/ExplorerListener.hxx"
 #include "event/ShutdownListener.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "system/Error.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/ToString.hxx"
@@ -75,7 +75,7 @@ struct Context final : PInstance, AvahiServiceExplorerListener {
 	using MemberMap = std::map<std::string, AllocatedSocketAddress>;
 	MemberMap members;
 
-	TimerEvent dump_event;
+	CoarseTimerEvent dump_event;
 
 	Context(AvahiIfIndex zeroconf_interface, const char *zeroconf_service)
 		:shutdown_listener(event_loop, BIND_THIS_METHOD(OnShutdown)),

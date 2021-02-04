@@ -37,7 +37,7 @@
 #include "stock/Item.hxx"
 #include "stock/LoggerDomain.hxx"
 #include "event/SocketEvent.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "net/PConnectSocket.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/SocketAddress.hxx"
@@ -89,7 +89,7 @@ struct TcpStockConnection final
 	const AllocatedSocketAddress address;
 
 	SocketEvent event;
-	TimerEvent idle_timeout_event;
+	CoarseTimerEvent idle_timeout_event;
 
 	TcpStockConnection(CreateStockItem c, SocketAddress _address,
 			   CancellablePointer &_cancel_ptr) noexcept

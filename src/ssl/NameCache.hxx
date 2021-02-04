@@ -33,7 +33,7 @@
 #pragma once
 
 #include "pg/AsyncConnection.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/FineTimerEvent.hxx"
 #include "io/Logger.hxx"
 
 #include <unordered_set>
@@ -65,7 +65,7 @@ class CertNameCache final : Pg::AsyncConnectionHandler, Pg::AsyncResultHandler {
 
 	Pg::AsyncConnection conn;
 
-	TimerEvent update_timer;
+	FineTimerEvent update_timer;
 
 	mutable std::mutex mutex;
 

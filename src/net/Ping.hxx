@@ -33,7 +33,7 @@
 #pragma once
 
 #include "event/SocketEvent.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/Compiler.h"
 
@@ -56,7 +56,7 @@ class PingClient final {
 	uint16_t ident;
 
 	SocketEvent event;
-	TimerEvent timeout_event;
+	CoarseTimerEvent timeout_event;
 
 	PingClientHandler &handler;
 

@@ -39,7 +39,8 @@
 #include "net/SocketAddress.hxx"
 #include "event/net/ConnectSocket.hxx"
 #include "event/SocketEvent.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/CoarseTimerEvent.hxx"
+#include "event/FineTimerEvent.hxx"
 #include "util/Cancellable.hxx"
 
 #include <unistd.h>
@@ -53,13 +54,13 @@ class ExpectMonitor final : ConnectSocketHandler, Cancellable {
 	SocketDescriptor fd = SocketDescriptor::Undefined();
 
 	SocketEvent event;
-	TimerEvent timeout_event;
+	CoarseTimerEvent timeout_event;
 
 	/**
 	 * A timer which is used to delay the recv() call, just in case
 	 * the server sends the response in more than one packet.
 	 */
-	TimerEvent delay_event;
+	FineTimerEvent delay_event;
 
 	LbMonitorHandler &handler;
 

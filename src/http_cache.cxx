@@ -48,7 +48,7 @@
 #include "istream/RefIstream.hxx"
 #include "pool/Holder.hxx"
 #include "AllocatorPtr.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/FarTimerEvent.hxx"
 #include "event/Loop.hxx"
 #include "io/Logger.hxx"
 #include "util/Background.hxx"
@@ -183,7 +183,7 @@ class HttpCache {
 
 	EventLoop &event_loop;
 
-	TimerEvent compress_timer;
+	FarTimerEvent compress_timer;
 
 	HttpCacheHeap heap;
 

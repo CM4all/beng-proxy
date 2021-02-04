@@ -34,10 +34,10 @@
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "New.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/FineTimerEvent.hxx"
 
 class SuspendIstream final : public ForwardIstream {
-	TimerEvent timer;
+	FineTimerEvent timer;
 
 	const Event::Duration delay;
 

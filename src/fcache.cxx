@@ -50,7 +50,8 @@
 #include "pool/pool.hxx"
 #include "pool/Ptr.hxx"
 #include "pool/Holder.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/CoarseTimerEvent.hxx"
+#include "event/FarTimerEvent.hxx"
 #include "event/Loop.hxx"
 #include "io/Logger.hxx"
 #include "http/List.hxx"
@@ -177,7 +178,7 @@ private:
 	 * This event is initialized by the response callback, and limits
 	 * the duration for receiving the response body.
 	 */
-	TimerEvent timeout_event;
+	CoarseTimerEvent timeout_event;
 
 	CancellablePointer cancel_ptr;
 
@@ -252,7 +253,7 @@ class FilterCache final : LeakDetector {
 	 */
 	std::unordered_map<std::string, PerTagList> per_tag;
 
-	TimerEvent compress_timer;
+	FarTimerEvent compress_timer;
 
 	ResourceLoader &resource_loader;
 

@@ -44,7 +44,7 @@
 #include "pool/LeakDetector.hxx"
 #include "stopwatch.hxx"
 #include "io/FileDescriptor.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/FineTimerEvent.hxx"
 #include "http/HeaderName.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
@@ -82,7 +82,7 @@ class WasClient final
 	 * forwarding this response without HTTP/1.1 chunking), and if
 	 * not, we're going to continue without a length.
 	 */
-	TimerEvent submit_response_timer;
+	FineTimerEvent submit_response_timer;
 
 	struct Request {
 		WasOutput *body;

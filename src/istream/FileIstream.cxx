@@ -40,7 +40,7 @@
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "system/Error.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/FineTimerEvent.hxx"
 #include "util/RuntimeError.hxx"
 
 #include <assert.h>
@@ -64,7 +64,7 @@ class FileIstream final : public Istream {
 	/**
 	 * A timer to retry reading after EAGAIN.
 	 */
-	TimerEvent retry_event;
+	FineTimerEvent retry_event;
 
 	off_t offset;
 

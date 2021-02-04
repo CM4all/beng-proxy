@@ -39,7 +39,7 @@
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "system/Error.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/FineTimerEvent.hxx"
 
 #include <assert.h>
 #include <sys/types.h>
@@ -64,7 +64,7 @@ class FdIstream final : public Istream {
 	/**
 	 * A timer to retry reading after EAGAIN.
 	 */
-	TimerEvent retry_event;
+	FineTimerEvent retry_event;
 
 	SliceFifoBuffer buffer;
 	const char *path;

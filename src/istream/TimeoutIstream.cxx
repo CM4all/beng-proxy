@@ -35,12 +35,12 @@
 #include "UnusedPtr.hxx"
 #include "Bucket.hxx"
 #include "New.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/CoarseTimerEvent.hxx"
 
 #include <stdexcept>
 
 class TimeoutIstream final : public ForwardIstream {
-	TimerEvent timeout_event;
+	CoarseTimerEvent timeout_event;
 
 	Event::Duration timeout;
 

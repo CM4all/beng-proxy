@@ -46,7 +46,7 @@
 #include "istream/istream_string.hxx"
 #include "istream/ZeroIstream.hxx"
 #include "pool/pool.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/FineTimerEvent.hxx"
 #include "PInstance.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
@@ -138,7 +138,7 @@ struct Context final
 	off_t available_after_bucket, available_after_bucket_partial;
 #endif
 
-	TimerEvent defer_event;
+	FineTimerEvent defer_event;
 	bool deferred = false;
 
 	Context()

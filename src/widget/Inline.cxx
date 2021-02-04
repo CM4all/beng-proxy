@@ -50,7 +50,7 @@
 #include "bp/session/Lease.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "util/Cancellable.hxx"
 #include "util/LimitedConcurrencyQueue.hxx"
 #include "util/StringCompare.hxx"
@@ -79,7 +79,7 @@ class InlineWidget final : PoolLeakDetector, HttpResponseHandler, Cancellable {
 
 	LimitedConcurrencyJob throttle_job;
 
-	TimerEvent header_timeout_event;
+	CoarseTimerEvent header_timeout_event;
 
 	DelayedIstreamControl &delayed;
 

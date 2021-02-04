@@ -50,6 +50,7 @@
 #include "istream/Sink.hxx"
 #include "fb_pool.hxx"
 #include "fs/FilteredSocket.hxx"
+#include "event/FineTimerEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
 #include "io/SpliceSupport.hxx"
@@ -347,7 +348,7 @@ static void
 TestDiscardedHugeRequestBody(Server &server)
 {
 	class RespondLater {
-		TimerEvent timer;
+		FineTimerEvent timer;
 
 		IncomingHttpRequest *request;
 

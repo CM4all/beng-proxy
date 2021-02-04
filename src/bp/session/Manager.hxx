@@ -33,7 +33,7 @@
 #pragma once
 
 #include "Session.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/FarTimerEvent.hxx"
 #include "util/Compiler.h"
 
 #include <boost/intrusive/unordered_set.hpp>
@@ -127,7 +127,7 @@ class SessionManager {
 
 	ByAttach sessions_by_attach;
 
-	TimerEvent cleanup_timer;
+	FarTimerEvent cleanup_timer;
 
 public:
 	SessionManager(EventLoop &event_loop, std::chrono::seconds idle_timeout,
