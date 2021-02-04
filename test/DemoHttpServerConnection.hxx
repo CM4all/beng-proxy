@@ -34,7 +34,7 @@
 
 #include "http_server/Handler.hxx"
 #include "istream/UnusedHoldPtr.hxx"
-#include "event/TimerEvent.hxx"
+#include "event/DeferEvent.hxx"
 #include "io/FdType.hxx"
 #include "util/Cancellable.hxx"
 
@@ -75,7 +75,7 @@ private:
 
 	UnusedHoldIstreamPtr request_body;
 
-	TimerEvent timer;
+	DeferEvent defer_event;
 
 	const Mode mode;
 
@@ -90,16 +90,16 @@ public:
 	~DemoHttpServerConnection() noexcept;
 
 	auto &GetEventLoop() const noexcept {
-		return timer.GetEventLoop();
+		return defer_event.GetEventLoop();
 	}
 
 private:
-	void OnTimer() noexcept;
+	void OnDeferred() noexcept;
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept final {
 		request_body.Clear();
-		timer.Cancel();
+		defer_event.Cancel();
 	}
 
 protected:

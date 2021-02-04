@@ -59,7 +59,7 @@ DemoHttpServerConnection::DemoHttpServerConnection(struct pool &pool,
 					       address,
 					       true,
 					       *this)),
-	 timer(event_loop, BIND_THIS_METHOD(OnTimer)),
+	 defer_event(event_loop, BIND_THIS_METHOD(OnDeferred)),
 	 mode(_mode) {}
 
 DemoHttpServerConnection::~DemoHttpServerConnection() noexcept
@@ -69,7 +69,7 @@ DemoHttpServerConnection::~DemoHttpServerConnection() noexcept
 }
 
 void
-DemoHttpServerConnection::OnTimer() noexcept
+DemoHttpServerConnection::OnDeferred() noexcept
 {
 	if (connection != nullptr)
 		http_server_connection_close(connection);
@@ -153,7 +153,7 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 					     std::move(delayed.first));
 		}
 
-		timer.Schedule(std::chrono::seconds(0));
+		defer_event.ScheduleIdle();
 		break;
 
 	case Mode::BLOCK:
