@@ -185,7 +185,7 @@ Known attributes:
   than one, the server will choose one according to the SNI parameter
   received from the client.
 
-- ``ssl_veriy`` and ``ssl_ca_cert`` can be used to enable client
+- ``ssl_verify`` and ``ssl_ca_cert`` can be used to enable client
   certificate verification (see :ref:`ssl_verify` for details).  To
   generate the request headers ``X-CM4all-BENG-Peer-Subject`` and
   ``X-CM4all-BENG-Peer-Issuer-Subject``, the ``SSL`` request header
