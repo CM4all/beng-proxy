@@ -43,6 +43,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <sys/sysinfo.h>
 
 static ThreadQueue *global_thread_queue;
 static std::forward_list<ThreadWorker> worker_threads;
@@ -53,12 +54,31 @@ thread_pool_init(EventLoop &event_loop) noexcept
 	global_thread_queue = new ThreadQueue(event_loop);
 }
 
+[[gnu::const]]
+static unsigned
+GetWorkerThreadCount() noexcept
+{
+	const int nprocs = get_nprocs();
+	if (nprocs <= 1)
+		return 1;
+
+	unsigned n = static_cast<unsigned>(nprocs);
+
+	/* no more than 16 threads */
+	static constexpr unsigned MAX_WORKER_THREADS = 16;
+	if (n > MAX_WORKER_THREADS)
+		n = MAX_WORKER_THREADS;
+
+	return n;
+}
+
 static void
 thread_pool_start() noexcept
 try {
 	assert(global_thread_queue != nullptr);
 
-	for (unsigned i = 0; i < 8; ++i) {
+	const unsigned n_worker_threads = GetWorkerThreadCount();
+	for (unsigned i = 0; i < n_worker_threads; ++i) {
 		worker_threads.emplace_front(*global_thread_queue);
 	}
 } catch (...) {
