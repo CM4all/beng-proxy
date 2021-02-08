@@ -169,27 +169,24 @@ apply_next_cookie(CookieJar &jar, struct pool &tpool, StringView &input,
 void
 cookie_jar_set_cookie2(CookieJar &jar, const char *value,
 		       const char *domain, const char *path) noexcept
-	try {
-		const TempPoolLease tpool;
+{
+	const TempPoolLease tpool;
 
-		StringView input = value;
-		while (1) {
-			if (!apply_next_cookie(jar, tpool, input, domain, path))
-				break;
+	StringView input = value;
+	while (1) {
+		if (!apply_next_cookie(jar, tpool, input, domain, path))
+			break;
 
-			if (input.empty())
-				return;
+		if (input.empty())
+			return;
 
-			if (input.front() != ',')
-				break;
+		if (input.front() != ',')
+			break;
 
-			input.pop_front();
-			input.StripLeft();
-		}
-
-	} catch (const std::bad_alloc &) {
-		/* XXX log error */
+		input.pop_front();
+		input.StripLeft();
 	}
+}
 
 const char *
 cookie_jar_http_header_value(const CookieJar &jar,

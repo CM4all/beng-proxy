@@ -38,7 +38,7 @@
 
 void
 Widget::SaveToSession(WidgetSession &ws) const noexcept
-try {
+{
 	assert(cls != nullptr);
 	assert(cls->stateful); /* cannot save state for stateless widgets */
 
@@ -48,7 +48,6 @@ try {
 		ws.query_string = nullptr;
 	else
 		ws.query_string = from_request.query_string;
-} catch (const std::bad_alloc &) {
 }
 
 void
