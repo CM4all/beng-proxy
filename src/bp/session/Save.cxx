@@ -37,6 +37,8 @@
 #include "Manager.hxx"
 #include "Session.hxx"
 #include "io/BufferedOutputStream.hxx"
+#include "io/BufferedReader.hxx"
+#include "io/FdReader.hxx"
 #include "io/FdOutputStream.hxx"
 #include "io/FileWriter.hxx"
 #include "io/Logger.hxx"
@@ -63,21 +65,21 @@ session_manager_save(SessionManager &manager, BufferedOutputStream &file)
 }
 
 static bool
-session_manager_load(SessionManager &manager, FILE *file)
+session_manager_load(SessionManager &manager, BufferedReader &r)
 {
-	session_read_file_header(file);
+	session_read_file_header(r);
 
 	const Expiry now = Expiry::Now();
 
 	unsigned num_added = 0, num_expired = 0;
 	while (true) {
-		uint32_t magic = session_read_magic(file);
+		uint32_t magic = session_read_magic(r);
 		if (magic == MAGIC_END_OF_LIST)
 			break;
 		else if (magic != MAGIC_SESSION)
 			return false;
 
-		auto session = session_read(file);
+		auto session = session_read(r);
 		assert(session);
 
 		if (session->expires.IsExpired(now)) {
@@ -128,12 +130,15 @@ session_save_init(SessionManager &manager, const char *path) noexcept
 
 	session_save_path = path;
 
-	FILE *file = fopen(session_save_path, "rb");
-	if (file == nullptr)
+	UniqueFileDescriptor fd;
+	if (!fd.OpenReadOnly(session_save_path))
 		return;
 
 	try {
-		session_manager_load(manager, file);
+		FdReader fr(fd);
+		BufferedReader br(fr);
+
+		session_manager_load(manager, br);
 	} catch (SessionDeserializerError) {
 		LogConcat(1, "SessionManager",
 			  "Session file is corrupt");
@@ -142,8 +147,6 @@ session_save_init(SessionManager &manager, const char *path) noexcept
 			  "Failed to load sessions: ",
 			  std::current_exception());
 	}
-
-	fclose(file);
 }
 
 void

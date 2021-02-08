@@ -39,9 +39,9 @@
 #include <memory>
 
 #include <stdint.h>
-#include <stdio.h>
 
 struct Session;
+class BufferedReader;
 
 class SessionDeserializerError {};
 
@@ -49,16 +49,16 @@ class SessionDeserializerError {};
  * Throws on error.
  */
 uint32_t
-session_read_magic(FILE *file);
+session_read_magic(BufferedReader &r);
 
 /**
  * Throws on error.
  */
 void
-session_read_file_header(FILE *file);
+session_read_file_header(BufferedReader &r);
 
 /**
  * Throws on error.
  */
 std::unique_ptr<Session>
-session_read(FILE *file);
+session_read(BufferedReader &r);

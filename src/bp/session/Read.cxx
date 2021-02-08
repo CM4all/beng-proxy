@@ -33,20 +33,18 @@
 #include "Read.hxx"
 #include "File.hxx"
 #include "Session.hxx"
-
-#include <stdint.h>
+#include "io/BufferedReader.hxx"
 
 namespace {
 
 class FileReader {
-	FILE *const file;
+	BufferedReader &r;
 
 public:
-	explicit FileReader(FILE *_file):file(_file) {}
+	explicit FileReader(BufferedReader &_r) noexcept:r(_r) {}
 
 	void ReadBuffer(void *buffer, size_t size) {
-		if (fread(buffer, 1, size, file) != size)
-			throw SessionDeserializerError();
+		r.ReadFull({buffer, size});
 	}
 
 	template<typename T>
@@ -118,15 +116,15 @@ Expect32(FileReader &file, uint32_t expected)
 }
 
 uint32_t
-session_read_magic(FILE *file)
+session_read_magic(BufferedReader &r)
 {
-	return FileReader(file).Read32();
+	return FileReader(r).Read32();
 }
 
 void
-session_read_file_header(FILE *_file)
+session_read_file_header(BufferedReader &r)
 {
-	FileReader file(_file);
+	FileReader file(r);
 	Expect32(file, MAGIC_FILE);
 	Expect32(file, sizeof(Session));
 }
@@ -242,9 +240,9 @@ DoReadSession(FileReader &file, Session &session)
 }
 
 std::unique_ptr<Session>
-session_read(FILE *_file)
+session_read(BufferedReader &r)
 {
-	FileReader file(_file);
+	FileReader file(r);
 	const auto id = file.ReadT<SessionId>();
 	auto session = std::make_unique<Session>(id);
 	DoReadSession(file, *session);
