@@ -129,20 +129,21 @@ session_save_init(SessionManager &manager, const char *path) noexcept
 	session_save_path = path;
 
 	FILE *file = fopen(session_save_path, "rb");
-	if (file != nullptr) {
-		try {
-			session_manager_load(manager, file);
-		} catch (SessionDeserializerError) {
-			LogConcat(1, "SessionManager",
-				  "Session file is corrupt");
-		} catch (...) {
-			LogConcat(1, "SessionManager",
-				  "Failed to load sessions: ",
-				  std::current_exception());
-		}
+	if (file == nullptr)
+		return;
 
-		fclose(file);
+	try {
+		session_manager_load(manager, file);
+	} catch (SessionDeserializerError) {
+		LogConcat(1, "SessionManager",
+			  "Session file is corrupt");
+	} catch (...) {
+		LogConcat(1, "SessionManager",
+			  "Failed to load sessions: ",
+			  std::current_exception());
 	}
+
+	fclose(file);
 }
 
 void
