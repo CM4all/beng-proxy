@@ -51,8 +51,6 @@ session_read_file_header(FILE *file);
 
 /**
  * Throws std::bad_alloc on error.
- *
- * @param old read #MAGIC_SESSION_OLD format (i.e. pre v10.21)
  */
 std::unique_ptr<Session>
 session_read(FILE *file);
