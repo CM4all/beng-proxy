@@ -66,7 +66,8 @@ try {
 } catch (...) {
 	LogConcat(1, "thread_pool", "Failed to launch worker thread: ",
 		  std::current_exception());
-	exit(EXIT_FAILURE);
+	if (worker_threads.empty())
+		exit(EXIT_FAILURE);
 }
 
 ThreadQueue &
