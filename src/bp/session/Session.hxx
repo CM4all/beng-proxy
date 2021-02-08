@@ -101,7 +101,7 @@ struct WidgetSession
 	void Attach(WidgetSession &&other) noexcept;
 
 	gcc_pure
-	WidgetSession *GetChild(const char *child_id, bool create);
+	WidgetSession *GetChild(const char *child_id, bool create) noexcept;
 };
 
 struct Session;
@@ -159,9 +159,6 @@ struct RealmSession
 	/** all cookies received by widget servers */
 	CookieJar cookies;
 
-	/**
-	 * Throws std::bad_alloc on error.
-	 */
 	template<typename R>
 	RealmSession(Session &_parent, R &&_realm)
 		:parent(_parent),
@@ -202,7 +199,7 @@ struct RealmSession
 	void Expire(Expiry now) noexcept;
 
 	gcc_pure
-	WidgetSession *GetWidget(const char *widget_id, bool create);
+	WidgetSession *GetWidget(const char *widget_id, bool create) noexcept;
 };
 
 struct Session {
@@ -305,14 +302,14 @@ struct Session {
 		language = nullptr;
 	}
 
-	bool SetExternalManager(const HttpAddress &address,
+	void SetExternalManager(const HttpAddress &address,
 				std::chrono::steady_clock::time_point now,
-				std::chrono::duration<uint16_t> keepalive);
+				std::chrono::duration<uint16_t> keepalive) noexcept;
 
 	void Expire(Expiry now) noexcept;
 
 	gcc_pure
-	RealmSession *GetRealm(const char *realm);
+	RealmSession *GetRealm(const char *realm) noexcept;
 };
 
 /**

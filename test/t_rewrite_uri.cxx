@@ -77,7 +77,7 @@ WidgetContext::GetRealmSession() const
 }
 
 RealmSession *
-Session::GetRealm(const char *)
+Session::GetRealm(const char *) noexcept
 {
 	return nullptr;
 }

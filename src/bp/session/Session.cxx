@@ -205,10 +205,10 @@ RealmSession::SetUser(const char *_user, std::chrono::seconds max_age) noexcept
 		user_expires.Touch(max_age);
 }
 
-bool
+void
 Session::SetExternalManager(const HttpAddress &address,
 			    std::chrono::steady_clock::time_point now,
-			    std::chrono::duration<uint16_t> keepalive)
+			    std::chrono::duration<uint16_t> keepalive) noexcept
 {
 	if (external_manager != nullptr) {
 		delete external_manager;
@@ -218,22 +218,16 @@ Session::SetExternalManager(const HttpAddress &address,
 		next_external_keepalive = std::chrono::steady_clock::time_point::min();
 	}
 
-	try {
-		external_manager_pool =
-			PoolPtr(pool_new_libc(nullptr,
-					      "external_session_manager"));
-		external_manager = new HttpAddress(*external_manager_pool,
-						   address);
-		external_keepalive = keepalive;
+	external_manager_pool =
+		PoolPtr(pool_new_libc(nullptr,
+				      "external_session_manager"));
+	external_manager = new HttpAddress(*external_manager_pool,
+					   address);
+	external_keepalive = keepalive;
 
-		/* assume the session is fresh now; postpone the first refresh
-		   for one period */
-		next_external_keepalive = now + keepalive;
-
-		return true;
-	} catch (const std::bad_alloc &) {
-		return false;
-	}
+	/* assume the session is fresh now; postpone the first refresh
+	   for one period */
+	next_external_keepalive = now + keepalive;
 }
 
 static WidgetSession *
@@ -255,23 +249,19 @@ hashmap_r_get_widget_session(WidgetSession::Set &set,
 }
 
 WidgetSession *
-RealmSession::GetWidget(const char *widget_id, bool create)
-try {
+RealmSession::GetWidget(const char *widget_id, bool create) noexcept
+{
 	assert(widget_id != nullptr);
 
 	return hashmap_r_get_widget_session(widgets, widget_id, create);
-} catch (const std::bad_alloc &) {
-	return nullptr;
 }
 
 WidgetSession *
-WidgetSession::GetChild(const char *child_id, bool create)
-try {
+WidgetSession::GetChild(const char *child_id, bool create) noexcept
+{
 	assert(child_id != nullptr);
 
 	return hashmap_r_get_widget_session(children, child_id, create);
-} catch (const std::bad_alloc &) {
-	return nullptr;
 }
 
 WidgetSession::~WidgetSession() noexcept
@@ -296,8 +286,8 @@ Session::Expire(Expiry now) noexcept
 }
 
 RealmSession *
-Session::GetRealm(const char *realm_name)
-try {
+Session::GetRealm(const char *realm_name) noexcept
+{
 	RealmSessionSet::insert_commit_data commit_data;
 	auto result = realms.insert_check(realm_name, RealmSession::Compare(),
 					  commit_data);
@@ -307,6 +297,4 @@ try {
 	auto realm = new RealmSession(*this, realm_name);
 	realms.insert_commit(*realm, commit_data);
 	return realm;
-} catch (const std::bad_alloc &) {
-	return nullptr;
 }
