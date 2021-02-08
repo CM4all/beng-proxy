@@ -38,8 +38,6 @@
 
 namespace {
 
-class SessionDeserializerError {};
-
 class FileReader {
 	FILE *const file;
 
@@ -121,21 +119,16 @@ Expect32(FileReader &file, uint32_t expected)
 
 uint32_t
 session_read_magic(FILE *file)
-try {
+{
 	return FileReader(file).Read32();
-} catch (SessionDeserializerError) {
-	return 0;
 }
 
-bool
+void
 session_read_file_header(FILE *_file)
-try {
+{
 	FileReader file(_file);
 	Expect32(file, MAGIC_FILE);
 	Expect32(file, sizeof(Session));
-	return true;
-} catch (SessionDeserializerError) {
-	return false;
 }
 
 static void
@@ -250,12 +243,10 @@ DoReadSession(FileReader &file, Session &session)
 
 std::unique_ptr<Session>
 session_read(FILE *_file)
-try {
+{
 	FileReader file(_file);
 	const auto id = file.ReadT<SessionId>();
 	auto session = std::make_unique<Session>(id);
 	DoReadSession(file, *session);
 	return session;
-} catch (SessionDeserializerError) {
-	return nullptr;
 }

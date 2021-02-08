@@ -65,8 +65,7 @@ session_manager_save(SessionManager &manager, BufferedOutputStream &file)
 static bool
 session_manager_load(SessionManager &manager, FILE *file)
 {
-	if (!session_read_file_header(file))
-		return false;
+	session_read_file_header(file);
 
 	const Expiry now = Expiry::Now();
 
@@ -79,8 +78,7 @@ session_manager_load(SessionManager &manager, FILE *file)
 			return false;
 
 		auto session = session_read(file);
-		if (session == nullptr)
-			return false;
+		assert(session);
 
 		if (session->expires.IsExpired(now)) {
 			/* this session is already expired, discard it
@@ -132,7 +130,17 @@ session_save_init(SessionManager &manager, const char *path) noexcept
 
 	FILE *file = fopen(session_save_path, "rb");
 	if (file != nullptr) {
-		session_manager_load(manager, file);
+		try {
+			session_manager_load(manager, file);
+		} catch (SessionDeserializerError) {
+			LogConcat(1, "SessionManager",
+				  "Session file is corrupt");
+		} catch (...) {
+			LogConcat(1, "SessionManager",
+				  "Failed to load sessions: ",
+				  std::current_exception());
+		}
+
 		fclose(file);
 	}
 }

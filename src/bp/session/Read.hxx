@@ -43,14 +43,22 @@
 
 struct Session;
 
+class SessionDeserializerError {};
+
+/**
+ * Throws on error.
+ */
 uint32_t
 session_read_magic(FILE *file);
 
-bool
+/**
+ * Throws on error.
+ */
+void
 session_read_file_header(FILE *file);
 
 /**
- * Throws std::bad_alloc on error.
+ * Throws on error.
  */
 std::unique_ptr<Session>
 session_read(FILE *file);
