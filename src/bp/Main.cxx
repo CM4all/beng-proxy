@@ -65,7 +65,6 @@
 #include "bp/Control.hxx"
 #include "widget/Registry.hxx"
 #include "access_log/Glue.hxx"
-#include "ua_classification.hxx"
 #include "ssl/Init.hxx"
 #include "ssl/Client.hxx"
 #include "system/CapabilityGlue.hxx"
@@ -306,9 +305,6 @@ try {
 
 	SetupProcess();
 	capabilities_init();
-
-	if (cmdline.ua_classification_file != nullptr)
-		instance.ua_classification = std::make_unique<UserAgentClassList>(ua_classification_init(cmdline.ua_classification_file));
 
 	const ScopeSslGlobalInit ssl_init;
 	instance.ssl_client_factory =

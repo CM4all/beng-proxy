@@ -66,9 +66,6 @@ GetInvalidateNameValue(const TranslateRequest &request,
 	case TranslationCommand::USER_AGENT:
 		return std::make_pair("user_agent", request.user_agent);
 
-	case TranslationCommand::UA_CLASS:
-		return std::make_pair("ua_class", request.ua_class);
-
 	case TranslationCommand::QUERY_STRING:
 		return std::make_pair("query_string", request.query_string);
 
@@ -155,10 +152,6 @@ apply_translation_packet(TranslateRequest &request,
 
 	case TranslationCommand::USER_AGENT:
 		request.user_agent = payload;
-		break;
-
-	case TranslationCommand::UA_CLASS:
-		request.ua_class = payload;
 		break;
 
 	case TranslationCommand::QUERY_STRING:

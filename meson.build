@@ -916,7 +916,6 @@ executable(
   'src/widget/Frame.cxx',
   'src/istream_gb.cxx',
   'src/istream_unlock.cxx',
-  'src/ua_classification.cxx',
   'src/access_log/Client.cxx',
   'src/access_log/Launch.cxx',
   'src/access_log/Glue.cxx',

@@ -112,11 +112,6 @@ Request
   (This packet optional and is only submitted if requested via ``WANT``,
   see page )
 
-- ``UA_CLASS``: a classification token of the ``User-Agent`` request
-  header sent by the client. See :ref:`uaclass` for more
-  information. (This packet optional and is only submitted if
-  requested via ``WANT``, see page )
-
 - ``LANGUAGE``: the ``Accept-Language`` request header sent by the
   client (not in the widget registry) (This packet optional and is only
   submitted if requested via ``WANT``, see page )
@@ -166,7 +161,7 @@ Request
   payload is an array of 16-bit integers with requested packet ids. The
   following packets are allowed/supported here: ``LISTENER_TAG``,
   ``LOCAL_ADDRESS``, ``REMOTE_HOST``, ``USER_AGENT``, ``USER``,
-  ``UA_CLASS``, ``LANGUAGE``, ``ARGS``, ``QUERY_STRING``
+  ``LANGUAGE``, ``ARGS``, ``QUERY_STRING``
 
 - ``WANT_FULL_URI``: causes beng-proxy to submit the same translation
   request again, with this packet appended (its payload is opaque to
@@ -449,7 +444,7 @@ Response
 
   The following request packets are currently supported: ``PARAM``,
   ``SESSION``, ``LISTENER_TAG``, ``LOCAL_ADDRESS``, ``REMOTE_HOST``,
-  ``HOST``, ``LANGUAGE``, ``USER_AGENT``, ``UA_CLASS``,
+  ``HOST``, ``LANGUAGE``, ``USER_AGENT``,
   ``QUERY_STRING``, ``USER``, ``INTERNAL_REDIRECT``, ``ENOTDIR``.
 
   The following request packets are on “vary” implicitly:

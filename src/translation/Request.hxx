@@ -59,7 +59,6 @@ struct TranslateRequest {
 	const char *host = nullptr;
 	const char *alt_host = nullptr;
 	const char *user_agent = nullptr;
-	const char *ua_class = nullptr;
 	const char *accept_language = nullptr;
 
 	/**

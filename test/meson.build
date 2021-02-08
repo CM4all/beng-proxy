@@ -49,14 +49,6 @@ executable('dump_control',
     system_dep,
   ])
 
-executable('run_ua_parser',
-  'run_ua_parser.cxx',
-  '../src/ua_classification.cxx',
-  include_directories: inc,
-  dependencies: [
-    expand_dep,
-  ])
-
 executable('run_parser_cdata',
   'run_parser_cdata.cxx',
   '../src/PInstance.cxx',

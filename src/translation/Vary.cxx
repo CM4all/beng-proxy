@@ -55,7 +55,6 @@ translation_vary_name(TranslationCommand cmd)
 		return "authorization";
 
 	case TranslationCommand::USER_AGENT:
-	case TranslationCommand::UA_CLASS:
 		return "user-agent";
 
 	default:

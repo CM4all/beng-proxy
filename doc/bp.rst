@@ -348,24 +348,6 @@ The following settings are available:
 
 All memory sizes can be suffixed using ``kB``, ``MB`` or ``GB``.
 
-.. _uaclass:
-
-User-Agent classification
--------------------------
-
-The option ``--ua-classes`` sets the file that contains mappings from
-``User-Agent`` request headers to classification tokens, example::
-
-   m, Firefox/, firefox
-   /Safari/ safari
-   /MSIE/ ie
-
-The first column is a regular expression which is delimited by two
-slashes or by a custom delimiter introduced by ``m`` (syntax borrowed
-from Perl). The second column is the class name, consisting of ASCII
-letters and digits. This name gets sent to the translation server in a
-``UA_CLASS`` packet.
-
 Cluster Options
 ---------------
 

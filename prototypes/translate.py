@@ -385,7 +385,7 @@ class Translation(Protocol):
 
     def _handle_http(self, request, raw_uri, uri, authorization,
                      check, want_full_uri, want, file_not_found, directory_index,
-                     ua_class, response):
+                     response):
         if uri[:6] == '/site/':
             x = uri[6:]
             i = x.find('/')
@@ -866,17 +866,6 @@ class Translation(Protocol):
             response.vary(TRANSLATE_USER_AGENT)
             self._handle_local_file('/var/www' + uri[22:], response,
                                     error_document=True)
-        elif raw_uri == '/ua_class':
-            if want is None or TRANSLATE_UA_CLASS not in want:
-                response.want(TRANSLATE_UA_CLASS)
-                return
-
-            response.vary(TRANSLATE_UA_CLASS, TRANSLATE_WANT)
-            response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'env.py'))
-            response.packet(TRANSLATE_NO_NEW_PRIVS)
-            response.packet(TRANSLATE_SCRIPT_NAME, uri)
-            if ua_class is not None:
-                response.packet(TRANSLATE_PATH_INFO, ua_class)
         elif raw_uri == '/listener_tag':
             if want is None or TRANSLATE_LISTENER_TAG not in want:
                 response.want(TRANSLATE_LISTENER_TAG)
@@ -1100,7 +1089,7 @@ class Translation(Protocol):
                               request.raw_uri, request.uri, request.authorization,
                               request.check, request.want_full_uri, request.want,
                               request.file_not_found, request.directory_index,
-                              request.ua_class, response)
+                              response)
 
         return response
 

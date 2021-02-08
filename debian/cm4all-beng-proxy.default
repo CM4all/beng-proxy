@@ -6,9 +6,6 @@
 # Path of the translation server socket.
 #TRANSLATION_SOCKET=@translation
 
-# Path of the User-Agent classification file.
-#UA_CLASSES=/etc/cm4all/beng/proxy/ua_classes.conf
-
 # Path of the persistent session file
 #SESSION_SAVE_PATH=
 

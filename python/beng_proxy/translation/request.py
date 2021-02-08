@@ -149,8 +149,6 @@ class Request:
             self.remote_host = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_USER_AGENT:
             self.user_agent = packet.payload.decode('ascii')
-        elif packet.command == TRANSLATE_UA_CLASS:
-            self.ua_class = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_LANGUAGE:
             self.accept_language = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_AUTHORIZATION:

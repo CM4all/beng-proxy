@@ -66,7 +66,6 @@
 #include "spawn/Client.hxx"
 #include "access_log/Glue.hxx"
 #include "util/PrintException.hxx"
-#include "ua_classification.hxx"
 #include "random.hxx"
 
 #ifdef HAVE_URING

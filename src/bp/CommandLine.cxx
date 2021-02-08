@@ -90,10 +90,6 @@ PrintUsage()
 #endif
 	     " -N N           set the index of this node in the beng-lb cluster\n"
 #ifdef __GLIBC__
-	     " --ua-classes PATH\n"
-#endif
-	     " -a PATH        load the User-Agent classification rules from this file\n"
-#ifdef __GLIBC__
 	     " --set NAME=VALUE  tweak an internal variable, see manual for details\n"
 #endif
 	     " -s NAME=VALUE  \n"
@@ -173,7 +169,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 		{"translation-socket", 1, nullptr, 't'},
 		{"cluster-size", 1, nullptr, 'C'},
 		{"cluster-node", 1, nullptr, 'N'},
-		{"ua-classes", 1, nullptr, 'a'},
 		{"set", 1, nullptr, 's'},
 		{"debug-listener-tag", 1, nullptr, 'L'},
 		{nullptr, 0, nullptr, 0}
@@ -242,10 +237,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 			if ((config.cluster_node != 0 || config.cluster_size != 0) &&
 			    config.cluster_node >= config.cluster_size)
 				arg_error(argv[0], "Cluster node too large");
-			break;
-
-		case 'a':
-			cmdline.ua_classification_file = optarg;
 			break;
 
 		case 's':

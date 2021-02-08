@@ -57,7 +57,6 @@
 #include "translation/Service.hxx"
 #include "translation/Protocol.hxx"
 #include "translation/Layout.hxx"
-#include "ua_classification.hxx"
 #include "HttpMessageResponse.hxx"
 #include "ResourceLoader.hxx"
 
@@ -427,21 +426,6 @@ fill_translate_request_user_agent(TranslateRequest &t,
 }
 
 static void
-fill_translate_request_ua_class(TranslateRequest &t,
-				const BpInstance &instance,
-				const StringMap &headers)
-{
-	if (!instance.ua_classification)
-		return;
-
-	const char *user_agent = headers.Get("user-agent");
-
-	t.ua_class = user_agent != nullptr
-		? instance.ua_classification->Lookup(user_agent)
-		: nullptr;
-}
-
-static void
 fill_translate_request_language(TranslateRequest &t,
 				const StringMap &headers)
 {
@@ -581,11 +565,6 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 	if (response.Wants(TranslationCommand::USER_AGENT))
 		fill_translate_request_user_agent(translate.request,
 						  request.headers);
-
-	if (response.Wants(TranslationCommand::UA_CLASS))
-		fill_translate_request_ua_class(translate.request,
-						instance,
-						request.headers);
 
 	if (response.Wants(TranslationCommand::LANGUAGE))
 		fill_translate_request_language(translate.request,

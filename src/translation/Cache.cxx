@@ -110,7 +110,6 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 		const char *host;
 		const char *accept_language;
 		const char *user_agent;
-		const char *ua_class;
 		const char *query_string;
 
 		ConstBuffer<void> internal_redirect;
@@ -954,10 +953,6 @@ TranslateCacheItem::VaryMatch(const TranslateRequest &other_request,
 		return tcache_string_match(request.user_agent,
 					   other_request.user_agent, strict);
 
-	case TranslationCommand::UA_CLASS:
-		return tcache_string_match(request.ua_class,
-					   other_request.ua_class, strict);
-
 	case TranslationCommand::QUERY_STRING:
 		return tcache_string_match(request.query_string,
 					   other_request.query_string, strict);
@@ -1233,9 +1228,6 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 	item->request.user_agent =
 		tcache_vary_copy(alloc, tcr.request.user_agent,
 				 response, TranslationCommand::USER_AGENT);
-	item->request.ua_class =
-		tcache_vary_copy(alloc, tcr.request.ua_class,
-				 response, TranslationCommand::UA_CLASS);
 	item->request.query_string =
 		tcache_vary_copy(alloc, tcr.request.query_string,
 				 response, TranslationCommand::QUERY_STRING);

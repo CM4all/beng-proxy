@@ -19,14 +19,12 @@ OPTIONS=""
 
 test -f /etc/default/cm4all-beng-proxy && source /etc/default/cm4all-beng-proxy
 
-for i in DAEMON_USER DAEMON_GROUP ALLOW_USER ALLOW_GROUP SPAWN_USER ACCESS_LOGGER PORT LISTEN; do
+for i in DAEMON_USER DAEMON_GROUP ALLOW_USER ALLOW_GROUP SPAWN_USER ACCESS_LOGGER PORT LISTEN UA_CLASSES; do
     if eval test -n \"\${$i}\"; then
         echo "Variable $i in /etc/default/cm4all-beng-proxy has been removed, please configure /etc/cm4all/beng/proxy/beng-proxy.conf instead" >&2
         exit 1
     fi
 done
-
-test -n "$UA_CLASSES" && UASPEC="--ua-classes=${UA_CLASSES}"
 
 if test -n "$TRANSLATION_SOCKET"; then
     OPTIONS="$OPTIONS --translation-socket $TRANSLATION_SOCKET"
