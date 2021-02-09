@@ -34,6 +34,8 @@
 
 #include <chrono>
 
+class AllocatorPtr;
+
 struct HttpCacheRequestInfo {
 	/**
 	 * Is the request served by a remote server?  If yes, then we
@@ -64,11 +66,11 @@ struct HttpCacheResponseInfo {
 	const char *vary;
 
 	HttpCacheResponseInfo() = default;
-	HttpCacheResponseInfo(struct pool &pool,
+	HttpCacheResponseInfo(AllocatorPtr alloc,
 			      const HttpCacheResponseInfo &src) noexcept;
 
 	HttpCacheResponseInfo(const HttpCacheResponseInfo &) = delete;
 	HttpCacheResponseInfo &operator=(const HttpCacheResponseInfo &) = delete;
 
-	void MoveToPool(struct pool &pool) noexcept;
+	void MoveToPool(AllocatorPtr alloc) noexcept;
 };

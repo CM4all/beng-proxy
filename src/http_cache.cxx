@@ -471,12 +471,14 @@ void
 HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 				 UnusedIstreamPtr body) noexcept
 {
+	const AllocatorPtr alloc{GetPool()};
+
 	HttpCacheDocument *locked_document = document;
 
 	if (document != nullptr && status == HTTP_STATUS_NOT_MODIFIED) {
 		assert(!body);
 
-		if (http_cache_response_evaluate(request_info, info, GetPool(),
+		if (http_cache_response_evaluate(request_info, info, alloc,
 						 HTTP_STATUS_OK, _headers, -1) &&
 		    info.expires >= GetEventLoop().SystemNow()) {
 			/* copy the new "Expires" (or "max-age") value from the
@@ -488,8 +490,8 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
 			/* TODO: this leaks pool memory each time we update
 			   headers; how to fix this? */
-			UpdateHeader(GetPool(), document->response_headers, _headers, "expires");
-			UpdateHeader(GetPool(), document->response_headers, _headers, "cache-control");
+			UpdateHeader(alloc, document->response_headers, _headers, "expires");
+			UpdateHeader(alloc, document->response_headers, _headers, "cache-control");
 		}
 
 		LogConcat(5, "HttpCache", "not_modified ", key);
@@ -525,7 +527,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 		? body.GetAvailable(true)
 		: 0;
 
-	if (!http_cache_response_evaluate(request_info, info, GetPool(),
+	if (!http_cache_response_evaluate(request_info, info, alloc,
 					  status, _headers, available)) {
 		/* don't cache response */
 		LogConcat(4, "HttpCache", "nocache ", key);
@@ -564,8 +566,8 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 		/* this->info was allocated from the caller pool; duplicate
 		   it to keep it alive even after the caller pool is
 		   destroyed */
-		key = p_strdup(pool, key);
-		info.MoveToPool(pool);
+		key = alloc.Dup(key);
+		info.MoveToPool(alloc);
 
 		/* tee the body: one goes to our client, and one goes into the
 		   cache */
