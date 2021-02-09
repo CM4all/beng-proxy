@@ -32,6 +32,7 @@
 
 #include "LeakDetector.hxx"
 #include "pool.hxx"
+#include "AllocatorPtr.hxx"
 
 #ifndef NDEBUG
 
@@ -40,6 +41,9 @@ PoolLeakDetector::PoolLeakDetector(struct pool &_pool) noexcept
 {
 	pool_register_leak_detector(ldp, *this);
 }
+
+PoolLeakDetector::PoolLeakDetector(AllocatorPtr alloc) noexcept
+	:PoolLeakDetector(alloc.GetPool()) {}
 
 PoolLeakDetector::~PoolLeakDetector() noexcept
 {

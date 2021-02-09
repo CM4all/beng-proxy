@@ -32,6 +32,8 @@
 
 #pragma once
 
+class AllocatorPtr;
+
 #ifndef NDEBUG
 
 #include "util/IntrusiveList.hxx"
@@ -45,6 +47,7 @@ class PoolLeakDetector : public IntrusiveListHook {
 
 public:
 	explicit PoolLeakDetector(struct pool &_pool) noexcept;
+	explicit PoolLeakDetector(AllocatorPtr alloc) noexcept;
 
 	PoolLeakDetector(const PoolLeakDetector &src):PoolLeakDetector(src.ldp) {}
 
@@ -60,6 +63,7 @@ public:
 class PoolLeakDetector {
 public:
 	explicit PoolLeakDetector(struct pool &) noexcept {}
+	explicit PoolLeakDetector(const AllocatorPtr &) noexcept {}
 };
 
 #endif
