@@ -593,7 +593,7 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
  */
 
 inline void
-Request::DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
+Request::DispatchResponseDirect(http_status_t status, HttpHeaders headers,
 				UnusedIstreamPtr body) noexcept
 {
 	assert(!response_sent);

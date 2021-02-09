@@ -643,7 +643,7 @@ public:
 					 void *relocate_ctx,
 					 const HeaderForwardSettings &settings) noexcept;
 
-	void DispatchResponseDirect(http_status_t status, HttpHeaders &&headers,
+	void DispatchResponseDirect(http_status_t status, HttpHeaders headers,
 				    UnusedIstreamPtr body) noexcept;
 
 	void DispatchResponse(http_status_t status, HttpHeaders &&headers,
