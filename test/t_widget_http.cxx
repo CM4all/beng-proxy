@@ -147,7 +147,7 @@ suffix_registry_lookup(gcc_unused struct pool &pool,
 		       gcc_unused const ResourceAddress &address,
 		       const StopwatchPtr &,
 		       gcc_unused SuffixRegistryHandler &handler,
-		       gcc_unused CancellablePointer &cancel_ptr)
+		       gcc_unused CancellablePointer &cancel_ptr) noexcept
 {
 	return false;
 }

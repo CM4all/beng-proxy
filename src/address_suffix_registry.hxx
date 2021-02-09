@@ -47,4 +47,4 @@ suffix_registry_lookup(struct pool &pool, TranslationService &service,
 		       const ResourceAddress &address,
 		       const StopwatchPtr &parent_stopwatch,
 		       SuffixRegistryHandler &handler,
-		       CancellablePointer &cancel_ptr);
+		       CancellablePointer &cancel_ptr) noexcept;

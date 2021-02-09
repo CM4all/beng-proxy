@@ -43,7 +43,7 @@
 
 [[gnu::pure]]
 static const char *
-get_suffix(const char *path)
+get_suffix(const char *path) noexcept
 {
 	const char *slash = strrchr(path, '/');
 	if (slash != nullptr)
@@ -66,7 +66,7 @@ struct AddressSuffixInfo {
 
 [[gnu::pure]]
 static AddressSuffixInfo
-GetAddressSuffixInfo(const ResourceAddress &address)
+GetAddressSuffixInfo(const ResourceAddress &address) noexcept
 {
 	switch (address.type) {
 	case ResourceAddress::Type::NONE:
@@ -93,7 +93,7 @@ suffix_registry_lookup(struct pool &pool, TranslationService &service,
 		       const ResourceAddress &address,
 		       const StopwatchPtr &parent_stopwatch,
 		       SuffixRegistryHandler &handler,
-		       CancellablePointer &cancel_ptr)
+		       CancellablePointer &cancel_ptr) noexcept
 {
 	const auto info = GetAddressSuffixInfo(address);
 	if (info.content_type_lookup.IsNull())
