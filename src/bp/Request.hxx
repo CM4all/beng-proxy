@@ -340,7 +340,6 @@ private:
 	bool response_sent = false;
 #endif
 
-public:
 	CancellablePointer cancel_ptr;
 
 public:
