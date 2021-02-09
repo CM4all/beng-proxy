@@ -43,7 +43,9 @@
 #include "pool/pool.hxx"
 #include "io/Logger.hxx"
 
-struct ErrorResponseLoader final : TranslateHandler, HttpResponseHandler, Cancellable {
+struct ErrorResponseLoader final
+	: PoolLeakDetector, TranslateHandler, HttpResponseHandler, Cancellable
+{
 	CancellablePointer cancel_ptr;
 
 	Request &request;
@@ -54,7 +56,8 @@ struct ErrorResponseLoader final : TranslateHandler, HttpResponseHandler, Cancel
 
 	ErrorResponseLoader(Request &_request, http_status_t _status,
 			    HttpHeaders &&_headers, UnusedIstreamPtr _body)
-		:request(_request),
+		:PoolLeakDetector(_request.pool),
+		 request(_request),
 		 original_response(_status, std::move(_headers),
 				   UnusedHoldIstreamPtr{request.pool, std::move(_body)}) {}
 
