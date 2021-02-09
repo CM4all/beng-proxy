@@ -42,7 +42,7 @@ struct WidgetRef {
 	const char *id;
 };
 
-static constexpr char WIDGET_REF_SEPARATOR = ':';
+constexpr char WIDGET_REF_SEPARATOR = ':';
 
 [[gnu::pure]]
 const WidgetRef *
