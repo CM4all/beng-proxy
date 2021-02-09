@@ -69,6 +69,14 @@ public:
 		return result;
 	}
 
+	/**
+	 * Allocate a new buffer with data concatenated from the given source
+	 * buffers.  If one is empty, this may return a pointer to the other
+	 * buffer.
+	 */
+	ConstBuffer<void> LazyConcat(ConstBuffer<void> a,
+				     ConstBuffer<void> b) const noexcept;
+
 	template<typename T, typename... Args>
 	T *New(Args&&... args) const noexcept {
 		return NewFromPool<T>(pool, std::forward<Args>(args)...);

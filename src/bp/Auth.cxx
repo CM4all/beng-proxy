@@ -42,7 +42,6 @@
 #include "session/Session.hxx"
 #include "http/IncomingRequest.hxx"
 #include "pool/pool.hxx"
-#include "pool/pbuffer.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Service.hxx"
 #include "load_file.hxx"
@@ -124,7 +123,8 @@ Request::HandleAuth(const TranslateResponse &response)
 	if (!response.append_auth.IsNull()) {
 		assert(!auth.IsNull());
 
-		auth = LazyCatBuffer(pool, auth, response.append_auth);
+		const AllocatorPtr alloc(pool);
+		auth = alloc.LazyConcat(auth, response.append_auth);
 	}
 
 	/* we need to validate the session realm early */
