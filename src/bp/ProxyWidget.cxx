@@ -50,7 +50,7 @@
 #include "pool/pool.hxx"
 #include "io/Logger.hxx"
 
-struct ProxyWidget final : PoolLeakDetector, WidgetLookupHandler, HttpResponseHandler, Cancellable {
+class ProxyWidget final : PoolLeakDetector, WidgetLookupHandler, HttpResponseHandler, Cancellable {
 	Request &request;
 
 	/**
@@ -72,6 +72,7 @@ struct ProxyWidget final : PoolLeakDetector, WidgetLookupHandler, HttpResponseHa
 
 	CancellablePointer cancel_ptr;
 
+public:
 	ProxyWidget(Request &_request, Widget &_widget,
 		    const WidgetRef *_ref,
 		    SharedPoolPtr<WidgetContext> &&_ctx) noexcept
@@ -84,6 +85,7 @@ struct ProxyWidget final : PoolLeakDetector, WidgetLookupHandler, HttpResponseHa
 	void Start(UnusedIstreamPtr body, unsigned options,
 		   CancellablePointer &caller_cancel_ptr) noexcept;
 
+private:
 	void Destroy() noexcept {
 		DeleteFromPool(request.pool, this);
 	}
