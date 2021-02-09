@@ -63,7 +63,7 @@ public:
 	void Open(StockMap &stock, const char *helper,
 		  const ChildOptions &options,
 		  CancellablePointer &cancel_ptr) {
-		delegate_stock_open(&stock, &pool,
+		delegate_stock_open(&stock, pool,
 				    helper, options, path,
 				    *this, cancel_ptr);
 	}

@@ -45,6 +45,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <assert.h>
 #include <stdio.h>
@@ -99,7 +100,8 @@ int main(int argc, char **argv)
 
 	MyDelegateHandler handler(instance.event_loop);
 	CancellablePointer cancel_ptr;
-	delegate_stock_open(delegate_stock, pool, helper_path, child_options,
+	delegate_stock_open(delegate_stock, AllocatorPtr{pool},
+			    helper_path, child_options,
 			    argv[1],
 			    handler, cancel_ptr);
 

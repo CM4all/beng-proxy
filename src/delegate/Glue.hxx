@@ -39,13 +39,14 @@
 
 struct ChildOptions;
 class StockMap;
+class AllocatorPtr;
 class DelegateHandler;
 class CancellablePointer;
 
 void
-delegate_stock_open(StockMap *stock, struct pool *pool,
+delegate_stock_open(StockMap *stock, AllocatorPtr alloc,
 		    const char *helper,
 		    const ChildOptions &options,
 		    const char *path,
 		    DelegateHandler &handler,
-		    CancellablePointer &cancel_ptr);
+		    CancellablePointer &cancel_ptr) noexcept;

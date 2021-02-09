@@ -37,8 +37,8 @@
 #include "stock/Item.hxx"
 #include "stock/MapStock.hxx"
 #include "lease.hxx"
-#include "pool/pool.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "AllocatorPtr.hxx"
 
 struct DelegateGlue final : Lease {
 	StockItem &item;
@@ -52,12 +52,12 @@ struct DelegateGlue final : Lease {
 };
 
 void
-delegate_stock_open(StockMap *stock, struct pool *pool,
+delegate_stock_open(StockMap *stock, AllocatorPtr alloc,
 		    const char *helper,
 		    const ChildOptions &options,
 		    const char *path,
 		    DelegateHandler &handler,
-		    CancellablePointer &cancel_ptr)
+		    CancellablePointer &cancel_ptr) noexcept
 {
 	StockItem *item;
 
@@ -68,8 +68,8 @@ delegate_stock_open(StockMap *stock, struct pool *pool,
 		return;
 	}
 
-	auto glue = NewFromPool<DelegateGlue>(*pool, *item);
+	auto glue = alloc.New<DelegateGlue>(*item);
 	delegate_open(stock->GetEventLoop(), delegate_stock_item_get(*item), *glue,
-		      pool, path,
+		      alloc, path,
 		      handler, cancel_ptr);
 }

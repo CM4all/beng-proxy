@@ -32,10 +32,10 @@
 
 #pragma once
 
-struct pool;
 class EventLoop;
 class SocketDescriptor;
 class Lease;
+class AllocatorPtr;
 class CancellablePointer;
 class DelegateHandler;
 
@@ -47,6 +47,6 @@ class DelegateHandler;
  */
 void
 delegate_open(EventLoop &event_loop, SocketDescriptor fd, Lease &lease,
-	      struct pool *pool, const char *path,
+	      AllocatorPtr alloc, const char *path,
 	      DelegateHandler &handler,
-	      CancellablePointer &cancel_ptr);
+	      CancellablePointer &cancel_ptr) noexcept;

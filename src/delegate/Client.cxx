@@ -33,7 +33,6 @@
 #include "Client.hxx"
 #include "Handler.hxx"
 #include "Protocol.hxx"
-#include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/SocketDescriptor.hxx"
@@ -45,6 +44,7 @@
 #include "util/Cancellable.hxx"
 #include "util/StringView.hxx"
 #include "lease.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <stdexcept>
 
@@ -60,9 +60,9 @@ struct DelegateClient final : PoolLeakDetector, Cancellable {
 	DelegateHandler &handler;
 
 	DelegateClient(EventLoop &event_loop, SocketDescriptor _s, Lease &lease,
-		       struct pool &_pool,
+		       AllocatorPtr alloc,
 		       DelegateHandler &_handler) noexcept
-		:PoolLeakDetector(_pool),
+		:PoolLeakDetector(alloc),
 		 lease_ref(lease),
 		 s(_s), event(event_loop, BIND_THIS_METHOD(SocketEventCallback), s),
 		 handler(_handler)
@@ -238,9 +238,9 @@ SendDelegatePacket(SocketDescriptor s, DelegateRequestCommand cmd,
 
 void
 delegate_open(EventLoop &event_loop, SocketDescriptor s, Lease &lease,
-	      struct pool *pool, const char *path,
+	      AllocatorPtr alloc, const char *path,
 	      DelegateHandler &handler,
-	      CancellablePointer &cancel_ptr)
+	      CancellablePointer &cancel_ptr) noexcept
 {
 	try {
 		SendDelegatePacket(s, DelegateRequestCommand::OPEN,
@@ -251,10 +251,7 @@ delegate_open(EventLoop &event_loop, SocketDescriptor s, Lease &lease,
 		return;
 	}
 
-	auto d = NewFromPool<DelegateClient>(*pool, event_loop, s, lease,
-					     *pool,
-					     handler);
-
-
+	auto d = alloc.New<DelegateClient>(event_loop, s, lease, alloc,
+					   handler);
 	cancel_ptr = *d;
 }

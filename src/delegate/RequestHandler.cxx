@@ -107,7 +107,7 @@ Request::HandleDelegateAddress(const DelegateAddress &address,
 
 	handler.delegate.path = path;
 
-	delegate_stock_open(instance.delegate_stock, request.pool,
+	delegate_stock_open(instance.delegate_stock, *request.pool,
 			    address.delegate, address.child_options,
 			    path,
 			    *this, cancel_ptr);
