@@ -49,6 +49,10 @@ class AllocatorPtr {
 public:
 	constexpr AllocatorPtr(struct pool &_pool) noexcept :pool(_pool) {}
 
+	struct pool &GetPool() const noexcept {
+		return pool;
+	}
+
 	char *Dup(const char *src) const noexcept {
 		return p_strdup(&pool, src);
 	}
