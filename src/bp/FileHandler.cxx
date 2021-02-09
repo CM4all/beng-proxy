@@ -52,7 +52,6 @@
 #ifdef HAVE_URING
 #include "io/UringOpenStat.hxx"
 #include "event/uring/Manager.hxx"
-#include <sys/sysmacros.h> // for makedev()
 #endif
 
 #include <assert.h>

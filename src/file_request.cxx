@@ -50,7 +50,6 @@
 #include "io/uring/OpenStat.hxx"
 #include "util/Cancellable.hxx"
 #include <memory>
-#include <sys/sysmacros.h> // for makedev()
 #endif
 
 #include <assert.h>
