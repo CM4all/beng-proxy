@@ -52,8 +52,6 @@
 static const uint8_t PROTOCOL_VERSION = 3;
 
 class TranslateClient final : BufferedSocketHandler, Cancellable {
-	struct pool &pool;
-
 	const StopwatchPtr stopwatch;
 
 	BufferedSocket socket;
@@ -79,7 +77,7 @@ public:
 
 private:
 	void Destroy() noexcept {
-		DeleteFromPool(pool, this);
+		this->~TranslateClient();
 	}
 
 	void ReleaseSocket(bool reuse) noexcept;
@@ -235,8 +233,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
 				 GrowingBuffer &&_request,
 				 TranslateHandler &_handler,
 				 CancellablePointer &cancel_ptr) noexcept
-	:pool(p),
-	 stopwatch(std::move(_stopwatch)),
+	:stopwatch(std::move(_stopwatch)),
 	 socket(event_loop), lease_ref(lease),
 	 request(std::move(_request)),
 	 handler(_handler),
