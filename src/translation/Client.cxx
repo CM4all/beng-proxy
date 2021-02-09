@@ -65,7 +65,7 @@ class TranslateClient final : BufferedSocketHandler, Cancellable {
 	TranslateParser parser;
 
 public:
-	TranslateClient(struct pool &p, EventLoop &event_loop,
+	TranslateClient(AllocatorPtr alloc, EventLoop &event_loop,
 			StopwatchPtr &&_stopwatch,
 			SocketDescriptor fd, Lease &lease,
 			const TranslateRequest &request2,
@@ -226,7 +226,7 @@ TranslateClient::TryWrite() noexcept
  */
 
 inline
-TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
+TranslateClient::TranslateClient(AllocatorPtr alloc, EventLoop &event_loop,
 				 StopwatchPtr &&_stopwatch,
 				 SocketDescriptor fd, Lease &lease,
 				 const TranslateRequest &request2,
@@ -237,7 +237,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
 	 socket(event_loop), lease_ref(lease),
 	 request(std::move(_request)),
 	 handler(_handler),
-	 parser(p, request2, *NewFromPool<TranslateResponse>(p))
+	 parser(alloc, request2, *alloc.New<TranslateResponse>())
 {
 	socket.Init(fd, FdType::FD_SOCKET,
 		    translate_read_timeout,
@@ -248,7 +248,7 @@ TranslateClient::TranslateClient(struct pool &p, EventLoop &event_loop,
 }
 
 void
-translate(struct pool &pool, EventLoop &event_loop,
+translate(AllocatorPtr alloc, EventLoop &event_loop,
 	  StopwatchPtr stopwatch,
 	  SocketDescriptor fd, Lease &lease,
 	  const TranslateRequest &request,
@@ -267,11 +267,11 @@ try {
 	GrowingBuffer gb = MarshalTranslateRequest(PROTOCOL_VERSION,
 						   request);
 
-	auto *client = NewFromPool<TranslateClient>(pool, pool, event_loop,
-						    std::move(stopwatch),
-						    fd, lease,
-						    request, std::move(gb),
-						    handler, cancel_ptr);
+	auto *client = alloc.New<TranslateClient>(alloc, event_loop,
+						  std::move(stopwatch),
+						  fd, lease,
+						  request, std::move(gb),
+						  handler, cancel_ptr);
 
 	client->TryWrite();
 } catch (...) {

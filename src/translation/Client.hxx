@@ -32,7 +32,7 @@
 
 #pragma once
 
-struct pool;
+class AllocatorPtr;
 class EventLoop;
 class Lease;
 class CancellablePointer;
@@ -45,7 +45,7 @@ class TranslateHandler;
  * Call the translation server.
  */
 void
-translate(struct pool &pool, EventLoop &event_loop,
+translate(AllocatorPtr alloc, EventLoop &event_loop,
 	  StopwatchPtr stopwatch,
 	  SocketDescriptor fd, Lease &lease,
 	  const TranslateRequest &request,

@@ -45,6 +45,7 @@
 #include "event/SocketEvent.hxx"
 #include "io/Logger.hxx"
 #include "stopwatch.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <string.h>
 #include <errno.h>
