@@ -112,7 +112,7 @@ public:
 class TranslationStock::Request final
 	: Cancellable, StockGetHandler, Lease, PoolLeakDetector
 {
-	struct pool &pool;
+	const AllocatorPtr alloc;
 
 	StopwatchPtr stopwatch;
 
@@ -127,13 +127,13 @@ class TranslationStock::Request final
 	CancellablePointer cancel_ptr;
 
 public:
-	Request(TranslationStock &_stock, struct pool &_pool,
+	Request(TranslationStock &_stock, AllocatorPtr _alloc,
 		const TranslateRequest &_request,
 		const StopwatchPtr &parent_stopwatch,
 		TranslateHandler &_handler,
 		CancellablePointer &_cancel_ptr) noexcept
-		:PoolLeakDetector(_pool),
-		 pool(_pool),
+		:PoolLeakDetector(_alloc),
+		 alloc(_alloc),
 		 stopwatch(parent_stopwatch, "translate",
 			   _request.GetDiagnosticName()),
 		 stock(_stock),
@@ -188,7 +188,7 @@ TranslationStock::Request::OnStockItemReady(StockItem &_item) noexcept
 	/* cancellation will not be handled by this class from here on;
 	   instead, we pass the caller's CancellablePointer to
 	   translate() */
-	translate(pool, stock.GetEventLoop(), std::move(stopwatch),
+	translate(alloc, stock.GetEventLoop(), std::move(stopwatch),
 		  item->GetSocket(),
 		  *this,
 		  request, handler,
