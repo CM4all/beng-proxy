@@ -271,7 +271,7 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 
 	if (!S_ISREG(st.st_mode)) {
 		body->CloseUnused();
-		DispatchResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR,
+		DispatchResponse(HTTP_STATUS_NOT_FOUND,
 				 "Not a regular file");
 		return;
 	}

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (16.30) unstable; urgency=low
 
-  * 
+  * bp/file: change the status of "Not a regular file" to 404
 
  --   
 
