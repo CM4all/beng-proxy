@@ -34,7 +34,6 @@
 
 #include "cluster/StickyHash.hxx"
 #include "http/Method.h"
-#include "util/Compiler.h"
 
 #include <stddef.h>
 
@@ -65,7 +64,7 @@ http_cache_close(HttpCache *cache) noexcept;
 void
 http_cache_fork_cow(HttpCache &cache, bool inherit) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 AllocatorStats
 http_cache_get_stats(const HttpCache &cache) noexcept;
 

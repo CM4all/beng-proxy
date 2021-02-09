@@ -38,7 +38,6 @@
 
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
-#include "util/Compiler.h"
 
 struct StockItem;
 class StockGetHandler;
@@ -94,13 +93,13 @@ private:
 		    CancellablePointer &cancel_ptr) override;
 };
 
-gcc_pure
+[[gnu::pure]]
 FilteredSocket &
 fs_stock_item_get(StockItem &item);
 
 /**
  * Returns the (peer) address this object is connected to.
  */
-gcc_pure
+[[gnu::pure]]
 SocketAddress
 fs_stock_item_get_address(const StockItem &item);

@@ -43,7 +43,6 @@
 #include "util/AllocatedString.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Expiry.hxx"
-#include "util/Compiler.h"
 
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive/unordered_set_hook.hpp>
@@ -100,7 +99,7 @@ struct WidgetSession
 	static void Attach(Set &dest, Set &&src) noexcept;
 	void Attach(WidgetSession &&other) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	WidgetSession *GetChild(const char *child_id, bool create) noexcept;
 };
 
@@ -198,7 +197,7 @@ struct RealmSession
 
 	void Expire(Expiry now) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	WidgetSession *GetWidget(const char *widget_id, bool create) noexcept;
 };
 
@@ -271,10 +270,10 @@ struct Session {
 	 * Calculates the score for purging the session: higher score
 	 * means more likely to be purged.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	unsigned GetPurgeScore() const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool HasUser() const noexcept {
 		for (auto &realm : realms)
 			if (realm.user != nullptr)
@@ -289,7 +288,7 @@ struct Session {
 	/**
 	 * Does this session have the specified "attach" value?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsAttach(ConstBuffer<std::byte> other) const noexcept;
 
 	void Attach(Session &&other) noexcept;
@@ -308,7 +307,7 @@ struct Session {
 
 	void Expire(Expiry now) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	RealmSession *GetRealm(const char *realm) noexcept;
 };
 

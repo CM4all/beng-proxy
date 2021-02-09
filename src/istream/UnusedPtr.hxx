@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 #include <utility>
 
 #include <assert.h>
@@ -103,7 +101,7 @@ public:
 			Close(*s);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	off_t GetAvailable(bool partial) const noexcept;
 
 	/**

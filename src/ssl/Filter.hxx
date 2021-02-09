@@ -33,7 +33,6 @@
 #pragma once
 
 #include "ssl/Unique.hxx"
-#include "util/Compiler.h"
 
 class SslFactory;
 class SslFilter;
@@ -67,18 +66,18 @@ ssl_filter_get_handler(SslFilter &ssl) noexcept;
  * given #SocketFilter is a different type (or is nullptr), this
  * function returns nullptr.
  */
-gcc_pure
+[[gnu::pure]]
 const SslFilter *
 ssl_filter_cast_from(const SocketFilter *socket_filter) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 ConstBuffer<unsigned char>
 ssl_filter_get_alpn_selected(const SslFilter &ssl) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 const char *
 ssl_filter_get_peer_subject(const SslFilter &ssl) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 const char *
 ssl_filter_get_peer_issuer_subject(const SslFilter &ssl) noexcept;

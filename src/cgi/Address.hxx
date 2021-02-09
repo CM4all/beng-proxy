@@ -36,8 +36,6 @@
 #include "cluster/AddressList.hxx"
 #include "adata/ExpandableStringList.hxx"
 
-#include "util/Compiler.h"
-
 class AllocatorPtr;
 class MatchInfo;
 
@@ -112,7 +110,7 @@ struct CgiAddress {
 
 	CgiAddress &operator=(const CgiAddress &) = delete;
 
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetURI(AllocatorPtr alloc) const;
 
 	/**
@@ -120,20 +118,20 @@ struct CgiAddress {
 	 * key in a hash table.  The string will be allocated by the specified
 	 * pool.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetId(AllocatorPtr alloc) const;
 
 	void Check() const {
 		options.Check();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsSameProgram(const CgiAddress &other) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsSameBase(const CgiAddress &other) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool HasQueryString() const {
 		return query_string != nullptr && *query_string != 0;
 	}
@@ -145,7 +143,7 @@ struct CgiAddress {
 
 	CgiAddress *Clone(AllocatorPtr alloc) const;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsValidBase() const;
 
 	const char *AutoBase(AllocatorPtr alloc, const char *request_uri) const;
@@ -164,7 +162,7 @@ struct CgiAddress {
 	 * Check if this instance is relative to the base, and return the
 	 * relative part.  Returns nullptr on mismatch.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	StringView RelativeTo(const CgiAddress &base) const;
 
 	/**
@@ -172,7 +170,7 @@ struct CgiAddress {
 	 * apply_base.Apply(relative).RelativeTo(*this). It is cheaper
 	 * because it needs copy only a small part of the object.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	StringView RelativeToApplied(AllocatorPtr alloc,
 				     const CgiAddress &apply_base,
 				     StringView relative) const;
@@ -180,7 +178,7 @@ struct CgiAddress {
 	/**
 	 * Does this address need to be expanded with Expand()?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsExpandable() const {
 		return options.IsExpandable() ||
 			expand_path ||

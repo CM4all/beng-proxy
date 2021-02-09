@@ -32,11 +32,9 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 #include <openssl/ssl.h>
 
-gcc_pure
+[[gnu::pure]]
 static inline unsigned
 GetSessionCacheNumber(SSL_CTX &ssl_ctx) noexcept
 {

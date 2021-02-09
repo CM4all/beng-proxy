@@ -144,7 +144,7 @@ struct LbClusterConfig {
 	 * Returns the member index of the node with the specified
 	 * jvm_route value, or -1 if not found.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	int FindJVMRoute(const char *jvm_route) const noexcept;
 
 	bool HasZeroConf() const noexcept {

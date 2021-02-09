@@ -34,7 +34,6 @@
 
 #include "cluster/BalancerMap.hxx"
 #include "event/Chrono.hxx"
-#include "util/Compiler.h"
 
 struct AddressList;
 class EventLoop;
@@ -63,7 +62,7 @@ public:
 			       FailureManager &_failure_manager) noexcept
 		:stock(_stock), failure_manager(_failure_manager) {}
 
-	gcc_pure
+	[[gnu::pure]]
 	EventLoop &GetEventLoop() noexcept;
 
 	FailureManager &GetFailureManager() {

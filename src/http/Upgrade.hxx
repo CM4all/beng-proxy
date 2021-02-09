@@ -37,12 +37,11 @@
 #pragma once
 
 #include "http/Status.h"
-#include "util/Compiler.h"
 
 class StringMap;
 class HttpHeaders;
 
-gcc_pure
+[[gnu::pure]]
 static inline bool
 http_is_upgrade(http_status_t status) noexcept
 {
@@ -52,25 +51,25 @@ http_is_upgrade(http_status_t status) noexcept
 /**
  * Does the "Upgrade" header exist?
  */
-gcc_pure
+[[gnu::pure]]
 bool
 http_is_upgrade(const StringMap &headers) noexcept;
 
 /**
  * Does the "Upgrade" header exist?
  */
-gcc_pure
+[[gnu::pure]]
 bool
 http_is_upgrade(const HttpHeaders &headers) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 static inline bool
 http_is_upgrade(http_status_t status, const StringMap &headers) noexcept
 {
 	return http_is_upgrade(status) && http_is_upgrade(headers);
 }
 
-gcc_pure
+[[gnu::pure]]
 static inline bool
 http_is_upgrade(http_status_t status, const HttpHeaders &headers) noexcept
 {

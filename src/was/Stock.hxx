@@ -36,7 +36,6 @@
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
 #include "net/SocketDescriptor.hxx"
-#include "util/Compiler.h"
 
 #include <stdint.h>
 
@@ -96,7 +95,7 @@ was_stock_item_set_uri(StockItem &item, const char *uri) noexcept;
 /**
  * Returns the socket descriptor of the specified stock item.
  */
-gcc_pure
+[[gnu::pure]]
 const WasProcess &
 was_stock_item_get(const StockItem &item) noexcept;
 

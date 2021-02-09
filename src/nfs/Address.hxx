@@ -34,8 +34,6 @@
 
 #include "util/ConstBuffer.hxx"
 
-#include "util/Compiler.h"
-
 class AllocatorPtr;
 class MatchInfo;
 
@@ -76,12 +74,12 @@ struct NfsAddress {
 	 */
 	void Check() const;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool HasQueryString() const {
 		return false;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsValidBase() const;
 
 	NfsAddress *SaveBase(AllocatorPtr alloc, const char *suffix) const;
@@ -91,7 +89,7 @@ struct NfsAddress {
 	/**
 	 * Does this address need to be expanded with Expand()?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsExpandable() const {
 		return expand_path;
 	}

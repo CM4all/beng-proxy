@@ -37,14 +37,13 @@
 #include "StickyMode.hxx"
 #include "RoundRobinBalancer.cxx"
 #include "net/SocketAddress.hxx"
-#include "util/Compiler.h"
 #include "util/Expiry.hxx"
 
 /**
  * Pick an address using the given #StickyMode.
  */
 template<typename List>
-gcc_pure
+[[gnu::pure]]
 const auto &
 PickGeneric(Expiry now, StickyMode sticky_mode,
 	    const List &list, sticky_hash_t sticky_hash) noexcept

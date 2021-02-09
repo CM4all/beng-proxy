@@ -33,7 +33,6 @@
 #pragma once
 
 #include "StickyHash.hxx"
-#include "util/Compiler.h"
 #include "util/Expiry.hxx"
 
 #include <iterator>
@@ -45,7 +44,7 @@
  * that address is failed, pick the next one.
  */
 template<typename List>
-gcc_pure
+[[gnu::pure]]
 const auto &
 PickModulo(Expiry now, const List &list, sticky_hash_t sticky_hash) noexcept
 {

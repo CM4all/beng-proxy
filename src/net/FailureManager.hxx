@@ -33,7 +33,6 @@
 #pragma once
 
 #include "FailureStatus.hxx"
-#include "util/Compiler.h"
 
 #include <boost/intrusive/unordered_set.hpp>
 
@@ -49,19 +48,19 @@ class FailureManager {
 	class Failure;
 
 	struct Hash {
-		gcc_pure
+		[[gnu::pure]]
 		size_t operator()(const SocketAddress a) const noexcept;
 
-		gcc_pure
+		[[gnu::pure]]
 		size_t operator()(const Failure &f) const noexcept;
 	};
 
 	struct Equal {
-		gcc_pure
+		[[gnu::pure]]
 		bool operator()(const SocketAddress a,
 				const SocketAddress b) const noexcept;
 
-		gcc_pure
+		[[gnu::pure]]
 		bool operator()(const SocketAddress a,
 				const Failure &b) const noexcept;
 	};
@@ -95,10 +94,10 @@ public:
 
 	SocketAddress GetAddress(const FailureInfo &info) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	FailureStatus Get(Expiry now, SocketAddress address) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool Check(Expiry now, SocketAddress address,
 		   bool allow_fade=false) const noexcept;
 };

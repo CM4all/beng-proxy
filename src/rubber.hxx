@@ -33,7 +33,6 @@
 #pragma once
 
 #include "system/LargeObject.hxx"
-#include "util/Compiler.h"
 #include "util/IntrusiveList.hxx"
 
 #include <array>
@@ -71,7 +70,7 @@ class Rubber {
 		1024 * 1024, 64 * 1024, 32 * 1024, 16 * 1024, 8192, 4096, 2048, 1024, 64, 0
 	};
 
-	gcc_const
+	[[gnu::const]]
 	static unsigned LookupHoleThreshold(size_t size) noexcept {
 		for (unsigned i = 0;; ++i)
 			if (size >= HOLE_THRESHOLDS[i])
@@ -118,7 +117,7 @@ public:
 	/**
 	 * Returns the maximum total size of all allocations.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetMaxSize() const noexcept;
 
 	/**
@@ -132,10 +131,10 @@ public:
 	 * Returns the memory consumed by this object, not including the
 	 * allocation table.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetBruttoSize() const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	AllocatorStats GetStats() const noexcept;
 
 	void Compress() noexcept;
@@ -165,30 +164,30 @@ public:
 	 * returned value may be a bit bigger than the size that was
 	 * passed to Add().
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetSizeOf(unsigned id) const noexcept;
 
 	/**
 	 * Return a writable pointer to the object.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	void *Write(unsigned id) noexcept;
 
 	/**
 	 * Return a read-only pointer to the object.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	const void *Read(unsigned id) const noexcept;
 
 private:
-	gcc_pure
+	[[gnu::pure]]
 	void *WriteAt(size_t offset) noexcept {
 		assert(offset <= table.size());
 
 		return (uint8_t *)table.get() + offset;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	const void *ReadAt(size_t offset) const noexcept {
 		assert(offset <= table.size());
 
@@ -203,17 +202,17 @@ private:
 		return OffsetOf(&hole);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	static size_t GetTotalHoleSize(const HoleList &holes) noexcept;
 
 #ifndef NDEBUG
 	size_t GetTotalHoleSize() const noexcept;
 #endif
 
-	gcc_pure
+	[[gnu::pure]]
 	static Hole *FindHole(HoleList &holes, size_t size) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	Hole *FindHole(size_t size) noexcept;
 
 	void AddToHoleList(Hole &hole) noexcept;
@@ -249,7 +248,7 @@ private:
 	 */
 	bool MoveLast(size_t max_object_size) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	Hole *FindHoleBetween(RubberObject &a, RubberObject &b) noexcept;
 
 	/**

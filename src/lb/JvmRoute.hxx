@@ -37,7 +37,6 @@
 #pragma once
 
 #include "cluster/StickyHash.hxx"
-#include "util/Compiler.h"
 
 class StringMap;
 struct LbClusterConfig;
@@ -45,7 +44,7 @@ struct LbClusterConfig;
 /**
  * Extract a jvm_route cookie from the request headers.
  */
-gcc_pure
+[[gnu::pure]]
 sticky_hash_t
 lb_jvm_route_get(const StringMap &request_headers,
 		 const LbClusterConfig &cluster);

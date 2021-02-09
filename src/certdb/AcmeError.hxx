@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 #include <boost/json/fwd.hpp>
 
 #include <stdexcept>
@@ -50,10 +48,10 @@ public:
 	}
 };
 
-gcc_pure
+[[gnu::pure]]
 bool
 IsAcmeErrorType(std::exception_ptr ep, const char *type) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 bool
 IsAcmeUnauthorizedError(std::exception_ptr ep) noexcept;

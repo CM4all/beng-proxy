@@ -138,7 +138,7 @@ public:
 		return type == Type::HTTP;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsAnyHttp() const noexcept {
 		return IsHttp() || type == Type::LHTTP;
 	}
@@ -150,101 +150,101 @@ public:
 		return type == Type::CGI || type == Type::FASTCGI || type == Type::WAS;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	const FileAddress &GetFile() const noexcept {
 		assert(type == Type::LOCAL);
 
 		return *u.file;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	FileAddress &GetFile() noexcept {
 		assert(type == Type::LOCAL);
 
 		return *const_cast<FileAddress *>(u.file);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	const HttpAddress &GetHttp() const noexcept {
 		assert(type == Type::HTTP);
 
 		return *u.http;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	HttpAddress &GetHttp() noexcept {
 		assert(type == Type::HTTP);
 
 		return *const_cast<HttpAddress *>(u.http);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	const LhttpAddress &GetLhttp() const noexcept {
 		assert(type == Type::LHTTP);
 
 		return *u.lhttp;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	LhttpAddress &GetLhttp() noexcept {
 		assert(type == Type::LHTTP);
 
 		return *const_cast<LhttpAddress *>(u.lhttp);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	const NfsAddress &GetNfs() const noexcept {
 		assert(type == Type::NFS);
 
 		return *u.nfs;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	NfsAddress &GetNfs() noexcept {
 		assert(type == Type::NFS);
 
 		return *const_cast<NfsAddress *>(u.nfs);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	const CgiAddress &GetCgi() const noexcept {
 		assert(IsCgiAlike() || type == Type::PIPE);
 
 		return *u.cgi;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	CgiAddress &GetCgi() noexcept {
 		assert(IsCgiAlike() || type == Type::PIPE);
 
 		return *const_cast<CgiAddress *>(u.cgi);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool HasQueryString() const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsValidBase() const noexcept;
 
 	/**
 	 * Determine the URI path.  May return nullptr if unknown or not
 	 * applicable.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetHostAndPort() const noexcept;
 
 	/**
 	 * Determine the URI path.  May return nullptr if unknown or not
 	 * applicable.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetUriPath() const noexcept;
 
 	/**
 	 * Generates a string identifying the address.  This can be used as a
 	 * key in a hash table.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetId(AllocatorPtr alloc) const noexcept;
 
 	void CopyFrom(AllocatorPtr alloc, const ResourceAddress &src) noexcept;
@@ -307,7 +307,7 @@ public:
 	 * @return nullptr if the suffix does not match, or if this address type
 	 * cannot have a base address
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	ResourceAddress SaveBase(AllocatorPtr alloc,
 				 const char *suffix) const noexcept;
 
@@ -320,7 +320,7 @@ public:
 	 * @param suffix the suffix to be addded to #src
 	 * @return nullptr if this address type cannot have a base address
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	ResourceAddress LoadBase(AllocatorPtr alloc,
 				 const char *suffix) const noexcept;
 
@@ -344,10 +344,10 @@ public:
 		       const char *uri, const char *base,
 		       bool unsafe_base, bool expandable);
 
-	gcc_pure
+	[[gnu::pure]]
 	ResourceAddress Apply(AllocatorPtr alloc, StringView relative) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	StringView RelativeTo(const ResourceAddress &base) const noexcept;
 
 	/**
@@ -355,7 +355,7 @@ public:
 	 * apply_base.Apply(relative).RelativeTo(*this). It is cheaper
 	 * because it needs copy only a small part of the object.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	StringView RelativeToApplied(AllocatorPtr alloc,
 				     const ResourceAddress &apply_base,
 				     StringView relative) const;
@@ -363,7 +363,7 @@ public:
 	/**
 	 * Does this address need to be expanded with Expand()?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsExpandable() const noexcept;
 
 	/**

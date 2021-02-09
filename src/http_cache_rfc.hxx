@@ -39,7 +39,6 @@
 
 #include "http/Method.h"
 #include "http/Status.h"
-#include "util/Compiler.h"
 
 #include <sys/types.h> /* for off_t */
 
@@ -62,11 +61,11 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
 			    bool obey_no_cache,
 			    bool has_request_body) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 bool
 http_cache_vary_fits(const StringMap &vary, const StringMap &headers) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 bool
 http_cache_vary_fits(const StringMap *vary, const StringMap &headers) noexcept;
 

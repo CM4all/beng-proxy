@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 class Expiry;
 class SocketAddress;
 class FailureManager;
@@ -46,10 +44,10 @@ public:
 	explicit constexpr FailureManagerProxy(FailureManager &_fm) noexcept
 		:failure_manager(_fm) {}
 
-	gcc_pure
+	[[gnu::pure]]
 	ReferencedFailureInfo &MakeFailureInfo(SocketAddress address) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool Check(const Expiry now, SocketAddress address,
 		   bool allow_fade) const noexcept;
 };

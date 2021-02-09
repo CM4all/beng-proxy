@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 #include <utility>
 
 #include <stddef.h>
@@ -60,7 +58,7 @@ public:
 
 	bool Add(struct pool &pool, const char *a0, StringView b) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	std::pair<const SubstNode *, const char *> FindFirstChar(const char *data,
 								 size_t length) const noexcept;
 };

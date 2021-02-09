@@ -36,12 +36,10 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 class AllocatorPtr;
 struct StringView;
 
-gcc_pure
+[[gnu::pure]]
 const char *
 uri_escape_dup(AllocatorPtr alloc, StringView src,
                char escape_char='%');

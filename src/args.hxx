@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 class AllocatorPtr;
 class StringMap;
 struct StringView;
@@ -41,7 +39,7 @@ struct StringView;
 /**
  * Parse the argument list in an URI after the semicolon.
  */
-gcc_pure
+[[gnu::pure]]
 StringMap
 args_parse(AllocatorPtr alloc, StringView p) noexcept;
 
@@ -52,7 +50,7 @@ args_parse(AllocatorPtr alloc, StringView p) noexcept;
  * @param replace_key add, replace or remove an entry in the args map
  * @param replace_value the new value or nullptr if the key should be removed
  */
-gcc_pure
+[[gnu::pure]]
 const char *
 args_format_n(AllocatorPtr alloc, const StringMap *args,
 	      const char *replace_key, StringView replace_value,
@@ -60,7 +58,7 @@ args_format_n(AllocatorPtr alloc, const StringMap *args,
 	      const char *replace_key3, StringView replace_value3,
 	      const char *remove_key) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 const char *
 args_format(AllocatorPtr alloc, const StringMap *args,
 	    const char *replace_key, StringView replace_value,

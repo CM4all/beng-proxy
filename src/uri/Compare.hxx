@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 struct StringView;
 
 /**
@@ -43,6 +41,6 @@ struct StringView;
  * @return the beginning of the suffix within #uri or nullptr on
  * mismatch
  */
-gcc_pure gcc_nonnull_all
+[[gnu::pure]]
 const char *
 UriFindUnescapedSuffix(StringView uri, StringView suffix) noexcept;

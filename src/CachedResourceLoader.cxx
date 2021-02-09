@@ -44,10 +44,10 @@ CachedResourceLoader::SendRequest(struct pool &pool,
 				  const char *site_name,
 				  http_method_t method,
 				  const ResourceAddress &address,
-				  gcc_unused http_status_t status,
+				  http_status_t,
 				  StringMap &&headers,
 				  UnusedIstreamPtr body,
-				  gcc_unused const char *body_etag,
+				  const char *,
 				  HttpResponseHandler &handler,
 				  CancellablePointer &cancel_ptr) noexcept
 {

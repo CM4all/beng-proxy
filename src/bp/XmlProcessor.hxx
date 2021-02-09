@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 /** options for processor_new() */
 enum processor_options {
 	/** rewrite URLs */
@@ -72,7 +70,7 @@ class UnusedIstreamPtr;
 class Widget;
 class StringMap;
 
-gcc_pure
+[[gnu::pure]]
 bool
 processable(const StringMap &headers);
 

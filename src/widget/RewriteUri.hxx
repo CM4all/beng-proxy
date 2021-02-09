@@ -36,8 +36,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 struct pool;
 struct WidgetContext;
 template<typename T> class SharedPoolPtr;
@@ -59,7 +57,7 @@ enum class RewriteUriMode {
 	RESPONSE,
 };
 
-gcc_pure
+[[gnu::pure]]
 RewriteUriMode
 parse_uri_mode(StringView s) noexcept;
 

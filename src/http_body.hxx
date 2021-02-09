@@ -36,8 +36,6 @@
 #include "istream/istream.hxx"
 #include "istream/Bucket.hxx"
 
-#include "util/Compiler.h"
-
 #include <assert.h>
 #include <stddef.h>
 
@@ -138,7 +136,7 @@ public:
 	}
 
 	template<typename Socket>
-	gcc_pure
+	[[gnu::pure]]
 	off_t GetAvailable(const Socket &s, bool partial) const {
 		assert(rest != REST_EOF_CHUNK);
 
@@ -199,7 +197,7 @@ public:
 	 * the full response.
 	 */
 	template<typename Socket>
-	gcc_pure
+	[[gnu::pure]]
 	bool IsSocketDone(const Socket &s) const {
 		if (IsChunked())
 			return end_seen;
@@ -241,7 +239,7 @@ public:
 	}
 
 private:
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetMaxRead(size_t length) const;
 
 	void Consumed(size_t nbytes);

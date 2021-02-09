@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 constexpr unsigned char alpn_http_1_1[] = {
 	8, 'h', 't', 't', 'p', '/', '1', '.', '1',
 };

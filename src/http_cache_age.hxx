@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 #include <chrono>
 
 class StringMap;
@@ -42,7 +40,7 @@ class StringMap;
  * Calculate the "expires" value for the new cache item, based on the
  * "Expires" response header.
  */
-gcc_pure
+[[gnu::pure]]
 std::chrono::steady_clock::time_point
 http_cache_calc_expires(std::chrono::steady_clock::time_point steady_now,
 			std::chrono::system_clock::time_point system_now,

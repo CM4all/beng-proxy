@@ -109,7 +109,7 @@ struct HttpAddress {
 	 * Check if this instance is relative to the base, and return the
 	 * relative part.  Returns nullptr if both URIs do not match.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	StringView RelativeTo(const HttpAddress &base) const;
 
 	/**
@@ -131,7 +131,7 @@ struct HttpAddress {
 	gcc_malloc
 	char *GetAbsoluteURI(AllocatorPtr alloc) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool HasQueryString() const;
 
 	/**
@@ -150,7 +150,7 @@ struct HttpAddress {
 	HttpAddress *InsertArgs(AllocatorPtr alloc,
 				StringView args, StringView path_info) const;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsValidBase() const;
 
 	gcc_malloc
@@ -164,7 +164,7 @@ struct HttpAddress {
 	/**
 	 * Does this address need to be expanded with http_address_expand()?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsExpandable() const {
 		return expand_path;
 	}
@@ -174,7 +174,7 @@ struct HttpAddress {
 	 */
 	void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
 
-	gcc_pure
+	[[gnu::pure]]
 	int GetDefaultPort() const {
 		return ssl ? 443 : 80;
 	}

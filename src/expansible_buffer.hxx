@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 #include <stddef.h>
 
 struct pool;
@@ -94,13 +92,13 @@ public:
 
 	bool Set(StringView p) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	ConstBuffer<void> Read() const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	const char *ReadString() noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	StringView ReadStringView() const noexcept;
 
 	void *Dup(struct pool &_pool) const noexcept;

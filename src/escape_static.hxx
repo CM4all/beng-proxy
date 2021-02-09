@@ -36,8 +36,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 #include <stddef.h>
 
 struct escape_class;
@@ -47,10 +45,10 @@ struct StringView;
  * Unescape the given string into a global static buffer.  Returns
  * NULL when the string is too long for the buffer.
  */
-gcc_pure
+[[gnu::pure]]
 const char *
 unescape_static(const struct escape_class *cls, StringView p);
 
-gcc_pure
+[[gnu::pure]]
 const char *
 escape_static(const struct escape_class *cls, StringView p);

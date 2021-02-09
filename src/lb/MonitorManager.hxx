@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 #include <map>
 
 struct LbMonitorConfig;
@@ -61,6 +59,6 @@ public:
 
 	void clear();
 
-	gcc_pure
+	[[gnu::pure]]
 	LbMonitorStock &operator[](const LbMonitorConfig &monitor_config);
 };

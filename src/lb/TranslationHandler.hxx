@@ -35,7 +35,6 @@
 #include "Goto.hxx"
 #include "translation/Stock.hxx"
 #include "util/StringLess.hxx"
-#include "util/Compiler.h"
 
 #include <map>
 #include <memory>
@@ -63,7 +62,7 @@ public:
 			     const LbTranslationHandlerConfig &_config);
 	~LbTranslationHandler() noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetAllocatedCacheMemory() const noexcept;
 
 	void FlushCache();

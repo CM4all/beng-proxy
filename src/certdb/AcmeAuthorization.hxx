@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 #include <forward_list>
 #include <string>
 #include <string_view>
@@ -55,7 +53,7 @@ struct AcmeAuthorization {
 
 	bool wildcard;
 
-	gcc_pure
+	[[gnu::pure]]
 	const AcmeChallenge *FindChallengeByType(const char *type) const noexcept;
 
 	static Status ParseStatus(std::string_view s);

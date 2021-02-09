@@ -33,7 +33,6 @@
 #pragma once
 
 #include "util/StringBuffer.hxx"
-#include "util/Compiler.h"
 
 #include <array>
 #include <algorithm>
@@ -47,7 +46,7 @@ class SessionId {
 	std::array<uint64_t, 2> data;
 
 public:
-	gcc_pure
+	[[gnu::pure]]
 	bool IsDefined() const noexcept {
 		return std::any_of(data.begin(), data.end(), [](auto i){
 			return i != 0;
@@ -66,17 +65,17 @@ public:
 	 */
 	void SetClusterNode(unsigned cluster_size, unsigned cluster_node) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool operator==(const SessionId &other) const noexcept {
 		return std::equal(data.begin(), data.end(), other.data.begin());
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool operator!=(const SessionId &other) const noexcept {
 		return !(*this == other);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	std::size_t Hash() const noexcept {
 		return data[0];
 	}
@@ -85,7 +84,7 @@ public:
 	 * Returns a hash that can be used to determine the cluster node
 	 * by calculating the modulo.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	auto GetClusterHash() const noexcept {
 		return data.back();
 	}
@@ -97,6 +96,6 @@ public:
 	 */
 	bool Parse(const char *p) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	StringBuffer<sizeof(data) * 2 + 1> Format() const noexcept;
 };

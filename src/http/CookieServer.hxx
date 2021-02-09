@@ -36,8 +36,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 class AllocatorPtr;
 class StringMap;
 
@@ -45,7 +43,7 @@ class StringMap;
  * Parse a Cookie request header and store all cookies in the
  * specified strmap.
  */
-gcc_pure
+[[gnu::pure]]
 StringMap
 cookie_map_parse(AllocatorPtr alloc, const char *p) noexcept;
 

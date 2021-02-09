@@ -130,7 +130,7 @@ struct RubberTable {
 	 * Calculate the size [in bytes] of a #RubberTable struct for the
 	 * given number of entries.
 	 */
-	gcc_const
+	[[gnu::const]]
 	static size_t RequiredSize(unsigned n) noexcept {
 		assert(n > 0);
 
@@ -142,7 +142,7 @@ struct RubberTable {
 	 * Calculate the capacity [in number of entries] of a #RubberTable
 	 * struct for the given size [in bytes].
 	 */
-	gcc_const
+	[[gnu::const]]
 	static unsigned Capacity(size_t size) noexcept {
 		const RubberTable *dummy = nullptr;
 		assert(size >= sizeof(*dummy));
@@ -154,14 +154,14 @@ struct RubberTable {
 	 * Returns the allocated size of the table object.  At the same time,
 	 * this is the offset of the first allocation.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetSize() const noexcept {
 		assert(entries[0].offset == 0);
 
 		return entries[0].size;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetBruttoSize() const noexcept {
 		return GetTail().GetEndOffset() - GetSize();
 	}
@@ -176,17 +176,17 @@ struct RubberTable {
 			: nullptr;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	RubberObject &GetTail() noexcept {
 		return entries[entries[0].previous];
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	const RubberObject &GetTail() const noexcept {
 		return entries[entries[0].previous];
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetTailOffset() const noexcept {
 		const auto &tail = GetTail();
 		assert(tail.next == 0);
@@ -213,10 +213,10 @@ struct RubberTable {
 
 	size_t Remove(unsigned id) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetSizeOf(unsigned id) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetOffsetOf(unsigned id) const noexcept;
 
 	size_t Shrink(unsigned id, size_t new_size) noexcept;
@@ -224,7 +224,7 @@ struct RubberTable {
 
 static constexpr size_t RUBBER_ALIGN = 0x20;
 
-gcc_const
+[[gnu::const]]
 static inline void *
 align_page_size_ptr(void *p) noexcept
 {
@@ -466,7 +466,7 @@ Rubber::GetTotalHoleSize(const HoleList &holes) noexcept
 	return result;
 }
 
-gcc_pure
+[[gnu::pure]]
 size_t
 Rubber::GetTotalHoleSize() const noexcept
 {

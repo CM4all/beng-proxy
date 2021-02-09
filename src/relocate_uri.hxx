@@ -33,12 +33,10 @@
 #ifndef BENG_PROXY_RELOCATE_HXX
 #define BENG_PROXY_RELOCATE_HXX
 
-#include "util/Compiler.h"
-
 struct StringView;
 class AllocatorPtr;
 
-gcc_pure
+[[gnu::pure]]
 const char *
 RelocateUri(AllocatorPtr alloc, const char *uri,
             const char *internal_host, StringView internal_path,

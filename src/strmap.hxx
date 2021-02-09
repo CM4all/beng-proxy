@@ -59,21 +59,21 @@ class StringMap {
 		Item &operator=(const Item &) = delete;
 
 		class Compare {
-			gcc_pure
+			[[gnu::pure]]
 			bool Less(const char *a, const char *b) const noexcept;
 
 		public:
-			gcc_pure
+			[[gnu::pure]]
 			bool operator()(const char *a, const Item &b) const noexcept {
 				return Less(a, b.key);
 			}
 
-			gcc_pure
+			[[gnu::pure]]
 			bool operator()(const Item &a, const char *b) const noexcept {
 				return Less(a.key, b);
 			}
 
-			gcc_pure
+			[[gnu::pure]]
 			bool operator()(const Item &a, const Item &b) const noexcept {
 				return Less(a.key, b.key);
 			}
@@ -147,7 +147,7 @@ public:
 		return map.end();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsEmpty() const noexcept {
 		return map.empty();
 	}
@@ -171,15 +171,15 @@ public:
 	void SecureSet(AllocatorPtr alloc,
 		       const char *key, const char *value) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	const char *Get(const char *key) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool Contains(const char *key) const noexcept {
 		return Get(key) != nullptr;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	std::pair<const_iterator, const_iterator> EqualRange(const char *key) const noexcept;
 
 	void CopyFrom(AllocatorPtr alloc,
@@ -221,7 +221,7 @@ strmap_dup(struct pool *pool, const StringMap *src) noexcept;
  * This variation of StringMap::Get() allows the caller to pass
  * map=nullptr.
  */
-gcc_pure
+[[gnu::pure]]
 static inline const char *
 strmap_get_checked(const StringMap *map, const char *key) noexcept
 {

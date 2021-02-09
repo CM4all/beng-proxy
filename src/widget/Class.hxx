@@ -33,7 +33,6 @@
 #pragma once
 
 #include "View.hxx"
-#include "util/Compiler.h"
 #include "util/StringSet.hxx"
 
 /**
@@ -138,12 +137,12 @@ struct WidgetClass {
 		return widget_view_lookup(&views, name);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool HasGroups() const noexcept {
 		return !container_groups.IsEmpty();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool MayEmbed(const WidgetClass &child) const noexcept {
 		return container_groups.IsEmpty() ||
 			(child.group != nullptr &&

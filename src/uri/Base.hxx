@@ -37,8 +37,6 @@
 #ifndef BENG_PROXY_URI_BASE_HXX
 #define BENG_PROXY_URI_BASE_HXX
 
-#include "util/Compiler.h"
-
 #include <stddef.h>
 
 struct StringView;
@@ -53,14 +51,14 @@ struct StringView;
  * @param base the base URI, as given by the translation server,
  * stored in the cache item
  */
-gcc_pure
+[[gnu::pure]]
 const char *
 base_tail(const char *uri, StringView base) noexcept;
 
 /**
  * Similar to base_tail(), but assert that there is a base match.
  */
-gcc_pure
+[[gnu::pure]]
 const char *
 require_base_tail(const char *uri, StringView base) noexcept;
 
@@ -69,7 +67,7 @@ require_base_tail(const char *uri, StringView base) noexcept;
  *
  * @return (size_t)-1 on mismatch
  */
-gcc_pure
+[[gnu::pure]]
 size_t
 base_string(StringView uri, StringView tail) noexcept;
 
@@ -77,7 +75,7 @@ base_string(StringView uri, StringView tail) noexcept;
  * Is the given string a valid base string?  That is, does it end with
  * a slash?
  */
-gcc_pure
+[[gnu::pure]]
 bool
 is_base(StringView uri) noexcept;
 

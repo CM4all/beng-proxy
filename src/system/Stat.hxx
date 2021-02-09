@@ -44,7 +44,7 @@ ToStatxTimestamp(const struct timespec &src) noexcept
 	return dest;
 }
 
-gcc_const
+[[gnu::const]]
 static struct statx
 ToStatx(const struct stat &st) noexcept
 {

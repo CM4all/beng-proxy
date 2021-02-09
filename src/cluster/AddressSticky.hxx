@@ -34,10 +34,8 @@
 
 #include "StickyHash.hxx"
 
-#include "util/Compiler.h"
-
 class SocketAddress;
 
-gcc_pure
+[[gnu::pure]]
 sticky_hash_t
 socket_address_sticky(SocketAddress address) noexcept;

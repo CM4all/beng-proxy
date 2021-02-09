@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "util/Compiler.h"
+#pragma once
 
 struct pool;
 
@@ -44,14 +44,14 @@ struct WidgetRef {
 
 static constexpr char WIDGET_REF_SEPARATOR = ':';
 
-gcc_pure
+[[gnu::pure]]
 const WidgetRef *
 widget_ref_parse(struct pool *pool, const char *p);
 
 /**
  * Is the specified "inner" reference inside or the same as "outer"?
  */
-gcc_pure
+[[gnu::pure]]
 bool
 widget_ref_includes(const WidgetRef *outer,
 		    const WidgetRef *inner);

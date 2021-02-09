@@ -71,7 +71,7 @@ public:
 			:Base(std::move(base)), balancer(_balancer),
 			 sticky_mode(_sticky_mode) {}
 
-		gcc_pure
+		[[gnu::pure]]
 		auto &GetRoundRobinBalancer() const noexcept {
 			return balancer.MakeRoundRobinBalancer(GetHashKey(*this));
 		}

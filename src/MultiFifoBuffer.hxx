@@ -33,7 +33,6 @@
 #pragma once
 
 #include "DefaultFifoBuffer.hxx"
-#include "util/Compiler.h"
 
 #include <list>
 
@@ -52,14 +51,14 @@ public:
 	MultiFifoBuffer(MultiFifoBuffer &&) noexcept = default;
 	MultiFifoBuffer &operator=(MultiFifoBuffer &&) noexcept = default;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool empty() const noexcept {
 		return buffers.empty();
 	}
 
 	void Push(ConstBuffer<uint8_t> src) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetAvailable() const noexcept;
 
 	ConstBuffer<uint8_t> Read() const noexcept;

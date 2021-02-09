@@ -33,7 +33,6 @@
 #pragma once
 
 #include "SliceAllocation.hxx"
-#include "util/Compiler.h"
 #include "util/IntrusiveList.hxx"
 
 #include <cstddef>
@@ -104,7 +103,7 @@ public:
 
 	void AddStats(AllocatorStats &stats, const AreaList &list) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	AllocatorStats GetStats() const noexcept;
 
 	void Compress() noexcept;
@@ -113,7 +112,7 @@ public:
 	void Free(SliceArea &area, void *p) noexcept;
 
 private:
-	gcc_pure
+	[[gnu::pure]]
 	SliceArea *FindNonFullArea() noexcept;
 
 	SliceArea &MakeNonFullArea() noexcept;

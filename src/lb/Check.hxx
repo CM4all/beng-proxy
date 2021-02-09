@@ -33,7 +33,6 @@
 #pragma once
 
 #include "net/MaskedSocketAddress.hxx"
-#include "util/Compiler.h"
 
 #include <algorithm>
 #include <string>
@@ -47,7 +46,7 @@ struct LbHttpCheckConfig {
 
 	std::forward_list<MaskedSocketAddress> client_addresses;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool MatchClientAddress(SocketAddress address) const noexcept {
 		if (client_addresses.empty())
 			return true;
@@ -58,13 +57,13 @@ struct LbHttpCheckConfig {
 				   });
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool Match(const char *request_uri,
 		   const char *request_host) const noexcept {
 		return request_host != nullptr &&
 			request_host == host && request_uri == uri;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool Check() const noexcept;
 };

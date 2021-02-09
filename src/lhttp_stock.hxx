@@ -34,8 +34,6 @@
 
 #include "io/FdType.hxx"
 
-#include "util/Compiler.h"
-
 struct pool;
 struct ChildErrorLogOptions;
 class LhttpStock;
@@ -79,11 +77,11 @@ lhttp_stock_get(LhttpStock *lhttp_stock,
 /**
  * Returns the socket descriptor of the specified stock item.
  */
-gcc_pure
+[[gnu::pure]]
 SocketDescriptor
 lhttp_stock_item_get_socket(const StockItem &item) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 FdType
 lhttp_stock_item_get_type(const StockItem &item) noexcept;
 

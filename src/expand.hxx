@@ -35,8 +35,6 @@
 
 #include "util/RuntimeError.hxx"
 
-#include "util/Compiler.h"
-
 #include <stdexcept>
 
 #include <assert.h>

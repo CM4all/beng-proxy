@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 #include <nghttp2/nghttp2.h>
 
 #include <algorithm>
@@ -83,7 +81,7 @@ public:
 		return session;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	void *GetStreamUserData(int32_t stream_id) const noexcept {
 		return nghttp2_session_get_stream_user_data(session, stream_id);
 	}

@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 #include <utility>
 
 class Stopwatch;
@@ -86,7 +84,7 @@ public:
 void
 stopwatch_enable(UniqueFileDescriptor fd) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 bool
 stopwatch_is_enabled() noexcept;
 

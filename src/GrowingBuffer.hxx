@@ -33,7 +33,6 @@
 #pragma once
 
 #include "DefaultChunkAllocator.hxx"
-#include "util/Compiler.h"
 #include "util/ConstBuffer.hxx"
 
 #include <utility>
@@ -196,7 +195,7 @@ public:
 	/**
 	 * Returns the total size of the buffer.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetSize() const noexcept;
 
 	/**
@@ -205,7 +204,7 @@ public:
 	 */
 	WritableBuffer<void> Dup(struct pool &pool) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	ConstBuffer<void> Read() const noexcept;
 
 	/**
@@ -272,13 +271,13 @@ class GrowingBufferReader {
 public:
 	explicit GrowingBufferReader(GrowingBuffer &&gb) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsEOF() const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	size_t Available() const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	ConstBuffer<void> Read() const noexcept;
 
 	/**

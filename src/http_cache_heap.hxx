@@ -36,7 +36,6 @@
 #include "SlicePool.hxx"
 #include "rubber.hxx"
 #include "http/Status.h"
-#include "util/Compiler.h"
 
 #include <stddef.h>
 
@@ -70,7 +69,7 @@ public:
 
 	void ForkCow(bool inherit) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	AllocatorStats GetStats() const noexcept;
 
 	HttpCacheDocument *Get(const char *uri,

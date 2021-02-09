@@ -62,7 +62,7 @@ struct LbAttributeReference {
 		:type(_type), name(std::forward<N>(_name)) {}
 
 	template<typename R>
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetRequestAttribute(const R &request) const noexcept {
 		switch (type) {
 		case Type::METHOD:
@@ -114,10 +114,10 @@ struct LbGotoConfig {
 		return !std::holds_alternative<std::nullptr_t>(destination);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	LbProtocol GetProtocol() const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetName() const noexcept;
 
 #ifdef HAVE_AVAHI
@@ -147,13 +147,13 @@ struct LbConditionConfig {
 	LbConditionConfig(const LbConditionConfig &) = delete;
 	LbConditionConfig &operator=(const LbConditionConfig &) = delete;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool Match(const char *s) const noexcept {
 		return std::visit(MatchHelper{s}, value) ^ negate;
 	}
 
 	template<typename R>
-	gcc_pure
+	[[gnu::pure]]
 	bool MatchRequest(const R &request) const noexcept {
 		const char *s = attribute_reference.GetRequestAttribute(request);
 		if (s == nullptr)

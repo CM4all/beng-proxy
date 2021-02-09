@@ -39,7 +39,6 @@
 #include "AlpnClient.hxx"
 #include "ssl/Ctx.hxx"
 #include "fs/Ptr.hxx"
-#include "util/Compiler.h"
 
 #include <memory>
 
@@ -69,12 +68,12 @@ public:
 			       SslClientAlpn alpn=SslClientAlpn::NONE);
 
 private:
-	gcc_const
+	[[gnu::const]]
 	static SslClientFactory &GetFactory(SSL_CTX *ssl_ctx) noexcept {
 		return *(SslClientFactory *)SSL_CTX_get_ex_data(ssl_ctx, idx);
 	}
 
-	gcc_const
+	[[gnu::const]]
 	static SslClientFactory &GetFactory(SSL *ssl) noexcept {
 		return GetFactory(SSL_get_SSL_CTX(ssl));
 	}

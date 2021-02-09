@@ -34,7 +34,6 @@
 
 #include "Session.hxx"
 #include "event/FarTimerEvent.hxx"
-#include "util/Compiler.h"
 
 #include <boost/intrusive/unordered_set.hpp>
 
@@ -57,44 +56,44 @@ class SessionManager {
 	const std::chrono::seconds idle_timeout;
 
 	struct SessionHash {
-		gcc_pure
+		[[gnu::pure]]
 		size_t operator()(const SessionId &id) const {
 			return id.Hash();
 		}
 
-		gcc_pure
+		[[gnu::pure]]
 		size_t operator()(const Session &session) const {
 			return session.id.Hash();
 		}
 	};
 
 	struct SessionEqual {
-		gcc_pure
+		[[gnu::pure]]
 		bool operator()(const Session &a, const Session &b) const {
 			return a.id == b.id;
 		}
 
-		gcc_pure
+		[[gnu::pure]]
 		bool operator()(const SessionId &a, const Session &b) const {
 			return a == b.id;
 		}
 	};
 
 	struct SessionAttachHash {
-		gcc_pure
+		[[gnu::pure]]
 		size_t operator()(ConstBuffer<std::byte> attach) const noexcept;
 
-		gcc_pure
+		[[gnu::pure]]
 		size_t operator()(const Session &session) const noexcept;
 	};
 
 	struct SessionAttachEqual {
-		gcc_pure
+		[[gnu::pure]]
 		bool operator()(const Session &a, const Session &b) const noexcept {
 			return b.IsAttach(a.attach);
 		}
 
-		gcc_pure
+		[[gnu::pure]]
 		bool operator()(ConstBuffer<std::byte> a, const Session &b) const noexcept {
 			return b.IsAttach(a);
 		}
@@ -156,7 +155,7 @@ public:
 	/**
 	 * Returns the number of sessions.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	unsigned Count() const noexcept {
 		return sessions.size();
 	}
@@ -167,7 +166,7 @@ public:
 	bool Visit(bool (*callback)(const Session *session,
 				    void *ctx), void *ctx);
 
-	gcc_pure
+	[[gnu::pure]]
 	SessionLease Find(SessionId id) noexcept;
 
 	/**

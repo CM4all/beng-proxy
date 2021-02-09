@@ -32,13 +32,11 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 #include <stddef.h>
 
 struct StringView;
 
-gcc_pure
+[[gnu::pure]]
 bool
 http_must_quote_token(StringView src) noexcept;
 

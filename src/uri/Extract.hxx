@@ -36,13 +36,11 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 #include <utility>
 
 struct StringView;
 
-gcc_pure
+[[gnu::pure]]
 bool
 uri_has_protocol(StringView uri) noexcept;
 
@@ -50,11 +48,11 @@ uri_has_protocol(StringView uri) noexcept;
  * Return the URI part after the protocol specification (and after the
  * double slash).
  */
-gcc_pure
+[[gnu::pure]]
 const char *
 uri_after_protocol(const char *uri) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 StringView
 uri_after_protocol(StringView uri) noexcept;
 
@@ -62,14 +60,14 @@ uri_after_protocol(StringView uri) noexcept;
  * Does this URI have an authority part?
  */
 template<typename U>
-gcc_pure
+[[gnu::pure]]
 inline bool
 uri_has_authority(U &&uri) noexcept
 {
 	return uri_after_protocol(std::forward<U>(uri)) != nullptr;
 }
 
-gcc_pure
+[[gnu::pure]]
 StringView
 uri_host_and_port(const char *uri) noexcept;
 
@@ -77,10 +75,10 @@ uri_host_and_port(const char *uri) noexcept;
  * Returns the URI path (including the query string) or nullptr if the
  * given URI has no path.
  */
-gcc_pure
+[[gnu::pure]]
 const char *
 uri_path(const char *uri) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 const char *
 uri_query_string(const char *uri) noexcept;

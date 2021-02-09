@@ -36,8 +36,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 struct StringView;
 
 /**
@@ -45,6 +43,6 @@ struct StringView;
  * absolute), and return the relative part.  Returns NULL if both URIs
  * do not match.
  */
-gcc_pure
+[[gnu::pure]]
 StringView
 uri_relative(StringView base, StringView uri) noexcept;

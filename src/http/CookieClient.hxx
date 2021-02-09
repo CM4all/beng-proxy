@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 class AllocatorPtr;
 class StringMap;
 struct CookieJar;
@@ -52,7 +50,7 @@ cookie_jar_set_cookie2(CookieJar &jar, const char *value,
 /**
  * Generate the HTTP request header for cookies in the jar.
  */
-gcc_pure
+[[gnu::pure]]
 const char *
 cookie_jar_http_header_value(const CookieJar &jar,
 			     const char *domain, const char *path,

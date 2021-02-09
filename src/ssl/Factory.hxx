@@ -33,7 +33,6 @@
 #pragma once
 
 #include "ssl/Unique.hxx"
-#include "util/Compiler.h"
 
 #include <memory>
 #include <vector>
@@ -56,7 +55,7 @@ public:
 
 	void LoadCertsKeys(const SslConfig &config);
 
-	gcc_pure
+	[[gnu::pure]]
 	const SslFactoryCertKey *FindCommonName(StringView host_name) const;
 
 	void EnableSNI();

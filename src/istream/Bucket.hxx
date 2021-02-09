@@ -129,7 +129,7 @@ public:
 		return list.end();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool HasNonBuffer() const noexcept {
 		for (const auto &bucket : list)
 			if (!bucket.IsBuffer())
@@ -137,7 +137,7 @@ public:
 		return false;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetTotalBufferSize() const noexcept {
 		size_t size = 0;
 		for (const auto &bucket : list)
@@ -146,7 +146,7 @@ public:
 		return size;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsDepleted(size_t consumed) const noexcept {
 		return !HasMore() && consumed == GetTotalBufferSize();
 	}

@@ -34,8 +34,6 @@
 
 #include "io/FdType.hxx"
 
-#include "util/Compiler.h"
-
 #include <stddef.h>
 #include <sys/types.h>
 
@@ -53,7 +51,7 @@ extern FdTypeMask ISTREAM_TO_CHARDEV;
 void
 direct_global_init();
 
-gcc_const
+[[gnu::const]]
 static inline FdTypeMask
 istream_direct_mask_to(FdType type)
 {
@@ -104,7 +102,7 @@ direct_global_init() {}
  * descriptor.  Returns -1 if that could not be determined
  * (unsupported fd type or error).
  */
-gcc_pure
+[[gnu::pure]]
 ssize_t
 direct_available(int fd, FdType fd_type, size_t max_length);
 
@@ -115,6 +113,6 @@ direct_available(int fd, FdType fd_type, size_t max_length);
  *
  * @return 0 if unknown
  */
-gcc_pure
+[[gnu::pure]]
 FdType
 guess_fd_type(int fd);

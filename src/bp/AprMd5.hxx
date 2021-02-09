@@ -33,15 +33,14 @@
 #pragma once
 
 #include "util/StringBuffer.hxx"
-#include "util/Compiler.h"
 
-gcc_pure
+[[gnu::pure]]
 bool
 IsAprMd5(const char *crypted_password) noexcept;
 
 /**
  * Emulate APR's braindead apr_md5_encode() function.
  */
-gcc_pure
+[[gnu::pure]]
 StringBuffer<120>
 AprMd5(const char *pw, const char *salt) noexcept;

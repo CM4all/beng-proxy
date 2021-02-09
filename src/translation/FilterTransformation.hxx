@@ -33,7 +33,6 @@
 #pragma once
 
 #include "ResourceAddress.hxx"
-#include "util/Compiler.h"
 
 class AllocatorPtr;
 
@@ -64,12 +63,12 @@ struct FilterTransformation {
 	 * Does this transformation need to be expanded with
 	 * transformation_expand()?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsExpandable() const noexcept {
 		return address.IsExpandable();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetId(AllocatorPtr alloc) const noexcept;
 
 	/**

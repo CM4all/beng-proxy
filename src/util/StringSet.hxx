@@ -32,7 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
 #include "util/IntrusiveForwardList.hxx"
 
 class AllocatorPtr;
@@ -60,12 +59,12 @@ public:
 		list.clear();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsEmpty() const noexcept {
 		return list.empty();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool Contains(const char *p) const noexcept;
 
 	/**

@@ -33,7 +33,6 @@
 #pragma once
 
 #include "event/Chrono.hxx"
-#include "util/Compiler.h"
 
 #include <exception>
 #include <memory>
@@ -74,18 +73,18 @@ class Stock {
 	class Item;
 
 	struct ItemHash {
-		gcc_pure
+		[[gnu::pure]]
 		size_t operator()(const char *key) const noexcept;
 
-		gcc_pure
+		[[gnu::pure]]
 		size_t operator()(const Item &item) const noexcept;
 	};
 
 	struct ItemEqual {
-		gcc_pure
+		[[gnu::pure]]
 		bool operator()(const char *a, const Item &b) const noexcept;
 
-		gcc_pure
+		[[gnu::pure]]
 		bool operator()(const Item &a, const Item &b) const noexcept;
 	};
 

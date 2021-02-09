@@ -35,7 +35,6 @@
 #include "event/SocketEvent.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "util/Compiler.h"
 
 #include <exception>
 
@@ -85,6 +84,6 @@ private:
 /**
  * Is the "ping" client available?
  */
-gcc_const
+[[gnu::const]]
 bool
 ping_available() noexcept;

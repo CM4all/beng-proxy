@@ -33,7 +33,6 @@
 #pragma once
 
 #include "util/ConstBuffer.hxx"
-#include "util/Compiler.h"
 
 class AllocatorPtr;
 class MatchInfo;
@@ -97,7 +96,7 @@ struct FileAddress {
 	FileAddress(const FileAddress &) = delete;
 	FileAddress &operator=(const FileAddress &) = delete;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool HasQueryString() const noexcept {
 		return false;
 	}
@@ -107,7 +106,7 @@ struct FileAddress {
 	 */
 	void Check() const;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsValidBase() const noexcept;
 
 	bool SplitBase(AllocatorPtr alloc, const char *suffix) noexcept;
@@ -120,7 +119,7 @@ struct FileAddress {
 	/**
 	 * Does this address need to be expanded with Expand()?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsExpandable() const noexcept;
 
 	/**

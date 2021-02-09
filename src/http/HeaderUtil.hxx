@@ -36,10 +36,8 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 struct StringView;
 
-gcc_pure
+[[gnu::pure]]
 StringView
 http_header_param(const char *value, const char *name) noexcept;

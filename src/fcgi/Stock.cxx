@@ -161,7 +161,7 @@ struct FcgiConnection final : StockItem {
 
 	~FcgiConnection() noexcept override;
 
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetTag() const noexcept {
 		assert(child != nullptr);
 
@@ -305,7 +305,7 @@ FcgiStock::PrepareChild(void *info, UniqueSocketDescriptor &&fd,
 
 void
 FcgiStock::Create(CreateStockItem c, StockRequest request,
-		  gcc_unused CancellablePointer &cancel_ptr)
+		  [[maybe_unused]] CancellablePointer &cancel_ptr)
 {
 	[[maybe_unused]] auto &params = *(FcgiChildParams *)request.get();
 	assert(params.executable_path != nullptr);

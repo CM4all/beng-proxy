@@ -40,7 +40,6 @@
 #include "certdb/CertDatabase.hxx"
 #include "stock/ThreadedStock.hxx"
 #include "io/Logger.hxx"
-#include "util/Compiler.h"
 
 #include <unordered_map>
 #include <map>
@@ -66,7 +65,7 @@ class CertCache final : CertNameCacheHandler {
 	CertNameCache name_cache;
 
 	struct SHA1Compare {
-		gcc_pure
+		[[gnu::pure]]
 		bool operator()(const SHA1Digest &a,
 				const SHA1Digest &b) const noexcept {
 			return memcmp(&a, &b, sizeof(a)) < 0;

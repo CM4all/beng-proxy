@@ -68,7 +68,7 @@ CreateFile(const char *path, const std::string &contents)
 	CreateFile(path, ConstBuffer<void>(contents.data(), contents.length()));
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 IsValidAcmeChallengeToken(const std::string &token) noexcept
 {

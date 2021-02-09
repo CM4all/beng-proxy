@@ -37,7 +37,6 @@
 #pragma once
 
 #include "http/Method.h"
-#include "util/Compiler.h"
 
 #include <stdexcept>
 
@@ -100,7 +99,7 @@ public:
  * Is the specified error a server failure, that justifies
  * blacklisting the server for a while?
  */
-gcc_pure
+[[gnu::pure]]
 bool
 IsHttpClientServerFailure(std::exception_ptr ep) noexcept;
 

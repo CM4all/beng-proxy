@@ -36,7 +36,6 @@
 #include "GrowingBuffer.hxx"
 #include "HeaderWriter.hxx"
 #include "HeaderParser.hxx"
-#include "util/Compiler.h"
 
 /**
  * A class that stores HTTP headers in a map and a buffer.  Some
@@ -85,7 +84,7 @@ public:
 		return std::move(map);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	const char *Get(const char *key) const noexcept {
 		return map.Get(key);
 	}

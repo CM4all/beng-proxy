@@ -35,7 +35,6 @@
 #include "http_cache_info.hxx"
 #include "strmap.hxx"
 #include "http/Status.h"
-#include "util/Compiler.h"
 
 struct HttpCacheDocument {
 	HttpCacheResponseInfo info;
@@ -60,6 +59,6 @@ struct HttpCacheDocument {
 	 * Checks whether the specified cache item fits the current request.
 	 * This is not true if the Vary headers mismatch.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool VaryFits(const StringMap &request_headers) const noexcept;
 };

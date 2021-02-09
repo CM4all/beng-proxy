@@ -37,12 +37,10 @@
 #ifndef BENG_URI_EDIT_HXX
 #define BENG_URI_EDIT_HXX
 
-#include "util/Compiler.h"
-
 class AllocatorPtr;
 struct StringView;
 
-gcc_pure
+[[gnu::pure]]
 const char *
 uri_insert_query_string(AllocatorPtr alloc, const char *uri,
                         const char *query_string);
@@ -51,17 +49,17 @@ uri_insert_query_string(AllocatorPtr alloc, const char *uri,
  * Appends the specified query string at the end.  Adds a '?' or '&'
  * if appropriate.
  */
-gcc_pure
+[[gnu::pure]]
 const char *
 uri_append_query_string_n(AllocatorPtr alloc, const char *uri,
                           StringView query_string);
 
-gcc_pure
+[[gnu::pure]]
 const char *
 uri_delete_query_string(AllocatorPtr alloc, const char *uri,
                         StringView needle);
 
-gcc_pure
+[[gnu::pure]]
 const char *
 uri_insert_args(AllocatorPtr alloc, const char *uri,
                 StringView args, StringView path);

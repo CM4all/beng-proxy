@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 class LbCluster;
 class LbBranch;
 class LbLuaHandler;
@@ -67,6 +65,6 @@ struct LbGoto {
 	}
 
 	template<typename R>
-	gcc_pure
+	[[gnu::pure]]
 	const LbGoto &FindRequestLeaf(const R &request) const;
 };

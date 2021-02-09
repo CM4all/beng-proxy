@@ -34,7 +34,6 @@
 
 #include "FilterTransformation.hxx"
 #include "SubstTransformation.hxx"
-#include "util/Compiler.h"
 #include "util/IntrusiveForwardList.hxx"
 
 #include <new>
@@ -125,21 +124,21 @@ struct Transformation : IntrusiveForwardListHook {
 	 * Returns true if the chain contains at least one "PROCESS"
 	 * transformation.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	static bool HasProcessor(const IntrusiveForwardList<Transformation> &list) noexcept;
 
 	/**
 	 * Returns true if the first "PROCESS" transformation in the chain (if
 	 * any) includes the "CONTAINER" processor option.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	static bool IsContainer(const IntrusiveForwardList<Transformation> &list) noexcept;
 
 	/**
 	 * Does this transformation need to be expanded with
 	 * transformation_expand()?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsExpandable() const noexcept {
 		return type == Type::FILTER &&
 			u.filter.IsExpandable();
@@ -149,7 +148,7 @@ struct Transformation : IntrusiveForwardListHook {
 	 * Does any transformation in the linked list need to be expanded with
 	 * transformation_expand()?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	static bool IsChainExpandable(const IntrusiveForwardList<Transformation> &list) noexcept;
 
 	gcc_malloc

@@ -34,7 +34,6 @@
 
 #include "ResourceAddress.hxx"
 #include "bp/ForwardHeaders.hxx"
-#include "util/Compiler.h"
 #include "util/IntrusiveForwardList.hxx"
 
 struct Transformation;
@@ -116,19 +115,19 @@ struct WidgetView {
 	/**
 	 * Does the effective view enable the HTML processor?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool HasProcessor() const noexcept;
 
 	/**
 	 * Is this view a container?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsContainer() const noexcept;
 
 	/**
 	 * Does this view need to be expanded with widget_view_expand()?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsExpandable() const noexcept;
 
 	/**
@@ -144,7 +143,7 @@ struct WidgetView {
  * Finds a view by its name.  If name==NULL, it returns the first
  * view.
  */
-gcc_pure
+[[gnu::pure]]
 const WidgetView *
 widget_view_lookup(const WidgetView *view, const char *name) noexcept;
 
@@ -152,7 +151,7 @@ widget_view_lookup(const WidgetView *view, const char *name) noexcept;
  * Does any view in the linked list need to be expanded with
  * widget_view_expand()?
  */
-gcc_pure
+[[gnu::pure]]
 bool
 widget_view_any_is_expandable(const WidgetView *view) noexcept;
 

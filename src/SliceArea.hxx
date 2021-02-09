@@ -32,7 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
 #include "util/IntrusiveList.hxx"
 
 #include <cassert>
@@ -94,10 +93,10 @@ public:
 		return allocated_count * slice_size;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	void *GetPage(unsigned page) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	void *GetSlice(unsigned slice) noexcept;
 
 	/**
@@ -105,20 +104,20 @@ public:
 	 * This is used to locate the #Slot for a pointer passed to a
 	 * public function.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	unsigned IndexOf(const void *_p) noexcept;
 
 	/**
 	 * Find the first free slot index, starting at the specified position.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	unsigned FindFree(unsigned start) const noexcept;
 
 	/**
 	 * Find the first allocated slot index, starting at the specified
 	 * position.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	unsigned FindAllocated(unsigned start) const noexcept;
 
 	/**

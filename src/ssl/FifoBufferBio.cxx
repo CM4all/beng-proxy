@@ -123,7 +123,7 @@ fb_write(BIO *b, const char *in, int inl)
 }
 
 static long
-fb_ctrl(BIO *b, int cmd, gcc_unused long num, gcc_unused void *ptr)
+fb_ctrl(BIO *b, int cmd, [[maybe_unused]] long num, [[maybe_unused]] void *ptr)
 {
 	auto &fb = *(FifoBufferBio *)BIO_get_data(b);
 

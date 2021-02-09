@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 struct pool;
 struct WidgetContext;
 class UnusedIstreamPtr;
@@ -44,7 +42,7 @@ class Widget;
  * Check if the resource described by the specified headers can be
  * processed by the text processor.
  */
-gcc_pure
+[[gnu::pure]]
 bool
 text_processor_allowed(const StringMap &headers);
 

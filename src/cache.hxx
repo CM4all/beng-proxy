@@ -34,8 +34,6 @@
 
 #include "event/CleanupTimer.hxx"
 
-#include "util/Compiler.h"
-
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/unordered_set.hpp>
 
@@ -127,7 +125,7 @@ public:
 		return size;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool Validate(std::chrono::steady_clock::time_point now) const noexcept {
 		return now < expires && Validate();
 	}
@@ -138,26 +136,26 @@ public:
 
 	virtual void Destroy() noexcept = 0;
 
-	gcc_pure
+	[[gnu::pure]]
 	static size_t KeyHasher(const char *key) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	static size_t ValueHasher(const CacheItem &value) noexcept {
 		return KeyHasher(value.key);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	static bool KeyValueEqual(const char *a, const CacheItem &b) noexcept;
 
 	struct Hash {
-		gcc_pure
+		[[gnu::pure]]
 		size_t operator()(const CacheItem &value) const noexcept {
 			return ValueHasher(value);
 		}
 	};
 
 	struct Equal {
-		gcc_pure
+		[[gnu::pure]]
 		bool operator()(const CacheItem &a,
 				const CacheItem &b) const noexcept {
 			return KeyValueEqual(a.key, b);
@@ -204,16 +202,16 @@ public:
 		return cleanup_timer.GetEventLoop();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	std::chrono::steady_clock::time_point SteadyNow() const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	std::chrono::system_clock::time_point SystemNow() const noexcept;
 
 	void EventAdd() noexcept;
 	void EventDel() noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	CacheItem *Get(const char *key) noexcept;
 
 	/**
@@ -224,7 +222,7 @@ public:
 	 * @param match the match callback function
 	 * @param ctx a context pointer for the callback
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	CacheItem *GetMatch(const char *key,
 			    bool (*match)(const CacheItem *, void *),
 			    void *ctx) noexcept;

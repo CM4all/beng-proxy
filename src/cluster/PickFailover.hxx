@@ -32,7 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
 #include "util/Expiry.hxx"
 
 #include <iterator>
@@ -44,7 +43,7 @@
  * non-failing address.
  */
 template<typename List>
-gcc_pure
+[[gnu::pure]]
 const auto &
 PickFailover(Expiry now, const List &list) noexcept
 {

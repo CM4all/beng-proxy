@@ -33,14 +33,13 @@
 #pragma once
 
 #include "cluster/StickyHash.hxx"
-#include "util/Compiler.h"
 #include "util/HashRing.hxx"
 
 #include <cstddef>
 
 class SocketAddress;
 
-gcc_pure
+[[gnu::pure]]
 sticky_hash_t
 MemberAddressHash(SocketAddress address, std::size_t replica) noexcept;
 

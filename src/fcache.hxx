@@ -33,7 +33,6 @@
 #pragma once
 
 #include "http/Status.h"
-#include "util/Compiler.h"
 
 struct pool;
 class StopwatchPtr;
@@ -61,7 +60,7 @@ filter_cache_close(FilterCache *cache) noexcept;
 void
 filter_cache_fork_cow(FilterCache &cache, bool inherit) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 AllocatorStats
 filter_cache_get_stats(const FilterCache &cache) noexcept;
 

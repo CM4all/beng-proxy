@@ -37,8 +37,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 #include <stddef.h>
 
 class SlicePool;
@@ -60,7 +58,7 @@ fb_pool_deinit();
 void
 fb_pool_fork_cow(bool inherit);
 
-gcc_const
+[[gnu::const]]
 SlicePool &
 fb_pool_get();
 

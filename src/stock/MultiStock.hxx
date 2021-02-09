@@ -34,7 +34,6 @@
 
 #include "stock/Request.hxx"
 #include "lease.hxx"
-#include "util/Compiler.h"
 #include "util/DeleteDisposer.hxx"
 
 #include <boost/intrusive/set.hpp>
@@ -93,7 +92,7 @@ class MultiStock {
 
 		~Item();
 
-		gcc_pure
+		[[gnu::pure]]
 		const char *GetKey() const;
 
 		bool IsFull() const {
@@ -134,21 +133,21 @@ class MultiStock {
 		void DeleteLease(Lease *lease, bool _reuse);
 
 		class Compare {
-			gcc_pure
+			[[gnu::pure]]
 			bool Less(const char *a, const char *b) const;
 
 		public:
-			gcc_pure
+			[[gnu::pure]]
 			bool operator()(const char *a, const Item &b) const {
 				return Less(a, b.GetKey());
 			}
 
-			gcc_pure
+			[[gnu::pure]]
 			bool operator()(const Item &a, const char *b) const {
 				return Less(a.GetKey(), b);
 			}
 
-			gcc_pure
+			[[gnu::pure]]
 			bool operator()(const Item &a, const Item &b) const {
 				return Less(a.GetKey(), b.GetKey());
 			}

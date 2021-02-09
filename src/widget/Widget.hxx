@@ -38,7 +38,6 @@
 #include "http/Method.h"
 #include "util/IntrusiveForwardList.hxx"
 #include "util/StringView.hxx"
-#include "util/Compiler.h"
 
 #include <cstdint>
 #include <memory>
@@ -289,7 +288,7 @@ private:
 	} lazy;
 
 	struct LoggerDomain {
-		gcc_pure
+		[[gnu::pure]]
 		StringView GetDomain() const noexcept;
 	};
 
@@ -332,10 +331,10 @@ public:
 	/**
 	 * Returns this widget's name for log/error messages.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetLogName() const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	Widget *FindRoot() noexcept {
 		Widget *w = this;
 		while (w->parent != nullptr)
@@ -343,27 +342,27 @@ public:
 		return w;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	Widget *FindChild(const char *child_id) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetDefaultPathInfo() const noexcept {
 		return from_template.path_info;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetRequestedPathInfo() const noexcept {
 		return from_request.path_info != nullptr
 			? from_request.path_info
 			: from_template.path_info;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetPathInfo(bool stateful) const noexcept {
 		return stateful ? GetRequestedPathInfo() : GetDefaultPathInfo();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool HasDefaultView() const noexcept {
 		return from_template.view != nullptr;
 	}
@@ -380,7 +379,7 @@ public:
 	/**
 	 * Is the default view a container?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsContainerByDefault() const noexcept;
 
 	/**
@@ -391,27 +390,27 @@ public:
 		return GetDefaultView();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	const WidgetView *GetEffectiveView() const noexcept {
 		return from_request.view;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool HasFocus() const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool DescendantHasFocus() const noexcept;
 
 	/**
 	 * Does the effective view enable the HTML processor?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool HasProcessor() const noexcept;
 
 	/**
 	 * Is the effective view a container?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsContainer() const noexcept;
 
 	/**
@@ -431,7 +430,7 @@ public:
 
 	const ResourceAddress &DetermineAddress(bool stateful) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	const ResourceAddress &GetAddress() const noexcept {
 		if (lazy.address == nullptr)
 			lazy.address = &DetermineAddress(true);
@@ -439,7 +438,7 @@ public:
 		return *lazy.address;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	const ResourceAddress &GetStatelessAddress() const noexcept {
 		if (lazy.stateless_address == nullptr)
 			lazy.stateless_address = &DetermineAddress(false);
@@ -447,22 +446,22 @@ public:
 		return *lazy.stateless_address;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	ResourceAddress GetBaseAddress(AllocatorPtr alloc,
 				       bool stateful) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	const char *AbsoluteUri(AllocatorPtr alloc, bool stateful,
 				StringView relative_uri) const noexcept;
 
 	/**
 	 * Returns an URI relative to the widget base address.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	StringView RelativeUri(AllocatorPtr alloc, bool stateful,
 			       StringView relative_uri) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	const char *ExternalUri(AllocatorPtr alloc,
 				StringView external_base_uri,
 				const StringMap *args,
@@ -510,7 +509,7 @@ public:
 	 */
 	WidgetSession *GetSession(RealmSession &session, bool create) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool ShouldSyncSession() const noexcept {
 		if (from_request.body)
 			/* do not save to session when this is a POST request */
@@ -556,6 +555,6 @@ public:
  * Recursion detection: check if the widget or its parent chain
  * contains the specified class name.
  */
-gcc_pure
+[[gnu::pure]]
 bool
 widget_check_recursion(const Widget *widget) noexcept;

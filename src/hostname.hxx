@@ -37,9 +37,7 @@
 #ifndef BENG_PROXY_HOSTNAME_HXX
 #define BENG_PROXY_HOSTNAME_HXX
 
-#include "util/Compiler.h"
-
-gcc_pure
+[[gnu::pure]]
 bool
 hostname_is_well_formed(const char *p);
 

@@ -39,7 +39,6 @@
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
 #include "event/Chrono.hxx"
-#include "util/Compiler.h"
 
 class AllocatorPtr;
 class SocketDescriptor;
@@ -93,17 +92,17 @@ private:
 		    CancellablePointer &cancel_ptr) override;
 };
 
-gcc_pure
+[[gnu::pure]]
 SocketDescriptor
 tcp_stock_item_get(const StockItem &item) noexcept;
 
 /**
  * Returns the (peer) address this object is connected to.
  */
-gcc_pure
+[[gnu::pure]]
 SocketAddress
 tcp_stock_item_get_address(const StockItem &item) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 int
 tcp_stock_item_get_domain(const StockItem &item) noexcept;

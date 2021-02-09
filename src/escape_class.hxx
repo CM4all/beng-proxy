@@ -34,8 +34,6 @@
 
 #include "util/StringView.hxx"
 
-#include "util/Compiler.h"
-
 #include <assert.h>
 #include <stddef.h>
 
@@ -76,7 +74,7 @@ struct escape_class {
 	size_t (*escape)(StringView p, char *q) noexcept;
 };
 
-gcc_pure
+[[gnu::pure]]
 static inline const char *
 unescape_find(const struct escape_class *cls, StringView p) noexcept
 {
@@ -112,7 +110,7 @@ unescape_inplace(const struct escape_class *cls,
 	return length2;
 }
 
-gcc_pure
+[[gnu::pure]]
 static inline const char *
 escape_find(const struct escape_class *cls, StringView p) noexcept
 {
@@ -122,7 +120,7 @@ escape_find(const struct escape_class *cls, StringView p) noexcept
 	return cls->escape_find(p);
 }
 
-gcc_pure
+[[gnu::pure]]
 static inline size_t
 escape_size(const struct escape_class *cls, StringView p) noexcept
 {
@@ -132,7 +130,7 @@ escape_size(const struct escape_class *cls, StringView p) noexcept
 	return cls->escape_size(p);
 }
 
-gcc_pure
+[[gnu::pure]]
 static inline StringView
 escape_char(const struct escape_class *cls, char ch) noexcept
 {

@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 #include <exception>
 
 #include <stddef.h>
@@ -68,7 +66,7 @@ nfs_cache_new(struct pool &pool, size_t max_size, NfsStock &stock,
 void
 nfs_cache_free(NfsCache *cache) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 AllocatorStats
 nfs_cache_get_stats(const NfsCache &cache) noexcept;
 

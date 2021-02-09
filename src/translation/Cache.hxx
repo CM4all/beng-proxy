@@ -33,7 +33,6 @@
 #pragma once
 
 #include "Service.hxx"
-#include "util/Compiler.h"
 
 #include <memory>
 
@@ -63,7 +62,7 @@ public:
 
 	void ForkCow(bool inherit) noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	AllocatorStats GetStats() const noexcept;
 
 	/**

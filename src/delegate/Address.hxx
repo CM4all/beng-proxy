@@ -34,8 +34,6 @@
 
 #include "spawn/ChildOptions.hxx"
 
-#include "util/Compiler.h"
-
 class AllocatorPtr;
 class MatchInfo;
 
@@ -74,7 +72,7 @@ struct DelegateAddress {
 	/**
 	 * Does this object need to be expanded with Expand()?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsExpandable() const {
 		return child_options.IsExpandable();
 	}

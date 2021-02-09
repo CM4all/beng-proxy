@@ -34,7 +34,6 @@
 
 #include "Context.hxx"
 #include "LuaInitHook.hxx"
-#include "util/Compiler.h"
 
 #include <cstddef>
 #include <map>
@@ -81,7 +80,7 @@ public:
 	void FlushCaches();
 	void InvalidateTranslationCaches(const TranslationInvalidateRequest &request);
 
-	gcc_pure
+	[[gnu::pure]]
 	std::size_t GetAllocatedTranslationCacheMemory() const noexcept;
 
 	LbGoto GetInstance(const char *name);
