@@ -46,7 +46,7 @@ static constexpr char WIDGET_REF_SEPARATOR = ':';
 
 [[gnu::pure]]
 const WidgetRef *
-widget_ref_parse(struct pool *pool, const char *p);
+widget_ref_parse(struct pool *pool, const char *p) noexcept;
 
 /**
  * Is the specified "inner" reference inside or the same as "outer"?
@@ -54,4 +54,4 @@ widget_ref_parse(struct pool *pool, const char *p);
 [[gnu::pure]]
 bool
 widget_ref_includes(const WidgetRef *outer,
-		    const WidgetRef *inner);
+		    const WidgetRef *inner) noexcept;

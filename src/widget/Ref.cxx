@@ -38,7 +38,7 @@
 #include <string.h>
 
 const WidgetRef *
-widget_ref_parse(struct pool *pool, const char *_p)
+widget_ref_parse(struct pool *pool, const char *_p) noexcept
 {
 	const WidgetRef *root = nullptr, **wr_p = &root;
 
@@ -67,7 +67,7 @@ widget_ref_parse(struct pool *pool, const char *_p)
 
 bool
 widget_ref_includes(const WidgetRef *outer,
-		    const WidgetRef *inner)
+		    const WidgetRef *inner) noexcept
 {
 	assert(inner != nullptr);
 
