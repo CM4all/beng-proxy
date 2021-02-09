@@ -31,16 +31,16 @@
  */
 
 #include "Multi.hxx"
-#include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "translation/Response.hxx"
 #include "translation/Handler.hxx"
 #include "util/Cancellable.hxx"
+#include "AllocatorPtr.hxx"
 
 class MultiTranslationService::Request final
 	: PoolLeakDetector, TranslateHandler, Cancellable {
 
-	struct pool &pool;
+	const AllocatorPtr alloc;
 	const TranslateRequest &request;
 	const StopwatchPtr &parent_stopwatch;
 	TranslateHandler &handler;
@@ -51,13 +51,13 @@ class MultiTranslationService::Request final
 	CancellablePointer cancel_ptr;
 
 public:
-	Request(struct pool &_pool, const TranslateRequest &_request,
+	Request(AllocatorPtr _alloc, const TranslateRequest &_request,
 		const StopwatchPtr &_parent_stopwatch,
 		TranslateHandler &_handler,
 		CancellablePointer &caller_cancel_ptr,
 		List::const_iterator _begin,
 		List::const_iterator _end) noexcept
-		:PoolLeakDetector(_pool), pool(_pool),
+		:PoolLeakDetector(_alloc), alloc(_alloc),
 		 request(_request), parent_stopwatch(_parent_stopwatch),
 		 handler(_handler),
 		 i(_begin), end(_end)
@@ -70,7 +70,7 @@ public:
 	}
 
 	void Start() noexcept {
-		(*i)->SendRequest(pool, request, parent_stopwatch,
+		(*i)->SendRequest(alloc, request, parent_stopwatch,
 				  *this, cancel_ptr);
 	}
 
@@ -106,7 +106,7 @@ MultiTranslationService::Request::OnTranslateResponse(TranslateResponse &respons
 }
 
 void
-MultiTranslationService::SendRequest(struct pool &pool,
+MultiTranslationService::SendRequest(AllocatorPtr alloc,
 				     const TranslateRequest &request,
 				     const StopwatchPtr &parent_stopwatch,
 				     TranslateHandler &handler,
@@ -115,13 +115,13 @@ MultiTranslationService::SendRequest(struct pool &pool,
 	assert(!items.empty());
 
 	if (items.size() == 1) {
-		items.front()->SendRequest(pool, request, parent_stopwatch,
+		items.front()->SendRequest(alloc, request, parent_stopwatch,
 					   handler, cancel_ptr);
 		return;
 	}
 
-	auto *r = NewFromPool<Request>(pool, pool, request, parent_stopwatch,
-				       handler, cancel_ptr,
-				       items.begin(), items.end());
+	auto *r = alloc.New<Request>(alloc, request, parent_stopwatch,
+				     handler, cancel_ptr,
+				     items.begin(), items.end());
 	r->Start();
 }

@@ -58,7 +58,7 @@
 class MyTranslationService final : public TranslationService {
 public:
 	/* virtual methods from class TranslationService */
-	void SendRequest(struct pool &pool,
+	void SendRequest(AllocatorPtr alloc,
 			 const TranslateRequest &request,
 			 const StopwatchPtr &parent_stopwatch,
 			 TranslateHandler &handler,
@@ -76,14 +76,14 @@ struct Instance : PInstance {
 const TranslateResponse *next_response;
 
 void
-MyTranslationService::SendRequest(struct pool &pool,
+MyTranslationService::SendRequest(AllocatorPtr alloc,
 				  gcc_unused const TranslateRequest &request,
 				  const StopwatchPtr &,
 				  TranslateHandler &handler,
 				  gcc_unused CancellablePointer &cancel_ptr) noexcept
 {
 	if (next_response != nullptr) {
-		auto response = NewFromPool<MakeResponse>(pool, pool, *next_response);
+		auto response = alloc.New<MakeResponse>(alloc, *next_response);
 		handler.OnTranslateResponse(*response);
 	} else
 		handler.OnTranslateError(std::make_exception_ptr(std::runtime_error("Error")));
@@ -327,7 +327,7 @@ Feed(struct pool &parent_pool, TranslationService &service,
 	CancellablePointer cancel_ptr;
 
 	next_response = &response;
-	service.SendRequest(handler.pool, request, nullptr,
+	service.SendRequest(AllocatorPtr{handler.pool}, request, nullptr,
 			    handler, cancel_ptr);
 
 	ExpectResponse(handler, response);
@@ -344,7 +344,7 @@ Feed(struct pool &parent_pool, TranslationService &service,
 	CancellablePointer cancel_ptr;
 
 	next_response = &feed_response;
-	service.SendRequest(handler.pool, request, nullptr,
+	service.SendRequest(AllocatorPtr{handler.pool}, request, nullptr,
 			    handler, cancel_ptr);
 
 	ExpectResponse(handler, expected_response);
@@ -360,7 +360,7 @@ FeedError(struct pool &parent_pool, TranslationService &service,
 	CancellablePointer cancel_ptr;
 
 	next_response = &response;
-	service.SendRequest(handler.pool, request, nullptr,
+	service.SendRequest(AllocatorPtr{handler.pool}, request, nullptr,
 			    handler, cancel_ptr);
 
 	ExpectError(handler);
@@ -376,7 +376,7 @@ Cached(struct pool &parent_pool, TranslationService &service,
 	CancellablePointer cancel_ptr;
 
 	next_response = nullptr;
-	service.SendRequest(handler.pool, request, nullptr,
+	service.SendRequest(AllocatorPtr{handler.pool}, request, nullptr,
 			    handler, cancel_ptr);
 
 	ExpectResponse(handler, response);
@@ -390,7 +390,7 @@ CachedError(struct pool &parent_pool, TranslationService &service,
 	CancellablePointer cancel_ptr;
 
 	next_response = nullptr;
-	service.SendRequest(handler.pool, request, nullptr,
+	service.SendRequest(AllocatorPtr{handler.pool}, request, nullptr,
 			    handler, cancel_ptr);
 
 	ExpectError(handler);

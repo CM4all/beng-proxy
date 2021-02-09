@@ -391,7 +391,7 @@ struct tcache {
 };
 
 struct TranslateCacheRequest final : TranslateHandler {
-	struct pool *pool;
+	const AllocatorPtr alloc;
 
 	struct tcache *tcache;
 
@@ -406,11 +406,11 @@ struct TranslateCacheRequest final : TranslateHandler {
 
 	TranslateHandler *handler;
 
-	TranslateCacheRequest(struct pool &_pool, struct tcache &_tcache,
+	TranslateCacheRequest(AllocatorPtr _alloc, struct tcache &_tcache,
 			      const TranslateRequest &_request, const char *_key,
 			      bool _cacheable,
 			      TranslateHandler &_handler)
-		:pool(&_pool), tcache(&_tcache), request(_request),
+		:alloc(_alloc), tcache(&_tcache), request(_request),
 		 cacheable(_cacheable),
 		 find_base(false), key(_key),
 		 handler(&_handler) {}
@@ -1316,13 +1316,13 @@ try {
 	}
 
 	if (request.uri != nullptr && response.IsExpandable()) {
-		tcache_expand_response(*pool, response,
+		tcache_expand_response(alloc, response,
 				       response.CompileRegex(),
 				       request.uri, request.host,
 				       request.user);
 	} else if (response.easy_base) {
 		/* create a writable copy and apply the BASE */
-		response.CacheLoad(*pool, response, request.uri);
+		response.CacheLoad(alloc, response, request.uri);
 	} else if (response.base != nullptr) {
 		const char *uri = request.uri;
 		const char *tail = require_base_tail(uri, response.base);
@@ -1345,18 +1345,18 @@ TranslateCacheRequest::OnTranslateError(std::exception_ptr ep) noexcept
 }
 
 static void
-tcache_hit(struct pool &pool,
+tcache_hit(AllocatorPtr alloc,
 	   const char *uri, const char *host, const char *user,
 	   gcc_unused const char *key,
 	   const TranslateCacheItem &item,
 	   TranslateHandler &handler)
 {
-	auto response = NewFromPool<TranslateResponse>(pool);
+	auto response = alloc.New<TranslateResponse>();
 
 	LogConcat(4, "TranslationCache", "hit ", key);
 
 	try {
-		response->CacheLoad(pool, item.response, uri);
+		response->CacheLoad(alloc, item.response, uri);
 	} catch (...) {
 		handler.OnTranslateError(std::current_exception());
 		return;
@@ -1364,7 +1364,7 @@ tcache_hit(struct pool &pool,
 
 	if (uri != nullptr && response->IsExpandable()) {
 		try {
-			tcache_expand_response(pool, *response, item.regex,
+			tcache_expand_response(alloc, *response, item.regex,
 					       uri, host, user);
 		} catch (...) {
 			handler.OnTranslateError(std::current_exception());
@@ -1376,22 +1376,22 @@ tcache_hit(struct pool &pool,
 }
 
 static void
-tcache_miss(struct pool &pool, struct tcache &tcache,
+tcache_miss(AllocatorPtr alloc, struct tcache &tcache,
 	    const TranslateRequest &request, const char *key,
 	    bool cacheable,
 	    const StopwatchPtr &parent_stopwatch,
 	    TranslateHandler &handler,
 	    CancellablePointer &cancel_ptr)
 {
-	auto tcr = NewFromPool<TranslateCacheRequest>(pool, pool, tcache,
-						      request, key,
-						      cacheable,
-						      handler);
+	auto tcr = alloc.New<TranslateCacheRequest>(alloc, tcache,
+						    request, key,
+						    cacheable,
+						    handler);
 
 	if (cacheable)
 		LogConcat(4, "TranslationCache", "miss ", key);
 
-	tcache.next.SendRequest(pool, request, parent_stopwatch,
+	tcache.next.SendRequest(alloc, request, parent_stopwatch,
 				*tcr, cancel_ptr);
 }
 
@@ -1524,22 +1524,22 @@ TranslationCache::Flush() noexcept
  */
 
 void
-TranslationCache::SendRequest(struct pool &pool,
+TranslationCache::SendRequest(AllocatorPtr alloc,
 			      const TranslateRequest &request,
 			      const StopwatchPtr &parent_stopwatch,
 			      TranslateHandler &handler,
 			      CancellablePointer &cancel_ptr) noexcept
 {
 	const bool cacheable = cache->active && tcache_request_evaluate(request);
-	const char *key = tcache_request_key(pool, request);
+	const char *key = tcache_request_key(alloc, request);
 	TranslateCacheItem *item = cacheable
-		? tcache_lookup(pool, *cache, request, key)
+		? tcache_lookup(alloc, *cache, request, key)
 		: nullptr;
 	if (item != nullptr)
-		tcache_hit(pool, request.uri, request.host, request.user, key,
+		tcache_hit(alloc, request.uri, request.host, request.user, key,
 			   *item, handler);
 	else
-		tcache_miss(pool, *cache, request, key, cacheable,
+		tcache_miss(alloc, *cache, request, key, cacheable,
 			    parent_stopwatch,
 			    handler, cancel_ptr);
 }

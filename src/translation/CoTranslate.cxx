@@ -32,13 +32,14 @@
 
 #include "CoTranslate.hxx"
 #include "Service.hxx"
+#include "AllocatorPtr.hxx"
 
 CoTranslate::CoTranslate(TranslationService &service,
-			 struct pool &pool,
+			 AllocatorPtr alloc,
 			 const TranslateRequest &request,
 			 const StopwatchPtr &parent_stopwatch) noexcept
 {
-	service.SendRequest(pool, request, parent_stopwatch, *this,
+	service.SendRequest(alloc, request, parent_stopwatch, *this,
 			    cancel_ptr);
 }
 

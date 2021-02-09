@@ -55,7 +55,7 @@ public:
 	bool aborted = false;
 
 	/* virtual methods from class TranslationService */
-	void SendRequest(struct pool &pool,
+	void SendRequest(AllocatorPtr alloc,
 			 const TranslateRequest &request,
 			 const StopwatchPtr &parent_stopwatch,
 			 TranslateHandler &handler,
@@ -83,7 +83,7 @@ struct Context : PInstance {
  */
 
 void
-MyTranslationService::SendRequest(struct pool &pool,
+MyTranslationService::SendRequest(AllocatorPtr alloc,
 				  const TranslateRequest &request,
 				  const StopwatchPtr &,
 				  TranslateHandler &handler,
@@ -97,9 +97,9 @@ MyTranslationService::SendRequest(struct pool &pool,
 	assert(request.param == NULL);
 
 	if (strcmp(request.widget_type, "sync") == 0) {
-		auto response = NewFromPool<TranslateResponse>(pool);
-		response->address = *http_address_parse(pool, "http://foo/");
-		response->views = NewFromPool<WidgetView>(pool, nullptr);
+		auto response = alloc.New<TranslateResponse>();
+		response->address = *http_address_parse(alloc, "http://foo/");
+		response->views = alloc.New<WidgetView>(nullptr);
 		response->views->address = {ShallowCopy(), response->address};
 		handler.OnTranslateResponse(*response);
 	} else if (strcmp(request.widget_type, "block") == 0) {

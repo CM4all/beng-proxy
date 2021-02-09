@@ -38,6 +38,7 @@
 #include "util/Cancellable.hxx"
 
 struct TranslateRequest;
+class AllocatorPtr;
 class TranslationService;
 class StopwatchPtr;
 
@@ -51,7 +52,7 @@ class CoTranslate final : TranslateHandler {
 
 public:
 	CoTranslate(TranslationService &service,
-		    struct pool &pool,
+		    AllocatorPtr alloc,
 		    const TranslateRequest &request,
 		    const StopwatchPtr &parent_stopwatch) noexcept;
 

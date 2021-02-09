@@ -217,14 +217,14 @@ TranslationStock::Create(CreateStockItem c, StockRequest,
 }
 
 void
-TranslationStock::SendRequest(struct pool &pool,
+TranslationStock::SendRequest(AllocatorPtr alloc,
 			      const TranslateRequest &request,
 			      const StopwatchPtr &parent_stopwatch,
 			      TranslateHandler &handler,
 			      CancellablePointer &cancel_ptr) noexcept
 {
-	auto r = NewFromPool<Request>(pool, *this, pool, request,
-				      parent_stopwatch,
-				      handler, cancel_ptr);
+	auto r = alloc.New<Request>(*this, alloc, request,
+				    parent_stopwatch,
+				    handler, cancel_ptr);
 	r->Start();
 }

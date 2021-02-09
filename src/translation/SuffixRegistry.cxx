@@ -37,6 +37,7 @@
 #include "translation/Response.hxx"
 #include "widget/View.hxx"
 #include "pool/pool.hxx"
+#include "AllocatorPtr.hxx"
 
 struct SuffixRegistryLookup final : TranslateHandler {
 	TranslateRequest request;

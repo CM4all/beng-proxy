@@ -32,8 +32,8 @@
 
 #pragma once
 
-struct pool;
 struct TranslateRequest;
+class AllocatorPtr;
 class TranslateHandler;
 class StopwatchPtr;
 class CancellablePointer;
@@ -42,7 +42,7 @@ class TranslationService {
 public:
 	virtual ~TranslationService() noexcept = default;
 
-	virtual void SendRequest(struct pool &pool,
+	virtual void SendRequest(AllocatorPtr alloc,
 				 const TranslateRequest &request,
 				 const StopwatchPtr &parent_stopwatch,
 				 TranslateHandler &handler,

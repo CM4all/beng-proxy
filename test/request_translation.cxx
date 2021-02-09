@@ -48,6 +48,7 @@
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 #include "stopwatch.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <stdio.h>
 
@@ -179,9 +180,11 @@ main(int argc, char **argv)
 	TranslationStock stock(instance.event_loop,
 			       translation_socket, 0);
 
+	const AllocatorPtr alloc(instance.root_pool);
+
 	MyHandler handler;
 	CancellablePointer cancel_ptr;
-	stock.SendRequest(instance.root_pool,
+	stock.SendRequest(alloc,
 			  request, nullptr,
 			  handler, cancel_ptr);
 

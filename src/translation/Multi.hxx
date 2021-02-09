@@ -63,7 +63,7 @@ public:
 	}
 
 	/* virtual methods from class TranslationService */
-	void SendRequest(struct pool &pool,
+	void SendRequest(AllocatorPtr alloc,
 			 const TranslateRequest &request,
 			 const StopwatchPtr &parent_stopwatch,
 			 TranslateHandler &handler,
