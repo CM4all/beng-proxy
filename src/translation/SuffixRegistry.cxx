@@ -36,7 +36,6 @@
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
 #include "widget/View.hxx"
-#include "pool/pool.hxx"
 #include "AllocatorPtr.hxx"
 
 struct SuffixRegistryLookup final : TranslateHandler {
@@ -73,7 +72,7 @@ SuffixRegistryLookup::OnTranslateError(std::exception_ptr ep) noexcept
 }
 
 void
-suffix_registry_lookup(struct pool &pool,
+suffix_registry_lookup(AllocatorPtr alloc,
 		       TranslationService &service,
 		       ConstBuffer<void> payload,
 		       const char *suffix,
@@ -81,10 +80,9 @@ suffix_registry_lookup(struct pool &pool,
 		       SuffixRegistryHandler &handler,
 		       CancellablePointer &cancel_ptr) noexcept
 {
-	auto lookup = NewFromPool<SuffixRegistryLookup>(pool,
-							payload, suffix,
-							handler);
+	auto lookup = alloc.New<SuffixRegistryLookup>(payload, suffix,
+						      handler);
 
-	service.SendRequest(pool, lookup->request, parent_stopwatch,
+	service.SendRequest(alloc, lookup->request, parent_stopwatch,
 			    *lookup, cancel_ptr);
 }

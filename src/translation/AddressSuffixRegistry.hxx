@@ -32,8 +32,8 @@
 
 #pragma once
 
-struct pool;
 struct ResourceAddress;
+class AllocatorPtr;
 class TranslationService;
 class SuffixRegistryHandler;
 class StopwatchPtr;
@@ -43,7 +43,7 @@ class CancellablePointer;
  * Interface for Content-Types managed by the translation server.
  */
 bool
-suffix_registry_lookup(struct pool &pool, TranslationService &service,
+suffix_registry_lookup(AllocatorPtr alloc, TranslationService &service,
 		       const ResourceAddress &address,
 		       const StopwatchPtr &parent_stopwatch,
 		       SuffixRegistryHandler &handler,

@@ -142,7 +142,7 @@ text_processor(gcc_unused struct pool &pool, UnusedIstreamPtr stream,
 }
 
 bool
-suffix_registry_lookup(gcc_unused struct pool &pool,
+suffix_registry_lookup(AllocatorPtr,
 		       gcc_unused TranslationService &service,
 		       gcc_unused const ResourceAddress &address,
 		       const StopwatchPtr &,

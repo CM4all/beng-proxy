@@ -36,7 +36,7 @@
 
 #include <exception>
 
-struct pool;
+class AllocatorPtr;
 class TranslationService;
 class StopwatchPtr;
 class CancellablePointer;
@@ -59,7 +59,7 @@ public:
  * Interface for Content-Types managed by the translation server.
  */
 void
-suffix_registry_lookup(struct pool &pool,
+suffix_registry_lookup(AllocatorPtr alloc,
 		       TranslationService &service,
 		       ConstBuffer<void> payload,
 		       const char *suffix,

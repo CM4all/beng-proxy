@@ -35,9 +35,9 @@
 #include "ResourceAddress.hxx"
 #include "file_address.hxx"
 #include "nfs/Address.hxx"
-#include "pool/pool.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/CharUtil.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <string.h>
 
@@ -89,7 +89,7 @@ GetAddressSuffixInfo(const ResourceAddress &address) noexcept
 }
 
 bool
-suffix_registry_lookup(struct pool &pool, TranslationService &service,
+suffix_registry_lookup(AllocatorPtr alloc, TranslationService &service,
 		       const ResourceAddress &address,
 		       const StopwatchPtr &parent_stopwatch,
 		       SuffixRegistryHandler &handler,
@@ -109,7 +109,7 @@ suffix_registry_lookup(struct pool &pool, TranslationService &service,
 
 	/* duplicate the suffix, convert to lower case, check for
 	   "illegal" characters (non-alphanumeric) */
-	char *buffer = p_strdup(&pool, suffix);
+	char *buffer = alloc.Dup(suffix);
 	for (char *p = buffer; *p != 0; ++p) {
 		const char ch = *p;
 		if (IsUpperAlphaASCII(ch))
@@ -120,7 +120,7 @@ suffix_registry_lookup(struct pool &pool, TranslationService &service,
 			return false;
 	}
 
-	suffix_registry_lookup(pool, service,
+	suffix_registry_lookup(alloc, service,
 			       info.content_type_lookup, buffer,
 			       parent_stopwatch,
 			       handler, cancel_ptr);
