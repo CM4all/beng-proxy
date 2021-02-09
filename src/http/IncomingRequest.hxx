@@ -62,7 +62,7 @@ struct IncomingHttpRequest {
 
 	/* request metadata */
 	http_method_t method;
-	char *uri;
+	const char *uri;
 	StringMap headers;
 
 	/**
