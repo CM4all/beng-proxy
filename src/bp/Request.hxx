@@ -71,6 +71,8 @@ struct PendingResponse;
 struct FilterTransformation;
 struct DelegateAddress;
 struct WidgetContext;
+struct WidgetRef;
+class Widget;
 class SessionLease;
 class RealmSessionLease;
 
@@ -671,6 +673,11 @@ private:
 				StringMap &response_headers,
 				UnusedIstreamPtr response_body,
 				const Transformation &transformation) noexcept;
+
+	void HandleProxyWidget(UnusedIstreamPtr body,
+			       Widget &widget, const WidgetRef *proxy_ref,
+			       SharedPoolPtr<WidgetContext> ctx,
+			       unsigned options) noexcept;
 
 	void InvokeCssProcessor(http_status_t status,
 				StringMap &response_headers,

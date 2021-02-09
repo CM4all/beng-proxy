@@ -38,7 +38,6 @@
 #include "RLogger.hxx"
 #include "Connection.hxx"
 #include "PendingResponse.hxx"
-#include "ProxyWidget.hxx"
 #include "Instance.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
@@ -303,10 +302,10 @@ Request::InvokeXmlProcessor(http_status_t status,
 	if (proxy_ref != nullptr) {
 		/* the client requests a widget in proxy mode */
 
-		proxy_widget(*this, std::move(response_body),
-			     widget, proxy_ref,
-			     std::move(ctx),
-			     transformation.u.processor.options);
+		HandleProxyWidget(std::move(response_body),
+				  widget, proxy_ref,
+				  std::move(ctx),
+				  transformation.u.processor.options);
 	} else {
 		/* the client requests the whole template */
 		response_body = processor_process(pool, stopwatch,

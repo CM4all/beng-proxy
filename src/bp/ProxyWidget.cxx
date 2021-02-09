@@ -30,7 +30,6 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ProxyWidget.hxx"
 #include "Request.hxx"
 #include "Instance.hxx"
 #include "CsrfProtection.hxx"
@@ -370,19 +369,17 @@ ProxyWidget::Cancel() noexcept
  */
 
 void
-proxy_widget(Request &request2,
-	     UnusedIstreamPtr body,
-	     Widget &widget, const WidgetRef *proxy_ref,
-	     SharedPoolPtr<WidgetContext> ctx,
-	     unsigned options)
+Request::HandleProxyWidget(UnusedIstreamPtr body,
+			   Widget &widget, const WidgetRef *proxy_ref,
+			   SharedPoolPtr<WidgetContext> ctx,
+			   unsigned options) noexcept
 {
 	assert(!widget.from_request.frame);
 	assert(proxy_ref != nullptr);
 	assert(body);
 
-	auto proxy = NewFromPool<ProxyWidget>(request2.pool, request2,
+	auto proxy = NewFromPool<ProxyWidget>(pool, *this,
 					      widget, proxy_ref,
 					      std::move(ctx));
-	proxy->Start(std::move(body), options,
-		     request2.cancel_ptr);
+	proxy->Start(std::move(body), options, cancel_ptr);
 }
