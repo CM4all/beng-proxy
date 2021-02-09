@@ -94,7 +94,7 @@ Request::OnErrdocCompletion(std::exception_ptr e) noexcept
 	assert(co_response);
 
 	if (e)
-		LogConcat(2, request.uri, "error on error document: ", e);
+		logger(2, "error on error document: ", e);
 
 	DispatchResponse(co_response->status, std::move(co_response->headers),
 			 std::move(co_response->body));
