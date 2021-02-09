@@ -250,14 +250,6 @@ gcc_malloc gcc_returns_nonnull
 char *
 p_strdup(struct pool *pool, const char *src TRACE_ARGS_DEFAULT) noexcept;
 
-#define p_strdup_fwd(pool, src) p_strdup(pool, src TRACE_ARGS_FWD)
-
-static inline const char *
-p_strdup_checked(struct pool *pool, const char *s TRACE_ARGS_DEFAULT) noexcept
-{
-	return s == NULL ? NULL : p_strdup_fwd(pool, s);
-}
-
 gcc_malloc gcc_returns_nonnull
 char *
 p_strndup(struct pool *pool, const char *src, size_t length

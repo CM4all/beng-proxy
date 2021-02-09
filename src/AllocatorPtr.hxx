@@ -58,7 +58,7 @@ public:
 	}
 
 	const char *CheckDup(const char *src) const noexcept {
-		return p_strdup_checked(&pool, src);
+		return src == nullptr ? nullptr : Dup(src);
 	}
 
 	template<typename... Args>
