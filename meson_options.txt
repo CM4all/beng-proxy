@@ -3,7 +3,7 @@ option('documentation', type: 'feature',
 
 option('certdb', type: 'boolean', value: true, description: 'Build with certdb support')
 
-option('coroutines', type: 'boolean', value: false,
+option('coroutines', type: 'boolean', value: true,
        description: 'Enable C++20 coroutines')
 
 option('static_libcxx', type: 'boolean', value: false,

@@ -134,6 +134,8 @@ if get_option('coroutines')
   else
     add_global_arguments('-fcoroutines', language: 'cpp')
   endif
+else
+  error('Coroutines must be enabled')
 endif
 
 if get_option('static_libcxx')
