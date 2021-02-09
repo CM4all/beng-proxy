@@ -467,6 +467,9 @@ To enable SSL/TLS on a listener, configure::
 
 One pool can be shared by listeners with and without SSL.
 
+To indicate that an HTTP request was received on a SSL/TLS connection,
+:program:`beng-lb` adds the ``X-CM4all-HTTPS:on`` header.
+
 Server Name Indication
 ~~~~~~~~~~~~~~~~~~~~~~
 

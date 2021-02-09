@@ -886,8 +886,9 @@ Group is one of:
   ``X-CM4all-BENG-User``
 
 - ``SSL``: forward information about the SSL connection, i.e.
-  ``X-CM4all-HTTPS``, ``X-CM4all-BENG-Peer-Subject`` and
-  ``X-CM4all-BENG-Peer-Issuer-Subject``
+  ``X-CM4all-HTTPS`` (set to ``on`` if the request was received on a
+  SSL/TLS connection, see :ref:`ssl`), ``X-CM4all-BENG-Peer-Subject``
+  and ``X-CM4all-BENG-Peer-Issuer-Subject`` (see :ref:`ssl_verify`)
 
 - ``TRANSFORMATION``: forward headers that affect the transformation
   (i.e. ``X-CM4all-View``)
