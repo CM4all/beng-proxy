@@ -240,10 +240,10 @@ Request::InvokeXmlProcessor(http_status_t status,
 				: p_strdup(pool, dissected_uri.base)));
 
 	const WidgetRef *focus_ref =
-		widget_ref_parse(&pool, args.Remove("focus"));
+		widget_ref_parse(pool, args.Remove("focus"));
 
 	const WidgetRef *proxy_ref =
-		widget_ref_parse(&pool, args.Get("frame"));
+		widget_ref_parse(pool, args.Get("frame"));
 
 	if (focus_ref != nullptr && proxy_ref != nullptr &&
 	    !widget_ref_includes(proxy_ref, focus_ref)) {

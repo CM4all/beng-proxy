@@ -31,21 +31,21 @@
  */
 
 #include "Ref.hxx"
-#include "pool/pool.hxx"
+#include "AllocatorPtr.hxx"
 #include "util/IterableSplitString.hxx"
 
 #include <assert.h>
 #include <string.h>
 
 const WidgetRef *
-widget_ref_parse(struct pool *pool, const char *_p) noexcept
+widget_ref_parse(AllocatorPtr alloc, const char *_p) noexcept
 {
 	const WidgetRef *root = nullptr, **wr_p = &root;
 
 	if (_p == nullptr || *_p == 0)
 		return nullptr;
 
-	char *p = p_strdup(pool, _p);
+	char *p = alloc.Dup(_p);
 
 	for (auto id : IterableSplitString(p, WIDGET_REF_SEPARATOR)) {
 		if (id.empty())
@@ -54,7 +54,7 @@ widget_ref_parse(struct pool *pool, const char *_p) noexcept
 		char *_id = const_cast<char *>(id.data);
 		_id[id.size] = 0;
 
-		auto wr = NewFromPool<WidgetRef>(*pool);
+		auto wr = alloc.New<WidgetRef>();
 		wr->next = nullptr;
 		wr->id = _id;
 
