@@ -117,7 +117,8 @@ Request
   submitted if requested via ``WANT``, see page )
 
 - ``AUTHORIZATION``: the ``Authorization`` request header sent by the
-  client (see RFC 2617); only for :ref:`http_auth`.
+  client (see `RFC 2617 <https://www.ietf.org/rfc/rfc2617.html>`__);
+  only for :ref:`http_auth`.
 
 - ``CONTENT_TYPE_LOOKUP``: Look up the ``Content-Type`` of a file name
   suffix. See :ref:`ctlookup` for a detailed description.
@@ -470,25 +471,30 @@ Response
 - ``RESPONSE_HEADER_FORWARD``: See :ref:`tfwdheader`
 
 - ``WWW_AUTHENTICATE``: the ``WWW-Authenticate`` response header sent
-  to the client (see RFC 2617). Currently, this is never cached. This
-  exact behavior is subject to change in the future, and will be
-  cacheable.
+  to the client (see `RFC 2617
+  <https://www.ietf.org/rfc/rfc2617.html>`__). Currently, this is
+  never cached. This exact behavior is subject to change in the
+  future, and will be cacheable.
 
 - ``AUTHENTICATION_INFO``: the ``Authentication-Info`` response header
-  sent to the client (see RFC 2617).
+  sent to the client (see `RFC 2617
+  <https://www.ietf.org/rfc/rfc2617.html>`__).
 
 - ``HEADER``: A custom HTTP response header sent to the client. Name
   and value are separated by a colon (without any whitespace). This will
   not override existing headers. It is not allowed to set hop-by-hop
-  headers (RFC 2616 13.5.1) this way. This packet shall only be a last
-  resort, when there is no other way to set a required response header.
+  headers (`RFC 2616 13.5.1
+  <https://www.ietf.org/rfc/rfc2616.html#section-13.5.1>`__) this
+  way. This packet shall only be a last resort, when there is no other
+  way to set a required response header.
 
 - ``EXPAND_HEADER``: Same as ``HEADER``, but expand the value.
 
 - ``REQUEST_HEADER``: A custom HTTP request header for the backend
   server. Name and value are separated by a colon (without any
   whitespace). This will override existing headers. It is not allowed to
-  set hop-by-hop headers (RFC 2616 13.5.1) this way.
+  set hop-by-hop headers (`RFC 2616 13.5.1
+  <https://www.ietf.org/rfc/rfc2616.html#section-13.5.1>`__) this way.
 
 - ``EXPAND_REQUEST_HEADER``: Same as ``REQUEST_HEADER``, but expand the
   value.

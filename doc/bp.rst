@@ -636,7 +636,9 @@ Forwarded headers
 
 Not all request and response headers are forwarded, for various reasons:
 
-- hop-by-hop headers (RFC 2616 13.5.1) must not be forwarded
+- hop-by-hop headers (`RFC 2616 13.5.1
+  <https://www.ietf.org/rfc/rfc2616.html#section-13.5.1>`__) must not
+  be forwarded
 
 - headers describing the body are not forwarded if there is no body
 
@@ -860,7 +862,8 @@ HTTP-level Authentication
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A translation response containing ``HTTP_AUTH`` enables HTTP-based
-authentication according to RFC 2617.  The packet may contain an
+authentication according to `RFC 2617
+<https://www.ietf.org/rfc/rfc2617.html>`__.  The packet may contain an
 opaque payload.  Additionally, the translation server should send
 ``WWW_AUTHENTICATE`` and ``AUTHENTICATION_INFO``, which will be sent
 to the client in the ``WWW-Authenticate`` and ``Authentication-Info``
@@ -899,7 +902,8 @@ Example conversation:
 HTTP-level Authentication (old)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:program:`beng-proxy` supports HTTP-level authentication according to RFC 2617.
+:program:`beng-proxy` supports HTTP-level authentication according to
+`RFC 2617 <https://www.ietf.org/rfc/rfc2617.html>`__.
 It forwards the ``Authorization`` request header to the translation
 server wrapped in a ``AUTHORIZATION`` packet, and allows the translation
 server to send ``WWW-Authenticate`` and ``Authentication-Info`` response
