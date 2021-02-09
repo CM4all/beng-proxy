@@ -277,11 +277,11 @@ ServerConnection::Request::OnHeaderCallback(StringView name,
 	if (name.Equals(":method"))
 		method = ParseHttpMethod(value);
 	else if (name.Equals(":path"))
-		uri = p_strdup(pool, value);
+		uri = alloc.DupZ(value);
 	else if (name.Equals(":authority"))
-		headers.Add(alloc, "host", p_strdup(pool, value));
+		headers.Add(alloc, "host", alloc.DupZ(value));
 	else if (name.size >= 2 && name.front() != ':')
-		headers.Add(alloc, p_strdup_lower(pool, name), p_strdup(pool, value));
+		headers.Add(alloc, alloc.DupToLower(name), alloc.DupZ(value));
 
 	return 0;
 }
