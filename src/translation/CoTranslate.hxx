@@ -90,7 +90,7 @@ private:
 		return !cancel_ptr;
 	}
 
-	TranslateResponse AwaitResume() noexcept {
+	TranslateResponse AwaitResume() {
 		if (error)
 			std::rethrow_exception(std::move(error));
 
