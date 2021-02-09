@@ -415,9 +415,6 @@ struct TranslateCacheRequest final : TranslateHandler {
 		 find_base(false), key(_key),
 		 handler(&_handler) {}
 
-	TranslateCacheRequest(const TranslateRequest &_request, bool _find_base)
-		:request(_request), cacheable(true), find_base(_find_base) {}
-
 	TranslateCacheRequest(TranslateCacheRequest &) = delete;
 
 	/* virtual methods from TranslateHandler */
@@ -974,11 +971,16 @@ TranslateCacheItem::VaryMatch(const TranslateRequest &other_request,
 	}
 }
 
+struct TranslateCacheMatchContext {
+	const TranslateRequest &request;
+	const bool find_base;
+};
+
 static bool
 tcache_item_match(const CacheItem *_item, void *ctx)
 {
 	auto &item = *(const TranslateCacheItem *)_item;
-	TranslateCacheRequest &tcr = *(TranslateCacheRequest *)ctx;
+	auto &tcr = *(TranslateCacheMatchContext *)ctx;
 	const TranslateRequest &request = tcr.request;
 
 	if (tcr.find_base && item.response.base == nullptr)
@@ -1012,7 +1014,7 @@ static TranslateCacheItem *
 tcache_get(struct tcache &tcache, const TranslateRequest &request,
 	   const char *key, bool find_base)
 {
-	TranslateCacheRequest match_ctx(request, find_base);
+	TranslateCacheMatchContext match_ctx{request, find_base};
 
 	return (TranslateCacheItem *)
 		tcache.cache.GetMatch(key, tcache_item_match, &match_ctx);
@@ -1285,7 +1287,8 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 	if (response.site != nullptr)
 		tcache_add_per_site(*tcr.tcache, item);
 
-	tcr.tcache->cache.PutMatch(key, *item, tcache_item_match, &tcr);
+	TranslateCacheMatchContext match_ctx{tcr.request, tcr.find_base};
+	tcr.tcache->cache.PutMatch(key, *item, tcache_item_match, &match_ctx);
 	return item;
 }
 
