@@ -49,7 +49,6 @@
 #include "istream/istream_string.hxx"
 #include "strmap.hxx"
 #include "bp/session/Lease.hxx"
-#include "pool/pbuffer.hxx"
 #include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
@@ -271,7 +270,7 @@ do_rewrite_widget_uri(AllocatorPtr alloc, WidgetContext &ctx,
  */
 
 class UriRewriter final : PoolLeakDetector, Cancellable {
-	struct pool &pool;
+	const AllocatorPtr alloc;
 	const SharedPoolPtr<WidgetContext> ctx;
 	Widget &widget;
 
@@ -289,7 +288,7 @@ class UriRewriter final : PoolLeakDetector, Cancellable {
 	CancellablePointer cancel_ptr;
 
 public:
-	UriRewriter(struct pool &_pool,
+	UriRewriter(AllocatorPtr _alloc,
 		    SharedPoolPtr<WidgetContext> &&_ctx,
 		    Widget &_widget,
 		    StringView _value,
@@ -297,12 +296,12 @@ public:
 		    const char *_view,
 		    const struct escape_class *_escape,
 		    DelayedIstreamControl &_delayed) noexcept
-		:PoolLeakDetector(_pool),
-		 pool(_pool), ctx(std::move(_ctx)), widget(_widget),
-		 value(DupBuffer(pool, _value)),
+		:PoolLeakDetector(_alloc),
+		 alloc(_alloc), ctx(std::move(_ctx)), widget(_widget),
+		 value(alloc.Dup(_value)),
 		 mode(_mode), stateful(_stateful),
 		 view(_view != nullptr
-		      ? (*_view != 0 ? p_strdup(&pool, _view) : "")
+		      ? (*_view != 0 ? alloc.Dup(_view) : "")
 		      : nullptr),
 		 escape(_escape),
 		 delayed(_delayed)
@@ -315,16 +314,16 @@ public:
 	}
 
 	UnusedIstreamPtr Start(UnusedIstreamPtr input) noexcept {
-		auto &_pool = pool;
+		auto &pool = alloc.GetPool();
 		auto &event_loop = ctx->event_loop;
 
-		ResolveWidget(pool,
+		ResolveWidget(alloc,
 			      widget,
 			      *ctx->widget_registry,
 			      BIND_THIS_METHOD(ResolverCallback),
 			      cancel_ptr);
 
-		return NewTimeoutIstream(_pool, std::move(input),
+		return NewTimeoutIstream(pool, std::move(input),
 					 event_loop,
 					 inline_widget_body_timeout);
 	}
@@ -362,7 +361,7 @@ UriRewriter::ResolverCallback() noexcept
 			value.data = unescaped;
 		}
 
-		uri = do_rewrite_widget_uri(pool, *ctx, widget,
+		uri = do_rewrite_widget_uri(alloc, *ctx, widget,
 					    value, mode, stateful,
 					    view);
 		if (uri != nullptr) {
@@ -370,6 +369,8 @@ UriRewriter::ResolverCallback() noexcept
 			escape_flag = true;
 		}
 	}
+
+	auto &pool = alloc.GetPool();
 
 	UnusedIstreamPtr istream;
 	if (!value.empty()) {
