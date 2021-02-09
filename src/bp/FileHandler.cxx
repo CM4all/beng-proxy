@@ -354,8 +354,7 @@ Request::HandleFileAddress(const FileAddress &address,
 	}
 
 	if (!S_ISREG(st.stx_mode)) {
-		DispatchError(HTTP_STATUS_INTERNAL_SERVER_ERROR,
-			      "Not a regular file");
+		DispatchError(HTTP_STATUS_NOT_FOUND, "Not a regular file");
 		return;
 	}
 
