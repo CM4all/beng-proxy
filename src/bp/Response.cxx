@@ -753,10 +753,14 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
 		   discard it as early as possible */
 		DiscardRequestBody();
 
-		DisaptchErrdocResponse(status,
-				       translate.response->error_document,
-				       std::move(headers),
-				       std::move(response_body));
+		co_response =
+			UniquePoolPtr<PendingResponse>::Make(pool, status,
+							     std::move(headers),
+							     UnusedHoldIstreamPtr{pool, std::move(response_body)});
+
+		co_handler =
+			DispatchErrdocResponse(translate.response->error_document);
+		co_handler.Start(BIND_THIS_METHOD(OnErrdocCompletion));
 		return;
 	}
 

@@ -260,6 +260,16 @@ private:
 	UniquePoolPtr<PendingResponse> pending_chain_response;
 
 	/**
+         * The response scheduled for submission by the a handler
+         * coroutine.  It will be submitted in the coroutine's
+         * completion handler.  This indirection is necessary because
+         * destroying this Request instance from inside a coroutine
+         * doesn't work, because it will also destruct the
+         * std::coroutine_handle inside the Co::InvokeTask.
+	 */
+	UniquePoolPtr<PendingResponse> co_response;
+
+	/**
 	 * The URI used for the cookie jar.  This is only used by
 	 * proxy_handler().
 	 */
@@ -751,10 +761,9 @@ private:
 	 * @param error_document the payload of the #TRANSLATE_ERROR_DOCUMENT
 	 * translate response packet
 	 */
-	void DisaptchErrdocResponse(http_status_t status,
-				    ConstBuffer<void> error_document,
-				    HttpHeaders &&headers,
-				    UnusedIstreamPtr body) noexcept;
+	Co::InvokeTask DispatchErrdocResponse(ConstBuffer<void> error_document);
+
+	void OnErrdocCompletion(std::exception_ptr e) noexcept;
 
 	/* FILE_DIRECTORY_INDEX handler */
 
