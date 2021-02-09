@@ -41,88 +41,88 @@
 
 #include <string.h>
 
-gcc_pure
+[[gnu::pure]]
 static const char *
 get_suffix(const char *path)
 {
-    const char *slash = strrchr(path, '/');
-    if (slash != nullptr)
-        path = slash + 1;
+	const char *slash = strrchr(path, '/');
+	if (slash != nullptr)
+		path = slash + 1;
 
-    while (*path == '.')
-        ++path;
+	while (*path == '.')
+		++path;
 
-    const char *dot = strrchr(path, '.');
-    if (dot == nullptr || dot[1] == 0)
-        return nullptr;
+	const char *dot = strrchr(path, '.');
+	if (dot == nullptr || dot[1] == 0)
+		return nullptr;
 
-    return dot + 1;
+	return dot + 1;
 }
 
 struct AddressSuffixInfo {
-    const char *path;
-    ConstBuffer<void> content_type_lookup;
+	const char *path;
+	ConstBuffer<void> content_type_lookup;
 };
 
-gcc_pure
+[[gnu::pure]]
 static AddressSuffixInfo
 GetAddressSuffixInfo(const ResourceAddress &address)
 {
-    switch (address.type) {
-    case ResourceAddress::Type::NONE:
-    case ResourceAddress::Type::HTTP:
-    case ResourceAddress::Type::LHTTP:
-    case ResourceAddress::Type::PIPE:
-    case ResourceAddress::Type::CGI:
-    case ResourceAddress::Type::FASTCGI:
-    case ResourceAddress::Type::WAS:
-        return {nullptr, nullptr};
+	switch (address.type) {
+	case ResourceAddress::Type::NONE:
+	case ResourceAddress::Type::HTTP:
+	case ResourceAddress::Type::LHTTP:
+	case ResourceAddress::Type::PIPE:
+	case ResourceAddress::Type::CGI:
+	case ResourceAddress::Type::FASTCGI:
+	case ResourceAddress::Type::WAS:
+		return {nullptr, nullptr};
 
-    case ResourceAddress::Type::LOCAL:
-        return {address.GetFile().path, address.GetFile().content_type_lookup};
+	case ResourceAddress::Type::LOCAL:
+		return {address.GetFile().path, address.GetFile().content_type_lookup};
 
-    case ResourceAddress::Type::NFS:
-        return {address.GetNfs().path, address.GetNfs().content_type_lookup};
-    }
+	case ResourceAddress::Type::NFS:
+		return {address.GetNfs().path, address.GetNfs().content_type_lookup};
+	}
 
-    gcc_unreachable();
+	gcc_unreachable();
 }
 
 bool
 suffix_registry_lookup(struct pool &pool, TranslationService &service,
-                       const ResourceAddress &address,
-                       const StopwatchPtr &parent_stopwatch,
-                       SuffixRegistryHandler &handler,
-                       CancellablePointer &cancel_ptr)
+		       const ResourceAddress &address,
+		       const StopwatchPtr &parent_stopwatch,
+		       SuffixRegistryHandler &handler,
+		       CancellablePointer &cancel_ptr)
 {
-    const auto info = GetAddressSuffixInfo(address);
-    if (info.content_type_lookup.IsNull())
-            return false;
+	const auto info = GetAddressSuffixInfo(address);
+	if (info.content_type_lookup.IsNull())
+		return false;
 
-    const char *suffix = get_suffix(info.path);
-    if (suffix == nullptr)
-        return false;
+	const char *suffix = get_suffix(info.path);
+	if (suffix == nullptr)
+		return false;
 
-    const size_t length = strlen(suffix);
-    if (length > 5)
-        return false;
+	const size_t length = strlen(suffix);
+	if (length > 5)
+		return false;
 
-    /* duplicate the suffix, convert to lower case, check for
-       "illegal" characters (non-alphanumeric) */
-    char *buffer = p_strdup(&pool, suffix);
-    for (char *p = buffer; *p != 0; ++p) {
-        const char ch = *p;
-        if (IsUpperAlphaASCII(ch))
-            /* convert to lower case */
-            *p += 'a' - 'A';
-        else if (!IsLowerAlphaASCII(ch) && !IsDigitASCII(ch))
-            /* no, we won't look this up */
-            return false;
-    }
+	/* duplicate the suffix, convert to lower case, check for
+	   "illegal" characters (non-alphanumeric) */
+	char *buffer = p_strdup(&pool, suffix);
+	for (char *p = buffer; *p != 0; ++p) {
+		const char ch = *p;
+		if (IsUpperAlphaASCII(ch))
+			/* convert to lower case */
+			*p += 'a' - 'A';
+		else if (!IsLowerAlphaASCII(ch) && !IsDigitASCII(ch))
+			/* no, we won't look this up */
+			return false;
+	}
 
-    suffix_registry_lookup(pool, service,
-                           info.content_type_lookup, buffer,
-                           parent_stopwatch,
-                           handler, cancel_ptr);
-    return true;
+	suffix_registry_lookup(pool, service,
+			       info.content_type_lookup, buffer,
+			       parent_stopwatch,
+			       handler, cancel_ptr);
+	return true;
 }
