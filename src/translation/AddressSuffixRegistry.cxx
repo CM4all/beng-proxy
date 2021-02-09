@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "address_suffix_registry.hxx"
-#include "suffix_registry.hxx"
+#include "AddressSuffixRegistry.hxx"
+#include "SuffixRegistry.hxx"
 #include "ResourceAddress.hxx"
 #include "file_address.hxx"
 #include "nfs/Address.hxx"

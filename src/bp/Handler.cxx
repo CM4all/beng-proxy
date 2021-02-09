@@ -44,7 +44,7 @@
 #include "session/Lease.hxx"
 #include "session/Session.hxx"
 #include "ExternalSession.hxx"
-#include "address_suffix_registry.hxx"
+#include "translation/AddressSuffixRegistry.hxx"
 #include "http/IncomingRequest.hxx"
 #include "istream/istream_memory.hxx"
 #include "AllocatorPtr.hxx"

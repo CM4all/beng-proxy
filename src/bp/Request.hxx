@@ -41,7 +41,7 @@
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
 #include "translation/Transformation.hxx"
-#include "suffix_registry.hxx"
+#include "translation/SuffixRegistry.hxx"
 #include "delegate/Handler.hxx"
 #include "nfs/Cache.hxx"
 #include "strmap.hxx"
