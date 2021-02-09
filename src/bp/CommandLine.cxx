@@ -169,7 +169,6 @@ ParseCommandLine(BpCmdLine &cmdline, BpConfig &config, int argc, char **argv)
 		{"verbose", 0, nullptr, 'v'},
 		{"quiet", 0, nullptr, 'q'},
 		{"config-file", 1, nullptr, 'f'},
-		{"user", 1, nullptr, 'u'},
 		{"logger-user", 1, nullptr, 'U'},
 		{"translation-socket", 1, nullptr, 't'},
 		{"cluster-size", 1, nullptr, 'C'},
