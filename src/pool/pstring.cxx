@@ -70,27 +70,11 @@ p_strdup(struct pool *pool, const char *src
 }
 
 char *
-p_strdup_lower(struct pool *pool, const char *src
-	       TRACE_ARGS_DECL) noexcept
-{
-	return p_strndup_lower_fwd(pool, src, strlen(src));
-}
-
-char *
 p_strndup(struct pool *pool, const char *src, size_t length
 	  TRACE_ARGS_DECL) noexcept
 {
 	char *dest = (char *)p_malloc_fwd(pool, length + 1);
 	*Copy(dest, src, length) = 0;
-	return dest;
-}
-
-char *
-p_strndup_lower(struct pool *pool, const char *src, size_t length
-		TRACE_ARGS_DECL) noexcept
-{
-	char *dest = (char *)p_malloc_fwd(pool, length + 1);
-	*CopyLower(dest, src, length) = 0;
 	return dest;
 }
 
