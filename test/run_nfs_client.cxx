@@ -43,7 +43,7 @@
 #include "io/SpliceSupport.hxx"
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 

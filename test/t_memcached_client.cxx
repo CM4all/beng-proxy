@@ -32,7 +32,7 @@
 
 #include "memcached/Client.hxx"
 #include "memcached/Handler.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
 #include "io/SpliceSupport.hxx"

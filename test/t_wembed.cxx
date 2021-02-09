@@ -38,7 +38,7 @@
 #include "widget/Context.hxx"
 #include "bp/XmlProcessor.hxx"
 #include "uri/Dissect.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "istream/istream.hxx"
 #include "istream/istream_iconv.hxx"
 #include "pool/pool.hxx"

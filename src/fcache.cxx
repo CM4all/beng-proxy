@@ -33,7 +33,7 @@
 #include "fcache.hxx"
 #include "cache.hxx"
 #include "strmap.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "AllocatorPtr.hxx"
 #include "ResourceAddress.hxx"
 #include "ResourceLoader.hxx"

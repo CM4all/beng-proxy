@@ -44,7 +44,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "util/Cancellable.hxx"
 #include "fb_pool.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "PInstance.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"

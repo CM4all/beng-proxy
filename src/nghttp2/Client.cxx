@@ -44,7 +44,7 @@
 #include "util/RuntimeError.hxx"
 #include "util/StaticArray.hxx"
 #include "util/StringView.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
 

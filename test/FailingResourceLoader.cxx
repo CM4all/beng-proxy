@@ -32,7 +32,7 @@
 
 #include "FailingResourceLoader.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 
 #include <stdexcept>
 

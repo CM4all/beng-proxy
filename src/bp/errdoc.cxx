@@ -35,7 +35,7 @@
 #include "Instance.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "translation/Service.hxx"
 #include "translation/Handler.hxx"
 #include "ResourceLoader.hxx"

@@ -38,7 +38,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
 #include "stopwatch.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
 #include "util/Cancellable.hxx"

@@ -36,7 +36,7 @@
 #include "http_cache_rfc.hxx"
 #include "http_cache_heap.hxx"
 #include "strmap.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "sink_rubber.hxx"

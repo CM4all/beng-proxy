@@ -32,7 +32,7 @@
 
 #include "MirrorResourceLoader.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 
 void
 MirrorResourceLoader::SendRequest(struct pool &,

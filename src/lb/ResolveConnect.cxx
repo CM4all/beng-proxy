@@ -36,7 +36,7 @@
 #include "Instance.hxx"
 #include "pool/PSocketAddress.hxx"
 #include "lease.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http_client.hxx"
 #include "http/Headers.hxx"

@@ -41,7 +41,7 @@
 #include "http/HeaderParser.hxx"
 #include "PInstance.hxx"
 #include "ResourceLoader.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "bp/XmlProcessor.hxx"
 #include "bp/CssProcessor.hxx"
 #include "bp/TextProcessor.hxx"

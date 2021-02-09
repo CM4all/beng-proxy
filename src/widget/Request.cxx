@@ -36,7 +36,7 @@
 #include "Context.hxx"
 #include "Error.hxx"
 #include "LookupHandler.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "FilterStatus.hxx"
 #include "pheaders.hxx"
 #include "bp/XmlProcessor.hxx"

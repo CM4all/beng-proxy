@@ -37,7 +37,7 @@
 #include "http/Address.hxx"
 #include "util/Cancellable.hxx"
 #include "AllocatorPtr.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
 

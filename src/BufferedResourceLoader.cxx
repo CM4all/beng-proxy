@@ -31,7 +31,7 @@
  */
 
 #include "BufferedResourceLoader.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "strmap.hxx"
 #include "istream/BufferedIstream.hxx"
 #include "istream/UnusedPtr.hxx"

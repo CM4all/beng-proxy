@@ -37,7 +37,7 @@
 #include "Context.hxx"
 #include "Resolver.hxx"
 #include "http/HeaderUtil.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "strmap.hxx"
 #include "istream_html_escape.hxx"
 #include "istream/ConcatIstream.hxx"

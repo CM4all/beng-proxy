@@ -34,7 +34,7 @@
 #include "LuaHandler.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 
 class LbLuaResponseHandler final : public HttpResponseHandler {
 	LbHttpConnection &connection;

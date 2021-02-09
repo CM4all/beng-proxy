@@ -36,7 +36,7 @@
 #include "Output.hxx"
 #include "Input.hxx"
 #include "Lease.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"

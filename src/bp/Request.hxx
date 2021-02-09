@@ -47,7 +47,7 @@
 #include "strmap.hxx"
 #include "session/Id.hxx"
 #include "widget/View.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "io/Logger.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "co/InvokeTask.hxx"

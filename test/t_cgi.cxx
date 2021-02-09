@@ -33,7 +33,7 @@
 #include "tconstruct.hxx"
 #include "cgi/Glue.hxx"
 #include "cgi/Address.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "strmap.hxx"
 #include "istream/OpenFileIstream.hxx"
 #include "istream/Sink.hxx"

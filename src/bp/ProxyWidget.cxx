@@ -44,7 +44,7 @@
 #include "ForwardHeaders.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "WidgetLookupProcessor.hxx"
 #include "istream/AutoPipeIstream.hxx"
 #include "pool/pool.hxx"

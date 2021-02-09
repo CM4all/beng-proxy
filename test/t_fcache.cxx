@@ -34,7 +34,7 @@
 #include "MirrorResourceLoader.hxx"
 #include "fcache.hxx"
 #include "strmap.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "ResourceAddress.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_string.hxx"

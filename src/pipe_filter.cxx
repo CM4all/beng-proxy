@@ -31,7 +31,7 @@
  */
 
 #include "pipe_filter.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "stopwatch.hxx"
 #include "istream_stopwatch.hxx"
 #include "strmap.hxx"

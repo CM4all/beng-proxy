@@ -33,7 +33,7 @@
 #include "http_client.hxx"
 #include "http/Upgrade.hxx"
 #include "http/List.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "http/HeaderParser.hxx"
 #include "http/HeaderWriter.hxx"
 #include "http_body.hxx"

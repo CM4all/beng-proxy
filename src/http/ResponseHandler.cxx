@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "HttpResponseHandler.hxx"
+#include "ResponseHandler.hxx"
 #include "strmap.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"

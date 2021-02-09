@@ -35,7 +35,7 @@
 #include "was/Lease.hxx"
 #include "stopwatch.hxx"
 #include "lease.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "strmap.hxx"
 #include "istream/sink_fd.hxx"
 #include "istream/UnusedPtr.hxx"

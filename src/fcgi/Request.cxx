@@ -33,7 +33,7 @@
 #include "Request.hxx"
 #include "Stock.hxx"
 #include "Client.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "lease.hxx"
 #include "access_log/ChildErrorLog.hxx"
 #include "stock/Item.hxx"

@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "istream/Handler.hxx"
 #include "istream/StringSink.hxx"
 #include "pool/Ptr.hxx"

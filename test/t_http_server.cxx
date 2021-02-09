@@ -35,7 +35,7 @@
 #include "http_server/Handler.hxx"
 #include "http_client.hxx"
 #include "http/Headers.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "lease.hxx"
 #include "PInstance.hxx"
 #include "pool/pool.hxx"

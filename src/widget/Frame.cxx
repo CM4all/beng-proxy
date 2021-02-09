@@ -36,7 +36,7 @@
 #include "Widget.hxx"
 #include "Context.hxx"
 #include "LookupHandler.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "pool/SharedPtr.hxx"
 #include "bp/session/Lease.hxx"
 

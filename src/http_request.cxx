@@ -33,7 +33,7 @@
 #include "http_request.hxx"
 #include "http_client.hxx"
 #include "http/Address.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "http/HeaderWriter.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "fs/Balancer.hxx"

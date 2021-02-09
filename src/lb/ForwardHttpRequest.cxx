@@ -46,7 +46,7 @@
 #include "http/IncomingRequest.hxx"
 #include "http_client.hxx"
 #include "fs/Handler.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "http/Headers.hxx"
 #include "strmap.hxx"
 #include "pool/pool.hxx"

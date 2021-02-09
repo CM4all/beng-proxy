@@ -32,7 +32,7 @@
 
 #include "DirectResourceLoader.hxx"
 #include "ResourceAddress.hxx"
-#include "HttpResponseHandler.hxx"
+#include "http/ResponseHandler.hxx"
 #include "nghttp2/Glue.hxx"
 #include "http_request.hxx"
 #include "file_request.hxx"
