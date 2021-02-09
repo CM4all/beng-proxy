@@ -53,6 +53,7 @@
 #include "util/StringFormat.hxx"
 #include "util/StringView.hxx"
 #include "util/ScopeExit.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <was/protocol.h>
 
@@ -63,7 +64,7 @@ class WasClient final
 	  DestructAnchor, PoolLeakDetector,
 	  Cancellable
 {
-	struct pool &pool;
+	const AllocatorPtr alloc;
 	struct pool &caller_pool;
 
 	const StopwatchPtr stopwatch;
@@ -171,7 +172,7 @@ public:
 
 private:
 	void Destroy() noexcept {
-		DeleteFromPool(pool, this);
+		this->~WasClient();
 	}
 
 	template<typename B>
@@ -480,7 +481,7 @@ IsValidHeaderValue(StringView value) noexcept
 }
 
 static void
-ParseHeaderPacket(struct pool &pool, StringMap &headers,
+ParseHeaderPacket(AllocatorPtr alloc, StringMap &headers,
 		  StringView payload)
 {
 	const auto pair = payload.Split('=');
@@ -491,9 +492,7 @@ ParseHeaderPacket(struct pool &pool, StringMap &headers,
 	    !IsValidHeaderValue(value))
 		throw WasProtocolError("Malformed WAS HEADER packet");
 
-	headers.Add(pool,
-		    p_strdup_lower(pool, name),
-		    p_strdup(pool, value));
+	headers.Add(alloc, alloc.DupToLower(name), alloc.DupZ(value));
 }
 
 bool
@@ -527,7 +526,7 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
 		}
 
 		try {
-			ParseHeaderPacket(pool, response.headers,
+			ParseHeaderPacket(alloc, response.headers,
 					  StringView(payload));
 		} catch (...) {
 			stopwatch.RecordEvent("control_error");
@@ -854,7 +853,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 		     HttpResponseHandler &_handler,
 		     CancellablePointer &cancel_ptr)
 	:PoolLeakDetector(_pool),
-	 pool(_pool), caller_pool(_caller_pool),
+	 alloc(_pool), caller_pool(_caller_pool),
 	 stopwatch(std::move(_stopwatch)),
 	 lease(_lease),
 	 control(event_loop, control_fd, *this),
@@ -862,12 +861,12 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 	 submit_response_timer(event_loop,
 			       BIND_THIS_METHOD(OnSubmitResponseTimer)),
 	 request(body
-		 ? was_output_new(pool, event_loop, output_fd,
+		 ? was_output_new(_pool, event_loop, output_fd,
 				  std::move(body), *this)
 		 : nullptr),
 	 response(http_method_is_empty(method)
 		  ? nullptr
-		  : was_input_new(pool, event_loop, input_fd, *this))
+		  : was_input_new(_pool, event_loop, input_fd, *this))
 {
 	cancel_ptr = *this;
 }
