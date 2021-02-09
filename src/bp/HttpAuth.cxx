@@ -92,16 +92,16 @@ Request::HandleHttpAuth(const TranslateResponse &response) noexcept
 		return;
 	}
 
-	auto t = NewFromPool<TranslateRequest>(pool);
-	t->http_auth = response.http_auth;
-	t->authorization = authorization;
+	TranslateRequest t;
+	t.http_auth = response.http_auth;
+	t.authorization = authorization;
 
 	translate.previous = &response;
 
 	auto *http_auth_translate_handler =
 		NewFromPool<HttpAuthTranslateHandler>(pool, *this);
 
-	GetTranslationService().SendRequest(pool, *t,
+	GetTranslationService().SendRequest(pool, t,
 					    stopwatch,
 					    *http_auth_translate_handler,
 					    cancel_ptr);
