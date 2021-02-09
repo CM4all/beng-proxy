@@ -871,6 +871,7 @@ executable(
   'src/hostname.cxx',
   'src/http_request.cxx',
   'src/http/ResponseHandler.cxx',
+  'src/http/CoResponseHandler.cxx',
   'src/bp/Stats.cxx',
   'src/bp/Control.cxx',
   'src/PipeLease.cxx',
