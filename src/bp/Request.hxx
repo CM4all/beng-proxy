@@ -50,6 +50,7 @@
 #include "HttpResponseHandler.hxx"
 #include "io/Logger.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "co/InvokeTask.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
 
@@ -339,6 +340,14 @@ private:
 #ifndef NDEBUG
 	bool response_sent = false;
 #endif
+
+	/**
+	 * A handle to the Coroutine handling this request.
+	 *
+	 * If this is not set, then a "classic" handler runs using
+	 * #cancel_ptr.
+	 */
+	Co::InvokeTask co_handler;
 
 	CancellablePointer cancel_ptr;
 
@@ -781,8 +790,12 @@ private:
 	void Cancel() noexcept override {
 		DiscardRequestBody();
 
-		/* forward the abort to the http_server library */
-		cancel_ptr.Cancel();
+		if (co_handler)
+			/* stop the coroutine */
+			co_handler = {};
+		else
+			/* forward the abort to the http_server library */
+			cancel_ptr.Cancel();
 
 		Destroy();
 	}
