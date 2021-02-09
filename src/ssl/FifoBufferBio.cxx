@@ -31,6 +31,7 @@
  */
 
 #include "FifoBufferBio.hxx"
+#include "util/Compiler.h"
 #include "util/ForeignFifoBuffer.hxx"
 
 #include <openssl/bio.h>

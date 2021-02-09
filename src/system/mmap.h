@@ -37,6 +37,8 @@
 #ifndef BENG_PROXY_MMAP_H
 #define BENG_PROXY_MMAP_H
 
+#include "util/Compiler.h"
+
 #ifdef VALGRIND
 #include <valgrind/memcheck.h>
 #include <stdlib.h>
