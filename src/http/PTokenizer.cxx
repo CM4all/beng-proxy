@@ -38,56 +38,56 @@
 
 void
 http_next_quoted_string(AllocatorPtr alloc, StringView &input,
-                        StringView &value) noexcept
+			StringView &value) noexcept
 {
-    char *dest = alloc.NewArray<char>(input.size); /* TODO: optimize memory consumption */
-    size_t pos = 1;
+	char *dest = alloc.NewArray<char>(input.size); /* TODO: optimize memory consumption */
+	size_t pos = 1;
 
-    value.size = 0;
-    value.data = dest;
+	value.size = 0;
+	value.data = dest;
 
-    while (pos < input.size) {
-        if (input[pos] == '\\') {
-            ++pos;
-            if (pos < input.size)
-                dest[value.size++] = input[pos++];
-        } else if (input[pos] == '"') {
-            ++pos;
-            break;
-        } else if (char_is_http_text(input[pos])) {
-            dest[value.size++] = input[pos++];
-        } else {
-            ++pos;
-        }
-    }
+	while (pos < input.size) {
+		if (input[pos] == '\\') {
+			++pos;
+			if (pos < input.size)
+				dest[value.size++] = input[pos++];
+		} else if (input[pos] == '"') {
+			++pos;
+			break;
+		} else if (char_is_http_text(input[pos])) {
+			dest[value.size++] = input[pos++];
+		} else {
+			++pos;
+		}
+	}
 
-    input.skip_front(pos);
+	input.skip_front(pos);
 }
 
 void
 http_next_value(AllocatorPtr alloc,
-                StringView &input, StringView &value) noexcept
+		StringView &input, StringView &value) noexcept
 {
-    if (!input.empty() && input.front() == '"')
-        http_next_quoted_string(alloc, input, value);
-    else
-        http_next_token(input, value);
+	if (!input.empty() && input.front() == '"')
+		http_next_quoted_string(alloc, input, value);
+	else
+		http_next_token(input, value);
 }
 
 void
 http_next_name_value(AllocatorPtr alloc, StringView &input,
-                     StringView &name, StringView &value) noexcept
+		     StringView &name, StringView &value) noexcept
 {
-    http_next_token(input, name);
-    if (name.empty())
-        return;
+	http_next_token(input, name);
+	if (name.empty())
+		return;
 
-    input.StripLeft();
-    if (!input.empty() && input.front() == '=') {
-        input.pop_front();
-        input.StripLeft();
+	input.StripLeft();
+	if (!input.empty() && input.front() == '=') {
+		input.pop_front();
+		input.StripLeft();
 
-        http_next_value(alloc, input, value);
-    } else
-        value = nullptr;
+		http_next_value(alloc, input, value);
+	} else
+		value = nullptr;
 }

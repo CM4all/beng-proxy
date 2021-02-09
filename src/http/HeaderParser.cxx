@@ -47,96 +47,96 @@
 static constexpr bool
 IsValidHeaderValueChar(char ch) noexcept
 {
-    return ch != '\0' && ch != '\n' && ch != '\r';
+	return ch != '\0' && ch != '\n' && ch != '\r';
 }
 
 gcc_pure
 static bool
 IsValidHeaderValue(StringView value) noexcept
 {
-    for (char ch : value)
-        if (!IsValidHeaderValueChar(ch))
-            return false;
+	for (char ch : value)
+		if (!IsValidHeaderValueChar(ch))
+			return false;
 
-    return true;
+	return true;
 }
 
 bool
 header_parse_line(struct pool &pool, StringMap &headers,
-                  StringView line) noexcept
+		  StringView line) noexcept
 {
-    const auto pair = line.Split(':');
-    const StringView name = pair.first;
-    StringView value = pair.second;
+	const auto pair = line.Split(':');
+	const StringView name = pair.first;
+	StringView value = pair.second;
 
-    if (gcc_unlikely(value.IsNull() ||
-                     !http_header_name_valid(name) ||
-                     !IsValidHeaderValue(value)))
-        return false;
+	if (gcc_unlikely(value.IsNull() ||
+			 !http_header_name_valid(name) ||
+			 !IsValidHeaderValue(value)))
+		return false;
 
-    value.StripLeft();
+	value.StripLeft();
 
-    headers.Add(pool,
-                p_strdup_lower(pool, name),
-                p_strdup(pool, value));
-    return true;
+	headers.Add(pool,
+		    p_strdup_lower(pool, name),
+		    p_strdup(pool, value));
+	return true;
 }
 
 void
 header_parse_buffer(struct pool &pool, StringMap &headers,
-                    GrowingBuffer &&_gb) noexcept
+		    GrowingBuffer &&_gb) noexcept
 {
-    GrowingBufferReader reader(std::move(_gb));
+	GrowingBufferReader reader(std::move(_gb));
 
-    StaticFifoBuffer<char, 4096> buffer;
+	StaticFifoBuffer<char, 4096> buffer;
 
-    const auto *gb = &_gb;
+	const auto *gb = &_gb;
 
-    while (true) {
-        /* copy gb to buffer */
+	while (true) {
+		/* copy gb to buffer */
 
-        if (gb != nullptr) {
-            auto w = buffer.Write();
-            if (!w.empty()) {
-                auto src = reader.Read();
-                if (!src.IsNull()) {
-                    size_t nbytes = std::min(src.size, w.size);
-                    memcpy(w.data, src.data, nbytes);
-                    buffer.Append(nbytes);
-                    reader.Consume(nbytes);
-                } else
-                    gb = nullptr;
-            }
-        }
+		if (gb != nullptr) {
+			auto w = buffer.Write();
+			if (!w.empty()) {
+				auto src = reader.Read();
+				if (!src.IsNull()) {
+					size_t nbytes = std::min(src.size, w.size);
+					memcpy(w.data, src.data, nbytes);
+					buffer.Append(nbytes);
+					reader.Consume(nbytes);
+				} else
+					gb = nullptr;
+			}
+		}
 
-        /* parse lines from the buffer */
+		/* parse lines from the buffer */
 
-        auto r = buffer.Read();
-        if (r.empty() && gb == nullptr)
-            break;
+		auto r = buffer.Read();
+		if (r.empty() && gb == nullptr)
+			break;
 
-        const char *const src = (const char *)r.data;
-        const char *p = src;
-        const size_t length = r.size;
+		const char *const src = (const char *)r.data;
+		const char *p = src;
+		const size_t length = r.size;
 
-        while (true) {
-            p = StripLeft(p, src + length);
+		while (true) {
+			p = StripLeft(p, src + length);
 
-            const char *eol = (const char *)memchr(p, '\n', src + length - p);
-            if (eol == nullptr) {
-                if (gb == nullptr)
-                    eol = src + length;
-                else
-                    break;
-            }
+			const char *eol = (const char *)memchr(p, '\n', src + length - p);
+			if (eol == nullptr) {
+				if (gb == nullptr)
+					eol = src + length;
+				else
+					break;
+			}
 
-            while (eol > p && eol[-1] == '\r')
-                --eol;
+			while (eol > p && eol[-1] == '\r')
+				--eol;
 
-            header_parse_line(pool, headers, {p, eol});
-            p = eol + 1;
-        }
+			header_parse_line(pool, headers, {p, eol});
+			p = eol + 1;
+		}
 
-        buffer.Consume(p - src);
-    }
+		buffer.Consume(p - src);
+	}
 }

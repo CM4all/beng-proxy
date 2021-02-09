@@ -41,98 +41,98 @@
 void
 header_write_begin(GrowingBuffer &buffer, const char *name) noexcept
 {
-    assert(name != nullptr);
-    assert(*name != 0);
+	assert(name != nullptr);
+	assert(*name != 0);
 
-    size_t name_length = strlen(name);
-    char *dest = (char *)buffer.Write(name_length + 2);
+	size_t name_length = strlen(name);
+	char *dest = (char *)buffer.Write(name_length + 2);
 
-    memcpy(dest, name, name_length);
-    dest += name_length;
-    *dest++ = ':';
-    *dest++ = ' ';
+	memcpy(dest, name, name_length);
+	dest += name_length;
+	*dest++ = ':';
+	*dest++ = ' ';
 }
 
 void
 header_write_finish(GrowingBuffer &buffer) noexcept
 {
-    buffer.Write("\r\n", 2);
+	buffer.Write("\r\n", 2);
 }
 
 void
 header_write(GrowingBuffer &buffer,
-             const char *key, const char *value) noexcept
+	     const char *key, const char *value) noexcept
 {
-    size_t key_length, value_length;
+	size_t key_length, value_length;
 
-    assert(key != nullptr);
-    assert(value != nullptr);
+	assert(key != nullptr);
+	assert(value != nullptr);
 
-    key_length = strlen(key);
-    value_length = strlen(value);
+	key_length = strlen(key);
+	value_length = strlen(value);
 
-    if (gcc_unlikely(key_length + value_length >= 1024)) {
-        /* because GrowingBuffer::Write(size_t) can only deal with
-           small sizes, use this slightly slower code path for large
-           headers */
-        buffer.Write(key, key_length);
-        buffer.Write(": ", 2);
-        buffer.Write(value, value_length);
-        buffer.Write("\r\n", 2);
-        return;
-    }
+	if (gcc_unlikely(key_length + value_length >= 1024)) {
+		/* because GrowingBuffer::Write(size_t) can only deal with
+		   small sizes, use this slightly slower code path for large
+		   headers */
+		buffer.Write(key, key_length);
+		buffer.Write(": ", 2);
+		buffer.Write(value, value_length);
+		buffer.Write("\r\n", 2);
+		return;
+	}
 
-    char *dest = (char *)buffer.Write(key_length + 2 + value_length + 2);
+	char *dest = (char *)buffer.Write(key_length + 2 + value_length + 2);
 
-    memcpy(dest, key, key_length);
-    dest += key_length;
-    *dest++ = ':';
-    *dest++ = ' ';
-    memcpy(dest, value, value_length);
-    dest += value_length;
-    *dest++ = '\r';
-    *dest = '\n';
+	memcpy(dest, key, key_length);
+	dest += key_length;
+	*dest++ = ':';
+	*dest++ = ' ';
+	memcpy(dest, value, value_length);
+	dest += value_length;
+	*dest++ = '\r';
+	*dest = '\n';
 }
 
 void
 headers_copy_one(const StringMap &in, GrowingBuffer &out,
-                 const char *key) noexcept
+		 const char *key) noexcept
 {
-    const char *value = in.Get(key);
-    if (value != nullptr)
-        header_write(out, key, value);
+	const char *value = in.Get(key);
+	if (value != nullptr)
+		header_write(out, key, value);
 }
 
 void
 headers_copy(const StringMap &in, GrowingBuffer &out,
-             const char *const*keys) noexcept
+	     const char *const*keys) noexcept
 {
-    for (; *keys != nullptr; ++keys) {
-        const char *value = in.Get(*keys);
-        if (value != nullptr)
-            header_write(out, *keys, value);
-    }
+	for (; *keys != nullptr; ++keys) {
+		const char *value = in.Get(*keys);
+		if (value != nullptr)
+			header_write(out, *keys, value);
+	}
 }
 
 void
 headers_copy_all(const StringMap &in, GrowingBuffer &out) noexcept
 {
-    for (const auto &i : in)
-        header_write(out, i.key, i.value);
+	for (const auto &i : in)
+		header_write(out, i.key, i.value);
 }
 
 void
 headers_copy_most(const StringMap &in, GrowingBuffer &out) noexcept
 {
-    for (const auto &i : in)
-        if (!http_header_is_hop_by_hop(i.key))
-            header_write(out, i.key, i.value);
+	for (const auto &i : in)
+		if (!http_header_is_hop_by_hop(i.key))
+			header_write(out, i.key, i.value);
 }
 
 GrowingBuffer
 headers_dup(const StringMap &in) noexcept
 {
-    GrowingBuffer out;
-    headers_copy_most(in, out);
-    return out;
+	GrowingBuffer out;
+	headers_copy_most(in, out);
+	return out;
 }

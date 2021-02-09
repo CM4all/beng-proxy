@@ -43,7 +43,7 @@ class StringMap;
 [[gnu::pure]]
 int
 http_client_accepts_encoding(const StringMap &request_headers,
-                             const char *coding) noexcept;
+			     const char *coding) noexcept;
 
 /**
  * Parse the "Date" response header.

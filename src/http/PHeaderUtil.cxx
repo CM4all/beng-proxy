@@ -38,21 +38,21 @@
 gcc_pure
 int
 http_client_accepts_encoding(const StringMap &request_headers,
-                             const char *coding) noexcept
+			     const char *coding) noexcept
 {
-    const char *accept_encoding = request_headers.Get("accept-encoding");
-    return accept_encoding != nullptr &&
-        http_list_contains(accept_encoding, coding);
+	const char *accept_encoding = request_headers.Get("accept-encoding");
+	return accept_encoding != nullptr &&
+		http_list_contains(accept_encoding, coding);
 }
 
 std::chrono::system_clock::time_point
 GetServerDate(const StringMap &response_headers) noexcept
 {
-    const char *p = response_headers.Get("date");
-    if (p == nullptr)
-        /* server does not provide its system time */
-        return std::chrono::system_clock::from_time_t(-1);
+	const char *p = response_headers.Get("date");
+	if (p == nullptr)
+		/* server does not provide its system time */
+		return std::chrono::system_clock::from_time_t(-1);
 
-    return http_date_parse(p);
+	return http_date_parse(p);
 
 }

@@ -46,8 +46,8 @@ class GrowingBuffer;
  */
 bool
 header_parse_line(struct pool &pool, StringMap &headers,
-                  StringView line) noexcept;
+		  StringView line) noexcept;
 
 void
 header_parse_buffer(struct pool &pool, StringMap &headers,
-                    GrowingBuffer &&gb) noexcept;
+		    GrowingBuffer &&gb) noexcept;

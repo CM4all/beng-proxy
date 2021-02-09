@@ -56,15 +56,15 @@ header_write_finish(GrowingBuffer &buffer) noexcept;
 
 void
 header_write(GrowingBuffer &buffer,
-             const char *key, const char *value) noexcept;
+	     const char *key, const char *value) noexcept;
 
 void
 headers_copy_one(const StringMap &in, GrowingBuffer &out,
-                 const char *key) noexcept;
+		 const char *key) noexcept;
 
 void
 headers_copy(const StringMap &in, GrowingBuffer &out,
-             const char *const*keys) noexcept;
+	     const char *const*keys) noexcept;
 
 void
 headers_copy_all(const StringMap &in, GrowingBuffer &out) noexcept;

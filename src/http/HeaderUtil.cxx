@@ -39,28 +39,28 @@
 StringView
 http_header_param(const char *value, const char *name) noexcept
 {
-    /* XXX this implementation only supports one param */
-    const char *p = strchr(value, ';'), *q;
+	/* XXX this implementation only supports one param */
+	const char *p = strchr(value, ';'), *q;
 
-    if (p == nullptr)
-        return nullptr;
+	if (p == nullptr)
+		return nullptr;
 
-    p = StripLeft(p + 1);
+	p = StripLeft(p + 1);
 
-    q = strchr(p, '=');
-    if (q == nullptr || (size_t)(q - p) != strlen(name) ||
-        memcmp(p, name, q - p) != 0)
-        return nullptr;
+	q = strchr(p, '=');
+	if (q == nullptr || (size_t)(q - p) != strlen(name) ||
+	    memcmp(p, name, q - p) != 0)
+		return nullptr;
 
-    p = q + 1;
-    if (*p == '"') {
-        ++p;
-        q = strchr(p, '"');
-        if (q == nullptr)
-            return p;
-        else
-            return {p, size_t(q - p)};
-    } else {
-        return p;
-    }
+	p = q + 1;
+	if (*p == '"') {
+		++p;
+		q = strchr(p, '"');
+		if (q == nullptr)
+			return p;
+		else
+			return {p, size_t(q - p)};
+	} else {
+		return p;
+	}
 }

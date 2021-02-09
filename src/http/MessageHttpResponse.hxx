@@ -39,15 +39,15 @@
  * Describes a very simple HTTP response with a text/plain body.
  */
 struct MessageHttpResponse {
-    http_status_t status;
+	http_status_t status;
 
-    /**
-     * The response body.  This string must either be a literal or the
-     * entity which constructs this object must ensure that it will be
-     * valid until sending the response has finished (e.g. by
-     * allocating on the #IncomingHttpRequest pool).
-     */
-    const char *message;
+	/**
+	 * The response body.  This string must either be a literal or the
+	 * entity which constructs this object must ensure that it will be
+	 * valid until sending the response has finished (e.g. by
+	 * allocating on the #IncomingHttpRequest pool).
+	 */
+	const char *message;
 };
 
 #endif

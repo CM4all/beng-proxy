@@ -41,12 +41,12 @@ class AllocatorPtr;
 
 void
 http_next_quoted_string(AllocatorPtr alloc, StringView &input,
-                        StringView &value) noexcept;
+			StringView &value) noexcept;
 
 void
 http_next_value(AllocatorPtr alloc,
-                StringView &input, StringView &value) noexcept;
+		StringView &input, StringView &value) noexcept;
 
 void
 http_next_name_value(AllocatorPtr alloc, StringView &input,
-                     StringView &name, StringView &value) noexcept;
+		     StringView &name, StringView &value) noexcept;
