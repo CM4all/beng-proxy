@@ -33,6 +33,7 @@
 #include "pool/RootPool.hxx"
 #include "http/HeaderParser.hxx"
 #include "GrowingBuffer.hxx"
+#include "AllocatorPtr.hxx"
 #include "strmap.hxx"
 
 #include <unistd.h>
@@ -45,6 +46,7 @@ main(int argc gcc_unused, char **argv gcc_unused)
 	ssize_t nbytes;
 
 	RootPool pool;
+	const AllocatorPtr alloc{pool};
 
 	GrowingBuffer gb;
 
@@ -56,7 +58,7 @@ main(int argc gcc_unused, char **argv gcc_unused)
 	/* parse the headers */
 
 	auto *headers = strmap_new(pool);
-	header_parse_buffer(pool, *headers, std::move(gb));
+	header_parse_buffer(alloc, *headers, std::move(gb));
 
 	/* dump headers */
 

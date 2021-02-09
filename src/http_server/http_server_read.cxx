@@ -316,7 +316,7 @@ HttpServerConnection::HandleLine(StringView line) noexcept
 		assert(request.read_state == Request::HEADERS);
 		assert(request.request != nullptr);
 
-		header_parse_line(request.request->pool,
+		header_parse_line(*request.request->pool,
 				  request.request->headers,
 				  line);
 		return true;

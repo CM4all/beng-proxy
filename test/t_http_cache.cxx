@@ -47,6 +47,7 @@
 #include "istream/istream_string.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Compiler.h"
+#include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
 #include <gtest/gtest.h>
@@ -228,6 +229,7 @@ static void
 run_cache_test(Instance &instance, const Request &request, bool cached)
 {
 	auto pool = pool_new_linear(instance.root_pool, "t_http_cache", 8192);
+	const AllocatorPtr alloc{pool};
 	const auto uwa = MakeHttpAddress(request.uri).Host("foo");
 	const ResourceAddress address(uwa);
 
@@ -240,7 +242,7 @@ run_cache_test(Instance &instance, const Request &request, bool cached)
 		GrowingBuffer gb;
 		gb.Write(request.request_headers);
 
-		header_parse_buffer(pool, headers, std::move(gb));
+		header_parse_buffer(alloc, headers, std::move(gb));
 	}
 
 	instance.resource_loader.got_request = false;

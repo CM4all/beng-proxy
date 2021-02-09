@@ -36,7 +36,7 @@
 
 #pragma once
 
-struct pool;
+class AllocatorPtr;
 class StringMap;
 struct StringView;
 class GrowingBuffer;
@@ -45,9 +45,9 @@ class GrowingBuffer;
  * @return true on success, false on error
  */
 bool
-header_parse_line(struct pool &pool, StringMap &headers,
+header_parse_line(AllocatorPtr alloc, StringMap &headers,
 		  StringView line) noexcept;
 
 void
-header_parse_buffer(struct pool &pool, StringMap &headers,
+header_parse_buffer(AllocatorPtr alloc, StringMap &headers,
 		    GrowingBuffer &&gb) noexcept;

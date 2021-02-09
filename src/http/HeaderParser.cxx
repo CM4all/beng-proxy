@@ -62,7 +62,7 @@ IsValidHeaderValue(StringView value) noexcept
 }
 
 bool
-header_parse_line(struct pool &pool, StringMap &headers,
+header_parse_line(AllocatorPtr alloc, StringMap &headers,
 		  StringView line) noexcept
 {
 	const auto pair = line.Split(':');
@@ -76,14 +76,12 @@ header_parse_line(struct pool &pool, StringMap &headers,
 
 	value.StripLeft();
 
-	headers.Add(pool,
-		    p_strdup_lower(pool, name),
-		    p_strdup(pool, value));
+	headers.Add(alloc, alloc.DupToLower(name), alloc.DupZ(value));
 	return true;
 }
 
 void
-header_parse_buffer(struct pool &pool, StringMap &headers,
+header_parse_buffer(AllocatorPtr alloc, StringMap &headers,
 		    GrowingBuffer &&_gb) noexcept
 {
 	GrowingBufferReader reader(std::move(_gb));
@@ -133,7 +131,7 @@ header_parse_buffer(struct pool &pool, StringMap &headers,
 			while (eol > p && eol[-1] == '\r')
 				--eol;
 
-			header_parse_line(pool, headers, {p, eol});
+			header_parse_line(alloc, headers, {p, eol});
 			p = eol + 1;
 		}
 
