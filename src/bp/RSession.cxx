@@ -104,7 +104,7 @@ Request::LoadSession(const char *_session_id)
 }
 
 static const char *
-build_session_cookie_name(struct pool *pool, const BpConfig *config,
+build_session_cookie_name(AllocatorPtr alloc, const BpConfig *config,
 			  const StringMap &headers) noexcept
 {
 	if (!config->dynamic_session_cookie)
@@ -115,7 +115,7 @@ build_session_cookie_name(struct pool *pool, const BpConfig *config,
 		return config->session_cookie.c_str();
 
 	size_t length = config->session_cookie.length();
-	char *name = PoolAlloc<char>(*pool, length + 5);
+	char *name = alloc.NewArray<char>(length + 5);
 	memcpy(name, config->session_cookie.data(), length);
 	format_uint16_hex_fixed(name + length, djb_hash_string(host));
 	name[length + 4] = 0;
@@ -144,7 +144,7 @@ Request::DetermineSession()
 		return;
 	}
 
-	session_cookie = build_session_cookie_name(&pool,
+	session_cookie = build_session_cookie_name(pool,
 						   &instance.config,
 						   request.headers);
 
@@ -269,7 +269,7 @@ Request::DiscardRealmSession() noexcept
  * server.  Guaranteed to return non-nullptr.
  */
 static const char *
-get_request_realm(struct pool *pool, const StringMap &request_headers,
+get_request_realm(AllocatorPtr alloc, const StringMap &request_headers,
 		  const TranslateResponse &response,
 		  ConstBuffer<void> auth_base) noexcept
 {
@@ -279,12 +279,12 @@ get_request_realm(struct pool *pool, const StringMap &request_headers,
 	if (response.realm_from_auth_base) {
 		assert(!auth_base.IsNull());
 		// TODO: what if AUTH contains null bytes?
-		return p_strndup(pool, (const char *)auth_base.data, auth_base.size);
+		return alloc.DupZ(StringView{(const char *)auth_base.data, auth_base.size});
 	}
 
 	const char *host = request_headers.Get("host");
 	if (host != nullptr)
-		return p_strdup_lower(pool, host);
+		return alloc.DupToLower(host);
 
 	/* fall back to empty string as the default realm if there is no
 	   "Host" header */
@@ -300,7 +300,7 @@ Request::ApplyTranslateRealm(const TranslateResponse &response,
 		   check again */
 		return;
 
-	realm = get_request_realm(&pool, request.headers, response, auth_base);
+	realm = get_request_realm(pool, request.headers, response, auth_base);
 }
 
 RealmSessionLease
