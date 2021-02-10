@@ -903,6 +903,14 @@ LbConfigParser::Branch::ParseLine(FileLineParser &line)
 		destination.response.location = line.ExpectValue();
 
 		AddGoto(std::move(destination), line);
+	} else if (strcmp(word, "redirect_https") == 0) {
+		const bool value = line.NextBool();
+		if (!value)
+			throw LineParser::Error("Invalid value");
+
+		LbGotoConfig destination(HTTP_STATUS_MOVED_PERMANENTLY);
+		destination.response.redirect_https = true;
+		AddGoto(std::move(destination), line);
 	} else
 		throw LineParser::Error("Unknown option");
 }
@@ -1071,6 +1079,18 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 		config.destination = parent.config.FindGoto(line.ExpectValueAndEnd());
 		if (!config.destination.IsDefined())
 			throw LineParser::Error("No such pool");
+	} else if (strcmp(word, "redirect_https") == 0) {
+		const bool value = line.NextBool();
+		line.ExpectEnd();
+
+		if (config.destination.IsDefined())
+			throw LineParser::Error("Pool already configured");
+
+		if (!value)
+			return;
+
+		config.destination = LbGotoConfig{HTTP_STATUS_MOVED_PERMANENTLY};
+		config.destination.response.redirect_https = true;
 	} else if (strcmp(word, "verbose_response") == 0) {
 		bool value = line.NextBool();
 
@@ -1189,6 +1209,11 @@ LbConfigParser::Listener::Finish()
 
 	if (config.ssl && config.ssl_config.cert_key.empty())
 		throw LineParser::Error("No SSL certificates ");
+
+	if (config.destination.response.IsDefined() &&
+	    config.destination.response.redirect_https &&
+	    config.ssl)
+		throw LineParser::Error("Cannot enable 'redirect_https' on HTTPS listener");
 
 	if (config.destination.GetProtocol() == LbProtocol::HTTP ||
 	    config.ssl)

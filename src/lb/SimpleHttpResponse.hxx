@@ -48,6 +48,8 @@ struct LbSimpleHttpResponse {
 
 	std::string message;
 
+	bool redirect_https = false;
+
 	LbSimpleHttpResponse() = default;
 	explicit LbSimpleHttpResponse(http_status_t _status)
 		:status(_status) {}

@@ -32,6 +32,7 @@
 
 #include "SimpleHttpResponse.hxx"
 #include "http/IncomingRequest.hxx"
+#include "RedirectHttps.hxx"
 
 void
 SendResponse(IncomingHttpRequest &request,
@@ -39,7 +40,26 @@ SendResponse(IncomingHttpRequest &request,
 {
 	assert(response.IsDefined());
 
-	request.SendSimpleResponse(response.status,
-				   response.location.empty() ? nullptr : response.location.c_str(),
-				   response.message.empty() ? nullptr : response.message.c_str());
+	const char *location = nullptr;
+	const char *message = response.message.empty()
+		? nullptr
+		: response.message.c_str();
+
+	if (response.redirect_https) {
+		const char *host = request.headers.Get("host");
+		if (host == nullptr) {
+			request.SendSimpleResponse(HTTP_STATUS_BAD_REQUEST,
+						   nullptr,
+						   "No Host header");
+			return;
+		}
+
+		location = MakeHttpsRedirect(AllocatorPtr{request.pool},
+					     host, 443, request.uri);
+		if (message == nullptr)
+			message = "This page requires \"https\"";
+	} else if (!response.location.empty())
+		location = response.location.c_str();
+
+	request.SendSimpleResponse(response.status, location, message);
 }

@@ -218,9 +218,9 @@ The following operators are available:
 The last token is a quoted string depicting the value to compare with,
 or the regular expression.
 
-Instead of ``goto``, you can use ``status`` or ``redirect`` to let
-:program:`beng-lb` generate a brief response with the given HTTP status code or
-``Location`` header::
+Instead of ``goto``, you can use ``status``, ``redirect`` or
+``redirect_https`` to let :program:`beng-lb` generate a brief response
+with the given HTTP status code or ``Location`` header::
 
    branch foo {
      status 418 if $http_user_agent =~ "BadBot"
@@ -366,6 +366,10 @@ Known attributes:
 
 - ``ssl``: ``yes`` enables SSL/TLS. See :ref:`ssl` for more
   information and more SSL options.
+
+- ``redirect_https``: ``yes`` redirects all incoming HTTP requests to
+  the according ``https://`` URL.  This can be specified instead of
+  ``pool``.
 
 - ``verbose_response``: ``yes`` exposes internal error messages in
   HTTP responses.
