@@ -67,7 +67,7 @@ class Translation(Protocol):
     def _handle_chain(self, chain, chain_header, status):
         log.msg("chain %s header=%s status=%s" % (chain, chain_header, status))
         response = Response(protocol_version=2)
-        if chain == 'foo':
+        if chain == b'foo':
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
             response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_ACTION, sed_fastcgi)
