@@ -30,33 +30,16 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
-
-#include "http/Status.h"
-
-#include <string>
-
-struct IncomingHttpRequest;
-
-struct LbSimpleHttpResponse {
-	http_status_t status = http_status_t(0);
-
-	/**
-	 * The "Location" response header.
-	 */
-	std::string location;
-
-	std::string message;
-
-	LbSimpleHttpResponse() = default;
-	explicit LbSimpleHttpResponse(http_status_t _status)
-		:status(_status) {}
-
-	bool IsDefined() const {
-		return status != http_status_t(0);
-	}
-};
+#include "SimpleHttpResponse.hxx"
+#include "http/IncomingRequest.hxx"
 
 void
 SendResponse(IncomingHttpRequest &request,
-	     const LbSimpleHttpResponse &response) noexcept;
+	     const LbSimpleHttpResponse &response) noexcept
+{
+	assert(response.IsDefined());
+
+	request.SendSimpleResponse(response.status,
+				   response.location.empty() ? nullptr : response.location.c_str(),
+				   response.message.empty() ? nullptr : response.message.c_str());
+}

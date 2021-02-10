@@ -907,6 +907,7 @@ executable(
   'src/RedirectHttps.cxx',
   'src/PInstance.cxx',
   'src/lb/Listener.cxx',
+  'src/lb/SimpleHttpResponse.cxx',
   'src/lb/HttpConnection.cxx',
   'src/lb/ResolveConnect.cxx',
   'src/lb/LuaHttpRequestHandler.cxx',
