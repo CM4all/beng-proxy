@@ -3,7 +3,7 @@ cm4all-beng-proxy (16.32) unstable; urgency=low
   * lb: fix crash bug
   * bp: flush the OpenSSL session cache on SIGHUP
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 10 Feb 2021 21:18:40 +0100
 
 cm4all-beng-proxy (16.31) unstable; urgency=low
 
