@@ -14,7 +14,7 @@ cm4all-beng-proxy (16.30) unstable; urgency=low
   * debian: add "Built-Using: ${sphinxdoc:Built-Using}"
   * systemd: configure memory limits
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 10 Feb 2021 16:28:15 +0100
 
 cm4all-beng-proxy (16.29) unstable; urgency=low
 
