@@ -192,6 +192,16 @@ BpInstance::ForkCow(bool inherit) noexcept
 #endif
 }
 
+unsigned
+BpInstance::FlushSSLSessionCache(long tm) noexcept
+{
+	unsigned n = 0;
+	for (auto &listener : listeners)
+		n += listener.FlushSSLSessionCache(tm);
+
+	return n;
+}
+
 void
 BpInstance::Compress() noexcept
 {

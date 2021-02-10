@@ -79,6 +79,10 @@ public:
 		listener.RemoveEvent();
 	}
 
+	unsigned FlushSSLSessionCache(long tm) noexcept {
+		return listener.FlushSSLSessionCache(tm);
+	}
+
 	const char *GetTag() const noexcept {
 		return tag;
 	}

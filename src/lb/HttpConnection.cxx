@@ -214,17 +214,6 @@ LbHttpConnection::LogSendError(IncomingHttpRequest &request,
 	SendError(request, ep);
 }
 
-static void
-SendResponse(IncomingHttpRequest &request,
-	     const LbSimpleHttpResponse &response)
-{
-	assert(response.IsDefined());
-
-	request.SendSimpleResponse(response.status,
-				   response.location.empty() ? nullptr : response.location.c_str(),
-				   response.message.empty() ? nullptr : response.message.c_str());
-}
-
 /*
  * http connection handler
  *

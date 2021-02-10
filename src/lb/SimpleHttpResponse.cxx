@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2021 CM4all GmbH
+ * Copyright 2007-2019 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,35 +30,36 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
-
-#include "http/Status.h"
-
-#include <string>
-
-struct IncomingHttpRequest;
-
-struct LbSimpleHttpResponse {
-	http_status_t status = http_status_t(0);
-
-	/**
-	 * The "Location" response header.
-	 */
-	std::string location;
-
-	std::string message;
-
-	bool redirect_https = false;
-
-	LbSimpleHttpResponse() = default;
-	explicit LbSimpleHttpResponse(http_status_t _status) noexcept
-		:status(_status) {}
-
-	bool IsDefined() const noexcept {
-		return status != http_status_t(0);
-	}
-};
+#include "SimpleHttpResponse.hxx"
+#include "http/IncomingRequest.hxx"
+#include "RedirectHttps.hxx"
 
 void
 SendResponse(IncomingHttpRequest &request,
-	     const LbSimpleHttpResponse &response) noexcept;
+	     const LbSimpleHttpResponse &response) noexcept
+{
+	assert(response.IsDefined());
+
+	const char *location = nullptr;
+	const char *message = response.message.empty()
+		? nullptr
+		: response.message.c_str();
+
+	if (response.redirect_https) {
+		const char *host = request.headers.Get("host");
+		if (host == nullptr) {
+			request.SendSimpleResponse(HTTP_STATUS_BAD_REQUEST,
+						   nullptr,
+						   "No Host header");
+			return;
+		}
+
+		location = MakeHttpsRedirect(AllocatorPtr{request.pool},
+					     host, 443, request.uri);
+		if (message == nullptr)
+			message = "This page requires \"https\"";
+	} else if (!response.location.empty())
+		location = response.location.c_str();
+
+	request.SendSimpleResponse(response.status, location, message);
+}

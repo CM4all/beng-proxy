@@ -152,17 +152,6 @@ private:
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
-static void
-SendResponse(IncomingHttpRequest &request,
-	     const LbSimpleHttpResponse &response) noexcept
-{
-	assert(response.IsDefined());
-
-	request.SendSimpleResponse(response.status,
-				   response.location.empty() ? nullptr : response.location.c_str(),
-				   response.message.empty() ? nullptr : response.message.c_str());
-}
-
 static bool
 send_fallback(IncomingHttpRequest &request,
 	      const LbSimpleHttpResponse &fallback) noexcept
