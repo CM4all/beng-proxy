@@ -73,6 +73,9 @@ LbGotoConfig::GetName() const
 	if (translation != nullptr)
 		return translation->name.c_str();
 
+	if (response.IsDefined())
+		return "response";
+
 	return cluster != nullptr
 		? cluster->name.c_str()
 		: branch->name.c_str();
