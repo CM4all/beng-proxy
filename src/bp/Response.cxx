@@ -68,6 +68,7 @@
 #include "translation/Transformation.hxx"
 #include "translation/Service.hxx"
 #include "http/Address.hxx"
+#include "co/Task.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "relocate_uri.hxx"
 #include "FilterStatus.hxx"
@@ -758,9 +759,8 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
 							     std::move(headers),
 							     UnusedHoldIstreamPtr{pool, std::move(response_body)});
 
-		co_handler =
-			DispatchErrdocResponse(translate.response->error_document);
-		co_handler.Start(BIND_THIS_METHOD(OnErrdocCompletion));
+		CoStart(DispatchErrdocResponse(translate.response->error_document),
+			BIND_THIS_METHOD(OnErrdocCompletion));
 		return;
 	}
 

@@ -860,6 +860,7 @@ executable(
   'src/bp/ProxyHandler.cxx',
   'src/bp/Global.cxx',
   'src/bp/Handler.cxx',
+  'src/bp/CoHandler.cxx',
   'src/bp/Auth.cxx',
   'src/bp/HttpAuth.cxx',
   'src/bp/TokenAuth.cxx',

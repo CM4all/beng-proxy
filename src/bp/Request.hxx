@@ -76,6 +76,7 @@ struct WidgetRef;
 class Widget;
 class SessionLease;
 class RealmSessionLease;
+namespace Co { template<typename T> class Task; }
 
 /*
  * The BENG request struct.  This is only used by the handlers
@@ -757,6 +758,29 @@ public:
 
 private:
 	/**
+	 * Coroutine glue method used by CoStart().
+	 */
+	Co::InvokeTask CoRun(Co::Task<PendingResponse> task);
+
+	/**
+	 * Let the given coroutine handle the request.  The returned
+	 * #PendingResponse will be passed to DispatchResponse().
+	 */
+	void CoStart(Co::Task<PendingResponse> task) noexcept;
+
+	/**
+	 * Overload with a custom completion handler.
+	 */
+	void CoStart(Co::Task<PendingResponse> task,
+		     BoundMethod<void(std::exception_ptr) noexcept> on_completion) noexcept;
+
+	/**
+	 * Default completion handler for CoStart() which calls
+	 * DispatchResponse() or DispatchError().
+	 */
+	void OnCoCompletion(std::exception_ptr error) noexcept;
+
+	/**
 	 * Asks the translation server for an error document, and submits it
 	 * to InvokeResponse().  If there is no error document, or the
 	 * error document resource fails, it resubmits the original response.
@@ -764,7 +788,7 @@ private:
 	 * @param error_document the payload of the #TRANSLATE_ERROR_DOCUMENT
 	 * translate response packet
 	 */
-	Co::InvokeTask DispatchErrdocResponse(ConstBuffer<void> error_document);
+	Co::Task<PendingResponse> DispatchErrdocResponse(ConstBuffer<void> error_document);
 
 	void OnErrdocCompletion(std::exception_ptr e) noexcept;
 

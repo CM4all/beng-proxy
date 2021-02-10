@@ -36,6 +36,7 @@
 #include "Instance.hxx"
 #include "http/IncomingRequest.hxx"
 #include "translation/CoTranslate.hxx"
+#include "co/Task.hxx"
 #include "io/Logger.hxx"
 
 static auto
@@ -48,7 +49,7 @@ MakeErrdocTranslateRequest(TranslateRequest r,
 	return r;
 }
 
-Co::InvokeTask
+Co::Task<PendingResponse>
 Request::DispatchErrdocResponse(ConstBuffer<void> error_document)
 {
 	assert(!error_document.IsNull());
@@ -66,7 +67,7 @@ Request::DispatchErrdocResponse(ConstBuffer<void> error_document)
 	    !t.address.IsDefined())
 		/* translation server did not specify an error
 		   document: submit the original response as-is */
-		co_return;
+		co_return std::move(*co_response);
 
 	const auto response = co_await
 		CoLoadResource(*instance.cached_resource_loader, pool,
@@ -79,13 +80,12 @@ Request::DispatchErrdocResponse(ConstBuffer<void> error_document)
 	if (!http_status_is_success(response->status))
 		/* the error document failed: submit the original
 		   as-is */
-		co_return;
+		co_return std::move(*co_response);
 
 	/* submit the error document which we just received */
-	co_response =
-		UniquePoolPtr<PendingResponse>::Make(pool, response->status,
-						     std::move(response->headers),
-						     std::move(response->body));
+	co_return PendingResponse(response->status,
+				  std::move(response->headers),
+				  std::move(response->body));
 }
 
 void
