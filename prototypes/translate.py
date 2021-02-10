@@ -986,6 +986,10 @@ class Translation(Protocol):
             response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'hello.sh'))
             response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_CHAIN, 'foo')
+        elif uri == '/chain/break':
+            response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'hello.sh'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
+            response.packet(TRANSLATE_CHAIN, 'bar')
         elif uri[:7] == '/defer/':
             response.packet(TRANSLATE_DEFER)
         elif uri[:11] == '/like_host/':
