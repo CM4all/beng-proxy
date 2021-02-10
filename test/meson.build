@@ -131,25 +131,6 @@ if libnghttp2.found()
   )
 endif
 
-executable('run_memcached_client',
-  'run_memcached_client.cxx',
-  '../src/PInstance.cxx',
-  '../src/pipe_stock.cxx',
-  '../src/PipeLease.cxx',
-  include_directories: inc,
-  dependencies: [
-    memcached_client_dep,
-    stock_dep,
-    net_dep,
-    io_dep,
-  ])
-
-executable('fake_memcached_server',
-  'fake_memcached_server.cxx',
-  include_directories: inc,
-  dependencies: [
-  ])
-
 executable('run_ping',
   'run_ping.cxx',
   '../src/PInstance.cxx',
@@ -504,15 +485,6 @@ if libwas.found()
     ),
   )
 endif
-
-test('t_memcached_client', executable('t_memcached_client',
-  't_memcached_client.cxx',
-  '../src/PInstance.cxx',
-  include_directories: inc,
-  dependencies: [
-    memcached_client_dep,
-  ]),
-)
 
 test('t_http_cache', executable('t_http_cache',
   't_http_cache.cxx',

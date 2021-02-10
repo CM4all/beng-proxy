@@ -38,7 +38,6 @@
 #include "Instance.hxx"
 #include "http_client.hxx"
 #include "nfs/Error.hxx"
-#include "memcached/Error.hxx"
 #include "cgi/Error.hxx"
 #include "fcgi/Error.hxx"
 #include "was/Error.hxx"
@@ -130,12 +129,6 @@ ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 		FindRetrowNested<CgiError>(ep);
 	} catch (...) {
 		return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
-	}
-
-	try {
-		FindRetrowNested<MemcachedClientError>(ep);
-	} catch (...) {
-		return {HTTP_STATUS_BAD_GATEWAY, "Cache server failed"};
 	}
 
 #ifdef HAVE_LIBNFS

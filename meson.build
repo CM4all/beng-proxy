@@ -545,20 +545,6 @@ socket = static_library('socket',
 socket_dep = declare_dependency(link_with: socket,
                                dependencies: [event_net_dep])
 
-memcached_client = static_library('memcached_client',
-  'src/memcached/Client.cxx',
-  'src/memcached/Stock.cxx',
-  'src/memcached/Packet.cxx',
-  include_directories: inc,
-)
-memcached_client_dep = declare_dependency(
-  link_with: memcached_client,
-  dependencies: [
-    istream_dep,
-    socket_dep,
-  ],
-)
-
 subdir('libcommon/src/translation')
 subdir('libcommon/src/translation/server')
 
@@ -950,7 +936,6 @@ executable(
     processor_dep,
     nfs_client_dep,
     thread_pool_dep,
-    memcached_client_dep,
     delegate_client_dep,
     control_server_dep,
     nghttp2_dep,
