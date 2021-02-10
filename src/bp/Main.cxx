@@ -179,6 +179,9 @@ BpInstance::ReloadEventCallback(int) noexcept
 	LogConcat(3, "main", "caught SIGHUP, flushing all caches (pid=",
 		  (int)getpid(), ")");
 
+	unsigned n_ssl_sessions = FlushSSLSessionCache(LONG_MAX);
+	LogConcat(3, "main", "flushed ", n_ssl_sessions, " SSL sessions");
+
 	FadeChildren();
 
 	FlushTranslationCaches();
