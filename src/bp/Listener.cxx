@@ -69,3 +69,11 @@ BPListener::OnAcceptError(std::exception_ptr ep) noexcept
 {
 	LogConcat(2, "listener", ep);
 }
+
+unsigned
+BPListener::FlushSSLSessionCache(long tm) noexcept
+{
+	return ssl_factory != nullptr
+		? ssl_factory_flush(*ssl_factory, tm)
+		: 0;
+}

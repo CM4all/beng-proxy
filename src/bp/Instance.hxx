@@ -202,6 +202,8 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 
 	void ForkCow(bool inherit) noexcept;
 
+	unsigned FlushSSLSessionCache(long tm) noexcept;
+
 	void Compress() noexcept;
 	void ScheduleCompress() noexcept;
 	void OnCompressTimer() noexcept;

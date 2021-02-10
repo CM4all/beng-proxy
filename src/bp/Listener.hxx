@@ -57,6 +57,8 @@ public:
 		   const SslConfig *ssl_config);
 	~BPListener();
 
+	unsigned FlushSSLSessionCache(long tm) noexcept;
+
 protected:
 	void OnAccept(UniqueSocketDescriptor &&fd, SocketAddress address) noexcept override;
 	void OnAcceptError(std::exception_ptr ep) noexcept override;
