@@ -206,6 +206,9 @@ void
 BpInstance::Compress() noexcept
 {
 	fb_pool_compress();
+
+	unsigned n_ssl_sessions = FlushSSLSessionCache(LONG_MAX);
+	LogConcat(3, "main", "flushed ", n_ssl_sessions, " SSL sessions");
 }
 
 void
