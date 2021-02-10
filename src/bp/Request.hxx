@@ -443,11 +443,13 @@ public:
 
 	bool CheckHandleReadFile(const TranslateResponse &response);
 	bool CheckHandleProbePathSuffixes(const TranslateResponse &response);
-	bool CheckHandleRedirect(const TranslateResponse &response);
-	bool CheckHandleBounce(const TranslateResponse &response);
-	bool CheckHandleStatus(const TranslateResponse &response);
-	bool CheckHandleTinyImage(const TranslateResponse &response);
-	bool CheckHandleMessage(const TranslateResponse &response);
+
+	[[gnu::pure]]
+	const char *CheckRedirectUri(const TranslateResponse &response) const noexcept;
+
+	[[gnu::pure]]
+	const char *CheckBounceUri(const TranslateResponse &response) const noexcept;
+
 	bool CheckHandleRedirectBounceStatus(const TranslateResponse &response);
 
 	bool DoContentTypeLookup(const ResourceAddress &address) noexcept;

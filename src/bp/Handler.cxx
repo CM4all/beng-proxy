@@ -47,6 +47,7 @@
 #include "translation/AddressSuffixRegistry.hxx"
 #include "http/IncomingRequest.hxx"
 #include "istream/istream_memory.hxx"
+#include "istream/istream_string.hxx"
 #include "AllocatorPtr.hxx"
 #include "puri_edit.hxx"
 #include "puri_escape.hxx"
@@ -193,15 +194,11 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 	}
 }
 
-inline bool
-Request::CheckHandleRedirect(const TranslateResponse &response)
+inline const char *
+Request::CheckRedirectUri(const TranslateResponse &response) const noexcept
 {
 	if (response.redirect == nullptr)
-		return false;
-
-	http_status_t status = response.status != (http_status_t)0
-		? response.status
-		: HTTP_STATUS_SEE_OTHER;
+		return nullptr;
 
 	const AllocatorPtr alloc(pool);
 
@@ -216,78 +213,66 @@ Request::CheckHandleRedirect(const TranslateResponse &response)
 		redirect_uri = uri_append_query_string_n(alloc, redirect_uri,
 							 dissected_uri.query);
 
-	DispatchRedirect(status, redirect_uri, response.message);
-	return true;
+	return redirect_uri;
 }
 
-inline bool
-Request::CheckHandleBounce(const TranslateResponse &response)
+inline const char *
+Request::CheckBounceUri(const TranslateResponse &response) const noexcept
 {
 	if (response.bounce == nullptr)
-		return false;
+		return nullptr;
 
-	DispatchRedirect(HTTP_STATUS_SEE_OTHER,
-			 GetBounceUri(pool, request,
-				      GetExternalUriScheme(response),
-				      GetExternalUriHost(response),
-				      dissected_uri, response),
-			 nullptr);
-	return true;
-}
-
-inline bool
-Request::CheckHandleStatus(const TranslateResponse &response)
-{
-	if (response.status == (http_status_t)0)
-		return false;
-
-	DispatchError(response.status, {}, nullptr);
-	return true;
-}
-
-inline bool
-Request::CheckHandleTinyImage(const TranslateResponse &response)
-{
-	if (!response.tiny_image)
-		return false;
-
-	http_status_t status = response.status != (http_status_t)0
-		? response.status
-		: HTTP_STATUS_OK;
-
-	HttpHeaders headers;
-	headers.Write("content-type", "image/gif");
-
-	static constexpr char tiny_gif[] =
-		"GIF89a\x01\x00\x01\x00\x80\xff\x00\xff\xff\xff\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00;";
-
-	DispatchError(status, std::move(headers),
-		      istream_memory_new(pool, tiny_gif, sizeof(tiny_gif) - 1));
-	return true;
-}
-
-inline bool
-Request::CheckHandleMessage(const TranslateResponse &response)
-{
-	if (response.message == nullptr)
-		return false;
-
-	http_status_t status = response.status != (http_status_t)0
-		? response.status
-		: HTTP_STATUS_OK;
-
-	DispatchError(status, response.message);
-	return true;
+	return GetBounceUri(pool, request,
+			    GetExternalUriScheme(response),
+			    GetExternalUriHost(response),
+			    dissected_uri, response);
 }
 
 bool
 Request::CheckHandleRedirectBounceStatus(const TranslateResponse &response)
 {
-	return CheckHandleRedirect(response) ||
-		CheckHandleBounce(response) ||
-		CheckHandleTinyImage(response) ||
-		CheckHandleMessage(response) ||
-		CheckHandleStatus(response);
+	if (response.redirect == nullptr && response.bounce == nullptr &&
+	    response.status == http_status_t(0) && !response.tiny_image &&
+	    response.message == nullptr)
+		return false;
+
+	http_status_t status = response.status;
+	HttpHeaders headers;
+	UnusedIstreamPtr body;
+
+	if (response.tiny_image) {
+		headers.Write("content-type", "image/gif");
+
+		static constexpr char tiny_gif[] =
+			"GIF89a\x01\x00\x01\x00\x80\xff\x00\xff\xff\xff\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00;";
+		body = istream_memory_new(pool, tiny_gif, sizeof(tiny_gif) - 1);
+	}
+
+	const char *message = response.message;
+
+	const char *redirect_uri = CheckRedirectUri(response);
+	if (redirect_uri == nullptr)
+		redirect_uri = CheckBounceUri(response);
+	if (redirect_uri != nullptr) {
+		if (status == http_status_t(0))
+			status = HTTP_STATUS_SEE_OTHER;
+
+		headers.Write("location", redirect_uri);
+
+		if (message == nullptr)
+			message = "redirection";
+	}
+
+	if (message != nullptr && !body) {
+		headers.Write("content-type", "text/plain");
+		body = istream_string_new(pool, message);
+	}
+
+	if (status == http_status_t(0))
+		status = body ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT;
+
+	DispatchError(status, std::move(headers), std::move(body));
+	return true;
 }
 
 gcc_pure
