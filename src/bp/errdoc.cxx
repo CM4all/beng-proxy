@@ -96,6 +96,5 @@ Request::OnErrdocCompletion(std::exception_ptr e) noexcept
 	if (e)
 		logger(2, "error on error document: ", e);
 
-	DispatchResponse(co_response->status, std::move(co_response->headers),
-			 std::move(co_response->body));
+	DispatchResponse(std::move(*co_response));
 }

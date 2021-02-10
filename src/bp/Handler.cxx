@@ -618,10 +618,7 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 	assert(pending_chain_response);
 
 	if (response.break_chain) {
-		auto pr = std::move(*pending_chain_response);
-		pending_chain_response.reset();
-		DispatchResponse(pr.status, std::move(pr.headers),
-				 std::move(pr.body));
+		DispatchResponse(std::move(pending_chain_response));
 		return;
 	}
 

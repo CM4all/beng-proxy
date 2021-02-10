@@ -798,6 +798,27 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
 }
 
 void
+Request::DispatchResponse(PendingResponse &&response) noexcept
+{
+	DispatchResponse(response.status, std::move(response.headers),
+			 std::move(response.body));
+}
+
+void
+Request::DispatchResponse(UniquePoolPtr<PendingResponse> response_ptr) noexcept
+{
+	assert(response_ptr);
+
+	/* copy the PendingResponse to the stack and clear the
+	   pointer, or else ~UniquePoolPtr() will call
+	   ~PendingResponse() on memory that is already freed */
+	auto response = std::move(*response_ptr);
+	response_ptr.reset();
+
+	DispatchResponse(std::move(response));
+}
+
+void
 Request::DispatchError(http_status_t status, HttpHeaders &&headers,
 		       UnusedIstreamPtr response_body) noexcept
 {
