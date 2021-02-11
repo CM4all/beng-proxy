@@ -568,6 +568,11 @@ public:
 		translate.suffix_transformations.clear();
 	}
 
+	void CancelChainAndTransformations() noexcept {
+		CancelTransformations();
+		translate.chain = nullptr;
+	}
+
 	const Transformation *PopTransformation() noexcept {
 		if (!translate.suffix_transformations.empty()) {
 			const auto &result = translate.suffix_transformations.front();
