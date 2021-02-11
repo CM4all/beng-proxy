@@ -35,6 +35,7 @@
 #include "pool.hxx"
 #include "util/LeakDetector.hxx"
 
+#include <cstddef>
 #include <utility>
 
 /**
@@ -47,6 +48,7 @@ class UniquePoolPtr : LeakDetector {
 
 public:
 	UniquePoolPtr() = default;
+	UniquePoolPtr(std::nullptr_t) noexcept {};
 	explicit UniquePoolPtr(T *_value) noexcept:value(_value) {}
 
 	UniquePoolPtr(UniquePoolPtr &&src) noexcept
@@ -60,6 +62,13 @@ public:
 	UniquePoolPtr &operator=(UniquePoolPtr &&src) noexcept {
 		using std::swap;
 		swap(value, src.value);
+		return *this;
+	}
+
+	UniquePoolPtr &operator=(std::nullptr_t n) noexcept {
+		if (value != nullptr)
+			value->~T();
+		value = n;
 		return *this;
 	}
 
