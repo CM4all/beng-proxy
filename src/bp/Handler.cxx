@@ -228,13 +228,13 @@ Request::CheckBounceUri(const TranslateResponse &response) const noexcept
 			    dissected_uri, response);
 }
 
-bool
-Request::CheckHandleRedirectBounceStatus(const TranslateResponse &response)
+UniquePoolPtr<PendingResponse>
+Request::CheckRedirectBounceStatus(const TranslateResponse &response) noexcept
 {
 	if (response.redirect == nullptr && response.bounce == nullptr &&
 	    response.status == http_status_t(0) && !response.tiny_image &&
 	    response.message == nullptr)
-		return false;
+		return nullptr;
 
 	http_status_t status = response.status;
 	HttpHeaders headers;
@@ -271,7 +271,19 @@ Request::CheckHandleRedirectBounceStatus(const TranslateResponse &response)
 	if (status == http_status_t(0))
 		status = body ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT;
 
-	DispatchError(status, std::move(headers), std::move(body));
+	return UniquePoolPtr<PendingResponse>::Make
+		(pool, status, std::move(headers), UnusedHoldIstreamPtr{pool, std::move(body)});
+}
+
+bool
+Request::CheckHandleRedirectBounceStatus(const TranslateResponse &response)
+{
+	auto r = CheckRedirectBounceStatus(response);
+	if (!r)
+		return false;
+
+	CancelChainAndTransformations();
+	DispatchResponse(std::move(r));
 	return true;
 }
 

@@ -450,6 +450,7 @@ public:
 	[[gnu::pure]]
 	const char *CheckBounceUri(const TranslateResponse &response) const noexcept;
 
+	UniquePoolPtr<PendingResponse> CheckRedirectBounceStatus(const TranslateResponse &response) noexcept;
 	bool CheckHandleRedirectBounceStatus(const TranslateResponse &response);
 
 	bool DoContentTypeLookup(const ResourceAddress &address) noexcept;
