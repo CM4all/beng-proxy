@@ -43,7 +43,7 @@ class TranslationService;
 class StopwatchPtr;
 
 class CoTranslate final : TranslateHandler {
-	TranslateResponse *response = nullptr;
+	TranslateResponse *response;
 	std::exception_ptr error;
 
 	CancellablePointer cancel_ptr;
