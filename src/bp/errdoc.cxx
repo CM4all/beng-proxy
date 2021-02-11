@@ -55,7 +55,7 @@ Request::DispatchErrdocResponse(ConstBuffer<void> error_document)
 	assert(!error_document.IsNull());
 	assert(co_response);
 
-	const auto t = co_await
+	const auto &t = co_await
 		CoTranslate(GetTranslationService(), pool,
 			    MakeErrdocTranslateRequest(translate.request,
 						       error_document,

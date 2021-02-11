@@ -77,7 +77,7 @@ public:
 				return std::noop_coroutine();
 			}
 
-			TranslateResponse await_resume() const {
+			const TranslateResponse &await_resume() const {
 				return request.AwaitResume();
 			}
 		};
@@ -90,11 +90,11 @@ private:
 		return !cancel_ptr;
 	}
 
-	TranslateResponse AwaitResume() {
+	const TranslateResponse &AwaitResume() const {
 		if (error)
 			std::rethrow_exception(std::move(error));
 
-		return std::move(*response);
+		return *response;
 	}
 
 	/* virtual methods from TranslateHandler */
