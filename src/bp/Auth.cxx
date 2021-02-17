@@ -143,22 +143,22 @@ Request::HandleAuth(const TranslateResponse &response)
 		return;
 	}
 
-	TranslateRequest t;
-	t.auth = auth;
-	t.uri = request.uri;
-	t.host = translate.request.host;
-	t.session = translate.request.session;
-	t.listener_tag = connection.listener.GetTag();
+	auto t = NewFromPool<TranslateRequest>(pool);
+	t->auth = auth;
+	t->uri = request.uri;
+	t->host = translate.request.host;
+	t->session = translate.request.session;
+	t->listener_tag = connection.listener.GetTag();
 
 	if (connection.listener.GetAuthAltHost())
-		t.alt_host = request.headers.Get("x-cm4all-althost");
+		t->alt_host = request.headers.Get("x-cm4all-althost");
 
 	translate.previous = &response;
 
 	auto *auth_translate_handler =
 		NewFromPool<AuthTranslateHandler>(pool, *this);
 
-	GetTranslationService().SendRequest(pool, t,
+	GetTranslationService().SendRequest(pool, *t,
 					    stopwatch,
 					    *auth_translate_handler,
 					    cancel_ptr);
