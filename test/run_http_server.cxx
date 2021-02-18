@@ -54,7 +54,7 @@
 struct Instance;
 
 class Connection final
-	: public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>,
+	: public AutoUnlinkIntrusiveListHook,
 	  PoolHolder,
 	  DemoHttpServerConnection
 {
