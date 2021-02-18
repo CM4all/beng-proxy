@@ -50,7 +50,13 @@ TranslationLayoutItem::Match(const char *uri) const noexcept
 		return StringStartsWith(uri, value);
 
 	case Type::REGEX:
-		return UniqueRegex{value, true, false}.Match(uri);
+		try {
+			return UniqueRegex{value, true, false}.Match(uri);
+		} catch (...) {
+			// TODO: what to do?  We should reject this
+			// translation response
+			return false;
+		}
 	}
 
 	gcc_unreachable();
