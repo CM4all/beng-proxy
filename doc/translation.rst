@@ -674,10 +674,12 @@ response packets allow reusing cache items for different requests:
   are specified, and everything else).  Responses don't need
   ``INVERSE_REGEX`` to exclude the specified bases.
 
-  The following request will mirror the ``LAYOUT`` packet:
+  The following request will mirror the ``LAYOUT`` packet and the
+  matching ``BASE`` packet:
 
   - ``URI=/.cm4all/foo``
   - ``LAYOUT=[opaque]``
+  - ``BASE=/.cm4all/``
 
   The server recognizes that this is a follow-up request, and
   responds:

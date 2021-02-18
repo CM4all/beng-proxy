@@ -84,8 +84,8 @@ struct TranslateRequest {
 
 	/**
 	 * If #layout is set, then this is the #TranslationLayoutItem
-	 * which matches the request.  This is not transmitted to the
-	 * translation server, it is only evaluated by the
+	 * which matches the request.  This is transmitted to the
+	 * translation server, but also evaluated by the
 	 * #TranslationCache to look up cache items.  If this is
 	 * nullptr, then there was no matching #TranslationLayoutItem.
 	 */

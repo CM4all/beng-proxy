@@ -2,6 +2,7 @@ cm4all-beng-proxy (17.0.47) unstable; urgency=low
 
   * bp/auth: fix crash bug
   * translation: allow LAYOUT with REGEX
+  * translation: echo BASE/REGEX with LAYOUT requests
 
  --   
 

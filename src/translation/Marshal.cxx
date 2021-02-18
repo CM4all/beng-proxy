@@ -32,6 +32,7 @@
 
 #include "Marshal.hxx"
 #include "Request.hxx"
+#include "Layout.hxx"
 #include "translation/Protocol.hxx"
 #include "net/ToString.hxx"
 #include "util/RuntimeError.hxx"
@@ -117,6 +118,21 @@ MarshalTranslateRequest(uint8_t PROTOCOL_VERSION,
 	m.WriteOptional(TranslationCommand::WIDGET_TYPE, request.widget_type);
 	m.WriteOptional(TranslationCommand::SESSION, request.session);
 	m.WriteOptional(TranslationCommand::LAYOUT, request.layout);
+
+	if (request.layout_item != nullptr) {
+		switch (request.layout_item->type) {
+		case TranslationLayoutItem::Type::BASE:
+			m.Write(TranslationCommand::BASE,
+				request.layout_item->value);
+			break;
+
+		case TranslationLayoutItem::Type::REGEX:
+			m.Write(TranslationCommand::REGEX,
+				request.layout_item->value);
+			break;
+		}
+	}
+
 	m.WriteOptional(TranslationCommand::INTERNAL_REDIRECT,
 			request.internal_redirect);
 	m.WriteOptional(TranslationCommand::CHECK, request.check);
