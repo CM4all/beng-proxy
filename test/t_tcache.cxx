@@ -277,7 +277,7 @@ AllEquals(WidgetView *a, WidgetView *b) noexcept
 static bool
 operator==(const TranslationLayoutItem &a, const TranslationLayoutItem &b) noexcept
 {
-	return StringIsEqual(a.base, b.base);
+	return a.type == b.type && StringIsEqual(a.value, b.value);
 }
 
 static bool

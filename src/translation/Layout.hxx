@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include <cstddef>
-
 class AllocatorPtr;
 
 /**
@@ -42,12 +40,16 @@ class AllocatorPtr;
  * @see TranslationCommand::LAYOUT
  */
 struct TranslationLayoutItem {
-	const char *base;
+	enum class Type {
+		BASE,
+	} type;
+
+	const char *value;
 
 	TranslationLayoutItem() = default;
 
-	explicit constexpr TranslationLayoutItem(const char *_base) noexcept
-		:base(_base) {}
+	constexpr TranslationLayoutItem(Type _type, const char *_value) noexcept
+		:type(_type), value(_value) {}
 
 	TranslationLayoutItem(AllocatorPtr alloc, const TranslationLayoutItem &src) noexcept;
 

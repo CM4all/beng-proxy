@@ -590,9 +590,15 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 		b.emplace_back(layout_buffer, UriEscape(layout_buffer, layout));
 
 		if (layout_item != nullptr) {
-			b.push_back("--");
-			assert(layout_item->base != nullptr);
-			b.emplace_back(layout_item->base);
+			assert(layout_item->value != nullptr);
+
+			switch (layout_item->type) {
+			case TranslationLayoutItem::Type::BASE:
+				b.push_back("--");
+				break;
+			}
+
+			b.emplace_back(layout_item->value);
 		}
 
 		b.push_back("=L|");

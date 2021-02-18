@@ -32,16 +32,22 @@
 
 #include "Layout.hxx"
 #include "AllocatorPtr.hxx"
+#include "util/Compiler.h"
 #include "util/StringCompare.hxx"
 
 TranslationLayoutItem::TranslationLayoutItem(AllocatorPtr alloc,
 					     const TranslationLayoutItem &src) noexcept
-	:base(alloc.Dup(src.base))
+	:type(src.type), value(alloc.Dup(src.value))
 {
 }
 
 bool
 TranslationLayoutItem::Match(const char *uri) const noexcept
 {
-	return StringStartsWith(uri, base);
+	switch (type) {
+	case Type::BASE:
+		return StringStartsWith(uri, value);
+	}
+
+	gcc_unreachable();
 }

@@ -55,7 +55,7 @@ struct MakeRequest : TranslateRequest {
 		layout = value.ToVoid();
 
 		if (item != nullptr) {
-			my_layout_item = TranslationLayoutItem{item};
+			my_layout_item = TranslationLayoutItem{TranslationLayoutItem::Type::BASE, item};
 			layout_item = &my_layout_item;
 		}
 
@@ -124,7 +124,12 @@ struct MakeResponse : TranslateResponse {
 	MakeResponse &&Layout(StringView value,
 			      std::initializer_list<const char *> items) && noexcept {
 		layout = value.ToVoid();
-		layout_items = alloc.ConstructArray<TranslationLayoutItem>(items);
+
+		auto *li = alloc.NewArray<TranslationLayoutItem>(items.size());
+		for (auto *dest = li; const char *src : items)
+			*dest++ = {TranslationLayoutItem::Type::BASE, src};
+
+		layout_items = {li, items.size()};
 		return std::move(*this);
 	}
 
