@@ -32,6 +32,7 @@
 
 #include "Layout.hxx"
 #include "AllocatorPtr.hxx"
+#include "pcre/Regex.hxx"
 #include "util/Compiler.h"
 #include "util/StringCompare.hxx"
 
@@ -47,6 +48,9 @@ TranslationLayoutItem::Match(const char *uri) const noexcept
 	switch (type) {
 	case Type::BASE:
 		return StringStartsWith(uri, value);
+
+	case Type::REGEX:
+		return UniqueRegex{value, true, false}.Match(uri);
 	}
 
 	gcc_unreachable();

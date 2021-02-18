@@ -42,6 +42,7 @@ class AllocatorPtr;
 struct TranslationLayoutItem {
 	enum class Type {
 		BASE,
+		REGEX,
 	} type;
 
 	const char *value;

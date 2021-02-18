@@ -652,10 +652,11 @@ response packets allow reusing cache items for different requests:
   layout.  Its payload is a non-empty opaque value which is mirrored
   in the next request.
 
-  This pakcet is followed by one or more ``BASE`` packets specifying
-  URI bases which shall not share cache items.  The first matching
-  base specfies where translation cache items will be stored; all URIs
-  without a match have their own cache.
+  This pakcet is followed by one or more ``BASE`` / ``REGEX`` packets
+  specifying URI bases or regular expressionswhich shall not share
+  cache items.  The first matching base/regex specfies where
+  translation cache items will be stored; all URIs without a match
+  have their own cache.
 
   This way, cacheable URI bases can be constructed easily without
   excessively complex ``INVERSE_REGEX`` packets.
@@ -667,6 +668,7 @@ response packets allow reusing cache items for different requests:
   - ``BASE=/.cm4all/private/``
   - ``BASE=/.cm4all/``
   - ``BASE=/.well-known/``
+  - ``REGEX=\.php$``
 
   Here, the whole host is separated into three bases (the three which
   are specified, and everything else).  Responses don't need

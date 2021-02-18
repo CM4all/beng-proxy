@@ -596,6 +596,10 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 			case TranslationLayoutItem::Type::BASE:
 				b.push_back("--");
 				break;
+
+			case TranslationLayoutItem::Type::REGEX:
+				b.push_back("-~");
+				break;
 			}
 
 			b.emplace_back(layout_item->value);
