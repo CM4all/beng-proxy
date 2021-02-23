@@ -125,6 +125,29 @@ BpInstance::GetTranslationServiceBuilder() const noexcept
 		: *translation_stocks;
 }
 
+#ifdef HAVE_AVAHI
+
+inline Avahi::Client &
+BpInstance::GetAvahiClient()
+{
+	if (!avahi_client)
+		avahi_client = std::make_unique<Avahi::Client>(event_loop);
+
+	return *avahi_client;
+}
+
+inline Avahi::Publisher &
+BpInstance::GetAvahiPublisher()
+{
+	if (!avahi_publisher)
+		avahi_publisher = std::make_unique<Avahi::Publisher>(GetAvahiClient(),
+								     "beng-proxy");
+
+	return *avahi_publisher;
+}
+
+#endif
+
 void
 BpInstance::EnableListeners() noexcept
 {
@@ -268,18 +291,10 @@ BpInstance::AddListener(const BpConfig::Listener &c)
 		   because it may have changed, e.g. if the kernel has
 		   selected a port for us */
 		const auto local_address = listener.GetLocalAddress();
-		if (local_address.IsDefined()) {
-			if (!avahi_publisher) {
-				if (!avahi_client)
-					avahi_client = std::make_unique<Avahi::Client>(event_loop);
-				avahi_publisher = std::make_unique<Avahi::Publisher>(*avahi_client,
-										     "beng-proxy");
-			}
-
-			avahi_publisher->AddService(c.zeroconf_service.c_str(),
-						    interface, local_address,
-						    c.v6only);
-		}
+		if (local_address.IsDefined())
+			GetAvahiPublisher().AddService(c.zeroconf_service.c_str(),
+						       interface, local_address,
+						       c.v6only);
 	}
 #endif
 }

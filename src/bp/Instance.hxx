@@ -225,6 +225,9 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 
 	void ReloadEventCallback(int signo) noexcept;
 
+	Avahi::Client &GetAvahiClient();
+	Avahi::Publisher &GetAvahiPublisher();
+
 	void AddListener(const BpConfig::Listener &c);
 
 	void EnableListeners() noexcept;
