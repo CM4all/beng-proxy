@@ -895,19 +895,6 @@ if get_option('certdb')
   )
 endif
 
-if avahi_dep.found()
-  executable(
-    'RunAvahiExplorer',
-    'RunAvahiExplorer.cxx',
-    include_directories: inc,
-    dependencies: [
-      avahi_dep,
-      net_dep,
-      io_dep,
-    ],
-  )
-endif
-
 if uring_dep.found()
   executable(
     'RunUringIstream',
