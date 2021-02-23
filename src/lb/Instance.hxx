@@ -42,10 +42,6 @@
 #include "io/Logger.hxx"
 #include "lb_features.h"
 
-#ifdef HAVE_AVAHI
-#include "avahi/Client.hxx"
-#endif
-
 #include <boost/intrusive/list.hpp>
 
 #include <forward_list>
@@ -66,6 +62,7 @@ class LbControl;
 class LbListener;
 class CertCache;
 namespace BengProxy { struct ControlStats; }
+namespace Avahi { class Client; }
 
 struct LbInstance final : PInstance {
 	const LbConfig &config;
@@ -95,7 +92,7 @@ struct LbInstance final : PInstance {
 	LbMonitorManager monitors;
 
 #ifdef HAVE_AVAHI
-	Avahi::Client avahi_client{event_loop};
+	std::unique_ptr<Avahi::Client> avahi_client;
 #endif
 
 	LbGotoMap goto_map;

@@ -44,11 +44,6 @@
 #include "net/FailureManager.hxx"
 #include "util/Background.hxx"
 
-#ifdef HAVE_AVAHI
-#include "avahi/Client.hxx"
-#include "avahi/Publisher.hxx"
-#endif
-
 #include <boost/intrusive/list.hpp>
 
 #include <forward_list>
@@ -87,6 +82,7 @@ namespace Uring { class Manager; }
 class BPListener;
 struct BpConnection;
 namespace NgHttp2 { class Stock; }
+namespace Avahi { class Client; class Publisher; }
 
 struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	const BpConfig config;
@@ -141,8 +137,8 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	std::unique_ptr<LocalControl> local_control_server;
 
 #ifdef HAVE_AVAHI
-	Avahi::Client avahi_client{event_loop};
-	Avahi::Publisher avahi_publisher{avahi_client, "beng-proxy"};
+	std::unique_ptr<Avahi::Client> avahi_client;
+	std::unique_ptr<Avahi::Publisher> avahi_publisher;
 #endif
 
 	/* stock */

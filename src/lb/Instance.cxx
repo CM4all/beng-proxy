@@ -49,6 +49,10 @@
 #include "ssl/Cache.hxx"
 #endif
 
+#ifdef HAVE_AVAHI
+#include "avahi/Client.hxx"
+#endif
+
 #include <assert.h>
 #include <sys/signal.h>
 

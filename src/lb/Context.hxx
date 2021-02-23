@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include <memory>
+
 class FailureManager;
 class BalancerMap;
 class FilteredSocketStock;
@@ -46,6 +48,6 @@ struct LbContext {
 	FilteredSocketBalancer &fs_balancer;
 	LbMonitorManager &monitors;
 #ifdef HAVE_AVAHI
-	Avahi::Client &avahi_client;
+	std::unique_ptr<Avahi::Client> &avahi_client;
 #endif
 };

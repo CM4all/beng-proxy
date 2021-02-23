@@ -72,6 +72,11 @@
 #include "event/uring/Manager.hxx"
 #endif
 
+#ifdef HAVE_AVAHI
+#include "avahi/Client.hxx"
+#include "avahi/Publisher.hxx"
+#endif
+
 #include <sys/signal.h>
 
 static constexpr auto COMPRESS_INTERVAL = std::chrono::minutes(10);

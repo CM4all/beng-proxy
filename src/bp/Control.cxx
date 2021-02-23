@@ -48,6 +48,10 @@
 #include "util/WritableBuffer.hxx"
 #include "stopwatch.hxx"
 
+#ifdef HAVE_AVAHI
+#include "avahi/Publisher.hxx"
+#endif
+
 using namespace BengProxy;
 
 static void
@@ -162,15 +166,15 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 
 	case ControlCommand::DISABLE_ZEROCONF:
 #ifdef HAVE_AVAHI
-		if (is_privileged)
-			avahi_publisher.HideServices();
+		if (is_privileged && avahi_publisher)
+			avahi_publisher->HideServices();
 #endif
 		break;
 
 	case ControlCommand::ENABLE_ZEROCONF:
 #ifdef HAVE_AVAHI
-		if (is_privileged)
-			avahi_publisher.ShowServices();
+		if (is_privileged && avahi_publisher)
+			avahi_publisher->ShowServices();
 #endif
 		break;
 

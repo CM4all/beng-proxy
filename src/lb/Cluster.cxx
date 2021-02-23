@@ -57,6 +57,7 @@
 #include "stopwatch.hxx"
 
 #ifdef HAVE_AVAHI
+#include "avahi/Client.hxx"
 #include "avahi/Explorer.hxx"
 
 #include <net/if.h>
@@ -126,7 +127,11 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 			interface = AvahiIfIndex(i);
 		}
 
-		explorer.reset(new Avahi::ServiceExplorer(context.avahi_client, *this,
+		if (!context.avahi_client)
+			context.avahi_client = std::make_unique<Avahi::Client>(context.fs_stock.GetEventLoop());
+
+		explorer.reset(new Avahi::ServiceExplorer(*context.avahi_client,
+							  *this,
 							  interface,
 							  AVAHI_PROTO_UNSPEC,
 							  config.zeroconf_service.c_str(),

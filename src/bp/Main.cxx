@@ -94,6 +94,11 @@
 #include <systemd/sd-daemon.h>
 #endif
 
+#ifdef HAVE_AVAHI
+#include "avahi/Client.hxx"
+#include "avahi/Publisher.hxx"
+#endif
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -154,7 +159,8 @@ BpInstance::ShutdownCallback() noexcept
 	pool_commit();
 
 #ifdef HAVE_AVAHI
-	avahi_client.Close();
+	avahi_publisher.reset();
+	avahi_client.reset();
 #endif
 
 	compress_timer.Cancel();
@@ -262,10 +268,18 @@ BpInstance::AddListener(const BpConfig::Listener &c)
 		   because it may have changed, e.g. if the kernel has
 		   selected a port for us */
 		const auto local_address = listener.GetLocalAddress();
-		if (local_address.IsDefined())
-			avahi_publisher.AddService(c.zeroconf_service.c_str(),
-						   interface, local_address,
-						   c.v6only);
+		if (local_address.IsDefined()) {
+			if (!avahi_publisher) {
+				if (!avahi_client)
+					avahi_client = std::make_unique<Avahi::Client>(event_loop);
+				avahi_publisher = std::make_unique<Avahi::Publisher>(*avahi_client,
+										     "beng-proxy");
+			}
+
+			avahi_publisher->AddService(c.zeroconf_service.c_str(),
+						    interface, local_address,
+						    c.v6only);
+		}
 	}
 #endif
 }

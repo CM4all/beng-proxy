@@ -55,6 +55,10 @@
 #include "odbus/Connection.hxx"
 #endif
 
+#ifdef HAVE_AVAHI
+#include "avahi/Client.hxx"
+#endif
+
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
 #endif
@@ -80,10 +84,6 @@ LbInstance::ShutdownCallback() noexcept
 	deinit_signals(this);
 	thread_pool_stop();
 
-#ifdef HAVE_AVAHI
-	avahi_client.Close();
-#endif
-
 	compress_event.Cancel();
 
 	DeinitAllControls();
@@ -95,6 +95,10 @@ LbInstance::ShutdownCallback() noexcept
 		http_connections.front().CloseAndDestroy();
 
 	goto_map.Clear();
+
+#ifdef HAVE_AVAHI
+	avahi_client.reset();
+#endif
 
 #ifdef ENABLE_CERTDB
 	DisconnectCertCaches();
