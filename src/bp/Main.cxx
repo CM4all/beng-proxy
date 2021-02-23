@@ -263,9 +263,9 @@ BpInstance::AddListener(const BpConfig::Listener &c)
 		   selected a port for us */
 		const auto local_address = listener.GetLocalAddress();
 		if (local_address.IsDefined())
-			avahi_client.AddService(c.zeroconf_service.c_str(),
-						interface, local_address,
-						c.v6only);
+			avahi_publisher.AddService(c.zeroconf_service.c_str(),
+						   interface, local_address,
+						   c.v6only);
 	}
 #endif
 }

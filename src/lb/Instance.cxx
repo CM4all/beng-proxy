@@ -66,9 +66,6 @@ LbInstance::LbInstance(const LbCmdLine &cmdline,
 	 fs_balancer(new FilteredSocketBalancer(*fs_stock, failure_manager)),
 	 pipe_stock(new PipeStock(event_loop)),
 	 monitors(event_loop, failure_manager),
-#ifdef HAVE_AVAHI
-	 avahi_client(event_loop, "beng-lb"),
-#endif
 	 goto_map(config,
 		  {failure_manager,
 		   *balancer, *fs_stock, *fs_balancer,

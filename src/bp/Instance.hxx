@@ -46,6 +46,7 @@
 
 #ifdef HAVE_AVAHI
 #include "avahi/Client.hxx"
+#include "avahi/Publisher.hxx"
 #endif
 
 #include <boost/intrusive/list.hpp>
@@ -140,7 +141,8 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	std::unique_ptr<LocalControl> local_control_server;
 
 #ifdef HAVE_AVAHI
-	Avahi::Client avahi_client;
+	Avahi::Client avahi_client{event_loop};
+	Avahi::Publisher avahi_publisher{avahi_client, "beng-proxy"};
 #endif
 
 	/* stock */

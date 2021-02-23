@@ -95,7 +95,7 @@ struct LbInstance final : PInstance {
 	LbMonitorManager monitors;
 
 #ifdef HAVE_AVAHI
-	Avahi::Client avahi_client;
+	Avahi::Client avahi_client{event_loop};
 #endif
 
 	LbGotoMap goto_map;

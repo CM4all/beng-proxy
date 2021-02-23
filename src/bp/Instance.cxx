@@ -82,9 +82,6 @@ BpInstance::BpInstance(BpConfig &&_config) noexcept
 	 sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback)),
 	 compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
 	 child_process_registry(event_loop),
-#ifdef HAVE_AVAHI
-	 avahi_client(event_loop, "beng-proxy"),
-#endif
 	 session_save_timer(event_loop, BIND_THIS_METHOD(SaveSessions))
 {
 	ForkCow(false);

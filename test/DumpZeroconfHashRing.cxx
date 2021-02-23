@@ -68,7 +68,7 @@
 struct Context final : PInstance, Avahi::ServiceExplorerListener {
 	ShutdownListener shutdown_listener;
 
-	Avahi::Client avahi_client{event_loop, "DumpZeroconfHashRing"};
+	Avahi::Client avahi_client{event_loop};
 
 	Avahi::ServiceExplorer explorer;
 

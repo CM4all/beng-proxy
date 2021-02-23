@@ -163,14 +163,14 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 	case ControlCommand::DISABLE_ZEROCONF:
 #ifdef HAVE_AVAHI
 		if (is_privileged)
-			avahi_client.HideServices();
+			avahi_publisher.HideServices();
 #endif
 		break;
 
 	case ControlCommand::ENABLE_ZEROCONF:
 #ifdef HAVE_AVAHI
 		if (is_privileged)
-			avahi_client.ShowServices();
+			avahi_publisher.ShowServices();
 #endif
 		break;
 
