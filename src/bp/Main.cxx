@@ -97,6 +97,7 @@
 #ifdef HAVE_AVAHI
 #include "avahi/Client.hxx"
 #include "avahi/Publisher.hxx"
+#include "avahi/Service.hxx"
 #endif
 
 #include <unistd.h>
@@ -134,16 +135,6 @@ BpInstance::GetAvahiClient()
 		avahi_client = std::make_unique<Avahi::Client>(event_loop);
 
 	return *avahi_client;
-}
-
-inline Avahi::Publisher &
-BpInstance::GetAvahiPublisher()
-{
-	if (!avahi_publisher)
-		avahi_publisher = std::make_unique<Avahi::Publisher>(GetAvahiClient(),
-								     "beng-proxy");
-
-	return *avahi_publisher;
 }
 
 #endif
@@ -265,7 +256,11 @@ MakeTranslationService(EventLoop &event_loop, TranslationServiceBuilder &b,
 }
 
 void
-BpInstance::AddListener(const BpConfig::Listener &c)
+BpInstance::AddListener(const BpConfig::Listener &c
+#ifdef HAVE_AVAHI
+			, std::forward_list<Avahi::Service> &avahi_services
+#endif
+			)
 {
 	auto ts = c.translation_sockets.empty()
 		? translation_service
@@ -292,9 +287,9 @@ BpInstance::AddListener(const BpConfig::Listener &c)
 		   selected a port for us */
 		const auto local_address = listener.GetLocalAddress();
 		if (local_address.IsDefined())
-			GetAvahiPublisher().AddService(c.zeroconf_service.c_str(),
-						       interface, local_address,
-						       c.v6only);
+			avahi_services.emplace_front(c.zeroconf_service.c_str(),
+						     interface, local_address,
+						     c.v6only);
 	}
 #endif
 }
@@ -562,8 +557,26 @@ try {
 	global_pipe_stock = instance.pipe_stock;
 
 	if (cmdline.debug_listener_tag == nullptr) {
+#ifdef HAVE_AVAHI
+		std::forward_list<Avahi::Service> avahi_services;
+#endif
+
 		for (const auto &i : instance.config.listen)
-			instance.AddListener(i);
+			instance.AddListener(i
+#ifdef HAVE_AVAHI
+					     , avahi_services
+#endif
+					     );
+
+#ifdef HAVE_AVAHI
+		if (!avahi_services.empty()) {
+			assert(!instance.avahi_publisher);
+
+			instance.avahi_publisher = std::make_unique<Avahi::Publisher>(instance.GetAvahiClient(),
+										      "beng-proxy",
+										      std::move(avahi_services));
+		}
+#endif
 	} else {
 		const char *tag = cmdline.debug_listener_tag;
 		if (*tag == 0)

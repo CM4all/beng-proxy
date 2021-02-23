@@ -82,7 +82,7 @@ namespace Uring { class Manager; }
 class BPListener;
 struct BpConnection;
 namespace NgHttp2 { class Stock; }
-namespace Avahi { class Client; class Publisher; }
+namespace Avahi { class Client; class Publisher; struct Service; }
 
 struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	const BpConfig config;
@@ -226,9 +226,12 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	void ReloadEventCallback(int signo) noexcept;
 
 	Avahi::Client &GetAvahiClient();
-	Avahi::Publisher &GetAvahiPublisher();
 
-	void AddListener(const BpConfig::Listener &c);
+	void AddListener(const BpConfig::Listener &c
+#ifdef HAVE_AVAHI
+			 , std::forward_list<Avahi::Service> &avahi_services
+#endif
+			 );
 
 	void EnableListeners() noexcept;
 	void DisableListeners() noexcept;
