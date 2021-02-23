@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.48) unstable; urgency=low
 
-  * 
+  * bp: fix disappearing Zeroconf registrations
 
  --   
 
