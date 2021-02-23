@@ -131,8 +131,11 @@ BpInstance::GetTranslationServiceBuilder() const noexcept
 inline Avahi::Client &
 BpInstance::GetAvahiClient()
 {
-	if (!avahi_client)
-		avahi_client = std::make_unique<Avahi::Client>(event_loop);
+	if (!avahi_client) {
+		Avahi::ErrorHandler &error_handler = *this;
+		avahi_client = std::make_unique<Avahi::Client>(event_loop,
+							       error_handler);
+	}
 
 	return *avahi_client;
 }
@@ -572,9 +575,11 @@ try {
 		if (!avahi_services.empty()) {
 			assert(!instance.avahi_publisher);
 
+			Avahi::ErrorHandler &error_handler = instance;
 			instance.avahi_publisher = std::make_unique<Avahi::Publisher>(instance.GetAvahiClient(),
 										      "beng-proxy",
-										      std::move(avahi_services));
+										      std::move(avahi_services),
+										      error_handler);
 		}
 #endif
 	} else {

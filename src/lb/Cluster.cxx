@@ -128,7 +128,8 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 		}
 
 		if (!context.avahi_client)
-			context.avahi_client = std::make_unique<Avahi::Client>(context.fs_stock.GetEventLoop());
+			context.avahi_client = std::make_unique<Avahi::Client>(context.fs_stock.GetEventLoop(),
+									       context.avahi_error_handler);
 
 		explorer.reset(new Avahi::ServiceExplorer(*context.avahi_client,
 							  *this,
@@ -137,7 +138,8 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 							  config.zeroconf_service.c_str(),
 							  config.zeroconf_domain.empty()
 							  ? nullptr
-							  : config.zeroconf_domain.c_str()));
+							  : config.zeroconf_domain.c_str(),
+							  context.avahi_error_handler));
 	}
 #endif
 

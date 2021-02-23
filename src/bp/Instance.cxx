@@ -295,6 +295,13 @@ BpInstance::OnMemoryWarning(uint64_t memory_usage,
 	// TODO: stop unused child processes
 }
 
+bool
+BpInstance::OnAvahiError(std::exception_ptr e) noexcept
+{
+	PrintException(e);
+	return true;
+}
+
 void
 BpInstance::SaveSessions() noexcept
 {

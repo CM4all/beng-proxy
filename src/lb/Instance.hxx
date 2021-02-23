@@ -35,6 +35,7 @@
 #include "PInstance.hxx"
 #include "GotoMap.hxx"
 #include "MonitorManager.hxx"
+#include "avahi/ErrorHandler.hxx"
 #include "event/FarTimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
@@ -64,7 +65,7 @@ class CertCache;
 namespace BengProxy { struct ControlStats; }
 namespace Avahi { class Client; }
 
-struct LbInstance final : PInstance {
+struct LbInstance final : PInstance, Avahi::ErrorHandler {
 	const LbConfig &config;
 
 	const Logger logger;
@@ -160,6 +161,9 @@ struct LbInstance final : PInstance {
 
 private:
 	void OnCompressTimer() noexcept;
+
+	/* virtual methods from class Avahi::ErrorHandler */
+	bool OnAvahiError(std::exception_ptr e) noexcept override;
 };
 
 void

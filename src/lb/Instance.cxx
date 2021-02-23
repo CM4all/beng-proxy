@@ -43,6 +43,7 @@
 #include "fb_pool.hxx"
 #include "pipe_stock.hxx"
 #include "access_log/Glue.hxx"
+#include "util/PrintException.hxx"
 
 #include "lb_features.h"
 #ifdef ENABLE_CERTDB
@@ -75,7 +76,7 @@ LbInstance::LbInstance(const LbCmdLine &cmdline,
 		   *balancer, *fs_stock, *fs_balancer,
 		   monitors,
 #ifdef HAVE_AVAHI
-		   avahi_client,
+		   avahi_client, *this,
 #endif
 		  },
 		  event_loop)
@@ -153,4 +154,11 @@ LbInstance::OnCompressTimer() noexcept
 	Compress();
 
 	compress_event.Schedule(COMPRESS_INTERVAL);
+}
+
+bool
+LbInstance::OnAvahiError(std::exception_ptr e) noexcept
+{
+	PrintException(e);
+	return true;
 }

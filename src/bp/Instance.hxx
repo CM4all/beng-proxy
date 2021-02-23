@@ -35,6 +35,7 @@
 #include "PInstance.hxx"
 #include "CommandLine.hxx"
 #include "Config.hxx"
+#include "avahi/ErrorHandler.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/FarTimerEvent.hxx"
@@ -84,7 +85,8 @@ struct BpConnection;
 namespace NgHttp2 { class Stock; }
 namespace Avahi { class Client; class Publisher; struct Service; }
 
-struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
+struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
+			  Avahi::ErrorHandler {
 	const BpConfig config;
 
 	uint64_t http_request_counter = 0;
@@ -251,6 +253,9 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	/* virtual methods from class SpawnServerClientHandler */
 	void OnMemoryWarning(uint64_t memory_usage,
 			     uint64_t memory_max) noexcept override;
+
+	/* virtual methods from class Avahi::ErrorHandler */
+	bool OnAvahiError(std::exception_ptr e) noexcept override;
 
 private:
 	bool AllocatorCompressCallback() noexcept;
