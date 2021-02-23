@@ -140,7 +140,7 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler {
 	std::unique_ptr<LocalControl> local_control_server;
 
 #ifdef HAVE_AVAHI
-	MyAvahiClient avahi_client;
+	Avahi::Client avahi_client;
 #endif
 
 	/* stock */

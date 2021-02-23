@@ -60,7 +60,7 @@ class BalancerMap;
 class FilteredSocketStock;
 class FilteredSocketBalancer;
 class StickyCache;
-class AvahiServiceExplorer;
+namespace Avahi { class ServiceExplorer; }
 class StopwatchPtr;
 class SocketFilterFactory;
 class FilteredSocketBalancerHandler;
@@ -70,7 +70,7 @@ class AllocatorPtr;
 
 class LbCluster final
 #ifdef HAVE_AVAHI
-	: AvahiServiceExplorerListener
+	: Avahi::ServiceExplorerListener
 #endif
 {
 	const LbClusterConfig &config;
@@ -99,7 +99,7 @@ class LbCluster final
 	/**
 	 * This #AvahiServiceExplorer locates Zeroconf nodes.
 	 */
-	std::unique_ptr<AvahiServiceExplorer> explorer;
+	std::unique_ptr<Avahi::ServiceExplorer> explorer;
 
 	class StickyRing;
 

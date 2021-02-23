@@ -126,13 +126,13 @@ LbCluster::LbCluster(const LbClusterConfig &_config,
 			interface = AvahiIfIndex(i);
 		}
 
-		explorer.reset(new AvahiServiceExplorer(context.avahi_client, *this,
-							interface,
-							AVAHI_PROTO_UNSPEC,
-							config.zeroconf_service.c_str(),
-							config.zeroconf_domain.empty()
-							? nullptr
-							: config.zeroconf_domain.c_str()));
+		explorer.reset(new Avahi::ServiceExplorer(context.avahi_client, *this,
+							  interface,
+							  AVAHI_PROTO_UNSPEC,
+							  config.zeroconf_service.c_str(),
+							  config.zeroconf_domain.empty()
+							  ? nullptr
+							  : config.zeroconf_domain.c_str()));
 	}
 #endif
 

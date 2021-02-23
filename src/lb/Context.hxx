@@ -37,7 +37,7 @@ class BalancerMap;
 class FilteredSocketStock;
 class FilteredSocketBalancer;
 class LbMonitorManager;
-class MyAvahiClient;
+namespace Avahi { class Client; }
 
 struct LbContext {
 	FailureManager &failure_manager;
@@ -46,6 +46,6 @@ struct LbContext {
 	FilteredSocketBalancer &fs_balancer;
 	LbMonitorManager &monitors;
 #ifdef HAVE_AVAHI
-	MyAvahiClient &avahi_client;
+	Avahi::Client &avahi_client;
 #endif
 };

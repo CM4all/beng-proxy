@@ -65,12 +65,12 @@
 #include <string.h>
 #include <net/if.h> // for if_nametoindex()
 
-struct Context final : PInstance, AvahiServiceExplorerListener {
+struct Context final : PInstance, Avahi::ServiceExplorerListener {
 	ShutdownListener shutdown_listener;
 
-	MyAvahiClient avahi_client{event_loop, "DumpZeroconfHashRing"};
+	Avahi::Client avahi_client{event_loop, "DumpZeroconfHashRing"};
 
-	AvahiServiceExplorer explorer;
+	Avahi::ServiceExplorer explorer;
 
 	using MemberMap = std::map<std::string, AllocatedSocketAddress>;
 	MemberMap members;

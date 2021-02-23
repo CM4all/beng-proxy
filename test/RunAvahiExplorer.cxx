@@ -39,11 +39,11 @@
 #include "net/ToString.hxx"
 #include "util/PrintException.hxx"
 
-class Instance final : AvahiServiceExplorerListener {
+class Instance final : Avahi::ServiceExplorerListener {
 	EventLoop event_loop;
 	ShutdownListener shutdown_listener;
-	MyAvahiClient client;
-	AvahiServiceExplorer explorer;
+	Avahi::Client client;
+	Avahi::ServiceExplorer explorer;
 
 public:
 	explicit Instance(const char *service)
