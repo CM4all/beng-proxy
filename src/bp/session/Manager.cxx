@@ -514,6 +514,9 @@ SessionContainer::Find(SessionId id)
     assert(crash_in_unsafe());
     assert(locked_session == nullptr);
 
+    if (!id.IsDefined())
+        return nullptr;
+
     auto i = sessions.find(id, SessionHash(), SessionEqual());
     if (i == sessions.end())
         return nullptr;
