@@ -184,6 +184,9 @@ SessionManager::CreateSession() noexcept
 SessionLease
 SessionManager::Find(SessionId id) noexcept
 {
+	if (!id.IsDefined())
+		return nullptr;
+
 	auto i = sessions.find(id, SessionHash(), SessionEqual());
 	if (i == sessions.end())
 		return nullptr;
