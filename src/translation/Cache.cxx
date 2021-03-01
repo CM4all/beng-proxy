@@ -1302,6 +1302,27 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 	return item;
 }
 
+/**
+ * Return a null-terminated string with the given URI minus the query
+ * string.  This function is only needed because various functions
+ * such as uri_path_verify_paranoid() require a null-terminated
+ * string, but cannot cope with a query string.
+ */
+static const char *
+UriWithoutQueryString(AllocatorPtr alloc, const char *uri) noexcept
+{
+	const char *qmark = strchr(uri, '?');
+	if (qmark == nullptr)
+		/* optimized fast path: return the original URI
+		   pointer without allocations and without copying any
+		   data */
+		return uri;
+
+	/* slow path: copy the string so the caller gets a
+	   null-terminated string */
+	return alloc.DupZ({uri, qmark});
+}
+
 /*
  * translate callback
  *
@@ -1326,16 +1347,19 @@ try {
 	}
 
 	if (request.uri != nullptr && response.IsExpandable()) {
+		const char *uri = UriWithoutQueryString(alloc, request.uri);
 		tcache_expand_response(alloc, response,
 				       response.CompileRegex(),
-				       request.uri, request.host,
+				       uri, request.host,
 				       request.user);
 	} else if (response.easy_base) {
 		/* create a writable copy and apply the BASE */
-		response.CacheLoad(alloc, response, request.uri);
+		const char *uri = UriWithoutQueryString(alloc, request.uri);
+		response.CacheLoad(alloc, response, uri);
 	} else if (response.base != nullptr) {
 		const char *uri = request.uri;
 		const char *tail = require_base_tail(uri, response.base);
+		tail = UriWithoutQueryString(alloc, tail);
 		if (!response.unsafe_base && !uri_path_verify_paranoid(tail))
 			throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
 						  "Malformed URI");
