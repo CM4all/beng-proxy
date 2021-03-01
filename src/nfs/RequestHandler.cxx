@@ -36,7 +36,6 @@
 #include "http/HeaderWriter.hxx"
 #include "bp/FileHeaders.hxx"
 #include "bp/Request.hxx"
-#include "bp/GenerateResponse.hxx"
 #include "bp/Instance.hxx"
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
@@ -143,7 +142,7 @@ Request::HandleNfsAddress() noexcept
 	if (request.method != HTTP_METHOD_HEAD &&
 	    request.method != HTTP_METHOD_GET &&
 	    !processor_focus) {
-		method_not_allowed(*this, "GET, HEAD");
+		DispatchMethodNotAllowed("GET, HEAD");
 		return;
 	}
 

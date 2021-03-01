@@ -30,14 +30,13 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "GenerateResponse.hxx"
 #include "Request.hxx"
 #include "http/Headers.hxx"
 
 #include <assert.h>
 
 void
-method_not_allowed(Request &request2, const char *allow)
+Request::DispatchMethodNotAllowed(const char *allow) noexcept
 {
 	assert(allow != nullptr);
 
@@ -45,7 +44,7 @@ method_not_allowed(Request &request2, const char *allow)
 	headers.Write("content-type", "text/plain");
 	headers.Write("allow", allow);
 
-	request2.DispatchError(HTTP_STATUS_METHOD_NOT_ALLOWED,
-			       std::move(headers),
-			       "This method is not allowed.");
+	DispatchError(HTTP_STATUS_METHOD_NOT_ALLOWED,
+		      std::move(headers),
+		      "This method is not allowed.");
 }

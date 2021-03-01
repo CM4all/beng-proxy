@@ -34,7 +34,6 @@
 #include "file_address.hxx"
 #include "Request.hxx"
 #include "Instance.hxx"
-#include "GenerateResponse.hxx"
 #include "http/HeaderWriter.hxx"
 #include "http/PHeaderUtil.hxx"
 #include "http/Headers.hxx"
@@ -280,7 +279,7 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 	if (request.method != HTTP_METHOD_HEAD &&
 	    request.method != HTTP_METHOD_GET &&
 	    !processor_focus) {
-		method_not_allowed(*this, "GET, HEAD");
+		DispatchMethodNotAllowed("GET, HEAD");
 		return;
 	}
 

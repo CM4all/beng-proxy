@@ -691,6 +691,8 @@ public:
 	void DispatchRedirect(http_status_t status, const char *location,
 			      const char *msg) noexcept;
 
+	void DispatchMethodNotAllowed(const char *allow) noexcept;
+
 private:
 	SharedPoolPtr<WidgetContext> MakeWidgetContext() noexcept;
 
