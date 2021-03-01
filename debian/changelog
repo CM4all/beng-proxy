@@ -5,7 +5,7 @@ cm4all-beng-proxy (17.0.49) unstable; urgency=low
   * lb: fix corrupt error messages
   * lb: fix Zeroconf delays (error "Zeroconf cluster is empty")
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 02 Mar 2021 00:40:23 +0100
 
 cm4all-beng-proxy (17.0.48) unstable; urgency=low
 
