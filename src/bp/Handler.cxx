@@ -828,15 +828,10 @@ Request::CheckHandleReadFile(const TranslateResponse &response)
 void
 Request::OnTranslateError(std::exception_ptr ep) noexcept
 {
-	try {
-		std::rethrow_exception(ep);
-	} catch (const HttpMessageResponse &response) {
+	if (DispatchHttpMessageResponse(ep))
 		/* don't log this, just send the response directly and
 		   return */
-		DispatchError(response.GetStatus(), response.what());
 		return;
-	} catch (...) {
-	}
 
 	LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
 			 "Configuration server failed", ep, 1);

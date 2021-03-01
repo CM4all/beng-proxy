@@ -54,6 +54,20 @@
 #include <nfsc/libnfs-raw-nfs.h>
 #endif
 
+bool
+Request::DispatchHttpMessageResponse(std::exception_ptr e) noexcept
+{
+	try {
+		std::rethrow_exception(e);
+	} catch (const HttpMessageResponse &response) {
+		DispatchError(response.GetStatus(), response.what());
+		return true;
+	} catch (...) {
+	}
+
+	return false;
+}
+
 static MessageHttpResponse
 Dup(struct pool &pool, http_status_t status, const char *msg) noexcept
 {

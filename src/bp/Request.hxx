@@ -752,6 +752,14 @@ private:
 	 */
 	void GenerateSetCookie(GrowingBuffer &headers) noexcept;
 
+	/**
+	 * @return true if the given exception is a
+	 * #HttpMessageResponse and the response has been dispatched
+	 * (and this #Request instance has been destroyed), false if
+	 * not (a response still needs to be dispatched)
+	 */
+	bool DispatchHttpMessageResponse(std::exception_ptr e) noexcept;
+
 public:
 	void LogDispatchError(http_status_t status, const char *log_msg,
 			      unsigned log_level=2) noexcept;
