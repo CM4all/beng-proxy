@@ -1180,6 +1180,7 @@ test_bogus_100(Context<Connection> &c)
 	assert(c.request_error);
 
 	const auto *e = FindNested<HttpClientError>(c.request_error);
+	(void)e;
 	assert(e != nullptr);
 	assert(e->GetCode() == HttpClientErrorCode::UNSPECIFIED);
 
@@ -1213,6 +1214,7 @@ test_twice_100(Context<Connection> &c)
 	assert(c.request_error);
 
 	const auto *e = FindNested<HttpClientError>(c.request_error);
+	(void)e;
 	assert(e != nullptr);
 	assert(e->GetCode() == HttpClientErrorCode::UNSPECIFIED);
 
