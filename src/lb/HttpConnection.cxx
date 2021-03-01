@@ -186,7 +186,8 @@ void
 LbHttpConnection::SendError(IncomingHttpRequest &request, std::exception_ptr ep)
 {
 	if (const auto *r = FindNested<HttpMessageResponse>(ep)) {
-		request.SendMessage(r->GetStatus(), r->what());
+		request.SendMessage(r->GetStatus(),
+				    p_strdup(request.pool, r->what()));
 		return;
 	}
 

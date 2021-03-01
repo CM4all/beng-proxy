@@ -58,7 +58,8 @@ bool
 Request::DispatchHttpMessageResponse(std::exception_ptr e) noexcept
 {
 	if (const auto *r = FindNested<HttpMessageResponse>(e)) {
-		DispatchError(r->GetStatus(), r->what());
+		DispatchError(r->GetStatus(),
+			      p_strdup(request.pool, r->what()));
 		return true;
 	}
 

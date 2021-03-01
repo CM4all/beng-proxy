@@ -2,6 +2,7 @@ cm4all-beng-proxy (17.0.49) unstable; urgency=low
 
   * bp: fix "400 Malformed URI" response
   * bp: fix TOKEN_AUTH failure with "%2f" in query string
+  * lb: fix corrupt error messages
 
  --   
 
