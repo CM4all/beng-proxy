@@ -57,12 +57,8 @@ AcmeError::AcmeError(const boost::json::object &error)
 bool
 IsAcmeErrorType(std::exception_ptr ep, const char *type) noexcept
 {
-	try {
-		FindRetrowNested<AcmeError>(ep);
-		return false;
-	} catch (const AcmeError &acme_error) {
-		return acme_error.GetType() == type;
-	}
+	const auto *e = FindNested<AcmeError>(ep);
+	return e != nullptr && e->GetType() == type;
 }
 
 bool

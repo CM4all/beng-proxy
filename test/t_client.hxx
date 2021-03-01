@@ -1179,12 +1179,9 @@ test_bogus_100(Context<Connection> &c)
 	assert(c.aborted);
 	assert(c.request_error);
 
-	try {
-		FindRetrowNested<HttpClientError>(c.request_error);
-		assert(false);
-	} catch (const HttpClientError &e) {
-		assert(e.GetCode() == HttpClientErrorCode::UNSPECIFIED);
-	}
+	const auto *e = FindNested<HttpClientError>(c.request_error);
+	assert(e != nullptr);
+	assert(e->GetCode() == HttpClientErrorCode::UNSPECIFIED);
 
 	assert(strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100") != nullptr);
 	assert(c.body_error == nullptr);
@@ -1215,12 +1212,9 @@ test_twice_100(Context<Connection> &c)
 	assert(c.aborted);
 	assert(c.request_error);
 
-	try {
-		FindRetrowNested<HttpClientError>(c.request_error);
-		assert(false);
-	} catch (const HttpClientError &e) {
-		assert(e.GetCode() == HttpClientErrorCode::UNSPECIFIED);
-	}
+	const auto *e = FindNested<HttpClientError>(c.request_error);
+	assert(e != nullptr);
+	assert(e->GetCode() == HttpClientErrorCode::UNSPECIFIED);
 
 	assert(strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100") != nullptr);
 	assert(c.body_error == nullptr);

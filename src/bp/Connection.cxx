@@ -111,18 +111,12 @@ HttpServerLogLevel(std::exception_ptr e) noexcept
 		/* some socket errors caused by our client are less
 		   important */
 
-		try {
-			FindRetrowNested<std::system_error>(e);
-		} catch (const std::system_error &se) {
-			if (IsErrno(se, ECONNRESET))
-				return 4;
-		}
-
-		try {
-			FindRetrowNested<SocketProtocolError>(e);
-		} catch (...) {
+		if (const auto *se = FindNested<std::system_error>(e);
+		    se != nullptr && IsErrno(*se, ECONNRESET))
 			return 4;
-		}
+
+		if (FindNested<SocketProtocolError>(e))
+			return 4;
 	}
 
 	return 2;

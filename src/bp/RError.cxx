@@ -78,17 +78,12 @@ gcc_pure
 static MessageHttpResponse
 ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 {
-	try {
-		FindRetrowNested<HttpMessageResponse>(ep);
-	} catch (const HttpMessageResponse &e) {
-		return Dup(pool, e.GetStatus(), e.what());
-	}
+	if (const auto *r = FindNested<HttpMessageResponse>(ep))
+		return Dup(pool, r->GetStatus(), r->what());
 
-	try {
-		FindRetrowNested<std::system_error>(ep);
-	} catch (const std::system_error &e) {
-		if (e.code().category() == ErrnoCategory()) {
-			switch (e.code().value()) {
+	if (const auto *e = FindNested<std::system_error>(ep)) {
+		if (e->code().category() == ErrnoCategory()) {
+			switch (e->code().value()) {
 			case ENOENT:
 			case ENOTDIR:
 
@@ -105,10 +100,8 @@ ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 		}
 	}
 
-	try {
-		FindRetrowNested<WidgetError>(ep);
-	} catch (const WidgetError &e) {
-		switch (e.GetCode()) {
+	if (const auto *e = FindNested<WidgetError>(ep)) {
+		switch (e->GetCode()) {
 		case WidgetErrorCode::UNSPECIFIED:
 			break;
 
@@ -120,36 +113,27 @@ ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 			return {HTTP_STATUS_NOT_FOUND, "No such view"};
 
 		case WidgetErrorCode::NOT_A_CONTAINER:
-			return Dup(pool, HTTP_STATUS_NOT_FOUND, e.what());
+			return Dup(pool, HTTP_STATUS_NOT_FOUND, e->what());
 
 		case WidgetErrorCode::FORBIDDEN:
 			return {HTTP_STATUS_FORBIDDEN, "Forbidden"};
 		}
 	}
 
-	try {
-		FindRetrowNested<HttpClientError>(ep);
-
-		/* a SslError is usually a failure to connect to the
-		   next server */
-		FindRetrowNested<SslError>(ep);
-	} catch (...) {
+	if (FindNested<HttpClientError>(ep) ||
+	    /* a SslError is usually a failure to connect to the next
+	       server */
+	    FindNested<SslError>(ep))
 		return {HTTP_STATUS_BAD_GATEWAY, "Upstream server failed"};
-	}
 
-	try {
-		FindRetrowNested<WasError>(ep);
-		FindRetrowNested<FcgiClientError>(ep);
-		FindRetrowNested<CgiError>(ep);
-	} catch (...) {
+	if (FindNested<WasError>(ep) ||
+	    FindNested<FcgiClientError>(ep) ||
+	    FindNested<CgiError>(ep))
 		return {HTTP_STATUS_BAD_GATEWAY, "Script failed"};
-	}
 
 #ifdef HAVE_LIBNFS
-	try {
-		FindRetrowNested<NfsClientError>(ep);
-	} catch (const NfsClientError &e) {
-		switch (e.GetCode()) {
+	if (const auto *e = FindNested<NfsClientError>(ep)) {
+		switch (e->GetCode()) {
 		case NFS3ERR_NOENT:
 		case NFS3ERR_NOTDIR:
 			return {HTTP_STATUS_NOT_FOUND,

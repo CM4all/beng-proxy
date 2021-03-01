@@ -86,18 +86,12 @@ HttpServerLogLevel(std::exception_ptr e)
 		/* some socket errors caused by our client are less
 		   important */
 
-		try {
-			FindRetrowNested<std::system_error>(e);
-		} catch (const std::system_error &se) {
-			if (IsErrno(se, ECONNRESET))
-				return 4;
-		}
-
-		try {
-			FindRetrowNested<SocketProtocolError>(e);
-		} catch (...) {
+		if (const auto *se = FindNested<std::system_error>(e);
+		    se != nullptr && IsErrno(*se, ECONNRESET))
 			return 4;
-		}
+
+		if (FindNested<SocketProtocolError>(e))
+			return 4;
 	}
 
 	return 2;
@@ -191,10 +185,8 @@ LbHttpConnection::CloseAndDestroy()
 void
 LbHttpConnection::SendError(IncomingHttpRequest &request, std::exception_ptr ep)
 {
-	try {
-		FindRetrowNested<HttpMessageResponse>(ep);
-	} catch (const HttpMessageResponse &e) {
-		request.SendMessage(e.GetStatus(), e.what());
+	if (const auto *r = FindNested<HttpMessageResponse>(ep)) {
+		request.SendMessage(r->GetStatus(), r->what());
 		return;
 	}
 

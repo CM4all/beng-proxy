@@ -78,35 +78,31 @@
 bool
 IsHttpClientServerFailure(std::exception_ptr ep) noexcept
 {
-	try {
-		FindRetrowNested<HttpClientError>(ep);
-		return false;
-	} catch (const HttpClientError &e) {
-		return e.GetCode() != HttpClientErrorCode::UNSPECIFIED;
-	}
+	const auto *e = FindNested<HttpClientError>(ep);
+	return e != nullptr &&
+		e->GetCode() != HttpClientErrorCode::UNSPECIFIED;
 }
 
 bool
 IsHttpClientRetryFailure(std::exception_ptr ep) noexcept
 {
-	try {
-		FindRetrowNested<HttpClientError>(ep);
+	const auto *e = FindNested<HttpClientError>(ep);
+	if (e == nullptr)
 		return false;
-	} catch (const HttpClientError &e) {
-		switch (e.GetCode()) {
-		case HttpClientErrorCode::UNSPECIFIED:
-		case HttpClientErrorCode::TIMEOUT:
-			return false;
 
-		case HttpClientErrorCode::REFUSED:
-		case HttpClientErrorCode::PREMATURE:
-		case HttpClientErrorCode::IO:
-		case HttpClientErrorCode::GARBAGE:
-			return true;
-		}
-
+	switch (e->GetCode()) {
+	case HttpClientErrorCode::UNSPECIFIED:
+	case HttpClientErrorCode::TIMEOUT:
 		return false;
+
+	case HttpClientErrorCode::REFUSED:
+	case HttpClientErrorCode::PREMATURE:
+	case HttpClientErrorCode::IO:
+	case HttpClientErrorCode::GARBAGE:
+		return true;
 	}
+
+	return false;
 }
 
 /**
