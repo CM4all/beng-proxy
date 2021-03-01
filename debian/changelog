@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.49) unstable; urgency=low
 
-  * 
+  * bp: fix "400 Malformed URI" response
 
  --   
 

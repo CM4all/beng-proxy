@@ -166,6 +166,11 @@ Request::LogDispatchError(http_status_t status, const char *log_msg,
 void
 Request::LogDispatchError(std::exception_ptr ep) noexcept
 {
+	if (DispatchHttpMessageResponse(ep))
+		/* don't log this, just send the response directly and
+		   return */
+		return;
+
 	auto response = ToResponse(pool, ep);
 	if (instance.config.verbose_response)
 		response.message = p_strdup(&pool, GetFullMessage(ep).c_str());
@@ -180,6 +185,11 @@ void
 Request::LogDispatchError(http_status_t status, const char *msg,
 			  std::exception_ptr ep, unsigned log_level) noexcept
 {
+	if (DispatchHttpMessageResponse(ep))
+		/* don't log this, just send the response directly and
+		   return */
+		return;
+
 	logger(log_level, "error on '", request.uri, "': ", ep);
 
 	if (instance.config.verbose_response)
