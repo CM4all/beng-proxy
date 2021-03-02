@@ -19,6 +19,7 @@ from beng_proxy.translation.widget import WidgetRegistry
 widgets_path = '/etc/cm4all/beng/widgets'
 cgi_path = '/usr/lib/cgi-bin'
 was_path = '/usr/lib/cm4all/was/bin'
+php_was = os.path.join(was_path, 'php')
 demo_path = '/usr/share/cm4all/beng-proxy/demo/htdocs'
 test_script_path = os.path.join(os.getcwd(), 'test')
 test_binary_path = test_script_path
@@ -240,7 +241,8 @@ class Translation(Protocol):
         return response
 
     def _handle_hosting(self, request, response, base, uri: str,
-                        document_root: str='/var/www'):
+                        document_root: str='/var/www',
+                        was: bool=False):
         response.packet(TRANSLATE_BASE, base)
         response.packet(TRANSLATE_DOCUMENT_ROOT, document_root)
 
@@ -276,14 +278,23 @@ class Translation(Protocol):
             response.packet(TRANSLATE_ENOTDIR, 'foo')
             response.packet(TRANSLATE_STATS_TAG, 'coma')
         elif uri[-4:] == '.php':
-            # run PHP-FastCGI
+            # run PHP (FastCGI or WAS(
             response.packet(TRANSLATE_EASY_BASE)
             response.packet(TRANSLATE_REGEX, r'^(.*\.php)$')
             response.packet(TRANSLATE_REGEX_TAIL)
-            response.packet(TRANSLATE_FASTCGI, easy_path)
+            if was:
+                response.packet(TRANSLATE_EXPAND_TEST_PATH, document_root + r'/\1')
+                response.packet(TRANSLATE_WAS, php_was)
+                response.packet(TRANSLATE_APPEND, '-dopcache.zip_dirs=/var/www/opcache:/var/www/WordPress')
+                response.packet(TRANSLATE_APPEND, '-dopcache.no_validate_timestamps_in=/var/www/')
+                response.packet(TRANSLATE_CONCURRENCY, '\x20\x00')
+                response.pair('PHP_SCRIPT', '/dummy')
+                response.packet(TRANSLATE_EXPAND_PAIR, r'PHP_SCRIPT=%s/\1' % document_root)
+            else:
+                response.packet(TRANSLATE_FASTCGI, easy_path)
+                response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1')
+                response.packet(TRANSLATE_ACTION, '/usr/bin/php-cgi')
             response.packet(TRANSLATE_NO_NEW_PRIVS)
-            response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1')
-            response.packet(TRANSLATE_ACTION, '/usr/bin/php-cgi')
             response.packet(TRANSLATE_FILE_NOT_FOUND, '404')
             response.packet(TRANSLATE_ENOTDIR, 'foo')
             response.packet(TRANSLATE_AUTO_BROTLI)
@@ -978,6 +989,8 @@ class Translation(Protocol):
             response.packet(TRANSLATE_CONTENT_TYPE_LOOKUP, 'xyz')
         elif raw_uri[:9] == '/hosting/':
             self._handle_hosting(request, response, '/hosting/', raw_uri[9:])
+        elif raw_uri[:13] == '/hosting-was/':
+            self._handle_hosting(request, response, '/hosting-was/', raw_uri[13:], was=True)
         elif raw_uri[:7] == '/probe/':
             self._handle_probe(request, response, '/probe/', raw_uri[7:])
         elif raw_uri[:6] == '/view/':
@@ -1239,6 +1252,7 @@ if __name__ == '__main__':
             elif os.path.isdir('../../cgi-coma'):
                 src_dir = os.path.join(os.getcwd(), '../..')
 
+        php_was = os.path.join(src_dir, 'php/sapi/was/php')
         was_examples_path = os.path.join(src_dir, 'libwas', 'output', 'debug', 'examples')
         libcommon_was_path = os.path.join(src_dir, 'libcommon', 'output', 'debug', 'demo', 'was')
         coma_was = os.path.join(src_dir, 'cgi-coma/output/debug/coma-was')
