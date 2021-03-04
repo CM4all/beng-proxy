@@ -1,6 +1,9 @@
 gtest_compile_args = [
   '-Wno-undef',
 
+  # shadow warnings in GTest 1.8.0
+  '-Wno-shadow',
+
   # TYPED_TEST_CASE_P got deprecated in GTest 1.9.0
   '-Wno-deprecated-declarations',
 ]
