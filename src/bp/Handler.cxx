@@ -42,6 +42,8 @@
 #include "Request.hxx"
 #include "args.hxx"
 #include "session/Session.hxx"
+#include "session/Glue.hxx"
+#include "session/Manager.hxx"
 #include "ExternalSession.hxx"
 #include "suffix_registry.hxx"
 #include "address_suffix_registry.hxx"
@@ -113,7 +115,18 @@ Request::ApplyTranslateResponseSession(const TranslateResponse &response) noexce
 	} else if (response.discard_session)
 		DiscardSession();
 
-	return ApplyTranslateSession(response);
+	try {
+		return ApplyTranslateSession(response);
+	} catch (const std::bad_alloc &) {
+		/* purge a few sessions and try again */
+		session_manager->Purge();
+
+		try {
+			return ApplyTranslateSession(response);
+		} catch (const std::bad_alloc &) {
+			return nullptr;
+		}
+	}
 }
 
 void

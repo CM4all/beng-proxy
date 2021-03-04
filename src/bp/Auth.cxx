@@ -49,10 +49,11 @@ inline void
 Request::OnAuthTranslateResponse(const TranslateResponse &response) noexcept
 {
 	bool is_authenticated = false;
-	{
+	try {
 		auto session = ApplyTranslateSession(response);
 		if (session)
 			is_authenticated = session->user != nullptr;
+	} catch (const std::bad_alloc &) {
 	}
 
 	if (CheckHandleRedirectBounceStatus(response))
