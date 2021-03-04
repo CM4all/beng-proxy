@@ -1,6 +1,6 @@
 cm4all-beng-proxy (16.33) unstable; urgency=low
 
-  * 
+  * bp: fix crash bug when session manager is out of shared memory
 
  --   
 

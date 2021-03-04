@@ -92,7 +92,7 @@ cookie_list_delete_match(struct dpool &dpool, L &list,
 
 static Cookie *
 parse_next_cookie(struct dpool &pool, struct pool &tpool,
-                  StringView &input) noexcept
+                  StringView &input)
 {
     StringView name, value;
     cookie_next_name_value(tpool, input, name, value, false);
@@ -131,7 +131,7 @@ parse_next_cookie(struct dpool &pool, struct pool &tpool,
 
 static bool
 apply_next_cookie(CookieJar &jar, struct pool &tpool, StringView &input,
-                  const char *domain, const char *path) noexcept
+                  const char *domain, const char *path)
 {
     assert(domain != nullptr);
 
