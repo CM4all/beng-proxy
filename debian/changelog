@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.50) unstable; urgency=low
 
-  * 
+  * merge release 16.33 (session bug fix not relevant)
 
  --   
 
@@ -410,6 +410,12 @@ cm4all-beng-proxy (17.0.1) unstable; urgency=low
   * certdb: implement ACMEv2
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 18 Mar 2020 16:54:20 +0100
+
+cm4all-beng-proxy (16.33) unstable; urgency=low
+
+  * bp: fix crash bug when session manager is out of shared memory
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 04 Mar 2021 14:44:42 +0100
 
 cm4all-beng-proxy (16.32) unstable; urgency=low
 
