@@ -239,6 +239,8 @@ struct Session {
 	/** an opaque string for the translation server */
 	AllocatedArray<std::byte> translate;
 
+	AllocatedString recover;
+
 	/** an opaque string for attaching sessions; if this is set,
 	    then the session is in
 	    SessionContainer::sessions_by_attach */
@@ -286,6 +288,11 @@ struct Session {
 
 	void SetTranslate(ConstBuffer<void> translate) noexcept;
 	void ClearTranslate() noexcept;
+
+	/**
+	 * @return true if the value modified
+	 */
+	bool SetRecover(const char *_recover) noexcept;
 
 	/**
 	 * Does this session have the specified "attach" value?

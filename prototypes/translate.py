@@ -170,14 +170,19 @@ class Translation(Protocol):
 
         return response
 
-    def _handle_token_auth(self, token_auth, auth_token):
-        log.msg(f"token_auth {token_auth!r} auth_token={auth_token!r}")
+    def _handle_token_auth(self, token_auth, auth_token, recover_session):
+        log.msg(f"token_auth {token_auth!r} auth_token={auth_token!r} recover_session={recover_session!r}")
 
         response = Response(protocol_version=2)
         response.max_age(0)
 
         if auth_token == b'foo' or auth_token == b'bar':
+            response.packet(TRANSLATE_RECOVER_SESSION, b'recover:' + auth_token)
             response.packet(TRANSLATE_USER, auth_token)
+            response.max_age(20)
+        elif recover_session is not None and recover_session[:8] == b'recover:':
+            response.packet(TRANSLATE_RECOVER_SESSION, recover_session)
+            response.packet(TRANSLATE_USER, recover_session[8:])
             response.max_age(20)
 
         return response
@@ -1053,7 +1058,8 @@ class Translation(Protocol):
 
         if request.token_auth is not None:
             return self._handle_token_auth(request.token_auth,
-                                           request.auth_token)
+                                           request.auth_token,
+                                           request.recover_session)
 
         if request.pool is not None:
             return self._handle_pool(request.pool, request.listener_tag, request.host)

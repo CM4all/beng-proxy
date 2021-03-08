@@ -704,6 +704,7 @@ tcache_request_evaluate(const TranslateRequest &request)
 		request.chain != nullptr ||
 		tcache_is_content_type_lookup(request)) &&
 		request.chain_header == nullptr &&
+		request.recover_session == nullptr &&
 		request.http_auth.IsNull() && // TODO: allow caching HTTP_AUTH
 		request.token_auth.IsNull() && // TODO: allow caching TOKEN_AUTH
 		request.auth.IsNull() &&

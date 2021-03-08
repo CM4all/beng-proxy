@@ -241,6 +241,8 @@ Request::HandleTokenAuth(const TranslateResponse &response) noexcept
 	auto t = NewFromPool<TranslateRequest>(pool);
 	t->token_auth = response.token_auth;
 	t->auth_token = auth_token;
+	if (auth_token == nullptr)
+		t->recover_session = recover_session_from_cookie;
 	t->uri = auth_token != nullptr
 		? RecomposeUri(pool, dissected_uri)
 		: request.uri;

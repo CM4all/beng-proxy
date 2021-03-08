@@ -185,6 +185,22 @@ Session::SetTranslate(ConstBuffer<void> _translate) noexcept
 	translate = ConstBuffer<std::byte>::FromVoid(_translate);
 }
 
+bool
+Session::SetRecover(const char *_recover) noexcept
+{
+	assert(_recover != nullptr);
+
+	if (recover != nullptr && StringIsEqual(recover.c_str(), _recover))
+		return false;
+
+	recover = _recover;
+
+	/* TODO: re-send session cookie with modified "recover" value
+	   in all realms? */
+
+	return true;
+}
+
 void
 RealmSession::SetUser(const char *_user, std::chrono::seconds max_age) noexcept
 {

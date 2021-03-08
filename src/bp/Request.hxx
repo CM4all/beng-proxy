@@ -297,6 +297,25 @@ private:
 	 */
 	const char *resource_tag;
 
+	/**
+	 * The RECOVER_COOKIE value parsed from the session cookie.
+	 * This value will be sent to the translation server in a
+	 * TOKEN_AUTH request if there is no session.
+	 *
+	 * This field is set by LoadSession(), but only if a valid
+	 * session was not found.
+	 */
+	const char *recover_session_from_cookie = nullptr;
+
+	/**
+	 * The RECOVER_COOKIE value to be included in the session
+	 * cookie value.
+	 *
+	 * This field is initialized by ApplyTranslateSession().  It
+	 * is only initialized if #send_session_cookie is true.
+	 */
+	const char *recover_session_to_cookie;
+
 	SharedPoolPtr<WidgetContext> widget_context;
 
 public:

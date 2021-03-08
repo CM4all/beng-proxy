@@ -73,6 +73,8 @@ struct TranslateRequest {
 
 #if TRANSLATION_ENABLE_SESSION
 	ConstBuffer<void> session = nullptr;
+
+	const char *recover_session = nullptr;
 #endif
 
 	const char *param = nullptr;

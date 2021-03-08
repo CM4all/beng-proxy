@@ -81,7 +81,9 @@ Request::LoadSession(const char *_session_id) noexcept
 	assert(!session_id.IsDefined());
 	assert(_session_id != nullptr);
 
-	if (!session_id.Parse(_session_id))
+	auto [sid, recover] = StringView(_session_id).Split('/');
+
+	if (!session_id.Parse(sid))
 		return nullptr;
 
 	const AllocatorPtr alloc(pool);
@@ -96,6 +98,11 @@ Request::LoadSession(const char *_session_id) noexcept
 		session->cookie_received = true;
 
 		session->Expire(instance.event_loop.SteadyNow());
+	} else {
+		/* note: "recover" is a StringView, but this part of
+		   the buffer is null-terminated, so this is legal */
+		recover_session_from_cookie = recover.data;
+		// TODO: do we need to unescape the string?
 	}
 
 	return session;
@@ -185,6 +192,7 @@ Request::MakeSession() noexcept
 
 	session_id = session->id;
 	send_session_cookie = true;
+	recover_session_to_cookie = nullptr;
 
 	return session;
 }
@@ -320,6 +328,17 @@ Request::ApplyTranslateSession(const TranslateResponse &response) noexcept
 
 			if (session)
 				session->parent.SetTranslate(response.session);
+		}
+	}
+
+	if (response.recover_session != nullptr) {
+		if (!session)
+			session = MakeRealmSession();
+
+		if (session &&
+		    session->parent.SetRecover(response.recover_session)) {
+			send_session_cookie = true;
+			recover_session_to_cookie = response.recover_session;
 		}
 	}
 

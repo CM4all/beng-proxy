@@ -910,6 +910,8 @@ server to send ``WWW-Authenticate`` and ``Authentication-Info`` response
 headers back to the client, wrapped in ``WWW_AUTHENTICATE`` and
 ``AUTHENTICATION_INFO``.
 
+.. _token_auth:
+
 Token Authentication
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -941,6 +943,29 @@ The translation server may now reply:
 - ``DISCARD_SESSION``, ``SESSION``, ``USER``: the session is updated
   and the client will be redirected to the current URI, but without
   the ``auth_token`` query string parameter
+
+.. _recover_session:
+
+Recovering a Session
+""""""""""""""""""""
+
+If :program:`beng-proxy` does not have a valid session for the client
+(and there is no ``access_token`` query string parameter), but the
+client sent a ``RECOVER_SESSION`` cookie, the translation request will
+contain that value, e.g.:
+
+- ``TOKEN_AUTH`` (echoing the response packet)
+- ``RECOVER_SESSION`` contains the value of the recover cookie
+- ``URI`` is the full request URI
+- ``HOST``
+
+The translation server validates the ``RECOVER_SESSION`` value
+(e.g. by checking a crypto signature contained within) and may then
+configure the new session with values copied from the lost session.
+
+Any ``TOKEN_AUTH`` translation response may contain a new
+``RECOVER_SESSION`` value which :program:`beng-proxy` will forward to
+its client as a cookie.
 
 
 Application level Authentication
