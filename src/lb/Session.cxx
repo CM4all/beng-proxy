@@ -56,6 +56,12 @@ lb_session_get(const StringMap &request_headers, const char *cookie_name)
 	size_t length = strlen(session);
 	const char *end = session + length;
 
+	const char *separator = (const char *)memchr(session, '/', length);
+	if (separator != nullptr) {
+		end = separator;
+		length = end - session;
+	}
+
 	if (length > 8)
 		/* only parse the upper 32 bits */
 		session += length - 8;
