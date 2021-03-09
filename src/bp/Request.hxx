@@ -596,7 +596,10 @@ public:
 	}
 
 private:
+	[[gnu::pure]]
 	const StringMap *GetCookies() noexcept;
+
+	[[gnu::pure]]
 	const char *GetCookieSessionId() noexcept;
 
 	SessionLease LoadSession(const char *_session_id) noexcept;

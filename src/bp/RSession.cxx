@@ -43,6 +43,7 @@
 #include "util/HexFormat.h"
 #include "util/djbhash.h"
 
+[[gnu::pure]]
 static StringMap *
 ParseCookieHeaders(AllocatorPtr alloc, const StringMap &headers) noexcept
 {
