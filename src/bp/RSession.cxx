@@ -149,27 +149,16 @@ Request::DetermineSession() noexcept
 						   &instance.config,
 						   request.headers);
 
-	bool cookie_received = false;
 	const char *sid = GetCookieSessionId();
 	if (sid == nullptr)
 		return;
-
-	cookie_received = true;
 
 	auto session = LoadSession(sid);
 	if (!session) {
 		return;
 	}
 
-	if (!cookie_received) {
-		const char *p = GetCookieSessionId();
-		if (p != nullptr && strcmp(p, sid) == 0)
-			cookie_received = true;
-	}
-
-	if (cookie_received) {
-		session->cookie_received = true;
-	}
+	session->cookie_received = true;
 }
 
 SessionLease
