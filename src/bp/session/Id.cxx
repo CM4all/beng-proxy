@@ -35,7 +35,6 @@
 #include "util/HexFormat.h"
 
 #include <assert.h>
-#include <stdlib.h>
 
 void
 SessionId::Generate() noexcept
@@ -77,15 +76,25 @@ SessionId::Parse(std::string_view s) noexcept
 	const char *p = s.data();
 
 	constexpr size_t segment_size = sizeof(data.front()) * 2;
-	std::array<char, segment_size + 1> segment;
-	segment.back() = 0;
+
 	for (auto &i : data) {
-		std::copy_n(p, segment_size, segment.begin());
-		p += segment_size;
-		char *endptr;
-		i = strtoul(&segment.front(), &endptr, 16);
-		if (endptr != &segment.back())
-			return false;
+		uint64_t value = 0;
+
+		for (unsigned j = 0; j < segment_size; ++j) {
+			const char ch = *p++;
+
+			uint_least8_t digit;
+			if (ch >= '0' && ch <= '9')
+				digit = ch - '0';
+			else if (ch >= 'a' && ch <= 'f')
+				digit = ch - 'a' + 0xa;
+			else
+				return false;
+
+			value = (value << 4) | digit;
+		}
+
+		i = value;
 	}
 
 	return true;
