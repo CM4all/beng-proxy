@@ -862,14 +862,6 @@ fill_translate_request(TranslateRequest &t,
 {
 	const AllocatorPtr alloc(request.pool);
 
-	/* these two were set by ParseArgs() */
-	const auto session = t.session;
-	const auto param = t.param;
-
-	/* restore */
-	t.session = session;
-	t.param = param;
-
 	t.host = request.headers.Get("host");
 	t.authorization = request.headers.Get("authorization");
 	t.uri = alloc.DupZ(uri.base);
