@@ -98,6 +98,11 @@ Request::OnTokenAuthTranslateResponse(const TranslateResponse &response) noexcep
 
 	translate.user_modified = response.user != nullptr;
 
+	if (!had_auth_token) {
+		OnTranslateResponseAfterAuth(*translate.previous);
+		return;
+	}
+
 	/* using the original translation response, because it may
 	   have information about the original request */
 	const auto &tr = *translate.previous;
@@ -214,6 +219,8 @@ Request::HandleTokenAuth(const TranslateResponse &response) noexcept
 		DispatchError(HTTP_STATUS_BAD_REQUEST, e.what());
 		return;
 	}
+
+	had_auth_token = auth_token != nullptr;
 
 	if (auth_token == nullptr) {
 		bool is_authenticated = false;

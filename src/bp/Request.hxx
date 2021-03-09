@@ -329,6 +329,13 @@ private:
 	 */
 	bool collect_cookies = false;
 
+	/**
+	 * Flag used by HandleTokenAuth() /
+	 * OnTokenAuthTranslateResponse() to decide whether a redirect
+	 * is necessary.
+	 */
+	bool had_auth_token;
+
 public:
 	/**
 	 * Is the processor active, and is there a focused widget?
