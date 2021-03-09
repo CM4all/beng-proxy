@@ -1039,7 +1039,7 @@ Articles on http://lwn.net/ on Linux namespaces:
 - `Network namespaces <http://lwn.net/Articles/219794/>`__
 
 User Namespaces
-~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^
 
 The translation packet ``USER_NAMESPACE`` launches the process in a
 new user namespace. This creates a new mapping for user ids inside
@@ -1049,7 +1049,7 @@ capabilities. This is a precondition for some of the other namespaces.
 Requires Linux 3.8 or newer.
 
 PID Namespaces
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^
 
 The translation packet ``PID_NAMESPACE`` launches the process in a new
 PID namespace. This creates a new mapping for process ids inside this
@@ -1068,7 +1068,7 @@ mount a new ``proc`` filesystem connected to the new namespace.
 Requires Linux 3.8 or newer.
 
 Cgroup Namespaces
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 
 The translation packet ``CGROOUP_NAMESPACE`` launches the process in a
 new cgroup namespace.
@@ -1076,7 +1076,7 @@ new cgroup namespace.
 Requires Linux 4.6 or newer.
 
 Network Namespaces
-~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^
 
 The translation packet ``NETWORK_NAMESPACE`` launches the process in a
 new network namespace. Without further configuration, this leaves the
@@ -1089,7 +1089,7 @@ with an existing network namespace configured with ``ip netns``.
 Requires Linux 2.6.29 or newer.
 
 Mount Namespaces
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
 
 A mount namespace makes the VFS mount table private to the new
 process.  This namespace is created implicitly by the packets
@@ -1145,14 +1145,14 @@ described in this section.
   user namespaces and PID namespaces.
 
 UTS Namespaces
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^
 
 A UTS namespace allows manipulating the host name reported by the
 kernel. ``UTS_NAMESPACE`` creates the namespace; its payload is the new
 host name.
 
 Namespaces Summary
-~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^
 
 The following example describes part of a translation packets that
 attempts to execute a child process as securely as possible::
@@ -1313,7 +1313,7 @@ request, :program:`beng-proxy` sends its contents unless it is empty
 translation server may provide a new value (which may be empty).
 
 External Session Manager
-~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Sometimes, the translation server involves an external entity in its
 session management, for example to handle authentication. The

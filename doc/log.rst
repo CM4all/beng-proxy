@@ -97,7 +97,7 @@ The following ``access_logger`` options are available:
 .. _child_error_logger:
 
 Child Error Logger
-~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^
 
 To be able to use the ``forward_child_errors`` feature without logging
 HTTP requests, the section ``child_error_logger`` can be used
@@ -121,7 +121,7 @@ This section describes the loggers which are included in the Debian
 package ``cm4all-beng-proxy-logging``.
 
 ``log-cat``
-~~~~~~~~~~~
+^^^^^^^^^^^
 
 Prints the events to standard output, which will be written to
 ``beng-proxy``\ ’s error log file (as if you had not configured a
@@ -132,13 +132,13 @@ You can combine it with ``multilog`` or similar programs, for example::
    cm4all-beng-proxy-log-cat |multilog t /var/log/cm4all/access
 
 ``log-json``
-~~~~~~~~~~~~
+^^^^^^^^^^^^
 
 Prints the events to standard output in JSON format. It has no
 arguments.
 
 ``log-lua``
-~~~~~~~~~~~
+^^^^^^^^^^^
 
 Run a Lua function for each request. Example code::
 
@@ -218,13 +218,13 @@ The code fragment is called for each request. The global variable ``_``
 contain a ``return`` statement.
 
 ``log-traffic``
-~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^
 
 Print site traffic to standard output. Each line is in the form
 “``SITENAME TRAFFICBYTES``”.
 
 ``log-split``
-~~~~~~~~~~~~~
+^^^^^^^^^^^^^
 
 Splits the events into several log files. The parameters are format
 strings which are used to build the file name. The first valid format
@@ -255,7 +255,7 @@ If the first argument is ``–localtime``, then local time is used instead
 of GMT.
 
 ``log-forward``, ``log-exec``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``log-forward`` forwards the events via UDP to a remote host. The
 parameters are the IP addresses of the peers (there may be more than
@@ -283,7 +283,7 @@ These two programs are useful in conjunction, to store logs on a central
 server.
 
 Multicast example
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 
 Multicast can be used to send access logs to one or multiple loggers at
 the same time, without having to configure them manually. If the senders
@@ -305,7 +305,7 @@ to all listening loggers:
 
 
 ``log-tee``
-~~~~~~~~~~~
+^^^^^^^^^^^
 
 ``log-tee`` launches multiple child loggers given on the command line
 and copies events to all of them.  Example::

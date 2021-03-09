@@ -122,7 +122,7 @@ The option ``mangle_via yes`` enables request header mangling: the
 headers ``Via`` and ``X-Forwarded-For`` are updated.
 
 Zeroconf
-~~~~~~~~
+^^^^^^^^
 
 To discover pool members automatically using Zeroconf, use the
 ``zeroconf_service`` setting::
@@ -158,7 +158,7 @@ appear. The major disadvantage is that this works only with a single
 default is ``no``.
 
 Protocols
-~~~~~~~~~
+^^^^^^^^^
 
 The protocol ``tcp`` forwards raw a raw bidirectional TCP stream. It is
 the fastest mode, and should be used when no special protocol parsing is
@@ -425,7 +425,7 @@ Other sticky modes:
   compared against the ``jvm_route`` of all member nodes
 
 Tomcat
-~~~~~~
+^^^^^^
 
 For the ``jvm_route`` mode, both :program:`beng-lb` and Tomcat must be configured
 properly. Example ``lb.conf``::
@@ -475,7 +475,7 @@ To indicate that an HTTP request was received on a SSL/TLS connection,
 :program:`beng-lb` adds the ``X-CM4all-HTTPS:on`` header.
 
 Server Name Indication
-~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^
 
 You can specify multiple ``ssl_cert`` lines. All certificate/key pairs
 are loaded. During the TLS handshake, the client may announce the
@@ -488,7 +488,7 @@ certificate matches, the first certificate is used.
 .. _certdbconfig:
 
 Certificate Database
-~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^
 
 Instead of configuring each server certificate in the configuration
 file, you can store certificate/key pairs in a PostgreSQL database. The
@@ -544,7 +544,7 @@ database.
 .. _ssl_verify:
 
 Client Certificates
-~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^
 
 The option ``ssl_verify`` enables client certificates. A connection
 without a client certificate will be rejected. The client certificate
@@ -577,7 +577,7 @@ is not possible to combine client certificate and the certificate
 database.
 
 Wireshark
-~~~~~~~~~
+^^^^^^^^^
 
 Wireshark can decrypt SSL/TLS traffic if it knows the session keys.
 These keys can be logged by :program:`beng-lb` and
@@ -632,7 +632,7 @@ The ``client`` setting is optional. If at least one is given, then only
 the specified client addresses / networks are diverted to this handler.
 
 Ping
-~~~~
+^^^^
 
 The “ping” monitor periodically sends echo-request ICMP packets to the
 node, and excepts echo-reply ICMP packets.  Example::
@@ -652,13 +652,13 @@ allowed to use the ICMP socket, which can be configured in the virtual
 file :file:`/proc/sys/net/ipv4/ping_group_range`
 
 Connect
-~~~~~~~
+^^^^^^^
 
 The ``connect`` monitor attempts to establish a TCP connection, and
 closes it immediately.
 
 TCP Expect
-~~~~~~~~~~
+^^^^^^^^^^
 
 The ``tcp_expect`` monitor opens a TCP connection, optionally sends some
 data, and expects a certain string in the response.  Example::
