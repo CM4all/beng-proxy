@@ -61,15 +61,18 @@ struct WidgetSession
 	: boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
 	struct Compare {
-		bool operator()(const WidgetSession &a, const WidgetSession &b) const {
+		[[gnu::pure]]
+		bool operator()(const WidgetSession &a, const WidgetSession &b) const noexcept {
 			return strcmp(a.id.c_str(), b.id.c_str()) < 0;
 		}
 
-		bool operator()(const WidgetSession &a, const char *b) const {
+		[[gnu::pure]]
+		bool operator()(const WidgetSession &a, const char *b) const noexcept {
 			return strcmp(a.id.c_str(), b) < 0;
 		}
 
-		bool operator()(const char *a, const WidgetSession &b) const {
+		[[gnu::pure]]
+		bool operator()(const char *a, const WidgetSession &b) const noexcept {
 			return strcmp(a, b.id.c_str()) < 0;
 		}
 	};
@@ -121,15 +124,18 @@ struct RealmSession
 	Session &parent;
 
 	struct Compare {
-		bool operator()(const RealmSession &a, const RealmSession &b) const {
+		[[gnu::pure]]
+		bool operator()(const RealmSession &a, const RealmSession &b) const noexcept {
 			return strcmp(a.realm.c_str(), b.realm.c_str()) < 0;
 		}
 
-		bool operator()(const RealmSession &a, const char *b) const {
+		[[gnu::pure]]
+		bool operator()(const RealmSession &a, const char *b) const noexcept {
 			return strcmp(a.realm.c_str(), b) < 0;
 		}
 
-		bool operator()(const char *a, const RealmSession &b) const {
+		[[gnu::pure]]
+		bool operator()(const char *a, const RealmSession &b) const noexcept {
 			return strcmp(a, b.realm.c_str()) < 0;
 		}
 	};
@@ -159,7 +165,7 @@ struct RealmSession
 	CookieJar cookies;
 
 	template<typename R>
-	RealmSession(Session &_parent, R &&_realm)
+	RealmSession(Session &_parent, R &&_realm) noexcept
 		:parent(_parent),
 		 realm(std::forward<R>(_realm))
 	{
@@ -282,7 +288,7 @@ struct Session {
 		return false;
 	}
 
-	void SetTranslate(ConstBuffer<void> translate);
+	void SetTranslate(ConstBuffer<void> translate) noexcept;
 	void ClearTranslate() noexcept;
 
 	/**
@@ -293,7 +299,7 @@ struct Session {
 
 	void Attach(Session &&other) noexcept;
 
-	void SetLanguage(const char *_language) {
+	void SetLanguage(const char *_language) noexcept {
 		language = _language;
 	}
 

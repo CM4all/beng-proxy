@@ -175,7 +175,7 @@ Session::Attach(Session &&other) noexcept
 }
 
 void
-Session::SetTranslate(ConstBuffer<void> _translate)
+Session::SetTranslate(ConstBuffer<void> _translate) noexcept
 {
 	assert(!_translate.IsNull());
 
