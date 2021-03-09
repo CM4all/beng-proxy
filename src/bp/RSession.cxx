@@ -97,6 +97,7 @@ Request::LoadSession(const char *_session_id) noexcept
 			send_session_cookie = true;
 
 		session->is_new = false;
+		session->cookie_received = true;
 
 		session->Expire(instance.event_loop.SteadyNow());
 	}
@@ -153,12 +154,7 @@ Request::DetermineSession() noexcept
 	if (sid == nullptr)
 		return;
 
-	auto session = LoadSession(sid);
-	if (!session) {
-		return;
-	}
-
-	session->cookie_received = true;
+	LoadSession(sid);
 }
 
 SessionLease
