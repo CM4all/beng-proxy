@@ -199,10 +199,7 @@ Request::MakeSession() noexcept
 
 	auto &session_manager = *instance.session_manager;
 	auto session = session_manager.CreateSession();
-	if (!session) {
-		logger(1, "Failed to allocate a session");
-		return nullptr;
-	}
+	assert(session);
 
 	session_id = session->id;
 	send_session_cookie = true;
