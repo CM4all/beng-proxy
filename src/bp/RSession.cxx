@@ -93,9 +93,6 @@ Request::LoadSession(const char *_session_id) noexcept
 			translate.request.session = alloc.Dup(t.ToVoid());
 		}
 
-		if (!session->cookie_sent)
-			send_session_cookie = true;
-
 		session->cookie_received = true;
 
 		session->Expire(instance.event_loop.SteadyNow());
