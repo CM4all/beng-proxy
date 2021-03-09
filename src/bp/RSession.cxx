@@ -74,7 +74,7 @@ Request::GetCookies() noexcept
 }
 
 inline SessionLease
-Request::LoadSession(const char *_session_id)
+Request::LoadSession(const char *_session_id) noexcept
 {
 	assert(!stateless);
 	assert(!session_id.IsDefined());
@@ -132,7 +132,7 @@ Request::GetCookieSessionId() noexcept
 }
 
 void
-Request::DetermineSession()
+Request::DetermineSession() noexcept
 {
 	const char *user_agent = request.headers.Get("user-agent");
 
@@ -186,7 +186,7 @@ Request::GetRealmSession() const noexcept
 }
 
 SessionLease
-Request::MakeSession()
+Request::MakeSession() noexcept
 {
 	if (stateless)
 		return nullptr;
@@ -211,7 +211,7 @@ Request::MakeSession()
 }
 
 RealmSessionLease
-Request::MakeRealmSession()
+Request::MakeRealmSession() noexcept
 {
 	assert(realm != nullptr);
 
@@ -304,7 +304,7 @@ Request::ApplyTranslateRealm(const TranslateResponse &response,
 }
 
 RealmSessionLease
-Request::ApplyTranslateSession(const TranslateResponse &response)
+Request::ApplyTranslateSession(const TranslateResponse &response) noexcept
 {
 	const AllocatorPtr alloc(pool);
 	auto session = GetRealmSession();

@@ -431,7 +431,7 @@ public:
 	 *
 	 * @return the session
 	 */
-	RealmSessionLease ApplyTranslateSession(const TranslateResponse &response);
+	RealmSessionLease ApplyTranslateSession(const TranslateResponse &response) noexcept;
 
 	/**
 	 * Apply session-specific data from the #TranslateResponse.  Returns
@@ -599,16 +599,16 @@ private:
 	const StringMap *GetCookies() noexcept;
 	const char *GetCookieSessionId() noexcept;
 
-	SessionLease LoadSession(const char *_session_id);
+	SessionLease LoadSession(const char *_session_id) noexcept;
 
 public:
-	void DetermineSession();
+	void DetermineSession() noexcept;
 
 	SessionLease GetSession() const noexcept;
 	RealmSessionLease GetRealmSession() const noexcept;
 
-	SessionLease MakeSession();
-	RealmSessionLease MakeRealmSession();
+	SessionLease MakeSession() noexcept;
+	RealmSessionLease MakeRealmSession() noexcept;
 
 	void IgnoreSession() noexcept;
 	void DiscardSession() noexcept;
