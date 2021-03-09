@@ -276,7 +276,7 @@ Request::CheckRedirectBounceStatus(const TranslateResponse &response) noexcept
 }
 
 bool
-Request::CheckHandleRedirectBounceStatus(const TranslateResponse &response)
+Request::CheckHandleRedirectBounceStatus(const TranslateResponse &response) noexcept
 {
 	auto r = CheckRedirectBounceStatus(response);
 	if (!r)
@@ -287,9 +287,9 @@ Request::CheckHandleRedirectBounceStatus(const TranslateResponse &response)
 	return true;
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
-ProbeOnePathSuffix(const char *prefix, const char *suffix)
+ProbeOnePathSuffix(const char *prefix, const char *suffix) noexcept
 {
 	const size_t prefix_length = strlen(prefix);
 	const size_t suffix_length = strlen(suffix);
@@ -307,9 +307,10 @@ ProbeOnePathSuffix(const char *prefix, const char *suffix)
 	return stat(path, &st) == 0 && S_ISREG(st.st_mode);
 }
 
-gcc_pure
+[[gnu::pure]]
 static const char *
-ProbePathSuffixes(const char *prefix, const ConstBuffer<const char *> suffixes)
+ProbePathSuffixes(const char *prefix,
+		  const ConstBuffer<const char *> suffixes) noexcept
 {
 	assert(!suffixes.IsNull());
 	assert(!suffixes.empty());
@@ -323,7 +324,7 @@ ProbePathSuffixes(const char *prefix, const ConstBuffer<const char *> suffixes)
 }
 
 inline bool
-Request::CheckHandleProbePathSuffixes(const TranslateResponse &response)
+Request::CheckHandleProbePathSuffixes(const TranslateResponse &response) noexcept
 {
 	if (response.probe_path_suffixes == nullptr)
 		return false;
@@ -389,8 +390,9 @@ Request::HandleTranslatedRequest(const TranslateResponse &response) noexcept
 	}
 }
 
+[[gnu::pure]]
 static const char *
-uri_without_query_string(AllocatorPtr alloc, const char *uri)
+uri_without_query_string(AllocatorPtr alloc, const char *uri) noexcept
 {
 	assert(uri != nullptr);
 
@@ -403,35 +405,35 @@ uri_without_query_string(AllocatorPtr alloc, const char *uri)
 
 static void
 fill_translate_request_local_address(TranslateRequest &t,
-				     const IncomingHttpRequest &r)
+				     const IncomingHttpRequest &r) noexcept
 {
 	t.local_address = r.local_address;
 }
 
 static void
 fill_translate_request_remote_host(TranslateRequest &t,
-				   const char *remote_host_and_port)
+				   const char *remote_host_and_port) noexcept
 {
 	t.remote_host = remote_host_and_port;
 }
 
 static void
 fill_translate_request_user_agent(TranslateRequest &t,
-				  const StringMap &headers)
+				  const StringMap &headers) noexcept
 {
 	t.user_agent = headers.Get("user-agent");
 }
 
 static void
 fill_translate_request_language(TranslateRequest &t,
-				const StringMap &headers)
+				const StringMap &headers) noexcept
 {
 	t.accept_language = headers.Get("accept-language");
 }
 
 static void
 fill_translate_request_args(TranslateRequest &t,
-			    AllocatorPtr alloc, const StringMap &args)
+			    AllocatorPtr alloc, const StringMap &args) noexcept
 {
 	t.args = args_format(alloc, &args,
 			     nullptr, nullptr, nullptr, nullptr,
@@ -453,7 +455,7 @@ fill_translate_request_query_string(TranslateRequest &t,
 static void
 fill_translate_request_user(Request &request,
 			    TranslateRequest &t,
-			    AllocatorPtr alloc)
+			    AllocatorPtr alloc) noexcept
 {
 	auto session = request.GetRealmSession();
 	if (session) {
@@ -462,7 +464,7 @@ fill_translate_request_user(Request &request,
 	}
 }
 
-gcc_pure
+[[gnu::pure]]
 static const TranslationLayoutItem *
 FindLayoutItem(ConstBuffer<TranslationLayoutItem> items,
 	       const char *uri) noexcept
@@ -798,7 +800,7 @@ Request::OnTranslateResponse2(const TranslateResponse &response)
 }
 
 inline bool
-Request::CheckHandleReadFile(const TranslateResponse &response)
+Request::CheckHandleReadFile(const TranslateResponse &response) noexcept
 {
 	if (response.read_file == nullptr)
 		return false;

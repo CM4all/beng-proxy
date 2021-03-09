@@ -441,8 +441,8 @@ public:
 
 	bool CheckFileNotFound(const TranslateResponse &response) noexcept;
 
-	bool CheckHandleReadFile(const TranslateResponse &response);
-	bool CheckHandleProbePathSuffixes(const TranslateResponse &response);
+	bool CheckHandleReadFile(const TranslateResponse &response) noexcept;
+	bool CheckHandleProbePathSuffixes(const TranslateResponse &response) noexcept;
 
 	[[gnu::pure]]
 	const char *CheckRedirectUri(const TranslateResponse &response) const noexcept;
@@ -451,7 +451,7 @@ public:
 	const char *CheckBounceUri(const TranslateResponse &response) const noexcept;
 
 	UniquePoolPtr<PendingResponse> CheckRedirectBounceStatus(const TranslateResponse &response) noexcept;
-	bool CheckHandleRedirectBounceStatus(const TranslateResponse &response);
+	bool CheckHandleRedirectBounceStatus(const TranslateResponse &response) noexcept;
 
 	bool DoContentTypeLookup(const ResourceAddress &address) noexcept;
 
