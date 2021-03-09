@@ -842,7 +842,7 @@ Request::SubmitTranslateRequest() noexcept
 					    cancel_ptr);
 }
 
-bool
+inline bool
 Request::ParseRequestUri() noexcept
 {
 	if (!uri_path_verify_quick(request.uri) ||
