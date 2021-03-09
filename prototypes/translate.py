@@ -162,7 +162,7 @@ class Translation(Protocol):
         response = Response(protocol_version=2)
         response.max_age(0)
 
-        if authorization[:6] == 'Basic ':
+        if authorization[:6] == b'Basic ':
             username, password = authorization[6:].decode('base64').split(':', 1)
             if password == 'testtest':
                 response.packet(TRANSLATE_USER, username)
@@ -176,7 +176,7 @@ class Translation(Protocol):
         response = Response(protocol_version=2)
         response.max_age(0)
 
-        if auth_token == 'foo' or auth_token == 'bar':
+        if auth_token == b'foo' or auth_token == b'bar':
             response.packet(TRANSLATE_USER, auth_token)
             response.max_age(20)
 
