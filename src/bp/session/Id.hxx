@@ -38,6 +38,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <string_view>
 
 /**
  * The session id data structure.
@@ -94,7 +95,7 @@ public:
 	 *
 	 * @return true on success, false on error
 	 */
-	bool Parse(const char *p) noexcept;
+	bool Parse(std::string_view s) noexcept;
 
 	[[gnu::pure]]
 	StringBuffer<sizeof(data) * 2 + 1> Format() const noexcept;

@@ -64,7 +64,7 @@ TEST(SessionIdTest, FormatAndParse)
 	EXPECT_EQ(strlen(s), sizeof(a) * 2);
 
 	SessionId b;
-	ASSERT_TRUE(b.Parse(s));
+	ASSERT_TRUE(b.Parse(s.c_str()));
 	ASSERT_EQ(b, a);
 	ASSERT_EQ(a, b);
 }

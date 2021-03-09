@@ -35,7 +35,6 @@
 #include "util/HexFormat.h"
 
 #include <assert.h>
-#include <string.h>
 #include <stdlib.h>
 
 void
@@ -70,10 +69,12 @@ SessionId::SetClusterNode(unsigned cluster_size,
 }
 
 bool
-SessionId::Parse(const char *p) noexcept
+SessionId::Parse(std::string_view s) noexcept
 {
-	if (strlen(p) != sizeof(data) * 2)
+	if (s.size() != sizeof(data) * 2)
 		return false;
+
+	const char *p = s.data();
 
 	constexpr size_t segment_size = sizeof(data.front()) * 2;
 	std::array<char, segment_size + 1> segment;
