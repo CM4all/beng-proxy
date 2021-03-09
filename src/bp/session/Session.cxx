@@ -101,9 +101,6 @@ Session::~Session() noexcept
 unsigned
 Session::GetPurgeScore() const noexcept
 {
-	if (is_new)
-		return 1000;
-
 	if (!cookie_received)
 		return 50;
 
@@ -134,8 +131,8 @@ Session::Attach(Session &&other) noexcept
 
 	++counter;
 
-	if (!other.is_new)
-		is_new = false;
+	if (other.cookie_received)
+		cookie_received = true;
 
 	if (translate == nullptr)
 		translate = std::move(other.translate);

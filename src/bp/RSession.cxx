@@ -96,7 +96,6 @@ Request::LoadSession(const char *_session_id) noexcept
 		if (!session->cookie_sent)
 			send_session_cookie = true;
 
-		session->is_new = false;
 		session->cookie_received = true;
 
 		session->Expire(instance.event_loop.SteadyNow());

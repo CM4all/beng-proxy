@@ -213,7 +213,7 @@ session_write(BufferedOutputStream &os, const Session *session)
 	file.WriteT(session->id);
 	file.Write(session->expires);
 	file.WriteT(session->counter);
-	file.WriteBool(session->is_new);
+	file.WriteBool(false); // obsolete: "is_new"
 	file.WriteBool(session->cookie_sent);
 	file.WriteBool(session->cookie_received);
 	file.Write(session->translate);
