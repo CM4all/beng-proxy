@@ -59,13 +59,13 @@ content_types = {
 
 class Translation(Protocol):
     def connectionMade(self):
-        log.msg("Connected from %s" % str(self.transport.client))
+        log.msg(f"Connected from {self.transport.client}")
         self._request = None
         self._packet = None
         self.widget_registry = WidgetRegistry(widgets_path)
 
     def _handle_chain(self, chain, chain_header, status):
-        log.msg("chain %s header=%s status=%s" % (chain, chain_header, status))
+        log.msg(f"chain {chain!r} header={chain_header!r} status={status}")
         response = Response(protocol_version=2)
         if chain == b'foo':
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
@@ -83,7 +83,7 @@ class Translation(Protocol):
             return Response(protocol_version=2).status(500)
 
     def _handle_content_type_lookup(self, payload, suffix):
-        log.msg("content_type_lookup '%s' suffix='%s'" % (payload, suffix))
+        log.msg(r"content_type_lookup {payload!r} suffix={suffix!r}")
 
         response = Response(protocol_version=2)
         if suffix == 'phtml':
@@ -96,7 +96,7 @@ class Translation(Protocol):
         return response
 
     def _handle_login(self, user, password, service, listener_tag):
-        log.msg("login %s password=%s service=%s tag=%s" % (repr(user), repr(password), repr(service), repr(listener_tag)))
+        log.msg(r"login {user!r} password={password!r} service={service!r} tag={listener_tag!r}")
 
         response = Response(protocol_version=2)
         if user is None or not re.match(r'^[-_\w]+$', user):
@@ -124,7 +124,7 @@ class Translation(Protocol):
         return response
 
     def _handle_cron(self, partition, tag, user, uri, param):
-        log.msg("cron partition=%s tag=%s user=%s uri=%s param=%s" % (repr(partition), repr(tag), repr(user), repr(uri), repr(param)))
+        log.msg(f"cron partition={partition!r} tag={tag!r} user={user!r} uri={uri!r} param={param!r}")
 
         response = Response(protocol_version=2)
         if user is None or not re.match(r'^[-_\w]+$', user):
@@ -148,7 +148,7 @@ class Translation(Protocol):
         return response
 
     def _handle_auth(self, auth, uri, session, alt_host):
-        log.msg("auth '%s' uri='%s' session='%s' alt_host='%s'" % (auth, uri, session, alt_host))
+        log.msg(f"auth {auth!r} uri={uri!r} session={session!r} alt_host={alt_host!r}")
 
         response = Response(protocol_version=2)
         response.max_age(0)
@@ -157,7 +157,7 @@ class Translation(Protocol):
         return response
 
     def _handle_http_auth(self, http_auth, authorization):
-        log.msg("http_auth '%s' authorization='%s'" % (http_auth, authorization))
+        log.msg(f"http_auth {http_auth!r} authorization={authorization!r}")
 
         response = Response(protocol_version=2)
         response.max_age(0)
@@ -171,7 +171,7 @@ class Translation(Protocol):
         return response
 
     def _handle_token_auth(self, token_auth, auth_token):
-        log.msg("token_auth '%s' auth_token='%s'" % (token_auth, auth_token))
+        log.msg(f"token_auth {token_auth!r} auth_token={auth_token!r}")
 
         response = Response(protocol_version=2)
         response.max_age(0)
@@ -183,7 +183,7 @@ class Translation(Protocol):
         return response
 
     def _handle_pool(self, name, listener_tag, host):
-        log.msg("pool '%s' tag=%s host=%s" % (name, repr(listener_tag), repr(host)))
+        log.msg(f"pool {name!r} tag={listener_tag!r} host={host!r}")
 
         response = Response(protocol_version=2)
 
@@ -1059,11 +1059,11 @@ class Translation(Protocol):
             return self._handle_pool(request.pool, request.listener_tag, request.host)
 
         if request.error_document:
-            log.msg("error %s %s %u" % (request.uri, repr(request.error_document_payload), request.status))
+            log.msg(f"error {request.uri!r} {request.error_document_payload!r} {request.status}")
             return Response(protocol_version=2).path('/var/www/%u.html' % request.status).content_type('text/html')
 
-        if request.session is not None: log.msg("- session = %s" % request.session)
-        if request.param is not None: log.msg("- param = %s" % request.param)
+        if request.session is not None: log.msg(f"- session = {request.session!r}")
+        if request.param is not None: log.msg(f"- param = {request.param!r}")
 
         if request.param is not None:
             # log in or log out; "real" authentification is missing
@@ -1119,7 +1119,7 @@ class Translation(Protocol):
                 self._request = None
                 self.transport.write(response.finish())
         else:
-            log.msg("Invalid command without request: %u" % packet.command)
+            log.msg(f"Invalid command without request: {packet.command}")
 
     def dataReceived(self, data):
         while len(data) > 0:
@@ -1132,7 +1132,7 @@ class Translation(Protocol):
                 self._packet = None
 
     def connectionLost(self, reason):
-        log.msg("Disconnected from %s" % str(self.transport.client))
+        log.msg(f"Disconnected from {self.transport.client}")
 
 factory = Factory()
 factory.protocol = Translation
