@@ -311,6 +311,7 @@ Request::ApplyTranslateSession(const TranslateResponse &response) noexcept
 			   send a new session cookie */
 			session_id = session->parent.id;
 			send_session_cookie = true;
+			recover_session_to_cookie = nullptr;
 		}
 	}
 
