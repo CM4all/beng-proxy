@@ -44,7 +44,7 @@ class Widget;
  */
 [[gnu::pure]]
 bool
-text_processor_allowed(const StringMap &headers);
+text_processor_allowed(const StringMap &headers) noexcept;
 
 /**
  * Process the specified istream, and return the processed stream.
@@ -53,4 +53,4 @@ text_processor_allowed(const StringMap &headers);
  */
 UnusedIstreamPtr
 text_processor(struct pool &pool, UnusedIstreamPtr istream,
-	       const Widget &widget, const WidgetContext &ctx);
+	       const Widget &widget, const WidgetContext &ctx) noexcept;

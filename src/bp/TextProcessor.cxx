@@ -45,7 +45,7 @@
 
 gcc_pure
 static bool
-text_processor_allowed_content_type(const char *content_type)
+text_processor_allowed_content_type(const char *content_type) noexcept
 {
 	assert(content_type != NULL);
 
@@ -55,7 +55,7 @@ text_processor_allowed_content_type(const char *content_type)
 }
 
 bool
-text_processor_allowed(const StringMap &headers)
+text_processor_allowed(const StringMap &headers) noexcept
 {
 	const char *content_type = headers.Get("content-type");
 	return content_type != NULL &&
@@ -64,7 +64,7 @@ text_processor_allowed(const StringMap &headers)
 
 gcc_pure
 static const char *
-base_uri(struct pool *pool, const char *absolute_uri)
+base_uri(struct pool *pool, const char *absolute_uri) noexcept
 {
 	const char *p;
 
@@ -130,7 +130,7 @@ EscapeValue(struct pool &pool, StringView v) noexcept
 static SubstTree
 processor_subst_beng_widget(struct pool &pool,
 			    const Widget &widget,
-			    const WidgetContext &ctx)
+			    const WidgetContext &ctx) noexcept
 {
 	SubstTree subst;
 	subst.Add(pool, "&c:type;", widget.class_name);
@@ -149,7 +149,7 @@ processor_subst_beng_widget(struct pool &pool,
 
 UnusedIstreamPtr
 text_processor(struct pool &pool, UnusedIstreamPtr input,
-	       const Widget &widget, const WidgetContext &ctx)
+	       const Widget &widget, const WidgetContext &ctx) noexcept
 {
 	return istream_subst_new(&pool, std::move(input),
 				 processor_subst_beng_widget(pool, widget, ctx));
