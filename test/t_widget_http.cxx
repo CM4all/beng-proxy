@@ -127,7 +127,7 @@ css_processor(struct pool &,
 }
 
 bool
-text_processor_allowed(const StringMap &)
+text_processor_allowed(const StringMap &) noexcept
 {
 	return false;
 }
@@ -135,7 +135,7 @@ text_processor_allowed(const StringMap &)
 UnusedIstreamPtr
 text_processor(struct pool &, UnusedIstreamPtr stream,
 	       const Widget &,
-	       const WidgetContext &)
+	       const WidgetContext &) noexcept
 {
 	return stream;
 }
