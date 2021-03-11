@@ -81,7 +81,7 @@ class XmlProcessor final : public ReplaceIstream, WidgetContainerParser {
 		XmlProcessor &processor;
 
 	public:
-		explicit CdataIstream(XmlProcessor &_processor)
+		explicit CdataIstream(XmlProcessor &_processor) noexcept
 			:Istream(_processor.GetPool()), processor(_processor) {}
 
 		/* virtual methods from class Istream */
@@ -1136,7 +1136,7 @@ XmlProcessor::OnError(std::exception_ptr ep) noexcept
  */
 
 bool
-processable(const StringMap &headers)
+processable(const StringMap &headers) noexcept
 {
 	const char *content_type = headers.Get("content-type");
 	return content_type != nullptr &&
@@ -1152,7 +1152,7 @@ processor_process(struct pool &caller_pool,
 		  UnusedIstreamPtr input,
 		  Widget &widget,
 		  SharedPoolPtr<WidgetContext> ctx,
-		  unsigned options)
+		  unsigned options) noexcept
 {
 	auto pool = pool_new_linear(&caller_pool, "WidgetLookupProcessor", 32768);
 

@@ -85,7 +85,7 @@ static unsigned test_id;
 static bool got_request, got_response;
 
 bool
-processable(const StringMap &)
+processable(const StringMap &) noexcept
 {
 	return false;
 }
@@ -96,7 +96,7 @@ processor_process(struct pool &,
 		  UnusedIstreamPtr istream,
 		  Widget &,
 		  SharedPoolPtr<WidgetContext>,
-		  unsigned)
+		  unsigned) noexcept
 {
 	return istream;
 }

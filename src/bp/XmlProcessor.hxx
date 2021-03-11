@@ -72,7 +72,7 @@ class StringMap;
 
 [[gnu::pure]]
 bool
-processable(const StringMap &headers);
+processable(const StringMap &headers) noexcept;
 
 /**
  * Process the specified istream, and return the processed stream.
@@ -85,4 +85,4 @@ processor_process(struct pool &pool,
 		  UnusedIstreamPtr istream,
 		  Widget &widget,
 		  SharedPoolPtr<WidgetContext> ctx,
-		  unsigned options);
+		  unsigned options) noexcept;
