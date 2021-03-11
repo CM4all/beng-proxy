@@ -121,7 +121,7 @@ public:
  * as the first parameter.
  */
 template<typename T, typename... Args>
-gcc_malloc gcc_returns_nonnull
+[[gnu::malloc]] gcc_returns_nonnull
 T *
 NewFromPool(PoolPtr &&p, Args&&... args)
 {

@@ -34,7 +34,6 @@
 #define BENG_PROXY_RESOURCE_ADDRESS_HXX
 
 #include "util/ShallowCopy.hxx"
-#include "util/Compiler.h"
 
 #include <cstddef>
 
@@ -249,7 +248,7 @@ public:
 
 	void CopyFrom(AllocatorPtr alloc, const ResourceAddress &src) noexcept;
 
-	gcc_malloc
+	[[gnu::malloc]]
 	ResourceAddress *Dup(AllocatorPtr alloc) const noexcept;
 
 	/**
@@ -297,7 +296,7 @@ public:
 	 * @param uri the request URI
 	 * @return a newly allocated base, or nullptr if that is not possible
 	 */
-	gcc_malloc
+	[[gnu::malloc]]
 	const char *AutoBase(AllocatorPtr alloc, const char *uri) const noexcept;
 
 	/**

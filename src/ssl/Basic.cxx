@@ -35,8 +35,6 @@
 #include "ssl/Error.hxx"
 #include "ssl/Ctx.hxx"
 
-#include "util/Compiler.h"
-
 #include <openssl/err.h>
 #include <openssl/opensslv.h>
 
@@ -123,7 +121,7 @@ CreateBasicSslCtx(bool server)
 }
 
 static int
-verify_callback(int ok, gcc_unused X509_STORE_CTX *ctx)
+verify_callback(int ok, X509_STORE_CTX *) noexcept
 {
 	return ok;
 }

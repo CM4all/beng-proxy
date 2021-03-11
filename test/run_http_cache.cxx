@@ -41,8 +41,6 @@
 #include "rubber.hxx"
 #include "AllocatorStats.hxx"
 
-#include "util/Compiler.h"
-
 #include <stdlib.h>
 
 static void
@@ -97,7 +95,7 @@ put_random(HttpCacheHeap *cache)
  */
 
 int
-main(gcc_unused int argc, gcc_unused char **argv)
+main(int, char **) noexcept
 {
 	static const size_t max_size = 256 * 1024 * 1024;
 

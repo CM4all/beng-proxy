@@ -39,7 +39,6 @@
 #include "pool/pool.hxx"
 #include "util/PrintException.hxx"
 #include "util/StringView.hxx"
-#include "util/Compiler.h"
 
 int
 main(int argc, char **argv)

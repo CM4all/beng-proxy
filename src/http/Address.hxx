@@ -33,7 +33,6 @@
 #pragma once
 
 #include "cluster/AddressList.hxx"
-#include "util/Compiler.h"
 
 struct StringView;
 class AllocatorPtr;
@@ -121,14 +120,14 @@ struct HttpAddress {
 	 * Build the absolute URI from this object, but use the specified path
 	 * instead.
 	 */
-	gcc_malloc
+	[[gnu::malloc]]
 	char *GetAbsoluteURI(AllocatorPtr alloc,
 			     const char *override_path) const noexcept;
 
 	/**
 	 * Build the absolute URI from this object.
 	 */
-	gcc_malloc
+	[[gnu::malloc]]
 	char *GetAbsoluteURI(AllocatorPtr alloc) const noexcept;
 
 	[[gnu::pure]]
@@ -138,7 +137,7 @@ struct HttpAddress {
 	 * Duplicates this #http_address object and inserts the specified
 	 * query string into the URI.
 	 */
-	gcc_malloc
+	[[gnu::malloc]]
 	HttpAddress *InsertQueryString(AllocatorPtr alloc,
 				       const char *query_string) const;
 
@@ -146,17 +145,17 @@ struct HttpAddress {
 	 * Duplicates this #http_address object and inserts the specified
 	 * arguments into the URI.
 	 */
-	gcc_malloc
+	[[gnu::malloc]]
 	HttpAddress *InsertArgs(AllocatorPtr alloc,
 				StringView args, StringView path_info) const;
 
 	[[gnu::pure]]
 	bool IsValidBase() const;
 
-	gcc_malloc
+	[[gnu::malloc]]
 	HttpAddress *SaveBase(AllocatorPtr alloc, const char *suffix) const;
 
-	gcc_malloc
+	[[gnu::malloc]]
 	HttpAddress *LoadBase(AllocatorPtr alloc, const char *suffix) const;
 
 	const HttpAddress *Apply(AllocatorPtr alloc, StringView relative) const;
@@ -186,7 +185,7 @@ struct HttpAddress {
  *
  * Throws std::runtime_error on error.
  */
-gcc_malloc
+[[gnu::malloc]]
 HttpAddress *
 http_address_parse(AllocatorPtr alloc, const char *uri);
 
@@ -195,7 +194,7 @@ http_address_parse(AllocatorPtr alloc, const char *uri);
  * replace the "path" attribute.  The string pointers are stored,
  * they are not duplicated.
  */
-gcc_malloc
+[[gnu::malloc]]
 HttpAddress *
 http_address_with_path(AllocatorPtr alloc,
 		       const HttpAddress *uwa,
@@ -206,7 +205,7 @@ http_address_with_path(AllocatorPtr alloc,
  * replace the "path" attribute.  The strings from the source object
  * are duplicated, but the "path" parameter is not.
  */
-gcc_malloc
+[[gnu::malloc]]
 HttpAddress *
 http_address_dup_with_path(AllocatorPtr alloc,
 			   const HttpAddress *uwa,

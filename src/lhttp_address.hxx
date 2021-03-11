@@ -36,7 +36,6 @@
 #include "spawn/ChildOptions.hxx"
 #include "adata/ExpandableStringList.hxx"
 #include "util/ShallowCopy.hxx"
-#include "util/Compiler.h"
 
 class AllocatorPtr;
 struct StringView;
@@ -110,7 +109,7 @@ struct LhttpAddress {
 	 * used as a key in a hash table.  The string will be allocated by
 	 * the specified pool.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetServerId(AllocatorPtr alloc) const noexcept;
 
 	/**
@@ -118,7 +117,7 @@ struct LhttpAddress {
 	 * key in a hash table.  The string will be allocated by the specified
 	 * pool.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetId(AllocatorPtr alloc) const noexcept;
 
 	/**
@@ -126,10 +125,10 @@ struct LhttpAddress {
 	 */
 	void Check() const;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsSameProgram(const LhttpAddress &other) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool HasQueryString() const noexcept;
 
 	LhttpAddress *Dup(AllocatorPtr alloc) const noexcept;
@@ -141,7 +140,7 @@ struct LhttpAddress {
 	 * Duplicates this #lhttp_address object and inserts the specified
 	 * query string into the URI.
 	 */
-	gcc_malloc
+	[[gnu::malloc]]
 	LhttpAddress *InsertQueryString(AllocatorPtr alloc,
 					const char *query_string) const noexcept;
 
@@ -149,12 +148,12 @@ struct LhttpAddress {
 	 * Duplicates this #lhttp_address object and inserts the specified
 	 * arguments into the URI.
 	 */
-	gcc_malloc
+	[[gnu::malloc]]
 	LhttpAddress *InsertArgs(AllocatorPtr alloc,
 				 StringView new_args,
 				 StringView path_info) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsValidBase() const noexcept;
 
 	LhttpAddress *SaveBase(AllocatorPtr alloc,
@@ -170,7 +169,7 @@ struct LhttpAddress {
 	const LhttpAddress *Apply(AllocatorPtr alloc,
 				  StringView relative) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	StringView RelativeTo(const LhttpAddress &base) const noexcept;
 
 	/**
@@ -178,7 +177,7 @@ struct LhttpAddress {
 	 * apply_base.Apply(relative).RelativeTo(*this). It is cheaper
 	 * because it needs copy only a small part of the object.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	StringView RelativeToApplied(AllocatorPtr alloc,
 				     const LhttpAddress &apply_base,
 				     StringView relative) const;
@@ -186,7 +185,7 @@ struct LhttpAddress {
 	/**
 	 * Does this address need to be expanded with lhttp_address_expand()?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsExpandable() const noexcept {
 		return options.IsExpandable() ||
 			expand_uri ||

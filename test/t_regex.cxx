@@ -34,7 +34,6 @@
 #include "pexpand.hxx"
 #include "TestPool.hxx"
 #include "AllocatorPtr.hxx"
-#include "util/Compiler.h"
 
 #include <gtest/gtest.h>
 

@@ -50,8 +50,6 @@
 #include "util/PrintException.hxx"
 #include "stopwatch.hxx"
 
-#include "util/Compiler.h"
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
@@ -107,7 +105,7 @@ static FdTypeMask my_handler_direct = 0;
  */
 
 size_t
-Context::OnData(gcc_unused const void *data, size_t length) noexcept
+Context::OnData(const void *, size_t length) noexcept
 {
 	body_data += length;
 
@@ -126,7 +124,7 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
 }
 
 ssize_t
-Context::OnDirect(gcc_unused FdType type, int fd, size_t max_length) noexcept
+Context::OnDirect(FdType, int fd, size_t max_length) noexcept
 {
 	if (close_response_body_data) {
 		body_closed = true;
@@ -171,7 +169,7 @@ Context::OnError(std::exception_ptr) noexcept
  */
 
 void
-Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
+Context::OnHttpResponse(http_status_t _status, StringMap &&,
 			UnusedIstreamPtr _body) noexcept
 {
 	assert(!no_content || !_body);
@@ -210,7 +208,7 @@ Context::OnHttpError(std::exception_ptr ep) noexcept
  *
  */
 
-gcc_pure
+[[gnu::pure]]
 static const char *
 GetCgiPath(AllocatorPtr alloc, const char *name) noexcept
 {

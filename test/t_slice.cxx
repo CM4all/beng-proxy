@@ -31,7 +31,6 @@
  */
 
 #include "SlicePool.hxx"
-#include "util/Compiler.h"
 
 #include <gtest/gtest.h>
 
@@ -45,7 +44,7 @@ Fill(void *_p, size_t length, unsigned seed)
 		*p = (uint8_t)seed++;
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 Check(const void *_p, size_t length, unsigned seed)
 {

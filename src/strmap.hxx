@@ -33,7 +33,6 @@
 #pragma once
 
 #include "util/ShallowCopy.hxx"
-#include "util/Compiler.h"
 #include "AllocatorPtr.hxx"
 
 #include <boost/intrusive/set.hpp>
@@ -211,10 +210,12 @@ public:
 	}
 };
 
-StringMap *gcc_malloc
+[[gnu::malloc]]
+StringMap *
 strmap_new(struct pool *pool) noexcept;
 
-StringMap *gcc_malloc
+[[gnu::malloc]]
+StringMap *
 strmap_dup(struct pool *pool, const StringMap *src) noexcept;
 
 /**

@@ -46,7 +46,6 @@
 #include "istream/istream.hxx"
 #include "istream/istream_string.hxx"
 #include "util/Cancellable.hxx"
-#include "util/Compiler.h"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
@@ -160,14 +159,14 @@ void
 MyResourceLoader::SendRequest(struct pool &pool,
 			      const StopwatchPtr &,
 			      sticky_hash_t,
-			      gcc_unused const char *cache_tag,
-			      gcc_unused const char *site_name,
+			      const char *,
+			      const char *,
 			      http_method_t method,
-			      gcc_unused const ResourceAddress &address,
-			      gcc_unused http_status_t status,
+			      const ResourceAddress &,
+			      http_status_t,
 			      StringMap &&headers,
 			      UnusedIstreamPtr body,
-			      gcc_unused const char *body_etag,
+			      const char *,
 			      HttpResponseHandler &handler,
 			      CancellablePointer &) noexcept
 {

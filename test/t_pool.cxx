@@ -33,7 +33,6 @@
 #include "pool/pool.hxx"
 #include "pool/Ptr.hxx"
 #include "pool/RootPool.hxx"
-#include "util/Compiler.h"
 
 #include <gtest/gtest.h>
 

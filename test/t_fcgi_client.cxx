@@ -51,7 +51,6 @@
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
 #include "fcgi_server.hxx"
-#include "util/Compiler.h"
 #include "stopwatch.hxx"
 
 #include <sys/wait.h>

@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
-
 #include <exception>
 
 #include <stdint.h>
@@ -159,7 +157,7 @@ was_input_premature(WasInput *input, uint64_t length) noexcept;
  * Same as above, but throw exception instead of reporting the error
  * to the #IstreamHandler.
  */
-gcc_noreturn
+[[noreturn]]
 void
 was_input_premature_throw(WasInput *input, uint64_t length);
 

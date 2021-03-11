@@ -35,7 +35,6 @@
 #include "TestPool.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/StringView.hxx"
-#include "util/Compiler.h"
 
 #include <gtest/gtest.h>
 

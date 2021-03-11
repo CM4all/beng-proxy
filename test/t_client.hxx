@@ -63,7 +63,6 @@
 #endif
 
 #include "http/Method.h"
-#include "util/Compiler.h"
 
 #include <stdexcept>
 
@@ -297,7 +296,7 @@ Context<Connection>::Cancel() noexcept
 
 template<class Connection>
 size_t
-Context<Connection>::OnData(gcc_unused const void *data, size_t length) noexcept
+Context<Connection>::OnData(const void *, size_t length) noexcept
 {
 	body_data += length;
 
@@ -676,7 +675,7 @@ test_close_response_body_after(Context<Connection> &c)
 }
 
 static UnusedIstreamPtr
-wrap_fake_request_body(gcc_unused struct pool *pool, UnusedIstreamPtr i)
+wrap_fake_request_body([[maybe_unused]] struct pool *pool, UnusedIstreamPtr i)
 {
 #ifndef HAVE_CHUNKED_REQUEST_BODY
 	if (i.GetAvailable(false) < 0)
@@ -994,7 +993,7 @@ test_head_discard2(Context<Connection> &c)
 	assert(c.connection == nullptr);
 	assert(c.status == HTTP_STATUS_OK);
 	assert(c.content_length != nullptr);
-	gcc_unused
+	[[maybe_unused]]
 		unsigned long content_length = strtoul(c.content_length, nullptr, 10);
 	assert(content_length == 5 || content_length == 256);
 	assert(!c.HasInput());

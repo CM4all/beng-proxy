@@ -45,8 +45,6 @@
 #include "istream/UnusedPtr.hxx"
 #include "util/Cancellable.hxx"
 
-#include "util/Compiler.h"
-
 #include <gtest/gtest.h>
 
 #include <assert.h>

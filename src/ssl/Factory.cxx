@@ -46,7 +46,6 @@
 #include "util/ConstBuffer.hxx"
 #include "util/StringView.hxx"
 #include "util/PrintException.hxx"
-#include "util/Compiler.h"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -68,7 +67,7 @@ struct SslFactoryCertKey {
 			:value(_value),
 			 length(_value.size()) {}
 
-		gcc_pure
+		[[gnu::pure]]
 		bool Match(StringView host_name) const;
 	};
 
@@ -99,7 +98,7 @@ struct SslFactoryCertKey {
 			names.emplace_front(i.c_str());
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool MatchCommonName(StringView host_name) const;
 
 	void SetSessionIdContext(ConstBuffer<void> _sid_ctx) {
@@ -219,7 +218,7 @@ SslFactory::FindCommonName(StringView host_name) const
 }
 
 static int
-ssl_servername_callback(SSL *ssl, gcc_unused int *al,
+ssl_servername_callback(SSL *ssl, int *,
 			const SslFactory &factory)
 {
 	const char *_host_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);

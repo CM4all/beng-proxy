@@ -256,12 +256,12 @@ private:
 	/**
 	 * @return false if the #HttpClient has released the socket
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsConnected() const noexcept {
 		return socket.IsConnected();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool CheckDirect() const noexcept {
 		assert(socket.GetType() == FdType::FD_NONE || IsConnected());
 		assert(response.state == Response::State::BODY);
@@ -318,7 +318,7 @@ private:
 
 	void ResponseFinished() noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	off_t GetAvailable(bool partial) const noexcept;
 
 	void Read();
@@ -570,7 +570,8 @@ HttpClient::TryWriteBuckets2()
 
 	ssize_t nbytes = socket.WriteV(v.begin(), v.size());
 	if (nbytes < 0) {
-		if (gcc_likely(nbytes == WRITE_BLOCKING))
+		if (nbytes == WRITE_BLOCKING)
+			[[likely]]
 			return BucketResult::BLOCKING;
 
 		if (nbytes == WRITE_DESTROYED)
@@ -654,8 +655,8 @@ HttpClient::ParseStatusLine(StringView line)
 
 	line.MoveFront(space + 1);
 
-	if (gcc_unlikely(line.size < 3 || !IsDigitASCII(line[0]) ||
-			 !IsDigitASCII(line[1]) || !IsDigitASCII(line[2]))) {
+	if (line.size < 3 || !IsDigitASCII(line[0]) ||
+	    !IsDigitASCII(line[1]) || !IsDigitASCII(line[2])) [[unlikely]] {
 		stopwatch.RecordEvent("malformed");
 
 		throw HttpClientError(HttpClientErrorCode::GARBAGE,
@@ -663,7 +664,7 @@ HttpClient::ParseStatusLine(StringView line)
 	}
 
 	response.status = (http_status_t)(((line[0] - '0') * 10 + line[1] - '0') * 10 + line[2] - '0');
-	if (gcc_unlikely(!http_status_is_valid(response.status))) {
+	if (!http_status_is_valid(response.status)) [[unlikely]] {
 		stopwatch.RecordEvent("malformed");
 
 		throw HttpClientError(HttpClientErrorCode::GARBAGE,
@@ -717,7 +718,7 @@ HttpClient::HeadersFinished()
 	    strcasecmp(transfer_encoding, "chunked") != 0) {
 		/* not chunked */
 
-		if (gcc_unlikely(content_length_string == nullptr)) {
+		if (content_length_string == nullptr) [[unlikely]] {
 			if (keep_alive) {
 				stopwatch.RecordEvent("malformed");
 
@@ -729,8 +730,8 @@ HttpClient::HeadersFinished()
 			char *endptr;
 			content_length = (off_t)strtoull(content_length_string,
 							 &endptr, 10);
-			if (gcc_unlikely(endptr == content_length_string || *endptr != 0 ||
-					 content_length < 0)) {
+			if (endptr == content_length_string || *endptr != 0 ||
+			    content_length < 0) [[unlikely]] {
 				stopwatch.RecordEvent("malformed");
 
 				throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
@@ -1198,13 +1199,13 @@ HttpClient::OnData(const void *data, size_t length) noexcept
 	request.got_data = true;
 
 	ssize_t nbytes = socket.Write(data, length);
-	if (gcc_likely(nbytes >= 0)) {
+	if (nbytes >= 0) [[likely]] {
 		ScheduleWrite();
 		return (size_t)nbytes;
 	}
 
-	if (gcc_likely(nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED ||
-		       nbytes == WRITE_BROKEN))
+	if (nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED ||
+	    nbytes == WRITE_BROKEN) [[likely]]
 		return 0;
 
 	int _errno = errno;
@@ -1226,14 +1227,14 @@ HttpClient::OnDirect(FdType type, int fd, size_t max_length) noexcept
 	request.got_data = true;
 
 	ssize_t nbytes = socket.WriteFrom(fd, type, max_length);
-	if (gcc_likely(nbytes > 0))
+	if (nbytes > 0) [[likely]]
 		ScheduleWrite();
 	else if (nbytes == WRITE_BLOCKING)
 		return ISTREAM_RESULT_BLOCKING;
 	else if (nbytes == WRITE_DESTROYED || nbytes == WRITE_BROKEN)
 		return ISTREAM_RESULT_CLOSED;
-	else if (gcc_likely(nbytes < 0)) {
-		if (gcc_likely(errno == EAGAIN)) {
+	else if (nbytes < 0) [[likely]] {
+		if (errno == EAGAIN) [[likely]] {
 			request.got_data = false;
 			socket.UnscheduleWrite();
 		}

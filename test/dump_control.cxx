@@ -38,7 +38,6 @@
 #include "system/SetupProcess.hxx"
 #include "io/Logger.hxx"
 #include "util/PrintException.hxx"
-#include "util/Compiler.h"
 #include "util/WritableBuffer.hxx"
 
 #include <stdio.h>
@@ -47,11 +46,11 @@ using namespace BengProxy;
 
 class DumpControlHandler final : public ControlHandler {
 public:
-	void OnControlPacket(gcc_unused ControlServer &control_server,
+	void OnControlPacket(ControlServer &,
 			     BengProxy::ControlCommand command,
 			     ConstBuffer<void> payload,
 			     WritableBuffer<UniqueFileDescriptor>,
-			     gcc_unused SocketAddress address, int uid) override {
+			     SocketAddress, int uid) override {
 		printf("packet command=%u uid=%d length=%zu\n",
 		       unsigned(command), uid, payload.size);
 	}

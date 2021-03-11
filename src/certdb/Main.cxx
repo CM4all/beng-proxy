@@ -54,7 +54,6 @@
 #include "util/ConstBuffer.hxx"
 #include "util/PrintException.hxx"
 #include "util/StringCompare.hxx"
-#include "util/Compiler.h"
 
 #include <stdexcept>
 
@@ -233,7 +232,7 @@ DumpKey(const CertDatabaseConfig &db_config, const char *host)
 		throw SslError("Failed to dump key");
 }
 
-gcc_noreturn
+[[noreturn]]
 static void
 Monitor(const CertDatabaseConfig &db_config)
 {
@@ -434,7 +433,7 @@ HandleDumpKey(ConstBuffer<const char *> args)
 	DumpKey(db_config, args[0]);
 }
 
-gcc_noreturn
+[[noreturn]]
 static void
 HandleMonitor(ConstBuffer<const char *> args)
 {

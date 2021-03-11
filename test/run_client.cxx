@@ -59,7 +59,6 @@
 #include "event/ShutdownListener.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
-#include "util/Compiler.h"
 #include "stopwatch.hxx"
 
 #ifdef HAVE_NGHTTP2
@@ -131,7 +130,7 @@ parse_url(const char *url)
 	return dest;
 }
 
-gcc_pure
+[[gnu::pure]]
 static const char *
 GetHostWithoutPort(struct pool &pool, const struct parsed_url &url) noexcept
 {
@@ -308,7 +307,7 @@ Context::OnNgHttp2ConnectionClosed() noexcept
  */
 
 void
-Context::OnHttpResponse(http_status_t _status, gcc_unused StringMap &&headers,
+Context::OnHttpResponse(http_status_t _status, StringMap &&,
 			UnusedIstreamPtr _body) noexcept
 {
 	got_response = true;

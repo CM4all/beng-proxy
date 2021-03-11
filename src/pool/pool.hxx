@@ -103,14 +103,14 @@ pool_unref(const PoolPtr &pool TRACE_ARGS_DEFAULT) noexcept;
 /**
  * Returns the total size of all allocations in this pool.
  */
-gcc_pure
+[[gnu::pure]]
 size_t
 pool_netto_size(const struct pool *pool) noexcept;
 
 /**
  * Returns the total amount of memory allocated by this pool.
  */
-gcc_pure
+[[gnu::pure]]
 size_t
 pool_brutto_size(const struct pool *pool) noexcept;
 
@@ -118,22 +118,22 @@ pool_brutto_size(const struct pool *pool) noexcept;
  * Returns the total size of this pool and all of its descendants
  * (recursively).
  */
-gcc_pure
+[[gnu::pure]]
 size_t
 pool_recursive_netto_size(const struct pool *pool) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 size_t
 pool_recursive_brutto_size(const struct pool *pool) noexcept;
 
 /**
  * Returns the total size of all descendants of this pool (recursively).
  */
-gcc_pure
+[[gnu::pure]]
 size_t
 pool_children_netto_size(const struct pool *pool) noexcept;
 
-gcc_pure
+[[gnu::pure]]
 size_t
 pool_children_brutto_size(const struct pool *pool) noexcept;
 
@@ -211,12 +211,12 @@ pool_register_leak_detector(struct pool &pool, PoolLeakDetector &ld) noexcept;
 void
 pool_clear(struct pool &pool) noexcept;
 
-gcc_malloc gcc_returns_nonnull
+[[gnu::malloc]] gcc_returns_nonnull
 void *
 p_malloc(struct pool *pool, size_t size
 	 TYPE_ARG_DECL TRACE_ARGS_DEFAULT) noexcept;
 
-gcc_malloc gcc_returns_nonnull
+[[gnu::malloc]] gcc_returns_nonnull
 static inline void *
 p_malloc_type(struct pool &pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DEFAULT) noexcept
 {
@@ -225,7 +225,7 @@ p_malloc_type(struct pool &pool, size_t size TYPE_ARG_DECL TRACE_ARGS_DEFAULT) n
 
 #ifndef NDEBUG
 
-gcc_malloc gcc_returns_nonnull
+[[gnu::malloc]] gcc_returns_nonnull
 static inline void *
 p_malloc(struct pool *pool, size_t size TRACE_ARGS_DEFAULT) noexcept
 {
@@ -239,30 +239,30 @@ p_malloc(struct pool *pool, size_t size TRACE_ARGS_DEFAULT) noexcept
 void
 p_free(struct pool *pool, const void *ptr, size_t size) noexcept;
 
-gcc_malloc gcc_returns_nonnull
+[[gnu::malloc]] gcc_returns_nonnull
 void *
 p_memdup(struct pool *pool, const void *src, size_t length
 	 TRACE_ARGS_DEFAULT) noexcept;
 
 #define p_memdup_fwd(pool, src, length) p_memdup(pool, src, length TRACE_ARGS_FWD)
 
-gcc_malloc gcc_returns_nonnull
+[[gnu::malloc]] gcc_returns_nonnull
 char *
 p_strdup(struct pool *pool, const char *src TRACE_ARGS_DEFAULT) noexcept;
 
-gcc_malloc gcc_returns_nonnull
+[[gnu::malloc]] gcc_returns_nonnull
 char *
 p_strndup(struct pool *pool, const char *src, size_t length
 	  TRACE_ARGS_DEFAULT) noexcept;
 
 #define p_strndup_fwd(pool, src, length) p_strndup(pool, src, length TRACE_ARGS_FWD)
 
-gcc_malloc gcc_returns_nonnull gcc_printf(2, 3)
+[[gnu::malloc]] gcc_returns_nonnull gcc_printf(2, 3)
 char *
 p_sprintf(struct pool *pool, const char *fmt, ...) noexcept;
 
 template<typename T>
-gcc_malloc gcc_returns_nonnull
+[[gnu::malloc]] gcc_returns_nonnull
 T *
 PoolAlloc(pool &p) noexcept
 {
@@ -273,7 +273,7 @@ PoolAlloc(pool &p) noexcept
 }
 
 template<typename T>
-gcc_malloc gcc_returns_nonnull
+[[gnu::malloc]] gcc_returns_nonnull
 T *
 PoolAlloc(pool &p, size_t n) noexcept
 {
@@ -284,7 +284,7 @@ PoolAlloc(pool &p, size_t n) noexcept
 }
 
 template<>
-gcc_malloc gcc_returns_nonnull
+[[gnu::malloc]] gcc_returns_nonnull
 inline void *
 PoolAlloc<void>(pool &p, size_t n) noexcept
 {
@@ -292,7 +292,7 @@ PoolAlloc<void>(pool &p, size_t n) noexcept
 }
 
 template<typename T, typename... Args>
-gcc_malloc gcc_returns_nonnull
+[[gnu::malloc]] gcc_returns_nonnull
 T *
 NewFromPool(pool &p, Args&&... args)
 {
@@ -350,11 +350,11 @@ public:
 	}
 };
 
-gcc_malloc gcc_returns_nonnull
+[[gnu::malloc]] gcc_returns_nonnull
 char *
 p_strdup(struct pool &pool, StringView src TRACE_ARGS_DEFAULT) noexcept;
 
-gcc_malloc gcc_returns_nonnull
+[[gnu::malloc]] gcc_returns_nonnull
 char *
 p_strdup_lower(struct pool &pool, StringView src
 	       TRACE_ARGS_DEFAULT) noexcept;

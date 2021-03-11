@@ -35,7 +35,6 @@
 #include "system/Error.hxx"
 #include "util/PrintException.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/Compiler.h"
 
 #include <assert.h>
 #include <sys/socket.h>
@@ -45,7 +44,7 @@
 #include <string.h>
 #include <errno.h>
 
-gcc_noreturn
+[[noreturn]]
 static void
 Exec(const char *command)
 {
@@ -56,7 +55,7 @@ Exec(const char *command)
 
 }
 
-gcc_noreturn
+[[noreturn]]
 static void
 RunLogger(const char *command, SocketDescriptor fd)
 {
@@ -100,7 +99,7 @@ LaunchLogger(const char *command,
 
 static constexpr size_t MAX_ARGS = 255;
 
-gcc_noreturn
+[[noreturn]]
 static void
 Exec(ConstBuffer<const char *> _args)
 {

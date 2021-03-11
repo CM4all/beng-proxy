@@ -36,8 +36,6 @@
 
 #include "util/ByteOrder.hxx"
 
-#include "util/Compiler.h"
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -57,7 +55,7 @@ read_full(void *_p, size_t length)
 	}
 }
 
-gcc_unused
+[[maybe_unused]]
 static uint8_t
 read_byte(size_t *remaining_r)
 {
@@ -71,7 +69,7 @@ read_byte(size_t *remaining_r)
 	return value;
 }
 
-gcc_unused
+[[maybe_unused]]
 static uint16_t
 read_short(size_t *remaining_r)
 {
@@ -85,7 +83,7 @@ read_short(size_t *remaining_r)
 	return FromBE16(value);
 }
 
-gcc_unused
+[[maybe_unused]]
 static void
 discard(size_t length)
 {
@@ -112,14 +110,14 @@ write_full(const void *_p, size_t length)
 	}
 }
 
-gcc_unused
+[[maybe_unused]]
 static void
 write_byte(const uint8_t value)
 {
 	write_full(&value, sizeof(value));
 }
 
-gcc_unused
+[[maybe_unused]]
 static void
 write_short(uint16_t value)
 {
@@ -127,7 +125,7 @@ write_short(uint16_t value)
 	write_full(&buffer, sizeof(buffer));
 }
 
-gcc_unused
+[[maybe_unused]]
 static void
 fill(size_t length)
 {

@@ -56,14 +56,12 @@
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
 
-#include "util/Compiler.h"
-
 #include <functional>
 
 static void
 RunNull(WasServer &server, struct pool &,
-	gcc_unused http_method_t method,
-	gcc_unused const char *uri, gcc_unused StringMap &&headers,
+	http_method_t,
+	const char *, StringMap &&,
 	UnusedIstreamPtr body)
 {
 	body.Clear();
@@ -73,8 +71,8 @@ RunNull(WasServer &server, struct pool &,
 
 static void
 RunHello(WasServer &server, struct pool &pool,
-	 gcc_unused http_method_t method,
-	 gcc_unused const char *uri, gcc_unused StringMap &&headers,
+	 http_method_t,
+	 const char *, StringMap &&,
 	 UnusedIstreamPtr body)
 {
 	body.Clear();
@@ -85,8 +83,8 @@ RunHello(WasServer &server, struct pool &pool,
 
 static void
 RunHuge(WasServer &server, struct pool &pool,
-	gcc_unused http_method_t method,
-	gcc_unused const char *uri, gcc_unused StringMap &&headers,
+	http_method_t ,
+	const char *, StringMap &&,
 	UnusedIstreamPtr body)
 {
 	body.Clear();
@@ -99,8 +97,8 @@ RunHuge(WasServer &server, struct pool &pool,
 
 static void
 RunHold(WasServer &server, struct pool &pool,
-	gcc_unused http_method_t method,
-	gcc_unused const char *uri, gcc_unused StringMap &&headers,
+	http_method_t,
+	const char *, StringMap &&,
 	UnusedIstreamPtr body)
 {
 	body.Clear();
@@ -111,8 +109,8 @@ RunHold(WasServer &server, struct pool &pool,
 
 static void
 RunBlock(WasServer &server, struct pool &pool,
-	gcc_unused http_method_t method,
-	gcc_unused const char *uri, gcc_unused StringMap &&headers,
+	http_method_t,
+	const char *, StringMap &&,
 	UnusedIstreamPtr body)
 {
 	body.Clear();
@@ -130,9 +128,9 @@ RunNop(WasServer &, struct pool &,
 }
 
 static void
-RunMirror(WasServer &server, gcc_unused struct pool &pool,
-	  gcc_unused http_method_t method,
-	  gcc_unused const char *uri, StringMap &&headers,
+RunMirror(WasServer &server, struct pool &,
+	  http_method_t,
+	  const char *, StringMap &&headers,
 	  UnusedIstreamPtr body)
 {
 	const bool has_body = body;
@@ -141,7 +139,7 @@ RunMirror(WasServer &server, gcc_unused struct pool &pool,
 }
 
 static void
-RunMalformedHeaderName(WasServer &server, gcc_unused struct pool &pool,
+RunMalformedHeaderName(WasServer &server, struct pool &pool,
 		       http_method_t, const char *, StringMap &&,
 		       UnusedIstreamPtr body)
 {
@@ -154,7 +152,7 @@ RunMalformedHeaderName(WasServer &server, gcc_unused struct pool &pool,
 }
 
 static void
-RunMalformedHeaderValue(WasServer &server, gcc_unused struct pool &pool,
+RunMalformedHeaderValue(WasServer &server, struct pool &pool,
 			http_method_t, const char *, StringMap &&,
 			UnusedIstreamPtr body)
 {
@@ -168,8 +166,8 @@ RunMalformedHeaderValue(WasServer &server, gcc_unused struct pool &pool,
 
 static void
 RunValidPremature(WasServer &server, struct pool &pool,
-		  gcc_unused http_method_t method,
-		  gcc_unused const char *uri, gcc_unused StringMap &&headers,
+		  http_method_t,
+		  const char *, StringMap &&,
 		  UnusedIstreamPtr body)
 {
 	body.Clear();
@@ -475,7 +473,7 @@ private:
 		lease->ReleaseLease(reuse);
 	}
 
-	void ReleaseWasStop(gcc_unused uint64_t input_received) override {
+	void ReleaseWasStop(uint64_t) override {
 		ReleaseWas(false);
 	}
 };

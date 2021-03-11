@@ -151,7 +151,7 @@ struct Transformation : IntrusiveForwardListHook {
 	[[gnu::pure]]
 	static bool IsChainExpandable(const IntrusiveForwardList<Transformation> &list) noexcept;
 
-	gcc_malloc
+	[[gnu::malloc]]
 	Transformation *Dup(AllocatorPtr alloc) const noexcept;
 
 	static IntrusiveForwardList<Transformation> DupChain(AllocatorPtr alloc,

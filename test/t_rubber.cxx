@@ -31,7 +31,6 @@
  */
 
 #include "rubber.hxx"
-#include "util/Compiler.h"
 
 #include <gtest/gtest.h>
 
@@ -46,7 +45,7 @@ Fill(void *_p, size_t length, unsigned seed)
 		*p = (uint8_t)seed++;
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 Check(const void *_p, size_t length, unsigned seed)
 {
@@ -74,7 +73,7 @@ AddFillRubber(Rubber &r, size_t length)
 	return id;
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 CheckRubber(Rubber &r, unsigned id, size_t length)
 {

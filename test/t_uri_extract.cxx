@@ -32,7 +32,6 @@
 
 #include "uri/Extract.hxx"
 #include "util/StringView.hxx"
-#include "util/Compiler.h"
 
 #include <gtest/gtest.h>
 

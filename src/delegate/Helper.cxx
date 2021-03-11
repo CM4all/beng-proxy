@@ -40,7 +40,6 @@
 #include "net/ScmRightsBuilder.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "io/Iovec.hxx"
-#include "util/Compiler.h"
 #include "util/PrintException.hxx"
 
 #include <stdbool.h>
@@ -139,7 +138,8 @@ delegate_handle(DelegateRequestCommand command,
 	return false;
 }
 
-int main(int argc gcc_unused, char **argv gcc_unused)
+int
+main(int, char **) noexcept
 {
 	while (true) {
 		DelegateRequestHeader header;

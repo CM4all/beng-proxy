@@ -58,7 +58,6 @@
 #include "bp/session/Session.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
-#include "util/Compiler.h"
 #include "stopwatch.hxx"
 
 #include <gtest/gtest.h>
@@ -86,56 +85,56 @@ static unsigned test_id;
 static bool got_request, got_response;
 
 bool
-processable(gcc_unused const StringMap &headers)
+processable(const StringMap &)
 {
 	return false;
 }
 
 UnusedIstreamPtr
-processor_process(gcc_unused struct pool &pool,
+processor_process(struct pool &,
 		  const StopwatchPtr &,
 		  UnusedIstreamPtr istream,
-		  gcc_unused Widget &widget,
+		  Widget &,
 		  SharedPoolPtr<WidgetContext>,
-		  gcc_unused unsigned options)
+		  unsigned)
 {
 	return istream;
 }
 
 void
-processor_lookup_widget(gcc_unused struct pool &pool,
+processor_lookup_widget(struct pool &,
 			const StopwatchPtr &,
-			gcc_unused UnusedIstreamPtr istream,
-			gcc_unused Widget &widget,
-			gcc_unused const char *id,
+			UnusedIstreamPtr,
+			Widget &,
+			const char *,
 			SharedPoolPtr<WidgetContext>,
-			gcc_unused unsigned options,
+			unsigned,
 			WidgetLookupHandler &handler,
-			gcc_unused CancellablePointer &cancel_ptr)
+			CancellablePointer &)
 {
 	handler.WidgetNotFound();
 }
 
 UnusedIstreamPtr
-css_processor(gcc_unused struct pool &pool,
+css_processor(struct pool &,
 	      const StopwatchPtr &,
 	      UnusedIstreamPtr stream,
-	      gcc_unused Widget &widget,
+	      Widget &,
 	      SharedPoolPtr<WidgetContext>,
-	      gcc_unused unsigned options) noexcept
+	      unsigned) noexcept
 {
 	return stream;
 }
 
 bool
-text_processor_allowed(gcc_unused const StringMap &headers)
+text_processor_allowed(const StringMap &)
 {
 	return false;
 }
 
 UnusedIstreamPtr
-text_processor(gcc_unused struct pool &pool, UnusedIstreamPtr stream,
-	       gcc_unused const Widget &widget,
+text_processor(struct pool &, UnusedIstreamPtr stream,
+	       const Widget &,
 	       const WidgetContext &)
 {
 	return stream;
@@ -143,11 +142,11 @@ text_processor(gcc_unused struct pool &pool, UnusedIstreamPtr stream,
 
 bool
 suffix_registry_lookup(AllocatorPtr,
-		       gcc_unused TranslationService &service,
-		       gcc_unused const ResourceAddress &address,
+		       TranslationService &,
+		       const ResourceAddress &,
 		       const StopwatchPtr &,
-		       gcc_unused SuffixRegistryHandler &handler,
-		       gcc_unused CancellablePointer &cancel_ptr) noexcept
+		       SuffixRegistryHandler &,
+		       CancellablePointer &) noexcept
 {
 	return false;
 }
@@ -158,8 +157,8 @@ class PipeStock;
 PipeStock *global_pipe_stock;
 
 UnusedIstreamPtr
-NewAutoPipeIstream(gcc_unused struct pool *pool, UnusedIstreamPtr input,
-		   gcc_unused PipeStock *pipe_stock) noexcept
+NewAutoPipeIstream(struct pool *, UnusedIstreamPtr input,
+		   PipeStock *) noexcept
 {
 	return input;
 }
@@ -184,14 +183,14 @@ void
 MyResourceLoader::SendRequest(struct pool &pool,
 			      const StopwatchPtr &,
 			      sticky_hash_t,
-			      gcc_unused const char *cache_tag,
-			      gcc_unused const char *site_name,
+			      const char *,
+			      const char *,
 			      http_method_t method,
-			      gcc_unused const ResourceAddress &address,
-			      gcc_unused http_status_t status,
+			      const ResourceAddress &,
+			      http_status_t,
 			      StringMap &&headers,
 			      UnusedIstreamPtr body,
-			      gcc_unused const char *body_etag,
+			      const char *,
 			      HttpResponseHandler &handler,
 			      CancellablePointer &) noexcept
 {
@@ -257,7 +256,7 @@ struct Context final : HttpResponseHandler {
 };
 
 void
-Context::OnHttpResponse(http_status_t status, gcc_unused StringMap &&headers,
+Context::OnHttpResponse(http_status_t status, StringMap &&,
 			UnusedIstreamPtr body) noexcept
 {
 	EXPECT_FALSE(got_response);
