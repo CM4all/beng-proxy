@@ -3,7 +3,7 @@ cm4all-beng-proxy (17.0.50) unstable; urgency=low
   * merge release 16.33 (session bug fix not relevant)
   * translation: add packet RECOVER_SESSION
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 11 Mar 2021 17:35:24 +0100
 
 cm4all-beng-proxy (17.0.49) unstable; urgency=low
 
