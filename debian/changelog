@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.51) unstable; urgency=low
 
-  * 
+  * bp: fix the escaping rules for the original URI for BOUNCE
 
  --   
 

@@ -83,8 +83,7 @@ GetBounceUri(AllocatorPtr alloc, const IncomingHttpRequest &request,
 	}
 
 	const char *current_uri = alloc.Concat(scheme, "://", host, uri_path);
-	const char *escaped_uri = uri_escape_dup(alloc, current_uri,
-						 strlen(current_uri));
+	const char *escaped_uri = uri_escape_dup(alloc, current_uri);
 
 	return alloc.Concat(response.bounce, escaped_uri);
 }
