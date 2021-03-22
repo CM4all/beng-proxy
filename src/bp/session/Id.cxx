@@ -32,7 +32,7 @@
 
 #include "Id.hxx"
 #include "random.hxx"
-#include "util/HexFormat.h"
+#include "util/HexFormat.hxx"
 
 #include <assert.h>
 

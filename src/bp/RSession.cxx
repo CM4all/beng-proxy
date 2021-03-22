@@ -40,7 +40,7 @@
 #include "http/CookieServer.hxx"
 #include "bot.h"
 #include "strmap.hxx"
-#include "util/HexFormat.h"
+#include "util/HexFormat.hxx"
 #include "util/djbhash.h"
 
 [[gnu::pure]]

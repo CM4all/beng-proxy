@@ -35,7 +35,7 @@
 #include "pool/pool.hxx"
 #include "http/Date.hxx"
 #include "io/FileDescriptor.hxx"
-#include "util/HexFormat.h"
+#include "util/HexFormat.hxx"
 
 #include <attr/xattr.h>
 

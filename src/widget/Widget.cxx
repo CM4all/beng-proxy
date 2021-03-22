@@ -36,7 +36,7 @@
 #include "Ref.hxx"
 #include "Error.hxx"
 #include "pool/tpool.hxx"
-#include "util/HexFormat.h"
+#include "util/HexFormat.hxx"
 #include "util/Cast.hxx"
 #include "AllocatorPtr.hxx"
 

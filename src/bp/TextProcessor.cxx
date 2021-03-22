@@ -39,7 +39,7 @@
 #include "widget/Context.hxx"
 #include "pool/pool.hxx"
 #include "util/CharUtil.hxx"
-#include "util/HexFormat.h"
+#include "util/HexFormat.hxx"
 
 #include <assert.h>
 

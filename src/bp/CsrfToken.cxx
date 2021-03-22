@@ -33,7 +33,7 @@
 #include "CsrfToken.hxx"
 #include "session/Id.hxx"
 #include "sodium/GenericHash.hxx"
-#include "util/HexFormat.h"
+#include "util/HexFormat.hxx"
 
 #include <algorithm>
 

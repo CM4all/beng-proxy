@@ -41,7 +41,7 @@
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/HexFormat.h"
+#include "util/HexFormat.hxx"
 #include "util/djbhash.h"
 
 #include <stdio.h>
