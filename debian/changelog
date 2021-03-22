@@ -1,6 +1,6 @@
 cm4all-beng-proxy (16.34) unstable; urgency=low
 
-  * 
+  * bp: decrease the default translate_stock_limit to 32
 
  --   
 

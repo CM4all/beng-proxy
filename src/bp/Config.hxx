@@ -122,7 +122,7 @@ struct BpConfig {
 	size_t nfs_cache_size = 256 * 1024 * 1024;
 
 	unsigned translate_cache_size = 131072;
-	unsigned translate_stock_limit = 64;
+	unsigned translate_stock_limit = 32;
 
 	unsigned tcp_stock_limit = 0;
 
