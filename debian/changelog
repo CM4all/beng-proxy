@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.52) unstable; urgency=low
 
-  * 
+  * bp/spawn: fix MOUNT_ROOT_TMPFS
 
  --   
 
