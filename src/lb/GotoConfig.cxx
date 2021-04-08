@@ -31,6 +31,7 @@
  */
 
 #include "GotoConfig.hxx"
+#include "ClusterConfig.hxx"
 
 #ifdef HAVE_AVAHI
 

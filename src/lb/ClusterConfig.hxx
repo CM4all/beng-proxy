@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include "Protocol.hxx"
 #include "SimpleHttpResponse.hxx"
 #include "cluster/AddressList.hxx"
 #include "cluster/StickyMode.hxx"
@@ -42,11 +43,6 @@
 #include <forward_list>
 
 struct LbMonitorConfig;
-
-enum class LbProtocol {
-	HTTP,
-	TCP,
-};
 
 struct LbNodeConfig {
 	std::string name;

@@ -33,8 +33,9 @@
 #pragma once
 
 #include "ConditionConfig.hxx"
-#include "ClusterConfig.hxx"
+#include "Protocol.hxx"
 #include "SimpleHttpResponse.hxx"
+#include "net/AllocatedSocketAddress.hxx"
 #include "util/StringLess.hxx"
 
 #include <filesystem>
@@ -43,6 +44,7 @@
 #include <map>
 #include <variant>
 
+struct LbClusterConfig;
 struct LbBranchConfig;
 struct LbLuaHandlerConfig;
 struct LbTranslationHandlerConfig;
