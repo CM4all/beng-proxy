@@ -32,54 +32,16 @@
 
 #pragma once
 
+#include "ConditionConfig.hxx"
 #include "ClusterConfig.hxx"
 #include "SimpleHttpResponse.hxx"
-#include "pcre/Regex.hxx"
 #include "util/StringLess.hxx"
-#include "util/Compiler.h"
 
-#include <cassert>
 #include <filesystem>
 #include <string>
 #include <list>
 #include <map>
 #include <variant>
-
-struct LbAttributeReference {
-	enum class Type {
-		METHOD,
-		URI,
-		HEADER,
-	} type;
-
-	std::string name;
-
-	LbAttributeReference(Type _type) noexcept
-		:type(_type) {}
-
-	template<typename N>
-	LbAttributeReference(Type _type, N &&_name) noexcept
-		:type(_type), name(std::forward<N>(_name)) {}
-
-	template<typename R>
-	[[gnu::pure]]
-	const char *GetRequestAttribute(const R &request) const noexcept {
-		switch (type) {
-		case Type::METHOD:
-			return http_method_to_string(request.method);
-
-		case Type::URI:
-			return request.uri;
-
-		case Type::HEADER:
-			return request.headers.Get(name.c_str());
-		}
-
-		assert(false);
-		gcc_unreachable();
-	}
-
-};
 
 struct LbBranchConfig;
 struct LbLuaHandlerConfig;
@@ -123,57 +85,6 @@ struct LbGotoConfig {
 #ifdef HAVE_AVAHI
 	bool HasZeroConf() const noexcept;
 #endif
-};
-
-struct LbConditionConfig {
-	LbAttributeReference attribute_reference;
-
-	bool negate;
-
-	std::variant<std::string, UniqueRegex> value;
-
-	LbConditionConfig(LbAttributeReference &&a, bool _negate,
-			  const char *_string) noexcept
-		:attribute_reference(std::move(a)),
-		 negate(_negate), value(_string) {}
-
-	LbConditionConfig(LbAttributeReference &&a, bool _negate,
-			  UniqueRegex &&_regex) noexcept
-		:attribute_reference(std::move(a)),
-		 negate(_negate), value(std::move(_regex)) {}
-
-	LbConditionConfig(LbConditionConfig &&other) = default;
-
-	LbConditionConfig(const LbConditionConfig &) = delete;
-	LbConditionConfig &operator=(const LbConditionConfig &) = delete;
-
-	[[gnu::pure]]
-	bool Match(const char *s) const noexcept {
-		return std::visit(MatchHelper{s}, value) ^ negate;
-	}
-
-	template<typename R>
-	[[gnu::pure]]
-	bool MatchRequest(const R &request) const noexcept {
-		const char *s = attribute_reference.GetRequestAttribute(request);
-		if (s == nullptr)
-			s = "";
-
-		return Match(s);
-	}
-
-private:
-	struct MatchHelper {
-		const char *s;
-
-		bool operator()(const std::string &v) const noexcept {
-			return v == s;
-		}
-
-		bool operator()(const UniqueRegex &v) const noexcept {
-			return v.Match(s);
-		}
-	};
 };
 
 struct LbGotoIfConfig {
