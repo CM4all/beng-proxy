@@ -198,6 +198,7 @@ That implies that pools and branches share a namespace, their names
 must be uniquie. Example::
 
    branch foo {
+     status 418 if $remote_address in "192.168.0.0/16"
      goto pool1 if $request_method == "POST"
      goto pool2 if $request_uri =~ "^/for/pool2/"
      goto pool3 if $http_user_agent =~ "Opera"
@@ -210,6 +211,7 @@ another branch.
 
 The following “variables” are available:
 
+- ``$remote_address``: the client address.
 - ``$request_method``: the HTTP request method (``GET``, ``POST``,
   ...)
 - ``$request_uri``: the HTTP request URI
@@ -222,6 +224,12 @@ The following operators are available:
 - ``!=``: check the value for non-equality
 - ``=~``: Perl-compatible regular expression match
 - ``!~``: Perl-compatible regular expression mismatch
+
+For ``$remote_address``, only the following operators are available:
+
+- ``in``: check whether the address matches the given address with
+  prefix length, e.g. ``$remote_address in "192.168.0.0/16"``
+- ``not in``: negated version of ``in``
 
 The last token is a quoted string depicting the value to compare with,
 or the regular expression.

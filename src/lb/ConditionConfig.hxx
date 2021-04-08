@@ -33,6 +33,7 @@
 #pragma once
 
 #include "pcre/Regex.hxx"
+#include "net/MaskedSocketAddress.hxx"
 #include "util/Compiler.h"
 
 #include <cassert>
@@ -41,6 +42,7 @@
 
 struct LbAttributeReference {
 	enum class Type {
+		REMOTE_ADDRESS,
 		METHOD,
 		URI,
 		HEADER,
@@ -55,10 +57,18 @@ struct LbAttributeReference {
 	LbAttributeReference(Type _type, N &&_name) noexcept
 		:type(_type), name(std::forward<N>(_name)) {}
 
+	bool IsAddress() const noexcept {
+		return type == Type::REMOTE_ADDRESS;
+	}
+
 	template<typename R>
 	[[gnu::pure]]
 	const char *GetRequestAttribute(const R &request) const noexcept {
 		switch (type) {
+		case Type::REMOTE_ADDRESS:
+			/* unreachable - handled as a special case */
+			break;
+
 		case Type::METHOD:
 			return http_method_to_string(request.method);
 
@@ -80,7 +90,7 @@ struct LbConditionConfig {
 
 	bool negate;
 
-	std::variant<std::string, UniqueRegex> value;
+	std::variant<std::string, UniqueRegex, MaskedSocketAddress> value;
 
 	LbConditionConfig(LbAttributeReference &&a, bool _negate,
 			  const char *_string) noexcept
@@ -91,6 +101,11 @@ struct LbConditionConfig {
 			  UniqueRegex &&_regex) noexcept
 		:attribute_reference(std::move(a)),
 		 negate(_negate), value(std::move(_regex)) {}
+
+	LbConditionConfig(LbAttributeReference &&a, bool _negate,
+			  MaskedSocketAddress &&_mask) noexcept
+		:attribute_reference(std::move(a)),
+		 negate(_negate), value(std::move(_mask)) {}
 
 	LbConditionConfig(LbConditionConfig &&other) = default;
 
@@ -105,6 +120,9 @@ struct LbConditionConfig {
 	template<typename R>
 	[[gnu::pure]]
 	bool MatchRequest(const R &request) const noexcept {
+		if (attribute_reference.type == LbAttributeReference::Type::REMOTE_ADDRESS)
+			return MatchAddress(request.remote_address);
+
 		const char *s = attribute_reference.GetRequestAttribute(request);
 		if (s == nullptr)
 			s = "";
@@ -113,6 +131,9 @@ struct LbConditionConfig {
 	}
 
 private:
+	[[gnu::pure]]
+	bool MatchAddress(SocketAddress address) const noexcept;
+
 	struct MatchHelper {
 		const char *s;
 
@@ -122,6 +143,11 @@ private:
 
 		bool operator()(const UniqueRegex &v) const noexcept {
 			return v.Match(s);
+		}
+
+		bool operator()(const MaskedSocketAddress &) const noexcept {
+			/* unreachable - handled as a special case */
+			gcc_unreachable();
 		}
 	};
 };

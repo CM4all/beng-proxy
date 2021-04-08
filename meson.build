@@ -986,6 +986,7 @@ executable(
   'src/lb/Check.cxx',
   'src/lb/Cookie.cxx',
   'src/lb/CommandLine.cxx',
+  'src/lb/ConditionConfig.cxx',
   'src/lb/Config.cxx',
   'src/lb/ConfigParser.cxx',
   'src/lb_check.cxx',

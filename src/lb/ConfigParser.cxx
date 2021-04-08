@@ -776,6 +776,8 @@ ParseAttributeReference(const char *p)
 		return LbAttributeReference::Type::METHOD;
 	} else if (strcmp(p, "request_uri") == 0) {
 		return LbAttributeReference::Type::URI;
+	} else if (strcmp(p, "remote_address") == 0) {
+		return LbAttributeReference::Type::REMOTE_ADDRESS;
 	} else if (auto header = StringAfterPrefix(p, "http_")) {
 		LbAttributeReference a(LbAttributeReference::Type::HEADER, header);
 		if (a.name.empty())
@@ -804,6 +806,25 @@ ParseCondition(FileLineParser &line)
 		throw LineParser::Error("Attribute name starting with '$' expected");
 
 	auto a = ParseAttributeReference(attribute);
+
+	if (a.IsAddress()) {
+		bool negate = false;
+
+		const char *in = line.NextWord();
+		if (in != nullptr && StringIsEqual(in, "not")) {
+			negate = true;
+			in = line.NextWord();
+		}
+
+		if (in == nullptr || !StringIsEqual(in, "in"))
+			throw LineParser::Error("'in' expected");
+
+		const char *s = line.NextValue();
+		if (s == nullptr)
+			throw LineParser::Error("Value expected");
+
+		return {std::move(a), negate, MaskedSocketAddress{s}};
+	}
 
 	bool re, negate;
 
