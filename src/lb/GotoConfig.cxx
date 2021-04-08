@@ -56,7 +56,7 @@ LbGotoConfig::GetProtocol() const noexcept
 	assert(IsDefined());
 
 	struct GetProtocolHelper {
-		LbProtocol operator()(std::nullptr_t) const noexcept {
+		LbProtocol operator()(std::monostate) const noexcept {
 			assert(false);
 			gcc_unreachable();
 		}
@@ -91,7 +91,7 @@ LbGotoConfig::GetName() const noexcept
 	assert(IsDefined());
 
 	struct GetNameHelper {
-		const char *operator()(std::nullptr_t) const noexcept {
+		const char *operator()(std::monostate) const noexcept {
 			assert(false);
 			gcc_unreachable();
 		}
@@ -126,7 +126,7 @@ bool
 LbGotoConfig::HasZeroConf() const noexcept
 {
 	struct HasZeroConfHelper {
-		bool operator()(std::nullptr_t) const noexcept {
+		bool operator()(std::monostate) const noexcept {
 			return false;
 		}
 

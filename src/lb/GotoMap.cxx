@@ -93,7 +93,7 @@ LbGotoMap::GetInstance(const LbGotoConfig &config)
 	struct GetInstanceHelper {
 		LbGotoMap &map;
 
-		LbGoto operator()(std::nullptr_t) const noexcept {
+		LbGoto operator()(std::monostate) const noexcept {
 			return {};
 		}
 

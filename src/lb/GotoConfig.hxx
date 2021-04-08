@@ -50,12 +50,12 @@ struct LbLuaHandlerConfig;
 struct LbTranslationHandlerConfig;
 
 struct LbGotoConfig {
-	std::variant<std::nullptr_t,
+	std::variant<std::monostate,
 		     const LbClusterConfig *,
 		     const LbBranchConfig *,
 		     const LbLuaHandlerConfig *,
 		     const LbTranslationHandlerConfig *,
-		     LbSimpleHttpResponse> destination{nullptr};
+		     LbSimpleHttpResponse> destination;
 
 	LbGotoConfig() = default;
 
@@ -75,7 +75,7 @@ struct LbGotoConfig {
 		:destination(LbSimpleHttpResponse{_status}) {}
 
 	bool IsDefined() const noexcept {
-		return !std::holds_alternative<std::nullptr_t>(destination);
+		return !std::holds_alternative<std::monostate>(destination);
 	}
 
 	[[gnu::pure]]
