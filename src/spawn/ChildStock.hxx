@@ -79,7 +79,8 @@ public:
 	 */
 	virtual bool WantStderrPond(void *) const noexcept = 0;
 
-	virtual const char *GetChildTag(void *info) const noexcept;
+	[[gnu::pure]]
+	virtual StringView GetChildTag(void *info) const noexcept;
 
 	/**
 	 * Throws std::runtime_error on error.
@@ -160,7 +161,7 @@ public:
 	/**
 	 * "Fade" all child processes with the given tag.
 	 */
-	void FadeTag(const char *tag);
+	void FadeTag(StringView tag) noexcept;
 
 	/**
 	 * For internal use only.
@@ -195,7 +196,8 @@ child_stock_item_get_type(const StockItem &) noexcept
 	return FdType::FD_SOCKET;
 }
 
-const char *
+[[gnu::pure]]
+StringView
 child_stock_item_get_tag(const StockItem &item);
 
 UniqueFileDescriptor

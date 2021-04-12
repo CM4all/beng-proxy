@@ -40,6 +40,7 @@
 #include <stdint.h>
 
 struct pool;
+struct StringView;
 struct ChildOptions;
 struct WasProcess;
 template<typename T> struct ConstBuffer;
@@ -68,7 +69,7 @@ public:
 		stock.FadeAll();
 	}
 
-	void FadeTag(const char *tag) noexcept;
+	void FadeTag(StringView tag) noexcept;
 
 	/**
 	 * @param args command-line arguments

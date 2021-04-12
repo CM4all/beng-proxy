@@ -101,9 +101,9 @@ class WasChild final : public StockItem, ExitListener {
 
 public:
 	explicit WasChild(CreateStockItem c, SpawnService &_spawn_service,
-			  const char *_tag) noexcept
+			  std::string_view _tag) noexcept
 		:StockItem(c), logger(GetStockName()), spawn_service(_spawn_service),
-		 tag(_tag != nullptr ? _tag : ""),
+		 tag(_tag),
 		 event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback))
 	{
 		/* mark this object as "unused" so the destructor doesn't
@@ -117,8 +117,8 @@ public:
 		return event.GetEventLoop();
 	}
 
-	bool IsTag(const char *other_tag) const noexcept {
-		return tag == other_tag;
+	bool IsTag(StringView other_tag) const noexcept {
+		return other_tag.Equals(std::string_view{tag});
 	}
 
 	/**
@@ -401,7 +401,7 @@ WasChild::EventCallback(unsigned) noexcept
  */
 
 void
-WasStock::FadeTag(const char *tag) noexcept
+WasStock::FadeTag(StringView tag) noexcept
 {
 	stock.FadeIf([tag](const StockItem &item){
 		const auto &child = (const WasChild &)item;

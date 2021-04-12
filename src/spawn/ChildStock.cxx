@@ -42,6 +42,7 @@
 #include "net/TempListener.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "util/StringView.hxx"
 
 #include <string>
 
@@ -60,7 +61,7 @@ ChildStockClass::GetChildBacklog(void *) const noexcept
 	return 0;
 }
 
-const char *
+StringView
 ChildStockClass::GetChildTag(void *) const noexcept
 {
 	return nullptr;
@@ -89,11 +90,11 @@ public:
 	ChildStockItem(CreateStockItem c,
 		       ChildStock &_child_stock,
 		       SpawnService &_spawn_service,
-		       const char *_tag) noexcept
+		       std::string_view _tag) noexcept
 		:StockItem(c),
 		 child_stock(_child_stock),
 		 spawn_service(_spawn_service),
-		 tag(_tag != nullptr ? _tag : "") {}
+		 tag(_tag) {}
 
 	~ChildStockItem() override;
 
@@ -107,12 +108,12 @@ public:
 		   const ChildErrorLogOptions &log_options);
 
 	gcc_pure
-	const char *GetTag() const {
-		return tag.empty() ? nullptr : tag.c_str();
+	StringView GetTag() const {
+		return tag.empty() ? nullptr : StringView{std::string_view{tag}};
 	}
 
 	gcc_pure
-	bool IsTag(const char *_tag) const {
+	bool IsTag(std::string_view _tag) const noexcept {
 		return tag == _tag;
 	}
 
@@ -266,7 +267,7 @@ ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
 ChildStock::~ChildStock() noexcept = default;
 
 void
-ChildStock::FadeTag(const char *tag)
+ChildStock::FadeTag(StringView tag) noexcept
 {
 	map.FadeIf([tag](const StockItem &_item) {
 		const auto &item = (const ChildStockItem &)_item;
@@ -301,7 +302,7 @@ child_stock_item_connect(StockItem &_item)
 	return item.Connect();
 }
 
-const char *
+StringView
 child_stock_item_get_tag(const StockItem &_item)
 {
 	const auto &item = (const ChildStockItem &)_item;

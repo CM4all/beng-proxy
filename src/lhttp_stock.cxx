@@ -78,7 +78,7 @@ public:
 		mchild_stock.FadeAll();
 	}
 
-	void FadeTag(const char *tag) noexcept;
+	void FadeTag(StringView tag) noexcept;
 
 	StockMap &GetConnectionStock() noexcept {
 		return hstock;
@@ -94,7 +94,7 @@ private:
 	bool WantStderrPond(void *info) const noexcept override;
 	int GetChildSocketType(void *info) const noexcept override;
 	unsigned GetChildBacklog(void *info) const noexcept override;
-	const char *GetChildTag(void *info) const noexcept override;
+	StringView GetChildTag(void *info) const noexcept override;
 	void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
 			  PreparedChildProcess &p) override;
 };
@@ -128,7 +128,7 @@ public:
 	}
 
 	gcc_pure
-	const char *GetTag() const noexcept {
+	StringView GetTag() const noexcept {
 		assert(child != nullptr);
 
 		return child_stock_item_get_tag(*child);
@@ -259,7 +259,7 @@ LhttpStock::GetChildBacklog(void *info) const noexcept
 	return address.concurrency;
 }
 
-const char *
+StringView
 LhttpStock::GetChildTag(void *info) const noexcept
 {
 	const auto &address = *(const LhttpAddress *)info;
@@ -330,19 +330,17 @@ LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
 		std::chrono::minutes(2)) {}
 
 void
-LhttpStock::FadeTag(const char *tag) noexcept
+LhttpStock::FadeTag(StringView tag) noexcept
 {
 	assert(tag != nullptr);
 
 	hstock.FadeIf([tag](const StockItem &item){
 		const auto &connection = (const LhttpConnection &)item;
-		const char *tag2 = connection.GetTag();
-		return tag2 != nullptr && strcmp(tag, tag2) == 0;
+		return tag.Equals(connection.GetTag());
 	});
 
 	mchild_stock.FadeIf([tag](const StockItem &item){
-		const char *tag2 = child_stock_item_get_tag(item);
-		return tag2 != nullptr && strcmp(tag, tag2) == 0;
+		return tag.Equals(child_stock_item_get_tag(item));
 	});
 
 	child_stock.FadeTag(tag);
@@ -377,7 +375,7 @@ lhttp_stock_fade_all(LhttpStock &ls) noexcept
 }
 
 void
-lhttp_stock_fade_tag(LhttpStock &ls, const char *tag) noexcept
+lhttp_stock_fade_tag(LhttpStock &ls, StringView tag) noexcept
 {
 	ls.FadeTag(tag);
 }

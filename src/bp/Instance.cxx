@@ -254,7 +254,7 @@ BpInstance::FadeChildren() noexcept
 }
 
 void
-BpInstance::FadeTaggedChildren(const char *tag) noexcept
+BpInstance::FadeTaggedChildren(StringView tag) noexcept
 {
 	assert(tag != nullptr);
 

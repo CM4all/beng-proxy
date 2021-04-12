@@ -156,8 +156,7 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 	case ControlCommand::FADE_CHILDREN:
 		if (!payload.empty())
 			/* tagged fade is allowed for any unprivileged client */
-			FadeTaggedChildren(std::string((const char *)payload.data,
-						       payload.size).c_str());
+			FadeTaggedChildren(StringView{ConstBuffer<char>::FromVoid(payload)});
 		else if (is_privileged)
 			/* unconditional fade is only allowed for privileged
 			   clients */
