@@ -34,8 +34,7 @@
  * Functions for editing URIs.
  */
 
-#ifndef BENG_URI_EDIT_HXX
-#define BENG_URI_EDIT_HXX
+#pragma once
 
 class AllocatorPtr;
 struct StringView;
@@ -43,7 +42,7 @@ struct StringView;
 [[gnu::pure]]
 const char *
 uri_insert_query_string(AllocatorPtr alloc, const char *uri,
-                        const char *query_string);
+			const char *query_string);
 
 /**
  * Appends the specified query string at the end.  Adds a '?' or '&'
@@ -52,16 +51,14 @@ uri_insert_query_string(AllocatorPtr alloc, const char *uri,
 [[gnu::pure]]
 const char *
 uri_append_query_string_n(AllocatorPtr alloc, const char *uri,
-                          StringView query_string);
+			  StringView query_string);
 
 [[gnu::pure]]
 const char *
 uri_delete_query_string(AllocatorPtr alloc, const char *uri,
-                        StringView needle);
+			StringView needle);
 
 [[gnu::pure]]
 const char *
 uri_insert_args(AllocatorPtr alloc, const char *uri,
-                StringView args, StringView path);
-
-#endif
+		StringView args, StringView path);

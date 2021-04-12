@@ -40,89 +40,89 @@
 
 const char *
 uri_insert_query_string(AllocatorPtr alloc, const char *uri,
-                        const char *query_string)
+			const char *query_string)
 {
-    assert(uri != nullptr);
-    assert(query_string != nullptr);
+	assert(uri != nullptr);
+	assert(query_string != nullptr);
 
-    const char *qmark = strchr(uri, '?');
+	const char *qmark = strchr(uri, '?');
 
-    if (qmark != nullptr) {
-        ++qmark;
-        return alloc.Concat(StringView(uri, qmark),
-                            query_string,
-                            '&',
-                            qmark);
-    } else
-        return alloc.Concat(uri, '?', query_string);
+	if (qmark != nullptr) {
+		++qmark;
+		return alloc.Concat(StringView(uri, qmark),
+				    query_string,
+				    '&',
+				    qmark);
+	} else
+		return alloc.Concat(uri, '?', query_string);
 }
 
 const char *
 uri_append_query_string_n(AllocatorPtr alloc, const char *uri,
-                          StringView query_string)
+			  StringView query_string)
 {
-    assert(uri != nullptr);
-    assert(!query_string.IsNull());
+	assert(uri != nullptr);
+	assert(!query_string.IsNull());
 
-    return alloc.Concat(uri,
-                        strchr(uri, '?') == nullptr ? '?' : '&',
-                        query_string);
+	return alloc.Concat(uri,
+			    strchr(uri, '?') == nullptr ? '?' : '&',
+			    query_string);
 }
 
 static size_t
 query_string_begins_with(const char *query_string, StringView needle)
 {
-    assert(query_string != nullptr);
-    assert(!needle.IsNull());
+	assert(query_string != nullptr);
+	assert(!needle.IsNull());
 
-    query_string = StringAfterPrefix(query_string, needle);
-    if (query_string == nullptr)
-        return 0;
+	query_string = StringAfterPrefix(query_string, needle);
+	if (query_string == nullptr)
+		return 0;
 
-    if (*query_string == '&')
-        return needle.size + 1;
-    else if (*query_string == 0)
-        return needle.size;
-    else
-        return 0;
+	if (*query_string == '&')
+		return needle.size + 1;
+	else if (*query_string == 0)
+		return needle.size;
+	else
+		return 0;
 }
 
 const char *
 uri_delete_query_string(AllocatorPtr alloc, const char *uri,
-                        StringView needle)
+			StringView needle)
 {
-    assert(uri != nullptr);
-    assert(!needle.IsNull());
+	assert(uri != nullptr);
+	assert(!needle.IsNull());
 
-    const char *p = strchr(uri, '?');
-    if (p == nullptr)
-        /* no query string, nothing to remove */
-        return uri;
+	const char *p = strchr(uri, '?');
+	if (p == nullptr)
+		/* no query string, nothing to remove */
+		return uri;
 
-    ++p;
-    size_t delete_length = query_string_begins_with(p, needle);
-    if (delete_length == 0)
-        /* mismatch, return original URI */
-        return uri;
+	++p;
+	size_t delete_length = query_string_begins_with(p, needle);
+	if (delete_length == 0)
+		/* mismatch, return original URI */
+		return uri;
 
-    if (p[delete_length] == 0) {
-        /* empty query string - also delete the question mark */
-        --p;
-        ++delete_length;
-    }
+	if (p[delete_length] == 0) {
+		/* empty query string - also delete the question mark */
+		--p;
+		++delete_length;
+	}
 
-    return alloc.Concat(StringView(uri, p),
-                        StringView(p + delete_length));
+	return alloc.Concat(StringView(uri, p),
+			    StringView(p + delete_length));
 }
 
 const char *
 uri_insert_args(AllocatorPtr alloc, const char *uri,
-                StringView args, StringView path)
+		StringView args, StringView path)
 {
-    const char *q = strchr(uri, '?');
-    if (q == nullptr)
-        q = uri + strlen(uri);
+	const char *q = strchr(uri, '?');
+	if (q == nullptr)
+		q = uri + strlen(uri);
 
-    return alloc.Concat(StringView(uri, q),
-                        ';', args, path, q);
+	return alloc.Concat(StringView(uri, q),
+			    ';', args, path, q);
 }
