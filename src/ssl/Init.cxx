@@ -35,15 +35,21 @@
 
 #include <openssl/ssl.h>
 #include <openssl/crypto.h>
-#include <openssl/engine.h>
 #include <openssl/err.h>
+
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+#include <openssl/engine.h>
+#endif
 
 void
 ssl_global_init()
 {
 	SSL_load_error_strings();
 	SSL_library_init();
+
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 	ENGINE_load_builtin_engines();
+#endif
 }
 
 void
@@ -51,7 +57,10 @@ ssl_global_deinit()
 {
 	DeinitFifoBufferBio();
 
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 	ENGINE_cleanup();
+#endif
+
 	EVP_cleanup();
 	CRYPTO_cleanup_all_ex_data();
 
