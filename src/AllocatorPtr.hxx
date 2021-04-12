@@ -62,10 +62,10 @@ public:
 	}
 
 	template<typename... Args>
-	char *Concat(Args&&... args) const noexcept {
-		const size_t length = ConcatLength(args...);
+	char *Concat(Args... args) const noexcept {
+		const size_t length = (ConcatLength(args) + ...);
 		char *result = NewArray<char>(length + 1);
-		*ConcatCopy(result, args...) = 0;
+		*ConcatCopyAll(result, args...) = 0;
 		return result;
 	}
 
@@ -160,59 +160,48 @@ public:
 	SocketAddress Dup(SocketAddress src) const noexcept;
 
 private:
-	template<typename... Args>
-	static size_t ConcatLength(const char *s, Args... args) noexcept {
-		return strlen(s) + ConcatLength(args...);
+	[[gnu::pure]]
+	static size_t ConcatLength(const char *s) noexcept {
+		return strlen(s);
 	}
 
-	template<typename... Args>
-	static size_t ConcatLength(char, Args... args) noexcept {
-		return 1 + ConcatLength(args...);
+	static constexpr size_t ConcatLength(char) noexcept {
+		return 1;
 	}
 
-	template<typename... Args>
-	static constexpr size_t ConcatLength(StringView s, Args... args) noexcept {
-		return s.size + ConcatLength(args...);
+	static constexpr size_t ConcatLength(std::string_view sv) noexcept {
+		return sv.size();
 	}
 
-	template<typename... Args>
-	static constexpr size_t ConcatLength(ConstBuffer<StringView> s,
-					     Args... args) noexcept {
-		size_t length = ConcatLength(args...);
+	static constexpr size_t ConcatLength(ConstBuffer<StringView> s) noexcept {
+		size_t length = 0;
 		for (const auto &i : s)
 			length += i.size;
 		return length;
 	}
 
-	static constexpr size_t ConcatLength() noexcept {
-		return 0;
+	static char *ConcatCopy(char *p, const char *s) noexcept {
+		return stpcpy(p, s);
 	}
 
-	template<typename... Args>
-	static char *ConcatCopy(char *p, const char *s, Args... args) noexcept {
-		return ConcatCopy(stpcpy(p, s), args...);
-	}
-
-	template<typename... Args>
-	static char *ConcatCopy(char *p, char ch, Args... args) noexcept {
+	static char *ConcatCopy(char *p, char ch) noexcept {
 		*p++ = ch;
-		return ConcatCopy(p, args...);
+		return p;
 	}
 
-	template<typename... Args>
-	static char *ConcatCopy(char *p, StringView s, Args... args) noexcept {
-		return ConcatCopy((char *)mempcpy(p, s.data, s.size), args...);
+	static char *ConcatCopy(char *p, std::string_view sv) noexcept {
+		return (char *)mempcpy(p, sv.data(), sv.size());
 	}
 
-	template<typename... Args>
-	static char *ConcatCopy(char *p, ConstBuffer<StringView> s, Args... args) noexcept {
+	static char *ConcatCopy(char *p, ConstBuffer<StringView> s) noexcept {
 		for (const auto &i : s)
 			p = ConcatCopy(p, i);
-		return ConcatCopy(p, args...);
+		return p;
 	}
 
 	template<typename... Args>
-	static char *ConcatCopy(char *p) noexcept {
+	static char *ConcatCopyAll(char *p, Args... args) noexcept {
+		((p = ConcatCopy(p, args)), ...);
 		return p;
 	}
 };
