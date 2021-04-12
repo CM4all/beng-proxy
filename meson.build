@@ -432,6 +432,7 @@ spawn_dep = declare_dependency(
 istream_spawn = static_library(
   'istream_spawn',
   'src/spawn/IstreamSpawn.cxx',
+  'src/spawn/ChildStock.cxx',
   include_directories: inc,
 )
 istream_spawn_dep = declare_dependency(
@@ -829,7 +830,6 @@ executable(
   'libcommon/src/spawn/Client.cxx',
   'libcommon/src/spawn/Glue.cxx',
   'libcommon/src/pg/Interval.cxx',
-  'src/child_stock.cxx',
   'src/bp/CommandLine.cxx',
   'src/bp/Config.cxx',
   'src/bp/ConfigParser.cxx',

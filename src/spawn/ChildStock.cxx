@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "child_stock.hxx"
+#include "ChildStock.hxx"
 #include "spawn/ExitListener.hxx"
 #include "access_log/ChildErrorLog.hxx"
 #include "stock/Stock.hxx"

@@ -40,7 +40,7 @@
 #include "pool/tpool.hxx"
 #include "AllocatorPtr.hxx"
 #include "lease.hxx"
-#include "child_stock.hxx"
+#include "spawn/ChildStock.hxx"
 #include "spawn/Prepared.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"

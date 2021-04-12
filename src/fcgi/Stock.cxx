@@ -36,7 +36,7 @@
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
-#include "child_stock.hxx"
+#include "spawn/ChildStock.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "pool/DisposablePointer.hxx"
