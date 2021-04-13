@@ -70,6 +70,18 @@ public:
 	}
 
 	/**
+	 * Concatenate all parameters into a newly allocated
+	 * std::string_view.
+	 */
+	template<typename... Args>
+	std::string_view ConcatView(Args... args) noexcept {
+		const size_t length = (ConcatLength(args) + ...);
+		char *result = NewArray<char>(length);
+		ConcatCopyAll(result, args...);
+		return {result, length};
+	}
+
+	/**
 	 * Allocate a new buffer with data concatenated from the given source
 	 * buffers.  If one is empty, this may return a pointer to the other
 	 * buffer.
