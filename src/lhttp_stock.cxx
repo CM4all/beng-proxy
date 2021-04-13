@@ -46,6 +46,7 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Logger.hxx"
 #include "util/RuntimeError.hxx"
+#include "util/StringList.hxx"
 
 #include <assert.h>
 #include <sys/socket.h>
@@ -336,11 +337,12 @@ LhttpStock::FadeTag(StringView tag) noexcept
 
 	hstock.FadeIf([tag](const StockItem &item){
 		const auto &connection = (const LhttpConnection &)item;
-		return tag.Equals(connection.GetTag());
+		return StringListContains(connection.GetTag(), '\0', tag);
 	});
 
 	mchild_stock.FadeIf([tag](const StockItem &item){
-		return tag.Equals(child_stock_item_get_tag(item));
+		return StringListContains(child_stock_item_get_tag(item), '\0',
+					  tag);
 	});
 
 	child_stock.FadeTag(tag);

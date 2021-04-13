@@ -44,6 +44,7 @@
 #include "event/SocketEvent.hxx"
 #include "io/Logger.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/StringList.hxx"
 
 #include <was/protocol.h>
 
@@ -118,7 +119,7 @@ public:
 	}
 
 	bool IsTag(StringView other_tag) const noexcept {
-		return other_tag.Equals(std::string_view{tag});
+		return StringListContains(tag, '\0', other_tag);
 	}
 
 	/**

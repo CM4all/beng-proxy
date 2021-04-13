@@ -48,6 +48,7 @@
 #include "io/Logger.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringFormat.hxx"
+#include "util/StringList.hxx"
 
 #include <assert.h>
 #include <sys/socket.h>
@@ -413,7 +414,7 @@ FcgiStock::FadeTag(StringView tag) noexcept
 
 	hstock.FadeIf([tag](const StockItem &item){
 		const auto &connection = (const FcgiConnection &)item;
-		return tag.Equals(connection.GetTag());
+		return StringListContains(connection.GetTag(), '\0', tag);
 	});
 
 	child_stock.FadeTag(tag);

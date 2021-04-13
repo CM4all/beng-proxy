@@ -42,6 +42,7 @@
 #include "net/TempListener.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "util/StringList.hxx"
 #include "util/StringView.hxx"
 
 #include <string>
@@ -114,7 +115,7 @@ public:
 
 	gcc_pure
 	bool IsTag(std::string_view _tag) const noexcept {
-		return tag == _tag;
+		return StringListContains(tag, '\0', _tag);
 	}
 
 	UniqueFileDescriptor GetStderr() const noexcept {

@@ -1229,7 +1229,9 @@ Other Child Process Options
   disabled with ``is_default="no"`` (see :ref:`child_error_logger`).
 
 - ``CHILD_TAG`` specifies a “tag” string for the child process. This
-  can be used to address groups of child processes.
+  can be used to address groups of child processes (e.g. for
+  :ref:`FADE_CHILDREN <fade_children>`).  A child process may have
+  more than one tag.
 
 .. _filter:
 

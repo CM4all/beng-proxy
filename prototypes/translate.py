@@ -704,6 +704,8 @@ class Translation(Protocol):
             name = uri[5:]
             if name in was_examples:
                 response.packet(TRANSLATE_WAS, os.path.join(was_examples_path, name))
+                response.packet(TRANSLATE_CHILD_TAG, 'foo')
+                response.packet(TRANSLATE_CHILD_TAG, 'bar')
                 response.packet(TRANSLATE_NO_NEW_PRIVS)
             else:
                 response.status(404)
