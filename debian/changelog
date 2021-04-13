@@ -2,7 +2,7 @@ cm4all-beng-proxy (17.0.55) unstable; urgency=low
 
   * translation: support multiple CHILD_TAGs
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 13 Apr 2021 09:35:21 +0200
 
 cm4all-beng-proxy (17.0.54) unstable; urgency=low
 
