@@ -110,12 +110,20 @@ LbHttpRequest::OnTranslateResponse(TranslateResponse &response) noexcept
 			return;
 		}
 
-		_request.SendRedirect(HTTP_STATUS_MOVED_PERMANENTLY,
+		http_status_t status = response.status;
+		if (status == http_status_t(0))
+			status = HTTP_STATUS_MOVED_PERMANENTLY;
+
+		const char *msg = response.message;
+		if (msg == nullptr)
+			msg = "This page requires \"https\"";
+
+		_request.SendRedirect(status,
 				      MakeHttpsRedirect(AllocatorPtr{_request.pool},
 							host,
 							response.https_only,
 							_request.uri),
-				      "This page requires \"https\"");
+				      msg);
 	} else if (response.status != http_status_t(0) ||
 		   response.redirect != nullptr ||
 		   response.message != nullptr) {
