@@ -50,7 +50,7 @@ IsValidSchemeChar(char ch) noexcept
 		ch == '+' || ch == '.' || ch == '-';
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 IsValidScheme(StringView p) noexcept
 {

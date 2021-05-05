@@ -77,7 +77,7 @@ private:
 
 static void
 ping_monitor_run(EventLoop &event_loop,
-		 gcc_unused const LbMonitorConfig &config,
+		 const LbMonitorConfig &,
 		 SocketAddress address,
 		 LbMonitorHandler &handler,
 		 CancellablePointer &cancel_ptr)

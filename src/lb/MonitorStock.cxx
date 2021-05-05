@@ -43,7 +43,7 @@
 
 #include <assert.h>
 
-gcc_const
+[[gnu::const]]
 static const LbMonitorClass &
 LookupMonitorClass(LbMonitorConfig::Type type)
 {

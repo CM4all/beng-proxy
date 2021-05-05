@@ -38,14 +38,14 @@
 #include <assert.h>
 #include <string.h>
 
-gcc_pure
+[[gnu::pure]]
 static const char *
 html_unescape_find(StringView p) noexcept
 {
 	return p.Find('&');
 }
 
-gcc_pure
+[[gnu::pure]]
 static const char *
 find_semicolon(const char *p, const char *end) noexcept
 {

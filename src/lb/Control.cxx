@@ -184,9 +184,8 @@ LbControl::FadeNode(const char *payload, size_t length)
 		.SetFade(GetEventLoop().SteadyNow(), std::chrono::hours(3));
 }
 
-gcc_const
-static const char *
-failure_status_to_string(FailureStatus status)
+static constexpr const char *
+failure_status_to_string(FailureStatus status) noexcept
 {
 	switch (status) {
 	case FailureStatus::OK:

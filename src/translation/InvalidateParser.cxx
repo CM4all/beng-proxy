@@ -36,7 +36,7 @@
 #include "util/RuntimeError.hxx"
 #include "pool/pool.hxx"
 
-gcc_pure
+[[gnu::pure]]
 static std::pair<const char *, const char *>
 GetInvalidateNameValue(const TranslateRequest &request,
 		       TranslationCommand command) noexcept

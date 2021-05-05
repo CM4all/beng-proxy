@@ -162,9 +162,8 @@ HttpAddress::Check() const
 		throw std::runtime_error("no ADDRESS for HTTP address");
 }
 
-gcc_const
-static const char *
-uri_protocol_prefix(bool has_host)
+static constexpr const char *
+uri_protocol_prefix(bool has_host) noexcept
 {
 	return has_host ? "http://" : "unix:";
 }

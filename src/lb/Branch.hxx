@@ -54,7 +54,7 @@ public:
 	}
 
 	template<typename R>
-	gcc_pure
+	[[gnu::pure]]
 	bool MatchRequest(const R &request) const {
 		return config.condition.MatchRequest(request);
 	}
@@ -79,7 +79,7 @@ public:
 	}
 
 	template<typename R>
-	gcc_pure
+	[[gnu::pure]]
 	const LbGoto &FindRequestLeaf(const R &request) const {
 		for (const auto &i : conditions)
 			if (i.MatchRequest(request))

@@ -50,7 +50,7 @@ public:
 		values.checked_append(value);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool Contains(unsigned value) const {
 		return values.contains(value);
 	}

@@ -49,7 +49,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-gcc_pure
+[[gnu::pure]]
 static bool
 domain_matches(const char *domain, const char *match) noexcept
 {
@@ -66,7 +66,7 @@ domain_matches(const char *domain, const char *match) noexcept
 		  domain[domain_length - match_length - 1] == '.'));
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 path_matches(const char *path, const char *match) noexcept
 {

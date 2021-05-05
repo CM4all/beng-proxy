@@ -45,7 +45,7 @@
  * Count the number of leading underscores.  Returns 0 if the
  * underscores are not followed by a different name character.
  */
-gcc_pure
+[[gnu::pure]]
 static inline unsigned
 underscore_prefix(StringView s) noexcept
 {
@@ -55,7 +55,7 @@ underscore_prefix(StringView s) noexcept
 	return q - s.data;
 }
 
-gcc_pure
+[[gnu::pure]]
 static inline bool
 is_underscore_prefix(StringView s) noexcept
 {

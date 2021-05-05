@@ -130,7 +130,7 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 	void EnableAllControls() noexcept;
 	void DeinitAllControls() noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	BengProxy::ControlStats GetStats() const noexcept;
 
 	/**

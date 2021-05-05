@@ -90,7 +90,7 @@ class ReplaceIstream : public FacadeIstream, DestructAnchor {
 				: 0;
 		}
 
-		gcc_pure
+		[[gnu::pure]]
 		bool IsActive() const noexcept;
 
 		/* virtual methods from class IstreamHandler */
@@ -164,7 +164,7 @@ private:
 			IsBufferAtEOF();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	off_t GetBufferEndOffsetUntil(off_t _position, const Substitution *s) const noexcept {
 		if (s != nullptr)
 			return std::min(s->start, source_length);
@@ -179,7 +179,7 @@ private:
 			return -1;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	off_t GetBufferEndOffsetUntil(const Substitution *s) const noexcept {
 		return GetBufferEndOffsetUntil(position, s);
 	}

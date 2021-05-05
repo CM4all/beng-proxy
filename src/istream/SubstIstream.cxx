@@ -129,7 +129,7 @@ public:
  */
 
 /** find a character in the tree */
-gcc_pure
+[[gnu::pure]]
 static const SubstNode *
 subst_find_char(const SubstNode *node, char ch) noexcept
 {
@@ -155,7 +155,7 @@ subst_find_char(const SubstNode *node, char ch) noexcept
 }
 
 /** find the leaf ending the current search word */
-gcc_pure
+[[gnu::pure]]
 static const SubstNode *
 subst_find_leaf(const SubstNode *node) noexcept
 {
@@ -183,7 +183,7 @@ subst_find_leaf(const SubstNode *node) noexcept
  * @param true if the remaining input matches so far (but may not be
  * complete yet), false if the input cannot match
  */
-gcc_pure
+[[gnu::pure]]
 static bool
 CheckMatch(const SubstNode *match, ConstBuffer<char> input) noexcept
 {
@@ -204,7 +204,7 @@ CheckMatch(const SubstNode *match, ConstBuffer<char> input) noexcept
 /** find any leaf which begins with the current partial match, used to
     find a buffer which is partially re-inserted into the data
     stream */
-gcc_pure
+[[gnu::pure]]
 static const SubstNode *
 subst_find_any_leaf(const SubstNode *node) noexcept
 {
@@ -219,7 +219,7 @@ subst_find_any_leaf(const SubstNode *node) noexcept
 }
 
 /** iterates over the current depth */
-gcc_pure
+[[gnu::pure]]
 static const SubstNode *
 subst_next_non_leaf_node(const SubstNode *node, const SubstNode *root) noexcept
 {

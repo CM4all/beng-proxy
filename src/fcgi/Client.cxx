@@ -208,7 +208,7 @@ private:
 	 * Find the #FCGI_END_REQUEST packet matching the current request, and
 	 * returns the offset where it ends, or 0 if none was found.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	BufferAnalysis AnalyseBuffer(const void *data, size_t size) const;
 
 	/**

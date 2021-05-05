@@ -48,7 +48,7 @@ align_size(std::size_t size) noexcept
 	return ((size - 1) | 0x1f) + 1;
 }
 
-gcc_const
+[[gnu::const]]
 static inline std::size_t
 align_page_size(std::size_t size) noexcept
 {
@@ -180,7 +180,7 @@ SliceArea::FindFree(unsigned start) const noexcept
  * Find the first allocated slot index, starting at the specified
  * position.
  */
-gcc_pure
+[[gnu::pure]]
 unsigned
 SliceArea::FindAllocated(unsigned start) const noexcept
 {
@@ -309,7 +309,7 @@ SlicePool::Compress() noexcept
 	/* compressing full_areas would have no effect */
 }
 
-gcc_pure
+[[gnu::pure]]
 inline SliceArea *
 SlicePool::FindNonFullArea() noexcept
 {

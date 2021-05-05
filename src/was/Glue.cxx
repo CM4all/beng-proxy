@@ -178,7 +178,7 @@ WasRequest::OnStockItemError(std::exception_ptr ep) noexcept
 
 #ifdef ENABLE_STOPWATCH
 
-gcc_pure
+[[gnu::pure]]
 static const char *
 GetComaClass(ConstBuffer<const char *> parameters)
 {

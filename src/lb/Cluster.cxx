@@ -278,7 +278,7 @@ struct LbCluster::ZeroconfListWrapper {
 		return active_members.end();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool Check(const Expiry now, const_reference member,
 		   bool allow_fade) const noexcept {
 		return member.GetFailureInfo().Check(now, allow_fade);

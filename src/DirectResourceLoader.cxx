@@ -61,7 +61,7 @@
 
 #include <string.h>
 
-gcc_pure
+[[gnu::pure]]
 static const char *
 extract_remote_addr(const StringMap &headers) noexcept
 {
@@ -79,7 +79,7 @@ extract_remote_addr(const StringMap &headers) noexcept
 	return StripLeft(p);
 }
 
-gcc_pure
+[[gnu::pure]]
 static const char *
 extract_remote_ip(struct pool &pool, const StringMap &headers) noexcept
 {
@@ -94,7 +94,7 @@ extract_remote_ip(struct pool &pool, const StringMap &headers) noexcept
 	return p_strdup(pool, eh.host);
 }
 
-gcc_pure
+[[gnu::pure]]
 static const char *
 GetHostWithoutPort(struct pool &pool, const HttpAddress &address) noexcept
 {

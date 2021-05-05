@@ -37,7 +37,7 @@
 
 #include <assert.h>
 
-gcc_pure
+[[gnu::pure]]
 static bool
 at_url_start(const char *p, size_t length) noexcept
 {

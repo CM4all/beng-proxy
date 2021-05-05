@@ -61,7 +61,7 @@ public:
 
 	~FilteredSocketLease() noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsConnected() const noexcept {
 		return socket != nullptr && socket->IsConnected();
 	}
@@ -70,7 +70,7 @@ public:
 		socket->Close();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool HasFilter() const noexcept {
 		assert(!IsReleased());
 
@@ -78,7 +78,7 @@ public:
 	}
 
 #ifndef NDEBUG
-	gcc_pure
+	[[gnu::pure]]
 	bool HasEnded() const noexcept {
 		assert(!IsReleased());
 
@@ -96,7 +96,7 @@ public:
 		return socket == nullptr;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	FdType GetType() const noexcept {
 		assert(!IsReleased());
 
@@ -115,10 +115,10 @@ public:
 		return socket->AsFD();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsEmpty() const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetAvailable() const noexcept;
 
 	WritableBuffer<void> ReadBuffer() const noexcept;

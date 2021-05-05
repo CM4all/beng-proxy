@@ -46,7 +46,7 @@
 
 class SslClientCerts {
 	struct X509NameCompare {
-		gcc_pure
+		[[gnu::pure]]
 		bool operator()(const UniqueX509_NAME &a,
 				const UniqueX509_NAME &b) const noexcept {
 			return X509_NAME_cmp(a.get(), b.get()) < 0;
@@ -65,7 +65,7 @@ public:
 
 	bool Find(X509_NAME &name, X509 **x509, EVP_PKEY **pkey) const noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	const auto *FindByConfiguredName(const char *name) const {
 		auto i = by_name.find(name);
 		return i != by_name.end()

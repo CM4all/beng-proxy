@@ -53,7 +53,7 @@ public:
 		return conn.GetStatus();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetErrorMessage() const {
 		return conn.GetErrorMessage();
 	}
@@ -61,7 +61,7 @@ public:
 	bool CheckConnected();
 	void EnsureConnected();
 
-	gcc_pure
+	[[gnu::pure]]
 	int GetSocket() const {
 		return conn.GetSocket();
 	}
@@ -77,7 +77,7 @@ public:
 	Pg::Result ListenModified();
 	Pg::Result NotifyModified();
 
-	gcc_pure
+	[[gnu::pure]]
 	std::string GetCurrentTimestamp() noexcept {
 		try {
 			const auto result = conn.Execute("SELECT CURRENT_TIMESTAMP");
@@ -87,7 +87,7 @@ public:
 		}
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	std::string GetLastModified() noexcept {
 		try {
 			const auto result = conn.Execute("SELECT MAX(modified) FROM server_certificate");

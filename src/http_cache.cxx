@@ -771,7 +771,7 @@ HttpCache::Miss(struct pool &caller_pool,
 				    *request, request->cancel_ptr);
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 CheckETagList(const char *list, const StringMap &response_headers) noexcept
 {

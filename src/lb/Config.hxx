@@ -90,7 +90,7 @@ struct LbConfig {
 	~LbConfig() noexcept;
 
 	template<typename T>
-	gcc_pure
+	[[gnu::pure]]
 	const LbMonitorConfig *FindMonitor(T &&t) const noexcept {
 		const auto i = monitors.find(std::forward<T>(t));
 		return i != monitors.end()
@@ -99,7 +99,7 @@ struct LbConfig {
 	}
 
 	template<typename T>
-	gcc_pure
+	[[gnu::pure]]
 	const LbCertDatabaseConfig *FindCertDb(T &&t) const noexcept {
 		const auto i = cert_dbs.find(std::forward<T>(t));
 		return i != cert_dbs.end()
@@ -108,7 +108,7 @@ struct LbConfig {
 	}
 
 	template<typename T>
-	gcc_pure
+	[[gnu::pure]]
 	const LbNodeConfig *FindNode(T &&t) const noexcept {
 		const auto i = nodes.find(std::forward<T>(t));
 		return i != nodes.end()
@@ -117,7 +117,7 @@ struct LbConfig {
 	}
 
 	template<typename T>
-	gcc_pure
+	[[gnu::pure]]
 	const LbClusterConfig *FindCluster(T &&t) const noexcept {
 		const auto i = clusters.find(std::forward<T>(t));
 		return i != clusters.end()
@@ -126,7 +126,7 @@ struct LbConfig {
 	}
 
 	template<typename T>
-	gcc_pure
+	[[gnu::pure]]
 	LbGotoConfig FindGoto(T &&t) const noexcept {
 		const auto *cluster = FindCluster(t);
 		if (cluster != nullptr)
@@ -148,7 +148,7 @@ struct LbConfig {
 	}
 
 	template<typename T>
-	gcc_pure
+	[[gnu::pure]]
 	const LbBranchConfig *FindBranch(T &&t) const noexcept {
 		const auto i = branches.find(std::forward<T>(t));
 		return i != branches.end()
@@ -157,7 +157,7 @@ struct LbConfig {
 	}
 
 	template<typename T>
-	gcc_pure
+	[[gnu::pure]]
 	const LbLuaHandlerConfig *FindLuaHandler(T &&t) const noexcept {
 		const auto i = lua_handlers.find(std::forward<T>(t));
 		return i != lua_handlers.end()
@@ -166,7 +166,7 @@ struct LbConfig {
 	}
 
 	template<typename T>
-	gcc_pure
+	[[gnu::pure]]
 	const LbTranslationHandlerConfig *FindTranslationHandler(T &&t) const noexcept {
 		const auto i = translation_handlers.find(std::forward<T>(t));
 		return i != translation_handlers.end()
@@ -175,7 +175,7 @@ struct LbConfig {
 	}
 
 	template<typename T>
-	gcc_pure
+	[[gnu::pure]]
 	const LbListenerConfig *FindListener(T &&t) const noexcept {
 		for (const auto &i : listeners)
 			if (i.name == t)
@@ -192,7 +192,7 @@ struct LbConfig {
 		return false;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool HasZeroConf() const noexcept {
 #ifdef HAVE_AVAHI
 		for (const auto &i : listeners)
@@ -203,7 +203,7 @@ struct LbConfig {
 		return false;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool HasTransparentSource() const noexcept {
 		for (const auto &i : clusters)
 			if (i.second.transparent_source)

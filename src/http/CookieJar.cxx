@@ -63,7 +63,7 @@ CookieJar::Expire(Expiry now) noexcept
 	}, DeleteDisposer{});
 }
 
-gcc_pure
+[[gnu::pure]]
 static Cookie *
 Find(IntrusiveList<Cookie> &list, const char *domain,
      const char *path, const char *name) noexcept
@@ -78,7 +78,7 @@ Find(IntrusiveList<Cookie> &list, const char *domain,
 	return nullptr;
 }
 
-gcc_pure
+[[gnu::pure]]
 static Cookie *
 Find(IntrusiveList<Cookie> &list, const Cookie &cookie) noexcept
 {

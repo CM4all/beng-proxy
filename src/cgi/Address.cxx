@@ -75,7 +75,7 @@ CgiAddress::CgiAddress(AllocatorPtr alloc, const CgiAddress &src)
 {
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 HasTrailingSlash(const char *p)
 {
@@ -287,7 +287,7 @@ CgiAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 	return dest;
 }
 
-gcc_pure
+[[gnu::pure]]
 static const char *
 UnescapeApplyPathInfo(AllocatorPtr alloc, const char *base_path_info,
 		      StringView relative_escaped) noexcept

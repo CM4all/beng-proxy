@@ -72,7 +72,7 @@ Widget::InitApproval(bool self_container) noexcept
 	}
 }
 
-gcc_pure
+[[gnu::pure]]
 static inline bool
 widget_check_group_approval(const Widget *widget) noexcept
 {

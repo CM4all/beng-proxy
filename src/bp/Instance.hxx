@@ -200,7 +200,7 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 	explicit BpInstance(BpConfig &&_config) noexcept;
 	~BpInstance() noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	TranslationServiceBuilder &GetTranslationServiceBuilder() const noexcept;
 
 	void EnableSignals() noexcept;
@@ -239,7 +239,7 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 	void EnableListeners() noexcept;
 	void DisableListeners() noexcept;
 
-	gcc_pure
+	[[gnu::pure]]
 	BengProxy::ControlStats GetStats() const noexcept;
 
 	/* virtual methods from class ControlHandler */

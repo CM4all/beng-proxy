@@ -127,7 +127,7 @@ http_cache_request_invalidate(http_method_t method) noexcept
 		method == HTTP_METHOD_POST;
 }
 
-gcc_pure
+[[gnu::pure]]
 static std::chrono::system_clock::time_point
 parse_translate_time(const char *p,
 		     std::chrono::system_clock::duration offset) noexcept
@@ -164,7 +164,7 @@ http_status_cacheable(http_status_t status) noexcept
  * @return the difference or min() if the server did not send a valid
  * "Date" header
  */
-gcc_pure
+[[gnu::pure]]
 static std::chrono::system_clock::duration
 GetServerDateOffset(const HttpCacheRequestInfo &request_info,
 		    std::chrono::system_clock::time_point now,

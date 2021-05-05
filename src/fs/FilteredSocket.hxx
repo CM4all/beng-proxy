@@ -241,19 +241,19 @@ public:
 	/**
 	 * Is the input buffer empty?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsEmpty() const noexcept;
 
 	/**
 	 * Is the input buffer full?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsFull() const noexcept;
 
 	/**
 	 * Returns the number of bytes in the input buffer.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetAvailable() const noexcept;
 
 	WritableBuffer<void> ReadBuffer() const noexcept;
@@ -294,7 +294,7 @@ public:
 		return base.WriteFrom(fd, fd_type, length);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsReadyForWriting() const noexcept {
 		assert(filter == nullptr);
 
@@ -334,21 +334,21 @@ public:
 			base.UnscheduleWrite();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool InternalIsEmpty() const noexcept {
 		assert(filter != nullptr);
 
 		return base.IsEmpty();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool InternalIsFull() const noexcept {
 		assert(filter != nullptr);
 
 		return base.IsFull();
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	size_t InternalGetAvailable() const noexcept {
 		assert(filter != nullptr);
 

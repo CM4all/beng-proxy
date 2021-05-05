@@ -115,7 +115,7 @@ public:
 		    SocketDescriptor filter_sink);
 };
 
-gcc_const
+[[gnu::const]]
 static const char *
 TypeToString(Net::Log::Type type) noexcept
 {

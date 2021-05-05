@@ -134,7 +134,7 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 
 	using PoolHolder::GetPool;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool MatchSite(const char *_site) const {
 		assert(_site != nullptr);
 
@@ -142,12 +142,12 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 			strcmp(_site, response.site) == 0;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool VaryMatch(const TranslateRequest &request,
 		       TranslationCommand command,
 		       bool strict) const;
 
-	gcc_pure
+	[[gnu::pure]]
 	bool VaryMatch(ConstBuffer<TranslationCommand> vary,
 		       const TranslateRequest &other_request, bool strict) const {
 		for (auto i : vary)
@@ -157,18 +157,18 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 		return true;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool VaryMatch(const TranslateRequest &other_request, bool strict) const {
 		return VaryMatch(response.vary, other_request, strict);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool InvalidateMatch(ConstBuffer<TranslationCommand> vary,
 			     const TranslateRequest &other_request) const {
 		return VaryMatch(vary, other_request, true);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool InvalidateMatch(ConstBuffer<TranslationCommand> vary,
 			     const TranslateRequest &other_request,
 			     const char *other_site) const {
@@ -218,19 +218,19 @@ struct TranslateCachePerHost
 	unsigned Invalidate(const TranslateRequest &request,
 			    ConstBuffer<TranslationCommand> vary);
 
-	gcc_pure
+	[[gnu::pure]]
 	static size_t KeyHasher(const char *key) {
 		assert(key != nullptr);
 
 		return djb_hash_string(key);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	static size_t ValueHasher(const TranslateCachePerHost &value) {
 		return KeyHasher(value.host.c_str());
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	static bool KeyValueEqual(const char *a, const TranslateCachePerHost &b) {
 		assert(a != nullptr);
 
@@ -238,14 +238,14 @@ struct TranslateCachePerHost
 	}
 
 	struct Hash {
-		gcc_pure
+		[[gnu::pure]]
 		size_t operator()(const TranslateCachePerHost &value) const {
 			return ValueHasher(value);
 		}
 	};
 
 	struct Equal {
-		gcc_pure
+		[[gnu::pure]]
 		bool operator()(const TranslateCachePerHost &a,
 				const TranslateCachePerHost &b) const {
 			return KeyValueEqual(a.host.c_str(), b);
@@ -290,19 +290,19 @@ struct TranslateCachePerSite
 	unsigned Invalidate(const TranslateRequest &request,
 			    ConstBuffer<TranslationCommand> vary);
 
-	gcc_pure
+	[[gnu::pure]]
 	static size_t KeyHasher(const char *key) {
 		assert(key != nullptr);
 
 		return djb_hash_string(key);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	static size_t ValueHasher(const TranslateCachePerSite &value) {
 		return KeyHasher(value.site.c_str());
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	static bool KeyValueEqual(const char *a, const TranslateCachePerSite &b) {
 		assert(a != nullptr);
 
@@ -310,14 +310,14 @@ struct TranslateCachePerSite
 	}
 
 	struct Hash {
-		gcc_pure
+		[[gnu::pure]]
 		size_t operator()(const TranslateCachePerSite &value) const {
 			return ValueHasher(value);
 		}
 	};
 
 	struct Equal {
-		gcc_pure
+		[[gnu::pure]]
 		bool operator()(const TranslateCachePerSite &a,
 				const TranslateCachePerSite &b) const {
 			return KeyValueEqual(a.site.c_str(), b);
@@ -1430,7 +1430,7 @@ tcache_miss(AllocatorPtr alloc, struct tcache &tcache,
 				*tcr, cancel_ptr);
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 tcache_validate_mtime(const TranslateResponse &response,
 		      gcc_unused const char *key)

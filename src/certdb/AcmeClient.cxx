@@ -51,7 +51,7 @@
 
 #include <memory>
 
-gcc_pure
+[[gnu::pure]]
 static bool
 IsJson(const GlueHttpResponse &response) noexcept
 {
@@ -65,7 +65,7 @@ IsJson(const GlueHttpResponse &response) noexcept
 		strcmp(content_type, "application/problem+json") == 0;
 }
 
-gcc_pure
+[[gnu::pure]]
 static boost::json::value
 ParseJson(GlueHttpResponse &&response)
 {
@@ -109,7 +109,7 @@ CheckThrowError(const boost::json::object &root, const char *msg)
  * Throw an exception, adding "detail" from the JSON document (if the
  * response is JSON).
  */
-gcc_noreturn
+[[noreturn]]
 static void
 ThrowError(GlueHttpResponse &&response, const char *msg)
 {
@@ -125,7 +125,7 @@ ThrowError(GlueHttpResponse &&response, const char *msg)
 /**
  * Throw an exception due to unexpected status.
  */
-gcc_noreturn
+[[noreturn]]
 static void
 ThrowStatusError(GlueHttpResponse &&response, const char *msg)
 {

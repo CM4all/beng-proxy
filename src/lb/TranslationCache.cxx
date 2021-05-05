@@ -41,7 +41,7 @@ LbTranslationCache::Vary::Vary(const TranslateResponse &response)
 	:host(response.VaryContains(TranslationCommand::HOST)),
 	 listener_tag(response.VaryContains(TranslationCommand::LISTENER_TAG)) {}
 
-gcc_pure
+[[gnu::pure]]
 static StringView
 WithVary(const char *value, bool vary)
 {
@@ -54,7 +54,7 @@ WithVary(const char *value, bool vary)
 	return value;
 }
 
-gcc_pure
+[[gnu::pure]]
 static size_t
 CalculateKeyIteratorBufferSize(StringView host, StringView listener_tag)
 {

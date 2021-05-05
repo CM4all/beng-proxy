@@ -167,7 +167,7 @@ class LbCluster final
 		/**
 		 * Obtain a name identifying this object for logging.
 		 */
-		gcc_pure
+		[[gnu::pure]]
 		const char *GetLogName() const noexcept;
 
 		struct Compare {
@@ -280,7 +280,7 @@ public:
 			      CancellablePointer &cancel_ptr) noexcept;
 
 #ifdef HAVE_AVAHI
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetZeroconfCount() noexcept {
 		if (dirty) {
 			dirty = false;

@@ -121,7 +121,7 @@ TEST(CgiAddressTest, Apply)
 	ASSERT_STREQ(b->path_info, "/bar");
 }
 
-gcc_pure
+[[gnu::pure]]
 static auto
 MakeCgiAddress(const char *executable_path, const char *script_name,
 	       const char *path_info) noexcept

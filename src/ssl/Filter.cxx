@@ -112,7 +112,7 @@ format_issuer_subject_name(X509 *cert)
 	return ToString(X509_get_issuer_name(cert));
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 is_ssl_error(SSL *ssl, int ret)
 {
@@ -273,7 +273,7 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 
 	ERR_clear_error();
 
-	if (gcc_unlikely(handshaking)) {
+	if (handshaking) [[unlikely]] {
 		int result = SSL_do_handshake(ssl.get());
 		if (result == 1) {
 			handshaking = false;
@@ -291,7 +291,7 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 		}
 	}
 
-	if (gcc_likely(!handshaking)) {
+	if (!handshaking) [[likely]] {
 		Encrypt();
 
 		switch (ssl_decrypt(ssl.get(), decrypted_input)) {

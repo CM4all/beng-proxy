@@ -74,7 +74,7 @@ Widget::GetBaseAddress(AllocatorPtr alloc, bool stateful) const noexcept
 	return src.WithPath(alloc, uri);
 }
 
-gcc_pure
+[[gnu::pure]]
 static const ResourceAddress &
 widget_get_original_address(const Widget &widget) noexcept
 {
@@ -86,7 +86,7 @@ widget_get_original_address(const Widget &widget) noexcept
 	return view->address;
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 HasTrailingSlash(const char *p) noexcept
 {
@@ -256,7 +256,7 @@ Widget::RelativeUri(AllocatorPtr alloc, bool stateful,
  * @param other the path to compare with; may be nullptr (i.e. never
  * matches)
  */
-gcc_pure
+[[gnu::pure]]
 static bool
 compare_widget_path(const Widget *widget, const char *other) noexcept
 {

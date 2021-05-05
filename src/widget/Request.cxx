@@ -383,7 +383,7 @@ WidgetRequest::ProcessResponse(http_status_t status,
 						   widget, ctx, options));
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 css_processable(const StringMap &headers) noexcept
 {

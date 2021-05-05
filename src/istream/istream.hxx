@@ -219,7 +219,7 @@ public:
 	 * @return the number of bytes available or -1 if the object does
 	 * not know
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	off_t GetAvailable(bool partial) noexcept {
 #ifndef NDEBUG
 		assert(!destroyed);

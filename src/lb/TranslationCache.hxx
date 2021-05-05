@@ -93,7 +93,7 @@ public:
 	LbTranslationCache()
 		:logger("tcache") {}
 
-	gcc_pure
+	[[gnu::pure]]
 	size_t GetAllocatedMemory() const noexcept;
 
 	void Clear();

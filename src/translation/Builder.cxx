@@ -43,7 +43,7 @@
 class SocketAddress;
 class TranslationStock;
 
-gcc_pure
+[[gnu::pure]]
 inline bool
 SocketAddressCompare::operator()(SocketAddress a,
 				 SocketAddress b) const noexcept

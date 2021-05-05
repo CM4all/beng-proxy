@@ -108,12 +108,12 @@ public:
 		   SocketDescriptor log_socket,
 		   const ChildErrorLogOptions &log_options);
 
-	gcc_pure
+	[[gnu::pure]]
 	StringView GetTag() const {
 		return tag.empty() ? nullptr : StringView{std::string_view{tag}};
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool IsTag(std::string_view _tag) const noexcept {
 		return StringListContains(tag, '\0', _tag);
 	}

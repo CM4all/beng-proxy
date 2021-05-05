@@ -74,7 +74,7 @@ LbHttpConnection::LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 		client_address = "unknown";
 }
 
-gcc_pure
+[[gnu::pure]]
 static int
 HttpServerLogLevel(std::exception_ptr e)
 {

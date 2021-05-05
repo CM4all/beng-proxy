@@ -490,7 +490,7 @@ parse_port(const char *p, SocketAddress address)
 	return port;
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
 validate_protocol_sticky(LbProtocol protocol, StickyMode sticky)
 {
@@ -519,7 +519,7 @@ validate_protocol_sticky(LbProtocol protocol, StickyMode sticky)
 
 #ifdef HAVE_AVAHI
 
-gcc_const
+[[gnu::const]]
 static bool
 ValidateZeroconfSticky(StickyMode sticky) noexcept
 {
@@ -542,7 +542,7 @@ ValidateZeroconfSticky(StickyMode sticky) noexcept
 
 #endif
 
-gcc_pure
+[[gnu::pure]]
 static StickyMode
 ParseStickyMode(const char *s)
 {

@@ -39,6 +39,7 @@
 #include "event/SocketEvent.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Compiler.h"
 #include "util/LeakDetector.hxx"
 
 extern "C" {
@@ -243,7 +244,7 @@ public:
 	/**
 	 * Is the object ready for reading?
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsReady() const noexcept;
 
 	bool IsExpired() const noexcept {

@@ -400,7 +400,7 @@ private:
 		this->~Request();
 	}
 
-	gcc_const
+	[[gnu::const]]
 	TranslationService &GetTranslationService() const noexcept;
 
 public:
@@ -433,7 +433,7 @@ public:
 		stateless = true;
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	bool HasValidCsrfToken() noexcept;
 
 	/**
@@ -546,7 +546,7 @@ public:
 	 * (unless the translation server declared the "transparent"
 	 * mode).
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	const char *ForwardURI() const noexcept;
 
 	/**
@@ -650,21 +650,21 @@ public:
 	 * Note: this ignores the deprecated "SCHEME" translation
 	 * response packet.
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	bool IsHttps() const noexcept;
 
 	/**
 	 * Determine the URI scheme to build absolute external URIs to
 	 * this server, e.g. "https" or "http".
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetExternalUriScheme(const TranslateResponse &tr) const noexcept;
 
 	/**
 	 * Determine the URI host (and port) to build absolute
 	 * external URIs to this server, e.g. "www.example.com:80".
 	 */
-	gcc_pure
+	[[gnu::pure]]
 	const char *GetExternalUriHost(const TranslateResponse &tr) const noexcept;
 
 	const char *GetCookieURI() const noexcept {

@@ -121,7 +121,7 @@ public:
 		return stream->ConsumeBucketList(nbytes);
 	}
 
-	gcc_pure
+	[[gnu::pure]]
 	off_t GetAvailable(bool partial) const noexcept {
 		assert(IsDefined());
 

@@ -39,7 +39,7 @@
  * If the given URI matches the #HttpAddress regarding and port, then
  * return the URI path.  If not, return nullptr.
  */
-gcc_pure
+[[gnu::pure]]
 static const char *
 MatchUriHost(const char *uri, const char *host) noexcept
 {
@@ -64,7 +64,7 @@ MatchUriHost(const char *uri, const char *host) noexcept
     return uri;
 }
 
-gcc_pure
+[[gnu::pure]]
 static StringView
 UriBaseTail(StringView uri, StringView base) noexcept
 {
@@ -73,7 +73,7 @@ UriBaseTail(StringView uri, StringView base) noexcept
         : nullptr;
 }
 
-gcc_pure
+[[gnu::pure]]
 static StringView
 UriPrefixBeforeTail(StringView uri, StringView tail) noexcept
 {
