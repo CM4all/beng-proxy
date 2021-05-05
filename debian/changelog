@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.0.56) unstable; urgency=low
 
   * lb: support HTTPS_ONLY with STATUS/MESSAGE
+  * spawn: Linux 5.12 compatibility
 
  --   
 
