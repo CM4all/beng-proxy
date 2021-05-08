@@ -61,7 +61,5 @@ protected:
 	size_t OnData(const void *data, size_t length) noexcept override;
 	ssize_t OnDirect(FdType type, int fd,
 			 size_t max_length) noexcept override;
-#ifndef NDEBUG
 	void OnEof() noexcept override;
-#endif
 };

@@ -32,7 +32,7 @@
 
 #include "LengthIstream.hxx"
 
-#include <assert.h>
+#include <stdexcept>
 
 off_t
 LengthIstream::_GetAvailable(bool) noexcept
@@ -60,7 +60,11 @@ LengthIstream::_ConsumeBucketList(size_t nbytes) noexcept
 size_t
 LengthIstream::OnData(const void *data, size_t length) noexcept
 {
-	assert(length <= (size_t)remaining);
+	if ((off_t)length > remaining) {
+		DestroyError(std::make_exception_ptr(std::runtime_error("Too much data in stream")));
+		return 0;
+	}
+
 	size_t nbytes = ForwardIstream::OnData(data, length);
 	if (nbytes > 0)
 		remaining -= nbytes;
@@ -77,13 +81,11 @@ LengthIstream::OnDirect(FdType type, int fd,
 	return nbytes;
 }
 
-#ifndef NDEBUG
-
 void
 LengthIstream::OnEof() noexcept
 {
-	assert(remaining == 0);
-	ForwardIstream::OnEof();
+	if (remaining == 0)
+		ForwardIstream::OnEof();
+	else
+		DestroyError(std::make_exception_ptr(std::runtime_error("Premature end of stream")));
 }
-
-#endif
