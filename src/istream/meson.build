@@ -28,6 +28,7 @@ istream_basic = static_library(
   'FourIstream.cxx',
   'HeadIstream.cxx',
   'InjectIstream.cxx',
+  'LengthIstream.cxx',
   'MemoryIstream.cxx',
   'OptionalIstream.cxx',
   'RefIstream.cxx',

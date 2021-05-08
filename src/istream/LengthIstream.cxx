@@ -30,38 +30,60 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "LengthIstream.hxx"
 
-#include "ForwardIstream.hxx"
+#include <assert.h>
 
-/**
- * An #Istream proxy which which provides a known length.  This can be
- * used by a HTTP client to propagate the Content-Length response
- * header, for example.
- */
-class LengthIstream final : public ForwardIstream {
-	off_t remaining;
+off_t
+LengthIstream::_GetAvailable(bool) noexcept
+{
+	return remaining;
+}
 
-public:
-	template<typename P, typename I>
-	LengthIstream(P &&_pool, I &&_input, off_t _length)
-		:ForwardIstream(std::forward<P>(_pool),
-				std::forward<I>(_input)),
-		 remaining(_length) {}
+off_t
+LengthIstream::_Skip(off_t length) noexcept
+{
+	off_t nbytes = ForwardIstream::_Skip(length);
+	if (nbytes > 0)
+		remaining -= nbytes;
+	return nbytes;
+}
 
-	/* virtual methods from class Istream */
+size_t
+LengthIstream::_ConsumeBucketList(size_t nbytes) noexcept
+{
+	auto consumed = input.ConsumeBucketList(nbytes);
+	remaining -= consumed;
+	return consumed;
+}
 
-	off_t _GetAvailable(bool) noexcept override;
-	off_t _Skip(off_t length) noexcept override;
-	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
+size_t
+LengthIstream::OnData(const void *data, size_t length) noexcept
+{
+	assert(length <= (size_t)remaining);
+	size_t nbytes = ForwardIstream::OnData(data, length);
+	if (nbytes > 0)
+		remaining -= nbytes;
+	return nbytes;
+}
 
-protected:
-	/* virtual methods from class IstreamHandler */
+ssize_t
+LengthIstream::OnDirect(FdType type, int fd,
+			size_t max_length) noexcept
+{
+	auto nbytes = ForwardIstream::OnDirect(type, fd, max_length);
+	if (nbytes > 0)
+		remaining -= nbytes;
+	return nbytes;
+}
 
-	size_t OnData(const void *data, size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd,
-			 size_t max_length) noexcept override;
 #ifndef NDEBUG
-	void OnEof() noexcept override;
+
+void
+LengthIstream::OnEof() noexcept
+{
+	assert(remaining == 0);
+	ForwardIstream::OnEof();
+}
+
 #endif
-};
