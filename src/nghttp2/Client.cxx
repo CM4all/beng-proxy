@@ -88,8 +88,6 @@ class ClientConnection::Request final
 
 	http_status_t status = HTTP_STATUS_OK;
 
-	bool eof = false;
-
 	StringMap response_headers;
 
 	MultiFifoBufferIstream *response_body_control;
@@ -176,11 +174,10 @@ public:
 						 {(const char *)value, valuelen});
 	}
 
-	int OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data,
-					uint8_t flags) noexcept;
+	int OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data) noexcept;
 
 	static int OnDataChunkReceivedCallback(nghttp2_session *session,
-					       uint8_t flags,
+					       [[maybe_unused]] uint8_t flags,
 					       int32_t stream_id,
 					       const uint8_t *data,
 					       size_t len,
@@ -200,7 +197,7 @@ public:
 			return 0;
 		}
 
-		return request->OnDataChunkReceivedCallback({data, len}, flags);
+		return request->OnDataChunkReceivedCallback({data, len});
 	}
 
 private:
@@ -372,8 +369,7 @@ ClientConnection::Request::OnHeaderCallback(StringView name,
 }
 
 inline int
-ClientConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data,
-						       uint8_t flags) noexcept
+ClientConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data) noexcept
 {
 	// TODO: limit the MultiFifoBuffer size
 
@@ -383,14 +379,6 @@ ClientConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data
 	}
 
 	response_body_control->Push(data.ToVoid());
-
-	eof = (flags & NGHTTP2_FLAG_END_STREAM) != 0;
-
-	if (eof) {
-		DestroyEof();
-		return 0;
-	}
-
 	response_body_control->SubmitBuffer();
 
 	return 0;
@@ -432,10 +420,8 @@ ClientConnection::Request::SubmitResponse(bool has_response_body) noexcept
 int
 ClientConnection::Request::OnEndDataFrame() noexcept
 {
-	if (!response_body_control || eof)
+	if (!response_body_control)
 		return 0;
-
-	eof = true;
 
 	DestroyEof();
 

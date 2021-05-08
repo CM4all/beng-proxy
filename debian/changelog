@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.57) unstable; urgency=low
 
-  * 
+  * nghttp2: fix crash with END_STREAM on incomplete DATA frame
 
  --   
 

@@ -69,8 +69,6 @@ class ServerConnection::Request final
 
 	const uint32_t id;
 
-	bool eof = false;
-
 	/**
 	 * The response body status.  This is set by SendResponse(),
 	 * and is used later for the access logger.
@@ -192,11 +190,10 @@ public:
 						 {(const char *)value, valuelen});
 	}
 
-	int OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data,
-					uint8_t flags) noexcept;
+	int OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data) noexcept;
 
 	static int OnDataChunkReceivedCallback(nghttp2_session *session,
-					       uint8_t flags,
+					       [[maybe_unused]] uint8_t flags,
 					       int32_t stream_id,
 					       const uint8_t *data,
 					       size_t len,
@@ -216,7 +213,7 @@ public:
 			return 0;
 		}
 
-		return request->OnDataChunkReceivedCallback({data, len}, flags);
+		return request->OnDataChunkReceivedCallback({data, len});
 	}
 
 private:
@@ -287,8 +284,7 @@ ServerConnection::Request::OnHeaderCallback(StringView name,
 }
 
 inline int
-ServerConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data,
-						       uint8_t flags) noexcept
+ServerConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data) noexcept
 {
 	// TODO: limit the MultiFifoBuffer size
 
@@ -298,14 +294,6 @@ ServerConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data
 	}
 
 	request_body_control->Push(data.ToVoid());
-
-	eof = (flags & NGHTTP2_FLAG_END_STREAM) != 0;
-	if (eof) {
-		Consume(request_body_control->GetAvailable());
-		std::exchange(request_body_control, nullptr)->SetEof();
-		return 0;
-	}
-
 	request_body_control->SubmitBuffer();
 
 	return 0;
@@ -355,10 +343,8 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 int
 ServerConnection::Request::OnEndDataFrame() noexcept
 {
-	if (!request_body_control || eof)
+	if (!request_body_control)
 		return 0;
-
-	eof = true;
 
 	Consume(request_body_control->GetAvailable());
 	std::exchange(request_body_control, nullptr)->SetEof();
