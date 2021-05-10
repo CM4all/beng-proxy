@@ -149,9 +149,9 @@ ApplyServerConfig(SSL_CTX *ssl_ctx, const SslCertKeyConfig &cert_key)
 {
 	ERR_clear_error();
 
-	if (SSL_CTX_use_RSAPrivateKey_file(ssl_ctx,
-					   cert_key.key_file.c_str(),
-					   SSL_FILETYPE_PEM) != 1)
+	if (SSL_CTX_use_PrivateKey_file(ssl_ctx,
+					cert_key.key_file.c_str(),
+					SSL_FILETYPE_PEM) != 1)
 		throw SslError("Failed to load key file " +
 			       cert_key.key_file);
 
