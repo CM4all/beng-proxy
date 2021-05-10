@@ -36,18 +36,22 @@
 #include "net/SocketConfig.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/Parser.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "event/Loop.hxx"
 #include "io/Logger.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 #include "util/PrintException.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <stdio.h>
 
 class DumpUdpHandler final : public UdpHandler {
 public:
 	/* virtual methods from class UdpHandler */
-	bool OnUdpDatagram(gcc_unused const void *data, size_t length,
+	bool OnUdpDatagram(ConstBuffer<void> payload,
+			   [[maybe_unused]] WritableBuffer<UniqueFileDescriptor> fds,
 			   gcc_unused SocketAddress address, int uid) override {
-		printf("packet: %zu uid=%d\n", length, uid);
+		printf("packet: %zu uid=%d\n", payload.size, uid);
 		return true;
 	}
 

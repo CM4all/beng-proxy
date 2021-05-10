@@ -35,6 +35,7 @@
 #include "net/SocketConfig.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SendMessage.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
