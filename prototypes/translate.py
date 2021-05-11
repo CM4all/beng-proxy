@@ -1024,6 +1024,20 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_LAYOUT, b'xxx')
                 response.packet(TRANSLATE_BASE, '/layout/foo/')
                 response.packet(TRANSLATE_BASE, '/layout/bar/')
+        elif uri.startswith('/layout-tail/'):
+            if request.layout == b'yyy':
+                if request.regex == 'foo':
+                    response.packet(TRANSLATE_MESSAGE, 'foo\n')
+                elif request.regex == 'bar':
+                    response.packet(TRANSLATE_MESSAGE, 'bar\n')
+                else:
+                    response.status(404)
+            else:
+                response.packet(TRANSLATE_BASE, '/layout-tail/')
+                response.packet(TRANSLATE_LAYOUT, b'yyy')
+                response.packet(TRANSLATE_REGEX_TAIL)
+                response.packet(TRANSLATE_REGEX, 'foo')
+                response.packet(TRANSLATE_REGEX, 'bar')
         elif uri == '/tiny.gif':
             response.packet(TRANSLATE_TINY_IMAGE)
         else:

@@ -58,6 +58,7 @@
 #include "translation/Service.hxx"
 #include "translation/Protocol.hxx"
 #include "translation/Layout.hxx"
+#include "util/StringCompare.hxx"
 #include "HttpMessageResponse.hxx"
 #include "ResourceLoader.hxx"
 
@@ -490,9 +491,19 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 			return;
 		}
 
+		const char *uri = translate.request.uri;
+		if (response.regex_tail && response.base != nullptr) {
+			uri = StringAfterPrefix(uri, response.base);
+			if (uri == nullptr) {
+				LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
+						 "Base mismatch", 1);
+				return;
+			}
+		}
+
 		translate.request.layout = response.layout;
 		translate.request.layout_item = FindLayoutItem(response.layout_items,
-							       translate.request.uri);
+							       uri);
 	}
 
 	if (!response.check.IsNull()) {

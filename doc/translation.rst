@@ -696,6 +696,10 @@ response packets allow reusing cache items for different requests:
   This response can be cached and reused for everything below
   ``/.cm4all/``, except for URIs below ``/.cm4all/private/``.
 
+  If ``LAYOUT`` is followed by ``REGEX_TAIL``, then all regular
+  expressions are matched against the tail of the URI after the given
+  ``BASE``.
+
 .. _tstatic:
 
 Static files
