@@ -2,6 +2,7 @@ cm4all-beng-proxy (17.0.57) unstable; urgency=low
 
   * nghttp2: fix crash with END_STREAM on incomplete DATA frame
   * nghttp2: fix crash after receiving bogus Content-Length
+  * python/translation/request: support BASE and REGEX (for LAYOUT requests)
 
  --   
 

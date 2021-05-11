@@ -87,6 +87,8 @@ class Request:
         self.password = None
         self.service = None
         self.cron = False
+        self.base = None
+        self.regex = None
 
     def __getattr__(self, name):
         if name == 'uri':
@@ -201,6 +203,10 @@ class Request:
                 self.cron = packet.payload.decode('ascii')
             else:
                 self.cron = True
+        elif packet.command == TRANSLATE_BASE:
+            self.base = packet.payload.decode('ascii')
+        elif packet.command == TRANSLATE_REGEX:
+            self.regex = packet.payload.decode('ascii')
         elif packet.command != TRANSLATE_LOCAL_ADDRESS:
             print("Invalid command:", packet.command)
         return False
