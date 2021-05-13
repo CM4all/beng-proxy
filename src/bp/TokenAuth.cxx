@@ -246,6 +246,7 @@ Request::HandleTokenAuth(const TranslateResponse &response) noexcept
 	t->uri = auth_token != nullptr
 		? RecomposeUri(pool, dissected_uri)
 		: request.uri;
+	t->listener_tag = translate.request.listener_tag;
 	t->host = translate.request.host;
 	t->session = translate.request.session;
 

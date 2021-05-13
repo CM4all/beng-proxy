@@ -927,7 +927,7 @@ following packets:
   (unescaped)
 - ``URI`` is the full request URI with only the ``auth_token`` query
   string parameter removed
-- ``HOST``
+- ``LISTENER_TAG``, ``HOST``
 
 If no ``access_token`` parameter was present, :program:`beng-proxy`
 checks if a ``USER`` is already set in the current session; if yes,

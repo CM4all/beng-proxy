@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.58) unstable; urgency=low
 
-  * 
+  * translation: send the LISTENER_TAG packet in TOKEN_AUTH requests
 
  --   
 
