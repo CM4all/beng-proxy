@@ -31,6 +31,7 @@ was_common_dep = declare_dependency(
 was_client = static_library(
   'was_client',
   'Client.cxx',
+  'IdleConnection.cxx',
   'Stock.cxx',
   'Launch.cxx',
   'Glue.cxx',

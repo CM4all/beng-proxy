@@ -32,6 +32,7 @@
 
 #include "Stock.hxx"
 #include "Launch.hxx"
+#include "IdleConnection.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
 #include "access_log/ChildErrorLog.hxx"
@@ -41,12 +42,9 @@
 #include "pool/DisposablePointer.hxx"
 #include "pool/tpool.hxx"
 #include "pool/StringBuilder.hxx"
-#include "event/SocketEvent.hxx"
 #include "io/Logger.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringList.hxx"
-
-#include <was/protocol.h>
 
 #include <string>
 
@@ -77,7 +75,7 @@ struct WasChildParams {
 	const char *GetStockKey(struct pool &pool) const noexcept;
 };
 
-class WasChild final : public StockItem, ExitListener {
+class WasChild final : public StockItem, ExitListener, WasIdleConnectionHandler {
 	const LLogger logger;
 
 	SpawnService &spawn_service;
@@ -86,36 +84,23 @@ class WasChild final : public StockItem, ExitListener {
 
 	ChildErrorLog log;
 
-	WasProcess process;
-	SocketEvent event;
+	int pid = -1;
 
-	/**
-	 * If true, then we're waiting for PREMATURE (after the #WasClient
-	 * has sent #WAS_COMMAND_STOP).
-	 */
-	bool stopping = false;
-
-	/**
-	 * The number of bytes received before #WAS_COMMAND_STOP was sent.
-	 */
-	uint64_t input_received;
+	WasIdleConnection connection;
 
 public:
 	explicit WasChild(CreateStockItem c, SpawnService &_spawn_service,
 			  std::string_view _tag) noexcept
 		:StockItem(c), logger(GetStockName()), spawn_service(_spawn_service),
 		 tag(_tag),
-		 event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback))
+		 connection(c.stock.GetEventLoop(), *this)
 	{
-		/* mark this object as "unused" so the destructor doesn't
-		   attempt to kill the process */
-		process.pid = -1;
 	}
 
 	~WasChild() noexcept override;
 
-	auto &GetEventLoop() noexcept {
-		return event.GetEventLoop();
+	auto &GetEventLoop() const noexcept {
+		return connection.GetEventLoop();
 	}
 
 	bool IsTag(StringView other_tag) const noexcept {
@@ -127,16 +112,21 @@ public:
 	 */
 	void Launch(const WasChildParams &params, SocketDescriptor log_socket,
 		    const ChildErrorLogOptions &log_options) {
-		process = was_launch(spawn_service,
-				     GetStockName(),
-				     params.executable_path,
-				     params.args,
-				     params.options,
-				     log.EnableClient(GetEventLoop(),
-						      log_socket, log_options,
-						      params.options.stderr_pond),
-				     this);
-		event.Open(process.control);
+		auto process =
+			was_launch(spawn_service,
+				   GetStockName(),
+				   params.executable_path,
+				   params.args,
+				   params.options,
+				   log.EnableClient(GetEventLoop(),
+						    log_socket, log_options,
+						    params.options.stderr_pond),
+				   this);
+
+		pid = process.pid;
+
+		WasSocket &socket = process;
+		connection.Open(std::move(socket));
 	}
 
 	void SetSite(const char *_site) noexcept {
@@ -148,73 +138,41 @@ public:
 	}
 
 	const WasSocket &GetSocket() const noexcept {
-		return process;
+		return connection.GetSocket();
 	}
 
 	void Stop(uint64_t _received) noexcept {
 		assert(!is_idle);
-		assert(!stopping);
 
-		stopping = true;
-		input_received = _received;
+		connection.Stop(_received);
 	}
-
-private:
-	enum class ReceiveResult {
-		SUCCESS, ERROR, AGAIN,
-	};
-
-	/**
-	 * Receive data on the control channel.
-	 */
-	ReceiveResult ReceiveControl(void *p, size_t size) noexcept;
-
-	/**
-	 * Receive and discard data on the control channel.
-	 *
-	 * @return true on success
-	 */
-	bool DiscardControl(size_t size) noexcept;
-
-	/**
-	 * Discard the given amount of data from the input pipe.
-	 *
-	 * @return true on success
-	 */
-	bool DiscardInput(uint64_t remaining) noexcept;
-
-	/**
-	 * Attempt to recover after the WAS client sent STOP to the
-	 * application.  This method waits for PREMATURE and discards
-	 * excess data from the pipe.
-	 */
-	void RecoverStop() noexcept;
-
-	void EventCallback(unsigned events) noexcept;
 
 public:
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override {
-		if (stopping)
-			/* we havn't yet recovered from #WAS_COMMAND_STOP - give
-			   up this child process */
-			// TODO: improve recovery for this case
-			return false;
-
-		event.Cancel();
-		return true;
+		return connection.Borrow();
 	}
 
 	bool Release() noexcept override {
-		event.ScheduleRead();
-		unclean = stopping;
+		connection.Release();
+		unclean = connection.IsStopping();
 		return true;
 	}
 
 private:
 	/* virtual methods from class ExitListener */
 	void OnChildProcessExit(gcc_unused int status) noexcept override {
-		process.pid = -1;
+		pid = -1;
+	}
+
+	/* virtual methods from class WasIdleConnectionHandler */
+	void OnWasIdleConnectionClean() noexcept override {
+		ClearUncleanFlag();
+	}
+
+	void OnWasIdleConnectionError(std::exception_ptr e) noexcept override {
+		logger(2, e);
+		InvokeIdleDisconnect();
 	}
 };
 
@@ -239,161 +197,6 @@ WasChildParams::GetStockKey(struct pool &pool) const noexcept
 		       options.MakeId(options_buffer));
 
 	return b(pool);
-}
-
-WasChild::ReceiveResult
-WasChild::ReceiveControl(void *p, size_t size) noexcept
-{
-	ssize_t nbytes = recv(process.control.Get(), p, size, MSG_DONTWAIT);
-	if (nbytes == (ssize_t)size)
-		return ReceiveResult::SUCCESS;
-
-	if (nbytes < 0 && errno == EAGAIN) {
-		/* the WAS application didn't send enough data (yet); don't
-		   bother waiting for more, just give up on this process */
-		return ReceiveResult::AGAIN;
-	}
-
-	if (nbytes < 0)
-		logger(2, "error on idle WAS control connection: ", strerror(errno));
-	else if (nbytes > 0)
-		logger(2, "unexpected data from idle WAS control connection");
-	return ReceiveResult::ERROR;
-}
-
-bool
-WasChild::DiscardControl(size_t size) noexcept
-{
-	while (size > 0) {
-		char buffer[1024];
-		ssize_t nbytes = recv(process.control.Get(), buffer,
-				      std::min(size, sizeof(buffer)),
-				      MSG_DONTWAIT);
-		if (nbytes <= 0)
-			return false;
-
-		size -= nbytes;
-	}
-
-	return true;
-}
-
-inline bool
-WasChild::DiscardInput(uint64_t remaining) noexcept
-{
-	while (remaining > 0) {
-		uint8_t buffer[16384];
-		size_t size = std::min(remaining, uint64_t(sizeof(buffer)));
-		ssize_t nbytes = process.input.Read(buffer, size);
-		if (nbytes <= 0)
-			return false;
-
-		remaining -= nbytes;
-	}
-
-	return true;
-}
-
-inline void
-WasChild::RecoverStop() noexcept
-{
-	uint64_t premature;
-
-	while (true) {
-		struct was_header header;
-		switch (ReceiveControl(&header, sizeof(header))) {
-		case ReceiveResult::SUCCESS:
-			break;
-
-		case ReceiveResult::ERROR:
-			InvokeIdleDisconnect();
-			return;
-
-		case ReceiveResult::AGAIN:
-			/* wait for more data */
-			return;
-		}
-
-		switch ((enum was_command)header.command) {
-		case WAS_COMMAND_NOP:
-			/* ignore */
-			continue;
-
-		case WAS_COMMAND_HEADER:
-		case WAS_COMMAND_STATUS:
-		case WAS_COMMAND_NO_DATA:
-		case WAS_COMMAND_DATA:
-		case WAS_COMMAND_LENGTH:
-		case WAS_COMMAND_STOP:
-			/* discard & ignore */
-			if (!DiscardControl(header.length)) {
-				InvokeIdleDisconnect();
-				return;
-			}
-			continue;
-
-		case WAS_COMMAND_REQUEST:
-		case WAS_COMMAND_METHOD:
-		case WAS_COMMAND_URI:
-		case WAS_COMMAND_SCRIPT_NAME:
-		case WAS_COMMAND_PATH_INFO:
-		case WAS_COMMAND_QUERY_STRING:
-		case WAS_COMMAND_PARAMETER:
-			logger(2, "unexpected data from idle WAS control connection '",
-			       GetStockName(), "'");
-			InvokeIdleDisconnect();
-			return;
-
-		case WAS_COMMAND_PREMATURE:
-			/* this is what we're waiting for */
-			break;
-		}
-
-		if (ReceiveControl(&premature, sizeof(premature)) != ReceiveResult::SUCCESS) {
-			InvokeIdleDisconnect();
-			return;
-		}
-
-		break;
-	}
-
-	if (premature < input_received) {
-		InvokeIdleDisconnect();
-		return;
-	}
-
-	if (!DiscardInput(premature - input_received)) {
-		InvokeIdleDisconnect();
-		return;
-	}
-
-	stopping = false;
-	ClearUncleanFlag();
-}
-
-/*
- * libevent callback
- *
- */
-
-inline void
-WasChild::EventCallback(unsigned) noexcept
-{
-	if (stopping) {
-		RecoverStop();
-		return;
-	}
-
-	char buffer;
-	ssize_t nbytes = recv(process.control.Get(), &buffer, sizeof(buffer),
-			      MSG_DONTWAIT);
-	if (nbytes < 0)
-		logger(2, "error on idle WAS control connection: ",
-		       strerror(errno));
-	else if (nbytes > 0)
-		logger(2, "unexpected data from idle WAS control connection");
-
-	InvokeIdleDisconnect();
 }
 
 /*
@@ -436,8 +239,8 @@ WasStock::Create(CreateStockItem c, StockRequest _request,
 
 WasChild::~WasChild() noexcept
 {
-	if (process.pid >= 0)
-		spawn_service.KillChildProcess(process.pid);
+	if (pid >= 0)
+		spawn_service.KillChildProcess(pid);
 }
 
 /*
