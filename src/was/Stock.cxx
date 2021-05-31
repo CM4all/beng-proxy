@@ -147,7 +147,7 @@ public:
 		log.SetUri(_uri);
 	}
 
-	const WasProcess &GetProcess() const noexcept {
+	const WasSocket &GetSocket() const noexcept {
 		return process;
 	}
 
@@ -476,12 +476,12 @@ was_stock_item_set_uri(StockItem &item, const char *uri) noexcept
 	child.SetUri(uri);
 }
 
-const WasProcess &
+const WasSocket &
 was_stock_item_get(const StockItem &item) noexcept
 {
 	auto *child = (const WasChild *)&item;
 
-	return child->GetProcess();
+	return child->GetSocket();
 }
 
 void

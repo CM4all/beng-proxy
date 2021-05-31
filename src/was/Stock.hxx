@@ -42,7 +42,7 @@
 struct pool;
 struct StringView;
 struct ChildOptions;
-struct WasProcess;
+struct WasSocket;
 template<typename T> struct ConstBuffer;
 class SpawnService;
 
@@ -97,7 +97,7 @@ was_stock_item_set_uri(StockItem &item, const char *uri) noexcept;
  * Returns the socket descriptor of the specified stock item.
  */
 [[gnu::pure]]
-const WasProcess &
+const WasSocket &
 was_stock_item_get(const StockItem &item) noexcept;
 
 /**
