@@ -52,6 +52,7 @@
 #include "lhttp_stock.hxx"
 #include "fcgi/Stock.hxx"
 #include "was/Stock.hxx"
+#include "was/MStock.hxx"
 #include "delegate/Stock.hxx"
 #include "fcache.hxx"
 #include "thread/Pool.hxx"
@@ -492,6 +493,13 @@ try {
 					  child_log_socket, child_log_options,
 					  instance.config.was_stock_limit,
 					  instance.config.was_stock_max_idle);
+	instance.multi_was_stock =
+		new MultiWasStock(instance.config.was_stock_limit, // TODO: separate config for MultiWas
+				  instance.config.was_stock_max_idle,
+				  instance.event_loop,
+				  *instance.spawn_service,
+				  child_log_socket,
+				  child_log_options);
 #endif
 
 	instance.delegate_stock = delegate_stock_new(instance.event_loop,
@@ -520,6 +528,7 @@ try {
 					 instance.fcgi_stock,
 #ifdef HAVE_LIBWAS
 					 instance.was_stock,
+					 instance.multi_was_stock,
 #endif
 					 instance.delegate_stock,
 #ifdef HAVE_LIBNFS

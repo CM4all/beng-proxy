@@ -53,6 +53,7 @@
 struct StringView;
 class AccessLogGlue;
 class WasStock;
+class MultiWasStock;
 class PipeStock;
 class ResourceLoader;
 class StockMap;
@@ -178,6 +179,7 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 
 #ifdef HAVE_LIBWAS
 	WasStock *was_stock = nullptr;
+	MultiWasStock *multi_was_stock = nullptr;
 #endif
 
 	StockMap *delegate_stock = nullptr;

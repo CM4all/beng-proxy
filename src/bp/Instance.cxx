@@ -52,6 +52,7 @@
 #include "lhttp_stock.hxx"
 #include "fcgi/Stock.hxx"
 #include "was/Stock.hxx"
+#include "was/MStock.hxx"
 #include "delegate/Stock.hxx"
 #include "tcp_stock.hxx"
 #include "ssl/Client.hxx"
@@ -140,6 +141,7 @@ BpInstance::FreeStocksAndCaches() noexcept
 
 #ifdef HAVE_LIBWAS
 	delete std::exchange(was_stock, nullptr);
+	delete std::exchange(multi_was_stock, nullptr);
 #endif
 
 	delete std::exchange(fs_balancer, nullptr);
@@ -247,6 +249,8 @@ BpInstance::FadeChildren() noexcept
 #ifdef HAVE_LIBWAS
 	if (was_stock != nullptr)
 		was_stock->FadeAll();
+	if (multi_was_stock != nullptr)
+		multi_was_stock->FadeAll();
 #endif
 
 	if (delegate_stock != nullptr)
@@ -267,6 +271,8 @@ BpInstance::FadeTaggedChildren(StringView tag) noexcept
 #ifdef HAVE_LIBWAS
 	if (was_stock != nullptr)
 		was_stock->FadeTag(tag);
+	if (multi_was_stock != nullptr)
+		multi_was_stock->FadeTag(tag);
 #endif
 
 	// TODO: delegate_stock

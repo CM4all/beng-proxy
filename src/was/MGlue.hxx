@@ -32,33 +32,36 @@
 
 #pragma once
 
-#include "util/ConstBuffer.hxx"
+#include "http/Method.h"
 
+struct pool;
+class StopwatchPtr;
+class UnusedIstreamPtr;
+class MultiWasStock;
+class StringMap;
+class HttpResponseHandler;
+class CancellablePointer;
 struct ChildOptions;
-class AllocatorPtr;
+template<typename T> struct ConstBuffer;
 
-struct CgiChildParams {
-	const char *executable_path;
-
-	ConstBuffer<const char *> args;
-
-	const ChildOptions &options;
-
-	unsigned concurrency;
-
-	CgiChildParams(const char *_executable_path,
-		       ConstBuffer<const char *> _args,
-		       const ChildOptions &_options,
-		       unsigned _concurrency=0) noexcept
-		:executable_path(_executable_path), args(_args),
-		 options(_options),
-		 concurrency(_concurrency) {}
-
-	/**
-	 * Generates a string identifying the process.  This can be
-	 * used as a key in a hash table.  The string will be
-	 * allocated by the specified pool.
-	 */
-	[[gnu::pure]]
-	const char *GetStockKey(AllocatorPtr alloc) const noexcept;
-};
+/**
+ * High level Multi-WAS client.
+ *
+ * @param args command-line arguments
+ */
+void
+SendMultiWasRequest(struct pool &pool, MultiWasStock &was_stock,
+		    const StopwatchPtr &parent_stopwatch,
+		    const char *site_name,
+		    const ChildOptions &options,
+		    const char *action,
+		    const char *path,
+		    ConstBuffer<const char *> args,
+		    http_method_t method, const char *uri,
+		    const char *script_name, const char *path_info,
+		    const char *query_string,
+		    StringMap &&headers, UnusedIstreamPtr body,
+		    ConstBuffer<const char *> params,
+		    unsigned concurrency,
+		    HttpResponseHandler &handler,
+		    CancellablePointer &cancel_ptr) noexcept;

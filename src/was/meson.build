@@ -1,4 +1,4 @@
-libwas = dependency('libcm4all-was-protocol', version: '>= 1.0', required: get_option('was'))
+libwas = dependency('libcm4all-was-protocol', version: '>= 2', required: get_option('was'))
 if not libwas.found()
   was_client_dep = dependency('', required: false)
   subdir_done()
@@ -35,6 +35,8 @@ was_client = static_library(
   'Stock.cxx',
   'Launch.cxx',
   'Glue.cxx',
+  'MStock.cxx',
+  'MGlue.cxx',
   include_directories: inc,
   dependencies: [
     libwas,

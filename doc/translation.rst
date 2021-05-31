@@ -249,7 +249,7 @@ Response
 - ``LHTTP_HOST``: the “Host” request header for ``LHTTP_PATH``
 
 - ``CONCURRENCY``: a 16 bit integer specifying the maximum number of
-  concurrent requests to this server (LHTTP only currently)
+  concurrent requests to this server (LHTTP and Multi-WAS only)
 
 - ``NON_BLOCKING``: If present, make the socket passed to a child
   process non-blocking (LHTTP only currently). This is needed by NodeJS
@@ -262,7 +262,8 @@ Response
   :ref:`t-cgi`)
 
 - ``WAS``: a local path which is executed as WAS application (see
-  :ref:`t-cgi`)
+  :ref:`t-cgi`).  May be followed by ``CONCURRENCY`` to enable
+  Multi-WAS mode.
 
 - ``REDIRECT``: another alternative to ``PATH``: redirect the HTTP
   client to this URL; ``STATUS`` must be set to one of the HTTP 3xx

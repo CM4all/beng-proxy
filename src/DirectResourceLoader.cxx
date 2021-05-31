@@ -44,6 +44,7 @@
 #include "fcgi/Request.hxx"
 #include "fcgi/Remote.hxx"
 #include "was/Glue.hxx"
+#include "was/MGlue.hxx"
 #include "nfs/Address.hxx"
 #include "nfs/Glue.hxx"
 #include "pipe_filter.hxx"
@@ -244,19 +245,36 @@ try {
 	case ResourceAddress::Type::WAS:
 #ifdef HAVE_LIBWAS
 		cgi = &address.GetCgi();
-		was_request(pool, *was_stock, parent_stopwatch,
-			    site_name,
-			    cgi->options,
-			    cgi->action,
-			    cgi->path,
-			    cgi->args.ToArray(pool),
-			    method, cgi->GetURI(pool),
-			    cgi->script_name,
-			    cgi->path_info,
-			    cgi->query_string,
-			    std::move(headers), std::move(body),
-			    cgi->params.ToArray(pool),
-			    handler, cancel_ptr);
+
+		if (cgi->concurrency == 0)
+			was_request(pool, *was_stock, parent_stopwatch,
+				    site_name,
+				    cgi->options,
+				    cgi->action,
+				    cgi->path,
+				    cgi->args.ToArray(pool),
+				    method, cgi->GetURI(pool),
+				    cgi->script_name,
+				    cgi->path_info,
+				    cgi->query_string,
+				    std::move(headers), std::move(body),
+				    cgi->params.ToArray(pool),
+				    handler, cancel_ptr);
+		else
+			SendMultiWasRequest(pool, *multi_was_stock, parent_stopwatch,
+					    site_name,
+					    cgi->options,
+					    cgi->action,
+					    cgi->path,
+					    cgi->args.ToArray(pool),
+					    method, cgi->GetURI(pool),
+					    cgi->script_name,
+					    cgi->path_info,
+					    cgi->query_string,
+					    std::move(headers), std::move(body),
+					    cgi->params.ToArray(pool),
+					    cgi->concurrency,
+					    handler, cancel_ptr);
 		return;
 #else
 		throw std::runtime_error("WAS support is disabled");
