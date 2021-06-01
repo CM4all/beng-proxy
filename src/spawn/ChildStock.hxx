@@ -35,7 +35,6 @@
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
 #include "access_log/ChildErrorLogOptions.hxx"
-#include "io/FdType.hxx"
 #include "net/SocketDescriptor.hxx"
 
 struct PreparedChildProcess;
@@ -189,12 +188,6 @@ private:
  */
 UniqueSocketDescriptor
 child_stock_item_connect(StockItem &item);
-
-constexpr FdType
-child_stock_item_get_type(const StockItem &) noexcept
-{
-	return FdType::FD_SOCKET;
-}
 
 [[gnu::pure]]
 StringView
