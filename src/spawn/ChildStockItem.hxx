@@ -76,17 +76,20 @@ public:
 
 	~ChildStockItem() noexcept override;
 
-	EventLoop &GetEventLoop() {
+	auto &GetEventLoop() const noexcept {
 		return stock.GetEventLoop();
 	}
 
+	/**
+	 * Throws on error.
+	 */
 	void Spawn(ChildStockClass &cls, void *info,
 		   unsigned backlog,
 		   SocketDescriptor log_socket,
 		   const ChildErrorLogOptions &log_options);
 
 	[[gnu::pure]]
-	StringView GetTag() const {
+	StringView GetTag() const noexcept {
 		return tag.empty() ? nullptr : StringView{std::string_view{tag}};
 	}
 
