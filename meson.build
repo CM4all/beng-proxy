@@ -34,7 +34,7 @@ common_flags = [
   '-D_REENTRANT', '-D_GNU_SOURCE',
   '-DCACHE_LOG',
   '-Wwrite-strings', '-Wcast-qual', '-Wcast-align', '-Wfloat-equal',
-  '-Wshadow', '-Wpointer-arith',
+  '-Wshadow',
   '-Wmissing-declarations', '-Wmissing-noreturn', '-Wmissing-format-attribute',
   '-Wredundant-decls',
   '-Wunused',
