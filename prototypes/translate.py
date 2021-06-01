@@ -249,7 +249,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FASTCGI, easy_path)
             response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1')
-            response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
+            response.packet(TRANSLATE_ACTION, '/usr/bin/php-cgi')
             response.packet(TRANSLATE_FILE_NOT_FOUND, '404')
             response.packet(TRANSLATE_ENOTDIR, 'foo')
         elif uri[-3:] == '.py':
@@ -310,7 +310,7 @@ class Translation(Protocol):
                 elif request.probe_suffix == '.php':
                     response.packet(TRANSLATE_FASTCGI, path)
                     response.packet(TRANSLATE_NO_NEW_PRIVS)
-                    response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
+                    response.packet(TRANSLATE_ACTION, '/usr/bin/php-cgi')
                 elif request.probe_suffix == '.cls':
                     response.packet(TRANSLATE_WAS, coma_was)
                     response.packet(TRANSLATE_NO_NEW_PRIVS)
@@ -337,7 +337,7 @@ class Translation(Protocol):
             else:
                 response.packet(TRANSLATE_CGI, m.group(1))
             response.packet(TRANSLATE_NO_NEW_PRIVS)
-            response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
+            response.packet(TRANSLATE_ACTION, '/usr/bin/php-cgi')
             response.packet(TRANSLATE_PATH_INFO, m.group(2))
             response.packet(TRANSLATE_AUTO_BASE)
             return
