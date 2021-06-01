@@ -48,7 +48,7 @@ class UniquePoolPtr : LeakDetector {
 
 public:
 	UniquePoolPtr() = default;
-	UniquePoolPtr(std::nullptr_t) noexcept {};
+	UniquePoolPtr(std::nullptr_t) noexcept {}
 	explicit UniquePoolPtr(T *_value) noexcept:value(_value) {}
 
 	UniquePoolPtr(UniquePoolPtr &&src) noexcept

@@ -46,7 +46,7 @@ public:
 	 * headers; but not the body).  This can be used to collect
 	 * metadata for LogHttpRequest().
 	 */
-	virtual void RequestHeadersFinished(IncomingHttpRequest &) noexcept {};
+	virtual void RequestHeadersFinished(IncomingHttpRequest &) noexcept {}
 
 	virtual void HandleHttpRequest(IncomingHttpRequest &request,
 				       const StopwatchPtr &parent_stopwatch,
