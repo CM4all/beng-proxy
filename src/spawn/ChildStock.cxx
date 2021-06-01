@@ -31,24 +31,12 @@
  */
 
 #include "ChildStock.hxx"
-#include "spawn/ExitListener.hxx"
-#include "access_log/ChildErrorLog.hxx"
-#include "stock/Stock.hxx"
-#include "stock/Item.hxx"
-#include "spawn/Interface.hxx"
-#include "spawn/Prepared.hxx"
-#include "system/Error.hxx"
-#include "net/EasyMessage.hxx"
-#include "net/TempListener.hxx"
+#include "ChildStockItem.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "util/StringList.hxx"
 #include "util/StringView.hxx"
 
-#include <string>
-
-#include <assert.h>
-#include <unistd.h>
+#include <cassert>
 
 int
 ChildStockClass::GetChildSocketType(void *) const noexcept
@@ -66,155 +54,6 @@ StringView
 ChildStockClass::GetChildTag(void *) const noexcept
 {
 	return nullptr;
-}
-
-class ChildStockItem final
-	: public StockItem,
-	  public ChildStockItemHook,
-	  ExitListener
-{
-	ChildStock &child_stock;
-	SpawnService &spawn_service;
-
-	const std::string tag;
-
-	ChildErrorLog log;
-
-	UniqueFileDescriptor stderr_fd;
-
-	TempListener socket;
-	int pid = -1;
-
-	bool busy = true;
-
-public:
-	ChildStockItem(CreateStockItem c,
-		       ChildStock &_child_stock,
-		       SpawnService &_spawn_service,
-		       std::string_view _tag) noexcept
-		:StockItem(c),
-		 child_stock(_child_stock),
-		 spawn_service(_spawn_service),
-		 tag(_tag) {}
-
-	~ChildStockItem() override;
-
-	EventLoop &GetEventLoop() {
-		return stock.GetEventLoop();
-	}
-
-	void Spawn(ChildStockClass &cls, void *info,
-		   unsigned backlog,
-		   SocketDescriptor log_socket,
-		   const ChildErrorLogOptions &log_options);
-
-	[[gnu::pure]]
-	StringView GetTag() const {
-		return tag.empty() ? nullptr : StringView{std::string_view{tag}};
-	}
-
-	[[gnu::pure]]
-	bool IsTag(std::string_view _tag) const noexcept {
-		return StringListContains(tag, '\0', _tag);
-	}
-
-	UniqueFileDescriptor GetStderr() const noexcept {
-		return stderr_fd.IsDefined()
-			? UniqueFileDescriptor(dup(stderr_fd.Get()))
-			: UniqueFileDescriptor{};
-	}
-
-	void SetSite(const char *site) noexcept {
-		log.SetSite(site);
-	}
-
-	void SetUri(const char *uri) noexcept {
-		log.SetUri(uri);
-	}
-
-	UniqueSocketDescriptor Connect() {
-		try {
-			return socket.Connect();
-		} catch (...) {
-			/* if the connection fails, abandon the child process, don't
-			   try again - it will never work! */
-			fade = true;
-			throw;
-		}
-	}
-
-	/* virtual methods from class StockItem */
-	bool Borrow() noexcept override {
-		assert(!busy);
-		busy = true;
-
-		/* remove from ChildStock::idle list */
-		assert(ChildStockItemHook::is_linked());
-		ChildStockItemHook::unlink();
-
-		return true;
-	}
-
-	bool Release() noexcept override {
-		assert(busy);
-		busy = false;
-
-		/* reuse this item only if the child process hasn't exited */
-		if (pid <= 0)
-			return false;
-
-		assert(!ChildStockItemHook::is_linked());
-		child_stock.AddIdle(*this);
-
-		return true;
-	}
-
-private:
-	/* virtual methods from class ExitListener */
-	void OnChildProcessExit(int status) noexcept override;
-};
-
-void
-ChildStockItem::Spawn(ChildStockClass &cls, void *info,
-		      unsigned backlog,
-		      SocketDescriptor log_socket,
-		      const ChildErrorLogOptions &log_options)
-{
-	int socket_type = cls.GetChildSocketType(info);
-
-	backlog = std::max(backlog, cls.GetChildBacklog(info));
-
-	PreparedChildProcess p;
-	cls.PrepareChild(info, socket.Create(socket_type, backlog), p);
-
-	if (log_socket.IsDefined() && p.stderr_fd < 0 &&
-	    p.stderr_path == nullptr)
-		log.EnableClient(p, GetEventLoop(), log_socket, log_options,
-				 cls.WantStderrPond(info));
-
-	UniqueSocketDescriptor stderr_socket1, stderr_socket2;
-	if (cls.WantReturnStderr(info) &&
-	    !UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
-						      stderr_socket1, stderr_socket2))
-		throw MakeErrno("socketpair() failed");
-
-	pid = spawn_service.SpawnChildProcess(GetStockName(), std::move(p),
-					      stderr_socket2,
-					      this);
-
-	if (stderr_socket1.IsDefined()) {
-		stderr_socket2.Close();
-		stderr_fd = EasyReceiveMessageWithOneFD(stderr_socket1);
-	}
-}
-
-void
-ChildStockItem::OnChildProcessExit(gcc_unused int status) noexcept
-{
-	pid = -1;
-
-	if (!busy)
-		InvokeIdleDisconnect();
 }
 
 /*
@@ -238,12 +77,6 @@ ChildStock::Create(CreateStockItem c, StockRequest request,
 	}
 
 	item->InvokeCreateSuccess();
-}
-
-ChildStockItem::~ChildStockItem()
-{
-	if (pid >= 0)
-		spawn_service.KillChildProcess(pid);
 }
 
 /*
@@ -276,7 +109,7 @@ ChildStock::FadeTag(StringView tag) noexcept
 	});
 }
 
-inline void
+void
 ChildStock::AddIdle(ChildStockItem &item) noexcept
 {
 	idle.push_back(item);
