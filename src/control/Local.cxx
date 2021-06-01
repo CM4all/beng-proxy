@@ -73,8 +73,8 @@ LocalControl::Open(EventLoop &event_loop)
 
 	SocketConfig config;
 	config.bind_address = SocketAddress((const struct sockaddr *)&sa,
-					    SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1)),
-		config.pass_cred = true;
+					    SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1));
+	config.pass_cred = true;
 
 	server.reset(new ControlServer(event_loop, *this, config));
 }
