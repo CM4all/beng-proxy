@@ -67,7 +67,7 @@ public:
 	/**
 	 * Implement this if you wish the child process to return the
          * stderr file descriptor it opened to the returned socket.
-         * This allows calling child_stock_item_get_stderr().
+         * This allows calling ChildStockItem::GetStderr().
 	 */
 	virtual bool WantReturnStderr(void *) const noexcept {
 		return false;
@@ -177,27 +177,3 @@ private:
 	void Create(CreateStockItem c, StockRequest request,
 		    CancellablePointer &cancel_ptr) override;
 };
-
-/**
- * Connect a socket to the given child process.  The socket must be
- * closed before the #stock_item is returned.
- *
- * Throws std::runtime_error on error.
- *
- * @return a socket descriptor
- */
-UniqueSocketDescriptor
-child_stock_item_connect(StockItem &item);
-
-[[gnu::pure]]
-StringView
-child_stock_item_get_tag(const StockItem &item);
-
-UniqueFileDescriptor
-child_stock_item_get_stderr(const StockItem &item) noexcept;
-
-void
-child_stock_item_set_site(StockItem &item, const char *site) noexcept;
-
-void
-child_stock_item_set_uri(StockItem &item, const char *uri) noexcept;

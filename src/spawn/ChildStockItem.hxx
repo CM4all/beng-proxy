@@ -103,6 +103,14 @@ public:
 		log.SetUri(uri);
 	}
 
+	/**
+	 * Connect a socket to the given child process.  The socket
+	 * must be closed before the #StockItem is returned.
+	 *
+	 * Throws on error.
+	 *
+	 * @return a socket
+	 */
 	UniqueSocketDescriptor Connect();
 
 	/* virtual methods from class StockItem */
