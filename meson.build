@@ -33,17 +33,23 @@ debug = get_option('b_ndebug') != 'true'
 common_flags = [
   '-D_REENTRANT', '-D_GNU_SOURCE',
   '-DCACHE_LOG',
-  '-Wwrite-strings', '-Wcast-qual', '-Wcast-align', '-Wfloat-equal',
-  '-Wshadow',
-  '-Wmissing-declarations', '-Wmissing-noreturn', '-Wmissing-format-attribute',
-  '-Wredundant-decls',
-  '-Wunused',
-  '-Wno-unused-result',
-  '-Wundef',
-  '-Wvla',
 ]
 
 test_common_flags = [
+  '-Wcast-align',
+  '-Wcast-qual',
+  '-Wfloat-equal',
+  '-Wmissing-declarations',
+  '-Wmissing-noreturn',
+  '-Wmissing-format-attribute',
+  '-Wredundant-decls',
+  '-Wshadow',
+  '-Wundef',
+  '-Wunused',
+  '-Wvla',
+  '-Wwrite-strings',
+
+  '-Wno-unused-result',
 ]
 
 test_global_common_flags = [
