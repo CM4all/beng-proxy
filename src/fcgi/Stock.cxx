@@ -37,6 +37,7 @@
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
 #include "spawn/ChildStock.hxx"
+#include "spawn/ChildStockItem.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "pool/DisposablePointer.hxx"
@@ -134,7 +135,7 @@ struct FcgiChildParams {
 struct FcgiConnection final : StockItem {
 	const LLogger logger;
 
-	StockItem *child = nullptr;
+	ChildStockItem *child = nullptr;
 
 	UniqueSocketDescriptor fd;
 	SocketEvent event;
@@ -166,21 +167,25 @@ struct FcgiConnection final : StockItem {
 	StringView GetTag() const noexcept {
 		assert(child != nullptr);
 
-		return child_stock_item_get_tag(*child);
+		return child->GetTag();
 	}
 
 	UniqueFileDescriptor GetStderr() const noexcept {
 		assert(child != nullptr);
 
-		return child_stock_item_get_stderr(*child);
+		return child->GetStderr();
 	}
 
 	void SetSite(const char *site) noexcept {
-		child_stock_item_set_site(*child, site);
+		assert(child != nullptr);
+
+		child->SetSite(site);
 	}
 
 	void SetUri(const char *uri) noexcept {
-		child_stock_item_set_uri(*child, uri);
+		assert(child != nullptr);
+
+		child->SetUri(uri);
 	}
 
 	/* virtual methods from class StockItem */
@@ -316,8 +321,9 @@ FcgiStock::Create(CreateStockItem c, StockRequest request,
 	const char *key = c.GetStockName();
 
 	try {
-		connection->child = child_stock.GetStockMap().GetNow(key,
-								     std::move(request));
+		connection->child = (ChildStockItem *)
+			child_stock.GetStockMap().GetNow(key,
+							 std::move(request));
 	} catch (...) {
 		delete connection;
 		std::throw_with_nested(FcgiClientError(StringFormat<256>("Failed to start FastCGI server '%s'",
@@ -325,7 +331,7 @@ FcgiStock::Create(CreateStockItem c, StockRequest request,
 	}
 
 	try {
-		connection->fd = child_stock_item_connect(*connection->child);
+		connection->fd = connection->child->Connect();
 	} catch (...) {
 		connection->kill = true;
 		delete connection;
