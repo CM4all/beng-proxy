@@ -38,6 +38,12 @@
 
 #include <algorithm>
 
+#if defined(__GNUC__) && OPENSSL_VERSION_NUMBER >= 0x30000000L
+/* the MD5 API is deprecated in OpenSSL 3.0, but we want to keep using
+   it */
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 /**
  * A C++ wrapper for libcrypto's MD5_CTX.
  */
