@@ -112,7 +112,7 @@ private:
 	bool WantReturnStderr(void *info) const noexcept override;
 	bool WantStderrPond(void *info) const noexcept override;
 	StringView GetChildTag(void *info) const noexcept override;
-	void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
+	void PrepareChild(void *info, UniqueSocketDescriptor fd,
 			  PreparedChildProcess &p) override;
 };
 
@@ -280,7 +280,7 @@ FcgiStock::GetChildTag(void *info) const noexcept
 }
 
 void
-FcgiStock::PrepareChild(void *info, UniqueSocketDescriptor &&fd,
+FcgiStock::PrepareChild(void *info, UniqueSocketDescriptor fd,
 			PreparedChildProcess &p)
 {
 	auto &params = *(FcgiChildParams *)info;

@@ -97,7 +97,7 @@ private:
 	int GetChildSocketType(void *info) const noexcept override;
 	unsigned GetChildBacklog(void *info) const noexcept override;
 	StringView GetChildTag(void *info) const noexcept override;
-	void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
+	void PrepareChild(void *info, UniqueSocketDescriptor fd,
 			  PreparedChildProcess &p) override;
 };
 
@@ -275,7 +275,7 @@ LhttpStock::GetChildTag(void *info) const noexcept
 }
 
 void
-LhttpStock::PrepareChild(void *info, UniqueSocketDescriptor &&fd,
+LhttpStock::PrepareChild(void *info, UniqueSocketDescriptor fd,
 			 PreparedChildProcess &p)
 {
 	const auto &address = *(const LhttpAddress *)info;

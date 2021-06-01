@@ -82,9 +82,9 @@ public:
 	virtual StringView GetChildTag(void *info) const noexcept;
 
 	/**
-	 * Throws std::runtime_error on error.
+	 * Throws on error.
 	 */
-	virtual void PrepareChild(void *info, UniqueSocketDescriptor &&fd,
+	virtual void PrepareChild(void *info, UniqueSocketDescriptor fd,
 				  PreparedChildProcess &p) = 0;
 };
 
