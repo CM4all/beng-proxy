@@ -41,6 +41,7 @@
 #include "AllocatorPtr.hxx"
 #include "lease.hxx"
 #include "spawn/ChildStock.hxx"
+#include "spawn/ChildStockItem.hxx"
 #include "spawn/Prepared.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -103,7 +104,7 @@ private:
 class LhttpConnection final : LoggerDomainFactory, StockItem {
 	LazyDomainLogger logger;
 
-	StockItem *child = nullptr;
+	ChildStockItem *child = nullptr;
 
 	LeasePtr lease_ref;
 
@@ -132,15 +133,19 @@ public:
 	StringView GetTag() const noexcept {
 		assert(child != nullptr);
 
-		return child_stock_item_get_tag(*child);
+		return child->GetTag();
 	}
 
 	void SetSite(const char *site) noexcept {
-		child_stock_item_set_site(*child, site);
+		assert(child != nullptr);
+
+		child->SetSite(site);
 	}
 
 	void SetUri(const char *uri) noexcept {
-		child_stock_item_set_uri(*child, uri);
+		assert(child != nullptr);
+
+		child->SetUri(uri);
 	}
 
 private:
@@ -169,7 +174,8 @@ LhttpConnection::Connect(MultiStock &child_stock,
 			 unsigned concurrency)
 {
 	try {
-		child = child_stock.GetNow(key, std::move(request), concurrency,
+		child = (ChildStockItem *)
+			child_stock.GetNow(key, std::move(request), concurrency,
 					   lease_ref);
 	} catch (...) {
 		delete this;
@@ -178,7 +184,7 @@ LhttpConnection::Connect(MultiStock &child_stock,
 	}
 
 	try {
-		fd = child_stock_item_connect(*child);
+		fd = child->Connect();
 	} catch (...) {
 		delete this;
 		std::throw_with_nested(FormatRuntimeError("Failed to connect to LHTTP server '%s'",
@@ -340,8 +346,9 @@ LhttpStock::FadeTag(StringView tag) noexcept
 		return StringListContains(connection.GetTag(), '\0', tag);
 	});
 
-	mchild_stock.FadeIf([tag](const StockItem &item){
-		return StringListContains(child_stock_item_get_tag(item), '\0',
+	mchild_stock.FadeIf([tag](const StockItem &_item){
+		auto &item = (const ChildStockItem &)_item;
+		return StringListContains(item.GetTag(), '\0',
 					  tag);
 	});
 
