@@ -111,6 +111,11 @@ private:
 	Event::Duration GetChildClearInterval(void *info) const noexcept override;
 	bool WantReturnStderr(void *info) const noexcept override;
 	bool WantStderrPond(void *info) const noexcept override;
+
+	unsigned GetChildBacklog(void *) const noexcept override {
+		return 4;
+	}
+
 	StringView GetChildTag(void *info) const noexcept override;
 	void PrepareChild(void *info, UniqueSocketDescriptor fd,
 			  PreparedChildProcess &p) override;
@@ -409,7 +414,6 @@ FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
 		std::chrono::minutes(2)),
 	 child_stock(event_loop, spawn_service,
 		     *this,
-		     4,
 		     _log_socket, _log_options,
 		     limit, max_idle) {}
 

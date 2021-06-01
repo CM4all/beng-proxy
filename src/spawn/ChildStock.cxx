@@ -44,12 +44,6 @@ ChildStockClass::GetChildSocketType(void *) const noexcept
 	return SOCK_STREAM;
 }
 
-unsigned
-ChildStockClass::GetChildBacklog(void *) const noexcept
-{
-	return 0;
-}
-
 StringView
 ChildStockClass::GetChildTag(void *) const noexcept
 {
@@ -69,7 +63,7 @@ ChildStock::Create(CreateStockItem c, StockRequest request,
 					cls.GetChildTag(request.get()));
 
 	try {
-		item->Spawn(cls, request.get(), backlog,
+		item->Spawn(cls, request.get(),
 			    log_socket, log_options);
 	} catch (...) {
 		delete item;
@@ -86,13 +80,11 @@ ChildStock::Create(CreateStockItem c, StockRequest request,
 
 ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
 		       ChildStockClass &_cls,
-		       unsigned _backlog,
 		       SocketDescriptor _log_socket,
 		       const ChildErrorLogOptions &_log_options,
 		       unsigned _limit, unsigned _max_idle) noexcept
 	:map(event_loop, *this, _cls, _limit, _max_idle),
 	 spawn_service(_spawn_service), cls(_cls),
-	 backlog(_backlog),
 	 log_socket(_log_socket),
 	 log_options(_log_options)
 {

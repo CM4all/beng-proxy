@@ -84,7 +84,6 @@ public:
 	 * Throws on error.
 	 */
 	void Spawn(ChildStockClass &cls, void *info,
-		   unsigned backlog,
 		   SocketDescriptor log_socket,
 		   const ChildErrorLogOptions &log_options);
 

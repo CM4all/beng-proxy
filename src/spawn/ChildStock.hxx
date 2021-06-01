@@ -62,7 +62,7 @@ public:
 	 */
 	virtual int GetChildSocketType(void *info) const noexcept;
 
-	virtual unsigned GetChildBacklog(void *info) const noexcept;
+	virtual unsigned GetChildBacklog(void *info) const noexcept = 0;
 
 	/**
 	 * Implement this if you wish the child process to return the
@@ -129,8 +129,6 @@ class ChildStock final : StockClass {
 	SpawnService &spawn_service;
 	ChildStockClass &cls;
 
-	const unsigned backlog;
-
 	const SocketDescriptor log_socket;
 
 	const ChildErrorLogOptions log_options;
@@ -138,7 +136,6 @@ class ChildStock final : StockClass {
 public:
 	ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
 		   ChildStockClass &_cls,
-		   unsigned _backlog,
 		   SocketDescriptor _log_socket,
 		   const ChildErrorLogOptions &_log_options,
 		   unsigned _limit, unsigned _max_idle) noexcept;

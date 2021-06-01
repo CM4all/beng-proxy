@@ -50,13 +50,12 @@ ChildStockItem::~ChildStockItem() noexcept
 
 void
 ChildStockItem::Spawn(ChildStockClass &cls, void *info,
-		      unsigned backlog,
 		      SocketDescriptor log_socket,
 		      const ChildErrorLogOptions &log_options)
 {
 	int socket_type = cls.GetChildSocketType(info);
 
-	backlog = std::max(backlog, cls.GetChildBacklog(info));
+	const unsigned backlog = cls.GetChildBacklog(info);
 
 	PreparedChildProcess p;
 	cls.PrepareChild(info, socket.Create(socket_type, backlog), p);
