@@ -38,12 +38,6 @@
 
 #include <cassert>
 
-int
-ChildStockClass::GetChildSocketType(void *) const noexcept
-{
-	return SOCK_STREAM;
-}
-
 StringView
 ChildStockClass::GetChildTag(void *) const noexcept
 {

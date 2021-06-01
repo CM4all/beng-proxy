@@ -40,8 +40,7 @@
 #include "pool/tpool.hxx"
 #include "AllocatorPtr.hxx"
 #include "lease.hxx"
-#include "spawn/ChildStock.hxx"
-#include "spawn/ChildStockItem.hxx"
+#include "spawn/ListenChildStock.hxx"
 #include "spawn/Prepared.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -54,7 +53,7 @@
 #include <unistd.h>
 #include <string.h>
 
-class LhttpStock final : StockClass, ChildStockClass {
+class LhttpStock final : StockClass, ListenChildStockClass {
 	ChildStock child_stock;
 	MultiStock mchild_stock;
 	StockMap hstock;
@@ -97,14 +96,17 @@ private:
 	int GetChildSocketType(void *info) const noexcept override;
 	unsigned GetChildBacklog(void *info) const noexcept override;
 	StringView GetChildTag(void *info) const noexcept override;
-	void PrepareChild(void *info, UniqueSocketDescriptor fd,
-			  PreparedChildProcess &p) override;
+	void PrepareChild(void *info, PreparedChildProcess &p) override;
+
+	/* virtual methods from class ListenChildStockClass */
+	void PrepareListenChild(void *info, UniqueSocketDescriptor fd,
+				PreparedChildProcess &p) override;
 };
 
 class LhttpConnection final : LoggerDomainFactory, StockItem {
 	LazyDomainLogger logger;
 
-	ChildStockItem *child = nullptr;
+	ListenChildStockItem *child = nullptr;
 
 	LeasePtr lease_ref;
 
@@ -174,7 +176,7 @@ LhttpConnection::Connect(MultiStock &child_stock,
 			 unsigned concurrency)
 {
 	try {
-		child = (ChildStockItem *)
+		child = (ListenChildStockItem *)
 			child_stock.GetNow(key, std::move(request), concurrency,
 					   lease_ref);
 	} catch (...) {
@@ -275,13 +277,18 @@ LhttpStock::GetChildTag(void *info) const noexcept
 }
 
 void
-LhttpStock::PrepareChild(void *info, UniqueSocketDescriptor fd,
-			 PreparedChildProcess &p)
+LhttpStock::PrepareChild(void *info, PreparedChildProcess &p)
 {
 	const auto &address = *(const LhttpAddress *)info;
 
-	p.SetStdin(std::move(fd));
 	address.CopyTo(p);
+}
+
+void
+LhttpStock::PrepareListenChild(void *, UniqueSocketDescriptor fd,
+			       PreparedChildProcess &p)
+{
+	p.SetStdin(std::move(fd));
 }
 
 /*

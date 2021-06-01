@@ -36,8 +36,7 @@
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
-#include "spawn/ChildStock.hxx"
-#include "spawn/ChildStockItem.hxx"
+#include "spawn/ListenChildStock.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "pool/DisposablePointer.hxx"
@@ -62,7 +61,7 @@
 #include <sched.h>
 #endif
 
-class FcgiStock final : StockClass, ChildStockClass {
+class FcgiStock final : StockClass, ListenChildStockClass {
 	StockMap hstock;
 	ChildStock child_stock;
 
@@ -117,8 +116,11 @@ private:
 	}
 
 	StringView GetChildTag(void *info) const noexcept override;
-	void PrepareChild(void *info, UniqueSocketDescriptor fd,
-			  PreparedChildProcess &p) override;
+	void PrepareChild(void *info, PreparedChildProcess &p) override;
+
+	/* virtual methods from class ListenChildStockClass */
+	void PrepareListenChild(void *info, UniqueSocketDescriptor fd,
+				PreparedChildProcess &p) override;
 };
 
 struct FcgiChildParams {
@@ -140,7 +142,7 @@ struct FcgiChildParams {
 struct FcgiConnection final : StockItem {
 	const LLogger logger;
 
-	ChildStockItem *child = nullptr;
+	ListenChildStockItem *child = nullptr;
 
 	UniqueSocketDescriptor fd;
 	SocketEvent event;
@@ -285,13 +287,10 @@ FcgiStock::GetChildTag(void *info) const noexcept
 }
 
 void
-FcgiStock::PrepareChild(void *info, UniqueSocketDescriptor fd,
-			PreparedChildProcess &p)
+FcgiStock::PrepareChild(void *info, PreparedChildProcess &p)
 {
 	auto &params = *(FcgiChildParams *)info;
 	const ChildOptions &options = params.options;
-
-	p.SetStdin(std::move(fd));
 
 	/* the FastCGI protocol defines a channel for stderr, so we could
 	   close its "real" stderr here, but many FastCGI applications
@@ -307,6 +306,13 @@ FcgiStock::PrepareChild(void *info, UniqueSocketDescriptor fd,
 		p.Append(i);
 
 	options.CopyTo(p);
+}
+
+void
+FcgiStock::PrepareListenChild(void *, UniqueSocketDescriptor fd,
+			      PreparedChildProcess &p)
+{
+	p.SetStdin(std::move(fd));
 }
 
 /*
@@ -326,7 +332,7 @@ FcgiStock::Create(CreateStockItem c, StockRequest request,
 	const char *key = c.GetStockName();
 
 	try {
-		connection->child = (ChildStockItem *)
+		connection->child = (ListenChildStockItem *)
 			child_stock.GetStockMap().GetNow(key,
 							 std::move(request));
 	} catch (...) {

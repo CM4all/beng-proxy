@@ -36,7 +36,6 @@
 #include "spawn/ExitListener.hxx"
 #include "access_log/ChildErrorLog.hxx"
 #include "stock/Item.hxx"
-#include "net/TempListener.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/StringView.hxx"
 
@@ -58,7 +57,6 @@ class ChildStockItem
 
 	UniqueFileDescriptor stderr_fd;
 
-	TempListener socket;
 	int pid = -1;
 
 	bool busy = true;
@@ -101,16 +99,6 @@ public:
 	void SetUri(const char *uri) noexcept {
 		log.SetUri(uri);
 	}
-
-	/**
-	 * Connect a socket to the given child process.  The socket
-	 * must be closed before the #StockItem is returned.
-	 *
-	 * Throws on error.
-	 *
-	 * @return a socket
-	 */
-	UniqueSocketDescriptor Connect();
 
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override;

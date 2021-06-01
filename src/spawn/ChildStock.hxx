@@ -56,19 +56,6 @@ public:
 	virtual Event::Duration GetChildClearInterval(void *info) const noexcept = 0;
 
 	/**
-	 * Determine the socket type for the given child process.  The
-	 * default is SOCK_STREAM.  This method may also be used to add
-	 * the SOCK_NONBLOCK flag.  SOCK_CLOEXEC should not be used; it is
-	 * added automatically.
-	 *
-	 * @param info an opaque pointer describing the process to be
-	 * spawned
-	 */
-	virtual int GetChildSocketType(void *info) const noexcept;
-
-	virtual unsigned GetChildBacklog(void *info) const noexcept = 0;
-
-	/**
 	 * Implement this if you wish the child process to return the
          * stderr file descriptor it opened to the returned socket.
          * This allows calling ChildStockItem::GetStderr().
@@ -92,8 +79,7 @@ public:
 	/**
 	 * Throws on error.
 	 */
-	virtual void PrepareChild(void *info, UniqueSocketDescriptor fd,
-				  PreparedChildProcess &p) = 0;
+	virtual void PrepareChild(void *info, PreparedChildProcess &p) = 0;
 };
 
 using ChildStockItemHook =

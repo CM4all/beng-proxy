@@ -40,6 +40,7 @@
 
 #include <cassert>
 
+#include <sys/socket.h>
 #include <unistd.h>
 
 ChildStockItem::~ChildStockItem() noexcept
@@ -54,9 +55,7 @@ void
 ChildStockItem::Prepare(ChildStockClass &cls, void *info,
 			PreparedChildProcess &p)
 {
-	int socket_type = cls.GetChildSocketType(info);
-	const unsigned backlog = cls.GetChildBacklog(info);
-	cls.PrepareChild(info, socket.Create(socket_type, backlog), p);
+	cls.PrepareChild(info, p);
 }
 
 void
@@ -101,19 +100,6 @@ ChildStockItem::GetStderr() const noexcept
 	return stderr_fd.IsDefined()
 		? UniqueFileDescriptor(dup(stderr_fd.Get()))
 		: UniqueFileDescriptor{};
-}
-
-UniqueSocketDescriptor
-ChildStockItem::Connect()
-{
-	try {
-		return socket.Connect();
-	} catch (...) {
-		/* if the connection fails, abandon the child process, don't
-		   try again - it will never work! */
-		fade = true;
-		throw;
-	}
 }
 
 bool
