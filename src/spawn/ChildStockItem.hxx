@@ -116,7 +116,15 @@ public:
 	bool Borrow() noexcept override;
 	bool Release() noexcept override;
 
+
 private:
 	/* virtual methods from class ExitListener */
 	void OnChildProcessExit(int status) noexcept override;
+
+protected:
+	/**
+	 * Throws on error.
+	 */
+	virtual void Prepare(ChildStockClass &cls, void *info,
+			     PreparedChildProcess &p);
 };

@@ -51,16 +51,21 @@ ChildStockItem::~ChildStockItem() noexcept
 }
 
 void
+ChildStockItem::Prepare(ChildStockClass &cls, void *info,
+			PreparedChildProcess &p)
+{
+	int socket_type = cls.GetChildSocketType(info);
+	const unsigned backlog = cls.GetChildBacklog(info);
+	cls.PrepareChild(info, socket.Create(socket_type, backlog), p);
+}
+
+void
 ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 		      SocketDescriptor log_socket,
 		      const ChildErrorLogOptions &log_options)
 {
-	int socket_type = cls.GetChildSocketType(info);
-
-	const unsigned backlog = cls.GetChildBacklog(info);
-
 	PreparedChildProcess p;
-	cls.PrepareChild(info, socket.Create(socket_type, backlog), p);
+	Prepare(cls, info, p);
 
 	if (log_socket.IsDefined() && p.stderr_fd < 0 &&
 	    p.stderr_path == nullptr)
