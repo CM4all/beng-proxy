@@ -44,6 +44,8 @@
 
 ChildStockItem::~ChildStockItem() noexcept
 {
+	auto &spawn_service = child_stock.GetSpawnService();
+
 	if (pid >= 0)
 		spawn_service.KillChildProcess(pid);
 }
@@ -71,6 +73,7 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 						      stderr_socket1, stderr_socket2))
 		throw MakeErrno("socketpair() failed");
 
+	auto &spawn_service = child_stock.GetSpawnService();
 	pid = spawn_service.SpawnChildProcess(GetStockName(), std::move(p),
 					      stderr_socket2,
 					      this);

@@ -59,7 +59,7 @@ void
 ChildStock::Create(CreateStockItem c, StockRequest request,
 		   CancellablePointer &)
 {
-	auto *item = new ChildStockItem(c, *this, spawn_service,
+	auto *item = new ChildStockItem(c, *this,
 					cls.GetChildTag(request.get()));
 
 	try {

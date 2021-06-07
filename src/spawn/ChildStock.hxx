@@ -146,6 +146,10 @@ public:
 		return map;
 	}
 
+	auto &GetSpawnService() const noexcept {
+		return spawn_service;
+	}
+
 	SocketDescriptor GetLogSocket() const noexcept {
 		return log_socket;
 	}

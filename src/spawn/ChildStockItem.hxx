@@ -51,7 +51,6 @@ class ChildStockItem final
 	  ExitListener
 {
 	ChildStock &child_stock;
-	SpawnService &spawn_service;
 
 	const std::string tag;
 
@@ -67,11 +66,9 @@ class ChildStockItem final
 public:
 	ChildStockItem(CreateStockItem c,
 		       ChildStock &_child_stock,
-		       SpawnService &_spawn_service,
 		       std::string_view _tag) noexcept
 		:StockItem(c),
 		 child_stock(_child_stock),
-		 spawn_service(_spawn_service),
 		 tag(_tag) {}
 
 	~ChildStockItem() noexcept override;
