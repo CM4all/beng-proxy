@@ -45,7 +45,7 @@
 /**
  * A process managed by #ChildStock.
  */
-class ChildStockItem final
+class ChildStockItem
 	: public StockItem,
 	  public ChildStockItemHook,
 	  ExitListener

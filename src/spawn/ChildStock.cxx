@@ -37,7 +37,6 @@
 #include "util/StringView.hxx"
 
 #include <cassert>
-#include <memory>
 
 int
 ChildStockClass::GetChildSocketType(void *) const noexcept
@@ -51,6 +50,14 @@ ChildStockClass::GetChildTag(void *) const noexcept
 	return nullptr;
 }
 
+std::unique_ptr<ChildStockItem>
+ChildStockClass::CreateChild(CreateStockItem c, void *info,
+			     ChildStock &child_stock)
+{
+	return std::make_unique<ChildStockItem>(c, child_stock,
+						GetChildTag(info));
+}
+
 /*
  * stock class
  *
@@ -60,8 +67,7 @@ void
 ChildStock::Create(CreateStockItem c, StockRequest request,
 		   CancellablePointer &)
 {
-	auto item = std::make_unique<ChildStockItem>(c, *this,
-						     cls.GetChildTag(request.get()));
+	auto item = cls.CreateChild(c, request.get(), *this);
 	item->Spawn(cls, request.get(),
 		    log_socket, log_options);
 

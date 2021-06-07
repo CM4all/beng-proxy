@@ -37,11 +37,15 @@
 #include "access_log/ChildErrorLogOptions.hxx"
 #include "net/SocketDescriptor.hxx"
 
+#include <memory>
+#include <string_view>
+
 struct PreparedChildProcess;
 class UniqueFileDescriptor;
 class UniqueSocketDescriptor;
 class EventLoop;
 class SpawnService;
+class ChildStock;
 class ChildStockItem;
 
 /*
@@ -80,6 +84,10 @@ public:
 
 	[[gnu::pure]]
 	virtual StringView GetChildTag(void *info) const noexcept;
+
+	virtual std::unique_ptr<ChildStockItem> CreateChild(CreateStockItem c,
+							    void *info,
+							    ChildStock &child_stock);
 
 	/**
 	 * Throws on error.
