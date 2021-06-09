@@ -4,7 +4,7 @@
 #
 # Author: Max Kellermann <mk@cm4all.com>
 
-import re
+import re, base64
 import os
 
 try:
@@ -162,9 +162,9 @@ class Translation(Protocol):
         response = Response(protocol_version=2)
         response.max_age(0)
 
-        if authorization[:6] == b'Basic ':
-            username, password = authorization[6:].decode('base64').split(':', 1)
-            if password == 'testtest':
+        if authorization[:6] == 'Basic ':
+            username, password = base64.b64decode(authorization[6:]).split(b':', 1)
+            if password == b'testtest':
                 response.packet(TRANSLATE_USER, username)
                 response.max_age(20)
 
