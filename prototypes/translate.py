@@ -702,6 +702,10 @@ class Translation(Protocol):
         elif uri[:12] == '/token-auth/':
             response.packet(TRANSLATE_TOKEN_AUTH, 'token-auth-demo')
             self._handle_local_file('/var/www' + uri[11:], response)
+        elif uri[:17] == '/http-token-auth/':
+            response.packet(TRANSLATE_TOKEN_AUTH, 'token-auth-demo')
+            response.packet(TRANSLATE_HTTP_AUTH, 'http-auth-demo')
+            self._handle_local_file('/var/www' + uri[16:], response)
         elif uri[:8] == '/header/':
             response.header('X-Foo', 'Bar')
             self._handle_local_file('/var/www' + uri[7:], response)

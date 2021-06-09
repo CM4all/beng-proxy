@@ -944,6 +944,22 @@ The translation server may now reply:
   and the client will be redirected to the current URI, but without
   the ``auth_token`` query string parameter
 
+Combining ``HTTP_AUTH`` and ``TOKEN_AUTH``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When ``HTTP_AUTH`` and ``TOKEN_AUTH`` are both specified,
+``HTTP_AUTH`` is only used if the client sends an ``Authorization``
+header.
+
+This precedence implies that ``WWW_AUTHENTICATE`` and
+``AUTHENTICATION_INFO`` are useless, and they must not be used.
+
+This also implies that if there is neither an ``Authorization`` header
+nor an authenticated session, then the ``TOKEN_AUTH`` handler decides
+how the request is going to be handled.  Usually, it means that the
+client gets redirected to a login HTML page.
+
+
 .. _recover_session:
 
 Recovering a Session
