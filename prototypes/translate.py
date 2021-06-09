@@ -167,6 +167,11 @@ class Translation(Protocol):
             if password == b'testtest':
                 response.packet(TRANSLATE_USER, username)
                 response.max_age(20)
+        elif authorization[:7] == 'Bearer ':
+            bearer = authorization[7:]
+            if bearer == 'foo':
+                response.packet(TRANSLATE_USER, bearer)
+                response.max_age(20)
 
         return response
 
