@@ -31,7 +31,7 @@
  */
 
 #include "Map.hxx"
-#include "Control.hxx"
+#include "was/async/Control.hxx"
 #include "strmap.hxx"
 
 namespace Was {

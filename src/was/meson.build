@@ -7,13 +7,13 @@ endif
 was_common = static_library(
   'was_common',
   'Socket.cxx',
-  'Control.cxx',
   'Map.cxx',
   'Output.cxx',
   'Input.cxx',
   include_directories: inc,
   dependencies: [
     libwas,
+    was_async_dep,
   ],
 )
 

@@ -31,8 +31,8 @@
  */
 
 #include "Server.hxx"
-#include "Error.hxx"
 #include "Map.hxx"
+#include "was/async/Error.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"

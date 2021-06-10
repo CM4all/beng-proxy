@@ -31,7 +31,7 @@
  */
 
 #include "Input.hxx"
-#include "Error.hxx"
+#include "was/async/Error.hxx"
 #include "event/SocketEvent.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"

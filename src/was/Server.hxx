@@ -33,9 +33,9 @@
 #pragma once
 
 #include "Socket.hxx"
-#include "Control.hxx"
 #include "Output.hxx"
 #include "Input.hxx"
+#include "was/async/Control.hxx"
 #include "pool/Ptr.hxx"
 #include "http/Method.h"
 #include "http/Status.h"

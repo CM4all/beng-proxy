@@ -40,7 +40,7 @@
 #include "nfs/Error.hxx"
 #include "cgi/Error.hxx"
 #include "fcgi/Error.hxx"
-#include "was/Error.hxx"
+#include "was/async/Error.hxx"
 #include "widget/Error.hxx"
 #include "ssl/Error.hxx"
 #include "http/IncomingRequest.hxx"

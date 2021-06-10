@@ -258,6 +258,7 @@ system_dep = declare_dependency(
 )
 
 subdir('libcommon/src/http')
+subdir('libcommon/src/was/async')
 subdir('libcommon/src/json')
 subdir('libcommon/src/lua')
 

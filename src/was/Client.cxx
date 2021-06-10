@@ -31,12 +31,12 @@
  */
 
 #include "Client.hxx"
-#include "Error.hxx"
-#include "Control.hxx"
 #include "Map.hxx"
 #include "Output.hxx"
 #include "Input.hxx"
 #include "Lease.hxx"
+#include "was/async/Control.hxx"
+#include "was/async/Error.hxx"
 #include "http/ResponseHandler.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/UnusedPtr.hxx"

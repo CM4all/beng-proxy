@@ -31,7 +31,7 @@
  */
 
 #include "Output.hxx"
-#include "Error.hxx"
+#include "was/async/Error.hxx"
 #include "event/SocketEvent.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "io/Splice.hxx"
