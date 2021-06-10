@@ -874,9 +874,12 @@ result in a ``401 Unauthorized`` response (with headers
 ``WWW-Authenticate`` and ``Authentication-Info``).
 
 If the ``Authorization`` header is available, :program:`beng-proxy`
-submits it to the translation server in an ``AUTHORIZATION`` packet
-and echoes the ``HTTP_AUTH`` packet.  The translation server
-responds with one of:
+submits a new translation request with the following packets:
+
+- ``TOKEN_AUTH`` (echoing the response packet)
+- ``AUTHORIZATION`` contains the ``Authorization`` request header
+
+The translation server responds with one of:
 
 - ``USER`` specifying the user handle to be forwarded in
   ``X-CM4all-BENG-User`` request headers (optionally followed by
