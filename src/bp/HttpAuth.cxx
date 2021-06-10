@@ -95,6 +95,8 @@ Request::HandleHttpAuth(const TranslateResponse &response) noexcept
 	auto t = NewFromPool<TranslateRequest>(pool);
 	t->http_auth = response.http_auth;
 	t->authorization = authorization;
+	t->listener_tag = translate.request.listener_tag;
+	t->host = translate.request.host;
 
 	translate.previous = &response;
 

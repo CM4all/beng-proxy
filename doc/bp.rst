@@ -878,6 +878,7 @@ submits a new translation request with the following packets:
 
 - ``TOKEN_AUTH`` (echoing the response packet)
 - ``AUTHORIZATION`` contains the ``Authorization`` request header
+- ``LISTENER_TAG``, ``HOST``
 
 The translation server responds with one of:
 
