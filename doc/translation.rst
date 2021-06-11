@@ -1429,8 +1429,9 @@ packets:
 - ``SEND_CSRF_TOKEN`` adds a valid token header to successful
   responses.  This option is not supported for widgets.
 
-Covert cross-site requests don't have this header and will be denied,
-effectively avoiding this kind of vulnerability.
+Covert cross-site requests don't have this header (with a valid value)
+will be denied with status ``403 Forbidden``, effectively avoiding
+this kind of vulnerability.
 
 Clients can obtain a token by inspecting the response header of a
 request to a location with ``SEND_CSRF_TOKEN`` enabled.  They may then
