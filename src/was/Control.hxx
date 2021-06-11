@@ -104,6 +104,13 @@ public:
 	bool SendString(enum was_command cmd,
 			std::string_view payload) noexcept;
 
+	/**
+	 * Send a name-value pair (e.g. for #WAS_COMMAND_HEADER and
+	 * #WAS_COMMAND_PARAMETER).
+	 */
+	bool SendPair(enum was_command cmd, std::string_view name,
+		      std::string_view value) noexcept;
+
 	bool SendUint64(enum was_command cmd, uint64_t payload) noexcept {
 		return Send(cmd, &payload, sizeof(payload));
 	}

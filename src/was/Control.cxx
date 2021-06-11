@@ -241,6 +241,23 @@ WasControl::SendString(enum was_command cmd, std::string_view payload) noexcept
 }
 
 bool
+WasControl::SendPair(enum was_command cmd, std::string_view name,
+		     std::string_view value) noexcept
+{
+	const std::size_t payload_size = name.size() + 1 + value.size();
+
+	char *dest = (char *)Start(cmd, payload_size);
+	if (dest == nullptr)
+		return false;
+
+	dest = std::copy(name.begin(), name.end(), dest);
+	*dest++ = '=';
+	dest = std::copy(value.begin(), value.end(), dest);
+
+	return Finish(payload_size);
+}
+
+bool
 WasControl::SendArray(enum was_command cmd,
 		      ConstBuffer<const char *> values) noexcept
 {
@@ -258,18 +275,7 @@ bool
 WasControl::SendStrmap(enum was_command cmd, const StringMap &map) noexcept
 {
 	for (const auto &i : map) {
-		size_t key_length = strlen(i.key);
-		size_t value_length = strlen(i.value);
-		size_t payload_length = key_length + 1 + value_length;
-
-		uint8_t *dest = (uint8_t *)Start(cmd, payload_length);
-		if (dest == nullptr)
-			return false;
-
-		memcpy(dest, i.key, key_length);
-		dest[key_length] = '=';
-		memcpy(dest + key_length + 1, i.value, value_length);
-		if (!Finish(payload_length))
+		if (!SendPair(cmd, i.key, i.value))
 			return false;
 	}
 
