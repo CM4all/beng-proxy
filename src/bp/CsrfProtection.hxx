@@ -42,6 +42,8 @@ MethodNeedsCsrfProtection(http_method_t method) noexcept
 	case HTTP_METHOD_GET:
 	case HTTP_METHOD_OPTIONS:
 	case HTTP_METHOD_TRACE:
+	case HTTP_METHOD_PROPFIND:
+	case HTTP_METHOD_REPORT:
 		return false;
 
 	default:

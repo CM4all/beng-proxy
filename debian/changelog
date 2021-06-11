@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.0.60) unstable; urgency=low
 
   * bp: send CSRF token even if the status indicates an error
+  * bp: exclude PROPFIND and REPORT from REQUIRE_CSRF_TOKEN
 
  --   
 
