@@ -33,7 +33,7 @@
 #pragma once
 
 #include "event/net/BufferedSocket.hxx"
-#include "SliceFifoBuffer.hxx"
+#include "DefaultFifoBuffer.hxx"
 
 #include <was/protocol.h>
 
@@ -80,7 +80,7 @@ class WasControl final : BufferedSocketHandler {
 		unsigned bulk = 0;
 	} output;
 
-	SliceFifoBuffer output_buffer;
+	DefaultFifoBuffer output_buffer;
 
 public:
 	WasControl(EventLoop &event_loop, SocketDescriptor _fd,

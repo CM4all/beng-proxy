@@ -33,7 +33,6 @@
 #include "Control.hxx"
 #include "Error.hxx"
 #include "strmap.hxx"
-#include "fb_pool.hxx"
 #include "system/Error.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -196,7 +195,7 @@ WasControl::Start(enum was_command cmd, size_t payload_length) noexcept
 {
 	assert(!done);
 
-	output_buffer.AllocateIfNull(fb_pool_get());
+	output_buffer.AllocateIfNull();
 	auto w = output_buffer.Write().ToVoid();
 	struct was_header *header = (struct was_header *)w.data;
 	if (w.size < sizeof(*header) + payload_length) {
