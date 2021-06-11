@@ -32,6 +32,7 @@
 
 #include "Server.hxx"
 #include "Error.hxx"
+#include "Map.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
@@ -452,7 +453,7 @@ WasServer::SendResponse(http_status_t status,
 		body.Clear();
 	}
 
-	control.SendStrmap(WAS_COMMAND_HEADER, headers);
+	Was::SendMap(control, WAS_COMMAND_HEADER, headers);
 
 	if (body) {
 		response.body = was_output_new(*request.pool,

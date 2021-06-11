@@ -33,6 +33,7 @@
 #include "Client.hxx"
 #include "Error.hxx"
 #include "Control.hxx"
+#include "Map.hxx"
 #include "Output.hxx"
 #include "Input.hxx"
 #include "Lease.hxx"
@@ -891,7 +892,7 @@ SendRequest(WasControl &control,
 		 control.SendString(WAS_COMMAND_PATH_INFO, path_info)) &&
 		(query_string == nullptr ||
 		 control.SendString(WAS_COMMAND_QUERY_STRING, query_string)) &&
-		control.SendStrmap(WAS_COMMAND_HEADER, headers) &&
+		Was::SendMap(control, WAS_COMMAND_HEADER, headers) &&
 		control.SendArray(WAS_COMMAND_PARAMETER, params) &&
 		control.SendEmpty(request_body != nullptr
 				  ? WAS_COMMAND_DATA

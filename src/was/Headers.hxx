@@ -39,6 +39,7 @@
 
 #include <string_view>
 
+class StringMap;
 template<typename T> struct ConstBuffer;
 
 class WasControlHandler {
@@ -116,6 +117,8 @@ public:
 
 	bool SendArray(enum was_command cmd,
 		       ConstBuffer<const char *> values) noexcept;
+
+	bool SendStrmap(enum was_command cmd, const StringMap &map) noexcept;
 
 	/**
 	 * Enables bulk mode.

@@ -32,7 +32,6 @@
 
 #include "Control.hxx"
 #include "Error.hxx"
-#include "strmap.hxx"
 #include "system/Error.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -264,17 +263,6 @@ WasControl::SendArray(enum was_command cmd,
 		assert(value != nullptr);
 
 		if (!SendString(cmd, value))
-			return false;
-	}
-
-	return true;
-}
-
-bool
-WasControl::SendStrmap(enum was_command cmd, const StringMap &map) noexcept
-{
-	for (const auto &i : map) {
-		if (!SendPair(cmd, i.key, i.value))
 			return false;
 	}
 
