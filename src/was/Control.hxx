@@ -41,7 +41,9 @@
 
 template<typename T> struct ConstBuffer;
 
-class WasControlHandler {
+namespace Was {
+
+class ControlHandler {
 public:
 	/**
 	 * A packet was received.
@@ -68,12 +70,12 @@ public:
 /**
  * Web Application Socket protocol, control channel library.
  */
-class WasControl final : BufferedSocketHandler {
+class Control final : BufferedSocketHandler {
 	BufferedSocket socket;
 
 	bool done = false;
 
-	WasControlHandler &handler;
+	ControlHandler &handler;
 
 	struct {
 		unsigned bulk = 0;
@@ -82,8 +84,8 @@ class WasControl final : BufferedSocketHandler {
 	DefaultFifoBuffer output_buffer;
 
 public:
-	WasControl(EventLoop &event_loop, SocketDescriptor _fd,
-		   WasControlHandler &_handler) noexcept;
+	Control(EventLoop &event_loop, SocketDescriptor _fd,
+		ControlHandler &_handler) noexcept;
 
 	auto &GetEventLoop() const noexcept {
 		return socket.GetEventLoop();
@@ -174,3 +176,5 @@ private:
 	bool OnBufferedDrained() noexcept override;
 	void OnBufferedError(std::exception_ptr e) noexcept override;
 };
+
+} // namespace Was

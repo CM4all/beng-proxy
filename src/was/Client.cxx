@@ -61,7 +61,7 @@
 #include <cassert>
 
 class WasClient final
-	: WasControlHandler, WasOutputHandler, WasInputHandler,
+	: Was::ControlHandler, WasOutputHandler, WasInputHandler,
 	  DestructAnchor, PoolLeakDetector,
 	  Cancellable
 {
@@ -72,7 +72,7 @@ class WasClient final
 
 	WasLease &lease;
 
-	WasControl control;
+	Was::Control control;
 
 	HttpResponseHandler &handler;
 
@@ -254,7 +254,7 @@ private:
 	}
 
 	/**
-	 * Destroys the objects WasControl, WasInput, WasOutput and
+	 * Destroys the objects Was::Control, WasInput, WasOutput and
 	 * releases the socket lease.  Assumes the response body has not
 	 * been enabled.
 	 */
@@ -349,7 +349,7 @@ private:
 	/**
 	 * Submit the pending response to our handler.
 	 *
-	 * @return false if our #WasControl instance has been disposed
+	 * @return false if our #Was::Control instance has been disposed
 	 */
 	bool SubmitPendingResponse();
 
@@ -461,7 +461,7 @@ WasClient::OnSubmitResponseTimer() noexcept
 }
 
 /*
- * WasControlHandler
+ * Was::ControlHandler
  */
 
 static constexpr bool
@@ -639,7 +639,7 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
 		if (!control.IsDefined()) {
 			/* through WasInputRelease(), the above
 			   was_input_set_length() call may have disposed the
-			   WasControl instance; this condition needs to be
+			   Was::Control instance; this condition needs to be
 			   reported to our caller */
 
 			if (response.pending)
@@ -873,7 +873,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 }
 
 static bool
-SendRequest(WasControl &control,
+SendRequest(Was::Control &control,
 	    http_method_t method, const char *uri,
 	    const char *script_name, const char *path_info,
 	    const char *query_string,

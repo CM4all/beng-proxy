@@ -182,10 +182,10 @@ RunValidPremature(WasServer &server, struct pool &pool,
 							      std::chrono::milliseconds(10))));
 }
 
-class MalformedPrematureWasServer final : WasControlHandler {
+class MalformedPrematureWasServer final : Was::ControlHandler {
 	WasSocket socket;
 
-	WasControl control;
+	Was::Control control;
 
 	FineTimerEvent defer_premature;
 
@@ -246,7 +246,7 @@ protected:
 		control.SendUint64(WAS_COMMAND_PREMATURE, 4096);
 	}
 
-	/* virtual methods from class WasControlHandler */
+	/* virtual methods from class Was::ControlHandler */
 	bool OnWasControlPacket(enum was_command cmd,
 				ConstBuffer<void> payload) noexcept override;
 	bool OnWasControlDrained() noexcept override {

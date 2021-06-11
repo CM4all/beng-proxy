@@ -42,10 +42,12 @@
 #include <stdio.h>
 #include <unistd.h>
 
+namespace Was {
+
 static constexpr auto was_control_timeout = std::chrono::minutes(2);
 
-WasControl::WasControl(EventLoop &event_loop, SocketDescriptor _fd,
-		       WasControlHandler &_handler) noexcept
+Control::Control(EventLoop &event_loop, SocketDescriptor _fd,
+		 ControlHandler &_handler) noexcept
 	:socket(event_loop), handler(_handler)
 {
 	socket.Init(_fd, FD_SOCKET,
@@ -56,7 +58,7 @@ WasControl::WasControl(EventLoop &event_loop, SocketDescriptor _fd,
 }
 
 void
-WasControl::ScheduleRead() noexcept
+Control::ScheduleRead() noexcept
 {
 	socket.ScheduleReadTimeout(true,
 				   socket.IsEmpty()
@@ -65,13 +67,13 @@ WasControl::ScheduleRead() noexcept
 }
 
 void
-WasControl::ScheduleWrite() noexcept
+Control::ScheduleWrite() noexcept
 {
 	socket.ScheduleWrite();
 }
 
 void
-WasControl::ReleaseSocket() noexcept
+Control::ReleaseSocket() noexcept
 {
 	assert(socket.IsConnected());
 
@@ -82,13 +84,13 @@ WasControl::ReleaseSocket() noexcept
 }
 
 void
-WasControl::InvokeError(const char *msg) noexcept
+Control::InvokeError(const char *msg) noexcept
 {
 	InvokeError(std::make_exception_ptr(WasProtocolError(msg)));
 }
 
 BufferedResult
-WasControl::OnBufferedData()
+Control::OnBufferedData()
 {
 	if (done) {
 		InvokeError("received too much control data");
@@ -118,14 +120,14 @@ WasControl::OnBufferedData()
 }
 
 bool
-WasControl::OnBufferedClosed() noexcept
+Control::OnBufferedClosed() noexcept
 {
 	InvokeError("WAS control socket closed by peer");
 	return false;
 }
 
 bool
-WasControl::OnBufferedWrite()
+Control::OnBufferedWrite()
 {
 	auto r = output_buffer.Read();
 	assert(!r.empty());
@@ -153,19 +155,19 @@ WasControl::OnBufferedWrite()
 }
 
 bool
-WasControl::OnBufferedDrained() noexcept
+Control::OnBufferedDrained() noexcept
 {
 	return handler.OnWasControlDrained();
 }
 
 void
-WasControl::OnBufferedError(std::exception_ptr e) noexcept
+Control::OnBufferedError(std::exception_ptr e) noexcept
 {
 	InvokeError(e);
 }
 
 bool
-WasControl::TryWrite() noexcept
+Control::TryWrite() noexcept
 {
 	if (output_buffer.empty())
 		return true;
@@ -190,7 +192,7 @@ WasControl::TryWrite() noexcept
  */
 
 void *
-WasControl::Start(enum was_command cmd, size_t payload_length) noexcept
+Control::Start(enum was_command cmd, size_t payload_length) noexcept
 {
 	assert(!done);
 
@@ -209,7 +211,7 @@ WasControl::Start(enum was_command cmd, size_t payload_length) noexcept
 }
 
 bool
-WasControl::Finish(size_t payload_length) noexcept
+Control::Finish(size_t payload_length) noexcept
 {
 	assert(!done);
 
@@ -219,8 +221,8 @@ WasControl::Finish(size_t payload_length) noexcept
 }
 
 bool
-WasControl::Send(enum was_command cmd,
-		 const void *payload, size_t payload_length) noexcept
+Control::Send(enum was_command cmd,
+	      const void *payload, size_t payload_length) noexcept
 {
 	assert(!done);
 
@@ -233,14 +235,14 @@ WasControl::Send(enum was_command cmd,
 }
 
 bool
-WasControl::SendString(enum was_command cmd, std::string_view payload) noexcept
+Control::SendString(enum was_command cmd, std::string_view payload) noexcept
 {
 	return Send(cmd, payload.data(), payload.size());
 }
 
 bool
-WasControl::SendPair(enum was_command cmd, std::string_view name,
-		     std::string_view value) noexcept
+Control::SendPair(enum was_command cmd, std::string_view name,
+		  std::string_view value) noexcept
 {
 	const std::size_t payload_size = name.size() + 1 + value.size();
 
@@ -256,8 +258,8 @@ WasControl::SendPair(enum was_command cmd, std::string_view name,
 }
 
 bool
-WasControl::SendArray(enum was_command cmd,
-		      ConstBuffer<const char *> values) noexcept
+Control::SendArray(enum was_command cmd,
+		   ConstBuffer<const char *> values) noexcept
 {
 	for (auto value : values) {
 		assert(value != nullptr);
@@ -270,7 +272,7 @@ WasControl::SendArray(enum was_command cmd,
 }
 
 bool
-WasControl::BulkOff() noexcept
+Control::BulkOff() noexcept
 {
 	assert(output.bulk > 0);
 
@@ -279,7 +281,7 @@ WasControl::BulkOff() noexcept
 }
 
 void
-WasControl::Done() noexcept
+Control::Done() noexcept
 {
 	assert(!done);
 
@@ -293,3 +295,5 @@ WasControl::Done() noexcept
 	if (output_buffer.empty())
 		InvokeDone();
 }
+
+} // namespace Was

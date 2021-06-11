@@ -53,12 +53,12 @@ public:
 	virtual void OnWasClosed() noexcept = 0;
 };
 
-class WasServer final : WasControlHandler, WasOutputHandler, WasInputHandler {
+class WasServer final : Was::ControlHandler, WasOutputHandler, WasInputHandler {
 	struct pool &pool;
 
 	WasSocket socket;
 
-	WasControl control;
+	Was::Control control;
 
 	WasServerHandler &handler;
 
@@ -158,7 +158,7 @@ private:
 	 */
 	void AbortUnused() noexcept;
 
-	/* virtual methods from class WasControlHandler */
+	/* virtual methods from class Was::ControlHandler */
 	bool OnWasControlPacket(enum was_command cmd,
 				ConstBuffer<void> payload) noexcept override;
 	bool OnWasControlDrained() noexcept override;

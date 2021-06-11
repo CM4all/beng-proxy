@@ -37,7 +37,7 @@
 namespace Was {
 
 bool
-SendMap(WasControl &control, enum was_command cmd,
+SendMap(Control &control, enum was_command cmd,
 	const StringMap &map) noexcept
 {
 	for (const auto &i : map)

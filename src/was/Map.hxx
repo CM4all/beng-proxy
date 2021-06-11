@@ -34,13 +34,14 @@
 
 #include <was/protocol.h>
 
-class WasControl;
 class StringMap;
 
 namespace Was {
 
+class Control;
+
 bool
-SendMap(WasControl &control, enum was_command cmd,
+SendMap(Control &control, enum was_command cmd,
 	const StringMap &map) noexcept;
 
 } // namespace Was
