@@ -37,6 +37,8 @@
 
 #include <was/protocol.h>
 
+#include <string_view>
+
 class StringMap;
 template<typename T> struct ConstBuffer;
 
@@ -99,7 +101,8 @@ public:
 		return Send(cmd, nullptr, 0);
 	}
 
-	bool SendString(enum was_command cmd, const char *payload) noexcept;
+	bool SendString(enum was_command cmd,
+			std::string_view payload) noexcept;
 
 	bool SendUint64(enum was_command cmd, uint64_t payload) noexcept {
 		return Send(cmd, &payload, sizeof(payload));

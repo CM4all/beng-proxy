@@ -235,11 +235,9 @@ WasControl::Send(enum was_command cmd,
 }
 
 bool
-WasControl::SendString(enum was_command cmd, const char *payload) noexcept
+WasControl::SendString(enum was_command cmd, std::string_view payload) noexcept
 {
-	assert(payload != nullptr);
-
-	return Send(cmd, payload, strlen(payload));
+	return Send(cmd, payload.data(), payload.size());
 }
 
 bool
