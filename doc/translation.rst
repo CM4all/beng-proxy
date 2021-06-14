@@ -1426,6 +1426,10 @@ packets:
   only supported for regular HTTP requests, but also for widgets (for
   modifying requests to widgets).
 
+  This requirement only applies to requests with a session cookie.
+  Requests without a session are assumed to be harmless, because there
+  is no authenticated identity associated with it.
+
 - ``SEND_CSRF_TOKEN`` adds a valid token header to successful
   responses.  This option is not supported for widgets.
 

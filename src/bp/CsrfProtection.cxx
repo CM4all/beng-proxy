@@ -59,8 +59,9 @@ Request::HasValidCsrfToken() noexcept
 	{
 		const auto session = GetSession();
 		if (!session)
-			/* need a valid session */
-			return false;
+			/* ignore this requirement if there is no
+			   session */
+			return true;
 
 		expected_hash.Generate(given_csrf_token.time,
 				       session->csrf_salt);
