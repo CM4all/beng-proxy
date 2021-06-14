@@ -92,7 +92,7 @@ class WasServer final : Was::ControlHandler, WasOutputHandler, WasInputHandler {
 			HEADERS,
 
 			/**
-			 * Receiving headers.
+			 * Pending call to WasServerHandler::OnWasRequest().
 			 */
 			PENDING,
 
