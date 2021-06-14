@@ -376,7 +376,6 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 			AbortError(std::make_exception_ptr("malformed PREMATURE packet"));
 			return false;
 		}
-		fprintf(stderr, "WAS_SERVER[%p] premature=%u body=%p\n", (const void *)this, (unsigned)*length_p, (const void *)request.body);
 
 		if (request.body == nullptr)
 			break;
