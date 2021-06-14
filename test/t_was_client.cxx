@@ -42,7 +42,7 @@
 #include "was/Client.hxx"
 #include "was/Server.hxx"
 #include "was/Lease.hxx"
-#include "was/Socket.hxx"
+#include "was/async/Socket.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/FileDescriptor.hxx"
 #include "io/SpliceSupport.hxx"

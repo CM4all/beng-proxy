@@ -6,7 +6,6 @@ endif
 
 was_common = static_library(
   'was_common',
-  'Socket.cxx',
   'Map.cxx',
   'Output.cxx',
   'Input.cxx',

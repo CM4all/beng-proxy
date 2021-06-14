@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "Socket.hxx"
+#include "was/async/Socket.hxx"
 
 class SpawnService;
 class ExitListener;

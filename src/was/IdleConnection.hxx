@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "Socket.hxx"
+#include "was/async/Socket.hxx"
 #include "event/SocketEvent.hxx"
 
 #include <exception>

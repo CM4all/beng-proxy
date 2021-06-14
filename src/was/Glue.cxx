@@ -32,8 +32,8 @@
 
 #include "Glue.hxx"
 #include "Stock.hxx"
-#include "Socket.hxx"
 #include "Client.hxx"
+#include "was/async/Socket.hxx"
 #include "http/ResponseHandler.hxx"
 #include "Lease.hxx"
 #include "stock/GetHandler.hxx"
