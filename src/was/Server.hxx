@@ -151,7 +151,7 @@ private:
 	 */
 	void AbortError(std::exception_ptr ep) noexcept;
 
-	void AbortError(const char *msg) noexcept;
+	void AbortProtocolError(const char *msg) noexcept;
 
 	/**
 	 * Abort receiving the response status/headers from the WAS server.

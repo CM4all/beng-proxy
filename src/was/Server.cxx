@@ -114,7 +114,7 @@ WasServer::AbortError(std::exception_ptr ep) noexcept
 }
 
 void
-WasServer::AbortError(const char *msg) noexcept
+WasServer::AbortProtocolError(const char *msg) noexcept
 {
 	AbortError(std::make_exception_ptr(WasProtocolError(msg)));
 }
@@ -246,7 +246,7 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 
 	case WAS_COMMAND_REQUEST:
 		if (request.state != Request::State::NONE) {
-			AbortError("misplaced REQUEST packet");
+			AbortProtocolError("misplaced REQUEST packet");
 			return false;
 		}
 
@@ -261,7 +261,7 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 
 	case WAS_COMMAND_METHOD:
 		if (payload.size != sizeof(method)) {
-			AbortError("malformed METHOD packet");
+			AbortProtocolError("malformed METHOD packet");
 			return false;
 		}
 
@@ -269,12 +269,12 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 		if (request.method != HTTP_METHOD_GET &&
 		    method != request.method) {
 			/* sending that packet twice is illegal */
-			AbortError("misplaced METHOD packet");
+			AbortProtocolError("misplaced METHOD packet");
 			return false;
 		}
 
 		if (!http_method_is_valid(method)) {
-			AbortError("invalid METHOD packet");
+			AbortProtocolError("invalid METHOD packet");
 			return false;
 		}
 
@@ -284,7 +284,7 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 	case WAS_COMMAND_URI:
 		if (request.state != Request::State::HEADERS ||
 		    request.uri != nullptr) {
-			AbortError("misplaced URI packet");
+			AbortProtocolError("misplaced URI packet");
 			return false;
 		}
 
@@ -300,13 +300,13 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 
 	case WAS_COMMAND_HEADER:
 		if (request.state != Request::State::HEADERS) {
-			AbortError("misplaced HEADER packet");
+			AbortProtocolError("misplaced HEADER packet");
 			return false;
 		}
 
 		p = (const char *)memchr(payload.data, '=', payload.size);
 		if (p == nullptr) {
-			AbortError("malformed HEADER packet");
+			AbortProtocolError("malformed HEADER packet");
 			return false;
 		}
 
@@ -319,13 +319,13 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 		break;
 
 	case WAS_COMMAND_STATUS:
-		AbortError("misplaced STATUS packet");
+		AbortProtocolError("misplaced STATUS packet");
 		return false;
 
 	case WAS_COMMAND_NO_DATA:
 		if (request.state != Request::State::HEADERS ||
 		    request.uri == nullptr) {
-			AbortError("misplaced NO_DATA packet");
+			AbortProtocolError("misplaced NO_DATA packet");
 			return false;
 		}
 
@@ -336,7 +336,7 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 	case WAS_COMMAND_DATA:
 		if (request.state != Request::State::HEADERS ||
 		    request.uri == nullptr) {
-			AbortError("misplaced DATA packet");
+			AbortProtocolError("misplaced DATA packet");
 			return false;
 		}
 
@@ -348,18 +348,18 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 	case WAS_COMMAND_LENGTH:
 		if (request.state < Request::State::PENDING ||
 		    request.body == nullptr) {
-			AbortError("misplaced LENGTH packet");
+			AbortProtocolError("misplaced LENGTH packet");
 			return false;
 		}
 
 		length_p = (const uint64_t *)payload.data;
 		if (payload.size != sizeof(*length_p)) {
-			AbortError("malformed LENGTH packet");
+			AbortProtocolError("malformed LENGTH packet");
 			return false;
 		}
 
 		if (!was_input_set_length(request.body, *length_p)) {
-			AbortError("invalid LENGTH packet");
+			AbortProtocolError("invalid LENGTH packet");
 			return false;
 		}
 
@@ -367,7 +367,7 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 
 	case WAS_COMMAND_STOP:
 		// XXX
-		AbortError(StringFormat<64>("unexpected packet: %d", cmd));
+		AbortProtocolError(StringFormat<64>("unexpected packet: %d", cmd));
 		return false;
 
 	case WAS_COMMAND_PREMATURE:
