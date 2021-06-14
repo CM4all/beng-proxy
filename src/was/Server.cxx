@@ -260,6 +260,11 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 		break;
 
 	case WAS_COMMAND_METHOD:
+		if (request.state != Request::State::HEADERS) {
+			AbortProtocolError("misplaced METHOD packet");
+			return false;
+		}
+
 		if (payload.size != sizeof(method)) {
 			AbortProtocolError("malformed METHOD packet");
 			return false;
