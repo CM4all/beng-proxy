@@ -43,7 +43,6 @@
 
 #include <was/protocol.h>
 
-#include <string.h>
 #include <unistd.h>
 
 WasServer::WasServer(struct pool &_pool, EventLoop &event_loop,
@@ -238,7 +237,6 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 {
 	switch (cmd) {
 		const uint64_t *length_p;
-		const char *p;
 		http_method_t method;
 
 	case WAS_COMMAND_NOP:
@@ -309,13 +307,13 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 			return false;
 		}
 
-		p = (const char *)memchr(payload.data, '=', payload.size);
-		if (p == nullptr) {
+		if (auto [name, value] = StringView{payload}.Split('=');
+		    value != nullptr) {
+			// TODO
+		} else {
 			AbortProtocolError("malformed HEADER packet");
 			return false;
 		}
-
-		// XXX parse buffer
 
 		break;
 
