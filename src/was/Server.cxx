@@ -318,7 +318,19 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 		break;
 
 	case WAS_COMMAND_PARAMETER:
-		// XXX
+		if (request.state != Request::State::HEADERS) {
+			AbortProtocolError("misplaced PARAMETER packet");
+			return false;
+		}
+
+		if (auto [name, value] = StringView{payload}.Split('=');
+		    value != nullptr) {
+			// TODO
+		} else {
+			AbortProtocolError("malformed PARAMETER packet");
+			return false;
+		}
+
 		break;
 
 	case WAS_COMMAND_STATUS:
