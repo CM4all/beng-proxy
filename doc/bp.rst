@@ -948,6 +948,10 @@ The translation server may now reply:
   and the client will be redirected to the current URI, but without
   the ``auth_token`` query string parameter
 
+A non-empty ``USER`` value means the user is authenticated.  This
+value is passed in the proprietary ``X-CM4all-BENG-User`` request
+header (if the request header group ``SECURE`` is set to ``MANGLE``).
+
 Combining ``HTTP_AUTH`` and ``TOKEN_AUTH``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
