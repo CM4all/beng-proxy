@@ -59,5 +59,6 @@ WidgetContext::ForwardRequestHeaders(AllocatorPtr alloc,
 				       session_cookie,
 				       GetRealmSession().get(),
 				       user,
+				       nullptr,
 				       host_and_port, _uri);
 }

@@ -86,7 +86,7 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 				       forward_charset,
 				       forward_encoding, forward_range,
 				       settings,
-				       session_cookie, session, user,
+				       session_cookie, session, user, nullptr,
 				       host_and_port, uri);
 }
 

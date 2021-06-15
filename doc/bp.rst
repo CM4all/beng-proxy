@@ -951,6 +951,11 @@ The translation server may now reply:
 A non-empty ``USER`` value means the user is authenticated.  This
 value is passed in the proprietary ``X-CM4all-BENG-User`` request
 header (if the request header group ``SECURE`` is set to ``MANGLE``).
+Additionally, the header ``X-CM4all-BENG-Has-Session: 1`` is sent to
+indicate that this authenticated request is based on a cookie-managed
+session (and not at the HTTP level with the ``Authorization``
+header).  This difference is important for some services, e.g. to
+decide whether CSRF protection is necessary.
 
 Combining ``HTTP_AUTH`` and ``TOKEN_AUTH``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

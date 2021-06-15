@@ -108,6 +108,7 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 			const char *session_cookie,
 			const RealmSession *session,
 			const char *user,
+			const char *has_session,
 			const char *host_and_port, const char *uri) noexcept;
 
 StringMap

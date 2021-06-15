@@ -153,6 +153,7 @@ Request::ForwardRequestHeaders(const StringMap &src,
 				       session_cookie,
 				       GetRealmSession().get(),
 				       user,
+				       session_id.IsDefined() ? "1" : "0",
 				       host_and_port, uri);
 }
 

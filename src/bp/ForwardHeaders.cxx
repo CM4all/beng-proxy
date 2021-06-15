@@ -284,6 +284,7 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 			const char *session_cookie,
 			const RealmSession *session,
 			const char *user,
+			const char *has_session,
 			const char *host_and_port, const char *uri) noexcept
 {
 #ifndef NDEBUG
@@ -383,8 +384,13 @@ forward_request_headers(AllocatorPtr alloc, const StringMap &src,
 			 alloc.DupZ((std::string_view)session->parent.language));
 
 	if (settings[HeaderGroup::SECURE] == HeaderForwardMode::MANGLE &&
-	    user != nullptr)
+	    user != nullptr) {
 		dest.Add(alloc, "x-cm4all-beng-user", user);
+
+		if (has_session != nullptr)
+			dest.Add(alloc, "x-cm4all-beng-has-session",
+				 has_session);
+	}
 
 	if (settings[HeaderGroup::AUTH] == HeaderForwardMode::MANGLE &&
 	    user != nullptr)
