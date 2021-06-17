@@ -31,7 +31,7 @@
  */
 
 #include "Relative.hxx"
-#include "Extract.hxx"
+#include "uri/Extract.hxx"
 #include "util/StringView.hxx"
 
 StringView

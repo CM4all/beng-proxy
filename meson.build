@@ -207,7 +207,6 @@ util2 = static_library(
   'src/uri/Compare.cxx',
   'src/uri/Dissect.cxx',
   'src/uri/Recompose.cxx',
-  'src/uri/Extract.cxx',
   'src/uri/Relative.cxx',
   'src/escape_html.cxx',
   'src/escape_css.cxx',
