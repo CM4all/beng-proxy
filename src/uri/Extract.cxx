@@ -34,6 +34,8 @@
 #include "util/StringView.hxx"
 #include "util/CharUtil.hxx"
 
+#include <algorithm>
+
 #include <assert.h>
 #include <string.h>
 
@@ -57,11 +59,7 @@ IsValidScheme(std::string_view p) noexcept
 	if (p.empty() || !IsValidSchemeStart(p.front()))
 		return false;
 
-	for (size_t i = 1; i < p.size(); ++i)
-		if (!IsValidSchemeChar(p[i]))
-			return false;
-
-	return true;
+	return std::all_of(std::next(p.begin()), p.end(), IsValidSchemeChar);
 }
 
 bool
