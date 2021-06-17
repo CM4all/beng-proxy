@@ -318,7 +318,7 @@ CanRewriteUri(StringView uri, bool rewrite_empty) noexcept
 		/* ignore data, email and JavaScript links */
 		return false;
 
-	if (uri_has_authority(uri))
+	if (UriHasAuthority(uri))
 		/* can't rewrite if the specified URI is absolute */
 		return false;
 

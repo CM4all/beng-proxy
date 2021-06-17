@@ -136,7 +136,7 @@ ResourceAddress::WithQueryStringFrom(AllocatorPtr alloc,
 	case Type::HTTP:
 		assert(u.http != nullptr);
 
-		query_string = uri_query_string(uri);
+		query_string = UriQuery(uri);
 		if (query_string == nullptr)
 			/* no query string in URI */
 			return {ShallowCopy(), *this};
@@ -146,7 +146,7 @@ ResourceAddress::WithQueryStringFrom(AllocatorPtr alloc,
 	case Type::LHTTP:
 		assert(u.lhttp != nullptr);
 
-		query_string = uri_query_string(uri);
+		query_string = UriQuery(uri);
 		if (query_string == nullptr)
 			/* no query string in URI */
 			return {ShallowCopy(), *this};
@@ -158,7 +158,7 @@ ResourceAddress::WithQueryStringFrom(AllocatorPtr alloc,
 	case Type::WAS:
 		assert(u.cgi->path != nullptr);
 
-		query_string = uri_query_string(uri);
+		query_string = UriQuery(uri);
 		if (query_string == nullptr)
 			/* no query string in URI */
 			return {ShallowCopy(), *this};

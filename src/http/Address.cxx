@@ -248,7 +248,7 @@ HttpAddress::Apply(AllocatorPtr alloc, StringView relative) const
 	if (relative.empty())
 		return this;
 
-	if (uri_has_protocol(relative)) {
+	if (UriHasScheme(relative)) {
 		HttpAddress *other;
 		try {
 			other = http_address_parse(alloc, alloc.DupZ(relative));

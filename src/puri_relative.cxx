@@ -133,7 +133,7 @@ uri_compress(AllocatorPtr alloc, const char *uri)
 static const char *
 uri_after_last_slash(const char *uri)
 {
-    const char *path = uri_path(uri);
+    const char *path = UriPathQueryFragment(uri);
     if (path == nullptr)
         return nullptr;
 
@@ -151,7 +151,7 @@ uri_absolute(AllocatorPtr alloc, const char *base, StringView uri)
     if (uri.empty())
         return base;
 
-    if (uri_has_protocol(uri))
+    if (UriHasScheme(uri))
         return alloc.DupZ(uri);
 
     size_t base_length;
@@ -165,7 +165,7 @@ uri_absolute(AllocatorPtr alloc, const char *base, StringView uri)
         if (base[0] == '/' && base[1] != '/')
             return alloc.DupZ(uri);
 
-        const char *base_path = uri_path(base);
+        const char *base_path = UriPathQueryFragment(base);
         if (base_path == nullptr)
             return alloc.Concat(base, uri);
 

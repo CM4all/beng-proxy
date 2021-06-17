@@ -59,7 +59,7 @@ static constexpr struct UriTests {
 TEST(UriExtractTest, HostAndPort)
 {
 	for (auto i : uri_tests) {
-		auto result = uri_host_and_port(i.uri);
+		auto result = UriHostAndPort(i.uri);
 		if (i.host_and_port == nullptr) {
 			ASSERT_EQ(i.host_and_port, result.data);
 			ASSERT_EQ(result.size, size_t(0));
@@ -75,7 +75,7 @@ TEST(UriExtractTest, HostAndPort)
 TEST(UriExtractTest, Path)
 {
 	for (auto i : uri_tests) {
-		auto result = uri_path(i.uri);
+		auto result = UriPathQueryFragment(i.uri);
 		if (i.path == nullptr)
 			ASSERT_EQ(i.path, result);
 		else
@@ -86,7 +86,7 @@ TEST(UriExtractTest, Path)
 TEST(UriExtractTest, QueryString)
 {
 	for (auto i : uri_tests) {
-		auto result = uri_query_string(i.uri);
+		auto result = UriQuery(i.uri);
 		if (i.query_string == nullptr)
 			ASSERT_EQ(i.query_string, result);
 		else

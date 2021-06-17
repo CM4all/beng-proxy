@@ -43,7 +43,7 @@ struct StringView;
 
 [[gnu::pure]]
 bool
-uri_has_protocol(std::string_view uri) noexcept;
+UriHasScheme(std::string_view uri) noexcept;
 
 /**
  * Return the URI part after the protocol specification (and after the
@@ -51,11 +51,11 @@ uri_has_protocol(std::string_view uri) noexcept;
  */
 [[gnu::pure]]
 const char *
-uri_after_protocol(const char *uri) noexcept;
+UriAfterScheme(const char *uri) noexcept;
 
 [[gnu::pure]]
 StringView
-uri_after_protocol(std::string_view uri) noexcept;
+UriAfterScheme(std::string_view uri) noexcept;
 
 /**
  * Does this URI have an authority part?
@@ -63,23 +63,23 @@ uri_after_protocol(std::string_view uri) noexcept;
 template<typename U>
 [[gnu::pure]]
 inline bool
-uri_has_authority(U &&uri) noexcept
+UriHasAuthority(U &&uri) noexcept
 {
-	return uri_after_protocol(std::forward<U>(uri)) != nullptr;
+	return UriAfterScheme(std::forward<U>(uri)) != nullptr;
 }
 
 [[gnu::pure]]
 StringView
-uri_host_and_port(const char *uri) noexcept;
+UriHostAndPort(const char *uri) noexcept;
 
 /**
- * Returns the URI path (including the query string) or nullptr if the
- * given URI has no path.
+ * Returns the URI path (including the query and the fragment) or
+ * nullptr if the given URI has no path.
  */
 [[gnu::pure]]
 const char *
-uri_path(const char *uri) noexcept;
+UriPathQueryFragment(const char *uri) noexcept;
 
 [[gnu::pure]]
 const char *
-uri_query_string(const char *uri) noexcept;
+UriQuery(const char *uri) noexcept;

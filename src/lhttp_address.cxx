@@ -187,7 +187,7 @@ ApplyUri(AllocatorPtr alloc, const char *base_uri,
 	if (relative.empty())
 		return base_uri;
 
-	if (uri_has_authority(relative))
+	if (UriHasAuthority(relative))
 		return nullptr;
 
 	return uri_absolute(alloc, base_uri, relative);

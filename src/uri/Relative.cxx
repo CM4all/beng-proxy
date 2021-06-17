@@ -47,8 +47,8 @@ uri_relative(StringView base, StringView uri) noexcept
 	if (uri.size == base.size - 1 &&
 	    uri.StartsWith(base) &&
 	    base.back() == '/' &&
-	    uri_after_protocol(uri) != nullptr &&
-	    uri_after_protocol(uri).Find('/') == nullptr)
+	    UriAfterScheme(uri) != nullptr &&
+	    UriAfterScheme(uri).Find('/') == nullptr)
 		return "";
 
 	return nullptr;

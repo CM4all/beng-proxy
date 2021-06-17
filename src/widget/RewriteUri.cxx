@@ -80,7 +80,7 @@ uri_replace_hostname(AllocatorPtr alloc, const char *uri,
 {
 	assert(hostname != nullptr);
 
-	const auto old_host = uri_host_and_port(uri);
+	const auto old_host = UriHostAndPort(uri);
 	if (old_host.IsNull())
 		return *uri == '/'
 			? alloc.Concat("//", hostname, uri)
@@ -111,7 +111,7 @@ uri_add_prefix(AllocatorPtr alloc, const char *uri, const char *absolute_uri,
 			/* unknown old host name, we cannot do anything useful */
 			return uri;
 
-		const auto host = uri_host_and_port(absolute_uri);
+		const auto host = UriHostAndPort(absolute_uri);
 		if (host.IsNull())
 			return uri;
 
@@ -120,7 +120,7 @@ uri_add_prefix(AllocatorPtr alloc, const char *uri, const char *absolute_uri,
 				    '.', host, uri);
 	}
 
-	const auto host = uri_host_and_port(uri);
+	const auto host = UriHostAndPort(uri);
 	if (host.IsNull())
 		return uri;
 
@@ -148,7 +148,7 @@ uri_add_site_suffix(AllocatorPtr alloc, const char *uri, const char *site_name,
 		   will render an error message */
 		return uri;
 
-	const char *path = uri_path(uri);
+	const char *path = UriPathQueryFragment(uri);
 	if (path == nullptr)
 		/* without an absolute path, we cannot build a new absolute
 		   URI */
@@ -176,7 +176,7 @@ uri_add_raw_site_suffix(AllocatorPtr alloc, const char *uri, const char *site_na
 		   will render an error message */
 		return uri;
 
-	const char *path = uri_path(uri);
+	const char *path = UriPathQueryFragment(uri);
 	if (path == nullptr)
 		/* without an absolute path, we cannot build a new absolute
 		   URI */
@@ -402,7 +402,7 @@ rewrite_widget_uri(struct pool &pool,
 		   const char *view,
 		   const struct escape_class *escape) noexcept
 {
-	if (uri_has_authority(value))
+	if (UriHasAuthority(value))
 		/* can't rewrite if the specified URI is absolute */
 		return nullptr;
 

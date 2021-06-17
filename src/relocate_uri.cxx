@@ -43,7 +43,7 @@
 static const char *
 MatchUriHost(const char *uri, const char *host) noexcept
 {
-    const auto &h = uri_host_and_port(uri);
+    const auto &h = UriHostAndPort(uri);
     if (!h.IsNull()) {
         if (host == nullptr)
             /* this is URI_SCHEME_UNIX, and its host cannot be

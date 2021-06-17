@@ -298,7 +298,7 @@ UnescapeApplyPathInfo(AllocatorPtr alloc, const char *base_path_info,
 	if (relative_escaped.empty())
 		return base_path_info;
 
-	if (uri_has_authority(relative_escaped))
+	if (UriHasAuthority(relative_escaped))
 		return nullptr;
 
 	const TempPoolLease tpool;

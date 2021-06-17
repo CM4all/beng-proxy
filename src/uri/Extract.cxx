@@ -65,7 +65,7 @@ IsValidScheme(std::string_view p) noexcept
 }
 
 bool
-uri_has_protocol(std::string_view _uri) noexcept
+UriHasScheme(std::string_view _uri) noexcept
 {
 	const StringView uri{_uri};
 	const char *colon = uri.Find(':');
@@ -76,7 +76,7 @@ uri_has_protocol(std::string_view _uri) noexcept
 }
 
 const char *
-uri_after_protocol(const char *uri) noexcept
+UriAfterScheme(const char *uri) noexcept
 {
 	if (uri[0] == '/' && uri[1] == '/' && uri[2] != '/')
 		return uri + 2;
@@ -90,7 +90,7 @@ uri_after_protocol(const char *uri) noexcept
 }
 
 StringView
-uri_after_protocol(std::string_view uri) noexcept
+UriAfterScheme(std::string_view uri) noexcept
 {
 	if (uri.size() > 2 && uri[0] == '/' && uri[1] == '/' && uri[2] != '/')
 		return uri.substr(2);
@@ -108,11 +108,11 @@ uri_after_protocol(std::string_view uri) noexcept
 }
 
 StringView
-uri_host_and_port(const char *uri) noexcept
+UriHostAndPort(const char *uri) noexcept
 {
 	assert(uri != nullptr);
 
-	uri = uri_after_protocol(uri);
+	uri = UriAfterScheme(uri);
 	if (uri == nullptr)
 		return nullptr;
 
@@ -124,11 +124,11 @@ uri_host_and_port(const char *uri) noexcept
 }
 
 const char *
-uri_path(const char *uri) noexcept
+UriPathQueryFragment(const char *uri) noexcept
 {
 	assert(uri != nullptr);
 
-	const char *ap = uri_after_protocol(uri);
+	const char *ap = UriAfterScheme(uri);
 	if (ap != nullptr)
 		return strchr(ap, '/');
 
@@ -136,7 +136,7 @@ uri_path(const char *uri) noexcept
 }
 
 const char *
-uri_query_string(const char *uri) noexcept
+UriQuery(const char *uri) noexcept
 {
 	assert(uri != nullptr);
 
