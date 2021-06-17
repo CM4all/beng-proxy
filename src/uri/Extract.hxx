@@ -36,13 +36,14 @@
 
 #pragma once
 
+#include <string_view>
 #include <utility>
 
 struct StringView;
 
 [[gnu::pure]]
 bool
-uri_has_protocol(StringView uri) noexcept;
+uri_has_protocol(std::string_view uri) noexcept;
 
 /**
  * Return the URI part after the protocol specification (and after the
@@ -54,7 +55,7 @@ uri_after_protocol(const char *uri) noexcept;
 
 [[gnu::pure]]
 StringView
-uri_after_protocol(StringView uri) noexcept;
+uri_after_protocol(std::string_view uri) noexcept;
 
 /**
  * Does this URI have an authority part?

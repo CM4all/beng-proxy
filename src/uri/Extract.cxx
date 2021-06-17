@@ -52,12 +52,12 @@ IsValidSchemeChar(char ch) noexcept
 
 [[gnu::pure]]
 static bool
-IsValidScheme(StringView p) noexcept
+IsValidScheme(std::string_view p) noexcept
 {
 	if (p.empty() || !IsValidSchemeStart(p.front()))
 		return false;
 
-	for (size_t i = 1; i < p.size; ++i)
+	for (size_t i = 1; i < p.size(); ++i)
 		if (!IsValidSchemeChar(p[i]))
 			return false;
 
@@ -65,10 +65,9 @@ IsValidScheme(StringView p) noexcept
 }
 
 bool
-uri_has_protocol(StringView uri) noexcept
+uri_has_protocol(std::string_view _uri) noexcept
 {
-	assert(!uri.IsNull());
-
+	const StringView uri{_uri};
 	const char *colon = uri.Find(':');
 	return colon != nullptr &&
 		IsValidScheme({uri.data, colon}) &&
@@ -91,18 +90,21 @@ uri_after_protocol(const char *uri) noexcept
 }
 
 StringView
-uri_after_protocol(StringView uri) noexcept
+uri_after_protocol(std::string_view uri) noexcept
 {
-	if (uri.size > 2 && uri[0] == '/' && uri[1] == '/' && uri[2] != '/')
+	if (uri.size() > 2 && uri[0] == '/' && uri[1] == '/' && uri[2] != '/')
 		return uri.substr(2);
 
-	const char *colon = uri.Find(':');
-	return colon != nullptr &&
-		IsValidScheme({uri.data, colon}) &&
-		colon < uri.data + uri.size - 2 &&
-		colon[1] == '/' && colon[2] == '/'
-		? uri.substr(colon + 3)
-		: nullptr;
+	auto colon = uri.find(':');
+	if (colon == std::string_view::npos ||
+	    !IsValidScheme(uri.substr(0, colon)))
+		return nullptr;
+
+	uri = uri.substr(colon + 1);
+	if (uri[0] != '/' || uri[1] != '/')
+		return nullptr;
+
+	return uri.substr(2);
 }
 
 StringView
