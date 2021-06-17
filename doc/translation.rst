@@ -1141,6 +1141,10 @@ described in this section.
   the new root), separated by a null byte. The new mount will have the
   options ``ro,noexec,nosuid,nodev``.
 
+  This (and all variants of this packet) may be followed by an empty
+  ``OPTIONAL`` packet: if the source directory does not exist, this
+  directive is ignored silently.
+
 - ``EXPAND_BIND_MOUNT`` is the same as ``BIND_MOUNT``, but the source
   directory is expanded using ``REGEX`` results.
 
