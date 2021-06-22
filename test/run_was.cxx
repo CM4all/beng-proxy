@@ -201,6 +201,7 @@ try {
 	const ScopeFbPoolInit fb_pool_init;
 
 	ChildOptions child_options;
+	child_options.no_new_privs = true;
 
 	Context context;
 	ChildProcessRegistry child_process_registry(context.event_loop);
