@@ -48,6 +48,7 @@
 #include "spawn/Local.hxx"
 #include "io/Logger.hxx"
 #include "io/SpliceSupport.hxx"
+#include "http/HeaderName.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
@@ -171,14 +172,17 @@ main(int argc, char **argv)
 try {
 	SetLogLevel(5);
 
-	StaticArray<const char *, 64> params;
-
 	if (argc < 3) {
 		fprintf(stderr, "Usage: run_was PATH URI [--parameter a=b ...]\n");
 		return EXIT_FAILURE;
 	}
 
+	Context context;
+
 	const char *uri = argv[2];
+	StaticArray<const char *, 64> params;
+
+	StringMap headers;
 
 	for (int i = 3; i < argc;) {
 		if (StringIsEqual(argv[i], "--parameter") ||
@@ -191,6 +195,21 @@ try {
 				throw std::runtime_error("Too many parameters");
 
 			params.push_back(argv[i++]);
+		} else if (StringIsEqual(argv[i], "--header") ||
+			   StringIsEqual(argv[i], "-H")) {
+			++i;
+			if (i >= argc)
+				throw std::runtime_error("Header value missing");
+
+			auto [name, value] = StringView{argv[i++]}.Split(':');
+			name.Strip();
+			if (!http_header_name_valid(name) || value == nullptr)
+				throw std::runtime_error("Malformed header");
+
+			value.StripLeft();
+
+			AllocatorPtr alloc(context.root_pool);
+			headers.Add(alloc, alloc.DupToLower(name), alloc.DupZ(value));
 		} else
 			throw std::runtime_error("Unrecognized parameter");
 	}
@@ -204,7 +223,6 @@ try {
 	ChildOptions child_options;
 	child_options.no_new_privs = true;
 
-	Context context;
 	ChildProcessRegistry child_process_registry(context.event_loop);
 	child_process_registry.SetVolatile();
 	LocalSpawnService spawn_service(spawn_config, child_process_registry);
@@ -221,7 +239,7 @@ try {
 			   HTTP_METHOD_GET, uri,
 			   nullptr,
 			   nullptr, nullptr,
-			   *strmap_new(context.root_pool),
+			   headers,
 			   request_body(context.event_loop, context.root_pool),
 			   params,
 			   context, context.cancel_ptr);
