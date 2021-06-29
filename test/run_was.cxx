@@ -52,6 +52,7 @@
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
 #include "util/StaticArray.hxx"
+#include "util/StringAPI.hxx"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -180,8 +181,8 @@ try {
 	const char *uri = argv[2];
 
 	for (int i = 3; i < argc;) {
-		if (strcmp(argv[i], "--parameter") == 0 ||
-		    strcmp(argv[i], "-p") == 0) {
+		if (StringIsEqual(argv[i], "--parameter") ||
+		    StringIsEqual(argv[i], "-p")) {
 			++i;
 			if (i >= argc)
 				throw std::runtime_error("Parameter value missing");
