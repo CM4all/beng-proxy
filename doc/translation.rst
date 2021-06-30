@@ -927,7 +927,8 @@ Group is one of:
 
 - ``OTHER``: other end-to-end headers not explicitly mentioned here
 
-- ``ALL``: all of the above except for ``SECURE`` and ``SSL``
+- ``ALL``: all of the above except for ``SECURE``, ``SSL`` and
+  ``AUTH``
 
 Mode is one of:
 
