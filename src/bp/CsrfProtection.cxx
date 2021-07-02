@@ -93,7 +93,7 @@ Request::WriteCsrfToken(HttpHeaders &headers) noexcept
 		token.Generate(instance.event_loop.SystemNow(), session->csrf_salt);
 	}
 
-	char s[CsrfToken::STRING_LENGTH];
+	char s[CsrfToken::STRING_LENGTH + 1];
 	token.Format(s);
 	headers.Write("x-cm4all-csrf-token", s);
 }
