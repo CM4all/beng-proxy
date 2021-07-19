@@ -45,3 +45,11 @@ cookie_next_unquoted_value(StringView &input) noexcept;
 
 StringView
 cookie_next_rfc_ignorant_value(StringView &input) noexcept;
+
+/**
+ * Like cookie_next_name_value(), but do not unquote.  Therefore, it
+ * does not allocate memory and does not copy data, it just returns a
+ * pointer inside the input string.
+ */
+std::pair<StringView, StringView>
+cookie_next_name_value_raw(StringView &input, bool rfc_ignorant) noexcept;

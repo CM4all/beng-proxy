@@ -31,6 +31,7 @@
  */
 
 #include "CookieString.hxx"
+#include "Tokenizer.hxx"
 #include "util/StringView.hxx"
 
 gcc_always_inline
@@ -75,4 +76,42 @@ cookie_next_rfc_ignorant_value(StringView &input) noexcept
 
 	input.skip_front(value.size);
 	return value;
+}
+
+static StringView
+cookie_next_value_raw(StringView &input) noexcept
+{
+	if (!input.empty() && input.front() == '"')
+		return http_next_quoted_string_raw(input);
+	else
+		return cookie_next_unquoted_value(input);
+}
+
+static StringView
+cookie_next_rfc_ignorant_value_raw(StringView &input) noexcept
+{
+	if (!input.empty() && input.front() == '"')
+		return http_next_quoted_string_raw(input);
+	else
+		return cookie_next_rfc_ignorant_value(input);
+}
+
+std::pair<StringView, StringView>
+cookie_next_name_value_raw(StringView &input, bool rfc_ignorant) noexcept
+{
+	const auto name = http_next_token(input);
+	if (name.empty())
+		return {name, nullptr};
+
+	input.StripLeft();
+	if (!input.empty() && input.front() == '=') {
+		input.pop_front();
+		input.StripLeft();
+
+		const auto value = rfc_ignorant
+			? cookie_next_rfc_ignorant_value_raw(input)
+			: cookie_next_value_raw(input);
+		return {name, value};
+	} else
+		return {name, nullptr};
 }
