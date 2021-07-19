@@ -37,13 +37,11 @@
 #include "AllocatorPtr.hxx"
 
 StringMap
-cookie_map_parse(AllocatorPtr alloc, const char *p) noexcept
+cookie_map_parse(AllocatorPtr alloc, std::string_view _input) noexcept
 {
-	assert(p != nullptr);
-
 	StringMap cookies;
 
-	StringView input = p;
+	StringView input = _input;
 
 	while (true) {
 		StringView name, value;

@@ -36,6 +36,8 @@
 
 #pragma once
 
+#include <string_view>
+
 class AllocatorPtr;
 class StringMap;
 
@@ -45,7 +47,7 @@ class StringMap;
  */
 [[gnu::pure]]
 StringMap
-cookie_map_parse(AllocatorPtr alloc, const char *p) noexcept;
+cookie_map_parse(AllocatorPtr alloc, std::string_view input) noexcept;
 
 /**
  * Remove cookies with the specified name from a Cookie request
