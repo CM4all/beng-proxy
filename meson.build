@@ -1126,7 +1126,7 @@ if get_option('certdb')
       pcre_dep,
       avahi_dep,
       sodium_dep,
-      ssl_dep,
+      crypto_dep,
       pg_dep,
       curl_dep,
       net_dep,
