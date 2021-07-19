@@ -34,8 +34,6 @@
 #include "FifoBufferBio.hxx"
 
 #include <openssl/ssl.h>
-#include <openssl/crypto.h>
-#include <openssl/err.h>
 
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
 #include <openssl/engine.h>
@@ -44,8 +42,9 @@
 void
 ssl_global_init()
 {
-	SSL_load_error_strings();
-	SSL_library_init();
+	OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS|
+			 OPENSSL_INIT_LOAD_CRYPTO_STRINGS,
+			 nullptr);
 
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
 	ENGINE_load_builtin_engines();
