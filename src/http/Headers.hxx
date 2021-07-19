@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include "AllocatorPtr.hxx"
 #include "strmap.hxx"
 #include "GrowingBuffer.hxx"
 #include "HeaderWriter.hxx"
@@ -79,8 +80,8 @@ public:
 		return map;
 	}
 
-	StringMap &&ToMap(struct pool &pool) && noexcept {
-		header_parse_buffer(pool, map, std::move(buffer));
+	StringMap &&ToMap(AllocatorPtr alloc) && noexcept {
+		header_parse_buffer(alloc, map, std::move(buffer));
 		return std::move(map);
 	}
 

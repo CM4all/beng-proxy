@@ -378,7 +378,7 @@ ServerConnection::Request::SendResponse(http_status_t status,
 		}
 	}
 
-	for (const auto &i : std::move(response_headers).ToMap(pool)) {
+	for (const auto &i : std::move(response_headers).ToMap(AllocatorPtr{pool})) {
 		if (hdrs.full())
 			// TODO: what now?
 			break;
