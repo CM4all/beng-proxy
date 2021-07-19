@@ -91,10 +91,7 @@ void
 CsrfToken::Format(char *s) const noexcept
 {
 	s = format_uint32_hex_fixed(s, hash.ImportTime(time));
-
-	for (const std::byte i : hash.data)
-		s = format_uint8_hex_fixed(s, (uint8_t)i);
-
+	s = HexFormat(s, hash.data);
 	*s = 0;
 }
 
