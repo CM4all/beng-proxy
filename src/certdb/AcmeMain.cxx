@@ -52,7 +52,7 @@
 #include "ssl/AltName.hxx"
 #include "ssl/Name.hxx"
 #include "ssl/GeneralName.hxx"
-#include "ssl/Unique.hxx"
+#include "ssl/UniqueX509.hxx"
 #include "ssl/Error.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/ConstBuffer.hxx"

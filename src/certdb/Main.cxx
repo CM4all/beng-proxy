@@ -43,7 +43,7 @@
 #include "ssl/Key.hxx"
 #include "ssl/LoadFile.hxx"
 #include "ssl/Name.hxx"
-#include "ssl/Unique.hxx"
+#include "ssl/UniqueEVP.hxx"
 #include "ssl/Error.hxx"
 #include "lb/Config.hxx"
 #include "system/Urandom.hxx"

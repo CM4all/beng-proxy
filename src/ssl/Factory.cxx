@@ -38,7 +38,6 @@
 #include "ssl/Error.hxx"
 #include "ssl/Basic.hxx"
 #include "ssl/Ctx.hxx"
-#include "ssl/Unique.hxx"
 #include "ssl/Name.hxx"
 #include "ssl/AltName.hxx"
 #include "ssl/Key.hxx"

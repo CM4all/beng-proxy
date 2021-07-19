@@ -42,6 +42,7 @@
 #include "json/ForwardList.hxx"
 #include "jwt/RS256.hxx"
 #include "ssl/Buffer.hxx"
+#include "ssl/UniqueBIO.hxx"
 #include "sodium/Base64.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/Exception.hxx"

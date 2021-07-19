@@ -35,6 +35,7 @@
 #include "ssl/Buffer.hxx"
 #include "ssl/Key.hxx"
 #include "ssl/Error.hxx"
+#include "ssl/UniqueBIO.hxx"
 #include "util/AllocatedArray.hxx"
 #include "util/Exception.hxx"
 

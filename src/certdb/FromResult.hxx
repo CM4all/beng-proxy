@@ -32,7 +32,8 @@
 
 #pragma once
 
-#include "ssl/Unique.hxx"
+#include "ssl/UniqueX509.hxx"
+#include "ssl/UniqueEVP.hxx"
 
 #include <utility>
 

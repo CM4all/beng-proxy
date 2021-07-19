@@ -34,7 +34,7 @@
 
 #include "NameCache.hxx"
 #include "ssl/Hash.hxx"
-#include "ssl/Unique.hxx"
+#include "ssl/UniqueX509.hxx"
 #include "ssl/Ctx.hxx"
 #include "certdb/Config.hxx"
 #include "certdb/CertDatabase.hxx"

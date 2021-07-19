@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "ssl/Unique.hxx"
+#include "ssl/UniqueEVP.hxx"
 
 /**
  * An ACME account key.
