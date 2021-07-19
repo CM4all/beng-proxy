@@ -50,6 +50,7 @@ MultiFifoBufferIstream::SetEof() noexcept
 void
 MultiFifoBufferIstream::SubmitBuffer() noexcept
 {
+	[[maybe_unused]] // do we ever need this variable?
 	size_t consumed = 0;
 
 	while (!buffer.empty()) {
