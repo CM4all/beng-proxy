@@ -39,8 +39,9 @@
 #include <utility>
 
 struct StringView;
-class AllocatorPtr;
 
-std::pair<StringView, StringView>
-cookie_next_name_value(AllocatorPtr alloc, StringView &input,
-		       bool rfc_ignorant) noexcept;
+StringView
+cookie_next_unquoted_value(StringView &input) noexcept;
+
+StringView
+cookie_next_rfc_ignorant_value(StringView &input) noexcept;

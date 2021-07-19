@@ -30,49 +30,48 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "PCookieString.hxx"
 #include "CookieString.hxx"
+#include "Tokenizer.hxx"
+#include "PTokenizer.hxx"
 #include "util/StringView.hxx"
+#include "AllocatorPtr.hxx"
 
-gcc_always_inline
-static constexpr bool
-char_is_cookie_octet(char ch) noexcept
+static StringView
+cookie_next_value(AllocatorPtr alloc, StringView &input) noexcept
 {
-	return ch == 0x21 || (ch >= 0x23 && ch <= 0x2b) ||
-		(ch >= 0x2d && ch <= 0x3a) ||
-		(ch >= 0x3c && ch <= 0x5b) ||
-		(ch >= 0x5d && ch <= 0x7e);
+	if (!input.empty() && input.front() == '"')
+		return http_next_quoted_string(alloc, input);
+	else
+		return cookie_next_unquoted_value(input);
 }
 
-StringView
-cookie_next_unquoted_value(StringView &input) noexcept
+static StringView
+cookie_next_rfc_ignorant_value(AllocatorPtr alloc, StringView &input) noexcept
 {
-	StringView value{input.data, std::size_t{}};
-
-	while (value.size < input.size &&
-	       char_is_cookie_octet(input[value.size]))
-		++value.size;
-
-	input.skip_front(value.size);
-	return value;
+	if (!input.empty() && input.front() == '"')
+		return http_next_quoted_string(alloc, input);
+	else
+		return cookie_next_rfc_ignorant_value(input);
 }
 
-gcc_always_inline
-static constexpr bool
-char_is_rfc_ignorant_cookie_octet(char ch) noexcept
+std::pair<StringView, StringView>
+cookie_next_name_value(AllocatorPtr alloc, StringView &input,
+		       bool rfc_ignorant) noexcept
 {
-	return char_is_cookie_octet(ch) ||
-		ch == ' ' || ch == ',';
-}
+	const auto name = http_next_token(input);
+	if (name.empty())
+		return {name, nullptr};
 
-StringView
-cookie_next_rfc_ignorant_value(StringView &input) noexcept
-{
-	StringView value{input.data, std::size_t{}};
+	input.StripLeft();
+	if (!input.empty() && input.front() == '=') {
+		input.pop_front();
+		input.StripLeft();
 
-	while (value.size < input.size &&
-	       char_is_rfc_ignorant_cookie_octet(input[value.size]))
-		++value.size;
-
-	input.skip_front(value.size);
-	return value;
+		const auto value = rfc_ignorant
+			? cookie_next_rfc_ignorant_value(alloc, input)
+			: cookie_next_value(alloc, input);
+		return {name, value};
+	} else
+		return {name, nullptr};
 }

@@ -30,49 +30,17 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "CookieString.hxx"
-#include "util/StringView.hxx"
+/*
+ * Cookie string utilities according to RFC 6265 4.1.1.
+ */
 
-gcc_always_inline
-static constexpr bool
-char_is_cookie_octet(char ch) noexcept
-{
-	return ch == 0x21 || (ch >= 0x23 && ch <= 0x2b) ||
-		(ch >= 0x2d && ch <= 0x3a) ||
-		(ch >= 0x3c && ch <= 0x5b) ||
-		(ch >= 0x5d && ch <= 0x7e);
-}
+#pragma once
 
-StringView
-cookie_next_unquoted_value(StringView &input) noexcept
-{
-	StringView value{input.data, std::size_t{}};
+#include <utility>
 
-	while (value.size < input.size &&
-	       char_is_cookie_octet(input[value.size]))
-		++value.size;
+struct StringView;
+class AllocatorPtr;
 
-	input.skip_front(value.size);
-	return value;
-}
-
-gcc_always_inline
-static constexpr bool
-char_is_rfc_ignorant_cookie_octet(char ch) noexcept
-{
-	return char_is_cookie_octet(ch) ||
-		ch == ' ' || ch == ',';
-}
-
-StringView
-cookie_next_rfc_ignorant_value(StringView &input) noexcept
-{
-	StringView value{input.data, std::size_t{}};
-
-	while (value.size < input.size &&
-	       char_is_rfc_ignorant_cookie_octet(input[value.size]))
-		++value.size;
-
-	input.skip_front(value.size);
-	return value;
-}
+std::pair<StringView, StringView>
+cookie_next_name_value(AllocatorPtr alloc, StringView &input,
+		       bool rfc_ignorant) noexcept;

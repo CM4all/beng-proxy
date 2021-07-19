@@ -32,7 +32,7 @@
 
 #include "CookieClient.hxx"
 #include "CookieJar.hxx"
-#include "CookieString.hxx"
+#include "PCookieString.hxx"
 #include "Quote.hxx"
 #include "PTokenizer.hxx"
 #include "strmap.hxx"

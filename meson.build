@@ -551,6 +551,7 @@ cookie = static_library('cookie',
   'src/http/CookieClient.cxx',
   'src/http/CookieServer.cxx',
   'src/http/CookieString.cxx',
+  'src/http/PCookieString.cxx',
   include_directories: inc,
 )
 cookie_dep = declare_dependency(link_with: cookie,

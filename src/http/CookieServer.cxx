@@ -31,7 +31,7 @@
  */
 
 #include "CookieServer.hxx"
-#include "CookieString.hxx"
+#include "PCookieString.hxx"
 #include "strmap.hxx"
 #include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
