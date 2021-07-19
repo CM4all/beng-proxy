@@ -257,7 +257,6 @@ system_dep = declare_dependency(
 )
 
 subdir('libcommon/src/http')
-subdir('libcommon/src/was/async')
 subdir('libcommon/src/json')
 subdir('libcommon/src/lua')
 
@@ -364,6 +363,7 @@ else
   stopwatch_dep = declare_dependency()
 endif
 
+subdir('libcommon/src/was/async')
 subdir('libcommon/src/stock')
 
 stock2 = static_library(
