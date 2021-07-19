@@ -106,7 +106,9 @@ parse_next_cookie(struct pool &tpool,
 	while (!input.empty() && input.front() == ';') {
 		input.pop_front();
 
-		http_next_name_value(tpool, input, name, value);
+		const auto nv = http_next_name_value(tpool, input);
+		name = nv.first;
+		value = nv.second;
 		if (name.EqualsIgnoreCase("domain"))
 			cookie->domain = value;
 		else if (name.EqualsIgnoreCase("path"))

@@ -36,17 +36,16 @@
 
 #pragma once
 
+#include <utility>
+
 struct StringView;
 class AllocatorPtr;
 
-void
-http_next_quoted_string(AllocatorPtr alloc, StringView &input,
-			StringView &value) noexcept;
+StringView
+http_next_quoted_string(AllocatorPtr alloc, StringView &input) noexcept;
 
-void
-http_next_value(AllocatorPtr alloc,
-		StringView &input, StringView &value) noexcept;
+StringView
+http_next_value(AllocatorPtr alloc, StringView &input) noexcept;
 
-void
-http_next_name_value(AllocatorPtr alloc, StringView &input,
-		     StringView &name, StringView &value) noexcept;
+std::pair<StringView, StringView>
+http_next_name_value(AllocatorPtr alloc, StringView &input) noexcept;

@@ -85,7 +85,7 @@ cookie_next_value(AllocatorPtr alloc, StringView &input,
 		  StringView &value) noexcept
 {
 	if (!input.empty() && input.front() == '"')
-		http_next_quoted_string(alloc, input, value);
+		value = http_next_quoted_string(alloc, input);
 	else
 		cookie_next_unquoted_value(input, value);
 }
@@ -95,7 +95,7 @@ cookie_next_rfc_ignorant_value(AllocatorPtr alloc, StringView &input,
 			       StringView &value) noexcept
 {
 	if (!input.empty() && input.front() == '"')
-		http_next_quoted_string(alloc, input, value);
+		value = http_next_quoted_string(alloc, input);
 	else
 		cookie_next_rfc_ignorant_value(input, value);
 }

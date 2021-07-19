@@ -36,15 +36,13 @@
 #include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
-void
-http_next_quoted_string(AllocatorPtr alloc, StringView &input,
-			StringView &value) noexcept
+StringView
+http_next_quoted_string(AllocatorPtr alloc, StringView &input) noexcept
 {
 	char *dest = alloc.NewArray<char>(input.size); /* TODO: optimize memory consumption */
 	size_t pos = 1;
 
-	value.size = 0;
-	value.data = dest;
+	StringView value{dest, std::size_t{}};
 
 	while (pos < input.size) {
 		if (input[pos] == '\\') {
@@ -62,32 +60,31 @@ http_next_quoted_string(AllocatorPtr alloc, StringView &input,
 	}
 
 	input.skip_front(pos);
+	return value;
 }
 
-void
-http_next_value(AllocatorPtr alloc,
-		StringView &input, StringView &value) noexcept
+StringView
+http_next_value(AllocatorPtr alloc, StringView &input) noexcept
 {
 	if (!input.empty() && input.front() == '"')
-		http_next_quoted_string(alloc, input, value);
+		return http_next_quoted_string(alloc, input);
 	else
-		value = http_next_token(input);
+		return http_next_token(input);
 }
 
-void
-http_next_name_value(AllocatorPtr alloc, StringView &input,
-		     StringView &name, StringView &value) noexcept
+std::pair<StringView, StringView>
+http_next_name_value(AllocatorPtr alloc, StringView &input) noexcept
 {
-	name = http_next_token(input);
+	const auto name = http_next_token(input);
 	if (name.empty())
-		return;
+		return {name, nullptr};
 
 	input.StripLeft();
 	if (!input.empty() && input.front() == '=') {
 		input.pop_front();
 		input.StripLeft();
 
-		http_next_value(alloc, input, value);
+		return {name, http_next_value(alloc, input)};
 	} else
-		value = nullptr;
+		return {name, nullptr};
 }
