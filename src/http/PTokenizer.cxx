@@ -71,14 +71,14 @@ http_next_value(AllocatorPtr alloc,
 	if (!input.empty() && input.front() == '"')
 		http_next_quoted_string(alloc, input, value);
 	else
-		http_next_token(input, value);
+		value = http_next_token(input);
 }
 
 void
 http_next_name_value(AllocatorPtr alloc, StringView &input,
 		     StringView &name, StringView &value) noexcept
 {
-	http_next_token(input, name);
+	name = http_next_token(input);
 	if (name.empty())
 		return;
 

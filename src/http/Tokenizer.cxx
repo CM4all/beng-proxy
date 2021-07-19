@@ -34,11 +34,10 @@
 #include "Chars.hxx"
 #include "util/StringView.hxx"
 
-void
-http_next_token(StringView &input, StringView &value) noexcept
+StringView
+http_next_token(StringView &input) noexcept
 {
-	value.size = 0;
-	value.data = input.data;
+	StringView value{input.data, std::size_t{}};
 
 	while (value.size < input.size &&
 	       char_is_http_token(input[value.size]))
@@ -46,4 +45,6 @@ http_next_token(StringView &input, StringView &value) noexcept
 
 	if (value.size > 0)
 		input.skip_front(value.size);
+
+	return value;
 }

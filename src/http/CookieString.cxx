@@ -105,7 +105,7 @@ cookie_next_name_value(AllocatorPtr alloc, StringView &input,
 		       StringView &name, StringView &value,
 		       bool rfc_ignorant) noexcept
 {
-	http_next_token(input, name);
+	name = http_next_token(input);
 	if (name.empty())
 		return;
 

@@ -38,5 +38,5 @@
 
 struct StringView;
 
-void
-http_next_token(StringView &input, StringView &value) noexcept;
+StringView
+http_next_token(StringView &input) noexcept;
