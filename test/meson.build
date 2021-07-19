@@ -534,6 +534,8 @@ test(
 test('t_session', executable('t_session',
   't_session.cxx',
   'TestSessionId.cxx',
+  'TestCsrfProtection.cxx',
+  '../src/bp/CsrfToken.cxx',
   '../src/random.cxx',
   include_directories: inc,
   dependencies: [
