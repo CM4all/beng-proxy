@@ -56,8 +56,3 @@ ssl_global_deinit()
 {
 	DeinitFifoBufferBio();
 }
-
-void
-ssl_thread_deinit()
-{
-}

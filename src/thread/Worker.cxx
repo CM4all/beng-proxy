@@ -33,7 +33,6 @@
 #include "Worker.hxx"
 #include "Queue.hxx"
 #include "Job.hxx"
-#include "ssl/Init.hxx"
 #include "system/Error.hxx"
 #include "util/ScopeExit.hxx"
 
@@ -56,7 +55,6 @@ ThreadWorker::Run(void *ctx) noexcept
 	auto &w = *(ThreadWorker *)ctx;
 	w.Run();
 
-	ssl_thread_deinit();
 	return nullptr;
 }
 
