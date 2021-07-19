@@ -69,10 +69,6 @@ SetupBasicSslCtx(SSL_CTX &ssl_ctx, bool server)
 	SSL_CTX_set_mode(&ssl_ctx, mode);
 
 	if (server) {
-		/* enable Elliptic curve Diffie-Hellman (ECDH) for perfect
-		   forward secrecy; by default, it OpenSSL disables it */
-		SSL_CTX_set_ecdh_auto(ssl_ctx, 1);
-
 		/* no auto-clear, because LbInstance::compress_event will do
 		   this every 10 minutes, which is more reliable */
 		SSL_CTX_set_session_cache_mode(&ssl_ctx,
