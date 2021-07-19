@@ -46,7 +46,6 @@
 #include "Config.hxx"
 #include "CertDatabase.hxx"
 #include "WrapKey.hxx"
-#include "ssl/Init.hxx"
 #include "ssl/Edit.hxx"
 #include "ssl/Key.hxx"
 #include "ssl/AltName.hxx"
@@ -572,8 +571,6 @@ Acme(ConstBuffer<const char *> args)
 
 		const char *email = args[0];
 
-		const ScopeSslGlobalInit ssl_init;
-
 		if (config.account_db) {
 			/* using the account database: generate a new
 			   key, create account and store it in the
@@ -600,8 +597,6 @@ Acme(ConstBuffer<const char *> args)
 	} else if (StringIsEqual(cmd, "get-account")) {
 		if (!args.empty())
 			throw Usage("acme get-account");
-
-		const ScopeSslGlobalInit ssl_init;
 
 		if (config.account_db) {
 			const auto db_config = LoadPatchCertDatabaseConfig();
@@ -630,7 +625,6 @@ Acme(ConstBuffer<const char *> args)
 
 		const auto db_config = LoadPatchCertDatabaseConfig();
 
-		const ScopeSslGlobalInit ssl_init;
 		const AcmeKey key(import_key_path);
 
 		const auto account = AcmeClient(config).NewAccount(*key,
@@ -660,8 +654,6 @@ Acme(ConstBuffer<const char *> args)
 		for (const char *i : args)
 			identifiers.emplace(i);
 
-		const ScopeSslGlobalInit ssl_init;
-
 		const auto db_config = LoadPatchCertDatabaseConfig();
 		CertDatabase db(db_config);
 		const auto key = GetAcmeAccountKey(config, db);
@@ -675,8 +667,6 @@ Acme(ConstBuffer<const char *> args)
 			throw Usage("acme renew-cert HANDLE");
 
 		const char *handle = args.front();
-
-		const ScopeSslGlobalInit ssl_init;
 
 		const auto db_config = LoadPatchCertDatabaseConfig();
 		CertDatabase db(db_config);

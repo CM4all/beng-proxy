@@ -37,7 +37,6 @@
 #include "CertDatabase.hxx"
 #include "WrapKey.hxx"
 #include "Wildcard.hxx"
-#include "ssl/Init.hxx"
 #include "ssl/Buffer.hxx"
 #include "ssl/Dummy.hxx"
 #include "ssl/Key.hxx"
@@ -108,8 +107,6 @@ LoadCertificate(const CertDatabaseConfig &db_config,
 		const char *handle,
 		const char *cert_path, const char *key_path)
 {
-	const ScopeSslGlobalInit ssl_init;
-
 	const auto cert = LoadCertFile(cert_path);
 	const auto common_name = GetCommonName(*cert);
 	if (common_name == nullptr)
@@ -139,8 +136,6 @@ LoadCertificate(const CertDatabaseConfig &db_config,
 static void
 ReloadCertificate(const CertDatabaseConfig &db_config, const char *handle)
 {
-	const ScopeSslGlobalInit ssl_init;
-
 	CertDatabase db(db_config);
 
 	auto cert_key = db.GetServerCertificateKeyByHandle(handle);
@@ -170,7 +165,6 @@ DeleteCertificate(const CertDatabaseConfig &db_config, const char *handle)
 static void
 GetCertificate(const CertDatabaseConfig &db_config, const char *handle)
 {
-	const ScopeSslGlobalInit ssl_init;
 	CertDatabase db(db_config);
 	auto cert = db.GetServerCertificateByHandle(handle);
 	if (!cert)
@@ -207,7 +201,6 @@ FindCertificate(const CertDatabaseConfig &db_config, const char *host, bool head
 	if (headers)
 		printf("id\thandle\tissuer\tnot_after\n");
 
-	const ScopeSslGlobalInit ssl_init;
 	CertDatabase db(db_config);
 
 	FindPrintCertificates(db, host);
@@ -220,7 +213,6 @@ FindCertificate(const CertDatabaseConfig &db_config, const char *host, bool head
 static void
 DumpKey(const CertDatabaseConfig &db_config, const char *host)
 {
-	const ScopeSslGlobalInit ssl_init;
 	CertDatabase db(db_config);
 
 	auto key = FindKeyByName(db, host);
@@ -302,8 +294,6 @@ static void
 Populate(const CertDatabaseConfig &db_config,
 	 const char *key_path, const char *suffix, unsigned n)
 {
-	const ScopeSslGlobalInit ssl_init;
-
 	const auto key = LoadKeyFile(key_path);
 
 	const SslBuffer key_buffer(*key);
