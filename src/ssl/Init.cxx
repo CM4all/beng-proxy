@@ -56,18 +56,6 @@ void
 ssl_global_deinit()
 {
 	DeinitFifoBufferBio();
-
-#if OPENSSL_VERSION_NUMBER < 0x30000000L
-	ENGINE_cleanup();
-#endif
-
-	EVP_cleanup();
-	CRYPTO_cleanup_all_ex_data();
-
-	CRYPTO_set_id_callback(nullptr);
-	CRYPTO_set_locking_callback(nullptr);
-
-	ERR_free_strings();
 }
 
 void
