@@ -49,7 +49,9 @@ static auto
 ToClusterNode(uint64_t id,
 	      unsigned cluster_size, unsigned cluster_node) noexcept
 {
-	uint64_t remainder = id % (uint64_t)cluster_size;
+	/* use only the lower 32 bit because that is what beng-lb's
+	   lb_session_get() function uses */
+	uint32_t remainder = uint32_t(id) % uint32_t(cluster_size);
 	assert(remainder < cluster_size);
 
 	id -= remainder;

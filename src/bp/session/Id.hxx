@@ -88,7 +88,9 @@ public:
 	 */
 	gcc_pure
 	auto GetClusterHash() const noexcept {
-		return data.back();
+		/* truncating to 32 bit because that is what beng-lb's
+		   lb_session_get() function uses */
+		return (uint32_t)data.back();
 	}
 
 	/**
