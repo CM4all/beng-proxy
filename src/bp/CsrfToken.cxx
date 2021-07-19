@@ -79,7 +79,7 @@ const char *
 CsrfHash::Parse(const char *s) noexcept
 {
 	for (auto &i : data) {
-		s = ParseHexSegment(s, i);
+		s = ParseHexSegment(s, (uint8_t &)i);
 		if (s == nullptr)
 			break;
 	}
@@ -92,8 +92,8 @@ CsrfToken::Format(char *s) const noexcept
 {
 	s = format_uint32_hex_fixed(s, hash.ImportTime(time));
 
-	for (const uint8_t i : hash.data)
-		s = format_uint8_hex_fixed(s, i);
+	for (const std::byte i : hash.data)
+		s = format_uint8_hex_fixed(s, (uint8_t)i);
 
 	*s = 0;
 }

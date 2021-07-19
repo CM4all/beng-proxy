@@ -38,7 +38,7 @@
 class SessionId;
 
 struct CsrfHash {
-	std::array<uint8_t, 12> data;
+	std::array<std::byte, 12> data;
 
 	void Generate(std::chrono::system_clock::time_point time,
 		      const SessionId &salt) noexcept;
