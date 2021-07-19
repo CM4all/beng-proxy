@@ -48,3 +48,21 @@ http_next_token(StringView &input) noexcept
 
 	return value;
 }
+
+StringView
+http_next_quoted_string_raw(StringView &input) noexcept
+{
+	assert(input.front() == '"');
+	input.pop_front();
+
+	const char *quote = input.Find('"');
+	if (quote != nullptr) {
+		StringView value{input.data + 1, quote};
+		input.MoveFront(quote + 1);
+		return value;
+	} else {
+		/* no closing quote - this is bad, but we ignore it
+		   and make the best of it */
+		return std::exchange(input, nullptr);
+	}
+}
