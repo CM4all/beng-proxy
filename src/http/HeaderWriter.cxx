@@ -71,7 +71,7 @@ header_write(GrowingBuffer &buffer,
 	key_length = strlen(key);
 	value_length = strlen(value);
 
-	if (gcc_unlikely(key_length + value_length >= 1024)) {
+	if (key_length + value_length >= 1024) [[unlikely]] {
 		/* because GrowingBuffer::Write(size_t) can only deal with
 		   small sizes, use this slightly slower code path for large
 		   headers */
