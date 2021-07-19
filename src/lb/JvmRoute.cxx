@@ -42,7 +42,7 @@
 
 sticky_hash_t
 lb_jvm_route_get(const StringMap &request_headers,
-		 const LbClusterConfig &cluster)
+		 const LbClusterConfig &cluster) noexcept
 {
 	const TempPoolLease tpool;
 
