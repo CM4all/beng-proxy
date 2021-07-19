@@ -37,7 +37,7 @@
 #include "session/Manager.hxx"
 #include "session/Session.hxx"
 #include "http/IncomingRequest.hxx"
-#include "http/CookieServer.hxx"
+#include "http/CookieExtract.hxx"
 #include "bot.h"
 #include "util/HexFormat.hxx"
 #include "util/djbhash.h"
@@ -45,44 +45,28 @@
 #include "strmap.hxx"
 
 [[gnu::pure]]
-static StringMap *
-ParseCookieHeaders(AllocatorPtr alloc, const StringMap &headers) noexcept
+static std::string_view
+ExtractCookieRaw(const StringMap &headers, std::string_view name) noexcept
 {
 	const auto r = headers.EqualRange("cookie");
 
-	StringMap *cookies = nullptr;
-
 	for (auto i = r.first; i != r.second; ++i) {
-		auto c = cookie_map_parse(alloc, i->value);
-		if (c.IsEmpty())
-			continue;
-
-		if (cookies == nullptr)
-			cookies = alloc.New<StringMap>(std::move(c));
-		else
-			cookies->Merge(std::move(c));
+		const auto value = ExtractCookieRaw(i->value, name);
+		if (value.data() != nullptr)
+			return value;
 	}
 
-	return cookies;
-}
-
-inline const StringMap *
-Request::GetCookies() noexcept
-{
-	if (cookies == nullptr)
-		cookies = ParseCookieHeaders(pool, request.headers);
-
-	return cookies;
+	return {};
 }
 
 inline SessionLease
-Request::LoadSession(const char *_session_id) noexcept
+Request::LoadSession(StringView _session_id) noexcept
 {
 	assert(!stateless);
 	assert(!session_id.IsDefined());
 	assert(_session_id != nullptr);
 
-	auto [sid, recover] = StringView(_session_id).Split('/');
+	auto [sid, recover] = _session_id.Split('/');
 
 	if (!session_id.Parse(sid))
 		return nullptr;
@@ -130,13 +114,13 @@ build_session_cookie_name(AllocatorPtr alloc, const BpConfig *config,
 	return name;
 }
 
-inline const char *
+inline StringView
 Request::GetCookieSessionId() noexcept
 {
 	assert(!stateless);
 	assert(session_cookie != nullptr);
 
-	return strmap_get_checked(GetCookies(), session_cookie);
+	return ExtractCookieRaw(request.headers, session_cookie);
 }
 
 void
@@ -156,7 +140,7 @@ Request::DetermineSession() noexcept
 						   &instance.config,
 						   request.headers);
 
-	const char *sid = GetCookieSessionId();
+	const auto sid = GetCookieSessionId();
 	if (sid == nullptr)
 		return;
 

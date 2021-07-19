@@ -30,32 +30,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "JvmRoute.hxx"
-#include "ClusterConfig.hxx"
-#include "http/CookieExtract.hxx"
+#include "CookieExtract.hxx"
+#include "CookieString.hxx"
 #include "util/StringView.hxx"
-#include "strmap.hxx"
 
-sticky_hash_t
-lb_jvm_route_get(const StringMap &request_headers,
-		 const LbClusterConfig &cluster) noexcept
+std::string_view
+ExtractCookieRaw(std::string_view cookie_header, std::string_view name) noexcept
 {
-	const char *cookie = request_headers.Get("cookie");
-	if (cookie == NULL)
-		return 0;
+	StringView input = cookie_header;
 
-	const StringView jsessionid = ExtractCookieRaw(cookie,
-						       "JSESSIONID");
-	const auto jvm_route = jsessionid.Split('.').second;
-	if (jvm_route.empty())
-		return 0;
+	while (true) {
+		const auto [current_name, current_value] =
+			    cookie_next_name_value_raw(input, true);
+		if (current_name.empty())
+			return {};
 
-	int i = cluster.FindJVMRoute(jvm_route);
-	if (i < 0)
-		return 0;
+		if (current_name.Equals(name))
+			return current_value;
 
-	/* add num_members to make sure that the modulo still maps to the
-	   node index, but the first node is not referred to as zero
-	   (special value for "no session") */
-	return i + cluster.members.size();
+		input.StripLeft();
+		if (input.empty() || input.front() != ';')
+			return {};
+
+		input.pop_front();
+		input.StripLeft();
+	}
 }

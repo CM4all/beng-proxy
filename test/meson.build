@@ -523,6 +523,7 @@ test(
     't_cookie',
     't_cookie_client.cxx',
     't_cookie_server.cxx',
+    'TestCookieExtract.cxx',
     include_directories: inc,
     dependencies: [
       gtest,

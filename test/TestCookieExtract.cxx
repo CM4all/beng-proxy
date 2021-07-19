@@ -30,32 +30,42 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "JvmRoute.hxx"
-#include "ClusterConfig.hxx"
 #include "http/CookieExtract.hxx"
-#include "util/StringView.hxx"
-#include "strmap.hxx"
 
-sticky_hash_t
-lb_jvm_route_get(const StringMap &request_headers,
-		 const LbClusterConfig &cluster) noexcept
+#include <gtest/gtest.h>
+
+using std::string_view_literals::operator""sv;
+
+TEST(CookieExtract, Basic)
 {
-	const char *cookie = request_headers.Get("cookie");
-	if (cookie == NULL)
-		return 0;
+	constexpr auto input = "a=b"sv;
+	ASSERT_EQ(ExtractCookieRaw(input, "c").data(), nullptr);
+	ASSERT_EQ(ExtractCookieRaw(input, "a"), "b"sv);
+}
 
-	const StringView jsessionid = ExtractCookieRaw(cookie,
-						       "JSESSIONID");
-	const auto jvm_route = jsessionid.Split('.').second;
-	if (jvm_route.empty())
-		return 0;
+TEST(CookieExtract, Basic2)
+{
+	constexpr auto input = "c=d;e=f"sv;
+	ASSERT_EQ(ExtractCookieRaw(input, "c"), "d"sv);
+	ASSERT_EQ(ExtractCookieRaw(input, "e"), "f"sv);
+}
 
-	int i = cluster.FindJVMRoute(jvm_route);
-	if (i < 0)
-		return 0;
+TEST(CookieExtract, Quoted)
+{
+	constexpr auto input = "quoted=\"quoted!\\\\"sv;
+	ASSERT_EQ(ExtractCookieRaw(input, "quoted"), "quoted!\\\\");
+}
 
-	/* add num_members to make sure that the modulo still maps to the
-	   node index, but the first node is not referred to as zero
-	   (special value for "no session") */
-	return i + cluster.members.size();
+TEST(CookieExtract, Invalid1)
+{
+	constexpr auto input = "invalid1=foo\t"sv;
+	ASSERT_EQ(ExtractCookieRaw(input, "invalid1"), "foo");
+}
+
+TEST(CookieExtract, Invalid2)
+{
+	/* this is actually invalid, but unfortunately RFC ignorance is
+	   viral, and forces us to accept square brackets :-( */
+	constexpr auto input = "invalid2=foo |[bar] ,"sv;
+	ASSERT_EQ(ExtractCookieRaw(input, "invalid2"), "foo |[bar] ,");
 }

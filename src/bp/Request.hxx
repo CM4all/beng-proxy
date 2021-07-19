@@ -64,6 +64,7 @@ struct statx;
 class Istream;
 class HttpHeaders;
 class GrowingBuffer;
+struct StringView;
 struct BpInstance;
 struct BpConfig;
 struct BpConnection;
@@ -111,8 +112,6 @@ public:
 	StringMap args;
 
 private:
-	StringMap *cookies = nullptr;
-
 	/**
 	 * The name of the session cookie.
 	 */
@@ -623,12 +622,9 @@ public:
 
 private:
 	[[gnu::pure]]
-	const StringMap *GetCookies() noexcept;
+	StringView GetCookieSessionId() noexcept;
 
-	[[gnu::pure]]
-	const char *GetCookieSessionId() noexcept;
-
-	SessionLease LoadSession(const char *_session_id) noexcept;
+	SessionLease LoadSession(StringView _session_id) noexcept;
 
 public:
 	void DetermineSession() noexcept;

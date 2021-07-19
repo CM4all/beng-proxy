@@ -30,32 +30,20 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "JvmRoute.hxx"
-#include "ClusterConfig.hxx"
-#include "http/CookieExtract.hxx"
-#include "util/StringView.hxx"
-#include "strmap.hxx"
+#pragma once
 
-sticky_hash_t
-lb_jvm_route_get(const StringMap &request_headers,
-		 const LbClusterConfig &cluster) noexcept
-{
-	const char *cookie = request_headers.Get("cookie");
-	if (cookie == NULL)
-		return 0;
+#include <string_view>
 
-	const StringView jsessionid = ExtractCookieRaw(cookie,
-						       "JSESSIONID");
-	const auto jvm_route = jsessionid.Split('.').second;
-	if (jvm_route.empty())
-		return 0;
-
-	int i = cluster.FindJVMRoute(jvm_route);
-	if (i < 0)
-		return 0;
-
-	/* add num_members to make sure that the modulo still maps to the
-	   node index, but the first node is not referred to as zero
-	   (special value for "no session") */
-	return i + cluster.members.size();
-}
+/**
+ * Extract a cookie with a specific name from the "Cookie" request
+ * header value.
+ *
+ * @param cookie_header the "Cookie" request header
+ * @param name the cookie name to look for
+ *
+ * @return the raw (i.e. still quoted) cookie value or a
+ * default-initialized std::string_view if no such cookie was found
+ */
+[[gnu::pure]]
+std::string_view
+ExtractCookieRaw(std::string_view cookie_header, std::string_view name) noexcept;
