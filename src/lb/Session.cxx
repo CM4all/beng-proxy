@@ -32,45 +32,28 @@
 
 #include "Session.hxx"
 #include "strmap.hxx"
-#include "pool/tpool.hxx"
-#include "http/CookieServer.hxx"
-#include "AllocatorPtr.hxx"
-
-#include <string.h>
-#include <stdlib.h>
+#include "http/CookieExtract.hxx"
+#include "util/HexParse.hxx"
+#include "util/StringView.hxx"
 
 unsigned
 lb_session_get(const StringMap &request_headers, const char *cookie_name)
 {
-	const TempPoolLease tpool;
-
 	const char *cookie = request_headers.Get("cookie");
 	if (cookie == NULL)
 		return 0;
 
-	const auto jar = cookie_map_parse(*tpool, cookie);
+	StringView session = ExtractCookieRaw(cookie, cookie_name);
+	session = session.Split('/').first;
+	if (session.size < 8)
+		return {};
 
-	const char *session = jar.Get(cookie_name);
-	if (session == NULL)
-		return 0;
+	/* only parse the lowest 32 bits */
+	session.skip_front(session.size - 8);
 
-	size_t length = strlen(session);
-	const char *end = session + length;
+	uint32_t hash;
+	if (!ParseLowerHexFixed(session, hash))
+		return {};
 
-	const char *separator = (const char *)memchr(session, '/', length);
-	if (separator != nullptr) {
-		end = separator;
-		length = end - session;
-	}
-
-	if (length > 8)
-		/* only parse the upper 32 bits */
-		session += length - 8;
-
-	char *endptr;
-	unsigned long id = strtoul(session, &endptr, 16);
-	if (endptr != end)
-		return 0;
-
-	return (unsigned)id;
+	return hash;
 }
