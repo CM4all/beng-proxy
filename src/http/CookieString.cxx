@@ -46,17 +46,17 @@ char_is_cookie_octet(char ch) noexcept
 		(ch >= 0x5d && ch <= 0x7e);
 }
 
-static void
-cookie_next_unquoted_value(StringView &input, StringView &value) noexcept
+static StringView
+cookie_next_unquoted_value(StringView &input) noexcept
 {
-	value.size = 0;
-	value.data = input.data;
+	StringView value{input.data, std::size_t{}};
 
 	while (value.size < input.size &&
 	       char_is_cookie_octet(input[value.size]))
 		++value.size;
 
 	input.skip_front(value.size);
+	return value;
 }
 
 gcc_always_inline
@@ -67,57 +67,54 @@ char_is_rfc_ignorant_cookie_octet(char ch) noexcept
 		ch == ' ' || ch == ',';
 }
 
-static void
-cookie_next_rfc_ignorant_value(StringView &input, StringView &value) noexcept
+static StringView
+cookie_next_rfc_ignorant_value(StringView &input) noexcept
 {
-	value.size = 0;
-	value.data = input.data;
+	StringView value{input.data, std::size_t{}};
 
 	while (value.size < input.size &&
 	       char_is_rfc_ignorant_cookie_octet(input[value.size]))
 		++value.size;
 
 	input.skip_front(value.size);
+	return value;
 }
 
-static void
-cookie_next_value(AllocatorPtr alloc, StringView &input,
-		  StringView &value) noexcept
+static StringView
+cookie_next_value(AllocatorPtr alloc, StringView &input) noexcept
 {
 	if (!input.empty() && input.front() == '"')
-		value = http_next_quoted_string(alloc, input);
+		return http_next_quoted_string(alloc, input);
 	else
-		cookie_next_unquoted_value(input, value);
+		return cookie_next_unquoted_value(input);
 }
 
-static void
-cookie_next_rfc_ignorant_value(AllocatorPtr alloc, StringView &input,
-			       StringView &value) noexcept
+static StringView
+cookie_next_rfc_ignorant_value(AllocatorPtr alloc, StringView &input) noexcept
 {
 	if (!input.empty() && input.front() == '"')
-		value = http_next_quoted_string(alloc, input);
+		return http_next_quoted_string(alloc, input);
 	else
-		cookie_next_rfc_ignorant_value(input, value);
+		return cookie_next_rfc_ignorant_value(input);
 }
 
-void
+std::pair<StringView, StringView>
 cookie_next_name_value(AllocatorPtr alloc, StringView &input,
-		       StringView &name, StringView &value,
 		       bool rfc_ignorant) noexcept
 {
-	name = http_next_token(input);
+	const auto name = http_next_token(input);
 	if (name.empty())
-		return;
+		return {name, nullptr};
 
 	input.StripLeft();
 	if (!input.empty() && input.front() == '=') {
 		input.pop_front();
 		input.StripLeft();
 
-		if (rfc_ignorant)
-			cookie_next_rfc_ignorant_value(alloc, input, value);
-		else
-			cookie_next_value(alloc, input, value);
+		const auto value = rfc_ignorant
+			? cookie_next_rfc_ignorant_value(alloc, input)
+			: cookie_next_value(alloc, input);
+		return {name, value};
 	} else
-		value = nullptr;
+		return {name, nullptr};
 }

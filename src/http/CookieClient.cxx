@@ -95,8 +95,7 @@ static std::unique_ptr<Cookie>
 parse_next_cookie(struct pool &tpool,
 		  StringView &input) noexcept
 {
-	StringView name, value;
-	cookie_next_name_value(tpool, input, name, value, false);
+	auto [name, value] = cookie_next_name_value(tpool, input, false);
 	if (name.empty())
 		return nullptr;
 

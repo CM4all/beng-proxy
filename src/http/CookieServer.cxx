@@ -44,8 +44,8 @@ cookie_map_parse(AllocatorPtr alloc, std::string_view _input) noexcept
 	StringView input = _input;
 
 	while (true) {
-		StringView name, value;
-		cookie_next_name_value(alloc, input, name, value, true);
+		const auto [name, value] =
+			cookie_next_name_value(alloc, input, true);
 		if (name.empty())
 			break;
 
@@ -81,8 +81,8 @@ cookie_exclude(const char *p, const char *_exclude,
 	bool empty = true, found = false;
 
 	while (true) {
-		StringView name, value;
-		cookie_next_name_value(alloc, input, name, value, true);
+		const auto [name, value] =
+			    cookie_next_name_value(alloc, input, true);
 		if (name.empty())
 			break;
 

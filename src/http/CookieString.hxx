@@ -36,10 +36,11 @@
 
 #pragma once
 
+#include <utility>
+
 struct StringView;
 class AllocatorPtr;
 
-void
+std::pair<StringView, StringView>
 cookie_next_name_value(AllocatorPtr alloc, StringView &input,
-		       StringView &name, StringView &value,
 		       bool rfc_ignorant) noexcept;
