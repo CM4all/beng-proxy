@@ -40,8 +40,6 @@
 
 #include <stdio.h>
 
-#if OPENSSL_VERSION_NUMBER >= 0x10101000L
-
 static void
 keylog(const SSL *, const char *line)
 {
@@ -55,8 +53,6 @@ keylog(const SSL *, const char *line)
 		  fclose(file);
 	}
 }
-
-#endif
 
 static void
 SetupBasicSslCtx(SSL_CTX &ssl_ctx, bool server)
@@ -99,11 +95,9 @@ SetupBasicSslCtx(SSL_CTX &ssl_ctx, bool server)
 	   preferences is bad */
 	SSL_CTX_set_options(&ssl_ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
 
-#if OPENSSL_VERSION_NUMBER >= 0x10101000L
 	/* support logging session secrets for Wireshark */
 	if (getenv("SSLKEYLOGFILE") != nullptr)
 		SSL_CTX_set_keylog_callback(&ssl_ctx, keylog);
-#endif
 }
 
 SslCtx
