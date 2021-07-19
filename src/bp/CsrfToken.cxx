@@ -34,32 +34,7 @@
 #include "session/Id.hxx"
 #include "sodium/GenericHash.hxx"
 #include "util/HexFormat.hxx"
-
-#include <algorithm>
-
-#include <stdlib.h>
-#include <string.h>
-
-template<typename T>
-static const char *
-ParseHexSegment(const char *s, T &value_r) noexcept
-{
-	constexpr size_t segment_size = sizeof(T) * 2;
-
-	if (memchr(s, 0, segment_size) != nullptr)
-		/* too short */
-		return nullptr;
-
-	std::array<char, segment_size + 1> segment;
-	*std::copy_n(s, segment_size, segment.begin()) = 0;
-
-	char *endptr;
-	value_r = strtoul(&segment.front(), &endptr, 16);
-	if (endptr != &segment.back())
-		return nullptr;
-
-	return s + segment_size;
-}
+#include "util/HexParse.hxx"
 
 void
 CsrfHash::Generate(std::chrono::system_clock::time_point time,
@@ -78,13 +53,7 @@ CsrfHash::Generate(std::chrono::system_clock::time_point time,
 const char *
 CsrfHash::Parse(const char *s) noexcept
 {
-	for (auto &i : data) {
-		s = ParseHexSegment(s, (uint8_t &)i);
-		if (s == nullptr)
-			break;
-	}
-
-	return s;
+	return ParseLowerHexFixed(s, data);
 }
 
 void
@@ -102,7 +71,7 @@ CsrfToken::Parse(const char *s) noexcept
 		return false;
 
 	uint32_t t;
-	s = ParseHexSegment(s, t);
+	s = ParseLowerHexFixed(s, t);
 	if (s == nullptr)
 		return false;
 

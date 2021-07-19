@@ -33,6 +33,7 @@
 #include "Id.hxx"
 #include "random.hxx"
 #include "util/HexFormat.hxx"
+#include "util/HexParse.hxx"
 
 #include <assert.h>
 
@@ -70,34 +71,7 @@ SessionId::SetClusterNode(unsigned cluster_size,
 bool
 SessionId::Parse(std::string_view s) noexcept
 {
-	if (s.size() != sizeof(data) * 2)
-		return false;
-
-	const char *p = s.data();
-
-	constexpr size_t segment_size = sizeof(data.front()) * 2;
-
-	for (auto &i : data) {
-		uint64_t value = 0;
-
-		for (unsigned j = 0; j < segment_size; ++j) {
-			const char ch = *p++;
-
-			uint_least8_t digit;
-			if (ch >= '0' && ch <= '9')
-				digit = ch - '0';
-			else if (ch >= 'a' && ch <= 'f')
-				digit = ch - 'a' + 0xa;
-			else
-				return false;
-
-			value = (value << 4) | digit;
-		}
-
-		i = value;
-	}
-
-	return true;
+	return ParseLowerHexFixed(s, data);
 }
 
 StringBuffer<sizeof(SessionId::data) * 2 + 1>
