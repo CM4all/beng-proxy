@@ -66,8 +66,5 @@ struct HttpCacheItem final : PoolHolder, HttpCacheDocument, CacheItem {
 	UnusedIstreamPtr OpenStream(struct pool &_pool) noexcept;
 
 	/* virtual methods from class CacheItem */
-	void Destroy() noexcept override {
-		pool_trash(pool);
-		this->~HttpCacheItem();
-	}
+	void Destroy() noexcept override;
 };

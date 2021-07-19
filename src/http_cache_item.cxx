@@ -34,6 +34,7 @@
 #include "http_cache_age.hxx"
 #include "istream_rubber.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "pool/pool.hxx"
 
 HttpCacheItem::HttpCacheItem(PoolPtr &&_pool,
 			     std::chrono::steady_clock::time_point now,
@@ -69,4 +70,11 @@ HttpCacheItem::OpenStream(struct pool &_pool) noexcept
 {
 	return istream_rubber_new(_pool, body.GetRubber(), body.GetId(),
 				  0, size, false);
+}
+
+void
+HttpCacheItem::Destroy() noexcept
+{
+	pool_trash(pool);
+	this->~HttpCacheItem();
 }
