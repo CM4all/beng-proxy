@@ -877,7 +877,7 @@ test(
     include_directories: inc,
     dependencies: [
       gtest,
-      libssl,
+      libcrypto,
     ],
   ),
 )
