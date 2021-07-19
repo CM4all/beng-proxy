@@ -141,7 +141,7 @@ struct LbClusterConfig {
 	 * jvm_route value, or -1 if not found.
 	 */
 	[[gnu::pure]]
-	int FindJVMRoute(const char *jvm_route) const noexcept;
+	int FindJVMRoute(std::string_view jvm_route) const noexcept;
 
 	bool HasZeroConf() const noexcept {
 #ifdef HAVE_AVAHI

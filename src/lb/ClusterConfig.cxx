@@ -53,10 +53,8 @@ LbClusterConfig::FillAddressList()
 }
 
 int
-LbClusterConfig::FindJVMRoute(const char *jvm_route) const noexcept
+LbClusterConfig::FindJVMRoute(std::string_view jvm_route) const noexcept
 {
-	assert(jvm_route != nullptr);
-
 	for (unsigned i = 0, n = members.size(); i < n; ++i) {
 		const auto &node = *members[i].node;
 
