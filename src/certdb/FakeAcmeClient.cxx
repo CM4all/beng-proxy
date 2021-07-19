@@ -209,8 +209,8 @@ try {
 		if (!X509_set_subject_name(cert.get(), X509_REQ_get_subject_name(req.get())))
 			throw SslError("X509_set_subject_name() failed");
 
-		X509_gmtime_adj(X509_get_notBefore(cert.get()), 0);
-		X509_gmtime_adj(X509_get_notAfter(cert.get()), 60 * 60);
+		X509_gmtime_adj(X509_getm_notBefore(cert.get()), 0);
+		X509_gmtime_adj(X509_getm_notAfter(cert.get()), 60 * 60);
 
 		CopyExtensions(*cert, *req);
 

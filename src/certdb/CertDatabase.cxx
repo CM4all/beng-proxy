@@ -178,11 +178,11 @@ CertDatabase::LoadServerCertificate(const char *handle,
 
 	const auto alt_names = GetSubjectAltNames(cert);
 
-	const auto not_before = FormatTime(X509_get_notBefore(&cert));
+	const auto not_before = FormatTime(X509_get0_notBefore(&cert));
 	if (not_before == nullptr)
 		throw "Certificate does not have a notBefore time stamp";
 
-	const auto not_after = FormatTime(X509_get_notAfter(&cert));
+	const auto not_after = FormatTime(X509_get0_notAfter(&cert));
 	if (not_after == nullptr)
 		throw "Certificate does not have a notAfter time stamp";
 
