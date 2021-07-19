@@ -39,6 +39,7 @@
 #include "http_cache_info.hxx"
 #include "strmap.hxx"
 #include "rubber.hxx"
+#include "AllocatorPtr.hxx"
 #include "AllocatorStats.hxx"
 
 #include <stdlib.h>

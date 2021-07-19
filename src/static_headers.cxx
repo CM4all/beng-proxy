@@ -36,6 +36,7 @@
 #include "http/Date.hxx"
 #include "io/FileDescriptor.hxx"
 #include "util/HexFormat.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <attr/xattr.h>
 

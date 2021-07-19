@@ -33,6 +33,7 @@
 #include "http/CookieServer.hxx"
 #include "strmap.hxx"
 #include "pool/RootPool.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <stdio.h>
 #include <unistd.h>

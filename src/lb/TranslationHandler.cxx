@@ -40,6 +40,7 @@
 #include "http/IncomingRequest.hxx"
 #include "pool/pool.hxx"
 #include "stopwatch.hxx"
+#include "AllocatorPtr.hxx"
 
 static std::map<const char *, LbGoto, StringLess>
 ToInstance(LbGotoMap &goto_map, const LbTranslationHandlerConfig &config)

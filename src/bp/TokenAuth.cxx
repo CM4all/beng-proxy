@@ -46,6 +46,7 @@
 #include "pool/pool.hxx"
 #include "uri/Recompose.hxx"
 #include "util/IterableSplitString.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <stdexcept>
 

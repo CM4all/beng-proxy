@@ -33,13 +33,13 @@
 #pragma once
 
 #include "util/ShallowCopy.hxx"
-#include "AllocatorPtr.hxx"
 
 #include <boost/intrusive/set.hpp>
 
 #include <utility>
 
 struct pool;
+class AllocatorPtr;
 
 /**
  * String hash map.

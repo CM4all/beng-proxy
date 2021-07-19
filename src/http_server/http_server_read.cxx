@@ -43,6 +43,7 @@
 #include "util/StringStrip.hxx"
 #include "util/StringView.hxx"
 #include "util/StringFormat.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <string.h>
 #include <stdlib.h>

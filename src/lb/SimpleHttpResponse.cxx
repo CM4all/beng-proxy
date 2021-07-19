@@ -33,6 +33,7 @@
 #include "SimpleHttpResponse.hxx"
 #include "http/IncomingRequest.hxx"
 #include "RedirectHttps.hxx"
+#include "AllocatorPtr.hxx"
 
 void
 SendResponse(IncomingHttpRequest &request,

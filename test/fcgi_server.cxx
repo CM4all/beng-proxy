@@ -35,6 +35,7 @@
 #include "strmap.hxx"
 #include "tio.hxx"
 #include "util/CharUtil.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <stdio.h>
 

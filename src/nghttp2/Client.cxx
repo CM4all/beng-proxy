@@ -47,6 +47,7 @@
 #include "http/ResponseHandler.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <nghttp2/nghttp2.h>
 

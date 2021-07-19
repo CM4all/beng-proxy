@@ -31,10 +31,11 @@
  */
 
 #include "Cookie.hxx"
-#include "strmap.hxx"
 #include "pool/tpool.hxx"
 #include "http/CookieServer.hxx"
 #include "util/StringCompare.hxx"
+#include "AllocatorPtr.hxx"
+#include "strmap.hxx"
 
 #include <assert.h>
 #include <stdlib.h>

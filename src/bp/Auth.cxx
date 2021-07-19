@@ -45,6 +45,7 @@
 #include "translation/Handler.hxx"
 #include "translation/Service.hxx"
 #include "load_file.hxx"
+#include "AllocatorPtr.hxx"
 
 inline void
 Request::OnAuthTranslateResponse(const TranslateResponse &response) noexcept

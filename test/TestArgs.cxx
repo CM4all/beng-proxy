@@ -34,6 +34,7 @@
 #include "strmap.hxx"
 #include "pool/RootPool.hxx"
 #include "util/StringView.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <gtest/gtest.h>
 

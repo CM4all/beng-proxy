@@ -35,6 +35,7 @@
 #include "strmap.hxx"
 #include "product.h"
 #include "util/StringCompare.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <gtest/gtest.h>
 

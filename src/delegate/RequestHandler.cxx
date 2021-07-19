@@ -36,6 +36,7 @@
 #include "bp/FileHeaders.hxx"
 #include "bp/Instance.hxx"
 #include "http/IncomingRequest.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <assert.h>
 #include <fcntl.h>

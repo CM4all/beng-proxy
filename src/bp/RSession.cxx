@@ -39,9 +39,10 @@
 #include "http/IncomingRequest.hxx"
 #include "http/CookieServer.hxx"
 #include "bot.h"
-#include "strmap.hxx"
 #include "util/HexFormat.hxx"
 #include "util/djbhash.h"
+#include "AllocatorPtr.hxx"
+#include "strmap.hxx"
 
 [[gnu::pure]]
 static StringMap *

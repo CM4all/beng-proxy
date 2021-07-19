@@ -34,6 +34,7 @@
 #include "strmap.hxx"
 #include "pool/tpool.hxx"
 #include "http/CookieServer.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <string.h>
 #include <stdlib.h>

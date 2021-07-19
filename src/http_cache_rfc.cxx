@@ -41,6 +41,7 @@
 #include "http/PList.hxx"
 #include "util/StringView.hxx"
 #include "util/IterableSplitString.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <stdlib.h>
 

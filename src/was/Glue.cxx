@@ -40,6 +40,7 @@
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
 #include "istream/UnusedHoldPtr.hxx"
+#include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "stopwatch.hxx"
 #include "util/Cancellable.hxx"

@@ -41,6 +41,7 @@
 #include "pool/pool.hxx"
 #include "system/Error.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <fcntl.h>
 #include <sys/stat.h>

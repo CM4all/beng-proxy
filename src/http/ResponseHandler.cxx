@@ -31,9 +31,10 @@
  */
 
 #include "ResponseHandler.hxx"
-#include "strmap.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "AllocatorPtr.hxx"
+#include "strmap.hxx"
 
 void
 HttpResponseHandler::InvokeResponse(struct pool &pool,

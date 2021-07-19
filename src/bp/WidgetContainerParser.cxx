@@ -38,6 +38,7 @@
 #include "util/CharUtil.hxx"
 #include "escape_class.hxx"
 #include "escape_html.hxx"
+#include "AllocatorPtr.hxx"
 #include "strmap.hxx"
 
 #include <stdexcept>

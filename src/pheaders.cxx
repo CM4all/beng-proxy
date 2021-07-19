@@ -32,6 +32,7 @@
 
 #include "pheaders.hxx"
 #include "strmap.hxx"
+#include "AllocatorPtr.hxx"
 
 StringMap
 processor_header_forward(struct pool &pool, const StringMap &src)

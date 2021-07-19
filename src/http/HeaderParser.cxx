@@ -39,6 +39,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/StaticFifoBuffer.hxx"
 #include "util/StringStrip.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <algorithm>
 

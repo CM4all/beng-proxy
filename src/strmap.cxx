@@ -31,9 +31,9 @@
  */
 
 #include "strmap.hxx"
-#include "pool/pool.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringView.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <iterator>
 

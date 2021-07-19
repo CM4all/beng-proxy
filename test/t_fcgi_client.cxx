@@ -52,6 +52,7 @@
 #include "util/ByteOrder.hxx"
 #include "fcgi_server.hxx"
 #include "stopwatch.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <sys/wait.h>
 

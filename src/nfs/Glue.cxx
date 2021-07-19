@@ -38,6 +38,7 @@
 #include "pool/pool.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "io/FileDescriptor.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <sys/stat.h>
 

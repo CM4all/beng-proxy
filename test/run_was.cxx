@@ -54,6 +54,7 @@
 #include "util/PrintException.hxx"
 #include "util/StaticArray.hxx"
 #include "util/StringAPI.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <sys/types.h>
 #include <sys/stat.h>

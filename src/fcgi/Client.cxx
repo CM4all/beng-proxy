@@ -58,6 +58,7 @@
 #include "util/InstanceList.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
+#include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 #include "lease.hxx"
 

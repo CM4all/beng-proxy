@@ -40,6 +40,7 @@
 #include "pool/pool.hxx"
 #include "translation/Handler.hxx"
 #include "translation/Service.hxx"
+#include "AllocatorPtr.hxx"
 
 inline void
 Request::OnHttpAuthTranslateResponse(const TranslateResponse &response) noexcept

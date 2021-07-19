@@ -55,6 +55,7 @@
 #include "util/LimitedConcurrencyQueue.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringFormat.hxx"
+#include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
 #include <assert.h>

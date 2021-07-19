@@ -35,6 +35,7 @@
 #include "http/HeaderParser.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 #include "util/StringStrip.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <string.h>
 #include <stdlib.h>
