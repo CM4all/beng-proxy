@@ -83,8 +83,7 @@ make_pipe_etag(AllocatorPtr alloc, const char *in,
     for (auto i : env)
         hash ^= djb_hash_string(i);
 
-    format_uint32_hex_fixed(suffix + 1, hash);
-    suffix[9] = 0;
+    *format_uint32_hex_fixed(suffix + 1, hash) = 0;
 
     /* append the hash to the old ETag */
     return append_etag(alloc, in, suffix);

@@ -118,8 +118,7 @@ EscapeValue(struct pool &pool, StringView v) noexcept
 	for (char ch : v) {
 		if (MustEscape(ch)) {
 			*p++ = '%';
-			format_uint8_hex_fixed(p, ch);
-			p += 2;
+			p = format_uint8_hex_fixed(p, ch);
 		} else
 			*p++ = ch;
 	}

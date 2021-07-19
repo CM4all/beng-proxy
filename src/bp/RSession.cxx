@@ -121,9 +121,11 @@ build_session_cookie_name(AllocatorPtr alloc, const BpConfig *config,
 
 	size_t length = config->session_cookie.length();
 	char *name = alloc.NewArray<char>(length + 5);
-	memcpy(name, config->session_cookie.data(), length);
-	format_uint16_hex_fixed(name + length, djb_hash_string(host));
-	name[length + 4] = 0;
+	char *p = std::copy(config->session_cookie.begin(),
+			    config->session_cookie.end(),
+			    name);
+	p = format_uint16_hex_fixed(p, djb_hash_string(host));
+	*p = 0;
 	return name;
 }
 

@@ -78,8 +78,7 @@ static char *
 quote_byte(char *p, uint8_t ch) noexcept
 {
 	*p++ = '_';
-	format_uint8_hex_fixed(p, ch);
-	return p + 2;
+	return format_uint8_hex_fixed(p, ch);
 }
 
 static const char *

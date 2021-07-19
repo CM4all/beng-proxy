@@ -66,16 +66,16 @@ static_etag(char *p, const struct statx &st)
 {
 	*p++ = '"';
 
-	p += format_uint32_hex(p, (uint32_t)st.stx_dev_major);
-	p += format_uint32_hex(p, (uint32_t)st.stx_dev_minor);
+	p = format_uint32_hex(p, (uint32_t)st.stx_dev_major);
+	p = format_uint32_hex(p, (uint32_t)st.stx_dev_minor);
 
 	*p++ = '-';
 
-	p += format_uint32_hex(p, (uint32_t)st.stx_ino);
+	p = format_uint32_hex(p, (uint32_t)st.stx_ino);
 
 	*p++ = '-';
 
-	p += format_uint32_hex(p, (uint32_t)st.stx_mtime.tv_sec);
+	p = format_uint32_hex(p, (uint32_t)st.stx_mtime.tv_sec);
 
 	*p++ = '"';
 	*p = 0;

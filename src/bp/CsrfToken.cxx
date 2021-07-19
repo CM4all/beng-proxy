@@ -90,13 +90,10 @@ CsrfHash::Parse(const char *s) noexcept
 void
 CsrfToken::Format(char *s) const noexcept
 {
-	format_uint32_hex_fixed(s, hash.ImportTime(time));
-	s += 8;
+	s = format_uint32_hex_fixed(s, hash.ImportTime(time));
 
-	for (const uint8_t i : hash.data) {
-		format_uint8_hex_fixed(s, i);
-		s += 2;
-	}
+	for (const uint8_t i : hash.data)
+		s = format_uint8_hex_fixed(s, i);
 
 	*s = 0;
 }

@@ -168,10 +168,10 @@ ChunkedIstream::StartChunk(size_t length) noexcept
 
 	missing_from_current_chunk = length;
 
-	auto p = SetBuffer(6);
-	format_uint16_hex_fixed(p, (uint16_t)length);
-	p[4] = '\r';
-	p[5] = '\n';
+	char *p = SetBuffer(6);
+	p = format_uint16_hex_fixed(p, (uint16_t)length);
+	*p++ = '\r';
+	*p++ = '\n';
 }
 
 bool

@@ -106,10 +106,8 @@ SessionId::Format() const noexcept
 	StringBuffer<sizeof(data) * 2 + 1> result;
 
 	char *p = result.data();
-	for (const auto i : data) {
-		format_uint64_hex_fixed(p, i);
-		p += sizeof(i) * 2;
-	}
+	for (const auto i : data)
+		p = format_uint64_hex_fixed(p, i);
 
 	*p = 0;
 	return result;
