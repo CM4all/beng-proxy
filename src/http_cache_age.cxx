@@ -41,7 +41,7 @@ static constexpr auto WEEK = 7 * DAY;
  * Returns the upper "maximum age" limit.  If the server specifies a
  * bigger maximum age, it will be clipped at this return value.
  */
-gcc_pure
+[[gnu::pure]]
 static std::chrono::seconds
 http_cache_age_limit(const StringMap &vary) noexcept
 {
