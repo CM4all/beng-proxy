@@ -45,11 +45,14 @@ lb_session_get(const StringMap &request_headers, const char *cookie_name)
 
 	StringView session = ExtractCookieRaw(cookie, cookie_name);
 	session = session.Split('/').first;
-	if (session.size < 8)
+
+	constexpr auto n_digits = sizeof(sticky_hash_t) * 2;
+
+	if (session.size < n_digits)
 		return {};
 
 	/* only parse the lowest 32 bits */
-	session.skip_front(session.size - 8);
+	session.skip_front(session.size - n_digits);
 
 	uint32_t hash;
 	if (!ParseLowerHexFixed(session, hash))

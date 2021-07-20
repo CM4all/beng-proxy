@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include "cluster/StickyHash.hxx"
 #include "util/StringBuffer.hxx"
 
 #include <array>
@@ -86,10 +87,10 @@ public:
 	 * by calculating the modulo.
 	 */
 	[[gnu::pure]]
-	auto GetClusterHash() const noexcept {
+	sticky_hash_t GetClusterHash() const noexcept {
 		/* truncating to 32 bit because that is what beng-lb's
 		   lb_session_get() function uses */
-		return (uint32_t)data.back();
+		return static_cast<sticky_hash_t>(data.back());
 	}
 
 	/**

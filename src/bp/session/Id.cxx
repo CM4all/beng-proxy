@@ -50,7 +50,7 @@ ToClusterNode(uint64_t id,
 {
 	/* use only the lower 32 bit because that is what beng-lb's
 	   lb_session_get() function uses */
-	uint32_t remainder = uint32_t(id) % uint32_t(cluster_size);
+	const auto remainder = sticky_hash_t(id) % sticky_hash_t(cluster_size);
 	assert(remainder < cluster_size);
 
 	id -= remainder;
