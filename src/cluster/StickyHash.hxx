@@ -30,15 +30,12 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_STICKY_HASH_HXX
-#define BENG_PROXY_STICKY_HASH_HXX
+#pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 /**
  * A type which can store a hash for choosing a cluster member.  Zero
  * is a special value for "sticky disabled"
  */
 typedef uint32_t sticky_hash_t;
-
-#endif
