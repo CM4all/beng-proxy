@@ -36,7 +36,7 @@
 #include "util/HexParse.hxx"
 #include "util/StringView.hxx"
 
-unsigned
+sticky_hash_t
 lb_session_get(const StringMap &request_headers, const char *cookie_name)
 {
 	const char *cookie = request_headers.Get("cookie");

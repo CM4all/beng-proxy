@@ -36,11 +36,13 @@
 
 #pragma once
 
+#include "cluster/StickyHash.hxx"
+
 class StringMap;
 
 /**
  * Extract a session identifier from the request headers.
  */
-unsigned
+sticky_hash_t
 lb_session_get(const StringMap &request_headers,
 	       const char *cookie_name);

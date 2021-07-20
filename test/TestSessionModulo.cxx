@@ -78,7 +78,7 @@ TEST(SessionModulo, Basic)
 				MakeHeaders(alloc, id,
 					    cluster_size, cluster_node);
 
-			const sticky_hash_t hash = lb_session_get(headers, "foo");
+			const auto hash = lb_session_get(headers, "foo");
 			EXPECT_NE(hash, 0U);
 			EXPECT_EQ(hash % cluster_size, cluster_node);
 		}
