@@ -414,5 +414,11 @@ embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext> ctx,
 	if (pause)
 		pause->Resume();
 
+#if GCC_CHECK_VERSION(11,0)
+	/* GCC 11 warns about redundant move, but without it, GCC 10
+	   refuses to compile - disable the warning for now */
+#pragma GCC diagnostic ignored "-Wredundant-move"
+#endif
+
 	return std::move(hold);
 }
