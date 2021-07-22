@@ -62,6 +62,8 @@ struct FileAddress {
 
 	bool auto_gzipped = false;
 
+	bool auto_brotli_path = false;
+
 	/**
 	 * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
 	 * translation cache.

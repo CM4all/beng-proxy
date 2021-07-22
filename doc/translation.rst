@@ -715,6 +715,9 @@ served.  The following packets are available:
 - ``EXPAND_PATH``: Override the path with the given value (after
   expanding); see :ref:`tresponse`.
 
+- ``AUTO_BROTLI_PATH``: Build the precompressed Brotli path by
+  appending :file:`.br` to the ``PATH``.
+
 - ``DEFLATED``: Absolute path of a precompressed version of the file.
   The file is compressed with the “deflate” algorithm, without ``gzip``
   headers. May follow the ``PATH`` packet.

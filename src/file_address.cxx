@@ -55,6 +55,7 @@ FileAddress::FileAddress(AllocatorPtr alloc, const FileAddress &src,
 		  ? alloc.New<DelegateAddress>(alloc, *src.delegate)
 		  : nullptr),
 	 auto_gzipped(src.auto_gzipped),
+	 auto_brotli_path(src.auto_brotli_path),
 	 expand_path(src.expand_path),
 	 expand_document_root(src.expand_document_root)
 {
