@@ -37,6 +37,7 @@
 #include "lua/Util.hxx"
 #include "lua/Class.hxx"
 #include "lua/Assert.hxx"
+#include "lua/PushLambda.hxx"
 
 static constexpr char lua_pools_class[] = "lb.pools";
 typedef Lua::Class<LbLuaInitHook *, lua_pools_class> LuaPools;
