@@ -185,8 +185,11 @@ LbResolveConnectRequest::OnStockItemError(std::exception_ptr ep) noexcept
 	connection.logger(2, "Connect error: ", ep);
 
 	body.Clear();
-	connection.SendError(request, ep);
-	ResponseSent();
+
+	auto &_connection = connection;
+	auto &_request = request;
+	Destroy();
+	_connection.SendError(_request, std::move(ep));
 }
 
 void
@@ -217,20 +220,36 @@ LbResolveConnectRequest::OnHttpResponse(http_status_t status, StringMap &&_heade
 		   (RFC 2616 14.13) */
 		headers.MoveToBuffer("content-length");
 
-	request.SendResponse(status, std::move(headers), std::move(response_body));
-	ResponseSent();
+	if (CheckRelease()) {
+		/* the connection lease was already released by the
+		   HTTP client: destroy this object before invoking
+		   the response to avoid use-after-free when
+		   SendResponse() frees the memory pool */
+		auto &_request = request;
+		Destroy();
+		_request.SendResponse(status, std::move(headers),
+				      std::move(response_body));;
+	} else {
+		request.SendResponse(status, std::move(headers),
+				     std::move(response_body));
+		ResponseSent();
+	}
 }
 
 void
 LbResolveConnectRequest::OnHttpError(std::exception_ptr ep) noexcept
 {
-	assert(lease_state != LeaseState::NONE);
+	assert(lease_state == LeaseState::PENDING);
 	assert(!response_sent);
 
 	connection.logger(2, ep);
 
-	connection.SendError(request, ep);
-	ResponseSent();
+	DoRelease();
+
+	auto &_connection = connection;
+	auto &_request = request;
+	Destroy();
+	_connection.SendError(_request, std::move(ep));
 }
 
 inline void
