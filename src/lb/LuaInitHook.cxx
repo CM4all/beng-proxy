@@ -39,6 +39,8 @@
 #include "lua/Assert.hxx"
 #include "lua/PushLambda.hxx"
 
+using namespace Lua;
+
 static constexpr char lua_pools_class[] = "lb.pools";
 typedef Lua::Class<LbLuaInitHook *, lua_pools_class> LuaPools;
 
@@ -85,7 +87,7 @@ LbLuaInitHook::PreInit(lua_State *L)
 	RegisterLuaGoto(L);
 
 	LuaPools::Register(L);
-	Lua::SetTable(L, -3, "__index", LuaPoolsIndex);
+	SetTable(L, RelativeStackIndex{-1}, "__index", LuaPoolsIndex);
 	lua_pop(L, 1);
 
 	Lua::SetGlobal(L, "pools", Lua::Lambda([this, L](){

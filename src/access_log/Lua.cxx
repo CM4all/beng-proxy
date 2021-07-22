@@ -60,6 +60,8 @@ extern "C" {
 #include <lualib.h>
 }
 
+using namespace Lua;
+
 static void
 LookupFunction(Lua::Value &dest, const char *path, const char *name)
 {
@@ -77,7 +79,7 @@ LookupFunction(Lua::Value &dest, const char *path, const char *name)
 						 name, path);
 	}
 
-	dest.Set(Lua::StackIndex(-2));
+	dest.Set(RelativeStackIndex{-1});
 }
 
 class LuaAccessLogger {
@@ -101,7 +103,7 @@ public:
 
 		AtScopeExit(L) { lua_pop(L, 1); };
 
-		function.Set(Lua::StackIndex(-2));
+		function.Set(RelativeStackIndex{-1});
 		set_underscore = true;
 	}
 
@@ -138,62 +140,73 @@ try {
 	    d.logger_client_address.IsDefined()) {
 		char buffer[1024];
 		if (ToString(buffer, sizeof(buffer), d.logger_client_address))
-			Lua::SetTable(L, -3, "logger_client", buffer);
+			Lua::SetTable(L, RelativeStackIndex{-1},
+				      "logger_client", buffer);
 	}
 
 	if (d.HasTimestamp())
-		Lua::SetTable(L, -3, "timestamp",
-			      ToFloatSeconds(d.timestamp.time_since_epoch()));
+		SetTable(L, RelativeStackIndex{-1}, "timestamp",
+			 ToFloatSeconds(d.timestamp.time_since_epoch()));
 
 	if (d.remote_host != nullptr)
-		Lua::SetTable(L, -3, "remote_host", d.remote_host);
+		SetTable(L, RelativeStackIndex{-1},
+			 "remote_host", d.remote_host);
 
 	if (d.host != nullptr)
-		Lua::SetTable(L, -3, "host", d.host);
+		SetTable(L, RelativeStackIndex{-1}, "host", d.host);
 
 	if (d.site != nullptr)
-		Lua::SetTable(L, -3, "site", d.site);
+		SetTable(L, RelativeStackIndex{-1}, "site", d.site);
 
 	if (d.forwarded_to != nullptr)
-		Lua::SetTable(L, -3, "forwarded_to", d.forwarded_to);
+		SetTable(L, RelativeStackIndex{-1},
+			 "forwarded_to", d.forwarded_to);
 
 	if (d.HasHttpMethod())
-		Lua::SetTable(L, -3, "http_method", http_method_to_string(d.http_method));
+		SetTable(L, RelativeStackIndex{-1},
+			 "http_method", http_method_to_string(d.http_method));
 
 	if (d.http_uri != nullptr)
-		Lua::SetTable(L, -3, "http_uri", d.http_uri);
+		SetTable(L, RelativeStackIndex{-1}, "http_uri", d.http_uri);
 
 	if (d.http_referer != nullptr)
-		Lua::SetTable(L, -3, "http_referer", d.http_referer);
+		SetTable(L, RelativeStackIndex{-1},
+			 "http_referer", d.http_referer);
 
 	if (d.user_agent != nullptr)
-		Lua::SetTable(L, -3, "user_agent", d.user_agent);
+		SetTable(L, RelativeStackIndex{-1},
+			 "user_agent", d.user_agent);
 
 	if (d.message != nullptr)
-		Lua::SetTable(L, -3, "message", d.message);
+		SetTable(L, RelativeStackIndex{-1}, "message", d.message);
 
 	if (d.HasHttpStatus())
-		Lua::SetTable(L, -3, "http_status", int(d.http_status));
+		SetTable(L, RelativeStackIndex{-1},
+			 "http_status", int(d.http_status));
 
 	if (d.valid_length)
-		Lua::SetTable(L, -3, "length", double(d.length));
+		SetTable(L, RelativeStackIndex{-1},
+			 "length", double(d.length));
 
 	if (d.valid_traffic) {
-		Lua::SetTable(L, -3, "traffic_received", double(d.traffic_received));
-		Lua::SetTable(L, -3, "traffic_sent", double(d.traffic_sent));
+		SetTable(L, RelativeStackIndex{-1},
+			 "traffic_received", double(d.traffic_received));
+		SetTable(L, RelativeStackIndex{-1},
+			 "traffic_sent", double(d.traffic_sent));
 	}
 
 	if (d.valid_duration)
-		Lua::SetTable(L, -3, "duration", ToFloatSeconds(d.duration));
+		SetTable(L, RelativeStackIndex{-1},
+			 "duration", ToFloatSeconds(d.duration));
 
 	if (const char *type = TypeToString(d.type))
-		Lua::SetTable(L, -3, "type", type);
+		SetTable(L, RelativeStackIndex{-1}, "type", type);
 
 	/* if the function is a Lua code fragment passed via
 	   "--handler-code", then set the global variable "_" to the
 	   request */
 	if (set_underscore)
-		Lua::SetGlobal(L, "_", Lua::StackIndex(-1));
+		SetGlobal(L, "_", RelativeStackIndex{-1});
 	AtScopeExit(this, L) {
 		if (set_underscore)
 			Lua::SetGlobal(L, "_", nullptr);

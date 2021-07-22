@@ -39,6 +39,8 @@
 #include "Branch.hxx"
 #include "lua/Class.hxx"
 
+using namespace Lua;
+
 static constexpr char lua_goto_class[] = "lb.goto";
 typedef Lua::Class<LbGoto, lua_goto_class> LuaGoto;
 
@@ -114,7 +116,7 @@ void
 RegisterLuaGoto(lua_State *L)
 {
 	LuaGoto::Register(L);
-	Lua::SetTable(L, -3, "__index", LuaGotoIndex);
+	SetTable(L, RelativeStackIndex{-1}, "__index", LuaGotoIndex);
 	lua_pop(L, 1);
 }
 

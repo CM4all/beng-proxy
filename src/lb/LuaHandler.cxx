@@ -51,6 +51,8 @@ extern "C" {
 #include <lualib.h>
 }
 
+using namespace Lua;
+
 struct LbLuaRequestData {
 	IncomingHttpRequest &request;
 	HttpResponseHandler &handler;
@@ -153,7 +155,8 @@ ResolveConnect(lua_State *L)
 		return luaL_argerror(L, 2, "String expected");
 
 	lua_newtable(L);
-	Lua::SetField(L, -2, "resolve_connect", Lua::StackIndex(2));
+	SetField(L, RelativeStackIndex{-1},
+		 "resolve_connect", Lua::StackIndex(2));
 	return 1;
 }
 
