@@ -215,7 +215,7 @@ LbResolveConnectRequest::OnHttpResponse(http_status_t status, StringMap &&_heade
 
 	HttpHeaders headers(std::move(_headers));
 
-	if (request.method == HTTP_METHOD_HEAD)
+	if (request.method == HTTP_METHOD_HEAD && !connection.IsHTTP2())
 		/* pass Content-Length, even though there is no response body
 		   (RFC 2616 14.13) */
 		headers.MoveToBuffer("content-length");

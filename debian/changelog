@@ -3,6 +3,7 @@ cm4all-beng-proxy (17.0.61) unstable; urgency=low
   * merge release 16.34
   * bp: fix off-by-one buffer overflow
   * lb: fix use-after-free crash bug in resolver
+  * lb: fix duplicate Content-Length header in HTTP/2 HEAD responses
   * translation: add packet AUTO_BROTLI_PATH
 
  --   
