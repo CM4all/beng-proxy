@@ -92,6 +92,14 @@ struct LbHttpConnection final
 		return ssl_filter != nullptr;
 	}
 
+	bool IsHTTP2() const noexcept {
+#ifdef HAVE_NGHTTP2
+		return http2;
+#else
+		return false;
+#endif
+	}
+
 	void SendError(IncomingHttpRequest &request, std::exception_ptr ep);
 	void LogSendError(IncomingHttpRequest &request, std::exception_ptr ep,
 			  unsigned log_level=2);
