@@ -65,7 +65,7 @@ struct CsrfToken {
 	std::chrono::system_clock::time_point time;
 	CsrfHash hash;
 
-	static constexpr size_t STRING_LENGTH = 16;
+	static constexpr size_t STRING_LENGTH = 32;
 
 	void Generate(std::chrono::system_clock::time_point _time,
 		      const SessionId &salt) noexcept {
