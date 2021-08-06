@@ -93,7 +93,6 @@ public:
 				     _connection.remote_host),
 		 connection(_connection), id(_id)
 	{
-		method = HTTP_METHOD_GET;
 	}
 
 	~Request() noexcept {
