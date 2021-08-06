@@ -75,6 +75,8 @@ class ServerConnection::Request final
 	 */
 	http_status_t the_status{};
 
+	const char *bad_request = nullptr;
+
 	CancellablePointer cancel_ptr;
 
 	MultiFifoBufferIstream *request_body_control = nullptr;
@@ -261,7 +263,7 @@ ParseHttpMethod(StringView s) noexcept
 			return http_method_t(i);
 	}
 
-	return HTTP_METHOD_GET;
+	return HTTP_METHOD_NULL;
 }
 
 inline int
@@ -270,9 +272,11 @@ ServerConnection::Request::OnHeaderCallback(StringView name,
 {
 	AllocatorPtr alloc(pool);
 
-	if (name.Equals(":method"))
+	if (name.Equals(":method")) {
 		method = ParseHttpMethod(value);
-	else if (name.Equals(":path"))
+		if (method == HTTP_METHOD_NULL)
+			bad_request = "Unsupported request method\n";
+	} else if (name.Equals(":path"))
 		uri = alloc.DupZ(value);
 	else if (name.Equals(":authority"))
 		headers.Add(alloc, "host", alloc.DupZ(value));
@@ -301,6 +305,11 @@ ServerConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data
 int
 ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 {
+	if (bad_request != nullptr) {
+		SendMessage(HTTP_STATUS_BAD_REQUEST, bad_request);
+		return 0;
+	}
+
 	if (method == HTTP_METHOD_NULL || uri == nullptr) {
 		/* no method and no URI - refuse to handle this
 		   request */
