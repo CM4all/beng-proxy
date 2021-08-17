@@ -280,8 +280,33 @@ ServerConnection::Request::OnHeaderCallback(StringView name,
 		uri = alloc.DupZ(value);
 	else if (name.Equals(":authority"))
 		headers.Add(alloc, "host", alloc.DupZ(value));
-	else if (name.size >= 2 && name.front() != ':')
-		headers.Add(alloc, alloc.DupToLower(name), alloc.DupZ(value));
+	else if (name.size >= 2 && name.front() != ':') {
+		const char *allocated_name = alloc.DupToLower(name);
+		const char *allocated_value;
+
+		/* the Cookie request header is special: multiple
+		   headers are not concatenated with comma (RFC 2616
+		   4.2), but with semicolon (RFC 6265 4.2.1); to avoid
+		   confusion, it would be best to not concatenate
+		   them, but leave them as separate headers, but when
+		   proxying to Apache, Apache will conatenate them
+		   unconditionally with comma via
+		   apr_table_compress(APR_OVERLAP_TABLES_MERGE), which
+		   breaks PHP's session management; as a workaround,
+		   we concatenate all Cookie headers with a semicolon
+		   here before Apache does the wrong thing */
+		if (StringIsEqual(allocated_name, "cookie")) {
+			const char *old_value = headers.Remove("cookie");
+			if (old_value != nullptr)
+				allocated_value = alloc.Concat(old_value, "; ",
+							       value);
+			else
+				allocated_value = alloc.DupZ(value);
+		} else
+			allocated_value = alloc.DupZ(value);
+
+		headers.Add(alloc, allocated_name, allocated_value);
+	}
 
 	return 0;
 }
