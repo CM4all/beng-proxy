@@ -3,7 +3,7 @@ cm4all-beng-proxy (17.0.62) unstable; urgency=low
   * nghttp2: don't accept unknown request methods
   * nghttp2: concatenate all Cookie request headers with semicolon
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 18 Aug 2021 11:20:04 +0200
 
 cm4all-beng-proxy (17.0.61) unstable; urgency=low
 
