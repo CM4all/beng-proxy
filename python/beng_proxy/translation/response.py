@@ -129,9 +129,9 @@ class Response:
     def nfs(self, server, export, path):
         """Generate an NFS address."""
 
-        assert isinstance(server, str)
-        assert isinstance(export, str)
-        assert isinstance(path, str)
+        assert isinstance(server, (str, bytes))
+        assert isinstance(export, (str, bytes))
+        assert isinstance(path, (str, bytes))
 
         self.packet(TRANSLATE_NFS_SERVER, server)
         self.packet(TRANSLATE_NFS_EXPORT, export)
@@ -186,7 +186,7 @@ class Response:
         """Send a PIPE packet.  You may pass additional arguments
         which are sent as APPEND packets."""
 
-        assert isinstance(path, str)
+        assert isinstance(path, (str, bytes))
         assert len(path) > 0
         self.packet(TRANSLATE_PIPE, path)
         for arg in args:
@@ -194,44 +194,48 @@ class Response:
         return self
 
     def path(self, path):
-        assert isinstance(path, str)
+        assert isinstance(path, (str, bytes))
         assert len(path) > 0
-        assert path[0] == '/'
+        assert path[0] == '/' or path[0] == ord('/')
         return self.packet(TRANSLATE_PATH, path)
 
     def gzipped(self, path):
-        assert isinstance(path, str)
+        assert isinstance(path, (str, bytes))
         assert len(path) > 0
-        assert path[0] == '/'
+        assert path[0] == '/' or path[0] == ord('/')
         return self.packet(TRANSLATE_GZIPPED, path)
 
     def pair(self, name, value):
         assert isinstance(name, str)
-        assert isinstance(value, str)
+        assert isinstance(value, (str, bytes))
         assert len(name) > 0
         assert name.find('=') < 0
-        return self.packet(TRANSLATE_PAIR, name + '=' + value)
+        return self.packet(TRANSLATE_PAIR,
+                           six.ensure_binary(name) + b'=' + six.ensure_binary(value))
 
     def expand_pair(self, name, value):
         assert isinstance(name, str)
-        assert isinstance(value, str)
+        assert isinstance(value, (str, bytes))
         assert len(name) > 0
         assert name.find('=') < 0
-        return self.packet(TRANSLATE_EXPAND_PAIR, name + '=' + value)
+        return self.packet(TRANSLATE_EXPAND_PAIR,
+                           six.ensure_binary(name) + b'=' + six.ensure_binary(value))
 
     def setenv(self, name, value):
         assert isinstance(name, str)
-        assert isinstance(value, str)
+        assert isinstance(value, (str, bytes))
         assert len(name) > 0
         assert name.find('=') < 0
-        return self.packet(TRANSLATE_SETENV, name + '=' + value)
+        return self.packet(TRANSLATE_SETENV,
+                           six.ensure_binary(name) + b'=' + six.ensure_binary(value))
 
     def expand_setenv(self, name, value):
         assert isinstance(name, str)
-        assert isinstance(value, str)
+        assert isinstance(value, (str, bytes))
         assert len(name) > 0
         assert name.find('=') < 0
-        return self.packet(TRANSLATE_EXPAND_SETENV, name + '=' + value)
+        return self.packet(TRANSLATE_EXPAND_SETENV,
+                           six.ensure_binary(name) + b'=' + six.ensure_binary(value))
 
     def content_type(self, content_type):
         assert isinstance(content_type, str)
@@ -239,7 +243,7 @@ class Response:
         return self.packet(TRANSLATE_CONTENT_TYPE, content_type)
 
     def delegate(self, helper):
-        assert isinstance(helper, str)
+        assert isinstance(helper, (str, bytes))
         return self.packet(TRANSLATE_DELEGATE, helper)
 
     def delegated_path(self, helper, path):
@@ -267,19 +271,22 @@ class Response:
                                    *args)
 
     def response_header(self, name, value):
-        assert isinstance(name, str)
-        assert isinstance(value, str)
-        return self.packet(TRANSLATE_HEADER, name + ':' + value)
+        assert isinstance(name, (str, bytes))
+        assert isinstance(value, (str, bytes))
+        return self.packet(TRANSLATE_REQUEST_HEADER,
+                           six.ensure_binary(name) + b':' + six.ensure_binary(value))
 
     def request_header(self, name, value):
-        assert isinstance(name, str)
-        assert isinstance(value, str)
-        return self.packet(TRANSLATE_REQUEST_HEADER, name + ':' + value)
+        assert isinstance(name, (str, bytes))
+        assert isinstance(value, (str, bytes))
+        return self.packet(TRANSLATE_REQUEST_HEADER,
+                           six.ensure_binary(name) + b':' + six.ensure_binary(value))
 
     def expand_request_header(self, name, value):
-        assert isinstance(name, str)
-        assert isinstance(value, str)
-        return self.packet(TRANSLATE_EXPAND_REQUEST_HEADER, name + ':' + value)
+        assert isinstance(name, (str, bytes))
+        assert isinstance(value, (str, bytes))
+        return self.packet(TRANSLATE_EXPAND_REQUEST_HEADER,
+                           six.ensure_binary(name) + b':' + six.ensure_binary(value))
 
     def header(self, name, value):
         """Deprecated.  Use response_header() instead."""
@@ -287,13 +294,16 @@ class Response:
 
     def validate_mtime(self, mtime, path):
         return self.packet(TRANSLATE_VALIDATE_MTIME,
-                           struct.pack('L', int(mtime)) + path.encode('utf-8'))
+                           struct.pack('L', int(mtime)) + six.ensure_binary(path))
 
     def bind_mount(self, source, target, expand=False, writable=False):
-        assert isinstance(source, str)
-        assert isinstance(target, str)
-        assert source[0] == '/'
-        assert target[0] == '/'
+        assert isinstance(source, (str, bytes))
+        source = six.ensure_binary(source)
+        assert source[0] == ord('/')
+
+        assert isinstance(target, (str, bytes))
+        target = six.ensure_binary(target)
+        assert target[0] == ord('/')
 
         if writable:
             if expand:
@@ -306,7 +316,7 @@ class Response:
             else:
                 command = TRANSLATE_BIND_MOUNT
 
-        return self.packet(command, source + '\0' + target)
+        return self.packet(command, source + b'\0' + target)
 
     def umask(self, umask):
         """Append a UMASK packet."""
