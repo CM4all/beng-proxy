@@ -41,10 +41,9 @@ class Response:
     def packet(self, command, payload = b''):
         """Append a packet."""
 
-        if not isinstance(payload, bytes) and isinstance(payload, str):
-            # this implicit conversion allows passing a `str` payload
-            # in Python 3
-            payload = payload.encode('utf-8')
+        # this automatic conversion allows passing a `str` payload in
+        # Python 3
+        payload = six.ensure_binary(payload)
 
         assert isinstance(payload, bytes)
         self._data += packet_header(command, len(payload))
