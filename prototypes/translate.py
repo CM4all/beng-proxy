@@ -6,6 +6,7 @@
 
 import re, base64
 import os
+import struct
 
 try:
     from urllib.parse import unquote
@@ -28,6 +29,7 @@ test_script_path = os.path.join(os.getcwd(), 'test')
 test_binary_path = test_script_path
 was_examples_path = was_path
 was_examples = ['hello', 'random', 'mirror', 'cookie']
+libcommon_was_path = was_path
 coma_was = os.path.join(was_path, 'coma-was')
 coma_demo = '/var/www'
 image_processor_path = '/usr/share/cm4all/coma/apps/imageprocessor/htdocs'
@@ -718,6 +720,11 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_NO_NEW_PRIVS)
             else:
                 response.status(404)
+        elif uri[:15] == '/libcommon/was/':
+            name = uri[15:]
+            response.packet(TRANSLATE_WAS, os.path.join(libcommon_was_path, name))
+            response.packet(TRANSLATE_CONCURRENCY, struct.pack('H', 8))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
         elif uri == '/xslt':
             response.packet(TRANSLATE_FASTCGI, xslt_fastcgi)
             response.packet(TRANSLATE_NO_NEW_PRIVS)
@@ -1188,6 +1195,7 @@ if __name__ == '__main__':
                 src_dir = os.path.join(os.getcwd(), '../..')
 
         was_examples_path = os.path.join(src_dir, 'libwas', 'output', 'debug', 'examples')
+        libcommon_was_path = os.path.join(src_dir, 'libcommon', 'output', 'debug', 'test', 'was')
         coma_was = os.path.join(src_dir, 'cgi-coma/output/debug/coma-was')
         coma_demo = os.path.join(src_dir, 'cgi-coma/demo')
         image_processor_path = os.path.join(src_dir, 'image-processor/src')
