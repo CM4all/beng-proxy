@@ -43,7 +43,7 @@ ExpandStringLength(const char *src, const MatchInfo &match_info)
     struct Result {
         size_t result = 0;
 
-        void Append(gcc_unused char ch) {
+        void Append(char) {
             ++result;
         }
 
@@ -51,11 +51,11 @@ ExpandStringLength(const char *src, const MatchInfo &match_info)
             result += strlen(p);
         }
 
-        void Append(gcc_unused const char *p, size_t length) {
+        void Append(const char *, size_t length) {
             result += length;
         }
 
-        void AppendValue(gcc_unused const char *p, size_t length) {
+        void AppendValue(const char *, size_t length) {
             result += length;
         }
 
