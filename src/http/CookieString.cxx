@@ -34,7 +34,7 @@
 #include "Tokenizer.hxx"
 #include "util/StringView.hxx"
 
-gcc_always_inline
+[[gnu::always_inline]]
 static constexpr bool
 char_is_cookie_octet(char ch) noexcept
 {
@@ -57,7 +57,7 @@ cookie_next_unquoted_value(StringView &input) noexcept
 	return value;
 }
 
-gcc_always_inline
+[[gnu::always_inline]]
 static constexpr bool
 char_is_rfc_ignorant_cookie_octet(char ch) noexcept
 {
