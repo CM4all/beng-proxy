@@ -132,7 +132,7 @@ LuaAccessLogger::Handle(const ReceivedAccessLogDatagram &d,
 try {
 	const auto L = function.GetState();
 
-	function.Push();
+	function.Push(L);
 
 	lua_newtable(L);
 

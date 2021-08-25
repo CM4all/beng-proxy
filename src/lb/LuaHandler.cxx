@@ -252,7 +252,7 @@ LbLuaHandler::HandleRequest(IncomingHttpRequest &request,
 	auto *L = state.get();
 	const Lua::ScopeCheckStack check_stack(L);
 
-	function.Push();
+	function.Push(L);
 	auto *data = NewLuaRequest(L, request, handler);
 	AtScopeExit(data) { data->stale = true; };
 
