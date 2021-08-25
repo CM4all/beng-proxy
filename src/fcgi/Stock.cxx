@@ -36,12 +36,12 @@
 #include "stock/Stock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
+#include "cgi/ChildParams.hxx"
 #include "spawn/ListenChildStock.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "pool/DisposablePointer.hxx"
 #include "pool/tpool.hxx"
-#include "pool/StringBuilder.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -123,22 +123,6 @@ private:
 				PreparedChildProcess &p) override;
 };
 
-struct FcgiChildParams {
-	const char *executable_path;
-
-	ConstBuffer<const char *> args;
-
-	const ChildOptions &options;
-
-	FcgiChildParams(const char *_executable_path,
-			ConstBuffer<const char *> _args,
-			const ChildOptions &_options) noexcept
-		:executable_path(_executable_path), args(_args),
-		 options(_options) {}
-
-	const char *GetStockKey(struct pool &pool) const noexcept;
-};
-
 struct FcgiConnection final : StockItem {
 	const LLogger logger;
 
@@ -203,29 +187,6 @@ private:
 	void OnSocketEvent(unsigned events) noexcept;
 };
 
-const char *
-FcgiChildParams::GetStockKey(struct pool &pool) const noexcept
-{
-	PoolStringBuilder<256> b;
-	b.push_back(executable_path);
-
-	for (auto i : args) {
-		b.push_back(" ");
-		b.push_back(i);
-	}
-
-	for (auto i : options.env) {
-		b.push_back("$");
-		b.push_back(i);
-	}
-
-	char options_buffer[16384];
-	b.emplace_back(options_buffer,
-		       options.MakeId(options_buffer));
-
-	return b(pool);
-}
-
 /*
  * libevent callback
  *
@@ -252,7 +213,7 @@ FcgiConnection::OnSocketEvent(unsigned) noexcept
 Event::Duration
 FcgiStock::GetChildClearInterval(void *info) const noexcept
 {
-	const auto &params = *(const FcgiChildParams *)info;
+	const auto &params = *(const CgiChildParams *)info;
 
 	return params.options.ns.mount.pivot_root == nullptr
 		? std::chrono::minutes(10)
@@ -264,7 +225,7 @@ FcgiStock::GetChildClearInterval(void *info) const noexcept
 bool
 FcgiStock::WantReturnStderr(void *info) const noexcept
 {
-	const auto &params = *(const FcgiChildParams *)info;
+	const auto &params = *(const CgiChildParams *)info;
 	/* we need the child process to return the stderr_fd to us if
 	   the given path is "jailed" */
 	return params.options.stderr_path != nullptr &&
@@ -274,14 +235,14 @@ FcgiStock::WantReturnStderr(void *info) const noexcept
 bool
 FcgiStock::WantStderrPond(void *info) const noexcept
 {
-	const auto &params = *(const FcgiChildParams *)info;
+	const auto &params = *(const CgiChildParams *)info;
 	return params.options.stderr_pond;
 }
 
 StringView
 FcgiStock::GetChildTag(void *info) const noexcept
 {
-	const auto &params = *(const FcgiChildParams *)info;
+	const auto &params = *(const CgiChildParams *)info;
 
 	return params.options.tag;
 }
@@ -289,7 +250,7 @@ FcgiStock::GetChildTag(void *info) const noexcept
 void
 FcgiStock::PrepareChild(void *info, PreparedChildProcess &p)
 {
-	auto &params = *(FcgiChildParams *)info;
+	auto &params = *(CgiChildParams *)info;
 	const ChildOptions &options = params.options;
 
 	/* the FastCGI protocol defines a channel for stderr, so we could
@@ -324,7 +285,7 @@ void
 FcgiStock::Create(CreateStockItem c, StockRequest request,
 		  [[maybe_unused]] CancellablePointer &cancel_ptr)
 {
-	[[maybe_unused]] auto &params = *(FcgiChildParams *)request.get();
+	[[maybe_unused]] auto &params = *(CgiChildParams *)request.get();
 	assert(params.executable_path != nullptr);
 
 	auto *connection = new FcgiConnection(GetEventLoop(), c);
@@ -483,8 +444,8 @@ FcgiStock::Get(const ChildOptions &options,
 {
 	const TempPoolLease tpool;
 
-	auto r = NewDisposablePointer<FcgiChildParams>(*tpool, executable_path,
-						       args, options);
+	auto r = NewDisposablePointer<CgiChildParams>(*tpool, executable_path,
+						      args, options);
 	const char *key = r->GetStockKey(*tpool);
 	return hstock.GetNow(key, std::move(r));
 }

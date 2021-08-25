@@ -36,12 +36,12 @@
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
 #include "access_log/ChildErrorLog.hxx"
+#include "cgi/ChildParams.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "spawn/ExitListener.hxx"
 #include "spawn/Interface.hxx"
 #include "pool/DisposablePointer.hxx"
 #include "pool/tpool.hxx"
-#include "pool/StringBuilder.hxx"
 #include "io/Logger.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringList.hxx"
@@ -58,22 +58,6 @@
 #include <sys/un.h>
 #include <signal.h>
 #include <stdlib.h>
-
-struct WasChildParams {
-	const char *executable_path;
-
-	ConstBuffer<const char *> args;
-
-	const ChildOptions &options;
-
-	WasChildParams(const char *_executable_path,
-		       ConstBuffer<const char *> _args,
-		       const ChildOptions &_options) noexcept
-		:executable_path(_executable_path), args(_args),
-		 options(_options) {}
-
-	const char *GetStockKey(struct pool &pool) const noexcept;
-};
 
 class WasChild final : public StockItem, ExitListener, WasIdleConnectionHandler {
 	const LLogger logger;
@@ -110,7 +94,7 @@ public:
 	/**
 	 * Throws on error.
 	 */
-	void Launch(const WasChildParams &params, SocketDescriptor log_socket,
+	void Launch(const CgiChildParams &params, SocketDescriptor log_socket,
 		    const ChildErrorLogOptions &log_options) {
 		auto process =
 			was_launch(spawn_service,
@@ -176,29 +160,6 @@ private:
 	}
 };
 
-const char *
-WasChildParams::GetStockKey(struct pool &pool) const noexcept
-{
-	PoolStringBuilder<256> b;
-	b.push_back(executable_path);
-
-	for (auto i : args) {
-		b.push_back(" ");
-		b.push_back(i);
-	}
-
-	for (auto i : options.env) {
-		b.push_back("$");
-		b.push_back(i);
-	}
-
-	char options_buffer[16384];
-	b.emplace_back(options_buffer,
-		       options.MakeId(options_buffer));
-
-	return b(pool);
-}
-
 /*
  * stock class
  *
@@ -217,7 +178,7 @@ void
 WasStock::Create(CreateStockItem c, StockRequest _request,
 		 gcc_unused CancellablePointer &cancel_ptr)
 {
-	auto &params = *(WasChildParams *)_request.get();
+	auto &params = *(CgiChildParams *)_request.get();
 
 	assert(params.executable_path != nullptr);
 
@@ -230,7 +191,7 @@ WasStock::Create(CreateStockItem c, StockRequest _request,
 		throw;
 	}
 
-	/* invoke the WasChildParams destructor before invoking the
+	/* invoke the CgiChildParams destructor before invoking the
 	   callback, because the latter may destroy the pool */
 	_request.reset();
 
@@ -258,7 +219,7 @@ WasStock::Get(struct pool &pool,
 {
 	const TempPoolLease tpool;
 
-	auto r = NewDisposablePointer<WasChildParams>(pool, executable_path,
+	auto r = NewDisposablePointer<CgiChildParams>(pool, executable_path,
 						      args, options);
 	const char *key = r->GetStockKey(*tpool);
 

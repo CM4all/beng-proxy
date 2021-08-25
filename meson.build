@@ -505,6 +505,7 @@ cluster_dep = declare_dependency(
 
 raddress = static_library('raddress',
   'src/regex.cxx',
+  'src/cgi/ChildParams.cxx',
   'src/cgi/Address.cxx',
   'src/file_address.cxx',
   'src/delegate/Address.cxx',
