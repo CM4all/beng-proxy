@@ -102,7 +102,7 @@ class CssParser final : DestructAnchor {
 			return {data(), size()};
 		}
 
-		gcc_pure
+		[[gnu::pure]]
 		bool Equals(StringView other) const noexcept {
 			return other.Equals(*this);
 		}

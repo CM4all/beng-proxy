@@ -78,7 +78,7 @@ public:
 
 static constexpr char apr1_id[] = "$apr1$";
 
-gcc_pure
+[[gnu::pure]]
 static StringView
 ExtractSalt(const char *s) noexcept
 {
