@@ -284,7 +284,7 @@ CssParser::Feed(const char *start, size_t length) noexcept
 
 						name_buffer.push_back('\0');
 
-						handler.property_keyword(name_buffer.raw(),
+						handler.property_keyword(name_buffer.data(),
 									 value_buffer,
 									 name_start,
 									 position + (off_t)(buffer - start) + 1,
@@ -306,7 +306,7 @@ CssParser::Feed(const char *start, size_t length) noexcept
 
 					value_buffer.push_back(*buffer);
 					if (handler.url != nullptr &&
-					    at_url_start(value_buffer.raw(),
+					    at_url_start(value_buffer.data(),
 							 value_buffer.size()))
 						state = State::PRE_URL;
 				}

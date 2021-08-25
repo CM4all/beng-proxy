@@ -426,7 +426,7 @@ ServerConnection::Request::SendResponse(http_status_t status,
 	}
 
 	nghttp2_submit_response(connection.session.get(), id,
-				hdrs.raw(), hdrs.size(),
+				hdrs.data(), hdrs.size(),
 				dpp);
 	connection.socket->ScheduleWrite();
 }

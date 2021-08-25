@@ -85,7 +85,7 @@ class CssParser final : DestructAnchor {
 	public:
 		using TrivialArray<char, max>::capacity;
 		using TrivialArray<char, max>::size;
-		using TrivialArray<char, max>::raw;
+		using TrivialArray<char, max>::data;
 		using TrivialArray<char, max>::end;
 
 		size_t GetRemainingSpace() const noexcept {
@@ -99,7 +99,7 @@ class CssParser final : DestructAnchor {
 		}
 
 		constexpr operator StringView() const noexcept {
-			return {raw(), size()};
+			return {data(), size()};
 		}
 
 		gcc_pure

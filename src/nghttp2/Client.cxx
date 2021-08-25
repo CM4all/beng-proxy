@@ -317,7 +317,7 @@ ClientConnection::Request::SendRequest(http_method_t method, const char *uri,
 	}
 
 	id = nghttp2_submit_request(connection.session.get(), nullptr,
-				    hdrs.raw(), hdrs.size(),
+				    hdrs.data(), hdrs.size(),
 				    dpp,
 				    this);
 	if (id < 0) {

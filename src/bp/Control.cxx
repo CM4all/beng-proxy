@@ -82,7 +82,7 @@ control_tcache_invalidate(BpInstance *instance, ConstBuffer<void> payload)
 
 	instance->translation_caches
 		->Invalidate(request,
-			     ConstBuffer<TranslationCommand>(request.commands.raw(),
+			     ConstBuffer<TranslationCommand>(request.commands.data(),
 							     request.commands.size()),
 			     request.site);
 }
