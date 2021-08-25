@@ -74,6 +74,13 @@ struct CgiAddress {
 	AddressList address_list;
 
 	/**
+	 * The maximum number of concurrent connections to one
+	 * instance.  Only applicable to WAS; if it is non-zero, then
+	 * the Multi-WAS protocol is used.
+	 */
+	unsigned concurrency = 0;
+
+	/**
 	 * Pass the CGI parameter "REQUEST_URI" verbatim instead of
 	 * building it from SCRIPT_NAME, PATH_INFO and QUERY_STRING.
 	 */
@@ -95,6 +102,7 @@ struct CgiAddress {
 		 uri(src.uri), script_name(src.script_name), path_info(src.path_info),
 		 query_string(src.query_string), document_root(src.document_root),
 		 address_list(shallow_copy, src.address_list),
+		 concurrency(src.concurrency),
 		 request_uri_verbatim(src.request_uri_verbatim),
 		 expand_path(src.expand_path),
 		 expand_uri(src.expand_uri),

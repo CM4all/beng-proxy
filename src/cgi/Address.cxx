@@ -66,6 +66,7 @@ CgiAddress::CgiAddress(AllocatorPtr alloc, const CgiAddress &src)
 	 query_string(alloc.CheckDup(src.query_string)),
 	 document_root(alloc.CheckDup(src.document_root)),
 	 address_list(alloc, src.address_list),
+	 concurrency(src.concurrency),
 	 request_uri_verbatim(src.request_uri_verbatim),
 	 expand_path(src.expand_path),
 	 expand_uri(src.expand_uri),
