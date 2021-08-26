@@ -231,9 +231,9 @@ MultiWasConnection::Connect(MultiStock &child_stock,
 }
 
 MultiWasStock::MultiWasStock(unsigned limit, unsigned max_idle,
-		       EventLoop &event_loop, SpawnService &spawn_service,
-		       SocketDescriptor log_socket,
-		       const ChildErrorLogOptions &log_options) noexcept
+			     EventLoop &event_loop, SpawnService &spawn_service,
+			     SocketDescriptor log_socket,
+			     const ChildErrorLogOptions &log_options) noexcept
 	:child_stock(event_loop, spawn_service,
 		     *this,
 		     log_socket, log_options,
