@@ -3,7 +3,7 @@ cm4all-beng-proxy (17.0.63) unstable; urgency=low
   * was: initial Multi-WAS support
   * python/translation/response: allow binary payload in PATH, PAIR, ...
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 26 Aug 2021 09:56:49 +0200
 
 cm4all-beng-proxy (17.0.62) unstable; urgency=low
 
