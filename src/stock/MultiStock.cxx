@@ -36,12 +36,12 @@
 #include "stock/Item.hxx"
 
 bool
-MultiStock::Item::Compare::Less(const char *a, const char *b) const
+MultiStock::Item::Compare::Less(const char *a, const char *b) const noexcept
 {
 	return strcmp(a, b) < 0;
 }
 
-MultiStock::Item::~Item()
+MultiStock::Item::~Item() noexcept
 {
 	assert(leases.empty());
 
@@ -49,14 +49,14 @@ MultiStock::Item::~Item()
 }
 
 const char *
-MultiStock::Item::GetKey() const
+MultiStock::Item::GetKey() const noexcept
 {
 	return item.GetStockName();
 }
 
 void
 MultiStock::Item::AddLease(StockGetHandler &handler,
-			   LeasePtr &lease_ref)
+			   LeasePtr &lease_ref) noexcept
 {
 	lease_ref.Set(AddLease());
 
@@ -64,7 +64,7 @@ MultiStock::Item::AddLease(StockGetHandler &handler,
 }
 
 void
-MultiStock::Item::DeleteLease(Lease *lease, bool _reuse)
+MultiStock::Item::DeleteLease(Lease *lease, bool _reuse) noexcept
 {
 	reuse &= _reuse;
 

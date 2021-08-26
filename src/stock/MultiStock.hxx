@@ -84,37 +84,37 @@ class MultiStock {
 		bool reuse = true;
 
 	public:
-		Item(unsigned _max_leases, StockItem &_item)
+		Item(unsigned _max_leases, StockItem &_item) noexcept
 			:item(_item), remaining_leases(_max_leases) {}
 
 		Item(const Item &) = delete;
 		Item &operator=(const Item &) = delete;
 
-		~Item();
+		~Item() noexcept;
 
 		[[gnu::pure]]
-		const char *GetKey() const;
+		const char *GetKey() const noexcept;
 
-		bool IsFull() const {
+		bool IsFull() const noexcept {
 			return remaining_leases == 0;
 		}
 
-		bool CanUse() const {
+		bool CanUse() const noexcept {
 			return reuse && !IsFull();
 		}
 
-		void Fade() {
+		void Fade() noexcept {
 			reuse = false;
 		}
 
 		template<typename P>
-		void FadeIf(P &&predicate) {
+		void FadeIf(P &&predicate) noexcept {
 			if (predicate(item))
 				Fade();
 		}
 
 	private:
-		Lease &AddLease() {
+		Lease &AddLease() noexcept {
 			Lease *lease = new Lease(*this);
 			leases.push_front(*lease);
 			--remaining_leases;
@@ -123,32 +123,35 @@ class MultiStock {
 
 	public:
 		void AddLease(StockGetHandler &handler,
-			      LeasePtr &lease_ref);
+			      LeasePtr &lease_ref) noexcept;
 
-		StockItem *AddLease(LeasePtr &lease_ref) {
+		StockItem *AddLease(LeasePtr &lease_ref) noexcept {
 			lease_ref.Set(AddLease());
 			return &item;
 		}
 
-		void DeleteLease(Lease *lease, bool _reuse);
+		void DeleteLease(Lease *lease, bool _reuse) noexcept;
 
 		class Compare {
 			[[gnu::pure]]
-			bool Less(const char *a, const char *b) const;
+			bool Less(const char *a, const char *b) const noexcept;
 
 		public:
 			[[gnu::pure]]
-			bool operator()(const char *a, const Item &b) const {
+			bool operator()(const char *a,
+					const Item &b) const noexcept {
 				return Less(a, b.GetKey());
 			}
 
 			[[gnu::pure]]
-			bool operator()(const Item &a, const char *b) const {
+			bool operator()(const Item &a,
+					const char *b) const noexcept {
 				return Less(a.GetKey(), b);
 			}
 
 			[[gnu::pure]]
-			bool operator()(const Item &a, const Item &b) const {
+			bool operator()(const Item &a,
+					const Item &b) const noexcept {
 				return Less(a.GetKey(), b.GetKey());
 			}
 		};
@@ -162,7 +165,7 @@ class MultiStock {
 	StockMap &hstock;
 
 public:
-	explicit MultiStock(StockMap &_hstock)
+	explicit MultiStock(StockMap &_hstock) noexcept
 		:hstock(_hstock) {}
 
 	MultiStock(const MultiStock &) = delete;
@@ -171,7 +174,7 @@ public:
 	/**
 	 * @see Stock::FadeAll()
 	 */
-	void FadeAll() {
+	void FadeAll() noexcept {
 		for (auto &i : items)
 			i.Fade();
 	}
@@ -180,7 +183,7 @@ public:
 	 * @see Stock::FadeIf()
 	 */
 	template<typename P>
-	void FadeIf(P &&predicate) {
+	void FadeIf(P &&predicate) noexcept {
 		for (auto &i : items)
 			i.FadeIf(std::forward<P>(predicate));
 	}
