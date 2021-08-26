@@ -223,7 +223,7 @@ MultiWasConnection::Connect(MultiStock &child_stock,
 		connection.Open(child->Connect());
 	} catch (...) {
 		delete this;
-		std::throw_with_nested(FormatRuntimeError("Failed to connect to LHTTP server '%s'",
+		std::throw_with_nested(FormatRuntimeError("Failed to connect to MultiWAS server '%s'",
 							  key));
 	}
 
