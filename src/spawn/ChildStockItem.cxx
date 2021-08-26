@@ -135,7 +135,11 @@ void
 ChildStockItem::OnChildProcessExit(gcc_unused int status) noexcept
 {
 	pid = -1;
+}
 
+void
+ChildStockItem::Disconnected() noexcept
+{
 	if (!busy)
 		InvokeIdleDisconnect();
 }

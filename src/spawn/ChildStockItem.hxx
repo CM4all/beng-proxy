@@ -111,6 +111,12 @@ private:
 
 protected:
 	/**
+	 * Call when this child process has disconnected.  This
+	 * #StockItem will not be used again.
+	 */
+	void Disconnected() noexcept;
+
+	/**
 	 * Throws on error.
 	 */
 	virtual void Prepare(ChildStockClass &cls, void *info,
