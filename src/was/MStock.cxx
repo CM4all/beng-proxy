@@ -53,23 +53,24 @@
 #include "util/StringList.hxx"
 
 #include <cassert>
+#include <optional>
 
-class MultiWasChild final : public ChildStockItem {
-	SocketEvent event;
+class MultiWasChild final : public ChildStockItem, Was::MultiClientHandler {
+	EventLoop &event_loop;
+
+	std::optional<Was::MultiClient> client;
 
 public:
 	MultiWasChild(CreateStockItem c,
 		      ChildStock &_child_stock,
 		      std::string_view _tag) noexcept
 		:ChildStockItem(c, _child_stock, _tag),
-		 event(c.stock.GetEventLoop(), BIND_THIS_METHOD(OnSocketReady))
+		 event_loop(c.stock.GetEventLoop())
 	{}
 
-	~MultiWasChild() noexcept {
-		event.Close();
+	WasSocket Connect() {
+		return client->Connect();
 	}
-
-	WasSocket Connect();
 
 protected:
 	/* virtual methods from class ChildStockItem */
@@ -77,16 +78,24 @@ protected:
 		     PreparedChildProcess &p) override;
 
 private:
-	void OnSocketReady(unsigned events) noexcept;
+	/* virtual methods from class Was::MultiClientHandler */
+	void OnMultiClientDisconnect() noexcept override {
+		client.reset();
+		Disconnected();
+	}
 
-	void Connect(WasSocket &&socket);
+	void OnMultiClientError(std::exception_ptr error) noexcept override {
+		(void)error; // TODO log error?
+		client.reset();
+		Disconnected();
+	}
 };
 
 void
 MultiWasChild::Prepare(ChildStockClass &cls, void *info,
 		       PreparedChildProcess &p)
 {
-	assert(!event.IsDefined());
+	assert(!client);
 
 	ChildStockItem::Prepare(cls, info, p);
 
@@ -97,30 +106,8 @@ MultiWasChild::Prepare(ChildStockClass &cls, void *info,
 
 	p.SetStdin(std::move(for_child));
 
-	event.Open(for_parent.Release());
-	event.ScheduleImplicit();
-}
-
-void
-MultiWasChild::OnSocketReady(unsigned events) noexcept
-{
-	(void)events; // TODO
-	event.Close();
-	Disconnected();
-}
-
-inline void
-MultiWasChild::Connect(WasSocket &&socket)
-{
-	Was::SendMultiNew(event.GetSocket(), std::move(socket));
-}
-
-WasSocket
-MultiWasChild::Connect()
-{
-	auto [result, for_child] = WasSocket::CreatePair();
-	Connect(std::move(for_child));
-	return std::move(result);
+	Was::MultiClientHandler &client_handler = *this;
+	client.emplace(event_loop, std::move(for_parent), client_handler);
 }
 
 class MultiWasConnection final : LoggerDomainFactory, StockItem,
