@@ -33,14 +33,17 @@
 #pragma once
 
 #include "stock/Request.hxx"
+#include "stock/GetHandler.hxx"
+#include "event/DeferEvent.hxx"
+#include "util/Cancellable.hxx"
 #include "lease.hxx"
 
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/unordered_set.hpp>
 
+class CancellablePointer;
 class LeasePtr;
 class StockMap;
-class StockGetHandler;
 class Stock;
 struct StockItem;
 struct StockStats;
@@ -141,7 +144,8 @@ class MultiStock {
 	};
 
 	class MapItem final
-		: public boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>
+		: public boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>,
+		  StockGetHandler
 	{
 		StockMap &map_stock;
 		Stock &stock;
@@ -151,11 +155,36 @@ class MultiStock {
 					       boost::intrusive::constant_time_size<false>>;
 		ItemList items;
 
+		struct Waiting;
+		using WaitingList =
+			boost::intrusive::list<Waiting,
+					       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
+					       boost::intrusive::constant_time_size<false>>;
+
+		WaitingList waiting;
+
+		/**
+		 * This event is used to move the "retry_waiting" code
+		 * out of the current stack, to invoke the handler
+		 * method in a safe environment.
+		 */
+		DeferEvent retry_event;
+
+		CancellablePointer get_cancel_ptr;
+
+		unsigned get_max_leases;
+
 	public:
 		MapItem(StockMap &_map_stock, Stock &_stock) noexcept;
 		~MapItem() noexcept;
 
 		Item &GetNow(StockRequest request, unsigned max_leases);
+		void Get(StockRequest request, unsigned max_leases,
+			 LeasePtr &lease_ref,
+			 StockGetHandler &handler,
+			 CancellablePointer &cancel_ptr) noexcept;
+
+		void RemoveWaiting(Waiting &w) noexcept;
 
 		void RemoveItem(Item &item) noexcept;
 		void OnLeaseReleased(Item &item) noexcept;
@@ -174,6 +203,21 @@ class MultiStock {
 	private:
 		[[gnu::pure]]
 		Item *FindUsable() noexcept;
+
+		/**
+		 * Delete all empty items.
+		 */
+		void DeleteEmptyItems(const Item *except=nullptr) noexcept;
+
+		/**
+		 * Retry the waiting requests.
+		 */
+		void RetryWaiting() noexcept;
+		bool ScheduleRetryWaiting() noexcept;
+
+		/* virtual methods from class StockGetHandler */
+		void OnStockItemReady(StockItem &item) noexcept override;
+		void OnStockItemError(std::exception_ptr error) noexcept override;
 
 	public:
 		struct Hash {
@@ -242,6 +286,12 @@ public:
 	StockItem *GetNow(const char *uri, StockRequest request,
 			  unsigned max_leases,
 			  LeasePtr &lease_ref);
+
+	void Get(const char *uri, StockRequest request,
+		 unsigned max_leases,
+		 LeasePtr &lease_ref,
+		 StockGetHandler &handler,
+		 CancellablePointer &cancel_ptr) noexcept;
 
 private:
 	[[gnu::pure]]

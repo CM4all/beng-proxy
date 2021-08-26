@@ -75,17 +75,49 @@ MultiStock::Item::DeleteLease(Lease *lease, bool _reuse) noexcept
 	parent.OnLeaseReleased(*this);
 }
 
-inline
+struct MultiStock::MapItem::Waiting final
+	: boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+		  Cancellable
+{
+	MapItem &parent;
+	StockRequest request;
+	LeasePtr &lease_ref;
+	StockGetHandler &handler;
+	CancellablePointer &caller_cancel_ptr;
+
+	Waiting(MapItem &_parent, StockRequest &&_request,
+		LeasePtr &_lease_ref, StockGetHandler &_handler,
+		CancellablePointer &_cancel_ptr) noexcept
+		:parent(_parent), request(std::move(_request)),
+		 lease_ref(_lease_ref), handler(_handler),
+		 caller_cancel_ptr(_cancel_ptr)
+	{
+		caller_cancel_ptr = *this;
+	}
+
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		parent.RemoveWaiting(*this);
+	}
+};
+
+
 MultiStock::MapItem::MapItem(StockMap &_map_stock, Stock &_stock) noexcept
-	:map_stock(_map_stock), stock(_stock)
+	:map_stock(_map_stock), stock(_stock),
+	retry_event(stock.GetEventLoop(), BIND_THIS_METHOD(RetryWaiting))
 {
 	map_stock.SetSticky(stock, true);
 }
 
-inline
 MultiStock::MapItem::~MapItem() noexcept
 {
+	assert(items.empty());
+	assert(waiting.empty());
+
 	map_stock.SetSticky(stock, false);
+
+	if (get_cancel_ptr)
+		get_cancel_ptr.Cancel();
 }
 
 MultiStock::Item *
@@ -112,9 +144,144 @@ MultiStock::MapItem::GetNow(StockRequest request, unsigned max_leases)
 }
 
 inline void
+MultiStock::MapItem::Get(StockRequest request, unsigned max_leases,
+			 LeasePtr &lease_ref,
+			 StockGetHandler &handler,
+			 CancellablePointer &cancel_ptr) noexcept
+{
+	if (auto *i = FindUsable()) {
+		i->AddLease(handler, lease_ref);
+		return;
+	}
+
+	if (auto *stock_item = stock.GetIdle()) {
+		auto *i = new Item(*this, *stock_item, max_leases);
+		items.push_back(*i);
+		i->AddLease(handler, lease_ref);
+		return;
+	}
+
+	get_max_leases = max_leases;
+
+	auto *w = new Waiting(*this, std::move(request),
+			      lease_ref, handler, cancel_ptr);
+	waiting.push_back(*w);
+
+	if (!stock.IsFull() && !get_cancel_ptr)
+		stock.GetCreate(std::move(w->request), *this, get_cancel_ptr);
+}
+
+inline void
 MultiStock::MapItem::RemoveItem(Item &item) noexcept
 {
 	items.erase_and_dispose(items.iterator_to(item), DeleteDisposer{});
+
+	if (items.empty() && !ScheduleRetryWaiting())
+		delete this;
+}
+
+inline void
+MultiStock::MapItem::RemoveWaiting(Waiting &w) noexcept
+{
+	waiting.erase_and_dispose(waiting.iterator_to(w), DeleteDisposer{});
+
+	if (!waiting.empty())
+		return;
+
+	if (retry_event.IsPending()) {
+		/* an item is ready, but was not yet delivered to the
+		   Waiting; delete all empty items */
+		retry_event.Cancel();
+
+		DeleteEmptyItems();
+	}
+
+	if (items.empty())
+		delete this;
+	else if (get_cancel_ptr)
+		get_cancel_ptr.CancelAndClear();
+}
+
+inline void
+MultiStock::MapItem::DeleteEmptyItems(const Item *except) noexcept
+{
+	items.remove_and_dispose_if([except](const auto &item){
+		return &item != except && item.IsEmpty();
+	}, DeleteDisposer{});
+}
+
+inline void
+MultiStock::MapItem::RetryWaiting() noexcept
+{
+	if (waiting.empty())
+		return;
+
+	auto &w = waiting.front();
+
+	if (auto *i = FindUsable()) {
+		/* if there is still a request object, move it to the
+		   next item in the waiting list */
+		if (w.request)
+			if (auto n = std::next(waiting.begin());
+			    n != waiting.end())
+				n->request = std::move(w.request);
+
+		auto &handler = w.handler;
+		auto &lease_ref = w.lease_ref;
+		waiting.pop_front_and_dispose(DeleteDisposer{});
+
+		/* do it again until no more usable items are
+		   found */
+		if (!ScheduleRetryWaiting())
+			/* no more waiting: we can now remove all
+			   remaining idle items which havn't been
+			   removed while there were still waiting
+			   items, but we had more empty items than we
+			   really needed */
+			DeleteEmptyItems(&*i);
+
+		i->AddLease(handler, lease_ref);
+		return;
+	}
+
+	assert(w.request);
+
+	if (!stock.IsFull() && !get_cancel_ptr)
+		stock.GetCreate(std::move(w.request), *this, get_cancel_ptr);
+}
+
+bool
+MultiStock::MapItem::ScheduleRetryWaiting() noexcept
+{
+	if (waiting.empty())
+		return false;
+
+	retry_event.Schedule();
+	return true;
+}
+
+void
+MultiStock::MapItem::OnStockItemReady(StockItem &stock_item) noexcept
+{
+	assert(!waiting.empty());
+	get_cancel_ptr = nullptr;
+
+	auto *item = new Item(*this, stock_item, get_max_leases);
+	items.push_back(*item);
+
+	ScheduleRetryWaiting();
+}
+
+void
+MultiStock::MapItem::OnStockItemError(std::exception_ptr error) noexcept
+{
+	assert(!waiting.empty());
+	get_cancel_ptr = nullptr;
+
+	waiting.clear_and_dispose([&error](auto *w){
+		w->handler.OnStockItemError(error);
+		delete w;
+	});
 
 	if (items.empty())
 		delete this;
@@ -123,6 +290,14 @@ MultiStock::MapItem::RemoveItem(Item &item) noexcept
 inline void
 MultiStock::MapItem::OnLeaseReleased(Item &item) noexcept
 {
+	/* now that a lease was released, schedule the "waiting" list
+	   again */
+	if (ScheduleRetryWaiting() && item.CanUse())
+		/* somebody's waiting and the iten can be reused for
+		   them - don't try to delete the item, even if it's
+		   empty */
+		return;
+
 	if (item.IsEmpty())
 		RemoveItem(item);
 }
@@ -189,4 +364,16 @@ MultiStock::GetNow(const char *uri, StockRequest request,
 	return MakeMapItem(uri, request.get())
 		.GetNow(std::move(request), max_leases)
 		.AddLease(lease_ref);
+}
+
+void
+MultiStock::Get(const char *uri, StockRequest request,
+		unsigned max_leases,
+		LeasePtr &lease_ref,
+		StockGetHandler &handler,
+		CancellablePointer &cancel_ptr) noexcept
+{
+	MakeMapItem(uri, request.get())
+		.Get(std::move(request), max_leases,
+		     lease_ref, handler, cancel_ptr);
 }
