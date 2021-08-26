@@ -1292,3 +1292,4 @@ if get_option('certdb')
   subdir('libcommon/test/pg')
 endif
 subdir('libcommon/test/sodium')
+subdir('libcommon/test/stock')
