@@ -43,18 +43,8 @@
 #include "util/ConstBuffer.hxx"
 #include "util/StringList.hxx"
 
+#include <cassert>
 #include <string>
-
-#include <assert.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <signal.h>
-#include <stdlib.h>
 
 class WasChild final : public WasStockConnection, ExitListener {
 	SpawnService &spawn_service;
