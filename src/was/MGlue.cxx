@@ -32,6 +32,7 @@
 
 #include "MGlue.hxx"
 #include "MStock.hxx"
+#include "SConnection.hxx"
 #include "Client.hxx"
 #include "was/async/Socket.hxx"
 #include "http/ResponseHandler.hxx"
@@ -60,7 +61,7 @@ class MultiWasRequest final
 
 	const char *const site_name;
 
-	StockItem *stock_item;
+	WasStockConnection *connection;
 
 	http_method_t method;
 	const char *uri;
@@ -130,13 +131,13 @@ private:
 
 	/* virtual methods from class WasLease */
 	void ReleaseWas(bool reuse) override {
-		stock_item->Put(!reuse);
+		connection->Put(!reuse);
 		Destroy();
 	}
 
 	void ReleaseWasStop(uint64_t input_received) override {
-		mwas_stock_item_stop(*stock_item, input_received);
-		stock_item->Put(false);
+		connection->Stop(input_received);
+		connection->Put(false);
 		Destroy();
 	}
 };
@@ -149,12 +150,11 @@ private:
 void
 MultiWasRequest::OnStockItemReady(StockItem &item) noexcept
 {
-	mwas_stock_item_set_site(item, site_name);
-	mwas_stock_item_set_uri(item, uri);
+	connection = (WasStockConnection *)&item;
+	connection->SetSite(site_name);
+	connection->SetUri(uri);
 
-	stock_item = &item;
-
-	const auto &socket = mwas_stock_item_get_socket(item);
+	const auto &socket = connection->GetSocket();
 
 	was_client_request(pool, item.stock.GetEventLoop(), std::move(stopwatch),
 			   socket.control,

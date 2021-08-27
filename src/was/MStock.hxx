@@ -77,6 +77,10 @@ public:
 		return hstock;
 	}
 
+	/**
+	 * The resulting #StockItem will be a #WasStockConnection
+	 * instance.
+	 */
 	void Get(AllocatorPtr alloc,
 		 const ChildOptions &options,
 		 const char *executable_path,
@@ -99,24 +103,3 @@ private:
 						    ChildStock &child_stock) override;
 	void PrepareChild(void *info, PreparedChildProcess &p) override;
 };
-
-/**
- * Returns the socket descriptor of the specified stock item.
- */
-[[gnu::pure]]
-const WasSocket &
-mwas_stock_item_get_socket(const StockItem &item) noexcept;
-
-/**
- * Set the "stopping" flag.  Call this after sending
- * #WAS_COMMAND_STOP, before calling hstock_put().  This will make the
- * stock wait for #WAS_COMMAND_PREMATURE.
- */
-void
-mwas_stock_item_stop(StockItem &item, uint64_t received) noexcept;
-
-void
-mwas_stock_item_set_site(StockItem &item, const char *site) noexcept;
-
-void
-mwas_stock_item_set_uri(StockItem &item, const char *uri) noexcept;

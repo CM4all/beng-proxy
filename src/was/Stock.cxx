@@ -171,32 +171,3 @@ WasStock::Get(struct pool &pool,
 
 	stock.Get(key, std::move(r), handler, cancel_ptr);
 }
-
-void
-was_stock_item_set_site(StockItem &item, const char *site) noexcept
-{
-	auto &child = (WasChild &)item;
-	child.SetSite(site);
-}
-
-void
-was_stock_item_set_uri(StockItem &item, const char *uri) noexcept
-{
-	auto &child = (WasChild &)item;
-	child.SetUri(uri);
-}
-
-const WasSocket &
-was_stock_item_get(const StockItem &item) noexcept
-{
-	auto *child = (const WasChild *)&item;
-
-	return child->GetSocket();
-}
-
-void
-was_stock_item_stop(StockItem &item, uint64_t received) noexcept
-{
-	auto &child = (WasChild &)item;
-	child.Stop(received);
-}

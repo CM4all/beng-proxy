@@ -282,31 +282,3 @@ MultiWasStock::Get(AllocatorPtr alloc,
 
 	GetConnectionStock().Get(key, std::move(r), handler, cancel_ptr);
 }
-
-const WasSocket &
-mwas_stock_item_get_socket(const StockItem &item) noexcept
-{
-	const auto &connection = (const MultiWasConnection &)item;
-	return connection.GetSocket();
-}
-
-void
-mwas_stock_item_stop(StockItem &item, uint64_t received) noexcept
-{
-	auto &connection = (MultiWasConnection &)item;
-	connection.Stop(received);
-}
-
-void
-mwas_stock_item_set_site(StockItem &item, const char *site) noexcept
-{
-	auto &connection = (MultiWasConnection &)item;
-	connection.SetSite(site);
-}
-
-void
-mwas_stock_item_set_uri(StockItem &item, const char *uri) noexcept
-{
-	auto &connection = (MultiWasConnection &)item;
-	connection.SetUri(uri);
-}

@@ -54,6 +54,11 @@ public:
 		return connection.GetSocket();
 	}
 
+	/**
+	 * Set the "stopping" flag.  Call this after sending
+	 * #WAS_COMMAND_STOP, before calling hstock_put().  This will
+	 * make the stock wait for #WAS_COMMAND_PREMATURE.
+	 */
 	void Stop(uint64_t _received) noexcept;
 
 	virtual void SetSite([[maybe_unused]] const char *site) noexcept {}
