@@ -32,6 +32,7 @@ was_client = static_library(
   'was_client',
   'Client.cxx',
   'IdleConnection.cxx',
+  'SConnection.cxx',
   'Stock.cxx',
   'Launch.cxx',
   'Glue.cxx',

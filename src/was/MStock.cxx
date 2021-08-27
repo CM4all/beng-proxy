@@ -31,13 +31,12 @@
  */
 
 #include "MStock.hxx"
-#include "IdleConnection.hxx"
+#include "SConnection.hxx"
 #include "was/async/Socket.hxx"
 #include "was/async/MultiClient.hxx"
 #include "cgi/Address.hxx"
 #include "stock/Stock.hxx"
 #include "stock/MapStock.hxx"
-#include "stock/Item.hxx"
 #include "pool/DisposablePointer.hxx"
 #include "pool/tpool.hxx"
 #include "AllocatorPtr.hxx"
@@ -47,7 +46,6 @@
 #include "spawn/Prepared.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "io/Logger.hxx"
 #include "system/Error.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StringList.hxx"
@@ -110,37 +108,19 @@ MultiWasChild::Prepare(ChildStockClass &cls, void *info,
 	client.emplace(event_loop, std::move(for_parent), client_handler);
 }
 
-class MultiWasConnection final : LoggerDomainFactory, StockItem,
-				 WasIdleConnectionHandler {
-	LazyDomainLogger logger;
-
+class MultiWasConnection final : public WasStockConnection {
 	MultiWasChild *child = nullptr;
 
 	LeasePtr lease_ref;
 
-	WasIdleConnection connection;
-
 public:
-	explicit MultiWasConnection(CreateStockItem c) noexcept
-		:StockItem(c),
-		 logger(*this),
-		 connection(c.stock.GetEventLoop(), *this) {}
+	using WasStockConnection::WasStockConnection;
 
 	~MultiWasConnection() noexcept override;
 
 	void Connect(MultiStock &child_stock,
 		     const char *key, StockRequest &&request,
 		     unsigned concurrency);
-
-	const auto &GetSocket() const noexcept {
-		return connection.GetSocket();
-	}
-
-	void Stop(uint64_t _received) noexcept {
-		assert(!is_idle);
-
-		connection.Stop(_received);
-	}
 
 	[[gnu::pure]]
 	StringView GetTag() const noexcept {
@@ -149,43 +129,16 @@ public:
 		return child->GetTag();
 	}
 
-	void SetSite(const char *site) noexcept {
+	void SetSite(const char *site) noexcept override {
 		assert(child != nullptr);
 
 		child->SetSite(site);
 	}
 
-	void SetUri(const char *uri) noexcept {
+	void SetUri(const char *uri) noexcept override {
 		assert(child != nullptr);
 
 		child->SetUri(uri);
-	}
-
-private:
-	/* virtual methods from LoggerDomainFactory */
-	std::string MakeLoggerDomain() const noexcept override {
-		return GetStockName();
-	}
-
-	/* virtual methods from class StockItem */
-	bool Borrow() noexcept override {
-		return connection.Borrow();
-	}
-
-	bool Release() noexcept override {
-		connection.Release();
-		unclean = connection.IsStopping();
-		return true;
-	}
-
-	/* virtual methods from class WasIdleConnectionHandler */
-	void OnWasIdleConnectionClean() noexcept override {
-		ClearUncleanFlag();
-	}
-
-	void OnWasIdleConnectionError(std::exception_ptr e) noexcept override {
-		logger(2, e);
-		InvokeIdleDisconnect();
 	}
 };
 
@@ -205,7 +158,7 @@ MultiWasConnection::Connect(MultiStock &child_stock,
 	}
 
 	try {
-		connection.Open(child->Connect());
+		Open(child->Connect());
 	} catch (...) {
 		delete this;
 		std::throw_with_nested(FormatRuntimeError("Failed to connect to MultiWAS server '%s'",

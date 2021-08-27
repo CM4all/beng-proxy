@@ -32,9 +32,7 @@
 
 #include "Stock.hxx"
 #include "Launch.hxx"
-#include "IdleConnection.hxx"
-#include "stock/Stock.hxx"
-#include "stock/Item.hxx"
+#include "SConnection.hxx"
 #include "access_log/ChildErrorLog.hxx"
 #include "cgi/ChildParams.hxx"
 #include "spawn/ChildOptions.hxx"
@@ -42,7 +40,6 @@
 #include "spawn/Interface.hxx"
 #include "pool/DisposablePointer.hxx"
 #include "pool/tpool.hxx"
-#include "io/Logger.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringList.hxx"
 
@@ -59,9 +56,7 @@
 #include <signal.h>
 #include <stdlib.h>
 
-class WasChild final : public StockItem, ExitListener, WasIdleConnectionHandler {
-	const LLogger logger;
-
+class WasChild final : public WasStockConnection, ExitListener {
 	SpawnService &spawn_service;
 
 	const std::string tag;
@@ -70,22 +65,15 @@ class WasChild final : public StockItem, ExitListener, WasIdleConnectionHandler 
 
 	int pid = -1;
 
-	WasIdleConnection connection;
-
 public:
 	explicit WasChild(CreateStockItem c, SpawnService &_spawn_service,
 			  std::string_view _tag) noexcept
-		:StockItem(c), logger(GetStockName()), spawn_service(_spawn_service),
-		 tag(_tag),
-		 connection(c.stock.GetEventLoop(), *this)
+		:WasStockConnection(c), spawn_service(_spawn_service),
+		 tag(_tag)
 	{
 	}
 
 	~WasChild() noexcept override;
-
-	auto &GetEventLoop() const noexcept {
-		return connection.GetEventLoop();
-	}
 
 	bool IsTag(StringView other_tag) const noexcept {
 		return StringListContains(tag, '\0', other_tag);
@@ -110,53 +98,21 @@ public:
 		pid = process.pid;
 
 		WasSocket &socket = process;
-		connection.Open(std::move(socket));
+		Open(std::move(socket));
 	}
 
-	void SetSite(const char *_site) noexcept {
+	void SetSite(const char *_site) noexcept override {
 		log.SetSite(_site);
 	}
 
-	void SetUri(const char *_uri) noexcept {
+	void SetUri(const char *_uri) noexcept override {
 		log.SetUri(_uri);
-	}
-
-	const WasSocket &GetSocket() const noexcept {
-		return connection.GetSocket();
-	}
-
-	void Stop(uint64_t _received) noexcept {
-		assert(!is_idle);
-
-		connection.Stop(_received);
-	}
-
-public:
-	/* virtual methods from class StockItem */
-	bool Borrow() noexcept override {
-		return connection.Borrow();
-	}
-
-	bool Release() noexcept override {
-		connection.Release();
-		unclean = connection.IsStopping();
-		return true;
 	}
 
 private:
 	/* virtual methods from class ExitListener */
 	void OnChildProcessExit(gcc_unused int status) noexcept override {
 		pid = -1;
-	}
-
-	/* virtual methods from class WasIdleConnectionHandler */
-	void OnWasIdleConnectionClean() noexcept override {
-		ClearUncleanFlag();
-	}
-
-	void OnWasIdleConnectionError(std::exception_ptr e) noexcept override {
-		logger(2, e);
-		InvokeIdleDisconnect();
 	}
 };
 
