@@ -36,12 +36,13 @@
 #include "lease.hxx"
 #include "util/DeleteDisposer.hxx"
 
-#include <boost/intrusive/set.hpp>
 #include <boost/intrusive/list.hpp>
+#include <boost/intrusive/unordered_set.hpp>
 
 class LeasePtr;
 class StockMap;
 class StockGetHandler;
+class Stock;
 struct StockItem;
 struct StockStats;
 
@@ -50,8 +51,11 @@ struct StockStats;
  * #StockItem.
  */
 class MultiStock {
+	class MapItem;
+
 	class Item
-		: public boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>> {
+		: public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>
+	{
 
 		struct Lease final : ::Lease {
 			static constexpr auto link_mode = boost::intrusive::normal_link;
@@ -75,6 +79,8 @@ class MultiStock {
 			}
 		};
 
+		MapItem &parent;
+
 		StockItem &item;
 
 		boost::intrusive::list<Lease, Lease::SiblingsListMemberHook,
@@ -85,16 +91,15 @@ class MultiStock {
 		bool reuse = true;
 
 	public:
-		Item(unsigned _max_leases, StockItem &_item) noexcept
-			:item(_item), remaining_leases(_max_leases) {}
+		Item(MapItem &_parent, StockItem &_item,
+		     unsigned _max_leases) noexcept
+			:parent(_parent), item(_item),
+			 remaining_leases(_max_leases) {}
 
 		Item(const Item &) = delete;
 		Item &operator=(const Item &) = delete;
 
 		~Item() noexcept;
-
-		[[gnu::pure]]
-		const char *GetKey() const noexcept;
 
 		bool IsFull() const noexcept {
 			return remaining_leases == 0;
@@ -132,39 +137,66 @@ class MultiStock {
 		}
 
 		void DeleteLease(Lease *lease, bool _reuse) noexcept;
+	};
 
-		class Compare {
-			[[gnu::pure]]
-			bool Less(const char *a, const char *b) const noexcept;
+	class MapItem final
+		: public boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>
+	{
+		Stock &stock;
 
-		public:
+		using ItemList =
+			boost::intrusive::list<Item,
+					       boost::intrusive::constant_time_size<false>>;
+		ItemList items;
+
+	public:
+		explicit MapItem(Stock &_stock) noexcept
+			:stock(_stock) {}
+
+		Item &GetNow(StockRequest request, unsigned max_leases);
+
+		void RemoveItem(Item &item) noexcept;
+
+		void FadeAll() noexcept {
+			for (auto &i : items)
+				i.Fade();
+		}
+
+		template<typename P>
+		void FadeIf(P &&predicate) noexcept {
+			for (auto &i : items)
+				i.FadeIf(std::forward<P>(predicate));
+		}
+
+		struct Hash {
 			[[gnu::pure]]
-			bool operator()(const char *a,
-					const Item &b) const noexcept {
-				return Less(a, b.GetKey());
-			}
+			std::size_t operator()(const char *key) const noexcept;
 
 			[[gnu::pure]]
-			bool operator()(const Item &a,
-					const char *b) const noexcept {
-				return Less(a.GetKey(), b);
-			}
+			std::size_t operator()(const MapItem &value) const noexcept;
+		};
+
+		struct Equal {
+			[[gnu::pure]]
+			bool operator()(const char *a, const MapItem &b) const noexcept;
 
 			[[gnu::pure]]
-			bool operator()(const Item &a,
-					const Item &b) const noexcept {
-				return Less(a.GetKey(), b.GetKey());
-			}
+			bool operator()(const MapItem &a, const MapItem &b) const noexcept;
 		};
 	};
 
-	using ItemMap =
-		boost::intrusive::multiset<Item,
-					   boost::intrusive::compare<Item::Compare>,
-					   boost::intrusive::constant_time_size<false>>;
-	ItemMap items;
-
 	StockMap &hstock;
+
+	using Map =
+		boost::intrusive::unordered_set<MapItem,
+						boost::intrusive::hash<MapItem::Hash>,
+						boost::intrusive::equal<MapItem::Equal>,
+						boost::intrusive::constant_time_size<false>>;
+
+	static constexpr size_t N_BUCKETS = 251;
+	Map::bucket_type buckets[N_BUCKETS];
+
+	Map map;
 
 public:
 	explicit MultiStock(StockMap &_hstock) noexcept;
@@ -177,8 +209,8 @@ public:
 	 * @see Stock::FadeAll()
 	 */
 	void FadeAll() noexcept {
-		for (auto &i : items)
-			i.Fade();
+		for (auto &i : map)
+			i.FadeAll();
 	}
 
 	/**
@@ -186,7 +218,7 @@ public:
 	 */
 	template<typename P>
 	void FadeIf(P &&predicate) noexcept {
-		for (auto &i : items)
+		for (auto &i : map)
 			i.FadeIf(std::forward<P>(predicate));
 	}
 
@@ -204,6 +236,6 @@ public:
 			  LeasePtr &lease_ref);
 
 private:
-	Item &MakeItem(const char *uri, StockRequest request,
-		       unsigned max_leases);
+	[[gnu::pure]]
+	MapItem &MakeMapItem(const char *uri, void *request) noexcept;
 };

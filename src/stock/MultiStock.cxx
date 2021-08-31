@@ -34,28 +34,17 @@
 #include "stock/MapStock.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
+#include "util/djbhash.h"
+#include "util/DeleteDisposer.hxx"
+#include "util/StringAPI.hxx"
 
 #include <cassert>
-
-#include <string.h>
-
-bool
-MultiStock::Item::Compare::Less(const char *a, const char *b) const noexcept
-{
-	return strcmp(a, b) < 0;
-}
 
 MultiStock::Item::~Item() noexcept
 {
 	assert(leases.empty());
 
 	item.Put(!reuse);
-}
-
-const char *
-MultiStock::Item::GetKey() const noexcept
-{
-	return item.GetStockName();
 }
 
 void
@@ -78,33 +67,84 @@ MultiStock::Item::DeleteLease(Lease *lease, bool _reuse) noexcept
 	++remaining_leases;
 
 	if (leases.empty())
+		parent.RemoveItem(*this);
+}
+
+MultiStock::Item &
+MultiStock::MapItem::GetNow(StockRequest request, unsigned max_leases)
+{
+	for (auto &i : items)
+		if (i.CanUse())
+			return i;
+
+	auto *stock_item = stock.GetNow(std::move(request));
+	assert(stock_item != nullptr);
+
+	auto *item = new Item(*this, *stock_item, max_leases);
+	items.push_back(*item);
+	return *item;
+}
+
+void
+MultiStock::MapItem::RemoveItem(Item &item) noexcept
+{
+	items.erase_and_dispose(items.iterator_to(item), DeleteDisposer{});
+
+	if (items.empty())
 		delete this;
 }
 
+inline std::size_t
+MultiStock::MapItem::Hash::operator()(const char *key) const noexcept
+{
+	assert(key != nullptr);
+
+	return djb_hash_string(key);
+}
+
+inline std::size_t
+MultiStock::MapItem::Hash::operator()(const MapItem &value) const noexcept
+{
+	return (*this)(value.stock.GetName());
+}
+
+inline bool
+MultiStock::MapItem::Equal::operator()(const char *a, const MapItem &b) const noexcept
+{
+	return StringIsEqual(a, b.stock.GetName());
+}
+
+inline bool
+MultiStock::MapItem::Equal::operator()(const MapItem &a, const MapItem &b) const noexcept
+{
+	return (*this)(a.stock.GetName(), b);
+}
+
 MultiStock::MultiStock(StockMap &_hstock) noexcept
-	:hstock(_hstock) {}
+	:hstock(_hstock),
+	 map(Map::bucket_traits(buckets, N_BUCKETS))
+{
+}
 
 MultiStock::~MultiStock() noexcept
 {
 	/* by now, all leases must be freed */
-	assert(items.empty());
+	assert(map.empty());
 }
 
-MultiStock::Item &
-MultiStock::MakeItem(const char *uri, StockRequest request,
-		     unsigned max_leases)
+MultiStock::MapItem &
+MultiStock::MakeMapItem(const char *uri, void *request) noexcept
 {
-	auto i = items.lower_bound(uri, items.key_comp());
-	for (; i != items.end() && !items.key_comp()(uri, *i); ++i)
-		if (i->CanUse())
-			return *i;
+	Map::insert_commit_data hint;
+	auto [i, inserted] =
+		map.insert_check(uri, map.hash_function(), map.key_eq(), hint);
+	if (inserted) {
+		auto *item = new MapItem(hstock.GetStock(uri, request));
+		map.insert_commit(*item, hint);
+		return *item;
+	} else
+		return *i;
 
-	auto *stock_item = hstock.GetNow(uri, std::move(request));
-	assert(stock_item != nullptr);
-
-	auto *item = new Item(max_leases, *stock_item);
-	items.insert(i, *item);
-	return *item;
 }
 
 StockItem *
@@ -112,5 +152,7 @@ MultiStock::GetNow(const char *uri, StockRequest request,
 		   unsigned max_leases,
 		   LeasePtr &lease_ref)
 {
-	return MakeItem(uri, std::move(request), max_leases).AddLease(lease_ref);
+	return MakeMapItem(uri, request.get())
+		.GetNow(std::move(request), max_leases)
+		.AddLease(lease_ref);
 }
