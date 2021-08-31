@@ -167,8 +167,8 @@ class MultiStock {
 	StockMap &hstock;
 
 public:
-	explicit MultiStock(StockMap &_hstock) noexcept
-		:hstock(_hstock) {}
+	explicit MultiStock(StockMap &_hstock) noexcept;
+	~MultiStock() noexcept;
 
 	MultiStock(const MultiStock &) = delete;
 	MultiStock &operator=(const MultiStock &) = delete;

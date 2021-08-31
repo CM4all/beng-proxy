@@ -77,6 +77,13 @@ MultiStock::Item::DeleteLease(Lease *lease, bool _reuse) noexcept
 		delete this;
 }
 
+MultiStock::MultiStock(StockMap &_hstock) noexcept
+	:hstock(_hstock) {}
+
+MultiStock::~MultiStock() noexcept
+{
+}
+
 MultiStock::Item &
 MultiStock::MakeItem(const char *uri, StockRequest request,
 		     unsigned max_leases)
