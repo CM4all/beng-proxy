@@ -34,7 +34,6 @@
 
 #include "stock/Request.hxx"
 #include "lease.hxx"
-#include "util/DeleteDisposer.hxx"
 
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/unordered_set.hpp>
