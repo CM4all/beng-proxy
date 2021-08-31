@@ -102,6 +102,10 @@ class MultiStock {
 			return remaining_leases == 0;
 		}
 
+		bool IsEmpty() const noexcept {
+			return leases.empty();
+		}
+
 		bool CanUse() const noexcept {
 			return reuse && !IsFull();
 		}

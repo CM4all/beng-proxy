@@ -72,7 +72,7 @@ MultiStock::Item::DeleteLease(Lease *lease, bool _reuse) noexcept
 				 DeleteDisposer());
 	++remaining_leases;
 
-	if (leases.empty())
+	if (IsEmpty())
 		parent.RemoveItem(*this);
 }
 
