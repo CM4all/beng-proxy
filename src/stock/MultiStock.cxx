@@ -76,12 +76,20 @@ MultiStock::Item::DeleteLease(Lease *lease, bool _reuse) noexcept
 		parent.RemoveItem(*this);
 }
 
+MultiStock::Item *
+MultiStock::MapItem::FindUsable() noexcept
+{	for (auto &i : items)
+		if (i.CanUse())
+			return &i;
+
+	return nullptr;
+}
+
 MultiStock::Item &
 MultiStock::MapItem::GetNow(StockRequest request, unsigned max_leases)
 {
-	for (auto &i : items)
-		if (i.CanUse())
-			return i;
+	if (auto *i = FindUsable())
+		return *i;
 
 	auto *stock_item = stock.GetNow(std::move(request));
 	assert(stock_item != nullptr);

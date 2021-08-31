@@ -169,6 +169,11 @@ class MultiStock {
 				i.FadeIf(std::forward<P>(predicate));
 		}
 
+	private:
+		[[gnu::pure]]
+		Item *FindUsable() noexcept;
+
+	public:
 		struct Hash {
 			[[gnu::pure]]
 			std::size_t operator()(const char *key) const noexcept;
