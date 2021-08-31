@@ -40,6 +40,12 @@
 
 #include <cassert>
 
+void
+MultiStock::Item::Lease::ReleaseLease(bool _reuse) noexcept
+{
+	item.DeleteLease(this, _reuse);
+}
+
 MultiStock::Item::~Item() noexcept
 {
 	assert(leases.empty());
@@ -56,7 +62,7 @@ MultiStock::Item::AddLease(StockGetHandler &handler,
 	handler.OnStockItemReady(item);
 }
 
-void
+inline void
 MultiStock::Item::DeleteLease(Lease *lease, bool _reuse) noexcept
 {
 	reuse &= _reuse;
