@@ -35,6 +35,10 @@
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 
+#include <cassert>
+
+#include <string.h>
+
 bool
 MultiStock::Item::Compare::Less(const char *a, const char *b) const noexcept
 {
@@ -82,6 +86,8 @@ MultiStock::MultiStock(StockMap &_hstock) noexcept
 
 MultiStock::~MultiStock() noexcept
 {
+	/* by now, all leases must be freed */
+	assert(items.empty());
 }
 
 MultiStock::Item &
