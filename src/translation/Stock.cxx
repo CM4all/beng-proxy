@@ -44,6 +44,7 @@
 #include "net/ToString.hxx"
 #include "event/SocketEvent.hxx"
 #include "io/Logger.hxx"
+#include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
 #include "AllocatorPtr.hxx"
 
