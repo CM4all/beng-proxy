@@ -41,8 +41,8 @@
  */
 template<typename T>
 class ThreadedStock {
-	typedef T Item;
-	typedef std::forward_list<T> List;
+	using Item = T;
+	using List = std::forward_list<T>;
 
 	std::mutex mutex;
 

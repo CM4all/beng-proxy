@@ -55,14 +55,15 @@ class MultiStock {
 
 		struct Lease final : ::Lease {
 			static constexpr auto link_mode = boost::intrusive::normal_link;
-			typedef boost::intrusive::link_mode<link_mode> LinkMode;
-			typedef boost::intrusive::list_member_hook<LinkMode> SiblingsListHook;
+			using LinkMode = boost::intrusive::link_mode<link_mode>;
+			using SiblingsListHook = boost::intrusive::list_member_hook<LinkMode>;
 
 			SiblingsListHook siblings;
 
-			typedef boost::intrusive::member_hook<Lease,
+			using SiblingsListMemberHook =
+				boost::intrusive::member_hook<Lease,
 							      Lease::SiblingsListHook,
-							      &Lease::siblings> SiblingsListMemberHook;
+							      &Lease::siblings>;
 
 			Item &item;
 
@@ -157,9 +158,10 @@ class MultiStock {
 		};
 	};
 
-	typedef boost::intrusive::multiset<Item,
+	using ItemMap =
+		boost::intrusive::multiset<Item,
 					   boost::intrusive::compare<Item::Compare>,
-					   boost::intrusive::constant_time_size<false>> ItemMap;
+					   boost::intrusive::constant_time_size<false>>;
 	ItemMap items;
 
 	StockMap &hstock;
