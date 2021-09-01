@@ -518,6 +518,7 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 
 		translate.previous = &response;
 		translate.request.check = response.check;
+		translate.request.authorization = request.headers.Get("authorization");
 	}
 
 	if (!response.internal_redirect.IsNull()) {
@@ -880,7 +881,6 @@ fill_translate_request(TranslateRequest &t,
 	const AllocatorPtr alloc(request.pool);
 
 	t.host = request.headers.Get("host");
-	t.authorization = request.headers.Get("authorization");
 	t.uri = alloc.DupZ(uri.base);
 
 	t.listener_tag = listener_tag;
