@@ -2,6 +2,7 @@ cm4all-beng-proxy (17.0.64) unstable; urgency=low
 
   * bp: send AUTHORIZATION only for HTTP_AUTH and CHECK translation requests
   * bp: fix hanging Multi-WAS connections
+  * translation: add packet TRANSPARENT_CHAIN
 
  --   
 

@@ -660,10 +660,18 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 	auto pr = std::move(*pending_chain_response);
 	pending_chain_response.reset();
 
+	http_method_t method = HTTP_METHOD_POST;
+	if (translate.response->transparent_chain) {
+		/* transparent chain mode: send the original request
+		   method/body */
+		method = request.method;
+		pr.body = std::move(request_body);
+	}
+
 	rl.SendRequest(pool, stopwatch,
 		       session_id.GetClusterHash(),
 		       nullptr, nullptr,
-		       HTTP_METHOD_POST, response.address,
+		       method, response.address,
 		       pr.status,
 		       std::move(pr.headers).ToMap(pool),
 		       std::move(pr.body),

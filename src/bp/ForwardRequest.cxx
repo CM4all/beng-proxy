@@ -55,7 +55,12 @@ Request::ForwardRequest(const HeaderForwardSettings &header_forward,
 		/* forward body (if any) to the real server */
 
 		method = request.method;
-		body = std::move(request_body);
+
+		/* in TRANSPARENT_CHAIN mode, don't send the request
+		   body to the handler; instead, send it to the
+		   chained (following) request handler */
+		if (!translate.response->transparent_chain)
+			body = std::move(request_body);
 	}
 
 	/* generate request headers */

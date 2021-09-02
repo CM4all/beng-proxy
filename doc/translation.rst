@@ -1320,6 +1320,12 @@ Example::
  response 2:
   WAS "/the/filter/program"
 
+If the response packet ``CHAIN`` is followed by an empty
+``TRANSPARENT_CHAIN`` packet, the chain handler will only see a
+``GET`` request without a body, and the original request method/body
+will be sent to the following request handler.  In that case, the
+chain handler's response body will be ignored.
+
 .. _sessions:
 
 Sessions
