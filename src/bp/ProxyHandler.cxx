@@ -100,11 +100,8 @@ Request::HandleProxyAddress() noexcept
 
 	cookie_uri = address.GetUriPath();
 
-	auto forward = request_forward(*this,
-				       tr.request_header_forward,
-				       GetCookieHost(),
-				       GetCookieURI(),
-				       address.IsAnyHttp());
+	auto forward = ForwardRequest(tr.request_header_forward,
+				      address.IsAnyHttp());
 
 	if (tr.require_csrf_token &&
 	    MethodNeedsCsrfProtection(forward.method) &&

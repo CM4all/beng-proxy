@@ -40,9 +40,6 @@
 #include "http/Method.h"
 #include "istream/UnusedPtr.hxx"
 
-struct HeaderForwardSettings;
-class Request;
-
 struct ForwardRequest {
 	http_method_t method;
 
@@ -55,9 +52,3 @@ struct ForwardRequest {
 		:method(_method), headers(std::move(_headers)),
 		 body(std::move(_body)) {}
 };
-
-ForwardRequest
-request_forward(Request &src,
-		const HeaderForwardSettings &header_forward,
-		const char *host_and_port, const char *uri,
-		bool exclude_host) noexcept;

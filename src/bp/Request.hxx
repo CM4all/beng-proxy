@@ -74,6 +74,7 @@ struct FilterTransformation;
 struct DelegateAddress;
 struct WidgetContext;
 struct WidgetRef;
+struct ForwardRequest;
 class Widget;
 class SessionLease;
 class RealmSessionLease;
@@ -719,6 +720,9 @@ public:
 	void DispatchMethodNotAllowed(const char *allow) noexcept;
 
 private:
+	::ForwardRequest ForwardRequest(const HeaderForwardSettings &header_forward,
+					bool exclude_host) noexcept;
+
 	SharedPoolPtr<WidgetContext> MakeWidgetContext() noexcept;
 
 	UnusedIstreamPtr AutoDeflate(HttpHeaders &response_headers,

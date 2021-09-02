@@ -36,21 +36,17 @@
 #include "http/IncomingRequest.hxx"
 
 ForwardRequest
-request_forward(Request &request2,
-		const HeaderForwardSettings &header_forward,
-		const char *host_and_port, const char *uri,
-		bool exclude_host) noexcept
+Request::ForwardRequest(const HeaderForwardSettings &header_forward,
+			bool exclude_host) noexcept
 {
-	const auto &request = request2.request;
-
-	assert(!request.HasBody() || request2.request_body);
+	assert(!request.HasBody() || request_body);
 
 	http_method_t method;
 	UnusedIstreamPtr body;
 
 	/* send a request body? */
 
-	if (request2.processor_focus) {
+	if (processor_focus) {
 		/* reserve method+body for the processor, and
 		   convert this request to a GET */
 
@@ -59,21 +55,23 @@ request_forward(Request &request2,
 		/* forward body (if any) to the real server */
 
 		method = request.method;
-		body = std::move(request2.request_body);
+		body = std::move(request_body);
 	}
 
 	/* generate request headers */
 
 	const bool has_body = body;
 
-	return ForwardRequest(method,
-			      request2.ForwardRequestHeaders(request.headers,
-							     exclude_host,
-							     has_body,
-							     !request2.IsProcessorEnabled(),
-							     !request2.IsTransformationEnabled(),
-							     !request2.IsTransformationEnabled(),
-							     header_forward,
-							     host_and_port, uri),
-			      std::move(body));
+	return ::ForwardRequest{
+		method,
+		ForwardRequestHeaders(request.headers,
+				      exclude_host,
+				      has_body,
+				      !IsProcessorEnabled(),
+				      !IsTransformationEnabled(),
+				      !IsTransformationEnabled(),
+				      header_forward,
+				      GetCookieHost(), GetCookieURI()),
+		std::move(body),
+	};
 }
