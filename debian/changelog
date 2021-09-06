@@ -4,7 +4,7 @@ cm4all-beng-proxy (17.0.64) unstable; urgency=low
   * bp: fix hanging Multi-WAS connections
   * translation: add packet TRANSPARENT_CHAIN
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 06 Sep 2021 14:43:08 +0200
 
 cm4all-beng-proxy (17.0.63) unstable; urgency=low
 
