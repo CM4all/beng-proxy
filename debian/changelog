@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.65) unstable; urgency=low
 
-  * 
+  * bp: fix HTTP/TOKEN_AUTH mixed mode breakage (17.0.64 regression)
 
  --   
 

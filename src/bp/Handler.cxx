@@ -743,7 +743,7 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 		 /* allow combining HTTP_AUTH and TOKEN_AUTH; in that
 		    case, use HTTP_AUTH only if an "Authorization"
 		    header was received */
-		 (translate.request.authorization != nullptr ||
+		 (request.headers.Get("authorization") != nullptr ||
 		  response.token_auth == nullptr))
 		HandleHttpAuth(response);
 	else if (!response.token_auth.IsNull())
