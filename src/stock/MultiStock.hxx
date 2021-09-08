@@ -143,6 +143,7 @@ class MultiStock {
 	class MapItem final
 		: public boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>
 	{
+		StockMap &map_stock;
 		Stock &stock;
 
 		using ItemList =
@@ -151,8 +152,8 @@ class MultiStock {
 		ItemList items;
 
 	public:
-		explicit MapItem(Stock &_stock) noexcept
-			:stock(_stock) {}
+		MapItem(StockMap &_map_stock, Stock &_stock) noexcept;
+		~MapItem() noexcept;
 
 		Item &GetNow(StockRequest request, unsigned max_leases);
 

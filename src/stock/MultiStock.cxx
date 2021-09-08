@@ -75,6 +75,19 @@ MultiStock::Item::DeleteLease(Lease *lease, bool _reuse) noexcept
 	parent.OnLeaseReleased(*this);
 }
 
+inline
+MultiStock::MapItem::MapItem(StockMap &_map_stock, Stock &_stock) noexcept
+	:map_stock(_map_stock), stock(_stock)
+{
+	map_stock.SetSticky(stock, true);
+}
+
+inline
+MultiStock::MapItem::~MapItem() noexcept
+{
+	map_stock.SetSticky(stock, false);
+}
+
 MultiStock::Item *
 MultiStock::MapItem::FindUsable() noexcept
 {	for (auto &i : items)
@@ -159,7 +172,8 @@ MultiStock::MakeMapItem(const char *uri, void *request) noexcept
 	auto [i, inserted] =
 		map.insert_check(uri, map.hash_function(), map.key_eq(), hint);
 	if (inserted) {
-		auto *item = new MapItem(hstock.GetStock(uri, request));
+		auto *item = new MapItem(hstock,
+					 hstock.GetStock(uri, request));
 		map.insert_commit(*item, hint);
 		return *item;
 	} else
