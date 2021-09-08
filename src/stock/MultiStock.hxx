@@ -157,6 +157,7 @@ class MultiStock {
 		Item &GetNow(StockRequest request, unsigned max_leases);
 
 		void RemoveItem(Item &item) noexcept;
+		void OnLeaseReleased(Item &item) noexcept;
 
 		void FadeAll() noexcept {
 			for (auto &i : items)

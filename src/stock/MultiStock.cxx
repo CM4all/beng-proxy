@@ -72,8 +72,7 @@ MultiStock::Item::DeleteLease(Lease *lease, bool _reuse) noexcept
 				 DeleteDisposer());
 	++remaining_leases;
 
-	if (IsEmpty())
-		parent.RemoveItem(*this);
+	parent.OnLeaseReleased(*this);
 }
 
 MultiStock::Item *
@@ -99,13 +98,20 @@ MultiStock::MapItem::GetNow(StockRequest request, unsigned max_leases)
 	return *item;
 }
 
-void
+inline void
 MultiStock::MapItem::RemoveItem(Item &item) noexcept
 {
 	items.erase_and_dispose(items.iterator_to(item), DeleteDisposer{});
 
 	if (items.empty())
 		delete this;
+}
+
+inline void
+MultiStock::MapItem::OnLeaseReleased(Item &item) noexcept
+{
+	if (item.IsEmpty())
+		RemoveItem(item);
 }
 
 inline std::size_t
