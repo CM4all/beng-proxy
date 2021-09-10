@@ -38,6 +38,8 @@ struct StringView;
 struct pool;
 struct ChildErrorLogOptions;
 class LhttpStock;
+class StockGetHandler;
+class CancellablePointer;
 struct StockItem;
 struct LhttpAddress;
 class SocketDescriptor;
@@ -68,12 +70,11 @@ lhttp_stock_fade_all(LhttpStock &ls) noexcept;
 void
 lhttp_stock_fade_tag(LhttpStock &ls, StringView tag) noexcept;
 
-/**
- * Throws exception on error.
- */
-StockItem *
+void
 lhttp_stock_get(LhttpStock *lhttp_stock,
-		const LhttpAddress *address);
+		const LhttpAddress *address,
+		StockGetHandler &handler,
+		CancellablePointer &cancel_ptr) noexcept;
 
 /**
  * Returns the socket descriptor of the specified stock item.

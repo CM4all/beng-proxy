@@ -476,7 +476,9 @@ try {
 		new WidgetRegistry(instance.root_pool,
 				   *instance.uncached_translation_service);
 
-	instance.lhttp_stock = lhttp_stock_new(0, 8, instance.event_loop,
+	instance.lhttp_stock = lhttp_stock_new(instance.config.lhttp_stock_limit,
+					       instance.config.lhttp_stock_max_idle,
+					       instance.event_loop,
 					       *instance.spawn_service,
 					       child_log_socket,
 					       child_log_options);

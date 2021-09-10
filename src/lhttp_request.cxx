@@ -37,9 +37,11 @@
 #include "http/ResponseHandler.hxx"
 #include "GrowingBuffer.hxx"
 #include "fs/FilteredSocket.hxx"
+#include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "http/HeaderWriter.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
@@ -83,7 +85,9 @@ private:
 	}
 };
 
-class LhttpRequest final : Cancellable, HttpResponseHandler, PoolLeakDetector {
+class LhttpRequest final
+	: Cancellable, StockGetHandler, HttpResponseHandler, PoolLeakDetector
+{
 	struct pool &pool;
 	EventLoop &event_loop;
 	LhttpStock &stock;
@@ -97,6 +101,7 @@ class LhttpRequest final : Cancellable, HttpResponseHandler, PoolLeakDetector {
 	const http_method_t method;
 	const LhttpAddress &address;
 	const StringMap headers;
+	UnusedHoldIstreamPtr body;
 
 	HttpResponseHandler &handler;
 	CancellablePointer cancel_ptr;
@@ -110,7 +115,7 @@ public:
 			      http_method_t _method,
 			      const LhttpAddress &_address,
 			      StringMap &&_headers,
-			      const UnusedIstreamPtr &body,
+			      UnusedIstreamPtr &&_body,
 			      HttpResponseHandler &_handler,
 			      CancellablePointer &_cancel_ptr) noexcept
 		:PoolLeakDetector(_pool), pool(_pool), event_loop(_event_loop),
@@ -118,15 +123,16 @@ public:
 		 stopwatch(std::move(_stopwatch)),
 		 site_name(_site_name),
 		 /* can only retry if there is no request body */
-		 retries(body ? 0 : 1),
+		 retries(_body ? 0 : 1),
 		 method(_method), address(_address),
 		 headers(std::move(_headers)),
+		 body(pool, std::move(_body)),
 		 handler(_handler)
 	{
 		_cancel_ptr = *this;
 	}
 
-	void Start(UnusedIstreamPtr body) noexcept;
+	void Start() noexcept;
 
 private:
 	void Destroy() {
@@ -139,34 +145,30 @@ private:
 		Destroy();
 	}
 
+	/* virtual methods from class StockGetHandler */
+	void OnStockItemReady(StockItem &item) noexcept override;
+	void OnStockItemError(std::exception_ptr error) noexcept override;
+
 	/* virtual methods from class HttpResponseHandler */
 	void OnHttpResponse(http_status_t status, StringMap &&headers,
 			    UnusedIstreamPtr body) noexcept override;
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 };
 
-void
-LhttpRequest::Start(UnusedIstreamPtr body) noexcept
+inline void
+LhttpRequest::Start() noexcept
 {
-	StockItem *stock_item;
+	lhttp_stock_get(&stock, &address,
+			*this, cancel_ptr);
+}
 
-	try {
-		stock_item = lhttp_stock_get(&stock, &address);
-	} catch (...) {
-		stopwatch.RecordEvent("launch_error");
-
-		body.Clear();
-
-		auto &_handler = handler;
-		Destroy();
-		_handler.InvokeError(std::current_exception());
-		return;
-	}
-
+void
+LhttpRequest::OnStockItemReady(StockItem &item) noexcept
+{
 	stopwatch.RecordEvent("launch");
 
-	lhttp_stock_item_set_site(*stock_item, site_name);
-	lhttp_stock_item_set_uri(*stock_item, address.uri);
+	lhttp_stock_item_set_site(item, site_name);
+	lhttp_stock_item_set_uri(item, address.uri);
 
 	GrowingBuffer more_headers;
 	if (address.host_and_port != nullptr)
@@ -174,15 +176,25 @@ LhttpRequest::Start(UnusedIstreamPtr body) noexcept
 			     address.host_and_port);
 
 	auto *lease = NewFromPool<LhttpLease>(pool, pool, event_loop,
-					      *stock_item);
+					      item);
 
 	http_client_request(pool, std::move(stopwatch),
 			    lease->GetSocket(), *lease,
-			    stock_item->GetStockName(),
+			    item.GetStockName(),
 			    method, address.uri,
 			    headers, std::move(more_headers),
 			    std::move(body), true,
 			    *this, cancel_ptr);
+}
+
+void
+LhttpRequest::OnStockItemError(std::exception_ptr error) noexcept
+{
+	stopwatch.RecordEvent("launch_error");
+
+	auto &_handler = handler;
+	Destroy();
+	_handler.InvokeError(std::move(error));
 }
 
 void
@@ -206,7 +218,7 @@ LhttpRequest::OnHttpError(std::exception_ptr ep) noexcept
 
 		/* passing no request body; retry is only ever enabled
 		   if there is no request body */
-		Start({});
+		Start();
 	} else {
 		auto &_handler = handler;
 		Destroy();
@@ -247,8 +259,9 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
 						 lhttp_stock,
 						 std::move(stopwatch),
 						 site_name, method, address,
-						 std::move(headers), body,
+						 std::move(headers),
+						 std::move(body),
 						 handler, cancel_ptr);
 
-	request->Start(std::move(body));
+	request->Start();
 }

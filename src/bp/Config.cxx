@@ -60,6 +60,10 @@ BpConfig::HandleSet(StringView name, const char *value)
 		max_connections = ParsePositiveLong(value, 1024 * 1024);
 	} else if (name.Equals("tcp_stock_limit")) {
 		tcp_stock_limit = ParseUnsignedLong(value);
+	} else if (name.Equals("lhttp_stock_limit")) {
+		lhttp_stock_limit = ParseUnsignedLong(value);
+	} else if (name.Equals("lhttp_stock_max_idle")) {
+		lhttp_stock_max_idle = ParseUnsignedLong(value);
 	} else if (name.Equals("fastcgi_stock_limit")) {
 		fcgi_stock_limit = ParseUnsignedLong(value);
 	} else if (name.Equals("fcgi_stock_max_idle")) {

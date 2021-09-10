@@ -308,6 +308,13 @@ The following settings are available:
   per remote host. 0 means unlimited, which has shown to be a bad
   choice, because many servers do not scale well.
 
+- ``lhttp_stock_limit``: The maximum number of LHTTP process copies.
+  0 means unlimited.
+
+- ``lhttp_stock_max_idle``: The maximum number of idle LHTTP process
+  copies.  If there are more than that, a timer will incrementally
+  kill excess processes.
+
 - ``fastcgi_stock_limit``: The maximum number of child processes for
   one FastCGI application. 0 means unlimited.
 
