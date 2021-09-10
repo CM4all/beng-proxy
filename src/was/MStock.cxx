@@ -47,6 +47,7 @@
 #include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
+#include "util/Exception.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StringList.hxx"
 
@@ -108,8 +109,12 @@ MultiWasChild::Prepare(ChildStockClass &cls, void *info,
 	client.emplace(event_loop, std::move(for_parent), client_handler);
 }
 
-class MultiWasConnection final : public WasStockConnection {
+class MultiWasConnection final
+	: public WasStockConnection, Cancellable, StockGetHandler
+{
 	MultiWasChild *child = nullptr;
+
+	CancellablePointer get_cancel_ptr;
 
 	LeasePtr lease_ref;
 
@@ -120,7 +125,8 @@ public:
 
 	void Connect(MultiStock &child_stock,
 		     const char *key, StockRequest &&request,
-		     unsigned concurrency);
+		     unsigned concurrency,
+		     CancellablePointer &cancel_ptr) noexcept;
 
 	[[gnu::pure]]
 	StringView GetTag() const noexcept {
@@ -140,32 +146,57 @@ public:
 
 		child->SetUri(uri);
 	}
+
+private:
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		InvokeCreateAborted();
+	}
+
+	/* virtual methods from class StockGetHandler */
+	void OnStockItemReady(StockItem &item) noexcept override;
+	void OnStockItemError(std::exception_ptr error) noexcept override;
 };
 
 inline void
 MultiWasConnection::Connect(MultiStock &child_stock,
 			    const char *key, StockRequest &&request,
-			    unsigned concurrency)
+			    unsigned concurrency,
+			    CancellablePointer &caller_cancel_ptr) noexcept
 {
-	try {
-		child = (MultiWasChild *)
-			child_stock.GetNow(key, std::move(request), concurrency,
-					   lease_ref);
-	} catch (...) {
-		delete this;
-		std::throw_with_nested(FormatRuntimeError("Failed to launch MultiWAS server '%s'",
-							  key));
-	}
+	caller_cancel_ptr = *this;
+
+	child_stock.Get(key, std::move(request), concurrency,
+			lease_ref, *this, get_cancel_ptr);
+}
+
+void
+MultiWasConnection::OnStockItemReady(StockItem &item) noexcept
+{
+	get_cancel_ptr = nullptr;
+
+	child = (MultiWasChild *)&item;
 
 	try {
 		Open(child->Connect());
 	} catch (...) {
-		delete this;
-		std::throw_with_nested(FormatRuntimeError("Failed to connect to MultiWAS server '%s'",
-							  key));
+		InvokeCreateError(NestException(std::current_exception(),
+						FormatRuntimeError("Failed to connect to MultiWAS server '%s'",
+								   GetStockName())));
+		return;
 	}
 
 	InvokeCreateSuccess();
+}
+
+void
+MultiWasConnection::OnStockItemError(std::exception_ptr error) noexcept
+{
+	get_cancel_ptr = nullptr;
+
+	InvokeCreateError(NestException(std::move(error),
+					FormatRuntimeError("Failed to launch MultiWAS server %s",
+							   GetStockName())));
 }
 
 MultiWasStock::MultiWasStock(unsigned limit, unsigned max_idle,
@@ -177,7 +208,7 @@ MultiWasStock::MultiWasStock(unsigned limit, unsigned max_idle,
 		     log_socket, log_options,
 		     limit, max_idle),
 	 mchild_stock(child_stock.GetStockMap()),
-	 hstock(event_loop, *this, limit, max_idle,
+	 hstock(event_loop, *this, 0, max_idle,
 		std::chrono::minutes{2}) {}
 
 Event::Duration
@@ -230,20 +261,23 @@ MultiWasStock::PrepareChild(void *info, PreparedChildProcess &p)
 
 void
 MultiWasStock::Create(CreateStockItem c, StockRequest request,
-		      CancellablePointer &)
+		      CancellablePointer &cancel_ptr)
 {
 	const auto &params = *(const CgiChildParams *)request.get();
 
 	auto *connection = new MultiWasConnection(c);
 	connection->Connect(mchild_stock,
 			    c.GetStockName(), std::move(request),
-			    params.concurrency);
+			    params.concurrency,
+			    cancel_ptr);
 }
 
 MultiWasConnection::~MultiWasConnection() noexcept
 {
 	if (child != nullptr)
 		lease_ref.Release(true);
+	else if (get_cancel_ptr)
+		get_cancel_ptr.CancelAndClear();
 }
 
 void
