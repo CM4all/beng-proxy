@@ -124,7 +124,7 @@ public:
 	~MultiWasConnection() noexcept override;
 
 	void Connect(MultiStock &child_stock,
-		     const char *key, StockRequest &&request,
+		     StockRequest &&request,
 		     unsigned concurrency,
 		     CancellablePointer &cancel_ptr) noexcept;
 
@@ -160,13 +160,13 @@ private:
 
 inline void
 MultiWasConnection::Connect(MultiStock &child_stock,
-			    const char *key, StockRequest &&request,
+			    StockRequest &&request,
 			    unsigned concurrency,
 			    CancellablePointer &caller_cancel_ptr) noexcept
 {
 	caller_cancel_ptr = *this;
 
-	child_stock.Get(key, std::move(request), concurrency,
+	child_stock.Get(GetStockName(), std::move(request), concurrency,
 			lease_ref, *this, get_cancel_ptr);
 }
 
@@ -266,8 +266,7 @@ MultiWasStock::Create(CreateStockItem c, StockRequest request,
 	const auto &params = *(const CgiChildParams *)request.get();
 
 	auto *connection = new MultiWasConnection(c);
-	connection->Connect(mchild_stock,
-			    c.GetStockName(), std::move(request),
+	connection->Connect(mchild_stock, std::move(request),
 			    params.concurrency,
 			    cancel_ptr);
 }

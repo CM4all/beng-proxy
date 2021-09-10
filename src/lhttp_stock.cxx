@@ -122,8 +122,7 @@ public:
 
 	~LhttpConnection() noexcept override;
 
-	void Connect(MultiStock &child_stock,
-		     const char *key, StockRequest &&request,
+	void Connect(MultiStock &child_stock, StockRequest &&request,
 		     unsigned concurrency);
 
 	SocketDescriptor GetSocket() const noexcept {
@@ -171,18 +170,17 @@ private:
 };
 
 inline void
-LhttpConnection::Connect(MultiStock &child_stock,
-			 const char *key, StockRequest &&request,
+LhttpConnection::Connect(MultiStock &child_stock, StockRequest &&request,
 			 unsigned concurrency)
 {
 	try {
 		child = (ListenChildStockItem *)
-			child_stock.GetNow(key, std::move(request), concurrency,
-					   lease_ref);
+			child_stock.GetNow(GetStockName(), std::move(request),
+					   concurrency, lease_ref);
 	} catch (...) {
 		delete this;
 		std::throw_with_nested(FormatRuntimeError("Failed to launch LHTTP server '%s'",
-							  key));
+							  GetStockName()));
 	}
 
 	try {
@@ -190,7 +188,7 @@ LhttpConnection::Connect(MultiStock &child_stock,
 	} catch (...) {
 		delete this;
 		std::throw_with_nested(FormatRuntimeError("Failed to connect to LHTTP server '%s'",
-							  key));
+							  GetStockName()));
 	}
 
 	event.Open(fd);
@@ -307,8 +305,7 @@ LhttpStock::Create(CreateStockItem c, StockRequest request,
 
 	auto *connection = new LhttpConnection(c);
 
-	connection->Connect(mchild_stock,
-			    c.GetStockName(), std::move(request),
+	connection->Connect(mchild_stock, std::move(request),
 			    address->concurrency);
 }
 
