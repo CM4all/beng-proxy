@@ -329,6 +329,13 @@ The following settings are available:
   for one WAS application. If there are more than that, a timer will
   incrementally kill excess processes.
 
+- ``multi_was_stock_limit``: The maximum number of child processes for
+  one Multi-WAS application.  0 means unlimited.
+
+- ``multi_was_stock_max_idle``: The maximum number of idle child
+  processes for one Multi-WAS application.  If there are more than
+  that, a timer will incrementally kill excess processes.
+
 - ``http_cache_size``: The maximum amount of memory used by the HTTP
   cache. Set to 0 to disable the HTTP cache.
 

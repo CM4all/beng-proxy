@@ -496,8 +496,8 @@ try {
 					  instance.config.was_stock_limit,
 					  instance.config.was_stock_max_idle);
 	instance.multi_was_stock =
-		new MultiWasStock(instance.config.was_stock_limit, // TODO: separate config for MultiWas
-				  instance.config.was_stock_max_idle,
+		new MultiWasStock(instance.config.multi_was_stock_limit,
+				  instance.config.multi_was_stock_max_idle,
 				  instance.event_loop,
 				  *instance.spawn_service,
 				  child_log_socket,

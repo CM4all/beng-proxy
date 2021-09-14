@@ -72,6 +72,10 @@ BpConfig::HandleSet(StringView name, const char *value)
 		was_stock_limit = ParseUnsignedLong(value);
 	} else if (name.Equals("was_stock_max_idle")) {
 		was_stock_max_idle = ParseUnsignedLong(value);
+	} else if (name.Equals("multi_was_stock_limit")) {
+		multi_was_stock_limit = ParseUnsignedLong(value);
+	} else if (name.Equals("multi_was_stock_max_idle")) {
+		multi_was_stock_max_idle = ParseUnsignedLong(value);
 	} else if (name.Equals("http_cache_size")) {
 		http_cache_size = ParseSize(value);
 	} else if (name.Equals("http_cache_obey_no_cache")) {
