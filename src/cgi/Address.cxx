@@ -174,6 +174,12 @@ CgiAddress::GetId(AllocatorPtr alloc) const
 	return b(alloc);
 }
 
+void
+CgiAddress::Check() const
+{
+	options.Check();
+}
+
 CgiAddress *
 CgiAddress::Clone(AllocatorPtr alloc) const
 {

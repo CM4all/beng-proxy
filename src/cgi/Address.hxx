@@ -129,9 +129,10 @@ struct CgiAddress {
 	[[gnu::pure]]
 	const char *GetId(AllocatorPtr alloc) const;
 
-	void Check() const {
-		options.Check();
-	}
+	/**
+	 * Throws on error.
+	 */
+	void Check() const;
 
 	[[gnu::pure]]
 	bool IsSameProgram(const CgiAddress &other) const noexcept;
