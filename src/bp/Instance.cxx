@@ -298,6 +298,11 @@ BpInstance::OnMemoryWarning(uint64_t memory_usage,
 	if (lhttp_stock != nullptr)
 		lhttp_stock_discard_some(*lhttp_stock);
 
+#ifdef HAVE_LIBWAS
+	if (multi_was_stock != nullptr)
+		multi_was_stock->DiscardSome();
+#endif
+
 	// TODO: stop unused child processes
 }
 
