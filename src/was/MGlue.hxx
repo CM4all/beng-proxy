@@ -36,8 +36,10 @@
 
 struct pool;
 class StopwatchPtr;
+class SocketAddress;
 class UnusedIstreamPtr;
 class MultiWasStock;
+class RemoteWasStock;
 class StringMap;
 class HttpResponseHandler;
 class CancellablePointer;
@@ -65,3 +67,21 @@ SendMultiWasRequest(struct pool &pool, MultiWasStock &was_stock,
 		    unsigned concurrency,
 		    HttpResponseHandler &handler,
 		    CancellablePointer &cancel_ptr) noexcept;
+
+/**
+ * High level Remote-WAS client.
+ *
+ * @param args command-line arguments
+ */
+void
+SendRemoteWasRequest(struct pool &pool, RemoteWasStock &was_stock,
+		     const StopwatchPtr &parent_stopwatch,
+		     SocketAddress address,
+		     http_method_t method, const char *uri,
+		     const char *script_name, const char *path_info,
+		     const char *query_string,
+		     StringMap &&headers, UnusedIstreamPtr body,
+		     ConstBuffer<const char *> params,
+		     unsigned concurrency,
+		     HttpResponseHandler &handler,
+		     CancellablePointer &cancel_ptr) noexcept;

@@ -4,6 +4,7 @@ cm4all-beng-proxy (17.0.65) unstable; urgency=low
   * bp: support Multi-WAS and LHTTP stock limits
   * bp: fade Multi-WAS processes if memory is low
   * was: use SOCK_SEQPACKET for Multi-WAS connections
+  * was: initial Remote-WAS support
 
  --   
 

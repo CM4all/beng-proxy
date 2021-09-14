@@ -53,6 +53,7 @@
 #include "fcgi/Stock.hxx"
 #include "was/Stock.hxx"
 #include "was/MStock.hxx"
+#include "was/RStock.hxx"
 #include "delegate/Stock.hxx"
 #include "tcp_stock.hxx"
 #include "ssl/Client.hxx"
@@ -142,6 +143,7 @@ BpInstance::FreeStocksAndCaches() noexcept
 #ifdef HAVE_LIBWAS
 	delete std::exchange(was_stock, nullptr);
 	delete std::exchange(multi_was_stock, nullptr);
+	delete std::exchange(remote_was_stock, nullptr);
 #endif
 
 	delete std::exchange(fs_balancer, nullptr);

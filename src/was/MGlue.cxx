@@ -32,6 +32,7 @@
 
 #include "MGlue.hxx"
 #include "MStock.hxx"
+#include "RStock.hxx"
 #include "SConnection.hxx"
 #include "Client.hxx"
 #include "was/async/Socket.hxx"
@@ -44,6 +45,8 @@
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "stopwatch.hxx"
+#include "net/SocketAddress.hxx"
+#include "net/ToString.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringCompare.hxx"
@@ -114,6 +117,12 @@ public:
 			  options,
 			  action, args,
 			  concurrency,
+			  *this, stock_cancel_ptr);
+	}
+
+	void Start(RemoteWasStock &stock, SocketAddress address,
+		   unsigned concurrency) noexcept {
+		stock.Get(pool, address, concurrency,
 			  *this, stock_cancel_ptr);
 	}
 
@@ -271,4 +280,82 @@ SendMultiWasRequest(struct pool &pool, MultiWasStock &stock,
 						    parameters,
 						    handler, cancel_ptr);
 	request->Start(stock, options, action, args, concurrency);
+}
+
+static StopwatchPtr
+stopwatch_new_was(const StopwatchPtr &parent_stopwatch,
+		  SocketAddress address, const char *uri,
+		  const char *path_info,
+		  ConstBuffer<const char *> parameters)
+{
+#ifdef ENABLE_STOPWATCH
+	assert(!address.IsNull());
+	assert(address.IsDefined());
+	assert(uri != nullptr);
+
+	if (!stopwatch_is_enabled())
+		return nullptr;
+
+	const char *path = nullptr;
+
+	/* special case for a very common COMA application */
+	const char *coma_class = GetComaClass(parameters);
+	if (coma_class != nullptr)
+		path = coma_class;
+
+	char path_buffer[1024];
+	if (path == nullptr) {
+		if (!ToString(path_buffer, sizeof(path_buffer), address))
+			return nullptr;
+		path = path_buffer;
+	}
+
+	const char *slash = strrchr(path, '/');
+	if (slash != nullptr && slash[1] != 0)
+		path = slash + 1;
+
+	if (path_info != nullptr && *path_info != 0)
+		uri = path_info;
+
+	std::string name = path;
+	name.push_back(' ');
+	name += uri;
+
+	return StopwatchPtr(parent_stopwatch, name.c_str());
+#else
+	(void)parent_stopwatch;
+	(void)address;
+	(void)uri;
+	(void)path_info;
+	(void)parameters;
+	return nullptr;
+#endif
+}
+
+void
+SendRemoteWasRequest(struct pool &pool, RemoteWasStock &stock,
+		     const StopwatchPtr &parent_stopwatch,
+		     SocketAddress address,
+		     http_method_t method, const char *uri,
+		     const char *script_name, const char *path_info,
+		     const char *query_string,
+		     StringMap &&headers, UnusedIstreamPtr body,
+		     ConstBuffer<const char *> parameters,
+		     unsigned concurrency,
+		     HttpResponseHandler &handler,
+		     CancellablePointer &cancel_ptr) noexcept
+{
+	auto request = NewFromPool<MultiWasRequest>(pool, pool,
+						    stopwatch_new_was(parent_stopwatch,
+								      address, uri,
+								      path_info,
+								      parameters),
+						    nullptr,
+						    method, uri, script_name,
+						    path_info, query_string,
+						    std::move(headers),
+						    std::move(body),
+						    parameters,
+						    handler, cancel_ptr);
+	request->Start(stock, address, concurrency);
 }

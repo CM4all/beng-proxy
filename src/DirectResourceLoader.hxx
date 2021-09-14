@@ -39,6 +39,7 @@ class EventLoop;
 class SpawnService;
 class WasStock;
 class MultiWasStock;
+class RemoteWasStock;
 class StockMap;
 class LhttpStock;
 class FcgiStock;
@@ -69,6 +70,7 @@ class DirectResourceLoader final : public ResourceLoader {
 #ifdef HAVE_LIBWAS
 	WasStock *was_stock;
 	MultiWasStock *const multi_was_stock;
+	RemoteWasStock *const remote_was_stock;
 #endif
 	StockMap *delegate_stock;
 #ifdef HAVE_LIBNFS
@@ -92,6 +94,7 @@ public:
 #ifdef HAVE_LIBWAS
 			     WasStock *_was_stock,
 			     MultiWasStock *_multi_was_stock,
+			     RemoteWasStock *_remote_was_stock,
 #endif
 			     StockMap *_delegate_stock,
 #ifdef HAVE_LIBNFS
@@ -113,6 +116,7 @@ public:
 #ifdef HAVE_LIBWAS
 		 was_stock(_was_stock),
 		 multi_was_stock(_multi_was_stock),
+		 remote_was_stock(_remote_was_stock),
 #endif
 		 delegate_stock(_delegate_stock),
 #ifdef HAVE_LIBNFS

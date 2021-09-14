@@ -134,7 +134,7 @@ struct CgiAddress {
 	/**
 	 * Throws on error.
 	 */
-	void Check() const;
+	void Check(bool is_was) const;
 
 	[[gnu::pure]]
 	bool IsSameProgram(const CgiAddress &other) const noexcept;

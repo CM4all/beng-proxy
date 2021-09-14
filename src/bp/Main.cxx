@@ -53,6 +53,7 @@
 #include "fcgi/Stock.hxx"
 #include "was/Stock.hxx"
 #include "was/MStock.hxx"
+#include "was/RStock.hxx"
 #include "delegate/Stock.hxx"
 #include "fcache.hxx"
 #include "thread/Pool.hxx"
@@ -229,6 +230,11 @@ BpInstance::ReloadEventCallback(int) noexcept
 #ifdef HAVE_NGHTTP2
 	if (nghttp2_stock != nullptr)
 		nghttp2_stock->FadeAll();
+#endif
+
+#ifdef HAVE_LIBWAS
+	if (remote_was_stock != nullptr)
+		remote_was_stock->FadeAll();
 #endif
 
 	Compress();
@@ -502,6 +508,10 @@ try {
 				  *instance.spawn_service,
 				  child_log_socket,
 				  child_log_options);
+	instance.remote_was_stock =
+		new RemoteWasStock(instance.config.remote_was_stock_limit,
+				   instance.config.remote_was_stock_max_idle,
+				   instance.event_loop);
 #endif
 
 	instance.delegate_stock = delegate_stock_new(instance.event_loop,
@@ -531,6 +541,7 @@ try {
 #ifdef HAVE_LIBWAS
 					 instance.was_stock,
 					 instance.multi_was_stock,
+					 instance.remote_was_stock,
 #endif
 					 instance.delegate_stock,
 #ifdef HAVE_LIBNFS

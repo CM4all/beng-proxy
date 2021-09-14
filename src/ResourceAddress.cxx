@@ -634,7 +634,7 @@ ResourceAddress::Check() const
 	case Type::CGI:
 	case Type::FASTCGI:
 	case Type::WAS:
-		u.cgi->Check();
+		u.cgi->Check(type == Type::WAS);
 		break;
 
 	case Type::NFS:

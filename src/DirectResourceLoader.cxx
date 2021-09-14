@@ -260,6 +260,18 @@ try {
 				    std::move(headers), std::move(body),
 				    cgi->params.ToArray(pool),
 				    handler, cancel_ptr);
+		else if (!cgi->address_list.IsEmpty())
+			SendRemoteWasRequest(pool, *remote_was_stock,
+					     parent_stopwatch,
+					     cgi->address_list.front(),
+					     method, cgi->GetURI(pool),
+					     cgi->script_name,
+					     cgi->path_info,
+					     cgi->query_string,
+					     std::move(headers), std::move(body),
+					     cgi->params.ToArray(pool),
+					     cgi->concurrency,
+					     handler, cancel_ptr);
 		else
 			SendMultiWasRequest(pool, *multi_was_stock, parent_stopwatch,
 					    site_name,

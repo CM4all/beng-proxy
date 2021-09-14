@@ -46,6 +46,8 @@
 #include "puri_edit.hxx"
 #include "pexpand.hxx"
 
+#include <stdexcept>
+
 #include <string.h>
 
 CgiAddress::CgiAddress(const char *_path) noexcept
@@ -175,8 +177,21 @@ CgiAddress::GetId(AllocatorPtr alloc) const noexcept
 }
 
 void
-CgiAddress::Check() const
+CgiAddress::Check(bool is_was) const
 {
+	if (is_was) {
+		if (!address_list.IsEmpty()) {
+			if (concurrency == 0)
+				throw std::runtime_error("Missing concurrency for Remote-WAS");
+
+			if (!address_list.IsSingle())
+				throw std::runtime_error("Too many Remote-WAS addresses");
+
+			if (address_list.front().GetFamily() != AF_LOCAL)
+				throw std::runtime_error("Remote-WAS requires AF_LOCAL");
+		}
+	}
+
 	options.Check();
 }
 

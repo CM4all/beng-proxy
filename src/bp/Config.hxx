@@ -127,6 +127,7 @@ struct BpConfig {
 
 	unsigned was_stock_limit = 0, was_stock_max_idle = 16;
 	unsigned multi_was_stock_limit = 0, multi_was_stock_max_idle = 16;
+	unsigned remote_was_stock_limit = 0, remote_was_stock_max_idle = 16;
 
 	unsigned cluster_size = 0, cluster_node = 0;
 

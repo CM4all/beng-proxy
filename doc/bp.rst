@@ -336,6 +336,13 @@ The following settings are available:
   processes for one Multi-WAS application.  If there are more than
   that, a timer will incrementally kill excess processes.
 
+- ``remote_was_stock_limit``: The maximum number of Multi-WAS
+  connections to one Remote-WAS application.  0 means unlimited.
+
+- ``remote_was_stock_max_idle``: The maximum number of idle Multi-WAS
+  connections to one Remote-WAS application.  If there are more than
+  that, a timer will incrementally kill excess connections.
+
 - ``http_cache_size``: The maximum amount of memory used by the HTTP
   cache. Set to 0 to disable the HTTP cache.
 

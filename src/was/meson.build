@@ -38,6 +38,7 @@ was_client = static_library(
   'Glue.cxx',
   'MStock.cxx',
   'MGlue.cxx',
+  'RStock.cxx',
   include_directories: inc,
   dependencies: [
     libwas,
