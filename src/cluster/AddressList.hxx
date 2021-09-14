@@ -99,6 +99,10 @@ struct AddressList {
 		return addresses.end();
 	}
 
+	constexpr const_reference front() const noexcept {
+		return addresses.front();
+	}
+
 	/**
 	 * @return false if the list is full
 	 */
