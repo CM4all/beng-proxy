@@ -99,7 +99,7 @@ MultiWasChild::Prepare(ChildStockClass &cls, void *info,
 	ChildStockItem::Prepare(cls, info, p);
 
 	UniqueSocketDescriptor for_child, for_parent;
-	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_STREAM, 0,
+	if (!UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
 						      for_child, for_parent))
 		throw MakeErrno("socketpair() failed");
 
