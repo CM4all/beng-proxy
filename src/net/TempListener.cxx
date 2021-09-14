@@ -31,6 +31,7 @@
  */
 
 #include "TempListener.hxx"
+#include "net/ConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
 
@@ -85,15 +86,5 @@ TempListener::Create(int socket_type, int backlog)
 UniqueSocketDescriptor
 TempListener::Connect() const
 {
-	UniqueSocketDescriptor fd;
-	if (!fd.CreateNonBlock(AF_LOCAL, SOCK_STREAM, 0))
-		throw MakeErrno("Failed to create socket");
-
-	if (!fd.Connect(GetAddress())) {
-		int e = errno;
-		fd.Close();
-		throw MakeErrno(e, "Failed to connect");
-	}
-
-	return fd;
+	return CreateConnectSocket(GetAddress(), SOCK_STREAM);
 }
