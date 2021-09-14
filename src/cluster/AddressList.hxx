@@ -52,7 +52,9 @@ struct AddressList {
 	StickyMode sticky_mode = StickyMode::NONE;
 
 	using Array = StaticArray<SocketAddress, MAX_ADDRESSES>;
+	using size_type = Array::size_type;
 	using const_iterator = Array::const_iterator;
+	using const_reference = Array::const_reference;
 
 	Array addresses;
 
@@ -77,7 +79,7 @@ struct AddressList {
 		return addresses.empty();
 	}
 
-	Array::size_type GetSize() const noexcept {
+	constexpr size_type GetSize() const noexcept {
 		return addresses.size();
 	}
 
