@@ -51,8 +51,8 @@ struct AddressList {
 
 	StickyMode sticky_mode = StickyMode::NONE;
 
-	typedef StaticArray<SocketAddress, MAX_ADDRESSES> Array;
-	typedef Array::const_iterator const_iterator;
+	using Array = StaticArray<SocketAddress, MAX_ADDRESSES>;
+	using const_iterator = Array::const_iterator;
 
 	Array addresses;
 
