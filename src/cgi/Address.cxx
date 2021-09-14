@@ -48,12 +48,12 @@
 
 #include <string.h>
 
-CgiAddress::CgiAddress(const char *_path)
+CgiAddress::CgiAddress(const char *_path) noexcept
 	:path(_path)
 {
 }
 
-CgiAddress::CgiAddress(AllocatorPtr alloc, const CgiAddress &src)
+CgiAddress::CgiAddress(AllocatorPtr alloc, const CgiAddress &src) noexcept
 	:path(alloc.Dup(src.path)),
 	 args(alloc, src.args),
 	 params(alloc, src.params),
@@ -78,14 +78,14 @@ CgiAddress::CgiAddress(AllocatorPtr alloc, const CgiAddress &src)
 
 [[gnu::pure]]
 static bool
-HasTrailingSlash(const char *p)
+HasTrailingSlash(const char *p) noexcept
 {
 	size_t length = strlen(p);
 	return length > 0 && p[length - 1] == '/';
 }
 
 const char *
-CgiAddress::GetURI(AllocatorPtr alloc) const
+CgiAddress::GetURI(AllocatorPtr alloc) const noexcept
 {
 	if (uri != nullptr)
 		return uri;
@@ -119,7 +119,7 @@ CgiAddress::GetURI(AllocatorPtr alloc) const
 }
 
 const char *
-CgiAddress::GetId(AllocatorPtr alloc) const
+CgiAddress::GetId(AllocatorPtr alloc) const noexcept
 {
 	PoolStringBuilder<256> b;
 	b.push_back(path);
@@ -181,7 +181,7 @@ CgiAddress::Check() const
 }
 
 CgiAddress *
-CgiAddress::Clone(AllocatorPtr alloc) const
+CgiAddress::Clone(AllocatorPtr alloc) const noexcept
 {
 	return alloc.New<CgiAddress>(alloc, *this);
 }
@@ -201,7 +201,8 @@ CgiAddress::IsSameBase(const CgiAddress &other) const noexcept
 }
 
 void
-CgiAddress::InsertQueryString(AllocatorPtr alloc, const char *new_query_string)
+CgiAddress::InsertQueryString(AllocatorPtr alloc,
+			      const char *new_query_string) noexcept
 {
 	if (query_string != nullptr)
 		query_string = alloc.Concat(new_query_string, "&", query_string);
@@ -211,7 +212,7 @@ CgiAddress::InsertQueryString(AllocatorPtr alloc, const char *new_query_string)
 
 void
 CgiAddress::InsertArgs(AllocatorPtr alloc, StringView new_args,
-		       StringView new_path_info)
+		       StringView new_path_info) noexcept
 {
 	uri = uri_insert_args(alloc, uri, new_args, new_path_info);
 
@@ -222,13 +223,14 @@ CgiAddress::InsertArgs(AllocatorPtr alloc, StringView new_args,
 }
 
 bool
-CgiAddress::IsValidBase() const
+CgiAddress::IsValidBase() const noexcept
 {
 	return IsExpandable() || (path_info != nullptr && is_base(path_info));
 }
 
 const char *
-CgiAddress::AutoBase(AllocatorPtr alloc, const char *request_uri) const
+CgiAddress::AutoBase(AllocatorPtr alloc,
+		     const char *request_uri) const noexcept
 {
 	/* auto-generate the BASE only if the path info begins with a
 	   slash and matches the URI */
@@ -248,7 +250,7 @@ CgiAddress::AutoBase(AllocatorPtr alloc, const char *request_uri) const
 }
 
 CgiAddress *
-CgiAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
+CgiAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const noexcept
 {
 	assert(suffix != nullptr);
 
@@ -275,7 +277,7 @@ CgiAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
 }
 
 CgiAddress *
-CgiAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
+CgiAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const noexcept
 {
 	assert(suffix != nullptr);
 
@@ -323,7 +325,7 @@ UnescapeApplyPathInfo(AllocatorPtr alloc, const char *base_path_info,
 
 const CgiAddress *
 CgiAddress::Apply(AllocatorPtr alloc,
-		  StringView relative) const
+		  StringView relative) const noexcept
 {
 	if (relative.empty())
 		return this;
@@ -339,7 +341,7 @@ CgiAddress::Apply(AllocatorPtr alloc,
 }
 
 StringView
-CgiAddress::RelativeTo(const CgiAddress &base) const
+CgiAddress::RelativeTo(const CgiAddress &base) const noexcept
 {
 	if (!IsSameProgram(base))
 		return nullptr;
@@ -350,7 +352,7 @@ CgiAddress::RelativeTo(const CgiAddress &base) const
 StringView
 CgiAddress::RelativeToApplied(AllocatorPtr alloc,
 			      const CgiAddress &apply_base,
-			      StringView relative) const
+			      StringView relative) const noexcept
 {
 	if (!IsSameProgram(apply_base))
 		return nullptr;
