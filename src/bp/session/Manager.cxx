@@ -106,11 +106,11 @@ SessionManager::SessionManager(EventLoop &event_loop,
 			       unsigned _cluster_node) noexcept
 	:cluster_size(_cluster_size), cluster_node(_cluster_node),
 	 idle_timeout(_idle_timeout),
+	 prng(MakeSeeded<SessionPrng>()),
 	 sessions(Set::bucket_traits(buckets, N_BUCKETS)),
 	 sessions_by_attach(ByAttach::bucket_traits(buckets_by_attach, N_BUCKETS)),
 	 cleanup_timer(event_loop, BIND_THIS_METHOD(Cleanup))
 {
-	SeedPrng();
 }
 
 void
