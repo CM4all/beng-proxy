@@ -43,6 +43,7 @@ template<typename T> struct ConstBuffer;
 class SessionId;
 class SessionLease;
 class RealmSessionLease;
+class BufferedReader;
 
 class SessionManager {
 	/** clean up expired sessions every 60 seconds */
@@ -208,6 +209,8 @@ public:
 	void Cleanup() noexcept;
 
 	void DiscardAttachSession(ConstBuffer<std::byte> attach) noexcept;
+
+	bool Load(BufferedReader &r);
 
 private:
 	SessionId GenerateSessionId() const noexcept;

@@ -64,8 +64,8 @@ session_manager_save(SessionManager &manager, BufferedOutputStream &file)
 	session_write_file_tail(file);
 }
 
-static bool
-session_manager_load(SessionManager &manager, BufferedReader &r)
+inline bool
+SessionManager::Load(BufferedReader &r)
 {
 	session_read_file_header(r);
 
@@ -89,7 +89,7 @@ session_manager_load(SessionManager &manager, BufferedReader &r)
 			continue;
 		}
 
-		manager.Insert(*session.release());
+		Insert(*session.release());
 		++num_added;
 	}
 
@@ -138,7 +138,7 @@ session_save_init(SessionManager &manager, const char *path) noexcept
 		FdReader fr(fd);
 		BufferedReader br(fr);
 
-		session_manager_load(manager, br);
+		manager.Load(br);
 	} catch (SessionDeserializerError) {
 		LogConcat(1, "SessionManager",
 			  "Session file is corrupt");
