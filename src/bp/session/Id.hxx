@@ -33,13 +33,14 @@
 #pragma once
 
 #include "cluster/StickyHash.hxx"
-#include "util/StringBuffer.hxx"
 
 #include <array>
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <string_view>
+
+template<std::size_t> class StringBuffer;
 
 /**
  * The session id data structure.

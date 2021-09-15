@@ -34,6 +34,7 @@
 #include "bp/session/Id.hxx"
 #include "cluster/StickyHash.hxx"
 #include "pool/RootPool.hxx"
+#include "util/StringBuffer.hxx"
 #include "AllocatorPtr.hxx"
 #include "random.hxx"
 #include "strmap.hxx"

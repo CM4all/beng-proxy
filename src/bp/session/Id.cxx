@@ -34,6 +34,7 @@
 #include "random.hxx"
 #include "util/HexFormat.hxx"
 #include "util/HexParse.hxx"
+#include "util/StringBuffer.hxx"
 
 #include <assert.h>
 

@@ -31,6 +31,7 @@
  */
 
 #include "bp/session/Id.hxx"
+#include "util/StringBuffer.hxx"
 #include "random.hxx"
 
 #include <gtest/gtest.h>

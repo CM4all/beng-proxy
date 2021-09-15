@@ -39,6 +39,7 @@
 #include "http/CookieClient.hxx"
 #include "http/CookieServer.hxx"
 #include "util/CharUtil.hxx"
+#include "util/StringBuffer.hxx"
 #include "util/StringCompare.hxx"
 #include "AllocatorPtr.hxx"
 

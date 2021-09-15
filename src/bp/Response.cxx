@@ -70,6 +70,7 @@
 #include "http/Address.hxx"
 #include "co/Task.hxx"
 #include "util/DeleteDisposer.hxx"
+#include "util/StringBuffer.hxx"
 #include "relocate_uri.hxx"
 #include "FilterStatus.hxx"
 
