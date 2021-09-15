@@ -81,7 +81,6 @@
 #include "io/Logger.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/PrintException.hxx"
-#include "random.hxx"
 
 #ifdef HAVE_URING
 #include "event/uring/Manager.hxx"
@@ -388,7 +387,6 @@ try {
 	instance.spawn->SetHandler(instance);
 	instance.spawn_service = instance.spawn.get();
 
-	random_seed();
 	instance.session_manager =
 		std::make_unique<SessionManager>(instance.event_loop,
 						 instance.config.session_idle_timeout,

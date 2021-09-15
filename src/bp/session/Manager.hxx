@@ -33,11 +33,13 @@
 #pragma once
 
 #include "Session.hxx"
+#include "Prng.hxx"
 #include "event/FarTimerEvent.hxx"
 
 #include <boost/intrusive/unordered_set.hpp>
 
 #include <chrono>
+#include <random>
 
 template<typename T> struct ConstBuffer;
 class SessionId;
@@ -55,6 +57,8 @@ class SessionManager {
 	 * The idle timeout of sessions [seconds].
 	 */
 	const std::chrono::seconds idle_timeout;
+
+	SessionPrng prng;
 
 	struct SessionHash {
 		[[gnu::pure]]
@@ -213,6 +217,8 @@ public:
 	bool Load(BufferedReader &r);
 
 private:
-	SessionId GenerateSessionId() const noexcept;
+	void SeedPrng();
+
+	SessionId GenerateSessionId() noexcept;
 	void EraseAndDispose(Session &session);
 };

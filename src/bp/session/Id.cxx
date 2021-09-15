@@ -31,19 +31,11 @@
  */
 
 #include "Id.hxx"
-#include "random.hxx"
 #include "util/HexFormat.hxx"
 #include "util/HexParse.hxx"
 #include "util/StringBuffer.hxx"
 
 #include <assert.h>
-
-void
-SessionId::Generate() noexcept
-{
-	for (auto &i : data)
-		i = random_uint64();
-}
 
 static auto
 ToClusterNode(uint64_t id,

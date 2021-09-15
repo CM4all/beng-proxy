@@ -36,6 +36,8 @@
 
 #pragma once
 
+#include "Prng.hxx"
+
 #include <memory>
 
 #include <stdint.h>
@@ -61,4 +63,4 @@ session_read_file_header(BufferedReader &r);
  * Throws on error.
  */
 std::unique_ptr<Session>
-session_read(BufferedReader &r);
+session_read(BufferedReader &r, SessionPrng &prng);

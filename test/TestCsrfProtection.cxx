@@ -32,7 +32,7 @@
 
 #include "bp/CsrfToken.hxx"
 #include "bp/session/Id.hxx"
-#include "random.hxx"
+#include "bp/session/Prng.hxx"
 
 #include <gtest/gtest.h>
 
@@ -46,10 +46,10 @@ TEST(CsrfProtectionTest, Time)
 
 TEST(CsrfProtectionTest, FormatAndParse)
 {
-	random_seed();
+	SessionPrng prng;
 
 	SessionId salt;
-	salt.Generate();
+	salt.Generate(prng);
 	EXPECT_TRUE(salt.IsDefined());
 
 	CsrfToken a;

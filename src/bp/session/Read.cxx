@@ -240,14 +240,14 @@ DoReadSession(FileReader &file, Session &session)
 }
 
 std::unique_ptr<Session>
-session_read(BufferedReader &r)
+session_read(BufferedReader &r, SessionPrng &prng)
 {
 	FileReader file(r);
 	const auto id = file.ReadT<SessionId>();
 
 	// TODO read salt from session file
 	SessionId csrf_salt;
-	csrf_salt.Generate();
+	csrf_salt.Generate(prng);
 
 	auto session = std::make_unique<Session>(id, csrf_salt);
 	DoReadSession(file, *session);

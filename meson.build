@@ -913,7 +913,6 @@ executable(
   'src/pipe_stock.cxx',
   'src/pipe_filter.cxx',
   'src/bp/ProxyWidget.cxx',
-  'src/random.cxx',
   'src/bp/ForwardRequest.cxx',
   'src/bp/Request.cxx',
   'src/bp/RSession.cxx',

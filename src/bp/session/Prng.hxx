@@ -30,23 +30,11 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "random.hxx"
-#include "system/Seed.hxx"
+#pragma once
 
 #include <random>
 
-typedef std::mt19937_64 Prng;
-static Prng prng;
-
-void
-random_seed()
-{
-	auto ss = GenerateSeedSeq<Prng>();
-	prng.seed(ss);
-}
-
-uint64_t
-random_uint64() noexcept
-{
-	return prng();
-}
+/**
+ * The random engine used to generate session ids.
+ */
+using SessionPrng = std::mt19937_64;

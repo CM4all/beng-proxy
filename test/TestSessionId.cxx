@@ -31,14 +31,14 @@
  */
 
 #include "bp/session/Id.hxx"
+#include "bp/session/Prng.hxx"
 #include "util/StringBuffer.hxx"
-#include "random.hxx"
 
 #include <gtest/gtest.h>
 
 TEST(SessionIdTest, IsDefined)
 {
-	random_seed();
+	SessionPrng prng;
 
 	SessionId a;
 	a.Clear();
@@ -46,7 +46,7 @@ TEST(SessionIdTest, IsDefined)
 	EXPECT_EQ(a, a);
 
 	SessionId b;
-	b.Generate();
+	b.Generate(prng);
 	EXPECT_TRUE(b.IsDefined());
 	EXPECT_EQ(b, b);
 	EXPECT_NE(a, b);
@@ -55,10 +55,10 @@ TEST(SessionIdTest, IsDefined)
 
 TEST(SessionIdTest, FormatAndParse)
 {
-	random_seed();
+	SessionPrng prng;
 
 	SessionId a;
-	a.Generate();
+	a.Generate(prng);
 	EXPECT_TRUE(a.IsDefined());
 
 	const auto s = a.Format();
@@ -72,12 +72,12 @@ TEST(SessionIdTest, FormatAndParse)
 
 TEST(SessionIdTest, ClusterHash)
 {
-	random_seed();
+	SessionPrng prng;
 
 	for (unsigned cluster_size = 2; cluster_size <= 16; ++cluster_size) {
 		for (unsigned cluster_node = 0; cluster_node < cluster_size; ++cluster_node) {
 			SessionId a;
-			a.Generate();
+			a.Generate(prng);
 			EXPECT_TRUE(a.IsDefined());
 
 			a.SetClusterNode(cluster_size, cluster_node);
