@@ -86,11 +86,10 @@ RealmSession::Attach(RealmSession &&other) noexcept
 	cookies.MoveFrom(std::move(other.cookies));
 }
 
-Session::Session(SessionId _id) noexcept
-	:id(_id),
+Session::Session(SessionId _id, SessionId _csrf_salt) noexcept
+	:id(_id), csrf_salt(_csrf_salt),
 	 expires(Expiry::Touched(SESSION_TTL_NEW))
 {
-	csrf_salt.Generate();
 }
 
 Session::~Session() noexcept

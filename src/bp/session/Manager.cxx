@@ -176,7 +176,10 @@ SessionManager::CreateSession() noexcept
 	if (Count() >= MAX_SESSIONS)
 		Purge();
 
-	Session *session = new Session(GenerateSessionId());
+	SessionId csrf_salt;
+	csrf_salt.Generate();
+
+	Session *session = new Session(GenerateSessionId(), csrf_salt);
 	Insert(*session);
 	return {*this, session};
 }

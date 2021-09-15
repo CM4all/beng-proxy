@@ -244,7 +244,12 @@ session_read(BufferedReader &r)
 {
 	FileReader file(r);
 	const auto id = file.ReadT<SessionId>();
-	auto session = std::make_unique<Session>(id);
+
+	// TODO read salt from session file
+	SessionId csrf_salt;
+	csrf_salt.Generate();
+
+	auto session = std::make_unique<Session>(id, csrf_salt);
 	DoReadSession(file, *session);
 	return session;
 }

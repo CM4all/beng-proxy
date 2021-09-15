@@ -220,7 +220,7 @@ struct Session {
 	const SessionId id;
 
 	/** a secret used to generate CSRF tokens */
-	SessionId csrf_salt;
+	const SessionId csrf_salt;
 
 	/** when will this session expire? */
 	Expiry expires;
@@ -267,7 +267,7 @@ struct Session {
 
 	RealmSessionSet realms;
 
-	explicit Session(SessionId _id) noexcept;
+	Session(SessionId _id, SessionId _csrf_salt) noexcept;
 	~Session() noexcept;
 
 	/**
