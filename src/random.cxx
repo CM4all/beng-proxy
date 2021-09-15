@@ -31,30 +31,17 @@
  */
 
 #include "random.hxx"
-#include "system/Urandom.hxx"
+#include "system/Seed.hxx"
 
 #include <random>
 
 typedef std::mt19937_64 Prng;
 static Prng prng;
 
-template<typename T>
-static size_t
-obtain_entropy(T *dest, size_t max)
-{
-	size_t nbytes = UrandomRead(dest, max * sizeof(dest[0]));
-	return nbytes / sizeof(dest[0]);
-}
-
 void
 random_seed()
 {
-	uint32_t seed[Prng::state_size * 2];
-	auto n = obtain_entropy(seed, Prng::state_size);
-	if (n == 0)
-		return;
-
-	std::seed_seq ss(seed, seed + n);
+	auto ss = GenerateSeedSeq<Prng>();
 	prng.seed(ss);
 }
 
