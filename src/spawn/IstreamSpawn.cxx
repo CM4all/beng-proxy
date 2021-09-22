@@ -448,7 +448,6 @@ SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
 	stdout_pipe.SetNonBlocking();
 
 	const int pid = spawn_service.SpawnChildProcess(name, std::move(prepared),
-							SocketDescriptor::Undefined(),
 							nullptr);
 	auto f = NewFromPool<SpawnIstream>(*pool, spawn_service, event_loop,
 					   *pool,

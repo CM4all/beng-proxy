@@ -64,7 +64,6 @@ WasLaunch(SpawnService &spawn_service,
 		p.SetStderr(std::move(stderr_fd));
 
 	return spawn_service.SpawnChildProcess(name, std::move(p),
-						      SocketDescriptor::Undefined(),
 					       listener);
 }
 

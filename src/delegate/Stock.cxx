@@ -171,7 +171,6 @@ DelegateStock::Create(CreateStockItem c,
 
 	spawn_service.SpawnChildProcess(info.executable_path,
 					std::move(p),
-					SocketDescriptor::Undefined(),
 					nullptr);
 
 	/* invoke the DelegateArgs destructor before invoking the

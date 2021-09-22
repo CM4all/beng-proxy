@@ -74,12 +74,11 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 	UniqueSocketDescriptor stderr_socket1, stderr_socket2;
 	if (cls.WantReturnStderr(info) &&
 	    !UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
-						      stderr_socket1, stderr_socket2))
+						      stderr_socket1, p.return_stderr))
 		throw MakeErrno("socketpair() failed");
 
 	auto &spawn_service = child_stock.GetSpawnService();
 	pid = spawn_service.SpawnChildProcess(GetStockName(), std::move(p),
-					      stderr_socket2,
 					      this);
 
 	if (stderr_socket1.IsDefined()) {
