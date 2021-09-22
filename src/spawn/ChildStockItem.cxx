@@ -66,7 +66,7 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 	PreparedChildProcess p;
 	Prepare(cls, info, p);
 
-	if (log_socket.IsDefined() && p.stderr_fd < 0 &&
+	if (log_socket.IsDefined() && !p.stderr_fd.IsDefined() &&
 	    p.stderr_path == nullptr)
 		log.EnableClient(p, GetEventLoop(), log_socket, log_options,
 				 cls.WantStderrPond(info));

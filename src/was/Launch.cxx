@@ -60,7 +60,7 @@ WasLaunch(SpawnService &spawn_service,
 
 	options.CopyTo(p);
 
-	if (p.stderr_fd < 0 && stderr_fd.IsDefined())
+	if (!p.stderr_fd.IsDefined() && stderr_fd.IsDefined())
 		p.SetStderr(std::move(stderr_fd));
 
 	return spawn_service.SpawnChildProcess(name, std::move(p),

@@ -91,7 +91,7 @@ ChildErrorLog::EnableClient(PreparedChildProcess &p,
 {
 	assert(!adapter);
 
-	if (p.stderr_fd >= 0)
+	if (p.stderr_fd.IsDefined())
 		/* already set */
 		return;
 
