@@ -882,12 +882,20 @@ class SpawnServerChildPrinter:
     def to_string(self):
         return '{id=%d, pid=%d, name=%s}' % (self.val['id'], self.val['pid'], self.val['name'])
 
+class TypeNamePrinter:
+    def __init__(self, val):
+        self.val = val
+
+    def to_string(self):
+        return str(self.val.type)
+
 import gdb.printing
 def build_pretty_printer():
     pp = gdb.printing.RegexpCollectionPrettyPrinter("cm4all-beng-proxy")
     pp.add_printer('std::array', '^std::array<', StdArrayPrinter)
     pp.add_printer('TrivialArray', '^TrivialArray<', StaticArrayPrinter)
     pp.add_printer('StaticArray', '^StaticArray<', StaticArrayPrinter)
+    pp.add_printer('boost::intrusive::hooks', 'boost::intrusive::(s?list_base|generic|unordered_set_base)_hook', TypeNamePrinter)
     pp.add_printer('boost::intrusive::list', 'boost::intrusive::s?list<', IntrusiveListPrinter)
     pp.add_printer('boost::intrusive::set', 'boost::intrusive::(multi)?set<', IntrusiveSetPrinter)
     pp.add_printer('boost::intrusive::unordered_set', 'boost::intrusive::unordered_(multi)?set<', IntrusiveUnorderedSetPrinter)
