@@ -410,6 +410,47 @@ TEST(MultiStock, Basic)
 	ASSERT_EQ(foo.failed, 0);
 }
 
+TEST(MultiStock, GetTooMany)
+{
+	Instance instance;
+
+	Partition foo{instance, "foo"};
+
+	/* request one more than allowed; this used to trigger an
+	   assertion failure */
+	foo.Get(3);
+
+	instance.RunSome();
+
+	ASSERT_EQ(foo.factory_created, 1);
+	ASSERT_EQ(foo.factory_failed, 0);
+	ASSERT_EQ(foo.destroyed, 0);
+	ASSERT_EQ(foo.total, 3);
+	ASSERT_EQ(foo.waiting, 1);
+	ASSERT_EQ(foo.ready, 2);
+	ASSERT_EQ(foo.failed, 0);
+
+	foo.PutDirty(2);
+
+	ASSERT_EQ(foo.factory_created, 1);
+	ASSERT_EQ(foo.factory_failed, 0);
+	ASSERT_EQ(foo.destroyed, 1);
+	ASSERT_EQ(foo.total, 1);
+	ASSERT_EQ(foo.waiting, 1);
+	ASSERT_EQ(foo.ready, 0);
+	ASSERT_EQ(foo.failed, 0);
+
+	instance.RunSome();
+
+	ASSERT_EQ(foo.factory_created, 2);
+	ASSERT_EQ(foo.factory_failed, 0);
+	ASSERT_EQ(foo.destroyed, 1);
+	ASSERT_EQ(foo.total, 1);
+	ASSERT_EQ(foo.waiting, 0);
+	ASSERT_EQ(foo.ready, 1);
+	ASSERT_EQ(foo.failed, 0);
+}
+
 TEST(MultiStock, DeferredCancel)
 {
 	Instance instance;
