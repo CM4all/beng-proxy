@@ -209,6 +209,8 @@ class MultiStock {
 		 */
 		void DeleteEmptyItems(const Item *except=nullptr) noexcept;
 
+		void FinishWaiting(Item &item) noexcept;
+
 		/**
 		 * Retry the waiting requests.
 		 */

@@ -211,39 +211,48 @@ MultiStock::MapItem::DeleteEmptyItems(const Item *except) noexcept
 }
 
 inline void
+MultiStock::MapItem::FinishWaiting(Item &item) noexcept
+{
+	assert(item.CanUse());
+	assert(!waiting.empty());
+
+	auto &w = waiting.front();
+	/* if there is still a request object, move it to the
+	   next item in the waiting list */
+	if (w.request)
+		if (auto n = std::next(waiting.begin());
+		    n != waiting.end())
+			n->request = std::move(w.request);
+
+	auto &handler = w.handler;
+	auto &lease_ref = w.lease_ref;
+	waiting.pop_front_and_dispose(DeleteDisposer{});
+
+	/* do it again until no more usable items are
+	   found */
+	if (!ScheduleRetryWaiting())
+		/* no more waiting: we can now remove all
+		   remaining idle items which havn't been
+		   removed while there were still waiting
+		   items, but we had more empty items than we
+		   really needed */
+		DeleteEmptyItems(&item);
+
+	item.AddLease(handler, lease_ref);
+}
+
+inline void
 MultiStock::MapItem::RetryWaiting() noexcept
 {
 	if (waiting.empty())
 		return;
 
-	auto &w = waiting.front();
-
 	if (auto *i = FindUsable()) {
-		/* if there is still a request object, move it to the
-		   next item in the waiting list */
-		if (w.request)
-			if (auto n = std::next(waiting.begin());
-			    n != waiting.end())
-				n->request = std::move(w.request);
-
-		auto &handler = w.handler;
-		auto &lease_ref = w.lease_ref;
-		waiting.pop_front_and_dispose(DeleteDisposer{});
-
-		/* do it again until no more usable items are
-		   found */
-		if (!ScheduleRetryWaiting())
-			/* no more waiting: we can now remove all
-			   remaining idle items which havn't been
-			   removed while there were still waiting
-			   items, but we had more empty items than we
-			   really needed */
-			DeleteEmptyItems(&*i);
-
-		i->AddLease(handler, lease_ref);
+		FinishWaiting(*i);
 		return;
 	}
 
+	auto &w = waiting.front();
 	assert(w.request);
 
 	if (!stock.IsFull() && !get_cancel_ptr)
