@@ -324,27 +324,7 @@ TEST(MultiStock, Basic)
 
 	Partition foo{instance, "foo"};
 
-	// request one item and cancel it before it arrives
-
-	foo.Get();
-
-	ASSERT_EQ(foo.total, 1);
-	ASSERT_EQ(foo.waiting, 1);
-	ASSERT_EQ(foo.ready, 0);
-	ASSERT_EQ(foo.failed, 0);
-
-	foo.leases.clear();
-
-	instance.RunSome();
-
-	ASSERT_EQ(foo.factory_created, 1);
-	ASSERT_EQ(foo.destroyed, 0);
-	ASSERT_EQ(foo.total, 0);
-	ASSERT_EQ(foo.waiting, 0);
-	ASSERT_EQ(foo.ready, 0);
-	ASSERT_EQ(foo.failed, 0);
-
-	// request another item, wait for it to be delivered
+	// request item, wait for it to be delivered
 
 	foo.Get();
 	instance.RunSome();
