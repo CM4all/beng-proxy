@@ -125,6 +125,12 @@ struct Partition {
 		:instance(_instance), key(_key) {}
 
 	MyLease &Get() noexcept;
+
+	void Get(std::size_t n) noexcept {
+		for (std::size_t i = 0; i < n; ++i)
+			Get();
+	}
+
 	void PutReady(unsigned n=256) noexcept;
 	void PutDirty(unsigned n) noexcept;
 };
@@ -411,8 +417,7 @@ TEST(MultiStock, DeferredCancel)
 	Partition foo{instance, "foo"};
 	foo.defer_create = true;
 
-	for (int i = 0; i < 16; ++i)
-		foo.Get();
+	foo.Get(16);
 
 	ASSERT_EQ(foo.total, 16);
 	ASSERT_EQ(foo.waiting, 16);
@@ -435,8 +440,7 @@ TEST(MultiStock, DeferredWaitingCancel)
 	Partition foo{instance, "foo"};
 	foo.defer_create = true;
 
-	for (int i = 0; i < 16; ++i)
-		foo.Get();
+	foo.Get(16);
 
 	ASSERT_EQ(foo.total, 16);
 	ASSERT_EQ(foo.waiting, 16);
@@ -466,8 +470,7 @@ TEST(MultiStock, Error)
 	Partition foo{instance, "foo"};
 	foo.next_error = std::make_exception_ptr(std::runtime_error{"Error"});
 
-	for (int i = 0; i < 16; ++i)
-		foo.Get();
+	foo.Get(16);
 
 	ASSERT_EQ(foo.factory_created, 0);
 	ASSERT_EQ(foo.factory_failed, 16);
@@ -486,8 +489,7 @@ TEST(MultiStock, DeferredError)
 	foo.defer_create = true;
 	foo.next_error = std::make_exception_ptr(std::runtime_error{"Error"});
 
-	for (int i = 0; i < 16; ++i)
-		foo.Get();
+	foo.Get(16);
 
 	ASSERT_EQ(foo.factory_created, 0);
 	ASSERT_EQ(foo.factory_failed, 0);
@@ -515,8 +517,7 @@ TEST(MultiStock, CreateTwo)
 	Partition foo{instance, "foo"};
 	foo.defer_create = true;
 
-	for (int i = 0; i < 16; ++i)
-		foo.Get();
+	foo.Get(16);
 
 	ASSERT_EQ(foo.factory_created, 0);
 	ASSERT_EQ(foo.factory_failed, 0);
