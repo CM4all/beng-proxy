@@ -278,7 +278,7 @@ MultiStock::MapItem::OnStockItemReady(StockItem &stock_item) noexcept
 	auto *item = new Item(*this, stock_item, get_max_leases);
 	items.push_back(*item);
 
-	ScheduleRetryWaiting();
+	FinishWaiting(*item);
 }
 
 void
