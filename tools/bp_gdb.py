@@ -794,7 +794,7 @@ class DeferEventPrinter:
         self.val = val
 
     def to_string(self):
-        return 'DeferEvent{scheduled=%s, callback=%s}' % (not is_null(self.val['prev_']), self.val['callback'])
+        return 'DeferEvent{scheduled=%s, callback=%s}' % (not is_null(self.val['siblings']['next']), self.val['callback'])
 
 class SliceAllocationPrinter:
     def __init__(self, val):
