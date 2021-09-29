@@ -215,6 +215,7 @@ MultiStock::MapItem::FinishWaiting(Item &item) noexcept
 {
 	assert(item.CanUse());
 	assert(!waiting.empty());
+	assert(!retry_event.IsPending());
 
 	auto &w = waiting.front();
 	/* if there is still a request object, move it to the
@@ -244,8 +245,7 @@ MultiStock::MapItem::FinishWaiting(Item &item) noexcept
 inline void
 MultiStock::MapItem::RetryWaiting() noexcept
 {
-	if (waiting.empty())
-		return;
+	assert(!waiting.empty());
 
 	if (auto *i = FindUsable()) {
 		FinishWaiting(*i);
@@ -275,6 +275,8 @@ MultiStock::MapItem::OnStockItemReady(StockItem &stock_item) noexcept
 	assert(!waiting.empty());
 	get_cancel_ptr = nullptr;
 
+	retry_event.Cancel();
+
 	auto *item = new Item(*this, stock_item, get_max_leases);
 	items.push_back(*item);
 
@@ -286,6 +288,8 @@ MultiStock::MapItem::OnStockItemError(std::exception_ptr error) noexcept
 {
 	assert(!waiting.empty());
 	get_cancel_ptr = nullptr;
+
+	retry_event.Cancel();
 
 	waiting.clear_and_dispose([&error](auto *w){
 		w->handler.OnStockItemError(error);
