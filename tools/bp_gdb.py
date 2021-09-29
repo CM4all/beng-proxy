@@ -50,6 +50,64 @@ def pool_sizes(pool):
         brutto_size = netto_size
     return brutto_size, netto_size
 
+class IntrusiveContainerType:
+    def __init__(self, list_type, member_hook=None):
+        self.list_type = get_basic_type(list_type)
+        self.value_type = list_type.template_argument(0)
+        self.value_pointer_type = self.value_type.pointer()
+
+    def get_header(self, l):
+        return l['head']
+
+    def node_to_value(self, node):
+        return node.cast(self.value_pointer_type)
+
+    def iter_nodes(self, l):
+        root = self.get_header(l)
+        root_address = root.address
+        node = root['next']
+        while node != root_address:
+            yield node
+            node = node['next']
+
+    def iter_nodes_reverse(self, l):
+        root = self.get_header(l)
+        root_address = root.address
+        node = root['prev']
+        while node != root_address:
+            yield node
+            node = node['prev']
+
+class IntrusiveListPrinter:
+    class Iterator:
+        def __init__(self, t, head):
+            self.t = t
+            self.head_address = head.address
+            self.i = head['next']
+
+        def __iter__(self):
+            return self
+
+        def __next__(self):
+            if self.i == self.head_address:
+                raise StopIteration
+            result = self.t.node_to_value(self.i)
+            self.i = self.i['next']
+            return '', result.dereference()
+
+    def __init__(self, val):
+        self.t = IntrusiveContainerType(val.type)
+        self.val = val
+
+    def display_hint(self):
+        return 'array'
+
+    def children(self):
+        return self.Iterator(self.t, self.t.get_header(self.val))
+
+    def to_string(self):
+        return "ilist<%s>" % self.t.value_type
+
 class BoostIntrusiveContainerType:
     def __init__(self, list_type, member_hook=None):
         self.list_type = get_basic_type(list_type)
@@ -895,6 +953,7 @@ def build_pretty_printer():
     pp.add_printer('std::array', '^std::array<', StdArrayPrinter)
     pp.add_printer('TrivialArray', '^TrivialArray<', StaticArrayPrinter)
     pp.add_printer('StaticArray', '^StaticArray<', StaticArrayPrinter)
+    pp.add_printer('IntrusiveList', 'Intrusive(IntrusiveForwardList)?List', IntrusiveListPrinter)
     pp.add_printer('boost::intrusive::hooks', 'boost::intrusive::(s?list_base|generic|unordered_set_base)_hook', TypeNamePrinter)
     pp.add_printer('boost::intrusive::list', 'boost::intrusive::s?list<', BoostIntrusiveListPrinter)
     pp.add_printer('boost::intrusive::set', 'boost::intrusive::(multi)?set<', BoostIntrusiveSetPrinter)
