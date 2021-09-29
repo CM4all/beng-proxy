@@ -631,7 +631,7 @@ class IntrusiveUnorderedSetPrinter:
         return [('', i.dereference()) for i in self.t.iter_values(self.val)]
 
     def to_string(self):
-        return "bi::unorderede_set<%s>" % self.t.value_type
+        return "bi::unordered_set<%s>" % self.t.value_type
 
 class StdArrayPrinter:
     def __init__(self, val):
