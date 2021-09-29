@@ -50,7 +50,7 @@ def pool_sizes(pool):
         brutto_size = netto_size
     return brutto_size, netto_size
 
-class IntrusiveContainerType:
+class BoostIntrusiveContainerType:
     def __init__(self, list_type, member_hook=None):
         self.list_type = get_basic_type(list_type)
         self.value_type = list_type.template_argument(0)
@@ -96,16 +96,16 @@ class IntrusiveContainerType:
             node = node['prev_']
 
 def for_each_intrusive_list_item(l, member_hook=None):
-    t = IntrusiveContainerType(l.type, member_hook=member_hook)
+    t = BoostIntrusiveContainerType(l.type, member_hook=member_hook)
     for node in t.iter_nodes(l):
         yield t.node_to_value(node).dereference()
 
 def for_each_intrusive_list_item_reverse(l, member_hook=None):
-    t = IntrusiveContainerType(l.type, member_hook=member_hook)
+    t = BoostIntrusiveContainerType(l.type, member_hook=member_hook)
     for node in t.iter_nodes_reverse(l):
         yield t.node_to_value(node).dereference()
 
-class IntrusiveListPrinter:
+class BoostIntrusiveListPrinter:
     class Iterator:
         def __init__(self, t, head):
             self.t = t
@@ -123,7 +123,7 @@ class IntrusiveListPrinter:
             return '', result.dereference()
 
     def __init__(self, val):
-        self.t = IntrusiveContainerType(val.type)
+        self.t = BoostIntrusiveContainerType(val.type)
         self.val = val
 
     def display_hint(self):
@@ -135,7 +135,7 @@ class IntrusiveListPrinter:
     def to_string(self):
         return "bi::list<%s>" % self.t.value_type
 
-class IntrusiveSetType:
+class BoostIntrusiveSetType:
     def __init__(self, list_type, member_hook=None):
         self.list_type = get_basic_type(list_type)
         self.value_type = list_type.template_argument(0)
@@ -183,11 +183,11 @@ class IntrusiveSetType:
             i = self._next_node(i)
 
 def for_each_intrusive_set_item(s, member_hook=None):
-    t = IntrusiveSetType(s.type, member_hook=member_hook)
+    t = BoostIntrusiveSetType(s.type, member_hook=member_hook)
     for node in t.iter_nodes(s):
         yield t.node_to_value(node.address).dereference()
 
-class IntrusiveUnorderedSetType:
+class BoostIntrusiveUnorderedSetType:
     def __init__(self, list_type, member_hook=None):
         self.list_type = get_basic_type(list_type)
         self.value_type = list_type.template_argument(0)
@@ -223,7 +223,7 @@ class IntrusiveUnorderedSetType:
             yield self.node_to_value(node)
 
 def for_each_intrusive_unordered_set_item(s, member_hook=None):
-    t = IntrusiveUnorderedSetType(s.type, member_hook=member_hook)
+    t = BoostIntrusiveUnorderedSetType(s.type, member_hook=member_hook)
     for value in t.iter_values(s):
         yield value.dereference()
 
@@ -605,9 +605,9 @@ DumpSlicePoolAreas()
 FindSliceFifoBuffer()
 LbStats()
 
-class IntrusiveSetPrinter:
+class BoostIntrusiveSetPrinter:
     def __init__(self, val):
-        self.t = IntrusiveSetType(val.type)
+        self.t = BoostIntrusiveSetType(val.type)
         self.val = val
 
     def display_hint(self):
@@ -619,9 +619,9 @@ class IntrusiveSetPrinter:
     def to_string(self):
         return "bi::set<%s>" % self.t.value_type
 
-class IntrusiveUnorderedSetPrinter:
+class BoostIntrusiveUnorderedSetPrinter:
     def __init__(self, val):
-        self.t = IntrusiveUnorderedSetType(val.type)
+        self.t = BoostIntrusiveUnorderedSetType(val.type)
         self.val = val
 
     def display_hint(self):
@@ -682,7 +682,7 @@ class StringMapPrinter:
         return 'array'
 
     def children(self):
-        return IntrusiveSetPrinter(self.val['map']).children()
+        return BoostIntrusiveSetPrinter(self.val['map']).children()
 
     def to_string(self):
         return 'StringMap'
@@ -896,9 +896,9 @@ def build_pretty_printer():
     pp.add_printer('TrivialArray', '^TrivialArray<', StaticArrayPrinter)
     pp.add_printer('StaticArray', '^StaticArray<', StaticArrayPrinter)
     pp.add_printer('boost::intrusive::hooks', 'boost::intrusive::(s?list_base|generic|unordered_set_base)_hook', TypeNamePrinter)
-    pp.add_printer('boost::intrusive::list', 'boost::intrusive::s?list<', IntrusiveListPrinter)
-    pp.add_printer('boost::intrusive::set', 'boost::intrusive::(multi)?set<', IntrusiveSetPrinter)
-    pp.add_printer('boost::intrusive::unordered_set', 'boost::intrusive::unordered_(multi)?set<', IntrusiveUnorderedSetPrinter)
+    pp.add_printer('boost::intrusive::list', 'boost::intrusive::s?list<', BoostIntrusiveListPrinter)
+    pp.add_printer('boost::intrusive::set', 'boost::intrusive::(multi)?set<', BoostIntrusiveSetPrinter)
+    pp.add_printer('boost::intrusive::unordered_set', 'boost::intrusive::unordered_(multi)?set<', BoostIntrusiveUnorderedSetPrinter)
     pp.add_printer('StringView', '^BasicStringView<char>$', StringViewPrinter)
     pp.add_printer('StringView', '^StringView$', StringViewPrinter)
     pp.add_printer('StringMap::Item', '^StringMap::Item$', StringMapItemPrinter)
