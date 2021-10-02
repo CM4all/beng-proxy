@@ -130,7 +130,7 @@ MultiStock::MapItem::FindUsable() noexcept
 }
 
 MultiStock::SharedItem &
-MultiStock::MapItem::GetNow(StockRequest request, unsigned max_leases)
+MultiStock::MapItem::GetNow(StockRequest request, std::size_t concurrency)
 {
 	if (auto *i = FindUsable())
 		return *i;
@@ -138,13 +138,13 @@ MultiStock::MapItem::GetNow(StockRequest request, unsigned max_leases)
 	auto *stock_item = stock.GetNow(std::move(request));
 	assert(stock_item != nullptr);
 
-	auto *item = new SharedItem(*this, *stock_item, max_leases);
+	auto *item = new SharedItem(*this, *stock_item, concurrency);
 	items.push_back(*item);
 	return *item;
 }
 
 inline void
-MultiStock::MapItem::Get(StockRequest request, unsigned max_leases,
+MultiStock::MapItem::Get(StockRequest request, std::size_t concurrency,
 			 LeasePtr &lease_ref,
 			 StockGetHandler &handler,
 			 CancellablePointer &cancel_ptr) noexcept
@@ -155,13 +155,13 @@ MultiStock::MapItem::Get(StockRequest request, unsigned max_leases,
 	}
 
 	if (auto *stock_item = stock.GetIdle()) {
-		auto *i = new SharedItem(*this, *stock_item, max_leases);
+		auto *i = new SharedItem(*this, *stock_item, concurrency);
 		items.push_back(*i);
 		i->AddLease(handler, lease_ref);
 		return;
 	}
 
-	get_max_leases = max_leases;
+	get_concurrency = concurrency;
 
 	auto *w = new Waiting(*this, std::move(request),
 			      lease_ref, handler, cancel_ptr);
@@ -277,7 +277,7 @@ MultiStock::MapItem::OnStockItemReady(StockItem &stock_item) noexcept
 
 	retry_event.Cancel();
 
-	auto *item = new SharedItem(*this, stock_item, get_max_leases);
+	auto *item = new SharedItem(*this, stock_item, get_concurrency);
 	items.push_back(*item);
 
 	FinishWaiting(*item);
@@ -371,22 +371,22 @@ MultiStock::MakeMapItem(const char *uri, void *request) noexcept
 
 StockItem *
 MultiStock::GetNow(const char *uri, StockRequest request,
-		   unsigned max_leases,
+		   std::size_t concurrency,
 		   LeasePtr &lease_ref)
 {
 	return MakeMapItem(uri, request.get())
-		.GetNow(std::move(request), max_leases)
+		.GetNow(std::move(request), concurrency)
 		.AddLease(lease_ref);
 }
 
 void
 MultiStock::Get(const char *uri, StockRequest request,
-		unsigned max_leases,
+		std::size_t concurrency,
 		LeasePtr &lease_ref,
 		StockGetHandler &handler,
 		CancellablePointer &cancel_ptr) noexcept
 {
 	MakeMapItem(uri, request.get())
-		.Get(std::move(request), max_leases,
+		.Get(std::move(request), concurrency,
 		     lease_ref, handler, cancel_ptr);
 }

@@ -90,15 +90,15 @@ class MultiStock {
 		boost::intrusive::list<Lease, Lease::SiblingsListMemberHook,
 				       boost::intrusive::constant_time_size<false>> leases;
 
-		unsigned remaining_leases;
+		std::size_t remaining_leases;
 
 		bool reuse = true;
 
 	public:
 		SharedItem(MapItem &_parent, StockItem &_item,
-			   unsigned _max_leases) noexcept
+			   std::size_t _limit) noexcept
 			:parent(_parent), shared_item(_item),
-			 remaining_leases(_max_leases) {}
+			 remaining_leases(_limit) {}
 
 		SharedItem(const SharedItem &) = delete;
 		SharedItem &operator=(const SharedItem &) = delete;
@@ -176,14 +176,15 @@ class MultiStock {
 
 		CancellablePointer get_cancel_ptr;
 
-		unsigned get_max_leases;
+		std::size_t get_concurrency;
 
 	public:
 		MapItem(StockMap &_map_stock, Stock &_stock) noexcept;
 		~MapItem() noexcept;
 
-		SharedItem &GetNow(StockRequest request, unsigned max_leases);
-		void Get(StockRequest request, unsigned max_leases,
+		SharedItem &GetNow(StockRequest request,
+				   std::size_t concurrency);
+		void Get(StockRequest request, std::size_t concurrency,
 			 LeasePtr &lease_ref,
 			 StockGetHandler &handler,
 			 CancellablePointer &cancel_ptr) noexcept;
@@ -290,11 +291,11 @@ public:
 	 * @param max_leases the maximum number of leases per stock_item
 	 */
 	StockItem *GetNow(const char *uri, StockRequest request,
-			  unsigned max_leases,
+			  std::size_t concurrency,
 			  LeasePtr &lease_ref);
 
 	void Get(const char *uri, StockRequest request,
-		 unsigned max_leases,
+		 std::size_t concurrency,
 		 LeasePtr &lease_ref,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
