@@ -161,7 +161,7 @@ apply_next_cookie(CookieJar &jar, struct pool &tpool, StringView &input,
 
 	/* add the new one */
 
-	if (cookie->expires != Expiry::AlreadyExpired())
+	if (!cookie->value.empty() && cookie->expires != Expiry::AlreadyExpired())
 		jar.Add(*cookie.release());
 
 	return true;
