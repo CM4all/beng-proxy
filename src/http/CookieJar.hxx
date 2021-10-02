@@ -56,9 +56,16 @@ struct CookieJar {
 	IntrusiveList<Cookie> cookies;
 
 	CookieJar() = default;
+	CookieJar(CookieJar &&) noexcept = default;
 
 	CookieJar(const CookieJar &src);
 	~CookieJar() noexcept;
+
+	CookieJar &operator=(CookieJar &&src) noexcept {
+		using std::swap;
+		swap(cookies, src.cookies);
+		return *this;
+	}
 
 	bool empty() const noexcept {
 		return cookies.empty();
