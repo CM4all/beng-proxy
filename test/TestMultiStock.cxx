@@ -632,3 +632,113 @@ TEST(MultiStock, CreateTwo)
 	ASSERT_EQ(foo.ready, 1);
 	ASSERT_EQ(foo.failed, 0);
 }
+
+TEST(MultiStock, FadeBusy)
+{
+	Instance instance;
+
+	Partition foo{instance, "foo"};
+
+	/* request one more than allowed */
+	foo.Get(3);
+
+	instance.RunSome();
+
+	ASSERT_EQ(foo.factory_created, 1);
+	ASSERT_EQ(foo.factory_failed, 0);
+	ASSERT_EQ(foo.destroyed, 0);
+	ASSERT_EQ(foo.total, 3);
+	ASSERT_EQ(foo.waiting, 1);
+	ASSERT_EQ(foo.ready, 2);
+	ASSERT_EQ(foo.failed, 0);
+
+	/* enable "fade"; this means no change right now, because no
+	   item is removed */
+	instance.multi_stock.FadeAll();
+	instance.RunSome();
+
+	ASSERT_EQ(foo.factory_created, 1);
+	ASSERT_EQ(foo.factory_failed, 0);
+	ASSERT_EQ(foo.destroyed, 0);
+	ASSERT_EQ(foo.total, 3);
+	ASSERT_EQ(foo.waiting, 1);
+	ASSERT_EQ(foo.ready, 2);
+	ASSERT_EQ(foo.failed, 0);
+
+	/* release one; the waiting client won't be handled because
+	   the one item is in "fade" mode */
+	foo.PutReady(1);
+	instance.RunSome();
+
+	ASSERT_EQ(foo.factory_created, 1);
+	ASSERT_EQ(foo.factory_failed, 0);
+	ASSERT_EQ(foo.destroyed, 0);
+	ASSERT_EQ(foo.total, 2);
+	ASSERT_EQ(foo.waiting, 1);
+	ASSERT_EQ(foo.ready, 1);
+	ASSERT_EQ(foo.failed, 0);
+
+	/* release the last one; now the existing item will be
+	   destroyed and a new one is created */
+	foo.PutReady(1);
+	instance.RunSome();
+
+	ASSERT_EQ(foo.factory_created, 2);
+	ASSERT_EQ(foo.factory_failed, 0);
+	ASSERT_EQ(foo.destroyed, 1);
+	ASSERT_EQ(foo.total, 1);
+	ASSERT_EQ(foo.waiting, 0);
+	ASSERT_EQ(foo.ready, 1);
+	ASSERT_EQ(foo.failed, 0);
+}
+
+TEST(MultiStock, FadeIdle)
+{
+	Instance instance;
+
+	Partition foo{instance, "foo"};
+
+	/* create one */
+	foo.Get(1);
+	instance.RunSome();
+	ASSERT_EQ(foo.factory_created, 1);
+	ASSERT_EQ(foo.factory_failed, 0);
+	ASSERT_EQ(foo.destroyed, 0);
+	ASSERT_EQ(foo.total, 1);
+	ASSERT_EQ(foo.waiting, 0);
+	ASSERT_EQ(foo.ready, 1);
+	ASSERT_EQ(foo.failed, 0);
+
+	/* release it; it will remain idle */
+	foo.PutReady(1);
+	instance.RunSome();
+	ASSERT_EQ(foo.factory_created, 1);
+	ASSERT_EQ(foo.factory_failed, 0);
+	ASSERT_EQ(foo.destroyed, 0);
+	ASSERT_EQ(foo.total, 0);
+	ASSERT_EQ(foo.waiting, 0);
+	ASSERT_EQ(foo.ready, 0);
+	ASSERT_EQ(foo.failed, 0);
+
+	/* fade it; the one idle item is destroyed now */
+	instance.multi_stock.FadeAll();
+	instance.RunSome();
+	ASSERT_EQ(foo.factory_created, 1);
+	ASSERT_EQ(foo.factory_failed, 0);
+	ASSERT_EQ(foo.destroyed, 1);
+	ASSERT_EQ(foo.total, 0);
+	ASSERT_EQ(foo.waiting, 0);
+	ASSERT_EQ(foo.ready, 0);
+	ASSERT_EQ(foo.failed, 0);
+
+	/* request a new item */
+	foo.Get(1);
+	instance.RunSome();
+	ASSERT_EQ(foo.factory_created, 2);
+	ASSERT_EQ(foo.factory_failed, 0);
+	ASSERT_EQ(foo.destroyed, 1);
+	ASSERT_EQ(foo.total, 1);
+	ASSERT_EQ(foo.waiting, 0);
+	ASSERT_EQ(foo.ready, 1);
+	ASSERT_EQ(foo.failed, 0);
+}
