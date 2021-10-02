@@ -41,12 +41,12 @@
 #include <cassert>
 
 void
-MultiStock::Item::Lease::ReleaseLease(bool _reuse) noexcept
+MultiStock::SharedItem::Lease::ReleaseLease(bool _reuse) noexcept
 {
 	item.DeleteLease(this, _reuse);
 }
 
-MultiStock::Item::~Item() noexcept
+MultiStock::SharedItem::~SharedItem() noexcept
 {
 	assert(leases.empty());
 
@@ -54,7 +54,7 @@ MultiStock::Item::~Item() noexcept
 }
 
 void
-MultiStock::Item::AddLease(StockGetHandler &handler,
+MultiStock::SharedItem::AddLease(StockGetHandler &handler,
 			   LeasePtr &lease_ref) noexcept
 {
 	lease_ref.Set(AddLease());
@@ -63,7 +63,7 @@ MultiStock::Item::AddLease(StockGetHandler &handler,
 }
 
 inline void
-MultiStock::Item::DeleteLease(Lease *lease, bool _reuse) noexcept
+MultiStock::SharedItem::DeleteLease(Lease *lease, bool _reuse) noexcept
 {
 	reuse &= _reuse;
 
@@ -120,7 +120,7 @@ MultiStock::MapItem::~MapItem() noexcept
 		get_cancel_ptr.Cancel();
 }
 
-MultiStock::Item *
+MultiStock::SharedItem *
 MultiStock::MapItem::FindUsable() noexcept
 {	for (auto &i : items)
 		if (i.CanUse())
@@ -129,7 +129,7 @@ MultiStock::MapItem::FindUsable() noexcept
 	return nullptr;
 }
 
-MultiStock::Item &
+MultiStock::SharedItem &
 MultiStock::MapItem::GetNow(StockRequest request, unsigned max_leases)
 {
 	if (auto *i = FindUsable())
@@ -138,7 +138,7 @@ MultiStock::MapItem::GetNow(StockRequest request, unsigned max_leases)
 	auto *stock_item = stock.GetNow(std::move(request));
 	assert(stock_item != nullptr);
 
-	auto *item = new Item(*this, *stock_item, max_leases);
+	auto *item = new SharedItem(*this, *stock_item, max_leases);
 	items.push_back(*item);
 	return *item;
 }
@@ -155,7 +155,7 @@ MultiStock::MapItem::Get(StockRequest request, unsigned max_leases,
 	}
 
 	if (auto *stock_item = stock.GetIdle()) {
-		auto *i = new Item(*this, *stock_item, max_leases);
+		auto *i = new SharedItem(*this, *stock_item, max_leases);
 		items.push_back(*i);
 		i->AddLease(handler, lease_ref);
 		return;
@@ -172,7 +172,7 @@ MultiStock::MapItem::Get(StockRequest request, unsigned max_leases,
 }
 
 inline void
-MultiStock::MapItem::RemoveItem(Item &item) noexcept
+MultiStock::MapItem::RemoveItem(SharedItem &item) noexcept
 {
 	items.erase_and_dispose(items.iterator_to(item), DeleteDisposer{});
 
@@ -203,7 +203,7 @@ MultiStock::MapItem::RemoveWaiting(Waiting &w) noexcept
 }
 
 inline void
-MultiStock::MapItem::DeleteEmptyItems(const Item *except) noexcept
+MultiStock::MapItem::DeleteEmptyItems(const SharedItem *except) noexcept
 {
 	items.remove_and_dispose_if([except](const auto &item){
 		return &item != except && item.IsEmpty();
@@ -211,7 +211,7 @@ MultiStock::MapItem::DeleteEmptyItems(const Item *except) noexcept
 }
 
 inline void
-MultiStock::MapItem::FinishWaiting(Item &item) noexcept
+MultiStock::MapItem::FinishWaiting(SharedItem &item) noexcept
 {
 	assert(item.CanUse());
 	assert(!waiting.empty());
@@ -277,7 +277,7 @@ MultiStock::MapItem::OnStockItemReady(StockItem &stock_item) noexcept
 
 	retry_event.Cancel();
 
-	auto *item = new Item(*this, stock_item, get_max_leases);
+	auto *item = new SharedItem(*this, stock_item, get_max_leases);
 	items.push_back(*item);
 
 	FinishWaiting(*item);
@@ -301,7 +301,7 @@ MultiStock::MapItem::OnStockItemError(std::exception_ptr error) noexcept
 }
 
 inline void
-MultiStock::MapItem::OnLeaseReleased(Item &item) noexcept
+MultiStock::MapItem::OnLeaseReleased(SharedItem &item) noexcept
 {
 	/* now that a lease was released, schedule the "waiting" list
 	   again */

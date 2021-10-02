@@ -55,7 +55,11 @@ struct StockStats;
 class MultiStock {
 	class MapItem;
 
-	class Item
+	/**
+	 * A manager for an "outer" #StockItem which can be shared by
+	 * multiple clients.
+	 */
+	class SharedItem
 		: public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>
 	{
 
@@ -71,9 +75,9 @@ class MultiStock {
 							      Lease::SiblingsListHook,
 							      &Lease::siblings>;
 
-			Item &item;
+			SharedItem &item;
 
-			Lease(Item &_item):item(_item) {}
+			explicit Lease(SharedItem &_item) noexcept:item(_item) {}
 
 			/* virtual methods from class Lease */
 			void ReleaseLease(bool _reuse) noexcept override;
@@ -91,15 +95,15 @@ class MultiStock {
 		bool reuse = true;
 
 	public:
-		Item(MapItem &_parent, StockItem &_item,
-		     unsigned _max_leases) noexcept
+		SharedItem(MapItem &_parent, StockItem &_item,
+			   unsigned _max_leases) noexcept
 			:parent(_parent), item(_item),
 			 remaining_leases(_max_leases) {}
 
-		Item(const Item &) = delete;
-		Item &operator=(const Item &) = delete;
+		SharedItem(const SharedItem &) = delete;
+		SharedItem &operator=(const SharedItem &) = delete;
 
-		~Item() noexcept;
+		~SharedItem() noexcept;
 
 		bool IsFull() const noexcept {
 			return remaining_leases == 0;
@@ -150,10 +154,10 @@ class MultiStock {
 		StockMap &map_stock;
 		Stock &stock;
 
-		using ItemList =
-			boost::intrusive::list<Item,
+		using SharedItemList =
+			boost::intrusive::list<SharedItem,
 					       boost::intrusive::constant_time_size<false>>;
-		ItemList items;
+		SharedItemList items;
 
 		struct Waiting;
 		using WaitingList =
@@ -178,7 +182,7 @@ class MultiStock {
 		MapItem(StockMap &_map_stock, Stock &_stock) noexcept;
 		~MapItem() noexcept;
 
-		Item &GetNow(StockRequest request, unsigned max_leases);
+		SharedItem &GetNow(StockRequest request, unsigned max_leases);
 		void Get(StockRequest request, unsigned max_leases,
 			 LeasePtr &lease_ref,
 			 StockGetHandler &handler,
@@ -186,8 +190,8 @@ class MultiStock {
 
 		void RemoveWaiting(Waiting &w) noexcept;
 
-		void RemoveItem(Item &item) noexcept;
-		void OnLeaseReleased(Item &item) noexcept;
+		void RemoveItem(SharedItem &item) noexcept;
+		void OnLeaseReleased(SharedItem &item) noexcept;
 
 		void FadeAll() noexcept {
 			for (auto &i : items)
@@ -202,14 +206,14 @@ class MultiStock {
 
 	private:
 		[[gnu::pure]]
-		Item *FindUsable() noexcept;
+		SharedItem *FindUsable() noexcept;
 
 		/**
 		 * Delete all empty items.
 		 */
-		void DeleteEmptyItems(const Item *except=nullptr) noexcept;
+		void DeleteEmptyItems(const SharedItem *except=nullptr) noexcept;
 
-		void FinishWaiting(Item &item) noexcept;
+		void FinishWaiting(SharedItem &item) noexcept;
 
 		/**
 		 * Retry the waiting requests.
