@@ -45,6 +45,17 @@ Request::GetCookieHost() const noexcept
 	return translate.address.GetHostAndPort();
 }
 
+static void
+ParseSetCookie(CookieJar &cookies,
+	       StringMap::const_iterator begin,
+	       StringMap::const_iterator end,
+	       const char *host_and_port, const char *path) noexcept
+{
+	for (auto i = begin; i != end; ++i)
+		cookie_jar_set_cookie2(cookies, i->value,
+				       host_and_port, path);
+}
+
 void
 Request::CollectCookies(const StringMap &headers) noexcept
 {
@@ -63,11 +74,23 @@ Request::CollectCookies(const StringMap &headers) noexcept
 	if (path == nullptr)
 		return;
 
-	auto session = MakeRealmSession();
-	if (!session)
+	if (auto session = GetRealmSession()) {
+		/* there's already an existing session */
+		ParseSetCookie(session->cookies, r.first, r.second,
+			       host_and_port, path);
+		return;
+	}
+
+	/* there's no session yet; first parse the cookies, and see if
+	   there is really a cookie in those headers */
+	CookieJar cookies;
+	ParseSetCookie(cookies, r.first, r.second,
+		       host_and_port, path);
+	if (cookies.empty())
+		/* nah, we don't need a session */
 		return;
 
-	for (auto i = r.first; i != r.second; ++i)
-		cookie_jar_set_cookie2(session->cookies, i->value,
-				       host_and_port, path);
+	/* aye, create a session and move the cookie jar into it */
+	if (auto session = MakeRealmSession())
+		session->cookies = std::move(cookies);
 }
