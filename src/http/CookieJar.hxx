@@ -60,6 +60,10 @@ struct CookieJar {
 	CookieJar(const CookieJar &src);
 	~CookieJar() noexcept;
 
+	bool empty() const noexcept {
+		return cookies.empty();
+	}
+
 	void Add(Cookie &cookie) noexcept {
 		cookies.push_front(cookie);
 	}
