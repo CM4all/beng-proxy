@@ -32,13 +32,14 @@
 
 #pragma once
 
-#include "stock/Stock.hxx"
+#include "stock/AbstractStock.hxx"
 
 class StockLoggerDomain {
-	const Stock &stock;
+	const AbstractStock &stock;
 
 public:
-	explicit StockLoggerDomain(const Stock &_stock):stock(_stock) {}
+	explicit StockLoggerDomain(const AbstractStock &_stock) noexcept
+		:stock(_stock) {}
 
 	StringView GetDomain() const {
 		return stock.GetName();
