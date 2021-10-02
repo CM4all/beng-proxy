@@ -115,7 +115,6 @@ class LhttpConnection final
 
 	LeasePtr lease_ref;
 
-	UniqueSocketDescriptor fd;
 	SocketEvent event;
 
 public:
@@ -132,8 +131,8 @@ public:
 		     CancellablePointer &cancel_ptr) noexcept;
 
 	SocketDescriptor GetSocket() const noexcept {
-		assert(fd.IsDefined());
-		return fd;
+		assert(event.IsDefined());
+		return event.GetSocket();
 	}
 
 	gcc_pure
@@ -203,7 +202,7 @@ LhttpConnection::OnStockItemReady(StockItem &item) noexcept
 	child = (ListenChildStockItem *)&item;
 
 	try {
-		fd = child->Connect();
+		event.Open(child->Connect().Release());
 	} catch (...) {
 		InvokeCreateError(NestException(std::current_exception(),
 						FormatRuntimeError("Failed to connect to LHTTP server '%s'",
@@ -211,7 +210,6 @@ LhttpConnection::OnStockItemReady(StockItem &item) noexcept
 		return;
 	}
 
-	event.Open(fd);
 	InvokeCreateSuccess();
 }
 
@@ -240,7 +238,7 @@ inline void
 LhttpConnection::EventCallback(unsigned) noexcept
 {
 	char buffer;
-	ssize_t nbytes = fd.Read(&buffer, sizeof(buffer));
+	ssize_t nbytes = GetSocket().Read(&buffer, sizeof(buffer));
 	if (nbytes < 0)
 		logger(2, "error on idle LHTTP connection: ", strerror(errno));
 	else if (nbytes > 0)
@@ -341,10 +339,7 @@ LhttpStock::Create(CreateStockItem c, StockRequest request,
 
 LhttpConnection::~LhttpConnection() noexcept
 {
-	if (fd.IsDefined()) {
-		event.Cancel();
-		fd.Close();
-	}
+	event.Close();
 
 	if (child != nullptr)
 		lease_ref.Release(true);
