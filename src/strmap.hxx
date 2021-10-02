@@ -101,11 +101,11 @@ class StringMap {
 					   boost::intrusive::compare<Item::Compare>,
 					   boost::intrusive::constant_time_size<false>> Map;
 
-	typedef Map::const_iterator const_iterator;
-
 	Map map;
 
 public:
+	using const_iterator = Map::const_iterator;
+
 	StringMap() = default;
 
 	template<typename A>
