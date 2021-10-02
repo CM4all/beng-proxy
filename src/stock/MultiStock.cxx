@@ -50,7 +50,7 @@ MultiStock::SharedItem::~SharedItem() noexcept
 {
 	assert(leases.empty());
 
-	item.Put(!reuse);
+	shared_item.Put(!reuse);
 }
 
 void
@@ -59,7 +59,7 @@ MultiStock::SharedItem::AddLease(StockGetHandler &handler,
 {
 	lease_ref.Set(AddLease());
 
-	handler.OnStockItemReady(item);
+	handler.OnStockItemReady(shared_item);
 }
 
 inline void

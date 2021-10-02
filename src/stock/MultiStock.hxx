@@ -85,7 +85,7 @@ class MultiStock {
 
 		MapItem &parent;
 
-		StockItem &item;
+		StockItem &shared_item;
 
 		boost::intrusive::list<Lease, Lease::SiblingsListMemberHook,
 				       boost::intrusive::constant_time_size<false>> leases;
@@ -97,7 +97,7 @@ class MultiStock {
 	public:
 		SharedItem(MapItem &_parent, StockItem &_item,
 			   unsigned _max_leases) noexcept
-			:parent(_parent), item(_item),
+			:parent(_parent), shared_item(_item),
 			 remaining_leases(_max_leases) {}
 
 		SharedItem(const SharedItem &) = delete;
@@ -123,7 +123,7 @@ class MultiStock {
 
 		template<typename P>
 		void FadeIf(P &&predicate) noexcept {
-			if (predicate(item))
+			if (predicate(shared_item))
 				Fade();
 		}
 
@@ -141,7 +141,7 @@ class MultiStock {
 
 		StockItem *AddLease(LeasePtr &lease_ref) noexcept {
 			lease_ref.Set(AddLease());
-			return &item;
+			return &shared_item;
 		}
 
 		void DeleteLease(Lease *lease, bool _reuse) noexcept;
