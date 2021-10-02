@@ -222,7 +222,7 @@ class MultiStock {
 		template<typename P>
 		void FadeIf(P &&predicate) noexcept {
 			for (auto &i : items)
-				i.FadeIf(std::forward<P>(predicate));
+				i.FadeIf(predicate);
 		}
 
 	private:
@@ -306,7 +306,7 @@ public:
 	template<typename P>
 	void FadeIf(P &&predicate) noexcept {
 		for (auto &i : map)
-			i.FadeIf(std::forward<P>(predicate));
+			i.FadeIf(predicate);
 	}
 
 	void Get(const char *uri, StockRequest request,
