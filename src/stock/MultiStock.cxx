@@ -129,20 +129,6 @@ MultiStock::MapItem::FindUsable() noexcept
 	return nullptr;
 }
 
-MultiStock::SharedItem &
-MultiStock::MapItem::GetNow(StockRequest request, std::size_t concurrency)
-{
-	if (auto *i = FindUsable())
-		return *i;
-
-	auto *stock_item = stock.GetNow(std::move(request));
-	assert(stock_item != nullptr);
-
-	auto *item = new SharedItem(*this, *stock_item, concurrency);
-	items.push_back(*item);
-	return *item;
-}
-
 inline void
 MultiStock::MapItem::Get(StockRequest request, std::size_t concurrency,
 			 LeasePtr &lease_ref,

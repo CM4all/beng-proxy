@@ -182,8 +182,6 @@ class MultiStock {
 		MapItem(StockMap &_map_stock, Stock &_stock) noexcept;
 		~MapItem() noexcept;
 
-		SharedItem &GetNow(StockRequest request,
-				   std::size_t concurrency);
 		void Get(StockRequest request, std::size_t concurrency,
 			 LeasePtr &lease_ref,
 			 StockGetHandler &handler,
