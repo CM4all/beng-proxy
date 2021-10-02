@@ -33,7 +33,6 @@
 #pragma once
 
 #include "spawn/ChildStock.hxx"
-#include "stock/Class.hxx"
 #include "stock/MultiStock.hxx"
 
 class AllocatorPtr;
@@ -45,10 +44,9 @@ class EventLoop;
 class SpawnService;
 template<typename T> struct ConstBuffer;
 
-class MultiWasStock final : StockClass, ChildStockClass {
+class MultiWasStock final : MultiStockClass, ChildStockClass {
 	ChildStock child_stock;
 	MultiStock mchild_stock;
-	StockMap hstock;
 
 public:
 	MultiWasStock(unsigned limit, unsigned max_idle,
@@ -59,23 +57,18 @@ public:
 	void DiscardSome() noexcept {
 		/* first close idle connections, hopefully turning
 		   child processes idle */
-		hstock.DiscardUnused();
+		mchild_stock.DiscardUnused();
 
 		/* kill the oldest child process */
 		child_stock.DiscardOldestIdle();
 	}
 
 	void FadeAll() noexcept {
-		hstock.FadeAll();
 		child_stock.GetStockMap().FadeAll();
 		mchild_stock.FadeAll();
 	}
 
 	void FadeTag(StringView tag) noexcept;
-
-	StockMap &GetConnectionStock() noexcept {
-		return hstock;
-	}
 
 	/**
 	 * The resulting #StockItem will be a #WasStockConnection
@@ -90,9 +83,8 @@ public:
 		 CancellablePointer &cancel_ptr) noexcept;
 
 private:
-	/* virtual methods from class StockClass */
-	void Create(CreateStockItem c, StockRequest request,
-		    CancellablePointer &cancel_ptr) override;
+	/* virtual methods from class MultiStockClass */
+	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 
 	/* virtual methods from class ChildStockClass */
 	Event::Duration GetChildClearInterval(void *info) const noexcept override;

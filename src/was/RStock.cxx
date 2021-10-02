@@ -40,7 +40,6 @@
 #include "pool/DisposablePointer.hxx"
 #include "pool/tpool.hxx"
 #include "AllocatorPtr.hxx"
-#include "lease.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "net/ConnectSocket.hxx"
@@ -118,85 +117,6 @@ RemoteMultiWasConnection::Release() noexcept
 	return true;
 }
 
-class RemoteWasConnection final
-	: public WasStockConnection, Cancellable, StockGetHandler
-{
-	RemoteMultiWasConnection *multi_connection = nullptr;
-
-	CancellablePointer get_cancel_ptr;
-
-	LeasePtr lease_ref;
-
-public:
-	using WasStockConnection::WasStockConnection;
-
-	~RemoteWasConnection() noexcept override;
-
-	void Connect(MultiStock &multi_stock,
-		     StockRequest &&request,
-		     unsigned concurrency,
-		     CancellablePointer &cancel_ptr) noexcept;
-
-private:
-	/* virtual methods from class Cancellable */
-	void Cancel() noexcept override {
-		InvokeCreateAborted();
-	}
-
-	/* virtual methods from class StockGetHandler */
-	void OnStockItemReady(StockItem &item) noexcept override;
-	void OnStockItemError(std::exception_ptr error) noexcept override;
-};
-
-RemoteWasConnection::~RemoteWasConnection() noexcept
-{
-	if (multi_connection != nullptr)
-		lease_ref.Release(true);
-	else if (get_cancel_ptr)
-		get_cancel_ptr.CancelAndClear();
-}
-
-inline void
-RemoteWasConnection::Connect(MultiStock &multi_stock,
-			     StockRequest &&request,
-			     unsigned concurrency,
-			     CancellablePointer &caller_cancel_ptr) noexcept
-{
-	caller_cancel_ptr = *this;
-
-	multi_stock.Get(GetStockName(), std::move(request), concurrency,
-			lease_ref, *this, get_cancel_ptr);
-}
-
-void
-RemoteWasConnection::OnStockItemReady(StockItem &item) noexcept
-{
-	get_cancel_ptr = nullptr;
-
-	multi_connection = (RemoteMultiWasConnection *)&item;
-
-	try {
-		Open(multi_connection->Connect());
-	} catch (...) {
-		InvokeCreateError(NestException(std::current_exception(),
-						FormatRuntimeError("Failed to connect to RemoteWAS server '%s'",
-								   GetStockName())));
-		return;
-	}
-
-	InvokeCreateSuccess();
-}
-
-void
-RemoteWasConnection::OnStockItemError(std::exception_ptr error) noexcept
-{
-	get_cancel_ptr = nullptr;
-
-	InvokeCreateError(NestException(std::move(error),
-					FormatRuntimeError("Failed to connect to RemoteWAS server %s",
-							   GetStockName())));
-}
-
 void
 RemoteWasStock::MultiClientStockClass::Create(CreateStockItem c,
 					      StockRequest request,
@@ -217,20 +137,14 @@ RemoteWasStock::RemoteWasStock(unsigned limit, unsigned max_idle,
 			    multi_client_stock_class,
 			    limit, max_idle,
 			    std::chrono::minutes{5}),
-	 multi_stock(multi_client_stock),
-	 connection_stock(event_loop, *this, 0, max_idle,
-			  std::chrono::minutes{2}) {}
+	 multi_stock(multi_client_stock, *this) {}
 
-void
-RemoteWasStock::Create(CreateStockItem c, StockRequest request,
-		       CancellablePointer &cancel_ptr)
+StockItem *
+RemoteWasStock::Create(CreateStockItem c, StockItem &shared_item)
 {
-	const auto &params = *(const RemoteMultiWasParams *)request.get();
+	auto &multi_connection = (RemoteMultiWasConnection &)shared_item;
 
-	auto *connection = new RemoteWasConnection(c);
-	connection->Connect(multi_stock, std::move(request),
-			    params.concurrency,
-			    cancel_ptr);
+	return new WasStockConnection(c, multi_connection.Connect());
 }
 
 void
@@ -251,5 +165,5 @@ RemoteWasStock::Get(AllocatorPtr alloc, SocketAddress address,
 
 	const char *key = alloc.Dup(buffer);
 
-	GetConnectionStock().Get(key, std::move(r), handler, cancel_ptr);
+	multi_stock.Get(key, std::move(r), concurrency, handler, cancel_ptr);
 }

@@ -34,19 +34,26 @@
 
 #include "stock/Request.hxx"
 #include "stock/GetHandler.hxx"
+#include "stock/AbstractStock.hxx"
 #include "event/DeferEvent.hxx"
+#include "event/TimerEvent.hxx"
 #include "util/Cancellable.hxx"
-#include "lease.hxx"
 
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/unordered_set.hpp>
 
 class CancellablePointer;
-class LeasePtr;
 class StockMap;
 class Stock;
+struct CreateStockItem;
 struct StockItem;
 struct StockStats;
+
+class MultiStockClass {
+public:
+	virtual StockItem *Create(CreateStockItem c,
+				  StockItem &shared_item) = 0;
+};
 
 /**
  * A #StockMap wrapper which allows multiple clients to use one
@@ -59,46 +66,35 @@ class MultiStock {
 	 * A manager for an "outer" #StockItem which can be shared by
 	 * multiple clients.
 	 */
-	class SharedItem
-		: public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>
+	class SharedItem final
+		: public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
+		  AbstractStock
 	{
-
-		struct Lease final : ::Lease {
-			static constexpr auto link_mode = boost::intrusive::normal_link;
-			using LinkMode = boost::intrusive::link_mode<link_mode>;
-			using SiblingsListHook = boost::intrusive::list_member_hook<LinkMode>;
-
-			SiblingsListHook siblings;
-
-			using SiblingsListMemberHook =
-				boost::intrusive::member_hook<Lease,
-							      Lease::SiblingsListHook,
-							      &Lease::siblings>;
-
-			SharedItem &item;
-
-			explicit Lease(SharedItem &_item) noexcept:item(_item) {}
-
-			/* virtual methods from class Lease */
-			void ReleaseLease(bool _reuse) noexcept override;
-		};
-
 		MapItem &parent;
 
 		StockItem &shared_item;
 
-		boost::intrusive::list<Lease, Lease::SiblingsListMemberHook,
-				       boost::intrusive::constant_time_size<false>> leases;
+		std::size_t limit;
 
-		std::size_t remaining_leases;
+		/**
+		 * This timer periodically deletes one third of all
+		 * idle items, to get rid of all unused items
+		 * eventually.
+		 */
+		TimerEvent cleanup_timer;
+
+		using ItemList =
+			boost::intrusive::list<StockItem,
+					       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
+					       boost::intrusive::constant_time_size<true>>;
+
+		ItemList idle, busy;
 
 		bool reuse = true;
 
 	public:
 		SharedItem(MapItem &_parent, StockItem &_item,
-			   std::size_t _limit) noexcept
-			:parent(_parent), shared_item(_item),
-			 remaining_leases(_limit) {}
+			   std::size_t _limit) noexcept;
 
 		SharedItem(const SharedItem &) = delete;
 		SharedItem &operator=(const SharedItem &) = delete;
@@ -106,20 +102,24 @@ class MultiStock {
 		~SharedItem() noexcept;
 
 		bool IsFull() const noexcept {
-			return remaining_leases == 0;
+			return busy.size() >= limit;
+		}
+
+		bool IsBusy() const noexcept {
+			return !busy.empty();
 		}
 
 		bool IsEmpty() const noexcept {
-			return leases.empty();
+			return idle.empty() && busy.empty();
 		}
 
 		bool CanUse() const noexcept {
 			return reuse && !IsFull();
 		}
 
-		void Fade() noexcept {
-			reuse = false;
-		}
+		void DiscardUnused() noexcept;
+
+		void Fade() noexcept;
 
 		template<typename P>
 		void FadeIf(P &&predicate) noexcept {
@@ -127,24 +127,39 @@ class MultiStock {
 				Fade();
 		}
 
+		void CreateLease(MultiStockClass &_cls,
+				 StockGetHandler &handler) noexcept;
+
+		void GetLease(MultiStockClass &_cls,
+			      StockGetHandler &handler) noexcept;
+
 	private:
-		Lease &AddLease() noexcept {
-			Lease *lease = new Lease(*this);
-			leases.push_front(*lease);
-			--remaining_leases;
-			return *lease;
+		StockItem *GetIdle() noexcept;
+
+		bool GetIdle(StockGetHandler &handler) noexcept;
+
+		void OnCleanupTimer() noexcept;
+
+		void ScheduleCleanupTimer() noexcept {
+			cleanup_timer.Schedule(std::chrono::minutes{5});
 		}
 
-	public:
-		void AddLease(StockGetHandler &handler,
-			      LeasePtr &lease_ref) noexcept;
-
-		StockItem *AddLease(LeasePtr &lease_ref) noexcept {
-			lease_ref.Set(AddLease());
-			return &shared_item;
+		void CancelCleanupTimer() noexcept {
+			cleanup_timer.Cancel();
 		}
 
-		void DeleteLease(Lease *lease, bool _reuse) noexcept;
+		/* virtual methods from class AbstractStock */
+		const char *GetName() const noexcept override;
+		EventLoop &GetEventLoop() const noexcept override;
+
+		void Put(StockItem &item, bool destroy) noexcept override;
+
+		void ItemIdleDisconnect(StockItem &item) noexcept override;
+		void ItemCreateSuccess(StockItem &item) noexcept override;
+		void ItemCreateError(StockGetHandler &get_handler,
+				     std::exception_ptr ep) noexcept override;
+		void ItemCreateAborted() noexcept override;
+		void ItemUncleanFlagCleared() noexcept override;
 	};
 
 	class MapItem final
@@ -153,6 +168,7 @@ class MultiStock {
 	{
 		StockMap &map_stock;
 		Stock &stock;
+		MultiStockClass &cls;
 
 		using SharedItemList =
 			boost::intrusive::list<SharedItem,
@@ -179,11 +195,15 @@ class MultiStock {
 		std::size_t get_concurrency;
 
 	public:
-		MapItem(StockMap &_map_stock, Stock &_stock) noexcept;
+		MapItem(StockMap &_map_stock, Stock &_stock,
+			MultiStockClass &_cls) noexcept;
 		~MapItem() noexcept;
 
+		bool IsEmpty() noexcept {
+			return items.empty() && waiting.empty();
+		}
+
 		void Get(StockRequest request, std::size_t concurrency,
-			 LeasePtr &lease_ref,
 			 StockGetHandler &handler,
 			 CancellablePointer &cancel_ptr) noexcept;
 
@@ -191,6 +211,8 @@ class MultiStock {
 
 		void RemoveItem(SharedItem &item) noexcept;
 		void OnLeaseReleased(SharedItem &item) noexcept;
+
+		void DiscardUnused() noexcept;
 
 		void FadeAll() noexcept {
 			for (auto &i : items)
@@ -244,6 +266,8 @@ class MultiStock {
 
 	StockMap &hstock;
 
+	MultiStockClass &cls;
+
 	using Map =
 		boost::intrusive::unordered_set<MapItem,
 						boost::intrusive::hash<MapItem::Hash>,
@@ -256,11 +280,17 @@ class MultiStock {
 	Map map;
 
 public:
-	explicit MultiStock(StockMap &_hstock) noexcept;
+	MultiStock(StockMap &_hstock, MultiStockClass &_cls) noexcept;
 	~MultiStock() noexcept;
 
 	MultiStock(const MultiStock &) = delete;
 	MultiStock &operator=(const MultiStock &) = delete;
+
+	/**
+	 * Discard all items which are idle and havn't been used in a
+	 * while.
+	 */
+	void DiscardUnused() noexcept;
 
 	/**
 	 * @see Stock::FadeAll()
@@ -281,7 +311,6 @@ public:
 
 	void Get(const char *uri, StockRequest request,
 		 std::size_t concurrency,
-		 LeasePtr &lease_ref,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 

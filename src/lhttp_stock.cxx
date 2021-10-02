@@ -54,10 +54,9 @@
 #include <unistd.h>
 #include <string.h>
 
-class LhttpStock final : StockClass, ListenChildStockClass {
+class LhttpStock final : MultiStockClass, ListenChildStockClass {
 	ChildStock child_stock;
 	MultiStock mchild_stock;
-	StockMap hstock;
 
 public:
 	LhttpStock(unsigned limit, unsigned max_idle,
@@ -68,28 +67,26 @@ public:
 	void DiscardSome() noexcept {
 		/* first close idle connections, hopefully turning
 		   child processes idle */
-		hstock.DiscardUnused();
+		mchild_stock.DiscardUnused();
 
 		/* kill the oldest child process */
 		child_stock.DiscardOldestIdle();
 	}
 
 	void FadeAll() noexcept {
-		hstock.FadeAll();
 		child_stock.GetStockMap().FadeAll();
 		mchild_stock.FadeAll();
 	}
 
 	void FadeTag(StringView tag) noexcept;
 
-	StockMap &GetConnectionStock() noexcept {
-		return hstock;
-	}
+	void Get(const LhttpAddress &address,
+		 StockGetHandler &handler,
+		 CancellablePointer &cancel_ptr) noexcept;
 
 private:
-	/* virtual methods from class StockClass */
-	void Create(CreateStockItem c, StockRequest request,
-		    CancellablePointer &cancel_ptr) override;
+	/* virtual methods from class MultiStockClass */
+	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 
 	/* virtual methods from class ChildStockClass */
 	Event::Duration GetChildClearInterval(void *info) const noexcept override;
@@ -105,30 +102,27 @@ private:
 };
 
 class LhttpConnection final
-	: LoggerDomainFactory, StockItem, Cancellable, StockGetHandler
+	: LoggerDomainFactory, public StockItem
 {
 	LazyDomainLogger logger;
 
-	CancellablePointer get_cancel_ptr;
-
-	ListenChildStockItem *child = nullptr;
+	ListenChildStockItem &child;
 
 	LeasePtr lease_ref;
 
 	SocketEvent event;
 
 public:
-	explicit LhttpConnection(CreateStockItem c) noexcept
+	explicit LhttpConnection(CreateStockItem c,
+				 ListenChildStockItem &_child) noexcept
 		:StockItem(c),
 		 logger(*this),
+		 child(_child),
 		 event(c.stock.GetEventLoop(),
-		       BIND_THIS_METHOD(EventCallback)) {}
+		       BIND_THIS_METHOD(EventCallback),
+		       _child.Connect().Release()) {}
 
 	~LhttpConnection() noexcept override;
-
-	void Connect(MultiStock &child_stock, StockRequest &&request,
-		     unsigned concurrency,
-		     CancellablePointer &cancel_ptr) noexcept;
 
 	SocketDescriptor GetSocket() const noexcept {
 		assert(event.IsDefined());
@@ -137,21 +131,15 @@ public:
 
 	gcc_pure
 	StringView GetTag() const noexcept {
-		assert(child != nullptr);
-
-		return child->GetTag();
+		return child.GetTag();
 	}
 
 	void SetSite(const char *site) noexcept {
-		assert(child != nullptr);
-
-		child->SetSite(site);
+		child.SetSite(site);
 	}
 
 	void SetUri(const char *uri) noexcept {
-		assert(child != nullptr);
-
-		child->SetUri(uri);
+		child.SetUri(uri);
 	}
 
 private:
@@ -161,15 +149,6 @@ private:
 	std::string MakeLoggerDomain() const noexcept override {
 		return GetStockName();
 	}
-
-	/* virtual methods from class Cancellable */
-	void Cancel() noexcept override {
-		InvokeCreateAborted();
-	}
-
-	/* virtual methods from class StockGetHandler */
-	void OnStockItemReady(StockItem &item) noexcept override;
-	void OnStockItemError(std::exception_ptr error) noexcept override;
 
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override {
@@ -182,46 +161,6 @@ private:
 		return true;
 	}
 };
-
-inline void
-LhttpConnection::Connect(MultiStock &child_stock, StockRequest &&request,
-			 unsigned concurrency,
-			 CancellablePointer &caller_cancel_ptr) noexcept
-{
-	caller_cancel_ptr = *this;
-
-	child_stock.Get(GetStockName(), std::move(request),
-			concurrency, lease_ref, *this, get_cancel_ptr);
-}
-
-void
-LhttpConnection::OnStockItemReady(StockItem &item) noexcept
-{
-	get_cancel_ptr = nullptr;
-
-	child = (ListenChildStockItem *)&item;
-
-	try {
-		event.Open(child->Connect().Release());
-	} catch (...) {
-		InvokeCreateError(NestException(std::current_exception(),
-						FormatRuntimeError("Failed to connect to LHTTP server '%s'",
-								   GetStockName())));
-		return;
-	}
-
-	InvokeCreateSuccess();
-}
-
-void
-LhttpConnection::OnStockItemError(std::exception_ptr error) noexcept
-{
-	get_cancel_ptr = nullptr;
-
-	InvokeCreateError(NestException(std::move(error),
-					FormatRuntimeError("Failed to launch LHTTP server '%s'",
-							   GetStockName())));
-}
 
 static const char *
 lhttp_stock_key(struct pool *pool, const LhttpAddress *address) noexcept
@@ -322,29 +261,17 @@ LhttpStock::PrepareListenChild(void *, UniqueSocketDescriptor fd,
  *
  */
 
-void
-LhttpStock::Create(CreateStockItem c, StockRequest request,
-		   CancellablePointer &cancel_ptr)
+StockItem *
+LhttpStock::Create(CreateStockItem c, StockItem &shared_item)
 {
-	const auto *address = (const LhttpAddress *)request.get();
+	auto &child = (ListenChildStockItem &)shared_item;
 
-	assert(address != nullptr);
-	assert(address->path != nullptr);
-
-	auto *connection = new LhttpConnection(c);
-
-	connection->Connect(mchild_stock, std::move(request),
-			    address->concurrency, cancel_ptr);
+	return new LhttpConnection(c, child);
 }
 
 LhttpConnection::~LhttpConnection() noexcept
 {
 	event.Close();
-
-	if (child != nullptr)
-		lease_ref.Release(true);
-	else if (get_cancel_ptr)
-		get_cancel_ptr.CancelAndClear();
 }
 
 
@@ -362,19 +289,14 @@ LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
 		     *this,
 		     log_socket, log_options,
 		     limit, max_idle),
-	 mchild_stock(child_stock.GetStockMap()),
-	 hstock(event_loop, *this, 0, max_idle,
-		std::chrono::minutes(2)) {}
+	 mchild_stock(child_stock.GetStockMap(), *this)
+{
+}
 
 void
 LhttpStock::FadeTag(StringView tag) noexcept
 {
 	assert(tag != nullptr);
-
-	hstock.FadeIf([tag](const StockItem &item){
-		const auto &connection = (const LhttpConnection &)item;
-		return StringListContains(connection.GetTag(), '\0', tag);
-	});
 
 	mchild_stock.FadeIf([tag](const StockItem &_item){
 		auto &item = (const ChildStockItem &)_item;
@@ -419,16 +341,25 @@ lhttp_stock_fade_tag(LhttpStock &ls, StringView tag) noexcept
 	ls.FadeTag(tag);
 }
 
+inline void
+LhttpStock::Get(const LhttpAddress &address,
+		StockGetHandler &handler,
+		CancellablePointer &cancel_ptr) noexcept
+{
+	const TempPoolLease tpool;
+	mchild_stock.Get(lhttp_stock_key(tpool, &address),
+			 ToNopPointer(const_cast<LhttpAddress *>(&address)),
+			 address.concurrency,
+			 handler, cancel_ptr);
+}
+
 void
 lhttp_stock_get(LhttpStock *lhttp_stock,
 		const LhttpAddress *address,
 		StockGetHandler &handler,
 		CancellablePointer &cancel_ptr) noexcept
 {
-	const TempPoolLease tpool;
-	lhttp_stock->GetConnectionStock().Get(lhttp_stock_key(tpool, address),
-					      ToNopPointer(const_cast<LhttpAddress *>(address)),
-					      handler, cancel_ptr);
+	lhttp_stock->Get(*address, handler, cancel_ptr);
 }
 
 SocketDescriptor

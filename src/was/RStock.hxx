@@ -39,7 +39,7 @@
 class AllocatorPtr;
 class SocketAddress;
 
-class RemoteWasStock final : StockClass {
+class RemoteWasStock final : MultiStockClass {
 	class MultiClientStockClass final : public StockClass {
 	public:
 		/* virtual methods from class StockClass */
@@ -51,20 +51,14 @@ class RemoteWasStock final : StockClass {
 
 	StockMap multi_client_stock;
 	MultiStock multi_stock;
-	StockMap connection_stock;
 
 public:
 	RemoteWasStock(unsigned limit, unsigned max_idle,
 		       EventLoop &event_loop) noexcept;
 
 	void FadeAll() noexcept {
-		connection_stock.FadeAll();
 		multi_stock.FadeAll();
 		multi_client_stock.FadeAll();
-	}
-
-	StockMap &GetConnectionStock() noexcept {
-		return connection_stock;
 	}
 
 	/**
@@ -77,7 +71,6 @@ public:
 		 CancellablePointer &cancel_ptr) noexcept;
 
 private:
-	/* virtual methods from class StockClass */
-	void Create(CreateStockItem c, StockRequest request,
-		    CancellablePointer &cancel_ptr) override;
+	/* virtual methods from class MultiStockClass */
+	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 };

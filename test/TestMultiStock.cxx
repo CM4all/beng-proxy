@@ -34,7 +34,6 @@
 #include "stock/MapStock.hxx"
 #include "stock/Class.hxx"
 #include "event/Loop.hxx"
-#include "lease.hxx"
 
 #include <gtest/gtest.h>
 
@@ -60,7 +59,20 @@ struct MyStockItem final : StockItem {
 	}
 };
 
-class MyStockClass final : public StockClass {
+struct MyInnerStockItem final : StockItem {
+	using StockItem::StockItem;
+
+	/* virtual methods from class StockItem */
+	bool Borrow() noexcept override {
+		return true;
+	}
+
+	bool Release() noexcept override {
+		return true;
+	}
+};
+
+class MyStockClass final : public StockClass, public MultiStockClass {
 	class DeferredRequest final : Cancellable {
 		Partition &partition;
 
@@ -83,6 +95,11 @@ public:
 	/* virtual methods from class StockClass */
 	void Create(CreateStockItem c, StockRequest request,
 		    CancellablePointer &cancel_ptr) override;
+
+	/* virtual methods from class MultiStockClass */
+	StockItem *Create(CreateStockItem c, StockItem &) override {
+		return new MyInnerStockItem(c);
+	}
 };
 
 struct Instance {
@@ -90,7 +107,7 @@ struct Instance {
 
 	MyStockClass stock_class;
 	StockMap stock_map;
-	MultiStock multi_stock{stock_map};
+	MultiStock multi_stock{stock_map, stock_class};
 
 	explicit Instance(unsigned limit=1) noexcept
 		:stock_map(event_loop, stock_class, limit, limit,
@@ -138,7 +155,6 @@ struct Partition {
 struct MyLease final : public StockGetHandler {
 	Partition &partition;
 
-	LeasePtr lease;
 	CancellablePointer get_cancel_ptr;
 
 	StockItem *item = nullptr;
@@ -154,7 +170,6 @@ struct MyLease final : public StockGetHandler {
 	}
 
 	~MyLease() noexcept {
-		assert((bool)lease == (item != nullptr));
 		assert(partition.total > 0);
 
 		if (get_cancel_ptr) {
@@ -162,7 +177,7 @@ struct MyLease final : public StockGetHandler {
 			--partition.waiting;
 
 			get_cancel_ptr.Cancel();
-		} else if (lease)
+		} else if (item != nullptr)
 			Release();
 
 		--partition.total;
@@ -176,15 +191,14 @@ struct MyLease final : public StockGetHandler {
 	}
 
 	void Release() noexcept {
-		assert(lease);
 		assert(item != nullptr);
 		assert(partition.total > 0);
 		assert(partition.ready > 0);
 
 		--partition.ready;
 
+		item->Put(!reuse);
 		item = nullptr;
-		lease.Release(reuse);
 	}
 
 	/* virtual methods from class StockGetHandler */
@@ -218,7 +232,7 @@ Partition::Get() noexcept
 {
 	leases.emplace_back(*this);
 	auto &lease = leases.back();
-	instance.multi_stock.Get(key, ToNopPointer(this), 2, lease.lease,
+	instance.multi_stock.Get(key, ToNopPointer(this), 2,
 				 lease, lease.get_cancel_ptr);
 	return lease;
 }
@@ -227,7 +241,7 @@ void
 Partition::PutReady(unsigned n) noexcept
 {
 	for (auto i = leases.begin(), end = leases.end(); n > 0 && i != end;) {
-		if (i->lease) {
+		if (i->item != nullptr) {
 			i = leases.erase(i);
 			--n;
 		} else
@@ -241,7 +255,7 @@ Partition::PutDirty(unsigned n) noexcept
 	for (auto i = leases.begin(); n > 0;) {
 		assert(i != leases.end());
 
-		if (i->lease) {
+		if (i->item != nullptr) {
 			i->SetDirty();
 			i = leases.erase(i);
 			--n;

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.67) unstable; urgency=low
 
-  * 
+  * bp: fix Multi-WAS and LHTTP stock limits
 
  --   
 

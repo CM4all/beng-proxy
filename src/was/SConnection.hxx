@@ -46,6 +46,12 @@ class WasStockConnection
 public:
 	explicit WasStockConnection(CreateStockItem c) noexcept;
 
+	WasStockConnection(CreateStockItem c, WasSocket &&_socket) noexcept
+		:WasStockConnection(c)
+	{
+		Open(std::move(_socket));
+	}
+
 	auto &GetEventLoop() const noexcept {
 		return connection.GetEventLoop();
 	}

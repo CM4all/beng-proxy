@@ -40,38 +40,209 @@
 
 #include <cassert>
 
-void
-MultiStock::SharedItem::Lease::ReleaseLease(bool _reuse) noexcept
+MultiStock::SharedItem::SharedItem(MapItem &_parent, StockItem &_item,
+				   std::size_t _limit) noexcept
+	:parent(_parent), shared_item(_item),
+	 limit(_limit),
+	 cleanup_timer(shared_item.stock.GetEventLoop(),
+		       BIND_THIS_METHOD(OnCleanupTimer))
 {
-	item.DeleteLease(this, _reuse);
 }
 
 MultiStock::SharedItem::~SharedItem() noexcept
 {
-	assert(leases.empty());
+	assert(busy.empty());
+
+	DiscardUnused();
 
 	shared_item.Put(!reuse);
 }
 
 void
-MultiStock::SharedItem::AddLease(StockGetHandler &handler,
-			   LeasePtr &lease_ref) noexcept
+MultiStock::SharedItem::OnCleanupTimer() noexcept
 {
-	lease_ref.Set(AddLease());
+	/* destroy one third of the idle items */
+	for (std::size_t i = (idle.size() + 2) / 3; i > 0; --i)
+		idle.pop_front_and_dispose(DeleteDisposer{});
 
-	handler.OnStockItemReady(shared_item);
+	if (!idle.empty())
+		/* repeat until we need this SharedItem again or until
+		   there are no more idle items */
+		ScheduleCleanupTimer();
+}
+
+void
+MultiStock::SharedItem::DiscardUnused() noexcept
+{
+	idle.clear_and_dispose(DeleteDisposer{});
+}
+
+void
+MultiStock::SharedItem::Fade() noexcept
+{
+	reuse = false;
+	DiscardUnused();
 }
 
 inline void
-MultiStock::SharedItem::DeleteLease(Lease *lease, bool _reuse) noexcept
+MultiStock::SharedItem::CreateLease(MultiStockClass &_cls,
+				    StockGetHandler &handler) noexcept
+try {
+	auto *lease = _cls.Create({*this, handler}, shared_item);
+	lease->InvokeCreateSuccess();
+} catch (...) {
+	/* if this SharedItem happens to be (still) empty, let the
+	   parent delete it */
+	if (IsEmpty())
+		parent.OnLeaseReleased(*this);
+
+	ItemCreateError(handler, std::current_exception());
+}
+
+inline StockItem *
+MultiStock::SharedItem::GetIdle() noexcept
 {
-	reuse &= _reuse;
+	assert(CanUse());
 
-	assert(!leases.empty());
-	leases.erase_and_dispose(leases.iterator_to(*lease),
-				 DeleteDisposer());
-	++remaining_leases;
+	// TODO code copied from Stock::GetIdle()
 
+	auto i = idle.begin();
+	const auto end = idle.end();
+	while (i != end) {
+		StockItem &item = *i;
+		assert(item.is_idle);
+
+		if (item.unclean) {
+			/* postpone reusal of this item until it's
+			   "clean" */
+			// TODO: replace this kludge
+			++i;
+			continue;
+		}
+
+		i = idle.erase(i);
+
+		if (item.Borrow()) {
+#ifndef NDEBUG
+			item.is_idle = false;
+#endif
+
+			CancelCleanupTimer();
+
+			busy.push_front(item);
+			return &item;
+		}
+
+		delete &item;
+	}
+
+	return nullptr;
+}
+
+inline bool
+MultiStock::SharedItem::GetIdle(StockGetHandler &handler) noexcept
+{
+	assert(CanUse());
+
+	auto *item = GetIdle();
+	if (item == nullptr)
+		return false;
+
+	handler.OnStockItemReady(*item);
+	return true;
+}
+
+void
+MultiStock::SharedItem::GetLease(MultiStockClass &_cls,
+				 StockGetHandler &handler) noexcept
+{
+	assert(CanUse());
+
+	if (!GetIdle(handler))
+		CreateLease(_cls, handler);
+}
+
+const char *
+MultiStock::SharedItem::GetName() const noexcept
+{
+	return shared_item.stock.GetName();
+}
+
+EventLoop &
+MultiStock::SharedItem::GetEventLoop() const noexcept
+{
+	return cleanup_timer.GetEventLoop();
+}
+
+void
+MultiStock::SharedItem::Put(StockItem &item, bool destroy) noexcept
+{
+	assert(!item.is_idle);
+	assert(&item.stock == this);
+
+	assert(!busy.empty());
+
+	busy.erase(busy.iterator_to(item));
+
+	if (destroy)
+		// TODO do we need to destroy the whole SharedItem?
+		Fade();
+
+	if (!reuse || destroy || item.fade || !item.Release()) {
+		delete &item;
+	} else {
+#ifndef NDEBUG
+		item.is_idle = true;
+#endif
+
+		idle.push_front(item);
+
+		ScheduleCleanupTimer();
+	}
+
+	parent.OnLeaseReleased(*this);
+}
+
+void
+MultiStock::SharedItem::ItemIdleDisconnect(StockItem &item) noexcept
+{
+	assert(item.is_idle);
+	assert(!idle.empty());
+
+	idle.erase_and_dispose(idle.iterator_to(item), DeleteDisposer{});
+
+	if (IsEmpty())
+		parent.OnLeaseReleased(*this);
+}
+
+void
+MultiStock::SharedItem::ItemCreateSuccess(StockItem &item) noexcept
+{
+	busy.push_front(item);
+	item.handler.OnStockItemReady(item);
+}
+
+void
+MultiStock::SharedItem::ItemCreateError(StockGetHandler &get_handler,
+					std::exception_ptr ep) noexcept
+{
+	Fade();
+
+	if (IsEmpty())
+		parent.OnLeaseReleased(*this);
+
+	get_handler.OnStockItemError(std::move(ep));
+}
+
+void
+MultiStock::SharedItem::ItemCreateAborted() noexcept
+{
+	// unreachable
+}
+
+void
+MultiStock::SharedItem::ItemUncleanFlagCleared() noexcept
+{
 	parent.OnLeaseReleased(*this);
 }
 
@@ -81,15 +252,14 @@ struct MultiStock::MapItem::Waiting final
 {
 	MapItem &parent;
 	StockRequest request;
-	LeasePtr &lease_ref;
 	StockGetHandler &handler;
 	CancellablePointer &caller_cancel_ptr;
 
 	Waiting(MapItem &_parent, StockRequest &&_request,
-		LeasePtr &_lease_ref, StockGetHandler &_handler,
+		StockGetHandler &_handler,
 		CancellablePointer &_cancel_ptr) noexcept
 		:parent(_parent), request(std::move(_request)),
-		 lease_ref(_lease_ref), handler(_handler),
+		 handler(_handler),
 		 caller_cancel_ptr(_cancel_ptr)
 	{
 		caller_cancel_ptr = *this;
@@ -101,10 +271,10 @@ struct MultiStock::MapItem::Waiting final
 	}
 };
 
-
-MultiStock::MapItem::MapItem(StockMap &_map_stock, Stock &_stock) noexcept
-	:map_stock(_map_stock), stock(_stock),
-	retry_event(stock.GetEventLoop(), BIND_THIS_METHOD(RetryWaiting))
+MultiStock::MapItem::MapItem(StockMap &_map_stock, Stock &_stock,
+			     MultiStockClass &_cls) noexcept
+	:map_stock(_map_stock), stock(_stock), cls(_cls),
+	 retry_event(stock.GetEventLoop(), BIND_THIS_METHOD(RetryWaiting))
 {
 	map_stock.SetSticky(stock, true);
 }
@@ -122,7 +292,8 @@ MultiStock::MapItem::~MapItem() noexcept
 
 MultiStock::SharedItem *
 MultiStock::MapItem::FindUsable() noexcept
-{	for (auto &i : items)
+{
+	for (auto &i : items)
 		if (i.CanUse())
 			return &i;
 
@@ -131,26 +302,25 @@ MultiStock::MapItem::FindUsable() noexcept
 
 inline void
 MultiStock::MapItem::Get(StockRequest request, std::size_t concurrency,
-			 LeasePtr &lease_ref,
 			 StockGetHandler &handler,
 			 CancellablePointer &cancel_ptr) noexcept
 {
 	if (auto *i = FindUsable()) {
-		i->AddLease(handler, lease_ref);
+		i->GetLease(cls, handler);
 		return;
 	}
 
 	if (auto *stock_item = stock.GetIdle()) {
 		auto *i = new SharedItem(*this, *stock_item, concurrency);
 		items.push_back(*i);
-		i->AddLease(handler, lease_ref);
+		i->CreateLease(cls, handler);
 		return;
 	}
 
 	get_concurrency = concurrency;
 
 	auto *w = new Waiting(*this, std::move(request),
-			      lease_ref, handler, cancel_ptr);
+			      handler, cancel_ptr);
 	waiting.push_back(*w);
 
 	if (!stock.IsFull() && !get_cancel_ptr)
@@ -196,6 +366,15 @@ MultiStock::MapItem::DeleteEmptyItems(const SharedItem *except) noexcept
 	}, DeleteDisposer{});
 }
 
+
+void
+MultiStock::MapItem::DiscardUnused() noexcept
+{
+	items.remove_and_dispose_if([](const auto &item){
+		return !item.IsBusy();
+	}, DeleteDisposer{});
+}
+
 inline void
 MultiStock::MapItem::FinishWaiting(SharedItem &item) noexcept
 {
@@ -212,7 +391,6 @@ MultiStock::MapItem::FinishWaiting(SharedItem &item) noexcept
 			n->request = std::move(w.request);
 
 	auto &handler = w.handler;
-	auto &lease_ref = w.lease_ref;
 	waiting.pop_front_and_dispose(DeleteDisposer{});
 
 	/* do it again until no more usable items are
@@ -225,7 +403,7 @@ MultiStock::MapItem::FinishWaiting(SharedItem &item) noexcept
 		   really needed */
 		DeleteEmptyItems(&item);
 
-	item.AddLease(handler, lease_ref);
+	item.GetLease(cls, handler);
 }
 
 inline void
@@ -327,16 +505,32 @@ MultiStock::MapItem::Equal::operator()(const MapItem &a, const MapItem &b) const
 	return (*this)(a.stock.GetName(), b);
 }
 
-MultiStock::MultiStock(StockMap &_hstock) noexcept
-	:hstock(_hstock),
+MultiStock::MultiStock(StockMap &_hstock, MultiStockClass &_cls) noexcept
+	:hstock(_hstock), cls(_cls),
 	 map(Map::bucket_traits(buckets, N_BUCKETS))
 {
 }
 
 MultiStock::~MultiStock() noexcept
 {
+	DiscardUnused();
+
 	/* by now, all leases must be freed */
 	assert(map.empty());
+}
+
+void
+MultiStock::DiscardUnused() noexcept
+{
+	for (auto i = map.begin(), end = map.end(); i != end;) {
+		auto next = std::next(i);
+
+		i->DiscardUnused();
+		if (i->IsEmpty())
+			map.erase_and_dispose(i, DeleteDisposer{});
+
+		i = next;
+	}
 }
 
 MultiStock::MapItem &
@@ -347,7 +541,8 @@ MultiStock::MakeMapItem(const char *uri, void *request) noexcept
 		map.insert_check(uri, map.hash_function(), map.key_eq(), hint);
 	if (inserted) {
 		auto *item = new MapItem(hstock,
-					 hstock.GetStock(uri, request));
+					 hstock.GetStock(uri, request),
+					 cls);
 		map.insert_commit(*item, hint);
 		return *item;
 	} else
@@ -358,11 +553,10 @@ MultiStock::MakeMapItem(const char *uri, void *request) noexcept
 void
 MultiStock::Get(const char *uri, StockRequest request,
 		std::size_t concurrency,
-		LeasePtr &lease_ref,
 		StockGetHandler &handler,
 		CancellablePointer &cancel_ptr) noexcept
 {
 	MakeMapItem(uri, request.get())
 		.Get(std::move(request), concurrency,
-		     lease_ref, handler, cancel_ptr);
+		     handler, cancel_ptr);
 }

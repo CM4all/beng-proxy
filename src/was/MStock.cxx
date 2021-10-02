@@ -40,7 +40,6 @@
 #include "pool/DisposablePointer.hxx"
 #include "pool/tpool.hxx"
 #include "AllocatorPtr.hxx"
-#include "lease.hxx"
 #include "cgi/ChildParams.hxx"
 #include "spawn/ChildStockItem.hxx"
 #include "spawn/Prepared.hxx"
@@ -110,94 +109,28 @@ MultiWasChild::Prepare(ChildStockClass &cls, void *info,
 }
 
 class MultiWasConnection final
-	: public WasStockConnection, Cancellable, StockGetHandler
+	: public WasStockConnection
 {
-	MultiWasChild *child = nullptr;
-
-	CancellablePointer get_cancel_ptr;
-
-	LeasePtr lease_ref;
+	MultiWasChild &child;
 
 public:
-	using WasStockConnection::WasStockConnection;
-
-	~MultiWasConnection() noexcept override;
-
-	void Connect(MultiStock &child_stock,
-		     StockRequest &&request,
-		     unsigned concurrency,
-		     CancellablePointer &cancel_ptr) noexcept;
+	MultiWasConnection(CreateStockItem c, MultiWasChild &_child)
+		:WasStockConnection(c, _child.Connect()),
+		 child(_child) {}
 
 	[[gnu::pure]]
 	StringView GetTag() const noexcept {
-		assert(child != nullptr);
-
-		return child->GetTag();
+		return child.GetTag();
 	}
 
 	void SetSite(const char *site) noexcept override {
-		assert(child != nullptr);
-
-		child->SetSite(site);
+		child.SetSite(site);
 	}
 
 	void SetUri(const char *uri) noexcept override {
-		assert(child != nullptr);
-
-		child->SetUri(uri);
+		child.SetUri(uri);
 	}
-
-private:
-	/* virtual methods from class Cancellable */
-	void Cancel() noexcept override {
-		InvokeCreateAborted();
-	}
-
-	/* virtual methods from class StockGetHandler */
-	void OnStockItemReady(StockItem &item) noexcept override;
-	void OnStockItemError(std::exception_ptr error) noexcept override;
 };
-
-inline void
-MultiWasConnection::Connect(MultiStock &child_stock,
-			    StockRequest &&request,
-			    unsigned concurrency,
-			    CancellablePointer &caller_cancel_ptr) noexcept
-{
-	caller_cancel_ptr = *this;
-
-	child_stock.Get(GetStockName(), std::move(request), concurrency,
-			lease_ref, *this, get_cancel_ptr);
-}
-
-void
-MultiWasConnection::OnStockItemReady(StockItem &item) noexcept
-{
-	get_cancel_ptr = nullptr;
-
-	child = (MultiWasChild *)&item;
-
-	try {
-		Open(child->Connect());
-	} catch (...) {
-		InvokeCreateError(NestException(std::current_exception(),
-						FormatRuntimeError("Failed to connect to MultiWAS server '%s'",
-								   GetStockName())));
-		return;
-	}
-
-	InvokeCreateSuccess();
-}
-
-void
-MultiWasConnection::OnStockItemError(std::exception_ptr error) noexcept
-{
-	get_cancel_ptr = nullptr;
-
-	InvokeCreateError(NestException(std::move(error),
-					FormatRuntimeError("Failed to launch MultiWAS server %s",
-							   GetStockName())));
-}
 
 MultiWasStock::MultiWasStock(unsigned limit, unsigned max_idle,
 			     EventLoop &event_loop, SpawnService &spawn_service,
@@ -207,9 +140,7 @@ MultiWasStock::MultiWasStock(unsigned limit, unsigned max_idle,
 		     *this,
 		     log_socket, log_options,
 		     limit, max_idle),
-	 mchild_stock(child_stock.GetStockMap()),
-	 hstock(event_loop, *this, 0, max_idle,
-		std::chrono::minutes{2}) {}
+	 mchild_stock(child_stock.GetStockMap(), *this) {}
 
 Event::Duration
 MultiWasStock::GetChildClearInterval(void *info) const noexcept
@@ -259,35 +190,18 @@ MultiWasStock::PrepareChild(void *info, PreparedChildProcess &p)
 	params.options.CopyTo(p);
 }
 
-void
-MultiWasStock::Create(CreateStockItem c, StockRequest request,
-		      CancellablePointer &cancel_ptr)
+StockItem *
+MultiWasStock::Create(CreateStockItem c, StockItem &shared_item)
 {
-	const auto &params = *(const CgiChildParams *)request.get();
+	auto &child = (MultiWasChild &)shared_item;
 
-	auto *connection = new MultiWasConnection(c);
-	connection->Connect(mchild_stock, std::move(request),
-			    params.concurrency,
-			    cancel_ptr);
-}
-
-MultiWasConnection::~MultiWasConnection() noexcept
-{
-	if (child != nullptr)
-		lease_ref.Release(true);
-	else if (get_cancel_ptr)
-		get_cancel_ptr.CancelAndClear();
+	return new MultiWasConnection(c, child);
 }
 
 void
 MultiWasStock::FadeTag(StringView tag) noexcept
 {
 	assert(tag != nullptr);
-
-	hstock.FadeIf([tag](const StockItem &item){
-		const auto &connection = (const MultiWasConnection &)item;
-		return StringListContains(connection.GetTag(), '\0', tag);
-	});
 
 	mchild_stock.FadeIf([tag](const StockItem &item){
 		const auto &child = (const MultiWasChild &)item;
@@ -313,5 +227,5 @@ MultiWasStock::Get(AllocatorPtr alloc,
 						      concurrency);
 	const char *key = r->GetStockKey(*tpool);
 
-	GetConnectionStock().Get(key, std::move(r), handler, cancel_ptr);
+	mchild_stock.Get(key, std::move(r), concurrency, handler, cancel_ptr);
 }
