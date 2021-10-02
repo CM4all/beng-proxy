@@ -369,16 +369,6 @@ MultiStock::MakeMapItem(const char *uri, void *request) noexcept
 
 }
 
-StockItem *
-MultiStock::GetNow(const char *uri, StockRequest request,
-		   std::size_t concurrency,
-		   LeasePtr &lease_ref)
-{
-	return MakeMapItem(uri, request.get())
-		.GetNow(std::move(request), concurrency)
-		.AddLease(lease_ref);
-}
-
 void
 MultiStock::Get(const char *uri, StockRequest request,
 		std::size_t concurrency,

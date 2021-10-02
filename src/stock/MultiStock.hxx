@@ -281,19 +281,6 @@ public:
 			i.FadeIf(std::forward<P>(predicate));
 	}
 
-	/**
-	 * Obtains an item from the stock without going through the
-	 * callback.  This requires a stock class which finishes the
-	 * StockClass::Create() method immediately.
-	 *
-	 * Throws exception on error.
-	 *
-	 * @param max_leases the maximum number of leases per stock_item
-	 */
-	StockItem *GetNow(const char *uri, StockRequest request,
-			  std::size_t concurrency,
-			  LeasePtr &lease_ref);
-
 	void Get(const char *uri, StockRequest request,
 		 std::size_t concurrency,
 		 LeasePtr &lease_ref,
