@@ -69,6 +69,9 @@ MultiStock::SharedItem::OnCleanupTimer() noexcept
 		/* repeat until we need this SharedItem again or until
 		   there are no more idle items */
 		ScheduleCleanupTimer();
+	else if (IsEmpty())
+		/* let the parent destroy us */
+		parent.OnLeaseReleased(*this);
 }
 
 void
