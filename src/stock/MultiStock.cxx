@@ -85,6 +85,10 @@ MultiStock::SharedItem::Fade() noexcept
 {
 	reuse = false;
 	DiscardUnused();
+
+	if (IsEmpty())
+		/* let the parent destroy us */
+		ScheduleCleanupNow();
 }
 
 inline void

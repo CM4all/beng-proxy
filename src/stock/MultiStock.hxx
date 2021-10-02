@@ -144,6 +144,10 @@ class MultiStock {
 			cleanup_timer.Schedule(std::chrono::minutes{5});
 		}
 
+		void ScheduleCleanupNow() noexcept {
+			cleanup_timer.Schedule(Event::Duration::zero());
+		}
+
 		void CancelCleanupTimer() noexcept {
 			cleanup_timer.Cancel();
 		}
