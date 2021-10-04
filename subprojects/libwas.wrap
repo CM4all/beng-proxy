@@ -1,0 +1,6 @@
+[wrap-git]
+url = https://github.com/CM4all/libwas
+revision = head
+
+[provide]
+libcm4all-was-protocol = libwas_protocol_dep

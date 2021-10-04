@@ -48,5 +48,5 @@ jobs:
         uses: BSFishy/meson-build@v1.0.3
         with:
           action: test
-          setup-options: -Ddocumentation=disabled -Dstatic_libcxx=true -Dcertdb=true -Dhttp2=enabled -Dnfs=enabled -Dwas=disabled -Dyaml=enabled -Dzeroconf=enabled --force-fallback-for=gtest,yaml-cpp
+          setup-options: -Ddocumentation=disabled -Dstatic_libcxx=true -Dcertdb=true -Dhttp2=enabled -Dnfs=enabled -Dwas=enabled -Dyaml=enabled -Dzeroconf=enabled --force-fallback-for=libcm4all-was-protocol
           meson-version: 0.56.0
