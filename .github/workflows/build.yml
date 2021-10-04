@@ -28,9 +28,8 @@ on:
     branches:
       - master
 env:
-  CC: 'ccache clang-14'
-  CXX: 'ccache clang++-14'
-  LDFLAGS: '-stdlib=libc++ -static-libstdc++ -fuse-ld=lld'
+  CC: 'ccache gcc-10'
+  CXX: 'ccache g++-10'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -44,14 +43,7 @@ jobs:
         with:
           key: ${{ matrix.os }}-${{ matrix.type }}
       - name: Install dependencies
-        run: sudo apt install -y libsystemd-dev libdbus-1-dev libseccomp-dev libboost-dev libcurl4-openssl-dev libpcre3-dev libcap-dev libc-ares-dev libluajit-5.1-dev libattr1-dev libsodium-dev libssl-dev libnfs-dev libnghttp2-dev libpq-dev libavahi-client-dev
-      - name: Install clang
-        uses: myci-actions/add-deb-repo@10
-        with:
-          repo: deb http://apt.llvm.org/focal/ llvm-toolchain-focal main
-          repo-name: llvm
-          keys-asc: https://apt.llvm.org/llvm-snapshot.gpg.key
-          install: clang-14 libc++-14-dev libc++abi-14-dev lld
+        run: sudo apt install -y g++-10 libsystemd-dev libdbus-1-dev libseccomp-dev libboost-dev libcurl4-openssl-dev libpcre3-dev libcap-dev libc-ares-dev libgtest-dev libluajit-5.1-dev libattr1-dev libsodium-dev libssl-dev libnfs-dev libnghttp2-dev libpq-dev libyaml-cpp-dev libavahi-client-dev
       - name: Meson Build
         uses: BSFishy/meson-build@v1.0.3
         with:
