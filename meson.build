@@ -368,6 +368,8 @@ else
   stopwatch_dep = declare_dependency()
 endif
 
+libcommon_enable_was = get_option('was')
+
 subdir('libcommon/src/was/async')
 subdir('libcommon/src/stock')
 
