@@ -1,0 +1,60 @@
+---
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - 'certdb/**'
+      - 'debian/**'
+      - 'demo/**'
+      - 'doc/**'
+      - 'js/**'
+      - 'prototypes/**'
+      - 'python/**'
+      - 'systemd/**'
+      - 'tools/**'
+    branches:
+      - master
+  pull_request:
+    paths-ignore:
+      - 'certdb/**'
+      - 'debian/**'
+      - 'demo/**'
+      - 'doc/**'
+      - 'js/**'
+      - 'prototypes/**'
+      - 'python/**'
+      - 'systemd/**'
+      - 'tools/**'
+    branches:
+      - master
+env:
+  CC: 'ccache clang-14'
+  CXX: 'ccache clang++-14'
+  LDFLAGS: '-stdlib=libc++ -static-libstdc++ -fuse-ld=lld'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - id: checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - id: cache-ccache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{ matrix.os }}-${{ matrix.type }}
+      - name: Install dependencies
+        run: sudo apt install -y libsystemd-dev libdbus-1-dev libseccomp-dev libboost-dev libcurl4-openssl-dev libpcre3-dev libcap-dev libc-ares-dev libluajit-5.1-dev libattr1-dev libsodium-dev libssl-dev libnfs-dev libnghttp2-dev libpq-dev libavahi-client-dev
+      - name: Install clang
+        uses: myci-actions/add-deb-repo@10
+        with:
+          repo: deb http://apt.llvm.org/focal/ llvm-toolchain-focal main
+          repo-name: llvm
+          keys-asc: https://apt.llvm.org/llvm-snapshot.gpg.key
+          install: clang-14 libc++-14-dev libc++abi-14-dev lld
+      - name: Meson Build
+        uses: BSFishy/meson-build@v1.0.3
+        with:
+          action: test
+          setup-options: -Ddocumentation=disabled -Dstatic_libcxx=true -Dcertdb=true -Dhttp2=enabled -Dnfs=enabled -Dwas=disabled -Dyaml=enabled -Dzeroconf=enabled --force-fallback-for=gtest,yaml-cpp
+          meson-version: 0.56.0
