@@ -390,12 +390,6 @@ MultiStock::MapItem::FinishWaiting(SharedItem &item) noexcept
 	assert(!retry_event.IsPending());
 
 	auto &w = waiting.front();
-	/* if there is still a request object, move it to the
-	   next item in the waiting list */
-	if (w.request)
-		if (auto n = std::next(waiting.begin());
-		    n != waiting.end())
-			n->request = std::move(w.request);
 
 	auto &handler = w.handler;
 	waiting.pop_front_and_dispose(DeleteDisposer{});
