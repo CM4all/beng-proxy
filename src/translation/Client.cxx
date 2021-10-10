@@ -245,6 +245,8 @@ TranslateClient::TranslateClient(AllocatorPtr alloc, EventLoop &event_loop,
 		    *this);
 
 	cancel_ptr = *this;
+
+	socket.DeferWrite();
 }
 
 void
@@ -267,13 +269,11 @@ try {
 	GrowingBuffer gb = MarshalTranslateRequest(PROTOCOL_VERSION,
 						   request);
 
-	auto *client = alloc.New<TranslateClient>(alloc, event_loop,
-						  std::move(stopwatch),
-						  fd, lease,
-						  request, std::move(gb),
-						  handler, cancel_ptr);
-
-	client->TryWrite();
+	alloc.New<TranslateClient>(alloc, event_loop,
+				   std::move(stopwatch),
+				   fd, lease,
+				   request, std::move(gb),
+				   handler, cancel_ptr);
 } catch (...) {
 	lease.ReleaseLease(true);
 

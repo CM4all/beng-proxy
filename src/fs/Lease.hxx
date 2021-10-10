@@ -142,6 +142,12 @@ public:
 		return socket->Write(data, size);
 	}
 
+	void DeferWrite() noexcept {
+		assert(!IsReleased());
+
+		socket->DeferWrite();
+	}
+
 	void ScheduleWrite() noexcept {
 		assert(!IsReleased());
 

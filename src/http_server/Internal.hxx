@@ -293,6 +293,11 @@ struct HttpServerConnection final
 			    HttpHeaders &&headers,
 			    UnusedIstreamPtr body);
 
+	void DeferWrite() noexcept {
+		response.want_write = true;
+		socket->DeferWrite();
+	}
+
 	void ScheduleWrite() {
 		response.want_write = true;
 		socket->ScheduleWrite();

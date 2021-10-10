@@ -134,6 +134,10 @@ public:
 
 	void AbortError(std::exception_ptr e) noexcept;
 
+	void DeferWrite() noexcept {
+		connection.DeferWrite();
+	}
+
 	void SendRequest(http_method_t method, const char *uri,
 			 StringMap &&headers,
 			 UnusedIstreamPtr body) noexcept;
@@ -246,7 +250,7 @@ private:
 		nghttp2_submit_rst_stream(connection.session.get(),
 					  NGHTTP2_FLAG_NONE,
 					  id, NGHTTP2_CANCEL);
-		connection.socket->ScheduleWrite();
+		DeferWrite();
 		Destroy();
 	}
 
@@ -256,7 +260,7 @@ private:
 		assert(connection.socket);
 
 		nghttp2_session_resume_data(connection.session.get(), id);
-		connection.socket->ScheduleWrite();
+		DeferWrite();
 	}
 };
 
@@ -328,7 +332,7 @@ ClientConnection::Request::SendRequest(http_method_t method, const char *uri,
 
 	state = State::HEADERS;
 
-	connection.socket->ScheduleWrite();
+	DeferWrite();
 }
 
 void
@@ -336,7 +340,7 @@ ClientConnection::Request::Cancel() noexcept
 {
 	nghttp2_submit_rst_stream(connection.session.get(), NGHTTP2_FLAG_NONE,
 				  id, NGHTTP2_CANCEL);
-	connection.socket->ScheduleWrite();
+	DeferWrite();
 	Destroy();
 }
 
@@ -476,7 +480,7 @@ ClientConnection::ClientConnection(EventLoop &loop,
 		throw FormatRuntimeError("nghttp2_submit_settings() failed: %s",
 					 nghttp2_strerror(rv));
 
-	socket->ScheduleWrite();
+	DeferWrite();
 	socket->ScheduleReadNoTimeout(false);
 }
 
@@ -503,6 +507,12 @@ ClientConnection::SendRequest(struct pool &request_pool,
 	requests.push_front(*request);
 	defer_invoke_idle.Cancel();
 	request->SendRequest(method, uri, std::move(headers), std::move(body));
+}
+
+void
+ClientConnection::DeferWrite() noexcept
+{
+	socket->DeferWrite();
 }
 
 void

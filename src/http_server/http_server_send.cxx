@@ -190,7 +190,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
 	SetResponseIstream(istream_cat_new(request_pool, std::move(status_stream),
 					   std::move(header_stream),
 					   std::move(body)));
-	TryWrite();
+	DeferWrite();
 }
 
 void

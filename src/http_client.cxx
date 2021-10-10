@@ -269,6 +269,12 @@ private:
 		return response_body_reader.CheckDirect(socket.GetType());
 	}
 
+	void DeferWrite() noexcept {
+		assert(IsConnected());
+
+		socket.DeferWrite();
+	}
+
 	void ScheduleWrite() noexcept {
 		assert(IsConnected());
 
@@ -936,7 +942,7 @@ HttpClient::FeedHeaders(ConstBuffer<void> b)
 					      "Peer closed the socket prematurely after status 100");
 		}
 
-		ScheduleWrite();
+		DeferWrite();
 
 		/* try again */
 		return BufferedResult::AGAIN_EXPECT;
@@ -1398,17 +1404,7 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 	input.SetDirect(istream_direct_mask_to(socket.GetType()));
 
 	socket.ScheduleReadNoTimeout(true);
-
-	switch (TryWriteBuckets()) {
-	case HttpClient::BucketResult::MORE:
-		input.Read();
-		break;
-
-	case HttpClient::BucketResult::BLOCKING:
-	case HttpClient::BucketResult::DEPLETED:
-	case HttpClient::BucketResult::DESTROYED:
-		break;
-	}
+	DeferWrite();
 }
 
 void

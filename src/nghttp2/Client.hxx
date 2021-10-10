@@ -117,6 +117,8 @@ public:
 			 CancellablePointer &cancel_ptr) noexcept;
 
 private:
+	void DeferWrite() noexcept;
+
 	void InvokeIdle() noexcept {
 		handler.OnNgHttp2ConnectionIdle();
 	}

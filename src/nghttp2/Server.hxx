@@ -85,7 +85,7 @@ public:
 	~ServerConnection() noexcept;
 
 private:
-	void ScheduleWrite() noexcept;
+	void DeferWrite() noexcept;
 
 	ssize_t SendCallback(const void *data, size_t length) noexcept;
 

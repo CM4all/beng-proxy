@@ -320,6 +320,13 @@ public:
 		ScheduleReadTimeout(expect_more, Event::Duration(-1));
 	}
 
+	void DeferWrite() noexcept {
+		if (filter != nullptr)
+			filter->ScheduleWrite();
+		else
+			base.DeferWrite();
+	}
+
 	void ScheduleWrite() noexcept {
 		if (filter != nullptr)
 			filter->ScheduleWrite();
@@ -419,7 +426,12 @@ public:
 	void InternalScheduleWrite() noexcept {
 		assert(filter != nullptr);
 
-		base.ScheduleWrite();
+		/* if there is a filter, be optimistic and assume the
+		   socket is already writable (calling
+		   BufferedSocket::DeferWrite() instead of
+		   BufferedSocket::ScheduleWrite()); this is because
+		   TLS often needs to transmit small packets */
+		base.DeferWrite();
 	}
 
 	void InternalUnscheduleWrite() noexcept {
