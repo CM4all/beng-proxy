@@ -200,8 +200,8 @@ public:
 					       const uint8_t *data,
 					       size_t len,
 					       [[maybe_unused]] void *user_data) noexcept {
-#ifndef NDEBUG
 		auto &c = *(ServerConnection *)user_data;
+#ifndef NDEBUG
 		c.unconsumed += len;
 #endif
 
@@ -212,6 +212,7 @@ public:
 			c.unconsumed -= len;
 #endif
 			nghttp2_session_consume(session, stream_id, len);
+			c.DeferWrite();
 			return 0;
 		}
 
@@ -230,6 +231,7 @@ private:
 #endif
 
 		nghttp2_session_consume(connection.session.get(), id, nbytes);
+		DeferWrite();
 	}
 
 	/* virtual methods from class MultiFifoBufferIstreamHandler */
