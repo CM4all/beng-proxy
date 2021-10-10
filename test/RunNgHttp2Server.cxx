@@ -34,6 +34,7 @@
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http_server/Handler.hxx"
+#include "fs/FilteredSocket.hxx"
 #include "event/Loop.hxx"
 #include "event/net/TemplateServerSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"

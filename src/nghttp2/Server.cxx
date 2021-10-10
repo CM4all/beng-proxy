@@ -44,6 +44,7 @@
 #include "istream/LengthIstream.hxx"
 #include "istream/MultiFifoBufferIstream.hxx"
 #include "istream/New.hxx"
+#include "fs/FilteredSocket.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "util/Cancellable.hxx"
 #include "util/RuntimeError.hxx"

@@ -34,12 +34,13 @@
 
 #include "Session.hxx"
 #include "pool/UniquePtr.hxx"
-#include "fs/FilteredSocket.hxx"
+#include "event/net/BufferedSocket.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <boost/intrusive/list.hpp>
 
 struct pool;
+class FilteredSocket;
 class HttpServerConnectionHandler;
 
 namespace NgHttp2 {
