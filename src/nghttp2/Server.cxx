@@ -219,6 +219,10 @@ public:
 	}
 
 private:
+	void ScheduleWrite() noexcept {
+		connection.ScheduleWrite();
+	}
+
 	void Consume(size_t nbytes) noexcept {
 #ifndef NDEBUG
 		assert(connection.unconsumed >= nbytes);
@@ -246,7 +250,7 @@ private:
 		assert(connection.socket);
 
 		nghttp2_session_resume_data(connection.session.get(), id);
-		connection.socket->ScheduleWrite();
+		ScheduleWrite();
 	}
 
 	/* virtual methods from class IncomingHttpRequest */
@@ -342,7 +346,7 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 		nghttp2_submit_rst_stream(connection.session.get(),
 					  NGHTTP2_FLAG_NONE,
 					  id, NGHTTP2_CANCEL);
-		connection.socket->ScheduleWrite();
+		ScheduleWrite();
 		Destroy();
 		return 0;
 	}
@@ -429,7 +433,7 @@ ServerConnection::Request::SendResponse(http_status_t status,
 	nghttp2_submit_response(connection.session.get(), id,
 				hdrs.data(), hdrs.size(),
 				dpp);
-	connection.socket->ScheduleWrite();
+	ScheduleWrite();
 }
 
 ServerConnection::ServerConnection(struct pool &_pool,
@@ -484,6 +488,12 @@ ServerConnection::~ServerConnection() noexcept
 	requests.clear_and_dispose([](Request *request) { request->Destroy(); });
 
 	assert(unconsumed == 0);
+}
+
+inline void
+ServerConnection::ScheduleWrite() noexcept
+{
+	socket->ScheduleWrite();
 }
 
 ssize_t

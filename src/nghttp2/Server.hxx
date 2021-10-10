@@ -85,6 +85,8 @@ public:
 	~ServerConnection() noexcept;
 
 private:
+	void ScheduleWrite() noexcept;
+
 	ssize_t SendCallback(const void *data, size_t length) noexcept;
 
 	static ssize_t SendCallback(nghttp2_session *, const uint8_t *data,
