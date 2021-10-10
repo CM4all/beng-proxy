@@ -38,6 +38,9 @@
 
 namespace NgHttp2 {
 
+/**
+ * Construct a #nghttp2_nv from two string views.
+ */
 constexpr auto
 MakeNv(StringView name, StringView value,
        uint8_t flags=NGHTTP2_NV_FLAG_NONE) noexcept
