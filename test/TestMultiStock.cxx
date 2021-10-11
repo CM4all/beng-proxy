@@ -60,7 +60,10 @@ struct MyStockItem final : StockItem {
 };
 
 struct MyInnerStockItem final : StockItem {
-	using StockItem::StockItem;
+	StockItem &outer_item;
+
+	MyInnerStockItem(CreateStockItem c, StockItem &_outer_item) noexcept
+		:StockItem(c), outer_item(_outer_item) {}
 
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override {
@@ -97,8 +100,8 @@ public:
 		    CancellablePointer &cancel_ptr) override;
 
 	/* virtual methods from class MultiStockClass */
-	StockItem *Create(CreateStockItem c, StockItem &) override {
-		return new MyInnerStockItem(c);
+	StockItem *Create(CreateStockItem c, StockItem &outer_item) override {
+		return new MyInnerStockItem(c, outer_item);
 	}
 };
 
@@ -157,7 +160,7 @@ struct MyLease final : public StockGetHandler {
 
 	CancellablePointer get_cancel_ptr;
 
-	StockItem *item = nullptr;
+	MyInnerStockItem *item = nullptr;
 	std::exception_ptr error;
 
 	bool reuse = true;
@@ -197,6 +200,8 @@ struct MyLease final : public StockGetHandler {
 
 		--partition.ready;
 
+		if (!reuse)
+			item->outer_item.fade = true;
 		item->Put(!reuse);
 		item = nullptr;
 	}
@@ -209,7 +214,7 @@ struct MyLease final : public StockGetHandler {
 		assert(partition.waiting > 0);
 
 		get_cancel_ptr = nullptr;
-		item = &_item;
+		item = (MyInnerStockItem *)&_item;
 		++partition.ready;
 		--partition.waiting;
 	}
