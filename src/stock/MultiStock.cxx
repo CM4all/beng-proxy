@@ -197,10 +197,6 @@ MultiStock::SharedItem::Put(StockItem &item, bool destroy) noexcept
 
 	busy.erase(busy.iterator_to(item));
 
-	if (destroy)
-		// TODO do we need to destroy the whole SharedItem?
-		Fade();
-
 	if (shared_item.fade || destroy || item.fade || !item.Release()) {
 		delete &item;
 	} else {
