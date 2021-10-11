@@ -53,4 +53,13 @@ TEST(SessionTest, Basic)
 	SessionLease session{session_manager, session_id};
 	ASSERT_TRUE(session);
 	ASSERT_EQ(session->id, session_id);
+
+	auto *realm = session->GetRealm("a_realm_name");
+	ASSERT_NE(realm, nullptr);
+
+	auto *widget = realm->GetWidget("a_widget_name", false);
+	ASSERT_EQ(widget, nullptr);
+
+	widget = realm->GetWidget("a_widget_name", true);
+	ASSERT_NE(widget, nullptr);
 }
