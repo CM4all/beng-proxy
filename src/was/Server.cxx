@@ -449,8 +449,6 @@ WasServer::SendResponse(http_status_t status,
 	assert(http_status_is_valid(status));
 	assert(!http_status_is_empty(status) || !body);
 
-	control.BulkOn();
-
 	if (!control.Send(WAS_COMMAND_STATUS, &status, sizeof(status)))
 		return;
 
@@ -481,6 +479,4 @@ WasServer::SendResponse(http_status_t status,
 		if (!control.SendEmpty(WAS_COMMAND_NO_DATA))
 			return;
 	}
-
-	control.BulkOff();
 }

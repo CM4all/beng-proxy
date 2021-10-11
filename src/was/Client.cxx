@@ -202,7 +202,8 @@ private:
 			return true;
 
 		uint64_t sent = was_output_free_p(&request.body);
-		return control.SendUint64(WAS_COMMAND_PREMATURE, sent);
+		return control.SendUint64(WAS_COMMAND_PREMATURE, sent) &&
+			control.FlushOutput();
 	}
 
 	/**
@@ -243,7 +244,8 @@ private:
 		   handler - he's not interested anymore */
 		ignore_control_errors = true;
 
-		if (!control.SendEmpty(WAS_COMMAND_STOP))
+		if (!control.SendEmpty(WAS_COMMAND_STOP) ||
+		    !control.FlushOutput())
 			return false;
 
 		control.ReleaseSocket();
@@ -907,15 +909,10 @@ WasClient::SendRequest(http_method_t method, const char *uri,
 		       const StringMap &headers,
 		       ConstBuffer<const char *> params) noexcept
 {
-	control.BulkOn();
-
-	if (!::SendRequest(control,
-			   method, uri, script_name, path_info,
-			   query_string, headers, request.body,
-			   params))
-		return;
-
-	control.BulkOff();
+	::SendRequest(control,
+		      method, uri, script_name, path_info,
+		      query_string, headers, request.body,
+		      params);
 }
 
 void
