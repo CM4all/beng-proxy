@@ -492,6 +492,9 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type)
 		request.body_state = Request::BodyState::CLOSED;
 #endif
 
+		if (socket->IsConnected())
+			socket->SetDirect(false);
+
 		const DestructObserver destructed(*this);
 		request_body_reader->DestroyEof();
 		return destructed

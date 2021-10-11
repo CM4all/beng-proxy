@@ -58,6 +58,9 @@ HttpServerConnection::FeedRequestBody(const void *data, size_t length)
 		request.body_state = Request::BodyState::CLOSED;
 #endif
 
+		if (socket->IsConnected())
+			socket->SetDirect(false);
+
 		/* re-enable the event, to detect client disconnect while
 		   we're processing the request */
 		socket->ScheduleReadNoTimeout(false);
@@ -93,6 +96,9 @@ HttpServerConnection::DiscardRequestBody() noexcept
 #ifndef NDEBUG
 	request.body_state = Request::BodyState::CLOSED;
 #endif
+
+	if (socket->IsConnected())
+		socket->SetDirect(false);
 
 	if (request.expect_100_continue)
 		/* the request body was optional, and we did not send the "100
@@ -135,6 +141,9 @@ HttpServerConnection::ReadRequestBody(bool require_more) noexcept
 	if (request.in_handler)
 		/* avoid recursion */
 		return;
+
+	if (socket->IsConnected())
+		socket->SetDirect(request_body_reader->CheckDirect(socket->GetType()));
 
 	socket->Read(require_more);
 }

@@ -2,6 +2,7 @@ cm4all-beng-proxy (17.0.69) unstable; urgency=low
 
   * bp/session: fix memory leak
   * http_client: fix use-after-free bug
+  * http_server: enable splice() for the request body
   * lhttp: fix crash after connect failure
   * lhttp: allow reusing the process even if one connection disables keep-alive
   * disable the EPOLL_CTL_DEL optimization to work around Linux kernel bug

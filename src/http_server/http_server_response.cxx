@@ -167,6 +167,9 @@ HttpServerConnection::ResponseIstreamFinished()
 		request.body_state = Request::BodyState::CLOSED;
 #endif
 
+		if (socket->IsConnected())
+			socket->SetDirect(false);
+
 		const DestructObserver destructed(*this);
 		request_body_reader->DestroyEof();
 		if (destructed)
