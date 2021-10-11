@@ -64,20 +64,30 @@ MultiStock::SharedItem::CanUse() const noexcept
 	return !shared_item.fade && !IsFull();
 }
 
+inline bool
+MultiStock::SharedItem::ShouldDelete() const noexcept
+{
+	return shared_item.fade && IsEmpty();
+}
+
 void
 MultiStock::SharedItem::OnCleanupTimer() noexcept
 {
+	if (IsEmpty()) {
+		/* if this item was unused for one cleanup_timer
+		   period, let parent.OnLeaseReleased() discard it */
+		shared_item.fade = true;
+		parent.OnLeaseReleased(*this);
+		return;
+	}
+
 	/* destroy one third of the idle items */
 	for (std::size_t i = (idle.size() + 2) / 3; i > 0; --i)
 		idle.pop_front_and_dispose(DeleteDisposer{});
 
-	if (!idle.empty())
-		/* repeat until we need this SharedItem again or until
-		   there are no more idle items */
-		ScheduleCleanupTimer();
-	else if (IsEmpty())
-		/* let the parent destroy us */
-		parent.OnLeaseReleased(*this);
+	/* repeat until we need this SharedItem again or until there
+	   are no more idle items */
+	ScheduleCleanupTimer();
 }
 
 void
@@ -214,9 +224,6 @@ MultiStock::SharedItem::ItemIdleDisconnect(StockItem &item) noexcept
 	assert(!idle.empty());
 
 	idle.erase_and_dispose(idle.iterator_to(item), DeleteDisposer{});
-
-	if (IsEmpty())
-		parent.OnLeaseReleased(*this);
 }
 
 void
@@ -473,7 +480,7 @@ MultiStock::MapItem::OnLeaseReleased(SharedItem &item) noexcept
 		   empty */
 		return;
 
-	if (item.IsEmpty())
+	if (item.ShouldDelete())
 		RemoveItem(item);
 }
 

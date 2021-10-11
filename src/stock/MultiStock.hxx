@@ -112,6 +112,7 @@ class MultiStock {
 		}
 
 		bool CanUse() const noexcept;
+		bool ShouldDelete() const noexcept;
 
 		void DiscardUnused() noexcept;
 
