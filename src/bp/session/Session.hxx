@@ -182,6 +182,8 @@ struct RealmSession
 	{
 	}
 
+	~RealmSession() noexcept;
+
 	void Attach(RealmSession &&other) noexcept;
 
 	void ClearSite() noexcept {

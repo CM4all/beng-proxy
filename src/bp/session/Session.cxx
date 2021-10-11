@@ -70,6 +70,11 @@ WidgetSession::Attach(WidgetSession &&src) noexcept
 	}
 }
 
+RealmSession::~RealmSession() noexcept
+{
+	widgets.clear_and_dispose(DeleteDisposer{});
+}
+
 void
 RealmSession::Attach(RealmSession &&other) noexcept
 {

@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.69) unstable; urgency=low
 
+  * bp/session: fix memory leak
   * http_client: fix use-after-free bug
   * lhttp: fix crash after connect failure
 
