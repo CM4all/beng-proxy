@@ -114,7 +114,7 @@ class LhttpConnection final
 
 public:
 	explicit LhttpConnection(CreateStockItem c,
-				 ListenChildStockItem &_child) noexcept
+				 ListenChildStockItem &_child)
 		:StockItem(c),
 		 logger(*this),
 		 child(_child),
