@@ -161,7 +161,6 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 	struct pool &caller_pool;
 
 	const char *const peer_name;
-
 	const StopwatchPtr stopwatch;
 
 	EventLoop &event_loop;
@@ -397,10 +396,15 @@ HttpClient::AbortResponseHeaders(std::exception_ptr ep) noexcept
 	assert(response.state == Response::State::STATUS ||
 	       response.state == Response::State::HEADERS);
 
+	/* need to call PrefixError() before ReleaseSocket() because
+	   the former uses the "peer_name" field which points to
+	   memory owned by the socket */
+	ep = PrefixError(std::move(ep));
+
 	if (IsConnected())
 		ReleaseSocket(false, false);
 
-	DestroyInvokeError(PrefixError(ep));
+	DestroyInvokeError(std::move(ep));
 }
 
 /**
