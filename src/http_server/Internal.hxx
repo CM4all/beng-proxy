@@ -274,6 +274,8 @@ struct HttpServerConnection final
 	 */
 	void DiscardRequestBody() noexcept;
 
+	void ReadRequestBody(bool require_more) noexcept;
+
 	/**
 	 * @return false if the connection has been closed
 	 */

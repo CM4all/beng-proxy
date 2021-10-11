@@ -121,22 +121,28 @@ HttpServerConnection::RequestBodyReader::_GetAvailable(bool partial) noexcept
 	return HttpBodyReader::GetAvailable(*connection.socket, partial);
 }
 
-void
-HttpServerConnection::RequestBodyReader::_Read() noexcept
+inline void
+HttpServerConnection::ReadRequestBody(bool require_more) noexcept
 {
-	assert(connection.IsValid());
-	assert(connection.request.read_state == Request::BODY);
-	assert(connection.request.body_state == Request::BodyState::READING);
-	assert(!connection.response.pending_drained);
+	assert(IsValid());
+	assert(request.read_state == Request::BODY);
+	assert(request.body_state == Request::BodyState::READING);
+	assert(!response.pending_drained);
 
-	if (!connection.MaybeSend100Continue())
+	if (!MaybeSend100Continue())
 		return;
 
-	if (connection.request.in_handler)
+	if (request.in_handler)
 		/* avoid recursion */
 		return;
 
-	connection.socket->Read(RequireMore());
+	socket->Read(require_more);
+}
+
+void
+HttpServerConnection::RequestBodyReader::_Read() noexcept
+{
+	connection.ReadRequestBody(RequireMore());
 }
 
 void
