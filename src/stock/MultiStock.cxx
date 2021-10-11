@@ -55,7 +55,13 @@ MultiStock::SharedItem::~SharedItem() noexcept
 
 	DiscardUnused();
 
-	shared_item.Put(!reuse);
+	shared_item.Put(true);
+}
+
+inline bool
+MultiStock::SharedItem::CanUse() const noexcept
+{
+	return !shared_item.fade && !IsFull();
 }
 
 void
@@ -83,7 +89,7 @@ MultiStock::SharedItem::DiscardUnused() noexcept
 void
 MultiStock::SharedItem::Fade() noexcept
 {
-	reuse = false;
+	shared_item.fade = true;
 	DiscardUnused();
 
 	if (IsEmpty())
@@ -195,7 +201,7 @@ MultiStock::SharedItem::Put(StockItem &item, bool destroy) noexcept
 		// TODO do we need to destroy the whole SharedItem?
 		Fade();
 
-	if (!reuse || destroy || item.fade || !item.Release()) {
+	if (shared_item.fade || destroy || item.fade || !item.Release()) {
 		delete &item;
 	} else {
 #ifndef NDEBUG

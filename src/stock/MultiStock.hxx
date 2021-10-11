@@ -90,8 +90,6 @@ class MultiStock {
 
 		ItemList idle, busy;
 
-		bool reuse = true;
-
 	public:
 		SharedItem(MapItem &_parent, StockItem &_item,
 			   std::size_t _limit) noexcept;
@@ -113,9 +111,7 @@ class MultiStock {
 			return idle.empty() && busy.empty();
 		}
 
-		bool CanUse() const noexcept {
-			return reuse && !IsFull();
-		}
+		bool CanUse() const noexcept;
 
 		void DiscardUnused() noexcept;
 
