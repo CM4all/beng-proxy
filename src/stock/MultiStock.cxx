@@ -104,11 +104,6 @@ try {
 	auto *lease = _cls.Create({*this, handler}, shared_item);
 	lease->InvokeCreateSuccess();
 } catch (...) {
-	/* if this SharedItem happens to be (still) empty, let the
-	   parent delete it */
-	if (IsEmpty())
-		parent.OnLeaseReleased(*this);
-
 	ItemCreateError(handler, std::current_exception());
 }
 
