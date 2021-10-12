@@ -43,7 +43,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/Logger.hxx"
 #include "net/SocketDescriptor.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/PipeEvent.hxx"
 #include "pool/pool.hxx"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"
@@ -67,12 +67,12 @@ struct SpawnIstream final : Istream, IstreamSink, ExitListener {
 	SpawnService &spawn_service;
 
 	UniqueFileDescriptor output_fd;
-	SocketEvent output_event;
+	PipeEvent output_event;
 
 	SliceFifoBuffer buffer;
 
 	UniqueFileDescriptor input_fd;
-	SocketEvent input_event;
+	PipeEvent input_event;
 
 	int pid;
 
@@ -402,10 +402,10 @@ SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
 	 spawn_service(_spawn_service),
 	 output_fd(std::move(_output_fd)),
 	 output_event(event_loop, BIND_THIS_METHOD(OutputEventCallback),
-		      SocketDescriptor::FromFileDescriptor(output_fd)),
+		      output_fd),
 	 input_fd(std::move(_input_fd)),
 	 input_event(event_loop, BIND_THIS_METHOD(InputEventCallback),
-		     SocketDescriptor::FromFileDescriptor(input_fd)),
+		     input_fd),
 	 pid(_pid)
 {
 	if (HasInput()) {
