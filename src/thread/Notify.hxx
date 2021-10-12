@@ -33,7 +33,6 @@
 #pragma once
 
 #include "event/PipeEvent.hxx"
-#include "io/UniqueFileDescriptor.hxx"
 #include "util/BindMethod.hxx"
 
 #include <atomic>
@@ -45,7 +44,6 @@ class Notify {
 	typedef BoundMethod<void() noexcept> Callback;
 	Callback callback;
 
-	UniqueFileDescriptor fd;
 	PipeEvent event;
 
 	std::atomic_bool pending;
@@ -65,7 +63,8 @@ public:
 	void Signal() noexcept {
 		if (!pending.exchange(true)) {
 			static constexpr uint64_t value = 1;
-			(void)fd.Write(&value, sizeof(value));
+			(void)event.GetFileDescriptor()
+				.Write(&value, sizeof(value));
 		}
 	}
 

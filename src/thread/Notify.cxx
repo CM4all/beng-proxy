@@ -32,26 +32,26 @@
 
 #include "Notify.hxx"
 #include "system/LinuxFD.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 
 Notify::Notify(EventLoop &event_loop, Callback _callback) noexcept
 	:callback(_callback),
-	 fd(CreateEventFD()),
 	 event(event_loop, BIND_THIS_METHOD(EventFdCallback),
-	       fd),
+	       CreateEventFD().Release()),
 	 pending(false) {
 	event.ScheduleRead();
 }
 
 Notify::~Notify() noexcept
 {
-	event.Cancel();
+	event.Close();
 }
 
 inline void
 Notify::EventFdCallback(unsigned) noexcept
 {
 	uint64_t value;
-	(void)fd.Read(&value, sizeof(value));
+	(void)event.GetFileDescriptor().Read(&value, sizeof(value));
 
 	if (pending.exchange(false))
 		callback();
