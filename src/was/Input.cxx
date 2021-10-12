@@ -237,8 +237,6 @@ private:
 	}
 
 	void _Read() noexcept override {
-		event.Cancel();
-
 		if (SubmitBuffer())
 			TryRead();
 	}
