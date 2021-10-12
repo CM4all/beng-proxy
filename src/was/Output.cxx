@@ -43,6 +43,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
+#include "util/DestructObserver.hxx"
 #include "util/StaticArray.hxx"
 
 #include <was/protocol.h>
@@ -54,7 +55,7 @@
 
 static constexpr Event::Duration was_output_timeout = std::chrono::minutes(2);
 
-class WasOutput final : PoolLeakDetector, IstreamSink {
+class WasOutput final : PoolLeakDetector, IstreamSink, DestructAnchor {
 	PipeEvent event;
 	CoarseTimerEvent timeout_event;
 
@@ -63,6 +64,8 @@ class WasOutput final : PoolLeakDetector, IstreamSink {
 	uint64_t sent = 0;
 
 	bool known_length = false;
+
+	bool got_data;
 
 public:
 	WasOutput(struct pool &pool, EventLoop &event_loop, FileDescriptor fd,
@@ -163,11 +166,20 @@ WasOutput::WriteEventCallback(unsigned) noexcept
 	assert(HasPipe());
 	assert(HasInput());
 
-	event.CancelWrite();
 	timeout_event.Cancel();
 
-	if (CheckLength())
-		input.Read();
+	if (!CheckLength())
+		return;
+
+	const DestructObserver destructed(*this);
+	got_data = false;
+
+	input.Read();
+
+	if (!destructed && !got_data)
+		/* the Istream is not ready for reading, so cancel our
+		   write event */
+		event.CancelWrite();
 }
 
 
@@ -278,6 +290,8 @@ WasOutput::OnData(const void *p, size_t length) noexcept
 	assert(HasPipe());
 	assert(HasInput());
 
+	got_data = true;
+
 	ssize_t nbytes = GetPipe().Write(p, length);
 	if (gcc_likely(nbytes > 0)) {
 		sent += nbytes;
@@ -306,6 +320,7 @@ WasOutput::OnDirect(gcc_unused FdType type, int source_fd, size_t max_length) no
 		ScheduleWrite();
 	} else if (nbytes < 0 && errno == EAGAIN) {
 		if (!GetPipe().IsReadyForWriting()) {
+			got_data = true;
 			ScheduleWrite();
 			return ISTREAM_RESULT_BLOCKING;
 		}
@@ -315,6 +330,9 @@ WasOutput::OnDirect(gcc_unused FdType type, int source_fd, size_t max_length) no
 		   fd.IsReadyForWriting() */
 		nbytes = SpliceToPipe(source_fd, GetPipe().Get(), max_length);
 	}
+
+	if (nbytes > 0)
+		got_data = true;
 
 	return nbytes;
 }
