@@ -32,7 +32,7 @@
 
 #include "Input.hxx"
 #include "was/async/Error.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/PipeEvent.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/Result.hxx"
@@ -51,7 +51,7 @@
 #include <unistd.h>
 
 class WasInput final : Istream {
-	SocketEvent event;
+	PipeEvent event;
 
 	WasInputHandler &handler;
 
@@ -69,8 +69,7 @@ public:
 	WasInput(struct pool &p, EventLoop &event_loop, FileDescriptor fd,
 		 WasInputHandler &_handler) noexcept
 		:Istream(p),
-		 event(event_loop, BIND_THIS_METHOD(EventCallback),
-		       SocketDescriptor::FromFileDescriptor(fd)),
+		 event(event_loop, BIND_THIS_METHOD(EventCallback), fd),
 		 handler(_handler) {
 	}
 
@@ -107,7 +106,7 @@ private:
 	}
 
 	FileDescriptor GetPipe() noexcept {
-		return event.GetSocket().ToFileDescriptor();
+		return event.GetFileDescriptor();
 	}
 
 	bool CanRelease() const {
@@ -121,7 +120,7 @@ private:
 		assert(HasPipe());
 
 		event.Cancel();
-		event.ReleaseSocket();
+		event.ReleaseFileDescriptor();
 
 		return handler.WasInputRelease();
 	}

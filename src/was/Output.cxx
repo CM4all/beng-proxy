@@ -32,7 +32,7 @@
 
 #include "Output.hxx"
 #include "was/async/Error.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/PipeEvent.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "io/Splice.hxx"
 #include "io/SpliceSupport.hxx"
@@ -55,7 +55,7 @@
 static constexpr Event::Duration was_output_timeout = std::chrono::minutes(2);
 
 class WasOutput final : PoolLeakDetector, IstreamSink {
-	SocketEvent event;
+	PipeEvent event;
 	CoarseTimerEvent timeout_event;
 
 	WasOutputHandler &handler;
@@ -70,8 +70,7 @@ public:
 		  WasOutputHandler &_handler) noexcept
 		:PoolLeakDetector(pool),
 		 IstreamSink(std::move(_input)),
-		 event(event_loop, BIND_THIS_METHOD(WriteEventCallback),
-		       SocketDescriptor::FromFileDescriptor(fd)),
+		 event(event_loop, BIND_THIS_METHOD(WriteEventCallback), fd),
 		 timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
 		 handler(_handler)
 	{
@@ -94,7 +93,7 @@ private:
 	}
 
 	FileDescriptor GetPipe() noexcept {
-		return event.GetSocket().ToFileDescriptor();
+		return event.GetFileDescriptor();
 	}
 
 	void Destroy() noexcept {
