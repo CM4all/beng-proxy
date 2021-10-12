@@ -44,14 +44,14 @@ struct FifoBufferBio {
 };
 
 static int
-fb_new(BIO *b)
+fb_new(BIO *b) noexcept
 {
 	BIO_set_init(b, 1);
 	return 1;
 }
 
 static int
-fb_free(BIO *b)
+fb_free(BIO *b) noexcept
 {
 	if (b == nullptr)
 		return 0;
@@ -64,7 +64,7 @@ fb_free(BIO *b)
 }
 
 static int
-fb_read(BIO *b, char *out, int outl)
+fb_read(BIO *b, char *out, int outl) noexcept
 {
 	BIO_clear_retry_flags(b);
 
@@ -89,7 +89,7 @@ fb_read(BIO *b, char *out, int outl)
 }
 
 static int
-fb_write(BIO *b, const char *in, int inl)
+fb_write(BIO *b, const char *in, int inl) noexcept
 {
 	BIO_clear_retry_flags(b);
 
@@ -123,7 +123,8 @@ fb_write(BIO *b, const char *in, int inl)
 }
 
 static long
-fb_ctrl(BIO *b, int cmd, [[maybe_unused]] long num, [[maybe_unused]] void *ptr)
+fb_ctrl(BIO *b, int cmd, [[maybe_unused]] long num,
+	[[maybe_unused]] void *ptr) noexcept
 {
 	auto &fb = *(FifoBufferBio *)BIO_get_data(b);
 
@@ -143,7 +144,7 @@ fb_ctrl(BIO *b, int cmd, [[maybe_unused]] long num, [[maybe_unused]] void *ptr)
 }
 
 static int
-fb_gets(BIO *b, char *buf, int size)
+fb_gets(BIO *b, char *buf, int size) noexcept
 {
 	(void)b;
 	(void)buf;
@@ -155,7 +156,7 @@ fb_gets(BIO *b, char *buf, int size)
 }
 
 static int
-fb_puts(BIO *b, const char *str)
+fb_puts(BIO *b, const char *str) noexcept
 {
 	(void)b;
 	(void)str;
@@ -168,7 +169,7 @@ fb_puts(BIO *b, const char *str)
 static BIO_METHOD *fb_method;
 
 static void
-InitFifoBufferBio()
+InitFifoBufferBio() noexcept
 {
 	fb_method = BIO_meth_new(BIO_get_new_index(), "FIFO buffer");
 	BIO_meth_set_write(fb_method, fb_write);
@@ -181,7 +182,7 @@ InitFifoBufferBio()
 }
 
 BIO *
-NewFifoBufferBio(ForeignFifoBuffer<uint8_t> &buffer)
+NewFifoBufferBio(ForeignFifoBuffer<uint8_t> &buffer) noexcept
 {
 	if (fb_method == nullptr)
 		InitFifoBufferBio();
@@ -192,7 +193,7 @@ NewFifoBufferBio(ForeignFifoBuffer<uint8_t> &buffer)
 }
 
 void
-DeinitFifoBufferBio()
+DeinitFifoBufferBio() noexcept
 {
 	if (fb_method != nullptr)
 		BIO_meth_free(std::exchange(fb_method, nullptr));

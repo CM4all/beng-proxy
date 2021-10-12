@@ -41,10 +41,10 @@ template<typename T> class ForeignFifoBuffer;
  * Create an OpenSSL BIO wrapper for a #ForeignFifoBuffer.
  */
 BIO *
-NewFifoBufferBio(ForeignFifoBuffer<uint8_t> &buffer);
+NewFifoBufferBio(ForeignFifoBuffer<uint8_t> &buffer) noexcept;
 
 /**
  * Global deinitialization.
  */
 void
-DeinitFifoBufferBio();
+DeinitFifoBufferBio() noexcept;
