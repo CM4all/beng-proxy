@@ -37,7 +37,7 @@ Notify::Notify(EventLoop &event_loop, Callback _callback) noexcept
 	:callback(_callback),
 	 fd(CreateEventFD()),
 	 event(event_loop, BIND_THIS_METHOD(EventFdCallback),
-	       SocketDescriptor::FromFileDescriptor(fd)),
+	       fd),
 	 pending(false) {
 	event.ScheduleRead();
 }

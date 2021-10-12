@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "event/SocketEvent.hxx"
+#include "event/PipeEvent.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/BindMethod.hxx"
 
@@ -46,7 +46,7 @@ class Notify {
 	Callback callback;
 
 	UniqueFileDescriptor fd;
-	SocketEvent event;
+	PipeEvent event;
 
 	std::atomic_bool pending;
 
