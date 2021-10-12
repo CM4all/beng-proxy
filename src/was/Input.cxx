@@ -261,8 +261,6 @@ private:
 void
 WasInput::ReadToBuffer()
 {
-	buffer.AllocateIfNull(fb_pool_get());
-
 	size_t max_length = FB_SIZE;
 	if (known_length) {
 		uint64_t rest = length - received;
@@ -273,6 +271,8 @@ WasInput::ReadToBuffer()
 			/* all the data we need is already in the buffer */
 			return;
 	}
+
+	buffer.AllocateIfNull(fb_pool_get());
 
 	ssize_t nbytes = read_to_buffer(GetPipe().Get(), buffer, max_length);
 	assert(nbytes != -2);
