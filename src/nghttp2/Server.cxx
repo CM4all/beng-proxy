@@ -581,10 +581,8 @@ ServerConnection::OnBufferedData()
 
 	socket->DisposeConsumed(nbytes);
 
-	const auto rv = nghttp2_session_send(session.get());
-	if (rv != 0)
-		throw FormatRuntimeError("nghttp2_session_send() failed: %s",
-					 nghttp2_strerror(rv));
+	if (nghttp2_session_want_write(session.get()))
+		DeferWrite();
 
 	return BufferedResult::MORE; // TODO?
 }
