@@ -134,6 +134,9 @@ public:
 		   Event::Duration timeout,
 		   SocketFilterFactory *filter_factory) noexcept;
 
+	void FinishOne(std::unique_ptr<FilteredSocket> &&_socket,
+		       StockGetHandler &handler) noexcept;
+
 	void AddGetHandler(AllocatorPtr alloc,
 			   const StopwatchPtr &parent_stopwatch,
 			   StockGetHandler &handler,
@@ -190,6 +193,22 @@ Stock::Item::Start(SocketAddress bind_address,
 			      get_requests.front().stopwatch,
 			      false, bind_address, address, timeout,
 			      filter_factory, *this, connect_cancel);
+}
+
+inline void
+Stock::Item::FinishOne(std::unique_ptr<FilteredSocket> &&socket,
+		       StockGetHandler &get_handler) noexcept
+{
+	assert(socket);
+	assert(!connection);
+	assert(get_requests.empty());
+
+	NgHttp2::ConnectionHandler &nghttp2_handler = *this;
+	connection = std::make_unique<ClientConnection>(std::move(socket),
+							nghttp2_handler);
+
+	idle_timer.Schedule(std::chrono::minutes(1));
+	get_handler.OnNgHttp2StockReady(*connection);
 }
 
 void
@@ -396,6 +415,17 @@ Stock::Get(EventLoop &event_loop,
 	items.insert(*item);
 	item->AddGetHandler(alloc, parent_stopwatch, handler, cancel_ptr);
 	item->Start(bind_address, address, timeout, filter_factory);
+}
+
+void
+Stock::Add(EventLoop &event_loop,
+	   const char *key,
+	   std::unique_ptr<FilteredSocket> socket,
+	   StockGetHandler &handler) noexcept
+{
+	auto *item = new Item(*this, event_loop, key);
+	items.insert(*item);
+	item->FinishOne(std::move(socket), handler);
 }
 
 inline void

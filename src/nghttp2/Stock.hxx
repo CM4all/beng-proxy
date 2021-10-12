@@ -119,6 +119,17 @@ public:
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 
+	/**
+	 * Add a newly connected HTTP/2 connection to the stock and
+	 * invoke the given #StockGetHandler.
+	 *
+	 * @param key a string generated with MakeFilteredSocketStockKey()
+	 */
+	void Add(EventLoop &event_loop,
+		 const char *key,
+		 std::unique_ptr<FilteredSocket> socket,
+		 StockGetHandler &handler) noexcept;
+
 private:
 	void DeleteItem(Item *item) noexcept;
 };
