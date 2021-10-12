@@ -33,6 +33,7 @@
 #include "Server.hxx"
 #include "Util.hxx"
 #include "Error.hxx"
+#include "SocketUtil.hxx"
 #include "IstreamDataSource.hxx"
 #include "Option.hxx"
 #include "Callbacks.hxx"
@@ -501,15 +502,7 @@ ServerConnection::DeferWrite() noexcept
 ssize_t
 ServerConnection::SendCallback(const void *data, size_t length) noexcept
 {
-	const auto nbytes = socket->Write(data, length);
-	if (nbytes < 0) {
-		if (nbytes == WRITE_BLOCKING)
-			return NGHTTP2_ERR_WOULDBLOCK;
-		else
-			return NGHTTP2_ERR_CALLBACK_FAILURE;
-	}
-
-	return nbytes;
+	return SendToBuffer(*socket, data, length);
 }
 
 int
@@ -571,19 +564,7 @@ ServerConnection::OnBeginHeaderCallback(const nghttp2_frame *frame) noexcept
 BufferedResult
 ServerConnection::OnBufferedData()
 {
-	auto r = socket->ReadBuffer();
-
-	auto nbytes = nghttp2_session_mem_recv(session.get(),
-					       (const uint8_t *)r.data, r.size);
-	if (nbytes < 0)
-		throw MakeError(int(nbytes), "nghttp2_session_mem_recv() failed");
-
-	socket->DisposeConsumed(nbytes);
-
-	if (nghttp2_session_want_write(session.get()))
-		DeferWrite();
-
-	return BufferedResult::MORE; // TODO?
+	return ReceiveFromSocketBuffer(session.get(), *socket);
 }
 
 bool
@@ -597,14 +578,7 @@ ServerConnection::OnBufferedClosed() noexcept
 bool
 ServerConnection::OnBufferedWrite()
 {
-	const auto rv = nghttp2_session_send(session.get());
-	if (rv != 0)
-		throw MakeError(rv, "nghttp2_session_send() failed");
-
-	if (!nghttp2_session_want_write(session.get()))
-		socket->UnscheduleWrite();
-
-	return true;
+	return OnSocketWrite(session.get(), *socket);
 }
 
 void

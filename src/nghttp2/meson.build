@@ -6,6 +6,7 @@ endif
 
 nghttp2 = static_library('nghttp2',
   'Error.cxx',
+  'SocketUtil.cxx',
   'Server.cxx',
   'Client.cxx',
   'Stock.cxx',
