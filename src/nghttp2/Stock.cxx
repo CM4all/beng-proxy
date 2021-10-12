@@ -263,8 +263,7 @@ Stock::Item::OnConnectFilteredSocket(std::unique_ptr<FilteredSocket> socket) noe
 	}
 
 	NgHttp2::ConnectionHandler &handler = *this;
-	connection = std::make_unique<ClientConnection>(GetEventLoop(),
-							std::move(socket),
+	connection = std::make_unique<ClientConnection>(std::move(socket),
 							handler);
 
 	auto &c = *connection;

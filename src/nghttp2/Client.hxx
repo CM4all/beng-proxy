@@ -90,8 +90,7 @@ class ClientConnection final : BufferedSocketHandler {
 #endif
 
 public:
-	ClientConnection(EventLoop &loop,
-			 std::unique_ptr<FilteredSocket> socket,
+	ClientConnection(std::unique_ptr<FilteredSocket> socket,
 			 ConnectionHandler &_handler);
 
 	~ClientConnection() noexcept;

@@ -395,8 +395,7 @@ try {
 						       std::move(fd), FdType::FD_TCP,
 						       std::move(socket_filter));
 
-		nghttp2_client = std::make_unique<NgHttp2::ClientConnection>(event_loop,
-									     std::move(fsp),
+		nghttp2_client = std::make_unique<NgHttp2::ClientConnection>(std::move(fsp),
 									     *this);
 
 		nghttp2_client->SendRequest(*pool, nullptr,

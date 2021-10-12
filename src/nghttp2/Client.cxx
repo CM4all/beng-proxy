@@ -446,12 +446,12 @@ ClientConnection::Request::OnStreamCloseCallback(uint32_t error_code) noexcept
 	return 0;
 }
 
-ClientConnection::ClientConnection(EventLoop &loop,
-				   std::unique_ptr<FilteredSocket> _socket,
+ClientConnection::ClientConnection(std::unique_ptr<FilteredSocket> _socket,
 				   ConnectionHandler &_handler)
 	:socket(std::move(_socket)),
 	 handler(_handler),
-	 defer_invoke_idle(loop, BIND_THIS_METHOD(InvokeIdle))
+	 defer_invoke_idle(socket->GetEventLoop(),
+			   BIND_THIS_METHOD(InvokeIdle))
 {
 	socket->Reinit(Event::Duration(-1), write_timeout,
 		       *this);
