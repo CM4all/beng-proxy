@@ -109,7 +109,6 @@ executable('run_http_server',
   '../src/PInstance.cxx',
   '../src/address_string.cxx',
   '../src/istream_gb.cxx',
-  '../src/duplex.cxx',
   include_directories: inc,
   dependencies: [
     http_server_dep,

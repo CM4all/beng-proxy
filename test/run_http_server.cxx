@@ -31,7 +31,6 @@
  */
 
 #include "DemoHttpServerConnection.hxx"
-#include "duplex.hxx"
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
 #include "pool/Holder.hxx"
@@ -140,20 +139,12 @@ Connection::HttpConnectionClosed() noexcept
 int
 main(int argc, char **argv)
 try {
-	if (argc != 4) {
-		fprintf(stderr, "Usage: %s INFD OUTFD {null|mirror|close|dummy|fixed|huge|hold}\n", argv[0]);
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s {null|mirror|close|dummy|fixed|huge|hold}\n", argv[0]);
 		return EXIT_FAILURE;
 	}
 
-	UniqueSocketDescriptor listen_fd;
-	int in_fd = -1, out_fd = -1;
-
-	if (strcmp(argv[1], "accept") == 0) {
-		listen_fd = UniqueSocketDescriptor(atoi(argv[2]));
-	} else {
-		in_fd = atoi(argv[1]);
-		out_fd = atoi(argv[2]);
-	}
+	UniqueSocketDescriptor listen_fd{STDIN_FILENO};
 
 	direct_global_init();
 	const ScopeFbPoolInit fb_pool_init;
@@ -161,7 +152,7 @@ try {
 	Instance instance;
 	instance.shutdown_listener.Enable();
 
-	const char *mode = argv[3];
+	const char *mode = argv[1];
 	DemoHttpServerConnection::Mode parsed_mode;
 	if (strcmp(mode, "null") == 0)
 		parsed_mode = DemoHttpServerConnection::Mode::MODE_NULL;
@@ -186,21 +177,9 @@ try {
 		return EXIT_FAILURE;
 	}
 
-	if (listen_fd.IsDefined()) {
-		instance.listener = std::make_unique<Listener>(instance.event_loop,
-							       instance, parsed_mode);
-		instance.listener->Listen(std::move(listen_fd));
-	} else {
-		UniqueSocketDescriptor sockfd;
-		if (in_fd != out_fd) {
-			sockfd = duplex_new(instance.event_loop, instance.root_pool,
-					    UniqueFileDescriptor(in_fd),
-					    UniqueFileDescriptor(out_fd));
-		} else
-			sockfd = UniqueSocketDescriptor(in_fd);
-
-		new Connection(instance, parsed_mode, std::move(sockfd), {});
-	}
+	instance.listener = std::make_unique<Listener>(instance.event_loop,
+						       instance, parsed_mode);
+	instance.listener->Listen(std::move(listen_fd));
 
 	instance.event_loop.Dispatch();
 
