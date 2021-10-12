@@ -552,6 +552,13 @@ WasInput::_FillBucketList(IstreamBucketList &list)
 		if (!HasPipe())
 			return;
 
+		if (direct) {
+			/* prefer splice() over buckets if possible */
+			if (!known_length || received < length)
+				list.SetMore();
+			return;
+		}
+
 		try {
 			ReadToBuffer();
 		} catch (...) {
