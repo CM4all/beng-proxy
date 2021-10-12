@@ -71,7 +71,7 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 		log.EnableClient(p, GetEventLoop(), log_socket, log_options,
 				 cls.WantStderrPond(info));
 
-	UniqueSocketDescriptor stderr_socket1, stderr_socket2;
+	UniqueSocketDescriptor stderr_socket1;
 	if (cls.WantReturnStderr(info) &&
 	    !UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
 						      stderr_socket1, p.return_stderr))
@@ -82,7 +82,9 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 					      this);
 
 	if (stderr_socket1.IsDefined()) {
-		stderr_socket2.Close();
+		if (p.return_stderr.IsDefined())
+			p.return_stderr.Close();
+
 		stderr_fd = EasyReceiveMessageWithOneFD(stderr_socket1);
 	}
 }
