@@ -60,8 +60,6 @@ class Stock::Item final
 
 	const std::string key;
 
-	SocketFilterFactory *const filter_factory;
-
 	std::unique_ptr<ClientConnection> connection;
 
 	struct GetRequest final
@@ -104,8 +102,7 @@ class Stock::Item final
 
 public:
 	template<typename K>
-	Item(Stock &_stock, EventLoop &event_loop, K &&_key,
-	     SocketFilterFactory *_filter_factory) noexcept;
+	Item(Stock &_stock, EventLoop &event_loop, K &&_key) noexcept;
 
 	auto &GetEventLoop() const noexcept {
 		return idle_timer.GetEventLoop();
@@ -133,7 +130,8 @@ public:
 
 	void Start(SocketAddress bind_address,
 		   SocketAddress address,
-		   Event::Duration timeout) noexcept;
+		   Event::Duration timeout,
+		   SocketFilterFactory *filter_factory) noexcept;
 
 	void AddGetHandler(AllocatorPtr alloc,
 			   const StopwatchPtr &parent_stopwatch,
@@ -172,10 +170,8 @@ private:
 };
 
 template<typename K>
-Stock::Item::Item(Stock &_stock, EventLoop &event_loop, K &&_key,
-		  SocketFilterFactory *_filter_factory) noexcept
+Stock::Item::Item(Stock &_stock, EventLoop &event_loop, K &&_key) noexcept
 	:stock(_stock), key(std::forward<K>(_key)),
-	 filter_factory(_filter_factory),
 	 idle_timer(event_loop, BIND_THIS_METHOD(OnIdleTimer))
 {
 }
@@ -183,7 +179,8 @@ Stock::Item::Item(Stock &_stock, EventLoop &event_loop, K &&_key,
 void
 Stock::Item::Start(SocketAddress bind_address,
 		   SocketAddress address,
-		   Event::Duration timeout) noexcept
+		   Event::Duration timeout,
+		   SocketFilterFactory *filter_factory) noexcept
 {
 	assert(!get_requests.empty());
 	assert(!alpn_failure);
@@ -403,10 +400,10 @@ Stock::Get(EventLoop &event_loop,
 		}
 	}
 
-	auto *item = new Item(*this, event_loop, key, filter_factory);
+	auto *item = new Item(*this, event_loop, key);
 	items.insert(*item);
 	item->AddGetHandler(alloc, parent_stopwatch, handler, cancel_ptr);
-	item->Start(bind_address, address, timeout);
+	item->Start(bind_address, address, timeout, filter_factory);
 }
 
 inline void
