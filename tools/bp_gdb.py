@@ -953,7 +953,7 @@ def build_pretty_printer():
     pp.add_printer('std::array', '^std::array<', StdArrayPrinter)
     pp.add_printer('TrivialArray', '^TrivialArray<', StaticArrayPrinter)
     pp.add_printer('StaticArray', '^StaticArray<', StaticArrayPrinter)
-    pp.add_printer('IntrusiveList', 'Intrusive(IntrusiveForwardList)?List', IntrusiveListPrinter)
+    pp.add_printer('IntrusiveList', '^Intrusive(Forward)?List$', IntrusiveListPrinter)
     pp.add_printer('boost::intrusive::hooks', 'boost::intrusive::(s?list_base|generic|unordered_set_base)_hook', TypeNamePrinter)
     pp.add_printer('boost::intrusive::list', 'boost::intrusive::s?list<', BoostIntrusiveListPrinter)
     pp.add_printer('boost::intrusive::set', 'boost::intrusive::(multi)?set<', BoostIntrusiveSetPrinter)
