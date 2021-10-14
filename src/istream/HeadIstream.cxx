@@ -53,6 +53,7 @@ public:
 	/* virtual methods from class Istream */
 
 	off_t _GetAvailable(bool partial) noexcept override;
+	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
 	off_t _Skip(off_t length) noexcept override;
 	void _Read() noexcept override;
 
@@ -115,6 +116,17 @@ HeadIstream::_FillBucketList(IstreamBucketList &list)
 	size_t nbytes = list.SpliceBuffersFrom(std::move(tmp1), rest);
 	if ((off_t)nbytes >= rest)
 		list.SetMore(false);
+}
+
+size_t
+HeadIstream::_ConsumeBucketList(size_t nbytes) noexcept
+{
+	if ((off_t)nbytes > rest)
+		nbytes = rest;
+
+	nbytes = ForwardIstream::_ConsumeBucketList(nbytes);
+	rest -= nbytes;
+	return nbytes;
 }
 
 ssize_t
