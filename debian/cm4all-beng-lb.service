@@ -25,6 +25,10 @@ AmbientCapabilities=CAP_NET_RAW
 # Needed to start logger processes as user "cm4all-logger"
 AmbientCapabilities=CAP_SETUID CAP_SETGID
 
+# This allows the kernel to merge CPU wakeups, the default of 50ns is
+# too fine.
+TimerSlackNSec=10ms
+
 # enable crash dumps
 LimitCORE=infinity
 
