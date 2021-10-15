@@ -63,6 +63,8 @@ class WasOutput final : PoolLeakDetector, IstreamSink, DestructAnchor {
 
 	uint64_t sent = 0;
 
+	uint64_t total_length;
+
 	bool known_length = false;
 
 	bool got_data;
@@ -127,6 +129,10 @@ private:
 		_handler.WasOutputError(ep);
 	}
 
+	bool IsEof() const noexcept {
+		return known_length && sent == total_length;
+	}
+
 	void ScheduleWrite() noexcept {
 		event.ScheduleWrite();
 		timeout_event.Schedule(was_output_timeout);
@@ -157,7 +163,8 @@ WasOutput::CheckLength() noexcept
 		return true;
 
 	known_length = true;
-	return handler.WasOutputLength(sent + available);
+	total_length = sent + available;
+	return handler.WasOutputLength(total_length);
 }
 
 /*
@@ -282,12 +289,20 @@ WasOutput::OnData(const void *p, size_t length) noexcept
 {
 	assert(HasPipe());
 	assert(HasInput());
+	assert(!IsEof());
 
 	got_data = true;
 
 	ssize_t nbytes = GetPipe().Write(p, length);
 	if (gcc_likely(nbytes > 0)) {
 		sent += nbytes;
+
+		if (IsEof()) {
+			CloseInput();
+			DestroyEof();
+			return 0;
+		}
+
 		ScheduleWrite();
 	} else if (nbytes < 0) {
 		if (errno == EAGAIN) {
@@ -306,10 +321,18 @@ inline ssize_t
 WasOutput::OnDirect(gcc_unused FdType type, int source_fd, size_t max_length) noexcept
 {
 	assert(HasPipe());
+	assert(!IsEof());
 
 	ssize_t nbytes = SpliceToPipe(source_fd, GetPipe().Get(), max_length);
 	if (gcc_likely(nbytes > 0)) {
 		sent += nbytes;
+
+		if (IsEof()) {
+			CloseInput();
+			DestroyEof();
+			return ISTREAM_RESULT_CLOSED;
+		}
+
 		ScheduleWrite();
 	} else if (nbytes < 0 && errno == EAGAIN) {
 		if (!GetPipe().IsReadyForWriting()) {
