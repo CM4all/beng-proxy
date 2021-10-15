@@ -326,13 +326,13 @@ private:
 	[[gnu::pure]]
 	off_t GetAvailable(bool partial) const noexcept;
 
-	void Read();
+	void Read() noexcept;
 
-	void FillBucketList(IstreamBucketList &list);
-	size_t ConsumeBucketList(size_t nbytes);
+	void FillBucketList(IstreamBucketList &list) noexcept;
+	size_t ConsumeBucketList(size_t nbytes) noexcept;
 
-	int AsFD();
-	void Close();
+	int AsFD() noexcept;
+	void Close() noexcept;
 
 	BucketResult TryWriteBuckets2();
 	BucketResult TryWriteBuckets();
@@ -362,7 +362,7 @@ private:
 	 */
 	BufferedResult FeedHeaders(ConstBuffer<void> b);
 
-	void ResponseBodyEOF();
+	void ResponseBodyEOF() noexcept;
 
 	BufferedResult FeedBody(ConstBuffer<void> b);
 
@@ -463,7 +463,7 @@ HttpClient::GetAvailable(bool partial) const noexcept
 }
 
 inline void
-HttpClient::Read()
+HttpClient::Read() noexcept
 {
 	assert(response_body_reader.IsSocketDone(socket) ||
 	       /* the following condition avoids calling
@@ -497,7 +497,7 @@ HttpClient::Read()
 }
 
 inline void
-HttpClient::FillBucketList(IstreamBucketList &list)
+HttpClient::FillBucketList(IstreamBucketList &list) noexcept
 {
 	assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
 	assert(response.state == Response::State::BODY);
@@ -506,7 +506,7 @@ HttpClient::FillBucketList(IstreamBucketList &list)
 }
 
 inline size_t
-HttpClient::ConsumeBucketList(size_t nbytes)
+HttpClient::ConsumeBucketList(size_t nbytes) noexcept
 {
 	assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
 	assert(response.state == Response::State::BODY);
@@ -515,7 +515,7 @@ HttpClient::ConsumeBucketList(size_t nbytes)
 }
 
 inline int
-HttpClient::AsFD()
+HttpClient::AsFD() noexcept
 {
 	assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
 	assert(response.state == Response::State::BODY);
@@ -535,7 +535,7 @@ HttpClient::AsFD()
 }
 
 inline void
-HttpClient::Close()
+HttpClient::Close() noexcept
 {
 	assert(response.state == Response::State::BODY);
 
@@ -842,7 +842,7 @@ HttpClient::ParseHeaders(const StringView b)
 }
 
 void
-HttpClient::ResponseBodyEOF()
+HttpClient::ResponseBodyEOF() noexcept
 {
 	assert(response.state == Response::State::BODY);
 	assert(response_body_reader.IsEOF());
