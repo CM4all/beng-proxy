@@ -104,7 +104,12 @@ private:
 	}
 
 	void DestroyEof() noexcept {
+		assert(!HasInput());
+
 		auto &_handler = handler;
+		if (!known_length && !_handler.WasOutputLength(sent))
+			return;
+
 		Destroy();
 		_handler.WasOutputEof();
 	}
@@ -210,10 +215,6 @@ WasOutput::OnIstreamReady() noexcept
 		/* our input has ended */
 
 		CloseInput();
-
-		if (!known_length && !handler.WasOutputLength(sent))
-			return false;
-
 		DestroyEof();
 		return false;
 	}
@@ -268,10 +269,6 @@ WasOutput::OnIstreamReady() noexcept
 		/* we've just reached end of our input */
 
 		CloseInput();
-
-		if (!known_length && !handler.WasOutputLength(sent))
-			return false;
-
 		DestroyEof();
 		return false;
 	}
@@ -339,10 +336,6 @@ WasOutput::OnEof() noexcept
 	assert(HasInput());
 
 	ClearInput();
-
-	if (!known_length && !handler.WasOutputLength(sent))
-		return;
-
 	DestroyEof();
 }
 
