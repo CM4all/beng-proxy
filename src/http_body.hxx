@@ -81,12 +81,12 @@ public:
 		:Istream(std::forward<P>(_pool)) {}
 
 	UnusedIstreamPtr Init(EventLoop &event_loop, off_t content_length,
-			      bool chunked);
+			      bool chunked) noexcept;
 
 	using Istream::GetPool;
 	using Istream::Destroy;
 
-	IstreamHandler *PrepareEof() {
+	IstreamHandler *PrepareEof() noexcept {
 		/* suppress InvokeEof() if rest==REST_EOF_CHUNK because in
 		   that case, the dechunker has already emitted that event */
 		return rest == 0
@@ -101,7 +101,7 @@ public:
 			Istream::InvokeEof();
 	}
 
-	void DestroyEof() {
+	void DestroyEof() noexcept {
 		InvokeEof();
 		Destroy();
 	}
@@ -109,35 +109,35 @@ public:
 	using Istream::InvokeError;
 	using Istream::DestroyError;
 
-	bool IsChunked() const {
+	bool IsChunked() const noexcept {
 		return rest == REST_CHUNKED || rest == REST_EOF_CHUNK;
 	}
 
 	/**
 	 * Do we know the remaining length of the body?
 	 */
-	bool KnownLength() const {
+	bool KnownLength() const noexcept {
 		return rest >= 0;
 	}
 
-	bool IsEOF() const {
+	bool IsEOF() const noexcept {
 		return rest == 0 || rest == REST_EOF_CHUNK;
 	}
 
-	bool GotEndChunk() const {
+	bool GotEndChunk() const noexcept {
 		return rest == REST_EOF_CHUNK;
 	}
 
 	/**
 	 * Do we require more data to finish the body?
 	 */
-	bool RequireMore() const {
+	bool RequireMore() const noexcept {
 		return rest > 0 || (rest == REST_CHUNKED && !end_seen);
 	}
 
 	template<typename Socket>
 	[[gnu::pure]]
-	off_t GetAvailable(const Socket &s, bool partial) const {
+	off_t GetAvailable(const Socket &s, bool partial) const noexcept {
 		assert(rest != REST_EOF_CHUNK);
 
 		if (KnownLength())
@@ -149,7 +149,8 @@ public:
 	}
 
 	template<typename Socket>
-	void FillBucketList(const Socket &s, IstreamBucketList &list) {
+	void FillBucketList(const Socket &s,
+			    IstreamBucketList &list) noexcept {
 		auto b = s.ReadBuffer();
 		if (b.empty()) {
 			if (!IsEOF())
@@ -167,7 +168,7 @@ public:
 	}
 
 	template<typename Socket>
-	size_t ConsumeBucketList(Socket &s, size_t nbytes) {
+	size_t ConsumeBucketList(Socket &s, size_t nbytes) noexcept {
 		auto b = s.ReadBuffer();
 		if (b.empty())
 			return 0;
@@ -183,13 +184,13 @@ public:
 		return Istream::Consumed(nbytes);
 	}
 
-	size_t FeedBody(const void *data, size_t length);
+	size_t FeedBody(const void *data, size_t length) noexcept;
 
 	bool CheckDirect(FdType type) const noexcept {
 		return (direct_mask & FdTypeMask(type)) != 0;
        }
 
-	ssize_t TryDirect(SocketDescriptor fd, FdType fd_type);
+	ssize_t TryDirect(SocketDescriptor fd, FdType fd_type) noexcept;
 
 	/**
 	 * Determines whether the socket can be released now.  This is true if
@@ -198,7 +199,7 @@ public:
 	 */
 	template<typename Socket>
 	[[gnu::pure]]
-	bool IsSocketDone(const Socket &s) const {
+	bool IsSocketDone(const Socket &s) const noexcept {
 		if (IsChunked())
 			return end_seen;
 
@@ -211,7 +212,7 @@ public:
 	 * @return true if there is data left in the buffer, false if the body
 	 * has been finished (with or without error)
 	 */
-	bool SocketEOF(size_t remaining);
+	bool SocketEOF(size_t remaining) noexcept;
 
 	/**
 	 * Discard data from the input buffer.  This method shall be used
@@ -221,7 +222,7 @@ public:
 	 * buffer
 	 */
 	template<typename Socket>
-	bool Discard(Socket &s) {
+	bool Discard(Socket &s) noexcept {
 		if (IsChunked() || !KnownLength())
 			return false;
 
@@ -240,9 +241,9 @@ public:
 
 private:
 	[[gnu::pure]]
-	size_t GetMaxRead(size_t length) const;
+	size_t GetMaxRead(size_t length) const noexcept;
 
-	void Consumed(size_t nbytes);
+	void Consumed(size_t nbytes) noexcept;
 
 public:
 	/* virtual methods from class Istream */

@@ -40,7 +40,7 @@
 
 /** determine how much can be read from the body */
 size_t
-HttpBodyReader::GetMaxRead(size_t length) const
+HttpBodyReader::GetMaxRead(size_t length) const noexcept
 {
 	assert(rest != REST_EOF_CHUNK);
 
@@ -53,7 +53,7 @@ HttpBodyReader::GetMaxRead(size_t length) const
 }
 
 void
-HttpBodyReader::Consumed(size_t nbytes)
+HttpBodyReader::Consumed(size_t nbytes) noexcept
 {
 	if (!KnownLength())
 		return;
@@ -64,7 +64,7 @@ HttpBodyReader::Consumed(size_t nbytes)
 }
 
 size_t
-HttpBodyReader::FeedBody(const void *data, size_t length)
+HttpBodyReader::FeedBody(const void *data, size_t length) noexcept
 {
 	assert(length > 0);
 
@@ -77,7 +77,7 @@ HttpBodyReader::FeedBody(const void *data, size_t length)
 }
 
 ssize_t
-HttpBodyReader::TryDirect(SocketDescriptor fd, FdType fd_type)
+HttpBodyReader::TryDirect(SocketDescriptor fd, FdType fd_type) noexcept
 {
 	assert(fd.IsDefined());
 	assert(CheckDirect(fd_type));
@@ -90,7 +90,7 @@ HttpBodyReader::TryDirect(SocketDescriptor fd, FdType fd_type)
 }
 
 bool
-HttpBodyReader::SocketEOF(size_t remaining)
+HttpBodyReader::SocketEOF(size_t remaining) noexcept
 {
 	if (rest == REST_UNKNOWN) {
 		rest = remaining;
@@ -146,7 +146,7 @@ HttpBodyReader::OnDechunkEnd() noexcept
 
 UnusedIstreamPtr
 HttpBodyReader::Init(EventLoop &event_loop, off_t content_length,
-		     bool _chunked)
+		     bool _chunked) noexcept
 {
 	assert(content_length >= -1);
 
