@@ -33,6 +33,7 @@
 #include "Input.hxx"
 #include "was/async/Error.hxx"
 #include "event/PipeEvent.hxx"
+#include "event/DeferEvent.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/Result.hxx"
@@ -52,6 +53,7 @@
 
 class WasInput final : Istream {
 	PipeEvent event;
+	DeferEvent defer_read;
 
 	WasInputHandler &handler;
 
@@ -70,6 +72,7 @@ public:
 		 WasInputHandler &_handler) noexcept
 		:Istream(p),
 		 event(event_loop, BIND_THIS_METHOD(EventCallback), fd),
+		 defer_read(event_loop, BIND_THIS_METHOD(OnDeferredRead)),
 		 handler(_handler) {
 	}
 
@@ -88,7 +91,7 @@ public:
 	UnusedIstreamPtr Enable() noexcept {
 		assert(!enabled);
 		enabled = true;
-		ScheduleRead();
+		defer_read.Schedule();
 		return UnusedIstreamPtr(this);
 	}
 
@@ -119,6 +122,7 @@ private:
 	bool ReleasePipe() noexcept {
 		assert(HasPipe());
 
+		defer_read.Cancel();
 		event.Cancel();
 		event.ReleaseFileDescriptor();
 
@@ -220,6 +224,7 @@ private:
 	}
 
 	void EventCallback(unsigned events) noexcept;
+	void OnDeferredRead() noexcept;
 
 	/* virtual methods from class Istream */
 
@@ -377,6 +382,14 @@ WasInput::TryDirect() noexcept
 
 inline void
 WasInput::EventCallback(unsigned) noexcept
+{
+	assert(HasPipe());
+
+	TryRead();
+}
+
+inline void
+WasInput::OnDeferredRead() noexcept
 {
 	assert(HasPipe());
 
