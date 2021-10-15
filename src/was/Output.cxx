@@ -210,8 +210,6 @@ WasOutput::OnIstreamReady() noexcept
 		/* our input has ended */
 
 		CloseInput();
-		event.Cancel();
-		timeout_event.Cancel();
 
 		if (!known_length && !handler.WasOutputLength(sent))
 			return false;
@@ -270,8 +268,6 @@ WasOutput::OnIstreamReady() noexcept
 		/* we've just reached end of our input */
 
 		CloseInput();
-		event.Cancel();
-		timeout_event.Cancel();
 
 		if (!known_length && !handler.WasOutputLength(sent))
 			return false;
@@ -343,8 +339,6 @@ WasOutput::OnEof() noexcept
 	assert(HasInput());
 
 	ClearInput();
-	event.Cancel();
-	timeout_event.Cancel();
 
 	if (!known_length && !handler.WasOutputLength(sent))
 		return;
