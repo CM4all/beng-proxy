@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.71) unstable; urgency=low
 
-  * 
+  * was: eliminate unnecessary epoll_ctl() calls
 
  --   
 

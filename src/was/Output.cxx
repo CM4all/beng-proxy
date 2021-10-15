@@ -33,6 +33,7 @@
 #include "Output.hxx"
 #include "was/async/Error.hxx"
 #include "event/PipeEvent.hxx"
+#include "event/DeferEvent.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "io/Splice.hxx"
 #include "io/SpliceSupport.hxx"
@@ -57,6 +58,7 @@ static constexpr Event::Duration was_output_timeout = std::chrono::minutes(2);
 
 class WasOutput final : PoolLeakDetector, IstreamSink, DestructAnchor {
 	PipeEvent event;
+	DeferEvent defer_write;
 	CoarseTimerEvent timeout_event;
 
 	WasOutputHandler &handler;
@@ -76,12 +78,13 @@ public:
 		:PoolLeakDetector(pool),
 		 IstreamSink(std::move(_input)),
 		 event(event_loop, BIND_THIS_METHOD(WriteEventCallback), fd),
+		 defer_write(event_loop, BIND_THIS_METHOD(OnDeferredWrite)),
 		 timeout_event(event_loop, BIND_THIS_METHOD(OnTimeout)),
 		 handler(_handler)
 	{
 		input.SetDirect(ISTREAM_TO_PIPE);
 
-		ScheduleWrite();
+		defer_write.Schedule();
 	}
 
 	uint64_t Close() noexcept {
@@ -139,6 +142,7 @@ private:
 	}
 
 	void WriteEventCallback(unsigned events) noexcept;
+	void OnDeferredWrite() noexcept;
 
 	void OnTimeout() noexcept {
 		DestroyError(std::make_exception_ptr(WasError("send timeout")));
@@ -194,6 +198,17 @@ WasOutput::WriteEventCallback(unsigned) noexcept
 		event.CancelWrite();
 }
 
+inline void
+WasOutput::OnDeferredWrite() noexcept
+{
+	assert(HasPipe());
+	assert(HasInput());
+
+	if (!CheckLength())
+		return;
+
+	input.Read();
+}
 
 /*
  * istream handler for the request
