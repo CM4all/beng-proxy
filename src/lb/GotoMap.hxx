@@ -75,10 +75,10 @@ public:
 	LbGotoMap(const LbGotoMap &) = delete;
 	LbGotoMap &operator=(const LbGotoMap &) = delete;
 
-	void Clear();
+	void Clear() noexcept;
 
-	void FlushCaches();
-	void InvalidateTranslationCaches(const TranslationInvalidateRequest &request);
+	void FlushCaches() noexcept;
+	void InvalidateTranslationCaches(const TranslationInvalidateRequest &request) noexcept;
 
 	[[gnu::pure]]
 	std::size_t GetAllocatedTranslationCacheMemory() const noexcept;

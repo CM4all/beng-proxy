@@ -47,26 +47,24 @@ LbGotoMap::LbGotoMap(const LbConfig &_config,
 	 event_loop(_event_loop),
 	 lua_init_hook(this) {}
 
-LbGotoMap::~LbGotoMap() noexcept
-{
-}
+LbGotoMap::~LbGotoMap() noexcept = default;
 
 void
-LbGotoMap::Clear()
+LbGotoMap::Clear() noexcept
 {
 	translation_handlers.clear();
 	clusters.clear();
 }
 
 void
-LbGotoMap::FlushCaches()
+LbGotoMap::FlushCaches() noexcept
 {
 	for (auto &i : translation_handlers)
 		i.second.FlushCache();
 }
 
 void
-LbGotoMap::InvalidateTranslationCaches(const TranslationInvalidateRequest &request)
+LbGotoMap::InvalidateTranslationCaches(const TranslationInvalidateRequest &request) noexcept
 {
 	for (auto &i : translation_handlers)
 		i.second.InvalidateCache(request);
