@@ -48,6 +48,7 @@ struct LbClusterConfig;
 struct LbBranchConfig;
 struct LbLuaHandlerConfig;
 struct LbTranslationHandlerConfig;
+struct LbPrometheusExporterConfig;
 
 struct LbGotoConfig {
 	std::variant<std::monostate,
@@ -55,6 +56,7 @@ struct LbGotoConfig {
 		     const LbBranchConfig *,
 		     const LbLuaHandlerConfig *,
 		     const LbTranslationHandlerConfig *,
+		     const LbPrometheusExporterConfig *,
 		     LbSimpleHttpResponse> destination;
 
 	LbGotoConfig() = default;
@@ -70,6 +72,9 @@ struct LbGotoConfig {
 
 	explicit LbGotoConfig(const LbTranslationHandlerConfig &_translation) noexcept
 		:destination(&_translation) {}
+
+	explicit LbGotoConfig(const LbPrometheusExporterConfig &_exporter) noexcept
+		:destination(&_exporter) {}
 
 	explicit LbGotoConfig(http_status_t _status) noexcept
 		:destination(LbSimpleHttpResponse{_status}) {}

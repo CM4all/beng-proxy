@@ -1054,6 +1054,7 @@ executable(
   'src/lb/MonitorStock.cxx',
   'src/lb/MonitorManager.cxx',
   'src/lb/PingMonitor.cxx',
+  'src/lb/PrometheusExporter.cxx',
   'src/lb/SynMonitor.cxx',
   'src/lb/ExpectMonitor.cxx',
   'src/lb/Instance.cxx',

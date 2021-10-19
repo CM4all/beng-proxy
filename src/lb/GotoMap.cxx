@@ -35,6 +35,7 @@
 #include "Cluster.hxx"
 #include "Branch.hxx"
 #include "TranslationHandler.hxx"
+#include "PrometheusExporter.hxx"
 #include "LuaHandler.hxx"
 #include "Config.hxx"
 #include "MonitorManager.hxx"
@@ -53,6 +54,7 @@ void
 LbGotoMap::Clear() noexcept
 {
 	translation_handlers.clear();
+	prometheus_exporters.clear();
 	clusters.clear();
 }
 
@@ -111,6 +113,10 @@ LbGotoMap::GetInstance(const LbGotoConfig &config)
 			return map.GetInstance(*translation);
 		}
 
+		LbGoto operator()(const LbPrometheusExporterConfig *exporter) const {
+			return map.GetInstance(*exporter);
+		}
+
 		LbGoto operator()(const LbSimpleHttpResponse &response) const noexcept {
 			return response;
 		}
@@ -161,4 +167,20 @@ LbGotoMap::GetInstance(const LbTranslationHandlerConfig &config)
 					    std::forward_as_tuple(event_loop,
 								  *this, config))
 		.first->second;
+}
+
+LbPrometheusExporter &
+LbGotoMap::GetInstance(const LbPrometheusExporterConfig &config)
+{
+	return prometheus_exporters.emplace(std::piecewise_construct,
+					    std::forward_as_tuple(&config),
+					    std::forward_as_tuple(config))
+		.first->second;
+}
+
+void
+LbGotoMap::SetInstance(LbInstance &instance) noexcept
+{
+	for (auto &[name, exporter] : prometheus_exporters)
+		exporter.SetInstance(instance);
 }

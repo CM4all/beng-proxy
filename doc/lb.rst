@@ -332,6 +332,16 @@ handle a HTTP request (see :ref:`pooltrans`). The
 The ``pools`` line specifies the pools (or branches or Lua handlers ...)
 which may be chosen from.
 
+Prometheus Exporters
+--------------------
+
+The ``prometheus_exporter`` section declares a request handler which
+returns statistics for consumption by a `Prometheus
+<https://prometheus.io/>`_ server.::
+
+  prometheus_exporter "prometheus" {
+  }
+
 Listener
 --------
 

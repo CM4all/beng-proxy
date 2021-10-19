@@ -97,6 +97,8 @@ LbInstance::InitWorker()
 	for (auto &listener : listeners)
 		listener.Scan(goto_map);
 
+	goto_map.SetInstance(*this);
+
 #ifdef ENABLE_CERTDB
 	ConnectCertCaches();
 #endif

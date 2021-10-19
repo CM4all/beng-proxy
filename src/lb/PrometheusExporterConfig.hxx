@@ -32,43 +32,13 @@
 
 #pragma once
 
-class LbCluster;
-class LbBranch;
-class LbLuaHandler;
-class LbTranslationHandler;
-class LbPrometheusExporter;
-struct LbSimpleHttpResponse;
+#include <string>
 
-struct LbGoto {
-	LbCluster *cluster = nullptr;
-	LbBranch *branch = nullptr;
-	LbLuaHandler *lua = nullptr;
-	LbTranslationHandler *translation = nullptr;
-	LbPrometheusExporter *exporter = nullptr;
-	const LbSimpleHttpResponse *response = nullptr;
+struct LbPrometheusExporterConfig {
+	std::string name;
 
-	/**
-	 * Resolve this host name and connect to the resulting
-	 * address.
-	 */
-	const char *resolve_connect = nullptr;
+	std::string instance{"lb"};
 
-	LbGoto() = default;
-	LbGoto(LbCluster &_cluster):cluster(&_cluster) {}
-	LbGoto(LbBranch &_branch):branch(&_branch) {}
-	LbGoto(LbLuaHandler &_lua):lua(&_lua) {}
-	LbGoto(LbTranslationHandler &_translation):translation(&_translation) {}
-	LbGoto(LbPrometheusExporter &_exporter):exporter(&_exporter) {}
-	LbGoto(const LbSimpleHttpResponse &_response):response(&_response) {}
-
-	bool IsDefined() const {
-		return cluster != nullptr || branch != nullptr ||
-			lua != nullptr || translation != nullptr ||
-			exporter != nullptr ||
-			response != nullptr || resolve_connect != nullptr;
-	}
-
-	template<typename R>
-	[[gnu::pure]]
-	const LbGoto &FindRequestLeaf(const R &request) const;
+	explicit LbPrometheusExporterConfig(const char *_name) noexcept
+		:name(_name) {}
 };

@@ -31,6 +31,7 @@
  */
 
 #include "Config.hxx"
+#include "PrometheusExporterConfig.hxx"
 #include "Check.hxx"
 #include "access_log/ConfigParser.hxx"
 #include "io/FileLineParser.hxx"
@@ -167,6 +168,20 @@ class LbConfigParser final : public NestedConfigParser {
 		void Finish() override;
 	};
 
+	class PrometheusExporter final : public ConfigParser {
+		LbConfigParser &parent;
+		LbPrometheusExporterConfig config;
+
+	public:
+		PrometheusExporter(LbConfigParser &_parent, const char *_name)
+			:parent(_parent), config(_name) {}
+
+	protected:
+		/* virtual methods from class ConfigParser */
+		void ParseLine(FileLineParser &line) override;
+		void Finish() override;
+	};
+
 	class Listener final : public ConfigParser {
 		LbConfigParser &parent;
 		LbListenerConfig config;
@@ -217,6 +232,7 @@ private:
 	void CreateBranch(FileLineParser &line);
 	void CreateLuaHandler(FileLineParser &line);
 	void CreateTranslationHandler(FileLineParser &line);
+	void CreatePrometheusExporter(FileLineParser &line);
 	void CreateListener(FileLineParser &line);
 	void CreateGlobalHttpCheck(FileLineParser &line);
 };
@@ -1056,6 +1072,28 @@ LbConfigParser::TranslationHandler::Finish()
 	ConfigParser::Finish();
 }
 
+void
+LbConfigParser::PrometheusExporter::ParseLine(FileLineParser &line)
+{
+	const char *word = line.ExpectWord();
+
+	if (StringIsEqual(word, "instance")) {
+		config.instance = line.ExpectValueAndEnd();
+	} else
+		throw LineParser::Error("Unknown option");
+}
+
+void
+LbConfigParser::PrometheusExporter::Finish()
+{
+	auto i = parent.config.prometheus_exporters.emplace(std::string(config.name),
+							    std::move(config));
+	if (!i.second)
+		throw LineParser::Error("Duplicate prometheus_exporter name");
+
+	ConfigParser::Finish();
+}
+
 inline void
 LbConfigParser::CreateTranslationHandler(FileLineParser &line)
 {
@@ -1063,6 +1101,15 @@ LbConfigParser::CreateTranslationHandler(FileLineParser &line)
 	line.ExpectSymbolAndEol('{');
 
 	SetChild(std::make_unique<TranslationHandler>(*this, name));
+}
+
+inline void
+LbConfigParser::CreatePrometheusExporter(FileLineParser &line)
+{
+	const char *name = line.ExpectValue();
+	line.ExpectSymbolAndEol('{');
+
+	SetChild(std::make_unique<PrometheusExporter>(*this, name));
 }
 
 void
@@ -1340,6 +1387,8 @@ LbConfigParser::ParseLine2(FileLineParser &line)
 		CreateLuaHandler(line);
 	else if (strcmp(word, "translation_handler") == 0)
 		CreateTranslationHandler(line);
+	else if (strcmp(word, "prometheus_exporter") == 0)
+		CreatePrometheusExporter(line);
 	else if (strcmp(word, "listener") == 0)
 		CreateListener(line);
 	else if (strcmp(word, "monitor") == 0)

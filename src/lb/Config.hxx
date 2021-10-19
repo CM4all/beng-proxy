@@ -36,6 +36,7 @@
 #include "GotoConfig.hxx"
 #include "ClusterConfig.hxx"
 #include "MonitorConfig.hxx"
+#include "PrometheusExporterConfig.hxx"
 #include "access_log/Config.hxx"
 #include "net/SocketConfig.hxx"
 #include "certdb/Config.hxx"
@@ -81,6 +82,7 @@ struct LbConfig {
 	std::map<std::string, LbBranchConfig> branches;
 	std::map<std::string, LbLuaHandlerConfig> lua_handlers;
 	std::map<std::string, LbTranslationHandlerConfig> translation_handlers;
+	std::map<std::string, LbPrometheusExporterConfig> prometheus_exporters;
 
 	std::list<LbListenerConfig> listeners;
 
@@ -144,6 +146,9 @@ struct LbConfig {
 		if (translation != nullptr)
 			return LbGotoConfig(*translation);
 
+		if (const auto *e = FindPrometheusExporter(t))
+			return LbGotoConfig(*e);
+
 		return {};
 	}
 
@@ -170,6 +175,15 @@ struct LbConfig {
 	const LbTranslationHandlerConfig *FindTranslationHandler(T &&t) const noexcept {
 		const auto i = translation_handlers.find(std::forward<T>(t));
 		return i != translation_handlers.end()
+			? &i->second
+			: nullptr;
+	}
+
+	template<typename T>
+	[[gnu::pure]]
+	const LbPrometheusExporterConfig *FindPrometheusExporter(T &&t) const noexcept {
+		const auto i = prometheus_exporters.find(std::forward<T>(t));
+		return i != prometheus_exporters.end()
 			? &i->second
 			: nullptr;
 	}

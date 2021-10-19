@@ -44,13 +44,16 @@ struct LbGotoConfig;
 struct LbClusterConfig;
 struct LbBranchConfig;
 struct LbTranslationHandlerConfig;
+struct LbPrometheusExporterConfig;
 struct LbLuaHandlerConfig;
 struct TranslationInvalidateRequest;
 class EventLoop;
 class LbCluster;
 class LbBranch;
 class LbTranslationHandler;
+class LbPrometheusExporter;
 class LbLuaHandler;
+struct LbInstance;
 
 class LbGotoMap final : LbContext {
 	const LbConfig &root_config;
@@ -62,6 +65,8 @@ class LbGotoMap final : LbContext {
 	std::map<const LbBranchConfig *, LbBranch> branches;
 	std::map<const LbTranslationHandlerConfig *,
 		 LbTranslationHandler> translation_handlers;
+	std::map<const LbPrometheusExporterConfig *,
+		 LbPrometheusExporter> prometheus_exporters;
 	std::map<const LbLuaHandlerConfig *,
 		 LbLuaHandler> lua_handlers;
 
@@ -88,8 +93,11 @@ public:
 
 	LbCluster &GetInstance(const LbClusterConfig &config);
 
+	void SetInstance(LbInstance &instance) noexcept;
+
 private:
 	LbBranch &GetInstance(const LbBranchConfig &config);
 	LbLuaHandler &GetInstance(const LbLuaHandlerConfig &config);
 	LbTranslationHandler &GetInstance(const LbTranslationHandlerConfig &config);
+	LbPrometheusExporter &GetInstance(const LbPrometheusExporterConfig &config);
 };

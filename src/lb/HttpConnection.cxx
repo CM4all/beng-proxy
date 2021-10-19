@@ -38,6 +38,7 @@
 #include "ListenerConfig.hxx"
 #include "Goto.txx"
 #include "ForwardHttpRequest.hxx"
+#include "PrometheusExporter.hxx"
 #include "Instance.hxx"
 #include "http_server/http_server.hxx"
 #include "http/IncomingRequest.hxx"
@@ -280,6 +281,11 @@ LbHttpConnection::HandleHttpRequest(const LbGoto &destination,
 
 	if (goto_.translation != nullptr) {
 		AskTranslationServer(*goto_.translation, request, cancel_ptr);
+		return;
+	}
+
+	if (goto_.exporter != nullptr) {
+		goto_.exporter->HandleRequest(request, cancel_ptr);
 		return;
 	}
 

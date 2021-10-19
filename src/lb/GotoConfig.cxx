@@ -32,6 +32,7 @@
 
 #include "GotoConfig.hxx"
 #include "ClusterConfig.hxx"
+#include "PrometheusExporterConfig.hxx"
 
 #ifdef HAVE_AVAHI
 
@@ -77,6 +78,10 @@ LbGotoConfig::GetProtocol() const noexcept
 			return LbProtocol::HTTP;
 		}
 
+		LbProtocol operator()(const LbPrometheusExporterConfig *) const noexcept {
+			return LbProtocol::HTTP;
+		}
+
 		LbProtocol operator()(const LbSimpleHttpResponse &) const noexcept {
 			return LbProtocol::HTTP;
 		}
@@ -112,6 +117,10 @@ LbGotoConfig::GetName() const noexcept
 			return translation->name.c_str();
 		}
 
+		const char *operator()(const LbPrometheusExporterConfig *exporter) const noexcept {
+			return exporter->name.c_str();
+		}
+
 		const char *operator()(const LbSimpleHttpResponse &) const noexcept {
 			return "response";
 		}
@@ -143,6 +152,10 @@ LbGotoConfig::HasZeroConf() const noexcept
 		}
 
 		bool operator()(const LbTranslationHandlerConfig *) const noexcept {
+			return false;
+		}
+
+		bool operator()(const LbPrometheusExporterConfig *) const noexcept {
 			return false;
 		}
 
