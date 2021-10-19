@@ -35,9 +35,9 @@
 #include "DefaultChunkAllocator.hxx"
 #include "util/ConstBuffer.hxx"
 
+#include <cstddef>
 #include <utility>
 
-#include <stddef.h>
 #include <stdint.h>
 
 template<typename T> struct ConstBuffer;
@@ -51,6 +51,8 @@ class GrowingBuffer {
 	friend class GrowingBufferReader;
 
 	struct Buffer;
+
+	using size_type = std::size_t;
 
 	struct BufferPtr {
 		Buffer *buffer = nullptr;
@@ -114,17 +116,17 @@ class GrowingBuffer {
 		}
 
 		template<typename F>
-		void ForEachBuffer(size_t skip, F &&f) const;
+		void ForEachBuffer(size_type skip, F &&f) const;
 	};
 
 	struct Buffer {
 		BufferPtr next;
 
-		const size_t size;
-		size_t fill = 0;
-		uint8_t data[sizeof(size_t)];
+		const size_type size;
+		size_type fill = 0;
+		uint8_t data[sizeof(size_type)];
 
-		explicit Buffer(size_t _size) noexcept
+		explicit Buffer(size_type _size) noexcept
 			:size(_size) {}
 
 		bool IsFull() const noexcept {
@@ -140,13 +142,13 @@ class GrowingBuffer {
 		}
 
 		WritableBuffer<void> Write() noexcept;
-		size_t WriteSome(ConstBuffer<void> src) noexcept;
+		size_type WriteSome(ConstBuffer<void> src) noexcept;
 	};
 
 	BufferPtr head;
 	Buffer *tail = nullptr;
 
-	size_t position = 0;
+	size_type position = 0;
 
 public:
 	GrowingBuffer() = default;
@@ -183,10 +185,10 @@ public:
 		position = 0;
 	}
 
-	void *Write(size_t length) noexcept;
+	void *Write(size_type length) noexcept;
 
-	size_t WriteSome(const void *p, size_t length) noexcept;
-	void Write(const void *p, size_t length) noexcept;
+	size_type WriteSome(const void *p, size_type length) noexcept;
+	void Write(const void *p, size_type length) noexcept;
 
 	void Write(const char *p) noexcept;
 
@@ -196,7 +198,7 @@ public:
 	 * Returns the total size of the buffer.
 	 */
 	[[gnu::pure]]
-	size_t GetSize() const noexcept;
+	size_type GetSize() const noexcept;
 
 	/**
 	 * Duplicates the whole buffer (including all chunks) to one
@@ -211,16 +213,16 @@ public:
 	 * Skip an arbitrary number of data bytes, which may span over
 	 * multiple internal buffers.
 	 */
-	void Skip(size_t length) noexcept;
+	void Skip(size_type length) noexcept;
 
 	/**
 	 * Consume data returned by Read().
 	 */
-	void Consume(size_t length) noexcept;
+	void Consume(size_type length) noexcept;
 
 	void FillBucketList(IstreamBucketList &list,
-			    size_t skip) const noexcept;
-	size_t ConsumeBucketList(size_t nbytes) noexcept;
+			    size_type skip) const noexcept;
+	size_type ConsumeBucketList(size_type nbytes) noexcept;
 
 private:
 	Buffer &AppendBuffer() noexcept;
@@ -243,7 +245,7 @@ GrowingBuffer::BufferPtr::Check() const noexcept
 
 template<typename F>
 void
-GrowingBuffer::BufferPtr::ForEachBuffer(size_t skip, F &&f) const
+GrowingBuffer::BufferPtr::ForEachBuffer(size_type skip, F &&f) const
 {
 	for (const auto *i = get(); i != nullptr; i = i->next.get()) {
 		i->Check();
@@ -265,8 +267,10 @@ GrowingBuffer::BufferPtr::ForEachBuffer(size_t skip, F &&f) const
 }
 
 class GrowingBufferReader {
+	using size_type = GrowingBuffer::size_type;
+
 	GrowingBuffer::BufferPtr buffer;
-	size_t position = 0;
+	size_type position = 0;
 
 public:
 	explicit GrowingBufferReader(GrowingBuffer &&gb) noexcept;
@@ -275,7 +279,7 @@ public:
 	bool IsEOF() const noexcept;
 
 	[[gnu::pure]]
-	size_t Available() const noexcept;
+	size_type Available() const noexcept;
 
 	[[gnu::pure]]
 	ConstBuffer<void> Read() const noexcept;
@@ -283,16 +287,16 @@ public:
 	/**
 	 * Consume data returned by Read().
 	 */
-	void Consume(size_t length) noexcept;
+	void Consume(size_type length) noexcept;
 
 	/**
 	 * Skip an arbitrary number of data bytes, which may span over
 	 * multiple internal buffers.
 	 */
-	void Skip(size_t length) noexcept;
+	void Skip(size_type length) noexcept;
 
 	void FillBucketList(IstreamBucketList &list) const noexcept;
-	size_t ConsumeBucketList(size_t nbytes) noexcept;
+	size_type ConsumeBucketList(size_type nbytes) noexcept;
 
 private:
 	template<typename F>

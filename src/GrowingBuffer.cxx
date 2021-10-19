@@ -85,11 +85,11 @@ GrowingBuffer::Buffer::Write() noexcept
 	return {data + fill, size - fill};
 }
 
-size_t
+GrowingBuffer::size_type
 GrowingBuffer::Buffer::WriteSome(ConstBuffer<void> src) noexcept
 {
 	auto dest = Write();
-	size_t nbytes = std::min(dest.size, src.size);
+	size_type nbytes = std::min(dest.size, src.size);
 	memcpy(dest.data, src.data, nbytes);
 	fill += nbytes;
 	return nbytes;
@@ -106,7 +106,7 @@ GrowingBuffer::AppendBuffer() noexcept
 }
 
 void *
-GrowingBuffer::Write(size_t length) noexcept
+GrowingBuffer::Write(size_type length) noexcept
 {
 	/* this method is only allowed with "tiny" sizes which fit well
 	   into any buffer */
@@ -128,8 +128,8 @@ GrowingBuffer::Write(size_t length) noexcept
 	return ret;
 }
 
-size_t
-GrowingBuffer::WriteSome(const void *p, size_t length) noexcept
+GrowingBuffer::size_type
+GrowingBuffer::WriteSome(const void *p, size_type length) noexcept
 {
 	auto *buffer = tail;
 	if (buffer == nullptr || buffer->IsFull())
@@ -139,10 +139,10 @@ GrowingBuffer::WriteSome(const void *p, size_t length) noexcept
 }
 
 void
-GrowingBuffer::Write(const void *p, size_t length) noexcept
+GrowingBuffer::Write(const void *p, size_type length) noexcept
 {
 	while (length > 0) {
-		size_t nbytes = WriteSome(p, length);
+		size_type nbytes = WriteSome(p, length);
 		p = ((const char *)p) + nbytes;
 		length -= nbytes;
 	}
@@ -165,10 +165,10 @@ GrowingBuffer::AppendMoveFrom(GrowingBuffer &&src) noexcept
 	src.tail = nullptr;
 }
 
-size_t
+GrowingBuffer::size_type
 GrowingBuffer::GetSize() const noexcept
 {
-	size_t result = 0;
+	size_type result = 0;
 
 	ForEachBuffer([&result](ConstBuffer<void> b){
 		result += b.size;
@@ -190,7 +190,7 @@ GrowingBuffer::Read() const noexcept
 }
 
 void
-GrowingBuffer::Consume(size_t length) noexcept
+GrowingBuffer::Consume(size_type length) noexcept
 {
 	if (length == 0)
 		return;
@@ -212,13 +212,13 @@ GrowingBuffer::Consume(size_t length) noexcept
 }
 
 void
-GrowingBuffer::Skip(size_t length) noexcept
+GrowingBuffer::Skip(size_type length) noexcept
 {
 	while (length > 0) {
 		assert(head);
 		head.Check();
 
-		size_t remaining = head->fill - position;
+		size_type remaining = head->fill - position;
 		if (length < remaining) {
 			position += length;
 			return;
@@ -246,10 +246,10 @@ GrowingBufferReader::IsEOF() const noexcept
 	return !buffer || position == buffer->fill;
 }
 
-size_t
+GrowingBufferReader::size_type
 GrowingBufferReader::Available() const noexcept
 {
-	size_t result = 0;
+	size_type result = 0;
 
 	ForEachBuffer([&result](ConstBuffer<void> b){
 		result += b.size;
@@ -270,7 +270,7 @@ GrowingBufferReader::Read() const noexcept
 }
 
 void
-GrowingBufferReader::Consume(size_t length) noexcept
+GrowingBufferReader::Consume(size_type length) noexcept
 {
 	assert(buffer);
 
@@ -288,12 +288,12 @@ GrowingBufferReader::Consume(size_t length) noexcept
 }
 
 void
-GrowingBufferReader::Skip(size_t length) noexcept
+GrowingBufferReader::Skip(size_type length) noexcept
 {
 	while (length > 0) {
 		assert(buffer);
 
-		size_t remaining = buffer->fill - position;
+		size_type remaining = buffer->fill - position;
 		if (length < remaining) {
 			position += length;
 			return;
@@ -316,7 +316,7 @@ GrowingBuffer::CopyTo(void *dest) const noexcept
 WritableBuffer<void>
 GrowingBuffer::Dup(struct pool &_pool) const noexcept
 {
-	size_t length = GetSize();
+	size_type length = GetSize();
 	if (length == 0)
 		return nullptr;
 
@@ -327,7 +327,7 @@ GrowingBuffer::Dup(struct pool &_pool) const noexcept
 }
 
 void
-GrowingBuffer::FillBucketList(IstreamBucketList &list, size_t skip) const noexcept
+GrowingBuffer::FillBucketList(IstreamBucketList &list, size_type skip) const noexcept
 {
 	ForEachBuffer([&list, &skip](ConstBuffer<void> b){
 		if (skip >= b.size) {
@@ -345,14 +345,14 @@ GrowingBuffer::FillBucketList(IstreamBucketList &list, size_t skip) const noexce
 	});
 }
 
-size_t
-GrowingBuffer::ConsumeBucketList(size_t nbytes) noexcept
+GrowingBuffer::size_type
+GrowingBuffer::ConsumeBucketList(size_type nbytes) noexcept
 {
-	size_t result = 0;
+	size_type result = 0;
 	while (nbytes > 0 && head) {
 		head.Check();
 
-		size_t available = head->fill - position;
+		size_type available = head->fill - position;
 		if (nbytes < available) {
 			position += nbytes;
 			result += nbytes;
@@ -380,12 +380,12 @@ GrowingBufferReader::FillBucketList(IstreamBucketList &list) const noexcept
 	});
 }
 
-size_t
-GrowingBufferReader::ConsumeBucketList(size_t nbytes) noexcept
+GrowingBufferReader::size_type
+GrowingBufferReader::ConsumeBucketList(size_type nbytes) noexcept
 {
-	size_t result = 0;
+	size_type result = 0;
 	while (nbytes > 0 && buffer) {
-		size_t available = buffer->fill - position;
+		size_type available = buffer->fill - position;
 		if (nbytes < available) {
 			position += nbytes;
 			result += nbytes;
