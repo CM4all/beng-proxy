@@ -106,25 +106,40 @@ GrowingBuffer::AppendBuffer() noexcept
 }
 
 void *
-GrowingBuffer::Write(size_type length) noexcept
+GrowingBuffer::BeginWrite(size_type size) noexcept
 {
 	/* this method is only allowed with "tiny" sizes which fit well
 	   into any buffer */
-	assert(tail == nullptr || length <= tail->size);
+	assert(tail == nullptr || size <= tail->size);
 
 	head.Check();
 	if (tail != nullptr)
 		tail->Check();
 
 	auto *buffer = tail;
-	if (buffer == nullptr || buffer->fill + length > buffer->size)
+	if (buffer == nullptr || buffer->fill + size > buffer->size)
 		buffer = &AppendBuffer();
 
-	assert(buffer->fill + length <= buffer->size);
+	assert(buffer->fill + size <= buffer->size);
 
-	void *ret = buffer->data + buffer->fill;
-	buffer->fill += length;
+	return buffer->data + buffer->fill;
+}
 
+void
+GrowingBuffer::CommitWrite(size_type size) noexcept
+{
+	auto *buffer = tail;
+	assert(buffer != nullptr);
+	assert(buffer->fill + size <= buffer->size);
+
+	buffer->fill += size;
+}
+
+void *
+GrowingBuffer::Write(size_type length) noexcept
+{
+	void *ret = BeginWrite(length);
+	CommitWrite(length);
 	return ret;
 }
 

@@ -185,6 +185,17 @@ public:
 		position = 0;
 	}
 
+	/**
+	 * Reserve space in the buffer and return a pointer to it.
+	 */
+	void *BeginWrite(size_type size) noexcept;
+
+	/**
+	 * Call this method after the specified number of bytes have
+	 * been written to the buffer returned by BeginWrite().
+	 */
+	void CommitWrite(size_type size) noexcept;
+
 	void *Write(size_type length) noexcept;
 
 	size_type WriteSome(const void *p, size_type length) noexcept;
