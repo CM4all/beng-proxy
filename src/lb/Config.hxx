@@ -32,10 +32,10 @@
 
 #pragma once
 
-#include "lb/ListenerConfig.hxx"
-#include "lb/GotoConfig.hxx"
-#include "lb/ClusterConfig.hxx"
-#include "lb/MonitorConfig.hxx"
+#include "ListenerConfig.hxx"
+#include "GotoConfig.hxx"
+#include "ClusterConfig.hxx"
+#include "MonitorConfig.hxx"
 #include "access_log/Config.hxx"
 #include "net/SocketConfig.hxx"
 #include "certdb/Config.hxx"
