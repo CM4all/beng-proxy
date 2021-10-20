@@ -115,6 +115,9 @@ LbPrometheusExporter::HandleRequest(IncomingHttpRequest &request,
 	if (instance != nullptr)
 		Write(buffer, process, instance->GetStats());
 
-	request.SendResponse(HTTP_STATUS_OK, {},
+	HttpHeaders headers;
+	headers.Write("content-type", "text/plain;version=0.0.4");
+
+	request.SendResponse(HTTP_STATUS_OK, std::move(headers),
 			     istream_gb_new(request.pool, std::move(buffer)));
 }
