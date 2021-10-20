@@ -36,6 +36,8 @@
 
 #pragma once
 
+#include <string_view>
+
 class StringMap;
 class GrowingBuffer;
 
@@ -44,7 +46,7 @@ class GrowingBuffer;
  * Call header_write_finish() when you're done.
  */
 void
-header_write_begin(GrowingBuffer &buffer, const char *name) noexcept;
+header_write_begin(GrowingBuffer &buffer, std::string_view name) noexcept;
 
 /**
  * Finish the current header line.
@@ -56,7 +58,7 @@ header_write_finish(GrowingBuffer &buffer) noexcept;
 
 void
 header_write(GrowingBuffer &buffer,
-	     const char *key, const char *value) noexcept;
+	     std::string_view name, std::string_view value) noexcept;
 
 void
 headers_copy_one(const StringMap &in, GrowingBuffer &out,

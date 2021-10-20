@@ -39,16 +39,13 @@
 #include <string.h>
 
 void
-header_write_begin(GrowingBuffer &buffer, const char *name) noexcept
+header_write_begin(GrowingBuffer &buffer, std::string_view name) noexcept
 {
-	assert(name != nullptr);
-	assert(*name != 0);
+	assert(!name.empty());
 
-	size_t name_length = strlen(name);
-	char *dest = (char *)buffer.Write(name_length + 2);
+	char *dest = (char *)buffer.Write(name.size() + 2);
 
-	memcpy(dest, name, name_length);
-	dest += name_length;
+	dest = std::copy(name.begin(), name.end(), dest);
 	*dest++ = ':';
 	*dest++ = ' ';
 }
@@ -61,35 +58,26 @@ header_write_finish(GrowingBuffer &buffer) noexcept
 
 void
 header_write(GrowingBuffer &buffer,
-	     const char *key, const char *value) noexcept
+	     std::string_view name, std::string_view value) noexcept
 {
-	size_t key_length, value_length;
+	assert(!name.empty());
 
-	assert(key != nullptr);
-	assert(value != nullptr);
-
-	key_length = strlen(key);
-	value_length = strlen(value);
-
-	if (key_length + value_length >= 1024) [[unlikely]] {
+	if (name.size() + value.size() >= 1024) [[unlikely]] {
 		/* because GrowingBuffer::Write(size_t) can only deal with
 		   small sizes, use this slightly slower code path for large
 		   headers */
-		buffer.Write(key, key_length);
+		buffer.Write(name.data(), name.size());
 		buffer.Write(": ", 2);
-		buffer.Write(value, value_length);
+		buffer.Write(value.data(), value.size());
 		buffer.Write("\r\n", 2);
 		return;
 	}
 
-	char *dest = (char *)buffer.Write(key_length + 2 + value_length + 2);
-
-	memcpy(dest, key, key_length);
-	dest += key_length;
+	char *dest = (char *)buffer.Write(name.size() + 2 + value.size() + 2);
+	dest = std::copy(name.begin(), name.end(), dest);
 	*dest++ = ':';
 	*dest++ = ' ';
-	memcpy(dest, value, value_length);
-	dest += value_length;
+	dest = std::copy(value.begin(), value.end(), dest);
 	*dest++ = '\r';
 	*dest = '\n';
 }

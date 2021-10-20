@@ -98,7 +98,7 @@ public:
 		return std::move(buffer);
 	}
 
-	void Write(const char *name, const char *value) noexcept {
+	void Write(std::string_view name, std::string_view value) noexcept {
 		header_write(buffer, name, value);
 	}
 
