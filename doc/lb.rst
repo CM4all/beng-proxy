@@ -340,7 +340,15 @@ returns statistics for consumption by a `Prometheus
 <https://prometheus.io/>`_ server.::
 
   prometheus_exporter "prometheus" {
+    load_from_local "/run/cm4all/prometheus-exporters/cgroup.socket"
+    load_from_local "/run/cm4all/prometheus-exporters/process.socket"
   }
+
+The following options are available:
+
+- ``load_from_local``: connect to this local socket (absolute path or
+  abstract socket prefixed by ``@``), send HTTP request and append the
+  response.
 
 Listener
 --------

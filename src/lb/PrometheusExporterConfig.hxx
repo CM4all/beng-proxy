@@ -32,12 +32,17 @@
 
 #pragma once
 
+#include "net/AllocatedSocketAddress.hxx"
+
 #include <string>
+#include <forward_list>
 
 struct LbPrometheusExporterConfig {
 	std::string name;
 
 	std::string instance{"lb"};
+
+	std::forward_list<AllocatedSocketAddress> load_from_local;
 
 	explicit LbPrometheusExporterConfig(const char *_name) noexcept
 		:name(_name) {}

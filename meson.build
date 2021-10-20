@@ -1007,6 +1007,7 @@ executable(
   'src/cluster/AddressList.cxx',
   'src/cluster/ConnectBalancer.cxx',
   'src/cluster/TcpBalancer.cxx',
+  'src/http_request.cxx',
   'src/http/Address.cxx',
   'src/http/ResponseHandler.cxx',
   'src/istream_gb.cxx',

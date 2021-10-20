@@ -1079,6 +1079,9 @@ LbConfigParser::PrometheusExporter::ParseLine(FileLineParser &line)
 
 	if (StringIsEqual(word, "instance")) {
 		config.instance = line.ExpectValueAndEnd();
+	} else if (StringIsEqual(word, "load_from_local")) {
+		config.load_from_local.emplace_front(ParseSocketAddress(line.ExpectValueAndEnd(),
+									80, false));
 	} else
 		throw LineParser::Error("Unknown option");
 }

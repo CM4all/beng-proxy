@@ -31,17 +31,102 @@
  */
 
 #include "PrometheusExporter.hxx"
+#include "PrometheusExporterConfig.hxx"
 #include "Instance.hxx"
 #include "beng-proxy/Control.hxx"
+#include "http/Address.hxx"
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
+#include "http/ResponseHandler.hxx"
 #include "util/ByteOrder.hxx"
+#include "util/Cancellable.hxx"
 #include "util/Compiler.h"
-#include "GrowingBuffer.hxx"
+#include "util/MimeType.hxx"
+#include "istream/ConcatIstream.hxx"
+#include "istream/DelayedIstream.hxx"
 #include "istream_gb.hxx"
+#include "GrowingBuffer.hxx"
+#include "http_request.hxx"
+#include "stopwatch.hxx"
 
 #include <inttypes.h>
 #include <stdarg.h>
+
+class LbPrometheusExporter::AppendRequest final
+	: public HttpResponseHandler, Cancellable
+{
+	DelayedIstreamControl &control;
+
+	HttpAddress address{false, "dummy:80", "/"};
+
+	CancellablePointer cancel_ptr;
+
+public:
+	AppendRequest(SocketAddress _address,
+		      DelayedIstreamControl &_control) noexcept
+		:control(_control)
+	{
+		control.cancel_ptr = *this;
+
+		address.addresses.AddPointer(_address);
+	}
+
+	void Start(struct pool &pool, LbInstance &instance) noexcept;
+
+	void Destroy() noexcept {
+		this->~AppendRequest();
+	}
+
+	void DestroyError(std::exception_ptr error) noexcept {
+		auto &_control = control;
+		Destroy();
+		_control.SetError(std::move(error));
+	}
+
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(http_status_t status, StringMap &&headers,
+			    UnusedIstreamPtr body) noexcept override;
+
+	void OnHttpError(std::exception_ptr error) noexcept override {
+		DestroyError(std::move(error));
+	}
+
+private:
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		cancel_ptr.Cancel();
+		Destroy();
+	}
+};
+
+inline void
+LbPrometheusExporter::AppendRequest::Start(struct pool &pool,
+					   LbInstance &instance) noexcept
+{
+	http_request(pool, instance.event_loop,
+		     *instance.fs_balancer, {}, {},
+		     nullptr,
+		     HTTP_METHOD_GET, address, {}, nullptr,
+		     *this, cancel_ptr);
+}
+
+void
+LbPrometheusExporter::AppendRequest::OnHttpResponse(http_status_t status,
+						    StringMap &&headers,
+						    UnusedIstreamPtr body) noexcept
+try {
+	if (!http_status_is_success(status))
+		throw std::runtime_error("HTTP request not sucessful");
+
+	const char *content_type = headers.Get("content-type");
+	if (content_type == nullptr ||
+	    GetMimeTypeBase(content_type) != "text/plain")
+		throw std::runtime_error("Not text/plain");
+
+	control.Set(std::move(body));
+} catch (...) {
+	DestroyError(std::current_exception());
+}
 
 gcc_printf(2, 3)
 static void
@@ -109,6 +194,8 @@ void
 LbPrometheusExporter::HandleRequest(IncomingHttpRequest &request,
 				    CancellablePointer &) noexcept
 {
+	auto &pool = request.pool;
+
 	GrowingBuffer buffer;
 
 	const char *process = "lb";
@@ -118,6 +205,18 @@ LbPrometheusExporter::HandleRequest(IncomingHttpRequest &request,
 	HttpHeaders headers;
 	headers.Write("content-type", "text/plain;version=0.0.4");
 
+	auto body = NewConcatIstream(pool,
+				     istream_gb_new(pool, std::move(buffer)));
+
+	for (const auto &i : config.load_from_local) {
+		// TODO check instance!=nullptr
+		auto delayed = istream_delayed_new(pool, instance->event_loop);
+		AppendConcatIstream(body, std::move(delayed.first));
+
+		auto *ar = NewFromPool<AppendRequest>(pool, i, delayed.second);
+		ar->Start(pool, *instance);
+	}
+
 	request.SendResponse(HTTP_STATUS_OK, std::move(headers),
-			     istream_gb_new(request.pool, std::move(buffer)));
+			     std::move(body));
 }

@@ -42,6 +42,8 @@ class LbPrometheusExporter {
 
 	LbInstance *instance = nullptr;
 
+	class AppendRequest;
+
 public:
 	explicit LbPrometheusExporter(const LbPrometheusExporterConfig &_config) noexcept
 		:config(_config) {}
