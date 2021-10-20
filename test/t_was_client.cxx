@@ -174,13 +174,13 @@ RunValidPremature(WasServer &server, struct pool &pool,
 	body.Clear();
 
 	server.SendResponse(HTTP_STATUS_OK, {},
-			    istream_cat_new(pool,
-					    istream_head_new(pool,
-							     istream_zero_new(pool),
-							     512, true),
-					    NewSuspendIstream(pool, istream_fail_new(pool, std::make_exception_ptr(std::runtime_error("Error"))),
-							      server.GetEventLoop(),
-							      std::chrono::milliseconds(10))));
+			    NewConcatIstream(pool,
+					     istream_head_new(pool,
+							      istream_zero_new(pool),
+							      512, true),
+					     NewSuspendIstream(pool, istream_fail_new(pool, std::make_exception_ptr(std::runtime_error("Error"))),
+							       server.GetEventLoop(),
+							       std::chrono::milliseconds(10))));
 }
 
 class MalformedPrematureWasServer final : Was::ControlHandler {

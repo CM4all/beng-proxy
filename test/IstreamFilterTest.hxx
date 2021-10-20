@@ -539,12 +539,12 @@ TYPED_TEST_P(IstreamFilterTest, FailAfterFirstByte)
 	const std::runtime_error error("test_fail");
 	auto istream =
 		traits.CreateTest(instance.event_loop, pool,
-				  istream_cat_new(input_pool,
-						  istream_head_new(input_pool,
-								   traits.CreateInput(input_pool),
-								   1, false),
-						  istream_fail_new(input_pool,
-								   std::make_exception_ptr(error))));
+				  NewConcatIstream(input_pool,
+						   istream_head_new(input_pool,
+								    traits.CreateInput(input_pool),
+								    1, false),
+						   istream_fail_new(input_pool,
+								    std::make_exception_ptr(error))));
 	input_pool.reset();
 
 	run_istream(traits, instance, std::move(pool),
@@ -707,8 +707,8 @@ TYPED_TEST_P(IstreamFilterTest, BigHold)
 
 	auto istream = traits.CreateInput(input_pool);
 	for (unsigned i = 0; i < 1024; ++i)
-		istream = istream_cat_new(input_pool, std::move(istream),
-					  traits.CreateInput(input_pool));
+		istream = NewConcatIstream(input_pool, std::move(istream),
+					   traits.CreateInput(input_pool));
 	input_pool.reset();
 
 	istream = traits.CreateTest(instance.event_loop, pool, std::move(istream));

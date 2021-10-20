@@ -155,7 +155,7 @@ BufferedIstream::Commit() noexcept
 
 	return i
 		? (HasInput()
-		   ? istream_cat_new(GetPool(), std::move(i), input.Steal())
+		   ? NewConcatIstream(GetPool(), std::move(i), input.Steal())
 		   : std::move(i))
 		: input.Steal();
 }

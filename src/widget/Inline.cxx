@@ -208,11 +208,11 @@ widget_response_format(struct pool &pool, const Widget &widget,
 		widget.logger(6, "converting text to HTML");
 
 		auto i = istream_html_escape_new(pool, std::move(body));
-		body = istream_cat_new(pool,
-				       istream_string_new(pool,
-							  "<pre class=\"beng_text_widget\">"),
-				       std::move(i),
-				       istream_string_new(pool, "</pre>"));
+		body = NewConcatIstream(pool,
+					istream_string_new(pool,
+							   "<pre class=\"beng_text_widget\">"),
+					std::move(i),
+					istream_string_new(pool, "</pre>"));
 	}
 
 	return body;

@@ -51,7 +51,7 @@ public:
 
     UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
                                 UnusedIstreamPtr input) const noexcept {
-        return istream_cat_new(pool, std::move(input));
+        return NewConcatIstream(pool, std::move(input));
     }
 };
 

@@ -41,12 +41,15 @@ class Istream;
  * Concatenate several istreams.
  */
 UnusedIstreamPtr
-_istream_cat_new(struct pool &pool, UnusedIstreamPtr *const inputs, unsigned n_inputs);
+_NewConcatIstream(struct pool &pool, UnusedIstreamPtr *const inputs, unsigned n_inputs);
 
 template<typename... Args>
 auto
-istream_cat_new(struct pool &pool, Args&&... args)
+NewConcatIstream(struct pool &pool, Args&&... args)
 {
 	UnusedIstreamPtr inputs[]{std::forward<Args>(args)...};
-	return _istream_cat_new(pool, inputs, sizeof...(args));
+	return _NewConcatIstream(pool, inputs, sizeof...(args));
 }
+
+void
+AppendConcatIstream(UnusedIstreamPtr &cat, UnusedIstreamPtr istream) noexcept;

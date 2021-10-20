@@ -114,9 +114,9 @@ public:
 		pl.Create();
 		pl.GetWriteFd().Write("bar", 3);
 
-		return istream_cat_new(pool,
-				       istream_string_new(pool, "foo"),
-				       NewIstreamPtr<PipeLeaseIstream>(pool, std::move(pl), 3));
+		return NewConcatIstream(pool,
+					istream_string_new(pool, "foo"),
+					NewIstreamPtr<PipeLeaseIstream>(pool, std::move(pl), 3));
 	}
 
 	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,

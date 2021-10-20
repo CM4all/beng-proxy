@@ -634,7 +634,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 					    fragment.size);
 		s = istream_html_escape_new(GetPool(), std::move(s));
 
-		istream = istream_cat_new(GetPool(), std::move(istream), std::move(s));
+		istream = NewConcatIstream(GetPool(), std::move(istream), std::move(s));
 	}
 
 	ReplaceAttributeValue(attr, std::move(istream));

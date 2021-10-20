@@ -272,9 +272,9 @@ TEST(SinkRubberTest, Abort)
 	auto delayed = istream_delayed_new(data.pool, event_loop);
 	delayed.second.cancel_ptr = nullptr;
 
-	auto input = istream_cat_new(data.pool,
-				     istream_string_new(data.pool, "foo"),
-				     std::move(delayed.first));
+	auto input = NewConcatIstream(data.pool,
+				      istream_string_new(data.pool, "foo"),
+				      std::move(delayed.first));
 	auto *sink = sink_rubber_new(data.pool, std::move(input), r, 4,
 				     data, data.cancel_ptr);
 	ASSERT_NE(sink, nullptr);

@@ -120,6 +120,12 @@ class CatIstream final : public Istream, DestructAnchor {
 public:
 	CatIstream(struct pool &p, WritableBuffer<UnusedIstreamPtr> _inputs) noexcept;
 
+	void Append(UnusedIstreamPtr &&istream) noexcept {
+		auto *input = NewFromPool<Input>(GetPool(), *this,
+						 std::move(istream));
+		inputs.push_back(*input);
+	}
+
 private:
 	Input &GetCurrent() noexcept {
 		return inputs.front();
@@ -331,14 +337,20 @@ inline CatIstream::CatIstream(struct pool &p, WritableBuffer<UnusedIstreamPtr> _
 		if (!_input)
 			continue;
 
-		auto *input = NewFromPool<Input>(p, *this, std::move(_input));
-		inputs.push_back(*input);
+		Append(std::move(_input));
 	}
 }
 
 UnusedIstreamPtr
-_istream_cat_new(struct pool &pool, UnusedIstreamPtr *const inputs, unsigned n_inputs)
+_NewConcatIstream(struct pool &pool, UnusedIstreamPtr *const inputs, unsigned n_inputs)
 {
 	return UnusedIstreamPtr(NewFromPool<CatIstream>(pool, pool,
 							WritableBuffer<UnusedIstreamPtr>(inputs, n_inputs)));
+}
+
+void
+AppendConcatIstream(UnusedIstreamPtr &_cat, UnusedIstreamPtr istream) noexcept
+{
+	auto &cat = _cat.StaticCast<CatIstream>();
+	cat.Append(std::move(istream));
 }

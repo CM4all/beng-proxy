@@ -728,10 +728,10 @@ test_close_request_body_fail(Context<Connection> &c)
 {
 	auto delayed = istream_delayed_new(*c.pool, c.event_loop);
 	auto request_body =
-		istream_cat_new(*c.pool,
-				istream_head_new(*c.pool, istream_zero_new(*c.pool),
-						 4096, false),
-				std::move(delayed.first));
+		NewConcatIstream(*c.pool,
+				 istream_head_new(*c.pool, istream_zero_new(*c.pool),
+						  4096, false),
+				 std::move(delayed.first));
 
 	c.delayed = &delayed.second;
 	c.connection = Connection::NewMirror(*c.pool, c.event_loop);

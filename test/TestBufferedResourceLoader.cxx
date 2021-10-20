@@ -89,9 +89,9 @@ TEST(BufferedResourceLoader, Small)
 			nullptr, nullptr,
 			HTTP_METHOD_POST, nullptr,
 			HTTP_STATUS_OK, {},
-			istream_cat_new(handler.pool,
-					istream_string_new(handler.pool, "foo"),
-					istream_string_new(handler.pool, "bar")),
+			NewConcatIstream(handler.pool,
+					 istream_string_new(handler.pool, "foo"),
+					 istream_string_new(handler.pool, "bar")),
 			nullptr,
 			handler, cancel_ptr);
 
