@@ -154,6 +154,29 @@ static void
 Write(GrowingBuffer &buffer, const char *process, const BengProxy::ControlStats &stats) noexcept
 {
 	Format(buffer,
+	       R"(
+# HELP beng_proxy_connections Number of connections
+# TYPE beng_proxy_connections gauge
+
+# HELP beng_proxy_children Number of child processes
+# TYPE beng_proxy_children gauge
+
+# HELP beng_proxy_sessions Number of sessions
+# TYPE beng_proxy_sessions gauge
+
+# HELP beng_proxy_http_requests Number of HTTP requests
+# TYPE beng_proxy_http_requests counter
+
+# HELP beng_proxy_http_traffic Number of bytes transferred
+# TYPE beng_proxy_http_traffic counter
+
+# HELP beng_proxy_cache_size Size of the cache in bytes
+# TYPE beng_proxy_cache_size gauge
+
+# HELP beng_proxy_buffer_size Size of buffers in bytes
+# TYPE beng_proxy_buffer_size gauge
+
+)"
 	       "beng_proxy_connections{process=\"%s\",direction=\"in\"} %" PRIu32 "\n"
 	       "beng_proxy_connections{process=\"%s\",direction=\"out\"} %" PRIu32 "\n"
 	       "beng_proxy_children{process=\"%s\"} %" PRIu32 "\n"
