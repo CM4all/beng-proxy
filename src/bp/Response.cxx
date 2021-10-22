@@ -515,8 +515,8 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 	if (send_session_cookie) {
 		header_write_begin(headers, "set-cookie");
 		headers.Write(session_cookie);
-		headers.Write("=", 1);
-		headers.Write(session_id.Format());
+		headers.Write("=");
+		headers.Write(session_id.Format().c_str());
 
 		if (recover_session_to_cookie != nullptr) {
 			headers.Write("/", 1);

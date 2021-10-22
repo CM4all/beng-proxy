@@ -37,6 +37,7 @@
 #include "util/ConstBuffer.hxx"
 
 #include <cstddef>
+#include <string_view>
 #include <utility>
 
 #include <stdint.h>
@@ -202,7 +203,9 @@ public:
 	size_type WriteSome(const void *p, size_type length) noexcept;
 	void Write(const void *p, size_type length) noexcept;
 
-	void Write(const char *p) noexcept;
+	void Write(std::string_view s) noexcept {
+		Write(s.data(), s.size());
+	}
 
 	gcc_printf(2, 3)
 	void Format(const char *fmt, ...) noexcept;

@@ -53,7 +53,7 @@ header_write_begin(GrowingBuffer &buffer, std::string_view name) noexcept
 void
 header_write_finish(GrowingBuffer &buffer) noexcept
 {
-	buffer.Write("\r\n", 2);
+	buffer.Write("\r\n");
 }
 
 void
@@ -66,10 +66,10 @@ header_write(GrowingBuffer &buffer,
 		/* because GrowingBuffer::Write(size_t) can only deal with
 		   small sizes, use this slightly slower code path for large
 		   headers */
-		buffer.Write(name.data(), name.size());
-		buffer.Write(": ", 2);
-		buffer.Write(value.data(), value.size());
-		buffer.Write("\r\n", 2);
+		buffer.Write(name);
+		buffer.Write(": ");
+		buffer.Write(value);
+		buffer.Write("\r\n");
 		return;
 	}
 

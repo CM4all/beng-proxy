@@ -165,12 +165,6 @@ GrowingBuffer::Write(const void *p, size_type length) noexcept
 }
 
 void
-GrowingBuffer::Write(const char *p) noexcept
-{
-	Write(p, strlen(p));
-}
-
-void
 GrowingBuffer::Format(const char *fmt, ...) noexcept
 {
 	va_list ap;
