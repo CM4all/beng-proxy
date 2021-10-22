@@ -447,6 +447,7 @@ if libcommon_enable_libsystemd or avahi_dep.found()
   subdir('libcommon/src/odbus')
 endif
 
+subdir('src/access_log')
 subdir('src/istream')
 
 expand = static_library('expand',
@@ -955,10 +956,6 @@ executable(
   'src/widget/Frame.cxx',
   'src/istream_gb.cxx',
   'src/istream_unlock.cxx',
-  'src/access_log/Client.cxx',
-  'src/access_log/Launch.cxx',
-  'src/access_log/Glue.cxx',
-  'src/access_log/ConfigParser.cxx',
   'src/access_log/ChildErrorLog.cxx',
   'src/PInstance.cxx',
   'src/bp/Instance.cxx',
@@ -966,6 +963,7 @@ executable(
   include_directories: inc,
   dependencies: [
     threads,
+    access_log_client_dep,
     event_uring_dep,
     avahi_dep,
     pool_dep,
@@ -1011,10 +1009,6 @@ executable(
   'src/http/Address.cxx',
   'src/http/ResponseHandler.cxx',
   'src/istream_gb.cxx',
-  'src/access_log/Client.cxx',
-  'src/access_log/Launch.cxx',
-  'src/access_log/Glue.cxx',
-  'src/access_log/ConfigParser.cxx',
   'src/RedirectHttps.cxx',
   'src/PInstance.cxx',
   'src/lb/Listener.cxx',
@@ -1067,6 +1061,7 @@ executable(
   include_directories: inc,
   dependencies: [
     threads,
+    access_log_client_dep,
     liblua,
     libpcre,
     sodium_dep,
