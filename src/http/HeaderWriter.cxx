@@ -32,7 +32,7 @@
 
 #include "http/HeaderWriter.hxx"
 #include "strmap.hxx"
-#include "GrowingBuffer.hxx"
+#include "memory/GrowingBuffer.hxx"
 #include "http/HeaderName.hxx"
 
 #include <assert.h>

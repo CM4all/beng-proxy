@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rubber.hxx"
+#include "memory/Rubber.hxx"
 
 #include <gtest/gtest.h>
 

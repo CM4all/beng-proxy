@@ -40,7 +40,7 @@
 #include "istream/sink_fd.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/OpenFileIstream.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "PInstance.hxx"
 #include "spawn/Config.hxx"
 #include "spawn/ChildOptions.hxx"

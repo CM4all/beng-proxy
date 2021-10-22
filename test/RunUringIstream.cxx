@@ -41,7 +41,7 @@
 #include "io/uring/Handler.hxx"
 #include "io/uring/OpenStat.hxx"
 #include "util/PrintException.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "PInstance.hxx"
 
 #include <sys/types.h>

@@ -50,7 +50,7 @@
 #include "widget/Context.hxx"
 #include "session/Lease.hxx"
 #include "session/Session.hxx"
-#include "GrowingBuffer.hxx"
+#include "memory/GrowingBuffer.hxx"
 #include "ResourceLoader.hxx"
 #include "resource_tag.hxx"
 #include "hostname.hxx"

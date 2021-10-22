@@ -33,7 +33,7 @@
 #ifndef BENG_PROXY_DEFAULT_FIFO_BUFFER_HXX
 #define BENG_PROXY_DEFAULT_FIFO_BUFFER_HXX
 
-#include "SliceFifoBuffer.hxx"
+#include "memory/SliceFifoBuffer.hxx"
 
 /**
  * A frontend for #SliceFifoBuffer which allows to replace it with a

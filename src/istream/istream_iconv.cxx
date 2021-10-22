@@ -34,8 +34,8 @@
 #include "FacadeIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "New.hxx"
-#include "fb_pool.hxx"
-#include "SliceFifoBuffer.hxx"
+#include "memory/fb_pool.hxx"
+#include "memory/SliceFifoBuffer.hxx"
 #include "util/DestructObserver.hxx"
 
 #include <iconv.h>

@@ -35,7 +35,7 @@
 #include "FacadeIstream.hxx"
 #include "Sink.hxx"
 #include "event/DeferEvent.hxx"
-#include "GrowingBuffer.hxx"
+#include "memory/GrowingBuffer.hxx"
 
 #include <sys/types.h>
 

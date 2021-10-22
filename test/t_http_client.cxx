@@ -47,7 +47,7 @@
 #include "net/SocketAddress.hxx"
 #include "system/Error.hxx"
 #include "fs/FilteredSocket.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "pool/UniquePtr.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "stopwatch.hxx"

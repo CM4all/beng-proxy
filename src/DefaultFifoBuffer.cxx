@@ -31,7 +31,7 @@
  */
 
 #include "DefaultFifoBuffer.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 
 void
 DefaultFifoBuffer::Allocate() noexcept

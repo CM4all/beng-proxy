@@ -35,7 +35,7 @@
 #include "http_cache_document.hxx"
 #include "pool/Holder.hxx"
 #include "cache.hxx"
-#include "rubber.hxx"
+#include "memory/Rubber.hxx"
 
 class UnusedIstreamPtr;
 

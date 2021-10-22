@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "SlicePool.hxx"
+#include "memory/SlicePool.hxx"
 #include "util/Sanitizer.hxx"
 
 #include <gtest/gtest.h>

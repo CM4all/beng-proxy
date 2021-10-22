@@ -40,7 +40,7 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/PrintException.hxx"
 #include "pool/RootPool.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 
 class Connection final
 	: public AutoUnlinkIntrusiveListHook,

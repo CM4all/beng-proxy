@@ -34,7 +34,7 @@
 
 #include "istream.hxx"
 #include "PipeLease.hxx"
-#include "SliceFifoBuffer.hxx"
+#include "memory/SliceFifoBuffer.hxx"
 
 /**
  * Read data from a #PipeLease.  The data must be in the pipe already,

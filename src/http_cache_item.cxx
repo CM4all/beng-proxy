@@ -32,7 +32,7 @@
 
 #include "http_cache_item.hxx"
 #include "http_cache_age.hxx"
-#include "istream_rubber.hxx"
+#include "memory/istream_rubber.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
 

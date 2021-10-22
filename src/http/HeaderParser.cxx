@@ -33,7 +33,7 @@
 #include "HeaderParser.hxx"
 #include "pool/pool.hxx"
 #include "strmap.hxx"
-#include "GrowingBuffer.hxx"
+#include "memory/GrowingBuffer.hxx"
 #include "http/HeaderName.hxx"
 #include "util/StringView.hxx"
 #include "util/ConstBuffer.hxx"

@@ -31,7 +31,7 @@
  */
 
 #include "Lease.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "net/SocketProtocolError.hxx"
 
 FilteredSocketLease::FilteredSocketLease(FilteredSocket &_socket, Lease &lease,

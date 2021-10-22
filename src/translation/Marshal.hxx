@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "GrowingBuffer.hxx"
+#include "memory/GrowingBuffer.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <utility>

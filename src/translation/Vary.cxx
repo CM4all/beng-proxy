@@ -34,7 +34,7 @@
 #include "translation/Response.hxx"
 #include "translation/Protocol.hxx"
 #include "strmap.hxx"
-#include "GrowingBuffer.hxx"
+#include "memory/GrowingBuffer.hxx"
 #include "http/HeaderWriter.hxx"
 #include "AllocatorPtr.hxx"
 

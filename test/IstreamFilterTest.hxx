@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "PInstance.hxx"
 #include "istream/istream.hxx"
 #include "istream/Bucket.hxx"

@@ -33,7 +33,7 @@
 #include "Instance.hxx"
 #include "Listener.hxx"
 #include "Connection.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "control/Server.hxx"
 #include "control/Local.hxx"
 #include "cluster/TcpBalancer.hxx"

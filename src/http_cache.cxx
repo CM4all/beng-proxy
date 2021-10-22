@@ -39,7 +39,7 @@
 #include "http/ResponseHandler.hxx"
 #include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
-#include "sink_rubber.hxx"
+#include "memory/sink_rubber.hxx"
 #include "AllocatorStats.hxx"
 #include "http/Date.hxx"
 #include "http/List.hxx"

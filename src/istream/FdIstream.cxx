@@ -36,8 +36,8 @@
 #include "Result.hxx"
 #include "io/Buffered.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "fb_pool.hxx"
-#include "SliceFifoBuffer.hxx"
+#include "memory/fb_pool.hxx"
+#include "memory/SliceFifoBuffer.hxx"
 #include "system/Error.hxx"
 #include "event/FineTimerEvent.hxx"
 

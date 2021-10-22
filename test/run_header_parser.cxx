@@ -32,7 +32,7 @@
 
 #include "pool/RootPool.hxx"
 #include "http/HeaderParser.hxx"
-#include "GrowingBuffer.hxx"
+#include "memory/GrowingBuffer.hxx"
 #include "AllocatorPtr.hxx"
 #include "strmap.hxx"
 

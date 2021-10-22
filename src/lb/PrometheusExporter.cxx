@@ -44,8 +44,8 @@
 #include "util/MimeType.hxx"
 #include "istream/ConcatIstream.hxx"
 #include "istream/DelayedIstream.hxx"
-#include "istream_gb.hxx"
-#include "GrowingBuffer.hxx"
+#include "memory/istream_gb.hxx"
+#include "memory/GrowingBuffer.hxx"
 #include "http_request.hxx"
 #include "stopwatch.hxx"
 

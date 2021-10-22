@@ -33,7 +33,7 @@
 #include "StdioSink.hxx"
 #include "FailingResourceLoader.hxx"
 #include "PInstance.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "bp/XmlProcessor.hxx"
 #include "widget/Context.hxx"
 #include "widget/Inline.hxx"

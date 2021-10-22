@@ -36,7 +36,7 @@
 #include "thread/Job.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/CoarseTimerEvent.hxx"
-#include "SliceFifoBuffer.hxx"
+#include "memory/SliceFifoBuffer.hxx"
 
 #include <mutex>
 

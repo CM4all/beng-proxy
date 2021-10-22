@@ -38,7 +38,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "pool/RootPool.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 
 #include <gtest/gtest.h>
 

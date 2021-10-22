@@ -36,7 +36,6 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
 #include "istream_unlock.hxx"
-#include "rubber.hxx"
 #include "pool/pool.hxx"
 
 static bool

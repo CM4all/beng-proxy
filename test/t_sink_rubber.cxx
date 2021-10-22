@@ -31,8 +31,8 @@
  */
 
 #include "TestPool.hxx"
-#include "rubber.hxx"
-#include "sink_rubber.hxx"
+#include "memory/Rubber.hxx"
+#include "memory/sink_rubber.hxx"
 #include "event/Loop.hxx"
 #include "pool/pool.hxx"
 #include "istream/ByteIstream.hxx"

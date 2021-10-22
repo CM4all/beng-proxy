@@ -31,9 +31,9 @@
  */
 
 #include "sink_rubber.hxx"
+#include "Rubber.hxx"
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "rubber.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "util/Cancellable.hxx"

@@ -36,7 +36,7 @@
 #include "Connection.hxx"
 #include "Global.hxx"
 #include "pool/pool.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "session/Manager.hxx"
 #include "session/Save.hxx"
 #include "tcp_stock.hxx"

@@ -38,7 +38,7 @@
 #include "event/ShutdownListener.hxx"
 #include "event/net/TemplateServerSocket.hxx"
 #include "fs/FilteredSocket.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/SpliceSupport.hxx"

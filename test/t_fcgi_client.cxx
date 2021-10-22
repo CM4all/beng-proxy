@@ -46,7 +46,7 @@
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "strmap.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"

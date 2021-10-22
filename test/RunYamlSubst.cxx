@@ -34,7 +34,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/YamlSubstIstream.hxx"
 #include "istream/OpenFileIstream.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
 #include "util/ConstBuffer.hxx"

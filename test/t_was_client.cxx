@@ -54,7 +54,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/ByteOrder.hxx"
 #include "AllocatorPtr.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "strmap.hxx"
 
 #include <functional>

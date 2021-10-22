@@ -48,7 +48,7 @@
 #include "istream/ZeroIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/Sink.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"

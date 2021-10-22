@@ -33,7 +33,7 @@
 #pragma once
 
 #include "Sink.hxx"
-#include "SliceFifoBuffer.hxx"
+#include "memory/SliceFifoBuffer.hxx"
 
 class FifoBufferSinkHandler {
 public:

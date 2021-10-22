@@ -33,7 +33,6 @@
 #include "ReplaceIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "Bucket.hxx"
-#include "GrowingBuffer.hxx"
 #include "pool/pool.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/DestructObserver.hxx"

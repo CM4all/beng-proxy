@@ -42,7 +42,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "PInstance.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "ssl/Init.hxx"
 #include "ssl/Client.hxx"

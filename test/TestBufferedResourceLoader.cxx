@@ -43,7 +43,7 @@
 #include "istream/istream_string.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "util/Cancellable.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "pool/pool.hxx"
 #include "http/ResponseHandler.hxx"
 #include "PInstance.hxx"

@@ -32,7 +32,7 @@
 
 #include "PipeLeaseIstream.hxx"
 #include "Result.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "io/Buffered.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"

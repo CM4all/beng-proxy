@@ -31,12 +31,12 @@
  */
 
 #include "TestPool.hxx"
-#include "GrowingBuffer.hxx"
-#include "istream_gb.hxx"
+#include "memory/GrowingBuffer.hxx"
+#include "memory/istream_gb.hxx"
 #include "istream/istream.hxx"
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"

@@ -40,7 +40,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream.hxx"
 #include "PInstance.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "spawn/Config.hxx"
 #include "spawn/Registry.hxx"
 #include "spawn/Local.hxx"

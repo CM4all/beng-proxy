@@ -34,7 +34,7 @@
 
 #include "AllocatorPtr.hxx"
 #include "strmap.hxx"
-#include "GrowingBuffer.hxx"
+#include "memory/GrowingBuffer.hxx"
 #include "HeaderWriter.hxx"
 #include "HeaderParser.hxx"
 

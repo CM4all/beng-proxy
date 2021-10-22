@@ -38,7 +38,7 @@
 #include "http_cache_heap.hxx"
 #include "http_cache_info.hxx"
 #include "strmap.hxx"
-#include "rubber.hxx"
+#include "memory/Rubber.hxx"
 #include "AllocatorPtr.hxx"
 #include "AllocatorStats.hxx"
 

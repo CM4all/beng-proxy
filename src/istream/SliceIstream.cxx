@@ -31,7 +31,7 @@
  */
 
 #include "SliceIstream.hxx"
-#include "SliceBuffer.hxx"
+#include "memory/SliceBuffer.hxx"
 
 SliceIstream::SliceIstream(struct pool &p, SliceBuffer &&src) noexcept
 	:MemoryIstream(p, src.Read()),

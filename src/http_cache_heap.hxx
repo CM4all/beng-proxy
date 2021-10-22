@@ -33,8 +33,8 @@
 #pragma once
 
 #include "cache.hxx"
-#include "SlicePool.hxx"
-#include "rubber.hxx"
+#include "memory/SlicePool.hxx"
+#include "memory/Rubber.hxx"
 #include "http/Status.h"
 
 #include <stddef.h>

@@ -33,7 +33,7 @@
 #include "ToBucketIstream.hxx"
 #include "Bucket.hxx"
 #include "UnusedPtr.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 
 #include <string.h>
 

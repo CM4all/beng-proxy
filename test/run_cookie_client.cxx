@@ -34,9 +34,9 @@
 #include "http/CookieJar.hxx"
 #include "http/HeaderWriter.hxx"
 #include "pool/RootPool.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "strmap.hxx"
-#include "GrowingBuffer.hxx"
+#include "memory/GrowingBuffer.hxx"
 #include "util/ConstBuffer.hxx"
 #include "AllocatorPtr.hxx"
 

@@ -35,7 +35,7 @@
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "PInstance.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "pool/pool.hxx"
 #include "pool/Ptr.hxx"
 #include "util/Exception.hxx"

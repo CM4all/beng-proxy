@@ -32,7 +32,7 @@
 
 #include "Serialize.hxx"
 #include "Protocol.hxx"
-#include "GrowingBuffer.hxx"
+#include "memory/GrowingBuffer.hxx"
 #include "strmap.hxx"
 #include "util/CharUtil.hxx"
 #include "util/ByteOrder.hxx"

@@ -33,7 +33,7 @@
 #pragma once
 
 #include "MemoryIstream.hxx"
-#include "SliceAllocation.hxx"
+#include "memory/SliceAllocation.hxx"
 
 class SliceBuffer;
 

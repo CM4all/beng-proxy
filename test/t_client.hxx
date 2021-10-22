@@ -49,7 +49,7 @@
 #include "event/FineTimerEvent.hxx"
 #include "PInstance.hxx"
 #include "strmap.hxx"
-#include "fb_pool.hxx"
+#include "memory/fb_pool.hxx"
 #include "util/Cast.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"

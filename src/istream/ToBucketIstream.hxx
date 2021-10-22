@@ -34,7 +34,7 @@
 
 #include "FacadeIstream.hxx"
 #include "event/DeferEvent.hxx"
-#include "SliceFifoBuffer.hxx"
+#include "memory/SliceFifoBuffer.hxx"
 
 /**
  * This class is an adapter for an existing #Istream implementation

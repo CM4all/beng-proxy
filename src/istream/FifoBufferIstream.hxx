@@ -33,7 +33,7 @@
 #pragma once
 
 #include "istream.hxx"
-#include "SliceFifoBuffer.hxx"
+#include "memory/SliceFifoBuffer.hxx"
 
 /**
  * Callbacks for #FifoBufferIstream.

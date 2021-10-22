@@ -35,7 +35,7 @@
 #include "lhttp_address.hxx"
 #include "http_client.hxx"
 #include "http/ResponseHandler.hxx"
-#include "GrowingBuffer.hxx"
+#include "memory/GrowingBuffer.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Item.hxx"

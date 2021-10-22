@@ -266,21 +266,7 @@ subdir('libcommon/src/http')
 subdir('libcommon/src/json')
 subdir('libcommon/src/lua')
 
-memory = static_library('memory',
-  'src/fb_pool.cxx',
-  'src/SlicePool.cxx',
-  'src/SliceAllocation.cxx',
-  'src/SliceFifoBuffer.cxx',
-  'src/MultiFifoBuffer.cxx',
-  'src/DefaultFifoBuffer.cxx',
-  'src/DefaultChunkAllocator.cxx',
-  'src/GrowingBuffer.cxx',
-  'src/rubber.cxx',
-  include_directories: inc,
-  dependencies: [
-  ])
-memory_dep = declare_dependency(link_with: memory,
-                               dependencies: [system_dep])
+subdir('src/memory')
 
 pool = static_library('pool',
   'src/AllocatorPtr.cxx',
@@ -935,8 +921,9 @@ executable(
   'src/translation/SuffixRegistry.cxx',
   'src/translation/AddressSuffixRegistry.cxx',
   'src/tcp_stock.cxx',
-  'src/istream_rubber.cxx',
-  'src/sink_rubber.cxx',
+  'src/memory/istream_gb.cxx',
+  'src/memory/istream_rubber.cxx',
+  'src/memory/sink_rubber.cxx',
   'src/lhttp_stock.cxx',
   'src/lhttp_request.cxx',
   'src/bp/errdoc.cxx',
@@ -954,7 +941,6 @@ executable(
   'src/FilterResourceLoader.cxx',
   'src/BufferedResourceLoader.cxx',
   'src/widget/Frame.cxx',
-  'src/istream_gb.cxx',
   'src/istream_unlock.cxx',
   'src/access_log/ChildErrorLog.cxx',
   'src/PInstance.cxx',
@@ -1008,7 +994,7 @@ executable(
   'src/http_request.cxx',
   'src/http/Address.cxx',
   'src/http/ResponseHandler.cxx',
-  'src/istream_gb.cxx',
+  'src/memory/istream_gb.cxx',
   'src/PInstance.cxx',
   'src/lb/Listener.cxx',
   'src/lb/SimpleHttpResponse.cxx',

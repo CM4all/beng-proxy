@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rubber.hxx"
+#include "Rubber.hxx"
 #include "system/HugePage.hxx"
 #include "system/mmap.h"
 #include "AllocatorStats.hxx"

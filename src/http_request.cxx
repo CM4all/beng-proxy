@@ -47,7 +47,7 @@
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
-#include "GrowingBuffer.hxx"
+#include "memory/GrowingBuffer.hxx"
 
 static constexpr Event::Duration HTTP_CONNECT_TIMEOUT =
 	std::chrono::seconds(30);
