@@ -437,6 +437,19 @@ endif
 subdir('src/access_log')
 subdir('src/istream')
 
+memory_istream = static_library(
+  'memory_istream',
+  'src/memory/istream_gb.cxx',
+  'src/memory/istream_rubber.cxx',
+  'src/memory/sink_rubber.cxx',
+  include_directories: inc,
+)
+
+memory_istream_dep = declare_dependency(
+  link_with: memory_istream,
+  dependencies: [memory_dep, istream_api_dep],
+)
+
 expand = static_library('expand',
   'src/regex.cxx',
   'src/pexpand.cxx',
@@ -644,6 +657,7 @@ http_client_dep = declare_dependency(
     putil_dep,
     http_util_dep,
     http_common_dep,
+    memory_istream_dep,
     stopwatch_dep,
   ],
 )
@@ -663,6 +677,7 @@ http_server_dep = declare_dependency(
   dependencies: [
     http_util_dep,
     http_common_dep,
+    memory_istream_dep,
     putil_dep,
     socket_dep,
     stopwatch_dep,
@@ -687,6 +702,7 @@ http_cache_dep = declare_dependency(
     eutil_dep,
     http_util_dep,
     istream_dep,
+    memory_istream_dep,
     raddress_dep,
     stopwatch_dep,
   ],
@@ -723,6 +739,7 @@ fcgi_client_dep = declare_dependency(
     socket_dep,
     putil_dep,
     istream_dep,
+    memory_istream_dep,
     http_util_dep,
     stopwatch_dep,
   ],
@@ -921,9 +938,6 @@ executable(
   'src/translation/SuffixRegistry.cxx',
   'src/translation/AddressSuffixRegistry.cxx',
   'src/tcp_stock.cxx',
-  'src/memory/istream_gb.cxx',
-  'src/memory/istream_rubber.cxx',
-  'src/memory/sink_rubber.cxx',
   'src/lhttp_stock.cxx',
   'src/lhttp_request.cxx',
   'src/bp/errdoc.cxx',
@@ -949,6 +963,7 @@ executable(
   include_directories: inc,
   dependencies: [
     threads,
+    memory_istream_dep,
     access_log_client_dep,
     event_uring_dep,
     avahi_dep,
@@ -994,7 +1009,6 @@ executable(
   'src/http_request.cxx',
   'src/http/Address.cxx',
   'src/http/ResponseHandler.cxx',
-  'src/memory/istream_gb.cxx',
   'src/PInstance.cxx',
   'src/lb/Listener.cxx',
   'src/lb/SimpleHttpResponse.cxx',
@@ -1046,6 +1060,7 @@ executable(
   include_directories: inc,
   dependencies: [
     threads,
+    memory_istream_dep,
     access_log_client_dep,
     liblua,
     libpcre,
