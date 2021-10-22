@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RedirectHttps.hxx"
+#include "uri/RedirectHttps.hxx"
 #include "TestPool.hxx"
 #include "AllocatorPtr.hxx"
 

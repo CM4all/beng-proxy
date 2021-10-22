@@ -377,7 +377,6 @@ test('t_header_forward', executable('t_header_forward',
 
 test('TestRedirectHttps', executable('TestRedirectHttps',
   'TestRedirectHttps.cxx',
-  '../src/RedirectHttps.cxx',
   include_directories: inc,
   dependencies: [
     gtest,

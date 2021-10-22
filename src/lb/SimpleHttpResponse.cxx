@@ -32,7 +32,7 @@
 
 #include "SimpleHttpResponse.hxx"
 #include "http/IncomingRequest.hxx"
-#include "RedirectHttps.hxx"
+#include "uri/RedirectHttps.hxx"
 #include "AllocatorPtr.hxx"
 
 void

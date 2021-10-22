@@ -38,7 +38,7 @@
 #include "translation/Handler.hxx"
 #include "translation/Response.hxx"
 #include "pool/pool.hxx"
-#include "RedirectHttps.hxx"
+#include "uri/RedirectHttps.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "util/Cancellable.hxx"
 #include "util/LeakDetector.hxx"
