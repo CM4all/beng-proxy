@@ -33,6 +33,7 @@
 #pragma once
 
 #include "DefaultChunkAllocator.hxx"
+#include "util/Compiler.h"
 #include "util/ConstBuffer.hxx"
 
 #include <cstddef>
@@ -202,6 +203,9 @@ public:
 	void Write(const void *p, size_type length) noexcept;
 
 	void Write(const char *p) noexcept;
+
+	gcc_printf(2, 3)
+	void Format(const char *fmt, ...) noexcept;
 
 	void AppendMoveFrom(GrowingBuffer &&src) noexcept;
 

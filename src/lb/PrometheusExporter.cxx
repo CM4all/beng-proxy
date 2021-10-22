@@ -128,32 +128,10 @@ try {
 	DestroyError(std::current_exception());
 }
 
-gcc_printf(2, 3)
-static void
-Format(GrowingBuffer &buffer, const char *fmt, ...) noexcept
-{
-	va_list ap;
-	va_start(ap, fmt);
-	const auto reserve_size = (std::size_t)
-		vsnprintf(nullptr, 0, fmt, ap) + 1;
-	va_end(ap);
-
-	char *p = (char *)buffer.BeginWrite(reserve_size);
-
-	va_start(ap, fmt);
-	const auto length = (std::size_t)
-		vsnprintf(p, reserve_size, fmt, ap);
-	va_end(ap);
-
-	assert(length + 1 == reserve_size);
-
-	buffer.CommitWrite(length);
-}
-
 static void
 Write(GrowingBuffer &buffer, const char *process, const BengProxy::ControlStats &stats) noexcept
 {
-	Format(buffer,
+	buffer.Format(
 	       R"(
 # HELP beng_proxy_connections Number of connections
 # TYPE beng_proxy_connections gauge
