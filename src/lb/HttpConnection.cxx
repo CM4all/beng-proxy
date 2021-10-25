@@ -47,7 +47,7 @@
 #include "pool/pool.hxx"
 #include "address_string.hxx"
 #include "fs/FilteredSocket.hxx"
-#include "ssl/Filter.hxx"
+#include "ssl/AlpnCompare.hxx"
 #include "uri/Verify.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/StaticSocketAddress.hxx"
@@ -103,17 +103,6 @@ HttpServerLogLevel(std::exception_ptr e)
  *
  */
 
-#ifdef HAVE_NGHTTP2
-
-static bool
-IsAlpnHttp2(ConstBuffer<unsigned char> alpn) noexcept
-{
-	return alpn != nullptr && alpn.size == 2 &&
-		alpn[0] == 'h' && alpn[1] == '2';
-}
-
-#endif
-
 LbHttpConnection *
 NewLbHttpConnection(LbInstance &instance,
 		    const LbListenerConfig &listener,
@@ -136,9 +125,7 @@ NewLbHttpConnection(LbInstance &instance,
 	instance.http_connections.push_back(*connection);
 
 #ifdef HAVE_NGHTTP2
-	if (listener.force_http2 ||
-	    (ssl_filter != nullptr &&
-	     IsAlpnHttp2(ssl_filter_get_alpn_selected(*ssl_filter))))
+	if (listener.force_http2 || IsAlpnHttp2(ssl_filter))
 		connection->http2 = UniquePoolPtr<NgHttp2::ServerConnection>::Make(connection->GetPool(),
 										   connection->GetPool(),
 										   std::move(socket),

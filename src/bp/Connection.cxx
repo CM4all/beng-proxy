@@ -42,6 +42,7 @@
 #include "address_string.hxx"
 #include "pool/UniquePtr.hxx"
 #include "fs/FilteredSocket.hxx"
+#include "ssl/AlpnCompare.hxx"
 #include "ssl/Filter.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/SocketAddress.hxx"
@@ -170,17 +171,6 @@ BpConnection::HttpConnectionClosed() noexcept
  *
  */
 
-#ifdef HAVE_NGHTTP2
-
-static bool
-IsAlpnHttp2(ConstBuffer<unsigned char> alpn) noexcept
-{
-	return alpn != nullptr && alpn.size == 2 &&
-		alpn[0] == 'h' && alpn[1] == '2';
-}
-
-#endif
-
 void
 new_connection(PoolPtr pool, BpInstance &instance, BPListener &listener,
 	       UniquePoolPtr<FilteredSocket> socket,
@@ -207,8 +197,7 @@ new_connection(PoolPtr pool, BpInstance &instance, BPListener &listener,
 	instance.connections.push_front(*connection);
 
 #ifdef HAVE_NGHTTP2
-	if (ssl_filter != nullptr &&
-	    IsAlpnHttp2(ssl_filter_get_alpn_selected(*ssl_filter)))
+	if (IsAlpnHttp2(ssl_filter))
 		connection->http2 = UniquePoolPtr<NgHttp2::ServerConnection>::Make(connection->GetPool(),
 										   connection->GetPool(),
 										   std::move(socket),

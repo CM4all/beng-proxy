@@ -3,6 +3,7 @@ ssl2 = static_library(
   'Basic.cxx',
   'Client.cxx',
   'Factory.cxx',
+  'AlpnCompare.cxx',
   'AlpnSelect.cxx',
   'AlpnEnable.cxx',
   'FifoBufferBio.cxx',

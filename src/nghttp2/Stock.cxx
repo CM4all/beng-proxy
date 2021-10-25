@@ -35,6 +35,7 @@
 #include "fs/FilteredSocket.hxx"
 #include "fs/Connect.hxx"
 #include "fs/Key.hxx"
+#include "ssl/AlpnCompare.hxx"
 #include "ssl/Filter.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "net/SocketAddress.hxx"
@@ -232,13 +233,6 @@ Stock::Item::Cancel() noexcept
 	stock.DeleteItem(this);
 }
 
-static bool
-IsAlpnHttp2(ConstBuffer<unsigned char> alpn) noexcept
-{
-	return alpn != nullptr && alpn.size == 2 &&
-		alpn[0] == 'h' && alpn[1] == '2';
-}
-
 void
 Stock::Item::OnConnectFilteredSocket(std::unique_ptr<FilteredSocket> socket) noexcept
 {
@@ -247,8 +241,7 @@ Stock::Item::OnConnectFilteredSocket(std::unique_ptr<FilteredSocket> socket) noe
 	assert(!connection);
 
 	const auto *ssl_filter = ssl_filter_cast_from(socket->GetFilter());
-	if (ssl_filter != nullptr &&
-	    !IsAlpnHttp2(ssl_filter_get_alpn_selected(*ssl_filter))) {
+	if (ssl_filter != nullptr && !IsAlpnHttp2(*ssl_filter)) {
 		alpn_failure = true;
 
 		auto _socket = std::move(socket);
