@@ -1032,6 +1032,7 @@ executable(
   'src/lb/ExpectMonitor.cxx',
   'src/lb/Instance.cxx',
   'src/lb/Main.cxx',
+  'src/prometheus/Stats.cxx',
 
   # the following sources are only necessary for the translation client
   'src/widget/View.cxx',

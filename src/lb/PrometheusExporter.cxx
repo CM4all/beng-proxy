@@ -33,6 +33,7 @@
 #include "PrometheusExporter.hxx"
 #include "PrometheusExporterConfig.hxx"
 #include "Instance.hxx"
+#include "prometheus/Stats.hxx"
 #include "beng-proxy/Control.hxx"
 #include "http/Address.hxx"
 #include "http/Headers.hxx"
@@ -48,9 +49,6 @@
 #include "memory/istream_gb.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "stopwatch.hxx"
-
-#include <inttypes.h>
-#include <stdarg.h>
 
 class LbPrometheusExporter::AppendRequest final
 	: public HttpResponseHandler, Cancellable
@@ -128,69 +126,6 @@ try {
 	DestroyError(std::current_exception());
 }
 
-static void
-Write(GrowingBuffer &buffer, const char *process, const BengProxy::ControlStats &stats) noexcept
-{
-	buffer.Format(
-	       R"(
-# HELP beng_proxy_connections Number of connections
-# TYPE beng_proxy_connections gauge
-
-# HELP beng_proxy_children Number of child processes
-# TYPE beng_proxy_children gauge
-
-# HELP beng_proxy_sessions Number of sessions
-# TYPE beng_proxy_sessions gauge
-
-# HELP beng_proxy_http_requests Number of HTTP requests
-# TYPE beng_proxy_http_requests counter
-
-# HELP beng_proxy_http_traffic Number of bytes transferred
-# TYPE beng_proxy_http_traffic counter
-
-# HELP beng_proxy_cache_size Size of the cache in bytes
-# TYPE beng_proxy_cache_size gauge
-
-# HELP beng_proxy_buffer_size Size of buffers in bytes
-# TYPE beng_proxy_buffer_size gauge
-
-)"
-	       "beng_proxy_connections{process=\"%s\",direction=\"in\"} %" PRIu32 "\n"
-	       "beng_proxy_connections{process=\"%s\",direction=\"out\"} %" PRIu32 "\n"
-	       "beng_proxy_children{process=\"%s\"} %" PRIu32 "\n"
-	       "beng_proxy_sessions{process=\"%s\"} %" PRIu32 "\n"
-	       "beng_proxy_http_requests{process=\"%s\"} %" PRIu64 "\n"
-	       "beng_proxy_http_traffic{process=\"%s\",direction=\"in\"} %" PRIu64 "\n"
-	       "beng_proxy_http_traffic{process=\"%s\",direction=\"out\"} %" PRIu64 "\n"
-	       "beng_proxy_cache_size{process=\"%s\",type=\"translation\",metric=\"netto\"} %" PRIu64 "\n"
-	       "beng_proxy_cache_size{process=\"%s\",type=\"translation\",metric=\"brutto\"} %" PRIu64 "\n"
-	       "beng_proxy_cache_size{process=\"%s\",type=\"http\",metric=\"netto\"} %" PRIu64 "\n"
-	       "beng_proxy_cache_size{process=\"%s\",type=\"http\",metric=\"brutto\"} %" PRIu64 "\n"
-	       "beng_proxy_cache_size{process=\"%s\",type=\"filter\",metric=\"netto\"} %" PRIu64 "\n"
-	       "beng_proxy_cache_size{process=\"%s\",type=\"filter\",metric=\"brutto\"} %" PRIu64 "\n"
-	       "beng_proxy_cache_size{process=\"%s\",type=\"nfs\",metric=\"netto\"} %" PRIu64 "\n"
-	       "beng_proxy_cache_size{process=\"%s\",type=\"nfs\",metric=\"brutto\"} %" PRIu64 "\n"
-	       "beng_proxy_buffer_size{process=\"%s\",type=\"io\",metric=\"netto\"} %" PRIu64 "\n"
-	       "beng_proxy_buffer_size{process=\"%s\",type=\"io\",metric=\"brutto\"} %" PRIu64 "\n",
-	       process, FromBE32(stats.incoming_connections),
-	       process, FromBE32(stats.outgoing_connections),
-	       process, FromBE32(stats.children),
-	       process, FromBE32(stats.sessions),
-	       process, FromBE64(stats.http_requests),
-	       process, FromBE64(stats.http_traffic_received),
-	       process, FromBE64(stats.http_traffic_sent),
-	       process, FromBE64(stats.translation_cache_size),
-	       process, FromBE64(stats.translation_cache_brutto_size),
-	       process, FromBE64(stats.http_cache_size),
-	       process, FromBE64(stats.http_cache_brutto_size),
-	       process, FromBE64(stats.filter_cache_size),
-	       process, FromBE64(stats.filter_cache_brutto_size),
-	       process, FromBE64(stats.nfs_cache_size),
-	       process, FromBE64(stats.nfs_cache_brutto_size),
-	       process, FromBE64(stats.io_buffers_size),
-	       process, FromBE64(stats.io_buffers_brutto_size));
-}
-
 void
 LbPrometheusExporter::HandleRequest(IncomingHttpRequest &request,
 				    CancellablePointer &) noexcept
@@ -201,7 +136,7 @@ LbPrometheusExporter::HandleRequest(IncomingHttpRequest &request,
 
 	const char *process = "lb";
 	if (instance != nullptr)
-		Write(buffer, process, instance->GetStats());
+		Prometheus::Write(buffer, process, instance->GetStats());
 
 	HttpHeaders headers;
 	headers.Write("content-type", "text/plain;version=0.0.4");
