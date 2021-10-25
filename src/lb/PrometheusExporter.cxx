@@ -45,6 +45,7 @@
 #include "istream/ConcatIstream.hxx"
 #include "istream/DelayedIstream.hxx"
 #include "istream/UnusedHoldPtr.hxx"
+#include "istream/istream_catch.hxx"
 #include "memory/istream_gb.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "stopwatch.hxx"
@@ -125,6 +126,13 @@ try {
 	DestroyError(std::current_exception());
 }
 
+static std::exception_ptr
+CatchCallback(std::exception_ptr, void *) noexcept
+{
+	// TODO log?
+	return {};
+}
+
 void
 LbPrometheusExporter::HandleRequest(IncomingHttpRequest &request,
 				    CancellablePointer &) noexcept
@@ -151,7 +159,10 @@ LbPrometheusExporter::HandleRequest(IncomingHttpRequest &request,
 		auto *ar = NewFromPool<AppendRequest>(pool, i, delayed.second);
 		ar->Start(pool, *instance);
 
-		AppendConcatIstream(body, std::move(hold));
+		AppendConcatIstream(body,
+				    istream_catch_new(pool,
+						      std::move(hold),
+						      CatchCallback, nullptr));
 	}
 
 	request.SendResponse(HTTP_STATUS_OK, std::move(headers),
