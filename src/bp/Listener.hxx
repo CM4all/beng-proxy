@@ -40,6 +40,7 @@
 struct BpInstance;
 struct SslConfig;
 class TranslationService;
+class BpPrometheusExporter;
 
 /**
  * Listener for incoming HTTP connections.
@@ -48,6 +49,8 @@ class BPListener final : FilteredSocketListenerHandler {
 	BpInstance &instance;
 
 	const std::shared_ptr<TranslationService> translation_service;
+
+	const std::unique_ptr<BpPrometheusExporter> prometheus_exporter;
 
 	const char *const tag;
 
@@ -59,6 +62,7 @@ public:
 	BPListener(BpInstance &_instance,
 		   std::shared_ptr<TranslationService> _translation_service,
 		   const char *_tag,
+		   bool _prometheus_exporter,
 		   bool _auth_alt_host,
 		   const SslConfig *ssl_config);
 	~BPListener() noexcept;

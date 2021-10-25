@@ -279,6 +279,7 @@ BpInstance::AddListener(const BpConfig::Listener &c
 
 	listeners.emplace_front(*this, std::move(ts),
 				c.tag.empty() ? nullptr : c.tag.c_str(),
+				c.handler == BpConfig::Listener::Handler::PROMETHEUS_EXPORTER,
 				c.auth_alt_host,
 				c.ssl ? &c.ssl_config : nullptr);
 	auto &listener = listeners.front();
@@ -610,6 +611,7 @@ try {
 		instance.listeners.emplace_front(instance,
 						 instance.translation_service,
 						 tag,
+						 false,
 						 false, nullptr);
 		instance.listeners.front().Listen(UniqueSocketDescriptor(STDIN_FILENO));
 	}

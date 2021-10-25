@@ -62,6 +62,11 @@ struct BpConfig {
 		 */
 		std::forward_list<AllocatedSocketAddress> translation_sockets;
 
+		enum class Handler {
+			TRANSLATION,
+			PROMETHEUS_EXPORTER,
+		} handler = Handler::TRANSLATION;
+
 		bool auth_alt_host = false;
 
 		bool ssl = false;

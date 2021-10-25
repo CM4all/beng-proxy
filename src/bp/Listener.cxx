@@ -33,6 +33,7 @@
 #include "Listener.hxx"
 #include "Connection.hxx"
 #include "Instance.hxx"
+#include "PrometheusExporter.hxx"
 #include "pool/UniquePtr.hxx"
 #include "ssl/Factory.hxx"
 #include "ssl/Filter.hxx"
@@ -60,9 +61,13 @@ MakeSslFactory(const SslConfig *ssl_config)
 BPListener::BPListener(BpInstance &_instance,
 		       std::shared_ptr<TranslationService> _translation_service,
 		       const char *_tag,
+		       bool _prometheus_exporter,
 		       bool _auth_alt_host,
 		       const SslConfig *ssl_config)
 	:instance(_instance), translation_service(_translation_service),
+	 prometheus_exporter(_prometheus_exporter
+			     ? new BpPrometheusExporter(instance)
+			     : nullptr),
 	 tag(_tag),
 	 auth_alt_host(_auth_alt_host),
 	 listener(instance.root_pool, instance.event_loop,
@@ -80,7 +85,7 @@ BPListener::OnFilteredSocketConnect(PoolPtr pool,
 				    const SslFilter *ssl_filter) noexcept
 {
 	new_connection(std::move(pool), instance, *this,
-		       nullptr,
+		       prometheus_exporter.get(),
 		       std::move(socket), ssl_filter,
 		       address);
 }

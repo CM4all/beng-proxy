@@ -121,6 +121,17 @@ SslClientConfigParser::ParseLine(FileLineParser &line)
 		throw LineParser::Error("Unknown option");
 }
 
+static BpConfig::Listener::Handler
+ParseListenerHandler(const char *s)
+{
+	if (StringIsEqual(s, "translation"))
+		return BpConfig::Listener::Handler::TRANSLATION;
+	else if (StringIsEqual(s, "prometheus_exporter"))
+		return BpConfig::Listener::Handler::PROMETHEUS_EXPORTER;
+	else
+		throw LineParser::Error("Unknown handler");
+}
+
 void
 BpConfigParser::Listener::ParseLine(FileLineParser &line)
 {
@@ -204,6 +215,8 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 	} else if (StringIsEqual(word, "translation_socket")) {
 		config.translation_sockets.emplace_front(ParseSocketAddress(line.ExpectValueAndEnd(),
 									    0, false));
+	} else if (strcmp(word, "handler") == 0) {
+		config.handler = ParseListenerHandler(line.ExpectValueAndEnd());
 	} else
 		throw LineParser::Error("Unknown option");
 }
@@ -216,6 +229,9 @@ BpConfigParser::Listener::Finish()
 
 	if (config.ssl && config.ssl_config.cert_key.empty())
 		throw LineParser::Error("No SSL certificates ");
+
+	if (!config.translation_sockets.empty() && config.handler != BpConfig::Listener::Handler::TRANSLATION)
+		throw LineParser::Error("Translation servers only possible for handler=translation");
 
 	parent.config.listen.emplace_front(std::move(config));
 
