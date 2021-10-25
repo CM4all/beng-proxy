@@ -50,5 +50,5 @@ IsAlpnHttp2(const SslFilter &ssl_filter) noexcept;
 inline bool
 IsAlpnHttp2(const SslFilter *ssl_filter) noexcept
 {
-	return ssl_filter != nullptr && IsAlpnHttp2(ssl_filter);
+	return ssl_filter != nullptr && IsAlpnHttp2(*ssl_filter);
 }
