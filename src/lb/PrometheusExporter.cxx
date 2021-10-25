@@ -44,6 +44,7 @@
 #include "util/MimeType.hxx"
 #include "istream/ConcatIstream.hxx"
 #include "istream/DelayedIstream.hxx"
+#include "istream/UnusedHoldPtr.hxx"
 #include "memory/istream_gb.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "stopwatch.hxx"
@@ -145,10 +146,12 @@ LbPrometheusExporter::HandleRequest(IncomingHttpRequest &request,
 	for (const auto &i : config.load_from_local) {
 		// TODO check instance!=nullptr
 		auto delayed = istream_delayed_new(pool, instance->event_loop);
-		AppendConcatIstream(body, std::move(delayed.first));
+		UnusedHoldIstreamPtr hold(pool, std::move(delayed.first));
 
 		auto *ar = NewFromPool<AppendRequest>(pool, i, delayed.second);
 		ar->Start(pool, *instance);
+
+		AppendConcatIstream(body, std::move(hold));
 	}
 
 	request.SendResponse(HTTP_STATUS_OK, std::move(headers),
