@@ -380,41 +380,19 @@ if get_option('certdb')
   subdir('libcommon/src/pg')
 
   ssl2_sources += [
-    'src/certdb/CertDatabase.cxx',
-    'src/certdb/FromResult.cxx',
-    'src/certdb/WrapKey.cxx',
-    'src/certdb/Wildcard.cxx',
-    'src/ssl/Cache.cxx',
-    'src/ssl/NameCache.cxx',
-    'src/ssl/DbSniCallback.cxx',
+    '../certdb/CertDatabase.cxx',
+    '../certdb/FromResult.cxx',
+    '../certdb/WrapKey.cxx',
+    '../certdb/Wildcard.cxx',
+    'Cache.cxx',
+    'NameCache.cxx',
+    'DbSniCallback.cxx',
   ]
 else
   pg_dep = declare_dependency(required: false)
 endif
 
-ssl2 = static_library(
-  'ssl2',
-  'src/ssl/Basic.cxx',
-  'src/ssl/Client.cxx',
-  'src/ssl/Factory.cxx',
-  'src/ssl/AlpnSelect.cxx',
-  'src/ssl/AlpnEnable.cxx',
-  'src/ssl/FifoBufferBio.cxx',
-  'src/ssl/Filter.cxx',
-  'src/ssl/Init.cxx',
-  ssl2_sources,
-  include_directories: inc,
-  dependencies: [
-    ssl_dep,
-    pg_dep,
-  ],
-)
-ssl_dep = declare_dependency(
-  link_with: ssl2,
-  dependencies: [
-    ssl_dep,
-  ],
-)
+subdir('src/ssl')
 
 libcommon_require_uring = true
 
