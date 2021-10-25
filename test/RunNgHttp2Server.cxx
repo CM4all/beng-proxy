@@ -44,7 +44,7 @@
 
 class Connection final
 	: public AutoUnlinkIntrusiveListHook,
-	  HttpServerConnectionHandler
+	  HttpServerConnectionHandler, HttpServerRequestHandler
 {
 	NgHttp2::ServerConnection http;
 
@@ -55,7 +55,7 @@ public:
 		      UniquePoolPtr<FilteredSocket>::Make(pool, event_loop,
 							  std::move(fd), FD_TCP),
 		      address,
-		      *this) {}
+		      *this, *this) {}
 
 	/* virtual methods from class HttpServerConnectionHandler */
 	void HandleHttpRequest(IncomingHttpRequest &request,

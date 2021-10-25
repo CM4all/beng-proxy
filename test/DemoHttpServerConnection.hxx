@@ -43,7 +43,9 @@ struct HttpServerConnection;
 class FilteredSocket;
 class SocketAddress;
 
-class DemoHttpServerConnection : protected HttpServerConnectionHandler, Cancellable
+class DemoHttpServerConnection
+	: protected HttpServerConnectionHandler, HttpServerRequestHandler,
+	  Cancellable
 {
 public:
 	enum class Mode {

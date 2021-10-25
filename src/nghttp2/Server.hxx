@@ -42,6 +42,7 @@
 struct pool;
 class FilteredSocket;
 class HttpServerConnectionHandler;
+class HttpServerRequestHandler;
 
 namespace NgHttp2 {
 
@@ -51,6 +52,7 @@ class ServerConnection final : BufferedSocketHandler {
 	const UniquePoolPtr<FilteredSocket> socket;
 
 	HttpServerConnectionHandler &handler;
+	HttpServerRequestHandler &request_handler;
 
 	const SocketAddress local_address, remote_address;
 
@@ -80,7 +82,8 @@ public:
 	ServerConnection(struct pool &_pool,
 			 UniquePoolPtr<FilteredSocket> _socket,
 			 SocketAddress remote_address,
-			 HttpServerConnectionHandler &_handler);
+			 HttpServerConnectionHandler &_handler,
+			 HttpServerRequestHandler &request_handler);
 
 	~ServerConnection() noexcept;
 

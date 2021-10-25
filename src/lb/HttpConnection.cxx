@@ -130,6 +130,7 @@ NewLbHttpConnection(LbInstance &instance,
 										   connection->GetPool(),
 										   std::move(socket),
 										   address,
+										   *connection,
 										   *connection);
 	else
 #endif
@@ -140,6 +141,7 @@ NewLbHttpConnection(LbInstance &instance,
 							      : nullptr,
 							      address,
 							      false,
+							      *connection,
 							      *connection);
 
 	return connection;

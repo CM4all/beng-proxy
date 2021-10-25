@@ -53,7 +53,7 @@ namespace NgHttp2 { class ServerConnection; }
  * A connection from a HTTP client.
  */
 struct BpConnection final
-	: PoolHolder, HttpServerConnectionHandler,
+	: PoolHolder, HttpServerConnectionHandler, HttpServerRequestHandler,
 	  boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
 	BpInstance &instance;

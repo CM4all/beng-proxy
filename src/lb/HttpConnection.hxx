@@ -53,7 +53,8 @@ class LbTranslationHandler;
 struct LbInstance;
 
 struct LbHttpConnection final
-	: PoolHolder, HttpServerConnectionHandler, LoggerDomainFactory,
+	: PoolHolder, HttpServerConnectionHandler, HttpServerRequestHandler,
+	  LoggerDomainFactory,
 	  boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
 	LbInstance &instance;

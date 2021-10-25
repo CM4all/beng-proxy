@@ -385,9 +385,9 @@ HttpServerConnection::SubmitRequest()
 			return false;
 	} else {
 		request.in_handler = true;
-		handler->HandleHttpRequest(*request.request,
-					   request.request->stopwatch,
-					   request.cancel_ptr);
+		request_handler.HandleHttpRequest(*request.request,
+						  request.request->stopwatch,
+						  request.cancel_ptr);
 		if (destructed)
 			return false;
 

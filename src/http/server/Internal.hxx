@@ -116,6 +116,8 @@ struct HttpServerConnection final
 	/* handler */
 	HttpServerConnectionHandler *handler;
 
+	HttpServerRequestHandler &request_handler;
+
 	/* info */
 
 	const SocketAddress local_address, remote_address;
@@ -207,7 +209,8 @@ struct HttpServerConnection final
 			     SocketAddress _local_address,
 			     SocketAddress _remote_address,
 			     bool _date_header,
-			     HttpServerConnectionHandler &_handler);
+			     HttpServerConnectionHandler &_handler,
+			     HttpServerRequestHandler &_request_handler) noexcept;
 
 	void Delete() noexcept;
 

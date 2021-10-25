@@ -48,10 +48,6 @@ public:
 	 */
 	virtual void RequestHeadersFinished(IncomingHttpRequest &) noexcept {}
 
-	virtual void HandleHttpRequest(IncomingHttpRequest &request,
-				       const StopwatchPtr &parent_stopwatch,
-				       CancellablePointer &cancel_ptr) noexcept = 0;
-
 	/**
 	 * A fatal protocol level error has occurred, and the connection
 	 * was closed.
@@ -61,4 +57,11 @@ public:
 	virtual void HttpConnectionError(std::exception_ptr e) noexcept = 0;
 
 	virtual void HttpConnectionClosed() noexcept = 0;
+};
+
+class HttpServerRequestHandler {
+public:
+	virtual void HandleHttpRequest(IncomingHttpRequest &request,
+				       const StopwatchPtr &parent_stopwatch,
+				       CancellablePointer &cancel_ptr) noexcept = 0;
 };

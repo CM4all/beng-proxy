@@ -65,7 +65,9 @@
 #include <stdlib.h>
 
 class Server final
-	: PoolHolder, HttpServerConnectionHandler, Lease, BufferedSocketHandler
+	: PoolHolder,
+	  HttpServerConnectionHandler, HttpServerRequestHandler,
+	  Lease, BufferedSocketHandler
 {
 	HttpServerConnection *connection = nullptr;
 
@@ -266,7 +268,7 @@ Server::Server(struct pool &_pool, EventLoop &event_loop)
 										    std::move(server_socket),
 										    FdType::FD_SOCKET),
 						nullptr, nullptr,
-						true, *this);
+						true, *this, *this);
 
 	client_fs.InitDummy(client_socket.Release(), FdType::FD_SOCKET);
 }

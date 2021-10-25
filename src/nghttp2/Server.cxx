@@ -375,9 +375,9 @@ ServerConnection::Request::OnReceiveRequest(bool has_request_body) noexcept
 
 	stopwatch = RootStopwatchPtr(uri);
 
-	connection.handler.HandleHttpRequest(*this,
-					     stopwatch,
-					     cancel_ptr);
+	connection.request_handler.HandleHttpRequest(*this,
+						     stopwatch,
+						     cancel_ptr);
 
 	return 0;
 }
@@ -443,9 +443,10 @@ ServerConnection::Request::SendResponse(http_status_t status,
 ServerConnection::ServerConnection(struct pool &_pool,
 				   UniquePoolPtr<FilteredSocket> _socket,
 				   SocketAddress _remote_address,
-				   HttpServerConnectionHandler &_handler)
+				   HttpServerConnectionHandler &_handler,
+				   HttpServerRequestHandler &_request_handler)
 	:pool(_pool), socket(std::move(_socket)),
-	 handler(_handler),
+	 handler(_handler), request_handler(_request_handler),
 	 local_address(DupAddress(pool, socket->GetSocket().GetLocalAddress())),
 	 remote_address(DupAddress(pool, _remote_address)),
 	 local_host_and_port(address_to_string(pool, local_address)),

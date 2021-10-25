@@ -306,12 +306,13 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 					   SocketAddress _local_address,
 					   SocketAddress _remote_address,
 					   bool _date_header,
-					   HttpServerConnectionHandler &_handler)
+					   HttpServerConnectionHandler &_handler,
+					   HttpServerRequestHandler &_request_handler) noexcept
 	:pool(&_pool), socket(std::move(_socket)),
 	 idle_timeout(socket->GetEventLoop(),
 		      BIND_THIS_METHOD(IdleTimeoutCallback)),
 	 defer_read(socket->GetEventLoop(), BIND_THIS_METHOD(OnDeferredRead)),
-	 handler(&_handler),
+	 handler(&_handler), request_handler(_request_handler),
 	 local_address(DupAddress(*pool, _local_address)),
 	 remote_address(DupAddress(*pool, _remote_address)),
 	 local_host_and_port(address_to_string(*pool, _local_address)),
@@ -340,7 +341,8 @@ http_server_connection_new(struct pool &pool,
 			   SocketAddress local_address,
 			   SocketAddress remote_address,
 			   bool date_header,
-			   HttpServerConnectionHandler &handler) noexcept
+			   HttpServerConnectionHandler &handler,
+			   HttpServerRequestHandler &request_handler) noexcept
 {
 	assert(socket);
 
@@ -348,7 +350,7 @@ http_server_connection_new(struct pool &pool,
 						 std::move(socket),
 						 local_address, remote_address,
 						 date_header,
-						 handler);
+						 handler, request_handler);
 }
 
 void

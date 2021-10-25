@@ -202,6 +202,7 @@ new_connection(PoolPtr pool, BpInstance &instance, BPListener &listener,
 										   connection->GetPool(),
 										   std::move(socket),
 										   address,
+										   *connection,
 										   *connection);
 	else
 #endif
@@ -213,5 +214,5 @@ new_connection(PoolPtr pool, BpInstance &instance, BPListener &listener,
 						   : nullptr,
 						   address,
 						   true,
-						   *connection);
+						   *connection, *connection);
 }

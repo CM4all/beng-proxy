@@ -58,7 +58,7 @@ DemoHttpServerConnection::DemoHttpServerConnection(struct pool &pool,
 					       nullptr,
 					       address,
 					       true,
-					       *this)),
+					       *this, *this)),
 	 defer_event(event_loop, BIND_THIS_METHOD(OnDeferred)),
 	 mode(_mode) {}
 
