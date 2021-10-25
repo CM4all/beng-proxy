@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_body.hxx"
+#include "Body.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 

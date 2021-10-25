@@ -44,7 +44,7 @@
 #include "cluster/AddressSticky.hxx"
 #include "address_string.hxx"
 #include "http/IncomingRequest.hxx"
-#include "http_client.hxx"
+#include "http/Client.hxx"
 #include "fs/Handler.hxx"
 #include "http/ResponseHandler.hxx"
 #include "http/Headers.hxx"

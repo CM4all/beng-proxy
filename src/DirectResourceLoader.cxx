@@ -34,7 +34,7 @@
 #include "ResourceAddress.hxx"
 #include "http/ResponseHandler.hxx"
 #include "nghttp2/Glue.hxx"
-#include "http_request.hxx"
+#include "http/GlueClient.hxx"
 #include "file_request.hxx"
 #include "file_address.hxx"
 #include "lhttp_request.hxx"

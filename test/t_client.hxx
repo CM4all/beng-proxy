@@ -59,7 +59,7 @@
 #endif
 
 #ifdef HAVE_EXPECT_100
-#include "http_client.hxx"
+#include "http/Client.hxx"
 #endif
 
 #include "http/Method.h"

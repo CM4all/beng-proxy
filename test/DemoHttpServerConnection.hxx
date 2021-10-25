@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "http_server/Handler.hxx"
+#include "http/server/Handler.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "event/DeferEvent.hxx"
 #include "io/FdType.hxx"

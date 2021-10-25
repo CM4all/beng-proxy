@@ -36,7 +36,7 @@
 
 #include "Request.hxx"
 #include "Instance.hxx"
-#include "http_client.hxx"
+#include "http/Client.hxx"
 #include "nfs/Error.hxx"
 #include "cgi/Error.hxx"
 #include "fcgi/Error.hxx"

@@ -34,7 +34,7 @@
 #include "session/Session.hxx"
 #include "Instance.hxx"
 #include "http/Address.hxx"
-#include "http_request.hxx"
+#include "http/GlueClient.hxx"
 #include "http/ResponseHandler.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "AllocatorPtr.hxx"

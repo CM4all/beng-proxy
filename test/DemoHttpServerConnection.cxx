@@ -33,7 +33,7 @@
 #include "DemoHttpServerConnection.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
-#include "http_server/http_server.hxx"
+#include "http/server/Public.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "istream/sink_null.hxx"
 #include "istream/BlockIstream.hxx"

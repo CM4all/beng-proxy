@@ -30,11 +30,11 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_request.hxx"
-#include "http_client.hxx"
-#include "http/Address.hxx"
-#include "http/ResponseHandler.hxx"
-#include "http/HeaderWriter.hxx"
+#include "GlueClient.hxx"
+#include "Client.hxx"
+#include "Address.hxx"
+#include "ResponseHandler.hxx"
+#include "HeaderWriter.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "fs/Balancer.hxx"
 #include "fs/Handler.hxx"

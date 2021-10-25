@@ -33,8 +33,10 @@
 #pragma once
 
 #include "Error.hxx"
-#include "http_server.hxx"
-#include "http_body.hxx"
+#include "Public.hxx"
+#include "http/Body.hxx"
+#include "http/Method.h"
+#include "http/Status.h"
 #include "fs/FilteredSocket.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/SocketAddress.hxx"
@@ -42,8 +44,6 @@
 #include "event/DeferEvent.hxx"
 #include "istream/Sink.hxx"
 #include "pool/UniquePtr.hxx"
-#include "http/Method.h"
-#include "http/Status.h"
 #include "util/Cancellable.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"

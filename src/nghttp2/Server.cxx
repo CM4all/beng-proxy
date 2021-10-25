@@ -39,7 +39,7 @@
 #include "Callbacks.hxx"
 #include "pool/pool.hxx"
 #include "pool/PSocketAddress.hxx"
-#include "http_server/Handler.hxx"
+#include "http/server/Handler.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"
 #include "http/Logger.hxx"

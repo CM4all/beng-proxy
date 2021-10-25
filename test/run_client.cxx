@@ -31,7 +31,7 @@
  */
 
 #include "strmap.hxx"
-#include "http_client.hxx"
+#include "http/Client.hxx"
 #include "http/Headers.hxx"
 #include "http/ResponseHandler.hxx"
 #include "lease.hxx"

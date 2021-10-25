@@ -640,14 +640,14 @@ translation_dep = declare_dependency(
 )
 
 http_common = static_library('http_common',
-  'src/http_body.cxx',
+  'src/http/Body.cxx',
   include_directories: inc,
 )
 http_common_dep = declare_dependency(link_with: http_common,
                                     dependencies: [istream_dep, io_dep])
 
 http_client = static_library('http_client',
-  'src/http_client.cxx',
+  'src/http/Client.cxx',
   include_directories: inc,
 )
 http_client_dep = declare_dependency(
@@ -664,12 +664,12 @@ http_client_dep = declare_dependency(
 
 http_server = static_library('http_server',
   'src/http/IncomingRequest.cxx',
-  'src/http_server/Request.cxx',
-  'src/http_server/http_server.cxx',
-  'src/http_server/http_server_send.cxx',
-  'src/http_server/http_server_request.cxx',
-  'src/http_server/http_server_read.cxx',
-  'src/http_server/http_server_response.cxx',
+  'src/http/server/SRequest.cxx',
+  'src/http/server/Public.cxx',
+  'src/http/server/Send.cxx',
+  'src/http/server/Request.cxx',
+  'src/http/server/Read.cxx',
+  'src/http/server/Response.cxx',
   include_directories: inc,
 )
 http_server_dep = declare_dependency(
@@ -912,7 +912,7 @@ executable(
   'src/bp/file_directory_index.cxx',
   'src/bp/ForwardHeaders.cxx',
   'src/hostname.cxx',
-  'src/http_request.cxx',
+  'src/http/GlueClient.cxx',
   'src/http/ResponseHandler.cxx',
   'src/http/CoResponseHandler.cxx',
   'src/bp/Stats.cxx',
@@ -1006,7 +1006,7 @@ executable(
   'src/cluster/AddressList.cxx',
   'src/cluster/ConnectBalancer.cxx',
   'src/cluster/TcpBalancer.cxx',
-  'src/http_request.cxx',
+  'src/http/GlueClient.cxx',
   'src/http/Address.cxx',
   'src/http/ResponseHandler.cxx',
   'src/PInstance.cxx',

@@ -33,7 +33,7 @@
 #include "drop.hxx"
 #include "Connection.hxx"
 #include "Instance.hxx"
-#include "http_server/http_server.hxx"
+#include "http/server/Public.hxx"
 #include "io/Logger.hxx"
 
 #include <limits>

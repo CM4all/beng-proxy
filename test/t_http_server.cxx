@@ -30,10 +30,10 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_server/http_server.hxx"
+#include "http/server/Public.hxx"
+#include "http/server/Handler.hxx"
 #include "http/IncomingRequest.hxx"
-#include "http_server/Handler.hxx"
-#include "http_client.hxx"
+#include "http/Client.hxx"
 #include "http/Headers.hxx"
 #include "http/ResponseHandler.hxx"
 #include "lease.hxx"

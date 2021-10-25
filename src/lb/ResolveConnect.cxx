@@ -38,7 +38,7 @@
 #include "lease.hxx"
 #include "http/ResponseHandler.hxx"
 #include "http/IncomingRequest.hxx"
-#include "http_client.hxx"
+#include "http/Client.hxx"
 #include "http/Headers.hxx"
 #include "ssl/Filter.hxx"
 #include "istream/UnusedHoldPtr.hxx"

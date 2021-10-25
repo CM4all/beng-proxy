@@ -30,13 +30,13 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_client.hxx"
-#include "http/Upgrade.hxx"
+#include "Client.hxx"
+#include "Body.hxx"
+#include "Upgrade.hxx"
+#include "ResponseHandler.hxx"
+#include "HeaderParser.hxx"
+#include "HeaderWriter.hxx"
 #include "http/List.hxx"
-#include "http/ResponseHandler.hxx"
-#include "http/HeaderParser.hxx"
-#include "http/HeaderWriter.hxx"
-#include "http_body.hxx"
 #include "istream/Bucket.hxx"
 #include "istream/Sink.hxx"
 #include "istream/UnusedPtr.hxx"

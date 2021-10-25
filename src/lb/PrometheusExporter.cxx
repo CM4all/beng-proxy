@@ -38,6 +38,7 @@
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/ResponseHandler.hxx"
+#include "http/GlueClient.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Compiler.h"
@@ -46,7 +47,6 @@
 #include "istream/DelayedIstream.hxx"
 #include "memory/istream_gb.hxx"
 #include "memory/GrowingBuffer.hxx"
-#include "http_request.hxx"
 #include "stopwatch.hxx"
 
 #include <inttypes.h>
