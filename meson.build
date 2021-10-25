@@ -559,22 +559,7 @@ thread_pool_dep = declare_dependency(
   ],
 )
 
-socket = static_library('socket',
-  'src/fs/FilteredSocket.cxx',
-  'src/fs/Ptr.cxx',
-  'src/fs/NopSocketFilter.cxx',
-  'src/fs/NopThreadSocketFilter.cxx',
-  'src/fs/ThreadSocketFilter.cxx',
-  'src/fs/Listener.cxx',
-  'src/fs/Connect.cxx',
-  'src/fs/Lease.cxx',
-  'src/fs/Stock.cxx',
-  'src/fs/Key.cxx',
-  'src/fs/Balancer.cxx',
-  include_directories: inc,
-)
-socket_dep = declare_dependency(link_with: socket,
-                               dependencies: [event_net_dep])
+subdir('src/fs')
 
 subdir('libcommon/src/translation')
 subdir('libcommon/src/translation/server')
