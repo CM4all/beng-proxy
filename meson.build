@@ -513,33 +513,7 @@ raddress_dep = declare_dependency(
 )
 
 subdir('src/was')
-
-http_util = static_library('http_util',
-  'src/http/Tokenizer.cxx',
-  'src/http/PTokenizer.cxx',
-  'src/http/Quote.cxx',
-  'src/http/Upgrade.cxx',
-  'src/http/PList.cxx',
-  'src/http/PHeaderUtil.cxx',
-  'src/http/HeaderUtil.cxx',
-  'src/http/HeaderParser.cxx',
-  'src/http/HeaderWriter.cxx',
-  include_directories: inc,
-)
-http_util_dep = declare_dependency(link_with: http_util,
-                                   dependencies: [pool_dep, putil_dep, http_dep])
-
-cookie = static_library('cookie',
-  'src/http/CookieJar.cxx',
-  'src/http/CookieClient.cxx',
-  'src/http/CookieExtract.cxx',
-  'src/http/CookieServer.cxx',
-  'src/http/CookieString.cxx',
-  'src/http/PCookieString.cxx',
-  include_directories: inc,
-)
-cookie_dep = declare_dependency(link_with: cookie,
-                                dependencies: [http_util_dep, putil_dep])
+subdir('src/http')
 
 thread_pool = static_library('thread_queue',
   'src/thread/Queue.cxx',
