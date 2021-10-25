@@ -1033,7 +1033,7 @@ executable(
   'src/lb/ConditionConfig.cxx',
   'src/lb/Config.cxx',
   'src/lb/ConfigParser.cxx',
-  'src/lb_check.cxx',
+  'src/lb/lb_check.cxx',
   'src/lb/Setup.cxx',
   'src/lb/GotoMap.cxx',
   'src/lb/Branch.cxx',
