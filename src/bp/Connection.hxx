@@ -69,6 +69,8 @@ struct BpConnection final
 
 	const char *const peer_subject, *const peer_issuer_subject;
 
+	HttpServerRequestHandler *request_handler = nullptr;
+
 	HttpServerConnection *http = nullptr;
 
 #ifdef HAVE_NGHTTP2
@@ -102,6 +104,7 @@ struct BpConnection final
 void
 new_connection(PoolPtr pool, BpInstance &instance,
 	       BPListener &listener,
+	       HttpServerRequestHandler *request_handler,
 	       UniquePoolPtr<FilteredSocket> socket,
 	       const SslFilter *ssl_filter,
 	       SocketAddress address) noexcept;

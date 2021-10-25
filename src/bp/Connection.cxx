@@ -173,6 +173,7 @@ BpConnection::HttpConnectionClosed() noexcept
 
 void
 new_connection(PoolPtr pool, BpInstance &instance, BPListener &listener,
+	       HttpServerRequestHandler *request_handler,
 	       UniquePoolPtr<FilteredSocket> socket,
 	       const SslFilter *ssl_filter,
 	       SocketAddress address) noexcept
@@ -196,6 +197,9 @@ new_connection(PoolPtr pool, BpInstance &instance, BPListener &listener,
 						     address, ssl_filter);
 	instance.connections.push_front(*connection);
 
+	if (request_handler == nullptr)
+		request_handler = connection;
+
 #ifdef HAVE_NGHTTP2
 	if (IsAlpnHttp2(ssl_filter))
 		connection->http2 = UniquePoolPtr<NgHttp2::ServerConnection>::Make(connection->GetPool(),
@@ -203,7 +207,7 @@ new_connection(PoolPtr pool, BpInstance &instance, BPListener &listener,
 										   std::move(socket),
 										   address,
 										   *connection,
-										   *connection);
+										   *request_handler);
 	else
 #endif
 		connection->http =
@@ -214,5 +218,6 @@ new_connection(PoolPtr pool, BpInstance &instance, BPListener &listener,
 						   : nullptr,
 						   address,
 						   true,
-						   *connection, *connection);
+						   *connection,
+						   *request_handler);
 }
