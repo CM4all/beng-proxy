@@ -1126,6 +1126,21 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 		config.bind_address = ParseSocketAddress(address, 80, true);
 	} else if (strcmp(word, "interface") == 0) {
 		config.interface = line.ExpectValueAndEnd();
+	} else if (StringIsEqual(word, "mode")) {
+		if (config.bind_address.IsNull() ||
+		    config.bind_address.GetFamily() != AF_LOCAL)
+			throw LineParser::Error("'mode' works only with local sockets");
+
+		const char *s = line.ExpectValueAndEnd();
+		char *endptr;
+		const unsigned long value = strtoul(s, &endptr, 8);
+		if (endptr == s || *endptr != 0)
+			throw LineParser::Error("Not a valid octal value");
+
+		if (value & ~0777ULL)
+			throw LineParser::Error("Not a valid mode");
+
+		config.mode = value;
 	} else if (strcmp(word, "tag") == 0) {
 		config.tag = line.ExpectValueAndEnd();
 	} else if (strcmp(word, "ack_timeout") == 0) {

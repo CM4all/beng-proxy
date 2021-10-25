@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.71) unstable; urgency=low
 
+  * add listener mode setting
   * was: eliminate unnecessary epoll_ctl() calls
   * add a Prometheus exporter
   * reduce timer slack to 10ms

@@ -152,6 +152,9 @@ Known attributes:
 
 - ``interface``: limit this listener to the given network interface.
 
+- ``mode``: for local socket files, this specifies the octal file
+  mode.
+
 - ``ack_timeout``: close the connection if transmitted data remains
   unacknowledged by the client for this number of seconds. By default,
   dead connections can remain open for up to 20 minutes.
