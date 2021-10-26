@@ -149,7 +149,7 @@ Request::HandleAuth(const TranslateResponse &response)
 	t->uri = request.uri;
 	t->host = translate.request.host;
 	t->session = translate.request.session;
-	t->listener_tag = connection.listener.GetTag();
+	t->listener_tag = translate.request.listener_tag;
 
 	if (connection.listener.GetAuthAltHost())
 		t->alt_host = request.headers.Get("x-cm4all-althost");
@@ -164,4 +164,3 @@ Request::HandleAuth(const TranslateResponse &response)
 					    *auth_translate_handler,
 					    cancel_ptr);
 }
-
