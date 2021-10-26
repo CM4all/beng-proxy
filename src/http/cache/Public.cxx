@@ -30,11 +30,11 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_cache_internal.hxx"
-#include "http_cache_document.hxx"
-#include "http_cache_item.hxx"
-#include "http_cache_rfc.hxx"
-#include "http_cache_heap.hxx"
+#include "Internal.hxx"
+#include "Document.hxx"
+#include "Item.hxx"
+#include "RFC.hxx"
+#include "Heap.hxx"
 #include "strmap.hxx"
 #include "http/ResponseHandler.hxx"
 #include "ResourceLoader.hxx"

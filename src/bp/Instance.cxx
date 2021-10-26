@@ -42,7 +42,7 @@
 #include "CachedResourceLoader.hxx"
 #include "FilterResourceLoader.hxx"
 #include "BufferedResourceLoader.hxx"
-#include "http_cache.hxx"
+#include "http/cache/Public.hxx"
 #include "fcache.hxx"
 #include "translation/Stock.hxx"
 #include "translation/Cache.hxx"

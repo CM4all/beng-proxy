@@ -30,13 +30,27 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_HTTP_CACHE_INTERNAL_HXX
-#define BENG_PROXY_HTTP_CACHE_INTERNAL_HXX
+#include "Document.hxx"
+#include "RFC.hxx"
+#include "AllocatorPtr.hxx"
 
-#include "http_cache.hxx"
+HttpCacheDocument::HttpCacheDocument(struct pool &pool,
+				     const HttpCacheResponseInfo &_info,
+				     const StringMap &request_headers,
+				     http_status_t _status,
+				     const StringMap &_response_headers) noexcept
+	:info(pool, _info),
+	 status(_status),
+	 response_headers(pool, _response_headers)
+{
+	assert(http_status_is_valid(_status));
 
-#include <sys/types.h>
+	if (_info.vary != nullptr)
+		http_cache_copy_vary(vary, pool, _info.vary, request_headers);
+}
 
-static const off_t cacheable_size_limit = 512 * 1024;
-
-#endif
+bool
+HttpCacheDocument::VaryFits(const StringMap &request_headers) const noexcept
+{
+	return http_cache_vary_fits(vary, request_headers);
+}

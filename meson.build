@@ -601,28 +601,7 @@ http_client_dep = declare_dependency(
 
 subdir('src/http/server')
 subdir('src/nghttp2')
-
-http_cache = static_library('http_cache',
-  'src/http_cache.cxx',
-  'src/http_cache_document.cxx',
-  'src/http_cache_age.cxx',
-  'src/http_cache_heap.cxx',
-  'src/http_cache_item.cxx',
-  'src/http_cache_info.cxx',
-  'src/http_cache_rfc.cxx',
-  include_directories: inc,
-)
-http_cache_dep = declare_dependency(
-  link_with: http_cache,
-  dependencies: [
-    eutil_dep,
-    http_util_dep,
-    istream_dep,
-    memory_istream_dep,
-    raddress_dep,
-    stopwatch_dep,
-  ],
-)
+subdir('src/http/cache')
 
 cgi = static_library('cgi',
   'src/cgi/Glue.cxx',

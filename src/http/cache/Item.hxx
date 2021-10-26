@@ -30,51 +30,41 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_cache_item.hxx"
-#include "http_cache_age.hxx"
-#include "memory/istream_rubber.hxx"
-#include "istream/UnusedPtr.hxx"
-#include "pool/pool.hxx"
+#pragma once
 
-HttpCacheItem::HttpCacheItem(PoolPtr &&_pool,
-			     std::chrono::steady_clock::time_point now,
-			     std::chrono::system_clock::time_point system_now,
-			     const HttpCacheResponseInfo &_info,
-			     const StringMap &_request_headers,
-			     http_status_t _status,
-			     const StringMap &_response_headers,
-			     size_t _size,
-			     RubberAllocation &&_body) noexcept
-	:PoolHolder(std::move(_pool)),
-	 HttpCacheDocument(pool, _info, _request_headers,
-			   _status, _response_headers),
-	 CacheItem(http_cache_calc_expires(now, system_now, _info.expires, vary),
-		   pool_netto_size(pool) + _size),
-	 size(_size),
-	 body(std::move(_body))
-{
-}
+#include "Document.hxx"
+#include "pool/Holder.hxx"
+#include "cache.hxx"
+#include "memory/Rubber.hxx"
 
-void
-HttpCacheItem::SetExpires(std::chrono::steady_clock::time_point steady_now,
-			  std::chrono::system_clock::time_point system_now,
-			  std::chrono::system_clock::time_point _expires) noexcept
-{
-	info.expires = _expires;
-	CacheItem::SetExpires(http_cache_calc_expires(steady_now, system_now,
-						      _expires, vary));
-}
+class UnusedIstreamPtr;
 
-UnusedIstreamPtr
-HttpCacheItem::OpenStream(struct pool &_pool) noexcept
-{
-	return istream_rubber_new(_pool, body.GetRubber(), body.GetId(),
-				  0, size, false);
-}
+struct HttpCacheItem final : PoolHolder, HttpCacheDocument, CacheItem {
+	size_t size;
 
-void
-HttpCacheItem::Destroy() noexcept
-{
-	pool_trash(pool);
-	this->~HttpCacheItem();
-}
+	const RubberAllocation body;
+
+	HttpCacheItem(PoolPtr &&_pool,
+		      std::chrono::steady_clock::time_point now,
+		      std::chrono::system_clock::time_point system_now,
+		      const HttpCacheResponseInfo &_info,
+		      const StringMap &_request_headers,
+		      http_status_t _status,
+		      const StringMap &_response_headers,
+		      size_t _size,
+		      RubberAllocation &&_body) noexcept;
+
+	HttpCacheItem(const HttpCacheItem &) = delete;
+	HttpCacheItem &operator=(const HttpCacheItem &) = delete;
+
+	using PoolHolder::GetPool;
+
+	void SetExpires(std::chrono::steady_clock::time_point steady_now,
+			std::chrono::system_clock::time_point system_now,
+			std::chrono::system_clock::time_point _expires) noexcept;
+
+	UnusedIstreamPtr OpenStream(struct pool &_pool) noexcept;
+
+	/* virtual methods from class CacheItem */
+	void Destroy() noexcept override;
+};

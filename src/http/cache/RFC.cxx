@@ -30,9 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_cache_rfc.hxx"
-#include "http_cache_document.hxx"
-#include "http_cache_internal.hxx"
+#include "RFC.hxx"
+#include "Document.hxx"
+#include "Internal.hxx"
 #include "strmap.hxx"
 #include "ResourceAddress.hxx"
 #include "io/Logger.hxx"

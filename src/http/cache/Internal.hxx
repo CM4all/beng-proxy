@@ -32,33 +32,8 @@
 
 #pragma once
 
-#include "http_cache_info.hxx"
-#include "strmap.hxx"
-#include "http/Status.h"
+#include "Public.hxx"
 
-struct HttpCacheDocument {
-	HttpCacheResponseInfo info;
+#include <sys/types.h>
 
-	StringMap vary;
-
-	http_status_t status;
-	StringMap response_headers;
-
-	HttpCacheDocument() = default;
-
-	HttpCacheDocument(struct pool &pool,
-			  const HttpCacheResponseInfo &_info,
-			  const StringMap &request_headers,
-			  http_status_t _status,
-			  const StringMap &response_headers) noexcept;
-
-	HttpCacheDocument(const HttpCacheDocument &) = delete;
-	HttpCacheDocument &operator=(const HttpCacheDocument &) = delete;
-
-	/**
-	 * Checks whether the specified cache item fits the current request.
-	 * This is not true if the Vary headers mismatch.
-	 */
-	[[gnu::pure]]
-	bool VaryFits(const StringMap &request_headers) const noexcept;
-};
+constexpr off_t cacheable_size_limit = 512 * 1024;

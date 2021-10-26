@@ -37,7 +37,7 @@
 #include "memory/fb_pool.hxx"
 #include "memory/SlicePool.hxx"
 #include "translation/Builder.hxx"
-#include "http_cache.hxx"
+#include "http/cache/Public.hxx"
 #include "fcache.hxx"
 #include "nfs/Cache.hxx"
 #include "session/Manager.hxx"

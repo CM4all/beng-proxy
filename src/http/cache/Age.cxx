@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_cache_age.hxx"
+#include "Age.hxx"
 #include "strmap.hxx"
 
 static constexpr std::chrono::hours HOUR(1);

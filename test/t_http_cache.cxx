@@ -31,7 +31,7 @@
  */
 
 #include "tconstruct.hxx"
-#include "http_cache.hxx"
+#include "http/cache/Public.hxx"
 #include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "RecordingHttpResponseHandler.hxx"

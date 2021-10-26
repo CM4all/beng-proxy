@@ -32,39 +32,33 @@
 
 #pragma once
 
-#include "http_cache_document.hxx"
-#include "pool/Holder.hxx"
-#include "cache.hxx"
-#include "memory/Rubber.hxx"
+#include "Info.hxx"
+#include "strmap.hxx"
+#include "http/Status.h"
 
-class UnusedIstreamPtr;
+struct HttpCacheDocument {
+	HttpCacheResponseInfo info;
 
-struct HttpCacheItem final : PoolHolder, HttpCacheDocument, CacheItem {
-	size_t size;
+	StringMap vary;
 
-	const RubberAllocation body;
+	http_status_t status;
+	StringMap response_headers;
 
-	HttpCacheItem(PoolPtr &&_pool,
-		      std::chrono::steady_clock::time_point now,
-		      std::chrono::system_clock::time_point system_now,
-		      const HttpCacheResponseInfo &_info,
-		      const StringMap &_request_headers,
-		      http_status_t _status,
-		      const StringMap &_response_headers,
-		      size_t _size,
-		      RubberAllocation &&_body) noexcept;
+	HttpCacheDocument() = default;
 
-	HttpCacheItem(const HttpCacheItem &) = delete;
-	HttpCacheItem &operator=(const HttpCacheItem &) = delete;
+	HttpCacheDocument(struct pool &pool,
+			  const HttpCacheResponseInfo &_info,
+			  const StringMap &request_headers,
+			  http_status_t _status,
+			  const StringMap &response_headers) noexcept;
 
-	using PoolHolder::GetPool;
+	HttpCacheDocument(const HttpCacheDocument &) = delete;
+	HttpCacheDocument &operator=(const HttpCacheDocument &) = delete;
 
-	void SetExpires(std::chrono::steady_clock::time_point steady_now,
-			std::chrono::system_clock::time_point system_now,
-			std::chrono::system_clock::time_point _expires) noexcept;
-
-	UnusedIstreamPtr OpenStream(struct pool &_pool) noexcept;
-
-	/* virtual methods from class CacheItem */
-	void Destroy() noexcept override;
+	/**
+	 * Checks whether the specified cache item fits the current request.
+	 * This is not true if the Vary headers mismatch.
+	 */
+	[[gnu::pure]]
+	bool VaryFits(const StringMap &request_headers) const noexcept;
 };

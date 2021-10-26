@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_cache_heap.hxx"
-#include "http_cache_item.hxx"
+#include "Heap.hxx"
+#include "Item.hxx"
 #include "AllocatorStats.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"

@@ -30,27 +30,22 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "http_cache_document.hxx"
-#include "http_cache_rfc.hxx"
+#include "Info.hxx"
 #include "AllocatorPtr.hxx"
 
-HttpCacheDocument::HttpCacheDocument(struct pool &pool,
-				     const HttpCacheResponseInfo &_info,
-				     const StringMap &request_headers,
-				     http_status_t _status,
-				     const StringMap &_response_headers) noexcept
-	:info(pool, _info),
-	 status(_status),
-	 response_headers(pool, _response_headers)
+HttpCacheResponseInfo::HttpCacheResponseInfo(AllocatorPtr alloc,
+					     const HttpCacheResponseInfo &src) noexcept
+	:expires(src.expires),
+	 last_modified(alloc.CheckDup(src.last_modified)),
+	 etag(alloc.CheckDup(src.etag)),
+	 vary(alloc.CheckDup(src.vary))
 {
-	assert(http_status_is_valid(_status));
-
-	if (_info.vary != nullptr)
-		http_cache_copy_vary(vary, pool, _info.vary, request_headers);
 }
 
-bool
-HttpCacheDocument::VaryFits(const StringMap &request_headers) const noexcept
+void
+HttpCacheResponseInfo::MoveToPool(AllocatorPtr alloc) noexcept
 {
-	return http_cache_vary_fits(vary, request_headers);
+	last_modified = alloc.CheckDup(last_modified);
+	etag = alloc.CheckDup(etag);
+	vary = alloc.CheckDup(vary);
 }
