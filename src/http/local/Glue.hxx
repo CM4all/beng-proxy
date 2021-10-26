@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_LHTTP_REQUEST_HXX
-#define BENG_PROXY_LHTTP_REQUEST_HXX
+#pragma once
 
 #include "http/Method.h"
 
@@ -58,5 +57,3 @@ lhttp_request(struct pool &pool, EventLoop &event_loop,
 	      StringMap &&headers, UnusedIstreamPtr body,
 	      HttpResponseHandler &handler,
 	      CancellablePointer &cancel_ptr) noexcept;
-
-#endif

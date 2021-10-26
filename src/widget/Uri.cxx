@@ -37,7 +37,7 @@
 #include "args.hxx"
 #include "pool/tpool.hxx"
 #include "http/Address.hxx"
-#include "lhttp_address.hxx"
+#include "http/local/Address.hxx"
 #include "cgi/Address.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/StringView.hxx"

@@ -34,7 +34,7 @@
 #include "translation/Response.hxx"
 #include "file_address.hxx"
 #include "cgi/Address.hxx"
-#include "lhttp_address.hxx"
+#include "http/local/Address.hxx"
 #include "io/StatAt.hxx"
 
 #include <assert.h>

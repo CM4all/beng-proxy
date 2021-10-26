@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "lhttp_address.hxx"
+#include "Address.hxx"
 #include "pool/StringBuilder.hxx"
 #include "AllocatorPtr.hxx"
 #include "uri/Base.hxx"

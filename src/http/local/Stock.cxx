@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "lhttp_stock.hxx"
-#include "lhttp_address.hxx"
+#include "Stock.hxx"
+#include "Address.hxx"
 #include "stock/Stock.hxx"
 #include "stock/MapStock.hxx"
 #include "stock/MultiStock.hxx"

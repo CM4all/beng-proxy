@@ -49,7 +49,7 @@
 #include "translation/Multi.hxx"
 #include "translation/Builder.hxx"
 #include "widget/Registry.hxx"
-#include "lhttp_stock.hxx"
+#include "http/local/Stock.hxx"
 #include "fcgi/Stock.hxx"
 #include "was/Stock.hxx"
 #include "was/MStock.hxx"

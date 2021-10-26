@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_LHTTP_ADDRESS_HXX
-#define BENG_PROXY_LHTTP_ADDRESS_HXX
+#pragma once
 
 #include "spawn/ChildOptions.hxx"
 #include "adata/ExpandableStringList.hxx"
@@ -199,5 +198,3 @@ struct LhttpAddress {
 	 */
 	void CopyTo(PreparedChildProcess &dest) const noexcept;
 };
-
-#endif

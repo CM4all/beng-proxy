@@ -32,7 +32,7 @@
 
 #include "ResourceAddress.hxx"
 #include "file_address.hxx"
-#include "lhttp_address.hxx"
+#include "http/local/Address.hxx"
 #include "http/Address.hxx"
 #include "cgi/Address.hxx"
 #include "nfs/Address.hxx"

@@ -30,9 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "lhttp_request.hxx"
-#include "lhttp_stock.hxx"
-#include "lhttp_address.hxx"
+#include "Glue.hxx"
+#include "Stock.hxx"
+#include "Address.hxx"
 #include "http/Client.hxx"
 #include "http/ResponseHandler.hxx"
 #include "memory/GrowingBuffer.hxx"

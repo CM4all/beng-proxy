@@ -39,7 +39,7 @@
 #include "memory/fb_pool.hxx"
 #include "pool/pool.hxx"
 #include "PInstance.hxx"
-#include "lhttp_address.hxx"
+#include "http/local/Address.hxx"
 #include "http/Address.hxx"
 #include "file_address.hxx"
 #include "cgi/Address.hxx"

@@ -49,7 +49,7 @@
 #include "fs/Balancer.hxx"
 #include "nghttp2/Stock.hxx"
 #include "http/cache/Public.hxx"
-#include "lhttp_stock.hxx"
+#include "http/local/Stock.hxx"
 #include "fcgi/Stock.hxx"
 #include "was/Stock.hxx"
 #include "was/MStock.hxx"
