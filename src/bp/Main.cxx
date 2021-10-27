@@ -73,7 +73,7 @@
 #include "system/KernelVersion.hxx"
 #include "system/SetupProcess.hxx"
 #include "system/ProcessName.hxx"
-#include "capabilities.hxx"
+#include "system/Capabilities.hxx"
 #include "spawn/Glue.hxx"
 #include "spawn/Client.hxx"
 #include "net/SocketAddress.hxx"

@@ -44,7 +44,7 @@
 #include "pool/pool.hxx"
 #include "thread/Pool.hxx"
 #include "memory/fb_pool.hxx"
-#include "capabilities.hxx"
+#include "system/Capabilities.hxx"
 #include "system/Isolate.hxx"
 #include "system/SetupProcess.hxx"
 #include "io/SpliceSupport.hxx"

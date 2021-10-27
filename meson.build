@@ -253,6 +253,7 @@ system2 = static_library(
   'system2',
   'src/system/SetupProcess.cxx',
   'src/system/Isolate.cxx',
+  'src/system/Capabilities.cxx',
   include_directories: inc,
 )
 system_dep = declare_dependency(
@@ -771,7 +772,6 @@ executable(
   'cm4all-beng-proxy',
   sources,
   'src/delegate/RequestHandler.cxx',
-  'src/capabilities.cxx',
   'src/address_string.cxx',
   'src/cluster/TcpBalancer.cxx',
   'src/bot.c',
@@ -895,7 +895,6 @@ executable(
 
 executable(
   'cm4all-beng-lb',
-  'src/capabilities.cxx',
   'src/tcp_stock.cxx',
   'src/pipe_stock.cxx',
   'src/address_string.cxx',

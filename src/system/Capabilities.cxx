@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "capabilities.hxx"
+#include "Capabilities.hxx"
 #include "system/CapabilityState.hxx"
 #include "system/Error.hxx"
 
