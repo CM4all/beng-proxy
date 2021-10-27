@@ -93,7 +93,7 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 			  Avahi::ErrorHandler {
 	const BpConfig config;
 
-	HttpStats http_stats{};
+	HttpStats http_stats;
 
 #ifdef HAVE_URING
 	std::unique_ptr<Uring::Manager> uring;

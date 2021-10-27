@@ -76,7 +76,7 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 
 	FarTimerEvent compress_event;
 
-	HttpStats http_stats{};
+	HttpStats http_stats;
 
 	std::forward_list<LbControl> controls;
 

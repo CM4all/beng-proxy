@@ -35,7 +35,7 @@
 #include <cstdint>
 
 struct HttpStats {
-	uint64_t n_requests;
-	uint64_t traffic_received;
-	uint64_t traffic_sent;
+	uint64_t n_requests = 0;
+	uint64_t traffic_received = 0;
+	uint64_t traffic_sent = 0;
 };
