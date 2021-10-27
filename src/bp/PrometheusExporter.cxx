@@ -50,7 +50,9 @@ BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
 
 	const char *process = "bp";
 	Prometheus::Write(buffer, process, instance.GetStats());
-	Prometheus::Write(buffer, process, instance.http_stats);
+
+	for (const auto &[name, stats] : instance.listener_stats)
+		Prometheus::Write(buffer, process, name.c_str(), stats);
 
 	HttpHeaders headers;
 	headers.Write("content-type", "text/plain;version=0.0.4");

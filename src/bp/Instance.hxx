@@ -49,6 +49,7 @@
 #include <boost/intrusive/list.hpp>
 
 #include <forward_list>
+#include <map>
 #include <memory>
 
 struct StringView;
@@ -98,6 +99,8 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 #ifdef HAVE_URING
 	std::unique_ptr<Uring::Manager> uring;
 #endif
+
+	std::map<std::string, HttpStats> listener_stats;
 
 	std::forward_list<BPListener> listeners;
 

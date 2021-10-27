@@ -39,6 +39,7 @@
 
 struct BpInstance;
 struct SslConfig;
+struct HttpStats;
 class TranslationService;
 class BpPrometheusExporter;
 
@@ -47,6 +48,8 @@ class BpPrometheusExporter;
  */
 class BPListener final : FilteredSocketListenerHandler {
 	BpInstance &instance;
+
+	HttpStats &http_stats;
 
 	const std::shared_ptr<TranslationService> translation_service;
 
@@ -60,6 +63,7 @@ class BPListener final : FilteredSocketListenerHandler {
 
 public:
 	BPListener(BpInstance &_instance,
+		   HttpStats &_http_stats,
 		   std::shared_ptr<TranslationService> _translation_service,
 		   const char *_tag,
 		   bool _prometheus_exporter,
@@ -85,6 +89,10 @@ public:
 
 	unsigned FlushSSLSessionCache(long tm) noexcept {
 		return listener.FlushSSLSessionCache(tm);
+	}
+
+	auto &GetHttpStats() noexcept {
+		return http_stats;
 	}
 
 	const char *GetTag() const noexcept {

@@ -34,6 +34,7 @@
 #include "RLogger.hxx"
 #include "Request.hxx"
 #include "Instance.hxx"
+#include "Listener.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/server/Public.hxx"
 #include "http/server/Handler.hxx"
@@ -134,7 +135,11 @@ BpConnection::RequestHeadersFinished(IncomingHttpRequest &request) noexcept
 {
 	++instance.http_stats.n_requests;
 
-	request.logger = NewFromPool<BpRequestLogger>(request.pool, instance);
+	auto &http_stats = listener.GetHttpStats();
+	++http_stats.n_requests;
+
+	request.logger = NewFromPool<BpRequestLogger>(request.pool, instance,
+						      http_stats);
 }
 
 void

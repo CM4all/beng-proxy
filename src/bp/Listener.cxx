@@ -59,12 +59,15 @@ MakeSslFactory(const SslConfig *ssl_config)
 }
 
 BPListener::BPListener(BpInstance &_instance,
+		       HttpStats &_http_stats,
 		       std::shared_ptr<TranslationService> _translation_service,
 		       const char *_tag,
 		       bool _prometheus_exporter,
 		       bool _auth_alt_host,
 		       const SslConfig *ssl_config)
-	:instance(_instance), translation_service(_translation_service),
+	:instance(_instance),
+	 http_stats(_http_stats),
+	 translation_service(_translation_service),
 	 prometheus_exporter(_prometheus_exporter
 			     ? new BpPrometheusExporter(instance)
 			     : nullptr),

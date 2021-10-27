@@ -38,7 +38,7 @@ struct HttpStats;
 namespace Prometheus {
 
 void
-Write(GrowingBuffer &buffer, const char *process,
+Write(GrowingBuffer &buffer, const char *process, const char *listener,
       const HttpStats &stats) noexcept;
 
 } // namespace Prometheus

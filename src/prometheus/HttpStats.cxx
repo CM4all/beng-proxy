@@ -39,7 +39,7 @@
 namespace Prometheus {
 
 void
-Write(GrowingBuffer &buffer, const char *process,
+Write(GrowingBuffer &buffer, const char *process, const char *listener,
       const HttpStats &stats) noexcept
 {
 	buffer.Format(
@@ -51,12 +51,12 @@ Write(GrowingBuffer &buffer, const char *process,
 # TYPE beng_proxy_http_traffic counter
 
 )"
-	       "beng_proxy_http_requests{process=\"%s\"} %" PRIu64 "\n"
-	       "beng_proxy_http_traffic{process=\"%s\",direction=\"in\"} %" PRIu64 "\n"
-	       "beng_proxy_http_traffic{process=\"%s\",direction=\"out\"} %" PRIu64 "\n",
-	       process, stats.n_requests,
-	       process, stats.traffic_received,
-	       process, stats.traffic_sent);
+	       "beng_proxy_http_requests{process=\"%s\",listener=\"%s\"} %" PRIu64 "\n"
+	       "beng_proxy_http_traffic{process=\"%s\",listener=\"%s\",direction=\"in\"} %" PRIu64 "\n"
+	       "beng_proxy_http_traffic{process=\"%s\",listener=\"%s\",direction=\"out\"} %" PRIu64 "\n",
+	       process, listener, stats.n_requests,
+	       process, listener, stats.traffic_received,
+	       process, listener, stats.traffic_sent);
 }
 
 } // namespace Prometheus

@@ -39,6 +39,7 @@
 #include <stdint.h>
 
 struct BpInstance;
+struct HttpStats;
 
 /**
  * Attributes which are specific to the current request.  They are
@@ -48,6 +49,8 @@ struct BpInstance;
  */
 struct BpRequestLogger final : IncomingHttpRequestLogger {
 	BpInstance &instance;
+
+	HttpStats &http_stats;
 
 	/**
 	 * The time stamp at the start of the request.  Used to calculate
@@ -62,7 +65,8 @@ struct BpRequestLogger final : IncomingHttpRequestLogger {
 	 */
 	const char *site_name = nullptr;
 
-	explicit BpRequestLogger(BpInstance &_instance) noexcept;
+	BpRequestLogger(BpInstance &_instance,
+			HttpStats &_http_stats) noexcept;
 
 	std::chrono::steady_clock::duration GetDuration(std::chrono::steady_clock::time_point now) const noexcept {
 		return now - start_time;

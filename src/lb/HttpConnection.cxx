@@ -40,6 +40,7 @@
 #include "ForwardHttpRequest.hxx"
 #include "PrometheusExporter.hxx"
 #include "Instance.hxx"
+#include "Listener.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/server/Public.hxx"
 #include "http/server/Handler.hxx"
@@ -63,11 +64,12 @@
 
 inline
 LbHttpConnection::LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
-				   const LbListenerConfig &_listener_config,
+				   LbListener &_listener,
 				   const LbGoto &_destination,
 				   SocketAddress _client_address)
 	:PoolHolder(std::move(_pool)), instance(_instance),
-	 listener_config(_listener_config),
+	 listener(_listener),
+	 listener_config(listener.GetConfig()),
 	 initial_destination(_destination),
 	 client_address(address_to_string(pool, _client_address)),
 	 logger(*this)
@@ -106,27 +108,27 @@ HttpServerLogLevel(std::exception_ptr e)
 
 LbHttpConnection *
 NewLbHttpConnection(LbInstance &instance,
-		    const LbListenerConfig &listener_config,
+		    LbListener &listener,
 		    const LbGoto &destination,
 		    PoolPtr pool,
 		    UniquePoolPtr<FilteredSocket> socket,
 		    const SslFilter *ssl_filter,
 		    SocketAddress address)
 {
-	assert(listener_config.destination.GetProtocol() == LbProtocol::HTTP);
+	assert(listener.GetProtocol() == LbProtocol::HTTP);
 
 	/* determine the local socket address */
 	StaticSocketAddress local_address = socket->GetSocket().GetLocalAddress();
 
 	auto *connection = NewFromPool<LbHttpConnection>(std::move(pool), instance,
-							 listener_config, destination,
+							 listener, destination,
 							 address);
 	connection->ssl_filter = ssl_filter;
 
 	instance.http_connections.push_back(*connection);
 
 #ifdef HAVE_NGHTTP2
-	if (listener_config.force_http2 || IsAlpnHttp2(ssl_filter))
+	if (listener.GetConfig().force_http2 || IsAlpnHttp2(ssl_filter))
 		connection->http2 = UniquePoolPtr<NgHttp2::ServerConnection>::Make(connection->GetPool(),
 										   connection->GetPool(),
 										   std::move(socket),
@@ -162,7 +164,7 @@ LbHttpConnection::Destroy()
 void
 LbHttpConnection::CloseAndDestroy()
 {
-	assert(listener_config.destination.GetProtocol() == LbProtocol::HTTP);
+	assert(listener.GetProtocol() == LbProtocol::HTTP);
 #ifdef HAVE_NGHTTP2
 	assert(http != nullptr || http2);
 #endif
@@ -208,8 +210,12 @@ LbHttpConnection::RequestHeadersFinished(IncomingHttpRequest &request) noexcept
 {
 	++instance.http_stats.n_requests;
 
+	auto &http_stats = listener.GetHttpStats();
+	++http_stats.n_requests;
+
 	request.logger = NewFromPool<LbRequestLogger>(request.pool,
-						      instance, request);
+						      instance, http_stats,
+						      request);
 }
 
 void

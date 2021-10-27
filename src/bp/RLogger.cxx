@@ -35,8 +35,9 @@
 #include "access_log/Glue.hxx"
 #include "http/IncomingRequest.hxx"
 
-BpRequestLogger::BpRequestLogger(BpInstance &_instance) noexcept
-	:instance(_instance),
+BpRequestLogger::BpRequestLogger(BpInstance &_instance,
+				 HttpStats &_http_stats) noexcept
+	:instance(_instance), http_stats(_http_stats),
 	 start_time(instance.event_loop.SteadyNow())
 {
 }
@@ -48,6 +49,9 @@ BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 {
 	instance.http_stats.traffic_received += bytes_received;
 	instance.http_stats.traffic_sent += bytes_sent;
+
+	http_stats.traffic_received += bytes_received;
+	http_stats.traffic_sent += bytes_sent;
 
 	if (instance.access_log != nullptr)
 		instance.access_log->Log(instance.event_loop.SystemNow(),

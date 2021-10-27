@@ -33,9 +33,12 @@
 #pragma once
 
 #include "Goto.hxx"
+#include "Protocol.hxx"
+#include "stats/HttpStats.hxx"
 #include "io/Logger.hxx"
 #include "fs/Listener.hxx"
 
+struct HttpStats;
 struct LbListenerConfig;
 struct LbInstance;
 class LbGotoMap;
@@ -48,15 +51,35 @@ class LbListener final : FilteredSocketListenerHandler {
 
 	const LbListenerConfig &config;
 
+	HttpStats http_stats;
+
 	FilteredSocketListener listener;
 
 	LbGoto destination;
 
 	const Logger logger;
 
+	const LbProtocol protocol;
+
 public:
 	LbListener(LbInstance &_instance,
 		   const LbListenerConfig &_config);
+
+	LbProtocol GetProtocol() const noexcept {
+		return protocol;
+	}
+
+	const auto &GetConfig() const noexcept {
+		return config;
+	}
+
+	HttpStats &GetHttpStats() noexcept {
+		return http_stats;
+	}
+
+	const HttpStats *GetHttpStats() const noexcept {
+		return protocol == LbProtocol::HTTP ? &http_stats : nullptr;
+	}
 
 	void Scan(LbGotoMap &goto_map);
 

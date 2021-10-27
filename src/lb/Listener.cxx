@@ -82,9 +82,9 @@ LbListener::OnFilteredSocketConnect(PoolPtr pool,
 				    SocketAddress address,
 				    const SslFilter *ssl_filter) noexcept
 try {
-	switch (config.destination.GetProtocol()) {
+	switch (protocol) {
 	case LbProtocol::HTTP:
-		NewLbHttpConnection(instance, config, destination,
+		NewLbHttpConnection(instance, *this, destination,
 				    std::move(pool),
 				    std::move(socket), ssl_filter,
 				    address);
@@ -121,7 +121,8 @@ LbListener::LbListener(LbInstance &_instance,
 	 listener(instance.root_pool, instance.event_loop,
 		  MakeSslFactory(config, instance),
 		  *this),
-	 logger("listener " + config.name)
+	 logger("listener " + config.name),
+	 protocol(config.destination.GetProtocol())
 {
 	listener.Listen(config.Create(SOCK_STREAM));
 }

@@ -277,7 +277,9 @@ BpInstance::AddListener(const BpConfig::Listener &c
 					 GetTranslationServiceBuilder(),
 					 c.translation_sockets);
 
-	listeners.emplace_front(*this, std::move(ts),
+	listeners.emplace_front(*this,
+				listener_stats[c.tag],
+				std::move(ts),
 				c.tag.empty() ? nullptr : c.tag.c_str(),
 				c.handler == BpConfig::Listener::Handler::PROMETHEUS_EXPORTER,
 				c.auth_alt_host,
@@ -609,6 +611,7 @@ try {
 			tag = nullptr;
 
 		instance.listeners.emplace_front(instance,
+						 instance.listener_stats[cmdline.debug_listener_tag],
 						 instance.translation_service,
 						 tag,
 						 false,

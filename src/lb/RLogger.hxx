@@ -38,6 +38,7 @@
 
 #include <stdint.h>
 
+struct HttpStats;
 struct LbInstance;
 
 /**
@@ -53,6 +54,8 @@ struct LbInstance;
  */
 struct LbRequestLogger final : IncomingHttpRequestLogger {
 	LbInstance &instance;
+
+	HttpStats &http_stats;
 
 	/**
 	 * The time stamp at the start of the request.  Used to calculate
@@ -98,7 +101,7 @@ struct LbRequestLogger final : IncomingHttpRequestLogger {
 	 */
 	const char *forwarded_to = nullptr;
 
-	LbRequestLogger(LbInstance &_instance,
+	LbRequestLogger(LbInstance &_instance, HttpStats &_http_stats,
 			const IncomingHttpRequest &request) noexcept;
 
 	const char *GetCanonicalHost() const {

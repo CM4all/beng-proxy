@@ -45,6 +45,7 @@ class SslFilter;
 class SocketAddress;
 struct HttpServerConnection;
 namespace NgHttp2 { class ServerConnection; }
+class LbListener;
 struct LbListenerConfig;
 class LbCluster;
 class LbLuaHandler;
@@ -59,6 +60,7 @@ struct LbHttpConnection final
 
 	LbInstance &instance;
 
+	LbListener &listener;
 	const LbListenerConfig &listener_config;
 
 	const LbGoto &initial_destination;
@@ -80,7 +82,7 @@ struct LbHttpConnection final
 #endif
 
 	LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
-			 const LbListenerConfig &_listener_config,
+			 LbListener &_listener,
 			 const LbGoto &_destination,
 			 SocketAddress _client_address);
 
@@ -143,7 +145,7 @@ protected:
 
 LbHttpConnection *
 NewLbHttpConnection(LbInstance &instance,
-		    const LbListenerConfig &listener_config,
+		    LbListener &listener,
 		    const LbGoto &destination,
 		    PoolPtr pool,
 		    UniquePoolPtr<FilteredSocket> socket,

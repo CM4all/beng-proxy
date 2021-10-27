@@ -36,8 +36,9 @@
 #include "http/IncomingRequest.hxx"
 
 LbRequestLogger::LbRequestLogger(LbInstance &_instance,
+				 HttpStats &_http_stats,
 				 const IncomingHttpRequest &request) noexcept
-	:instance(_instance),
+	:instance(_instance), http_stats(_http_stats),
 	 start_time(instance.event_loop.SteadyNow()),
 	 host(request.headers.Get("host")),
 	 x_forwarded_for(request.headers.Get("x-forwarded-for")),
@@ -53,6 +54,9 @@ LbRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 {
 	instance.http_stats.traffic_received += bytes_received;
 	instance.http_stats.traffic_sent += bytes_sent;
+
+	http_stats.traffic_received += bytes_received;
+	http_stats.traffic_sent += bytes_sent;
 
 	if (instance.access_log != nullptr)
 		instance.access_log->Log(instance.event_loop.SystemNow(),
