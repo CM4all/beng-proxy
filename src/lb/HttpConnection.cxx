@@ -63,10 +63,11 @@
 
 inline
 LbHttpConnection::LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
-				   const LbListenerConfig &_listener,
+				   const LbListenerConfig &_listener_config,
 				   const LbGoto &_destination,
 				   SocketAddress _client_address)
-	:PoolHolder(std::move(_pool)), instance(_instance), listener(_listener),
+	:PoolHolder(std::move(_pool)), instance(_instance),
+	 listener_config(_listener_config),
 	 initial_destination(_destination),
 	 client_address(address_to_string(pool, _client_address)),
 	 logger(*this)
@@ -105,27 +106,27 @@ HttpServerLogLevel(std::exception_ptr e)
 
 LbHttpConnection *
 NewLbHttpConnection(LbInstance &instance,
-		    const LbListenerConfig &listener,
+		    const LbListenerConfig &listener_config,
 		    const LbGoto &destination,
 		    PoolPtr pool,
 		    UniquePoolPtr<FilteredSocket> socket,
 		    const SslFilter *ssl_filter,
 		    SocketAddress address)
 {
-	assert(listener.destination.GetProtocol() == LbProtocol::HTTP);
+	assert(listener_config.destination.GetProtocol() == LbProtocol::HTTP);
 
 	/* determine the local socket address */
 	StaticSocketAddress local_address = socket->GetSocket().GetLocalAddress();
 
 	auto *connection = NewFromPool<LbHttpConnection>(std::move(pool), instance,
-							 listener, destination,
+							 listener_config, destination,
 							 address);
 	connection->ssl_filter = ssl_filter;
 
 	instance.http_connections.push_back(*connection);
 
 #ifdef HAVE_NGHTTP2
-	if (listener.force_http2 || IsAlpnHttp2(ssl_filter))
+	if (listener_config.force_http2 || IsAlpnHttp2(ssl_filter))
 		connection->http2 = UniquePoolPtr<NgHttp2::ServerConnection>::Make(connection->GetPool(),
 										   connection->GetPool(),
 										   std::move(socket),
@@ -161,7 +162,7 @@ LbHttpConnection::Destroy()
 void
 LbHttpConnection::CloseAndDestroy()
 {
-	assert(listener.destination.GetProtocol() == LbProtocol::HTTP);
+	assert(listener_config.destination.GetProtocol() == LbProtocol::HTTP);
 #ifdef HAVE_NGHTTP2
 	assert(http != nullptr || http2);
 #endif
@@ -181,7 +182,7 @@ LbHttpConnection::SendError(IncomingHttpRequest &request, std::exception_ptr ep)
 		return;
 	}
 
-	const char *msg = listener.verbose_response
+	const char *msg = listener_config.verbose_response
 		? p_strdup(request.pool, GetFullMessage(ep).c_str())
 		: "Bad gateway";
 
@@ -322,8 +323,8 @@ LbHttpConnection::HttpConnectionClosed() noexcept
 std::string
 LbHttpConnection::MakeLoggerDomain() const noexcept
 {
-	return "listener='" + listener.name
-		+ "' cluster='" + listener.destination.GetName()
+	return "listener='" + listener_config.name
+		+ "' cluster='" + listener_config.destination.GetName()
 		+ "' client='" + client_address
 		+ "'";
 }

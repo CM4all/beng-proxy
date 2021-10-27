@@ -59,7 +59,7 @@ struct LbHttpConnection final
 
 	LbInstance &instance;
 
-	const LbListenerConfig &listener;
+	const LbListenerConfig &listener_config;
 
 	const LbGoto &initial_destination;
 
@@ -80,7 +80,7 @@ struct LbHttpConnection final
 #endif
 
 	LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
-			 const LbListenerConfig &_listener,
+			 const LbListenerConfig &_listener_config,
 			 const LbGoto &_destination,
 			 SocketAddress _client_address);
 
@@ -143,7 +143,7 @@ protected:
 
 LbHttpConnection *
 NewLbHttpConnection(LbInstance &instance,
-		    const LbListenerConfig &listener,
+		    const LbListenerConfig &listener_config,
 		    const LbGoto &destination,
 		    PoolPtr pool,
 		    UniquePoolPtr<FilteredSocket> socket,
