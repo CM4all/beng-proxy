@@ -41,7 +41,7 @@
 #include "PInstance.hxx"
 #include "http/local/Address.hxx"
 #include "http/Address.hxx"
-#include "file_address.hxx"
+#include "file/Address.hxx"
 #include "cgi/Address.hxx"
 #include "nfs/Address.hxx"
 #include "net/AllocatedSocketAddress.hxx"

@@ -33,7 +33,7 @@
 #include "FileHeaders.hxx"
 #include "Request.hxx"
 #include "Instance.hxx"
-#include "static_headers.hxx"
+#include "file/Headers.hxx"
 #include "http/HeaderWriter.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/Headers.hxx"

@@ -31,7 +31,7 @@
  */
 
 #include "ResourceAddress.hxx"
-#include "file_address.hxx"
+#include "file/Address.hxx"
 #include "http/local/Address.hxx"
 #include "http/Address.hxx"
 #include "cgi/Address.hxx"

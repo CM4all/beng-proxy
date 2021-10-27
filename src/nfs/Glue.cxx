@@ -33,7 +33,7 @@
 #include "Glue.hxx"
 #include "Cache.hxx"
 #include "http/ResponseHandler.hxx"
-#include "static_headers.hxx"
+#include "file/Headers.hxx"
 #include "strmap.hxx"
 #include "pool/pool.hxx"
 #include "istream/UnusedPtr.hxx"

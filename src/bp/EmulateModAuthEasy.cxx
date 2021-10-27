@@ -34,7 +34,7 @@
 #include "Instance.hxx"
 #include "AprMd5.hxx"
 #include "FileHeaders.hxx"
-#include "file_address.hxx"
+#include "file/Address.hxx"
 #include "http/Headers.hxx"
 #include "http/IncomingRequest.hxx"
 #include "translation/Vary.hxx"

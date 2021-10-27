@@ -31,7 +31,7 @@
  */
 
 #include "FileHeaders.hxx"
-#include "file_address.hxx"
+#include "file/Address.hxx"
 #include "Request.hxx"
 #include "Instance.hxx"
 #include "http/HeaderWriter.hxx"

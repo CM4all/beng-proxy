@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "static_headers.hxx"
+#include "Headers.hxx"
 #include "strmap.hxx"
 #include "pool/pool.hxx"
 #include "http/Date.hxx"

@@ -32,7 +32,7 @@
 
 #include "Request.hxx"
 #include "translation/Response.hxx"
-#include "file_address.hxx"
+#include "file/Address.hxx"
 #include "io/StatAt.hxx"
 
 #include <assert.h>

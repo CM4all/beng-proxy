@@ -32,7 +32,7 @@
 
 #include "Request.hxx"
 #include "translation/Response.hxx"
-#include "file_address.hxx"
+#include "file/Address.hxx"
 #include "cgi/Address.hxx"
 #include "http/local/Address.hxx"
 #include "io/StatAt.hxx"

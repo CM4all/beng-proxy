@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "file_address.hxx"
+#include "Address.hxx"
 #include "delegate/Address.hxx"
 #include "uri/Base.hxx"
 #include "uri/Compare.hxx"

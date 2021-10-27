@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "file_request.hxx"
-#include "static_headers.hxx"
+#include "Request.hxx"
+#include "Headers.hxx"
 #include "http/ResponseHandler.hxx"
 #include "strmap.hxx"
 #include "istream/UnusedPtr.hxx"

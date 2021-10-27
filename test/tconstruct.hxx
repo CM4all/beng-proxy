@@ -36,7 +36,7 @@
 #include "translation/Layout.hxx"
 #include "widget/View.hxx"
 #include "http/Address.hxx"
-#include "file_address.hxx"
+#include "file/Address.hxx"
 #include "cgi/Address.hxx"
 #include "spawn/Mount.hxx"
 #include "spawn/NamespaceOptions.hxx"

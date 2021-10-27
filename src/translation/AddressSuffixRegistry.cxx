@@ -33,7 +33,7 @@
 #include "AddressSuffixRegistry.hxx"
 #include "SuffixRegistry.hxx"
 #include "ResourceAddress.hxx"
-#include "file_address.hxx"
+#include "file/Address.hxx"
 #include "nfs/Address.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/CharUtil.hxx"

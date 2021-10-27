@@ -32,7 +32,7 @@
 
 #include "tconstruct.hxx"
 #include "ResourceAddress.hxx"
-#include "file_address.hxx"
+#include "file/Address.hxx"
 #include "cgi/Address.hxx"
 #include "TestPool.hxx"
 

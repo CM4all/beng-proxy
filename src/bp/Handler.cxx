@@ -38,7 +38,7 @@
 #include "RLogger.hxx"
 #include "Instance.hxx"
 #include "load_file.hxx"
-#include "file_address.hxx"
+#include "file/Address.hxx"
 #include "nfs/Address.hxx"
 #include "session/Lease.hxx"
 #include "session/Session.hxx"
