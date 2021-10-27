@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "puri_relative.hxx"
+#include "PRelative.hxx"
 #include "uri/Extract.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/StringView.hxx"

@@ -41,7 +41,7 @@
 #include "uri/Base.hxx"
 #include "uri/Verify.hxx"
 #include "uri/Escape.hxx"
-#include "puri_escape.hxx"
+#include "uri/PEscape.hxx"
 #include "pool/tpool.hxx"
 #include "pool/Holder.hxx"
 #include "AllocatorPtr.hxx"

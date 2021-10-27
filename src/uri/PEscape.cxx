@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "puri_escape.hxx"
+#include "PEscape.hxx"
 #include "uri/Escape.hxx"
 #include "uri/Unescape.hxx"
 #include "util/StringView.hxx"

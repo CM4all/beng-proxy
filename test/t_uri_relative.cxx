@@ -31,7 +31,7 @@
  */
 
 #include "uri/Relative.hxx"
-#include "puri_relative.hxx"
+#include "uri/PRelative.hxx"
 #include "TestPool.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/StringView.hxx"

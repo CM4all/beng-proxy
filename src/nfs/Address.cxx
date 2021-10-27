@@ -33,7 +33,7 @@
 #include "Address.hxx"
 #include "uri/Base.hxx"
 #include "uri/Compare.hxx"
-#include "puri_escape.hxx"
+#include "uri/PEscape.hxx"
 #include "pexpand.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/StringView.hxx"

@@ -31,8 +31,8 @@
  */
 
 #include "Args.hxx"
+#include "PEscape.hxx"
 #include "uri/Escape.hxx"
-#include "puri_escape.hxx"
 #include "strmap.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/IterableSplitString.hxx"

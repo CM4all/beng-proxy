@@ -34,8 +34,7 @@
  * Functions for working with relative URIs.
  */
 
-#ifndef BENG_PURI_RELATIVE_HXX
-#define BENG_PURI_RELATIVE_HXX
+#pragma once
 
 #include <stddef.h>
 
@@ -58,5 +57,3 @@ uri_compress(AllocatorPtr alloc, const char *uri);
 [[gnu::pure]]
 const char *
 uri_absolute(AllocatorPtr alloc, const char *base, StringView uri);
-
-#endif

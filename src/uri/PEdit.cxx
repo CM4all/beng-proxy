@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "puri_edit.hxx"
+#include "PEdit.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringView.hxx"

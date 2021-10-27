@@ -32,11 +32,11 @@
 
 #include "Address.hxx"
 #include "uri/Base.hxx"
+#include "uri/PEdit.hxx"
+#include "uri/PRelative.hxx"
 #include "uri/Relative.hxx"
 #include "uri/Verify.hxx"
 #include "uri/Extract.hxx"
-#include "puri_edit.hxx"
-#include "puri_relative.hxx"
 #include "AllocatorPtr.hxx"
 #include "pexpand.hxx"
 #include "util/StringCompare.hxx"

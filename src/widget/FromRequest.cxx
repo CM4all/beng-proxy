@@ -34,7 +34,7 @@
 #include "Error.hxx"
 #include "Class.hxx"
 #include "Ref.hxx"
-#include "puri_relative.hxx"
+#include "uri/PRelative.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <string.h>

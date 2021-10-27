@@ -32,14 +32,14 @@
 
 #include "Widget.hxx"
 #include "Class.hxx"
-#include "puri_edit.hxx"
-#include "puri_relative.hxx"
 #include "pool/tpool.hxx"
 #include "http/Address.hxx"
 #include "http/local/Address.hxx"
 #include "cgi/Address.hxx"
 #include "AllocatorPtr.hxx"
 #include "uri/Args.hxx"
+#include "uri/PEdit.hxx"
+#include "uri/PRelative.hxx"
 #include "util/StringView.hxx"
 
 #include <assert.h>
