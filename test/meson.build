@@ -568,7 +568,7 @@ test('t_slice', executable('t_slice',
 
 test('t_relocate_uri', executable('t_relocate_uri',
   't_relocate_uri.cxx',
-  '../src/relocate_uri.cxx',
+  '../src/uri/Relocate.cxx',
   include_directories: inc,
   dependencies: [
     gtest,

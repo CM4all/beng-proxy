@@ -30,8 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_RELOCATE_HXX
-#define BENG_PROXY_RELOCATE_HXX
+#pragma once
 
 struct StringView;
 class AllocatorPtr;
@@ -43,5 +42,3 @@ RelocateUri(AllocatorPtr alloc, const char *uri,
             const char *external_scheme, const char *external_host,
             StringView external_path,
             StringView base) noexcept;
-
-#endif

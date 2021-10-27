@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "relocate_uri.hxx"
+#include "Relocate.hxx"
 #include "uri/Extract.hxx"
 #include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"

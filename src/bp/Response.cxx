@@ -69,9 +69,9 @@
 #include "translation/Service.hxx"
 #include "http/Address.hxx"
 #include "co/Task.hxx"
+#include "uri/Relocate.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/StringBuffer.hxx"
-#include "relocate_uri.hxx"
 #include "FilterStatus.hxx"
 
 static const char *

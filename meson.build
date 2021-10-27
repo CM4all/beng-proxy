@@ -788,7 +788,7 @@ executable(
   'src/bp/Connection.cxx',
   'src/bp/RLogger.cxx',
   'src/bp/drop.cxx',
-  'src/relocate_uri.cxx',
+  'src/uri/Relocate.cxx',
   'src/fcache.cxx',
   'src/prometheus/Stats.cxx',
   'src/bp/FileHeaders.cxx',
