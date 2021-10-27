@@ -35,6 +35,7 @@
 #include "PInstance.hxx"
 #include "CommandLine.hxx"
 #include "Config.hxx"
+#include "stats/HttpStats.hxx"
 #include "avahi/ErrorHandler.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
@@ -92,9 +93,7 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 			  Avahi::ErrorHandler {
 	const BpConfig config;
 
-	uint64_t http_request_counter = 0;
-	uint64_t http_traffic_received_counter = 0;
-	uint64_t http_traffic_sent_counter = 0;
+	HttpStats http_stats{};
 
 #ifdef HAVE_URING
 	std::unique_ptr<Uring::Manager> uring;

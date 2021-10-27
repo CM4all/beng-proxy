@@ -70,9 +70,9 @@ BpInstance::GetStats() const noexcept
 					    + tcp_stock_stats.idle);
 	stats.children = ToBE32(child_process_registry.GetCount());
 	stats.sessions = ToBE32(session_manager->Count());
-	stats.http_requests = ToBE64(http_request_counter);
-	stats.http_traffic_received = ToBE64(http_traffic_received_counter);
-	stats.http_traffic_sent = ToBE64(http_traffic_sent_counter);
+	stats.http_requests = ToBE64(http_stats.n_requests);
+	stats.http_traffic_received = ToBE64(http_stats.traffic_received);
+	stats.http_traffic_sent = ToBE64(http_stats.traffic_sent);
 	stats.translation_cache_size = ToBE64(tcache_stats.netto_size);
 	stats.http_cache_size = ToBE64(http_cache_stats.netto_size);
 	stats.filter_cache_size = ToBE64(fcache_stats.netto_size);

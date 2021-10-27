@@ -205,7 +205,7 @@ LbHttpConnection::LogSendError(IncomingHttpRequest &request,
 void
 LbHttpConnection::RequestHeadersFinished(IncomingHttpRequest &request) noexcept
 {
-	++instance.http_request_counter;
+	++instance.http_stats.n_requests;
 
 	request.logger = NewFromPool<LbRequestLogger>(request.pool,
 						      instance, request);

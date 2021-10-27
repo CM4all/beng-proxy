@@ -35,6 +35,7 @@
 #include "PInstance.hxx"
 #include "GotoMap.hxx"
 #include "MonitorManager.hxx"
+#include "stats/HttpStats.hxx"
 #include "avahi/ErrorHandler.hxx"
 #include "event/FarTimerEvent.hxx"
 #include "event/SignalEvent.hxx"
@@ -75,9 +76,7 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 
 	FarTimerEvent compress_event;
 
-	uint64_t http_request_counter = 0;
-	uint64_t http_traffic_received_counter = 0;
-	uint64_t http_traffic_sent_counter = 0;
+	HttpStats http_stats{};
 
 	std::forward_list<LbControl> controls;
 
