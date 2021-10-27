@@ -55,7 +55,7 @@
 #include "resource_tag.hxx"
 #include "hostname.hxx"
 #include "strmap.hxx"
-#include "pheaders.hxx"
+#include "ProcessorHeaders.hxx"
 #include "XmlProcessor.hxx"
 #include "CssProcessor.hxx"
 #include "TextProcessor.hxx"

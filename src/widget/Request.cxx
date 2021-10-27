@@ -38,7 +38,7 @@
 #include "LookupHandler.hxx"
 #include "http/ResponseHandler.hxx"
 #include "FilterStatus.hxx"
-#include "pheaders.hxx"
+#include "bp/ProcessorHeaders.hxx"
 #include "bp/XmlProcessor.hxx"
 #include "bp/WidgetLookupProcessor.hxx"
 #include "bp/CssProcessor.hxx"
