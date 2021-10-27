@@ -30,8 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "escape_css.hxx"
-#include "escape_class.hxx"
+#include "escape/CSS.hxx"
+#include "escape/Class.hxx"
 
 #include <gtest/gtest.h>
 

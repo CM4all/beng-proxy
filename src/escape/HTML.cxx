@@ -30,41 +30,71 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "escape_css.hxx"
-#include "escape_class.hxx"
+#include "HTML.hxx"
+#include "Class.hxx"
+#include "util/CharUtil.hxx"
+#include "util/StringView.hxx"
 
 #include <assert.h>
 #include <string.h>
 
+[[gnu::pure]]
 static const char *
-css_unescape_find(StringView p) noexcept
+html_unescape_find(StringView p) noexcept
 {
-	return p.Find('\\');
+	return p.Find('&');
 }
 
-static constexpr bool
-need_simple_escape(char ch) noexcept
+[[gnu::pure]]
+static const char *
+find_semicolon(const char *p, const char *end) noexcept
 {
-	return ch == '\\' || ch == '"' || ch == '\'';
+	while (p < end) {
+		if (*p == ';')
+			return p;
+		else if (!IsAlphaASCII(*p))
+			break;
+
+		++p;
+	}
+
+	return nullptr;
 }
 
 static size_t
-css_unescape(StringView _p, char *q) noexcept
+html_unescape(StringView _p, char *q) noexcept
 {
 	const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
 
-	const char *bs;
-	while ((bs = (const char *)memchr(p, '\\', p_end - p)) != nullptr) {
-		memmove(q, p, bs - p);
-		q += bs - p;
+	const char *amp;
+	while ((amp = (const char *)memchr(p, '&', p_end - p)) != nullptr) {
+		memmove(q, p, amp - p);
+		q += amp - p;
 
-		p = bs + 1;
+		StringView entity;
+		entity.data = amp + 1;
 
-		if (p < p_end && need_simple_escape(*p))
-			*q++ = *p++;
-		else
-			/* XXX implement newline and hex codes */
-			*q++ = '\\';
+		const char *semicolon = find_semicolon(entity.data, p_end);
+		if (semicolon == nullptr) {
+			*q++ = '&';
+			p = amp + 1;
+			continue;
+		}
+
+		entity.size = semicolon - entity.data;
+
+		if (entity.Equals("amp"))
+			*q++ = '&';
+		else if (entity.Equals("quot"))
+			*q++ = '"';
+		else if (entity.Equals("lt"))
+			*q++ = '<';
+		else if (entity.Equals("gt"))
+			*q++ = '>';
+		else if (entity.Equals("apos"))
+			*q++ = '\'';
+
+		p = semicolon + 1;
 	}
 
 	memmove(q, p, p_end - p);
@@ -74,49 +104,75 @@ css_unescape(StringView _p, char *q) noexcept
 }
 
 static size_t
-css_escape_size(StringView _p) noexcept
+html_escape_size(StringView _p) noexcept
 {
 	const char *p = _p.begin(), *const end = _p.end();
 
 	size_t size = 0;
 	while (p < end) {
-		if (need_simple_escape(*p))
-			size += 2;
-		else
-			/* XXX implement newline and hex codes */
+		switch (*p++) {
+		case '&':
+			size += 5;
+			break;
+
+		case '"':
+		case '\'':
+			size += 6;
+			break;
+
+		case '<':
+		case '>':
+			size += 4;
+			break;
+
+		default:
 			++size;
+		}
 	}
 
 	return size;
 }
 
 static const char *
-css_escape_find(StringView _p) noexcept
+html_escape_find(StringView _p) noexcept
 {
 	const char *p = _p.begin(), *const end = _p.end();
 
 	while (p < end) {
-		if (need_simple_escape(*p))
+		switch (*p) {
+		case '&':
+		case '"':
+		case '\'':
+		case '<':
+		case '>':
 			return p;
 
-		++p;
+		default:
+			++p;
+		}
 	}
 
 	return nullptr;
 }
 
 static StringView
-css_escape_char(char ch) noexcept
+html_escape_char(char ch) noexcept
 {
 	switch (ch) {
-	case '\\':
-		return "\\\\";
+	case '&':
+		return "&amp;";
 
 	case '"':
-		return "\\\"";
+		return "&quot;";
 
 	case '\'':
-		return "\\'";
+		return "&apos;";
+
+	case '<':
+		return "&lt;";
+
+	case '>':
+		return "&gt;";
 
 	default:
 		assert(false);
@@ -125,27 +181,46 @@ css_escape_char(char ch) noexcept
 }
 
 static size_t
-css_escape(StringView _p, char *q) noexcept
+html_escape(StringView _p, char *q) noexcept
 {
 	const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
 
 	while (p < p_end) {
 		char ch = *p++;
-		if (need_simple_escape(ch)) {
-			*q++ = '\\';
+		switch (ch) {
+		case '&':
+			q = (char *)mempcpy(q, "&amp;", 5);
+			break;
+
+		case '"':
+			q = (char *)mempcpy(q, "&quot;", 6);
+			break;
+
+		case '\'':
+			q = (char *)mempcpy(q, "&apos;", 6);
+			break;
+
+		case '<':
+			q = (char *)mempcpy(q, "&lt;", 4);
+			break;
+
+		case '>':
+			q = (char *)mempcpy(q, "&gt;", 4);
+			break;
+
+		default:
 			*q++ = ch;
-		} else
-			*q++ = ch;
+		}
 	}
 
 	return q - q_start;
 }
 
-const struct escape_class css_escape_class = {
-	css_unescape_find,
-	css_unescape,
-	css_escape_find,
-	css_escape_char,
-	css_escape_size,
-	css_escape,
+const struct escape_class html_escape_class = {
+	html_unescape_find,
+	html_unescape,
+	html_escape_find,
+	html_escape_char,
+	html_escape_size,
+	html_escape,
 };

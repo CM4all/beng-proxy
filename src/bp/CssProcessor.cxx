@@ -36,7 +36,7 @@
 #include "widget/Widget.hxx"
 #include "widget/RewriteUri.hxx"
 #include "widget/Context.hxx"
-#include "escape_css.hxx"
+#include "escape/CSS.hxx"
 #include "istream/ReplaceIstream.hxx"
 #include "istream/istream_string.hxx"
 #include "pool/SharedPtr.hxx"

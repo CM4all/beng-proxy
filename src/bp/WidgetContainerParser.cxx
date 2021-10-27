@@ -36,8 +36,8 @@
 #include "pool/tpool.hxx"
 #include "uri/Escape.hxx"
 #include "util/CharUtil.hxx"
-#include "escape_class.hxx"
-#include "escape_html.hxx"
+#include "escape/Class.hxx"
+#include "escape/HTML.hxx"
 #include "AllocatorPtr.hxx"
 #include "strmap.hxx"
 

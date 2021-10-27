@@ -30,11 +30,11 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "istream_escape.hxx"
+#include "Istream.hxx"
+#include "Class.hxx"
 #include "istream/FacadeIstream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/New.hxx"
-#include "escape_class.hxx"
 #include "util/StringView.hxx"
 #include "util/DestructObserver.hxx"
 

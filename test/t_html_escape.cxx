@@ -30,9 +30,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "escape_html.hxx"
-#include "escape_class.hxx"
-#include "escape_static.hxx"
+#include "escape/HTML.hxx"
+#include "escape/Class.hxx"
+#include "escape/Static.hxx"
 
 #include <gtest/gtest.h>
 

@@ -30,29 +30,31 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "escape_pool.hxx"
-#include "escape_class.hxx"
-#include "pool/pool.hxx"
+#include "Static.hxx"
+#include "Class.hxx"
+#include "util/StringView.hxx"
 
-#include <assert.h>
+static char buffer[4096];
 
-char *
-escape_dup(struct pool *pool, const struct escape_class *cls,
-	   StringView p)
+const char *
+unescape_static(const struct escape_class *cls, StringView p)
 {
-	assert(cls != nullptr);
-	assert(cls->escape_size != nullptr);
-	assert(cls->escape != nullptr);
+	if (p.size >= sizeof(buffer))
+		return nullptr;
 
-	size_t size = cls->escape_size(p);
-	if (size == 0)
-		return p_strdup(*pool, p);
-
-	char *q = (char *)p_malloc(pool, size + 1);
-	size_t out_size = cls->escape(p, q);
-	assert(out_size <= size);
-	q[out_size] = 0;
-
-	return q;
+	size_t l = unescape_buffer(cls, p, buffer);
+	buffer[l] = 0;
+	return buffer;
 }
 
+const char *
+escape_static(const struct escape_class *cls, StringView p)
+{
+	size_t l = escape_size(cls, p);
+	if (l >= sizeof(buffer))
+		return nullptr;
+
+	l = escape_buffer(cls, p, buffer);
+	buffer[l] = 0;
+	return buffer;
+}

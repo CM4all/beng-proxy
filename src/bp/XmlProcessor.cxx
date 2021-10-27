@@ -44,7 +44,7 @@
 #include "widget/Inline.hxx"
 #include "widget/RewriteUri.hxx"
 #include "expansible_buffer.hxx"
-#include "escape_html.hxx"
+#include "escape/HTML.hxx"
 #include "strmap.hxx"
 #include "istream_html_escape.hxx"
 #include "istream/istream.hxx"

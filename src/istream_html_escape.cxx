@@ -31,9 +31,9 @@
  */
 
 #include "istream_html_escape.hxx"
-#include "istream_escape.hxx"
+#include "escape/Istream.hxx"
+#include "escape/HTML.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "escape_html.hxx"
 
 UnusedIstreamPtr
 istream_html_escape_new(struct pool &pool, UnusedIstreamPtr input)

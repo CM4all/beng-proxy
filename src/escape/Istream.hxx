@@ -30,31 +30,15 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "escape_static.hxx"
-#include "escape_class.hxx"
-#include "util/StringView.hxx"
+#pragma once
 
-static char buffer[4096];
+struct pool;
+class UnusedIstreamPtr;
+struct escape_class;
 
-const char *
-unescape_static(const struct escape_class *cls, StringView p)
-{
-	if (p.size >= sizeof(buffer))
-		return nullptr;
-
-	size_t l = unescape_buffer(cls, p, buffer);
-	buffer[l] = 0;
-	return buffer;
-}
-
-const char *
-escape_static(const struct escape_class *cls, StringView p)
-{
-	size_t l = escape_size(cls, p);
-	if (l >= sizeof(buffer))
-		return nullptr;
-
-	l = escape_buffer(cls, p, buffer);
-	buffer[l] = 0;
-	return buffer;
-}
+/**
+ * An istream filter that escapes the data.
+ */
+UnusedIstreamPtr
+istream_escape_new(struct pool &pool, UnusedIstreamPtr input,
+                   const struct escape_class &cls);

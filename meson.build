@@ -214,8 +214,8 @@ util2 = static_library(
   'src/uri/Recompose.cxx',
   'src/uri/Relative.cxx',
   'src/uri/RedirectHttps.cxx',
-  'src/escape_html.cxx',
-  'src/escape_css.cxx',
+  'src/escape/HTML.cxx',
+  'src/escape/CSS.cxx',
   include_directories: inc,
 )
 util_dep = declare_dependency(
@@ -288,7 +288,7 @@ putil = static_library('putil',
   'src/uri/PEdit.cxx',
   'src/uri/PEscape.cxx',
   'src/uri/PRelative.cxx',
-  'src/escape_pool.cxx',
+  'src/escape/Pool.cxx',
   include_directories: inc,
   dependencies: [
   ])
@@ -844,7 +844,7 @@ executable(
   'src/widget/Resolver.cxx',
   'src/widget/Request.cxx',
   'src/widget/Inline.cxx',
-  'src/istream_escape.cxx',
+  'src/escape/Istream.cxx',
   'src/istream_html_escape.cxx',
   'src/ssl/SslSocketFilterFactory.cxx',
   'src/DirectResourceLoader.cxx',

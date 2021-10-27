@@ -30,18 +30,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_ISTREAM_ESCAPE_HXX
-#define BENG_PROXY_ISTREAM_ESCAPE_HXX
+#include "Pool.hxx"
+#include "Class.hxx"
+#include "pool/pool.hxx"
 
-struct pool;
-class UnusedIstreamPtr;
-struct escape_class;
+#include <assert.h>
 
-/**
- * An istream filter that escapes the data.
- */
-UnusedIstreamPtr
-istream_escape_new(struct pool &pool, UnusedIstreamPtr input,
-                   const struct escape_class &cls);
+char *
+escape_dup(struct pool *pool, const struct escape_class *cls,
+	   StringView p)
+{
+	assert(cls != nullptr);
+	assert(cls->escape_size != nullptr);
+	assert(cls->escape != nullptr);
 
-#endif
+	size_t size = cls->escape_size(p);
+	if (size == 0)
+		return p_strdup(*pool, p);
+
+	char *q = (char *)p_malloc(pool, size + 1);
+	size_t out_size = cls->escape(p, q);
+	assert(out_size <= size);
+	q[out_size] = 0;
+
+	return q;
+}
+
