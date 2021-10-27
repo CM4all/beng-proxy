@@ -268,6 +268,7 @@ subdir('libcommon/src/json')
 subdir('libcommon/src/lua')
 
 subdir('src/memory')
+subdir('src/prometheus')
 
 pool = static_library('pool',
   'src/AllocatorPtr.cxx',
@@ -789,7 +790,6 @@ executable(
   'src/bp/drop.cxx',
   'src/uri/Relocate.cxx',
   'src/fcache.cxx',
-  'src/prometheus/Stats.cxx',
   'src/bp/FileHeaders.cxx',
   'src/bp/FileHandler.cxx',
   'src/bp/EmulateModAuthEasy.cxx',
@@ -886,6 +886,7 @@ executable(
     nghttp2_dep,
     cluster_dep,
     sodium_dep,
+    prometheus_dep,
     libcrypt,
     libcxx,
   ],
@@ -948,7 +949,6 @@ executable(
   'src/lb/ExpectMonitor.cxx',
   'src/lb/Instance.cxx',
   'src/lb/Main.cxx',
-  'src/prometheus/Stats.cxx',
 
   # the following sources are only necessary for the translation client
   'src/widget/View.cxx',
@@ -976,6 +976,7 @@ executable(
     eutil_dep,
     stock_dep,
     translation_dep,
+    prometheus_dep,
     spawn_dep,
     expand_dep,
     stopwatch_dep,
