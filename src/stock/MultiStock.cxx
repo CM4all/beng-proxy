@@ -224,6 +224,9 @@ MultiStock::SharedItem::ItemIdleDisconnect(StockItem &item) noexcept
 	assert(!idle.empty());
 
 	idle.erase_and_dispose(idle.iterator_to(item), DeleteDisposer{});
+
+	if (IsEmpty())
+		parent.RemoveItem(*this);
 }
 
 void

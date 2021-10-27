@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.72) unstable; urgency=low
 
+  * was: fix RemoteWAS hang bug after WAS process restarted
   * prometheus: show per-listener statistics
 
  --   
