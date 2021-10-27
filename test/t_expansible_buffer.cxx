@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "expansible_buffer.hxx"
+#include "memory/ExpansibleBuffer.hxx"
 #include "TestPool.hxx"
 #include "util/ConstBuffer.hxx"
 

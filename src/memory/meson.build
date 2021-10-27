@@ -7,6 +7,7 @@ memory = static_library(
   'MultiFifoBuffer.cxx',
   '../DefaultFifoBuffer.cxx',
   'DefaultChunkAllocator.cxx',
+  'ExpansibleBuffer.cxx',
   'GrowingBuffer.cxx',
   'Rubber.cxx',
   include_directories: inc,

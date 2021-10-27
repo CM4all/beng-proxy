@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "expansible_buffer.hxx"
+#include "memory/ExpansibleBuffer.hxx"
 #include "util/StringView.hxx"
 
 #include <assert.h>

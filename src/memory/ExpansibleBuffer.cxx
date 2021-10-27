@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "expansible_buffer.hxx"
+#include "ExpansibleBuffer.hxx"
 #include "pool/pool.hxx"
 #include "util/StringView.hxx"
 #include "util/Poison.hxx"

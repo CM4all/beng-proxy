@@ -282,7 +282,6 @@ pool_dep = declare_dependency(link_with: pool,
                              dependencies: [memory_dep, io_dep])
 
 putil = static_library('putil',
-  'src/expansible_buffer.cxx',
   'src/strmap.cxx',
   'src/PStringSet.cxx',
   'src/uri/PEdit.cxx',
