@@ -46,7 +46,7 @@
 #include "memory/Rubber.hxx"
 #include "memory/sink_rubber.hxx"
 #include "memory/SlicePool.hxx"
-#include "AllocatorStats.hxx"
+#include "stats/AllocatorStats.hxx"
 #include "pool/pool.hxx"
 #include "pool/Ptr.hxx"
 #include "pool/Holder.hxx"

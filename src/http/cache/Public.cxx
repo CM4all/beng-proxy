@@ -40,7 +40,7 @@
 #include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "memory/sink_rubber.hxx"
-#include "AllocatorStats.hxx"
+#include "stats/AllocatorStats.hxx"
 #include "http/Date.hxx"
 #include "http/List.hxx"
 #include "istream/UnusedPtr.hxx"

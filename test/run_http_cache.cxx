@@ -40,7 +40,7 @@
 #include "strmap.hxx"
 #include "memory/Rubber.hxx"
 #include "AllocatorPtr.hxx"
-#include "AllocatorStats.hxx"
+#include "stats/AllocatorStats.hxx"
 
 #include <stdlib.h>
 

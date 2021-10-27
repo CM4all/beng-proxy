@@ -35,7 +35,7 @@
 #include "Cache.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/ConstBuffer.hxx"
-#include "AllocatorStats.hxx"
+#include "stats/AllocatorStats.hxx"
 
 #include <cassert>
 #include <cstring>

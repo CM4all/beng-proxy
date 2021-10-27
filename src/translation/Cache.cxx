@@ -48,7 +48,7 @@
 #include "pool/StringBuilder.hxx"
 #include "pool/PSocketAddress.hxx"
 #include "memory/SlicePool.hxx"
-#include "AllocatorStats.hxx"
+#include "stats/AllocatorStats.hxx"
 #include "pcre/Regex.hxx"
 #include "io/Logger.hxx"
 #include "util/djbhash.h"

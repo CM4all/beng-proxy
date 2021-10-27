@@ -32,7 +32,7 @@
 
 #include "Heap.hxx"
 #include "Item.hxx"
-#include "AllocatorStats.hxx"
+#include "stats/AllocatorStats.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
 #include "istream_unlock.hxx"

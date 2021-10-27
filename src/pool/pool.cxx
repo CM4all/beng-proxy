@@ -34,7 +34,7 @@
 #include "Ptr.hxx"
 #include "LeakDetector.hxx"
 #include "memory/SlicePool.hxx"
-#include "AllocatorStats.hxx"
+#include "stats/AllocatorStats.hxx"
 #include "io/Logger.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/Recycler.hxx"

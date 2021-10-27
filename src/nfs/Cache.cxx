@@ -45,7 +45,7 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_null.hxx"
 #include "istream/TeeIstream.hxx"
-#include "AllocatorStats.hxx"
+#include "stats/AllocatorStats.hxx"
 #include "cache.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "event/FarTimerEvent.hxx"

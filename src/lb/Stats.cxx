@@ -35,7 +35,7 @@
 #include "stock/Stats.hxx"
 #include "memory/fb_pool.hxx"
 #include "memory/SlicePool.hxx"
-#include "AllocatorStats.hxx"
+#include "stats/AllocatorStats.hxx"
 #include "beng-proxy/Control.hxx"
 #include "util/ByteOrder.hxx"
 
