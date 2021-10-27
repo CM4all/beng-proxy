@@ -34,7 +34,7 @@
 #include "Address.hxx"
 #include "Client.hxx"
 #include "Launch.hxx"
-#include "abort_flag.hxx"
+#include "util/AbortFlag.hxx"
 #include "stopwatch.hxx"
 #include "http/ResponseHandler.hxx"
 #include "istream/UnusedPtr.hxx"
