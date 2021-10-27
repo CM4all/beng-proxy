@@ -133,6 +133,14 @@ CatchCallback(std::exception_ptr, void *) noexcept
 	return {};
 }
 
+static void
+WriteStats(GrowingBuffer &buffer, const LbInstance &instance) noexcept
+{
+	const char *process = "lb";
+
+	Prometheus::Write(buffer, process, instance.GetStats());
+}
+
 void
 LbPrometheusExporter::HandleRequest(IncomingHttpRequest &request,
 				    CancellablePointer &) noexcept
@@ -141,9 +149,8 @@ LbPrometheusExporter::HandleRequest(IncomingHttpRequest &request,
 
 	GrowingBuffer buffer;
 
-	const char *process = "lb";
 	if (instance != nullptr)
-		Prometheus::Write(buffer, process, instance->GetStats());
+		WriteStats(buffer, *instance);
 
 	HttpHeaders headers;
 	headers.Write("content-type", "text/plain;version=0.0.4");
