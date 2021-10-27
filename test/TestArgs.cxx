@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "args.hxx"
+#include "uri/Args.hxx"
 #include "strmap.hxx"
 #include "pool/RootPool.hxx"
 #include "util/StringView.hxx"

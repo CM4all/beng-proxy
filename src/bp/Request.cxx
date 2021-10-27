@@ -38,8 +38,8 @@
 #include "http/IncomingRequest.hxx"
 #include "widget/Context.hxx"
 #include "translation/Vary.hxx"
+#include "uri/Args.hxx"
 #include "util/StringAPI.hxx"
-#include "args.hxx"
 #include "strmap.hxx"
 
 Request::Request(BpConnection &_connection,

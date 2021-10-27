@@ -713,7 +713,7 @@ widget = static_library('widget',
   'src/widget/Uri.cxx',
   'src/widget/Approval.cxx',
   'src/widget/Error.cxx',
-  'src/args.cxx',
+  'src/uri/Args.cxx',
   include_directories: inc,
 )
 widget_dep = declare_dependency(link_with: widget,
