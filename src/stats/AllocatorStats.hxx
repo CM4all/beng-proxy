@@ -32,16 +32,18 @@
 
 #pragma once
 
+#include <cstddef>
+
 struct AllocatorStats {
 	/**
 	 * Number of bytes allocated from the kernel.
 	 */
-	size_t brutto_size;
+	std::size_t brutto_size;
 
 	/**
 	 * Number of bytes being used by client code.
 	 */
-	size_t netto_size;
+	std::size_t netto_size;
 
 	static constexpr AllocatorStats Zero() {
 		return { 0, 0 };
