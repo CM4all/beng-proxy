@@ -1,6 +1,7 @@
 prometheus = static_library(
   'prometheus',
   'Stats.cxx',
+  'HttpStats.cxx',
   include_directories: inc,
 )
 

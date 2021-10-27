@@ -30,31 +30,33 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "PrometheusExporter.hxx"
-#include "Instance.hxx"
-#include "prometheus/Stats.hxx"
-#include "prometheus/HttpStats.hxx"
-#include "beng-proxy/Control.hxx"
-#include "http/Headers.hxx"
-#include "http/IncomingRequest.hxx"
-#include "http/ResponseHandler.hxx"
-#include "memory/istream_gb.hxx"
+#include "HttpStats.hxx"
+#include "stats/HttpStats.hxx"
 #include "memory/GrowingBuffer.hxx"
 
+#include <inttypes.h>
+
+namespace Prometheus {
+
 void
-BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
-					const StopwatchPtr &,
-					CancellablePointer &) noexcept
+Write(GrowingBuffer &buffer, const char *process,
+      const HttpStats &stats) noexcept
 {
-	GrowingBuffer buffer;
+	buffer.Format(
+	       R"(
+# HELP beng_proxy_http_requests Number of HTTP requests
+# TYPE beng_proxy_http_requests counter
 
-	const char *process = "bp";
-	Prometheus::Write(buffer, process, instance.GetStats());
-	Prometheus::Write(buffer, process, instance.http_stats);
+# HELP beng_proxy_http_traffic Number of bytes transferred
+# TYPE beng_proxy_http_traffic counter
 
-	HttpHeaders headers;
-	headers.Write("content-type", "text/plain;version=0.0.4");
-
-	request.SendResponse(HTTP_STATUS_OK, std::move(headers),
-			     istream_gb_new(request.pool, std::move(buffer)));
+)"
+	       "beng_proxy_http_requests{process=\"%s\"} %" PRIu64 "\n"
+	       "beng_proxy_http_traffic{process=\"%s\",direction=\"in\"} %" PRIu64 "\n"
+	       "beng_proxy_http_traffic{process=\"%s\",direction=\"out\"} %" PRIu64 "\n",
+	       process, stats.n_requests,
+	       process, stats.traffic_received,
+	       process, stats.traffic_sent);
 }
+
+} // namespace Prometheus

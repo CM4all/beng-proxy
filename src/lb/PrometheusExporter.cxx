@@ -34,6 +34,7 @@
 #include "PrometheusExporterConfig.hxx"
 #include "Instance.hxx"
 #include "prometheus/Stats.hxx"
+#include "prometheus/HttpStats.hxx"
 #include "beng-proxy/Control.hxx"
 #include "http/Address.hxx"
 #include "http/Headers.hxx"
@@ -139,6 +140,7 @@ WriteStats(GrowingBuffer &buffer, const LbInstance &instance) noexcept
 	const char *process = "lb";
 
 	Prometheus::Write(buffer, process, instance.GetStats());
+	Prometheus::Write(buffer, process, instance.http_stats);
 }
 
 void

@@ -54,12 +54,6 @@ Write(GrowingBuffer &buffer, const char *process,
 # HELP beng_proxy_sessions Number of sessions
 # TYPE beng_proxy_sessions gauge
 
-# HELP beng_proxy_http_requests Number of HTTP requests
-# TYPE beng_proxy_http_requests counter
-
-# HELP beng_proxy_http_traffic Number of bytes transferred
-# TYPE beng_proxy_http_traffic counter
-
 # HELP beng_proxy_cache_size Size of the cache in bytes
 # TYPE beng_proxy_cache_size gauge
 
@@ -71,9 +65,6 @@ Write(GrowingBuffer &buffer, const char *process,
 	       "beng_proxy_connections{process=\"%s\",direction=\"out\"} %" PRIu32 "\n"
 	       "beng_proxy_children{process=\"%s\"} %" PRIu32 "\n"
 	       "beng_proxy_sessions{process=\"%s\"} %" PRIu32 "\n"
-	       "beng_proxy_http_requests{process=\"%s\"} %" PRIu64 "\n"
-	       "beng_proxy_http_traffic{process=\"%s\",direction=\"in\"} %" PRIu64 "\n"
-	       "beng_proxy_http_traffic{process=\"%s\",direction=\"out\"} %" PRIu64 "\n"
 	       "beng_proxy_cache_size{process=\"%s\",type=\"translation\",metric=\"netto\"} %" PRIu64 "\n"
 	       "beng_proxy_cache_size{process=\"%s\",type=\"translation\",metric=\"brutto\"} %" PRIu64 "\n"
 	       "beng_proxy_cache_size{process=\"%s\",type=\"http\",metric=\"netto\"} %" PRIu64 "\n"
@@ -88,9 +79,6 @@ Write(GrowingBuffer &buffer, const char *process,
 	       process, FromBE32(stats.outgoing_connections),
 	       process, FromBE32(stats.children),
 	       process, FromBE32(stats.sessions),
-	       process, FromBE64(stats.http_requests),
-	       process, FromBE64(stats.http_traffic_received),
-	       process, FromBE64(stats.http_traffic_sent),
 	       process, FromBE64(stats.translation_cache_size),
 	       process, FromBE64(stats.translation_cache_brutto_size),
 	       process, FromBE64(stats.http_cache_size),

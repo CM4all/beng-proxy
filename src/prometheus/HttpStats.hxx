@@ -30,31 +30,15 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "PrometheusExporter.hxx"
-#include "Instance.hxx"
-#include "prometheus/Stats.hxx"
-#include "prometheus/HttpStats.hxx"
-#include "beng-proxy/Control.hxx"
-#include "http/Headers.hxx"
-#include "http/IncomingRequest.hxx"
-#include "http/ResponseHandler.hxx"
-#include "memory/istream_gb.hxx"
-#include "memory/GrowingBuffer.hxx"
+#pragma once
+
+class GrowingBuffer;
+struct HttpStats;
+
+namespace Prometheus {
 
 void
-BpPrometheusExporter::HandleHttpRequest(IncomingHttpRequest &request,
-					const StopwatchPtr &,
-					CancellablePointer &) noexcept
-{
-	GrowingBuffer buffer;
+Write(GrowingBuffer &buffer, const char *process,
+      const HttpStats &stats) noexcept;
 
-	const char *process = "bp";
-	Prometheus::Write(buffer, process, instance.GetStats());
-	Prometheus::Write(buffer, process, instance.http_stats);
-
-	HttpHeaders headers;
-	headers.Write("content-type", "text/plain;version=0.0.4");
-
-	request.SendResponse(HTTP_STATUS_OK, std::move(headers),
-			     istream_gb_new(request.pool, std::move(buffer)));
-}
+} // namespace Prometheus
