@@ -101,6 +101,10 @@ class MultiStock {
 
 		~OuterItem() noexcept;
 
+		bool IsItem(const StockItem &other) const noexcept {
+			return &other == &shared_item;
+		}
+
 		bool IsFull() const noexcept {
 			return busy.size() >= limit;
 		}
@@ -233,6 +237,9 @@ class MultiStock {
 
 	private:
 		[[gnu::pure]]
+		OuterItem &ToOuterItem(StockItem &shared_item) noexcept;
+
+		[[gnu::pure]]
 		OuterItem *FindUsable() noexcept;
 
 		/**
@@ -251,6 +258,9 @@ class MultiStock {
 		/* virtual methods from class StockGetHandler */
 		void OnStockItemReady(StockItem &item) noexcept override;
 		void OnStockItemError(std::exception_ptr error) noexcept override;
+
+		/* virtual methods from class AbstractStock */
+		void ItemBusyDisconnect(StockItem &item) noexcept override;
 
 	public:
 		struct Hash {

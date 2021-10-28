@@ -483,6 +483,29 @@ MultiStock::MapItem::OnStockItemError(std::exception_ptr error) noexcept
 		delete this;
 }
 
+inline MultiStock::OuterItem &
+MultiStock::MapItem::ToOuterItem(StockItem &shared_item) noexcept
+{
+	auto i = std::find_if(items.begin(), items.end(), [&](const auto &j){
+		return j.IsItem(shared_item);
+	});
+
+	assert(i != items.end());
+
+	return *i;
+}
+
+void
+MultiStock::MapItem::ItemBusyDisconnect(StockItem &item) noexcept
+{
+	Stock::ItemBusyDisconnect(item);
+
+	auto &outer_item = ToOuterItem(item);
+
+	if (!outer_item.IsBusy())
+		RemoveItem(outer_item);
+}
+
 inline void
 MultiStock::MapItem::OnLeaseReleased(OuterItem &item) noexcept
 {
