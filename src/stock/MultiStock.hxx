@@ -66,7 +66,7 @@ class MultiStock {
 	 * A manager for an "outer" #StockItem which can be shared by
 	 * multiple clients.
 	 */
-	class SharedItem final
+	class OuterItem final
 		: public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
 		  AbstractStock
 	{
@@ -91,13 +91,13 @@ class MultiStock {
 		ItemList idle, busy;
 
 	public:
-		SharedItem(MapItem &_parent, StockItem &_item,
-			   std::size_t _limit) noexcept;
+		OuterItem(MapItem &_parent, StockItem &_item,
+			  std::size_t _limit) noexcept;
 
-		SharedItem(const SharedItem &) = delete;
-		SharedItem &operator=(const SharedItem &) = delete;
+		OuterItem(const OuterItem &) = delete;
+		OuterItem &operator=(const OuterItem &) = delete;
 
-		~SharedItem() noexcept;
+		~OuterItem() noexcept;
 
 		bool IsFull() const noexcept {
 			return busy.size() >= limit;
@@ -172,10 +172,10 @@ class MultiStock {
 		Stock &stock;
 		MultiStockClass &inner_class;
 
-		using SharedItemList =
-			boost::intrusive::list<SharedItem,
+		using OuterItemList =
+			boost::intrusive::list<OuterItem,
 					       boost::intrusive::constant_time_size<false>>;
-		SharedItemList items;
+		OuterItemList items;
 
 		struct Waiting;
 		using WaitingList =
@@ -211,8 +211,8 @@ class MultiStock {
 
 		void RemoveWaiting(Waiting &w) noexcept;
 
-		void RemoveItem(SharedItem &item) noexcept;
-		void OnLeaseReleased(SharedItem &item) noexcept;
+		void RemoveItem(OuterItem &item) noexcept;
+		void OnLeaseReleased(OuterItem &item) noexcept;
 
 		void DiscardUnused() noexcept;
 
@@ -229,14 +229,14 @@ class MultiStock {
 
 	private:
 		[[gnu::pure]]
-		SharedItem *FindUsable() noexcept;
+		OuterItem *FindUsable() noexcept;
 
 		/**
 		 * Delete all empty items.
 		 */
-		void DeleteEmptyItems(const SharedItem *except=nullptr) noexcept;
+		void DeleteEmptyItems(const OuterItem *except=nullptr) noexcept;
 
-		void FinishWaiting(SharedItem &item) noexcept;
+		void FinishWaiting(OuterItem &item) noexcept;
 
 		/**
 		 * Retry the waiting requests.

@@ -40,8 +40,8 @@
 
 #include <cassert>
 
-MultiStock::SharedItem::SharedItem(MapItem &_parent, StockItem &_item,
-				   std::size_t _limit) noexcept
+MultiStock::OuterItem::OuterItem(MapItem &_parent, StockItem &_item,
+				 std::size_t _limit) noexcept
 	:parent(_parent), shared_item(_item),
 	 limit(_limit),
 	 cleanup_timer(shared_item.stock.GetEventLoop(),
@@ -49,7 +49,7 @@ MultiStock::SharedItem::SharedItem(MapItem &_parent, StockItem &_item,
 {
 }
 
-MultiStock::SharedItem::~SharedItem() noexcept
+MultiStock::OuterItem::~OuterItem() noexcept
 {
 	assert(busy.empty());
 
@@ -59,19 +59,19 @@ MultiStock::SharedItem::~SharedItem() noexcept
 }
 
 inline bool
-MultiStock::SharedItem::CanUse() const noexcept
+MultiStock::OuterItem::CanUse() const noexcept
 {
 	return !shared_item.fade && !IsFull();
 }
 
 inline bool
-MultiStock::SharedItem::ShouldDelete() const noexcept
+MultiStock::OuterItem::ShouldDelete() const noexcept
 {
 	return shared_item.fade && IsEmpty();
 }
 
 void
-MultiStock::SharedItem::OnCleanupTimer() noexcept
+MultiStock::OuterItem::OnCleanupTimer() noexcept
 {
 	if (IsEmpty()) {
 		/* if this item was unused for one cleanup_timer
@@ -85,19 +85,19 @@ MultiStock::SharedItem::OnCleanupTimer() noexcept
 	for (std::size_t i = (idle.size() + 2) / 3; i > 0; --i)
 		idle.pop_front_and_dispose(DeleteDisposer{});
 
-	/* repeat until we need this SharedItem again or until there
+	/* repeat until we need this OuterItem again or until there
 	   are no more idle items */
 	ScheduleCleanupTimer();
 }
 
 void
-MultiStock::SharedItem::DiscardUnused() noexcept
+MultiStock::OuterItem::DiscardUnused() noexcept
 {
 	idle.clear_and_dispose(DeleteDisposer{});
 }
 
 void
-MultiStock::SharedItem::Fade() noexcept
+MultiStock::OuterItem::Fade() noexcept
 {
 	shared_item.fade = true;
 	DiscardUnused();
@@ -108,7 +108,7 @@ MultiStock::SharedItem::Fade() noexcept
 }
 
 inline void
-MultiStock::SharedItem::CreateLease(MultiStockClass &_inner_class,
+MultiStock::OuterItem::CreateLease(MultiStockClass &_inner_class,
 				    StockGetHandler &handler) noexcept
 try {
 	auto *lease = _inner_class.Create({*this, handler}, shared_item);
@@ -118,7 +118,7 @@ try {
 }
 
 inline StockItem *
-MultiStock::SharedItem::GetIdle() noexcept
+MultiStock::OuterItem::GetIdle() noexcept
 {
 	assert(CanUse());
 
@@ -158,7 +158,7 @@ MultiStock::SharedItem::GetIdle() noexcept
 }
 
 inline bool
-MultiStock::SharedItem::GetIdle(StockGetHandler &handler) noexcept
+MultiStock::OuterItem::GetIdle(StockGetHandler &handler) noexcept
 {
 	assert(CanUse());
 
@@ -171,7 +171,7 @@ MultiStock::SharedItem::GetIdle(StockGetHandler &handler) noexcept
 }
 
 void
-MultiStock::SharedItem::GetLease(MultiStockClass &_inner_class,
+MultiStock::OuterItem::GetLease(MultiStockClass &_inner_class,
 				 StockGetHandler &handler) noexcept
 {
 	assert(CanUse());
@@ -181,19 +181,19 @@ MultiStock::SharedItem::GetLease(MultiStockClass &_inner_class,
 }
 
 const char *
-MultiStock::SharedItem::GetName() const noexcept
+MultiStock::OuterItem::GetName() const noexcept
 {
 	return shared_item.stock.GetName();
 }
 
 EventLoop &
-MultiStock::SharedItem::GetEventLoop() const noexcept
+MultiStock::OuterItem::GetEventLoop() const noexcept
 {
 	return cleanup_timer.GetEventLoop();
 }
 
 void
-MultiStock::SharedItem::Put(StockItem &item, bool destroy) noexcept
+MultiStock::OuterItem::Put(StockItem &item, bool destroy) noexcept
 {
 	assert(!item.is_idle);
 	assert(&item.stock == this);
@@ -218,7 +218,7 @@ MultiStock::SharedItem::Put(StockItem &item, bool destroy) noexcept
 }
 
 void
-MultiStock::SharedItem::ItemIdleDisconnect(StockItem &item) noexcept
+MultiStock::OuterItem::ItemIdleDisconnect(StockItem &item) noexcept
 {
 	assert(item.is_idle);
 	assert(!idle.empty());
@@ -230,7 +230,7 @@ MultiStock::SharedItem::ItemIdleDisconnect(StockItem &item) noexcept
 }
 
 void
-MultiStock::SharedItem::ItemBusyDisconnect(StockItem &item) noexcept
+MultiStock::OuterItem::ItemBusyDisconnect(StockItem &item) noexcept
 {
 	assert(!item.is_idle);
 	assert(!busy.empty());
@@ -239,14 +239,14 @@ MultiStock::SharedItem::ItemBusyDisconnect(StockItem &item) noexcept
 }
 
 void
-MultiStock::SharedItem::ItemCreateSuccess(StockItem &item) noexcept
+MultiStock::OuterItem::ItemCreateSuccess(StockItem &item) noexcept
 {
 	busy.push_front(item);
 	item.handler.OnStockItemReady(item);
 }
 
 void
-MultiStock::SharedItem::ItemCreateError(StockGetHandler &get_handler,
+MultiStock::OuterItem::ItemCreateError(StockGetHandler &get_handler,
 					std::exception_ptr ep) noexcept
 {
 	Fade();
@@ -258,13 +258,13 @@ MultiStock::SharedItem::ItemCreateError(StockGetHandler &get_handler,
 }
 
 void
-MultiStock::SharedItem::ItemCreateAborted() noexcept
+MultiStock::OuterItem::ItemCreateAborted() noexcept
 {
 	// unreachable
 }
 
 void
-MultiStock::SharedItem::ItemUncleanFlagCleared() noexcept
+MultiStock::OuterItem::ItemUncleanFlagCleared() noexcept
 {
 	parent.OnLeaseReleased(*this);
 }
@@ -313,7 +313,7 @@ MultiStock::MapItem::~MapItem() noexcept
 		get_cancel_ptr.Cancel();
 }
 
-MultiStock::SharedItem *
+MultiStock::OuterItem *
 MultiStock::MapItem::FindUsable() noexcept
 {
 	for (auto &i : items)
@@ -334,7 +334,7 @@ MultiStock::MapItem::Get(StockRequest request, std::size_t concurrency,
 	}
 
 	if (auto *stock_item = stock.GetIdle()) {
-		auto *i = new SharedItem(*this, *stock_item, concurrency);
+		auto *i = new OuterItem(*this, *stock_item, concurrency);
 		items.push_back(*i);
 		i->CreateLease(inner_class, handler);
 		return;
@@ -351,7 +351,7 @@ MultiStock::MapItem::Get(StockRequest request, std::size_t concurrency,
 }
 
 inline void
-MultiStock::MapItem::RemoveItem(SharedItem &item) noexcept
+MultiStock::MapItem::RemoveItem(OuterItem &item) noexcept
 {
 	items.erase_and_dispose(items.iterator_to(item), DeleteDisposer{});
 
@@ -382,7 +382,7 @@ MultiStock::MapItem::RemoveWaiting(Waiting &w) noexcept
 }
 
 inline void
-MultiStock::MapItem::DeleteEmptyItems(const SharedItem *except) noexcept
+MultiStock::MapItem::DeleteEmptyItems(const OuterItem *except) noexcept
 {
 	items.remove_and_dispose_if([except](const auto &item){
 		return &item != except && item.IsEmpty();
@@ -399,7 +399,7 @@ MultiStock::MapItem::DiscardUnused() noexcept
 }
 
 inline void
-MultiStock::MapItem::FinishWaiting(SharedItem &item) noexcept
+MultiStock::MapItem::FinishWaiting(OuterItem &item) noexcept
 {
 	assert(item.CanUse());
 	assert(!waiting.empty());
@@ -458,7 +458,7 @@ MultiStock::MapItem::OnStockItemReady(StockItem &stock_item) noexcept
 
 	retry_event.Cancel();
 
-	auto *item = new SharedItem(*this, stock_item, get_concurrency);
+	auto *item = new OuterItem(*this, stock_item, get_concurrency);
 	items.push_back(*item);
 
 	FinishWaiting(*item);
@@ -482,7 +482,7 @@ MultiStock::MapItem::OnStockItemError(std::exception_ptr error) noexcept
 }
 
 inline void
-MultiStock::MapItem::OnLeaseReleased(SharedItem &item) noexcept
+MultiStock::MapItem::OnLeaseReleased(OuterItem &item) noexcept
 {
 	/* now that a lease was released, schedule the "waiting" list
 	   again */
