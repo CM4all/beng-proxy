@@ -294,15 +294,15 @@ struct MultiStock::MapItem::Waiting final
 	}
 };
 
-MultiStock::MapItem::MapItem(EventLoop &event_loop, StockClass &_outer_class,
+MultiStock::MapItem::MapItem(EventLoop &_event_loop, StockClass &_outer_class,
 			     const char *_name,
 			     std::size_t _limit, std::size_t _max_idle,
 			     Event::Duration _clear_interval,
 			     MultiStockClass &_inner_class) noexcept
-	:stock(event_loop, _outer_class, _name, _limit, _max_idle,
+	:Stock(_event_loop, _outer_class, _name, _limit, _max_idle,
 	       _clear_interval),
 	 inner_class(_inner_class),
-	 retry_event(stock.GetEventLoop(), BIND_THIS_METHOD(RetryWaiting))
+	 retry_event(_event_loop, BIND_THIS_METHOD(RetryWaiting))
 {
 }
 
@@ -327,29 +327,29 @@ MultiStock::MapItem::FindUsable() noexcept
 
 inline void
 MultiStock::MapItem::Get(StockRequest request, std::size_t concurrency,
-			 StockGetHandler &handler,
+			 StockGetHandler &get_handler,
 			 CancellablePointer &cancel_ptr) noexcept
 {
 	if (auto *i = FindUsable()) {
-		i->GetLease(inner_class, handler);
+		i->GetLease(inner_class, get_handler);
 		return;
 	}
 
-	if (auto *stock_item = stock.GetIdle()) {
+	if (auto *stock_item = GetIdle()) {
 		auto *i = new OuterItem(*this, *stock_item, concurrency);
 		items.push_back(*i);
-		i->CreateLease(inner_class, handler);
+		i->CreateLease(inner_class, get_handler);
 		return;
 	}
 
 	get_concurrency = concurrency;
 
 	auto *w = new Waiting(*this, std::move(request),
-			      handler, cancel_ptr);
+			      get_handler, cancel_ptr);
 	waiting.push_back(*w);
 
-	if (!stock.IsFull() && !get_cancel_ptr)
-		stock.GetCreate(std::move(w->request), *this, get_cancel_ptr);
+	if (!IsFull() && !get_cancel_ptr)
+		GetCreate(std::move(w->request), *this, get_cancel_ptr);
 }
 
 inline void
@@ -409,7 +409,7 @@ MultiStock::MapItem::FinishWaiting(OuterItem &item) noexcept
 
 	auto &w = waiting.front();
 
-	auto &handler = w.handler;
+	auto &get_handler = w.handler;
 	waiting.pop_front_and_dispose(DeleteDisposer{});
 
 	/* do it again until no more usable items are
@@ -422,7 +422,7 @@ MultiStock::MapItem::FinishWaiting(OuterItem &item) noexcept
 		   really needed */
 		DeleteEmptyItems(&item);
 
-	item.GetLease(inner_class, handler);
+	item.GetLease(inner_class, get_handler);
 }
 
 inline void
@@ -438,8 +438,8 @@ MultiStock::MapItem::RetryWaiting() noexcept
 	auto &w = waiting.front();
 	assert(w.request);
 
-	if (!stock.IsFull() && !get_cancel_ptr)
-		stock.GetCreate(std::move(w.request), *this, get_cancel_ptr);
+	if (!IsFull() && !get_cancel_ptr)
+		GetCreate(std::move(w.request), *this, get_cancel_ptr);
 }
 
 bool
@@ -509,19 +509,19 @@ MultiStock::MapItem::Hash::operator()(const char *key) const noexcept
 inline std::size_t
 MultiStock::MapItem::Hash::operator()(const MapItem &value) const noexcept
 {
-	return (*this)(value.stock.GetName());
+	return (*this)(value.GetName());
 }
 
 inline bool
 MultiStock::MapItem::Equal::operator()(const char *a, const MapItem &b) const noexcept
 {
-	return StringIsEqual(a, b.stock.GetName());
+	return StringIsEqual(a, b.GetName());
 }
 
 inline bool
 MultiStock::MapItem::Equal::operator()(const MapItem &a, const MapItem &b) const noexcept
 {
-	return (*this)(a.stock.GetName(), b);
+	return (*this)(a.GetName(), b);
 }
 
 MultiStock::MultiStock(EventLoop &_event_loop, StockClass &_outer_cls,

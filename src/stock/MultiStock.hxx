@@ -168,9 +168,9 @@ class MultiStock {
 
 	class MapItem final
 		: public boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>,
+		  Stock,
 		  StockGetHandler
 	{
-		Stock stock;
 		MultiStockClass &inner_class;
 
 		using OuterItemList =
