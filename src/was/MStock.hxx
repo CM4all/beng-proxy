@@ -44,7 +44,7 @@ class EventLoop;
 class SpawnService;
 template<typename T> struct ConstBuffer;
 
-class MultiWasStock final : MultiStockClass, ChildStockClass {
+class MultiWasStock final : MultiStockClass, ChildStockMapClass {
 	ChildStockMap child_stock;
 	MultiStock mchild_stock;
 

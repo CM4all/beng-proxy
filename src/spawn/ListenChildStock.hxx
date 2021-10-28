@@ -41,7 +41,7 @@
 /**
  * @see #ListenChildStockItem
  */
-class ListenChildStockClass : public ChildStockClass {
+class ListenChildStockClass : public ChildStockMapClass {
 public:
 	virtual int GetChildSocketType(void *info) const noexcept;
 	virtual unsigned GetChildBacklog(void *info) const noexcept = 0;
@@ -52,7 +52,7 @@ public:
 	virtual void PrepareListenChild(void *info, UniqueSocketDescriptor fd,
 					PreparedChildProcess &p) = 0;
 
-	/* virtual methods from class ChildStockClass */
+	/* virtual methods from class ChildStockMapClass */
 	std::unique_ptr<ChildStockItem> CreateChild(CreateStockItem c,
 						    void *info,
 						    ChildStock &child_stock) override;

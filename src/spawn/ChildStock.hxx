@@ -53,8 +53,6 @@ class ChildStockItem;
  */
 class ChildStockClass {
 public:
-	virtual Event::Duration GetChildClearInterval(void *info) const noexcept = 0;
-
 	/**
 	 * Implement this if you wish the child process to return the
          * stderr file descriptor it opened to the returned socket.
@@ -80,6 +78,11 @@ public:
 	 * Throws on error.
 	 */
 	virtual void PrepareChild(void *info, PreparedChildProcess &p) = 0;
+};
+
+class ChildStockMapClass : public ChildStockClass {
+public:
+	virtual Event::Duration GetChildClearInterval(void *info) const noexcept = 0;
 };
 
 using ChildStockItemHook =
@@ -157,11 +160,11 @@ class ChildStockMap final {
 	ChildStock cls;
 
 	class MyStockMap final : public StockMap {
-		ChildStockClass &ccls;
+		ChildStockMapClass &ccls;
 
 	public:
 		MyStockMap(EventLoop &_event_loop, StockClass &_cls,
-			   ChildStockClass &_ccls,
+			   ChildStockMapClass &_ccls,
 			   unsigned _limit, unsigned _max_idle) noexcept
 			:StockMap(_event_loop, _cls, _limit, _max_idle,
 				  Event::Duration::zero()),
@@ -177,7 +180,7 @@ class ChildStockMap final {
 
 public:
 	ChildStockMap(EventLoop &event_loop, SpawnService &_spawn_service,
-		      ChildStockClass &_cls,
+		      ChildStockMapClass &_cls,
 		      SocketDescriptor _log_socket,
 		      const ChildErrorLogOptions &_log_options,
 		      unsigned _limit, unsigned _max_idle) noexcept;

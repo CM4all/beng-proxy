@@ -84,7 +84,7 @@ ChildStock::Create(CreateStockItem c, StockRequest request,
  */
 
 ChildStockMap::ChildStockMap(EventLoop &event_loop, SpawnService &_spawn_service,
-			     ChildStockClass &_cls,
+			     ChildStockMapClass &_cls,
 			     SocketDescriptor _log_socket,
 			     const ChildErrorLogOptions &_log_options,
 			     unsigned _limit, unsigned _max_idle) noexcept

@@ -88,7 +88,7 @@ private:
 	/* virtual methods from class MultiStockClass */
 	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 
-	/* virtual methods from class ChildStockClass */
+	/* virtual methods from class ChildStockMapClass */
 	Event::Duration GetChildClearInterval(void *info) const noexcept override;
 	bool WantStderrPond(void *info) const noexcept override;
 	int GetChildSocketType(void *info) const noexcept override;
