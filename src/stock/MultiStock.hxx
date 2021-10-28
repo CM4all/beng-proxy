@@ -35,6 +35,7 @@
 #include "stock/Request.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/AbstractStock.hxx"
+#include "stock/Stock.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/TimerEvent.hxx"
 #include "util/Cancellable.hxx"
@@ -43,14 +44,15 @@
 #include <boost/intrusive/unordered_set.hpp>
 
 class CancellablePointer;
-class StockMap;
-class Stock;
+class StockClass;
 struct CreateStockItem;
 struct StockItem;
 struct StockStats;
 
 class MultiStockClass {
 public:
+	virtual Event::Duration GetClearInterval(void *info) const noexcept = 0;
+
 	virtual StockItem *Create(CreateStockItem c,
 				  StockItem &shared_item) = 0;
 };
@@ -168,8 +170,7 @@ class MultiStock {
 		: public boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>,
 		  StockGetHandler
 	{
-		StockMap &map_stock;
-		Stock &stock;
+		Stock stock;
 		MultiStockClass &inner_class;
 
 		using OuterItemList =
@@ -197,7 +198,10 @@ class MultiStock {
 		std::size_t get_concurrency;
 
 	public:
-		MapItem(StockMap &_map_stock, Stock &_stock,
+		MapItem(EventLoop &event_loop, StockClass &_outer_class,
+			const char *_name,
+			std::size_t _limit, std::size_t _max_idle,
+			Event::Duration _clear_interval,
 			MultiStockClass &_inner_class) noexcept;
 		~MapItem() noexcept;
 
@@ -266,7 +270,19 @@ class MultiStock {
 		};
 	};
 
-	StockMap &hstock;
+	EventLoop &event_loop;
+
+	StockClass &outer_class;
+
+	/**
+	 * The maximum number of items in each stock.
+	 */
+	const std::size_t limit;
+
+	/**
+	 * The maximum number of permanent idle items in each stock.
+	 */
+	const std::size_t max_idle;
 
 	MultiStockClass &inner_class;
 
@@ -282,11 +298,17 @@ class MultiStock {
 	Map map;
 
 public:
-	MultiStock(StockMap &_hstock, MultiStockClass &_inner_class) noexcept;
+	MultiStock(EventLoop &_event_loop, StockClass &_outer_cls,
+		   std::size_t _limit, std::size_t _max_idle,
+		   MultiStockClass &_inner_class) noexcept;
 	~MultiStock() noexcept;
 
 	MultiStock(const MultiStock &) = delete;
 	MultiStock &operator=(const MultiStock &) = delete;
+
+	auto &GetEventLoop() const noexcept {
+		return event_loop;
+	}
 
 	/**
 	 * Discard all items which are idle and havn't been used in a

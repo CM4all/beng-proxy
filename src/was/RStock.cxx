@@ -138,11 +138,8 @@ RemoteWasStock::MultiClientStockClass::Create(CreateStockItem c,
 
 RemoteWasStock::RemoteWasStock(unsigned limit, unsigned max_idle,
 			       EventLoop &event_loop) noexcept
-	:multi_client_stock(event_loop,
-			    multi_client_stock_class,
-			    limit, max_idle,
-			    std::chrono::minutes{5}),
-	 multi_stock(multi_client_stock, *this) {}
+	:multi_stock(event_loop, multi_client_stock_class,
+		     limit, max_idle, *this) {}
 
 StockItem *
 RemoteWasStock::Create(CreateStockItem c, StockItem &shared_item)

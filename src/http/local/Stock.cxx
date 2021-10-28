@@ -33,7 +33,6 @@
 #include "Stock.hxx"
 #include "Address.hxx"
 #include "stock/Stock.hxx"
-#include "stock/MapStock.hxx"
 #include "stock/MultiStock.hxx"
 #include "stock/Class.hxx"
 #include "stock/Item.hxx"
@@ -55,7 +54,7 @@
 #include <string.h>
 
 class LhttpStock final : MultiStockClass, ListenChildStockClass {
-	ChildStockMap child_stock;
+	ChildStock child_stock;
 	MultiStock mchild_stock;
 
 public:
@@ -74,7 +73,6 @@ public:
 	}
 
 	void FadeAll() noexcept {
-		child_stock.GetStockMap().FadeAll();
 		mchild_stock.FadeAll();
 	}
 
@@ -86,6 +84,8 @@ public:
 
 private:
 	/* virtual methods from class MultiStockClass */
+	Event::Duration GetClearInterval(void *) const noexcept override;
+
 	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 
 	/* virtual methods from class ChildStockMapClass */
@@ -192,8 +192,24 @@ LhttpConnection::EventCallback(unsigned) noexcept
  */
 
 Event::Duration
+LhttpStock::GetClearInterval(void *info) const noexcept
+{
+	const auto &address = *(const LhttpAddress *)info;
+
+	return address.options.ns.mount.pivot_root == nullptr
+		? std::chrono::minutes(15)
+		/* lower clear_interval for jailed (per-account?)
+		   processes */
+		: std::chrono::minutes(5);
+}
+
+/* TODO: this method is unreachable we don't use ChildStockMap, but we
+   must implemented it because ListenChildStockClass is based on
+   ChildStockMapClass */
+Event::Duration
 LhttpStock::GetChildClearInterval(void *info) const noexcept
 {
+	return GetClearInterval(info);
 	const auto &address = *(const LhttpAddress *)info;
 
 	return address.options.ns.mount.pivot_root == nullptr
@@ -285,11 +301,10 @@ LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
 		       EventLoop &event_loop, SpawnService &spawn_service,
 		       SocketDescriptor log_socket,
 		       const ChildErrorLogOptions &log_options) noexcept
-	:child_stock(event_loop, spawn_service,
-		     *this,
-		     log_socket, log_options,
-		     limit, max_idle),
-	 mchild_stock(child_stock.GetStockMap(), *this)
+	:child_stock(spawn_service, *this,
+		     log_socket, log_options),
+	 mchild_stock(event_loop, child_stock,
+		      limit, max_idle, *this)
 {
 }
 
@@ -303,8 +318,6 @@ LhttpStock::FadeTag(StringView tag) noexcept
 		return StringListContains(item.GetTag(), '\0',
 					  tag);
 	});
-
-	child_stock.FadeTag(tag);
 }
 
 LhttpStock *

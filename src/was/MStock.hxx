@@ -44,8 +44,8 @@ class EventLoop;
 class SpawnService;
 template<typename T> struct ConstBuffer;
 
-class MultiWasStock final : MultiStockClass, ChildStockMapClass {
-	ChildStockMap child_stock;
+class MultiWasStock final : MultiStockClass, ChildStockClass {
+	ChildStock child_stock;
 	MultiStock mchild_stock;
 
 public:
@@ -64,7 +64,6 @@ public:
 	}
 
 	void FadeAll() noexcept {
-		child_stock.GetStockMap().FadeAll();
 		mchild_stock.FadeAll();
 	}
 
@@ -84,10 +83,10 @@ public:
 
 private:
 	/* virtual methods from class MultiStockClass */
+	Event::Duration GetClearInterval(void *info) const noexcept override;
 	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 
 	/* virtual methods from class ChildStockClass */
-	Event::Duration GetChildClearInterval(void *info) const noexcept override;
 	bool WantStderrPond(void *info) const noexcept override;
 	StringView GetChildTag(void *info) const noexcept override;
 	std::unique_ptr<ChildStockItem> CreateChild(CreateStockItem c,

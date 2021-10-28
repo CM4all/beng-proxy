@@ -294,20 +294,22 @@ struct MultiStock::MapItem::Waiting final
 	}
 };
 
-MultiStock::MapItem::MapItem(StockMap &_map_stock, Stock &_stock,
+MultiStock::MapItem::MapItem(EventLoop &event_loop, StockClass &_outer_class,
+			     const char *_name,
+			     std::size_t _limit, std::size_t _max_idle,
+			     Event::Duration _clear_interval,
 			     MultiStockClass &_inner_class) noexcept
-	:map_stock(_map_stock), stock(_stock), inner_class(_inner_class),
+	:stock(event_loop, _outer_class, _name, _limit, _max_idle,
+	       _clear_interval),
+	 inner_class(_inner_class),
 	 retry_event(stock.GetEventLoop(), BIND_THIS_METHOD(RetryWaiting))
 {
-	map_stock.SetSticky(stock, true);
 }
 
 MultiStock::MapItem::~MapItem() noexcept
 {
 	assert(items.empty());
 	assert(waiting.empty());
-
-	map_stock.SetSticky(stock, false);
 
 	if (get_cancel_ptr)
 		get_cancel_ptr.Cancel();
@@ -522,8 +524,12 @@ MultiStock::MapItem::Equal::operator()(const MapItem &a, const MapItem &b) const
 	return (*this)(a.stock.GetName(), b);
 }
 
-MultiStock::MultiStock(StockMap &_hstock, MultiStockClass &_inner_class) noexcept
-	:hstock(_hstock), inner_class(_inner_class),
+MultiStock::MultiStock(EventLoop &_event_loop, StockClass &_outer_cls,
+		       std::size_t _limit, std::size_t _max_idle,
+		       MultiStockClass &_inner_class) noexcept
+	:event_loop(_event_loop), outer_class(_outer_cls),
+	 limit(_limit), max_idle(_max_idle),
+	 inner_class(_inner_class),
 	 map(Map::bucket_traits(buckets, N_BUCKETS))
 {
 }
@@ -557,8 +563,9 @@ MultiStock::MakeMapItem(const char *uri, void *request) noexcept
 	auto [i, inserted] =
 		map.insert_check(uri, map.hash_function(), map.key_eq(), hint);
 	if (inserted) {
-		auto *item = new MapItem(hstock,
-					 hstock.GetStock(uri, request),
+		auto *item = new MapItem(GetEventLoop(), outer_class, uri,
+					 limit, max_idle,
+					 inner_class.GetClearInterval(request),
 					 inner_class);
 		map.insert_commit(*item, hint);
 		return *item;

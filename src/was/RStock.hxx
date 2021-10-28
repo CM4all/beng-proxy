@@ -33,7 +33,6 @@
 #pragma once
 
 #include "stock/Class.hxx"
-#include "stock/MapStock.hxx"
 #include "stock/MultiStock.hxx"
 
 class AllocatorPtr;
@@ -49,7 +48,6 @@ class RemoteWasStock final : MultiStockClass {
 
 	MultiClientStockClass multi_client_stock_class;
 
-	StockMap multi_client_stock;
 	MultiStock multi_stock;
 
 public:
@@ -58,7 +56,6 @@ public:
 
 	void FadeAll() noexcept {
 		multi_stock.FadeAll();
-		multi_client_stock.FadeAll();
 	}
 
 	/**
@@ -72,5 +69,9 @@ public:
 
 private:
 	/* virtual methods from class MultiStockClass */
+	Event::Duration GetClearInterval(void *) const noexcept override {
+		return std::chrono::minutes{5};
+	}
+
 	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 };

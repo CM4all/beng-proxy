@@ -96,6 +96,10 @@ class MyStockClass final : public StockClass, public MultiStockClass {
 
 public:
 	/* virtual methods from class StockClass */
+	Event::Duration GetClearInterval(void *) const noexcept override {
+		return std::chrono::hours{1};
+	}
+
 	void Create(CreateStockItem c, StockRequest request,
 		    CancellablePointer &cancel_ptr) override;
 
@@ -109,12 +113,11 @@ struct Instance {
 	EventLoop event_loop;
 
 	MyStockClass stock_class;
-	StockMap stock_map;
-	MultiStock multi_stock{stock_map, stock_class};
+	MultiStock multi_stock;
 
 	explicit Instance(unsigned limit=1) noexcept
-		:stock_map(event_loop, stock_class, limit, limit,
-			   std::chrono::hours{1}) {}
+		:multi_stock(event_loop, stock_class, limit, limit,
+			     stock_class) {}
 
 	void RunSome() noexcept {
 		for (unsigned i = 0; i < 8; ++i)

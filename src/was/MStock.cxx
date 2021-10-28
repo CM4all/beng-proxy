@@ -136,14 +136,15 @@ MultiWasStock::MultiWasStock(unsigned limit, unsigned max_idle,
 			     EventLoop &event_loop, SpawnService &spawn_service,
 			     SocketDescriptor log_socket,
 			     const ChildErrorLogOptions &log_options) noexcept
-	:child_stock(event_loop, spawn_service,
+	:child_stock(spawn_service,
 		     *this,
-		     log_socket, log_options,
-		     limit, max_idle),
-	 mchild_stock(child_stock.GetStockMap(), *this) {}
+		     log_socket, log_options),
+	 mchild_stock(event_loop, child_stock,
+		      limit, max_idle,
+		      *this) {}
 
 Event::Duration
-MultiWasStock::GetChildClearInterval(void *info) const noexcept
+MultiWasStock::GetClearInterval(void *info) const noexcept
 {
 	const auto &params = *(const CgiChildParams *)info;
 
@@ -207,8 +208,6 @@ MultiWasStock::FadeTag(StringView tag) noexcept
 		const auto &child = (const MultiWasChild &)item;
 		return child.IsTag(tag);
 	});
-
-	child_stock.FadeTag(tag);
 }
 
 void
