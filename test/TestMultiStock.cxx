@@ -156,6 +156,7 @@ struct Partition {
 
 	void PutReady(unsigned n=256) noexcept;
 	void PutDirty(unsigned n) noexcept;
+	void PutOuterDirty() noexcept;
 };
 
 struct MyLease final : public StockGetHandler {
@@ -272,6 +273,18 @@ Partition::PutDirty(unsigned n) noexcept
 	}
 
 	// unreachable
+}
+
+void
+Partition::PutOuterDirty() noexcept
+{
+	assert(!leases.empty());
+
+	auto &item = leases.front();
+	auto &outer_item = item.item->outer_item;
+	leases.pop_front();
+
+	outer_item.InvokeBusyDisconnect();
 }
 
 MyStockClass::DeferredRequest::DeferredRequest(Partition &_partition,
@@ -730,6 +743,46 @@ TEST(MultiStock, FadeIdle)
 
 	/* fade it; the one idle item is destroyed now */
 	instance.multi_stock.FadeAll();
+	instance.RunSome();
+	ASSERT_EQ(foo.factory_created, 1);
+	ASSERT_EQ(foo.factory_failed, 0);
+	ASSERT_EQ(foo.destroyed, 1);
+	ASSERT_EQ(foo.total, 0);
+	ASSERT_EQ(foo.waiting, 0);
+	ASSERT_EQ(foo.ready, 0);
+	ASSERT_EQ(foo.failed, 0);
+
+	/* request a new item */
+	foo.Get(1);
+	instance.RunSome();
+	ASSERT_EQ(foo.factory_created, 2);
+	ASSERT_EQ(foo.factory_failed, 0);
+	ASSERT_EQ(foo.destroyed, 1);
+	ASSERT_EQ(foo.total, 1);
+	ASSERT_EQ(foo.waiting, 0);
+	ASSERT_EQ(foo.ready, 1);
+	ASSERT_EQ(foo.failed, 0);
+}
+
+TEST(MultiStock, FadeOuter)
+{
+	Instance instance;
+
+	Partition foo{instance, "foo"};
+
+	/* create one */
+	foo.Get(1);
+	instance.RunSome();
+	ASSERT_EQ(foo.factory_created, 1);
+	ASSERT_EQ(foo.factory_failed, 0);
+	ASSERT_EQ(foo.destroyed, 0);
+	ASSERT_EQ(foo.total, 1);
+	ASSERT_EQ(foo.waiting, 0);
+	ASSERT_EQ(foo.ready, 1);
+	ASSERT_EQ(foo.failed, 0);
+
+	/* release it, fade the outer item */
+	foo.PutOuterDirty();
 	instance.RunSome();
 	ASSERT_EQ(foo.factory_created, 1);
 	ASSERT_EQ(foo.factory_failed, 0);
