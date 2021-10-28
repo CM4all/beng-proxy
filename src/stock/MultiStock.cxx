@@ -108,10 +108,10 @@ MultiStock::SharedItem::Fade() noexcept
 }
 
 inline void
-MultiStock::SharedItem::CreateLease(MultiStockClass &_cls,
+MultiStock::SharedItem::CreateLease(MultiStockClass &_inner_class,
 				    StockGetHandler &handler) noexcept
 try {
-	auto *lease = _cls.Create({*this, handler}, shared_item);
+	auto *lease = _inner_class.Create({*this, handler}, shared_item);
 	lease->InvokeCreateSuccess();
 } catch (...) {
 	ItemCreateError(handler, std::current_exception());
@@ -171,13 +171,13 @@ MultiStock::SharedItem::GetIdle(StockGetHandler &handler) noexcept
 }
 
 void
-MultiStock::SharedItem::GetLease(MultiStockClass &_cls,
+MultiStock::SharedItem::GetLease(MultiStockClass &_inner_class,
 				 StockGetHandler &handler) noexcept
 {
 	assert(CanUse());
 
 	if (!GetIdle(handler))
-		CreateLease(_cls, handler);
+		CreateLease(_inner_class, handler);
 }
 
 const char *
@@ -295,8 +295,8 @@ struct MultiStock::MapItem::Waiting final
 };
 
 MultiStock::MapItem::MapItem(StockMap &_map_stock, Stock &_stock,
-			     MultiStockClass &_cls) noexcept
-	:map_stock(_map_stock), stock(_stock), cls(_cls),
+			     MultiStockClass &_inner_class) noexcept
+	:map_stock(_map_stock), stock(_stock), inner_class(_inner_class),
 	 retry_event(stock.GetEventLoop(), BIND_THIS_METHOD(RetryWaiting))
 {
 	map_stock.SetSticky(stock, true);
@@ -329,14 +329,14 @@ MultiStock::MapItem::Get(StockRequest request, std::size_t concurrency,
 			 CancellablePointer &cancel_ptr) noexcept
 {
 	if (auto *i = FindUsable()) {
-		i->GetLease(cls, handler);
+		i->GetLease(inner_class, handler);
 		return;
 	}
 
 	if (auto *stock_item = stock.GetIdle()) {
 		auto *i = new SharedItem(*this, *stock_item, concurrency);
 		items.push_back(*i);
-		i->CreateLease(cls, handler);
+		i->CreateLease(inner_class, handler);
 		return;
 	}
 
@@ -420,7 +420,7 @@ MultiStock::MapItem::FinishWaiting(SharedItem &item) noexcept
 		   really needed */
 		DeleteEmptyItems(&item);
 
-	item.GetLease(cls, handler);
+	item.GetLease(inner_class, handler);
 }
 
 inline void
@@ -522,8 +522,8 @@ MultiStock::MapItem::Equal::operator()(const MapItem &a, const MapItem &b) const
 	return (*this)(a.stock.GetName(), b);
 }
 
-MultiStock::MultiStock(StockMap &_hstock, MultiStockClass &_cls) noexcept
-	:hstock(_hstock), cls(_cls),
+MultiStock::MultiStock(StockMap &_hstock, MultiStockClass &_inner_class) noexcept
+	:hstock(_hstock), inner_class(_inner_class),
 	 map(Map::bucket_traits(buckets, N_BUCKETS))
 {
 }
@@ -559,7 +559,7 @@ MultiStock::MakeMapItem(const char *uri, void *request) noexcept
 	if (inserted) {
 		auto *item = new MapItem(hstock,
 					 hstock.GetStock(uri, request),
-					 cls);
+					 inner_class);
 		map.insert_commit(*item, hint);
 		return *item;
 	} else

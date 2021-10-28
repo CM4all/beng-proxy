@@ -170,7 +170,7 @@ class MultiStock {
 	{
 		StockMap &map_stock;
 		Stock &stock;
-		MultiStockClass &cls;
+		MultiStockClass &inner_class;
 
 		using SharedItemList =
 			boost::intrusive::list<SharedItem,
@@ -198,7 +198,7 @@ class MultiStock {
 
 	public:
 		MapItem(StockMap &_map_stock, Stock &_stock,
-			MultiStockClass &_cls) noexcept;
+			MultiStockClass &_inner_class) noexcept;
 		~MapItem() noexcept;
 
 		bool IsEmpty() noexcept {
@@ -268,7 +268,7 @@ class MultiStock {
 
 	StockMap &hstock;
 
-	MultiStockClass &cls;
+	MultiStockClass &inner_class;
 
 	using Map =
 		boost::intrusive::unordered_set<MapItem,
@@ -282,7 +282,7 @@ class MultiStock {
 	Map map;
 
 public:
-	MultiStock(StockMap &_hstock, MultiStockClass &_cls) noexcept;
+	MultiStock(StockMap &_hstock, MultiStockClass &_inner_class) noexcept;
 	~MultiStock() noexcept;
 
 	MultiStock(const MultiStock &) = delete;
