@@ -88,11 +88,74 @@ using ChildStockItemHook =
 
 /**
  * A stock which spawns and manages reusable child processes
+ * (e.g. FastCGI servers).  The meaning of the "info" pointer and key
+ * strings are defined by the given #ChildStockClass.
+ */
+class ChildStock final : public StockClass {
+	SpawnService &spawn_service;
+
+	ChildStockClass &cls;
+
+	const SocketDescriptor log_socket;
+
+	const ChildErrorLogOptions log_options;
+
+	/**
+	 * A list of idle items, the most recently used at the end.
+	 * This is used by DiscardOldestIdle().
+	 */
+	boost::intrusive::list<ChildStockItem,
+			       boost::intrusive::base_hook<ChildStockItemHook>,
+			       boost::intrusive::constant_time_size<false>> idle;
+
+public:
+	ChildStock(SpawnService &_spawn_service,
+		   ChildStockClass &_cls,
+		   SocketDescriptor _log_socket,
+		   const ChildErrorLogOptions &_log_options) noexcept;
+	~ChildStock() noexcept;
+
+	auto &GetSpawnService() const noexcept {
+		return spawn_service;
+	}
+
+	auto &GetClass() const noexcept {
+		return cls;
+	}
+
+	SocketDescriptor GetLogSocket() const noexcept {
+		return log_socket;
+	}
+
+	const auto &GetLogOptions() const noexcept {
+		return log_options;
+	}
+
+	/**
+	 * For internal use only.
+	 */
+	void AddIdle(ChildStockItem &item) noexcept;
+
+	/**
+	 * Kill the oldest idle child process across all stocks.
+	 */
+	void DiscardOldestIdle() noexcept;
+
+private:
+	/* virtual methods from class StockClass */
+	void Create(CreateStockItem c, StockRequest request,
+		    CancellablePointer &cancel_ptr) override;
+};
+
+/**
+ * A stock which spawns and manages reusable child processes
  * (e.g. FastCGI servers).  It is based on #StockMap.  The meaning of
  * the "info" pointer and key strings are defined by the given
  * #ChildStockClass.
  */
-class ChildStock final : StockClass {
+class ChildStockMap final {
+	ChildStock cls;
+
 	class MyStockMap final : public StockMap {
 		ChildStockClass &ccls;
 
@@ -110,46 +173,25 @@ class ChildStock final : StockClass {
 		}
 	};
 
-	/**
-	 * A list of idle items, the most recently used at the end.
-	 * This is used by DiscardOldestIdle().
-	 */
-	boost::intrusive::list<ChildStockItem,
-			       boost::intrusive::base_hook<ChildStockItemHook>,
-			       boost::intrusive::constant_time_size<false>> idle;
-
 	MyStockMap map;
 
-	SpawnService &spawn_service;
-	ChildStockClass &cls;
-
-	const SocketDescriptor log_socket;
-
-	const ChildErrorLogOptions log_options;
-
 public:
-	ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
-		   ChildStockClass &_cls,
-		   SocketDescriptor _log_socket,
-		   const ChildErrorLogOptions &_log_options,
-		   unsigned _limit, unsigned _max_idle) noexcept;
-
-	~ChildStock() noexcept;
+	ChildStockMap(EventLoop &event_loop, SpawnService &_spawn_service,
+		      ChildStockClass &_cls,
+		      SocketDescriptor _log_socket,
+		      const ChildErrorLogOptions &_log_options,
+		      unsigned _limit, unsigned _max_idle) noexcept;
 
 	StockMap &GetStockMap() noexcept {
 		return map;
 	}
 
-	auto &GetSpawnService() const noexcept {
-		return spawn_service;
-	}
-
-	SocketDescriptor GetLogSocket() const noexcept {
-		return log_socket;
+	auto GetLogSocket() const noexcept {
+		return cls.GetLogSocket();
 	}
 
 	const auto &GetLogOptions() const noexcept {
-		return log_options;
+		return cls.GetLogOptions();
 	}
 
 	/**
@@ -158,17 +200,9 @@ public:
 	void FadeTag(StringView tag) noexcept;
 
 	/**
-	 * For internal use only.
-	 */
-	void AddIdle(ChildStockItem &item) noexcept;
-
-	/**
 	 * Kill the oldest idle child process across all stocks.
 	 */
-	void DiscardOldestIdle() noexcept;
-
-private:
-	/* virtual methods from class StockClass */
-	void Create(CreateStockItem c, StockRequest request,
-		    CancellablePointer &cancel_ptr) override;
+	void DiscardOldestIdle() noexcept {
+		cls.DiscardOldestIdle();
+	}
 };

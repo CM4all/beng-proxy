@@ -55,7 +55,7 @@
 #include <string.h>
 
 class LhttpStock final : MultiStockClass, ListenChildStockClass {
-	ChildStock child_stock;
+	ChildStockMap child_stock;
 	MultiStock mchild_stock;
 
 public:

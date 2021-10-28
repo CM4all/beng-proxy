@@ -63,7 +63,7 @@
 
 class FcgiStock final : StockClass, ListenChildStockClass {
 	StockMap hstock;
-	ChildStock child_stock;
+	ChildStockMap child_stock;
 
 public:
 	FcgiStock(unsigned limit, unsigned max_idle,

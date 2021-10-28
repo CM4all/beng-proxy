@@ -52,6 +52,16 @@ ChildStockClass::CreateChild(CreateStockItem c, void *info,
 						GetChildTag(info));
 }
 
+ChildStock::ChildStock(SpawnService &_spawn_service,
+		       ChildStockClass &_cls,
+		       SocketDescriptor _log_socket,
+		       const ChildErrorLogOptions &_log_options) noexcept
+	:spawn_service(_spawn_service), cls(_cls),
+	 log_socket(_log_socket),
+	 log_options(_log_options) {}
+
+ChildStock::~ChildStock() noexcept = default;
+
 /*
  * stock class
  *
@@ -73,22 +83,18 @@ ChildStock::Create(CreateStockItem c, StockRequest request,
  *
  */
 
-ChildStock::ChildStock(EventLoop &event_loop, SpawnService &_spawn_service,
-		       ChildStockClass &_cls,
-		       SocketDescriptor _log_socket,
-		       const ChildErrorLogOptions &_log_options,
-		       unsigned _limit, unsigned _max_idle) noexcept
-	:map(event_loop, *this, _cls, _limit, _max_idle),
-	 spawn_service(_spawn_service), cls(_cls),
-	 log_socket(_log_socket),
-	 log_options(_log_options)
+ChildStockMap::ChildStockMap(EventLoop &event_loop, SpawnService &_spawn_service,
+			     ChildStockClass &_cls,
+			     SocketDescriptor _log_socket,
+			     const ChildErrorLogOptions &_log_options,
+			     unsigned _limit, unsigned _max_idle) noexcept
+	:cls(_spawn_service, _cls, _log_socket, _log_options),
+	 map(event_loop, cls, _cls, _limit, _max_idle)
 {
 }
 
-ChildStock::~ChildStock() noexcept = default;
-
 void
-ChildStock::FadeTag(StringView tag) noexcept
+ChildStockMap::FadeTag(StringView tag) noexcept
 {
 	map.FadeIf([tag](const StockItem &_item) {
 		const auto &item = (const ChildStockItem &)_item;

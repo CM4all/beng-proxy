@@ -45,7 +45,7 @@ class SpawnService;
 template<typename T> struct ConstBuffer;
 
 class MultiWasStock final : MultiStockClass, ChildStockClass {
-	ChildStock child_stock;
+	ChildStockMap child_stock;
 	MultiStock mchild_stock;
 
 public:
