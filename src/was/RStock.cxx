@@ -61,19 +61,22 @@ struct RemoteMultiWasParams {
 class RemoteMultiWasConnection final
 	: public StockItem, Was::MultiClientHandler
 {
-	Was::MultiClient client;
+	std::optional<Was::MultiClient> client;
 
 	bool busy = true;
 
 public:
 	RemoteMultiWasConnection(CreateStockItem c,
 				 UniqueSocketDescriptor socket) noexcept
-		:StockItem(c),
-		 client(c.stock.GetEventLoop(), std::move(socket), *this)
-	{}
+		:StockItem(c)
+	{
+		Was::MultiClientHandler &client_handler = *this;
+		client.emplace(c.stock.GetEventLoop(), std::move(socket),
+			       client_handler);
+	}
 
 	WasSocket Connect() {
-		return client.Connect();
+		return client->Connect();
 	}
 
 	/* virtual methods from class StockItem */
@@ -82,6 +85,8 @@ public:
 
 private:
 	void Disconnected() noexcept {
+		client.reset();
+
 		fade = true;
 
 		if (!busy)
