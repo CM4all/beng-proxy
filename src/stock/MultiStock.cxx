@@ -230,6 +230,15 @@ MultiStock::SharedItem::ItemIdleDisconnect(StockItem &item) noexcept
 }
 
 void
+MultiStock::SharedItem::ItemBusyDisconnect(StockItem &item) noexcept
+{
+	assert(!item.is_idle);
+	assert(!busy.empty());
+
+	item.fade = true;
+}
+
+void
 MultiStock::SharedItem::ItemCreateSuccess(StockItem &item) noexcept
 {
 	busy.push_front(item);

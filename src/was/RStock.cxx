@@ -87,9 +87,9 @@ private:
 	void Disconnected() noexcept {
 		client.reset();
 
-		fade = true;
-
-		if (!busy)
+		if (busy)
+			InvokeBusyDisconnect();
+		else
 			InvokeIdleDisconnect();
 	}
 

@@ -143,6 +143,8 @@ ChildStockItem::Disconnected() noexcept
 {
 	fade = true;
 
-	if (!busy)
+	if (busy)
+		InvokeBusyDisconnect();
+	else
 		InvokeIdleDisconnect();
 }
