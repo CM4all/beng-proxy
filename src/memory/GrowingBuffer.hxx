@@ -193,6 +193,12 @@ public:
 	void *BeginWrite(size_type size) noexcept;
 
 	/**
+	 * Reserve at least one byte of space and return the writable
+	 * range.
+	 */
+	WritableBuffer<void> BeginWrite() noexcept;
+
+	/**
 	 * Call this method after the specified number of bytes have
 	 * been written to the buffer returned by BeginWrite().
 	 */

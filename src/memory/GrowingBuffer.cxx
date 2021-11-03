@@ -126,6 +126,22 @@ GrowingBuffer::BeginWrite(size_type size) noexcept
 	return buffer->data + buffer->fill;
 }
 
+WritableBuffer<void>
+GrowingBuffer::BeginWrite() noexcept
+{
+	head.Check();
+	if (tail != nullptr)
+		tail->Check();
+
+	auto *buffer = tail;
+	if (buffer == nullptr || buffer->IsFull())
+		buffer = &AppendBuffer();
+
+	assert(!buffer->IsFull());
+
+	return buffer->Write();
+}
+
 void
 GrowingBuffer::CommitWrite(size_type size) noexcept
 {
