@@ -43,6 +43,9 @@
 #include "pool/UniquePtr.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/UnusedHoldPtr.hxx"
+#include "istream/BlockIstream.hxx"
+#include "istream/ConcatIstream.hxx"
+#include "istream/InjectIstream.hxx"
 #include "istream/HeadIstream.hxx"
 #include "istream/BlockIstream.hxx"
 #include "istream/ZeroIstream.hxx"
@@ -128,6 +131,12 @@ public:
 			client_fs.Close();
 			client_fs.Destroy();
 		}
+	}
+
+	void WaitClosed() noexcept {
+		auto &event_loop = GetEventLoop();
+		while (connection != nullptr)
+			event_loop.LoopOnce();
 	}
 
 private:
@@ -395,6 +404,36 @@ TestBufferedMirror(Server &server)
 }
 
 static void
+TestAbortedRequestBody(Server &server)
+{
+	bool request_received = false;
+	server.SetRequestHandler([&](IncomingHttpRequest &request, CancellablePointer &cancel_ptr) noexcept {
+		request_received = true;
+		NewFromPool<BufferedMirror>(request.pool, request, cancel_ptr);
+	});
+
+	char *data = RandomString(server.GetPool(), 65536);
+
+	auto [inject_istream, inject_control] = istream_inject_new(server.GetPool(),
+								   istream_block_new(server.GetPool()));
+
+	Client client;
+	client.SendRequest(server,
+			   HTTP_METHOD_POST, "/AbortedRequestBody", {},
+			   NewConcatIstream(server.GetPool(),
+					    istream_string_new(server.GetPool(), data),
+					    istream_head_new(server.GetPool(),
+							     std::move(inject_istream),
+							     32768, true)));
+
+	while (!request_received)
+		server.GetEventLoop().LoopOnce();
+
+	inject_control.InjectFault(std::make_exception_ptr(std::runtime_error("Inject")));
+	server.WaitClosed();
+}
+
+static void
 TestDiscardTinyRequestBody(Server &server)
 {
 	server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &) noexcept {
@@ -472,6 +511,14 @@ try {
 		TestBufferedMirror(server);
 		TestDiscardTinyRequestBody(server);
 		TestDiscardedHugeRequestBody(server);
+
+		server.CloseClientSocket();
+		instance.event_loop.Dispatch();
+	}
+
+	{
+		Server server(instance.root_pool, instance.event_loop);
+		TestAbortedRequestBody(server);
 
 		server.CloseClientSocket();
 		instance.event_loop.Dispatch();
