@@ -392,6 +392,12 @@ HttpServerConnection::SubmitRequest()
 			return false;
 
 		request.in_handler = false;
+
+		if (request.read_state == Request::BODY &&
+		    socket->IsConnected())
+			/* enable splice() if the handler supports
+			   it */
+			socket->SetDirect(request_body_reader->CheckDirect(socket->GetType()));
 	}
 
 	return true;
