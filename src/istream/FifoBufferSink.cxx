@@ -67,6 +67,7 @@ FifoBufferSink::OnIstreamReady() noexcept
 		auto r = bucket.GetBuffer();
 		size_t n_copy = std::min(w.size, r.size);
 		memcpy(w.data, r.data, n_copy);
+		buffer.Append(nbytes);
 		nbytes += n_copy;
 
 		if (n_copy < r.size) {
