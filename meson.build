@@ -419,6 +419,7 @@ subdir('src/istream')
 memory_istream = static_library(
   'memory_istream',
   'src/memory/istream_gb.cxx',
+  'src/memory/SinkGrowingBuffer.cxx',
   'src/memory/istream_rubber.cxx',
   'src/memory/sink_rubber.cxx',
   include_directories: inc,
