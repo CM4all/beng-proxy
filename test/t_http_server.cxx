@@ -49,12 +49,16 @@
 #include "istream/istream_string.hxx"
 #include "istream/Sink.hxx"
 #include "memory/fb_pool.hxx"
+#include "memory/GrowingBuffer.hxx"
+#include "memory/SinkGrowingBuffer.hxx"
+#include "memory/istream_gb.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/Cancellable.hxx"
+#include "util/Exception.hxx"
 #include "util/PrintException.hxx"
 #include "util/RuntimeError.hxx"
 #include "stopwatch.hxx"
@@ -325,6 +329,71 @@ TestMirror(Server &server)
 	client.ExpectResponse(server, HTTP_STATUS_OK, "foo");
 }
 
+class BufferedMirror final : GrowingBufferSinkHandler, Cancellable {
+	IncomingHttpRequest &request;
+
+	GrowingBufferSink sink;
+
+public:
+	BufferedMirror(IncomingHttpRequest &_request,
+		       CancellablePointer &cancel_ptr) noexcept
+		:request(_request),
+		 sink(std::move(request.body), *this)
+	{
+		cancel_ptr = *this;
+	}
+
+private:
+	void Destroy() noexcept {
+		this->~BufferedMirror();
+	}
+
+	void Cancel() noexcept override {
+		Destroy();
+	}
+
+	/* virtual methods from class GrowingBufferSinkHandler */
+	void OnGrowingBufferSinkEof(GrowingBuffer buffer) noexcept {
+		request.SendResponse(HTTP_STATUS_OK, {},
+				     istream_gb_new(request.pool,
+						    std::move(buffer)));
+	}
+
+	void OnGrowingBufferSinkError(std::exception_ptr error) noexcept {
+		const char *msg = p_strdup(request.pool,
+					   GetFullMessage(error).c_str());
+
+		request.SendResponse(HTTP_STATUS_INTERNAL_SERVER_ERROR, {},
+				     istream_string_new(request.pool, msg));
+	}
+};
+
+static char *
+RandomString(AllocatorPtr alloc, std::size_t length) noexcept
+{
+	char *p = alloc.NewArray<char>(length + 1), *q = p;
+	for (std::size_t i = 0; i < length; ++i)
+		*q++ = 'A' + (i % 26);
+	*q = 0;
+	return p;
+}
+
+static void
+TestBufferedMirror(Server &server)
+{
+	server.SetRequestHandler([](IncomingHttpRequest &request, CancellablePointer &cancel_ptr) noexcept {
+		NewFromPool<BufferedMirror>(request.pool, request, cancel_ptr);
+	});
+
+	char *data = RandomString(server.GetPool(), 65536);
+
+	Client client;
+	client.SendRequest(server,
+			   HTTP_METHOD_POST, "/buffered", {},
+			   istream_string_new(server.GetPool(), data));
+	client.ExpectResponse(server, HTTP_STATUS_OK, data);
+}
+
 static void
 TestDiscardTinyRequestBody(Server &server)
 {
@@ -400,6 +469,7 @@ try {
 		Server server(instance.root_pool, instance.event_loop);
 		TestSimple(server);
 		TestMirror(server);
+		TestBufferedMirror(server);
 		TestDiscardTinyRequestBody(server);
 		TestDiscardedHugeRequestBody(server);
 
