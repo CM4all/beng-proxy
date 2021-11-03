@@ -97,6 +97,7 @@ public:
 
 	void Disable() noexcept {
 		event.Cancel();
+		defer_read.Cancel();
 	}
 
 	bool SetLength(uint64_t _length) noexcept;
@@ -141,6 +142,11 @@ private:
 		assert(!buffer.IsDefined() || !buffer.IsFull());
 
 		event.ScheduleRead();
+	}
+
+	void CancelRead() noexcept {
+		defer_read.Cancel();
+		event.CancelRead();
 	}
 
 	void AbortError(std::exception_ptr ep) noexcept {
@@ -300,7 +306,7 @@ WasInput::ReadToBuffer()
 	received += nbytes;
 
 	if (buffer.IsFull())
-		event.CancelRead();
+		CancelRead();
 }
 
 inline bool
@@ -343,7 +349,7 @@ WasInput::TryDirect() noexcept
 
 	ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, GetPipe().Get(), max_length);
 	if (nbytes == ISTREAM_RESULT_BLOCKING) {
-		event.CancelRead();
+		CancelRead();
 		return false;
 	}
 
@@ -418,6 +424,7 @@ WasInput::Free(std::exception_ptr ep) noexcept
 
 	buffer.FreeIfDefined();
 
+	defer_read.Cancel();
 	event.Cancel();
 
 	if (!closed && enabled)
@@ -488,6 +495,7 @@ void
 WasInput::PrematureThrow(uint64_t _length)
 {
 	buffer.FreeIfDefined();
+	defer_read.Cancel();
 	event.Cancel();
 
 	if (known_length && _length > length)
