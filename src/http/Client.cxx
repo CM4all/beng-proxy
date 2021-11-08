@@ -284,6 +284,19 @@ private:
 	 * Release the socket held by this object.
 	 */
 	void ReleaseSocket(bool preserve, bool reuse) noexcept {
+		assert(!socket.IsReleased());
+
+		if (HasInput()) {
+			/* the request body is still being
+			   transferred */
+			CloseInput();
+
+			/* closing a partially transferred request
+			   body means the HTTP connection is dirty, so
+			   we need to disable keep-alive */
+			reuse = false;
+		}
+
 		socket.Release(preserve, reuse);
 	}
 
