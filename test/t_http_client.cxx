@@ -51,6 +51,7 @@
 #include "pool/UniquePtr.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "stopwatch.hxx"
+#include "util/AbortFlag.hxx"
 
 #include <memory>
 
@@ -185,6 +186,10 @@ struct Connection {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::NOP);
 	}
+
+	static Connection *NewIgnoredRequestBody(struct pool &, EventLoop &event_loop) {
+		return New(event_loop, "./test/ignored_request_body.sh", nullptr);
+	}
 };
 
 Connection::~Connection()
@@ -310,6 +315,51 @@ test_no_keepalive(Context<Connection> &c)
 	assert(c.body_error == nullptr);
 }
 
+/**
+ * The server ignores the request body, and sends the whole response
+ * (keep-alive enabled).  The HTTP client's response body handler
+ * blocks, and then more request body data becomes available.  This
+ * used to trigger an assertion failure, because the HTTP client
+ * forgot about the in-progress request body.
+ */
+template<class Connection>
+static void
+test_ignored_request_body(Context<Connection> &c)
+{
+	auto delayed = istream_delayed_new(*c.pool, c.event_loop);
+	AbortFlag abort_flag(delayed.second.cancel_ptr);
+	auto zero = istream_zero_new(*c.pool);
+
+	c.data_blocking = 1;
+	c.connection = Connection::NewIgnoredRequestBody(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HTTP_METHOD_GET, "/foo", {},
+			      std::move(delayed.first),
+#ifdef HAVE_EXPECT_100
+			      false,
+#endif
+			      c, c.cancel_ptr);
+
+	c.WaitForResponse();
+
+	/* at this point, the HTTP client must have closed the request
+	   body; but if it has not due to the bug, this will trigger
+	   the assertion failure: */
+	if (!abort_flag.aborted) {
+		delayed.second.Set(std::move(zero));
+		c.event_loop.Dispatch();
+	}
+
+	assert(abort_flag.aborted);
+
+	assert(c.released);
+	assert(c.connection == nullptr);
+	assert(c.status == HTTP_STATUS_OK);
+	assert(c.body_data == 3);
+	assert(c.body_error == nullptr);
+	assert(!c.reuse);
+}
+
 /*
  * main
  *
@@ -325,4 +375,5 @@ main(int, char **)
 
 	run_all_tests<Connection>();
 	run_test<Connection>(test_no_keepalive);
+	run_test<Connection>(test_ignored_request_body);
 }
