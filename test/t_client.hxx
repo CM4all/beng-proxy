@@ -1243,7 +1243,11 @@ test_close_100(Context<Connection> &c)
 	assert(c.released);
 	assert(c.aborted);
 	assert(c.request_error != nullptr);
-	assert(strstr(GetFullMessage(c.request_error).c_str(), "closed the socket prematurely") != nullptr);
+	assert(strstr(GetFullMessage(c.request_error).c_str(), "closed the socket prematurely") != nullptr ||
+	       /* the following two errors are not the primary error,
+		  but sometimes occur depending on the timing: */
+	       strstr(GetFullMessage(c.request_error).c_str(), "Connection reset by peer") != nullptr ||
+	       strstr(GetFullMessage(c.request_error).c_str(), "unexpected status 100") != nullptr);
 	assert(c.body_error == nullptr);
 	assert(!c.reuse);
 }
