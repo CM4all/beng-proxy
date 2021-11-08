@@ -333,7 +333,7 @@ test_ignored_request_body(Context<Connection> &c)
 	c.data_blocking = 1;
 	c.connection = Connection::NewIgnoredRequestBody(*c.pool, c.event_loop);
 	c.connection->Request(c.pool, c,
-			      HTTP_METHOD_GET, "/foo", {},
+			      HTTP_METHOD_GET, "/ignored-request-body", {},
 			      std::move(delayed.first),
 #ifdef HAVE_EXPECT_100
 			      false,
