@@ -283,14 +283,12 @@ private:
 	void ClearRequestStream() noexcept {
 		assert(HasInput());
 
-		request.pending_body.reset();
 		ClearInput();
 	}
 
 	void CloseRequestStream() noexcept {
 		assert(HasInput());
 
-		request.pending_body.reset();
 		CloseInput();
 	}
 
