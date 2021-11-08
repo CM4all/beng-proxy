@@ -952,7 +952,7 @@ HttpClient::FeedHeaders(ConstBuffer<void> b)
 	if (response.status == HTTP_STATUS_CONTINUE) {
 		assert(response.state == Response::State::END);
 
-		if (!request.pending_body) {
+		if (!request.pending_body || !HasInput()) {
 #ifndef NDEBUG
 			/* assertion workaround */
 			response.state = Response::State::STATUS;
