@@ -280,6 +280,23 @@ private:
 		socket.ScheduleWrite();
 	}
 
+	void ClearRequestStream() noexcept {
+		assert(HasInput());
+
+		ClearInput();
+	}
+
+	void CloseRequestStream() noexcept {
+		assert(HasInput());
+
+		CloseInput();
+	}
+
+	void MaybeCloseRequestStream() noexcept {
+		if (HasInput())
+			CloseRequestStream();
+	}
+
 	/**
 	 * Release the socket held by this object.
 	 */
@@ -289,7 +306,7 @@ private:
 		if (HasInput()) {
 			/* the request body is still being
 			   transferred */
-			CloseInput();
+			CloseRequestStream();
 
 			/* closing a partially transferred request
 			   body means the HTTP connection is dirty, so
@@ -428,8 +445,7 @@ HttpClient::AbortResponseBody(std::exception_ptr ep) noexcept
 {
 	assert(response.state == Response::State::BODY);
 
-	if (HasInput())
-		CloseInput();
+	MaybeCloseRequestStream();
 
 	if (response_body_reader.GotEndChunk()) {
 		/* avoid recursing from DechunkIstream: when DechunkIstream
@@ -653,7 +669,7 @@ HttpClient::TryWriteBuckets()
 		assert(!request.pending_body);
 
 		stopwatch.RecordEvent("request_end");
-		CloseInput();
+		CloseRequestStream();
 		socket.ScheduleReadNoTimeout(true);
 		break;
 
@@ -1041,9 +1057,7 @@ HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type)
 	}
 
 	if (nbytes == ISTREAM_RESULT_EOF) {
-		if (HasInput())
-			CloseInput();
-
+		MaybeCloseRequestStream();
 		response_body_reader.SocketEOF(0);
 		Destroy();
 		return DirectResult::CLOSED;
@@ -1103,8 +1117,7 @@ HttpClient::OnBufferedClosed() noexcept
 {
 	stopwatch.RecordEvent("end");
 
-	if (HasInput())
-		CloseInput();
+	MaybeCloseRequestStream();
 
 	/* close the socket, but don't release it just yet; data may be
 	   still in flight in a SocketFilter (e.g. SSL/TLS); we'll do that
@@ -1193,8 +1206,7 @@ HttpClient::OnBufferedBroken() noexcept
 
 	keep_alive = false;
 
-	if (HasInput())
-		CloseInput();
+	MaybeCloseRequestStream();
 
 	socket.ScheduleReadNoTimeout(true);
 
@@ -1272,8 +1284,7 @@ HttpClient::OnEof() noexcept
 {
 	stopwatch.RecordEvent("request_end");
 
-	assert(HasInput());
-	ClearInput();
+	ClearRequestStream();
 
 	socket.UnscheduleWrite();
 	socket.ScheduleReadNoTimeout(response.state == Response::State::BODY &&
@@ -1290,8 +1301,7 @@ HttpClient::OnError(std::exception_ptr ep) noexcept
 
 	stopwatch.RecordEvent("request_error");
 
-	assert(HasInput());
-	ClearInput();
+	ClearRequestStream();
 
 	switch (response.state) {
 	case Response::State::STATUS:
