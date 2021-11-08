@@ -341,6 +341,7 @@ test_ignored_request_body(Context<Connection> &c)
 			      c, c.cancel_ptr);
 
 	c.WaitForResponse();
+	c.WaitForEndOfBody();
 
 	/* at this point, the HTTP client must have closed the request
 	   body; but if it has not due to the bug, this will trigger
@@ -355,7 +356,7 @@ test_ignored_request_body(Context<Connection> &c)
 	assert(c.released);
 	assert(c.connection == nullptr);
 	assert(c.status == HTTP_STATUS_OK);
-	assert(c.body_data == 3);
+	assert(c.consumed_body_data == 3);
 	assert(c.body_error == nullptr);
 	assert(!c.reuse);
 }
