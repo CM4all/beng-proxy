@@ -650,6 +650,7 @@ HttpClient::TryWriteBuckets()
 
 	case BucketResult::DEPLETED:
 		assert(HasInput());
+		assert(!request.pending_body);
 
 		stopwatch.RecordEvent("request_end");
 		CloseInput();
