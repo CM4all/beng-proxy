@@ -961,12 +961,6 @@ HttpClient::FeedHeaders(ConstBuffer<void> b)
 					      "unexpected status 100");
 		}
 
-		/* reset state, we're now expecting the real response */
-		response.state = Response::State::STATUS;
-
-		request.pending_body->Resume();
-		request.pending_body.reset();
-
 		if (!IsConnected()) {
 #ifndef NDEBUG
 			/* assertion workaround */
@@ -975,6 +969,12 @@ HttpClient::FeedHeaders(ConstBuffer<void> b)
 			throw HttpClientError(HttpClientErrorCode::UNSPECIFIED,
 					      "Peer closed the socket prematurely after status 100");
 		}
+
+		/* reset state, we're now expecting the real response */
+		response.state = Response::State::STATUS;
+
+		request.pending_body->Resume();
+		request.pending_body.reset();
 
 		DeferWrite();
 
