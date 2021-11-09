@@ -96,6 +96,11 @@ private:
 		return BufferedResult::BLOCKING;
 	}
 
+	bool OnBufferedHangup() noexcept override {
+		Destroy();
+		return false;
+	}
+
 	bool OnBufferedClosed() noexcept override {
 		Destroy();
 		return false;
