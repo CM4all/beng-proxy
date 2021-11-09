@@ -384,6 +384,7 @@ private:
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override;
 	DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
+	bool OnBufferedHangup() noexcept override;
 	bool OnBufferedClosed() noexcept override;
 	bool OnBufferedRemaining(size_t remaining) noexcept override;
 	bool OnBufferedWrite() override;
@@ -1099,12 +1100,20 @@ HttpClient::OnBufferedDirect(SocketDescriptor fd, FdType fd_type)
 }
 
 bool
-HttpClient::OnBufferedClosed() noexcept
+HttpClient::OnBufferedHangup() noexcept
 {
-	stopwatch.RecordEvent("end");
+	stopwatch.RecordEvent("hup");
 
 	if (HasInput())
 		CloseInput();
+
+	return true;
+}
+
+bool
+HttpClient::OnBufferedClosed() noexcept
+{
+	stopwatch.RecordEvent("end");
 
 	/* close the socket, but don't release it just yet; data may be
 	   still in flight in a SocketFilter (e.g. SSL/TLS); we'll do that
