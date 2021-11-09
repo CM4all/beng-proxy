@@ -361,6 +361,7 @@ struct HttpServerConnection final
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override;
 	DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
+	bool OnBufferedHangup() noexcept override;
 	bool OnBufferedClosed() noexcept override;
 	bool OnBufferedWrite() override;
 	bool OnBufferedDrained() noexcept override;

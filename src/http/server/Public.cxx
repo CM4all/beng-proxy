@@ -279,6 +279,13 @@ HttpServerConnection::OnBufferedDrained() noexcept
 }
 
 bool
+HttpServerConnection::OnBufferedHangup() noexcept
+{
+	Cancel();
+	return false;
+}
+
+bool
 HttpServerConnection::OnBufferedClosed() noexcept
 {
 	Cancel();
