@@ -362,13 +362,13 @@ private:
 	}
 
 	/* virtual methods from class GrowingBufferSinkHandler */
-	void OnGrowingBufferSinkEof(GrowingBuffer buffer) noexcept {
+	void OnGrowingBufferSinkEof(GrowingBuffer buffer) noexcept override {
 		request.SendResponse(HTTP_STATUS_OK, {},
 				     istream_gb_new(request.pool,
 						    std::move(buffer)));
 	}
 
-	void OnGrowingBufferSinkError(std::exception_ptr error) noexcept {
+	void OnGrowingBufferSinkError(std::exception_ptr error) noexcept override {
 		const char *msg = p_strdup(request.pool,
 					   GetFullMessage(error).c_str());
 
