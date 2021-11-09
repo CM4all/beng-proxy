@@ -132,6 +132,15 @@ LbTcpConnection::Inbound::OnBufferedData()
 }
 
 bool
+LbTcpConnection::Inbound::OnBufferedHangup() noexcept
+{
+	auto &tcp = LbTcpConnection::FromInbound(*this);
+
+	tcp.OnTcpEnd();
+	return false;
+}
+
+bool
 LbTcpConnection::Inbound::OnBufferedClosed() noexcept
 {
 	auto &tcp = LbTcpConnection::FromInbound(*this);
