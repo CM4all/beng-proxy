@@ -34,11 +34,16 @@
 
 class GrowingBuffer;
 struct HttpStats;
+struct TaggedHttpStats;
 
 namespace Prometheus {
 
 void
 Write(GrowingBuffer &buffer, const char *process, const char *listener,
       const HttpStats &stats) noexcept;
+
+void
+Write(GrowingBuffer &buffer, const char *process, const char *listener,
+      const TaggedHttpStats &stats) noexcept;
 
 } // namespace Prometheus

@@ -35,7 +35,7 @@
 #include "PInstance.hxx"
 #include "CommandLine.hxx"
 #include "Config.hxx"
-#include "stats/HttpStats.hxx"
+#include "stats/TaggedHttpStats.hxx"
 #include "avahi/ErrorHandler.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
@@ -100,7 +100,7 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 	std::unique_ptr<Uring::Manager> uring;
 #endif
 
-	std::map<std::string, HttpStats> listener_stats;
+	std::map<std::string, TaggedHttpStats> listener_stats;
 
 	std::forward_list<BPListener> listeners;
 

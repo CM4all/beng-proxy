@@ -39,7 +39,7 @@
 
 struct BpInstance;
 struct SslConfig;
-struct HttpStats;
+struct TaggedHttpStats;
 class TranslationService;
 class BpPrometheusExporter;
 
@@ -49,7 +49,7 @@ class BpPrometheusExporter;
 class BPListener final : FilteredSocketListenerHandler {
 	BpInstance &instance;
 
-	HttpStats &http_stats;
+	TaggedHttpStats &http_stats;
 
 	const std::shared_ptr<TranslationService> translation_service;
 
@@ -63,7 +63,7 @@ class BPListener final : FilteredSocketListenerHandler {
 
 public:
 	BPListener(BpInstance &_instance,
-		   HttpStats &_http_stats,
+		   TaggedHttpStats &_http_stats,
 		   std::shared_ptr<TranslationService> _translation_service,
 		   const char *_tag,
 		   bool _prometheus_exporter,

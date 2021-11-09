@@ -248,6 +248,7 @@ class Translation(Protocol):
             response.pair('UPLOAD_BUFFER_SIZE', '4M')
             response.packet(TRANSLATE_FILE_NOT_FOUND, '404')
             response.packet(TRANSLATE_ENOTDIR, 'foo')
+            response.packet(TRANSLATE_STATS_TAG, 'coma')
         elif uri[-4:] == '.php':
             # run PHP-FastCGI
             response.packet(TRANSLATE_EASY_BASE)
@@ -322,6 +323,7 @@ class Translation(Protocol):
                     response.packet(TRANSLATE_WAS, coma_was)
                     response.packet(TRANSLATE_NO_NEW_PRIVS)
                     response.pair('COMA_CLASS', path)
+                    response.packet(TRANSLATE_STATS_TAG, 'coma')
                 else:
                     response.packet(TRANSLATE_PATH, path)
                 response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1' + request.probe_suffix)
@@ -354,6 +356,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.pair('COMA_CLASS', path)
             response.pair('UPLOAD_BUFFER_SIZE', '4M')
+            response.packet(TRANSLATE_STATS_TAG, 'coma')
         else:
             response.path(path)
             response.expires_relative(1800)
@@ -374,6 +377,7 @@ class Translation(Protocol):
         relative_path, path_info = relative_uri[:i], relative_uri[i:]
 
         path = os.path.join(base_path, relative_path)
+        response.packet(TRANSLATE_STATS_TAG, 'coma')
         response.packet(TRANSLATE_DOCUMENT_ROOT, base_path)
         response.packet(TRANSLATE_WAS, coma_was)
         response.pair('COMA_CLASS', path)

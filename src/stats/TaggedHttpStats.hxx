@@ -30,37 +30,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RLogger.hxx"
-#include "Instance.hxx"
-#include "access_log/Glue.hxx"
-#include "http/IncomingRequest.hxx"
-#include "util/StringView.hxx"
+#pragma once
 
-BpRequestLogger::BpRequestLogger(BpInstance &_instance,
-				 TaggedHttpStats &_http_stats) noexcept
-	:instance(_instance), http_stats(_http_stats),
-	 start_time(instance.event_loop.SteadyNow())
-{
-}
+#include "HttpStats.hxx"
 
-void
-BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
-				http_status_t status, int64_t length,
-				uint64_t bytes_received, uint64_t bytes_sent) noexcept
-{
-	instance.http_stats.AddRequest(status,
-				       bytes_received, bytes_sent);
+#include <map>
+#include <string>
 
-	http_stats.AddRequest(StringView{stats_tag}, status,
-			      bytes_received, bytes_sent);
+struct TaggedHttpStats {
+	std::map<std::string, HttpStats, std::less<>> per_tag;
 
-	if (instance.access_log != nullptr)
-		instance.access_log->Log(instance.event_loop.SystemNow(),
-					 request, site_name,
-					 nullptr,
-					 request.headers.Get("referer"),
-					 request.headers.Get("user-agent"),
-					 status, length,
-					 bytes_received, bytes_sent,
-					 GetDuration(instance.event_loop.SteadyNow()));
-}
+	void AddRequest(std::string_view tag,
+			http_status_t status,
+			uint64_t bytes_received,
+			uint64_t bytes_sent) noexcept {
+		auto &s = FindOrEmplace(tag);
+		s.AddRequest(status, bytes_received, bytes_sent);
+	}
+
+private:
+	HttpStats &FindOrEmplace(std::string_view tag) noexcept {
+		if (auto i = per_tag.find(tag); i != per_tag.end())
+			return i->second;
+
+		return per_tag.try_emplace(std::string{tag}).first->second;
+	}
+};

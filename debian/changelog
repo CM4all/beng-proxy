@@ -3,7 +3,8 @@ cm4all-beng-proxy (17.0.73) unstable; urgency=low
   * was: fix assertion failure
   * http_server: fix assertion failure
   * http_client: fix assertion failure
-  * prometheus: show per-status statistics
+  * prometheus: show per-status and per-tag statistics
+  * translation: add packet STATS_TAG
   * debian: build the Buster backport with clang 13
 
  --   
