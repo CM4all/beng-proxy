@@ -143,6 +143,7 @@ private:
 
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override;
+	bool OnBufferedHangup() noexcept override;
 	bool OnBufferedClosed() noexcept override;
 
 	gcc_noreturn
@@ -173,6 +174,13 @@ FilteredSocketStockConnection::OnBufferedData()
 	logger(2, "unexpected data in idle TCP connection");
 	InvokeIdleDisconnect();
 	return BufferedResult::CLOSED;
+}
+
+bool
+FilteredSocketStockConnection::OnBufferedHangup() noexcept
+{
+	InvokeIdleDisconnect();
+	return false;
 }
 
 bool
