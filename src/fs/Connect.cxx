@@ -117,6 +117,7 @@ private:
 
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override;
+	bool OnBufferedHangup() noexcept override;
 	bool OnBufferedClosed() noexcept override;
 
 	bool OnBufferedWrite() override {
@@ -206,6 +207,15 @@ BufferedResult
 ConnectFilteredSocketOperation::OnBufferedData()
 {
 	return BufferedResult::BLOCKING;
+}
+
+bool
+ConnectFilteredSocketOperation::OnBufferedHangup() noexcept
+{
+	stopwatch.RecordEvent("error");
+	handler.OnConnectFilteredSocketError(std::make_exception_ptr(std::runtime_error("Peer closed the connection prematurely")));
+	delete this;
+	return false;
 }
 
 bool
