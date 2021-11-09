@@ -497,6 +497,7 @@ public:
 private:
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override;
+	bool OnBufferedHangup() noexcept override;
 	bool OnBufferedClosed() noexcept override;
 	bool OnBufferedRemaining(size_t remaining) noexcept override;
 	bool OnBufferedEnd() noexcept override;

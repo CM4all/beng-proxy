@@ -66,6 +66,12 @@ FilteredSocket::OnBufferedData()
 }
 
 bool
+FilteredSocket::OnBufferedHangup() noexcept
+{
+	return handler->OnBufferedHangup();
+}
+
+bool
 FilteredSocket::OnBufferedClosed() noexcept
 {
 	return InvokeClosed();
