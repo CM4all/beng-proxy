@@ -47,6 +47,9 @@ Write(GrowingBuffer &buffer, const char *process, const char *listener,
 # HELP beng_proxy_http_requests Number of HTTP requests
 # TYPE beng_proxy_http_requests counter
 
+# HELP beng_proxy_http_requests_per_status Number of HTTP requests splitted by status
+# TYPE beng_proxy_http_requests_per_status counter
+
 # HELP beng_proxy_http_traffic Number of bytes transferred
 # TYPE beng_proxy_http_traffic counter
 
@@ -57,6 +60,13 @@ Write(GrowingBuffer &buffer, const char *process, const char *listener,
 	       process, listener, stats.n_requests,
 	       process, listener, stats.traffic_received,
 	       process, listener, stats.traffic_sent);
+
+	for (std::size_t i = 0; i < stats.n_per_status.size(); ++i)
+		if (stats.n_per_status[i] > 0)
+			buffer.Format("beng_proxy_http_requests_per_status{process=\"%s\",listener=\"%s\",status=\"%u\"} %" PRIu64 "\n",
+				      process, listener,
+				      IndexToHttpStatus(i),
+				      stats.n_per_status[i]);
 }
 
 } // namespace Prometheus

@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include "http/StatusIndex.hxx"
+
 #include <cstdint>
 
 struct HttpStats {
@@ -39,10 +41,15 @@ struct HttpStats {
 	uint64_t traffic_received = 0;
 	uint64_t traffic_sent = 0;
 
-	void AddRequest(uint64_t bytes_received,
+	std::array<uint64_t, valid_http_status_array.size()> n_per_status{};
+
+	void AddRequest(http_status_t status,
+			uint64_t bytes_received,
 			uint64_t bytes_sent) noexcept {
 		++n_requests;
 		traffic_received += bytes_received;
 		traffic_sent += bytes_sent;
+
+		++n_per_status[HttpStatusToIndex(status)];
 	}
 };

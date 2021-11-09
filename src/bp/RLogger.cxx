@@ -47,8 +47,10 @@ BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 				http_status_t status, int64_t length,
 				uint64_t bytes_received, uint64_t bytes_sent) noexcept
 {
-	instance.http_stats.AddRequest(bytes_received, bytes_sent);
-	http_stats.AddRequest(bytes_received, bytes_sent);
+	instance.http_stats.AddRequest(status,
+				       bytes_received, bytes_sent);
+	http_stats.AddRequest(status,
+			      bytes_received, bytes_sent);
 
 	if (instance.access_log != nullptr)
 		instance.access_log->Log(instance.event_loop.SystemNow(),
