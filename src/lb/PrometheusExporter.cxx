@@ -102,10 +102,10 @@ private:
 
 inline void
 LbPrometheusExporter::AppendRequest::Start(struct pool &pool,
-					   LbInstance &instance) noexcept
+					   LbInstance &_instance) noexcept
 {
-	http_request(pool, instance.event_loop,
-		     *instance.fs_balancer, {}, {},
+	http_request(pool, _instance.event_loop,
+		     *_instance.fs_balancer, {}, {},
 		     nullptr,
 		     HTTP_METHOD_GET, address, {}, nullptr,
 		     *this, cancel_ptr);
