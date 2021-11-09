@@ -216,6 +216,12 @@ FilteredSocketLease::OnBufferedDirect(SocketDescriptor fd, FdType fd_type)
 }
 
 bool
+FilteredSocketLease::OnBufferedHangup() noexcept
+{
+	return handler.OnBufferedHangup();
+}
+
+bool
 FilteredSocketLease::OnBufferedClosed() noexcept
 {
 	auto result = handler.OnBufferedClosed();

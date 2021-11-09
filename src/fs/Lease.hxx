@@ -195,6 +195,7 @@ private:
 	BufferedResult OnBufferedData() override;
 	DirectResult OnBufferedDirect(SocketDescriptor fd,
 				      FdType fd_type) override;
+	bool OnBufferedHangup() noexcept override;
 	bool OnBufferedClosed() noexcept override;
 	bool OnBufferedRemaining(size_t remaining) noexcept override;
 	bool OnBufferedEnd() noexcept override;
