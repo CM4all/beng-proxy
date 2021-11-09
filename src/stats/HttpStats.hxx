@@ -38,4 +38,11 @@ struct HttpStats {
 	uint64_t n_requests = 0;
 	uint64_t traffic_received = 0;
 	uint64_t traffic_sent = 0;
+
+	void AddRequest(uint64_t bytes_received,
+			uint64_t bytes_sent) noexcept {
+		++n_requests;
+		traffic_received += bytes_received;
+		traffic_sent += bytes_sent;
+	}
 };

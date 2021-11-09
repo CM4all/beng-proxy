@@ -133,13 +133,8 @@ HttpServerLogLevel(std::exception_ptr e) noexcept
 void
 BpConnection::RequestHeadersFinished(IncomingHttpRequest &request) noexcept
 {
-	++instance.http_stats.n_requests;
-
-	auto &http_stats = listener.GetHttpStats();
-	++http_stats.n_requests;
-
 	request.logger = NewFromPool<BpRequestLogger>(request.pool, instance,
-						      http_stats);
+						      listener.GetHttpStats());
 }
 
 void

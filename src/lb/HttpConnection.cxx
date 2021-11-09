@@ -208,13 +208,9 @@ LbHttpConnection::LogSendError(IncomingHttpRequest &request,
 void
 LbHttpConnection::RequestHeadersFinished(IncomingHttpRequest &request) noexcept
 {
-	++instance.http_stats.n_requests;
-
-	auto &http_stats = listener.GetHttpStats();
-	++http_stats.n_requests;
-
 	request.logger = NewFromPool<LbRequestLogger>(request.pool,
-						      instance, http_stats,
+						      instance,
+						      listener.GetHttpStats(),
 						      request);
 }
 
