@@ -60,6 +60,7 @@ DemoHttpServerConnection::DemoHttpServerConnection(struct pool &pool,
 					       true,
 					       *this, *this)),
 	 defer_event(event_loop, BIND_THIS_METHOD(OnDeferred)),
+	 response_timer(event_loop, BIND_THIS_METHOD(OnResponseTimer)),
 	 mode(_mode) {}
 
 DemoHttpServerConnection::~DemoHttpServerConnection() noexcept
@@ -75,6 +76,16 @@ DemoHttpServerConnection::OnDeferred() noexcept
 		http_server_connection_close(connection);
 
 	HttpConnectionClosed();
+}
+
+void
+DemoHttpServerConnection::OnResponseTimer() noexcept
+{
+	const http_status_t status = request_body
+		? HTTP_STATUS_OK
+		: HTTP_STATUS_NO_CONTENT;
+
+	current_request->SendResponse(status, {}, std::move(request_body));
 }
 
 void
@@ -98,6 +109,13 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 			? HTTP_STATUS_OK
 			: HTTP_STATUS_NO_CONTENT;
 		request.SendResponse(status, {}, std::move(request.body));
+		break;
+
+	case Mode::DEFER_MIRROR:
+		current_request = &request;
+		request_body = UnusedHoldIstreamPtr(request.pool,
+						    std::move(request.body));
+		response_timer.ScheduleIdle();
 		break;
 
 	case Mode::CLOSE:

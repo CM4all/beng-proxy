@@ -35,6 +35,7 @@
 #include "http/server/Handler.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "event/DeferEvent.hxx"
+#include "event/FineTimerEvent.hxx"
 #include "io/FdType.hxx"
 #include "util/Cancellable.hxx"
 
@@ -51,6 +52,12 @@ public:
 	enum class Mode {
 		MODE_NULL,
 		MIRROR,
+
+		/**
+		 * Defer the response, meanwhile "hold" the request
+		 * body.
+		 */
+		DEFER_MIRROR,
 
 		/**
 		 * Response body of unknown length with keep-alive disabled.
@@ -75,9 +82,13 @@ public:
 private:
 	HttpServerConnection *connection;
 
+	IncomingHttpRequest *current_request;
+
 	UnusedHoldIstreamPtr request_body;
 
 	DeferEvent defer_event;
+
+	DeferEvent response_timer;
 
 	const Mode mode;
 
@@ -97,6 +108,7 @@ public:
 
 private:
 	void OnDeferred() noexcept;
+	void OnResponseTimer() noexcept;
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept final {

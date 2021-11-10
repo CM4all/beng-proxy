@@ -49,6 +49,10 @@
 #include "fs/FilteredSocket.hxx"
 #include "memory/fb_pool.hxx"
 #include "pool/UniquePtr.hxx"
+#include "PipeLease.hxx"
+#include "istream/New.hxx"
+#include "istream/DeferReadIstream.hxx"
+#include "istream/PipeLeaseIstream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "stopwatch.hxx"
 #include "util/AbortFlag.hxx"
@@ -134,6 +138,11 @@ struct Connection {
 	static Connection *NewMirror(struct pool &pool, EventLoop &event_loop) {
 		return NewWithServer(pool, event_loop,
 				     DemoHttpServerConnection::Mode::MIRROR);
+	}
+
+	static Connection *NewDeferMirror(struct pool &pool, EventLoop &event_loop) {
+		return NewWithServer(pool, event_loop,
+				     DemoHttpServerConnection::Mode::DEFER_MIRROR);
 	}
 
 	static Connection *NewNull(struct pool &pool, EventLoop &event_loop) {
@@ -361,6 +370,74 @@ test_ignored_request_body(Context<Connection> &c)
 	assert(!c.reuse);
 }
 
+static char *
+RandomString(AllocatorPtr alloc, std::size_t length) noexcept
+{
+	char *p = alloc.NewArray<char>(length + 1), *q = p;
+	for (std::size_t i = 0; i < length; ++i)
+		*q++ = 'A' + (i % 26);
+	*q = 0;
+	return p;
+}
+
+static PipeLease
+FillPipeLease(struct pool &pool, PipeStock *stock,
+	      std::size_t length)
+{
+	PipeLease pl(stock);
+	pl.Create();
+
+	char *data = RandomString(pool, length);
+	auto nbytes = pl.GetWriteFd().Write(data, length);
+	if (nbytes < 0)
+		throw MakeErrno("Failed to write to pipe");
+
+	if (std::size_t(nbytes) < length)
+		throw std::runtime_error("Short write to pipe");
+
+	return pl;
+}
+
+static UnusedIstreamPtr
+FillPipeLeaseIstream(struct pool &pool, PipeStock *stock,
+		     std::size_t length)
+{
+	return NewIstreamPtr<PipeLeaseIstream>(pool,
+					       FillPipeLease(pool, stock,
+							     length),
+					       length);
+}
+
+/**
+ * Send a request with "Expect: 100-continue" with a request body that
+ * can be spliced.
+ */
+template<class Connection>
+static void
+test_expect_100_continue_splice(Context<Connection> &c)
+{
+	constexpr std::size_t length = 4096;
+
+	c.connection = Connection::NewDeferMirror(*c.pool, c.event_loop);
+	c.connection->Request(c.pool, c,
+			      HTTP_METHOD_POST, "/expect_100_continue_splice",
+			      {},
+			      NewIstreamPtr<DeferReadIstream>(*c.pool, c.event_loop,
+							      FillPipeLeaseIstream(*c.pool, nullptr, length)),
+			      true,
+			      c, c.cancel_ptr);
+
+	c.WaitForResponse();
+	c.WaitForEndOfBody();
+
+	assert(c.released);
+	assert(c.connection == nullptr);
+	assert(c.status == HTTP_STATUS_OK);
+	assert(c.consumed_body_data == length);
+	assert(c.body_error == nullptr);
+	assert(c.reuse);
+}
+
 /*
  * main
  *
@@ -377,4 +454,5 @@ main(int, char **)
 	run_all_tests<Connection>();
 	run_test<Connection>(test_no_keepalive);
 	run_test<Connection>(test_ignored_request_body);
+	run_test<Connection>(test_expect_100_continue_splice);
 }
