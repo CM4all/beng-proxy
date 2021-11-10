@@ -49,7 +49,7 @@ enum istream_result {
 
 	/**
 	 * Writing would block, callee is responsible for registering an
-	 * event and calling istream_read().
+	 * event and calling Istream::Read().
 	 */
 	ISTREAM_RESULT_BLOCKING = -2,
 
