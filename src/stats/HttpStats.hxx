@@ -34,6 +34,7 @@
 
 #include "http/StatusIndex.hxx"
 
+#include <array>
 #include <cstdint>
 
 struct HttpStats {
