@@ -43,9 +43,11 @@ struct TaggedHttpStats {
 	void AddRequest(std::string_view tag,
 			http_status_t status,
 			uint64_t bytes_received,
-			uint64_t bytes_sent) noexcept {
+			uint64_t bytes_sent,
+			std::chrono::steady_clock::duration duration) noexcept {
 		auto &s = FindOrEmplace(tag);
-		s.AddRequest(status, bytes_received, bytes_sent);
+		s.AddRequest(status, bytes_received, bytes_sent,
+			     duration);
 	}
 
 private:

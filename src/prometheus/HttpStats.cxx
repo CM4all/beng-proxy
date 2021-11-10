@@ -49,12 +49,17 @@ Write(GrowingBuffer &buffer, const char *labels,
 # HELP beng_proxy_http_requests Number of HTTP requests
 # TYPE beng_proxy_http_requests counter
 
+# HELP beng_proxy_http_total_duration Total duration of all HTTP requests
+# TYPE beng_proxy_http_total_duration counter
+
 # HELP beng_proxy_http_traffic Number of bytes transferred
 # TYPE beng_proxy_http_traffic counter
 
 )"
+	       "beng_proxy_http_total_duration{%s} %e\n"
 	       "beng_proxy_http_traffic{%sdirection=\"in\"} %" PRIu64 "\n"
 	       "beng_proxy_http_traffic{%sdirection=\"out\"} %" PRIu64 "\n",
+	       labels, std::chrono::duration_cast<std::chrono::duration<double>>(stats.total_duration).count(),
 	       labels, stats.traffic_received,
 	       labels, stats.traffic_sent);
 

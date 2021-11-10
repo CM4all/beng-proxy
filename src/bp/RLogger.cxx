@@ -48,11 +48,15 @@ BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 				http_status_t status, int64_t length,
 				uint64_t bytes_received, uint64_t bytes_sent) noexcept
 {
+	const auto duration = GetDuration(instance.event_loop.SteadyNow());
+
 	instance.http_stats.AddRequest(status,
-				       bytes_received, bytes_sent);
+				       bytes_received, bytes_sent,
+				       duration);
 
 	http_stats.AddRequest(StringView{stats_tag}, status,
-			      bytes_received, bytes_sent);
+			      bytes_received, bytes_sent,
+			      duration);
 
 	if (instance.access_log != nullptr)
 		instance.access_log->Log(instance.event_loop.SystemNow(),
@@ -62,5 +66,5 @@ BpRequestLogger::LogHttpRequest(IncomingHttpRequest &request,
 					 request.headers.Get("user-agent"),
 					 status, length,
 					 bytes_received, bytes_sent,
-					 GetDuration(instance.event_loop.SteadyNow()));
+					 duration);
 }
