@@ -104,7 +104,9 @@ public:
 	/* handler */
 
 	size_t OnData(const void *data, size_t length) noexcept override {
-		return resumed ? InvokeData(data, length) : 0;
+		return resumed
+			? ForwardIstream::OnData(data, length)
+			: 0;
 	}
 };
 
