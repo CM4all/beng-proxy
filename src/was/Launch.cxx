@@ -37,8 +37,6 @@
 #include "net/SocketDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 
-#include <fcntl.h>
-
 static int
 WasLaunch(SpawnService &spawn_service,
 	  const char *name,
@@ -81,12 +79,6 @@ was_launch(SpawnService &spawn_service,
 	WasProcess process(std::move(s.first));
 	process.input.SetNonBlocking();
 	process.output.SetNonBlocking();
-
-	/* allocate 256 kB for each pipe to reduce the system call and
-	   latency overhead for splicing */
-	static constexpr int PIPE_BUFFER_SIZE = 256 * 1024;
-	fcntl(process.input.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
-	fcntl(process.output.Get(), F_SETPIPE_SZ, PIPE_BUFFER_SIZE);
 
 	process.pid = WasLaunch(spawn_service, name, executable_path, args,
 				options, std::move(stderr_fd),

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.74) unstable; urgency=low
 
-  * 
+  * was: configure 256 kB pipe buffers for Multi-WAS
 
  --   
 
