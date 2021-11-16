@@ -84,9 +84,9 @@ Request::LoadSession(StringView _session_id) noexcept
 
 		session->Expire(instance.event_loop.SteadyNow());
 	} else {
-		/* note: "recover" is a StringView, but this part of
-		   the buffer is null-terminated, so this is legal */
-		recover_session_from_cookie = recover.data;
+		/* we have to duplicate the string because it needs to
+		   be null-terminated */
+		recover_session_from_cookie = alloc.DupZ(recover);
 		// TODO: do we need to unescape the string?
 	}
 
