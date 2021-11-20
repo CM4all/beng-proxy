@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "pcre/Regex.hxx"
+#include "pcre/UniqueRegex.hxx"
 #include "net/MaskedSocketAddress.hxx"
 #include "util/Compiler.h"
 

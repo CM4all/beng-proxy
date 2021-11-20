@@ -30,7 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "pcre/Regex.hxx"
+#include "pcre/UniqueRegex.hxx"
 #include "pexpand.hxx"
 #include "TestPool.hxx"
 #include "AllocatorPtr.hxx"
