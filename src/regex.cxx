@@ -43,23 +43,25 @@ ExpandStringLength(const char *src, const MatchInfo &match_info)
 	struct Result {
 		std::size_t result = 0;
 
-		void Append(char) {
+		constexpr void Append(char) noexcept {
 			++result;
 		}
 
-		void Append(const char *p) {
+		void Append(const char *p) noexcept {
 			result += strlen(p);
 		}
 
-		void Append(const char *, std::size_t length) {
+		constexpr void Append(const char *,
+				      std::size_t length) noexcept {
 			result += length;
 		}
 
-		void AppendValue(const char *, std::size_t length) {
+		constexpr void AppendValue(const char *,
+					   std::size_t length) noexcept {
 			result += length;
 		}
 
-		size_t Commit() const {
+		constexpr size_t Commit() const noexcept {
 			return result;
 		}
 	};
