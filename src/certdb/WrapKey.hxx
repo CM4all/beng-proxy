@@ -33,7 +33,7 @@
 #pragma once
 
 #include "Config.hxx"
-#include "ssl/Error.hxx"
+#include "lib/openssl/Error.hxx"
 #include "pg/BinaryValue.hxx"
 
 #include <openssl/aes.h>

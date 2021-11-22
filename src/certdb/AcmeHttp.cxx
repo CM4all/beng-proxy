@@ -33,7 +33,7 @@
 #include "AcmeHttp.hxx"
 #include "AcmeChallenge.hxx"
 #include "JWS.hxx"
-#include "sodium/UrlSafeBase64SHA256.hxx"
+#include "lib/sodium/UrlSafeBase64SHA256.hxx"
 #include "io/FileWriter.hxx"
 #include "util/ConstBuffer.hxx"
 

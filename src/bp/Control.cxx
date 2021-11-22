@@ -49,7 +49,7 @@
 #include "stopwatch.hxx"
 
 #ifdef HAVE_AVAHI
-#include "avahi/Publisher.hxx"
+#include "lib/avahi/Publisher.hxx"
 #endif
 
 using namespace BengProxy;

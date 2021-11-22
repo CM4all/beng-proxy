@@ -39,7 +39,7 @@
 #include "util/StringView.hxx"
 
 #ifdef HAVE_AVAHI
-#include "avahi/Check.hxx"
+#include "lib/avahi/Check.hxx"
 #endif
 
 #include <string.h>

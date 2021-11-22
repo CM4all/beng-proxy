@@ -32,7 +32,7 @@
 
 #include "regex.hxx"
 #include "expand.hxx"
-#include "pcre/MatchInfo.hxx"
+#include "lib/pcre/MatchInfo.hxx"
 
 #include <assert.h>
 #include <string.h>

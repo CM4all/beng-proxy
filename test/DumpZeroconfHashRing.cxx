@@ -43,11 +43,11 @@
 #undef class
 
 #include "lb/MemberHash.hxx"
-#include "avahi/Check.hxx"
-#include "avahi/Client.hxx"
-#include "avahi/ErrorHandler.hxx"
-#include "avahi/Explorer.hxx"
-#include "avahi/ExplorerListener.hxx"
+#include "lib/avahi/Check.hxx"
+#include "lib/avahi/Client.hxx"
+#include "lib/avahi/ErrorHandler.hxx"
+#include "lib/avahi/Explorer.hxx"
+#include "lib/avahi/ExplorerListener.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "system/Error.hxx"

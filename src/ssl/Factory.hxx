@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "ssl/UniqueSSL.hxx"
+#include "lib/openssl/UniqueSSL.hxx"
 
 #include <memory>
 #include <vector>

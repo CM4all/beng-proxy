@@ -36,7 +36,7 @@
 #include "CommandLine.hxx"
 #include "Config.hxx"
 #include "stats/TaggedHttpStats.hxx"
-#include "avahi/ErrorHandler.hxx"
+#include "lib/avahi/ErrorHandler.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/FarTimerEvent.hxx"

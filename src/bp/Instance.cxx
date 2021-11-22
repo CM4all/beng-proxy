@@ -74,8 +74,8 @@
 #endif
 
 #ifdef HAVE_AVAHI
-#include "avahi/Client.hxx"
-#include "avahi/Publisher.hxx"
+#include "lib/avahi/Client.hxx"
+#include "lib/avahi/Publisher.hxx"
 #endif
 
 #include <sys/signal.h>

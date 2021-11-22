@@ -32,12 +32,12 @@
 
 #include "Filter.hxx"
 #include "Factory.hxx"
-#include "ssl/Name.hxx"
+#include "lib/openssl/Name.hxx"
+#include "lib/openssl/UniqueX509.hxx"
 #include "FifoBufferBio.hxx"
 #include "fs/ThreadSocketFilter.hxx"
 #include "memory/fb_pool.hxx"
 #include "memory/SliceFifoBuffer.hxx"
-#include "ssl/UniqueX509.hxx"
 #include "util/AllocatedArray.hxx"
 #include "util/AllocatedString.hxx"
 

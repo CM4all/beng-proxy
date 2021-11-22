@@ -31,7 +31,7 @@
  */
 
 #include "AcmeKey.hxx"
-#include "ssl/LoadFile.hxx"
+#include "lib/openssl/LoadFile.hxx"
 #include "util/RuntimeError.hxx"
 
 AcmeKey::AcmeKey(const char *path)

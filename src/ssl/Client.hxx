@@ -37,7 +37,7 @@
 #pragma once
 
 #include "AlpnClient.hxx"
-#include "ssl/Ctx.hxx"
+#include "lib/openssl/Ctx.hxx"
 #include "fs/Ptr.hxx"
 
 #include <memory>

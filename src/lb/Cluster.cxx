@@ -57,8 +57,8 @@
 #include "stopwatch.hxx"
 
 #ifdef HAVE_AVAHI
-#include "avahi/Client.hxx"
-#include "avahi/Explorer.hxx"
+#include "lib/avahi/Client.hxx"
+#include "lib/avahi/Explorer.hxx"
 
 #include <net/if.h>
 #endif

@@ -31,11 +31,11 @@
  */
 
 #include "AcmeClient.hxx"
-#include "ssl/Request.hxx"
-#include "ssl/Buffer.hxx"
-#include "ssl/Key.hxx"
-#include "ssl/Error.hxx"
-#include "ssl/UniqueBIO.hxx"
+#include "lib/openssl/Request.hxx"
+#include "lib/openssl/Buffer.hxx"
+#include "lib/openssl/Key.hxx"
+#include "lib/openssl/Error.hxx"
+#include "lib/openssl/UniqueBIO.hxx"
 #include "util/AllocatedArray.hxx"
 #include "util/Exception.hxx"
 

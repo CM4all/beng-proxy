@@ -32,9 +32,9 @@
 
 #include "GlueHttpClient.hxx"
 #include "event/Loop.hxx"
-#include "curl/Request.hxx"
-#include "curl/Handler.hxx"
-#include "curl/Slist.hxx"
+#include "lib/curl/Request.hxx"
+#include "lib/curl/Handler.hxx"
+#include "lib/curl/Slist.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <exception>

@@ -33,9 +33,9 @@
 #pragma once
 
 #include "NameCache.hxx"
-#include "ssl/Hash.hxx"
-#include "ssl/UniqueX509.hxx"
-#include "ssl/Ctx.hxx"
+#include "lib/openssl/Hash.hxx"
+#include "lib/openssl/UniqueX509.hxx"
+#include "lib/openssl/Ctx.hxx"
 #include "certdb/Config.hxx"
 #include "certdb/CertDatabase.hxx"
 #include "stock/ThreadedStock.hxx"

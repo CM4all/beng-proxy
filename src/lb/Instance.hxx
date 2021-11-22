@@ -36,7 +36,7 @@
 #include "GotoMap.hxx"
 #include "MonitorManager.hxx"
 #include "stats/HttpStats.hxx"
-#include "avahi/ErrorHandler.hxx"
+#include "lib/avahi/ErrorHandler.hxx"
 #include "event/FarTimerEvent.hxx"
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"

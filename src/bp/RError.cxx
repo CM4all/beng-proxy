@@ -42,7 +42,7 @@
 #include "fcgi/Error.hxx"
 #include "was/async/Error.hxx"
 #include "widget/Error.hxx"
-#include "ssl/Error.hxx"
+#include "lib/openssl/Error.hxx"
 #include "http/IncomingRequest.hxx"
 #include "http/MessageHttpResponse.hxx"
 #include "HttpMessageResponse.hxx"

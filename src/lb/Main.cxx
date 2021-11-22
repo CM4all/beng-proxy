@@ -51,12 +51,12 @@
 #include "util/PrintException.hxx"
 
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
-#include "odbus/Init.hxx"
-#include "odbus/Connection.hxx"
+#include "lib/dbus/Init.hxx"
+#include "lib/dbus/Connection.hxx"
 #endif
 
 #ifdef HAVE_AVAHI
-#include "avahi/Client.hxx"
+#include "lib/avahi/Client.hxx"
 #endif
 
 #ifdef HAVE_LIBSYSTEMD

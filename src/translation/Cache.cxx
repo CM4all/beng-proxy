@@ -49,7 +49,7 @@
 #include "pool/PSocketAddress.hxx"
 #include "memory/SlicePool.hxx"
 #include "stats/AllocatorStats.hxx"
-#include "pcre/UniqueRegex.hxx"
+#include "lib/pcre/UniqueRegex.hxx"
 #include "io/Logger.hxx"
 #include "util/djbhash.h"
 #include "util/StringView.hxx"

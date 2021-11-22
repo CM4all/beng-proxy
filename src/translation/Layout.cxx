@@ -32,7 +32,7 @@
 
 #include "Layout.hxx"
 #include "AllocatorPtr.hxx"
-#include "pcre/UniqueRegex.hxx"
+#include "lib/pcre/UniqueRegex.hxx"
 #include "util/Compiler.h"
 #include "util/StringCompare.hxx"
 

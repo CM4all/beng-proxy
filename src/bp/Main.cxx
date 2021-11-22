@@ -87,8 +87,8 @@
 #endif
 
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
-#include "odbus/Init.hxx"
-#include "odbus/Connection.hxx"
+#include "lib/dbus/Init.hxx"
+#include "lib/dbus/Connection.hxx"
 #endif
 
 #ifdef HAVE_LIBSYSTEMD
@@ -96,9 +96,9 @@
 #endif
 
 #ifdef HAVE_AVAHI
-#include "avahi/Client.hxx"
-#include "avahi/Publisher.hxx"
-#include "avahi/Service.hxx"
+#include "lib/avahi/Client.hxx"
+#include "lib/avahi/Publisher.hxx"
+#include "lib/avahi/Service.hxx"
 #endif
 
 #include <unistd.h>

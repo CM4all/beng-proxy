@@ -51,7 +51,7 @@
 #endif
 
 #ifdef HAVE_AVAHI
-#include "avahi/Client.hxx"
+#include "lib/avahi/Client.hxx"
 #endif
 
 #include <assert.h>

@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "curl/Global.hxx"
+#include "lib/curl/Global.hxx"
 #include "http/Method.h"
 #include "http/Status.h"
 

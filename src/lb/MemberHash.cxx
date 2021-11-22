@@ -31,7 +31,7 @@
  */
 
 #include "MemberHash.hxx"
-#include "sodium/GenericHash.hxx"
+#include "lib/sodium/GenericHash.hxx"
 #include "net/SocketAddress.hxx"
 
 sticky_hash_t

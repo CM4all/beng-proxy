@@ -33,8 +33,8 @@
 #include "FromResult.hxx"
 #include "WrapKey.hxx"
 #include "pg/Result.hxx"
-#include "ssl/Certificate.hxx"
-#include "ssl/Key.hxx"
+#include "lib/openssl/Certificate.hxx"
+#include "lib/openssl/Key.hxx"
 
 UniqueX509
 LoadCertificate(const Pg::Result &result, unsigned row, unsigned column)

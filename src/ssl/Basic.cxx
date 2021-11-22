@@ -32,8 +32,8 @@
 
 #include "Basic.hxx"
 #include "Config.hxx"
-#include "ssl/Error.hxx"
-#include "ssl/Ctx.hxx"
+#include "lib/openssl/Error.hxx"
+#include "lib/openssl/Ctx.hxx"
 
 #include <openssl/err.h>
 #include <openssl/opensslv.h>

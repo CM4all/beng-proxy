@@ -32,8 +32,8 @@
 
 #pragma once
 
-#include "sodium/HashKey.hxx"
-#include "sodium/GenericHash.hxx"
+#include "lib/sodium/HashKey.hxx"
+#include "lib/sodium/GenericHash.hxx"
 
 /**
  * Generates a collision-free hash which identifies the address list

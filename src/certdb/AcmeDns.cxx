@@ -33,7 +33,7 @@
 #include "AcmeDns.hxx"
 #include "AcmeConfig.hxx"
 #include "AcmeHttp.hxx"
-#include "sodium/UrlSafeBase64SHA256.hxx"
+#include "lib/sodium/UrlSafeBase64SHA256.hxx"
 #include "system/Error.hxx"
 #include "util/PrintException.hxx"
 #include "util/RuntimeError.hxx"

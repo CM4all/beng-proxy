@@ -35,7 +35,7 @@
 #include "AllocatorPtr.hxx"
 #include "regex.hxx"
 #include "uri/Unescape.hxx"
-#include "pcre/MatchInfo.hxx"
+#include "lib/pcre/MatchInfo.hxx"
 #include "util/StringView.hxx"
 
 #include <assert.h>

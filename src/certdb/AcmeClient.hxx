@@ -34,7 +34,7 @@
 
 #include "event/Loop.hxx"
 #include "GlueHttpClient.hxx"
-#include "ssl/UniqueX509.hxx"
+#include "lib/openssl/UniqueX509.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <boost/json/fwd.hpp>

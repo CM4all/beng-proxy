@@ -31,8 +31,8 @@
  */
 
 #include "JWS.hxx"
-#include "sodium/Base64.hxx"
-#include "ssl/Buffer.hxx"
+#include "lib/sodium/Base64.hxx"
+#include "lib/openssl/Buffer.hxx"
 #include "util/AllocatedString.hxx"
 
 #include "openssl/evp.h"

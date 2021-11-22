@@ -226,8 +226,8 @@ util_dep = declare_dependency(
   ],
 )
 
-subdir('libcommon/src/pcre')
-subdir('libcommon/src/sodium')
+subdir('libcommon/src/lib/pcre')
+subdir('libcommon/src/lib/sodium')
 subdir('libcommon/src/time')
 subdir('libcommon/src/io')
 
@@ -372,7 +372,7 @@ stock_dep = declare_dependency(
   dependencies: [stock_dep, event_dep],
 )
 
-subdir('libcommon/src/ssl')
+subdir('libcommon/src/lib/openssl')
 subdir('libcommon/src/jwt')
 
 ssl2_sources = []
@@ -398,19 +398,19 @@ subdir('src/ssl')
 libcommon_require_uring = true
 
 libcommon_require_avahi = get_option('zeroconf')
-subdir('libcommon/src/avahi')
+subdir('libcommon/src/lib/avahi')
 if avahi_dep.found()
   avahi_dep = declare_dependency(compile_args: '-DHAVE_AVAHI',
                                  dependencies: avahi_dep)
 endif
 
 if get_option('certdb')
-  subdir('libcommon/src/curl')
+  subdir('libcommon/src/lib/curl')
 endif
 
 libcommon_enable_libsystemd = get_option('systemd')
 if libcommon_enable_libsystemd or avahi_dep.found()
-  subdir('libcommon/src/odbus')
+  subdir('libcommon/src/lib/dbus')
 endif
 
 subdir('src/access_log')

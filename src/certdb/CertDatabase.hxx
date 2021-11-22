@@ -34,8 +34,8 @@
 
 #include "pg/Connection.hxx"
 #include "pg/Transaction.hxx"
-#include "ssl/UniqueEVP.hxx"
-#include "ssl/UniqueX509.hxx"
+#include "lib/openssl/UniqueEVP.hxx"
+#include "lib/openssl/UniqueX509.hxx"
 
 #include <string>
 

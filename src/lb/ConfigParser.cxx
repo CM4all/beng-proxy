@@ -43,7 +43,7 @@
 #include "util/RuntimeError.hxx"
 
 #ifdef HAVE_AVAHI
-#include "avahi/Check.hxx"
+#include "lib/avahi/Check.hxx"
 #endif
 
 #include <assert.h>

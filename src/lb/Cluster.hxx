@@ -41,7 +41,7 @@
 #include "util/LeakDetector.hxx"
 
 #ifdef HAVE_AVAHI
-#include "avahi/ExplorerListener.hxx"
+#include "lib/avahi/ExplorerListener.hxx"
 #endif
 
 #include <boost/intrusive/set.hpp>
