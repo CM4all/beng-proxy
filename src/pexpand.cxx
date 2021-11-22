@@ -46,7 +46,7 @@ expand_string(AllocatorPtr alloc, const char *src,
 	      const MatchInfo &match_info)
 {
 	assert(src != nullptr);
-	assert(match_info.IsDefined());
+	assert(match_info);
 
 	const size_t length = ExpandStringLength(src, match_info);
 	const auto buffer = alloc.NewArray<char>(length + 1);
@@ -87,7 +87,7 @@ expand_string_unescaped(AllocatorPtr alloc, const char *src,
 			const MatchInfo &match_info)
 {
 	assert(src != nullptr);
-	assert(match_info.IsDefined());
+	assert(match_info);
 
 	const size_t length = ExpandStringLength(src, match_info);
 	const auto buffer = alloc.NewArray<char>(length + 1);

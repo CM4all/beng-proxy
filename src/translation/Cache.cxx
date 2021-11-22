@@ -797,7 +797,7 @@ tcache_expand_response(AllocatorPtr alloc, TranslateResponse &response,
 					  "Malformed URI");
 
 	const auto match_info = regex.MatchCapture(uri);
-	if (!match_info.IsDefined())
+	if (!match_info)
 		/* shouldn't happen, as this has already been matched */
 		throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
 					  "Regex mismatch");

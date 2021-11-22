@@ -50,7 +50,7 @@ TEST(RegexTest, Expand)
 	ASSERT_FALSE(r.Match("a"));
 
 	auto match_info = r.MatchCapture("/foo/bar/a/b/c.html");
-	ASSERT_TRUE(match_info.IsDefined());
+	ASSERT_TRUE(match_info);
 
 	TestPool pool;
 	AllocatorPtr alloc(pool);
@@ -60,14 +60,14 @@ TEST(RegexTest, Expand)
 	ASSERT_EQ(strcmp(e, "bar-a-b/c.html-\\"), 0);
 
 	match_info = r.MatchCapture("/foo/bar/a/b/");
-	ASSERT_TRUE(match_info.IsDefined());
+	ASSERT_TRUE(match_info);
 
 	e = expand_string(alloc, "\\1-\\2-\\3-\\\\", match_info);
 	ASSERT_NE(e, nullptr);
 	ASSERT_EQ(strcmp(e, "bar-a-b/-\\"), 0);
 
 	match_info = r.MatchCapture("/foo/bar/a%20b/c%2520.html");
-	ASSERT_TRUE(match_info.IsDefined());
+	ASSERT_TRUE(match_info);
 
 	e = expand_string_unescaped(alloc, "\\1-\\2-\\3", match_info);
 	ASSERT_NE(e, nullptr);
@@ -85,7 +85,7 @@ TEST(RegexTest, ExpandMalformedUriEscape)
 	ASSERT_TRUE(r.IsDefined());
 
 	auto match_info = r.MatchCapture("%xxx");
-	ASSERT_TRUE(match_info.IsDefined());
+	ASSERT_TRUE(match_info);
 
 	TestPool pool;
 	AllocatorPtr alloc(pool);
@@ -106,7 +106,7 @@ TEST(RegexTest, ExpandOptional)
 	ASSERT_TRUE(r.IsDefined());
 
 	auto match_info = r.MatchCapture("abc");
-	ASSERT_TRUE(match_info.IsDefined());
+	ASSERT_TRUE(match_info);
 
 	TestPool pool;
 	AllocatorPtr alloc(pool);
@@ -116,7 +116,7 @@ TEST(RegexTest, ExpandOptional)
 	ASSERT_EQ(strcmp(e, "a-b-c"), 0);
 
 	match_info = r.MatchCapture("ac");
-	ASSERT_TRUE(match_info.IsDefined());
+	ASSERT_TRUE(match_info);
 	e = expand_string(alloc, "\\1-\\2-\\3", match_info);
 	ASSERT_NE(e, nullptr);
 	ASSERT_EQ(strcmp(e, "a--c"), 0);
@@ -130,7 +130,7 @@ TEST(RegexTest, ExpandOptionalLast)
 	ASSERT_TRUE(r.IsDefined());
 
 	auto match_info = r.MatchCapture("abc");
-	ASSERT_TRUE(match_info.IsDefined());
+	ASSERT_TRUE(match_info);
 
 	TestPool pool;
 	AllocatorPtr alloc(pool);
@@ -140,13 +140,13 @@ TEST(RegexTest, ExpandOptionalLast)
 	ASSERT_EQ(strcmp(e, "a-b-c"), 0);
 
 	match_info = r.MatchCapture("ac");
-	ASSERT_TRUE(match_info.IsDefined());
+	ASSERT_TRUE(match_info);
 	e = expand_string(alloc, "\\1-\\2-\\3", match_info);
 	ASSERT_NE(e, nullptr);
 	ASSERT_EQ(strcmp(e, "a--c"), 0);
 
 	match_info = r.MatchCapture("ab");
-	ASSERT_TRUE(match_info.IsDefined());
+	ASSERT_TRUE(match_info);
 	e = expand_string(alloc, "\\1-\\2-\\3", match_info);
 	ASSERT_NE(e, nullptr);
 	ASSERT_EQ(strcmp(e, "a-b-"), 0);
