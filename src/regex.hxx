@@ -34,8 +34,7 @@
  * Utilities for dealing with regular expressions.
  */
 
-#ifndef BENG_PROXY_REGEX_HXX
-#define BENG_PROXY_REGEX_HXX
+#pragma once
 
 #include <stddef.h>
 
@@ -50,5 +49,3 @@ class MatchInfo;
  */
 size_t
 ExpandStringLength(const char *src, const MatchInfo &match_info);
-
-#endif

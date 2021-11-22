@@ -40,31 +40,31 @@
 size_t
 ExpandStringLength(const char *src, const MatchInfo &match_info)
 {
-    struct Result {
-        size_t result = 0;
+	struct Result {
+		size_t result = 0;
 
-        void Append(char) {
-            ++result;
-        }
+		void Append(char) {
+			++result;
+		}
 
-        void Append(const char *p) {
-            result += strlen(p);
-        }
+		void Append(const char *p) {
+			result += strlen(p);
+		}
 
-        void Append(const char *, size_t length) {
-            result += length;
-        }
+		void Append(const char *, size_t length) {
+			result += length;
+		}
 
-        void AppendValue(const char *, size_t length) {
-            result += length;
-        }
+		void AppendValue(const char *, size_t length) {
+			result += length;
+		}
 
-        size_t Commit() const {
-            return result;
-        }
-    };
+		size_t Commit() const {
+			return result;
+		}
+	};
 
-    Result result;
-    ExpandString(result, src, match_info);
-    return result.Commit();
+	Result result;
+	ExpandString(result, src, match_info);
+	return result.Commit();
 }
