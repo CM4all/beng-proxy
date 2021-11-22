@@ -71,7 +71,7 @@ ExpandString(Result &result, const char *src, MatchInfo &&match_info)
 				throw std::runtime_error("Invalid regex capture");
 
 			if (auto c = match_info.GetCapture(i); !c.empty())
-				result.AppendValue(c.data, c.size);
+				result.AppendValue(c.data(), c.size());
 		} else {
 			throw FormatRuntimeError("Invalid backslash escape (0x%02x)", ch);
 		}
