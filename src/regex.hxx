@@ -36,7 +36,7 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <cstddef>
 
 class MatchInfo;
 
@@ -47,5 +47,5 @@ class MatchInfo;
  *
  * @return the length (without the null terminator)
  */
-size_t
+std::size_t
 ExpandStringLength(const char *src, const MatchInfo &match_info);
