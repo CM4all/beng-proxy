@@ -66,11 +66,11 @@ ExpandString(Result &result, const char *src, MatchInfo &&match_info)
 		if (ch == '\\')
 			result.Append(ch);
 		else if (ch >= '0' && ch <= '9') {
-			auto c = match_info.GetCapture(ch - '0');
-			if (c.IsNull())
+			const std::size_t i = ch - '0';
+			if (i >= match_info.size())
 				throw std::runtime_error("Invalid regex capture");
 
-			if (!c.empty())
+			if (auto c = match_info.GetCapture(i); !c.empty())
 				result.AppendValue(c.data, c.size);
 		} else {
 			throw FormatRuntimeError("Invalid backslash escape (0x%02x)", ch);
