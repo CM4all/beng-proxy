@@ -735,7 +735,7 @@ ResourceAddress::IsExpandable() const noexcept
 }
 
 void
-ResourceAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
+ResourceAddress::Expand(AllocatorPtr alloc, const MatchData &match_data)
 {
 	switch (type) {
 		FileAddress *file;
@@ -748,7 +748,7 @@ ResourceAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 
 	case Type::LOCAL:
 		u.file = file = alloc.New<FileAddress>(alloc, *u.file);
-		file->Expand(alloc, match_info);
+		file->Expand(alloc, match_data);
 		break;
 
 	case Type::PIPE:
@@ -756,27 +756,27 @@ ResourceAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 	case Type::FASTCGI:
 	case Type::WAS:
 		u.cgi = cgi = u.cgi->Clone(alloc);
-		cgi->Expand(alloc, match_info);
+		cgi->Expand(alloc, match_data);
 		break;
 
 	case Type::HTTP:
 		/* copy the http_address object (it's a pointer, not
 		   in-line) and expand it */
 		u.http = uwa = alloc.New<HttpAddress>(alloc, *u.http);
-		uwa->Expand(alloc, match_info);
+		uwa->Expand(alloc, match_data);
 		break;
 
 	case Type::LHTTP:
 		/* copy the lhttp_address object (it's a pointer, not
 		   in-line) and expand it */
 		u.lhttp = lhttp = u.lhttp->Dup(alloc);
-		lhttp->Expand(alloc, match_info);
+		lhttp->Expand(alloc, match_data);
 		break;
 
 	case Type::NFS:
 		/* copy the nfs_address object (it's a pointer, not
 		   in-line) and expand it */
-		u.nfs = u.nfs->Expand(alloc, match_info);
+		u.nfs = u.nfs->Expand(alloc, match_data);
 		break;
 	}
 }

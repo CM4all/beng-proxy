@@ -563,6 +563,9 @@ translation2 = static_library(
   'src/translation/InvalidateParser.cxx',
   translation2_sources,
   include_directories: inc,
+  dependencies: [
+    pcre_dep,
+  ],
 )
 
 translation_dep = declare_dependency(

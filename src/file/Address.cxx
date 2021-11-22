@@ -188,19 +188,19 @@ FileAddress::IsExpandable() const noexcept
 }
 
 void
-FileAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
+FileAddress::Expand(AllocatorPtr alloc, const MatchData &match_data)
 {
 	if (expand_path) {
 		expand_path = false;
-		path = expand_string_unescaped(alloc, path, match_info);
+		path = expand_string_unescaped(alloc, path, match_data);
 	}
 
 	if (expand_document_root) {
 		expand_document_root = false;
 		document_root = expand_string_unescaped(alloc, document_root,
-							match_info);
+							match_data);
 	}
 
 	if (delegate != nullptr)
-		delegate->Expand(alloc, match_info);
+		delegate->Expand(alloc, match_data);
 }

@@ -37,7 +37,7 @@
 #include "adata/ExpandableStringList.hxx"
 
 class AllocatorPtr;
-class MatchInfo;
+class MatchData;
 
 /**
  * The address of a CGI/FastCGI/WAS request.
@@ -209,5 +209,5 @@ struct CgiAddress {
 	/**
 	 * Throws std::runtime_error on error.
 	 */
-	void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
+	void Expand(AllocatorPtr alloc, const MatchData &match_data);
 };

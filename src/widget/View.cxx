@@ -168,18 +168,18 @@ widget_view_any_is_expandable(const WidgetView *view) noexcept
 }
 
 void
-WidgetView::Expand(AllocatorPtr alloc, const MatchInfo &match_info) noexcept
+WidgetView::Expand(AllocatorPtr alloc, const MatchData &match_data) noexcept
 {
-	address.Expand(alloc, match_info);
-	Transformation::ExpandChain(alloc, transformations, match_info);
+	address.Expand(alloc, match_data);
+	Transformation::ExpandChain(alloc, transformations, match_data);
 }
 
 void
 widget_view_expand_all(AllocatorPtr alloc, WidgetView *view,
-		       const MatchInfo &match_info) noexcept
+		       const MatchData &match_data) noexcept
 {
 	while (view != nullptr) {
-		view->Expand(alloc, match_info);
+		view->Expand(alloc, match_data);
 		view = view->next;
 	}
 }

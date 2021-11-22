@@ -136,7 +136,7 @@ struct WidgetView {
 	 *
 	 * Throws std::runtime_error on error.
 	 */
-	void Expand(AllocatorPtr alloc, const MatchInfo &match_info) noexcept;
+	void Expand(AllocatorPtr alloc, const MatchData &match_data) noexcept;
 };
 
 /**
@@ -161,4 +161,4 @@ widget_view_any_is_expandable(const WidgetView *view) noexcept;
  */
 void
 widget_view_expand_all(AllocatorPtr alloc, WidgetView *view,
-		       const MatchInfo &match_info) noexcept;
+		       const MatchData &match_data) noexcept;

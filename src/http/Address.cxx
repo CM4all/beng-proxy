@@ -291,10 +291,10 @@ HttpAddress::RelativeTo(const HttpAddress &base) const
 }
 
 void
-HttpAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
+HttpAddress::Expand(AllocatorPtr alloc, const MatchData &match_data)
 {
 	if (expand_path) {
 		expand_path = false;
-		path = expand_string(alloc, path, match_info);
+		path = expand_string(alloc, path, match_data);
 	}
 }

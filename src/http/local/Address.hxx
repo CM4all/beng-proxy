@@ -191,7 +191,7 @@ struct LhttpAddress {
 			args.IsExpandable();
 	}
 
-	void Expand(AllocatorPtr alloc, const MatchInfo &match_info) noexcept;
+	void Expand(AllocatorPtr alloc, const MatchData &match_data) noexcept;
 
 	/**
 	 * Throws std::runtime_error on error.

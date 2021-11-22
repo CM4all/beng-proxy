@@ -49,31 +49,31 @@ TEST(RegexTest, Expand)
 
 	ASSERT_FALSE(r.Match("a"));
 
-	auto match_info = r.MatchCapture("/foo/bar/a/b/c.html");
-	ASSERT_TRUE(match_info);
+	auto match_data = r.Match("/foo/bar/a/b/c.html");
+	ASSERT_TRUE(match_data);
 
 	TestPool pool;
 	AllocatorPtr alloc(pool);
 
-	auto e = expand_string(alloc, "\\1-\\2-\\3-\\\\", match_info);
+	auto e = expand_string(alloc, "\\1-\\2-\\3-\\\\", match_data);
 	ASSERT_NE(e, nullptr);
 	ASSERT_EQ(strcmp(e, "bar-a-b/c.html-\\"), 0);
 
-	match_info = r.MatchCapture("/foo/bar/a/b/");
-	ASSERT_TRUE(match_info);
+	match_data = r.Match("/foo/bar/a/b/");
+	ASSERT_TRUE(match_data);
 
-	e = expand_string(alloc, "\\1-\\2-\\3-\\\\", match_info);
+	e = expand_string(alloc, "\\1-\\2-\\3-\\\\", match_data);
 	ASSERT_NE(e, nullptr);
 	ASSERT_EQ(strcmp(e, "bar-a-b/-\\"), 0);
 
-	match_info = r.MatchCapture("/foo/bar/a%20b/c%2520.html");
-	ASSERT_TRUE(match_info);
+	match_data = r.Match("/foo/bar/a%20b/c%2520.html");
+	ASSERT_TRUE(match_data);
 
-	e = expand_string_unescaped(alloc, "\\1-\\2-\\3", match_info);
+	e = expand_string_unescaped(alloc, "\\1-\\2-\\3", match_data);
 	ASSERT_NE(e, nullptr);
 	ASSERT_EQ(strcmp(e, "bar-a b-c%20.html"), 0);
 
-	ASSERT_THROW(expand_string_unescaped(alloc, "\\4", match_info),
+	ASSERT_THROW(expand_string_unescaped(alloc, "\\4", match_data),
 		     std::runtime_error);
 }
 
@@ -84,17 +84,17 @@ TEST(RegexTest, ExpandMalformedUriEscape)
 	r.Compile("^(.*)$", false, true);
 	ASSERT_TRUE(r.IsDefined());
 
-	auto match_info = r.MatchCapture("%xxx");
-	ASSERT_TRUE(match_info);
+	auto match_data = r.Match("%xxx");
+	ASSERT_TRUE(match_data);
 
 	TestPool pool;
 	AllocatorPtr alloc(pool);
 
-	auto e = expand_string(alloc, "-\\1-", match_info);
+	auto e = expand_string(alloc, "-\\1-", match_data);
 	ASSERT_NE(e, nullptr);
 	ASSERT_EQ(strcmp(e, "-%xxx-"), 0);
 
-	ASSERT_THROW(expand_string_unescaped(alloc, "-\\1-", match_info),
+	ASSERT_THROW(expand_string_unescaped(alloc, "-\\1-", match_data),
 		     std::runtime_error);
 }
 
@@ -105,19 +105,19 @@ TEST(RegexTest, ExpandOptional)
 	r.Compile("^(a)(b)?(c)$", true, true);
 	ASSERT_TRUE(r.IsDefined());
 
-	auto match_info = r.MatchCapture("abc");
-	ASSERT_TRUE(match_info);
+	auto match_data = r.Match("abc");
+	ASSERT_TRUE(match_data);
 
 	TestPool pool;
 	AllocatorPtr alloc(pool);
 
-	auto e = expand_string(alloc, "\\1-\\2-\\3", match_info);
+	auto e = expand_string(alloc, "\\1-\\2-\\3", match_data);
 	ASSERT_NE(e, nullptr);
 	ASSERT_EQ(strcmp(e, "a-b-c"), 0);
 
-	match_info = r.MatchCapture("ac");
-	ASSERT_TRUE(match_info);
-	e = expand_string(alloc, "\\1-\\2-\\3", match_info);
+	match_data = r.Match("ac");
+	ASSERT_TRUE(match_data);
+	e = expand_string(alloc, "\\1-\\2-\\3", match_data);
 	ASSERT_NE(e, nullptr);
 	ASSERT_EQ(strcmp(e, "a--c"), 0);
 }
@@ -129,25 +129,25 @@ TEST(RegexTest, ExpandOptionalLast)
 	r.Compile("^(a)(b)?(c)?$", true, true);
 	ASSERT_TRUE(r.IsDefined());
 
-	auto match_info = r.MatchCapture("abc");
-	ASSERT_TRUE(match_info);
+	auto match_data = r.Match("abc");
+	ASSERT_TRUE(match_data);
 
 	TestPool pool;
 	AllocatorPtr alloc(pool);
 
-	auto e = expand_string(alloc, "\\1-\\2-\\3", match_info);
+	auto e = expand_string(alloc, "\\1-\\2-\\3", match_data);
 	ASSERT_NE(e, nullptr);
 	ASSERT_EQ(strcmp(e, "a-b-c"), 0);
 
-	match_info = r.MatchCapture("ac");
-	ASSERT_TRUE(match_info);
-	e = expand_string(alloc, "\\1-\\2-\\3", match_info);
+	match_data = r.Match("ac");
+	ASSERT_TRUE(match_data);
+	e = expand_string(alloc, "\\1-\\2-\\3", match_data);
 	ASSERT_NE(e, nullptr);
 	ASSERT_EQ(strcmp(e, "a--c"), 0);
 
-	match_info = r.MatchCapture("ab");
-	ASSERT_TRUE(match_info);
-	e = expand_string(alloc, "\\1-\\2-\\3", match_info);
+	match_data = r.Match("ab");
+	ASSERT_TRUE(match_data);
+	e = expand_string(alloc, "\\1-\\2-\\3", match_data);
 	ASSERT_NE(e, nullptr);
 	ASSERT_EQ(strcmp(e, "a-b-"), 0);
 }

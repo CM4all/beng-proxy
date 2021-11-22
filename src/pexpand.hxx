@@ -37,21 +37,21 @@
 #pragma once
 
 class AllocatorPtr;
-class MatchInfo;
+class MatchData;
 
 /**
- * Throws std::runtime_error on error.
+ * Throws Pcre::Error on error.
  */
 const char *
 expand_string(AllocatorPtr alloc, const char *src,
-              const MatchInfo &match_info);
+	      const MatchData &match_data);
 
 /**
  * Like expand_string(), but unescape the substitutions with the '%'
  * URI method.
  *
- * Throws std::runtime_error on error.
+ * Throws Pcre::Error on error.
  */
 const char *
 expand_string_unescaped(AllocatorPtr alloc, const char *src,
-                        const MatchInfo &match_info);
+			const MatchData &match_data);

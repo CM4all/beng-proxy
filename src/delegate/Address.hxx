@@ -35,7 +35,7 @@
 #include "spawn/ChildOptions.hxx"
 
 class AllocatorPtr;
-class MatchInfo;
+class MatchData;
 
 /**
  * The description of a delegate process.
@@ -80,5 +80,5 @@ struct DelegateAddress {
 	/**
 	 * Throws std::runtime_error on error.
 	 */
-	void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
+	void Expand(AllocatorPtr alloc, const MatchData &match_data);
 };

@@ -163,7 +163,7 @@ struct Transformation : IntrusiveForwardListHook {
 	 *
 	 * Throws std::runtime_error on error.
 	 */
-	void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
+	void Expand(AllocatorPtr alloc, const MatchData &match_data);
 
 	/**
 	 * The same as Expand(), but expand all transformations in the
@@ -171,5 +171,5 @@ struct Transformation : IntrusiveForwardListHook {
 	 */
 	static void ExpandChain(AllocatorPtr alloc,
 				IntrusiveForwardList<Transformation> &list,
-				const MatchInfo &match_info);
+				const MatchData &match_data);
 };

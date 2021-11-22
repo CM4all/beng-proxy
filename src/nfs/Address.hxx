@@ -35,7 +35,7 @@
 #include "util/ConstBuffer.hxx"
 
 class AllocatorPtr;
-class MatchInfo;
+class MatchData;
 
 /**
  * The address of a file on a NFS server.
@@ -98,5 +98,5 @@ struct NfsAddress {
 	 * Throws std::runtime_error on error.
 	 */
 	const NfsAddress *Expand(AllocatorPtr alloc,
-				 const MatchInfo &match_info) const;
+				 const MatchData &match_data) const;
 };

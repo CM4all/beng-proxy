@@ -43,9 +43,9 @@
 /**
  * Throws std::runtime_error on error.
  */
-template<typename Result, typename MatchInfo>
+template<typename Result, typename MatchData>
 void
-ExpandString(Result &result, const char *src, MatchInfo &&match_info)
+ExpandString(Result &result, const char *src, MatchData &&match_data)
 {
 	assert(src != nullptr);
 
@@ -67,10 +67,10 @@ ExpandString(Result &result, const char *src, MatchInfo &&match_info)
 			result.Append(ch);
 		else if (ch >= '0' && ch <= '9') {
 			const std::size_t i = ch - '0';
-			if (i >= match_info.size())
+			if (i >= match_data.size())
 				throw std::runtime_error("Invalid regex capture");
 
-			if (auto c = match_info[i]; !c.empty())
+			if (auto c = match_data[i]; !c.empty())
 				result.AppendValue(c.data(), c.size());
 		} else {
 			throw FormatRuntimeError("Invalid backslash escape (0x%02x)", ch);

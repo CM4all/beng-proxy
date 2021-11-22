@@ -35,7 +35,7 @@
 #include "AllocatorPtr.hxx"
 #include "regex.hxx"
 #include "uri/Unescape.hxx"
-#include "lib/pcre/MatchInfo.hxx"
+#include "lib/pcre/MatchData.hxx"
 #include "util/StringView.hxx"
 
 #include <assert.h>
@@ -43,12 +43,12 @@
 
 const char *
 expand_string(AllocatorPtr alloc, const char *src,
-	      const MatchInfo &match_info)
+	      const MatchData &match_data)
 {
 	assert(src != nullptr);
-	assert(match_info);
+	assert(match_data);
 
-	const size_t length = ExpandStringLength(src, match_info);
+	const size_t length = ExpandStringLength(src, match_data);
 	const auto buffer = alloc.NewArray<char>(length + 1);
 
 	struct Result {
@@ -74,7 +74,7 @@ expand_string(AllocatorPtr alloc, const char *src,
 	};
 
 	Result result(buffer);
-	ExpandString(result, src, match_info);
+	ExpandString(result, src, match_data);
 
 	assert(result.q == buffer + length);
 	*result.q = 0;
@@ -84,12 +84,12 @@ expand_string(AllocatorPtr alloc, const char *src,
 
 const char *
 expand_string_unescaped(AllocatorPtr alloc, const char *src,
-			const MatchInfo &match_info)
+			const MatchData &match_data)
 {
 	assert(src != nullptr);
-	assert(match_info);
+	assert(match_data);
 
-	const size_t length = ExpandStringLength(src, match_info);
+	const size_t length = ExpandStringLength(src, match_data);
 	const auto buffer = alloc.NewArray<char>(length + 1);
 
 	struct Result {
@@ -117,7 +117,7 @@ expand_string_unescaped(AllocatorPtr alloc, const char *src,
 	};
 
 	Result result(buffer);
-	ExpandString(result, src, match_info);
+	ExpandString(result, src, match_data);
 
 	assert(result.q <= buffer + length);
 	*result.q = 0;

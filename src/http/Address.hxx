@@ -36,7 +36,7 @@
 
 struct StringView;
 class AllocatorPtr;
-class MatchInfo;
+class MatchData;
 
 /**
  * The address of a resource stored on a HTTP server.
@@ -171,7 +171,7 @@ struct HttpAddress {
 	/**
 	 * Throws std::runtime_error on error.
 	 */
-	void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
+	void Expand(AllocatorPtr alloc, const MatchData &match_data);
 
 	[[gnu::pure]]
 	int GetDefaultPort() const {

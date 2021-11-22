@@ -38,14 +38,14 @@
 
 #include <cstddef>
 
-class MatchInfo;
+class MatchData;
 
 /**
  * Calculate the length of an expanded string.
  *
- * Throws std::runtime_error on error.
+ * Throws Pcre::Error on error.
  *
  * @return the length (without the null terminator)
  */
 std::size_t
-ExpandStringLength(const char *src, const MatchInfo &match_info);
+ExpandStringLength(const char *src, const MatchData &match_data);

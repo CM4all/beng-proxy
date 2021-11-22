@@ -796,13 +796,13 @@ tcache_expand_response(AllocatorPtr alloc, TranslateResponse &response,
 		throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
 					  "Malformed URI");
 
-	const auto match_info = regex.MatchCapture(uri);
-	if (!match_info)
+	const auto match_data = regex.Match(uri);
+	if (!match_data)
 		/* shouldn't happen, as this has already been matched */
 		throw HttpMessageResponse(HTTP_STATUS_BAD_REQUEST,
 					  "Regex mismatch");
 
-	response.Expand(alloc, match_info);
+	response.Expand(alloc, match_data);
 }
 
 static const char *

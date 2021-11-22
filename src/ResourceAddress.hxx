@@ -45,7 +45,7 @@ struct LhttpAddress;
 struct HttpAddress;
 struct CgiAddress;
 struct NfsAddress;
-class MatchInfo;
+class MatchData;
 class AllocatorPtr;
 
 /**
@@ -370,7 +370,7 @@ public:
 	 *
 	 * Throws std::runtime_error on error.
 	 */
-	void Expand(AllocatorPtr alloc, const MatchInfo &match_info);
+	void Expand(AllocatorPtr alloc, const MatchData &match_data);
 };
 
 #endif

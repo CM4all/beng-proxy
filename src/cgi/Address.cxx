@@ -381,36 +381,36 @@ CgiAddress::RelativeToApplied(AllocatorPtr alloc,
 }
 
 void
-CgiAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
+CgiAddress::Expand(AllocatorPtr alloc, const MatchData &match_data)
 {
-	options.Expand(alloc, match_info);
+	options.Expand(alloc, match_data);
 
 	if (expand_path) {
 		expand_path = false;
-		path = expand_string_unescaped(alloc, path, match_info);
+		path = expand_string_unescaped(alloc, path, match_data);
 	}
 
 	if (expand_uri) {
 		expand_uri = false;
-		uri = expand_string_unescaped(alloc, uri, match_info);
+		uri = expand_string_unescaped(alloc, uri, match_data);
 	}
 
 	if (expand_script_name) {
 		expand_script_name = false;
-		script_name = expand_string_unescaped(alloc, script_name, match_info);
+		script_name = expand_string_unescaped(alloc, script_name, match_data);
 	}
 
 	if (expand_path_info) {
 		expand_path_info = false;
-		path_info = expand_string_unescaped(alloc, path_info, match_info);
+		path_info = expand_string_unescaped(alloc, path_info, match_data);
 	}
 
 	if (expand_document_root) {
 		expand_document_root = false;
 		document_root = expand_string_unescaped(alloc, document_root,
-							match_info);
+							match_data);
 	}
 
-	args.Expand(alloc, match_info);
-	params.Expand(alloc, match_info);
+	args.Expand(alloc, match_data);
+	params.Expand(alloc, match_data);
 }

@@ -46,7 +46,7 @@ FilterTransformation::GetId(AllocatorPtr alloc) const noexcept
 }
 
 void
-FilterTransformation::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
+FilterTransformation::Expand(AllocatorPtr alloc, const MatchData &match_data)
 {
-	address.Expand(alloc, match_info);
+	address.Expand(alloc, match_data);
 }

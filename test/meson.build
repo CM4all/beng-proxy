@@ -355,6 +355,7 @@ test('t_regex', executable('t_regex',
   dependencies: [
     gtest,
     expand_dep,
+    pcre_dep,
   ]))
 
 test('t_header_forward', executable('t_header_forward',

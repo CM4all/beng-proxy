@@ -113,13 +113,13 @@ NfsAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
 }
 
 const NfsAddress *
-NfsAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info) const
+NfsAddress::Expand(AllocatorPtr alloc, const MatchData &match_data) const
 {
 	if (!expand_path)
 		return this;
 
 	const char *new_path = expand_string_unescaped(alloc, path,
-						       match_info);
+						       match_data);
 
 	auto dest = alloc.New<NfsAddress>(server, export_name, new_path);
 	dest->content_type = alloc.CheckDup(content_type);

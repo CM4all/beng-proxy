@@ -227,16 +227,16 @@ LhttpAddress::RelativeToApplied(AllocatorPtr alloc,
 }
 
 void
-LhttpAddress::Expand(AllocatorPtr alloc, const MatchInfo &match_info) noexcept
+LhttpAddress::Expand(AllocatorPtr alloc, const MatchData &match_data) noexcept
 {
-	options.Expand(alloc, match_info);
+	options.Expand(alloc, match_data);
 
 	if (expand_uri) {
 		expand_uri = false;
-		uri = expand_string(alloc, uri, match_info);
+		uri = expand_string(alloc, uri, match_data);
 	}
 
-	args.Expand(alloc, match_info);
+	args.Expand(alloc, match_data);
 }
 
 void

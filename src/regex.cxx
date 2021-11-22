@@ -32,13 +32,13 @@
 
 #include "regex.hxx"
 #include "expand.hxx"
-#include "lib/pcre/MatchInfo.hxx"
+#include "lib/pcre/MatchData.hxx"
 
 #include <assert.h>
 #include <string.h>
 
 std::size_t
-ExpandStringLength(const char *src, const MatchInfo &match_info)
+ExpandStringLength(const char *src, const MatchData &match_data)
 {
 	struct Result {
 		std::size_t result = 0;
@@ -67,6 +67,6 @@ ExpandStringLength(const char *src, const MatchInfo &match_info)
 	};
 
 	Result result;
-	ExpandString(result, src, match_info);
+	ExpandString(result, src, match_data);
 	return result.Commit();
 }

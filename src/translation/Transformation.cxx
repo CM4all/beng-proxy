@@ -111,7 +111,7 @@ Transformation::IsChainExpandable(const IntrusiveForwardList<Transformation> &li
 }
 
 void
-Transformation::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
+Transformation::Expand(AllocatorPtr alloc, const MatchData &match_data)
 {
 	switch (type) {
 	case Type::PROCESS:
@@ -120,7 +120,7 @@ Transformation::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 		break;
 
 	case Type::FILTER:
-		u.filter.Expand(alloc, match_info);
+		u.filter.Expand(alloc, match_data);
 		break;
 
 	case Type::SUBST:
@@ -131,8 +131,8 @@ Transformation::Expand(AllocatorPtr alloc, const MatchInfo &match_info)
 void
 Transformation::ExpandChain(AllocatorPtr alloc,
 			    IntrusiveForwardList<Transformation> &list,
-			    const MatchInfo &match_info)
+			    const MatchData &match_data)
 {
 	for (auto &i : list)
-		i.Expand(alloc, match_info);
+		i.Expand(alloc, match_data);
 }
