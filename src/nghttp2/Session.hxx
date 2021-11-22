@@ -34,7 +34,7 @@
 
 #include <nghttp2/nghttp2.h>
 
-#include <algorithm>
+#include <utility>
 
 namespace NgHttp2 {
 

@@ -38,6 +38,8 @@
 
 #include "Id.hxx"
 
+#include <utility>
+
 struct Session;
 struct RealmSession;
 class SessionManager;
