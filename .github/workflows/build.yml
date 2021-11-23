@@ -48,7 +48,7 @@ jobs:
           sudo apt install -y --no-install-recommends \
             g++-10 \
             libattr1-dev \
-            libavahi-client-dev
+            libavahi-client-dev \
             libboost-dev \
             libc-ares-dev \
             libcap-dev \
