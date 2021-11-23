@@ -42,8 +42,30 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1
         with:
           key: ${{ matrix.os }}-${{ matrix.type }}
+
       - name: Install dependencies
-        run: sudo apt install -y g++-10 libsystemd-dev libdbus-1-dev libseccomp-dev libboost-dev libcurl4-openssl-dev libpcre3-dev libcap-dev libc-ares-dev libgtest-dev libluajit-5.1-dev libattr1-dev libsodium-dev libssl-dev libnfs-dev libnghttp2-dev libpq-dev libyaml-cpp-dev libavahi-client-dev
+        run: |
+          sudo apt install -y \
+            g++-10 \
+            libattr1-dev \
+            libavahi-client-dev
+            libboost-dev \
+            libc-ares-dev \
+            libcap-dev \
+            libcurl4-openssl-dev \
+            libdbus-1-dev \
+            libgtest-dev \
+            libluajit-5.1-dev \
+            libnfs-dev \
+            libnghttp2-dev \
+            libpcre3-dev \
+            libpq-dev \
+            libseccomp-dev \
+            libsodium-dev \
+            libssl-dev \
+            libsystemd-dev \
+            libyaml-cpp-dev
+
       - name: Meson Build
         uses: BSFishy/meson-build@v1.0.3
         with:
