@@ -58,7 +58,7 @@ jobs:
             libluajit-5.1-dev \
             libnfs-dev \
             libnghttp2-dev \
-            libpcre3-dev \
+            libpcre2-dev \
             libpq-dev \
             libseccomp-dev \
             libsodium-dev \
