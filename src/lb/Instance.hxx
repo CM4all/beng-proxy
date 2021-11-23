@@ -116,6 +116,10 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 	LbInstance(const LbCmdLine &cmdline, const LbConfig &_config) noexcept;
 	~LbInstance() noexcept;
 
+	auto &GetEventLoop() const noexcept {
+		return shutdown_listener.GetEventLoop();
+	}
+
 	/**
 	 * Transition the current process from "master" to "worker".  Call
 	 * this after forking in the new worker process.
