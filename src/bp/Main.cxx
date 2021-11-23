@@ -289,11 +289,11 @@ BpInstance::AddListener(const BpConfig::Listener &c
 	listener.Listen(c.Create(SOCK_STREAM));
 
 #ifdef HAVE_AVAHI
-	const char *const interface = c.interface.empty()
-		? nullptr
-		: c.interface.c_str();
-
 	if (!c.zeroconf_service.empty()) {
+		const char *const interface = c.interface.empty()
+			? nullptr
+			: c.interface.c_str();
+
 		/* ask the kernel for the effective address via getsockname(),
 		   because it may have changed, e.g. if the kernel has
 		   selected a port for us */
