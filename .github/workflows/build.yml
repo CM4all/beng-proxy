@@ -45,7 +45,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt install -y \
+          sudo apt install -y --no-install-recommends \
             g++-10 \
             libattr1-dev \
             libavahi-client-dev
