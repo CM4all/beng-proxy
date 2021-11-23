@@ -52,6 +52,7 @@
 
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Client.hxx"
+#include "lib/avahi/Publisher.hxx"
 #endif
 
 #include <assert.h>

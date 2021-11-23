@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.75) unstable; urgency=low
 
+  * lb: ZeroConf publish support
   * switch to PCRE2
 
  --   

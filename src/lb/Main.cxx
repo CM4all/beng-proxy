@@ -57,6 +57,7 @@
 
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Client.hxx"
+#include "lib/avahi/Publisher.hxx"
 #endif
 
 #ifdef HAVE_LIBSYSTEMD
@@ -97,6 +98,7 @@ LbInstance::ShutdownCallback() noexcept
 	goto_map.Clear();
 
 #ifdef HAVE_AVAHI
+	avahi_publisher.reset();
 	avahi_client.reset();
 #endif
 

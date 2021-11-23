@@ -37,6 +37,7 @@
 #include "stats/HttpStats.hxx"
 #include "io/Logger.hxx"
 #include "fs/Listener.hxx"
+#include "net/StaticSocketAddress.hxx"
 
 struct HttpStats;
 struct LbListenerConfig;
@@ -64,6 +65,10 @@ class LbListener final : FilteredSocketListenerHandler {
 public:
 	LbListener(LbInstance &_instance,
 		   const LbListenerConfig &_config);
+
+	auto GetLocalAddress() const noexcept {
+		return listener.GetLocalAddress();
+	}
 
 	LbProtocol GetProtocol() const noexcept {
 		return protocol;

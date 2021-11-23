@@ -42,6 +42,10 @@
 #include "util/Exception.hxx"
 #include "util/WritableBuffer.hxx"
 
+#ifdef HAVE_AVAHI
+#include "lib/avahi/Publisher.hxx"
+#endif
+
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-journal.h>
 #endif
@@ -310,6 +314,20 @@ LbControl::OnControlPacket(ControlServer &control_server,
 	case ControlCommand::FADE_CHILDREN:
 		break;
 
+	case ControlCommand::DISABLE_ZEROCONF:
+#ifdef HAVE_AVAHI
+		if (is_privileged && instance.avahi_publisher)
+			instance.avahi_publisher->HideServices();
+#endif
+		break;
+
+	case ControlCommand::ENABLE_ZEROCONF:
+#ifdef HAVE_AVAHI
+		if (is_privileged && instance.avahi_publisher)
+			instance.avahi_publisher->ShowServices();
+#endif
+		break;
+
 	case ControlCommand::ENABLE_NODE:
 		if (is_privileged)
 			EnableNode((const char *)payload.data, payload.size);
@@ -342,8 +360,6 @@ LbControl::OnControlPacket(ControlServer &control_server,
 
 		break;
 
-	case ControlCommand::DISABLE_ZEROCONF:
-	case ControlCommand::ENABLE_ZEROCONF:
 	case ControlCommand::FLUSH_NFS_CACHE:
 	case ControlCommand::FLUSH_FILTER_CACHE:
 	case ControlCommand::STOPWATCH_PIPE:

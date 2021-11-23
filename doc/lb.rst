@@ -371,6 +371,9 @@ Known attributes:
   a ``LISTENER_TAG`` packet (if a translation server is ever queried
   during a HTTP request).
 
+- ``zeroconf_service``: if specified, then register this listener as
+  Zeroconf service in the local Avahi daemon.
+
 - ``bind``: an adddress to bind to. May be the wildcard ``*`` or an
   IPv4/IPv6 address followed by a port. IPv6 addresses should be
   enclosed in square brackets to disambiguate the port

@@ -47,6 +47,10 @@ struct LbListenerConfig : SocketConfig {
 
 	std::string tag;
 
+#ifdef HAVE_AVAHI
+	std::string zeroconf_service;
+#endif
+
 	bool verbose_response = false;
 
 #ifdef HAVE_NGHTTP2

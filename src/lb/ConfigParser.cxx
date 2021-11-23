@@ -1143,6 +1143,13 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 		config.mode = value;
 	} else if (strcmp(word, "tag") == 0) {
 		config.tag = line.ExpectValueAndEnd();
+	} else if (strcmp(word, "zeroconf_service") == 0) {
+#ifdef HAVE_AVAHI
+		config.zeroconf_service = MakeZeroconfServiceType(line.ExpectValueAndEnd(),
+								  "_tcp");
+#else
+		throw LineParser::Error("Zeroconf support is disabled at compile time");
+#endif
 	} else if (strcmp(word, "ack_timeout") == 0) {
 		config.tcp_user_timeout = line.NextPositiveInteger() * 1000;
 		line.ExpectEnd();

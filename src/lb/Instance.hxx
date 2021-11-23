@@ -64,7 +64,7 @@ class LbControl;
 class LbListener;
 class CertCache;
 namespace BengProxy { struct ControlStats; }
-namespace Avahi { class Client; }
+namespace Avahi { class Client; class Publisher; struct Service; }
 
 struct LbInstance final : PInstance, Avahi::ErrorHandler {
 	const LbConfig &config;
@@ -93,6 +93,7 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 
 #ifdef HAVE_AVAHI
 	std::unique_ptr<Avahi::Client> avahi_client;
+	std::unique_ptr<Avahi::Publisher> avahi_publisher;
 #endif
 
 	LbGotoMap goto_map;
