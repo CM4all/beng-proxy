@@ -290,9 +290,7 @@ BpInstance::AddListener(const BpConfig::Listener &c
 
 #ifdef HAVE_AVAHI
 	if (!c.zeroconf_service.empty()) {
-		const char *const interface = c.interface.empty()
-			? nullptr
-			: c.interface.c_str();
+		const char *const interface = c.GetZeroconfInterface();
 
 		/* ask the kernel for the effective address via getsockname(),
 		   because it may have changed, e.g. if the kernel has

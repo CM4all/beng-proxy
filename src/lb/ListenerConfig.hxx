@@ -76,6 +76,18 @@ struct LbListenerConfig : SocketConfig {
 	bool HasZeroConf() const noexcept {
 		return destination.HasZeroConf();
 	}
+
+	/**
+	 * @return the name of the interface where the Zeroconf
+	 * service shall be published
+	 */
+	[[gnu::pure]]
+	const char *GetZeroconfInterface() const noexcept {
+		if (!interface.empty())
+			return interface.c_str();
+
+		return nullptr;
+	}
 #endif
 
 	bool GetAlpnHttp2() const noexcept {

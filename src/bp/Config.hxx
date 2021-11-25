@@ -84,6 +84,20 @@ struct BpConfig {
 			listen = 64;
 			tcp_defer_accept = 10;
 		}
+
+#ifdef HAVE_AVAHI
+		/**
+		 * @return the name of the interface where the
+		 * Zeroconf service shall be published
+		 */
+		[[gnu::pure]]
+		const char *GetZeroconfInterface() const noexcept {
+			if (!interface.empty())
+				return interface.c_str();
+
+			return nullptr;
+		}
+#endif
 	};
 
 	std::forward_list<Listener> listen;

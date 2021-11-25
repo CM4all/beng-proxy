@@ -66,9 +66,7 @@ LbInstance::InitAllListeners()
 		if (!i.zeroconf_service.empty()) {
 			auto &listener = listeners.front();
 
-			const char *const interface = i.interface.empty()
-				? nullptr
-				: i.interface.c_str();
+			const char *const interface = i.GetZeroconfInterface();
 
 			/* ask the kernel for the effective address
 			   via getsockname(), because it may have
