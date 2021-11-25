@@ -198,6 +198,9 @@ Known attributes:
   Zeroconf service in the local Avahi daemon. This can be used by
   :program:`beng-lb` to discover pool members.
 
+- ``zeroconf_interface``: publish the Zeroconf service only on the
+  given interface.
+
 - ``translation_socket``: if at least one is specified, then this
   translation server is used instead of one from the global
   configuration (see :ref:`translation_servers`).

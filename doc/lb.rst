@@ -374,6 +374,9 @@ Known attributes:
 - ``zeroconf_service``: if specified, then register this listener as
   Zeroconf service in the local Avahi daemon.
 
+- ``zeroconf_interface``: publish the Zeroconf service only on the
+  given interface.
+
 - ``bind``: an adddress to bind to. May be the wildcard ``*`` or an
   IPv4/IPv6 address followed by a port. IPv6 addresses should be
   enclosed in square brackets to disambiguate the port

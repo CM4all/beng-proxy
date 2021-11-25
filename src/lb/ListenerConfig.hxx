@@ -49,6 +49,7 @@ struct LbListenerConfig : SocketConfig {
 
 #ifdef HAVE_AVAHI
 	std::string zeroconf_service;
+	std::string zeroconf_interface;
 #endif
 
 	bool verbose_response = false;
@@ -83,6 +84,9 @@ struct LbListenerConfig : SocketConfig {
 	 */
 	[[gnu::pure]]
 	const char *GetZeroconfInterface() const noexcept {
+		if (!zeroconf_interface.empty())
+			return zeroconf_interface.c_str();
+
 		if (!interface.empty())
 			return interface.c_str();
 

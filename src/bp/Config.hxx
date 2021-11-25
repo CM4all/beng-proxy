@@ -53,6 +53,7 @@ struct BpConfig {
 
 #ifdef HAVE_AVAHI
 		std::string zeroconf_service;
+		std::string zeroconf_interface;
 #endif
 
 		/**
@@ -92,6 +93,9 @@ struct BpConfig {
 		 */
 		[[gnu::pure]]
 		const char *GetZeroconfInterface() const noexcept {
+			if (!zeroconf_interface.empty())
+				return zeroconf_interface.c_str();
+
 			if (!interface.empty())
 				return interface.c_str();
 

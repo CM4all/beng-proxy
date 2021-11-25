@@ -170,6 +170,18 @@ BpConfigParser::Listener::ParseLine(FileLineParser &line)
 #else
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
+	} else if (strcmp(word, "zeroconf_interface") == 0) {
+#ifdef HAVE_AVAHI
+		if (config.zeroconf_service.empty())
+			throw LineParser::Error("zeroconf_interface without zeroconf_service");
+
+		if (!config.zeroconf_interface.empty())
+			throw LineParser::Error("Duplicate zeroconf_interface");
+
+		config.zeroconf_interface = line.ExpectValueAndEnd();
+#else
+		throw LineParser::Error("Zeroconf support is disabled at compile time");
+#endif
 	} else if (strcmp(word, "ack_timeout") == 0) {
 		config.tcp_user_timeout = line.NextPositiveInteger() * 1000;
 		line.ExpectEnd();
