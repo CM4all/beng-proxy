@@ -72,7 +72,7 @@ struct LbListenerConfig : SocketConfig {
 	}
 
 #ifdef HAVE_AVAHI
-	gcc_pure
+	[[gnu::pure]]
 	bool HasZeroConf() const noexcept {
 		return destination.HasZeroConf();
 	}

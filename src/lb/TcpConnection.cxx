@@ -48,7 +48,7 @@ static constexpr Event::Duration LB_TCP_CONNECT_TIMEOUT =
 
 static constexpr auto write_timeout = std::chrono::seconds(30);
 
-gcc_pure
+[[gnu::pure]]
 static sticky_hash_t
 lb_tcp_sticky(StickyMode sticky_mode,
 	      SocketAddress remote_address)
