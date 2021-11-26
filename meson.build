@@ -357,6 +357,7 @@ else
 endif
 
 libcommon_enable_was = get_option('was')
+libcommon_enable_libsystemd = get_option('systemd')
 
 subdir('libcommon/src/was/async')
 subdir('libcommon/src/stock')
@@ -408,7 +409,6 @@ if get_option('certdb')
   subdir('libcommon/src/lib/curl')
 endif
 
-libcommon_enable_libsystemd = get_option('systemd')
 if libcommon_enable_libsystemd or avahi_dep.found()
   subdir('libcommon/src/lib/dbus')
 endif
