@@ -37,16 +37,28 @@
 #include "util/StringView.hxx"
 #include "util/IntrusiveList.hxx"
 
-struct Cookie : IntrusiveListHook {
+struct CookieData {
 	const AllocatedString name;
 	const AllocatedString value;
 	AllocatedString domain, path;
 	Expiry expires = Expiry::Never();
 
 	template<typename N, typename V>
-	Cookie(N &&_name, V &&_value)
+	CookieData(N &&_name, V &&_value)
 		:name(std::forward<N>(_name)),
 		 value(std::forward<V>(_value)) {}
+};
+
+struct Cookie : IntrusiveListHook, CookieData {
+	/* this copy constructor is needed because the
+	   IntrusiveListHook base class is not copyable */
+	Cookie(const Cookie &src) noexcept
+		:CookieData(src) {}
+
+	template<typename N, typename V>
+	Cookie(N &&_name, V &&_value) noexcept
+		:CookieData(std::forward<N>(_name),
+			    std::forward<V>(_value)) {}
 };
 
 /**
