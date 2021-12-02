@@ -306,8 +306,8 @@ BpInstance::AddListener(const BpConfig::Listener &c
 
 int main(int argc, char **argv)
 try {
-	if (!IsKernelVersionOrNewer({4, 11}))
-		throw "Your Linux kernel is too old; this program requires at least 4.11";
+	if (!IsKernelVersionOrNewer({5, 10}))
+		throw "Your Linux kernel is too old; this program requires at least 5.10";
 
 	if (geteuid() == 0)
 		throw "Refusing to run as root";

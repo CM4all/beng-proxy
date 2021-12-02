@@ -42,7 +42,6 @@
 #include "io/Open.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
-#include "system/KernelVersion.hxx"
 #include "http/Status.h"
 
 #ifdef HAVE_URING
@@ -175,13 +174,7 @@ static_file_get(EventLoop &event_loop,
 
 	if (_base != nullptr) {
 		try {
-			base = IsKernelVersionOrNewer({5, 6, 13})
-				? OpenPath(_base)
-				/* O_PATH file descriptors are broken
-				   in io_uring until at least 5.6.12,
-				   see
-				   https://lkml.org/lkml/2020/5/7/1287 */
-				: OpenDirectory(_base);
+			base = OpenPath(_base);
 		} catch (...) {
 			handler.InvokeError(std::current_exception());
 			return;

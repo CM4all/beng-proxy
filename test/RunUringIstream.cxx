@@ -67,8 +67,6 @@ struct Context final : PInstance, Uring::OpenStatHandler, SinkFdHandler {
 	}
 
 	void Open(const char *path);
-	void OpenCompat(const char *path);
-	void OpenUring(const char *path) noexcept;
 
 	void CreateSinkFd(const char *path,
 			  UniqueFileDescriptor &&fd,
@@ -86,34 +84,10 @@ struct Context final : PInstance, Uring::OpenStatHandler, SinkFdHandler {
 };
 
 inline void
-Context::OpenCompat(const char *path)
-{
-	auto fd = OpenReadOnly(path);
-	struct stat st;
-	if (fstat(fd.Get(), &st) < 0)
-		throw FormatErrno("Failed to stat %s", path);
-
-	if (!S_ISREG(st.st_mode))
-		throw std::runtime_error("Not a regular file");
-
-	CreateSinkFd(path, std::move(fd), st.st_size);
-}
-
-inline void
-Context::OpenUring(const char *path) noexcept
+Context::Open(const char *path) noexcept
 {
 	_path = path;
 	open_stat.StartOpenStatReadOnly(path);
-}
-
-inline void
-Context::Open(const char *path)
-{
-	if (IsKernelVersionOrNewer({5, 6}))
-		OpenUring(path);
-	else
-		OpenCompat(path);
-
 }
 
 void

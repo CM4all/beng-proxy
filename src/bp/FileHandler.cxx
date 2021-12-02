@@ -44,7 +44,6 @@
 #include "pool/pool.hxx"
 #include "translation/Vary.hxx"
 #include "system/Error.hxx"
-#include "system/KernelVersion.hxx"
 #include "io/Open.hxx"
 #include "util/StringCompare.hxx"
 
@@ -294,13 +293,7 @@ Request::HandleFileAddress(const FileAddress &address) noexcept
 		// TODO: use uring
 		try {
 			handler.file.base =
-				handler.file.base_ = IsKernelVersionOrNewer({5, 6, 13})
-				? OpenPath(address.base)
-				/* O_PATH file descriptors are broken
-				   in io_uring until at least 5.6.12,
-				   see
-				   https://lkml.org/lkml/2020/5/7/1287 */
-				: OpenDirectory(address.base);
+				handler.file.base_ = OpenPath(address.base);
 		} catch (...) {
 			LogDispatchError(std::current_exception());
 			return;
