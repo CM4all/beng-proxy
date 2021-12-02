@@ -66,7 +66,7 @@ struct Context final : PInstance, Uring::OpenStatHandler, SinkFdHandler {
 		uring_manager.SetVolatile();
 	}
 
-	void Open(const char *path);
+	void Open(const char *path) noexcept;
 
 	void CreateSinkFd(const char *path,
 			  UniqueFileDescriptor &&fd,
