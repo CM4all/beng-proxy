@@ -175,8 +175,7 @@ UringIstream::StartRead() noexcept
 	if (buffer.IsNull())
 		buffer.Allocate(fb_pool_get());
 
-	auto *s = uring.GetSubmitEntry();
-	assert(s != nullptr); // TODO: what if the submit queue is full?
+	auto &s = uring.RequireSubmitEntry();
 
 	ConstBuffer<uint8_t> w = buffer.Write();
 	assert(!w.empty());
@@ -184,9 +183,9 @@ UringIstream::StartRead() noexcept
 		w.size = GetMaxRead();
 
 	*iov = MakeIovec(w);
-	io_uring_prep_readv(s, fd.Get(), iov.get(), 1, offset);
+	io_uring_prep_readv(&s, fd.Get(), iov.get(), 1, offset);
 
-	uring.Push(*s, *this);
+	uring.Push(s, *this);
 }
 
 void
