@@ -12,14 +12,6 @@ MESON_OPTIONS = \
 	-Dyaml=enabled \
 	-Dzeroconf=enabled
 
-ifeq ($(wildcard /usr/bin/g++-10),)
-export CXX="clang++-13"
-export CC="clang-13"
-MESON_OPTIONS += \
-	--force-fallback-for=gtest,yaml-cpp \
-	-Dstatic_libcxx=true
-endif
-
 %:
 	dh $@ --with=python2 --with=python3 --with sphinxdoc --no-start --restart-after-upgrade
 
