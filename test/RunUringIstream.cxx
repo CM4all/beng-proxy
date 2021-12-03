@@ -34,7 +34,6 @@
 #include "istream/sink_fd.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "system/Error.hxx"
-#include "system/KernelVersion.hxx"
 #include "io/Open.hxx"
 #include "io/SpliceSupport.hxx"
 #include "event/uring/Manager.hxx"
