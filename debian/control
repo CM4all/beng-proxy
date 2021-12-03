@@ -114,18 +114,6 @@ Description: Development files for cm4all-beng-proxy
  This package provides C++ headers for developing extensions and
  services for cm4all-beng-proxy.
 
-Package: python-cm4all-beng-proxy
-Architecture: all
-Section: python
-Provides: ${python:Provides}
-Depends: ${python:Depends}, python-twisted-core, python-twisted-names, python-future
-Recommends: cm4all-beng-proxy
-Description: Python bindings for beng-proxy
- BENG proxy is an HTTP proxy server which includes a HTML template
- processor.
- .
- This is the Python translation server library.
-
 Package: python3-cm4all-beng-proxy
 Architecture: all
 Section: python

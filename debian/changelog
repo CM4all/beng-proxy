@@ -2,6 +2,7 @@ cm4all-beng-proxy (17.0.76) unstable; urgency=low
 
   * bp: fix assertion failure if io_uring submit queue is full
   * require Linux kernel 5.10 (Debian Bullseye)
+  * python: drop Python 2 support
   * debian: remove clang build option
 
  --   
