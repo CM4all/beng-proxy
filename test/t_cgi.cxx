@@ -77,10 +77,9 @@ struct Context final : PInstance, HttpResponseHandler, IstreamSink {
 	bool body_eof = false, body_abort = false, body_closed = false;
 
 	Context()
-		:child_process_registry(event_loop),
-		 spawn_service(spawn_config, child_process_registry)
+		:spawn_service(spawn_config, event_loop,
+			       child_process_registry)
 	{
-		child_process_registry.SetVolatile();
 	}
 
 	using IstreamSink::HasInput;

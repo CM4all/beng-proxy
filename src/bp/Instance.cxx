@@ -87,7 +87,6 @@ BpInstance::BpInstance(BpConfig &&_config) noexcept
 	 shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
 	 sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback)),
 	 compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
-	 child_process_registry(event_loop),
 	 session_save_timer(event_loop, BIND_THIS_METHOD(SaveSessions))
 {
 	ForkCow(false);

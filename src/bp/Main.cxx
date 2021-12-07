@@ -183,8 +183,6 @@ BpInstance::ShutdownCallback() noexcept
 
 	compress_timer.Cancel();
 
-	child_process_registry.SetVolatile();
-
 	thread_pool_join();
 
 	background_manager.AbortAll();
@@ -366,7 +364,7 @@ try {
 	   because the reference will be evaluated in the child process
 	   after ~BpInstance() has been called */
 	instance.spawn = StartSpawnServer(SpawnConfig(instance.config.spawn),
-					  instance.child_process_registry,
+					  instance.event_loop,
 					  nullptr,
 					  [&instance](){
 						  instance.event_loop.Reinit();

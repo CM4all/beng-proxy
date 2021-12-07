@@ -223,9 +223,9 @@ try {
 	ChildOptions child_options;
 	child_options.no_new_privs = true;
 
-	ChildProcessRegistry child_process_registry(context.event_loop);
-	child_process_registry.SetVolatile();
-	LocalSpawnService spawn_service(spawn_config, child_process_registry);
+	ChildProcessRegistry child_process_registry;
+	LocalSpawnService spawn_service(spawn_config, context.event_loop,
+					child_process_registry);
 
 	context.process = was_launch(spawn_service, "was",
 				     argv[1], nullptr,

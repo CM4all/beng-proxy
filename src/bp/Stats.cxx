@@ -68,7 +68,7 @@ BpInstance::GetStats() const noexcept
 	stats.incoming_connections = ToBE32(connections.size());
 	stats.outgoing_connections = ToBE32(tcp_stock_stats.busy
 					    + tcp_stock_stats.idle);
-	stats.children = ToBE32(child_process_registry.GetCount());
+	stats.children = 0; // TODO
 	stats.sessions = ToBE32(session_manager->Count());
 	stats.http_requests = ToBE64(http_stats.n_requests);
 	stats.http_traffic_received = ToBE64(http_stats.traffic_received);

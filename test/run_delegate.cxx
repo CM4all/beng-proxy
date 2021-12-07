@@ -88,10 +88,10 @@ int main(int argc, char **argv)
 
 	PInstance instance;
 
-	ChildProcessRegistry child_process_registry(instance.event_loop);
-	child_process_registry.SetVolatile();
+	ChildProcessRegistry child_process_registry;
 
-	LocalSpawnService spawn_service(spawn_config, child_process_registry);
+	LocalSpawnService spawn_service(spawn_config, instance.event_loop,
+					child_process_registry);
 
 	delegate_stock = delegate_stock_new(instance.event_loop, spawn_service);
 	const auto pool = pool_new_linear(instance.root_pool, "test", 8192);
