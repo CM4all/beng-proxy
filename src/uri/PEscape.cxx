@@ -40,44 +40,44 @@
 
 const char *
 uri_escape_dup(AllocatorPtr alloc, StringView src,
-               char escape_char)
+	       char escape_char)
 {
-    char *dest = alloc.NewArray<char>(src.size * 3 + 1);
-    size_t dest_length = UriEscape(dest, src, escape_char);
-    dest[dest_length] = 0;
-    return dest;
+	char *dest = alloc.NewArray<char>(src.size * 3 + 1);
+	size_t dest_length = UriEscape(dest, src, escape_char);
+	dest[dest_length] = 0;
+	return dest;
 }
 
 char *
 uri_unescape_dup(AllocatorPtr alloc, StringView src,
-                 char escape_char)
+		 char escape_char)
 {
-    char *dest = alloc.NewArray<char>(src.size + 1);
-    char *end = UriUnescape(dest, src, escape_char);
-    if (end == nullptr)
-        return nullptr;
+	char *dest = alloc.NewArray<char>(src.size + 1);
+	char *end = UriUnescape(dest, src, escape_char);
+	if (end == nullptr)
+		return nullptr;
 
-    *end = 0;
-    return dest;
+	*end = 0;
+	return dest;
 }
 
 char *
 uri_unescape_concat(AllocatorPtr alloc, StringView uri,
-                    StringView escaped_tail) noexcept
+		    StringView escaped_tail) noexcept
 {
-    /* worst-case allocation */
-    char *dest = alloc.NewArray<char>(uri.size + escaped_tail.size + 1);
+	/* worst-case allocation */
+	char *dest = alloc.NewArray<char>(uri.size + escaped_tail.size + 1);
 
-    /* first copy "uri" */
-    char *p = std::copy_n(uri.data, uri.size, dest);
+	/* first copy "uri" */
+	char *p = std::copy_n(uri.data, uri.size, dest);
 
-    /* append "escaped_tail", and fail this function if unescaping
-       fails */
-    p = UriUnescape(p, escaped_tail);
-    if (p == nullptr)
-        return nullptr;
+	/* append "escaped_tail", and fail this function if unescaping
+	   fails */
+	p = UriUnescape(p, escaped_tail);
+	if (p == nullptr)
+		return nullptr;
 
-    *p = 0;
+	*p = 0;
 
-    return dest;
+	return dest;
 }

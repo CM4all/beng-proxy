@@ -44,18 +44,18 @@ class StopwatchPtr;
  */
 UnusedIstreamPtr
 istream_stopwatch_new(struct pool &pool, UnusedIstreamPtr input,
-                      StopwatchPtr stopwatch);
+		      StopwatchPtr stopwatch);
 
 #else /* !ENABLE_STOPWATCH */
 
 static inline UnusedIstreamPtr &&
 istream_stopwatch_new(struct pool &pool, UnusedIstreamPtr &&input,
-                      StopwatchPtr &&_stopwatch)
+		      StopwatchPtr &&_stopwatch)
 {
-    (void)pool;
-    (void)_stopwatch;
+	(void)pool;
+	(void)_stopwatch;
 
-    return std::move(input);
+	return std::move(input);
 }
 
 #endif /* !ENABLE_STOPWATCH */

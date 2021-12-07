@@ -41,6 +41,6 @@ class StringMap;
  */
 const char *
 resource_tag_append_etag(AllocatorPtr alloc, const char *tag,
-                         const StringMap &headers);
+			 const StringMap &headers);
 
 #endif

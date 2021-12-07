@@ -43,69 +43,69 @@
 static const char *
 MatchUriHost(const char *uri, const char *host) noexcept
 {
-    const auto &h = UriHostAndPort(uri);
-    if (!h.IsNull()) {
-        if (host == nullptr)
-            /* this is URI_SCHEME_UNIX, and its host cannot be
-               verified */
-            return nullptr;
+	const auto &h = UriHostAndPort(uri);
+	if (!h.IsNull()) {
+		if (host == nullptr)
+			/* this is URI_SCHEME_UNIX, and its host cannot be
+			   verified */
+			return nullptr;
 
-        if (memcmp(h.data, host, h.size) != 0 || host[h.size] != 0)
-            /* host/port mismatch */
-            return nullptr;
+		if (memcmp(h.data, host, h.size) != 0 || host[h.size] != 0)
+			/* host/port mismatch */
+			return nullptr;
 
-        uri = h.end();
-    }
+		uri = h.end();
+	}
 
-    if (*uri != '/')
-        /* relative URIs are not (yet?) supported here */
-        return nullptr;
+	if (*uri != '/')
+		/* relative URIs are not (yet?) supported here */
+		return nullptr;
 
-    return uri;
+	return uri;
 }
 
 [[gnu::pure]]
 static StringView
 UriBaseTail(StringView uri, StringView base) noexcept
 {
-    return uri.StartsWith(base)
-        ? StringView(uri.data + base.size, uri.end())
-        : nullptr;
+	return uri.StartsWith(base)
+		? StringView(uri.data + base.size, uri.end())
+		: nullptr;
 }
 
 [[gnu::pure]]
 static StringView
 UriPrefixBeforeTail(StringView uri, StringView tail) noexcept
 {
-    return uri.size > tail.size &&
-        memcmp(uri.end() - tail.size, tail.data, tail.size) == 0 &&
-        uri[uri.size - tail.size - 1] == '/'
-        ? StringView(uri.begin(), uri.end() - tail.size)
-        : nullptr;
+	return uri.size > tail.size &&
+		memcmp(uri.end() - tail.size, tail.data, tail.size) == 0 &&
+		uri[uri.size - tail.size - 1] == '/'
+		? StringView(uri.begin(), uri.end() - tail.size)
+		: nullptr;
 }
 
 const char *
 RelocateUri(AllocatorPtr alloc, const char *uri,
-            const char *internal_host, StringView internal_path,
-            const char *external_scheme, const char *external_host,
-            StringView external_path, StringView base) noexcept
+	    const char *internal_host, StringView internal_path,
+	    const char *external_scheme, const char *external_host,
+	    StringView external_path, StringView base) noexcept
 {
-    const char *path = MatchUriHost(uri, internal_host);
-    if (path == nullptr)
-        return nullptr;
+	const char *path = MatchUriHost(uri, internal_host);
+	if (path == nullptr)
+		return nullptr;
 
-    const StringView tail = UriBaseTail(external_path, base);
-    if (tail.IsNull())
-        return nullptr;
+	const StringView tail = UriBaseTail(external_path, base);
+	if (tail.IsNull())
+		return nullptr;
 
-    const StringView prefix = UriPrefixBeforeTail(internal_path, tail);
-    if (prefix.IsNull())
-        return nullptr;
+	const StringView prefix = UriPrefixBeforeTail(internal_path, tail);
+	if (prefix.IsNull())
+		return nullptr;
 
-    const StringView tail2 = UriBaseTail(path, prefix);
-    if (tail2.IsNull())
-        return nullptr;
+	const StringView tail2 = UriBaseTail(path, prefix);
+	if (tail2.IsNull())
+		return nullptr;
 
-    return alloc.Concat(external_scheme, "://",
-                        external_host, base, tail2);
+	return alloc.Concat(external_scheme, "://",
+			    external_host, base, tail2);
 }

@@ -38,7 +38,7 @@ class AllocatorPtr;
 [[gnu::pure]]
 const char *
 RelocateUri(AllocatorPtr alloc, const char *uri,
-            const char *internal_host, StringView internal_path,
-            const char *external_scheme, const char *external_host,
-            StringView external_path,
-            StringView base) noexcept;
+	    const char *internal_host, StringView internal_path,
+	    const char *external_scheme, const char *external_host,
+	    StringView external_path,
+	    StringView base) noexcept;

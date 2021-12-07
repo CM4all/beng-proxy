@@ -39,17 +39,17 @@
 std::string
 LoadStringFile(const char *path)
 {
-    auto fd = OpenReadOnly(path);
+	auto fd = OpenReadOnly(path);
 
-    char buffer[1024];
-    ssize_t nbytes = fd.Read(buffer, sizeof(buffer));
-    if (nbytes < 0)
-        throw FormatErrno("Failed to read %s", path);
+	char buffer[1024];
+	ssize_t nbytes = fd.Read(buffer, sizeof(buffer));
+	if (nbytes < 0)
+		throw FormatErrno("Failed to read %s", path);
 
-    size_t length = StripRight(buffer, nbytes);
-    if (length >= sizeof(buffer))
-        throw std::runtime_error("File is too large: " + std::string(path));
+	size_t length = StripRight(buffer, nbytes);
+	if (length >= sizeof(buffer))
+		throw std::runtime_error("File is too large: " + std::string(path));
 
-    buffer[length] = 0;
-    return StripLeft(buffer);
+	buffer[length] = 0;
+	return StripLeft(buffer);
 }

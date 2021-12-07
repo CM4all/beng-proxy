@@ -38,27 +38,27 @@
 const char *
 address_to_string(struct pool &pool, SocketAddress address)
 {
-    if (address.IsNull())
-        return nullptr;
+	if (address.IsNull())
+		return nullptr;
 
-    char host[512];
-    bool success = ToString(host, sizeof(host), address);
-    if (!success || *host == 0)
-        return nullptr;
+	char host[512];
+	bool success = ToString(host, sizeof(host), address);
+	if (!success || *host == 0)
+		return nullptr;
 
-    return p_strdup(&pool, host);
+	return p_strdup(&pool, host);
 }
 
 const char *
 address_to_host_string(struct pool &pool, SocketAddress address)
 {
-    if (address.IsNull())
-        return nullptr;
+	if (address.IsNull())
+		return nullptr;
 
-    char host[512];
-    bool success = HostToString(host, sizeof(host), address);
-    if (!success || *host == 0)
-        return nullptr;
+	char host[512];
+	bool success = HostToString(host, sizeof(host), address);
+	if (!success || *host == 0)
+		return nullptr;
 
-    return p_strdup(&pool, host);
+	return p_strdup(&pool, host);
 }

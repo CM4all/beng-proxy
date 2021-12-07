@@ -37,21 +37,21 @@
 #include "stopwatch.hxx"
 
 class StopwatchIstream final : public ForwardIstream {
-    const StopwatchPtr stopwatch;
+	const StopwatchPtr stopwatch;
 
 public:
-    StopwatchIstream(struct pool &p, UnusedIstreamPtr _input,
-                     StopwatchPtr &&_stopwatch)
-        :ForwardIstream(p, std::move(_input)),
-         stopwatch(std::move(_stopwatch)) {}
+	StopwatchIstream(struct pool &p, UnusedIstreamPtr _input,
+			 StopwatchPtr &&_stopwatch)
+		:ForwardIstream(p, std::move(_input)),
+		 stopwatch(std::move(_stopwatch)) {}
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    int _AsFd() noexcept override;
+	int _AsFd() noexcept override;
 
-    /* virtual methods from class IstreamHandler */
-    void OnEof() noexcept override;
-    void OnError(std::exception_ptr ep) noexcept override;
+	/* virtual methods from class IstreamHandler */
+	void OnEof() noexcept override;
+	void OnError(std::exception_ptr ep) noexcept override;
 };
 
 
@@ -63,17 +63,17 @@ public:
 void
 StopwatchIstream::OnEof() noexcept
 {
-    stopwatch.RecordEvent("end");
+	stopwatch.RecordEvent("end");
 
-    ForwardIstream::OnEof();
+	ForwardIstream::OnEof();
 }
 
 void
 StopwatchIstream::OnError(std::exception_ptr ep) noexcept
 {
-    stopwatch.RecordEvent("input_error");
+	stopwatch.RecordEvent("input_error");
 
-    ForwardIstream::OnError(ep);
+	ForwardIstream::OnError(ep);
 }
 
 /*
@@ -84,13 +84,13 @@ StopwatchIstream::OnError(std::exception_ptr ep) noexcept
 int
 StopwatchIstream::_AsFd() noexcept
 {
-    int fd = input.AsFd();
-    if (fd >= 0) {
-        stopwatch.RecordEvent("as_fd");
-        Destroy();
-    }
+	int fd = input.AsFd();
+	if (fd >= 0) {
+		stopwatch.RecordEvent("as_fd");
+		Destroy();
+	}
 
-    return fd;
+	return fd;
 }
 
 /*
@@ -100,11 +100,11 @@ StopwatchIstream::_AsFd() noexcept
 
 UnusedIstreamPtr
 istream_stopwatch_new(struct pool &pool, UnusedIstreamPtr input,
-                      StopwatchPtr stopwatch)
+		      StopwatchPtr stopwatch)
 {
-    if (!stopwatch)
-        return input;
+	if (!stopwatch)
+		return input;
 
-    return NewIstreamPtr<StopwatchIstream>(pool, std::move(input),
-                                           std::move(stopwatch));
+	return NewIstreamPtr<StopwatchIstream>(pool, std::move(input),
+					       std::move(stopwatch));
 }

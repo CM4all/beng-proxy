@@ -53,12 +53,12 @@ template<typename T> struct ConstBuffer;
  */
 void
 pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
-            struct pool &pool,
-            const StopwatchPtr &parent_stopwatch,
-            const char *path,
-            ConstBuffer<const char *> args,
-            const ChildOptions &options,
-            http_status_t status, StringMap &&headers, UnusedIstreamPtr body,
-            HttpResponseHandler &_handler);
+	    struct pool &pool,
+	    const StopwatchPtr &parent_stopwatch,
+	    const char *path,
+	    ConstBuffer<const char *> args,
+	    const ChildOptions &options,
+	    http_status_t status, StringMap &&headers, UnusedIstreamPtr body,
+	    HttpResponseHandler &_handler);
 
 #endif

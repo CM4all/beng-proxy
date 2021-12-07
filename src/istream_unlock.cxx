@@ -37,32 +37,32 @@
 #include "cache.hxx"
 
 class UnlockIstream final : public ForwardIstream {
-    CacheItem &item;
+	CacheItem &item;
 
 public:
-    UnlockIstream(struct pool &p, UnusedIstreamPtr _input,
-                  CacheItem &_item) noexcept
-        :ForwardIstream(p, std::move(_input)),
-         item(_item) {
-        item.Lock();
-    }
+	UnlockIstream(struct pool &p, UnusedIstreamPtr _input,
+		      CacheItem &_item) noexcept
+		:ForwardIstream(p, std::move(_input)),
+		 item(_item) {
+		item.Lock();
+	}
 
-    virtual ~UnlockIstream() noexcept {
-        item.Unlock();
-    }
+	virtual ~UnlockIstream() noexcept {
+		item.Unlock();
+	}
 
-    void _FillBucketList(IstreamBucketList &list) override {
-        try {
-            input.FillBucketList(list);
-        } catch (...) {
-            Destroy();
-            throw;
-        }
-    }
+	void _FillBucketList(IstreamBucketList &list) override {
+		try {
+			input.FillBucketList(list);
+		} catch (...) {
+			Destroy();
+			throw;
+		}
+	}
 };
 
 UnusedIstreamPtr
 istream_unlock_new(struct pool &pool, UnusedIstreamPtr input, CacheItem &item)
 {
-    return NewIstreamPtr<UnlockIstream>(pool, std::move(input), item);
+	return NewIstreamPtr<UnlockIstream>(pool, std::move(input), item);
 }

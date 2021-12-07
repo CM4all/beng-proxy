@@ -41,78 +41,78 @@
 #include <assert.h>
 
 class EscapeIstream final : public FacadeIstream, DestructAnchor {
-    const struct escape_class &cls;
+	const struct escape_class &cls;
 
-    StringView escaped;
+	StringView escaped;
 
 public:
-    EscapeIstream(struct pool &_pool, UnusedIstreamPtr _input,
-                  const struct escape_class &_cls) noexcept
-        :FacadeIstream(_pool, std::move(_input)),
-         cls(_cls) {
-        escaped.size = 0;
-    }
+	EscapeIstream(struct pool &_pool, UnusedIstreamPtr _input,
+		      const struct escape_class &_cls) noexcept
+		:FacadeIstream(_pool, std::move(_input)),
+		 cls(_cls) {
+		escaped.size = 0;
+	}
 
-    bool SendEscaped() noexcept;
+	bool SendEscaped() noexcept;
 
-    /* virtual methods from class Istream */
+	/* virtual methods from class Istream */
 
-    off_t _GetAvailable(bool partial) noexcept override {
-        if (!HasInput())
-            return escaped.size;
+	off_t _GetAvailable(bool partial) noexcept override {
+		if (!HasInput())
+			return escaped.size;
 
-        return partial
-            ? escaped.size + input.GetAvailable(partial)
-            : -1;
-    }
+		return partial
+			? escaped.size + input.GetAvailable(partial)
+			: -1;
+	}
 
-    off_t _Skip(gcc_unused off_t length) noexcept override {
-        return -1;
-    }
+	off_t _Skip(gcc_unused off_t length) noexcept override {
+		return -1;
+	}
 
-    void _Read() noexcept override;
+	void _Read() noexcept override;
 
-    int _AsFd() noexcept override {
-        return -1;
-    }
+	int _AsFd() noexcept override {
+		return -1;
+	}
 
-    void _Close() noexcept override;
+	void _Close() noexcept override;
 
-    /* virtual methods from class IstreamHandler */
-    size_t OnData(const void *data, size_t length) noexcept override;
+	/* virtual methods from class IstreamHandler */
+	size_t OnData(const void *data, size_t length) noexcept override;
 
-    void OnEof() noexcept override {
-        ClearInput();
+	void OnEof() noexcept override {
+		ClearInput();
 
-        if (escaped.empty())
-            DestroyEof();
-    }
+		if (escaped.empty())
+			DestroyEof();
+	}
 
-    void OnError(std::exception_ptr ep) noexcept override {
-        ClearInput();
-        DestroyError(ep);
-    }
+	void OnError(std::exception_ptr ep) noexcept override {
+		ClearInput();
+		DestroyError(ep);
+	}
 };
 
 bool
 EscapeIstream::SendEscaped() noexcept
 {
-    assert(!escaped.empty());
+	assert(!escaped.empty());
 
-    size_t nbytes = InvokeData(escaped.data, escaped.size);
-    if (nbytes == 0)
-        return false;
+	size_t nbytes = InvokeData(escaped.data, escaped.size);
+	if (nbytes == 0)
+		return false;
 
-    escaped.skip_front(nbytes);
-    if (!escaped.empty())
-        return false;
+	escaped.skip_front(nbytes);
+	if (!escaped.empty())
+		return false;
 
-    if (!HasInput()) {
-        DestroyEof();
-        return false;
-    }
+	if (!HasInput()) {
+		DestroyEof();
+		return false;
+	}
 
-    return true;
+	return true;
 }
 
 /*
@@ -123,58 +123,58 @@ EscapeIstream::SendEscaped() noexcept
 size_t
 EscapeIstream::OnData(const void *data0, size_t length) noexcept
 {
-    const char *data = (const char *)data0;
+	const char *data = (const char *)data0;
 
-    if (!escaped.empty() && !SendEscaped())
-        return 0;
+	if (!escaped.empty() && !SendEscaped())
+		return 0;
 
-    size_t total = 0;
+	size_t total = 0;
 
-    const DestructObserver destructed(*this);
+	const DestructObserver destructed(*this);
 
-    do {
-        /* find the next control character */
-        const char *control = escape_find(&cls, {data, length});
-        if (control == nullptr) {
-            /* none found - just forward the data block to our sink */
-            size_t nbytes = InvokeData(data, length);
-            if (destructed)
-                return 0;
+	do {
+		/* find the next control character */
+		const char *control = escape_find(&cls, {data, length});
+		if (control == nullptr) {
+			/* none found - just forward the data block to our sink */
+			size_t nbytes = InvokeData(data, length);
+			if (destructed)
+				return 0;
 
-            total += nbytes;
-            break;
-        }
+			total += nbytes;
+			break;
+		}
 
-        if (control > data) {
-            /* forward the portion before the control character */
-            const size_t n = control - data;
-            size_t nbytes = InvokeData(data, n);
-            if (destructed)
-                return 0;
+		if (control > data) {
+			/* forward the portion before the control character */
+			const size_t n = control - data;
+			size_t nbytes = InvokeData(data, n);
+			if (destructed)
+				return 0;
 
-            total += nbytes;
-            if (nbytes < n)
-                break;
-        }
+			total += nbytes;
+			if (nbytes < n)
+				break;
+		}
 
-        /* consume everything until after the control character */
+		/* consume everything until after the control character */
 
-        length -= control - data + 1;
-        data = control + 1;
-        ++total;
+		length -= control - data + 1;
+		data = control + 1;
+		++total;
 
-        /* insert the entity into the stream */
+		/* insert the entity into the stream */
 
-        escaped = escape_char(&cls, *control);
+		escaped = escape_char(&cls, *control);
 
-        if (!SendEscaped()) {
-            if (destructed)
-                return 0;
-            break;
-        }
-    } while (length > 0);
+		if (!SendEscaped()) {
+			if (destructed)
+				return 0;
+			break;
+		}
+	} while (length > 0);
 
-    return total;
+	return total;
 }
 
 /*
@@ -185,16 +185,16 @@ EscapeIstream::OnData(const void *data0, size_t length) noexcept
 void
 EscapeIstream::_Read() noexcept
 {
-    if (!escaped.empty() && !SendEscaped())
-        return;
+	if (!escaped.empty() && !SendEscaped())
+		return;
 
-    input.Read();
+	input.Read();
 }
 
 void
 EscapeIstream::_Close() noexcept
 {
-    Destroy();
+	Destroy();
 }
 
 /*
@@ -204,10 +204,10 @@ EscapeIstream::_Close() noexcept
 
 UnusedIstreamPtr
 istream_escape_new(struct pool &pool, UnusedIstreamPtr input,
-                   const struct escape_class &cls)
+		   const struct escape_class &cls)
 {
-    assert(cls.escape_find != nullptr);
-    assert(cls.escape_char != nullptr);
+	assert(cls.escape_find != nullptr);
+	assert(cls.escape_char != nullptr);
 
-    return NewIstreamPtr<EscapeIstream>(pool, std::move(input), cls);
+	return NewIstreamPtr<EscapeIstream>(pool, std::move(input), cls);
 }

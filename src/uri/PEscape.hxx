@@ -42,14 +42,14 @@ struct StringView;
 [[gnu::pure]]
 const char *
 uri_escape_dup(AllocatorPtr alloc, StringView src,
-               char escape_char='%');
+	       char escape_char='%');
 
 /**
  * @return nullptr on error
  */
 char *
 uri_unescape_dup(AllocatorPtr alloc, StringView src,
-                 char escape_char='%');
+		 char escape_char='%');
 
 /**
  * Concatenate an existing (unescaped) URI and an escaped URI fragment
@@ -59,4 +59,4 @@ uri_unescape_dup(AllocatorPtr alloc, StringView src,
  */
 char *
 uri_unescape_concat(AllocatorPtr alloc, StringView uri,
-                    StringView escaped_tail) noexcept;
+		    StringView escaped_tail) noexcept;

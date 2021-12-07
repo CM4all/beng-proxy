@@ -41,4 +41,4 @@ struct escape_class;
  */
 UnusedIstreamPtr
 istream_escape_new(struct pool &pool, UnusedIstreamPtr input,
-                   const struct escape_class &cls);
+		   const struct escape_class &cls);

@@ -37,29 +37,29 @@
 StringMap
 processor_header_forward(struct pool &pool, const StringMap &src)
 {
-    StringMap dest;
+	StringMap dest;
 
-    static const char *const copy_headers[] = {
-        "content-language",
-        "content-type",
-        "content-disposition",
-        "location",
-        nullptr,
-    };
+	static const char *const copy_headers[] = {
+		"content-language",
+		"content-type",
+		"content-disposition",
+		"location",
+		nullptr,
+	};
 
-    dest.ListCopyFrom(pool, src, copy_headers);
+	dest.ListCopyFrom(pool, src, copy_headers);
 
 #ifndef NDEBUG
-    /* copy Wildfire headers if present (debug build only, to avoid
-       overhead on production servers) */
-    if (src.Get("x-wf-protocol-1") != nullptr)
-        dest.PrefixCopyFrom(pool, src, "x-wf-");
+	/* copy Wildfire headers if present (debug build only, to avoid
+	   overhead on production servers) */
+	if (src.Get("x-wf-protocol-1") != nullptr)
+		dest.PrefixCopyFrom(pool, src, "x-wf-");
 #endif
 
-    /* reportedly, the Internet Explorer caches uncacheable resources
-       without revalidating them; only Cache-Control will prevent him
-       from showing stale data to the user */
-    dest.Add(pool, "cache-control", "no-store");
+	/* reportedly, the Internet Explorer caches uncacheable resources
+	   without revalidating them; only Cache-Control will prevent him
+	   from showing stale data to the user */
+	dest.Add(pool, "cache-control", "no-store");
 
-    return dest;
+	return dest;
 }
