@@ -53,7 +53,6 @@
 #include "memory/GrowingBuffer.hxx"
 #include "ResourceLoader.hxx"
 #include "resource_tag.hxx"
-#include "hostname.hxx"
 #include "strmap.hxx"
 #include "ProcessorHeaders.hxx"
 #include "XmlProcessor.hxx"
@@ -70,6 +69,7 @@
 #include "http/Address.hxx"
 #include "co/Task.hxx"
 #include "uri/Relocate.hxx"
+#include "uri/Verify.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/StringBuffer.hxx"
 #include "FilterStatus.hxx"
@@ -87,7 +87,7 @@ request_absolute_uri(const IncomingHttpRequest &request,
 	if (host == nullptr)
 		host = request.headers.Get("host");
 
-	if (host == nullptr || !hostname_is_well_formed(host))
+	if (host == nullptr || !VerifyUriHostPort(host))
 		return nullptr;
 
 	const AllocatorPtr alloc(request.pool);
