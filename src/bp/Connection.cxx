@@ -67,7 +67,9 @@ BpConnection::BpConnection(PoolPtr &&_pool, BpInstance &_instance,
 	 listener(_listener),
 	 config(_instance.config),
 	 remote_host_and_port(address_to_string(pool, remote_address)),
-	 logger(remote_host_and_port),
+	 logger(remote_host_and_port != nullptr
+		? remote_host_and_port
+		: "unknown"),
 	 peer_subject(ssl_filter != nullptr
 		      ? ssl_filter_get_peer_subject(*ssl_filter)
 		      : nullptr),
