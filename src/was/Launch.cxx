@@ -37,14 +37,13 @@
 #include "net/SocketDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 
-static int
+static auto
 WasLaunch(SpawnService &spawn_service,
 	  const char *name,
 	  const char *executable_path,
 	  ConstBuffer<const char *> args,
 	  const ChildOptions &options,
 	  UniqueFileDescriptor &&stderr_fd,
-	  ExitListener *listener,
 	  WasSocket &&socket)
 {
 	PreparedChildProcess p;
@@ -61,8 +60,7 @@ WasLaunch(SpawnService &spawn_service,
 	if (!p.stderr_fd.IsDefined() && stderr_fd.IsDefined())
 		p.SetStderr(std::move(stderr_fd));
 
-	return spawn_service.SpawnChildProcess(name, std::move(p),
-					       listener);
+	return spawn_service.SpawnChildProcess(name, std::move(p));
 }
 
 WasProcess
@@ -71,8 +69,7 @@ was_launch(SpawnService &spawn_service,
 	   const char *executable_path,
 	   ConstBuffer<const char *> args,
 	   const ChildOptions &options,
-	   UniqueFileDescriptor stderr_fd,
-	   ExitListener *listener)
+	   UniqueFileDescriptor stderr_fd)
 {
 	auto s = WasSocket::CreatePair();
 
@@ -80,8 +77,8 @@ was_launch(SpawnService &spawn_service,
 	process.input.SetNonBlocking();
 	process.output.SetNonBlocking();
 
-	process.pid = WasLaunch(spawn_service, name, executable_path, args,
-				options, std::move(stderr_fd),
-				listener, std::move(s.second));
+	process.handle = WasLaunch(spawn_service, name, executable_path, args,
+				   options, std::move(stderr_fd),
+				   std::move(s.second));
 	return process;
 }

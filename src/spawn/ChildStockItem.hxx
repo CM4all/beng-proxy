@@ -39,7 +39,10 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/StringView.hxx"
 
+#include <memory>
 #include <string>
+
+class ChildProcessHandle;
 
 /**
  * A process managed by #ChildStock.
@@ -57,17 +60,14 @@ class ChildStockItem
 
 	UniqueFileDescriptor stderr_fd;
 
-	int pid = -1;
+	std::unique_ptr<ChildProcessHandle> handle;
 
 	bool busy = true;
 
 public:
 	ChildStockItem(CreateStockItem c,
 		       ChildStock &_child_stock,
-		       std::string_view _tag) noexcept
-		:StockItem(c),
-		 child_stock(_child_stock),
-		 tag(_tag) {}
+		       std::string_view _tag) noexcept;
 
 	~ChildStockItem() noexcept override;
 

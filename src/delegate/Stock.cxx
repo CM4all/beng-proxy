@@ -40,6 +40,7 @@
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
+#include "spawn/ProcessHandle.hxx"
 #include "AllocatorPtr.hxx"
 #include "pool/DisposablePointer.hxx"
 #include "pool/tpool.hxx"
@@ -73,15 +74,19 @@ struct DelegateArgs {
 class DelegateProcess final : public StockItem {
 	const LLogger logger;
 
+	std::unique_ptr<ChildProcessHandle> handle;
+
 	UniqueSocketDescriptor fd;
 
 	SocketEvent event;
 
 public:
 	explicit DelegateProcess(CreateStockItem c,
+				 std::unique_ptr<ChildProcessHandle> &&_handle,
 				 UniqueSocketDescriptor &&_fd) noexcept
 		:StockItem(c),
 		 logger(c.GetStockName()),
+		 handle(std::move(_handle)),
 		 fd(std::move(_fd)),
 		 event(c.stock.GetEventLoop(),
 		       BIND_THIS_METHOD(SocketEventCallback), fd)
@@ -169,15 +174,15 @@ DelegateStock::Create(CreateStockItem c,
 
 	p.SetStdin(std::move(server_fd));
 
-	spawn_service.SpawnChildProcess(info.executable_path,
-					std::move(p),
-					nullptr);
+	auto handle = spawn_service.SpawnChildProcess(info.executable_path,
+						      std::move(p));
 
 	/* invoke the DelegateArgs destructor before invoking the
 	   callback, because the latter may destroy the pool */
 	request.reset();
 
-	auto *process = new DelegateProcess(c, std::move(client_fd));
+	auto *process = new DelegateProcess(c, std::move(handle),
+					    std::move(client_fd));
 	process->InvokeCreateSuccess();
 }
 

@@ -77,8 +77,7 @@ struct Context final
 
 	/* virtual methods from class Lease */
 	void ReleaseWas(gcc_unused bool reuse) override {
-		kill(process.pid, SIGTERM);
-
+		process.handle.reset();
 		process.Close();
 	}
 
@@ -230,7 +229,7 @@ try {
 
 	context.process = was_launch(spawn_service, "was",
 				     argv[1], nullptr,
-				     child_options, {}, nullptr);
+				     child_options, {});
 
 	was_client_request(context.root_pool, context.event_loop, nullptr,
 			   context.process.control,

@@ -53,7 +53,7 @@ class WasChild final : public WasStockConnection, ExitListener {
 
 	ChildErrorLog log;
 
-	int pid = -1;
+	std::unique_ptr<ChildProcessHandle> handle;
 
 public:
 	explicit WasChild(CreateStockItem c, SpawnService &_spawn_service,
@@ -82,10 +82,10 @@ public:
 				   params.options,
 				   log.EnableClient(GetEventLoop(),
 						    log_socket, log_options,
-						    params.options.stderr_pond),
-				   this);
+						    params.options.stderr_pond));
 
-		pid = process.pid;
+		handle = std::move(process.handle);
+		handle->SetExitListener(*this);
 
 		WasSocket &socket = process;
 		Open(std::move(socket));
@@ -102,7 +102,8 @@ public:
 private:
 	/* virtual methods from class ExitListener */
 	void OnChildProcessExit(gcc_unused int status) noexcept override {
-		pid = -1;
+		assert(handle);
+		handle.reset();
 	}
 };
 
@@ -144,11 +145,7 @@ WasStock::Create(CreateStockItem c, StockRequest _request,
 	child->InvokeCreateSuccess();
 }
 
-WasChild::~WasChild() noexcept
-{
-	if (pid >= 0)
-		spawn_service.KillChildProcess(pid);
-}
+WasChild::~WasChild() noexcept = default;
 
 /*
  * interface

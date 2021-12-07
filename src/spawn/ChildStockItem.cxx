@@ -33,6 +33,7 @@
 #include "ChildStockItem.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
+#include "spawn/ProcessHandle.hxx"
 #include "system/Error.hxx"
 #include "net/EasyMessage.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -43,13 +44,14 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-ChildStockItem::~ChildStockItem() noexcept
-{
-	auto &spawn_service = child_stock.GetSpawnService();
+ChildStockItem::ChildStockItem(CreateStockItem c,
+			       ChildStock &_child_stock,
+			       std::string_view _tag) noexcept
+	:StockItem(c),
+	 child_stock(_child_stock),
+	 tag(_tag) {}
 
-	if (pid >= 0)
-		spawn_service.KillChildProcess(pid);
-}
+ChildStockItem::~ChildStockItem() noexcept = default;
 
 void
 ChildStockItem::Prepare(ChildStockClass &cls, void *info,
@@ -78,8 +80,8 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 		throw MakeErrno("socketpair() failed");
 
 	auto &spawn_service = child_stock.GetSpawnService();
-	pid = spawn_service.SpawnChildProcess(GetStockName(), std::move(p),
-					      this);
+	handle = spawn_service.SpawnChildProcess(GetStockName(), std::move(p));
+	handle->SetExitListener(*this);
 
 	if (stderr_socket1.IsDefined()) {
 		if (p.return_stderr.IsDefined())
@@ -123,7 +125,7 @@ ChildStockItem::Release() noexcept
 	busy = false;
 
 	/* reuse this item only if the child process hasn't exited */
-	if (pid <= 0)
+	if (!handle)
 		return false;
 
 	assert(!ChildStockItemHook::is_linked());
@@ -135,7 +137,8 @@ ChildStockItem::Release() noexcept
 void
 ChildStockItem::OnChildProcessExit(gcc_unused int status) noexcept
 {
-	pid = -1;
+	assert(handle);
+	handle.reset();
 }
 
 void

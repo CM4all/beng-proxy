@@ -33,14 +33,17 @@
 #pragma once
 
 #include "was/async/Socket.hxx"
+#include "spawn/ProcessHandle.hxx"
+
+#include <memory>
 
 class SpawnService;
-class ExitListener;
+class ChildProcessHandle;
 struct ChildOptions;
 template<typename T> struct ConstBuffer;
 
 struct WasProcess : WasSocket {
-	int pid;
+	std::unique_ptr<ChildProcessHandle> handle;
 
 	WasProcess() = default;
 
@@ -59,5 +62,4 @@ was_launch(SpawnService &spawn_service,
 	   const char *executable_path,
 	   ConstBuffer<const char *> args,
 	   const ChildOptions &options,
-	   UniqueFileDescriptor stderr_fd,
-	   ExitListener *listener);
+	   UniqueFileDescriptor stderr_fd);

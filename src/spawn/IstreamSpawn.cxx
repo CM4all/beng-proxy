@@ -32,6 +32,7 @@
 
 #include "IstreamSpawn.hxx"
 #include "spawn/Interface.hxx"
+#include "spawn/ProcessHandle.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ExitListener.hxx"
 #include "istream/UnusedPtr.hxx"
@@ -48,13 +49,14 @@
 #include "memory/fb_pool.hxx"
 #include "memory/SliceFifoBuffer.hxx"
 #include "system/Error.hxx"
-#include "util/Cast.hxx"
+
+#include <cassert>
+#include <memory>
 
 #ifdef __linux
 #include <fcntl.h>
 #endif
 
-#include <assert.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
@@ -64,7 +66,6 @@
 
 struct SpawnIstream final : Istream, IstreamSink, ExitListener {
 	const LLogger logger;
-	SpawnService &spawn_service;
 
 	UniqueFileDescriptor output_fd;
 	PipeEvent output_event;
@@ -74,15 +75,15 @@ struct SpawnIstream final : Istream, IstreamSink, ExitListener {
 	UniqueFileDescriptor input_fd;
 	PipeEvent input_event;
 
-	int pid;
+	std::unique_ptr<ChildProcessHandle> handle;
 
 	bool direct = false;
 
-	SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
+	SpawnIstream(EventLoop &event_loop,
 		     struct pool &p,
 		     UnusedIstreamPtr _input, UniqueFileDescriptor _input_fd,
 		     UniqueFileDescriptor _output_fd,
-		     pid_t _pid) noexcept;
+		     std::unique_ptr<ChildProcessHandle> &&_handle) noexcept;
 
 	bool CheckDirect() const noexcept {
 		return direct;
@@ -153,10 +154,7 @@ SpawnIstream::Cancel() noexcept
 
 	output_fd.Close();
 
-	if (pid >= 0) {
-		spawn_service.KillChildProcess(pid);
-		pid = -1;
-	}
+	handle.reset();
 }
 
 inline bool
@@ -378,9 +376,8 @@ SpawnIstream::_Close() noexcept
 void
 SpawnIstream::OnChildProcessExit(gcc_unused int status) noexcept
 {
-	assert(pid >= 0);
-
-	pid = -1;
+	assert(handle);
+	handle.reset();
 }
 
 
@@ -390,30 +387,29 @@ SpawnIstream::OnChildProcessExit(gcc_unused int status) noexcept
  */
 
 inline
-SpawnIstream::SpawnIstream(SpawnService &_spawn_service, EventLoop &event_loop,
+SpawnIstream::SpawnIstream(EventLoop &event_loop,
 			   struct pool &p,
 			   UnusedIstreamPtr _input,
 			   UniqueFileDescriptor _input_fd,
 			   UniqueFileDescriptor _output_fd,
-			   pid_t _pid) noexcept
+			   std::unique_ptr<ChildProcessHandle> &&_handle) noexcept
 	:Istream(p),
 	 IstreamSink(std::move(_input)),
 	 logger("spawn"),
-	 spawn_service(_spawn_service),
 	 output_fd(std::move(_output_fd)),
 	 output_event(event_loop, BIND_THIS_METHOD(OutputEventCallback),
 		      output_fd),
 	 input_fd(std::move(_input_fd)),
 	 input_event(event_loop, BIND_THIS_METHOD(InputEventCallback),
 		     input_fd),
-	 pid(_pid)
+	 handle(std::move(_handle))
 {
 	if (HasInput()) {
 		input.SetDirect(ISTREAM_TO_PIPE);
 		input_event.ScheduleWrite();
 	}
 
-	spawn_service.SetExitListener(pid, this);
+	handle->SetExitListener(*this);
 }
 
 UnusedIstreamPtr
@@ -447,13 +443,12 @@ SpawnChildProcess(EventLoop &event_loop, struct pool *pool, const char *name,
 
 	stdout_pipe.SetNonBlocking();
 
-	const int pid = spawn_service.SpawnChildProcess(name, std::move(prepared),
-							nullptr);
-	auto f = NewFromPool<SpawnIstream>(*pool, spawn_service, event_loop,
+	auto handle = spawn_service.SpawnChildProcess(name, std::move(prepared));
+	auto f = NewFromPool<SpawnIstream>(*pool, event_loop,
 					   *pool,
 					   std::move(input), std::move(stdin_pipe),
 					   std::move(stdout_pipe),
-					   pid);
+					   std::move(handle));
 
 	/* XXX CLOEXEC */
 
