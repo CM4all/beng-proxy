@@ -93,7 +93,7 @@ LbInstance::InitAllListeners()
 								       error_handler);
 
 		avahi_publisher = std::make_unique<Avahi::Publisher>(*avahi_client,
-								     "beng-proxy",
+								     "beng-lb",
 								     std::move(avahi_services),
 								     error_handler);
 	}

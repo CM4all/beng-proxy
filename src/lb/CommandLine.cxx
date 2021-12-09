@@ -50,7 +50,7 @@ PrintUsage()
 #ifdef __GLIBC__
 	     " --version\n"
 #endif
-	     " -V             show cm4all-beng-proxy version\n"
+	     " -V             show cm4all-beng-lb version\n"
 #ifdef __GLIBC__
 	     " --verbose\n"
 #endif
