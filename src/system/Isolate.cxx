@@ -116,13 +116,13 @@ isolate_from_filesystem(bool allow_dbus)
 	mkdir("run", 0700);
 
 	mkdir("run/systemd", 0);
-	mount("/run/systemd", "run/systemd", nullptr, MS_BIND, nullptr);
+	mount("/run/systemd", "run/systemd", nullptr, MS_BIND|MS_REC, nullptr);
 	mount(nullptr, "run/systemd", nullptr,
 	      MS_REMOUNT|MS_BIND|MS_NOEXEC|MS_NOSUID|MS_RDONLY, nullptr);
 
 	if (allow_dbus) {
 		mkdir("run/dbus", 0);
-		mount("/run/dbus", "run/dbus", nullptr, MS_BIND, nullptr);
+		mount("/run/dbus", "run/dbus", nullptr, MS_BIND|MS_REC, nullptr);
 		mount(nullptr, "run/dbus", nullptr,
 		      MS_REMOUNT|MS_BIND|MS_NOEXEC|MS_NOSUID|MS_RDONLY, nullptr);
 	}
@@ -147,7 +147,7 @@ isolate_from_filesystem(bool allow_dbus)
 
 		mount("/var/lib/cm4all/save-core/incoming",
 		      "var/lib/cm4all/save-core/incoming",
-		      nullptr, MS_BIND, nullptr);
+		      nullptr, MS_BIND|MS_REC, nullptr);
 		mount(nullptr, "var/lib/cm4all/save-core/incoming", nullptr,
 		      MS_REMOUNT|MS_BIND|MS_NOEXEC|MS_NOSUID, nullptr);
 

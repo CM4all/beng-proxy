@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.0.77) unstable; urgency=low
 
   * lb: fix Zeroconf name
+  * lb: fix isolation mode failures when launched inside container
 
  --   
 
