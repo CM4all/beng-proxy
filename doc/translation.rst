@@ -1122,6 +1122,8 @@ described in this section.
 - ``MOUNT_PROC`` mounts a new read-only instance of the ``proc``
   filesystem.
 
+- ``MOUNT_DEV`` mounts a minimalistic :file:`/dev`.
+
 - ``MOUNT_HOME`` bind-mounts the home directory (specified by
   ``HOME``) to the given directory within the ``PIVOT_ROOT``. It will
   be mounted with option ``nosuid``.
