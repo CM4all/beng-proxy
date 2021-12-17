@@ -4,7 +4,7 @@ cm4all-beng-proxy (17.0.77) unstable; urgency=low
   * lb: fix isolation mode failures when launched inside container
   * spawn: support operation without CAP_SYS_ADMIN
   * spawn: allow path components to exist already
-  * translation: add packet MOUNT_DEV
+  * translation: add packets MOUNT_DEV, BIND_MOUNT_FILE
 
  --   
 

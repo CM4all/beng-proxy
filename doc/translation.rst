@@ -1160,6 +1160,11 @@ described in this section.
   ``EXPAND_BIND_MOUNT_EXEC`` omit the ``noexec`` option. (There is no
   way to make a mount both writable and executable.)
 
+- ``BIND_MOUNT_FILE`` mounts a (read-only, non-executable) regular
+  file onto an existing regular file.  The payload is the source path
+  (absolute within the old root) and the target path (absolute within
+  the new root), separated by a null byte.
+
 - ``PIVOT_ROOT`` depends on user namespaces. ``MOUNT_PROC``,
   ``MOUNT_HOME`` and ``MOUNT_TMP_TMPFS`` depend on ``PIVOT_ROOT``,
   user namespaces and PID namespaces.
