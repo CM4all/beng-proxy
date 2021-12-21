@@ -183,6 +183,8 @@ BpInstance::ShutdownCallback() noexcept
 
 	compress_timer.Cancel();
 
+	zombie_reaper.Disable();
+
 	thread_pool_join();
 
 	background_manager.AbortAll();

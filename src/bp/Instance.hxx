@@ -40,7 +40,7 @@
 #include "event/SignalEvent.hxx"
 #include "event/ShutdownListener.hxx"
 #include "event/FarTimerEvent.hxx"
-#include "spawn/Registry.hxx"
+#include "spawn/ZombieReaper.hxx"
 #include "spawn/Handler.hxx"
 #include "control/Handler.hxx"
 #include "net/FailureManager.hxx"
@@ -122,7 +122,7 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 	BackgroundManager background_manager;
 
 	/* child management */
-	ChildProcessRegistry child_process_registry;
+	ZombieReaper zombie_reaper{event_loop};
 	SpawnService *spawn_service;
 
 	std::unique_ptr<SpawnServerClient> spawn;
