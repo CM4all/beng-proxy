@@ -190,8 +190,12 @@ inline int
 SslFactory::CertCallback(SSL &ssl) noexcept
 {
 	const char *_host_name = SSL_get_servername(&ssl, TLSEXT_NAMETYPE_host_name);
-	if (_host_name == nullptr)
+	if (_host_name == nullptr) {
+		if (!cert_key.empty())
+			cert_key.front().Apply(ssl);
+
 		return 1;
+	}
 
 	const StringView host_name(_host_name);
 
