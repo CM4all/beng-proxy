@@ -105,17 +105,24 @@ CertCache::Query(const char *host)
 	return &Add(std::move(cert_key.first), std::move(cert_key.second));
 }
 
+inline const CertCache::Item *
+CertCache::GetCached(const char *host) noexcept
+{
+	const std::unique_lock<std::mutex> lock{mutex};
+
+	if (auto i = map.find(host); i != map.end()) {
+		i->second.expires = GetEventLoop().SteadyNow() + std::chrono::hours(24);
+		return &i->second;
+	}
+
+	return nullptr;
+}
+
 const CertCache::Item *
 CertCache::GetNoWildCard(const char *host)
 {
-	{
-		const std::unique_lock<std::mutex> lock(mutex);
-		auto i = map.find(host);
-		if (i != map.end()) {
-			i->second.expires = GetEventLoop().SteadyNow() + std::chrono::hours(24);
-			return &i->second;
-		}
-	}
+	if (const auto *item = GetCached(host))
+		return item;
 
 	if (name_cache.Lookup(host)) {
 		if (const auto *item = Query(host))

@@ -135,6 +135,10 @@ public:
 private:
 	const Item &Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key);
 	const Item *Query(const char *host);
+
+	[[gnu::pure]]
+	const Item *GetCached(const char *host) noexcept;
+
 	const Item *GetNoWildCard(const char *host);
 	const Item *Get(const char *host);
 
