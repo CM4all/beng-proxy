@@ -34,9 +34,10 @@
 
 #include "lib/openssl/UniqueSSL.hxx"
 
+#include <span>
+
 class SslFactory;
 class SslFilter;
-template<typename T> struct ConstBuffer;
 class SocketFilter;
 class ThreadSocketFilterHandler;
 
@@ -71,7 +72,7 @@ const SslFilter *
 ssl_filter_cast_from(const SocketFilter *socket_filter) noexcept;
 
 [[gnu::pure]]
-ConstBuffer<unsigned char>
+std::span<const unsigned char>
 ssl_filter_get_alpn_selected(const SslFilter &ssl) noexcept;
 
 [[gnu::pure]]

@@ -72,8 +72,8 @@ public:
 			    NewFifoBufferBio(encrypted_output));
 	}
 
-	ConstBuffer<unsigned char> GetAlpnSelected() const noexcept {
-		return alpn_selected;
+	std::span<const unsigned char> GetAlpnSelected() const noexcept {
+		return {alpn_selected.data(), alpn_selected.size()};
 	}
 
 private:
@@ -382,7 +382,7 @@ ssl_filter_cast_from(const SocketFilter *socket_filter) noexcept
 	return dynamic_cast<const SslFilter *>(tsf->GetHandler());
 }
 
-ConstBuffer<unsigned char>
+std::span<const unsigned char>
 ssl_filter_get_alpn_selected(const SslFilter &ssl) noexcept
 {
 	return ssl.GetAlpnSelected();

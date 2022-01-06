@@ -32,14 +32,14 @@
 
 #pragma once
 
-#include "util/ConstBuffer.hxx"
+#include <span>
 
 class SslFilter;
 
 inline bool
-IsAlpnHttp2(ConstBuffer<unsigned char> alpn) noexcept
+IsAlpnHttp2(std::span<const unsigned char> alpn) noexcept
 {
-	return alpn != nullptr && alpn.size == 2 &&
+	return alpn.size() == 2 &&
 		alpn[0] == 'h' && alpn[1] == '2';
 }
 
