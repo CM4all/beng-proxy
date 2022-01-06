@@ -101,7 +101,7 @@ class CertCache final : CertNameCacheHandler {
 	 * Map host names to SSL_CTX instances.  The key may be a
 	 * wildcard.
 	 */
-	std::unordered_map<std::string, Item> map;
+	std::unordered_multimap<std::string, Item> map;
 
 public:
 	explicit CertCache(EventLoop &event_loop,

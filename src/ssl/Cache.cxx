@@ -84,10 +84,11 @@ CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key)
 		throw std::runtime_error("Certificate without common name");
 
 	const std::unique_lock<std::mutex> lock(mutex);
-	auto i = map.try_emplace(name.c_str(),
-				 std::move(cert),
-				 std::move(key),
-				 GetEventLoop().SteadyNow()).first;
+	auto i = map.emplace(std::piecewise_construct,
+			     std::forward_as_tuple(name.c_str()),
+			     std::forward_as_tuple(std::move(cert),
+						   std::move(key),
+						   GetEventLoop().SteadyNow()));
 
 	return i->second;
 }
@@ -176,9 +177,9 @@ void
 CertCache::OnCertModified(const std::string &name, bool deleted) noexcept
 {
 	const std::unique_lock<std::mutex> lock(mutex);
-	auto i = map.find(name);
-	if (i != map.end()) {
-		map.erase(i);
+	auto i = map.equal_range(name);
+	if (i.first != i.second) {
+		map.erase(i.first, i.second);
 
 		logger.Format(5, "flushed %s certificate '%s'",
 			      deleted ? "deleted" : "modified",
