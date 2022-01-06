@@ -182,12 +182,12 @@ SslClientFactory::Create(EventLoop &event_loop,
 		break;
 
 	case SslClientAlpn::HTTP_2:
-		SSL_set_alpn_protos(ssl.get(), alpn_h2, std::size(alpn_h2));
+		SSL_set_alpn_protos(ssl.get(), alpn_h2.data(), alpn_h2.size());
 		break;
 
 	case SslClientAlpn::HTTP_ANY:
-		SSL_set_alpn_protos(ssl.get(), alpn_http_any,
-				    std::size(alpn_http_any));
+		SSL_set_alpn_protos(ssl.get(), alpn_http_any.data(),
+				    alpn_http_any.size());
 		break;
 	}
 

@@ -31,28 +31,27 @@
  */
 
 #include "AlpnSelect.hxx"
-#include "util/ConstBuffer.hxx"
 
 #include <assert.h>
 #include <string.h>
 
-ConstBuffer<unsigned char>
-FindAlpn(ConstBuffer<unsigned char> haystack,
-	 ConstBuffer<unsigned char> needle) noexcept
+std::span<const unsigned char>
+FindAlpn(std::span<const unsigned char> haystack,
+	 std::span<const unsigned char> needle) noexcept
 {
 	assert(!needle.empty());
-	assert((size_t)needle.front() + 1 == needle.size);
+	assert((size_t)needle.front() + 1 == needle.size());
 
-	while (haystack.size >= needle.size) {
-		if (memcmp(haystack.data, needle.data, needle.size) == 0)
-			return {haystack.data + 1, needle.size - 1};
+	while (haystack.size() >= needle.size()) {
+		if (memcmp(haystack.data(), needle.data(), needle.size()) == 0)
+			return haystack.subspan(1, needle.size() - 1);
 
 		size_t skip = (size_t)haystack.front() + 1;
-		if (skip > haystack.size)
+		if (skip > haystack.size())
 			break;
 
-		haystack.skip_front(skip);
+		haystack = haystack.subspan(skip);
 	}
 
-	return nullptr;
+	return {};
 }

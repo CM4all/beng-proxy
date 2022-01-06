@@ -32,15 +32,8 @@
 
 #pragma once
 
-constexpr unsigned char alpn_http_1_1[] = {
-	8, 'h', 't', 't', 'p', '/', '1', '.', '1',
-};
+#include "AlpnMake.hxx"
 
-constexpr unsigned char alpn_h2[] = {
-	2, 'h', '2',
-};
-
-constexpr unsigned char alpn_http_any[] = {
-	2, 'h', '2',
-	8, 'h', 't', 't', 'p', '/', '1', '.', '1',
-};
+constexpr auto alpn_http_1_1 = MakeAlpnString("http/1.1");
+constexpr auto alpn_h2 = MakeAlpnString("h2");
+constexpr auto alpn_http_any = ConcatAlpnStrings(alpn_h2, alpn_http_1_1);
