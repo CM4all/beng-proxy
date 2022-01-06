@@ -54,6 +54,26 @@
 
 #include <assert.h>
 
+template<typename Name>
+[[gnu::pure]]
+static auto
+GetCertificateNames(X509 &cert) noexcept
+{
+	std::forward_list<Name> names;
+
+	if (X509_NAME *subject = X509_get_subject_name(&cert);
+	    subject != nullptr) {
+		if (auto common_name = NidToString(*subject, NID_commonName);
+		    common_name != nullptr)
+			names.emplace_front(std::move(common_name));
+	}
+
+	for (const auto &i : GetSubjectAltNames(cert))
+		names.emplace_front(std::string_view{i});
+
+	return names;
+}
+
 struct SslFactoryCertKey {
 	struct Name {
 		AllocatedString value;
@@ -81,21 +101,6 @@ struct SslFactoryCertKey {
 
 	void LoadServer(const SslConfig &parent_config,
 			const SslCertKeyConfig &config);
-
-	void CacheCommonName(X509_NAME &subject) noexcept {
-		auto common_name = NidToString(subject, NID_commonName);
-		if (common_name != nullptr)
-			names.emplace_front(std::move(common_name));
-	}
-
-	void CacheCommonName(X509 &cert) noexcept {
-		X509_NAME *subject = X509_get_subject_name(&cert);
-		if (subject != nullptr)
-			CacheCommonName(*subject);
-
-		for (const auto &i : GetSubjectAltNames(cert))
-			names.emplace_front(i.c_str());
-	}
 
 	[[gnu::pure]]
 	bool MatchCommonName(StringView host_name) const noexcept;
@@ -324,7 +329,7 @@ SslFactoryCertKey::LoadServer(const SslConfig &parent_config,
 			       "' does not match certificate '" +
 			       config.cert_file + "'");
 
-	CacheCommonName(*cert);
+	names = GetCertificateNames<Name>(*cert);
 }
 
 std::unique_ptr<SslFactory>
