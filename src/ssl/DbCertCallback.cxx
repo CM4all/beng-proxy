@@ -30,23 +30,11 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PROXY_SSL_DB_SNI_CALLBACK_HXX
-#define BENG_PROXY_SSL_DB_SNI_CALLBACK_HXX
+#include "DbCertCallback.hxx"
+#include "Cache.hxx"
 
-#include "SniCallback.hxx"
-
-class CertCache;
-
-class DbSslSniCallback final : public SslSniCallback {
-	CertCache &cache;
-
-	const bool alpn_h2;
-
-public:
-	DbSslSniCallback(CertCache &_cache, bool _alpn_h2) noexcept
-		:cache(_cache), alpn_h2(_alpn_h2) {}
-
-	void OnSni(SSL *ssl, const char *name) override;
-};
-
-#endif
+bool
+DbSslCertCallback::OnCertCallback(SSL &ssl, const char *name)
+{
+	return cache.Apply(ssl, name);
+}

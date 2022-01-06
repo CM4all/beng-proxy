@@ -37,7 +37,7 @@
 #include "TcpConnection.hxx"
 #include "pool/UniquePtr.hxx"
 #include "ssl/Factory.hxx"
-#include "ssl/DbSniCallback.hxx"
+#include "ssl/DbCertCallback.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "lb_features.h"
@@ -51,12 +51,11 @@ MakeSslFactory(const LbListenerConfig &config,
 
 	/* prepare SSL support */
 
-	std::unique_ptr<SslSniCallback> sni_callback;
+	std::unique_ptr<SslCertCallback> sni_callback;
 #ifdef ENABLE_CERTDB
 	if (config.cert_db != nullptr) {
 		auto &cert_cache = instance.GetCertCache(*config.cert_db);
-		sni_callback.reset(new DbSslSniCallback(cert_cache,
-							config.GetAlpnHttp2()));
+		sni_callback.reset(new DbSslCertCallback(cert_cache));
 	}
 #else
 	(void)instance;

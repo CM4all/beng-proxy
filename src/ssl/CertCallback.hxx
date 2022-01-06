@@ -30,17 +30,26 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * SSL/TLS certificate database and cache.
- */
-
 #pragma once
 
 #include <openssl/ossl_typ.h>
 
-class SslSniCallback {
+/**
+ * C++ wrapper for the SSL_CTX_set_cert_cb() callback function.
+ */
+class SslCertCallback {
 public:
-	virtual ~SslSniCallback() {}
+	virtual ~SslCertCallback() noexcept = default;
 
-	virtual void OnSni(SSL *ssl, const char *name) = 0;
+	/**
+	 * The actual certificate callback.  This method is supposed
+	 * to look up the given host name and then call
+	 * SSL_use_certificate() and SSL_use_PrivateKey().
+	 *
+	 * May throw on error.
+	 *
+	 * @return true if a certificate was found and used, false if
+	 * not found
+	 */
+	virtual bool OnCertCallback(SSL &ssl, const char *name) = 0;
 };

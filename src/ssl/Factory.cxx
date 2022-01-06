@@ -34,13 +34,15 @@
 #include "Basic.hxx"
 #include "Config.hxx"
 #include "SessionCache.hxx"
-#include "SniCallback.hxx"
+#include "CertCallback.hxx"
 #include "AlpnEnable.hxx"
 #include "lib/openssl/Error.hxx"
-#include "lib/openssl/Ctx.hxx"
 #include "lib/openssl/Name.hxx"
 #include "lib/openssl/AltName.hxx"
+#include "lib/openssl/LoadFile.hxx"
 #include "lib/openssl/Key.hxx"
+#include "lib/openssl/UniqueEVP.hxx"
+#include "lib/openssl/UniqueX509.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringView.hxx"
@@ -90,12 +92,13 @@ struct SslFactoryCertKey {
 		bool Match(StringView host_name) const noexcept;
 	};
 
-	SslCtx ssl_ctx;
+	UniqueX509 cert;
+	std::forward_list<UniqueX509> chain;
+	UniqueEVP_PKEY key;
 
 	std::forward_list<Name> names;
 
-	SslFactoryCertKey(const SslConfig &parent_config,
-			  const SslCertKeyConfig &config);
+	explicit SslFactoryCertKey(const SslCertKeyConfig &config);
 
 	SslFactoryCertKey(SslFactoryCertKey &&other) = default;
 	SslFactoryCertKey &operator=(SslFactoryCertKey &&other) = default;
@@ -103,66 +106,37 @@ struct SslFactoryCertKey {
 	[[gnu::pure]]
 	bool MatchCommonName(StringView host_name) const noexcept;
 
-	void SetSessionIdContext(ConstBuffer<void> _sid_ctx) {
-		auto sid_ctx = ConstBuffer<unsigned char>::FromVoid(_sid_ctx);
-		int result = SSL_CTX_set_session_id_context(ssl_ctx.get(),
-							    sid_ctx.data,
-							    sid_ctx.size);
-		if (result == 0)
-			throw SslError("SSL_CTX_set_session_id_context() failed");
+	void Apply(SSL_CTX &ssl_ctx) const noexcept {
+		SSL_CTX_use_PrivateKey(&ssl_ctx, key.get());
+		SSL_CTX_use_certificate(&ssl_ctx, cert.get());
+
+		for (const auto &i : chain)
+			SSL_CTX_add1_chain_cert(&ssl_ctx, i.get());
 	}
 
-	void EnableAlpnH2() noexcept {
-		::EnableAlpnH2(*ssl_ctx);
-	}
+	void Apply(SSL &ssl) const noexcept {
+		SSL_use_PrivateKey(&ssl, key.get());
+		SSL_use_certificate(&ssl, cert.get());
 
-	UniqueSSL Make() const {
-		UniqueSSL ssl(SSL_new(ssl_ctx.get()));
-		if (!ssl)
-			throw SslError("SSL_new() failed");
-
-		return ssl;
-	}
-
-	void Apply(SSL *ssl) const noexcept {
-		SSL_set_SSL_CTX(ssl, ssl_ctx.get());
-	}
-
-	unsigned Flush(long tm) noexcept {
-		return ::FlushSessionCache(*ssl_ctx, tm);
+		for (const auto &i : chain)
+			SSL_add1_chain_cert(&ssl, i.get());
 	}
 };
 
 void
 SslFactory::LoadCertsKeys(const SslConfig &config)
 {
+	assert(!ssl_ctx);
+
+	ssl_ctx = CreateBasicSslCtx(true);
+
+	ApplyServerConfig(*ssl_ctx, config);
+
 	cert_key.reserve(config.cert_key.size());
 
 	for (const auto &c : config.cert_key) {
-		cert_key.emplace_back(config, c);
+		cert_key.emplace_back(c);
 	}
-}
-
-static void
-ApplyServerConfig(SSL_CTX *ssl_ctx, const SslCertKeyConfig &cert_key)
-{
-	ERR_clear_error();
-
-	if (SSL_CTX_use_PrivateKey_file(ssl_ctx,
-					cert_key.key_file.c_str(),
-					SSL_FILETYPE_PEM) != 1)
-		throw SslError("Failed to load key file " +
-			       cert_key.key_file);
-
-	if (SSL_CTX_use_certificate_chain_file(ssl_ctx,
-					       cert_key.cert_file.c_str()) != 1)
-		throw SslError("Failed to load certificate file " +
-			       cert_key.cert_file);
-
-	if (SSL_CTX_check_private_key(ssl_ctx) != 1)
-		throw SslError("Key '" + cert_key.key_file +
-			       "' does not match certificate '" +
-			       cert_key.cert_file + "'");
 }
 
 inline bool
@@ -199,8 +173,8 @@ SslFactoryCertKey::MatchCommonName(StringView host_name) const noexcept
 }
 
 inline
-SslFactory::SslFactory(std::unique_ptr<SslSniCallback> &&_sni) noexcept
-	:sni(std::move(_sni))
+SslFactory::SslFactory(std::unique_ptr<SslCertCallback> &&_cert_callback) noexcept
+	:cert_callback(std::move(_cert_callback))
 {
 }
 
@@ -216,69 +190,88 @@ SslFactory::FindCommonName(StringView host_name) const noexcept
 	return nullptr;
 }
 
-static int
-ssl_servername_callback(SSL *ssl, int *,
-			const SslFactory &factory) noexcept
+inline int
+SslFactory::CertCallback(SSL &ssl) noexcept
 {
-	const char *_host_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+	const char *_host_name = SSL_get_servername(&ssl, TLSEXT_NAMETYPE_host_name);
 	if (_host_name == nullptr)
-		return SSL_TLSEXT_ERR_OK;
+		return 1;
 
 	const StringView host_name(_host_name);
 
 	/* find the first certificate that matches */
 
-	const auto *ck = factory.FindCommonName(host_name);
-	if (ck != nullptr) {
+	if (const auto *ck = FindCommonName(host_name)) {
 		/* found it - now use it */
 		ck->Apply(ssl);
-	} else if (factory.GetSNI()) {
+		return 1;
+	}
+
+	/* check the certificate database */
+
+	if (cert_callback) {
 		try {
-			factory.GetSNI()->OnSni(ssl, host_name.data);
+			if (cert_callback->OnCertCallback(ssl, host_name.data))
+				return 1;
 		} catch (const std::exception &e) {
 			PrintException(e);
 		}
 	}
 
-	return SSL_TLSEXT_ERR_OK;
+	/* no match: fall back to the first configured certificate (if
+	   there is one) */
+
+	if (!cert_key.empty())
+		cert_key.front().Apply(ssl);
+
+	return 1;
+}
+
+int
+SslFactory::CertCallback(SSL *ssl, void *arg) noexcept
+{
+	auto &f = *(SslFactory *)arg;
+	return f.CertCallback(*ssl);
 }
 
 inline void
 SslFactory::EnableSNI()
 {
-	SSL_CTX *ssl_ctx = cert_key.front().ssl_ctx.get();
-
-	if (!SSL_CTX_set_tlsext_servername_callback(ssl_ctx,
-						    ssl_servername_callback) ||
-	    !SSL_CTX_set_tlsext_servername_arg(ssl_ctx, this))
-		throw SslError("SSL_CTX_set_tlsext_servername_callback() failed");
+	SSL_CTX_set_cert_cb(ssl_ctx.get(), CertCallback, this);
 }
 
 inline void
 SslFactory::AutoEnableSNI()
 {
-	if (cert_key.size() > 1 || sni)
+	if (cert_key.size() > 1 || cert_callback)
 		EnableSNI();
+	else if (!cert_key.empty())
+		cert_key.front().Apply(*ssl_ctx);
 }
 
 void
-SslFactory::SetSessionIdContext(ConstBuffer<void> sid_ctx)
+SslFactory::SetSessionIdContext(ConstBuffer<void> _sid_ctx)
 {
-	for (auto &i : cert_key)
-		i.SetSessionIdContext(sid_ctx);
+	auto sid_ctx = ConstBuffer<unsigned char>::FromVoid(_sid_ctx);
+	int result = SSL_CTX_set_session_id_context(ssl_ctx.get(),
+						    sid_ctx.data,
+						    sid_ctx.size);
+	if (result == 0)
+		throw SslError("SSL_CTX_set_session_id_context() failed");
 }
 
 void
 SslFactory::EnableAlpnH2()
 {
-	for (auto &i : cert_key)
-		i.EnableAlpnH2();
+	::EnableAlpnH2(*ssl_ctx);
 }
 
 UniqueSSL
 SslFactory::Make()
 {
-	auto ssl = cert_key.front().Make();
+	UniqueSSL ssl{SSL_new(ssl_ctx.get())};
+	if (!ssl)
+		throw SslError("SSL_new() failed");
 
 	SSL_set_accept_state(ssl.get());
 
@@ -288,44 +281,24 @@ SslFactory::Make()
 unsigned
 SslFactory::Flush(long tm) noexcept
 {
-	unsigned n = 0;
-	for (auto &i : cert_key)
-		n += i.Flush(tm);
-	return n;
+	return ::FlushSessionCache(*ssl_ctx, tm);
 }
 
-SslFactoryCertKey::SslFactoryCertKey(const SslConfig &parent_config,
-				     const SslCertKeyConfig &config)
-	:ssl_ctx(CreateBasicSslCtx(true))
+SslFactoryCertKey::SslFactoryCertKey(const SslCertKeyConfig &config)
 {
-	assert(!parent_config.cert_key.empty());
-
-	ApplyServerConfig(ssl_ctx.get(), config);
-	ApplyServerConfig(*ssl_ctx, parent_config);
-
-	auto ssl = Make();
-
-	X509 *cert = SSL_get_certificate(ssl.get());
-	if (cert == nullptr)
-		throw SslError("No certificate in SSL_CTX");
-
-	EVP_PKEY *key = SSL_get_privatekey(ssl.get());
-	if (key == nullptr)
-		throw SslError("No certificate in SSL_CTX");
-
-	if (!MatchModulus(*cert, *key))
-		/* this shouldn't ever fail because
-		   SSL_CTX_check_private_key() was successful */
-		throw SslError("Key '" + config.key_file +
-			       "' does not match certificate '" +
-			       config.cert_file + "'");
+	auto ck = LoadCertChainKeyFile(config.cert_file.c_str(),
+				       config.key_file.c_str());
+	cert = std::move(ck.first.front());
+	ck.first.pop_front();
+	chain = std::move(ck.first);
+	key = std::move(ck.second);
 
 	names = GetCertificateNames<Name>(*cert);
 }
 
 std::unique_ptr<SslFactory>
 ssl_factory_new_server(const SslConfig &config,
-		       std::unique_ptr<SslSniCallback> &&sni)
+		       std::unique_ptr<SslCertCallback> &&sni)
 {
 	assert(!config.cert_key.empty());
 

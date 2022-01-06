@@ -35,7 +35,7 @@
 #include "lb/LuaHandler.hxx"
 #include "lb/LuaInitHook.hxx"
 #include "ssl/Factory.hxx"
-#include "ssl/SniCallback.hxx"
+#include "ssl/CertCallback.hxx"
 
 #include "lb_features.h"
 #ifdef ENABLE_CERTDB
@@ -61,7 +61,7 @@ lb_check(const LbListenerConfig &config)
 {
 	if (config.ssl) {
 		ssl_factory_new_server(config.ssl_config,
-				       std::unique_ptr<SslSniCallback>());
+				       std::unique_ptr<SslCertCallback>());
 	}
 }
 

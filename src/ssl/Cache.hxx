@@ -35,7 +35,7 @@
 #include "NameCache.hxx"
 #include "lib/openssl/Hash.hxx"
 #include "lib/openssl/UniqueX509.hxx"
-#include "lib/openssl/Ctx.hxx"
+#include "lib/openssl/UniqueEVP.hxx"
 #include "certdb/Config.hxx"
 #include "certdb/CertDatabase.hxx"
 #include "stock/ThreadedStock.hxx"
@@ -82,13 +82,16 @@ class CertCache final : CertNameCacheHandler {
 	std::mutex mutex;
 
 	struct Item {
-		SslCtx ssl_ctx;
+		UniqueX509 cert;
+		UniqueEVP_PKEY key;
 
 		std::chrono::steady_clock::time_point expires;
 
-		template<typename T>
-		Item(T &&_ssl_ctx, std::chrono::steady_clock::time_point now) noexcept
-			:ssl_ctx(std::forward<T>(_ssl_ctx)),
+		template<typename C, typename K>
+		Item(C &&_cert, K &&_key,
+		     std::chrono::steady_clock::time_point now) noexcept
+			:cert(std::forward<C>(_cert)),
+			 key(std::forward<K>(_key)),
 			 /* the initial expiration is 6 hours; it will be raised
 			    to 24 hours if the certificate is used again */
 			 expires(now + std::chrono::hours(6)) {}
@@ -120,34 +123,20 @@ public:
 		name_cache.Disconnect();
 	}
 
-	/**
-	 * Flush expired sessions from the OpenSSL session cache.
-	 *
-	 * @return the number of expired sessions
-	 */
-	unsigned FlushSessionCache(long tm) noexcept;
-
 	void Expire() noexcept;
 
 	/**
-	 * Look up a certificate by host name.  Returns the SSL_CTX
-	 * pointer on success, nullptr if no matching certificate was
-	 * found, and throws an exception on error.
+	 * Look up a certificate by host name, and set it in the given
+	 * #SSL.  Returns true on success, false if a certificate for
+	 * that name was not found, and throws an exception on error.
 	 */
-	SslCtx Get(const char *host, bool alpn_h2);
+	bool Apply(SSL &ssl, const char *host);
 
 private:
-	template<typename H>
-	std::string MakeCacheKey(H &&host, bool alpn_h2) noexcept {
-		std::string result(std::forward<H>(host));
-		if (alpn_h2)
-			result.append("|h2");
-		return result;
-	}
-
-	SslCtx Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key, bool alpn_h2);
-	SslCtx Query(const char *host, bool alpn_h2);
-	SslCtx GetNoWildCard(const char *host, bool alpn_h2);
+	const Item &Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key);
+	const Item *Query(const char *host);
+	const Item *GetNoWildCard(const char *host);
+	const Item *Get(const char *host);
 
 	/* virtual methods from class CertNameCacheHandler */
 	void OnCertModified(const std::string &name,

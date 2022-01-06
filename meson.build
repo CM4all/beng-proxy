@@ -388,7 +388,7 @@ if get_option('certdb')
     '../certdb/Wildcard.cxx',
     'Cache.cxx',
     'NameCache.cxx',
-    'DbSniCallback.cxx',
+    'DbCertCallback.cxx',
   ]
 else
   pg_dep = declare_dependency(required: false)

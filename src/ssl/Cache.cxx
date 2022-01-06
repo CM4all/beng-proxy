@@ -32,8 +32,6 @@
 
 #include "Cache.hxx"
 #include "SessionCache.hxx"
-#include "Basic.hxx"
-#include "AlpnEnable.hxx"
 #include "lib/openssl/Name.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/LoadFile.hxx"
@@ -42,17 +40,6 @@
 #include "util/AllocatedString.hxx"
 
 #include <openssl/err.h>
-
-unsigned
-CertCache::FlushSessionCache(long tm) noexcept
-{
-	unsigned n = 0;
-
-	for (auto &i : map)
-		n += ::FlushSessionCache(*i.second.ssl_ctx, tm);
-
-	return n;
-}
 
 void
 CertCache::Expire() noexcept
@@ -84,97 +71,98 @@ CertCache::LoadCaCertificate(const char *path)
 		throw SslError(std::string("Duplicate CA certificate: ") + path);
 }
 
-SslCtx
-CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key, bool alpn_h2)
+const CertCache::Item &
+CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key)
 {
 	assert(cert);
 	assert(key);
 
-	auto ssl_ctx = CreateBasicSslCtx(true);
-	// TODO: call ApplyServerConfig()
-
-	if (alpn_h2)
-		EnableAlpnH2(*ssl_ctx);
-
 	ERR_clear_error();
 
 	const auto name = GetCommonName(*cert);
+	if (name == nullptr)
+		throw std::runtime_error("Certificate without common name");
 
-	X509_NAME *issuer = X509_get_issuer_name(cert.get());
+	const std::unique_lock<std::mutex> lock(mutex);
+	auto i = map.try_emplace(name.c_str(),
+				 std::move(cert),
+				 std::move(key),
+				 GetEventLoop().SteadyNow()).first;
 
-	if (SSL_CTX_use_PrivateKey(ssl_ctx.get(), key.get()) != 1)
-		throw SslError("SSL_CTX_use_PrivateKey() failed");
-
-	if (SSL_CTX_use_certificate(ssl_ctx.get(), cert.get()) != 1)
-		throw SslError("SSL_CTX_use_certificate() failed");
-
-	if (issuer != nullptr) {
-		auto i = ca_certs.find(CalcSHA1(*issuer));
-		if (i != ca_certs.end())
-			for (const auto &ca_cert : i->second)
-				SSL_CTX_add_extra_chain_cert(ssl_ctx.get(),
-							     X509_dup(ca_cert.get()));
-	}
-
-	if (name != nullptr) {
-		const std::unique_lock<std::mutex> lock(mutex);
-		map.emplace(std::piecewise_construct,
-			    std::forward_as_tuple(MakeCacheKey(name.c_str(),
-							       alpn_h2)),
-			    std::forward_as_tuple(ssl_ctx,
-						  GetEventLoop().SteadyNow()));
-	}
-
-	return ssl_ctx;
+	return i->second;
 }
 
-SslCtx
-CertCache::Query(const char *host, bool alpn_h2)
+const CertCache::Item *
+CertCache::Query(const char *host)
 {
 	auto db = dbs.Get(config);
 	db->EnsureConnected();
 
 	auto cert_key = db->GetServerCertificateKey(host);
 	if (!cert_key.second)
-		return SslCtx();
+		return nullptr;
 
-	return Add(std::move(cert_key.first), std::move(cert_key.second),
-		   alpn_h2);
+	return &Add(std::move(cert_key.first), std::move(cert_key.second));
 }
 
-SslCtx
-CertCache::GetNoWildCard(const char *host, bool alpn_h2)
+const CertCache::Item *
+CertCache::GetNoWildCard(const char *host)
 {
 	{
 		const std::unique_lock<std::mutex> lock(mutex);
-		auto i = map.find(MakeCacheKey(host, alpn_h2));
+		auto i = map.find(host);
 		if (i != map.end()) {
 			i->second.expires = GetEventLoop().SteadyNow() + std::chrono::hours(24);
-			return i->second.ssl_ctx;
+			return &i->second;
 		}
 	}
 
 	if (name_cache.Lookup(host)) {
-		auto ssl_ctx = Query(host, alpn_h2);
-		if (ssl_ctx)
-			return ssl_ctx;
+		if (const auto *item = Query(host))
+			return item;
 	}
 
-	return {};
+	return nullptr;
 }
 
-SslCtx
-CertCache::Get(const char *host, bool alpn_h2)
+const CertCache::Item *
+CertCache::Get(const char *host)
 {
-	auto ssl_ctx = GetNoWildCard(host, alpn_h2);
-	if (!ssl_ctx) {
+	const auto *item = GetNoWildCard(host);
+	if (item == nullptr) {
 		/* not found: try the wildcard */
 		const auto wildcard = MakeCommonNameWildcard(host);
 		if (!wildcard.empty())
-			ssl_ctx = GetNoWildCard(wildcard.c_str(), alpn_h2);
+			item = GetNoWildCard(wildcard.c_str());
 	}
 
-	return ssl_ctx;
+	return item;
+}
+
+bool
+CertCache::Apply(SSL &ssl, const char *host)
+{
+	const auto *item = Get(host);
+	if (item == nullptr)
+		return false;
+
+	ERR_clear_error();
+
+	if (SSL_use_PrivateKey(&ssl, item->key.get()) != 1)
+		throw SslError("SSL_use_PrivateKey() failed");
+
+	if (SSL_use_certificate(&ssl, item->cert.get()) != 1)
+		throw SslError("SSL_use_certificate() failed");
+
+	if (X509_NAME *issuer = X509_get_issuer_name(item->cert.get());
+	    issuer != nullptr) {
+		auto i = ca_certs.find(CalcSHA1(*issuer));
+		if (i != ca_certs.end())
+			for (const auto &ca_cert : i->second)
+				SSL_add1_chain_cert(&ssl, ca_cert.get());
+	}
+
+	return true;
 }
 
 void
@@ -182,15 +170,6 @@ CertCache::OnCertModified(const std::string &name, bool deleted) noexcept
 {
 	const std::unique_lock<std::mutex> lock(mutex);
 	auto i = map.find(name);
-	if (i != map.end()) {
-		map.erase(i);
-
-		logger.Format(5, "flushed %s certificate '%s'",
-			      deleted ? "deleted" : "modified",
-			      name.c_str());
-	}
-
-	i = map.find(MakeCacheKey(name, true));
 	if (i != map.end()) {
 		map.erase(i);
 

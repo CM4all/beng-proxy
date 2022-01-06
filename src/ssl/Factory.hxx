@@ -33,6 +33,7 @@
 #pragma once
 
 #include "lib/openssl/UniqueSSL.hxx"
+#include "lib/openssl/Ctx.hxx"
 
 #include <memory>
 #include <vector>
@@ -42,15 +43,17 @@ struct pool;
 struct SslConfig;
 template<typename T> struct ConstBuffer;
 struct SslFactoryCertKey;
-class SslSniCallback;
+class SslCertCallback;
 
 class SslFactory {
+	SslCtx ssl_ctx;
+
 	std::vector<SslFactoryCertKey> cert_key;
 
-	const std::unique_ptr<SslSniCallback> sni;
+	const std::unique_ptr<SslCertCallback> cert_callback;
 
 public:
-	explicit SslFactory(std::unique_ptr<SslSniCallback> &&_sni) noexcept;
+	explicit SslFactory(std::unique_ptr<SslCertCallback> &&_cert_callback) noexcept;
 	~SslFactory() noexcept;
 
 	void LoadCertsKeys(const SslConfig &config);
@@ -60,10 +63,6 @@ public:
 
 	void EnableSNI();
 	void AutoEnableSNI();
-
-	const auto &GetSNI() const noexcept {
-		return sni;
-	}
 
 	/**
 	 * Wrapper for SSL_CTX_set_session_id_context().
@@ -82,8 +81,12 @@ public:
 	 * @return the number of expired sessions
 	 */
 	unsigned Flush(long tm) noexcept;
+
+private:
+	int CertCallback(SSL &ssl) noexcept;
+	static int CertCallback(SSL *ssl, void *arg) noexcept;
 };
 
 std::unique_ptr<SslFactory>
 ssl_factory_new_server(const SslConfig &config,
-		       std::unique_ptr<SslSniCallback> &&sni);
+		       std::unique_ptr<SslCertCallback> &&cert_callback);

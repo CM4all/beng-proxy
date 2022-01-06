@@ -30,13 +30,18 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "DbSniCallback.hxx"
-#include "Cache.hxx"
+#pragma once
 
-void
-DbSslSniCallback::OnSni(SSL *ssl, const char *name)
-{
-	auto ssl_ctx = cache.Get(name, alpn_h2);
-	if (ssl_ctx)
-		SSL_set_SSL_CTX(ssl, ssl_ctx.get());
-}
+#include "CertCallback.hxx"
+
+class CertCache;
+
+class DbSslCertCallback final : public SslCertCallback {
+	CertCache &cache;
+
+public:
+	explicit DbSslCertCallback(CertCache &_cache) noexcept
+		:cache(_cache) {}
+
+	bool OnCertCallback(SSL &ssl, const char *name) override;
+};
