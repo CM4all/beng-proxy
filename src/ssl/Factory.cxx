@@ -94,13 +94,11 @@ struct SslFactoryCertKey {
 
 	std::forward_list<Name> names;
 
-	SslFactoryCertKey() = default;
+	SslFactoryCertKey(const SslConfig &parent_config,
+			  const SslCertKeyConfig &config);
 
 	SslFactoryCertKey(SslFactoryCertKey &&other) = default;
 	SslFactoryCertKey &operator=(SslFactoryCertKey &&other) = default;
-
-	void LoadServer(const SslConfig &parent_config,
-			const SslCertKeyConfig &config);
 
 	[[gnu::pure]]
 	bool MatchCommonName(StringView host_name) const noexcept;
@@ -141,10 +139,7 @@ SslFactory::LoadCertsKeys(const SslConfig &config)
 	cert_key.reserve(config.cert_key.size());
 
 	for (const auto &c : config.cert_key) {
-		SslFactoryCertKey ck;
-		ck.LoadServer(config, c);
-
-		cert_key.emplace_back(std::move(ck));
+		cert_key.emplace_back(config, c);
 	}
 }
 
@@ -299,14 +294,10 @@ SslFactory::Flush(long tm) noexcept
 	return n;
 }
 
-void
-SslFactoryCertKey::LoadServer(const SslConfig &parent_config,
-			      const SslCertKeyConfig &config)
+SslFactoryCertKey::SslFactoryCertKey(const SslConfig &parent_config,
+				     const SslCertKeyConfig &config)
+	:ssl_ctx(CreateBasicSslCtx(true))
 {
-	assert(!ssl_ctx);
-
-	ssl_ctx = CreateBasicSslCtx(true);
-
 	assert(!parent_config.cert_key.empty());
 
 	ApplyServerConfig(ssl_ctx.get(), config);
