@@ -30,34 +30,70 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "AlpnEnable.hxx"
-#include "AlpnProtos.hxx"
+#include "AlpnCallback.hxx"
+#include "AlpnIterator.hxx"
 #include "AlpnSelect.hxx"
 
 #include <openssl/ssl.h>
 
-#include <iterator> // for std::size()
+#include <cassert>
 
-void
-EnableAlpnH2(SSL_CTX &ssl_ctx) noexcept
+inline AlpnCallback::Span
+AlpnCallback::NextProtosAdvertisedCallback(SSL &) noexcept
 {
-	SSL_CTX_set_next_protos_advertised_cb(&ssl_ctx, [](SSL *, const unsigned char **data, unsigned int *len, void *) {
-		*data = alpn_http_any.data();
-		*len = alpn_http_any.size();
-		return SSL_TLSEXT_ERR_OK;
-	}, nullptr);
-
-	SSL_CTX_set_alpn_select_cb(&ssl_ctx, [](SSL *, const unsigned char **out, unsigned char *outlen, const unsigned char *in, unsigned int inlen, void *){
-		const std::span<const unsigned char> haystack{in, inlen};
-		auto found = FindAlpn(haystack, alpn_h2);
-		if (found.empty())
-			found = FindAlpn(haystack, alpn_http_1_1);
-		if (found.empty())
-			return SSL_TLSEXT_ERR_NOACK;
-
-		*out = found.data();
-		*outlen = found.size();
-		return SSL_TLSEXT_ERR_OK;
-	}, nullptr);
+	return {(const unsigned char *)advertised.data(), advertised.size()};
 }
 
+int
+AlpnCallback::NextProtosAdvertisedCallback(SSL *ssl,
+					   const unsigned char **data,
+					   unsigned int *len,
+					   void *ctx) noexcept
+{
+	auto &c = *(AlpnCallback *)ctx;
+	auto a = c.NextProtosAdvertisedCallback(*ssl);
+	assert(!a.empty());
+
+	*data = a.data();
+	*len = a.size();
+	return SSL_TLSEXT_ERR_OK;
+}
+
+AlpnCallback::Span
+AlpnCallback::SelectCallback(SSL &ssl, Span in) noexcept
+{
+	for (const auto a : AlpnRange{NextProtosAdvertisedCallback(ssl)}) {
+		if (auto found = FindAlpn(in, a); !found.empty())
+			return found;
+	}
+
+	return {};
+}
+
+int
+AlpnCallback::SelectCallback(SSL *ssl, const unsigned char **out,
+			     unsigned char *outlen,
+			     const unsigned char *in, unsigned int inlen,
+			     void *ctx) noexcept
+{
+	auto &c = *(AlpnCallback *)ctx;
+	auto s = c.SelectCallback(*ssl, {in, inlen});
+	if (s.empty())
+		return SSL_TLSEXT_ERR_NOACK;
+
+	*out = s.data();
+	*outlen = s.size();
+	return SSL_TLSEXT_ERR_OK;
+}
+
+void
+AlpnCallback::Setup(SSL_CTX &ssl_ctx) noexcept
+{
+	if (advertised.empty())
+		return;
+
+	SSL_CTX_set_next_protos_advertised_cb(&ssl_ctx,
+					      NextProtosAdvertisedCallback,
+					      this);
+	SSL_CTX_set_alpn_select_cb(&ssl_ctx, SelectCallback, this);
+}

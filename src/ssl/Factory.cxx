@@ -35,7 +35,6 @@
 #include "Config.hxx"
 #include "SessionCache.hxx"
 #include "CertCallback.hxx"
-#include "AlpnEnable.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/Name.hxx"
 #include "lib/openssl/AltName.hxx"
@@ -240,12 +239,6 @@ SslFactory::SetSessionIdContext(ConstBuffer<void> _sid_ctx)
 						    sid_ctx.size);
 	if (result == 0)
 		throw SslError("SSL_CTX_set_session_id_context() failed");
-}
-
-void
-SslFactory::EnableAlpnH2()
-{
-	::EnableAlpnH2(*ssl_ctx);
 }
 
 UniqueSSL

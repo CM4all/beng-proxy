@@ -38,6 +38,7 @@
 #include "pool/UniquePtr.hxx"
 #include "ssl/Factory.hxx"
 #include "ssl/DbCertCallback.hxx"
+#include "ssl/AlpnProtos.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "lb_features.h"
@@ -69,8 +70,10 @@ MakeSslFactory(const LbListenerConfig &config,
 	   good enough */
 	ssl_factory->SetSessionIdContext({config.name.data(), config.name.size()});
 
+#ifdef HAVE_NGHTTP2
 	if (config.GetAlpnHttp2())
-		ssl_factory->EnableAlpnH2();
+		ssl_factory->AddAlpn(alpn_http_any);
+#endif
 
 	return ssl_factory;
 }

@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include "AlpnCallback.hxx"
 #include "lib/openssl/UniqueSSL.hxx"
 #include "lib/openssl/Ctx.hxx"
 
@@ -46,6 +47,8 @@ struct SslFactoryCertKey;
 class SslCertCallback;
 
 class SslFactory {
+	AlpnCallback alpn_callback;
+
 	SslCtx ssl_ctx;
 
 	std::vector<SslFactoryCertKey> cert_key;
@@ -57,6 +60,11 @@ public:
 		   std::unique_ptr<SslCertCallback> _cert_callback);
 	~SslFactory() noexcept;
 
+	void AddAlpn(std::span<const unsigned char> p) {
+		alpn_callback.Add(p);
+		alpn_callback.Setup(*ssl_ctx);
+	}
+
 	[[gnu::pure]]
 	const SslFactoryCertKey *FindCommonName(StringView host_name) const noexcept;
 
@@ -66,8 +74,6 @@ public:
 	 * Throws on error.
 	 */
 	void SetSessionIdContext(ConstBuffer<void> sid_ctx);
-
-	void EnableAlpnH2();
 
 	UniqueSSL Make();
 

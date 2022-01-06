@@ -38,6 +38,7 @@
 #include "ssl/Factory.hxx"
 #include "ssl/Filter.hxx"
 #include "ssl/CertCallback.hxx"
+#include "ssl/AlpnProtos.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
@@ -52,7 +53,7 @@ MakeSslFactory(const SslConfig *ssl_config)
 	// TODO: call SetSessionIdContext()
 
 #ifdef HAVE_NGHTTP2
-	ssl_factory->EnableAlpnH2();
+	ssl_factory->AddAlpn(alpn_http_any);
 #endif
 
 	return ssl_factory;
