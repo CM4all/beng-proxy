@@ -59,15 +59,15 @@ struct SslFactoryCertKey {
 		AllocatedString value;
 		size_t length;
 
-		Name(AllocatedString &&_value)
+		Name(AllocatedString &&_value) noexcept
 			:value(std::move(_value)), length(strlen(value.c_str())) {}
 
-		Name(std::string_view _value)
+		Name(std::string_view _value) noexcept
 			:value(_value),
 			 length(_value.size()) {}
 
 		[[gnu::pure]]
-		bool Match(StringView host_name) const;
+		bool Match(StringView host_name) const noexcept;
 	};
 
 	SslCtx ssl_ctx;
@@ -82,13 +82,13 @@ struct SslFactoryCertKey {
 	void LoadServer(const SslConfig &parent_config,
 			const SslCertKeyConfig &config);
 
-	void CacheCommonName(X509_NAME &subject) {
+	void CacheCommonName(X509_NAME &subject) noexcept {
 		auto common_name = NidToString(subject, NID_commonName);
 		if (common_name != nullptr)
 			names.emplace_front(std::move(common_name));
 	}
 
-	void CacheCommonName(X509 &cert) {
+	void CacheCommonName(X509 &cert) noexcept {
 		X509_NAME *subject = X509_get_subject_name(&cert);
 		if (subject != nullptr)
 			CacheCommonName(*subject);
@@ -98,7 +98,7 @@ struct SslFactoryCertKey {
 	}
 
 	[[gnu::pure]]
-	bool MatchCommonName(StringView host_name) const;
+	bool MatchCommonName(StringView host_name) const noexcept;
 
 	void SetSessionIdContext(ConstBuffer<void> _sid_ctx) {
 		auto sid_ctx = ConstBuffer<unsigned char>::FromVoid(_sid_ctx);
@@ -121,11 +121,11 @@ struct SslFactoryCertKey {
 		return ssl;
 	}
 
-	void Apply(SSL *ssl) const {
+	void Apply(SSL *ssl) const noexcept {
 		SSL_set_SSL_CTX(ssl, ssl_ctx.get());
 	}
 
-	unsigned Flush(long tm) {
+	unsigned Flush(long tm) noexcept {
 		return ::FlushSessionCache(*ssl_ctx, tm);
 	}
 };
@@ -166,7 +166,7 @@ ApplyServerConfig(SSL_CTX *ssl_ctx, const SslCertKeyConfig &cert_key)
 }
 
 inline bool
-SslFactoryCertKey::Name::Match(StringView host_name) const
+SslFactoryCertKey::Name::Match(StringView host_name) const noexcept
 {
 	if (value == nullptr)
 		return false;
@@ -189,7 +189,7 @@ SslFactoryCertKey::Name::Match(StringView host_name) const
 }
 
 inline bool
-SslFactoryCertKey::MatchCommonName(StringView host_name) const
+SslFactoryCertKey::MatchCommonName(StringView host_name) const noexcept
 {
 	for (const auto &name : names)
 		if (name.Match(host_name))
@@ -207,7 +207,7 @@ SslFactory::SslFactory(std::unique_ptr<SslSniCallback> &&_sni) noexcept
 SslFactory::~SslFactory() noexcept = default;
 
 inline const SslFactoryCertKey *
-SslFactory::FindCommonName(StringView host_name) const
+SslFactory::FindCommonName(StringView host_name) const noexcept
 {
 	for (const auto &ck : cert_key)
 		if (ck.MatchCommonName(host_name))
@@ -218,7 +218,7 @@ SslFactory::FindCommonName(StringView host_name) const
 
 static int
 ssl_servername_callback(SSL *ssl, int *,
-			const SslFactory &factory)
+			const SslFactory &factory) noexcept
 {
 	const char *_host_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
 	if (_host_name == nullptr)
@@ -286,7 +286,7 @@ SslFactory::Make()
 }
 
 unsigned
-SslFactory::Flush(long tm)
+SslFactory::Flush(long tm) noexcept
 {
 	unsigned n = 0;
 	for (auto &i : cert_key)

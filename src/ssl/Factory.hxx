@@ -56,7 +56,7 @@ public:
 	void LoadCertsKeys(const SslConfig &config);
 
 	[[gnu::pure]]
-	const SslFactoryCertKey *FindCommonName(StringView host_name) const;
+	const SslFactoryCertKey *FindCommonName(StringView host_name) const noexcept;
 
 	void EnableSNI();
 	void AutoEnableSNI();
@@ -81,7 +81,7 @@ public:
 	 *
 	 * @return the number of expired sessions
 	 */
-	unsigned Flush(long tm);
+	unsigned Flush(long tm) noexcept;
 };
 
 std::unique_ptr<SslFactory>
