@@ -392,7 +392,7 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	const auto wrap_key = wrap_key_helper.SetEncryptKey(db_config);
 
 	db.DoSerializableRepeat(8, [&](){
-		db.LoadServerCertificate(handle, *cert, *cert_key,
+		db.LoadServerCertificate(handle, nullptr, *cert, *cert_key,
 					 wrap_key.first, wrap_key.second);
 	});
 
@@ -463,7 +463,7 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	const auto wrap_key = wrap_key_helper.SetEncryptKey(db_config);
 
 	db.DoSerializableRepeat(8, [&](){
-		db.LoadServerCertificate(handle, *cert, old_key,
+		db.LoadServerCertificate(handle, nullptr, *cert, old_key,
 					 wrap_key.first, wrap_key.second);
 	});
 

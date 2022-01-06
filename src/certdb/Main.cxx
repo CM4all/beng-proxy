@@ -124,7 +124,7 @@ LoadCertificate(const CertDatabaseConfig &db_config,
 	bool inserted;
 
 	db.DoSerializableRepeat(8, [&](){
-		inserted = db.LoadServerCertificate(handle,
+		inserted = db.LoadServerCertificate(handle, nullptr,
 						    *cert, *key, wrap_key.first,
 						    wrap_key.second);
 	});
@@ -145,7 +145,7 @@ ReloadCertificate(const CertDatabaseConfig &db_config, const char *handle)
 	WrapKeyHelper wrap_key_helper;
 	const auto wrap_key = wrap_key_helper.SetEncryptKey(db_config);
 
-	db.LoadServerCertificate(handle,
+	db.LoadServerCertificate(handle, nullptr,
 				 *cert_key.first, *cert_key.second,
 				 wrap_key.first, wrap_key.second);
 }
@@ -183,7 +183,7 @@ GetCertificate(const CertDatabaseConfig &db_config, const char *handle)
 static UniqueEVP_PKEY
 FindKeyByName(CertDatabase &db, const char *common_name)
 {
-	return db.GetServerCertificateKey(common_name).second;
+	return db.GetServerCertificateKey(common_name, nullptr).second;
 }
 
 static void
@@ -284,7 +284,8 @@ Populate(CertDatabase &db, EVP_PKEY *key, ConstBuffer<void> key_der,
 	const char *not_after = "1971-01-01";
 
 	auto cert = MakeSelfSignedDummyCert(*key, common_name);
-	db.InsertServerCertificate(nullptr, common_name, common_name,
+	db.InsertServerCertificate(nullptr,  nullptr,
+				   common_name, common_name,
 				   not_before, not_after,
 				   *cert, key_der,
 				   nullptr);

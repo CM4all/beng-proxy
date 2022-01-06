@@ -137,6 +137,7 @@ CertDatabase::GetIdByHandle(const char *handle)
 
 void
 CertDatabase::InsertServerCertificate(const char *handle,
+				      const char *special,
 				      const char *common_name,
 				      const char *issuer_common_name,
 				      const char *not_before,
@@ -149,14 +150,14 @@ CertDatabase::InsertServerCertificate(const char *handle,
 
 	const Pg::BinaryValue key_der(key);
 
-	InsertServerCertificate(handle,
+	InsertServerCertificate(handle, special,
 				common_name, issuer_common_name,
 				not_before, not_after,
 				cert_der, key_der, key_wrap_name);
 }
 
 bool
-CertDatabase::LoadServerCertificate(const char *handle,
+CertDatabase::LoadServerCertificate(const char *handle, const char *special,
 				    X509 &cert, EVP_PKEY &key,
 				    const char *key_wrap_name,
 				    AES_KEY *wrap_key)
@@ -186,7 +187,7 @@ CertDatabase::LoadServerCertificate(const char *handle,
 	if (not_after == nullptr)
 		throw "Certificate does not have a notAfter time stamp";
 
-	auto result = UpdateServerCertificate(handle,
+	auto result = UpdateServerCertificate(handle, special,
 					      common_name.c_str(),
 					      issuer_common_name.c_str(),
 					      not_before.c_str(),
@@ -204,7 +205,8 @@ CertDatabase::LoadServerCertificate(const char *handle,
 		   already exists */
 		ReallyDeleteServerCertificateByName(common_name.c_str());
 
-		result = InsertServerCertificate(handle, common_name.c_str(),
+		result = InsertServerCertificate(handle, special,
+						 common_name.c_str(),
 						 issuer_common_name.c_str(),
 						 not_before.c_str(),
 						 not_after.c_str(),
@@ -238,9 +240,9 @@ CertDatabase::GetServerCertificateKeyByHandle(const char *handle)
 }
 
 std::pair<UniqueX509, UniqueEVP_PKEY>
-CertDatabase::GetServerCertificateKey(const char *name)
+CertDatabase::GetServerCertificateKey(const char *name, const char *special)
 {
-	auto result = FindServerCertificateKeyByName(name);
+	auto result = FindServerCertificateKeyByName(name, special);
 	if (result.GetRowCount() == 0)
 		return std::make_pair(nullptr, nullptr);
 

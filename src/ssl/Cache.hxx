@@ -85,6 +85,8 @@ class CertCache final : CertNameCacheHandler {
 		UniqueX509 cert;
 		UniqueEVP_PKEY key;
 
+		std::string special;
+
 		std::chrono::steady_clock::time_point expires;
 
 		template<typename C, typename K>
@@ -130,17 +132,18 @@ public:
 	 * #SSL.  Returns true on success, false if a certificate for
 	 * that name was not found, and throws an exception on error.
 	 */
-	bool Apply(SSL &ssl, const char *host);
+	bool Apply(SSL &ssl, const char *host, const char *special);
 
 private:
-	const Item &Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key);
-	const Item *Query(const char *host);
+	const Item &Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key,
+			const char *special);
+	const Item *Query(const char *host, const char *special);
 
 	[[gnu::pure]]
-	const Item *GetCached(const char *host) noexcept;
+	const Item *GetCached(const char *host, const char *special) noexcept;
 
-	const Item *GetNoWildCard(const char *host);
-	const Item *Get(const char *host);
+	const Item *GetNoWildCard(const char *host, const char *special);
+	const Item *Get(const char *host, const char *special);
 
 	/* virtual methods from class CertNameCacheHandler */
 	void OnCertModified(const std::string &name,

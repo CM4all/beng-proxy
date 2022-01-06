@@ -98,4 +98,10 @@ CertDatabase::Migrate()
 			     "server_certificate_handle"))
 		conn.Execute("CREATE UNIQUE INDEX server_certificate_handle "
 			     "ON server_certificate(handle);");
+
+	/* server_certificate.special added in version 17.0.79 */
+
+	conn.Execute("ALTER TABLE server_certificate ADD COLUMN IF NOT EXISTS special varchar(64) NULL");
+	conn.Execute("DROP INDEX IF EXISTS server_certificate_name");
+	conn.Execute("CREATE UNIQUE INDEX IF NOT EXISTS server_certificate_name_special ON server_certificate(common_name, special)");
 }

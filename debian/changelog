@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.79) unstable; urgency=low
 
-  * 
+  * certdb: add database column "special"
 
  --   
 

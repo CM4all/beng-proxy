@@ -36,5 +36,7 @@
 bool
 DbSslCertCallback::OnCertCallback(SSL &ssl, const char *name)
 {
-	return cache.Apply(ssl, name);
+	const char *special = nullptr;
+
+	return cache.Apply(ssl, name, special);
 }

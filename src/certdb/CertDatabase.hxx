@@ -123,6 +123,7 @@ public:
 	Pg::Serial GetIdByHandle(const char *handle);
 
 	void InsertServerCertificate(const char *handle,
+				     const char *special,
 				     const char *common_name,
 				     const char *issuer_common_name,
 				     const char *not_before,
@@ -134,7 +135,7 @@ public:
 	 * @return true when new certificate has been inserted, false when an
 	 * existing certificate has been updated
 	 */
-	bool LoadServerCertificate(const char *handle,
+	bool LoadServerCertificate(const char *handle, const char *special,
 				   X509 &cert, EVP_PKEY &key,
 				   const char *key_wrap_name,
 				   AES_KEY *wrap_key);
@@ -148,7 +149,8 @@ public:
 	 * no matching certificate was found
 	 */
 	std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKeyByHandle(const char *handle);
-	std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(const char *name);
+	std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(const char *name,
+								      const char *special);
 	std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(Pg::Serial id);
 
 	/**
@@ -162,6 +164,7 @@ public:
 
 private:
 	Pg::Result InsertServerCertificate(const char *handle,
+					   const char *special,
 					   const char *common_name,
 					   const char *issuer_common_name,
 					   const char *not_before,
@@ -169,17 +172,18 @@ private:
 					   Pg::BinaryValue cert, Pg::BinaryValue key,
 					   const char *key_wrap_name) {
 		return conn.ExecuteParams("INSERT INTO server_certificate("
-					  "handle, common_name, issuer_common_name, "
+					  "handle, special, common_name, issuer_common_name, "
 					  "not_before, not_after, "
 					  "certificate_der, key_der, key_wrap_name) "
-					  "VALUES($1, $2, $3, $4, $5, $6, $7, $8)"
+					  "VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)"
 					  " RETURNING id",
-					  handle, common_name, issuer_common_name,
+					  handle, special,
+					  common_name, issuer_common_name,
 					  not_before, not_after,
 					  cert, key, key_wrap_name);
 	}
 
-	Pg::Result UpdateServerCertificate(const char *handle,
+	Pg::Result UpdateServerCertificate(const char *handle, const char *special,
 					   const char *common_name,
 					   const char *issuer_common_name,
 					   const char *not_before,
@@ -196,6 +200,7 @@ private:
 					  "issuer_common_name=$7, "
 					  "modified=CURRENT_TIMESTAMP, deleted=FALSE "
 					  "WHERE handle=$8"
+					  " AND special IS NOT DISTINCT FROM $9"
 					  " RETURNING id"
 					  : "UPDATE server_certificate SET "
 					  "not_before=$2, not_after=$3, "
@@ -205,10 +210,11 @@ private:
 					  "handle=$8, "
 					  "modified=CURRENT_TIMESTAMP, deleted=FALSE "
 					  "WHERE common_name=$1"
+					  " AND special IS NOT DISTINCT FROM $9"
 					  " RETURNING id",
 					  common_name, not_before, not_after,
 					  cert, key, key_wrap_name,
-					  issuer_common_name, handle);
+					  issuer_common_name, handle, special);
 	}
 
 	Pg::Result DeleteAltNames(const char *server_certificate_id) {
@@ -253,11 +259,13 @@ private:
 					  handle);
 	}
 
-	Pg::Result FindServerCertificateKeyByName(const char *common_name) {
+	Pg::Result FindServerCertificateKeyByName(const char *common_name,
+						  const char *special) {
 		return conn.ExecuteParams(true,
 					  "SELECT certificate_der, key_der, key_wrap_name "
 					  "FROM server_certificate "
 					  "WHERE NOT deleted AND "
+					  " special IS NOT DISTINCT FROM $2 AND"
 					  "(common_name=$1 OR EXISTS("
 					  "SELECT id FROM server_certificate_alt_name"
 					  " WHERE server_certificate_id=server_certificate.id"
@@ -268,7 +276,7 @@ private:
 					  /* prefer exact match in common_name: */
 					  " common_name=$1 DESC "
 					  "LIMIT 1",
-					  common_name);
+					  common_name, special);
 	}
 
 	Pg::Result FindServerCertificateKeyById(Pg::Serial id) {

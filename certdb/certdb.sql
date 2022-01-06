@@ -25,6 +25,10 @@ CREATE TABLE server_certificate (
     -- this certificate
     handle varchar(256) NULL,
 
+    -- if non-NULL, then this is a "special" certificate which is not
+    -- supposed to be used for regular connections
+    special varchar(64) NULL,
+
     --------------------------------
     -- Mirrors of X.509 attributes
     --------------------------------
@@ -74,7 +78,7 @@ CREATE TABLE server_certificate_alt_name (
 );
 
 -- for looking up a certificate by its name
-CREATE UNIQUE INDEX server_certificate_name ON server_certificate(common_name);
+CREATE UNIQUE INDEX server_certificate_name_special ON server_certificate(common_name, special);
 
 -- for looking up a certificate by its handle
 CREATE UNIQUE INDEX server_certificate_handle ON server_certificate(handle);
