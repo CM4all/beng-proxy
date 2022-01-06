@@ -46,7 +46,7 @@ FindAlpn(std::span<const unsigned char> haystack,
 	for (const auto i : AlpnRange{haystack}) {
 		if (i.size() == needle.size() &&
 		    memcmp(i.data(), needle.data(), needle.size()) == 0)
-			return i;
+			return i.subspan(1);
 	}
 
 	return {};
