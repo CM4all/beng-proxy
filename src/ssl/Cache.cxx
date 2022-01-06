@@ -71,7 +71,7 @@ CertCache::LoadCaCertificate(const char *path)
 		throw SslError(std::string("Duplicate CA certificate: ") + path);
 }
 
-const CertCache::Item &
+inline const CertCache::Item &
 CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key)
 {
 	assert(cert);
