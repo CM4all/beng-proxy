@@ -48,7 +48,7 @@ MakeSslFactory(const SslConfig *ssl_config)
 	if (ssl_config == nullptr)
 		return nullptr;
 
-	auto ssl_factory = ssl_factory_new_server(*ssl_config, nullptr);
+	auto ssl_factory = std::make_unique<SslFactory>(*ssl_config, nullptr);
 	// TODO: call SetSessionIdContext()
 
 #ifdef HAVE_NGHTTP2

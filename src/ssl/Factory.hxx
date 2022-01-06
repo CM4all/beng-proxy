@@ -53,16 +53,12 @@ class SslFactory {
 	const std::unique_ptr<SslCertCallback> cert_callback;
 
 public:
-	explicit SslFactory(std::unique_ptr<SslCertCallback> &&_cert_callback) noexcept;
+	SslFactory(const SslConfig &config,
+		   std::unique_ptr<SslCertCallback> _cert_callback);
 	~SslFactory() noexcept;
-
-	void LoadCertsKeys(const SslConfig &config);
 
 	[[gnu::pure]]
 	const SslFactoryCertKey *FindCommonName(StringView host_name) const noexcept;
-
-	void EnableSNI();
-	void AutoEnableSNI();
 
 	/**
 	 * Wrapper for SSL_CTX_set_session_id_context().
@@ -86,7 +82,3 @@ private:
 	int CertCallback(SSL &ssl) noexcept;
 	static int CertCallback(SSL *ssl, void *arg) noexcept;
 };
-
-std::unique_ptr<SslFactory>
-ssl_factory_new_server(const SslConfig &config,
-		       std::unique_ptr<SslCertCallback> &&cert_callback);

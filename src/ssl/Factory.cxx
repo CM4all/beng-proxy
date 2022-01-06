@@ -123,22 +123,6 @@ struct SslFactoryCertKey {
 	}
 };
 
-void
-SslFactory::LoadCertsKeys(const SslConfig &config)
-{
-	assert(!ssl_ctx);
-
-	ssl_ctx = CreateBasicSslCtx(true);
-
-	ApplyServerConfig(*ssl_ctx, config);
-
-	cert_key.reserve(config.cert_key.size());
-
-	for (const auto &c : config.cert_key) {
-		cert_key.emplace_back(c);
-	}
-}
-
 inline bool
 SslFactoryCertKey::Name::Match(StringView host_name) const noexcept
 {
@@ -172,10 +156,23 @@ SslFactoryCertKey::MatchCommonName(StringView host_name) const noexcept
 	return false;
 }
 
-inline
-SslFactory::SslFactory(std::unique_ptr<SslCertCallback> &&_cert_callback) noexcept
-	:cert_callback(std::move(_cert_callback))
+SslFactory::SslFactory(const SslConfig &config,
+		       std::unique_ptr<SslCertCallback> _cert_callback)
+	:ssl_ctx(CreateBasicSslCtx(true)),
+	 cert_callback(std::move(_cert_callback))
 {
+	assert(!config.cert_key.empty());
+
+	ApplyServerConfig(*ssl_ctx, config);
+
+	cert_key.reserve(config.cert_key.size());
+	for (const auto &c : config.cert_key)
+		cert_key.emplace_back(c);
+
+	if (cert_key.size() > 1 || cert_callback)
+		SSL_CTX_set_cert_cb(ssl_ctx.get(), CertCallback, this);
+	else if (!cert_key.empty())
+		cert_key.front().Apply(*ssl_ctx);
 }
 
 SslFactory::~SslFactory() noexcept = default;
@@ -234,21 +231,6 @@ SslFactory::CertCallback(SSL *ssl, void *arg) noexcept
 	return f.CertCallback(*ssl);
 }
 
-inline void
-SslFactory::EnableSNI()
-{
-	SSL_CTX_set_cert_cb(ssl_ctx.get(), CertCallback, this);
-}
-
-inline void
-SslFactory::AutoEnableSNI()
-{
-	if (cert_key.size() > 1 || cert_callback)
-		EnableSNI();
-	else if (!cert_key.empty())
-		cert_key.front().Apply(*ssl_ctx);
-}
-
 void
 SslFactory::SetSessionIdContext(ConstBuffer<void> _sid_ctx)
 {
@@ -294,18 +276,4 @@ SslFactoryCertKey::SslFactoryCertKey(const SslCertKeyConfig &config)
 	key = std::move(ck.second);
 
 	names = GetCertificateNames<Name>(*cert);
-}
-
-std::unique_ptr<SslFactory>
-ssl_factory_new_server(const SslConfig &config,
-		       std::unique_ptr<SslCertCallback> &&sni)
-{
-	assert(!config.cert_key.empty());
-
-	std::unique_ptr<SslFactory> factory(new SslFactory(std::move(sni)));
-
-	factory->LoadCertsKeys(config);
-	factory->AutoEnableSNI();
-
-	return factory;
 }
