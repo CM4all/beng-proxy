@@ -65,6 +65,11 @@ MakeSslFactory(const LbListenerConfig &config,
 	auto ssl_factory = std::make_unique<SslFactory>(config.ssl_config,
 							std::move(sni_callback));
 
+#ifdef ENABLE_CERTDB
+	if (config.cert_db != nullptr)
+		ssl_factory->AddAlpn(alpn_acme_tls1);
+#endif
+
 	/* we use the listener name as OpenSSL session_id_context,
 	   because listener names are unique, so I hope this should be
 	   good enough */

@@ -106,6 +106,9 @@ specified ``--challenge-directory`` path (on all domains).
 After the program finishes, the new certificate should be usable
 immediately.
 
+To use ``tls-apn-01`` instead of ``http-01``, pass the command line
+option ``--alpn`` instead of ``--challenge-directory``.
+
 Wildcards
 ---------
 

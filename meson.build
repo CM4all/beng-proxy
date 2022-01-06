@@ -1013,6 +1013,7 @@ if get_option('certdb')
     'src/certdb/AcmeError.cxx',
     'src/certdb/AcmeHttp.cxx',
     'src/certdb/AcmeDns.cxx',
+    'src/certdb/AcmeAlpn.cxx',
     'src/certdb/AcmeClient.cxx',
     'src/certdb/AcmeChallenge.cxx',
     'src/certdb/AcmeAccount.cxx',

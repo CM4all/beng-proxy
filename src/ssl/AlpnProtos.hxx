@@ -37,3 +37,5 @@
 constexpr auto alpn_http_1_1 = MakeAlpnString("http/1.1");
 constexpr auto alpn_h2 = MakeAlpnString("h2");
 constexpr auto alpn_http_any = ConcatAlpnStrings(alpn_h2, alpn_http_1_1);
+
+constexpr auto alpn_acme_tls1 = MakeAlpnString("acme-tls/1");

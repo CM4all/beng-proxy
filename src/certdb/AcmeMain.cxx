@@ -42,6 +42,7 @@
 #include "AcmeKey.hxx"
 #include "AcmeHttp.hxx"
 #include "AcmeDns.hxx"
+#include "AcmeAlpn.hxx"
 #include "AcmeConfig.hxx"
 #include "Config.hxx"
 #include "CertDatabase.hxx"
@@ -165,6 +166,9 @@ MakeCertRequest(EVP_PKEY &key, X509 &src)
 	return req;
 }
 
+using Alpn01ChallengeRecordPtr = std::shared_ptr<Alpn01ChallengeRecord>;
+using Alpn01ChallengeRecordMap = std::map<std::string, Alpn01ChallengeRecordPtr>;
+
 using Dns01ChallengeRecordPtr = std::shared_ptr<Dns01ChallengeRecord>;
 using Dns01ChallengeRecordMap = std::map<std::string, Dns01ChallengeRecordPtr>;
 
@@ -172,6 +176,7 @@ struct PendingAuthorization {
 	std::string url;
 
 	std::variant<Http01ChallengeFile,
+		     Alpn01ChallengeRecordPtr,
 		     Dns01ChallengeRecordPtr> challenge;
 
 	struct Http01 {};
@@ -184,6 +189,16 @@ struct PendingAuthorization {
 		:url(_url),
 		 challenge(std::in_place_type_t<Http01ChallengeFile>{},
 			   directory, _challenge, account_key) {}
+
+	struct Alpn01 {};
+
+	PendingAuthorization(Alpn01,
+			     const std::string &_url,
+			     const Alpn01ChallengeRecordPtr &ptr) noexcept
+		:url(_url), challenge(ptr)
+	{
+	}
+
 	struct Dns01 {};
 
 	PendingAuthorization(Dns01,
@@ -197,8 +212,10 @@ struct PendingAuthorization {
 static const AcmeChallenge *
 SelectChallenge(const AcmeConfig &config,
 		EVP_PKEY &account_key,
+		CertDatabase &db,
 		const std::string &authz_url,
 		const AcmeAuthorization &authz_response,
+		Alpn01ChallengeRecordMap &alpn_map,
 		Dns01ChallengeRecordMap &dns_map,
 		std::forward_list<PendingAuthorization> &pending_authz)
 {
@@ -210,6 +227,20 @@ SelectChallenge(const AcmeConfig &config,
 						    authz_url,
 						    config.challenge_directory,
 						    *challenge, account_key);
+			return challenge;
+		}
+	}
+
+	if (config.alpn) {
+		const auto *challenge =
+			authz_response.FindChallengeByType("tls-alpn-01");
+		if (challenge != nullptr) {
+			auto e = alpn_map.emplace(authz_response.identifier,
+						 std::make_shared<Alpn01ChallengeRecord>(db,
+											 authz_response.identifier));
+			e.first->second->AddChallenge(*challenge, account_key);
+			pending_authz.emplace_front(PendingAuthorization::Alpn01{},
+						    authz_url, e.first->second);
 			return challenge;
 		}
 	}
@@ -244,8 +275,10 @@ ValidateIdentifier(const AcmeAuthorization &authz,
 }
 
 static auto
-CollectPendingAuthorizations(const AcmeConfig &config,
+CollectPendingAuthorizations(const CertDatabaseConfig &db_config,
+			     const AcmeConfig &config,
 			     EVP_PKEY &account_key,
+			     CertDatabase &db,
 			     AcmeClient &client,
 			     StepProgress &progress,
 			     const std::set<std::string> &identifiers,
@@ -259,6 +292,7 @@ CollectPendingAuthorizations(const AcmeConfig &config,
 	   different values for each authorization; this creates
 	   multiple TXT records (and removes them when finished) */
 	Dns01ChallengeRecordMap dns_map;
+	Alpn01ChallengeRecordMap alpn_map;
 
 	std::forward_list<AcmeChallenge> challenges;
 
@@ -268,8 +302,9 @@ CollectPendingAuthorizations(const AcmeConfig &config,
 			throw FormatRuntimeError("Invalid identifier received: '%s'",
 						 ar.identifier.c_str());
 
-		const auto *challenge = SelectChallenge(config, account_key,
-							i, ar, dns_map,
+		const auto *challenge = SelectChallenge(config, account_key, db,
+							i, ar,
+							alpn_map, dns_map,
 							pending_authz);
 		if (challenge == nullptr)
 			throw std::runtime_error("No compatible challenge found");
@@ -289,6 +324,9 @@ CollectPendingAuthorizations(const AcmeConfig &config,
 	for (auto &i : dns_map)
 		i.second->Commit();
 
+	for (auto &i : alpn_map)
+		i.second->Commit(db_config);
+
 	/* update all challenges, which triggers the server-side
 	   check */
 	while (!challenges.empty()) {
@@ -304,14 +342,16 @@ CollectPendingAuthorizations(const AcmeConfig &config,
 }
 
 static void
-AcmeAuthorize(const AcmeConfig &config,
+AcmeAuthorize(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	      EVP_PKEY &account_key,
+	      CertDatabase &db,
 	      AcmeClient &client,
 	      StepProgress &progress,
 	      const std::set<std::string> &identifiers,
 	      const std::forward_list<std::string> &authorizations)
 {
-	auto pending_authz = CollectPendingAuthorizations(config, account_key,
+	auto pending_authz = CollectPendingAuthorizations(db_config, config,
+							  account_key, db,
 							  client, progress,
 							  identifiers,
 							  authorizations);
@@ -359,8 +399,9 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	     const std::set<std::string> &identifiers)
 {
 	if (config.challenge_directory.empty() &&
+	    !config.alpn &&
 	    config.dns_txt_program.empty())
-		throw "Neither --challenge-directory nor --dns-txt-program specified";
+		throw "Neither --alpn nor --challenge-directory nor --dns-txt-program specified";
 
 	AcmeClient::OrderRequest order_request;
 	size_t n_identifiers = 0;
@@ -376,7 +417,7 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 					   std::move(order_request));
 	progress();
 
-	AcmeAuthorize(config, account_key, client, progress,
+	AcmeAuthorize(db_config, config, account_key, db, client, progress,
 		      identifiers, order.authorizations);
 
 	const auto cert_key = GenerateRsaKey();
@@ -448,7 +489,7 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 					   std::move(order_request));
 	progress();
 
-	AcmeAuthorize(config, account_key, client, progress,
+	AcmeAuthorize(db_config, config, account_key, db, client, progress,
 		      names, order.authorizations);
 
 	const auto req = MakeCertRequest(old_key, old_cert);
@@ -537,6 +578,9 @@ Acme(ConstBuffer<const char *> args)
 
 			config.dns_txt_program = args.front();
 			args.shift();
+		} else if (StringIsEqual(arg, "--alpn")) {
+			args.shift();
+			config.alpn = true;
 		} else
 			break;
 	}
@@ -555,6 +599,8 @@ Acme(ConstBuffer<const char *> args)
 			"  --account-db  load the ACME account key from the database\n"
 			"  --account-key FILE\n"
 			"                load the ACME account key from this file\n"
+			"  --alpn\n"
+			"                enable tls-alpn-01\n"
 			"  --dns-txt-program PATH\n"
 			"                use this program to set TXT records for dns-01\n"
 			"  --challenge-directory PATH\n"

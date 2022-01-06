@@ -46,6 +46,8 @@ struct AcmeConfig {
 
 	std::string dns_txt_program;
 
+	bool alpn = false;
+
 	bool account_db = false;
 
 	bool debug = false;

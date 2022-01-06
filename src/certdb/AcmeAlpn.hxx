@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2021 CM4all GmbH
+ * Copyright 2007-2022 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -30,42 +30,33 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "DbCertCallback.hxx"
-#include "Cache.hxx"
-#include "AlpnProtos.hxx"
+#pragma once
 
-#include <openssl/ssl.h>
+#include "lib/openssl/UniqueX509.hxx"
 
-#include <cstring>
-#include <span>
+#include <string>
 
-[[gnu::pure]]
-static std::span<const unsigned char>
-GetAlpnSelected(SSL &ssl) noexcept
-{
-	const unsigned char *data;
-	unsigned int length;
-	SSL_get0_alpn_selected(&ssl, &data, &length);
-	return {data, length};
-}
+class CertDatabase;
+struct CertDatabaseConfig;
+struct AcmeChallenge;
 
-[[gnu::pure]]
-static bool
-Equals(std::span<const unsigned char> a,
-       std::span<const unsigned char> b) noexcept
-{
-	return a.size() == b.size() &&
-		memcmp(a.data(), b.data(), a.size()) == 0;
-}
+class Alpn01ChallengeRecord {
+	CertDatabase &db;
+	const std::string host, handle;
 
-bool
-DbSslCertCallback::OnCertCallback(SSL &ssl, const char *name)
-{
-	const char *special = nullptr;
+	UniqueX509 cert;
 
-	if (const auto alpn_selected = GetAlpnSelected(ssl);
-	    Equals(alpn_selected, std::span{alpn_acme_tls1}.subspan(1)))
-		special = "acme-alpn-tls-01";
+public:
+	Alpn01ChallengeRecord(CertDatabase &_db,
+			      const std::string &_host);
 
-	return cache.Apply(ssl, name, special);
-}
+	~Alpn01ChallengeRecord() noexcept;
+
+	Alpn01ChallengeRecord(const Alpn01ChallengeRecord &) = delete;
+	Alpn01ChallengeRecord &operator=(const Alpn01ChallengeRecord &) = delete;
+
+	void AddChallenge(const AcmeChallenge &challenge,
+			  EVP_PKEY &account_key);
+
+	void Commit(const CertDatabaseConfig &db_config);
+};
