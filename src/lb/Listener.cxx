@@ -62,7 +62,7 @@ MakeSslFactory(const LbListenerConfig &config,
 #endif
 
 	auto ssl_factory = std::make_unique<SslFactory>(config.ssl_config,
-							nullptr);
+							std::move(sni_callback));
 
 	/* we use the listener name as OpenSSL session_id_context,
 	   because listener names are unique, so I hope this should be
