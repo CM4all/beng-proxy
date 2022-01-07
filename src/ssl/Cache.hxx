@@ -82,8 +82,8 @@ class CertCache final : CertNameCacheHandler {
 	std::mutex mutex;
 
 	struct Item {
-		UniqueX509 cert;
-		UniqueEVP_PKEY key;
+		const UniqueX509 cert;
+		const UniqueEVP_PKEY key;
 
 		std::string special;
 
