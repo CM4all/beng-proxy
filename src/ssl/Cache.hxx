@@ -97,6 +97,16 @@ class CertCache final : CertNameCacheHandler {
 			 /* the initial expiration is 6 hours; it will be raised
 			    to 24 hours if the certificate is used again */
 			 expires(now + std::chrono::hours(6)) {}
+
+		Item(const Item &src) noexcept
+			:cert(src.cert.get()),
+			 key(src.key.get()),
+			 special(src.special),
+			 expires(src.expires) {
+			// TODO: this should be part of UniqueX509/UniqueEVP_PKEY
+			X509_up_ref(cert.get());
+			EVP_PKEY_up_ref(key.get());
+		}
 	};
 
 	/**
