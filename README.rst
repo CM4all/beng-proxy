@@ -4,7 +4,9 @@ beng-proxy
 ``beng-proxy`` is a web server designed for shared web hosting.  This
 repository also contains ``beng-lb``, a load balancer.
 
-For more information, read the manual in the `doc` directory.
+For more information, `read the manual
+<https://beng-proxy.readthedocs.io/en/latest/>`__ in the `doc`
+directory.
 
 
 Building beng-proxy
