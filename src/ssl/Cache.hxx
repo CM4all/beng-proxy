@@ -145,6 +145,15 @@ private:
 	const Item *GetNoWildCard(const char *host, const char *special);
 	const Item *Get(const char *host, const char *special);
 
+	/**
+	 * Flush items with the given name.
+	 *
+	 * Caller must lock the mutex.
+	 *
+	 * @return true if at least one item was found and deleted
+	 */
+	bool Flush(const std::string &name) noexcept;
+
 	/* virtual methods from class CertNameCacheHandler */
 	void OnCertModified(const std::string &name,
 			    bool deleted) noexcept override;

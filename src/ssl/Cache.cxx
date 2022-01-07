@@ -185,16 +185,24 @@ CertCache::Apply(SSL &ssl, const char *host, const char *special)
 	return true;
 }
 
+bool
+CertCache::Flush(const std::string &name) noexcept
+{
+	auto r = map.equal_range(name);
+	if (r.first == r.second)
+		return false;
+
+	map.erase(r.first, r.second);
+	return true;
+}
+
 void
 CertCache::OnCertModified(const std::string &name, bool deleted) noexcept
 {
 	const std::unique_lock<std::mutex> lock(mutex);
-	auto i = map.equal_range(name);
-	if (i.first != i.second) {
-		map.erase(i.first, i.second);
 
+	if (Flush(name))
 		logger.Format(5, "flushed %s certificate '%s'",
 			      deleted ? "deleted" : "modified",
 			      name.c_str());
-	}
 }
