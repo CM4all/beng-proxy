@@ -33,6 +33,7 @@
 #include "Cache.hxx"
 #include "SessionCache.hxx"
 #include "lib/openssl/Name.hxx"
+#include "lib/openssl/AltName.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/LoadFile.hxx"
 #include "certdb/Wildcard.hxx"
@@ -40,6 +41,8 @@
 #include "util/AllocatedString.hxx"
 
 #include <openssl/err.h>
+
+#include <set>
 
 void
 CertCache::Expire() noexcept
@@ -92,6 +95,16 @@ CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key, const char *special)
 
 	if (special != nullptr)
 		i->second.special = special;
+
+	/* create shadow items for all altNames */
+	std::set<std::string> alt_names;
+	for (auto &a : GetSubjectAltNames(*i->second.cert))
+		alt_names.emplace(std::move(a));
+
+	alt_names.erase(i->first);
+
+	for (auto &a : alt_names)
+		map.emplace(std::move(a), i->second);
 
 	return i->second;
 }
@@ -192,7 +205,25 @@ CertCache::Flush(const std::string &name) noexcept
 	if (r.first == r.second)
 		return false;
 
-	map.erase(r.first, r.second);
+	std::set<std::string> alt_names;
+
+	for (auto i = r.first; i != r.second;) {
+		const auto &item = i->second;
+
+		/* if this is a primary item (not a shadow item for an
+		   altName), collect all altNames to be flushed
+		   later */
+		if (name == GetCommonName(*item.cert).c_str())
+			for (auto &a : GetSubjectAltNames(*item.cert))
+				alt_names.emplace(std::move(a));
+
+		i = map.erase(i);
+	}
+
+	/* now flush all altNames */
+	for (const auto &i : alt_names)
+		Flush(i);
+
 	return true;
 }
 

@@ -2,6 +2,7 @@ cm4all-beng-proxy (17.0.79) unstable; urgency=low
 
   * certdb: add database column "special"
   * certdb: implement ACME tls-apn-01 (RFC 8737)
+  * lb: fix unnecessary certdb cache misses
 
  --   
 
