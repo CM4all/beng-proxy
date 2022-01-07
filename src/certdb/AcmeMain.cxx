@@ -467,8 +467,9 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	      const char *handle)
 {
 	if (config.challenge_directory.empty() &&
+	    !config.alpn &&
 	    config.dns_txt_program.empty())
-		throw "Neither --challenge-directory nor --dns-txt-program specified";
+		throw "Neither --alpn nor --challenge-directory nor --dns-txt-program specified";
 
 	const auto old_cert_key = db.GetServerCertificateKeyByHandle(handle);
 	if (!old_cert_key.second)
