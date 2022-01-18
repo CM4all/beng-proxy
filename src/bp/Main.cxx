@@ -304,6 +304,18 @@ BpInstance::AddListener(const BpConfig::Listener &c
 #endif
 }
 
+[[gnu::const]]
+static unsigned
+GetDefaultPort() noexcept
+{
+#ifndef NDEBUG
+	if (!HaveNetBindService())
+		return 8080;
+#endif
+
+	return 80;
+}
+
 int main(int argc, char **argv)
 try {
 	if (!IsKernelVersionOrNewer({5, 10}))
@@ -315,7 +327,7 @@ try {
 	InitProcessName(argc, argv);
 
 #ifndef NDEBUG
-	debug_mode = !IsSysAdmin();
+	debug_mode = !HaveSetuid();
 #endif
 
 #if defined(HAVE_LIBSYSTEMD) || defined(HAVE_AVAHI)
@@ -332,7 +344,7 @@ try {
 	if (cmdline.config_file != nullptr)
 		LoadConfigFile(_config, cmdline.config_file);
 
-	_config.Finish(debug_mode ? 8080 : 80);
+	_config.Finish(GetDefaultPort());
 
 	/* initialize */
 

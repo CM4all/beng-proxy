@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.80) unstable; urgency=low
 
-  * 
+  * spawn: check for CAP_SETUID instead of CAP_SYS_ADMIN
 
  --   
 
