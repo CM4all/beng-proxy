@@ -130,12 +130,8 @@ private:
 
 	void AddAltName(const std::string &common_name,
 			std::string &&alt_name) noexcept;
-	void AddAltNames(const std::string &common_name,
-			 std::forward_list<std::string> &&list) noexcept;
 	void RemoveAltName(const std::string &common_name,
 			   const std::string &alt_name) noexcept;
-	void RemoveAltNames(const std::string &common_name,
-			    std::forward_list<std::string> &&list) noexcept;
 
 	/* virtual methods from Pg::AsyncConnectionHandler */
 	void OnConnect() override;

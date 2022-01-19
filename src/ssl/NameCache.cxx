@@ -77,9 +77,10 @@ try {
 	if (complete)
 		conn.SendQuery(*this,
 			       "SELECT common_name, "
-			       "ARRAY(SELECT name FROM server_certificate_alt_name WHERE server_certificate_id=server_certificate.id), "
+			       "server_certificate_alt_name.name, "
 			       "modified, deleted "
-			       " FROM server_certificate"
+			       " FROM server_certificate LEFT JOIN server_certificate_alt_name"
+			       " ON server_certificate.id=server_certificate_alt_name.server_certificate_id"
 			       " WHERE modified>$1"
 			       " ORDER BY modified",
 			       latest.c_str());
@@ -88,9 +89,10 @@ try {
 		   (until our mirror is complete) */
 		conn.SendQuery(*this,
 			       "SELECT common_name, "
-			       "ARRAY(SELECT name FROM server_certificate_alt_name WHERE server_certificate_id=server_certificate.id), "
+			       "server_certificate_alt_name.name, "
 			       "modified "
-			       " FROM server_certificate"
+			       " FROM server_certificate LEFT JOIN server_certificate_alt_name"
+			       " ON server_certificate.id=server_certificate_alt_name.server_certificate_id"
 			       " WHERE NOT deleted"
 			       " ORDER BY modified");
 
@@ -117,15 +119,6 @@ CertNameCache::AddAltName(const std::string &common_name,
 }
 
 inline void
-CertNameCache::AddAltNames(const std::string &common_name,
-			   std::forward_list<std::string> &&list) noexcept
-{
-	for (auto &&a : list) {
-		AddAltName(common_name, std::move(a));
-	}
-}
-
-inline void
 CertNameCache::RemoveAltName(const std::string &common_name,
 			     const std::string &alt_name) noexcept
 {
@@ -142,15 +135,6 @@ CertNameCache::RemoveAltName(const std::string &common_name,
 				   alt_name: remove it completely */
 				alt_names.erase(i);
 		}
-	}
-}
-
-inline void
-CertNameCache::RemoveAltNames(const std::string &common_name,
-			      std::forward_list<std::string> &&list) noexcept
-{
-	for (auto &&a : list) {
-		RemoveAltName(common_name, a);
 	}
 }
 
@@ -221,20 +205,19 @@ CertNameCache::OnResult(Pg::Result &&result)
 
 	for (const auto &row : result) {
 		std::string name{row.GetValueView(0)};
-		auto _alt_names = row.IsValueNull(1)
-			? std::forward_list<std::string>()
-			: Pg::DecodeArray(row.GetValue(1));
+		std::string alt_name{row.GetValueView(1)};
 		modified = row.GetValue(2);
 		const bool deleted = complete && *row.GetValue(3) == 't';
 
 		handler.OnCertModified(name, deleted);
-		for (const auto &a : _alt_names)
-			handler.OnCertModified(a, deleted);
+		if (!alt_name.empty())
+			handler.OnCertModified(alt_name, deleted);
 
 		const std::unique_lock<std::mutex> lock(mutex);
 
 		if (deleted) {
-			RemoveAltNames(name, std::move(_alt_names));
+			if (!alt_name.empty())
+				RemoveAltName(name, std::move(alt_name));
 
 			auto i = names.find(std::move(name));
 			if (i != names.end()) {
@@ -242,7 +225,8 @@ CertNameCache::OnResult(Pg::Result &&result)
 				++n_deleted;
 			}
 		} else {
-			AddAltNames(name, std::move(_alt_names));
+			if (!alt_name.empty())
+				AddAltName(name, std::move(alt_name));
 
 			auto i = names.emplace(std::move(name));
 			if (i.second)
