@@ -639,12 +639,11 @@ try {
 #endif
 
 	try {
-		capabilities_post_setuid(cap_keep_list, std::size(cap_keep_list));
+		capabilities_post_setuid(cap_keep_list);
 	} catch (...) {
 		/* if we failed to preserve CAP_NET_BIND_SERVICE, drop
 		   all capabilities */
-		static constexpr cap_value_t dummy{};
-		capabilities_post_setuid(&dummy, 0);
+		capabilities_post_setuid({});
 	}
 
 #ifdef HAVE_LIBSYSTEMD

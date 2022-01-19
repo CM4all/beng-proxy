@@ -36,6 +36,8 @@
 
 #pragma once
 
+#include <span>
+
 #include <sys/capability.h>
 
 /**
@@ -50,4 +52,4 @@ capabilities_init();
  * Call after setuid().
  */
 void
-capabilities_post_setuid(const cap_value_t *keep_list, unsigned n);
+capabilities_post_setuid(std::span<const cap_value_t> keep_list);

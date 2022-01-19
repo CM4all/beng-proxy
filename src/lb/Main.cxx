@@ -228,10 +228,9 @@ try {
 			CAP_NET_RAW,
 		};
 
-		capabilities_post_setuid(cap_keep_list, std::size(cap_keep_list));
+		capabilities_post_setuid(cap_keep_list);
 	} else {
-		static constexpr cap_value_t dummy{};
-		capabilities_post_setuid(&dummy, 0);
+		capabilities_post_setuid({});
 	}
 
 #ifdef __linux

@@ -46,15 +46,15 @@ capabilities_init()
 }
 
 void
-capabilities_post_setuid(const cap_value_t *keep_list, unsigned n)
+capabilities_post_setuid(std::span<const cap_value_t> keep_list)
 {
 	/* drop all capabilities but the ones we want */
 
 	CapabilityState state = CapabilityState::Empty();
 
-	if (n > 0) {
-		state.SetFlag(CAP_EFFECTIVE, {keep_list, n}, CAP_SET);
-		state.SetFlag(CAP_PERMITTED, {keep_list, n}, CAP_SET);
+	if (!keep_list.empty()) {
+		state.SetFlag(CAP_EFFECTIVE, keep_list, CAP_SET);
+		state.SetFlag(CAP_PERMITTED, keep_list, CAP_SET);
 	}
 
 	state.Install();
