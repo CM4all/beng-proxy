@@ -107,14 +107,41 @@ CertNameCache::ScheduleUpdate() noexcept
 }
 
 inline void
+CertNameCache::AddAltName(const std::string &common_name,
+			  std::string &&alt_name) noexcept
+{
+	/* create the alt_name if it doesn't exist yet */
+	auto i = alt_names.emplace(std::move(alt_name), std::set<std::string>());
+	/* add the common_name to the set */
+	i.first->second.emplace(common_name);
+}
+
+inline void
 CertNameCache::AddAltNames(const std::string &common_name,
 			   std::forward_list<std::string> &&list) noexcept
 {
 	for (auto &&a : list) {
-		/* create the alt_name if it doesn't exist yet */
-		auto i = alt_names.emplace(std::move(a), std::set<std::string>());
-		/* add the common_name to the set */
-		i.first->second.emplace(common_name);
+		AddAltName(common_name, std::move(a));
+	}
+}
+
+inline void
+CertNameCache::RemoveAltName(const std::string &common_name,
+			     const std::string &alt_name) noexcept
+{
+	auto i = alt_names.find(alt_name);
+	if (i != alt_names.end()) {
+		/* this alt_name exists */
+		auto j = i->second.find(common_name);
+		if (j != i->second.end()) {
+			/* and inside, the given common_name exist; remove
+			   it */
+			i->second.erase(j);
+			if (i->second.empty())
+				/* list is empty, no more certificates cover this
+				   alt_name: remove it completely */
+				alt_names.erase(i);
+		}
 	}
 }
 
@@ -123,20 +150,7 @@ CertNameCache::RemoveAltNames(const std::string &common_name,
 			      std::forward_list<std::string> &&list) noexcept
 {
 	for (auto &&a : list) {
-		auto i = alt_names.find(std::move(a));
-		if (i != alt_names.end()) {
-			/* this alt_name exists */
-			auto j = i->second.find(common_name);
-			if (j != i->second.end()) {
-				/* and inside, the given common_name exist; remove
-				   it */
-				i->second.erase(j);
-				if (i->second.empty())
-					/* list is empty, no more certificates cover this
-					   alt_name: remove it completely */
-					alt_names.erase(i);
-			}
-		}
+		RemoveAltName(common_name, a);
 	}
 }
 
