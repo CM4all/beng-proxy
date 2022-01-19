@@ -206,7 +206,7 @@ CertNameCache::OnResult(Pg::Result &&result)
 	const char *modified = nullptr;
 
 	for (const auto &row : result) {
-		std::string name(row.GetValue(0));
+		std::string name{row.GetValueView(0)};
 		auto _alt_names = row.IsValueNull(1)
 			? std::forward_list<std::string>()
 			: Pg::DecodeArray(row.GetValue(1));
