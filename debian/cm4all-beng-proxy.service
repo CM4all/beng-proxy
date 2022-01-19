@@ -36,6 +36,11 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 # Needed to start logger processes as user "cm4all-logger"
 AmbientCapabilities=CAP_SETUID CAP_SETGID
 
+# For spawner initalization to chown cgroup.procs to itself, which is
+# necessary if we are running in a non-root user namespace (e.g. in a
+# container)
+AmbientCapabilities=CAP_CHOWN
+
 # Needed by the spawner
 AmbientCapabilities=CAP_KILL
 #TODO: check CAP_SYS_NICE CAP_SYS_PTRACE CAP_SYS_RESOURCE
