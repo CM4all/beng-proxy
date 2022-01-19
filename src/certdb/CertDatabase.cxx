@@ -243,8 +243,13 @@ std::pair<UniqueX509, UniqueEVP_PKEY>
 CertDatabase::GetServerCertificateKey(const char *name, const char *special)
 {
 	auto result = FindServerCertificateKeyByName(name, special);
-	if (result.GetRowCount() == 0)
-		return std::make_pair(nullptr, nullptr);
+	if (result.GetRowCount() == 0) {
+		/* no matching common_name; check for an altName */
+		// TODO do both queries, use the most recent record
+		result = FindServerCertificateKeyByAltName(name, special);
+		if (result.GetRowCount() == 0)
+			return std::make_pair(nullptr, nullptr);
+	}
 
 	return LoadCertificateKey(config, result, 0, 0);
 }

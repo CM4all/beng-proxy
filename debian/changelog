@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.82) unstable; urgency=low
 
-  * 
+  * certdb: optimize the certificate lookup query
 
  --   
 
