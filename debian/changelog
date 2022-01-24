@@ -2,6 +2,7 @@ cm4all-beng-proxy (17.0.82) unstable; urgency=low
 
   * certdb: optimize the certificate lookup query
   * certdb: optimize the name cache query
+  * certdb: fix crash bug due to missing lock
 
  --   
 

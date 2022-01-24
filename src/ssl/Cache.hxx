@@ -47,6 +47,7 @@
 #include <string>
 #include <mutex>
 #include <chrono>
+#include <optional>
 
 #include <string.h>
 
@@ -81,6 +82,8 @@ class CertCache final : CertNameCacheHandler {
 
 	std::mutex mutex;
 
+	using CertKey = std::pair<UniqueX509, UniqueEVP_PKEY>;
+
 	struct Item {
 		const UniqueX509 cert;
 		const UniqueEVP_PKEY key;
@@ -106,6 +109,10 @@ class CertCache final : CertNameCacheHandler {
 			// TODO: this should be part of UniqueX509/UniqueEVP_PKEY
 			X509_up_ref(cert.get());
 			EVP_PKEY_up_ref(key.get());
+		}
+
+		CertKey UpRef() noexcept {
+			return {::UpRef(*cert), ::UpRef(*key)};
 		}
 	};
 
@@ -145,15 +152,15 @@ public:
 	bool Apply(SSL &ssl, const char *host, const char *special);
 
 private:
-	const Item &Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key,
+	CertKey Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key,
 			const char *special);
-	const Item *Query(const char *host, const char *special);
+	std::optional<CertKey> Query(const char *host, const char *special);
 
 	[[gnu::pure]]
-	const Item *GetCached(const char *host, const char *special) noexcept;
+	std::optional<CertKey> GetCached(const char *host, const char *special) noexcept;
 
-	const Item *GetNoWildCard(const char *host, const char *special);
-	const Item *Get(const char *host, const char *special);
+	std::optional<CertKey> GetNoWildCard(const char *host, const char *special);
+	std::optional<CertKey> Get(const char *host, const char *special);
 
 	void Apply(SSL &ssl, X509 &cert, EVP_PKEY &key);
 

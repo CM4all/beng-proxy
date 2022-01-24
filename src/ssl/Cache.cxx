@@ -74,7 +74,7 @@ CertCache::LoadCaCertificate(const char *path)
 		throw SslError(std::string("Duplicate CA certificate: ") + path);
 }
 
-inline const CertCache::Item &
+inline CertCache::CertKey
 CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key, const char *special)
 {
 	assert(cert);
@@ -106,10 +106,10 @@ CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key, const char *special)
 	for (auto &a : alt_names)
 		map.emplace(std::move(a), i->second);
 
-	return i->second;
+	return i->second.UpRef();
 }
 
-const CertCache::Item *
+std::optional<CertCache::CertKey>
 CertCache::Query(const char *host, const char *special)
 {
 	auto db = dbs.Get(config);
@@ -117,13 +117,13 @@ CertCache::Query(const char *host, const char *special)
 
 	auto cert_key = db->GetServerCertificateKey(host, special);
 	if (!cert_key.second)
-		return nullptr;
+		return std::nullopt;
 
-	return &Add(std::move(cert_key.first), std::move(cert_key.second),
-		    special);
+	return Add(std::move(cert_key.first), std::move(cert_key.second),
+		   special);
 }
 
-inline const CertCache::Item *
+inline std::optional<CertCache::CertKey>
 CertCache::GetCached(const char *host, const char *_special) noexcept
 {
 	const std::unique_lock<std::mutex> lock{mutex};
@@ -137,32 +137,32 @@ CertCache::GetCached(const char *host, const char *_special) noexcept
 	for (auto [i, end] = map.equal_range(host); i != end; ++i) {
 		if (i->second.special == special) {
 			i->second.expires = GetEventLoop().SteadyNow() + std::chrono::hours(24);
-			return &i->second;
+			return i->second.UpRef();
 		}
 	}
 
-	return nullptr;
+	return std::nullopt;
 }
 
-const CertCache::Item *
+std::optional<CertCache::CertKey>
 CertCache::GetNoWildCard(const char *host, const char *special)
 {
-	if (const auto *item = GetCached(host, special))
+	if (auto item = GetCached(host, special))
 		return item;
 
 	if (name_cache.Lookup(host)) {
-		if (const auto *item = Query(host, special))
+		if (auto item = Query(host, special))
 			return item;
 	}
 
-	return nullptr;
+	return std::nullopt;
 }
 
-const CertCache::Item *
+std::optional<CertCache::CertKey>
 CertCache::Get(const char *host, const char *special)
 {
-	const auto *item = GetNoWildCard(host, special);
-	if (item == nullptr) {
+	auto item = GetNoWildCard(host, special);
+	if (!item) {
 		/* not found: try the wildcard */
 		const auto wildcard = MakeCommonNameWildcard(host);
 		if (!wildcard.empty())
@@ -195,11 +195,11 @@ CertCache::Apply(SSL &ssl, X509 &cert, EVP_PKEY &key)
 bool
 CertCache::Apply(SSL &ssl, const char *host, const char *special)
 {
-	const auto *item = Get(host, special);
-	if (item == nullptr)
+	const auto item = Get(host, special);
+	if (!item)
 		return false;
 
-	Apply(ssl, *item->cert, *item->key);
+	Apply(ssl, *item->first, *item->second);
 	return true;
 }
 
