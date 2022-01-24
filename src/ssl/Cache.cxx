@@ -172,6 +172,26 @@ CertCache::Get(const char *host, const char *special)
 	return item;
 }
 
+inline void
+CertCache::Apply(SSL &ssl, X509 &cert, EVP_PKEY &key)
+{
+	ERR_clear_error();
+
+	if (SSL_use_PrivateKey(&ssl, &key) != 1)
+		throw SslError("SSL_use_PrivateKey() failed");
+
+	if (SSL_use_certificate(&ssl, &cert) != 1)
+		throw SslError("SSL_use_certificate() failed");
+
+	if (X509_NAME *issuer = X509_get_issuer_name(&cert);
+	    issuer != nullptr) {
+		auto i = ca_certs.find(CalcSHA1(*issuer));
+		if (i != ca_certs.end())
+			for (const auto &ca_cert : i->second)
+				SSL_add1_chain_cert(&ssl, ca_cert.get());
+	}
+}
+
 bool
 CertCache::Apply(SSL &ssl, const char *host, const char *special)
 {
@@ -179,22 +199,7 @@ CertCache::Apply(SSL &ssl, const char *host, const char *special)
 	if (item == nullptr)
 		return false;
 
-	ERR_clear_error();
-
-	if (SSL_use_PrivateKey(&ssl, item->key.get()) != 1)
-		throw SslError("SSL_use_PrivateKey() failed");
-
-	if (SSL_use_certificate(&ssl, item->cert.get()) != 1)
-		throw SslError("SSL_use_certificate() failed");
-
-	if (X509_NAME *issuer = X509_get_issuer_name(item->cert.get());
-	    issuer != nullptr) {
-		auto i = ca_certs.find(CalcSHA1(*issuer));
-		if (i != ca_certs.end())
-			for (const auto &ca_cert : i->second)
-				SSL_add1_chain_cert(&ssl, ca_cert.get());
-	}
-
+	Apply(ssl, *item->cert, *item->key);
 	return true;
 }
 

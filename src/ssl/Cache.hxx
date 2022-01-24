@@ -155,6 +155,8 @@ private:
 	const Item *GetNoWildCard(const char *host, const char *special);
 	const Item *Get(const char *host, const char *special);
 
+	void Apply(SSL &ssl, X509 &cert, EVP_PKEY &key);
+
 	/**
 	 * Flush items with the given name.
 	 *
