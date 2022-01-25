@@ -36,7 +36,6 @@
 
 #include <span>
 
-class SslFactory;
 class SslFilter;
 class SocketFilter;
 class ThreadSocketFilterHandler;
@@ -46,18 +45,6 @@ class ThreadSocketFilterHandler;
  */
 SslFilter *
 ssl_filter_new(UniqueSSL &&ssl) noexcept;
-
-/**
- * Create a new SSL filter.
- *
- * Throws std::runtime_error on error.
- *
- * @param encrypted_fd the encrypted side of the filter
- * @param plain_fd the plain-text side of the filter (socketpair
- * to local service)
- */
-SslFilter *
-ssl_filter_new(SslFactory &factory);
 
 ThreadSocketFilterHandler &
 ssl_filter_get_handler(SslFilter &ssl) noexcept;

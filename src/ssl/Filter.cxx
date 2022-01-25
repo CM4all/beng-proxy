@@ -31,7 +31,6 @@
  */
 
 #include "Filter.hxx"
-#include "Factory.hxx"
 #include "lib/openssl/Name.hxx"
 #include "lib/openssl/UniqueX509.hxx"
 #include "FifoBufferBio.hxx"
@@ -358,12 +357,6 @@ SslFilter *
 ssl_filter_new(UniqueSSL &&ssl) noexcept
 {
 	return new SslFilter(std::move(ssl));
-}
-
-SslFilter *
-ssl_filter_new(SslFactory &factory)
-{
-	return new SslFilter(factory.Make());
 }
 
 ThreadSocketFilterHandler &

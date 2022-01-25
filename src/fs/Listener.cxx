@@ -162,7 +162,7 @@ try {
 		return;
 	}
 
-	auto *ssl_filter = ssl_filter_new(*ssl_factory);
+	auto *ssl_filter = ssl_filter_new(ssl_factory->Make());
 	SocketFilterPtr filter(new ThreadSocketFilter(event_loop,
 						      thread_pool_get_queue(event_loop),
 						      &ssl_filter_get_handler(*ssl_filter)));
