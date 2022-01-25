@@ -32,7 +32,25 @@
 
 #pragma once
 
+#include "LookupCertResult.hxx"
+
 #include <openssl/ossl_typ.h>
+
+class SslCompletionHandler;
+class CancellablePointer;
+
+class SslCertCompletionCallback {
+public:
+	/**
+	 * The certificate lookup has completed.
+	 *
+	 * This method will be invoked in the main thread.
+	 *
+	 * @param true on success if a certificate was found, false if
+	 * no certificate was found or an error has occurred
+	 */
+	virtual void OnCertCallbackComplete(SSL &ssl, bool found) noexcept = 0;
+};
 
 /**
  * C++ wrapper for the SSL_CTX_set_cert_cb() callback function.
@@ -48,8 +66,11 @@ public:
 	 *
 	 * May throw on error.
 	 *
-	 * @return true if a certificate was found and used, false if
-	 * not found
+	 * @param ssl a #SSL object which must have a
+	 * #SslCompletionHandler (via SetSslCompletionHandler()); this
+	 * handler will be invoked after this method has returned
+	 * #IN_PROGRESS; using its #CancellablePointer field, the
+	 * caller may cancel the operation
 	 */
-	virtual bool OnCertCallback(SSL &ssl, const char *name) = 0;
+	virtual LookupCertResult OnCertCallback(SSL &ssl, const char *name) = 0;
 };

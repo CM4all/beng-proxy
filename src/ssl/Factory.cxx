@@ -211,8 +211,17 @@ SslFactory::CertCallback(SSL &ssl) noexcept
 
 	if (cert_callback) {
 		try {
-			if (cert_callback->OnCertCallback(ssl, host_name.data))
+			switch (cert_callback->OnCertCallback(ssl,
+							      host_name.data)) {
+			case LookupCertResult::NOT_FOUND:
+				break;
+
+			case LookupCertResult::COMPLETE:
 				return 1;
+
+			case LookupCertResult::IN_PROGRESS:
+				return -1;
+			}
 		} catch (const std::exception &e) {
 			PrintException(e);
 		}
