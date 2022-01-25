@@ -353,16 +353,16 @@ SslFilter::PostRun(ThreadSocketFilterInternal &f) noexcept
  *
  */
 
-SslFilter *
+std::unique_ptr<ThreadSocketFilterHandler>
 ssl_filter_new(UniqueSSL &&ssl) noexcept
 {
-	return new SslFilter(std::move(ssl));
+	return std::make_unique<SslFilter>(std::move(ssl));
 }
 
-ThreadSocketFilterHandler &
-ssl_filter_get_handler(SslFilter &ssl) noexcept
+SslFilter &
+ssl_filter_cast_from(ThreadSocketFilterHandler &tsfh) noexcept
 {
-	return ssl;
+	return static_cast<SslFilter &>(tsfh);
 }
 
 const SslFilter *
@@ -372,7 +372,7 @@ ssl_filter_cast_from(const SocketFilter *socket_filter) noexcept
 	if (tsf == nullptr)
 		return nullptr;
 
-	return dynamic_cast<const SslFilter *>(tsf->GetHandler());
+	return dynamic_cast<const SslFilter *>(&tsf->GetHandler());
 }
 
 std::span<const unsigned char>

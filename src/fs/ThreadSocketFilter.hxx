@@ -38,6 +38,7 @@
 #include "event/CoarseTimerEvent.hxx"
 #include "memory/SliceFifoBuffer.hxx"
 
+#include <memory>
 #include <mutex>
 
 class FilteredSocket;
@@ -153,7 +154,7 @@ class ThreadSocketFilter final : public SocketFilter, ThreadSocketFilterInternal
 	 * The actual filter.  If this is NULL, then this object behaves
 	 * just like #BufferedSocket.
 	 */
-	ThreadSocketFilterHandler *const handler;
+	const std::unique_ptr<ThreadSocketFilterHandler> handler;
 
 	BoundMethod<void() noexcept> handshake_callback{nullptr};
 
@@ -223,14 +224,14 @@ class ThreadSocketFilter final : public SocketFilter, ThreadSocketFilterInternal
 public:
 	ThreadSocketFilter(EventLoop &_event_loop,
 			   ThreadQueue &queue,
-			   ThreadSocketFilterHandler *handler) noexcept;
+			   std::unique_ptr<ThreadSocketFilterHandler> _handler) noexcept;
 
 	ThreadSocketFilter(const ThreadSocketFilter &) = delete;
 
 	~ThreadSocketFilter() noexcept;
 
-	const ThreadSocketFilterHandler *GetHandler() const noexcept {
-		return handler;
+	const ThreadSocketFilterHandler &GetHandler() const noexcept {
+		return *handler;
 	}
 
 private:

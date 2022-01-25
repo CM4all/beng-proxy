@@ -42,20 +42,19 @@
 
 ThreadSocketFilter::ThreadSocketFilter(EventLoop &_event_loop,
 				       ThreadQueue &_queue,
-				       ThreadSocketFilterHandler *_handler) noexcept
+				       std::unique_ptr<ThreadSocketFilterHandler> _handler) noexcept
 	:queue(_queue),
-	 handler(_handler),
+	 handler(std::move(_handler)),
 	 defer_event(_event_loop, BIND_THIS_METHOD(OnDeferred)),
 	 handshake_timeout_event(_event_loop,
 				 BIND_THIS_METHOD(HandshakeTimeoutCallback))
 {
+	assert(handler);
+
 	handshake_timeout_event.Schedule(std::chrono::minutes(1));
 }
 
-ThreadSocketFilter::~ThreadSocketFilter() noexcept
-{
-	delete handler;
-}
+ThreadSocketFilter::~ThreadSocketFilter() noexcept = default;
 
 void
 ThreadSocketFilter::ClosedPrematurely() noexcept

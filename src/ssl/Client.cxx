@@ -208,9 +208,7 @@ SslClientFactory::Create(EventLoop &event_loop,
 		SSL_use_certificate(ssl.get(), c->first.get());
 	}
 
-	auto f = ssl_filter_new(std::move(ssl));
-
 	auto &queue = thread_pool_get_queue(event_loop);
 	return SocketFilterPtr(new ThreadSocketFilter(event_loop, queue,
-						      &ssl_filter_get_handler(*f)));
+						      ssl_filter_new(std::move(ssl))));
 }

@@ -162,10 +162,12 @@ try {
 		return;
 	}
 
-	auto *ssl_filter = ssl_filter_new(ssl_factory->Make());
+	auto f = ssl_filter_new(ssl_factory->Make());
+	auto &ssl_filter = ssl_filter_cast_from(*f);
+
 	SocketFilterPtr filter(new ThreadSocketFilter(event_loop,
 						      thread_pool_get_queue(event_loop),
-						      &ssl_filter_get_handler(*ssl_filter)));
+						      std::move(f)));
 
 	auto socket = UniquePoolPtr<FilteredSocket>::Make(connection_pool,
 							  event_loop,
@@ -174,7 +176,7 @@ try {
 
 	auto *p = NewFromPool<Pending>(std::move(connection_pool),
 				       std::move(socket),
-				       address, ssl_filter, handler);
+				       address, &ssl_filter, handler);
 	pending.push_front(*p);
 
 	p->Start();

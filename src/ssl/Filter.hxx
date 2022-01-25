@@ -34,6 +34,7 @@
 
 #include "lib/openssl/UniqueSSL.hxx"
 
+#include <memory>
 #include <span>
 
 class SslFilter;
@@ -43,11 +44,16 @@ class ThreadSocketFilterHandler;
 /**
  * Create a new SSL filter.
  */
-SslFilter *
+std::unique_ptr<ThreadSocketFilterHandler>
 ssl_filter_new(UniqueSSL &&ssl) noexcept;
 
-ThreadSocketFilterHandler &
-ssl_filter_get_handler(SslFilter &ssl) noexcept;
+/**
+ * Cast a #ThreadSocketFilterHandler created by ssl_filter_new() to
+ * #SslFilter.
+ */
+[[gnu::const]]
+SslFilter &
+ssl_filter_cast_from(ThreadSocketFilterHandler &tsfh) noexcept;
 
 /**
  * Attempt to cast a #SocketFilter pointer to a #SslFilter.  If the
