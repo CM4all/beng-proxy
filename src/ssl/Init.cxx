@@ -52,7 +52,7 @@ ssl_global_init()
 }
 
 void
-ssl_global_deinit()
+ssl_global_deinit() noexcept
 {
 	DeinitFifoBufferBio();
 }

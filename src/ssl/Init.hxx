@@ -39,14 +39,14 @@ void
 ssl_global_init();
 
 void
-ssl_global_deinit();
+ssl_global_deinit() noexcept;
 
 struct ScopeSslGlobalInit {
 	ScopeSslGlobalInit() {
 		ssl_global_init();
 	}
 
-	~ScopeSslGlobalInit() {
+	~ScopeSslGlobalInit() noexcept {
 		ssl_global_deinit();
 	}
 
