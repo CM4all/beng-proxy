@@ -52,12 +52,12 @@ public:
 		WAITING,
 
 		/**
-		 * The job is being performed via run().
+		 * The job is being performed via Run().
 		 */
 		BUSY,
 
 		/**
-		 * The job has finished, but the done() method has not been
+		 * The job has finished, but the Done() method has not been
 		 * invoked yet.
 		 */
 		DONE,
@@ -66,7 +66,7 @@ public:
 	State state = State::INITIAL;
 
 	/**
-	 * Shall this job be enqueued again instead of invoking its done()
+	 * Shall this job be enqueued again instead of invoking its Done()
 	 * method?
 	 */
 	bool again = false;

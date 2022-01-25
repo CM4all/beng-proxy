@@ -63,7 +63,7 @@ public:
 	virtual void Run(ThreadSocketFilterInternal &f) = 0;
 
 	/**
-	 * Called in the main thread after one or more run() calls have
+	 * Called in the main thread after one or more Run() calls have
 	 * finished successfully.
 	 */
 	virtual void PostRun(ThreadSocketFilterInternal &) noexcept {}
@@ -72,7 +72,7 @@ public:
 struct ThreadSocketFilterInternal : ThreadJob {
 	/**
 	 * True when #ThreadSocketFilterHandler's internal output buffers
-	 * are empty.  Set by #ThreadSocketFilterHandler::run() before
+	 * are empty.  Set by #ThreadSocketFilterHandler::Run() before
 	 * returning.
 	 *
 	 * Protected by #mutex.
@@ -141,8 +141,8 @@ struct ThreadSocketFilterInternal : ThreadJob {
 };
 
 /**
- * A module for #filtered_socket that moves the filter to a thread
- * pool (see #thread_job).
+ * A module for #FilteredSocket that moves the filter to a thread
+ * pool (see #ThreadJob).
  */
 class ThreadSocketFilter final : public SocketFilter, ThreadSocketFilterInternal {
 	ThreadQueue &queue;
@@ -185,25 +185,23 @@ class ThreadSocketFilter final : public SocketFilter, ThreadSocketFilterInternal
 
 	/**
 	 * Set to true when the thread queue hasn't yet released the
-	 * #thread_job.  The object will be destroyed in the "done"
+	 * #ThreadJob.  The object will be destroyed in the "done"
 	 * callback.
 	 */
 	bool postponed_destroy = false;
 
 	/**
-	 * True when the client has called
-	 * filtered_socket_schedule_read().
+	 * True when the client has called ScheduleRead().
 	 */
 	bool want_read = false;
 
 	/**
-	 * Was _schedule_read() forwarded?
+	 * Was ScheduleRead() forwarded?
 	 */
 	bool read_scheduled = false;
 
 	/**
-	 * True when the client has called
-	 * filtered_socket_schedule_write().
+	 * True when the client has called ScheduleWrite().
 	 */
 	bool want_write = false;
 
