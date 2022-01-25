@@ -46,7 +46,7 @@ class ThreadQueue;
 
 class ThreadSocketFilterHandler {
 public:
-	virtual ~ThreadSocketFilterHandler() {}
+	virtual ~ThreadSocketFilterHandler() noexcept = default;
 
 	/**
 	 * Called in the main thread before Run() is scheduled.
