@@ -31,6 +31,7 @@
  */
 
 #include "Filter.hxx"
+#include "CompletionHandler.hxx"
 #include "lib/openssl/Name.hxx"
 #include "lib/openssl/UniqueX509.hxx"
 #include "FifoBufferBio.hxx"
@@ -46,7 +47,8 @@
 #include <assert.h>
 #include <string.h>
 
-class SslFilter final : public ThreadSocketFilterHandler {
+class SslFilter final : public ThreadSocketFilterHandler,
+			SslCompletionHandler {
 	/**
 	 * Buffers which can be accessed from within the thread without
 	 * holding locks.  These will be copied to/from the according
@@ -69,6 +71,8 @@ public:
 		SSL_set_bio(ssl.get(),
 			    NewFifoBufferBio(encrypted_input),
 			    NewFifoBufferBio(encrypted_output));
+
+		SetSslCompletionHandler(*ssl, *this);
 	}
 
 	std::span<const unsigned char> GetAlpnSelected() const noexcept {
@@ -89,6 +93,11 @@ private:
 	void PreRun(ThreadSocketFilterInternal &f) noexcept override;
 	void Run(ThreadSocketFilterInternal &f) override;
 	void PostRun(ThreadSocketFilterInternal &f) noexcept override;
+
+	/* virtual methods from class SslCompletionHandler */
+	void OnSslCompletion() noexcept override {
+		ScheduleRun();
+	}
 };
 
 static std::runtime_error
