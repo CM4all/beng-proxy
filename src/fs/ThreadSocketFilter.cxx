@@ -52,6 +52,8 @@ ThreadSocketFilter::ThreadSocketFilter(EventLoop &_event_loop,
 	assert(handler);
 
 	handshake_timeout_event.Schedule(std::chrono::minutes(1));
+
+	handler->SetScheduleRunFunction(BIND_THIS_METHOD(Schedule));
 }
 
 ThreadSocketFilter::~ThreadSocketFilter() noexcept = default;

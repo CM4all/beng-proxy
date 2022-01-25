@@ -46,9 +46,27 @@ struct ThreadSocketFilterInternal;
 class ThreadQueue;
 
 class ThreadSocketFilterHandler {
+	using ScheduleRunFunction = BoundMethod<void() noexcept>;
+	ScheduleRunFunction schedule_run{nullptr};
+
 public:
 	virtual ~ThreadSocketFilterHandler() noexcept = default;
 
+	void SetScheduleRunFunction(ScheduleRunFunction f) noexcept {
+		schedule_run = f;
+	}
+
+protected:
+	/**
+	 * Schedule a Run() call.
+	 *
+	 * This method may only be called from the main thread.
+	 */
+	void ScheduleRun() noexcept {
+		schedule_run();
+	}
+
+public:
 	/**
 	 * Called in the main thread before Run() is scheduled.
 	 */
