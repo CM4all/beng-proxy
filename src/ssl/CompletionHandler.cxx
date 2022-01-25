@@ -30,32 +30,44 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Init.hxx"
 #include "CompletionHandler.hxx"
-#include "FifoBufferBio.hxx"
+#include "lib/openssl/Error.hxx"
 
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 
-#if OPENSSL_VERSION_NUMBER < 0x30000000L
-#include <openssl/engine.h>
-#endif
+static int ssl_completion_handler_index;
 
 void
-ssl_global_init()
+InitSslCompletionHandler()
 {
-	OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS|
-			 OPENSSL_INIT_LOAD_CRYPTO_STRINGS,
-			 nullptr);
+	ERR_clear_error();
 
-#if OPENSSL_VERSION_NUMBER < 0x30000000L
-	ENGINE_load_builtin_engines();
-#endif
-
-	InitSslCompletionHandler();
+	ssl_completion_handler_index =
+		SSL_get_ex_new_index(0, nullptr, nullptr, nullptr, nullptr);
+	if (ssl_completion_handler_index < 0)
+		throw SslError("SSL_get_ex_new_index() failed");
 }
 
 void
-ssl_global_deinit() noexcept
+SetSslCompletionHandler(SSL &ssl, SslCompletionHandler &handler) noexcept
 {
-	DeinitFifoBufferBio();
+	SSL_set_ex_data(&ssl, ssl_completion_handler_index, &handler);
+}
+
+SslCompletionHandler &
+GetSslCompletionHandler(SSL &ssl) noexcept
+{
+	auto *handler = (SslCompletionHandler *)
+		SSL_get_ex_data(&ssl, ssl_completion_handler_index);
+	assert(handler != nullptr);
+	return *handler;
+}
+
+void
+InvokeSslCompletionHandler(SSL &ssl) noexcept
+{
+	auto &handler = GetSslCompletionHandler(ssl);
+	handler.cancel_ptr = nullptr;
+	handler.OnSslCompletion();
 }

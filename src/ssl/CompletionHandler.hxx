@@ -30,32 +30,40 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Init.hxx"
-#include "CompletionHandler.hxx"
-#include "FifoBufferBio.hxx"
+#pragma once
 
-#include <openssl/ssl.h>
+#include "util/Cancellable.hxx"
 
-#if OPENSSL_VERSION_NUMBER < 0x30000000L
-#include <openssl/engine.h>
-#endif
+#include <openssl/ossl_typ.h>
+
+/**
+ * Handler for the completion of a suspended OpenSSL callback.
+ */
+class SslCompletionHandler {
+public:
+	CancellablePointer cancel_ptr;
+
+	~SslCompletionHandler() noexcept {
+		if (cancel_ptr)
+			cancel_ptr.Cancel();
+	}
+
+	/**
+	 * A suspended callback is complete, and the #SSL object can
+	 * continue to work.
+	 */
+	virtual void OnSslCompletion() noexcept = 0;
+};
 
 void
-ssl_global_init()
-{
-	OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS|
-			 OPENSSL_INIT_LOAD_CRYPTO_STRINGS,
-			 nullptr);
-
-#if OPENSSL_VERSION_NUMBER < 0x30000000L
-	ENGINE_load_builtin_engines();
-#endif
-
-	InitSslCompletionHandler();
-}
+InitSslCompletionHandler();
 
 void
-ssl_global_deinit() noexcept
-{
-	DeinitFifoBufferBio();
-}
+SetSslCompletionHandler(SSL &ssl, SslCompletionHandler &handler) noexcept;
+
+[[gnu::pure]]
+SslCompletionHandler &
+GetSslCompletionHandler(SSL &ssl) noexcept;
+
+void
+InvokeSslCompletionHandler(SSL &ssl) noexcept;

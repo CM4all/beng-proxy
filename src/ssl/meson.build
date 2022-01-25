@@ -2,6 +2,7 @@ ssl2 = static_library(
   'ssl2',
   'Basic.cxx',
   'Client.cxx',
+  'CompletionHandler.cxx',
   'Factory.cxx',
   'AlpnCompare.cxx',
   'AlpnSelect.cxx',
