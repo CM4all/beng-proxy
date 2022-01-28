@@ -30,34 +30,41 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
-
-#include "LookupCertResult.hxx"
-
-#include <openssl/ossl_typ.h>
-
-class SslCompletionHandler;
-class CancellablePointer;
+#include "CoCertDatabase.hxx"
+#include "Queries.hxx"
+#include "FromResult.hxx"
+#include "pg/CoQuery.hxx"
+#include "co/Task.hxx"
 
 /**
- * C++ wrapper for the SSL_CTX_set_cert_cb() callback function.
+ * A callable which invokes Pg::CoQuery().
  */
-class SslCertCallback {
-public:
-	virtual ~SslCertCallback() noexcept = default;
+struct CoQueryWrapper {
+	Pg::AsyncConnection &connection;
 
-	/**
-	 * The actual certificate callback.  This method is supposed
-	 * to look up the given host name and then call
-	 * SSL_use_certificate() and SSL_use_PrivateKey().
-	 *
-	 * May throw on error.
-	 *
-	 * @param ssl a #SSL object which must have a
-	 * #SslCompletionHandler (via SetSslCompletionHandler()); this
-	 * handler will be invoked after this method has returned
-	 * #IN_PROGRESS; using its #CancellablePointer field, the
-	 * caller may cancel the operation
-	 */
-	virtual LookupCertResult OnCertCallback(SSL &ssl, const char *name) = 0;
+	template<typename... Params>
+	auto operator()(const Params&... params) const {
+		return Pg::CoQuery(connection,
+				   Pg::CoQuery::CancelType::DISCARD,
+				   params...);
+	}
 };
+
+Co::Task<std::pair<UniqueX509, UniqueEVP_PKEY>>
+CoGetServerCertificateKey(Pg::AsyncConnection &connection,
+			  const CertDatabaseConfig &config,
+			  const char *name, const char *special)
+{
+	const CoQueryWrapper q{connection};
+
+	auto result = co_await FindServerCertificateKeyByName(q, name, special);
+	if (result.GetRowCount() == 0) {
+		/* no matching common_name; check for an altName */
+		// TODO do both queries, use the most recent record
+		result = co_await FindServerCertificateKeyByAltName(q, name, special);
+		if (result.GetRowCount() == 0)
+			co_return std::make_pair(nullptr, nullptr);
+	}
+
+	co_return LoadCertificateKey(config, result, 0, 0);
+}

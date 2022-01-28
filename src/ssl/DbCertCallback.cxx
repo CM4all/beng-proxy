@@ -67,7 +67,5 @@ DbSslCertCallback::OnCertCallback(SSL &ssl, const char *name)
 	    Equals(alpn_selected, std::span{alpn_acme_tls1}.subspan(1)))
 		special = "acme-alpn-tls-01";
 
-	return cache.Apply(ssl, name, special)
-		? LookupCertResult::COMPLETE
-		: LookupCertResult::NOT_FOUND;
+	return cache.Apply(ssl, name, special);
 }

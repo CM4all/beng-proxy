@@ -32,32 +32,17 @@
 
 #pragma once
 
-#include "LookupCertResult.hxx"
+#include "lib/openssl/UniqueEVP.hxx"
+#include "lib/openssl/UniqueX509.hxx"
 
-#include <openssl/ossl_typ.h>
+#include <utility>
 
-class SslCompletionHandler;
-class CancellablePointer;
+struct CertDatabaseConfig;
 
-/**
- * C++ wrapper for the SSL_CTX_set_cert_cb() callback function.
- */
-class SslCertCallback {
-public:
-	virtual ~SslCertCallback() noexcept = default;
+namespace Pg { class AsyncConnection; }
+namespace Co { template<typename T> class Task; }
 
-	/**
-	 * The actual certificate callback.  This method is supposed
-	 * to look up the given host name and then call
-	 * SSL_use_certificate() and SSL_use_PrivateKey().
-	 *
-	 * May throw on error.
-	 *
-	 * @param ssl a #SSL object which must have a
-	 * #SslCompletionHandler (via SetSslCompletionHandler()); this
-	 * handler will be invoked after this method has returned
-	 * #IN_PROGRESS; using its #CancellablePointer field, the
-	 * caller may cancel the operation
-	 */
-	virtual LookupCertResult OnCertCallback(SSL &ssl, const char *name) = 0;
-};
+Co::Task<std::pair<UniqueX509, UniqueEVP_PKEY>>
+CoGetServerCertificateKey(Pg::AsyncConnection &connection,
+			  const CertDatabaseConfig &config,
+			  const char *name, const char *special);

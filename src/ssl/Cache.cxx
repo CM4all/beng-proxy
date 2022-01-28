@@ -32,11 +32,15 @@
 
 #include "Cache.hxx"
 #include "SessionCache.hxx"
+#include "CompletionHandler.hxx"
 #include "lib/openssl/Name.hxx"
 #include "lib/openssl/AltName.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/LoadFile.hxx"
 #include "certdb/Wildcard.hxx"
+#include "certdb/CoCertDatabase.hxx"
+#include "co/InvokeTask.hxx"
+#include "co/Task.hxx"
 #include "event/Loop.hxx"
 #include "util/AllocatedString.hxx"
 
@@ -44,9 +48,150 @@
 
 #include <set>
 
+struct CertCache::Request final : AutoUnlinkIntrusiveListHook, Cancellable {
+	SSL &ssl;
+
+	explicit Request(SSL &_ssl) noexcept
+		:ssl(_ssl)
+	{
+		auto &handler = GetSslCompletionHandler(ssl);
+		assert(!handler.cancel_ptr);
+		handler.cancel_ptr = *this;
+	}
+
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		delete this;
+	}
+};
+
+class CertCache::Query {
+	CertCache &cache;
+
+	std::string host, special;
+
+	IntrusiveList<Request> requests;
+
+	Co::InvokeTask invoke_task;
+
+public:
+	template<typename H, typename S>
+	Query(CertCache &_cache, H &&_host, S &&_special) noexcept
+		:cache(_cache),
+		 host(std::forward<H>(_host)),
+		 special(std::forward<S>(_special))
+	{
+	}
+
+	~Query() noexcept {
+		assert(requests.empty());
+	}
+
+	void AddRequest(Request &request) noexcept {
+		requests.push_back(request);
+	}
+
+	bool IsRunning() const noexcept {
+		return invoke_task;
+	}
+
+	bool IsCancelled() const noexcept {
+		return requests.empty();
+	}
+
+	void Start() noexcept {
+		assert(&cache.current_query->second == this);
+		assert(!IsRunning());
+
+		invoke_task = Run();
+		invoke_task.Start(BIND_THIS_METHOD(OnCompletion));
+	}
+
+	/**
+	 * Stop execution of the coroutine.  This is only supposed to
+	 * be called during shutdown, when it is expected that all
+	 * requests will be canceled.
+	 */
+	void Stop() noexcept {
+		assert(&cache.current_query->second == this);
+		assert(IsRunning());
+
+		invoke_task = {};
+	}
+
+private:
+	Co::InvokeTask Run();
+
+	void OnCompletion(std::exception_ptr error) noexcept;
+};
+
+Co::InvokeTask
+CertCache::Query::Run()
+{
+	assert(&cache.current_query->second == this);
+
+	const char *_special = special.empty() ? nullptr : special.c_str();
+
+	auto cert_key = co_await CoGetServerCertificateKey(cache.db,
+							   cache.config,
+							   host.c_str(),
+							   _special);
+	if (!cert_key.first)
+		/* certificate was not found; the
+		   SslCompletionHandlers will be invoked by
+		   OnCompletion() */
+		co_return;
+
+	cert_key = cache.Add(std::move(cert_key.first),
+			     std::move(cert_key.second),
+			     _special);
+
+	requests.clear_and_dispose([this, &cert_key](Request *request){
+		cache.state_idx.Set(request->ssl, State::COMPLETE);
+		cache.Apply(request->ssl, cert_key);
+		InvokeSslCompletionHandler(request->ssl);
+		delete request;
+	});
+}
+
+inline void
+CertCache::Query::OnCompletion(std::exception_ptr error) noexcept
+{
+	assert(&cache.current_query->second == this);
+
+	if (error)
+		cache.logger(1, error);
+
+	/* invoke all remaining SslCompletionHandlers; this is
+	   only relevant if Run() has not finished
+	   sucessfully */
+	requests.clear_and_dispose([this](Request *request){
+		cache.state_idx.Set(request->ssl, State::NOT_FOUND);
+		InvokeSslCompletionHandler(request->ssl);
+		delete request;
+	});
+
+	/* copy the "cache" reference to the stack because the
+	   following erase() call will delete this object */
+	auto &_cache = cache;
+
+	{
+		const std::unique_lock<std::mutex> lock{_cache.mutex};
+		_cache.queries.erase(_cache.current_query);
+	}
+
+	_cache.current_query = _cache.queries.end();
+
+	/* start the next query */
+	_cache.StartQuery();
+}
+
 CertCache::CertCache(EventLoop &event_loop,
 		     const CertDatabaseConfig &_config) noexcept
 	:logger("CertCache"), config(_config),
+	 query_added_notify(event_loop, BIND_THIS_METHOD(StartQuery)),
+	 db(event_loop, config.connect.c_str(), config.schema.c_str(),
+	    *this),
 	 name_cache(event_loop, _config, *this)
 {
 }
@@ -87,6 +232,7 @@ CertCache::LoadCaCertificate(const char *path)
 void
 CertCache::Connect() noexcept
 {
+	db.Connect();
 	name_cache.Connect();
 }
 
@@ -94,6 +240,15 @@ void
 CertCache::Disconnect() noexcept
 {
 	name_cache.Disconnect();
+
+	if (current_query != queries.end()) {
+		const std::unique_lock lock{mutex};
+		current_query->second.Stop();
+		current_query = queries.end();
+	}
+
+	db.Disconnect();
+	query_added_notify.Disable();
 }
 
 inline CertCache::CertKey
@@ -131,20 +286,6 @@ CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key, const char *special)
 	return i->second.UpRef();
 }
 
-std::optional<CertCache::CertKey>
-CertCache::Query(const char *host, const char *special)
-{
-	auto db = dbs.Get(config);
-	db->EnsureConnected();
-
-	auto cert_key = db->GetServerCertificateKey(host, special);
-	if (!cert_key.second)
-		return std::nullopt;
-
-	return Add(std::move(cert_key.first), std::move(cert_key.second),
-		   special);
-}
-
 inline std::optional<CertCache::CertKey>
 CertCache::GetNoWildCardCached(const char *host, const char *_special) noexcept
 {
@@ -166,32 +307,60 @@ CertCache::GetNoWildCardCached(const char *host, const char *_special) noexcept
 	return std::nullopt;
 }
 
-std::optional<CertCache::CertKey>
-CertCache::GetNoWildCard(const char *host, const char *special)
+void
+CertCache::StartQuery() noexcept
 {
-	if (auto item = GetNoWildCardCached(host, special))
-		return item;
+	if (current_query != queries.end())
+		/* already busy */
+		return;
 
-	if (name_cache.Lookup(host)) {
-		if (auto item = Query(host, special))
-			return item;
+	if (!db.IsReady())
+		/* database is (re)connecting */
+		return;
+
+	/* pick an arbitrary request and start the database query */
+	const std::unique_lock<std::mutex> lock{mutex};
+	while (!queries.empty()) {
+		auto i = queries.begin();
+		if (!i->second.IsCancelled()) {
+			/* found a candidate - start it */
+			current_query = i;
+			current_query->second.Start();
+			break;
+		}
+
+		/* this query was scheduled, but meanwhile all
+		   requests were cancelled, so don't bother */
+		queries.erase(i);
 	}
-
-	return std::nullopt;
 }
 
-std::optional<CertCache::CertKey>
-CertCache::Get(const char *host, const char *special)
+void
+CertCache::ScheduleQuery(SSL &ssl, const char *host,
+			 const char *special) noexcept
 {
-	auto item = GetNoWildCard(host, special);
-	if (!item) {
-		/* not found: try the wildcard */
-		const auto wildcard = MakeCommonNameWildcard(host);
-		if (!wildcard.empty())
-			item = GetNoWildCard(wildcard.c_str(), special);
+	std::string key(host);
+	if (special != nullptr) {
+		key.push_back(0);
+		key.append(special);
 	}
 
-	return item;
+	bool was_empty;
+
+	{
+		const std::unique_lock<std::mutex> lock{mutex};
+		was_empty = queries.empty();
+
+		const char *_special = special != nullptr ? special : "";
+		auto &query = queries.try_emplace(std::move(key),
+						  *this, host, _special).first->second;
+
+		auto *request = new Request(ssl);
+		query.AddRequest(*request);
+	}
+
+	if (was_empty)
+		query_added_notify.Signal();
 }
 
 inline void
@@ -220,15 +389,53 @@ CertCache::Apply(SSL &ssl, const CertKey &cert_key)
 	Apply(ssl, *cert_key.first, *cert_key.second);
 }
 
-bool
-CertCache::Apply(SSL &ssl, const char *host, const char *special)
+LookupCertResult
+CertCache::Apply(SSL &ssl, const char *host,
+		 const char *special) noexcept
 {
-	const auto item = Get(host, special);
-	if (!item)
-		return false;
+	assert(db.IsDefined());
 
-	Apply(ssl, *item);
-	return true;
+	switch (state_idx.Get(ssl)) {
+	case State::NONE:
+		break;
+
+	case State::IN_PROGRESS:
+		/* registered again, already in progress */
+		return LookupCertResult::IN_PROGRESS;
+
+	case State::COMPLETE:
+		/* registered again, but was already found */
+		return LookupCertResult::COMPLETE;
+
+	case State::NOT_FOUND:
+		/* registered again, but was not found */
+		return LookupCertResult::NOT_FOUND;
+	}
+
+	if (auto item = GetNoWildCardCached(host, special)) {
+		state_idx.Set(ssl, State::COMPLETE);
+		Apply(ssl, *item);
+		return LookupCertResult::COMPLETE;
+	}
+
+	const auto wildcard = MakeCommonNameWildcard(host);
+	if (!wildcard.empty()) {
+		if (auto item = GetNoWildCardCached(wildcard.c_str(), special)) {
+			state_idx.Set(ssl, State::COMPLETE);
+			Apply(ssl, *item);
+			return LookupCertResult::COMPLETE;
+		}
+	}
+
+	if (name_cache.Lookup(host) ||
+	    (!wildcard.empty() && name_cache.Lookup(wildcard.c_str()))) {
+		state_idx.Set(ssl, State::IN_PROGRESS);
+		ScheduleQuery(ssl, host, special);
+		return LookupCertResult::IN_PROGRESS;
+	}
+
+	state_idx.Set(ssl, State::NOT_FOUND);
+	return LookupCertResult::NOT_FOUND;
 }
 
 bool
@@ -269,4 +476,30 @@ CertCache::OnCertModified(const std::string &name, bool deleted) noexcept
 		logger.Format(5, "flushed %s certificate '%s'",
 			      deleted ? "deleted" : "modified",
 			      name.c_str());
+}
+
+void
+CertCache::OnConnect()
+{
+	logger(5, "connected to certificate database");
+
+	StartQuery();
+}
+
+void
+CertCache::OnDisconnect() noexcept
+{
+	logger(4, "disconnected from certificate database");
+}
+
+void
+CertCache::OnNotify(const char *name)
+{
+	logger(5, "received notify '", name, "'");
+}
+
+void
+CertCache::OnError(std::exception_ptr e) noexcept
+{
+	logger(1, e);
 }

@@ -33,13 +33,17 @@
 #pragma once
 
 #include "NameCache.hxx"
+#include "LookupCertResult.hxx"
 #include "lib/openssl/Hash.hxx"
 #include "lib/openssl/UniqueX509.hxx"
 #include "lib/openssl/UniqueEVP.hxx"
+#include "lib/openssl/IntegralExDataIndex.hxx"
 #include "certdb/Config.hxx"
-#include "certdb/CertDatabase.hxx"
-#include "stock/ThreadedStock.hxx"
+#include "pg/AsyncConnection.hxx"
+#include "thread/Notify.hxx"
 #include "io/Logger.hxx"
+#include "util/Cancellable.hxx"
+#include "util/IntrusiveList.hxx"
 
 #include <unordered_map>
 #include <map>
@@ -58,10 +62,29 @@ class CertDatabase;
  * instance.  It is thread-safe, designed to be called synchronously
  * by worker threads (via #SslFilter).
  */
-class CertCache final : CertNameCacheHandler {
+class CertCache final : Pg::AsyncConnectionHandler, CertNameCacheHandler {
 	const LLogger logger;
 
 	const CertDatabaseConfig config;
+
+	enum class State {
+		NONE = 0,
+		IN_PROGRESS,
+		COMPLETE,
+		NOT_FOUND,
+	};
+
+	const OpenSSL::IntegralExDataIndex<State> state_idx;
+
+	/**
+	 * Used to move the Apply() call from a worker thread to the
+	 * main thread.  The worker thread adds a #Request/#Query to
+	 * the #queries map and then signals this object, which
+	 * triggers a StartQuery() call in the main thread.
+	 */
+	Notify query_added_notify;
+
+	Pg::AsyncConnection db;
 
 	CertNameCache name_cache;
 
@@ -76,12 +99,7 @@ class CertCache final : CertNameCacheHandler {
 	std::map<SHA1Digest, std::forward_list<UniqueX509>, SHA1Compare> ca_certs;
 
 	/**
-	 * Database connections used by worker threads.
-	 */
-	ThreadedStock<CertDatabase> dbs;
-
-	/**
-	 * Protects #map.
+	 * Protects #map, #queries.
 	 */
 	std::mutex mutex;
 
@@ -125,6 +143,20 @@ class CertCache final : CertNameCacheHandler {
 	 */
 	std::unordered_multimap<std::string, Item> map;
 
+	struct Request;
+	class Query;
+
+	using QueryMap = std::map<std::string, Query>;
+	QueryMap queries;
+
+	/**
+	 * The query that is currently being executed.
+	 *
+	 * This field is not protected by #mutex because it is
+	 * accessed only from the main thread.
+	 */
+	QueryMap::iterator current_query = queries.end();
+
 public:
 	CertCache(EventLoop &event_loop,
 		  const CertDatabaseConfig &_config) noexcept;
@@ -144,22 +176,34 @@ public:
 
 	/**
 	 * Look up a certificate by host name, and set it in the given
-	 * #SSL.  Returns true on success, false if a certificate for
-	 * that name was not found, and throws an exception on error.
+	 * #SSL.
+	 *
+	 * @param ssl a #SSL object which must have a
+	 * #SslCompletionHandler (via SetSslCompletionHandler()); this
+	 * handler will be invoked after this method has returned
+	 * #IN_PROGRESS; using its #CancellablePointer field, the
+	 * caller may cancel the operation
 	 */
-	bool Apply(SSL &ssl, const char *host, const char *special);
+	LookupCertResult Apply(SSL &ssl, const char *host,
+			       const char *special) noexcept;
 
 private:
+	/**
+	 * Add the given certificate/key pair to the cache.
+	 *
+	 * This method locks the mutex when necessary.
+	 */
 	CertKey Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key,
-			const char *special);
-	std::optional<CertKey> Query(const char *host, const char *special);
+		    const char *special);
 
 	[[gnu::pure]]
 	std::optional<CertKey> GetNoWildCardCached(const char *host,
 						   const char *special) noexcept;
 
-	std::optional<CertKey> GetNoWildCard(const char *host, const char *special);
-	std::optional<CertKey> Get(const char *host, const char *special);
+	void StartQuery() noexcept;
+
+	void ScheduleQuery(SSL &ssl, const char *host,
+			   const char *special) noexcept;
 
 	void Apply(SSL &ssl, X509 &cert, EVP_PKEY &key);
 	void Apply(SSL &ssl, const CertKey &cert_key);
@@ -172,6 +216,12 @@ private:
 	 * @return true if at least one item was found and deleted
 	 */
 	bool Flush(const std::string &name) noexcept;
+
+	/* virtual methods from Pg::AsyncConnectionHandler */
+	void OnConnect() override;
+	void OnDisconnect() noexcept override;
+	void OnNotify(const char *name) override;
+	void OnError(std::exception_ptr e) noexcept override;
 
 	/* virtual methods from class CertNameCacheHandler */
 	void OnCertModified(const std::string &name,

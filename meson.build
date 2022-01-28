@@ -383,6 +383,7 @@ if get_option('certdb')
 
   ssl2_sources += [
     '../certdb/CertDatabase.cxx',
+    '../certdb/CoCertDatabase.cxx',
     '../certdb/FromResult.cxx',
     '../certdb/WrapKey.cxx',
     '../certdb/Wildcard.cxx',
