@@ -164,6 +164,7 @@ private:
 	std::optional<CertKey> Get(const char *host, const char *special);
 
 	void Apply(SSL &ssl, X509 &cert, EVP_PKEY &key);
+	void Apply(SSL &ssl, const CertKey &cert_key);
 
 	/**
 	 * Flush items with the given name.

@@ -192,6 +192,12 @@ CertCache::Apply(SSL &ssl, X509 &cert, EVP_PKEY &key)
 	}
 }
 
+inline void
+CertCache::Apply(SSL &ssl, const CertKey &cert_key)
+{
+	Apply(ssl, *cert_key.first, *cert_key.second);
+}
+
 bool
 CertCache::Apply(SSL &ssl, const char *host, const char *special)
 {
@@ -199,7 +205,7 @@ CertCache::Apply(SSL &ssl, const char *host, const char *special)
 	if (!item)
 		return false;
 
-	Apply(ssl, *item->first, *item->second);
+	Apply(ssl, *item);
 	return true;
 }
 
