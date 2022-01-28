@@ -124,7 +124,7 @@ CertCache::Query(const char *host, const char *special)
 }
 
 inline std::optional<CertCache::CertKey>
-CertCache::GetCached(const char *host, const char *_special) noexcept
+CertCache::GetNoWildCardCached(const char *host, const char *_special) noexcept
 {
 	const std::unique_lock<std::mutex> lock{mutex};
 
@@ -147,7 +147,7 @@ CertCache::GetCached(const char *host, const char *_special) noexcept
 std::optional<CertCache::CertKey>
 CertCache::GetNoWildCard(const char *host, const char *special)
 {
-	if (auto item = GetCached(host, special))
+	if (auto item = GetNoWildCardCached(host, special))
 		return item;
 
 	if (name_cache.Lookup(host)) {

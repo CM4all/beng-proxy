@@ -157,7 +157,8 @@ private:
 	std::optional<CertKey> Query(const char *host, const char *special);
 
 	[[gnu::pure]]
-	std::optional<CertKey> GetCached(const char *host, const char *special) noexcept;
+	std::optional<CertKey> GetNoWildCardCached(const char *host,
+						   const char *special) noexcept;
 
 	std::optional<CertKey> GetNoWildCard(const char *host, const char *special);
 	std::optional<CertKey> Get(const char *host, const char *special);
