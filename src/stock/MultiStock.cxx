@@ -380,7 +380,7 @@ MultiStock::MapItem::RemoveWaiting(Waiting &w) noexcept
 	if (items.empty())
 		delete this;
 	else if (get_cancel_ptr)
-		get_cancel_ptr.CancelAndClear();
+		get_cancel_ptr.Cancel();
 }
 
 inline void

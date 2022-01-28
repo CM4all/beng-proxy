@@ -276,7 +276,7 @@ NfsCacheStore::Abort() noexcept
 {
 	assert(cancel_ptr);
 
-	cancel_ptr.CancelAndClear();
+	cancel_ptr.Cancel();
 	Destroy();
 }
 

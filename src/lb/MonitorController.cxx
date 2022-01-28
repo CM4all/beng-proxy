@@ -127,7 +127,7 @@ LbMonitorController::TimeoutCallback() noexcept
 
 	logger(6, "timeout");
 
-	cancel_ptr.CancelAndClear();
+	cancel_ptr.Cancel();
 
 	state = false;
 	failure->SetMonitor();

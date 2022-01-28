@@ -115,7 +115,7 @@ private:
 	void Cancel() noexcept override {
 		assert(cancel_ptr);
 
-		cancel_ptr.CancelAndClear();
+		cancel_ptr.Cancel();
 		InvokeCreateAborted();
 	}
 

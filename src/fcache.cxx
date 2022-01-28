@@ -363,7 +363,7 @@ FilterCacheRequest::CancelStore() noexcept
 {
 	assert(response.cancel_ptr);
 
-	response.cancel_ptr.CancelAndClear();
+	response.cancel_ptr.Cancel();
 	Destroy();
 }
 
