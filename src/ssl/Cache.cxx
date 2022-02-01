@@ -84,6 +84,18 @@ CertCache::LoadCaCertificate(const char *path)
 		throw SslError(std::string("Duplicate CA certificate: ") + path);
 }
 
+void
+CertCache::Connect() noexcept
+{
+	name_cache.Connect();
+}
+
+void
+CertCache::Disconnect() noexcept
+{
+	name_cache.Disconnect();
+}
+
 inline CertCache::CertKey
 CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key, const char *special)
 {

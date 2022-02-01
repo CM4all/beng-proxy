@@ -137,13 +137,8 @@ public:
 
 	void LoadCaCertificate(const char *path);
 
-	void Connect() noexcept {
-		name_cache.Connect();
-	}
-
-	void Disconnect() noexcept {
-		name_cache.Disconnect();
-	}
+	void Connect() noexcept;
+	void Disconnect() noexcept;
 
 	void Expire() noexcept;
 
