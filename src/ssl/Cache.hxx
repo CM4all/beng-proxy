@@ -126,10 +126,10 @@ class CertCache final : CertNameCacheHandler {
 	std::unordered_multimap<std::string, Item> map;
 
 public:
-	explicit CertCache(EventLoop &event_loop,
-			   const CertDatabaseConfig &_config) noexcept
-		:logger("CertCache"), config(_config),
-		 name_cache(event_loop, _config, *this) {}
+	CertCache(EventLoop &event_loop,
+		  const CertDatabaseConfig &_config) noexcept;
+
+	~CertCache() noexcept;
 
 	auto &GetEventLoop() const noexcept {
 		return name_cache.GetEventLoop();

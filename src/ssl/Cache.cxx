@@ -44,6 +44,15 @@
 
 #include <set>
 
+CertCache::CertCache(EventLoop &event_loop,
+		     const CertDatabaseConfig &_config) noexcept
+	:logger("CertCache"), config(_config),
+	 name_cache(event_loop, _config, *this)
+{
+}
+
+CertCache::~CertCache() noexcept = default;
+
 void
 CertCache::Expire() noexcept
 {
