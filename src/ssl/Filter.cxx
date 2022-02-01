@@ -135,6 +135,7 @@ is_ssl_error(SSL *ssl, int ret)
 	case SSL_ERROR_WANT_WRITE:
 	case SSL_ERROR_WANT_CONNECT:
 	case SSL_ERROR_WANT_ACCEPT:
+	case SSL_ERROR_WANT_X509_LOOKUP:
 		return false;
 
 	default:
