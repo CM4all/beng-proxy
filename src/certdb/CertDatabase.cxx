@@ -31,6 +31,7 @@
  */
 
 #include "CertDatabase.hxx"
+#include "Queries.hxx"
 #include "FromResult.hxx"
 #include "Config.hxx"
 #include "WrapKey.hxx"
@@ -42,6 +43,18 @@
 #include "util/AllocatedString.hxx"
 
 #include <openssl/aes.h>
+
+/**
+ * A callable which invokes Pg::Connection::ExecuteParams().
+ */
+struct SyncQueryWrapper {
+	Pg::Connection &connection;
+
+	template<typename... Params>
+	auto operator()(const Params&... params) {
+		return connection.ExecuteParams(params...);
+	}
+};
 
 CertDatabase::CertDatabase(const CertDatabaseConfig &_config)
 	:config(_config), conn(config.connect.c_str())
@@ -242,11 +255,13 @@ CertDatabase::GetServerCertificateKeyByHandle(const char *handle)
 std::pair<UniqueX509, UniqueEVP_PKEY>
 CertDatabase::GetServerCertificateKey(const char *name, const char *special)
 {
-	auto result = FindServerCertificateKeyByName(name, special);
+	auto result = FindServerCertificateKeyByName(SyncQueryWrapper{conn},
+						     name, special);
 	if (result.GetRowCount() == 0) {
 		/* no matching common_name; check for an altName */
 		// TODO do both queries, use the most recent record
-		result = FindServerCertificateKeyByAltName(name, special);
+		result = FindServerCertificateKeyByAltName(SyncQueryWrapper{conn},
+							   name, special);
 		if (result.GetRowCount() == 0)
 			return std::make_pair(nullptr, nullptr);
 	}

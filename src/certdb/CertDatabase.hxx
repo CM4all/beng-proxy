@@ -259,39 +259,6 @@ private:
 					  handle);
 	}
 
-	Pg::Result FindServerCertificateKeyByName(const char *common_name,
-						  const char *special) {
-		return conn.ExecuteParams(true,
-					  "SELECT certificate_der, key_der, key_wrap_name "
-					  "FROM server_certificate "
-					  "WHERE NOT deleted AND "
-					  " special IS NOT DISTINCT FROM $2 AND"
-					  " common_name=$1 "
-					  "ORDER BY"
-					  /* prefer certificates which expire later */
-					  " not_after DESC "
-					  "LIMIT 1",
-					  common_name, special);
-	}
-
-	Pg::Result FindServerCertificateKeyByAltName(const char *common_name,
-						     const char *special) {
-		return conn.ExecuteParams(true,
-					  "SELECT certificate_der, key_der, key_wrap_name "
-					  "FROM server_certificate "
-					  "WHERE NOT deleted AND "
-					  " special IS NOT DISTINCT FROM $2 AND"
-					  " EXISTS("
-					  "SELECT id FROM server_certificate_alt_name"
-					  " WHERE server_certificate_id=server_certificate.id"
-					  " AND name=$1) "
-					  "ORDER BY"
-					  /* prefer certificates which expire later */
-					  " not_after DESC "
-					  "LIMIT 1",
-					  common_name, special);
-	}
-
 	Pg::Result FindServerCertificateKeyById(Pg::Serial id) {
 		return conn.ExecuteParams(true,
 					  "SELECT certificate_der, key_der, key_wrap_name "
