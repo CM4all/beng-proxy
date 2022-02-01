@@ -80,6 +80,9 @@ class CertCache final : CertNameCacheHandler {
 	 */
 	ThreadedStock<CertDatabase> dbs;
 
+	/**
+	 * Protects #map.
+	 */
 	std::mutex mutex;
 
 	using CertKey = std::pair<UniqueX509, UniqueEVP_PKEY>;
