@@ -49,6 +49,7 @@ CertCache::Expire() noexcept
 {
 	const auto now = GetEventLoop().SteadyNow();
 
+	const std::unique_lock<std::mutex> lock(mutex);
 	for (auto i = map.begin(), end = map.end(); i != end;) {
 		if (now >= i->second.expires) {
 			logger(5, "flushed certificate '", i->first, "'");
