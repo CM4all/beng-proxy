@@ -33,11 +33,11 @@
 #pragma once
 
 #include "lib/curl/Global.hxx"
+#include "lib/curl/Headers.hxx"
 #include "http/Method.h"
 #include "http/Status.h"
 
 #include <string>
-#include <map>
 
 template<typename T> struct ConstBuffer;
 class EventLoop;
@@ -45,12 +45,12 @@ class EventLoop;
 struct GlueHttpResponse {
 	http_status_t status;
 
-	std::multimap<std::string, std::string> headers;
+	Curl::Headers headers;
 
 	std::string body;
 
 	GlueHttpResponse(http_status_t _status,
-			 std::multimap<std::string, std::string> &&_headers,
+			 Curl::Headers &&_headers,
 			 std::string &&_body)
 		:status(_status), headers(std::move(_headers)), body(_body) {}
 };

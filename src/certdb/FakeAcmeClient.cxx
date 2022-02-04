@@ -157,7 +157,7 @@ try {
 	(void)body;
 
 	if (strcmp(uri, "/acme/new-authz") == 0) {
-		std::multimap<std::string, std::string> response_headers = {
+		Curl::Headers response_headers = {
 			{"content-type", "application/json"},
 		};
 
@@ -175,7 +175,7 @@ try {
 					"  ]"
 					"}");
 	} else if (strcmp(uri, "/example/tls-sni-01/uri") == 0) {
-		std::multimap<std::string, std::string> response_headers = {
+		Curl::Headers response_headers = {
 			{"content-type", "application/json"},
 		};
 

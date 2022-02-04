@@ -50,7 +50,7 @@ GlueHttpClient::~GlueHttpClient()
 
 class GlueHttpResponseHandler final : public CurlResponseHandler {
 	http_status_t status;
-	std::multimap<std::string, std::string> headers;
+	Curl::Headers headers;
 
 	std::string body_string;
 
@@ -75,8 +75,7 @@ public:
 public:
 	/* virtual methods from class CurlResponseHandler */
 
-	void OnHeaders(unsigned _status,
-		       std::multimap<std::string, std::string> &&_headers) override {
+	void OnHeaders(unsigned _status, Curl::Headers &&_headers) override {
 		status = http_status_t(_status);
 		headers = std::move(_headers);
 	}
