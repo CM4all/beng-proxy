@@ -125,6 +125,25 @@ private:
 	void OnCompletion(std::exception_ptr error) noexcept;
 };
 
+static Co::Task<std::pair<UniqueX509, UniqueEVP_PKEY>>
+CoGetServerCertificateKeyMaybeWildcard(Pg::AsyncConnection &connection,
+				       const CertDatabaseConfig &config,
+				       const char *name, const char *special)
+{
+	auto cert_key = co_await CoGetServerCertificateKey(connection, config,
+							   name, special);
+	if (!cert_key.first) {
+		const auto wildcard = MakeCommonNameWildcard(name);
+		if (!wildcard.empty())
+			cert_key = co_await
+				CoGetServerCertificateKey(connection, config,
+							  wildcard.c_str(),
+							  special);
+	}
+
+	co_return cert_key;
+}
+
 Co::InvokeTask
 CertCache::Query::Run()
 {
@@ -132,10 +151,10 @@ CertCache::Query::Run()
 
 	const char *_special = special.empty() ? nullptr : special.c_str();
 
-	auto cert_key = co_await CoGetServerCertificateKey(cache.db,
-							   cache.config,
-							   host.c_str(),
-							   _special);
+	auto cert_key = co_await CoGetServerCertificateKeyMaybeWildcard(cache.db,
+									cache.config,
+									host.c_str(),
+									_special);
 	if (!cert_key.first)
 		/* certificate was not found; the
 		   SslCompletionHandlers will be invoked by
