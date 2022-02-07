@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.83) unstable; urgency=low
 
+  * ssl: fix stall bug
   * ssl: asynchronous certdb lookups
 
  --   

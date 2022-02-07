@@ -632,6 +632,13 @@ ThreadSocketFilter::InternalWrite() noexcept
 
 		if (empty)
 			socket->InternalUnscheduleWrite();
+		else if (size_t(nbytes) < r.size)
+			/* if this was only a partial write, and this
+			   InternalWrite() was triggered by
+			   BufferedSocket::DeferWrite() (which is
+			   one-shot), we need to register EPOLLOUT to
+			   trigger further writes */
+			socket->InternalScheduleWrite();
 
 		if (_drained && !socket->InternalDrained())
 			return false;
