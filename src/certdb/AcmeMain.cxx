@@ -302,6 +302,13 @@ CollectPendingAuthorizations(const CertDatabaseConfig &db_config,
 			throw FormatRuntimeError("Invalid identifier received: '%s'",
 						 ar.identifier.c_str());
 
+		if (config.debug) {
+			fprintf(stderr, "ACME authorization: %s\n", ar.identifier.c_str());
+			for (const auto &c : ar.challenges)
+				fprintf(stderr, "Challenge type=%s status=%s\n",
+					c.type.c_str(), c.FormatStatus(c.status));
+		}
+
 		const auto *challenge = SelectChallenge(config, account_key, db,
 							i, ar,
 							alpn_map, dns_map,
