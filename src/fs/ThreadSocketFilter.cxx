@@ -391,7 +391,13 @@ ThreadSocketFilter::Done() noexcept
 			socket->InternalScheduleRead(expect_more, Event::Duration(-1));
 
 		if (!encrypted_output.empty())
-			socket->InternalScheduleWrite();
+			/* be optimistic and assume the socket is
+			   already writable (calling
+			   BufferedSocket::DeferWrite() instead of
+			   BufferedSocket::ScheduleWrite()); this is
+			   because TLS often needs to transmit small
+			   packets */
+			socket->InternalDeferWrite();
 	}
 
 	if (!CheckWrite(lock))
