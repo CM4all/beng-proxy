@@ -3,7 +3,7 @@ cm4all-beng-proxy (17.0.83) unstable; urgency=low
   * ssl: fix stall bug
   * ssl: asynchronous certdb lookups
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 10 Feb 2022 10:13:41 +0100
 
 cm4all-beng-proxy (17.0.82) unstable; urgency=low
 
