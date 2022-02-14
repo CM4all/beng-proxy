@@ -65,6 +65,10 @@ public:
 	[[gnu::pure]]
 	EventLoop &GetEventLoop() noexcept;
 
+	auto &GetStock() const noexcept {
+		return stock;
+	}
+
 	FailureManager &GetFailureManager() {
 		return failure_manager;
 	}

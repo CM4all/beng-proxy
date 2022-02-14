@@ -35,6 +35,11 @@
 #include "cluster/StickyHash.hxx"
 #include "http/Method.h"
 
+#ifdef HAVE_NGHTTP2
+#include <string>
+#include <map>
+#endif
+
 struct pool;
 class EventLoop;
 class StopwatchPtr;
@@ -56,6 +61,11 @@ class AnyHttpClient {
 
 #ifdef HAVE_NGHTTP2
 	NgHttp2::Stock &nghttp2_stock;
+
+	struct Request;
+	struct Waiting;
+	class Probe;
+	std::map<std::string, Probe> probes;
 #endif
 
 	SslClientFactory *const ssl_client_factory;
@@ -85,4 +95,15 @@ public:
 			 StringMap &&headers, UnusedIstreamPtr body,
 			 HttpResponseHandler &handler,
 			 CancellablePointer &cancel_ptr);
+
+private:
+	void ProbeHTTP2(struct pool &pool,
+			const StopwatchPtr &parent_stopwatch,
+			sticky_hash_t sticky_hash,
+			SocketFilterFactory &filter_factory,
+			http_method_t method,
+			const HttpAddress &address,
+			StringMap &&headers, UnusedIstreamPtr body,
+			HttpResponseHandler &handler,
+			CancellablePointer &cancel_ptr) noexcept;
 };
