@@ -50,23 +50,42 @@ class StringMap;
 
 /**
  * Invoke either an HTTP/2 or an HTTP/1.2 client.
- *
- * Throws on error.
- *
- * @param sticky_hash a portion of the session id that is used to
- * select the worker; 0 means disable stickiness
  */
-void
-AnyHttpRequest(struct pool &pool, EventLoop &event_loop,
-	       SslClientFactory *ssl_client_factory,
-	       FilteredSocketBalancer &fs_balancer,
+class AnyHttpClient {
+	FilteredSocketBalancer &fs_balancer;
+
 #ifdef HAVE_NGHTTP2
-	       NgHttp2::Stock &nghttp2_stock,
+	NgHttp2::Stock &nghttp2_stock;
 #endif
-	       const StopwatchPtr &parent_stopwatch,
-	       sticky_hash_t sticky_hash,
-	       http_method_t method,
-	       const HttpAddress &address,
-	       StringMap &&headers, UnusedIstreamPtr body,
-	       HttpResponseHandler &handler,
-	       CancellablePointer &cancel_ptr);
+
+	SslClientFactory *const ssl_client_factory;
+
+public:
+	AnyHttpClient(FilteredSocketBalancer &_fs_balancer,
+#ifdef HAVE_NGHTTP2
+		      NgHttp2::Stock &_nghttp2_stock,
+#endif
+		      SslClientFactory *_ssl_client_factory) noexcept
+		:fs_balancer(_fs_balancer),
+#ifdef HAVE_NGHTTP2
+		 nghttp2_stock(_nghttp2_stock),
+#endif
+		 ssl_client_factory(_ssl_client_factory) {}
+
+	EventLoop &GetEventLoop() const noexcept;
+
+	/**
+	 * Throws on error.
+	 *
+	 * @param sticky_hash a portion of the session id that is used to
+	 * select the worker; 0 means disable stickiness
+	 */
+	void SendRequest(struct pool &pool,
+			 const StopwatchPtr &parent_stopwatch,
+			 sticky_hash_t sticky_hash,
+			 http_method_t method,
+			 const HttpAddress &address,
+			 StringMap &&headers, UnusedIstreamPtr body,
+			 HttpResponseHandler &handler,
+			 CancellablePointer &cancel_ptr);
+};

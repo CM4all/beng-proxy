@@ -37,7 +37,14 @@
 #include "istream/UnusedPtr.hxx"
 #include "nghttp2/Glue.hxx"
 #include "ssl/SslSocketFilterFactory.hxx"
+#include "fs/Balancer.hxx"
 #include "net/HostParser.hxx"
+
+inline EventLoop &
+AnyHttpClient::GetEventLoop() const noexcept
+{
+	return fs_balancer.GetEventLoop();
+}
 
 [[gnu::pure]]
 static const char *
@@ -55,20 +62,17 @@ GetHostWithoutPort(struct pool &pool, const HttpAddress &address) noexcept
 }
 
 void
-AnyHttpRequest(struct pool &pool, EventLoop &event_loop,
-	       SslClientFactory *ssl_client_factory,
-	       FilteredSocketBalancer &fs_balancer,
-#ifdef HAVE_NGHTTP2
-	       NgHttp2::Stock &nghttp2_stock,
-#endif
-	       const StopwatchPtr &parent_stopwatch,
-	       sticky_hash_t sticky_hash,
-	       http_method_t method,
-	       const HttpAddress &address,
-	       StringMap &&headers, UnusedIstreamPtr body,
-	       HttpResponseHandler &handler,
-	       CancellablePointer &cancel_ptr)
+AnyHttpClient::SendRequest(struct pool &pool,
+			   const StopwatchPtr &parent_stopwatch,
+			   sticky_hash_t sticky_hash,
+			   http_method_t method,
+			   const HttpAddress &address,
+			   StringMap &&headers, UnusedIstreamPtr body,
+			   HttpResponseHandler &handler,
+			   CancellablePointer &cancel_ptr)
 {
+	auto &event_loop = GetEventLoop();
+
 	SocketFilterFactory *filter_factory = nullptr;
 
 	if (address.ssl) {

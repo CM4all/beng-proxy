@@ -33,7 +33,6 @@
 #include "DirectResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "http/ResponseHandler.hxx"
-#include "http/AnyClient.hxx"
 #include "file/Address.hxx"
 #include "file/Request.hxx"
 #include "http/local/Glue.hxx"
@@ -275,17 +274,12 @@ try {
 #endif
 
 	case ResourceAddress::Type::HTTP:
-		AnyHttpRequest(pool, event_loop,
-			       ssl_client_factory, fs_balancer,
-#ifdef HAVE_NGHTTP2
-			       nghttp2_stock,
-#endif
-			       parent_stopwatch,
-			       sticky_hash,
-			       method, address.GetHttp(),
-			       std::move(headers),
-			       std::move(body),
-			       handler, cancel_ptr);
+		any_http_client.SendRequest(pool, parent_stopwatch,
+					    sticky_hash,
+					    method, address.GetHttp(),
+					    std::move(headers),
+					    std::move(body),
+					    handler, cancel_ptr);
 		return;
 
 	case ResourceAddress::Type::LHTTP:

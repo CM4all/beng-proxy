@@ -34,6 +34,7 @@
 #define BENG_PROXY_DIRECT_RESOURCE_LOADER_HXX
 
 #include "ResourceLoader.hxx"
+#include "http/AnyClient.hxx"
 
 class EventLoop;
 class SpawnService;
@@ -60,10 +61,7 @@ class DirectResourceLoader final : public ResourceLoader {
 	Uring::Queue *const uring;
 #endif
 	TcpBalancer *tcp_balancer;
-	FilteredSocketBalancer &fs_balancer;
-#ifdef HAVE_NGHTTP2
-	NgHttp2::Stock &nghttp2_stock;
-#endif
+	AnyHttpClient any_http_client;
 	SpawnService &spawn_service;
 	LhttpStock *lhttp_stock;
 	FcgiStock *fcgi_stock;
@@ -72,11 +70,10 @@ class DirectResourceLoader final : public ResourceLoader {
 	MultiWasStock *const multi_was_stock;
 	RemoteWasStock *const remote_was_stock;
 #endif
-	StockMap *delegate_stock;
 #ifdef HAVE_LIBNFS
 	NfsCache *nfs_cache;
 #endif
-	SslClientFactory *const ssl_client_factory;
+	StockMap *delegate_stock;
 
 public:
 	DirectResourceLoader(EventLoop &_event_loop,
@@ -106,10 +103,11 @@ public:
 		 uring(_uring),
 #endif
 		 tcp_balancer(_tcp_balancer),
-		 fs_balancer(_fs_balancer),
+		 any_http_client(_fs_balancer,
 #ifdef HAVE_NGHTTP2
-		 nghttp2_stock(_nghttp2_stock),
+				 _nghttp2_stock,
 #endif
+				 _ssl_client_factory),
 		 spawn_service(_spawn_service),
 		 lhttp_stock(_lhttp_stock),
 		 fcgi_stock(_fcgi_stock),
@@ -118,11 +116,10 @@ public:
 		 multi_was_stock(_multi_was_stock),
 		 remote_was_stock(_remote_was_stock),
 #endif
-		 delegate_stock(_delegate_stock),
 #ifdef HAVE_LIBNFS
 		 nfs_cache(_nfs_cache),
 #endif
-		 ssl_client_factory(_ssl_client_factory)
+		 delegate_stock(_delegate_stock)
 	{
 	}
 
