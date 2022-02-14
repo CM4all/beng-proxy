@@ -65,12 +65,9 @@ public:
 #ifdef HAVE_NGHTTP2
 		      NgHttp2::Stock &_nghttp2_stock,
 #endif
-		      SslClientFactory *_ssl_client_factory) noexcept
-		:fs_balancer(_fs_balancer),
-#ifdef HAVE_NGHTTP2
-		 nghttp2_stock(_nghttp2_stock),
-#endif
-		 ssl_client_factory(_ssl_client_factory) {}
+		      SslClientFactory *_ssl_client_factory) noexcept;
+
+	~AnyHttpClient() noexcept;
 
 	EventLoop &GetEventLoop() const noexcept;
 
