@@ -87,6 +87,16 @@ public:
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 
+	/**
+	 * Add a newly connected socket to the stock and invoke the
+	 * given #StockGetHandler.
+	 *
+	 * @param key a string generated with MakeFilteredSocketStockKey()
+	 */
+	void Add(AllocatorPtr alloc, const char *key,
+		 std::unique_ptr<FilteredSocket> socket,
+		 StockGetHandler &handler) noexcept;
+
 private:
 	/* virtual methods from class StockClass */
 	void Create(CreateStockItem c, StockRequest request,

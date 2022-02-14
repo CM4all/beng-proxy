@@ -62,6 +62,8 @@ struct FilteredSocketStockRequest {
 
 	SocketFilterFactory *const filter_factory;
 
+	std::unique_ptr<FilteredSocket> socket;
+
 	FilteredSocketStockRequest(StopwatchPtr &&_stopwatch,
 				   bool _ip_transparent,
 				   SocketAddress _bind_address,
@@ -73,6 +75,12 @@ struct FilteredSocketStockRequest {
 		 bind_address(_bind_address), address(_address),
 		 timeout(_timeout),
 		 filter_factory(_filter_factory) {}
+
+	FilteredSocketStockRequest(std::unique_ptr<FilteredSocket> _socket) noexcept
+		:ip_transparent(),
+		 bind_address(), address(), timeout(),
+		 filter_factory(),
+		 socket(std::move(_socket)) {}
 };
 
 class FilteredSocketStockConnection final
@@ -108,6 +116,13 @@ public:
 	}
 
 	void Start(FilteredSocketStockRequest &&request) noexcept {
+		if (request.socket) {
+			/* this was called from
+			   FilteredSocketStock::Add() */
+			OnConnectFilteredSocket(std::move(request.socket));
+			return;
+		}
+
 		ConnectFilteredSocket(stock.GetEventLoop(),
 				      std::move(request.stopwatch),
 				      request.ip_transparent,
@@ -308,6 +323,21 @@ FilteredSocketStock::Get(AllocatorPtr alloc,
 								 filter_factory);
 
 	stock.Get(key, std::move(request), handler, cancel_ptr);
+}
+
+void
+FilteredSocketStock::Add(AllocatorPtr alloc,
+			 const char *key,
+			 std::unique_ptr<FilteredSocket> socket,
+			 StockGetHandler &handler) noexcept
+{
+	/* create a FilteredSocketStockRequest with a FilteredSocket,
+	   which Start() will use to invoke the handler immediately */
+	auto request =
+		NewDisposablePointer<FilteredSocketStockRequest>(alloc, std::move(socket));
+
+	CancellablePointer dummy_cancel_ptr;
+	stock.Get(key, std::move(request), handler, dummy_cancel_ptr);
 }
 
 FilteredSocket &
