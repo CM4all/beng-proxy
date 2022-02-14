@@ -811,6 +811,7 @@ executable(
   'src/bp/file_enotdir.cxx',
   'src/bp/file_directory_index.cxx',
   'src/bp/ForwardHeaders.cxx',
+  'src/http/AnyClient.cxx',
   'src/http/GlueClient.cxx',
   'src/http/ResponseHandler.cxx',
   'src/http/CoResponseHandler.cxx',

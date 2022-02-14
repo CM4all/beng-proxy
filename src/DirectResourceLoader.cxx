@@ -33,8 +33,7 @@
 #include "DirectResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "http/ResponseHandler.hxx"
-#include "nghttp2/Glue.hxx"
-#include "http/GlueClient.hxx"
+#include "http/AnyClient.hxx"
 #include "file/Address.hxx"
 #include "file/Request.hxx"
 #include "http/local/Glue.hxx"
@@ -52,7 +51,6 @@
 #include "delegate/HttpRequest.hxx"
 #include "strmap.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "ssl/SslSocketFilterFactory.hxx"
 #include "pool/pool.hxx"
 #include "AllocatorPtr.hxx"
 #include "net/HostParser.hxx"
@@ -95,21 +93,6 @@ extract_remote_ip(struct pool &pool, const StringMap &headers) noexcept
 	return p_strdup(pool, eh.host);
 }
 
-[[gnu::pure]]
-static const char *
-GetHostWithoutPort(struct pool &pool, const HttpAddress &address) noexcept
-{
-	const char *host_and_port = address.host_and_port;
-	if (host_and_port == nullptr)
-		return nullptr;
-
-	auto e = ExtractHost(host_and_port);
-	if (e.host.IsNull())
-		return nullptr;
-
-	return p_strdup(pool, e.host);
-}
-
 void
 DirectResourceLoader::SendRequest(struct pool &pool,
 				  const StopwatchPtr &parent_stopwatch,
@@ -130,7 +113,6 @@ try {
 #ifdef HAVE_LIBNFS
 		const NfsAddress *nfs;
 #endif
-		SocketFilterFactory *filter_factory;
 
 	case ResourceAddress::Type::NONE:
 		break;
@@ -293,43 +275,17 @@ try {
 #endif
 
 	case ResourceAddress::Type::HTTP:
-		if (address.GetHttp().ssl) {
-			if (ssl_client_factory == nullptr)
-				throw std::runtime_error("SSL support is disabled");
-
-			auto alpn = address.GetHttp().http2
-				? SslClientAlpn::HTTP_2
-				: SslClientAlpn::NONE;
-
-			filter_factory = NewFromPool<SslSocketFilterFactory>(pool,
-									     event_loop,
-									     *ssl_client_factory,
-									     GetHostWithoutPort(pool, address.GetHttp()),
-									     address.GetHttp().certificate,
-									     alpn);
-		} else {
-			filter_factory = nullptr;
-		}
-
+		AnyHttpRequest(pool, event_loop,
+			       ssl_client_factory, fs_balancer,
 #ifdef HAVE_NGHTTP2
-		if (address.GetHttp().http2)
-			NgHttp2::SendRequest(pool, event_loop, nghttp2_stock,
-					     parent_stopwatch,
-					     filter_factory,
-					     method, address.GetHttp(),
-					     std::move(headers),
-					     std::move(body),
-					     handler, cancel_ptr);
-		else
+			       nghttp2_stock,
 #endif
-			http_request(pool, event_loop, fs_balancer,
-				     parent_stopwatch,
-				     sticky_hash,
-				     filter_factory,
-				     method, address.GetHttp(),
-				     std::move(headers),
-				     std::move(body),
-				     handler, cancel_ptr);
+			       parent_stopwatch,
+			       sticky_hash,
+			       method, address.GetHttp(),
+			       std::move(headers),
+			       std::move(body),
+			       handler, cancel_ptr);
 		return;
 
 	case ResourceAddress::Type::LHTTP:
