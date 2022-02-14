@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.84) unstable; urgency=low
 
-  * 
+  * debian: allow polkitd instead of policykit-1
 
  --   
 
