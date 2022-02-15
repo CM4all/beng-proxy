@@ -34,6 +34,7 @@
 #include "Stock.hxx"
 #include "Address.hxx"
 #include "http/Client.hxx"
+#include "http/PendingRequest.hxx"
 #include "http/ResponseHandler.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "fs/FilteredSocket.hxx"
@@ -41,14 +42,12 @@
 #include "stock/Item.hxx"
 #include "lease.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/UnusedHoldPtr.hxx"
 #include "http/HeaderWriter.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
-#include "strmap.hxx"
 
 class LhttpLease final : public Lease, PoolLeakDetector {
 	StockItem &stock_item;
@@ -98,10 +97,9 @@ class LhttpRequest final
 
 	unsigned retries;
 
-	const http_method_t method;
 	const LhttpAddress &address;
-	const StringMap headers;
-	UnusedHoldIstreamPtr body;
+
+	PendingHttpRequest pending_request;
 
 	HttpResponseHandler &handler;
 	CancellablePointer cancel_ptr;
@@ -124,9 +122,9 @@ public:
 		 site_name(_site_name),
 		 /* can only retry if there is no request body */
 		 retries(_body ? 0 : 1),
-		 method(_method), address(_address),
-		 headers(std::move(_headers)),
-		 body(pool, std::move(_body)),
+		 address(_address),
+		 pending_request(_pool, _method, _address.uri,
+				 std::move(_headers), std::move(_body)),
 		 handler(_handler)
 	{
 		_cancel_ptr = *this;
@@ -181,9 +179,9 @@ LhttpRequest::OnStockItemReady(StockItem &item) noexcept
 	http_client_request(pool, std::move(stopwatch),
 			    lease->GetSocket(), *lease,
 			    item.GetStockName(),
-			    method, address.uri,
-			    headers, std::move(more_headers),
-			    std::move(body), true,
+			    pending_request.method, pending_request.uri,
+			    pending_request.headers, std::move(more_headers),
+			    std::move(pending_request.body), true,
 			    *this, cancel_ptr);
 }
 

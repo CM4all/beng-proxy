@@ -32,6 +32,7 @@
 
 #include "Remote.hxx"
 #include "Client.hxx"
+#include "http/PendingRequest.hxx"
 #include "http/ResponseHandler.hxx"
 #include "lease.hxx"
 #include "tcp_stock.hxx"
@@ -40,8 +41,6 @@
 #include "stock/Item.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
-#include "strmap.hxx"
-#include "istream/UnusedHoldPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -58,17 +57,14 @@ class FcgiRemoteRequest final : StockGetHandler, Cancellable, Lease, PoolLeakDet
 
 	StockItem *stock_item;
 
-	const http_method_t method;
-	const char *const uri;
+	PendingHttpRequest pending_request;
+
 	const char *const script_filename;
 	const char *const script_name;
 	const char *const path_info;
 	const char *const query_string;
 	const char *const document_root;
 	const char *const remote_addr;
-	StringMap headers;
-
-	UnusedHoldIstreamPtr body;
 
 	const ConstBuffer<const char *> params;
 
@@ -96,13 +92,12 @@ public:
 	:PoolLeakDetector(_pool),
 	 pool(_pool), event_loop(_event_loop),
 	 stopwatch(parent_stopwatch, "fcgi", _uri),
-	 method(_method), uri(_uri),
+	 pending_request(_pool, _method, _uri,
+			 std::move(_headers), std::move(_body)),
 	 script_filename(_script_filename), script_name(_script_name),
 	 path_info(_path_info), query_string(_query_string),
 	 document_root(_document_root),
 	 remote_addr(_remote_addr),
-	 headers(std::move(_headers)),
-	 body(pool, std::move(_body)),
 	 params(_params),
 	 stderr_fd(std::move(_stderr_fd)),
 	 handler(_handler), caller_cancel_ptr(_cancel_ptr) {
@@ -155,13 +150,14 @@ FcgiRemoteRequest::OnStockItemReady(StockItem &item) noexcept
 			    tcp_stock_item_get_domain(item) == AF_LOCAL
 			    ? FdType::FD_SOCKET : FdType::FD_TCP,
 			    *this,
-			    method, uri,
+			    pending_request.method, pending_request.uri,
 			    script_filename,
 			    script_name, path_info,
 			    query_string,
 			    document_root,
 			    remote_addr,
-			    std::move(headers), std::move(body),
+			    std::move(pending_request.headers),
+			    std::move(pending_request.body),
 			    params,
 			    std::move(stderr_fd),
 			    handler,

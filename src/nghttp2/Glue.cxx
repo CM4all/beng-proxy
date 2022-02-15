@@ -33,13 +33,12 @@
 #include "Glue.hxx"
 #include "Stock.hxx"
 #include "Client.hxx"
-#include "istream/UnusedHoldPtr.hxx"
 #include "http/Address.hxx"
+#include "http/PendingRequest.hxx"
 #include "util/Cancellable.hxx"
 #include "AllocatorPtr.hxx"
 #include "http/ResponseHandler.hxx"
 #include "stopwatch.hxx"
-#include "strmap.hxx"
 
 namespace NgHttp2 {
 
@@ -51,10 +50,8 @@ class GlueRequest final : Cancellable, StockGetHandler {
 
 	SocketFilterFactory *const filter_factory;
 
-	const http_method_t method;
 	const HttpAddress &address;
-	StringMap headers;
-	UnusedHoldIstreamPtr body;
+	PendingHttpRequest pending_request;
 
 	CancellablePointer &caller_cancel_ptr;
 	CancellablePointer cancel_ptr;
@@ -70,14 +67,16 @@ public:
 		:pool(_pool), handler(_handler),
 		 stopwatch(parent_stopwatch, "nghttp2_client"),
 		 filter_factory(_filter_factory),
-		 method(_method), address(_address),
-		 headers(std::move(_headers)), body(pool, std::move(_body)),
+		 address(_address),
+		 pending_request(_pool, _method, _address.path,
+				 std::move(_headers), std::move(_body)),
 		 caller_cancel_ptr(_caller_cancel_ptr)
 	{
 		caller_cancel_ptr = *this;
 
 		if (address.host_and_port != nullptr)
-			headers.Add(pool, "host", address.host_and_port);
+			pending_request.headers.Add(pool, "host",
+						    address.host_and_port);
 	}
 
 	void Start(AllocatorPtr alloc,
@@ -106,16 +105,13 @@ private:
 		auto &_pool = pool;
 		auto _stopwatch = std::move(stopwatch);
 		auto &_handler = handler;
-		const auto _method = method;
-		const auto &_address = address;
-		auto _headers = std::move(headers);
-		auto _body = std::move(body);
+		auto request = std::move(pending_request);
 		auto &_caller_cancel_ptr = caller_cancel_ptr;
 		Destroy();
 		connection.SendRequest(_pool, std::move(_stopwatch),
-				       _method, _address.path,
-				       std::move(_headers),
-				       std::move(_body),
+				       request.method, request.uri,
+				       std::move(request.headers),
+				       std::move(request.body),
 				       _handler, _caller_cancel_ptr);
 	}
 

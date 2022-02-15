@@ -36,12 +36,12 @@
 #include "SConnection.hxx"
 #include "Client.hxx"
 #include "was/async/Socket.hxx"
+#include "http/PendingRequest.hxx"
 #include "http/ResponseHandler.hxx"
 #include "Lease.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/Stock.hxx"
 #include "stock/Item.hxx"
-#include "istream/UnusedHoldPtr.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "stopwatch.hxx"
@@ -50,7 +50,6 @@
 #include "util/Cancellable.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringCompare.hxx"
-#include "strmap.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <cassert>
@@ -66,13 +65,10 @@ class MultiWasRequest final
 
 	WasStockConnection *connection;
 
-	http_method_t method;
-	const char *uri;
+	PendingHttpRequest pending_request;
 	const char *script_name;
 	const char *path_info;
 	const char *query_string;
-	const StringMap headers;
-	UnusedHoldIstreamPtr body;
 
 	ConstBuffer<const char *> parameters;
 
@@ -96,11 +92,10 @@ public:
 		 pool(_pool),
 		 stopwatch(std::move(_stopwatch)),
 		 site_name(_site_name),
-		 method(_method),
-		 uri(_uri), script_name(_script_name),
+		 pending_request(_pool, _method, _uri,
+				 std::move(_headers), std::move(_body)),
+		 script_name(_script_name),
 		 path_info(_path_info), query_string(_query_string),
-		 headers(std::move(_headers)),
-		 body(pool, std::move(_body)),
 		 parameters(_parameters),
 		 handler(_handler), caller_cancel_ptr(_cancel_ptr) {
 		caller_cancel_ptr = *this;
@@ -161,7 +156,7 @@ MultiWasRequest::OnStockItemReady(StockItem &item) noexcept
 {
 	connection = (WasStockConnection *)&item;
 	connection->SetSite(site_name);
-	connection->SetUri(uri);
+	connection->SetUri(pending_request.uri);
 
 	const auto &socket = connection->GetSocket();
 
@@ -169,10 +164,11 @@ MultiWasRequest::OnStockItemReady(StockItem &item) noexcept
 			   socket.control,
 			   socket.input, socket.output,
 			   *this,
-			   method, uri,
+			   pending_request.method, pending_request.uri,
 			   script_name, path_info,
 			   query_string,
-			   headers, std::move(body),
+			   pending_request.headers,
+			   std::move(pending_request.body),
 			   parameters,
 			   handler, caller_cancel_ptr);
 }

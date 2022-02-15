@@ -31,11 +31,11 @@
  */
 
 #include "GlueClient.hxx"
+#include "PendingRequest.hxx"
 #include "Client.hxx"
 #include "Address.hxx"
 #include "ResponseHandler.hxx"
 #include "HeaderWriter.hxx"
-#include "istream/UnusedHoldPtr.hxx"
 #include "fs/Balancer.hxx"
 #include "fs/Handler.hxx"
 #include "pool/pool.hxx"
@@ -46,7 +46,6 @@
 #include "util/Cancellable.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
-#include "strmap.hxx"
 #include "memory/GrowingBuffer.hxx"
 
 static constexpr Event::Duration HTTP_CONNECT_TIMEOUT =
@@ -71,10 +70,9 @@ class HttpRequest final
 
 	unsigned retries;
 
-	const http_method_t method;
 	const HttpAddress &address;
-	const StringMap headers;
-	UnusedHoldIstreamPtr body;
+
+	PendingHttpRequest pending_request;
 
 	HttpResponseHandler &handler;
 	CancellablePointer cancel_ptr;
@@ -98,8 +96,9 @@ public:
 		 sticky_hash(_sticky_hash),
 		 /* can only retry if there is no request body */
 		 retries(_body ? 0 : 2),
-		 method(_method), address(_address),
-		 headers(std::move(_headers)), body(pool, std::move(_body)),
+		 address(_address),
+		 pending_request(_pool, _method, _address.path,
+				 std::move(_headers), std::move(_body)),
 		 handler(_handler)
 	{
 		_cancel_ptr = *this;
@@ -121,7 +120,7 @@ private:
 	}
 
 	void Failed(std::exception_ptr ep) {
-		body.Clear();
+		pending_request.Discard();
 		auto &_handler = handler;
 		Destroy();
 		_handler.InvokeError(ep);
@@ -203,9 +202,9 @@ HttpRequest::OnFilteredSocketReady(Lease &lease,
 
 	http_client_request(pool, std::move(stopwatch),
 			    socket, lease, name,
-			    method, address.path,
-			    headers, std::move(more_headers),
-			    std::move(body), true,
+			    pending_request.method, pending_request.uri,
+			    pending_request.headers, std::move(more_headers),
+			    std::move(pending_request.body), true,
 			    *this, cancel_ptr);
 }
 
