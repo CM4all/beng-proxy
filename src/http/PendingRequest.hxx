@@ -37,9 +37,9 @@
 #include "strmap.hxx"
 
 struct PendingHttpRequest {
-	const http_method_t method;
+	http_method_t method;
 
-	const char *const uri;
+	const char *uri;
 
 	StringMap headers;
 
