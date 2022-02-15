@@ -48,7 +48,7 @@
 
 [[gnu::const]]
 static int
-GetAcmeIndentifierObjectId() noexcept
+GetAcmeIdentifierObjectId() noexcept
 {
 	const char *const txt = "1.3.6.1.5.5.7.1.31";
 
@@ -99,7 +99,7 @@ Alpn01ChallengeRecord::AddChallenge(const AcmeChallenge &challenge,
 	value.size = sizeof(value.payload);
 	value.payload = SHA256(MakeHttp01(challenge, account_key));
 
-	const int nid = GetAcmeIndentifierObjectId();
+	const int nid = GetAcmeIdentifierObjectId();
 
 	auto *s = ASN1_OCTET_STRING_new();
 	ASN1_OCTET_STRING_set(s, (const unsigned char *)&value,
