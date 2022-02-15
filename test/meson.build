@@ -83,6 +83,31 @@ executable('run_client',
     thread_pool_dep,
   ])
 
+executable(
+  'RunAnyHttpClient',
+  'RunAnyHttpClient.cxx',
+  '../src/PInstance.cxx',
+  '../src/pipe_stock.cxx',
+  '../src/PipeLease.cxx',
+  '../src/http/AnyClient.cxx',
+  '../src/http/GlueClient.cxx',
+  '../src/ssl/SslSocketFilterFactory.cxx',
+  include_directories: inc,
+  dependencies: [
+    threads,
+    ssl_dep,
+    was_client_dep,
+    http_client_dep,
+    nghttp2_dep,
+    event_net_dep,
+    stock_dep,
+    socket_dep,
+    cluster_dep,
+    net_dep,
+    thread_pool_dep,
+    raddress_dep,
+  ])
+
 executable('run_delegate',
   'run_delegate.cxx',
   '../src/PInstance.cxx',
