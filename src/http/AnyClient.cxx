@@ -114,6 +114,7 @@ AnyHttpClient::SendRequest(struct pool &pool,
 				     method, address,
 				     std::move(headers),
 				     std::move(body),
+				     nullptr,
 				     handler, cancel_ptr);
 	else
 #endif

@@ -44,6 +44,7 @@ namespace NgHttp2 {
 
 class GlueRequest final : Cancellable, StockGetHandler {
 	struct pool &pool;
+	AlpnHandler *const alpn_handler;
 	HttpResponseHandler &handler;
 
 	const StopwatchPtr stopwatch;
@@ -57,14 +58,15 @@ class GlueRequest final : Cancellable, StockGetHandler {
 	CancellablePointer cancel_ptr;
 
 public:
-	GlueRequest(struct pool &_pool, HttpResponseHandler &_handler,
+	GlueRequest(struct pool &_pool, AlpnHandler *_alpn_handler,
+		    HttpResponseHandler &_handler,
 		    const StopwatchPtr &parent_stopwatch,
 		    SocketFilterFactory *_filter_factory,
 		    http_method_t _method,
 		    const HttpAddress &_address,
 		    StringMap &&_headers, UnusedIstreamPtr _body,
 		    CancellablePointer &_caller_cancel_ptr) noexcept
-		:pool(_pool), handler(_handler),
+		:pool(_pool), alpn_handler(_alpn_handler), handler(_handler),
 		 stopwatch(parent_stopwatch, "nghttp2_client"),
 		 filter_factory(_filter_factory),
 		 address(_address),
@@ -98,6 +100,9 @@ private:
 
 	/* virtual methods from class StockGetHandler */
 	void OnNgHttp2StockReady(ClientConnection &connection) noexcept override {
+		if (alpn_handler != nullptr)
+			alpn_handler->OnAlpnNoMismatch();
+
 		if (address.host_and_port != nullptr)
 			pending_request.headers.Add(pool, "host",
 						    address.host_and_port);
@@ -118,6 +123,9 @@ private:
 	void OnNgHttp2StockAlpn(std::unique_ptr<FilteredSocket> &&socket) noexcept override;
 
 	void OnNgHttp2StockError(std::exception_ptr e) noexcept override {
+		if (alpn_handler != nullptr)
+			alpn_handler->OnAlpnError();
+
 		auto &_handler = handler;
 		Destroy();
 		_handler.InvokeError(std::move(e));
@@ -127,7 +135,15 @@ private:
 void
 GlueRequest::OnNgHttp2StockAlpn(std::unique_ptr<FilteredSocket> &&socket) noexcept
 {
-	// TODO: fall back to HTTP/1.1
+	if (alpn_handler != nullptr) {
+		auto &_alpn_handler = *alpn_handler;
+		const SocketAddress _address = *address.addresses.begin(); // TODO
+		auto request = std::move(pending_request);
+		Destroy();
+		_alpn_handler.OnAlpnMismatch(std::move(request), _address,
+					     std::move(socket));
+		return;
+	}
 
 	(void)socket;
 
@@ -141,10 +157,12 @@ SendRequest(struct pool &pool, EventLoop &event_loop, Stock &stock,
 	    http_method_t method,
 	    const HttpAddress &address,
 	    StringMap &&headers, UnusedIstreamPtr body,
+	    AlpnHandler *alpn_handler,
 	    HttpResponseHandler &handler,
 	    CancellablePointer &cancel_ptr) noexcept
 {
-	auto *request = NewFromPool<GlueRequest>(pool, pool, handler,
+	auto *request = NewFromPool<GlueRequest>(pool, pool,
+						 alpn_handler, handler,
 						 parent_stopwatch,
 						 filter_factory,
 						 method, address,
