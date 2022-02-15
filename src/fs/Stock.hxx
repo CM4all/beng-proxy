@@ -71,6 +71,10 @@ public:
 		stock.AddStats(data);
 	}
 
+	void FadeAll() noexcept {
+		stock.FadeAll();
+	}
+
 	/**
 	 * @param name the MapStock name; it is auto-generated from the
 	 * #address if nullptr is passed here
