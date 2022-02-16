@@ -73,10 +73,6 @@ public:
 		 caller_cancel_ptr(_caller_cancel_ptr)
 	{
 		caller_cancel_ptr = *this;
-
-		if (address.host_and_port != nullptr)
-			pending_request.headers.Add(pool, "host",
-						    address.host_and_port);
 	}
 
 	void Start(AllocatorPtr alloc,
@@ -102,6 +98,10 @@ private:
 
 	/* virtual methods from class StockGetHandler */
 	void OnNgHttp2StockReady(ClientConnection &connection) noexcept override {
+		if (address.host_and_port != nullptr)
+			pending_request.headers.Add(pool, "host",
+						    address.host_and_port);
+
 		auto &_pool = pool;
 		auto _stopwatch = std::move(stopwatch);
 		auto &_handler = handler;
