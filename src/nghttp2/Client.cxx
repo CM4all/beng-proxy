@@ -93,7 +93,7 @@ class ClientConnection::Request final
 
 	StringMap response_headers;
 
-	MultiFifoBufferIstream *response_body_control;
+	MultiFifoBufferIstream *response_body_control = nullptr;
 
 	std::unique_ptr<IstreamDataSource> request_body;
 

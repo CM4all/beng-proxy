@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.84) unstable; urgency=low
 
+  * http2/client: fix crash after cancellation
   * debian: allow polkitd instead of policykit-1
 
  --   
