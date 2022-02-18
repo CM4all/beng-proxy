@@ -59,7 +59,7 @@ CsrfHash::Parse(const char *s) noexcept
 void
 CsrfToken::Format(char *s) const noexcept
 {
-	s = format_uint32_hex_fixed(s, hash.ImportTime(time));
+	s = HexFormatUint32Fixed(s, hash.ImportTime(time));
 	s = HexFormat(s, hash.data);
 	*s = 0;
 }

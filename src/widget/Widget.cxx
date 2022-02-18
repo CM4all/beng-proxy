@@ -74,11 +74,11 @@ count_invalid_chars(const char *p)
 	return n;
 }
 
-static char *
+static constexpr char *
 quote_byte(char *p, uint8_t ch) noexcept
 {
 	*p++ = '_';
-	return format_uint8_hex_fixed(p, ch);
+	return HexFormatUint8Fixed(p, ch);
 }
 
 static const char *

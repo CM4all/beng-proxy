@@ -76,7 +76,7 @@ SessionId::Format() const noexcept
 
 	char *p = result.data();
 	for (const auto i : data)
-		p = format_uint64_hex_fixed(p, i);
+		p = HexFormatUint64Fixed(p, i);
 
 	*p = 0;
 	return result;

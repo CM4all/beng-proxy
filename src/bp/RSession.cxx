@@ -109,7 +109,7 @@ build_session_cookie_name(AllocatorPtr alloc, const BpConfig *config,
 	char *p = std::copy(config->session_cookie.begin(),
 			    config->session_cookie.end(),
 			    name);
-	p = format_uint16_hex_fixed(p, djb_hash_string(host));
+	p = HexFormatUint16Fixed(p, djb_hash_string(host));
 	*p = 0;
 	return name;
 }
