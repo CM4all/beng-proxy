@@ -35,7 +35,7 @@
 #include "pool/pool.hxx"
 #include "http/Date.hxx"
 #include "io/FileDescriptor.hxx"
-#include "util/HexFormat.hxx"
+#include "util/Base32.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <attr/xattr.h>
@@ -67,16 +67,16 @@ static_etag(char *p, const struct statx &st)
 {
 	*p++ = '"';
 
-	p = format_uint32_hex(p, (uint32_t)st.stx_dev_major);
-	p = format_uint32_hex(p, (uint32_t)st.stx_dev_minor);
+	p = FormatIntBase32(p, st.stx_dev_major);
+	p = FormatIntBase32(p, st.stx_dev_minor);
 
 	*p++ = '-';
 
-	p = format_uint32_hex(p, (uint32_t)st.stx_ino);
+	p = FormatIntBase32(p, st.stx_ino);
 
 	*p++ = '-';
 
-	p = format_uint32_hex(p, (uint32_t)st.stx_mtime.tv_sec);
+	p = FormatIntBase32(p, st.stx_mtime.tv_sec);
 
 	*p++ = '"';
 	*p = 0;
