@@ -98,7 +98,7 @@ class Translation(Protocol):
         return response
 
     def _handle_login(self, user, password, service, listener_tag):
-        log.msg(r"login {user!r} password={password!r} service={service!r} tag={listener_tag!r}")
+        log.msg(f"login {user!r} password={password!r} service={service!r} tag={listener_tag!r}")
 
         response = Response(protocol_version=2)
         if user is None or not re.match(r'^[-_\w]+$', user):
