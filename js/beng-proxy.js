@@ -11,32 +11,32 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
         return encodeURIComponent(x).replace(/%/g, '$');
     }
 
-    if (base_uri == null ||
-        (mode != null && mode != "focus" && mode != "frame" &&
-         mode != "partial" && mode != "save"))
+    if (base_uri === null ||
+        (mode !== null && mode !== "focus" && mode !== "frame" &&
+         mode !== "partial" && mode !== "save"))
         return null;
 
     let params = "";
 
-    if (translate != null)
+    if (translate !== null)
         params += "&translate=" + _beng_proxy_escape(translate);
 
-    if (focus != null) {
-        if (mode == "frame")
+    if (focus !== null) {
+        if (mode === "frame")
             mode = "partial";
 
         params += "&focus=" + _beng_proxy_escape(focus);
-        if (mode == "partial" || mode == "save")
+        if (mode === "partial" || mode === "save")
             frame = focus;
 
-        if (frame != null) {
+        if (frame !== null) {
             params += "&frame=" + _beng_proxy_escape(frame);
 
-            if (view != null)
+            if (view !== null)
                 params += "&view=" + _beng_proxy_escape(view);
         }
 
-        if (path != null) {
+        if (path !== null) {
             let query_string = null;
             let qmark = path.indexOf("?");
             if (qmark >= 0) {
@@ -44,7 +44,7 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
                 path = path.substring(0, qmark);
             }
             params += "&path=" + _beng_proxy_escape(path);
-            if (query_string != null)
+            if (query_string !== null)
                 params += query_string;
         }
     }
