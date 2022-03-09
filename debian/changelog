@@ -5,7 +5,7 @@ cm4all-beng-proxy (17.0.84) unstable; urgency=low
   * spawn: fix cgroup.kill regression
   * debian: allow polkitd instead of policykit-1
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 09 Mar 2022 09:52:05 +0100
 
 cm4all-beng-proxy (17.0.83) unstable; urgency=low
 
