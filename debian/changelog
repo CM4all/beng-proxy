@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.85) unstable; urgency=low
 
-  * 
+  * certdb: add new index for faster "ON DELETE CASCADE"
 
  --   
 

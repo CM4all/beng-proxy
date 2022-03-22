@@ -86,6 +86,9 @@ CREATE UNIQUE INDEX server_certificate_handle ON server_certificate(handle);
 -- for looking up a certificate by its alternative name
 CREATE INDEX server_certificate_alt_name_name ON server_certificate_alt_name(name);
 
+-- for looking up a certificate by its owner (for faster "ON DELETE CASCADE")
+CREATE INDEX server_certificate_alt_name_owner ON server_certificate_alt_name(server_certificate_id);
+
 -- for getting the latest updates
 CREATE INDEX server_certificate_modified ON server_certificate(modified);
 

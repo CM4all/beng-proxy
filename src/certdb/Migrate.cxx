@@ -104,4 +104,8 @@ CertDatabase::Migrate()
 	conn.Execute("ALTER TABLE server_certificate ADD COLUMN IF NOT EXISTS special varchar(64) NULL");
 	conn.Execute("DROP INDEX IF EXISTS server_certificate_name");
 	conn.Execute("CREATE UNIQUE INDEX IF NOT EXISTS server_certificate_name_special ON server_certificate(common_name, special)");
+
+	/* new index for faster "ON DELETE CASCADE" added in version 17.0.85 */
+
+	conn.Execute("CREATE INDEX IF NOT EXISTS server_certificate_alt_name_owner ON server_certificate_alt_name(server_certificate_id)");
 }
