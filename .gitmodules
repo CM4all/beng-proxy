@@ -1,3 +1,3 @@
 [submodule "libcommon"]
 	path = libcommon
-	url = git://github.com/CM4all/libcommon
+	url = https://github.com/CM4all/libcommon
