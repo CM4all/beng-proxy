@@ -338,6 +338,8 @@ AnyHttpClient::Probe::OnAlpnError() noexcept
 	assert(state == State::PENDING);
 	assert(!waiting.empty());
 
+	state = State::UNKNOWN;
+
 	/* this request failed - remove it (and don't cancel it) */
 	auto &w = waiting.front();
 	w.cancel_ptr = {};
