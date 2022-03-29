@@ -1444,6 +1444,11 @@ LbConfigParser::ParseLine2(FileLineParser &line)
 		} else
 			/* <12.0.32 legacy */
 			config.access_log.SetLegacy(line.ExpectValueAndEnd());
+	} else if (StringIsEqual(word, "set")) {
+		const char *name = line.ExpectWord();
+		line.ExpectSymbol('=');
+		const char *value = line.ExpectValueAndEnd();
+		config.HandleSet(name, value);
 	} else
 		throw LineParser::Error("Unknown option");
 }

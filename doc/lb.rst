@@ -731,3 +731,19 @@ Access Loggers
 
 The configuration block ``access_logger`` configures the access
 logger.  See :ref:`log`.
+
+
+``set``
+-------
+
+Tweak global settings. Most of these are legacy from the old ``–set``
+command-line option.  Do not confuse with ``@set``, which sets
+configuration parser variables!  Syntax::
+
+   set NAME = "VALUE"
+
+The following settings are available:
+
+- ``tcp_stock_limit``: The maximum number of outgoing TCP connections
+  per remote host.  0 means unlimited, which has shown to be a bad
+  choice, because many servers do not scale well.
