@@ -166,9 +166,7 @@ struct AnyHttpClient::Waiting final
 	};
 
 	/* virtual methods from class Cancellable */
-	void Cancel() noexcept override {
-		Destroy();
-	}
+	void Cancel() noexcept override;
 };
 
 /**
@@ -213,7 +211,18 @@ public:
 			 HttpResponseHandler &handler,
 			 CancellablePointer &cancel_ptr) noexcept;
 
+	void Cancelling(const Waiting &w) noexcept {
+		if (IsPending(w)) {
+			state = State::UNKNOWN;
+			defer_again.Schedule();
+		}
+	}
+
 private:
+	bool IsPending(const Waiting &w) const noexcept {
+		return state == State::PENDING && &waiting.front() == &w;
+	}
+
 	void OnAgain() noexcept;
 
 	void SendHTTP1(Request &r) noexcept {
@@ -232,6 +241,13 @@ private:
 			    SocketAddress address,
 			    std::unique_ptr<FilteredSocket> &&socket) noexcept override;
 };
+
+void
+AnyHttpClient::Waiting::Cancel() noexcept
+{
+	parent.Cancelling(*this);
+	Destroy();
+}
 
 inline void
 AnyHttpClient::Probe::SendRequest(struct pool &pool,
