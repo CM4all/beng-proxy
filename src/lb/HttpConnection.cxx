@@ -34,10 +34,12 @@
 #include "RLogger.hxx"
 #include "Config.hxx"
 #include "Check.hxx"
+#include "Cluster.hxx"
 #include "ClusterConfig.hxx"
 #include "ListenerConfig.hxx"
 #include "Goto.txx"
 #include "ForwardHttpRequest.hxx"
+#include "DelayForwardHttpRequest.hxx"
 #include "PrometheusExporter.hxx"
 #include "Instance.hxx"
 #include "Listener.hxx"
@@ -295,6 +297,21 @@ LbHttpConnection::ForwardHttpRequest(LbCluster &cluster,
 				     IncomingHttpRequest &request,
 				     CancellablePointer &cancel_ptr)
 {
+	if (cluster.GetConfig().tarpit && request.method == HTTP_METHOD_GET &&
+	    StringIsEqual(request.uri, "/")) {
+		++tarpit_counter;
+
+		if (tarpit_counter > 64) {
+			/* too many consecutive redundant requests:
+			   assuming this is a DDoS agent, so throttle
+			   it */
+			DelayForwardHttpRequest(*this, request, cluster,
+						cancel_ptr);
+			return;
+		}
+	} else
+		tarpit_counter = 0;
+
 	::ForwardHttpRequest(*this, request, cluster, cancel_ptr);
 }
 

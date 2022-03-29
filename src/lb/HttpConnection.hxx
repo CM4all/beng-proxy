@@ -81,6 +81,8 @@ struct LbHttpConnection final
 	UniquePoolPtr<NgHttp2::ServerConnection> http2;
 #endif
 
+	unsigned tarpit_counter = 0;
+
 	LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 			 LbListener &_listener,
 			 const LbGoto &_destination,

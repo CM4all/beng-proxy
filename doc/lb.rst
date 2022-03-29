@@ -125,6 +125,9 @@ The option ``fair_schedulding`` enables fair scheduling, which
 attempts to schedule HTTP requests for different sites in a way that
 avoids one site blocking all backend connections.
 
+The option ``tarpit`` delays clients which send many consecutive HTTP
+requests, in order to mitigate DDoS attacks.
+
 Zeroconf
 ^^^^^^^^
 

@@ -920,6 +920,7 @@ executable(
   'src/lb/TranslationHttpRequestHandler.cxx',
   'src/lb/TcpConnection.cxx',
   'src/lb/ForwardHttpRequest.cxx',
+  'src/lb/DelayForwardHttpRequest.cxx',
   'src/lb/LuaHandler.cxx',
   'src/lb/LuaInitHook.cxx',
   'src/lb/LuaGoto.cxx',

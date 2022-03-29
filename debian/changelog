@@ -4,6 +4,7 @@ cm4all-beng-proxy (17.0.85) unstable; urgency=low
   * bp: fix assertion failure during ALPN HTTP/2 probe
   * lb: add configuration file setting "tcp_stock_limit"
   * lb: basic fair scheduling
+  * lb: new option "tarpit" to handle simple DDoS attacks
   * certdb: add new index for faster "ON DELETE CASCADE"
 
  --   

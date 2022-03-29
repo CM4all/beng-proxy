@@ -83,6 +83,8 @@ struct LbClusterConfig {
 
 	bool fair_scheduling = false;
 
+	bool tarpit = false;
+
 	/**
 	 * Use the client's source IP for the connection to the backend?
 	 * This is implemented using IP_TRANSPARENT and requires the

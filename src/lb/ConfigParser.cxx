@@ -697,6 +697,9 @@ LbConfigParser::Cluster::ParseLine(FileLineParser &line)
 	} else if (strcmp(word, "fair_scheduling") == 0) {
 		config.fair_scheduling = line.NextBool();
 		line.ExpectEnd();
+	} else if (strcmp(word, "tarpit") == 0) {
+		config.tarpit = line.NextBool();
+		line.ExpectEnd();
 	} else if (strcmp(word, "source_address") == 0) {
 		const char *address = line.ExpectValueAndEnd();
 		if (strcmp(address, "transparent") != 0)
