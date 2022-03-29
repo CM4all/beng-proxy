@@ -36,6 +36,7 @@
 #include "stats/AllocatorStats.hxx"
 #include "util/Poison.h"
 #include "util/Sanitizer.hxx"
+#include "util/Valgrind.hxx"
 
 #include <new>
 
@@ -60,6 +61,21 @@ static constexpr unsigned
 divide_round_up(unsigned a, unsigned b) noexcept
 {
 	return (a + b - 1) / b;
+}
+
+[[gnu::const]]
+static bool
+HaveMemoryChecker() noexcept
+{
+	if (HaveAddressSanitizer())
+		return true;
+
+#ifdef VALGRIND
+	if (HaveValgrind())
+		return true;
+#endif
+
+	return false;
 }
 
 /*
@@ -356,7 +372,7 @@ SliceArea::Alloc() noexcept
 SliceAllocation
 SlicePool::Alloc() noexcept
 {
-	if (HaveAddressSanitizer())
+	if (HaveMemoryChecker())
 		return { *(SliceArea *)nullptr, malloc(slice_size), slice_size };
 
 	auto &area = MakeNonFullArea();
@@ -397,7 +413,7 @@ SliceArea::_Free(void *p) noexcept
 void
 SlicePool::Free(SliceArea &area, void *p) noexcept
 {
-	if (HaveAddressSanitizer()) {
+	if (HaveMemoryChecker()) {
 		free(p);
 		return;
 	}
@@ -423,7 +439,7 @@ SlicePool::Free(SliceArea &area, void *p) noexcept
 void
 SliceArea::Free(void *p) noexcept
 {
-	if (HaveAddressSanitizer()) {
+	if (HaveMemoryChecker()) {
 		free(p);
 		return;
 	}
