@@ -85,7 +85,7 @@ SliceArea *
 SliceArea::New(SlicePool &pool) noexcept
 {
 	void *p = mmap_alloc_anonymous(pool.area_size);
-	if (p == (void *)-1) {
+	if (p == MAP_FAILED) {
 		fputs("Out of adress space\n", stderr);
 		abort();
 	}
