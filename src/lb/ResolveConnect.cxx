@@ -256,7 +256,7 @@ inline void
 LbResolveConnectRequest::Start(const char *name, SocketAddress address)
 {
 	connection.instance.fs_stock->Get(pool, nullptr,
-					  name, false, nullptr,
+					  name, 0, false, nullptr,
 					  address,
 					  LB_HTTP_CONNECT_TIMEOUT,
 					  nullptr,

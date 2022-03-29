@@ -46,6 +46,8 @@ class FilteredSocketBalancer::Request : public StockGetHandler, Lease {
 
 	const StopwatchPtr parent_stopwatch;
 
+	uint_least64_t fairness_hash;
+
 	const bool ip_transparent;
 	const SocketAddress bind_address;
 
@@ -60,6 +62,7 @@ class FilteredSocketBalancer::Request : public StockGetHandler, Lease {
 public:
 	Request(FilteredSocketStock &_stock,
 		const StopwatchPtr &_parent_stopwatch,
+		uint_fast64_t _fairness_hash,
 		bool _ip_transparent,
 		SocketAddress _bind_address,
 		Event::Duration _timeout,
@@ -67,6 +70,7 @@ public:
 		FilteredSocketBalancerHandler &_handler) noexcept
 		:stock(_stock),
 		 parent_stopwatch(_parent_stopwatch),
+		 fairness_hash(_fairness_hash),
 		 ip_transparent(_ip_transparent),
 		 bind_address(_bind_address),
 		 timeout(_timeout),
@@ -94,7 +98,7 @@ FilteredSocketBalancer::Request::Send(AllocatorPtr alloc, SocketAddress address,
 {
 	stock.Get(alloc,
 		  StopwatchPtr(parent_stopwatch, "connect"),
-		  nullptr,
+		  nullptr, 0,
 		  ip_transparent, bind_address, address,
 		  timeout,
 		  filter_factory,
@@ -155,6 +159,7 @@ FilteredSocketBalancer::GetEventLoop() noexcept
 void
 FilteredSocketBalancer::Get(AllocatorPtr alloc,
 			    const StopwatchPtr &parent_stopwatch,
+			    uint_fast64_t fairness_hash,
 			    bool ip_transparent,
 			    SocketAddress bind_address,
 			    sticky_hash_t sticky_hash,
@@ -171,6 +176,7 @@ FilteredSocketBalancer::Get(AllocatorPtr alloc,
 		  cancel_ptr,
 		  sticky_hash,
 		  stock, parent_stopwatch,
+		  fairness_hash,
 		  ip_transparent,
 		  bind_address, timeout,
 		  filter_factory,

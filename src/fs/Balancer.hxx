@@ -76,12 +76,17 @@ public:
 	class Request;
 
 	/**
+	 * @param fairness_hash if non-zero, then two consecutive
+	 * requests with the same value are avoided (for fair
+	 * scheduling)
+	 *
 	 * @param sticky_hash a portion of the session id that is used to
 	 * select the worker; 0 means disable stickiness
 	 * @param timeout the connect timeout for each attempt [seconds]
 	 */
 	void Get(AllocatorPtr alloc,
 		 const StopwatchPtr &parent_stopwatch,
+		 uint_fast64_t fairness_hash,
 		 bool ip_transparent,
 		 SocketAddress bind_address,
 		 sticky_hash_t sticky_hash,

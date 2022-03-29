@@ -54,6 +54,8 @@
 struct FilteredSocketStockRequest {
 	StopwatchPtr stopwatch;
 
+	const uint_least64_t fairness_hash;
+
 	const bool ip_transparent;
 
 	const SocketAddress bind_address, address;
@@ -63,12 +65,14 @@ struct FilteredSocketStockRequest {
 	SocketFilterFactory *const filter_factory;
 
 	FilteredSocketStockRequest(StopwatchPtr &&_stopwatch,
+				   uint_fast64_t _fairness_hash,
 				   bool _ip_transparent,
 				   SocketAddress _bind_address,
 				   SocketAddress _address,
 				   Event::Duration _timeout,
 				   SocketFilterFactory *_filter_factory) noexcept
 		:stopwatch(std::move(_stopwatch)),
+		 fairness_hash(_fairness_hash),
 		 ip_transparent(_ip_transparent),
 		 bind_address(_bind_address), address(_address),
 		 timeout(_timeout),
@@ -257,6 +261,13 @@ FilteredSocketStock::Create(CreateStockItem c, StockRequest _request,
 	connection->Start(std::move(request));
 }
 
+uint_fast64_t
+FilteredSocketStock::GetFairnessHash(const void *_request) const noexcept
+{
+	const auto &request = *(const FilteredSocketStockRequest *)_request;
+	return request.fairness_hash;
+}
+
 bool
 FilteredSocketStockConnection::Release() noexcept
 {
@@ -287,6 +298,7 @@ void
 FilteredSocketStock::Get(AllocatorPtr alloc,
 			 StopwatchPtr stopwatch,
 			 const char *name,
+			 uint_fast64_t fairness_hash,
 			 bool ip_transparent,
 			 SocketAddress bind_address,
 			 SocketAddress address,
@@ -313,6 +325,7 @@ FilteredSocketStock::Get(AllocatorPtr alloc,
 	auto request =
 		NewDisposablePointer<FilteredSocketStockRequest>(alloc,
 								 std::move(stopwatch),
+								 fairness_hash,
 								 ip_transparent,
 								 bind_address, address,
 								 timeout,

@@ -226,7 +226,10 @@ LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
 {
 	assert(config.protocol == LbProtocol::HTTP);
 
+	const uint_fast64_t fairness_hash = 0;
+
 	fs_balancer.Get(alloc, parent_stopwatch,
+			fairness_hash,
 			config.transparent_source,
 			bind_address,
 			sticky_hash,
@@ -491,9 +494,12 @@ LbCluster::ZeroconfHttpConnect::Start() noexcept
 
 	failure = member->GetFailureRef();
 
+	const uint_fast64_t fairness_hash = 0;
+
 	cluster.fs_stock.Get(alloc,
 			     nullptr,
 			     member->GetLogName(),
+			     fairness_hash,
 			     cluster.config.transparent_source,
 			     bind_address,
 			     member->GetAddress(),

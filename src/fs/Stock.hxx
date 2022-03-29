@@ -78,11 +78,17 @@ public:
 	/**
 	 * @param name the MapStock name; it is auto-generated from the
 	 * #address if nullptr is passed here
+	 *
+	 * @param fairness_hash if non-zero, then two consecutive
+	 * requests with the same value are avoided (for fair
+	 * scheduling)
+	 *
 	 * @param timeout the connect timeout in seconds
 	 */
 	void Get(AllocatorPtr alloc,
 		 StopwatchPtr stopwatch,
 		 const char *name,
+		 uint_fast64_t fairness_hash,
 		 bool ip_transparent,
 		 SocketAddress bind_address,
 		 SocketAddress address,
@@ -103,6 +109,8 @@ private:
 	/* virtual methods from class StockClass */
 	void Create(CreateStockItem c, StockRequest request,
 		    CancellablePointer &cancel_ptr) override;
+
+	uint_fast64_t GetFairnessHash(const void *request) const noexcept override;
 };
 
 [[gnu::pure]]

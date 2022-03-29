@@ -106,7 +106,7 @@ public:
 
 	void BeginConnect() {
 		fs_balancer.Get(pool, stopwatch,
-				false, SocketAddress::Null(),
+				0, false, SocketAddress::Null(),
 				sticky_hash,
 				address.addresses,
 				HTTP_CONNECT_TIMEOUT,
