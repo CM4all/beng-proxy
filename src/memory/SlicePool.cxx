@@ -34,6 +34,7 @@
 #include "SliceArea.hxx"
 #include "stats/AllocatorStats.hxx"
 #include "system/PageAllocator.hxx"
+#include "system/HugePage.hxx"
 #include "util/Poison.h"
 #include "util/Sanitizer.hxx"
 #include "util/Valgrind.hxx"
@@ -94,6 +95,11 @@ SliceArea *
 SliceArea::New(SlicePool &pool) noexcept
 {
 	void *p = AllocatePages(pool.area_size);
+
+	if (std::size_t huge_size = AlignHugePageDown(pool.area_size);
+	    huge_size > 0)
+		EnableHugePages(p, huge_size);
+
 	return ::new(p) SliceArea(pool);
 }
 
