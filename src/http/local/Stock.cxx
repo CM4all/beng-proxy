@@ -246,7 +246,9 @@ LhttpStock::GetChildBacklog(void *info) const noexcept
 	/* use the concurrency for the listener backlog to ensure that
 	   we'll never get ECONNREFUSED/EAGAIN while the child process
 	   initializes itself */
-	return address.concurrency;
+	/* use a factor of 2 because cancelled requests during child
+	   process startup count towards the backlog */
+	return address.concurrency * 2;
 }
 
 StringView
