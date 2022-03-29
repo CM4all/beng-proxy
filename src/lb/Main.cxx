@@ -160,12 +160,13 @@ try {
 	/* configuration */
 
 	LbCmdLine cmdline;
-	ParseCommandLine(cmdline, argc, argv);
-
 	LbConfig config;
+
+	ParseCommandLine(cmdline, config, argc, argv);
+
 	LoadConfigFile(config, cmdline.config_path);
 
-	LbInstance instance(cmdline, config);
+	LbInstance instance(config);
 
 	if (cmdline.check) {
 		const ScopeSslGlobalInit ssl_init;

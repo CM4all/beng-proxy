@@ -31,6 +31,7 @@
  */
 
 #include "CommandLine.hxx"
+#include "Config.hxx"
 #include "io/Logger.hxx"
 #include "version.h"
 
@@ -103,26 +104,7 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
 }
 
 static void
-HandleSet(LbCmdLine &cmdline, const char *argv0,
-	  const char *name, size_t name_length, const char *value)
-{
-	static const char tcp_stock_limit[] = "tcp_stock_limit";
-	char *endptr;
-	long l;
-
-	if (name_length == sizeof(tcp_stock_limit) - 1 &&
-	    memcmp(name, tcp_stock_limit, sizeof(tcp_stock_limit) - 1) == 0) {
-		l = strtol(value, &endptr, 10);
-		if (*endptr != 0 || l < 0)
-			arg_error(argv0, "Invalid value for tcp_stock_limit");
-
-		cmdline.tcp_stock_limit = l;
-	} else
-		arg_error(argv0, "Unknown variable: %.*s", (int)name_length, name);
-}
-
-static void
-HandleSet(LbCmdLine &cmdline, const char *argv0, const char *p)
+HandleSet(LbConfig &config, const char *argv0, const char *p)
 {
 	const char *eq;
 
@@ -133,12 +115,20 @@ HandleSet(LbCmdLine &cmdline, const char *argv0, const char *p)
 	if (eq == p)
 		arg_error(argv0, "No name found in --set argument");
 
-	HandleSet(cmdline, argv0, p, eq - p, eq + 1);
+	const StringView name(p, eq - p);
+	const char *const value = eq + 1;
+
+	try {
+		config.HandleSet(name, value);
+	} catch (const std::runtime_error &e) {
+		arg_error(argv0, "Error while parsing \"--set %.*s\": %s",
+			  (int)name.size, name.data, e.what());
+	}
 }
 
 /** read configuration options from the command line */
 void
-ParseCommandLine(LbCmdLine &cmdline,
+ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
 		 int argc, char **argv)
 {
 	int ret;
@@ -200,7 +190,7 @@ ParseCommandLine(LbCmdLine &cmdline,
 			break;
 
 		case 's':
-			HandleSet(cmdline, argv[0], optarg);
+			HandleSet(config, argv[0], optarg);
 			break;
 
 		case '?':

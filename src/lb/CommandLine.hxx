@@ -34,6 +34,8 @@
 
 #include "spawn/UidGid.hxx"
 
+struct LbConfig;
+
 struct LbCmdLine {
 	UidGid logger_user;
 
@@ -41,8 +43,6 @@ struct LbCmdLine {
 	 * The configuration file.
 	 */
 	const char *config_path = "/etc/cm4all/beng/lb.conf";
-
-	unsigned tcp_stock_limit = 256;
 
 	/**
 	 * If true, then the environment (e.g. the configuration file) is
@@ -55,5 +55,5 @@ struct LbCmdLine {
  * Parse command line options.
  */
 void
-ParseCommandLine(LbCmdLine &cmdline,
+ParseCommandLine(LbCmdLine &cmdline, LbConfig &config,
 		 int argc, char **argv);

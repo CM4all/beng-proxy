@@ -60,15 +60,14 @@
 
 static constexpr Event::Duration COMPRESS_INTERVAL = std::chrono::minutes(10);
 
-LbInstance::LbInstance(const LbCmdLine &cmdline,
-		       const LbConfig &_config) noexcept
+LbInstance::LbInstance(const LbConfig &_config)
 	:config(_config),
 	 shutdown_listener(event_loop, BIND_THIS_METHOD(ShutdownCallback)),
 	 sighup_event(event_loop, SIGHUP, BIND_THIS_METHOD(ReloadEventCallback)),
 	 compress_event(event_loop, BIND_THIS_METHOD(OnCompressTimer)),
 	 balancer(new BalancerMap()),
 	 fs_stock(new FilteredSocketStock(event_loop,
-					  cmdline.tcp_stock_limit)),
+					  config.tcp_stock_limit)),
 	 fs_balancer(new FilteredSocketBalancer(*fs_stock, failure_manager)),
 	 pipe_stock(new PipeStock(event_loop)),
 	 monitors(event_loop, failure_manager),

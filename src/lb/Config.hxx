@@ -88,6 +88,8 @@ struct LbConfig {
 
 	std::unique_ptr<LbHttpCheckConfig> global_http_check;
 
+	unsigned tcp_stock_limit = 256;
+
 	LbConfig() noexcept;
 	~LbConfig() noexcept;
 
@@ -225,6 +227,8 @@ struct LbConfig {
 
 		return false;
 	}
+
+	void HandleSet(std::string_view name, const char *value);
 };
 
 /**

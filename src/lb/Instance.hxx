@@ -55,7 +55,6 @@ class PipeStock;
 class BalancerMap;
 class FilteredSocketStock;
 class FilteredSocketBalancer;
-struct LbCmdLine;
 struct LbConfig;
 struct LbCertDatabaseConfig;
 struct LbHttpConnection;
@@ -114,7 +113,7 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 
 	std::unique_ptr<AccessLogGlue> access_log;
 
-	LbInstance(const LbCmdLine &cmdline, const LbConfig &_config) noexcept;
+	explicit LbInstance(const LbConfig &_config);
 	~LbInstance() noexcept;
 
 	auto &GetEventLoop() const noexcept {
