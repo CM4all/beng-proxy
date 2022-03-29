@@ -32,7 +32,7 @@
 
 #include "Rubber.hxx"
 #include "system/HugePage.hxx"
-#include "system/mmap.h"
+#include "system/PageAllocator.hxx"
 #include "stats/AllocatorStats.hxx"
 
 #include <assert.h>
@@ -617,8 +617,8 @@ Rubber::Rubber(size_t _max_size)
 	static_assert(RUBBER_ALIGN >= sizeof(Hole), "Alignment too large");
 
 	const size_t table_size = table->GetSize();
-	mmap_enable_huge_pages(WriteAt(table_size),
-			       AlignHugePageDown(table.size() - table_size));
+	EnableHugePages(WriteAt(table_size),
+			AlignHugePageDown(table.size() - table_size));
 }
 
 Rubber::~Rubber() noexcept
@@ -630,7 +630,7 @@ Rubber::~Rubber() noexcept
 void
 Rubber::ForkCow(bool inherit) noexcept
 {
-	mmap_enable_fork(table.get(), table.size(), inherit);
+	EnablePageFork(table.get(), table.size(), inherit);
 }
 
 void
@@ -953,5 +953,5 @@ Rubber::Compress() noexcept
 	   allocation */
 	const size_t allocated = AlignHugePageUp(offset);
 	if (allocated < table.size())
-		mmap_discard_pages(WriteAt(allocated), table.size() - allocated);
+		DiscardPages(WriteAt(allocated), table.size() - allocated);
 }

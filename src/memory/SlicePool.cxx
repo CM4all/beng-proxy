@@ -32,8 +32,8 @@
 
 #include "SlicePool.hxx"
 #include "SliceArea.hxx"
-#include "system/mmap.h"
 #include "stats/AllocatorStats.hxx"
+#include "system/PageAllocator.hxx"
 #include "util/Poison.h"
 #include "util/Sanitizer.hxx"
 #include "util/Valgrind.hxx"
@@ -47,14 +47,7 @@
 static constexpr std::size_t
 align_size(std::size_t size) noexcept
 {
-	return ((size - 1) | 0x1f) + 1;
-}
-
-[[gnu::const]]
-static inline std::size_t
-align_page_size(std::size_t size) noexcept
-{
-	return ((size - 1) | (mmap_page_size() - 1)) + 1;
+	return RoundUpToPowerOfTwo(size, (std::size_t)0x20);
 }
 
 static constexpr unsigned
@@ -94,18 +87,13 @@ SliceArea::SliceArea(SlicePool &_pool) noexcept
 	slices[pool.slices_per_area - 1].next = Slot::END_OF_LIST;
 
 	PoisonInaccessible(GetPage(pool.header_pages),
-			   mmap_page_size() * (pool.pages_per_area - pool.header_pages));
+			   PAGE_SIZE * (pool.pages_per_area - pool.header_pages));
 }
 
 SliceArea *
 SliceArea::New(SlicePool &pool) noexcept
 {
-	void *p = mmap_alloc_anonymous(pool.area_size);
-	if (p == MAP_FAILED) {
-		fputs("Out of adress space\n", stderr);
-		abort();
-	}
-
+	void *p = AllocatePages(pool.area_size);
 	return ::new(p) SliceArea(pool);
 }
 
@@ -139,7 +127,7 @@ SliceArea::Delete() noexcept
 #endif
 
 	this->~SliceArea();
-	mmap_free(this, pool.area_size);
+	FreePages(this, pool.area_size);
 }
 
 inline void *
@@ -147,7 +135,7 @@ SliceArea::GetPage(unsigned page) noexcept
 {
 	assert(page <= pool.pages_per_area);
 
-	return (uint8_t *)this + (pool.header_pages + page) * mmap_page_size();
+	return (uint8_t *)this + (pool.header_pages + page) * PAGE_SIZE;
 }
 
 inline void *
@@ -170,8 +158,8 @@ SliceArea::IndexOf(const void *_p) noexcept
 	assert(p < (uint8_t *)GetPage(pool.pages_per_area));
 
 	std::size_t offset = p - (const uint8_t *)this;
-	const unsigned page = offset / mmap_page_size() - pool.header_pages;
-	offset %= mmap_page_size();
+	const unsigned page = offset / PAGE_SIZE - pool.header_pages;
+	offset %= PAGE_SIZE;
 	assert(offset % pool.slice_size == 0);
 
 	return page * pool.slices_per_page / pool.pages_per_slice
@@ -214,7 +202,8 @@ SliceArea::FindAllocated(unsigned start) const noexcept
 }
 
 void
-SliceArea::PunchSliceRange(unsigned start, gcc_unused unsigned end) noexcept
+SliceArea::PunchSliceRange(unsigned start,
+			   [[maybe_unused]] unsigned end) noexcept
 {
 	assert(start <= end);
 
@@ -229,7 +218,7 @@ SliceArea::PunchSliceRange(unsigned start, gcc_unused unsigned end) noexcept
 	uint8_t *start_pointer = (uint8_t *)GetPage(start_page);
 	uint8_t *end_pointer = (uint8_t *)GetPage(end_page);
 
-	mmap_discard_pages(start_pointer, end_pointer - start_pointer);
+	DiscardPages(start_pointer, end_pointer - start_pointer);
 }
 
 void
@@ -259,19 +248,19 @@ SlicePool::SlicePool(std::size_t _slice_size, unsigned _slices_per_area) noexcep
 	assert(_slice_size > 0);
 	assert(_slices_per_area > 0);
 
-	if (_slice_size <= mmap_page_size() / 2) {
+	if (_slice_size <= PAGE_SIZE / 2) {
 		slice_size = align_size(_slice_size);
 
-		slices_per_page = mmap_page_size() / slice_size;
+		slices_per_page = PAGE_SIZE / slice_size;
 		pages_per_slice = 1;
 
 		pages_per_area = divide_round_up(_slices_per_area,
 						 slices_per_page);
 	} else {
-		slice_size = align_page_size(_slice_size);
+		slice_size = AlignToPageSize(_slice_size);
 
 		slices_per_page = 1;
-		pages_per_slice = slice_size / mmap_page_size();
+		pages_per_slice = slice_size / PAGE_SIZE;
 
 		pages_per_area = _slices_per_area * pages_per_slice;
 	}
@@ -279,9 +268,9 @@ SlicePool::SlicePool(std::size_t _slice_size, unsigned _slices_per_area) noexcep
 	slices_per_area = (pages_per_area / pages_per_slice) * slices_per_page;
 
 	const std::size_t header_size = SliceArea::GetHeaderSize(slices_per_area);
-	header_pages = divide_round_up(header_size, mmap_page_size());
+	header_pages = divide_round_up(header_size, PAGE_SIZE);
 
-	area_size = mmap_page_size() * (header_pages + pages_per_area);
+	area_size = PAGE_SIZE * (header_pages + pages_per_area);
 }
 
 SlicePool::~SlicePool() noexcept
@@ -295,7 +284,7 @@ SlicePool::~SlicePool() noexcept
 void
 SliceArea::ForkCow(bool inherit) noexcept
 {
-	mmap_enable_fork(this, pool.area_size, inherit);
+	EnablePageFork(this, pool.area_size, inherit);
 }
 
 void
