@@ -214,7 +214,7 @@ LbCluster::ConnectTcp(AllocatorPtr alloc,
 			 timeout, handler, cancel_ptr);
 }
 
-void
+inline void
 LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
 			     const StopwatchPtr &parent_stopwatch,
 			     SocketAddress bind_address,
@@ -236,7 +236,7 @@ LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
 			handler, cancel_ptr);
 }
 
-void
+inline void
 LbCluster::ConnectStaticTcp(AllocatorPtr alloc,
 			    SocketAddress bind_address,
 			    sticky_hash_t sticky_hash,
@@ -538,7 +538,7 @@ LbCluster::ZeroconfHttpConnect::ReleaseLease(bool reuse) noexcept
 	Destroy();
 }
 
-void
+inline void
 LbCluster::ConnectZeroconfHttp(AllocatorPtr alloc,
 			       const StopwatchPtr &,
 			       SocketAddress bind_address,
@@ -558,7 +558,7 @@ LbCluster::ConnectZeroconfHttp(AllocatorPtr alloc,
 	c->Start();
 }
 
-void
+inline void
 LbCluster::ConnectZeroconfTcp(AllocatorPtr alloc,
 			      SocketAddress bind_address,
 			      sticky_hash_t sticky_hash,
