@@ -129,7 +129,7 @@ Data::RubberError(std::exception_ptr ep) noexcept
 
 TEST(SinkRubberTest, Empty)
 {
-	Rubber r(4 * 1024 * 1024);
+	Rubber r{4 * 1024 * 1024, "rubber"};
 	Data data(r);
 
 	sink_rubber_new(data.pool, istream_null_new(data.pool), r, 1024,
@@ -142,7 +142,7 @@ TEST(SinkRubberTest, Empty)
 
 TEST(SinkRubberTest, Empty2)
 {
-	Rubber r(4 * 1024 * 1024);
+	Rubber r{4 * 1024 * 1024, "rubber"};
 	Data data(r);
 
 	auto input = istream_byte_new(data.pool, istream_null_new(data.pool));
@@ -160,7 +160,7 @@ TEST(SinkRubberTest, Empty2)
 
 TEST(SinkRubberTest, String)
 {
-	Rubber r(4 * 1024 * 1024);
+	Rubber r{4 * 1024 * 1024, "rubber"};
 	Data data(r);
 
 	auto input = istream_string_new(data.pool, "foo");
@@ -180,7 +180,7 @@ TEST(SinkRubberTest, String)
 
 TEST(SinkRubberTest, String2)
 {
-	Rubber r(4 * 1024 * 1024);
+	Rubber r{4 * 1024 * 1024, "rubber"};
 	Data data(r);
 
 	auto input = istream_four_new(data.pool,
@@ -204,7 +204,7 @@ TEST(SinkRubberTest, String2)
 
 TEST(SinkRubberTest, TooLarge1)
 {
-	Rubber r(4 * 1024 * 1024);
+	Rubber r{4 * 1024 * 1024, "rubber"};
 	Data data(r);
 
 	sink_rubber_new(data.pool, istream_string_new(data.pool, "foobar"), r, 5,
@@ -214,7 +214,7 @@ TEST(SinkRubberTest, TooLarge1)
 
 TEST(SinkRubberTest, TooLarge2)
 {
-	Rubber r(4 * 1024 * 1024);
+	Rubber r{4 * 1024 * 1024, "rubber"};
 	Data data(r);
 
 	auto input = istream_four_new(data.pool,
@@ -233,7 +233,7 @@ TEST(SinkRubberTest, TooLarge2)
 
 TEST(SinkRubberTest, Error)
 {
-	Rubber r(4 * 1024 * 1024);
+	Rubber r{4 * 1024 * 1024, "rubber"};
 	Data data(r);
 
 	auto input = istream_fail_new(data.pool,
@@ -251,7 +251,7 @@ TEST(SinkRubberTest, Error)
 
 TEST(SinkRubberTest, OOM)
 {
-	Rubber r(4 * 1024 * 1024);
+	Rubber r{4 * 1024 * 1024, "rubber"};
 	Data data(r);
 
 	EventLoop event_loop;
@@ -265,7 +265,7 @@ TEST(SinkRubberTest, OOM)
 
 TEST(SinkRubberTest, Abort)
 {
-	Rubber r(4 * 1024 * 1024);
+	Rubber r{4 * 1024 * 1024, "rubber"};
 	Data data(r);
 
 	EventLoop event_loop;

@@ -62,7 +62,7 @@ TEST(SliceTest, Small)
 	const size_t slice_size = 13;
 	const unsigned per_area = 600;
 
-	SlicePool pool(slice_size, per_area);
+	SlicePool pool{slice_size, per_area, "slice"};
 
 	auto allocation0 = pool.Alloc();
 	auto *area0 = allocation0.area;
@@ -113,7 +113,7 @@ TEST(SliceTest, Medium)
 	const size_t slice_size = 3000;
 	const unsigned per_area = 10;
 
-	SlicePool pool(slice_size, per_area);
+	SlicePool pool{slice_size, per_area, "slice"};
 
 	auto allocation0 = pool.Alloc();
 	auto *area0 = allocation0.area;
@@ -162,7 +162,7 @@ TEST(SliceTest, Large)
 	const size_t slice_size = 8192;
 	const unsigned per_area = 13;
 
-	SlicePool pool(slice_size, per_area);
+	SlicePool pool{slice_size, per_area, "slice"};
 
 	auto allocation0 = pool.Alloc();
 	auto *area0 = allocation0.area;

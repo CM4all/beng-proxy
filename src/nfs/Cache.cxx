@@ -389,10 +389,10 @@ NfsCacheRequest::OnNfsStockError(std::exception_ptr ep) noexcept
 inline
 NfsCache::NfsCache(struct pool &_pool, size_t max_size,
 		   NfsStock &_stock, EventLoop &_event_loop)
-	:pool(pool_new_dummy(&_pool, "nfs_cache")),
+	:pool(pool_new_dummy(&_pool, "nfs_cache_slice")),
 	 stock(_stock),
 	 event_loop(_event_loop),
-	 rubber(max_size),
+	 rubber(max_size, "nfs_cache_rubber"),
 	 cache(event_loop, 65521, max_size * 7 / 8),
 	 compress_timer(event_loop, BIND_THIS_METHOD(OnCompressTimer)) {
 	compress_timer.Schedule(nfs_cache_compress_interval);

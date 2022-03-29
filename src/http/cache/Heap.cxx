@@ -149,8 +149,8 @@ HttpCacheHeap::OpenStream(struct pool &_pool,
 HttpCacheHeap::HttpCacheHeap(struct pool &_pool, EventLoop &event_loop,
 			     size_t max_size) noexcept
 	:pool(_pool),
-	 slice_pool(1024, 65536),
-	 rubber(max_size),
+	 slice_pool(1024, 65536, "http_cache_meta"),
+	 rubber(max_size, "http_cache_data"),
 	 /* leave 12.5% of the rubber allocator empty, to increase the
 	    chances that a hole can be found for a new allocation, to
 	    reduce the pressure that rubber_compress() creates */

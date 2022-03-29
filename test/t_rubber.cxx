@@ -84,7 +84,7 @@ TEST(RubberTest, Basic)
 {
 	size_t total = 4 * 1024 * 1024;
 
-	Rubber r(total);
+	Rubber r{total, "rubber"};
 
 	total = r.GetMaxSize();
 
@@ -183,7 +183,7 @@ TEST(RubberTest, Shrink)
 {
 	size_t total = 4 * 1024 * 1024;
 
-	Rubber r(total);
+	Rubber r{total, "rubber"};
 
 	total = r.GetMaxSize();
 
@@ -259,7 +259,7 @@ TEST(RubberTest, FullTable)
 {
 	size_t total = 64 * 1024 * 1024;
 
-	Rubber r(total);
+	Rubber r{total, "rubber"};
 
 	total = r.GetMaxSize();
 

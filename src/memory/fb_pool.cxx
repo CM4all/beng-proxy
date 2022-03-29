@@ -42,7 +42,7 @@ fb_pool_init()
 {
 	assert(fb_pool == nullptr);
 
-	fb_pool = new SlicePool(FB_SIZE, 256);
+	fb_pool = new SlicePool(FB_SIZE, 256, "io_buffers");
 }
 
 void

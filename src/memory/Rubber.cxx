@@ -33,6 +33,7 @@
 #include "Rubber.hxx"
 #include "system/HugePage.hxx"
 #include "system/PageAllocator.hxx"
+#include "system/VmaName.hxx"
 #include "stats/AllocatorStats.hxx"
 
 #include <assert.h>
@@ -610,11 +611,14 @@ Rubber::AddHoleAfter(unsigned reference_id, size_t offset, size_t size) noexcept
  *
  */
 
-Rubber::Rubber(size_t _max_size)
+Rubber::Rubber(size_t _max_size, const char *vma_name)
 	:table(HUGE_PAGE_SIZE + AlignHugePageUp(_max_size),
 	       (HUGE_PAGE_SIZE + AlignHugePageUp(_max_size)) / 1024u)
 {
 	static_assert(RUBBER_ALIGN >= sizeof(Hole), "Alignment too large");
+
+	if (vma_name != nullptr)
+		SetVmaName(table.get(), table.size(), vma_name);
 
 	const size_t table_size = table->GetSize();
 	EnableHugePages(WriteAt(table_size),

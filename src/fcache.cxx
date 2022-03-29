@@ -638,8 +638,8 @@ FilterCache::FilterCache(struct pool &_pool, size_t max_size,
 			 EventLoop &_event_loop,
 			 ResourceLoader &_resource_loader)
 	:pool(pool_new_dummy(&_pool, "filter_cache")),
-	 slice_pool(1024, 65536),
-	 rubber(max_size),
+	 slice_pool(1024, 65536, "filter_cache_meta"),
+	 rubber(max_size, "filter_cache_data"),
 	 /* leave 12.5% of the rubber allocator empty, to increase the
 	    chances that a hole can be found for a new allocation, to
 	    reduce the pressure that rubber_compress() creates */

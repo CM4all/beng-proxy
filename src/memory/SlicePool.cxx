@@ -35,6 +35,7 @@
 #include "stats/AllocatorStats.hxx"
 #include "system/PageAllocator.hxx"
 #include "system/HugePage.hxx"
+#include "system/VmaName.hxx"
 #include "util/Poison.h"
 #include "util/Sanitizer.hxx"
 #include "util/Valgrind.hxx"
@@ -95,6 +96,9 @@ SliceArea *
 SliceArea::New(SlicePool &pool) noexcept
 {
 	void *p = AllocatePages(pool.area_size);
+
+	if (pool.vma_name != nullptr)
+		SetVmaName(p, pool.area_size, pool.vma_name);
 
 	if (std::size_t huge_size = AlignHugePageDown(pool.area_size);
 	    huge_size > 0)
@@ -249,7 +253,9 @@ SliceArea::Compress() noexcept
  *
  */
 
-SlicePool::SlicePool(std::size_t _slice_size, unsigned _slices_per_area) noexcept
+SlicePool::SlicePool(std::size_t _slice_size, unsigned _slices_per_area,
+		     const char *_vma_name) noexcept
+	:vma_name(_vma_name)
 {
 	assert(_slice_size > 0);
 	assert(_slices_per_area > 0);

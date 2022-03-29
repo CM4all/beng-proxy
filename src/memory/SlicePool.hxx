@@ -47,6 +47,8 @@ class SliceArea;
 class SlicePool {
 	friend class SliceArea;
 
+	const char *const vma_name;
+
 	std::size_t slice_size;
 
 	/**
@@ -88,7 +90,8 @@ class SlicePool {
 	bool fork_cow = true;
 
 public:
-	SlicePool(std::size_t _slice_size, unsigned _slices_per_area) noexcept;
+	SlicePool(std::size_t _slice_size, unsigned _slices_per_area,
+		  const char *_vma_name) noexcept;
 	~SlicePool() noexcept;
 
 	std::size_t GetSliceSize() const noexcept {

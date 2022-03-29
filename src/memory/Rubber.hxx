@@ -104,7 +104,7 @@ public:
 	/**
 	 * Throws std::bad_alloc on error.
 	 */
-	explicit Rubber(size_t _max_size);
+	explicit Rubber(size_t _max_size, const char *vma_name);
 
 	~Rubber() noexcept;
 
