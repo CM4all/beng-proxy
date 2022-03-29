@@ -231,9 +231,7 @@ public:
 	}
 
 	/**
-	 * Obtain a HTTP connection to a statically configured member
-	 * (Zeroconf or
-	 * static).
+	 * Obtain a HTTP connection to a member (Zeroconf or static).
 	 */
 	void ConnectHttp(AllocatorPtr alloc,
 			 const StopwatchPtr &parent_stopwatch,
