@@ -121,6 +121,10 @@ code and a brief message (plain text)::
 The option ``mangle_via yes`` enables request header mangling: the
 headers ``Via`` and ``X-Forwarded-For`` are updated.
 
+The option ``fair_schedulding`` enables fair scheduling, which
+attempts to schedule HTTP requests for different sites in a way that
+avoids one site blocking all backend connections.
+
 Zeroconf
 ^^^^^^^^
 

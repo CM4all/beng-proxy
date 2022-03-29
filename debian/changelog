@@ -3,6 +3,7 @@ cm4all-beng-proxy (17.0.85) unstable; urgency=low
   * set virtual memory area names (Linux 5.17)
   * bp: fix assertion failure during ALPN HTTP/2 probe
   * lb: add configuration file setting "tcp_stock_limit"
+  * lb: basic fair scheduling
   * certdb: add new index for faster "ON DELETE CASCADE"
 
  --   

@@ -171,6 +171,7 @@ LbCluster::~LbCluster() noexcept
 void
 LbCluster::ConnectHttp(AllocatorPtr alloc,
 		       const StopwatchPtr &parent_stopwatch,
+		       uint_fast64_t fairness_hash,
 		       SocketAddress bind_address,
 		       sticky_hash_t sticky_hash,
 		       Event::Duration timeout,
@@ -181,6 +182,7 @@ LbCluster::ConnectHttp(AllocatorPtr alloc,
 #ifdef HAVE_AVAHI
 	if (config.HasZeroConf()) {
 		ConnectZeroconfHttp(alloc, parent_stopwatch,
+				    fairness_hash,
 				    bind_address, sticky_hash,
 				    timeout, filter_factory,
 				    handler, cancel_ptr);
@@ -189,6 +191,7 @@ LbCluster::ConnectHttp(AllocatorPtr alloc,
 #endif
 
 	ConnectStaticHttp(alloc, parent_stopwatch,
+			  fairness_hash,
 			  bind_address, sticky_hash,
 			  timeout, filter_factory,
 			  handler, cancel_ptr);
@@ -217,6 +220,7 @@ LbCluster::ConnectTcp(AllocatorPtr alloc,
 inline void
 LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
 			     const StopwatchPtr &parent_stopwatch,
+			     uint_fast64_t fairness_hash,
 			     SocketAddress bind_address,
 			     sticky_hash_t sticky_hash,
 			     Event::Duration timeout,
@@ -225,8 +229,6 @@ LbCluster::ConnectStaticHttp(AllocatorPtr alloc,
 			     CancellablePointer &cancel_ptr) noexcept
 {
 	assert(config.protocol == LbProtocol::HTTP);
-
-	const uint_fast64_t fairness_hash = 0;
 
 	fs_balancer.Get(alloc, parent_stopwatch,
 			fairness_hash,
@@ -404,6 +406,8 @@ class LbCluster::ZeroconfHttpConnect final : StockGetHandler, Lease, Cancellable
 
 	AllocatorPtr alloc;
 
+	const uint_least64_t fairness_hash;
+
 	const SocketAddress bind_address;
 	const sticky_hash_t sticky_hash;
 	const Event::Duration timeout;
@@ -425,6 +429,7 @@ class LbCluster::ZeroconfHttpConnect final : StockGetHandler, Lease, Cancellable
 
 public:
 	ZeroconfHttpConnect(LbCluster &_cluster, AllocatorPtr _alloc,
+			    const uint_fast64_t _fairness_hash,
 			    SocketAddress _bind_address,
 			    sticky_hash_t _sticky_hash,
 			    Event::Duration _timeout,
@@ -432,6 +437,7 @@ public:
 			    FilteredSocketBalancerHandler &_handler,
 			    CancellablePointer &caller_cancel_ptr) noexcept
 		:cluster(_cluster), alloc(_alloc),
+		 fairness_hash(_fairness_hash),
 		 bind_address(_bind_address),
 		 sticky_hash(_sticky_hash),
 		 timeout(_timeout),
@@ -494,8 +500,6 @@ LbCluster::ZeroconfHttpConnect::Start() noexcept
 
 	failure = member->GetFailureRef();
 
-	const uint_fast64_t fairness_hash = 0;
-
 	cluster.fs_stock.Get(alloc,
 			     nullptr,
 			     member->GetLogName(),
@@ -547,6 +551,7 @@ LbCluster::ZeroconfHttpConnect::ReleaseLease(bool reuse) noexcept
 inline void
 LbCluster::ConnectZeroconfHttp(AllocatorPtr alloc,
 			       const StopwatchPtr &,
+			       uint_fast64_t fairness_hash,
 			       SocketAddress bind_address,
 			       sticky_hash_t sticky_hash,
 			       Event::Duration timeout,
@@ -557,6 +562,7 @@ LbCluster::ConnectZeroconfHttp(AllocatorPtr alloc,
 	assert(config.HasZeroConf());
 
 	auto *c = alloc.New<ZeroconfHttpConnect>(*this, alloc,
+						 fairness_hash,
 						 bind_address,
 						 sticky_hash, timeout,
 						 filter_factory,

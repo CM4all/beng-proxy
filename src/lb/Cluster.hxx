@@ -235,6 +235,7 @@ public:
 	 */
 	void ConnectHttp(AllocatorPtr alloc,
 			 const StopwatchPtr &parent_stopwatch,
+			 uint_fast64_t fairness_hash,
 			 SocketAddress bind_address,
 			 sticky_hash_t sticky_hash,
 			 Event::Duration timeout,
@@ -259,6 +260,7 @@ public:
 	 */
 	void ConnectStaticHttp(AllocatorPtr alloc,
 			       const StopwatchPtr &parent_stopwatch,
+			       uint_fast64_t fairness_hash,
 			       SocketAddress bind_address,
 			       sticky_hash_t sticky_hash,
 			       Event::Duration timeout,
@@ -310,6 +312,7 @@ public:
 	 */
 	void ConnectZeroconfHttp(AllocatorPtr alloc,
 				 const StopwatchPtr &parent_stopwatch,
+				 uint_fast64_t fairness_hash,
 				 SocketAddress bind_address,
 				 sticky_hash_t sticky_hash,
 				 Event::Duration timeout,

@@ -131,6 +131,8 @@ private:
 	sticky_hash_t GetXHostHash() const noexcept;
 	sticky_hash_t MakeCookieHash() noexcept;
 
+	uint_fast64_t MakeFairnessHash() const noexcept;
+
 	SocketAddress MakeBindAddress() const noexcept;
 
 	/* virtual methods from class Cancellable */
@@ -375,6 +377,19 @@ LbRequest::OnFilteredSocketError(std::exception_ptr ep) noexcept
  *
  */
 
+inline uint_fast64_t
+LbRequest::MakeFairnessHash() const noexcept
+{
+	if (!cluster_config.fair_scheduling)
+		return 0;
+
+	const char *host = GetCanonicalHost();
+	if (host == nullptr)
+		return FNV1aHash64(ConstBuffer<void>{});
+
+	return FNV1aHash64(host);
+}
+
 inline SocketAddress
 LbRequest::MakeBindAddress() const noexcept
 {
@@ -403,6 +418,7 @@ inline void
 LbRequest::Start() noexcept
 {
 	cluster.ConnectHttp(pool, nullptr,
+			    MakeFairnessHash(),
 			    MakeBindAddress(),
 			    GetStickyHash(),
 			    LB_HTTP_CONNECT_TIMEOUT,
