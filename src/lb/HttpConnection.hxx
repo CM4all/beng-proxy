@@ -33,6 +33,7 @@
 #pragma once
 
 #include "http/server/Handler.hxx"
+#include "net/ClientAccounting.hxx"
 #include "pool/Holder.hxx"
 #include "pool/UniquePtr.hxx"
 #include "io/Logger.hxx"
@@ -55,6 +56,7 @@ struct LbInstance;
 
 struct LbHttpConnection final
 	: PoolHolder, HttpServerConnectionHandler, HttpServerRequestHandler,
+	  AccountedClientConnection,
 	  LoggerDomainFactory,
 	  boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 

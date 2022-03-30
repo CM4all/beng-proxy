@@ -39,10 +39,13 @@
 #include "fs/Listener.hxx"
 #include "net/StaticSocketAddress.hxx"
 
+#include <memory>
+
 struct HttpStats;
 struct LbListenerConfig;
 struct LbInstance;
 class LbGotoMap;
+class ClientAccountingMap;
 
 /**
  * Listener on a TCP port.
@@ -62,9 +65,13 @@ class LbListener final : FilteredSocketListenerHandler {
 
 	const LbProtocol protocol;
 
+	std::unique_ptr<ClientAccountingMap> client_accounting;
+
 public:
 	LbListener(LbInstance &_instance,
 		   const LbListenerConfig &_config);
+
+	~LbListener() noexcept;
 
 	auto GetLocalAddress() const noexcept {
 		return listener.GetLocalAddress();
@@ -92,6 +99,9 @@ public:
 
 private:
 	/* virtual methods from class FilteredSocketListenerHandler */
+	UniqueSocketDescriptor OnFilteredSocketAccept(UniqueSocketDescriptor s,
+						      SocketAddress address) override;
+
 	void OnFilteredSocketConnect(PoolPtr pool,
 				     UniquePoolPtr<FilteredSocket> socket,
 				     SocketAddress address,

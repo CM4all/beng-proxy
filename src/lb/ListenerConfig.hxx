@@ -52,6 +52,8 @@ struct LbListenerConfig : SocketConfig {
 	std::string zeroconf_interface;
 #endif
 
+	std::size_t max_connections_per_ip = 0;
+
 	bool verbose_response = false;
 
 #ifdef HAVE_NGHTTP2

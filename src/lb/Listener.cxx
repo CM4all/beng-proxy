@@ -40,8 +40,21 @@
 #include "ssl/DbCertCallback.hxx"
 #include "ssl/AlpnProtos.hxx"
 #include "fs/FilteredSocket.hxx"
+#include "net/ClientAccounting.hxx"
 #include "net/SocketAddress.hxx"
 #include "lb_features.h"
+
+UniqueSocketDescriptor
+LbListener::OnFilteredSocketAccept(UniqueSocketDescriptor s,
+				   SocketAddress address)
+{
+	if (client_accounting)
+		if (auto *per_client = client_accounting->Get(address);
+		    per_client != nullptr && !per_client->Check())
+			s.Close();
+
+	return s;
+}
 
 static std::unique_ptr<SslFactory>
 MakeSslFactory(const LbListenerConfig &config,
@@ -89,12 +102,22 @@ LbListener::OnFilteredSocketConnect(PoolPtr pool,
 				    SocketAddress address,
 				    const SslFilter *ssl_filter) noexcept
 try {
+	LbHttpConnection *http_connection;
+
 	switch (protocol) {
 	case LbProtocol::HTTP:
-		NewLbHttpConnection(instance, *this, destination,
-				    std::move(pool),
-				    std::move(socket), ssl_filter,
-				    address);
+		http_connection = NewLbHttpConnection(instance, *this,
+						      destination,
+						      std::move(pool),
+						      std::move(socket),
+						      ssl_filter,
+						      address);
+
+		if (client_accounting)
+			if (auto *per_client = client_accounting->Get(address);
+			    per_client != nullptr)
+				per_client->AddConnection(*http_connection);
+
 		break;
 
 	case LbProtocol::TCP:
@@ -131,8 +154,13 @@ LbListener::LbListener(LbInstance &_instance,
 	 logger("listener " + config.name),
 	 protocol(config.destination.GetProtocol())
 {
+	if (config.max_connections_per_ip > 0)
+		client_accounting = std::make_unique<ClientAccountingMap>(config.max_connections_per_ip);
+
 	listener.Listen(config.Create(SOCK_STREAM));
 }
+
+LbListener::~LbListener() noexcept = default;
 
 void
 LbListener::Scan(LbGotoMap &goto_map)

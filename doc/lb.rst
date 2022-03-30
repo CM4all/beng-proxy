@@ -421,6 +421,9 @@ Known attributes:
   the according ``https://`` URL.  This can be specified instead of
   ``pool``.
 
+- ``max_connections_per_ip``: specifies the maximum number of
+  connections from each IP address.
+
 - ``verbose_response``: ``yes`` exposes internal error messages in
   HTTP responses.
 

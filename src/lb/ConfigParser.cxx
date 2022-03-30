@@ -1168,6 +1168,9 @@ LbConfigParser::Listener::ParseLine(FileLineParser &line)
 #else
 		throw LineParser::Error("Zeroconf support is disabled at compile time");
 #endif
+	} else if (strcmp(word, "max_connections_per_ip") == 0) {
+		config.max_connections_per_ip = line.NextPositiveInteger();
+		line.ExpectEnd();
 	} else if (strcmp(word, "ack_timeout") == 0) {
 		config.tcp_user_timeout = line.NextPositiveInteger() * 1000;
 		line.ExpectEnd();
