@@ -46,6 +46,19 @@ class SslFilter;
 
 class FilteredSocketListenerHandler {
 public:
+	/**
+	 * This method allows the handler to intercept a new
+	 * connection that was just accepted, before doing any SSL/TLS
+	 * handshake.  If it returns an undefined
+	 * #UniqueSocketDescriptor, the connection will be discarded
+	 * (though the socket can be used by the handler).
+	 *
+	 * Exceptions thrown by this method will be passed to
+	 * OnFilteredSocketError().
+	 */
+	virtual UniqueSocketDescriptor OnFilteredSocketAccept(UniqueSocketDescriptor s,
+							      SocketAddress address);
+
 	virtual void OnFilteredSocketConnect(PoolPtr pool,
 					     UniquePoolPtr<FilteredSocket> socket,
 					     SocketAddress address,

@@ -44,6 +44,13 @@
 #include "net/SocketAddress.hxx"
 #include "io/FdType.hxx"
 
+UniqueSocketDescriptor
+FilteredSocketListenerHandler::OnFilteredSocketAccept(UniqueSocketDescriptor s,
+						      SocketAddress)
+{
+	return s;
+}
+
 class FilteredSocketListener::Pending final
 	: PoolHolder,
 	  public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>,
@@ -141,6 +148,10 @@ void
 FilteredSocketListener::OnAccept(UniqueSocketDescriptor &&s,
 				 SocketAddress address) noexcept
 try {
+	s = handler.OnFilteredSocketAccept(std::move(s), address);
+	if (!s.IsDefined())
+		return;
+
 	auto &event_loop = GetEventLoop();
 
 	auto connection_pool = pool_new_linear(&parent_pool, "connection", 2048);
