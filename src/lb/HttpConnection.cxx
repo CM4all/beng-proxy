@@ -302,6 +302,8 @@ LbHttpConnection::ForwardHttpRequest(LbCluster &cluster,
 		++tarpit_counter;
 
 		if (tarpit_counter > 64) {
+			EnableTarpit();
+
 			/* too many consecutive redundant requests:
 			   assuming this is a DDoS agent, so throttle
 			   it */
@@ -311,6 +313,14 @@ LbHttpConnection::ForwardHttpRequest(LbCluster &cluster,
 		}
 	} else
 		tarpit_counter = 0;
+
+	if (cluster.GetConfig().tarpit && CheckTarpit()) {
+		if (tarpit_counter > 0)
+			tarpit_counter = 64;
+
+		DelayForwardHttpRequest(*this, request, cluster, cancel_ptr);
+		return;
+	}
 
 	::ForwardHttpRequest(*this, request, cluster, cancel_ptr);
 }

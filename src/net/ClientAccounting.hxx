@@ -57,6 +57,11 @@ public:
 
 	AccountedClientConnection(const AccountedClientConnection &) = delete;
 	AccountedClientConnection &operator=(const AccountedClientConnection &) = delete;
+
+	void EnableTarpit() noexcept;
+
+	[[gnu::pure]]
+	bool CheckTarpit() const noexcept;
 };
 
 class PerClientAccounting final
@@ -95,6 +100,8 @@ class PerClientAccounting final
 
 	Event::TimePoint expires;
 
+	Event::TimePoint tarpit_until;
+
 public:
 	PerClientAccounting(ClientAccountingMap &_map, uint_least64_t _address) noexcept;
 
@@ -103,6 +110,11 @@ public:
 
 	void AddConnection(AccountedClientConnection &c) noexcept;
 	void RemoveConnection(AccountedClientConnection &c) noexcept;
+
+	void EnableTarpit() noexcept;
+
+	[[gnu::pure]]
+	bool CheckTarpit() const noexcept;
 };
 
 class ClientAccountingMap {

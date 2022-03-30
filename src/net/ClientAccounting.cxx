@@ -43,6 +43,19 @@ AccountedClientConnection::~AccountedClientConnection() noexcept
 		per_client->RemoveConnection(*this);
 }
 
+void
+AccountedClientConnection::EnableTarpit() noexcept
+{
+	if (per_client != nullptr)
+		per_client->EnableTarpit();
+}
+
+bool
+AccountedClientConnection::CheckTarpit() const noexcept
+{
+	return per_client != nullptr && per_client->CheckTarpit();
+}
+
 static constexpr uint_least64_t
 Read64(const uint8_t *src) noexcept
 {
@@ -110,6 +123,18 @@ PerClientAccounting::RemoveConnection(AccountedClientConnection &c) noexcept
 
 	if (connections.empty())
 		map.ScheduleCleanup();
+}
+
+inline void
+PerClientAccounting::EnableTarpit() noexcept
+{
+	tarpit_until = map.GetEventLoop().SteadyNow() + std::chrono::minutes{1};
+}
+
+inline bool
+PerClientAccounting::CheckTarpit() const noexcept
+{
+	return map.GetEventLoop().SteadyNow() < tarpit_until;
 }
 
 PerClientAccounting *
