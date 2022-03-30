@@ -73,6 +73,10 @@ public:
 
 	~LbListener() noexcept;
 
+	auto &GetEventLoop() const noexcept {
+		return listener.GetEventLoop();
+	}
+
 	auto GetLocalAddress() const noexcept {
 		return listener.GetLocalAddress();
 	}

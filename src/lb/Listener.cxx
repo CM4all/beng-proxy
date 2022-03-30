@@ -155,7 +155,8 @@ LbListener::LbListener(LbInstance &_instance,
 	 protocol(config.destination.GetProtocol())
 {
 	if (config.max_connections_per_ip > 0)
-		client_accounting = std::make_unique<ClientAccountingMap>(config.max_connections_per_ip);
+		client_accounting = std::make_unique<ClientAccountingMap>(GetEventLoop(),
+									  config.max_connections_per_ip);
 
 	listener.Listen(config.Create(SOCK_STREAM));
 }

@@ -31,9 +31,11 @@
  */
 
 #include "ClientAccounting.hxx"
+#include "event/Loop.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/IPv6Address.hxx"
+#include "util/DeleteDisposer.hxx"
 
 AccountedClientConnection::~AccountedClientConnection() noexcept
 {
@@ -103,6 +105,11 @@ PerClientAccounting::RemoveConnection(AccountedClientConnection &c) noexcept
 
 	connections.erase(connections.iterator_to(c));
 	c.per_client = nullptr;
+
+	expires = map.GetEventLoop().SteadyNow() + std::chrono::minutes{5};
+
+	if (connections.empty())
+		map.ScheduleCleanup();
 }
 
 PerClientAccounting *
@@ -123,4 +130,48 @@ ClientAccountingMap::Get(SocketAddress _address) noexcept
 
 	return &*i;
 
+}
+
+void
+ClientAccountingMap::ScheduleCleanup() noexcept
+{
+	if (!cleanup_timer.IsPending())
+		cleanup_timer.Schedule(std::chrono::minutes{1});
+}
+
+template<typename Container, typename Pred, typename Disposer>
+static void
+EraseAndDisposeIf(Container &container, Pred pred, Disposer disposer)
+{
+	for (auto i = container.begin(), end = container.end(); i != end;) {
+		const auto next = std::next(i);
+
+		if (pred(*i))
+			container.erase_and_dispose(i, disposer);
+
+		i = next;
+	}
+}
+
+void
+ClientAccountingMap::OnCleanupTimer() noexcept
+{
+	bool reschedule = false;
+
+	const auto now = GetEventLoop().SteadyNow();
+
+	EraseAndDisposeIf(map, [&reschedule, now](const auto &i){
+		if (!i.connections.empty())
+			return false;
+
+		if (now < i.expires) {
+			reschedule = true;
+			return false;
+		}
+
+		return true;
+	}, DeleteDisposer{});
+
+	if (reschedule)
+		ScheduleCleanup();
 }

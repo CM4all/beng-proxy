@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include "event/FarTimerEvent.hxx"
+
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/unordered_set.hpp>
 
@@ -91,6 +93,8 @@ class PerClientAccounting final
 
 	ConnectionList connections;
 
+	Event::TimePoint expires;
+
 public:
 	PerClientAccounting(ClientAccountingMap &_map, uint_least64_t _address) noexcept;
 
@@ -115,13 +119,25 @@ class ClientAccountingMap {
 
 	Map map{Map::bucket_traits{buckets, N_BUCKETS}};
 
+	FarTimerEvent cleanup_timer;
+
 public:
-	explicit ClientAccountingMap(std::size_t _max_connections) noexcept
-		:max_connections(_max_connections) {}
+	ClientAccountingMap(EventLoop &event_loop, std::size_t _max_connections) noexcept
+		:max_connections(_max_connections),
+		 cleanup_timer(event_loop, BIND_THIS_METHOD(OnCleanupTimer)) {}
+
+	auto &GetEventLoop() const noexcept {
+		return cleanup_timer.GetEventLoop();
+	}
 
 	std::size_t GetMaxConnections() const noexcept {
 		return max_connections;
 	}
 
 	PerClientAccounting *Get(SocketAddress address) noexcept;
+
+	void ScheduleCleanup() noexcept;
+
+private:
+	void OnCleanupTimer() noexcept;
 };
