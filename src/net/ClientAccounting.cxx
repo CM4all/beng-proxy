@@ -95,6 +95,12 @@ PerClientAccounting::PerClientAccounting(ClientAccountingMap &_map,
 {
 }
 
+inline Event::TimePoint
+PerClientAccounting::Now() const noexcept
+{
+	return map.GetEventLoop().SteadyNow();
+}
+
 bool
 PerClientAccounting::Check() const noexcept
 {
@@ -119,7 +125,7 @@ PerClientAccounting::RemoveConnection(AccountedClientConnection &c) noexcept
 	connections.erase(connections.iterator_to(c));
 	c.per_client = nullptr;
 
-	expires = map.GetEventLoop().SteadyNow() + std::chrono::minutes{5};
+	expires = Now() + std::chrono::minutes{5};
 
 	if (connections.empty())
 		map.ScheduleCleanup();
@@ -128,13 +134,13 @@ PerClientAccounting::RemoveConnection(AccountedClientConnection &c) noexcept
 inline void
 PerClientAccounting::EnableTarpit() noexcept
 {
-	tarpit_until = map.GetEventLoop().SteadyNow() + std::chrono::minutes{1};
+	tarpit_until = Now() + std::chrono::minutes{1};
 }
 
 inline bool
 PerClientAccounting::CheckTarpit() const noexcept
 {
-	return map.GetEventLoop().SteadyNow() < tarpit_until;
+	return Now() < tarpit_until;
 }
 
 PerClientAccounting *

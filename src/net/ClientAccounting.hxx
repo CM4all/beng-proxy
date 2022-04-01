@@ -115,6 +115,10 @@ public:
 
 	[[gnu::pure]]
 	bool CheckTarpit() const noexcept;
+
+private:
+	[[gnu::pure]]
+	Event::TimePoint Now() const noexcept;
 };
 
 class ClientAccountingMap {
