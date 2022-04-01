@@ -49,6 +49,16 @@ public:
 	virtual void RequestHeadersFinished(IncomingHttpRequest &) noexcept {}
 
 	/**
+	 * Called after sending a response was finished successfully.
+	 * This can be used to track the timing of requests and
+	 * responses.
+	 *
+	 * Note: this is not implemented for HTTP/2 (class
+	 * NgHttp2::ServerConnection).
+	 */
+	virtual void ResponseFinished() noexcept {}
+
+	/**
 	 * A fatal protocol level error has occurred, and the connection
 	 * was closed.
 	 *

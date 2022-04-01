@@ -32,6 +32,7 @@
 
 #include "Internal.hxx"
 #include "Request.hxx"
+#include "Handler.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/Exception.hxx"
 
@@ -156,6 +157,9 @@ bool
 HttpServerConnection::ResponseIstreamFinished()
 {
 	socket->UnscheduleWrite();
+
+	if (handler != nullptr)
+		handler->ResponseFinished();
 
 	Log();
 
