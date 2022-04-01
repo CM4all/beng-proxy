@@ -82,6 +82,9 @@ ToInteger(SocketAddress address) noexcept
 		return IPv4Address::Cast(address).GetNumericAddressBE();
 
 	case AF_INET6:
+		if (const auto &v6 = IPv6Address::Cast(address); v6.IsV4Mapped())
+			return v6.UnmapV4().GetNumericAddressBE();
+
 		return ToInteger(IPv6Address::Cast(address).GetAddress());
 
 	default:
