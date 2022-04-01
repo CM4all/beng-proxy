@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include "event/Chrono.hxx"
+
 struct LbHttpConnection;
 struct IncomingHttpRequest;
 class LbCluster;
@@ -41,4 +43,5 @@ void
 DelayForwardHttpRequest(LbHttpConnection &connection,
 			IncomingHttpRequest &request,
 			LbCluster &cluster,
+			Event::Duration delay,
 			CancellablePointer &cancel_ptr) noexcept;

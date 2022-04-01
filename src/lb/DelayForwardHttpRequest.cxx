@@ -69,8 +69,8 @@ public:
 		return timer.GetEventLoop();
 	}
 
-	void Start() noexcept {
-		timer.Schedule(std::chrono::seconds{10});
+	void Start(Event::Duration delay) noexcept {
+		timer.Schedule(delay);
 	}
 
 private:
@@ -98,11 +98,12 @@ void
 DelayForwardHttpRequest(LbHttpConnection &connection,
 			IncomingHttpRequest &request,
 			LbCluster &cluster,
+			Event::Duration delay,
 			CancellablePointer &cancel_ptr) noexcept
 {
 	const auto request2 =
 		NewFromPool<LbDelayRequest>(request.pool,
 					    connection,  request, cluster,
 					    cancel_ptr);
-	request2->Start();
+	request2->Start(delay);
 }

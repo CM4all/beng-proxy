@@ -308,6 +308,7 @@ LbHttpConnection::ForwardHttpRequest(LbCluster &cluster,
 			   assuming this is a DDoS agent, so throttle
 			   it */
 			DelayForwardHttpRequest(*this, request, cluster,
+						std::chrono::seconds{10},
 						cancel_ptr);
 			return;
 		}
@@ -318,7 +319,9 @@ LbHttpConnection::ForwardHttpRequest(LbCluster &cluster,
 		if (tarpit_counter > 0)
 			tarpit_counter = 64;
 
-		DelayForwardHttpRequest(*this, request, cluster, cancel_ptr);
+		DelayForwardHttpRequest(*this, request, cluster,
+					std::chrono::seconds{10},
+					cancel_ptr);
 		return;
 	}
 
