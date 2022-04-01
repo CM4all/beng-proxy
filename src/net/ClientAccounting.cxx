@@ -44,16 +44,25 @@ AccountedClientConnection::~AccountedClientConnection() noexcept
 }
 
 void
-AccountedClientConnection::EnableTarpit() noexcept
+AccountedClientConnection::NoteRequest() noexcept
 {
 	if (per_client != nullptr)
-		per_client->EnableTarpit();
+		per_client->NoteRequest();
 }
 
-bool
-AccountedClientConnection::CheckTarpit() const noexcept
+void
+AccountedClientConnection::NoteResponseFinished() noexcept
 {
-	return per_client != nullptr && per_client->CheckTarpit();
+	if (per_client != nullptr)
+		per_client->NoteResponseFinished();
+}
+
+Event::Duration
+AccountedClientConnection::GetDelay() const noexcept
+{
+	return per_client != nullptr
+		? per_client->GetDelay()
+		: Event::Duration{};
 }
 
 static constexpr uint_least64_t
@@ -135,15 +144,38 @@ PerClientAccounting::RemoveConnection(AccountedClientConnection &c) noexcept
 }
 
 inline void
-PerClientAccounting::EnableTarpit() noexcept
+PerClientAccounting::NoteRequest() noexcept
 {
-	tarpit_until = Now() + std::chrono::minutes{1};
+	static constexpr Event::Duration IDLE_THRESHOLD = std::chrono::seconds{2};
+	static constexpr Event::Duration BUSY_THRESHOLD = std::chrono::minutes{2};
+	static constexpr Event::Duration TARPIT_FOR = std::chrono::minutes{5};
+	static constexpr Event::Duration MAX_DELAY = std::chrono::minutes{1};
+	static constexpr Event::Duration DELAY_STEP = std::chrono::milliseconds{500};
+
+	const auto now = Now();
+
+	if (now - idle_since > IDLE_THRESHOLD) {
+		busy_since = now;
+
+		if (delay > DELAY_STEP)
+			delay -= DELAY_STEP;
+	} else if (now - busy_since > BUSY_THRESHOLD) {
+		tarpit_until = now + std::chrono::minutes{1};
+
+		if (delay < MAX_DELAY)
+			delay += DELAY_STEP;
+	}
+
+	idle_since = now;
+
+	if (now >= tarpit_until)
+		delay = {};
 }
 
-inline bool
-PerClientAccounting::CheckTarpit() const noexcept
+inline void
+PerClientAccounting::NoteResponseFinished() noexcept
 {
-	return Now() < tarpit_until;
+	idle_since = Now();
 }
 
 PerClientAccounting *

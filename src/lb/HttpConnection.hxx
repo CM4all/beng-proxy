@@ -83,8 +83,6 @@ struct LbHttpConnection final
 	UniquePoolPtr<NgHttp2::ServerConnection> http2;
 #endif
 
-	unsigned tarpit_counter = 0;
-
 	LbHttpConnection(PoolPtr &&_pool, LbInstance &_instance,
 			 LbListener &_listener,
 			 const LbGoto &_destination,
@@ -113,6 +111,7 @@ struct LbHttpConnection final
 
 	/* virtual methods from class HttpServerConnectionHandler */
 	void RequestHeadersFinished(IncomingHttpRequest &request) noexcept override;
+	void ResponseFinished() noexcept override;
 	void HandleHttpRequest(IncomingHttpRequest &request,
 			       const StopwatchPtr &parent_stopwatch,
 			       CancellablePointer &cancel_ptr) noexcept override;

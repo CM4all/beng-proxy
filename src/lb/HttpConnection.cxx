@@ -217,6 +217,12 @@ LbHttpConnection::RequestHeadersFinished(IncomingHttpRequest &request) noexcept
 }
 
 void
+LbHttpConnection::ResponseFinished() noexcept
+{
+	AccountedClientConnection::NoteResponseFinished();
+}
+
+void
 LbHttpConnection::HandleHttpRequest(IncomingHttpRequest &request,
 				    const StopwatchPtr &,
 				    CancellablePointer &cancel_ptr) noexcept
@@ -297,32 +303,15 @@ LbHttpConnection::ForwardHttpRequest(LbCluster &cluster,
 				     IncomingHttpRequest &request,
 				     CancellablePointer &cancel_ptr)
 {
-	if (cluster.GetConfig().tarpit && request.method == HTTP_METHOD_GET &&
-	    StringIsEqual(request.uri, "/")) {
-		++tarpit_counter;
+	if (cluster.GetConfig().tarpit) {
+		AccountedClientConnection::NoteRequest();
 
-		if (tarpit_counter > 64) {
-			EnableTarpit();
-
-			/* too many consecutive redundant requests:
-			   assuming this is a DDoS agent, so throttle
-			   it */
-			DelayForwardHttpRequest(*this, request, cluster,
-						std::chrono::seconds{10},
+		if (auto delay = AccountedClientConnection::GetDelay();
+		    delay.count() > 0) {
+			DelayForwardHttpRequest(*this, request, cluster, delay,
 						cancel_ptr);
 			return;
 		}
-	} else
-		tarpit_counter = 0;
-
-	if (cluster.GetConfig().tarpit && CheckTarpit()) {
-		if (tarpit_counter > 0)
-			tarpit_counter = 64;
-
-		DelayForwardHttpRequest(*this, request, cluster,
-					std::chrono::seconds{10},
-					cancel_ptr);
-		return;
 	}
 
 	::ForwardHttpRequest(*this, request, cluster, cancel_ptr);

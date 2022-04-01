@@ -58,10 +58,11 @@ public:
 	AccountedClientConnection(const AccountedClientConnection &) = delete;
 	AccountedClientConnection &operator=(const AccountedClientConnection &) = delete;
 
-	void EnableTarpit() noexcept;
+	void NoteRequest() noexcept;
+	void NoteResponseFinished() noexcept;
 
 	[[gnu::pure]]
-	bool CheckTarpit() const noexcept;
+	Event::Duration GetDelay() const noexcept;
 };
 
 class PerClientAccounting final
@@ -100,7 +101,25 @@ class PerClientAccounting final
 
 	Event::TimePoint expires;
 
+	/**
+	 * Since when has this client been busy?
+	 */
+	Event::TimePoint busy_since = Now();
+
+	/**
+	 * Since when has this client been idle?
+	 */
+	Event::TimePoint idle_since;
+
+	/**
+	 * After this time point, the delay can be cleared.
+	 */
 	Event::TimePoint tarpit_until;
+
+	/**
+	 * The current request delay.
+	 */
+	Event::Duration delay;
 
 public:
 	PerClientAccounting(ClientAccountingMap &_map, uint_least64_t _address) noexcept;
@@ -111,10 +130,12 @@ public:
 	void AddConnection(AccountedClientConnection &c) noexcept;
 	void RemoveConnection(AccountedClientConnection &c) noexcept;
 
-	void EnableTarpit() noexcept;
+	void NoteRequest() noexcept;
+	void NoteResponseFinished() noexcept;
 
-	[[gnu::pure]]
-	bool CheckTarpit() const noexcept;
+	Event::Duration GetDelay() const noexcept {
+		return delay;
+	}
 
 private:
 	[[gnu::pure]]
