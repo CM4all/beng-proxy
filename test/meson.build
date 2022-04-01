@@ -186,6 +186,19 @@ if libwas.found()
   )
 endif
 
+executable(
+  'LaunchLocalHTTP',
+  'LaunchLocalHTTP.cxx',
+  '../src/PInstance.cxx',
+  '../src/pexpand.cxx',
+  include_directories: inc,
+  dependencies: [
+    net_dep,
+    was_client_dep,
+    stopwatch_dep,
+  ],
+)
+
 executable('format_http_date',
   'format_http_date.cxx',
   include_directories: inc,
