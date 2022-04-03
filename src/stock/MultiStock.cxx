@@ -225,7 +225,7 @@ MultiStock::OuterItem::ItemIdleDisconnect(StockItem &item) noexcept
 
 	idle.erase_and_dispose(idle.iterator_to(item), DeleteDisposer{});
 
-	if (IsEmpty())
+	if (ShouldDelete())
 		parent.RemoveItem(*this);
 }
 
