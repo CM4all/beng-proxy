@@ -134,7 +134,7 @@ HttpCacheHeap::OpenStream(struct pool &_pool,
 {
 	auto &item = (HttpCacheItem &)document;
 
-	if (!item.body)
+	if (!item.HasBody())
 		/* don't lock the item */
 		return istream_null_new(_pool);
 

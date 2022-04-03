@@ -39,11 +39,12 @@
 
 class UnusedIstreamPtr;
 
-struct HttpCacheItem final : PoolHolder, HttpCacheDocument, CacheItem {
+class HttpCacheItem final : PoolHolder, public HttpCacheDocument, public CacheItem {
 	size_t size;
 
 	const RubberAllocation body;
 
+public:
 	HttpCacheItem(PoolPtr &&_pool,
 		      std::chrono::steady_clock::time_point now,
 		      std::chrono::system_clock::time_point system_now,
@@ -62,6 +63,10 @@ struct HttpCacheItem final : PoolHolder, HttpCacheDocument, CacheItem {
 	void SetExpires(std::chrono::steady_clock::time_point steady_now,
 			std::chrono::system_clock::time_point system_now,
 			std::chrono::system_clock::time_point _expires) noexcept;
+
+	bool HasBody() const noexcept {
+		return body;
+	}
 
 	UnusedIstreamPtr OpenStream(struct pool &_pool) noexcept;
 
