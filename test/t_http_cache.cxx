@@ -60,6 +60,8 @@
 #include <signal.h>
 
 struct Request final {
+	const char *tag = nullptr;
+
 	http_method_t method = HTTP_METHOD_GET;
 	const char *uri;
 	const char *request_headers;
@@ -250,7 +252,7 @@ run_cache_test(Instance &instance, const Request &request, bool cached)
 					     instance.event_loop);
 
 	http_cache_request(*instance.cache, pool, nullptr,
-			   0, nullptr, nullptr,
+			   0, request.tag, nullptr,
 			   request.method, address,
 			   std::move(headers), nullptr,
 			   handler, cancel_ptr);
@@ -453,4 +455,25 @@ TEST(HttpCache, MultiVary)
 	run_cache_test(instance, r5, true);
 	run_cache_test(instance, r5b, true);
 	run_cache_test(instance, r6, true);
+}
+
+TEST(HttpCache, Tag)
+{
+	const ScopeFbPoolInit fb_pool_init;
+	Instance instance;
+
+	Request request = requests[0];
+	request.tag = "abc";
+
+	run_cache_test(instance, request, false);
+	run_cache_test(instance, request, true);
+
+	/* this does not flush the item */
+	http_cache_flush_tag(*instance.cache, "def");
+	run_cache_test(instance, request, true);
+
+	/* but this does */
+	http_cache_flush_tag(*instance.cache, "abc");
+	run_cache_test(instance, request, false);
+	run_cache_test(instance, request, true);
 }

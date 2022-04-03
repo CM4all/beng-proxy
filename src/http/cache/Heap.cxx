@@ -56,7 +56,7 @@ HttpCacheHeap::Get(const char *uri, StringMap &request_headers) noexcept
 }
 
 void
-HttpCacheHeap::Put(const char *url,
+HttpCacheHeap::Put(const char *url, const char *tag,
 		   const HttpCacheResponseInfo &info,
 		   StringMap &request_headers,
 		   http_status_t status,
@@ -70,6 +70,9 @@ HttpCacheHeap::Put(const char *url,
 					       status, response_headers,
 					       size,
 					       std::move(a));
+
+	if (tag != nullptr)
+		per_tag[tag].push_back(*item);
 
 	cache.PutMatch(p_strdup(&item->GetPool(), url), *item,
 		       http_cache_item_match, &request_headers);
@@ -110,6 +113,18 @@ HttpCacheHeap::Flush() noexcept
 	cache.Flush();
 	slice_pool.Compress();
 	rubber.Compress();
+}
+
+void
+HttpCacheHeap::FlushTag(const std::string &tag) noexcept
+{
+	auto i = per_tag.find(tag);
+	if (i == per_tag.end())
+		return;
+
+	auto &list = i->second;
+	while (!list.empty())
+		cache.Remove(list.front());
 }
 
 void
@@ -157,6 +172,8 @@ HttpCacheHeap::HttpCacheHeap(struct pool &_pool, EventLoop &event_loop,
 	 cache(event_loop, 65521, max_size * 7 / 8)
 {
 }
+
+HttpCacheHeap::~HttpCacheHeap() noexcept = default;
 
 AllocatorStats
 HttpCacheHeap::GetStats() const noexcept

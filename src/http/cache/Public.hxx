@@ -35,6 +35,8 @@
 #include "cluster/StickyHash.hxx"
 #include "http/Method.h"
 
+#include <string>
+
 #include <stddef.h>
 
 struct pool;
@@ -70,6 +72,9 @@ http_cache_get_stats(const HttpCache &cache) noexcept;
 
 void
 http_cache_flush(HttpCache &cache) noexcept;
+
+void
+http_cache_flush_tag(HttpCache &cache, const std::string &tag) noexcept;
 
 /**
  * @param sticky_hash a portion of the session id that is used to

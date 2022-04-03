@@ -78,6 +78,7 @@ public:
 	PoolPtr caller_pool;
 
 	const sticky_hash_t sticky_hash;
+	const char *const cache_tag;
 	const char *const site_name;
 
 	/**
@@ -124,6 +125,7 @@ public:
 
 	HttpCacheRequest(PoolPtr &&_pool, struct pool &_caller_pool,
 			 sticky_hash_t _sticky_hash,
+			 const char *_cache_tag,
 			 const char *_site_name,
 			 HttpCache &_cache,
 			 http_method_t _method,
@@ -234,6 +236,10 @@ public:
 		heap.Flush();
 	}
 
+	void FlushTag(const std::string &tag) noexcept {
+		heap.FlushTag(tag);
+	}
+
 	void AddRequest(HttpCacheRequest &r) noexcept {
 		requests.push_front(r);
 	}
@@ -253,7 +259,7 @@ public:
 		   HttpResponseHandler &handler,
 		   CancellablePointer &cancel_ptr) noexcept;
 
-	void Put(const char *url,
+	void Put(const char *url, const char *tag,
 		 const HttpCacheResponseInfo &info,
 		 StringMap &request_headers,
 		 http_status_t status,
@@ -261,7 +267,7 @@ public:
 		 RubberAllocation &&a, size_t size) noexcept {
 		LogConcat(4, "HttpCache", "put ", url);
 
-		heap.Put(url, info, request_headers,
+		heap.Put(url, tag, info, request_headers,
 			 status, response_headers,
 			 std::move(a), size);
 	}
@@ -414,7 +420,7 @@ HttpCacheRequest::GetEventLoop() const noexcept
 void
 HttpCacheRequest::Put(RubberAllocation &&a, size_t size) noexcept
 {
-	cache.Put(key, info, headers,
+	cache.Put(key, cache_tag, info, headers,
 		  response.status, *response.headers,
 		  std::move(a), size);
 }
@@ -632,6 +638,7 @@ HttpCacheRequest::Cancel() noexcept
 HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 				   struct pool &_caller_pool,
 				   sticky_hash_t _sticky_hash,
+				   const char *_cache_tag,
 				   const char *_site_name,
 				   HttpCache &_cache,
 				   http_method_t _method,
@@ -641,7 +648,9 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 				   const HttpCacheRequestInfo &_request_info,
 				   CancellablePointer &_cancel_ptr) noexcept
 	:PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
-	 sticky_hash(_sticky_hash), site_name(_site_name),
+	 sticky_hash(_sticky_hash),
+	 cache_tag(_cache_tag),
+	 site_name(_site_name),
 	 cache(_cache),
 	 method(_method),
 	 address((AllocatorPtr)pool, _address),
@@ -730,6 +739,12 @@ http_cache_flush(HttpCache &cache) noexcept
 }
 
 void
+http_cache_flush_tag(HttpCache &cache, const std::string &tag) noexcept
+{
+	cache.FlushTag(tag);
+}
+
+void
 HttpCache::Miss(struct pool &caller_pool,
 		const StopwatchPtr &parent_stopwatch,
 		sticky_hash_t sticky_hash,
@@ -754,7 +769,8 @@ HttpCache::Miss(struct pool &caller_pool,
 
 	auto request =
 		NewFromPool<HttpCacheRequest>(std::move(request_pool), caller_pool,
-					      sticky_hash, site_name, *this,
+					      sticky_hash, cache_tag,
+					      site_name, *this,
 					      method, address,
 					      headers,
 					      handler,
@@ -908,7 +924,8 @@ HttpCache::Revalidate(struct pool &caller_pool,
 
 	auto request =
 		NewFromPool<HttpCacheRequest>(std::move(request_pool), caller_pool,
-					      sticky_hash, site_name, *this,
+					      sticky_hash, cache_tag,
+					      site_name, *this,
 					      method, address,
 					      headers,
 					      handler,

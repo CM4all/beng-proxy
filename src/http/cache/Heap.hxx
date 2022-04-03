@@ -32,10 +32,16 @@
 
 #pragma once
 
-#include "cache.hxx"
+#include "Item.hxx"
 #include "memory/SlicePool.hxx"
 #include "memory/Rubber.hxx"
 #include "http/Status.h"
+#include "cache.hxx"
+
+#include <boost/intrusive/list.hpp>
+
+#include <unordered_map>
+#include <string>
 
 #include <stddef.h>
 
@@ -59,9 +65,23 @@ class HttpCacheHeap {
 
 	Cache cache;
 
+	using PerTagHook =
+		boost::intrusive::member_hook<HttpCacheItem,
+					      HttpCacheItem::PerTagHook,
+					      &HttpCacheItem::per_tag_siblings>;
+	using PerTagList =
+		boost::intrusive::list<HttpCacheItem, PerTagHook,
+				       boost::intrusive::constant_time_size<false>>;
+
+	/**
+	 * Lookup table to speed up FlushTag().
+	 */
+	std::unordered_map<std::string, PerTagList> per_tag;
+
 public:
 	HttpCacheHeap(struct pool &pool, EventLoop &event_loop,
 		      size_t max_size) noexcept;
+	~HttpCacheHeap() noexcept;
 
 	Rubber &GetRubber() noexcept {
 		return rubber;
@@ -75,7 +95,7 @@ public:
 	HttpCacheDocument *Get(const char *uri,
 			       StringMap &request_headers) noexcept;
 
-	void Put(const char *url,
+	void Put(const char *url, const char *tag,
 		 const HttpCacheResponseInfo &info,
 		 StringMap &request_headers,
 		 http_status_t status,
@@ -87,6 +107,7 @@ public:
 
 	void Compress() noexcept;
 	void Flush() noexcept;
+	void FlushTag(const std::string &tag) noexcept;
 
 	static void Lock(HttpCacheDocument &document) noexcept;
 	void Unlock(HttpCacheDocument &document) noexcept;
