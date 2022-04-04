@@ -190,13 +190,14 @@ public:
 
 	void Start(ResourceLoader &resource_loader,
 		   const StopwatchPtr &parent_stopwatch,
+		   const char *cache_tag,
 		   const ResourceAddress &address,
 		   http_status_t status, StringMap &&headers,
 		   UnusedIstreamPtr body, const char *body_etag,
 		   CancellablePointer &caller_cancel_ptr) noexcept {
 		caller_cancel_ptr = *this;
 		resource_loader.SendRequest(pool, parent_stopwatch,
-					    0, nullptr, nullptr,
+					    {0, cache_tag, nullptr},
 					    HTTP_METHOD_POST, address,
 					    status, std::move(headers),
 					    std::move(body), body_etag,
@@ -727,7 +728,8 @@ FilterCache::Miss(struct pool &caller_pool,
 
 	LogConcat(4, "FilterCache", "miss ", info.key);
 
-	request->Start(resource_loader, parent_stopwatch, address,
+	request->Start(resource_loader, parent_stopwatch, info.tag,
+		       address,
 		       status, std::move(headers),
 		       std::move(body), body_etag,
 		       cancel_ptr);
@@ -793,7 +795,7 @@ FilterCache::Get(struct pool &caller_pool,
 		}
 	} else {
 		resource_loader.SendRequest(caller_pool, parent_stopwatch,
-					    0, cache_tag, nullptr,
+					    {0, cache_tag, nullptr},
 					    HTTP_METHOD_POST, address,
 					    status, std::move(headers),
 					    std::move(body), source_id,

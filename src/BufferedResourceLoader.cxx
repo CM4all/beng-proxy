@@ -46,9 +46,7 @@ class PostponedRequest {
 	struct pool &pool;
 	ResourceLoader &next;
 	const StopwatchPtr parent_stopwatch;
-	const sticky_hash_t sticky_hash;
-	const char *const cache_tag;
-	const char *const site_name;
+	const ResourceRequestParams params;
 	const http_method_t method;
 	const ResourceAddress &address;
 	const http_status_t status;
@@ -61,9 +59,7 @@ class PostponedRequest {
 public:
 	PostponedRequest(struct pool &_pool, ResourceLoader &_next,
 			 const StopwatchPtr &_parent_stopwatch,
-			 sticky_hash_t _sticky_hash,
-			 const char *_cache_tag,
-			 const char *_site_name,
+			 const ResourceRequestParams &_params,
 			 http_method_t _method,
 			 const ResourceAddress &_address,
 			 http_status_t _status, StringMap &&_headers,
@@ -72,9 +68,7 @@ public:
 			 CancellablePointer &_caller_cancel_ptr) noexcept
 		:pool(_pool),
 		 next(_next), parent_stopwatch(_parent_stopwatch),
-		 sticky_hash(_sticky_hash),
-		 cache_tag(_cache_tag),
-		 site_name(_site_name),
+		 params(_params),
 		 method(_method), address(_address),
 		 status(_status),
 		 /* copy the headers, because they may come from a
@@ -95,8 +89,7 @@ public:
 	}
 
 	void Send(UnusedIstreamPtr body) noexcept {
-		next.SendRequest(pool, parent_stopwatch,
-				 sticky_hash, cache_tag, site_name,
+		next.SendRequest(pool, parent_stopwatch, params,
 				 method, address, status, std::move(headers),
 				 std::move(body), body_etag,
 				 handler, caller_cancel_ptr);
@@ -115,9 +108,7 @@ class BufferedResourceLoader::Request final
 public:
 	Request(struct pool &_pool, ResourceLoader &_next,
 		const StopwatchPtr &_parent_stopwatch,
-		sticky_hash_t _sticky_hash,
-		const char *_cache_tag,
-		const char *_site_name,
+		const ResourceRequestParams &_params,
 		http_method_t _method, const ResourceAddress &_address,
 		http_status_t _status, StringMap &&_headers,
 		const char *_body_etag,
@@ -125,9 +116,7 @@ public:
 		CancellablePointer &caller_cancel_ptr) noexcept
 		:PoolLeakDetector(_pool),
 		 postponed_request(_pool, _next,
-				   _parent_stopwatch,
-				   _sticky_hash,
-				   _cache_tag, _site_name,
+				   _parent_stopwatch, _params,
 				   _method, _address,
 				   _status, std::move(_headers),
 				   _body_etag, _handler, caller_cancel_ptr)
@@ -175,9 +164,7 @@ private:
 void
 BufferedResourceLoader::SendRequest(struct pool &pool,
 				    const StopwatchPtr &parent_stopwatch,
-				    sticky_hash_t sticky_hash,
-				    const char *cache_tag,
-				    const char *site_name,
+				    const ResourceRequestParams &params,
 				    http_method_t method,
 				    const ResourceAddress &address,
 				    http_status_t status, StringMap &&headers,
@@ -187,15 +174,14 @@ BufferedResourceLoader::SendRequest(struct pool &pool,
 {
 	if (body) {
 		auto *request = NewFromPool<Request>(pool, pool, next, parent_stopwatch,
-						     sticky_hash,
-						     cache_tag, site_name,
+						     params,
 						     method, address,
 						     status, std::move(headers),
 						     body_etag, handler, cancel_ptr);
 		request->Start(event_loop, pipe_stock, std::move(body));
 	} else {
 		next.SendRequest(pool, parent_stopwatch,
-				 sticky_hash, cache_tag, site_name,
+				 params,
 				 method, address, status, std::move(headers),
 				 std::move(body), body_etag,
 				 handler, cancel_ptr);

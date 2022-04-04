@@ -168,9 +168,7 @@ public:
 	/* virtual methods from class ResourceLoader */
 	void SendRequest(struct pool &pool,
 			 const StopwatchPtr &parent_stopwatch,
-			 sticky_hash_t,
-			 const char *cache_tag,
-			 const char *site_name,
+			 const ResourceRequestParams &params,
 			 http_method_t method,
 			 const ResourceAddress &address,
 			 http_status_t status, StringMap &&headers,
@@ -182,9 +180,7 @@ public:
 void
 MyResourceLoader::SendRequest(struct pool &pool,
 			      const StopwatchPtr &,
-			      sticky_hash_t,
-			      const char *,
-			      const char *,
+			      const ResourceRequestParams &,
 			      http_method_t method,
 			      const ResourceAddress &,
 			      http_status_t,

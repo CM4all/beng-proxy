@@ -122,8 +122,11 @@ Request::HandleProxyAddress() noexcept
 		: *instance.cached_resource_loader;
 
 	rl.SendRequest(pool, stopwatch,
-		       session_id.GetClusterHash(),
-		       tr.cache_tag, tr.site,
+		       {
+			       session_id.GetClusterHash(),
+			       tr.cache_tag,
+			       tr.site,
+		       },
 		       forward.method, address, HTTP_STATUS_OK,
 		       std::move(forward.headers),
 		       std::move(forward.body),

@@ -674,8 +674,11 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 	}
 
 	rl.SendRequest(pool, stopwatch,
-		       session_id.GetClusterHash(),
-		       nullptr, nullptr,
+		       {
+			       session_id.GetClusterHash(),
+			       nullptr,
+			       nullptr,
+		       },
 		       method, response.address,
 		       pr.status,
 		       std::move(pr.headers).ToMap(pool),

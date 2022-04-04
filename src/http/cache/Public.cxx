@@ -240,9 +240,7 @@ public:
 
 	void Start(struct pool &caller_pool,
 		   const StopwatchPtr &parent_stopwatch,
-		   sticky_hash_t sticky_hash,
-		   const char *cache_tag,
-		   const char *site_name,
+		   const ResourceRequestParams &params,
 		   http_method_t method,
 		   const ResourceAddress &address,
 		   StringMap &&headers, UnusedIstreamPtr body,
@@ -286,9 +284,7 @@ public:
 	 */
 	void Use(struct pool &caller_pool,
 		 const StopwatchPtr &parent_stopwatch,
-		 sticky_hash_t sticky_hash,
-		 const char *cache_tag,
-		 const char *site_name,
+		 const ResourceRequestParams &params,
 		 http_method_t method,
 		 const ResourceAddress &address,
 		 StringMap &&headers,
@@ -314,9 +310,7 @@ private:
 	 */
 	void Miss(struct pool &caller_pool,
 		  const StopwatchPtr &parent_stopwatch,
-		  sticky_hash_t sticky_hash,
-		  const char *cache_tag,
-		  const char *site_name,
+		  const ResourceRequestParams &params,
 		  const HttpCacheRequestInfo &info,
 		  http_method_t method,
 		  const ResourceAddress &address,
@@ -331,9 +325,7 @@ private:
 	 */
 	void Revalidate(struct pool &caller_pool,
 			const StopwatchPtr &parent_stopwatch,
-			sticky_hash_t sticky_hash,
-			const char *cache_tag,
-			const char *site_name,
+			const ResourceRequestParams &params,
 			const HttpCacheRequestInfo &info,
 			HttpCacheDocument &document,
 			http_method_t method,
@@ -353,9 +345,7 @@ private:
 		   HttpCacheDocument &document,
 		   struct pool &caller_pool,
 		   const StopwatchPtr &parent_stopwatch,
-		   sticky_hash_t sticky_hash,
-		   const char *cache_tag,
-		   const char *site_name,
+		   const ResourceRequestParams &params,
 		   http_method_t method,
 		   const ResourceAddress &address,
 		   StringMap &&headers,
@@ -728,9 +718,7 @@ http_cache_flush_tag(HttpCache &cache, const std::string &tag) noexcept
 void
 HttpCache::Miss(struct pool &caller_pool,
 		const StopwatchPtr &parent_stopwatch,
-		sticky_hash_t sticky_hash,
-		const char *cache_tag,
-		const char *site_name,
+		const ResourceRequestParams &params,
 		const HttpCacheRequestInfo &info,
 		http_method_t method,
 		const ResourceAddress &address,
@@ -750,7 +738,7 @@ HttpCache::Miss(struct pool &caller_pool,
 
 	auto request =
 		NewFromPool<HttpCacheRequest>(std::move(request_pool), caller_pool,
-					      cache_tag,
+					      params.cache_tag,
 					      *this,
 					      address,
 					      headers,
@@ -760,8 +748,7 @@ HttpCache::Miss(struct pool &caller_pool,
 	LogConcat(4, "HttpCache", "miss ", request->key);
 
 	resource_loader.SendRequest(request->GetPool(), parent_stopwatch,
-				    sticky_hash,
-				    cache_tag, site_name,
+				    params,
 				    method, address,
 				    HTTP_STATUS_OK, std::move(headers),
 				    nullptr, nullptr,
@@ -888,9 +875,7 @@ HttpCacheRequest::Serve() noexcept
 void
 HttpCache::Revalidate(struct pool &caller_pool,
 		      const StopwatchPtr &parent_stopwatch,
-		      sticky_hash_t sticky_hash,
-		      const char *cache_tag,
-		      const char *site_name,
+		      const ResourceRequestParams &params,
 		      const HttpCacheRequestInfo &info,
 		      HttpCacheDocument &document,
 		      http_method_t method,
@@ -905,7 +890,7 @@ HttpCache::Revalidate(struct pool &caller_pool,
 
 	auto request =
 		NewFromPool<HttpCacheRequest>(std::move(request_pool), caller_pool,
-					      cache_tag,
+					      params.cache_tag,
 					      *this,
 					      address,
 					      headers,
@@ -926,8 +911,7 @@ HttpCache::Revalidate(struct pool &caller_pool,
 			    "if-none-match", document.info.etag);
 
 	resource_loader.SendRequest(request->GetPool(), parent_stopwatch,
-				    sticky_hash,
-				    cache_tag, site_name,
+				    params,
 				    method, address,
 				    HTTP_STATUS_OK, std::move(headers),
 				    nullptr, nullptr,
@@ -950,9 +934,7 @@ HttpCache::Found(const HttpCacheRequestInfo &info,
 		 HttpCacheDocument &document,
 		 struct pool &caller_pool,
 		 const StopwatchPtr &parent_stopwatch,
-		 sticky_hash_t sticky_hash,
-		 const char *cache_tag,
-		 const char *site_name,
+		 const ResourceRequestParams &params,
 		 http_method_t method,
 		 const ResourceAddress &address,
 		 StringMap &&headers,
@@ -968,7 +950,7 @@ HttpCache::Found(const HttpCacheRequestInfo &info,
 		      handler);
 	else
 		Revalidate(caller_pool, parent_stopwatch,
-			   sticky_hash, cache_tag, site_name,
+			   params,
 			   info, document,
 			   method, address, std::move(headers),
 			   handler, cancel_ptr);
@@ -977,9 +959,7 @@ HttpCache::Found(const HttpCacheRequestInfo &info,
 void
 HttpCache::Use(struct pool &caller_pool,
 	       const StopwatchPtr &parent_stopwatch,
-	       sticky_hash_t sticky_hash,
-	       const char *cache_tag,
-	       const char *site_name,
+	       const ResourceRequestParams &params,
 	       http_method_t method,
 	       const ResourceAddress &address,
 	       StringMap &&headers,
@@ -991,12 +971,12 @@ HttpCache::Use(struct pool &caller_pool,
 
 	if (document == nullptr)
 		Miss(caller_pool, parent_stopwatch,
-		     sticky_hash, cache_tag, site_name, info,
+		     params, info,
 		     method, address, std::move(headers),
 		     handler, cancel_ptr);
 	else
 		Found(info, *document, caller_pool, parent_stopwatch,
-		      sticky_hash, cache_tag, site_name,
+		      params,
 		      method, address, std::move(headers),
 		      handler, cancel_ptr);
 }
@@ -1004,9 +984,7 @@ HttpCache::Use(struct pool &caller_pool,
 inline void
 HttpCache::Start(struct pool &caller_pool,
 		 const StopwatchPtr &parent_stopwatch,
-		 sticky_hash_t sticky_hash,
-		 const char *cache_tag,
-		 const char *site_name,
+		 const ResourceRequestParams &params,
 		 http_method_t method,
 		 const ResourceAddress &address,
 		 StringMap &&headers, UnusedIstreamPtr body,
@@ -1022,8 +1000,7 @@ HttpCache::Start(struct pool &caller_pool,
 	       cache space anyway */
 	    strlen(key) > 8192) {
 		resource_loader.SendRequest(caller_pool, parent_stopwatch,
-					    sticky_hash,
-					    nullptr, site_name,
+					    params,
 					    method, address,
 					    HTTP_STATUS_OK, std::move(headers),
 					    std::move(body), nullptr,
@@ -1035,8 +1012,7 @@ HttpCache::Start(struct pool &caller_pool,
 						    obey_no_cache, body)) {
 		assert(!body);
 
-		Use(caller_pool, parent_stopwatch,
-		    sticky_hash, cache_tag, site_name,
+		Use(caller_pool, parent_stopwatch, params,
 		    method, address, std::move(headers), *info,
 		    handler, cancel_ptr);
 	} else {
@@ -1046,8 +1022,7 @@ HttpCache::Start(struct pool &caller_pool,
 		LogConcat(4, "HttpCache", "ignore ", key);
 
 		resource_loader.SendRequest(caller_pool, parent_stopwatch,
-					    sticky_hash,
-					    cache_tag, site_name,
+					    params,
 					    method, address,
 					    HTTP_STATUS_OK, std::move(headers),
 					    std::move(body), nullptr,
@@ -1059,17 +1034,14 @@ void
 http_cache_request(HttpCache &cache,
 		   struct pool &pool,
 		   const StopwatchPtr &parent_stopwatch,
-		   sticky_hash_t sticky_hash,
-		   const char *cache_tag,
-		   const char *site_name,
+		   const ResourceRequestParams &params,
 		   http_method_t method,
 		   const ResourceAddress &address,
 		   StringMap &&headers, UnusedIstreamPtr body,
 		   HttpResponseHandler &handler,
 		   CancellablePointer &cancel_ptr) noexcept
 {
-	cache.Start(pool, parent_stopwatch,
-		    sticky_hash, cache_tag, site_name,
+	cache.Start(pool, parent_stopwatch, params,
 		    method, address, std::move(headers), std::move(body),
 		    handler, cancel_ptr);
 }

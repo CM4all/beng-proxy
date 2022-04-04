@@ -146,9 +146,7 @@ public:
 	/* virtual methods from class ResourceLoader */
 	void SendRequest(struct pool &pool,
 			 const StopwatchPtr &parent_stopwatch,
-			 sticky_hash_t sticky_hash,
-			 const char *cache_tag,
-			 const char *site_name,
+			 const ResourceRequestParams &params,
 			 http_method_t method,
 			 const ResourceAddress &address,
 			 http_status_t status, StringMap &&headers,
@@ -160,9 +158,7 @@ public:
 void
 MyResourceLoader::SendRequest(struct pool &pool,
 			      const StopwatchPtr &,
-			      sticky_hash_t,
-			      const char *,
-			      const char *,
+			      const ResourceRequestParams &,
 			      http_method_t method,
 			      const ResourceAddress &,
 			      http_status_t,
@@ -252,7 +248,7 @@ run_cache_test(Instance &instance, const Request &request, bool cached)
 					     instance.event_loop);
 
 	http_cache_request(*instance.cache, pool, nullptr,
-			   0, request.tag, nullptr,
+			   {0, request.tag, nullptr},
 			   request.method, address,
 			   std::move(headers), nullptr,
 			   handler, cancel_ptr);

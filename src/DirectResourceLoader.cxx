@@ -95,9 +95,7 @@ extract_remote_ip(struct pool &pool, const StringMap &headers) noexcept
 void
 DirectResourceLoader::SendRequest(struct pool &pool,
 				  const StopwatchPtr &parent_stopwatch,
-				  sticky_hash_t sticky_hash,
-				  gcc_unused const char *cache_tag,
-				  const char *site_name,
+				  const ResourceRequestParams &params,
 				  http_method_t method,
 				  const ResourceAddress &address,
 				  http_status_t status, StringMap &&headers,
@@ -190,7 +188,7 @@ try {
 
 		if (cgi->address_list.IsEmpty())
 			fcgi_request(&pool, event_loop, fcgi_stock, parent_stopwatch,
-				     site_name,
+				     params.site_name,
 				     cgi->options,
 				     cgi->action,
 				     cgi->path,
@@ -229,7 +227,7 @@ try {
 
 		if (cgi->concurrency == 0)
 			was_request(pool, *was_stock, parent_stopwatch,
-				    site_name,
+				    params.site_name,
 				    cgi->options,
 				    cgi->action,
 				    cgi->path,
@@ -255,7 +253,7 @@ try {
 					     handler, cancel_ptr);
 		else
 			SendMultiWasRequest(pool, *multi_was_stock, parent_stopwatch,
-					    site_name,
+					    params.site_name,
 					    cgi->options,
 					    cgi->action,
 					    cgi->path,
@@ -275,7 +273,7 @@ try {
 
 	case ResourceAddress::Type::HTTP:
 		any_http_client.SendRequest(pool, parent_stopwatch,
-					    sticky_hash,
+					    params.sticky_hash,
 					    method, address.GetHttp(),
 					    std::move(headers),
 					    std::move(body),
@@ -285,7 +283,7 @@ try {
 	case ResourceAddress::Type::LHTTP:
 		lhttp_request(pool, event_loop, *lhttp_stock,
 			      parent_stopwatch,
-			      site_name,
+			      params.site_name,
 			      address.GetLhttp(),
 			      method, std::move(headers),
 			      std::move(body),

@@ -45,6 +45,33 @@ class HttpResponseHandler;
 class CancellablePointer;
 
 /**
+ * Container for various additional parameters passed to
+ * ResourceLoader::SendRequest().  Having this in a separate struct
+ * unclutters the #ResourceLoader interface and allows adding more
+ * parameters easily.
+ */
+struct ResourceRequestParams {
+	/**
+	 * A portion of the session id that is used to select
+	 * the worker; 0 means disable stickiness.
+	 */
+	sticky_hash_t sticky_hash;
+
+	/**
+	 * An opaque tag string to be assigned to the cache
+	 * item (if the response is going to be cached by the
+	 * #ResourceLoader); may be nullptr.
+	 */
+	const char *cache_tag;
+
+	/**
+	 * The name of the site this request belongs to; may
+	 * be nullptr.
+	 */
+	const char *site_name;
+};
+
+/**
  * Load resources specified by a resource_address.
  */
 class ResourceLoader {
@@ -52,15 +79,6 @@ public:
 	/**
 	 * Requests a resource.
 	 *
-	 * @param sticky_hash a portion of the session id that is used to
-	 * select the worker; 0 means disable stickiness
-	 *
-	 * @param cache_tag an opaque tag string to be assigned to the
-	 * cache item (if the response is going to be cached by the
-	 * #ResourceLoader); may be nullptr
-	 *
-	 * @param site_name the name of the site this request belongs to;
-	 * may be nullptr
 	 * @param address the address of the resource
 	 * @param status a HTTP status code for protocols which do have one
 	 * @param body the request body
@@ -69,9 +87,7 @@ public:
 	 */
 	virtual void SendRequest(struct pool &pool,
 				 const StopwatchPtr &parent_stopwatch,
-				 sticky_hash_t sticky_hash,
-				 const char *cache_tag,
-				 const char *site_name,
+				 const ResourceRequestParams &params,
 				 http_method_t method,
 				 const ResourceAddress &address,
 				 http_status_t status, StringMap &&headers,

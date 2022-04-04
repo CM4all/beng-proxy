@@ -71,8 +71,7 @@ Request::DispatchErrdocResponse(ConstBuffer<void> error_document)
 
 	const auto response = co_await
 		CoLoadResource(*instance.cached_resource_loader, pool,
-			       stopwatch,
-			       0, nullptr, nullptr,
+			       stopwatch, {},
 			       HTTP_METHOD_GET,
 			       t.address, HTTP_STATUS_OK,
 			       {}, nullptr, nullptr);

@@ -313,9 +313,11 @@ WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body) noex
 
 	ctx->resource_loader.SendRequest(pool,
 					 parent_stopwatch,
-					 ctx->session_id.GetClusterHash(),
-					 nullptr,
-					 ctx->site_name,
+					 {
+						 ctx->session_id.GetClusterHash(),
+						 nullptr,
+						 ctx->site_name,
+					 },
 					 HTTP_METHOD_GET, address, HTTP_STATUS_OK,
 					 MakeRequestHeaders(*view, *t_view,
 							    address.IsAnyHttp(),
@@ -463,9 +465,11 @@ WidgetRequest::FilterResponse(http_status_t status,
 	ctx->filter_resource_loader
 		.SendRequest(pool,
 			     parent_stopwatch,
-			     ctx->session_id.GetClusterHash(),
-			     filter.cache_tag,
-			     ctx->site_name,
+			     {
+				     ctx->session_id.GetClusterHash(),
+				     filter.cache_tag,
+				     ctx->site_name,
+			     },
 			     HTTP_METHOD_POST, filter.address, status,
 			     std::move(headers), std::move(body), source_tag,
 			     *this,
@@ -759,9 +763,11 @@ WidgetRequest::SendRequest() noexcept
 	}
 
 	ctx->resource_loader.SendRequest(pool, parent_stopwatch,
-					 ctx->session_id.GetClusterHash(),
-					 nullptr,
-					 ctx->site_name,
+					 {
+						 ctx->session_id.GetClusterHash(),
+						 nullptr,
+						 ctx->site_name,
+					 },
 					 widget.from_request.method,
 					 address, HTTP_STATUS_OK,
 					 std::move(headers),
