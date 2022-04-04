@@ -680,6 +680,7 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
 		->SendRequest(pool, stopwatch,
 			      {
 				      session_id.GetClusterHash(),
+				      false,
 				      filter.cache_tag,
 				      translate.response->site,
 			      },

@@ -4,6 +4,7 @@ cm4all-beng-proxy (17.0.86) unstable; urgency=low
   * lhttp: don't stop process after last connection closed
   * lb: add listener option "max_connections_per_ip"
   * bp: support CACHE_TAG in the HTTP cache
+  * translation: add packet EAGER_CACHE
   * control: add command FLUSH_HTTP_CACHE
 
  --   

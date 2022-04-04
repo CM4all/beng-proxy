@@ -118,7 +118,10 @@ public:
 
 	CancellablePointer cancel_ptr;
 
+	const bool eager_cache;
+
 	HttpCacheRequest(PoolPtr &&_pool, struct pool &_caller_pool,
+			 bool _eager_cache,
 			 const char *_cache_tag,
 			 HttpCache &_cache,
 			 const ResourceAddress &_address,
@@ -466,6 +469,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
 		if (auto _info = http_cache_response_evaluate(request_info,
 							      alloc,
+							      eager_cache,
 							      HTTP_STATUS_OK,
 							      _headers, -1);
 		    _info && _info->expires >= GetEventLoop().SystemNow()) {
@@ -516,6 +520,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 		: 0;
 
 	if (auto _info = http_cache_response_evaluate(request_info, alloc,
+						      eager_cache,
 						      status, _headers,
 						      available);
 	    _info) {
@@ -623,6 +628,7 @@ HttpCacheRequest::Cancel() noexcept
 
 HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 				   struct pool &_caller_pool,
+				   bool _eager_cache,
 				   const char *_cache_tag,
 				   HttpCache &_cache,
 				   const ResourceAddress &address,
@@ -636,7 +642,9 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 	 key(http_cache_key(pool, address)),
 	 headers(pool, _headers),
 	 handler(_handler),
-	 request_info(_request_info) {
+	 request_info(_request_info),
+	 eager_cache(_eager_cache)
+{
 	_cancel_ptr = *this;
 }
 
@@ -744,6 +752,7 @@ HttpCache::Miss(struct pool &caller_pool,
 
 	auto request =
 		NewFromPool<HttpCacheRequest>(std::move(request_pool), caller_pool,
+					      params.eager_cache,
 					      params.cache_tag,
 					      *this,
 					      address,
@@ -896,6 +905,7 @@ HttpCache::Revalidate(struct pool &caller_pool,
 
 	auto request =
 		NewFromPool<HttpCacheRequest>(std::move(request_pool), caller_pool,
+					      params.eager_cache,
 					      params.cache_tag,
 					      *this,
 					      address,

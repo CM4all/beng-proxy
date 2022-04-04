@@ -248,7 +248,7 @@ run_cache_test(Instance &instance, const Request &request, bool cached)
 					     instance.event_loop);
 
 	http_cache_request(*instance.cache, pool, nullptr,
-			   {0, request.tag, nullptr},
+			   {0, false, request.tag, nullptr},
 			   request.method, address,
 			   std::move(headers), nullptr,
 			   handler, cancel_ptr);

@@ -84,6 +84,7 @@ http_cache_request_invalidate(http_method_t method) noexcept;
 std::optional<HttpCacheResponseInfo>
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 			     AllocatorPtr alloc,
+			     bool eager_cache,
 			     http_status_t status, const StringMap &headers,
 			     off_t body_available) noexcept;
 

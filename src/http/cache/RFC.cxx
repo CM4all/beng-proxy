@@ -188,6 +188,7 @@ GetServerDateOffset(const HttpCacheRequestInfo &request_info,
 std::optional<HttpCacheResponseInfo>
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 			     AllocatorPtr alloc,
+			     bool eager_cache,
 			     http_status_t status, const StringMap &headers,
 			     off_t body_available) noexcept
 {
@@ -250,6 +251,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 	}
 
 	if (request_info.has_query_string &&
+	    !eager_cache &&
 	    info.expires == std::chrono::system_clock::from_time_t(-1))
 		/* RFC 2616 13.9: "since some applications have traditionally
 		   used GETs and HEADs with query URLs (those containing a "?"
@@ -285,8 +287,13 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 
 	if (info.expires == std::chrono::system_clock::from_time_t(-1) &&
 	    info.last_modified == nullptr &&
-	    info.etag == nullptr)
-		return std::nullopt;
+	    info.etag == nullptr) {
+		if (eager_cache)
+			// TODO
+			info.expires = std::chrono::system_clock::now() + std::chrono::hours(1);
+		else
+			return std::nullopt;
+	}
 
 	return info;
 }

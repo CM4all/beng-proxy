@@ -124,6 +124,7 @@ Request::HandleProxyAddress() noexcept
 	rl.SendRequest(pool, stopwatch,
 		       {
 			       session_id.GetClusterHash(),
+			       tr.eager_cache,
 			       tr.cache_tag,
 			       tr.site,
 		       },
