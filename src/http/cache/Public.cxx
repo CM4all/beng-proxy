@@ -51,7 +51,6 @@
 #include "event/FarTimerEvent.hxx"
 #include "event/Loop.hxx"
 #include "io/Logger.hxx"
-#include "util/Background.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "util/RuntimeError.hxx"
@@ -193,8 +192,6 @@ class HttpCache {
 							     HttpCacheRequest::SiblingsHook,
 							     &HttpCacheRequest::siblings>,
 			       boost::intrusive::constant_time_size<false>> requests;
-
-	BackgroundManager background;
 
 	const bool obey_no_cache;
 
@@ -696,8 +693,6 @@ inline
 HttpCache::~HttpCache() noexcept
 {
 	requests.clear_and_dispose(std::mem_fn(&HttpCacheRequest::AbortRubberStore));
-
-	background.AbortAll();
 }
 
 void
