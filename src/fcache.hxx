@@ -34,6 +34,8 @@
 
 #include "http/Status.h"
 
+#include <string>
+
 struct pool;
 class StopwatchPtr;
 class UnusedIstreamPtr;
@@ -68,7 +70,7 @@ void
 filter_cache_flush(FilterCache &cache) noexcept;
 
 void
-filter_cache_flush_tag(FilterCache &cache, const char *tag) noexcept;
+filter_cache_flush_tag(FilterCache &cache, const std::string &tag) noexcept;
 
 /**
  * @param source_id uniquely identifies the source; NULL means disable

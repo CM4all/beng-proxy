@@ -292,7 +292,7 @@ public:
 		Compress();
 	}
 
-	void FlushTag(const char *tag) noexcept;
+	void FlushTag(const std::string &tag) noexcept;
 
 	void Get(struct pool &caller_pool,
 		 const StopwatchPtr &parent_stopwatch,
@@ -690,7 +690,7 @@ filter_cache_flush(FilterCache &cache) noexcept
 }
 
 void
-FilterCache::FlushTag(const char *tag) noexcept
+FilterCache::FlushTag(const std::string &tag) noexcept
 {
 	auto i = per_tag.find(tag);
 	if (i == per_tag.end())
@@ -702,7 +702,7 @@ FilterCache::FlushTag(const char *tag) noexcept
 }
 
 void
-filter_cache_flush_tag(FilterCache &cache, const char *tag) noexcept
+filter_cache_flush_tag(FilterCache &cache, const std::string &tag) noexcept
 {
 	cache.FlushTag(tag);
 }

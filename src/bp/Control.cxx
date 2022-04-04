@@ -191,7 +191,7 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 			else
 				filter_cache_flush_tag(*filter_cache,
 						       std::string((const char *)payload.data,
-								   payload.size).c_str());
+								   payload.size));
 		}
 
 		break;
