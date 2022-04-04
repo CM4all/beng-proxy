@@ -364,6 +364,7 @@ LbControl::OnControlPacket(ControlServer &control_server,
 	case ControlCommand::FLUSH_FILTER_CACHE:
 	case ControlCommand::STOPWATCH_PIPE:
 	case ControlCommand::DISCARD_SESSION:
+	case ControlCommand::FLUSH_HTTP_CACHE:
 		/* not applicable */
 		break;
 	}

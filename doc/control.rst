@@ -96,6 +96,11 @@ Commands
   payload is given, then this is a tag which flushes only cache items
   with the given :ref:`CACHE_TAG <cache_tag>`.
 
+.. _flush_http_cache:
+
+- ``FLUSH_HTTP_CACHE``: Flush all items from the HTTP cache with the
+  given :ref:`CACHE_TAG <cache_tag>`.
+
 .. _discard_session:
 
 - ``DISCARD_SESSION``: Discard the session with the given

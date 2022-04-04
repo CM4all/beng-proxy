@@ -144,6 +144,11 @@ enum class ControlCommand {
      * #TranslationCommand::ATTACH_SESSION value.
      */
     DISCARD_SESSION = 14,
+
+    /**
+     * Drop items from the HTTP cache with the given tag.
+     */
+    FLUSH_HTTP_CACHE = 15,
 };
 
 struct ControlStats {

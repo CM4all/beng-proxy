@@ -34,6 +34,7 @@
 #include "Instance.hxx"
 #include "session/Manager.hxx"
 #include "fcache.hxx"
+#include "http/cache/Public.hxx"
 #include "nfs/Cache.hxx"
 #include "control/Server.hxx"
 #include "control/Local.hxx"
@@ -203,6 +204,14 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 	case ControlCommand::DISCARD_SESSION:
 		if (!payload.empty() && session_manager)
 			session_manager->DiscardAttachSession(ConstBuffer<std::byte>::FromVoid(payload));
+		break;
+
+	case ControlCommand::FLUSH_HTTP_CACHE:
+		if (http_cache != nullptr)
+			http_cache_flush_tag(*http_cache,
+					     std::string((const char *)payload.data,
+							 payload.size));
+
 		break;
 	}
 }
