@@ -77,15 +77,12 @@ public:
 
 	PoolPtr caller_pool;
 
-	const sticky_hash_t sticky_hash;
 	const char *const cache_tag;
 
 	/**
 	 * The cache object which got this request.
 	 */
 	HttpCache &cache;
-	const http_method_t method;
-	const ResourceAddress address;
 
 	/**
 	 * The cache key used to address the associated cache document.
@@ -123,10 +120,8 @@ public:
 	CancellablePointer cancel_ptr;
 
 	HttpCacheRequest(PoolPtr &&_pool, struct pool &_caller_pool,
-			 sticky_hash_t _sticky_hash,
 			 const char *_cache_tag,
 			 HttpCache &_cache,
-			 http_method_t _method,
 			 const ResourceAddress &_address,
 			 const StringMap &_headers,
 			 HttpResponseHandler &_handler,
@@ -635,21 +630,16 @@ HttpCacheRequest::Cancel() noexcept
 
 HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 				   struct pool &_caller_pool,
-				   sticky_hash_t _sticky_hash,
 				   const char *_cache_tag,
 				   HttpCache &_cache,
-				   http_method_t _method,
-				   const ResourceAddress &_address,
+				   const ResourceAddress &address,
 				   const StringMap &_headers,
 				   HttpResponseHandler &_handler,
 				   const HttpCacheRequestInfo &_request_info,
 				   CancellablePointer &_cancel_ptr) noexcept
 	:PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
-	 sticky_hash(_sticky_hash),
 	 cache_tag(_cache_tag),
 	 cache(_cache),
-	 method(_method),
-	 address((AllocatorPtr)pool, _address),
 	 key(http_cache_key(pool, address)),
 	 headers(pool, _headers),
 	 handler(_handler),
@@ -765,9 +755,9 @@ HttpCache::Miss(struct pool &caller_pool,
 
 	auto request =
 		NewFromPool<HttpCacheRequest>(std::move(request_pool), caller_pool,
-					      sticky_hash, cache_tag,
+					      cache_tag,
 					      *this,
-					      method, address,
+					      address,
 					      headers,
 					      handler,
 					      info, cancel_ptr);
@@ -920,9 +910,9 @@ HttpCache::Revalidate(struct pool &caller_pool,
 
 	auto request =
 		NewFromPool<HttpCacheRequest>(std::move(request_pool), caller_pool,
-					      sticky_hash, cache_tag,
+					      cache_tag,
 					      *this,
-					      method, address,
+					      address,
 					      headers,
 					      handler,
 					      info, cancel_ptr);
