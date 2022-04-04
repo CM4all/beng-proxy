@@ -77,14 +77,14 @@ public:
 
 	PoolPtr caller_pool;
 
-	sticky_hash_t sticky_hash;
-	const char *site_name;
+	const sticky_hash_t sticky_hash;
+	const char *const site_name;
 
 	/**
 	 * The cache object which got this request.
 	 */
 	HttpCache &cache;
-	http_method_t method;
+	const http_method_t method;
 	const ResourceAddress address;
 
 	/**
@@ -97,7 +97,7 @@ public:
 
 	HttpResponseHandler &handler;
 
-	HttpCacheRequestInfo request_info;
+	const HttpCacheRequestInfo request_info;
 
 	/**
 	 * Information on the request passed to http_cache_request().
