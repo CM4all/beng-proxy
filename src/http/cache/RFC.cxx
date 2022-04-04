@@ -185,9 +185,8 @@ GetServerDateOffset(const HttpCacheRequestInfo &request_info,
 	return now - server_date;
 }
 
-bool
+std::optional<HttpCacheResponseInfo>
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
-			     HttpCacheResponseInfo &info,
 			     AllocatorPtr alloc,
 			     http_status_t status, const StringMap &headers,
 			     off_t body_available) noexcept
@@ -195,12 +194,13 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 	const char *p;
 
 	if (!http_status_cacheable(status))
-		return false;
+		return std::nullopt;
 
 	if (body_available != (off_t)-1 && body_available > cacheable_size_limit)
 		/* too large for the cache */
-		return false;
+		return std::nullopt;
 
+	HttpCacheResponseInfo info;
 	info.expires = std::chrono::system_clock::from_time_t(-1);
 	p = headers.Get("cache-control");
 	if (p != nullptr) {
@@ -209,7 +209,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 
 			if (s.StartsWith("private") ||
 			    s.Equals("no-cache") || s.Equals("no-store"))
-				return false;
+				return std::nullopt;
 
 			if (s.StartsWith("max-age=")) {
 				/* RFC 2616 14.9.3 */
@@ -236,7 +236,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 	if (offset == std::chrono::system_clock::duration::min())
 		/* we cannot determine whether to cache a resource if the
 		   server does not provide its system time */
-		return false;
+		return std::nullopt;
 
 	if (info.expires == std::chrono::system_clock::from_time_t(-1)) {
 		/* RFC 2616 14.9.3: "If a response includes both an Expires
@@ -257,7 +257,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 		   significant side effects, caches MUST NOT treat responses
 		   to such URIs as fresh unless the server provides an
 		   explicit expiration time" */
-		return false;
+		return std::nullopt;
 
 	info.last_modified = headers.Get("last-modified");
 	info.etag = headers.Get("etag");
@@ -275,7 +275,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 			   requests on that resource can only be
 			   properly interpreted by the origin
 			   server. */
-			return false;
+			return std::nullopt;
 
 		if (info.vary == nullptr)
 			info.vary = value;
@@ -283,9 +283,12 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 			info.vary = alloc.Concat(info.vary, ", ", value);
 	}
 
-	return info.expires != std::chrono::system_clock::from_time_t(-1) ||
-		info.last_modified != nullptr ||
-		info.etag != nullptr;
+	if (info.expires == std::chrono::system_clock::from_time_t(-1) &&
+	    info.last_modified == nullptr &&
+	    info.etag == nullptr)
+		return std::nullopt;
+
+	return info;
 }
 
 void

@@ -69,8 +69,8 @@ struct HttpCacheResponseInfo {
 	HttpCacheResponseInfo(AllocatorPtr alloc,
 			      const HttpCacheResponseInfo &src) noexcept;
 
-	HttpCacheResponseInfo(const HttpCacheResponseInfo &) = delete;
-	HttpCacheResponseInfo &operator=(const HttpCacheResponseInfo &) = delete;
+	HttpCacheResponseInfo(HttpCacheResponseInfo &&) = default;
+	HttpCacheResponseInfo &operator=(HttpCacheResponseInfo &&) = default;
 
 	void MoveToPool(AllocatorPtr alloc) noexcept;
 };

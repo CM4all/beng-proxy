@@ -464,15 +464,17 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 	if (document != nullptr && status == HTTP_STATUS_NOT_MODIFIED) {
 		assert(!body);
 
-		if (http_cache_response_evaluate(request_info, info, alloc,
-						 HTTP_STATUS_OK, _headers, -1) &&
-		    info.expires >= GetEventLoop().SystemNow()) {
+		if (auto _info = http_cache_response_evaluate(request_info,
+							      alloc,
+							      HTTP_STATUS_OK,
+							      _headers, -1);
+		    _info && _info->expires >= GetEventLoop().SystemNow()) {
 			/* copy the new "Expires" (or "max-age") value from the
 			   "304 Not Modified" response */
 			auto &item = *(HttpCacheItem *)document;
 			item.SetExpires(GetEventLoop().SteadyNow(),
 					GetEventLoop().SystemNow(),
-					info.expires);
+					_info->expires);
 
 			/* TODO: this leaks pool memory each time we update
 			   headers; how to fix this? */
@@ -513,8 +515,12 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 		? body.GetAvailable(true)
 		: 0;
 
-	if (!http_cache_response_evaluate(request_info, info, alloc,
-					  status, _headers, available)) {
+	if (auto _info = http_cache_response_evaluate(request_info, alloc,
+						      status, _headers,
+						      available);
+	    _info) {
+		info = std::move(*_info);
+	} else {
 		/* don't cache response */
 		LogConcat(4, "HttpCache", "nocache ", key);
 

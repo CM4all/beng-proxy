@@ -80,9 +80,9 @@ http_cache_request_invalidate(http_method_t method) noexcept;
 /**
  * Check whether the HTTP response should be put into the cache.
  */
-bool
+[[gnu::pure]]
+std::optional<HttpCacheResponseInfo>
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
-			     HttpCacheResponseInfo &info,
 			     AllocatorPtr alloc,
 			     http_status_t status, const StringMap &headers,
 			     off_t body_available) noexcept;
@@ -99,6 +99,7 @@ http_cache_copy_vary(StringMap &dest, AllocatorPtr alloc, const char *vary,
  * The server sent us a non-"Not Modified" response.  Check if we want
  * to serve the cache item anyway, and discard the server's response.
  */
+[[gnu::pure]]
 bool
 http_cache_prefer_cached(const HttpCacheDocument &document,
 			 const StringMap &response_headers) noexcept;
