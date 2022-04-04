@@ -191,11 +191,15 @@ executable(
   'LaunchLocalHTTP.cxx',
   '../src/PInstance.cxx',
   '../src/pexpand.cxx',
+  '../src/regex.cxx',
   include_directories: inc,
   dependencies: [
+    event_dep,
+    pool_dep,
     net_dep,
     was_client_dep,
     stopwatch_dep,
+    pcre_dep,
   ],
 )
 
