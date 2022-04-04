@@ -40,7 +40,7 @@
 class UnusedIstreamPtr;
 
 class HttpCacheItem final : PoolHolder, public HttpCacheDocument, public CacheItem {
-	size_t size;
+	const size_t size;
 
 	const RubberAllocation body;
 
