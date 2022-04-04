@@ -123,7 +123,7 @@ Request::HandleProxyAddress() noexcept
 
 	rl.SendRequest(pool, stopwatch,
 		       session_id.GetClusterHash(),
-		       nullptr, tr.site,
+		       tr.cache_tag, tr.site,
 		       forward.method, address, HTTP_STATUS_OK,
 		       std::move(forward.headers),
 		       std::move(forward.body),

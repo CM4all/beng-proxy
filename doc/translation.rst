@@ -338,6 +338,9 @@ Response
   tag can be used with :ref:`FLUSH_FILTER_CACHE <flush_filter_cache>`
   to flush only a part of the filter cache.
 
+  Without ``FILTER``, this assigns a tag for the HTTP cache item which
+  can be used with :ref:`FLUSH_HTTP_CACHE <flush_http_cache>`.
+
 - ``REVEAL_USER``: If present after ``FILTER``, then the filter will
   see ``X-CM4all-BENG-User`` as an additional request header (if a user
   is logged in).
