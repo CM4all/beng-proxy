@@ -130,7 +130,7 @@ public:
 			 const ResourceAddress &_address,
 			 const StringMap &_headers,
 			 HttpResponseHandler &_handler,
-			 HttpCacheRequestInfo &_info,
+			 const HttpCacheRequestInfo &_info,
 			 CancellablePointer &_cancel_ptr) noexcept;
 
 	HttpCacheRequest(const HttpCacheRequest &) = delete;
@@ -296,7 +296,7 @@ public:
 		 http_method_t method,
 		 const ResourceAddress &address,
 		 StringMap &&headers,
-		 HttpCacheRequestInfo &info,
+		 const HttpCacheRequestInfo &info,
 		 HttpResponseHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 
@@ -321,7 +321,7 @@ private:
 		  sticky_hash_t sticky_hash,
 		  const char *cache_tag,
 		  const char *site_name,
-		  HttpCacheRequestInfo &info,
+		  const HttpCacheRequestInfo &info,
 		  http_method_t method,
 		  const ResourceAddress &address,
 		  StringMap &&headers,
@@ -338,7 +338,7 @@ private:
 			sticky_hash_t sticky_hash,
 			const char *cache_tag,
 			const char *site_name,
-			HttpCacheRequestInfo &info,
+			const HttpCacheRequestInfo &info,
 			HttpCacheDocument &document,
 			http_method_t method,
 			const ResourceAddress &address,
@@ -353,7 +353,7 @@ private:
 	 * Caller pool is referenced synchronously and freed asynchronously
 	 * (as needed).
 	 */
-	void Found(HttpCacheRequestInfo &info,
+	void Found(const HttpCacheRequestInfo &info,
 		   HttpCacheDocument &document,
 		   struct pool &caller_pool,
 		   const StopwatchPtr &parent_stopwatch,
@@ -638,7 +638,7 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 				   const ResourceAddress &_address,
 				   const StringMap &_headers,
 				   HttpResponseHandler &_handler,
-				   HttpCacheRequestInfo &_request_info,
+				   const HttpCacheRequestInfo &_request_info,
 				   CancellablePointer &_cancel_ptr) noexcept
 	:PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
 	 sticky_hash(_sticky_hash), site_name(_site_name),
@@ -735,7 +735,7 @@ HttpCache::Miss(struct pool &caller_pool,
 		sticky_hash_t sticky_hash,
 		const char *cache_tag,
 		const char *site_name,
-		HttpCacheRequestInfo &info,
+		const HttpCacheRequestInfo &info,
 		http_method_t method,
 		const ResourceAddress &address,
 		StringMap &&headers,
@@ -894,7 +894,7 @@ HttpCache::Revalidate(struct pool &caller_pool,
 		      sticky_hash_t sticky_hash,
 		      const char *cache_tag,
 		      const char *site_name,
-		      HttpCacheRequestInfo &info,
+		      const HttpCacheRequestInfo &info,
 		      HttpCacheDocument &document,
 		      http_method_t method,
 		      const ResourceAddress &address,
@@ -937,9 +937,10 @@ HttpCache::Revalidate(struct pool &caller_pool,
 				    request->cancel_ptr);
 }
 
+[[gnu::pure]]
 static bool
 http_cache_may_serve(EventLoop &event_loop,
-		     HttpCacheRequestInfo &info,
+		     const HttpCacheRequestInfo &info,
 		     const HttpCacheDocument &document) noexcept
 {
 	return info.only_if_cached ||
@@ -947,7 +948,7 @@ http_cache_may_serve(EventLoop &event_loop,
 }
 
 void
-HttpCache::Found(HttpCacheRequestInfo &info,
+HttpCache::Found(const HttpCacheRequestInfo &info,
 		 HttpCacheDocument &document,
 		 struct pool &caller_pool,
 		 const StopwatchPtr &parent_stopwatch,
@@ -984,7 +985,7 @@ HttpCache::Use(struct pool &caller_pool,
 	       http_method_t method,
 	       const ResourceAddress &address,
 	       StringMap &&headers,
-	       HttpCacheRequestInfo &info,
+	       const HttpCacheRequestInfo &info,
 	       HttpResponseHandler &handler,
 	       CancellablePointer &cancel_ptr) noexcept
 {
