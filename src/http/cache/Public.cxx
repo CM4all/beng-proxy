@@ -79,7 +79,6 @@ public:
 
 	const sticky_hash_t sticky_hash;
 	const char *const cache_tag;
-	const char *const site_name;
 
 	/**
 	 * The cache object which got this request.
@@ -126,7 +125,6 @@ public:
 	HttpCacheRequest(PoolPtr &&_pool, struct pool &_caller_pool,
 			 sticky_hash_t _sticky_hash,
 			 const char *_cache_tag,
-			 const char *_site_name,
 			 HttpCache &_cache,
 			 http_method_t _method,
 			 const ResourceAddress &_address,
@@ -639,7 +637,6 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 				   struct pool &_caller_pool,
 				   sticky_hash_t _sticky_hash,
 				   const char *_cache_tag,
-				   const char *_site_name,
 				   HttpCache &_cache,
 				   http_method_t _method,
 				   const ResourceAddress &_address,
@@ -650,7 +647,6 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 	:PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
 	 sticky_hash(_sticky_hash),
 	 cache_tag(_cache_tag),
-	 site_name(_site_name),
 	 cache(_cache),
 	 method(_method),
 	 address((AllocatorPtr)pool, _address),
@@ -770,7 +766,7 @@ HttpCache::Miss(struct pool &caller_pool,
 	auto request =
 		NewFromPool<HttpCacheRequest>(std::move(request_pool), caller_pool,
 					      sticky_hash, cache_tag,
-					      site_name, *this,
+					      *this,
 					      method, address,
 					      headers,
 					      handler,
@@ -925,7 +921,7 @@ HttpCache::Revalidate(struct pool &caller_pool,
 	auto request =
 		NewFromPool<HttpCacheRequest>(std::move(request_pool), caller_pool,
 					      sticky_hash, cache_tag,
-					      site_name, *this,
+					      *this,
 					      method, address,
 					      headers,
 					      handler,
