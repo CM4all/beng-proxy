@@ -1033,14 +1033,13 @@ HttpCache::Start(struct pool &caller_pool,
 		return;
 	}
 
-	HttpCacheRequestInfo info;
-	if (http_cache_request_evaluate(info, method, address, headers,
-					obey_no_cache, body)) {
+	if (auto info = http_cache_request_evaluate(method, address, headers,
+						    obey_no_cache, body)) {
 		assert(!body);
 
 		Use(caller_pool, parent_stopwatch,
 		    sticky_hash, cache_tag, site_name,
-		    method, address, std::move(headers), info,
+		    method, address, std::move(headers), *info,
 		    handler, cancel_ptr);
 	} else {
 		if (http_cache_request_invalidate(method))

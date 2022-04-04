@@ -40,6 +40,8 @@
 #include "http/Method.h"
 #include "http/Status.h"
 
+#include <optional>
+
 #include <sys/types.h> /* for off_t */
 
 class AllocatorPtr;
@@ -53,9 +55,9 @@ struct HttpCacheResponseInfo;
  * @param obey_no_cache if false, then "no-cache" requests will be
  * ignored
  */
-bool
-http_cache_request_evaluate(HttpCacheRequestInfo &info,
-			    http_method_t method,
+[[gnu::pure]]
+std::optional<HttpCacheRequestInfo>
+http_cache_request_evaluate(http_method_t method,
 			    const ResourceAddress &address,
 			    const StringMap &headers,
 			    bool obey_no_cache,

@@ -46,9 +46,8 @@
 #include <stdlib.h>
 
 /* check whether the request could produce a cacheable response */
-bool
-http_cache_request_evaluate(HttpCacheRequestInfo &info,
-			    http_method_t method,
+std::optional<HttpCacheRequestInfo>
+http_cache_request_evaluate(http_method_t method,
 			    const ResourceAddress &address,
 			    const StringMap &headers,
 			    bool obey_no_cache,
@@ -56,18 +55,20 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
 {
 	if (method != HTTP_METHOD_GET || has_request_body)
 		/* RFC 2616 13.11 "Write-Through Mandatory" */
-		return false;
+		return std::nullopt;
 
 	const char *p = headers.Get("range");
 	if (p != nullptr)
-		return false;
+		return std::nullopt;
 
 	/* RFC 2616 14.8: "When a shared cache receives a request
 	   containing an Authorization field, it MUST NOT return the
 	   corresponding response as a reply to any other request
 	   [...] */
 	if (headers.Get("authorization") != nullptr)
-		return false;
+		return std::nullopt;
+
+	bool only_if_cached = false;
 
 	p = headers.Get("cache-control");
 	if (p != nullptr) {
@@ -76,18 +77,20 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
 
 			if (obey_no_cache &&
 			    (s.Equals("no-cache") || s.Equals("no-store")))
-				return false;
+				return std::nullopt;
 
 			if (s.Equals("only-if-cached"))
-				info.only_if_cached = true;
+				only_if_cached = true;
 		}
 	} else if (obey_no_cache) {
 		p = headers.Get("pragma");
 		if (p != nullptr && strcmp(p, "no-cache") == 0)
-			return false;
+			return std::nullopt;
 	}
 
+	HttpCacheRequestInfo info;
 	info.is_remote = address.type == ResourceAddress::Type::HTTP;
+	info.only_if_cached = only_if_cached;
 	info.has_query_string = address.HasQueryString();
 
 	info.if_match = headers.Get("if-match");
@@ -95,7 +98,7 @@ http_cache_request_evaluate(HttpCacheRequestInfo &info,
 	info.if_modified_since = headers.Get("if-modified-since");
 	info.if_unmodified_since = headers.Get("if-unmodified-since");
 
-	return true;
+	return info;
 }
 
 bool
