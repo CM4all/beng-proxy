@@ -7,7 +7,7 @@ cm4all-beng-proxy (17.0.86) unstable; urgency=low
   * translation: add packets EAGER_CACHE, AUTO_FLUSH_CACHE
   * control: add command FLUSH_HTTP_CACHE
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 05 Apr 2022 20:30:26 +0200
 
 cm4all-beng-proxy (17.0.85) unstable; urgency=low
 
