@@ -249,7 +249,7 @@ public:
 		   const ResourceRequestParams &params,
 		   http_method_t method,
 		   const ResourceAddress &address,
-		   StringMap &&_headers,
+		   StringMap &&_headers, UnusedIstreamPtr body,
 		   CancellablePointer &_cancel_ptr) noexcept {
 		_cancel_ptr = *this;
 
@@ -257,7 +257,7 @@ public:
 				 params,
 				 method, address,
 				 HTTP_STATUS_OK, std::move(_headers),
-				 nullptr, nullptr,
+				 std::move(body), nullptr,
 				 *this, cancel_ptr);
 	}
 
@@ -1164,7 +1164,7 @@ HttpCache::Start(struct pool &caller_pool,
 		request->Start(resource_loader, caller_pool, parent_stopwatch,
 			       params,
 			       method, address,
-			       std::move(headers),
+			       std::move(headers), std::move(body),
 			       cancel_ptr);
 	} else {
 		if (http_cache_request_invalidate(method))
