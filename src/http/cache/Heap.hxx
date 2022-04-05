@@ -97,7 +97,7 @@ public:
 
 	void Put(const char *url, const char *tag,
 		 const HttpCacheResponseInfo &info,
-		 StringMap &request_headers,
+		 const StringMap &request_headers,
 		 http_status_t status,
 		 const StringMap &response_headers,
 		 RubberAllocation &&a, size_t size) noexcept;

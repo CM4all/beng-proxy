@@ -58,7 +58,7 @@ HttpCacheHeap::Get(const char *uri, StringMap &request_headers) noexcept
 void
 HttpCacheHeap::Put(const char *url, const char *tag,
 		   const HttpCacheResponseInfo &info,
-		   StringMap &request_headers,
+		   const StringMap &request_headers,
 		   http_status_t status,
 		   const StringMap &response_headers,
 		   RubberAllocation &&a, size_t size) noexcept
@@ -75,7 +75,8 @@ HttpCacheHeap::Put(const char *url, const char *tag,
 		per_tag[tag].push_back(*item);
 
 	cache.PutMatch(p_strdup(&item->GetPool(), url), *item,
-		       http_cache_item_match, &request_headers);
+		       http_cache_item_match,
+		       const_cast<void *>((const void *)&request_headers));
 }
 
 void
