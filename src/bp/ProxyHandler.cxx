@@ -125,6 +125,7 @@ Request::HandleProxyAddress() noexcept
 		       {
 			       session_id.GetClusterHash(),
 			       tr.eager_cache,
+			       tr.auto_flush_cache,
 			       tr.cache_tag,
 			       tr.site,
 		       },

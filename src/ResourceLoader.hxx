@@ -59,6 +59,8 @@ struct ResourceRequestParams {
 
 	bool eager_cache;
 
+	bool auto_flush_cache;
+
 	/**
 	 * An opaque tag string to be assigned to the cache
 	 * item (if the response is going to be cached by the

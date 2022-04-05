@@ -681,6 +681,7 @@ Request::ApplyFilter(http_status_t status, StringMap &&headers2,
 			      {
 				      session_id.GetClusterHash(),
 				      false,
+				      false,
 				      filter.cache_tag,
 				      translate.response->site,
 			      },

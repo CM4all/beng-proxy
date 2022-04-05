@@ -677,6 +677,7 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 		       {
 			       session_id.GetClusterHash(),
 			       false,
+			       false,
 			       nullptr,
 			       nullptr,
 		       },

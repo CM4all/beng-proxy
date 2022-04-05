@@ -586,6 +586,9 @@ Response
 - ``EAGER_CACHE``: Enable caching for the given resource address, even
   if it is not declared to be cacheable.
 
+- ``AUTO_FLUSH_CACHE``: All (successful) modifying requests (``POST``,
+  ``PUT`` ...) flush the HTTP cache of the specified ``CACHE_TAG``.
+
 If the translation server does not provide the ``CONTENT_TYPE``
 header, :program:`beng-proxy` will attempt to discover the file type
 from its extended attributes (see :ref:`xattr`).

@@ -64,6 +64,24 @@
 
 static constexpr Event::Duration http_cache_compress_interval = std::chrono::minutes(10);
 
+static constexpr bool
+IsModifyingMethod(http_method_t method) noexcept
+{
+	// TODO: code copied from MethodNeedsCsrfProtection()
+	switch (method) {
+	case HTTP_METHOD_HEAD:
+	case HTTP_METHOD_GET:
+	case HTTP_METHOD_OPTIONS:
+	case HTTP_METHOD_TRACE:
+	case HTTP_METHOD_PROPFIND:
+	case HTTP_METHOD_REPORT:
+		return false;
+
+	default:
+		return true;
+	}
+}
+
 class HttpCacheRequest final : PoolHolder,
 			       HttpResponseHandler,
 			       RubberSinkHandler,
@@ -196,6 +214,73 @@ private:
 	void RubberOutOfMemory() noexcept override;
 	void RubberTooLarge() noexcept override;
 	void RubberError(std::exception_ptr ep) noexcept override;
+};
+
+/**
+ * Wrapper for a uncacheable request which implements #AUTO_FLUSH_CACHE.
+ */
+class AutoFlushHttpCacheRequest final
+	: public HttpResponseHandler, Cancellable
+{
+	const char *const cache_tag;
+
+	/**
+	 * The cache object which got this request.
+	 */
+	HttpCache &cache;
+
+	HttpResponseHandler &handler;
+
+	CancellablePointer cancel_ptr;
+
+public:
+	AutoFlushHttpCacheRequest(const char *_cache_tag,
+				  HttpCache &_cache,
+				  HttpResponseHandler &_handler) noexcept
+		:cache_tag(_cache_tag),
+		 cache(_cache),
+		 handler(_handler) {}
+
+	AutoFlushHttpCacheRequest(const AutoFlushHttpCacheRequest &) = delete;
+	AutoFlushHttpCacheRequest &operator=(const AutoFlushHttpCacheRequest &) = delete;
+
+	void Start(ResourceLoader &next, struct pool &pool,
+		   const StopwatchPtr &parent_stopwatch,
+		   const ResourceRequestParams &params,
+		   http_method_t method,
+		   const ResourceAddress &address,
+		   StringMap &&_headers,
+		   CancellablePointer &_cancel_ptr) noexcept {
+		_cancel_ptr = *this;
+
+		next.SendRequest(pool, parent_stopwatch,
+				 params,
+				 method, address,
+				 HTTP_STATUS_OK, std::move(_headers),
+				 nullptr, nullptr,
+				 *this, cancel_ptr);
+	}
+
+private:
+	void Destroy() noexcept {
+		this->~AutoFlushHttpCacheRequest();
+	}
+
+	/* virtual methods from class Cancellable */
+	void Cancel() noexcept override {
+		cancel_ptr.Cancel();
+		Destroy();
+	}
+
+	/* virtual methods from class HttpResponseHandler */
+	void OnHttpResponse(http_status_t status, StringMap &&headers,
+			    UnusedIstreamPtr body) noexcept override;
+
+	void OnHttpError(std::exception_ptr e) noexcept override {
+		auto &_handler = handler;
+		Destroy();
+		_handler.InvokeError(std::move(e));
+	}
 };
 
 class HttpCache {
@@ -478,6 +563,22 @@ HttpCacheRequest::RubberError(std::exception_ptr ep) noexcept
  * http response handler
  *
  */
+
+void
+AutoFlushHttpCacheRequest::OnHttpResponse(http_status_t status,
+					  StringMap &&_headers,
+					  UnusedIstreamPtr body) noexcept
+{
+	assert(cache_tag != nullptr);
+
+	if (!http_status_is_error(status))
+		cache.FlushTag(cache_tag);
+
+	auto &_handler = handler;
+	Destroy();
+
+	_handler.InvokeResponse(status, std::move(_headers), std::move(body));
+}
 
 void
 HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
@@ -1049,6 +1150,22 @@ HttpCache::Start(struct pool &caller_pool,
 		Use(caller_pool, parent_stopwatch, params,
 		    method, address, std::move(headers), *info,
 		    handler, cancel_ptr);
+	} else if (params.auto_flush_cache && IsModifyingMethod(method)) {
+		LogConcat(4, "HttpCache", "auto_flush? ", key);
+
+		/* TODO merge IsModifyingMethod() and
+		   http_cache_request_invalidate()? */
+		RemoveURL(key, headers);
+
+		auto request =
+			NewFromPool<AutoFlushHttpCacheRequest>(caller_pool,
+							       params.cache_tag,
+							       *this, handler);
+		request->Start(resource_loader, caller_pool, parent_stopwatch,
+			       params,
+			       method, address,
+			       std::move(headers),
+			       cancel_ptr);
 	} else {
 		if (http_cache_request_invalidate(method))
 			RemoveURL(key, headers);

@@ -70,6 +70,8 @@ struct Request final {
 	const char *response_headers;
 	const char *response_body;
 
+	bool auto_flush_cache = false;
+
 	constexpr Request(const char *_uri, const char *_request_headers,
 			  const char *_response_headers,
 			  const char *_response_body) noexcept
@@ -248,7 +250,7 @@ run_cache_test(Instance &instance, const Request &request, bool cached)
 					     instance.event_loop);
 
 	http_cache_request(*instance.cache, pool, nullptr,
-			   {0, false, request.tag, nullptr},
+			   {0, false, request.auto_flush_cache, request.tag, nullptr},
 			   request.method, address,
 			   std::move(headers), nullptr,
 			   handler, cancel_ptr);
@@ -470,6 +472,36 @@ TEST(HttpCache, Tag)
 
 	/* but this does */
 	http_cache_flush_tag(*instance.cache, "abc");
+	run_cache_test(instance, request, false);
+	run_cache_test(instance, request, true);
+
+	/* AUTO_FLUSH_CACHE test (GET does not flush) */
+
+	Request r2{
+		"/bar", nullptr,
+		"",
+		"bar",
+	};
+
+	r2.tag = request.tag;
+	r2.auto_flush_cache = true;
+
+	run_cache_test(instance, r2, false);
+	run_cache_test(instance, request, true);
+
+	/* AUTO_FLUSH_CACHE test (unsuccessful POST does not flush) */
+
+	r2.method = HTTP_METHOD_POST;
+	r2.status = HTTP_STATUS_FORBIDDEN;
+
+	run_cache_test(instance, r2, false);
+	run_cache_test(instance, request, true);
+
+	/* AUTO_FLUSH_CACHE test (successful POST flushes) */
+
+	r2.status = HTTP_STATUS_OK;
+
+	run_cache_test(instance, r2, false);
 	run_cache_test(instance, request, false);
 	run_cache_test(instance, request, true);
 }

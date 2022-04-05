@@ -316,6 +316,7 @@ WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body) noex
 					 {
 						 ctx->session_id.GetClusterHash(),
 						 false,
+						 false,
 						 nullptr,
 						 ctx->site_name,
 					 },
@@ -468,6 +469,7 @@ WidgetRequest::FilterResponse(http_status_t status,
 			     parent_stopwatch,
 			     {
 				     ctx->session_id.GetClusterHash(),
+				     false,
 				     false,
 				     filter.cache_tag,
 				     ctx->site_name,
@@ -767,6 +769,7 @@ WidgetRequest::SendRequest() noexcept
 	ctx->resource_loader.SendRequest(pool, parent_stopwatch,
 					 {
 						 ctx->session_id.GetClusterHash(),
+						 false,
 						 false,
 						 nullptr,
 						 ctx->site_name,
