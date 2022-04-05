@@ -89,7 +89,7 @@ public:
 	const char *key;
 
 	/** headers from the original request */
-	const StringMap headers;
+	const StringMap request_headers;
 
 	HttpResponseHandler &handler;
 
@@ -403,7 +403,7 @@ HttpCacheRequest::GetEventLoop() const noexcept
 void
 HttpCacheRequest::Put(RubberAllocation &&a, size_t size) noexcept
 {
-	cache.Put(key, cache_tag, info, headers,
+	cache.Put(key, cache_tag, info, request_headers,
 		  response.status, *response.headers,
 		  std::move(a), size);
 }
@@ -640,7 +640,7 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 	 cache_tag(_cache_tag),
 	 cache(_cache),
 	 key(http_cache_key(pool, address)),
-	 headers(pool, _headers),
+	 request_headers(pool, _headers),
 	 handler(_handler),
 	 request_info(_request_info),
 	 eager_cache(_eager_cache)
