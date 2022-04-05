@@ -57,8 +57,7 @@ http_cache_request_evaluate(http_method_t method,
 		/* RFC 2616 13.11 "Write-Through Mandatory" */
 		return std::nullopt;
 
-	const char *p = headers.Get("range");
-	if (p != nullptr)
+	if (headers.Contains("range"))
 		return std::nullopt;
 
 	/* RFC 2616 14.8: "When a shared cache receives a request
@@ -70,9 +69,8 @@ http_cache_request_evaluate(http_method_t method,
 
 	bool only_if_cached = false;
 
-	p = headers.Get("cache-control");
-	if (p != nullptr) {
-		for (auto s : IterableSplitString(p, ',')) {
+	if (const char *cache_control = headers.Get("cache-control")) {
+		for (auto s : IterableSplitString(cache_control, ',')) {
 			s.Strip();
 
 			if (obey_no_cache &&
@@ -83,8 +81,8 @@ http_cache_request_evaluate(http_method_t method,
 				only_if_cached = true;
 		}
 	} else if (obey_no_cache) {
-		p = headers.Get("pragma");
-		if (p != nullptr && strcmp(p, "no-cache") == 0)
+		if (const char *pragma = headers.Get("pragma");
+		    pragma != nullptr && strcmp(pragma, "no-cache") == 0)
 			return std::nullopt;
 	}
 
@@ -192,8 +190,6 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 			     http_status_t status, const StringMap &headers,
 			     off_t body_available) noexcept
 {
-	const char *p;
-
 	if (!http_status_cacheable(status))
 		return std::nullopt;
 
@@ -203,9 +199,8 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 
 	HttpCacheResponseInfo info;
 	info.expires = std::chrono::system_clock::from_time_t(-1);
-	p = headers.Get("cache-control");
-	if (p != nullptr) {
-		for (auto s : IterableSplitString(p, ',')) {
+	if (const char *cache_control = headers.Get("cache-control")) {
+		for (auto s : IterableSplitString(cache_control, ',')) {
 			s.Strip();
 
 			if (s.StartsWith("private") ||
