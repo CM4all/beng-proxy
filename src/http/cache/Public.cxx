@@ -65,8 +65,8 @@
 static constexpr Event::Duration http_cache_compress_interval = std::chrono::minutes(10);
 
 class HttpCacheRequest final : PoolHolder,
-			       public HttpResponseHandler,
-			       public RubberSinkHandler,
+			       HttpResponseHandler,
+			       RubberSinkHandler,
 			       Cancellable {
 public:
 	static constexpr auto link_mode = boost::intrusive::normal_link;
@@ -127,13 +127,29 @@ public:
 			 const ResourceAddress &_address,
 			 const StringMap &_headers,
 			 HttpResponseHandler &_handler,
-			 const HttpCacheRequestInfo &_info,
-			 CancellablePointer &_cancel_ptr) noexcept;
+			 const HttpCacheRequestInfo &_info) noexcept;
 
 	HttpCacheRequest(const HttpCacheRequest &) = delete;
 	HttpCacheRequest &operator=(const HttpCacheRequest &) = delete;
 
 	using PoolHolder::GetPool;
+
+	void Start(ResourceLoader &next,
+		   const StopwatchPtr &parent_stopwatch,
+		   const ResourceRequestParams &params,
+		   http_method_t method,
+		   const ResourceAddress &address,
+		   StringMap &&_headers,
+		   CancellablePointer &_cancel_ptr) noexcept {
+		_cancel_ptr = *this;
+
+		next.SendRequest(GetPool(), parent_stopwatch,
+				 params,
+				 method, address,
+				 HTTP_STATUS_OK, std::move(_headers),
+				 nullptr, nullptr,
+				 *this, cancel_ptr);
+	}
 
 	EventLoop &GetEventLoop() const noexcept;
 
@@ -634,8 +650,7 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 				   const ResourceAddress &address,
 				   const StringMap &_headers,
 				   HttpResponseHandler &_handler,
-				   const HttpCacheRequestInfo &_request_info,
-				   CancellablePointer &_cancel_ptr) noexcept
+				   const HttpCacheRequestInfo &_request_info) noexcept
 	:PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
 	 cache_tag(_cache_tag),
 	 cache(_cache),
@@ -645,7 +660,6 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 	 request_info(_request_info),
 	 eager_cache(_eager_cache)
 {
-	_cancel_ptr = *this;
 }
 
 inline
@@ -758,16 +772,15 @@ HttpCache::Miss(struct pool &caller_pool,
 					      address,
 					      headers,
 					      handler,
-					      info, cancel_ptr);
+					      info);
 
 	LogConcat(4, "HttpCache", "miss ", request->key);
 
-	resource_loader.SendRequest(request->GetPool(), parent_stopwatch,
-				    params,
-				    method, address,
-				    HTTP_STATUS_OK, std::move(headers),
-				    nullptr, nullptr,
-				    *request, request->cancel_ptr);
+	request->Start(resource_loader, parent_stopwatch,
+		       params,
+		       method, address,
+		       std::move(headers),
+		       cancel_ptr);
 }
 
 [[gnu::pure]]
@@ -911,7 +924,7 @@ HttpCache::Revalidate(struct pool &caller_pool,
 					      address,
 					      headers,
 					      handler,
-					      info, cancel_ptr);
+					      info);
 
 	Lock(document);
 	request->document = &document;
@@ -926,13 +939,10 @@ HttpCache::Revalidate(struct pool &caller_pool,
 		headers.Set(request->GetPool(),
 			    "if-none-match", document.info.etag);
 
-	resource_loader.SendRequest(request->GetPool(), parent_stopwatch,
-				    params,
-				    method, address,
-				    HTTP_STATUS_OK, std::move(headers),
-				    nullptr, nullptr,
-				    *request,
-				    request->cancel_ptr);
+	request->Start(resource_loader, parent_stopwatch,
+		       params,
+		       method, address, std::move(headers),
+		       cancel_ptr);
 }
 
 [[gnu::pure]]
