@@ -74,6 +74,7 @@ public:
 	typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
 	SiblingsHook siblings;
 
+private:
 	PoolPtr caller_pool;
 
 	const char *const cache_tag;
@@ -105,7 +106,7 @@ public:
 	 * request to test the validity of the cache entry.  If this is
 	 * nullptr, then we had a cache miss.
 	 */
-	HttpCacheDocument *document = nullptr;
+	HttpCacheDocument *const document;
 
 	/**
 	 * This struct holds response information while this module
@@ -120,6 +121,7 @@ public:
 
 	const bool eager_cache;
 
+public:
 	HttpCacheRequest(PoolPtr &&_pool, struct pool &_caller_pool,
 			 bool _eager_cache,
 			 const char *_cache_tag,
@@ -127,12 +129,17 @@ public:
 			 const ResourceAddress &_address,
 			 const StringMap &_headers,
 			 HttpResponseHandler &_handler,
-			 const HttpCacheRequestInfo &_info) noexcept;
+			 const HttpCacheRequestInfo &_info,
+			 HttpCacheDocument *_document) noexcept;
 
 	HttpCacheRequest(const HttpCacheRequest &) = delete;
 	HttpCacheRequest &operator=(const HttpCacheRequest &) = delete;
 
 	using PoolHolder::GetPool;
+
+	const char *GetKey() const noexcept {
+		return key;
+	}
 
 	void Start(ResourceLoader &next,
 		   const StopwatchPtr &parent_stopwatch,
@@ -650,7 +657,8 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 				   const ResourceAddress &address,
 				   const StringMap &_headers,
 				   HttpResponseHandler &_handler,
-				   const HttpCacheRequestInfo &_request_info) noexcept
+				   const HttpCacheRequestInfo &_request_info,
+				   HttpCacheDocument *_document) noexcept
 	:PoolHolder(std::move(_pool)), caller_pool(_caller_pool),
 	 cache_tag(_cache_tag),
 	 cache(_cache),
@@ -658,6 +666,7 @@ HttpCacheRequest::HttpCacheRequest(PoolPtr &&_pool,
 	 request_headers(pool, _headers),
 	 handler(_handler),
 	 request_info(_request_info),
+	 document(_document),
 	 eager_cache(_eager_cache)
 {
 }
@@ -772,9 +781,9 @@ HttpCache::Miss(struct pool &caller_pool,
 					      address,
 					      headers,
 					      handler,
-					      info);
+					      info, nullptr);
 
-	LogConcat(4, "HttpCache", "miss ", request->key);
+	LogConcat(4, "HttpCache", "miss ", request->GetKey());
 
 	request->Start(resource_loader, parent_stopwatch,
 		       params,
@@ -916,6 +925,8 @@ HttpCache::Revalidate(struct pool &caller_pool,
 	   allocate a new pool for it from cache.pool */
 	auto request_pool = pool_new_linear(pool, "HttpCacheRequest", 8192);
 
+	Lock(document);
+
 	auto request =
 		NewFromPool<HttpCacheRequest>(std::move(request_pool), caller_pool,
 					      params.eager_cache,
@@ -924,12 +935,9 @@ HttpCache::Revalidate(struct pool &caller_pool,
 					      address,
 					      headers,
 					      handler,
-					      info);
+					      info, &document);
 
-	Lock(document);
-	request->document = &document;
-
-	LogConcat(4, "HttpCache", "test ", request->key);
+	LogConcat(4, "HttpCache", "test ", request->GetKey());
 
 	if (document.info.last_modified != nullptr)
 		headers.Set(request->GetPool(),
