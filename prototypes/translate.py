@@ -41,6 +41,8 @@ clear_html = os.path.join(was_path, 'clear-html')
 sed_fastcgi = '/usr/lib/cm4all/fcgi-bin/fsed'
 apache_lhttpd = '/usr/lib/cm4all/lhttp/bin/apache-lhttpd'
 
+functions_api = os.path.join(was_path, 'functions-api')
+
 davos_plain = os.path.join(was_path, 'davos-plain')
 davos_od = os.path.join(was_path, 'davos-od')
 od_conf = '/etc/cm4all/davos/od.conf'
@@ -797,6 +799,14 @@ class Translation(Protocol):
             response.path(os.path.join(demo_path, 'subst-alt.txt'))
             response.packet(TRANSLATE_SUBST_YAML_FILE, '\0' + os.path.join(demo_path, 'subst.yaml') + '\0child')
             response.packet(TRANSLATE_SUBST_ALT_SYNTAX)
+        elif uri[:11] == '/functions/':
+            response.packet(TRANSLATE_BASE, "/functions/")
+            response.packet(TRANSLATE_EASY_BASE)
+            response.packet(TRANSLATE_WAS, functions_api)
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
+            response.pair('ID', '42')
+            response.packet(TRANSLATE_SCRIPT_NAME, '/functions')
+            response.packet(TRANSLATE_PATH_INFO, '/')
         elif uri == '/dav':
             response.packet(TRANSLATE_WAS, davos_plain)
             response.packet(TRANSLATE_NO_NEW_PRIVS)
@@ -1202,6 +1212,7 @@ if __name__ == '__main__':
         xmlstrip = os.path.join(src_dir, 'filters/build/xmlstrip')
         clear_html = os.path.join(src_dir, 'filters/build/clear-html')
         sed_fastcgi = os.path.join(src_dir, 'sed/sed/fsed')
+        functions_api = os.path.join(src_dir, 'workshop/output/debug/functions-api')
         davos_plain = os.path.join(src_dir, 'davos/output/debug/davos-plain')
         davos_od = os.path.join(src_dir, 'davos/output/debug/davos-od')
         od_conf = '/home/max/people/cmag/od/od.conf'
