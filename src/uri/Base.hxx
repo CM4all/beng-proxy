@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2021 CM4all GmbH
+ * Copyright 2007-2022 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -37,8 +37,7 @@
 #pragma once
 
 #include <cstddef>
-
-struct StringView;
+#include <string_view>
 
 /**
  * Calculate the URI tail after a base URI from a request URI.
@@ -52,14 +51,14 @@ struct StringView;
  */
 [[gnu::pure]]
 const char *
-base_tail(const char *uri, StringView base) noexcept;
+base_tail(const char *uri, std::string_view base) noexcept;
 
 /**
  * Similar to base_tail(), but assert that there is a base match.
  */
 [[gnu::pure]]
 const char *
-require_base_tail(const char *uri, StringView base) noexcept;
+require_base_tail(const char *uri, std::string_view base) noexcept;
 
 /**
  * Determine the length of the base prefix in the given string.
@@ -68,7 +67,7 @@ require_base_tail(const char *uri, StringView base) noexcept;
  */
 [[gnu::pure]]
 std::size_t
-base_string(StringView uri, StringView tail) noexcept;
+base_string(std::string_view uri, std::string_view tail) noexcept;
 
 /**
  * Is the given string a valid base string?  That is, does it end with
@@ -76,4 +75,4 @@ base_string(StringView uri, StringView tail) noexcept;
  */
 [[gnu::pure]]
 bool
-is_base(StringView uri) noexcept;
+is_base(std::string_view uri) noexcept;

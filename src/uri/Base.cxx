@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2021 CM4all GmbH
+ * Copyright 2007-2022 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -36,7 +36,7 @@
 #include <cassert>
 
 const char *
-base_tail(const char *uri, StringView base) noexcept
+base_tail(const char *uri, std::string_view base) noexcept
 {
 	assert(uri != nullptr);
 
@@ -48,32 +48,34 @@ base_tail(const char *uri, StringView base) noexcept
 }
 
 const char *
-require_base_tail(const char *uri, StringView base) noexcept
+require_base_tail(const char *uri, std::string_view base) noexcept
 {
 	assert(uri != nullptr);
 	assert(is_base(base));
 	assert(StringStartsWith(uri, base));
 
-	return uri + base.size;
+	return uri + base.size();
 }
 
 std::size_t
-base_string(StringView uri, StringView tail) noexcept
+base_string(std::string_view uri, std::string_view tail) noexcept
 {
-	if (uri.size == tail.size)
+	if (uri.size() == tail.size())
 		/* special case: zero-length prefix (not followed by a
 		   slash) */
-		return memcmp(uri.data, tail.data, uri.size) == 0
+		return memcmp(uri.data(), tail.data(), uri.size()) == 0
 			? 0 : (std::size_t)-1;
 
-	return uri.size > tail.size && uri[uri.size - tail.size - 1] == '/' &&
-		memcmp(uri.data + uri.size - tail.size, tail.data, tail.size) == 0
-		? uri.size - tail.size
+	return uri.size() > tail.size() &&
+		uri[uri.size() - tail.size() - 1] == '/' &&
+		memcmp(uri.data() + uri.size() - tail.size(),
+		       tail.data(), tail.size()) == 0
+		? uri.size() - tail.size()
 		: (std::size_t)-1;
 }
 
 bool
-is_base(StringView uri) noexcept
+is_base(std::string_view uri) noexcept
 {
 	return !uri.empty() && uri.back() == '/';
 }
