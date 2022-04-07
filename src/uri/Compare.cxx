@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2021 CM4all GmbH
+ * Copyright 2007-2022 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,11 +32,10 @@
 
 #include "Compare.hxx"
 #include "util/HexParse.hxx"
-#include "util/StringView.hxx"
 
 const char *
-UriFindUnescapedSuffix(const StringView uri_start,
-		       const StringView suffix_start) noexcept
+UriFindUnescapedSuffix(const std::string_view uri_start,
+		       const std::string_view suffix_start) noexcept
 {
 	auto uri_i = uri_start.end();
 	auto suffix_i = suffix_start.end();

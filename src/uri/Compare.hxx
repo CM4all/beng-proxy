@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2021 CM4all GmbH
+ * Copyright 2007-2022 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -32,7 +32,7 @@
 
 #pragma once
 
-struct StringView;
+#include <string_view>
 
 /**
  * Compare the end of the given (unescaped) URI with the given
@@ -43,4 +43,4 @@ struct StringView;
  */
 [[gnu::pure]]
 const char *
-UriFindUnescapedSuffix(StringView uri, StringView suffix) noexcept;
+UriFindUnescapedSuffix(std::string_view uri, std::string_view suffix) noexcept;
