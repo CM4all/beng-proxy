@@ -1641,20 +1641,6 @@ Additional packets may configure resource limits (:ref:`rlimits`,
 
 The client may assume that all responses may be cached indefinitely.
 
-Functions Translation
----------------------
-
-This sub-protocol can tell the ``functions`` job execution layer of
-*Workshop* how to spawn a child process.  It is the same as
-:ref:`cron`, but with the following differences:
-
-- ``FUNCTIONS``: Marks this request as a "functions" request. The
-  payload is the name of the ``functions`` section in Workshop’s
-  configuration file, or none if none was specified there.
-
-- ``URI``: The ``functions.id`` column.
-
-
 .. _pooltrans:
 
 Pool translation

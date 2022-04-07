@@ -151,29 +151,6 @@ class Translation(Protocol):
         response.packet(TRANSLATE_UTS_NAMESPACE, 'host-' + user)
         return response
 
-    def _handle_functions(self, partition, tag, user, uri, param):
-        log.msg(f"functions partition={partition!r} tag={tag!r} user={user!r} uri={uri!r} param={param!r}")
-
-        response = Response(protocol_version=2)
-        if user is None or not re.match(r'^[-_\w]+$', user):
-            response.status(400)
-            return response
-
-        response.packet(TRANSLATE_EXECUTE, '/bin/echo')
-        response.packet(TRANSLATE_APPEND, 'Hello, World!')
-        response.packet(TRANSLATE_APPEND, uri)
-
-        response.packet(TRANSLATE_HOME, os.path.join('/var/www', user))
-        response.packet(TRANSLATE_USER_NAMESPACE)
-        response.packet(TRANSLATE_PID_NAMESPACE)
-        #response.uid_gid(500, 100)
-        response.packet(TRANSLATE_PIVOT_ROOT, '/srv/chroot/jessie')
-        response.packet(TRANSLATE_MOUNT_HOME, '/home')
-        response.packet(TRANSLATE_MOUNT_PROC)
-        response.packet(TRANSLATE_MOUNT_TMP_TMPFS)
-        response.packet(TRANSLATE_UTS_NAMESPACE, 'host-' + user)
-        return response
-
     def _handle_auth(self, auth, uri, session, alt_host):
         log.msg(f"auth {auth!r} uri={uri!r} session={session!r} alt_host={alt_host!r}")
 
@@ -1111,9 +1088,6 @@ class Translation(Protocol):
 
         if request.cron:
             return self._handle_cron(request.cron, request.listener_tag, request.user, request.uri, request.param)
-
-        if request.functions:
-            return self._handle_functions(request.functions, request.listener_tag, request.user, request.uri, request.param)
 
         if request.auth is not None:
             return self._handle_auth(request.auth, request.uri, request.session, request.alt_host)
