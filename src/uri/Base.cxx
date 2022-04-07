@@ -33,7 +33,7 @@
 #include "Base.hxx"
 #include "util/StringCompare.hxx"
 
-#include <assert.h>
+#include <cassert>
 
 const char *
 base_tail(const char *uri, StringView base) noexcept
@@ -57,19 +57,19 @@ require_base_tail(const char *uri, StringView base) noexcept
 	return uri + base.size;
 }
 
-size_t
+std::size_t
 base_string(StringView uri, StringView tail) noexcept
 {
 	if (uri.size == tail.size)
 		/* special case: zero-length prefix (not followed by a
 		   slash) */
 		return memcmp(uri.data, tail.data, uri.size) == 0
-			? 0 : (size_t)-1;
+			? 0 : (std::size_t)-1;
 
 	return uri.size > tail.size && uri[uri.size - tail.size - 1] == '/' &&
 		memcmp(uri.data + uri.size - tail.size, tail.data, tail.size) == 0
 		? uri.size - tail.size
-		: (size_t)-1;
+		: (std::size_t)-1;
 }
 
 bool

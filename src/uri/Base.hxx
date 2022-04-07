@@ -34,10 +34,9 @@
  * Functions for working with base URIs.
  */
 
-#ifndef BENG_PROXY_URI_BASE_HXX
-#define BENG_PROXY_URI_BASE_HXX
+#pragma once
 
-#include <stddef.h>
+#include <cstddef>
 
 struct StringView;
 
@@ -65,10 +64,10 @@ require_base_tail(const char *uri, StringView base) noexcept;
 /**
  * Determine the length of the base prefix in the given string.
  *
- * @return (size_t)-1 on mismatch
+ * @return (std::size_t)-1 on mismatch
  */
 [[gnu::pure]]
-size_t
+std::size_t
 base_string(StringView uri, StringView tail) noexcept;
 
 /**
@@ -78,5 +77,3 @@ base_string(StringView uri, StringView tail) noexcept;
 [[gnu::pure]]
 bool
 is_base(StringView uri) noexcept;
-
-#endif
