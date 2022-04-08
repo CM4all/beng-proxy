@@ -96,15 +96,13 @@ CgiAddress::GetURI(AllocatorPtr alloc) const noexcept
 	if (sn == nullptr)
 		sn = "/";
 
-	const char *pi = path_info;
+	std::string_view pi = GetPathInfo();
 	const char *qm = "";
 	const char *qs = query_string;
 
-	if (pi == nullptr) {
+	if (pi.empty()) {
 		if (qs == nullptr)
 			return sn;
-
-		pi = "";
 	}
 
 	if (qs != nullptr)
@@ -112,10 +110,10 @@ CgiAddress::GetURI(AllocatorPtr alloc) const noexcept
 	else
 		qs = "";
 
-	if (*pi == '/' && HasTrailingSlash(sn))
+	if (pi.starts_with('/') && HasTrailingSlash(sn))
 		/* avoid generating a double slash when concatenating
 		   script_name and path_info */
-		++pi;
+		pi.remove_prefix(1);
 
 	return alloc.Concat(sn, pi, qm, qs);
 }
@@ -240,7 +238,7 @@ CgiAddress::InsertArgs(AllocatorPtr alloc, StringView new_args,
 bool
 CgiAddress::IsValidBase() const noexcept
 {
-	return IsExpandable() || (path_info != nullptr && is_base(path_info));
+	return IsExpandable() || is_base(GetPathInfo());
 }
 
 const char *
@@ -250,14 +248,16 @@ CgiAddress::AutoBase(AllocatorPtr alloc,
 	/* auto-generate the BASE only if the path info begins with a
 	   slash and matches the URI */
 
-	if (path_info == nullptr ||
-	    path_info[0] != '/' ||
-	    path_info[1] == 0)
+	auto pi = GetPathInfo();
+
+	if (pi.size() < 2 || !pi.starts_with('/'))
 		return nullptr;
 
 	/* XXX implement (un-)escaping of the uri */
 
-	size_t length = base_string(request_uri, path_info + 1);
+	pi.remove_prefix(1);
+
+	size_t length = base_string(request_uri, pi);
 	if (length == 0 || length == (size_t)-1)
 		return nullptr;
 
@@ -276,7 +276,7 @@ CgiAddress::SaveBase(AllocatorPtr alloc, std::string_view suffix) const noexcept
 		uri_length = end - uri;
 	}
 
-	const char *new_path_info = path_info != nullptr ? path_info : "";
+	std::string_view new_path_info = GetPathInfo();
 	const char *new_path_info_end =
 		UriFindUnescapedSuffix(new_path_info, suffix);
 	if (new_path_info_end == nullptr)
@@ -285,7 +285,7 @@ CgiAddress::SaveBase(AllocatorPtr alloc, std::string_view suffix) const noexcept
 	CgiAddress *dest = Clone(alloc);
 	if (dest->uri != nullptr)
 		dest->uri = alloc.DupZ({dest->uri, uri_length});
-	dest->path_info = alloc.DupZ({new_path_info, new_path_info_end});
+	dest->path_info = alloc.DupZ({new_path_info.data(), new_path_info_end});
 	return dest;
 }
 
@@ -302,8 +302,7 @@ CgiAddress::LoadBase(AllocatorPtr alloc, std::string_view suffix) const noexcept
 	if (dest->uri != nullptr)
 		dest->uri = alloc.Concat(dest->uri, unescaped);
 
-	const char *new_path_info = path_info != nullptr ? path_info : "";
-	dest->path_info = alloc.Concat(new_path_info, unescaped);
+	dest->path_info = alloc.Concat(GetPathInfo(), unescaped);
 	return dest;
 }
 

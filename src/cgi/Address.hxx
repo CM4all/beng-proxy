@@ -36,6 +36,8 @@
 #include "cluster/AddressList.hxx"
 #include "adata/ExpandableStringList.hxx"
 
+#include <string_view>
+
 class AllocatorPtr;
 class MatchData;
 
@@ -122,6 +124,17 @@ struct CgiAddress {
 
 	[[gnu::pure]]
 	const char *GetURI(AllocatorPtr alloc) const noexcept;
+
+	/**
+	 * Returns the #path_info field or an empty (non-nullptr)
+	 * std::string_view if there is none.
+	 */
+	std::string_view GetPathInfo() const noexcept {
+		if (path_info == nullptr)
+			return {"", 0};
+
+		return path_info;
+	}
 
 	/**
 	 * Generates a string identifying the address.  This can be used as a
