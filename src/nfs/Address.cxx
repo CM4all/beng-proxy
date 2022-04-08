@@ -78,10 +78,9 @@ NfsAddress::IsValidBase() const
 }
 
 NfsAddress *
-NfsAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
+NfsAddress::SaveBase(AllocatorPtr alloc,
+		     std::string_view suffix) const noexcept
 {
-	assert(suffix != nullptr);
-
 	const char *end = UriFindUnescapedSuffix(path, suffix);
 	if (end == nullptr)
 		return nullptr;
@@ -94,12 +93,12 @@ NfsAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
 }
 
 NfsAddress *
-NfsAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
+NfsAddress::LoadBase(AllocatorPtr alloc,
+		     std::string_view suffix) const noexcept
 {
 	assert(path != nullptr);
 	assert(*path != 0);
 	assert(path[strlen(path) - 1] == '/');
-	assert(suffix != nullptr);
 
 	char *new_path = uri_unescape_concat(alloc, path, suffix);
 	if (new_path == nullptr)

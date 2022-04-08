@@ -34,6 +34,8 @@
 
 #include "cluster/AddressList.hxx"
 
+#include <string_view>
+
 struct StringView;
 class AllocatorPtr;
 class MatchData;
@@ -153,10 +155,12 @@ struct HttpAddress {
 	bool IsValidBase() const;
 
 	[[gnu::malloc]]
-	HttpAddress *SaveBase(AllocatorPtr alloc, const char *suffix) const;
+	HttpAddress *SaveBase(AllocatorPtr alloc,
+			      std::string_view suffix) const noexcept;
 
 	[[gnu::malloc]]
-	HttpAddress *LoadBase(AllocatorPtr alloc, const char *suffix) const;
+	HttpAddress *LoadBase(AllocatorPtr alloc,
+			      std::string_view suffix) const noexcept;
 
 	const HttpAddress *Apply(AllocatorPtr alloc, StringView relative) const;
 

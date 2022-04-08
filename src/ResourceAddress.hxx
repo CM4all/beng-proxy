@@ -35,9 +35,9 @@
 
 #include "util/ShallowCopy.hxx"
 
+#include <cassert>
 #include <cstddef>
-
-#include <assert.h>
+#include <string_view>
 
 struct StringView;
 struct FileAddress;
@@ -308,7 +308,7 @@ public:
 	 */
 	[[gnu::pure]]
 	ResourceAddress SaveBase(AllocatorPtr alloc,
-				 const char *suffix) const noexcept;
+				 std::string_view suffix) const noexcept;
 
 	/**
 	 * Duplicate a resource address, and append a suffix.
@@ -321,7 +321,7 @@ public:
 	 */
 	[[gnu::pure]]
 	ResourceAddress LoadBase(AllocatorPtr alloc,
-				 const char *suffix) const noexcept;
+				 std::string_view suffix) const noexcept;
 
 	/**
 	 * Copies data from #src for storing in the translation cache.

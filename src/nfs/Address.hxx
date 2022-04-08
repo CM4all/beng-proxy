@@ -34,6 +34,8 @@
 
 #include "util/ConstBuffer.hxx"
 
+#include <string_view>
+
 class AllocatorPtr;
 class MatchData;
 
@@ -82,9 +84,11 @@ struct NfsAddress {
 	[[gnu::pure]]
 	bool IsValidBase() const;
 
-	NfsAddress *SaveBase(AllocatorPtr alloc, const char *suffix) const;
+	NfsAddress *SaveBase(AllocatorPtr alloc,
+			     std::string_view suffix) const noexcept;
 
-	NfsAddress *LoadBase(AllocatorPtr alloc, const char *suffix) const;
+	NfsAddress *LoadBase(AllocatorPtr alloc,
+			     std::string_view suffix) const noexcept;
 
 	/**
 	 * Does this address need to be expanded with Expand()?

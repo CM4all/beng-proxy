@@ -156,10 +156,8 @@ LhttpAddress::IsValidBase() const noexcept
 }
 
 LhttpAddress *
-LhttpAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const noexcept
+LhttpAddress::SaveBase(AllocatorPtr alloc, std::string_view suffix) const noexcept
 {
-	assert(suffix != nullptr);
-
 	size_t length = base_string(uri, suffix);
 	if (length == (size_t)-1)
 		return nullptr;
@@ -168,13 +166,11 @@ LhttpAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const noexcept
 }
 
 LhttpAddress *
-LhttpAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const noexcept
+LhttpAddress::LoadBase(AllocatorPtr alloc, std::string_view suffix) const noexcept
 {
-	assert(suffix != nullptr);
 	assert(uri != nullptr);
 	assert(*uri != 0);
 	assert(uri[strlen(uri) - 1] == '/');
-	assert(suffix != nullptr);
 
 	return DupWithUri(alloc, alloc.Concat(uri, suffix));
 }

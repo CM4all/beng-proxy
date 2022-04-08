@@ -162,10 +162,10 @@ struct CgiAddress {
 			     const char *request_uri) const noexcept;
 
 	CgiAddress *SaveBase(AllocatorPtr alloc,
-			     const char *suffix) const noexcept;
+			     std::string_view suffix) const noexcept;
 
 	CgiAddress *LoadBase(AllocatorPtr alloc,
-			     const char *suffix) const noexcept;
+			     std::string_view suffix) const noexcept;
 
 	/**
 	 * @return a new object on success, src if no change is needed,

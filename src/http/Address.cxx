@@ -218,10 +218,9 @@ HttpAddress::IsValidBase() const
 }
 
 HttpAddress *
-HttpAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
+HttpAddress::SaveBase(AllocatorPtr alloc,
+		      std::string_view suffix) const noexcept
 {
-	assert(suffix != nullptr);
-
 	size_t length = base_string(path, suffix);
 	if (length == (size_t)-1)
 		return nullptr;
@@ -231,9 +230,9 @@ HttpAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const
 }
 
 HttpAddress *
-HttpAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const
+HttpAddress::LoadBase(AllocatorPtr alloc,
+		      std::string_view suffix) const noexcept
 {
-	assert(suffix != nullptr);
 	assert(path != nullptr);
 	assert(*path != 0);
 	assert(expand_path || path[strlen(path) - 1] == '/');

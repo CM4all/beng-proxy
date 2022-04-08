@@ -239,7 +239,7 @@ ResourceAddress::AutoBase(AllocatorPtr alloc, const char *uri) const noexcept
 
 ResourceAddress
 ResourceAddress::SaveBase(AllocatorPtr alloc,
-			  const char *suffix) const noexcept
+			  std::string_view suffix) const noexcept
 {
 	switch (type) {
 	case Type::NONE:
@@ -339,7 +339,7 @@ ResourceAddress::CacheStore(AllocatorPtr alloc,
 
 ResourceAddress
 ResourceAddress::LoadBase(AllocatorPtr alloc,
-			  const char *suffix) const noexcept
+			  std::string_view suffix) const noexcept
 {
 	switch (type) {
 	case Type::NONE:

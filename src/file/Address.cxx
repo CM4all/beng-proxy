@@ -96,11 +96,9 @@ FileAddress::SplitBase(AllocatorPtr alloc, const char *suffix) noexcept
 }
 
 FileAddress *
-FileAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const noexcept
+FileAddress::SaveBase(AllocatorPtr alloc, std::string_view suffix) const noexcept
 {
-	assert(suffix != nullptr);
-
-	if (base != nullptr && *suffix == 0)
+	if (base != nullptr && suffix.empty())
 		return strcmp(path, ".") == 0
 			? alloc.New<FileAddress>(alloc, *this)
 			: nullptr;
@@ -131,10 +129,9 @@ FileAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const noexcept
 }
 
 FileAddress *
-FileAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const noexcept
+FileAddress::LoadBase(AllocatorPtr alloc, std::string_view suffix) const noexcept
 {
 	assert(path != nullptr);
-	assert(suffix != nullptr);
 
 	if (delegate != nullptr) {
 		/* no "base" support for delegates */

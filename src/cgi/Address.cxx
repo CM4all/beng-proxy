@@ -265,10 +265,8 @@ CgiAddress::AutoBase(AllocatorPtr alloc,
 }
 
 CgiAddress *
-CgiAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const noexcept
+CgiAddress::SaveBase(AllocatorPtr alloc, std::string_view suffix) const noexcept
 {
-	assert(suffix != nullptr);
-
 	size_t uri_length = 0;
 	if (uri != nullptr) {
 		const char *end = UriFindUnescapedSuffix(uri, suffix);
@@ -292,10 +290,8 @@ CgiAddress::SaveBase(AllocatorPtr alloc, const char *suffix) const noexcept
 }
 
 CgiAddress *
-CgiAddress::LoadBase(AllocatorPtr alloc, const char *suffix) const noexcept
+CgiAddress::LoadBase(AllocatorPtr alloc, std::string_view suffix) const noexcept
 {
-	assert(suffix != nullptr);
-
 	const TempPoolLease tpool;
 
 	char *unescaped = uri_unescape_dup(*tpool, suffix);

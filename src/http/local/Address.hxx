@@ -36,6 +36,8 @@
 #include "adata/ExpandableStringList.hxx"
 #include "util/ShallowCopy.hxx"
 
+#include <string_view>
+
 class AllocatorPtr;
 struct StringView;
 
@@ -156,10 +158,10 @@ struct LhttpAddress {
 	bool IsValidBase() const noexcept;
 
 	LhttpAddress *SaveBase(AllocatorPtr alloc,
-			       const char *suffix) const noexcept;
+			       std::string_view suffix) const noexcept;
 
 	LhttpAddress *LoadBase(AllocatorPtr alloc,
-			       const char *suffix) const noexcept;
+			       std::string_view suffix) const noexcept;
 
 	/**
 	 * @return a new object on success, src if no change is needed, nullptr

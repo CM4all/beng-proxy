@@ -34,6 +34,8 @@
 
 #include "util/ConstBuffer.hxx"
 
+#include <string_view>
+
 class AllocatorPtr;
 class MatchData;
 struct DelegateAddress;
@@ -114,9 +116,9 @@ struct FileAddress {
 	bool SplitBase(AllocatorPtr alloc, const char *suffix) noexcept;
 
 	FileAddress *SaveBase(AllocatorPtr alloc,
-			      const char *suffix) const noexcept;
+			      std::string_view suffix) const noexcept;
 	FileAddress *LoadBase(AllocatorPtr alloc,
-			      const char *suffix) const noexcept;
+			      std::string_view suffix) const noexcept;
 
 	/**
 	 * Does this address need to be expanded with Expand()?
