@@ -38,10 +38,11 @@
 
 [[gnu::pure]]
 static constexpr auto
-MakeCgiAddress(const char *executable_path, const char *script_name,
-	       const char *path_info) noexcept
+MakeCgiAddress(const char *executable_path, const char *uri,
+	       const char *script_name, const char *path_info) noexcept
 {
 	CgiAddress address(executable_path);
+	address.uri = uri;
 	address.script_name = script_name;
 	address.path_info = path_info;
 	return address;
@@ -97,7 +98,7 @@ TEST(CgiAddressTest, Apply)
 	TestPool pool;
 	AllocatorPtr alloc(pool);
 
-	auto a = MakeCgiAddress("/usr/bin/cgi", "/test.pl", "/foo");
+	auto a = MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/foo");
 
 	auto b = a.Apply(alloc, "");
 	ASSERT_EQ((const CgiAddress *)&a, b);
@@ -159,13 +160,13 @@ TEST(CgiAddressTest, RelativeTo)
 	TestPool pool;
 	AllocatorPtr alloc(pool);
 
-	static constexpr auto base = MakeCgiAddress("/usr/bin/cgi", "/test.pl", "/foo/");
+	static constexpr auto base = MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/foo/");
 
-	ASSERT_EQ(MakeCgiAddress("/usr/bin/other-cgi", "/test.pl", "/foo/").RelativeTo(base), nullptr);
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/other-cgi", nullptr, "/test.pl", "/foo/").RelativeTo(base), nullptr);
 
-	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", "/test.pl", nullptr).RelativeTo(base), nullptr);
-	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", "/test.pl", "/").RelativeTo(base), nullptr);
-	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", "/test.pl", "/foo").RelativeTo(base), nullptr);
-	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", "/test.pl", "/foo/").RelativeTo(base), "");
-	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", "/test.pl", "/foo/bar").RelativeTo(base), "bar");
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", nullptr).RelativeTo(base), nullptr);
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/").RelativeTo(base), nullptr);
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/foo").RelativeTo(base), nullptr);
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/foo/").RelativeTo(base), "");
+	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/foo/bar").RelativeTo(base), "bar");
 }
