@@ -179,7 +179,10 @@ TEST(CgiAddressTest, AutoBase)
 	static constexpr auto cgi0 =
 		MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, nullptr, "/");
 
-	ASSERT_EQ(cgi0.AutoBase(alloc, "/"), nullptr);
+	const char *ab = cgi0.AutoBase(alloc, "/");
+	ASSERT_NE(ab, nullptr);
+	ASSERT_STREQ(ab, "/");
+
 	ASSERT_EQ(cgi0.AutoBase(alloc, "/foo"), nullptr);
 
 	static constexpr auto cgi1 =
@@ -194,7 +197,41 @@ TEST(CgiAddressTest, AutoBase)
 	ASSERT_EQ(cgi2.AutoBase(alloc, "/"), nullptr);
 	ASSERT_EQ(cgi2.AutoBase(alloc, "/foobar/baz"), nullptr);
 
-	const char *ab = cgi2.AutoBase(alloc, "/foo/bar/baz");
+	ab = cgi2.AutoBase(alloc, "/foo/bar/baz");
+	ASSERT_NE(ab, nullptr);
+	ASSERT_STREQ(ab, "/foo/");
+}
+
+TEST(CgiAddressTest, AutoBaseEmptyPathInfo)
+{
+	TestPool pool;
+	const AllocatorPtr alloc{pool};
+
+	/* empty PATH_INFO */
+	static constexpr auto cgi3 =
+		MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, "/script/", "");
+
+	const char *ab = cgi3.AutoBase(alloc, "/");
+	ASSERT_NE(ab, nullptr);
+	ASSERT_STREQ(ab, "/");
+
+	ab = cgi3.AutoBase(alloc, "/foo/");
+	ASSERT_NE(ab, nullptr);
+	ASSERT_STREQ(ab, "/foo/");
+}
+
+TEST(CgiAddressTest, AutoBaseScriptNameSlash)
+{
+	TestPool pool;
+	const AllocatorPtr alloc{pool};
+
+	/* SCRIPT_NAME ends with slash */
+	static constexpr auto cgi4 =
+		MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, "/script/", "abc");
+
+	ASSERT_EQ(cgi4.AutoBase(alloc, "/"), nullptr);
+
+	const char *ab = cgi4.AutoBase(alloc, "/foo/abc");
 	ASSERT_NE(ab, nullptr);
 	ASSERT_STREQ(ab, "/foo/");
 }
@@ -264,4 +301,91 @@ TEST(CgiAddressTest, SaveLoadBase)
 	ASSERT_STREQ(b->path, src.path);
 	ASSERT_STREQ(b->uri, "/foo/bar/bar/xyz");
 	ASSERT_STREQ(b->path_info, "/bar/bar/xyz");
+}
+
+TEST(CgiAddressTest, SaveLoadBaseScriptNameSlash)
+{
+	TestPool pool;
+	const AllocatorPtr alloc{pool};
+
+	static constexpr auto src =
+		MakeCgiAddress("/usr/lib/cgi-bin/foo.pl",
+			       "/foo/bar/baz",
+			       "/foo/",
+			       "bar/baz");
+
+	const auto *a = src.SaveBase(alloc, "bar/baz");
+	ASSERT_NE(a, nullptr);
+	ASSERT_STREQ(a->uri, "/foo/");
+	ASSERT_STREQ(a->script_name, "/foo/");
+	ASSERT_STREQ(a->path, src.path);
+	ASSERT_STREQ(a->path_info, "");
+
+	const auto *b = a->LoadBase(alloc, "");
+	ASSERT_NE(b, nullptr);
+	ASSERT_STREQ(b->path, src.path);
+	ASSERT_STREQ(b->uri, "/foo/");
+	ASSERT_STREQ(b->script_name, "/foo/");
+	ASSERT_STREQ(b->path_info, "");
+
+	b = a->LoadBase(alloc, "xyz");
+	ASSERT_NE(b, nullptr);
+	ASSERT_STREQ(b->path, src.path);
+	ASSERT_STREQ(b->uri, "/foo/xyz");
+	ASSERT_STREQ(b->script_name, "/foo/");
+	ASSERT_STREQ(b->path_info, "xyz");
+
+	a = src.SaveBase(alloc, "baz");
+	ASSERT_NE(a, nullptr);
+	ASSERT_STREQ(a->path, src.path);
+	ASSERT_STREQ(a->uri, "/foo/bar/");
+	ASSERT_STREQ(a->script_name, "/foo/");
+	ASSERT_STREQ(a->path_info, "bar/");
+
+	b = a->LoadBase(alloc, "bar/");
+	ASSERT_NE(b, nullptr);
+	ASSERT_STREQ(b->path, src.path);
+	ASSERT_STREQ(b->uri, "/foo/bar/bar/");
+	ASSERT_STREQ(b->script_name, "/foo/");
+	ASSERT_STREQ(b->path_info, "bar/bar/");
+
+	b = a->LoadBase(alloc, "bar/xyz");
+	ASSERT_NE(b, nullptr);
+	ASSERT_STREQ(b->path, src.path);
+	ASSERT_STREQ(b->uri, "/foo/bar/bar/xyz");
+	ASSERT_STREQ(b->script_name, "/foo/");
+	ASSERT_STREQ(b->path_info, "bar/bar/xyz");
+}
+
+TEST(CgiAddressTest, SaveLoadBaseEmptyPathInfo)
+{
+	TestPool pool;
+	const AllocatorPtr alloc{pool};
+
+	static constexpr auto src =
+		MakeCgiAddress("/usr/lib/cgi-bin/foo.pl",
+			       "/foo/",
+			       "/foo/",
+			       "");
+
+	const auto *a = src.SaveBase(alloc, "");
+	ASSERT_NE(a, nullptr);
+	ASSERT_STREQ(a->uri, "/foo/");
+	ASSERT_STREQ(a->script_name, "/foo/");
+	ASSERT_STREQ(a->path, src.path);
+	ASSERT_STREQ(a->path_info, "");
+
+	const auto *b = a->LoadBase(alloc, "");
+	ASSERT_NE(b, nullptr);
+	ASSERT_STREQ(b->path, src.path);
+	ASSERT_STREQ(b->uri, "/foo/");
+	ASSERT_STREQ(b->script_name, "/foo/");
+	ASSERT_STREQ(b->path_info, "");
+
+	b = a->LoadBase(alloc, "xyz");
+	ASSERT_NE(b, nullptr);
+	ASSERT_STREQ(b->path, src.path);
+	ASSERT_STREQ(b->uri, "/foo/xyz");
+	ASSERT_STREQ(b->script_name, "/foo/");
+	ASSERT_STREQ(b->path_info, "xyz");
 }

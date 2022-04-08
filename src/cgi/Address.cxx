@@ -233,24 +233,32 @@ CgiAddress::InsertArgs(AllocatorPtr alloc, StringView new_args,
 bool
 CgiAddress::IsValidBase() const noexcept
 {
-	return IsExpandable() || is_base(GetPathInfo());
+	if (IsExpandable())
+		return true;
+
+	const auto pi = GetPathInfo();
+	if (pi.empty())
+		return script_name != nullptr && is_base(script_name);
+	else
+		return is_base(pi);
 }
 
 const char *
 CgiAddress::AutoBase(AllocatorPtr alloc,
 		     const char *request_uri) const noexcept
 {
-	/* auto-generate the BASE only if the path info begins with a
-	   slash and matches the URI */
-
 	auto pi = GetPathInfo();
-
-	if (pi.size() < 2 || !pi.starts_with('/'))
-		return nullptr;
 
 	/* XXX implement (un-)escaping of the uri */
 
-	pi.remove_prefix(1);
+	/* either SCRIPT_NAME must end with a slash or PATH_INFO must
+	   start with one */
+	if (script_name == nullptr || !is_base(script_name)) {
+		if (!pi.starts_with('/'))
+			return nullptr;
+
+		pi.remove_prefix(1);
+	}
 
 	size_t length = base_string(request_uri, pi);
 	if (length == 0 || length == (size_t)-1)
