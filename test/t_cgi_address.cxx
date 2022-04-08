@@ -36,6 +36,17 @@
 
 #include <gtest/gtest.h>
 
+[[gnu::pure]]
+static constexpr auto
+MakeCgiAddress(const char *executable_path, const char *script_name,
+	       const char *path_info) noexcept
+{
+	CgiAddress address(executable_path);
+	address.script_name = script_name;
+	address.path_info = path_info;
+	return address;
+}
+
 TEST(CgiAddressTest, Uri)
 {
 	TestPool pool;
@@ -86,9 +97,7 @@ TEST(CgiAddressTest, Apply)
 	TestPool pool;
 	AllocatorPtr alloc(pool);
 
-	CgiAddress a("/usr/bin/cgi");
-	a.script_name = "/test.pl";
-	a.path_info = "/foo";
+	auto a = MakeCgiAddress("/usr/bin/cgi", "/test.pl", "/foo");
 
 	auto b = a.Apply(alloc, "");
 	ASSERT_EQ((const CgiAddress *)&a, b);
@@ -119,17 +128,6 @@ TEST(CgiAddressTest, Apply)
 	ASSERT_STREQ(b->path, a.path);
 	ASSERT_STREQ(b->script_name, a.script_name);
 	ASSERT_STREQ(b->path_info, "/bar");
-}
-
-[[gnu::pure]]
-static constexpr auto
-MakeCgiAddress(const char *executable_path, const char *script_name,
-	       const char *path_info) noexcept
-{
-	CgiAddress address(executable_path);
-	address.script_name = script_name;
-	address.path_info = path_info;
-	return address;
 }
 
 static bool
