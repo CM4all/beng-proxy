@@ -122,7 +122,7 @@ TEST(CgiAddressTest, Apply)
 }
 
 [[gnu::pure]]
-static auto
+static constexpr auto
 MakeCgiAddress(const char *executable_path, const char *script_name,
 	       const char *path_info) noexcept
 {
@@ -161,7 +161,7 @@ TEST(CgiAddressTest, RelativeTo)
 	TestPool pool;
 	AllocatorPtr alloc(pool);
 
-	const auto base = MakeCgiAddress("/usr/bin/cgi", "/test.pl", "/foo/");
+	static constexpr auto base = MakeCgiAddress("/usr/bin/cgi", "/test.pl", "/foo/");
 
 	ASSERT_EQ(MakeCgiAddress("/usr/bin/other-cgi", "/test.pl", "/foo/").RelativeTo(base), nullptr);
 

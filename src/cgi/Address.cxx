@@ -50,11 +50,6 @@
 
 #include <string.h>
 
-CgiAddress::CgiAddress(const char *_path) noexcept
-	:path(_path)
-{
-}
-
 CgiAddress::CgiAddress(AllocatorPtr alloc, const CgiAddress &src) noexcept
 	:path(alloc.Dup(src.path)),
 	 args(alloc, src.args),

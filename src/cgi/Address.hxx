@@ -94,7 +94,10 @@ struct CgiAddress {
 	bool expand_path_info = false;
 	bool expand_document_root = false;
 
-	explicit CgiAddress(const char *_path) noexcept;
+	explicit constexpr CgiAddress(const char *_path) noexcept
+		:path(_path)
+	{
+	}
 
 	constexpr CgiAddress(ShallowCopy shallow_copy,
 			     const CgiAddress &src) noexcept
