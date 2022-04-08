@@ -67,8 +67,7 @@ base_string(std::string_view uri, std::string_view tail) noexcept
 
 	return uri.size() > tail.size() &&
 		uri[uri.size() - tail.size() - 1] == '/' &&
-		memcmp(uri.data() + uri.size() - tail.size(),
-		       tail.data(), tail.size()) == 0
+		uri.ends_with(tail)
 		? uri.size() - tail.size()
 		: (std::size_t)-1;
 }
