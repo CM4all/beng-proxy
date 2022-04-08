@@ -77,5 +77,5 @@ base_string(std::string_view uri, std::string_view tail) noexcept
 bool
 is_base(std::string_view uri) noexcept
 {
-	return !uri.empty() && uri.back() == '/';
+	return uri.ends_with('/');
 }
