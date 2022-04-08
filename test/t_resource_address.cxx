@@ -40,59 +40,6 @@
 
 #include <string.h>
 
-TEST(ResourceAddressTest, AutoBase)
-{
-	TestPool pool;
-	const AllocatorPtr alloc(pool);
-
-	static const auto cgi0 =
-		MakeCgiAddress(alloc, "/usr/lib/cgi-bin/foo.pl", nullptr, "/");
-	static constexpr ResourceAddress ra0(ResourceAddress::Type::CGI, cgi0);
-
-	ASSERT_EQ(ra0.AutoBase(alloc, "/"), nullptr);
-	ASSERT_EQ(ra0.AutoBase(alloc, "/foo"), nullptr);
-
-	static const auto cgi1 =
-		MakeCgiAddress(alloc, "/usr/lib/cgi-bin/foo.pl", nullptr, "foo/bar");
-	static constexpr ResourceAddress ra1(ResourceAddress::Type::CGI, cgi1);
-
-	ASSERT_EQ(ra1.AutoBase(alloc, "/"), nullptr);
-	ASSERT_EQ(ra1.AutoBase(alloc, "/foo/bar"), nullptr);
-
-	static const auto cgi2 =
-		MakeCgiAddress(alloc, "/usr/lib/cgi-bin/foo.pl", nullptr, "/bar/baz");
-	static constexpr ResourceAddress ra2(ResourceAddress::Type::CGI, cgi2);
-
-	ASSERT_EQ(ra2.AutoBase(alloc, "/"), nullptr);
-	ASSERT_EQ(ra2.AutoBase(alloc, "/foobar/baz"), nullptr);
-
-	const char *a = ra2.AutoBase(alloc, "/foo/bar/baz");
-	ASSERT_NE(a, nullptr);
-	ASSERT_STREQ(a, "/foo/");
-}
-
-TEST(ResourceAddressTest, BaseNoPathInfo)
-{
-	TestPool pool;
-	const AllocatorPtr alloc(pool);
-
-	static const auto cgi0 = MakeCgiAddress(alloc, "/usr/lib/cgi-bin/foo.pl");
-	static constexpr ResourceAddress ra0(ResourceAddress::Type::CGI, cgi0);
-
-	auto dest = ra0.SaveBase(alloc, "");
-	ASSERT_TRUE(dest.IsDefined());
-	ASSERT_EQ(dest.type, ResourceAddress::Type::CGI);
-	ASSERT_STREQ(dest.GetCgi().path, ra0.GetCgi().path);
-	ASSERT_TRUE(dest.GetCgi().path_info == nullptr ||
-		    strcmp(dest.GetCgi().path_info, "") == 0);
-
-	dest = ra0.LoadBase(alloc, "foo/bar");
-	ASSERT_TRUE(dest.IsDefined());
-	ASSERT_EQ(dest.type, ResourceAddress::Type::CGI);
-	ASSERT_STREQ(dest.GetCgi().path, ra0.GetCgi().path);
-	ASSERT_STREQ(dest.GetCgi().path_info, "foo/bar");
-}
-
 TEST(ResourceAddressTest, CgiApply)
 {
 	TestPool pool;
@@ -130,12 +77,6 @@ TEST(ResourceAddressTest, Basic)
 	static const FileAddress file2("/var/www/foo/space .txt");
 	static constexpr ResourceAddress ra2(file2);
 
-	static const auto cgi3 =
-		MakeCgiAddress(alloc, "/usr/lib/cgi-bin/foo.pl",
-			       "/foo/bar/baz",
-			       "/bar/baz");
-	static constexpr ResourceAddress ra3(ResourceAddress::Type::CGI, cgi3);
-
 	auto a = ra1.SaveBase(alloc, "bar.html");
 	ASSERT_TRUE(a.IsDefined());
 	ASSERT_EQ(a.type, ResourceAddress::Type::LOCAL);
@@ -159,45 +100,4 @@ TEST(ResourceAddressTest, Basic)
 	ASSERT_EQ(b.type, ResourceAddress::Type::LOCAL);
 	ASSERT_STREQ(b.GetFile().base, "/var/www/foo/");
 	ASSERT_STREQ(b.GetFile().path, "index.html");
-
-	a = ra3.SaveBase(alloc, "bar/baz");
-	ASSERT_TRUE(a.IsDefined());
-	ASSERT_EQ(a.type, ResourceAddress::Type::CGI);
-	ASSERT_STREQ(a.GetCgi().path, ra3.GetCgi().path);
-	ASSERT_STREQ(a.GetCgi().path_info, "/");
-
-	b = a.LoadBase(alloc, "");
-	ASSERT_TRUE(b.IsDefined());
-	ASSERT_EQ(b.type, ResourceAddress::Type::CGI);
-	ASSERT_STREQ(b.GetCgi().path, ra3.GetCgi().path);
-	ASSERT_STREQ(b.GetCgi().uri, "/foo/");
-	ASSERT_STREQ(b.GetCgi().path_info, "/");
-
-	b = a.LoadBase(alloc, "xyz");
-	ASSERT_TRUE(b.IsDefined());
-	ASSERT_EQ(b.type, ResourceAddress::Type::CGI);
-	ASSERT_STREQ(b.GetCgi().path, ra3.GetCgi().path);
-	ASSERT_STREQ(b.GetCgi().uri, "/foo/xyz");
-	ASSERT_STREQ(b.GetCgi().path_info, "/xyz");
-
-	a = ra3.SaveBase(alloc, "baz");
-	ASSERT_TRUE(a.IsDefined());
-	ASSERT_EQ(a.type, ResourceAddress::Type::CGI);
-	ASSERT_STREQ(a.GetCgi().path, ra3.GetCgi().path);
-	ASSERT_STREQ(a.GetCgi().uri, "/foo/bar/");
-	ASSERT_STREQ(a.GetCgi().path_info, "/bar/");
-
-	b = a.LoadBase(alloc, "bar/");
-	ASSERT_TRUE(b.IsDefined());
-	ASSERT_EQ(b.type, ResourceAddress::Type::CGI);
-	ASSERT_STREQ(b.GetCgi().path, ra3.GetCgi().path);
-	ASSERT_STREQ(b.GetCgi().uri, "/foo/bar/bar/");
-	ASSERT_STREQ(b.GetCgi().path_info, "/bar/bar/");
-
-	b = a.LoadBase(alloc, "bar/xyz");
-	ASSERT_TRUE(b.IsDefined());
-	ASSERT_EQ(b.type, ResourceAddress::Type::CGI);
-	ASSERT_STREQ(b.GetCgi().path, ra3.GetCgi().path);
-	ASSERT_STREQ(b.GetCgi().uri, "/foo/bar/bar/xyz");
-	ASSERT_STREQ(b.GetCgi().path_info, "/bar/bar/xyz");
 }

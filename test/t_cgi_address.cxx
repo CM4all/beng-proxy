@@ -170,3 +170,98 @@ TEST(CgiAddressTest, RelativeTo)
 	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/foo/").RelativeTo(base), "");
 	ASSERT_EQ(MakeCgiAddress("/usr/bin/cgi", nullptr, "/test.pl", "/foo/bar").RelativeTo(base), "bar");
 }
+
+TEST(CgiAddressTest, AutoBase)
+{
+	TestPool pool;
+	const AllocatorPtr alloc{pool};
+
+	static constexpr auto cgi0 =
+		MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, nullptr, "/");
+
+	ASSERT_EQ(cgi0.AutoBase(alloc, "/"), nullptr);
+	ASSERT_EQ(cgi0.AutoBase(alloc, "/foo"), nullptr);
+
+	static constexpr auto cgi1 =
+		MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, nullptr, "foo/bar");
+
+	ASSERT_EQ(cgi1.AutoBase(alloc, "/"), nullptr);
+	ASSERT_EQ(cgi1.AutoBase(alloc, "/foo/bar"), nullptr);
+
+	static constexpr auto cgi2 =
+		MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, nullptr, "/bar/baz");
+
+	ASSERT_EQ(cgi2.AutoBase(alloc, "/"), nullptr);
+	ASSERT_EQ(cgi2.AutoBase(alloc, "/foobar/baz"), nullptr);
+
+	const char *ab = cgi2.AutoBase(alloc, "/foo/bar/baz");
+	ASSERT_NE(ab, nullptr);
+	ASSERT_STREQ(ab, "/foo/");
+}
+
+TEST(CgiAddressTest, BaseNoPathInfo)
+{
+	TestPool pool;
+	const AllocatorPtr alloc{pool};
+
+	static constexpr auto src =
+		MakeCgiAddress("/usr/lib/cgi-bin/foo.pl", nullptr, nullptr, nullptr);
+
+	const auto *dest = src.SaveBase(alloc, "");
+	ASSERT_NE(dest, nullptr);
+	ASSERT_STREQ(dest->path, src.path);
+	ASSERT_TRUE(dest->path_info == nullptr ||
+		    strcmp(dest->path_info, "") == 0);
+
+	dest = src.LoadBase(alloc, "foo/bar");
+	ASSERT_NE(dest, nullptr);
+	ASSERT_STREQ(dest->path, src.path);
+	ASSERT_STREQ(dest->path_info, "foo/bar");
+}
+
+TEST(CgiAddressTest, SaveLoadBase)
+{
+	TestPool pool;
+	const AllocatorPtr alloc{pool};
+
+	static constexpr auto src =
+		MakeCgiAddress("/usr/lib/cgi-bin/foo.pl",
+			       "/foo/bar/baz",
+			       nullptr,
+			       "/bar/baz");
+
+	const auto *a = src.SaveBase(alloc, "bar/baz");
+	ASSERT_NE(a, nullptr);
+	ASSERT_STREQ(a->path, src.path);
+	ASSERT_STREQ(a->path_info, "/");
+
+	const auto *b = a->LoadBase(alloc, "");
+	ASSERT_NE(b, nullptr);
+	ASSERT_STREQ(b->path, src.path);
+	ASSERT_STREQ(b->uri, "/foo/");
+	ASSERT_STREQ(b->path_info, "/");
+
+	b = a->LoadBase(alloc, "xyz");
+	ASSERT_NE(b, nullptr);
+	ASSERT_STREQ(b->path, src.path);
+	ASSERT_STREQ(b->uri, "/foo/xyz");
+	ASSERT_STREQ(b->path_info, "/xyz");
+
+	a = src.SaveBase(alloc, "baz");
+	ASSERT_NE(a, nullptr);
+	ASSERT_STREQ(a->path, src.path);
+	ASSERT_STREQ(a->uri, "/foo/bar/");
+	ASSERT_STREQ(a->path_info, "/bar/");
+
+	b = a->LoadBase(alloc, "bar/");
+	ASSERT_NE(b, nullptr);
+	ASSERT_STREQ(b->path, src.path);
+	ASSERT_STREQ(b->uri, "/foo/bar/bar/");
+	ASSERT_STREQ(b->path_info, "/bar/bar/");
+
+	b = a->LoadBase(alloc, "bar/xyz");
+	ASSERT_NE(b, nullptr);
+	ASSERT_STREQ(b->path, src.path);
+	ASSERT_STREQ(b->uri, "/foo/bar/bar/xyz");
+	ASSERT_STREQ(b->path_info, "/bar/bar/xyz");
+}
