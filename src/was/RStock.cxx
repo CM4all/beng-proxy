@@ -55,7 +55,7 @@
 
 struct RemoteMultiWasParams {
 	SocketAddress address;
-	unsigned concurrency;
+	unsigned parallelism, concurrency;
 };
 
 class RemoteMultiWasConnection final
@@ -141,6 +141,18 @@ RemoteWasStock::RemoteWasStock(unsigned limit, unsigned max_idle,
 	:multi_stock(event_loop, multi_client_stock_class,
 		     limit, max_idle, *this) {}
 
+std::size_t
+RemoteWasStock::GetLimit(const void *request,
+			 std::size_t _limit) const noexcept
+{
+	const auto &params = *(const RemoteMultiWasParams *)request;
+
+	if (params.parallelism > 0)
+		return params.parallelism;
+
+	return _limit;
+}
+
 StockItem *
 RemoteWasStock::Create(CreateStockItem c, StockItem &shared_item)
 {
@@ -151,7 +163,7 @@ RemoteWasStock::Create(CreateStockItem c, StockItem &shared_item)
 
 void
 RemoteWasStock::Get(AllocatorPtr alloc, SocketAddress address,
-		   unsigned concurrency,
+		   unsigned parallelism, unsigned concurrency,
 		   StockGetHandler &handler,
 		   CancellablePointer &cancel_ptr) noexcept
 {
@@ -159,6 +171,7 @@ RemoteWasStock::Get(AllocatorPtr alloc, SocketAddress address,
 
 	auto r = NewDisposablePointer<RemoteMultiWasParams>(alloc);
 	r->address = address;
+	r->parallelism = parallelism;
 	r->concurrency = concurrency;
 
 	char buffer[1024];

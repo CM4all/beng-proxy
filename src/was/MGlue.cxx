@@ -107,17 +107,17 @@ public:
 
 	void Start(MultiWasStock &stock, const ChildOptions &options,
 		   const char *action, ConstBuffer<const char *> args,
-		   unsigned concurrency) noexcept {
+		   unsigned parallelism, unsigned concurrency) noexcept {
 		stock.Get(pool,
 			  options,
 			  action, args,
-			  concurrency,
+			  parallelism, concurrency,
 			  *this, stock_cancel_ptr);
 	}
 
 	void Start(RemoteWasStock &stock, SocketAddress address,
-		   unsigned concurrency) noexcept {
-		stock.Get(pool, address, concurrency,
+		   unsigned parallelism, unsigned concurrency) noexcept {
+		stock.Get(pool, address, parallelism, concurrency,
 			  *this, stock_cancel_ptr);
 	}
 
@@ -251,6 +251,7 @@ SendMultiWasRequest(struct pool &pool, MultiWasStock &stock,
 		    const char *action,
 		    const char *path,
 		    ConstBuffer<const char *> args,
+		    unsigned parallelism,
 		    http_method_t method, const char *uri,
 		    const char *script_name, const char *path_info,
 		    const char *query_string,
@@ -275,7 +276,7 @@ SendMultiWasRequest(struct pool &pool, MultiWasStock &stock,
 						    std::move(body),
 						    parameters,
 						    handler, cancel_ptr);
-	request->Start(stock, options, action, args, concurrency);
+	request->Start(stock, options, action, args, parallelism, concurrency);
 }
 
 static StopwatchPtr
@@ -332,6 +333,7 @@ void
 SendRemoteWasRequest(struct pool &pool, RemoteWasStock &stock,
 		     const StopwatchPtr &parent_stopwatch,
 		     SocketAddress address,
+		     unsigned parallelism,
 		     http_method_t method, const char *uri,
 		     const char *script_name, const char *path_info,
 		     const char *query_string,
@@ -353,5 +355,5 @@ SendRemoteWasRequest(struct pool &pool, RemoteWasStock &stock,
 						    std::move(body),
 						    parameters,
 						    handler, cancel_ptr);
-	request->Start(stock, address, concurrency);
+	request->Start(stock, address, parallelism, concurrency);
 }

@@ -59,6 +59,7 @@ LhttpAddress::LhttpAddress(AllocatorPtr alloc,
 	 options(alloc, src.options),
 	 host_and_port(alloc.CheckDup(src.host_and_port)),
 	 uri(alloc.Dup(src.uri)),
+	 parallelism(src.parallelism),
 	 concurrency(src.concurrency),
 	 blocking(src.blocking),
 	 expand_uri(src.expand_uri)

@@ -51,6 +51,9 @@ struct StockStats;
 
 class MultiStockClass {
 public:
+	virtual std::size_t GetLimit(const void *request,
+				     std::size_t _limit) const noexcept = 0;
+
 	virtual Event::Duration GetClearInterval(const void *info) const noexcept = 0;
 
 	virtual StockItem *Create(CreateStockItem c,

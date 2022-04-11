@@ -76,7 +76,8 @@ StockItem *
 fcgi_stock_get(FcgiStock *fcgi_stock,
 	       const ChildOptions &options,
 	       const char *executable_path,
-	       ConstBuffer<const char *> args);
+	       ConstBuffer<const char *> args,
+	       unsigned parallelism);
 
 void
 fcgi_stock_item_set_site(StockItem &item, const char *site) noexcept;

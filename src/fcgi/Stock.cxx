@@ -92,7 +92,8 @@ public:
 
 	StockItem *Get(const ChildOptions &options,
 		       const char *executable_path,
-		       ConstBuffer<const char *> args);
+		       ConstBuffer<const char *> args,
+		       unsigned parallelism);
 
 	void FadeAll() noexcept {
 		hstock.FadeAll();
@@ -107,6 +108,8 @@ private:
 		    CancellablePointer &cancel_ptr) override;
 
 	/* virtual methods from class ChildStockClass */
+	std::size_t GetChildLimit(const void *request,
+				  std::size_t _limit) const noexcept override;
 	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
 	bool WantReturnStderr(void *info) const noexcept override;
 	bool WantStderrPond(void *info) const noexcept override;
@@ -209,6 +212,17 @@ FcgiConnection::OnSocketEvent(unsigned) noexcept
  * child_stock class
  *
  */
+
+std::size_t
+FcgiStock::GetChildLimit(const void *request,
+			 std::size_t _limit) const noexcept
+{
+	const auto &params = *(const CgiChildParams *)request;
+	if (params.parallelism > 0)
+		return params.parallelism;
+
+	return _limit;
+}
 
 Event::Duration
 FcgiStock::GetChildClearInterval(const void *info) const noexcept
@@ -440,12 +454,14 @@ fcgi_stock_fade_tag(FcgiStock &fs, StringView tag) noexcept
 inline StockItem *
 FcgiStock::Get(const ChildOptions &options,
 	       const char *executable_path,
-	       ConstBuffer<const char *> args)
+	       ConstBuffer<const char *> args,
+	       unsigned parallelism)
 {
 	const TempPoolLease tpool;
 
 	auto r = NewDisposablePointer<CgiChildParams>(*tpool, executable_path,
-						      args, options);
+						      args, options,
+						      parallelism, 0);
 	const char *key = r->GetStockKey(*tpool);
 	return hstock.GetNow(key, std::move(r));
 }
@@ -454,9 +470,11 @@ StockItem *
 fcgi_stock_get(FcgiStock *fcgi_stock,
 	       const ChildOptions &options,
 	       const char *executable_path,
-	       ConstBuffer<const char *> args)
+	       ConstBuffer<const char *> args,
+	       unsigned parallelism)
 {
-	return fcgi_stock->Get(options, executable_path, args);
+	return fcgi_stock->Get(options, executable_path, args,
+			       parallelism);
 }
 
 int

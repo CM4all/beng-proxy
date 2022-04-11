@@ -60,6 +60,12 @@ struct LhttpAddress {
 	const char *uri;
 
 	/**
+	 * The maximum number of parallel child processes of this
+	 * kind.
+	 */
+	unsigned parallelism = 0;
+
+	/**
 	 * The maximum number of concurrent connections to one instance.
 	 */
 	unsigned concurrency = 1;
@@ -85,6 +91,7 @@ struct LhttpAddress {
 		 options(shallow_copy, src.options),
 		 host_and_port(src.host_and_port),
 		 uri(src.uri),
+		 parallelism(src.parallelism),
 		 concurrency(src.concurrency),
 		 blocking(src.blocking),
 		 expand_uri(src.expand_uri)

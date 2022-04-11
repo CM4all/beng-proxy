@@ -84,6 +84,8 @@ public:
 
 private:
 	/* virtual methods from class MultiStockClass */
+	std::size_t GetLimit(const void *request,
+			     std::size_t _limit) const noexcept override;
 	Event::Duration GetClearInterval(const void *request) const noexcept override;
 	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 
@@ -93,6 +95,8 @@ private:
 	void PrepareChild(void *info, PreparedChildProcess &p) override;
 
 	/* virtual methods from class ChildStockMapClass */
+	std::size_t GetChildLimit(const void *request,
+				  std::size_t _limit) const noexcept override;
 	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
 
 	/* virtual methods from class ListenChildStockClass */
@@ -192,6 +196,18 @@ LhttpConnection::EventCallback(unsigned) noexcept
  *
  */
 
+std::size_t
+LhttpStock::GetLimit(const void *request,
+		     std::size_t _limit) const noexcept
+{
+	const auto &address = *(const LhttpAddress *)request;
+
+	if (address.parallelism > 0)
+		return address.parallelism;
+
+	return _limit;
+}
+
 Event::Duration
 LhttpStock::GetClearInterval(const void *info) const noexcept
 {
@@ -202,6 +218,16 @@ LhttpStock::GetClearInterval(const void *info) const noexcept
 		/* lower clear_interval for jailed (per-account?)
 		   processes */
 		: std::chrono::minutes(5);
+}
+
+/* TODO: this method is unreachable we don't use ChildStockMap, but we
+   must implemented it because ListenChildStockClass is based on
+   ChildStockMapClass */
+std::size_t
+LhttpStock::GetChildLimit(const void *request,
+			  std::size_t _limit) const noexcept
+{
+	return GetLimit(request, _limit);
 }
 
 /* TODO: this method is unreachable we don't use ChildStockMap, but we

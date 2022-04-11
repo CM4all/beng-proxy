@@ -587,7 +587,8 @@ MultiStock::MakeMapItem(const char *uri, void *request) noexcept
 		map.insert_check(uri, map.hash_function(), map.key_eq(), hint);
 	if (inserted) {
 		auto *item = new MapItem(GetEventLoop(), outer_class, uri,
-					 limit, max_idle,
+					 inner_class.GetLimit(request, limit),
+					 max_idle,
 					 inner_class.GetClearInterval(request),
 					 inner_class);
 		map.insert_commit(*item, hint);

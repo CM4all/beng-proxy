@@ -76,6 +76,12 @@ struct CgiAddress {
 	AddressList address_list;
 
 	/**
+	 * The maximum number of parallel child processes of this
+	 * kind.
+	 */
+	unsigned parallelism = 0;
+
+	/**
 	 * The maximum number of concurrent connections to one
 	 * instance.  Only applicable to WAS; if it is non-zero, then
 	 * the Multi-WAS protocol is used.

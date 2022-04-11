@@ -77,12 +77,14 @@ public:
 		 const ChildOptions &options,
 		 const char *executable_path,
 		 ConstBuffer<const char *> args,
-		 unsigned concurrency,
+		 unsigned parallelism, unsigned concurrency,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 
 private:
 	/* virtual methods from class MultiStockClass */
+	std::size_t GetLimit(const void *request,
+			     std::size_t _limit) const noexcept override;
 	Event::Duration GetClearInterval(const void *info) const noexcept override;
 	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 

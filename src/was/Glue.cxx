@@ -101,10 +101,12 @@ public:
 	}
 
 	void Start(WasStock &was_stock, const ChildOptions &options,
-		   const char *action, ConstBuffer<const char *> args) {
+		   const char *action, ConstBuffer<const char *> args,
+		   unsigned parallelism) noexcept {
 		was_stock.Get(pool,
 			      options,
 			      action, args,
+			      parallelism,
 			      *this, stock_cancel_ptr);
 	}
 
@@ -238,6 +240,7 @@ was_request(struct pool &pool, WasStock &was_stock,
 	    const char *action,
 	    const char *path,
 	    ConstBuffer<const char *> args,
+	    unsigned parallelism,
 	    http_method_t method, const char *uri,
 	    const char *script_name, const char *path_info,
 	    const char *query_string,
@@ -261,5 +264,6 @@ was_request(struct pool &pool, WasStock &was_stock,
 					       std::move(body),
 					       parameters,
 					       handler, cancel_ptr);
-	request->Start(was_stock, options, action, args);
+	request->Start(was_stock, options, action, args,
+		       parallelism);
 }

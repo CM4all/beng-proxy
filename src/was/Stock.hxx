@@ -53,7 +53,17 @@ class WasStock final : StockClass {
 	SpawnService &spawn_service;
 	const SocketDescriptor log_socket;
 	const ChildErrorLogOptions log_options;
-	StockMap stock;
+
+	class WasStockMap final : public StockMap {
+	public:
+		using StockMap::StockMap;
+
+		/* virtual methods from class StockMap */
+		std::size_t GetLimit(const void *request,
+				     std::size_t _limit) const noexcept override;
+	};
+
+	WasStockMap stock;
 
 public:
 	explicit WasStock(EventLoop &event_loop, SpawnService &_spawn_service,
@@ -81,6 +91,7 @@ public:
 		 const ChildOptions &options,
 		 const char *executable_path,
 		 ConstBuffer<const char *> args,
+		 unsigned parallelism,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 

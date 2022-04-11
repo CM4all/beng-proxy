@@ -46,6 +46,17 @@
 #include <cassert>
 #include <string>
 
+std::size_t
+WasStock::WasStockMap::GetLimit(const void *request,
+				std::size_t _limit) const noexcept
+{
+	auto &params = *(const CgiChildParams *)request;
+	if (params.parallelism > 0)
+		return params.parallelism;
+
+	return _limit;
+}
+
 class WasChild final : public WasStockConnection, ExitListener {
 	SpawnService &spawn_service;
 
@@ -157,13 +168,16 @@ WasStock::Get(struct pool &pool,
 	      const ChildOptions &options,
 	      const char *executable_path,
 	      ConstBuffer<const char *> args,
+	      unsigned parallelism,
 	      StockGetHandler &handler,
 	      CancellablePointer &cancel_ptr) noexcept
 {
 	const TempPoolLease tpool;
 
 	auto r = NewDisposablePointer<CgiChildParams>(pool, executable_path,
-						      args, options);
+						      args, options,
+						      parallelism,
+						      0);
 	const char *key = r->GetStockKey(*tpool);
 
 	stock.Get(key, std::move(r), handler, cancel_ptr);

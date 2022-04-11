@@ -44,14 +44,16 @@ struct CgiChildParams {
 
 	const ChildOptions &options;
 
-	unsigned concurrency;
+	unsigned parallelism, concurrency;
 
 	CgiChildParams(const char *_executable_path,
 		       ConstBuffer<const char *> _args,
 		       const ChildOptions &_options,
-		       unsigned _concurrency=0) noexcept
+		       unsigned _parallelism,
+		       unsigned _concurrency) noexcept
 		:executable_path(_executable_path), args(_args),
 		 options(_options),
+		 parallelism(_parallelism),
 		 concurrency(_concurrency) {}
 
 	/**

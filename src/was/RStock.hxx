@@ -63,12 +63,15 @@ public:
 	 * instance.
 	 */
 	void Get(AllocatorPtr alloc, SocketAddress address,
-		 unsigned concurrency,
+		 unsigned parallelism, unsigned concurrency,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;
 
 private:
 	/* virtual methods from class MultiStockClass */
+	std::size_t GetLimit(const void *request,
+			     std::size_t _limit) const noexcept override;
+
 	Event::Duration GetClearInterval(const void *) const noexcept override {
 		return std::chrono::minutes{5};
 	}

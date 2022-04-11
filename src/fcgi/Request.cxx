@@ -141,6 +141,7 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
 	     const char *action,
 	     const char *path,
 	     ConstBuffer<const char *> args,
+	     unsigned parallelism,
 	     http_method_t method, const char *uri,
 	     const char *script_name, const char *path_info,
 	     const char *query_string,
@@ -160,8 +161,7 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
 	StockItem *stock_item;
 	try {
 		stock_item = fcgi_stock_get(fcgi_stock, options,
-					    action,
-					    args);
+					    action, args, parallelism);
 	} catch (...) {
 		stopwatch.RecordEvent("launch_error");
 		body.Clear();

@@ -96,6 +96,11 @@ class MyStockClass final : public StockClass, public MultiStockClass {
 
 public:
 	/* virtual methods from class StockClass */
+	std::size_t GetLimit(const void *,
+			     std::size_t _limit) const noexcept override {
+		return _limit;
+	}
+
 	Event::Duration GetClearInterval(const void *) const noexcept override {
 		return std::chrono::hours{1};
 	}

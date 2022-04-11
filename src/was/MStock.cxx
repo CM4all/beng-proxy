@@ -143,6 +143,18 @@ MultiWasStock::MultiWasStock(unsigned limit, unsigned max_idle,
 		      limit, max_idle,
 		      *this) {}
 
+std::size_t
+MultiWasStock::GetLimit(const void *request,
+			std::size_t _limit) const noexcept
+{
+	const auto &params = *(const CgiChildParams *)request;
+
+	if (params.parallelism > 0)
+		return params.parallelism;
+
+	return _limit;
+}
+
 Event::Duration
 MultiWasStock::GetClearInterval(const void *info) const noexcept
 {
@@ -215,7 +227,7 @@ MultiWasStock::Get(AllocatorPtr alloc,
 		   const ChildOptions &options,
 		   const char *executable_path,
 		   ConstBuffer<const char *> args,
-		   unsigned concurrency,
+		   unsigned parallelism, unsigned concurrency,
 		   StockGetHandler &handler,
 		   CancellablePointer &cancel_ptr) noexcept
 {
@@ -223,7 +235,7 @@ MultiWasStock::Get(AllocatorPtr alloc,
 
 	auto r = NewDisposablePointer<CgiChildParams>(alloc, executable_path,
 						      args, options,
-						      concurrency);
+						      parallelism, concurrency);
 	const char *key = r->GetStockKey(*tpool);
 
 	mchild_stock.Get(key, std::move(r), concurrency, handler, cancel_ptr);
