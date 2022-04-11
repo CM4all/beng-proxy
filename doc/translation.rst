@@ -251,6 +251,9 @@ Response
 - ``CONCURRENCY``: a 16 bit integer specifying the maximum number of
   concurrent requests to this server (LHTTP and Multi-WAS only)
 
+- ``PARALLELISM``: a 16 bit integer specifying the maximum number of
+  parallel child processes of this kind
+
 - ``NON_BLOCKING``: If present, make the socket passed to a child
   process non-blocking (LHTTP only currently). This is needed by NodeJS
   0.12.
