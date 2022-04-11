@@ -69,7 +69,7 @@ public:
 
 private:
 	/* virtual methods from class MultiStockClass */
-	Event::Duration GetClearInterval(void *) const noexcept override {
+	Event::Duration GetClearInterval(const void *) const noexcept override {
 		return std::chrono::minutes{5};
 	}
 

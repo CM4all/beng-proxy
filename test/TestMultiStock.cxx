@@ -96,7 +96,7 @@ class MyStockClass final : public StockClass, public MultiStockClass {
 
 public:
 	/* virtual methods from class StockClass */
-	Event::Duration GetClearInterval(void *) const noexcept override {
+	Event::Duration GetClearInterval(const void *) const noexcept override {
 		return std::chrono::hours{1};
 	}
 

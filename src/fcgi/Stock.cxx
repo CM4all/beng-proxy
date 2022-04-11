@@ -107,7 +107,7 @@ private:
 		    CancellablePointer &cancel_ptr) override;
 
 	/* virtual methods from class ChildStockClass */
-	Event::Duration GetChildClearInterval(void *info) const noexcept override;
+	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
 	bool WantReturnStderr(void *info) const noexcept override;
 	bool WantStderrPond(void *info) const noexcept override;
 
@@ -211,7 +211,7 @@ FcgiConnection::OnSocketEvent(unsigned) noexcept
  */
 
 Event::Duration
-FcgiStock::GetChildClearInterval(void *info) const noexcept
+FcgiStock::GetChildClearInterval(const void *info) const noexcept
 {
 	const auto &params = *(const CgiChildParams *)info;
 

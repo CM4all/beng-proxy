@@ -144,7 +144,7 @@ MultiWasStock::MultiWasStock(unsigned limit, unsigned max_idle,
 		      *this) {}
 
 Event::Duration
-MultiWasStock::GetClearInterval(void *info) const noexcept
+MultiWasStock::GetClearInterval(const void *info) const noexcept
 {
 	const auto &params = *(const CgiChildParams *)info;
 

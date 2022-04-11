@@ -82,7 +82,7 @@ public:
 
 class ChildStockMapClass : public ChildStockClass {
 public:
-	virtual Event::Duration GetChildClearInterval(void *info) const noexcept = 0;
+	virtual Event::Duration GetChildClearInterval(const void *info) const noexcept = 0;
 };
 
 using ChildStockItemHook =
@@ -171,7 +171,7 @@ class ChildStockMap final {
 			 ccls(_ccls) {}
 
 	protected:
-		Event::Duration GetClearInterval(void *info) const noexcept override {
+		Event::Duration GetClearInterval(const void *info) const noexcept override {
 			return ccls.GetChildClearInterval(info);
 		}
 	};

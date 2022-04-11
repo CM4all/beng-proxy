@@ -51,7 +51,7 @@ struct StockStats;
 
 class MultiStockClass {
 public:
-	virtual Event::Duration GetClearInterval(void *info) const noexcept = 0;
+	virtual Event::Duration GetClearInterval(const void *info) const noexcept = 0;
 
 	virtual StockItem *Create(CreateStockItem c,
 				  StockItem &shared_item) = 0;

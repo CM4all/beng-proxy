@@ -84,12 +84,11 @@ public:
 
 private:
 	/* virtual methods from class MultiStockClass */
-	Event::Duration GetClearInterval(void *) const noexcept override;
-
+	Event::Duration GetClearInterval(const void *request) const noexcept override;
 	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 
 	/* virtual methods from class ChildStockMapClass */
-	Event::Duration GetChildClearInterval(void *info) const noexcept override;
+	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
 	bool WantStderrPond(void *info) const noexcept override;
 	int GetChildSocketType(void *info) const noexcept override;
 	unsigned GetChildBacklog(void *info) const noexcept override;
@@ -192,7 +191,7 @@ LhttpConnection::EventCallback(unsigned) noexcept
  */
 
 Event::Duration
-LhttpStock::GetClearInterval(void *info) const noexcept
+LhttpStock::GetClearInterval(const void *info) const noexcept
 {
 	const auto &address = *(const LhttpAddress *)info;
 
@@ -207,7 +206,7 @@ LhttpStock::GetClearInterval(void *info) const noexcept
    must implemented it because ListenChildStockClass is based on
    ChildStockMapClass */
 Event::Duration
-LhttpStock::GetChildClearInterval(void *info) const noexcept
+LhttpStock::GetChildClearInterval(const void *info) const noexcept
 {
 	return GetClearInterval(info);
 }
