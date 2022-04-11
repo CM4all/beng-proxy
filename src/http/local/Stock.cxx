@@ -210,13 +210,6 @@ Event::Duration
 LhttpStock::GetChildClearInterval(void *info) const noexcept
 {
 	return GetClearInterval(info);
-	const auto &address = *(const LhttpAddress *)info;
-
-	return address.options.ns.mount.pivot_root == nullptr
-		? std::chrono::minutes(15)
-		/* lower clear_interval for jailed (per-account?)
-		   processes */
-		: std::chrono::minutes(5);
 }
 
 bool
