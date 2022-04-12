@@ -87,15 +87,17 @@ private:
 	Event::Duration GetClearInterval(const void *request) const noexcept override;
 	StockItem *Create(CreateStockItem c, StockItem &shared_item) override;
 
-	/* virtual methods from class ChildStockMapClass */
-	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
+	/* virtual methods from class ChildStockClass */
 	bool WantStderrPond(void *info) const noexcept override;
-	int GetChildSocketType(void *info) const noexcept override;
-	unsigned GetChildBacklog(void *info) const noexcept override;
 	StringView GetChildTag(void *info) const noexcept override;
 	void PrepareChild(void *info, PreparedChildProcess &p) override;
 
+	/* virtual methods from class ChildStockMapClass */
+	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
+
 	/* virtual methods from class ListenChildStockClass */
+	int GetChildSocketType(void *info) const noexcept override;
+	unsigned GetChildBacklog(void *info) const noexcept override;
 	void PrepareListenChild(void *info, UniqueSocketDescriptor fd,
 				PreparedChildProcess &p) override;
 };
