@@ -45,26 +45,26 @@
 
 Pg::BinaryValue
 WapKey(Pg::BinaryValue key_der, AES_KEY *wrap_key,
-       std::unique_ptr<unsigned char[]> &wrapped)
+       std::unique_ptr<std::byte[]> &wrapped)
 {
-	std::unique_ptr<unsigned char[]> padded;
+	std::unique_ptr<std::byte[]> padded;
 	size_t padded_size = ((key_der.size - 1) | 7) + 1;
 	if (padded_size != key_der.size) {
 		/* pad with zeroes */
-		padded.reset(new unsigned char[padded_size]);
+		padded.reset(new std::byte[padded_size]);
 
-		unsigned char *p = padded.get();
-		p = std::copy_n((const unsigned char *)key_der.data,
+		std::byte *p = padded.get();
+		p = std::copy_n((const std::byte *)key_der.data,
 				key_der.size, p);
-		std::fill(p, padded.get() + padded_size, 0);
+		std::fill(p, padded.get() + padded_size, std::byte{});
 
 		key_der.data = padded.get();
 		key_der.size = padded_size;
 	}
 
-	wrapped.reset(new unsigned char[key_der.size + 8]);
+	wrapped.reset(new std::byte[key_der.size + 8]);
 	int result = AES_wrap_key(wrap_key, nullptr,
-				  wrapped.get(),
+				  (unsigned char *)wrapped.get(),
 				  (const unsigned char *)key_der.data,
 				  key_der.size);
 	if (result <= 0)
@@ -78,7 +78,7 @@ WapKey(Pg::BinaryValue key_der, AES_KEY *wrap_key,
 Pg::BinaryValue
 UnwrapKey(Pg::BinaryValue key_der,
 	  const CertDatabaseConfig &config, const std::string &key_wrap_name,
-	  std::unique_ptr<unsigned char[]> &unwrapped)
+	  std::unique_ptr<std::byte[]> &unwrapped)
 {
 	if (key_der.size <= 8)
 		throw std::runtime_error("Malformed wrapped key");
@@ -94,9 +94,9 @@ UnwrapKey(Pg::BinaryValue key_der,
 
 	ERR_clear_error();
 
-	unwrapped.reset(new unsigned char[key_der.size - 8]);
+	unwrapped.reset(new std::byte[key_der.size - 8]);
 	int r = AES_unwrap_key(wrap_key, nullptr,
-			       unwrapped.get(),
+			       (unsigned char *)unwrapped.get(),
 			       (const unsigned char *)key_der.data,
 			       key_der.size);
 	if (r <= 0)

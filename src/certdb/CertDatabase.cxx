@@ -186,7 +186,7 @@ CertDatabase::LoadServerCertificate(const char *handle, const char *special,
 	const SslBuffer key_buffer(key);
 	Pg::BinaryValue key_der(key_buffer.get());
 
-	std::unique_ptr<unsigned char[]> wrapped;
+	std::unique_ptr<std::byte[]> wrapped;
 	if (wrap_key != nullptr)
 		key_der = WapKey(key_der, wrap_key, wrapped);
 
@@ -340,7 +340,7 @@ CertDatabase::InsertAcmeAccount(bool staging,
 	const SslBuffer key_buffer(key);
 	Pg::BinaryValue key_der(key_buffer.get());
 
-	std::unique_ptr<unsigned char[]> wrapped;
+	std::unique_ptr<std::byte[]> wrapped;
 	if (wrap_key != nullptr)
 		key_der = WapKey(key_der, wrap_key, wrapped);
 

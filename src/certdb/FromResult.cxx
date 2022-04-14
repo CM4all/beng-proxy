@@ -55,7 +55,7 @@ LoadWrappedKey(const CertDatabaseConfig &config,
 
 	auto key_der = result.GetBinaryValue(row, column);
 
-	std::unique_ptr<unsigned char[]> unwrapped;
+	std::unique_ptr<std::byte[]> unwrapped;
 	if (!result.IsValueNull(row, column + 1)) {
 		/* the private key is encrypted; descrypt it using the AES key
 		   from the configuration file */
