@@ -100,8 +100,8 @@ public:
 #endif
 
 Pg::BinaryValue
-WapKey(Pg::BinaryValue key_der, AES_KEY *wrap_key,
-       std::unique_ptr<std::byte[]> &wrapped);
+WrapKey(Pg::BinaryValue key_der, AES_KEY *wrap_key,
+	std::unique_ptr<std::byte[]> &wrapped);
 
 Pg::BinaryValue
 UnwrapKey(Pg::BinaryValue key_der,

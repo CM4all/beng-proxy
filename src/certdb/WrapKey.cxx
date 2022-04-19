@@ -44,8 +44,8 @@
 #endif
 
 Pg::BinaryValue
-WapKey(Pg::BinaryValue key_der, AES_KEY *wrap_key,
-       std::unique_ptr<std::byte[]> &wrapped)
+WrapKey(Pg::BinaryValue key_der, AES_KEY *wrap_key,
+	std::unique_ptr<std::byte[]> &wrapped)
 {
 	std::unique_ptr<std::byte[]> padded;
 	size_t padded_size = ((key_der.size - 1) | 7) + 1;

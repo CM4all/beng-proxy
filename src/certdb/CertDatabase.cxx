@@ -188,7 +188,7 @@ CertDatabase::LoadServerCertificate(const char *handle, const char *special,
 
 	std::unique_ptr<std::byte[]> wrapped;
 	if (wrap_key != nullptr)
-		key_der = WapKey(key_der, wrap_key, wrapped);
+		key_der = WrapKey(key_der, wrap_key, wrapped);
 
 	const auto alt_names = GetSubjectAltNames(cert);
 
@@ -342,7 +342,7 @@ CertDatabase::InsertAcmeAccount(bool staging,
 
 	std::unique_ptr<std::byte[]> wrapped;
 	if (wrap_key != nullptr)
-		key_der = WapKey(key_der, wrap_key, wrapped);
+		key_der = WrapKey(key_der, wrap_key, wrapped);
 
 	conn.ExecuteParams("INSERT INTO acme_account("
 			   "staging, email, location, key_der, key_wrap_name) "
