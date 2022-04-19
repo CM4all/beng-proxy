@@ -40,7 +40,6 @@
 #include "lib/openssl/Edit.hxx"
 #include "lib/openssl/Key.hxx"
 #include "lib/sodium/UrlSafeBase64SHA256.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/PrintException.hxx"
 #include "util/ScopeExit.hxx"
 
@@ -56,13 +55,6 @@ GetAcmeIdentifierObjectId() noexcept
 		return id;
 
 	return OBJ_create(txt, "pe-acmeIdentifier", "ACME Identifier");
-}
-
-[[gnu::pure]]
-static inline auto
-SHA256(std::string_view src) noexcept
-{
-	return SHA256(ConstBuffer<void>{src.data(), src.size()});
 }
 
 Alpn01ChallengeRecord::Alpn01ChallengeRecord(CertDatabase &_db,

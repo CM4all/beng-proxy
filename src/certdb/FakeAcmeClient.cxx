@@ -43,17 +43,24 @@
 
 #include <sstream>
 
-static boost::json::value
-ParseJson(ConstBuffer<void> buffer)
+static constexpr std::string_view
+ToStringView(std::span<const std::byte> span) noexcept
 {
-	return boost::json::parse(std::string_view((const char *)buffer.data, buffer.size));
+	const std::span<const char> char_span{(const char *)(const void *)span.data(), span.size()};
+	return {char_span.begin(), char_span.end()};
+}
+
+static boost::json::value
+ParseJson(std::span<const std::byte> buffer)
+{
+	return boost::json::parse(ToStringView(buffer));
 }
 
 template<typename T>
 static boost::json::value
 ParseJson(const AllocatedArray<T> &src)
 {
-	return ParseJson(ConstBuffer<T>(&src.front(), src.size()).ToVoid());
+	return ParseJson(std::as_bytes(std::span<const T>(src)));
 }
 
 /*
@@ -82,7 +89,7 @@ DecodeUrlSafe(BIO *dest, std::string_view src)
 	}
 }
 
-static AllocatedArray<char>
+static AllocatedArray<std::byte>
 DecodeUrlSafeBase64(std::string_view src)
 {
 	UniqueBIO mem_bio(BIO_new(BIO_s_mem()));
@@ -104,14 +111,14 @@ DecodeUrlSafeBase64(std::string_view src)
 	BIO *b = BIO_push(b64.get(), mem_bio.get());
 
 	const size_t buffer_size = src.size();
-	AllocatedArray<char> buffer(buffer_size);
+	AllocatedArray<std::byte> buffer{buffer_size};
 	int nbytes = BIO_read(b, buffer.data(), buffer_size);
 	buffer.SetSize(std::max(nbytes, 0));
 	return buffer;
 }
 
-static AllocatedArray<char>
-ParseSignedBody(ConstBuffer<void> body)
+static AllocatedArray<std::byte>
+ParseSignedBody(std::span<const std::byte> body)
 {
 	const auto root = ParseJson(body);
 	const auto &payload = root.as_object().at("playload");
@@ -119,12 +126,12 @@ ParseSignedBody(ConstBuffer<void> body)
 }
 
 static UniqueX509_REQ
-ParseNewCertBody(ConstBuffer<void> body)
+ParseNewCertBody(std::span<const std::byte> body)
 {
 	const auto payload = ParseJson(ParseSignedBody(body));
 	const auto &csr = payload.as_object().at("csr");
 	const auto req_der = DecodeUrlSafeBase64(csr.as_string());
-	return DecodeDerCertificateRequest(ConstBuffer<void>(&req_der.front(), req_der.size()));
+	return DecodeDerCertificateRequest(req_der);
 }
 
 static void
@@ -148,7 +155,7 @@ CopyExtensions(X509 &dest, X509_REQ &src)
 
 GlueHttpResponse
 AcmeClient::FakeRequest(http_method_t method, const char *uri,
-			ConstBuffer<void> body)
+			std::span<const std::byte> body)
 try {
 	(void)method;
 	(void)body;
@@ -182,7 +189,7 @@ try {
 					"  \"status\": \"valid\""
 					"}");
 	} else if (strcmp(uri, "/acme/new-cert") == 0) {
-		if (method != HTTP_METHOD_POST || body == nullptr)
+		if (method != HTTP_METHOD_POST || body.data() == nullptr)
 			return GlueHttpResponse(HTTP_STATUS_BAD_REQUEST, {},
 						"Bad request");
 
@@ -219,10 +226,8 @@ try {
 
 		const SslBuffer cert_buffer(*cert);
 
-		auto response_body = ConstBuffer<char>::FromVoid(cert_buffer.get());
 		return GlueHttpResponse(HTTP_STATUS_CREATED, {},
-					std::string(response_body.data,
-						    response_body.size));
+					std::string{ToStringView(cert_buffer.get())});
 	} else
 		return GlueHttpResponse(HTTP_STATUS_NOT_FOUND, {},
 					"Not found");

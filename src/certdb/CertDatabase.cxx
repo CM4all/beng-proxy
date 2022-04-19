@@ -155,7 +155,8 @@ CertDatabase::InsertServerCertificate(const char *handle,
 				      const char *issuer_common_name,
 				      const char *not_before,
 				      const char *not_after,
-				      X509 &cert, ConstBuffer<void> key,
+				      X509 &cert,
+				      std::span<const std::byte> key,
 				      const char *key_wrap_name)
 {
 	const SslBuffer cert_buffer(cert);

@@ -47,7 +47,7 @@ CsrfHash::Generate(std::chrono::system_clock::time_point time,
 	GenericHashState state(sizeof(data));
 	state.UpdateT(t);
 	state.UpdateT(salt);
-	state.Final((unsigned char *)&data, sizeof(data));
+	state.Final(data);
 }
 
 const char *

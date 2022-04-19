@@ -35,11 +35,11 @@
 #include "event/Loop.hxx"
 #include "GlueHttpClient.hxx"
 #include "lib/openssl/UniqueX509.hxx"
-#include "util/ConstBuffer.hxx"
 
 #include <boost/json/fwd.hpp>
 
 #include <forward_list>
+#include <span>
 #include <string>
 
 #include <string.h>
@@ -143,20 +143,20 @@ private:
 	void EnsureDirectory();
 
 	GlueHttpResponse FakeRequest(http_method_t method, const char *uri,
-				     ConstBuffer<void> body);
+				     std::span<const std::byte> body);
 
 	GlueHttpResponse Request(http_method_t method, const char *uri,
-				 ConstBuffer<void> body);
+				 std::span<const std::byte> body);
 
 	GlueHttpResponse Request(http_method_t method, const char *uri,
-				 std::nullptr_t body=nullptr) {
-		return Request(method, uri, ConstBuffer<void>{body});
+				 std::nullptr_t=nullptr) {
+		return Request(method, uri, std::span<const std::byte>{});
 	}
 
 	GlueHttpResponse Request(http_method_t method, const char *uri,
-				 const std::string &body) {
+				 const std::string_view body) {
 		return Request(method, uri,
-			       ConstBuffer<void>{body.data(), body.size()});
+			       std::as_bytes(std::span<const char>{body}));
 	}
 
 	GlueHttpResponse Request(http_method_t method, const char *uri,
@@ -164,13 +164,13 @@ private:
 
 	GlueHttpResponse SignedRequest(EVP_PKEY &key,
 				       http_method_t method, const char *uri,
-				       ConstBuffer<void> payload);
+				       std::span<const std::byte> payload);
 
 	GlueHttpResponse SignedRequest(EVP_PKEY &key,
 				       http_method_t method, const char *uri,
-				       const char *payload) {
+				       const std::string_view body) {
 		return SignedRequest(key, method, uri,
-				     ConstBuffer<void>(payload, strlen(payload)));
+				     std::as_bytes(std::span<const char>{body}));
 	}
 
 	GlueHttpResponse SignedRequest(EVP_PKEY &key,

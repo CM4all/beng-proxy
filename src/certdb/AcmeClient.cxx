@@ -52,6 +52,8 @@
 
 #include <memory>
 
+using std::string_view_literals::operator""sv;
+
 [[gnu::pure]]
 static bool
 IsJson(const GlueHttpResponse &response) noexcept
@@ -177,7 +179,7 @@ AcmeClient::RequestDirectory()
 		auto response = glue_http_client.Request(event_loop,
 							 HTTP_METHOD_GET,
 							 (server + "/directory").c_str(),
-							 nullptr);
+							 {});
 		if (response.status != HTTP_STATUS_OK) {
 			if (http_status_is_server_error(response.status) &&
 			    --remaining_tries > 0)
@@ -222,7 +224,7 @@ AcmeClient::RequestNonce()
 		auto response = glue_http_client.Request(event_loop,
 							 HTTP_METHOD_HEAD,
 							 directory.new_nonce.c_str(),
-							 nullptr);
+							 {});
 		if (response.status != HTTP_STATUS_OK) {
 			if (http_status_is_server_error(response.status) &&
 			    --remaining_tries > 0)
@@ -273,7 +275,7 @@ MakeHeader(EVP_PKEY &key, const char *url, const char *kid,
 
 GlueHttpResponse
 AcmeClient::Request(http_method_t method, const char *uri,
-		    ConstBuffer<void> body)
+		    std::span<const std::byte> body)
 {
 	auto response = fake
 		? FakeRequest(method, uri, body)
@@ -298,7 +300,7 @@ AcmeClient::Request(http_method_t method, const char *uri,
 GlueHttpResponse
 AcmeClient::SignedRequest(EVP_PKEY &key,
 			  http_method_t method, const char *uri,
-			  ConstBuffer<void> payload)
+			  std::span<const std::byte> payload)
 {
 	const auto payload_b64 = UrlSafeBase64(payload);
 
@@ -328,7 +330,7 @@ AcmeClient::SignedRequest(EVP_PKEY &key,
 			  const boost::json::value &payload)
 {
 	return SignedRequest(key, method, uri,
-			     boost::json::serialize(payload).c_str());
+			     boost::json::serialize(payload));
 }
 
 template<typename T>
@@ -524,7 +526,7 @@ AcmeClient::DownloadCertificate(EVP_PKEY &key, const AcmeOrder &order)
 	auto response = SignedRequestRetry(key,
 					   HTTP_METHOD_POST,
 					   order.certificate.c_str(),
-					   "");
+					   ""sv);
 	if (response.status != HTTP_STATUS_OK)
 		ThrowStatusError(std::move(response),
 				 "Failed to download certificate");
@@ -586,7 +588,7 @@ AcmeClient::Authorize(EVP_PKEY &key, const char *url)
 	auto response = SignedRequestRetry(key,
 					   HTTP_METHOD_POST,
 					   url,
-					   "");
+					   ""sv);
 	if (response.status != HTTP_STATUS_OK)
 		ThrowStatusError(std::move(response),
 				 "Failed to request authorization");
@@ -602,7 +604,7 @@ AcmeClient::PollAuthorization(EVP_PKEY &key, const char *url)
 	auto response = SignedRequestRetry(key,
 					   HTTP_METHOD_POST,
 					   url,
-					   "");
+					   ""sv);
 	if (response.status != HTTP_STATUS_OK)
 		ThrowStatusError(std::move(response),
 				 "Failed to poll authorization");

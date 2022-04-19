@@ -37,6 +37,7 @@
 #include "lib/openssl/UniqueEVP.hxx"
 #include "lib/openssl/UniqueX509.hxx"
 
+#include <span>
 #include <string>
 
 typedef struct aes_key_st AES_KEY;
@@ -128,7 +129,8 @@ public:
 				     const char *issuer_common_name,
 				     const char *not_before,
 				     const char *not_after,
-				     X509 &cert, ConstBuffer<void> key,
+				     X509 &cert,
+				     std::span<const std::byte> key,
 				     const char *key_wrap_name);
 
 	/**

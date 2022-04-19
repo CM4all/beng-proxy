@@ -97,7 +97,7 @@ public:
 GlueHttpResponse
 GlueHttpClient::Request(EventLoop &event_loop,
 			http_method_t method, const char *uri,
-			ConstBuffer<void> body)
+			std::span<const std::byte> body)
 {
 	CurlSlist header_list;
 
@@ -111,8 +111,8 @@ GlueHttpClient::Request(EventLoop &event_loop,
 	else if (method == HTTP_METHOD_POST)
 		request.SetPost();
 
-	if (!body.IsNull()) {
-		request.SetRequestBody(body.data, body.size);
+	if (body.data() != nullptr) {
+		request.SetRequestBody(body.data(), body.size_bytes());
 		header_list.Append("Content-Type: application/jose+json");
 	}
 

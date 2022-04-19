@@ -37,9 +37,9 @@
 #include "http/Method.h"
 #include "http/Status.h"
 
+#include <span>
 #include <string>
 
-template<typename T> struct ConstBuffer;
 class EventLoop;
 
 struct GlueHttpResponse {
@@ -73,5 +73,5 @@ public:
 
 	GlueHttpResponse Request(EventLoop &event_loop,
 				 http_method_t method, const char *uri,
-				 ConstBuffer<void> body);
+				 std::span<const std::byte> body);
 };

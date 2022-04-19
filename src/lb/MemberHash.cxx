@@ -40,7 +40,7 @@ MemberAddressHash(SocketAddress address, std::size_t replica) noexcept
 	/* use libsodium's "generichash" (BLAKE2b) which is secure
 	   enough for class HashRing */
 	union {
-		unsigned char hash[crypto_generichash_BYTES_MIN];
+		std::array<std::byte, crypto_generichash_BYTES_MIN> hash;
 		sticky_hash_t result;
 	} u;
 
@@ -49,7 +49,7 @@ MemberAddressHash(SocketAddress address, std::size_t replica) noexcept
 	GenericHashState state(sizeof(u.hash));
 	state.Update(address.GetSteadyPart());
 	state.UpdateT(replica);
-	state.Final(u.hash, sizeof(u.hash));
+	state.Final(u.hash);
 
 	return u.result;
 }

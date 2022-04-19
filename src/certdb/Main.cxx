@@ -274,7 +274,7 @@ Tail(const CertDatabaseConfig &db_config)
 }
 
 static void
-Populate(CertDatabase &db, EVP_PKEY *key, ConstBuffer<void> key_der,
+Populate(CertDatabase &db, EVP_PKEY *key, std::span<const std::byte> key_der,
 	 const char *common_name)
 {
 	(void)key;
