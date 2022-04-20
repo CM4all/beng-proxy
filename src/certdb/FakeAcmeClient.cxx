@@ -105,7 +105,7 @@ DecodeUrlSafeBase64(std::string_view src)
 
 	const size_t buffer_size = src.size();
 	AllocatedArray<char> buffer(buffer_size);
-	int nbytes = BIO_read(b, &buffer.front(), buffer_size);
+	int nbytes = BIO_read(b, buffer.data(), buffer_size);
 	buffer.SetSize(std::max(nbytes, 0));
 	return buffer;
 }
