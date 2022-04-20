@@ -65,10 +65,9 @@ ParseJson(const AllocatedArray<T> &src)
 */
 
 static void
-DecodeUrlSafe(BIO *dest, const char *src)
+DecodeUrlSafe(BIO *dest, std::string_view src)
 {
-	while (*src != 0) {
-		char ch = *src++;
+	for (char ch : src) {
 		switch (ch) {
 		case '-':
 			ch = '+';
@@ -84,15 +83,13 @@ DecodeUrlSafe(BIO *dest, const char *src)
 }
 
 static AllocatedArray<char>
-DecodeUrlSafeBase64(const char *src)
+DecodeUrlSafeBase64(std::string_view src)
 {
-	const size_t src_length = strlen(src);
-
 	UniqueBIO mem_bio(BIO_new(BIO_s_mem()));
 	DecodeUrlSafe(mem_bio.get(), src);
 
 	/* add padding */
-	switch (src_length % 4) {
+	switch (src.size() % 4) {
 	case 2:
 		BIO_write(mem_bio.get(), "==", 2);
 		break;
@@ -106,7 +103,7 @@ DecodeUrlSafeBase64(const char *src)
 	BIO_set_flags(b64.get(), BIO_FLAGS_BASE64_NO_NL);
 	BIO *b = BIO_push(b64.get(), mem_bio.get());
 
-	const size_t buffer_size = src_length;
+	const size_t buffer_size = src.size();
 	AllocatedArray<char> buffer(buffer_size);
 	int nbytes = BIO_read(b, &buffer.front(), buffer_size);
 	buffer.SetSize(std::max(nbytes, 0));
@@ -118,7 +115,7 @@ ParseSignedBody(ConstBuffer<void> body)
 {
 	const auto root = ParseJson(body);
 	const auto &payload = root.as_object().at("playload");
-	return DecodeUrlSafeBase64(payload.as_string().c_str());
+	return DecodeUrlSafeBase64(payload.as_string());
 }
 
 static UniqueX509_REQ
@@ -126,7 +123,7 @@ ParseNewCertBody(ConstBuffer<void> body)
 {
 	const auto payload = ParseJson(ParseSignedBody(body));
 	const auto &csr = payload.as_object().at("csr");
-	const auto req_der = DecodeUrlSafeBase64(csr.as_string().c_str());
+	const auto req_der = DecodeUrlSafeBase64(csr.as_string());
 	return DecodeDerCertificateRequest(ConstBuffer<void>(&req_der.front(), req_der.size()));
 }
 
