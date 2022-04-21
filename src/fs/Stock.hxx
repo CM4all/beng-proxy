@@ -39,7 +39,7 @@
 #include "stock/Class.hxx"
 #include "stock/MapStock.hxx"
 
-struct StockItem;
+class StockItem;
 class StockGetHandler;
 class CancellablePointer;
 class SocketFilterFactory;

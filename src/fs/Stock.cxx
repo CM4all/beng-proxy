@@ -123,7 +123,7 @@ public:
 	}
 
 	void Start(FilteredSocketStockRequest &&request) noexcept {
-		ConnectFilteredSocket(stock.GetEventLoop(),
+		ConnectFilteredSocket(GetStock().GetEventLoop(),
 				      std::move(request.stopwatch),
 				      request.ip_transparent,
 				      request.bind_address,

@@ -34,7 +34,7 @@
 
 struct StringView;
 struct ChildErrorLogOptions;
-struct StockItem;
+class StockItem;
 class FcgiStock;
 struct ChildOptions;
 template<typename T> struct ConstBuffer;

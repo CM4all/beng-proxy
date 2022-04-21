@@ -40,7 +40,7 @@ struct ChildErrorLogOptions;
 class LhttpStock;
 class StockGetHandler;
 class CancellablePointer;
-struct StockItem;
+class StockItem;
 struct LhttpAddress;
 class SocketDescriptor;
 class EventLoop;

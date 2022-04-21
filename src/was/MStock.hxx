@@ -37,7 +37,7 @@
 
 class AllocatorPtr;
 struct ChildOptions;
-struct StockItem;
+class StockItem;
 struct WasSocket;
 class SocketDescriptor;
 class EventLoop;

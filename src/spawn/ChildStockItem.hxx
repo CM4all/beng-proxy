@@ -72,7 +72,7 @@ public:
 	~ChildStockItem() noexcept override;
 
 	auto &GetEventLoop() const noexcept {
-		return stock.GetEventLoop();
+		return GetStock().GetEventLoop();
 	}
 
 	/**

@@ -37,7 +37,7 @@ class StockMap;
 class EventLoop;
 class SpawnService;
 class SocketDescriptor;
-struct StockItem;
+class StockItem;
 
 StockMap *
 delegate_stock_new(EventLoop &event_loop, SpawnService &spawn_service);

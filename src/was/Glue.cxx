@@ -149,7 +149,8 @@ WasRequest::OnStockItemReady(StockItem &item) noexcept
 
 	const auto &process = connection->GetSocket();
 
-	was_client_request(pool, item.stock.GetEventLoop(), std::move(stopwatch),
+	was_client_request(pool, item.GetStock().GetEventLoop(),
+			   std::move(stopwatch),
 			   process.control,
 			   process.input, process.output,
 			   *this,

@@ -160,7 +160,8 @@ MultiWasRequest::OnStockItemReady(StockItem &item) noexcept
 
 	const auto &socket = connection->GetSocket();
 
-	was_client_request(pool, item.stock.GetEventLoop(), std::move(stopwatch),
+	was_client_request(pool, item.GetStock().GetEventLoop(),
+			   std::move(stopwatch),
 			   socket.control,
 			   socket.input, socket.output,
 			   *this,

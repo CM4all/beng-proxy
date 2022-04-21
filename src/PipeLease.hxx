@@ -37,7 +37,7 @@
 #include <utility>
 
 class PipeStock;
-struct StockItem;
+class StockItem;
 
 class PipeLease {
 	PipeStock *stock;

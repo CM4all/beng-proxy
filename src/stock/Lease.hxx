@@ -34,7 +34,7 @@
 
 #include "lease.hxx"
 
-struct StockItem;
+class StockItem;
 
 /**
  * A #Lease implementation which calls StockItem::Put() and then
