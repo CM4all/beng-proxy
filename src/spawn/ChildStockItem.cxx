@@ -139,6 +139,9 @@ ChildStockItem::OnChildProcessExit(gcc_unused int status) noexcept
 {
 	assert(handle);
 	handle.reset();
+
+	/* don't attempt to use this child process again */
+	Fade();
 }
 
 void

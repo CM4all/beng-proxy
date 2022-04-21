@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.0.87) unstable; urgency=low
 
   * cgi: support BASE with empty PATH_INFO (SCRIPT_NAME ends with slash)
+  * lhttp: don't attempt to reconnect after child process exited
   * translation: add packet PARALLELISM
 
  --   
