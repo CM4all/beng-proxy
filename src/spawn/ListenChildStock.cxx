@@ -70,7 +70,7 @@ ListenChildStockItem::Connect()
 	} catch (...) {
 		/* if the connection fails, abandon the child process, don't
 		   try again - it will never work! */
-		fade = true;
+		Fade();
 		throw;
 	}
 }
