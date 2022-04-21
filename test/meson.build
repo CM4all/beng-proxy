@@ -345,19 +345,6 @@ if nfs_client_dep.found()
 endif
 
 test(
-  'TestMultiStock',
-  executable(
-    'TestMultiStock',
-    'TestMultiStock.cxx',
-    include_directories: inc,
-    dependencies: [
-      gtest,
-      stock_dep,
-    ],
-  ),
-)
-
-test(
   't_cache',
   executable(
     't_cache',

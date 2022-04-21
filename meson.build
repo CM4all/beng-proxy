@@ -364,7 +364,6 @@ subdir('libcommon/src/stock')
 
 stock2 = static_library(
   'stock2',
-  'src/stock/MultiStock.cxx',
   'src/stock/Lease.cxx',
   include_directories: inc,
 )
