@@ -4,6 +4,7 @@ cm4all-beng-proxy (17.0.87) unstable; urgency=low
   * lhttp: don't attempt to reconnect after child process exited
   * spawn: fix bogus error "failed to kill child process: Operation not permitted"
   * spawn: fix bogus error "waitid() failed: No child processes"
+  * spawn: print resource usage after child process exits
   * translation: add packet PARALLELISM
 
  --   
