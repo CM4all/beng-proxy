@@ -635,10 +635,6 @@ where real data is transmitted.
 In Wireshark, you can specify the file in the SSL protocol settings as
 "(Pre-)Master-Secret log filename".
 
-.. note::
-   This feature is only available if the project was built with
-   OpenSSL 1.1.1 or newer (i.e. Debian Buster).
-
 Monitors
 --------
 
