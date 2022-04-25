@@ -7,6 +7,7 @@ cm4all-beng-proxy (17.0.87) unstable; urgency=low
   * spawn: print resource usage after child process exits
   * spawn: use CLONE_INTO_CGROUP
   * translation: add packet PARALLELISM
+  * ssl: implement cancellation of asynchronous certdb lookups
 
  --   
 

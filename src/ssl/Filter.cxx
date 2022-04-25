@@ -93,6 +93,7 @@ private:
 	void PreRun(ThreadSocketFilterInternal &f) noexcept override;
 	void Run(ThreadSocketFilterInternal &f) override;
 	void PostRun(ThreadSocketFilterInternal &f) noexcept override;
+	void CancelRun(ThreadSocketFilterInternal &f) noexcept override;
 
 	/* virtual methods from class SslCompletionHandler */
 	void OnSslCompletion() noexcept override {
@@ -356,6 +357,14 @@ SslFilter::PostRun(ThreadSocketFilterInternal &f) noexcept
 		decrypted_input.FreeIfEmpty();
 		encrypted_output.FreeIfEmpty();
 	}
+}
+
+void
+SslFilter::CancelRun(ThreadSocketFilterInternal &) noexcept
+{
+	if (cancel_ptr)
+		/* cancel the CertCache::Apply() call */
+		cancel_ptr.Cancel();
 }
 
 /*
