@@ -69,11 +69,19 @@ SetupBasicSslCtx(SSL_CTX &ssl_ctx, bool server)
 	SSL_CTX_set_mode(&ssl_ctx, mode);
 
 	if (server) {
+		/* disable session resumption for now (still
+		   experimenting with performance tweaks) */
+		SSL_CTX_set_session_cache_mode(&ssl_ctx, SSL_SESS_CACHE_OFF);
+		SSL_CTX_set_num_tickets(&ssl_ctx, 0);
+
+		// TODO remove the following code (and the timer)?
+#if 0
 		/* no auto-clear, because LbInstance::compress_event will do
 		   this every 10 minutes, which is more reliable */
 		SSL_CTX_set_session_cache_mode(&ssl_ctx,
 					       SSL_SESS_CACHE_SERVER|
 					       SSL_SESS_CACHE_NO_AUTO_CLEAR);
+#endif
 	}
 
 	/* disable protocols that are known to be insecure */
