@@ -761,6 +761,8 @@ ThreadSocketFilter::Close() noexcept
 	if (!queue.Cancel(*this)) {
 		/* postpone the destruction */
 		postponed_destroy = true;
+
+		handler->CancelRun(*this);
 		return;
 	}
 

@@ -86,6 +86,14 @@ public:
 	 * finished successfully.
 	 */
 	virtual void PostRun(ThreadSocketFilterInternal &) noexcept {}
+
+	/**
+	 * Called in the main thread while the worker thread runs
+	 * Run() and is unable to cancel it; this gives the
+	 * #ThreadSocketFilterHandler a chance to fast-track
+	 * cancellation.
+	 */
+	virtual void CancelRun(ThreadSocketFilterInternal &) noexcept {}
 };
 
 struct ThreadSocketFilterInternal : ThreadJob {
