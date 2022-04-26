@@ -142,7 +142,7 @@ MakeCertRequest(EVP_PKEY &key, const std::set<std::string> &alt_hosts)
 
 	X509_REQ_set_pubkey(req.get(), &key);
 
-	if (!X509_REQ_sign(req.get(), &key, EVP_sha1()))
+	if (!X509_REQ_sign(req.get(), &key, EVP_sha256()))
 		throw SslError("X509_REQ_sign() failed");
 
 	return req;
@@ -160,7 +160,7 @@ MakeCertRequest(EVP_PKEY &key, X509 &src)
 
 	X509_REQ_set_pubkey(req.get(), &key);
 
-	if (!X509_REQ_sign(req.get(), &key, EVP_sha1()))
+	if (!X509_REQ_sign(req.get(), &key, EVP_sha256()))
 		throw SslError("X509_REQ_sign() failed");
 
 	return req;

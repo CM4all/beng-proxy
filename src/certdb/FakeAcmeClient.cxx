@@ -221,7 +221,7 @@ try {
 		X509_set_pubkey(cert.get(), pkey.release());
 
 		auto key = GenerateRsaKey();
-		if (!X509_sign(cert.get(), key.get(), EVP_sha1()))
+		if (!X509_sign(cert.get(), key.get(), EVP_sha256()))
 			throw SslError("X509_sign() failed");
 
 		const SslBuffer cert_buffer(*cert);
