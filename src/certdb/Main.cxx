@@ -585,7 +585,7 @@ try {
 		fprintf(stderr, "\n"
 			"Global options:\n"
 			"  --progress[=MIN,MAX]  print Workshop job progress\n"
-			"  --workshop-control    use the Workshop contrl channel for progress\n");
+			"  --workshop-control    use the Workshop control channel for progress\n");
 
 		return EXIT_FAILURE;
 	}
