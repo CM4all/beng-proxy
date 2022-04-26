@@ -53,7 +53,7 @@ void
 Request::OnNfsCacheResponse(NfsCacheHandle &handle,
 			    const struct statx &st) noexcept
 {
-	const TranslateResponse *const tr = translate.response;
+	const TranslateResponse &tr = *translate.response;
 
 	struct file_request file_request(st.stx_size);
 	if (!EvaluateFileRequest(FileDescriptor::Undefined(), st, file_request))
@@ -71,11 +71,11 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle,
 			      instance.event_loop.GetSystemClockCache(),
 			      override_content_type,
 			      FileDescriptor::Undefined(), st,
-			      tr->expires_relative,
+			      tr.expires_relative,
 			      IsProcessorFirst());
-	write_translation_vary_header(headers2, *tr);
+	write_translation_vary_header(headers2, tr);
 
-	http_status_t status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
+	http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
 
 	/* generate the Content-Range header */
 
