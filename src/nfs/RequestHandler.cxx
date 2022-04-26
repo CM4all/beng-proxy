@@ -71,7 +71,7 @@ Request::OnNfsCacheResponse(NfsCacheHandle &handle,
 			      instance.event_loop.GetSystemClockCache(),
 			      override_content_type,
 			      FileDescriptor::Undefined(), st,
-			      tr.expires_relative,
+			      tr.GetExpiresRelative(HasQueryString()),
 			      IsProcessorFirst());
 	write_translation_vary_header(headers2, tr);
 

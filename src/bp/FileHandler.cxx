@@ -74,7 +74,7 @@ Request::DispatchFile(const char *path, UniqueFileDescriptor fd,
 			      instance.event_loop.GetSystemClockCache(),
 			      override_content_type,
 			      fd, st,
-			      tr.expires_relative,
+			      tr.GetExpiresRelative(HasQueryString()),
 			      IsProcessorFirst());
 	write_translation_vary_header(headers2, tr);
 
@@ -166,7 +166,7 @@ Request::DispatchCompressedFile(const char *path, FileDescriptor fd,
 			      instance.event_loop.GetSystemClockCache(),
 			      override_content_type,
 			      fd, st,
-			      tr.expires_relative,
+			      tr.GetExpiresRelative(HasQueryString()),
 			      IsProcessorFirst());
 	write_translation_vary_header(headers2, tr);
 

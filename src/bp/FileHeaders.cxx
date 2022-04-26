@@ -160,7 +160,7 @@ DispatchNotModified(Request &request2, const TranslateResponse &tr,
 
 	file_cache_headers(headers2,
 			   request2.instance.event_loop.GetSystemClockCache(),
-			   fd, st, tr.expires_relative);
+			   fd, st, tr.GetExpiresRelative(request2.HasQueryString()));
 
 	write_translation_vary_header(headers2, tr);
 

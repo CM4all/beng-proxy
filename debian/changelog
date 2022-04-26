@@ -6,7 +6,7 @@ cm4all-beng-proxy (17.0.87) unstable; urgency=low
   * spawn: fix bogus error "waitid() failed: No child processes"
   * spawn: print resource usage after child process exits
   * spawn: use CLONE_INTO_CGROUP
-  * translation: add packet PARALLELISM
+  * translation: add packets PARALLELISM, EXPIRES_RELATIVE_WITH_QUERY
   * lb: disable TLSv1.3 session tickets
   * ssl: implement cancellation of asynchronous certdb lookups
   * certdb: use SHA2-256 instead of SHA-1

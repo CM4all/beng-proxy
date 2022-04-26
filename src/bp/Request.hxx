@@ -404,6 +404,10 @@ private:
 	TranslationService &GetTranslationService() const noexcept;
 
 public:
+	bool HasQueryString() const noexcept {
+		return !dissected_uri.query.empty();
+	}
+
 	void HandleHttpRequest(CancellablePointer &caller_cancel_ptr) noexcept;
 
 private:

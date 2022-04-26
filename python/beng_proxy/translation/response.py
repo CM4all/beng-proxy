@@ -146,6 +146,10 @@ class Response:
         assert isinstance(seconds, int)
         return self.packet(TRANSLATE_EXPIRES_RELATIVE, struct.pack('I', seconds))
 
+    def expires_relative_with_query(self, seconds):
+        assert isinstance(seconds, int)
+        return self.packet(TRANSLATE_EXPIRES_RELATIVE_WITH_QUERY, struct.pack('I', seconds))
+
     def vary(self, *args):
         """Send a VARY packet.  All arguments are packet ids which are
         put into the VARY packet payload."""

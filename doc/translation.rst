@@ -754,6 +754,11 @@ served.  The following packets are available:
 - ``EXPIRES_RELATIVE``: Generate an ``Expires`` response header. The
   payload is a 32 bit integer specifying the number of seconds from now.
 
+- ``EXPIRES_RELATIVE_WITH_QUERY``: Like ``EXPIRES_RELATIVE``, but this
+  value is only used if there is a non-empty query string.  This is
+  useful for serving static files which are usually referenced with a
+  version number in the query string.
+
 .. _tdelegate:
 
 Delegates
