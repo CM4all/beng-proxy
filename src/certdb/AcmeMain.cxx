@@ -427,7 +427,7 @@ AcmeNewOrder(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	AcmeAuthorize(db_config, config, account_key, db, client, progress,
 		      identifiers, order.authorizations);
 
-	const auto cert_key = GenerateRsaKey();
+	const auto cert_key = GenerateEcKey();
 	const auto req = MakeCertRequest(*cert_key, identifiers);
 
 	const auto order2 = client.FinalizeOrder(account_key, order, *req);
@@ -466,6 +466,13 @@ AllNames(X509 &cert)
 	return result;
 }
 
+[[gnu::pure]]
+static bool
+AcceptKey(const EVP_PKEY &key) noexcept
+{
+	return EVP_PKEY_base_id(&key) == EVP_PKEY_EC;
+}
+
 static void
 AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	      EVP_PKEY &account_key,
@@ -485,6 +492,15 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	auto &old_cert = *old_cert_key.first;
 	auto &old_key = *old_cert_key.second;
 
+	UniqueEVP_PKEY generated_key;
+	if (!AcceptKey(old_key)) {
+		/* migrate old RSA keys to EC */
+		generated_key = GenerateEcKey();
+		assert(AcceptKey(*generated_key));
+	}
+
+	auto &new_key = generated_key ? *generated_key : old_key;
+
 	const auto names = AllNames(old_cert);
 	StepProgress progress(_progress,
 			      names.size() * 3 + 5);
@@ -500,7 +516,7 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	AcmeAuthorize(db_config, config, account_key, db, client, progress,
 		      names, order.authorizations);
 
-	const auto req = MakeCertRequest(old_key, old_cert);
+	const auto req = MakeCertRequest(new_key, old_cert);
 
 	const auto order2 = client.FinalizeOrder(account_key, order, *req);
 	progress();
@@ -512,7 +528,7 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 	const auto wrap_key = wrap_key_helper.SetEncryptKey(db_config);
 
 	db.DoSerializableRepeat(8, [&](){
-		db.LoadServerCertificate(handle, nullptr, *cert, old_key,
+		db.LoadServerCertificate(handle, nullptr, *cert, new_key,
 					 wrap_key.first, wrap_key.second);
 	});
 

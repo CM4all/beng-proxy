@@ -106,7 +106,7 @@ Alpn01ChallengeRecord::AddChallenge(const AcmeChallenge &challenge,
 void
 Alpn01ChallengeRecord::Commit(const CertDatabaseConfig &db_config)
 {
-	const auto cert_key = GenerateRsaKey();
+	const auto cert_key = GenerateEcKey();
 
 	X509_set_pubkey(cert.get(), cert_key.get());
 	if (!X509_sign(cert.get(), cert_key.get(), EVP_sha256()))
