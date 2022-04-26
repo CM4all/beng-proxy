@@ -45,6 +45,7 @@
 #include "spawn/Registry.hxx"
 #include "spawn/Local.hxx"
 #include "system/SetupProcess.hxx"
+#include "system/KernelVersion.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
@@ -655,6 +656,10 @@ main(int argc, char **argv)
 try {
 	(void)argc;
 	(void)argv;
+
+	// skip this unit test on old kernels without clone3()
+	if (!IsKernelVersionOrNewer({5, 3}))
+		return 77;
 
 	SetupProcess();
 
