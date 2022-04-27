@@ -408,6 +408,14 @@ CertCache::Apply(SSL &ssl, const CertKey &cert_key)
 	Apply(ssl, *cert_key.first, *cert_key.second);
 }
 
+inline LookupCertResult
+CertCache::ApplyAndSetState(SSL &ssl, const CertKey &cert_key) noexcept
+{
+	state_idx.Set(ssl, State::COMPLETE);
+	Apply(ssl, cert_key);
+	return LookupCertResult::COMPLETE;
+}
+
 LookupCertResult
 CertCache::Apply(SSL &ssl, const char *host,
 		 const char *special) noexcept
@@ -431,19 +439,13 @@ CertCache::Apply(SSL &ssl, const char *host,
 		return LookupCertResult::NOT_FOUND;
 	}
 
-	if (auto item = GetNoWildCardCached(host, special)) {
-		state_idx.Set(ssl, State::COMPLETE);
-		Apply(ssl, *item);
-		return LookupCertResult::COMPLETE;
-	}
+	if (auto item = GetNoWildCardCached(host, special))
+		return ApplyAndSetState(ssl, *item);
 
 	const auto wildcard = MakeCommonNameWildcard(host);
 	if (!wildcard.empty()) {
-		if (auto item = GetNoWildCardCached(wildcard.c_str(), special)) {
-			state_idx.Set(ssl, State::COMPLETE);
-			Apply(ssl, *item);
-			return LookupCertResult::COMPLETE;
-		}
+		if (auto item = GetNoWildCardCached(wildcard.c_str(), special))
+			return ApplyAndSetState(ssl, *item);
 	}
 
 	if (name_cache.Lookup(host) ||

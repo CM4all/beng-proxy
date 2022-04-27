@@ -208,6 +208,9 @@ private:
 	void Apply(SSL &ssl, X509 &cert, EVP_PKEY &key);
 	void Apply(SSL &ssl, const CertKey &cert_key);
 
+	LookupCertResult ApplyAndSetState(SSL &ssl,
+					  const CertKey &cert_key) noexcept;
+
 	/**
 	 * Flush items with the given name.
 	 *
