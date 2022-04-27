@@ -166,8 +166,14 @@ CertCache::Query::Run()
 			     _special);
 
 	requests.clear_and_dispose([this, &cert_key](Request *request){
-		cache.state_idx.Set(request->ssl, State::COMPLETE);
-		cache.Apply(request->ssl, cert_key);
+		try {
+			cache.Apply(request->ssl, cert_key);
+			cache.state_idx.Set(request->ssl, State::COMPLETE);
+		} catch (...) {
+			cache.logger(1, std::current_exception());
+			cache.state_idx.Set(request->ssl, State::ERROR);
+		}
+
 		InvokeSslCompletionHandler(request->ssl);
 		delete request;
 	});
@@ -413,9 +419,15 @@ CertCache::Apply(SSL &ssl, const CertKey &cert_key)
 inline LookupCertResult
 CertCache::ApplyAndSetState(SSL &ssl, const CertKey &cert_key) noexcept
 {
-	state_idx.Set(ssl, State::COMPLETE);
-	Apply(ssl, cert_key);
-	return LookupCertResult::COMPLETE;
+	try {
+		Apply(ssl, cert_key);
+		state_idx.Set(ssl, State::COMPLETE);
+		return LookupCertResult::COMPLETE;
+	} catch (...) {
+		logger(1, std::current_exception());
+		state_idx.Set(ssl, State::ERROR);
+		return LookupCertResult::ERROR;
+	}
 }
 
 LookupCertResult
