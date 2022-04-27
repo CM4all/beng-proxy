@@ -36,4 +36,10 @@ enum class LookupCertResult {
 	NOT_FOUND,
 	COMPLETE,
 	IN_PROGRESS,
+
+	/**
+	 * An error has occurred and the TLS handdhskae shall be
+	 * aborted.
+	 */
+	ERROR,
 };

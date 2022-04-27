@@ -178,14 +178,16 @@ CertCache::Query::OnCompletion(std::exception_ptr error) noexcept
 {
 	assert(&cache.current_query->second == this);
 
+	const State new_state = error ? State::ERROR : State::NOT_FOUND;
+
 	if (error)
 		cache.logger(1, error);
 
 	/* invoke all remaining SslCompletionHandlers; this is
 	   only relevant if Run() has not finished
 	   sucessfully */
-	requests.clear_and_dispose([this](Request *request){
-		cache.state_idx.Set(request->ssl, State::NOT_FOUND);
+	requests.clear_and_dispose([this, new_state](Request *request){
+		cache.state_idx.Set(request->ssl, new_state);
 		InvokeSslCompletionHandler(request->ssl);
 		delete request;
 	});
@@ -437,6 +439,9 @@ CertCache::Apply(SSL &ssl, const char *host,
 	case State::NOT_FOUND:
 		/* registered again, but was not found */
 		return LookupCertResult::NOT_FOUND;
+
+	case State::ERROR:
+		return LookupCertResult::ERROR;
 	}
 
 	if (auto item = GetNoWildCardCached(host, special))

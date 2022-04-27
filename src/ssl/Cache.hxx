@@ -72,6 +72,7 @@ class CertCache final : Pg::AsyncConnectionHandler, CertNameCacheHandler {
 		IN_PROGRESS,
 		COMPLETE,
 		NOT_FOUND,
+		ERROR,
 	};
 
 	const OpenSSL::IntegralExDataIndex<State> state_idx;

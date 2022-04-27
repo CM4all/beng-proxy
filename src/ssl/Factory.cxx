@@ -219,6 +219,10 @@ SslFactory::CertCallback(SSL &ssl) noexcept
 
 		case LookupCertResult::IN_PROGRESS:
 			return -1;
+
+		case LookupCertResult::ERROR:
+			// abort the handshake
+			return 0;
 		}
 	}
 
