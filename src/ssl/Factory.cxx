@@ -45,7 +45,6 @@
 #include "util/AllocatedString.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringView.hxx"
-#include "util/PrintException.hxx"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -210,20 +209,16 @@ SslFactory::CertCallback(SSL &ssl) noexcept
 	/* check the certificate database */
 
 	if (cert_callback) {
-		try {
-			switch (cert_callback->OnCertCallback(ssl,
-							      host_name.data)) {
-			case LookupCertResult::NOT_FOUND:
-				break;
+		switch (cert_callback->OnCertCallback(ssl,
+						      host_name.data)) {
+		case LookupCertResult::NOT_FOUND:
+			break;
 
-			case LookupCertResult::COMPLETE:
-				return 1;
+		case LookupCertResult::COMPLETE:
+			return 1;
 
-			case LookupCertResult::IN_PROGRESS:
-				return -1;
-			}
-		} catch (const std::exception &e) {
-			PrintException(e);
+		case LookupCertResult::IN_PROGRESS:
+			return -1;
 		}
 	}
 

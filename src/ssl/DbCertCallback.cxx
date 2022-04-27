@@ -59,7 +59,7 @@ Equals(std::span<const unsigned char> a,
 }
 
 LookupCertResult
-DbSslCertCallback::OnCertCallback(SSL &ssl, const char *name)
+DbSslCertCallback::OnCertCallback(SSL &ssl, const char *name) noexcept
 {
 	const char *special = nullptr;
 

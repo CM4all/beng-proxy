@@ -43,5 +43,6 @@ public:
 	explicit DbSslCertCallback(CertCache &_cache) noexcept
 		:cache(_cache) {}
 
-	LookupCertResult OnCertCallback(SSL &ssl, const char *name) override;
+	LookupCertResult OnCertCallback(SSL &ssl,
+					const char *name) noexcept override;
 };

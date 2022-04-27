@@ -51,13 +51,11 @@ public:
 	 * to look up the given host name and then call
 	 * SSL_use_certificate() and SSL_use_PrivateKey().
 	 *
-	 * May throw on error.
-	 *
 	 * @param ssl a #SSL object which must have a
 	 * #SslCompletionHandler (via SetSslCompletionHandler()); this
 	 * handler will be invoked after this method has returned
 	 * #IN_PROGRESS; using its #CancellablePointer field, the
 	 * caller may cancel the operation
 	 */
-	virtual LookupCertResult OnCertCallback(SSL &ssl, const char *name) = 0;
+	virtual LookupCertResult OnCertCallback(SSL &ssl, const char *name) noexcept = 0;
 };
