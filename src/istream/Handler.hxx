@@ -81,8 +81,9 @@ public:
 	 * @return the number of bytes consumed, or one of the
 	 * #istream_result values
 	 */
-	virtual ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-				 gcc_unused size_t max_length) noexcept {
+	virtual ssize_t OnDirect([[maybe_unused]] FdType type,
+				 [[maybe_unused]] int fd,
+				 [[maybe_unused]] size_t max_length) noexcept {
 		gcc_unreachable();
 	}
 

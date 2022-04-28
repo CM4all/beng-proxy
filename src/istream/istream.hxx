@@ -487,14 +487,14 @@ protected:
 	 * This method can be implemented by subclasses to propagate
 	 * the new tag to their inputs.
 	 */
-	virtual void _SetDirect(gcc_unused FdTypeMask _handler_direct) noexcept {
+	virtual void _SetDirect([[maybe_unused]] FdTypeMask _handler_direct) noexcept {
 	}
 
-	virtual off_t _GetAvailable(gcc_unused bool partial) noexcept {
+	virtual off_t _GetAvailable([[maybe_unused]] bool partial) noexcept {
 		return -1;
 	}
 
-	virtual off_t _Skip(gcc_unused off_t length) noexcept {
+	virtual off_t _Skip([[maybe_unused]] off_t length) noexcept {
 		return -1;
 	}
 

@@ -53,7 +53,7 @@ public:
 
 	/* virtual methods from class Istream */
 
-	off_t _GetAvailable(gcc_unused bool partial) noexcept override {
+	off_t _GetAvailable([[maybe_unused]] bool partial) noexcept override {
 		return data.size;
 	}
 

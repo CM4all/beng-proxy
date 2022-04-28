@@ -159,7 +159,7 @@ private:
 			: 0;
 	}
 
-	ssize_t OnInputDirect(gcc_unused Input &i, FdType type, int fd,
+	ssize_t OnInputDirect([[maybe_unused]] Input &i, FdType type, int fd,
 			      size_t max_length) noexcept {
 		return IsCurrent(i)
 			? InvokeDirect(type, fd, max_length)
@@ -197,7 +197,7 @@ public:
 	}
 
 	off_t _GetAvailable(bool partial) noexcept override;
-	off_t _Skip(gcc_unused off_t length) noexcept override;
+	off_t _Skip([[maybe_unused]] off_t length) noexcept override;
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
 	size_t _ConsumeBucketList(size_t nbytes) noexcept override;

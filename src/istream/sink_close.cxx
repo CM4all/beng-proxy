@@ -34,6 +34,7 @@
 #include "Sink.hxx"
 #include "UnusedPtr.hxx"
 #include "pool/pool.hxx"
+#include "util/Compiler.h"
 
 class SinkClose final : IstreamSink {
 public:
@@ -45,13 +46,13 @@ public:
 	}
 
 	/* request istream handler */
-	size_t OnData(gcc_unused const void *data, gcc_unused size_t length) noexcept {
+	size_t OnData([[maybe_unused]] const void *data, [[maybe_unused]] size_t length) noexcept {
 		CloseInput();
 		return 0;
 	}
 
-	ssize_t OnDirect(gcc_unused FdType type, gcc_unused int fd,
-			 gcc_unused size_t max_length) noexcept {
+	ssize_t OnDirect([[maybe_unused]] FdType type, [[maybe_unused]] int fd,
+			 [[maybe_unused]] size_t max_length) noexcept {
 		gcc_unreachable();
 	}
 

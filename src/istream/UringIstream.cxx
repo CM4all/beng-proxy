@@ -125,7 +125,7 @@ private:
 	/* virtual methods from class Istream */
 
 	off_t _GetAvailable(bool partial) noexcept override;
-	off_t _Skip(gcc_unused off_t length) noexcept override;
+	off_t _Skip(off_t length) noexcept override;
 
 	void _Read() noexcept override {
 		// TODO free the buffer?

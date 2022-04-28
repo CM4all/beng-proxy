@@ -32,6 +32,7 @@
 
 #include "istream.hxx"
 #include "Bucket.hxx"
+#include "util/Compiler.h"
 
 Istream::~Istream() noexcept
 {
@@ -49,7 +50,7 @@ Istream::_FillBucketList(IstreamBucketList &list)
 
 gcc_noreturn
 size_t
-Istream::_ConsumeBucketList(gcc_unused size_t nbytes) noexcept
+Istream::_ConsumeBucketList(size_t) noexcept
 {
 	assert(false);
 	gcc_unreachable();
