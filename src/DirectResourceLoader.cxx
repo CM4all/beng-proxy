@@ -32,6 +32,7 @@
 
 #include "DirectResourceLoader.hxx"
 #include "ResourceAddress.hxx"
+#include "http/XForwardedFor.hxx"
 #include "http/ResponseHandler.hxx"
 #include "file/Address.hxx"
 #include "file/Request.hxx"
@@ -60,20 +61,18 @@
 
 [[gnu::pure]]
 static const char *
-extract_remote_addr(const StringMap &headers) noexcept
+GetRemoteHost(const XForwardedForConfig &config, AllocatorPtr alloc,
+	      const StringMap &headers) noexcept
 {
 	const char *xff = headers.Get("x-forwarded-for");
 	if (xff == nullptr)
 		return nullptr;
 
-	/* extract the last host name in X-Forwarded-For */
-	const char *p = strrchr(xff, ',');
-	if (p == nullptr)
-		p = xff;
-	else
-		++p;
+	const auto remote_host = config.GetRealRemoteHost(xff);
+	if (remote_host.empty())
+		return nullptr;
 
-	return StripLeft(p);
+	return alloc.DupZ(remote_host);
 }
 
 void
@@ -154,7 +153,7 @@ try {
 	case ResourceAddress::Type::CGI:
 		cgi_new(spawn_service, event_loop, &pool, parent_stopwatch,
 			method, &address.GetCgi(),
-			extract_remote_addr(headers),
+			GetRemoteHost(xff, pool, headers),
 			headers, std::move(body),
 			handler, cancel_ptr);
 		return;
@@ -168,7 +167,7 @@ try {
 			stderr_fd = cgi->options.OpenStderrPath();
 		}
 
-		const char *remote_ip = extract_remote_addr(headers);
+		const char *remote_ip = GetRemoteHost(xff, pool, headers);
 
 		if (cgi->address_list.IsEmpty())
 			fcgi_request(&pool, event_loop, fcgi_stock, parent_stopwatch,

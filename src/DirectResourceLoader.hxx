@@ -50,6 +50,7 @@ namespace Uring { class Queue; }
 class FilteredSocketBalancer;
 class SslClientFactory;
 namespace NgHttp2 { class Stock; }
+struct XForwardedForConfig;
 
 /**
  * A #ResourceLoader implementation which integrates all client-side
@@ -75,6 +76,8 @@ class DirectResourceLoader final : public ResourceLoader {
 #endif
 	StockMap *delegate_stock;
 
+	const XForwardedForConfig &xff;
+
 public:
 	DirectResourceLoader(EventLoop &_event_loop,
 #ifdef HAVE_URING
@@ -97,7 +100,8 @@ public:
 #ifdef HAVE_LIBNFS
 			     NfsCache *_nfs_cache,
 #endif
-			     SslClientFactory *_ssl_client_factory) noexcept
+			     SslClientFactory *_ssl_client_factory,
+			     const XForwardedForConfig &_xff) noexcept
 		:event_loop(_event_loop),
 #ifdef HAVE_URING
 		 uring(_uring),
@@ -119,7 +123,8 @@ public:
 #ifdef HAVE_LIBNFS
 		 nfs_cache(_nfs_cache),
 #endif
-		 delegate_stock(_delegate_stock)
+		 delegate_stock(_delegate_stock),
+		 xff(_xff)
 	{
 	}
 

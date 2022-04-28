@@ -558,7 +558,8 @@ try {
 #ifdef HAVE_LIBNFS
 					 instance.nfs_cache,
 #endif
-					 instance.ssl_client_factory.get());
+					 instance.ssl_client_factory.get(),
+					 instance.config.access_log.xff);
 
 	if (instance.config.http_cache_size > 0) {
 		instance.http_cache = http_cache_new(instance.root_pool,
