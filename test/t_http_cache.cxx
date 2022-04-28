@@ -338,6 +338,32 @@ TEST(HttpCache, CacheableWithoutResponseBody)
 	run_cache_test(instance, r0, true);
 }
 
+TEST(HttpCache, Uncacheable)
+{
+	const ScopeFbPoolInit fb_pool_init;
+	Instance instance;
+
+	static constexpr Request with_body{
+		"/uncacheable-body", nullptr,
+		"date: " DATE "\n"
+		"cache-control: no-cache\n",
+		"foo",
+	};
+
+	run_cache_test(instance, with_body, false);
+	run_cache_test(instance, with_body, false);
+
+	static constexpr Request no_body{
+		"/uncacheable-empty", nullptr,
+		"date: " DATE "\n"
+		"cache-control: no-cache\n",
+		nullptr
+	};
+
+	run_cache_test(instance, no_body, false);
+	run_cache_test(instance, no_body, false);
+}
+
 TEST(HttpCache, MultiVary)
 {
 	const ScopeFbPoolInit fb_pool_init;
