@@ -34,6 +34,7 @@
 #include "Bucket.hxx"
 #include "UnusedPtr.hxx"
 #include "memory/fb_pool.hxx"
+#include "util/Compiler.h"
 
 #include <string.h>
 
