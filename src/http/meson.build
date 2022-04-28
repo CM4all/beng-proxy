@@ -9,6 +9,7 @@ http_util = static_library(
   'HeaderUtil.cxx',
   'HeaderParser.cxx',
   'HeaderWriter.cxx',
+  'XForwardedFor.cxx',
   include_directories: inc,
 )
 

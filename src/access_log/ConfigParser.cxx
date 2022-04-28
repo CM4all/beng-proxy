@@ -63,7 +63,7 @@ AccessLogConfigParser::ParseLine(FileLineParser &line)
 		   !is_child_error_logger) {
 		config.ignore_localhost_200 = line.ExpectValueAndEnd();
 	} else if (strcmp(word, "trust_xff") == 0 && !is_child_error_logger) {
-		config.trust_xff.emplace(line.ExpectValueAndEnd());
+		config.xff.trust.emplace(line.ExpectValueAndEnd());
 	} else if (strcmp(word, "forward_child_errors") == 0 &&
 		   !is_child_error_logger) {
 		config.forward_child_errors = line.NextBool();

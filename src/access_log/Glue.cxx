@@ -93,60 +93,6 @@ AccessLogGlue::Log(const Net::Log::Datagram &d) noexcept
 		LogOneLine(FileDescriptor(STDOUT_FILENO), d);
 }
 
-/**
- * Extract the right-most item of a comma-separated list, such as an
- * X-Forwarded-For header value.  Returns the remaining string and the
- * right-most item as a std::pair.
- */
-gcc_pure
-static std::pair<StringView, StringView>
-LastListItem(StringView list) noexcept
-{
-	const char *comma = (const char *)memrchr(list.data, ',', list.size);
-	if (comma == nullptr) {
-		list.Strip();
-		if (list.empty())
-			return std::make_pair(nullptr, nullptr);
-
-		return std::make_pair("", list);
-	}
-
-	StringView value = list.substr(comma + 1);
-	value.Strip();
-
-	list.size = comma - list.data;
-
-	return std::make_pair(list, value);
-}
-
-/**
- * Extract the "real" remote host from an X-Forwarded-For request header.
- *
- * @param trust a list of trusted proxies
- */
-gcc_pure
-static StringView
-GetRealRemoteHost(const char *xff, const std::set<std::string> &trust) noexcept
-{
-	StringView list(xff);
-	StringView result(nullptr);
-
-	while (true) {
-		auto l = LastListItem(list);
-		if (l.second.empty())
-			/* list finished; return the last good address (even if
-			   it's a trusted proxy) */
-			return result;
-
-		result = l.second;
-		if (trust.find(std::string(result.data, result.size)) == trust.end())
-			/* this address is not a trusted proxy; return it */
-			return result;
-
-		list = l.first;
-	}
-}
-
 void
 AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 		   const IncomingHttpRequest &request, const char *site,
@@ -163,13 +109,11 @@ AccessLogGlue::Log(std::chrono::system_clock::time_point now,
 	const char *remote_host = request.remote_host;
 	std::string buffer;
 
-	if (remote_host != nullptr &&
-	    !config.trust_xff.empty() &&
-	    config.trust_xff.find(remote_host) != config.trust_xff.end() &&
-	    x_forwarded_for != nullptr) {
-		auto r = GetRealRemoteHost(x_forwarded_for, config.trust_xff);
-		if (r != nullptr) {
-			buffer.assign(r.data, r.size);
+	if (remote_host != nullptr && x_forwarded_for != nullptr &&
+	    config.xff.IsTrustedHost(remote_host)) {
+		auto r = config.xff.GetRealRemoteHost(x_forwarded_for);
+		if (!r.empty()) {
+			buffer.assign(r);
 			remote_host = buffer.c_str();
 		}
 	}
