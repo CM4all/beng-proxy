@@ -655,6 +655,14 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 
 		if (body)
 			body = NewRefIstream(pool, std::move(body));
+		else
+			/* workaround: if there is no response body,
+			   nobody will hold a pool reference, and the
+			   headers will be freed after
+			   InvokeResponse() returns; in that case, we
+			   need to copy all headers into the caller's
+			   pool to avoid use-after-free bugs */
+			_headers = {caller_pool, _headers};
 
 		handler.InvokeResponse(status, std::move(_headers), std::move(body));
 		Destroy();
@@ -683,6 +691,13 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 	if (!body) {
 		Put({}, 0);
 		destroy = true;
+
+		/* workaround: if there is no response body, nobody
+		   will hold a pool reference, and the headers will be
+		   freed after InvokeResponse() returns; in that case,
+		   we need to copy all headers into the caller's pool
+		   to avoid use-after-free bugs */
+		_headers = {_caller_pool, _headers};
 	} else {
 		/* this->info was allocated from the caller pool; duplicate
 		   it to keep it alive even after the caller pool is
@@ -990,10 +1005,20 @@ HttpCache::Serve(struct pool &caller_pool,
 {
 	LogConcat(4, "HttpCache", "serve ", key);
 
+	auto body = heap.OpenStream(caller_pool, document);
+
+	StringMap headers = body
+		? StringMap{ShallowCopy{}, caller_pool, document.response_headers}
+		/* workaround: if there is no response body, nobody
+		   will hold a pool reference, and the headers will be
+		   freed after InvokeResponse() returns; in that case,
+		   we need to copy all headers into the caller's pool
+		   to avoid use-after-free bugs */
+		: StringMap{caller_pool, document.response_headers};
+
 	handler.InvokeResponse(document.status,
-			       StringMap(ShallowCopy(), caller_pool,
-					 document.response_headers),
-			       heap.OpenStream(caller_pool, document));
+			       std::move(headers),
+			       std::move(body));
 }
 
 /**

@@ -559,6 +559,14 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 
 		if (body)
 			body = NewRefIstream(pool, std::move(body));
+		else
+			/* workaround: if there is no response body,
+			   nobody will hold a pool reference, and the
+			   headers will be freed after
+			   InvokeResponse() returns; in that case, we
+			   need to copy all headers into the caller's
+			   pool to avoid use-after-free bugs */
+			headers = {caller_pool, headers};
 
 		handler.InvokeResponse(status, std::move(headers), std::move(body));
 		Destroy();
@@ -579,6 +587,13 @@ FilterCacheRequest::OnHttpResponse(http_status_t status, StringMap &&headers,
 		response.cancel_ptr = nullptr;
 
 		cache.Put(info, status, headers, {}, 0);
+
+		/* workaround: if there is no response body, nobody
+		   will hold a pool reference, and the headers will be
+		   freed after InvokeResponse() returns; in that case,
+		   we need to copy all headers into the caller's pool
+		   to avoid use-after-free bugs */
+		headers = {caller_pool, headers};
 
 		Destroy();
 		_handler.InvokeResponse(status, std::move(headers), std::move(body));
