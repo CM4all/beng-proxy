@@ -42,21 +42,18 @@
 static std::pair<StringView, StringView>
 LastListItem(StringView list) noexcept
 {
-	const char *comma = (const char *)memrchr(list.data, ',', list.size);
-	if (comma == nullptr) {
-		list.Strip();
-		if (list.empty())
-			return std::make_pair(nullptr, nullptr);
+	auto [a, b] = list.SplitLast(',');
+	if (b == nullptr) {
+		// no comma found
+		a.Strip();
+		if (a.empty())
+			return {a, b};
 
-		return std::make_pair("", list);
+		return {b, a};
 	}
 
-	StringView value = list.substr(comma + 1);
-	value.Strip();
-
-	list.size = comma - list.data;
-
-	return std::make_pair(list, value);
+	b.Strip();
+	return {a, b};
 }
 
 std::string_view
