@@ -35,6 +35,7 @@
 #include "ResourceLoader.hxx"
 #include "ResourceAddress.hxx"
 #include "RecordingHttpResponseHandler.hxx"
+#include "DeferHttpResponseHandler.hxx"
 #include "http/Address.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "http/HeaderParser.hxx"
@@ -249,11 +250,15 @@ run_cache_test(Instance &instance, const Request &request, bool cached)
 	RecordingHttpResponseHandler handler(instance.root_pool,
 					     instance.event_loop);
 
+	DeferHttpResponseHandler defer_handler(instance.root_pool,
+					       instance.event_loop,
+					       handler);
+
 	http_cache_request(*instance.cache, pool, nullptr,
 			   {0, false, request.auto_flush_cache, request.tag, nullptr},
 			   request.method, address,
 			   std::move(headers), nullptr,
-			   handler, cancel_ptr);
+			   defer_handler, cancel_ptr);
 
 	if (handler.IsAlive())
 		instance.event_loop.Dispatch();
