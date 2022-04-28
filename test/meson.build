@@ -265,6 +265,19 @@ executable('run_header_parser',
     http_util_dep,
   ])
 
+test(
+  'TestHttpUtil',
+  executable(
+    'TestHttpUtil',
+    'TestXFF.cxx',
+    include_directories: inc,
+    dependencies: [
+      http_util_dep,
+      gtest,
+    ],
+  ),
+)
+
 executable('run_html_unescape',
   'run_html_unescape.cxx',
   '../src/escape/Static.cxx',
