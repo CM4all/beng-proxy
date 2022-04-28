@@ -1140,13 +1140,9 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 	ps.Headers(headers);
 
 	for (const StringView param : params) {
-		const char *separator = param.Find('=');
-		if (separator == nullptr)
-			continue;
-
-		StringView name(param.data, separator);
-		StringView value(separator + 1, param.end());
-		ps(name, value);
+		const auto [name, value] = param.Split('=');
+		if (!name.empty() && value != nullptr)
+			ps(name, value);
 	}
 
 	ps.Commit();
