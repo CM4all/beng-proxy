@@ -75,6 +75,7 @@ was_client_request(struct pool &pool, EventLoop &event_loop,
 		   SocketDescriptor control_fd,
 		   FileDescriptor input_fd, FileDescriptor output_fd,
 		   WasLease &lease,
+		   const char *remote_host,
 		   http_method_t method, const char *uri,
 		   const char *script_name, const char *path_info,
 		   const char *query_string,
@@ -82,3 +83,4 @@ was_client_request(struct pool &pool, EventLoop &event_loop,
 		   ConstBuffer<const char *> params,
 		   HttpResponseHandler &handler,
 		   CancellablePointer &cancel_ptr);
+

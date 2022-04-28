@@ -58,6 +58,8 @@ class WasRequest final : StockGetHandler, Cancellable, WasLease, PoolLeakDetecto
 
 	const char *const site_name;
 
+	const char *const remote_host;
+
 	WasStockConnection *connection;
 
 	PendingHttpRequest pending_request;
@@ -75,6 +77,7 @@ public:
 	WasRequest(struct pool &_pool,
 		   StopwatchPtr &&_stopwatch,
 		   const char *_site_name,
+		   const char *_remote_host,
 		   http_method_t _method, const char *_uri,
 		   const char *_script_name, const char *_path_info,
 		   const char *_query_string,
@@ -87,6 +90,7 @@ public:
 		 pool(_pool),
 		 stopwatch(std::move(_stopwatch)),
 		 site_name(_site_name),
+		 remote_host(_remote_host),
 		 pending_request(_pool, _method, _uri,
 				 std::move(_headers), std::move(_body)),
 		 script_name(_script_name),
@@ -154,6 +158,7 @@ WasRequest::OnStockItemReady(StockItem &item) noexcept
 			   process.control,
 			   process.input, process.output,
 			   *this,
+			   remote_host,
 			   pending_request.method, pending_request.uri,
 			   script_name, path_info,
 			   query_string,
@@ -242,6 +247,7 @@ was_request(struct pool &pool, WasStock &was_stock,
 	    const char *path,
 	    ConstBuffer<const char *> args,
 	    unsigned parallelism,
+	    const char *remote_host,
 	    http_method_t method, const char *uri,
 	    const char *script_name, const char *path_info,
 	    const char *query_string,
@@ -259,6 +265,7 @@ was_request(struct pool &pool, WasStock &was_stock,
 								 path_info,
 								 parameters),
 					       site_name,
+					       remote_host,
 					       method, uri, script_name,
 					       path_info, query_string,
 					       std::move(headers),

@@ -275,6 +275,7 @@ MalformedPrematureWasServer::OnWasControlPacket(enum was_command cmd,
 	case WAS_COMMAND_QUERY_STRING:
 	case WAS_COMMAND_HEADER:
 	case WAS_COMMAND_PARAMETER:
+	case WAS_COMMAND_REMOTE_HOST:
 		break;
 
 	case WAS_COMMAND_STATUS:
@@ -369,6 +370,7 @@ public:
 		was_client_request(*pool, GetEventLoop(), nullptr,
 				   socket.control, socket.input, socket.output,
 				   *this,
+				   nullptr,
 				   method, uri, uri, nullptr, nullptr,
 				   headers, std::move(body), nullptr,
 				   handler, cancel_ptr);

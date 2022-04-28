@@ -165,7 +165,8 @@ public:
 		  HttpResponseHandler &_handler,
 		  CancellablePointer &cancel_ptr);
 
-	void SendRequest(http_method_t method, const char *uri,
+	void SendRequest(const char *remote_host,
+			 http_method_t method, const char *uri,
 			 const char *script_name, const char *path_info,
 			 const char *query_string,
 			 const StringMap &headers,
@@ -517,6 +518,7 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
 	case WAS_COMMAND_PATH_INFO:
 	case WAS_COMMAND_QUERY_STRING:
 	case WAS_COMMAND_PARAMETER:
+	case WAS_COMMAND_REMOTE_HOST:
 		stopwatch.RecordEvent("control_error");
 		AbortResponse(std::make_exception_ptr(WasProtocolError(StringFormat<64>("Unexpected WAS packet %d", cmd))));
 		return false;
@@ -876,6 +878,7 @@ WasClient::WasClient(struct pool &_pool, struct pool &_caller_pool,
 
 static bool
 SendRequest(Was::Control &control,
+	    const char *remote_host,
 	    http_method_t method, const char *uri,
 	    const char *script_name, const char *path_info,
 	    const char *query_string,
@@ -896,6 +899,8 @@ SendRequest(Was::Control &control,
 		 control.SendString(WAS_COMMAND_QUERY_STRING, query_string)) &&
 		Was::SendMap(control, WAS_COMMAND_HEADER, headers) &&
 		control.SendArray(WAS_COMMAND_PARAMETER, params) &&
+		(remote_host == nullptr ||
+		 control.SendString(WAS_COMMAND_REMOTE_HOST, remote_host)) &&
 		control.SendEmpty(request_body != nullptr
 				  ? WAS_COMMAND_DATA
 				  : WAS_COMMAND_NO_DATA) &&
@@ -903,13 +908,15 @@ SendRequest(Was::Control &control,
 }
 
 inline void
-WasClient::SendRequest(http_method_t method, const char *uri,
+WasClient::SendRequest(const char *remote_host,
+		       http_method_t method, const char *uri,
 		       const char *script_name, const char *path_info,
 		       const char *query_string,
 		       const StringMap &headers,
 		       ConstBuffer<const char *> params) noexcept
 {
 	::SendRequest(control,
+		      remote_host,
 		      method, uri, script_name, path_info,
 		      query_string, headers, request.body,
 		      params);
@@ -921,6 +928,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
 		   SocketDescriptor control_fd,
 		   FileDescriptor input_fd, FileDescriptor output_fd,
 		   WasLease &lease,
+		   const char *remote_host,
 		   http_method_t method, const char *uri,
 		   const char *script_name, const char *path_info,
 		   const char *query_string,
@@ -937,7 +945,8 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
 					     control_fd, input_fd, output_fd,
 					     lease, method, std::move(body),
 					     handler, cancel_ptr);
-	client->SendRequest(method, uri, script_name, path_info,
+	client->SendRequest(remote_host,
+			    method, uri, script_name, path_info,
 			    query_string, headers,
 			    params);
 }

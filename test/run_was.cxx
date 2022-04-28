@@ -236,6 +236,7 @@ try {
 			   context.process.input,
 			   context.process.output,
 			   context,
+			   nullptr,
 			   HTTP_METHOD_GET, uri,
 			   nullptr,
 			   nullptr, nullptr,

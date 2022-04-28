@@ -77,7 +77,7 @@ The following ``access_logger`` options are available:
 - ``trust_xff``: The specified IP address is a “trusted” proxy whose
   ``X-Forwarded-For`` value is used to determine the ``remote_host``.
   This option can be specified multiple times.  (This setting is also
-  used for the FastCGI ``REMOTE_HOST`` parameter.)
+  used for the FastCGI/WAS ``REMOTE_HOST`` parameter.)
 
 - ``ignore_localhost_200``: The value is an URI which is never logged
   if the ``Host`` header is “localhost” and the response status is

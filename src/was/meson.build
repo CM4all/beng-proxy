@@ -1,4 +1,4 @@
-libwas = dependency('libcm4all-was-protocol', version: '>= 1.21', required: get_option('was'))
+libwas = dependency('libcm4all-was-protocol', version: '>= 1.24', required: get_option('was'))
 if not libwas.found()
   was_client_dep = dependency('', required: false)
   subdir_done()

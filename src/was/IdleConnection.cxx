@@ -136,6 +136,7 @@ WasIdleConnection::RecoverStop()
 		case WAS_COMMAND_PATH_INFO:
 		case WAS_COMMAND_QUERY_STRING:
 		case WAS_COMMAND_PARAMETER:
+		case WAS_COMMAND_REMOTE_HOST:
 			throw std::runtime_error("unexpected data from idle WAS control connection");
 
 		case WAS_COMMAND_PREMATURE:
