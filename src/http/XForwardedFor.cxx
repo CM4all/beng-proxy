@@ -39,7 +39,7 @@
  * right-most item as a std::pair.
  */
 [[gnu::pure]]
-static std::pair<StringView, StringView>
+static std::pair<std::string_view, std::string_view>
 LastListItem(StringView list) noexcept
 {
 	auto [a, b] = list.SplitLast(',');
@@ -59,7 +59,7 @@ LastListItem(StringView list) noexcept
 std::string_view
 XForwardedForConfig::GetRealRemoteHost(const char *xff) const noexcept
 {
-	StringView list{xff};
+	std::string_view list{xff};
 	std::string_view result{};
 
 	while (true) {
