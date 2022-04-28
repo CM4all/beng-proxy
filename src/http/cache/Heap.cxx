@@ -152,7 +152,7 @@ HttpCacheHeap::OpenStream(struct pool &_pool,
 
 	if (!item.HasBody())
 		/* don't lock the item */
-		return istream_null_new(_pool);
+		return {};
 
 	return istream_unlock_new(_pool, item.OpenStream(_pool), item);
 }
