@@ -73,7 +73,7 @@ XForwardedForConfig::GetRealRemoteHost(const char *xff) const noexcept
 			return result;
 
 		result = l.second;
-		if (trust.find(std::string{result}) == trust.end())
+		if (!IsTrustedHost(result))
 			/* this address is not a trusted proxy; return it */
 			return result;
 

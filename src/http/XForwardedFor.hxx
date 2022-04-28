@@ -43,11 +43,12 @@ struct XForwardedForConfig {
 	 * A list of proxy servers whose "X-Forwarded-For" header will be
 	 * trusted.
 	 */
-	std::set<std::string> trust;
+	std::set<std::string, std::less<>> trust;
 
+	template<typename H>
 	[[gnu::pure]]
-	bool IsTrustedHost(const char *host) const noexcept {
-		return !trust.empty() && trust.find(host) != trust.end();
+	bool IsTrustedHost(H &&host) const noexcept {
+		return trust.contains(std::forward<H>(host));
 	}
 
 	[[gnu::pure]]
