@@ -52,7 +52,6 @@
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "AllocatorPtr.hxx"
-#include "net/HostParser.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringStrip.hxx"
@@ -75,21 +74,6 @@ extract_remote_addr(const StringMap &headers) noexcept
 		++p;
 
 	return StripLeft(p);
-}
-
-[[gnu::pure]]
-static const char *
-extract_remote_ip(struct pool &pool, const StringMap &headers) noexcept
-{
-	const char *p = extract_remote_addr(headers);
-	if (p == nullptr)
-		return p;
-
-	auto eh = ExtractHost(p);
-	if (eh.HasFailed() || eh.host.size == strlen(p))
-		return p;
-
-	return p_strdup(pool, eh.host);
 }
 
 void
@@ -170,7 +154,7 @@ try {
 	case ResourceAddress::Type::CGI:
 		cgi_new(spawn_service, event_loop, &pool, parent_stopwatch,
 			method, &address.GetCgi(),
-			extract_remote_ip(pool, headers),
+			extract_remote_addr(headers),
 			headers, std::move(body),
 			handler, cancel_ptr);
 		return;
@@ -184,7 +168,7 @@ try {
 			stderr_fd = cgi->options.OpenStderrPath();
 		}
 
-		const char *remote_ip = extract_remote_ip(pool, headers);
+		const char *remote_ip = extract_remote_addr(headers);
 
 		if (cgi->address_list.IsEmpty())
 			fcgi_request(&pool, event_loop, fcgi_stock, parent_stopwatch,
