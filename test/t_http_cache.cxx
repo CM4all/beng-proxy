@@ -320,6 +320,24 @@ TEST(HttpCache, Basic)
 	run_cache_test(instance, requests[3], true);
 }
 
+TEST(HttpCache, CacheableWithoutResponseBody)
+{
+	const ScopeFbPoolInit fb_pool_init;
+	Instance instance;
+
+	static constexpr Request r0{
+		"/cacheable-no-response-body", nullptr,
+		"date: " DATE "\n"
+		"last-modified: " STAMP1 "\n"
+		"expires: " EXPIRES "\n"
+		"vary: x-foo\n",
+		nullptr,
+	};
+
+	run_cache_test(instance, r0, false);
+	run_cache_test(instance, r0, true);
+}
+
 TEST(HttpCache, MultiVary)
 {
 	const ScopeFbPoolInit fb_pool_init;
