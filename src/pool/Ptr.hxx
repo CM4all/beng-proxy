@@ -32,7 +32,6 @@
 
 #pragma once
 
-#include "util/Compiler.h"
 #include "trace.h"
 
 #include <utility>
@@ -121,7 +120,7 @@ public:
  * as the first parameter.
  */
 template<typename T, typename... Args>
-[[gnu::malloc]] gcc_returns_nonnull
+[[gnu::malloc]] [[gnu::returns_nonnull]]
 T *
 NewFromPool(PoolPtr &&p, Args&&... args)
 {
