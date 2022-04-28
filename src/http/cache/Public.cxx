@@ -674,7 +674,7 @@ HttpCacheRequest::OnHttpResponse(http_status_t status, StringMap &&_headers,
 	auto &_handler = handler;
 
 	/* hold an additional pool reference to ensure that all header
-	   strings stay valid untilt he handler returns, just in case
+	   strings stay valid until he handler returns, just in case
 	   sink_rubber_new() destroys this object and the pool; TODO:
 	   find a better solution for this */
 	const ScopePoolRef ref(pool);
