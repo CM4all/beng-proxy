@@ -45,11 +45,8 @@ struct XForwardedForConfig {
 	 */
 	std::set<std::string, std::less<>> trust;
 
-	template<typename H>
 	[[gnu::pure]]
-	bool IsTrustedHost(H &&host) const noexcept {
-		return trust.contains(std::forward<H>(host));
-	}
+	bool IsTrustedHost(std::string_view host) const noexcept;
 
 	[[gnu::pure]]
 	std::string_view GetRealRemoteHost(const char *xff) const noexcept;

@@ -33,6 +33,12 @@
 #include "XForwardedFor.hxx"
 #include "util/StringView.hxx"
 
+bool
+XForwardedForConfig::IsTrustedHost(std::string_view host) const noexcept
+{
+	return trust.contains(host);
+}
+
 /**
  * Extract the right-most item of a comma-separated list, such as an
  * X-Forwarded-For header value.  Returns the remaining string and the
