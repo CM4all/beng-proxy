@@ -79,6 +79,11 @@ The following ``access_logger`` options are available:
   This option can be specified multiple times.  (This setting is also
   used for the FastCGI/WAS ``REMOTE_HOST`` parameter.)
 
+- ``trust_xff_interface``: Like ``trust_xff``, but trust all
+  IPv6-link-local addresses on this network interface.  This is useful
+  if this server is discovered using Zeroconf by a dynamic set of load
+  balancers.
+
 - ``ignore_localhost_200``: The value is an URI which is never logged
   if the ``Host`` header is “localhost” and the response status is
   ``200 OK``.

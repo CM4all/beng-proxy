@@ -45,6 +45,12 @@ struct XForwardedForConfig {
 	 */
 	std::set<std::string, std::less<>> trust;
 
+	/**
+	 * The "X-Forwarded-For" entries of all proxy servers on these
+	 * interfaces will be trusted.
+	 */
+	std::set<std::string, std::less<>> trust_interfaces;
+
 	[[gnu::pure]]
 	bool IsTrustedHost(std::string_view host) const noexcept;
 

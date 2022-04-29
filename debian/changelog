@@ -5,6 +5,7 @@ cm4all-beng-proxy (17.0.88) unstable; urgency=low
   * lb: allow ssl_verify with ssl_cert_db
   * lb: fix crash on broken certificate in certdb
   * {http,filter}_cache: fix use-after-free bugs
+  * access_log: add setting "trust_xff_interface"
 
  --   
 

@@ -36,7 +36,15 @@
 bool
 XForwardedForConfig::IsTrustedHost(std::string_view host) const noexcept
 {
-	return trust.contains(host);
+	if (trust.contains(host))
+		return true;
+
+	if (const auto [address, interface] = StringView{host}.Split('%');
+	    !address.empty() && !interface.empty() &&
+	    trust_interfaces.contains(std::string_view{interface}))
+		return true;
+
+	return false;
 }
 
 /**
