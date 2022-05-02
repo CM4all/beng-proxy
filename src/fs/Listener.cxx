@@ -136,14 +136,6 @@ FilteredSocketListener::~FilteredSocketListener() noexcept
 	pending.clear_and_dispose(NoPoolDisposer{});
 }
 
-unsigned
-FilteredSocketListener::FlushSSLSessionCache(long tm) noexcept
-{
-	return ssl_factory != nullptr
-		? ssl_factory->Flush(tm)
-		: 0;
-}
-
 void
 FilteredSocketListener::OnAccept(UniqueSocketDescriptor &&s,
 				 SocketAddress address) noexcept

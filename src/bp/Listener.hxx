@@ -87,10 +87,6 @@ public:
 		listener.RemoveEvent();
 	}
 
-	unsigned FlushSSLSessionCache(long tm) noexcept {
-		return listener.FlushSSLSessionCache(tm);
-	}
-
 	auto &GetHttpStats() noexcept {
 		return http_stats;
 	}

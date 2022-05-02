@@ -196,23 +196,10 @@ BpInstance::ForkCow(bool inherit) noexcept
 #endif
 }
 
-unsigned
-BpInstance::FlushSSLSessionCache(long tm) noexcept
-{
-	unsigned n = 0;
-	for (auto &listener : listeners)
-		n += listener.FlushSSLSessionCache(tm);
-
-	return n;
-}
-
 void
 BpInstance::Compress() noexcept
 {
 	fb_pool_compress();
-
-	unsigned n_ssl_sessions = FlushSSLSessionCache(LONG_MAX);
-	LogConcat(3, "main", "flushed ", n_ssl_sessions, " SSL sessions");
 }
 
 void

@@ -99,8 +99,6 @@ public:
 
 	void Scan(LbGotoMap &goto_map);
 
-	unsigned FlushSSLSessionCache(long tm);
-
 private:
 	/* virtual methods from class FilteredSocketListenerHandler */
 	UniqueSocketDescriptor OnFilteredSocketAccept(UniqueSocketDescriptor s,

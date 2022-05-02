@@ -77,13 +77,6 @@ public:
 
 	UniqueSSL Make();
 
-	/**
-	 * Flush expired sessions from the session cache.
-	 *
-	 * @return the number of expired sessions
-	 */
-	unsigned Flush(long tm) noexcept;
-
 private:
 	int CertCallback(SSL &ssl) noexcept;
 	static int CertCallback(SSL *ssl, void *arg) noexcept;

@@ -127,9 +127,6 @@ LbInstance::ShutdownCallback() noexcept
 void
 LbInstance::ReloadEventCallback(int) noexcept
 {
-	unsigned n_ssl_sessions = FlushSSLSessionCache(LONG_MAX);
-	logger(3, "flushed ", n_ssl_sessions, " SSL sessions");
-
 	goto_map.FlushCaches();
 
 	Compress();

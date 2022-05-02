@@ -31,7 +31,6 @@
  */
 
 #include "Cache.hxx"
-#include "SessionCache.hxx"
 #include "CompletionHandler.hxx"
 #include "lib/openssl/Name.hxx"
 #include "lib/openssl/AltName.hxx"
@@ -45,6 +44,7 @@
 #include "util/AllocatedString.hxx"
 
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #include <set>
 

@@ -33,7 +33,6 @@
 #include "Factory.hxx"
 #include "Basic.hxx"
 #include "Config.hxx"
-#include "SessionCache.hxx"
 #include "CertCallback.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lib/openssl/Name.hxx"
@@ -263,12 +262,6 @@ SslFactory::Make()
 	SSL_set_accept_state(ssl.get());
 
 	return ssl;
-}
-
-unsigned
-SslFactory::Flush(long tm) noexcept
-{
-	return ::FlushSessionCache(*ssl_ctx, tm);
 }
 
 SslFactoryCertKey::SslFactoryCertKey(const SslCertKeyConfig &config)

@@ -113,9 +113,6 @@ LbInstance::Compress() noexcept
 	for (auto &i : cert_dbs)
 		i.second.Expire();
 #endif
-
-	unsigned n_ssl_sessions = FlushSSLSessionCache(time(nullptr));
-	logger(3, "flushed ", n_ssl_sessions, " SSL sessions");
 }
 
 #ifdef ENABLE_CERTDB

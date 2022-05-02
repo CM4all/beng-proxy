@@ -168,9 +168,3 @@ LbListener::Scan(LbGotoMap &goto_map)
 {
 	destination = goto_map.GetInstance(config.destination);
 }
-
-unsigned
-LbListener::FlushSSLSessionCache(long tm)
-{
-	return listener.FlushSSLSessionCache(tm);
-}

@@ -156,8 +156,6 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 		goto_map.InvalidateTranslationCaches(request);
 	}
 
-	unsigned FlushSSLSessionCache(long tm) noexcept;
-
 	void ShutdownCallback() noexcept;
 
 	void ReloadEventCallback(int signo) noexcept;

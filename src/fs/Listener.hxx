@@ -87,8 +87,6 @@ public:
 			       FilteredSocketListenerHandler &_handler) noexcept;
 	~FilteredSocketListener() noexcept;
 
-	unsigned FlushSSLSessionCache(long tm) noexcept;
-
 protected:
 	void OnAccept(UniqueSocketDescriptor &&s,
 		      SocketAddress address) noexcept override;
