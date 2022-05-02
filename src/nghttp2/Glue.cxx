@@ -145,8 +145,6 @@ GlueRequest::OnNgHttp2StockAlpn(std::unique_ptr<FilteredSocket> &&socket) noexce
 		return;
 	}
 
-	(void)socket;
-
 	OnNgHttp2StockError(std::make_exception_ptr(std::runtime_error("Server does not support HTTP/2")));
 }
 
