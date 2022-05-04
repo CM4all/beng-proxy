@@ -166,12 +166,9 @@ client_socket_new(EventLoop &event_loop, AllocatorPtr alloc,
 		return;
 	}
 
-	if (ip_transparent) {
-		int on = 1;
-		if (setsockopt(fd.Get(), SOL_IP, IP_TRANSPARENT, &on, sizeof on) < 0) {
-			handler.OnSocketConnectError(std::make_exception_ptr(MakeSocketError("Failed to set IP_TRANSPARENT")));
-			return;
-		}
+	if (ip_transparent && !fd.SetBoolOption(SOL_IP, IP_TRANSPARENT, true)) {
+		handler.OnSocketConnectError(std::make_exception_ptr(MakeSocketError("Failed to set IP_TRANSPARENT")));
+		return;
 	}
 
 	if (!bind_address.IsNull() && bind_address.IsDefined()) {
