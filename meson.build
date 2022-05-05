@@ -170,7 +170,6 @@ if get_option('coroutines')
     add_global_arguments(
       '-fcoroutines-ts',
       '-stdlib=libc++',
-      '-D__cpp_impl_coroutine',
       language: 'cpp')
     add_global_link_arguments('-stdlib=libc++', language: 'cpp')
   else
