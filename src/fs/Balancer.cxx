@@ -98,7 +98,7 @@ FilteredSocketBalancer::Request::Send(AllocatorPtr alloc, SocketAddress address,
 {
 	stock.Get(alloc,
 		  StopwatchPtr(parent_stopwatch, "connect"),
-		  nullptr, 0,
+		  nullptr, fairness_hash,
 		  ip_transparent, bind_address, address,
 		  timeout,
 		  filter_factory,
