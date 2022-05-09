@@ -390,7 +390,7 @@ if get_option('certdb')
     'DbCertCallback.cxx',
   ]
 else
-  pg_dep = declare_dependency(required: false)
+  pg_dep = dependency('', required: false)
 endif
 
 subdir('src/ssl')
