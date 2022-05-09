@@ -148,7 +148,7 @@ PerClientAccounting::NoteRequest() noexcept
 {
 	static constexpr Event::Duration IDLE_THRESHOLD = std::chrono::seconds{2};
 	static constexpr Event::Duration BUSY_THRESHOLD = std::chrono::minutes{2};
-	static constexpr Event::Duration TARPIT_FOR = std::chrono::minutes{5};
+	static constexpr Event::Duration TARPIT_FOR = std::chrono::minutes{1};
 	static constexpr Event::Duration MAX_DELAY = std::chrono::minutes{1};
 	static constexpr Event::Duration DELAY_STEP = std::chrono::milliseconds{500};
 
@@ -160,7 +160,7 @@ PerClientAccounting::NoteRequest() noexcept
 		if (delay > DELAY_STEP)
 			delay -= DELAY_STEP;
 	} else if (now - busy_since > BUSY_THRESHOLD) {
-		tarpit_until = now + std::chrono::minutes{1};
+		tarpit_until = now + TARPIT_FOR;
 
 		if (delay < MAX_DELAY)
 			delay += DELAY_STEP;
