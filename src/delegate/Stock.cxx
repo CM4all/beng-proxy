@@ -129,6 +129,7 @@ public:
 private:
 	/* virtual methods from class StockClass */
 	void Create(CreateStockItem c, StockRequest request,
+		    StockGetHandler &handler,
 		    CancellablePointer &cancel_ptr) override;
 };
 
@@ -158,7 +159,8 @@ DelegateProcess::SocketEventCallback(unsigned) noexcept
 void
 DelegateStock::Create(CreateStockItem c,
 		      StockRequest request,
-		      gcc_unused CancellablePointer &cancel_ptr)
+		      StockGetHandler &handler,
+		      CancellablePointer &)
 {
 	auto &info = *(DelegateArgs *)request.get();
 
@@ -183,7 +185,7 @@ DelegateStock::Create(CreateStockItem c,
 
 	auto *process = new DelegateProcess(c, std::move(handle),
 					    std::move(client_fd));
-	process->InvokeCreateSuccess();
+	process->InvokeCreateSuccess(handler);
 }
 
 /*

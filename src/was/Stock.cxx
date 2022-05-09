@@ -134,7 +134,8 @@ WasStock::FadeTag(StringView tag) noexcept
 
 void
 WasStock::Create(CreateStockItem c, StockRequest _request,
-		 gcc_unused CancellablePointer &cancel_ptr)
+		 StockGetHandler &handler,
+		 CancellablePointer &)
 {
 	auto &params = *(CgiChildParams *)_request.get();
 
@@ -153,7 +154,7 @@ WasStock::Create(CreateStockItem c, StockRequest _request,
 	   callback, because the latter may destroy the pool */
 	_request.reset();
 
-	child->InvokeCreateSuccess();
+	child->InvokeCreateSuccess(handler);
 }
 
 WasChild::~WasChild() noexcept = default;

@@ -108,6 +108,7 @@ public:
 private:
 	/* virtual methods from class StockClass */
 	void Create(CreateStockItem c, StockRequest request,
+		    StockGetHandler &handler,
 		    CancellablePointer &cancel_ptr) override;
 
 	uint_fast64_t GetFairnessHash(const void *request) const noexcept override;

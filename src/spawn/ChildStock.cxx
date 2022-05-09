@@ -69,13 +69,14 @@ ChildStock::~ChildStock() noexcept = default;
 
 void
 ChildStock::Create(CreateStockItem c, StockRequest request,
+		   StockGetHandler &handler,
 		   CancellablePointer &)
 {
 	auto item = cls.CreateChild(c, request.get(), *this);
 	item->Spawn(cls, request.get(),
 		    log_socket, log_options);
 
-	item.release()->InvokeCreateSuccess();
+	item.release()->InvokeCreateSuccess(handler);
 }
 
 /*

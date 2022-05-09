@@ -54,7 +54,8 @@ struct PipeStockItem final : StockItem {
 
 void
 PipeStock::Create(CreateStockItem c, StockRequest,
-		  gcc_unused CancellablePointer &cancel_ptr)
+		  StockGetHandler &get_handler,
+		  CancellablePointer &)
 {
 	auto *item = new PipeStockItem(c);
 
@@ -65,7 +66,7 @@ PipeStock::Create(CreateStockItem c, StockRequest,
 		throw MakeErrno(e, "pipe() failed");
 	}
 
-	item->InvokeCreateSuccess();
+	item->InvokeCreateSuccess(get_handler);
 }
 
 bool

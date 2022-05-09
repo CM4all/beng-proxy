@@ -125,6 +125,7 @@ RemoteMultiWasConnection::Release() noexcept
 void
 RemoteWasStock::MultiClientStockClass::Create(CreateStockItem c,
 					      StockRequest request,
+					      StockGetHandler &handler,
 					      CancellablePointer &)
 {
 	const auto &params = *(const RemoteMultiWasParams *)request.get();
@@ -133,7 +134,7 @@ RemoteWasStock::MultiClientStockClass::Create(CreateStockItem c,
 		new RemoteMultiWasConnection(c,
 					     CreateConnectSocket(params.address,
 								 SOCK_SEQPACKET));
-	connection->InvokeCreateSuccess();
+	connection->InvokeCreateSuccess(handler);
 }
 
 RemoteWasStock::RemoteWasStock(unsigned limit, unsigned max_idle,

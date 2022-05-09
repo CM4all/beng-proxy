@@ -105,6 +105,7 @@ public:
 private:
 	/* virtual methods from class StockClass */
 	void Create(CreateStockItem c, StockRequest request,
+		    StockGetHandler &handler,
 		    CancellablePointer &cancel_ptr) override;
 
 	/* virtual methods from class ChildStockClass */
@@ -297,6 +298,7 @@ FcgiStock::PrepareListenChild(void *, UniqueSocketDescriptor fd,
 
 void
 FcgiStock::Create(CreateStockItem c, StockRequest request,
+		  StockGetHandler &handler,
 		  [[maybe_unused]] CancellablePointer &cancel_ptr)
 {
 	[[maybe_unused]] auto &params = *(CgiChildParams *)request.get();
@@ -327,7 +329,7 @@ FcgiStock::Create(CreateStockItem c, StockRequest request,
 
 	connection->event.Open(connection->fd);
 
-	connection->InvokeCreateSuccess();
+	connection->InvokeCreateSuccess(handler);
 }
 
 bool

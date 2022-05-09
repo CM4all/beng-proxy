@@ -87,6 +87,8 @@ class FilteredSocketStockConnection final
 
 	const AllocatedSocketAddress address;
 
+	StockGetHandler *const handler;
+
 	/**
 	 * To cancel the ClientSocket.
 	 */
@@ -97,10 +99,12 @@ class FilteredSocketStockConnection final
 public:
 	FilteredSocketStockConnection(CreateStockItem c,
 				      SocketAddress _address,
+				      StockGetHandler &_handler,
 				      CancellablePointer &_cancel_ptr) noexcept
 		:StockItem(c),
 		 logger(c.stock),
-		 address(_address)
+		 address(_address),
+		 handler(&_handler)
 	{
 		_cancel_ptr = *this;
 
@@ -113,6 +117,7 @@ public:
 		:StockItem(c),
 		 logger(c.stock),
 		 address(_address),
+		 handler(nullptr),
 		 socket(std::move(_socket))
 	{
 	}
@@ -220,24 +225,28 @@ FilteredSocketStockConnection::OnBufferedError(std::exception_ptr e) noexcept
 void
 FilteredSocketStockConnection::OnConnectFilteredSocket(std::unique_ptr<FilteredSocket> _socket) noexcept
 {
+	assert(handler != nullptr);
+
 	cancel_ptr = nullptr;
 
 	socket = std::move(_socket);
 	socket->Reinit(Event::Duration(-1), Event::Duration(-1),
 		       *this);
 
-	InvokeCreateSuccess();
+	InvokeCreateSuccess(*handler);
 }
 
 void
 FilteredSocketStockConnection::OnConnectFilteredSocketError(std::exception_ptr ep) noexcept
 {
+	assert(handler != nullptr);
+
 	cancel_ptr = nullptr;
 
 	ep = NestException(ep,
 			   FormatRuntimeError("Failed to connect to '%s'",
 					      GetStockName()));
-	InvokeCreateError(ep);
+	InvokeCreateError(*handler, std::move(ep));
 }
 
 /*
@@ -247,6 +256,7 @@ FilteredSocketStockConnection::OnConnectFilteredSocketError(std::exception_ptr e
 
 void
 FilteredSocketStock::Create(CreateStockItem c, StockRequest _request,
+			    StockGetHandler &handler,
 			    CancellablePointer &cancel_ptr)
 {
 	/* move the request to the stack to avoid use-after-free in
@@ -257,7 +267,7 @@ FilteredSocketStock::Create(CreateStockItem c, StockRequest _request,
 
 	auto *connection = new FilteredSocketStockConnection(c,
 							     request.address,
-							     cancel_ptr);
+							     handler, cancel_ptr);
 	connection->Start(std::move(request));
 }
 
@@ -340,8 +350,7 @@ FilteredSocketStock::Add(const char *key, SocketAddress address,
 {
 	auto &_stock = stock.GetStock(key, nullptr);
 
-	auto &dummy_handler = *(StockGetHandler *)nullptr;
-	const CreateStockItem c{_stock, dummy_handler};
+	const CreateStockItem c{_stock};
 
 	auto *connection = new FilteredSocketStockConnection(c, address,
 							     std::move(socket));

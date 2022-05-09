@@ -79,6 +79,8 @@ struct TcpStockConnection final
 
 	BasicLogger<StockLoggerDomain> logger;
 
+	StockGetHandler &handler;
+
 	/**
 	 * To cancel the ClientSocket.
 	 */
@@ -92,9 +94,11 @@ struct TcpStockConnection final
 	CoarseTimerEvent idle_timeout_event;
 
 	TcpStockConnection(CreateStockItem c, SocketAddress _address,
+			   StockGetHandler &_handler,
 			   CancellablePointer &_cancel_ptr) noexcept
 		:StockItem(c),
 		 logger(c.stock),
+		 handler(_handler),
 		 address(_address),
 		 event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)),
 		 idle_timeout_event(c.stock.GetEventLoop(),
@@ -178,7 +182,7 @@ TcpStockConnection::OnSocketConnectSuccess(UniqueSocketDescriptor new_fd) noexce
 	fd = new_fd.Release();
 	event.Open(fd);
 
-	InvokeCreateSuccess();
+	InvokeCreateSuccess(handler);
 }
 
 void
@@ -189,7 +193,7 @@ TcpStockConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
 	ep = NestException(ep,
 			   FormatRuntimeError("Failed to connect to '%s'",
 					      GetStockName()));
-	InvokeCreateError(ep);
+	InvokeCreateError(handler, ep);
 }
 
 /*
@@ -200,6 +204,7 @@ TcpStockConnection::OnSocketConnectError(std::exception_ptr ep) noexcept
 void
 TcpStock::Create(CreateStockItem c,
 		 StockRequest _request,
+		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr)
 {
 	/* move the request to the stack to avoid use-after-free in
@@ -210,6 +215,7 @@ TcpStock::Create(CreateStockItem c,
 
 	auto *connection = new TcpStockConnection(c,
 						  request.address,
+						  handler,
 						  cancel_ptr);
 
 	client_socket_new(c.stock.GetEventLoop(), request.alloc,
