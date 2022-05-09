@@ -374,7 +374,7 @@ SliceAllocation
 SlicePool::Alloc() noexcept
 {
 	if (HaveMemoryChecker())
-		return { *(SliceArea *)nullptr, malloc(slice_size), slice_size };
+		return SliceAllocation{ malloc(slice_size), slice_size };
 
 	auto &area = MakeNonFullArea();
 

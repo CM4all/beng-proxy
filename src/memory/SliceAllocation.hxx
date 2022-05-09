@@ -50,6 +50,13 @@ public:
 	SliceAllocation(SliceArea &_area, void *_data, std::size_t _size) noexcept
 		:area(&_area), data(_data), size(_size) {}
 
+	/**
+	 * This constructor is used if HaveMemoryChecker(); in that
+	 * case, memory was allocated with malloc().
+	 */
+	explicit SliceAllocation(void *_data, std::size_t _size) noexcept
+		:data(_data), size(_size) {}
+
 	SliceAllocation(SliceAllocation &&src) noexcept
 		:area(src.area),
 		 data(std::exchange(src.data, nullptr)), size(src.size) {}
