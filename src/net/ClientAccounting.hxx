@@ -79,14 +79,14 @@ class PerClientAccounting final
 			return value.address;
 		}
 
-		constexpr std::size_t operator()(uint_least64_t address) const noexcept {
-			return address;
+		constexpr std::size_t operator()(uint_least64_t _address) const noexcept {
+			return _address;
 		}
 	};
 
 	struct Equal {
-		constexpr std::size_t operator()(uint_least64_t address, const PerClientAccounting &value) const noexcept {
-			return address == value.address;
+		constexpr std::size_t operator()(uint_least64_t _address, const PerClientAccounting &value) const noexcept {
+			return _address == value.address;
 		}
 	};
 
