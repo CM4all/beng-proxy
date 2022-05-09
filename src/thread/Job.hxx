@@ -34,12 +34,14 @@
 
 #include "util/IntrusiveList.hxx"
 
+#include <cstdint>
+
 /**
  * A job that shall be executed in a worker thread.
  */
 class ThreadJob : public IntrusiveListHook {
 public:
-	enum class State {
+	enum class State : uint8_t {
 		/**
 		 * The job is not in any queue.
 		 */
