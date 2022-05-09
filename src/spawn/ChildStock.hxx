@@ -174,8 +174,9 @@ class ChildStockMap final {
 			 ccls(_ccls) {}
 
 	protected:
+		/* virtual method from class StockMap */
 		std::size_t GetLimit(const void *request,
-				     std::size_t _limit) const noexcept {
+				     std::size_t _limit) const noexcept override {
 			return ccls.GetChildLimit(request, _limit);
 		}
 
