@@ -34,7 +34,7 @@
 
 #include "util/IntrusiveList.hxx"
 
-/*8
+/**
  * A job that shall be executed in a worker thread.
  */
 class ThreadJob : public IntrusiveListHook {
