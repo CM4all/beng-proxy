@@ -93,8 +93,8 @@ struct AnyHttpClient::Request {
 	}
 
 	void SendHTTP1(EventLoop &event_loop,
-		       FilteredSocketBalancer &fs_balancer) noexcept {
-		http_request(pool, event_loop, fs_balancer,
+		       FilteredSocketBalancer &_fs_balancer) noexcept {
+		http_request(pool, event_loop, _fs_balancer,
 			     parent_stopwatch,
 			     sticky_hash,
 			     &filter_factory,
@@ -105,10 +105,10 @@ struct AnyHttpClient::Request {
 	}
 
 	void SendHTTP2(EventLoop &event_loop,
-		       NgHttp2::Stock &nghttp2_stock,
+		       NgHttp2::Stock &_nghttp2_stock,
 		       NgHttp2::AlpnHandler *alpn_handler,
 		       CancellablePointer &cancel_ptr) noexcept {
-		NgHttp2::SendRequest(pool, event_loop, nghttp2_stock,
+		NgHttp2::SendRequest(pool, event_loop, _nghttp2_stock,
 				     parent_stopwatch,
 				     &filter_factory,
 				     pending_request.method, address,
