@@ -84,13 +84,13 @@ private:
 
 	void Fail(std::exception_ptr ep) noexcept;
 
-	BufferedResult Feed(const uint8_t *data, size_t length) noexcept;
+	BufferedResult Feed(const std::byte *data, size_t length) noexcept;
 
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override {
 		auto r = socket.ReadBuffer();
 		assert(!r.empty());
-		return Feed((const uint8_t *)r.data, r.size);
+		return Feed((const std::byte *)r.data, r.size);
 	}
 
 	bool OnBufferedClosed() noexcept override {
@@ -149,11 +149,11 @@ TranslateClient::Fail(std::exception_ptr ep) noexcept
  */
 
 inline BufferedResult
-TranslateClient::Feed(const uint8_t *data, size_t length) noexcept
+TranslateClient::Feed(const std::byte *data, size_t length) noexcept
 try {
 	size_t consumed = 0;
 	while (consumed < length) {
-		size_t nbytes = parser.Feed(data + consumed, length - consumed);
+		size_t nbytes = parser.Feed((const uint8_t *)(data + consumed), length - consumed);
 		if (nbytes == 0)
 			/* need more data */
 			break;
