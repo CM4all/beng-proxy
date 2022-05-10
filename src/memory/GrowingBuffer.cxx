@@ -382,7 +382,7 @@ GrowingBuffer::FillBucketList(IstreamBucketList &list, size_type skip) const noe
 			return;
 		}
 
-		auto c = ConstBuffer<uint8_t>::FromVoid(b);
+		auto c = ConstBuffer<std::byte>::FromVoid(b);
 		if (skip > 0) {
 			c.skip_front(skip);
 			skip = 0;

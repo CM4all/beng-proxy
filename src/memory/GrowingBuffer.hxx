@@ -126,7 +126,7 @@ class GrowingBuffer {
 
 		const size_type size;
 		size_type fill = 0;
-		uint8_t data[sizeof(size_type)];
+		std::byte data[sizeof(size_type)];
 
 		explicit Buffer(size_type _size) noexcept
 			:size(_size) {}
@@ -275,7 +275,7 @@ GrowingBuffer::BufferPtr::ForEachBuffer(size_type skip, F &&f) const
 		i->Check();
 		i->next.Check();
 
-		ConstBuffer<uint8_t> b(i->data, i->fill);
+		ConstBuffer<std::byte> b(i->data, i->fill);
 		if (skip > 0) {
 			if (skip >= b.size) {
 				skip -= b.size;
