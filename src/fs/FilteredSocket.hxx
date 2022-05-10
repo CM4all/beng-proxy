@@ -256,7 +256,7 @@ public:
 	[[gnu::pure]]
 	size_t GetAvailable() const noexcept;
 
-	WritableBuffer<void> ReadBuffer() const noexcept;
+	std::span<std::byte> ReadBuffer() const noexcept;
 
 	/**
 	 * Dispose the specified number of bytes from the input buffer.
@@ -362,7 +362,7 @@ public:
 		return base.GetAvailable();
 	}
 
-	WritableBuffer<void> InternalReadBuffer() const noexcept {
+	std::span<std::byte> InternalReadBuffer() const noexcept {
 		assert(filter != nullptr);
 
 		return base.ReadBuffer();

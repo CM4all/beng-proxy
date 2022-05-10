@@ -222,10 +222,10 @@ TEST(GrowingBufferTest, FirstEmpty)
 
 	GrowingBufferReader reader(std::move(buffer));
 	auto x = reader.Read();
-	ASSERT_FALSE(x.IsNull());
-	ASSERT_EQ(x.size, 17u);
+	ASSERT_NE(x.data(), nullptr);
+	ASSERT_EQ(x.size(), 17u);
 
-	reader.Consume(x.size);
+	reader.Consume(x.size());
 }
 
 /** test growing_buffer_reader_skip() */
@@ -255,8 +255,8 @@ TEST(GrowingBufferTest, Skip)
 	ASSERT_EQ(reader.Available(), 18 + buffer_size);
 
 	auto x = reader.Read();
-	ASSERT_FALSE(x.IsNull());
-	ASSERT_EQ(x.size, 2u);
+	ASSERT_NE(x.data(), nullptr);
+	ASSERT_EQ(x.size(), 2u);
 	reader.Consume(1);
 	ASSERT_EQ(reader.Available(), 17 + buffer_size);
 
@@ -264,27 +264,27 @@ TEST(GrowingBufferTest, Skip)
 	ASSERT_EQ(reader.Available(), 12 + buffer_size);
 
 	x = reader.Read();
-	ASSERT_FALSE(x.IsNull());
-	ASSERT_EQ(x.size, buffer_size - 4);
+	ASSERT_NE(x.data(), nullptr);
+	ASSERT_EQ(x.size(), buffer_size - 4);
 	reader.Consume(4);
 	ASSERT_EQ(reader.Available(), 8 + buffer_size);
 
 	x = reader.Read();
-	ASSERT_FALSE(x.IsNull());
-	ASSERT_EQ(x.size, buffer_size - 8);
+	ASSERT_NE(x.data(), nullptr);
+	ASSERT_EQ(x.size(), buffer_size - 8);
 
 	reader.Skip(buffer_size);
 	ASSERT_EQ(reader.Available(), 8u);
 
 	x = reader.Read();
-	ASSERT_FALSE(x.IsNull());
-	ASSERT_EQ(x.size, 8u);
+	ASSERT_NE(x.data(), nullptr);
+	ASSERT_EQ(x.size(), 8u);
 
 	reader.Skip(8);
 	ASSERT_EQ(reader.Available(), 0u);
 
 	x = reader.Read();
-	ASSERT_TRUE(x.IsNull());
+	ASSERT_EQ(x.data(), nullptr);
 }
 
 /** test reading the head while appending to the tail */
@@ -313,8 +313,8 @@ TEST(GrowingBufferTest, ConcurrentRW)
 	ASSERT_TRUE(Equals(buffer.Dup(pool), "cdef"));
 
 	auto x = buffer.Read();
-	ASSERT_FALSE(x.IsNull());
-	ASSERT_EQ(x.size, 4u);
+	ASSERT_NE(x.data(), nullptr);
+	ASSERT_EQ(x.size(), 4u);
 }
 
 /** abort without handler */

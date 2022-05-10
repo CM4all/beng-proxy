@@ -59,15 +59,15 @@ Context::ReadBuckets(size_t limit)
 		}
 
 		const auto b = i.GetBuffer();
-		size_t size = std::min(b.size, limit);
+		size_t size = std::min(b.size(), limit);
 
 		if (expected_result && record) {
 			assert(skipped + buffer.size() == offset);
-			assert(offset + b.size <= strlen(expected_result));
+			assert(offset + b.size() <= strlen(expected_result));
 			assert(memcmp((const char *)expected_result + skipped + buffer.size(),
-				      b.data, b.size) == 0);
+				      b.data(), b.size()) == 0);
 
-			buffer.append((const char *)b.data, size);
+			buffer.append((const char *)b.data(), size);
 		}
 
 		consumed += size;

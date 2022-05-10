@@ -254,7 +254,7 @@ struct HttpServerConnection final
 	/**
 	 * @return false if the connection has been closed
 	 */
-	BufferedResult Feed(ConstBuffer<void> b) noexcept;
+	BufferedResult Feed(std::span<const std::byte> b) noexcept;
 
 	/**
 	 * Send data from the input buffer to the request body istream

@@ -754,8 +754,9 @@ FcgiClient::_GetAvailable(bool partial) noexcept
 		return response.available;
 
 	const auto buffer = socket.ReadBuffer();
-	if (buffer.size > content_length) {
-		const auto analysis = AnalyseBuffer(buffer.data, buffer.size);
+	if (buffer.size() > content_length) {
+		const auto analysis = AnalyseBuffer(buffer.data(),
+						    buffer.size());
 		if (analysis.end_request_offset > 0 || partial)
 			return analysis.total_stdout;
 	}
@@ -786,8 +787,8 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 	}
 
 	auto b = socket.ReadBuffer();
-	auto data = (const std::byte *)b.data;
-	const auto end = data + b.size;
+	auto data = b.data();
+	const auto end = data + b.size();
 
 	off_t available = response.available;
 	size_t current_content_length = content_length;
@@ -896,7 +897,7 @@ FcgiClient::_ConsumeBucketList(size_t nbytes) noexcept
 			if (b.empty())
 				break;
 
-			size_t consumed = std::min(b.size, skip_length);
+			size_t consumed = std::min(b.size(), skip_length);
 			socket.DisposeConsumed(consumed);
 			skip_length -= consumed;
 
@@ -905,8 +906,8 @@ FcgiClient::_ConsumeBucketList(size_t nbytes) noexcept
 		}
 
 		const auto b = socket.ReadBuffer();
-		const auto &header = *(const struct fcgi_record_header *)b.data;
-		if (b.size < sizeof(header))
+		const auto &header = *(const struct fcgi_record_header *)(const void *)b.data();
+		if (b.size() < sizeof(header))
 			break;
 
 		if (header.request_id != id) {
@@ -944,14 +945,14 @@ FcgiClient::OnBufferedData()
 	if (socket.IsConnected()) {
 		/* check if the #FCGI_END_REQUEST packet can be found in the
 		   following data chunk */
-		const auto analysis = AnalyseBuffer(r.data, r.size);
+		const auto analysis = AnalyseBuffer(r.data(), r.size());
 		if (analysis.end_request_offset > 0)
 			/* found it: we no longer need the socket, everything we
 			   need is already in the given buffer */
-			ReleaseSocket(analysis.end_request_offset == r.size);
+			ReleaseSocket(analysis.end_request_offset == r.size());
 	}
 
-	return ConsumeInput((const std::byte *)r.data, r.size);
+	return ConsumeInput(r.data(), r.size());
 }
 
 bool

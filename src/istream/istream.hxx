@@ -156,14 +156,14 @@ protected:
 	 */
 	template<typename Buffer>
 	size_t ConsumeFromBuffer(Buffer &buffer) noexcept {
-		auto r = buffer.Read().ToVoid();
+		auto r = buffer.Read();
 		if (r.empty())
 			return 0;
 
-		size_t consumed = InvokeData(r.data, r.size);
+		size_t consumed = InvokeData(r.data(), r.size());
 		if (consumed > 0)
 			buffer.Consume(consumed);
-		return r.size - consumed;
+		return r.size() - consumed;
 	}
 
 	/**
@@ -171,11 +171,11 @@ protected:
 	 */
 	template<typename Buffer>
 	size_t SendFromBuffer(Buffer &buffer) noexcept {
-		auto r = buffer.Read().ToVoid();
+		auto r = buffer.Read();
 		if (r.empty())
 			return 0;
 
-		size_t consumed = InvokeData(r.data, r.size);
+		size_t consumed = InvokeData(r.data(), r.size());
 		if (consumed > 0)
 			buffer.Consume(consumed);
 		return consumed;

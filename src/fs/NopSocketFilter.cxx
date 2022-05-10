@@ -57,7 +57,7 @@ NopSocketFilter::GetAvailable() const noexcept
 	return socket->InternalGetAvailable();
 }
 
-WritableBuffer<void>
+std::span<std::byte>
 NopSocketFilter::ReadBuffer() noexcept
 {
 	return socket->InternalReadBuffer();

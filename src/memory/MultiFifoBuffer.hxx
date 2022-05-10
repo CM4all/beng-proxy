@@ -35,10 +35,8 @@
 #include "DefaultFifoBuffer.hxx"
 
 #include <list>
+#include <span>
 
-#include <stdint.h>
-
-template<typename T> struct ConstBuffer;
 class IstreamBucketList;
 
 class MultiFifoBuffer {
@@ -56,12 +54,12 @@ public:
 		return buffers.empty();
 	}
 
-	void Push(ConstBuffer<std::byte> src) noexcept;
+	void Push(std::span<const std::byte> src) noexcept;
 
 	[[gnu::pure]]
 	size_t GetAvailable() const noexcept;
 
-	ConstBuffer<std::byte> Read() const noexcept;
+	std::span<const std::byte> Read() const noexcept;
 	void Consume(size_t nbytes) noexcept;
 
 	void FillBucketList(IstreamBucketList &list) const noexcept;

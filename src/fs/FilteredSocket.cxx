@@ -219,7 +219,7 @@ FilteredSocket::GetAvailable() const noexcept
 		: base.GetAvailable();
 }
 
-WritableBuffer<void>
+std::span<std::byte>
 FilteredSocket::ReadBuffer() const noexcept
 {
 	return filter != nullptr

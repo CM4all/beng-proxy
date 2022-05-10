@@ -37,13 +37,13 @@
 #include <string.h>
 
 size_t
-FifoBufferIstream::Push(ConstBuffer<void> src) noexcept
+FifoBufferIstream::Push(std::span<const std::byte> src) noexcept
 {
 	buffer.AllocateIfNull(fb_pool_get());
 
 	auto w = buffer.Write();
-	size_t nbytes = std::min(w.size, src.size);
-	memcpy(w.data, src.data, nbytes);
+	size_t nbytes = std::min(w.size(), src.size());
+	memcpy(w.data(), src.data(), nbytes);
 	buffer.Append(nbytes);
 	return nbytes;
 }
@@ -106,7 +106,7 @@ FifoBufferIstream::_FillBucketList(IstreamBucketList &list) noexcept
 {
 	auto r = buffer.Read();
 	if (!r.empty())
-		list.Push(r.ToVoid());
+		list.Push(r);
 
 	if (!eof)
 		list.SetMore();

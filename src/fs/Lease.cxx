@@ -55,7 +55,7 @@ FilteredSocketLease::MoveSocketInput() noexcept
 	// TODO: move buffers instead of copying the data
 	size_t i = 0;
 	while (true) {
-		auto r = WritableBuffer<std::byte>::FromVoid(socket->ReadBuffer());
+		auto r = socket->ReadBuffer();
 		if (r.empty())
 			break;
 
@@ -69,9 +69,9 @@ FilteredSocketLease::MoveSocketInput() noexcept
 		}
 
 		auto w = dest.Write();
-		size_t n = std::min(r.size, w.size);
+		size_t n = std::min(r.size(), w.size());
 		assert(n > 0);
-		std::move(r.data, r.data + n, w.data);
+		std::move(r.data(), r.data() + n, w.data());
 		socket->DisposeConsumed(n);
 		dest.Append(n);
 	}
@@ -111,11 +111,11 @@ FilteredSocketLease::GetAvailable() const noexcept
 		return socket->GetAvailable();
 }
 
-WritableBuffer<void>
+std::span<std::byte>
 FilteredSocketLease::ReadBuffer() const noexcept
 {
 	return IsReleased()
-		? input.front().Read().ToVoid()
+		? std::span<std::byte>{input.front().Read()}
 		: socket->ReadBuffer();
 }
 

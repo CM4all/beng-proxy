@@ -162,10 +162,10 @@ FileIstream::TryData()
 	auto w = buffer.Write();
 	assert(!w.empty());
 
-	if (end_offset - offset < off_t(w.size))
-		w.size = end_offset - offset;
+	if (end_offset - offset < off_t(w.size()))
+		w = w.first(end_offset - offset);
 
-	ssize_t nbytes = pread(fd.Get(), w.data, w.size, offset);
+	ssize_t nbytes = pread(fd.Get(), w.data(), w.size(), offset);
 	if (nbytes == 0) {
 		throw FormatRuntimeError("premature end of file in '%s'",
 					 path);

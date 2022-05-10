@@ -85,7 +85,7 @@ public:
 	 *
 	 * @return the number of bytes copied into the buffer
 	 */
-	size_t Push(ConstBuffer<void> src) noexcept;
+	size_t Push(std::span<const std::byte> src) noexcept;
 
 	/**
 	 * Indicate that this #Istream will end after all remaining

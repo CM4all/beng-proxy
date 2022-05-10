@@ -174,10 +174,10 @@ try {
 	auto w = buffer.Write();
 	assert(!w.empty());
 
-	if (length > w.size)
-		length = w.size;
+	if (length > w.size())
+		length = w.size();
 
-	memcpy(w.data, data, length);
+	memcpy(w.data(), data, length);
 	buffer.Append(length);
 
 	switch (parser.FeedHeaders(GetPool(), buffer)) {

@@ -193,7 +193,7 @@ private:
 	bool SubmitBuffer() noexcept {
 		auto r = buffer.Read();
 		if (!r.empty()) {
-			size_t nbytes = InvokeData(r.data, r.size);
+			size_t nbytes = InvokeData(r.data(), r.size());
 			if (nbytes == 0)
 				return false;
 
@@ -602,7 +602,7 @@ WasInput::_FillBucketList(IstreamBucketList &list)
 		}
 	}
 
-	list.Push(r.ToVoid());
+	list.Push(r);
 
 	if (!known_length || received < length)
 		list.SetMore();

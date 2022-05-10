@@ -290,7 +290,7 @@ ThreadSocketFilter::Done() noexcept
 			if (!r.empty()) {
 				/* don't care for the return value; the socket and
 				   this object are going to be closed anyway */
-				socket->InternalDirectWrite(r.data, r.size);
+				socket->InternalDirectWrite(r.data(), r.size());
 				socket->Shutdown();
 			}
 		}
@@ -449,14 +449,12 @@ ThreadSocketFilter::OnData() noexcept
 		if (w.empty())
 			return BufferedResult::BLOCKING;
 
-		if (r.size > w.size)
-			r.size = w.size;
-
-		memcpy(w.data, r.data, r.size);
-		encrypted_input.Append(r.size);
+		const std::size_t nbytes = std::min(r.size(), w.size());
+		std::copy_n(r.begin(), nbytes, w.begin());
+		encrypted_input.Append(nbytes);
 	}
 
-	socket->InternalConsumed(r.size);
+	socket->InternalConsumed(r.size());
 
 	Schedule();
 
@@ -487,13 +485,13 @@ ThreadSocketFilter::GetAvailable() const noexcept
 		unprotected_decrypted_input.GetAvailable();
 }
 
-WritableBuffer<void>
+std::span<std::byte>
 ThreadSocketFilter::ReadBuffer() noexcept
 {
 	if (unprotected_decrypted_input.empty())
 		MoveDecryptedInputAndSchedule();
 
-	return unprotected_decrypted_input.Read().ToVoid();
+	return unprotected_decrypted_input.Read();
 }
 
 void
@@ -529,8 +527,8 @@ ThreadSocketFilter::LockWritePlainOutput(const void *data, size_t size) noexcept
 	plain_output.AllocateIfNull(fb_pool_get());
 
 	auto w = plain_output.Write();
-	size_t nbytes = std::min(size, w.size);
-	memcpy(w.data, data, nbytes);
+	size_t nbytes = std::min(size, w.size());
+	memcpy(w.data(), data, nbytes);
 	plain_output.Append(nbytes);
 
 	return nbytes;
@@ -610,12 +608,12 @@ ThreadSocketFilter::InternalWrite() noexcept
 	}
 
 	/* copy to stack, unlock */
-	assert(r.size <= FB_SIZE);
-	uint8_t copy[FB_SIZE];
-	memcpy(copy, r.data, r.size);
+	assert(r.size() <= FB_SIZE);
+	std::byte copy[FB_SIZE];
+	std::copy(r.begin(), r.end(), copy);
 	lock.unlock();
 
-	ssize_t nbytes = socket->InternalWrite(copy, r.size);
+	ssize_t nbytes = socket->InternalWrite(copy, r.size());
 	if (nbytes > 0) {
 		lock.lock();
 		const bool add = encrypted_output.IsFull();
@@ -632,7 +630,7 @@ ThreadSocketFilter::InternalWrite() noexcept
 
 		if (empty)
 			socket->InternalUnscheduleWrite();
-		else if (size_t(nbytes) < r.size)
+		else if (size_t(nbytes) < r.size())
 			/* if this was only a partial write, and this
 			   InternalWrite() was triggered by
 			   BufferedSocket::DeferWrite() (which is

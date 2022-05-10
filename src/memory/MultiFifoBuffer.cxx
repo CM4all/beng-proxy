@@ -34,13 +34,13 @@
 #include "istream/Bucket.hxx"
 #include "util/ConstBuffer.hxx"
 
-#include <string.h>
+#include <algorithm>
 
 MultiFifoBuffer::MultiFifoBuffer() noexcept = default;
 MultiFifoBuffer::~MultiFifoBuffer() noexcept = default;
 
 void
-MultiFifoBuffer::Push(ConstBuffer<std::byte> src) noexcept
+MultiFifoBuffer::Push(std::span<const std::byte> src) noexcept
 {
 	/* try to append to the last existing buffer (if there is
 	   any) */
@@ -49,10 +49,10 @@ MultiFifoBuffer::Push(ConstBuffer<std::byte> src) noexcept
 		assert(b.IsDefined());
 
 		auto w = b.Write();
-		size_t nbytes = std::min(w.size, src.size);
-		memcpy(w.data, src.data, nbytes);
+		size_t nbytes = std::min(w.size(), src.size());
+		std::copy_n(src.data(), nbytes, w.data());
 		b.Append(nbytes);
-		src.skip_front(nbytes);
+		src = src.subspan(nbytes);
 	}
 
 	/* create more buffers for remaining data */
@@ -62,10 +62,10 @@ MultiFifoBuffer::Push(ConstBuffer<std::byte> src) noexcept
 		b.Allocate();
 
 		auto w = b.Write();
-		size_t nbytes = std::min(w.size, src.size);
-		memcpy(w.data, src.data, nbytes);
+		size_t nbytes = std::min(w.size(), src.size());
+		std::copy_n(src.data(), nbytes, w.data());
 		b.Append(nbytes);
-		src.skip_front(nbytes);
+		src = src.subspan(nbytes);
 	}
 }
 
@@ -78,11 +78,11 @@ MultiFifoBuffer::GetAvailable() const noexcept
 	return result;
 }
 
-ConstBuffer<std::byte>
+std::span<const std::byte>
 MultiFifoBuffer::Read() const noexcept
 {
 	if (buffers.empty())
-		return nullptr;
+		return {};
 
 	return buffers.front().Read();
 }
@@ -108,7 +108,7 @@ void
 MultiFifoBuffer::FillBucketList(IstreamBucketList &list) const noexcept
 {
 	for (const auto &i : buffers)
-		list.Push(i.Read().ToVoid());
+		list.Push(i.Read());
 }
 
 size_t

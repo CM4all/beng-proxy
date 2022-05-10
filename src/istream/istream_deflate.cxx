@@ -108,13 +108,13 @@ public:
 	 * @return a pointer to the writable buffer, or nullptr if there is no
 	 * room (our istream handler blocks) or if the stream was closed
 	 */
-	WritableBuffer<void> BufferWrite() noexcept {
+	auto BufferWrite() noexcept {
 		buffer.AllocateIfNull(fb_pool_get());
 		auto w = buffer.Write();
 		if (w.empty() && TryWrite() > 0)
 			w = buffer.Write();
 
-		return w.ToVoid();
+		return w;
 	}
 
 	void TryFlush() noexcept;
@@ -198,14 +198,14 @@ DeflateIstream::TryWrite() noexcept
 	auto r = buffer.Read();
 	assert(!r.empty());
 
-	size_t nbytes = InvokeData(r.data, r.size);
+	size_t nbytes = InvokeData(r.data(), r.size());
 	if (nbytes == 0)
 		return 0;
 
 	buffer.Consume(nbytes);
 	buffer.FreeIfEmpty();
 
-	if (nbytes == r.size && !HasInput() && z_stream_end) {
+	if (nbytes == r.size() && !HasInput() && z_stream_end) {
 		DestroyEof();
 		return 0;
 	}
@@ -222,8 +222,8 @@ DeflateIstream::TryFlush() noexcept
 	if (w.empty())
 		return;
 
-	z.next_out = (Bytef *)w.data;
-	z.avail_out = (uInt)w.size;
+	z.next_out = (Bytef *)w.data();
+	z.avail_out = (uInt)w.size();
 
 	z.next_in = nullptr;
 	z.avail_in = 0;
@@ -234,7 +234,7 @@ DeflateIstream::TryFlush() noexcept
 		return;
 	}
 
-	buffer.Append(w.size - (size_t)z.avail_out);
+	buffer.Append(w.size() - (size_t)z.avail_out);
 
 	if (!buffer.empty())
 		TryWrite();
@@ -280,8 +280,8 @@ DeflateIstream::TryFinish() noexcept
 	if (w.empty())
 		return;
 
-	z.next_out = (Bytef *)w.data;
-	z.avail_out = (uInt)w.size;
+	z.next_out = (Bytef *)w.data();
+	z.avail_out = (uInt)w.size();
 
 	z.next_in = nullptr;
 	z.avail_in = 0;
@@ -294,7 +294,7 @@ DeflateIstream::TryFinish() noexcept
 		return;
 	}
 
-	buffer.Append(w.size - (size_t)z.avail_out);
+	buffer.Append(w.size() - (size_t)z.avail_out);
 
 	if (z_stream_end && buffer.empty()) {
 		DestroyEof();
@@ -314,7 +314,7 @@ DeflateIstream::OnData(const void *data, size_t length) noexcept
 	assert(HasInput());
 
 	auto w = BufferWrite();
-	if (w.size < 64) /* reserve space for end-of-stream marker */
+	if (w.size() < 64) /* reserve space for end-of-stream marker */
 		return 0;
 
 	if (!InitZlib())
@@ -325,8 +325,8 @@ DeflateIstream::OnData(const void *data, size_t length) noexcept
 	if (!reading)
 		had_output = false;
 
-	z.next_out = (Bytef *)w.data;
-	z.avail_out = (uInt)w.size;
+	z.next_out = (Bytef *)w.data();
+	z.avail_out = (uInt)w.size();
 
 	z.next_in = (Bytef *)const_cast<void *>(data);
 	z.avail_in = (uInt)length;
@@ -338,7 +338,7 @@ DeflateIstream::OnData(const void *data, size_t length) noexcept
 			return 0;
 		}
 
-		size_t nbytes = w.size - (size_t)z.avail_out;
+		size_t nbytes = w.size() - (size_t)z.avail_out;
 		if (nbytes > 0) {
 			had_output = true;
 			buffer.Append(nbytes);
@@ -351,11 +351,11 @@ DeflateIstream::OnData(const void *data, size_t length) noexcept
 			break;
 
 		w = BufferWrite();
-		if (w.size < 64) /* reserve space for end-of-stream marker */
+		if (w.size() < 64) /* reserve space for end-of-stream marker */
 			break;
 
-		z.next_out = (Bytef *)w.data;
-		z.avail_out = (uInt)w.size;
+		z.next_out = (Bytef *)w.data();
+		z.avail_out = (uInt)w.size();
 	} while (z.avail_in > 0);
 
 	if (!reading && !had_output)

@@ -54,6 +54,7 @@
 #include "fs/Lease.hxx"
 #include "AllocatorPtr.hxx"
 #include "system/Error.hxx"
+#include "io/Iovec.hxx"
 #include "io/Logger.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/Cancellable.hxx"
@@ -373,11 +374,11 @@ private:
 	/**
 	 * Throws on error.
 	 */
-	BufferedResult FeedHeaders(ConstBuffer<void> b);
+	BufferedResult FeedHeaders(std::span<const std::byte> b);
 
 	void ResponseBodyEOF() noexcept;
 
-	BufferedResult FeedBody(ConstBuffer<void> b);
+	BufferedResult FeedBody(std::span<const std::byte> b);
 
 	DirectResult TryResponseDirect(SocketDescriptor fd, FdType fd_type);
 
@@ -576,10 +577,7 @@ HttpClient::TryWriteBuckets2()
 		if (!bucket.IsBuffer())
 			break;
 
-		const auto buffer = bucket.GetBuffer();
-		auto &tail = v.append();
-		tail.iov_base = const_cast<void *>(buffer.data);
-		tail.iov_len = buffer.size;
+		v.append() = MakeIovec(bucket.GetBuffer());
 
 		if (v.full())
 			break;
@@ -873,7 +871,7 @@ HttpClient::ResponseBodyEOF() noexcept
 }
 
 inline BufferedResult
-HttpClient::FeedBody(ConstBuffer<void> b)
+HttpClient::FeedBody(std::span<const std::byte> b)
 {
 	assert(response.state == Response::State::BODY);
 
@@ -881,7 +879,7 @@ HttpClient::FeedBody(ConstBuffer<void> b)
 
 	{
 		const DestructObserver destructed(*this);
-		nbytes = response_body_reader.FeedBody(b.data, b.size);
+		nbytes = response_body_reader.FeedBody(b.data(), b.size());
 
 		if (!destructed && IsConnected())
 			/* if BufferedSocket is currently flushing the
@@ -910,7 +908,7 @@ HttpClient::FeedBody(ConstBuffer<void> b)
 		return BufferedResult::CLOSED;
 	}
 
-	if (nbytes < b.size)
+	if (nbytes < b.size())
 		return BufferedResult::OK;
 
 	if (response_body_reader.RequireMore())
@@ -920,7 +918,7 @@ HttpClient::FeedBody(ConstBuffer<void> b)
 }
 
 BufferedResult
-HttpClient::FeedHeaders(ConstBuffer<void> b)
+HttpClient::FeedHeaders(std::span<const std::byte> b)
 {
 	assert(response.state == Response::State::STATUS ||
 	       response.state == Response::State::HEADERS);

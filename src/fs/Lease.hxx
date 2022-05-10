@@ -121,7 +121,7 @@ public:
 	[[gnu::pure]]
 	size_t GetAvailable() const noexcept;
 
-	WritableBuffer<void> ReadBuffer() const noexcept;
+	std::span<std::byte> ReadBuffer() const noexcept;
 
 	void DisposeConsumed(size_t nbytes) noexcept;
 

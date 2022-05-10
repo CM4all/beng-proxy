@@ -56,7 +56,7 @@ ToBucketIstream::_FillBucketList(IstreamBucketList &list)
 {
 	auto r = buffer.Read();
 	if (!r.empty()) {
-		list.Push(r.ToVoid());
+		list.Push(r);
 		list.SetMore();
 		return;
 	}
@@ -114,8 +114,8 @@ ToBucketIstream::OnData(const void *data, size_t length) noexcept
 
 	buffer.AllocateIfNull(fb_pool_get());
 	auto w = buffer.Write();
-	size_t nbytes = std::min(length, w.size);
-	memcpy(w.data, data, nbytes);
+	size_t nbytes = std::min(length, w.size());
+	memcpy(w.data(), data, nbytes);
 	return nbytes;
 }
 

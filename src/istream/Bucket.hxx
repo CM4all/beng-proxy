@@ -35,6 +35,8 @@
 #include "util/ConstBuffer.hxx"
 #include "util/StaticArray.hxx"
 
+#include <span>
+
 class IstreamBucket {
 public:
 	enum class Type {
@@ -59,13 +61,13 @@ public:
 		return type == Type::BUFFER;
 	}
 
-	ConstBuffer<void> GetBuffer() const noexcept {
+	std::span<const std::byte> GetBuffer() const noexcept {
 		assert(type == Type::BUFFER);
 
 		return buffer;
 	}
 
-	void Set(ConstBuffer<void> _buffer) noexcept {
+	void Set(std::span<const std::byte> _buffer) noexcept {
 		type = Type::BUFFER;
 		buffer = _buffer;
 	}
@@ -112,7 +114,7 @@ public:
 		list.append(bucket);
 	}
 
-	void Push(ConstBuffer<void> buffer) noexcept {
+	void Push(std::span<const std::byte> buffer) noexcept {
 		if (IsFull()) {
 			SetMore();
 			return;
@@ -142,7 +144,7 @@ public:
 		size_t size = 0;
 		for (const auto &bucket : list)
 			if (bucket.IsBuffer())
-				size += bucket.GetBuffer().size;
+				size += bucket.GetBuffer().size();
 		return size;
 	}
 
@@ -179,14 +181,14 @@ public:
 			}
 
 			auto buffer = bucket.GetBuffer();
-			if (buffer.size > max_size) {
-				buffer.size = max_size;
+			if (buffer.size() > max_size) {
+				buffer = buffer.first(max_size);
 				SetMore();
 			}
 
 			Push(buffer);
-			max_size -= buffer.size;
-			total_size += buffer.size;
+			max_size -= buffer.size();
+			total_size += buffer.size();
 		}
 
 		return total_size;
@@ -211,7 +213,7 @@ public:
 
 			auto buffer = bucket.GetBuffer();
 			Push(buffer);
-			total_size += buffer.size;
+			total_size += buffer.size();
 		}
 
 		return total_size;

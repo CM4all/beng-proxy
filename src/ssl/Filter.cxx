@@ -190,7 +190,7 @@ ssl_decrypt(SSL *ssl, ForeignFifoBuffer<std::byte> &buffer)
 		if (w.empty())
 			return SslDecryptResult::SUCCESS;
 
-		int result = SSL_read(ssl, w.data, w.size);
+		int result = SSL_read(ssl, w.data(), w.size());
 		if (result < 0 && SSL_get_error(ssl, result) == SSL_ERROR_WANT_READ)
 			return SslDecryptResult::MORE;
 
@@ -221,7 +221,7 @@ ssl_encrypt(SSL *ssl, ForeignFifoBuffer<std::byte> &buffer)
 		if (r.empty())
 			return;
 
-		int result = SSL_write(ssl, r.data, r.size);
+		int result = SSL_write(ssl, r.data(), r.size());
 		if (result <= 0) {
 			CheckThrowSslError(ssl, result);
 			return;

@@ -34,16 +34,14 @@
 
 #include "DefaultChunkAllocator.hxx"
 #include "util/Compiler.h"
-#include "util/ConstBuffer.hxx"
 
 #include <cstddef>
+#include <span>
 #include <string_view>
 #include <utility>
 
 #include <stdint.h>
 
-template<typename T> struct ConstBuffer;
-template<typename T> struct WritableBuffer;
 class IstreamBucketList;
 
 /**
@@ -143,8 +141,8 @@ class GrowingBuffer {
 			assert(fill <= size);
 		}
 
-		WritableBuffer<void> Write() noexcept;
-		size_type WriteSome(ConstBuffer<void> src) noexcept;
+		std::span<std::byte> Write() noexcept;
+		size_type WriteSome(std::span<const std::byte> src) noexcept;
 	};
 
 	BufferPtr head;
@@ -196,7 +194,7 @@ public:
 	 * Reserve at least one byte of space and return the writable
 	 * range.
 	 */
-	WritableBuffer<void> BeginWrite() noexcept;
+	std::span<std::byte> BeginWrite() noexcept;
 
 	/**
 	 * Call this method after the specified number of bytes have
@@ -228,10 +226,10 @@ public:
 	 * Duplicates the whole buffer (including all chunks) to one
 	 * contiguous buffer.
 	 */
-	WritableBuffer<void> Dup(struct pool &pool) const noexcept;
+	std::span<std::byte> Dup(struct pool &pool) const noexcept;
 
 	[[gnu::pure]]
-	ConstBuffer<void> Read() const noexcept;
+	std::span<const std::byte> Read() const noexcept;
 
 	/**
 	 * Skip an arbitrary number of data bytes, which may span over
@@ -275,18 +273,18 @@ GrowingBuffer::BufferPtr::ForEachBuffer(size_type skip, F &&f) const
 		i->Check();
 		i->next.Check();
 
-		ConstBuffer<std::byte> b(i->data, i->fill);
+		std::span<const std::byte> b{i->data, i->fill};
 		if (skip > 0) {
-			if (skip >= b.size) {
-				skip -= b.size;
+			if (skip >= b.size()) {
+				skip -= b.size();
 				continue;
 			} else {
-				b.skip_front(skip);
+				b = b.subspan(skip);
 				skip = 0;
 			}
 		}
 
-		f(b.ToVoid());
+		f(b);
 	}
 }
 
@@ -306,7 +304,7 @@ public:
 	size_type Available() const noexcept;
 
 	[[gnu::pure]]
-	ConstBuffer<void> Read() const noexcept;
+	std::span<const std::byte> Read() const noexcept;
 
 	/**
 	 * Consume data returned by Read().

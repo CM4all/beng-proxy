@@ -67,7 +67,7 @@ public:
 		/* this loop is required to cross the buffer borders */
 		while (true) {
 			auto src = reader.Read();
-			if (src.IsNull()) {
+			if (src.empty()) {
 				assert(reader.IsEOF());
 				DestroyEof();
 				return;
@@ -75,13 +75,13 @@ public:
 
 			assert(!reader.IsEOF());
 
-			size_t nbytes = InvokeData(src.data, src.size);
+			size_t nbytes = InvokeData(src.data(), src.size());
 			if (nbytes == 0)
 				/* growing_buffer has been closed */
 				return;
 
 			reader.Consume(nbytes);
-			if (nbytes < src.size)
+			if (nbytes < src.size())
 				return;
 		}
 	}

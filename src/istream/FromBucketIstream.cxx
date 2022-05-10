@@ -55,7 +55,7 @@ FromBucketIstream::_Read() noexcept
 		assert(i.IsBuffer());
 
 		const auto buffer = i.GetBuffer();
-		size_t consumed = InvokeData(buffer.data, buffer.size);
+		size_t consumed = InvokeData(buffer.data(), buffer.size());
 		if (consumed == 0 && destructed)
 			return;
 
@@ -63,7 +63,7 @@ FromBucketIstream::_Read() noexcept
 
 		total += consumed;
 
-		if (consumed < buffer.size)
+		if (consumed < buffer.size())
 			break;
 	}
 

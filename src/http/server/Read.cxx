@@ -404,7 +404,7 @@ HttpServerConnection::SubmitRequest()
 }
 
 BufferedResult
-HttpServerConnection::Feed(ConstBuffer<void> b) noexcept
+HttpServerConnection::Feed(std::span<const std::byte> b) noexcept
 {
 	assert(!response.pending_drained);
 
@@ -434,7 +434,7 @@ HttpServerConnection::Feed(ConstBuffer<void> b) noexcept
 		return result;
 
 	case Request::BODY:
-		return FeedRequestBody(b.data, b.size);
+		return FeedRequestBody(b.data(), b.size());
 
 	case Request::END:
 		/* check if the connection was closed by the client while we
@@ -449,7 +449,7 @@ HttpServerConnection::Feed(ConstBuffer<void> b) noexcept
 		if (!keep_alive) {
 			/* discard all pipelined input when keep-alive has been
 			   disabled */
-			socket->DisposeConsumed(b.size);
+			socket->DisposeConsumed(b.size());
 			return BufferedResult::OK;
 		}
 

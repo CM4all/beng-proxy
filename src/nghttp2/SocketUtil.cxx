@@ -44,7 +44,8 @@ ReceiveFromSocketBuffer(nghttp2_session *session, FilteredSocket &socket)
 	auto r = socket.ReadBuffer();
 
 	auto nbytes = nghttp2_session_mem_recv(session,
-					       (const uint8_t *)r.data, r.size);
+					       (const uint8_t *)r.data(),
+					       r.size());
 	if (nbytes < 0)
 		throw MakeError(int(nbytes), "nghttp2_session_mem_recv() failed");
 

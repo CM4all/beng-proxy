@@ -90,7 +90,7 @@ private:
 	BufferedResult OnBufferedData() override {
 		auto r = socket.ReadBuffer();
 		assert(!r.empty());
-		return Feed((const std::byte *)r.data, r.size);
+		return Feed(r.data(), r.size());
 	}
 
 	bool OnBufferedClosed() noexcept override {
@@ -195,9 +195,9 @@ bool
 TranslateClient::TryWrite() noexcept
 {
 	auto src = request.Read();
-	assert(!src.IsNull());
+	assert(!src.empty());
 
-	ssize_t nbytes = socket.Write(src.data, src.size);
+	ssize_t nbytes = socket.Write(src.data(), src.size());
 	if (gcc_unlikely(nbytes < 0)) {
 		if (gcc_likely(nbytes == WRITE_BLOCKING))
 			return true;

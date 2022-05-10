@@ -39,6 +39,7 @@
 #include "pool/PSocketAddress.hxx"
 #include "istream/Bucket.hxx"
 #include "system/Error.hxx"
+#include "io/Iovec.hxx"
 #include "util/StringView.hxx"
 #include "util/StaticArray.hxx"
 #include "util/RuntimeError.hxx"
@@ -112,10 +113,7 @@ HttpServerConnection::TryWriteBuckets2()
 		if (!bucket.IsBuffer())
 			break;
 
-		const auto buffer = bucket.GetBuffer();
-		auto &tail = v.append();
-		tail.iov_base = const_cast<void *>(buffer.data);
-		tail.iov_len = buffer.size;
+		v.append() = MakeIovec(bucket.GetBuffer());
 
 		if (v.full())
 			break;
@@ -235,7 +233,7 @@ HttpServerConnection::OnBufferedData()
 	if (response.pending_drained) {
 		/* discard all incoming data while we're waiting for the
 		   (filtered) response to be drained */
-		socket->DisposeConsumed(r.size);
+		socket->DisposeConsumed(r.size());
 		return BufferedResult::OK;
 	}
 

@@ -756,7 +756,7 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 			}
 
 			const auto b = bucket.GetBuffer();
-			StringView s{(const char *)b.data, b.size};
+			StringView s{(const char *)b.data(), b.size()};
 
 			const char *first = FindFirstChar(s.data,
 							  s.size);
@@ -790,7 +790,7 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 		const size_t length = match->leaf.b_length - b_sent;
 		assert(length > 0);
 
-		list.Push({match->leaf.b + b_sent, length});
+		list.Push({(const std::byte *)match->leaf.b + b_sent, length});
 		list.SetMore();
 
 		// TODO: read more

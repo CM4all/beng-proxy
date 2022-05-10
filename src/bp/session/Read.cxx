@@ -44,7 +44,7 @@ public:
 	explicit FileReader(BufferedReader &_r) noexcept:r(_r) {}
 
 	void ReadBuffer(void *buffer, size_t size) {
-		r.ReadFull({buffer, size});
+		r.ReadFull({static_cast<std::byte *>(buffer), size});
 	}
 
 	template<typename T>

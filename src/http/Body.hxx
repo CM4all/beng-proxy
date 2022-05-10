@@ -158,12 +158,12 @@ public:
 			return;
 		}
 
-		size_t max = GetMaxRead(b.size);
-		if (b.size > max)
-			b.size = max;
+		size_t max = GetMaxRead(b.size());
+		if (b.size() > max)
+			b = b.first(max);
 
-		list.Push(ConstBuffer<void>(b.data, b.size));
-		if ((off_t)b.size != rest)
+		list.Push(b);
+		if ((off_t)b.size() != rest)
 			list.SetMore();
 	}
 
@@ -173,7 +173,7 @@ public:
 		if (b.empty())
 			return 0;
 
-		size_t max = GetMaxRead(b.size);
+		size_t max = GetMaxRead(b.size());
 		if (nbytes > max)
 			nbytes = max;
 		if (nbytes == 0)
@@ -231,7 +231,7 @@ public:
 		   ThreadSocketFilter::Consumed() which asserts that
 		   ReadBuffer() has moved decrypted_input into
 		   unprotected_decrypted_input */
-		size_t available = s.ReadBuffer().size;
+		size_t available = s.ReadBuffer().size();
 		if ((off_t)available < rest)
 			return false;
 

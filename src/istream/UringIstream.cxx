@@ -179,8 +179,8 @@ UringIstream::StartRead() noexcept
 
 	auto w = buffer.Write();
 	assert(!w.empty());
-	if (w.size > GetMaxRead())
-		w.size = GetMaxRead();
+	if (w.size() > GetMaxRead())
+		w = w.first(GetMaxRead());
 
 	*iov = MakeIovec(w);
 	io_uring_prep_readv(&s, fd.Get(), iov.get(), 1, offset);

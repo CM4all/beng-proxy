@@ -78,7 +78,7 @@ GrowingBuffer::BufferPtr::Pop() noexcept
 	Check();
 }
 
-WritableBuffer<void>
+std::span<std::byte>
 GrowingBuffer::Buffer::Write() noexcept
 {
 	Check();
@@ -87,11 +87,11 @@ GrowingBuffer::Buffer::Write() noexcept
 }
 
 GrowingBuffer::size_type
-GrowingBuffer::Buffer::WriteSome(ConstBuffer<void> src) noexcept
+GrowingBuffer::Buffer::WriteSome(std::span<const std::byte> src) noexcept
 {
 	auto dest = Write();
-	size_type nbytes = std::min(dest.size, src.size);
-	memcpy(dest.data, src.data, nbytes);
+	size_type nbytes = std::min(dest.size(), src.size());
+	std::copy_n(src.begin(), nbytes, dest.begin());
 	fill += nbytes;
 	return nbytes;
 }
@@ -126,7 +126,7 @@ GrowingBuffer::BeginWrite(size_type size) noexcept
 	return buffer->data + buffer->fill;
 }
 
-WritableBuffer<void>
+std::span<std::byte>
 GrowingBuffer::BeginWrite() noexcept
 {
 	head.Check();
@@ -167,7 +167,7 @@ GrowingBuffer::WriteSome(const void *p, size_type length) noexcept
 	if (buffer == nullptr || buffer->IsFull())
 		buffer = &AppendBuffer();
 
-	return buffer->WriteSome({p, length});
+	return buffer->WriteSome({(const std::byte *)p, length});
 }
 
 void
@@ -217,18 +217,18 @@ GrowingBuffer::GetSize() const noexcept
 {
 	size_type result = 0;
 
-	ForEachBuffer([&result](ConstBuffer<void> b){
-		result += b.size;
+	ForEachBuffer([&result](std::span<const std::byte> b){
+		result += b.size();
 	});
 
 	return result;
 }
 
-ConstBuffer<void>
+std::span<const std::byte>
 GrowingBuffer::Read() const noexcept
 {
 	if (!head)
-		return nullptr;
+		return {};
 
 	head.Check();
 	assert(position < head->size);
@@ -298,18 +298,18 @@ GrowingBufferReader::Available() const noexcept
 {
 	size_type result = 0;
 
-	ForEachBuffer([&result](ConstBuffer<void> b){
-		result += b.size;
+	ForEachBuffer([&result](std::span<const std::byte> b){
+		result += b.size();
 	});
 
 	return result;
 }
 
-ConstBuffer<void>
+std::span<const std::byte>
 GrowingBufferReader::Read() const noexcept
 {
 	if (!buffer)
-		return nullptr;
+		return {};
 
 	assert(position < buffer->fill);
 
@@ -355,19 +355,19 @@ GrowingBufferReader::Skip(size_type length) noexcept
 void
 GrowingBuffer::CopyTo(void *dest) const noexcept
 {
-	ForEachBuffer([&dest](ConstBuffer<void> b){
-		dest = mempcpy(dest, b.data, b.size);
+	ForEachBuffer([&dest](std::span<const std::byte> b){
+		dest = mempcpy(dest, b.data(), b.size());
 	});
 }
 
-WritableBuffer<void>
+std::span<std::byte>
 GrowingBuffer::Dup(struct pool &_pool) const noexcept
 {
 	size_type length = GetSize();
 	if (length == 0)
-		return nullptr;
+		return {};
 
-	void *dest = p_malloc(&_pool, length);
+	auto *dest = PoolAlloc<std::byte>(_pool, length);
 	CopyTo(dest);
 
 	return { dest, length };
@@ -376,19 +376,18 @@ GrowingBuffer::Dup(struct pool &_pool) const noexcept
 void
 GrowingBuffer::FillBucketList(IstreamBucketList &list, size_type skip) const noexcept
 {
-	ForEachBuffer([&list, &skip](ConstBuffer<void> b){
-		if (skip >= b.size) {
-			skip -= b.size;
+	ForEachBuffer([&list, &skip](std::span<const std::byte> b){
+		if (skip >= b.size()) {
+			skip -= b.size();
 			return;
 		}
 
-		auto c = ConstBuffer<std::byte>::FromVoid(b);
 		if (skip > 0) {
-			c.skip_front(skip);
+			b = b.subspan(skip);
 			skip = 0;
 		}
 
-		list.Push(c.ToVoid());
+		list.Push(b);
 	});
 }
 
@@ -422,7 +421,7 @@ GrowingBuffer::ConsumeBucketList(size_type nbytes) noexcept
 void
 GrowingBufferReader::FillBucketList(IstreamBucketList &list) const noexcept
 {
-	ForEachBuffer([&list](ConstBuffer<void> b){
+	ForEachBuffer([&list](std::span<const std::byte> b){
 		list.Push(b);
 	});
 }

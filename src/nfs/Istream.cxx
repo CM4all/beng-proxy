@@ -157,9 +157,9 @@ NfsIstream::Feed(const void *data, size_t length)
 	}
 
 	auto w = buffer.Write();
-	assert(w.size >= length);
+	assert(w.size() >= length);
 
-	memcpy(w.data, data, length);
+	memcpy(w.data(), data, length);
 	buffer.Append(length);
 }
 
@@ -216,7 +216,7 @@ NfsIstream::ScheduleRead()
 	assert(pending_read == 0);
 
 	const size_t max = buffer.IsDefined()
-		? buffer.Write().size
+		? buffer.Write().size()
 		: NFS_BUFFER_SIZE;
 	size_t nbytes = remaining > max
 		? max

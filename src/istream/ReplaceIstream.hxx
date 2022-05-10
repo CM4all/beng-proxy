@@ -244,7 +244,7 @@ protected:
 	 * to our handler's OnError() method, but this method must not
 	 * destroy this #ReplaceIstream instance.
 	 */
-	virtual void Parse(ConstBuffer<void> b) {
+	virtual void Parse(std::span<const std::byte> b) {
 		(void) b;
 	}
 

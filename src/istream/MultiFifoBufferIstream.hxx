@@ -78,7 +78,9 @@ public:
 	 * #IstreamHandler and thus will never destroy the object.  To
 	 * actually invoke the #IstreamHandler, call SubmitBuffer().
 	 */
-	void Push(ConstBuffer<void> src) noexcept;
+	void Push(std::span<const std::byte> src) noexcept {
+		buffer.Push(src);
+	}
 
 	/**
 	 * Indicate that this #Istream will end after all remaining

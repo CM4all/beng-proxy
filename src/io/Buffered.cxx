@@ -46,10 +46,10 @@ read_to_buffer(int fd, ForeignFifoBuffer<std::byte> &buffer, size_t length)
 	if (w.empty())
 		return -2;
 
-	if (length > w.size)
-		length = w.size;
+	if (length > w.size())
+		length = w.size();
 
-	ssize_t nbytes = read(fd, w.data, length);
+	ssize_t nbytes = read(fd, w.data(), length);
 	if (nbytes > 0)
 		buffer.Append((size_t)nbytes);
 
@@ -63,7 +63,7 @@ write_from_buffer(int fd, ForeignFifoBuffer<std::byte> &buffer)
 	if (r.empty())
 		return -2;
 
-	ssize_t nbytes = write(fd, r.data, r.size);
+	ssize_t nbytes = write(fd, r.data(), r.size());
 	if (nbytes >= 0)
 		buffer.Consume((size_t)nbytes);
 	else if (errno == EAGAIN)

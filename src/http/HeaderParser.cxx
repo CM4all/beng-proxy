@@ -98,9 +98,10 @@ header_parse_buffer(AllocatorPtr alloc, StringMap &headers,
 			auto w = buffer.Write();
 			if (!w.empty()) {
 				auto src = reader.Read();
-				if (!src.IsNull()) {
-					size_t nbytes = std::min(src.size, w.size);
-					memcpy(w.data, src.data, nbytes);
+				if (!src.empty()) {
+					size_t nbytes = std::min(src.size(),
+								 w.size());
+					memcpy(w.data(), src.data(), nbytes);
 					buffer.Append(nbytes);
 					reader.Consume(nbytes);
 				} else
@@ -114,9 +115,9 @@ header_parse_buffer(AllocatorPtr alloc, StringMap &headers,
 		if (r.empty() && gb == nullptr)
 			break;
 
-		const char *const src = (const char *)r.data;
+		const char *const src = (const char *)r.data();
 		const char *p = src;
-		const size_t length = r.size;
+		const size_t length = r.size();
 
 		while (true) {
 			p = StripLeft(p, src + length);

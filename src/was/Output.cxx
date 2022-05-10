@@ -35,6 +35,7 @@
 #include "event/PipeEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "event/CoarseTimerEvent.hxx"
+#include "io/Iovec.hxx"
 #include "io/Splice.hxx"
 #include "io/SpliceSupport.hxx"
 #include "io/FileDescriptor.hxx"
@@ -261,10 +262,8 @@ WasOutput::OnIstreamReady() noexcept
 
 		const auto buffer = i.GetBuffer();
 
-		auto &w = v.append();
-		w.iov_base = const_cast<void *>(buffer.data);
-		w.iov_len = buffer.size;
-		total += buffer.size;
+		v.append() = MakeIovec(buffer);
+		total += buffer.size();
 	}
 
 	if (v.empty())

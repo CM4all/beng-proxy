@@ -65,12 +65,12 @@ FifoBufferSink::OnIstreamReady() noexcept
 		buffer.AllocateIfNull(fb_pool_get());
 		auto w = buffer.Write();
 		auto r = bucket.GetBuffer();
-		size_t n_copy = std::min(w.size, r.size);
-		memcpy(w.data, r.data, n_copy);
+		size_t n_copy = std::min(w.size(), r.size());
+		std::copy_n(r.data(), n_copy, w.data());
 		buffer.Append(nbytes);
 		nbytes += n_copy;
 
-		if (n_copy < r.size) {
+		if (n_copy < r.size()) {
 			more = true;
 			break;
 		}
@@ -94,8 +94,8 @@ FifoBufferSink::OnData(const void *data, size_t length) noexcept
 	buffer.AllocateIfNull(fb_pool_get());
 
 	auto w = buffer.Write();
-	size_t nbytes = std::min(w.size, length);
-	memcpy(w.data, data, nbytes);
+	size_t nbytes = std::min(w.size(), length);
+	memcpy(w.data(), data, nbytes);
 	buffer.Append(nbytes);
 
 	if (!handler.OnFifoBufferSinkData())
@@ -113,10 +113,9 @@ FifoBufferSink::OnDirect(FdType, int fd, size_t max_length) noexcept
 	if (w.empty())
 		return ISTREAM_RESULT_BLOCKING;
 
-	if (max_length < w.size)
-		w.size = max_length;
+	const std::size_t n = std::min(w.size(), max_length);
 
-	ssize_t nbytes = read(fd, w.data, w.size);
+	ssize_t nbytes = read(fd, w.data(), n);
 	if (nbytes < 0)
 		return ISTREAM_RESULT_ERRNO;
 

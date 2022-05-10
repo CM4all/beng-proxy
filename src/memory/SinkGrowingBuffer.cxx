@@ -61,8 +61,8 @@ GrowingBufferSink::OnIstreamReady() noexcept
 		}
 
 		auto r = bucket.GetBuffer();
-		buffer.Write(r.data, r.size);
-		nbytes += r.size;
+		buffer.Write(r.data(), r.size());
+		nbytes += r.size();
 	}
 
 	if (nbytes > 0)
@@ -88,10 +88,9 @@ ssize_t
 GrowingBufferSink::OnDirect(FdType, int fd, std::size_t max_length) noexcept
 {
 	auto w = buffer.BeginWrite();
-	if (max_length < w.size)
-		w.size = max_length;
+	const std::size_t n = std::min(w.size(), max_length);
 
-	ssize_t nbytes = read(fd, w.data, w.size);
+	ssize_t nbytes = read(fd, w.data(), n);
 	if (nbytes > 0)
 		buffer.CommitWrite(nbytes);
 

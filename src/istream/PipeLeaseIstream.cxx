@@ -47,7 +47,7 @@ PipeLeaseIstream::FeedBuffer() noexcept
 	auto r = buffer.Read();
 	assert(!r.empty());
 
-	size_t consumed = InvokeData(r.data, r.size);
+	size_t consumed = InvokeData(r.data(), r.size());
 	if (consumed == 0)
 		return false;
 

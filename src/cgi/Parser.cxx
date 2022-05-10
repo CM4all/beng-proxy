@@ -83,8 +83,8 @@ CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<std::byte> &buffer)
 	if (r.empty())
 		return Completion::MORE;
 
-	const char *data = (const char *)r.data;
-	const char *data_end = data + r.size;
+	const char *data = (const char *)r.data();
+	const char *data_end = data + r.size();
 
 	/* parse each line until we stumble upon an empty one */
 	const char *start = data, *end, *next = nullptr;

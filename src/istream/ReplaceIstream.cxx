@@ -183,26 +183,25 @@ ReplaceIstream::ReadFromBuffer(size_t max_length) noexcept
 	assert(max_length > 0);
 
 	auto src = buffer.Read();
-	assert(!src.IsNull());
 	assert(!src.empty());
 
-	if (src.size > max_length)
-		src.size = max_length;
+	if (src.size() > max_length)
+		src = src.first(max_length);
 
 	had_output = true;
-	size_t nbytes = InvokeData(src.data, src.size);
-	assert(nbytes <= src.size);
+	size_t nbytes = InvokeData(src.data(), src.size());
+	assert(nbytes <= src.size());
 
 	if (nbytes == 0)
 		/* istream_replace has been closed */
-		return src.size;
+		return src.size();
 
 	buffer.Consume(nbytes);
 	position += nbytes;
 
 	assert(position <= source_length);
 
-	return src.size - nbytes;
+	return src.size() - nbytes;
 }
 
 inline bool
@@ -291,7 +290,7 @@ ReplaceIstream::OnData(const void *data, size_t length) noexcept
 	source_length += (off_t)length;
 
 	try {
-		Parse({data, length});
+		Parse({(const std::byte *)data, length});
 	} catch (...) {
 		DestroyError(std::current_exception());
 		return 0;
@@ -433,9 +432,9 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 				break;
 			}
 
-			auto b = i.GetBuffer();
-			buffer.Write(b.data, b.size);
-			source_length += (off_t)b.size;
+			const auto b = i.GetBuffer();
+			buffer.Write(b.data(), b.size());
+			source_length += (off_t)b.size();
 
 			if (source_length >= 8 * 1024 * 1024) {
 				Destroy();
@@ -449,7 +448,7 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 				throw;
 			}
 
-			total += b.size;
+			total += b.size();
 		}
 
 		if (only_buffers && !tmp.HasMore()) {

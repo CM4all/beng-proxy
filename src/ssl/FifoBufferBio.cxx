@@ -79,9 +79,9 @@ fb_read(BIO *b, char *out, int outl) noexcept
 	if (outl <= 0)
 		return outl;
 
-	size_t nbytes = std::min(r.size, size_t(outl));
+	size_t nbytes = std::min(r.size(), size_t(outl));
 	if (out != nullptr) {
-		memcpy(out, r.data, nbytes);
+		memcpy(out, r.data(), nbytes);
 		fb.buffer.Consume(nbytes);
 	}
 
@@ -116,8 +116,8 @@ fb_write(BIO *b, const char *in, int inl) noexcept
 		return -1;
 	}
 
-	size_t nbytes = std::min(w.size, size_t(inl));
-	memcpy(w.data, in, nbytes);
+	size_t nbytes = std::min(w.size(), size_t(inl));
+	memcpy(w.data(), in, nbytes);
 	fb.buffer.Append(nbytes);
 	return nbytes;
 }

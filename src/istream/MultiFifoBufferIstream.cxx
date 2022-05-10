@@ -35,12 +35,6 @@
 #include <string.h>
 
 void
-MultiFifoBufferIstream::Push(ConstBuffer<void> src) noexcept
-{
-	buffer.Push(ConstBuffer<std::byte>::FromVoid(src));
-}
-
-void
 MultiFifoBufferIstream::SetEof() noexcept
 {
 	eof = true;

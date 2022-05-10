@@ -121,9 +121,9 @@ IconvIstream::OnData(const void *_data, size_t length) noexcept
 			continue;
 		}
 
-		char *const dest0 = (char *)w.data;
+		char *const dest0 = (char *)w.data();
 		char *dest = dest0;
-		size_t dest_left = w.size;
+		size_t dest_left = w.size();
 
 		size_t ret = deconst_iconv(iconv, &src, &length, &dest, &dest_left);
 		if (dest > dest0)

@@ -73,8 +73,8 @@ struct CssProcessor final : public ReplaceIstream {
 	using ReplaceIstream::GetPool;
 
 	/* virtual methods from class ReplaceIstream */
-	void Parse(ConstBuffer<void> b) override {
-		parser.Feed((const char *)b.data, b.size);
+	void Parse(std::span<const std::byte> b) override {
+		parser.Feed((const char *)b.data(), b.size());
 	}
 
 	void ParseEnd() override {
