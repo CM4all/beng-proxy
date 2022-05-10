@@ -69,7 +69,7 @@ BengControlClient::Send(BengProxy::ControlCommand cmd,
 		MakeIovecT(magic),
 		MakeIovecT(header),
 		MakeIovec(payload),
-		MakeIovec(ConstBuffer<uint8_t>(padding, PaddingSize(payload.size))),
+		MakeIovec(std::span{padding, PaddingSize(payload.size)}),
 	};
 
 	MessageHeader msg = ConstBuffer<struct iovec>(v);
