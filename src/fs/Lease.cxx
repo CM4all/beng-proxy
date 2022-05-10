@@ -55,7 +55,7 @@ FilteredSocketLease::MoveSocketInput() noexcept
 	// TODO: move buffers instead of copying the data
 	size_t i = 0;
 	while (true) {
-		auto r = WritableBuffer<uint8_t>::FromVoid(socket->ReadBuffer());
+		auto r = WritableBuffer<std::byte>::FromVoid(socket->ReadBuffer());
 		if (r.empty())
 			break;
 

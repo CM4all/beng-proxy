@@ -91,7 +91,7 @@ struct CGIParser {
 	 * header data is expected
 	 */
 	Completion FeedHeaders(struct pool &pool,
-			       ForeignFifoBuffer<uint8_t> &buffer);
+			       ForeignFifoBuffer<std::byte> &buffer);
 
 	http_status_t GetStatus() const {
 		assert(finished);
@@ -149,5 +149,5 @@ private:
 	 *
 	 * Throws exception on error.
 	 */
-	Completion Finish(ForeignFifoBuffer<uint8_t> &buffer);
+	Completion Finish(ForeignFifoBuffer<std::byte> &buffer);
 };

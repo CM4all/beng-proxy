@@ -37,7 +37,7 @@
 void
 MultiFifoBufferIstream::Push(ConstBuffer<void> src) noexcept
 {
-	buffer.Push(ConstBuffer<uint8_t>::FromVoid(src));
+	buffer.Push(ConstBuffer<std::byte>::FromVoid(src));
 }
 
 void

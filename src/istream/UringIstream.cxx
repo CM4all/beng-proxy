@@ -177,7 +177,7 @@ UringIstream::StartRead() noexcept
 
 	auto &s = uring.RequireSubmitEntry();
 
-	ConstBuffer<uint8_t> w = buffer.Write();
+	auto w = buffer.Write();
 	assert(!w.empty());
 	if (w.size > GetMaxRead())
 		w.size = GetMaxRead();

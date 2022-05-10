@@ -38,7 +38,7 @@
 #include <errno.h>
 
 ssize_t
-read_to_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer, size_t length)
+read_to_buffer(int fd, ForeignFifoBuffer<std::byte> &buffer, size_t length)
 {
 	assert(fd >= 0);
 
@@ -57,7 +57,7 @@ read_to_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer, size_t length)
 }
 
 ssize_t
-write_from_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer)
+write_from_buffer(int fd, ForeignFifoBuffer<std::byte> &buffer)
 {
 	auto r = buffer.Read();
 	if (r.empty())

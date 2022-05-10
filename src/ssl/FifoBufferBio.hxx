@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstddef>
 
 typedef struct bio_st BIO;
 template<typename T> class ForeignFifoBuffer;
@@ -41,7 +41,7 @@ template<typename T> class ForeignFifoBuffer;
  * Create an OpenSSL BIO wrapper for a #ForeignFifoBuffer.
  */
 BIO *
-NewFifoBufferBio(ForeignFifoBuffer<uint8_t> &buffer) noexcept;
+NewFifoBufferBio(ForeignFifoBuffer<std::byte> &buffer) noexcept;
 
 /**
  * Global deinitialization.

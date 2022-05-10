@@ -41,7 +41,7 @@
 #include <stdlib.h>
 
 inline Completion
-CGIParser::Finish(ForeignFifoBuffer<uint8_t> &buffer)
+CGIParser::Finish(ForeignFifoBuffer<std::byte> &buffer)
 {
 	/* parse the status */
 	const char *p = headers.Remove("status");
@@ -75,7 +75,7 @@ CGIParser::Finish(ForeignFifoBuffer<uint8_t> &buffer)
 }
 
 Completion
-CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<uint8_t> &buffer)
+CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<std::byte> &buffer)
 {
 	assert(!AreHeadersFinished());
 

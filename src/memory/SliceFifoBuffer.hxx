@@ -40,14 +40,14 @@
 class SlicePool;
 class SliceArea;
 
-class SliceFifoBuffer : public ForeignFifoBuffer<uint8_t> {
+class SliceFifoBuffer : public ForeignFifoBuffer<std::byte> {
 	SliceAllocation allocation;
 
 public:
-	SliceFifoBuffer() noexcept:ForeignFifoBuffer<uint8_t>(nullptr) {}
+	SliceFifoBuffer() noexcept:ForeignFifoBuffer<std::byte>(nullptr) {}
 
 	explicit SliceFifoBuffer(SlicePool &pool) noexcept
-		:ForeignFifoBuffer<uint8_t>(nullptr) {
+		:ForeignFifoBuffer<std::byte>(nullptr) {
 		Allocate(pool);
 	}
 
@@ -60,7 +60,7 @@ public:
 
 	void swap(SliceFifoBuffer &other) noexcept {
 		using std::swap;
-		ForeignFifoBuffer<uint8_t>::swap(other);
+		ForeignFifoBuffer<std::byte>::swap(other);
 		swap(allocation, other.allocation);
 	}
 
@@ -101,7 +101,7 @@ public:
 		}
 	}
 
-	using ForeignFifoBuffer<uint8_t>::MoveFrom;
+	using ForeignFifoBuffer<std::byte>::MoveFrom;
 
 	/**
 	 * Move as much data as possible from the specified buffer.  If
@@ -115,7 +115,7 @@ public:
 			   copying data */
 			swap(src);
 		else
-			ForeignFifoBuffer<uint8_t>::MoveFrom(src);
+			ForeignFifoBuffer<std::byte>::MoveFrom(src);
 	}
 
 	/**
@@ -128,7 +128,7 @@ public:
 			   copying data */
 			swap(src);
 		else
-			ForeignFifoBuffer<uint8_t>::MoveFrom(src);
+			ForeignFifoBuffer<std::byte>::MoveFrom(src);
 	}
 
 	/**
@@ -141,7 +141,7 @@ public:
 			   copying data */
 			swap(src);
 		else
-			ForeignFifoBuffer<uint8_t>::MoveFrom(src);
+			ForeignFifoBuffer<std::byte>::MoveFrom(src);
 	}
 
 	/**
@@ -153,7 +153,7 @@ public:
 			   copying data */
 			swap(src);
 		else
-			ForeignFifoBuffer<uint8_t>::MoveFrom(src);
+			ForeignFifoBuffer<std::byte>::MoveFrom(src);
 	}
 
 	/**

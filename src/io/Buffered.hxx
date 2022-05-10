@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2021 CM4all GmbH
+ * Copyright 2007-2022 CM4all GmbH
  * All rights reserved.
  *
  * author: Max Kellermann <mk@cm4all.com>
@@ -34,11 +34,11 @@
  * Utilities for buffered I/O.
  */
 
-#ifndef IO_BUFFERED_HXX
-#define IO_BUFFERED_HXX
+#pragma once
+
+#include <cstddef>
 
 #include <sys/types.h>
-#include <stdint.h>
 
 template<typename T> class ForeignFifoBuffer;
 
@@ -50,7 +50,7 @@ template<typename T> class ForeignFifoBuffer;
  * @return -1 on error, -2 if the buffer is full, or the amount appended to the buffer
  */
 ssize_t
-read_to_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer, size_t length);
+read_to_buffer(int fd, ForeignFifoBuffer<std::byte> &buffer, size_t length);
 
 /**
  * Writes data from the buffer to the file.
@@ -61,6 +61,4 @@ read_to_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer, size_t length);
  * bytes written
  */
 ssize_t
-write_from_buffer(int fd, ForeignFifoBuffer<uint8_t> &buffer);
-
-#endif
+write_from_buffer(int fd, ForeignFifoBuffer<std::byte> &buffer);

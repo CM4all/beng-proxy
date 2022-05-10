@@ -40,7 +40,7 @@
 #include <string.h>
 
 struct FifoBufferBio {
-	ForeignFifoBuffer<uint8_t> &buffer;
+	ForeignFifoBuffer<std::byte> &buffer;
 };
 
 static int
@@ -182,7 +182,7 @@ InitFifoBufferBio() noexcept
 }
 
 BIO *
-NewFifoBufferBio(ForeignFifoBuffer<uint8_t> &buffer) noexcept
+NewFifoBufferBio(ForeignFifoBuffer<std::byte> &buffer) noexcept
 {
 	if (fb_method == nullptr)
 		InitFifoBufferBio();

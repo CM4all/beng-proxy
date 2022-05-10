@@ -56,12 +56,12 @@ public:
 		return buffers.empty();
 	}
 
-	void Push(ConstBuffer<uint8_t> src) noexcept;
+	void Push(ConstBuffer<std::byte> src) noexcept;
 
 	[[gnu::pure]]
 	size_t GetAvailable() const noexcept;
 
-	ConstBuffer<uint8_t> Read() const noexcept;
+	ConstBuffer<std::byte> Read() const noexcept;
 	void Consume(size_t nbytes) noexcept;
 
 	void FillBucketList(IstreamBucketList &list) const noexcept;

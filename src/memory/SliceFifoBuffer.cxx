@@ -39,7 +39,7 @@ SliceFifoBuffer::Allocate(SlicePool &pool) noexcept
 	assert(IsNull());
 
 	allocation = pool.Alloc();
-	SetBuffer((uint8_t *)allocation.data, allocation.size);
+	SetBuffer((std::byte *)allocation.data, allocation.size);
 }
 
 void

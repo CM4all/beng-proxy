@@ -40,7 +40,7 @@ MultiFifoBuffer::MultiFifoBuffer() noexcept = default;
 MultiFifoBuffer::~MultiFifoBuffer() noexcept = default;
 
 void
-MultiFifoBuffer::Push(ConstBuffer<uint8_t> src) noexcept
+MultiFifoBuffer::Push(ConstBuffer<std::byte> src) noexcept
 {
 	/* try to append to the last existing buffer (if there is
 	   any) */
@@ -78,7 +78,7 @@ MultiFifoBuffer::GetAvailable() const noexcept
 	return result;
 }
 
-ConstBuffer<uint8_t>
+ConstBuffer<std::byte>
 MultiFifoBuffer::Read() const noexcept
 {
 	if (buffers.empty())

@@ -180,7 +180,7 @@ enum class SslDecryptResult {
 };
 
 static SslDecryptResult
-ssl_decrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer)
+ssl_decrypt(SSL *ssl, ForeignFifoBuffer<std::byte> &buffer)
 {
 	/* SSL_read() must be called repeatedly until there is no more
 	   data (or until the buffer is full) */
@@ -208,7 +208,7 @@ ssl_decrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer)
 }
 
 static void
-ssl_encrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer)
+ssl_encrypt(SSL *ssl, ForeignFifoBuffer<std::byte> &buffer)
 {
 	/* SSL_write() must be called repeatedly until there is no more
 	   data; with SSL_MODE_ENABLE_PARTIAL_WRITE, SSL_write() finishes
