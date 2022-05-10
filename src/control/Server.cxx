@@ -36,6 +36,7 @@
 #include "net/SocketAddress.hxx"
 #include "net/SendMessage.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
+#include "io/Iovec.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
@@ -131,8 +132,8 @@ ControlServer::Reply(SocketAddress address,
 	const struct BengProxy::ControlHeader header{ToBE16(payload.size), ToBE16(uint16_t(command))};
 
 	struct iovec v[] = {
-		{ const_cast<BengProxy::ControlHeader *>(&header), sizeof(header) },
-		{ const_cast<void *>(payload.data), payload.size },
+		MakeIovecT(header),
+		MakeIovec(payload),
 	};
 
 	SendMessage(socket.GetSocket(),
