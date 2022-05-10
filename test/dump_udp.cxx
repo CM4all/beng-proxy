@@ -48,10 +48,10 @@
 class DumpUdpHandler final : public UdpHandler {
 public:
 	/* virtual methods from class UdpHandler */
-	bool OnUdpDatagram(ConstBuffer<void> payload,
-			   [[maybe_unused]] WritableBuffer<UniqueFileDescriptor> fds,
+	bool OnUdpDatagram(std::span<const std::byte> payload,
+			   [[maybe_unused]] std::span<UniqueFileDescriptor> fds,
 			   gcc_unused SocketAddress address, int uid) override {
-		printf("packet: %zu uid=%d\n", payload.size, uid);
+		printf("packet: %zu uid=%d\n", payload.size(), uid);
 		return true;
 	}
 

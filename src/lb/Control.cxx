@@ -223,7 +223,7 @@ node_status_response(ControlServer *server,
 
 	server->Reply(address,
 		      ControlCommand::NODE_STATUS,
-		      {response, response_length});
+		      std::as_bytes(std::span{response, response_length}));
 }
 
 inline void
@@ -285,7 +285,8 @@ LbControl::QueryStats(ControlServer &control_server,
 try {
 	const auto stats = instance.GetStats();
 	control_server.Reply(address,
-			     ControlCommand::STATS, {&stats, sizeof(stats)});
+			     ControlCommand::STATS,
+			     std::as_bytes(std::span{&stats, 1}));
 } catch (...) {
 	logger(3, std::current_exception());
 }
