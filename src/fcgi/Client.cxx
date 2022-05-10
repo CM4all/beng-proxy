@@ -228,7 +228,7 @@ private:
 	 * @return the number of bytes consumed, or 0 if this object has
 	 * been destructed
 	 */
-	size_t Feed(const uint8_t *data, size_t length);
+	size_t Feed(const std::byte *data, size_t length);
 
 	/**
 	 * Submit the response metadata to the #HttpResponseHandler.
@@ -253,7 +253,7 @@ private:
 	/**
 	 * Consume data from the input buffer.
 	 */
-	BufferedResult ConsumeInput(const uint8_t *data, size_t length);
+	BufferedResult ConsumeInput(const std::byte *data, size_t length);
 
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override;
@@ -336,8 +336,8 @@ FcgiClient::_Close() noexcept
 FcgiClient::BufferAnalysis
 FcgiClient::AnalyseBuffer(const void *const _data0, size_t size) const
 {
-	const auto data0 = (const uint8_t *)_data0;
-	const uint8_t *data = data0, *const end = data0 + size;
+	const auto data0 = (const std::byte *)_data0;
+	const std::byte *data = data0, *const end = data0 + size;
 
 	FcgiClient::BufferAnalysis result;
 
@@ -350,7 +350,7 @@ FcgiClient::AnalyseBuffer(const void *const _data0, size_t size) const
 	while (true) {
 		const struct fcgi_record_header *header =
 			(const struct fcgi_record_header *)(const void *)data;
-		data = (const uint8_t *)(header + 1);
+		data = (const std::byte *)(header + 1);
 		if (data > end)
 			/* reached the end of the given buffer */
 			break;
@@ -413,7 +413,7 @@ FcgiClient::ParseHeaders(const char *data, size_t length)
 }
 
 inline size_t
-FcgiClient::Feed(const uint8_t *data, size_t length)
+FcgiClient::Feed(const std::byte *data, size_t length)
 {
 	if (response.stderr) {
 		/* ignore errors and partial writes while forwarding STDERR
@@ -574,10 +574,10 @@ FcgiClient::HandleHeader(const struct fcgi_record_header &header)
 }
 
 inline BufferedResult
-FcgiClient::ConsumeInput(const uint8_t *data0, size_t length0)
+FcgiClient::ConsumeInput(const std::byte *data0, size_t length0)
 {
 	const DestructObserver destructed(*this);
-	const uint8_t *data = data0, *const end = data0 + length0;
+	const std::byte *data = data0, *const end = data0 + length0;
 
 	do {
 		if (content_length > 0) {
@@ -786,7 +786,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 	}
 
 	auto b = socket.ReadBuffer();
-	auto data = (const uint8_t *)b.data;
+	auto data = (const std::byte *)b.data;
 	const auto end = data + b.size;
 
 	off_t available = response.available;
@@ -951,7 +951,7 @@ FcgiClient::OnBufferedData()
 			ReleaseSocket(analysis.end_request_offset == r.size);
 	}
 
-	return ConsumeInput((const uint8_t *)r.data, r.size);
+	return ConsumeInput((const std::byte *)r.data, r.size);
 }
 
 bool
