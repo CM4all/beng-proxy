@@ -288,7 +288,7 @@ struct Session {
 		return false;
 	}
 
-	void SetTranslate(ConstBuffer<void> translate) noexcept;
+	void SetTranslate(std::span<const std::byte> translate) noexcept;
 	void ClearTranslate() noexcept;
 
 	/**
@@ -300,7 +300,7 @@ struct Session {
 	 * Does this session have the specified "attach" value?
 	 */
 	[[gnu::pure]]
-	bool IsAttach(ConstBuffer<std::byte> other) const noexcept;
+	bool IsAttach(std::span<const std::byte> other) const noexcept;
 
 	void Attach(Session &&other) noexcept;
 

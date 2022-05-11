@@ -36,11 +36,12 @@
 #if TRANSLATION_ENABLE_HTTP
 #include "net/SocketAddress.hxx"
 #endif
-#include "util/ConstBuffer.hxx"
 
 #if TRANSLATION_ENABLE_HTTP
 #include "http/Status.h"
 #endif
+
+#include <span>
 
 #include <stddef.h>
 #include <stdint.h>
@@ -72,7 +73,7 @@ struct TranslateRequest {
 	const char *widget_type = nullptr;
 
 #if TRANSLATION_ENABLE_SESSION
-	ConstBuffer<void> session = nullptr;
+	std::span<const std::byte> session = {};
 
 	const char *recover_session = nullptr;
 #endif
@@ -82,7 +83,7 @@ struct TranslateRequest {
 	/**
 	 * Mirror of the #TranslationCommand::LAYOUT packet.
 	 */
-	ConstBuffer<void> layout = nullptr;
+	std::span<const std::byte> layout = {};
 
 	/**
 	 * If #layout is set, then this is the #TranslationLayoutItem
@@ -95,67 +96,67 @@ struct TranslateRequest {
 
 	/**
 	 * The payload of the #TRANSLATE_INTERNAL_REDIRECT packet.  If
-	 * ConstBuffer::IsNull(), then no #TRANSLATE_INTERNAL_REDIRECT
+	 * nullptr, then no #TRANSLATE_INTERNAL_REDIRECT
 	 * packet was received.
 	 */
-	ConstBuffer<void> internal_redirect = nullptr;
+	std::span<const std::byte> internal_redirect = {};
 
 #if TRANSLATION_ENABLE_SESSION
 	/**
-	 * The payload of the CHECK packet.  If ConstBuffer::IsNull(),
+	 * The payload of the CHECK packet.  If nullptr,
 	 * then no CHECK packet will be sent.
 	 */
-	ConstBuffer<void> check = nullptr;
+	std::span<const std::byte> check = {};
 
 	/**
-	 * The payload of the AUTH packet.  If ConstBuffer::IsNull(),
+	 * The payload of the AUTH packet.  If nullptr,
 	 * then no AUTH packet will be sent.
 	 */
-	ConstBuffer<void> auth = nullptr;
+	std::span<const std::byte> auth = {};
 #endif
 
 #if TRANSLATION_ENABLE_HTTP
-	ConstBuffer<void> http_auth = nullptr;
+	std::span<const std::byte> http_auth = {};
 
-	ConstBuffer<void> token_auth = nullptr;
+	std::span<const std::byte> token_auth = {};
 
 	const char *auth_token = nullptr;
 
 	/**
 	 * The payload of the #TRANSLATE_WANT_FULL_URI packet.  If
-	 * ConstBuffer::IsNull(), then no #TRANSLATE_WANT_FULL_URI packet
+	 * nullptr, then no #TRANSLATE_WANT_FULL_URI packet
 	 * was received.
 	 */
-	ConstBuffer<void> want_full_uri = nullptr;
+	std::span<const std::byte> want_full_uri = {};
 
-	ConstBuffer<void> chain = nullptr;
+	std::span<const std::byte> chain = {};
 
 	const char *chain_header = nullptr;
 #endif
 
-	ConstBuffer<TranslationCommand> want = nullptr;
+	std::span<const TranslationCommand> want = {};
 
-	ConstBuffer<void> file_not_found = nullptr;
+	std::span<const std::byte> file_not_found = {};
 
-	ConstBuffer<void> content_type_lookup = nullptr;
+	std::span<const std::byte> content_type_lookup = {};
 
 	const char *suffix = nullptr;
 
-	ConstBuffer<void> enotdir = nullptr;
+	std::span<const std::byte> enotdir = {};
 
-	ConstBuffer<void> directory_index = nullptr;
+	std::span<const std::byte> directory_index = {};
 
 #if TRANSLATION_ENABLE_HTTP
-	ConstBuffer<void> error_document = nullptr;
+	std::span<const std::byte> error_document = {};
 #endif
 
-	ConstBuffer<void> probe_path_suffixes = nullptr;
+	std::span<const std::byte> probe_path_suffixes = {};
 	const char *probe_suffix = nullptr;
 
 	/**
 	 * File contents.
 	 */
-	ConstBuffer<void> read_file = nullptr;
+	std::span<const std::byte> read_file = {};
 
 	const char *user = nullptr;
 

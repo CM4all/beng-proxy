@@ -68,12 +68,12 @@ struct MakeRequest : TranslateRequest {
 	}
 
 	MakeRequest &&Check(const char *value) {
-		check = {value, strlen(value)};
+		check = {(const std::byte *)value, strlen(value)};
 		return std::move(*this);
 	}
 
 	MakeRequest &&WantFullUri(const char *value) {
-		want_full_uri = {value, strlen(value)};
+		want_full_uri = {(const std::byte *)value, strlen(value)};
 		return std::move(*this);
 	}
 
@@ -267,12 +267,12 @@ struct MakeResponse : TranslateResponse {
 	}
 
 	MakeResponse &&Check(const char *value) {
-		check = {value, strlen(value)};
+		check = {(const std::byte *)value, strlen(value)};
 		return std::move(*this);
 	}
 
 	MakeResponse &&WantFullUri(const char *value) {
-		want_full_uri = {value, strlen(value)};
+		want_full_uri = {(const std::byte *)value, strlen(value)};
 		return std::move(*this);
 	}
 };

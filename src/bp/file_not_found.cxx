@@ -116,7 +116,7 @@ get_file_base(const TranslateResponse &response) noexcept
 bool
 Request::CheckFileNotFound(const TranslateResponse &response) noexcept
 {
-	assert(!response.file_not_found.IsNull());
+	assert(response.file_not_found.data() != nullptr);
 
 	const char *path = get_file_path(response);
 	if (path == nullptr) {

@@ -259,11 +259,11 @@ translate(AllocatorPtr alloc, EventLoop &event_loop,
 try {
 	assert(fd.IsDefined());
 	assert(request.uri != nullptr || request.widget_type != nullptr ||
-	       request.http_auth != nullptr ||
-	       request.token_auth != nullptr ||
-	       request.chain != nullptr ||
+	       request.http_auth.data() != nullptr ||
+	       request.token_auth.data() != nullptr ||
+	       request.chain.data() != nullptr ||
 	       request.pool != nullptr ||
-	       (!request.content_type_lookup.IsNull() &&
+	       (request.content_type_lookup.data() != nullptr &&
 		request.suffix != nullptr));
 
 	GrowingBuffer gb = MarshalTranslateRequest(PROTOCOL_VERSION,

@@ -77,7 +77,7 @@ Request::ParseArgs() noexcept
 
 	if (dissected_uri.args.empty()) {
 		translate.request.param = nullptr;
-		translate.request.session = nullptr;
+		translate.request.session = {};
 		return;
 	}
 
@@ -87,7 +87,7 @@ Request::ParseArgs() noexcept
 	args.Remove("session");
 
 	translate.request.param = args.Remove("translate");
-	translate.request.session = nullptr;
+	translate.request.session = {};
 }
 
 bool

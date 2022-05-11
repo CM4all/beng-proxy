@@ -121,10 +121,10 @@ Session::ClearTranslate() noexcept
 }
 
 bool
-Session::IsAttach(ConstBuffer<std::byte> other) const noexcept
+Session::IsAttach(std::span<const std::byte> other) const noexcept
 {
-	return attach.size() == other.size &&
-		memcmp(attach.data(), other.data, attach.size()) == 0;
+	return attach.size() == other.size() &&
+		memcmp(attach.data(), other.data(), attach.size()) == 0;
 }
 
 void
@@ -176,17 +176,17 @@ Session::Attach(Session &&other) noexcept
 }
 
 void
-Session::SetTranslate(ConstBuffer<void> _translate) noexcept
+Session::SetTranslate(std::span<const std::byte> _translate) noexcept
 {
-	assert(!_translate.IsNull());
+	assert(_translate.data() != nullptr);
 
-	if (!translate.IsNull() &&
-	    translate.size() == _translate.size &&
-	    memcmp(translate.data(), _translate.data, _translate.size) == 0)
+	if (translate.data() != nullptr &&
+	    translate.size() == _translate.size() &&
+	    memcmp(translate.data(), _translate.data(), _translate.size()) == 0)
 		/* same value as before: no-op */
 		return;
 
-	translate = ConstBuffer<std::byte>::FromVoid(_translate);
+	translate = _translate;
 }
 
 bool

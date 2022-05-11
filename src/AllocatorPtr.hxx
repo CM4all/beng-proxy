@@ -105,13 +105,15 @@ public:
 		return p_memdup(&pool, data, size);
 	}
 
-	ConstBuffer<void> Dup(ConstBuffer<void> src) const noexcept;
+	std::span<const std::byte> Dup(std::span<const std::byte> src) const noexcept;
 
 	template<typename T>
-	ConstBuffer<T> Dup(ConstBuffer<T> src) const noexcept {
-		static_assert(std::is_trivial_v<T>);
-
-		return ConstBuffer<T>::FromVoid(Dup(src.ToVoid()));
+	std::span<const T> Dup(std::span<const T> src) const noexcept {
+		auto dest = Dup(std::as_bytes(src));
+		return {
+			(const T *)(dest.data()),
+			dest.size() / sizeof(T),
+		};
 	}
 
 	/**
@@ -148,18 +150,18 @@ public:
 	 * AllocatorPtr &, const T &" for each item.
 	 */
 	template<typename T>
-	ConstBuffer<T> CloneArray(ConstBuffer<T> src) const noexcept {
+	std::span<const T> CloneArray(std::span<const T> src) const noexcept {
 		static_assert(std::is_trivially_destructible_v<T>);
 
-		if (src == nullptr)
-			return nullptr;
+		if (src.data() == nullptr)
+			return {};
 
-		auto *dest = NewArray<T>(src.size);
+		auto *dest = NewArray<T>(src.size());
 		std::transform(src.begin(), src.end(), dest, [this](const T &i){
 			return T{*this, i};
 		});
 
-		return {dest, src.size};
+		return {dest, src.size()};
 	}
 
 	StringView Dup(StringView src) const noexcept;
@@ -185,7 +187,7 @@ private:
 		return sv.size();
 	}
 
-	static constexpr size_t ConcatLength(ConstBuffer<StringView> s) noexcept {
+	static constexpr size_t ConcatLength(std::span<const StringView> s) noexcept {
 		size_t length = 0;
 		for (const auto &i : s)
 			length += i.size;
@@ -205,7 +207,7 @@ private:
 		return (char *)mempcpy(p, sv.data(), sv.size());
 	}
 
-	static char *ConcatCopy(char *p, ConstBuffer<StringView> s) noexcept {
+	static char *ConcatCopy(char *p, std::span<const StringView> s) noexcept {
 		for (const auto &i : s)
 			p = ConcatCopy(p, i);
 		return p;

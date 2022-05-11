@@ -142,7 +142,7 @@ Request::SubmitEnotdir(const TranslateResponse &response) noexcept
 bool
 Request::CheckFileEnotdir(const TranslateResponse &response) noexcept
 {
-	assert(!response.enotdir.IsNull());
+	assert(response.enotdir.data() != nullptr);
 
 	const char *path = get_file_path(response);
 	if (path == nullptr) {

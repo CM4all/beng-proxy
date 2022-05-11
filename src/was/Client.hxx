@@ -34,6 +34,8 @@
 
 #include "http/Method.h"
 
+#include <span>
+
 struct pool;
 class StopwatchPtr;
 class FileDescriptor;
@@ -44,7 +46,6 @@ class WasLease;
 class StringMap;
 class HttpResponseHandler;
 class CancellablePointer;
-template<typename T> struct ConstBuffer;
 
 /**
  * Web Application Socket client.
@@ -80,7 +81,7 @@ was_client_request(struct pool &pool, EventLoop &event_loop,
 		   const char *script_name, const char *path_info,
 		   const char *query_string,
 		   const StringMap &headers, UnusedIstreamPtr body,
-		   ConstBuffer<const char *> params,
+		   std::span<const char *const> params,
 		   HttpResponseHandler &handler,
 		   CancellablePointer &cancel_ptr);
 

@@ -40,27 +40,27 @@
 
 void
 TranslationMarshaller::Write(TranslationCommand command,
-			     ConstBuffer<void> payload)
+			     std::span<const std::byte> payload)
 {
-	if (payload.size >= 0xffff)
+	if (payload.size() >= 0xffff)
 		throw FormatRuntimeError("payload for translate command %u too large",
 					 command);
 
 	TranslationHeader header;
-	header.length = (uint16_t)payload.size;
+	header.length = (uint16_t)payload.size();
 	header.command = command;
 
 	buffer.Write(&header, sizeof(header));
 
 	if (!payload.empty())
-		buffer.Write(payload.data, payload.size);
+		buffer.Write(payload.data(), payload.size());
 }
 
 void
 TranslationMarshaller::Write(TranslationCommand command,
 			     const char *payload)
 {
-	Write(command, StringView(payload));
+	Write(command, std::span{StringView(payload)});
 }
 
 void

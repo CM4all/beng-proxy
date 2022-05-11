@@ -33,8 +33,8 @@
 #pragma once
 
 #include "memory/GrowingBuffer.hxx"
-#include "util/ConstBuffer.hxx"
 
+#include <span>
 #include <utility>
 
 #include <stdint.h>
@@ -48,12 +48,12 @@ class TranslationMarshaller {
 
 public:
 	void Write(TranslationCommand command,
-		   ConstBuffer<void> payload=nullptr);
+		   std::span<const std::byte> payload={});
 
 	template<typename T>
 	void Write(TranslationCommand command,
-		   ConstBuffer<T> payload) {
-		Write(command, payload.ToVoid());
+		   std::span<const T> payload) {
+		Write(command, std::as_bytes(payload));
 	}
 
 	void Write(TranslationCommand command,
@@ -61,8 +61,8 @@ public:
 
 	template<typename T>
 	void WriteOptional(TranslationCommand command,
-			   ConstBuffer<T> payload) {
-		if (!payload.IsNull())
+			   std::span<const T> payload) {
+		if (payload.data() != nullptr)
 			Write(command, payload);
 	}
 
@@ -74,7 +74,7 @@ public:
 
 	template<typename T>
 	void WriteT(TranslationCommand command, const T &payload) {
-		Write(command, ConstBuffer<T>(&payload, 1));
+		Write(command, std::span{&payload, 1});
 	}
 
 	void Write16(TranslationCommand command, uint16_t payload) {

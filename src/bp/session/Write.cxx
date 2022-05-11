@@ -98,21 +98,17 @@ public:
 		WriteBuffer(s, length);
 	}
 
-	void Write(ConstBuffer<void> buffer) {
-		if (buffer.IsNull()) {
+	void Write(std::span<const std::byte> buffer) {
+		if (buffer.data() == nullptr) {
 			Write16((uint16_t)-1);
 			return;
 		}
 
-		if (buffer.size >= (uint16_t)-1)
+		if (buffer.size() >= (uint16_t)-1)
 			throw SessionSerializerError("Buffer is too long");
 
-		Write16(buffer.size);
-		WriteBuffer(buffer.data, buffer.size);
-	}
-
-	void Write(ConstBuffer<std::byte> buffer) {
-		Write(buffer.ToVoid());
+		Write16(buffer.size());
+		WriteBuffer(buffer.data(), buffer.size());
 	}
 
 	void Write(StringView s) {

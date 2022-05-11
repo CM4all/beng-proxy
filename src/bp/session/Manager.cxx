@@ -44,9 +44,9 @@
 static constexpr unsigned MAX_SESSIONS = 65536;
 
 inline size_t
-SessionManager::SessionAttachHash::operator()(ConstBuffer<std::byte> attach) const noexcept
+SessionManager::SessionAttachHash::operator()(std::span<const std::byte> attach) const noexcept
 {
-	return djb_hash(attach.data, attach.size);
+	return djb_hash(attach.data(), attach.size());
 }
 
 inline size_t
@@ -222,9 +222,9 @@ SessionManager::Find(SessionId id) noexcept
 
 RealmSessionLease
 SessionManager::Attach(RealmSessionLease lease, const char *realm,
-		       ConstBuffer<std::byte> attach) noexcept
+		       std::span<const std::byte> attach) noexcept
 {
-	assert(attach != nullptr);
+	assert(attach.data() != nullptr);
 	assert(!attach.empty());
 
 	if (lease && sessions_by_attach.key_eq()(attach, lease->parent))
@@ -331,7 +331,7 @@ SessionManager::Visit(bool (*callback)(const Session *session,
 }
 
 void
-SessionManager::DiscardAttachSession(ConstBuffer<std::byte> attach) noexcept
+SessionManager::DiscardAttachSession(std::span<const std::byte> attach) noexcept
 {
 	auto i = sessions_by_attach.find(attach,
 					 sessions_by_attach.hash_function(),

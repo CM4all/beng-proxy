@@ -188,7 +188,7 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 	} else if (response.www_authenticate != nullptr &&
 		   /* disable the deprecated HTTP-auth if the new
 		      HTTP_AUTH is enabled: */
-		   response.http_auth.IsNull()) {
+		   response.http_auth.data() == nullptr) {
 		DispatchError(HTTP_STATUS_UNAUTHORIZED, "Unauthorized");
 	} else if (response.break_chain) {
 		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
@@ -331,7 +331,7 @@ ProbePathSuffixes(const char *prefix,
 inline bool
 Request::CheckHandleProbePathSuffixes(const TranslateResponse &response) noexcept
 {
-	if (response.probe_path_suffixes == nullptr)
+	if (response.probe_path_suffixes.data() == nullptr)
 		return false;
 
 	if (++translate.n_probe_path_suffixes > 2) {
@@ -486,7 +486,7 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 {
 	const AllocatorPtr alloc(pool);
 
-	if (response.layout != nullptr) {
+	if (response.layout.data() != nullptr) {
 		/* repeat request with LAYOUT mirrored */
 
 		if (++translate.n_layout > 4) {
@@ -511,7 +511,7 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 							       uri);
 	}
 
-	if (!response.check.IsNull()) {
+	if (response.check.data() != nullptr) {
 		/* repeat request with CHECK set */
 
 		if (++translate.n_checks > 4) {
@@ -526,10 +526,10 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 		translate.request.authorization = request.headers.Get("authorization");
 	}
 
-	if (!response.internal_redirect.IsNull()) {
+	if (response.internal_redirect.data() != nullptr) {
 		/* repeat request with INTERNAL_REDIRECT set */
 
-		assert(response.want_full_uri == nullptr);
+		assert(response.want_full_uri.data() == nullptr);
 
 		if (++translate.n_internal_redirects > 4) {
 			LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
@@ -560,7 +560,7 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 
 	/* handle WANT */
 
-	if (!response.want.IsNull())
+	if (response.want.data() != nullptr)
 		translate.request.want = response.want;
 
 	if (response.Wants(TranslationCommand::LISTENER_TAG)) {
@@ -606,7 +606,7 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 		fill_translate_request_user(*this, translate.request, alloc);
 	}
 
-	if (!response.want_full_uri.IsNull()) {
+	if (response.want_full_uri.data() != nullptr) {
 		/* repeat request with full URI */
 
 		/* echo the server's WANT_FULL_URI packet */
@@ -738,7 +738,7 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 	else if (response.discard_realm_session)
 		DiscardRealmSession();
 
-	if (!response.session.IsNull())
+	if (response.session.data() != nullptr)
 		/* must apply SESSION early so it gets used by
 		   repeat_translation() */
 		translate.request.session = response.session;
@@ -749,14 +749,14 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 
 	if (response.HasAuth())
 		HandleAuth(response);
-	else if (!response.http_auth.IsNull() &&
+	else if (response.http_auth.data() != nullptr &&
 		 /* allow combining HTTP_AUTH and TOKEN_AUTH; in that
 		    case, use HTTP_AUTH only if an "Authorization"
 		    header was received */
 		 (request.headers.Get("authorization") != nullptr ||
-		  response.token_auth == nullptr))
+		  response.token_auth.data() == nullptr))
 		HandleHttpAuth(response);
-	else if (!response.token_auth.IsNull())
+	else if (response.token_auth.data() != nullptr)
 		HandleTokenAuth(response);
 	else
 		OnTranslateResponseAfterAuth(response);
@@ -765,15 +765,15 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 void
 Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 {
-	if (!response.check.IsNull() ||
-	    response.layout != nullptr ||
-	    !response.internal_redirect.IsNull() ||
+	if (response.check.data() != nullptr ||
+	    response.layout.data() != nullptr ||
+	    response.internal_redirect.data() != nullptr||
 	    response.like_host != nullptr ||
 	    !response.want.empty() ||
 	    /* after successful new authentication, repeat the translation
 	       if the translation server wishes to know the user */
 	    (translate.want_user && translate.user_modified) ||
-	    !response.want_full_uri.IsNull()) {
+	    response.want_full_uri.data() != nullptr) {
 
 		/* repeat translation due to want_user||user_modified only
 		   once */
@@ -785,7 +785,7 @@ Request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 
 	/* the CHECK is done by now; don't carry the CHECK value on to
 	   further translation requests */
-	translate.request.check = nullptr;
+	translate.request.check = {};
 	/* also reset the counter so we don't trigger the endless
 	   recursion detection by the ENOTDIR chain */
 	translate.n_checks = 0;
@@ -817,16 +817,16 @@ Request::OnTranslateResponse2(const TranslateResponse &response)
 		return;
 
 	/* check ENOTDIR */
-	if (!response.enotdir.IsNull() && !CheckFileEnotdir(response))
+	if (response.enotdir.data() != nullptr && !CheckFileEnotdir(response))
 		return;
 
 	/* check if the file exists */
-	if (!response.file_not_found.IsNull() &&
+	if (response.file_not_found.data() != nullptr &&
 	    !CheckFileNotFound(response))
 		return;
 
 	/* check if it's a directory */
-	if (!response.directory_index.IsNull() &&
+	if (response.directory_index.data() != nullptr &&
 	    !CheckDirectoryIndex(response))
 		return;
 

@@ -85,7 +85,7 @@ public:
 void
 Request::HandleHttpAuth(const TranslateResponse &response) noexcept
 {
-	assert(!response.http_auth.IsNull());
+	assert(response.http_auth.data() != nullptr);
 
 	const char *authorization = request.headers.Get("authorization");
 

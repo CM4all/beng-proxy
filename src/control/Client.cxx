@@ -65,14 +65,14 @@ BengControlClient::Send(BengProxy::ControlCommand cmd,
 
 	static constexpr uint8_t padding[3] = {0, 0, 0};
 
-	struct iovec v[] = {
+	const struct iovec v[] = {
 		MakeIovecT(magic),
 		MakeIovecT(header),
 		MakeIovec(payload),
 		MakeIovec(std::span{padding, PaddingSize(payload.size)}),
 	};
 
-	MessageHeader msg = ConstBuffer<struct iovec>(v);
+	MessageHeader msg{std::span{v}};
 
 	ScmRightsBuilder<1> b(msg);
 	for (const auto &i : fds)

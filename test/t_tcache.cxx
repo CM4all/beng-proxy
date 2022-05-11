@@ -102,12 +102,12 @@ StringEquals(const char *a, const char *b) noexcept
 template<typename T>
 [[gnu::pure]]
 static bool
-RawEquals(ConstBuffer<T> a, ConstBuffer<T> b) noexcept
+RawEquals(std::span<const T> a, std::span<const T> b) noexcept
 {
-	if (a == nullptr || b == nullptr)
-		return (a == nullptr) == (b == nullptr);
+	if (a.data() == nullptr || b.data() == nullptr)
+		return (a.data() == nullptr) == (b.data() == nullptr);
 
-	return a.size == b.size && memcmp(a.data, b.data, a.ToVoid().size) == 0;
+	return a.size() == b.size() && memcmp(a.data(), b.data(), a.size_bytes()) == 0;
 }
 
 static bool

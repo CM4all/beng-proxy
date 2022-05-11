@@ -207,7 +207,7 @@ ExtractAuthToken(AllocatorPtr alloc, DissectedUri &dissected_uri)
 void
 Request::HandleTokenAuth(const TranslateResponse &response) noexcept
 {
-	assert(!response.token_auth.IsNull());
+	assert(response.token_auth.data() != nullptr);
 
 	/* we need to validate the session realm early */
 	ApplyTranslateRealm(response, nullptr);

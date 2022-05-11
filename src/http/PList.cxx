@@ -74,5 +74,5 @@ http_list_split(AllocatorPtr alloc, const char *p) noexcept
 
 	tmp[num++] = nullptr;
 
-	return alloc.Dup(ConstBuffer<const char *>(tmp, num)).data;
+	return alloc.Dup(std::span<const char *const>{tmp, num}).data();
 }

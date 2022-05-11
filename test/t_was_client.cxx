@@ -372,7 +372,7 @@ public:
 				   *this,
 				   nullptr,
 				   method, uri, uri, nullptr, nullptr,
-				   headers, std::move(body), nullptr,
+				   headers, std::move(body), {},
 				   handler, cancel_ptr);
 	}
 

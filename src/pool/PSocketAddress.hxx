@@ -43,7 +43,5 @@ DupAddress(AllocatorPtr alloc, SocketAddress src) noexcept
 {
 	return src.IsNull()
 		? src
-		: SocketAddress((const struct sockaddr *)
-				alloc.Dup(ConstBuffer<void>(src.GetAddress(), src.GetSize())).data,
-				src.GetSize());
+		: SocketAddress(alloc.Dup(std::span<const std::byte>(src)));
 }

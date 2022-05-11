@@ -92,8 +92,8 @@ delegate_send_fd(DelegateResponseCommand command, int fd)
 		0,
 		command,
 	};
-	auto vec = MakeIovecT(header);
-	MessageHeader msg({&vec, 1});
+	const std::array vec{MakeIovecT(header)};
+	MessageHeader msg{vec};
 
 	ScmRightsBuilder<1> srb(msg);
 	srb.push_back(fd);

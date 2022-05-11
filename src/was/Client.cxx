@@ -933,7 +933,7 @@ was_client_request(struct pool &caller_pool, EventLoop &event_loop,
 		   const char *script_name, const char *path_info,
 		   const char *query_string,
 		   const StringMap &headers, UnusedIstreamPtr body,
-		   ConstBuffer<const char *> params,
+		   std::span<const char *const> params,
 		   HttpResponseHandler &handler,
 		   CancellablePointer &cancel_ptr)
 {

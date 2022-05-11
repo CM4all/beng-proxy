@@ -639,8 +639,8 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 static bool
 tcache_is_content_type_lookup(const TranslateRequest &request)
 {
-	return !request.content_type_lookup.IsNull() &&
-		request.content_type_lookup.size <= MAX_CONTENT_TYPE_LOOKUP &&
+	return request.content_type_lookup.data() != nullptr &&
+		request.content_type_lookup.size() <= MAX_CONTENT_TYPE_LOOKUP &&
 		request.suffix != nullptr;
 }
 
@@ -680,7 +680,7 @@ tcache_request_key(AllocatorPtr alloc, const TranslateRequest &request)
 	if (tcache_is_content_type_lookup(request))
 		return tcache_content_type_lookup_key(alloc, request);
 
-	if (!request.chain.IsNull())
+	if (request.chain.data() != nullptr)
 		return tcache_chain_key(alloc, request);
 
 	return request.uri != nullptr
@@ -701,19 +701,19 @@ static bool
 tcache_request_evaluate(const TranslateRequest &request)
 {
 	return (request.uri != nullptr || request.widget_type != nullptr ||
-		request.chain != nullptr ||
+		request.chain.data() != nullptr ||
 		tcache_is_content_type_lookup(request)) &&
 		request.chain_header == nullptr &&
 		request.recover_session == nullptr &&
-		request.http_auth.IsNull() && // TODO: allow caching HTTP_AUTH
-		request.token_auth.IsNull() && // TODO: allow caching TOKEN_AUTH
-		request.auth.IsNull() &&
-		request.check.size < MAX_CACHE_CHECK &&
-		request.want_full_uri.size <= MAX_CACHE_WFU &&
-		request.probe_path_suffixes.size <= MAX_PROBE_PATH_SUFFIXES &&
-		request.file_not_found.size <= MAX_FILE_NOT_FOUND &&
-		request.directory_index.size <= MAX_DIRECTORY_INDEX &&
-		request.read_file.size <= MAX_READ_FILE &&
+		request.http_auth.data() == nullptr && // TODO: allow caching HTTP_AUTH
+		request.token_auth.data() == nullptr && // TODO: allow caching TOKEN_AUTH
+		request.auth.data() == nullptr &&
+		request.check.size() < MAX_CACHE_CHECK &&
+		request.want_full_uri.size() <= MAX_CACHE_WFU &&
+		request.probe_path_suffixes.size() <= MAX_PROBE_PATH_SUFFIXES &&
+		request.file_not_found.size() <= MAX_FILE_NOT_FOUND &&
+		request.directory_index.size() <= MAX_DIRECTORY_INDEX &&
+		request.read_file.size() <= MAX_READ_FILE &&
 		request.authorization == nullptr;
 }
 
@@ -837,14 +837,14 @@ tcache_vary_copy(AllocatorPtr alloc, const char *p,
 }
 
 template<typename T>
-static ConstBuffer<T>
-tcache_vary_copy(AllocatorPtr alloc, ConstBuffer<T> value,
+static std::span<const T>
+tcache_vary_copy(AllocatorPtr alloc, std::span<const T> value,
 		 const TranslateResponse &response,
 		 TranslationCommand command)
 {
-	return !value.IsNull() && response.VaryContains(command)
+	return value.data() != nullptr && response.VaryContains(command)
 		? alloc.Dup(value)
-		: nullptr;
+		: std::span<const T>{};
 }
 
 /**
@@ -882,13 +882,16 @@ tcache_string_match(const char *a, const char *b, bool strict)
 /**
  * @param strict in strict mode, nullptr values are a mismatch
  */
+[[gnu::pure]]
 static bool
-tcache_buffer_match(ConstBuffer<void> a, ConstBuffer<void> b, bool strict)
+tcache_buffer_match(std::span<const std::byte> a, std::span<const std::byte> b,
+		    bool strict) noexcept
 {
-	if (a.IsNull() || b.IsNull())
-		return !strict && a.data == b.data;
+	if (a.data() == nullptr || b.data() == nullptr)
+		return !strict && a.data() == b.data();
 
-	return a.size == b.size && memcmp(a.data, b.data, a.size) == 0;
+	return a.size() == b.size() &&
+		memcmp(a.data(), b.data(), a.size()) == 0;
 }
 
 static bool

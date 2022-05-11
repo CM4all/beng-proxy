@@ -93,7 +93,7 @@ MyTranslationService::SendRequest(AllocatorPtr alloc,
 	assert(request.host == NULL);
 	assert(request.uri == NULL);
 	assert(request.widget_type != NULL);
-	assert(request.session.IsNull());
+	assert(request.session.data() == nullptr);
 	assert(request.param == NULL);
 
 	if (strcmp(request.widget_type, "sync") == 0) {

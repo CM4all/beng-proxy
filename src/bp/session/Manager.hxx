@@ -86,7 +86,7 @@ class SessionManager {
 
 	struct SessionAttachHash {
 		[[gnu::pure]]
-		size_t operator()(ConstBuffer<std::byte> attach) const noexcept;
+		size_t operator()(std::span<const std::byte> attach) const noexcept;
 
 		[[gnu::pure]]
 		size_t operator()(const Session &session) const noexcept;
@@ -99,7 +99,7 @@ class SessionManager {
 		}
 
 		[[gnu::pure]]
-		bool operator()(ConstBuffer<std::byte> a, const Session &b) const noexcept {
+		bool operator()(std::span<const std::byte> a, const Session &b) const noexcept {
 			return b.IsAttach(a);
 		}
 	};
@@ -186,7 +186,7 @@ public:
 	 * @return a new lease for the attached session
 	 */
 	RealmSessionLease Attach(RealmSessionLease lease, const char *realm,
-				 ConstBuffer<std::byte> attach) noexcept;
+				 std::span<const std::byte> attach) noexcept;
 
 	void Put(Session &session) noexcept;
 
@@ -212,7 +212,7 @@ public:
 
 	void Cleanup() noexcept;
 
-	void DiscardAttachSession(ConstBuffer<std::byte> attach) noexcept;
+	void DiscardAttachSession(std::span<const std::byte> attach) noexcept;
 
 	bool Load(BufferedReader &r);
 

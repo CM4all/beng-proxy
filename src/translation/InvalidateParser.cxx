@@ -125,7 +125,7 @@ apply_translation_packet(TranslateRequest &request,
 		break;
 
 	case TranslationCommand::SESSION:
-		request.session = { payload, payload_length };
+		request.session = { (const std::byte *)payload, payload_length };
 		break;
 
 	case TranslationCommand::LISTENER_TAG:
@@ -159,11 +159,11 @@ apply_translation_packet(TranslateRequest &request,
 		break;
 
 	case TranslationCommand::INTERNAL_REDIRECT:
-		request.internal_redirect = { payload, payload_length };
+		request.internal_redirect = { (const std::byte *)payload, payload_length };
 		break;
 
 	case TranslationCommand::ENOTDIR_:
-		request.enotdir = { payload, payload_length };
+		request.enotdir = { (const std::byte *)payload, payload_length };
 		break;
 
 	case TranslationCommand::USER:

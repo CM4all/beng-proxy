@@ -35,13 +35,15 @@
 #include "AddressListView.hxx"
 #include "FailureManagerProxy.hxx"
 
+#include <span>
+
 /**
- * Wraps a ConstBuffer<SocketAddress> in an interface for
+ * Wraps a std::span<const SocketAddress> in an interface for
  * PickFailover() and PickModulo().
  */
 class AddressListWrapper : public AddressListView, public FailureManagerProxy {
 public:
 	constexpr AddressListWrapper(FailureManager &_failure_manager,
-				     ConstBuffer<SocketAddress> _list) noexcept
+				     std::span<const SocketAddress> _list) noexcept
 		:AddressListView(_list), FailureManagerProxy(_failure_manager) {}
 };

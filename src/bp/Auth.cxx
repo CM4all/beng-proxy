@@ -105,7 +105,7 @@ Request::HandleAuth(const TranslateResponse &response)
 	assert(response.HasAuth());
 
 	auto auth = response.auth;
-	if (auth == nullptr) {
+	if (auth.data() == nullptr) {
 		/* load #TRANSLATE_AUTH_FILE */
 		assert(response.auth_file != nullptr);
 
@@ -121,8 +121,8 @@ Request::HandleAuth(const TranslateResponse &response)
 
 	const auto auth_base = auth;
 
-	if (!response.append_auth.IsNull()) {
-		assert(!auth.IsNull());
+	if (response.append_auth.data() != nullptr) {
+		assert(auth.data() != nullptr);
 
 		const AllocatorPtr alloc(pool);
 		auth = alloc.LazyConcat(auth, response.append_auth);

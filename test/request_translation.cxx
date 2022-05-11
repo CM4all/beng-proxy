@@ -147,9 +147,9 @@ MyHandler::OnTranslateResponse(TranslateResponse &response) noexcept
 
 	if (response.redirect != nullptr)
 		printf("redirect=%s\n", response.redirect);
-	if (!response.session.IsNull())
-		printf("session=%.*s\n", (int)response.session.size,
-		       (const char *)response.session.data);
+	if (response.session.data() != nullptr)
+		printf("session=%.*s\n", (int)response.session.size(),
+		       (const char *)response.session.data());
 	if (response.user != nullptr)
 		printf("user=%s\n", response.user);
 }

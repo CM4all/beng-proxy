@@ -758,7 +758,7 @@ Request::DispatchResponse(http_status_t status, HttpHeaders &&headers,
 
 	if (http_status_is_error(status) && !transformed &&
 	    translate.response != nullptr &&
-	    !translate.response->error_document.IsNull()) {
+	    translate.response->error_document.data() != nullptr) {
 		transformed = true;
 
 		/* for sure, the errdoc library doesn't use the request body;

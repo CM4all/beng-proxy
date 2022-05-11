@@ -75,7 +75,7 @@ Request::LoadSession(StringView _session_id) noexcept
 
 	auto session = GetSession();
 	if (session) {
-		if (!session->translate.IsNull()) {
+		if (session->translate.data() != nullptr) {
 			const ConstBuffer<std::byte> t(session->translate);
 			translate.request.session = alloc.Dup(t.ToVoid());
 		}
@@ -219,7 +219,7 @@ Request::DiscardSession() noexcept
 	instance.session_manager->EraseAndDispose(session_id);
 	session_id.Clear();
 
-	translate.request.session = nullptr;
+	translate.request.session = {};
 	send_session_cookie = false;
 }
 
@@ -234,7 +234,7 @@ Request::DiscardRealmSession() noexcept
 	instance.session_manager->DiscardRealmSession(session_id, realm);
 	session_id.Clear();
 
-	translate.request.session = nullptr;
+	translate.request.session = {};
 	send_session_cookie = false;
 }
 
@@ -302,7 +302,7 @@ Request::ApplyTranslateSession(const TranslateResponse &response) noexcept
 		}
 	}
 
-	if (!response.session.IsNull()) {
+	if (response.session.data() != nullptr) {
 		if (response.session.empty()) {
 			/* clear translate session */
 

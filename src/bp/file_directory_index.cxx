@@ -58,7 +58,7 @@ IsDirectory(const FileAddress &address) noexcept
 bool
 Request::CheckDirectoryIndex(const TranslateResponse &response) noexcept
 {
-	assert(!response.directory_index.IsNull());
+	assert(response.directory_index.data() != nullptr);
 
 	if (response.test_path != nullptr) {
 		if (!IsDirectory(nullptr, response.test_path))

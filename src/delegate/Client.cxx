@@ -224,13 +224,12 @@ SendDelegatePacket(SocketDescriptor s, DelegateRequestCommand cmd,
 {
 	const DelegateRequestHeader header{uint16_t(payload.size), cmd};
 
-	struct iovec v[] = {
+	const struct iovec v[] = {
 		MakeIovecT(header),
 		MakeIovec(payload),
 	};
 
-	auto nbytes = SendMessage(s,
-				  ConstBuffer<struct iovec>(v, std::size(v)),
+	auto nbytes = SendMessage(s, MessageHeader{v},
 				  MSG_DONTWAIT);
 	if (nbytes != sizeof(header) + payload.size)
 		throw std::runtime_error("Short send to delegate");
