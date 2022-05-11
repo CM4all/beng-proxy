@@ -45,8 +45,8 @@ AppendSocketAddress(StringBuilder &b, SocketAddress address)
 	assert(!address.IsNull());
 
 	auto w = b.Write();
-	if (ToString(w.data, w.size, address))
-		b.Extend(strlen(w.data));
+	if (ToString(w.data(), w.size(), address))
+		b.Extend(strlen(w.data()));
 }
 
 static void
