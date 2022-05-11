@@ -155,7 +155,6 @@ private:
 
 		cancel_ptr.Cancel();
 		InvokeCreateAborted();
-		delete this;
 	}
 
 	/* virtual methods from class ConnectSocketHandler */
@@ -248,7 +247,6 @@ FilteredSocketStockConnection::OnConnectFilteredSocketError(std::exception_ptr e
 			   FormatRuntimeError("Failed to connect to '%s'",
 					      GetStockName()));
 	InvokeCreateError(*handler, std::move(ep));
-	delete this;
 }
 
 /*

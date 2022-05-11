@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.0.91) unstable; urgency=low
 
   * bp: fix "Malformed spawn payload" (17.0.90 regression)
+  * lb: fix double free bug (17.0.90 regression)
 
  --   
 
