@@ -4,7 +4,7 @@ cm4all-beng-proxy (17.0.90) unstable; urgency=low
   * lb: support "fair_scheduling" with static pool members
   * use IP_BIND_ADDRESS_NO_PORT
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 11 May 2022 10:35:37 +0200
 
 cm4all-beng-proxy (17.0.89) unstable; urgency=low
 
