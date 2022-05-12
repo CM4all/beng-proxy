@@ -34,7 +34,8 @@
 
 #include "event/Chrono.hxx"
 #include "util/BindMethod.hxx"
-#include "util/WritableBuffer.hxx"
+
+#include <span>
 
 #include <sys/types.h>
 #include <stddef.h>
