@@ -34,7 +34,6 @@
 #include "Server.hxx"
 #include "net/SocketConfig.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/WritableBuffer.hxx"
 
 #include <sys/un.h>
 #include <stdio.h>

@@ -38,9 +38,7 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Iovec.hxx"
 #include "util/ByteOrder.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
-#include "util/WritableBuffer.hxx"
 
 ControlServer::ControlServer(EventLoop &event_loop, UniqueSocketDescriptor s,
 			     ControlHandler &_handler) noexcept
@@ -57,7 +55,7 @@ ControlServer::ControlServer(EventLoop &event_loop, ControlHandler &_handler,
 static void
 control_server_decode(ControlServer &control_server,
 		      const void *data, size_t length,
-		      WritableBuffer<UniqueFileDescriptor> fds,
+		      std::span<UniqueFileDescriptor> fds,
 		      SocketAddress address, int uid,
 		      ControlHandler &handler)
 {
@@ -131,13 +129,12 @@ ControlServer::Reply(SocketAddress address,
 {
 	const struct BengProxy::ControlHeader header{ToBE16(payload.size()), ToBE16(uint16_t(command))};
 
-	struct iovec v[] = {
+	const struct iovec v[] = {
 		MakeIovecT(header),
-		MakeIovec(ConstBuffer<std::byte>{payload}),
+		MakeIovec(payload),
 	};
 
 	SendMessage(socket.GetSocket(),
-		    MessageHeader(ConstBuffer<struct iovec>(v, std::size(v)))
-		    .SetAddress(address),
+		    MessageHeader{v}.SetAddress(address),
 		    MSG_DONTWAIT|MSG_NOSIGNAL);
 }
