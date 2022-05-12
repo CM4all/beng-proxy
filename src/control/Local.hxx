@@ -57,8 +57,8 @@ public:
 	/* virtual methods from class ControlHandler */
 	void OnControlPacket(ControlServer &control_server,
 			     BengProxy::ControlCommand command,
-			     ConstBuffer<void> payload,
-			     WritableBuffer<UniqueFileDescriptor> fds,
+			     std::span<const std::byte> payload,
+			     std::span<UniqueFileDescriptor> fds,
 			     SocketAddress address, int uid) override;
 
 	void OnControlError(std::exception_ptr ep) noexcept override;

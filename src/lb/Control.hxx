@@ -64,7 +64,7 @@ public:
 	}
 
 private:
-	void InvalidateTranslationCache(ConstBuffer<void> payload,
+	void InvalidateTranslationCache(std::span<const std::byte> payload,
 					SocketAddress address);
 
 	void EnableNode(const char *payload, size_t length);
@@ -79,8 +79,8 @@ private:
 	/* virtual methods from class ControlHandler */
 	void OnControlPacket(ControlServer &control_server,
 			     BengProxy::ControlCommand command,
-			     ConstBuffer<void> payload,
-			     WritableBuffer<UniqueFileDescriptor> fds,
+			     std::span<const std::byte> payload,
+			     std::span<UniqueFileDescriptor> fds,
 			     SocketAddress address, int uid) override;
 
 	void OnControlError(std::exception_ptr ep) noexcept override;

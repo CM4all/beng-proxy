@@ -48,11 +48,11 @@ class DumpControlHandler final : public ControlHandler {
 public:
 	void OnControlPacket(ControlServer &,
 			     BengProxy::ControlCommand command,
-			     ConstBuffer<void> payload,
-			     WritableBuffer<UniqueFileDescriptor>,
+			     std::span<const std::byte> payload,
+			     std::span<UniqueFileDescriptor>,
 			     SocketAddress, int uid) override {
 		printf("packet command=%u uid=%d length=%zu\n",
-		       unsigned(command), uid, payload.size);
+		       unsigned(command), uid, payload.size());
 	}
 
 	void OnControlError(std::exception_ptr ep) noexcept override {

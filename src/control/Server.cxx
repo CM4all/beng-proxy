@@ -37,7 +37,6 @@
 #include "net/SendMessage.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/Iovec.hxx"
-#include "io/UniqueFileDescriptor.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
@@ -90,7 +89,7 @@ control_server_decode(ControlServer &control_server,
 		data = header + 1;
 		length -= sizeof(*header);
 
-		const char *payload = (const char *)data;
+		const std::byte *payload = (const std::byte *)data;
 		if (length < payload_length)
 			throw FormatRuntimeError("partial payload (length=%zu, expected=%zu)",
 						 length, payload_length);

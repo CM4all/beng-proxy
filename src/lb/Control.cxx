@@ -62,7 +62,7 @@ LbControl::LbControl(LbInstance &_instance, const LbControlConfig &config)
 }
 
 inline void
-LbControl::InvalidateTranslationCache(ConstBuffer<void> payload,
+LbControl::InvalidateTranslationCache(std::span<const std::byte> payload,
 				      SocketAddress address)
 {
 	if (payload.empty()) {
@@ -89,8 +89,9 @@ LbControl::InvalidateTranslationCache(ConstBuffer<void> payload,
 	TranslationInvalidateRequest request;
 
 	try {
-		request = ParseTranslationInvalidateRequest(tpool, payload.data,
-							    payload.size);
+		request = ParseTranslationInvalidateRequest(tpool,
+							    payload.data(),
+							    payload.size());
 	} catch (...) {
 		logger(2, "malformed TCACHE_INVALIDATE control packet: ",
 		       GetFullMessage(std::current_exception()));
@@ -294,12 +295,12 @@ try {
 void
 LbControl::OnControlPacket(ControlServer &control_server,
 			   BengProxy::ControlCommand command,
-			   ConstBuffer<void> payload,
-			   WritableBuffer<UniqueFileDescriptor>,
+			   std::span<const std::byte> payload,
+			   std::span<UniqueFileDescriptor>,
 			   SocketAddress address, int uid)
 {
 	logger(5, "command=", int(command), " uid=", uid,
-	       " payload_length=", unsigned(payload.size));
+	       " payload_length=", unsigned(payload.size()));
 
 	/* only local clients are allowed to use most commands */
 	const bool is_privileged = uid >= 0;
@@ -331,12 +332,12 @@ LbControl::OnControlPacket(ControlServer &control_server,
 
 	case ControlCommand::ENABLE_NODE:
 		if (is_privileged)
-			EnableNode((const char *)payload.data, payload.size);
+			EnableNode((const char *)payload.data(), payload.size());
 		break;
 
 	case ControlCommand::FADE_NODE:
 		if (is_privileged)
-			FadeNode((const char *)payload.data, payload.size);
+			FadeNode((const char *)payload.data(), payload.size());
 		break;
 
 	case ControlCommand::NODE_STATUS:
@@ -355,8 +356,8 @@ LbControl::OnControlPacket(ControlServer &control_server,
 		break;
 
 	case ControlCommand::VERBOSE:
-		if (is_privileged && payload.size == 1) {
-			SetLogLevel(*(const uint8_t *)payload.data);
+		if (is_privileged && payload.size() == 1) {
+			SetLogLevel(*(const uint8_t *)payload.data());
 		}
 
 		break;

@@ -56,7 +56,7 @@
 using namespace BengProxy;
 
 static void
-control_tcache_invalidate(BpInstance *instance, ConstBuffer<void> payload)
+control_tcache_invalidate(BpInstance *instance, std::span<const std::byte> payload)
 {
 	if (payload.empty()) {
 		/* flush the translation cache if the payload is empty */
@@ -73,7 +73,8 @@ control_tcache_invalidate(BpInstance *instance, ConstBuffer<void> payload)
 
 	try {
 		request = ParseTranslationInvalidateRequest(*tpool,
-							    payload.data, payload.size);
+							    payload.data(),
+							    payload.size());
 	} catch (...) {
 		LogConcat(2, "control",
 			  "malformed TCACHE_INVALIDATE control packet: ",
@@ -104,10 +105,10 @@ query_stats(BpInstance *instance, ControlServer *server,
 }
 
 static void
-HandleStopwatchPipe(ConstBuffer<void> payload,
-		    WritableBuffer<UniqueFileDescriptor> fds)
+HandleStopwatchPipe(std::span<const std::byte> payload,
+		    std::span<UniqueFileDescriptor> fds)
 {
-	if (!payload.empty() || fds.size != 1 || !fds.front().IsPipe())
+	if (!payload.empty() || fds.size() != 1 || !fds.front().IsPipe())
 		throw std::runtime_error("Malformed STOPWATCH_PIPE packet");
 
 	stopwatch_enable(std::move(fds.front()));
@@ -116,12 +117,12 @@ HandleStopwatchPipe(ConstBuffer<void> payload,
 void
 BpInstance::OnControlPacket(ControlServer &control_server,
 			    BengProxy::ControlCommand command,
-			    ConstBuffer<void> payload,
-			    WritableBuffer<UniqueFileDescriptor> fds,
+			    std::span<const std::byte> payload,
+			    std::span<UniqueFileDescriptor> fds,
 			    SocketAddress address, int uid)
 {
 	LogConcat(5, "control", "command=", int(command), " uid=", uid,
-		  " payload_length=", unsigned(payload.size));
+		  " payload_length=", unsigned(payload.size()));
 
 	/* only local clients are allowed to use most commands */
 	const bool is_privileged = uid >= 0;
@@ -151,8 +152,8 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 		break;
 
 	case ControlCommand::VERBOSE:
-		if (is_privileged && payload.size == 1)
-			SetLogLevel(*(const uint8_t *)payload.data);
+		if (is_privileged && payload.size() == 1)
+			SetLogLevel(*(const uint8_t *)payload.data());
 		break;
 
 	case ControlCommand::FADE_CHILDREN:
@@ -192,8 +193,8 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 				filter_cache_flush(*filter_cache);
 			else
 				filter_cache_flush_tag(*filter_cache,
-						       std::string((const char *)payload.data,
-								   payload.size));
+						       std::string((const char *)payload.data(),
+								   payload.size()));
 		}
 
 		break;
@@ -210,8 +211,8 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 	case ControlCommand::FLUSH_HTTP_CACHE:
 		if (http_cache != nullptr)
 			http_cache_flush_tag(*http_cache,
-					     std::string((const char *)payload.data,
-							 payload.size));
+					     std::string((const char *)payload.data(),
+							 payload.size()));
 
 		break;
 	}

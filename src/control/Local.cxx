@@ -42,8 +42,8 @@
 void
 LocalControl::OnControlPacket(ControlServer &control_server,
 			      BengProxy::ControlCommand command,
-			      ConstBuffer<void> payload,
-			      WritableBuffer<UniqueFileDescriptor> fds,
+			      std::span<const std::byte> payload,
+			      std::span<UniqueFileDescriptor> fds,
 			      SocketAddress address, int uid)
 {
 	if (uid < 0 || (uid != 0 && (uid_t)uid != geteuid()))
