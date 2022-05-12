@@ -33,7 +33,6 @@
 #include "DefaultChunkAllocator.hxx"
 #include "SlicePool.hxx"
 #include "fb_pool.hxx"
-#include "util/WritableBuffer.hxx"
 
 #include <cassert>
 
@@ -46,13 +45,13 @@ DefaultChunkAllocator::~DefaultChunkAllocator() noexcept
 
 #endif
 
-WritableBuffer<void>
+std::span<std::byte>
 DefaultChunkAllocator::Allocate() noexcept
 {
 	assert(!allocation.IsDefined());
 
 	allocation = fb_pool_get().Alloc();
-	return {allocation.data, allocation.size};
+	return {(std::byte *)allocation.data, allocation.size};
 }
 
 void

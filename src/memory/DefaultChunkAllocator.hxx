@@ -36,9 +36,9 @@
 
 #include <cassert>
 #include <cstddef>
+#include <span>
 #include <utility>
 
-template<typename T> struct WritableBuffer;
 class SliceArea;
 
 class DefaultChunkAllocator {
@@ -60,7 +60,7 @@ public:
 		swap(a.allocation, b.allocation);
 	}
 
-	WritableBuffer<void> Allocate() noexcept;
+	std::span<std::byte> Allocate() noexcept;
 	void Free() noexcept;
 
 	bool IsDefined() const noexcept {

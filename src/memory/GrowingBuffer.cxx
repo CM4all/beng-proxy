@@ -33,8 +33,6 @@
 #include "GrowingBuffer.hxx"
 #include "pool/pool.hxx"
 #include "istream/Bucket.hxx"
-#include "util/ConstBuffer.hxx"
-#include "util/WritableBuffer.hxx"
 
 #include <algorithm>
 #include <cstdarg>
@@ -48,7 +46,7 @@ GrowingBuffer::BufferPtr::Allocate() noexcept
 	assert(buffer == nullptr);
 
 	auto a = allocator.Allocate();
-	buffer = ::new(a.data) Buffer(a.size - sizeof(*buffer) + sizeof(buffer->data));
+	buffer = ::new(a.data()) Buffer(a.size() - sizeof(*buffer) + sizeof(buffer->data));
 	return *buffer;
 }
 
