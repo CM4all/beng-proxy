@@ -111,7 +111,7 @@ public:
 	std::span<const T> Dup(std::span<const T> src) const noexcept {
 		auto dest = Dup(std::as_bytes(src));
 		return {
-			(const T *)(dest.data()),
+			(const T *)(const void *)(dest.data()),
 			dest.size() / sizeof(T),
 		};
 	}
