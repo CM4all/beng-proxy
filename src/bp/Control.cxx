@@ -46,7 +46,6 @@
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/WritableBuffer.hxx"
 #include "stopwatch.hxx"
 
 #ifdef HAVE_AVAHI

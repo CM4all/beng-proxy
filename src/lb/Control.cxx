@@ -40,7 +40,6 @@
 #include "net/FailureManager.hxx"
 #include "net/FailureRef.hxx"
 #include "util/Exception.hxx"
-#include "util/WritableBuffer.hxx"
 
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Publisher.hxx"
