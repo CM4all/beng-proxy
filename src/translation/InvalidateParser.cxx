@@ -178,31 +178,31 @@ apply_translation_packet(TranslateRequest &request,
 
 TranslationInvalidateRequest
 ParseTranslationInvalidateRequest(struct pool &pool,
-				  const void *data, size_t length)
+				  std::span<const std::byte> p)
 {
 	TranslationInvalidateRequest request;
 
-	if (length % 4 != 0)
+	if (p.size() % 4 != 0)
 		/* must be padded */
 		throw std::runtime_error("Not padded");
 
-	while (length > 0) {
-		const auto *header = (const TranslationHeader *)data;
-		if (length < sizeof(*header))
+	while (!p.empty()) {
+		const auto *header = (const TranslationHeader *)
+			(const void *)p.data();
+		if (p.size() < sizeof(*header))
 			throw std::runtime_error("Partial header");
 
 		size_t payload_length = FromBE16(header->length);
 		const auto command =
 			TranslationCommand(FromBE16(uint16_t(header->command)));
 
-		data = header + 1;
-		length -= sizeof(*header);
+		p = p.subspan(sizeof(*header));
 
-		if (length < payload_length)
+		if (p.size() < payload_length)
 			throw std::runtime_error("Truncated payload");
 
 		const char *payload = payload_length > 0
-			? p_strndup(&pool, (const char *)data, payload_length)
+			? p_strndup(&pool, (const char *)p.data(), payload_length)
 			: "";
 		if (command == TranslationCommand::SITE)
 			request.site = payload;
@@ -216,8 +216,7 @@ ParseTranslationInvalidateRequest(struct pool &pool,
 
 		payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */
 
-		data = (const char *)data + payload_length;
-		length -= payload_length;
+		p = p.subspan(payload_length);
 	}
 
 	return request;

@@ -36,6 +36,8 @@
 #include "translation/Protocol.hxx"
 #include "util/StaticArray.hxx"
 
+#include <cstddef>
+#include <span>
 #include <string>
 
 #include <stddef.h>
@@ -55,4 +57,4 @@ struct TranslationInvalidateRequest : TranslateRequest {
  */
 TranslationInvalidateRequest
 ParseTranslationInvalidateRequest(struct pool &pool,
-				  const void *data, size_t length);
+				  std::span<const std::byte> p);

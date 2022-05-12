@@ -72,9 +72,7 @@ control_tcache_invalidate(BpInstance *instance, std::span<const std::byte> paylo
 	TranslationInvalidateRequest request;
 
 	try {
-		request = ParseTranslationInvalidateRequest(*tpool,
-							    payload.data(),
-							    payload.size());
+		request = ParseTranslationInvalidateRequest(*tpool, payload);
 	} catch (...) {
 		LogConcat(2, "control",
 			  "malformed TCACHE_INVALIDATE control packet: ",

@@ -89,9 +89,7 @@ LbControl::InvalidateTranslationCache(std::span<const std::byte> payload,
 	TranslationInvalidateRequest request;
 
 	try {
-		request = ParseTranslationInvalidateRequest(tpool,
-							    payload.data(),
-							    payload.size());
+		request = ParseTranslationInvalidateRequest(tpool, payload);
 	} catch (...) {
 		logger(2, "malformed TCACHE_INVALIDATE control packet: ",
 		       GetFullMessage(std::current_exception()));
