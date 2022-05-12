@@ -158,8 +158,8 @@ SslFilter::PostHandshake() noexcept
 	unsigned int alpn_length;
 	SSL_get0_alpn_selected(ssl.get(), &alpn_data, &alpn_length);
 	if (alpn_length > 0)
-		alpn_selected = ConstBuffer<unsigned char>(alpn_data,
-							   alpn_length);
+		alpn_selected = std::span<const unsigned char>(alpn_data,
+							       alpn_length);
 
 	UniqueX509 cert(SSL_get_peer_certificate(ssl.get()));
 	if (cert != nullptr) {
