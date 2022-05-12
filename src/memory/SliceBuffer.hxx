@@ -33,10 +33,9 @@
 #pragma once
 
 #include "SliceAllocation.hxx"
-#include "util/WritableBuffer.hxx"
 
-#include <assert.h>
-#include <stdint.h>
+#include <cassert>
+#include <span>
 
 class SlicePool;
 class SliceArea;
@@ -86,16 +85,16 @@ public:
 		return size() == 0;
 	}
 
-	ConstBuffer<uint8_t> Read() noexcept {
+	std::span<const std::byte> Read() noexcept {
 		assert(IsDefined());
 
-		return {(const uint8_t *)allocation.data, fill};
+		return {(const std::byte *)allocation.data, fill};
 	}
 
-	WritableBuffer<uint8_t> Write() noexcept {
+	std::span<std::byte> Write() noexcept {
 		assert(IsDefined());
 
-		return {(uint8_t *)allocation.data + fill, allocation.size - fill};
+		return {(std::byte *)allocation.data + fill, allocation.size - fill};
 	}
 
 	void Append(size_t n) noexcept {

@@ -180,11 +180,11 @@ BufferedIstream::ReadToBuffer(int fd, size_t max_length) noexcept
 		/* buffer is full - the "ready" call is pending */
 		return ISTREAM_RESULT_BLOCKING;
 
-	ssize_t nbytes = read(fd, w.data, std::min(w.size, max_length));
+	ssize_t nbytes = read(fd, w.data(), std::min(w.size(), max_length));
 	if (nbytes > 0) {
 		buffer.Append(nbytes);
 
-		if ((size_t)nbytes == w.size)
+		if ((size_t)nbytes == w.size())
 			/* buffer has become full - we can report to handler */
 			defer_ready.Schedule();
 }
@@ -210,11 +210,11 @@ BufferedIstream::OnData(const void *data, size_t length) noexcept
 		/* buffer is full - the "ready" call is pending */
 		return 0;
 
-	size_t nbytes = std::min(length, w.size);
-	memcpy(w.data, data, nbytes);
+	size_t nbytes = std::min(length, w.size());
+	memcpy(w.data(), data, nbytes);
 	buffer.Append(nbytes);
 
-	if (nbytes == w.size)
+	if (nbytes == w.size())
 		/* buffer has become full - we can report to handler */
 		defer_ready.Schedule();
 
