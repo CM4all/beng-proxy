@@ -394,6 +394,7 @@ else
 endif
 
 subdir('src/ssl')
+subdir('src/control')
 
 libcommon_require_uring = true
 
@@ -742,19 +743,6 @@ processor_dep = declare_dependency(
     istream_dep,
     putil_dep,
     stopwatch_dep,
-  ],
-)
-
-control_server = static_library('control_server',
-  'src/control/Server.cxx',
-  'src/control/Handler.cxx',
-  'src/control/Local.cxx',
-  include_directories: inc,
-)
-control_server_dep = declare_dependency(
-  link_with: control_server,
-  dependencies: [
-    event_net_dep,
   ],
 )
 
@@ -1161,20 +1149,6 @@ executable(
   ],
   install: true,
   install_dir: 'lib/cm4all/beng-proxy/delegate/bin',
-)
-
-executable(
-  'cm4all-beng-control',
-  'src/control/Main.cxx',
-  'src/control/Client.cxx',
-  include_directories: inc,
-  dependencies: [
-    net_dep,
-    io_dep,
-    util_dep,
-    libcxx,
-  ],
-  install: true,
 )
 
 install_headers(
