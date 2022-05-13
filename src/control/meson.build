@@ -1,7 +1,6 @@
 control_server = static_library(
   'control_server',
   'Server.cxx',
-  'Handler.cxx',
   'Local.cxx',
   include_directories: inc,
 )
