@@ -38,6 +38,7 @@
 #include <utility>
 
 struct CertDatabaseConfig;
+struct UniqueCertKey;
 namespace Pg { class Result; }
 
 UniqueX509
@@ -47,6 +48,6 @@ UniqueEVP_PKEY
 LoadWrappedKey(const CertDatabaseConfig &config,
 	       const Pg::Result &result, unsigned row, unsigned column);
 
-std::pair<UniqueX509, UniqueEVP_PKEY>
+UniqueCertKey
 LoadCertificateKey(const CertDatabaseConfig &config,
 		   const Pg::Result &result, unsigned row, unsigned column);

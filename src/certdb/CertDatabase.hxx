@@ -42,6 +42,7 @@
 
 typedef struct aes_key_st AES_KEY;
 struct CertDatabaseConfig;
+struct UniqueCertKey;
 
 class CertDatabase {
 	const CertDatabaseConfig &config;
@@ -150,10 +151,10 @@ public:
 	 * @return a pair of certificate and key, or {nullptr, nullptr} if
 	 * no matching certificate was found
 	 */
-	std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKeyByHandle(const char *handle);
-	std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(const char *name,
-								      const char *special);
-	std::pair<UniqueX509, UniqueEVP_PKEY> GetServerCertificateKey(Pg::Serial id);
+	UniqueCertKey GetServerCertificateKeyByHandle(const char *handle);
+	UniqueCertKey GetServerCertificateKey(const char *name,
+					      const char *special);
+	UniqueCertKey GetServerCertificateKey(Pg::Serial id);
 
 	/**
 	 * Result columns: id, handle, issuer_common_name, not_after

@@ -37,6 +37,7 @@
 #include "Basic.hxx"
 #include "lib/openssl/LoadFile.hxx"
 #include "lib/openssl/Error.hxx"
+#include "lib/openssl/UniqueCertKey.hxx"
 #include "io/Logger.hxx"
 #include "fs/ThreadSocketFilter.hxx"
 #include "thread/Pool.hxx"
@@ -53,12 +54,10 @@ class SslClientCerts {
 		}
 	};
 
-	std::map<UniqueX509_NAME,
-		 std::pair<UniqueX509, UniqueEVP_PKEY>,
+	std::map<UniqueX509_NAME, UniqueCertKey,
 		 X509NameCompare> by_issuer;
 
-	std::map<std::string,
-		 std::pair<UniqueX509, UniqueEVP_PKEY>> by_name;
+	std::map<std::string, UniqueCertKey> by_name;
 
 public:
 	explicit SslClientCerts(const std::vector<NamedSslCertKeyConfig> &config);
@@ -112,19 +111,18 @@ SslClientCerts::SslClientCerts(const std::vector<NamedSslCertKeyConfig> &config)
 			if (!i.name.empty()) {
 				auto j = by_name.emplace(std::piecewise_construct,
 							 std::forward_as_tuple(i.name),
-							 std::forward_as_tuple(UpRef(*ck.first), UpRef(*ck.second)));
+							 std::forward_as_tuple(UpRef(ck)));
 				if (!j.second)
 					throw FormatRuntimeError("Duplicate certificate name '%s'",
 								 i.name.c_str());
 			}
 
-			X509_NAME *issuer = X509_get_issuer_name(ck.first.get());
+			X509_NAME *issuer = X509_get_issuer_name(ck.cert.get());
 			if (issuer != nullptr) {
 				UniqueX509_NAME issuer2(X509_NAME_dup(issuer));
 				if (issuer2)
 					by_issuer.emplace(std::move(issuer2),
-							  std::make_pair(std::move(ck.first),
-									 std::move(ck.second)));
+							  std::move(ck));
 			}
 		} catch (...) {
 			std::throw_with_nested(FormatRuntimeError("Failed to load certificate '%s'/'%s'",
@@ -146,8 +144,8 @@ SslClientCerts::Find(X509_NAME &name,
 	if (i == by_issuer.end())
 		return false;
 
-	*x509 = UpRef(*i->second.first).release();
-	*pkey = UpRef(*i->second.second).release();
+	*x509 = UpRef(*i->second.cert).release();
+	*pkey = UpRef(*i->second.key).release();
 	return true;
 }
 
@@ -204,8 +202,8 @@ SslClientFactory::Create(EventLoop &event_loop,
 		if (c == nullptr)
 			throw std::runtime_error("Selected certificate not found in configuration");
 
-		SSL_use_PrivateKey(ssl.get(), c->second.get());
-		SSL_use_certificate(ssl.get(), c->first.get());
+		SSL_use_PrivateKey(ssl.get(), c->key.get());
+		SSL_use_certificate(ssl.get(), c->cert.get());
 	}
 
 	auto &queue = thread_pool_get_queue(event_loop);

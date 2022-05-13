@@ -32,17 +32,15 @@
 
 #pragma once
 
-#include "lib/openssl/UniqueEVP.hxx"
-#include "lib/openssl/UniqueX509.hxx"
-
 #include <utility>
 
 struct CertDatabaseConfig;
+struct UniqueCertKey;
 
 namespace Pg { class AsyncConnection; }
 namespace Co { template<typename T> class Task; }
 
-Co::Task<std::pair<UniqueX509, UniqueEVP_PKEY>>
+Co::Task<UniqueCertKey>
 CoGetServerCertificateKey(Pg::AsyncConnection &connection,
 			  const CertDatabaseConfig &config,
 			  const char *name, const char *special);

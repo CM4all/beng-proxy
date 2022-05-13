@@ -43,6 +43,7 @@
 #include "lib/openssl/LoadFile.hxx"
 #include "lib/openssl/Name.hxx"
 #include "lib/openssl/UniqueEVP.hxx"
+#include "lib/openssl/UniqueCertKey.hxx"
 #include "lib/openssl/Error.hxx"
 #include "lb/Config.hxx"
 #include "system/Urandom.hxx"
@@ -139,14 +140,14 @@ ReloadCertificate(const CertDatabaseConfig &db_config, const char *handle)
 	CertDatabase db(db_config);
 
 	auto cert_key = db.GetServerCertificateKeyByHandle(handle);
-	if (!cert_key.second)
+	if (!cert_key)
 		throw "Certificate not found";
 
 	WrapKeyHelper wrap_key_helper;
 	const auto wrap_key = wrap_key_helper.SetEncryptKey(db_config);
 
 	db.LoadServerCertificate(handle, nullptr,
-				 *cert_key.first, *cert_key.second,
+				 *cert_key.cert, *cert_key.key,
 				 wrap_key.first, wrap_key.second);
 }
 
@@ -183,7 +184,7 @@ GetCertificate(const CertDatabaseConfig &db_config, const char *handle)
 static UniqueEVP_PKEY
 FindKeyByName(CertDatabase &db, const char *common_name)
 {
-	return db.GetServerCertificateKey(common_name, nullptr).second;
+	return db.GetServerCertificateKey(common_name, nullptr).key;
 }
 
 static void

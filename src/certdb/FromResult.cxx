@@ -35,6 +35,7 @@
 #include "pg/Result.hxx"
 #include "lib/openssl/Certificate.hxx"
 #include "lib/openssl/Key.hxx"
+#include "lib/openssl/UniqueCertKey.hxx"
 
 UniqueX509
 LoadCertificate(const Pg::Result &result, unsigned row, unsigned column)
@@ -66,15 +67,17 @@ LoadWrappedKey(const CertDatabaseConfig &config,
 	return DecodeDerKey(key_der);
 }
 
-std::pair<UniqueX509, UniqueEVP_PKEY>
+UniqueCertKey
 LoadCertificateKey(const CertDatabaseConfig &config,
 		   const Pg::Result &result, unsigned row, unsigned column)
 {
-	auto pair = std::make_pair(LoadCertificate(result, row, column),
-				   LoadWrappedKey(config, result, row, column + 1));
+	UniqueCertKey ck{
+		LoadCertificate(result, row, column),
+		LoadWrappedKey(config, result, row, column + 1),
+	};
 
-	if (!MatchModulus(*pair.first, *pair.second))
+	if (!MatchModulus(*ck.cert, *ck.key))
 		throw std::runtime_error("Key does not match certificate");
 
-	return pair;
+	return ck;
 }

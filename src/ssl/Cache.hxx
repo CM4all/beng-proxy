@@ -36,7 +36,7 @@
 #include "LookupCertResult.hxx"
 #include "lib/openssl/Hash.hxx"
 #include "lib/openssl/UniqueX509.hxx"
-#include "lib/openssl/UniqueEVP.hxx"
+#include "lib/openssl/UniqueCertKey.hxx"
 #include "lib/openssl/IntegralExDataIndex.hxx"
 #include "certdb/Config.hxx"
 #include "pg/AsyncConnection.hxx"
@@ -104,38 +104,22 @@ class CertCache final : Pg::AsyncConnectionHandler, CertNameCacheHandler {
 	 */
 	std::mutex mutex;
 
-	using CertKey = std::pair<UniqueX509, UniqueEVP_PKEY>;
-
-	struct Item {
-		const UniqueX509 cert;
-		const UniqueEVP_PKEY key;
-
+	struct Item : UniqueCertKey {
 		std::string special;
 
 		std::chrono::steady_clock::time_point expires;
 
-		template<typename C, typename K>
-		Item(C &&_cert, K &&_key,
+		Item(UniqueCertKey &&_ck,
 		     std::chrono::steady_clock::time_point now) noexcept
-			:cert(std::forward<C>(_cert)),
-			 key(std::forward<K>(_key)),
+			:UniqueCertKey(std::move(_ck)),
 			 /* the initial expiration is 6 hours; it will be raised
 			    to 24 hours if the certificate is used again */
 			 expires(now + std::chrono::hours(6)) {}
 
 		Item(const Item &src) noexcept
-			:cert(src.cert.get()),
-			 key(src.key.get()),
+			:UniqueCertKey(UpRef(src)),
 			 special(src.special),
-			 expires(src.expires) {
-			// TODO: this should be part of UniqueX509/UniqueEVP_PKEY
-			X509_up_ref(cert.get());
-			EVP_PKEY_up_ref(key.get());
-		}
-
-		CertKey UpRef() noexcept {
-			return {::UpRef(*cert), ::UpRef(*key)};
-		}
+			 expires(src.expires) {}
 	};
 
 	/**
@@ -194,12 +178,12 @@ private:
 	 *
 	 * This method locks the mutex when necessary.
 	 */
-	CertKey Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key,
-		    const char *special);
+	UniqueCertKey Add(UniqueCertKey &&ck,
+			  const char *special);
 
 	[[gnu::pure]]
-	std::optional<CertKey> GetNoWildCardCached(const char *host,
-						   const char *special) noexcept;
+	std::optional<UniqueCertKey> GetNoWildCardCached(const char *host,
+							 const char *special) noexcept;
 
 	void StartQuery() noexcept;
 
@@ -207,10 +191,10 @@ private:
 			   const char *special) noexcept;
 
 	void Apply(SSL &ssl, X509 &cert, EVP_PKEY &key);
-	void Apply(SSL &ssl, const CertKey &cert_key);
+	void Apply(SSL &ssl, const UniqueCertKey &cert_key);
 
 	LookupCertResult ApplyAndSetState(SSL &ssl,
-					  const CertKey &cert_key) noexcept;
+					  const UniqueCertKey &cert_key) noexcept;
 
 	/**
 	 * Flush items with the given name.

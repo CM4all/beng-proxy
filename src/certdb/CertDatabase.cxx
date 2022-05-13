@@ -39,6 +39,7 @@
 #include "lib/openssl/Time.hxx"
 #include "lib/openssl/Name.hxx"
 #include "lib/openssl/AltName.hxx"
+#include "lib/openssl/UniqueCertKey.hxx"
 #include "io/FileDescriptor.hxx"
 #include "util/AllocatedString.hxx"
 
@@ -243,17 +244,17 @@ CertDatabase::GetServerCertificateByHandle(const char *handle)
 	return LoadCertificate(result, 0, 0);
 }
 
-std::pair<UniqueX509, UniqueEVP_PKEY>
+UniqueCertKey
 CertDatabase::GetServerCertificateKeyByHandle(const char *handle)
 {
 	auto result = FindServerCertificateKeyByHandle(handle);
 	if (result.GetRowCount() == 0)
-		return std::make_pair(nullptr, nullptr);
+		return {};
 
 	return LoadCertificateKey(config, result, 0, 0);
 }
 
-std::pair<UniqueX509, UniqueEVP_PKEY>
+UniqueCertKey
 CertDatabase::GetServerCertificateKey(const char *name, const char *special)
 {
 	auto result = FindServerCertificateKeyByName(SyncQueryWrapper{conn},
@@ -264,18 +265,18 @@ CertDatabase::GetServerCertificateKey(const char *name, const char *special)
 		result = FindServerCertificateKeyByAltName(SyncQueryWrapper{conn},
 							   name, special);
 		if (result.GetRowCount() == 0)
-			return std::make_pair(nullptr, nullptr);
+			return {};
 	}
 
 	return LoadCertificateKey(config, result, 0, 0);
 }
 
-std::pair<UniqueX509, UniqueEVP_PKEY>
+UniqueCertKey
 CertDatabase::GetServerCertificateKey(Pg::Serial id)
 {
 	auto result = FindServerCertificateKeyById(id);
 	if (result.GetRowCount() == 0)
-		return std::make_pair(nullptr, nullptr);
+		return {};
 
 	return LoadCertificateKey(config, result, 0, 0);
 }

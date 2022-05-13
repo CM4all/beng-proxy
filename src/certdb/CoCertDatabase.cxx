@@ -33,6 +33,7 @@
 #include "CoCertDatabase.hxx"
 #include "Queries.hxx"
 #include "FromResult.hxx"
+#include "lib/openssl/UniqueCertKey.hxx"
 #include "pg/CoQuery.hxx"
 #include "co/Task.hxx"
 
@@ -50,7 +51,7 @@ struct CoQueryWrapper {
 	}
 };
 
-Co::Task<std::pair<UniqueX509, UniqueEVP_PKEY>>
+Co::Task<UniqueCertKey>
 CoGetServerCertificateKey(Pg::AsyncConnection &connection,
 			  const CertDatabaseConfig &config,
 			  const char *name, const char *special)
@@ -63,7 +64,7 @@ CoGetServerCertificateKey(Pg::AsyncConnection &connection,
 		// TODO do both queries, use the most recent record
 		result = co_await FindServerCertificateKeyByAltName(q, name, special);
 		if (result.GetRowCount() == 0)
-			co_return std::make_pair(nullptr, nullptr);
+			co_return UniqueCertKey{};
 	}
 
 	co_return LoadCertificateKey(config, result, 0, 0);

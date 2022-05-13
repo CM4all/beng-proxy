@@ -53,6 +53,7 @@
 #include "lib/openssl/Name.hxx"
 #include "lib/openssl/GeneralName.hxx"
 #include "lib/openssl/UniqueX509.hxx"
+#include "lib/openssl/UniqueCertKey.hxx"
 #include "lib/openssl/Error.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/ConstBuffer.hxx"
@@ -486,11 +487,11 @@ AcmeRenewCert(const CertDatabaseConfig &db_config, const AcmeConfig &config,
 		throw "Neither --alpn nor --challenge-directory nor --dns-txt-program specified";
 
 	const auto old_cert_key = db.GetServerCertificateKeyByHandle(handle);
-	if (!old_cert_key.second)
+	if (old_cert_key)
 		throw "Old certificate not found in database";
 
-	auto &old_cert = *old_cert_key.first;
-	auto &old_key = *old_cert_key.second;
+	auto &old_cert = *old_cert_key.cert;
+	auto &old_key = *old_cert_key.key;
 
 	UniqueEVP_PKEY generated_key;
 	if (!AcceptKey(old_key)) {

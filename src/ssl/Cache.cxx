@@ -125,14 +125,14 @@ private:
 	void OnCompletion(std::exception_ptr error) noexcept;
 };
 
-static Co::Task<std::pair<UniqueX509, UniqueEVP_PKEY>>
+static Co::Task<UniqueCertKey>
 CoGetServerCertificateKeyMaybeWildcard(Pg::AsyncConnection &connection,
 				       const CertDatabaseConfig &config,
 				       const char *name, const char *special)
 {
 	auto cert_key = co_await CoGetServerCertificateKey(connection, config,
 							   name, special);
-	if (!cert_key.first) {
+	if (!cert_key) {
 		const auto wildcard = MakeCommonNameWildcard(name);
 		if (!wildcard.empty())
 			cert_key = co_await
@@ -155,14 +155,13 @@ CertCache::Query::Run()
 									cache.config,
 									host.c_str(),
 									_special);
-	if (!cert_key.first)
+	if (!cert_key)
 		/* certificate was not found; the
 		   SslCompletionHandlers will be invoked by
 		   OnCompletion() */
 		co_return;
 
-	cert_key = cache.Add(std::move(cert_key.first),
-			     std::move(cert_key.second),
+	cert_key = cache.Add(std::move(cert_key),
 			     _special);
 
 	requests.clear_and_dispose([this, &cert_key](Request *request){
@@ -278,23 +277,21 @@ CertCache::Disconnect() noexcept
 	query_added_notify.Disable();
 }
 
-inline CertCache::CertKey
-CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key, const char *special)
+inline UniqueCertKey
+CertCache::Add(UniqueCertKey &&ck, const char *special)
 {
-	assert(cert);
-	assert(key);
+	assert(ck);
 
 	ERR_clear_error();
 
-	const auto name = GetCommonName(*cert);
+	const auto name = GetCommonName(*ck.cert);
 	if (name == nullptr)
 		throw std::runtime_error("Certificate without common name");
 
 	const std::unique_lock<std::mutex> lock(mutex);
 	auto i = map.emplace(std::piecewise_construct,
 			     std::forward_as_tuple(name.c_str()),
-			     std::forward_as_tuple(std::move(cert),
-						   std::move(key),
+			     std::forward_as_tuple(std::move(ck),
 						   GetEventLoop().SteadyNow()));
 
 	if (special != nullptr)
@@ -310,10 +307,10 @@ CertCache::Add(UniqueX509 &&cert, UniqueEVP_PKEY &&key, const char *special)
 	for (auto &a : alt_names)
 		map.emplace(std::move(a), i->second);
 
-	return i->second.UpRef();
+	return UpRef(i->second);
 }
 
-inline std::optional<CertCache::CertKey>
+inline std::optional<UniqueCertKey>
 CertCache::GetNoWildCardCached(const char *host, const char *_special) noexcept
 {
 	const std::unique_lock<std::mutex> lock{mutex};
@@ -327,7 +324,7 @@ CertCache::GetNoWildCardCached(const char *host, const char *_special) noexcept
 	for (auto [i, end] = map.equal_range(host); i != end; ++i) {
 		if (i->second.special == special) {
 			i->second.expires = GetEventLoop().SteadyNow() + std::chrono::hours(24);
-			return i->second.UpRef();
+			return UpRef(i->second);
 		}
 	}
 
@@ -411,13 +408,13 @@ CertCache::Apply(SSL &ssl, X509 &cert, EVP_PKEY &key)
 }
 
 inline void
-CertCache::Apply(SSL &ssl, const CertKey &cert_key)
+CertCache::Apply(SSL &ssl, const UniqueCertKey &cert_key)
 {
-	Apply(ssl, *cert_key.first, *cert_key.second);
+	Apply(ssl, *cert_key.cert, *cert_key.key);
 }
 
 inline LookupCertResult
-CertCache::ApplyAndSetState(SSL &ssl, const CertKey &cert_key) noexcept
+CertCache::ApplyAndSetState(SSL &ssl, const UniqueCertKey &cert_key) noexcept
 {
 	try {
 		Apply(ssl, cert_key);
