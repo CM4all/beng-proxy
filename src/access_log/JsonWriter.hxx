@@ -91,7 +91,7 @@ private:
 		default:
 			if ((unsigned char)ch < 0x20)
 				/* escape non-printable control characters */
-				fprintf(file, "\\x%02x", ch);
+				fprintf(file, "\\u%04x", ch);
 			else
 				WriteRaw(ch);
 			break;
