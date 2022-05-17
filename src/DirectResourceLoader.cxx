@@ -169,7 +169,7 @@ try {
 
 		const char *remote_ip = GetRemoteHost(xff, pool, headers);
 
-		if (cgi->address_list.IsEmpty())
+		if (cgi->address_list.empty())
 			fcgi_request(&pool, event_loop, fcgi_stock, parent_stopwatch,
 				     params.site_name,
 				     cgi->options,
@@ -225,7 +225,7 @@ try {
 				    std::move(headers), std::move(body),
 				    cgi->params.ToArray(pool),
 				    handler, cancel_ptr);
-		else if (!cgi->address_list.IsEmpty())
+		else if (!cgi->address_list.empty())
 			SendRemoteWasRequest(pool, *remote_was_stock,
 					     parent_stopwatch,
 					     cgi->address_list.front(),

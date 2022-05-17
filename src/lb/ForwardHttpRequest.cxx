@@ -194,18 +194,18 @@ static unsigned
 GenerateCookie(const FailureManager &failure_manager, Expiry now,
 	       const AddressList &list) noexcept
 {
-	assert(list.GetSize() >= 2);
+	assert(list.size() >= 2);
 
-	const unsigned first = lb_cookie_generate(list.GetSize());
+	const unsigned first = lb_cookie_generate(list.size());
 
 	unsigned i = first;
 	do {
-		assert(i >= 1 && i <= list.GetSize());
-		const SocketAddress address = list.addresses[i % list.GetSize()];
+		assert(i >= 1 && i <= list.size());
+		const SocketAddress address = list.addresses[i % list.size()];
 		if (failure_manager.Check(now, address))
 			return i;
 
-		i = lb_cookie_next(list.GetSize(), i);
+		i = lb_cookie_next(list.size(), i);
 	} while (i != first);
 
 	/* all nodes have failed */

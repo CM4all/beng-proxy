@@ -158,7 +158,7 @@ http_address_dup_with_path(AllocatorPtr alloc,
 void
 HttpAddress::Check() const
 {
-	if (addresses.IsEmpty())
+	if (addresses.empty())
 		throw std::runtime_error("no ADDRESS for HTTP address");
 }
 

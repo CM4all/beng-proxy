@@ -37,7 +37,7 @@
 void
 LbClusterConfig::FillAddressList()
 {
-	assert(address_list.IsEmpty());
+	assert(address_list.empty());
 
 	address_list.SetStickyMode(sticky_mode);
 

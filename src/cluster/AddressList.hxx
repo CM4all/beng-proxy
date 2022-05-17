@@ -75,11 +75,11 @@ struct AddressList {
 	}
 
 	constexpr
-	bool IsEmpty() const noexcept {
+	bool empty() const noexcept {
 		return addresses.empty();
 	}
 
-	constexpr size_type GetSize() const noexcept {
+	constexpr size_type size() const noexcept {
 		return addresses.size();
 	}
 

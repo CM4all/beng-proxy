@@ -174,7 +174,7 @@ void
 CgiAddress::Check(bool is_was) const
 {
 	if (is_was) {
-		if (!address_list.IsEmpty()) {
+		if (!address_list.empty()) {
 			if (concurrency == 0)
 				throw std::runtime_error("Missing concurrency for Remote-WAS");
 

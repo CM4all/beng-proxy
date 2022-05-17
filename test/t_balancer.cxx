@@ -84,7 +84,7 @@ public:
 	}
 
 	int Find(SocketAddress address) const {
-		for (unsigned i = 0; i < GetSize(); ++i)
+		for (unsigned i = 0; i < size(); ++i)
 			if (addresses[i] == address)
 				return i;
 
