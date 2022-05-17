@@ -384,7 +384,7 @@ private:
 
 	/* virtual methods from class WasControlHandler */
 	bool OnWasControlPacket(enum was_command cmd,
-				ConstBuffer<void> payload) noexcept override;
+				std::span<const std::byte> payload) noexcept override;
 	bool OnWasControlDrained() noexcept override;
 
 	void OnWasControlDone() noexcept override {
@@ -500,7 +500,8 @@ ParseHeaderPacket(AllocatorPtr alloc, StringMap &headers,
 }
 
 bool
-WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) noexcept
+WasClient::OnWasControlPacket(enum was_command cmd,
+			      std::span<const std::byte> payload) noexcept
 {
 	switch (cmd) {
 		const uint32_t *status32_r;
@@ -551,12 +552,12 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
 			return false;
 		}
 
-		status32_r = (const uint32_t *)payload.data;
-		status16_r = (const uint16_t *)payload.data;
+		status32_r = (const uint32_t *)payload.data();
+		status16_r = (const uint16_t *)payload.data();
 
-		if (payload.size == sizeof(*status32_r))
+		if (payload.size() == sizeof(*status32_r))
 			status = (http_status_t)*status32_r;
-		else if (payload.size == sizeof(*status16_r))
+		else if (payload.size() == sizeof(*status16_r))
 			status = (http_status_t)*status16_r;
 		else {
 			stopwatch.RecordEvent("control_error");
@@ -630,8 +631,8 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
 			return false;
 		}
 
-		length_p = (const uint64_t *)payload.data;
-		if (payload.size != sizeof(*length_p)) {
+		length_p = (const uint64_t *)payload.data();
+		if (payload.size() != sizeof(*length_p)) {
 			stopwatch.RecordEvent("control_error");
 			AbortResponseBody(std::make_exception_ptr(WasProtocolError("malformed LENGTH packet")));
 			return false;
@@ -671,8 +672,8 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload) n
 			return false;
 		}
 
-		length_p = (const uint64_t *)payload.data;
-		if (payload.size != sizeof(*length_p)) {
+		length_p = (const uint64_t *)payload.data();
+		if (payload.size() != sizeof(*length_p)) {
 			stopwatch.RecordEvent("control_error");
 			AbortResponseBody(std::make_exception_ptr(WasProtocolError("malformed PREMATURE packet")));
 			return false;

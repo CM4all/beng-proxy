@@ -249,7 +249,7 @@ protected:
 
 	/* virtual methods from class Was::ControlHandler */
 	bool OnWasControlPacket(enum was_command cmd,
-				ConstBuffer<void> payload) noexcept override;
+				std::span<const std::byte> payload) noexcept override;
 	bool OnWasControlDrained() noexcept override {
 		return true;
 	}
@@ -261,7 +261,7 @@ protected:
 
 bool
 MalformedPrematureWasServer::OnWasControlPacket(enum was_command cmd,
-						ConstBuffer<void> payload) noexcept
+						std::span<const std::byte> payload) noexcept
 {
 	(void)payload;
 

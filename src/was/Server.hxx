@@ -160,7 +160,7 @@ private:
 
 	/* virtual methods from class Was::ControlHandler */
 	bool OnWasControlPacket(enum was_command cmd,
-				ConstBuffer<void> payload) noexcept override;
+				std::span<const std::byte> payload) noexcept override;
 	bool OnWasControlDrained() noexcept override;
 	void OnWasControlDone() noexcept override;
 	void OnWasControlError(std::exception_ptr ep) noexcept override;
