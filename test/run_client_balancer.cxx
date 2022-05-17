@@ -33,6 +33,7 @@
 #include "cluster/ConnectBalancer.hxx"
 #include "cluster/BalancerMap.hxx"
 #include "cluster/AddressList.hxx"
+#include "cluster/AddressListBuilder.hxx"
 #include "event/net/ConnectSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
@@ -43,6 +44,7 @@
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
 #include "pool/Ptr.hxx"
+#include "pool/PSocketAddress.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
@@ -100,13 +102,15 @@ try {
 	const auto pool = pool_new_linear(ctx.root_pool, "test", 8192);
 	AllocatorPtr alloc(pool);
 
-	AddressList address_list;
+	AddressListBuilder address_list_builder;
 
 	static constexpr auto hints = MakeAddrInfo(AI_ADDRCONFIG, AF_UNSPEC,
 						   SOCK_STREAM);
 
 	for (int i = 1; i < argc; ++i)
-		address_list.Add(alloc, Resolve(argv[i], 80, &hints));
+		address_list_builder.Add(alloc, Resolve(argv[i], 80, &hints));
+
+	const auto address_list = address_list_builder.Finish(alloc);
 
 	/* connect */
 

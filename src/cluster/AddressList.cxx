@@ -34,41 +34,23 @@
 #include "net/AddressInfo.hxx"
 #include "AllocatorPtr.hxx"
 
-AddressList::AddressList(ShallowCopy, const AddressInfoList &src) noexcept
+AddressList::AddressList(ShallowCopy, AllocatorPtr alloc,
+			 const AddressInfoList &src) noexcept
 {
-	for (const auto &i : src) {
-		if (addresses.full())
-			break;
+	const std::size_t n = std::distance(src.begin(), src.end());
+	auto *p = alloc.NewArray<SocketAddress>(n);
+	addresses = {p, n};
 
-		addresses.push_back(i);
-	}
+	std::copy(src.begin(), src.end(), p);
 }
 
 AddressList::AddressList(AllocatorPtr alloc, const AddressList &src) noexcept
 	:sticky_mode(src.sticky_mode)
 {
-	addresses.clear();
+	auto *p = alloc.NewArray<SocketAddress>(src.size());
+	addresses = {p, src.size()};
 
-	for (const auto &i : src)
-		Add(alloc, i);
-}
-
-bool
-AddressList::Add(AllocatorPtr alloc, const SocketAddress address) noexcept
-{
-	if (addresses.full())
-		return false;
-
-	addresses.push_back(alloc.Dup(address));
-	return true;
-}
-
-bool
-AddressList::Add(AllocatorPtr alloc, const AddressInfoList &list) noexcept
-{
-	for (const auto &i : list)
-		if (!Add(alloc, i))
-			return false;
-
-	return true;
+	std::transform(src.begin(), src.end(), p, [&alloc](const auto &i){
+		return alloc.Dup(i);
+	});
 }

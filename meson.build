@@ -491,6 +491,7 @@ raddress = static_library('raddress',
   'src/http/local/Address.cxx',
   'src/http/Address.cxx',
   'src/cluster/AddressList.cxx',
+  'src/cluster/AddressListBuilder.cxx',
   'src/ResourceAddress.cxx',
   include_directories: inc,
   dependencies: [

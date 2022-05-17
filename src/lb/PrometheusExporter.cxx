@@ -58,6 +58,8 @@ class LbPrometheusExporter::AppendRequest final
 {
 	DelayedIstreamControl &control;
 
+	const SocketAddress socket_address;
+
 	HttpAddress address{false, "dummy:80", "/"};
 
 	CancellablePointer cancel_ptr;
@@ -65,11 +67,15 @@ class LbPrometheusExporter::AppendRequest final
 public:
 	AppendRequest(SocketAddress _address,
 		      DelayedIstreamControl &_control) noexcept
-		:control(_control)
+		:control(_control), socket_address(_address)
 	{
 		control.cancel_ptr = *this;
 
-		address.addresses.AddPointer(_address);
+		address.addresses = AddressList{
+			ShallowCopy{},
+			StickyMode::NONE,
+			std::span{&socket_address, 1},
+		};
 	}
 
 	void Start(struct pool &pool, LbInstance &instance) noexcept;

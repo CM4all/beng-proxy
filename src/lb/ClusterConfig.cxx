@@ -39,17 +39,23 @@ LbClusterConfig::FillAddressList()
 {
 	assert(address_list.empty());
 
-	address_list.SetStickyMode(sticky_mode);
+	address_list_allocation = std::make_unique<SocketAddress[]>(members.size());
 
+	auto *p = address_list_allocation.get();
 	for (auto &member : members) {
 		address_allocations.emplace_front(member.node->address);
 		auto &address = address_allocations.front();
 		if (member.port != 0)
 			address.SetPort(member.port);
 
-		if (!address_list.AddPointer(address))
-			throw std::runtime_error("Too many members");
+		*p++ = address;
 	}
+
+	address_list = AddressList{
+		ShallowCopy{},
+		sticky_mode,
+		std::span<const SocketAddress>{address_list_allocation.get(), members.size()},
+	};
 }
 
 int

@@ -34,79 +34,40 @@
 
 #include "StickyMode.hxx"
 #include "net/SocketAddress.hxx"
-#include "util/ShallowCopy.hxx"
 
-#include <cassert>
-#include <span>
+#include <vector>
 
 class AllocatorPtr;
 class AddressInfoList;
+struct AddressList;
 
 /**
- * Store a URI along with a list of socket addresses.
+ * Builder for an #AddressList.
  */
-struct AddressList {
+class AddressListBuilder {
 	StickyMode sticky_mode = StickyMode::NONE;
 
-	using Array = std::span<const SocketAddress>;
-	using size_type = Array::size_type;
-	using const_iterator = Array::iterator;
-	using const_reference = Array::const_reference;
+	std::vector<SocketAddress> v;
 
-	Array addresses;
-
-	AddressList() = default;
-
-	constexpr AddressList(ShallowCopy, StickyMode _sticky_mode,
-			      std::span<const SocketAddress> src) noexcept
-		:sticky_mode(_sticky_mode),
-		 addresses(src.begin(), src.end())
-	{
-	}
-
-	constexpr AddressList(ShallowCopy, const AddressList &src) noexcept
-		:sticky_mode(src.sticky_mode),
-		 addresses(src.addresses)
-	{
-	}
-
-	AddressList(ShallowCopy, AllocatorPtr alloc,
-		    const AddressInfoList &src) noexcept;
-
-	AddressList(AllocatorPtr alloc, const AddressList &src) noexcept;
-
-	constexpr
+public:
 	bool empty() const noexcept {
-		return addresses.empty();
+		return v.empty();
 	}
 
-	constexpr size_type size() const noexcept {
-		return addresses.size();
+	void clear() noexcept {
+		v.clear();
 	}
 
-	/**
-	 * Is there no more than one address?
-	 */
-	constexpr
-	bool IsSingle() const noexcept {
-		return addresses.size() == 1;
+	void SetStickyMode(StickyMode _sticky_mode) noexcept {
+		sticky_mode = _sticky_mode;
 	}
 
-	constexpr const_iterator begin() const noexcept {
-		return addresses.begin();
+	void AddPointer(SocketAddress address) noexcept {
+		v.push_back(address);
 	}
 
-	constexpr const_iterator end() const noexcept {
-		return addresses.end();
-	}
+	void Add(AllocatorPtr alloc, SocketAddress address) noexcept;
+	void Add(AllocatorPtr alloc, const AddressInfoList &list) noexcept;
 
-	constexpr const_reference front() const noexcept {
-		return addresses.front();
-	}
-
-	const SocketAddress &operator[](unsigned n) const noexcept {
-		assert(addresses[n].IsDefined());
-
-		return addresses[n];
-	}
+	AddressList Finish(AllocatorPtr alloc) const noexcept;
 };

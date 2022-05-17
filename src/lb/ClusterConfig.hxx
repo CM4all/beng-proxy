@@ -38,6 +38,7 @@
 #include "cluster/StickyMode.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <forward_list>
@@ -117,6 +118,7 @@ struct LbClusterConfig {
 	std::string zeroconf_interface;
 #endif
 
+	std::unique_ptr<SocketAddress[]> address_list_allocation;
 	std::forward_list<AllocatedSocketAddress> address_allocations;
 
 	/**

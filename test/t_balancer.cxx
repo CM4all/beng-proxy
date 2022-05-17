@@ -34,6 +34,7 @@
 #include "cluster/BalancerMap.hxx"
 #include "cluster/AddressList.hxx"
 #include "cluster/AddressListWrapper.hxx"
+#include "cluster/AddressListBuilder.hxx"
 #include "AllocatorPtr.hxx"
 #include "event/Loop.hxx"
 #include "net/Resolver.hxx"
@@ -62,35 +63,21 @@ public:
 
 	SocketAddress Get(const AddressList &al, unsigned session=0) {
 		return balancer.MakeAddressListWrapper(AddressListWrapper(failure_manager,
-									  al.addresses),
+									  al),
 						       al.sticky_mode)
 			.Pick(Expiry::Now(), session);
 	}
 };
 
-class AddressListBuilder : public AddressList {
-	struct pool *pool;
+static int
+Find(const AddressList &al, SocketAddress address) noexcept
+{
+	for (unsigned i = 0; i < al.size(); ++i)
+		if (al[i] == address)
+			return i;
 
-public:
-	AddressListBuilder(struct pool *_pool,
-			   StickyMode _sticky=StickyMode::NONE)
-		:pool(_pool) {
-		sticky_mode = _sticky;
-	}
-
-	bool Add(const char *host_and_port) {
-		return AddressList::Add(*pool,
-					Resolve(host_and_port, 80, nullptr).front());
-	}
-
-	int Find(SocketAddress address) const {
-		for (unsigned i = 0; i < size(); ++i)
-			if (addresses[i] == address)
-				return i;
-
-		return -1;
-	}
-};
+	return -1;
+}
 
 [[gnu::pure]]
 static FailureStatus
@@ -181,44 +168,47 @@ TEST(BalancerTest, Basic)
 	EventLoop event_loop;
 	MyBalancer balancer(fm);
 
-	AddressListBuilder al(pool);
-	al.Add("192.168.0.1");
-	al.Add("192.168.0.2");
-	al.Add("192.168.0.3");
+	const AllocatorPtr alloc{pool};
+
+	AddressListBuilder b;
+	b.Add(alloc, Resolve("192.168.0.1", 80, nullptr).front());
+	b.Add(alloc, Resolve("192.168.0.2", 80, nullptr).front());
+	b.Add(alloc, Resolve("192.168.0.3", 80, nullptr).front());
+	const auto al = b.Finish(alloc);
 
 	SocketAddress result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 1);
+	ASSERT_EQ(Find(al, result), 1);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 2);
+	ASSERT_EQ(Find(al, result), 2);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 1);
+	ASSERT_EQ(Find(al, result), 1);
 
 	/* test with session id, which should be ignored here */
 
 	result = balancer.Get(al, 1);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 2);
+	ASSERT_EQ(Find(al, result), 2);
 
 	result = balancer.Get(al, 1);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al, 1);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 1);
+	ASSERT_EQ(Find(al, result), 1);
 }
 
 TEST(BalancerTest, Failed)
@@ -228,21 +218,24 @@ TEST(BalancerTest, Failed)
 	MyBalancer balancer(fm);
 
 	TestPool pool;
-	AddressListBuilder al(pool);
-	al.Add("192.168.0.1");
-	al.Add("192.168.0.2");
-	al.Add("192.168.0.3");
+	const AllocatorPtr alloc{pool};
+
+	AddressListBuilder b;
+	b.Add(alloc, Resolve("192.168.0.1", 80, nullptr).front());
+	b.Add(alloc, Resolve("192.168.0.2", 80, nullptr).front());
+	b.Add(alloc, Resolve("192.168.0.3", 80, nullptr).front());
+	const auto al = b.Finish(alloc);
 
 	FailureAdd(fm, "192.168.0.2");
 
 	SocketAddress result = balancer.Get(al);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al);
-	ASSERT_EQ(al.Find(result), 2);
+	ASSERT_EQ(Find(al, result), 2);
 
 	result = balancer.Get(al);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 }
 
 TEST(BalancerTest, StickyFailover)
@@ -252,24 +245,28 @@ TEST(BalancerTest, StickyFailover)
 	MyBalancer balancer(fm);
 
 	TestPool pool;
-	AddressListBuilder al(pool, StickyMode::FAILOVER);
-	al.Add("192.168.0.1");
-	al.Add("192.168.0.2");
-	al.Add("192.168.0.3");
+	const AllocatorPtr alloc{pool};
+
+	AddressListBuilder b;
+	b.SetStickyMode(StickyMode::FAILOVER);
+	b.Add(alloc, Resolve("192.168.0.1", 80, nullptr).front());
+	b.Add(alloc, Resolve("192.168.0.2", 80, nullptr).front());
+	b.Add(alloc, Resolve("192.168.0.3", 80, nullptr).front());
+	const auto al = b.Finish(alloc);
 
 	/* first node is always used */
 
 	SocketAddress result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al, 1);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	/* .. even if the second node fails */
 
@@ -277,15 +274,15 @@ TEST(BalancerTest, StickyFailover)
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al, 1);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	/* use third node when both first and second fail */
 
@@ -293,15 +290,15 @@ TEST(BalancerTest, StickyFailover)
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 2);
+	ASSERT_EQ(Find(al, result), 2);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 2);
+	ASSERT_EQ(Find(al, result), 2);
 
 	result = balancer.Get(al, 1);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 2);
+	ASSERT_EQ(Find(al, result), 2);
 
 	/* use second node when first node fails */
 
@@ -309,15 +306,15 @@ TEST(BalancerTest, StickyFailover)
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 1);
+	ASSERT_EQ(Find(al, result), 1);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 1);
+	ASSERT_EQ(Find(al, result), 1);
 
 	result = balancer.Get(al, 1);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 1);
+	ASSERT_EQ(Find(al, result), 1);
 
 	/* back to first node as soon as it recovers */
 
@@ -325,15 +322,15 @@ TEST(BalancerTest, StickyFailover)
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al, 1);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 }
 
 TEST(BalancerTest, StickyCookie)
@@ -343,66 +340,70 @@ TEST(BalancerTest, StickyCookie)
 	MyBalancer balancer(fm);
 
 	TestPool pool;
-	AddressListBuilder al(pool, StickyMode::COOKIE);
-	al.Add("192.168.0.1");
-	al.Add("192.168.0.2");
-	al.Add("192.168.0.3");
+	const AllocatorPtr alloc{pool};
+
+	AddressListBuilder b;
+	b.SetStickyMode(StickyMode::COOKIE);
+	b.Add(alloc, Resolve("192.168.0.1", 80, nullptr).front());
+	b.Add(alloc, Resolve("192.168.0.2", 80, nullptr).front());
+	b.Add(alloc, Resolve("192.168.0.3", 80, nullptr).front());
+	const auto al = b.Finish(alloc);
 
 	/* without cookie: round-robin */
 
 	SocketAddress result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 1);
+	ASSERT_EQ(Find(al, result), 1);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 2);
+	ASSERT_EQ(Find(al, result), 2);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 1);
+	ASSERT_EQ(Find(al, result), 1);
 
 	/* with cookie */
 
 	result = balancer.Get(al, 1);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 1);
+	ASSERT_EQ(Find(al, result), 1);
 
 	result = balancer.Get(al, 1);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 1);
+	ASSERT_EQ(Find(al, result), 1);
 
 	result = balancer.Get(al, 2);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 2);
+	ASSERT_EQ(Find(al, result), 2);
 
 	result = balancer.Get(al, 2);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 2);
+	ASSERT_EQ(Find(al, result), 2);
 
 	result = balancer.Get(al, 3);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al, 3);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al, 4);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 1);
+	ASSERT_EQ(Find(al, result), 1);
 
 	result = balancer.Get(al, 4);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 1);
+	ASSERT_EQ(Find(al, result), 1);
 
 	/* failed */
 
@@ -410,15 +411,15 @@ TEST(BalancerTest, StickyCookie)
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 2);
+	ASSERT_EQ(Find(al, result), 2);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 2);
+	ASSERT_EQ(Find(al, result), 2);
 
 	/* fade */
 
@@ -426,25 +427,25 @@ TEST(BalancerTest, StickyCookie)
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 2);
+	ASSERT_EQ(Find(al, result), 2);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 2);
+	ASSERT_EQ(Find(al, result), 2);
 
 	result = balancer.Get(al, 3);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al, 3);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 0);
+	ASSERT_EQ(Find(al, result), 0);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 2);
+	ASSERT_EQ(Find(al, result), 2);
 
 	result = balancer.Get(al);
 	ASSERT_NE(result, nullptr);
-	ASSERT_EQ(al.Find(result), 2);
+	ASSERT_EQ(Find(al, result), 2);
 }

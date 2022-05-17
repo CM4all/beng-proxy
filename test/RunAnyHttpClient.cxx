@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "cluster/AddressListBuilder.hxx"
 #include "http/Address.hxx"
 #include "http/AnyClient.hxx"
 #include "http/ResponseHandler.hxx"
@@ -39,6 +40,7 @@
 #include "istream/sink_fd.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
+#include "pool/PSocketAddress.hxx"
 #include "memory/fb_pool.hxx"
 #include "fs/FilteredSocket.hxx"
 #include "fs/Stock.hxx"
@@ -237,10 +239,13 @@ try {
 							   AF_UNSPEC,
 							   SOCK_STREAM);
 
-		for (SocketAddress i : Resolve(address->host_and_port,
-					       address->ssl ? 443 : 80,
-					       &hints))
-			address->addresses.Add(*ctx.pool, i);
+		AddressListBuilder address_list_builder;
+		address_list_builder.Add(*ctx.pool,
+					 Resolve(address->host_and_port,
+						 address->ssl ? 443 : 80,
+						 &hints));
+
+		address->addresses = address_list_builder.Finish(*ctx.pool);
 	}
 
 	address->Check();

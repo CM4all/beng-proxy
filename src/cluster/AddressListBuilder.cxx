@@ -30,35 +30,30 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "AddressListBuilder.hxx"
+#include "AddressList.hxx"
+#include "net/AddressInfo.hxx"
+#include "AllocatorPtr.hxx"
 
-#include "net/SocketAddress.hxx"
+void
+AddressListBuilder::Add(AllocatorPtr alloc, const SocketAddress address) noexcept
+{
+	v.push_back(alloc.Dup(address));
+}
 
-#include <span>
+void
+AddressListBuilder::Add(AllocatorPtr alloc, const AddressInfoList &list) noexcept
+{
+	for (const SocketAddress i : list)
+		Add(alloc, i);
+}
 
-/**
- * Wraps a ConstBuffer<SocketAddress> in an interface for
- * PickFailover() and PickModulo().
- */
-class AddressListView {
-	using Span = std::span<const SocketAddress>;
-	Span list;
-
-public:
-	explicit constexpr AddressListView(Span _list) noexcept
-		:list(_list) {}
-
-	using const_reference = Span::const_reference;
-
-	constexpr auto size() const noexcept {
-		return list.size();
-	}
-
-	auto begin() const noexcept {
-		return std::begin(list);
-	}
-
-	auto end() const noexcept {
-		return std::end(list);
-	}
-};
+AddressList
+AddressListBuilder::Finish(AllocatorPtr alloc) const noexcept
+{
+	return {
+		ShallowCopy{},
+		sticky_mode,
+		alloc.Dup(std::span{v}),
+	};
+}
