@@ -33,23 +33,25 @@
 #pragma once
 
 #include "net/SocketAddress.hxx"
-#include "util/ConstBuffer.hxx"
+
+#include <span>
 
 /**
  * Wraps a ConstBuffer<SocketAddress> in an interface for
  * PickFailover() and PickModulo().
  */
 class AddressListView {
-	ConstBuffer<SocketAddress> list;
+	using Span = std::span<const SocketAddress>;
+	Span list;
 
 public:
-	explicit constexpr AddressListView(ConstBuffer<SocketAddress> _list) noexcept
+	explicit constexpr AddressListView(Span _list) noexcept
 		:list(_list) {}
 
-	using const_reference = ConstBuffer<SocketAddress>::const_reference;
+	using const_reference = Span::const_reference;
 
 	constexpr auto size() const noexcept {
-		return list.size;
+		return list.size();
 	}
 
 	auto begin() const noexcept {
