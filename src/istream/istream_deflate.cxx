@@ -39,7 +39,6 @@
 #include "memory/SliceFifoBuffer.hxx"
 #include "event/DeferEvent.hxx"
 #include "util/DestructObserver.hxx"
-#include "util/WritableBuffer.hxx"
 
 #include <zlib.h>
 

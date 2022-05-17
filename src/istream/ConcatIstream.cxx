@@ -37,7 +37,6 @@
 #include "pool/pool.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/IntrusiveList.hxx"
-#include "util/WritableBuffer.hxx"
 
 #include <assert.h>
 
@@ -118,7 +117,7 @@ class CatIstream final : public Istream, DestructAnchor {
 	InputList inputs;
 
 public:
-	CatIstream(struct pool &p, WritableBuffer<UnusedIstreamPtr> _inputs) noexcept;
+	CatIstream(struct pool &p, std::span<UnusedIstreamPtr> _inputs) noexcept;
 
 	void Append(UnusedIstreamPtr &&istream) noexcept {
 		auto *input = NewFromPool<Input>(GetPool(), *this,
@@ -330,7 +329,8 @@ CatIstream::_Close() noexcept
  *
  */
 
-inline CatIstream::CatIstream(struct pool &p, WritableBuffer<UnusedIstreamPtr> _inputs) noexcept
+inline CatIstream::CatIstream(struct pool &p,
+			      std::span<UnusedIstreamPtr> _inputs) noexcept
 	:Istream(p)
 {
 	for (UnusedIstreamPtr &_input : _inputs) {
@@ -342,10 +342,9 @@ inline CatIstream::CatIstream(struct pool &p, WritableBuffer<UnusedIstreamPtr> _
 }
 
 UnusedIstreamPtr
-_NewConcatIstream(struct pool &pool, UnusedIstreamPtr *const inputs, unsigned n_inputs)
+_NewConcatIstream(struct pool &pool, std::span<UnusedIstreamPtr> inputs)
 {
-	return UnusedIstreamPtr(NewFromPool<CatIstream>(pool, pool,
-							WritableBuffer<UnusedIstreamPtr>(inputs, n_inputs)));
+	return UnusedIstreamPtr{NewFromPool<CatIstream>(pool, pool, inputs)};
 }
 
 void

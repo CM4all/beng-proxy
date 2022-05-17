@@ -34,6 +34,8 @@
 
 #include "UnusedPtr.hxx"
 
+#include <span>
+
 struct pool;
 class Istream;
 
@@ -41,14 +43,14 @@ class Istream;
  * Concatenate several istreams.
  */
 UnusedIstreamPtr
-_NewConcatIstream(struct pool &pool, UnusedIstreamPtr *const inputs, unsigned n_inputs);
+_NewConcatIstream(struct pool &pool, std::span<UnusedIstreamPtr> inputs);
 
 template<typename... Args>
 auto
 NewConcatIstream(struct pool &pool, Args&&... args)
 {
 	UnusedIstreamPtr inputs[]{std::forward<Args>(args)...};
-	return _NewConcatIstream(pool, inputs, sizeof...(args));
+	return _NewConcatIstream(pool, inputs);
 }
 
 void
