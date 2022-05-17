@@ -268,7 +268,7 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 			return false;
 		}
 
-		method = *(const http_method_t *)payload.data();
+		method = *(const http_method_t *)(const void *)payload.data();
 		if (request.method != HTTP_METHOD_GET &&
 		    method != request.method) {
 			/* sending that packet twice is illegal */
@@ -369,7 +369,7 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 			return false;
 		}
 
-		length_p = (const uint64_t *)payload.data();
+		length_p = (const uint64_t *)(const void *)payload.data();
 		if (payload.size() != sizeof(*length_p)) {
 			AbortProtocolError("malformed LENGTH packet");
 			return false;
@@ -388,7 +388,7 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 		return false;
 
 	case WAS_COMMAND_PREMATURE:
-		length_p = (const uint64_t *)payload.data();
+		length_p = (const uint64_t *)(const void *)payload.data();
 		if (payload.size() != sizeof(*length_p)) {
 			AbortError(std::make_exception_ptr("malformed PREMATURE packet"));
 			return false;

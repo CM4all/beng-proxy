@@ -552,8 +552,8 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 			return false;
 		}
 
-		status32_r = (const uint32_t *)payload.data();
-		status16_r = (const uint16_t *)payload.data();
+		status32_r = (const uint32_t *)(const void *)payload.data();
+		status16_r = (const uint16_t *)(const void *)payload.data();
 
 		if (payload.size() == sizeof(*status32_r))
 			status = (http_status_t)*status32_r;
@@ -631,7 +631,7 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 			return false;
 		}
 
-		length_p = (const uint64_t *)payload.data();
+		length_p = (const uint64_t *)(const void *)payload.data();
 		if (payload.size() != sizeof(*length_p)) {
 			stopwatch.RecordEvent("control_error");
 			AbortResponseBody(std::make_exception_ptr(WasProtocolError("malformed LENGTH packet")));
@@ -672,7 +672,7 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 			return false;
 		}
 
-		length_p = (const uint64_t *)payload.data();
+		length_p = (const uint64_t *)(const void *)payload.data();
 		if (payload.size() != sizeof(*length_p)) {
 			stopwatch.RecordEvent("control_error");
 			AbortResponseBody(std::make_exception_ptr(WasProtocolError("malformed PREMATURE packet")));
