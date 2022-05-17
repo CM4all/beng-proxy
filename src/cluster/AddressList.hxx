@@ -32,13 +32,10 @@
 
 #pragma once
 
+#include "StickyMode.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/StaticArray.hxx"
 #include "util/ShallowCopy.hxx"
-#include "StickyMode.hxx"
-
-#include <stddef.h>
-#include <assert.h>
 
 class AllocatorPtr;
 class AddressInfoList;
@@ -47,11 +44,9 @@ class AddressInfoList;
  * Store a URI along with a list of socket addresses.
  */
 struct AddressList {
-	static constexpr size_t MAX_ADDRESSES = 16;
-
 	StickyMode sticky_mode = StickyMode::NONE;
 
-	using Array = StaticArray<SocketAddress, MAX_ADDRESSES>;
+	using Array = StaticArray<SocketAddress, 16>;
 	using size_type = Array::size_type;
 	using const_iterator = Array::const_iterator;
 	using const_reference = Array::const_reference;
