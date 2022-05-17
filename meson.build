@@ -440,13 +440,7 @@ expand = static_library('expand',
 expand_dep = declare_dependency(link_with: expand,
                                 dependencies: [putil_dep])
 
-adata = static_library('adata',
-  'libcommon/src/adata/ExpandableStringList.cxx',
-  include_directories: inc,
-  dependencies: [
-  ])
-adata_dep = declare_dependency(link_with: adata)
-
+subdir('libcommon/src/adata')
 subdir('libcommon/src/spawn')
 
 spawn_dep = declare_dependency(
