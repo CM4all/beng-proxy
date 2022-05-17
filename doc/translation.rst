@@ -1229,6 +1229,10 @@ is a name below :program:`beng-proxy`\ ’s own cgroup assigned by
 ``CGROUP_SET`` set a cgroup attribute. Payload is in the form
 ``controller.name=value``, e.g. ``cpu.shares=42``.
 
+``CGROUP_XATTR`` set an extended attribute on the cgroup directory.
+Payload is in the form ``namespace.name=value``,
+e.g. ``user.account_id=42``.
+
 .. _childoptions:
 
 Other Child Process Options

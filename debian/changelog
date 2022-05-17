@@ -3,6 +3,7 @@ cm4all-beng-proxy (17.0.92) unstable; urgency=low
   * access_log: fix malformed strings in log packets
   * access_log/json: escape ASCII control characters with "\u" instead of "\x"
   * spawn: don't propagate the "cpuset" controller
+  * translation: add packet CGROUP_XATTR
 
  --   
 
