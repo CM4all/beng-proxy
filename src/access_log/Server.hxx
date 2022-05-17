@@ -62,7 +62,7 @@ class AccessLogServer {
 
 	static constexpr size_t N = 32;
 	std::array<StaticSocketAddress, N> addresses;
-	std::array<uint8_t[16384], N> payloads;
+	std::array<std::byte[16384], N> payloads;
 	std::array<size_t, N> sizes;
 	size_t n_payloads = 0, current_payload = 0;
 

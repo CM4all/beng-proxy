@@ -95,20 +95,20 @@ AccessLogServer::Receive()
 		assert(current_payload < n_payloads);
 
 		const SocketAddress address = addresses[current_payload];
-		uint8_t *buffer = payloads[current_payload];
+		std::byte *buffer = payloads[current_payload];
 		size_t nbytes = sizes[current_payload];
 		++current_payload;
 
 		/* force null termination so we can use string functions inside
 		   the buffer */
-		buffer[nbytes] = 0;
+		buffer[nbytes] = std::byte{'\0'};
 
 		datagram.logger_client_address = address;
 		datagram.raw = {buffer, nbytes};
 
 		try {
 			Net::Log::Datagram &base = datagram;
-			base = Net::Log::ParseDatagram(buffer, buffer + nbytes);
+			base = Net::Log::ParseDatagram({buffer, nbytes});
 			return &datagram;
 		} catch (Net::Log::ProtocolError) {
 		}
