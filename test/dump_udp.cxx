@@ -41,7 +41,6 @@
 #include "io/Logger.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/PrintException.hxx"
-#include "util/WritableBuffer.hxx"
 
 #include <stdio.h>
 

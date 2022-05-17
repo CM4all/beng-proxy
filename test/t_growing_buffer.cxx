@@ -38,12 +38,11 @@
 #include "istream/UnusedPtr.hxx"
 #include "memory/fb_pool.hxx"
 #include "io/SpliceSupport.hxx"
-#include "util/ConstBuffer.hxx"
-#include "util/WritableBuffer.hxx"
 
 #include <gtest/gtest.h>
 
 #include <cassert>
+#include <span>
 
 #include <string.h>
 #include <stdio.h>
@@ -176,9 +175,9 @@ create_empty(struct pool *pool)
 }
 
 static bool
-Equals(WritableBuffer<void> a, const char *b)
+Equals(std::span<std::byte> a, const char *b)
 {
-	return a.size == strlen(b) && memcmp(a.data, b, a.size) == 0;
+	return a.size() == strlen(b) && memcmp(a.data(), b, a.size()) == 0;
 }
 
 

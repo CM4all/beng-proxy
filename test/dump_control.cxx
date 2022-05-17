@@ -38,7 +38,6 @@
 #include "system/SetupProcess.hxx"
 #include "io/Logger.hxx"
 #include "util/PrintException.hxx"
-#include "util/WritableBuffer.hxx"
 
 #include <stdio.h>
 
