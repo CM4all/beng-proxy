@@ -37,6 +37,9 @@
 #include "util/StaticArray.hxx"
 #include "util/ShallowCopy.hxx"
 
+#include <cassert>
+#include <span>
+
 class AllocatorPtr;
 class AddressInfoList;
 
@@ -54,6 +57,11 @@ struct AddressList {
 	Array addresses;
 
 	AddressList() = default;
+
+	AddressList(ShallowCopy, std::span<const SocketAddress> src) noexcept
+		:addresses(src.begin(), src.end())
+	{
+	}
 
 	constexpr AddressList(ShallowCopy, const AddressList &src) noexcept
 		:sticky_mode(src.sticky_mode),
