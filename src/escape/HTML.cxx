@@ -33,7 +33,9 @@
 #include "HTML.hxx"
 #include "Class.hxx"
 #include "util/CharUtil.hxx"
+#include "util/HexParse.hxx"
 #include "util/StringView.hxx"
+#include "util/UTF8.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -43,6 +45,53 @@ static const char *
 html_unescape_find(StringView p) noexcept
 {
 	return p.Find('&');
+}
+
+[[gnu::pure]]
+static std::pair<uint_least32_t, std::string_view>
+ParseDecimal(std::string_view s) noexcept
+{
+	uint_least32_t value = 0;
+
+	for (auto i = s.begin(), end = s.end(); i != end; ++i) {
+		const char ch = *i;
+		if (!IsDigitASCII(ch))
+			return {value, {i, end}};
+
+		value = value * 10 + (ch - '0');
+	}
+
+	return {value, {}};
+}
+
+[[gnu::pure]]
+static std::pair<uint_least32_t, std::string_view>
+ParseHex(std::string_view s) noexcept
+{
+	uint_least32_t value = 0;
+
+	for (auto i = s.begin(), end = s.end(); i != end; ++i) {
+		const char ch = *i;
+		int d = ParseHexDigit(ch);
+		if (d < 0)
+			return {value, {i, end}};
+
+		value = value * 0x10 + d;
+	}
+
+	return {value, {}};
+}
+
+[[gnu::pure]]
+static std::pair<uint_least32_t, std::string_view>
+ParseNumericEntity(std::string_view entity) noexcept
+{
+	assert(!entity.empty());
+
+	if (entity.front() == 'x')
+		return ParseHex(entity.substr(1));
+
+	return ParseDecimal(entity);
 }
 
 static size_t
@@ -60,7 +109,7 @@ html_unescape(StringView src, char *q) noexcept
 			break;
 
 		auto [entity, rest] = after_ampersand.Split(';');
-		if (rest == nullptr) {
+		if (rest == nullptr || entity.empty()) {
 			*q++ = '&';
 			src = after_ampersand;
 			continue;
@@ -76,7 +125,25 @@ html_unescape(StringView src, char *q) noexcept
 			*q++ = '>';
 		else if (entity.Equals("apos"))
 			*q++ = '\'';
-		else {
+		else if (entity.front() == '#') {
+			entity.pop_front();
+
+			if (entity.empty()) {
+				*q++ = '&';
+				src = after_ampersand;
+				continue;
+			}
+
+			auto [value, unparsed] = ParseNumericEntity(entity);
+			if (value <= 0 || value > 0x10ffff ||
+			    !unparsed.empty()) {
+				*q++ = '&';
+				src = after_ampersand;
+				continue;
+			}
+
+			q = UnicodeToUTF8(value, q);
+		} else {
 			*q++ = '&';
 			src = after_ampersand;
 			continue;

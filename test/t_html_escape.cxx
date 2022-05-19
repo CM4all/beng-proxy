@@ -61,6 +61,10 @@ TEST(HtmlEscape, Basic)
 	ASSERT_STREQ(html_unescape("&amp;amp;"), "&amp;");
 	ASSERT_STREQ(html_unescape("&amp;&&quot;"), "&&\"");
 	ASSERT_STREQ(html_unescape("&gt&lt;&apos;"), "&gt<'");
+	ASSERT_STREQ(html_unescape("&#10;"), "\n");
+	ASSERT_STREQ(html_unescape("&#xa;"), "\n");
+	ASSERT_STREQ(html_unescape("&#xfc;"), "\xc3\xbc");
+	ASSERT_STREQ(html_unescape("&#x10ffff;"), "\xf4\x8f\xbf\xbf");
 
 	char a[] = "foo bar";
 	ASSERT_EQ(html_unescape_inplace(a, sizeof(a) - 1), "foo bar"sv);
