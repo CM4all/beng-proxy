@@ -45,43 +45,26 @@ html_unescape_find(StringView p) noexcept
 	return p.Find('&');
 }
 
-[[gnu::pure]]
-static const char *
-find_semicolon(const char *p, const char *end) noexcept
+static size_t
+html_unescape(StringView src, char *q) noexcept
 {
-	while (p < end) {
-		if (*p == ';')
-			return p;
-		else if (!IsAlphaASCII(*p))
+	const char *const q_start = q;
+
+	while (true) {
+		const auto [before_ampersand, after_ampersand] = src.Split('&');
+
+		memmove(q, before_ampersand.data, before_ampersand.size);
+		q += before_ampersand.size;
+
+		if (after_ampersand == nullptr)
 			break;
 
-		++p;
-	}
-
-	return nullptr;
-}
-
-static size_t
-html_unescape(StringView _p, char *q) noexcept
-{
-	const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
-
-	const char *amp;
-	while ((amp = (const char *)memchr(p, '&', p_end - p)) != nullptr) {
-		memmove(q, p, amp - p);
-		q += amp - p;
-
-		StringView entity;
-		entity.data = amp + 1;
-
-		const char *semicolon = find_semicolon(entity.data, p_end);
-		if (semicolon == nullptr) {
+		auto [entity, rest] = after_ampersand.Split(';');
+		if (rest == nullptr) {
 			*q++ = '&';
-			p = amp + 1;
+			src = after_ampersand;
 			continue;
 		}
-
-		entity.size = semicolon - entity.data;
 
 		if (entity.Equals("amp"))
 			*q++ = '&';
@@ -93,12 +76,14 @@ html_unescape(StringView _p, char *q) noexcept
 			*q++ = '>';
 		else if (entity.Equals("apos"))
 			*q++ = '\'';
+		else {
+			*q++ = '&';
+			src = after_ampersand;
+			continue;
+		}
 
-		p = semicolon + 1;
+		src = rest;
 	}
-
-	memmove(q, p, p_end - p);
-	q += p_end - p;
 
 	return q - q_start;
 }
