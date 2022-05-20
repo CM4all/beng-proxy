@@ -44,7 +44,7 @@
 #include "fs/FilteredSocket.hxx"
 #include "util/Cancellable.hxx"
 #include "util/RuntimeError.hxx"
-#include "util/StaticArray.hxx"
+#include "util/StaticVector.hxx"
 #include "util/StringView.hxx"
 #include "http/ResponseHandler.hxx"
 #include "stopwatch.hxx"
@@ -293,7 +293,7 @@ ClientConnection::Request::SendRequest(http_method_t method, const char *uri,
 {
 	assert(state == State::INITIAL);
 
-	StaticArray<nghttp2_nv, 256> hdrs;
+	StaticVector<nghttp2_nv, 256> hdrs;
 	hdrs.push_back(MakeNv(":method", http_method_to_string(method)));
 	hdrs.push_back(MakeNv(":scheme", "http")); // TODO
 

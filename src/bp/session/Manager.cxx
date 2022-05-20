@@ -35,7 +35,7 @@
 #include "io/Logger.hxx"
 #include "system/Seed.hxx"
 #include "util/DeleteDisposer.hxx"
-#include "util/StaticArray.hxx"
+#include "util/StaticVector.hxx"
 #include "util/djbhash.h"
 #include "util/PrintException.hxx"
 
@@ -145,7 +145,7 @@ bool
 SessionManager::Purge() noexcept
 {
 	/* collect at most 256 sessions */
-	StaticArray<Session *, 256> purge_sessions;
+	StaticVector<std::reference_wrapper<Session>, 256> purge_sessions;
 	unsigned highest_score = 0;
 
 	for (auto &session : sessions) {
@@ -155,8 +155,8 @@ SessionManager::Purge() noexcept
 			highest_score = score;
 		}
 
-		if (score == highest_score)
-			purge_sessions.checked_append(&session);
+		if (score == highest_score && !purge_sessions.full())
+			purge_sessions.emplace_back(session);
 	}
 
 	if (purge_sessions.empty())
@@ -165,8 +165,8 @@ SessionManager::Purge() noexcept
 	LogConcat(3, "SessionManager", "purging ", (unsigned)purge_sessions.size(),
 		  " sessions (score=", highest_score, ")");
 
-	for (auto session : purge_sessions) {
-		EraseAndDispose(*session);
+	for (auto &session : purge_sessions) {
+		EraseAndDispose(session);
 	}
 
 	/* purge again if the highest score group has only very few items,

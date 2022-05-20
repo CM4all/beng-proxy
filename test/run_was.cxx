@@ -52,7 +52,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 #include "util/PrintException.hxx"
-#include "util/StaticArray.hxx"
+#include "util/StaticVector.hxx"
 #include "util/StringAPI.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -180,7 +180,7 @@ try {
 	Context context;
 
 	const char *uri = argv[2];
-	StaticArray<const char *, 64> params;
+	StaticVector<const char *, 64> params;
 
 	StringMap headers;
 

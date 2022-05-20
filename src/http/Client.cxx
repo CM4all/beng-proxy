@@ -64,7 +64,7 @@
 #include "util/StringStrip.hxx"
 #include "util/StringView.hxx"
 #include "util/StringFormat.hxx"
-#include "util/StaticArray.hxx"
+#include "util/StaticVector.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/Exception.hxx"
 #include "util/Compiler.h"
@@ -572,12 +572,12 @@ HttpClient::TryWriteBuckets2()
 	IstreamBucketList list;
 	input.FillBucketList(list);
 
-	StaticArray<struct iovec, 64> v;
+	StaticVector<struct iovec, 64> v;
 	for (const auto &bucket : list) {
 		if (!bucket.IsBuffer())
 			break;
 
-		v.append() = MakeIovec(bucket.GetBuffer());
+		v.push_back(MakeIovec(bucket.GetBuffer()));
 
 		if (v.full())
 			break;

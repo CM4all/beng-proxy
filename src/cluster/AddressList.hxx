@@ -34,7 +34,7 @@
 
 #include "StickyMode.hxx"
 #include "net/SocketAddress.hxx"
-#include "util/StaticArray.hxx"
+#include "util/StaticVector.hxx"
 #include "util/ShallowCopy.hxx"
 
 #include <cassert>
@@ -49,7 +49,7 @@ class AddressInfoList;
 struct AddressList {
 	StickyMode sticky_mode = StickyMode::NONE;
 
-	using Array = StaticArray<SocketAddress, 16>;
+	using Array = StaticVector<SocketAddress, 16>;
 	using size_type = Array::size_type;
 	using const_iterator = Array::const_iterator;
 	using const_reference = Array::const_reference;
@@ -110,7 +110,11 @@ struct AddressList {
 	 * @return false if the list is full
 	 */
 	bool AddPointer(SocketAddress address) noexcept {
-		return addresses.checked_append(address);
+		if (addresses.full())
+			return false;
+
+		addresses.push_back(address);
+		return true;
 	}
 
 	bool Add(AllocatorPtr alloc, SocketAddress address) noexcept;

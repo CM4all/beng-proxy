@@ -50,7 +50,7 @@
 #include "net/StaticSocketAddress.hxx"
 #include "util/Cancellable.hxx"
 #include "util/RuntimeError.hxx"
-#include "util/StaticArray.hxx"
+#include "util/StaticVector.hxx"
 #include "util/StringView.hxx"
 #include "address_string.hxx"
 #include "stopwatch.hxx"
@@ -405,7 +405,7 @@ ServerConnection::Request::SendResponse(http_status_t status,
 	char status_string[16];
 	sprintf(status_string, "%u", unsigned(status));
 
-	StaticArray<nghttp2_nv, 256> hdrs;
+	StaticVector<nghttp2_nv, 256> hdrs;
 	hdrs.push_back(MakeNv(":status", status_string));
 
 	char content_length_string[32];

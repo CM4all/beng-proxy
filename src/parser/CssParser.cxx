@@ -117,7 +117,7 @@ CssParser::Feed(const char *start, size_t length) noexcept
 					break;
 				}
 
-				if (name_buffer.size() < name_buffer.capacity() - 1)
+				if (name_buffer.size() < name_buffer.max_size() - 1)
 					name_buffer.push_back(*buffer);
 
 				++buffer;
@@ -142,7 +142,7 @@ CssParser::Feed(const char *start, size_t length) noexcept
 					break;
 				}
 
-				if (name_buffer.size() < name_buffer.capacity() - 1)
+				if (name_buffer.size() < name_buffer.max_size() - 1)
 					name_buffer.push_back(*buffer);
 
 				++buffer;
@@ -206,7 +206,7 @@ CssParser::Feed(const char *start, size_t length) noexcept
 					break;
 				}
 
-				if (name_buffer.size() < name_buffer.capacity() - 1)
+				if (name_buffer.size() < name_buffer.max_size() - 1)
 					name_buffer.push_back(*buffer);
 
 				++buffer;

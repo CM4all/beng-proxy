@@ -33,7 +33,7 @@
 #pragma once
 
 #include "util/ConstBuffer.hxx"
-#include "util/StaticArray.hxx"
+#include "util/StaticVector.hxx"
 
 #include <span>
 
@@ -51,7 +51,10 @@ private:
 	};
 
 public:
-	IstreamBucket() = default;
+	explicit IstreamBucket(std::span<const std::byte> _buffer) noexcept
+		:type(Type::BUFFER),
+		 buffer(_buffer) {}
+
 
 	Type GetType() const noexcept {
 		return type;
@@ -66,15 +69,10 @@ public:
 
 		return buffer;
 	}
-
-	void Set(std::span<const std::byte> _buffer) noexcept {
-		type = Type::BUFFER;
-		buffer = _buffer;
-	}
 };
 
 class IstreamBucketList {
-	typedef StaticArray<IstreamBucket, 64> List;
+	using List = StaticVector<IstreamBucket, 64>;
 	List list;
 
 	bool more = false;
@@ -111,7 +109,7 @@ public:
 			return;
 		}
 
-		list.append(bucket);
+		list.push_back(bucket);
 	}
 
 	void Push(std::span<const std::byte> buffer) noexcept {
@@ -120,7 +118,7 @@ public:
 			return;
 		}
 
-		list.append().Set(buffer);
+		list.emplace_back(buffer);
 	}
 
 	List::const_iterator begin() const noexcept {

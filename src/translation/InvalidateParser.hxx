@@ -34,7 +34,7 @@
 
 #include "Request.hxx"
 #include "translation/Protocol.hxx"
-#include "util/StaticArray.hxx"
+#include "util/StaticVector.hxx"
 
 #include <cstddef>
 #include <span>
@@ -47,7 +47,7 @@ struct pool;
 struct TranslationInvalidateRequest : TranslateRequest {
 	const char *site = nullptr;
 
-	StaticArray<TranslationCommand, 32> commands;
+	StaticVector<TranslationCommand, 32> commands;
 
 	std::string ToString() const noexcept;
 };

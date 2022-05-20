@@ -210,8 +210,10 @@ ParseTranslationInvalidateRequest(struct pool &pool,
 			apply_translation_packet(request, command, payload,
 						 payload_length);
 
-			if (!request.commands.checked_append(command))
+			if (request.commands.full())
 				throw std::runtime_error("Too many commands");
+
+			request.commands.push_back(command);
 		}
 
 		payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */

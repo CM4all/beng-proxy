@@ -33,12 +33,12 @@
 #pragma once
 
 #include "AllocatorPtr.hxx"
-#include "util/StaticArray.hxx"
+#include "util/StaticVector.hxx"
 #include "util/StringView.hxx"
 
 template<size_t MAX>
 class PoolStringBuilder {
-	StaticArray<StringView, MAX> items;
+	StaticVector<StringView, MAX> items;
 
 public:
 	void push_back(StringView s) noexcept {

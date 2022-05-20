@@ -41,7 +41,7 @@
 #include "system/Error.hxx"
 #include "io/Iovec.hxx"
 #include "util/StringView.hxx"
-#include "util/StaticArray.hxx"
+#include "util/StaticVector.hxx"
 #include "util/RuntimeError.hxx"
 
 #include <assert.h>
@@ -108,12 +108,12 @@ HttpServerConnection::TryWriteBuckets2()
 		std::throw_with_nested(std::runtime_error("error on HTTP response stream"));
 	}
 
-	StaticArray<struct iovec, 64> v;
+	StaticVector<struct iovec, 64> v;
 	for (const auto &bucket : list) {
 		if (!bucket.IsBuffer())
 			break;
 
-		v.append() = MakeIovec(bucket.GetBuffer());
+		v.push_back(MakeIovec(bucket.GetBuffer()));
 
 		if (v.full())
 			break;

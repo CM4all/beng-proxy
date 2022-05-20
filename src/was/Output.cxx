@@ -46,7 +46,7 @@
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
 #include "util/DestructObserver.hxx"
-#include "util/StaticArray.hxx"
+#include "util/StaticVector.hxx"
 
 #include <was/protocol.h>
 
@@ -244,7 +244,7 @@ WasOutput::OnIstreamReady() noexcept
 
 	/* convert buckets to struct iovec array */
 
-	StaticArray<struct iovec, 64> v;
+	StaticVector<struct iovec, 64> v;
 	bool more = list.HasMore(), result = false;
 	size_t total = 0;
 
@@ -262,7 +262,7 @@ WasOutput::OnIstreamReady() noexcept
 
 		const auto buffer = i.GetBuffer();
 
-		v.append() = MakeIovec(buffer);
+		v.push_back(MakeIovec(buffer));
 		total += buffer.size();
 	}
 
@@ -271,7 +271,7 @@ WasOutput::OnIstreamReady() noexcept
 
 	/* write this struct iovec array */
 
-	ssize_t nbytes = writev(GetPipe().Get(), &v.front(), v.size());
+	ssize_t nbytes = writev(GetPipe().Get(), v.data(), v.size());
 	if (nbytes < 0) {
 		int e = errno;
 		if (e == EAGAIN) {
