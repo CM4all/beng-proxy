@@ -37,8 +37,8 @@
 #include "cluster/AddressListBuilder.hxx"
 #include "AllocatorPtr.hxx"
 #include "event/Loop.hxx"
-#include "net/Resolver.hxx"
-#include "net/AddressInfo.hxx"
+#include "net/AllocatedSocketAddress.hxx"
+#include "net/Parser.hxx"
 #include "net/FailureManager.hxx"
 #include "net/FailureRef.hxx"
 #include "util/Expiry.hxx"
@@ -83,7 +83,8 @@ Find(const AddressList &al, SocketAddress address) noexcept
 static FailureStatus
 FailureGet(FailureManager &fm, const char *host_and_port)
 {
-	return fm.Get(Expiry::Now(), Resolve(host_and_port, 80, nullptr).front());
+	return fm.Get(Expiry::Now(),
+		      ParseSocketAddress(host_and_port, 80, false));
 }
 
 static void
@@ -91,7 +92,7 @@ FailureAdd(FailureManager &fm, const char *host_and_port,
 	   FailureStatus status=FailureStatus::CONNECT,
 	   std::chrono::seconds duration=std::chrono::hours(1))
 {
-	fm.Make(Resolve(host_and_port, 80, nullptr).front())
+	fm.Make(ParseSocketAddress(host_and_port, 80, false))
 		.Set(Expiry::Now(), status, duration);
 }
 
@@ -99,7 +100,7 @@ static void
 FailureRemove(FailureManager &fm, const char *host_and_port,
 	      FailureStatus status=FailureStatus::CONNECT)
 {
-	fm.Make(Resolve(host_and_port, 80, nullptr).front()).Unset(status);
+	fm.Make(ParseSocketAddress(host_and_port, 80, false)).Unset(status);
 }
 
 TEST(BalancerTest, Failure)
@@ -171,9 +172,9 @@ TEST(BalancerTest, Basic)
 	const AllocatorPtr alloc{pool};
 
 	AddressListBuilder b;
-	b.Add(alloc, Resolve("192.168.0.1", 80, nullptr).front());
-	b.Add(alloc, Resolve("192.168.0.2", 80, nullptr).front());
-	b.Add(alloc, Resolve("192.168.0.3", 80, nullptr).front());
+	b.Add(alloc, ParseSocketAddress("192.168.0.1", 80, false));
+	b.Add(alloc, ParseSocketAddress("192.168.0.2", 80, false));
+	b.Add(alloc, ParseSocketAddress("192.168.0.3", 80, false));
 	const auto al = b.Finish(alloc);
 
 	SocketAddress result = balancer.Get(al);
@@ -221,9 +222,9 @@ TEST(BalancerTest, Failed)
 	const AllocatorPtr alloc{pool};
 
 	AddressListBuilder b;
-	b.Add(alloc, Resolve("192.168.0.1", 80, nullptr).front());
-	b.Add(alloc, Resolve("192.168.0.2", 80, nullptr).front());
-	b.Add(alloc, Resolve("192.168.0.3", 80, nullptr).front());
+	b.Add(alloc, ParseSocketAddress("192.168.0.1", 80, false));
+	b.Add(alloc, ParseSocketAddress("192.168.0.2", 80, false));
+	b.Add(alloc, ParseSocketAddress("192.168.0.3", 80, false));
 	const auto al = b.Finish(alloc);
 
 	FailureAdd(fm, "192.168.0.2");
@@ -249,9 +250,9 @@ TEST(BalancerTest, StickyFailover)
 
 	AddressListBuilder b;
 	b.SetStickyMode(StickyMode::FAILOVER);
-	b.Add(alloc, Resolve("192.168.0.1", 80, nullptr).front());
-	b.Add(alloc, Resolve("192.168.0.2", 80, nullptr).front());
-	b.Add(alloc, Resolve("192.168.0.3", 80, nullptr).front());
+	b.Add(alloc, ParseSocketAddress("192.168.0.1", 80, false));
+	b.Add(alloc, ParseSocketAddress("192.168.0.2", 80, false));
+	b.Add(alloc, ParseSocketAddress("192.168.0.3", 80, false));
 	const auto al = b.Finish(alloc);
 
 	/* first node is always used */
@@ -344,9 +345,9 @@ TEST(BalancerTest, StickyCookie)
 
 	AddressListBuilder b;
 	b.SetStickyMode(StickyMode::COOKIE);
-	b.Add(alloc, Resolve("192.168.0.1", 80, nullptr).front());
-	b.Add(alloc, Resolve("192.168.0.2", 80, nullptr).front());
-	b.Add(alloc, Resolve("192.168.0.3", 80, nullptr).front());
+	b.Add(alloc, ParseSocketAddress("192.168.0.1", 80, false));
+	b.Add(alloc, ParseSocketAddress("192.168.0.2", 80, false));
+	b.Add(alloc, ParseSocketAddress("192.168.0.3", 80, false));
 	const auto al = b.Finish(alloc);
 
 	/* without cookie: round-robin */
