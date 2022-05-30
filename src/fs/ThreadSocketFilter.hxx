@@ -286,7 +286,7 @@ private:
 	/**
 	 * @return the number of bytes appended to #plain_output
 	 */
-	size_t LockWritePlainOutput(const void *data, size_t size) noexcept;
+	size_t LockWritePlainOutput(std::span<const std::byte> src) noexcept;
 
 	void ClosedPrematurely() noexcept;
 

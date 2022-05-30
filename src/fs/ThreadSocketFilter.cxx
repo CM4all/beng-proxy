@@ -522,15 +522,15 @@ ThreadSocketFilter::Read(bool _expect_more) noexcept
 }
 
 inline size_t
-ThreadSocketFilter::LockWritePlainOutput(const void *data, size_t size) noexcept
+ThreadSocketFilter::LockWritePlainOutput(std::span<const std::byte> src) noexcept
 {
 	const std::lock_guard<std::mutex> lock(mutex);
 
 	plain_output.AllocateIfNull(fb_pool_get());
 
 	auto w = plain_output.Write();
-	size_t nbytes = std::min(size, w.size());
-	memcpy(w.data(), data, nbytes);
+	size_t nbytes = std::min(src.size(), w.size());
+	memcpy(w.data(), src.data(), nbytes);
 	plain_output.Append(nbytes);
 
 	return nbytes;
@@ -543,7 +543,7 @@ ThreadSocketFilter::Write(const void *data, size_t length) noexcept
 	if (length == 0)
 		return 0;
 
-	const size_t nbytes = LockWritePlainOutput(data, length);
+	const size_t nbytes = LockWritePlainOutput({(const std::byte *)data, length});
 
 	if (nbytes < length)
 		/* set the "want_write" flag but don't schedule an event to
