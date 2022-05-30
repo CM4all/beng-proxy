@@ -374,6 +374,14 @@ public:
 		base.DisposeConsumed(nbytes);
 	}
 
+	DefaultFifoBuffer &InternalGetInputBuffer() noexcept {
+		return base.GetInputBuffer();
+	}
+
+	const DefaultFifoBuffer &GetInputBuffer() const noexcept {
+		return base.GetInputBuffer();
+	}
+
 	bool InternalRead(bool expect_more) noexcept {
 		assert(filter != nullptr);
 
