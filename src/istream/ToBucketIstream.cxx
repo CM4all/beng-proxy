@@ -113,10 +113,7 @@ ToBucketIstream::OnData(const void *data, size_t length) noexcept
 	defer_read.Cancel();
 
 	buffer.AllocateIfNull(fb_pool_get());
-	auto w = buffer.Write();
-	size_t nbytes = std::min(length, w.size());
-	memcpy(w.data(), data, nbytes);
-	return nbytes;
+	return buffer.MoveFrom(std::span{(const std::byte *)data, length});
 }
 
 void

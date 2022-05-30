@@ -68,12 +68,9 @@ FilteredSocketLease::MoveSocketInput() noexcept
 			continue;
 		}
 
-		auto w = dest.Write();
-		size_t n = std::min(r.size(), w.size());
+		std::size_t n = dest.MoveFrom(r);
 		assert(n > 0);
-		std::move(r.data(), r.data() + n, w.data());
 		socket->DisposeConsumed(n);
-		dest.Append(n);
 	}
 }
 

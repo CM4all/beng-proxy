@@ -48,10 +48,7 @@ MultiFifoBuffer::Push(std::span<const std::byte> src) noexcept
 		auto &b = buffers.back();
 		assert(b.IsDefined());
 
-		auto w = b.Write();
-		size_t nbytes = std::min(w.size(), src.size());
-		std::copy_n(src.data(), nbytes, w.data());
-		b.Append(nbytes);
+		const std::size_t nbytes = b.MoveFrom(src);
 		src = src.subspan(nbytes);
 	}
 
@@ -61,10 +58,7 @@ MultiFifoBuffer::Push(std::span<const std::byte> src) noexcept
 		auto &b = buffers.back();
 		b.Allocate();
 
-		auto w = b.Write();
-		size_t nbytes = std::min(w.size(), src.size());
-		std::copy_n(src.data(), nbytes, w.data());
-		b.Append(nbytes);
+		const std::size_t nbytes = b.MoveFrom(src);
 		src = src.subspan(nbytes);
 	}
 }

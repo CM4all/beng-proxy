@@ -63,11 +63,8 @@ FifoBufferSink::OnIstreamReady() noexcept
 		}
 
 		buffer.AllocateIfNull(fb_pool_get());
-		auto w = buffer.Write();
 		auto r = bucket.GetBuffer();
-		size_t n_copy = std::min(w.size(), r.size());
-		std::copy_n(r.data(), n_copy, w.data());
-		buffer.Append(nbytes);
+		size_t n_copy = buffer.MoveFrom(r);
 		nbytes += n_copy;
 
 		if (n_copy < r.size()) {
@@ -92,11 +89,7 @@ size_t
 FifoBufferSink::OnData(const void *data, size_t length) noexcept
 {
 	buffer.AllocateIfNull(fb_pool_get());
-
-	auto w = buffer.Write();
-	size_t nbytes = std::min(w.size(), length);
-	memcpy(w.data(), data, nbytes);
-	buffer.Append(nbytes);
+	const std::size_t nbytes = buffer.MoveFrom(std::span{(const std::byte *)data, length});
 
 	if (!handler.OnFifoBufferSinkData())
 		return 0;

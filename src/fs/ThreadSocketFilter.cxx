@@ -38,8 +38,6 @@
 
 #include <algorithm>
 
-#include <string.h>
-
 ThreadSocketFilter::ThreadSocketFilter(EventLoop &_event_loop,
 				       ThreadQueue &_queue,
 				       std::unique_ptr<ThreadSocketFilterHandler> _handler) noexcept
@@ -440,23 +438,20 @@ ThreadSocketFilter::OnData() noexcept
 	auto r = socket->InternalReadBuffer();
 	assert(!r.empty());
 
+	std::size_t nbytes;
+
 	{
 		const std::lock_guard<std::mutex> lock(mutex);
 
 		encrypted_input.AllocateIfNull(fb_pool_get());
 
-		auto w = encrypted_input.Write();
-		if (w.empty())
-			return BufferedResult::BLOCKING;
-
-		if (r.size() > w.size())
-			r = r.first(w.size());
-
-		std::copy(r.begin(), r.end(), w.begin());
-		encrypted_input.Append(r.size());
+		nbytes = encrypted_input.MoveFrom(r);
 	}
 
-	socket->InternalConsumed(r.size());
+	if (nbytes == 0)
+		return BufferedResult::BLOCKING;
+
+	socket->InternalConsumed(nbytes);
 
 	Schedule();
 
@@ -527,13 +522,7 @@ ThreadSocketFilter::LockWritePlainOutput(std::span<const std::byte> src) noexcep
 	const std::lock_guard<std::mutex> lock(mutex);
 
 	plain_output.AllocateIfNull(fb_pool_get());
-
-	auto w = plain_output.Write();
-	size_t nbytes = std::min(src.size(), w.size());
-	memcpy(w.data(), src.data(), nbytes);
-	plain_output.Append(nbytes);
-
-	return nbytes;
+	return plain_output.MoveFrom(src);
 }
 
 ssize_t

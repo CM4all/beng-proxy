@@ -110,15 +110,12 @@ fb_write(BIO *b, const char *in, int inl) noexcept
 
 	auto &fb = *(FifoBufferBio *)BIO_get_data(b);
 
-	auto w = fb.buffer.Write();
-	if (w.empty()) {
+	const std::size_t nbytes = fb.buffer.MoveFrom(std::span{(const std::byte *)in, std::size_t(inl)});
+	if (nbytes == 0) {
 		BIO_set_retry_write(b);
 		return -1;
 	}
 
-	size_t nbytes = std::min(w.size(), size_t(inl));
-	memcpy(w.data(), in, nbytes);
-	fb.buffer.Append(nbytes);
 	return nbytes;
 }
 

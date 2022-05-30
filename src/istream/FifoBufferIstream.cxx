@@ -34,18 +34,11 @@
 #include "Bucket.hxx"
 #include "memory/fb_pool.hxx"
 
-#include <string.h>
-
 size_t
 FifoBufferIstream::Push(std::span<const std::byte> src) noexcept
 {
 	buffer.AllocateIfNull(fb_pool_get());
-
-	auto w = buffer.Write();
-	size_t nbytes = std::min(w.size(), src.size());
-	memcpy(w.data(), src.data(), nbytes);
-	buffer.Append(nbytes);
-	return nbytes;
+	return buffer.MoveFrom(src);
 }
 
 void
