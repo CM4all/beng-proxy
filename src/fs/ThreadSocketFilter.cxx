@@ -435,23 +435,17 @@ ThreadSocketFilter::OnData() noexcept
 {
 	read_scheduled = false;
 
-	auto r = socket->InternalReadBuffer();
-	assert(!r.empty());
-
-	std::size_t nbytes;
-
 	{
 		const std::scoped_lock lock{mutex};
 
-		encrypted_input.AllocateIfNull(fb_pool_get());
+		if (encrypted_input.IsDefinedAndFull())
+			return BufferedResult::BLOCKING;
 
-		nbytes = encrypted_input.MoveFrom(r);
+		auto &src = socket->InternalGetInputBuffer();
+		assert(!src.empty());
+
+		encrypted_input.MoveFromAllowBothNull(src);
 	}
-
-	if (nbytes == 0)
-		return BufferedResult::BLOCKING;
-
-	socket->InternalConsumed(nbytes);
 
 	Schedule();
 
