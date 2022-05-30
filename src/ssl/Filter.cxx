@@ -116,7 +116,7 @@ format_issuer_subject_name(X509 *cert)
 
 [[gnu::pure]]
 static bool
-is_ssl_error(SSL *ssl, int ret)
+IsSslError(SSL *ssl, int ret) noexcept
 {
 	if (ret == 0)
 		/* this is always an error according to the documentation of
@@ -140,7 +140,7 @@ is_ssl_error(SSL *ssl, int ret)
 static void
 CheckThrowSslError(SSL *ssl, int result)
 {
-	if (is_ssl_error(ssl, result))
+	if (IsSslError(ssl, result))
 		throw SslError();
 }
 
