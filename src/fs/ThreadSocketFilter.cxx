@@ -445,6 +445,7 @@ ThreadSocketFilter::OnData() noexcept
 		assert(!src.empty());
 
 		encrypted_input.MoveFromAllowBothNull(src);
+		src.FreeIfEmpty();
 	}
 
 	Schedule();
