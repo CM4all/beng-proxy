@@ -114,16 +114,10 @@ format_issuer_subject_name(X509 *cert)
 	return ToString(X509_get_issuer_name(cert));
 }
 
-[[gnu::pure]]
-static bool
-IsSslError(SSL *ssl, int ret) noexcept
+static constexpr bool
+IsSslError(int error) noexcept
 {
-	if (ret == 0)
-		/* this is always an error according to the documentation of
-		   SSL_read(), SSL_write() and SSL_do_handshake() */
-		return true;
-
-	switch (SSL_get_error(ssl, ret)) {
+	switch (error) {
 	case SSL_ERROR_NONE:
 	case SSL_ERROR_WANT_READ:
 	case SSL_ERROR_WANT_WRITE:
@@ -135,6 +129,18 @@ IsSslError(SSL *ssl, int ret) noexcept
 	default:
 		return true;
 	}
+}
+
+[[gnu::pure]]
+static bool
+IsSslError(SSL *ssl, int ret) noexcept
+{
+	if (ret == 0)
+		/* this is always an error according to the documentation of
+		   SSL_read(), SSL_write() and SSL_do_handshake() */
+		return true;
+
+	return IsSslError(SSL_get_error(ssl, ret));
 }
 
 static void
