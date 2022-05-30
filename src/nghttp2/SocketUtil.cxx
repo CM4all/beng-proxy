@@ -58,7 +58,7 @@ ReceiveFromSocketBuffer(nghttp2_session *session, FilteredSocket &socket)
 }
 
 ssize_t
-SendToBuffer(FilteredSocket &socket, const void *data, size_t length)
+SendToBuffer(FilteredSocket &socket, const void *data, size_t length) noexcept
 {
 	const auto nbytes = socket.Write(data, length);
 	if (nbytes < 0) {
