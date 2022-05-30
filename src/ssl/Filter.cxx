@@ -131,25 +131,6 @@ IsSslError(int error) noexcept
 	}
 }
 
-[[gnu::pure]]
-static bool
-IsSslError(SSL *ssl, int ret) noexcept
-{
-	if (ret == 0)
-		/* this is always an error according to the documentation of
-		   SSL_read(), SSL_write() and SSL_do_handshake() */
-		return true;
-
-	return IsSslError(SSL_get_error(ssl, ret));
-}
-
-static void
-CheckThrowSslError(SSL *ssl, int result)
-{
-	if (IsSslError(ssl, result))
-		throw SslError();
-}
-
 inline void
 SslFilter::PostHandshake() noexcept
 {
@@ -295,16 +276,16 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 		if (result == 1) {
 			handshaking = false;
 			PostHandshake();
-		} else {
-			try {
-				CheckThrowSslError(ssl.get(), result);
+		} else if (const int error = SSL_get_error(ssl.get(), result);
+			   IsSslError(error)) {
+			{
 				/* flush the encrypted_output buffer, because it may
 				   contain a "TLS alert" */
-			} catch (...) {
 				const std::lock_guard<std::mutex> lock(f.mutex);
 				f.encrypted_output.MoveFromAllowNull(encrypted_output);
-				throw;
 			}
+
+			throw SslError{};
 		}
 	}
 
