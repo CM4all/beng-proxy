@@ -32,6 +32,7 @@
 
 #include "Filter.hxx"
 #include "CompletionHandler.hxx"
+#include "lib/openssl/Error.hxx"
 #include "lib/openssl/Name.hxx"
 #include "lib/openssl/UniqueX509.hxx"
 #include "FifoBufferBio.hxx"
@@ -101,14 +102,6 @@ private:
 	}
 };
 
-static std::runtime_error
-MakeSslError()
-{
-	unsigned long error = ERR_get_error();
-	char buffer[120];
-	return std::runtime_error(ERR_error_string(error, buffer));
-}
-
 static AllocatedString
 format_subject_name(X509 *cert)
 {
@@ -148,7 +141,7 @@ static void
 CheckThrowSslError(SSL *ssl, int result)
 {
 	if (is_ssl_error(ssl, result))
-		throw MakeSslError();
+		throw SslError();
 }
 
 inline void
