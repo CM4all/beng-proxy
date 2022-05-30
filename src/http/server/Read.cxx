@@ -49,6 +49,8 @@
 #include <stdlib.h>
 #include <errno.h>
 
+using std::string_view_literals::operator""sv;
+
 inline bool
 HttpServerConnection::ParseRequestLine(const char *line, size_t length)
 {
@@ -174,10 +176,10 @@ HttpServerConnection::ParseRequestLine(const char *line, size_t length)
 	if (gcc_unlikely(space == nullptr || space + 6 > line + length ||
 			 memcmp(space + 1, "HTTP/", 5) != 0)) {
 		/* refuse HTTP 0.9 requests */
-		static const char msg[] =
-			"This server requires HTTP 1.1.";
+		static constexpr auto msg =
+			"This server requires HTTP 1.1."sv;
 
-		ssize_t nbytes = socket->Write(msg, sizeof(msg) - 1);
+		ssize_t nbytes = socket->Write(msg.data(), msg.size());
 		if (nbytes != WRITE_DESTROYED)
 			Done();
 		return false;

@@ -47,6 +47,8 @@
 
 #include <string.h>
 
+using std::string_view_literals::operator""sv;
+
 bool
 HttpServerConnection::MaybeSend100Continue()
 {
@@ -63,10 +65,9 @@ HttpServerConnection::MaybeSend100Continue()
 	/* this string is simple enough to expect that we don't need to
 	   check for partial writes, not before we have sent a single byte
 	   of response to the peer */
-	static const char *const response_string = "HTTP/1.1 100 Continue\r\n\r\n";
-	const size_t length = strlen(response_string);
-	ssize_t nbytes = socket->Write(response_string, length);
-	if (gcc_likely(nbytes == (ssize_t)length))
+	static constexpr auto response_string = "HTTP/1.1 100 Continue\r\n\r\n"sv;
+	ssize_t nbytes = socket->Write(response_string.data(), response_string.size());
+	if (nbytes == (ssize_t)response_string.size()) [[likely]]
 		return true;
 
 	if (nbytes == WRITE_ERRNO)
