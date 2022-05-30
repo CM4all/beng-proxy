@@ -43,7 +43,7 @@ BufferedResult
 ReceiveFromSocketBuffer(nghttp2_session *session, FilteredSocket &socket);
 
 ssize_t
-SendToBuffer(FilteredSocket &socket, const void *data, size_t length) noexcept;
+SendToBuffer(FilteredSocket &socket, std::span<const std::byte> src) noexcept;
 
 bool
 OnSocketWrite(nghttp2_session *session, FilteredSocket &socket);

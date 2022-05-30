@@ -58,9 +58,9 @@ ReceiveFromSocketBuffer(nghttp2_session *session, FilteredSocket &socket)
 }
 
 ssize_t
-SendToBuffer(FilteredSocket &socket, const void *data, size_t length) noexcept
+SendToBuffer(FilteredSocket &socket, std::span<const std::byte> src) noexcept
 {
-	const auto nbytes = socket.Write(data, length);
+	const auto nbytes = socket.Write(src);
 	if (nbytes < 0) {
 		if (nbytes == WRITE_BLOCKING)
 			return NGHTTP2_ERR_WOULDBLOCK;

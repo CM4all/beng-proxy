@@ -76,9 +76,9 @@ NopSocketFilter::Read(bool expect_more) noexcept
 }
 
 ssize_t
-NopSocketFilter::Write(const void *data, size_t length) noexcept
+NopSocketFilter::Write(std::span<const std::byte> src) noexcept
 {
-	return socket->InternalWrite(data, length);
+	return socket->InternalWrite(src);
 }
 
 void

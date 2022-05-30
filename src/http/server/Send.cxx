@@ -66,7 +66,7 @@ HttpServerConnection::MaybeSend100Continue()
 	   check for partial writes, not before we have sent a single byte
 	   of response to the peer */
 	static constexpr auto response_string = "HTTP/1.1 100 Continue\r\n\r\n"sv;
-	ssize_t nbytes = socket->Write(response_string.data(), response_string.size());
+	ssize_t nbytes = socket->Write(std::as_bytes(std::span{response_string}));
 	if (nbytes == (ssize_t)response_string.size()) [[likely]]
 		return true;
 

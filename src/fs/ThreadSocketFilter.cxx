@@ -288,7 +288,7 @@ ThreadSocketFilter::Done() noexcept
 			if (!r.empty()) {
 				/* don't care for the return value; the socket and
 				   this object are going to be closed anyway */
-				socket->InternalDirectWrite(r.data(), r.size());
+				socket->InternalDirectWrite(r);
 				socket->Shutdown();
 			}
 		}
@@ -520,15 +520,15 @@ ThreadSocketFilter::LockWritePlainOutput(std::span<const std::byte> src) noexcep
 }
 
 ssize_t
-ThreadSocketFilter::Write(const void *data, size_t length) noexcept
+ThreadSocketFilter::Write(std::span<const std::byte> src) noexcept
 {
 	// TODO: is this check necessary?
-	if (length == 0)
+	if (src.empty())
 		return 0;
 
-	const size_t nbytes = LockWritePlainOutput({(const std::byte *)data, length});
+	const size_t nbytes = LockWritePlainOutput(src);
 
-	if (nbytes < length)
+	if (nbytes < src.size())
 		/* set the "want_write" flag but don't schedule an event to
 		   avoid a busy loop; as soon as the worker thread returns, we
 		   will retry to write according to this flag */
@@ -598,7 +598,7 @@ ThreadSocketFilter::InternalWrite() noexcept
 	std::copy(r.begin(), r.end(), copy);
 	lock.unlock();
 
-	ssize_t nbytes = socket->InternalWrite(copy, r.size());
+	ssize_t nbytes = socket->InternalWrite(std::span{copy}.first(r.size()));
 	if (nbytes > 0) {
 		lock.lock();
 		const bool add = encrypted_output.IsFull();

@@ -83,7 +83,7 @@ public:
 	 * processes it, and may then call
 	 * filtered_socket_internal_write().
 	 */
-	virtual ssize_t Write(const void *data, size_t length) noexcept = 0;
+	virtual ssize_t Write(std::span<const std::byte> src) noexcept = 0;
 
 	/**
 	 * The client is willing to read, but does not expect it yet.  The

@@ -37,6 +37,8 @@
 
 #include <array>
 
+#include <sys/uio.h> // for struct iovec
+
 /**
  * Wrapper for a #FilteredSocket which may be released at some point.
  * After that, remaining data in the input buffer can still be read.
@@ -136,10 +138,10 @@ public:
 		socket->ScheduleReadNoTimeout(expect_more);
 	}
 
-	ssize_t Write(const void *data, size_t size) noexcept {
+	ssize_t Write(std::span<const std::byte>  src) noexcept {
 		assert(!IsReleased());
 
-		return socket->Write(data, size);
+		return socket->Write(src);
 	}
 
 	void DeferWrite() noexcept {
@@ -160,10 +162,10 @@ public:
 		socket->UnscheduleWrite();
 	}
 
-	ssize_t WriteV(const struct iovec *v, size_t n) noexcept {
+	ssize_t WriteV(std::span<const struct iovec> v) noexcept {
 		assert(!IsReleased());
 
-		return socket->WriteV(v, n);
+		return socket->WriteV(v);
 	}
 
 	ssize_t WriteFrom(int fd, FdType fd_type, size_t length) noexcept {

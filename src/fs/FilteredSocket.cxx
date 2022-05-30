@@ -246,11 +246,11 @@ FilteredSocket::Read(bool expect_more) noexcept
 }
 
 ssize_t
-FilteredSocket::Write(const void *data, size_t length) noexcept
+FilteredSocket::Write(std::span<const std::byte> src) noexcept
 {
 	return filter != nullptr
-		? filter->Write(data, length)
-		: base.Write(data, length);
+		? filter->Write(src)
+		: base.Write(src.data(), src.size());
 }
 
 bool

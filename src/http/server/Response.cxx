@@ -70,7 +70,7 @@ HttpServerConnection::OnData(const void *data, size_t length) noexcept
 	if (!socket->IsConnected())
 		return 0;
 
-	ssize_t nbytes = socket->Write(data, length);
+	ssize_t nbytes = socket->Write({(const std::byte *)data, length});
 
 	if (gcc_likely(nbytes >= 0)) {
 		response.bytes_sent += nbytes;

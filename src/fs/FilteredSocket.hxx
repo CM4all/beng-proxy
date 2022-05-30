@@ -37,6 +37,9 @@
 #include "event/net/BufferedSocket.hxx"
 #include "util/BindMethod.hxx"
 
+#include <cstddef>
+#include <span>
+
 class UniqueSocketDescriptor;
 
 /**
@@ -280,12 +283,12 @@ public:
 	 */
 	bool Read(bool expect_more) noexcept;
 
-	ssize_t Write(const void *data, size_t length) noexcept;
+	ssize_t Write(std::span<const std::byte> src) noexcept;
 
-	ssize_t WriteV(const struct iovec *v, size_t n) noexcept {
+	ssize_t WriteV(std::span<const struct iovec> v) noexcept {
 		assert(filter == nullptr);
 
-		return base.WriteV(v, n);
+		return base.WriteV(v.data(), v.size());
 	}
 
 	ssize_t WriteFrom(int fd, FdType fd_type, size_t length) noexcept {
@@ -395,16 +398,16 @@ public:
 		return base.Read(expect_more);
 	}
 
-	ssize_t InternalDirectWrite(const void *data, size_t length) noexcept {
+	ssize_t InternalDirectWrite(std::span<const std::byte> src) noexcept {
 		assert(filter != nullptr);
 
-		return base.DirectWrite(data, length);
+		return base.DirectWrite(src.data(), src.size());
 	}
 
-	ssize_t InternalWrite(const void *data, size_t length) noexcept {
+	ssize_t InternalWrite(std::span<const std::byte> src) noexcept {
 		assert(filter != nullptr);
 
-		return base.Write(data, length);
+		return base.Write(src.data(), src.size());
 	}
 
 	/**

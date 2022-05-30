@@ -212,7 +212,7 @@ LbTcpConnection::Outbound::OnBufferedData()
 	auto r = socket.ReadBuffer();
 	assert(!r.empty());
 
-	ssize_t nbytes = tcp.inbound.socket->Write(r.data(), r.size());
+	ssize_t nbytes = tcp.inbound.socket->Write(r);
 	if (nbytes > 0) {
 		tcp.inbound.socket->ScheduleWrite();
 		socket.DisposeConsumed(nbytes);

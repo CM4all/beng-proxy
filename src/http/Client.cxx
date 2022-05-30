@@ -590,7 +590,7 @@ HttpClient::TryWriteBuckets2()
 			: BucketResult::DEPLETED;
 	}
 
-	ssize_t nbytes = socket.WriteV(v.begin(), v.size());
+	ssize_t nbytes = socket.WriteV(v);
 	if (nbytes < 0) {
 		if (nbytes == WRITE_BLOCKING)
 			[[likely]]
@@ -1229,7 +1229,7 @@ HttpClient::OnData(const void *data, size_t length) noexcept
 
 	request.got_data = true;
 
-	ssize_t nbytes = socket.Write(data, length);
+	ssize_t nbytes = socket.Write({(const std::byte *)data, length});
 	if (nbytes >= 0) [[likely]] {
 		ScheduleWrite();
 		return (size_t)nbytes;

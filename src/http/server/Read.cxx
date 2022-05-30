@@ -179,7 +179,7 @@ HttpServerConnection::ParseRequestLine(const char *line, size_t length)
 		static constexpr auto msg =
 			"This server requires HTTP 1.1."sv;
 
-		ssize_t nbytes = socket->Write(msg.data(), msg.size());
+		ssize_t nbytes = socket->Write(std::as_bytes(std::span{msg}));
 		if (nbytes != WRITE_DESTROYED)
 			Done();
 		return false;

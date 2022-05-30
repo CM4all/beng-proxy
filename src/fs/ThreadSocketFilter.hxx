@@ -333,7 +333,7 @@ public:
 	std::span<std::byte> ReadBuffer() noexcept override;
 	void Consumed(size_t nbytes) noexcept override;
 	bool Read(bool expect_more) noexcept override;
-	ssize_t Write(const void *data, size_t length) noexcept override;
+	ssize_t Write(std::span<const std::byte> src) noexcept override;
 	void ScheduleRead(bool expect_more,
 			  Event::Duration timeout) noexcept override;
 	void ScheduleWrite() noexcept override;

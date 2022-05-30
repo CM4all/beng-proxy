@@ -90,13 +90,13 @@ public:
 private:
 	void DeferWrite() noexcept;
 
-	ssize_t SendCallback(const void *data, size_t length) noexcept;
+	ssize_t SendCallback(std::span<const std::byte> src) noexcept;
 
 	static ssize_t SendCallback(nghttp2_session *, const uint8_t *data,
 				    size_t length, int,
 				    void *user_data) noexcept {
 		auto &c = *(ServerConnection *)user_data;
-		return c.SendCallback(data, length);
+		return c.SendCallback({(const std::byte *)data, length});
 	}
 
 	int OnFrameRecvCallback(const nghttp2_frame *frame) noexcept;

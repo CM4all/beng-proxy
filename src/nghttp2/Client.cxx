@@ -537,9 +537,9 @@ ClientConnection::AbortAllRequests(std::exception_ptr e) noexcept
 }
 
 ssize_t
-ClientConnection::SendCallback(const void *data, size_t length) noexcept
+ClientConnection::SendCallback(std::span<const std::byte> src) noexcept
 {
-	return SendToBuffer(*socket, data, length);
+	return SendToBuffer(*socket, src);
 }
 
 int

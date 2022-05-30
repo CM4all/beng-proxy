@@ -501,9 +501,9 @@ ServerConnection::DeferWrite() noexcept
 }
 
 ssize_t
-ServerConnection::SendCallback(const void *data, size_t length) noexcept
+ServerConnection::SendCallback(std::span<const std::byte> src) noexcept
 {
-	return SendToBuffer(*socket, data, length);
+	return SendToBuffer(*socket, src);
 }
 
 int
