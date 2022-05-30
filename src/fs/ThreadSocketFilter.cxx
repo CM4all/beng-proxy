@@ -78,7 +78,7 @@ ThreadSocketFilter::SetHandshakeCallback(BoundMethod<void() noexcept> callback) 
 	assert(!handshake_callback);
 	assert(callback);
 
-	const std::lock_guard<std::mutex> lock(mutex);
+	const std::scoped_lock lock{mutex};
 	if (handshaking)
 		/* defer */
 		handshake_callback = callback;
@@ -92,7 +92,7 @@ ThreadSocketFilter::MoveDecryptedInput() noexcept
 {
 	assert(!unprotected_decrypted_input.IsDefinedAndFull());
 
-	const std::lock_guard<std::mutex> lock(mutex);
+	const std::scoped_lock lock{mutex};
 	const bool was_full = decrypted_input.IsDefinedAndFull();
 	unprotected_decrypted_input.MoveFromAllowBothNull(decrypted_input);
 	unprotected_decrypted_input.FreeIfEmpty();
@@ -183,7 +183,7 @@ ThreadSocketFilter::CheckWrite(std::unique_lock<std::mutex> &lock) noexcept
 void
 ThreadSocketFilter::OnDeferred() noexcept
 {
-	std::unique_lock<std::mutex> lock(mutex);
+	std::unique_lock lock{mutex};
 
 	if (!CheckRead(lock) || !CheckWrite(lock))
 		return;
@@ -195,7 +195,7 @@ ThreadSocketFilter::HandshakeTimeoutCallback() noexcept
 	bool _handshaking;
 
 	{
-		std::unique_lock<std::mutex> lock(mutex);
+		const std::scoped_lock lock{mutex};
 		_handshaking = handshaking;
 	}
 
@@ -207,7 +207,7 @@ void
 ThreadSocketFilter::PreRun() noexcept
 {
 	{
-		const std::lock_guard<std::mutex> lock(mutex);
+		const std::scoped_lock lock{mutex};
 		decrypted_input.AllocateIfNull(fb_pool_get());
 		encrypted_output.AllocateIfNull(fb_pool_get());
 	}
@@ -221,7 +221,7 @@ ThreadSocketFilter::PostRun() noexcept
 	handler->PostRun(*this);
 
 	{
-		const std::lock_guard<std::mutex> lock(mutex);
+		const std::scoped_lock lock{mutex};
 		decrypted_input.FreeIfEmpty();
 		encrypted_output.FreeIfEmpty();
 	}
@@ -236,7 +236,7 @@ void
 ThreadSocketFilter::Run() noexcept
 {
 	{
-		const std::lock_guard<std::mutex> lock(mutex);
+		const std::scoped_lock lock{mutex};
 
 		if (error != nullptr)
 			return;
@@ -253,7 +253,7 @@ ThreadSocketFilter::Run() noexcept
 	}
 
 	{
-		const std::lock_guard<std::mutex> lock(mutex);
+		const std::scoped_lock lock{mutex};
 
 		busy = false;
 		done_pending = true;
@@ -273,7 +273,7 @@ ThreadSocketFilter::Done() noexcept
 		return;
 	}
 
-	std::unique_lock<std::mutex> lock(mutex);
+	std::unique_lock lock{mutex};
 
 	done_pending = false;
 
@@ -441,7 +441,7 @@ ThreadSocketFilter::OnData() noexcept
 	std::size_t nbytes;
 
 	{
-		const std::lock_guard<std::mutex> lock(mutex);
+		const std::scoped_lock lock{mutex};
 
 		encrypted_input.AllocateIfNull(fb_pool_get());
 
@@ -461,7 +461,7 @@ ThreadSocketFilter::OnData() noexcept
 bool
 ThreadSocketFilter::IsEmpty() const noexcept
 {
-	std::lock_guard<std::mutex> lock(mutex);
+	const std::scoped_lock lock{mutex};
 	return decrypted_input.empty() &&
 		unprotected_decrypted_input.empty();
 }
@@ -469,7 +469,7 @@ ThreadSocketFilter::IsEmpty() const noexcept
 bool
 ThreadSocketFilter::IsFull() const noexcept
 {
-	std::lock_guard<std::mutex> lock(mutex);
+	const std::scoped_lock lock{mutex};
 	return decrypted_input.IsDefinedAndFull() &&
 		unprotected_decrypted_input.IsDefinedAndFull();
 }
@@ -477,7 +477,7 @@ ThreadSocketFilter::IsFull() const noexcept
 size_t
 ThreadSocketFilter::GetAvailable() const noexcept
 {
-	std::lock_guard<std::mutex> lock(mutex);
+	const std::scoped_lock lock{mutex};
 	return decrypted_input.GetAvailable() +
 		unprotected_decrypted_input.GetAvailable();
 }
@@ -519,7 +519,7 @@ ThreadSocketFilter::Read(bool _expect_more) noexcept
 inline size_t
 ThreadSocketFilter::LockWritePlainOutput(std::span<const std::byte> src) noexcept
 {
-	const std::lock_guard<std::mutex> lock(mutex);
+	const std::scoped_lock lock{mutex};
 
 	plain_output.AllocateIfNull(fb_pool_get());
 	return plain_output.MoveFrom(src);
@@ -589,7 +589,7 @@ ThreadSocketFilter::UnscheduleWrite() noexcept
 bool
 ThreadSocketFilter::InternalWrite() noexcept
 {
-	std::unique_lock<std::mutex> lock(mutex);
+	std::unique_lock lock{mutex};
 
 	auto r = encrypted_output.Read();
 	if (r.empty()) {
@@ -678,7 +678,7 @@ ThreadSocketFilter::OnRemaining(size_t remaining) noexcept
 	assert(!postponed_remaining);
 
 	if (remaining == 0) {
-		std::unique_lock<std::mutex> lock(mutex);
+		std::unique_lock lock{mutex};
 
 		if (!busy && !done_pending && encrypted_input.empty()) {
 			const size_t available = decrypted_input.GetAvailable() +
@@ -705,7 +705,7 @@ ThreadSocketFilter::OnEnd() noexcept
 
 	if (postponed_remaining) {
 		/* see if we can commit the "remaining" call now */
-		std::unique_lock<std::mutex> lock(mutex);
+		std::unique_lock lock{mutex};
 
 		if (!busy && !done_pending && encrypted_input.empty()) {
 			const size_t available = decrypted_input.GetAvailable() +
@@ -728,7 +728,7 @@ ThreadSocketFilter::OnEnd() noexcept
 
 	bool empty;
 	{
-		const std::lock_guard<std::mutex> lock(mutex);
+		const std::scoped_lock lock{mutex};
 		assert(encrypted_input.empty());
 		empty = decrypted_input.empty() &&
 			unprotected_decrypted_input.empty();

@@ -84,7 +84,7 @@ public:
 		List tmp;
 
 		{
-			std::unique_lock<std::mutex> lock(mutex);
+			const std::scoped_lock lock{mutex};
 			if (!items.empty())
 				tmp.splice_after(tmp.before_begin(),
 						 items, items.before_begin());
@@ -98,7 +98,7 @@ public:
 
 private:
 	void Put(List &&src) {
-		const std::unique_lock<std::mutex> lock(mutex);
+		const std::scoped_lock lock{mutex};
 		items.splice_after(items.before_begin(), std::move(src));
 	}
 };

@@ -202,7 +202,7 @@ CertCache::Query::OnCompletion(std::exception_ptr error) noexcept
 	auto &_cache = cache;
 
 	{
-		const std::unique_lock<std::mutex> lock{_cache.mutex};
+		const std::scoped_lock lock{_cache.mutex};
 		_cache.queries.erase(_cache.current_query);
 	}
 
@@ -229,7 +229,7 @@ CertCache::Expire() noexcept
 {
 	const auto now = GetEventLoop().SteadyNow();
 
-	const std::unique_lock<std::mutex> lock(mutex);
+	const std::scoped_lock lock{mutex};
 	for (auto i = map.begin(), end = map.end(); i != end;) {
 		if (now >= i->second.expires) {
 			logger(5, "flushed certificate '", i->first, "'");
@@ -268,7 +268,7 @@ CertCache::Disconnect() noexcept
 	name_cache.Disconnect();
 
 	if (current_query != queries.end()) {
-		const std::unique_lock lock{mutex};
+		const std::scoped_lock lock{mutex};
 		current_query->second.Stop();
 		current_query = queries.end();
 	}
@@ -288,7 +288,7 @@ CertCache::Add(UniqueCertKey &&ck, const char *special)
 	if (name == nullptr)
 		throw std::runtime_error("Certificate without common name");
 
-	const std::unique_lock<std::mutex> lock(mutex);
+	const std::scoped_lock lock{mutex};
 	auto i = map.emplace(std::piecewise_construct,
 			     std::forward_as_tuple(name.c_str()),
 			     std::forward_as_tuple(std::move(ck),
@@ -313,7 +313,7 @@ CertCache::Add(UniqueCertKey &&ck, const char *special)
 inline std::optional<UniqueCertKey>
 CertCache::GetNoWildCardCached(const char *host, const char *_special) noexcept
 {
-	const std::unique_lock<std::mutex> lock{mutex};
+	const std::scoped_lock lock{mutex};
 
 	const std::string_view special{
 		_special != nullptr
@@ -343,7 +343,7 @@ CertCache::StartQuery() noexcept
 		return;
 
 	/* pick an arbitrary request and start the database query */
-	const std::unique_lock<std::mutex> lock{mutex};
+	const std::scoped_lock lock{mutex};
 	while (!queries.empty()) {
 		auto i = queries.begin();
 		if (!i->second.IsCancelled()) {
@@ -372,7 +372,7 @@ CertCache::ScheduleQuery(SSL &ssl, const char *host,
 	bool was_empty;
 
 	{
-		const std::unique_lock<std::mutex> lock{mutex};
+		const std::scoped_lock lock{mutex};
 		was_empty = queries.empty();
 
 		const char *_special = special != nullptr ? special : "";
@@ -505,7 +505,7 @@ CertCache::Flush(const std::string &name) noexcept
 void
 CertCache::OnCertModified(const std::string &name, bool deleted) noexcept
 {
-	const std::unique_lock<std::mutex> lock(mutex);
+	const std::scoped_lock lock{mutex};
 
 	if (Flush(name))
 		logger.Format(5, "flushed %s certificate '%s'",

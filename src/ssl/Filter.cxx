@@ -245,7 +245,7 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 	/* copy input (and output to make room for more output) */
 
 	{
-		std::unique_lock<std::mutex> lock(f.mutex);
+		const std::scoped_lock lock{f.mutex};
 
 		if (f.decrypted_input.IsNull() || f.encrypted_output.IsNull()) {
 			/* retry, let PreRun() allocate the missing buffer */
@@ -281,7 +281,7 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 			{
 				/* flush the encrypted_output buffer, because it may
 				   contain a "TLS alert" */
-				const std::lock_guard<std::mutex> lock(f.mutex);
+				const std::scoped_lock lock{f.mutex};
 				f.encrypted_output.MoveFromAllowNull(encrypted_output);
 			}
 
@@ -304,7 +304,7 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 
 		case SslDecryptResult::CLOSE_NOTIFY_ALERT:
 			{
-				std::unique_lock<std::mutex> lock(f.mutex);
+				const std::scoped_lock lock(f.mutex);
 				f.input_eof = true;
 			}
 			break;
@@ -314,7 +314,7 @@ SslFilter::Run(ThreadSocketFilterInternal &f)
 	/* copy output */
 
 	{
-		std::unique_lock<std::mutex> lock(f.mutex);
+		const std::scoped_lock lock{f.mutex};
 
 		f.decrypted_input.MoveFromAllowNull(decrypted_input);
 		f.encrypted_output.MoveFromAllowNull(encrypted_output);

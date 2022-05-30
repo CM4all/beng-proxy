@@ -54,7 +54,7 @@ CertNameCache::Lookup(const char *_host) const noexcept
 
 	const std::string host(_host);
 
-	const std::unique_lock<std::mutex> lock(mutex);
+	const std::scoped_lock lock{mutex};
 	return names.find(host) != names.end() ||
 		alt_names.find(host) != alt_names.end();
 }
@@ -213,7 +213,7 @@ CertNameCache::OnResult(Pg::Result &&result)
 		if (!alt_name.empty())
 			handler.OnCertModified(alt_name, deleted);
 
-		const std::unique_lock<std::mutex> lock(mutex);
+		const std::scoped_lock lock{mutex};
 
 		if (deleted) {
 			if (!alt_name.empty())

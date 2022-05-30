@@ -82,7 +82,7 @@ ThreadQueue::WakeupCallback() noexcept
 void
 ThreadQueue::Stop() noexcept
 {
-	std::unique_lock<std::mutex> lock(mutex);
+	const std::scoped_lock lock{mutex};
 	alive = false;
 	cond.notify_all();
 }
@@ -110,7 +110,7 @@ ThreadQueue::Add(ThreadJob &job) noexcept
 ThreadJob *
 ThreadQueue::Wait() noexcept
 {
-	std::unique_lock<std::mutex> lock(mutex);
+	std::unique_lock lock{mutex};
 
 	while (true) {
 		if (!alive)
@@ -153,7 +153,7 @@ ThreadQueue::Done(ThreadJob &job) noexcept
 bool
 ThreadQueue::Cancel(ThreadJob &job) noexcept
 {
-	std::unique_lock<std::mutex> lock(mutex);
+	const std::scoped_lock lock{mutex};
 
 	switch (job.state) {
 	case ThreadJob::State::INITIAL:
