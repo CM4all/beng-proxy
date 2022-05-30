@@ -449,9 +449,11 @@ ThreadSocketFilter::OnData() noexcept
 		if (w.empty())
 			return BufferedResult::BLOCKING;
 
-		const std::size_t nbytes = std::min(r.size(), w.size());
-		std::copy_n(r.begin(), nbytes, w.begin());
-		encrypted_input.Append(nbytes);
+		if (r.size() > w.size())
+			r = r.first(w.size());
+
+		std::copy(r.begin(), r.end(), w.begin());
+		encrypted_input.Append(r.size());
 	}
 
 	socket->InternalConsumed(r.size());

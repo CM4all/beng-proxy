@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.93) unstable; urgency=low
 
-  * 
+  * ssl: fix "decryption failed" errors
 
  --   
 
