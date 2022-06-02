@@ -637,6 +637,11 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 		return;
 	}
 
+	if (response.internal_redirect.data() != nullptr) {
+		RepeatTranslation(response);
+		return;
+	}
+
 	if (CheckHandleRedirectBounceStatus(response))
 		/* done */
 		return;

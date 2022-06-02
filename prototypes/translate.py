@@ -75,6 +75,9 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
             response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_ACTION, sed_fastcgi)
+        elif chain == b'internal_redirect':
+            response.packet(TRANSLATE_INTERNAL_REDIRECT, 'hans')
+            response.packet(TRANSLATE_URI, '/message/hallo')
         else:
             response.packet(TRANSLATE_BREAK_CHAIN)
         return response
@@ -1021,6 +1024,10 @@ class Translation(Protocol):
             response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'hello.sh'))
             response.packet(TRANSLATE_NO_NEW_PRIVS)
             response.packet(TRANSLATE_CHAIN, 'bar')
+        elif uri == '/chain/internal_redirect':
+            response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'hello.sh'))
+            response.packet(TRANSLATE_NO_NEW_PRIVS)
+            response.packet(TRANSLATE_CHAIN, 'internal_redirect')
         elif uri[:7] == '/defer/':
             response.packet(TRANSLATE_DEFER)
         elif uri[:11] == '/like_host/':

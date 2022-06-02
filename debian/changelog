@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.93) unstable; urgency=low
 
+  * bp: support INTERNAL_REDIRECT in CHAIN response
   * ssl: fix "decryption failed" errors
 
  --   
