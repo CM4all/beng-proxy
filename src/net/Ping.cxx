@@ -37,6 +37,8 @@
 #include "net/SendMessage.hxx"
 #include "io/Iovec.hxx"
 
+#include <cassert>
+
 #include <sys/socket.h>
 #include <errno.h>
 #include <string.h>
