@@ -219,10 +219,10 @@ SendPing(SocketDescriptor fd, SocketAddress address, uint16_t ident)
 	memset(packet.data, 0, sizeof(packet.data));
 	packet.header.checksum = in_cksum((u_short *)&packet, sizeof(packet), 0);
 
-	auto iov = MakeIovecT(packet);
+	const std::array iov{MakeIovecT(packet)};
 
 	SendMessage(fd,
-		    MessageHeader(ConstBuffer<struct iovec>(&iov, 1))
+		    MessageHeader(iov)
 		    .SetAddress(address), 0);
 }
 
