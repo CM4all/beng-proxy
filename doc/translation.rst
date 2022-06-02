@@ -314,6 +314,9 @@ Response
   attacker to break out if the regular expression and the expansion
   string are phrased improperly. (Since version 2.0.5)
 
+- ``LISTENER_TAG``: override the ``LISTENER_TAG``.  All following
+  translation requests will feature the new listener tag.
+
 - ``SITE``: optional identification or name of the site this resource
   belongs to
 

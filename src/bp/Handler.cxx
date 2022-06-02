@@ -706,6 +706,9 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 		return;
 	}
 
+	if (response.listener_tag != nullptr)
+		translate.request.listener_tag = response.listener_tag;
+
 	if (response.defer) {
 		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
 				 "Unexpected DEFER", 1);
