@@ -82,10 +82,8 @@ Request
 
 .. _t-listener_tag:
 
-- ``LISTENER_TAG``: The “tag” of the listener that accepted the
-  connection. The can can be specified in the ``–listen`` setting, for
-  example: ``–listen TAG=192.168.1.99:80`` (This packet optional and
-  is only submitted if requested via ``WANT``, see page )
+- ``LISTENER_TAG``: The ``tag`` of the listener (as specified in the
+  ``listener`` configuration section) that accepted the connection.
 
 - ``LOCAL_ADDRESS``: The local socket address the request was received
   on. The payload is a ``struct sockaddr``. (This packet optional and is
