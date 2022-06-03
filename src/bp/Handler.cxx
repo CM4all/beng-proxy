@@ -541,6 +541,11 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 		translate.previous = &response;
 		translate.request.internal_redirect = response.internal_redirect;
 
+		/* reset "layout" because we're now serving a
+		   different request */
+		translate.request.layout = {};
+		translate.request.layout_item = nullptr;
+
 		assert(response.uri != nullptr);
 		translate.request.uri = response.uri;
 	}
