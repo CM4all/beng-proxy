@@ -643,6 +643,7 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 	}
 
 	if (response.internal_redirect.data() != nullptr) {
+		pending_chain_response.reset();
 		RepeatTranslation(response);
 		return;
 	}
