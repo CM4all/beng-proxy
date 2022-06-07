@@ -46,13 +46,14 @@ MakeHttpsRedirect(AllocatorPtr alloc, const char *_host, uint16_t port,
 		port_length = sprintf(port_buffer, ":%u", port);
 
 	auto eh = ExtractHost(_host);
-	auto host = eh.host != nullptr
+	auto host = eh.host.data() != nullptr
 		? eh.host
 		: _host;
 
 	static constexpr char a = '[';
 	static constexpr char b = ']';
-	const size_t is_ipv6 = eh.host != nullptr && eh.host.Find(':') != nullptr;
+	const size_t is_ipv6 =
+		std::find(eh.host.begin(), eh.host.end(), ':') != eh.host.end();
 	const size_t need_brackets = is_ipv6 && port_length > 0;
 
 	return alloc.Concat("https://",

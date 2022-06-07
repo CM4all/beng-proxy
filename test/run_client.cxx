@@ -138,7 +138,7 @@ GetHostWithoutPort(struct pool &pool, const struct parsed_url &url) noexcept
 		return nullptr;
 
 	auto e = ExtractHost(url.host.c_str());
-	if (e.host.IsNull())
+	if (e.host.data() == nullptr)
 		return nullptr;
 
 	return p_strdup(pool, e.host);

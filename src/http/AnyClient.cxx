@@ -436,7 +436,7 @@ GetHostWithoutPort(struct pool &pool, const HttpAddress &address) noexcept
 		return nullptr;
 
 	auto e = ExtractHost(host_and_port);
-	if (e.host.IsNull())
+	if (e.host.data() == nullptr)
 		return nullptr;
 
 	return p_strdup(pool, e.host);
