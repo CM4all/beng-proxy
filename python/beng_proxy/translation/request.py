@@ -50,6 +50,7 @@ class Request:
         self.widget_type = None
         self.session = None
         self.check = None
+        self.check_header = None
         self.auth = None
         self.http_auth = None
         self.token_auth = None
@@ -125,6 +126,8 @@ class Request:
             self.session = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_CHECK:
             self.check = packet.payload
+        elif packet.command == TRANSLATE_CHECK_HEADER:
+            self.check_header = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_AUTH:
             self.auth = packet.payload
         elif packet.command == TRANSLATE_HTTP_AUTH:

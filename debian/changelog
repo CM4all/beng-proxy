@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.96) unstable; urgency=low
 
-  * 
+  * translation: add packet CHECK_HEADER
 
  --   
 
@@ -21,6 +21,7 @@ cm4all-beng-proxy (17.0.93) unstable; urgency=low
   * bp: support INTERNAL_REDIRECT in CHAIN response
   * bp: reset LAYOUT after INTERNAL_REDIRECT
   * translation: allow LISTENER_TAG in translation response
+  * translation: add packet CHECK_HEADER
   * ssl: fix "decryption failed" errors
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 08 Jun 2022 10:20:16 +0200

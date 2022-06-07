@@ -138,6 +138,8 @@ MarshalTranslateRequest(uint8_t PROTOCOL_VERSION,
 	m.WriteOptional(TranslationCommand::INTERNAL_REDIRECT,
 			request.internal_redirect);
 	m.WriteOptional(TranslationCommand::CHECK, request.check);
+	m.WriteOptional(TranslationCommand::CHECK_HEADER,
+			request.check_header);
 	m.WriteOptional(TranslationCommand::AUTH, request.auth);
 	m.WriteOptional(TranslationCommand::HTTP_AUTH, request.http_auth);
 	m.WriteOptional(TranslationCommand::TOKEN_AUTH, request.token_auth);

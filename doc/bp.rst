@@ -1080,6 +1080,18 @@ Example 2, authenticated user:
 
 #. translation server: ``MAX_AGE=300 VARY=SESSION PREVIOUS``
 
+Example 3, with ``CHECK_HEADER``:
+
+#. :program:`beng-proxy`: ``URI=/foo``
+
+#. translation server:
+   ``CHECK=abc CHECK_HEADER=api-key``
+
+#. :program:`beng-proxy`: ``URI=/foo CHECK=abc CHECK_HEADER=api-key:12345678``
+
+#. translation server:
+   ``PATH=/var/www/12345678/foo``
+
 .. _auth:
 
 The ``AUTH`` packet

@@ -108,6 +108,8 @@ struct TranslateRequest {
 	 */
 	std::span<const std::byte> check = {};
 
+	const char *check_header = nullptr;
+
 	/**
 	 * The payload of the AUTH packet.  If nullptr,
 	 * then no AUTH packet will be sent.

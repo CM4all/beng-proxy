@@ -533,6 +533,7 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	       ConstBuffer<void> layout,
 	       const TranslationLayoutItem *layout_item,
 	       ConstBuffer<void> check,
+	       const char *check_header,
 	       ConstBuffer<void> want_full_uri,
 	       ConstBuffer<void> probe_path_suffixes,
 	       const char *probe_suffix,
@@ -616,6 +617,11 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 		b.emplace_back(check_buffer, UriEscape(check_buffer, check));
 	}
 
+	if (check_header != nullptr) {
+		b.push_back("|CH=");
+		b.push_back(check_header);
+	}
+
 	if (host != nullptr) {
 		/* workaround for a scalability problem in a large hosting
 		   environment: include the Host request header in the cache
@@ -687,7 +693,8 @@ tcache_request_key(AllocatorPtr alloc, const TranslateRequest &request)
 		? tcache_uri_key(alloc, request.uri, request.host,
 				 request.status,
 				 request.layout, request.layout_item,
-				 request.check, request.want_full_uri,
+				 request.check, request.check_header,
+				 request.want_full_uri,
 				 request.probe_path_suffixes, request.probe_suffix,
 				 request.directory_index,
 				 request.file_not_found,
@@ -816,7 +823,8 @@ tcache_store_response(AllocatorPtr alloc, TranslateResponse &dest,
 		? tcache_uri_key(alloc, dest.base, request.host,
 				 request.status,
 				 request.layout, request.layout_item,
-				 request.check, request.want_full_uri,
+				 request.check, request.check_header,
+				 request.want_full_uri,
 				 request.probe_path_suffixes, request.probe_suffix,
 				 request.directory_index,
 				 request.file_not_found,

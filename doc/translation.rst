@@ -180,6 +180,12 @@ Request
   used when the second response contains the ``PREVIOUS`` packet. This
   can be used to implement authentication (see :ref:`authentication`).
 
+- ``CHECK_HEADER``: the ``CHECK`` request shall contain the specified
+  request header.  Payload is the header name (lower case).  For the
+  ``CHECK`` request, the payload is the header name and the value
+  separated by a colon; if no such request header exists, the value is
+  empty.
+
 - ``AUTH``: Indicates that authentication is necessary (see
   :ref:`auth`).
 

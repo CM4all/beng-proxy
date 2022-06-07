@@ -65,6 +65,8 @@
 #include <assert.h>
 #include <sys/stat.h>
 
+using std::string_view_literals::operator""sv;
+
 static unsigned translation_protocol_version;
 static bool translation_protocol_version_received = false;
 
@@ -523,6 +525,18 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 
 		translate.previous = &response;
 		translate.request.check = response.check;
+
+		if (response.check_header != nullptr) {
+			const char *check_header =
+				request.headers.Get(response.check_header);
+			if (check_header == nullptr)
+				check_header = "";
+			translate.request.check_header =
+				alloc.Concat(response.check_header, ":"sv,
+					     check_header);
+		} else
+			translate.request.check_header = nullptr;
+
 		translate.request.authorization = request.headers.Get("authorization");
 	}
 

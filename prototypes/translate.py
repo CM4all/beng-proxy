@@ -405,7 +405,8 @@ class Translation(Protocol):
         return username == 'hansi' and password == 'hansilein'
 
     def _handle_http(self, request, raw_uri, uri, authorization,
-                     check, want_full_uri, want, file_not_found, directory_index,
+                     check, check_header,
+                     want_full_uri, want, file_not_found, directory_index,
                      response):
         if uri[:6] == '/site/':
             x = uri[6:]
@@ -874,6 +875,24 @@ class Translation(Protocol):
             else:
                 # invalid request
                 response.status(400)
+        elif uri == '/check_header':
+            if check is None:
+                response.packet(TRANSLATE_CHECK, b'ch')
+                response.packet(TRANSLATE_CHECK_HEADER, 'api-key')
+            elif check == b'ch':
+                if check_header is None or not check_header.startswith('api-key:'):
+                    response.status(400)
+                    return
+
+                api_key = check_header[8:]
+                if len(api_key) == 0:
+                    response.status(403)
+                    return
+
+                response.path('/var/www/' + api_key)
+            else:
+                # invalid request
+                response.status(400)
         elif uri[:14] == '/want_full_uri':
             if want_full_uri is None:
                 response.packet(TRANSLATE_WANT_FULL_URI, 'foo')
@@ -1144,7 +1163,8 @@ class Translation(Protocol):
         if request.uri is not None:
             self._handle_http(request,
                               request.raw_uri, request.uri, request.authorization,
-                              request.check, request.want_full_uri, request.want,
+                              request.check, request.check_header,
+                              request.want_full_uri, request.want,
                               request.file_not_found, request.directory_index,
                               response)
 
