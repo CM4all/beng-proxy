@@ -43,6 +43,7 @@
 #include "istream/FourIstream.hxx"
 #include "istream/HeadIstream.hxx"
 #include "istream/InjectIstream.hxx"
+#include "istream/istream_null.hxx"
 #include "istream/istream_later.hxx"
 #include "istream/UnusedHoldPtr.hxx"
 #include "pool/pool.hxx"
@@ -692,6 +693,26 @@ TYPED_TEST_P(IstreamFilterTest, Later)
 		    std::move(istream), true);
 }
 
+/** call Istream::AsFd() */
+TYPED_TEST_P(IstreamFilterTest, AsFd)
+{
+	TypeParam traits;
+	Instance instance;
+
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+
+	auto istream =
+		traits.CreateTest(instance.event_loop, pool,
+				  istream_null_new(pool));
+
+	int fd = istream.AsFd();
+	if (fd >= 0) {
+		EXPECT_FALSE(istream);
+	} else {
+		EXPECT_TRUE(istream);
+	}
+}
+
 /** test with large input and blocking handler */
 TYPED_TEST_P(IstreamFilterTest, BigHold)
 {
@@ -739,5 +760,6 @@ REGISTER_TYPED_TEST_CASE_P(IstreamFilterTest,
 			   AbortInHandler,
 			   AbortInHandlerHalf,
 			   AbortAfter1Byte,
+			   AsFd,
 			   Later,
 			   BigHold);
