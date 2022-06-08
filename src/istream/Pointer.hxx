@@ -137,6 +137,10 @@ public:
 	int AsFd() noexcept {
 		assert(IsDefined());
 
-		return stream->AsFd();
+		int fd = stream->AsFd();
+		if (fd >= 0)
+			Clear();
+
+		return fd;
 	}
 };
