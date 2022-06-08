@@ -182,7 +182,7 @@ try {
 
 	if (d.HasHttpStatus())
 		SetTable(L, RelativeStackIndex{-1},
-			 "http_status", int(d.http_status));
+			 "http_status", lua_Integer(d.http_status));
 
 	if (d.valid_length)
 		SetTable(L, RelativeStackIndex{-1},

@@ -90,7 +90,7 @@ LuaGotoIndex(lua_State *L)
 		}
 	} else if (strcmp(name, "status") == 0) {
 		if (g.response != nullptr) {
-			Lua::Push(L, int(g.response->status));
+			Lua::Push(L, lua_Integer(g.response->status));
 			return 1;
 		}
 	} else if (strcmp(name, "location") == 0) {
