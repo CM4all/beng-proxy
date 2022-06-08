@@ -40,69 +40,69 @@
 
 class IstreamChunkedTestTraits {
 public:
-    static constexpr const char *expected_result = nullptr;
+	static constexpr const char *expected_result = nullptr;
 
-    static constexpr bool call_available = true;
-    static constexpr bool got_data_assert = true;
-    static constexpr bool enable_blocking = true;
-    static constexpr bool enable_abort_istream = true;
+	static constexpr bool call_available = true;
+	static constexpr bool got_data_assert = true;
+	static constexpr bool enable_blocking = true;
+	static constexpr bool enable_abort_istream = true;
 
-    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
-        return istream_string_new(pool, "foo_bar_0123456789abcdefghijklmnopqrstuvwxyz");
-    }
+	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+		return istream_string_new(pool, "foo_bar_0123456789abcdefghijklmnopqrstuvwxyz");
+	}
 
-    UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
-                                UnusedIstreamPtr input) const noexcept {
-        return istream_chunked_new(pool, std::move(input));
-    }
+	UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
+				    UnusedIstreamPtr input) const noexcept {
+		return istream_chunked_new(pool, std::move(input));
+	}
 };
 
 INSTANTIATE_TYPED_TEST_CASE_P(Chunked, IstreamFilterTest,
-                              IstreamChunkedTestTraits);
+			      IstreamChunkedTestTraits);
 
 TEST(IstreamChunkedTest, Custom)
 {
-    struct Custom final : Istream, IstreamHandler {
-        bool eof;
-        std::exception_ptr error;
+	struct Custom final : Istream, IstreamHandler {
+		bool eof;
+		std::exception_ptr error;
 
-        explicit Custom(struct pool &p):Istream(p) {}
+		explicit Custom(struct pool &p):Istream(p) {}
 
-        /* virtual methods from class Istream */
+		/* virtual methods from class Istream */
 
-        off_t _GetAvailable(gcc_unused bool partial) noexcept override {
-            return 1;
-        }
+		off_t _GetAvailable(gcc_unused bool partial) noexcept override {
+			return 1;
+		}
 
-        void _Read() noexcept override {}
+		void _Read() noexcept override {}
 
-        /* virtual methods from class IstreamHandler */
+		/* virtual methods from class IstreamHandler */
 
-        size_t OnData(gcc_unused const void *data,
-                      gcc_unused size_t length) noexcept override {
-            InvokeData(" ", 1);
-            return 0;
-        }
+		size_t OnData(gcc_unused const void *data,
+			      gcc_unused size_t length) noexcept override {
+			InvokeData(" ", 1);
+			return 0;
+		}
 
-        void OnEof() noexcept override {
-            eof = true;
-        }
+		void OnEof() noexcept override {
+			eof = true;
+		}
 
-        void OnError(std::exception_ptr ep) noexcept override {
-            error = ep;
-        }
-    };
+		void OnError(std::exception_ptr ep) noexcept override {
+			error = ep;
+		}
+	};
 
-    PInstance instance;
-    auto pool = pool_new_linear(instance.root_pool, "test", 8192);
-    auto *ctx = NewFromPool<Custom>(pool, pool);
+	PInstance instance;
+	auto pool = pool_new_linear(instance.root_pool, "test", 8192);
+	auto *ctx = NewFromPool<Custom>(pool, pool);
 
-    auto *chunked = istream_chunked_new(pool, UnusedIstreamPtr(ctx)).Steal();
-    chunked->SetHandler(*ctx);
+	auto *chunked = istream_chunked_new(pool, UnusedIstreamPtr(ctx)).Steal();
+	chunked->SetHandler(*ctx);
 
-    chunked->Read();
-    chunked->Close();
+	chunked->Read();
+	chunked->Close();
 
-    pool.reset();
-    pool_commit();
+	pool.reset();
+	pool_commit();
 }

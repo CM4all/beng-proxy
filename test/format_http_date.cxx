@@ -36,10 +36,12 @@
 #include <stdio.h>
 #include <time.h>
 
-int main(int argc, char **argv) {
-    auto t = argc >= 2
-        ? std::chrono::system_clock::from_time_t(strtoul(argv[1], nullptr, 10))
-        : std::chrono::system_clock::now();
+int
+main(int argc, char **argv) noexcept
+{
+	auto t = argc >= 2
+		? std::chrono::system_clock::from_time_t(strtoul(argv[1], nullptr, 10))
+		: std::chrono::system_clock::now();
 
-    printf("%s\n", http_date_format(t));
+	printf("%s\n", http_date_format(t));
 }

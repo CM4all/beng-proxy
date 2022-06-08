@@ -249,24 +249,24 @@ private:
 
 	/**
 	 * A filter with TranslationCommand::FILTER_NO_BODY is
-         * running, and this response will be sent as soon as it
-         * finishes successfully.
+	 * running, and this response will be sent as soon as it
+	 * finishes successfully.
 	 */
 	UniquePoolPtr<PendingResponse> pending_filter_response;
 
 	/**
-         * This response is pending, waiting for the CHAIN translation
-         * request to be finished, so we know where to send it.
+	 * This response is pending, waiting for the CHAIN translation
+	 * request to be finished, so we know where to send it.
 	 */
 	UniquePoolPtr<PendingResponse> pending_chain_response;
 
 	/**
-         * The response scheduled for submission by the a handler
-         * coroutine.  It will be submitted in the coroutine's
-         * completion handler.  This indirection is necessary because
-         * destroying this Request instance from inside a coroutine
-         * doesn't work, because it will also destruct the
-         * std::coroutine_handle inside the Co::InvokeTask.
+	 * The response scheduled for submission by the a handler
+	 * coroutine.  It will be submitted in the coroutine's
+	 * completion handler.  This indirection is necessary because
+	 * destroying this Request instance from inside a coroutine
+	 * doesn't work, because it will also destruct the
+	 * std::coroutine_handle inside the Co::InvokeTask.
 	 */
 	UniquePoolPtr<PendingResponse> co_response;
 

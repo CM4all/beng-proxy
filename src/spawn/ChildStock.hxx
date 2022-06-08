@@ -55,8 +55,8 @@ class ChildStockClass {
 public:
 	/**
 	 * Implement this if you wish the child process to return the
-         * stderr file descriptor it opened to the returned socket.
-         * This allows calling ChildStockItem::GetStderr().
+	 * stderr file descriptor it opened to the returned socket.
+	 * This allows calling ChildStockItem::GetStderr().
 	 */
 	virtual bool WantReturnStderr(void *) const noexcept {
 		return false;

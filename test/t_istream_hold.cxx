@@ -37,22 +37,22 @@
 
 class IstreamHoldTestTraits {
 public:
-    static constexpr const char *expected_result = "foo";
+	static constexpr const char *expected_result = "foo";
 
-    static constexpr bool call_available = true;
-    static constexpr bool got_data_assert = true;
-    static constexpr bool enable_blocking = true;
-    static constexpr bool enable_abort_istream = true;
+	static constexpr bool call_available = true;
+	static constexpr bool got_data_assert = true;
+	static constexpr bool enable_blocking = true;
+	static constexpr bool enable_abort_istream = true;
 
-    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
-        return istream_string_new(pool, "foo");
-    }
+	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+		return istream_string_new(pool, "foo");
+	}
 
-    UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
-                                UnusedIstreamPtr input) const noexcept {
-        return UnusedIstreamPtr(istream_hold_new(pool, std::move(input)));
-    }
+	UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
+				    UnusedIstreamPtr input) const noexcept {
+		return UnusedIstreamPtr(istream_hold_new(pool, std::move(input)));
+	}
 };
 
 INSTANTIATE_TYPED_TEST_CASE_P(Hold, IstreamFilterTest,
-                              IstreamHoldTestTraits);
+			      IstreamHoldTestTraits);

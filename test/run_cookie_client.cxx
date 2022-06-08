@@ -44,32 +44,34 @@
 #include <unistd.h>
 #include <string.h>
 
-int main(int argc, char **argv) {
-    const ScopeFbPoolInit fb_pool_init;
-    RootPool pool;
-    const AllocatorPtr alloc(pool);
+int
+main(int argc, char **argv) noexcept
+{
+	const ScopeFbPoolInit fb_pool_init;
+	RootPool pool;
+	const AllocatorPtr alloc(pool);
 
-    CookieJar jar;
+	CookieJar jar;
 
-    for (int i = 1; i < argc; ++i)
-        cookie_jar_set_cookie2(jar, argv[i], "foo.bar", nullptr);
+	for (int i = 1; i < argc; ++i)
+		cookie_jar_set_cookie2(jar, argv[i], "foo.bar", nullptr);
 
-    StringMap headers;
-    cookie_jar_http_header(jar, "foo.bar", "/x", headers, alloc);
+	StringMap headers;
+	cookie_jar_http_header(jar, "foo.bar", "/x", headers, alloc);
 
-    GrowingBufferReader reader(headers_dup(headers));
+	GrowingBufferReader reader(headers_dup(headers));
 
-    ConstBuffer<void> src;
-    while (!(src = reader.Read()).IsNull()) {
-        ssize_t nbytes = write(1, src.data, src.size);
-        if (nbytes < 0) {
-            perror("write() failed");
-            return 1;
-        }
+	ConstBuffer<void> src;
+	while (!(src = reader.Read()).IsNull()) {
+		ssize_t nbytes = write(1, src.data, src.size);
+		if (nbytes < 0) {
+			perror("write() failed");
+			return 1;
+		}
 
-        if (nbytes == 0)
-            break;
+		if (nbytes == 0)
+			break;
 
-        reader.Consume((size_t)nbytes);
-    }
+		reader.Consume((size_t)nbytes);
+	}
 }

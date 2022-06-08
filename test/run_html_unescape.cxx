@@ -38,16 +38,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-int main(int argc, char **argv) {
-    if (argc != 2)
-        exit(1);
+int
+main(int argc, char **argv) noexcept
+{
+	if (argc != 2)
+		exit(1);
 
-    const char *p = argv[1];
-    const char *q = unescape_static(&html_escape_class, p);
-    if (q == NULL) {
-        fprintf(stderr, "too long\n");
-        return EXIT_FAILURE;
-    }
+	const char *p = argv[1];
+	const char *q = unescape_static(&html_escape_class, p);
+	if (q == NULL) {
+		fprintf(stderr, "too long\n");
+		return EXIT_FAILURE;
+	}
 
-    printf("%s\n", q);
+	printf("%s\n", q);
 }

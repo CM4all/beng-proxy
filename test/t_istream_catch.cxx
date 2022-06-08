@@ -41,32 +41,32 @@
 static std::exception_ptr
 catch_callback(std::exception_ptr ep, gcc_unused void *ctx)
 {
-    fprintf(stderr, "caught: %s\n", GetFullMessage(ep).c_str());
-    return {};
+	fprintf(stderr, "caught: %s\n", GetFullMessage(ep).c_str());
+	return {};
 }
 
 class IstreamCatchTestTraits : public SkipErrorTraits {
 public:
-    /* an input string longer than the "space" buffer (128 bytes) to
-       trigger bugs due to truncated OnData() buffers */
-    static constexpr const char *expected_result =
-        "long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long";
+	/* an input string longer than the "space" buffer (128 bytes) to
+	   trigger bugs due to truncated OnData() buffers */
+	static constexpr const char *expected_result =
+		"long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long long";
 
-    static constexpr bool call_available = false;
-    static constexpr bool got_data_assert = true;
-    static constexpr bool enable_blocking = true;
-    static constexpr bool enable_abort_istream = true;
+	static constexpr bool call_available = false;
+	static constexpr bool got_data_assert = true;
+	static constexpr bool enable_blocking = true;
+	static constexpr bool enable_abort_istream = true;
 
-    UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
-        return istream_string_new(pool, expected_result);
-    }
+	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
+		return istream_string_new(pool, expected_result);
+	}
 
-    UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
-                                UnusedIstreamPtr input) const noexcept {
-        return istream_catch_new(&pool, std::move(input),
-                                 catch_callback, nullptr);
-    }
+	UnusedIstreamPtr CreateTest(EventLoop &, struct pool &pool,
+				    UnusedIstreamPtr input) const noexcept {
+		return istream_catch_new(&pool, std::move(input),
+					 catch_callback, nullptr);
+	}
 };
 
 INSTANTIATE_TYPED_TEST_CASE_P(Catch, IstreamFilterTest,
-                              IstreamCatchTestTraits);
+			      IstreamCatchTestTraits);
