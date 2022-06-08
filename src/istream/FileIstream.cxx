@@ -275,6 +275,17 @@ FileIstream::_Skip(off_t length) noexcept
 int
 FileIstream::_AsFd() noexcept
 {
+	/* allow this method only if the file descriptor points to a
+	   regular file and the specified end offset is the end of the
+	   file */
+	struct stat st;
+	if (fstat(fd.Get(), &st) < 0 || !S_ISREG(st.st_mode) ||
+	    end_offset != st.st_size ||
+	    /* seek to the current offset (this class doesn't move the
+	       file pointer) */
+	    lseek(fd.Get(), offset, SEEK_SET) != offset)
+		return -1;
+
 	int result_fd = fd.Steal();
 
 	Destroy();
