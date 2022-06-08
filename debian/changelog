@@ -2,7 +2,7 @@ cm4all-beng-proxy (17.0.94) unstable; urgency=low
 
   * istream: fix assertion failure
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 08 Jun 2022 13:01:14 +0200
 
 cm4all-beng-proxy (17.0.93) unstable; urgency=low
 
