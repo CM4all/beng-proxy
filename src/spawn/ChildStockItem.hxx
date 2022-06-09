@@ -32,24 +32,27 @@
 
 #pragma once
 
-#include "ChildStock.hxx"
 #include "spawn/ExitListener.hxx"
 #include "access_log/ChildErrorLog.hxx"
+#include "stock/AbstractStock.hxx"
 #include "stock/Item.hxx"
 #include "io/UniqueFileDescriptor.hxx"
+#include "util/IntrusiveList.hxx"
 #include "util/StringView.hxx"
 
 #include <memory>
 #include <string>
 
 class ChildProcessHandle;
+class ChildStock;
+class ChildStockClass;
 
 /**
  * A process managed by #ChildStock.
  */
 class ChildStockItem
 	: public StockItem,
-	  public ChildStockItemHook,
+	  public AutoUnlinkIntrusiveListHook,
 	  ExitListener
 {
 	ChildStock &child_stock;

@@ -36,6 +36,7 @@
 #include "stock/MapStock.hxx"
 #include "access_log/ChildErrorLogOptions.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "util/IntrusiveList.hxx"
 
 #include <memory>
 #include <string_view>
@@ -88,10 +89,6 @@ public:
 	virtual Event::Duration GetChildClearInterval(const void *info) const noexcept = 0;
 };
 
-using ChildStockItemHook =
-	boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>,
-					 boost::intrusive::tag<ChildStockClass>>;
-
 /**
  * A stock which spawns and manages reusable child processes
  * (e.g. FastCGI servers).  The meaning of the "info" pointer and key
@@ -110,9 +107,7 @@ class ChildStock final : public StockClass {
 	 * A list of idle items, the most recently used at the end.
 	 * This is used by DiscardOldestIdle().
 	 */
-	boost::intrusive::list<ChildStockItem,
-			       boost::intrusive::base_hook<ChildStockItemHook>,
-			       boost::intrusive::constant_time_size<false>> idle;
+	IntrusiveList<ChildStockItem> idle;
 
 public:
 	ChildStock(SpawnService &_spawn_service,

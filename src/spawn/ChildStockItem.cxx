@@ -31,6 +31,7 @@
  */
 
 #include "ChildStockItem.hxx"
+#include "ChildStock.hxx"
 #include "spawn/Interface.hxx"
 #include "spawn/Prepared.hxx"
 #include "spawn/ProcessHandle.hxx"
@@ -112,8 +113,8 @@ ChildStockItem::Borrow() noexcept
 	busy = true;
 
 	/* remove from ChildStock::idle list */
-	assert(ChildStockItemHook::is_linked());
-	ChildStockItemHook::unlink();
+	assert(AutoUnlinkIntrusiveListHook::is_linked());
+	AutoUnlinkIntrusiveListHook::unlink();
 
 	return true;
 }
@@ -128,7 +129,7 @@ ChildStockItem::Release() noexcept
 	if (!handle)
 		return false;
 
-	assert(!ChildStockItemHook::is_linked());
+	assert(!AutoUnlinkIntrusiveListHook::is_linked());
 	child_stock.AddIdle(*this);
 
 	return true;
