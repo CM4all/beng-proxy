@@ -58,10 +58,9 @@
 #include "http/Date.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
+#include "util/IntrusiveList.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/LeakDetector.hxx"
-
-#include <boost/intrusive/list.hpp>
 
 #include <unordered_map>
 
@@ -108,14 +107,14 @@ struct FilterCacheInfo {
 };
 
 struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
-	using AutoUnlink =
-		boost::intrusive::link_mode<boost::intrusive::auto_unlink>;
-	using PerTagHook = boost::intrusive::list_member_hook<AutoUnlink>;
-
 	/**
 	 * A doubly linked list of cache items with the same cache tag.
 	 */
-	PerTagHook per_tag_siblings;
+	AutoUnlinkIntrusiveListHook per_tag_siblings;
+
+	using PerTagList =
+		IntrusiveList<FilterCacheItem,
+			      IntrusiveListMemberHookTraits<&FilterCacheItem::per_tag_siblings>>;
 
 	const http_status_t status;
 	StringMap headers;
@@ -149,14 +148,6 @@ struct FilterCacheItem final : PoolHolder, CacheItem, LeakDetector {
 class FilterCacheRequest final
 	: PoolHolder, HttpResponseHandler, RubberSinkHandler,
 	  Cancellable, LeakDetector {
-
-public:
-	static constexpr auto link_mode = boost::intrusive::auto_unlink;
-	typedef boost::intrusive::link_mode<link_mode> LinkMode;
-	typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
-	SiblingsHook siblings;
-
-private:
 	const PoolPtr caller_pool;
 	FilterCache &cache;
 	HttpResponseHandler &handler;
@@ -182,7 +173,13 @@ private:
 
 	CancellablePointer cancel_ptr;
 
+	AutoUnlinkIntrusiveListHook siblings;
+
 public:
+	using List =
+		IntrusiveList<FilterCacheRequest,
+			      IntrusiveListMemberHookTraits<&FilterCacheRequest::siblings>>;
+
 	FilterCacheRequest(PoolPtr &&_pool, struct pool &_caller_pool,
 			   FilterCache &_cache,
 			   HttpResponseHandler &_handler,
@@ -241,13 +238,7 @@ class FilterCache final : LeakDetector {
 	Rubber rubber;
 	Cache cache;
 
-	using PerTagHook =
-		boost::intrusive::member_hook<FilterCacheItem,
-					      FilterCacheItem::PerTagHook,
-					      &FilterCacheItem::per_tag_siblings>;
-	using PerTagList =
-		boost::intrusive::list<FilterCacheItem, PerTagHook,
-				       boost::intrusive::constant_time_size<false>>;
+	using PerTagList = FilterCacheItem::PerTagList;
 
 	/**
 	 * Lookup table to speed up FlushTag().
@@ -263,11 +254,7 @@ class FilterCache final : LeakDetector {
 	 * to a #Rubber allocation.  We keep track of them so we can
 	 * cancel them on shutdown.
 	 */
-	boost::intrusive::list<FilterCacheRequest,
-			       boost::intrusive::member_hook<FilterCacheRequest,
-							     FilterCacheRequest::SiblingsHook,
-							     &FilterCacheRequest::siblings>,
-			       boost::intrusive::constant_time_size<false>> requests;
+	FilterCacheRequest::List requests;
 
 public:
 	FilterCache(struct pool &_pool, size_t max_size,
