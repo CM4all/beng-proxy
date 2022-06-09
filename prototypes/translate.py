@@ -866,9 +866,9 @@ class Translation(Protocol):
             response.vary(TRANSLATE_HOST)
         elif uri == '/check':
             if check is None:
-                response.packet(TRANSLATE_CHECK, 'ok')
+                response.packet(TRANSLATE_CHECK, b'ok')
                 self._handle_local_file(os.path.join(demo_path, 'hello.txt'), response)
-            elif check == 'ok':
+            elif check == b'ok':
                 response.max_age(20)
                 response.packet(TRANSLATE_PREVIOUS)
             else:
