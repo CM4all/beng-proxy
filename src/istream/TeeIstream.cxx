@@ -38,19 +38,16 @@
 #include "pool/pool.hxx"
 #include "event/DeferEvent.hxx"
 #include "util/DestructObserver.hxx"
-
-#include <boost/intrusive/list.hpp>
+#include "util/IntrusiveList.hxx"
 
 #include <stdexcept>
 
 #include <assert.h>
 
-namespace bi = boost::intrusive;
-
 struct TeeIstream final : IstreamSink, DestructAnchor {
 
 	struct Output
-		: bi::list_base_hook<bi::link_mode<bi::normal_link>>,
+		: IntrusiveListHook,
 		  Istream, DestructAnchor
 	{
 		TeeIstream &parent;
@@ -166,10 +163,7 @@ struct TeeIstream final : IstreamSink, DestructAnchor {
 		void _Close() noexcept override;
 	};
 
-	using OutputList =
-		bi::list<Output,
-			 bi::base_hook<bi::list_base_hook<bi::link_mode<bi::normal_link>>>,
-			 bi::constant_time_size<false>>;
+	using OutputList = IntrusiveList<Output>;
 
 	OutputList outputs;
 
