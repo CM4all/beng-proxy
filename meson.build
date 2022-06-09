@@ -332,7 +332,6 @@ event_net2 = static_library(
   'event_net2',
   'src/net/PConnectSocket.cxx',
   'src/net/Ping.cxx',
-  'src/net/UdpDistribute.cxx',
   include_directories: inc,
 )
 event_net_dep = declare_dependency(
