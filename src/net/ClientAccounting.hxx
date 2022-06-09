@@ -33,8 +33,8 @@
 #pragma once
 
 #include "event/FarTimerEvent.hxx"
+#include "util/IntrusiveList.hxx"
 
-#include <boost/intrusive/list.hpp>
 #include <boost/intrusive/unordered_set.hpp>
 
 #include <cstdint>
@@ -46,12 +46,15 @@ class ClientAccountingMap;
 class AccountedClientConnection {
 	friend class PerClientAccounting;
 
-	using SiblingsHook = boost::intrusive::list_member_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>;
-	SiblingsHook siblings;
+	IntrusiveListHook siblings;
 
 	PerClientAccounting *per_client = nullptr;
 
 public:
+	using List = IntrusiveList<AccountedClientConnection,
+				   IntrusiveListMemberHookTraits<&AccountedClientConnection::siblings>,
+				   true>;
+
 	AccountedClientConnection() = default;
 	~AccountedClientConnection() noexcept;
 
@@ -90,12 +93,7 @@ class PerClientAccounting final
 		}
 	};
 
-	using ConnectionList =
-		boost::intrusive::list<AccountedClientConnection,
-				       boost::intrusive::member_hook<AccountedClientConnection,
-								     AccountedClientConnection::SiblingsHook,
-								     &AccountedClientConnection::siblings>,
-				       boost::intrusive::constant_time_size<true>>;
+	using ConnectionList = AccountedClientConnection::List;
 
 	ConnectionList connections;
 
