@@ -36,8 +36,7 @@
 #include "pool/UniquePtr.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "net/SocketAddress.hxx"
-
-#include <boost/intrusive/list.hpp>
+#include "util/IntrusiveList.hxx"
 
 struct pool;
 class FilteredSocket;
@@ -62,10 +61,7 @@ class ServerConnection final : BufferedSocketHandler {
 	NgHttp2::Session session;
 
 	class Request;
-	using RequestList =
-		boost::intrusive::list<Request,
-				       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>>,
-				       boost::intrusive::constant_time_size<false>>;
+	using RequestList = IntrusiveList<Request>;
 
 	RequestList requests;
 

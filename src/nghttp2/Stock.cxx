@@ -64,8 +64,9 @@ class Stock::Item final
 	std::unique_ptr<ClientConnection> connection;
 
 	struct GetRequest final
-		: boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>,
-		  Cancellable {
+		: IntrusiveListHook,
+		  Cancellable
+	{
 		Item &item;
 
 		const StopwatchPtr stopwatch;
@@ -90,8 +91,7 @@ class Stock::Item final
 		}
 	};
 
-	boost::intrusive::list<GetRequest,
-			       boost::intrusive::constant_time_size<false>> get_requests;
+	IntrusiveList<GetRequest> get_requests;
 
 	CancellablePointer connect_cancel;
 

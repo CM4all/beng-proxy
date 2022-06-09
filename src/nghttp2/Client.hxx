@@ -36,8 +36,7 @@
 #include "event/net/BufferedSocket.hxx"
 #include "event/DeferEvent.hxx"
 #include "http/Method.h"
-
-#include <boost/intrusive/list.hpp>
+#include "util/IntrusiveList.hxx"
 
 #include <memory>
 
@@ -70,9 +69,9 @@ class ClientConnection final : BufferedSocketHandler {
 
 	class Request;
 	using RequestList =
-		boost::intrusive::list<Request,
-				       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
-				       boost::intrusive::constant_time_size<true>>;
+		IntrusiveList<Request,
+			      IntrusiveListBaseHookTraits<Request>,
+			      true>;
 
 	RequestList requests;
 

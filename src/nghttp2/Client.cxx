@@ -62,7 +62,7 @@ static constexpr Event::Duration write_timeout = std::chrono::seconds(30);
 class ClientConnection::Request final
 	: Cancellable, MultiFifoBufferIstreamHandler,
 	  IstreamDataSourceHandler,
-	  public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>
+	  public IntrusiveListHook
 {
 	struct pool &pool;
 

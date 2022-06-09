@@ -66,7 +66,7 @@ static constexpr Event::Duration write_timeout = std::chrono::seconds(30);
 class ServerConnection::Request final
 	: public IncomingHttpRequest, MultiFifoBufferIstreamHandler,
 	  IstreamDataSourceHandler,
-	  public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::auto_unlink>>
+	  public AutoUnlinkIntrusiveListHook
 {
 	ServerConnection &connection;
 
