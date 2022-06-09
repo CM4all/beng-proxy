@@ -42,8 +42,7 @@
 #include "net/StaticSocketAddress.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Cast.hxx"
-
-#include <boost/intrusive/list_hook.hpp>
+#include "util/IntrusiveList.hxx"
 
 #include <exception>
 
@@ -55,8 +54,8 @@ struct LbInstance;
 
 class LbTcpConnection final
 	: PoolHolder, LoggerDomainFactory, ConnectSocketHandler,
-	  public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-
+	  public IntrusiveListHook
+{
 	LbInstance &instance;
 
 	const LbListenerConfig &listener;

@@ -37,8 +37,7 @@
 #include "pool/Holder.hxx"
 #include "pool/UniquePtr.hxx"
 #include "io/Logger.hxx"
-
-#include <boost/intrusive/list_hook.hpp>
+#include "util/IntrusiveList.hxx"
 
 template<typename T> class UniquePoolPtr;
 class FilteredSocket;
@@ -58,8 +57,8 @@ struct LbHttpConnection final
 	: PoolHolder, HttpServerConnectionHandler, HttpServerRequestHandler,
 	  AccountedClientConnection,
 	  LoggerDomainFactory,
-	  boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-
+	  public IntrusiveListHook
+{
 	LbInstance &instance;
 
 	LbListener &listener;

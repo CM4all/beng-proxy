@@ -45,8 +45,7 @@
 #include "control/Handler.hxx"
 #include "net/FailureManager.hxx"
 #include "util/Background.hxx"
-
-#include <boost/intrusive/list.hpp>
+#include "util/IntrusiveList.hxx"
 
 #include <forward_list>
 #include <map>
@@ -104,9 +103,9 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 
 	std::forward_list<BPListener> listeners;
 
-	boost::intrusive::list<BpConnection,
-			       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
-			       boost::intrusive::constant_time_size<true>> connections;
+	IntrusiveList<BpConnection,
+		      IntrusiveListBaseHookTraits<BpConnection>,
+		      true> connections;
 
 	std::unique_ptr<AccessLogGlue> access_log, child_error_log;
 

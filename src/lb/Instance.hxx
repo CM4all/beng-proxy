@@ -42,9 +42,8 @@
 #include "event/ShutdownListener.hxx"
 #include "net/FailureManager.hxx"
 #include "io/Logger.hxx"
+#include "util/IntrusiveList.hxx"
 #include "lb_features.h"
-
-#include <boost/intrusive/list.hpp>
 
 #include <forward_list>
 #include <memory>
@@ -103,13 +102,13 @@ struct LbInstance final : PInstance, Avahi::ErrorHandler {
 	std::map<std::string, CertCache> cert_dbs;
 #endif
 
-	boost::intrusive::list<LbHttpConnection,
-			       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
-			       boost::intrusive::constant_time_size<true>> http_connections;
+	IntrusiveList<LbHttpConnection,
+		      IntrusiveListBaseHookTraits<LbHttpConnection>,
+		      true> http_connections;
 
-	boost::intrusive::list<LbTcpConnection,
-			       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
-			       boost::intrusive::constant_time_size<true>> tcp_connections;
+	IntrusiveList<LbTcpConnection,
+		      IntrusiveListBaseHookTraits<LbTcpConnection>,
+		      true> tcp_connections;
 
 	std::unique_ptr<AccessLogGlue> access_log;
 

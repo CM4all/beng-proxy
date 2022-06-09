@@ -36,8 +36,7 @@
 #include "pool/Holder.hxx"
 #include "pool/UniquePtr.hxx"
 #include "io/Logger.hxx"
-
-#include <boost/intrusive/list_hook.hpp>
+#include "util/IntrusiveList.hxx"
 
 template<typename T> class UniquePoolPtr;
 class FilteredSocket;
@@ -54,8 +53,8 @@ namespace NgHttp2 { class ServerConnection; }
  */
 struct BpConnection final
 	: PoolHolder, HttpServerConnectionHandler, HttpServerRequestHandler,
-	  boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
-
+	  public IntrusiveListHook
+{
 	BpInstance &instance;
 	BPListener &listener;
 	const BpConfig &config;
