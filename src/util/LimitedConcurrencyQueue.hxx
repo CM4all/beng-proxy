@@ -34,12 +34,11 @@
 
 #include "event/DeferEvent.hxx"
 #include "util/BindMethod.hxx"
-
-#include <boost/intrusive/list.hpp>
+#include "util/IntrusiveList.hxx"
 
 class LimitedConcurrencyQueue;
 
-class LimitedConcurrencyJob final : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+class LimitedConcurrencyJob final : public IntrusiveListHook {
 	friend class LimitedConcurrencyQueue;
 
 	LimitedConcurrencyQueue &queue;
@@ -78,8 +77,9 @@ public:
 
 class LimitedConcurrencyQueue {
 	using JobList =
-		boost::intrusive::list<LimitedConcurrencyJob,
-				       boost::intrusive::constant_time_size<true>>;
+		IntrusiveList<LimitedConcurrencyJob,
+			      IntrusiveListBaseHookTraits<LimitedConcurrencyJob>,
+			      true>;
 
 	JobList waiting, running;
 
