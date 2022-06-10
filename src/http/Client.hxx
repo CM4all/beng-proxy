@@ -76,11 +76,6 @@ enum class HttpClientErrorCode {
 	 * Non-HTTP garbage was received.
 	 */
 	GARBAGE,
-
-	/**
-	 * The server has failed to respond or accept data in time.
-	 */
-	TIMEOUT,
 };
 
 class HttpClientError : public std::runtime_error {

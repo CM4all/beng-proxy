@@ -93,7 +93,6 @@ IsHttpClientRetryFailure(std::exception_ptr ep) noexcept
 
 	switch (e->GetCode()) {
 	case HttpClientErrorCode::UNSPECIFIED:
-	case HttpClientErrorCode::TIMEOUT:
 		return false;
 
 	case HttpClientErrorCode::REFUSED:
