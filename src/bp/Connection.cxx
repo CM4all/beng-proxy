@@ -48,6 +48,7 @@
 #include "net/SocketProtocolError.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
+#include "net/TimeoutError.hxx"
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
 #include "pool/pool.hxx"
@@ -119,7 +120,8 @@ HttpServerLogLevel(std::exception_ptr e) noexcept
 		    se != nullptr && IsErrno(*se, ECONNRESET))
 			return 4;
 
-		if (FindNested<SocketProtocolError>(e))
+		if (FindNested<SocketProtocolError>(e) ||
+		    FindNested<TimeoutError>(e))
 			return 4;
 	}
 

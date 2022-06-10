@@ -54,6 +54,7 @@
 #include "uri/Verify.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/StaticSocketAddress.hxx"
+#include "net/TimeoutError.hxx"
 #include "system/Error.hxx"
 #include "util/Exception.hxx"
 #include "HttpMessageResponse.hxx"
@@ -96,7 +97,8 @@ HttpServerLogLevel(std::exception_ptr e)
 		    se != nullptr && IsErrno(*se, ECONNRESET))
 			return 4;
 
-		if (FindNested<SocketProtocolError>(e))
+		if (FindNested<SocketProtocolError>(e) ||
+		    FindNested<TimeoutError>(e))
 			return 4;
 	}
 
