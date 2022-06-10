@@ -94,6 +94,14 @@ ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 			case EPERM:
 				return {HTTP_STATUS_FORBIDDEN,
 					"Access to the requested file denied."};
+
+			case ECONNREFUSED:
+				return {HTTP_STATUS_BAD_GATEWAY,
+					"Connect to upstream server failed."};
+
+			case ENETUNREACH:
+				return {HTTP_STATUS_BAD_GATEWAY,
+					"Upstream server is unreachable."};
 			}
 		}
 	}
