@@ -48,6 +48,8 @@
 #include "HttpMessageResponse.hxx"
 #include "pool/pool.hxx"
 #include "system/Error.hxx"
+#include "net/SocketProtocolError.hxx"
+#include "net/TimeoutError.hxx"
 #include "util/Exception.hxx"
 
 #ifdef HAVE_LIBNFS
@@ -152,6 +154,14 @@ ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 		}
 	}
 #endif
+
+	if (FindNested<TimeoutError>(ep))
+		return {HTTP_STATUS_BAD_GATEWAY,
+			"Upstream server timed out"};
+
+	if (FindNested<SocketProtocolError>(ep))
+		return {HTTP_STATUS_BAD_GATEWAY,
+			"Upstream server failed"};
 
 	return {HTTP_STATUS_INTERNAL_SERVER_ERROR, "Internal server error"};
 }
