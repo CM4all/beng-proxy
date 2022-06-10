@@ -398,7 +398,9 @@ ClientConnection::Request::SubmitResponse(bool has_response_body) noexcept
 {
 	UnusedIstreamPtr body;
 
-	if (has_response_body) {
+	// TODO close stream if response body is ignored?
+
+	if (has_response_body && !http_status_is_empty(status)) {
 		MultiFifoBufferIstreamHandler &fbi_handler = *this;
 		response_body_control = NewFromPool<MultiFifoBufferIstream>(pool, pool, fbi_handler);
 		body = UnusedIstreamPtr(response_body_control);
