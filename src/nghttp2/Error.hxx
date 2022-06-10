@@ -39,7 +39,7 @@ namespace NgHttp2 {
 class ErrorCategory final : public std::error_category {
 public:
 	const char *name() const noexcept override {
-		return "avahi-client";
+		return "nghttp2";
 	}
 
 	std::string message(int condition) const override;
