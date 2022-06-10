@@ -48,6 +48,7 @@
 #include "util/Cancellable.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/StringBuilder.hxx"
+#include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
 
 #ifdef HAVE_NGHTTP2

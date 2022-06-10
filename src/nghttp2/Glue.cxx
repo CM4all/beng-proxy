@@ -43,7 +43,7 @@
 namespace NgHttp2 {
 
 class GlueRequest final : Cancellable, StockGetHandler {
-	struct pool &pool;
+	const AllocatorPtr alloc;
 	AlpnHandler *const alpn_handler;
 	HttpResponseHandler &handler;
 
@@ -58,7 +58,7 @@ class GlueRequest final : Cancellable, StockGetHandler {
 	CancellablePointer cancel_ptr;
 
 public:
-	GlueRequest(struct pool &_pool, AlpnHandler *_alpn_handler,
+	GlueRequest(AllocatorPtr _alloc, AlpnHandler *_alpn_handler,
 		    HttpResponseHandler &_handler,
 		    const StopwatchPtr &parent_stopwatch,
 		    SocketFilterFactory *_filter_factory,
@@ -66,19 +66,18 @@ public:
 		    const HttpAddress &_address,
 		    StringMap &&_headers, UnusedIstreamPtr _body,
 		    CancellablePointer &_caller_cancel_ptr) noexcept
-		:pool(_pool), alpn_handler(_alpn_handler), handler(_handler),
+		:alloc(_alloc), alpn_handler(_alpn_handler), handler(_handler),
 		 stopwatch(parent_stopwatch, "nghttp2_client"),
 		 filter_factory(_filter_factory),
 		 address(_address),
-		 pending_request(_pool, _method, _address.path,
+		 pending_request(alloc.GetPool(), _method, _address.path,
 				 std::move(_headers), std::move(_body)),
 		 caller_cancel_ptr(_caller_cancel_ptr)
 	{
 		caller_cancel_ptr = *this;
 	}
 
-	void Start(AllocatorPtr alloc,
-		   Stock &stock, EventLoop &event_loop) noexcept {
+	void Start(Stock &stock, EventLoop &event_loop) noexcept {
 		stock.Get(event_loop, alloc, stopwatch, nullptr,
 			  nullptr,
 			  *address.addresses.begin(), // TODO
@@ -104,16 +103,16 @@ private:
 			alpn_handler->OnAlpnNoMismatch();
 
 		if (address.host_and_port != nullptr)
-			pending_request.headers.Add(pool, "host",
+			pending_request.headers.Add(alloc, "host",
 						    address.host_and_port);
 
-		auto &_pool = pool;
+		const auto _alloc = alloc;
 		auto _stopwatch = std::move(stopwatch);
 		auto &_handler = handler;
 		auto request = std::move(pending_request);
 		auto &_caller_cancel_ptr = caller_cancel_ptr;
 		Destroy();
-		connection.SendRequest(_pool, std::move(_stopwatch),
+		connection.SendRequest(_alloc, std::move(_stopwatch),
 				       request.method, request.uri,
 				       std::move(request.headers),
 				       std::move(request.body),
@@ -149,7 +148,7 @@ GlueRequest::OnNgHttp2StockAlpn(std::unique_ptr<FilteredSocket> &&socket) noexce
 }
 
 void
-SendRequest(struct pool &pool, EventLoop &event_loop, Stock &stock,
+SendRequest(AllocatorPtr alloc, EventLoop &event_loop, Stock &stock,
 	    const StopwatchPtr &parent_stopwatch,
 	    SocketFilterFactory *filter_factory,
 	    http_method_t method,
@@ -159,15 +158,15 @@ SendRequest(struct pool &pool, EventLoop &event_loop, Stock &stock,
 	    HttpResponseHandler &handler,
 	    CancellablePointer &cancel_ptr) noexcept
 {
-	auto *request = NewFromPool<GlueRequest>(pool, pool,
-						 alpn_handler, handler,
-						 parent_stopwatch,
-						 filter_factory,
-						 method, address,
-						 std::move(headers),
-						 std::move(body),
-						 cancel_ptr);
-	request->Start(pool, stock, event_loop);
+	auto *request = alloc.New<GlueRequest>(alloc,
+					       alpn_handler, handler,
+					       parent_stopwatch,
+					       filter_factory,
+					       method, address,
+					       std::move(headers),
+					       std::move(body),
+					       cancel_ptr);
+	request->Start(stock, event_loop);
 }
 
 } // namespace NgHttp2

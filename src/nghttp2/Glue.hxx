@@ -36,9 +36,9 @@
 
 #include <memory>
 
-struct pool;
 struct HttpAddress;
 struct PendingHttpRequest;
+class AllocatorPtr;
 class EventLoop;
 class StopwatchPtr;
 class SocketAddress;
@@ -85,7 +85,7 @@ public:
 class Stock;
 
 void
-SendRequest(struct pool &pool, EventLoop &event_loop, Stock &stock,
+SendRequest(AllocatorPtr alloc, EventLoop &event_loop, Stock &stock,
 	    const StopwatchPtr &parent_stopwatch,
 	    SocketFilterFactory *filter_factory,
 	    http_method_t method,
