@@ -467,31 +467,6 @@ class Translation(Protocol):
             response.packet(TRANSLATE_TRANSPARENT)
         elif raw_uri[:6] == '/1234/':
             response.http('http://localhost:1234/' + raw_uri[4:])
-        elif raw_uri[:11] == '/cfatest01/':
-            response.http('http://cfatest01.intern.cm-ag/' + raw_uri[11:])
-        elif raw_uri[:13] == '/transparent/':
-            response.http('http://cfatest01.intern.cm-ag/' + raw_uri[11:])
-            response.packet(TRANSLATE_TRANSPARENT)
-        elif raw_uri[:7] == '/proxy/':
-            response.http('http://cfatest01.intern.cm-ag/' + raw_uri[7:])
-            response.request_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_YES))
-            response.response_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_YES))
-        elif raw_uri[:8] == '/mangle/':
-            response.http('http://cfatest01.intern.cm-ag/' + raw_uri[8:])
-            response.request_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_MANGLE))
-            response.response_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_MANGLE))
-        elif raw_uri[:10] == '/relocate/':
-            response.packet(TRANSLATE_BASE, '/relocate/')
-            response.packet(TRANSLATE_EASY_BASE)
-            response.http('http://cfatest01.intern.cm-ag/')
-            response.response_header_forward((HEADER_GROUP_LINK, HEADER_FORWARD_MANGLE))
-        elif raw_uri[:24] == '/vary-user-agent/remote/':
-            if want is None or TRANSLATE_USER_AGENT not in want:
-                response.want(TRANSLATE_USER_AGENT)
-                return
-
-            response.vary(TRANSLATE_USER_AGENT)
-            response.http('http://cfatest01.intern.cm-ag/' + raw_uri[24:])
         elif raw_uri[:5] == '/nfs/':
             response.nfs('172.28.0.8', '/srv/nfs4/foo', raw_uri[4:])
         elif uri[:8] == '/fcgi.rb':
@@ -1026,10 +1001,6 @@ class Translation(Protocol):
             response.max_age(0)
             response.packet(TRANSLATE_ATTACH_SESSION, uri[16:])
             response.status(201)
-        elif uri == '/external_session_manager/':
-            response.path('/var/www/index.html')
-            response.external_session_manager('http://cfatest01.intern.cm-ag/session')
-            response.external_session_keepalive(5)
         elif uri[:19] == '/internal_redirect/':
             response.packet(TRANSLATE_INTERNAL_REDIRECT, 'hans')
             response.packet(TRANSLATE_URI, '/proxy/' + uri[19:])
@@ -1093,9 +1064,6 @@ class Translation(Protocol):
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)
-
-        #response.packet(TRANSLATE_FILTER)
-        # .... PROXY 'http://cfatest01.intern.cm-ag/filter.py'
 
     def _handle_request(self, request):
         if request.content_type_lookup is not None:
