@@ -37,7 +37,6 @@
 #include "IstreamDataSource.hxx"
 #include "Option.hxx"
 #include "Callbacks.hxx"
-#include "pool/pool.hxx"
 #include "istream/LengthIstream.hxx"
 #include "istream/MultiFifoBufferIstream.hxx"
 #include "istream/New.hxx"
@@ -64,7 +63,7 @@ class ClientConnection::Request final
 	  IstreamDataSourceHandler,
 	  public IntrusiveListHook
 {
-	struct pool &pool;
+	const AllocatorPtr alloc;
 
 	enum class State {
 		INITIAL,
@@ -98,12 +97,12 @@ class ClientConnection::Request final
 	std::unique_ptr<IstreamDataSource> request_body;
 
 public:
-	explicit Request(struct pool &_pool,
+	explicit Request(AllocatorPtr _alloc,
 			 StopwatchPtr &&_stopwatch,
 			 ClientConnection &_connection,
 			 HttpResponseHandler &_handler,
 			 CancellablePointer &cancel_ptr) noexcept
-		:pool(_pool),
+		:alloc(_alloc),
 		 stopwatch(std::move(_stopwatch)),
 		 connection(_connection), handler(_handler)
 	{
@@ -352,8 +351,6 @@ inline int
 ClientConnection::Request::OnHeaderCallback(StringView name,
 					    StringView value) noexcept
 {
-	AllocatorPtr alloc(pool);
-
 	if (name.Equals(":status")) {
 		char buffer[4];
 		if (value.size != 3)
@@ -402,7 +399,9 @@ ClientConnection::Request::SubmitResponse(bool has_response_body) noexcept
 
 	if (has_response_body && !http_status_is_empty(status)) {
 		MultiFifoBufferIstreamHandler &fbi_handler = *this;
-		response_body_control = NewFromPool<MultiFifoBufferIstream>(pool, pool, fbi_handler);
+		response_body_control =
+			alloc.New<MultiFifoBufferIstream>(alloc.GetPool(),
+							  fbi_handler);
 		body = UnusedIstreamPtr(response_body_control);
 
 		const char *content_length =
@@ -411,7 +410,7 @@ ClientConnection::Request::SubmitResponse(bool has_response_body) noexcept
 			char *endptr;
 			auto length = strtoul(content_length, &endptr, 10);
 			if (endptr > content_length)
-				body = NewIstreamPtr<LengthIstream>(pool,
+				body = NewIstreamPtr<LengthIstream>(alloc.GetPool(),
 								    std::move(body),
 								    length);
 		}
@@ -498,7 +497,7 @@ ClientConnection::~ClientConnection() noexcept
 }
 
 void
-ClientConnection::SendRequest(struct pool &request_pool,
+ClientConnection::SendRequest(AllocatorPtr alloc,
 			      StopwatchPtr stopwatch,
 			      http_method_t method, const char *uri,
 			      StringMap &&headers,
@@ -506,9 +505,9 @@ ClientConnection::SendRequest(struct pool &request_pool,
 			      HttpResponseHandler &_handler,
 			      CancellablePointer &cancel_ptr) noexcept
 {
-	auto *request = NewFromPool<Request>(request_pool, request_pool,
-					     std::move(stopwatch), *this,
-					     _handler, cancel_ptr);
+	auto *request = alloc.New<Request>(alloc,
+					   std::move(stopwatch), *this,
+					   _handler, cancel_ptr);
 	requests.push_front(*request);
 	defer_invoke_idle.Cancel();
 	request->SendRequest(method, uri, std::move(headers), std::move(body));

@@ -40,7 +40,7 @@
 
 #include <memory>
 
-struct pool;
+class AllocatorPtr;
 class StringMap;
 class StopwatchPtr;
 class HttpResponseHandler;
@@ -106,7 +106,7 @@ public:
 		return requests.size() >= max_concurrent_streams;
 	}
 
-	void SendRequest(struct pool &request_pool,
+	void SendRequest(AllocatorPtr alloc,
 			 StopwatchPtr stopwatch,
 			 http_method_t method, const char *uri,
 			 StringMap &&headers,
