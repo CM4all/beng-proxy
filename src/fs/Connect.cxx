@@ -38,6 +38,7 @@
 #include "event/DeferEvent.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/TimeoutError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/LeakDetector.hxx"
@@ -271,7 +272,7 @@ void
 ConnectFilteredSocketOperation::OnTimeout() noexcept
 {
 	stopwatch.RecordEvent("timeout");
-	handler.OnConnectFilteredSocketError(std::make_exception_ptr(std::runtime_error("Timeout")));
+	handler.OnConnectFilteredSocketError(std::make_exception_ptr(TimeoutError{"Connect timeout"}));
 	delete this;
 }
 
