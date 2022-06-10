@@ -478,7 +478,6 @@ AnyHttpClient::ProbeHTTP2(struct pool &pool,
 			  filter_factory, method, address,
 			  std::move(headers), std::move(body),
 			  handler, cancel_ptr);
-	return;
 }
 
 #endif // HAVE_NGHTTP2
