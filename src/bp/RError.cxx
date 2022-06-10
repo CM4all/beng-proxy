@@ -100,6 +100,7 @@ ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 					"Connect to upstream server failed."};
 
 			case ENETUNREACH:
+			case EHOSTUNREACH:
 				return {HTTP_STATUS_BAD_GATEWAY,
 					"Upstream server is unreachable."};
 			}
