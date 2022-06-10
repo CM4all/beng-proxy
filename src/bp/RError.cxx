@@ -103,6 +103,10 @@ ToResponse(struct pool &pool, std::exception_ptr ep) noexcept
 			case EHOSTUNREACH:
 				return {HTTP_STATUS_BAD_GATEWAY,
 					"Upstream server is unreachable."};
+
+			case ETIMEDOUT:
+				return {HTTP_STATUS_BAD_GATEWAY,
+					"Upstream server timed out"};
 			}
 		}
 	}
