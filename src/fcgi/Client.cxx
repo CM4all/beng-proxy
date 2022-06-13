@@ -55,7 +55,6 @@
 #include "util/StringStrip.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/StringView.hxx"
-#include "util/InstanceList.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "AllocatorPtr.hxx"
@@ -70,7 +69,8 @@
 
 class FcgiClient final
 	: BufferedSocketHandler, Cancellable, Istream, IstreamSink,
-	  WithInstanceList<FcgiClient>, DestructAnchor {
+	  DestructAnchor
+{
 
 	BufferedSocket socket;
 
