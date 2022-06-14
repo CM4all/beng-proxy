@@ -88,6 +88,7 @@ class Request:
         self.password = None
         self.service = None
         self.cron = False
+        self.execute = False
         self.base = None
         self.regex = None
 
@@ -206,6 +207,11 @@ class Request:
                 self.cron = packet.payload.decode('ascii')
             else:
                 self.cron = True
+        elif packet.command == TRANSLATE_EXECUTE:
+            if packet.payload:
+                self.execute = packet.payload.decode('ascii')
+            else:
+                self.execute = True
         elif packet.command == TRANSLATE_BASE:
             self.base = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_REGEX:

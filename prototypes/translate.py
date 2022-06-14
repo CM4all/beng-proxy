@@ -154,6 +154,12 @@ class Translation(Protocol):
         response.packet(TRANSLATE_UTS_NAMESPACE, 'host-' + user)
         return response
 
+    def _handle_execute(self, execute, param, service, tag):
+        log.msg(f"execute {execute!r} param={param!r} service={service!r} tag={tag!r}")
+
+        response.status(404)
+        return response
+
     def _handle_auth(self, auth, uri, session, alt_host):
         log.msg(f"auth {auth!r} uri={uri!r} session={session!r} alt_host={alt_host!r}")
 
@@ -1082,6 +1088,9 @@ class Translation(Protocol):
 
         if request.cron:
             return self._handle_cron(request.cron, request.listener_tag, request.user, request.uri, request.param)
+
+        if request.execute:
+            return self._handle_execute(request.execute, request.param, request.service, request.listener_tag)
 
         if request.auth is not None:
             return self._handle_auth(request.auth, request.uri, request.session, request.alt_host)

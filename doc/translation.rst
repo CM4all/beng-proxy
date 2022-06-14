@@ -1660,6 +1660,41 @@ Additional packets may configure resource limits (:ref:`rlimits`,
 
 The client may assume that all responses may be cached indefinitely.
 
+.. _execute:
+
+Execute Translation
+-------------------
+
+This sub-protocol is used to query how to spawn a process which was
+requested to be executed.
+
+The request contains the following packets:
+
+- ``EXECUTE``: Marks this request as an "execute" request. The payload
+  is a token describing which process shall be executed.  This token
+  was provided by an unprivileged process and should not be trusted.
+
+- ``PARAM``: An opaque parameter with more details about the process.
+  This parametr was provided by an unprivileged process and should not
+  be trusted.
+
+- ``SERVICE``: Payload specifies the service that wants to execute the
+  process, e.g. :samp:`workshop`.
+
+- ``LISTENER_TAG``: A tag which was set in the client's configuration
+  file.
+
+A successful response contains at least ``EXECUTE`` with the path of
+the program to be spawned, plus :ref:`the usual process parameters
+<childoptions>`.
+
+A failed response contains ``STATUS`` and optionally ``MESSAGE``.
+
+- ``HOME``: Path of the user’s home directory.
+
+- ``UID_GID``: Specify uid and gid (and supplementary groups) for the
+  child process. Payload is an array of 32 bit integers.
+
 .. _pooltrans:
 
 Pool translation
