@@ -157,6 +157,7 @@ class Translation(Protocol):
     def _handle_execute(self, execute, param, service, tag, plan):
         log.msg(f"execute {execute!r} param={param!r} service={service!r} tag={tag!r} plan={plan!r}")
 
+        response = Response(protocol_version=2)
         response.status(404)
         return response
 
