@@ -1684,6 +1684,10 @@ The request contains the following packets:
 - ``LISTENER_TAG``: A tag which was set in the client's configuration
   file.
 
+- ``PLAN``: If this request was triggered by a `Workshop
+  <https://github.com/CM4all/workshop/>`__ plan, then this is its
+  name.
+
 A successful response contains at least ``EXECUTE`` with the path of
 the program to be spawned, plus :ref:`the usual process parameters
 <childoptions>`.

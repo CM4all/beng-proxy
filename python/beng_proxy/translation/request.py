@@ -87,6 +87,7 @@ class Request:
         self.login = False
         self.password = None
         self.service = None
+        self.plan = None
         self.cron = False
         self.execute = False
         self.base = None
@@ -202,6 +203,8 @@ class Request:
             self.password = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_SERVICE:
             self.service = packet.payload.decode('ascii')
+        elif packet.command == TRANSLATE_PLAN:
+            self.plan = packet.payload.decode('ascii')
         elif packet.command == TRANSLATE_CRON:
             if packet.payload:
                 self.cron = packet.payload.decode('ascii')
