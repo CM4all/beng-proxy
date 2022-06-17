@@ -562,6 +562,10 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 
 		assert(response.uri != nullptr);
 		translate.request.uri = response.uri;
+
+		translate.had_internal_redirect = true;
+
+		dissected_uri.base = translate.request.uri;
 	}
 
 	if (response.like_host != nullptr) {

@@ -228,6 +228,13 @@ private:
 		 * initial translation with the new user value.
 		 */
 		bool user_modified = false;
+
+		/**
+		 * Has at least one INTERNAL_REDIRECT been seen?  This
+		 * means that "request.uri" should not be used
+		 * anymore.
+		 */
+		bool had_internal_redirect = false;
 	} translate;
 
 	/**

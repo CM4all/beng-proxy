@@ -61,10 +61,19 @@ inline const char *
 Request::ForwardURI() const noexcept
 {
 	const TranslateResponse &t = *translate.response;
-	if (t.transparent || dissected_uri.args == nullptr)
+	if (t.transparent || dissected_uri.args == nullptr) {
 		/* transparent or no args: return the full URI as-is */
+
+		if (translate.had_internal_redirect)
+			/* after an internal redirect, we need to use
+			   the new URI (and add query string / args);
+			   dissected_uri.base has already been
+			   updated, but request.uri is still the
+			   original request URI */
+			return RecomposeUri(pool, dissected_uri);
+
 		return request.uri;
-	else
+	} else
 		/* remove the "args" part */
 		return ::ForwardURI(pool, dissected_uri);
 }
