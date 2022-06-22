@@ -92,6 +92,8 @@ public:
 						     log_options,
 						     /* TODO? */ true);
 
+		log.SetSite(site_name);
+
 		const char *script_filename = path;
 
 		fcgi_client_request(&pool, event_loop, std::move(stopwatch),
