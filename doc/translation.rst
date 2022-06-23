@@ -429,6 +429,8 @@ Response
 
 - ``SECURE_COOKIE``: Set the "secure" flag on the session cookie.
 
+- ``CHDIR``: change the working directory (after namespace setup).
+
 - ``HOME``: home directory of the account this site belongs to; will be
   mounted in the jail; defaults to ``DOCUMENT_ROOT``
 
