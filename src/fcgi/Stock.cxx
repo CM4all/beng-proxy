@@ -82,14 +82,6 @@ public:
 		return hstock.GetEventLoop();
 	}
 
-	SocketDescriptor GetLogSocket() const noexcept {
-		return child_stock.GetLogSocket();
-	}
-
-	const auto &GetLogOptions() const noexcept {
-		return child_stock.GetLogOptions();
-	}
-
 	StockItem *Get(const ChildOptions &options,
 		       const char *executable_path,
 		       ConstBuffer<const char *> args,
@@ -423,18 +415,6 @@ void
 fcgi_stock_free(FcgiStock *fcgi_stock) noexcept
 {
 	delete fcgi_stock;
-}
-
-SocketDescriptor
-fcgi_stock_get_log_socket(const FcgiStock &fs) noexcept
-{
-	return fs.GetLogSocket();
-}
-
-const ChildErrorLogOptions &
-fcgi_stock_get_log_options(const FcgiStock &fs) noexcept
-{
-	return fs.GetLogOptions();
 }
 
 void
