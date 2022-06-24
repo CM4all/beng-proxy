@@ -78,7 +78,7 @@ public:
 		   SocketDescriptor log_socket,
 		   const ChildErrorLogOptions &log_options,
 		   HttpResponseHandler &handler,
-		   CancellablePointer &caller_cancel_ptr) {
+		   CancellablePointer &caller_cancel_ptr) noexcept {
 		caller_cancel_ptr = *this;
 
 		fcgi_stock_item_set_site(*stock_item, site_name);
