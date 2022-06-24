@@ -35,7 +35,6 @@
 #include "Client.hxx"
 #include "http/ResponseHandler.hxx"
 #include "lease.hxx"
-#include "access_log/ChildErrorLog.hxx"
 #include "stock/Item.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
@@ -52,8 +51,6 @@ class FcgiRequest final : Lease, Cancellable, PoolLeakDetector {
 	struct pool &pool;
 
 	StockItem *stock_item;
-
-	ChildErrorLog log;
 
 	CancellablePointer cancel_ptr;
 
@@ -75,8 +72,6 @@ public:
 		   StringMap &&headers, UnusedIstreamPtr body,
 		   ConstBuffer<const char *> params,
 		   UniqueFileDescriptor &&stderr_fd,
-		   SocketDescriptor log_socket,
-		   const ChildErrorLogOptions &log_options,
 		   HttpResponseHandler &handler,
 		   CancellablePointer &caller_cancel_ptr) noexcept {
 		caller_cancel_ptr = *this;
@@ -86,13 +81,6 @@ public:
 
 		if (!stderr_fd.IsDefined())
 			stderr_fd = fcgi_stock_item_get_stderr(*stock_item);
-
-		if (log_socket.IsDefined() && !stderr_fd.IsDefined())
-			stderr_fd = log.EnableClient(event_loop, log_socket,
-						     log_options,
-						     /* TODO? */ true);
-
-		log.SetSite(site_name);
 
 		const char *script_filename = path;
 
@@ -181,7 +169,5 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
 		       query_string, document_root, remote_addr,
 		       std::move(headers), std::move(body),
 		       params, std::move(stderr_fd),
-		       fcgi_stock_get_log_socket(*fcgi_stock),
-		       fcgi_stock_get_log_options(*fcgi_stock),
 		       handler, cancel_ptr);
 }
