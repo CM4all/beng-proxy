@@ -81,6 +81,9 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 						      stderr_socket1, p.return_stderr))
 		throw MakeErrno("socketpair() failed");
 
+	if (p.stderr_fd.IsDefined() && cls.WantStderrFd(info))
+		stderr_fd = p.stderr_fd.Duplicate();
+
 	auto &spawn_service = child_stock.GetSpawnService();
 	handle = spawn_service.SpawnChildProcess(GetStockName(), std::move(p));
 	handle->SetExitListener(*this);
