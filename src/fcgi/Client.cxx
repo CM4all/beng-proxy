@@ -225,12 +225,10 @@ private:
 	/**
 	 * Feed data into the FastCGI protocol parser.
 	 *
-	 * Throws on error.
-	 *
 	 * @return the number of bytes consumed, or 0 if this object has
 	 * been destructed
 	 */
-	size_t Feed(const std::byte *data, size_t length);
+	size_t Feed(const std::byte *data, size_t length) noexcept;
 
 	/**
 	 * Submit the response metadata to the #HttpResponseHandler.
@@ -254,10 +252,8 @@ private:
 
 	/**
 	 * Consume data from the input buffer.
-	 *
-	 * Throws on error.
 	 */
-	BufferedResult ConsumeInput(const std::byte *data, size_t length);
+	BufferedResult ConsumeInput(const std::byte *data, size_t length) noexcept;
 
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override;
@@ -417,7 +413,7 @@ FcgiClient::ParseHeaders(const char *data, size_t length)
 }
 
 inline size_t
-FcgiClient::Feed(const std::byte *data, size_t length)
+FcgiClient::Feed(const std::byte *data, size_t length) noexcept
 {
 	if (response.stderr) {
 		/* ignore errors and partial writes while forwarding STDERR
@@ -578,7 +574,7 @@ FcgiClient::HandleHeader(const struct fcgi_record_header &header) noexcept
 }
 
 inline BufferedResult
-FcgiClient::ConsumeInput(const std::byte *data0, size_t length0)
+FcgiClient::ConsumeInput(const std::byte *data0, size_t length0) noexcept
 {
 	const DestructObserver destructed(*this);
 	const std::byte *data = data0, *const end = data0 + length0;
