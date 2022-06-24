@@ -102,7 +102,7 @@ UniqueFileDescriptor
 ChildStockItem::GetStderr() const noexcept
 {
 	return stderr_fd.IsDefined()
-		? UniqueFileDescriptor(dup(stderr_fd.Get()))
+		? stderr_fd.Duplicate()
 		: UniqueFileDescriptor{};
 }
 
