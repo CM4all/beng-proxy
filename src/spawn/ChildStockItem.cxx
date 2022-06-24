@@ -75,7 +75,8 @@ ChildStockItem::Spawn(ChildStockClass &cls, void *info,
 				 cls.WantStderrPond(info));
 
 	UniqueSocketDescriptor stderr_socket1;
-	if (cls.WantReturnStderr(info) &&
+	if (p.stderr_path != nullptr &&
+	    cls.WantStderrFd(info) &&
 	    !UniqueSocketDescriptor::CreateSocketPair(AF_LOCAL, SOCK_SEQPACKET, 0,
 						      stderr_socket1, p.return_stderr))
 		throw MakeErrno("socketpair() failed");

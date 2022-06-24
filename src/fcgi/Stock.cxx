@@ -112,7 +112,7 @@ private:
 	std::size_t GetChildLimit(const void *request,
 				  std::size_t _limit) const noexcept override;
 	Event::Duration GetChildClearInterval(const void *info) const noexcept override;
-	bool WantReturnStderr(void *info) const noexcept override;
+	bool WantStderrFd(void *info) const noexcept override;
 	bool WantStderrPond(void *info) const noexcept override;
 
 	unsigned GetChildBacklog(void *) const noexcept override {
@@ -238,13 +238,9 @@ FcgiStock::GetChildClearInterval(const void *info) const noexcept
 }
 
 bool
-FcgiStock::WantReturnStderr(void *info) const noexcept
+FcgiStock::WantStderrFd(void *) const noexcept
 {
-	const auto &params = *(const CgiChildParams *)info;
-	/* we need the child process to return the stderr_fd to us if
-	   the given path is "jailed" */
-	return params.options.stderr_path != nullptr &&
-		params.options.stderr_jailed;
+	return true;
 }
 
 bool
