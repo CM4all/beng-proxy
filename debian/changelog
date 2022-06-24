@@ -2,6 +2,7 @@ cm4all-beng-proxy (17.0.98) unstable; urgency=low
 
   * fcgi: fix missing "site" attribute on FastCGI STDERR packets
   * spawn: forward startup errors to Pond
+  * spawn: don't inherit capabilities to launched processes
   * translation: add packet CHDIR
 
  --   
