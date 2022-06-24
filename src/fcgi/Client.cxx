@@ -151,7 +151,7 @@ public:
 		   uint16_t _id, http_method_t method,
 		   UnusedIstreamPtr &&request_istream,
 		   HttpResponseHandler &_handler,
-		   CancellablePointer &cancel_ptr);
+		   CancellablePointer &cancel_ptr) noexcept;
 
 	~FcgiClient() noexcept override;
 
@@ -166,7 +166,7 @@ private:
 	/**
 	 * Release the socket held by this object.
 	 */
-	void ReleaseSocket(bool reuse) {
+	void ReleaseSocket(bool reuse) noexcept {
 		socket.Abandon();
 		lease_ref.Release(reuse);
 	}
@@ -210,7 +210,7 @@ private:
 	 * returns the offset where it ends, or 0 if none was found.
 	 */
 	[[gnu::pure]]
-	BufferAnalysis AnalyseBuffer(const void *data, size_t size) const;
+	BufferAnalysis AnalyseBuffer(const void *data, size_t size) const noexcept;
 
 	/**
 	 * Throws on error.
@@ -225,6 +225,8 @@ private:
 	/**
 	 * Feed data into the FastCGI protocol parser.
 	 *
+	 * Throws on error.
+	 *
 	 * @return the number of bytes consumed, or 0 if this object has
 	 * been destructed
 	 */
@@ -235,23 +237,25 @@ private:
 	 *
 	 * @return false if the connection was closed
 	 */
-	bool SubmitResponse();
+	bool SubmitResponse() noexcept;
 
 	/**
 	 * Handle an END_REQUEST packet.  This function will always
 	 * destroy the client.
 	 */
-	void HandleEnd();
+	void HandleEnd() noexcept;
 
 	/**
 	 * A packet header was received.
 	 *
 	 * @return false if the client has been destroyed
 	 */
-	bool HandleHeader(const struct fcgi_record_header &header);
+	bool HandleHeader(const struct fcgi_record_header &header) noexcept;
 
 	/**
 	 * Consume data from the input buffer.
+	 *
+	 * Throws on error.
 	 */
 	BufferedResult ConsumeInput(const std::byte *data, size_t length);
 
@@ -334,7 +338,7 @@ FcgiClient::_Close() noexcept
 }
 
 FcgiClient::BufferAnalysis
-FcgiClient::AnalyseBuffer(const void *const _data0, size_t size) const
+FcgiClient::AnalyseBuffer(const void *const _data0, size_t size) const noexcept
 {
 	const auto data0 = (const std::byte *)_data0;
 	const std::byte *data = data0, *const end = data0 + size;
@@ -461,7 +465,7 @@ FcgiClient::Feed(const std::byte *data, size_t length)
 }
 
 inline bool
-FcgiClient::SubmitResponse()
+FcgiClient::SubmitResponse() noexcept
 {
 	assert(response.read_state == Response::READ_BODY);
 
@@ -509,7 +513,7 @@ FcgiClient::SubmitResponse()
 }
 
 inline void
-FcgiClient::HandleEnd()
+FcgiClient::HandleEnd() noexcept
 {
 	assert(!socket.IsConnected());
 
@@ -534,7 +538,7 @@ FcgiClient::HandleEnd()
 }
 
 inline bool
-FcgiClient::HandleHeader(const struct fcgi_record_header &header)
+FcgiClient::HandleHeader(const struct fcgi_record_header &header) noexcept
 {
 	content_length = FromBE16(header.content_length);
 	skip_length = header.padding_length;
@@ -1043,7 +1047,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
 		       uint16_t _id, http_method_t method,
 		       UnusedIstreamPtr &&request_istream,
 		       HttpResponseHandler &_handler,
-		       CancellablePointer &cancel_ptr)
+		       CancellablePointer &cancel_ptr) noexcept
 	:Istream(_pool),
 	 IstreamSink(std::move(request_istream)),
 	 socket(event_loop),
@@ -1077,7 +1081,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 		    ConstBuffer<const char *> params,
 		    UniqueFileDescriptor &&stderr_fd,
 		    HttpResponseHandler &handler,
-		    CancellablePointer &cancel_ptr)
+		    CancellablePointer &cancel_ptr) noexcept
 {
 	static unsigned next_request_id = 1;
 	++next_request_id;
