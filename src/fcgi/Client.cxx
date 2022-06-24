@@ -210,7 +210,7 @@ private:
 	 * returns the offset where it ends, or 0 if none was found.
 	 */
 	[[gnu::pure]]
-	BufferAnalysis AnalyseBuffer(const void *data, size_t size) const noexcept;
+	BufferAnalysis AnalyseBuffer(std::span<const std::byte> buffer) const noexcept;
 
 	/**
 	 * Throws on error.
@@ -334,10 +334,10 @@ FcgiClient::_Close() noexcept
 }
 
 FcgiClient::BufferAnalysis
-FcgiClient::AnalyseBuffer(const void *const _data0, size_t size) const noexcept
+FcgiClient::AnalyseBuffer(const std::span<const std::byte> buffer) const noexcept
 {
-	const auto data0 = (const std::byte *)_data0;
-	const std::byte *data = data0, *const end = data0 + size;
+	const auto data0 = (const std::byte *)buffer.data();
+	const std::byte *data = data0, *const end = data0 + buffer.size();
 
 	BufferAnalysis result;
 
@@ -755,8 +755,7 @@ FcgiClient::_GetAvailable(bool partial) noexcept
 
 	const auto buffer = socket.ReadBuffer();
 	if (buffer.size() > content_length) {
-		const auto analysis = AnalyseBuffer(buffer.data(),
-						    buffer.size());
+		const auto analysis = AnalyseBuffer(buffer);
 		if (analysis.end_request_offset > 0 || partial)
 			return analysis.total_stdout;
 	}
@@ -945,7 +944,7 @@ FcgiClient::OnBufferedData()
 	if (socket.IsConnected()) {
 		/* check if the #FCGI_END_REQUEST packet can be found in the
 		   following data chunk */
-		const auto analysis = AnalyseBuffer(r.data(), r.size());
+		const auto analysis = AnalyseBuffer(r);
 		if (analysis.end_request_offset > 0)
 			/* found it: we no longer need the socket, everything we
 			   need is already in the given buffer */
