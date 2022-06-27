@@ -33,9 +33,10 @@
 #pragma once
 
 #include "pool/pool.hxx"
-#include "util/StringView.hxx"
 
 #include <algorithm>
+#include <span>
+#include <string_view>
 #include <type_traits>
 
 #include <string.h>
@@ -163,10 +164,10 @@ public:
 		return {dest, src.size()};
 	}
 
-	StringView Dup(StringView src) const noexcept;
-	const char *DupZ(StringView src) const noexcept;
+	std::string_view Dup(std::string_view src) const noexcept;
+	const char *DupZ(std::string_view src) const noexcept;
 
-	const char *DupToLower(StringView src) const noexcept {
+	const char *DupToLower(std::string_view src) const noexcept {
 		return p_strdup_lower(pool, src);
 	}
 

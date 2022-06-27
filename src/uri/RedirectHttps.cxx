@@ -32,6 +32,7 @@
 
 #include "RedirectHttps.hxx"
 #include "net/HostParser.hxx"
+#include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <stdio.h>

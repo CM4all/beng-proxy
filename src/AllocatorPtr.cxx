@@ -34,6 +34,8 @@
 #include "pool/PSocketAddress.hxx"
 #include "util/StringView.hxx"
 
+using std::string_view_literals::operator""sv;
+
 std::span<const std::byte>
 AllocatorPtr::Dup(std::span<const std::byte> src) const noexcept
 {
@@ -46,28 +48,28 @@ AllocatorPtr::Dup(std::span<const std::byte> src) const noexcept
 	return {(const std::byte *)Dup(src.data(), src.size()), src.size()};
 }
 
-StringView
-AllocatorPtr::Dup(StringView src) const noexcept
+std::string_view
+AllocatorPtr::Dup(std::string_view src) const noexcept
 {
-	if (src == nullptr)
-		return nullptr;
+	if (src.data() == nullptr)
+		return {};
 
 	if (src.empty())
-		return "";
+		return ""sv;
 
-	return {(const char *)Dup(src.data, src.size), src.size};
+	return {(const char *)Dup(src.data(), src.size()), src.size()};
 }
 
 const char *
-AllocatorPtr::DupZ(StringView src) const noexcept
+AllocatorPtr::DupZ(std::string_view src) const noexcept
 {
-	if (src == nullptr)
-		return nullptr;
+	if (src.data() == nullptr)
+		return {};
 
 	if (src.empty())
 		return "";
 
-	return p_strndup(&pool, src.data, src.size);
+	return p_strndup(&pool, src.data(), src.size());
 }
 
 SocketAddress

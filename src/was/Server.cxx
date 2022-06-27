@@ -39,6 +39,7 @@
 #include "pool/pool.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringFormat.hxx"
+#include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <was/protocol.h>
