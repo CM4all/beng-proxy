@@ -41,11 +41,11 @@
 
 #else
 
-#include <boost/type_index.hpp>
+#include <typeinfo>
 
 #define TYPE_ARG_DECL , const char *type
 #define TYPE_ARG_FWD , type
 #define TYPE_ARG_NULL , nullptr
-#define TYPE_ARG(T) , boost::typeindex::type_id<T>().name()
+#define TYPE_ARG(T) , typeid(T).name()
 
 #endif
