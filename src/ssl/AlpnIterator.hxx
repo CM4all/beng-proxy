@@ -32,6 +32,9 @@
 
 #pragma once
 
+#include <span>
+#include <utility>
+
 /**
  * An iterable range of ALPN strrings.
  */
