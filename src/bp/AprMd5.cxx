@@ -31,6 +31,7 @@
  */
 
 #include "AprMd5.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringView.hxx"
 
@@ -58,18 +59,13 @@ public:
 		MD5_Init(&ctx);
 	}
 
-	auto &Update(ConstBuffer<void> b) noexcept {
-		MD5_Update(&ctx, b.data, b.size);
+	auto &Update(std::span<const std::byte> b) noexcept {
+		MD5_Update(&ctx, b.data(), b.size());
 		return *this;
 	}
 
-	auto &Update(StringView s) noexcept {
-		return Update(s.ToVoid());
-	}
-
-	template<typename T, size_t size>
-	auto &Update(const std::array<T, size> &a) noexcept {
-		return Update(ConstBuffer<T>(a.data(), a.size()).ToVoid());
+	auto &Update(std::string_view src) noexcept {
+		return Update(AsBytes(src));
 	}
 
 	std::array<std::byte, MD5_DIGEST_LENGTH> Final() noexcept {
@@ -146,7 +142,7 @@ AprMd5(const char *_pw, const char *_salt) noexcept
 	auto f = CryptoMD5().Update(pw).Update(salt).Update(pw).Final();
 
 	for (ssize_t i = pw.size(); i > 0; i -= MD5_DIGEST_LENGTH)
-		ctx.Update({f.data(), std::min<size_t>(i, MD5_DIGEST_LENGTH)});
+		ctx.Update(std::span{f.data(), std::min<size_t>(i, MD5_DIGEST_LENGTH)});
 
 	for (size_t i = pw.size(); i != 0; i >>= 1) {
 		if (i & 1)
