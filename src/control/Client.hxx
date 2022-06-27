@@ -35,9 +35,9 @@
 #include "beng-proxy/Control.hxx"
 #include "translation/Protocol.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "util/ConstBuffer.hxx"
-#include "util/StringView.hxx"
+#include "util/SpanCast.hxx"
 
+#include <span>
 #include <string>
 #include <string_view>
 
@@ -52,23 +52,24 @@ public:
 		socket.AutoBind();
 	}
 
-	void Send(BengProxy::ControlCommand cmd, ConstBuffer<void> payload=nullptr,
-		  ConstBuffer<FileDescriptor> fds=nullptr);
+	void Send(BengProxy::ControlCommand cmd,
+		  std::span<const std::byte> payload={},
+		  std::span<const FileDescriptor> fds={});
 
-	void Send(BengProxy::ControlCommand cmd, std::nullptr_t n,
-		  ConstBuffer<FileDescriptor> fds=nullptr) {
-		Send(cmd, ConstBuffer<void>{n}, fds);
+	void Send(BengProxy::ControlCommand cmd, std::nullptr_t,
+		  std::span<const FileDescriptor> fds={}) {
+		Send(cmd, std::span<const std::byte>{}, fds);
 	}
 
 	void Send(BengProxy::ControlCommand cmd, std::string_view payload,
-		  ConstBuffer<FileDescriptor> fds=nullptr) {
-		Send(cmd, StringView(payload).ToVoid(), fds);
+		  std::span<const FileDescriptor> fds={}) {
+		Send(cmd, AsBytes(payload), fds);
 	}
 
 	std::pair<BengProxy::ControlCommand, std::string> Receive();
 
 	static std::string MakeTcacheInvalidate(TranslationCommand cmd,
-						ConstBuffer<void> payload) noexcept;
+						std::span<const std::byte> payload) noexcept;
 
 	static std::string MakeTcacheInvalidate(TranslationCommand cmd,
 						const char *value) noexcept;

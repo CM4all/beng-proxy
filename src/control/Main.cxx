@@ -134,7 +134,7 @@ Verbose(const char *server, ConstBuffer<const char *> args)
 
 	BengControlClient client(server);
 	client.Send(BengProxy::ControlCommand::VERBOSE,
-		    {&log_level, sizeof(log_level)});
+		    std::as_bytes(std::span{&log_level, 1}));
 }
 
 static void

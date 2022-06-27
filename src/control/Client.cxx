@@ -57,11 +57,11 @@ PaddingSize(size_t size) noexcept
 
 void
 BengControlClient::Send(BengProxy::ControlCommand cmd,
-			ConstBuffer<void> payload,
-			ConstBuffer<FileDescriptor> fds)
+			std::span<const std::byte> payload,
+			std::span<const FileDescriptor> fds)
 {
 	static constexpr uint32_t magic = ToBE32(BengProxy::control_magic);
-	const BengProxy::ControlHeader header{ToBE16(payload.size), ToBE16(uint16_t(cmd))};
+	const BengProxy::ControlHeader header{ToBE16(payload.size()), ToBE16(uint16_t(cmd))};
 
 	static constexpr uint8_t padding[3] = {0, 0, 0};
 
@@ -69,7 +69,7 @@ BengControlClient::Send(BengProxy::ControlCommand cmd,
 		MakeIovecT(magic),
 		MakeIovecT(header),
 		MakeIovec(payload),
-		MakeIovec(std::span{padding, PaddingSize(payload.size)}),
+		MakeIovec(std::span{padding, PaddingSize(payload.size())}),
 	};
 
 	MessageHeader msg{std::span{v}};
@@ -119,17 +119,17 @@ BengControlClient::Receive()
 
 std::string
 BengControlClient::MakeTcacheInvalidate(TranslationCommand cmd,
-					ConstBuffer<void> payload) noexcept
+					std::span<const std::byte> payload) noexcept
 {
 	TranslationHeader h;
-	h.length = ToBE16(payload.size);
+	h.length = ToBE16(payload.size());
 	h.command = TranslationCommand(ToBE16(uint16_t(cmd)));
 
 	std::string result;
 	result.append((const char *)&h, sizeof(h));
 	if (!payload.empty()) {
-		result.append((const char *)payload.data, payload.size);
-		result.append(PaddingSize(payload.size), '\0');
+		result.append((const char *)payload.data(), payload.size());
+		result.append(PaddingSize(payload.size()), '\0');
 	}
 
 	return result;
@@ -139,6 +139,6 @@ std::string
 BengControlClient::MakeTcacheInvalidate(TranslationCommand cmd,
 					const char *value) noexcept
 {
-	return MakeTcacheInvalidate(cmd,
-				    ConstBuffer<void>(value, strlen(value) + 1));
+	const std::span value_span{value, strlen(value) + 1};
+	return MakeTcacheInvalidate(cmd, std::as_bytes(value_span));
 }

@@ -33,7 +33,6 @@
 #include "Local.hxx"
 #include "Server.hxx"
 #include "net/SocketConfig.hxx"
-#include "util/ConstBuffer.hxx"
 
 #include <sys/un.h>
 #include <stdio.h>
