@@ -37,6 +37,7 @@
 #include <openssl/md5.h>
 
 #include <algorithm>
+#include <concepts>
 
 #if defined(__GNUC__) && OPENSSL_VERSION_NUMBER >= 0x30000000L
 /* the MD5 API is deprecated in OpenSSL 3.0, but we want to keep using
@@ -95,9 +96,8 @@ ExtractSalt(const char *s) noexcept
 	return {s, std::min<size_t>(length, 8)};
 }
 
-template<typename T>
 static char *
-To64(char *s, T v, size_t n) noexcept
+To64(char *s, std::integral auto v, size_t n) noexcept
 {
 	static constexpr char itoa64[] =
 		"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
