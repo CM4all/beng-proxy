@@ -76,23 +76,21 @@ AllocatorPtr::Dup(SocketAddress src) const noexcept
 	return DupAddress(pool, src);
 }
 
-ConstBuffer<void>
-AllocatorPtr::LazyConcat(ConstBuffer<void> a,
-			 ConstBuffer<void> b) const noexcept
+std::span<const std::byte>
+AllocatorPtr::LazyConcat(std::span<const std::byte> a,
+			 std::span<const std::byte> b) const noexcept
 {
-	assert(!a.IsNull());
-	assert(!b.IsNull());
-
-	if (a.size == 0)
+	if (a.empty())
 		/* no need to allocate a new buffer */
 		return b;
 
-	if (b.size == 0)
+	if (b.empty())
 		/* no need to allocate a new buffer */
 		return a;
 
-	size_t size = a.size + b.size;
-	void *result = NewArray<std::byte>(size);
-	mempcpy(mempcpy(result, a.data, a.size), b.data, b.size);
+	std::size_t size = a.size() + b.size();
+	std::byte *result = NewArray<std::byte>(size);
+	std::copy(b.begin(), b.end(),
+		  std::copy(a.begin(), a.end(), result));
 	return { result, size };
 }

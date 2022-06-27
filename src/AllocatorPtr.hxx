@@ -33,7 +33,6 @@
 #pragma once
 
 #include "pool/pool.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/StringView.hxx"
 
 #include <algorithm>
@@ -86,8 +85,8 @@ public:
 	 * buffers.  If one is empty, this may return a pointer to the other
 	 * buffer.
 	 */
-	ConstBuffer<void> LazyConcat(ConstBuffer<void> a,
-				     ConstBuffer<void> b) const noexcept;
+	std::span<const std::byte> LazyConcat(std::span<const std::byte> a,
+					      std::span<const std::byte> b) const noexcept;
 
 	template<typename T, typename... Args>
 	T *New(Args&&... args) const noexcept {
@@ -118,10 +117,10 @@ public:
 
 	/**
 	 * Copy all items of a std::initializer_list to a newly
-	 * allocated array wrapped in a #ConstBuffer.
+	 * allocated array wrapped in a std::span.
 	 */
 	template<typename T>
-	ConstBuffer<T> Dup(std::initializer_list<T> src) const noexcept {
+	std::span<const T> Dup(std::initializer_list<T> src) const noexcept {
 		static_assert(std::is_trivially_destructible_v<T>);
 
 		auto *dest = NewArray<T>(src.size());
@@ -134,7 +133,7 @@ public:
 	 * Construct an array with items from a std::initializer_list.
 	 */
 	template<typename T, typename U>
-	ConstBuffer<T> ConstructArray(std::initializer_list<U> src) const noexcept {
+	std::span<const T> ConstructArray(std::initializer_list<U> src) const noexcept {
 		static_assert(std::is_trivially_destructible_v<T>);
 
 		auto *dest = NewArray<T>(src.size());
