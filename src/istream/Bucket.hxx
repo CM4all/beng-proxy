@@ -32,7 +32,6 @@
 
 #pragma once
 
-#include "util/ConstBuffer.hxx"
 #include "util/StaticVector.hxx"
 
 #include <span>
@@ -47,7 +46,7 @@ private:
 	Type type;
 
 	union {
-		ConstBuffer<void> buffer;
+		std::span<const std::byte> buffer;
 	};
 
 public:
@@ -236,14 +235,14 @@ public:
 				break;
 			}
 
-			auto buffer = ConstBuffer<uint8_t>::FromVoid(bucket.GetBuffer());
-			if (buffer.size > skip) {
-				buffer.skip_front(skip);
+			auto buffer = bucket.GetBuffer();
+			if (buffer.size() > skip) {
+				buffer = buffer.subspan(skip);
 				skip = 0;
-				Push(buffer.ToVoid());
-				total_size += buffer.size;
+				Push(buffer);
+				total_size += buffer.size();
 			} else
-				skip -= buffer.size;
+				skip -= buffer.size();
 		}
 
 		return total_size;
