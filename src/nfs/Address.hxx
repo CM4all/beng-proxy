@@ -32,8 +32,8 @@
 
 #pragma once
 
-#include "util/ConstBuffer.hxx"
-
+#include <cstddef>
+#include <span>
 #include <string_view>
 
 class AllocatorPtr;
@@ -51,7 +51,7 @@ struct NfsAddress {
 
 	const char *content_type;
 
-	ConstBuffer<void> content_type_lookup = nullptr;
+	std::span<const std::byte> content_type_lookup{};
 
 	/**
 	 * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
