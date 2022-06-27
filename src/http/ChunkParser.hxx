@@ -32,15 +32,15 @@
 
 #pragma once
 
-#include "util/ConstBuffer.hxx"
-
 #include "util/Compiler.h"
+#include "util/SpanCast.hxx"
 
+#include <cassert>
 #include <algorithm>
+#include <cstddef>
 #include <stdexcept>
-
-#include <assert.h>
-#include <stddef.h>
+#include <span>
+#include <string_view>
 
 /**
  * Incremental parser for "Transfer-Encoding:chunked".
@@ -72,7 +72,7 @@ public:
 	 * @return a pointer to the data chunk, an empty chunk pointing to
 	 * the end of input if there is no data chunk
 	 */
-	ConstBuffer<void> Parse(ConstBuffer<void> input);
+	std::span<const std::byte> Parse(std::span<const std::byte> input);
 
 	bool Consume(size_t nbytes) {
 		assert(nbytes > 0);
@@ -94,12 +94,10 @@ public:
 	}
 };
 
-ConstBuffer<void>
-HttpChunkParser::Parse(ConstBuffer<void> _input)
+std::span<const std::byte>
+HttpChunkParser::Parse(std::span<const std::byte> _input)
 {
-	assert(!_input.IsNull());
-
-	const auto input = ConstBuffer<char>::FromVoid(_input);
+	const auto input = ToStringView(_input);
 	auto p = input.begin();
 	const auto end = input.end();
 	size_t digit;
@@ -147,7 +145,7 @@ HttpChunkParser::Parse(ConstBuffer<void> _input)
 		case State::DATA:
 			assert(remaining_chunk > 0);
 
-			return {p, std::min(size_t(end - p), remaining_chunk)};
+			return AsBytes({p, std::min(size_t(end - p), remaining_chunk)});
 
 		case State::AFTER_DATA:
 			if (ch == '\n') {
@@ -163,7 +161,7 @@ HttpChunkParser::Parse(ConstBuffer<void> _input)
 			++p;
 			if (ch == '\n') {
 				state = State::END;
-				return {p, 0};
+				return AsBytes({p, 0});
 			} else if (ch != '\r') {
 				state = State::TRAILER_DATA;
 			}
@@ -181,5 +179,5 @@ HttpChunkParser::Parse(ConstBuffer<void> _input)
 		}
 	}
 
-	return {p, 0};
+	return AsBytes({p, 0});
 }

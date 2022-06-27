@@ -199,12 +199,12 @@ DechunkIstream::CalculateRemainingDataSize(const std::byte *src,
 	HttpChunkParser p(parser);
 
 	while (src != src_end) {
-		const ConstBuffer<std::byte> src_remaining(src, src_end - src);
+		const std::span<const std::byte> src_remaining(src, src_end - src);
 
-		ConstBuffer<std::byte> data;
+		std::span<const std::byte> data;
 
 		try {
-			data = ConstBuffer<std::byte>::FromVoid(p.Parse(src_remaining.ToVoid()));
+			data = p.Parse(src_remaining);
 		} catch (...) {
 			Abort(std::current_exception());
 			return false;
@@ -219,9 +219,9 @@ DechunkIstream::CalculateRemainingDataSize(const std::byte *src,
 			break;
 		}
 
-		seen_data += data.size;
-		p.Consume(data.size);
-		src = data.end();
+		seen_data += data.size();
+		p.Consume(data.size());
+		src = data.data() + data.size();
 	}
 
 	return true;
@@ -248,22 +248,22 @@ DechunkIstream::Feed(const void *data0, size_t length) noexcept
 		src += pending_verbatim;
 
 	while (src != src_end) {
-		const ConstBuffer<std::byte> src_remaining(src, src_end - src);
+		const std::span<const std::byte> src_remaining(src, src_end - src);
 
-		ConstBuffer<std::byte> data;
+		std::span<const std::byte> data;
 
 		try {
-			data = ConstBuffer<std::byte>::FromVoid(parser.Parse(src_remaining.ToVoid()));
+			data = parser.Parse(src_remaining);
 		} catch (...) {
 			Abort(std::current_exception());
 			return 0;
 		}
 
-		assert(data.data >= src);
-		assert(data.data <= src_end);
-		assert(data.end() <= src_end);
+		assert(data.data() >= src);
+		assert(data.data() <= src_end);
+		assert(data.data() + data.size() <= src_end);
 
-		src = data.data;
+		src = data.data();
 
 		if (!data.empty()) {
 			assert(!parser.HasEnded());
@@ -273,12 +273,12 @@ DechunkIstream::Feed(const void *data0, size_t length) noexcept
 			if (verbatim) {
 				/* postpone this data chunk; try to send it all later in
 				   one big block */
-				nbytes = data.size;
+				nbytes = data.size();
 			} else {
 				had_output = true;
-				seen_data += data.size;
-				nbytes = InvokeData(src, data.size);
-				assert(nbytes <= data.size);
+				seen_data += data.size();
+				nbytes = InvokeData(src, data.size());
+				assert(nbytes <= data.size());
 
 				if (destructed)
 					return 0;
