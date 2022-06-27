@@ -107,7 +107,7 @@ Exec(ConstBuffer<const char *> _args)
 	assert(_args.size < args.size());
 	*std::copy_n(_args.data, _args.size, args.begin()) = nullptr;
 
-	execv(args.front(), const_cast<char **>(&args.front()));
+	execv(args.front(), const_cast<char **>(args.data()));
 	fprintf(stderr, "failed to execute %s: %s\n",
 		args.front(), strerror(errno));
 	_exit(EXIT_FAILURE);
