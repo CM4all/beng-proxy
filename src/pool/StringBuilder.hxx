@@ -34,14 +34,15 @@
 
 #include "AllocatorPtr.hxx"
 #include "util/StaticVector.hxx"
-#include "util/StringView.hxx"
+
+#include <string_view>
 
 template<size_t MAX>
 class PoolStringBuilder {
-	StaticVector<StringView, MAX> items;
+	StaticVector<std::string_view, MAX> items;
 
 public:
-	void push_back(StringView s) noexcept {
+	void push_back(std::string_view s) noexcept {
 		items.push_back(s);
 	}
 

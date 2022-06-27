@@ -186,10 +186,10 @@ private:
 		return sv.size();
 	}
 
-	static constexpr size_t ConcatLength(std::span<const StringView> s) noexcept {
+	static constexpr size_t ConcatLength(std::span<const std::string_view> s) noexcept {
 		size_t length = 0;
 		for (const auto &i : s)
-			length += i.size;
+			length += i.size();
 		return length;
 	}
 
@@ -206,7 +206,7 @@ private:
 		return (char *)mempcpy(p, sv.data(), sv.size());
 	}
 
-	static char *ConcatCopy(char *p, std::span<const StringView> s) noexcept {
+	static char *ConcatCopy(char *p, std::span<const std::string_view> s) noexcept {
 		for (const auto &i : s)
 			p = ConcatCopy(p, i);
 		return p;
