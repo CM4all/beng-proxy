@@ -38,6 +38,7 @@
 #include <cstdarg>
 
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 
 GrowingBuffer::Buffer &
