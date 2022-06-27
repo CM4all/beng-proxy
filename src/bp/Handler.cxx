@@ -58,6 +58,7 @@
 #include "translation/Service.hxx"
 #include "translation/Protocol.hxx"
 #include "translation/Layout.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StringCompare.hxx"
 #include "HttpMessageResponse.hxx"
 #include "ResourceLoader.hxx"
@@ -250,9 +251,9 @@ Request::CheckRedirectBounceStatus(const TranslateResponse &response) noexcept
 	if (response.tiny_image) {
 		headers.Write("content-type", "image/gif");
 
-		static constexpr char tiny_gif[] =
-			"GIF89a\x01\x00\x01\x00\x80\xff\x00\xff\xff\xff\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00;";
-		body = istream_memory_new(pool, tiny_gif, sizeof(tiny_gif) - 1);
+		static constexpr std::string_view tiny_gif =
+			"GIF89a\x01\x00\x01\x00\x80\xff\x00\xff\xff\xff\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00;"sv;
+		body = istream_memory_new(pool, AsBytes(tiny_gif));
 	}
 
 	const char *message = response.message;

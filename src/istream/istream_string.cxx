@@ -33,11 +33,10 @@
 #include "istream_string.hxx"
 #include "istream_memory.hxx"
 #include "UnusedPtr.hxx"
-
-#include <string.h>
+#include "util/SpanCast.hxx"
 
 UnusedIstreamPtr
-istream_string_new(struct pool &pool, const char *s) noexcept
+istream_string_new(struct pool &pool, std::string_view s) noexcept
 {
-	return istream_memory_new(pool, s, strlen(s));
+	return istream_memory_new(pool, AsBytes(s));
 }

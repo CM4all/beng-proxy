@@ -148,10 +148,13 @@ ExpansibleBuffer::ReadStringView() const noexcept
 	return { (const char *)buffer, size };
 }
 
-void *
+std::span<std::byte>
 ExpansibleBuffer::Dup(struct pool &_pool) const noexcept
 {
-	return p_memdup(&_pool, buffer, size);
+	return {
+		(std::byte *)p_memdup(&_pool, buffer, size),
+		size,
+	};
 }
 
 char *

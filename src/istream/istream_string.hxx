@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include <string_view>
+
 struct pool;
 class UnusedIstreamPtr;
 
@@ -39,4 +41,4 @@ class UnusedIstreamPtr;
  * istream implementation which reads from a string.
  */
 UnusedIstreamPtr
-istream_string_new(struct pool &pool, const char *s) noexcept;
+istream_string_new(struct pool &pool, std::string_view s) noexcept;

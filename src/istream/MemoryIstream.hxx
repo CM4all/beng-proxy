@@ -33,28 +33,20 @@
 #pragma once
 
 #include "istream.hxx"
-#include "util/ConstBuffer.hxx"
 
-#include <stdint.h>
+#include <span>
 
 class MemoryIstream : public Istream {
-	ConstBuffer<uint8_t> data;
+	std::span<const std::byte> data;
 
 public:
-	MemoryIstream(struct pool &p, const void *_data, size_t length) noexcept
-		:Istream(p),
-		 data((const uint8_t *)_data, length) {}
-
-	MemoryIstream(struct pool &p, ConstBuffer<uint8_t> _data) noexcept
+	MemoryIstream(struct pool &p, std::span<const std::byte> _data) noexcept
 		:Istream(p), data(_data) {}
-
-	MemoryIstream(struct pool &p, ConstBuffer<void> _data) noexcept
-		:MemoryIstream(p, ConstBuffer<uint8_t>::FromVoid(_data)) {}
 
 	/* virtual methods from class Istream */
 
 	off_t _GetAvailable([[maybe_unused]] bool partial) noexcept override {
-		return data.size;
+		return data.size();
 	}
 
 	off_t _Skip(off_t length) noexcept override;

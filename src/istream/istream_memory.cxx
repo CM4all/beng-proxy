@@ -35,7 +35,7 @@
 #include "New.hxx"
 
 UnusedIstreamPtr
-istream_memory_new(struct pool &pool, const void *data, size_t length) noexcept
+istream_memory_new(struct pool &pool, std::span<const std::byte> src) noexcept
 {
-	return NewIstreamPtr<MemoryIstream>(pool, data, length);
+	return NewIstreamPtr<MemoryIstream>(pool, src);
 }

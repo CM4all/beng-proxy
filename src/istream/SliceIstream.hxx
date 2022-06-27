@@ -46,7 +46,8 @@ class SliceIstream final : public MemoryIstream {
 public:
 	SliceIstream(struct pool &p, SliceAllocation &&_allocation,
 		     size_t _size) noexcept
-		:MemoryIstream(p, {_allocation.data, _size}),
+		:MemoryIstream(p,
+			       {(const std::byte *)_allocation.data, _size}),
 		 allocation(std::move(_allocation)) {}
 
 	SliceIstream(struct pool &p, SliceBuffer &&src) noexcept;

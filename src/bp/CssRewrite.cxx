@@ -39,7 +39,7 @@
 #include "pool/SharedPtr.hxx"
 #include "istream/New.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "istream/istream_memory.hxx"
+#include "istream/istream_string.hxx"
 #include "istream/ReplaceIstream.hxx"
 #include "util/StringView.hxx"
 
@@ -105,7 +105,7 @@ css_rewrite_block_uris(struct pool &pool,
 		return nullptr;
 
 	auto input =
-		istream_memory_new(pool, p_strdup(pool, block), block.size);
+		istream_string_new(pool, {p_strdup(pool, block), block.size});
 	auto replace = NewIstream<ReplaceIstream>(pool, ctx->event_loop, std::move(input));
 
 	bool modified = false;

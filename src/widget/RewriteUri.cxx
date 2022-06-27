@@ -49,6 +49,7 @@
 #include "istream/istream_string.hxx"
 #include "strmap.hxx"
 #include "bp/session/Lease.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
@@ -374,7 +375,7 @@ UriRewriter::ResolverCallback() noexcept
 
 	UnusedIstreamPtr istream;
 	if (!value.empty()) {
-		istream = istream_memory_new(pool, value.data, value.size);
+		istream = istream_memory_new(pool, AsBytes(value));
 
 		if (escape_flag && escape != nullptr)
 			istream = istream_escape_new(pool, std::move(istream), *escape);

@@ -629,9 +629,11 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 
 	if (!fragment.empty()) {
 		/* escape and append the fragment to the new URI */
-		auto s = istream_memory_new(GetPool(),
-					    p_strdup(GetPool(), fragment),
-					    fragment.size);
+		auto s = istream_string_new(GetPool(),
+					    {
+						    p_strdup(GetPool(), fragment),
+						    fragment.size,
+					    });
 		s = istream_html_escape_new(GetPool(), std::move(s));
 
 		istream = NewConcatIstream(GetPool(), std::move(istream), std::move(s));
@@ -767,9 +769,7 @@ XmlProcessor::HandleClassAttribute(const XmlParserAttribute &attr) noexcept
 	if (!buffer.Write(p, end - p))
 		return;
 
-	const size_t length = buffer.GetSize();
-	void *q = buffer.Dup(GetPool());
-	ReplaceAttributeValue(attr, istream_memory_new(GetPool(), q, length));
+	ReplaceAttributeValue(attr, istream_memory_new(GetPool(), buffer.Dup(GetPool())));
 }
 
 void

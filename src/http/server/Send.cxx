@@ -43,6 +43,7 @@
 #include "http/Date.hxx"
 #include "event/Loop.hxx"
 #include "util/DecimalFormat.h"
+#include "util/SpanCast.hxx"
 #include "product.h"
 
 #include <string.h>
@@ -125,11 +126,14 @@ HttpServerConnection::SubmitResponse(http_status_t status,
 	auto &request_pool = request.request->pool;
 
 	response.status = status;
+
+	const std::string_view status_line{
+		response.status_buffer,
+		format_status_line(response.status_buffer, status),
+	};
+
 	auto status_stream
-		= istream_memory_new(request_pool,
-				     response.status_buffer,
-				     format_status_line(response.status_buffer,
-							status));
+		= istream_memory_new(request_pool, AsBytes(status_line));
 
 	/* how will we transfer the body?  determine length and
 	   transfer-encoding */

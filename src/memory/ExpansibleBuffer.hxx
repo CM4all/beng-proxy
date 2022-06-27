@@ -32,7 +32,8 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <cstddef>
+#include <span>
 
 struct pool;
 template<typename T> struct ConstBuffer;
@@ -101,7 +102,7 @@ public:
 	[[gnu::pure]]
 	StringView ReadStringView() const noexcept;
 
-	void *Dup(struct pool &_pool) const noexcept;
+	std::span<std::byte> Dup(struct pool &_pool) const noexcept;
 
 	char *StringDup(struct pool &_pool) const noexcept;
 

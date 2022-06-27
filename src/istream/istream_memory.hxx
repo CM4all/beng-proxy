@@ -32,7 +32,8 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <cstddef>
+#include <span>
 
 struct pool;
 class UnusedIstreamPtr;
@@ -41,5 +42,4 @@ class UnusedIstreamPtr;
  * istream implementation which reads from a fixed memory buffer.
  */
 UnusedIstreamPtr
-istream_memory_new(struct pool &pool,
-		   const void *data, size_t length) noexcept;
+istream_memory_new(struct pool &pool, std::span<const std::byte> src) noexcept;

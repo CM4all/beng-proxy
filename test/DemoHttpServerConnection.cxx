@@ -95,7 +95,7 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 {
 	switch (mode) {
 		http_status_t status;
-		static char data[0x100];
+		static constexpr std::byte data[0x100]{};
 
 	case Mode::MODE_NULL:
 		if (request.body)
@@ -145,7 +145,7 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 
 		request.SendResponse(HTTP_STATUS_OK, {},
 				     istream_memory_new(request.pool,
-							data, sizeof(data)));
+							data));
 		break;
 
 	case Mode::HUGE_:
@@ -190,7 +190,7 @@ DemoHttpServerConnection::HandleHttpRequest(IncomingHttpRequest &request,
 			first = false;
 			request.SendResponse(HTTP_STATUS_OK, {},
 					     istream_memory_new(request.pool,
-								data, sizeof(data)));
+								data));
 		} else {
 			http_server_connection_close(connection);
 			HttpConnectionClosed();
