@@ -72,9 +72,9 @@ public:
 		return Update(ConstBuffer<T>(a.data(), a.size()).ToVoid());
 	}
 
-	std::array<uint8_t, MD5_DIGEST_LENGTH> Final() noexcept {
-		std::array<uint8_t, MD5_DIGEST_LENGTH> md;
-		MD5_Final(md.data(), &ctx);
+	std::array<std::byte, MD5_DIGEST_LENGTH> Final() noexcept {
+		std::array<std::byte, MD5_DIGEST_LENGTH> md;
+		MD5_Final((unsigned char *)md.data(), &ctx);
 		return md;
 	}
 };
@@ -108,6 +108,22 @@ To64(char *s, std::integral auto v, size_t n) noexcept
 	}
 
 	return s;
+}
+
+static char *
+To64(char *s, std::byte v) noexcept
+{
+	return To64(s, static_cast<uint_fast8_t>(v), 2);
+}
+
+static char *
+To64(char *s, std::byte a, std::byte b, std::byte c) noexcept
+{
+	return To64(s,
+		    (static_cast<uint_fast32_t>(a) << 16) |
+		    (static_cast<uint_fast32_t>(b) << 8) |
+		    static_cast<uint_fast32_t>(c),
+		    4);
 }
 
 bool
@@ -168,12 +184,12 @@ AprMd5(const char *_pw, const char *_salt) noexcept
 	p = std::copy(salt.begin(), salt.end(), p);
 	*p++ = '$';
 
-	p = To64(p, (f[0] << 16) | (f[6] << 8) | f[12], 4);
-	p = To64(p, (f[1] << 16) | (f[7] << 8) | f[13], 4);
-	p = To64(p, (f[2] << 16) | (f[8] << 8) | f[14], 4);
-	p = To64(p, (f[3] << 16) | (f[9] << 8) | f[15], 4);
-	p = To64(p, (f[4] << 16) | (f[10] << 8) | f[ 5], 4);
-	p = To64(p, f[11], 2);
+	p = To64(p, f[0], f[6], f[12]);
+	p = To64(p, f[1], f[7], f[13]);
+	p = To64(p, f[2], f[8], f[14]);
+	p = To64(p, f[3], f[9], f[15]);
+	p = To64(p, f[4], f[10], f[5]);
+	p = To64(p, f[11]);
 	*p = '\0';
 
 	return result;
