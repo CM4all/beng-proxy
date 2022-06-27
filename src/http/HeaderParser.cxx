@@ -53,7 +53,7 @@ IsValidHeaderValueChar(char ch) noexcept
 
 gcc_pure
 static bool
-IsValidHeaderValue(StringView value) noexcept
+IsValidHeaderValue(std::string_view value) noexcept
 {
 	for (char ch : value)
 		if (!IsValidHeaderValueChar(ch))
@@ -64,11 +64,9 @@ IsValidHeaderValue(StringView value) noexcept
 
 bool
 header_parse_line(AllocatorPtr alloc, StringMap &headers,
-		  StringView line) noexcept
+		  std::string_view line) noexcept
 {
-	const auto pair = line.Split(':');
-	const StringView name = pair.first;
-	StringView value = pair.second;
+	auto [name, value] = StringView{line}.Split(':');
 
 	if (gcc_unlikely(value.IsNull() ||
 			 !http_header_name_valid(name) ||

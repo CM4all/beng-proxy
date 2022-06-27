@@ -36,9 +36,10 @@
 
 #pragma once
 
+#include "util/StringView.hxx"
+
 class AllocatorPtr;
 class StringMap;
-struct StringView;
 class GrowingBuffer;
 
 /**
@@ -46,7 +47,7 @@ class GrowingBuffer;
  */
 bool
 header_parse_line(AllocatorPtr alloc, StringMap &headers,
-		  StringView line) noexcept;
+		  std::string_view line) noexcept;
 
 void
 header_parse_buffer(AllocatorPtr alloc, StringMap &headers,
