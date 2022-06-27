@@ -32,7 +32,6 @@
 
 #include "pool.hxx"
 #include "util/CharUtil.hxx"
-#include "util/StringView.hxx"
 
 #include <algorithm>
 
@@ -79,18 +78,18 @@ p_strndup(struct pool *pool, const char *src, size_t length
 }
 
 char *
-p_strdup(struct pool &pool, StringView src TRACE_ARGS_DECL) noexcept
+p_strdup(struct pool &pool, std::string_view src TRACE_ARGS_DECL) noexcept
 {
-	char *dest = (char *)p_malloc_fwd(&pool, src.size + 1);
-	*Copy(dest, src.data, src.size) = 0;
+	char *dest = (char *)p_malloc_fwd(&pool, src.size() + 1);
+	*Copy(dest, src.data(), src.size()) = 0;
 	return dest;
 }
 
 char *
-p_strdup_lower(struct pool &pool, StringView src TRACE_ARGS_DECL) noexcept
+p_strdup_lower(struct pool &pool, std::string_view src TRACE_ARGS_DECL) noexcept
 {
-	char *dest = (char *)p_malloc_fwd(&pool, src.size + 1);
-	*CopyLower(dest, src.data, src.size) = 0;
+	char *dest = (char *)p_malloc_fwd(&pool, src.size() + 1);
+	*CopyLower(dest, src.data(), src.size()) = 0;
 	return dest;
 }
 

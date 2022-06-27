@@ -48,6 +48,7 @@
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
 
+struct StringView;
 struct HttpServerRequest;
 class HttpHeaders;
 

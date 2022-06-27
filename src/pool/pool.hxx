@@ -40,19 +40,17 @@
 #include "trace.h"
 #include "util/Compiler.h"
 
+#include <cstddef>
+#include <new>
+#include <string_view>
 #include <type_traits>
 #include <utility>
-#include <new>
-
-#include <stddef.h>
 
 struct pool;
 class SlicePool;
 struct AllocatorStats;
 class PoolPtr;
 class PoolLeakDetector;
-
-struct StringView;
 
 void
 pool_recycler_clear() noexcept;
@@ -352,9 +350,9 @@ public:
 
 [[gnu::malloc]] gcc_returns_nonnull
 char *
-p_strdup(struct pool &pool, StringView src TRACE_ARGS_DEFAULT) noexcept;
+p_strdup(struct pool &pool, std::string_view src TRACE_ARGS_DEFAULT) noexcept;
 
 [[gnu::malloc]] gcc_returns_nonnull
 char *
-p_strdup_lower(struct pool &pool, StringView src
+p_strdup_lower(struct pool &pool, std::string_view src
 	       TRACE_ARGS_DEFAULT) noexcept;
