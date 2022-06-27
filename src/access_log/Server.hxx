@@ -35,9 +35,9 @@
 #include "net/log/Datagram.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/StaticSocketAddress.hxx"
-#include "util/ConstBuffer.hxx"
 
 #include <array>
+#include <span>
 
 /**
  * An extension of #Net::Log::Datagram which contains information on
@@ -49,7 +49,7 @@ struct ReceivedAccessLogDatagram : Net::Log::Datagram {
 	/**
 	 * The raw datagram payload.
 	 */
-	ConstBuffer<void> raw;
+	std::span<const std::byte> raw;
 };
 
 /**
