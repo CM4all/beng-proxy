@@ -339,7 +339,7 @@ UnescapeApplyPathInfo(AllocatorPtr alloc, const char *base_path_info,
 
 const CgiAddress *
 CgiAddress::Apply(AllocatorPtr alloc,
-		  StringView relative) const noexcept
+		  std::string_view relative) const noexcept
 {
 	if (relative.empty())
 		return this;

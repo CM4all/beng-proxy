@@ -425,7 +425,8 @@ ResourceAddress::CacheLoad(AllocatorPtr alloc, const ResourceAddress &src,
 }
 
 ResourceAddress
-ResourceAddress::Apply(AllocatorPtr alloc, StringView relative) const noexcept
+ResourceAddress::Apply(AllocatorPtr alloc,
+		       std::string_view relative) const noexcept
 {
 	const HttpAddress *uwa;
 	const CgiAddress *cgi;

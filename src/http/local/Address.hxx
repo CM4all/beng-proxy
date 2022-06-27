@@ -175,7 +175,7 @@ struct LhttpAddress {
 	 * on error
 	 */
 	const LhttpAddress *Apply(AllocatorPtr alloc,
-				  StringView relative) const noexcept;
+				  std::string_view relative) const noexcept;
 
 	[[gnu::pure]]
 	StringView RelativeTo(const LhttpAddress &base) const noexcept;

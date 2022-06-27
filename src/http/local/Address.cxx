@@ -191,7 +191,7 @@ ApplyUri(AllocatorPtr alloc, const char *base_uri,
 }
 
 const LhttpAddress *
-LhttpAddress::Apply(AllocatorPtr alloc, StringView relative) const noexcept
+LhttpAddress::Apply(AllocatorPtr alloc, std::string_view relative) const noexcept
 {
 	if (relative.empty())
 		return this;

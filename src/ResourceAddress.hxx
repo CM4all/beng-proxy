@@ -344,7 +344,8 @@ public:
 		       bool unsafe_base, bool expandable);
 
 	[[gnu::pure]]
-	ResourceAddress Apply(AllocatorPtr alloc, StringView relative) const noexcept;
+	ResourceAddress Apply(AllocatorPtr alloc,
+			      std::string_view relative) const noexcept;
 
 	[[gnu::pure]]
 	StringView RelativeTo(const ResourceAddress &base) const noexcept;

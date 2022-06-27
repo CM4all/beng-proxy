@@ -194,7 +194,7 @@ struct CgiAddress {
 	 * nullptr on error
 	 */
 	const CgiAddress *Apply(AllocatorPtr alloc,
-				StringView relative) const noexcept;
+				std::string_view relative) const noexcept;
 
 	/**
 	 * Check if this instance is relative to the base, and return the

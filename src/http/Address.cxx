@@ -242,7 +242,8 @@ HttpAddress::LoadBase(AllocatorPtr alloc,
 }
 
 const HttpAddress *
-HttpAddress::Apply(AllocatorPtr alloc, StringView relative) const
+HttpAddress::Apply(AllocatorPtr alloc,
+		   std::string_view relative) const noexcept
 {
 	if (relative.empty())
 		return this;
