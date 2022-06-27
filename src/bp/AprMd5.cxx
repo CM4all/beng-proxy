@@ -44,6 +44,8 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
+using std::string_view_literals::operator""sv;
+
 /**
  * A C++ wrapper for libcrypto's MD5_CTX.
  */
@@ -76,10 +78,10 @@ public:
 	}
 };
 
-static constexpr char apr1_id[] = "$apr1$";
+static constexpr auto apr1_id = "$apr1$"sv;
 
 [[gnu::pure]]
-static StringView
+static std::string_view
 ExtractSalt(const char *s) noexcept
 {
 	if (auto after_apr1_id = StringAfterPrefix(s, apr1_id))
@@ -117,7 +119,7 @@ IsAprMd5(const char *crypted_password) noexcept
 StringBuffer<120>
 AprMd5(const char *_pw, const char *_salt) noexcept
 {
-	const StringView pw(_pw);
+	const std::string_view pw{_pw};
 	const auto salt = ExtractSalt(_salt);
 
 	CryptoMD5 ctx;
@@ -127,14 +129,14 @@ AprMd5(const char *_pw, const char *_salt) noexcept
 
 	auto f = CryptoMD5().Update(pw).Update(salt).Update(pw).Final();
 
-	for (ssize_t i = pw.size; i > 0; i -= MD5_DIGEST_LENGTH)
+	for (ssize_t i = pw.size(); i > 0; i -= MD5_DIGEST_LENGTH)
 		ctx.Update({f.data(), std::min<size_t>(i, MD5_DIGEST_LENGTH)});
 
-	for (size_t i = pw.size; i != 0; i >>= 1) {
+	for (size_t i = pw.size(); i != 0; i >>= 1) {
 		if (i & 1)
-			ctx.Update(StringView{"\0", 1});
+			ctx.Update("\0"sv);
 		else
-			ctx.Update(StringView{pw.data, 1});
+			ctx.Update(pw.substr(0, 1));
 	}
 
 	f = ctx.Final();
@@ -162,8 +164,8 @@ AprMd5(const char *_pw, const char *_salt) noexcept
 
 	StringBuffer<120> result;
 	char *p = result.data();
-	p = stpcpy(p, apr1_id);
-	p = (char *)mempcpy(p, salt.data, salt.size);
+	p = std::copy(apr1_id.begin(), apr1_id.end(), p);
+	p = std::copy(salt.begin(), salt.end(), p);
 	*p++ = '$';
 
 	p = To64(p, (f[0] << 16) | (f[6] << 8) | f[12], 4);
