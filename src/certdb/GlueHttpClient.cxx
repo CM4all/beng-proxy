@@ -35,7 +35,7 @@
 #include "lib/curl/Request.hxx"
 #include "lib/curl/Handler.hxx"
 #include "lib/curl/Slist.hxx"
-#include "util/ConstBuffer.hxx"
+#include "util/SpanCast.hxx"
 
 #include <exception>
 
@@ -80,8 +80,8 @@ public:
 		headers = std::move(_headers);
 	}
 
-	void OnData(ConstBuffer<void> data) override {
-		body_string.append((const char *)data.data, data.size);
+	void OnData(std::span<const std::byte> data) override {
+		body_string.append(ToStringView(data));
 	}
 
 	void OnEnd() override {
