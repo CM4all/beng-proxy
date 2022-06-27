@@ -41,7 +41,6 @@
 #include "pool/Ptr.hxx"
 #include "util/AllocatedArray.hxx"
 #include "util/AllocatedString.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/Expiry.hxx"
 
 #include <boost/intrusive/set.hpp>
