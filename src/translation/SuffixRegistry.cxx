@@ -43,7 +43,7 @@ struct SuffixRegistryLookup final : TranslateHandler {
 
 	SuffixRegistryHandler &handler;
 
-	SuffixRegistryLookup(ConstBuffer<void> payload,
+	SuffixRegistryLookup(std::span<const std::byte> payload,
 			     const char *suffix,
 			     SuffixRegistryHandler &_handler) noexcept
 		:handler(_handler) {
@@ -74,7 +74,7 @@ SuffixRegistryLookup::OnTranslateError(std::exception_ptr ep) noexcept
 void
 suffix_registry_lookup(AllocatorPtr alloc,
 		       TranslationService &service,
-		       ConstBuffer<void> payload,
+		       std::span<const std::byte> payload,
 		       const char *suffix,
 		       const StopwatchPtr &parent_stopwatch,
 		       SuffixRegistryHandler &handler,

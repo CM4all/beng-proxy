@@ -34,13 +34,14 @@
 
 #include "util/IntrusiveForwardList.hxx"
 
+#include <cstddef>
 #include <exception>
+#include <span>
 
 class AllocatorPtr;
 class TranslationService;
 class StopwatchPtr;
 class CancellablePointer;
-template<typename T> struct ConstBuffer;
 struct Transformation;
 
 class SuffixRegistryHandler {
@@ -61,7 +62,7 @@ public:
 void
 suffix_registry_lookup(AllocatorPtr alloc,
 		       TranslationService &service,
-		       ConstBuffer<void> payload,
+		       std::span<const std::byte> payload,
 		       const char *suffix,
 		       const StopwatchPtr &parent_stopwatch,
 		       SuffixRegistryHandler &handler,
