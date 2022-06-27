@@ -42,7 +42,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "system/Error.hxx"
 #include "util/Cancellable.hxx"
-#include "util/StringView.hxx"
+#include "util/SpanCast.hxx"
 #include "lease.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -220,9 +220,9 @@ DelegateClient::TryRead()
 
 static void
 SendDelegatePacket(SocketDescriptor s, DelegateRequestCommand cmd,
-		   ConstBuffer<void> payload)
+		   std::span<const std::byte> payload)
 {
-	const DelegateRequestHeader header{uint16_t(payload.size), cmd};
+	const DelegateRequestHeader header{uint16_t(payload.size()), cmd};
 
 	const struct iovec v[] = {
 		MakeIovecT(header),
@@ -231,7 +231,7 @@ SendDelegatePacket(SocketDescriptor s, DelegateRequestCommand cmd,
 
 	auto nbytes = SendMessage(s, MessageHeader{v},
 				  MSG_DONTWAIT);
-	if (nbytes != sizeof(header) + payload.size)
+	if (nbytes != sizeof(header) + payload.size())
 		throw std::runtime_error("Short send to delegate");
 }
 
@@ -243,7 +243,7 @@ delegate_open(EventLoop &event_loop, SocketDescriptor s, Lease &lease,
 {
 	try {
 		SendDelegatePacket(s, DelegateRequestCommand::OPEN,
-				   StringView(path).ToVoid());
+				   AsBytes(path));
 	} catch (...) {
 		lease.ReleaseLease(false);
 		handler.OnDelegateError(std::current_exception());
