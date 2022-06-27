@@ -84,14 +84,14 @@ static constexpr struct {
 };
 
 static std::string
-ParseTcacheInvalidate(StringView name, const char *value)
+ParseTcacheInvalidate(std::string_view name, const char *value)
 {
 	for (const auto &i : tcache_invalidate_strings)
-		if (name.Equals(i.name))
+		if (name == i.name)
 			return BengControlClient::MakeTcacheInvalidate(i.cmd, value);
 
 	throw FormatRuntimeError("Unrecognized key: '%.*s'",
-				 int(name.size), name.data);
+				 int(name.size()), name.data());
 }
 
 static std::string
@@ -143,7 +143,7 @@ EnableNode(const char *server, ConstBuffer<const char *> args)
 	if (args.empty())
 		throw Usage{"Node name missing"};
 
-	const StringView name = args.shift();
+	const std::string_view name = args.shift();
 
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
@@ -158,7 +158,7 @@ FadeNode(const char *server, ConstBuffer<const char *> args)
 	if (args.empty())
 		throw Usage{"Node name missing"};
 
-	const StringView name = args.shift();
+	const std::string_view name = args.shift();
 
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
@@ -173,7 +173,7 @@ NodeStatus(const char *server, ConstBuffer<const char *> args)
 	if (args.empty())
 		throw Usage{"Node name missing"};
 
-	const StringView name = args.shift();
+	const std::string_view name = args.shift();
 
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
@@ -248,7 +248,7 @@ Stats(const char *server, ConstBuffer<const char *> args)
 static void
 FadeChildren(const char *server, ConstBuffer<const char *> args)
 {
-	StringView tag = nullptr;
+	std::string_view tag{};
 
 	if (!args.empty())
 		tag = args.shift();
@@ -263,7 +263,7 @@ FadeChildren(const char *server, ConstBuffer<const char *> args)
 static void
 FlushFilterCache(const char *server, ConstBuffer<const char *> args)
 {
-	StringView tag = nullptr;
+	std::string_view tag{};
 
 	if (!args.empty())
 		tag = args.shift();
@@ -281,7 +281,7 @@ DiscardSession(const char *server, ConstBuffer<const char *> args)
 	if (args.empty())
 		throw Usage{"Not enough arguments"};
 
-	const StringView attach_id = args.shift();
+	const std::string_view attach_id = args.shift();
 
 	if (!args.empty())
 		throw Usage{"Too many arguments"};
