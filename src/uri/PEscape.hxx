@@ -36,19 +36,20 @@
 
 #pragma once
 
+#include <string_view>
+
 class AllocatorPtr;
-struct StringView;
 
 [[gnu::pure]]
 const char *
-uri_escape_dup(AllocatorPtr alloc, StringView src,
+uri_escape_dup(AllocatorPtr alloc, std::string_view src,
 	       char escape_char='%');
 
 /**
  * @return nullptr on error
  */
 char *
-uri_unescape_dup(AllocatorPtr alloc, StringView src,
+uri_unescape_dup(AllocatorPtr alloc, std::string_view src,
 		 char escape_char='%');
 
 /**
@@ -58,5 +59,5 @@ uri_unescape_dup(AllocatorPtr alloc, StringView src,
  * @return nullptr on error
  */
 char *
-uri_unescape_concat(AllocatorPtr alloc, StringView uri,
-		    StringView escaped_tail) noexcept;
+uri_unescape_concat(AllocatorPtr alloc, std::string_view uri,
+		    std::string_view escaped_tail) noexcept;

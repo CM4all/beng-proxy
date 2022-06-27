@@ -33,26 +33,25 @@
 #include "PEscape.hxx"
 #include "uri/Escape.hxx"
 #include "uri/Unescape.hxx"
-#include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <algorithm>
 
 const char *
-uri_escape_dup(AllocatorPtr alloc, StringView src,
+uri_escape_dup(AllocatorPtr alloc, std::string_view src,
 	       char escape_char)
 {
-	char *dest = alloc.NewArray<char>(src.size * 3 + 1);
+	char *dest = alloc.NewArray<char>(src.size() * 3 + 1);
 	size_t dest_length = UriEscape(dest, src, escape_char);
 	dest[dest_length] = 0;
 	return dest;
 }
 
 char *
-uri_unescape_dup(AllocatorPtr alloc, StringView src,
+uri_unescape_dup(AllocatorPtr alloc, std::string_view src,
 		 char escape_char)
 {
-	char *dest = alloc.NewArray<char>(src.size + 1);
+	char *dest = alloc.NewArray<char>(src.size() + 1);
 	char *end = UriUnescape(dest, src, escape_char);
 	if (end == nullptr)
 		return nullptr;
@@ -62,14 +61,14 @@ uri_unescape_dup(AllocatorPtr alloc, StringView src,
 }
 
 char *
-uri_unescape_concat(AllocatorPtr alloc, StringView uri,
-		    StringView escaped_tail) noexcept
+uri_unescape_concat(AllocatorPtr alloc, std::string_view uri,
+		    std::string_view escaped_tail) noexcept
 {
 	/* worst-case allocation */
-	char *dest = alloc.NewArray<char>(uri.size + escaped_tail.size + 1);
+	char *dest = alloc.NewArray<char>(uri.size() + escaped_tail.size() + 1);
 
 	/* first copy "uri" */
-	char *p = std::copy_n(uri.data, uri.size, dest);
+	char *p = std::copy(uri.begin(), uri.end(), dest);
 
 	/* append "escaped_tail", and fail this function if unescaping
 	   fails */
