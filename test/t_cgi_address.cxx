@@ -31,6 +31,7 @@
  */
 
 #include "cgi/Address.hxx"
+#include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 #include "TestPool.hxx"
 

@@ -89,7 +89,7 @@ Dump(JsonWriter::Sink sink, const ReceivedAccessLogDatagram &d)
 	if (d.user_agent != nullptr)
 		o.AddMember("user_agent", d.user_agent);
 
-	if (d.message != nullptr)
+	if (d.message.data() != nullptr)
 		o.AddMember("message", d.message);
 
 	if (d.HasHttpStatus())

@@ -177,7 +177,7 @@ try {
 		SetTable(L, RelativeStackIndex{-1},
 			 "user_agent", d.user_agent);
 
-	if (d.message != nullptr)
+	if (d.message.data() != nullptr)
 		SetTable(L, RelativeStackIndex{-1}, "message", d.message);
 
 	if (d.HasHttpStatus())
