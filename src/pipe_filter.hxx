@@ -30,10 +30,11 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BENG_PIPE_FILTER_HXX
-#define BENG_PIPE_FILTER_HXX
+#pragma once
 
 #include "http/Status.h"
+
+#include <span>
 
 struct pool;
 class UnusedIstreamPtr;
@@ -43,7 +44,6 @@ class StringMap;
 class HttpResponseHandler;
 class StopwatchPtr;
 struct ChildOptions;
-template<typename T> struct ConstBuffer;
 
 /**
  * Filter an istream through a piped program.
@@ -56,9 +56,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 	    struct pool &pool,
 	    const StopwatchPtr &parent_stopwatch,
 	    const char *path,
-	    ConstBuffer<const char *> args,
+	    std::span<const char *const> args,
 	    const ChildOptions &options,
 	    http_status_t status, StringMap &&headers, UnusedIstreamPtr body,
 	    HttpResponseHandler &_handler);
-
-#endif

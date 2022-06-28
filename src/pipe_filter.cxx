@@ -40,7 +40,6 @@
 #include "spawn/ChildOptions.hxx"
 #include "spawn/IstreamSpawn.hxx"
 #include "spawn/Prepared.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/HexFormat.hxx"
 #include "util/djbhash.h"
 
@@ -60,7 +59,7 @@ append_etag(AllocatorPtr alloc, const char *in, const char *suffix)
 	if (in[length] != '"')
 		return alloc.Concat(in, suffix);
 
-	return alloc.Concat(StringView{in, length},
+	return alloc.Concat(std::string_view{in, length},
 			    suffix,
 			    '"');
 }
@@ -94,7 +93,7 @@ pipe_filter(SpawnService &spawn_service, EventLoop &event_loop,
 	    struct pool &pool,
 	    const StopwatchPtr &parent_stopwatch,
 	    const char *path,
-	    ConstBuffer<const char *> args,
+	    std::span<const char *const> args,
 	    const ChildOptions &options,
 	    http_status_t status, StringMap &&headers, UnusedIstreamPtr body,
 	    HttpResponseHandler &handler)
