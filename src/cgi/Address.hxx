@@ -38,6 +38,7 @@
 
 #include <string_view>
 
+struct StringView;
 class AllocatorPtr;
 class MatchData;
 
