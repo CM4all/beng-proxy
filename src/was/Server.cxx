@@ -37,7 +37,6 @@
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
 #include "pool/pool.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/StringFormat.hxx"
 #include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"

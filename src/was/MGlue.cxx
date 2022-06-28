@@ -48,7 +48,6 @@
 #include "net/SocketAddress.hxx"
 #include "net/ToString.hxx"
 #include "util/Cancellable.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/StringCompare.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -72,7 +71,7 @@ class MultiWasRequest final
 	const char *path_info;
 	const char *query_string;
 
-	ConstBuffer<const char *> parameters;
+	std::span<const char *const> parameters;
 
 	HttpResponseHandler &handler;
 	CancellablePointer &caller_cancel_ptr;
@@ -88,7 +87,7 @@ public:
 			const char *_query_string,
 			StringMap &&_headers,
 			UnusedIstreamPtr _body,
-			ConstBuffer<const char *> _parameters,
+			std::span<const char *const> _parameters,
 			HttpResponseHandler &_handler,
 			CancellablePointer &_cancel_ptr) noexcept
 		:PoolLeakDetector(_pool),
@@ -110,7 +109,7 @@ public:
 	}
 
 	void Start(MultiWasStock &stock, const ChildOptions &options,
-		   const char *action, ConstBuffer<const char *> args,
+		   const char *action, std::span<const char *const> args,
 		   unsigned parallelism, unsigned concurrency) noexcept {
 		stock.Get(pool,
 			  options,
@@ -196,7 +195,7 @@ MultiWasRequest::OnStockItemError(std::exception_ptr ep) noexcept
 
 [[gnu::pure]]
 static const char *
-GetComaClass(ConstBuffer<const char *> parameters)
+GetComaClass(std::span<const char *const> parameters)
 {
 	for (const char *i : parameters) {
 		const char *result = StringAfterPrefix(i, "COMA_CLASS=");
@@ -213,7 +212,7 @@ static StopwatchPtr
 stopwatch_new_was(const StopwatchPtr &parent_stopwatch,
 		  const char *path, const char *uri,
 		  const char *path_info,
-		  ConstBuffer<const char *> parameters)
+		  std::span<const char *const> parameters)
 {
 #ifdef ENABLE_STOPWATCH
 	assert(path != nullptr);
@@ -256,14 +255,14 @@ SendMultiWasRequest(struct pool &pool, MultiWasStock &stock,
 		    const ChildOptions &options,
 		    const char *action,
 		    const char *path,
-		    ConstBuffer<const char *> args,
+		    std::span<const char *const> args,
 		    unsigned parallelism,
 		    const char *remote_host,
 		    http_method_t method, const char *uri,
 		    const char *script_name, const char *path_info,
 		    const char *query_string,
 		    StringMap &&headers, UnusedIstreamPtr body,
-		    ConstBuffer<const char *> parameters,
+		    std::span<const char *const> parameters,
 		    unsigned concurrency,
 		    HttpResponseHandler &handler,
 		    CancellablePointer &cancel_ptr) noexcept
@@ -291,7 +290,7 @@ static StopwatchPtr
 stopwatch_new_was(const StopwatchPtr &parent_stopwatch,
 		  SocketAddress address, const char *uri,
 		  const char *path_info,
-		  ConstBuffer<const char *> parameters)
+		  std::span<const char *const> parameters)
 {
 #ifdef ENABLE_STOPWATCH
 	assert(!address.IsNull());
@@ -347,7 +346,7 @@ SendRemoteWasRequest(struct pool &pool, RemoteWasStock &stock,
 		     const char *script_name, const char *path_info,
 		     const char *query_string,
 		     StringMap &&headers, UnusedIstreamPtr body,
-		     ConstBuffer<const char *> parameters,
+		     std::span<const char *const> parameters,
 		     unsigned concurrency,
 		     HttpResponseHandler &handler,
 		     CancellablePointer &cancel_ptr) noexcept

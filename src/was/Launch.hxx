@@ -36,11 +36,11 @@
 #include "spawn/ProcessHandle.hxx"
 
 #include <memory>
+#include <span>
 
 class SpawnService;
 class ChildProcessHandle;
 struct ChildOptions;
-template<typename T> struct ConstBuffer;
 
 struct WasProcess : WasSocket {
 	std::unique_ptr<ChildProcessHandle> handle;
@@ -60,6 +60,6 @@ WasProcess
 was_launch(SpawnService &spawn_service,
 	   const char *name,
 	   const char *executable_path,
-	   ConstBuffer<const char *> args,
+	   std::span<const char *const> args,
 	   const ChildOptions &options,
 	   UniqueFileDescriptor stderr_fd);

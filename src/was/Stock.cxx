@@ -40,7 +40,6 @@
 #include "spawn/Interface.hxx"
 #include "pool/DisposablePointer.hxx"
 #include "pool/tpool.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/StringList.hxx"
 
 #include <cassert>
@@ -168,7 +167,7 @@ void
 WasStock::Get(struct pool &pool,
 	      const ChildOptions &options,
 	      const char *executable_path,
-	      ConstBuffer<const char *> args,
+	      std::span<const char *const> args,
 	      unsigned parallelism,
 	      StockGetHandler &handler,
 	      CancellablePointer &cancel_ptr) noexcept

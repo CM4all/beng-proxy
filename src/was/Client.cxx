@@ -47,7 +47,6 @@
 #include "io/FileDescriptor.hxx"
 #include "event/FineTimerEvent.hxx"
 #include "http/HeaderName.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
@@ -170,7 +169,7 @@ public:
 			 const char *script_name, const char *path_info,
 			 const char *query_string,
 			 const StringMap &headers,
-			 ConstBuffer<const char *> params) noexcept;
+			 std::span<const char *const> params) noexcept;
 
 private:
 	void Destroy() noexcept {
@@ -884,7 +883,7 @@ SendRequest(Was::Control &control,
 	    const char *script_name, const char *path_info,
 	    const char *query_string,
 	    const StringMap &headers, WasOutput *request_body,
-	    ConstBuffer<const char *> params)
+	    std::span<const char *const> params)
 {
 	const uint32_t method32 = (uint32_t)method;
 
@@ -914,7 +913,7 @@ WasClient::SendRequest(const char *remote_host,
 		       const char *script_name, const char *path_info,
 		       const char *query_string,
 		       const StringMap &headers,
-		       ConstBuffer<const char *> params) noexcept
+		       std::span<const char *const> params) noexcept
 {
 	::SendRequest(control,
 		      remote_host,

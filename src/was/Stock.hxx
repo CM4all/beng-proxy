@@ -37,13 +37,12 @@
 #include "stock/MapStock.hxx"
 #include "net/SocketDescriptor.hxx"
 
-#include <stdint.h>
+#include <span>
 
 struct pool;
 struct StringView;
 struct ChildOptions;
 struct WasSocket;
-template<typename T> struct ConstBuffer;
 class SpawnService;
 
 /**
@@ -90,7 +89,7 @@ public:
 	void Get(struct pool &pool,
 		 const ChildOptions &options,
 		 const char *executable_path,
-		 ConstBuffer<const char *> args,
+		 std::span<const char *const> args,
 		 unsigned parallelism,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;

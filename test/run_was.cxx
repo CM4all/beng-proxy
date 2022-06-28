@@ -228,7 +228,7 @@ try {
 					child_process_registry);
 
 	context.process = was_launch(spawn_service, "was",
-				     argv[1], nullptr,
+				     argv[1], {},
 				     child_options, {});
 
 	was_client_request(context.root_pool, context.event_loop, nullptr,

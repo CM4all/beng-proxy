@@ -34,6 +34,8 @@
 
 #include "http/Method.h"
 
+#include <span>
+
 struct pool;
 class StopwatchPtr;
 class UnusedIstreamPtr;
@@ -42,7 +44,6 @@ class StringMap;
 class HttpResponseHandler;
 class CancellablePointer;
 struct ChildOptions;
-template<typename T> struct ConstBuffer;
 
 /**
  * High level WAS client.
@@ -56,13 +57,13 @@ was_request(struct pool &pool, WasStock &was_stock,
 	    const ChildOptions &options,
 	    const char *action,
 	    const char *path,
-	    ConstBuffer<const char *> args,
+	    std::span<const char *const> args,
 	    unsigned parallelism,
 	    const char *remote_host,
 	    http_method_t method, const char *uri,
 	    const char *script_name, const char *path_info,
 	    const char *query_string,
 	    StringMap &&headers, UnusedIstreamPtr body,
-	    ConstBuffer<const char *> params,
+	    std::span<const char *const> params,
 	    HttpResponseHandler &handler,
 	    CancellablePointer &cancel_ptr);

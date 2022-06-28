@@ -45,7 +45,6 @@
 #include "pool/LeakDetector.hxx"
 #include "stopwatch.hxx"
 #include "util/Cancellable.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/StringCompare.hxx"
 
 #include <assert.h>
@@ -67,7 +66,7 @@ class WasRequest final : StockGetHandler, Cancellable, WasLease, PoolLeakDetecto
 	const char *path_info;
 	const char *query_string;
 
-	ConstBuffer<const char *> parameters;
+	std::span<const char *const> parameters;
 
 	HttpResponseHandler &handler;
 	CancellablePointer &caller_cancel_ptr;
@@ -83,7 +82,7 @@ public:
 		   const char *_query_string,
 		   StringMap &&_headers,
 		   UnusedIstreamPtr _body,
-		   ConstBuffer<const char *> _parameters,
+		   std::span<const char *const> _parameters,
 		   HttpResponseHandler &_handler,
 		   CancellablePointer &_cancel_ptr)
 		:PoolLeakDetector(_pool),
@@ -105,7 +104,7 @@ public:
 	}
 
 	void Start(WasStock &was_stock, const ChildOptions &options,
-		   const char *action, ConstBuffer<const char *> args,
+		   const char *action, std::span<const char *const> args,
 		   unsigned parallelism) noexcept {
 		was_stock.Get(pool,
 			      options,
@@ -185,7 +184,7 @@ WasRequest::OnStockItemError(std::exception_ptr ep) noexcept
 
 [[gnu::pure]]
 static const char *
-GetComaClass(ConstBuffer<const char *> parameters)
+GetComaClass(std::span<const char *const> parameters)
 {
 	for (const char *i : parameters) {
 		const char *result = StringAfterPrefix(i, "COMA_CLASS=");
@@ -202,7 +201,7 @@ static StopwatchPtr
 stopwatch_new_was(const StopwatchPtr &parent_stopwatch,
 		  const char *path, const char *uri,
 		  const char *path_info,
-		  ConstBuffer<const char *> parameters)
+		  std::span<const char *const> parameters)
 {
 #ifdef ENABLE_STOPWATCH
 	assert(path != nullptr);
@@ -245,14 +244,14 @@ was_request(struct pool &pool, WasStock &was_stock,
 	    const ChildOptions &options,
 	    const char *action,
 	    const char *path,
-	    ConstBuffer<const char *> args,
+	    std::span<const char *const> args,
 	    unsigned parallelism,
 	    const char *remote_host,
 	    http_method_t method, const char *uri,
 	    const char *script_name, const char *path_info,
 	    const char *query_string,
 	    StringMap &&headers, UnusedIstreamPtr body,
-	    ConstBuffer<const char *> parameters,
+	    std::span<const char *const> parameters,
 	    HttpResponseHandler &handler,
 	    CancellablePointer &cancel_ptr)
 {

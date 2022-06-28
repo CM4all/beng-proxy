@@ -226,7 +226,7 @@ void
 MultiWasStock::Get(AllocatorPtr alloc,
 		   const ChildOptions &options,
 		   const char *executable_path,
-		   ConstBuffer<const char *> args,
+		   std::span<const char *const> args,
 		   unsigned parallelism, unsigned concurrency,
 		   StockGetHandler &handler,
 		   CancellablePointer &cancel_ptr) noexcept

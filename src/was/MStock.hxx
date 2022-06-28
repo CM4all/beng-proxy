@@ -35,6 +35,8 @@
 #include "spawn/ChildStock.hxx"
 #include "stock/MultiStock.hxx"
 
+#include <span>
+
 class AllocatorPtr;
 struct ChildOptions;
 class StockItem;
@@ -42,7 +44,6 @@ struct WasSocket;
 class SocketDescriptor;
 class EventLoop;
 class SpawnService;
-template<typename T> struct ConstBuffer;
 
 class MultiWasStock final : MultiStockClass, ChildStockClass {
 	ChildStock child_stock;
@@ -76,7 +77,7 @@ public:
 	void Get(AllocatorPtr alloc,
 		 const ChildOptions &options,
 		 const char *executable_path,
-		 ConstBuffer<const char *> args,
+		 std::span<const char *const> args,
 		 unsigned parallelism, unsigned concurrency,
 		 StockGetHandler &handler,
 		 CancellablePointer &cancel_ptr) noexcept;

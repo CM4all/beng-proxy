@@ -35,13 +35,12 @@
 #include "spawn/Prepared.hxx"
 #include "spawn/ChildOptions.hxx"
 #include "net/SocketDescriptor.hxx"
-#include "util/ConstBuffer.hxx"
 
 static auto
 WasLaunch(SpawnService &spawn_service,
 	  const char *name,
 	  const char *executable_path,
-	  ConstBuffer<const char *> args,
+	  std::span<const char *const> args,
 	  const ChildOptions &options,
 	  UniqueFileDescriptor &&stderr_fd,
 	  WasSocket &&socket)
@@ -67,7 +66,7 @@ WasProcess
 was_launch(SpawnService &spawn_service,
 	   const char *name,
 	   const char *executable_path,
-	   ConstBuffer<const char *> args,
+	   std::span<const char *const> args,
 	   const ChildOptions &options,
 	   UniqueFileDescriptor stderr_fd)
 {
