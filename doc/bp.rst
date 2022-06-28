@@ -305,7 +305,9 @@ Configures the process spawner. Example::
   (:math:`1..10000`).  :program:`systemd`'s default is 100.
 
 Memory limits are in bytes and may be postfixed with ``kB``, ``MB``,
-``GB`` or ``TB``.
+``GB`` or ``TB``.  Percent values are relative to total physical
+memory.
+
 
 ``set``
 -------
