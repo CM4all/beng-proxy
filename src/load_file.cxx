@@ -40,7 +40,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/StringFormat.hxx"
 
-ConstBuffer<void>
+std::span<const std::byte>
 LoadFile(struct pool &pool, const char *path, off_t max_size)
 {
 	auto fd = OpenReadOnly(path);
@@ -54,9 +54,9 @@ LoadFile(struct pool &pool, const char *path, off_t max_size)
 					  StringFormat<256>("File is too large: %s", path));
 
 	if (size == 0)
-		return { "", 0 };
+		return { (const std::byte *)"", 0 };
 
-	void *p = p_malloc(&pool, size);
+	std::byte *p = PoolAlloc<std::byte>(pool, size);
 	if (p == nullptr)
 		throw std::bad_alloc();
 

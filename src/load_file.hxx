@@ -30,12 +30,13 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LOAD_FILE_HXX
-#define LOAD_FILE_HXX
+#pragma once
+
+#include <cstddef>
+#include <span>
 
 #include <sys/types.h>
 
-template<typename T> struct ConstBuffer;
 struct pool;
 
 /**
@@ -43,7 +44,5 @@ struct pool;
  *
  * Throws exception on error.
  */
-ConstBuffer<void>
+std::span<const std::byte>
 LoadFile(struct pool &pool, const char *path, off_t max_size);
-
-#endif
