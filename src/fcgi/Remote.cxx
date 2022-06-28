@@ -44,7 +44,6 @@
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 #include "AllocatorPtr.hxx"
 #include "stopwatch.hxx"
@@ -66,7 +65,7 @@ class FcgiRemoteRequest final : StockGetHandler, Cancellable, Lease, PoolLeakDet
 	const char *const document_root;
 	const char *const remote_addr;
 
-	const ConstBuffer<const char *> params;
+	const std::span<const char *const> params;
 
 	UniqueFileDescriptor stderr_fd;
 
@@ -85,7 +84,7 @@ public:
 			  const char *_remote_addr,
 			  StringMap &&_headers,
 			  UnusedIstreamPtr _body,
-			  ConstBuffer<const char *> _params,
+			  std::span<const char *const> _params,
 			  UniqueFileDescriptor &&_stderr_fd,
 			  HttpResponseHandler &_handler,
 			  CancellablePointer &_cancel_ptr)
@@ -194,7 +193,7 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
 		    const char *document_root,
 		    const char *remote_addr,
 		    StringMap &&headers, UnusedIstreamPtr body,
-		    ConstBuffer<const char *> params,
+		    std::span<const char *const> params,
 		    UniqueFileDescriptor stderr_fd,
 		    HttpResponseHandler &handler,
 		    CancellablePointer &_cancel_ptr)

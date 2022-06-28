@@ -302,7 +302,7 @@ struct Connection {
 				    method, uri, uri, nullptr, nullptr, nullptr,
 				    nullptr, "192.168.1.100",
 				    std::move(headers), std::move(body),
-				    nullptr,
+				    {},
 				    {},
 				    handler, cancel_ptr);
 	}

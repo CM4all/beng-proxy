@@ -34,6 +34,8 @@
 
 #include "http/Method.h"
 
+#include <span>
+
 struct pool;
 class EventLoop;
 class UnusedIstreamPtr;
@@ -44,7 +46,6 @@ class HttpResponseHandler;
 class CancellablePointer;
 class UniqueFileDescriptor;
 class StopwatchPtr;
-template<typename T> struct ConstBuffer;
 
 /**
  * High level FastCGI client for remote FastCGI servers.
@@ -61,7 +62,7 @@ fcgi_remote_request(struct pool *pool, EventLoop &event_loop,
 		    const char *document_root,
 		    const char *remote_addr,
 		    StringMap &&headers, UnusedIstreamPtr body,
-		    ConstBuffer<const char *> params,
+		    std::span<const char *const> params,
 		    UniqueFileDescriptor stderr_fd,
 		    HttpResponseHandler &handler,
 		    CancellablePointer &cancel_ptr);

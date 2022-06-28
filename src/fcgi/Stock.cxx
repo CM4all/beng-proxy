@@ -46,7 +46,6 @@
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/Logger.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/StringFormat.hxx"
 #include "util/StringList.hxx"
 
@@ -84,7 +83,7 @@ public:
 
 	StockItem *Get(const ChildOptions &options,
 		       const char *executable_path,
-		       ConstBuffer<const char *> args,
+		       std::span<const char *const> args,
 		       unsigned parallelism);
 
 	void FadeAll() noexcept {
@@ -432,7 +431,7 @@ fcgi_stock_fade_tag(FcgiStock &fs, StringView tag) noexcept
 inline StockItem *
 FcgiStock::Get(const ChildOptions &options,
 	       const char *executable_path,
-	       ConstBuffer<const char *> args,
+	       std::span<const char *const> args,
 	       unsigned parallelism)
 {
 	const TempPoolLease tpool;
@@ -448,7 +447,7 @@ StockItem *
 fcgi_stock_get(FcgiStock *fcgi_stock,
 	       const ChildOptions &options,
 	       const char *executable_path,
-	       ConstBuffer<const char *> args,
+	       std::span<const char *const> args,
 	       unsigned parallelism)
 {
 	return fcgi_stock->Get(options, executable_path, args,

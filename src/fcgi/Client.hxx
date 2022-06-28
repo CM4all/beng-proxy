@@ -35,6 +35,8 @@
 #include "io/FdType.hxx"
 #include "http/Method.h"
 
+#include <span>
+
 struct pool;
 class EventLoop;
 class UnusedIstreamPtr;
@@ -45,7 +47,6 @@ class StringMap;
 class HttpResponseHandler;
 class CancellablePointer;
 class StopwatchPtr;
-template<typename T> struct ConstBuffer;
 
 /**
  * Sends a HTTP request on a socket to an FastCGI server, and passes
@@ -81,7 +82,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 		    const char *document_root,
 		    const char *remote_addr,
 		    StringMap &&headers, UnusedIstreamPtr body,
-		    ConstBuffer<const char *> params,
+		    std::span<const char *const> params,
 		    UniqueFileDescriptor &&stderr_fd,
 		    HttpResponseHandler &handler,
 		    CancellablePointer &cancel_ptr) noexcept;

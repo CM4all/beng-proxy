@@ -32,12 +32,13 @@
 
 #pragma once
 
+#include <span>
+
 struct StringView;
 struct ChildErrorLogOptions;
 class StockItem;
 class FcgiStock;
 struct ChildOptions;
-template<typename T> struct ConstBuffer;
 class EventLoop;
 class SpawnService;
 class SocketDescriptor;
@@ -70,7 +71,7 @@ StockItem *
 fcgi_stock_get(FcgiStock *fcgi_stock,
 	       const ChildOptions &options,
 	       const char *executable_path,
-	       ConstBuffer<const char *> args,
+	       std::span<const char *const> args,
 	       unsigned parallelism);
 
 void

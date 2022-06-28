@@ -50,7 +50,6 @@
 #include "event/net/BufferedSocket.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/SpliceSupport.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/StringStrip.hxx"
 #include "util/ByteOrder.hxx"
@@ -816,7 +815,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 				available -= size;
 			}
 
-			list.Push(ConstBuffer<void>(data, size));
+			list.Push({data, size});
 			data += size;
 			current_content_length -= size;
 
@@ -1073,7 +1072,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 		    const char *document_root,
 		    const char *remote_addr,
 		    StringMap &&headers, UnusedIstreamPtr body,
-		    ConstBuffer<const char *> params,
+		    std::span<const char *const> params,
 		    UniqueFileDescriptor &&stderr_fd,
 		    HttpResponseHandler &handler,
 		    CancellablePointer &cancel_ptr) noexcept

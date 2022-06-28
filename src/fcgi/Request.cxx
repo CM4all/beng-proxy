@@ -41,7 +41,6 @@
 #include "pool/LeakDetector.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
 
@@ -70,7 +69,7 @@ public:
 		   const char *document_root,
 		   const char *remote_addr,
 		   StringMap &&headers, UnusedIstreamPtr body,
-		   ConstBuffer<const char *> params,
+		   std::span<const char *const> params,
 		   UniqueFileDescriptor &&stderr_fd,
 		   HttpResponseHandler &handler,
 		   CancellablePointer &caller_cancel_ptr) noexcept {
@@ -130,7 +129,7 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
 	     const ChildOptions &options,
 	     const char *action,
 	     const char *path,
-	     ConstBuffer<const char *> args,
+	     std::span<const char *const> args,
 	     unsigned parallelism,
 	     http_method_t method, const char *uri,
 	     const char *script_name, const char *path_info,
@@ -138,7 +137,7 @@ fcgi_request(struct pool *pool, EventLoop &event_loop,
 	     const char *document_root,
 	     const char *remote_addr,
 	     StringMap &&headers, UnusedIstreamPtr body,
-	     ConstBuffer<const char *> params,
+	     std::span<const char *const> params,
 	     UniqueFileDescriptor &&stderr_fd,
 	     HttpResponseHandler &handler,
 	     CancellablePointer &cancel_ptr) noexcept
