@@ -38,7 +38,7 @@ Cookies
 full-featured session management and provides cookies for the widget
 servers.
 
-:program:`beng-proxy` maintains the client’s session id in either a cookie or as
+:program:`beng-proxy` maintains the client's session id in either a cookie or as
 part of the URI. In its local session storage, it holds all cookies
 which were created by the widget servers. This way, the client gets to
 see only the one session id, disregarding how much session information
@@ -76,7 +76,7 @@ Configuration
 =============
 
 The file :file:`/etc/cm4all/beng/lb.conf` contains
-:program:`beng-proxy`\ ’s configuration. The following options are
+:program:`beng-proxy`'s configuration. The following options are
 available:
 
 ``@include``
@@ -266,18 +266,18 @@ Configures the process spawner. Example::
   group.
 
 - ``CPUWeight``: CPU weight for all spawned processes combined
-  (:math:`1..10000`). ``systemd``\ ’s default is 100.
+  (:math:`1..10000`).  :program:`systemd`'s default is 100.
 
-- ``TasksMax``: maximum number of tasks (:math:`1..`). ``systemd``
-  sets no limit by default.
+- ``TasksMax``: maximum number of tasks
+  (:math:`1..`). :program:`systemd` sets no limit by default.
 
 - ``MemoryMax``: absolute limit on the combined memory usage of all
   spawned processes. Value is in bytes and may be postfixed with
-  ``kB``, ``MB``, ``GB`` or ``TB``. ``systemd`` sets no limit by
-  default.
+  ``kB``, ``MB``, ``GB`` or ``TB``.  :program:`systemd` sets no limit
+  by default.
 
 - ``IOWeight``: IO weight for all spawned processes combined
-  (:math:`1..10000`). ``systemd``\ ’s default is 100.
+  (:math:`1..10000`).  :program:`systemd`'s default is 100.
 
 ``set``
 -------
@@ -654,9 +654,10 @@ existing connections to a remote server.
 Load balancing, failover
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-For a remote URL, more than one server may be specified. ``beng-proxy``
-tries to use all of these equally. If one server fails on the socket
-level, ``beng-proxy`` ignores it for a short amount of time.
+For a remote URL, more than one server may be
+specified. :program:`beng-proxy` tries to use all of these equally. If
+one server fails on the socket level, :program:`beng-proxy` ignores it for a
+short amount of time.
 
 Forwarded headers
 ^^^^^^^^^^^^^^^^^
@@ -692,7 +693,7 @@ the remote HTTP server:
 
 - ``Cookie2`` is taken from the current session
 
-Response headers forwarded to ``beng-proxy``\ ’s client:
+Response headers forwarded to :program:`beng-proxy`'s client:
 
 - ``Age``, ``ETag``, ``Cache-Control``, ``Last-Modified``,
   ``Retry-After``, ``Vary``, ``Location``
@@ -1038,13 +1039,13 @@ The ``CHECK`` packet
 ^^^^^^^^^^^^^^^^^^^^
 
 On a protected resource, the translation server may send the ``CHECK``
-packet together with the normal response. Now ``beng-proxy`` queries the
-translation server again, sending the same request and a copy of the
-``CHECK`` packet. The translation server may now verify the current
-session, redirect to a login page, or anything else needed to
-authenticate the user. The response to this second translation request
-may be a resource address as usual, or the ``PREVIOUS`` packet, which
-indicates that the first translation shall be used.
+packet together with the normal response. Now :program:`beng-proxy`
+queries the translation server again, sending the same request and a
+copy of the ``CHECK`` packet. The translation server may now verify
+the current session, redirect to a login page, or anything else needed
+to authenticate the user. The response to this second translation
+request may be a resource address as usual, or the ``PREVIOUS``
+packet, which indicates that the first translation shall be used.
 
 While the first response is usually cached for a long time, the second
 one may specify a short ``MAX_AGE`` value. This means the latter is sent
@@ -1501,11 +1502,11 @@ URI rewriting code, here an example for a widget rendering an image::
    <img c:base="child" c:mode="partial" c:view="raw" src="logo"
      alt="Our website logo"/>
 
-Note that we use ``c:view=raw`` here (assuming a view with that name was
-defined), because an image should not (and can not) be processed by
-:program:`beng-proxy`. You can also use ``c:mode=direct`` if you want the browser
-to request the resource from widget server directly instead of proxying
-through :program:`beng-proxy`.
+Note that we use ``c:view=raw`` here (assuming a view with that name
+was defined), because an image should not (and can not) be processed
+by :program:`beng-proxy`. You can also use ``c:mode=direct`` if you
+want the browser to request the resource from widget server directly
+instead of proxying through :program:`beng-proxy`.
 
 Untrusted Widgets
 -----------------
@@ -1515,9 +1516,10 @@ problem is that all scripts run with the same privileges, and each
 widget’s scripts can access the whole page, each widget can invoke
 requests to any other widget.
 
-As a safeguard against potentially malicious widgets, :program:`beng-proxy` can
-run widgets in a separate domain. The default security settings of
-browsers will disallow cross-domain script access.
+As a safeguard against potentially malicious widgets,
+:program:`beng-proxy` can run widgets in a separate domain. The
+default security settings of browsers will disallow cross-domain
+script access.
 
 To make a widget class “untrusted”, the translation server generates the
 ``HOST`` packet with a host name for that widget. A host name may be
@@ -1533,9 +1535,10 @@ The Beng JavaScript API
 =======================
 
 JavaScript code in a widget frequently needs to send HTTP requests to
-the widget server. All these requests must got through :program:`beng-proxy`.
-Since the structure of a :program:`beng-proxy` URI is regarded internal, it
-provides a JavaScript function to generate such an URI::
+the widget server. All these requests must got through
+:program:`beng-proxy`.  Since the structure of a :program:`beng-proxy`
+URI is regarded internal, it provides a JavaScript function to
+generate such an URI::
 
    function
    beng_widget_uri(base_uri, session_id, frame, focus, mode,
