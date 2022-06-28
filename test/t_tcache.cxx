@@ -55,6 +55,8 @@
 
 #include <gtest/gtest.h>
 
+using std::string_view_literals::operator""sv;
+
 class MyTranslationService final : public TranslationService {
 public:
 	/* virtual methods from class TranslationService */
@@ -669,7 +671,7 @@ TEST(TranslationCache, InvalidateUri)
 	const auto request4b = MakeRequest("/invalidate/uri")
 		.Status(HTTP_STATUS_INTERNAL_SERVER_ERROR)
 		.Check("x")
-		.WantFullUri({ "a\0/b", 4 });
+		.WantFullUri("a\0/b"sv);
 	const auto response4b = MakeResponse(pool).File("/var/www/500/check/wfu/invalidate/uri");
 	Feed(pool, cache, request4b, response4b);
 

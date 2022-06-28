@@ -40,6 +40,7 @@
 #include "cgi/Address.hxx"
 #include "spawn/Mount.hxx"
 #include "spawn/NamespaceOptions.hxx"
+#include "util/SpanCast.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <string.h>
@@ -51,8 +52,8 @@ struct MakeRequest : TranslateRequest {
 		uri = _uri;
 	}
 
-	auto &&Layout(StringView value, const char *item) && noexcept {
-		layout = value.ToVoid();
+	auto &&Layout(std::string_view value, const char *item) && noexcept {
+		layout = AsBytes(value);
 
 		if (item != nullptr) {
 			my_layout_item = TranslationLayoutItem{TranslationLayoutItem::Type::BASE, item};
@@ -72,14 +73,13 @@ struct MakeRequest : TranslateRequest {
 		return std::move(*this);
 	}
 
-	MakeRequest &&WantFullUri(const char *value) {
-		want_full_uri = {(const std::byte *)value, strlen(value)};
+	MakeRequest &&WantFullUri(std::span<const std::byte> value) {
+		want_full_uri = value;
 		return std::move(*this);
 	}
 
-	MakeRequest &&WantFullUri(ConstBuffer<void> value) {
-		want_full_uri = value;
-		return std::move(*this);
+	MakeRequest &&WantFullUri(std::string_view value) {
+		return WantFullUri(AsBytes(value));
 	}
 
 	MakeRequest &&Status(http_status_t value) noexcept {
@@ -121,9 +121,9 @@ struct MakeResponse : TranslateResponse {
 		return std::move(*this);
 	}
 
-	MakeResponse &&Layout(StringView value,
+	MakeResponse &&Layout(std::string_view value,
 			      std::initializer_list<const char *> items) && noexcept {
-		layout = value.ToVoid();
+		layout = AsBytes(value);
 
 		auto *li = alloc.NewArray<TranslationLayoutItem>(items.size());
 		for (auto *dest = li; const char *src : items)
