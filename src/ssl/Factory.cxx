@@ -42,7 +42,6 @@
 #include "lib/openssl/UniqueEVP.hxx"
 #include "lib/openssl/UniqueX509.hxx"
 #include "util/AllocatedString.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/StringView.hxx"
 
 #include <openssl/ssl.h>
@@ -242,12 +241,11 @@ SslFactory::CertCallback(SSL *ssl, void *arg) noexcept
 }
 
 void
-SslFactory::SetSessionIdContext(ConstBuffer<void> _sid_ctx)
+SslFactory::SetSessionIdContext(std::span<const std::byte> sid_ctx)
 {
-	auto sid_ctx = ConstBuffer<unsigned char>::FromVoid(_sid_ctx);
 	int result = SSL_CTX_set_session_id_context(ssl_ctx.get(),
-						    sid_ctx.data,
-						    sid_ctx.size);
+						    (const unsigned char *)sid_ctx.data(),
+						    sid_ctx.size());
 	if (result == 0)
 		throw SslError("SSL_CTX_set_session_id_context() failed");
 }

@@ -37,12 +37,12 @@
 #include "lib/openssl/Ctx.hxx"
 
 #include <memory>
+#include <span>
 #include <vector>
 
 struct StringView;
 struct pool;
 struct SslConfig;
-template<typename T> struct ConstBuffer;
 struct SslFactoryCertKey;
 class SslCertCallback;
 
@@ -73,7 +73,7 @@ public:
 	 *
 	 * Throws on error.
 	 */
-	void SetSessionIdContext(ConstBuffer<void> sid_ctx);
+	void SetSessionIdContext(std::span<const std::byte> sid_ctx);
 
 	UniqueSSL Make();
 

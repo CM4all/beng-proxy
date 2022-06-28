@@ -42,6 +42,7 @@
 #include "fs/FilteredSocket.hxx"
 #include "net/ClientAccounting.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/SpanCast.hxx"
 #include "lb_features.h"
 
 UniqueSocketDescriptor
@@ -86,7 +87,7 @@ MakeSslFactory(const LbListenerConfig &config,
 	/* we use the listener name as OpenSSL session_id_context,
 	   because listener names are unique, so I hope this should be
 	   good enough */
-	ssl_factory->SetSessionIdContext({config.name.data(), config.name.size()});
+	ssl_factory->SetSessionIdContext(AsBytes(config.name));
 
 #ifdef HAVE_NGHTTP2
 	if (config.GetAlpnHttp2())
