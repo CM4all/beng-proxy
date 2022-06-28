@@ -36,7 +36,7 @@
 #include "translation/Protocol.hxx"
 #include "net/ToString.hxx"
 #include "util/RuntimeError.hxx"
-#include "util/StringView.hxx"
+#include "util/SpanCast.hxx"
 
 void
 TranslationMarshaller::Write(TranslationCommand command,
@@ -60,7 +60,7 @@ void
 TranslationMarshaller::Write(TranslationCommand command,
 			     const char *payload)
 {
-	Write(command, std::span{StringView(payload)});
+	Write(command, AsBytes(payload));
 }
 
 void
@@ -70,7 +70,7 @@ TranslationMarshaller::Write(TranslationCommand command,
 {
 	assert(!address.IsNull());
 
-	Write(command, ConstBuffer<void>(address.GetAddress(), address.GetSize()));
+	Write(command, address);
 
 	char address_string[1024];
 

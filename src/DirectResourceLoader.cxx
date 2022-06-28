@@ -54,7 +54,6 @@
 #include "pool/pool.hxx"
 #include "AllocatorPtr.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/StringStrip.hxx"
 
 #include <string.h>

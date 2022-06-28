@@ -34,7 +34,6 @@
 #include "Stock.hxx"
 #include "Cache.hxx"
 #include "net/SocketAddress.hxx"
-#include "util/ConstBuffer.hxx"
 #include "stats/AllocatorStats.hxx"
 
 #include <cassert>
@@ -118,7 +117,7 @@ TranslationCacheBuilder::Flush() noexcept
 
 void
 TranslationCacheBuilder::Invalidate(const TranslateRequest &request,
-				    ConstBuffer<TranslationCommand> vary,
+				    std::span<const TranslationCommand> vary,
 				    const char *site) noexcept
 {
 	for (auto &i : m)

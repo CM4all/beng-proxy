@@ -35,9 +35,10 @@
 #include "ResourceAddress.hxx"
 #include "file/Address.hxx"
 #include "nfs/Address.hxx"
-#include "util/ConstBuffer.hxx"
 #include "util/CharUtil.hxx"
 #include "AllocatorPtr.hxx"
+
+#include <span>
 
 #include <string.h>
 
@@ -61,7 +62,7 @@ get_suffix(const char *path) noexcept
 
 struct AddressSuffixInfo {
 	const char *path;
-	ConstBuffer<void> content_type_lookup;
+	std::span<const std::byte> content_type_lookup;
 };
 
 [[gnu::pure]]
@@ -76,7 +77,7 @@ GetAddressSuffixInfo(const ResourceAddress &address) noexcept
 	case ResourceAddress::Type::CGI:
 	case ResourceAddress::Type::FASTCGI:
 	case ResourceAddress::Type::WAS:
-		return {nullptr, nullptr};
+		return {};
 
 	case ResourceAddress::Type::LOCAL:
 		return {address.GetFile().path, address.GetFile().content_type_lookup};
@@ -96,7 +97,7 @@ suffix_registry_lookup(AllocatorPtr alloc, TranslationService &service,
 		       CancellablePointer &cancel_ptr) noexcept
 {
 	const auto info = GetAddressSuffixInfo(address);
-	if (info.content_type_lookup.IsNull())
+	if (info.content_type_lookup.data() == nullptr)
 		return false;
 
 	const char *suffix = get_suffix(info.path);

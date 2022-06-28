@@ -41,8 +41,8 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <span>
 
-template<typename T> struct ConstBuffer;
 struct AllocatorStats;
 class EventLoop;
 class SocketAddress;
@@ -99,7 +99,7 @@ public:
 	void Flush() noexcept;
 
 	void Invalidate(const TranslateRequest &request,
-			ConstBuffer<TranslationCommand> vary,
+			std::span<const TranslationCommand> vary,
 			const char *site) noexcept;
 
 	std::shared_ptr<TranslationService> Get(SocketAddress address,

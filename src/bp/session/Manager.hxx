@@ -41,7 +41,6 @@
 #include <chrono>
 #include <random>
 
-template<typename T> struct ConstBuffer;
 class SessionId;
 class SessionLease;
 class RealmSessionLease;

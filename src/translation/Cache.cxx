@@ -101,7 +101,7 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 
 	struct {
 		const char *param;
-		ConstBuffer<void> session;
+		std::span<const std::byte> session;
 
 		const char *listener_tag;
 		SocketAddress local_address;
@@ -112,8 +112,8 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 		const char *user_agent;
 		const char *query_string;
 
-		ConstBuffer<void> internal_redirect;
-		ConstBuffer<void> enotdir;
+		std::span<const std::byte> internal_redirect;
+		std::span<const std::byte> enotdir;
 
 		const char *user;
 
@@ -148,7 +148,7 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 		       bool strict) const;
 
 	[[gnu::pure]]
-	bool VaryMatch(ConstBuffer<TranslationCommand> vary,
+	bool VaryMatch(std::span<const TranslationCommand> vary,
 		       const TranslateRequest &other_request, bool strict) const {
 		for (auto i : vary)
 			if (!VaryMatch(other_request, i, strict))
@@ -163,13 +163,13 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 	}
 
 	[[gnu::pure]]
-	bool InvalidateMatch(ConstBuffer<TranslationCommand> vary,
+	bool InvalidateMatch(std::span<const TranslationCommand> vary,
 			     const TranslateRequest &other_request) const {
 		return VaryMatch(vary, other_request, true);
 	}
 
 	[[gnu::pure]]
-	bool InvalidateMatch(ConstBuffer<TranslationCommand> vary,
+	bool InvalidateMatch(std::span<const TranslationCommand> vary,
 			     const TranslateRequest &other_request,
 			     const char *other_site) const {
 		return (other_site == nullptr || MatchSite(other_site)) &&
@@ -216,7 +216,7 @@ struct TranslateCachePerHost
 	void Erase(TranslateCacheItem &item);
 
 	unsigned Invalidate(const TranslateRequest &request,
-			    ConstBuffer<TranslationCommand> vary);
+			    std::span<const TranslationCommand> vary);
 
 	[[gnu::pure]]
 	static size_t KeyHasher(const char *key) {
@@ -288,7 +288,7 @@ struct TranslateCachePerSite
 	void Erase(TranslateCacheItem &item);
 
 	unsigned Invalidate(const TranslateRequest &request,
-			    ConstBuffer<TranslationCommand> vary);
+			    std::span<const TranslationCommand> vary);
 
 	[[gnu::pure]]
 	static size_t KeyHasher(const char *key) {
@@ -379,14 +379,14 @@ struct tcache {
 	TranslateCachePerSite &MakePerSite(const char *site);
 
 	unsigned InvalidateHost(const TranslateRequest &request,
-				ConstBuffer<TranslationCommand> vary);
+				std::span<const TranslationCommand> vary);
 
 	unsigned InvalidateSite(const TranslateRequest &request,
-				ConstBuffer<TranslationCommand> vary,
+				std::span<const TranslationCommand> vary,
 				const char *site);
 
 	void Invalidate(const TranslateRequest &request,
-			ConstBuffer<TranslationCommand> vary,
+			std::span<const TranslationCommand> vary,
 			const char *site) noexcept;
 };
 
@@ -530,40 +530,40 @@ TranslateCachePerSite::Erase(TranslateCacheItem &item)
 static const char *
 tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	       http_status_t status,
-	       ConstBuffer<void> layout,
+	       std::span<const std::byte> layout,
 	       const TranslationLayoutItem *layout_item,
-	       ConstBuffer<void> check,
+	       std::span<const std::byte> check,
 	       const char *check_header,
-	       ConstBuffer<void> want_full_uri,
-	       ConstBuffer<void> probe_path_suffixes,
+	       std::span<const std::byte> want_full_uri,
+	       std::span<const std::byte> probe_path_suffixes,
 	       const char *probe_suffix,
-	       ConstBuffer<void> directory_index,
-	       ConstBuffer<void> file_not_found,
-	       ConstBuffer<void> read_file,
+	       std::span<const std::byte> directory_index,
+	       std::span<const std::byte> file_not_found,
+	       std::span<const std::byte> read_file,
 	       bool want)
 {
 	PoolStringBuilder<256> b;
 
 	char rf_buffer[MAX_READ_FILE * 3];
-	if (!read_file.IsNull()) {
+	if (read_file.data() != nullptr) {
 		b.emplace_back(rf_buffer, UriEscape(rf_buffer, read_file));
 		b.push_back("=RF]");
 	}
 
 	char di_buffer[MAX_DIRECTORY_INDEX * 3];
-	if (!directory_index.IsNull()) {
+	if (directory_index.data() != nullptr) {
 		b.emplace_back(di_buffer, UriEscape(di_buffer, directory_index));
 		b.push_back("=DIR]");
 	}
 
 	char fnf_buffer[MAX_FILE_NOT_FOUND * 3];
-	if (!file_not_found.IsNull()) {
+	if (file_not_found.data() != nullptr) {
 		b.emplace_back(fnf_buffer, UriEscape(fnf_buffer, file_not_found));
 		b.push_back("=FNF]");
 	}
 
 	char pps_buffer[MAX_PROBE_PATH_SUFFIXES * 3];
-	if (!probe_path_suffixes.IsNull()) {
+	if (probe_path_suffixes.data() != nullptr) {
 		b.emplace_back(pps_buffer,
 			       UriEscape(pps_buffer, probe_path_suffixes));
 		b.push_back("=PPS");
@@ -581,13 +581,13 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 		b.push_back("|W_");
 
 	char wfu_buffer[MAX_CACHE_WFU * 3];
-	if (!want_full_uri.IsNull()) {
+	if (want_full_uri.data() != nullptr) {
 		b.push_back("|WFU=");
 		b.emplace_back(wfu_buffer, UriEscape(wfu_buffer, want_full_uri));
 	}
 
 	char layout_buffer[MAX_CACHE_LAYOUT * 3];
-	if (layout != nullptr) {
+	if (layout.data() != nullptr) {
 		b.emplace_back(layout_buffer, UriEscape(layout_buffer, layout));
 
 		if (layout_item != nullptr) {
@@ -612,7 +612,7 @@ tcache_uri_key(AllocatorPtr alloc, const char *uri, const char *host,
 	}
 
 	char check_buffer[MAX_CACHE_CHECK * 3];
-	if (!check.IsNull()) {
+	if (check.data() != nullptr) {
 		b.push_back("|CHECK=");
 		b.emplace_back(check_buffer, UriEscape(check_buffer, check));
 	}
@@ -1080,7 +1080,7 @@ tcache_lookup(AllocatorPtr alloc, struct tcache &tcache,
 struct TranslationCacheInvalidate {
 	const TranslateRequest *request;
 
-	ConstBuffer<TranslationCommand> vary;
+	std::span<const TranslationCommand> vary;
 
 	const char *site;
 };
@@ -1096,7 +1096,7 @@ tcache_invalidate_match(const CacheItem *_item, void *ctx)
 
 inline unsigned
 tcache::InvalidateHost(const TranslateRequest &request,
-		       ConstBuffer<TranslationCommand> vary)
+		       std::span<const TranslationCommand> vary)
 {
 	const char *host = request.host;
 	if (host == nullptr)
@@ -1115,7 +1115,7 @@ tcache::InvalidateHost(const TranslateRequest &request,
 
 inline unsigned
 TranslateCachePerHost::Invalidate(const TranslateRequest &request,
-				  ConstBuffer<TranslationCommand> vary)
+				  std::span<const TranslationCommand> vary)
 {
 	unsigned n_removed = 0;
 
@@ -1138,7 +1138,7 @@ TranslateCachePerHost::Invalidate(const TranslateRequest &request,
 
 inline unsigned
 tcache::InvalidateSite(const TranslateRequest &request,
-		       ConstBuffer<TranslationCommand> vary,
+		       std::span<const TranslationCommand> vary,
 		       const char *site)
 {
 	assert(site != nullptr);
@@ -1156,7 +1156,7 @@ tcache::InvalidateSite(const TranslateRequest &request,
 
 inline unsigned
 TranslateCachePerSite::Invalidate(const TranslateRequest &request,
-				  ConstBuffer<TranslationCommand> vary)
+				  std::span<const TranslationCommand> vary)
 {
 	unsigned n_removed = 0;
 
@@ -1179,7 +1179,7 @@ TranslateCachePerSite::Invalidate(const TranslateRequest &request,
 
 void
 tcache::Invalidate(const TranslateRequest &request,
-		   ConstBuffer<TranslationCommand> vary,
+		   std::span<const TranslationCommand> vary,
 		   const char *site) noexcept
 {
 	TranslationCacheInvalidate data{&request, vary, site};
@@ -1187,7 +1187,7 @@ tcache::Invalidate(const TranslateRequest &request,
 	gcc_unused
 		unsigned removed = site != nullptr
 		? InvalidateSite(request, vary, site)
-		: (vary.Contains(TranslationCommand::HOST)
+		: (std::find(vary.begin(), vary.end(), TranslationCommand::HOST) != vary.end()
 		   ? InvalidateHost(request, vary)
 		   : cache.RemoveAllMatch(tcache_invalidate_match, &data));
 	LogConcat(4, "TranslationCache", "invalidated ", removed, " cache items");
@@ -1195,7 +1195,7 @@ tcache::Invalidate(const TranslateRequest &request,
 
 void
 TranslationCache::Invalidate(const TranslateRequest &request,
-			     ConstBuffer<TranslationCommand> vary,
+			     std::span<const TranslationCommand> vary,
 			     const char *site) noexcept
 {
 	cache->Invalidate(request, vary, site);

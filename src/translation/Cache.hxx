@@ -35,11 +35,11 @@
 #include "Service.hxx"
 
 #include <memory>
+#include <span>
 
 enum class TranslationCommand : uint16_t;
 class EventLoop;
 struct AllocatorStats;
-template<typename T> struct ConstBuffer;
 
 struct tcache;
 
@@ -78,7 +78,7 @@ public:
 	 * the cache item filter
 	 */
 	void Invalidate(const TranslateRequest &request,
-			ConstBuffer<TranslationCommand> vary,
+			std::span<const TranslationCommand> vary,
 			const char *site) noexcept;
 
 	/* virtual methods from class TranslationService */
