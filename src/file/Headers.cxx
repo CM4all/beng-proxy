@@ -78,6 +78,10 @@ static_etag(char *p, const struct statx &st)
 
 	p = FormatIntBase32(p, st.stx_mtime.tv_sec);
 
+	*p++ = '-';
+
+	p = FormatIntBase32(p, st.stx_mtime.tv_nsec);
+
 	*p++ = '"';
 	*p = 0;
 }

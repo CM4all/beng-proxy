@@ -4,6 +4,7 @@ cm4all-beng-proxy (17.0.99) unstable; urgency=low
   * spawn: support percent memory limits
   * spawn: use inotify to watch cgroup memory limits
   * lhttp: forward stdout to Pond as well
+  * bp: generate ETag with nanosecond granularity
 
  --   
 
