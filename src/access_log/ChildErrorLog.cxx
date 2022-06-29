@@ -96,8 +96,14 @@ ChildErrorLog::EnableClient(PreparedChildProcess &p,
 		return;
 
 	auto w = EnableClient(event_loop, socket, options, force);
-	if (w.IsDefined())
+	if (w.IsDefined()) {
 		p.SetStderr(std::move(w));
+
+		/* if there's nothing else on stdout (no pipe etc.),
+		   redirect it to Pond as well */
+		if (!p.stdout_fd.IsDefined())
+			p.stdout_fd = p.stderr_fd;
+	}
 }
 
 Net::Log::Datagram &
