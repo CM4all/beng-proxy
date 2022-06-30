@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.100) unstable; urgency=low
 
-  * 
+  * spawn: fix inotify busy loop
 
  --   
 
