@@ -47,7 +47,7 @@ args_parse(AllocatorPtr alloc, const StringView p) noexcept
 {
 	StringMap args;
 
-	for (const auto s : IterableSplitString(p, '&')) {
+	for (const StringView s : IterableSplitString(p, '&')) {
 		const auto [name, escaped_value] = s.Split('=');
 		if (name.empty() || escaped_value.IsNull())
 			continue;

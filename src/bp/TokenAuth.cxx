@@ -183,7 +183,7 @@ ExtractAuthToken(AllocatorPtr alloc, DissectedUri &dissected_uri)
 {
 	char *auth_token = nullptr;
 
-	for (const auto i : IterableSplitString(dissected_uri.query, '&')) {
+	for (const StringView i : IterableSplitString(dissected_uri.query, '&')) {
 		const auto [name, escaped_value] = i.Split('=');
 		if (!StringView("access_token").Equals(name))
 			continue;

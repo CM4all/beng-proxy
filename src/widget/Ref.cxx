@@ -51,8 +51,8 @@ widget_ref_parse(AllocatorPtr alloc, const char *_p) noexcept
 		if (id.empty())
 			continue;
 
-		char *_id = const_cast<char *>(id.data);
-		_id[id.size] = 0;
+		char *_id = const_cast<char *>(id.data());
+		_id[id.size()] = 0;
 
 		auto wr = alloc.New<WidgetRef>();
 		wr->next = nullptr;
