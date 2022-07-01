@@ -34,6 +34,7 @@
 #include "File.hxx"
 #include "Session.hxx"
 #include "io/BufferedOutputStream.hxx"
+#include "util/SpanCast.hxx"
 
 #include <stdexcept>
 
@@ -111,12 +112,8 @@ public:
 		WriteBuffer(buffer.data(), buffer.size());
 	}
 
-	void Write(StringView s) {
-		Write(s.ToVoid());
-	}
-
 	void Write(std::string_view s) {
-		Write(StringView(s));
+		Write(AsBytes(s));
 	}
 };
 

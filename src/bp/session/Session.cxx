@@ -34,6 +34,7 @@
 #include "http/Address.hxx"
 #include "pool/pool.hxx"
 #include "util/DeleteDisposer.hxx"
+#include "util/StringAPI.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <boost/intrusive/unordered_set.hpp>
