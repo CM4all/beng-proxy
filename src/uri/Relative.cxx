@@ -47,8 +47,8 @@ uri_relative(StringView base, StringView uri) noexcept
 	if (uri.size == base.size - 1 &&
 	    uri.StartsWith(base) &&
 	    base.back() == '/' &&
-	    UriAfterScheme(uri) != nullptr &&
-	    UriAfterScheme(uri).Find('/') == nullptr)
+	    UriAfterScheme(uri).data() != nullptr &&
+	    UriAfterScheme(uri).find('/') == std::string_view::npos)
 		return "";
 
 	return nullptr;

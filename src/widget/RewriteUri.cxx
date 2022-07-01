@@ -81,7 +81,7 @@ uri_replace_hostname(AllocatorPtr alloc, const char *uri,
 {
 	assert(hostname != nullptr);
 
-	const auto old_host = UriHostAndPort(uri);
+	const StringView old_host = UriHostAndPort(uri);
 	if (old_host.IsNull())
 		return *uri == '/'
 			? alloc.Concat("//", hostname, uri)
@@ -112,7 +112,7 @@ uri_add_prefix(AllocatorPtr alloc, const char *uri, const char *absolute_uri,
 			/* unknown old host name, we cannot do anything useful */
 			return uri;
 
-		const auto host = UriHostAndPort(absolute_uri);
+		const StringView host = UriHostAndPort(absolute_uri);
 		if (host.IsNull())
 			return uri;
 
@@ -121,7 +121,7 @@ uri_add_prefix(AllocatorPtr alloc, const char *uri, const char *absolute_uri,
 				    '.', host, uri);
 	}
 
-	const auto host = UriHostAndPort(uri);
+	const StringView host = UriHostAndPort(uri);
 	if (host.IsNull())
 		return uri;
 

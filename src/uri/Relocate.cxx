@@ -43,14 +43,14 @@
 static const char *
 MatchUriHost(const char *uri, const char *host) noexcept
 {
-	const auto &h = UriHostAndPort(uri);
-	if (!h.IsNull()) {
+	const auto h = UriHostAndPort(uri);
+	if (h.data() != nullptr) {
 		if (host == nullptr)
 			/* this is URI_SCHEME_UNIX, and its host cannot be
 			   verified */
 			return nullptr;
 
-		if (memcmp(h.data, host, h.size) != 0 || host[h.size] != 0)
+		if (h != host)
 			/* host/port mismatch */
 			return nullptr;
 
