@@ -34,7 +34,8 @@
 
 #include "io/FdType.hxx"
 
-struct StringView;
+#include <string_view>
+
 struct pool;
 struct ChildErrorLogOptions;
 class LhttpStock;
@@ -68,7 +69,7 @@ void
 lhttp_stock_fade_all(LhttpStock &ls) noexcept;
 
 void
-lhttp_stock_fade_tag(LhttpStock &ls, StringView tag) noexcept;
+lhttp_stock_fade_tag(LhttpStock &ls, std::string_view tag) noexcept;
 
 void
 lhttp_stock_get(LhttpStock *lhttp_stock,

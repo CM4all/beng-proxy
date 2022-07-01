@@ -34,14 +34,13 @@
 #include "ChildStockItem.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "io/UniqueFileDescriptor.hxx"
-#include "util/StringView.hxx"
 
 #include <cassert>
 
-StringView
+std::string_view
 ChildStockClass::GetChildTag(void *) const noexcept
 {
-	return nullptr;
+	return {};
 }
 
 std::unique_ptr<ChildStockItem>
@@ -95,7 +94,7 @@ ChildStockMap::ChildStockMap(EventLoop &event_loop, SpawnService &_spawn_service
 }
 
 void
-ChildStockMap::FadeTag(StringView tag) noexcept
+ChildStockMap::FadeTag(std::string_view tag) noexcept
 {
 	map.FadeIf([tag](const StockItem &_item) {
 		const auto &item = (const ChildStockItem &)_item;

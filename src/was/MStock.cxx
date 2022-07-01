@@ -119,7 +119,7 @@ public:
 		 child(_child) {}
 
 	[[gnu::pure]]
-	StringView GetTag() const noexcept {
+	std::string_view GetTag() const noexcept {
 		return child.GetTag();
 	}
 
@@ -174,7 +174,7 @@ MultiWasStock::WantStderrPond(void *info) const noexcept
 	return params.options.stderr_pond;
 }
 
-StringView
+std::string_view
 MultiWasStock::GetChildTag(void *info) const noexcept
 {
 	const auto &params = *(const CgiChildParams *)info;
@@ -212,10 +212,8 @@ MultiWasStock::Create(CreateStockItem c, StockItem &shared_item)
 }
 
 void
-MultiWasStock::FadeTag(StringView tag) noexcept
+MultiWasStock::FadeTag(std::string_view tag) noexcept
 {
-	assert(tag != nullptr);
-
 	mchild_stock.FadeIf([tag](const StockItem &item){
 		const auto &child = (const MultiWasChild &)item;
 		return child.IsTag(tag);

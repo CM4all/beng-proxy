@@ -76,7 +76,7 @@ public:
 		mchild_stock.FadeAll();
 	}
 
-	void FadeTag(StringView tag) noexcept;
+	void FadeTag(std::string_view tag) noexcept;
 
 	void Get(const LhttpAddress &address,
 		 StockGetHandler &handler,
@@ -91,7 +91,7 @@ private:
 
 	/* virtual methods from class ChildStockClass */
 	bool WantStderrPond(void *info) const noexcept override;
-	StringView GetChildTag(void *info) const noexcept override;
+	std::string_view GetChildTag(void *info) const noexcept override;
 	void PrepareChild(void *info, PreparedChildProcess &p) override;
 
 	/* virtual methods from class ChildStockMapClass */
@@ -135,7 +135,7 @@ public:
 	}
 
 	gcc_pure
-	StringView GetTag() const noexcept {
+	std::string_view GetTag() const noexcept {
 		return child.GetTag();
 	}
 
@@ -271,7 +271,7 @@ LhttpStock::GetChildBacklog(void *info) const noexcept
 	return address.concurrency * 2;
 }
 
-StringView
+std::string_view
 LhttpStock::GetChildTag(void *info) const noexcept
 {
 	const auto &address = *(const LhttpAddress *)info;
@@ -331,10 +331,8 @@ LhttpStock::LhttpStock(unsigned limit, unsigned max_idle,
 }
 
 void
-LhttpStock::FadeTag(StringView tag) noexcept
+LhttpStock::FadeTag(std::string_view tag) noexcept
 {
-	assert(tag != nullptr);
-
 	mchild_stock.FadeIf([tag](const StockItem &_item){
 		auto &item = (const ChildStockItem &)_item;
 		return StringListContains(item.GetTag(), '\0',
@@ -371,7 +369,7 @@ lhttp_stock_fade_all(LhttpStock &ls) noexcept
 }
 
 void
-lhttp_stock_fade_tag(LhttpStock &ls, StringView tag) noexcept
+lhttp_stock_fade_tag(LhttpStock &ls, std::string_view tag) noexcept
 {
 	ls.FadeTag(tag);
 }

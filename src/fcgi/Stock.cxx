@@ -91,7 +91,7 @@ public:
 		child_stock.GetStockMap().FadeAll();
 	}
 
-	void FadeTag(StringView tag) noexcept;
+	void FadeTag(std::string_view tag) noexcept;
 
 private:
 	/* virtual methods from class StockClass */
@@ -110,7 +110,7 @@ private:
 		return 4;
 	}
 
-	StringView GetChildTag(void *info) const noexcept override;
+	std::string_view GetChildTag(void *info) const noexcept override;
 	void PrepareChild(void *info, PreparedChildProcess &p) override;
 
 	/* virtual methods from class ListenChildStockClass */
@@ -150,7 +150,7 @@ struct FcgiConnection final : StockItem {
 	~FcgiConnection() noexcept override;
 
 	[[gnu::pure]]
-	StringView GetTag() const noexcept {
+	std::string_view GetTag() const noexcept {
 		assert(child != nullptr);
 
 		return child->GetTag();
@@ -241,7 +241,7 @@ FcgiStock::WantStderrPond(void *info) const noexcept
 	return params.options.stderr_pond;
 }
 
-StringView
+std::string_view
 FcgiStock::GetChildTag(void *info) const noexcept
 {
 	const auto &params = *(const CgiChildParams *)info;
@@ -388,10 +388,8 @@ FcgiStock::FcgiStock(unsigned limit, unsigned max_idle,
 		     limit, max_idle) {}
 
 void
-FcgiStock::FadeTag(StringView tag) noexcept
+FcgiStock::FadeTag(std::string_view tag) noexcept
 {
-	assert(tag != nullptr);
-
 	hstock.FadeIf([tag](const StockItem &item){
 		const auto &connection = (const FcgiConnection &)item;
 		return StringListContains(connection.GetTag(), '\0', tag);
@@ -423,7 +421,7 @@ fcgi_stock_fade_all(FcgiStock &fs) noexcept
 }
 
 void
-fcgi_stock_fade_tag(FcgiStock &fs, StringView tag) noexcept
+fcgi_stock_fade_tag(FcgiStock &fs, std::string_view tag) noexcept
 {
 	fs.FadeTag(tag);
 }

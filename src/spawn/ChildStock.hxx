@@ -70,7 +70,7 @@ public:
 	virtual bool WantStderrPond(void *) const noexcept = 0;
 
 	[[gnu::pure]]
-	virtual StringView GetChildTag(void *info) const noexcept;
+	virtual std::string_view GetChildTag(void *info) const noexcept;
 
 	virtual std::unique_ptr<ChildStockItem> CreateChild(CreateStockItem c,
 							    void *info,
@@ -206,7 +206,7 @@ public:
 	/**
 	 * "Fade" all child processes with the given tag.
 	 */
-	void FadeTag(StringView tag) noexcept;
+	void FadeTag(std::string_view tag) noexcept;
 
 	/**
 	 * Kill the oldest idle child process across all stocks.

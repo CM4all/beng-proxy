@@ -68,7 +68,7 @@ public:
 		mchild_stock.FadeAll();
 	}
 
-	void FadeTag(StringView tag) noexcept;
+	void FadeTag(std::string_view tag) noexcept;
 
 	/**
 	 * The resulting #StockItem will be a #WasStockConnection
@@ -91,7 +91,7 @@ private:
 
 	/* virtual methods from class ChildStockClass */
 	bool WantStderrPond(void *info) const noexcept override;
-	StringView GetChildTag(void *info) const noexcept override;
+	std::string_view GetChildTag(void *info) const noexcept override;
 	std::unique_ptr<ChildStockItem> CreateChild(CreateStockItem c,
 						    void *info,
 						    ChildStock &child_stock) override;

@@ -38,7 +38,6 @@
 #include "stock/Item.hxx"
 #include "io/UniqueFileDescriptor.hxx"
 #include "util/IntrusiveList.hxx"
-#include "util/StringView.hxx"
 
 #include <memory>
 #include <string>
@@ -86,8 +85,11 @@ public:
 		   const ChildErrorLogOptions &log_options);
 
 	[[gnu::pure]]
-	StringView GetTag() const noexcept {
-		return tag.empty() ? nullptr : StringView{std::string_view{tag}};
+	std::string_view GetTag() const noexcept {
+		if (tag.empty())
+			return {};
+
+		return tag;
 	}
 
 	[[gnu::pure]]

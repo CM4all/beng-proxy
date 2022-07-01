@@ -33,8 +33,8 @@
 #pragma once
 
 #include <span>
+#include <string_view>
 
-struct StringView;
 struct ChildErrorLogOptions;
 class StockItem;
 class FcgiStock;
@@ -60,7 +60,7 @@ void
 fcgi_stock_fade_all(FcgiStock &fs) noexcept;
 
 void
-fcgi_stock_fade_tag(FcgiStock &fs, StringView tag) noexcept;
+fcgi_stock_fade_tag(FcgiStock &fs, std::string_view tag) noexcept;
 
 /**
  * Throws exception on error.
