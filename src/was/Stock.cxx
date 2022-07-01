@@ -75,7 +75,7 @@ public:
 
 	~WasChild() noexcept override;
 
-	bool IsTag(StringView other_tag) const noexcept {
+	bool IsTag(std::string_view other_tag) const noexcept {
 		return StringListContains(tag, '\0', other_tag);
 	}
 
@@ -123,7 +123,7 @@ private:
  */
 
 void
-WasStock::FadeTag(StringView tag) noexcept
+WasStock::FadeTag(std::string_view tag) noexcept
 {
 	stock.FadeIf([tag](const StockItem &item){
 		const auto &child = (const WasChild &)item;

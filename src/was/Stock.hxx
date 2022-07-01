@@ -38,9 +38,9 @@
 #include "net/SocketDescriptor.hxx"
 
 #include <span>
+#include <string_view>
 
 struct pool;
-struct StringView;
 struct ChildOptions;
 struct WasSocket;
 class SpawnService;
@@ -78,7 +78,7 @@ public:
 		stock.FadeAll();
 	}
 
-	void FadeTag(StringView tag) noexcept;
+	void FadeTag(std::string_view tag) noexcept;
 
 	/**
 	 * The resulting #StockItem will be a #WasStockConnection
