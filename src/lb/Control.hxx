@@ -36,7 +36,8 @@
 #include "control/Server.hxx"
 #include "io/Logger.hxx"
 
-struct StringView;
+#include <string_view>
+
 struct LbInstance;
 struct LbControlConfig;
 template<typename T> struct ConstBuffer;
@@ -71,7 +72,7 @@ private:
 	void FadeNode(const char *payload, size_t length);
 
 	void QueryNodeStatus(ControlServer &control_server,
-			     StringView payload,
+			     std::string_view payload,
 			     SocketAddress address);
 
 	void QueryStats(ControlServer &control_server, SocketAddress address);

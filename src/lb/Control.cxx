@@ -40,6 +40,8 @@
 #include "net/FailureManager.hxx"
 #include "net/FailureRef.hxx"
 #include "util/Exception.hxx"
+#include "util/SpanCast.hxx"
+#include "util/StringSplit.hxx"
 
 #ifdef HAVE_AVAHI
 #include "lib/avahi/Publisher.hxx"
@@ -209,24 +211,23 @@ static void
 node_status_response(ControlServer *server,
 		     struct pool &pool,
 		     SocketAddress address,
-		     StringView payload, const char *status)
+		     std::string_view payload, std::string_view status)
 {
-	size_t status_length = strlen(status);
-
-	size_t response_length = payload.size + 1 + status_length;
+	size_t response_length = payload.size() + 1 + status.size();
 	char *response = PoolAlloc<char>(pool, response_length);
-	memcpy(response, payload.data, payload.size);
-	response[payload.size] = 0;
-	memcpy(response + payload.size + 1, status, status_length);
+
+	auto *p = std::copy(payload.begin(), payload.end(), response);
+	*p++ = 0;
+	std::copy(status.begin(), status.end(), p);
 
 	server->Reply(address,
 		      ControlCommand::NODE_STATUS,
-		      std::as_bytes(std::span{response, response_length}));
+		      AsBytes(std::string_view{response, response_length}));
 }
 
 inline void
 LbControl::QueryNodeStatus(ControlServer &control_server,
-			   StringView payload,
+			   std::string_view payload,
 			   SocketAddress address)
 try {
 	if (address.GetSize() == 0) {
@@ -236,17 +237,16 @@ try {
 
 	const TempPoolLease tpool;
 
-	const char *colon = payload.Find(':');
-	if (colon == nullptr || colon == payload.data || colon == payload.data + payload.size - 1) {
+	const auto [_node_name, _port_string] = Split(payload, ':');
+	if (_node_name.empty() || _port_string.empty()) {
 		logger(3, "malformed NODE_STATUS control packet: no port");
 		node_status_response(&control_server, tpool, address,
 				     payload, "malformed");
 		return;
 	}
 
-	char *node_name = p_strdup(tpool, payload);
-	char *port_string = node_name + (colon - payload.data);
-	*port_string++ = 0;
+	char *node_name = p_strdup(tpool, _node_name);
+	char *port_string = p_strdup(tpool, _port_string);
 
 	const auto *node = instance.config.FindNode(node_name);
 	if (node == nullptr) {
@@ -339,7 +339,7 @@ LbControl::OnControlPacket(ControlServer &control_server,
 
 	case ControlCommand::NODE_STATUS:
 		QueryNodeStatus(control_server,
-				StringView(payload),
+				ToStringView(payload),
 				address);
 		break;
 
