@@ -41,7 +41,7 @@ public:
 	explicit StockLoggerDomain(const AbstractStock &_stock) noexcept
 		:stock(_stock) {}
 
-	StringView GetDomain() const {
+	std::string_view GetDomain() const noexcept {
 		return stock.GetName();
 	}
 };
