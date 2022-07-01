@@ -34,7 +34,6 @@
 
 #include "util/Expiry.hxx"
 #include "util/AllocatedString.hxx"
-#include "util/StringView.hxx"
 #include "util/IntrusiveList.hxx"
 
 struct CookieData {

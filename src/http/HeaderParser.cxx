@@ -35,9 +35,9 @@
 #include "strmap.hxx"
 #include "memory/GrowingBuffer.hxx"
 #include "http/HeaderName.hxx"
-#include "util/StringView.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StaticFifoBuffer.hxx"
+#include "util/StringSplit.hxx"
 #include "util/StringStrip.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -66,14 +66,14 @@ bool
 header_parse_line(AllocatorPtr alloc, StringMap &headers,
 		  std::string_view line) noexcept
 {
-	auto [name, value] = StringView{line}.Split(':');
+	auto [name, value] = Split(line, ':');
 
-	if (gcc_unlikely(value.IsNull() ||
+	if (gcc_unlikely(value.data() == nullptr ||
 			 !http_header_name_valid(name) ||
 			 !IsValidHeaderValue(value)))
 		return false;
 
-	value.StripLeft();
+	value = StripLeft(value);
 
 	headers.Add(alloc, alloc.DupToLower(name), alloc.DupZ(value));
 	return true;

@@ -36,7 +36,7 @@
 
 #pragma once
 
-#include "util/StringView.hxx"
+#include <string_view>
 
 class AllocatorPtr;
 class StringMap;
