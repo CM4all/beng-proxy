@@ -65,7 +65,7 @@ struct DelegateArgs {
 		char *options_end = options.MakeId(options_buffer);
 		if (options_end > options_buffer)
 			key = alloc.Concat(key, '|',
-					   StringView{options_buffer, options_end});
+					   std::string_view{options_buffer, std::size_t(options_end - options_buffer)});
 
 		return key;
 	}
