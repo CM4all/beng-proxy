@@ -39,11 +39,14 @@
 #include "http/Date.hxx"
 #include "http/PHeaderUtil.hxx"
 #include "http/PList.hxx"
-#include "util/StringView.hxx"
 #include "util/IterableSplitString.hxx"
+#include "util/StringCompare.hxx"
+#include "util/StringStrip.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <stdlib.h>
+
+using std::string_view_literals::operator""sv;
 
 /* check whether the request could produce a cacheable response */
 std::optional<HttpCacheRequestInfo>
@@ -70,14 +73,14 @@ http_cache_request_evaluate(http_method_t method,
 	bool only_if_cached = false;
 
 	if (const char *cache_control = headers.Get("cache-control")) {
-		for (auto s : IterableSplitString(cache_control, ',')) {
-			s.Strip();
+		for (std::string_view s : IterableSplitString(cache_control, ',')) {
+			s = Strip(s);
 
 			if (obey_no_cache &&
-			    (s.Equals("no-cache") || s.Equals("no-store")))
+			    (s == "no-cache"sv || s == "no-store"sv))
 				return std::nullopt;
 
-			if (s.Equals("only-if-cached"))
+			if (s == "only-if-cached"sv)
 				only_if_cached = true;
 		}
 	} else if (obey_no_cache) {
@@ -200,24 +203,22 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 	HttpCacheResponseInfo info;
 	info.expires = std::chrono::system_clock::from_time_t(-1);
 	if (const char *cache_control = headers.Get("cache-control")) {
-		for (auto s : IterableSplitString(cache_control, ',')) {
-			s.Strip();
+		for (std::string_view s : IterableSplitString(cache_control, ',')) {
+			s = Strip(s);
 
-			if (s.StartsWith("private") ||
-			    s.Equals("no-cache") || s.Equals("no-store"))
+			if (s.starts_with("private"sv) ||
+			    s == "no-cache"sv || s == "no-store"sv)
 				return std::nullopt;
 
-			if (s.StartsWith("max-age=")) {
+			if (SkipPrefix(s, "max-age="sv)) {
 				/* RFC 2616 14.9.3 */
 				char value[16];
 				int seconds;
 
-				StringView param(s.data + 8, s.size - 8);
-				if (param.size >= sizeof(value))
+				if (s.size() >= sizeof(value))
 					continue;
 
-				memcpy(value, param.data, param.size);
-				value[param.size] = 0;
+				*std::copy(s.begin(), s.end(), value) = 0;
 
 				seconds = atoi(value);
 				if (seconds > 0)
