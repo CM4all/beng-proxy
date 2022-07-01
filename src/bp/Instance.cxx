@@ -236,10 +236,8 @@ BpInstance::FadeChildren() noexcept
 }
 
 void
-BpInstance::FadeTaggedChildren(StringView tag) noexcept
+BpInstance::FadeTaggedChildren(std::string_view tag) noexcept
 {
-	assert(tag != nullptr);
-
 	if (lhttp_stock != nullptr)
 		lhttp_stock_fade_tag(*lhttp_stock, tag);
 

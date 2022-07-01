@@ -51,7 +51,6 @@
 #include <map>
 #include <memory>
 
-struct StringView;
 class AccessLogGlue;
 class WasStock;
 class MultiWasStock;
@@ -223,7 +222,7 @@ struct BpInstance final : PInstance, ControlHandler, SpawnServerClientHandler,
 	 * Handler for #CONTROL_FADE_CHILDREN
 	 */
 	void FadeChildren() noexcept;
-	void FadeTaggedChildren(StringView tag) noexcept;
+	void FadeTaggedChildren(std::string_view tag) noexcept;
 
 	void ShutdownCallback() noexcept;
 

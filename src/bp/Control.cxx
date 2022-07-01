@@ -45,7 +45,7 @@
 #include "pool/pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "io/Logger.hxx"
-#include "util/ConstBuffer.hxx"
+#include "util/SpanCast.hxx"
 #include "stopwatch.hxx"
 
 #ifdef HAVE_AVAHI
@@ -81,8 +81,7 @@ control_tcache_invalidate(BpInstance *instance, std::span<const std::byte> paylo
 
 	instance->translation_caches
 		->Invalidate(request,
-			     ConstBuffer<TranslationCommand>(request.commands.data(),
-							     request.commands.size()),
+			     request.commands,
 			     request.site);
 }
 
@@ -156,7 +155,7 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 	case ControlCommand::FADE_CHILDREN:
 		if (!payload.empty())
 			/* tagged fade is allowed for any unprivileged client */
-			FadeTaggedChildren(StringView{ConstBuffer<char>::FromVoid(payload)});
+			FadeTaggedChildren(ToStringView(payload));
 		else if (is_privileged)
 			/* unconditional fade is only allowed for privileged
 			   clients */
@@ -202,7 +201,7 @@ BpInstance::OnControlPacket(ControlServer &control_server,
 
 	case ControlCommand::DISCARD_SESSION:
 		if (!payload.empty() && session_manager)
-			session_manager->DiscardAttachSession(ConstBuffer<std::byte>::FromVoid(payload));
+			session_manager->DiscardAttachSession(payload);
 		break;
 
 	case ControlCommand::FLUSH_HTTP_CACHE:
