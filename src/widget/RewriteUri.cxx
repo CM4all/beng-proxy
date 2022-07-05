@@ -40,8 +40,9 @@
 #include "pool/LeakDetector.hxx"
 #include "pool/SharedPtr.hxx"
 #include "pool/tpool.hxx"
-#include "escape/Class.hxx"
 #include "escape/Istream.hxx"
+#include "escape/Class.hxx"
+#include "escape/Pool.hxx"
 #include "istream/TimeoutIstream.hxx"
 #include "istream/DelayedIstream.hxx"
 #include "istream/istream_memory.hxx"
@@ -365,13 +366,8 @@ UriRewriter::ResolverCallback() noexcept
 
 		const TempPoolLease tpool;
 		bool is_unescaped = value.find('&') != value.npos;
-		if (is_unescaped) {
-			char *unescaped = (char *)p_memdup(tpool, value.data(), value.size());
-			value = {
-				unescaped,
-				unescape_inplace(escape, unescaped, value.size()),
-			};
-		}
+		if (is_unescaped)
+			value = unescape_dup(*tpool, *escape, value);
 
 		uri = do_rewrite_widget_uri(alloc, *ctx, widget,
 					    value, mode, stateful,
@@ -437,13 +433,8 @@ rewrite_widget_uri(struct pool &pool,
 
 		const TempPoolLease tpool;
 		if (escape != nullptr && value.data() != nullptr &&
-		    unescape_find(escape, value) != nullptr) {
-			char *unescaped = (char *)p_memdup(tpool, value.data(), value.size());
-			value = {
-				unescaped,
-				unescape_inplace(escape, unescaped, value.size()),
-			};
-		}
+		    unescape_find(escape, value) != nullptr)
+			value = unescape_dup(*tpool, *escape, value);
 
 		uri = do_rewrite_widget_uri(pool, *ctx, widget, value,
 					    mode, stateful,

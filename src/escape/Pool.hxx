@@ -40,3 +40,7 @@ struct escape_class;
 const char *
 escape_dup(AllocatorPtr alloc, const struct escape_class &cls,
 	   std::string_view p) noexcept;
+
+std::string_view
+unescape_dup(AllocatorPtr alloc, const struct escape_class &cls,
+	     std::string_view src) noexcept;

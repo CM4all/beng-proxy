@@ -38,6 +38,7 @@
 #include "util/CharUtil.hxx"
 #include "escape/Class.hxx"
 #include "escape/HTML.hxx"
+#include "escape/Pool.hxx"
 #include "AllocatorPtr.hxx"
 #include "strmap.hxx"
 
@@ -292,11 +293,8 @@ WidgetContainerParser::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 		const TempPoolLease tpool;
 
 		auto value = widget.param.value.ReadStringView();
-		if (value.Find('&') != nullptr) {
-			char *q = (char *)p_memdup(tpool, value.data, value.size);
-			value.size = unescape_inplace(&html_escape_class, q, value.size);
-			value.data = q;
-		}
+		if (value.Find('&') != nullptr)
+			value = unescape_dup(*tpool, html_escape_class, value);
 
 		if (!widget.params.IsEmpty())
 			widget.params.Write("&", 1);

@@ -55,3 +55,14 @@ escape_dup(AllocatorPtr alloc, const struct escape_class &cls,
 	return q;
 }
 
+std::string_view
+unescape_dup(AllocatorPtr alloc, const struct escape_class &cls,
+	     std::string_view src) noexcept
+{
+	char *unescaped = alloc.NewArray<char>(src.size());
+
+	return {
+		unescaped,
+		unescape_buffer(&cls, src, unescaped),
+	};
+}
