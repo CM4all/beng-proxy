@@ -52,6 +52,7 @@
 #include "util/SpanCast.hxx"
 #include "util/Cancellable.hxx"
 #include "util/StringCompare.hxx"
+#include "util/StringSplit.hxx"
 #include "stopwatch.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -76,25 +77,6 @@ parse_uri_mode(const std::string_view s) noexcept
  * The "real" rewriting code
  *
  */
-
-template<typename T>
-constexpr std::pair<std::basic_string_view<T>, std::basic_string_view<T>>
-Partition(const std::basic_string_view<T> haystack,
-	  const typename std::basic_string_view<T>::size_type position) noexcept
-{
-	return {
-		haystack.substr(0, position),
-		haystack.substr(position),
-	};
-}
-
-template<typename T>
-constexpr std::pair<std::basic_string_view<T>, std::basic_string_view<T>>
-Partition(const std::basic_string_view<T> haystack,
-	  const typename std::basic_string_view<T>::const_pointer position) noexcept
-{
-	return Partition(haystack, std::distance(haystack.data(), position));
-}
 
 static constexpr std::string_view
 MakeStringView(const char *begin, const char *end) noexcept
