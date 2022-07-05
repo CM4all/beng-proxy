@@ -293,7 +293,7 @@ WidgetContainerParser::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 		const TempPoolLease tpool;
 
 		auto value = widget.param.value.ReadStringView();
-		if (value.Find('&') != nullptr)
+		if (value.find('&') != value.npos)
 			value = unescape_dup(*tpool, html_escape_class, value);
 
 		if (!widget.params.IsEmpty())
@@ -312,7 +312,7 @@ WidgetContainerParser::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 			return true;
 
 		const auto name = widget.param.name.ReadStringView();
-		if (!header_name_valid(name.data, name.size)) {
+		if (!header_name_valid(name.data(), name.size())) {
 			container.logger(3, "invalid widget HTTP header name");
 			return true;
 		}

@@ -32,7 +32,6 @@
 
 #include "ExpansibleBuffer.hxx"
 #include "pool/pool.hxx"
-#include "util/StringView.hxx"
 #include "util/Poison.hxx"
 
 #include <assert.h>
@@ -119,15 +118,15 @@ ExpansibleBuffer::Set(const void *p, size_t new_size) noexcept
 }
 
 bool
-ExpansibleBuffer::Set(StringView p) noexcept
+ExpansibleBuffer::Set(std::string_view p) noexcept
 {
-	return Set(p.data, p.size);
+	return Set(p.data(), p.size());
 }
 
-ConstBuffer<void>
+std::span<const std::byte>
 ExpansibleBuffer::Read() const noexcept
 {
-	return {buffer, size};
+	return {(const std::byte *)buffer, size};
 }
 
 const char *
@@ -142,7 +141,7 @@ ExpansibleBuffer::ReadString() noexcept
 	return buffer;
 }
 
-StringView
+std::string_view
 ExpansibleBuffer::ReadStringView() const noexcept
 {
 	return { (const char *)buffer, size };

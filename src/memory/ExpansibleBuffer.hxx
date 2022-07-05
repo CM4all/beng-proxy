@@ -34,10 +34,9 @@
 
 #include <cstddef>
 #include <span>
+#include <string_view>
 
 struct pool;
-template<typename T> struct ConstBuffer;
-struct StringView;
 
 /**
  * A buffer which grows automatically.  Compared to growing_buffer, it
@@ -91,16 +90,16 @@ public:
 	 */
 	bool Set(const void *p, size_t new_size) noexcept;
 
-	bool Set(StringView p) noexcept;
+	bool Set(std::string_view p) noexcept;
 
 	[[gnu::pure]]
-	ConstBuffer<void> Read() const noexcept;
+	std::span<const std::byte> Read() const noexcept;
 
 	[[gnu::pure]]
 	const char *ReadString() noexcept;
 
 	[[gnu::pure]]
-	StringView ReadStringView() const noexcept;
+	std::string_view ReadStringView() const noexcept;
 
 	std::span<std::byte> Dup(struct pool &_pool) const noexcept;
 
