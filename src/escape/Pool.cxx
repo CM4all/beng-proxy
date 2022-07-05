@@ -32,12 +32,12 @@
 
 #include "Pool.hxx"
 #include "Class.hxx"
-#include "pool/pool.hxx"
+#include "AllocatorPtr.hxx"
 
 #include <assert.h>
 
-char *
-escape_dup(struct pool *pool, const struct escape_class *cls,
+const char *
+escape_dup(AllocatorPtr alloc, const struct escape_class *cls,
 	   std::string_view p) noexcept
 {
 	assert(cls != nullptr);
@@ -46,9 +46,9 @@ escape_dup(struct pool *pool, const struct escape_class *cls,
 
 	size_t size = cls->escape_size(p);
 	if (size == 0)
-		return p_strdup(*pool, p);
+		return alloc.DupZ(p);
 
-	char *q = (char *)p_malloc(pool, size + 1);
+	char *q = alloc.NewArray<char>(size + 1);
 	size_t out_size = cls->escape(p, q);
 	assert(out_size <= size);
 	q[out_size] = 0;

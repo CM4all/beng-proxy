@@ -34,9 +34,9 @@
 
 #include <string_view>
 
-struct pool;
+class AllocatorPtr;
 struct escape_class;
 
-char *
-escape_dup(struct pool *pool, const struct escape_class *cls,
+const char *
+escape_dup(AllocatorPtr alloc, const struct escape_class *cls,
 	   std::string_view p) noexcept;
