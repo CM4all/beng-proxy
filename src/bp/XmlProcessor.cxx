@@ -56,6 +56,7 @@
 #include "pool/pool.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StringView.hxx"
+#include "util/StringSplit.hxx"
 #include "stopwatch.hxx"
 
 #include <assert.h>
@@ -547,34 +548,18 @@ XmlProcessor::OnXmlTagStart2(const XmlParserTag &xml_tag) noexcept
 	}
 }
 
-static void
-SplitString(StringView in, char separator,
-	    StringView &before, StringView &after) noexcept
-{
-	const char *x = in.Find(separator);
-
-	if (x != nullptr) {
-		before = {in.data, x};
-		after = {x + 1, in.end()};
-	} else {
-		before = in;
-		after = nullptr;
-	}
-}
-
 inline void
 XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 				    UriBase base,
 				    RewriteUriMode mode,
 				    const char *view) noexcept
 {
-	StringView value = attr.value;
+	std::string_view value = attr.value;
 
 	/* this has been checked already by PostponeUriRewrite() */
 	assert(CanRewriteUri(value, MustRewriteEmptyURI()));
 
 	Widget *target_widget = nullptr;
-	StringView child_id, suffix;
 
 	switch (base) {
 	case UriBase::TEMPLATE:
@@ -585,8 +570,8 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 		target_widget = &container;
 		break;
 
-	case UriBase::CHILD:
-		SplitString(value, '/', child_id, suffix);
+	case UriBase::CHILD: {
+		const auto [child_id, suffix] = Split(value, '/');
 
 		target_widget = container.FindChild(p_strdup(GetPool(), child_id));
 		if (target_widget == nullptr)
@@ -594,6 +579,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 
 		value = suffix;
 		break;
+	}
 
 	case UriBase::PARENT:
 		target_widget = container.parent;
@@ -608,13 +594,13 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 	if (target_widget->cls == nullptr && target_widget->class_name == nullptr)
 		return;
 
-	const char *hash = value.Find('#');
+	const auto hash = value.find('#');
 	StringView fragment;
-	if (hash != nullptr) {
+	if (hash != value.npos) {
 		/* save the unescaped fragment part of the URI, don't pass it
 		   to rewrite_widget_uri() */
-		fragment = {hash, value.end()};
-		value = {value.data, hash};
+		fragment = value.substr(hash);
+		value = value.substr(0, hash);
 	} else
 		fragment = nullptr;
 
