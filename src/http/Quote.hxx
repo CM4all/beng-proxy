@@ -32,13 +32,12 @@
 
 #pragma once
 
-#include <stddef.h>
-
-struct StringView;
+#include <cstddef>
+#include <string_view>
 
 [[gnu::pure]]
 bool
-http_must_quote_token(StringView src) noexcept;
+http_must_quote_token(std::string_view src) noexcept;
 
-size_t
-http_quote_string(char *dest, StringView src) noexcept;
+std::size_t
+http_quote_string(char *dest, std::string_view src) noexcept;

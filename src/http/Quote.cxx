@@ -32,10 +32,9 @@
 
 #include "Quote.hxx"
 #include "Chars.hxx"
-#include "util/StringView.hxx"
 
 bool
-http_must_quote_token(StringView src) noexcept
+http_must_quote_token(std::string_view src) noexcept
 {
 	for (auto ch : src)
 		if (!char_is_http_token(ch))
@@ -43,14 +42,14 @@ http_must_quote_token(StringView src) noexcept
 	return false;
 }
 
-size_t
-http_quote_string(char *dest, const StringView src) noexcept
+std::size_t
+http_quote_string(char *dest, const std::string_view src) noexcept
 {
 	size_t dest_pos = 0, src_pos = 0;
 
 	dest[dest_pos++] = '"';
 
-	while (src_pos < src.size) {
+	while (src_pos < src.size()) {
 		if (src[src_pos] == '"' || src[src_pos] == '\\') {
 			dest[dest_pos++] = '\\';
 			dest[dest_pos++] = src[src_pos++];
