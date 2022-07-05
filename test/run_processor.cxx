@@ -67,7 +67,7 @@ embed_inline_widget(struct pool &pool,
 }
 
 RewriteUriMode
-parse_uri_mode(gcc_unused StringView s) noexcept
+parse_uri_mode(std::string_view) noexcept
 {
 	return RewriteUriMode::DIRECT;
 }
@@ -76,7 +76,7 @@ UnusedIstreamPtr
 rewrite_widget_uri(gcc_unused struct pool &pool,
 		   SharedPoolPtr<WidgetContext>, const StopwatchPtr &,
 		   gcc_unused Widget &widget,
-		   gcc_unused StringView value,
+		   std::string_view,
 		   gcc_unused RewriteUriMode mode,
 		   gcc_unused bool stateful,
 		   gcc_unused const char *view,

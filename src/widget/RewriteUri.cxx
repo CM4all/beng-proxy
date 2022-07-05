@@ -50,21 +50,22 @@
 #include "strmap.hxx"
 #include "bp/session/Lease.hxx"
 #include "util/SpanCast.hxx"
-#include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
 #include "stopwatch.hxx"
 #include "AllocatorPtr.hxx"
 
+using std::string_view_literals::operator""sv;
+
 RewriteUriMode
-parse_uri_mode(const StringView s) noexcept
+parse_uri_mode(const std::string_view s) noexcept
 {
-	if (s.Equals("direct"))
+	if (s == "direct"sv)
 		return RewriteUriMode::DIRECT;
-	else if (s.Equals("focus"))
+	else if (s == "focus"sv)
 		return RewriteUriMode::FOCUS;
-	else if (s.Equals("partial"))
+	else if (s == "partial"sv)
 		return RewriteUriMode::PARTIAL;
-	else if (s.Equals("response"))
+	else if (s == "response"sv)
 		return RewriteUriMode::RESPONSE;
 	else
 		return RewriteUriMode::PARTIAL;
@@ -75,23 +76,44 @@ parse_uri_mode(const StringView s) noexcept
  *
  */
 
+template<typename T>
+constexpr std::pair<std::basic_string_view<T>, std::basic_string_view<T>>
+Partition(const std::basic_string_view<T> haystack,
+	  const typename std::basic_string_view<T>::size_type position) noexcept
+{
+	return {
+		haystack.substr(0, position),
+		haystack.substr(position),
+	};
+}
+
+template<typename T>
+constexpr std::pair<std::basic_string_view<T>, std::basic_string_view<T>>
+Partition(const std::basic_string_view<T> haystack,
+	  const typename std::basic_string_view<T>::const_pointer position) noexcept
+{
+	return Partition(haystack, std::distance(haystack.data(), position));
+}
+
 static const char *
 uri_replace_hostname(AllocatorPtr alloc, const std::string_view uri,
 		     const char *hostname) noexcept
 {
 	assert(hostname != nullptr);
 
-	const StringView old_host = UriHostAndPort(uri);
-	if (old_host.IsNull())
+	const std::string_view old_host = UriHostAndPort(uri);
+	if (old_host.data() == nullptr)
 		return uri.starts_with('/')
 			? alloc.Concat("//", hostname, uri)
 			: nullptr;
 
-	const char *colon = old_host.Find(':');
-	const char *end = colon != nullptr ? colon : old_host.end();
+	const auto colon = old_host.find(':');
+	const auto end_pos = colon != old_host.npos ? colon : old_host.size();
+	const char *end = old_host.data() + end_pos;
 
-	return alloc.Concat(StringView{uri.data(), old_host.data},
-			    hostname, end);
+	return alloc.Concat(Partition(uri, old_host.data()).first,
+			    hostname,
+			    Partition(uri, end).second);
 }
 
 static const char *
@@ -398,7 +420,7 @@ rewrite_widget_uri(struct pool &pool,
 		   SharedPoolPtr<WidgetContext> ctx,
 		   const StopwatchPtr &parent_stopwatch,
 		   Widget &widget,
-		   StringView value,
+		   std::string_view  value,
 		   RewriteUriMode mode, bool stateful,
 		   const char *view,
 		   const struct escape_class *escape) noexcept
@@ -425,11 +447,13 @@ rewrite_widget_uri(struct pool &pool,
 			return nullptr;
 
 		const TempPoolLease tpool;
-		if (escape != nullptr && !value.IsNull() &&
+		if (escape != nullptr && value.data() != nullptr &&
 		    unescape_find(escape, value) != nullptr) {
-			char *unescaped = (char *)p_memdup(tpool, value.data, value.size);
-			value.size = unescape_inplace(escape, unescaped, value.size);
-			value.data = unescaped;
+			char *unescaped = (char *)p_memdup(tpool, value.data(), value.size());
+			value = {
+				unescaped,
+				unescape_inplace(escape, unescaped, value.size()),
+			};
 		}
 
 		uri = do_rewrite_widget_uri(pool, *ctx, widget, value,

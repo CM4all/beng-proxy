@@ -36,13 +36,14 @@
 
 #pragma once
 
+#include <string_view>
+
 struct pool;
 struct WidgetContext;
 template<typename T> class SharedPoolPtr;
 class StopwatchPtr;
 class UnusedIstreamPtr;
 class Widget;
-struct StringView;
 struct escape_class;
 
 enum class RewriteUriMode {
@@ -59,7 +60,7 @@ enum class RewriteUriMode {
 
 [[gnu::pure]]
 RewriteUriMode
-parse_uri_mode(StringView s) noexcept;
+parse_uri_mode(std::string_view s) noexcept;
 
 /**
  * @param untrusted_host the value of the UNTRUSTED translation
@@ -73,7 +74,7 @@ rewrite_widget_uri(struct pool &pool,
 		   SharedPoolPtr<WidgetContext> ctx,
 		   const StopwatchPtr &parent_stopwatch,
 		   Widget &widget,
-		   StringView value,
+		   std::string_view value,
 		   RewriteUriMode mode, bool stateful,
 		   const char *view,
 		   const struct escape_class *escape) noexcept;
