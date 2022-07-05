@@ -277,7 +277,7 @@ class Response:
     def response_header(self, name, value):
         assert isinstance(name, (str, bytes))
         assert isinstance(value, (str, bytes))
-        return self.packet(TRANSLATE_REQUEST_HEADER,
+        return self.packet(TRANSLATE_HEADER,
                            six.ensure_binary(name) + b':' + six.ensure_binary(value))
 
     def request_header(self, name, value):
