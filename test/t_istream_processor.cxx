@@ -40,6 +40,7 @@
 #include "widget/Ptr.hxx"
 #include "widget/Class.hxx"
 #include "widget/Context.hxx"
+#include "http/Address.hxx"
 #include "bp/XmlProcessor.hxx"
 #include "widget/Inline.hxx"
 #include "widget/Registry.hxx"
@@ -50,28 +51,64 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+using std::string_view_literals::operator""sv;
+
 class EventLoop;
 
 const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
 
+static WidgetClass *
+MakeWidgetClass(struct pool &pool, const char *name) noexcept
+{
+
+	if (StringIsEqual(name, "processed")) {
+		auto *address = NewFromPool<HttpAddress>(pool, false,
+							 "widget.server",
+							 "/processed/");
+
+		auto *cls = NewFromPool<WidgetClass>(pool);
+		cls->views.address = *address;
+		return cls;
+	}
+
+	return nullptr;
+}
+
 void
 WidgetRegistry::LookupWidgetClass(struct pool &,
-				  struct pool &,
-				  const char *,
+				  struct pool &widget_pool,
+				  const char *name,
 				  WidgetRegistryCallback callback,
 				  CancellablePointer &) noexcept
 {
 	(void)translation_service; // suppress -Wunused-private-field
 
-	callback(nullptr);
+	callback(MakeWidgetClass(widget_pool, name));
 }
 
 UnusedIstreamPtr
-embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext>,
-		    const StopwatchPtr &,
+embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext> ctx,
+		    const StopwatchPtr &stopwatch,
 		    gcc_unused bool plain_text,
 		    Widget &widget) noexcept
 {
+	widget.cls = MakeWidgetClass(widget.pool, widget.class_name);
+	if (widget.cls != nullptr) {
+		widget.from_request.view = widget.from_template.view = &widget.cls->views;
+	}
+
+	if (StringIsEqual(widget.class_name, "processed")) {
+		auto body = istream_string_new(pool, R"html(
+<META http-equiv="refresh" content="999;URL='refresh'">Refresh</meta>
+<a href="relative">
+)html"sv);
+
+		return processor_process(pool, stopwatch,
+					 std::move(body),
+					 widget, ctx,
+					 PROCESSOR_REWRITE_URL|PROCESSOR_FOCUS_WIDGET|PROCESSOR_PREFIX_XML_ID);
+	}
+
 	return istream_string_new(pool, p_strdup(&pool, widget.class_name));
 }
 
@@ -82,6 +119,10 @@ foo &c:url;
 <script><c:widget id="foo" type="bar"/></script>
 bar
 <b>http://localhost:8080/beng.html?%27%%22%3c%3e</b>
+
+<META http-equiv="refresh" content="999;URL='/beng.html?&apos;%&quot;&lt;&gt;;focus=p&amp;path=refresh'">Refresh</meta>
+<a href="/beng.html?&apos;%&quot;&lt;&gt;;focus=p&amp;path=relative">
+
 )html";
 
 	static constexpr bool call_available = true;
@@ -95,6 +136,7 @@ foo &c:url;
 <script><c:widget id="foo" type="bar"/></script>
 <c:widget id="foo" type="bar"/>
 <b>&c:uri;</b>
+<c:widget id="p" type="processed"/>
 )html");
 	}
 
