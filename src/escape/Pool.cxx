@@ -38,7 +38,7 @@
 
 char *
 escape_dup(struct pool *pool, const struct escape_class *cls,
-	   StringView p)
+	   std::string_view p) noexcept
 {
 	assert(cls != nullptr);
 	assert(cls->escape_size != nullptr);

@@ -32,10 +32,11 @@
 
 #pragma once
 
+#include <string_view>
+
 struct pool;
 struct escape_class;
-struct StringView;
 
 char *
 escape_dup(struct pool *pool, const struct escape_class *cls,
-	   StringView p);
+	   std::string_view p) noexcept;
