@@ -32,10 +32,9 @@
 
 #pragma once
 
-#include "util/StringView.hxx"
-
 #include <utility>
 #include <cinttypes>
+#include <string_view>
 
 #include <stdio.h>
 
@@ -99,7 +98,7 @@ private:
 	}
 
 public:
-	void WriteValue(StringView value) noexcept {
+	void WriteValue(std::string_view value) noexcept {
 		WriteRaw('"');
 
 		for (const char ch : value)

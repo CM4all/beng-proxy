@@ -32,7 +32,6 @@
 
 #include "AllocatorPtr.hxx"
 #include "pool/PSocketAddress.hxx"
-#include "util/StringView.hxx"
 
 using std::string_view_literals::operator""sv;
 
