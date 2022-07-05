@@ -115,14 +115,14 @@ HandleSet(LbConfig &config, const char *argv0, const char *p)
 	if (eq == p)
 		arg_error(argv0, "No name found in --set argument");
 
-	const StringView name(p, eq - p);
+	const std::string_view name(p, eq - p);
 	const char *const value = eq + 1;
 
 	try {
 		config.HandleSet(name, value);
 	} catch (const std::runtime_error &e) {
 		arg_error(argv0, "Error while parsing \"--set %.*s\": %s",
-			  (int)name.size, name.data, e.what());
+			  (int)name.size(), name.data(), e.what());
 	}
 }
 
