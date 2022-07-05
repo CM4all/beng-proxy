@@ -54,6 +54,8 @@
 #include "util/PrintException.hxx"
 #include "util/StaticVector.hxx"
 #include "util/StringAPI.hxx"
+#include "util/StringSplit.hxx"
+#include "util/StringStrip.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <sys/types.h>
@@ -201,12 +203,12 @@ try {
 			if (i >= argc)
 				throw std::runtime_error("Header value missing");
 
-			auto [name, value] = StringView{argv[i++]}.Split(':');
-			name.Strip();
-			if (!http_header_name_valid(name) || value == nullptr)
+			auto [name, value] = Split(std::string_view{argv[i++]}, ':');
+			name = Strip(name);
+			if (!http_header_name_valid(name) || value.data() == nullptr)
 				throw std::runtime_error("Malformed header");
 
-			value.StripLeft();
+			value = StripLeft(value);
 
 			AllocatorPtr alloc(context.root_pool);
 			headers.Add(alloc, alloc.DupToLower(name), alloc.DupZ(value));
