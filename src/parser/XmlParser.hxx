@@ -33,7 +33,8 @@
 #pragma once
 
 #include "memory/ExpansibleBuffer.hxx"
-#include "util/StringView.hxx"
+
+#include <string_view>
 
 #include <assert.h>
 #include <sys/types.h>
@@ -51,13 +52,13 @@ enum class XmlParserTagType {
 
 struct XmlParserTag {
 	off_t start, end;
-	StringView name;
+	std::string_view name;
 	XmlParserTagType type;
 };
 
 struct XmlParserAttribute {
 	off_t name_start, value_start, value_end, end;
-	StringView name, value;
+	std::string_view name, value;
 };
 
 class XmlParserHandler {
@@ -77,7 +78,7 @@ public:
 	virtual bool OnXmlTagFinished(const XmlParserTag &tag) noexcept = 0;
 
 	virtual void OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept = 0;
-	virtual size_t OnXmlCdata(StringView text, bool escaped,
+	virtual size_t OnXmlCdata(std::string_view text, bool escaped,
 				  off_t start) noexcept = 0;
 };
 

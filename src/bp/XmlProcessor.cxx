@@ -215,7 +215,7 @@ private:
 	}
 
 	void PostponeUriRewrite(off_t start, off_t end,
-				StringView value) noexcept;
+				std::string_view value) noexcept;
 
 	void PostponeUriRewrite(const XmlParserAttribute &attr) noexcept {
 		PostponeUriRewrite(attr.value_start, attr.value_end, attr.value);
@@ -271,14 +271,14 @@ private:
 
 	bool WidgetElementFinished(const XmlParserTag &tag,
 				   WidgetPtr &&child_widget) noexcept override;
-	bool OnProcessingInstruction(StringView name) noexcept override;
+	bool OnProcessingInstruction(std::string_view name) noexcept override;
 	bool OnXmlTagStart2(const XmlParserTag &tag) noexcept override;
 
 	/* virtual methods from class XmlParserHandler */
 	bool OnXmlTagStart(const XmlParserTag &tag) noexcept override;
 	bool OnXmlTagFinished(const XmlParserTag &tag) noexcept override;
 	void OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept override;
-	size_t OnXmlCdata(StringView text, bool escaped,
+	size_t OnXmlCdata(std::string_view text, bool escaped,
 			  off_t start) noexcept override;
 
 	/**
@@ -306,7 +306,7 @@ private:
  */
 gcc_pure
 static bool
-CanRewriteUri(StringView uri, bool rewrite_empty) noexcept
+CanRewriteUri(std::string_view uri, bool rewrite_empty) noexcept
 {
 	if (uri.empty())
 		/* an empty URI is a reference to the current document and
@@ -317,8 +317,8 @@ CanRewriteUri(StringView uri, bool rewrite_empty) noexcept
 		/* can't rewrite URI fragments */
 		return false;
 
-	if (uri.StartsWith("data:") ||
-	    uri.StartsWith("mailto:") || uri.StartsWith("javascript:"))
+	if (uri.starts_with("data:"sv) ||
+	    uri.starts_with("mailto:"sv) || uri.starts_with("javascript:"sv))
 		/* ignore data, email and JavaScript links */
 		return false;
 
@@ -331,7 +331,7 @@ CanRewriteUri(StringView uri, bool rewrite_empty) noexcept
 
 void
 XmlProcessor::PostponeUriRewrite(off_t start, off_t end,
-				 StringView value) noexcept
+				 std::string_view value) noexcept
 {
 	assert(start <= end);
 
@@ -385,7 +385,7 @@ XmlProcessor::DeleteUriRewrite(off_t start, off_t end) noexcept
 inline void
 XmlProcessor::PostponeRefreshRewrite(const XmlParserAttribute &attr) noexcept
 {
-	auto p = Split(std::string_view{attr.value}, ';').second;
+	auto p = Split(attr.value, ';').second;
 	if (p.data() == nullptr || p.size() < 7 ||
 	    !SkipPrefix(p, "URL='"sv) ||
 	    !RemoveSuffix(p, "'"sv))
@@ -395,7 +395,7 @@ XmlProcessor::PostponeRefreshRewrite(const XmlParserAttribute &attr) noexcept
 	   attribute value position, save the original attribute value and
 	   set the "pending" flag */
 
-	const std::size_t delta = p.data() - attr.value.data;
+	const std::size_t delta = p.data() - attr.value.data();
 
 	PostponeUriRewrite(attr.value_start + delta,
 			   attr.value_start + delta + p.size(),
@@ -474,10 +474,10 @@ XmlProcessor::StartCdataIstream() noexcept
  */
 
 bool
-XmlProcessor::OnProcessingInstruction(StringView name) noexcept
+XmlProcessor::OnProcessingInstruction(std::string_view name) noexcept
 {
 	if (HasOptionRewriteUrl() &&
-	    name.Equals("cm4all-rewrite-uri")) {
+	    name == "cm4all-rewrite-uri"sv) {
 		InitUriRewrite(Tag::REWRITE_URI);
 		return true;
 	}
@@ -498,43 +498,43 @@ XmlProcessor::OnXmlTagStart(const XmlParserTag &xml_tag) noexcept
 bool
 XmlProcessor::OnXmlTagStart2(const XmlParserTag &xml_tag) noexcept
 {
-	if (xml_tag.name.EqualsIgnoreCase("script")) {
+	if (StringIsEqualIgnoreCase(xml_tag.name, "script"sv)) {
 		InitUriRewrite(Tag::SCRIPT);
 		return true;
-	} else if (xml_tag.name.Equals("c:widget")) {
+	} else if (xml_tag.name == "c:widget"sv) {
 		/* let WidgetContainerParser handle those */
 		return false;
 	} else if (HasOptionStyle() &&
-		   xml_tag.name.EqualsIgnoreCase("style")) {
+		   StringIsEqualIgnoreCase(xml_tag.name, "style"sv)) {
 		tag = Tag::STYLE;
 		return true;
 	} else if (HasOptionRewriteUrl()) {
-		if (xml_tag.name.EqualsIgnoreCase("a")) {
+		if (StringIsEqualIgnoreCase(xml_tag.name, "a"sv)) {
 			InitUriRewrite(Tag::A);
 			return true;
-		} else if (xml_tag.name.EqualsIgnoreCase("link")) {
+		} else if (StringIsEqualIgnoreCase(xml_tag.name, "link"sv)) {
 			/* this isn't actually an anchor, but we are only interested in
 			   the HREF attribute */
 			InitUriRewrite(Tag::A);
 			return true;
-		} else if (xml_tag.name.EqualsIgnoreCase("form")) {
+		} else if (StringIsEqualIgnoreCase(xml_tag.name, "form"sv)) {
 			InitUriRewrite(Tag::FORM);
 			return true;
-		} else if (xml_tag.name.EqualsIgnoreCase("img")) {
+		} else if (StringIsEqualIgnoreCase(xml_tag.name, "img"sv)) {
 			InitUriRewrite(Tag::IMG);
 			return true;
-		} else if (xml_tag.name.EqualsIgnoreCase("iframe") ||
-			   xml_tag.name.EqualsIgnoreCase("embed") ||
-			   xml_tag.name.EqualsIgnoreCase("video") ||
-			   xml_tag.name.EqualsIgnoreCase("audio")) {
+		} else if (StringIsEqualIgnoreCase(xml_tag.name, "iframe"sv) ||
+			   StringIsEqualIgnoreCase(xml_tag.name, "embed"sv) ||
+			   StringIsEqualIgnoreCase(xml_tag.name, "video"sv) ||
+			   StringIsEqualIgnoreCase(xml_tag.name, "audio"sv)) {
 			/* this isn't actually an IMG, but we are only interested
 			   in the SRC attribute */
 			InitUriRewrite(Tag::IMG);
 			return true;
-		} else if (xml_tag.name.EqualsIgnoreCase("param")) {
+		} else if (StringIsEqualIgnoreCase(xml_tag.name, "param"sv)) {
 			InitUriRewrite(Tag::PARAM);
 			return true;
-		} else if (xml_tag.name.EqualsIgnoreCase("meta")) {
+		} else if (StringIsEqualIgnoreCase(xml_tag.name, "meta"sv)) {
 			InitUriRewrite(Tag::META);
 			return true;
 		} else if (HasOptionPrefixAny()) {
@@ -649,7 +649,7 @@ parse_uri_base(StringView s) noexcept
 inline bool
 XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr) noexcept
 {
-	if (attr.name.Equals("c:base")) {
+	if (attr.name == "c:base"sv) {
 		uri_rewrite.base = parse_uri_base(attr.value);
 
 		if (tag != Tag::REWRITE_URI)
@@ -657,7 +657,7 @@ XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr) noexcept
 		return true;
 	}
 
-	if (attr.name.Equals("c:mode")) {
+	if (attr.name == "c:mode"sv) {
 		uri_rewrite.mode = parse_uri_mode(attr.value);
 
 		if (tag != Tag::REWRITE_URI)
@@ -665,11 +665,10 @@ XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr) noexcept
 		return true;
 	}
 
-	if (attr.name.Equals("c:view") &&
-	    attr.value.size < sizeof(uri_rewrite.view)) {
-		memcpy(uri_rewrite.view,
-		       attr.value.data, attr.value.size);
-		uri_rewrite.view[attr.value.size] = 0;
+	if (attr.name == "c:view"sv &&
+	    attr.value.size() < sizeof(uri_rewrite.view)) {
+		*std::copy(attr.value.begin(), attr.value.end(),
+			   uri_rewrite.view) = 0;
 
 		if (tag != Tag::REWRITE_URI)
 			DeleteUriRewrite(attr.name_start, attr.end);
@@ -677,7 +676,7 @@ XmlProcessor::LinkAttributeFinished(const XmlParserAttribute &attr) noexcept
 		return true;
 	}
 
-	if (attr.name.Equals("xmlns:c")) {
+	if (attr.name == "xmlns:c"sv) {
 		/* delete "xmlns:c" attributes */
 		if (tag != Tag::REWRITE_URI)
 			DeleteUriRewrite(attr.name_start, attr.end);
@@ -821,7 +820,7 @@ gcc_pure
 static bool
 IsMetaWithUriContent(StringView name, StringView value) noexcept
 {
-	return name.EqualsIgnoreCase("property") && IsMetaPropertyWithLink(value);
+	return StringIsEqualIgnoreCase(name, "property"sv) && IsMetaPropertyWithLink(value);
 }
 
 void
@@ -834,8 +833,8 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
 		return;
 
 	if (tag == Tag::META &&
-	    attr.name.EqualsIgnoreCase("http-equiv") &&
-	    attr.value.EqualsIgnoreCase("refresh")) {
+	    StringIsEqualIgnoreCase(attr.name, "http-equiv"sv) &&
+	    StringIsEqualIgnoreCase(attr.value, "refresh"sv)) {
 		/* morph Tag::META to Tag::META_REFRESH */
 		tag = Tag::META_REFRESH;
 		return;
@@ -852,7 +851,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
 	       we cannot edit attributes followed by a URI attribute */
 	    !postponed_rewrite.pending &&
 	    IsHtml(tag) &&
-	    attr.name.Equals("class")) {
+	    attr.name == "class"sv) {
 		HandleClassAttribute(attr);
 		return;
 	}
@@ -862,7 +861,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
 	       we cannot edit attributes followed by a URI attribute */
 	    !postponed_rewrite.pending &&
 	    IsHtml(tag) &&
-	    (attr.name.Equals("id") || attr.name.Equals("for"))) {
+	    (attr.name == "id"sv || attr.name == "for"sv)) {
 		HandleIdAttribute(attr);
 		return;
 	}
@@ -872,7 +871,7 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
 	       we cannot edit attributes followed by a URI attribute */
 	    !postponed_rewrite.pending &&
 	    IsHtml(tag) &&
-	    attr.name.Equals("style")) {
+	    attr.name == "style"sv) {
 		HandleStyleAttribute(attr);
 		return;
 	}
@@ -890,42 +889,42 @@ XmlProcessor::OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept
 		break;
 
 	case Tag::IMG:
-		if (attr.name.EqualsIgnoreCase("src"))
+		if (StringIsEqualIgnoreCase(attr.name, "src"sv))
 			PostponeUriRewrite(attr);
 		break;
 
 	case Tag::A:
-		if (attr.name.EqualsIgnoreCase("href")) {
+		if (StringIsEqualIgnoreCase(attr.name, "href"sv)) {
 			PostponeUriRewrite(attr);
 		} else if (HasOptionPrefixId() &&
-			   attr.name.EqualsIgnoreCase("name"))
+			   StringIsEqualIgnoreCase(attr.name, "name"sv))
 			HandleIdAttribute(attr);
 
 		break;
 
 	case Tag::FORM:
-		if (attr.name.EqualsIgnoreCase("action"))
+		if (StringIsEqualIgnoreCase(attr.name, "action"sv))
 			PostponeUriRewrite(attr);
 		break;
 
 	case Tag::SCRIPT:
 		if (HasOptionRewriteUrl() &&
-		    attr.name.EqualsIgnoreCase("src"))
+		    StringIsEqualIgnoreCase(attr.name, "src"sv))
 			PostponeUriRewrite(attr);
 		break;
 
 	case Tag::PARAM:
-		if (attr.name.Equals("value"))
+		if (attr.name == "value"sv)
 			PostponeUriRewrite(attr);
 		break;
 
 	case Tag::META_REFRESH:
-		if (attr.name.EqualsIgnoreCase("content"))
+		if (StringIsEqualIgnoreCase(attr.name, "content"sv))
 			PostponeRefreshRewrite(attr);
 		break;
 
 	case Tag::META_URI_CONTENT:
-		if (attr.name.EqualsIgnoreCase("content"))
+		if (StringIsEqualIgnoreCase(attr.name, "content"sv))
 			PostponeUriRewrite(attr);
 		break;
 
@@ -1076,20 +1075,20 @@ XmlProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 }
 
 size_t
-XmlProcessor::OnXmlCdata(StringView text,
+XmlProcessor::OnXmlCdata(std::string_view text,
 			 gcc_unused bool escaped, off_t start) noexcept
 {
 	had_input = true;
 
 	if (tag == Tag::STYLE_PROCESS) {
 		/* XXX unescape? */
-		size_t length = cdata_istream->InvokeData(text.data, text.size);
+		size_t length = cdata_istream->InvokeData(text.data(), text.size());
 		if (length > 0)
 			ReplaceIstream::Extend(cdata_start, start + length);
 	} else if (widget.widget == nullptr)
-		ReplaceIstream::Settle(start + text.size);
+		ReplaceIstream::Settle(start + text.size());
 
-	return text.size;
+	return text.size();
 }
 
 void

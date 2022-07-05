@@ -70,10 +70,10 @@ public:
 
 	void OnXmlAttributeFinished(gcc_unused const XmlParserAttribute &attr) noexcept override {}
 
-	size_t OnXmlCdata(StringView text, gcc_unused bool escaped,
+	size_t OnXmlCdata(std::string_view text, gcc_unused bool escaped,
 			  gcc_unused off_t start) noexcept override {
-		(void)write(STDOUT_FILENO, text.data, text.size);
-		return text.size;
+		(void)write(STDOUT_FILENO, text.data(), text.size());
+		return text.size();
 	}
 
 	/* virtual methods from class IstreamHandler */

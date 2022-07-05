@@ -122,7 +122,7 @@ protected:
 	virtual bool WidgetElementFinished(const XmlParserTag &widget_tag,
 					   WidgetPtr &&child_widget) noexcept = 0;
 
-	virtual bool OnProcessingInstruction(StringView name) noexcept {
+	virtual bool OnProcessingInstruction(std::string_view name) noexcept {
 		(void)name;
 		return false;
 	}
@@ -136,7 +136,7 @@ private:
 	void CancelWidget() noexcept;
 
 	bool OnStartElementInWidget(XmlParserTagType type,
-				    StringView name) noexcept;
+				    std::string_view name) noexcept;
 
 public:
 	/* virtual methods from class XmlParserHandler */

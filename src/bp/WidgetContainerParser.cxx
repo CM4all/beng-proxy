@@ -36,6 +36,7 @@
 #include "pool/tpool.hxx"
 #include "uri/Escape.hxx"
 #include "util/CharUtil.hxx"
+#include "util/StringCompare.hxx"
 #include "escape/Class.hxx"
 #include "escape/HTML.hxx"
 #include "escape/Pool.hxx"
@@ -43,6 +44,8 @@
 #include "strmap.hxx"
 
 #include <stdexcept>
+
+using std::string_view_literals::operator""sv;
 
 WidgetContainerParser::WidgetContainerParser(struct pool &_pool,
 					     Widget &_container,
@@ -62,25 +65,25 @@ WidgetContainerParser::CancelWidget() noexcept
 
 inline bool
 WidgetContainerParser::OnStartElementInWidget(XmlParserTagType type,
-					      StringView name) noexcept
+					      std::string_view name) noexcept
 {
-	name.SkipPrefix("c:");
+	SkipPrefix(name, "c:"sv);
 
-	if (name.Equals("widget")) {
+	if (name == "widget"sv) {
 		if (type == XmlParserTagType::CLOSE)
 			tag = Tag::WIDGET;
-	} else if (name.Equals("path-info")) {
+	} else if (name == "path-info"sv) {
 		tag = Tag::WIDGET_PATH_INFO;
-	} else if (name.Equals("param") ||
-		   name.Equals("parameter")) {
+	} else if (name == "param"sv ||
+		   name == "parameter"sv) {
 		tag = Tag::WIDGET_PARAM;
 		widget.param.name.Clear();
 		widget.param.value.Clear();
-	} else if (name.Equals("header")) {
+	} else if (name == "header"sv) {
 		tag = Tag::WIDGET_HEADER;
 		widget.param.name.Clear();
 		widget.param.value.Clear();
-	} else if (name.Equals("view")) {
+	} else if (name == "view"sv) {
 		tag = Tag::WIDGET_VIEW;
 	} else {
 		tag = Tag::IGNORE;
@@ -93,7 +96,8 @@ WidgetContainerParser::OnStartElementInWidget(XmlParserTagType type,
 bool
 WidgetContainerParser::OnXmlTagStart(const XmlParserTag &xml_tag) noexcept
 {
-	if (tag == Tag::SCRIPT && !xml_tag.name.EqualsIgnoreCase("script"))
+	if (tag == Tag::SCRIPT &&
+	    !StringIsEqualIgnoreCase(xml_tag.name, "script"sv))
 		/* workaround for bugged scripts: ignore all closing tags
 		   except </SCRIPT> */
 		return false;
@@ -108,7 +112,7 @@ WidgetContainerParser::OnXmlTagStart(const XmlParserTag &xml_tag) noexcept
 
 	if (OnXmlTagStart2(xml_tag)) {
 		return true;
-	} else if (xml_tag.name.Equals("c:widget")) {
+	} else if (xml_tag.name == "c:widget"sv) {
 		if (ctx->widget_registry == nullptr)
 			return false;
 
@@ -124,7 +128,7 @@ WidgetContainerParser::OnXmlTagStart(const XmlParserTag &xml_tag) noexcept
 		widget.widget->parent = &container;
 
 		return true;
-	} else if (xml_tag.name.EqualsIgnoreCase("script")) {
+	} else if (StringIsEqualIgnoreCase(xml_tag.name, "script"sv)) {
 		tag = Tag::SCRIPT;
 		return true;
 	} else {
@@ -134,27 +138,27 @@ WidgetContainerParser::OnXmlTagStart(const XmlParserTag &xml_tag) noexcept
 
 static void
 parser_widget_attr_finished(Widget &widget,
-			    StringView name, StringView value)
+			    std::string_view name, std::string_view value)
 {
-	if (name.Equals("type")) {
+	if (name == "type"sv) {
 		if (value.empty())
 			throw std::runtime_error("empty widget class name");
 
 		widget.SetClassName(value);
-	} else if (name.Equals("id")) {
+	} else if (name == "id"sv) {
 		if (!value.empty())
 			widget.SetId(value);
-	} else if (name.Equals("display")) {
-		if (value.Equals("inline"))
+	} else if (name == "display"sv) {
+		if (value == "inline"sv)
 			widget.display = Widget::Display::INLINE;
-		else if (value.Equals("none"))
+		else if (value == "none"sv)
 			widget.display = Widget::Display::NONE;
 		else
 			throw std::runtime_error("Invalid widget 'display' attribute");
-	} else if (name.Equals("session")) {
-		if (value.Equals("resource"))
+	} else if (name == "session"sv) {
+		if (value == "resource"sv)
 			widget.session_scope = Widget::SessionScope::RESOURCE;
-		else if (value.Equals("site"))
+		else if (value == "site"sv)
 			widget.session_scope = Widget::SessionScope::SITE;
 		else
 			throw std::runtime_error("Invalid widget 'session' attribute");
@@ -187,9 +191,9 @@ WidgetContainerParser::OnXmlAttributeFinished(const XmlParserAttribute &attr) no
 	case Tag::WIDGET_HEADER:
 		assert(widget.widget != nullptr);
 
-		if (attr.name.Equals("name")) {
+		if (attr.name == "name"sv) {
 			widget.param.name.Set(attr.value);
-		} else if (attr.name.Equals("value")) {
+		} else if (attr.name == "value"sv) {
 			widget.param.value.Set(attr.value);
 		}
 
@@ -198,7 +202,7 @@ WidgetContainerParser::OnXmlAttributeFinished(const XmlParserAttribute &attr) no
 	case Tag::WIDGET_PATH_INFO:
 		assert(widget.widget != nullptr);
 
-		if (attr.name.Equals("value"))
+		if (attr.name == "value"sv)
 			widget.widget->from_template.path_info
 				= p_strdup(widget.pool, attr.value);
 
@@ -207,7 +211,7 @@ WidgetContainerParser::OnXmlAttributeFinished(const XmlParserAttribute &attr) no
 	case Tag::WIDGET_VIEW:
 		assert(widget.widget != nullptr);
 
-		if (attr.name.Equals("name")) {
+		if (attr.name == "name"sv) {
 			if (attr.value.empty()) {
 				container.logger(2, "empty view name");
 				return;
@@ -255,9 +259,9 @@ header_name_valid(const char *name, size_t length) noexcept
 static void
 expansible_buffer_append_uri_escaped(ExpansibleBuffer &buffer,
 				     struct pool &tpool,
-				     StringView value) noexcept
+				     std::string_view value) noexcept
 {
-	char *escaped = (char *)p_malloc(&tpool, value.size * 3);
+	char *escaped = (char *)p_malloc(&tpool, value.size() * 3);
 	size_t length = UriEscape(escaped, value);
 	buffer.Write(escaped, length);
 }

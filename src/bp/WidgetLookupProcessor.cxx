@@ -42,7 +42,6 @@
 #include "pool/pool.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/RuntimeError.hxx"
-#include "util/StringView.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ScopeExit.hxx"
 #include "stopwatch.hxx"
@@ -133,7 +132,7 @@ private:
 	bool OnXmlTagStart(const XmlParserTag &tag) noexcept override;
 	bool OnXmlTagFinished(const XmlParserTag &tag) noexcept override;
 	void OnXmlAttributeFinished(const XmlParserAttribute &attr) noexcept override;
-	size_t OnXmlCdata(StringView text, bool escaped,
+	size_t OnXmlCdata(std::string_view text, bool escaped,
 			  off_t start) noexcept override;
 
 	/**
@@ -262,11 +261,11 @@ WidgetLookupProcessor::OnXmlTagFinished(const XmlParserTag &xml_tag) noexcept
 }
 
 size_t
-WidgetLookupProcessor::OnXmlCdata(StringView text, bool, off_t) noexcept
+WidgetLookupProcessor::OnXmlCdata(std::string_view text, bool, off_t) noexcept
 {
 	had_input = true;
 
-	return text.size;
+	return text.size();
 }
 
 void
