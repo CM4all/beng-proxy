@@ -385,7 +385,7 @@ LbRequest::MakeFairnessHash() const noexcept
 
 	const char *host = GetCanonicalHost();
 	if (host == nullptr)
-		return FNV1aHash64(ConstBuffer<void>{});
+		return FNV1aHash64(std::span<const std::byte>{});
 
 	return FNV1aHash64(host);
 }
