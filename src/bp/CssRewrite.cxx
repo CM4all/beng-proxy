@@ -41,7 +41,6 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/istream_string.hxx"
 #include "istream/ReplaceIstream.hxx"
-#include "util/StringView.hxx"
 
 struct css_url {
 	size_t start, end;
@@ -88,7 +87,7 @@ css_rewrite_block_uris(struct pool &pool,
 		       SharedPoolPtr<WidgetContext> ctx,
 		       const StopwatchPtr &parent_stopwatch,
 		       Widget &widget,
-		       const StringView block,
+		       const std::string_view block,
 		       const struct escape_class *escape) noexcept
 {
 	struct css_rewrite rewrite;
@@ -97,7 +96,7 @@ css_rewrite_block_uris(struct pool &pool,
 		const TempPoolLease tpool;
 
 		CssParser parser(true, css_rewrite_parser_handler, &rewrite);
-		parser.Feed(block.data, block.size);
+		parser.Feed(block.data(), block.size());
 	}
 
 	if (rewrite.n_urls == 0)
@@ -105,7 +104,7 @@ css_rewrite_block_uris(struct pool &pool,
 		return nullptr;
 
 	auto input =
-		istream_string_new(pool, {p_strdup(pool, block), block.size});
+		istream_string_new(pool, {p_strdup(pool, block), block.size()});
 	auto replace = NewIstream<ReplaceIstream>(pool, ctx->event_loop, std::move(input));
 
 	bool modified = false;
@@ -115,7 +114,7 @@ css_rewrite_block_uris(struct pool &pool,
 		auto value =
 			rewrite_widget_uri(pool, ctx, parent_stopwatch,
 					   widget,
-					   {block.data + url->start, url->end - url->start},
+					   {block.data() + url->start, url->end - url->start},
 					   RewriteUriMode::PARTIAL, false, nullptr,
 					   escape);
 		if (!value)

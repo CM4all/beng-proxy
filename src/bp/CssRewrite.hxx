@@ -32,12 +32,13 @@
 
 #pragma once
 
+#include <string_view>
+
 struct pool;
 struct WidgetContext;
 template<typename T> class SharedPoolPtr;
 class StopwatchPtr;
 class UnusedIstreamPtr;
-struct StringView;
 struct escape_class;
 class Widget;
 
@@ -51,5 +52,5 @@ css_rewrite_block_uris(struct pool &pool,
 		       SharedPoolPtr<WidgetContext> ctx,
 		       const StopwatchPtr &parent_stopwatch,
 		       Widget &widget,
-		       StringView block,
+		       std::string_view block,
 		       const struct escape_class *escape) noexcept;
