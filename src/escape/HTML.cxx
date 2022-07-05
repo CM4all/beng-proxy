@@ -34,17 +34,22 @@
 #include "Class.hxx"
 #include "util/CharUtil.hxx"
 #include "util/HexParse.hxx"
-#include "util/StringView.hxx"
+#include "util/StringSplit.hxx"
 #include "util/UTF8.hxx"
 
 #include <assert.h>
 #include <string.h>
 
+using std::string_view_literals::operator""sv;
+
 [[gnu::pure]]
 static const char *
-html_unescape_find(StringView p) noexcept
+html_unescape_find(std::string_view p) noexcept
 {
-	return p.Find('&');
+	const auto i = p.find('&');
+	return i != p.npos
+		? p.data() + i
+		: nullptr;
 }
 
 [[gnu::pure]]
@@ -95,38 +100,38 @@ ParseNumericEntity(std::string_view entity) noexcept
 }
 
 static size_t
-html_unescape(StringView src, char *q) noexcept
+html_unescape(std::string_view src, char *q) noexcept
 {
 	const char *const q_start = q;
 
 	while (true) {
-		const auto [before_ampersand, after_ampersand] = src.Split('&');
+		const auto [before_ampersand, after_ampersand] = Split(src, '&');
 
-		memmove(q, before_ampersand.data, before_ampersand.size);
-		q += before_ampersand.size;
+		memmove(q, before_ampersand.data(), before_ampersand.size());
+		q += before_ampersand.size();
 
-		if (after_ampersand == nullptr)
+		if (after_ampersand.data() == nullptr)
 			break;
 
-		auto [entity, rest] = after_ampersand.Split(';');
-		if (rest == nullptr || entity.empty()) {
+		auto [entity, rest] = Split(after_ampersand, ';');
+		if (rest.data() == nullptr || entity.empty()) {
 			*q++ = '&';
 			src = after_ampersand;
 			continue;
 		}
 
-		if (entity.Equals("amp"))
+		if (entity == "amp"sv)
 			*q++ = '&';
-		else if (entity.Equals("quot"))
+		else if (entity == "quot"sv)
 			*q++ = '"';
-		else if (entity.Equals("lt"))
+		else if (entity == "lt"sv)
 			*q++ = '<';
-		else if (entity.Equals("gt"))
+		else if (entity == "gt"sv)
 			*q++ = '>';
-		else if (entity.Equals("apos"))
+		else if (entity == "apos"sv)
 			*q++ = '\'';
 		else if (entity.front() == '#') {
-			entity.pop_front();
+			entity = entity.substr(1);
 
 			if (entity.empty()) {
 				*q++ = '&';
@@ -156,7 +161,7 @@ html_unescape(StringView src, char *q) noexcept
 }
 
 static size_t
-html_escape_size(StringView _p) noexcept
+html_escape_size(std::string_view _p) noexcept
 {
 	const char *p = _p.begin(), *const end = _p.end();
 
@@ -186,7 +191,7 @@ html_escape_size(StringView _p) noexcept
 }
 
 static const char *
-html_escape_find(StringView _p) noexcept
+html_escape_find(std::string_view _p) noexcept
 {
 	const char *p = _p.begin(), *const end = _p.end();
 
@@ -207,7 +212,7 @@ html_escape_find(StringView _p) noexcept
 	return nullptr;
 }
 
-static StringView
+static std::string_view
 html_escape_char(char ch) noexcept
 {
 	switch (ch) {
@@ -228,12 +233,12 @@ html_escape_char(char ch) noexcept
 
 	default:
 		assert(false);
-		return nullptr;
+		return {};
 	}
 }
 
 static size_t
-html_escape(StringView _p, char *q) noexcept
+html_escape(std::string_view _p, char *q) noexcept
 {
 	const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
 

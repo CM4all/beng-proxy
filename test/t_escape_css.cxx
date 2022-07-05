@@ -68,12 +68,10 @@ check_escape(const char *p, const char *q)
 }
 
 static void
-check_escape_char(char p, StringView q)
+check_escape_char(char p, std::string_view q)
 {
 	const auto result = escape_char(&css_escape_class, p);
-	ASSERT_FALSE(result.IsNull());
-	ASSERT_EQ(result.size, q.size);
-	ASSERT_EQ(memcmp(result.data, q.data, result.size), 0);
+	ASSERT_EQ(result, q);
 }
 
 TEST(CssEscape, Basic)

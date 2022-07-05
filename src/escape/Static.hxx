@@ -36,10 +36,9 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <string_view>
 
 struct escape_class;
-struct StringView;
 
 /**
  * Unescape the given string into a global static buffer.  Returns
@@ -47,8 +46,8 @@ struct StringView;
  */
 [[gnu::pure]]
 const char *
-unescape_static(const struct escape_class *cls, StringView p);
+unescape_static(const struct escape_class *cls, std::string_view p) noexcept;
 
 [[gnu::pure]]
 const char *
-escape_static(const struct escape_class *cls, StringView p);
+escape_static(const struct escape_class *cls, std::string_view p) noexcept;

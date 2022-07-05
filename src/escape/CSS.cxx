@@ -37,9 +37,12 @@
 #include <string.h>
 
 static const char *
-css_unescape_find(StringView p) noexcept
+css_unescape_find(std::string_view p) noexcept
 {
-	return p.Find('\\');
+	const auto i = p.find('\\');
+	return i != p.npos
+		? p.data() + i
+		: nullptr;
 }
 
 static constexpr bool
@@ -49,7 +52,7 @@ need_simple_escape(char ch) noexcept
 }
 
 static size_t
-css_unescape(StringView _p, char *q) noexcept
+css_unescape(std::string_view _p, char *q) noexcept
 {
 	const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
 
@@ -74,7 +77,7 @@ css_unescape(StringView _p, char *q) noexcept
 }
 
 static size_t
-css_escape_size(StringView _p) noexcept
+css_escape_size(std::string_view _p) noexcept
 {
 	const char *p = _p.begin(), *const end = _p.end();
 
@@ -91,7 +94,7 @@ css_escape_size(StringView _p) noexcept
 }
 
 static const char *
-css_escape_find(StringView _p) noexcept
+css_escape_find(std::string_view _p) noexcept
 {
 	const char *p = _p.begin(), *const end = _p.end();
 
@@ -105,7 +108,7 @@ css_escape_find(StringView _p) noexcept
 	return nullptr;
 }
 
-static StringView
+static std::string_view
 css_escape_char(char ch) noexcept
 {
 	switch (ch) {
@@ -120,12 +123,12 @@ css_escape_char(char ch) noexcept
 
 	default:
 		assert(false);
-		return nullptr;
+		return {};
 	}
 }
 
 static size_t
-css_escape(StringView _p, char *q) noexcept
+css_escape(std::string_view _p, char *q) noexcept
 {
 	const char *p = _p.begin(), *const p_end = _p.end(), *const q_start = q;
 
