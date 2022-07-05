@@ -200,10 +200,10 @@ assert_rewrite_check4(EventLoop &event_loop,
 
 	StringView value2 = value;
 	if (!value2.IsNull())
-		value2 = escape_dup(*widget_pool, &html_escape_class, value2);
+		value2 = escape_dup(*widget_pool, html_escape_class, value2);
 
 	if (result != NULL) {
-		result = escape_dup(*widget_pool, &html_escape_class, result);
+		result = escape_dup(*widget_pool, html_escape_class, result);
 	}
 
 	SessionId session_id;
