@@ -55,12 +55,15 @@
 #include "istream/istream_string.hxx"
 #include "pool/pool.hxx"
 #include "util/RuntimeError.hxx"
+#include "util/StringCompare.hxx"
 #include "util/StringView.hxx"
 #include "util/StringSplit.hxx"
 #include "stopwatch.hxx"
 
 #include <assert.h>
 #include <string.h>
+
+using std::string_view_literals::operator""sv;
 
 enum class UriBase {
 	TEMPLATE,
@@ -382,20 +385,21 @@ XmlProcessor::DeleteUriRewrite(off_t start, off_t end) noexcept
 inline void
 XmlProcessor::PostponeRefreshRewrite(const XmlParserAttribute &attr) noexcept
 {
-	const auto end = attr.value.end();
-	const char *p = attr.value.Find(';');
-	if (p == nullptr || p + 7 > end || memcmp(p + 1, "URL='", 5) != 0 ||
-	    end[-1] != '\'')
+	auto p = Split(std::string_view{attr.value}, ';').second;
+	if (p.data() == nullptr || p.size() < 7 ||
+	    !SkipPrefix(p, "URL='"sv) ||
+	    !RemoveSuffix(p, "'"sv))
 		return;
-
-	p += 6;
 
 	/* postpone the URI rewrite until the tag is finished: save the
 	   attribute value position, save the original attribute value and
 	   set the "pending" flag */
 
-	PostponeUriRewrite(attr.value_start + (p - attr.value.data),
-			   attr.value_end - 1, {p, end - 1});
+	const std::size_t delta = p.data() - attr.value.data;
+
+	PostponeUriRewrite(attr.value_start + delta,
+			   attr.value_start + delta + p.size(),
+			   p);
 }
 
 inline void
