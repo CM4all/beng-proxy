@@ -77,8 +77,12 @@ embed_inline_widget(struct pool &pool, SharedPoolPtr<WidgetContext>,
 
 class IstreamProcessorTestTraits {
 public:
-	static constexpr const char *expected_result =
-		"foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar<b>http://localhost:8080/beng.html?%27%%22%3c%3e</b>";
+	static constexpr const char *expected_result = R"html(
+foo &c:url;
+<script><c:widget id="foo" type="bar"/></script>
+bar
+<b>http://localhost:8080/beng.html?%27%%22%3c%3e</b>
+)html";
 
 	static constexpr bool call_available = true;
 	static constexpr bool got_data_assert = true;
@@ -86,7 +90,12 @@ public:
 	static constexpr bool enable_abort_istream = true;
 
 	UnusedIstreamPtr CreateInput(struct pool &pool) const noexcept {
-		return istream_string_new(pool, "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> <c:widget id=\"foo\" type=\"bar\"/><b>&c:uri;</b>");
+		return istream_string_new(pool, R"html(
+foo &c:url;
+<script><c:widget id="foo" type="bar"/></script>
+<c:widget id="foo" type="bar"/>
+<b>&c:uri;</b>
+)html");
 	}
 
 	UnusedIstreamPtr CreateTest(EventLoop &event_loop, struct pool &pool,
