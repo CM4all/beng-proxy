@@ -51,6 +51,7 @@
 #include "bp/session/Lease.hxx"
 #include "util/SpanCast.hxx"
 #include "util/Cancellable.hxx"
+#include "util/StringCompare.hxx"
 #include "stopwatch.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -95,6 +96,12 @@ Partition(const std::basic_string_view<T> haystack,
 	return Partition(haystack, std::distance(haystack.data(), position));
 }
 
+static constexpr std::string_view
+MakeStringView(const char *begin, const char *end) noexcept
+{
+	return {begin, std::size_t(end - begin)};
+}
+
 static const char *
 uri_replace_hostname(AllocatorPtr alloc, const std::string_view uri,
 		     const char *hostname) noexcept
@@ -134,20 +141,20 @@ uri_add_prefix(AllocatorPtr alloc, const char *uri, const char *absolute_uri,
 			/* unknown old host name, we cannot do anything useful */
 			return uri;
 
-		const StringView host = UriHostAndPort(absolute_uri);
-		if (host.IsNull())
+		const auto host = UriHostAndPort(absolute_uri);
+		if (host.data() == nullptr)
 			return uri;
 
-		return alloc.Concat(StringView{absolute_uri, host.data},
+		return alloc.Concat(MakeStringView(absolute_uri, host.data()),
 				    untrusted_prefix,
 				    '.', host, uri);
 	}
 
-	const StringView host = UriHostAndPort(uri);
-	if (host.IsNull())
+	const auto host = UriHostAndPort(uri);
+	if (host.data() == nullptr)
 		return uri;
 
-	return alloc.Concat(StringView{uri, host.data},
+	return alloc.Concat(MakeStringView(uri, host.data()),
 			    untrusted_prefix,
 			    '.', host);
 }
@@ -214,15 +221,13 @@ uri_add_raw_site_suffix(AllocatorPtr alloc, const char *uri, const char *site_na
 static const char *
 do_rewrite_widget_uri(AllocatorPtr alloc, WidgetContext &ctx,
 		      Widget &widget,
-		      StringView value,
+		      std::string_view value,
 		      RewriteUriMode mode, bool stateful,
 		      const char *view) noexcept
 {
-	if (widget.cls->local_uri != nullptr &&
-	    value.size >= 2 && value[0] == '@' && value[1] == '/')
+	if (widget.cls->local_uri != nullptr && SkipPrefix(value, "@/"sv))
 		/* relative to widget's "local URI" */
-		return alloc.Concat(widget.cls->local_uri,
-				    StringView{value.data + 2, value.size - 2});
+		return alloc.Concat(widget.cls->local_uri, value);
 
 	const char *frame = nullptr;
 
@@ -298,7 +303,7 @@ class UriRewriter final : PoolLeakDetector, Cancellable {
 	Widget &widget;
 
 	/** the value passed to rewrite_widget_uri() */
-	StringView value;
+	std::string_view value;
 
 	const RewriteUriMode mode;
 	const bool stateful;
@@ -314,7 +319,7 @@ public:
 	UriRewriter(AllocatorPtr _alloc,
 		    SharedPoolPtr<WidgetContext> &&_ctx,
 		    Widget &_widget,
-		    StringView _value,
+		    std::string_view _value,
 		    RewriteUriMode _mode, bool _stateful,
 		    const char *_view,
 		    const struct escape_class *_escape,
@@ -377,11 +382,13 @@ UriRewriter::ResolverCallback() noexcept
 		}
 
 		const TempPoolLease tpool;
-		bool is_unescaped = value.Find('&') != nullptr;
+		bool is_unescaped = value.find('&') != value.npos;
 		if (is_unescaped) {
-			char *unescaped = (char *)p_memdup(tpool, value.data, value.size);
-			value.size = unescape_inplace(escape, unescaped, value.size);
-			value.data = unescaped;
+			char *unescaped = (char *)p_memdup(tpool, value.data(), value.size());
+			value = {
+				unescaped,
+				unescape_inplace(escape, unescaped, value.size()),
+			};
 		}
 
 		uri = do_rewrite_widget_uri(alloc, *ctx, widget,
