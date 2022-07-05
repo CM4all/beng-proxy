@@ -76,21 +76,21 @@ parse_uri_mode(const StringView s) noexcept
  */
 
 static const char *
-uri_replace_hostname(AllocatorPtr alloc, const char *uri,
+uri_replace_hostname(AllocatorPtr alloc, const std::string_view uri,
 		     const char *hostname) noexcept
 {
 	assert(hostname != nullptr);
 
 	const StringView old_host = UriHostAndPort(uri);
 	if (old_host.IsNull())
-		return *uri == '/'
+		return uri.starts_with('/')
 			? alloc.Concat("//", hostname, uri)
 			: nullptr;
 
 	const char *colon = old_host.Find(':');
 	const char *end = colon != nullptr ? colon : old_host.end();
 
-	return alloc.Concat(StringView{uri, old_host.data},
+	return alloc.Concat(StringView{uri.data(), old_host.data},
 			    hostname, end);
 }
 
