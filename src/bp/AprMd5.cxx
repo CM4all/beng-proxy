@@ -33,7 +33,6 @@
 #include "AprMd5.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringCompare.hxx"
-#include "util/StringView.hxx"
 
 #include <openssl/md5.h>
 

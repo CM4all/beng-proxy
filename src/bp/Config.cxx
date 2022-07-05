@@ -34,10 +34,12 @@
 #include "CommandLine.hxx"
 #include "pg/Interval.hxx"
 #include "net/Parser.hxx"
-#include "util/StringView.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringParser.hxx"
 
 #include <stdexcept>
+
+using std::string_view_literals::operator""sv;
 
 static auto
 ParseSessionCookieSameSite(const char *s)
@@ -54,62 +56,62 @@ ParseSessionCookieSameSite(const char *s)
 }
 
 void
-BpConfig::HandleSet(StringView name, const char *value)
+BpConfig::HandleSet(std::string_view name, const char *value)
 {
-	if (name.Equals("max_connections")) {
+	if (name == "max_connections"sv) {
 		max_connections = ParsePositiveLong(value, 1024 * 1024);
-	} else if (name.Equals("tcp_stock_limit")) {
+	} else if (name == "tcp_stock_limit"sv) {
 		tcp_stock_limit = ParseUnsignedLong(value);
-	} else if (name.Equals("lhttp_stock_limit")) {
+	} else if (name == "lhttp_stock_limit"sv) {
 		lhttp_stock_limit = ParseUnsignedLong(value);
-	} else if (name.Equals("lhttp_stock_max_idle")) {
+	} else if (name == "lhttp_stock_max_idle"sv) {
 		lhttp_stock_max_idle = ParseUnsignedLong(value);
-	} else if (name.Equals("fastcgi_stock_limit")) {
+	} else if (name == "fastcgi_stock_limit"sv) {
 		fcgi_stock_limit = ParseUnsignedLong(value);
-	} else if (name.Equals("fcgi_stock_max_idle")) {
+	} else if (name == "fcgi_stock_max_idle"sv) {
 		fcgi_stock_max_idle = ParseUnsignedLong(value);
-	} else if (name.Equals("was_stock_limit")) {
+	} else if (name == "was_stock_limit"sv) {
 		was_stock_limit = ParseUnsignedLong(value);
-	} else if (name.Equals("was_stock_max_idle")) {
+	} else if (name == "was_stock_max_idle"sv) {
 		was_stock_max_idle = ParseUnsignedLong(value);
-	} else if (name.Equals("multi_was_stock_limit")) {
+	} else if (name == "multi_was_stock_limit"sv) {
 		multi_was_stock_limit = ParseUnsignedLong(value);
-	} else if (name.Equals("multi_was_stock_max_idle")) {
+	} else if (name == "multi_was_stock_max_idle"sv) {
 		multi_was_stock_max_idle = ParseUnsignedLong(value);
-	} else if (name.Equals("remote_was_stock_limit")) {
+	} else if (name == "remote_was_stock_limit"sv) {
 		remote_was_stock_limit = ParseUnsignedLong(value);
-	} else if (name.Equals("remote_was_stock_max_idle")) {
+	} else if (name == "remote_was_stock_max_idle"sv) {
 		remote_was_stock_max_idle = ParseUnsignedLong(value);
-	} else if (name.Equals("http_cache_size")) {
+	} else if (name == "http_cache_size"sv) {
 		http_cache_size = ParseSize(value);
-	} else if (name.Equals("http_cache_obey_no_cache")) {
+	} else if (name == "http_cache_obey_no_cache"sv) {
 		http_cache_obey_no_cache = ParseBool(value);
-	} else if (name.Equals("filter_cache_size")) {
+	} else if (name == "filter_cache_size"sv) {
 		filter_cache_size = ParseSize(value);
-	} else if (name.Equals("nfs_cache_size")) {
+	} else if (name == "nfs_cache_size"sv) {
 		nfs_cache_size = ParseSize(value);
-	} else if (name.Equals("translate_cache_size")) {
+	} else if (name == "translate_cache_size"sv) {
 		translate_cache_size = ParseUnsignedLong(value);
-	} else if (name.Equals("translate_stock_limit")) {
+	} else if (name == "translate_stock_limit"sv) {
 		translate_stock_limit = ParseUnsignedLong(value);
-	} else if (name.Equals("stopwatch")) {
+	} else if (name == "stopwatch"sv) {
 		/* deprecated */
-	} else if (name.Equals("dump_widget_tree")) {
+	} else if (name == "dump_widget_tree"sv) {
 		/* deprecated */
-	} else if (name.Equals("verbose_response")) {
+	} else if (name == "verbose_response"sv) {
 		verbose_response = ParseBool(value);
-	} else if (name.Equals("session_cookie")) {
+	} else if (name == "session_cookie"sv) {
 		if (*value == 0)
 			throw std::runtime_error("Invalid value");
 
 		session_cookie = value;
-	} else if (name.Equals("session_cookie_same_site")) {
+	} else if (name == "session_cookie_same_site"sv) {
 		session_cookie_same_site = ParseSessionCookieSameSite(value);
-	} else if (name.Equals("dynamic_session_cookie")) {
+	} else if (name == "dynamic_session_cookie"sv) {
 		dynamic_session_cookie = ParseBool(value);
-	} else if (name.Equals("session_idle_timeout")) {
+	} else if (name == "session_idle_timeout"sv) {
 		session_idle_timeout = Pg::ParseIntervalS(value);
-	} else if (name.Equals("session_save_path")) {
+	} else if (name == "session_save_path"sv) {
 		session_save_path = value;
 	} else
 		throw std::runtime_error("Unknown variable");

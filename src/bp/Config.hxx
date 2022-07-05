@@ -39,10 +39,9 @@
 
 #include <forward_list>
 #include <chrono>
+#include <string_view>
 
 #include <stddef.h>
-
-struct StringView;
 
 /**
  * Configuration.
@@ -180,7 +179,7 @@ struct BpConfig {
 #endif
 	}
 
-	void HandleSet(StringView name, const char *value);
+	void HandleSet(std::string_view name, const char *value);
 
 	void Finish(unsigned default_port);
 };
