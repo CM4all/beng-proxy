@@ -51,13 +51,15 @@
 #include "util/Cancellable.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StaticVector.hxx"
-#include "util/StringView.hxx"
+#include "util/StringAPI.hxx"
 #include "address_string.hxx"
 #include "stopwatch.hxx"
 
 #include <nghttp2/nghttp2.h>
 
 #include <assert.h>
+
+using std::string_view_literals::operator""sv;
 
 namespace NgHttp2 {
 
@@ -174,7 +176,7 @@ public:
 		return request->OnStreamCloseCallback(error_code);
 	}
 
-	int OnHeaderCallback(StringView name, StringView value) noexcept;
+	int OnHeaderCallback(std::string_view name, std::string_view value) noexcept;
 
 	static int OnHeaderCallback(nghttp2_session *session,
 				    const nghttp2_frame *frame,
@@ -264,11 +266,11 @@ private:
 };
 
 static http_method_t
-ParseHttpMethod(StringView s) noexcept
+ParseHttpMethod(std::string_view s) noexcept
 {
 	for (size_t i = 0; i < size_t(HTTP_METHOD_INVALID); ++i) {
 		const char *name = http_method_to_string_data[i];
-		if (name != nullptr && s.Equals(name))
+		if (name != nullptr && s == name)
 			return http_method_t(i);
 	}
 
@@ -276,20 +278,20 @@ ParseHttpMethod(StringView s) noexcept
 }
 
 inline int
-ServerConnection::Request::OnHeaderCallback(StringView name,
-					    StringView value) noexcept
+ServerConnection::Request::OnHeaderCallback(std::string_view name,
+					    std::string_view value) noexcept
 {
 	AllocatorPtr alloc(pool);
 
-	if (name.Equals(":method")) {
+	if (name == ":method"sv) {
 		method = ParseHttpMethod(value);
 		if (method == HTTP_METHOD_NULL)
 			bad_request = "Unsupported request method\n";
-	} else if (name.Equals(":path"))
+	} else if (name == ":path"sv)
 		uri = alloc.DupZ(value);
-	else if (name.Equals(":authority"))
+	else if (name == ":authority"sv)
 		headers.Add(alloc, "host", alloc.DupZ(value));
-	else if (name.size >= 2 && name.front() != ':') {
+	else if (name.size() >= 2 && name.front() != ':') {
 		const char *allocated_name = alloc.DupToLower(name);
 		const char *allocated_value;
 

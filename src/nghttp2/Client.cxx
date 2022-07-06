@@ -44,7 +44,6 @@
 #include "util/Cancellable.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StaticVector.hxx"
-#include "util/StringView.hxx"
 #include "http/ResponseHandler.hxx"
 #include "stopwatch.hxx"
 #include "strmap.hxx"
@@ -53,6 +52,8 @@
 #include <nghttp2/nghttp2.h>
 
 #include <assert.h>
+
+using std::string_view_literals::operator""sv;
 
 namespace NgHttp2 {
 
@@ -160,7 +161,7 @@ public:
 		return request->OnStreamCloseCallback(error_code);
 	}
 
-	int OnHeaderCallback(StringView name, StringView value) noexcept;
+	int OnHeaderCallback(std::string_view name, std::string_view value) noexcept;
 
 	static int OnHeaderCallback(nghttp2_session *session,
 				    const nghttp2_frame *frame,
@@ -348,27 +349,26 @@ ClientConnection::Request::Cancel() noexcept
 }
 
 inline int
-ClientConnection::Request::OnHeaderCallback(StringView name,
-					    StringView value) noexcept
+ClientConnection::Request::OnHeaderCallback(std::string_view name,
+					    std::string_view value) noexcept
 {
-	if (name.Equals(":status")) {
+	if (name == ":status"sv) {
 		char buffer[4];
-		if (value.size != 3)
+		if (value.size() != 3)
 			return 0;
 
-		memcpy(buffer, value.data, value.size);
-		buffer[value.size] = 0;
+		*std::copy(value.begin(), value.end(), buffer) = 0;
 
 		char *endptr;
 		auto _status = (http_status_t)strtoul(buffer, &endptr, 10);
-		if (endptr != buffer + value.size ||
+		if (endptr != buffer + value.size() ||
 		    !http_status_is_valid(_status))
 			return 0;
 
 		status = _status;
 	}
 
-	if (name.size >= 2 && name.front() != ':')
+	if (name.size() >= 2 && name.front() != ':')
 		response_headers.Add(alloc, alloc.DupZ(name), alloc.DupZ(value));
 
 	return 0;
