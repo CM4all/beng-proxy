@@ -52,7 +52,6 @@
 #include "lib/pcre/UniqueRegex.hxx"
 #include "io/Logger.hxx"
 #include "util/djbhash.h"
-#include "util/StringView.hxx"
 
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/unordered_set.hpp>
@@ -657,7 +656,7 @@ tcache_content_type_lookup_key(AllocatorPtr alloc,
 	char buffer[MAX_CONTENT_TYPE_LOOKUP * 3];
 	size_t length = UriEscape(buffer, request.content_type_lookup);
 	return alloc.Concat("CTL|",
-			    StringView{buffer, length},
+			    std::string_view{buffer, length},
 			    '|',
 			    request.suffix);
 }
@@ -675,7 +674,7 @@ tcache_chain_key(AllocatorPtr alloc, const TranslateRequest &request) noexcept
 		*status_buffer = 0;
 
 	return alloc.Concat("CHAIN|",
-			    StringView{buffer, length},
+			    std::string_view{buffer, length},
 			    '=',
 			    status_buffer);
 }

@@ -36,7 +36,6 @@
 #include "uri/PEscape.hxx"
 #include "pexpand.hxx"
 #include "AllocatorPtr.hxx"
-#include "util/StringView.hxx"
 
 #include <stdexcept>
 
