@@ -32,7 +32,7 @@
 
 #include "Relocate.hxx"
 #include "uri/Extract.hxx"
-#include "util/StringView.hxx"
+#include "util/StringCompare.hxx"
 #include "AllocatorPtr.hxx"
 
 /**
@@ -65,45 +65,43 @@ MatchUriHost(const char *uri, const char *host) noexcept
 }
 
 [[gnu::pure]]
-static StringView
-UriBaseTail(StringView uri, StringView base) noexcept
+static std::string_view
+UriBaseTail(std::string_view uri, std::string_view base) noexcept
 {
-	return uri.StartsWith(base)
-		? StringView(uri.data + base.size, uri.end())
-		: nullptr;
+	return SkipPrefix(uri, base)
+		? uri
+		: std::string_view{};
 }
 
 [[gnu::pure]]
-static StringView
-UriPrefixBeforeTail(StringView uri, StringView tail) noexcept
+static std::string_view
+UriPrefixBeforeTail(std::string_view uri, std::string_view tail) noexcept
 {
-	return uri.size > tail.size &&
-		memcmp(uri.end() - tail.size, tail.data, tail.size) == 0 &&
-		uri[uri.size - tail.size - 1] == '/'
-		? StringView(uri.begin(), uri.end() - tail.size)
-		: nullptr;
+	return RemoveSuffix(uri, tail) && uri.ends_with('/')
+		? uri
+		: std::string_view{};
 }
 
 const char *
 RelocateUri(AllocatorPtr alloc, const char *uri,
-	    const char *internal_host, StringView internal_path,
+	    const char *internal_host, std::string_view internal_path,
 	    const char *external_scheme, const char *external_host,
-	    StringView external_path, StringView base) noexcept
+	    std::string_view external_path, std::string_view base) noexcept
 {
 	const char *path = MatchUriHost(uri, internal_host);
 	if (path == nullptr)
 		return nullptr;
 
-	const StringView tail = UriBaseTail(external_path, base);
-	if (tail.IsNull())
+	const std::string_view tail = UriBaseTail(external_path, base);
+	if (tail.data() == nullptr)
 		return nullptr;
 
-	const StringView prefix = UriPrefixBeforeTail(internal_path, tail);
-	if (prefix.IsNull())
+	const std::string_view prefix = UriPrefixBeforeTail(internal_path, tail);
+	if (prefix.data() == nullptr)
 		return nullptr;
 
-	const StringView tail2 = UriBaseTail(path, prefix);
-	if (tail2.IsNull())
+	const std::string_view tail2 = UriBaseTail(path, prefix);
+	if (tail2.data() == nullptr)
 		return nullptr;
 
 	return alloc.Concat(external_scheme, "://",
