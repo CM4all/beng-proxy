@@ -33,14 +33,15 @@
 #pragma once
 
 #include "util/DestructObserver.hxx"
-#include "util/StringView.hxx"
 #include "util/TrivialArray.hxx"
+
+#include <string_view>
 
 #include <sys/types.h>
 
 struct CssParserValue {
 	off_t start, end;
-	StringView value;
+	std::string_view value;
 };
 
 struct CssParserHandler {
@@ -62,7 +63,7 @@ struct CssParserHandler {
 	/**
 	 * A property value with a keyword value.  Optional method.
 	 */
-	void (*property_keyword)(const char *name, StringView value,
+	void (*property_keyword)(const char *name, std::string_view value,
 				 off_t start, off_t end, void *ctx) noexcept;
 
 	/**
@@ -92,24 +93,19 @@ class CssParser final : DestructAnchor {
 			return capacity() - size();
 		}
 
-		void AppendTruncated(StringView p) noexcept {
-			size_t n = std::min(p.size, GetRemainingSpace());
-			std::copy_n(p.data, n, end());
+		void AppendTruncated(std::string_view p) noexcept {
+			size_t n = std::min(p.size(), GetRemainingSpace());
+			std::copy_n(p.data(), n, end());
 			this->the_size += n;
 		}
 
-		constexpr operator StringView() const noexcept {
+		constexpr operator std::string_view() const noexcept {
 			return {data(), size()};
 		}
 
 		[[gnu::pure]]
-		bool Equals(StringView other) const noexcept {
-			return other.Equals(*this);
-		}
-
-		template<size_t n>
-		bool EqualsLiteral(const char (&value)[n]) const noexcept {
-			return Equals({value, n - 1});
+		bool Equals(std::string_view other) const noexcept {
+			return other == *this;
 		}
 	};
 

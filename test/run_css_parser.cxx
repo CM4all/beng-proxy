@@ -57,7 +57,7 @@ my_parser_class_name(const CssParserValue *name, void *ctx) noexcept
 {
 	(void)ctx;
 
-	printf(".%.*s\n", (int)name->value.size, name->value.data);
+	printf(".%.*s\n", (int)name->value.size(), name->value.data());
 }
 
 static void
@@ -65,17 +65,17 @@ my_parser_xml_id(const CssParserValue *id, void *ctx) noexcept
 {
 	(void)ctx;
 
-	printf("#%.*s\n", (int)id->value.size, id->value.data);
+	printf("#%.*s\n", (int)id->value.size(), id->value.data());
 }
 
 static void
-my_parser_property_keyword(const char *name, StringView value,
+my_parser_property_keyword(const char *name, std::string_view value,
 			   gcc_unused off_t start, gcc_unused off_t end,
 			   void *ctx) noexcept
 {
 	(void)ctx;
 
-	printf("%s = %.*s\n", name, int(value.size), value.data);
+	printf("%s = %.*s\n", name, int(value.size()), value.data());
 }
 
 static void
@@ -83,7 +83,7 @@ my_parser_url(const CssParserValue *url, void *ctx) noexcept
 {
 	(void)ctx;
 
-	printf("%.*s\n", (int)url->value.size, url->value.data);
+	printf("%.*s\n", (int)url->value.size(), url->value.data());
 }
 
 static void
@@ -91,7 +91,7 @@ my_parser_import(const CssParserValue *url, void *ctx) noexcept
 {
 	(void)ctx;
 
-	printf("import %.*s\n", (int)url->value.size, url->value.data);
+	printf("import %.*s\n", (int)url->value.size(), url->value.data());
 }
 
 static constexpr CssParserHandler my_parser_handler = {

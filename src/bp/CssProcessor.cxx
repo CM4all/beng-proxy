@@ -190,7 +190,7 @@ css_processor_parser_block(void *ctx) noexcept
 }
 
 static void
-css_processor_parser_property_keyword(const char *name, StringView value,
+css_processor_parser_property_keyword(const char *name, std::string_view value,
 				      off_t start, off_t end,
 				      void *ctx) noexcept
 {
@@ -204,9 +204,9 @@ css_processor_parser_property_keyword(const char *name, StringView value,
 
 	if (css_processor_option_rewrite_url(processor) &&
 	    strcmp(name, "-c-view") == 0 &&
-	    value.size < sizeof(processor->uri_rewrite.view)) {
-		memcpy(processor->uri_rewrite.view, value.data, value.size);
-		processor->uri_rewrite.view[value.size] = 0;
+	    value.size() < sizeof(processor->uri_rewrite.view)) {
+		*std::copy(value.begin(), value.end(),
+			   processor->uri_rewrite.view) = 0;
 		css_processor_replace_add(processor, start, end, nullptr);
 	}
 }

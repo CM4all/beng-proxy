@@ -35,7 +35,10 @@
 #include "util/DestructObserver.hxx"
 #include "util/StringStrip.hxx"
 
-#include <assert.h>
+#include <cassert>
+#include <cstring>
+
+using std::string_view_literals::operator""sv;
 
 [[gnu::pure]]
 static bool
@@ -377,7 +380,7 @@ CssParser::Feed(const char *start, size_t length) noexcept
 		case State::AT:
 			do {
 				if (!is_css_nmchar(*buffer)) {
-					if (name_buffer.EqualsLiteral("import"))
+					if ("import"sv == name_buffer)
 						state = State::PRE_IMPORT;
 					else
 						state = State::NONE;
