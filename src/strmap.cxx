@@ -32,10 +32,10 @@
 
 #include "strmap.hxx"
 #include "util/StringCompare.hxx"
-#include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <iterator>
+#include <string_view>
 
 #include <string.h>
 
@@ -183,7 +183,7 @@ StringMap::PrefixCopyFrom(AllocatorPtr alloc,
 	assert(_prefix != nullptr);
 	assert(*_prefix != 0);
 
-	const StringView prefix(_prefix);
+	const std::string_view prefix{_prefix};
 
 	// TODO optimize this search
 	for (const auto &i : src)

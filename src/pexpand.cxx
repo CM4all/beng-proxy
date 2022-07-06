@@ -36,7 +36,6 @@
 #include "regex.hxx"
 #include "uri/Unescape.hxx"
 #include "lib/pcre/MatchData.hxx"
-#include "util/StringView.hxx"
 
 #include <assert.h>
 #include <string.h>
