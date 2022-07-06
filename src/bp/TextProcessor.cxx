@@ -95,7 +95,7 @@ MustEscape(char ch) noexcept
 }
 
 static size_t
-CountMustEscape(StringView s) noexcept
+CountMustEscape(std::string_view s) noexcept
 {
 	size_t n = 0;
 	for (char ch : s)
@@ -104,16 +104,16 @@ CountMustEscape(StringView s) noexcept
 	return n;
 }
 
-static StringView
-EscapeValue(struct pool &pool, StringView v) noexcept
+static std::string_view
+EscapeValue(struct pool &pool, std::string_view v) noexcept
 {
 	const size_t n_escape = CountMustEscape(v);
 	if (n_escape == 0)
 		return v;
 
-	const size_t result_length = v.size + n_escape * 2;
+	const size_t result_length = v.size() + n_escape * 2;
 	char *p = PoolAlloc<char>(pool, result_length);
-	const StringView result(p, result_length);
+	const std::string_view result{p, result_length};
 
 	for (char ch : v) {
 		if (MustEscape(ch)) {
@@ -124,6 +124,15 @@ EscapeValue(struct pool &pool, StringView v) noexcept
 	}
 
 	return result;
+}
+
+static std::string_view
+EscapeValue(struct pool &pool, const char *v) noexcept
+{
+	return EscapeValue(pool,
+			   v != nullptr
+			   ? std::string_view{v}
+			   : std::string_view{});
 }
 
 static SubstTree
