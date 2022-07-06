@@ -39,7 +39,6 @@
 #include "pool/pool.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/PrintException.hxx"
-#include "util/StringView.hxx"
 
 struct Usage {};
 

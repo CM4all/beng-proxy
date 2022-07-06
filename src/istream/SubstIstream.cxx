@@ -37,7 +37,8 @@
 #include "Bucket.hxx"
 #include "pool/pool.hxx"
 #include "util/DestructObserver.hxx"
-#include "util/StringView.hxx"
+#include "util/SpanCast.hxx"
+#include "util/StringSplit.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -62,7 +63,7 @@ class SubstIstream final : public FacadeIstream, DestructAnchor {
 	SubstTree tree;
 
 	const SubstNode *match;
-	StringView mismatch = nullptr;
+	std::string_view mismatch{};
 
 	enum class State {
 		/** searching the first matching character */
@@ -332,11 +333,11 @@ SubstIstream::FeedMismatch() noexcept
 	assert(!mismatch.empty());
 
 	if (send_first) {
-		const size_t nbytes = InvokeData(mismatch.data, 1);
+		const size_t nbytes = InvokeData(mismatch.data(), 1);
 		if (nbytes == 0)
 			return true;
 
-		mismatch.skip_front(1);
+		mismatch = mismatch.substr(nbytes);
 
 		if (mismatch.empty())
 			return false;
@@ -344,13 +345,12 @@ SubstIstream::FeedMismatch() noexcept
 		send_first = false;
 	}
 
-	const size_t nbytes = Feed(mismatch.data, mismatch.size);
+	const size_t nbytes = Feed(mismatch.data(), mismatch.size());
 	if (nbytes == 0)
 		return true;
 
-	assert(nbytes <= mismatch.size);
-
-	mismatch.skip_front(nbytes);
+	assert(nbytes <= mismatch.size());
+	mismatch = mismatch.substr(nbytes);
 
 	return !mismatch.empty();
 }
@@ -361,13 +361,12 @@ SubstIstream::WriteMismatch() noexcept
 	assert(!input.IsDefined() || state == State::NONE);
 	assert(!mismatch.empty());
 
-	size_t nbytes = InvokeData(mismatch.data, mismatch.size);
+	size_t nbytes = InvokeData(mismatch.data(), mismatch.size());
 	if (nbytes == 0)
 		return true;
 
-	assert(nbytes <= mismatch.size);
-
-	mismatch.skip_front(nbytes);
+	assert(nbytes <= mismatch.size());
+	mismatch = mismatch.substr(nbytes);
 
 	if (!mismatch.empty())
 		return true;
@@ -718,14 +717,14 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 			// FeedMismatch()
 
 			if (send_first)
-				list.Push(mismatch.substr(0, 1).ToVoid());
+				list.Push(AsBytes(mismatch.substr(0, 1)));
 
 			// TODO: re-parse the rest of the mismatch buffer
 			list.SetMore();
 			return;
 		} else {
 			// WriteMismatch()
-			list.Push(mismatch.ToVoid());
+			list.Push(AsBytes(mismatch));
 			return;
 		}
 	} else {
@@ -753,20 +752,19 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 				return;
 			}
 
-			const auto b = bucket.GetBuffer();
-			StringView s{(const char *)b.data(), b.size()};
+			auto s = ToStringView(bucket.GetBuffer());
 
-			const char *first = FindFirstChar(s.data,
-							  s.size);
+			const char *first = FindFirstChar(s.data(),
+							  s.size());
 			if (first != nullptr) {
-				s.SetEnd(first);
+				s = Partition(s, first).first;
 				if (!s.empty())
-					list.Push(s.ToVoid());
+					list.Push(AsBytes(s));
 				list.SetMore();
 				return;
 			}
 
-			list.Push(s.ToVoid());
+			list.Push(AsBytes(s));
 		}
 
 		return;
@@ -814,8 +812,8 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 			return 0;
 		} else {
 			// WriteMismatch()
-			nbytes = std::min(nbytes, mismatch.size);
-			mismatch.skip_front(nbytes);
+			nbytes = std::min(nbytes, mismatch.size());
+			mismatch = mismatch.substr(nbytes);
 			return Consumed(nbytes);
 		}
 	} else {
@@ -869,7 +867,7 @@ istream_subst_new(struct pool *pool, UnusedIstreamPtr input,
 }
 
 bool
-SubstTree::Add(struct pool &pool, const char *a0, StringView b) noexcept
+SubstTree::Add(struct pool &pool, const char *a0, std::string_view b) noexcept
 {
 	SubstNode *parent = nullptr;
 	const char *a = a0;
@@ -914,17 +912,24 @@ SubstTree::Add(struct pool &pool, const char *a0, StringView b) noexcept
 	/* create new leaf node */
 
 	SubstNode *p = (SubstNode *)
-		p_malloc(&pool, sizeof(*p) + b.size - sizeof(p->leaf.b));
+		p_malloc(&pool, sizeof(*p) + b.size() - sizeof(p->leaf.b));
 	p->parent = parent;
 	p->left = nullptr;
 	p->right = nullptr;
 	p->equals = nullptr;
 	p->ch = 0;
 	p->leaf.a = a0;
-	p->leaf.b_length = b.size;
-	memcpy(p->leaf.b, b.data, b.size);
+	p->leaf.b_length = b.size();
+	std::copy(b.begin(), b.end(), p->leaf.b);
 
 	*pp = p;
 
 	return true;
+}
+
+bool
+SubstTree::Add(struct pool &pool, const char *a0, const char *b) noexcept
+{
+	return Add(pool, a0,
+		   b != nullptr ? std::string_view{b} : std::string_view{});
 }

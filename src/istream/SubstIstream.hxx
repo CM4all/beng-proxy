@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include <string_view>
 #include <utility>
 
 #include <stddef.h>
@@ -39,7 +40,6 @@
 struct pool;
 class UnusedIstreamPtr;
 struct SubstNode;
-struct StringView;
 
 class SubstTree {
 	SubstNode *root = nullptr;
@@ -56,7 +56,8 @@ public:
 		return *this;
 	}
 
-	bool Add(struct pool &pool, const char *a0, StringView b) noexcept;
+	bool Add(struct pool &pool, const char *a0, std::string_view b) noexcept;
+	bool Add(struct pool &pool, const char *a0, const char *b) noexcept;
 
 	[[gnu::pure]]
 	std::pair<const SubstNode *, const char *> FindFirstChar(const char *data,

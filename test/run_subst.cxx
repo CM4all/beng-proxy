@@ -38,7 +38,6 @@
 #include "PInstance.hxx"
 #include "pool/pool.hxx"
 #include "util/PrintException.hxx"
-#include "util/StringView.hxx"
 
 int
 main(int argc, char **argv)

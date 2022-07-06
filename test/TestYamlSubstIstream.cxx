@@ -35,7 +35,6 @@
 #include "istream/istream_string.hxx"
 #include "istream/istream.hxx"
 #include "istream/UnusedPtr.hxx"
-#include "util/StringView.hxx"
 
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/node/node.h>
