@@ -60,12 +60,12 @@
 #endif
 
 #include <exception>
+#include <string_view>
 
 struct statx;
 class Istream;
 class HttpHeaders;
 class GrowingBuffer;
-struct StringView;
 struct BpInstance;
 struct BpConfig;
 struct BpConnection;
@@ -635,9 +635,9 @@ public:
 
 private:
 	[[gnu::pure]]
-	StringView GetCookieSessionId() noexcept;
+	std::string_view GetCookieSessionId() noexcept;
 
-	SessionLease LoadSession(StringView _session_id) noexcept;
+	SessionLease LoadSession(std::string_view _session_id) noexcept;
 
 public:
 	void DetermineSession() noexcept;

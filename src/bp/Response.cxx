@@ -890,12 +890,10 @@ Request::RelocateCallback(const char *const uri, void *ctx) noexcept
 
 	const auto &address = tr.address.GetHttp();
 
-	StringView internal_path = address.path;
-	const char *q = internal_path.Find('?');
-	if (q != nullptr)
-		/* truncate the query string, because it's not part of
-		   request.uri.base either */
-		internal_path.size = q - internal_path.data;
+	std::string_view internal_path{address.path};
+	/* truncate the query string, because it's not part of
+	   request.uri.base either */
+	internal_path = Split(std::string_view{address.path}, '?').first;
 
 	const char *new_uri = RelocateUri(AllocatorPtr{request.request.pool}, uri,
 					  address.host_and_port,

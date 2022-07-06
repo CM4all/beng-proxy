@@ -41,7 +41,8 @@
 #include "bot.h"
 #include "util/HexFormat.hxx"
 #include "util/djbhash.h"
-#include "util/StringView.hxx"
+#include "util/SpanCast.hxx"
+#include "util/StringSplit.hxx"
 #include "AllocatorPtr.hxx"
 #include "strmap.hxx"
 
@@ -61,13 +62,12 @@ ExtractCookieRaw(const StringMap &headers, std::string_view name) noexcept
 }
 
 inline SessionLease
-Request::LoadSession(StringView _session_id) noexcept
+Request::LoadSession(std::string_view _session_id) noexcept
 {
 	assert(!stateless);
 	assert(!session_id.IsDefined());
-	assert(_session_id != nullptr);
 
-	auto [sid, recover] = _session_id.Split('/');
+	auto [sid, recover] = Split(_session_id, '/');
 
 	if (!session_id.Parse(sid))
 		return nullptr;
@@ -115,7 +115,7 @@ build_session_cookie_name(AllocatorPtr alloc, const BpConfig *config,
 	return name;
 }
 
-inline StringView
+inline std::string_view
 Request::GetCookieSessionId() noexcept
 {
 	assert(!stateless);
@@ -142,7 +142,7 @@ Request::DetermineSession() noexcept
 						   request.headers);
 
 	const auto sid = GetCookieSessionId();
-	if (sid == nullptr)
+	if (sid.empty())
 		return;
 
 	LoadSession(sid);
@@ -254,7 +254,7 @@ get_request_realm(AllocatorPtr alloc, const StringMap &request_headers,
 	if (response.realm_from_auth_base) {
 		assert(!auth_base.IsNull());
 		// TODO: what if AUTH contains null bytes?
-		return alloc.DupZ(StringView{(const char *)auth_base.data, auth_base.size});
+		return alloc.DupZ(ToStringView(auth_base));
 	}
 
 	const char *host = request_headers.Get("host");

@@ -44,7 +44,6 @@
 #include "util/StringStrip.hxx"
 #include "util/CharUtil.hxx"
 #include "util/ScopeExit.hxx"
-#include "util/StringView.hxx"
 
 #include <sodium.h>
 
@@ -75,7 +74,7 @@ FindWhitespace(char *s) noexcept
 }
 
 static const char *
-CheckUsername(const char *s, StringView user) noexcept
+CheckUsername(const char *s, std::string_view user) noexcept
 {
 	const char *t = StringAfterPrefixIgnoreCase(s, user);
 	if (t == nullptr || *t != ':')
@@ -85,7 +84,7 @@ CheckUsername(const char *s, StringView user) noexcept
 }
 
 static const char *
-FindUserPassword(char *s, StringView user) noexcept
+FindUserPassword(char *s, std::string_view user) noexcept
 {
 	while (true) {
 		s = StripLeft(s);
@@ -208,7 +207,7 @@ CheckAccessFileFor(FileDescriptor directory,
 	if (basic_auth.first.empty())
 		return false;
 
-	const StringView username = basic_auth.first.c_str();
+	const std::string_view username = basic_auth.first;
 	const auto given_password = basic_auth.second.c_str();
 
 	char buffer[4096];

@@ -43,7 +43,6 @@
 #include "cgi/Address.hxx"
 #include "istream/AutoPipeIstream.hxx"
 #include "uri/Recompose.hxx"
-#include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
 /**

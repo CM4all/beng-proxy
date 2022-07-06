@@ -46,10 +46,11 @@
 #include "uri/PEscape.hxx"
 #include "uri/Recompose.hxx"
 #include "util/IterableSplitString.hxx"
-#include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <stdexcept>
+
+using std::string_view_literals::operator""sv;
 
 static const char *
 GetTokenAuthRedirectUri(AllocatorPtr alloc,
@@ -150,31 +151,31 @@ public:
 	}
 };
 
-static StringView
-ConcatQueryStrings(AllocatorPtr alloc, StringView a, StringView b) noexcept
+static std::string_view
+ConcatQueryStrings(AllocatorPtr alloc, std::string_view a, std::string_view b) noexcept
 {
 	/* strip redundant ampersands */
-	if (a.EndsWith('&') && (b.empty() || b.StartsWith('&')))
-		a.pop_back();
+	if (a.ends_with('&') && (b.empty() || b.starts_with('&')))
+		a = a.substr(0, a.size() - 1);
 
-	if (a.empty() && b.StartsWith('&'))
-		b.pop_front();
+	if (a.empty() && b.starts_with('&'))
+		b = b.substr(1);
 
 	/* shortcut: if both are empty, the query string is gone
 	   completely */
 	if (a.empty() && b.empty())
-		return nullptr;
+		return {};
 
 	/* concatenate both parts */
 	return alloc.Concat(a, b);
 }
 
-static StringView
-RemoveFromQueryString(AllocatorPtr alloc, StringView q,
-		      StringView name, StringView value) noexcept
+static std::string_view
+RemoveFromQueryString(AllocatorPtr alloc, std::string_view q,
+		      std::string_view name, std::string_view value) noexcept
 {
-	StringView a(q.begin(), name.begin());
-	StringView b(value.end(), q.end());
+	const auto a = Partition(q, name.data()).first;
+	const auto b = Partition(q, value.data() + value.size()).second;
 
 	return ConcatQueryStrings(alloc, a, b);
 }
@@ -184,9 +185,9 @@ ExtractAuthToken(AllocatorPtr alloc, DissectedUri &dissected_uri)
 {
 	char *auth_token = nullptr;
 
-	for (const StringView i : IterableSplitString(dissected_uri.query, '&')) {
-		const auto [name, escaped_value] = i.Split('=');
-		if (!StringView("access_token").Equals(name))
+	for (const auto i : IterableSplitString(dissected_uri.query, '&')) {
+		const auto [name, escaped_value] = Split(i, '=');
+		if (name != "access_token"sv)
 			continue;
 
 		auth_token = uri_unescape_dup(alloc, escaped_value);
