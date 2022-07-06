@@ -56,7 +56,6 @@
 #include "pool/pool.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StringCompare.hxx"
-#include "util/StringView.hxx"
 #include "util/StringSplit.hxx"
 #include "stopwatch.hxx"
 
@@ -598,15 +597,13 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 	if (target_widget->cls == nullptr && target_widget->class_name == nullptr)
 		return;
 
-	const auto hash = value.find('#');
-	StringView fragment;
-	if (hash != value.npos) {
+	std::string_view fragment{};
+	if (const auto hash = value.find('#'); hash != value.npos) {
 		/* save the unescaped fragment part of the URI, don't pass it
 		   to rewrite_widget_uri() */
 		fragment = value.substr(hash);
 		value = value.substr(0, hash);
-	} else
-		fragment = nullptr;
+	}
 
 	auto istream =
 		rewrite_widget_uri(GetPool(), ctx, stopwatch,
@@ -622,7 +619,7 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 		auto s = istream_string_new(GetPool(),
 					    {
 						    p_strdup(GetPool(), fragment),
-						    fragment.size,
+						    fragment.size(),
 					    });
 		s = istream_html_escape_new(GetPool(), std::move(s));
 
@@ -632,15 +629,15 @@ XmlProcessor::TransformUriAttribute(const XmlParserAttribute &attr,
 	ReplaceAttributeValue(attr, std::move(istream));
 }
 
-gcc_pure
+[[gnu::pure]]
 static UriBase
-parse_uri_base(StringView s) noexcept
+parse_uri_base(std::string_view s) noexcept
 {
-	if (s.Equals("widget"))
+	if (s == "widget"sv)
 		return UriBase::WIDGET;
-	else if (s.Equals("child"))
+	else if (s == "child"sv)
 		return UriBase::CHILD;
-	else if (s.Equals("parent"))
+	else if (s == "parent"sv)
 		return UriBase::PARENT;
 	else
 		return UriBase::TEMPLATE;
@@ -801,24 +798,24 @@ XmlProcessor::HandleStyleAttribute(const XmlParserAttribute &attr) noexcept
 		ReplaceAttributeValue(attr, std::move(result));
 }
 
-gcc_pure
+[[gnu::pure]]
 static bool
-IsMetaPropertyWithLink(StringView property) noexcept
+IsMetaPropertyWithLink(std::string_view property) noexcept
 {
-	return property.StartsWith("og:") &&
-		(property.EndsWith(":url") ||
-		 property.Equals("og:image") ||
-		 property.Equals("og:audio") ||
-		 property.Equals("og:video"));
+	return property.starts_with("og:"sv) &&
+		(property.ends_with(":url"sv) ||
+		 property == "og:image"sv ||
+		 property == "og:audio"sv ||
+		 property == "og:video"sv);
 }
 
 /**
  * Does this attribute indicate that the "meta" element contains an
  * URI in the "content" attribute?
  */
-gcc_pure
+[[gnu::pure]]
 static bool
-IsMetaWithUriContent(StringView name, StringView value) noexcept
+IsMetaWithUriContent(std::string_view name, std::string_view value) noexcept
 {
 	return StringIsEqualIgnoreCase(name, "property"sv) && IsMetaPropertyWithLink(value);
 }
