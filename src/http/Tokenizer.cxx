@@ -57,7 +57,7 @@ http_next_quoted_string_raw(StringView &input) noexcept
 
 	const char *quote = input.Find('"');
 	if (quote != nullptr) {
-		StringView value{input.data + 1, quote};
+		StringView value{input.data, quote};
 		input.MoveFront(quote + 1);
 		return value;
 	} else {
