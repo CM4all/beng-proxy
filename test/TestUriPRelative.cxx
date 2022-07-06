@@ -30,15 +30,12 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "uri/Relative.hxx"
 #include "uri/PRelative.hxx"
 #include "TestPool.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/StringView.hxx"
 
 #include <gtest/gtest.h>
-
-#include <string.h>
 
 TEST(UriRelativeTest, Compress)
 {
