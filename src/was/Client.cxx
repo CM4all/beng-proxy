@@ -50,8 +50,9 @@
 #include "util/Cancellable.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StringFormat.hxx"
-#include "util/StringView.hxx"
+#include "util/StringSplit.hxx"
 #include "util/ScopeExit.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -474,7 +475,7 @@ IsValidHeaderValueChar(char ch) noexcept
 
 gcc_pure
 static bool
-IsValidHeaderValue(StringView value) noexcept
+IsValidHeaderValue(std::string_view value) noexcept
 {
 	for (char ch : value)
 		if (!IsValidHeaderValueChar(ch))
@@ -485,13 +486,11 @@ IsValidHeaderValue(StringView value) noexcept
 
 static void
 ParseHeaderPacket(AllocatorPtr alloc, StringMap &headers,
-		  StringView payload)
+		  std::string_view payload)
 {
-	const auto pair = payload.Split('=');
-	const StringView name = pair.first;
-	const StringView value = pair.second;
+	const auto [name, value] = Split(payload, '=');
 
-	if (value.IsNull() || !http_header_name_valid(name) ||
+	if (value.data() == nullptr || !http_header_name_valid(name) ||
 	    !IsValidHeaderValue(value))
 		throw WasProtocolError("Malformed WAS HEADER packet");
 
@@ -532,7 +531,7 @@ WasClient::OnWasControlPacket(enum was_command cmd,
 
 		try {
 			ParseHeaderPacket(alloc, response.headers,
-					  StringView(payload));
+					  ToStringView(payload));
 		} catch (...) {
 			stopwatch.RecordEvent("control_error");
 			AbortResponseHeaders(std::current_exception());
