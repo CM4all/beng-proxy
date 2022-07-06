@@ -297,7 +297,7 @@ TEST(WidgetHttpTest, CookieClient)
 		 nullptr, nullptr,
 		 "localhost", "localhost",
 		 nullptr, nullptr,
-		 nullptr,
+		 std::string_view{},
 		 nullptr,
 		 &session_manager,
 		 nullptr,

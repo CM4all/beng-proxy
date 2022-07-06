@@ -35,7 +35,8 @@
 #include "Ptr.hxx"
 #include "bp/session/Id.hxx"
 #include "util/IntrusiveForwardList.hxx"
-#include "util/StringView.hxx"
+
+#include <string_view>
 
 class EventLoop;
 class ResourceLoader;
@@ -80,7 +81,7 @@ struct WidgetContext {
 	const char *absolute_uri;
 
 	/** the base URI which was requested by the beng-proxy client */
-	StringView external_base_uri;
+	std::string_view external_base_uri;
 
 	/** semicolon-arguments in the external URI */
 	const StringMap *args;
@@ -109,7 +110,7 @@ struct WidgetContext {
 		      const char *remote_host,
 		      const char *request_uri,
 		      const char *absolute_uri,
-		      StringView external_base_uri,
+		      std::string_view external_base_uri,
 		      const StringMap *args,
 		      SessionManager *session_manager,
 		      const char *session_cookie,

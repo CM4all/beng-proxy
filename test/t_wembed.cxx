@@ -55,6 +55,8 @@
 #include <errno.h>
 #include <string.h>
 
+using std::string_view_literals::operator""sv;
+
 const char *
 Widget::GetLogName() const noexcept
 {
@@ -155,7 +157,7 @@ test_abort_resolver()
 		 "localhost:8080",
 		 "/beng.html",
 		 "http://localhost:8080/beng.html",
-		 "/beng.html",
+		 "/beng.html"sv,
 		 nullptr,
 		 nullptr, nullptr, SessionId{}, nullptr,
 		 nullptr);

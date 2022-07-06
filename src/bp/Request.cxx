@@ -40,6 +40,7 @@
 #include "translation/Vary.hxx"
 #include "uri/Args.hxx"
 #include "util/StringAPI.hxx"
+#include "util/StringView.hxx"
 #include "strmap.hxx"
 
 Request::Request(BpConnection &_connection,

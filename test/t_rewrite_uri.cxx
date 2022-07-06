@@ -55,6 +55,8 @@
 
 #include <gtest/gtest.h>
 
+using std::string_view_literals::operator""sv;
+
 const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
 
 struct MakeWidgetClass : WidgetClass {
@@ -218,7 +220,7 @@ assert_rewrite_check4(EventLoop &event_loop,
 		 site_name, nullptr,
 		 nullptr, nullptr,
 		 nullptr, nullptr,
-		 "/index.html",
+		 "/index.html"sv,
 		 nullptr,
 		 nullptr, nullptr, session_id, "foo",
 		 nullptr);

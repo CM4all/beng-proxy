@@ -51,6 +51,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+using std::string_view_literals::operator""sv;
+
 class EventLoop;
 
 const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
@@ -115,7 +117,7 @@ public:
 			 "localhost:8080",
 			 "/beng.html?'%\"<>",
 			 "http://localhost:8080/beng.html?'%\"<>",
-			 "/beng.html?'%\"<>",
+			 "/beng.html?'%\"<>"sv,
 			 nullptr,
 			 nullptr, nullptr, SessionId{}, nullptr,
 			 nullptr);

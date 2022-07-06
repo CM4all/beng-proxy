@@ -154,7 +154,7 @@ foo &c:url;
 			 "localhost:8080",
 			 "/beng.html?'%\"<>",
 			 "http://localhost:8080/beng.html?'%\"<>",
-			 "/beng.html?'%\"<>",
+			 "/beng.html?'%\"<>"sv,
 			 nullptr,
 			 nullptr, nullptr, SessionId{}, nullptr,
 			 nullptr);

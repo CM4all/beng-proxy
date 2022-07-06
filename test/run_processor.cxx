@@ -47,6 +47,8 @@
 #include "util/PrintException.hxx"
 #include "stopwatch.hxx"
 
+using std::string_view_literals::operator""sv;
+
 /*
  * emulate missing libraries
  *
@@ -105,7 +107,7 @@ try {
 		 "localhost:8080",
 		 "/beng.html",
 		 "http://localhost:8080/beng.html",
-		 "/beng.html",
+		 "/beng.html"sv,
 		 nullptr,
 		 nullptr, nullptr, SessionId{}, nullptr,
 		 nullptr);

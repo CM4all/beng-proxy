@@ -57,6 +57,8 @@
 #include <errno.h>
 #include <string.h>
 
+using std::string_view_literals::operator""sv;
+
 /*
  * emulate missing libraries
  *
@@ -138,7 +140,7 @@ TEST(Processor, Abort)
 		 "localhost:8080",
 		 "/beng.html",
 		 "http://localhost:8080/beng.html",
-		 "/beng.html",
+		 "/beng.html"sv,
 		 nullptr,
 		 nullptr, nullptr, SessionId{}, nullptr,
 		 nullptr);
