@@ -45,7 +45,7 @@ uri_relative(StringView base, StringView uri) noexcept
 
 	/* special case: http://hostname without trailing slash */
 	if (uri.size == base.size - 1 &&
-	    uri.StartsWith(base) &&
+	    base.StartsWith(uri) &&
 	    base.back() == '/' &&
 	    UriAfterScheme(uri).data() != nullptr &&
 	    UriAfterScheme(uri).find('/') == std::string_view::npos)
