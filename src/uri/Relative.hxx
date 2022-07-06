@@ -36,7 +36,7 @@
 
 #pragma once
 
-struct StringView;
+#include <string_view>
 
 /**
  * Check if an (absolute) URI is relative to an a base URI (also
@@ -44,5 +44,5 @@ struct StringView;
  * do not match.
  */
 [[gnu::pure]]
-StringView
-uri_relative(StringView base, StringView uri) noexcept;
+std::string_view
+uri_relative(std::string_view base, std::string_view uri) noexcept;

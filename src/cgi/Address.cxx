@@ -360,6 +360,9 @@ CgiAddress::RelativeTo(const CgiAddress &base) const noexcept
 	if (!IsSameProgram(base))
 		return nullptr;
 
+	if (path_info == nullptr || base.path_info == nullptr)
+		return nullptr;
+
 	return uri_relative(base.path_info, path_info);
 }
 
@@ -369,6 +372,9 @@ CgiAddress::RelativeToApplied(AllocatorPtr alloc,
 			      StringView relative) const noexcept
 {
 	if (!IsSameProgram(apply_base))
+		return nullptr;
+
+	if (path_info == nullptr)
 		return nullptr;
 
 	const char *new_path_info =
