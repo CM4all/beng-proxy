@@ -50,6 +50,7 @@
 #include <forward_list>
 
 #include <assert.h>
+#include <string.h>
 
 template<typename Name>
 [[gnu::pure]]
