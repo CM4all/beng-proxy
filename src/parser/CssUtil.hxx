@@ -37,9 +37,9 @@
  */
 
 #include "CssSyntax.hxx"
-#include "util/StringView.hxx"
 
 #include <algorithm>
+#include <string_view>
 
 /**
  * Count the number of leading underscores.  Returns 0 if the
@@ -47,17 +47,17 @@
  */
 [[gnu::pure]]
 static inline unsigned
-underscore_prefix(StringView s) noexcept
+underscore_prefix(std::string_view s) noexcept
 {
 	const char *q = std::find_if(s.begin(), s.end(),
 				     [](char ch){ return ch != '_'; });
 
-	return q - s.data;
+	return q - s.data();
 }
 
 [[gnu::pure]]
 static inline bool
-is_underscore_prefix(StringView s) noexcept
+is_underscore_prefix(std::string_view s) noexcept
 {
 	unsigned n = underscore_prefix(s);
 	return n == 2 || n == 3;
