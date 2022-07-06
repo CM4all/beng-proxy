@@ -32,25 +32,24 @@
 
 #include "HeaderUtil.hxx"
 #include "util/StringStrip.hxx"
-#include "util/StringView.hxx"
 
 #include <string.h>
 
-StringView
+std::string_view
 http_header_param(const char *value, const char *name) noexcept
 {
 	/* XXX this implementation only supports one param */
 	const char *p = strchr(value, ';'), *q;
 
 	if (p == nullptr)
-		return nullptr;
+		return {};
 
 	p = StripLeft(p + 1);
 
 	q = strchr(p, '=');
 	if (q == nullptr || (size_t)(q - p) != strlen(name) ||
 	    memcmp(p, name, q - p) != 0)
-		return nullptr;
+		return {};
 
 	p = q + 1;
 	if (*p == '"') {

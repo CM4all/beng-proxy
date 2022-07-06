@@ -60,6 +60,8 @@
 
 #include <assert.h>
 
+using std::string_view_literals::operator""sv;
+
 static constexpr Event::Duration inline_widget_header_timeout = std::chrono::seconds(5);
 const Event::Duration inline_widget_body_timeout = std::chrono::seconds(10);
 
@@ -184,8 +186,9 @@ widget_response_format(struct pool &pool, const Widget &widget,
 				  "widget sent non-text response");
 
 	const auto charset = http_header_param(content_type, "charset");
-	if (!charset.IsNull() && !charset.EqualsIgnoreCase("utf-8") &&
-	    !charset.EqualsIgnoreCase("utf8")) {
+	if (charset.data() != nullptr &&
+	    !StringIsEqualIgnoreCase(charset, "utf-8"sv) &&
+	    !StringIsEqualIgnoreCase(charset, "utf8"sv)) {
 		/* beng-proxy expects all widgets to send their HTML code in
 		   utf-8; this widget however used a different charset.
 		   Automatically convert it with istream_iconv */
