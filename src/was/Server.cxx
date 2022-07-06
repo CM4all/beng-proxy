@@ -37,8 +37,9 @@
 #include "istream/istream_null.hxx"
 #include "strmap.hxx"
 #include "pool/pool.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StringFormat.hxx"
-#include "util/StringView.hxx"
+#include "util/StringSplit.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <was/protocol.h>
@@ -309,8 +310,8 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 			return false;
 		}
 
-		if (auto [name, value] = StringView{payload}.Split('=');
-		    value != nullptr) {
+		if (auto [name, value] = Split(ToStringView(payload), '=');
+		    value.data() != nullptr) {
 			// TODO
 		} else {
 			AbortProtocolError("malformed HEADER packet");
@@ -325,8 +326,8 @@ WasServer::OnWasControlPacket(enum was_command cmd,
 			return false;
 		}
 
-		if (auto [name, value] = StringView{payload}.Split('=');
-		    value != nullptr) {
+		if (auto [name, value] = Split(ToStringView(payload), '=');
+		    value.data() != nullptr) {
 			// TODO
 		} else {
 			AbortProtocolError("malformed PARAMETER packet");
