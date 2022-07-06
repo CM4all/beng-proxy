@@ -38,9 +38,9 @@
 
 #include <memory>
 #include <span>
+#include <string_view>
 #include <vector>
 
-struct StringView;
 struct pool;
 struct SslConfig;
 struct SslFactoryCertKey;
@@ -66,7 +66,7 @@ public:
 	}
 
 	[[gnu::pure]]
-	const SslFactoryCertKey *FindCommonName(StringView host_name) const noexcept;
+	const SslFactoryCertKey *FindCommonName(std::string_view host_name) const noexcept;
 
 	/**
 	 * Wrapper for SSL_CTX_set_session_id_context().

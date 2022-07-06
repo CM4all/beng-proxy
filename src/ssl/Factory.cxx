@@ -42,7 +42,6 @@
 #include "lib/openssl/UniqueEVP.hxx"
 #include "lib/openssl/UniqueX509.hxx"
 #include "util/AllocatedString.hxx"
-#include "util/StringView.hxx"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -85,7 +84,7 @@ struct SslFactoryCertKey {
 			 length(_value.size()) {}
 
 		[[gnu::pure]]
-		bool Match(StringView host_name) const noexcept;
+		bool Match(std::string_view host_name) const noexcept;
 	};
 
 	UniqueX509 cert;
@@ -100,7 +99,7 @@ struct SslFactoryCertKey {
 	SslFactoryCertKey &operator=(SslFactoryCertKey &&other) = default;
 
 	[[gnu::pure]]
-	bool MatchCommonName(StringView host_name) const noexcept;
+	bool MatchCommonName(std::string_view host_name) const noexcept;
 
 	void Apply(SSL_CTX &ssl_ctx) const noexcept {
 		SSL_CTX_use_PrivateKey(&ssl_ctx, key.get());
@@ -120,21 +119,21 @@ struct SslFactoryCertKey {
 };
 
 inline bool
-SslFactoryCertKey::Name::Match(StringView host_name) const noexcept
+SslFactoryCertKey::Name::Match(std::string_view host_name) const noexcept
 {
 	if (value == nullptr)
 		return false;
 
-	if (length == host_name.size &&
-	    memcmp(host_name.data, value.c_str(), host_name.size) == 0)
+	if (length == host_name.size() &&
+	    memcmp(host_name.data(), value.c_str(), host_name.size()) == 0)
 		return true;
 
 	if (value[0] == '*' && value[1] == '.' && value[2] != 0) {
-		if (host_name.size >= length &&
+		if (host_name.size() >= length &&
 		    /* match only one segment (no dots) */
-		    memchr(host_name.data, '.',
-			   host_name.size - length + 1) == nullptr &&
-		    memcmp(host_name.data + host_name.size - length + 1,
+		    memchr(host_name.data(), '.',
+			   host_name.size() - length + 1) == nullptr &&
+		    memcmp(host_name.data() + host_name.size() - length + 1,
 			   value.c_str() + 1, length - 1) == 0)
 			return true;
 	}
@@ -143,7 +142,7 @@ SslFactoryCertKey::Name::Match(StringView host_name) const noexcept
 }
 
 inline bool
-SslFactoryCertKey::MatchCommonName(StringView host_name) const noexcept
+SslFactoryCertKey::MatchCommonName(std::string_view host_name) const noexcept
 {
 	for (const auto &name : names)
 		if (name.Match(host_name))
@@ -174,7 +173,7 @@ SslFactory::SslFactory(const SslConfig &config,
 SslFactory::~SslFactory() noexcept = default;
 
 inline const SslFactoryCertKey *
-SslFactory::FindCommonName(StringView host_name) const noexcept
+SslFactory::FindCommonName(std::string_view host_name) const noexcept
 {
 	for (const auto &ck : cert_key)
 		if (ck.MatchCommonName(host_name))
@@ -194,7 +193,7 @@ SslFactory::CertCallback(SSL &ssl) noexcept
 		return 1;
 	}
 
-	const StringView host_name(_host_name);
+	const std::string_view host_name{_host_name};
 
 	/* find the first certificate that matches */
 
@@ -207,8 +206,7 @@ SslFactory::CertCallback(SSL &ssl) noexcept
 	/* check the certificate database */
 
 	if (cert_callback) {
-		switch (cert_callback->OnCertCallback(ssl,
-						      host_name.data)) {
+		switch (cert_callback->OnCertCallback(ssl, host_name.data())) {
 		case LookupCertResult::NOT_FOUND:
 			break;
 
