@@ -47,7 +47,7 @@ struct StringView;
  */
 [[gnu::pure]]
 const char *
-uri_compress(AllocatorPtr alloc, const char *uri);
+uri_compress(AllocatorPtr alloc, const char *uri) noexcept;
 
 /**
  * Append a relative URI to an absolute base URI, and return the
@@ -56,4 +56,4 @@ uri_compress(AllocatorPtr alloc, const char *uri);
  */
 [[gnu::pure]]
 const char *
-uri_absolute(AllocatorPtr alloc, const char *base, StringView uri);
+uri_absolute(AllocatorPtr alloc, const char *base, StringView uri) noexcept;

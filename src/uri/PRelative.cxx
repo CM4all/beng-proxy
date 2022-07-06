@@ -39,7 +39,7 @@
 #include <string.h>
 
 const char *
-uri_compress(AllocatorPtr alloc, const char *uri)
+uri_compress(AllocatorPtr alloc, const char *uri) noexcept
 {
 	assert(uri != nullptr);
 
@@ -131,7 +131,7 @@ uri_compress(AllocatorPtr alloc, const char *uri)
 }
 
 static const char *
-uri_after_last_slash(const char *uri)
+uri_after_last_slash(const char *uri) noexcept
 {
 	const char *path = UriPathQueryFragment(uri);
 	if (path == nullptr)
@@ -144,7 +144,7 @@ uri_after_last_slash(const char *uri)
 }
 
 const char *
-uri_absolute(AllocatorPtr alloc, const char *base, StringView uri)
+uri_absolute(AllocatorPtr alloc, const char *base, StringView uri) noexcept
 {
 	assert(base != nullptr);
 
