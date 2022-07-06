@@ -185,15 +185,13 @@ subst_find_leaf(const SubstNode *node) noexcept
  */
 [[gnu::pure]]
 static bool
-CheckMatch(const SubstNode *match, ConstBuffer<char> input) noexcept
+CheckMatch(const SubstNode *match, std::string_view input) noexcept
 {
-	const char *p = input.data, *const end = p + input.size;
-
-	while (p < end) {
+	for (const char ch : input) {
 		if (subst_find_leaf(match) != nullptr)
 			return true;
 
-		match = subst_find_char(match, *p++);
+		match = subst_find_char(match, ch);
 		if (match == nullptr)
 			return false;
 	}
