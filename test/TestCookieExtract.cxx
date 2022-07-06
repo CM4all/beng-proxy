@@ -56,6 +56,12 @@ TEST(CookieExtract, Quoted)
 	ASSERT_EQ(ExtractCookieRaw(input, "quoted"), "quoted!\\\\");
 }
 
+TEST(CookieExtract, Quoted2)
+{
+	constexpr auto input = "quoted=\"quoted!\\\\\""sv;
+	ASSERT_EQ(ExtractCookieRaw(input, "quoted"), "quoted!\\\\");
+}
+
 TEST(CookieExtract, Invalid1)
 {
 	constexpr auto input = "invalid1=foo\t"sv;
