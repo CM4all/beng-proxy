@@ -36,7 +36,6 @@
 #include "pool/pool.hxx"
 #include "util/IterableSplitString.hxx"
 #include "util/RuntimeError.hxx"
-#include "util/StringView.hxx"
 
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/node/node.h>
@@ -48,24 +47,24 @@
 #include <assert.h>
 
 static YAML::Node
-ResolveYamlPathSegment(const YAML::Node &parent, StringView segment)
+ResolveYamlPathSegment(const YAML::Node &parent, std::string_view segment)
 {
 	if (parent.IsMap()) {
-		auto result = parent[std::string(segment.data, segment.size).c_str()];
+		auto result = parent[std::string{segment}.c_str()];
 		if (!result)
 			throw FormatRuntimeError("YAML path segment '%.*s' does not exist",
-						 int(segment.size), segment.data);
+						 int(segment.size()), segment.data());
 
 		return result;
 	} else
 		throw FormatRuntimeError("Failed to resolve YAML path segment '%.*s'",
-					 int(segment.size), segment.data);
+					 int(segment.size()), segment.data());
 }
 
 static YAML::Node
-ResolveYamlPath(YAML::Node node, StringView path)
+ResolveYamlPath(YAML::Node node, std::string_view path)
 {
-	for (StringView s : IterableSplitString(path, '.')) {
+	for (const auto s : IterableSplitString(path, '.')) {
 		if (s.empty())
 			continue;
 
@@ -76,14 +75,14 @@ ResolveYamlPath(YAML::Node node, StringView path)
 }
 
 static YAML::Node
-ResolveYamlMap(YAML::Node node, StringView path)
+ResolveYamlMap(YAML::Node node, std::string_view path)
 {
 	node = ResolveYamlPath(node, path);
 	if (!node.IsMap())
 		throw path.empty()
 			? std::runtime_error("Not a YAML map")
 			: FormatRuntimeError("Path '%.*s' is not a YAML map",
-					     int(path.size), path.data);
+					     int(path.size()), path.data());
 
 	return node;
 }
