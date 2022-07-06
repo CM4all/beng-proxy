@@ -194,7 +194,7 @@ public:
 						 {(const char *)value, valuelen});
 	}
 
-	int OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data) noexcept;
+	int OnDataChunkReceivedCallback(std::span<const std::byte> data) noexcept;
 
 	static int OnDataChunkReceivedCallback(nghttp2_session *session,
 					       [[maybe_unused]] uint8_t flags,
@@ -218,7 +218,7 @@ public:
 			return 0;
 		}
 
-		return request->OnDataChunkReceivedCallback({data, len});
+		return request->OnDataChunkReceivedCallback(std::as_bytes(std::span{data, len}));
 	}
 
 private:
@@ -321,16 +321,16 @@ ServerConnection::Request::OnHeaderCallback(StringView name,
 }
 
 inline int
-ServerConnection::Request::OnDataChunkReceivedCallback(ConstBuffer<uint8_t> data) noexcept
+ServerConnection::Request::OnDataChunkReceivedCallback(std::span<const std::byte> data) noexcept
 {
 	// TODO: limit the MultiFifoBuffer size
 
 	if (!request_body_control) {
-		Consume(data.size);
+		Consume(data.size());
 		return 0;
 	}
 
-	request_body_control->Push(data.ToVoid());
+	request_body_control->Push(data);
 	request_body_control->SubmitBuffer();
 
 	return 0;
