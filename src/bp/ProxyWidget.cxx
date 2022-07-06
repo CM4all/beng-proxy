@@ -270,9 +270,8 @@ ProxyWidget::Continue()
 			/* apply new-style path_info to frame top widget (direct
 			   addressing) */
 			widget->from_request.path_info =
-				p_strndup(&request.pool,
-					  request.dissected_uri.path_info.data + 1,
-					  request.dissected_uri.path_info.size - 1);
+				p_strdup(request.pool,
+					 request.dissected_uri.path_info.substr(1));
 
 		widget->from_request.frame = true;
 

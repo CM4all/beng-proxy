@@ -41,6 +41,7 @@
 #include "bot.h"
 #include "util/HexFormat.hxx"
 #include "util/djbhash.h"
+#include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 #include "strmap.hxx"
 

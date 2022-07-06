@@ -60,6 +60,7 @@
 #include "translation/Layout.hxx"
 #include "util/SpanCast.hxx"
 #include "util/StringCompare.hxx"
+#include "util/StringView.hxx"
 #include "HttpMessageResponse.hxx"
 #include "ResourceLoader.hxx"
 
@@ -82,7 +83,7 @@ GetBounceUri(AllocatorPtr alloc, const IncomingHttpRequest &request,
 	if (response.uri != nullptr) {
 		auto new_du = dissected_uri;
 		new_du.base = response.uri;
-		new_du.path_info = nullptr;
+		new_du.path_info = {};
 		uri_path = RecomposeUri(alloc, new_du);
 	}
 
@@ -212,12 +213,14 @@ Request::CheckRedirectUri(const TranslateResponse &response) const noexcept
 
 	const char *redirect_uri = response.redirect;
 
-	if (response.redirect_full_uri && !dissected_uri.args.IsNull())
+	if (response.redirect_full_uri &&
+	    dissected_uri.args.data() != nullptr)
 		redirect_uri = alloc.Concat(redirect_uri, ';',
 					    dissected_uri.args,
 					    dissected_uri.path_info);
 
-	if (response.redirect_query_string && !dissected_uri.query.IsNull())
+	if (response.redirect_query_string &&
+	    dissected_uri.query.data() != nullptr)
 		redirect_uri = uri_append_query_string_n(alloc, redirect_uri,
 							 dissected_uri.query);
 
@@ -406,7 +409,7 @@ uri_without_query_string(AllocatorPtr alloc, const char *uri) noexcept
 
 	const char *qmark = strchr(uri, '?');
 	if (qmark != nullptr)
-		return alloc.DupZ(StringView{uri, qmark});
+		return alloc.DupZ(std::string_view{uri, qmark});
 
 	return uri;
 }
@@ -642,8 +645,8 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 		/* undo the uri_parse() call (but leave the query_string) */
 
 		dissected_uri.base = translate.request.uri;
-		dissected_uri.args = nullptr;
-		dissected_uri.path_info = nullptr;
+		dissected_uri.args = {};
+		dissected_uri.path_info = {};
 	}
 
 	/* resend the modified request */

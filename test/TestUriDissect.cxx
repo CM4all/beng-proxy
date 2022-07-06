@@ -42,9 +42,9 @@ TEST(DissectedUriTest, basic)
 	ASSERT_TRUE(uri.Parse("/"));
 
 	ASSERT_EQ(uri.base, "/"sv);
-	ASSERT_EQ(uri.args.data, nullptr);
-	ASSERT_EQ(uri.path_info.data, nullptr);
-	ASSERT_EQ(uri.query.data, nullptr);
+	ASSERT_EQ(uri.args.data(), nullptr);
+	ASSERT_EQ(uri.path_info.data(), nullptr);
+	ASSERT_EQ(uri.query.data(), nullptr);
 }
 
 TEST(DissectedUriTest, Query)
@@ -53,8 +53,8 @@ TEST(DissectedUriTest, Query)
 	ASSERT_TRUE(uri.Parse("/foo?a=b"));
 
 	ASSERT_EQ(uri.base, "/foo"sv);
-	ASSERT_EQ(uri.args.data, nullptr);
-	ASSERT_EQ(uri.path_info.data, nullptr);
+	ASSERT_EQ(uri.args.data(), nullptr);
+	ASSERT_EQ(uri.path_info.data(), nullptr);
 	ASSERT_EQ(uri.query, "a=b"sv);
 }
 
@@ -65,7 +65,7 @@ TEST(DissectedUriTest, Args)
 
 	ASSERT_EQ(uri.base, "/foo"sv);
 	ASSERT_EQ(uri.args, "c=d"sv);
-	ASSERT_EQ(uri.path_info.data, nullptr);
+	ASSERT_EQ(uri.path_info.data(), nullptr);
 	ASSERT_EQ(uri.query, "a=b"sv);
 }
 

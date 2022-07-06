@@ -46,6 +46,7 @@
 #include "uri/PEscape.hxx"
 #include "uri/Recompose.hxx"
 #include "util/IterableSplitString.hxx"
+#include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <stdexcept>
@@ -60,7 +61,7 @@ GetTokenAuthRedirectUri(AllocatorPtr alloc,
 
 	if (response.uri != nullptr) {
 		dissected_uri.base = response.uri;
-		dissected_uri.path_info = nullptr;
+		dissected_uri.path_info = {};
 	}
 
 	const char *uri_path = RecomposeUri(alloc, dissected_uri);

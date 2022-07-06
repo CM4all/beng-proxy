@@ -38,9 +38,9 @@ char *
 RecomposeUri(AllocatorPtr alloc, const DissectedUri &uri) noexcept
 {
 	return alloc.Concat(uri.base,
-			    StringView{";", uri.args == nullptr ? (size_t)0 : 1},
+			    std::string_view{";", uri.args.data() == nullptr ? (size_t)0 : 1},
 			    uri.args,
 			    uri.path_info,
-			    StringView{"?", uri.query == nullptr ? (size_t)0 : 1},
+			    std::string_view{"?", uri.query.data() == nullptr ? (size_t)0 : 1},
 			    uri.query);
 }

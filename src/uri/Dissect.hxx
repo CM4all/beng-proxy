@@ -32,8 +32,6 @@
 
 #pragma once
 
-#include "util/StringView.hxx"
-
 #include <string_view>
 
 /**
@@ -44,24 +42,24 @@ struct DissectedUri {
 	 * The "base" URI that points to the real resource, without
 	 * dynamic arguments.
 	 */
-	StringView base;
+	std::string_view base;
 
 	/**
 	 * The beng-proxy arguments, which were introduced by a semicolon
 	 * (without the semicolon).
 	 */
-	StringView args;
+	std::string_view args;
 
 	/**
 	 * The URI portion after the arguments, including the leading
 	 * slash.
 	 */
-	StringView path_info;
+	std::string_view path_info;
 
 	/**
 	 * The query string (without the question mark).
 	 */
-	StringView query;
+	std::string_view query;
 
 	/**
 	 * Split the URI into its parts.  The result contains pointers

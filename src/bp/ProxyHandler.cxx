@@ -43,6 +43,7 @@
 #include "cgi/Address.hxx"
 #include "istream/AutoPipeIstream.hxx"
 #include "uri/Recompose.hxx"
+#include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
 /**
@@ -53,7 +54,7 @@ gcc_pure
 static const char *
 ForwardURI(AllocatorPtr alloc, DissectedUri uri) noexcept
 {
-	uri.args = nullptr;
+	uri.args = {};
 	return RecomposeUri(alloc, uri);
 }
 
@@ -61,7 +62,7 @@ inline const char *
 Request::ForwardURI() const noexcept
 {
 	const TranslateResponse &t = *translate.response;
-	if (t.transparent || dissected_uri.args == nullptr) {
+	if (t.transparent || dissected_uri.args.data() == nullptr) {
 		/* transparent or no args: return the full URI as-is */
 
 		if (translate.had_internal_redirect)
@@ -90,7 +91,8 @@ Request::HandleProxyAddress() noexcept
 	       address.IsCgiAlike());
 
 	if (tr.transparent &&
-	    (!dissected_uri.args.IsNull() || !dissected_uri.path_info.empty()))
+	    (dissected_uri.args.data() != nullptr ||
+	     !dissected_uri.path_info.empty()))
 		address = address.WithArgs(pool,
 					   dissected_uri.args,
 					   dissected_uri.path_info);

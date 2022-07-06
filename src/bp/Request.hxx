@@ -52,6 +52,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "co/InvokeTask.hxx"
 #include "util/Cancellable.hxx"
+#include "util/ConstBuffer.hxx"
 #include "stopwatch.hxx"
 
 #ifdef HAVE_URING
