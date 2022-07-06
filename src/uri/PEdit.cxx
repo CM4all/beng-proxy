@@ -33,14 +33,13 @@
 #include "PEdit.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/StringCompare.hxx"
-#include "util/StringView.hxx"
 
 #include <assert.h>
 #include <string.h>
 
 const char *
 uri_insert_query_string(AllocatorPtr alloc, const char *uri,
-			const char *query_string)
+			const char *query_string) noexcept
 {
 	assert(uri != nullptr);
 	assert(query_string != nullptr);
@@ -49,7 +48,7 @@ uri_insert_query_string(AllocatorPtr alloc, const char *uri,
 
 	if (qmark != nullptr) {
 		++qmark;
-		return alloc.Concat(StringView(uri, qmark),
+		return alloc.Concat(std::string_view(uri, qmark),
 				    query_string,
 				    '&',
 				    qmark);
@@ -59,10 +58,9 @@ uri_insert_query_string(AllocatorPtr alloc, const char *uri,
 
 const char *
 uri_append_query_string_n(AllocatorPtr alloc, const char *uri,
-			  StringView query_string)
+			  std::string_view query_string) noexcept
 {
 	assert(uri != nullptr);
-	assert(!query_string.IsNull());
 
 	return alloc.Concat(uri,
 			    strchr(uri, '?') == nullptr ? '?' : '&',
@@ -70,29 +68,28 @@ uri_append_query_string_n(AllocatorPtr alloc, const char *uri,
 }
 
 static size_t
-query_string_begins_with(const char *query_string, StringView needle)
+query_string_begins_with(const char *query_string,
+			 std::string_view needle) noexcept
 {
 	assert(query_string != nullptr);
-	assert(!needle.IsNull());
 
 	query_string = StringAfterPrefix(query_string, needle);
 	if (query_string == nullptr)
 		return 0;
 
 	if (*query_string == '&')
-		return needle.size + 1;
+		return needle.size() + 1;
 	else if (*query_string == 0)
-		return needle.size;
+		return needle.size();
 	else
 		return 0;
 }
 
 const char *
 uri_delete_query_string(AllocatorPtr alloc, const char *uri,
-			StringView needle)
+			std::string_view needle) noexcept
 {
 	assert(uri != nullptr);
-	assert(!needle.IsNull());
 
 	const char *p = strchr(uri, '?');
 	if (p == nullptr)
@@ -111,18 +108,18 @@ uri_delete_query_string(AllocatorPtr alloc, const char *uri,
 		++delete_length;
 	}
 
-	return alloc.Concat(StringView(uri, p),
-			    StringView(p + delete_length));
+	return alloc.Concat(std::string_view(uri, p),
+			    std::string_view(p + delete_length));
 }
 
 const char *
 uri_insert_args(AllocatorPtr alloc, const char *uri,
-		StringView args, StringView path)
+		std::string_view args, std::string_view path) noexcept
 {
 	const char *q = strchr(uri, '?');
 	if (q == nullptr)
 		q = uri + strlen(uri);
 
-	return alloc.Concat(StringView(uri, q),
+	return alloc.Concat(std::string_view(uri, q),
 			    ';', args, path, q);
 }

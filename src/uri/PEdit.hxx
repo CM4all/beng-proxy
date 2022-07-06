@@ -36,13 +36,14 @@
 
 #pragma once
 
+#include <string_view>
+
 class AllocatorPtr;
-struct StringView;
 
 [[gnu::pure]]
 const char *
 uri_insert_query_string(AllocatorPtr alloc, const char *uri,
-			const char *query_string);
+			const char *query_string) noexcept;
 
 /**
  * Appends the specified query string at the end.  Adds a '?' or '&'
@@ -51,14 +52,14 @@ uri_insert_query_string(AllocatorPtr alloc, const char *uri,
 [[gnu::pure]]
 const char *
 uri_append_query_string_n(AllocatorPtr alloc, const char *uri,
-			  StringView query_string);
+			  std::string_view query_string) noexcept;
 
 [[gnu::pure]]
 const char *
 uri_delete_query_string(AllocatorPtr alloc, const char *uri,
-			StringView needle);
+			std::string_view needle) noexcept;
 
 [[gnu::pure]]
 const char *
 uri_insert_args(AllocatorPtr alloc, const char *uri,
-		StringView args, StringView path);
+		std::string_view args, std::string_view path) noexcept;
