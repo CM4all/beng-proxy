@@ -32,7 +32,6 @@
 
 #include "RedirectHttps.hxx"
 #include "net/HostParser.hxx"
-#include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <stdio.h>
@@ -58,9 +57,9 @@ MakeHttpsRedirect(AllocatorPtr alloc, const char *_host, uint16_t port,
 	const size_t need_brackets = is_ipv6 && port_length > 0;
 
 	return alloc.Concat("https://",
-			    StringView(&a, need_brackets),
+			    std::string_view{&a, need_brackets},
 			    host,
-			    StringView(&b, need_brackets),
-			    StringView(port_buffer, port_length),
+			    std::string_view{&b, need_brackets},
+			    std::string_view{port_buffer, port_length},
 			    uri);
 }
