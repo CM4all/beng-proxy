@@ -711,6 +711,7 @@ test('t_widget_http', executable('t_widget_http',
 
 test('t_uri', executable('t_uri',
   'TestUriPRelative.cxx',
+  'TestUriRelative.cxx',
   't_uri_compare.cxx',
   'TestUriDissect.cxx',
   include_directories: inc,
