@@ -34,6 +34,8 @@
 
 #include "util/StringView.hxx"
 
+#include <string_view>
+
 /**
  * A splitted URI.
  */
@@ -65,5 +67,5 @@ struct DissectedUri {
 	 * Split the URI into its parts.  The result contains pointers
 	 * into the original string.
 	 */
-	bool Parse(const char *src) noexcept;
+	bool Parse(std::string_view src) noexcept;
 };

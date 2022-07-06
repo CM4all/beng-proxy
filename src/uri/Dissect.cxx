@@ -32,55 +32,33 @@
 
 #include "Dissect.hxx"
 #include "uri/Verify.hxx"
+#include "util/StringSplit.hxx"
 
 #include <string.h>
 
 bool
-DissectedUri::Parse(const char *src) noexcept
+DissectedUri::Parse(std::string_view src) noexcept
 {
-	const char *qmark = strchr(src, '?');
+	const auto [before_query, _query] = Split(src, '?');
+	query = _query;
 
-	const char *semicolon;
-	if (qmark == nullptr)
-		semicolon = strchr(src, ';');
-	else
-		semicolon = (const char *)memchr(src, ';', qmark - src);
-
-	base.data = src;
-	if (semicolon != nullptr)
-		base.size = semicolon - src;
-	else if (qmark != nullptr)
-		base.size = qmark - src;
-	else
-		base.size = strlen(src);
+	const auto [before_args, args_and_path_info] = Split(before_query, ';');
+	base = before_args;
 
 	if (!uri_path_verify(base))
 		return false;
 
-	if (semicolon == nullptr) {
-		args = nullptr;
-		path_info = nullptr;
+	/* TODO second semicolon for stuff being forwared? */
+	const auto slash = args_and_path_info.find('/');
+	if (slash != args_and_path_info.npos) {
+		const auto [_args, _path_info] =
+			Partition(args_and_path_info, slash);
+		args = _args;
+		path_info = _path_info;
 	} else {
-		/* XXX second semicolon for stuff being forwared? */
-		args.data = semicolon + 1;
-		if (qmark == nullptr)
-			args.size = strlen(args.data);
-		else
-			args.size = qmark - args.data;
-
-		const char *slash = args.Find('/');
-		if (slash != nullptr) {
-			path_info.data = slash;
-			path_info.size = args.end() - slash;
-			args.size = slash - args.data;
-		} else
-			path_info = nullptr;
+		args = args_and_path_info;
+		path_info = {};
 	}
-
-	if (qmark == nullptr)
-		query = nullptr;
-	else
-		query = { qmark + 1, strlen(qmark + 1) };
 
 	return true;
 }
