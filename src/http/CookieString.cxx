@@ -32,7 +32,8 @@
 
 #include "CookieString.hxx"
 #include "Tokenizer.hxx"
-#include "util/StringView.hxx"
+#include "util/StringSplit.hxx"
+#include "util/StringStrip.hxx"
 
 [[gnu::always_inline]]
 static constexpr bool
@@ -44,17 +45,17 @@ char_is_cookie_octet(char ch) noexcept
 		(ch >= 0x5d && ch <= 0x7e);
 }
 
-StringView
-cookie_next_unquoted_value(StringView &input) noexcept
+std::string_view
+cookie_next_unquoted_value(std::string_view &input) noexcept
 {
-	StringView value{input.data, std::size_t{}};
+	std::size_t i = 0;
+	while (i < input.size() &&
+	       char_is_cookie_octet(input[i]))
+		++i;
 
-	while (value.size < input.size &&
-	       char_is_cookie_octet(input[value.size]))
-		++value.size;
-
-	input.skip_front(value.size);
-	return value;
+	auto p = Partition(input, i);
+	input = p.second;
+	return p.first;
 }
 
 [[gnu::always_inline]]
@@ -65,21 +66,21 @@ char_is_rfc_ignorant_cookie_octet(char ch) noexcept
 		ch == ' ' || ch == ',';
 }
 
-StringView
-cookie_next_rfc_ignorant_value(StringView &input) noexcept
+std::string_view
+cookie_next_rfc_ignorant_value(std::string_view &input) noexcept
 {
-	StringView value{input.data, std::size_t{}};
+	std::size_t i = 0;
+	while (i < input.size() &&
+	       char_is_rfc_ignorant_cookie_octet(input[i]))
+		++i;
 
-	while (value.size < input.size &&
-	       char_is_rfc_ignorant_cookie_octet(input[value.size]))
-		++value.size;
-
-	input.skip_front(value.size);
-	return value;
+	auto p = Partition(input, i);
+	input = p.second;
+	return p.first;
 }
 
-static StringView
-cookie_next_value_raw(StringView &input) noexcept
+static std::string_view
+cookie_next_value_raw(std::string_view &input) noexcept
 {
 	if (!input.empty() && input.front() == '"')
 		return http_next_quoted_string_raw(input);
@@ -87,8 +88,8 @@ cookie_next_value_raw(StringView &input) noexcept
 		return cookie_next_unquoted_value(input);
 }
 
-static StringView
-cookie_next_rfc_ignorant_value_raw(StringView &input) noexcept
+static std::string_view
+cookie_next_rfc_ignorant_value_raw(std::string_view &input) noexcept
 {
 	if (!input.empty() && input.front() == '"')
 		return http_next_quoted_string_raw(input);
@@ -96,17 +97,16 @@ cookie_next_rfc_ignorant_value_raw(StringView &input) noexcept
 		return cookie_next_rfc_ignorant_value(input);
 }
 
-std::pair<StringView, StringView>
-cookie_next_name_value_raw(StringView &input, bool rfc_ignorant) noexcept
+std::pair<std::string_view, std::string_view>
+cookie_next_name_value_raw(std::string_view &input, bool rfc_ignorant) noexcept
 {
 	const auto name = http_next_token(input);
 	if (name.empty())
 		return {name, nullptr};
 
-	input.StripLeft();
+	input = StripLeft(input);
 	if (!input.empty() && input.front() == '=') {
-		input.pop_front();
-		input.StripLeft();
+		input = StripLeft(input.substr(1));
 
 		const auto value = rfc_ignorant
 			? cookie_next_rfc_ignorant_value_raw(input)

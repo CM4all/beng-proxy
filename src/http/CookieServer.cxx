@@ -33,7 +33,7 @@
 #include "CookieServer.hxx"
 #include "PCookieString.hxx"
 #include "strmap.hxx"
-#include "util/StringView.hxx"
+#include "util/StringStrip.hxx"
 #include "AllocatorPtr.hxx"
 
 StringMap
@@ -41,7 +41,7 @@ cookie_map_parse(AllocatorPtr alloc, std::string_view _input) noexcept
 {
 	StringMap cookies;
 
-	StringView input = _input;
+	std::string_view input = _input;
 
 	while (true) {
 		const auto [name, value] =
@@ -51,12 +51,11 @@ cookie_map_parse(AllocatorPtr alloc, std::string_view _input) noexcept
 
 		cookies.Add(alloc, alloc.DupZ(name), alloc.DupZ(value));
 
-		input.StripLeft();
+		input = StripLeft(input);
 		if (input.empty() || input.front() != ';')
 			break;
 
-		input.pop_front();
-		input.StripLeft();
+		input = StripLeft(input.substr(1));
 	}
 
 	return cookies;
@@ -73,9 +72,9 @@ cookie_exclude(const char *p, const char *_exclude,
 	char *const dest0 = alloc.NewArray<char>(strlen(p) + 1);
 	char *dest = dest0;
 
-	StringView input = p;
+	std::string_view input = p;
 
-	const StringView exclude = _exclude;
+	const std::string_view exclude = _exclude;
 	const char *src = p;
 
 	bool empty = true, found = false;
@@ -86,25 +85,24 @@ cookie_exclude(const char *p, const char *_exclude,
 		if (name.empty())
 			break;
 
-		const bool skip = name.Equals(exclude);
+		const bool skip = name == exclude;
 		if (skip) {
 			found = true;
-			dest = (char *)mempcpy(dest, src, name.data - src);
+			dest = (char *)mempcpy(dest, src, name.data() - src);
 		} else
 			empty = false;
 
-		input.StripLeft();
+		input = StripLeft(input);
 		if (input.empty() || input.front() != ';') {
 			if (skip)
-				src = input.data;
+				src = input.data();
 			break;
 		}
 
-		input.pop_front();
-		input.StripLeft();
+		input = StripLeft(input.substr(1));
 
 		if (skip)
-			src = input.data;
+			src = input.data();
 	}
 
 	if (!found)
@@ -113,7 +111,7 @@ cookie_exclude(const char *p, const char *_exclude,
 	if (empty)
 		return nullptr;
 
-	dest = (char *)mempcpy(dest, src, input.data - src);
+	dest = (char *)mempcpy(dest, src, input.data() - src);
 	*dest = 0;
 	return dest0;
 }

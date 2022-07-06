@@ -33,38 +33,36 @@
 #include "PTokenizer.hxx"
 #include "Tokenizer.hxx"
 #include "Chars.hxx"
-#include "util/StringView.hxx"
+#include "util/StringStrip.hxx"
 #include "AllocatorPtr.hxx"
 
-StringView
-http_next_quoted_string(AllocatorPtr alloc, StringView &input) noexcept
+std::string_view
+http_next_quoted_string(AllocatorPtr alloc, std::string_view &input) noexcept
 {
-	char *dest = alloc.NewArray<char>(input.size); /* TODO: optimize memory consumption */
-	size_t pos = 1;
+	char *dest = alloc.NewArray<char>(input.size()); /* TODO: optimize memory consumption */
+	std::size_t pos = 1, value_size = 0;
 
-	StringView value{dest, std::size_t{}};
-
-	while (pos < input.size) {
+	while (pos < input.size()) {
 		if (input[pos] == '\\') {
 			++pos;
-			if (pos < input.size)
-				dest[value.size++] = input[pos++];
+			if (pos < input.size())
+				dest[value_size++] = input[pos++];
 		} else if (input[pos] == '"') {
 			++pos;
 			break;
 		} else if (char_is_http_text(input[pos])) {
-			dest[value.size++] = input[pos++];
+			dest[value_size++] = input[pos++];
 		} else {
 			++pos;
 		}
 	}
 
-	input.skip_front(pos);
-	return value;
+	input = input.substr(pos);
+	return {dest, value_size};
 }
 
-StringView
-http_next_value(AllocatorPtr alloc, StringView &input) noexcept
+std::string_view
+http_next_value(AllocatorPtr alloc, std::string_view &input) noexcept
 {
 	if (!input.empty() && input.front() == '"')
 		return http_next_quoted_string(alloc, input);
@@ -72,17 +70,16 @@ http_next_value(AllocatorPtr alloc, StringView &input) noexcept
 		return http_next_token(input);
 }
 
-std::pair<StringView, StringView>
-http_next_name_value(AllocatorPtr alloc, StringView &input) noexcept
+std::pair<std::string_view, std::string_view>
+http_next_name_value(AllocatorPtr alloc, std::string_view &input) noexcept
 {
 	const auto name = http_next_token(input);
 	if (name.empty())
 		return {name, nullptr};
 
-	input.StripLeft();
+	input = StripLeft(input);
 	if (!input.empty() && input.front() == '=') {
-		input.pop_front();
-		input.StripLeft();
+		input = StripLeft(input.substr(1));
 
 		return {name, http_next_value(alloc, input)};
 	} else

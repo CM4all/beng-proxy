@@ -32,30 +32,29 @@
 
 #include "Tokenizer.hxx"
 #include "Chars.hxx"
-#include "util/StringView.hxx"
+#include "util/StringSplit.hxx"
 
-StringView
-http_next_token(StringView &input) noexcept
+#include <cassert>
+
+std::string_view
+http_next_token(std::string_view &input) noexcept
 {
-	StringView value{input.data, std::size_t{}};
+	std::size_t i = 0;
+	while (i < input.size() && char_is_http_token(input[i]))
+		++i;
 
-	while (value.size < input.size &&
-	       char_is_http_token(input[value.size]))
-		++value.size;
-
-	if (value.size > 0)
-		input.skip_front(value.size);
-
-	return value;
+	auto p = Partition(input, i);
+	input = p.second;
+	return p.first;
 }
 
-StringView
-http_next_quoted_string_raw(StringView &input) noexcept
+std::string_view
+http_next_quoted_string_raw(std::string_view &input) noexcept
 {
-	assert(input.front() == '"');
-	input.pop_front();
+	assert(input.starts_with('"'));
+	input = input.substr(1);
 
-	const auto [value, rest] = input.Split('"');
+	const auto [value, rest] = Split(input, '"');
 	/* if there is no closing quote, we ignore it and make the
 	   best of it */
 	input = rest;

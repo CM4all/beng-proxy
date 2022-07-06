@@ -32,12 +32,12 @@
 
 #include "CookieExtract.hxx"
 #include "CookieString.hxx"
-#include "util/StringView.hxx"
+#include "util/StringStrip.hxx"
 
 std::string_view
 ExtractCookieRaw(std::string_view cookie_header, std::string_view name) noexcept
 {
-	StringView input = cookie_header;
+	std::string_view input = cookie_header;
 
 	while (true) {
 		const auto [current_name, current_value] =
@@ -45,14 +45,13 @@ ExtractCookieRaw(std::string_view cookie_header, std::string_view name) noexcept
 		if (current_name.empty())
 			return {};
 
-		if (current_name.Equals(name))
+		if (current_name == name)
 			return current_value;
 
-		input.StripLeft();
+		input = StripLeft(input);
 		if (input.empty() || input.front() != ';')
 			return {};
 
-		input.pop_front();
-		input.StripLeft();
+		input = StripLeft(input.substr(1));
 	}
 }

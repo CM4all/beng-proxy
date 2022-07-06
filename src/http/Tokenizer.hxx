@@ -36,15 +36,15 @@
 
 #pragma once
 
-struct StringView;
+#include <string_view>
 
-StringView
-http_next_token(StringView &input) noexcept;
+std::string_view
+http_next_token(std::string_view &input) noexcept;
 
 /**
  * Like http_next_quoted_string(), but do not unquote.  Therefore, it
  * does not allocate memory and does not copy data, it just returns a
  * pointer inside the input string.
  */
-StringView
-http_next_quoted_string_raw(StringView &input) noexcept;
+std::string_view
+http_next_quoted_string_raw(std::string_view &input) noexcept;

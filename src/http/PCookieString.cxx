@@ -34,11 +34,11 @@
 #include "CookieString.hxx"
 #include "Tokenizer.hxx"
 #include "PTokenizer.hxx"
-#include "util/StringView.hxx"
+#include "util/StringStrip.hxx"
 #include "AllocatorPtr.hxx"
 
-static StringView
-cookie_next_value(AllocatorPtr alloc, StringView &input) noexcept
+static std::string_view
+cookie_next_value(AllocatorPtr alloc, std::string_view &input) noexcept
 {
 	if (!input.empty() && input.front() == '"')
 		return http_next_quoted_string(alloc, input);
@@ -46,8 +46,8 @@ cookie_next_value(AllocatorPtr alloc, StringView &input) noexcept
 		return cookie_next_unquoted_value(input);
 }
 
-static StringView
-cookie_next_rfc_ignorant_value(AllocatorPtr alloc, StringView &input) noexcept
+static std::string_view
+cookie_next_rfc_ignorant_value(AllocatorPtr alloc, std::string_view &input) noexcept
 {
 	if (!input.empty() && input.front() == '"')
 		return http_next_quoted_string(alloc, input);
@@ -55,18 +55,17 @@ cookie_next_rfc_ignorant_value(AllocatorPtr alloc, StringView &input) noexcept
 		return cookie_next_rfc_ignorant_value(input);
 }
 
-std::pair<StringView, StringView>
-cookie_next_name_value(AllocatorPtr alloc, StringView &input,
+std::pair<std::string_view, std::string_view>
+cookie_next_name_value(AllocatorPtr alloc, std::string_view &input,
 		       bool rfc_ignorant) noexcept
 {
 	const auto name = http_next_token(input);
 	if (name.empty())
 		return {name, nullptr};
 
-	input.StripLeft();
+	input = StripLeft(input);
 	if (!input.empty() && input.front() == '=') {
-		input.pop_front();
-		input.StripLeft();
+		input = StripLeft(input.substr(1));
 
 		const auto value = rfc_ignorant
 			? cookie_next_rfc_ignorant_value(alloc, input)

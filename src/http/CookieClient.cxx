@@ -40,6 +40,7 @@
 #include "pool/pool.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/StringCompare.hxx"
+#include "util/StringStrip.hxx"
 #include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -48,6 +49,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+
+using std::string_view_literals::operator""sv;
 
 [[gnu::pure]]
 static bool
@@ -93,7 +96,7 @@ cookie_list_delete_match(L &list,
 
 static std::unique_ptr<Cookie>
 parse_next_cookie(struct pool &tpool,
-		  StringView &input) noexcept
+		  std::string_view &input) noexcept
 {
 	auto [name, value] = cookie_next_name_value(tpool, input, false);
 	if (name.empty())
@@ -101,18 +104,18 @@ parse_next_cookie(struct pool &tpool,
 
 	auto cookie = std::make_unique<Cookie>(name, value);
 
-	input.StripLeft();
+	input = StripLeft(input);
 	while (!input.empty() && input.front() == ';') {
-		input.pop_front();
+		input = input.substr(1);
 
 		const auto nv = http_next_name_value(tpool, input);
 		name = nv.first;
 		value = nv.second;
-		if (name.EqualsIgnoreCase("domain"))
+		if (StringIsEqualIgnoreCase(name, "domain"sv))
 			cookie->domain = value;
-		else if (name.EqualsIgnoreCase("path"))
+		else if (StringIsEqualIgnoreCase(name, "path"sv))
 			cookie->path = value;
-		else if (name.EqualsIgnoreCase("max-age")) {
+		else if (StringIsEqualIgnoreCase(name, "max-age"sv)) {
 			unsigned long seconds;
 			char *endptr;
 
@@ -125,14 +128,14 @@ parse_next_cookie(struct pool &tpool,
 			}
 		}
 
-		input.StripLeft();
+		input = StripLeft(input);
 	}
 
 	return cookie;
 }
 
 static bool
-apply_next_cookie(CookieJar &jar, struct pool &tpool, StringView &input,
+apply_next_cookie(CookieJar &jar, struct pool &tpool, std::string_view &input,
 		  const char *domain, const char *path) noexcept
 {
 	assert(domain != nullptr);
@@ -173,7 +176,7 @@ cookie_jar_set_cookie2(CookieJar &jar, const char *value,
 {
 	const TempPoolLease tpool;
 
-	StringView input = value;
+	std::string_view input = value;
 	while (1) {
 		if (!apply_next_cookie(jar, tpool, input, domain, path))
 			break;
@@ -184,8 +187,7 @@ cookie_jar_set_cookie2(CookieJar &jar, const char *value,
 		if (input.front() != ',')
 			break;
 
-		input.pop_front();
-		input.StripLeft();
+		input = StripLeft(input.substr(1));
 	}
 }
 

@@ -36,20 +36,19 @@
 
 #pragma once
 
+#include <string_view>
 #include <utility>
 
-struct StringView;
+std::string_view
+cookie_next_unquoted_value(std::string_view &input) noexcept;
 
-StringView
-cookie_next_unquoted_value(StringView &input) noexcept;
-
-StringView
-cookie_next_rfc_ignorant_value(StringView &input) noexcept;
+std::string_view
+cookie_next_rfc_ignorant_value(std::string_view &input) noexcept;
 
 /**
  * Like cookie_next_name_value(), but do not unquote.  Therefore, it
  * does not allocate memory and does not copy data, it just returns a
  * pointer inside the input string.
  */
-std::pair<StringView, StringView>
-cookie_next_name_value_raw(StringView &input, bool rfc_ignorant) noexcept;
+std::pair<std::string_view, std::string_view>
+cookie_next_name_value_raw(std::string_view &input, bool rfc_ignorant) noexcept;
