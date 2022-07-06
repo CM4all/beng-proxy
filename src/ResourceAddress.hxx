@@ -39,7 +39,6 @@
 #include <cstddef>
 #include <string_view>
 
-struct StringView;
 struct FileAddress;
 struct LhttpAddress;
 struct HttpAddress;
@@ -286,7 +285,7 @@ public:
 	 * given path parameter.
 	 */
 	ResourceAddress WithArgs(AllocatorPtr alloc,
-				 StringView args, StringView path) const noexcept;
+				 std::string_view args, std::string_view path) const noexcept;
 
 	/**
 	 * Check if a "base" URI can be generated automatically from this
@@ -348,7 +347,7 @@ public:
 			      std::string_view relative) const noexcept;
 
 	[[gnu::pure]]
-	StringView RelativeTo(const ResourceAddress &base) const noexcept;
+	std::string_view RelativeTo(const ResourceAddress &base) const noexcept;
 
 	/**
 	 * A combination of Apply() and RelativeTo(), i.e. calls
@@ -356,9 +355,9 @@ public:
 	 * because it needs copy only a small part of the object.
 	 */
 	[[gnu::pure]]
-	StringView RelativeToApplied(AllocatorPtr alloc,
-				     const ResourceAddress &apply_base,
-				     StringView relative) const;
+	std::string_view RelativeToApplied(AllocatorPtr alloc,
+					   const ResourceAddress &apply_base,
+					   std::string_view relative) const;
 
 	/**
 	 * Does this address need to be expanded with Expand()?

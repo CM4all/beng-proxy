@@ -174,7 +174,7 @@ ResourceAddress::WithQueryStringFrom(AllocatorPtr alloc,
 
 ResourceAddress
 ResourceAddress::WithArgs(AllocatorPtr alloc,
-			  StringView args, StringView path) const noexcept
+			  std::string_view args, std::string_view path) const noexcept
 {
 	switch (type) {
 		CgiAddress *cgi;
@@ -469,7 +469,7 @@ ResourceAddress::Apply(AllocatorPtr alloc,
 	gcc_unreachable();
 }
 
-StringView
+std::string_view
 ResourceAddress::RelativeTo(const ResourceAddress &base) const noexcept
 {
 	assert(base.type == type);
@@ -479,7 +479,7 @@ ResourceAddress::RelativeTo(const ResourceAddress &base) const noexcept
 	case Type::LOCAL:
 	case Type::PIPE:
 	case Type::NFS:
-		return nullptr;
+		return {};
 
 	case Type::HTTP:
 		return u.http->RelativeTo(*base.u.http);
@@ -497,10 +497,10 @@ ResourceAddress::RelativeTo(const ResourceAddress &base) const noexcept
 	gcc_unreachable();
 }
 
-StringView
+std::string_view
 ResourceAddress::RelativeToApplied(AllocatorPtr alloc,
 				   const ResourceAddress &apply_base,
-				   StringView relative) const
+				   std::string_view relative) const
 {
 	assert(apply_base.type == type);
 
@@ -526,7 +526,7 @@ ResourceAddress::RelativeToApplied(AllocatorPtr alloc,
 	auto applied = apply_base.Apply(alloc, relative);
 	return applied.IsDefined()
 		? applied.RelativeTo(*this)
-		: nullptr;
+		: std::string_view{};
 }
 
 const char *
