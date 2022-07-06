@@ -43,6 +43,7 @@
 #include "util/StringCompare.hxx"
 
 #include <assert.h>
+#include <string.h>
 
 using std::string_view_literals::operator""sv;
 
