@@ -48,12 +48,7 @@ char_is_cookie_octet(char ch) noexcept
 std::string_view
 cookie_next_unquoted_value(std::string_view &input) noexcept
 {
-	std::size_t i = 0;
-	while (i < input.size() &&
-	       char_is_cookie_octet(input[i]))
-		++i;
-
-	auto p = Partition(input, i);
+	auto p = SplitWhile(input, char_is_cookie_octet);
 	input = p.second;
 	return p.first;
 }
@@ -69,12 +64,7 @@ char_is_rfc_ignorant_cookie_octet(char ch) noexcept
 std::string_view
 cookie_next_rfc_ignorant_value(std::string_view &input) noexcept
 {
-	std::size_t i = 0;
-	while (i < input.size() &&
-	       char_is_rfc_ignorant_cookie_octet(input[i]))
-		++i;
-
-	auto p = Partition(input, i);
+	auto p = SplitWhile(input, char_is_rfc_ignorant_cookie_octet);
 	input = p.second;
 	return p.first;
 }

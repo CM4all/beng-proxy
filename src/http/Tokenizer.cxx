@@ -39,11 +39,7 @@
 std::string_view
 http_next_token(std::string_view &input) noexcept
 {
-	std::size_t i = 0;
-	while (i < input.size() && char_is_http_token(input[i]))
-		++i;
-
-	auto p = Partition(input, i);
+	auto p = SplitWhile(input, char_is_http_token);
 	input = p.second;
 	return p.first;
 }
