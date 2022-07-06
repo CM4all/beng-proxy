@@ -40,18 +40,21 @@
 #include "pool/pool.hxx"
 #include "util/CharUtil.hxx"
 #include "util/HexFormat.hxx"
+#include "util/StringCompare.hxx"
 
 #include <assert.h>
 
-gcc_pure
+using std::string_view_literals::operator""sv;
+
+[[gnu::pure]]
 static bool
 text_processor_allowed_content_type(const char *content_type) noexcept
 {
 	assert(content_type != NULL);
 
-	return strncmp(content_type, "text/", 5) == 0 ||
-		strncmp(content_type, "application/json", 16) == 0 ||
-		strncmp(content_type, "application/javascript", 22) == 0;
+	return StringStartsWith(content_type, "text/"sv) ||
+		StringStartsWith(content_type, "application/json"sv) ||
+		StringStartsWith(content_type, "application/javascript"sv);
 }
 
 bool
