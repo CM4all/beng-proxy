@@ -33,7 +33,6 @@
 #include "uri/PRelative.hxx"
 #include "TestPool.hxx"
 #include "AllocatorPtr.hxx"
-#include "util/StringView.hxx"
 
 #include <gtest/gtest.h>
 

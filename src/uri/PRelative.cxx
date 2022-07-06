@@ -33,10 +33,11 @@
 #include "PRelative.hxx"
 #include "uri/Extract.hxx"
 #include "AllocatorPtr.hxx"
-#include "util/StringView.hxx"
 
 #include <assert.h>
 #include <string.h>
+
+using std::string_view_literals::operator""sv;
 
 const char *
 uri_compress(AllocatorPtr alloc, const char *uri) noexcept
@@ -144,7 +145,8 @@ uri_after_last_slash(const char *uri) noexcept
 }
 
 const char *
-uri_absolute(AllocatorPtr alloc, const char *base, StringView uri) noexcept
+uri_absolute(AllocatorPtr alloc, const char *base,
+	     std::string_view uri) noexcept
 {
 	assert(base != nullptr);
 
@@ -155,7 +157,7 @@ uri_absolute(AllocatorPtr alloc, const char *base, StringView uri) noexcept
 		return alloc.DupZ(uri);
 
 	size_t base_length;
-	if (uri.size >= 2 && uri[0] == '/' && uri[1] == '/') {
+	if (uri.starts_with("//"sv)) {
 		const char *colon = strstr(base, "://");
 		if (colon != nullptr)
 			base_length = colon + 1 - base;
@@ -181,5 +183,5 @@ uri_absolute(AllocatorPtr alloc, const char *base, StringView uri) noexcept
 		base_length = base_end - base;
 	}
 
-	return alloc.Concat(StringView(base, base_length), uri);
+	return alloc.Concat(std::string_view{base, base_length}, uri);
 }

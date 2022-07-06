@@ -36,10 +36,9 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <string_view>
 
 class AllocatorPtr;
-struct StringView;
 
 /**
  * Compresses an URI (eliminates all "/./" and "/../"), and returns
@@ -56,4 +55,5 @@ uri_compress(AllocatorPtr alloc, const char *uri) noexcept;
  */
 [[gnu::pure]]
 const char *
-uri_absolute(AllocatorPtr alloc, const char *base, StringView uri) noexcept;
+uri_absolute(AllocatorPtr alloc, const char *base,
+	     std::string_view uri) noexcept;
