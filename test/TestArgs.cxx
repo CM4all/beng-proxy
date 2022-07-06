@@ -33,19 +33,20 @@
 #include "uri/Args.hxx"
 #include "strmap.hxx"
 #include "pool/RootPool.hxx"
-#include "util/StringView.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <gtest/gtest.h>
 
 #include <string.h>
 
+using std::string_view_literals::operator""sv;
+
 TEST(Args, Parse)
 {
 	RootPool pool;
 	AllocatorPtr alloc(pool);
 
-	const StringView s("a=foo&b=bar&c=$20&=&=xyz&d=&e");
+	const std::string_view s = "a=foo&b=bar&c=$20&=&=xyz&d=&e"sv;
 	const auto args = args_parse(alloc, s);
 
 	EXPECT_EQ(std::distance(args.begin(), args.end()), 4u);

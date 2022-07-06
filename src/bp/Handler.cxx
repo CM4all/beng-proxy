@@ -447,7 +447,7 @@ fill_translate_request_args(TranslateRequest &t,
 			    AllocatorPtr alloc, const StringMap &args) noexcept
 {
 	t.args = args_format(alloc, &args,
-			     nullptr, nullptr, nullptr, nullptr,
+			     nullptr, {}, nullptr, {},
 			     "translate");
 	if (t.args != nullptr && *t.args == 0)
 		t.args = nullptr;

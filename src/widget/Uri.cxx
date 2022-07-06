@@ -332,7 +332,8 @@ Widget::ExternalUri(AllocatorPtr alloc,
 	args2 = args_format_n(*tpool, args,
 			      "focus", path,
 			      p.IsNull() ? nullptr : "path", p,
-			      frame == nullptr ? nullptr : "frame", frame,
+			      frame == nullptr ? nullptr : "frame",
+			      frame == nullptr ? std::string_view{} : std::string_view{frame},
 			      nullptr);
 
 	new_uri = alloc.Concat(external_base_uri, ';',

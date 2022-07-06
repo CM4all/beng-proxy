@@ -32,16 +32,17 @@
 
 #pragma once
 
+#include <string_view>
+
 class AllocatorPtr;
 class StringMap;
-struct StringView;
 
 /**
  * Parse the argument list in an URI after the semicolon.
  */
 [[gnu::pure]]
 StringMap
-args_parse(AllocatorPtr alloc, StringView p) noexcept;
+args_parse(AllocatorPtr alloc, std::string_view p) noexcept;
 
 /**
  * Format the arguments into a string in the form
@@ -53,14 +54,14 @@ args_parse(AllocatorPtr alloc, StringView p) noexcept;
 [[gnu::pure]]
 const char *
 args_format_n(AllocatorPtr alloc, const StringMap *args,
-	      const char *replace_key, StringView replace_value,
-	      const char *replace_key2, StringView replace_value2,
-	      const char *replace_key3, StringView replace_value3,
+	      const char *replace_key, std::string_view replace_value,
+	      const char *replace_key2, std::string_view replace_value2,
+	      const char *replace_key3, std::string_view replace_value3,
 	      const char *remove_key) noexcept;
 
 [[gnu::pure]]
 const char *
 args_format(AllocatorPtr alloc, const StringMap *args,
-	    const char *replace_key, StringView replace_value,
-	    const char *replace_key2, StringView replace_value2,
+	    const char *replace_key, std::string_view replace_value,
+	    const char *replace_key2, std::string_view replace_value2,
 	    const char *remove_key) noexcept;

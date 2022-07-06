@@ -36,20 +36,20 @@
 #include "strmap.hxx"
 #include "AllocatorPtr.hxx"
 #include "util/IterableSplitString.hxx"
-#include "util/StringView.hxx"
+#include "util/StringSplit.hxx"
 
 #include <string.h>
 
 static constexpr char ARGS_ESCAPE_CHAR = '$';
 
 StringMap
-args_parse(AllocatorPtr alloc, const StringView p) noexcept
+args_parse(AllocatorPtr alloc, const std::string_view p) noexcept
 {
 	StringMap args;
 
-	for (const StringView s : IterableSplitString(p, '&')) {
-		const auto [name, escaped_value] = s.Split('=');
-		if (name.empty() || escaped_value.IsNull())
+	for (const auto s : IterableSplitString(p, '&')) {
+		const auto [name, escaped_value] = Split(s, '=');
+		if (name.empty() || escaped_value.data() == nullptr)
 			continue;
 
 		char *value = uri_unescape_dup(alloc, escaped_value,
@@ -63,9 +63,9 @@ args_parse(AllocatorPtr alloc, const StringView p) noexcept
 
 const char *
 args_format_n(AllocatorPtr alloc, const StringMap *args,
-	      const char *replace_key, StringView replace_value,
-	      const char *replace_key2, StringView replace_value2,
-	      const char *replace_key3, StringView replace_value3,
+	      const char *replace_key, std::string_view replace_value,
+	      const char *replace_key2, std::string_view replace_value2,
+	      const char *replace_key3, std::string_view replace_value3,
 	      const char *remove_key) noexcept
 {
 	size_t length = 0;
@@ -77,13 +77,13 @@ args_format_n(AllocatorPtr alloc, const StringMap *args,
 			length += strlen(i.key) + 1 + strlen(i.value) * 3 + 1;
 
 	if (replace_key != nullptr)
-		length += strlen(replace_key) + 1 + replace_value.size * 3 + 1;
+		length += strlen(replace_key) + 1 + replace_value.size() * 3 + 1;
 
 	if (replace_key2 != nullptr)
-		length += strlen(replace_key2) + 1 + replace_value2.size * 3 + 1;
+		length += strlen(replace_key2) + 1 + replace_value2.size() * 3 + 1;
 
 	if (replace_key3 != nullptr)
-		length += strlen(replace_key3) + 1 + replace_value3.size * 3 + 1;
+		length += strlen(replace_key3) + 1 + replace_value3.size() * 3 + 1;
 
 	/* allocate memory, format it */
 
@@ -143,13 +143,13 @@ args_format_n(AllocatorPtr alloc, const StringMap *args,
 
 const char *
 args_format(AllocatorPtr alloc, const StringMap *args,
-	    const char *replace_key, StringView replace_value,
-	    const char *replace_key2, StringView replace_value2,
+	    const char *replace_key, std::string_view replace_value,
+	    const char *replace_key2, std::string_view replace_value2,
 	    const char *remove_key) noexcept
 {
 	return args_format_n(alloc, args,
 			     replace_key, replace_value,
 			     replace_key2, replace_value2,
-			     nullptr, nullptr,
+			     nullptr, {},
 			     remove_key);
 }
