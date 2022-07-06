@@ -38,12 +38,14 @@
 #include "util/ConstBuffer.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/HexFormat.hxx"
-#include "util/StringView.hxx"
+#include "util/SpanCast.hxx"
 
 #include <algorithm>
 
 #include <assert.h>
 #include <string.h>
+
+using std::string_view_literals::operator""sv;
 
 class ChunkedIstream final : public FacadeIstream, DestructAnchor {
 	/**
@@ -357,7 +359,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 		size_t nbytes = list.SpliceBuffersFrom(std::move(sub),
 						       missing_from_current_chunk);
 		if (nbytes >= missing_from_current_chunk)
-			list.Push(StringView("\r\n").ToVoid());
+			list.Push(AsBytes("\r\n"sv));
 	}
 
 	list.SetMore();
