@@ -111,7 +111,7 @@ quote_prefix(struct pool *pool, const char *p) noexcept
 }
 
 void
-Widget::SetId(const StringView _id) noexcept
+Widget::SetId(const std::string_view _id) noexcept
 {
 	assert(parent != nullptr);
 	assert(!_id.empty());
@@ -134,7 +134,7 @@ Widget::SetId(const StringView _id) noexcept
 }
 
 void
-Widget::SetClassName(const StringView _class_name) noexcept
+Widget::SetClassName(const std::string_view _class_name) noexcept
 {
 	assert(parent != nullptr);
 	assert(class_name == nullptr);
@@ -170,7 +170,7 @@ Widget::GetLogName() const noexcept
 	return lazy.log_name = alloc.Concat(class_name, '#', id_path);
 }
 
-StringView
+std::string_view
 Widget::LoggerDomain::GetDomain() const noexcept
 {
 	const auto &widget = ContainerCast(*this, (LoggerDomain Widget::*)&Widget::logger);

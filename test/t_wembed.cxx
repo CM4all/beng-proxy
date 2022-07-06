@@ -63,7 +63,7 @@ Widget::GetLogName() const noexcept
 	return "dummy";
 }
 
-StringView
+std::string_view
 Widget::LoggerDomain::GetDomain() const noexcept
 {
 	return "dummy";

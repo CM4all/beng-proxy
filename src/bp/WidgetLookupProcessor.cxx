@@ -44,6 +44,7 @@
 #include "util/RuntimeError.hxx"
 #include "util/Cancellable.hxx"
 #include "util/ScopeExit.hxx"
+#include "util/StringAPI.hxx"
 #include "stopwatch.hxx"
 
 #include <assert.h>

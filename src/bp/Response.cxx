@@ -72,6 +72,7 @@
 #include "uri/Verify.hxx"
 #include "util/DeleteDisposer.hxx"
 #include "util/StringBuffer.hxx"
+#include "util/StringSplit.hxx"
 #include "FilterStatus.hxx"
 
 static const char *

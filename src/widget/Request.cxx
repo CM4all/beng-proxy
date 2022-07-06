@@ -295,7 +295,7 @@ WidgetRequest::HandleRedirect(const char *location, UnusedIstreamPtr &body) noex
 		return false;
 
 	const auto p = widget.RelativeUri(pool, true, location);
-	if (p.IsNull())
+	if (p.data() == nullptr)
 		return false;
 
 	widget.CopyFromRedirectLocation(p, GetSessionIfStateful().get());

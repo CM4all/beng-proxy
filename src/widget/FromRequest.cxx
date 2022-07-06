@@ -35,6 +35,7 @@
 #include "Class.hxx"
 #include "Ref.hxx"
 #include "uri/PRelative.hxx"
+#include "util/StringSplit.hxx"
 #include "AllocatorPtr.hxx"
 
 #include <string.h>
@@ -110,7 +111,7 @@ Widget::CopyFromRequest()
 }
 
 void
-Widget::CopyFromRedirectLocation(StringView location,
+Widget::CopyFromRedirectLocation(std::string_view location,
 				 RealmSession *session) noexcept
 {
 	assert(cls != nullptr);
@@ -118,16 +119,9 @@ Widget::CopyFromRedirectLocation(StringView location,
 	from_request.method = HTTP_METHOD_GET;
 	from_request.body = nullptr;
 
-	const char *qmark = location.Find('?');
-	if (qmark == nullptr) {
-		from_request.path_info = p_strdup(pool, location);
-		from_request.query_string = nullptr;
-	} else {
-		from_request.path_info = p_strdup(pool,
-						  StringView(location.data, qmark));
-		from_request.query_string = { qmark + 1,
-			size_t(location.end() - (qmark + 1)) };
-	}
+	const auto [_path_info, _query_string] = Split(location, '?');
+	from_request.path_info = p_strdup(pool, _path_info);
+	from_request.query_string = _query_string;
 
 	lazy.address = nullptr;
 

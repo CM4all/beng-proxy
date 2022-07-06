@@ -35,6 +35,8 @@
 #include "Error.hxx"
 #include "util/StringFormat.hxx"
 
+#include <string.h>
+
 bool
 Widget::InitApproval(bool self_container) noexcept
 {

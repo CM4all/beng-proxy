@@ -37,10 +37,10 @@
 #include "io/Logger.hxx"
 #include "http/Method.h"
 #include "util/IntrusiveForwardList.hxx"
-#include "util/StringView.hxx"
 
 #include <cstdint>
 #include <memory>
+#include <string_view>
 
 struct pool;
 class AllocatorPtr;
@@ -201,7 +201,7 @@ public:
 		const char *path_info = nullptr;
 
 		/** the query string provided by the browser */
-		StringView query_string = nullptr;
+		std::string_view query_string{};
 
 		/** the request body */
 		UnusedHoldIstreamPtr body;
@@ -247,7 +247,7 @@ public:
 		/**
 		 * The query string for the focused widget.
 		 */
-		const StringView query_string;
+		const std::string_view query_string;
 
 		/**
 		 * The request body.  This must be closed if it failed to be
@@ -261,7 +261,7 @@ public:
 		const http_method_t method;
 
 		ForFocused(http_method_t _method, const char *_path_info,
-			   StringView _query_string,
+			   std::string_view _query_string,
 			   UnusedHoldIstreamPtr &&_body) noexcept
 			:path_info(_path_info), query_string(_query_string),
 			 body(std::move(_body)),
@@ -289,7 +289,7 @@ private:
 
 	struct LoggerDomain {
 		[[gnu::pure]]
-		StringView GetDomain() const noexcept;
+		std::string_view GetDomain() const noexcept;
 	};
 
 public:
@@ -305,8 +305,8 @@ public:
 	Widget(const Widget &) = delete;
 	Widget &operator=(const Widget &) = delete;
 
-	void SetId(StringView _id) noexcept;
-	void SetClassName(StringView _class_name) noexcept;
+	void SetId(std::string_view _id) noexcept;
+	void SetClassName(std::string_view _class_name) noexcept;
 
 	const char *GetIdPath() const noexcept {
 		return id_path;
@@ -452,21 +452,21 @@ public:
 
 	[[gnu::pure]]
 	const char *AbsoluteUri(AllocatorPtr alloc, bool stateful,
-				StringView relative_uri) const noexcept;
+				std::string_view relative_uri) const noexcept;
 
 	/**
 	 * Returns an URI relative to the widget base address.
 	 */
 	[[gnu::pure]]
-	StringView RelativeUri(AllocatorPtr alloc, bool stateful,
-			       StringView relative_uri) const noexcept;
+	std::string_view RelativeUri(AllocatorPtr alloc, bool stateful,
+				     std::string_view relative_uri) const noexcept;
 
 	[[gnu::pure]]
 	const char *ExternalUri(AllocatorPtr alloc,
-				StringView external_base_uri,
+				std::string_view external_base_uri,
 				const StringMap *args,
 				bool stateful,
-				StringView relative_uri,
+				std::string_view relative_uri,
 				const char *frame,
 				const char *view) const noexcept;
 
@@ -541,7 +541,7 @@ public:
 	 * Overwrite request data, copy values from a HTTP redirect
 	 * location.
 	 */
-	void CopyFromRedirectLocation(StringView location,
+	void CopyFromRedirectLocation(std::string_view location,
 				      RealmSession *session) noexcept;
 
 	struct Disposer {

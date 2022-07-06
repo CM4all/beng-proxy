@@ -200,9 +200,9 @@ assert_rewrite_check4(EventLoop &event_loop,
 {
 	auto pool = pool_new_libc(widget_pool, "rewrite");
 
-	StringView value2 = value;
-	if (!value2.IsNull())
-		value2 = escape_dup(*widget_pool, html_escape_class, value2);
+	std::string_view value2{};
+	if (value != nullptr)
+		value2 = escape_dup(*widget_pool, html_escape_class, value);
 
 	if (result != NULL) {
 		result = escape_dup(*widget_pool, html_escape_class, result);

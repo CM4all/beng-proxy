@@ -40,9 +40,12 @@
 #include "uri/Args.hxx"
 #include "uri/PEdit.hxx"
 #include "uri/PRelative.hxx"
-#include "util/StringView.hxx"
+#include "util/StringCompare.hxx"
+#include "util/StringSplit.hxx"
 
 #include <assert.h>
+
+using std::string_view_literals::operator""sv;
 
 /**
  * Returns the "base" address of the widget, i.e. without the widget
@@ -140,7 +143,7 @@ Widget::DetermineAddress(bool stateful) const noexcept
 			uri = uri_insert_query_string(alloc, uri,
 						      from_template.query_string);
 
-		if (stateful && !from_request.query_string.IsNull())
+		if (stateful && from_request.query_string.data() != nullptr)
 			uri = uri_append_query_string_n(alloc, uri,
 							from_request.query_string);
 
@@ -164,7 +167,7 @@ Widget::DetermineAddress(bool stateful) const noexcept
 			uri = uri_insert_query_string(alloc, uri,
 						      from_template.query_string);
 
-		if (stateful && !from_request.query_string.IsNull())
+		if (stateful && from_request.query_string.data() != nullptr)
 			uri = uri_append_query_string_n(alloc, uri,
 							from_request.query_string);
 
@@ -199,15 +202,15 @@ Widget::DetermineAddress(bool stateful) const noexcept
 
 const char *
 Widget::AbsoluteUri(AllocatorPtr alloc, bool stateful,
-		    StringView relative_uri) const noexcept
+		    std::string_view relative_uri) const noexcept
 {
 	assert(GetAddress().IsHttp());
 
-	if (relative_uri.SkipPrefix("~/")) {
+	if (SkipPrefix(relative_uri, "~/"sv)) {
 		stateful = false;
 	} else if (!relative_uri.empty() && relative_uri.front() == '/' &&
 		   cls != nullptr && cls->anchor_absolute) {
-		relative_uri.skip_front(1);
+		relative_uri = relative_uri.substr(1);
 		stateful = false;
 	}
 
@@ -216,7 +219,7 @@ Widget::AbsoluteUri(AllocatorPtr alloc, bool stateful,
 		  ? GetAddress()
 		  : GetStatelessAddress()).GetHttp();
 	const char *base = uwa->path;
-	if (relative_uri.IsNull())
+	if (relative_uri.data() == nullptr)
 		return uwa->GetAbsoluteURI(alloc);
 
 	const char *uri = uri_absolute(alloc, base, relative_uri);
@@ -232,16 +235,16 @@ Widget::AbsoluteUri(AllocatorPtr alloc, bool stateful,
 	return uwa->GetAbsoluteURI(alloc, uri);
 }
 
-StringView
+std::string_view
 Widget::RelativeUri(AllocatorPtr alloc, bool stateful,
-		    StringView relative_uri) const noexcept
+		    std::string_view relative_uri) const noexcept
 {
 	const ResourceAddress *base;
-	if (relative_uri.SkipPrefix("~/")) {
+	if (SkipPrefix(relative_uri, "~/"sv)) {
 		base = &widget_get_original_address(*this);
-	} else if (relative_uri.size >= 1 && relative_uri[0] == '/' &&
+	} else if (relative_uri.starts_with('/') &&
 		   cls != nullptr && cls->anchor_absolute) {
-		relative_uri.skip_front(1);
+		relative_uri = relative_uri.substr(1);
 		base = &widget_get_original_address(*this);
 	} else
 		base = alloc.New<ResourceAddress>(GetBaseAddress(alloc, stateful));
@@ -274,31 +277,29 @@ compare_widget_path(const Widget *widget, const char *other) noexcept
 
 const char *
 Widget::ExternalUri(AllocatorPtr alloc,
-		    StringView external_base_uri,
+		    std::string_view external_base_uri,
 		    const StringMap *args,
 		    bool stateful,
-		    StringView relative_uri,
+		    std::string_view relative_uri,
 		    const char *frame, const char *view) const noexcept
 {
-	const char *qmark, *args2, *new_uri;
-	StringView p;
-
 	const char *path = GetIdPath();
 	if (path == nullptr ||
-	    external_base_uri.IsNull() ||
+	    external_base_uri.data() == nullptr ||
 	    cls == &root_widget_class)
 		return nullptr;
 
 	const TempPoolLease tpool;
 
-	if (!relative_uri.IsNull()) {
+	std::string_view p{};
+	if (relative_uri.data() != nullptr) {
 		p = RelativeUri(*tpool, stateful, relative_uri);
-		if (p.IsNull())
+		if (p.data() == nullptr)
 			return nullptr;
-	} else
-		p = nullptr;
+	}
 
-	if (!p.IsNull() && relative_uri.Find('?') == nullptr &&
+	if (p.data() != nullptr &&
+	    relative_uri.find('?') == relative_uri.npos &&
 	    from_template.query_string != nullptr) {
 		/* no query string in relative_uri: if there is one in the new
 		   URI, check it and remove the configured parameters */
@@ -308,39 +309,37 @@ Widget::ExternalUri(AllocatorPtr alloc,
 		p = uri;
 	}
 
-	StringView query_string;
-	if (!p.IsNull() && (qmark = p.Find('?')) != nullptr) {
+	std::string_view query_string{};
+	if (const auto qmark = p.find('?'); qmark != p.npos) {
 		/* separate query_string from path_info */
-		query_string = { qmark, p.end() };
-		p.size = qmark - p.data;
-	} else {
-		query_string = nullptr;
+		const auto s = Partition(p, qmark);
+		p = s.first;
+		query_string = s.second;
 	}
 
-	StringView suffix;
-	if (!p.IsNull() && cls->direct_addressing &&
+	std::string_view suffix = ""sv;
+	if (p.data() != nullptr && cls->direct_addressing &&
 	    compare_widget_path(this, frame)) {
 		/* new-style direct URI addressing: append */
 		suffix = p;
-		p = nullptr;
-	} else
-		suffix = "";
+		p = {};
+	}
 
 	/* the URI is relative to the widget's base URI.  Convert the URI
 	   into an absolute URI to the template page on this server and
 	   add the appropriate args. */
-	args2 = args_format_n(*tpool, args,
+	const char *args2 =
+		args_format_n(*tpool, args,
 			      "focus", path,
-			      p.IsNull() ? nullptr : "path", p,
+			      p.data() == nullptr ? nullptr : "path", p,
 			      frame == nullptr ? nullptr : "frame",
 			      frame == nullptr ? std::string_view{} : std::string_view{frame},
 			      nullptr);
 
-	new_uri = alloc.Concat(external_base_uri, ';',
-			       args2,
-			       StringView{"&view=", size_t(view != nullptr ? 6 : 0)},
-			       view != nullptr ? view : "",
-			       StringView{"/", size_t(suffix.size > 0)},
-			       suffix, query_string);
-	return new_uri;
+	return alloc.Concat(external_base_uri, ';',
+			    args2,
+			    std::string_view{"&view=", size_t(view != nullptr ? 6 : 0)},
+			    view != nullptr ? view : "",
+			    std::string_view{"/", size_t(suffix.size() > 0)},
+			    suffix, query_string);
 }

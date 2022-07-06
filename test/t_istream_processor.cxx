@@ -46,6 +46,7 @@
 #include "widget/Registry.hxx"
 #include "bp/Global.hxx"
 #include "util/ScopeExit.hxx"
+#include "util/StringAPI.hxx"
 #include "stopwatch.hxx"
 
 #include <stdlib.h>
