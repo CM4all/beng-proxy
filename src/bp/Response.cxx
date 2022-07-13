@@ -539,7 +539,7 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 
 		using SS = BpConfig::SessionCookieSameSite;
 		switch (connection.config.session_cookie_same_site) {
-		case SS::NONE:
+		case SS::DEFAULT:
 			break;
 
 		case SS::STRICT:

@@ -154,7 +154,7 @@ struct BpConfig {
 	unsigned cluster_size = 0, cluster_node = 0;
 
 	enum class SessionCookieSameSite : uint8_t {
-		NONE,
+		DEFAULT,
 		STRICT,
 		LAX,
 	} session_cookie_same_site;

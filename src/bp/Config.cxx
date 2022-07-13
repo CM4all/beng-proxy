@@ -45,8 +45,8 @@ static auto
 ParseSessionCookieSameSite(const char *s)
 {
 	using SS = BpConfig::SessionCookieSameSite;
-	if (StringIsEqual(s, "none"))
-		return SS::NONE;
+	if (StringIsEqual(s, "default"))
+		return SS::DEFAULT;
 	else if (StringIsEqual(s, "strict"))
 		return SS::STRICT;
 	else if (StringIsEqual(s, "lax"))
