@@ -172,7 +172,7 @@ struct RealmSession
 
 	RealmSession(Session &_parent, RealmSession &&src) noexcept
 		:parent(_parent),
-		 realm(src.realm),
+		 realm(std::move(src.realm)),
 		 site(std::move(src.site)),
 		 user(std::move(src.user)),
 		 user_expires(src.user_expires),
