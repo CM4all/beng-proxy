@@ -576,7 +576,6 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 		header_write(headers, "p3p", "CP=\"CAO PSA OUR\"");
 
 		if (auto realm_session = MakeRealmSession()) {
-			realm_session->parent.cookie_sent = true;
 			realm_session->session_cookie_same_site = session_cookie_same_site;
 		}
 	} else if ((tr.discard_session || tr.discard_realm_session) &&

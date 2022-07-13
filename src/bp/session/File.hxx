@@ -39,7 +39,7 @@
 #include <stdint.h>
 
 static constexpr uint32_t MAGIC_FILE = 2461362039;
-static constexpr uint32_t MAGIC_SESSION = 663845834;
+static constexpr uint32_t MAGIC_SESSION = 663845835;
 static constexpr uint32_t MAGIC_REALM_SESSION = 983957473;
 static constexpr uint32_t MAGIC_WIDGET_SESSION = 983957472;
 static constexpr uint32_t MAGIC_COOKIE = 860919820;

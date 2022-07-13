@@ -238,9 +238,6 @@ struct Session {
 	 */
 	unsigned counter = 1;
 
-	/** has a HTTP cookie with this session id already been sent? */
-	bool cookie_sent = false;
-
 	/** has a HTTP cookie with this session id already been received? */
 	bool cookie_received = false;
 

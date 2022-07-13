@@ -220,7 +220,6 @@ DoReadSession(FileReader &file, Session &session)
 	file.Read(session.expires);
 	file.ReadT(session.counter);
 	file.ReadBool(); // obsolete: "is_new"
-	session.cookie_sent = file.ReadBool();
 	session.cookie_received = file.ReadBool();
 	session.translate = file.ReadArray();
 	session.language = file.ReadString();
