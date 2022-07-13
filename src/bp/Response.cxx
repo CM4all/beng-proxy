@@ -540,7 +540,9 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 			headers.Write("; Secure");
 
 		using SS = CookieSameSite;
-		switch (connection.config.session_cookie_same_site) {
+		const auto session_cookie_same_site =
+			connection.config.session_cookie_same_site;
+		switch (session_cookie_same_site) {
 		case SS::DEFAULT:
 			break;
 
@@ -573,9 +575,10 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 		   details */
 		header_write(headers, "p3p", "CP=\"CAO PSA OUR\"");
 
-		auto session = MakeSession();
-		if (session)
-			session->cookie_sent = true;
+		if (auto realm_session = MakeRealmSession()) {
+			realm_session->parent.cookie_sent = true;
+			realm_session->session_cookie_same_site = session_cookie_same_site;
+		}
 	} else if ((tr.discard_session || tr.discard_realm_session) &&
 		   !session_id.IsDefined()) {
 		/* delete the cookie for the discarded session */

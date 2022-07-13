@@ -208,6 +208,7 @@ ReadRealmSession(FileReader &file, Session &parent)
 	file.Read(session->user_expires);
 	ReadWidgetSessions(file, session->widgets);
 	ReadCookieJar(file, session->cookies);
+	session->session_cookie_same_site = file.ReadT<CookieSameSite>();
 	Expect32(file, MAGIC_END_OF_RECORD);
 
 	return session;

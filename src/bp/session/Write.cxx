@@ -195,6 +195,7 @@ WriteRealmSession(FileWriter &file, const RealmSession &session)
 	file.Write(session.user_expires);
 	WriteWidgetSessions(file, session.widgets);
 	WriteCookieJar(file, session.cookies);
+	file.WriteT(session.session_cookie_same_site);
 	file.Write32(MAGIC_END_OF_RECORD);
 }
 

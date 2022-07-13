@@ -38,6 +38,7 @@
 
 #include "Id.hxx"
 #include "http/CookieJar.hxx"
+#include "http/CookieSameSite.hxx"
 #include "pool/Ptr.hxx"
 #include "util/AllocatedArray.hxx"
 #include "util/AllocatedString.hxx"
@@ -162,6 +163,12 @@ struct RealmSession
 
 	/** all cookies received by widget servers */
 	CookieJar cookies;
+
+	/**
+	 * The "SameSite" attribute of the session cookie which was
+	 * most recently sent to the client.
+	 */
+	CookieSameSite session_cookie_same_site = CookieSameSite::DEFAULT;
 
 	template<typename R>
 	RealmSession(Session &_parent, R &&_realm) noexcept
