@@ -45,6 +45,8 @@ ParseCookieSameSite(std::string_view s)
 		return CookieSameSite::STRICT;
 	else if (s == "lax"sv)
 		return CookieSameSite::LAX;
+	else if (s == "none"sv)
+		return CookieSameSite::NONE;
 	else
 		throw std::invalid_argument{"Invalid Cookie/SameSite attribute value"};
 }

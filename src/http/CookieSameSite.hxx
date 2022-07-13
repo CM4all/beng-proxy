@@ -39,6 +39,7 @@ enum class CookieSameSite : uint8_t {
 	DEFAULT,
 	STRICT,
 	LAX,
+	NONE,
 };
 
 /**

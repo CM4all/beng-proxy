@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.101) unstable; urgency=low
 
-  * 
+  * bp: support "SameSite=None" in cookie headers
 
  --   
 

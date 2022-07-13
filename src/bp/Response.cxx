@@ -75,6 +75,8 @@
 #include "util/StringSplit.hxx"
 #include "FilterStatus.hxx"
 
+using std::string_view_literals::operator""sv;
+
 static const char *
 request_absolute_uri(const IncomingHttpRequest &request,
 		     const char *scheme, const char *host,
@@ -548,6 +550,10 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 
 		case SS::LAX:
 			headers.Write("; SameSite=lax");
+			break;
+
+		case SS::NONE:
+			headers.Write("; SameSite=none");
 			break;
 		}
 

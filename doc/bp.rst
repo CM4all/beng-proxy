@@ -326,7 +326,7 @@ The following settings are available:
 - ``session_cookie_same_site``: Enable the ``SameSite`` attribute in
   the session cookie (see `RFC 6265 5.3.7
   <https://tools.ietf.org/html/draft-ietf-httpbis-rfc6265bis-02#section-5.3.7>`__).
-  Supported values are ``strict`` and ``lax``.
+  Supported values are ``strict``, ``lax`` and ``none``.
 
 - ``dynamic_session_cookie``: Append a suffix to the session cookie
   generated from the ``Host`` request header if set to ``yes``. This
