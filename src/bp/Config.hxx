@@ -157,7 +157,7 @@ struct BpConfig {
 		DEFAULT,
 		STRICT,
 		LAX,
-	} session_cookie_same_site;
+	} session_cookie_same_site = SessionCookieSameSite::DEFAULT;
 
 	bool dynamic_session_cookie = false;
 
