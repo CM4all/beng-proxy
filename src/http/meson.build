@@ -27,6 +27,7 @@ cookie = static_library(
   'CookieJar.cxx',
   'CookieClient.cxx',
   'CookieExtract.cxx',
+  'CookieSameSite.cxx',
   'CookieServer.cxx',
   'CookieString.cxx',
   'PCookieString.cxx',

@@ -34,6 +34,7 @@
 
 #include "access_log/Config.hxx"
 #include "ssl/Config.hxx"
+#include "http/CookieSameSite.hxx"
 #include "net/SocketConfig.hxx"
 #include "spawn/Config.hxx"
 
@@ -153,11 +154,7 @@ struct BpConfig {
 
 	unsigned cluster_size = 0, cluster_node = 0;
 
-	enum class SessionCookieSameSite : uint8_t {
-		DEFAULT,
-		STRICT,
-		LAX,
-	} session_cookie_same_site = SessionCookieSameSite::DEFAULT;
+	CookieSameSite session_cookie_same_site = CookieSameSite::DEFAULT;
 
 	bool dynamic_session_cookie = false;
 

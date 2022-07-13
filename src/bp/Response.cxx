@@ -537,7 +537,7 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 		if (tr.secure_cookie)
 			headers.Write("; Secure");
 
-		using SS = BpConfig::SessionCookieSameSite;
+		using SS = CookieSameSite;
 		switch (connection.config.session_cookie_same_site) {
 		case SS::DEFAULT:
 			break;

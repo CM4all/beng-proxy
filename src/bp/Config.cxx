@@ -41,20 +41,6 @@
 
 using std::string_view_literals::operator""sv;
 
-static auto
-ParseSessionCookieSameSite(const char *s)
-{
-	using SS = BpConfig::SessionCookieSameSite;
-	if (StringIsEqual(s, "default"))
-		return SS::DEFAULT;
-	else if (StringIsEqual(s, "strict"))
-		return SS::STRICT;
-	else if (StringIsEqual(s, "lax"))
-		return SS::LAX;
-	else
-		throw std::runtime_error("Invalid value");
-}
-
 void
 BpConfig::HandleSet(std::string_view name, const char *value)
 {
@@ -106,7 +92,7 @@ BpConfig::HandleSet(std::string_view name, const char *value)
 
 		session_cookie = value;
 	} else if (name == "session_cookie_same_site"sv) {
-		session_cookie_same_site = ParseSessionCookieSameSite(value);
+		session_cookie_same_site = ParseCookieSameSite(value);
 	} else if (name == "dynamic_session_cookie"sv) {
 		dynamic_session_cookie = ParseBool(value);
 	} else if (name == "session_idle_timeout"sv) {
