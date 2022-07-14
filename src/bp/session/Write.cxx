@@ -44,9 +44,7 @@ namespace {
 
 class SessionSerializerError final : public std::runtime_error {
 public:
-	template<typename W>
-	SessionSerializerError(W &&_what) noexcept
-		:std::runtime_error(std::forward<W>(_what)) {}
+	using std::runtime_error::runtime_error;
 };
 
 class FileWriter {
