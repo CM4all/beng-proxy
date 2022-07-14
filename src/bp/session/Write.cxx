@@ -36,9 +36,8 @@
 #include "io/BufferedOutputStream.hxx"
 #include "util/SpanCast.hxx"
 
+#include <cstdint>
 #include <stdexcept>
-
-#include <stdint.h>
 
 namespace {
 
@@ -85,12 +84,12 @@ public:
 
 	void Write(const char *s) {
 		if (s == nullptr) {
-			Write16((uint16_t)-1);
+			Write16(UINT16_MAX);
 			return;
 		}
 
 		uint32_t length = strlen(s);
-		if (length >= (uint16_t)-1)
+		if (length >= UINT16_MAX)
 			throw SessionSerializerError("String is too long");
 
 		Write16(length);
@@ -99,11 +98,11 @@ public:
 
 	void Write(std::span<const std::byte> buffer) {
 		if (buffer.data() == nullptr) {
-			Write16((uint16_t)-1);
+			Write16(UINT16_MAX);
 			return;
 		}
 
-		if (buffer.size() >= (uint16_t)-1)
+		if (buffer.size() >= UINT16_MAX)
 			throw SessionSerializerError("Buffer is too long");
 
 		Write16(buffer.size());
