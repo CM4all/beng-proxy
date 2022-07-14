@@ -779,6 +779,9 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 		   repeat_translation() */
 		translate.request.session = response.session;
 
+	if (response.session_cookie_same_site != CookieSameSite::DEFAULT)
+		session_cookie_same_site = response.session_cookie_same_site;
+
 	translation_protocol_version_received = true;
 	if (response.protocol_version > translation_protocol_version)
 		translation_protocol_version = response.protocol_version;

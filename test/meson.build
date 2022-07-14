@@ -220,6 +220,7 @@ executable('request_translation',
     widget_dep,
     stock_dep,
     http_dep,
+    cookie_dep,
   ])
 
 executable('run_subst',

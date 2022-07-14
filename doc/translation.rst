@@ -429,6 +429,10 @@ Response
 
 - ``SECURE_COOKIE``: Set the "secure" flag on the session cookie.
 
+- ``SESSION_COOKIE_SAME_SITE``: Set the "SameSite" attribute on the
+  (realm) session cookie.  Valid payloads are ``strict``, ``lax`` and
+  ``none`` (all lower case).
+
 - ``CHDIR``: change the working directory (after namespace setup).
 
 - ``HOME``: home directory of the account this site belongs to; will be

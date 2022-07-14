@@ -342,6 +342,14 @@ private:
 	http_status_t previous_status = http_status_t(0);
 
 	/**
+	 * The desired "SameSite" attribute for the session cookie.
+	 * This gets initialized from
+	 * BpConfig::session_cookie_same_site, but may be modified by
+	 * translation responses.
+	 */
+	CookieSameSite session_cookie_same_site;
+
+	/**
 	 * Is this request "stateless", i.e. is session management
 	 * disabled?  This is initialized by DetermineSession(), and
 	 * may be disabled later by HandleTranslatedRequest().

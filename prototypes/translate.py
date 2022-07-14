@@ -1068,6 +1068,10 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_REGEX, 'bar')
         elif uri == '/tiny.gif':
             response.packet(TRANSLATE_TINY_IMAGE)
+        elif uri.startswith('/same-site/'):
+            same_site = uri[11:]
+            response.packet(TRANSLATE_SESSION_COOKIE_SAME_SITE, same_site)
+            response.message(same_site)
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)

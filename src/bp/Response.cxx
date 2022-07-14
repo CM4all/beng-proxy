@@ -540,8 +540,6 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 			headers.Write("; Secure");
 
 		using SS = CookieSameSite;
-		const auto session_cookie_same_site =
-			connection.config.session_cookie_same_site;
 		switch (session_cookie_same_site) {
 		case SS::DEFAULT:
 			break;

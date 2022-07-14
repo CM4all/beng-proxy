@@ -32,6 +32,7 @@
 
 #include "Request.hxx"
 #include "Connection.hxx"
+#include "Config.hxx"
 #include "Listener.hxx"
 #include "PendingResponse.hxx"
 #include "session/Lease.hxx"
@@ -52,7 +53,8 @@ Request::Request(BpConnection &_connection,
 	 logger(connection.logger),
 	 stopwatch(parent_stopwatch, "handler"),
 	 request(_request),
-	 request_body(pool, std::move(request.body))
+	 request_body(pool, std::move(request.body)),
+	 session_cookie_same_site(connection.config.session_cookie_same_site)
 {
 	session_id.Clear();
 }

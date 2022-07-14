@@ -402,5 +402,22 @@ Request::ApplyTranslateSession(const TranslateResponse &response) noexcept
 							   response.external_session_keepalive);
 	}
 
+	/* apply SESSION_COOKIE_SAME_SITE; the setting was already
+	   copied early from TranslateResponse by
+	   OnTranslateResponse() */
+	if (session_cookie_same_site != CookieSameSite::DEFAULT &&
+	    session &&
+	    session_cookie_same_site != session->session_cookie_same_site &&
+	    !send_session_cookie) {
+		/* cookie attribute "SameSite" has changed - we need
+		   to resend the session cookie with the new attribute
+		   value */
+		send_session_cookie = true;
+
+		/* this field needs to be initialized if
+		   send_session_cookie is set */
+		recover_session_to_cookie = nullptr;
+	}
+
 	return session;
 }
