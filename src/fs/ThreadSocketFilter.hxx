@@ -92,6 +92,9 @@ public:
 	 * Run() and is unable to cancel it; this gives the
 	 * #ThreadSocketFilterHandler a chance to fast-track
 	 * cancellation.
+	 *
+	 * This cancellation may be permanent; it is only used while
+	 * shutting down the connection.
 	 */
 	virtual void CancelRun(ThreadSocketFilterInternal &) noexcept {}
 };
