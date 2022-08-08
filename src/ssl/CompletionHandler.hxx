@@ -57,6 +57,7 @@ public:
 	}
 
 	void InvokeSslCompletion() noexcept {
+		assert(cancel_ptr);
 		cancel_ptr = nullptr;
 		OnSslCompletion();
 	}
