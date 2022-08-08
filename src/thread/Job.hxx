@@ -85,6 +85,13 @@ public:
 		return state == State::INITIAL;
 	}
 
+	/**
+	 * Invoked in a worker thread.
+	 */
 	virtual void Run() noexcept = 0;
+
+	/**
+	 * Invoked in the main thread after Run() has finished.
+	 */
 	virtual void Done() noexcept = 0;
 };
