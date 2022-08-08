@@ -52,16 +52,32 @@ class SslCompletionHandler {
 
 	CancellablePointer cancel_ptr;
 
+	/**
+	 * Was this object permanently cancelled?  This flag is
+	 * necessary to fix a race between SetCancellable() in a
+	 * worker thread and CheckCancel() in the main thread.
+	 */
+	bool already_cancelled = false;
+
 public:
 	~SslCompletionHandler() noexcept {
 		if (cancel_ptr)
 			cancel_ptr.Cancel();
 	}
 
-	void SetCancellable(Cancellable &cancellable) noexcept {
+	struct AlreadyCancelled {};
+
+	/**
+	 * Throws #AlreadyCancelled if this object was already
+	 * cancelled.
+	 */
+	void SetCancellable(Cancellable &cancellable) {
 		const std::scoped_lock lock{mutex};
 
 		assert(!cancel_ptr);
+
+		if (already_cancelled)
+			throw AlreadyCancelled{};
 
 		cancel_ptr = cancellable;
 	}
@@ -72,6 +88,7 @@ public:
 		   cancellation (also in the main thread) */
 
 		assert(cancel_ptr);
+		assert(!already_cancelled);
 		cancel_ptr = nullptr;
 
 		OnSslCompletion();
@@ -80,6 +97,7 @@ public:
 protected:
 	CancellablePointer LockSteal() noexcept {
 		const std::scoped_lock lock{mutex};
+		already_cancelled = true;
 		return std::move(cancel_ptr);
 	}
 

@@ -51,7 +51,11 @@
 struct CertCache::Request final : AutoUnlinkIntrusiveListHook, Cancellable {
 	SSL &ssl;
 
-	explicit Request(SSL &_ssl) noexcept
+	/**
+	 * Throws #SslCompletionHandler::AlreadyCancelled if the #SSL
+	 * was already cancelled.
+	 */
+	explicit Request(SSL &_ssl)
 		:ssl(_ssl)
 	{
 		auto &handler = GetSslCompletionHandler(ssl);
@@ -368,17 +372,28 @@ CertCache::ScheduleQuery(SSL &ssl, const char *host,
 		key.append(special);
 	}
 
+	Request *request;
+
+	try {
+		request = new Request(ssl);
+	} catch (SslCompletionHandler::AlreadyCancelled) {
+		/* the main thread has cancelled the SSL object (via
+		   SslFilter::CancelRun()) while the worker thread has
+		   been running inside SSL_do_handshake() */
+		return;
+	}
+
 	bool was_empty;
 
 	{
 		const std::scoped_lock lock{mutex};
+
 		was_empty = queries.empty();
 
 		const char *_special = special != nullptr ? special : "";
 		auto &query = queries.try_emplace(std::move(key),
 						  *this, host, _special).first->second;
 
-		auto *request = new Request(ssl);
 		query.AddRequest(*request);
 	}
 

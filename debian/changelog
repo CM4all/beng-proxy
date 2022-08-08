@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.0.102) unstable; urgency=low
 
-  * 
+  * ssl: fix crash on cancelled certdb SNI callback (race)
 
  --   
 
