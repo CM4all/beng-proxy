@@ -36,14 +36,33 @@
 
 #include <openssl/ossl_typ.h>
 
+#include <cassert>
+
 /**
  * Handler for the completion of a suspended OpenSSL callback.
  */
 class SslCompletionHandler {
-public:
 	CancellablePointer cancel_ptr;
 
+public:
 	~SslCompletionHandler() noexcept {
+		if (cancel_ptr)
+			cancel_ptr.Cancel();
+	}
+
+	void SetCancellable(Cancellable &cancellable) noexcept {
+		assert(!cancel_ptr);
+
+		cancel_ptr = cancellable;
+	}
+
+	void InvokeSslCompletion() noexcept {
+		cancel_ptr = nullptr;
+		OnSslCompletion();
+	}
+
+protected:
+	void CheckCancel() noexcept {
 		if (cancel_ptr)
 			cancel_ptr.Cancel();
 	}

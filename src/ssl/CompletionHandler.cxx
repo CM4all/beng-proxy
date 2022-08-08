@@ -36,6 +36,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+
 static int ssl_completion_handler_index;
 
 void
@@ -68,6 +69,5 @@ void
 InvokeSslCompletionHandler(SSL &ssl) noexcept
 {
 	auto &handler = GetSslCompletionHandler(ssl);
-	handler.cancel_ptr = nullptr;
-	handler.OnSslCompletion();
+	handler.InvokeSslCompletion();
 }

@@ -350,9 +350,8 @@ SslFilter::PostRun(ThreadSocketFilterInternal &f) noexcept
 void
 SslFilter::CancelRun(ThreadSocketFilterInternal &) noexcept
 {
-	if (cancel_ptr)
-		/* cancel the CertCache::Apply() call */
-		cancel_ptr.Cancel();
+	/* cancel the CertCache::Apply() call */
+	SslCompletionHandler::CheckCancel();
 }
 
 /*

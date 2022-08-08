@@ -55,8 +55,7 @@ struct CertCache::Request final : AutoUnlinkIntrusiveListHook, Cancellable {
 		:ssl(_ssl)
 	{
 		auto &handler = GetSslCompletionHandler(ssl);
-		assert(!handler.cancel_ptr);
-		handler.cancel_ptr = *this;
+		handler.SetCancellable(*this);
 	}
 
 	/* virtual methods from class Cancellable */
