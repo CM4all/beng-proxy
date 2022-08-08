@@ -38,7 +38,7 @@ enum class LookupCertResult {
 	IN_PROGRESS,
 
 	/**
-	 * An error has occurred and the TLS handdhskae shall be
+	 * An error has occurred and the TLS handshake shall be
 	 * aborted.
 	 */
 	ERROR,
