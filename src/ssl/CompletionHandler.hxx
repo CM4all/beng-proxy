@@ -37,11 +37,19 @@
 #include <openssl/ossl_typ.h>
 
 #include <cassert>
+#include <mutex>
 
 /**
  * Handler for the completion of a suspended OpenSSL callback.
  */
 class SslCompletionHandler {
+	/**
+	 * A global mutex which protects all #SslCompletionHandler
+	 * instances.  Suspended OpenSSL callbacks are rare enough
+	 * that one global mutex should do.
+	 */
+	static inline std::mutex mutex;
+
 	CancellablePointer cancel_ptr;
 
 public:
@@ -51,21 +59,33 @@ public:
 	}
 
 	void SetCancellable(Cancellable &cancellable) noexcept {
+		const std::scoped_lock lock{mutex};
+
 		assert(!cancel_ptr);
 
 		cancel_ptr = cancellable;
 	}
 
 	void InvokeSslCompletion() noexcept {
+		/* no mutex lock here because completion runs in the
+		   main thread and thus will never race with
+		   cancellation (also in the main thread) */
+
 		assert(cancel_ptr);
 		cancel_ptr = nullptr;
+
 		OnSslCompletion();
 	}
 
 protected:
+	CancellablePointer LockSteal() noexcept {
+		const std::scoped_lock lock{mutex};
+		return std::move(cancel_ptr);
+	}
+
 	void CheckCancel() noexcept {
-		if (cancel_ptr)
-			cancel_ptr.Cancel();
+		if (auto c = LockSteal())
+			c.Cancel();
 	}
 
 	/**
