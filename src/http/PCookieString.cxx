@@ -61,7 +61,7 @@ cookie_next_name_value(AllocatorPtr alloc, std::string_view &input,
 {
 	const auto name = http_next_token(input);
 	if (name.empty())
-		return {name, nullptr};
+		return {name, {}};
 
 	input = StripLeft(input);
 	if (!input.empty() && input.front() == '=') {
@@ -72,5 +72,5 @@ cookie_next_name_value(AllocatorPtr alloc, std::string_view &input,
 			: cookie_next_value(alloc, input);
 		return {name, value};
 	} else
-		return {name, nullptr};
+		return {name, {}};
 }

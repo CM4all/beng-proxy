@@ -75,7 +75,7 @@ http_next_name_value(AllocatorPtr alloc, std::string_view &input) noexcept
 {
 	const auto name = http_next_token(input);
 	if (name.empty())
-		return {name, nullptr};
+		return {name, {}};
 
 	input = StripLeft(input);
 	if (!input.empty() && input.front() == '=') {
@@ -83,5 +83,5 @@ http_next_name_value(AllocatorPtr alloc, std::string_view &input) noexcept
 
 		return {name, http_next_value(alloc, input)};
 	} else
-		return {name, nullptr};
+		return {name, {}};
 }

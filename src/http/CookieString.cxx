@@ -92,7 +92,7 @@ cookie_next_name_value_raw(std::string_view &input, bool rfc_ignorant) noexcept
 {
 	const auto name = http_next_token(input);
 	if (name.empty())
-		return {name, nullptr};
+		return {name, {}};
 
 	input = StripLeft(input);
 	if (!input.empty() && input.front() == '=') {
@@ -103,5 +103,5 @@ cookie_next_name_value_raw(std::string_view &input, bool rfc_ignorant) noexcept
 			: cookie_next_value_raw(input);
 		return {name, value};
 	} else
-		return {name, nullptr};
+		return {name, {}};
 }
