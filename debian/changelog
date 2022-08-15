@@ -2,7 +2,7 @@ cm4all-beng-proxy (17.0.104) unstable; urgency=low
 
   * nghttp2/client: fix use-after-free bug
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 15 Aug 2022 12:34:18 +0200
 
 cm4all-beng-proxy (17.0.103) unstable; urgency=low
 
