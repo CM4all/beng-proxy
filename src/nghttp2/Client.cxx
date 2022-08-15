@@ -393,8 +393,6 @@ ClientConnection::Request::OnDataChunkReceivedCallback(std::span<const std::byte
 int
 ClientConnection::Request::SubmitResponse(bool has_response_body) noexcept
 {
-	UnusedIstreamPtr body;
-
 	// TODO close stream if response body is ignored?
 
 	if (has_response_body && !http_status_is_empty(status)) {
@@ -402,7 +400,7 @@ ClientConnection::Request::SubmitResponse(bool has_response_body) noexcept
 		response_body_control =
 			alloc.New<MultiFifoBufferIstream>(alloc.GetPool(),
 							  fbi_handler);
-		body = UnusedIstreamPtr(response_body_control);
+		UnusedIstreamPtr body{response_body_control};
 
 		const char *content_length =
 			response_headers.Remove("content-length");
@@ -414,15 +412,26 @@ ClientConnection::Request::SubmitResponse(bool has_response_body) noexcept
 								    std::move(body),
 								    length);
 		}
-	}
 
-	state = State::BODY;
+		state = State::BODY;
 
-	handler.InvokeResponse(status, std::move(response_headers),
-			       std::move(body));
+		handler.InvokeResponse(status, std::move(response_headers),
+				       std::move(body));
+	} else {
+		// TODO reset stream if has_response_body?
 
-	if (!has_response_body)
+		auto &_handler = handler;
+
+		/* if there is no response body, destroy this Request
+		   object before invoking the handler, just in case
+		   the handler destroys the memory pool, freeing this
+		   Request; without a response body, it can't give us
+		   feedback */
 		Destroy();
+
+		_handler.InvokeResponse(status, std::move(response_headers),
+					UnusedIstreamPtr{});
+	}
 
 	return 0;
 }
