@@ -1625,7 +1625,9 @@ A successful response must contain at least ``HOME`` and ``UID_GID``:
 
 - ``NO_PASSWOORD``: If present, then the ``LOGIN`` request can be
   approved without a password.  This can happen when the username is a
-  secret token.
+  secret token.  An optional payload may describe a service-specific
+  limitation, e.g. ``sftp`` to limit ``LOGIN/SERVICE=ssh`` to
+  ``SERVICE=sftp``.
 
 .. _cron:
 
