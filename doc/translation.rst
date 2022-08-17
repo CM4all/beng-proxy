@@ -1623,6 +1623,10 @@ A successful response must contain at least ``HOME`` and ``UID_GID``:
 
 - ``TOKEN``: A token to be matched by the OpenSSH configuration file.
 
+- ``NO_PASSWOORD``: If present, then the ``LOGIN`` request can be
+  approved without a password.  This can happen when the username is a
+  secret token.
+
 .. _cron:
 
 Cron translation

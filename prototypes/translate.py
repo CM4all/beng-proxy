@@ -114,6 +114,9 @@ class Translation(Protocol):
             response.status(403)
             return response
 
+        if user == 'nopassword':
+            response.packet(TRANSLATE_NO_PASSWORD)
+
         response.packet(TRANSLATE_USER_NAMESPACE)
         response.packet(TRANSLATE_PID_NAMESPACE_NAME, user)
         response.packet(TRANSLATE_HOME, os.path.join('/var/www', user))
