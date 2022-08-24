@@ -215,10 +215,6 @@ HttpServerConnection::HeadersFinished()
 		strcmp(value, "100-continue") != 0;
 
 	value = r.headers.Get("connection");
-
-	/* we disable keep-alive support on ancient HTTP 1.0, because that
-	   feature was not well-defined and led to problems with some
-	   clients */
 	keep_alive = value == nullptr || !http_list_contains_i(value, "close");
 
 	const bool upgrade = http_is_upgrade(r.headers);
