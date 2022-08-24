@@ -1,5 +1,6 @@
 cm4all-beng-proxy (17.0.105) unstable; urgency=low
 
+  * http_server: disable read timeout after "expect:100-continue"
   * translation: add packet NO_PASSWORD
 
  --   

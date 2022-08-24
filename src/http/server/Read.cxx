@@ -223,6 +223,11 @@ HttpServerConnection::HeadersFinished()
 
 	Event::Duration read_timeout = http_server_read_timeout;
 
+	if (request.expect_100_continue)
+		/* while the client waits for our "100 Continue"
+		   response, we won't time it out */
+		read_timeout = Event::Duration(-1);
+
 	off_t content_length = -1;
 	const bool chunked = value != nullptr && strcasecmp(value, "chunked") == 0;
 	if (!chunked) {

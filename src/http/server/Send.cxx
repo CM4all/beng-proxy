@@ -68,8 +68,14 @@ HttpServerConnection::MaybeSend100Continue()
 	   of response to the peer */
 	static constexpr auto response_string = "HTTP/1.1 100 Continue\r\n\r\n"sv;
 	ssize_t nbytes = socket->Write(std::as_bytes(std::span{response_string}));
-	if (nbytes == (ssize_t)response_string.size()) [[likely]]
+	if (nbytes == (ssize_t)response_string.size()) [[likely]] {
+		/* re-enable the request body read timeout that was
+		   disabled by HeadersFinished() in the presence of an
+		   "expect:100-continue" request header */
+		socket->ScheduleReadTimeout(true, http_server_read_timeout);
+
 		return true;
+	}
 
 	if (nbytes == WRITE_ERRNO)
 		SocketErrorErrno("write error");
