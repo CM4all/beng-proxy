@@ -62,7 +62,7 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
         window.cm4all.widgets[path] = {
             url: function(pathInfo, options) {
                 options = options || {};
-                return beng_widget_uri(base, session, frame, path, options.mode || "partial", pathInfo || '');
+                return beng_widget_uri(base, session, frame, path, options.mode || "partial", pathInfo || '', null, null);
             }
         };
     };
