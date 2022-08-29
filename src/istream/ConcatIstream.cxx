@@ -68,7 +68,7 @@ class CatIstream final : public Istream, DestructAnchor {
 			input.FillBucketList(list);
 		}
 
-		size_t ConsumeBucketList(size_t nbytes) noexcept {
+		std::size_t ConsumeBucketList(std::size_t nbytes) noexcept {
 			return input.ConsumeBucketList(nbytes);
 		}
 
@@ -82,11 +82,12 @@ class CatIstream final : public Istream, DestructAnchor {
 			return cat.OnInputReady(*this);
 		}
 
-		size_t OnData(const void *data, size_t length) noexcept override {
+		std::size_t OnData(const void *data, std::size_t length) noexcept override {
 			return cat.OnInputData(*this, data, length);
 		}
 
-		ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override {
+		ssize_t OnDirect(FdType type, int fd,
+				 std::size_t max_length) noexcept override {
 			return cat.OnInputDirect(*this, type, fd, max_length);
 		}
 
@@ -152,14 +153,14 @@ private:
 			: false;
 	}
 
-	size_t OnInputData(Input &i, const void *data, size_t length) noexcept {
+	std::size_t OnInputData(Input &i, const void *data, std::size_t length) noexcept {
 		return IsCurrent(i)
 			? InvokeData(data, length)
 			: 0;
 	}
 
 	ssize_t OnInputDirect([[maybe_unused]] Input &i, FdType type, int fd,
-			      size_t max_length) noexcept {
+			      std::size_t max_length) noexcept {
 		return IsCurrent(i)
 			? InvokeDirect(type, fd, max_length)
 			: (ssize_t)ISTREAM_RESULT_BLOCKING;
@@ -199,7 +200,7 @@ public:
 	off_t _Skip([[maybe_unused]] off_t length) noexcept override;
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
-	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
+	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	int _AsFd() noexcept override;
 	void _Close() noexcept override;
 };
@@ -282,13 +283,13 @@ CatIstream::_FillBucketList(IstreamBucketList &list)
 	}
 }
 
-size_t
-CatIstream::_ConsumeBucketList(size_t nbytes) noexcept
+std::size_t
+CatIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
-	size_t total = 0;
+	std::size_t total = 0;
 
 	for (auto &input : inputs) {
-		size_t consumed = input.ConsumeBucketList(nbytes);
+		std::size_t consumed = input.ConsumeBucketList(nbytes);
 		Consumed(consumed);
 		total += consumed;
 		nbytes -= consumed;

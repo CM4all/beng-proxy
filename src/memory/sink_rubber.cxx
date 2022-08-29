@@ -47,14 +47,14 @@
 class RubberSink final : IstreamSink, Cancellable, PoolLeakDetector {
 	RubberAllocation allocation;
 
-	const size_t max_size;
-	size_t position = 0;
+	const std::size_t max_size;
+	std::size_t position = 0;
 
 	RubberSinkHandler &handler;
 
 public:
 	template<typename I>
-	RubberSink(struct pool &_pool, RubberAllocation &&_a, size_t _max_size,
+	RubberSink(struct pool &_pool, RubberAllocation &&_a, std::size_t _max_size,
 		   RubberSinkHandler &_handler,
 		   I &&_input,
 		   CancellablePointer &cancel_ptr) noexcept
@@ -84,14 +84,14 @@ private:
 	void Cancel() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
-	size_t OnData(const void *data, size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
 
 static ssize_t
-fd_read(FdType type, int fd, void *p, size_t size) noexcept
+fd_read(FdType type, int fd, void *p, std::size_t size) noexcept
 {
 	return IsAnySocket(type)
 		? recv(fd, p, size, MSG_DONTWAIT)
@@ -130,8 +130,8 @@ RubberSink::DestroyEof() noexcept
  *
  */
 
-size_t
-RubberSink::OnData(const void *data, size_t length) noexcept
+std::size_t
+RubberSink::OnData(const void *data, std::size_t length) noexcept
 {
 	assert(position <= max_size);
 
@@ -150,11 +150,11 @@ RubberSink::OnData(const void *data, size_t length) noexcept
 }
 
 ssize_t
-RubberSink::OnDirect(FdType type, int fd, size_t max_length) noexcept
+RubberSink::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 {
 	assert(position <= max_size);
 
-	size_t length = max_size - position;
+	std::size_t length = max_size - position;
 	if (length == 0) {
 		/* already full, see what the file descriptor says */
 
@@ -181,7 +181,7 @@ RubberSink::OnDirect(FdType type, int fd, size_t max_length) noexcept
 
 	ssize_t nbytes = fd_read(type, fd, p, length);
 	if (nbytes > 0)
-		position += (size_t)nbytes;
+		position += (std::size_t)nbytes;
 
 	return nbytes;
 }
@@ -224,7 +224,7 @@ RubberSink::Cancel() noexcept
 
 RubberSink *
 sink_rubber_new(struct pool &pool, UnusedIstreamPtr input,
-		Rubber &rubber, size_t max_size,
+		Rubber &rubber, std::size_t max_size,
 		RubberSinkHandler &handler,
 		CancellablePointer &cancel_ptr) noexcept
 {
@@ -244,9 +244,9 @@ sink_rubber_new(struct pool &pool, UnusedIstreamPtr input,
 		return nullptr;
 	}
 
-	const size_t allocate = size == -1
+	const std::size_t allocate = size == -1
 		? max_size
-		: (size_t)size;
+		: (std::size_t)size;
 
 	unsigned rubber_id = rubber.Add(allocate);
 	if (rubber_id == 0) {

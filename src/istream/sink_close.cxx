@@ -46,13 +46,13 @@ public:
 	}
 
 	/* request istream handler */
-	size_t OnData([[maybe_unused]] const void *data, [[maybe_unused]] size_t length) noexcept {
+	std::size_t OnData([[maybe_unused]] const void *data, [[maybe_unused]] std::size_t length) noexcept {
 		CloseInput();
 		return 0;
 	}
 
 	ssize_t OnDirect([[maybe_unused]] FdType type, [[maybe_unused]] int fd,
-			 [[maybe_unused]] size_t max_length) noexcept {
+			 [[maybe_unused]] std::size_t max_length) noexcept {
 		gcc_unreachable();
 	}
 

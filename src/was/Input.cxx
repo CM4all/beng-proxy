@@ -193,7 +193,7 @@ private:
 	bool SubmitBuffer() noexcept {
 		auto r = buffer.Read();
 		if (!r.empty()) {
-			size_t nbytes = InvokeData(r.data(), r.size());
+			std::size_t nbytes = InvokeData(r.data(), r.size());
 			if (nbytes == 0)
 				return false;
 
@@ -253,7 +253,7 @@ private:
 	}
 
 	void _FillBucketList(IstreamBucketList &list) override;
-	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
+	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override;
 
 	void _Close() noexcept override {
 		buffer.FreeIfDefined();
@@ -272,7 +272,7 @@ private:
 void
 WasInput::ReadToBuffer()
 {
-	size_t max_length = FB_SIZE;
+	std::size_t max_length = FB_SIZE;
 	if (known_length) {
 		uint64_t rest = length - received;
 		if (rest < (uint64_t)max_length)
@@ -340,7 +340,7 @@ WasInput::TryDirect() noexcept
 	assert(buffer.empty());
 	assert(!buffer.IsDefined());
 
-	size_t max_length = 0x1000000;
+	std::size_t max_length = 0x1000000;
 	if (known_length) {
 		uint64_t rest = length - received;
 		if (rest < (uint64_t)max_length)
@@ -508,7 +508,7 @@ WasInput::PrematureThrow(uint64_t _length)
 
 	while (remaining > 0) {
 		uint8_t discard_buffer[4096];
-		size_t size = std::min(remaining, uint64_t(sizeof(discard_buffer)));
+		std::size_t size = std::min(remaining, uint64_t(sizeof(discard_buffer)));
 		ssize_t nbytes = GetPipe().Read(discard_buffer, size);
 		if (nbytes < 0)
 			throw NestException(std::make_exception_ptr(MakeErrno("Read error")),
@@ -608,10 +608,10 @@ WasInput::_FillBucketList(IstreamBucketList &list)
 		list.SetMore();
 }
 
-size_t
-WasInput::_ConsumeBucketList(size_t nbytes) noexcept
+std::size_t
+WasInput::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
-	size_t consumed = std::min(buffer.GetAvailable(), nbytes);
+	std::size_t consumed = std::min(buffer.GetAvailable(), nbytes);
 
 	buffer.Consume(consumed);
 	buffer.FreeIfEmpty();

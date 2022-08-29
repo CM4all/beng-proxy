@@ -52,7 +52,7 @@
 using std::string_view_literals::operator""sv;
 
 inline bool
-HttpServerConnection::ParseRequestLine(const char *line, size_t length)
+HttpServerConnection::ParseRequestLine(const char *line, std::size_t length)
 {
 	assert(request.read_state == Request::START);
 	assert(request.request == nullptr);
@@ -361,7 +361,7 @@ HttpServerConnection::FeedHeaders(const StringView b) noexcept
 			break;
 	}
 
-	const size_t consumed = remaining.data - b.data;
+	const std::size_t consumed = remaining.data - b.data;
 	request.bytes_received += consumed;
 	socket->DisposeConsumed(consumed);
 

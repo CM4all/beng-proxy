@@ -84,14 +84,14 @@ HttpServerConnection::MaybeSend100Continue()
 	return false;
 }
 
-static size_t
+static std::size_t
 format_status_line(char *p, http_status_t status)
 {
 	assert(http_status_is_valid(status));
 
 	const char *status_string = http_status_to_string(status);
 	assert(status_string != nullptr);
-	size_t length = strlen(status_string);
+	std::size_t length = strlen(status_string);
 
 	memcpy(p, "HTTP/1.1 ", 9);
 	memcpy(p + 9, status_string, length);

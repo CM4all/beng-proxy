@@ -91,8 +91,8 @@ struct Context final : PInstance, HttpResponseHandler, IstreamSink {
 	void OnHttpError(std::exception_ptr ep) noexcept override;
 
 	/* virtual methods from class IstreamHandler */
-	size_t OnData(const void *data, size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -104,8 +104,8 @@ static FdTypeMask my_handler_direct = 0;
  *
  */
 
-size_t
-Context::OnData(const void *, size_t length) noexcept
+std::size_t
+Context::OnData(const void *, std::size_t length) noexcept
 {
 	body_data += length;
 
@@ -124,7 +124,7 @@ Context::OnData(const void *, size_t length) noexcept
 }
 
 ssize_t
-Context::OnDirect(FdType, int fd, size_t max_length) noexcept
+Context::OnDirect(FdType, int fd, std::size_t max_length) noexcept
 {
 	if (close_response_body_data) {
 		body_closed = true;

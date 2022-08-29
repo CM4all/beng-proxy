@@ -158,7 +158,7 @@ public:
 			return;
 		}
 
-		size_t max = GetMaxRead(b.size());
+		std::size_t max = GetMaxRead(b.size());
 		if (b.size() > max)
 			b = b.first(max);
 
@@ -168,12 +168,12 @@ public:
 	}
 
 	template<typename Socket>
-	size_t ConsumeBucketList(Socket &s, size_t nbytes) noexcept {
+	std::size_t ConsumeBucketList(Socket &s, std::size_t nbytes) noexcept {
 		auto b = s.ReadBuffer();
 		if (b.empty())
 			return 0;
 
-		size_t max = GetMaxRead(b.size());
+		std::size_t max = GetMaxRead(b.size());
 		if (nbytes > max)
 			nbytes = max;
 		if (nbytes == 0)
@@ -184,7 +184,7 @@ public:
 		return Istream::Consumed(nbytes);
 	}
 
-	size_t FeedBody(const void *data, size_t length) noexcept;
+	std::size_t FeedBody(const void *data, std::size_t length) noexcept;
 
 	bool CheckDirect(FdType type) const noexcept {
 		return (direct_mask & FdTypeMask(type)) != 0;
@@ -212,7 +212,7 @@ public:
 	 * @return true if there is data left in the buffer, false if the body
 	 * has been finished (with or without error)
 	 */
-	bool SocketEOF(size_t remaining) noexcept;
+	bool SocketEOF(std::size_t remaining) noexcept;
 
 	/**
 	 * Discard data from the input buffer.  This method shall be used
@@ -231,7 +231,7 @@ public:
 		   ThreadSocketFilter::Consumed() which asserts that
 		   ReadBuffer() has moved decrypted_input into
 		   unprotected_decrypted_input */
-		size_t available = s.ReadBuffer().size();
+		std::size_t available = s.ReadBuffer().size();
 		if ((off_t)available < rest)
 			return false;
 
@@ -241,9 +241,9 @@ public:
 
 private:
 	[[gnu::pure]]
-	size_t GetMaxRead(size_t length) const noexcept;
+	std::size_t GetMaxRead(std::size_t length) const noexcept;
 
-	void Consumed(size_t nbytes) noexcept;
+	void Consumed(std::size_t nbytes) noexcept;
 
 public:
 	/* virtual methods from class Istream */

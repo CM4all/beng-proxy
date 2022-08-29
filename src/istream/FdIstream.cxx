@@ -126,7 +126,7 @@ FdIstream::TryData()
 	if (buffer.IsNull()) {
 		buffer.Allocate(fb_pool_get());
 	} else {
-		const size_t available = buffer.GetAvailable();
+		const std::size_t available = buffer.GetAvailable();
 		if (available > 0) {
 			if (SendFromBuffer(buffer) == 0)
 				/* not a single byte was consumed: we may have been

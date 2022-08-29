@@ -46,14 +46,14 @@ class HeadIstream final : public ForwardIstream {
 
 public:
 	HeadIstream(struct pool &p, UnusedIstreamPtr _input,
-		    size_t size, bool _authoritative) noexcept
+		    std::size_t size, bool _authoritative) noexcept
 		:ForwardIstream(p, std::move(_input)),
 		 rest(size), authoritative(_authoritative) {}
 
 	/* virtual methods from class Istream */
 
 	off_t _GetAvailable(bool partial) noexcept override;
-	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
+	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	off_t _Skip(off_t length) noexcept override;
 	void _Read() noexcept override;
 
@@ -64,8 +64,8 @@ public:
 	}
 
 	/* virtual methods from class IstreamHandler */
-	size_t OnData(const void *data, size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
 };
 
 /*
@@ -73,8 +73,8 @@ public:
  *
  */
 
-size_t
-HeadIstream::OnData(const void *data, size_t length) noexcept
+std::size_t
+HeadIstream::OnData(const void *data, std::size_t length) noexcept
 {
 	if (rest == 0) {
 		DestroyEof();
@@ -84,7 +84,7 @@ HeadIstream::OnData(const void *data, size_t length) noexcept
 	if ((off_t)length > rest)
 		length = rest;
 
-	size_t nbytes = InvokeData(data, length);
+	std::size_t nbytes = InvokeData(data, length);
 	assert((off_t)nbytes <= rest);
 
 	if (nbytes > 0) {
@@ -113,13 +113,13 @@ HeadIstream::_FillBucketList(IstreamBucketList &list)
 		throw;
 	}
 
-	size_t nbytes = list.SpliceBuffersFrom(std::move(tmp1), rest);
+	std::size_t nbytes = list.SpliceBuffersFrom(std::move(tmp1), rest);
 	if ((off_t)nbytes >= rest)
 		list.SetMore(false);
 }
 
-size_t
-HeadIstream::_ConsumeBucketList(size_t nbytes) noexcept
+std::size_t
+HeadIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
 	if ((off_t)nbytes > rest)
 		nbytes = rest;
@@ -130,7 +130,7 @@ HeadIstream::_ConsumeBucketList(size_t nbytes) noexcept
 }
 
 ssize_t
-HeadIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
+HeadIstream::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 {
 	if (rest == 0) {
 		DestroyEof();
@@ -144,7 +144,7 @@ HeadIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 	assert(nbytes < 0 || (off_t)nbytes <= rest);
 
 	if (nbytes > 0) {
-		rest -= (size_t)nbytes;
+		rest -= (std::size_t)nbytes;
 		if (rest == 0) {
 			DestroyEof();
 			return ISTREAM_RESULT_CLOSED;
@@ -205,7 +205,7 @@ HeadIstream::_Read() noexcept
 
 UnusedIstreamPtr
 istream_head_new(struct pool &pool, UnusedIstreamPtr input,
-		 size_t size, bool authoritative) noexcept
+		 std::size_t size, bool authoritative) noexcept
 {
 	return NewIstreamPtr<HeadIstream>(pool, std::move(input),
 					  size, authoritative);

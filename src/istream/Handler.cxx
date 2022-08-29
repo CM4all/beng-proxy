@@ -37,7 +37,7 @@ gcc_noreturn
 ssize_t
 IstreamHandler::OnDirect([[maybe_unused]] FdType type,
 			 [[maybe_unused]] int fd,
-			 [[maybe_unused]] size_t max_length) noexcept
+			 [[maybe_unused]] std::size_t max_length) noexcept
 {
 	gcc_unreachable();
 }

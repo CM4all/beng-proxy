@@ -103,14 +103,14 @@ public:
 
 	/* handler */
 
-	size_t OnData(const void *data, size_t length) noexcept override {
+	std::size_t OnData(const void *data, std::size_t length) noexcept override {
 		return resumed
 			? ForwardIstream::OnData(data, length)
 			: 0;
 	}
 
 	ssize_t OnDirect(FdType type, int fd,
-			 size_t max_length) noexcept override {
+			 std::size_t max_length) noexcept override {
 		return resumed
 			? ForwardIstream::OnDirect(type, fd, max_length)
 			: (ssize_t)ISTREAM_RESULT_BLOCKING;

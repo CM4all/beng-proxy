@@ -51,11 +51,11 @@ public:
 
 	/* virtual methods from class IstreamHandler */
 
-	size_t OnData(const void *, size_t length) noexcept override {
+	std::size_t OnData(const void *, std::size_t length) noexcept override {
 		return length;
 	}
 
-	ssize_t OnDirect(FdType, int fd, size_t max_length) noexcept override
+	ssize_t OnDirect(FdType, int fd, std::size_t max_length) noexcept override
 	{
 		if (!dev_null.IsDefined())
 			if (!dev_null.Open("/dev/null", O_WRONLY))

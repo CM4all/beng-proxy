@@ -51,7 +51,7 @@ class CatchIstream final : public ForwardIstream {
 	 * The amount of data passed to OnData(), minus the number of
 	 * bytes consumed by it.  The next call must be at least this big.
 	 */
-	size_t chunk = 0;
+	std::size_t chunk = 0;
 
 	std::exception_ptr (*const callback)(std::exception_ptr ep, void *ctx);
 	void *const callback_ctx;
@@ -76,7 +76,7 @@ public:
 			else
 				available = 0;
 
-			if ((size_t)nbytes < chunk)
+			if ((std::size_t)nbytes < chunk)
 				chunk -= nbytes;
 			else
 				chunk = 0;
@@ -90,8 +90,8 @@ public:
 
 	/* virtual methods from class IstreamHandler */
 
-	size_t OnData(const void *data, size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
 
@@ -111,7 +111,7 @@ CatchIstream::SendSpace() noexcept
 	if (chunk > sizeof(space) - 1) {
 		std::unique_ptr<char[]> buffer(new char[chunk]);
 		std::fill_n(buffer.get(), ' ', chunk);
-		size_t nbytes = ForwardIstream::OnData(buffer.get(), chunk);
+		std::size_t nbytes = ForwardIstream::OnData(buffer.get(), chunk);
 		if (nbytes == 0)
 			return;
 
@@ -128,13 +128,13 @@ CatchIstream::SendSpace() noexcept
 	}
 
 	do {
-		size_t length;
+		std::size_t length;
 		if (available >= (off_t)sizeof(space) - 1)
 			length = sizeof(space) - 1;
 		else
-			length = (size_t)available;
+			length = (std::size_t)available;
 
-		size_t nbytes = ForwardIstream::OnData(space, length);
+		std::size_t nbytes = ForwardIstream::OnData(space, length);
 		if (nbytes == 0)
 			return;
 
@@ -152,8 +152,8 @@ CatchIstream::SendSpace() noexcept
  *
  */
 
-size_t
-CatchIstream::OnData(const void *data, size_t length) noexcept
+std::size_t
+CatchIstream::OnData(const void *data, std::size_t length) noexcept
 {
 	if ((off_t)length > available)
 		available = length;
@@ -161,7 +161,7 @@ CatchIstream::OnData(const void *data, size_t length) noexcept
 	if (length > chunk)
 		chunk = length;
 
-	size_t nbytes = ForwardIstream::OnData(data, length);
+	std::size_t nbytes = ForwardIstream::OnData(data, length);
 	if (nbytes > 0) {
 		if ((off_t)nbytes < available)
 			available -= (off_t)nbytes;
@@ -175,7 +175,7 @@ CatchIstream::OnData(const void *data, size_t length) noexcept
 }
 
 ssize_t
-CatchIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
+CatchIstream::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 {
 	ssize_t nbytes = ForwardIstream::OnDirect(type, fd, max_length);
 	if (nbytes > 0) {
@@ -184,7 +184,7 @@ CatchIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 		else
 			available = 0;
 
-		if ((size_t)nbytes < chunk)
+		if ((std::size_t)nbytes < chunk)
 			chunk -= nbytes;
 		else
 			chunk = 0;

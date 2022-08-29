@@ -140,7 +140,7 @@ class FcgiClient final
 			:no_body(_no_body) {}
 	} response;
 
-	size_t content_length = 0, skip_length = 0;
+	std::size_t content_length = 0, skip_length = 0;
 
 public:
 	FcgiClient(struct pool &_pool, EventLoop &event_loop,
@@ -196,12 +196,12 @@ private:
 		 * Offset of the end of the #FCGI_END_REQUEST packet, or 0 if
 		 * none was found.
 		 */
-		size_t end_request_offset = 0;
+		std::size_t end_request_offset = 0;
 
 		/**
 		 * Amount of #FCGI_STDOUT data found in the buffer.
 		 */
-		size_t total_stdout = 0;
+		std::size_t total_stdout = 0;
 	};
 
 	/**
@@ -214,12 +214,12 @@ private:
 	/**
 	 * Throws on error.
 	 */
-	bool HandleLine(const char *line, size_t length);
+	bool HandleLine(const char *line, std::size_t length);
 
 	/**
 	 * Throws on error.
 	 */
-	size_t ParseHeaders(const char *data, size_t length);
+	std::size_t ParseHeaders(const char *data, std::size_t length);
 
 	/**
 	 * Feed data into the FastCGI protocol parser.
@@ -227,7 +227,7 @@ private:
 	 * @return the number of bytes consumed, or 0 if this object has
 	 * been destructed
 	 */
-	size_t Feed(const std::byte *data, size_t length) noexcept;
+	std::size_t Feed(const std::byte *data, std::size_t length) noexcept;
 
 	/**
 	 * Submit the response metadata to the #HttpResponseHandler.
@@ -252,12 +252,12 @@ private:
 	/**
 	 * Consume data from the input buffer.
 	 */
-	BufferedResult ConsumeInput(const std::byte *data, size_t length) noexcept;
+	BufferedResult ConsumeInput(const std::byte *data, std::size_t length) noexcept;
 
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override;
 	bool OnBufferedClosed() noexcept override;
-	bool OnBufferedRemaining(size_t remaining) noexcept override;
+	bool OnBufferedRemaining(std::size_t remaining) noexcept override;
 	bool OnBufferedWrite() override;
 	bool OnBufferedTimeout() noexcept override;
 	void OnBufferedError(std::exception_ptr e) noexcept override;
@@ -270,12 +270,12 @@ private:
 	off_t _GetAvailable(bool partial) noexcept override;
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
-	size_t _ConsumeBucketList(size_t nbytes) noexcept override;
+	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override;
 	void _Close() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
-	size_t OnData(const void *data, size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -372,7 +372,7 @@ FcgiClient::AnalyseBuffer(const std::span<const std::byte> buffer) const noexcep
 }
 
 inline bool
-FcgiClient::HandleLine(const char *line, size_t length)
+FcgiClient::HandleLine(const char *line, std::size_t length)
 {
 	assert(line != nullptr);
 
@@ -389,8 +389,8 @@ FcgiClient::HandleLine(const char *line, size_t length)
 	}
 }
 
-inline size_t
-FcgiClient::ParseHeaders(const char *data, size_t length)
+inline std::size_t
+FcgiClient::ParseHeaders(const char *data, std::size_t length)
 {
 	const char *p = data, *const data_end = data + length;
 
@@ -411,8 +411,8 @@ FcgiClient::ParseHeaders(const char *data, size_t length)
 	return next != nullptr ? next - data : 0;
 }
 
-inline size_t
-FcgiClient::Feed(const std::byte *data, size_t length) noexcept
+inline std::size_t
+FcgiClient::Feed(const std::byte *data, std::size_t length) noexcept
 {
 	if (response.stderr) {
 		/* ignore errors and partial writes while forwarding STDERR
@@ -426,7 +426,7 @@ FcgiClient::Feed(const std::byte *data, size_t length) noexcept
 	}
 
 	switch (response.read_state) {
-		size_t consumed;
+		std::size_t consumed;
 
 	case Response::READ_HEADERS:
 		try {
@@ -573,7 +573,7 @@ FcgiClient::HandleHeader(const struct fcgi_record_header &header) noexcept
 }
 
 inline BufferedResult
-FcgiClient::ConsumeInput(const std::byte *data0, size_t length0) noexcept
+FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 {
 	const DestructObserver destructed(*this);
 	const std::byte *data = data0, *const end = data0 + length0;
@@ -582,7 +582,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, size_t length0) noexcept
 		if (content_length > 0) {
 			bool at_headers = response.read_state == Response::READ_HEADERS;
 
-			size_t length = end - data;
+			std::size_t length = end - data;
 			if (length > content_length)
 				length = content_length;
 
@@ -596,7 +596,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, size_t length0) noexcept
 				return BufferedResult::CLOSED;
 			}
 
-			size_t nbytes = Feed(data, length);
+			std::size_t nbytes = Feed(data, length);
 			if (nbytes == 0) {
 				if (destructed)
 					return BufferedResult::CLOSED;
@@ -639,7 +639,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, size_t length0) noexcept
 		}
 
 		if (skip_length > 0) {
-			size_t nbytes = end - data;
+			std::size_t nbytes = end - data;
 			if (nbytes > skip_length)
 				nbytes = skip_length;
 
@@ -655,7 +655,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, size_t length0) noexcept
 
 		const struct fcgi_record_header *header =
 			(const struct fcgi_record_header *)(const void *)data;
-		const size_t remaining = end - data;
+		const std::size_t remaining = end - data;
 		if (remaining < sizeof(*header))
 			return BufferedResult::MORE;
 
@@ -674,8 +674,8 @@ FcgiClient::ConsumeInput(const std::byte *data0, size_t length0) noexcept
  *
  */
 
-size_t
-FcgiClient::OnData(const void *data, size_t length) noexcept
+std::size_t
+FcgiClient::OnData(const void *data, std::size_t length) noexcept
 {
 	assert(socket.IsConnected());
 	assert(HasInput());
@@ -693,11 +693,11 @@ FcgiClient::OnData(const void *data, size_t length) noexcept
 		return 0;
 	}
 
-	return (size_t)nbytes;
+	return (std::size_t)nbytes;
 }
 
 ssize_t
-FcgiClient::OnDirect(FdType type, int fd, size_t max_length) noexcept
+FcgiClient::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 {
 	assert(socket.IsConnected());
 
@@ -789,8 +789,8 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 	const auto end = data + b.size();
 
 	off_t available = response.available;
-	size_t current_content_length = content_length;
-	size_t current_skip_length = skip_length;
+	std::size_t current_content_length = content_length;
+	std::size_t current_skip_length = skip_length;
 
 	bool found_end_request = false;
 
@@ -807,8 +807,8 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 						      "from FastCGI application");
 			}
 
-			const size_t remaining = end - data;
-			size_t size = std::min(remaining, current_content_length);
+			const std::size_t remaining = end - data;
+			std::size_t size = std::min(remaining, current_content_length);
 			if (available > 0) {
 				if ((off_t)size > available)
 					size = available;
@@ -824,8 +824,8 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 		}
 
 		if (current_skip_length > 0) {
-			const size_t remaining = end - data;
-			size_t size = std::min(remaining, current_skip_length);
+			const std::size_t remaining = end - data;
+			std::size_t size = std::min(remaining, current_skip_length);
 			data += size;
 			current_skip_length -= size;
 
@@ -834,7 +834,7 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 		}
 
 		const auto &header = *(const struct fcgi_record_header *)(const void *)data;
-		const size_t remaining = end - data;
+		const std::size_t remaining = end - data;
 		if (remaining < sizeof(header))
 			break;
 
@@ -863,18 +863,18 @@ FcgiClient::_FillBucketList(IstreamBucketList &list)
 		list.SetMore();
 }
 
-size_t
-FcgiClient::_ConsumeBucketList(size_t nbytes) noexcept
+std::size_t
+FcgiClient::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
 	assert(response.available != 0);
 	assert(response.read_state == Response::READ_BODY);
 	assert(!response.stderr);
 
-	size_t total = 0;
+	std::size_t total = 0;
 
 	while (nbytes > 0) {
 		if (content_length > 0) {
-			size_t consumed = std::min(nbytes, content_length);
+			std::size_t consumed = std::min(nbytes, content_length);
 			if (response.available > 0 && (off_t)consumed > response.available)
 				consumed = response.available;
 
@@ -895,7 +895,7 @@ FcgiClient::_ConsumeBucketList(size_t nbytes) noexcept
 			if (b.empty())
 				break;
 
-			size_t consumed = std::min(b.size(), skip_length);
+			std::size_t consumed = std::min(b.size(), skip_length);
 			socket.DisposeConsumed(consumed);
 			skip_length -= consumed;
 
@@ -964,7 +964,7 @@ FcgiClient::OnBufferedClosed() noexcept
 }
 
 bool
-FcgiClient::OnBufferedRemaining(gcc_unused size_t remaining) noexcept
+FcgiClient::OnBufferedRemaining(gcc_unused std::size_t remaining) noexcept
 {
 	/* only READ_BODY could have blocked */
 	assert(response.read_state == Response::READ_BODY);

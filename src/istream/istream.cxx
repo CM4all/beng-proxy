@@ -49,8 +49,8 @@ Istream::_FillBucketList(IstreamBucketList &list)
 }
 
 gcc_noreturn
-size_t
-Istream::_ConsumeBucketList(size_t) noexcept
+std::size_t
+Istream::_ConsumeBucketList(std::size_t) noexcept
 {
 	assert(false);
 	gcc_unreachable();

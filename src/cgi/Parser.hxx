@@ -117,7 +117,7 @@ struct CGIParser {
 		return remaining > 0;
 	}
 
-	bool IsTooMuch(size_t length) const {
+	bool IsTooMuch(std::size_t length) const {
 		return remaining != -1 && (off_t)length > remaining;
 	}
 
@@ -126,7 +126,7 @@ struct CGIParser {
 	 *
 	 * @return true if the response body is finished
 	 */
-	bool BodyConsumed(size_t nbytes) {
+	bool BodyConsumed(std::size_t nbytes) {
 		assert(nbytes > 0);
 
 		if (remaining < 0)

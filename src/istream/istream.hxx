@@ -38,8 +38,8 @@
 #include "util/LeakDetector.hxx"
 
 #include <algorithm>
-
-#include <assert.h>
+#include <cassert>
+#include <cstddef>
 
 class IstreamHandler;
 class IstreamBucketList;
@@ -82,13 +82,13 @@ class Istream : PoolHolder, LeakDetector, IstreamDestructAnchor {
 	bool in_data = false, available_full_set = false;
 
 	/** how much data was available in the previous invocation? */
-	size_t data_available = 0;
+	std::size_t data_available = 0;
 
 	/**
 	 * Sum of all recent Consumed() calls.  This is used for
 	 * assertions in ConsumeBucketList().
 	 */
-	size_t consumed_sum;
+	std::size_t consumed_sum;
 
 	off_t available_partial = 0, available_full = 0;
 #endif
@@ -105,7 +105,7 @@ protected:
 
 	using PoolHolder::GetPool;
 
-	size_t Consumed(size_t nbytes) noexcept {
+	std::size_t Consumed(std::size_t nbytes) noexcept {
 #ifndef NDEBUG
 		consumed_sum += nbytes;
 
@@ -126,8 +126,8 @@ protected:
 	}
 
 	bool InvokeReady() noexcept;
-	size_t InvokeData(const void *data, size_t length) noexcept;
-	ssize_t InvokeDirect(FdType type, int fd, size_t max_length) noexcept;
+	std::size_t InvokeData(const void *data, std::size_t length) noexcept;
+	ssize_t InvokeDirect(FdType type, int fd, std::size_t max_length) noexcept;
 	void InvokeEof() noexcept;
 	void InvokeError(std::exception_ptr ep) noexcept;
 
@@ -155,12 +155,12 @@ protected:
 	 * @return the number of bytes still in the buffer
 	 */
 	template<typename Buffer>
-	size_t ConsumeFromBuffer(Buffer &buffer) noexcept {
+	std::size_t ConsumeFromBuffer(Buffer &buffer) noexcept {
 		auto r = buffer.Read();
 		if (r.empty())
 			return 0;
 
-		size_t consumed = InvokeData(r.data(), r.size());
+		std::size_t consumed = InvokeData(r.data(), r.size());
 		if (consumed > 0)
 			buffer.Consume(consumed);
 		return r.size() - consumed;
@@ -170,12 +170,12 @@ protected:
 	 * @return the number of bytes consumed
 	 */
 	template<typename Buffer>
-	size_t SendFromBuffer(Buffer &buffer) noexcept {
+	std::size_t SendFromBuffer(Buffer &buffer) noexcept {
 		auto r = buffer.Read();
 		if (r.empty())
 			return 0;
 
-		size_t consumed = InvokeData(r.data(), r.size());
+		std::size_t consumed = InvokeData(r.data(), r.size());
 		if (consumed > 0)
 			buffer.Consume(consumed);
 		return consumed;
@@ -379,7 +379,7 @@ public:
 
 #if 0
 		// TODO: not possible currently due to include dependencies
-		size_t total_size = list.GetTotalBufferSize();
+		std::size_t total_size = list.GetTotalBufferSize();
 		if ((off_t)total_size > available_partial)
 			available_partial = total_size;
 
@@ -404,7 +404,7 @@ public:
 	 * @return the number of bytes really consumed by this instance
 	 * (the rest will be consumed by its siblings)
 	 */
-	size_t ConsumeBucketList(size_t nbytes) noexcept {
+	std::size_t ConsumeBucketList(std::size_t nbytes) noexcept {
 #ifndef NDEBUG
 		assert(!destroyed);
 		assert(!closing);
@@ -501,7 +501,7 @@ protected:
 	virtual void _Read() noexcept = 0;
 
 	virtual void _FillBucketList(IstreamBucketList &list);
-	virtual size_t _ConsumeBucketList(size_t nbytes) noexcept;
+	virtual std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept;
 
 	virtual int _AsFd() noexcept {
 		return -1;

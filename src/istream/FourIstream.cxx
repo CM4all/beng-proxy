@@ -72,14 +72,14 @@ public:
 
 	/* virtual methods from class IstreamHandler */
 
-	size_t OnData(const void *data, size_t length) noexcept override {
+	std::size_t OnData(const void *data, std::size_t length) noexcept override {
 		return ForwardIstream::OnData(data,
-					      std::min(length, size_t(4)));
+					      std::min(length, std::size_t{4}));
 	}
 
-	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override {
+	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override {
 		return ForwardIstream::OnDirect(type, fd,
-						std::min(max_length, size_t(4)));
+						std::min(max_length, std::size_t{4}));
 	}
 };
 

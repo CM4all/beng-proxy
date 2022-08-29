@@ -49,23 +49,23 @@ LengthIstream::_Skip(off_t length) noexcept
 	return nbytes;
 }
 
-size_t
-LengthIstream::_ConsumeBucketList(size_t nbytes) noexcept
+std::size_t
+LengthIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 {
 	auto consumed = input.ConsumeBucketList(nbytes);
 	remaining -= consumed;
 	return consumed;
 }
 
-size_t
-LengthIstream::OnData(const void *data, size_t length) noexcept
+std::size_t
+LengthIstream::OnData(const void *data, std::size_t length) noexcept
 {
 	if ((off_t)length > remaining) {
 		DestroyError(std::make_exception_ptr(std::runtime_error("Too much data in stream")));
 		return 0;
 	}
 
-	size_t nbytes = ForwardIstream::OnData(data, length);
+	std::size_t nbytes = ForwardIstream::OnData(data, length);
 	if (nbytes > 0)
 		remaining -= nbytes;
 	return nbytes;
@@ -73,7 +73,7 @@ LengthIstream::OnData(const void *data, size_t length) noexcept
 
 ssize_t
 LengthIstream::OnDirect(FdType type, int fd,
-			size_t max_length) noexcept
+			std::size_t max_length) noexcept
 {
 	auto nbytes = ForwardIstream::OnDirect(type, fd, max_length);
 	if (nbytes > 0)

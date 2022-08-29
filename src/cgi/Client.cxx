@@ -89,21 +89,21 @@ public:
 	 * @return the number of bytes consumed from the specified buffer
 	 * (moved to the input buffer), 0 if the object has been closed
 	 */
-	size_t FeedHeaders(const void *data, size_t length);
+	std::size_t FeedHeaders(const void *data, std::size_t length);
 
 	/**
 	 * Call FeedHeaders() in a loop, to parse as much as possible.
 	 *
 	 * Caller must hold pool reference.
 	 */
-	size_t FeedHeadersLoop(const char *data, size_t length);
+	std::size_t FeedHeadersLoop(const char *data, std::size_t length);
 
 	/**
 	 * Caller must hold pool reference.
 	 */
-	size_t FeedHeadersCheck(const char *data, size_t length);
+	std::size_t FeedHeadersCheck(const char *data, std::size_t length);
 
-	size_t FeedBody(const char *data, size_t length);
+	std::size_t FeedBody(const char *data, std::size_t length);
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override;
@@ -118,8 +118,8 @@ public:
 	void _Read() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
-	size_t OnData(const void *data, size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -166,8 +166,8 @@ CGIClient::ReturnResponse()
 	}
 }
 
-inline size_t
-CGIClient::FeedHeaders(const void *data, size_t length)
+inline std::size_t
+CGIClient::FeedHeaders(const void *data, std::size_t length)
 try {
 	assert(!parser.AreHeadersFinished());
 
@@ -214,17 +214,17 @@ try {
 	return 0;
 }
 
-inline size_t
-CGIClient::FeedHeadersLoop(const char *data, size_t length)
+inline std::size_t
+CGIClient::FeedHeadersLoop(const char *data, std::size_t length)
 {
 	assert(length > 0);
 	assert(!parser.AreHeadersFinished());
 
 	const DestructObserver destructed(*this);
-	size_t consumed = 0;
+	std::size_t consumed = 0;
 
 	do {
-		size_t nbytes = FeedHeaders(data + consumed, length - consumed);
+		std::size_t nbytes = FeedHeaders(data + consumed, length - consumed);
 		if (nbytes == 0)
 			break;
 
@@ -237,10 +237,10 @@ CGIClient::FeedHeadersLoop(const char *data, size_t length)
 	return consumed;
 }
 
-inline size_t
-CGIClient::FeedHeadersCheck(const char *data, size_t length)
+inline std::size_t
+CGIClient::FeedHeadersCheck(const char *data, std::size_t length)
 {
-	size_t nbytes = FeedHeadersLoop(data, length);
+	std::size_t nbytes = FeedHeadersLoop(data, length);
 
 	assert(nbytes == 0 || input.IsDefined());
 	assert(nbytes == 0 ||
@@ -250,8 +250,8 @@ CGIClient::FeedHeadersCheck(const char *data, size_t length)
 	return nbytes;
 }
 
-inline size_t
-CGIClient::FeedBody(const char *data, size_t length)
+inline std::size_t
+CGIClient::FeedBody(const char *data, std::size_t length)
 {
 	if (parser.IsTooMuch(length)) {
 		stopwatch.RecordEvent("malformed");
@@ -261,7 +261,7 @@ CGIClient::FeedBody(const char *data, size_t length)
 
 	had_output = true;
 
-	size_t nbytes = InvokeData(data, length);
+	std::size_t nbytes = InvokeData(data, length);
 	if (nbytes > 0 && parser.BodyConsumed(nbytes)) {
 		stopwatch.RecordEvent("end");
 		DestroyEof();
@@ -276,23 +276,23 @@ CGIClient::FeedBody(const char *data, size_t length)
  *
  */
 
-size_t
-CGIClient::OnData(const void *data, size_t length) noexcept
+std::size_t
+CGIClient::OnData(const void *data, std::size_t length) noexcept
 {
 	assert(input.IsDefined());
 
 	had_input = true;
 
 	if (!parser.AreHeadersFinished()) {
-		size_t nbytes = FeedHeadersCheck((const char *)data, length);
+		std::size_t nbytes = FeedHeadersCheck((const char *)data, length);
 
 		if (nbytes > 0 && nbytes < length &&
 		    parser.AreHeadersFinished()) {
 			/* the headers are finished; now begin sending the
 			   response body */
 			const DestructObserver destructed(*this);
-			size_t nbytes2 = FeedBody((const char *)data + nbytes,
-						  length - nbytes);
+			std::size_t nbytes2 = FeedBody((const char *)data + nbytes,
+						       length - nbytes);
 			if (nbytes2 > 0)
 				/* more data was consumed */
 				nbytes += nbytes2;
@@ -308,7 +308,7 @@ CGIClient::OnData(const void *data, size_t length) noexcept
 }
 
 ssize_t
-CGIClient::OnDirect(FdType type, int fd, size_t max_length) noexcept
+CGIClient::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 {
 	assert(parser.AreHeadersFinished());
 
@@ -317,7 +317,7 @@ CGIClient::OnDirect(FdType type, int fd, size_t max_length) noexcept
 
 	if (parser.KnownLength() &&
 	    (off_t)max_length > parser.GetAvailable())
-		max_length = (size_t)parser.GetAvailable();
+		max_length = (std::size_t)parser.GetAvailable();
 
 	ssize_t nbytes = InvokeDirect(type, fd, max_length);
 	if (nbytes > 0 && parser.BodyConsumed(nbytes)) {

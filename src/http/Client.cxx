@@ -144,7 +144,7 @@ class HttpClient final : BufferedSocketHandler, IstreamSink, Cancellable, Destru
 			GetClient().FillBucketList(list);
 		}
 
-		size_t _ConsumeBucketList(size_t nbytes) noexcept override {
+		std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override {
 			return GetClient().ConsumeBucketList(nbytes);
 		}
 
@@ -342,7 +342,7 @@ private:
 	void Read() noexcept;
 
 	void FillBucketList(IstreamBucketList &list) noexcept;
-	size_t ConsumeBucketList(size_t nbytes) noexcept;
+	std::size_t ConsumeBucketList(std::size_t nbytes) noexcept;
 
 	int AsFD() noexcept;
 	void Close() noexcept;
@@ -386,7 +386,7 @@ private:
 	DirectResult OnBufferedDirect(SocketDescriptor fd, FdType fd_type) override;
 	bool OnBufferedHangup() noexcept override;
 	bool OnBufferedClosed() noexcept override;
-	bool OnBufferedRemaining(size_t remaining) noexcept override;
+	bool OnBufferedRemaining(std::size_t remaining) noexcept override;
 	bool OnBufferedWrite() override;
 	enum write_result OnBufferedBroken() noexcept override;
 	void OnBufferedError(std::exception_ptr e) noexcept override;
@@ -395,8 +395,8 @@ private:
 	void Cancel() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
-	size_t OnData(const void *data, size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -519,8 +519,8 @@ HttpClient::FillBucketList(IstreamBucketList &list) noexcept
 	response_body_reader.FillBucketList(socket, list);
 }
 
-inline size_t
-HttpClient::ConsumeBucketList(size_t nbytes) noexcept
+inline std::size_t
+HttpClient::ConsumeBucketList(std::size_t nbytes) noexcept
 {
 	assert(response_body_reader.IsSocketDone(socket) || !socket.HasEnded());
 	assert(response.state == Response::State::BODY);
@@ -610,8 +610,8 @@ HttpClient::TryWriteBuckets2()
 						       strerror(_errno)));
 	}
 
-	size_t consumed = input.ConsumeBucketList(nbytes);
-	assert(consumed == (size_t)nbytes);
+	std::size_t consumed = input.ConsumeBucketList(nbytes);
+	assert(consumed == (std::size_t)nbytes);
 
 	return list.IsDepleted(consumed)
 		? BucketResult::DEPLETED
@@ -874,7 +874,7 @@ HttpClient::FeedBody(std::span<const std::byte> b)
 {
 	assert(response.state == Response::State::BODY);
 
-	size_t nbytes;
+	std::size_t nbytes;
 
 	{
 		const DestructObserver destructed(*this);
@@ -1122,7 +1122,7 @@ HttpClient::OnBufferedClosed() noexcept
 }
 
 bool
-HttpClient::OnBufferedRemaining(size_t remaining) noexcept
+HttpClient::OnBufferedRemaining(std::size_t remaining) noexcept
 {
 	if (!socket.IsReleased())
 		/* by now, the SocketFilter has processed all incoming data,
@@ -1221,8 +1221,8 @@ HttpClient::OnBufferedError(std::exception_ptr ep) noexcept
  *
  */
 
-size_t
-HttpClient::OnData(const void *data, size_t length) noexcept
+std::size_t
+HttpClient::OnData(const void *data, std::size_t length) noexcept
 {
 	assert(IsConnected());
 
@@ -1231,7 +1231,7 @@ HttpClient::OnData(const void *data, size_t length) noexcept
 	ssize_t nbytes = socket.Write({(const std::byte *)data, length});
 	if (nbytes >= 0) [[likely]] {
 		ScheduleWrite();
-		return (size_t)nbytes;
+		return (std::size_t)nbytes;
 	}
 
 	if (nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED ||
@@ -1250,7 +1250,7 @@ HttpClient::OnData(const void *data, size_t length) noexcept
 }
 
 ssize_t
-HttpClient::OnDirect(FdType type, int fd, size_t max_length) noexcept
+HttpClient::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 {
 	assert(IsConnected());
 

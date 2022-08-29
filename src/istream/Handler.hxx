@@ -35,6 +35,7 @@
 #include "Result.hxx"
 #include "io/FdType.hxx"
 
+#include <cstddef>
 #include <exception>
 
 #include <sys/types.h>
@@ -68,7 +69,7 @@ public:
 	 * (caller is responsible for registering an event) or if the
 	 * stream has been closed
 	 */
-	virtual size_t OnData(const void *data, size_t length) noexcept = 0;
+	virtual std::size_t OnData(const void *data, std::size_t length) noexcept = 0;
 
 	/**
 	 * Data is available in a file descriptor.
@@ -81,7 +82,7 @@ public:
 	 * #istream_result values
 	 */
 	virtual ssize_t OnDirect(FdType type, int fd,
-				 size_t max_length) noexcept;
+				 std::size_t max_length) noexcept;
 
 	/**
 	 * End of file encountered.

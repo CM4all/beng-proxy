@@ -140,8 +140,8 @@ HttpServerConnection::TryWriteBuckets2()
 	response.bytes_sent += nbytes;
 	response.length += nbytes;
 
-	size_t consumed = input.ConsumeBucketList(nbytes);
-	assert(consumed == (size_t)nbytes);
+	std::size_t consumed = input.ConsumeBucketList(nbytes);
+	assert(consumed == (std::size_t)nbytes);
 
 	return list.IsDepleted(consumed)
 		? BucketResult::DEPLETED

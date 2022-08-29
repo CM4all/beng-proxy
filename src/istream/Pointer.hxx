@@ -115,7 +115,7 @@ public:
 		}
 	}
 
-	size_t ConsumeBucketList(size_t nbytes) noexcept {
+	std::size_t ConsumeBucketList(std::size_t nbytes) noexcept {
 		assert(IsDefined());
 
 		return stream->ConsumeBucketList(nbytes);

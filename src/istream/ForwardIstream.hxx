@@ -68,7 +68,7 @@ public:
 		input.Read();
 	}
 
-	size_t _ConsumeBucketList(size_t nbytes) noexcept override {
+	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override {
 		return Consumed(input.ConsumeBucketList(nbytes));
 	}
 
@@ -85,12 +85,12 @@ public:
 		return InvokeReady();
 	}
 
-	size_t OnData(const void *data, size_t length) noexcept override {
+	std::size_t OnData(const void *data, std::size_t length) noexcept override {
 		return InvokeData(data, length);
 	}
 
 	ssize_t OnDirect(FdType type, int fd,
-			 size_t max_length) noexcept override {
+			 std::size_t max_length) noexcept override {
 		return InvokeDirect(type, fd, max_length);
 	}
 

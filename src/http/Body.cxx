@@ -39,21 +39,21 @@
 #include <limits.h>
 
 /** determine how much can be read from the body */
-size_t
-HttpBodyReader::GetMaxRead(size_t length) const noexcept
+std::size_t
+HttpBodyReader::GetMaxRead(std::size_t length) const noexcept
 {
 	assert(rest != REST_EOF_CHUNK);
 
 	if (KnownLength() && rest < (off_t)length)
 		/* content-length header was provided, return this value */
-		return (size_t)rest;
+		return (std::size_t)rest;
 	else
 		/* read as much as possible, the dechunker will do the rest */
 		return length;
 }
 
 void
-HttpBodyReader::Consumed(size_t nbytes) noexcept
+HttpBodyReader::Consumed(std::size_t nbytes) noexcept
 {
 	if (!KnownLength())
 		return;
@@ -63,13 +63,13 @@ HttpBodyReader::Consumed(size_t nbytes) noexcept
 	rest -= (off_t)nbytes;
 }
 
-size_t
-HttpBodyReader::FeedBody(const void *data, size_t length) noexcept
+std::size_t
+HttpBodyReader::FeedBody(const void *data, std::size_t length) noexcept
 {
 	assert(length > 0);
 
 	length = GetMaxRead(length);
-	size_t consumed = InvokeData(data, length);
+	std::size_t consumed = InvokeData(data, length);
 	if (consumed > 0)
 		Consumed(consumed);
 
@@ -84,13 +84,13 @@ HttpBodyReader::TryDirect(SocketDescriptor fd, FdType fd_type) noexcept
 
 	ssize_t nbytes = InvokeDirect(fd_type, fd.Get(), GetMaxRead(INT_MAX));
 	if (nbytes > 0)
-		Consumed((size_t)nbytes);
+		Consumed((std::size_t)nbytes);
 
 	return nbytes;
 }
 
 bool
-HttpBodyReader::SocketEOF(size_t remaining) noexcept
+HttpBodyReader::SocketEOF(std::size_t remaining) noexcept
 {
 	if (rest == REST_UNKNOWN) {
 		rest = remaining;

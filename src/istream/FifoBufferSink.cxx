@@ -53,7 +53,7 @@ FifoBufferSink::OnIstreamReady() noexcept
 		return false;
 	}
 
-	size_t nbytes = 0;
+	std::size_t nbytes = 0;
 	bool more = list.HasMore();
 
 	for (const auto &bucket : list) {
@@ -64,7 +64,7 @@ FifoBufferSink::OnIstreamReady() noexcept
 
 		buffer.AllocateIfNull(fb_pool_get());
 		auto r = bucket.GetBuffer();
-		size_t n_copy = buffer.MoveFrom(r);
+		std::size_t n_copy = buffer.MoveFrom(r);
 		nbytes += n_copy;
 
 		if (n_copy < r.size()) {
@@ -85,8 +85,8 @@ FifoBufferSink::OnIstreamReady() noexcept
 	return true;
 }
 
-size_t
-FifoBufferSink::OnData(const void *data, size_t length) noexcept
+std::size_t
+FifoBufferSink::OnData(const void *data, std::size_t length) noexcept
 {
 	buffer.AllocateIfNull(fb_pool_get());
 	const std::size_t nbytes = buffer.MoveFrom(std::span{(const std::byte *)data, length});
@@ -98,7 +98,7 @@ FifoBufferSink::OnData(const void *data, size_t length) noexcept
 }
 
 ssize_t
-FifoBufferSink::OnDirect(FdType, int fd, size_t max_length) noexcept
+FifoBufferSink::OnDirect(FdType, int fd, std::size_t max_length) noexcept
 {
 	buffer.AllocateIfNull(fb_pool_get());
 

@@ -117,9 +117,9 @@ struct Context final : IstreamSink {
 	/**
 	 * The current offset in the #Istream.
 	 */
-	size_t offset = 0;
+	std::size_t offset = 0;
 
-	size_t skipped = 0;
+	std::size_t skipped = 0;
 
 	DeferEvent defer_inject_event;
 	InjectIstreamControl *defer_inject_istream = nullptr;
@@ -188,11 +188,11 @@ struct Context final : IstreamSink {
 					    std::exception_ptr()));
 	}
 
-	bool ReadBuckets(size_t limit);
+	bool ReadBuckets(std::size_t limit);
 
 	/* virtual methods from class IstreamHandler */
-	size_t OnData(const void *data, size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };

@@ -33,7 +33,7 @@
 #include "IstreamFilterTest.hxx"
 
 bool
-Context::ReadBuckets(size_t limit)
+Context::ReadBuckets(std::size_t limit)
 {
 	if (abort_istream != nullptr)
 		/* don't attempt to read buckets when this option is
@@ -50,7 +50,7 @@ Context::ReadBuckets(size_t limit)
 	got_data = true;
 
 	bool result = true;
-	size_t consumed = 0;
+	std::size_t consumed = 0;
 
 	for (const auto &i : list) {
 		if (!i.IsBuffer()) {
@@ -59,7 +59,7 @@ Context::ReadBuckets(size_t limit)
 		}
 
 		const auto b = i.GetBuffer();
-		size_t size = std::min(b.size(), limit);
+		std::size_t size = std::min(b.size(), limit);
 
 		if (expected_result && record) {
 			assert(skipped + buffer.size() == offset);
@@ -77,7 +77,7 @@ Context::ReadBuckets(size_t limit)
 			break;
 	}
 
-	gcc_unused size_t consumed2 = input.ConsumeBucketList(consumed);
+	gcc_unused std::size_t consumed2 = input.ConsumeBucketList(consumed);
 	assert(consumed2 == consumed);
 
 	if (result && !list.HasMore()) {
@@ -93,8 +93,8 @@ Context::ReadBuckets(size_t limit)
  *
  */
 
-size_t
-Context::OnData(gcc_unused const void *data, size_t length) noexcept
+std::size_t
+Context::OnData(gcc_unused const void *data, std::size_t length) noexcept
 {
 	got_data = true;
 
@@ -143,7 +143,7 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
 
 	offset += length;
 
-	if (close_after >= 0 && offset >= size_t(close_after)) {
+	if (close_after >= 0 && offset >= std::size_t(close_after)) {
 		CloseInput();
 		test_pool.reset(); // TODO: move this before CloseInput()
 		eof = true;
@@ -154,7 +154,7 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
 }
 
 ssize_t
-Context::OnDirect(gcc_unused FdType type, gcc_unused int fd, size_t max_length) noexcept
+Context::OnDirect(gcc_unused FdType type, gcc_unused int fd, std::size_t max_length) noexcept
 {
 	got_data = true;
 

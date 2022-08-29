@@ -60,8 +60,8 @@ HttpServerConnection::OnIstreamReady() noexcept
 	gcc_unreachable();
 }
 
-size_t
-HttpServerConnection::OnData(const void *data, size_t length) noexcept
+std::size_t
+HttpServerConnection::OnData(const void *data, std::size_t length) noexcept
 {
 	assert(socket->IsConnected() || request.request == nullptr);
 	assert(HasInput());
@@ -76,7 +76,7 @@ HttpServerConnection::OnData(const void *data, size_t length) noexcept
 		response.bytes_sent += nbytes;
 		response.length += (off_t)nbytes;
 		ScheduleWrite();
-		return (size_t)nbytes;
+		return (std::size_t)nbytes;
 	}
 
 	if (gcc_likely(nbytes == WRITE_BLOCKING)) {
@@ -92,7 +92,7 @@ HttpServerConnection::OnData(const void *data, size_t length) noexcept
 }
 
 ssize_t
-HttpServerConnection::OnDirect(FdType type, int fd, size_t max_length) noexcept
+HttpServerConnection::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 {
 	assert(socket->IsConnected() || request.request == nullptr);
 	assert(HasInput());

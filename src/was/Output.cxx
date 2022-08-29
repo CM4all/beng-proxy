@@ -151,8 +151,8 @@ private:
 
 	/* virtual methods from class IstreamHandler */
 	bool OnIstreamReady() noexcept override;
-	size_t OnData(const void *data, size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -246,7 +246,7 @@ WasOutput::OnIstreamReady() noexcept
 
 	StaticVector<struct iovec, 64> v;
 	bool more = list.HasMore(), result = false;
-	size_t total = 0;
+	std::size_t total = 0;
 
 	for (const auto &i : list) {
 		if (!i.IsBuffer()) {
@@ -286,7 +286,7 @@ WasOutput::OnIstreamReady() noexcept
 	sent += nbytes;
 	input.ConsumeBucketList(nbytes);
 
-	if (!more && size_t(nbytes) == total) {
+	if (!more && std::size_t(nbytes) == total) {
 		/* we've just reached end of our input */
 
 		CloseInput();
@@ -298,8 +298,8 @@ WasOutput::OnIstreamReady() noexcept
 	return result;
 }
 
-inline size_t
-WasOutput::OnData(const void *p, size_t length) noexcept
+inline std::size_t
+WasOutput::OnData(const void *p, std::size_t length) noexcept
 {
 	assert(HasPipe());
 	assert(HasInput());
@@ -328,11 +328,11 @@ WasOutput::OnData(const void *p, size_t length) noexcept
 		return 0;
 	}
 
-	return (size_t)nbytes;
+	return (std::size_t)nbytes;
 }
 
 inline ssize_t
-WasOutput::OnDirect(gcc_unused FdType type, int source_fd, size_t max_length) noexcept
+WasOutput::OnDirect(gcc_unused FdType type, int source_fd, std::size_t max_length) noexcept
 {
 	assert(HasPipe());
 	assert(!IsEof());
