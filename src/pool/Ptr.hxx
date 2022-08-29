@@ -34,9 +34,8 @@
 
 #include "trace.h"
 
+#include <cstddef>
 #include <utility>
-
-#include <stddef.h>
 
 /**
  * A reference-holding pointer to a "struct pool".
@@ -112,7 +111,7 @@ public:
 		return std::exchange(value, nullptr);
 	}
 
-	void *Allocate(size_t size) const noexcept;
+	void *Allocate(std::size_t size) const noexcept;
 };
 
 /**
