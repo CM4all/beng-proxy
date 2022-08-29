@@ -80,7 +80,6 @@ HttpServerConnection::DiscardRequestBody() noexcept
 {
 	assert(request.read_state == Request::BODY);
 	assert(request.body_state == Request::BodyState::READING);
-	assert(!request_body_reader->IsEOF());
 	assert(!response.pending_drained);
 
 	if (!socket->IsValid() || !socket->IsConnected()) {
