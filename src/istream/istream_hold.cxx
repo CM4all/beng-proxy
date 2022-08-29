@@ -131,11 +131,11 @@ public:
 		return HasHandler() ? ForwardIstream::OnData(data, length) : 0;
 	}
 
-	ssize_t OnDirect(FdType type, int fd,
-			 std::size_t max_length) noexcept override {
+	IstreamDirectResult OnDirect(FdType type, int fd,
+				     std::size_t max_length) noexcept override {
 		return HasHandler()
 			? ForwardIstream::OnDirect(type, fd, max_length)
-			: ssize_t(ISTREAM_RESULT_BLOCKING);
+			: IstreamDirectResult::BLOCKING;
 	}
 
 	void OnEof() noexcept override {

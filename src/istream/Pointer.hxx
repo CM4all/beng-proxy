@@ -121,6 +121,12 @@ public:
 		return stream->ConsumeBucketList(nbytes);
 	}
 
+	void ConsumeDirect(std::size_t nbytes) noexcept {
+		assert(IsDefined());
+
+		stream->ConsumeDirect(nbytes);
+	}
+
 	[[gnu::pure]]
 	off_t GetAvailable(bool partial) const noexcept {
 		assert(IsDefined());

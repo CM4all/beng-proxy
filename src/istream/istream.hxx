@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include "Result.hxx"
 #include "pool/Holder.hxx"
 #include "io/FdType.hxx"
 #include "util/DestructObserver.hxx"
@@ -127,7 +128,8 @@ protected:
 
 	bool InvokeReady() noexcept;
 	std::size_t InvokeData(const void *data, std::size_t length) noexcept;
-	ssize_t InvokeDirect(FdType type, int fd, std::size_t max_length) noexcept;
+	IstreamDirectResult InvokeDirect(FdType type, int fd,
+					 std::size_t max_length) noexcept;
 	void InvokeEof() noexcept;
 	void InvokeError(std::exception_ptr ep) noexcept;
 
@@ -427,6 +429,31 @@ public:
 	}
 
 	/**
+	 * Consume data from the file descriptor passed to
+	 * IstreamHandler::OnDirect().
+	 *
+	 * @param nbytes the number of bytes which were consumed
+	 */
+	void ConsumeDirect(std::size_t nbytes) noexcept {
+#ifndef NDEBUG
+		assert(nbytes > 0);
+		assert(!destroyed);
+		assert(!closing);
+		assert(!eof);
+		assert(in_data);
+
+		consumed_sum = 0;
+#endif
+
+		_ConsumeDirect(Consumed(nbytes));
+
+#ifndef NDEBUG
+		assert(!destroyed);
+		assert(consumed_sum == nbytes);
+#endif
+	}
+
+	/**
 	 * Close the istream object, and return the remaining data as a
 	 * file descriptor.  This fd can be read until end-of-stream.
 	 * Returns -1 if this is not possible (the stream object is still
@@ -502,6 +529,7 @@ protected:
 
 	virtual void _FillBucketList(IstreamBucketList &list);
 	virtual std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept;
+	virtual void _ConsumeDirect(std::size_t nbytes) noexcept;
 
 	virtual int _AsFd() noexcept {
 		return -1;

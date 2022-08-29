@@ -54,6 +54,7 @@ public:
 
 	off_t _GetAvailable(bool partial) noexcept override;
 	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override;
+	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 	off_t _Skip(off_t length) noexcept override;
 	void _Read() noexcept override;
 
@@ -65,7 +66,8 @@ public:
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
+	IstreamDirectResult OnDirect(FdType type, int fd,
+				     std::size_t max_length) noexcept override;
 };
 
 /*
@@ -129,29 +131,34 @@ HeadIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 	return nbytes;
 }
 
-ssize_t
+void
+HeadIstream::_ConsumeDirect(std::size_t nbytes) noexcept
+{
+	assert((off_t)nbytes <= rest);
+
+	rest -= nbytes;
+	ForwardIstream::_ConsumeBucketList(nbytes);
+}
+
+IstreamDirectResult
 HeadIstream::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 {
 	if (rest == 0) {
 		DestroyEof();
-		return ISTREAM_RESULT_CLOSED;
+		return IstreamDirectResult::CLOSED;
 	}
 
 	if ((off_t)max_length > rest)
 		max_length = rest;
 
-	ssize_t nbytes = InvokeDirect(type, fd, max_length);
-	assert(nbytes < 0 || (off_t)nbytes <= rest);
+	const auto result = InvokeDirect(type, fd, max_length);
 
-	if (nbytes > 0) {
-		rest -= (std::size_t)nbytes;
-		if (rest == 0) {
-			DestroyEof();
-			return ISTREAM_RESULT_CLOSED;
-		}
+	if (result == IstreamDirectResult::OK && rest == 0) {
+		DestroyEof();
+		return IstreamDirectResult::CLOSED;
 	}
 
-	return nbytes;
+	return result;
 }
 
 /*

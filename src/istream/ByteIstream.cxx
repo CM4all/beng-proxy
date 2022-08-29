@@ -74,8 +74,8 @@ public:
 		return ForwardIstream::OnData(data, 1);
 	}
 
-	ssize_t OnDirect(FdType type, int fd,
-			 [[maybe_unused]] size_t max_length) noexcept override {
+	IstreamDirectResult OnDirect(FdType type, int fd,
+				     [[maybe_unused]] size_t max_length) noexcept override {
 		return ForwardIstream::OnDirect(type, fd, 1);
 	}
 };

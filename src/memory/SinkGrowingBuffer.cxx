@@ -84,17 +84,22 @@ GrowingBufferSink::OnData(const void *data, std::size_t length) noexcept
 	return length;
 }
 
-ssize_t
+IstreamDirectResult
 GrowingBufferSink::OnDirect(FdType, int fd, std::size_t max_length) noexcept
 {
 	auto w = buffer.BeginWrite();
 	const std::size_t n = std::min(w.size(), max_length);
 
 	ssize_t nbytes = read(fd, w.data(), n);
-	if (nbytes > 0)
-		buffer.CommitWrite(nbytes);
+	if (nbytes <= 0)
+		return nbytes < 0
+			? IstreamDirectResult::ERRNO
+			: IstreamDirectResult::END;
 
-	return nbytes;
+	input.ConsumeDirect(nbytes);
+	buffer.CommitWrite(nbytes);
+
+	return IstreamDirectResult::OK;
 }
 
 void

@@ -57,6 +57,13 @@ LengthIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 	return consumed;
 }
 
+void
+LengthIstream::_ConsumeDirect(std::size_t nbytes) noexcept
+{
+	remaining -= nbytes;
+	ForwardIstream::_ConsumeDirect(nbytes);
+}
+
 std::size_t
 LengthIstream::OnData(const void *data, std::size_t length) noexcept
 {
@@ -66,16 +73,6 @@ LengthIstream::OnData(const void *data, std::size_t length) noexcept
 	}
 
 	std::size_t nbytes = ForwardIstream::OnData(data, length);
-	if (nbytes > 0)
-		remaining -= nbytes;
-	return nbytes;
-}
-
-ssize_t
-LengthIstream::OnDirect(FdType type, int fd,
-			std::size_t max_length) noexcept
-{
-	auto nbytes = ForwardIstream::OnDirect(type, fd, max_length);
 	if (nbytes > 0)
 		remaining -= nbytes;
 	return nbytes;

@@ -97,32 +97,32 @@ FifoBufferSink::OnData(const void *data, std::size_t length) noexcept
 	return nbytes;
 }
 
-ssize_t
+IstreamDirectResult
 FifoBufferSink::OnDirect(FdType, int fd, std::size_t max_length) noexcept
 {
 	buffer.AllocateIfNull(fb_pool_get());
 
 	auto w = buffer.Write();
 	if (w.empty())
-		return ISTREAM_RESULT_BLOCKING;
+		return IstreamDirectResult::BLOCKING;
 
 	const std::size_t n = std::min(w.size(), max_length);
 
 	ssize_t nbytes = read(fd, w.data(), n);
-	if (nbytes < 0)
-		return ISTREAM_RESULT_ERRNO;
-
-	if (nbytes == 0) {
+	if (nbytes <= 0) {
 		buffer.FreeIfEmpty();
-		return ISTREAM_RESULT_EOF;
+		return nbytes < 0
+			? IstreamDirectResult::ERRNO
+			: IstreamDirectResult::END;
 	}
 
 	buffer.Append(nbytes);
+	input.ConsumeDirect(nbytes);
 
 	if (!handler.OnFifoBufferSinkData())
-		return ISTREAM_RESULT_CLOSED;
+		return IstreamDirectResult::CLOSED;
 
-	return nbytes;
+	return IstreamDirectResult::OK;
 }
 
 void

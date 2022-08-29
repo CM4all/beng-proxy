@@ -396,7 +396,8 @@ private:
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
+	IstreamDirectResult OnDirect(FdType type, int fd,
+				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -1020,39 +1021,41 @@ HttpClient::TryResponseDirect(SocketDescriptor fd, FdType fd_type)
 	assert(response.state == Response::State::BODY);
 	assert(CheckDirect());
 
-	ssize_t nbytes = response_body_reader.TryDirect(fd, fd_type);
-	if (nbytes == ISTREAM_RESULT_BLOCKING)
+	switch (response_body_reader.TryDirect(fd, fd_type)) {
+	case IstreamDirectResult::BLOCKING:
 		/* the destination fd blocks */
 		return DirectResult::BLOCKING;
 
-	if (nbytes == ISTREAM_RESULT_CLOSED)
+	case IstreamDirectResult::CLOSED:
 		/* the stream (and the whole connection) has been closed
 		   during the direct() callback */
 		return DirectResult::CLOSED;
 
-	if (nbytes < 0) {
+	case IstreamDirectResult::ERRNO:
 		if (errno == EAGAIN)
 			/* the source fd (= ours) blocks */
 			return DirectResult::EMPTY;
 
 		return DirectResult::ERRNO;
-	}
 
-	if (nbytes == ISTREAM_RESULT_EOF) {
+	case IstreamDirectResult::END:
 		if (HasInput())
 			CloseInput();
 
 		response_body_reader.SocketEOF(0);
 		Destroy();
 		return DirectResult::CLOSED;
+
+	case IstreamDirectResult::OK:
+		if (response_body_reader.IsEOF()) {
+			ResponseBodyEOF();
+			return DirectResult::CLOSED;
+		}
+
+		return DirectResult::OK;
 	}
 
-	if (response_body_reader.IsEOF()) {
-		ResponseBodyEOF();
-		return DirectResult::CLOSED;
-	}
-
-	return DirectResult::OK;
+	gcc_unreachable();
 }
 
 /*
@@ -1249,7 +1252,7 @@ HttpClient::OnData(const void *data, std::size_t length) noexcept
 	return 0;
 }
 
-ssize_t
+IstreamDirectResult
 HttpClient::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 {
 	assert(IsConnected());
@@ -1257,20 +1260,24 @@ HttpClient::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 	request.got_data = true;
 
 	ssize_t nbytes = socket.WriteFrom(fd, type, max_length);
-	if (nbytes > 0) [[likely]]
+	if (nbytes > 0) [[likely]] {
+		input.ConsumeDirect(nbytes);
 		ScheduleWrite();
-	else if (nbytes == WRITE_BLOCKING)
-		return ISTREAM_RESULT_BLOCKING;
+		return IstreamDirectResult::OK;
+	} else if (nbytes == WRITE_BLOCKING)
+		return IstreamDirectResult::BLOCKING;
 	else if (nbytes == WRITE_DESTROYED || nbytes == WRITE_BROKEN)
-		return ISTREAM_RESULT_CLOSED;
-	else if (nbytes < 0) [[likely]] {
+		return IstreamDirectResult::CLOSED;
+	else if (nbytes == WRITE_SOURCE_EOF)
+		return IstreamDirectResult::END;
+	else {
 		if (errno == EAGAIN) [[likely]] {
 			request.got_data = false;
 			socket.UnscheduleWrite();
 		}
-	}
 
-	return nbytes;
+		return IstreamDirectResult::ERRNO;
+	}
 }
 
 void

@@ -152,7 +152,8 @@ private:
 	/* virtual methods from class IstreamHandler */
 	bool OnIstreamReady() noexcept override;
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
+	IstreamDirectResult OnDirect(FdType type, int fd,
+				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -331,28 +332,18 @@ WasOutput::OnData(const void *p, std::size_t length) noexcept
 	return (std::size_t)nbytes;
 }
 
-inline ssize_t
+IstreamDirectResult
 WasOutput::OnDirect(gcc_unused FdType type, int source_fd, std::size_t max_length) noexcept
 {
 	assert(HasPipe());
 	assert(!IsEof());
 
 	ssize_t nbytes = SpliceToPipe(source_fd, GetPipe().Get(), max_length);
-	if (gcc_likely(nbytes > 0)) {
-		sent += nbytes;
-
-		if (IsEof()) {
-			CloseInput();
-			DestroyEof();
-			return ISTREAM_RESULT_CLOSED;
-		}
-
-		ScheduleWrite();
-	} else if (nbytes < 0 && errno == EAGAIN) {
+	if (nbytes < 0 && errno == EAGAIN) {
 		if (!GetPipe().IsReadyForWriting()) {
 			got_data = true;
 			ScheduleWrite();
-			return ISTREAM_RESULT_BLOCKING;
+			return IstreamDirectResult::BLOCKING;
 		}
 
 		/* try again, just in case fd has become ready between
@@ -361,10 +352,24 @@ WasOutput::OnDirect(gcc_unused FdType type, int source_fd, std::size_t max_lengt
 		nbytes = SpliceToPipe(source_fd, GetPipe().Get(), max_length);
 	}
 
-	if (nbytes > 0)
-		got_data = true;
+	if (nbytes <= 0)
+		return nbytes < 0
+			? IstreamDirectResult::ERRNO
+			: IstreamDirectResult::END;
 
-	return nbytes;
+	input.ConsumeDirect(nbytes);
+	sent += nbytes;
+	got_data = true;
+
+	if (IsEof()) {
+		CloseInput();
+		DestroyEof();
+		return IstreamDirectResult::CLOSED;
+	}
+
+	ScheduleWrite();
+
+	return IstreamDirectResult::OK;
 }
 
 void

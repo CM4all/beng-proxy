@@ -36,26 +36,31 @@
  * These special values may be returned from
  * IstreamHandler::OnDirect().
  */
-enum istream_result {
+enum class IstreamDirectResult {
+	/**
+	 * Some data has been read.
+	 */
+	OK,
+
 	/**
 	 * No more data available in the specified socket.
 	 */
-	ISTREAM_RESULT_EOF = 0,
+	END,
 
 	/**
 	 * I/O error, errno set.
 	 */
-	ISTREAM_RESULT_ERRNO = -1,
+	ERRNO,
 
 	/**
 	 * Writing would block, callee is responsible for registering an
 	 * event and calling Istream::Read().
 	 */
-	ISTREAM_RESULT_BLOCKING = -2,
+	BLOCKING,
 
 	/**
 	 * The stream has ben closed.  This state supersedes all other
 	 * states.
 	 */
-	ISTREAM_RESULT_CLOSED = -3,
+	CLOSED,
 };

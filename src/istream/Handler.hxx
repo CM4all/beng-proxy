@@ -73,7 +73,9 @@ public:
 
 	/**
 	 * Data is available in a file descriptor.
-	 * This function must return 0 if it has closed the stream.
+	 *
+	 * After the method has read data from the specified file
+	 * descriptor, it must call Istream::ConsumeDirect().
 	 *
 	 * @param type what kind of file descriptor?
 	 * @param fd the file descriptor
@@ -81,8 +83,8 @@ public:
 	 * @return the number of bytes consumed, or one of the
 	 * #istream_result values
 	 */
-	virtual ssize_t OnDirect(FdType type, int fd,
-				 std::size_t max_length) noexcept;
+	virtual IstreamDirectResult OnDirect(FdType type, int fd,
+					     std::size_t max_length) noexcept;
 
 	/**
 	 * End of file encountered.

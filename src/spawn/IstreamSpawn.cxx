@@ -124,12 +124,16 @@ struct SpawnIstream final : Istream, IstreamSink, ExitListener {
 	}
 
 	void _Read() noexcept override;
+
+	void _ConsumeDirect(std::size_t nbytes) noexcept override;
+
 	// TODO: implement int AsFd() override;
 	void _Close() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
+	IstreamDirectResult OnDirect(FdType type, int fd,
+				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 
@@ -208,29 +212,36 @@ SpawnIstream::OnData(const void *data, std::size_t length) noexcept
 	return (std::size_t)nbytes;
 }
 
-ssize_t
+IstreamDirectResult
 SpawnIstream::OnDirect(gcc_unused FdType type, int fd, std::size_t max_length) noexcept
 {
 	assert(input_fd.IsDefined());
 
 	ssize_t nbytes = SpliceToPipe(fd, input_fd.Get(), max_length);
-	if (nbytes > 0)
-		input_event.ScheduleWrite();
-	else if (nbytes < 0) {
-		if (errno == EAGAIN) {
-			if (!input_fd.IsReadyForWriting()) {
-				input_event.ScheduleWrite();
-				return ISTREAM_RESULT_BLOCKING;
-			}
+	if (nbytes <= 0) {
+		if (nbytes == 0)
+			return IstreamDirectResult::END;
 
-			/* try again, just in case connection->fd has become ready
-			   between the first splice() call and
-			   fd_ready_for_writing() */
-			nbytes = SpliceToPipe(fd, input_fd.Get(), max_length);
+		if (errno != EAGAIN)
+			return IstreamDirectResult::ERRNO;
+
+		if (!input_fd.IsReadyForWriting()) {
+			input_event.ScheduleWrite();
+			return IstreamDirectResult::BLOCKING;
 		}
+
+		/* try again, just in case connection->fd has become
+		   ready between the first splice() call and
+		   fd_ready_for_writing() */
+		nbytes = SpliceToPipe(fd, input_fd.Get(), max_length);
+		if (nbytes <= 0)
+			return nbytes < 0
+				? IstreamDirectResult::ERRNO
+				: IstreamDirectResult::END;
 	}
 
-	return nbytes;
+	input.ConsumeDirect(nbytes);
+	return IstreamDirectResult::OK;
 }
 
 inline void
@@ -317,29 +328,37 @@ SpawnIstream::ReadFromOutput() noexcept
 			return;
 		}
 
-		ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, output_fd.Get(),
-					      INT_MAX);
-		if (nbytes == ISTREAM_RESULT_BLOCKING ||
-		    nbytes == ISTREAM_RESULT_CLOSED) {
-			/* -2 means the callback wasn't able to consume any data right
-			   now */
-		} else if (nbytes > 0) {
+		switch (InvokeDirect(FdType::FD_PIPE, output_fd.Get(),
+				     INT_MAX)) {
+		case IstreamDirectResult::BLOCKING:
+		case IstreamDirectResult::CLOSED:
+			break;
+
+		case IstreamDirectResult::OK:
 			output_event.ScheduleRead();
-		} else if (nbytes == ISTREAM_RESULT_EOF) {
+			break;
+
+		case IstreamDirectResult::END:
 			FreeBuffer();
 			Cancel();
 			DestroyEof();
-		} else if (errno == EAGAIN) {
-			output_event.ScheduleRead();
+			break;
 
-			if (HasInput())
-				/* the CGI may be waiting for more data from stdin */
-				input.Read();
-		} else {
-			auto error = MakeErrno("failed to read from sub process");
-			FreeBuffer();
-			Cancel();
-			DestroyError(std::make_exception_ptr(error));
+		case IstreamDirectResult::ERRNO:
+			if (errno == EAGAIN) {
+				output_event.ScheduleRead();
+
+				if (HasInput())
+					/* the CGI may be waiting for more data from stdin */
+					input.Read();
+			} else {
+				auto error = MakeErrno("failed to read from sub process");
+				FreeBuffer();
+				Cancel();
+				DestroyError(std::make_exception_ptr(error));
+			}
+
+			break;
 		}
 	}
 }
@@ -355,6 +374,12 @@ SpawnIstream::_Read() noexcept
 {
 	if (buffer.empty() || SendFromBuffer())
 		ReadFromOutput();
+}
+
+void
+SpawnIstream::_ConsumeDirect(std::size_t) noexcept
+{
+	output_event.ScheduleRead();
 }
 
 void

@@ -130,6 +130,8 @@ private:
 		TryRead();
 	}
 
+	void _ConsumeDirect(std::size_t nbytes) noexcept override;
+
 	int _AsFd() noexcept override;
 	void _Close() noexcept override {
 		Destroy();
@@ -199,31 +201,30 @@ FileIstream::TryDirect()
 	if (fd.Seek(offset) < 0)
 		throw FormatErrno("Failed to seek '%s'", path);
 
-	ssize_t nbytes = InvokeDirect(FdType::FD_FILE, fd.Get(), GetMaxRead());
-	if (nbytes == ISTREAM_RESULT_CLOSED)
-		/* this stream was closed during the direct() callback */
-		return;
+	switch (InvokeDirect(FdType::FD_FILE, fd.Get(), GetMaxRead())) {
+	case IstreamDirectResult::CLOSED:
+	case IstreamDirectResult::BLOCKING:
+	case IstreamDirectResult::OK:
+		break;
 
-	if (nbytes > 0 || nbytes == ISTREAM_RESULT_BLOCKING) {
-		/* -2 means the callback wasn't able to consume any data right
-		   now */
-		if (nbytes > 0) {
-			offset += nbytes;
-			if (offset >= end_offset)
-				EofDetected();
-		}
-	} else if (nbytes == ISTREAM_RESULT_EOF) {
+	case IstreamDirectResult::END:
 		throw FormatRuntimeError("premature end of file in '%s'", path);
-	} else if (errno == EAGAIN) {
-		/* this should only happen for splice(SPLICE_F_NONBLOCK) from
-		   NFS files - unfortunately we cannot use SocketEvent::READ
-		   here, so we just install a timer which retries after
-		   100ms */
 
-		retry_event.Schedule(file_retry_timeout);
-	} else {
-		/* XXX */
-		throw FormatErrno("Failed to read from '%s'", path);
+	case IstreamDirectResult::ERRNO:
+		if (errno == EAGAIN) {
+			/* this should only happen for
+			   splice(SPLICE_F_NONBLOCK) from NFS files -
+			   unfortunately we cannot use
+			   SocketEvent::READ here, so we just install
+			   a timer which retries after 100ms */
+
+			retry_event.Schedule(file_retry_timeout);
+		} else {
+			/* XXX */
+			throw FormatErrno("Failed to read from '%s'", path);
+		}
+
+		break;
 	}
 }
 
@@ -270,6 +271,16 @@ FileIstream::_Skip(off_t length) noexcept
 	off_t result = buffer_available + length;
 	Consumed(result);
 	return result;
+}
+
+void
+FileIstream::_ConsumeDirect(std::size_t nbytes) noexcept
+{
+	Consumed(nbytes);
+
+	offset += nbytes;
+	if (offset >= end_offset)
+		EofDetected();
 }
 
 int

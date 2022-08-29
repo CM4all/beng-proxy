@@ -72,6 +72,10 @@ class CatIstream final : public Istream, DestructAnchor {
 			return input.ConsumeBucketList(nbytes);
 		}
 
+		void ConsumeDirect(std::size_t nbytes) noexcept {
+			return input.ConsumeDirect(nbytes);
+		}
+
 		int AsFd() noexcept {
 			return input.AsFd();
 		}
@@ -86,8 +90,8 @@ class CatIstream final : public Istream, DestructAnchor {
 			return cat.OnInputData(*this, data, length);
 		}
 
-		ssize_t OnDirect(FdType type, int fd,
-				 std::size_t max_length) noexcept override {
+		IstreamDirectResult OnDirect(FdType type, int fd,
+					     std::size_t max_length) noexcept override {
 			return cat.OnInputDirect(*this, type, fd, max_length);
 		}
 
@@ -159,11 +163,12 @@ private:
 			: 0;
 	}
 
-	ssize_t OnInputDirect([[maybe_unused]] Input &i, FdType type, int fd,
-			      std::size_t max_length) noexcept {
+	IstreamDirectResult OnInputDirect(Input &i,
+					  FdType type, int fd,
+					  std::size_t max_length) noexcept {
 		return IsCurrent(i)
 			? InvokeDirect(type, fd, max_length)
-			: (ssize_t)ISTREAM_RESULT_BLOCKING;
+			: IstreamDirectResult::BLOCKING;
 	}
 
 	void OnInputEof(Input &i) noexcept {
@@ -201,6 +206,7 @@ public:
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
 	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override;
+	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 	int _AsFd() noexcept override;
 	void _Close() noexcept override;
 };
@@ -298,6 +304,12 @@ CatIstream::_ConsumeBucketList(std::size_t nbytes) noexcept
 	}
 
 	return total;
+}
+
+void
+CatIstream::_ConsumeDirect(std::size_t nbytes) noexcept
+{
+	GetCurrent().ConsumeDirect(nbytes);
 }
 
 int

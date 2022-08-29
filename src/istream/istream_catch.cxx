@@ -87,11 +87,11 @@ public:
 
 	void _Read() noexcept override;
 	void _FillBucketList(IstreamBucketList &list) override;
+	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 
 	/* virtual methods from class IstreamHandler */
 
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
 
@@ -146,6 +146,21 @@ CatchIstream::SendSpace() noexcept
 	DestroyEof();
 }
 
+void
+CatchIstream::_ConsumeDirect(std::size_t nbytes) noexcept
+{
+	ForwardIstream::_ConsumeDirect(nbytes);
+
+	if ((off_t)nbytes < available)
+		available -= (off_t)nbytes;
+	else
+		available = 0;
+
+	if (nbytes < chunk)
+		chunk -= nbytes;
+	else
+		chunk = 0;
+}
 
 /*
  * istream handler
@@ -169,25 +184,6 @@ CatchIstream::OnData(const void *data, std::size_t length) noexcept
 			available = 0;
 
 		chunk -= nbytes;
-	}
-
-	return nbytes;
-}
-
-ssize_t
-CatchIstream::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
-{
-	ssize_t nbytes = ForwardIstream::OnDirect(type, fd, max_length);
-	if (nbytes > 0) {
-		if ((off_t)nbytes < available)
-			available -= (off_t)nbytes;
-		else
-			available = 0;
-
-		if ((std::size_t)nbytes < chunk)
-			chunk -= nbytes;
-		else
-			chunk = 0;
 	}
 
 	return nbytes;

@@ -99,7 +99,8 @@ public:
 		return ForwardIstream::OnData(data, length);
 	}
 
-	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override {
+	IstreamDirectResult OnDirect(FdType type, int fd,
+				     std::size_t max_length) noexcept override {
 		/* disable the timeout as soon as the first data byte
 		   arrives */
 		timeout_event.Cancel();

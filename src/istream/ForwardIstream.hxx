@@ -72,6 +72,10 @@ public:
 		return Consumed(input.ConsumeBucketList(nbytes));
 	}
 
+	void _ConsumeDirect(std::size_t nbytes) noexcept override {
+		input.ConsumeDirect(nbytes);
+	}
+
 	int _AsFd() noexcept override {
 		int fd = input.AsFd();
 		if (fd >= 0)
@@ -89,8 +93,8 @@ public:
 		return InvokeData(data, length);
 	}
 
-	ssize_t OnDirect(FdType type, int fd,
-			 std::size_t max_length) noexcept override {
+	IstreamDirectResult OnDirect(FdType type, int fd,
+				     std::size_t max_length) noexcept override {
 		return InvokeDirect(type, fd, max_length);
 	}
 

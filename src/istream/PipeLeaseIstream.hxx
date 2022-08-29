@@ -75,6 +75,8 @@ public:
 
 	void _Read() noexcept override;
 
+	void _ConsumeDirect(std::size_t nbytes) noexcept override;
+
 private:
 	/**
 	 * @return true if the buffer is now empty; false if data remains

@@ -34,7 +34,7 @@
 #include "util/Compiler.h"
 
 gcc_noreturn
-ssize_t
+IstreamDirectResult
 IstreamHandler::OnDirect([[maybe_unused]] FdType type,
 			 [[maybe_unused]] int fd,
 			 [[maybe_unused]] std::size_t max_length) noexcept

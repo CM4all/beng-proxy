@@ -154,6 +154,14 @@ HttpServerConnection::RequestBodyReader::_Read() noexcept
 }
 
 void
+HttpServerConnection::RequestBodyReader::_ConsumeDirect(std::size_t nbytes) noexcept
+{
+	HttpBodyReader::_ConsumeDirect(nbytes);
+
+	connection.request.bytes_received += nbytes;
+}
+
+void
 HttpServerConnection::RequestBodyReader::_Close() noexcept
 {
 	if (connection.request.read_state == Request::END)

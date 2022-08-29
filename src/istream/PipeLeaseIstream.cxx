@@ -85,23 +85,23 @@ PipeLeaseIstream::_Read() noexcept
 		assert(pipe.IsDefined());
 
 		if (direct) {
-			auto nbytes = InvokeDirect(FD_PIPE, pipe.GetReadFd().Get(),
-						   remaining);
-			if (nbytes <= 0) {
-				if (nbytes == ISTREAM_RESULT_CLOSED ||
-				    nbytes == ISTREAM_RESULT_BLOCKING)
-					return;
+			switch (InvokeDirect(FD_PIPE, pipe.GetReadFd().Get(),
+					     remaining)) {
+			case IstreamDirectResult::CLOSED:
+			case IstreamDirectResult::BLOCKING:
+				return;
 
-				if (nbytes == 0) {
-					DestroyError(std::make_exception_ptr(std::runtime_error("Premature end of pipe")));
-					return;
-				}
+			case IstreamDirectResult::END:
+				DestroyError(std::make_exception_ptr(std::runtime_error("Premature end of pipe")));
+				return;
 
+			case IstreamDirectResult::ERRNO:
 				DestroyError(std::make_exception_ptr(MakeErrno("Read from pipe failed")));
 				return;
-			}
 
-			remaining -= nbytes;
+			case IstreamDirectResult::OK:
+				break;
+			}
 		} else {
 			/* fill buffer */
 
@@ -124,4 +124,10 @@ PipeLeaseIstream::_Read() noexcept
 		if (remaining == 0)
 			pipe.Release(true);
 	}
+}
+
+void
+PipeLeaseIstream::_ConsumeDirect(std::size_t nbytes) noexcept
+{
+	remaining -= nbytes;
 }

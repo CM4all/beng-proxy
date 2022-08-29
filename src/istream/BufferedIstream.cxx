@@ -72,7 +72,7 @@ class BufferedIstream final : PoolHolder, IstreamSink, Cancellable {
 	/**
 	 * How many bytes were spliced into the pipe?
 	 */
-	size_t in_pipe = 0;
+	std::size_t in_pipe = 0;
 
 	/**
 	 * This event postpones the
@@ -123,7 +123,7 @@ private:
 		_handler.OnBufferedIstreamError(std::move(e));
 	}
 
-	ssize_t ReadToBuffer(int fd, size_t max_length) noexcept;
+	IstreamDirectResult ReadToBuffer(int fd, std::size_t max_length) noexcept;
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
@@ -131,8 +131,9 @@ private:
 	}
 
 	/* virtual methods from class IstreamHandler */
-	size_t OnData(const void *data, size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	IstreamDirectResult OnDirect(FdType type, int fd,
+				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr e) noexcept override;
 };
@@ -169,8 +170,8 @@ BufferedIstream::DeferredReady() noexcept
 	_handler.OnBufferedIstreamReady(std::move(i));
 }
 
-inline ssize_t
-BufferedIstream::ReadToBuffer(int fd, size_t max_length) noexcept
+inline IstreamDirectResult
+BufferedIstream::ReadToBuffer(int fd, std::size_t max_length) noexcept
 {
 	if (!buffer.IsDefined())
 		buffer = fb_pool_get().Alloc();
@@ -178,22 +179,26 @@ BufferedIstream::ReadToBuffer(int fd, size_t max_length) noexcept
 	const auto w = buffer.Write();
 	if (w.empty())
 		/* buffer is full - the "ready" call is pending */
-		return ISTREAM_RESULT_BLOCKING;
+		return IstreamDirectResult::BLOCKING;
 
 	ssize_t nbytes = read(fd, w.data(), std::min(w.size(), max_length));
-	if (nbytes > 0) {
-		buffer.Append(nbytes);
+	if (nbytes <= 0)
+		return nbytes < 0
+			? IstreamDirectResult::ERRNO
+			: IstreamDirectResult::END;
 
-		if ((size_t)nbytes == w.size())
-			/* buffer has become full - we can report to handler */
-			defer_ready.Schedule();
+	input.ConsumeDirect(nbytes);
+	buffer.Append(nbytes);
+
+	if ((std::size_t)nbytes == w.size())
+		/* buffer has become full - we can report to handler */
+		defer_ready.Schedule();
+
+	return IstreamDirectResult::OK;
 }
 
-	return nbytes;
-}
-
-size_t
-BufferedIstream::OnData(const void *data, size_t length) noexcept
+std::size_t
+BufferedIstream::OnData(const void *data, std::size_t length) noexcept
 {
 	if (in_pipe > 0) {
 		/* can't fill both buffer and pipe; stop here and report to
@@ -210,7 +215,7 @@ BufferedIstream::OnData(const void *data, size_t length) noexcept
 		/* buffer is full - the "ready" call is pending */
 		return 0;
 
-	size_t nbytes = std::min(length, w.size());
+	std::size_t nbytes = std::min(length, w.size());
 	memcpy(w.data(), data, nbytes);
 	buffer.Append(nbytes);
 
@@ -221,8 +226,8 @@ BufferedIstream::OnData(const void *data, size_t length) noexcept
 	return nbytes;
 }
 
-ssize_t
-BufferedIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
+IstreamDirectResult
+BufferedIstream::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 {
 	if (buffer.IsDefined() || (type & ISTREAM_TO_PIPE) == 0)
 		/* if we have already read something into the buffer,
@@ -237,7 +242,7 @@ BufferedIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 			pipe.Create();
 		} catch (...) {
 			InvokeError(std::current_exception());
-			return ISTREAM_RESULT_CLOSED;
+			return IstreamDirectResult::CLOSED;
 		}
 	}
 
@@ -245,23 +250,27 @@ BufferedIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 
 	ssize_t nbytes = splice(fd, nullptr, pipe.GetWriteFd().Get(), nullptr,
 				max_length, SPLICE_F_MOVE|SPLICE_F_NONBLOCK);
-	if (nbytes < 0) {
+	if (nbytes <= 0) {
+		if (nbytes == 0)
+			return IstreamDirectResult::END;
+
 		const int e = errno;
 		if (e == EAGAIN) {
 			if (!pipe.GetWriteFd().IsReadyForWriting()) {
 				/* the pipe is full - we can report to handler */
 				defer_ready.Schedule();
-				return ISTREAM_RESULT_BLOCKING;
+				return IstreamDirectResult::BLOCKING;
 			}
 
-			return ISTREAM_RESULT_ERRNO;
+			return IstreamDirectResult::ERRNO;
 		}
 
-		return ISTREAM_RESULT_ERRNO;
+		return IstreamDirectResult::ERRNO;
 	}
 
 	in_pipe += nbytes;
-	return nbytes;
+	input.ConsumeDirect(nbytes);
+	return IstreamDirectResult::OK;
 }
 
 void

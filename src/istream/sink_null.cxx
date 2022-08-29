@@ -55,14 +55,23 @@ public:
 		return length;
 	}
 
-	ssize_t OnDirect(FdType, int fd, std::size_t max_length) noexcept override
+	IstreamDirectResult OnDirect(FdType, int fd,
+				     std::size_t max_length) noexcept override
 	{
 		if (!dev_null.IsDefined())
 			if (!dev_null.Open("/dev/null", O_WRONLY))
-				return ISTREAM_RESULT_ERRNO;
+				return IstreamDirectResult::ERRNO;
 
-		return splice(fd, nullptr, dev_null.Get(), nullptr, max_length,
-			      SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
+		const auto nbytes =
+			splice(fd, nullptr, dev_null.Get(), nullptr, max_length,
+			       SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
+		if (nbytes <= 0)
+			return nbytes < 0
+				? IstreamDirectResult::ERRNO
+				: IstreamDirectResult::END;
+
+		input.ConsumeDirect(nbytes);
+		return IstreamDirectResult::OK;
 	}
 
 	void OnEof() noexcept override {

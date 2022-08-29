@@ -153,7 +153,7 @@ Context::OnData(gcc_unused const void *data, std::size_t length) noexcept
 	return length;
 }
 
-ssize_t
+IstreamDirectResult
 Context::OnDirect(gcc_unused FdType type, gcc_unused int fd, std::size_t max_length) noexcept
 {
 	got_data = true;
@@ -162,18 +162,19 @@ Context::OnDirect(gcc_unused FdType type, gcc_unused int fd, std::size_t max_len
 		DeferInject(*block_inject,
 			    std::make_exception_ptr(std::runtime_error("block_inject")));
 		block_inject = nullptr;
-		return 0;
+		return IstreamDirectResult::END;
 	}
 
 	if (abort_istream != nullptr) {
 		DeferInject(*abort_istream,
 			    std::make_exception_ptr(std::runtime_error("abort_istream")));
 		abort_istream = nullptr;
-		return 0;
+		return IstreamDirectResult::END;
 	}
 
 	offset += max_length;
-	return max_length;
+	input.ConsumeDirect(max_length);
+	return IstreamDirectResult::OK;
 }
 
 void

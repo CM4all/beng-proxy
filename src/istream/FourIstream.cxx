@@ -77,7 +77,8 @@ public:
 					      std::min(length, std::size_t{4}));
 	}
 
-	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override {
+	IstreamDirectResult OnDirect(FdType type, int fd,
+				     std::size_t max_length) noexcept override {
 		return ForwardIstream::OnDirect(type, fd,
 						std::min(max_length, std::size_t{4}));
 	}

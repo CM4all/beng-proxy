@@ -114,6 +114,9 @@ private:
 		TryRead();
 	}
 
+	void _ConsumeDirect(std::size_t) noexcept override {
+	}
+
 	int _AsFd() noexcept override;
 	void _Close() noexcept override {
 		Destroy();
@@ -157,24 +160,31 @@ FdIstream::TryDirect()
 	if (ConsumeFromBuffer(buffer) > 0)
 		return;
 
-	ssize_t nbytes = InvokeDirect(fd_type, fd.Get(), INT_MAX);
-	if (nbytes == ISTREAM_RESULT_CLOSED)
-		/* this stream was closed during the direct() callback */
-		return;
+	switch (InvokeDirect(fd_type, fd.Get(), INT_MAX)) {
+	case IstreamDirectResult::CLOSED:
+	case IstreamDirectResult::OK:
+	case IstreamDirectResult::BLOCKING:
+		break;
 
-	if (nbytes > 0 || nbytes == ISTREAM_RESULT_BLOCKING) {
-	} else if (nbytes == ISTREAM_RESULT_EOF) {
+	case IstreamDirectResult::END:
 		DestroyEof();
-	} else if (errno == EAGAIN) {
-		/* this should only happen for splice(SPLICE_F_NONBLOCK) from
-		   NFS files - unfortunately we cannot use SocketEvent::READ
-		   here, so we just install a timer which retries after
-		   100ms */
+		break;
 
-		retry_event.Schedule(file_retry_timeout);
-	} else {
-		/* XXX */
-		throw FormatErrno("Failed to read from '%s'", path);
+	case IstreamDirectResult::ERRNO:
+		if (errno == EAGAIN) {
+			/* this should only happen for
+			   splice(SPLICE_F_NONBLOCK) from NFS files -
+			   unfortunately we cannot use
+			   SocketEvent::READ here, so we just install
+			   a timer which retries after 100ms */
+
+			retry_event.Schedule(file_retry_timeout);
+		} else {
+			/* XXX */
+			throw FormatErrno("Failed to read from '%s'", path);
+		}
+
+		break;
 	}
 }
 

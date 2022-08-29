@@ -275,7 +275,8 @@ private:
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
+	IstreamDirectResult OnDirect(FdType type, int fd,
+				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -696,7 +697,7 @@ FcgiClient::OnData(const void *data, std::size_t length) noexcept
 	return (std::size_t)nbytes;
 }
 
-ssize_t
+IstreamDirectResult
 FcgiClient::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 {
 	assert(socket.IsConnected());
@@ -704,18 +705,24 @@ FcgiClient::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 	request.got_data = true;
 
 	ssize_t nbytes = socket.WriteFrom(fd, type, max_length);
-	if (gcc_likely(nbytes > 0))
+	if (gcc_likely(nbytes > 0)) {
+		input.ConsumeDirect(nbytes);
 		socket.ScheduleWrite();
-	else if (nbytes == WRITE_BLOCKING)
-		return ISTREAM_RESULT_BLOCKING;
+		return IstreamDirectResult::OK;
+	} else if (nbytes == WRITE_BLOCKING)
+		return IstreamDirectResult::BLOCKING;
 	else if (nbytes == WRITE_DESTROYED)
-		return ISTREAM_RESULT_CLOSED;
-	else if (nbytes < 0 && errno == EAGAIN) {
-		request.got_data = false;
-		socket.UnscheduleWrite();
-	}
+		return IstreamDirectResult::CLOSED;
+	else if (nbytes == WRITE_SOURCE_EOF)
+		return IstreamDirectResult::END;
+	else {
+		if (errno == EAGAIN) {
+			request.got_data = false;
+			socket.UnscheduleWrite();
+		}
 
-	return nbytes;
+		return IstreamDirectResult::ERRNO;
+	}
 }
 
 void

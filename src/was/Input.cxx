@@ -254,6 +254,7 @@ private:
 
 	void _FillBucketList(IstreamBucketList &list) override;
 	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override;
+	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 
 	void _Close() noexcept override {
 		buffer.FreeIfDefined();
@@ -347,38 +348,35 @@ WasInput::TryDirect() noexcept
 			max_length = rest;
 	}
 
-	ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, GetPipe().Get(), max_length);
-	if (nbytes == ISTREAM_RESULT_BLOCKING) {
+	switch (InvokeDirect(FdType::FD_PIPE, GetPipe().Get(), max_length)) {
+	case IstreamDirectResult::BLOCKING:
 		CancelRead();
 		return false;
-	}
 
-	if (nbytes == ISTREAM_RESULT_EOF || nbytes == ISTREAM_RESULT_CLOSED)
+	case IstreamDirectResult::END:
+	case IstreamDirectResult::CLOSED:
 		return false;
 
-	if (nbytes < 0) {
-		const int e = errno;
-
-		if (e == EAGAIN) {
+	case IstreamDirectResult::ERRNO:
+		if (const int e = errno; e == EAGAIN)
 			ScheduleRead();
-			return false;
-		}
-
-		AbortError(std::make_exception_ptr(MakeErrno(e,
-							     "read error on WAS data connection")));
+		else
+			AbortError(std::make_exception_ptr(MakeErrno(e,
+								     "read error on WAS data connection")));
 		return false;
+
+	case IstreamDirectResult::OK:
+		if (!CheckReleasePipe())
+			return false;
+
+		if (CheckEof())
+			return false;
+
+		ScheduleRead();
+		return true;
 	}
 
-	received += nbytes;
-
-	if (!CheckReleasePipe())
-		return false;
-
-	if (CheckEof())
-		return false;
-
-	ScheduleRead();
-	return true;
+	gcc_unreachable();
 }
 
 /*
@@ -617,4 +615,10 @@ WasInput::_ConsumeBucketList(std::size_t nbytes) noexcept
 	buffer.FreeIfEmpty();
 
 	return Consumed(consumed);
+}
+
+void
+WasInput::_ConsumeDirect(std::size_t nbytes) noexcept
+{
+	received += nbytes;
 }

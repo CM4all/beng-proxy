@@ -190,7 +190,7 @@ public:
 		return (direct_mask & FdTypeMask(type)) != 0;
        }
 
-	ssize_t TryDirect(SocketDescriptor fd, FdType fd_type) noexcept;
+	IstreamDirectResult TryDirect(SocketDescriptor fd, FdType fd_type) noexcept;
 
 	/**
 	 * Determines whether the socket can be released now.  This is true if
@@ -250,6 +250,10 @@ public:
 
 	void _SetDirect(FdTypeMask mask) noexcept override {
 		direct_mask = mask;
+	}
+
+	void _ConsumeDirect(std::size_t nbytes) noexcept override {
+		Consumed(nbytes);
 	}
 
 protected:

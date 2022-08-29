@@ -85,7 +85,8 @@ private:
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
+	IstreamDirectResult OnDirect(FdType type, int fd,
+				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -149,7 +150,7 @@ RubberSink::OnData(const void *data, std::size_t length) noexcept
 	return length;
 }
 
-ssize_t
+IstreamDirectResult
 RubberSink::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 {
 	assert(position <= max_size);
@@ -161,16 +162,17 @@ RubberSink::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 		uint8_t dummy;
 		ssize_t nbytes = fd_read(type, fd, &dummy, sizeof(dummy));
 		if (nbytes > 0) {
+			input.ConsumeDirect(nbytes);
 			FailTooLarge();
-			return ISTREAM_RESULT_CLOSED;
+			return IstreamDirectResult::CLOSED;
 		}
 
 		if (nbytes == 0) {
 			DestroyEof();
-			return ISTREAM_RESULT_CLOSED;
+			return IstreamDirectResult::CLOSED;
 		}
 
-		return ISTREAM_RESULT_ERRNO;
+		return IstreamDirectResult::ERRNO;
 	}
 
 	if (length > max_length)
@@ -180,10 +182,15 @@ RubberSink::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 	p += position;
 
 	ssize_t nbytes = fd_read(type, fd, p, length);
-	if (nbytes > 0)
-		position += (std::size_t)nbytes;
+	if (nbytes <= 0)
+		return nbytes < 0
+			? IstreamDirectResult::ERRNO
+			: IstreamDirectResult::END;
 
-	return nbytes;
+	input.ConsumeDirect(nbytes);
+	position += (std::size_t)nbytes;
+
+	return IstreamDirectResult::OK;
 }
 
 void

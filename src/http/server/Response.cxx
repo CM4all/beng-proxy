@@ -91,7 +91,7 @@ HttpServerConnection::OnData(const void *data, std::size_t length) noexcept
 	return 0;
 }
 
-ssize_t
+IstreamDirectResult
 HttpServerConnection::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 {
 	assert(socket->IsConnected() || request.request == nullptr);
@@ -99,22 +99,28 @@ HttpServerConnection::OnDirect(FdType type, int fd, std::size_t max_length) noex
 	assert(!response.pending_drained);
 
 	if (!socket->IsConnected())
-		return 0;
+		return IstreamDirectResult::BLOCKING;
 
 	ssize_t nbytes = socket->WriteFrom(fd, type, max_length);
 	if (gcc_likely(nbytes > 0)) {
+		input.ConsumeDirect(nbytes);
 		response.bytes_sent += nbytes;
 		response.length += (off_t)nbytes;
 		ScheduleWrite();
+
+		return IstreamDirectResult::OK;
 	} else if (nbytes == WRITE_BLOCKING) {
 		response.want_write = true;
-		return ISTREAM_RESULT_BLOCKING;
+		return IstreamDirectResult::BLOCKING;
 	} else if (nbytes == WRITE_DESTROYED)
-		return ISTREAM_RESULT_CLOSED;
-	else if (gcc_likely(nbytes < 0) && errno == EAGAIN)
-		socket->UnscheduleWrite();
-
-	return nbytes;
+		return IstreamDirectResult::CLOSED;
+	else if (nbytes == WRITE_SOURCE_EOF)
+		return IstreamDirectResult::END;
+	else {
+		if (errno == EAGAIN)
+			socket->UnscheduleWrite();
+		return IstreamDirectResult::ERRNO;
+	}
 }
 
 void

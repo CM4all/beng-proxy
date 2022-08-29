@@ -116,10 +116,12 @@ public:
 
 	off_t _GetAvailable(bool partial) noexcept override;
 	void _Read() noexcept override;
+	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
+	IstreamDirectResult OnDirect(FdType type, int fd,
+				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -307,7 +309,7 @@ CGIClient::OnData(const void *data, std::size_t length) noexcept
 	}
 }
 
-ssize_t
+IstreamDirectResult
 CGIClient::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 {
 	assert(parser.AreHeadersFinished());
@@ -319,14 +321,14 @@ CGIClient::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 	    (off_t)max_length > parser.GetAvailable())
 		max_length = (std::size_t)parser.GetAvailable();
 
-	ssize_t nbytes = InvokeDirect(type, fd, max_length);
-	if (nbytes > 0 && parser.BodyConsumed(nbytes)) {
+	auto result = InvokeDirect(type, fd, max_length);
+	if (result == IstreamDirectResult::OK && parser.IsEOF()) {
 		stopwatch.RecordEvent("end");
 		DestroyEof();
-		return ISTREAM_RESULT_CLOSED;
+		result = IstreamDirectResult::CLOSED;
 	}
 
-	return nbytes;
+	return result;
 }
 
 void
@@ -417,6 +419,12 @@ CGIClient::_Read() noexcept
 			input.Read();
 		} while (!destructed && input.IsDefined() && had_input && !had_output);
 	}
+}
+
+void
+CGIClient::_ConsumeDirect(std::size_t nbytes) noexcept
+{
+	parser.BodyConsumed(nbytes);
 }
 
 /*

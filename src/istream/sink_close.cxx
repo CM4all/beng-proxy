@@ -51,8 +51,9 @@ public:
 		return 0;
 	}
 
-	ssize_t OnDirect([[maybe_unused]] FdType type, [[maybe_unused]] int fd,
-			 [[maybe_unused]] std::size_t max_length) noexcept {
+	IstreamDirectResult OnDirect([[maybe_unused]] FdType type,
+				     [[maybe_unused]] int fd,
+				     [[maybe_unused]] std::size_t max_length) noexcept {
 		gcc_unreachable();
 	}
 

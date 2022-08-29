@@ -55,3 +55,11 @@ Istream::_ConsumeBucketList(std::size_t) noexcept
 	assert(false);
 	gcc_unreachable();
 }
+
+gcc_noreturn
+void
+Istream::_ConsumeDirect(std::size_t) noexcept
+{
+	assert(false);
+	gcc_unreachable();
+}

@@ -76,17 +76,13 @@ HttpBodyReader::FeedBody(const void *data, std::size_t length) noexcept
 	return consumed;
 }
 
-ssize_t
+IstreamDirectResult
 HttpBodyReader::TryDirect(SocketDescriptor fd, FdType fd_type) noexcept
 {
 	assert(fd.IsDefined());
 	assert(CheckDirect(fd_type));
 
-	ssize_t nbytes = InvokeDirect(fd_type, fd.Get(), GetMaxRead(INT_MAX));
-	if (nbytes > 0)
-		Consumed((std::size_t)nbytes);
-
-	return nbytes;
+	return InvokeDirect(fd_type, fd.Get(), GetMaxRead(INT_MAX));
 }
 
 bool

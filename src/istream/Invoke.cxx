@@ -99,7 +99,7 @@ Istream::InvokeData(const void *data, std::size_t length) noexcept
 	return nbytes;
 }
 
-ssize_t
+IstreamDirectResult
 Istream::InvokeDirect(FdType type, int fd, std::size_t max_length) noexcept
 {
 	assert(!destroyed);
@@ -115,26 +115,21 @@ Istream::InvokeDirect(FdType type, int fd, std::size_t max_length) noexcept
 	in_data = true;
 #endif
 
-	ssize_t nbytes = handler->OnDirect(type, fd, max_length);
-	assert(nbytes >= -3);
-	assert(nbytes < 0 || (std::size_t)nbytes <= max_length);
-	assert(nbytes == ISTREAM_RESULT_CLOSED || !eof);
+	IstreamDirectResult result = handler->OnDirect(type, fd, max_length);
+	assert(result == IstreamDirectResult::CLOSED || !eof);
 
 #ifndef NDEBUG
 	if (destructed || destroyed) {
-		assert(nbytes == ISTREAM_RESULT_CLOSED);
-		return nbytes;
+		assert(result == IstreamDirectResult::CLOSED);
+		return result;
 	}
 
-	assert(nbytes != ISTREAM_RESULT_CLOSED);
+	assert(result != IstreamDirectResult::CLOSED);
 
 	in_data = false;
-
-	if (nbytes > 0)
-		Consumed(nbytes);
 #endif
 
-	return nbytes;
+	return result;
 }
 
 IstreamHandler &

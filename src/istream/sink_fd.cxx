@@ -122,7 +122,8 @@ private:
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, std::size_t max_length) noexcept override;
+	IstreamDirectResult OnDirect(FdType type, int fd,
+				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -155,31 +156,45 @@ SinkFd::OnData(const void *data, std::size_t length) noexcept
 	}
 }
 
-ssize_t
+IstreamDirectResult
 SinkFd::OnDirect(FdType type, int _fd, std::size_t max_length) noexcept
 {
 	got_data = true;
 
 	ssize_t nbytes = SpliceTo(_fd, type, fd.Get(), fd_type, max_length);
-	if (gcc_unlikely(nbytes < 0 && errno == EAGAIN)) {
+
+	if (nbytes <= 0) {
+		if (nbytes == 0)
+			return IstreamDirectResult::END;
+
+		if (errno != EAGAIN)
+			return IstreamDirectResult::ERRNO;
+
 		if (!fd.IsReadyForWriting()) {
 			ScheduleWrite();
-			return ISTREAM_RESULT_BLOCKING;
+			return IstreamDirectResult::BLOCKING;
 		}
 
-		/* try again, just in case connection->fd has become ready
-		   between the first istream_direct_to_socket() call and
-		   fd_ready_for_writing() */
+		/* try again, just in case connection->fd has become
+		   ready between the first istream_direct_to_socket()
+		   call and fd_ready_for_writing() */
 		nbytes = SpliceTo(_fd, type, fd.Get(), fd_type, max_length);
+
+		if (nbytes <= 0)
+			return nbytes < 0
+				? IstreamDirectResult::ERRNO
+				: IstreamDirectResult::END;
 	}
 
-	if (gcc_likely(nbytes > 0) && (got_event || type == FdType::FD_FILE))
+	input.ConsumeDirect(nbytes);
+
+	if (got_event || type == FdType::FD_FILE)
 		/* regular files don't have support for SocketEvent::READ, and
 		   thus the sink is responsible for triggering the next
 		   splice */
 		ScheduleWrite();
 
-	return nbytes;
+	return IstreamDirectResult::OK;
 }
 
 void

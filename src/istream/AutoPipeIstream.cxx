@@ -45,7 +45,7 @@
 
 class AutoPipeIstream final : public ForwardIstream {
 	PipeLease pipe;
-	size_t piped = 0;
+	std::size_t piped = 0;
 
 	FdTypeMask direct_mask = 0;
 
@@ -73,19 +73,22 @@ public:
 		}
 	}
 
+	void _ConsumeDirect(std::size_t nbytes) noexcept override;
+
 	int _AsFd() noexcept override;
 	void _Close() noexcept override;
 
 	/* handler */
-	size_t OnData(const void *data, size_t length) noexcept override;
-	ssize_t OnDirect(FdType type, int fd, size_t max_length) noexcept override;
+	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	IstreamDirectResult OnDirect(FdType type, int fd,
+				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 
 private:
 	void CloseInternal() noexcept;
 	void Abort(std::exception_ptr ep) noexcept;
-	ssize_t Consume() noexcept;
+	IstreamDirectResult Consume() noexcept;
 };
 
 void
@@ -103,43 +106,46 @@ AutoPipeIstream::Abort(std::exception_ptr ep) noexcept
 	DestroyError(ep);
 }
 
-ssize_t
+IstreamDirectResult
 AutoPipeIstream::Consume() noexcept
 {
 	assert(pipe.IsDefined());
 	assert(piped > 0);
 
-	ssize_t nbytes = InvokeDirect(FdType::FD_PIPE, pipe.GetReadFd().Get(),
-				      piped);
-	if (gcc_unlikely(nbytes == ISTREAM_RESULT_BLOCKING ||
-			 nbytes == ISTREAM_RESULT_CLOSED))
-		/* handler blocks (-2) or pipe was closed (-3) */
-		return nbytes;
+	auto result = InvokeDirect(FdType::FD_PIPE, pipe.GetReadFd().Get(),
+				   piped);
+	switch (result) {
+	case IstreamDirectResult::BLOCKING:
+	case IstreamDirectResult::CLOSED:
+		/* handler blocks or pipe was closed */
+		break;
 
-	if (gcc_unlikely(nbytes == ISTREAM_RESULT_ERRNO && errno != EAGAIN)) {
-		Abort(std::make_exception_ptr(MakeErrno("read from pipe failed")));
-		return ISTREAM_RESULT_CLOSED;
-	}
+	case IstreamDirectResult::END:
+		/* must not happen */
+		assert(false);
+		gcc_unreachable();
 
-	if (nbytes > 0) {
-		assert((size_t)nbytes <= piped);
-		piped -= (size_t)nbytes;
+	case IstreamDirectResult::ERRNO:
+		if (errno != EAGAIN) {
+			Abort(std::make_exception_ptr(MakeErrno("read from pipe failed")));
+			result = IstreamDirectResult::CLOSED;
+		}
 
-		if (piped == 0)
-			/* if the pipe was drained, return it to the stock, to
-			   make it available to other streams */
-			pipe.ReleaseIfStock();
+		break;
 
+	case IstreamDirectResult::OK:
 		if (piped == 0 && !input.IsDefined()) {
 			/* our input has already reported EOF, and we have been
 			   waiting for the pipe buffer to become empty */
 			CloseInternal();
 			DestroyEof();
-			return ISTREAM_RESULT_CLOSED;
+			result = IstreamDirectResult::CLOSED;
 		}
+
+		break;
 	}
 
-	return nbytes;
+	return result;
 }
 
 
@@ -148,14 +154,14 @@ AutoPipeIstream::Consume() noexcept
  *
  */
 
-inline size_t
-AutoPipeIstream::OnData(const void *data, size_t length) noexcept
+inline std::size_t
+AutoPipeIstream::OnData(const void *data, std::size_t length) noexcept
 {
 	assert(HasHandler());
 
 	if (piped > 0) {
-		ssize_t nbytes = Consume();
-		if (nbytes == ISTREAM_RESULT_CLOSED)
+		const auto result = Consume();
+		if (result != IstreamDirectResult::OK)
 			return 0;
 
 		if (piped > 0 || !HasHandler())
@@ -167,20 +173,20 @@ AutoPipeIstream::OnData(const void *data, size_t length) noexcept
 	return InvokeData(data, length);
 }
 
-inline ssize_t
-AutoPipeIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
+inline IstreamDirectResult
+AutoPipeIstream::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 {
 	assert(HasHandler());
 
 	if (piped > 0) {
-		ssize_t nbytes = Consume();
-		if (nbytes <= 0)
-			return nbytes;
+		const auto result = Consume();
+		if (result != IstreamDirectResult::OK)
+			return result;
 
 		if (piped > 0)
 			/* if the pipe still isn't empty, we can't start reading
 			   new input */
-			return ISTREAM_RESULT_BLOCKING;
+			return IstreamDirectResult::BLOCKING;
 	}
 
 	if (direct_mask & FdTypeMask(type))
@@ -195,7 +201,7 @@ AutoPipeIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 			pipe.Create();
 		} catch (...) {
 			Abort(std::current_exception());
-			return ISTREAM_RESULT_CLOSED;
+			return IstreamDirectResult::CLOSED;
 		}
 	}
 
@@ -205,15 +211,19 @@ AutoPipeIstream::OnDirect(FdType type, int fd, size_t max_length) noexcept
 	   the pipe; assume that it can only be the source file which is
 	   blocking */
 	if (nbytes <= 0)
-		return nbytes;
+		return nbytes < 0
+			? IstreamDirectResult::ERRNO
+			: IstreamDirectResult::END;
+
+	input.ConsumeDirect(nbytes);
 
 	assert(piped == 0);
-	piped = (size_t)nbytes;
+	piped = (std::size_t)nbytes;
 
-	if (Consume() == ISTREAM_RESULT_CLOSED)
-		return ISTREAM_RESULT_CLOSED;
+	if (Consume() == IstreamDirectResult::CLOSED)
+		return IstreamDirectResult::CLOSED;
 
-	return nbytes;
+	return IstreamDirectResult::OK;
 }
 
 inline void
@@ -278,7 +288,7 @@ AutoPipeIstream::_GetAvailable(bool partial) noexcept
 void
 AutoPipeIstream::_Read() noexcept
 {
-	if (piped > 0 && (Consume() <= 0 || piped > 0))
+	if (piped > 0 && (Consume() != IstreamDirectResult::OK || piped > 0))
 		return;
 
 	/* at this point, the pipe must be flushed - if the pipe is
@@ -287,6 +297,23 @@ AutoPipeIstream::_Read() noexcept
 	assert(input.IsDefined());
 
 	input.Read();
+}
+
+void
+AutoPipeIstream::_ConsumeDirect(std::size_t nbytes) noexcept
+{
+	if (piped > 0) {
+		assert((std::size_t)nbytes <= piped);
+		piped -= (std::size_t)nbytes;
+
+		if (piped == 0)
+			/* if the pipe was drained, return it to the
+			   stock, to make it available to other
+			   streams */
+			pipe.ReleaseIfStock();
+	} else {
+		ForwardIstream::_ConsumeDirect(nbytes);
+	}
 }
 
 int

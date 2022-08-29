@@ -473,45 +473,46 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type)
 	if (!MaybeSend100Continue())
 		return DirectResult::CLOSED;
 
-	ssize_t nbytes = request_body_reader->TryDirect(fd, fd_type);
-	if (nbytes == ISTREAM_RESULT_BLOCKING)
+	switch (request_body_reader->TryDirect(fd, fd_type)) {
+	case IstreamDirectResult::BLOCKING:
 		/* the destination fd blocks */
 		return DirectResult::BLOCKING;
 
-	if (nbytes == ISTREAM_RESULT_CLOSED)
+	case IstreamDirectResult::CLOSED:
 		/* the stream (and the whole connection) has been closed
 		   during the direct() callback (-3); no further checks */
 		return DirectResult::CLOSED;
 
-	if (nbytes < 0) {
+	case IstreamDirectResult::ERRNO:
 		if (errno == EAGAIN)
 			return DirectResult::EMPTY;
 
 		return DirectResult::ERRNO;
-	}
 
-	if (nbytes == ISTREAM_RESULT_EOF)
+	case IstreamDirectResult::END:
 		return DirectResult::END;
 
-	request.bytes_received += nbytes;
-
-	if (request_body_reader->IsEOF()) {
-		request.read_state = Request::END;
+	case IstreamDirectResult::OK:
+		if (request_body_reader->IsEOF()) {
+			request.read_state = Request::END;
 #ifndef NDEBUG
-		request.body_state = Request::BodyState::CLOSED;
+			request.body_state = Request::BodyState::CLOSED;
 #endif
 
-		if (socket->IsConnected())
-			socket->SetDirect(false);
+			if (socket->IsConnected())
+				socket->SetDirect(false);
 
-		const DestructObserver destructed(*this);
-		request_body_reader->DestroyEof();
-		return destructed
-			? DirectResult::CLOSED
-			: DirectResult::OK;
-	} else {
+			const DestructObserver destructed(*this);
+			request_body_reader->DestroyEof();
+			return destructed
+				? DirectResult::CLOSED
+				: DirectResult::OK;
+		}
+
 		return DirectResult::OK;
 	}
+
+	gcc_unreachable();
 }
 
 void
