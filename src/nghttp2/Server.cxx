@@ -520,6 +520,13 @@ ServerConnection::ServerConnection(struct pool &_pool,
 	if (rv != 0)
 		throw MakeError(rv, "nghttp2_submit_settings() failed");
 
+	/* allow the connection-level window size to be somewhat
+	   larger than the default 64 kB for better concurrent upload
+	   performance */
+	nghttp2_session_set_local_window_size(session.get(),
+					      NGHTTP2_NV_FLAG_NONE,
+					      0, 256 * 1024);
+
 	// TODO: idle_timeout.Schedule(http_server_idle_timeout);
 
 	DeferWrite();

@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.0.105) unstable; urgency=low
 
   * nghttp2/server: fix stall bug with many concurrent uploads
+  * nghttp2/server: increase connection-level window size to 256 kB
   * http_server: disable read timeout after "expect:100-continue"
   * http_server: fix keep-alive if splice() was used
   * translation: add packet NO_PASSWORD
