@@ -239,25 +239,11 @@ private:
 	}
 
 	/* virtual methods from class MultiFifoBufferIstreamHandler */
-	void OnFifoBufferIstreamConsumed(size_t nbytes) noexcept override {
-		Consume(nbytes);
-	}
-
-	void OnFifoBufferIstreamClosed() noexcept override {
-		assert(request_body_control);
-
-		Consume(request_body_control->GetAvailable());
-		request_body_control = nullptr;
-	}
+	void OnFifoBufferIstreamConsumed(size_t nbytes) noexcept override;
+	void OnFifoBufferIstreamClosed() noexcept override;
 
 	/* virtual methods from class IstreamDataSourceHandler */
-	void OnIstreamDataSourceReady() noexcept override {
-		assert(response_body);
-		assert(connection.socket);
-
-		nghttp2_session_resume_data(connection.session.get(), id);
-		DeferWrite();
-	}
+	void OnIstreamDataSourceReady() noexcept override;
 
 	/* virtual methods from class IncomingHttpRequest */
 	void SendResponse(http_status_t status,
@@ -320,6 +306,31 @@ ServerConnection::Request::OnHeaderCallback(std::string_view name,
 	}
 
 	return 0;
+}
+
+void
+ServerConnection::Request::OnFifoBufferIstreamConsumed(size_t nbytes) noexcept
+{
+	Consume(nbytes);
+}
+
+void
+ServerConnection::Request::OnFifoBufferIstreamClosed() noexcept
+{
+	assert(request_body_control);
+
+	Consume(request_body_control->GetAvailable());
+	request_body_control = nullptr;
+}
+
+void
+ServerConnection::Request::OnIstreamDataSourceReady() noexcept
+{
+	assert(response_body);
+	assert(connection.socket);
+
+	nghttp2_session_resume_data(connection.session.get(), id);
+	DeferWrite();
 }
 
 inline int
