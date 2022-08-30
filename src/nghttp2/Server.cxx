@@ -90,6 +90,12 @@ class ServerConnection::Request final
 
 	RootStopwatchPtr stopwatch;
 
+	/**
+	 * This is set to true after at least one byte of the request
+	 * body has been consumed.
+	 */
+	bool request_body_used = false;
+
 public:
 	explicit Request(PoolPtr &&_pool,
 			 ServerConnection &_connection, uint32_t _id) noexcept
@@ -311,6 +317,17 @@ ServerConnection::Request::OnHeaderCallback(std::string_view name,
 void
 ServerConnection::Request::OnFifoBufferIstreamConsumed(size_t nbytes) noexcept
 {
+	if (!request_body_used) {
+		request_body_used = true;
+
+		/* now that the first byte has been consumed, and the
+		   request body is really being used, revert to the
+		   default window size */
+		nghttp2_session_set_local_window_size(connection.session.get(),
+						      NGHTTP2_NV_FLAG_NONE,
+						      id, NGHTTP2_INITIAL_WINDOW_SIZE);
+	}
+
 	Consume(nbytes);
 }
 
@@ -489,6 +506,13 @@ ServerConnection::ServerConnection(struct pool &_pool,
 
 	static constexpr nghttp2_settings_entry iv[] = {
 		{NGHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS, 256},
+
+		/* until a request body is really being used, allow
+		   the client to upload only the first 4 kB to avoid
+		   congesting the connection-level window; this will
+		   be reverted to the 64 kB default later by
+		   Request::OnFifoBufferIstreamConsumed() */
+		{NGHTTP2_SETTINGS_INITIAL_WINDOW_SIZE, 4096},
 	};
 
 	const auto rv = nghttp2_submit_settings(session.get(), NGHTTP2_FLAG_NONE,
