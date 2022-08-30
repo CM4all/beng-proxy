@@ -487,7 +487,9 @@ ServerConnection::ServerConnection(struct pool &_pool,
 
 	session = NgHttp2::Session::NewServer(callbacks.get(), this, option.get());
 
-	static constexpr nghttp2_settings_entry iv[1] = {{NGHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS, 256}};
+	static constexpr nghttp2_settings_entry iv[] = {
+		{NGHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS, 256},
+	};
 
 	const auto rv = nghttp2_submit_settings(session.get(), NGHTTP2_FLAG_NONE,
 						iv, std::size(iv));
