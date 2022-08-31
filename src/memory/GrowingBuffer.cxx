@@ -160,22 +160,21 @@ GrowingBuffer::Write(size_type length) noexcept
 }
 
 GrowingBuffer::size_type
-GrowingBuffer::WriteSome(const void *p, size_type length) noexcept
+GrowingBuffer::WriteSome(std::span<const std::byte> src) noexcept
 {
 	auto *buffer = tail;
 	if (buffer == nullptr || buffer->IsFull())
 		buffer = &AppendBuffer();
 
-	return buffer->WriteSome({(const std::byte *)p, length});
+	return buffer->WriteSome(src);
 }
 
 void
-GrowingBuffer::Write(const void *p, size_type length) noexcept
+GrowingBuffer::Write(std::span<const std::byte> src) noexcept
 {
-	while (length > 0) {
-		size_type nbytes = WriteSome(p, length);
-		p = ((const char *)p) + nbytes;
-		length -= nbytes;
+	while (!src.empty()) {
+		size_type nbytes = WriteSome(src);
+		src = src.subspan(nbytes);
 	}
 }
 

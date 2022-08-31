@@ -62,33 +62,31 @@ FcgiRecordSerializer::Commit(size_t content_length) noexcept
 }
 
 static size_t
-fcgi_serialize_length(GrowingBuffer &gb, size_t length)
+fcgi_serialize_length(GrowingBuffer &gb, std::size_t length) noexcept
 {
 	if (length < 0x80) {
 		uint8_t buffer = (uint8_t)length;
-		gb.Write(&buffer, sizeof(buffer));
+		gb.WriteT(buffer);
 		return sizeof(buffer);
 	} else {
 		/* XXX 31 bit overflow? */
 		uint32_t buffer = ToBE32(length | 0x80000000);
-		gb.Write(&buffer, sizeof(buffer));
+		gb.WriteT(buffer);
 		return sizeof(buffer);
 	}
 }
 
 static size_t
-fcgi_serialize_pair(GrowingBuffer &gb, StringView name,
-		    StringView value)
+fcgi_serialize_pair(GrowingBuffer &gb, std::string_view name,
+		    std::string_view value) noexcept
 {
-	assert(!name.IsNull());
+	std::size_t size = fcgi_serialize_length(gb, name.size());
+	size += fcgi_serialize_length(gb, value.size());
 
-	size_t size = fcgi_serialize_length(gb, name.size);
-	size += fcgi_serialize_length(gb, value.size);
+	gb.Write(name);
+	gb.Write(value);
 
-	gb.Write(name.data, name.size);
-	gb.Write(value.data, value.size);
-
-	return size + name.size + value.size;
+	return size + name.size() + value.size();
 }
 
 FcgiParamsSerializer::FcgiParamsSerializer(GrowingBuffer &_buffer,

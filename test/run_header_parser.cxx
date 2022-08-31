@@ -42,7 +42,7 @@
 int
 main(int argc gcc_unused, char **argv gcc_unused)
 {
-	char buffer[16];
+	std::byte buffer[16];
 	ssize_t nbytes;
 
 	RootPool pool;
@@ -53,7 +53,7 @@ main(int argc gcc_unused, char **argv gcc_unused)
 	/* read input from stdin */
 
 	while ((nbytes = read(0, buffer, sizeof(buffer))) > 0)
-		gb.Write(buffer, (size_t)nbytes);
+		gb.Write(std::span{buffer}.first(nbytes));
 
 	/* parse the headers */
 

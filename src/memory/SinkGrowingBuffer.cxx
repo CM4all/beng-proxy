@@ -62,7 +62,7 @@ GrowingBufferSink::OnIstreamReady() noexcept
 		}
 
 		auto r = bucket.GetBuffer();
-		buffer.Write(r.data(), r.size());
+		buffer.Write(r);
 		nbytes += r.size();
 	}
 
@@ -81,7 +81,7 @@ GrowingBufferSink::OnIstreamReady() noexcept
 std::size_t
 GrowingBufferSink::OnData(const void *data, std::size_t length) noexcept
 {
-	buffer.Write(data, length);
+	buffer.Write({(const std::byte *)data, length});
 	return length;
 }
 

@@ -286,7 +286,7 @@ ReplaceIstream::OnData(const void *data, size_t length) noexcept
 
 	const auto old_source_length = source_length;
 
-	buffer.Write(data, length);
+	buffer.Write({(const std::byte *)data, length});
 	source_length += (off_t)length;
 
 	try {
@@ -433,7 +433,7 @@ ReplaceIstream::_FillBucketList(IstreamBucketList &list)
 			}
 
 			const auto b = i.GetBuffer();
-			buffer.Write(b.data(), b.size());
+			buffer.Write(b);
 			source_length += (off_t)b.size();
 
 			if (source_length >= 8 * 1024 * 1024) {

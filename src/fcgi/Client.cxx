@@ -1104,8 +1104,8 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 
 	GrowingBuffer buffer;
 	header.content_length = ToBE16(sizeof(begin_request));
-	buffer.Write(&header, sizeof(header));
-	buffer.Write(&begin_request, sizeof(begin_request));
+	buffer.WriteT(header);
+	buffer.WriteT(begin_request);
 
 	FcgiParamsSerializer ps(buffer, header.request_id);
 
@@ -1158,7 +1158,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 
 	header.type = FCGI_PARAMS;
 	header.content_length = ToBE16(0);
-	buffer.Write(&header, sizeof(header));
+	buffer.WriteT(header);
 
 	UnusedIstreamPtr request;
 
@@ -1172,7 +1172,7 @@ fcgi_client_request(struct pool *pool, EventLoop &event_loop,
 		/* no request body - append an empty STDIN packet */
 		header.type = FCGI_STDIN;
 		header.content_length = ToBE16(0);
-		buffer.Write(&header, sizeof(header));
+		buffer.WriteT(header);
 
 		request = istream_gb_new(*pool, std::move(buffer));
 	}

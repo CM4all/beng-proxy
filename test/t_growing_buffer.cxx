@@ -244,8 +244,8 @@ TEST(GrowingBufferTest, Skip)
 
 	constexpr size_t buffer_size = FB_SIZE - sizeof(void *) - sizeof(DefaultChunkAllocator) - 2 * sizeof(size_t);
 
-	static char zero[buffer_size * 2];
-	buffer.Write(zero, sizeof(zero));
+	static std::byte zero[buffer_size * 2]{};
+	buffer.Write(std::span{zero});
 	ASSERT_EQ(buffer.GetSize(), 16 + buffer_size * 2);
 
 	GrowingBufferReader reader(std::move(buffer));

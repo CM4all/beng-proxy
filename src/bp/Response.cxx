@@ -522,7 +522,7 @@ Request::GenerateSetCookie(GrowingBuffer &headers) noexcept
 		headers.Write(session_id.Format().c_str());
 
 		if (recover_session_to_cookie != nullptr) {
-			headers.Write("/", 1);
+			headers.Write("/"sv);
 			// TODO: escape the string?
 			headers.Write(recover_session_to_cookie);
 		}

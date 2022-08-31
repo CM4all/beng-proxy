@@ -34,6 +34,7 @@
 
 #include "DefaultChunkAllocator.hxx"
 #include "util/Compiler.h"
+#include "util/SpanCast.hxx"
 
 #include <cstddef>
 #include <span>
@@ -204,11 +205,15 @@ public:
 
 	void *Write(size_type length) noexcept;
 
-	size_type WriteSome(const void *p, size_type length) noexcept;
-	void Write(const void *p, size_type length) noexcept;
+	size_type WriteSome(std::span<const std::byte> src) noexcept;
+	void Write(std::span<const std::byte> src) noexcept;
+
+	void WriteT(const auto &src) noexcept {
+		Write(std::as_bytes(std::span{&src, 1}));
+	}
 
 	void Write(std::string_view s) noexcept {
-		Write(s.data(), s.size());
+		Write(AsBytes(s));
 	}
 
 	gcc_printf(2, 3)

@@ -188,7 +188,7 @@ HttpServerConnection::SubmitResponse(http_status_t status,
 		headers.Write("server", BRIEF_PRODUCT_TOKEN);
 
 	GrowingBuffer headers3 = headers.ToBuffer();
-	headers3.Write("\r\n", 2);
+	headers3.Write("\r\n"sv);
 	auto header_stream = istream_gb_new(request_pool, std::move(headers3));
 
 	response.length = - status_stream.GetAvailable(false)

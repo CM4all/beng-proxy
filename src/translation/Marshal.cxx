@@ -50,10 +50,10 @@ TranslationMarshaller::Write(TranslationCommand command,
 	header.length = (uint16_t)payload.size();
 	header.command = command;
 
-	buffer.Write(&header, sizeof(header));
+	buffer.WriteT(header);
 
 	if (!payload.empty())
-		buffer.Write(payload.data(), payload.size());
+		buffer.Write(payload);
 }
 
 void

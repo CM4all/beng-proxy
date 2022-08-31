@@ -40,6 +40,8 @@
 
 #include <string.h>
 
+using std::string_view_literals::operator""sv;
+
 static const char *
 translation_vary_name(TranslationCommand cmd)
 {
@@ -110,7 +112,7 @@ write_translation_vary_header(GrowingBuffer &headers,
 			continue;
 
 		if (active) {
-			headers.Write(",", 1);
+			headers.Write(","sv);
 		} else {
 			active = true;
 			header_write_begin(headers, "vary");

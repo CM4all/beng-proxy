@@ -76,6 +76,8 @@
 #include <string.h>
 #include <unistd.h>
 
+using std::string_view_literals::operator""sv;
+
 bool
 IsHttpClientServerFailure(std::exception_ptr ep) noexcept
 {
@@ -1425,7 +1427,7 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 	}
 
 	headers_copy_most(headers, headers2);
-	headers2.Write("\r\n", 2);
+	headers2.Write("\r\n"sv);
 
 	auto header_stream = istream_gb_new(GetPool(), std::move(headers2));
 
