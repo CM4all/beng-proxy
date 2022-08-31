@@ -252,7 +252,8 @@ public:
 		direct_mask = mask;
 	}
 
-	void _ConsumeDirect(std::size_t) noexcept override {
+	void _ConsumeDirect(std::size_t nbytes) noexcept override {
+		Consumed(nbytes);
 	}
 
 protected:
