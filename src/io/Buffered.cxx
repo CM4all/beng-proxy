@@ -35,7 +35,6 @@
 
 #include <assert.h>
 #include <unistd.h>
-#include <errno.h>
 
 ssize_t
 read_to_buffer(int fd, ForeignFifoBuffer<std::byte> &buffer, size_t length)
@@ -52,22 +51,6 @@ read_to_buffer(int fd, ForeignFifoBuffer<std::byte> &buffer, size_t length)
 	ssize_t nbytes = read(fd, w.data(), length);
 	if (nbytes > 0)
 		buffer.Append((size_t)nbytes);
-
-	return nbytes;
-}
-
-ssize_t
-write_from_buffer(int fd, ForeignFifoBuffer<std::byte> &buffer)
-{
-	auto r = buffer.Read();
-	if (r.empty())
-		return -2;
-
-	ssize_t nbytes = write(fd, r.data(), r.size());
-	if (nbytes >= 0)
-		buffer.Consume((size_t)nbytes);
-	else if (errno == EAGAIN)
-		nbytes = 0;
 
 	return nbytes;
 }
