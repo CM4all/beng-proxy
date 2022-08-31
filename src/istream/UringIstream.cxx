@@ -127,13 +127,7 @@ private:
 
 	off_t _GetAvailable(bool partial) noexcept override;
 	off_t _Skip(off_t length) noexcept override;
-
-	void _Read() noexcept override {
-		// TODO free the buffer?
-		if (ConsumeFromBuffer(buffer) == 0 && !IsUringPending())
-			StartRead();
-		// TODO "direct"?
-	}
+	void _Read() noexcept override;
 
 	// TODO: _FillBucketList, _ConsumeBucketList
 
@@ -233,6 +227,16 @@ UringIstream::_Skip(off_t length) noexcept
 	// TODO: skip more data?  what about the pending read?
 
 	return buffer_available;
+}
+
+void
+UringIstream::_Read() noexcept
+{
+	// TODO free the buffer?
+	if (ConsumeFromBuffer(buffer) == 0 && !IsUringPending()) {
+		StartRead();
+	}
+	// TODO "direct"?
 }
 
 int
