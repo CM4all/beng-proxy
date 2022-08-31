@@ -63,7 +63,7 @@ class SubstIstream final : public FacadeIstream, DestructAnchor {
 	SubstTree tree;
 
 	const SubstNode *match;
-	std::string_view mismatch{};
+	std::span<const std::byte> mismatch{};
 
 	enum class State {
 		/** searching the first matching character */
@@ -337,7 +337,7 @@ SubstIstream::FeedMismatch() noexcept
 		if (nbytes == 0)
 			return true;
 
-		mismatch = mismatch.substr(nbytes);
+		mismatch = mismatch.subspan(nbytes);
 
 		if (mismatch.empty())
 			return false;
@@ -350,7 +350,7 @@ SubstIstream::FeedMismatch() noexcept
 		return true;
 
 	assert(nbytes <= mismatch.size());
-	mismatch = mismatch.substr(nbytes);
+	mismatch = mismatch.subspan(nbytes);
 
 	return !mismatch.empty();
 }
@@ -366,7 +366,7 @@ SubstIstream::WriteMismatch() noexcept
 		return true;
 
 	assert(nbytes <= mismatch.size());
-	mismatch = mismatch.substr(nbytes);
+	mismatch = mismatch.subspan(nbytes);
 
 	if (!mismatch.empty())
 		return true;
@@ -544,7 +544,7 @@ SubstIstream::Feed(const void *_data, size_t length) noexcept
 					n = subst_find_any_leaf(match);
 					assert(n != nullptr);
 					assert(n->ch == 0);
-					mismatch = {n->leaf.a, a_match};
+					mismatch = std::as_bytes(std::span{n->leaf.a, a_match});
 
 					if (FeedMismatch())
 						return destructed ? 0 : data - data0;
@@ -633,7 +633,7 @@ SubstIstream::OnEof() noexcept
 			assert(n != nullptr);
 			assert(n->ch == 0);
 
-			mismatch = {n->leaf.a, a_match};
+			mismatch = std::as_bytes(std::span{n->leaf.a, a_match});
 			WriteMismatch();
 			return;
 		}
@@ -717,14 +717,14 @@ SubstIstream::_FillBucketList(IstreamBucketList &list)
 			// FeedMismatch()
 
 			if (send_first)
-				list.Push(AsBytes(mismatch.substr(0, 1)));
+				list.Push(mismatch.first(1));
 
 			// TODO: re-parse the rest of the mismatch buffer
 			list.SetMore();
 			return;
 		} else {
 			// WriteMismatch()
-			list.Push(AsBytes(mismatch));
+			list.Push(mismatch);
 			return;
 		}
 	} else {
@@ -813,7 +813,7 @@ SubstIstream::_ConsumeBucketList(size_t nbytes) noexcept
 		} else {
 			// WriteMismatch()
 			nbytes = std::min(nbytes, mismatch.size());
-			mismatch = mismatch.substr(nbytes);
+			mismatch = mismatch.subspan(nbytes);
 			return Consumed(nbytes);
 		}
 	} else {
