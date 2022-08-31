@@ -276,8 +276,6 @@ FileIstream::_Skip(off_t length) noexcept
 void
 FileIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 {
-	Consumed(nbytes);
-
 	offset += nbytes;
 	if (offset >= end_offset)
 		EofDetected();
