@@ -305,6 +305,7 @@ AutoPipeIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 	if (piped > 0) {
 		assert(nbytes <= piped);
 		piped -= nbytes;
+		Consumed(nbytes);
 
 		if (piped == 0)
 			/* if the pipe was drained, return it to the
