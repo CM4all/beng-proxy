@@ -35,6 +35,7 @@
 #include "UnusedPtr.hxx"
 #include "New.hxx"
 #include "Bucket.hxx"
+#include "io/FileDescriptor.hxx"
 
 #include <algorithm>
 
@@ -77,7 +78,7 @@ public:
 					      std::min(length, std::size_t{4}));
 	}
 
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     std::size_t max_length) noexcept override {
 		return ForwardIstream::OnDirect(type, fd,
 						std::min(max_length, std::size_t{4}));

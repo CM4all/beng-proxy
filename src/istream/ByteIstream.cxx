@@ -35,6 +35,7 @@
 #include "UnusedPtr.hxx"
 #include "Bucket.hxx"
 #include "New.hxx"
+#include "io/FileDescriptor.hxx"
 
 class ByteIstream final : public ForwardIstream {
 public:
@@ -74,7 +75,7 @@ public:
 		return ForwardIstream::OnData(data, 1);
 	}
 
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     [[maybe_unused]] size_t max_length) noexcept override {
 		return ForwardIstream::OnDirect(type, fd, 1);
 	}

@@ -138,7 +138,7 @@ FdIstream::TryData()
 		}
 	}
 
-	ssize_t nbytes = read_to_buffer(fd.Get(), buffer, INT_MAX);
+	ssize_t nbytes = ReadToBuffer(fd, buffer, INT_MAX);
 	if (nbytes == 0) {
 		fd.Close();
 		if (buffer.empty())
@@ -160,7 +160,7 @@ FdIstream::TryDirect()
 	if (ConsumeFromBuffer(buffer) > 0)
 		return;
 
-	switch (InvokeDirect(fd_type, fd.Get(), INT_MAX)) {
+	switch (InvokeDirect(fd_type, fd, INT_MAX)) {
 	case IstreamDirectResult::CLOSED:
 	case IstreamDirectResult::OK:
 	case IstreamDirectResult::BLOCKING:

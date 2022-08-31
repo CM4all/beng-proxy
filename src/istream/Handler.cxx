@@ -31,12 +31,13 @@
  */
 
 #include "Handler.hxx"
+#include "io/FileDescriptor.hxx"
 #include "util/Compiler.h"
 
 gcc_noreturn
 IstreamDirectResult
 IstreamHandler::OnDirect([[maybe_unused]] FdType type,
-			 [[maybe_unused]] int fd,
+			 [[maybe_unused]] FileDescriptor fd,
 			 [[maybe_unused]] std::size_t max_length) noexcept
 {
 	gcc_unreachable();

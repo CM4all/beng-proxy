@@ -92,7 +92,7 @@ struct Context final : PInstance, HttpResponseHandler, IstreamSink {
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
@@ -125,7 +125,7 @@ Context::OnData(const void *, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-Context::OnDirect(FdType, int fd, std::size_t max_length) noexcept
+Context::OnDirect(FdType, FileDescriptor fd, std::size_t max_length) noexcept
 {
 	if (close_response_body_data) {
 		body_closed = true;
@@ -142,7 +142,7 @@ Context::OnDirect(FdType, int fd, std::size_t max_length) noexcept
 	if (max_length > sizeof(buffer))
 		max_length = sizeof(buffer);
 
-	ssize_t nbytes = read(fd, buffer, max_length);
+	ssize_t nbytes = fd.Read(buffer, max_length);
 	if (nbytes <= 0)
 		return nbytes < 0
 			? IstreamDirectResult::ERRNO

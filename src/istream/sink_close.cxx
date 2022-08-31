@@ -34,6 +34,7 @@
 #include "Sink.hxx"
 #include "UnusedPtr.hxx"
 #include "pool/pool.hxx"
+#include "io/FileDescriptor.hxx"
 #include "util/Compiler.h"
 
 class SinkClose final : IstreamSink {
@@ -52,7 +53,7 @@ public:
 	}
 
 	IstreamDirectResult OnDirect([[maybe_unused]] FdType type,
-				     [[maybe_unused]] int fd,
+				     FileDescriptor,
 				     [[maybe_unused]] std::size_t max_length) noexcept {
 		gcc_unreachable();
 	}

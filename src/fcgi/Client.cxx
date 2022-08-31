@@ -275,7 +275,7 @@ private:
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
@@ -698,13 +698,13 @@ FcgiClient::OnData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-FcgiClient::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
+FcgiClient::OnDirect(FdType type, FileDescriptor fd, std::size_t max_length) noexcept
 {
 	assert(socket.IsConnected());
 
 	request.got_data = true;
 
-	ssize_t nbytes = socket.WriteFrom(fd, type, max_length);
+	ssize_t nbytes = socket.WriteFrom(fd.Get(), type, max_length);
 	if (gcc_likely(nbytes > 0)) {
 		input.ConsumeDirect(nbytes);
 		socket.ScheduleWrite();

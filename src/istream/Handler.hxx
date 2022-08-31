@@ -40,6 +40,8 @@
 
 #include <sys/types.h>
 
+class FileDescriptor;
+
 /** data sink for an istream */
 class IstreamHandler {
 public:
@@ -83,7 +85,7 @@ public:
 	 * @return the number of bytes consumed, or one of the
 	 * #istream_result values
 	 */
-	virtual IstreamDirectResult OnDirect(FdType type, int fd,
+	virtual IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 					     std::size_t max_length) noexcept;
 
 	/**

@@ -34,6 +34,7 @@
 #include "ForwardIstream.hxx"
 #include "UnusedPtr.hxx"
 #include "New.hxx"
+#include "io/FileDescriptor.hxx"
 
 #include <assert.h>
 
@@ -131,7 +132,7 @@ public:
 		return HasHandler() ? ForwardIstream::OnData(data, length) : 0;
 	}
 
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     std::size_t max_length) noexcept override {
 		return HasHandler()
 			? ForwardIstream::OnDirect(type, fd, max_length)

@@ -80,7 +80,7 @@ public:
 
 	/* handler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
@@ -112,8 +112,7 @@ AutoPipeIstream::Consume() noexcept
 	assert(pipe.IsDefined());
 	assert(piped > 0);
 
-	auto result = InvokeDirect(FdType::FD_PIPE, pipe.GetReadFd().Get(),
-				   piped);
+	auto result = InvokeDirect(FdType::FD_PIPE, pipe.GetReadFd(), piped);
 	switch (result) {
 	case IstreamDirectResult::BLOCKING:
 	case IstreamDirectResult::CLOSED:
@@ -174,7 +173,8 @@ AutoPipeIstream::OnData(const void *data, std::size_t length) noexcept
 }
 
 inline IstreamDirectResult
-AutoPipeIstream::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
+AutoPipeIstream::OnDirect(FdType type, FileDescriptor fd,
+			  std::size_t max_length) noexcept
 {
 	assert(HasHandler());
 
@@ -205,7 +205,7 @@ AutoPipeIstream::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 		}
 	}
 
-	ssize_t nbytes = Splice(fd, pipe.GetWriteFd().Get(), max_length);
+	ssize_t nbytes = Splice(fd.Get(), pipe.GetWriteFd().Get(), max_length);
 	/* don't check EAGAIN here (and don't return -2).  We assume that
 	   splicing to the pipe cannot possibly block, since we flushed
 	   the pipe; assume that it can only be the source file which is

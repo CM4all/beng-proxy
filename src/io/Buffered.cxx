@@ -31,15 +31,16 @@
  */
 
 #include "Buffered.hxx"
+#include "io/FileDescriptor.hxx"
 #include "util/ForeignFifoBuffer.hxx"
 
-#include <assert.h>
-#include <unistd.h>
+#include <cassert>
 
 ssize_t
-read_to_buffer(int fd, ForeignFifoBuffer<std::byte> &buffer, size_t length)
+ReadToBuffer(FileDescriptor fd, ForeignFifoBuffer<std::byte> &buffer,
+	     std::size_t length) noexcept
 {
-	assert(fd >= 0);
+	assert(fd.IsDefined());
 
 	auto w = buffer.Write();
 	if (w.empty())
@@ -48,7 +49,7 @@ read_to_buffer(int fd, ForeignFifoBuffer<std::byte> &buffer, size_t length)
 	if (length > w.size())
 		length = w.size();
 
-	ssize_t nbytes = read(fd, w.data(), length);
+	ssize_t nbytes = fd.Read(w.data(), length);
 	if (nbytes > 0)
 		buffer.Append((size_t)nbytes);
 

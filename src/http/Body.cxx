@@ -82,7 +82,8 @@ HttpBodyReader::TryDirect(SocketDescriptor fd, FdType fd_type) noexcept
 	assert(fd.IsDefined());
 	assert(CheckDirect(fd_type));
 
-	return InvokeDirect(fd_type, fd.Get(), GetMaxRead(INT_MAX));
+	return InvokeDirect(fd_type, fd.ToFileDescriptor(),
+			    GetMaxRead(INT_MAX));
 }
 
 bool

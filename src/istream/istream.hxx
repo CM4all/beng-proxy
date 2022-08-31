@@ -42,6 +42,7 @@
 #include <cassert>
 #include <cstddef>
 
+class FileDescriptor;
 class IstreamHandler;
 class IstreamBucketList;
 
@@ -128,7 +129,7 @@ protected:
 
 	bool InvokeReady() noexcept;
 	std::size_t InvokeData(const void *data, std::size_t length) noexcept;
-	IstreamDirectResult InvokeDirect(FdType type, int fd,
+	IstreamDirectResult InvokeDirect(FdType type, FileDescriptor fd,
 					 std::size_t max_length) noexcept;
 	void InvokeEof() noexcept;
 	void InvokeError(std::exception_ptr ep) noexcept;

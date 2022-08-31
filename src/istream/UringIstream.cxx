@@ -179,7 +179,7 @@ try {
 	if (fd.Seek(offset) < 0)
 		throw FormatErrno("Failed to seek '%s'", path);
 
-	switch (InvokeDirect(FdType::FD_FILE, fd.Get(), max_read)) {
+	switch (InvokeDirect(FdType::FD_FILE, fd, max_read)) {
 	case IstreamDirectResult::CLOSED:
 	case IstreamDirectResult::BLOCKING:
 		break;

@@ -35,6 +35,7 @@
 #include "UnusedPtr.hxx"
 #include "Bucket.hxx"
 #include "New.hxx"
+#include "io/FileDescriptor.hxx"
 
 #include <algorithm>
 
@@ -66,7 +67,7 @@ public:
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     std::size_t max_length) noexcept override;
 };
 
@@ -141,7 +142,7 @@ HeadIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 }
 
 IstreamDirectResult
-HeadIstream::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
+HeadIstream::OnDirect(FdType type, FileDescriptor fd, std::size_t max_length) noexcept
 {
 	if (rest == 0) {
 		DestroyEof();

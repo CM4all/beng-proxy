@@ -36,13 +36,13 @@
 #include "istream/UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "pool/LeakDetector.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "util/Cancellable.hxx"
 
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/socket.h>
 
 class RubberSink final : IstreamSink, Cancellable, PoolLeakDetector {
 	RubberAllocation allocation;
@@ -85,18 +85,18 @@ private:
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
 
 static ssize_t
-fd_read(FdType type, int fd, void *p, std::size_t size) noexcept
+fd_read(FdType type, FileDescriptor fd, void *p, std::size_t size) noexcept
 {
 	return IsAnySocket(type)
-		? recv(fd, p, size, MSG_DONTWAIT)
-		: read(fd, p, size);
+		? SocketDescriptor::FromFileDescriptor(fd).Read(p, size)
+		: fd.Read(p, size);
 }
 
 void
@@ -151,7 +151,8 @@ RubberSink::OnData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-RubberSink::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
+RubberSink::OnDirect(FdType type, FileDescriptor fd,
+		     std::size_t max_length) noexcept
 {
 	assert(position <= max_size);
 

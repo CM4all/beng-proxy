@@ -41,6 +41,7 @@
 #include "http/ResponseHandler.hxx"
 #include "memory/fb_pool.hxx"
 #include "memory/SliceFifoBuffer.hxx"
+#include "io/FileDescriptor.hxx"
 #include "util/Cancellable.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
@@ -120,7 +121,7 @@ public:
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
@@ -310,7 +311,8 @@ CGIClient::OnData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-CGIClient::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
+CGIClient::OnDirect(FdType type, FileDescriptor fd,
+		    std::size_t max_length) noexcept
 {
 	assert(parser.AreHeadersFinished());
 

@@ -55,7 +55,7 @@ public:
 		return length;
 	}
 
-	IstreamDirectResult OnDirect(FdType, int fd,
+	IstreamDirectResult OnDirect(FdType, FileDescriptor fd,
 				     std::size_t max_length) noexcept override
 	{
 		if (!dev_null.IsDefined())
@@ -63,7 +63,8 @@ public:
 				return IstreamDirectResult::ERRNO;
 
 		const auto nbytes =
-			splice(fd, nullptr, dev_null.Get(), nullptr, max_length,
+			splice(fd.Get(), nullptr, dev_null.Get(), nullptr,
+			       max_length,
 			       SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
 		if (nbytes <= 0)
 			return nbytes < 0

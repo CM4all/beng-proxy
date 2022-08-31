@@ -31,6 +31,7 @@
  */
 
 #include "ForwardIstream.hxx"
+#include "io/FileDescriptor.hxx"
 
 off_t
 ForwardIstream::_Skip(off_t length) noexcept
@@ -57,7 +58,7 @@ ForwardIstream::OnData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-ForwardIstream::OnDirect(FdType type, int fd,
+ForwardIstream::OnDirect(FdType type, FileDescriptor fd,
 			 std::size_t max_length) noexcept
 {
 	return InvokeDirect(type, fd, max_length);

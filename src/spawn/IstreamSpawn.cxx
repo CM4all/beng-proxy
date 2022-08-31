@@ -132,7 +132,7 @@ struct SpawnIstream final : Istream, IstreamSink, ExitListener {
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
@@ -213,11 +213,12 @@ SpawnIstream::OnData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-SpawnIstream::OnDirect(gcc_unused FdType type, int fd, std::size_t max_length) noexcept
+SpawnIstream::OnDirect(gcc_unused FdType type, FileDescriptor fd,
+		       std::size_t max_length) noexcept
 {
 	assert(input_fd.IsDefined());
 
-	ssize_t nbytes = SpliceToPipe(fd, input_fd.Get(), max_length);
+	ssize_t nbytes = SpliceToPipe(fd.Get(), input_fd.Get(), max_length);
 	if (nbytes <= 0) {
 		if (nbytes == 0)
 			return IstreamDirectResult::END;
@@ -233,7 +234,7 @@ SpawnIstream::OnDirect(gcc_unused FdType type, int fd, std::size_t max_length) n
 		/* try again, just in case connection->fd has become
 		   ready between the first splice() call and
 		   fd_ready_for_writing() */
-		nbytes = SpliceToPipe(fd, input_fd.Get(), max_length);
+		nbytes = SpliceToPipe(fd.Get(), input_fd.Get(), max_length);
 		if (nbytes <= 0)
 			return nbytes < 0
 				? IstreamDirectResult::ERRNO
@@ -284,7 +285,7 @@ SpawnIstream::ReadFromOutput() noexcept
 	if (!CheckDirect()) {
 		buffer.AllocateIfNull(fb_pool_get());
 
-		ssize_t nbytes = read_to_buffer(output_fd.Get(), buffer, INT_MAX);
+		ssize_t nbytes = ReadToBuffer(output_fd, buffer, INT_MAX);
 		if (nbytes == -2) {
 			/* XXX should not happen */
 		} else if (nbytes > 0) {
@@ -328,8 +329,7 @@ SpawnIstream::ReadFromOutput() noexcept
 			return;
 		}
 
-		switch (InvokeDirect(FdType::FD_PIPE, output_fd.Get(),
-				     INT_MAX)) {
+		switch (InvokeDirect(FdType::FD_PIPE, output_fd, INT_MAX)) {
 		case IstreamDirectResult::BLOCKING:
 		case IstreamDirectResult::CLOSED:
 			break;

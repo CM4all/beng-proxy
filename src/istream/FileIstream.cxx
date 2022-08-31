@@ -201,7 +201,7 @@ FileIstream::TryDirect()
 	if (fd.Seek(offset) < 0)
 		throw FormatErrno("Failed to seek '%s'", path);
 
-	switch (InvokeDirect(FdType::FD_FILE, fd.Get(), GetMaxRead())) {
+	switch (InvokeDirect(FdType::FD_FILE, fd, GetMaxRead())) {
 	case IstreamDirectResult::CLOSED:
 	case IstreamDirectResult::BLOCKING:
 		break;

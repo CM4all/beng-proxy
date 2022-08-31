@@ -286,7 +286,7 @@ WasInput::ReadToBuffer()
 
 	buffer.AllocateIfNull(fb_pool_get());
 
-	ssize_t nbytes = read_to_buffer(GetPipe().Get(), buffer, max_length);
+	ssize_t nbytes = ::ReadToBuffer(GetPipe(), buffer, max_length);
 	assert(nbytes != -2);
 
 	if (nbytes == 0)
@@ -348,7 +348,7 @@ WasInput::TryDirect() noexcept
 			max_length = rest;
 	}
 
-	switch (InvokeDirect(FdType::FD_PIPE, GetPipe().Get(), max_length)) {
+	switch (InvokeDirect(FdType::FD_PIPE, GetPipe(), max_length)) {
 	case IstreamDirectResult::BLOCKING:
 		CancelRead();
 		return false;

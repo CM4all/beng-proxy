@@ -152,7 +152,7 @@ private:
 	/* virtual methods from class IstreamHandler */
 	bool OnIstreamReady() noexcept override;
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
@@ -333,12 +333,14 @@ WasOutput::OnData(const void *p, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-WasOutput::OnDirect(gcc_unused FdType type, int source_fd, std::size_t max_length) noexcept
+WasOutput::OnDirect(gcc_unused FdType type, FileDescriptor source_fd,
+		    std::size_t max_length) noexcept
 {
 	assert(HasPipe());
 	assert(!IsEof());
 
-	ssize_t nbytes = SpliceToPipe(source_fd, GetPipe().Get(), max_length);
+	ssize_t nbytes = SpliceToPipe(source_fd.Get(), GetPipe().Get(),
+				      max_length);
 	if (nbytes < 0 && errno == EAGAIN) {
 		if (!GetPipe().IsReadyForWriting()) {
 			got_data = true;
@@ -349,7 +351,8 @@ WasOutput::OnDirect(gcc_unused FdType type, int source_fd, std::size_t max_lengt
 		/* try again, just in case fd has become ready between
 		   the first istream_direct_to_pipe() call and
 		   fd.IsReadyForWriting() */
-		nbytes = SpliceToPipe(source_fd, GetPipe().Get(), max_length);
+		nbytes = SpliceToPipe(source_fd.Get(), GetPipe().Get(),
+				      max_length);
 	}
 
 	if (nbytes <= 0)

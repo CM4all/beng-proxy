@@ -122,7 +122,7 @@ private:
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
@@ -157,11 +157,13 @@ SinkFd::OnData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-SinkFd::OnDirect(FdType type, int _fd, std::size_t max_length) noexcept
+SinkFd::OnDirect(FdType type, FileDescriptor _fd,
+		 std::size_t max_length) noexcept
 {
 	got_data = true;
 
-	ssize_t nbytes = SpliceTo(_fd, type, fd.Get(), fd_type, max_length);
+	ssize_t nbytes = SpliceTo(_fd.Get(), type, fd.Get(), fd_type,
+				  max_length);
 
 	if (nbytes <= 0) {
 		if (nbytes == 0)
@@ -178,7 +180,8 @@ SinkFd::OnDirect(FdType type, int _fd, std::size_t max_length) noexcept
 		/* try again, just in case connection->fd has become
 		   ready between the first istream_direct_to_socket()
 		   call and fd_ready_for_writing() */
-		nbytes = SpliceTo(_fd, type, fd.Get(), fd_type, max_length);
+		nbytes = SpliceTo(_fd.Get(), type, fd.Get(), fd_type,
+				  max_length);
 
 		if (nbytes <= 0)
 			return nbytes < 0

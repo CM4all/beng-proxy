@@ -36,6 +36,7 @@
 #include "Bucket.hxx"
 #include "New.hxx"
 #include "event/CoarseTimerEvent.hxx"
+#include "io/FileDescriptor.hxx"
 
 #include <stdexcept>
 
@@ -99,7 +100,7 @@ public:
 		return ForwardIstream::OnData(data, length);
 	}
 
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     std::size_t max_length) noexcept override {
 		/* disable the timeout as soon as the first data byte
 		   arrives */

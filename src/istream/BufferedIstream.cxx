@@ -123,7 +123,8 @@ private:
 		_handler.OnBufferedIstreamError(std::move(e));
 	}
 
-	IstreamDirectResult ReadToBuffer(int fd, std::size_t max_length) noexcept;
+	IstreamDirectResult ReadToBuffer(FileDescriptor fd,
+					 std::size_t max_length) noexcept;
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
@@ -132,7 +133,7 @@ private:
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr e) noexcept override;
@@ -171,7 +172,7 @@ BufferedIstream::DeferredReady() noexcept
 }
 
 inline IstreamDirectResult
-BufferedIstream::ReadToBuffer(int fd, std::size_t max_length) noexcept
+BufferedIstream::ReadToBuffer(FileDescriptor fd, std::size_t max_length) noexcept
 {
 	if (!buffer.IsDefined())
 		buffer = fb_pool_get().Alloc();
@@ -181,7 +182,7 @@ BufferedIstream::ReadToBuffer(int fd, std::size_t max_length) noexcept
 		/* buffer is full - the "ready" call is pending */
 		return IstreamDirectResult::BLOCKING;
 
-	ssize_t nbytes = read(fd, w.data(), std::min(w.size(), max_length));
+	ssize_t nbytes = fd.Read(w.data(), std::min(w.size(), max_length));
 	if (nbytes <= 0)
 		return nbytes < 0
 			? IstreamDirectResult::ERRNO
@@ -227,7 +228,8 @@ BufferedIstream::OnData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-BufferedIstream::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
+BufferedIstream::OnDirect(FdType type, FileDescriptor fd,
+			  std::size_t max_length) noexcept
 {
 	if (buffer.IsDefined() || (type & ISTREAM_TO_PIPE) == 0)
 		/* if we have already read something into the buffer,
@@ -248,7 +250,8 @@ BufferedIstream::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
 
 	defer_ready.Schedule();
 
-	ssize_t nbytes = splice(fd, nullptr, pipe.GetWriteFd().Get(), nullptr,
+	ssize_t nbytes = splice(fd.Get(), nullptr,
+				pipe.GetWriteFd().Get(), nullptr,
 				max_length, SPLICE_F_MOVE|SPLICE_F_NONBLOCK);
 	if (nbytes <= 0) {
 		if (nbytes == 0)

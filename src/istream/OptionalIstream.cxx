@@ -36,6 +36,7 @@
 #include "Bucket.hxx"
 #include "New.hxx"
 #include "istream_null.hxx"
+#include "io/FileDescriptor.hxx"
 
 #include <assert.h>
 
@@ -109,7 +110,7 @@ public:
 			: 0;
 	}
 
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     std::size_t max_length) noexcept override {
 		return resumed
 			? ForwardIstream::OnDirect(type, fd, max_length)

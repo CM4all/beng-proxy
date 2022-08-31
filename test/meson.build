@@ -603,6 +603,7 @@ test('t_sink_rubber', executable('t_sink_rubber',
     gtest,
     istream_dep,
     memory_istream_dep,
+    net_dep,
   ]))
 
 test('t_slice', executable('t_slice',

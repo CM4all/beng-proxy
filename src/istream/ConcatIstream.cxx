@@ -35,6 +35,7 @@
 #include "Bucket.hxx"
 #include "UnusedPtr.hxx"
 #include "pool/pool.hxx"
+#include "io/FileDescriptor.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/IntrusiveList.hxx"
 
@@ -90,7 +91,7 @@ class CatIstream final : public Istream, DestructAnchor {
 			return cat.OnInputData(*this, data, length);
 		}
 
-		IstreamDirectResult OnDirect(FdType type, int fd,
+		IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 					     std::size_t max_length) noexcept override {
 			return cat.OnInputDirect(*this, type, fd, max_length);
 		}
@@ -164,7 +165,7 @@ private:
 	}
 
 	IstreamDirectResult OnInputDirect(Input &i,
-					  FdType type, int fd,
+					  FdType type, FileDescriptor fd,
 					  std::size_t max_length) noexcept {
 		return IsCurrent(i)
 			? InvokeDirect(type, fd, max_length)

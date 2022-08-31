@@ -32,8 +32,9 @@
 
 #include "istream.hxx"
 #include "Handler.hxx"
+#include "io/FileDescriptor.hxx"
 
-#include <assert.h>
+#include <cassert>
 
 bool
 Istream::InvokeReady() noexcept
@@ -100,11 +101,11 @@ Istream::InvokeData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-Istream::InvokeDirect(FdType type, int fd, std::size_t max_length) noexcept
+Istream::InvokeDirect(FdType type, FileDescriptor fd, std::size_t max_length) noexcept
 {
 	assert(!destroyed);
 	assert(handler != nullptr);
-	assert(fd >= 0);
+	assert(fd.IsDefined());
 	assert(max_length > 0);
 	assert(!in_data);
 	assert(!eof);

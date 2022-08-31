@@ -85,7 +85,7 @@ PipeLeaseIstream::_Read() noexcept
 		assert(pipe.IsDefined());
 
 		if (direct) {
-			switch (InvokeDirect(FD_PIPE, pipe.GetReadFd().Get(),
+			switch (InvokeDirect(FD_PIPE, pipe.GetReadFd(),
 					     remaining)) {
 			case IstreamDirectResult::CLOSED:
 			case IstreamDirectResult::BLOCKING:
@@ -107,7 +107,7 @@ PipeLeaseIstream::_Read() noexcept
 
 			buffer.AllocateIfNull(fb_pool_get());
 
-			auto nbytes = read_to_buffer(pipe.GetReadFd().Get(), buffer, remaining);
+			auto nbytes = ReadToBuffer(pipe.GetReadFd(), buffer, remaining);
 			assert(nbytes != -2);
 			if (nbytes == 0) {
 				DestroyError(std::make_exception_ptr(std::runtime_error("Premature end of pipe")));

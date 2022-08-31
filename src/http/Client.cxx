@@ -396,7 +396,7 @@ private:
 
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
@@ -1253,13 +1253,13 @@ HttpClient::OnData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-HttpClient::OnDirect(FdType type, int fd, std::size_t max_length) noexcept
+HttpClient::OnDirect(FdType type, FileDescriptor fd, std::size_t max_length) noexcept
 {
 	assert(IsConnected());
 
 	request.got_data = true;
 
-	ssize_t nbytes = socket.WriteFrom(fd, type, max_length);
+	ssize_t nbytes = socket.WriteFrom(fd.Get(), type, max_length);
 	if (nbytes > 0) [[likely]] {
 		input.ConsumeDirect(nbytes);
 		ScheduleWrite();

@@ -33,6 +33,7 @@
 #include "FifoBufferSink.hxx"
 #include "Bucket.hxx"
 #include "memory/fb_pool.hxx"
+#include "io/FileDescriptor.hxx"
 
 #include <algorithm>
 #include <exception>
@@ -98,7 +99,8 @@ FifoBufferSink::OnData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-FifoBufferSink::OnDirect(FdType, int fd, std::size_t max_length) noexcept
+FifoBufferSink::OnDirect(FdType, FileDescriptor fd,
+			 std::size_t max_length) noexcept
 {
 	buffer.AllocateIfNull(fb_pool_get());
 
@@ -108,7 +110,7 @@ FifoBufferSink::OnDirect(FdType, int fd, std::size_t max_length) noexcept
 
 	const std::size_t n = std::min(w.size(), max_length);
 
-	ssize_t nbytes = read(fd, w.data(), n);
+	ssize_t nbytes = fd.Read(w.data(), n);
 	if (nbytes <= 0) {
 		buffer.FreeIfEmpty();
 		return nbytes < 0

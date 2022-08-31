@@ -40,6 +40,7 @@
 
 #include <sys/types.h>
 
+class FileDescriptor;
 template<typename T> class ForeignFifoBuffer;
 
 /**
@@ -50,4 +51,5 @@ template<typename T> class ForeignFifoBuffer;
  * @return -1 on error, -2 if the buffer is full, or the amount appended to the buffer
  */
 ssize_t
-read_to_buffer(int fd, ForeignFifoBuffer<std::byte> &buffer, size_t length);
+ReadToBuffer(FileDescriptor fd, ForeignFifoBuffer<std::byte> &buffer,
+	     std::size_t length) noexcept;

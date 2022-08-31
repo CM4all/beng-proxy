@@ -79,7 +79,7 @@ public:
 	std::size_t OnData(const void *data,
 			   std::size_t length) noexcept override;
 
-	IstreamDirectResult OnDirect(FdType type, int fd,
+	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     std::size_t max_length) noexcept override;
 
 	void OnEof() noexcept override;
