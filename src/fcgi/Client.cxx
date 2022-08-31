@@ -704,7 +704,7 @@ FcgiClient::OnDirect(FdType type, FileDescriptor fd, std::size_t max_length) noe
 
 	request.got_data = true;
 
-	ssize_t nbytes = socket.WriteFrom(fd, type, max_length);
+	ssize_t nbytes = socket.WriteFrom(fd, type, nullptr, max_length);
 	if (gcc_likely(nbytes > 0)) {
 		input.ConsumeDirect(nbytes);
 		socket.ScheduleWrite();

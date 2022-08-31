@@ -218,7 +218,8 @@ SpawnIstream::OnDirect(gcc_unused FdType type, FileDescriptor fd,
 {
 	assert(input_fd.IsDefined());
 
-	ssize_t nbytes = SpliceToPipe(fd, input_fd, max_length);
+	ssize_t nbytes = SpliceToPipe(fd, nullptr,
+				      input_fd, max_length);
 	if (nbytes <= 0) {
 		if (nbytes == 0)
 			return IstreamDirectResult::END;
@@ -234,7 +235,8 @@ SpawnIstream::OnDirect(gcc_unused FdType type, FileDescriptor fd,
 		/* try again, just in case connection->fd has become
 		   ready between the first splice() call and
 		   fd_ready_for_writing() */
-		nbytes = SpliceToPipe(fd, input_fd, max_length);
+		nbytes = SpliceToPipe(fd, nullptr,
+				      input_fd, max_length);
 		if (nbytes <= 0)
 			return nbytes < 0
 				? IstreamDirectResult::ERRNO

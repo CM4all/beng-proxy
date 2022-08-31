@@ -339,7 +339,8 @@ WasOutput::OnDirect(gcc_unused FdType type, FileDescriptor source_fd,
 	assert(HasPipe());
 	assert(!IsEof());
 
-	ssize_t nbytes = SpliceToPipe(source_fd, GetPipe(),
+	ssize_t nbytes = SpliceToPipe(source_fd, nullptr,
+				      GetPipe(),
 				      max_length);
 	if (nbytes < 0 && errno == EAGAIN) {
 		if (!GetPipe().IsReadyForWriting()) {
@@ -351,7 +352,8 @@ WasOutput::OnDirect(gcc_unused FdType type, FileDescriptor source_fd,
 		/* try again, just in case fd has become ready between
 		   the first istream_direct_to_pipe() call and
 		   fd.IsReadyForWriting() */
-		nbytes = SpliceToPipe(source_fd, GetPipe(),
+		nbytes = SpliceToPipe(source_fd, nullptr,
+				      GetPipe(),
 				      max_length);
 	}
 

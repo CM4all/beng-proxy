@@ -162,7 +162,8 @@ SinkFd::OnDirect(FdType type, FileDescriptor _fd,
 {
 	got_data = true;
 
-	ssize_t nbytes = SpliceTo(_fd, type, fd, fd_type,
+	ssize_t nbytes = SpliceTo(_fd, type, nullptr,
+				  fd, fd_type,
 				  max_length);
 
 	if (nbytes <= 0) {
@@ -180,7 +181,8 @@ SinkFd::OnDirect(FdType type, FileDescriptor _fd,
 		/* try again, just in case connection->fd has become
 		   ready between the first istream_direct_to_socket()
 		   call and fd_ready_for_writing() */
-		nbytes = SpliceTo(_fd, type, fd, fd_type,
+		nbytes = SpliceTo(_fd, type, nullptr,
+				  fd, fd_type,
 				  max_length);
 
 		if (nbytes <= 0)

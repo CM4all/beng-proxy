@@ -291,11 +291,11 @@ public:
 		return base.WriteV(v.data(), v.size());
 	}
 
-	ssize_t WriteFrom(FileDescriptor fd, FdType fd_type,
+	ssize_t WriteFrom(FileDescriptor fd, FdType fd_type, off_t *offset,
 			  std::size_t length) noexcept {
 		assert(filter == nullptr);
 
-		return base.WriteFrom(fd, fd_type, length);
+		return base.WriteFrom(fd, fd_type, offset, length);
 	}
 
 	[[gnu::pure]]
