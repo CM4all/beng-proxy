@@ -99,6 +99,8 @@ class UringIstream final : public Istream, Uring::Operation {
 	 */
 	const char *const path;
 
+	bool direct = false;
+
 public:
 	UringIstream(struct pool &p, Uring::Queue &_uring,
 		     const char *_path, UniqueFileDescriptor &&_fd,
@@ -118,6 +120,8 @@ private:
 		return std::min(end_offset - offset, off_t(INT_MAX));
 	}
 
+	void TryDirect() noexcept;
+
 	void StartRead() noexcept;
 
 	/* virtual methods from class Uring::Operation */
@@ -125,9 +129,14 @@ private:
 
 	/* virtual methods from class Istream */
 
+	void _SetDirect(FdTypeMask mask) noexcept override {
+		direct = (mask & FdTypeMask(FdType::FD_FILE)) != 0;
+	}
+
 	off_t _GetAvailable(bool partial) noexcept override;
 	off_t _Skip(off_t length) noexcept override;
 	void _Read() noexcept override;
+	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 
 	// TODO: _FillBucketList, _ConsumeBucketList
 
@@ -151,6 +160,54 @@ UringIstream::~UringIstream() noexcept
 						   std::move(buffer));
 		ReplaceUring(*c);
 	}
+}
+
+inline void
+UringIstream::TryDirect() noexcept
+try {
+	assert(buffer.empty());
+	assert(!IsUringPending());
+
+	const std::size_t max_read = GetMaxRead();
+	if (max_read == 0) {
+		DestroyEof();
+		return;
+	}
+
+	// TODO: eliminate the lseek() call by passing the offset to
+	// InvokeDirect() (requires an IstreamHandler API change)
+	if (fd.Seek(offset) < 0)
+		throw FormatErrno("Failed to seek '%s'", path);
+
+	switch (InvokeDirect(FdType::FD_FILE, fd.Get(), max_read)) {
+	case IstreamDirectResult::CLOSED:
+	case IstreamDirectResult::BLOCKING:
+		break;
+
+	case IstreamDirectResult::OK:
+		if (offset >= end_offset)
+			DestroyEof();
+		break;
+
+	case IstreamDirectResult::END:
+		throw FormatRuntimeError("premature end of file in '%s'", path);
+
+	case IstreamDirectResult::ERRNO:
+		if (errno == EAGAIN) {
+			/* this should only happen for
+			   splice(SPLICE_F_NONBLOCK) from NFS files -
+			   fall back to io_uring read() */
+
+			StartRead();
+		} else {
+			/* XXX */
+			throw FormatErrno("Failed to read from '%s'", path);
+		}
+
+		break;
+	}
+} catch (...) {
+	DestroyError(std::current_exception());
 }
 
 void
@@ -230,13 +287,21 @@ UringIstream::_Skip(off_t length) noexcept
 }
 
 void
+UringIstream::_ConsumeDirect(std::size_t nbytes) noexcept
+{
+	offset += nbytes;
+}
+
+void
 UringIstream::_Read() noexcept
 {
 	// TODO free the buffer?
 	if (ConsumeFromBuffer(buffer) == 0 && !IsUringPending()) {
-		StartRead();
+		if (direct)
+			TryDirect();
+		else
+			StartRead();
 	}
-	// TODO "direct"?
 }
 
 int

@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.0.106) unstable; urgency=low
 
   * bp: fix assertion failure when io_uring is not available
+  * istream/uring: allow sendfile()/splice()
   * js: fix strict (in)equality comparison
 
  --   
