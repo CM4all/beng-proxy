@@ -32,6 +32,7 @@
 
 #include "FdIstream.hxx"
 #include "istream.hxx"
+#include "Handler.hxx"
 #include "New.hxx"
 #include "Result.hxx"
 #include "io/Buffered.hxx"
@@ -160,7 +161,8 @@ FdIstream::TryDirect()
 	if (ConsumeFromBuffer(buffer) > 0)
 		return;
 
-	switch (InvokeDirect(fd_type, fd, INT_MAX)) {
+	switch (InvokeDirect(fd_type, fd, IstreamHandler::NO_OFFSET,
+			     INT_MAX)) {
 	case IstreamDirectResult::CLOSED:
 	case IstreamDirectResult::OK:
 	case IstreamDirectResult::BLOCKING:

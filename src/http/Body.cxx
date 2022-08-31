@@ -31,6 +31,7 @@
  */
 
 #include "Body.hxx"
+#include "istream/Handler.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "net/SocketDescriptor.hxx"
 
@@ -83,6 +84,7 @@ HttpBodyReader::TryDirect(SocketDescriptor fd, FdType fd_type) noexcept
 	assert(CheckDirect(fd_type));
 
 	return InvokeDirect(fd_type, fd.ToFileDescriptor(),
+			    IstreamHandler::NO_OFFSET,
 			    GetMaxRead(INT_MAX));
 }
 

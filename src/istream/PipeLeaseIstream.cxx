@@ -32,6 +32,7 @@
 
 #include "PipeLeaseIstream.hxx"
 #include "Result.hxx"
+#include "Handler.hxx"
 #include "memory/fb_pool.hxx"
 #include "io/Buffered.hxx"
 #include "io/UniqueFileDescriptor.hxx"
@@ -86,6 +87,7 @@ PipeLeaseIstream::_Read() noexcept
 
 		if (direct) {
 			switch (InvokeDirect(FD_PIPE, pipe.GetReadFd(),
+					     IstreamHandler::NO_OFFSET,
 					     remaining)) {
 			case IstreamDirectResult::CLOSED:
 			case IstreamDirectResult::BLOCKING:

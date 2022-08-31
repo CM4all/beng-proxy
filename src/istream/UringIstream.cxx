@@ -174,12 +174,7 @@ try {
 		return;
 	}
 
-	// TODO: eliminate the lseek() call by passing the offset to
-	// InvokeDirect() (requires an IstreamHandler API change)
-	if (fd.Seek(offset) < 0)
-		throw FormatErrno("Failed to seek '%s'", path);
-
-	switch (InvokeDirect(FdType::FD_FILE, fd, max_read)) {
+	switch (InvokeDirect(FdType::FD_FILE, fd, offset, max_read)) {
 	case IstreamDirectResult::CLOSED:
 	case IstreamDirectResult::BLOCKING:
 		break;

@@ -53,3 +53,8 @@ template<typename T> class ForeignFifoBuffer;
 ssize_t
 ReadToBuffer(FileDescriptor fd, ForeignFifoBuffer<std::byte> &buffer,
 	     std::size_t length) noexcept;
+
+ssize_t
+ReadToBufferAt(FileDescriptor fd, off_t offset,
+	       ForeignFifoBuffer<std::byte> &buffer,
+	       std::size_t length) noexcept;

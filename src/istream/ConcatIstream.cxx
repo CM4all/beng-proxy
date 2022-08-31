@@ -92,8 +92,10 @@ class CatIstream final : public Istream, DestructAnchor {
 		}
 
 		IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
+					     off_t offset,
 					     std::size_t max_length) noexcept override {
-			return cat.OnInputDirect(*this, type, fd, max_length);
+			return cat.OnInputDirect(*this, type, fd, offset,
+						 max_length);
 		}
 
 		void OnEof() noexcept override {
@@ -166,9 +168,10 @@ private:
 
 	IstreamDirectResult OnInputDirect(Input &i,
 					  FdType type, FileDescriptor fd,
+					  off_t offset,
 					  std::size_t max_length) noexcept {
 		return IsCurrent(i)
-			? InvokeDirect(type, fd, max_length)
+			? InvokeDirect(type, fd, offset, max_length)
 			: IstreamDirectResult::BLOCKING;
 	}
 

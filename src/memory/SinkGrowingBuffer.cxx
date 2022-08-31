@@ -86,12 +86,15 @@ GrowingBufferSink::OnData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-GrowingBufferSink::OnDirect(FdType, FileDescriptor fd, std::size_t max_length) noexcept
+GrowingBufferSink::OnDirect(FdType, FileDescriptor fd, off_t offset,
+			    std::size_t max_length) noexcept
 {
 	auto w = buffer.BeginWrite();
 	const std::size_t n = std::min(w.size(), max_length);
 
-	ssize_t nbytes = fd.Read(w.data(), n);
+	ssize_t nbytes = HasOffset(offset)
+		? fd.ReadAt(offset, w.data(), n)
+		: fd.Read(w.data(), n);
 	if (nbytes <= 0)
 		return nbytes < 0
 			? IstreamDirectResult::ERRNO

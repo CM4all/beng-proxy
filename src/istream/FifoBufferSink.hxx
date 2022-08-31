@@ -72,6 +72,7 @@ protected:
 	bool OnIstreamReady() noexcept override;
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
+				     off_t offset,
 				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;

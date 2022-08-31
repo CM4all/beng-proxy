@@ -100,12 +100,14 @@ FifoBufferSink::OnData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-FifoBufferSink::OnDirect(FdType, FileDescriptor fd,
+FifoBufferSink::OnDirect(FdType, FileDescriptor fd, off_t offset,
 			 std::size_t max_length) noexcept
 {
 	buffer.AllocateIfNull(fb_pool_get());
 
-	const auto nbytes = ReadToBuffer(fd, buffer, max_length);
+	const auto nbytes = HasOffset(offset)
+		? ReadToBufferAt(fd, offset, buffer, max_length)
+		: ReadToBuffer(fd, buffer, max_length);
 	if (nbytes == -2)
 		return IstreamDirectResult::BLOCKING;
 

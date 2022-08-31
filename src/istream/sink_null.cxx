@@ -55,15 +55,24 @@ public:
 		return length;
 	}
 
-	IstreamDirectResult OnDirect(FdType, FileDescriptor fd,
+	IstreamDirectResult OnDirect(FdType, FileDescriptor fd, off_t offset,
 				     std::size_t max_length) noexcept override
 	{
+		if (HasOffset(offset)) {
+			/* if there is an offset, we can assume that
+			   splicing to /dev/null is a no-op, so we can
+			   just omit the call */
+			input.ConsumeDirect(max_length);
+			return IstreamDirectResult::OK;
+		}
+
 		if (!dev_null.IsDefined())
 			if (!dev_null.Open("/dev/null", O_WRONLY))
 				return IstreamDirectResult::ERRNO;
 
 		const auto nbytes =
-			splice(fd.Get(), nullptr, dev_null.Get(), nullptr,
+			splice(fd.Get(), ToOffsetPointer(offset),
+			       dev_null.Get(), nullptr,
 			       max_length,
 			       SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
 		if (nbytes <= 0)

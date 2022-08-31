@@ -53,7 +53,7 @@ public:
 	}
 
 	IstreamDirectResult OnDirect([[maybe_unused]] FdType type,
-				     FileDescriptor,
+				     FileDescriptor, off_t,
 				     [[maybe_unused]] std::size_t max_length) noexcept {
 		gcc_unreachable();
 	}

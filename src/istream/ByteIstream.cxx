@@ -76,8 +76,9 @@ public:
 	}
 
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
+				     off_t offset,
 				     [[maybe_unused]] size_t max_length) noexcept override {
-		return ForwardIstream::OnDirect(type, fd, 1);
+		return ForwardIstream::OnDirect(type, fd, offset, 1);
 	}
 };
 

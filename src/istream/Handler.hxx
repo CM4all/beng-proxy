@@ -46,6 +46,27 @@ class FileDescriptor;
 class IstreamHandler {
 public:
 	/**
+	 * @see OnDirect()
+	 */
+	static constexpr off_t NO_OFFSET = -1;
+
+	/**
+	 * Determine whether the given offset is an explicit offset,
+	 * or whether #NO_OFFSET was given.
+	 */
+	static constexpr bool HasOffset(off_t offset) noexcept {
+		return offset >= 0;
+	}
+
+	/**
+	 * Convert an offset into a pointer argument for splice() and
+	 * pread().
+	 */
+	static constexpr off_t *ToOffsetPointer(off_t &offset) noexcept {
+		return HasOffset(offset) ? &offset : nullptr;
+	}
+
+	/**
 	 * Data is available and the callee shall invoke
 	 * Istream::FillBucketList() and Istream::ConsumeBucketList().
 	 *
@@ -81,11 +102,15 @@ public:
 	 *
 	 * @param type what kind of file descriptor?
 	 * @param fd the file descriptor
+	 * @param offset read from the file descriptor at the given
+	 * offset; pass #NO_OFFSET to read from the current offset or if not
+	 * applicable (e.g. pipes, sockets)
 	 * @param max_length don't read more than this number of bytes
 	 * @return the number of bytes consumed, or one of the
 	 * #istream_result values
 	 */
 	virtual IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
+					     off_t offset,
 					     std::size_t max_length) noexcept;
 
 	/**

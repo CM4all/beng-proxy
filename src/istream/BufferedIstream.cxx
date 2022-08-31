@@ -124,6 +124,7 @@ private:
 	}
 
 	IstreamDirectResult ReadToBuffer(FileDescriptor fd,
+					 off_t offset,
 					 std::size_t max_length) noexcept;
 
 	/* virtual methods from class Cancellable */
@@ -134,6 +135,7 @@ private:
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
+				     off_t offset,
 				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr e) noexcept override;
@@ -172,7 +174,8 @@ BufferedIstream::DeferredReady() noexcept
 }
 
 inline IstreamDirectResult
-BufferedIstream::ReadToBuffer(FileDescriptor fd, std::size_t max_length) noexcept
+BufferedIstream::ReadToBuffer(FileDescriptor fd, off_t offset,
+			      std::size_t max_length) noexcept
 {
 	if (!buffer.IsDefined())
 		buffer = fb_pool_get().Alloc();
@@ -182,7 +185,11 @@ BufferedIstream::ReadToBuffer(FileDescriptor fd, std::size_t max_length) noexcep
 		/* buffer is full - the "ready" call is pending */
 		return IstreamDirectResult::BLOCKING;
 
-	ssize_t nbytes = fd.Read(w.data(), std::min(w.size(), max_length));
+	const std::size_t n_try = std::min(w.size(), max_length);
+
+	ssize_t nbytes = HasOffset(offset)
+		? fd.ReadAt(offset, w.data(), n_try)
+		: fd.Read(w.data(), n_try);
 	if (nbytes <= 0)
 		return nbytes < 0
 			? IstreamDirectResult::ERRNO
@@ -228,7 +235,7 @@ BufferedIstream::OnData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-BufferedIstream::OnDirect(FdType type, FileDescriptor fd,
+BufferedIstream::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 			  std::size_t max_length) noexcept
 {
 	if (buffer.IsDefined() || (type & ISTREAM_TO_PIPE) == 0)
@@ -236,7 +243,7 @@ BufferedIstream::OnDirect(FdType type, FileDescriptor fd,
 		   we must continue to do so, even if we suddenly get
 		   a file descriptor, because this class is incapable
 		   of mixing both */
-		return ReadToBuffer(fd, max_length);
+		return ReadToBuffer(fd, offset, max_length);
 
 	if (!pipe.IsDefined()) {
 		/* create the pipe */
@@ -250,7 +257,7 @@ BufferedIstream::OnDirect(FdType type, FileDescriptor fd,
 
 	defer_ready.Schedule();
 
-	ssize_t nbytes = splice(fd.Get(), nullptr,
+	ssize_t nbytes = splice(fd.Get(), ToOffsetPointer(offset),
 				pipe.GetWriteFd().Get(), nullptr,
 				max_length, SPLICE_F_MOVE|SPLICE_F_NONBLOCK);
 	if (nbytes <= 0) {

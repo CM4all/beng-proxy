@@ -101,12 +101,13 @@ public:
 	}
 
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
+				     off_t offset,
 				     std::size_t max_length) noexcept override {
 		/* disable the timeout as soon as the first data byte
 		   arrives */
 		timeout_event.Cancel();
 
-		return ForwardIstream::OnDirect(type, fd, max_length);
+		return ForwardIstream::OnDirect(type, fd, offset, max_length);
 	}
 };
 

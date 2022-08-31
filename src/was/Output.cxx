@@ -153,6 +153,7 @@ private:
 	bool OnIstreamReady() noexcept override;
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
+				     off_t offset,
 				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
@@ -334,12 +335,14 @@ WasOutput::OnData(const void *p, std::size_t length) noexcept
 
 IstreamDirectResult
 WasOutput::OnDirect(gcc_unused FdType type, FileDescriptor source_fd,
+		    off_t source_offset,
 		    std::size_t max_length) noexcept
 {
 	assert(HasPipe());
 	assert(!IsEof());
 
-	ssize_t nbytes = SpliceToPipe(source_fd, nullptr,
+	ssize_t nbytes = SpliceToPipe(source_fd,
+				      ToOffsetPointer(source_offset),
 				      GetPipe(),
 				      max_length);
 	if (nbytes < 0 && errno == EAGAIN) {
@@ -352,7 +355,8 @@ WasOutput::OnDirect(gcc_unused FdType type, FileDescriptor source_fd,
 		/* try again, just in case fd has become ready between
 		   the first istream_direct_to_pipe() call and
 		   fd.IsReadyForWriting() */
-		nbytes = SpliceToPipe(source_fd, nullptr,
+		nbytes = SpliceToPipe(source_fd,
+				      ToOffsetPointer(source_offset),
 				      GetPipe(),
 				      max_length);
 	}

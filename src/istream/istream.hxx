@@ -130,6 +130,7 @@ protected:
 	bool InvokeReady() noexcept;
 	std::size_t InvokeData(const void *data, std::size_t length) noexcept;
 	IstreamDirectResult InvokeDirect(FdType type, FileDescriptor fd,
+					 off_t offset,
 					 std::size_t max_length) noexcept;
 	void InvokeEof() noexcept;
 	void InvokeError(std::exception_ptr ep) noexcept;

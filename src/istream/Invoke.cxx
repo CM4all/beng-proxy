@@ -101,7 +101,8 @@ Istream::InvokeData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-Istream::InvokeDirect(FdType type, FileDescriptor fd, std::size_t max_length) noexcept
+Istream::InvokeDirect(FdType type, FileDescriptor fd, off_t offset,
+		      std::size_t max_length) noexcept
 {
 	assert(!destroyed);
 	assert(handler != nullptr);
@@ -116,7 +117,7 @@ Istream::InvokeDirect(FdType type, FileDescriptor fd, std::size_t max_length) no
 	in_data = true;
 #endif
 
-	IstreamDirectResult result = handler->OnDirect(type, fd, max_length);
+	const auto result = handler->OnDirect(type, fd, offset, max_length);
 	assert(result == IstreamDirectResult::CLOSED || !eof);
 
 #ifndef NDEBUG

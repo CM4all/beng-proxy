@@ -35,6 +35,7 @@
 #include "event/PipeEvent.hxx"
 #include "event/DeferEvent.hxx"
 #include "istream/istream.hxx"
+#include "istream/Handler.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/Result.hxx"
 #include "istream/Bucket.hxx"
@@ -348,7 +349,9 @@ WasInput::TryDirect() noexcept
 			max_length = rest;
 	}
 
-	switch (InvokeDirect(FdType::FD_PIPE, GetPipe(), max_length)) {
+	switch (InvokeDirect(FdType::FD_PIPE, GetPipe(),
+			     IstreamHandler::NO_OFFSET,
+			     max_length)) {
 	case IstreamDirectResult::BLOCKING:
 		CancelRead();
 		return false;

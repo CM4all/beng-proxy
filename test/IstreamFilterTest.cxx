@@ -154,7 +154,7 @@ Context::OnData(gcc_unused const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-Context::OnDirect(FdType, FileDescriptor, std::size_t max_length) noexcept
+Context::OnDirect(FdType, FileDescriptor, off_t, std::size_t max_length) noexcept
 {
 	got_data = true;
 

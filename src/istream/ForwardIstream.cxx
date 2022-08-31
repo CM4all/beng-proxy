@@ -58,10 +58,10 @@ ForwardIstream::OnData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-ForwardIstream::OnDirect(FdType type, FileDescriptor fd,
+ForwardIstream::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 			 std::size_t max_length) noexcept
 {
-	return InvokeDirect(type, fd, max_length);
+	return InvokeDirect(type, fd, offset, max_length);
 }
 
 void

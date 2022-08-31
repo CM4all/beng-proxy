@@ -38,6 +38,7 @@ gcc_noreturn
 IstreamDirectResult
 IstreamHandler::OnDirect([[maybe_unused]] FdType type,
 			 [[maybe_unused]] FileDescriptor fd,
+			 [[maybe_unused]] off_t offset,
 			 [[maybe_unused]] std::size_t max_length) noexcept
 {
 	gcc_unreachable();

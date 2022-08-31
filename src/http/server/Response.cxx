@@ -92,7 +92,7 @@ HttpServerConnection::OnData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-HttpServerConnection::OnDirect(FdType type, FileDescriptor fd,
+HttpServerConnection::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 			       std::size_t max_length) noexcept
 {
 	assert(socket->IsConnected() || request.request == nullptr);
@@ -102,7 +102,8 @@ HttpServerConnection::OnDirect(FdType type, FileDescriptor fd,
 	if (!socket->IsConnected())
 		return IstreamDirectResult::BLOCKING;
 
-	ssize_t nbytes = socket->WriteFrom(fd, type, nullptr, max_length);
+	ssize_t nbytes = socket->WriteFrom(fd, type, ToOffsetPointer(offset),
+					   max_length);
 	if (gcc_likely(nbytes > 0)) {
 		input.ConsumeDirect(nbytes);
 		response.bytes_sent += nbytes;

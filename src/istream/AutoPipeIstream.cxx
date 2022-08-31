@@ -81,6 +81,7 @@ public:
 	/* handler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
+				     off_t offset,
 				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
@@ -112,7 +113,8 @@ AutoPipeIstream::Consume() noexcept
 	assert(pipe.IsDefined());
 	assert(piped > 0);
 
-	auto result = InvokeDirect(FdType::FD_PIPE, pipe.GetReadFd(), piped);
+	auto result = InvokeDirect(FdType::FD_PIPE, pipe.GetReadFd(),
+				   IstreamHandler::NO_OFFSET, piped);
 	switch (result) {
 	case IstreamDirectResult::BLOCKING:
 	case IstreamDirectResult::CLOSED:
@@ -173,7 +175,7 @@ AutoPipeIstream::OnData(const void *data, std::size_t length) noexcept
 }
 
 inline IstreamDirectResult
-AutoPipeIstream::OnDirect(FdType type, FileDescriptor fd,
+AutoPipeIstream::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 			  std::size_t max_length) noexcept
 {
 	assert(HasHandler());
@@ -192,7 +194,7 @@ AutoPipeIstream::OnDirect(FdType type, FileDescriptor fd,
 	if (direct_mask & FdTypeMask(type))
 		/* already supported by handler (maybe already a pipe) - no
 		   need for wrapping it into a pipe */
-		return InvokeDirect(type, fd, max_length);
+		return InvokeDirect(type, fd, offset, max_length);
 
 	assert((type & ISTREAM_TO_PIPE) == type);
 

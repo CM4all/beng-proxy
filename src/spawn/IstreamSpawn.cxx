@@ -133,6 +133,7 @@ struct SpawnIstream final : Istream, IstreamSink, ExitListener {
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
+				     off_t offset,
 				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
@@ -213,12 +214,12 @@ SpawnIstream::OnData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-SpawnIstream::OnDirect(gcc_unused FdType type, FileDescriptor fd,
+SpawnIstream::OnDirect(gcc_unused FdType type, FileDescriptor fd, off_t offset,
 		       std::size_t max_length) noexcept
 {
 	assert(input_fd.IsDefined());
 
-	ssize_t nbytes = SpliceToPipe(fd, nullptr,
+	ssize_t nbytes = SpliceToPipe(fd, ToOffsetPointer(offset),
 				      input_fd, max_length);
 	if (nbytes <= 0) {
 		if (nbytes == 0)
@@ -235,7 +236,7 @@ SpawnIstream::OnDirect(gcc_unused FdType type, FileDescriptor fd,
 		/* try again, just in case connection->fd has become
 		   ready between the first splice() call and
 		   fd_ready_for_writing() */
-		nbytes = SpliceToPipe(fd, nullptr,
+		nbytes = SpliceToPipe(fd, ToOffsetPointer(offset),
 				      input_fd, max_length);
 		if (nbytes <= 0)
 			return nbytes < 0
@@ -331,7 +332,8 @@ SpawnIstream::ReadFromOutput() noexcept
 			return;
 		}
 
-		switch (InvokeDirect(FdType::FD_PIPE, output_fd, INT_MAX)) {
+		switch (InvokeDirect(FdType::FD_PIPE, output_fd, NO_OFFSET,
+				     INT_MAX)) {
 		case IstreamDirectResult::BLOCKING:
 		case IstreamDirectResult::CLOSED:
 			break;

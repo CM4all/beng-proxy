@@ -86,17 +86,21 @@ private:
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
+				     off_t offset,
 				     std::size_t max_length) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
 
 static ssize_t
-fd_read(FdType type, FileDescriptor fd, void *p, std::size_t size) noexcept
+fd_read(FdType type, FileDescriptor fd, off_t offset,
+	void *p, std::size_t size) noexcept
 {
 	return IsAnySocket(type)
 		? SocketDescriptor::FromFileDescriptor(fd).Read(p, size)
-		: fd.Read(p, size);
+		: (IstreamHandler::HasOffset(offset)
+		   ? fd.ReadAt(offset, p, size)
+		   : fd.Read(p, size));
 }
 
 void
@@ -151,7 +155,7 @@ RubberSink::OnData(const void *data, std::size_t length) noexcept
 }
 
 IstreamDirectResult
-RubberSink::OnDirect(FdType type, FileDescriptor fd,
+RubberSink::OnDirect(FdType type, FileDescriptor fd, off_t offset,
 		     std::size_t max_length) noexcept
 {
 	assert(position <= max_size);
@@ -161,7 +165,8 @@ RubberSink::OnDirect(FdType type, FileDescriptor fd,
 		/* already full, see what the file descriptor says */
 
 		uint8_t dummy;
-		ssize_t nbytes = fd_read(type, fd, &dummy, sizeof(dummy));
+		ssize_t nbytes = fd_read(type, fd, offset,
+					 &dummy, sizeof(dummy));
 		if (nbytes > 0) {
 			input.ConsumeDirect(nbytes);
 			FailTooLarge();
@@ -182,7 +187,7 @@ RubberSink::OnDirect(FdType type, FileDescriptor fd,
 	uint8_t *p = (uint8_t *)allocation.Write();
 	p += position;
 
-	ssize_t nbytes = fd_read(type, fd, p, length);
+	ssize_t nbytes = fd_read(type, fd, offset, p, length);
 	if (nbytes <= 0)
 		return nbytes < 0
 			? IstreamDirectResult::ERRNO

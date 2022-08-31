@@ -68,6 +68,7 @@ public:
 	/* virtual methods from class IstreamHandler */
 	std::size_t OnData(const void *data, std::size_t length) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
+				     off_t offset,
 				     std::size_t max_length) noexcept override;
 };
 
@@ -142,7 +143,8 @@ HeadIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 }
 
 IstreamDirectResult
-HeadIstream::OnDirect(FdType type, FileDescriptor fd, std::size_t max_length) noexcept
+HeadIstream::OnDirect(FdType type, FileDescriptor fd, off_t offset,
+		      std::size_t max_length) noexcept
 {
 	if (rest == 0) {
 		DestroyEof();
@@ -152,7 +154,7 @@ HeadIstream::OnDirect(FdType type, FileDescriptor fd, std::size_t max_length) no
 	if ((off_t)max_length > rest)
 		max_length = rest;
 
-	const auto result = InvokeDirect(type, fd, max_length);
+	const auto result = InvokeDirect(type, fd, offset, max_length);
 
 	if (result == IstreamDirectResult::OK && rest == 0) {
 		DestroyEof();
