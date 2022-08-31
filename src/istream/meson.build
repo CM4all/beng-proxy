@@ -21,6 +21,8 @@ istream_api_dep = declare_dependency(
 istream_basic = static_library(
   'istream_basic',
 
+  'ForwardIstream.cxx',
+
   # Istream implementations
   'BlockIstream.cxx',
   'ByteIstream.cxx',

@@ -30,58 +30,49 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "ForwardIstream.hxx"
 
-#include "FacadeIstream.hxx"
+off_t
+ForwardIstream::_Skip(off_t length) noexcept
+{
+	off_t nbytes = input.Skip(length);
+	if (nbytes > 0)
+		Consumed(nbytes);
+	return nbytes;
+}
 
-class ForwardIstream : public FacadeIstream {
-protected:
-	template<typename I>
-	ForwardIstream(struct pool &_pool, I &&_input)
-		:FacadeIstream(_pool, std::forward<I>(_input)) {}
+int
+ForwardIstream::_AsFd() noexcept
+{
+	int fd = input.AsFd();
+	if (fd >= 0)
+		Destroy();
+	return fd;
+}
 
-	explicit ForwardIstream(struct pool &_pool)
-		:FacadeIstream(_pool) {}
+std::size_t
+ForwardIstream::OnData(const void *data, std::size_t length) noexcept
+{
+	return InvokeData(data, length);
+}
 
-public:
-	/* virtual methods from class Istream */
+IstreamDirectResult
+ForwardIstream::OnDirect(FdType type, int fd,
+			 std::size_t max_length) noexcept
+{
+	return InvokeDirect(type, fd, max_length);
+}
 
-	void _SetDirect(FdTypeMask mask) noexcept override {
-		input.SetDirect(mask);
-	}
+void
+ForwardIstream::OnEof() noexcept
+{
+	ClearInput();
+	DestroyEof();
+}
 
-	off_t _GetAvailable(bool partial) noexcept override {
-		return input.GetAvailable(partial);
-	}
-
-	off_t _Skip(off_t length) noexcept override;
-
-	void _Read() noexcept override {
-		input.Read();
-	}
-
-	std::size_t _ConsumeBucketList(std::size_t nbytes) noexcept override {
-		return Consumed(input.ConsumeBucketList(nbytes));
-	}
-
-	void _ConsumeDirect(std::size_t nbytes) noexcept override {
-		input.ConsumeDirect(nbytes);
-	}
-
-	int _AsFd() noexcept override;
-
-	/* virtual methods from class IstreamHandler */
-
-	bool OnIstreamReady() noexcept override {
-		return InvokeReady();
-	}
-
-	std::size_t OnData(const void *data,
-			   std::size_t length) noexcept override;
-
-	IstreamDirectResult OnDirect(FdType type, int fd,
-				     std::size_t max_length) noexcept override;
-
-	void OnEof() noexcept override;
-	void OnError(std::exception_ptr ep) noexcept override;
-};
+void
+ForwardIstream::OnError(std::exception_ptr ep) noexcept
+{
+	ClearInput();
+	DestroyError(ep);
+}
