@@ -204,7 +204,11 @@ FileIstream::TryDirect()
 	switch (InvokeDirect(FdType::FD_FILE, fd.Get(), GetMaxRead())) {
 	case IstreamDirectResult::CLOSED:
 	case IstreamDirectResult::BLOCKING:
+		break;
+
 	case IstreamDirectResult::OK:
+		if (offset >= end_offset)
+			EofDetected();
 		break;
 
 	case IstreamDirectResult::END:
@@ -277,8 +281,6 @@ void
 FileIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 {
 	offset += nbytes;
-	if (offset >= end_offset)
-		EofDetected();
 }
 
 int
