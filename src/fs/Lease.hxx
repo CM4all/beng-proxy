@@ -168,7 +168,7 @@ public:
 		return socket->WriteV(v);
 	}
 
-	ssize_t WriteFrom(int fd, FdType fd_type, size_t length) noexcept {
+	ssize_t WriteFrom(FileDescriptor fd, FdType fd_type, size_t length) noexcept {
 		assert(!IsReleased());
 
 		return socket->WriteFrom(fd, fd_type, length);

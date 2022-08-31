@@ -291,7 +291,8 @@ public:
 		return base.WriteV(v.data(), v.size());
 	}
 
-	ssize_t WriteFrom(int fd, FdType fd_type, size_t length) noexcept {
+	ssize_t WriteFrom(FileDescriptor fd, FdType fd_type,
+			  std::size_t length) noexcept {
 		assert(filter == nullptr);
 
 		return base.WriteFrom(fd, fd_type, length);

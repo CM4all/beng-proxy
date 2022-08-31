@@ -205,7 +205,7 @@ AutoPipeIstream::OnDirect(FdType type, FileDescriptor fd,
 		}
 	}
 
-	ssize_t nbytes = Splice(fd.Get(), pipe.GetWriteFd().Get(), max_length);
+	ssize_t nbytes = Splice(fd, pipe.GetWriteFd(), max_length);
 	/* don't check EAGAIN here (and don't return -2).  We assume that
 	   splicing to the pipe cannot possibly block, since we flushed
 	   the pipe; assume that it can only be the source file which is
