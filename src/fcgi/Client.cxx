@@ -51,6 +51,7 @@
 #include "io/UniqueFileDescriptor.hxx"
 #include "io/SpliceSupport.hxx"
 #include "util/DestructObserver.hxx"
+#include "util/StringSplit.hxx"
 #include "util/StringStrip.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/StringView.hxx"
@@ -214,7 +215,7 @@ private:
 	/**
 	 * Throws on error.
 	 */
-	bool HandleLine(const char *line, std::size_t length);
+	bool HandleLine(std::string_view line);
 
 	/**
 	 * Throws on error.
@@ -374,12 +375,10 @@ FcgiClient::AnalyseBuffer(const std::span<const std::byte> buffer) const noexcep
 }
 
 inline bool
-FcgiClient::HandleLine(const char *line, std::size_t length)
+FcgiClient::HandleLine(std::string_view line)
 {
-	assert(line != nullptr);
-
-	if (length > 0) {
-		if (!header_parse_line(GetPool(), response.headers, {line, length}))
+	if (!line.empty()) {
+		if (!header_parse_line(GetPool(), response.headers, line))
 			throw FcgiClientError("Malformed FastCGI response header");
 		return false;
 	} else {
@@ -392,25 +391,24 @@ FcgiClient::HandleLine(const char *line, std::size_t length)
 }
 
 inline std::size_t
-FcgiClient::ParseHeaders(std::string_view src)
+FcgiClient::ParseHeaders(const std::string_view src0)
 {
-	const char *p = src.data(), *const data_end = p + src.size();
-
+	std::string_view src = src0;
 	const char *next = nullptr;
 
-	const char *eol;
-	while ((eol = (const char *)memchr(p, '\n', data_end - p)) != nullptr) {
-		next = eol + 1;
-
-		eol = StripRight(p, eol);
-
-		if (HandleLine(p, eol - p))
+	while (true) {
+		const auto [line, rest] = Split(src, '\n');
+		next = rest.data();
+		if (next == nullptr)
 			break;
 
-		p = next;
+		if (HandleLine(StripRight(line)))
+			break;
+
+		src = rest;
 	}
 
-	return next != nullptr ? next - src.data() : 0;
+	return next != nullptr ? next - src0.data() : 0;
 }
 
 inline std::size_t
