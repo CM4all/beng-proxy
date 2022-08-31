@@ -437,7 +437,7 @@ HttpServerConnection::Feed(std::span<const std::byte> b) noexcept
 		return result;
 
 	case Request::BODY:
-		return FeedRequestBody(b.data(), b.size());
+		return FeedRequestBody(b);
 
 	case Request::END:
 		/* check if the connection was closed by the client while we

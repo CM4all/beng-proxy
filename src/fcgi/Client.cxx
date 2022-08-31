@@ -219,7 +219,7 @@ private:
 	/**
 	 * Throws on error.
 	 */
-	std::size_t ParseHeaders(const char *data, std::size_t length);
+	std::size_t ParseHeaders(std::string_view src);
 
 	/**
 	 * Feed data into the FastCGI protocol parser.
@@ -227,7 +227,7 @@ private:
 	 * @return the number of bytes consumed, or 0 if this object has
 	 * been destructed
 	 */
-	std::size_t Feed(const std::byte *data, std::size_t length) noexcept;
+	std::size_t Feed(std::span<const std::byte> src) noexcept;
 
 	/**
 	 * Submit the response metadata to the #HttpResponseHandler.
@@ -274,7 +274,7 @@ private:
 	void _Close() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
-	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     off_t offset,
 				     std::size_t max_length) noexcept override;
@@ -392,9 +392,9 @@ FcgiClient::HandleLine(const char *line, std::size_t length)
 }
 
 inline std::size_t
-FcgiClient::ParseHeaders(const char *data, std::size_t length)
+FcgiClient::ParseHeaders(std::string_view src)
 {
-	const char *p = data, *const data_end = data + length;
+	const char *p = src.data(), *const data_end = p + src.size();
 
 	const char *next = nullptr;
 
@@ -410,21 +410,21 @@ FcgiClient::ParseHeaders(const char *data, std::size_t length)
 		p = next;
 	}
 
-	return next != nullptr ? next - data : 0;
+	return next != nullptr ? next - src.data() : 0;
 }
 
 inline std::size_t
-FcgiClient::Feed(const std::byte *data, std::size_t length) noexcept
+FcgiClient::Feed(std::span<const std::byte> src) noexcept
 {
 	if (response.stderr) {
 		/* ignore errors and partial writes while forwarding STDERR
 		   payload; there's nothing useful we can do, and we can't let
 		   this delay/disturb the response delivery */
 		if (stderr_fd.IsDefined())
-			stderr_fd.Write(data, length);
+			stderr_fd.Write(src.data(), src.size());
 		else
-			fwrite(data, 1, length, stderr);
-		return length;
+			fwrite(src.data(), 1, src.size(), stderr);
+		return src.size();
 	}
 
 	switch (response.read_state) {
@@ -432,7 +432,7 @@ FcgiClient::Feed(const std::byte *data, std::size_t length) noexcept
 
 	case Response::READ_HEADERS:
 		try {
-			return ParseHeaders((const char *)data, length);
+			return ParseHeaders(ToStringView(src));
 		} catch (...) {
 			AbortResponseHeaders(std::current_exception());
 			return 0;
@@ -445,9 +445,9 @@ FcgiClient::Feed(const std::byte *data, std::size_t length) noexcept
 
 	case Response::READ_BODY:
 		assert(response.available < 0 ||
-		       (off_t)length <= response.available);
+		       (off_t)src.size() <= response.available);
 
-		consumed = InvokeData(data, length);
+		consumed = InvokeData(src);
 		if (consumed > 0 && response.available >= 0) {
 			assert((off_t)consumed <= response.available);
 			response.available -= consumed;
@@ -598,7 +598,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 				return BufferedResult::CLOSED;
 			}
 
-			std::size_t nbytes = Feed(data, length);
+			std::size_t nbytes = Feed({data, length});
 			if (nbytes == 0) {
 				if (destructed)
 					return BufferedResult::CLOSED;
@@ -677,14 +677,14 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
  */
 
 std::size_t
-FcgiClient::OnData(const void *data, std::size_t length) noexcept
+FcgiClient::OnData(std::span<const std::byte> src) noexcept
 {
 	assert(socket.IsConnected());
 	assert(HasInput());
 
 	request.got_data = true;
 
-	ssize_t nbytes = socket.Write(data, length);
+	ssize_t nbytes = socket.Write(src.data(), src.size());
 	if (nbytes > 0)
 		socket.ScheduleWrite();
 	else if (gcc_likely(nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED))

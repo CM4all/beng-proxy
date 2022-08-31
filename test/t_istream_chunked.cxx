@@ -37,6 +37,9 @@
 #include "istream/UnusedPtr.hxx"
 #include "istream/Handler.hxx"
 #include "pool/pool.hxx"
+#include "util/SpanCast.hxx"
+
+using std::string_view_literals::operator""sv;
 
 class IstreamChunkedTestTraits {
 public:
@@ -78,9 +81,8 @@ TEST(IstreamChunkedTest, Custom)
 
 		/* virtual methods from class IstreamHandler */
 
-		size_t OnData(gcc_unused const void *data,
-			      gcc_unused size_t length) noexcept override {
-			InvokeData(" ", 1);
+		size_t OnData(std::span<const std::byte>) noexcept override {
+			InvokeData(AsBytes(" "sv));
 			return 0;
 		}
 

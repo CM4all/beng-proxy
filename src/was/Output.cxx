@@ -151,7 +151,7 @@ private:
 
 	/* virtual methods from class IstreamHandler */
 	bool OnIstreamReady() noexcept override;
-	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     off_t offset,
 				     std::size_t max_length) noexcept override;
@@ -301,7 +301,7 @@ WasOutput::OnIstreamReady() noexcept
 }
 
 inline std::size_t
-WasOutput::OnData(const void *p, std::size_t length) noexcept
+WasOutput::OnData(const std::span<const std::byte> src) noexcept
 {
 	assert(HasPipe());
 	assert(HasInput());
@@ -309,7 +309,7 @@ WasOutput::OnData(const void *p, std::size_t length) noexcept
 
 	got_data = true;
 
-	ssize_t nbytes = GetPipe().Write(p, length);
+	ssize_t nbytes = GetPipe().Write(src.data(), src.size());
 	if (gcc_likely(nbytes > 0)) {
 		sent += nbytes;
 

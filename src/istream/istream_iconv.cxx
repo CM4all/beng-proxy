@@ -74,7 +74,7 @@ public:
 
 	/* handler */
 
-	size_t OnData(const void *data, size_t length) noexcept override;
+	size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -94,7 +94,7 @@ deconst_iconv(iconv_t cd,
  */
 
 size_t
-IconvIstream::OnData(const void *_data, size_t length) noexcept
+IconvIstream::OnData(const std::span<const std::byte> _src) noexcept
 {
 	assert(input.IsDefined());
 
@@ -102,7 +102,8 @@ IconvIstream::OnData(const void *_data, size_t length) noexcept
 
 	buffer.AllocateIfNull(fb_pool_get());
 
-	const char *data = (const char *)_data, *src = data;
+	const char *data = (const char *)_src.data(), *src = data;
+	std::size_t length = _src.size();
 
 	do {
 		auto w = buffer.Write();

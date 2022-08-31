@@ -397,7 +397,7 @@ private:
 	void Cancel() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
-	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     off_t offset,
 				     std::size_t max_length) noexcept override;
@@ -882,7 +882,7 @@ HttpClient::FeedBody(std::span<const std::byte> b)
 
 	{
 		const DestructObserver destructed(*this);
-		nbytes = response_body_reader.FeedBody(b.data(), b.size());
+		nbytes = response_body_reader.FeedBody(b);
 
 		if (!destructed && IsConnected())
 			/* if BufferedSocket is currently flushing the
@@ -1228,13 +1228,13 @@ HttpClient::OnBufferedError(std::exception_ptr ep) noexcept
  */
 
 std::size_t
-HttpClient::OnData(const void *data, std::size_t length) noexcept
+HttpClient::OnData(std::span<const std::byte> src) noexcept
 {
 	assert(IsConnected());
 
 	request.got_data = true;
 
-	ssize_t nbytes = socket.Write({(const std::byte *)data, length});
+	ssize_t nbytes = socket.Write(src);
 	if (nbytes >= 0) [[likely]] {
 		ScheduleWrite();
 		return (std::size_t)nbytes;

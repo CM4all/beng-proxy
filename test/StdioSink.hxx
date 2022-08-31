@@ -53,7 +53,7 @@ struct StdioSink final : IstreamSink {
 
 	/* virtual methods from class IstreamHandler */
 
-	size_t OnData(const void *data, size_t length) noexcept override;
+	size_t OnData(std::span<const std::byte> src) noexcept override;
 
 	void OnEof() noexcept override {
 		ClearInput();
@@ -67,9 +67,9 @@ struct StdioSink final : IstreamSink {
 };
 
 size_t
-StdioSink::OnData(const void *data, size_t length) noexcept
+StdioSink::OnData(std::span<const std::byte> src) noexcept
 {
-	ssize_t nbytes = write(STDOUT_FILENO, data, length);
+	ssize_t nbytes = write(STDOUT_FILENO, src.data(), src.size());
 	if (nbytes < 0) {
 		perror("failed to write to stdout");
 		CloseInput();

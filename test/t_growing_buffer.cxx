@@ -65,7 +65,7 @@ struct Context final : IstreamSink {
 	void Run(PoolPtr _pool, UnusedIstreamPtr _istream);
 
 	/* virtual methods from class IstreamHandler */
-	size_t OnData(const void *data, size_t length) noexcept override;
+	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -76,7 +76,7 @@ struct Context final : IstreamSink {
  */
 
 size_t
-Context::OnData(gcc_unused const void *data, size_t length) noexcept
+Context::OnData(std::span<const std::byte> src) noexcept
 {
 	assert(HasInput());
 
@@ -89,7 +89,7 @@ Context::OnData(gcc_unused const void *data, size_t length) noexcept
 		return 0;
 	}
 
-	return length;
+	return src.size();
 }
 
 void

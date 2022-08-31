@@ -92,12 +92,12 @@ public:
 
 	/* virtual methods from class IstreamHandler */
 
-	std::size_t OnData(const void *data, std::size_t length) noexcept override {
+	std::size_t OnData(std::span<const std::byte> src) noexcept override {
 		/* disable the timeout as soon as the first data byte
 		   arrives */
 		timeout_event.Cancel();
 
-		return ForwardIstream::OnData(data, length);
+		return ForwardIstream::OnData(src);
 	}
 
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,

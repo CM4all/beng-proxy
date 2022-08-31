@@ -184,7 +184,7 @@ public:
 		return Istream::Consumed(nbytes);
 	}
 
-	std::size_t FeedBody(const void *data, std::size_t length) noexcept;
+	std::size_t FeedBody(std::span<const std::byte> src) noexcept;
 
 	bool CheckDirect(FdType type) const noexcept {
 		return (direct_mask & FdTypeMask(type)) != 0;

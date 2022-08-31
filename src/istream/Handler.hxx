@@ -37,6 +37,7 @@
 
 #include <cstddef>
 #include <exception>
+#include <span>
 
 #include <sys/types.h>
 
@@ -92,7 +93,7 @@ public:
 	 * (caller is responsible for registering an event) or if the
 	 * stream has been closed
 	 */
-	virtual std::size_t OnData(const void *data, std::size_t length) noexcept = 0;
+	virtual std::size_t OnData(std::span<const std::byte> src) noexcept = 0;
 
 	/**
 	 * Data is available in a file descriptor.

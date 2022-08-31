@@ -41,6 +41,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <span>
 
 class FileDescriptor;
 class IstreamHandler;
@@ -128,7 +129,7 @@ protected:
 	}
 
 	bool InvokeReady() noexcept;
-	std::size_t InvokeData(const void *data, std::size_t length) noexcept;
+	std::size_t InvokeData(std::span<const std::byte> src) noexcept;
 	IstreamDirectResult InvokeDirect(FdType type, FileDescriptor fd,
 					 off_t offset,
 					 std::size_t max_length) noexcept;
@@ -164,7 +165,7 @@ protected:
 		if (r.empty())
 			return 0;
 
-		std::size_t consumed = InvokeData(r.data(), r.size());
+		std::size_t consumed = InvokeData(r);
 		if (consumed > 0)
 			buffer.Consume(consumed);
 		return r.size() - consumed;
@@ -179,7 +180,7 @@ protected:
 		if (r.empty())
 			return 0;
 
-		std::size_t consumed = InvokeData(r.data(), r.size());
+		std::size_t consumed = InvokeData(r);
 		if (consumed > 0)
 			buffer.Consume(consumed);
 		return consumed;

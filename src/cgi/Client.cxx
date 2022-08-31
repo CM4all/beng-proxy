@@ -90,21 +90,21 @@ public:
 	 * @return the number of bytes consumed from the specified buffer
 	 * (moved to the input buffer), 0 if the object has been closed
 	 */
-	std::size_t FeedHeaders(const void *data, std::size_t length);
+	std::size_t FeedHeaders(std::span<const std::byte> src);
 
 	/**
 	 * Call FeedHeaders() in a loop, to parse as much as possible.
 	 *
 	 * Caller must hold pool reference.
 	 */
-	std::size_t FeedHeadersLoop(const char *data, std::size_t length);
+	std::size_t FeedHeadersLoop(std::span<const std::byte> src);
 
 	/**
 	 * Caller must hold pool reference.
 	 */
-	std::size_t FeedHeadersCheck(const char *data, std::size_t length);
+	std::size_t FeedHeadersCheck(std::span<const std::byte> src);
 
-	std::size_t FeedBody(const char *data, std::size_t length);
+	std::size_t FeedBody(std::span<const std::byte> src);
 
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override;
@@ -120,7 +120,7 @@ public:
 	void _ConsumeDirect(std::size_t nbytes) noexcept override;
 
 	/* virtual methods from class IstreamHandler */
-	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     off_t offset,
 				     std::size_t max_length) noexcept override;
@@ -171,25 +171,25 @@ CGIClient::ReturnResponse()
 }
 
 inline std::size_t
-CGIClient::FeedHeaders(const void *data, std::size_t length)
+CGIClient::FeedHeaders(std::span<const std::byte> src)
 try {
 	assert(!parser.AreHeadersFinished());
 
 	auto w = buffer.Write();
 	assert(!w.empty());
 
-	if (length > w.size())
-		length = w.size();
+	if (src.size() > w.size())
+		src = src.first(w.size());
 
-	memcpy(w.data(), data, length);
-	buffer.Append(length);
+	std::copy(src.begin(), src.end(), w.data());
+	buffer.Append(src.size());
 
 	switch (parser.FeedHeaders(GetPool(), buffer)) {
 	case Completion::DONE:
 		/* the DONE status can only be triggered by new data that
 		   was just received; therefore, the amount of data still in
 		   the buffer (= response body) must be smaller */
-		assert(buffer.GetAvailable() < length);
+		assert(buffer.GetAvailable() < src.size());
 
 		if (!ReturnResponse())
 			return 0;
@@ -197,10 +197,10 @@ try {
 		/* don't consider data still in the buffer (= response body)
 		   as "consumed"; the caller will attempt to submit it to the
 		   response body handler */
-		return length - buffer.GetAvailable();
+		return src.size() - buffer.GetAvailable();
 
 	case Completion::MORE:
-		return length;
+		return src.size();
 
 	case Completion::CLOSED:
 		/* unreachable */
@@ -219,21 +219,21 @@ try {
 }
 
 inline std::size_t
-CGIClient::FeedHeadersLoop(const char *data, std::size_t length)
+CGIClient::FeedHeadersLoop(const std::span<const std::byte> src)
 {
-	assert(length > 0);
+	assert(!src.empty());
 	assert(!parser.AreHeadersFinished());
 
 	const DestructObserver destructed(*this);
 	std::size_t consumed = 0;
 
 	do {
-		std::size_t nbytes = FeedHeaders(data + consumed, length - consumed);
+		std::size_t nbytes = FeedHeaders(src.subspan(consumed));
 		if (nbytes == 0)
 			break;
 
 		consumed += nbytes;
-	} while (consumed < length && !parser.AreHeadersFinished());
+	} while (consumed < src.size() && !parser.AreHeadersFinished());
 
 	if (destructed)
 		return 0;
@@ -242,9 +242,9 @@ CGIClient::FeedHeadersLoop(const char *data, std::size_t length)
 }
 
 inline std::size_t
-CGIClient::FeedHeadersCheck(const char *data, std::size_t length)
+CGIClient::FeedHeadersCheck(std::span<const std::byte> src)
 {
-	std::size_t nbytes = FeedHeadersLoop(data, length);
+	std::size_t nbytes = FeedHeadersLoop(src);
 
 	assert(nbytes == 0 || input.IsDefined());
 	assert(nbytes == 0 ||
@@ -255,9 +255,9 @@ CGIClient::FeedHeadersCheck(const char *data, std::size_t length)
 }
 
 inline std::size_t
-CGIClient::FeedBody(const char *data, std::size_t length)
+CGIClient::FeedBody(std::span<const std::byte> src)
 {
-	if (parser.IsTooMuch(length)) {
+	if (parser.IsTooMuch(src.size())) {
 		stopwatch.RecordEvent("malformed");
 		DestroyError(std::make_exception_ptr(CgiError("too much data from CGI script")));
 		return 0;
@@ -265,7 +265,7 @@ CGIClient::FeedBody(const char *data, std::size_t length)
 
 	had_output = true;
 
-	std::size_t nbytes = InvokeData(data, length);
+	std::size_t nbytes = InvokeData(src);
 	if (nbytes > 0 && parser.BodyConsumed(nbytes)) {
 		stopwatch.RecordEvent("end");
 		DestroyEof();
@@ -281,22 +281,21 @@ CGIClient::FeedBody(const char *data, std::size_t length)
  */
 
 std::size_t
-CGIClient::OnData(const void *data, std::size_t length) noexcept
+CGIClient::OnData(std::span<const std::byte> src) noexcept
 {
 	assert(input.IsDefined());
 
 	had_input = true;
 
 	if (!parser.AreHeadersFinished()) {
-		std::size_t nbytes = FeedHeadersCheck((const char *)data, length);
+		std::size_t nbytes = FeedHeadersCheck(src);
 
-		if (nbytes > 0 && nbytes < length &&
+		if (nbytes > 0 && nbytes < src.size() &&
 		    parser.AreHeadersFinished()) {
 			/* the headers are finished; now begin sending the
 			   response body */
 			const DestructObserver destructed(*this);
-			std::size_t nbytes2 = FeedBody((const char *)data + nbytes,
-						       length - nbytes);
+			std::size_t nbytes2 = FeedBody(src.subspan(nbytes));
 			if (nbytes2 > 0)
 				/* more data was consumed */
 				nbytes += nbytes2;
@@ -307,7 +306,7 @@ CGIClient::OnData(const void *data, std::size_t length) noexcept
 
 		return nbytes;
 	} else {
-		return FeedBody((const char *)data, length);
+		return FeedBody(src);
 	}
 }
 

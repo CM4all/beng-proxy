@@ -75,7 +75,7 @@ public:
 
 			assert(!reader.IsEOF());
 
-			size_t nbytes = InvokeData(src.data(), src.size());
+			size_t nbytes = InvokeData(src);
 			if (nbytes == 0)
 				/* growing_buffer has been closed */
 				return;

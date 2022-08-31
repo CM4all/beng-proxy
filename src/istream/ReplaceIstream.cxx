@@ -92,11 +92,11 @@ ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s) noexcept
  */
 
 size_t
-ReplaceIstream::Substitution::OnData(const void *data, size_t length) noexcept
+ReplaceIstream::Substitution::OnData(std::span<const std::byte> src) noexcept
 {
 	if (IsActive()) {
 		replace.had_output = true;
-		return replace.InvokeData(data, length);
+		return replace.InvokeData(src);
 	} else
 		return 0;
 }
@@ -189,7 +189,7 @@ ReplaceIstream::ReadFromBuffer(size_t max_length) noexcept
 		src = src.first(max_length);
 
 	had_output = true;
-	size_t nbytes = InvokeData(src.data(), src.size());
+	size_t nbytes = InvokeData(src);
 	assert(nbytes <= src.size());
 
 	if (nbytes == 0)
@@ -275,7 +275,7 @@ ReplaceIstream::TryRead() noexcept
  */
 
 size_t
-ReplaceIstream::OnData(const void *data, size_t length) noexcept
+ReplaceIstream::OnData(const std::span<const std::byte> src) noexcept
 {
 	had_input = true;
 
@@ -286,11 +286,11 @@ ReplaceIstream::OnData(const void *data, size_t length) noexcept
 
 	const auto old_source_length = source_length;
 
-	buffer.Write({(const std::byte *)data, length});
-	source_length += (off_t)length;
+	buffer.Write(src);
+	source_length += (off_t)src.size();
 
 	try {
-		Parse({(const std::byte *)data, length});
+		Parse(src);
 	} catch (...) {
 		DestroyError(std::current_exception());
 		return 0;
@@ -301,7 +301,7 @@ ReplaceIstream::OnData(const void *data, size_t length) noexcept
 		had_output = true;
 	}
 
-	return length;
+	return src.size();
 }
 
 void

@@ -122,7 +122,7 @@ private:
 
 	bool CalculateRemainingDataSize(const std::byte *src, const std::byte *src_end) noexcept;
 
-	size_t Feed(const void *data, size_t length) noexcept;
+	size_t Feed(std::span<const std::byte> src) noexcept;
 
 public:
 	/* virtual methods from class Istream */
@@ -132,7 +132,7 @@ public:
 
 protected:
 	/* virtual methods from class IstreamHandler */
-	size_t OnData(const void *data, size_t length) noexcept override;
+	size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
@@ -228,7 +228,7 @@ DechunkIstream::CalculateRemainingDataSize(const std::byte *src,
 }
 
 size_t
-DechunkIstream::Feed(const void *data0, size_t length) noexcept
+DechunkIstream::Feed(const std::span<const std::byte> _src) noexcept
 {
 	assert(input.IsDefined());
 	assert(!IsEofPending());
@@ -238,8 +238,8 @@ DechunkIstream::Feed(const void *data0, size_t length) noexcept
 
 	had_input = true;
 
-	const auto src_begin = (const std::byte *)data0;
-	const auto src_end = src_begin + length;
+	const auto src_begin = _src.data();
+	const auto src_end = src_begin + _src.size();
 
 	auto src = src_begin;
 	if (verbatim)
@@ -277,7 +277,7 @@ DechunkIstream::Feed(const void *data0, size_t length) noexcept
 			} else {
 				had_output = true;
 				seen_data += data.size();
-				nbytes = InvokeData(src, data.size());
+				nbytes = InvokeData({src, data.size()});
 				assert(nbytes <= data.size());
 
 				if (destructed)
@@ -303,7 +303,7 @@ DechunkIstream::Feed(const void *data0, size_t length) noexcept
 	if (verbatim && position > 0) {
 		/* send all chunks in one big block */
 		had_output = true;
-		size_t nbytes = InvokeData(src_begin, position);
+		size_t nbytes = InvokeData({src_begin, position});
 		if (destructed)
 			return 0;
 
@@ -339,9 +339,9 @@ DechunkIstream::Feed(const void *data0, size_t length) noexcept
  */
 
 size_t
-DechunkIstream::OnData(const void *data, size_t length) noexcept
+DechunkIstream::OnData(std::span<const std::byte> src) noexcept
 {
-	assert(!verbatim || length >= pending_verbatim);
+	assert(!verbatim || src.size() >= pending_verbatim);
 
 	if (IsEofPending())
 		/* don't accept any more data after the EOF chunk */
@@ -355,10 +355,10 @@ DechunkIstream::OnData(const void *data, size_t length) noexcept
 
 		assert(pending_verbatim > 0);
 
-		assert(length >= pending_verbatim);
+		assert(src.size() >= pending_verbatim);
 
 		had_output = true;
-		size_t nbytes = InvokeData(data, pending_verbatim);
+		size_t nbytes = InvokeData(src.first(pending_verbatim));
 		if (nbytes == 0)
 			return 0;
 
@@ -369,7 +369,7 @@ DechunkIstream::OnData(const void *data, size_t length) noexcept
 		return nbytes;
 	}
 
-	return Feed(data, length);
+	return Feed(src);
 }
 
 void

@@ -76,8 +76,7 @@ public:
 		return InvokeReady();
 	}
 
-	std::size_t OnData(const void *data,
-			   std::size_t length) noexcept override;
+	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     off_t offset,

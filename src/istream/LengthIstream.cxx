@@ -65,14 +65,14 @@ LengthIstream::_ConsumeDirect(std::size_t nbytes) noexcept
 }
 
 std::size_t
-LengthIstream::OnData(const void *data, std::size_t length) noexcept
+LengthIstream::OnData(std::span<const std::byte> src) noexcept
 {
-	if ((off_t)length > remaining) {
+	if ((off_t)src.size() > remaining) {
 		DestroyError(std::make_exception_ptr(std::runtime_error("Too much data in stream")));
 		return 0;
 	}
 
-	std::size_t nbytes = ForwardIstream::OnData(data, length);
+	std::size_t nbytes = ForwardIstream::OnData(src);
 	if (nbytes > 0)
 		remaining -= nbytes;
 	return nbytes;

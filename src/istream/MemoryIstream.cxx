@@ -48,7 +48,7 @@ void
 MemoryIstream::_Read() noexcept
 {
 	if (!data.empty()) {
-		auto nbytes = InvokeData(data.data(), data.size());
+		auto nbytes = InvokeData(data);
 		if (nbytes == 0)
 			return;
 

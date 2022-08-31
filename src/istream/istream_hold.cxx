@@ -128,8 +128,8 @@ public:
 		return !HasHandler() || ForwardIstream::OnIstreamReady();
 	}
 
-	std::size_t OnData(const void *data, std::size_t length) noexcept override {
-		return HasHandler() ? ForwardIstream::OnData(data, length) : 0;
+	std::size_t OnData(std::span<const std::byte> src) noexcept override {
+		return HasHandler() ? ForwardIstream::OnData(src) : 0;
 	}
 
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,

@@ -74,9 +74,9 @@ struct StatsIstreamSink : IstreamSink {
 
 	/* virtual methods from class IstreamHandler */
 
-	size_t OnData(gcc_unused const void *data, size_t length) noexcept override {
-		total_data += length;
-		return length;
+	size_t OnData(std::span<const std::byte> src) noexcept override {
+		total_data += src.size();
+		return src.size();
 	}
 
 	void OnEof() noexcept override {
@@ -108,7 +108,7 @@ struct BlockContext final : Context, StatsIstreamSink {
 
 	/* istream handler */
 
-	size_t OnData(gcc_unused const void *data, gcc_unused size_t length) noexcept override {
+	size_t OnData(std::span<const std::byte>) noexcept override {
 		// block
 		return 0;
 	}

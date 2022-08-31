@@ -35,6 +35,7 @@
 #include "istream/FacadeIstream.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "istream/New.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StringView.hxx"
 #include "util/DestructObserver.hxx"
 
@@ -79,7 +80,7 @@ public:
 	void _Close() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
-	size_t OnData(const void *data, size_t length) noexcept override;
+	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 
 	void OnEof() noexcept override {
 		ClearInput();
@@ -99,7 +100,7 @@ EscapeIstream::SendEscaped() noexcept
 {
 	assert(!escaped.empty());
 
-	size_t nbytes = InvokeData(escaped.data, escaped.size);
+	size_t nbytes = InvokeData(AsBytes(escaped));
 	if (nbytes == 0)
 		return false;
 
@@ -120,10 +121,11 @@ EscapeIstream::SendEscaped() noexcept
  *
  */
 
-size_t
-EscapeIstream::OnData(const void *data0, size_t length) noexcept
+std::size_t
+EscapeIstream::OnData(const std::span<const std::byte> src) noexcept
 {
-	const char *data = (const char *)data0;
+	const char *data = (const char *)src.data();
+	std::size_t length = src.size();
 
 	if (!escaped.empty() && !SendEscaped())
 		return 0;
@@ -137,7 +139,7 @@ EscapeIstream::OnData(const void *data0, size_t length) noexcept
 		const char *control = escape_find(&cls, {data, length});
 		if (control == nullptr) {
 			/* none found - just forward the data block to our sink */
-			size_t nbytes = InvokeData(data, length);
+			size_t nbytes = InvokeData(std::as_bytes(std::span{data, length}));
 			if (destructed)
 				return 0;
 
@@ -148,7 +150,7 @@ EscapeIstream::OnData(const void *data0, size_t length) noexcept
 		if (control > data) {
 			/* forward the portion before the control character */
 			const size_t n = control - data;
-			size_t nbytes = InvokeData(data, n);
+			size_t nbytes = InvokeData(std::as_bytes(std::span{data, n}));
 			if (destructed)
 				return 0;
 

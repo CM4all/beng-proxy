@@ -117,8 +117,8 @@ public:
 		input.Read();
 	}
 
-	size_t OnData(const void *data, size_t length) noexcept override {
-		return parser.Feed((const char *)data, length);
+	size_t OnData(std::span<const std::byte> src) noexcept override {
+		return parser.Feed((const char *)src.data(), src.size());
 	}
 
 	void OnEof() noexcept override {

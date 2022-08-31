@@ -72,7 +72,7 @@ class NfsIstream final : public Istream, NfsClientReadFileHandler {
 	 */
 	size_t discard_read = 0;
 
-	ForeignFifoBuffer<uint8_t> buffer;
+	ForeignFifoBuffer<std::byte> buffer;
 
 public:
 	NfsIstream(struct pool &p, NfsFileHandle &_handle,
@@ -152,7 +152,7 @@ NfsIstream::Feed(const void *data, size_t length)
 		const size_t buffer_size = total_size > NFS_BUFFER_SIZE
 			? NFS_BUFFER_SIZE
 			: (size_t)total_size;
-		buffer.SetBuffer(PoolAlloc<uint8_t>(GetPool(), buffer_size),
+		buffer.SetBuffer(PoolAlloc<std::byte>(GetPool(), buffer_size),
 				 buffer_size);
 	}
 

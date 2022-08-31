@@ -61,9 +61,9 @@ public:
 
 	/* virtual methods from class IstreamHandler */
 
-	size_t OnData(const void *, size_t length) noexcept override {
-		got_data += length;
-		return length;
+	size_t OnData(std::span<const std::byte> src) noexcept override {
+		got_data += src.size();
+		return src.size();
 	}
 
 	void OnEof() noexcept override {

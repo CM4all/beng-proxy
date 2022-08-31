@@ -57,7 +57,6 @@ public:
 
 	bool WriteHeader() noexcept;
 	void StartRecord(size_t length) noexcept;
-	size_t Feed(const char *data, size_t length) noexcept;
 
 	/* virtual methods from class Istream */
 
@@ -79,9 +78,7 @@ public:
 
 	/* virtual methods from class IstreamHandler */
 
-	size_t OnData(const void *data, size_t length) noexcept override {
-		return Feed((const char *)data, length);
-	}
+	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 
 	void OnEof() noexcept override;
 
@@ -100,8 +97,8 @@ FcgiIstream::WriteHeader() noexcept
 	if (length == 0)
 		return true;
 
-	const char *data = (char *)&header + header_sent;
-	size_t nbytes = InvokeData(data, length);
+	const std::byte *data = (std::byte *)&header + header_sent;
+	size_t nbytes = InvokeData({data, length});
 	if (nbytes > 0)
 		header_sent += nbytes;
 
@@ -123,8 +120,8 @@ FcgiIstream::StartRecord(size_t length) noexcept
 	missing_from_current_record = length;
 }
 
-inline size_t
-FcgiIstream::Feed(const char *data, size_t length) noexcept
+std::size_t
+FcgiIstream::OnData(const std::span<const std::byte> src) noexcept
 {
 	const DestructObserver destructed(*this);
 
@@ -135,11 +132,11 @@ FcgiIstream::Feed(const char *data, size_t length) noexcept
 
 		if (missing_from_current_record > 0) {
 			/* send the record header */
-			size_t rest = length - total;
+			size_t rest = src.size() - total;
 			if (rest > missing_from_current_record)
 				rest = missing_from_current_record;
 
-			size_t nbytes = InvokeData(data + total, rest);
+			size_t nbytes = InvokeData({src.data() + total, rest});
 			if (nbytes == 0)
 				return destructed ? 0 : total;
 
@@ -154,7 +151,7 @@ FcgiIstream::Feed(const char *data, size_t length) noexcept
 				return total;
 		}
 
-		size_t rest = length - total;
+		size_t rest = src.size() - total;
 		if (rest == 0)
 			return total;
 

@@ -87,8 +87,8 @@ class CatIstream final : public Istream, DestructAnchor {
 			return cat.OnInputReady(*this);
 		}
 
-		std::size_t OnData(const void *data, std::size_t length) noexcept override {
-			return cat.OnInputData(*this, data, length);
+		std::size_t OnData(std::span<const std::byte> src) noexcept override {
+			return cat.OnInputData(*this, src);
 		}
 
 		IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
@@ -160,9 +160,9 @@ private:
 			: false;
 	}
 
-	std::size_t OnInputData(Input &i, const void *data, std::size_t length) noexcept {
+	std::size_t OnInputData(Input &i, std::span<const std::byte> src) noexcept {
 		return IsCurrent(i)
-			? InvokeData(data, length)
+			? InvokeData(src)
 			: 0;
 	}
 

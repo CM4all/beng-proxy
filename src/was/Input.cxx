@@ -194,7 +194,7 @@ private:
 	bool SubmitBuffer() noexcept {
 		auto r = buffer.Read();
 		if (!r.empty()) {
-			std::size_t nbytes = InvokeData(r.data(), r.size());
+			std::size_t nbytes = InvokeData(r);
 			if (nbytes == 0)
 				return false;
 

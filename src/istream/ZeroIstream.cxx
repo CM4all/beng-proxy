@@ -58,14 +58,14 @@ public:
 	}
 
 	void _Read() noexcept override {
-		InvokeData(zero_buffer, sizeof(zero_buffer));
+		InvokeData(std::span{zero_buffer});
 	}
 
 	void _FillBucketList(IstreamBucketList &list) noexcept override {
 		list.SetMore();
 
 		while (!list.IsFull())
-			list.Push({zero_buffer, sizeof(zero_buffer)});
+			list.Push(std::span{zero_buffer});
 	}
 
 	size_t _ConsumeBucketList(size_t nbytes) noexcept override {

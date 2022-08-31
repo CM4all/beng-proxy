@@ -65,12 +65,12 @@ HttpBodyReader::Consumed(std::size_t nbytes) noexcept
 }
 
 std::size_t
-HttpBodyReader::FeedBody(const void *data, std::size_t length) noexcept
+HttpBodyReader::FeedBody(std::span<const std::byte> src) noexcept
 {
-	assert(length > 0);
+	assert(!src.empty());
 
-	length = GetMaxRead(length);
-	std::size_t consumed = InvokeData(data, length);
+	src = src.first(GetMaxRead(src.size()));
+	std::size_t consumed = InvokeData(src);
 	if (consumed > 0)
 		Consumed(consumed);
 

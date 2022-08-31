@@ -59,6 +59,6 @@ public:
 protected:
 	/* virtual methods from class IstreamHandler */
 
-	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
 };

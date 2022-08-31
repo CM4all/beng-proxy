@@ -99,7 +99,7 @@ class ReplaceIstream : public FacadeIstream, DestructAnchor {
 			return IsActive() && replace.InvokeReady();
 		}
 
-		size_t OnData(const void *data, size_t length) noexcept override;
+		size_t OnData(std::span<const std::byte> src) noexcept override;
 		void OnEof() noexcept override;
 		void OnError(std::exception_ptr ep) noexcept override;
 	};
@@ -263,7 +263,7 @@ protected:
 
 public:
 	/* virtual methods from class IstreamHandler */
-	size_t OnData(const void *data, size_t length) noexcept override;
+	size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 

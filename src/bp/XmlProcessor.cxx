@@ -1079,7 +1079,7 @@ XmlProcessor::OnXmlCdata(std::string_view text,
 
 	if (tag == Tag::STYLE_PROCESS) {
 		/* XXX unescape? */
-		size_t length = cdata_istream->InvokeData(text.data(), text.size());
+		size_t length = cdata_istream->InvokeData(AsBytes(text));
 		if (length > 0)
 			ReplaceIstream::Extend(cdata_start, start + length);
 	} else if (widget.widget == nullptr)

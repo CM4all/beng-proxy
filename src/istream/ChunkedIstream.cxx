@@ -77,7 +77,7 @@ public:
 		return InvokeReady();
 	}
 
-	size_t OnData(const void *data, size_t length) noexcept override;
+	size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 
@@ -133,7 +133,7 @@ private:
 	 */
 	bool SendBuffer2() noexcept;
 
-	size_t Feed(const char *data, size_t length) noexcept;
+	size_t Feed(std::span<const std::byte> src) noexcept;
 };
 
 void
@@ -181,7 +181,7 @@ ChunkedIstream::SendBuffer() noexcept
 	if (r.empty())
 		return true;
 
-	size_t nbytes = InvokeData(r.data(), r.size());
+	size_t nbytes = InvokeData(std::as_bytes(r));
 	if (nbytes > 0)
 		buffer_sent += nbytes;
 
@@ -203,7 +203,7 @@ ChunkedIstream::SendBuffer2() noexcept
 }
 
 inline size_t
-ChunkedIstream::Feed(const char *data, size_t length) noexcept
+ChunkedIstream::Feed(const std::span<const std::byte> src) noexcept
 {
 	const DestructObserver destructed(*this);
 
@@ -215,7 +215,7 @@ ChunkedIstream::Feed(const char *data, size_t length) noexcept
 		assert(!writing_buffer);
 
 		if (IsBufferEmpty() && missing_from_current_chunk == 0)
-			StartChunk(length - total);
+			StartChunk(src.size() - total);
 
 		if (!SendBuffer())
 			return destructed ? 0 : total;
@@ -229,11 +229,11 @@ ChunkedIstream::Feed(const char *data, size_t length) noexcept
 			continue;
 		}
 
-		rest = length - total;
+		rest = src.size() - total;
 		if (rest > missing_from_current_chunk)
 			rest = missing_from_current_chunk;
 
-		nbytes = InvokeData(data + total, rest);
+		nbytes = InvokeData({src.data() + total, rest});
 		if (nbytes == 0)
 			return destructed ? 0 : total;
 
@@ -246,7 +246,7 @@ ChunkedIstream::Feed(const char *data, size_t length) noexcept
 			p[0] = '\r';
 			p[1] = '\n';
 		}
-	} while ((!IsBufferEmpty() || total < length) && nbytes == rest);
+	} while ((!IsBufferEmpty() || total < src.size()) && nbytes == rest);
 
 	return total;
 }
@@ -258,13 +258,13 @@ ChunkedIstream::Feed(const char *data, size_t length) noexcept
  */
 
 size_t
-ChunkedIstream::OnData(const void *data, size_t length) noexcept
+ChunkedIstream::OnData(std::span<const std::byte> src) noexcept
 {
 	if (writing_buffer)
 		/* this is a recursive call from _Read(): bail out */
 		return 0;
 
-	return Feed((const char*)data, length);
+	return Feed(src);
 }
 
 void

@@ -71,8 +71,8 @@ public:
 
 	/* handler */
 
-	size_t OnData(const void *data, [[maybe_unused]] size_t length) noexcept override {
-		return ForwardIstream::OnData(data, 1);
+	size_t OnData(std::span<const std::byte> src) noexcept override {
+		return ForwardIstream::OnData(src.first(1));
 	}
 
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,

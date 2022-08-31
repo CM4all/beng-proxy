@@ -34,7 +34,7 @@
 #include "Request.hxx"
 
 BufferedResult
-HttpServerConnection::FeedRequestBody(const void *data, std::size_t length)
+HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 {
 	assert(request.read_state == Request::BODY);
 	assert(request.body_state == Request::BodyState::READING);
@@ -42,7 +42,7 @@ HttpServerConnection::FeedRequestBody(const void *data, std::size_t length)
 
 	const DestructObserver destructed(*this);
 
-	std::size_t nbytes = request_body_reader->FeedBody(data, length);
+	std::size_t nbytes = request_body_reader->FeedBody(src);
 	if (nbytes == 0) {
 		return destructed
 			? BufferedResult::CLOSED

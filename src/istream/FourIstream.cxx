@@ -73,9 +73,11 @@ public:
 
 	/* virtual methods from class IstreamHandler */
 
-	std::size_t OnData(const void *data, std::size_t length) noexcept override {
-		return ForwardIstream::OnData(data,
-					      std::min(length, std::size_t{4}));
+	std::size_t OnData(std::span<const std::byte> src) noexcept override {
+		if (src.size() > 4)
+			src = src.first(4);
+
+		return ForwardIstream::OnData(src);
 	}
 
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,

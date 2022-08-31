@@ -108,12 +108,12 @@ ToBucketIstream::OnIstreamReady() noexcept
 }
 
 size_t
-ToBucketIstream::OnData(const void *data, size_t length) noexcept
+ToBucketIstream::OnData(std::span<const std::byte> src) noexcept
 {
 	defer_read.Cancel();
 
 	buffer.AllocateIfNull(fb_pool_get());
-	return buffer.MoveFrom(std::span{(const std::byte *)data, length});
+	return buffer.MoveFrom(src);
 }
 
 void

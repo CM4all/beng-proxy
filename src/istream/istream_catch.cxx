@@ -91,7 +91,7 @@ public:
 
 	/* virtual methods from class IstreamHandler */
 
-	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
 
@@ -111,7 +111,7 @@ CatchIstream::SendSpace() noexcept
 	if (chunk > sizeof(space) - 1) {
 		std::unique_ptr<char[]> buffer(new char[chunk]);
 		std::fill_n(buffer.get(), ' ', chunk);
-		std::size_t nbytes = ForwardIstream::OnData(buffer.get(), chunk);
+		std::size_t nbytes = ForwardIstream::OnData(std::as_bytes(std::span{buffer.get(), chunk}));
 		if (nbytes == 0)
 			return;
 
@@ -134,7 +134,7 @@ CatchIstream::SendSpace() noexcept
 		else
 			length = (std::size_t)available;
 
-		std::size_t nbytes = ForwardIstream::OnData(space, length);
+		std::size_t nbytes = ForwardIstream::OnData(std::as_bytes(std::span{space, length}));
 		if (nbytes == 0)
 			return;
 
@@ -168,15 +168,15 @@ CatchIstream::_ConsumeDirect(std::size_t nbytes) noexcept
  */
 
 std::size_t
-CatchIstream::OnData(const void *data, std::size_t length) noexcept
+CatchIstream::OnData(std::span<const std::byte> src) noexcept
 {
-	if ((off_t)length > available)
-		available = length;
+	if ((off_t)src.size() > available)
+		available = src.size();
 
-	if (length > chunk)
-		chunk = length;
+	if (src.size() > chunk)
+		chunk = src.size();
 
-	std::size_t nbytes = ForwardIstream::OnData(data, length);
+	std::size_t nbytes = ForwardIstream::OnData(src);
 	if (nbytes > 0) {
 		if ((off_t)nbytes < available)
 			available -= (off_t)nbytes;

@@ -121,7 +121,7 @@ private:
 	void EventCallback(unsigned events) noexcept;
 
 	/* virtual methods from class IstreamHandler */
-	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     off_t offset,
 				     std::size_t max_length) noexcept override;
@@ -135,13 +135,14 @@ private:
  */
 
 std::size_t
-SinkFd::OnData(const void *data, std::size_t length) noexcept
+SinkFd::OnData(std::span<const std::byte> src) noexcept
 {
 	got_data = true;
 
 	ssize_t nbytes = IsAnySocket(fd_type)
-		? send(fd.Get(), data, length, MSG_DONTWAIT|MSG_NOSIGNAL)
-		: fd.Write(data, length);
+		? send(fd.Get(), src.data(), src.size(),
+		       MSG_DONTWAIT|MSG_NOSIGNAL)
+		: fd.Write(src.data(), src.size());
 	if (nbytes >= 0) {
 		ScheduleWrite();
 		return nbytes;

@@ -52,6 +52,10 @@ struct SubstNode {
 		const char *a;
 		size_t b_length;
 		char b[1];
+
+		constexpr std::span<const char> AsSpan() const noexcept {
+			return {b, b_length};
+		}
 	} leaf;
 };
 
@@ -107,7 +111,7 @@ private:
 	size_t ForwardSourceDataFinal(const char *start,
 				      const char *end, const char *p) noexcept;
 
-	size_t Feed(const void *data, size_t length) noexcept;
+	size_t Feed(std::span<const std::byte> src) noexcept;
 
 public:
 	/* virtual methods from class Istream */
@@ -118,7 +122,7 @@ public:
 
 	/* istream handler */
 
-	size_t OnData(const void *data, size_t length) noexcept override;
+	size_t OnData(std::span<const std::byte> src) noexcept override;
 
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
@@ -308,21 +312,21 @@ SubstIstream::TryWriteB() noexcept
 	assert(match->ch == 0);
 	assert(a_match == strlen(match->leaf.a));
 
-	const size_t length = match->leaf.b_length - b_sent;
-	assert(length > 0);
+	const auto src = std::as_bytes(match->leaf.AsSpan().subspan(b_sent));
+	assert(!src.empty());
 
-	const size_t nbytes = InvokeData(match->leaf.b + b_sent, length);
-	assert(nbytes <= length);
+	const size_t nbytes = InvokeData(src);
+	assert(nbytes <= src.size());
 	if (nbytes > 0) {
 		/* note progress */
 		b_sent += nbytes;
 
 		/* finished sending substitution? */
-		if (nbytes == length)
+		if (nbytes == src.size())
 			state = State::NONE;
 	}
 
-	return length - nbytes;
+	return src.size() - nbytes;
 }
 
 bool
@@ -333,7 +337,7 @@ SubstIstream::FeedMismatch() noexcept
 	assert(!mismatch.empty());
 
 	if (send_first) {
-		const size_t nbytes = InvokeData(mismatch.data(), 1);
+		const size_t nbytes = InvokeData(mismatch.first(1));
 		if (nbytes == 0)
 			return true;
 
@@ -345,7 +349,7 @@ SubstIstream::FeedMismatch() noexcept
 		send_first = false;
 	}
 
-	const size_t nbytes = Feed(mismatch.data(), mismatch.size());
+	const size_t nbytes = Feed(mismatch);
 	if (nbytes == 0)
 		return true;
 
@@ -361,7 +365,7 @@ SubstIstream::WriteMismatch() noexcept
 	assert(!input.IsDefined() || state == State::NONE);
 	assert(!mismatch.empty());
 
-	size_t nbytes = InvokeData(mismatch.data(), mismatch.size());
+	size_t nbytes = InvokeData(mismatch);
 	if (nbytes == 0)
 		return true;
 
@@ -385,7 +389,7 @@ SubstIstream::ForwardSourceData(const char *start,
 {
 	const DestructObserver destructed(*this);
 
-	size_t nbytes = InvokeData(p, length);
+	size_t nbytes = InvokeData(std::as_bytes(std::span{p, length}));
 	if (destructed) {
 		/* stream has been closed - we must return 0 */
 		assert(nbytes == 0);
@@ -409,7 +413,7 @@ SubstIstream::ForwardSourceDataFinal(const char *start,
 {
 	const DestructObserver destructed(*this);
 
-	size_t nbytes = InvokeData(p, end - p);
+	size_t nbytes = InvokeData(std::as_bytes(std::span{p, end}));
 	if (nbytes > 0 || !destructed) {
 		had_output = true;
 		nbytes += (p - start);
@@ -419,14 +423,14 @@ SubstIstream::ForwardSourceDataFinal(const char *start,
 }
 
 size_t
-SubstIstream::Feed(const void *_data, size_t length) noexcept
+SubstIstream::Feed(std::span<const std::byte> src) noexcept
 {
 	assert(input.IsDefined());
 
 	const DestructObserver destructed(*this);
 
-	const char *const data0 = (const char *)_data, *data = data0, *p = data0,
-		*const end = p + length, *first = nullptr;
+	const char *const data0 = (const char *)src.data(), *data = data0, *p = data0,
+		*const end = p + src.size(), *first = nullptr;
 	const SubstNode *n;
 
 	had_input = true;
@@ -603,12 +607,12 @@ SubstIstream::Feed(const void *_data, size_t length) noexcept
  */
 
 inline size_t
-SubstIstream::OnData(const void *data, size_t length) noexcept
+SubstIstream::OnData(std::span<const std::byte> src) noexcept
 {
 	if (!mismatch.empty() && FeedMismatch())
 		return 0;
 
-	return Feed(data, length);
+	return Feed(src);
 }
 
 void

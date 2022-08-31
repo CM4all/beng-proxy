@@ -250,9 +250,9 @@ private:
 
 	/* virtual methods from class IstreamHandler */
 
-	size_t OnData(const void *data, size_t length) noexcept override {
-		response_body.append((const char *)data, length);
-		return length;
+	size_t OnData(std::span<const std::byte> src) noexcept override {
+		response_body.append(ToStringView(src));
+		return src.size();
 	}
 
 	void OnEof() noexcept override {

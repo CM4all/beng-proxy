@@ -35,6 +35,7 @@
 #include "UnusedPtr.hxx"
 #include "pool/pool.hxx"
 #include "util/Cancellable.hxx"
+#include "util/SpanCast.hxx"
 
 class StringSink final : IstreamSink, Cancellable {
 	std::string value;
@@ -67,9 +68,9 @@ private:
 
 	/* virtual methods from class IstreamHandler */
 
-	size_t OnData(const void *data, size_t length) noexcept override {
-		value.append((const char *)data, length);
-		return length;
+	size_t OnData(std::span<const std::byte> src) noexcept override {
+		value.append(ToStringView(src));
+		return src.size();
 	}
 
 	void OnEof() noexcept override {

@@ -84,7 +84,7 @@ private:
 	void Cancel() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
-	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     off_t offset,
 				     std::size_t max_length) noexcept override;
@@ -136,22 +136,22 @@ RubberSink::DestroyEof() noexcept
  */
 
 std::size_t
-RubberSink::OnData(const void *data, std::size_t length) noexcept
+RubberSink::OnData(std::span<const std::byte> src) noexcept
 {
 	assert(position <= max_size);
 
-	if (position + length > max_size) {
+	if (position + src.size() > max_size) {
 		/* too large, abort and invoke handler */
 
 		FailTooLarge();
 		return 0;
 	}
 
-	uint8_t *p = (uint8_t *)allocation.Write();
-	memcpy(p + position, data, length);
-	position += length;
+	std::byte *p = (std::byte *)allocation.Write();
+	std::copy(src.begin(), src.end(), p + position);
+	position += src.size();
 
-	return length;
+	return src.size();
 }
 
 IstreamDirectResult

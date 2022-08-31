@@ -138,7 +138,7 @@ public:
 	}
 
 	/* virtual methods from class IstreamHandler */
-	size_t OnData(const void *data, size_t length) noexcept override;
+	size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 
@@ -197,7 +197,7 @@ DeflateIstream::TryWrite() noexcept
 	auto r = buffer.Read();
 	assert(!r.empty());
 
-	size_t nbytes = InvokeData(r.data(), r.size());
+	size_t nbytes = InvokeData(r);
 	if (nbytes == 0)
 		return 0;
 
@@ -308,7 +308,7 @@ DeflateIstream::TryFinish() noexcept
  */
 
 size_t
-DeflateIstream::OnData(const void *data, size_t length) noexcept
+DeflateIstream::OnData(const std::span<const std::byte> src) noexcept
 {
 	assert(HasInput());
 
@@ -327,8 +327,8 @@ DeflateIstream::OnData(const void *data, size_t length) noexcept
 	z.next_out = (Bytef *)w.data();
 	z.avail_out = (uInt)w.size();
 
-	z.next_in = (Bytef *)const_cast<void *>(data);
-	z.avail_in = (uInt)length;
+	z.next_in = (Bytef *)const_cast<std::byte *>(src.data());
+	z.avail_in = (uInt)src.size();
 
 	do {
 		auto err = deflate(&z, Z_NO_FLUSH);
@@ -363,7 +363,7 @@ DeflateIstream::OnData(const void *data, size_t length) noexcept
 		   avoid stalling the stream, trigger the DeferEvent */
 		defer.Schedule();
 
-	return length - (size_t)z.avail_in;
+	return src.size() - (size_t)z.avail_in;
 }
 
 void

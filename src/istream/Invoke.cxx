@@ -61,26 +61,26 @@ Istream::InvokeReady() noexcept
 }
 
 std::size_t
-Istream::InvokeData(const void *data, std::size_t length) noexcept
+Istream::InvokeData(std::span<const std::byte> src) noexcept
 {
 	assert(!destroyed);
 	assert(handler != nullptr);
-	assert(data != nullptr);
-	assert(length > 0);
+	assert(src.data() != nullptr);
+	assert(!src.empty());
 	assert(!in_data);
 	assert(!eof);
 	assert(!closing);
-	assert(length >= data_available);
+	assert(src.size() >= data_available);
 	assert(!available_full_set ||
-	       (off_t)length <= available_full);
+	       (off_t)src.size() <= available_full);
 
 #ifndef NDEBUG
 	const DestructObserver destructed(*this);
 	in_data = true;
 #endif
 
-	std::size_t nbytes = handler->OnData(data, length);
-	assert(nbytes <= length);
+	std::size_t nbytes = handler->OnData(src);
+	assert(nbytes <= src.size());
 	assert(nbytes == 0 || !eof);
 
 #ifndef NDEBUG
@@ -94,7 +94,7 @@ Istream::InvokeData(const void *data, std::size_t length) noexcept
 	if (nbytes > 0)
 		Consumed(nbytes);
 
-	data_available = length - nbytes;
+	data_available = src.size() - nbytes;
 #endif
 
 	return nbytes;

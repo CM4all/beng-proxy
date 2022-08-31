@@ -131,7 +131,7 @@ struct SpawnIstream final : Istream, IstreamSink, ExitListener {
 	void _Close() noexcept override;
 
 	/* virtual methods from class IstreamHandler */
-	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     off_t offset,
 				     std::size_t max_length) noexcept override;
@@ -190,11 +190,11 @@ SpawnIstream::SendFromBuffer() noexcept
  */
 
 std::size_t
-SpawnIstream::OnData(const void *data, std::size_t length) noexcept
+SpawnIstream::OnData(std::span<const std::byte> src) noexcept
 {
 	assert(input_fd.IsDefined());
 
-	ssize_t nbytes = input_fd.Write(data, length);
+	ssize_t nbytes = input_fd.Write(src.data(), src.size());
 	if (nbytes > 0)
 		input_event.ScheduleWrite();
 	else if (nbytes < 0) {

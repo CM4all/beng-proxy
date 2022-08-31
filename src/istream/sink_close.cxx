@@ -47,7 +47,7 @@ public:
 	}
 
 	/* request istream handler */
-	std::size_t OnData([[maybe_unused]] const void *data, [[maybe_unused]] std::size_t length) noexcept {
+	std::size_t OnData(std::span<const std::byte>) noexcept {
 		CloseInput();
 		return 0;
 	}

@@ -133,7 +133,7 @@ private:
 	}
 
 	/* virtual methods from class IstreamHandler */
-	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     off_t offset,
 				     std::size_t max_length) noexcept override;
@@ -206,7 +206,7 @@ BufferedIstream::ReadToBuffer(FileDescriptor fd, off_t offset,
 }
 
 std::size_t
-BufferedIstream::OnData(const void *data, std::size_t length) noexcept
+BufferedIstream::OnData(std::span<const std::byte> src) noexcept
 {
 	if (in_pipe > 0) {
 		/* can't fill both buffer and pipe; stop here and report to
@@ -223,15 +223,17 @@ BufferedIstream::OnData(const void *data, std::size_t length) noexcept
 		/* buffer is full - the "ready" call is pending */
 		return 0;
 
-	std::size_t nbytes = std::min(length, w.size());
-	memcpy(w.data(), data, nbytes);
-	buffer.Append(nbytes);
+	if (w.size() < src.size())
+		src = src.first(w.size());
 
-	if (nbytes == w.size())
+	std::copy(src.begin(), src.end(), w.begin());
+	buffer.Append(src.size());
+
+	if (src.size() == w.size())
 		/* buffer has become full - we can report to handler */
 		defer_ready.Schedule();
 
-	return nbytes;
+	return src.size();
 }
 
 IstreamDirectResult

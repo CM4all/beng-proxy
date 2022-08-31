@@ -82,7 +82,7 @@ struct TeeIstream final : IstreamSink, DestructAnchor {
 		Output(const Output &) = delete;
 		Output &operator=(const Output &) = delete;
 
-		size_t Feed(const char *data, size_t length) noexcept;
+		std::size_t Feed(std::span<const std::byte> src) noexcept;
 
 		void Consumed(size_t nbytes) noexcept {
 			assert(nbytes <= skip);
@@ -261,33 +261,32 @@ struct TeeIstream final : IstreamSink, DestructAnchor {
 	void Remove(Output &output) noexcept;
 
 	/* virtual methods from class IstreamHandler */
-	size_t OnData(const void *data, size_t length) noexcept override;
+	size_t OnData(std::span<const std::byte> src) noexcept override;
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
 
-inline size_t
-TeeIstream::Output::Feed(const char *data, size_t length) noexcept
+inline std::size_t
+TeeIstream::Output::Feed(std::span<const std::byte> src) noexcept
 {
-	if (length <= skip)
+	if (src.size() <= skip)
 		/* all of this has already been sent to this output, but
 		   following outputs one didn't accept it yet */
-		return length;
+		return src.size();
 
 	/* skip the part which was already sent */
-	data += skip;
-	length -= skip;
+	src = src.subspan(skip);
 
 	const DestructObserver destructed(*this);
 	const DestructObserver parent_destructed(parent);
 
-	size_t nbytes = InvokeData(data, length);
+	size_t nbytes = InvokeData(src);
 	if (destructed) {
 		/* this output has been closed, so pretend everything
 		   was consumed (unless the whole TeeIstream has been
 		   destroyed) */
 		assert(nbytes == 0);
-		return parent_destructed ? 0 : length;
+		return parent_destructed ? 0 : src.size();
 	}
 
 	skip += nbytes;
@@ -350,25 +349,24 @@ TeeIstream::Remove(Output &output) noexcept
  */
 
 size_t
-TeeIstream::OnData(const void *data, size_t length) noexcept
+TeeIstream::OnData(std::span<const std::byte> src) noexcept
 {
 	assert(HasInput());
 
 	for (auto i = outputs.begin(); i != outputs.end(); i = next_output) {
 		next_output = std::next(i);
 
-		size_t nbytes = i->Feed((const char *)data, length);
+		size_t nbytes = i->Feed(src);
 		if (nbytes == 0)
 			return 0;
 
-		if (nbytes < length)
-			length = nbytes;
+		src = src.first(nbytes);
 	}
 
 	for (auto &i : outputs)
-		i.Consumed(length);
+		i.Consumed(src.size());
 
-	return length;
+	return src.size();
 }
 
 void

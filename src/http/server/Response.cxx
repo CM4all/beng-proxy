@@ -61,7 +61,7 @@ HttpServerConnection::OnIstreamReady() noexcept
 }
 
 std::size_t
-HttpServerConnection::OnData(const void *data, std::size_t length) noexcept
+HttpServerConnection::OnData(std::span<const std::byte> src) noexcept
 {
 	assert(socket->IsConnected() || request.request == nullptr);
 	assert(HasInput());
@@ -70,7 +70,7 @@ HttpServerConnection::OnData(const void *data, std::size_t length) noexcept
 	if (!socket->IsConnected())
 		return 0;
 
-	ssize_t nbytes = socket->Write({(const std::byte *)data, length});
+	ssize_t nbytes = socket->Write(src);
 
 	if (gcc_likely(nbytes >= 0)) {
 		response.bytes_sent += nbytes;

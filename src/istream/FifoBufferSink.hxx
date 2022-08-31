@@ -70,7 +70,7 @@ public:
 protected:
 	/* virtual methods from class IstreamHandler */
 	bool OnIstreamReady() noexcept override;
-	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     off_t offset,
 				     std::size_t max_length) noexcept override;

@@ -79,10 +79,10 @@ GrowingBufferSink::OnIstreamReady() noexcept
 }
 
 std::size_t
-GrowingBufferSink::OnData(const void *data, std::size_t length) noexcept
+GrowingBufferSink::OnData(std::span<const std::byte> src) noexcept
 {
-	buffer.Write({(const std::byte *)data, length});
-	return length;
+	buffer.Write(src);
+	return src.size();
 }
 
 IstreamDirectResult

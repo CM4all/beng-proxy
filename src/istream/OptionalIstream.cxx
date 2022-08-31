@@ -104,9 +104,9 @@ public:
 
 	/* handler */
 
-	std::size_t OnData(const void *data, std::size_t length) noexcept override {
+	std::size_t OnData(std::span<const std::byte> src) noexcept override {
 		return resumed
-			? ForwardIstream::OnData(data, length)
+			? ForwardIstream::OnData(src)
 			: 0;
 	}
 

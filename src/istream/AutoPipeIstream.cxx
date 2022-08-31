@@ -79,7 +79,7 @@ public:
 	void _Close() noexcept override;
 
 	/* handler */
-	std::size_t OnData(const void *data, std::size_t length) noexcept override;
+	std::size_t OnData(std::span<const std::byte> src) noexcept override;
 	IstreamDirectResult OnDirect(FdType type, FileDescriptor fd,
 				     off_t offset,
 				     std::size_t max_length) noexcept override;
@@ -156,7 +156,7 @@ AutoPipeIstream::Consume() noexcept
  */
 
 inline std::size_t
-AutoPipeIstream::OnData(const void *data, std::size_t length) noexcept
+AutoPipeIstream::OnData(std::span<const std::byte> src) noexcept
 {
 	assert(HasHandler());
 
@@ -171,7 +171,7 @@ AutoPipeIstream::OnData(const void *data, std::size_t length) noexcept
 
 	assert(piped == 0);
 
-	return InvokeData(data, length);
+	return InvokeData(src);
 }
 
 inline IstreamDirectResult

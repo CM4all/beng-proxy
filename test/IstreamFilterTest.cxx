@@ -31,6 +31,7 @@
  */
 
 #include "IstreamFilterTest.hxx"
+#include "util/SpanCast.hxx"
 
 bool
 Context::ReadBuckets(std::size_t limit)
@@ -94,8 +95,10 @@ Context::ReadBuckets(std::size_t limit)
  */
 
 std::size_t
-Context::OnData(gcc_unused const void *data, std::size_t length) noexcept
+Context::OnData(const std::span<const std::byte> src) noexcept
 {
+	std::size_t length = src.size();
+
 	got_data = true;
 
 	if (block_inject != nullptr) {
@@ -136,9 +139,10 @@ Context::OnData(gcc_unused const void *data, std::size_t length) noexcept
 	if (expected_result && record) {
 		assert(skipped + buffer.size() == offset);
 		assert(offset + length <= strlen(expected_result));
-		assert(memcmp((const char *)expected_result + skipped + buffer.size(), data, length) == 0);
+		assert(memcmp((const char *)expected_result + skipped + buffer.size(),
+			      src.data(), src.size()) == 0);
 
-		buffer.append((const char *)data, length);
+		buffer.append(ToStringView(src));
 	}
 
 	offset += length;

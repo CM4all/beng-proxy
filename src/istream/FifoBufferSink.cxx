@@ -88,10 +88,10 @@ FifoBufferSink::OnIstreamReady() noexcept
 }
 
 std::size_t
-FifoBufferSink::OnData(const void *data, std::size_t length) noexcept
+FifoBufferSink::OnData(std::span<const std::byte> src) noexcept
 {
 	buffer.AllocateIfNull(fb_pool_get());
-	const std::size_t nbytes = buffer.MoveFrom(std::span{(const std::byte *)data, length});
+	const std::size_t nbytes = buffer.MoveFrom(src);
 
 	if (!handler.OnFifoBufferSinkData())
 		return 0;

@@ -52,9 +52,9 @@ ForwardIstream::_AsFd() noexcept
 }
 
 std::size_t
-ForwardIstream::OnData(const void *data, std::size_t length) noexcept
+ForwardIstream::OnData(std::span<const std::byte> src) noexcept
 {
-	return InvokeData(data, length);
+	return InvokeData(src);
 }
 
 IstreamDirectResult

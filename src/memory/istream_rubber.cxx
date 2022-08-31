@@ -84,11 +84,11 @@ public:
 	void _Read() noexcept override {
 		assert(position <= end);
 
-		const uint8_t *data = (const uint8_t *)rubber.Read(id);
+		const std::byte *data = (const std::byte *)rubber.Read(id);
 		const size_t remaining = end - position;
 
 		if (remaining > 0) {
-			size_t nbytes = InvokeData(data + position, remaining);
+			size_t nbytes = InvokeData({data + position, remaining});
 			if (nbytes == 0)
 				return;
 
