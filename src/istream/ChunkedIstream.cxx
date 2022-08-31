@@ -41,8 +41,9 @@
 #include "util/SpanCast.hxx"
 
 #include <algorithm>
+#include <array>
+#include <cassert>
 
-#include <assert.h>
 #include <string.h>
 
 using std::string_view_literals::operator""sv;
@@ -55,8 +56,8 @@ class ChunkedIstream final : public FacadeIstream, DestructAnchor {
 	 */
 	bool writing_buffer = false;
 
-	char buffer[7];
-	size_t buffer_sent = sizeof(buffer);
+	std::array<char, 7> buffer;
+	size_t buffer_sent = buffer.size();
 
 	size_t missing_from_current_chunk = 0;
 
@@ -82,31 +83,31 @@ public:
 
 private:
 	bool IsBufferEmpty() const noexcept {
-		assert(buffer_sent <= sizeof(buffer));
+		assert(buffer_sent <= buffer.size());
 
-		return buffer_sent == sizeof(buffer);
+		return buffer_sent == buffer.size();
 	}
 
 	/** set the buffer length and return a pointer to the first byte */
 	char *SetBuffer(size_t length) noexcept {
 		assert(IsBufferEmpty());
-		assert(length <= sizeof(buffer));
+		assert(length <= buffer.size());
 
-		buffer_sent = sizeof(buffer) - length;
-		return buffer + buffer_sent;
+		buffer_sent = buffer.size() - length;
+		return buffer.data() + buffer_sent;
 	}
 
 	/** append data to the buffer */
-	void AppendToBuffer(const void *data, size_t length) noexcept;
+	void AppendToBuffer(std::string_view src) noexcept;
 
 	void StartChunk(size_t length) noexcept;
 
-	ConstBuffer<void> ReadBuffer() noexcept {
-		return { buffer + buffer_sent, sizeof(buffer) - buffer_sent };
+	std::span<const char> ReadBuffer() noexcept {
+		return std::span{buffer}.subspan(buffer_sent);
 	}
 
 	size_t ConsumeBuffer(size_t nbytes) noexcept {
-		size_t size = ReadBuffer().size;
+		size_t size = ReadBuffer().size();
 		if (size > nbytes)
 			size = nbytes;
 
@@ -136,25 +137,22 @@ private:
 };
 
 void
-ChunkedIstream::AppendToBuffer(const void *data, size_t length) noexcept
+ChunkedIstream::AppendToBuffer(std::string_view src) noexcept
 {
-	assert(data != nullptr);
-	assert(length > 0);
-	assert(length <= buffer_sent);
+	assert(!src.empty());
+	assert(src.size() <= buffer_sent);
 
 	const auto old = ReadBuffer();
 
 #ifndef NDEBUG
 	/* simulate a buffer reset; if we don't do this, an assertion in
 	   SetBuffer() fails (which is invalid for this special case) */
-	buffer_sent = sizeof(buffer);
+	buffer_sent = buffer.size();
 #endif
 
-	auto dest = SetBuffer(old.size + length);
-	memmove(dest, old.data, old.size);
-	dest += old.size;
-
-	memcpy(dest, data, length);
+	auto dest = SetBuffer(old.size() + src.size());
+	dest = std::copy(old.begin(), old.end(), dest);
+	std::copy(src.begin(), src.end(), dest);
 }
 
 void
@@ -170,7 +168,7 @@ ChunkedIstream::StartChunk(size_t length) noexcept
 
 	missing_from_current_chunk = length;
 
-	char *p = SetBuffer(6);
+	char *p = (char *)SetBuffer(6);
 	p = HexFormatUint16Fixed(p, (uint16_t)length);
 	*p++ = '\r';
 	*p++ = '\n';
@@ -183,11 +181,11 @@ ChunkedIstream::SendBuffer() noexcept
 	if (r.empty())
 		return true;
 
-	size_t nbytes = InvokeData(r.data, r.size);
+	size_t nbytes = InvokeData(r.data(), r.size());
 	if (nbytes > 0)
 		buffer_sent += nbytes;
 
-	return nbytes == r.size;
+	return nbytes == r.size();
 }
 
 bool
@@ -279,7 +277,7 @@ ChunkedIstream::OnEof() noexcept
 
 	/* write EOF chunk (length 0) */
 
-	AppendToBuffer("0\r\n\r\n", 5);
+	AppendToBuffer("0\r\n\r\n"sv);
 
 	/* flush the buffer */
 
@@ -343,7 +341,7 @@ ChunkedIstream::_FillBucketList(IstreamBucketList &list)
 	}
 
 	if (!b.empty())
-		list.Push(b);
+		list.Push(std::as_bytes(b));
 
 	if (missing_from_current_chunk > 0) {
 		assert(input.IsDefined());
