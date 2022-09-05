@@ -1,6 +1,6 @@
 cm4all-beng-proxy (17.2) unstable; urgency=low
 
-  * 
+  * status 502 instead of 500 for "Peer closed the connection prematurely"
 
  --   
 

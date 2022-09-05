@@ -38,6 +38,7 @@
 #include "event/DeferEvent.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/SocketProtocolError.hxx"
 #include "net/TimeoutError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "system/Error.hxx"
@@ -223,7 +224,7 @@ bool
 ConnectFilteredSocketOperation::OnBufferedHangup() noexcept
 {
 	stopwatch.RecordEvent("error");
-	handler.OnConnectFilteredSocketError(std::make_exception_ptr(std::runtime_error("Peer closed the connection prematurely")));
+	handler.OnConnectFilteredSocketError(std::make_exception_ptr(SocketClosedPrematurelyError{}));
 	delete this;
 	return false;
 }
@@ -232,7 +233,7 @@ bool
 ConnectFilteredSocketOperation::OnBufferedClosed() noexcept
 {
 	stopwatch.RecordEvent("error");
-	handler.OnConnectFilteredSocketError(std::make_exception_ptr(std::runtime_error("Peer closed the connection prematurely")));
+	handler.OnConnectFilteredSocketError(std::make_exception_ptr(SocketClosedPrematurelyError{}));
 	delete this;
 	return false;
 }
