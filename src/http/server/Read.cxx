@@ -205,7 +205,7 @@ HttpServerConnection::HeadersFinished()
 	handler->RequestHeadersFinished(r);
 
 	/* disable the idle+headers timeout; the request body timeout will
-	   be tracked by filtered_socket (auto-refreshing) */
+	   be tracked by FilteredSocket (auto-refreshing) */
 	idle_timeout.Cancel();
 
 	const char *value = r.headers.Get("expect");

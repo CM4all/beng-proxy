@@ -106,7 +106,7 @@ struct HttpServerConnection final
 
 	/**
 	 * Track the total time for idle periods plus receiving all
-	 * headers from the client.  Unlike the #filtered_socket read
+	 * headers from the client.  Unlike the #FilteredSocket read
 	 * timeout, it is not refreshed after receiving some header data.
 	 */
 	CoarseTimerEvent idle_timeout;

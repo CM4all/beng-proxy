@@ -280,7 +280,7 @@ ThreadSocketFilter::Done() noexcept
 
 	if (error != nullptr) {
 		/* an error has occurred inside the worker thread: forward it
-		   to the filtered_socket */
+		   to the FilteredSocket */
 
 		if (socket->IsConnected()) {
 			/* flush the encrypted_output buffer, because it may
