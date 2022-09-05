@@ -41,6 +41,7 @@
 #include "istream/MultiFifoBufferIstream.hxx"
 #include "istream/New.hxx"
 #include "fs/FilteredSocket.hxx"
+#include "net/SocketProtocolError.hxx"
 #include "util/Cancellable.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StaticVector.hxx"
@@ -607,7 +608,7 @@ ClientConnection::OnBufferedData()
 bool
 ClientConnection::OnBufferedClosed() noexcept
 {
-	AbortAllRequests(std::make_exception_ptr(std::runtime_error("Peer closed the socket prematurely")));
+	AbortAllRequests(std::make_exception_ptr(SocketClosedPrematurelyError{}));
 
 	handler.OnNgHttp2ConnectionClosed();
 	return false;
