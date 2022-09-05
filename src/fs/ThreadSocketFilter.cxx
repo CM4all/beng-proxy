@@ -35,6 +35,7 @@
 #include "memory/fb_pool.hxx"
 #include "thread/Queue.hxx"
 #include "system/Error.hxx"
+#include "net/SocketProtocolError.hxx"
 
 #include <algorithm>
 
@@ -59,7 +60,7 @@ ThreadSocketFilter::~ThreadSocketFilter() noexcept = default;
 void
 ThreadSocketFilter::ClosedPrematurely() noexcept
 {
-	socket->InvokeError(std::make_exception_ptr(std::runtime_error("Peer closed the socket prematurely")));
+	socket->InvokeError(std::make_exception_ptr(SocketClosedPrematurelyError{}));
 }
 
 void
