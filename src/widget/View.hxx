@@ -34,8 +34,9 @@
 
 #include "ResourceAddress.hxx"
 #include "bp/ForwardHeaders.hxx"
-
 #include "util/Compiler.h"
+
+#include <utility>
 
 struct Transformation;
 class AllocatorPtr;

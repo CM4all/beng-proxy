@@ -34,9 +34,8 @@
 
 #include "util/Compiler.h"
 
-#include <algorithm>
-
-#include <stddef.h>
+#include <cstddef>
+#include <utility>
 
 struct pool;
 class UnusedIstreamPtr;

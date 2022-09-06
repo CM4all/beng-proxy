@@ -38,8 +38,8 @@
 #include "util/LeakDetector.hxx"
 
 #include <algorithm>
-
-#include <assert.h>
+#include <cassert>
+#include <exception>
 
 class IstreamHandler;
 class IstreamBucketList;
