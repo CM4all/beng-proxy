@@ -33,6 +33,7 @@
 #include "Config.hxx"
 #include "io/ConfigParser.hxx"
 #include "io/FileLineParser.hxx"
+#include "util/HexParse.hxx"
 #include "util/StringAPI.hxx"
 
 #include <stdexcept>
@@ -52,18 +53,8 @@ CertDatabaseConfig::ParseLine(const char *word, LineParser &line)
 		line.ExpectEnd();
 
 		CertDatabaseConfig::AES256 key;
-		if (strlen(hex_key) != key.size() * 2)
+		if (!ParseLowerHexFixed(hex_key, key))
 			throw LineParser::Error("Malformed AES256 key");
-
-		for (unsigned i = 0; i < sizeof(key); ++i) {
-			const char b[3] = { hex_key[i * 2], hex_key[i * 2 + 1], 0 };
-			char *endptr;
-			unsigned long v = strtoul(b, &endptr, 16);
-			if (endptr != b + 2 || v >= 0xff)
-				throw LineParser::Error("Malformed AES256 key");
-
-			key[i] = v;
-		}
 
 		auto i = wrap_keys.emplace(name, key);
 		if (!i.second)
