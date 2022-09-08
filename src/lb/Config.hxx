@@ -58,7 +58,7 @@ struct LbCertDatabaseConfig : CertDatabaseConfig {
 	std::string name;
 
 	/**
-	 * List of PEM path names containing certificator authorities
+	 * List of PEM path names containing certificate authorities
 	 * we're going to use to build the certificate chain.
 	 */
 	std::list<std::string> ca_certs;
