@@ -291,37 +291,9 @@ LbConfigParser::CertDatabase::ParseLine(FileLineParser &line)
 {
 	const char *word = line.ExpectWord();
 
-	if (strcmp(word, "connect") == 0) {
-		config.connect = line.ExpectValueAndEnd();
-	} else if (strcmp(word, "schema") == 0) {
-		config.schema = line.ExpectValueAndEnd();
+	if (config.ParseLine(word, line)) {
 	} else if (strcmp(word, "ca_cert") == 0) {
 		config.ca_certs.emplace_back(line.ExpectValueAndEnd());
-	} else if (strcmp(word, "wrap_key") == 0) {
-		const char *name = line.ExpectValue();
-		const char *hex_key = line.ExpectValue();
-		line.ExpectEnd();
-
-		CertDatabaseConfig::AES256 key;
-		if (strlen(hex_key) != key.size() * 2)
-			throw LineParser::Error("Malformed AES256 key");
-
-		for (unsigned i = 0; i < sizeof(key); ++i) {
-			const char b[3] = { hex_key[i * 2], hex_key[i * 2 + 1], 0 };
-			char *endptr;
-			unsigned long v = strtoul(b, &endptr, 16);
-			if (endptr != b + 2 || v >= 0xff)
-				throw LineParser::Error("Malformed AES256 key");
-
-			key[i] = v;
-		}
-
-		auto i = config.wrap_keys.emplace(name, key);
-		if (!i.second)
-			throw LineParser::Error("Duplicate wrap_key name");
-
-		if (config.default_wrap_key.empty())
-			config.default_wrap_key = i.first->first;
 	} else
 		throw std::runtime_error("Unknown option");
 }

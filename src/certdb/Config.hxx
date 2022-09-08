@@ -36,6 +36,8 @@
 #include <string>
 #include <array>
 
+class LineParser;
+
 struct CertDatabaseConfig {
 	std::string connect;
 	std::string schema;
@@ -45,6 +47,13 @@ struct CertDatabaseConfig {
 	std::map<std::string, AES256> wrap_keys;
 
 	std::string default_wrap_key;
+
+	/**
+	 * Throws on error.
+	 *
+	 * @return false if the word was not recognized
+	 */
+	bool ParseLine(const char *word, LineParser &line);
 
 	/**
 	 * Throws on error.

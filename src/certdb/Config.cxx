@@ -31,8 +31,50 @@
  */
 
 #include "Config.hxx"
+#include "io/LineParser.hxx"
+#include "util/StringAPI.hxx"
 
 #include <stdexcept>
+
+bool
+CertDatabaseConfig::ParseLine(const char *word, LineParser &line)
+{
+	if (StringIsEqual(word, "connect")) {
+		connect = line.ExpectValueAndEnd();
+		return true;
+	} else if (StringIsEqual(word, "schema")) {
+		schema = line.ExpectValueAndEnd();
+		return true;
+	} else if (StringIsEqual(word, "wrap_key")) {
+		const char *name = line.ExpectValue();
+		const char *hex_key = line.ExpectValue();
+		line.ExpectEnd();
+
+		CertDatabaseConfig::AES256 key;
+		if (strlen(hex_key) != key.size() * 2)
+			throw LineParser::Error("Malformed AES256 key");
+
+		for (unsigned i = 0; i < sizeof(key); ++i) {
+			const char b[3] = { hex_key[i * 2], hex_key[i * 2 + 1], 0 };
+			char *endptr;
+			unsigned long v = strtoul(b, &endptr, 16);
+			if (endptr != b + 2 || v >= 0xff)
+				throw LineParser::Error("Malformed AES256 key");
+
+			key[i] = v;
+		}
+
+		auto i = wrap_keys.emplace(name, key);
+		if (!i.second)
+			throw LineParser::Error("Duplicate wrap_key name");
+
+		if (default_wrap_key.empty())
+			default_wrap_key = i.first->first;
+
+		return true;
+	} else
+		return false;
+}
 
 void
 CertDatabaseConfig::Check()
