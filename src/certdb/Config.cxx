@@ -31,7 +31,8 @@
  */
 
 #include "Config.hxx"
-#include "io/LineParser.hxx"
+#include "io/ConfigParser.hxx"
+#include "io/FileLineParser.hxx"
 #include "util/StringAPI.hxx"
 
 #include <stdexcept>
@@ -81,4 +82,31 @@ CertDatabaseConfig::Check()
 {
 	if (connect.empty())
 		throw std::runtime_error("Missing 'connect'");
+}
+
+CertDatabaseConfig
+LoadStandaloneCertDatabaseConfig(const char *path)
+{
+	struct StandaloneCertDatabaseConfigParser final : ConfigParser {
+		CertDatabaseConfig config;
+
+		/* virtual methods from class ConfigParser */
+		void ParseLine(FileLineParser &line) override {
+			const char *word = line.ExpectWord();
+			if (!config.ParseLine(word, line))
+				throw std::runtime_error{"Unknown option"};
+		}
+
+		void Finish() override {
+			config.Check();
+		}
+	} parser;
+
+	VariableConfigParser v_parser(parser);
+	CommentConfigParser parser2(v_parser);
+	IncludeConfigParser parser3(path, parser2);
+
+	ParseConfigFile(path, parser3);
+
+	return std::move(parser.config);
 }

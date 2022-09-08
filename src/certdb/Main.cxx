@@ -60,10 +60,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 struct AutoUsage {};
 
 WorkshopProgress root_progress;
+
+static bool
+MaybeExists(const char *path) noexcept
+{
+	struct stat st;
+	return lstat(path, &st) == 0 || errno != ENOENT;
+}
 
 static CertDatabaseConfig
 LoadCertDatabaseConfig(const char *path)
@@ -92,6 +100,10 @@ LoadCertDatabaseConfig()
 CertDatabaseConfig
 LoadPatchCertDatabaseConfig()
 {
+	if (const char *path = "/etc/cm4all/beng/certdb.conf";
+	    MaybeExists(path))
+		return LoadStandaloneCertDatabaseConfig(path);
+
 	CertDatabaseConfig config = LoadCertDatabaseConfig();
 
 	try {

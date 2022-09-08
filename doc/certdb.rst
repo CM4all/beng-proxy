@@ -33,13 +33,15 @@ access may cease to work after the migration.
 Managing Certificates
 ---------------------
 
-The program ``cm4all-certdb`` is a frontend for the database. It loads
-the PostgreSQL connect string and the ``wrap_key`` settings from the
-:program:`beng-lb` configuration file
-(i.e. :file:`/etc/cm4all/beng/lb.conf`). The connect string can be
-overridden from the one-line text file
-:file:`/etc/cm4all/beng/certdb.connect`, just in case this
-command-line tool needs a different setting.
+The program ``cm4all-certdb`` is a frontend for the database.
+
+It loads the configuration file :file:`/etc/cm4all/beng/certdb.conf`
+containing the (top-level) settings ``connect`` and ``wrap_key`` as
+described in :ref:`certdbconfig`.
+
+(Prior to version 18, the program loaded the :program:`beng-lb`
+configuration file :file:`/etc/cm4all/beng/lb.conf` with an optional
+connect string override from :file:`/etc/cm4all/beng/certdb.connect`.)
 
 Load a new certificate into the database::
 

@@ -60,3 +60,6 @@ struct CertDatabaseConfig {
 	 */
 	void Check();
 };
+
+CertDatabaseConfig
+LoadStandaloneCertDatabaseConfig(const char *path);
