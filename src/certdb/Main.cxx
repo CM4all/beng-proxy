@@ -53,6 +53,7 @@
 #include "util/AllocatedString.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/PrintException.hxx"
+#include "util/RuntimeError.hxx"
 #include "util/StringCompare.hxx"
 
 #include <stdexcept>
@@ -72,7 +73,8 @@ LoadCertDatabaseConfig(const char *path)
 
 	auto i = lb_config.cert_dbs.begin();
 	if (i == lb_config.cert_dbs.end())
-		throw "/etc/cm4all/beng/lb.conf contains no cert_db section";
+		throw FormatRuntimeError("No cert_db section found in %s",
+					 path);
 
 	if (std::next(i) != lb_config.cert_dbs.end())
 		fprintf(stderr, "Warning: %s contains multiple cert_db sections\n",
