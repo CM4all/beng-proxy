@@ -30,24 +30,13 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "Config.hxx"
 
-#include <map>
-#include <string>
-#include <array>
+#include <stdexcept>
 
-struct CertDatabaseConfig {
-	std::string connect;
-	std::string schema;
-
-	typedef std::array<unsigned char, 256/8> AES256;
-
-	std::map<std::string, AES256> wrap_keys;
-
-	std::string default_wrap_key;
-
-	/**
-	 * Throws on error.
-	 */
-	void Check();
-};
+void
+CertDatabaseConfig::Check()
+{
+	if (connect.empty())
+		throw std::runtime_error("Missing 'connect'");
+}
