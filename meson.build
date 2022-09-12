@@ -760,7 +760,7 @@ executable(
   'src/delegate/RequestHandler.cxx',
   'src/address_string.cxx',
   'src/cluster/TcpBalancer.cxx',
-  'src/bot.c',
+  'src/bp/Bot.cxx',
   'libcommon/src/spawn/Server.cxx',
   'libcommon/src/spawn/Launch.cxx',
   'libcommon/src/spawn/Client.cxx',

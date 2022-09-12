@@ -30,20 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Identify well-known bots and crawlers.
- */
-
-#ifndef BENG_PROXY_BOT_H
-#define BENG_PROXY_BOT_H
-
-#include "util/Compiler.h"
-
-#include <stdbool.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#pragma once
 
 /**
  * Checks if the specified User-Agent request header is a well-known
@@ -51,12 +38,6 @@ extern "C" {
  * bots in the world.  This is just here to optimize session
  * management: don't create sessions for bots.
  */
-gcc_pure
+[[gnu::pure]]
 bool
-user_agent_is_bot(const char *user_agent);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+user_agent_is_bot(const char *user_agent) noexcept;
