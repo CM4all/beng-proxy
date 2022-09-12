@@ -127,8 +127,12 @@ public:
 			cancel_ptr.Cancel();
 	}
 
+	auto &GetEventLoop() const noexcept {
+		return GetStock().GetEventLoop();
+	}
+
 	void Start(FilteredSocketStockRequest &&request) noexcept {
-		ConnectFilteredSocket(GetStock().GetEventLoop(),
+		ConnectFilteredSocket(GetEventLoop(),
 				      std::move(request.stopwatch),
 				      request.ip_transparent,
 				      request.bind_address,
