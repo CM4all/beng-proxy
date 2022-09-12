@@ -90,8 +90,7 @@ public:
 	 * filter processes the call, and may then call
 	 * FilteredSocket::InternalScheduleRead().
 	 */
-	virtual void ScheduleRead(bool expect_more,
-				  Event::Duration timeout) noexcept = 0;
+	virtual void ScheduleRead(bool expect_more) noexcept = 0;
 
 	/**
 	 * The client wants to be called back as soon as writing becomes

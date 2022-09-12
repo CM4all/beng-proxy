@@ -332,7 +332,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 	 remote_host(address_to_host_string(*pool, _remote_address)),
 	 date_header(_date_header)
 {
-	socket->Reinit(Event::Duration{-1}, write_timeout, *this);
+	socket->Reinit(write_timeout, *this);
 
 	idle_timer.Schedule(idle_timeout);
 

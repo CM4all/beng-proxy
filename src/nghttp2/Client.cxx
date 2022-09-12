@@ -464,8 +464,7 @@ ClientConnection::ClientConnection(std::unique_ptr<FilteredSocket> _socket,
 	 defer_invoke_idle(socket->GetEventLoop(),
 			   BIND_THIS_METHOD(InvokeIdle))
 {
-	socket->Reinit(Event::Duration(-1), write_timeout,
-		       *this);
+	socket->Reinit(write_timeout, *this);
 
 	NgHttp2::Option option;
 	nghttp2_option_set_no_auto_window_update(option.get(), true);
@@ -495,7 +494,7 @@ ClientConnection::ClientConnection(std::unique_ptr<FilteredSocket> _socket,
 		throw MakeError(rv, "nghttp2_submit_settings() failed");
 
 	DeferWrite();
-	socket->ScheduleReadNoTimeout(false);
+	socket->ScheduleRead(false);
 }
 
 ClientConnection::~ClientConnection() noexcept

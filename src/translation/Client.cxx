@@ -221,7 +221,7 @@ TranslateClient::TryWrite() noexcept
 		stopwatch.RecordEvent("request_end");
 
 		socket.UnscheduleWrite();
-		socket.ScheduleReadNoTimeout(true);
+		socket.ScheduleRead(true);
 		read_timer.Schedule(read_timeout);
 		return true;
 	}
@@ -250,7 +250,7 @@ TranslateClient::TranslateClient(AllocatorPtr alloc, EventLoop &event_loop,
 	 handler(_handler),
 	 parser(alloc, request2, *alloc.New<TranslateResponse>())
 {
-	socket.Init(fd, FdType::FD_SOCKET, read_timeout, write_timeout, *this);
+	socket.Init(fd, FdType::FD_SOCKET, write_timeout, *this);
 
 	cancel_ptr = *this;
 

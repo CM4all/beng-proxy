@@ -656,7 +656,7 @@ HttpClient::TryWriteBuckets()
 
 		stopwatch.RecordEvent("request_end");
 		CloseInput();
-		socket.ScheduleReadNoTimeout(true);
+		socket.ScheduleRead(true);
 		break;
 
 	case BucketResult::DESTROYED:
@@ -1208,7 +1208,7 @@ HttpClient::OnBufferedBroken() noexcept
 	if (HasInput())
 		CloseInput();
 
-	socket.ScheduleReadNoTimeout(true);
+	socket.ScheduleRead(true);
 
 	return WRITE_BROKEN;
 }
@@ -1294,8 +1294,8 @@ HttpClient::OnEof() noexcept
 	ClearInput();
 
 	socket.UnscheduleWrite();
-	socket.ScheduleReadNoTimeout(response.state == Response::State::BODY &&
-				     response_body_reader.RequireMore());
+	socket.ScheduleRead(response.state == Response::State::BODY &&
+			    response_body_reader.RequireMore());
 }
 
 void
@@ -1365,9 +1365,7 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 	 peer_name(_peer_name),
 	 stopwatch(std::move(_stopwatch)),
 	 event_loop(_socket.GetEventLoop()),
-	 socket(_socket, lease,
-		Event::Duration(-1), http_client_timeout,
-		*this),
+	 socket(_socket, lease, http_client_timeout, *this),
 	 request(handler),
 	 response_body_reader(pool)
 {
@@ -1439,7 +1437,7 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 				  std::move(body)));
 	input.SetDirect(istream_direct_mask_to(socket.GetType()));
 
-	socket.ScheduleReadNoTimeout(true);
+	socket.ScheduleRead(true);
 	DeferWrite();
 }
 

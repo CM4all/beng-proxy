@@ -57,7 +57,6 @@ class FilteredSocketLease final : BufferedSocketHandler {
 
 public:
 	FilteredSocketLease(FilteredSocket &_socket, Lease &lease,
-			    Event::Duration read_timeout,
 			    Event::Duration write_timeout,
 			    BufferedSocketHandler &_handler) noexcept;
 
@@ -129,13 +128,8 @@ public:
 
 	bool Read(bool expect_more) noexcept;
 
-	void ScheduleReadTimeout(bool expect_more,
-				 Event::Duration timeout) noexcept {
-		socket->ScheduleReadTimeout(expect_more, timeout);
-	}
-
-	void ScheduleReadNoTimeout(bool expect_more) noexcept {
-		socket->ScheduleReadNoTimeout(expect_more);
+	void ScheduleRead(bool expect_more) noexcept {
+		socket->ScheduleRead(expect_more);
 	}
 
 	ssize_t Write(std::span<const std::byte>  src) noexcept {

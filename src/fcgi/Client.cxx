@@ -158,7 +158,7 @@ public:
 	using Istream::GetPool;
 
 	void Start() noexcept {
-		socket.ScheduleReadNoTimeout(true);
+		socket.ScheduleRead(true);
 		input.Read();
 	}
 
@@ -1060,9 +1060,7 @@ FcgiClient::FcgiClient(struct pool &_pool, EventLoop &event_loop,
 	 id(_id),
 	 response(http_method_is_empty(method))
 {
-	socket.Init(fd, fd_type,
-		    fcgi_client_timeout, fcgi_client_timeout,
-		    *this);
+	socket.Init(fd, fd_type, fcgi_client_timeout, *this);
 
 	input.SetDirect(istream_direct_mask_to(fd_type));
 

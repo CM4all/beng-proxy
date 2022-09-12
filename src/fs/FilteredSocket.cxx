@@ -122,7 +122,6 @@ FilteredSocket::OnBufferedError(std::exception_ptr ep) noexcept
 
 void
 FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
-		     Event::Duration read_timeout,
 		     Event::Duration write_timeout,
 		     SocketFilterPtr _filter,
 		     BufferedSocketHandler &__handler) noexcept
@@ -138,7 +137,7 @@ FilteredSocket::Init(SocketDescriptor fd, FdType fd_type,
 	}
 
 	base.Init(fd, fd_type,
-		  read_timeout, write_timeout,
+		  write_timeout,
 		  *_handler);
 
 #ifndef NDEBUG
@@ -160,9 +159,7 @@ FilteredSocket::InitDummy(SocketDescriptor fd, FdType fd_type,
 	filter = std::move(_filter);
 
 	if (filter != nullptr)
-		base.Init(fd, fd_type,
-			  Event::Duration{-1}, Event::Duration{-1},
-			  *this);
+		base.Init(fd, fd_type, Event::Duration{-1}, *this);
 	else
 		base.Init(fd, fd_type);
 
@@ -177,15 +174,14 @@ FilteredSocket::InitDummy(SocketDescriptor fd, FdType fd_type,
 }
 
 void
-FilteredSocket::Reinit(Event::Duration read_timeout,
-		       Event::Duration write_timeout,
+FilteredSocket::Reinit(Event::Duration write_timeout,
 		       BufferedSocketHandler &_handler) noexcept
 {
 	if (filter != nullptr) {
 		handler = &_handler;
-		base.SetTimeouts(read_timeout, write_timeout);
+		base.SetWriteTimeout(write_timeout);
 	} else
-		base.Reinit(read_timeout, write_timeout, _handler);
+		base.Reinit(write_timeout, _handler);
 }
 
 void

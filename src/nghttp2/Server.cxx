@@ -482,8 +482,7 @@ ServerConnection::ServerConnection(struct pool &_pool,
 	 local_host_and_port(address_to_string(pool, local_address)),
 	 remote_host(address_to_host_string(pool, remote_address))
 {
-	socket->Reinit(Event::Duration(-1), write_timeout,
-		       *this);
+	socket->Reinit(write_timeout, *this);
 
 	NgHttp2::Option option;
 	//nghttp2_option_set_recv_client_preface(option.get(), 1);
@@ -530,7 +529,7 @@ ServerConnection::ServerConnection(struct pool &_pool,
 	// TODO: idle_timeout.Schedule(http_server_idle_timeout);
 
 	DeferWrite();
-	socket->ScheduleReadNoTimeout(false);
+	socket->ScheduleRead(false);
 }
 
 ServerConnection::~ServerConnection() noexcept

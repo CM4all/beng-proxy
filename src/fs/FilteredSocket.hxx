@@ -88,7 +88,6 @@ public:
 	}
 
 	void Init(SocketDescriptor fd, FdType fd_type,
-		  Event::Duration read_timeout,
 		  Event::Duration write_timeout,
 		  SocketFilterPtr filter,
 		  BufferedSocketHandler &handler) noexcept;
@@ -101,8 +100,7 @@ public:
 	void InitDummy(SocketDescriptor _fd, FdType _fd_type,
 		       SocketFilterPtr _filter={}) noexcept;
 
-	void Reinit(Event::Duration read_timeout,
-		    Event::Duration write_timeout,
+	void Reinit(Event::Duration write_timeout,
 		    BufferedSocketHandler &handler) noexcept;
 
 	bool HasFilter() const noexcept {
@@ -321,24 +319,13 @@ public:
 			base.DeferRead(_expect_more);
 	}
 
-	void ScheduleReadTimeout(bool expect_more,
-				 Event::Duration timeout) noexcept {
+	void ScheduleRead(bool expect_more) noexcept {
 		if (filter != nullptr)
-			filter->ScheduleRead(expect_more, timeout);
+			filter->ScheduleRead(expect_more);
 		else
-			base.ScheduleReadTimeout(expect_more, timeout);
+			base.ScheduleRead(expect_more);
 	}
 
-	/**
-	 * Schedules reading on the socket with timeout disabled, to indicate
-	 * that you are willing to read, but do not expect it yet.  No direct
-	 * action is taken.  Use this to enable reading when you are still
-	 * sending the request.  When you are finished sending the request,
-	 * you should call FilteredSocket::Read() to enable the read timeout.
-	 */
-	void ScheduleReadNoTimeout(bool expect_more) noexcept {
-		ScheduleReadTimeout(expect_more, Event::Duration(-1));
-	}
 
 	void DeferWrite() noexcept {
 		if (filter != nullptr)
@@ -444,11 +431,10 @@ public:
 	 */
 	bool InternalDrained() noexcept;
 
-	void InternalScheduleRead(bool expect_more,
-				  Event::Duration timeout) noexcept {
+	void InternalScheduleRead(bool expect_more) noexcept {
 		assert(filter != nullptr);
 
-		base.ScheduleReadTimeout(expect_more, timeout);
+		base.ScheduleRead(expect_more);
 	}
 
 	void InternalScheduleWrite() noexcept {

@@ -194,7 +194,7 @@ ConnectFilteredSocketOperation::OnSocketConnectSuccess(UniqueSocketDescriptor fd
 
 	try {
 		socket->Init(fd.Release(), fd_type,
-			     Event::Duration(-1), Event::Duration(-1),
+			     Event::Duration(-1),
 			     filter_factory != nullptr
 			     ? filter_factory->CreateFilter()
 			     : nullptr,

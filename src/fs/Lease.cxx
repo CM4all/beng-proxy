@@ -35,13 +35,12 @@
 #include "net/SocketProtocolError.hxx"
 
 FilteredSocketLease::FilteredSocketLease(FilteredSocket &_socket, Lease &lease,
-					 Event::Duration read_timeout,
 					 Event::Duration write_timeout,
 					 BufferedSocketHandler &_handler) noexcept
 	:socket(&_socket), lease_ref(lease),
 	 handler(_handler)
 {
-	socket->Reinit(read_timeout, write_timeout, *this);
+	socket->Reinit(write_timeout, *this);
 }
 
 FilteredSocketLease::~FilteredSocketLease() noexcept

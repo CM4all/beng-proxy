@@ -246,8 +246,7 @@ FilteredSocketStockConnection::OnConnectFilteredSocket(std::unique_ptr<FilteredS
 	cancel_ptr = nullptr;
 
 	socket = std::move(_socket);
-	socket->Reinit(Event::Duration(-1), Event::Duration(-1),
-		       *this);
+	socket->Reinit(Event::Duration(-1), *this);
 
 	InvokeCreateSuccess(*handler);
 }
@@ -307,10 +306,10 @@ FilteredSocketStockConnection::Release() noexcept
 		return false;
 	}
 
-	socket->Reinit(Event::Duration(-1), Event::Duration(-1), *this);
+	socket->Reinit(Event::Duration(-1), *this);
 	socket->UnscheduleWrite();
 
-	socket->ScheduleReadNoTimeout(false);
+	socket->ScheduleRead(false);
 	idle_timer.Schedule(std::chrono::minutes(1));
 
 	return true;

@@ -55,8 +55,7 @@ public:
 	void Consumed(size_t nbytes) noexcept override;
 	bool Read(bool expect_more) noexcept override;
 	ssize_t Write(std::span<const std::byte> src) noexcept override;
-	void ScheduleRead(bool expect_more,
-			  Event::Duration timeout) noexcept override;
+	void ScheduleRead(bool expect_more) noexcept override;
 	void ScheduleWrite() noexcept override;
 	void UnscheduleWrite() noexcept override;
 	bool InternalWrite() noexcept override;
