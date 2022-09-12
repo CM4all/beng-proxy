@@ -119,15 +119,6 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
 	exit(1);
 }
 
-template<typename F>
-static void
-SplitForEach(const char *p, char separator, F &&f)
-{
-	for (auto value : IterableSplitString(p, separator))
-		if (!value.empty())
-			f(std::string(value.data, value.size).c_str());
-}
-
 static void
 HandleSet(BpConfig &config,
 	  const char *argv0, const char *p)
