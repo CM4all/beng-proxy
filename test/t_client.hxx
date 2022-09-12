@@ -341,6 +341,8 @@ Context<Connection>::OnError(std::exception_ptr ep) noexcept
 	ClearInput();
 	body_abort = true;
 
+	defer_event.Cancel();
+
 	assert(!body_error);
 	body_error = ep;
 }
