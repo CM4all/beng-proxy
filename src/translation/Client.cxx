@@ -52,6 +52,9 @@
 static const uint8_t PROTOCOL_VERSION = 3;
 
 class TranslateClient final : BufferedSocketHandler, Cancellable {
+	static constexpr Event::Duration read_timeout = std::chrono::minutes{1};
+	static constexpr Event::Duration write_timeout = std::chrono::seconds{10};
+
 	const StopwatchPtr stopwatch;
 
 	BufferedSocket socket;
@@ -114,9 +117,6 @@ private:
 		Destroy();
 	}
 };
-
-static constexpr auto translate_read_timeout = std::chrono::minutes(1);
-static constexpr auto translate_write_timeout = std::chrono::seconds(10);
 
 void
 TranslateClient::ReleaseSocket(bool reuse) noexcept
@@ -212,8 +212,7 @@ TranslateClient::TryWrite() noexcept
 		stopwatch.RecordEvent("request_end");
 
 		socket.UnscheduleWrite();
-		socket.ScheduleReadTimeout(true,
-					   translate_read_timeout);
+		socket.ScheduleReadTimeout(true, read_timeout);
 		return true;
 	}
 
@@ -240,10 +239,7 @@ TranslateClient::TranslateClient(AllocatorPtr alloc, EventLoop &event_loop,
 	 handler(_handler),
 	 parser(alloc, request2, *alloc.New<TranslateResponse>())
 {
-	socket.Init(fd, FdType::FD_SOCKET,
-		    translate_read_timeout,
-		    translate_write_timeout,
-		    *this);
+	socket.Init(fd, FdType::FD_SOCKET, read_timeout, write_timeout, *this);
 
 	cancel_ptr = *this;
 
