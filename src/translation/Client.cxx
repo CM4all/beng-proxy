@@ -212,7 +212,9 @@ TranslateClient::TryWrite() noexcept
 		stopwatch.RecordEvent("request_end");
 
 		socket.UnscheduleWrite();
-		return socket.Read(true);
+		socket.ScheduleReadTimeout(true,
+					   translate_read_timeout);
+		return true;
 	}
 
 	socket.ScheduleWrite();
