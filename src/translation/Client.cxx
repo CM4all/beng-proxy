@@ -36,10 +36,12 @@
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
 #include "translation/Handler.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "stopwatch.hxx"
 #include "pool/pool.hxx"
 #include "system/Error.hxx"
+#include "net/TimeoutError.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "lease.hxx"
@@ -59,6 +61,8 @@ class TranslateClient final : BufferedSocketHandler, Cancellable {
 
 	BufferedSocket socket;
 	LeasePtr lease_ref;
+
+	CoarseTimerEvent read_timer;
 
 	/** the marshalled translate request */
 	GrowingBufferReader request;
@@ -88,6 +92,11 @@ private:
 	void Fail(std::exception_ptr ep) noexcept;
 
 	BufferedResult Feed(std::span<const std::byte> src) noexcept;
+
+	void OnReadTimeout() noexcept {
+		Fail(NestException(std::make_exception_ptr(TimeoutError{}),
+				   std::runtime_error("Translation server timed out")));
+	}
 
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override {
@@ -212,7 +221,8 @@ TranslateClient::TryWrite() noexcept
 		stopwatch.RecordEvent("request_end");
 
 		socket.UnscheduleWrite();
-		socket.ScheduleReadTimeout(true, read_timeout);
+		socket.ScheduleReadNoTimeout(true);
+		read_timer.Schedule(read_timeout);
 		return true;
 	}
 
@@ -235,6 +245,7 @@ TranslateClient::TranslateClient(AllocatorPtr alloc, EventLoop &event_loop,
 				 CancellablePointer &cancel_ptr) noexcept
 	:stopwatch(std::move(_stopwatch)),
 	 socket(event_loop), lease_ref(lease),
+	 read_timer(event_loop, BIND_THIS_METHOD(OnReadTimeout)),
 	 request(std::move(_request)),
 	 handler(_handler),
 	 parser(alloc, request2, *alloc.New<TranslateResponse>())
