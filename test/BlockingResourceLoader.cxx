@@ -37,7 +37,7 @@
 #include "util/LeakDetector.hxx"
 #include "util/Cancellable.hxx"
 
-class BlockingResourceRequest : PoolHolder, LeakDetector, Cancellable {
+class BlockingResourceRequest final : PoolHolder, LeakDetector, Cancellable {
 	UnusedHoldIstreamPtr request_body;
 
 public:
