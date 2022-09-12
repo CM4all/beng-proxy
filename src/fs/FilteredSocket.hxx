@@ -309,6 +309,18 @@ public:
 		return base.IsReadyForWriting();
 	}
 
+	/**
+	 * Wrapper for BufferedSocket::DeferRead().  This works only
+	 * for the initial read.
+	 */
+	void DeferRead(bool _expect_more) noexcept {
+		/* this is only relevant if there is no filter; with a
+		   filter, reading is always scheduled (unless the
+		   buffer is full) */
+		if (filter == nullptr)
+			base.DeferRead(_expect_more);
+	}
+
 	void ScheduleReadTimeout(bool expect_more,
 				 Event::Duration timeout) noexcept {
 		if (filter != nullptr)
