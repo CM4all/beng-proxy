@@ -234,12 +234,12 @@ struct HttpServerConnection final
 	/**
 	 * @return false if the connection has been closed
 	 */
-	bool ParseRequestLine(const char *line, std::size_t length);
+	bool ParseRequestLine(const char *line, std::size_t length) noexcept;
 
 	/**
 	 * @return false if the connection has been closed
 	 */
-	bool HeadersFinished();
+	bool HeadersFinished() noexcept;
 
 	/**
 	 * @return false if the connection has been closed

@@ -52,7 +52,8 @@
 using std::string_view_literals::operator""sv;
 
 inline bool
-HttpServerConnection::ParseRequestLine(const char *line, std::size_t length)
+HttpServerConnection::ParseRequestLine(const char *line,
+				       std::size_t length) noexcept
 {
 	assert(request.read_state == Request::START);
 	assert(request.request == nullptr);
@@ -195,7 +196,7 @@ HttpServerConnection::ParseRequestLine(const char *line, std::size_t length)
  * @return false if the connection has been closed
  */
 inline bool
-HttpServerConnection::HeadersFinished()
+HttpServerConnection::HeadersFinished() noexcept
 {
 	assert(request.body_state == Request::BodyState::START);
 
