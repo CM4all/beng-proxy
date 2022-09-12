@@ -208,7 +208,7 @@ HttpServerConnection::HeadersFinished() noexcept
 
 	/* disable the idle+headers timeout; the request body timeout will
 	   be tracked by FilteredSocket (auto-refreshing) */
-	idle_timeout.Cancel();
+	idle_timer.Cancel();
 
 	const char *value = r.headers.Get("expect");
 	request.expect_100_continue = value != nullptr &&
@@ -223,12 +223,12 @@ HttpServerConnection::HeadersFinished() noexcept
 
 	value = r.headers.Get("transfer-encoding");
 
-	Event::Duration read_timeout = http_server_read_timeout;
+	Event::Duration _read_timeout = read_timeout;
 
 	if (request.expect_100_continue)
 		/* while the client waits for our "100 Continue"
 		   response, we won't time it out */
-		read_timeout = Event::Duration(-1);
+		_read_timeout = Event::Duration(-1);
 
 	off_t content_length = -1;
 	const bool chunked = value != nullptr && strcasecmp(value, "chunked") == 0;
@@ -242,7 +242,7 @@ HttpServerConnection::HeadersFinished() noexcept
 			}
 
 			/* disable timeout */
-			read_timeout = Event::Duration(-1);
+			_read_timeout = Event::Duration(-1);
 
 			/* forward incoming data as-is */
 
@@ -294,7 +294,7 @@ HttpServerConnection::HeadersFinished() noexcept
 
 	/* for the request body, the FilteredSocket class tracks
 	   inactivity timeout */
-	socket->ScheduleReadTimeout(false, read_timeout);
+	socket->ScheduleReadTimeout(false, _read_timeout);
 
 	return true;
 }

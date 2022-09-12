@@ -217,7 +217,7 @@ HttpServerConnection::ResponseIstreamFinished()
 		   next request */
 
 		socket->ScheduleReadNoTimeout(false);
-		idle_timeout.Schedule(http_server_idle_timeout);
+		idle_timer.Schedule(idle_timeout);
 
 		return true;
 	} else {

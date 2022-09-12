@@ -56,6 +56,23 @@ class HttpHeaders;
 struct HttpServerConnection final
 	: BufferedSocketHandler, IstreamSink, DestructAnchor {
 
+	/**
+	 * The timeout of an idle connection (READ_START) up until
+	 * request headers are received.
+	 */
+	static constexpr Event::Duration idle_timeout = std::chrono::seconds{30};
+
+	/**
+	 * The timeout for reading more request data (READ_BODY).
+	 */
+	static constexpr Event::Duration read_timeout = std::chrono::seconds{30};
+
+	/**
+	 * The timeout for writing more response data (READ_BODY,
+	 * READ_END).
+	 */
+	static constexpr Event::Duration write_timeout = std::chrono::seconds{30};
+
 	enum class BucketResult {
 		/**
 		 * No data is avaiable right now.  Maybe the #Istream doesn't
@@ -110,7 +127,7 @@ struct HttpServerConnection final
 	 * headers from the client.  Unlike the #FilteredSocket read
 	 * timeout, it is not refreshed after receiving some header data.
 	 */
-	CoarseTimerEvent idle_timeout;
+	CoarseTimerEvent idle_timer;
 
 	DeferEvent defer_read;
 
@@ -379,22 +396,6 @@ struct HttpServerConnection final
 	void OnEof() noexcept override;
 	void OnError(std::exception_ptr ep) noexcept override;
 };
-
-/**
- * The timeout of an idle connection (READ_START) up until request
- * headers are received.
- */
-extern const Event::Duration http_server_idle_timeout;
-
-/**
- * The timeout for reading more request data (READ_BODY).
- */
-extern const Event::Duration http_server_read_timeout;
-
-/**
- * The timeout for writing more response data (READ_BODY, READ_END).
- */
-extern const Event::Duration http_server_write_timeout;
 
 HttpServerRequest *
 http_server_request_new(HttpServerConnection *connection,

@@ -72,7 +72,7 @@ HttpServerConnection::MaybeSend100Continue()
 		/* re-enable the request body read timeout that was
 		   disabled by HeadersFinished() in the presence of an
 		   "expect:100-continue" request header */
-		socket->ScheduleReadTimeout(true, http_server_read_timeout);
+		socket->ScheduleReadTimeout(true, read_timeout);
 
 		return true;
 	}
