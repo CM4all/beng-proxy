@@ -48,7 +48,7 @@ struct HttpServerRequest final : public IncomingHttpRequest {
 			  const char *_local_host_and_port,
 			  const char *_remote_host,
 			  http_method_t _method,
-			  StringView _uri) noexcept;
+			  std::string_view _uri) noexcept;
 
 	void Destroy() noexcept;
 

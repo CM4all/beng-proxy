@@ -39,9 +39,10 @@
 #include "http/HeaderParser.hxx"
 #include "istream/istream_null.hxx"
 #include "http/List.hxx"
+#include "util/SpanCast.hxx"
 #include "util/StringCompare.hxx"
+#include "util/StringSplit.hxx"
 #include "util/StringStrip.hxx"
-#include "util/StringView.hxx"
 #include "util/StringFormat.hxx"
 #include "AllocatorPtr.hxx"
 
@@ -302,21 +303,21 @@ HttpServerConnection::HeadersFinished() noexcept
  * @return false if the connection has been closed
  */
 inline bool
-HttpServerConnection::HandleLine(StringView line) noexcept
+HttpServerConnection::HandleLine(std::string_view line) noexcept
 {
 	assert(request.read_state == Request::START ||
 	       request.read_state == Request::HEADERS);
 
-	if (line.size >= 8192) {
+	if (line.size() >= 8192) {
 		ProtocolError(StringFormat<64>("Request header is too large (%zu)",
-					       line.size));
+					       line.size()));
 		return false;
 	}
 
 	if (gcc_unlikely(request.read_state == Request::START)) {
 		assert(request.request == nullptr);
 
-		return ParseRequestLine(line.data, line.size);
+		return ParseRequestLine(line.data(), line.size());
 	} else if (gcc_likely(!line.empty())) {
 		assert(request.read_state == Request::HEADERS);
 		assert(request.request != nullptr);
@@ -334,7 +335,7 @@ HttpServerConnection::HandleLine(StringView line) noexcept
 }
 
 inline BufferedResult
-HttpServerConnection::FeedHeaders(const StringView b) noexcept
+HttpServerConnection::FeedHeaders(const std::string_view b) noexcept
 {
 	assert(request.read_state == Request::START ||
 	       request.read_state == Request::HEADERS);
@@ -344,16 +345,15 @@ HttpServerConnection::FeedHeaders(const StringView b) noexcept
 		return BufferedResult::CLOSED;
 	}
 
-	StringView remaining = b;
+	std::string_view remaining = b;
 	while (true) {
-		auto s = remaining.Split('\n');
-		if (s.second == nullptr)
+		auto [line, _remaining] = Split(remaining, '\n');
+		if (_remaining.data() == nullptr)
 			break;
 
-		StringView line = s.first;
-		remaining = s.second;
+		remaining = _remaining;
 
-		line.StripRight();
+		line = StripRight(line);
 
 		if (!HandleLine(line))
 			return BufferedResult::CLOSED;
@@ -362,7 +362,7 @@ HttpServerConnection::FeedHeaders(const StringView b) noexcept
 			break;
 	}
 
-	const std::size_t consumed = remaining.data - b.data;
+	const std::size_t consumed = remaining.data() - b.data();
 	request.bytes_received += consumed;
 	socket->DisposeConsumed(consumed);
 
@@ -422,7 +422,7 @@ HttpServerConnection::Feed(std::span<const std::byte> b) noexcept
 		[[fallthrough]];
 
 	case Request::HEADERS:
-		result = FeedHeaders(StringView(b));
+		result = FeedHeaders(ToStringView(b));
 		if (result == BufferedResult::OK &&
 		    (request.read_state == Request::BODY ||
 		     request.read_state == Request::END)) {

@@ -48,7 +48,8 @@
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
 
-struct StringView;
+#include <string_view>
+
 struct HttpServerRequest;
 class HttpHeaders;
 
@@ -244,9 +245,9 @@ struct HttpServerConnection final
 	/**
 	 * @return false if the connection has been closed
 	 */
-	bool HandleLine(StringView line) noexcept;
+	bool HandleLine(std::string_view line) noexcept;
 
-	BufferedResult FeedHeaders(StringView b) noexcept;
+	BufferedResult FeedHeaders(std::string_view b) noexcept;
 
 	/**
 	 * @return false if the connection has been closed
@@ -398,4 +399,4 @@ extern const Event::Duration http_server_write_timeout;
 HttpServerRequest *
 http_server_request_new(HttpServerConnection *connection,
 			http_method_t method,
-			StringView uri) noexcept;
+			std::string_view uri) noexcept;
