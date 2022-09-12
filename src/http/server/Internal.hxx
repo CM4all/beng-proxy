@@ -41,7 +41,6 @@
 #include "net/SocketProtocolError.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/CoarseTimerEvent.hxx"
-#include "event/DeferEvent.hxx"
 #include "istream/Sink.hxx"
 #include "pool/UniquePtr.hxx"
 #include "util/Cancellable.hxx"
@@ -128,8 +127,6 @@ struct HttpServerConnection final
 	 * timeout, it is not refreshed after receiving some header data.
 	 */
 	CoarseTimerEvent idle_timer;
-
-	DeferEvent defer_read;
 
 	enum http_server_score score = HTTP_SERVER_NEW;
 
@@ -234,8 +231,8 @@ struct HttpServerConnection final
 
 	void Delete() noexcept;
 
-	EventLoop &GetEventLoop() {
-		return defer_read.GetEventLoop();
+	auto &GetEventLoop() const noexcept {
+		return idle_timer.GetEventLoop();
 	}
 
 	gcc_pure
@@ -246,8 +243,6 @@ struct HttpServerConnection final
 	void IdleTimeoutCallback() noexcept;
 
 	void Log() noexcept;
-
-	void OnDeferredRead() noexcept;
 
 	/**
 	 * @return false if the connection has been closed

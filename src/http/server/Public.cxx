@@ -312,7 +312,6 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 	:pool(&_pool), socket(std::move(_socket)),
 	 idle_timer(socket->GetEventLoop(),
 		    BIND_THIS_METHOD(IdleTimeoutCallback)),
-	 defer_read(socket->GetEventLoop(), BIND_THIS_METHOD(OnDeferredRead)),
 	 handler(&_handler), request_handler(_request_handler),
 	 local_address(DupAddress(*pool, _local_address)),
 	 remote_address(DupAddress(*pool, _remote_address)),
@@ -327,7 +326,7 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 	/* read the first request, but not in this stack frame, because a
 	   failure may destroy the HttpServerConnection before it gets
 	   passed to the caller */
-	defer_read.Schedule();
+	socket->DeferRead(false);
 }
 
 void

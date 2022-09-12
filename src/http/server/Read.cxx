@@ -515,9 +515,3 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type)
 
 	gcc_unreachable();
 }
-
-void
-HttpServerConnection::OnDeferredRead() noexcept
-{
-	socket->Read(false);
-}
