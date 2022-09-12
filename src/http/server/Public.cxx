@@ -39,6 +39,7 @@
 #include "pool/PSocketAddress.hxx"
 #include "istream/Bucket.hxx"
 #include "system/Error.hxx"
+#include "net/TimeoutError.hxx"
 #include "io/Iovec.hxx"
 #include "util/StringView.hxx"
 #include "util/StaticVector.hxx"
@@ -301,6 +302,16 @@ HttpServerConnection::IdleTimeoutCallback() noexcept
 	Cancel();
 }
 
+inline void
+HttpServerConnection::OnReadTimeout() noexcept
+{
+	assert(request.read_state == Request::BODY);
+
+	// TODO send "408 Request Timeout"?
+
+	SocketError(TimeoutError{});
+}
+
 inline
 HttpServerConnection::HttpServerConnection(struct pool &_pool,
 					   UniquePoolPtr<FilteredSocket> &&_socket,
@@ -312,6 +323,8 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 	:pool(&_pool), socket(std::move(_socket)),
 	 idle_timer(socket->GetEventLoop(),
 		    BIND_THIS_METHOD(IdleTimeoutCallback)),
+	 read_timer(socket->GetEventLoop(),
+		    BIND_THIS_METHOD(OnReadTimeout)),
 	 handler(&_handler), request_handler(_request_handler),
 	 local_address(DupAddress(*pool, _local_address)),
 	 remote_address(DupAddress(*pool, _remote_address)),

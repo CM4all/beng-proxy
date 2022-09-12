@@ -128,6 +128,14 @@ struct HttpServerConnection final
 	 */
 	CoarseTimerEvent idle_timer;
 
+	/**
+	 * A timer which fires when reading the request body times
+	 * out.  It is refreshed each time request body data is
+	 * received, and is disabled as long as the #Istream handler
+	 * blocks.
+	 */
+	CoarseTimerEvent read_timer;
+
 	enum http_server_score score = HTTP_SERVER_NEW;
 
 	/* handler */
@@ -177,6 +185,11 @@ struct HttpServerConnection final
 		 */
 		bool in_handler;
 
+		/**
+		 * Did the client send an "Upgrade" header?
+		 */
+		bool upgrade;
+
 		/** did the client send an "Expect: 100-continue" header? */
 		bool expect_100_continue;
 
@@ -188,6 +201,15 @@ struct HttpServerConnection final
 		CancellablePointer cancel_ptr;
 
 		uint64_t bytes_received = 0;
+
+		bool ShouldEnableReadTimeout() const noexcept {
+			/* "Upgrade" requests have no request body
+			   timeout, because an arbitrary protocol may
+			   be on the wire now */
+			/* no timeout as long as the client is waiting
+			   for "100 Continue" */
+			return !upgrade && !expect_100_continue;
+		}
 	} request;
 
 	/** the request body reader; this variable is only valid if
@@ -241,6 +263,7 @@ struct HttpServerConnection final
 	}
 
 	void IdleTimeoutCallback() noexcept;
+	void OnReadTimeout() noexcept;
 
 	void Log() noexcept;
 
@@ -312,6 +335,11 @@ struct HttpServerConnection final
 	void SubmitResponse(http_status_t status,
 			    HttpHeaders &&headers,
 			    UnusedIstreamPtr body);
+
+	void ScheduleReadTimeoutTimer() noexcept {
+		if (request.ShouldEnableReadTimeout())
+			read_timer.Schedule(read_timeout);
+	}
 
 	void DeferWrite() noexcept {
 		response.want_write = true;

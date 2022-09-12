@@ -179,6 +179,8 @@ HttpServerConnection::ResponseIstreamFinished()
 		request.body_state = Request::BodyState::CLOSED;
 #endif
 
+		read_timer.Cancel();
+
 		if (socket->IsConnected())
 			socket->SetDirect(false);
 
@@ -201,6 +203,8 @@ HttpServerConnection::ResponseIstreamFinished()
 			return false;
 	}
 
+	assert(!read_timer.IsPending());
+
 	request.request->stopwatch.RecordEvent("response_end");
 	request.request->Destroy();
 	request.request = nullptr;
@@ -216,7 +220,6 @@ HttpServerConnection::ResponseIstreamFinished()
 		/* handle pipelined request (if any), or set up events for
 		   next request */
 
-		socket->ScheduleReadNoTimeout(false);
 		idle_timer.Schedule(idle_timeout);
 
 		return true;

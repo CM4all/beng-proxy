@@ -219,30 +219,20 @@ HttpServerConnection::HeadersFinished() noexcept
 	value = r.headers.Get("connection");
 	keep_alive = value == nullptr || !http_list_contains_i(value, "close");
 
-	const bool upgrade = http_is_upgrade(r.headers);
+	request.upgrade = http_is_upgrade(r.headers);
 
 	value = r.headers.Get("transfer-encoding");
-
-	Event::Duration _read_timeout = read_timeout;
-
-	if (request.expect_100_continue)
-		/* while the client waits for our "100 Continue"
-		   response, we won't time it out */
-		_read_timeout = Event::Duration(-1);
 
 	off_t content_length = -1;
 	const bool chunked = value != nullptr && strcasecmp(value, "chunked") == 0;
 	if (!chunked) {
 		value = r.headers.Get("content-length");
 
-		if (upgrade) {
+		if (request.upgrade) {
 			if (value != nullptr) {
 				ProtocolError("cannot upgrade with Content-Length request header");
 				return false;
 			}
-
-			/* disable timeout */
-			_read_timeout = Event::Duration(-1);
 
 			/* forward incoming data as-is */
 
@@ -277,7 +267,7 @@ HttpServerConnection::HeadersFinished() noexcept
 				return true;
 			}
 		}
-	} else if (upgrade) {
+	} else if (request.upgrade) {
 		ProtocolError("cannot upgrade chunked request");
 		return false;
 	}
@@ -291,10 +281,6 @@ HttpServerConnection::HeadersFinished() noexcept
 #ifndef NDEBUG
 	request.body_state = Request::BodyState::READING;
 #endif
-
-	/* for the request body, the FilteredSocket class tracks
-	   inactivity timeout */
-	socket->ScheduleReadTimeout(false, _read_timeout);
 
 	return true;
 }
@@ -374,11 +360,6 @@ HttpServerConnection::FeedHeaders(const std::string_view b) noexcept
 inline bool
 HttpServerConnection::SubmitRequest()
 {
-	if (request.read_state == Request::END)
-		/* re-enable the event, to detect client disconnect while
-		   we're processing the request */
-		socket->ScheduleReadNoTimeout(false);
-
 	const DestructObserver destructed(*this);
 
 	if (request.expect_failed) {
@@ -398,10 +379,13 @@ HttpServerConnection::SubmitRequest()
 		request.in_handler = false;
 
 		if (request.read_state == Request::BODY &&
-		    socket->IsConnected())
+		    socket->IsConnected()) {
 			/* enable splice() if the handler supports
 			   it */
 			socket->SetDirect(request_body_reader->CheckDirect(socket->GetType()));
+
+			ScheduleReadTimeoutTimer();
+		}
 	}
 
 	return true;
@@ -438,7 +422,25 @@ HttpServerConnection::Feed(std::span<const std::byte> b) noexcept
 		return result;
 
 	case Request::BODY:
-		return FeedRequestBody(b);
+		result = FeedRequestBody(b);
+		switch (result) {
+		case BufferedResult::OK:
+		case BufferedResult::MORE:
+		case BufferedResult::AGAIN_OPTIONAL:
+		case BufferedResult::AGAIN_EXPECT:
+			/* refresh the request body timeout */
+			ScheduleReadTimeoutTimer();
+			break;
+
+		case BufferedResult::BLOCKING:
+			read_timer.Cancel();
+			break;
+
+		case BufferedResult::CLOSED:
+			break;
+		}
+
+		return result;
 
 	case Request::END:
 		/* check if the connection was closed by the client while we
@@ -477,6 +479,7 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type)
 	switch (request_body_reader->TryDirect(fd, fd_type)) {
 	case IstreamDirectResult::BLOCKING:
 		/* the destination fd blocks */
+		read_timer.Cancel();
 		return DirectResult::BLOCKING;
 
 	case IstreamDirectResult::CLOSED:
@@ -500,6 +503,8 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type)
 			request.body_state = Request::BodyState::CLOSED;
 #endif
 
+			read_timer.Cancel();
+
 			if (socket->IsConnected())
 				socket->SetDirect(false);
 
@@ -509,6 +514,9 @@ HttpServerConnection::TryRequestBodyDirect(SocketDescriptor fd, FdType fd_type)
 				? DirectResult::CLOSED
 				: DirectResult::OK;
 		}
+
+		/* refresh the request body timeout */
+		ScheduleReadTimeoutTimer();
 
 		return DirectResult::OK;
 	}
