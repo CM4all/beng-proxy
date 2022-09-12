@@ -47,6 +47,7 @@
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
 
+#include <cassert>
 #include <string_view>
 
 struct HttpServerRequest;
@@ -337,6 +338,8 @@ struct HttpServerConnection final
 			    UnusedIstreamPtr body);
 
 	void ScheduleReadTimeoutTimer() noexcept {
+		assert(request.read_state == Request::BODY);
+
 		if (request.ShouldEnableReadTimeout())
 			read_timer.Schedule(read_timeout);
 	}

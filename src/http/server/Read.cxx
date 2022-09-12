@@ -428,8 +428,10 @@ HttpServerConnection::Feed(std::span<const std::byte> b) noexcept
 		case BufferedResult::MORE:
 		case BufferedResult::AGAIN_OPTIONAL:
 		case BufferedResult::AGAIN_EXPECT:
-			/* refresh the request body timeout */
-			ScheduleReadTimeoutTimer();
+			/* refresh the request body timeout (if we're
+			   still reading the request body) */
+			if (request.read_state == Request::BODY)
+				ScheduleReadTimeoutTimer();
 			break;
 
 		case BufferedResult::BLOCKING:
