@@ -1,6 +1,7 @@
 cm4all-beng-proxy (17.2) unstable; urgency=low
 
   * http_server: disable read timeout if handler blocks
+  * nghttp2/server: reduce concurrency to 64 to fix stuck mass uploads
   * status 502 instead of 500 for "Peer closed the connection prematurely"
 
  --   

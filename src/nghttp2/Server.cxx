@@ -504,7 +504,7 @@ ServerConnection::ServerConnection(struct pool &_pool,
 	session = NgHttp2::Session::NewServer(callbacks.get(), this, option.get());
 
 	static constexpr nghttp2_settings_entry iv[] = {
-		{NGHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS, 256},
+		{NGHTTP2_SETTINGS_MAX_CONCURRENT_STREAMS, 64},
 
 		/* until a request body is really being used, allow
 		   the client to upload only the first 4 kB to avoid
