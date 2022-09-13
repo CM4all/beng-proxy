@@ -926,8 +926,8 @@ HttpClient::FeedHeaders(std::span<const std::byte> b)
 	assert(response.state == Response::State::STATUS ||
 	       response.state == Response::State::HEADERS);
 
-	const BufferedResult result = ParseHeaders(StringView(b));
-	if (result != BufferedResult::AGAIN_EXPECT)
+	if (const BufferedResult result = ParseHeaders(StringView(b));
+	    result != BufferedResult::AGAIN_EXPECT)
 		return result;
 
 	/* the headers are finished, we can now report the response to
