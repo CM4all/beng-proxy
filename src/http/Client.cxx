@@ -513,7 +513,7 @@ HttpClient::Read() noexcept
 		   continue parsing the response if possible */
 		return;
 
-	socket.Read(response_body_reader.RequireMore());
+	socket.Read();
 }
 
 inline void
@@ -658,7 +658,7 @@ HttpClient::TryWriteBuckets()
 
 		stopwatch.RecordEvent("request_end");
 		CloseInput();
-		socket.ScheduleRead(true);
+		socket.ScheduleRead();
 		break;
 
 	case BucketResult::DESTROYED:
@@ -844,7 +844,7 @@ HttpClient::ParseHeaders(const std::string_view b)
 		if (response.state != Response::State::HEADERS) {
 			/* header parsing is finished */
 			socket.DisposeConsumed(remaining.data() - b.data());
-			return BufferedResult::AGAIN_EXPECT;
+			return BufferedResult::AGAIN;
 		}
 	}
 
@@ -923,7 +923,7 @@ HttpClient::FeedHeaders(std::span<const std::byte> b)
 	       response.state == Response::State::HEADERS);
 
 	if (const BufferedResult result = ParseHeaders(ToStringView(b));
-	    result != BufferedResult::AGAIN_EXPECT)
+	    result != BufferedResult::AGAIN)
 		return result;
 
 	/* the headers are finished, we can now report the response to
@@ -961,7 +961,7 @@ HttpClient::FeedHeaders(std::span<const std::byte> b)
 		DeferWrite();
 
 		/* try again */
-		return BufferedResult::AGAIN_EXPECT;
+		return BufferedResult::AGAIN;
 	} else if (request.pending_body) {
 		/* the server begins sending a response - he's not interested
 		   in the request body, discard it now */
@@ -1008,9 +1008,7 @@ HttpClient::FeedHeaders(std::span<const std::byte> b)
 	}
 
 	/* now do the response body */
-	return response_body_reader.RequireMore()
-		? BufferedResult::AGAIN_EXPECT
-		: BufferedResult::AGAIN_OPTIONAL;
+	return BufferedResult::AGAIN;
 }
 
 inline DirectResult
@@ -1204,7 +1202,7 @@ HttpClient::OnBufferedBroken() noexcept
 	if (HasInput())
 		CloseInput();
 
-	socket.ScheduleRead(true);
+	socket.ScheduleRead();
 
 	return WRITE_BROKEN;
 }
@@ -1290,8 +1288,7 @@ HttpClient::OnEof() noexcept
 	ClearInput();
 
 	socket.UnscheduleWrite();
-	socket.ScheduleRead(response.state == Response::State::BODY &&
-			    response_body_reader.RequireMore());
+	socket.ScheduleRead();
 }
 
 void
@@ -1433,7 +1430,7 @@ HttpClient::HttpClient(struct pool &_pool, struct pool &_caller_pool,
 				  std::move(body)));
 	input.SetDirect(istream_direct_mask_to(socket.GetType()));
 
-	socket.ScheduleRead(true);
+	socket.ScheduleRead();
 	DeferWrite();
 }
 

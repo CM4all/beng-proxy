@@ -127,10 +127,10 @@ public:
 	void DisposeConsumed(size_t nbytes) noexcept;
 	void AfterConsumed() noexcept;
 
-	bool Read(bool expect_more) noexcept;
+	bool Read() noexcept;
 
-	void ScheduleRead(bool expect_more) noexcept {
-		socket->ScheduleRead(expect_more);
+	void ScheduleRead() noexcept {
+		socket->ScheduleRead();
 	}
 
 	ssize_t Write(std::span<const std::byte>  src) noexcept {

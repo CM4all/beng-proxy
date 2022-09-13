@@ -240,12 +240,12 @@ FilteredSocket::AfterConsumed() noexcept
 }
 
 bool
-FilteredSocket::Read(bool expect_more) noexcept
+FilteredSocket::Read() noexcept
 {
 	if (filter != nullptr)
-		return filter->Read(expect_more);
+		return filter->Read();
 	else
-		return base.Read(expect_more);
+		return base.Read();
 }
 
 ssize_t

@@ -203,12 +203,6 @@ class ThreadSocketFilter final : public SocketFilter, ThreadSocketFilterInternal
 
 	bool connected = true;
 
-	/**
-	 * Does the handler expect more data?  It announced this by
-	 * returning BUFFERED_MORE.
-	 */
-	bool expect_more = false;
-
 	bool postponed_remaining = false;
 
 	bool postponed_end = false;
@@ -333,9 +327,9 @@ public:
 	size_t GetAvailable() const noexcept override;
 	std::span<std::byte> ReadBuffer() noexcept override;
 	void Consumed(size_t nbytes) noexcept override;
-	bool Read(bool expect_more) noexcept override;
+	bool Read() noexcept override;
 	ssize_t Write(std::span<const std::byte> src) noexcept override;
-	void ScheduleRead(bool expect_more) noexcept override;
+	void ScheduleRead() noexcept override;
 	void ScheduleWrite() noexcept override;
 	void UnscheduleWrite() noexcept override;
 	bool InternalWrite() noexcept override;

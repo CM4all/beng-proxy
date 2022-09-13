@@ -70,9 +70,9 @@ NopSocketFilter::Consumed(size_t nbytes) noexcept
 }
 
 bool
-NopSocketFilter::Read(bool expect_more) noexcept
+NopSocketFilter::Read() noexcept
 {
-	return socket->InternalRead(expect_more);
+	return socket->InternalRead();
 }
 
 ssize_t
@@ -82,9 +82,9 @@ NopSocketFilter::Write(std::span<const std::byte> src) noexcept
 }
 
 void
-NopSocketFilter::ScheduleRead(bool expect_more) noexcept
+NopSocketFilter::ScheduleRead() noexcept
 {
-	socket->InternalScheduleRead(expect_more);
+	socket->InternalScheduleRead();
 }
 
 void

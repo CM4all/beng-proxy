@@ -506,7 +506,7 @@ ServerConnection::ServerConnection(struct pool &_pool,
 	// TODO: idle_timeout.Schedule(http_server_idle_timeout);
 
 	DeferWrite();
-	socket->ScheduleRead(false);
+	socket->ScheduleRead();
 }
 
 ServerConnection::~ServerConnection() noexcept

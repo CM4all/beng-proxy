@@ -156,7 +156,7 @@ LbTcpConnection::Inbound::OnBufferedWrite()
 
 	tcp.got_outbound_data = false;
 
-	if (!tcp.outbound.socket.Read(false))
+	if (!tcp.outbound.socket.Read())
 		return false;
 
 	if (!tcp.got_outbound_data)
@@ -282,7 +282,7 @@ LbTcpConnection::Outbound::OnBufferedWrite()
 
 	tcp.got_inbound_data = false;
 
-	if (!tcp.inbound.socket->Read(false))
+	if (!tcp.inbound.socket->Read())
 		return false;
 
 	if (!tcp.got_inbound_data)
@@ -380,8 +380,8 @@ LbTcpConnection::OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept
 	   (istream_direct_mask_to(inbound.base.base.fd_type) & FdType::FD_PIPE) != 0;
 	*/
 
-	if (inbound.socket->Read(false))
-		outbound.socket.Read(false);
+	if (inbound.socket->Read())
+		outbound.socket.Read();
 }
 
 void

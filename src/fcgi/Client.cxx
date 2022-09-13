@@ -158,7 +158,7 @@ public:
 	using Istream::GetPool;
 
 	void Start() noexcept {
-		socket.ScheduleRead(true);
+		socket.ScheduleRead();
 		input.Read();
 	}
 
@@ -258,7 +258,6 @@ private:
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override;
 	bool OnBufferedClosed() noexcept override;
-	bool OnBufferedRemaining(std::size_t remaining) noexcept override;
 	bool OnBufferedWrite() override;
 	bool OnBufferedTimeout() noexcept override;
 	void OnBufferedError(std::exception_ptr e) noexcept override;
@@ -629,7 +628,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 				return SubmitResponse()
 					/* continue parsing the response body from the
 					   buffer */
-					? BufferedResult::AGAIN_EXPECT
+					? BufferedResult::AGAIN
 					: BufferedResult::CLOSED;
 			}
 
@@ -785,7 +784,7 @@ FcgiClient::_Read() noexcept
 		   continue parsing the response if possible */
 		return;
 
-	socket.Read(true);
+	socket.Read();
 }
 
 void
@@ -977,16 +976,6 @@ FcgiClient::OnBufferedClosed() noexcept
 
 	/* the rest of the response may already be in the input buffer */
 	ReleaseSocket(false);
-	return true;
-}
-
-bool
-FcgiClient::OnBufferedRemaining(gcc_unused std::size_t remaining) noexcept
-{
-	/* only READ_BODY could have blocked */
-	assert(response.read_state == Response::READ_BODY);
-
-	/* the rest of the response may already be in the input buffer */
 	return true;
 }
 

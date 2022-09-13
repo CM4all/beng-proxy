@@ -83,7 +83,7 @@ public:
 	}
 
 	void Start() noexcept {
-		socket->ScheduleRead(false);
+		socket->ScheduleRead();
 		socket->SetHandshakeCallback(BIND_THIS_METHOD(OnHandshake));
 	}
 

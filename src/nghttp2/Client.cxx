@@ -494,7 +494,7 @@ ClientConnection::ClientConnection(std::unique_ptr<FilteredSocket> _socket,
 		throw MakeError(rv, "nghttp2_submit_settings() failed");
 
 	DeferWrite();
-	socket->ScheduleRead(false);
+	socket->ScheduleRead();
 }
 
 ClientConnection::~ClientConnection() noexcept

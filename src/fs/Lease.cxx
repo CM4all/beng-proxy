@@ -147,8 +147,7 @@ FilteredSocketLease::ReadReleased() noexcept
 			return true;
 
 		case BufferedResult::MORE:
-		case BufferedResult::AGAIN_OPTIONAL:
-		case BufferedResult::AGAIN_EXPECT:
+		case BufferedResult::AGAIN:
 			break;
 
 		case BufferedResult::CLOSED:
@@ -160,12 +159,12 @@ FilteredSocketLease::ReadReleased() noexcept
 }
 
 bool
-FilteredSocketLease::Read(bool expect_more) noexcept
+FilteredSocketLease::Read() noexcept
 {
 	if (IsReleased())
 		return ReadReleased();
 	else
-		return socket->Read(expect_more);
+		return socket->Read();
 }
 
 void
@@ -193,16 +192,7 @@ FilteredSocketLease::OnBufferedData()
 		/* since the BufferedSocket is gone already, we must handle
 		   the AGAIN result codes here */
 
-		if (result == BufferedResult::AGAIN_OPTIONAL && !IsEmpty())
-			continue;
-		else if (result == BufferedResult::AGAIN_EXPECT) {
-			if (IsEmpty()) {
-				handler.OnBufferedError(std::make_exception_ptr(SocketClosedPrematurelyError()));
-				break;
-			}
-
-			continue;
-		} else
+		if (result != BufferedResult::AGAIN && !IsEmpty())
 			break;
 	}
 

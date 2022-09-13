@@ -76,7 +76,7 @@ public:
 	 * The client asks to read more data.  The filter shall call
 	 * FilteredSocket::InvokeData() again.
 	 */
-	virtual bool Read(bool expect_more) noexcept = 0;
+	virtual bool Read() noexcept = 0;
 
 	/**
 	 * The client asks to write data to the socket.  The filter
@@ -90,7 +90,7 @@ public:
 	 * filter processes the call, and may then call
 	 * FilteredSocket::InternalScheduleRead().
 	 */
-	virtual void ScheduleRead(bool expect_more) noexcept = 0;
+	virtual void ScheduleRead() noexcept = 0;
 
 	/**
 	 * The client wants to be called back as soon as writing becomes

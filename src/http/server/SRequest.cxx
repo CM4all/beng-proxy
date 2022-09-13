@@ -127,7 +127,7 @@ HttpServerConnection::RequestBodyReader::_GetAvailable(bool partial) noexcept
 }
 
 inline void
-HttpServerConnection::ReadRequestBody(bool require_more) noexcept
+HttpServerConnection::ReadRequestBody() noexcept
 {
 	assert(IsValid());
 	assert(request.read_state == Request::BODY);
@@ -144,13 +144,13 @@ HttpServerConnection::ReadRequestBody(bool require_more) noexcept
 	if (socket->IsConnected())
 		socket->SetDirect(request_body_reader->CheckDirect(socket->GetType()));
 
-	socket->Read(require_more);
+	socket->Read();
 }
 
 void
 HttpServerConnection::RequestBodyReader::_Read() noexcept
 {
-	connection.ReadRequestBody(RequireMore());
+	connection.ReadRequestBody();
 }
 
 void

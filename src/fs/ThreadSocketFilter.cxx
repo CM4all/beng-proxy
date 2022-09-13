@@ -132,14 +132,14 @@ ThreadSocketFilter::SubmitDecryptedInput() noexcept
 			return true;
 
 		case BufferedResult::MORE:
-			expect_more = true;
+			if (unprotected_decrypted_input.IsDefinedAndFull()) {
+				socket->InvokeError(std::make_exception_ptr(SocketBufferFullError{}));
+				return false;
+			}
+
 			return true;
 
-		case BufferedResult::AGAIN_OPTIONAL:
-			break;
-
-		case BufferedResult::AGAIN_EXPECT:
-			expect_more = true;
+		case BufferedResult::AGAIN:
 			break;
 
 		case BufferedResult::CLOSED:
@@ -157,7 +157,7 @@ ThreadSocketFilter::CheckRead(std::unique_lock<std::mutex> &lock) noexcept
 
 	read_scheduled = true;
 	lock.unlock();
-	socket->InternalScheduleRead(false);
+	socket->InternalScheduleRead();
 	lock.lock();
 
 	return true;
@@ -345,11 +345,6 @@ ThreadSocketFilter::Done() noexcept
 				unprotected_decrypted_input.GetAvailable();
 			lock.unlock();
 
-			if (available == 0 && expect_more) {
-				ClosedPrematurely();
-				return;
-			}
-
 			postponed_remaining = false;
 
 			// TODO: check if there is really no more data pending inside our handler
@@ -362,11 +357,6 @@ ThreadSocketFilter::Done() noexcept
 		if (decrypted_input.empty() &&
 		    unprotected_decrypted_input.empty()) {
 			lock.unlock();
-
-			if (expect_more) {
-				ClosedPrematurely();
-				return;
-			}
 
 			socket->InvokeEnd();
 			return;
@@ -386,7 +376,7 @@ ThreadSocketFilter::Done() noexcept
 		}
 
 		if (!encrypted_input.IsDefinedAndFull())
-			socket->InternalScheduleRead(expect_more);
+			socket->InternalScheduleRead();
 
 		if (!encrypted_output.empty())
 			/* be optimistic and assume the socket is
@@ -501,14 +491,11 @@ ThreadSocketFilter::Consumed(size_t nbytes) noexcept
 }
 
 bool
-ThreadSocketFilter::Read(bool _expect_more) noexcept
+ThreadSocketFilter::Read() noexcept
 {
-	if (_expect_more)
-		expect_more = true;
-
 	return SubmitDecryptedInput() &&
 		(postponed_end ||
-		 socket->InternalRead(false));
+		 socket->InternalRead());
 }
 
 inline size_t
@@ -545,11 +532,8 @@ ThreadSocketFilter::Write(std::span<const std::byte> src) noexcept
 }
 
 void
-ThreadSocketFilter::ScheduleRead(bool _expect_more) noexcept
+ThreadSocketFilter::ScheduleRead() noexcept
 {
-	if (_expect_more)
-		expect_more = true;
-
 	want_read = true;
 	read_scheduled = false;
 
