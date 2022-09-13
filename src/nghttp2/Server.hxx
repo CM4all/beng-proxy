@@ -83,6 +83,12 @@ public:
 
 	~ServerConnection() noexcept;
 
+	void Consume(std::size_t nbytes) noexcept {
+		nghttp2_session_consume_connection(session.get(),
+						   nbytes);
+		DeferWrite();
+	}
+
 private:
 	void DeferWrite() noexcept;
 
