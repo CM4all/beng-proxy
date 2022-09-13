@@ -578,6 +578,8 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 	const DestructObserver destructed(*this);
 	const std::byte *data = data0, *const end = data0 + length0;
 
+	bool consumed_some = false;
+
 	do {
 		if (content_length > 0) {
 			bool at_headers = response.read_state == Response::READ_HEADERS;
@@ -610,12 +612,15 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 
 				/* the response body handler blocks, wait for it to
 				   become ready */
-				return BufferedResult::BLOCKING;
+				return consumed_some
+					? BufferedResult::OK
+					: BufferedResult::BLOCKING;
 			}
 
 			data += nbytes;
 			content_length -= nbytes;
 			socket.DisposeConsumed(nbytes);
+			consumed_some = true;
 
 			if (at_headers && response.read_state == Response::READ_BODY) {
 				/* the read_state has been switched from HEADERS to
@@ -646,6 +651,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 			data += nbytes;
 			skip_length -= nbytes;
 			socket.DisposeConsumed(nbytes);
+			consumed_some = true;
 
 			if (skip_length > 0)
 				return BufferedResult::MORE;
@@ -661,6 +667,7 @@ FcgiClient::ConsumeInput(const std::byte *data0, std::size_t length0) noexcept
 
 		data += sizeof(*header);
 		socket.KeepConsumed(sizeof(*header));
+		consumed_some = true;
 
 		if (!HandleHeader(*header))
 			return BufferedResult::CLOSED;
