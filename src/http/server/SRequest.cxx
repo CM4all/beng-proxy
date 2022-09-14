@@ -52,7 +52,9 @@ HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 	request.bytes_received += nbytes;
 	socket->DisposeConsumed(nbytes);
 
-	if (request.read_state == Request::BODY && request_body_reader->IsEOF()) {
+	assert(request.read_state == Request::BODY);
+
+	if (request_body_reader->IsEOF()) {
 		request.read_state = Request::END;
 #ifndef NDEBUG
 		request.body_state = Request::BodyState::CLOSED;
