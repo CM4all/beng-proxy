@@ -1137,7 +1137,7 @@ HttpClient::OnBufferedRemaining(std::size_t remaining) noexcept
 
 	if (remaining == 0 && response.state == Response::State::STATUS) {
 		AbortResponseHeaders(HttpClientErrorCode::REFUSED,
-				     "Server closed the socket without sending any response data");
+				     "Server closed the socket prematurely without sending any response data");
 		return false;
 	}
 
