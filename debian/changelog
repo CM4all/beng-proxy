@@ -9,7 +9,7 @@ cm4all-beng-proxy (17.2) unstable; urgency=low
   * status 502 instead of 500 for "Peer closed the connection prematurely"
   * stock: make the "waiting" list first-in-first-out
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 14 Sep 2022 18:17:02 +0200
 
 cm4all-beng-proxy (17.1) unstable; urgency=low
 
