@@ -34,6 +34,7 @@
 #include "istream/Handler.hxx"
 #include "istream/UnusedPtr.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "net/SocketProtocolError.hxx"
 
 #include <stdexcept>
 
@@ -119,7 +120,7 @@ HttpBodyReader::SocketEOF(std::size_t remaining) noexcept
 	} else {
 		/* something has gone wrong: either not enough or too much
 		   data left in the buffer */
-		InvokeError(std::make_exception_ptr(std::runtime_error("premature end of socket")));
+		InvokeError(std::make_exception_ptr(SocketClosedPrematurelyError{}));
 		return false;
 	}
 }
