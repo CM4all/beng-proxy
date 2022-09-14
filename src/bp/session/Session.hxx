@@ -241,7 +241,10 @@ struct Session {
 	/** has a HTTP cookie with this session id already been received? */
 	bool cookie_received = false;
 
-	/** an opaque string for the translation server */
+	/**
+	 * An opaque string for the translation server obtained from
+	 * TranslationCommand::SESSION.
+	 */
 	AllocatedArray<std::byte> translate;
 
 	AllocatedString recover;
