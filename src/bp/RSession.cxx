@@ -244,13 +244,13 @@ Request::DiscardRealmSession() noexcept
 static const char *
 get_request_realm(AllocatorPtr alloc, const StringMap &request_headers,
 		  const TranslateResponse &response,
-		  ConstBuffer<void> auth_base) noexcept
+		  std::span<const std::byte> auth_base) noexcept
 {
 	if (response.realm != nullptr)
 		return response.realm;
 
 	if (response.realm_from_auth_base) {
-		assert(!auth_base.IsNull());
+		assert(auth_base.data() != nullptr);
 		// TODO: what if AUTH contains null bytes?
 		return alloc.DupZ(ToStringView(auth_base));
 	}
@@ -266,7 +266,7 @@ get_request_realm(AllocatorPtr alloc, const StringMap &request_headers,
 
 void
 Request::ApplyTranslateRealm(const TranslateResponse &response,
-			     ConstBuffer<void> auth_base) noexcept
+			     std::span<const std::byte> auth_base) noexcept
 {
 	if (realm != nullptr)
 		/* was already called by Request::HandleAuth(), and no need to
@@ -285,13 +285,11 @@ Request::ApplyTranslateSession(const TranslateResponse &response) noexcept
 	if (user == nullptr && session && session->user != nullptr)
 		user = alloc.DupZ((std::string_view)session->user);
 
-	const auto attach_session =
-		ConstBuffer<std::byte>::FromVoid(response.attach_session);
-	if (attach_session != nullptr &&
-	    (!session || !session->parent.IsAttach(attach_session))) {
+	if (response.attach_session.data() != nullptr &&
+	    (!session || !session->parent.IsAttach(response.attach_session))) {
 		session = instance.session_manager->Attach(std::move(session),
 							   realm,
-							   attach_session);
+							   response.attach_session);
 		if (session && session->parent.id != session_id) {
 			/* if we have switched to a different session,
 			   send a new session cookie */

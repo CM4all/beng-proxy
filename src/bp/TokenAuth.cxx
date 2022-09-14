@@ -212,7 +212,7 @@ Request::HandleTokenAuth(const TranslateResponse &response) noexcept
 	assert(response.token_auth.data() != nullptr);
 
 	/* we need to validate the session realm early */
-	ApplyTranslateRealm(response, nullptr);
+	ApplyTranslateRealm(response, {});
 
 	const char *auth_token;
 

@@ -100,7 +100,7 @@ GetBounceUri(AllocatorPtr alloc, const IncomingHttpRequest &request,
 inline RealmSessionLease
 Request::ApplyTranslateResponseSession(const TranslateResponse &response) noexcept
 {
-	ApplyTranslateRealm(response, nullptr);
+	ApplyTranslateRealm(response, {});
 
 	return ApplyTranslateSession(response);
 }
@@ -137,7 +137,7 @@ Request::HandleTranslatedRequest2(const TranslateResponse &response) noexcept
 		translate.transformations.clear();
 
 	translate.chain = response.chain;
-	if (!translate.chain.IsNull() && ++translate.n_chain > 4) {
+	if (translate.chain.data() != nullptr && ++translate.n_chain > 4) {
 		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
 				 "Too many consecutive CHAIN packets", 1);
 		return;
@@ -627,7 +627,7 @@ Request::RepeatTranslation(const TranslateResponse &response) noexcept
 						    dissected_uri);
 
 	if (response.Wants(TranslationCommand::USER) || translate.want_user) {
-		ApplyTranslateRealm(response, nullptr);
+		ApplyTranslateRealm(response, {});
 
 		translate.want_user = true;
 		fill_translate_request_user(*this, translate.request, alloc);
@@ -686,7 +686,7 @@ Request::HandleChainResponse(const TranslateResponse &response) noexcept
 		translate.transformations.clear();
 
 	translate.chain = response.chain;
-	if (!translate.chain.IsNull() && ++translate.n_chain > 4) {
+	if (translate.chain.data() != nullptr && ++translate.n_chain > 4) {
 		LogDispatchError(HTTP_STATUS_BAD_GATEWAY,
 				 "Too many consecutive CHAIN packets", 1);
 		return;
