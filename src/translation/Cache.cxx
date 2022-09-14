@@ -101,6 +101,7 @@ struct TranslateCacheItem final : PoolHolder, CacheItem {
 	struct {
 		const char *param;
 		std::span<const std::byte> session;
+		std::span<const std::byte> realm_session;
 
 		const char *listener_tag;
 		SocketAddress local_address;
@@ -946,6 +947,11 @@ TranslateCacheItem::VaryMatch(const TranslateRequest &other_request,
 		return tcache_buffer_match(request.session,
 					   other_request.session, strict);
 
+	case TranslationCommand::REALM_SESSION:
+		return tcache_buffer_match(request.realm_session,
+					   other_request.realm_session,
+					   strict);
+
 	case TranslationCommand::LISTENER_TAG:
 		return tcache_string_match(request.listener_tag,
 					   other_request.listener_tag, strict);
@@ -1226,6 +1232,10 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response)
 	item->request.session =
 		tcache_vary_copy(alloc, tcr.request.session,
 				 response, TranslationCommand::SESSION);
+
+	item->request.realm_session =
+		tcache_vary_copy(alloc, tcr.request.realm_session,
+				 response, TranslationCommand::REALM_SESSION);
 
 	item->request.listener_tag =
 		tcache_vary_copy(alloc, tcr.request.listener_tag,

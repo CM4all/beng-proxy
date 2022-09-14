@@ -227,14 +227,15 @@ Request::HandleTokenAuth(const TranslateResponse &response) noexcept
 
 	had_auth_token = auth_token != nullptr;
 
-	if (auth_token == nullptr) {
-		bool is_authenticated = false;
-		{
-			auto session = GetRealmSession();
-			if (session)
-				is_authenticated = session->user != nullptr;
-		}
+	bool is_authenticated = false;
+	std::span<const std::byte> translate_realm_session{};
 
+	if (auto session = GetRealmSession()) {
+		is_authenticated = session->user != nullptr;
+		translate_realm_session = alloc.Dup(std::span(session->translate));
+	}
+
+	if (auth_token == nullptr) {
 		if (is_authenticated) {
 			/* already authenticated; we can skip the
 			   TOKEN_AUTH request */
@@ -254,6 +255,7 @@ Request::HandleTokenAuth(const TranslateResponse &response) noexcept
 	t->listener_tag = translate.request.listener_tag;
 	t->host = translate.request.host;
 	t->session = translate.request.session;
+	t->realm_session = translate_realm_session;
 
 	translate.previous = &response;
 

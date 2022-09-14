@@ -197,13 +197,28 @@ ReadCookieJar(FileReader &file, CookieJar &jar)
 }
 
 static std::unique_ptr<RealmSession>
-ReadRealmSession(FileReader &file, Session &parent)
+ReadRealmSession(FileReader &file, uint32_t magic, Session &parent)
 {
+	bool have_translate;
+	if (magic == MAGIC_REALM_SESSION) {
+		/* since version 17.2 */
+		have_translate = true;
+	} else if (magic == MAGIC_REALM_SESSION_OLD) {
+		/* until version 17.1 */
+		have_translate = false;
+	} else
+		throw SessionDeserializerError();
+
+
 	auto name = file.ReadString();
 	auto session = std::make_unique<RealmSession>(parent,
 						      std::move(name));
 
 	session->site = file.ReadString();
+
+	if (have_translate)
+		session->translate = file.ReadArray();
+
 	session->user = file.ReadString();
 	file.Read(session->user_expires);
 	ReadWidgetSessions(file, session->widgets);
@@ -225,12 +240,10 @@ DoReadSession(FileReader &file, Session &session)
 
 	while (true) {
 		uint32_t magic = file.Read32();
-		if (magic == MAGIC_END_OF_LIST) {
+		if (magic == MAGIC_END_OF_LIST)
 			break;
-		} else if (magic != MAGIC_REALM_SESSION)
-			throw SessionDeserializerError();
 
-		auto realm_session = ReadRealmSession(file, session);
+		auto realm_session = ReadRealmSession(file, magic, session);
 		if (session.realms.insert(*realm_session).second)
 			realm_session.release();
 	}

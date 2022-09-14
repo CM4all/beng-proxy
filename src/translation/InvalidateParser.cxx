@@ -51,6 +51,9 @@ GetInvalidateNameValue(const TranslateRequest &request,
 	case TranslationCommand::SESSION:
 		return std::make_pair("session", "?");
 
+	case TranslationCommand::REALM_SESSION:
+		return std::make_pair("realm_session", "?");
+
 	case TranslationCommand::LISTENER_TAG:
 		return std::make_pair("listener_tag", request.listener_tag);
 
@@ -126,6 +129,10 @@ apply_translation_packet(TranslateRequest &request,
 
 	case TranslationCommand::SESSION:
 		request.session = { (const std::byte *)payload, payload_length };
+		break;
+
+	case TranslationCommand::REALM_SESSION:
+		request.realm_session = { (const std::byte *)payload, payload_length };
 		break;
 
 	case TranslationCommand::LISTENER_TAG:

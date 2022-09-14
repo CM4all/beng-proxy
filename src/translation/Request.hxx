@@ -74,6 +74,7 @@ struct TranslateRequest {
 
 #if TRANSLATION_ENABLE_SESSION
 	std::span<const std::byte> session = {};
+	std::span<const std::byte> realm_session = {};
 
 	const char *recover_session = nullptr;
 #endif

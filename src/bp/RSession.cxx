@@ -316,6 +316,23 @@ Request::ApplyTranslateSession(const TranslateResponse &response) noexcept
 		}
 	}
 
+	if (response.realm_session.data() != nullptr) {
+		if (response.realm_session.empty()) {
+			/* clear translate session */
+
+			if (session)
+				session->ClearTranslate();
+		} else {
+			/* set new translate session */
+
+			if (!session)
+				session = MakeRealmSession();
+
+			if (session)
+				session->SetTranslate(response.realm_session);
+		}
+	}
+
 	if (response.recover_session != nullptr) {
 		if (!session)
 			session = MakeRealmSession();

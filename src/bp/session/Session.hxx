@@ -151,6 +151,12 @@ struct RealmSession
 	 */
 	AllocatedString site;
 
+	/**
+	 * An opaque string for the translation server obtained from
+	 * TranslationCommand::REALM_SESSION.
+	 */
+	AllocatedArray<std::byte> translate;
+
 	/** the user name which is logged in (nullptr if anonymous), provided
 	    by the translation server */
 	AllocatedString user;
@@ -198,6 +204,12 @@ struct RealmSession
 
 	void SetSite(const char *_site) noexcept {
 		site = _site;
+	}
+
+	void SetTranslate(std::span<const std::byte> translate) noexcept;
+
+	void ClearTranslate() noexcept {
+		translate = nullptr;
 	}
 
 	/**

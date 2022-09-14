@@ -188,6 +188,7 @@ WriteRealmSession(FileWriter &file, const RealmSession &session)
 {
 	file.Write(session.realm);
 	file.Write(session.site);
+	file.Write(session.translate);
 	file.Write(session.user);
 	file.Write(session.user_expires);
 	WriteWidgetSessions(file, session.widgets);

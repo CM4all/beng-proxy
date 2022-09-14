@@ -776,8 +776,13 @@ Request::OnTranslateResponse(TranslateResponse &response) noexcept
 
 	if (response.session.data() != nullptr)
 		/* must apply SESSION early so it gets used by
-		   repeat_translation() */
+		   RepeatTranslation() */
 		translate.request.session = response.session;
+
+	if (response.realm_session.data() != nullptr)
+		/* must apply REALM_SESSION early so it gets used by
+		   RepeatTranslation() */
+		translate.request.realm_session = response.realm_session;
 
 	if (response.session_cookie_same_site != CookieSameSite::DEFAULT)
 		session_cookie_same_site = response.session_cookie_same_site;
