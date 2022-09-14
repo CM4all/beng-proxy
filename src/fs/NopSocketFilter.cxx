@@ -69,6 +69,12 @@ NopSocketFilter::Consumed(std::size_t nbytes) noexcept
 	socket->InternalConsumed(nbytes);
 }
 
+void
+NopSocketFilter::AfterConsumed() noexcept
+{
+	socket->InternalAfterConsumed();
+}
+
 bool
 NopSocketFilter::Read() noexcept
 {

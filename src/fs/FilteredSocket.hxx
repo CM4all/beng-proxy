@@ -379,6 +379,12 @@ public:
 		base.DisposeConsumed(nbytes);
 	}
 
+	void InternalAfterConsumed() noexcept {
+		assert(filter != nullptr);
+
+		base.AfterConsumed();
+	}
+
 	DefaultFifoBuffer &InternalGetInputBuffer() noexcept {
 		return base.GetInputBuffer();
 	}

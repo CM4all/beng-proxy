@@ -72,6 +72,8 @@ public:
 
 	virtual void Consumed(std::size_t nbytes) noexcept = 0;
 
+	virtual void AfterConsumed() noexcept = 0;
+
 	/**
 	 * The client asks to read more data.  The filter shall call
 	 * FilteredSocket::InvokeData() again.

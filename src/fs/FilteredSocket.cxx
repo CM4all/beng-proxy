@@ -235,7 +235,9 @@ FilteredSocket::DisposeConsumed(std::size_t nbytes) noexcept
 void
 FilteredSocket::AfterConsumed() noexcept
 {
-	if (filter == nullptr)
+	if (filter != nullptr)
+		filter->AfterConsumed();
+	else
 		base.AfterConsumed();
 }
 

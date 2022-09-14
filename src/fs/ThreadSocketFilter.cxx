@@ -487,6 +487,11 @@ ThreadSocketFilter::Consumed(std::size_t nbytes) noexcept
 	MoveDecryptedInputAndSchedule();
 }
 
+void
+ThreadSocketFilter::AfterConsumed() noexcept
+{
+}
+
 bool
 ThreadSocketFilter::Read() noexcept
 {

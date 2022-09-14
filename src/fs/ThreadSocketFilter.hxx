@@ -327,6 +327,7 @@ public:
 	std::size_t GetAvailable() const noexcept override;
 	std::span<std::byte> ReadBuffer() noexcept override;
 	void Consumed(std::size_t nbytes) noexcept override;
+	void AfterConsumed() noexcept override;
 	bool Read() noexcept override;
 	ssize_t Write(std::span<const std::byte> src) noexcept override;
 	void ScheduleRead() noexcept override;
