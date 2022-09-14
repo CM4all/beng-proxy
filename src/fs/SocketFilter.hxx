@@ -66,11 +66,11 @@ public:
 
 	virtual bool IsFull() const noexcept = 0;
 
-	virtual size_t GetAvailable() const noexcept = 0;
+	virtual std::size_t GetAvailable() const noexcept = 0;
 
 	virtual std::span<std::byte> ReadBuffer() noexcept = 0;
 
-	virtual void Consumed(size_t nbytes) noexcept = 0;
+	virtual void Consumed(std::size_t nbytes) noexcept = 0;
 
 	/**
 	 * The client asks to read more data.  The filter shall call
@@ -122,7 +122,7 @@ public:
 	 */
 	virtual void OnClosed() noexcept {}
 
-	virtual bool OnRemaining(size_t remaining) noexcept = 0;
+	virtual bool OnRemaining(std::size_t remaining) noexcept = 0;
 
 	/**
 	 * The buffered_socket has run empty after the socket has been

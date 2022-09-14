@@ -52,7 +52,7 @@ void
 FilteredSocketLease::MoveSocketInput() noexcept
 {
 	// TODO: move buffers instead of copying the data
-	size_t i = 0;
+	std::size_t i = 0;
 	while (true) {
 		auto r = socket->ReadBuffer();
 		if (r.empty())
@@ -95,11 +95,11 @@ FilteredSocketLease::IsEmpty() const noexcept
 		return socket->IsEmpty();
 }
 
-size_t
+std::size_t
 FilteredSocketLease::GetAvailable() const noexcept
 {
 	if (IsReleased()) {
-		size_t result = 0;
+		std::size_t result = 0;
 		for (const auto &i : input)
 			result += i.GetAvailable();
 		return result;
@@ -116,7 +116,7 @@ FilteredSocketLease::ReadBuffer() const noexcept
 }
 
 void
-FilteredSocketLease::DisposeConsumed(size_t nbytes) noexcept
+FilteredSocketLease::DisposeConsumed(std::size_t nbytes) noexcept
 {
 	if (IsReleased()) {
 		input.front().Consume(nbytes);
@@ -177,7 +177,7 @@ void
 FilteredSocketLease::MoveInput() noexcept
 {
 	auto &dest = input.front();
-	for (size_t i = 1; !dest.IsFull() && i < input.size(); ++i) {
+	for (std::size_t i = 1; !dest.IsFull() && i < input.size(); ++i) {
 		auto &src = input[i];
 		dest.MoveFromAllowBothNull(src);
 		src.FreeIfEmpty();
@@ -238,7 +238,7 @@ FilteredSocketLease::OnBufferedClosed() noexcept
 }
 
 bool
-FilteredSocketLease::OnBufferedRemaining(size_t remaining) noexcept
+FilteredSocketLease::OnBufferedRemaining(std::size_t remaining) noexcept
 {
 	auto result = handler.OnBufferedRemaining(remaining);
 	if (result && IsReleased())

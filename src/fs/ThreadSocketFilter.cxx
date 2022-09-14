@@ -338,7 +338,7 @@ ThreadSocketFilter::Done() noexcept
 				lock.lock();
 			}
 
-			const size_t available = decrypted_input.GetAvailable() +
+			const std::size_t available = decrypted_input.GetAvailable() +
 				unprotected_decrypted_input.GetAvailable();
 			lock.unlock();
 
@@ -456,7 +456,7 @@ ThreadSocketFilter::IsFull() const noexcept
 		unprotected_decrypted_input.IsDefinedAndFull();
 }
 
-size_t
+std::size_t
 ThreadSocketFilter::GetAvailable() const noexcept
 {
 	const std::scoped_lock lock{mutex};
@@ -474,7 +474,7 @@ ThreadSocketFilter::ReadBuffer() noexcept
 }
 
 void
-ThreadSocketFilter::Consumed(size_t nbytes) noexcept
+ThreadSocketFilter::Consumed(std::size_t nbytes) noexcept
 {
 	if (nbytes == 0)
 		return;
@@ -495,7 +495,7 @@ ThreadSocketFilter::Read() noexcept
 		 socket->InternalRead());
 }
 
-inline size_t
+inline std::size_t
 ThreadSocketFilter::LockWritePlainOutput(std::span<const std::byte> src) noexcept
 {
 	const std::scoped_lock lock{mutex};
@@ -511,7 +511,7 @@ ThreadSocketFilter::Write(std::span<const std::byte> src) noexcept
 	if (src.empty())
 		return 0;
 
-	const size_t nbytes = LockWritePlainOutput(src);
+	const std::size_t nbytes = LockWritePlainOutput(src);
 
 	if (nbytes < src.size())
 		/* set the "want_write" flag but don't schedule an event to
@@ -594,7 +594,7 @@ ThreadSocketFilter::InternalWrite() noexcept
 
 		if (empty)
 			socket->InternalUnscheduleWrite();
-		else if (size_t(nbytes) < r.size())
+		else if (std::size_t(nbytes) < r.size())
 			/* if this was only a partial write, and this
 			   InternalWrite() was triggered by
 			   BufferedSocket::DeferWrite() (which is
@@ -644,7 +644,7 @@ ThreadSocketFilter::OnClosed() noexcept
 }
 
 bool
-ThreadSocketFilter::OnRemaining(size_t remaining) noexcept
+ThreadSocketFilter::OnRemaining(std::size_t remaining) noexcept
 {
 	assert(!connected);
 	assert(!want_write);
@@ -654,7 +654,7 @@ ThreadSocketFilter::OnRemaining(size_t remaining) noexcept
 		std::unique_lock lock{mutex};
 
 		if (!busy && !done_pending && encrypted_input.empty()) {
-			const size_t available = decrypted_input.GetAvailable() +
+			const std::size_t available = decrypted_input.GetAvailable() +
 				unprotected_decrypted_input.GetAvailable();
 			lock.unlock();
 
@@ -681,7 +681,7 @@ ThreadSocketFilter::OnEnd() noexcept
 		std::unique_lock lock{mutex};
 
 		if (!busy && !done_pending && encrypted_input.empty()) {
-			const size_t available = decrypted_input.GetAvailable() +
+			const std::size_t available = decrypted_input.GetAvailable() +
 				unprotected_decrypted_input.GetAvailable();
 			lock.unlock();
 

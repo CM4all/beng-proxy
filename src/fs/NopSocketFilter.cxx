@@ -51,7 +51,7 @@ NopSocketFilter::IsFull() const noexcept
 	return socket->InternalIsFull();
 }
 
-size_t
+std::size_t
 NopSocketFilter::GetAvailable() const noexcept
 {
 	return socket->InternalGetAvailable();
@@ -64,7 +64,7 @@ NopSocketFilter::ReadBuffer() noexcept
 }
 
 void
-NopSocketFilter::Consumed(size_t nbytes) noexcept
+NopSocketFilter::Consumed(std::size_t nbytes) noexcept
 {
 	socket->InternalConsumed(nbytes);
 }
@@ -106,7 +106,7 @@ NopSocketFilter::InternalWrite() noexcept
 }
 
 bool
-NopSocketFilter::OnRemaining(size_t remaining) noexcept
+NopSocketFilter::OnRemaining(std::size_t remaining) noexcept
 {
 	return socket->InvokeRemaining(remaining);
 }

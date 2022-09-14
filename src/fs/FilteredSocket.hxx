@@ -254,7 +254,7 @@ public:
 	 * Returns the number of bytes in the input buffer.
 	 */
 	[[gnu::pure]]
-	size_t GetAvailable() const noexcept;
+	std::size_t GetAvailable() const noexcept;
 
 	std::span<std::byte> ReadBuffer() const noexcept;
 
@@ -262,7 +262,7 @@ public:
 	 * Dispose the specified number of bytes from the input buffer.
 	 * Call this after ReadBuffer().  It may be called repeatedly.
 	 */
-	void DisposeConsumed(size_t nbytes) noexcept;
+	void DisposeConsumed(std::size_t nbytes) noexcept;
 
 	void AfterConsumed() noexcept;
 
@@ -361,7 +361,7 @@ public:
 	}
 
 	[[gnu::pure]]
-	size_t InternalGetAvailable() const noexcept {
+	std::size_t InternalGetAvailable() const noexcept {
 		assert(filter != nullptr);
 
 		return base.GetAvailable();
@@ -373,7 +373,7 @@ public:
 		return base.ReadBuffer();
 	}
 
-	void InternalConsumed(size_t nbytes) noexcept {
+	void InternalConsumed(std::size_t nbytes) noexcept {
 		assert(filter != nullptr);
 
 		base.DisposeConsumed(nbytes);
@@ -470,7 +470,7 @@ public:
 		return handler->OnBufferedClosed();
 	}
 
-	bool InvokeRemaining(size_t remaining) noexcept {
+	bool InvokeRemaining(std::size_t remaining) noexcept {
 		assert(filter != nullptr);
 
 		return handler->OnBufferedRemaining(remaining);
@@ -512,7 +512,7 @@ private:
 	BufferedResult OnBufferedData() override;
 	bool OnBufferedHangup() noexcept override;
 	bool OnBufferedClosed() noexcept override;
-	bool OnBufferedRemaining(size_t remaining) noexcept override;
+	bool OnBufferedRemaining(std::size_t remaining) noexcept override;
 	bool OnBufferedEnd() noexcept override;
 	bool OnBufferedWrite() override;
 	bool OnBufferedTimeout() noexcept override;
