@@ -76,10 +76,8 @@ Request::LoadSession(std::string_view _session_id) noexcept
 
 	auto session = GetSession();
 	if (session) {
-		if (session->translate.data() != nullptr) {
-			const ConstBuffer<std::byte> t(session->translate);
-			translate.request.session = alloc.Dup(t.ToVoid());
-		}
+		if (session->translate.data() != nullptr)
+			translate.request.session = alloc.Dup(std::span(session->translate));
 
 		session->cookie_received = true;
 
