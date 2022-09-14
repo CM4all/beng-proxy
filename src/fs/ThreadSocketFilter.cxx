@@ -115,10 +115,10 @@ ThreadSocketFilter::MoveDecryptedInputAndSchedule() noexcept
 bool
 ThreadSocketFilter::SubmitDecryptedInput() noexcept
 {
-	while (true) {
-		if (unprotected_decrypted_input.empty())
-			MoveDecryptedInputAndSchedule();
+	if (unprotected_decrypted_input.empty())
+		MoveDecryptedInputAndSchedule();
 
+	while (true) {
 		if (unprotected_decrypted_input.empty())
 			return true;
 
@@ -126,6 +126,7 @@ ThreadSocketFilter::SubmitDecryptedInput() noexcept
 
 		switch (socket->InvokeData()) {
 		case BufferedResult::OK:
+			AfterConsumed();
 			return true;
 
 		case BufferedResult::MORE:
@@ -134,10 +135,21 @@ ThreadSocketFilter::SubmitDecryptedInput() noexcept
 				return false;
 			}
 
+			{
+				const std::size_t available =
+					unprotected_decrypted_input.GetAvailable();
+				AfterConsumed();
+				if (unprotected_decrypted_input.GetAvailable() > available)
+					/* more data has just arrived from the
+					   worker thread; try again */
+					continue;
+			}
+
 			return true;
 
 		case BufferedResult::AGAIN:
-			break;
+			AfterConsumed();
+			continue;
 
 		case BufferedResult::CLOSED:
 			return false;
@@ -467,9 +479,6 @@ ThreadSocketFilter::GetAvailable() const noexcept
 std::span<std::byte>
 ThreadSocketFilter::ReadBuffer() noexcept
 {
-	if (unprotected_decrypted_input.empty())
-		MoveDecryptedInputAndSchedule();
-
 	return unprotected_decrypted_input.Read();
 }
 
@@ -483,13 +492,13 @@ ThreadSocketFilter::Consumed(std::size_t nbytes) noexcept
 
 	unprotected_decrypted_input.Consume(nbytes);
 	unprotected_decrypted_input.FreeIfEmpty();
-
-	MoveDecryptedInputAndSchedule();
 }
 
 void
 ThreadSocketFilter::AfterConsumed() noexcept
 {
+	if (!unprotected_decrypted_input.IsDefinedAndFull())
+		MoveDecryptedInputAndSchedule();
 }
 
 bool
