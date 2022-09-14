@@ -121,7 +121,7 @@ class LbCluster final
 	std::forward_list<LbMonitorRef> static_member_monitors;
 
 #ifdef HAVE_AVAHI
-	class ZeroconfMember
+	class ZeroconfMember final
 		: LeakDetector,
 		  public boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 

@@ -75,9 +75,7 @@ public:
 		 address(DupAddress((AllocatorPtr)pool, _address)),
 		 ssl_filter(_ssl_filter), handler(_handler)
 	{
-		socket->Reinit(Event::Duration(-1),
-			       Event::Duration(-1),
-			       *this);
+		socket->Reinit(Event::Duration(-1), *this);
 	}
 
 	void Destroy() noexcept {
@@ -85,7 +83,7 @@ public:
 	}
 
 	void Start() noexcept {
-		socket->ScheduleReadNoTimeout(false);
+		socket->ScheduleRead(false);
 		socket->SetHandshakeCallback(BIND_THIS_METHOD(OnHandshake));
 	}
 

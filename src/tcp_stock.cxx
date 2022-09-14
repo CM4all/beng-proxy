@@ -91,7 +91,7 @@ struct TcpStockConnection final
 	const AllocatedSocketAddress address;
 
 	SocketEvent event;
-	CoarseTimerEvent idle_timeout_event;
+	CoarseTimerEvent idle_timer;
 
 	TcpStockConnection(CreateStockItem c, SocketAddress _address,
 			   StockGetHandler &_handler,
@@ -101,8 +101,8 @@ struct TcpStockConnection final
 		 handler(_handler),
 		 address(_address),
 		 event(c.stock.GetEventLoop(), BIND_THIS_METHOD(EventCallback)),
-		 idle_timeout_event(c.stock.GetEventLoop(),
-				    BIND_THIS_METHOD(OnIdleTimeout))
+		 idle_timer(c.stock.GetEventLoop(),
+			    BIND_THIS_METHOD(OnIdleTimeout))
 	{
 		_cancel_ptr = *this;
 
@@ -130,13 +130,13 @@ private:
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override {
 		event.Cancel();
-		idle_timeout_event.Cancel();
+		idle_timer.Cancel();
 		return true;
 	}
 
 	bool Release() noexcept override {
 		event.ScheduleRead();
-		idle_timeout_event.Schedule(std::chrono::minutes(1));
+		idle_timer.Schedule(std::chrono::minutes(1));
 		return true;
 	}
 };

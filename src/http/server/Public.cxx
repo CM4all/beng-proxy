@@ -39,6 +39,7 @@
 #include "pool/PSocketAddress.hxx"
 #include "istream/Bucket.hxx"
 #include "system/Error.hxx"
+#include "net/TimeoutError.hxx"
 #include "io/Iovec.hxx"
 #include "util/StringView.hxx"
 #include "util/StaticVector.hxx"
@@ -46,10 +47,6 @@
 
 #include <assert.h>
 #include <unistd.h>
-
-const Event::Duration  http_server_idle_timeout = std::chrono::seconds(30);
-const Event::Duration http_server_read_timeout = std::chrono::seconds(30);
-const Event::Duration http_server_write_timeout = std::chrono::seconds(30);
 
 void
 HttpServerConnection::Log() noexcept
@@ -69,7 +66,7 @@ HttpServerConnection::Log() noexcept
 HttpServerRequest *
 http_server_request_new(HttpServerConnection *connection,
 			http_method_t method,
-			StringView uri) noexcept
+			std::string_view uri) noexcept
 {
 	assert(connection != nullptr);
 
@@ -305,6 +302,16 @@ HttpServerConnection::IdleTimeoutCallback() noexcept
 	Cancel();
 }
 
+inline void
+HttpServerConnection::OnReadTimeout() noexcept
+{
+	assert(request.read_state == Request::BODY);
+
+	// TODO send "408 Request Timeout"?
+
+	SocketError(TimeoutError{});
+}
+
 inline
 HttpServerConnection::HttpServerConnection(struct pool &_pool,
 					   UniquePoolPtr<FilteredSocket> &&_socket,
@@ -314,9 +321,10 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 					   HttpServerConnectionHandler &_handler,
 					   HttpServerRequestHandler &_request_handler) noexcept
 	:pool(&_pool), socket(std::move(_socket)),
-	 idle_timeout(socket->GetEventLoop(),
-		      BIND_THIS_METHOD(IdleTimeoutCallback)),
-	 defer_read(socket->GetEventLoop(), BIND_THIS_METHOD(OnDeferredRead)),
+	 idle_timer(socket->GetEventLoop(),
+		    BIND_THIS_METHOD(IdleTimeoutCallback)),
+	 read_timer(socket->GetEventLoop(),
+		    BIND_THIS_METHOD(OnReadTimeout)),
 	 handler(&_handler), request_handler(_request_handler),
 	 local_address(DupAddress(*pool, _local_address)),
 	 remote_address(DupAddress(*pool, _remote_address)),
@@ -324,14 +332,14 @@ HttpServerConnection::HttpServerConnection(struct pool &_pool,
 	 remote_host(address_to_host_string(*pool, _remote_address)),
 	 date_header(_date_header)
 {
-	socket->Reinit(Event::Duration(-1), http_server_write_timeout, *this);
+	socket->Reinit(write_timeout, *this);
 
-	idle_timeout.Schedule(http_server_idle_timeout);
+	idle_timer.Schedule(idle_timeout);
 
 	/* read the first request, but not in this stack frame, because a
 	   failure may destroy the HttpServerConnection before it gets
 	   passed to the caller */
-	defer_read.Schedule();
+	socket->DeferRead(false);
 }
 
 void

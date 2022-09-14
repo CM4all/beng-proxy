@@ -41,19 +41,37 @@
 #include "net/SocketProtocolError.hxx"
 #include "net/SocketAddress.hxx"
 #include "event/CoarseTimerEvent.hxx"
-#include "event/DeferEvent.hxx"
 #include "istream/Sink.hxx"
 #include "pool/UniquePtr.hxx"
 #include "util/Cancellable.hxx"
 #include "util/DestructObserver.hxx"
 #include "util/Exception.hxx"
 
-struct StringView;
+#include <cassert>
+#include <string_view>
+
 struct HttpServerRequest;
 class HttpHeaders;
 
 struct HttpServerConnection final
 	: BufferedSocketHandler, IstreamSink, DestructAnchor {
+
+	/**
+	 * The timeout of an idle connection (READ_START) up until
+	 * request headers are received.
+	 */
+	static constexpr Event::Duration idle_timeout = std::chrono::seconds{30};
+
+	/**
+	 * The timeout for reading more request data (READ_BODY).
+	 */
+	static constexpr Event::Duration read_timeout = std::chrono::seconds{30};
+
+	/**
+	 * The timeout for writing more response data (READ_BODY,
+	 * READ_END).
+	 */
+	static constexpr Event::Duration write_timeout = std::chrono::seconds{30};
 
 	enum class BucketResult {
 		/**
@@ -106,12 +124,18 @@ struct HttpServerConnection final
 
 	/**
 	 * Track the total time for idle periods plus receiving all
-	 * headers from the client.  Unlike the #filtered_socket read
+	 * headers from the client.  Unlike the #FilteredSocket read
 	 * timeout, it is not refreshed after receiving some header data.
 	 */
-	CoarseTimerEvent idle_timeout;
+	CoarseTimerEvent idle_timer;
 
-	DeferEvent defer_read;
+	/**
+	 * A timer which fires when reading the request body times
+	 * out.  It is refreshed each time request body data is
+	 * received, and is disabled as long as the #Istream handler
+	 * blocks.
+	 */
+	CoarseTimerEvent read_timer;
 
 	enum http_server_score score = HTTP_SERVER_NEW;
 
@@ -162,6 +186,11 @@ struct HttpServerConnection final
 		 */
 		bool in_handler;
 
+		/**
+		 * Did the client send an "Upgrade" header?
+		 */
+		bool upgrade;
+
 		/** did the client send an "Expect: 100-continue" header? */
 		bool expect_100_continue;
 
@@ -173,6 +202,15 @@ struct HttpServerConnection final
 		CancellablePointer cancel_ptr;
 
 		uint64_t bytes_received = 0;
+
+		bool ShouldEnableReadTimeout() const noexcept {
+			/* "Upgrade" requests have no request body
+			   timeout, because an arbitrary protocol may
+			   be on the wire now */
+			/* no timeout as long as the client is waiting
+			   for "100 Continue" */
+			return !upgrade && !expect_100_continue;
+		}
 	} request;
 
 	/** the request body reader; this variable is only valid if
@@ -216,8 +254,8 @@ struct HttpServerConnection final
 
 	void Delete() noexcept;
 
-	EventLoop &GetEventLoop() {
-		return defer_read.GetEventLoop();
+	auto &GetEventLoop() const noexcept {
+		return idle_timer.GetEventLoop();
 	}
 
 	gcc_pure
@@ -226,27 +264,26 @@ struct HttpServerConnection final
 	}
 
 	void IdleTimeoutCallback() noexcept;
+	void OnReadTimeout() noexcept;
 
 	void Log() noexcept;
 
-	void OnDeferredRead() noexcept;
+	/**
+	 * @return false if the connection has been closed
+	 */
+	bool ParseRequestLine(const char *line, std::size_t length) noexcept;
 
 	/**
 	 * @return false if the connection has been closed
 	 */
-	bool ParseRequestLine(const char *line, std::size_t length);
+	bool HeadersFinished() noexcept;
 
 	/**
 	 * @return false if the connection has been closed
 	 */
-	bool HeadersFinished();
+	bool HandleLine(std::string_view line) noexcept;
 
-	/**
-	 * @return false if the connection has been closed
-	 */
-	bool HandleLine(StringView line) noexcept;
-
-	BufferedResult FeedHeaders(StringView b) noexcept;
+	BufferedResult FeedHeaders(std::string_view b) noexcept;
 
 	/**
 	 * @return false if the connection has been closed
@@ -299,6 +336,13 @@ struct HttpServerConnection final
 	void SubmitResponse(http_status_t status,
 			    HttpHeaders &&headers,
 			    UnusedIstreamPtr body);
+
+	void ScheduleReadTimeoutTimer() noexcept {
+		assert(request.read_state == Request::BODY);
+
+		if (request.ShouldEnableReadTimeout())
+			read_timer.Schedule(read_timeout);
+	}
 
 	void DeferWrite() noexcept {
 		response.want_write = true;
@@ -379,23 +423,7 @@ struct HttpServerConnection final
 	void OnError(std::exception_ptr ep) noexcept override;
 };
 
-/**
- * The timeout of an idle connection (READ_START) up until request
- * headers are received.
- */
-extern const Event::Duration http_server_idle_timeout;
-
-/**
- * The timeout for reading more request data (READ_BODY).
- */
-extern const Event::Duration http_server_read_timeout;
-
-/**
- * The timeout for writing more response data (READ_BODY, READ_END).
- */
-extern const Event::Duration http_server_write_timeout;
-
 HttpServerRequest *
 http_server_request_new(HttpServerConnection *connection,
 			http_method_t method,
-			StringView uri) noexcept;
+			std::string_view uri) noexcept;

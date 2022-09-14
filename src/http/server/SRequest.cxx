@@ -58,12 +58,10 @@ HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 		request.body_state = Request::BodyState::CLOSED;
 #endif
 
+		read_timer.Cancel();
+
 		if (socket->IsConnected())
 			socket->SetDirect(false);
-
-		/* re-enable the event, to detect client disconnect while
-		   we're processing the request */
-		socket->ScheduleReadNoTimeout(false);
 
 		request.request->stopwatch.RecordEvent("request_end");
 
@@ -95,6 +93,8 @@ HttpServerConnection::DiscardRequestBody() noexcept
 #ifndef NDEBUG
 	request.body_state = Request::BodyState::CLOSED;
 #endif
+
+	read_timer.Cancel();
 
 	if (socket->IsConnected())
 		socket->SetDirect(false);

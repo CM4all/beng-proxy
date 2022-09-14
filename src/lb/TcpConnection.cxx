@@ -372,8 +372,7 @@ LbTcpConnection::OnSocketConnectSuccess(UniqueSocketDescriptor fd) noexcept
 	cancel_connect = nullptr;
 
 	outbound.socket.Init(fd.Release(), FdType::FD_TCP,
-			     Event::Duration(-1), write_timeout,
-			     outbound);
+			     write_timeout, outbound);
 
 	/* TODO
 	   outbound.direct = pipe_stock != nullptr &&
@@ -418,8 +417,7 @@ inline
 LbTcpConnection::Inbound::Inbound(UniquePoolPtr<FilteredSocket> &&_socket) noexcept
 	:socket(std::move(_socket))
 {
-	socket->Reinit(Event::Duration(-1), write_timeout,
-		       *this);
+	socket->Reinit(write_timeout, *this);
 	/* TODO
 	   socket.base.direct = pipe_stock != nullptr &&
 	   (ISTREAM_TO_PIPE & fd_type) != 0 &&

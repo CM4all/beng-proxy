@@ -82,10 +82,9 @@ NopSocketFilter::Write(std::span<const std::byte> src) noexcept
 }
 
 void
-NopSocketFilter::ScheduleRead(bool expect_more,
-			      Event::Duration timeout) noexcept
+NopSocketFilter::ScheduleRead(bool expect_more) noexcept
 {
-	socket->InternalScheduleRead(expect_more, timeout);
+	socket->InternalScheduleRead(expect_more);
 }
 
 void

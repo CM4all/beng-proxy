@@ -88,7 +88,6 @@ public:
 	}
 
 	void Init(SocketDescriptor fd, FdType fd_type,
-		  Event::Duration read_timeout,
 		  Event::Duration write_timeout,
 		  SocketFilterPtr filter,
 		  BufferedSocketHandler &handler) noexcept;
@@ -101,8 +100,7 @@ public:
 	void InitDummy(SocketDescriptor _fd, FdType _fd_type,
 		       SocketFilterPtr _filter={}) noexcept;
 
-	void Reinit(Event::Duration read_timeout,
-		    Event::Duration write_timeout,
+	void Reinit(Event::Duration write_timeout,
 		    BufferedSocketHandler &handler) noexcept;
 
 	bool HasFilter() const noexcept {
@@ -149,7 +147,7 @@ public:
 
 	/**
 	 * Close the physical socket, but do not destroy the input buffer.  To
-	 * do the latter, call filtered_socket_destroy().
+	 * do the latter, call Destroy().
 	 */
 	void Close() noexcept {
 		if (filter != nullptr)
@@ -193,9 +191,8 @@ public:
 #endif
 
 	/**
-	 * Destroy the object.  Prior to that, the socket must be removed
-	 * by calling either filtered_socket_close() or
-	 * filtered_socket_abandon().
+	 * Destroy the object.  Prior to that, the socket must be
+	 * removed by calling either Close() or Abandon().
 	 */
 	void Destroy() noexcept;
 
@@ -267,6 +264,8 @@ public:
 	 */
 	void DisposeConsumed(size_t nbytes) noexcept;
 
+	void AfterConsumed() noexcept;
+
 	void SetDirect(bool _direct) noexcept {
 		assert(!_direct || !HasFilter());
 
@@ -274,12 +273,17 @@ public:
 	}
 
 	/**
-	 * The caller wants to read more data from the socket.  There are
-	 * four possible outcomes: a call to filtered_socket_handler.read,
-	 * a call to filtered_socket_handler.direct, a call to
-	 * filtered_socket_handler.error or (if there is no data available
-	 * yet) an event gets scheduled and the function returns
-	 * immediately.
+	 * The caller wants to read more data from the socket.  There
+	 * are four possible outcomes: a call to
+	 * BufferedSocketHandler::OnBufferedData(), a call to
+	 * BufferedSocketHandler::OnBufferedDirect(), a call to
+	 * BufferedSocketHandler::OnBufferedError() or (if there is no
+	 * data available yet) an event gets scheduled and the
+	 * function returns immediately.
+	 *
+	 * @param expect_more if true, generates an error if no more data can
+	 * be read (socket already shut down, buffer empty); if false, the
+	 * existing expect_more state is unmodified
 	 */
 	bool Read(bool expect_more) noexcept;
 
@@ -305,24 +309,25 @@ public:
 		return base.IsReadyForWriting();
 	}
 
-	void ScheduleReadTimeout(bool expect_more,
-				 Event::Duration timeout) noexcept {
-		if (filter != nullptr)
-			filter->ScheduleRead(expect_more, timeout);
-		else
-			base.ScheduleReadTimeout(expect_more, timeout);
+	/**
+	 * Wrapper for BufferedSocket::DeferRead().  This works only
+	 * for the initial read.
+	 */
+	void DeferRead(bool _expect_more) noexcept {
+		/* this is only relevant if there is no filter; with a
+		   filter, reading is always scheduled (unless the
+		   buffer is full) */
+		if (filter == nullptr)
+			base.DeferRead(_expect_more);
 	}
 
-	/**
-	 * Schedules reading on the socket with timeout disabled, to indicate
-	 * that you are willing to read, but do not expect it yet.  No direct
-	 * action is taken.  Use this to enable reading when you are still
-	 * sending the request.  When you are finished sending the request,
-	 * you should call filtered_socket_read() to enable the read timeout.
-	 */
-	void ScheduleReadNoTimeout(bool expect_more) noexcept {
-		ScheduleReadTimeout(expect_more, Event::Duration(-1));
+	void ScheduleRead(bool expect_more) noexcept {
+		if (filter != nullptr)
+			filter->ScheduleRead(expect_more);
+		else
+			base.ScheduleRead(expect_more);
 	}
+
 
 	void DeferWrite() noexcept {
 		if (filter != nullptr)
@@ -428,11 +433,10 @@ public:
 	 */
 	bool InternalDrained() noexcept;
 
-	void InternalScheduleRead(bool expect_more,
-				  Event::Duration timeout) noexcept {
+	void InternalScheduleRead(bool expect_more) noexcept {
 		assert(filter != nullptr);
 
-		base.ScheduleReadTimeout(expect_more, timeout);
+		base.ScheduleRead(expect_more);
 	}
 
 	void InternalScheduleWrite() noexcept {

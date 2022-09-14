@@ -39,6 +39,7 @@
 #include "stock/Stock.hxx"
 #include "stock/GetHandler.hxx"
 #include "stock/LoggerDomain.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 #include "io/Logger.hxx"
@@ -96,6 +97,8 @@ class FilteredSocketStockConnection final
 
 	std::unique_ptr<FilteredSocket> socket;
 
+	CoarseTimerEvent idle_timer;
+
 public:
 	FilteredSocketStockConnection(CreateStockItem c,
 				      SocketAddress _address,
@@ -104,7 +107,9 @@ public:
 		:StockItem(c),
 		 logger(c.stock),
 		 address(_address),
-		 handler(&_handler)
+		 handler(&_handler),
+		 idle_timer(c.stock.GetEventLoop(),
+			    BIND_THIS_METHOD(OnIdleTimeout))
 	{
 		_cancel_ptr = *this;
 
@@ -118,7 +123,9 @@ public:
 		 logger(c.stock),
 		 address(_address),
 		 handler(nullptr),
-		 socket(std::move(_socket))
+		 socket(std::move(_socket)),
+		 idle_timer(c.stock.GetEventLoop(),
+			    BIND_THIS_METHOD(OnIdleTimeout))
 	{
 	}
 
@@ -127,8 +134,12 @@ public:
 			cancel_ptr.Cancel();
 	}
 
+	auto &GetEventLoop() const noexcept {
+		return idle_timer.GetEventLoop();
+	}
+
 	void Start(FilteredSocketStockRequest &&request) noexcept {
-		ConnectFilteredSocket(GetStock().GetEventLoop(),
+		ConnectFilteredSocket(GetEventLoop(),
 				      std::move(request.stopwatch),
 				      request.ip_transparent,
 				      request.bind_address,
@@ -149,6 +160,10 @@ public:
 	}
 
 private:
+	void OnIdleTimeout() noexcept {
+		InvokeIdleDisconnect();
+	}
+
 	/* virtual methods from class Cancellable */
 	void Cancel() noexcept override {
 		assert(cancel_ptr);
@@ -177,6 +192,7 @@ private:
 
 	/* virtual methods from class StockItem */
 	bool Borrow() noexcept override {
+		idle_timer.Cancel();
 		return true;
 	}
 
@@ -230,8 +246,7 @@ FilteredSocketStockConnection::OnConnectFilteredSocket(std::unique_ptr<FilteredS
 	cancel_ptr = nullptr;
 
 	socket = std::move(_socket);
-	socket->Reinit(Event::Duration(-1), Event::Duration(-1),
-		       *this);
+	socket->Reinit(Event::Duration(-1), *this);
 
 	InvokeCreateSuccess(*handler);
 }
@@ -291,10 +306,11 @@ FilteredSocketStockConnection::Release() noexcept
 		return false;
 	}
 
-	socket->Reinit(Event::Duration(-1), Event::Duration(-1), *this);
+	socket->Reinit(Event::Duration(-1), *this);
 	socket->UnscheduleWrite();
 
-	socket->ScheduleReadTimeout(false, std::chrono::minutes(1));
+	socket->ScheduleRead(false);
+	idle_timer.Schedule(std::chrono::minutes(1));
 
 	return true;
 }

@@ -242,8 +242,6 @@ class ThreadSocketFilter final : public SocketFilter, ThreadSocketFilterInternal
 	 */
 	SliceFifoBuffer unprotected_decrypted_input;
 
-	Event::Duration read_timeout = Event::Duration(-1);
-
 	/**
 	 * If this is set, an exception was caught inside the thread, and
 	 * shall be forwarded to the main thread.
@@ -337,8 +335,7 @@ public:
 	void Consumed(size_t nbytes) noexcept override;
 	bool Read(bool expect_more) noexcept override;
 	ssize_t Write(std::span<const std::byte> src) noexcept override;
-	void ScheduleRead(bool expect_more,
-			  Event::Duration timeout) noexcept override;
+	void ScheduleRead(bool expect_more) noexcept override;
 	void ScheduleWrite() noexcept override;
 	void UnscheduleWrite() noexcept override;
 	bool InternalWrite() noexcept override;

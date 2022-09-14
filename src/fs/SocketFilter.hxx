@@ -74,14 +74,14 @@ public:
 
 	/**
 	 * The client asks to read more data.  The filter shall call
-	 * filtered_socket_internal_data() again.
+	 * FilteredSocket::InvokeData() again.
 	 */
 	virtual bool Read(bool expect_more) noexcept = 0;
 
 	/**
 	 * The client asks to write data to the socket.  The filter
 	 * processes it, and may then call
-	 * filtered_socket_internal_write().
+	 * FilteredSocket::InvokeWrite().
 	 */
 	virtual ssize_t Write(std::span<const std::byte> src) noexcept = 0;
 
@@ -90,8 +90,7 @@ public:
 	 * filter processes the call, and may then call
 	 * FilteredSocket::InternalScheduleRead().
 	 */
-	virtual void ScheduleRead(bool expect_more,
-				  Event::Duration timeout) noexcept = 0;
+	virtual void ScheduleRead(bool expect_more) noexcept = 0;
 
 	/**
 	 * The client wants to be called back as soon as writing becomes
@@ -103,7 +102,7 @@ public:
 	/**
 	 * The client is not anymore interested in writing.  The filter
 	 * processes the call, and may then call
-	 * filtered_socket_internal_unschedule_write().
+	 * FilteredSocket::InternalUnscheduleWrite().
 	 */
 	virtual void UnscheduleWrite() noexcept = 0;
 
@@ -127,7 +126,7 @@ public:
 
 	/**
 	 * The buffered_socket has run empty after the socket has been
-	 * closed.  The filter may call filtered_socket_invoke_end() as
+	 * closed.  The filter may call FilteredSocket::InvokeEnd() as
 	 * soon as all its buffers have been consumed.
 	 */
 	virtual void OnEnd() noexcept = 0;

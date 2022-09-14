@@ -152,7 +152,7 @@ private:
 		client_fs_released = true;
 
 		if (reuse && client_fs.IsValid() && client_fs.IsConnected()) {
-			client_fs.Reinit(Event::Duration(-1), Event::Duration(-1), *this);
+			client_fs.Reinit(Event::Duration(-1), *this);
 			client_fs.UnscheduleWrite();
 		} else {
 			CloseClientSocket();

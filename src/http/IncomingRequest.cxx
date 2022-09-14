@@ -35,7 +35,6 @@
 #include "pool/pool.hxx"
 #include "istream/istream_string.hxx"
 #include "http/Headers.hxx"
-#include "util/StringView.hxx"
 
 IncomingHttpRequest::IncomingHttpRequest(PoolPtr &&_pool,
 					 SocketAddress _local_address,
@@ -58,7 +57,7 @@ IncomingHttpRequest::IncomingHttpRequest(PoolPtr &&_pool,
 					 const char *_local_host_and_port,
 					 const char *_remote_host,
 					 http_method_t _method,
-					 StringView _uri) noexcept
+					 std::string_view _uri) noexcept
 	:pool(std::move(_pool)),
 	 local_address(_local_address),
 	 remote_address(_remote_address),

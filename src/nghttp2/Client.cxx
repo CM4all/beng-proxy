@@ -41,6 +41,7 @@
 #include "istream/MultiFifoBufferIstream.hxx"
 #include "istream/New.hxx"
 #include "fs/FilteredSocket.hxx"
+#include "net/SocketProtocolError.hxx"
 #include "util/Cancellable.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StaticVector.hxx"
@@ -463,8 +464,7 @@ ClientConnection::ClientConnection(std::unique_ptr<FilteredSocket> _socket,
 	 defer_invoke_idle(socket->GetEventLoop(),
 			   BIND_THIS_METHOD(InvokeIdle))
 {
-	socket->Reinit(Event::Duration(-1), write_timeout,
-		       *this);
+	socket->Reinit(write_timeout, *this);
 
 	NgHttp2::Option option;
 	nghttp2_option_set_no_auto_window_update(option.get(), true);
@@ -494,7 +494,7 @@ ClientConnection::ClientConnection(std::unique_ptr<FilteredSocket> _socket,
 		throw MakeError(rv, "nghttp2_submit_settings() failed");
 
 	DeferWrite();
-	socket->ScheduleReadNoTimeout(false);
+	socket->ScheduleRead(false);
 }
 
 ClientConnection::~ClientConnection() noexcept
@@ -607,7 +607,7 @@ ClientConnection::OnBufferedData()
 bool
 ClientConnection::OnBufferedClosed() noexcept
 {
-	AbortAllRequests(std::make_exception_ptr(std::runtime_error("Peer closed the socket prematurely")));
+	AbortAllRequests(std::make_exception_ptr(SocketClosedPrematurelyError{}));
 
 	handler.OnNgHttp2ConnectionClosed();
 	return false;

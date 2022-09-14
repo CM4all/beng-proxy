@@ -165,20 +165,6 @@ endif
 add_global_arguments(debug_flags, language: 'c')
 add_global_arguments(debug_flags, language: 'cpp')
 
-if get_option('coroutines')
-  if compiler.get_id() == 'clang'
-    add_global_arguments(
-      '-fcoroutines-ts',
-      '-stdlib=libc++',
-      language: 'cpp')
-    add_global_link_arguments('-stdlib=libc++', language: 'cpp')
-  else
-    add_global_arguments('-fcoroutines', language: 'cpp')
-  endif
-else
-  error('Coroutines must be enabled')
-endif
-
 if get_option('static_libcxx')
   link_args = ['-static-libstdc++']
 
@@ -224,6 +210,8 @@ util_dep = declare_dependency(
     uri_dep,
   ],
 )
+
+subdir('libcommon/src/co')
 
 subdir('libcommon/src/lib/pcre')
 subdir('libcommon/src/lib/sodium')
@@ -536,10 +524,6 @@ subdir('libcommon/src/translation/server')
 
 libcommon_translation_dep = translation_dep
 
-translation2_sources = []
-if get_option('coroutines')
-  translation2_sources += 'src/translation/CoTranslate.cxx'
-endif
 
 translation2 = static_library(
   'translation2',
@@ -555,9 +539,10 @@ translation2 = static_library(
   'src/translation/SubstTransformation.cxx',
   'src/translation/Vary.cxx',
   'src/translation/InvalidateParser.cxx',
-  translation2_sources,
+  'src/translation/CoTranslate.cxx',
   include_directories: inc,
   dependencies: [
+    coroutines_dep,
     pcre_dep,
   ],
 )
@@ -565,6 +550,7 @@ translation2 = static_library(
 translation_dep = declare_dependency(
   link_with: translation2,
   dependencies: [
+    coroutines_dep,
     translation_dep,
     event_dep,
     putil_dep,
@@ -760,7 +746,7 @@ executable(
   'src/delegate/RequestHandler.cxx',
   'src/address_string.cxx',
   'src/cluster/TcpBalancer.cxx',
-  'src/bot.c',
+  'src/bp/Bot.cxx',
   'libcommon/src/spawn/Server.cxx',
   'libcommon/src/spawn/Launch.cxx',
   'libcommon/src/spawn/Client.cxx',

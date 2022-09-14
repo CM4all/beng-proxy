@@ -36,10 +36,12 @@
 #include "translation/Request.hxx"
 #include "translation/Response.hxx"
 #include "translation/Handler.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "event/net/BufferedSocket.hxx"
 #include "stopwatch.hxx"
 #include "pool/pool.hxx"
 #include "system/Error.hxx"
+#include "net/TimeoutError.hxx"
 #include "util/Cancellable.hxx"
 #include "util/Exception.hxx"
 #include "lease.hxx"
@@ -52,10 +54,15 @@
 static const uint8_t PROTOCOL_VERSION = 3;
 
 class TranslateClient final : BufferedSocketHandler, Cancellable {
+	static constexpr Event::Duration read_timeout = std::chrono::minutes{1};
+	static constexpr Event::Duration write_timeout = std::chrono::seconds{10};
+
 	const StopwatchPtr stopwatch;
 
 	BufferedSocket socket;
 	LeasePtr lease_ref;
+
+	CoarseTimerEvent read_timer;
 
 	/** the marshalled translate request */
 	GrowingBufferReader request;
@@ -86,6 +93,11 @@ private:
 
 	BufferedResult Feed(std::span<const std::byte> src) noexcept;
 
+	void OnReadTimeout() noexcept {
+		Fail(NestException(std::make_exception_ptr(TimeoutError{}),
+				   std::runtime_error("Translation server timed out")));
+	}
+
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override {
 		auto r = socket.ReadBuffer();
@@ -114,9 +126,6 @@ private:
 		Destroy();
 	}
 };
-
-static constexpr auto translate_read_timeout = std::chrono::minutes(1);
-static constexpr auto translate_write_timeout = std::chrono::seconds(10);
 
 void
 TranslateClient::ReleaseSocket(bool reuse) noexcept
@@ -212,7 +221,9 @@ TranslateClient::TryWrite() noexcept
 		stopwatch.RecordEvent("request_end");
 
 		socket.UnscheduleWrite();
-		return socket.Read(true);
+		socket.ScheduleRead(true);
+		read_timer.Schedule(read_timeout);
+		return true;
 	}
 
 	socket.ScheduleWrite();
@@ -234,14 +245,12 @@ TranslateClient::TranslateClient(AllocatorPtr alloc, EventLoop &event_loop,
 				 CancellablePointer &cancel_ptr) noexcept
 	:stopwatch(std::move(_stopwatch)),
 	 socket(event_loop), lease_ref(lease),
+	 read_timer(event_loop, BIND_THIS_METHOD(OnReadTimeout)),
 	 request(std::move(_request)),
 	 handler(_handler),
 	 parser(alloc, request2, *alloc.New<TranslateResponse>())
 {
-	socket.Init(fd, FdType::FD_SOCKET,
-		    translate_read_timeout,
-		    translate_write_timeout,
-		    *this);
+	socket.Init(fd, FdType::FD_SOCKET, write_timeout, *this);
 
 	cancel_ptr = *this;
 
