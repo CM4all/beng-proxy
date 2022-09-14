@@ -892,7 +892,7 @@ HttpClient::FeedBody(std::span<const std::byte> b)
 		if (nbytes == 0)
 			return destructed
 				? BufferedResult::CLOSED
-				: BufferedResult::BLOCKING;
+				: BufferedResult::OK;
 	}
 
 	socket.DisposeConsumed(nbytes);

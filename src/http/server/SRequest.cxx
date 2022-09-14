@@ -48,7 +48,7 @@ HttpServerConnection::FeedRequestBody(std::span<const std::byte> src) noexcept
 			return BufferedResult::CLOSED;
 
 		read_timer.Cancel();
-		return BufferedResult::BLOCKING;
+		return BufferedResult::OK;
 	}
 
 	request.bytes_received += nbytes;

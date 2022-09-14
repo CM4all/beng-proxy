@@ -128,9 +128,6 @@ ThreadSocketFilter::SubmitDecryptedInput() noexcept
 		case BufferedResult::OK:
 			return true;
 
-		case BufferedResult::BLOCKING:
-			return true;
-
 		case BufferedResult::MORE:
 			if (unprotected_decrypted_input.IsDefinedAndFull()) {
 				socket->InvokeError(std::make_exception_ptr(SocketBufferFullError{}));
@@ -429,7 +426,7 @@ ThreadSocketFilter::OnData() noexcept
 		const std::scoped_lock lock{mutex};
 
 		if (encrypted_input.IsDefinedAndFull())
-			return BufferedResult::BLOCKING;
+			return BufferedResult::OK;
 
 		auto &src = socket->InternalGetInputBuffer();
 		assert(!src.empty());

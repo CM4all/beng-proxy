@@ -217,7 +217,7 @@ ConnectFilteredSocketOperation::OnSocketConnectSuccess(UniqueSocketDescriptor fd
 BufferedResult
 ConnectFilteredSocketOperation::OnBufferedData()
 {
-	return BufferedResult::BLOCKING;
+	return BufferedResult::OK;
 }
 
 bool

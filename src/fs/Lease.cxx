@@ -136,15 +136,18 @@ bool
 FilteredSocketLease::ReadReleased() noexcept
 {
 	while (!IsReleasedEmpty()) {
+		const std::size_t remaining = input.front().GetAvailable();
+
 		switch (handler.OnBufferedData()) {
 		case BufferedResult::OK:
 			if (IsReleasedEmpty() && !handler.OnBufferedEnd())
 				return false;
-			break;
 
-		case BufferedResult::BLOCKING:
-			assert(!IsReleasedEmpty());
-			return true;
+			if (input.front().GetAvailable() >= remaining)
+				/* no data was consumed */
+				return true;
+
+			break;
 
 		case BufferedResult::MORE:
 			handler.OnBufferedError(std::make_exception_ptr(SocketClosedPrematurelyError()));

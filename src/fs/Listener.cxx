@@ -98,7 +98,7 @@ private:
 
 	/* virtual methods from class BufferedSocketHandler */
 	BufferedResult OnBufferedData() override {
-		return BufferedResult::BLOCKING;
+		return BufferedResult::OK;
 	}
 
 	bool OnBufferedHangup() noexcept override {

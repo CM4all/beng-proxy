@@ -87,7 +87,7 @@ LbTcpConnection::Inbound::OnBufferedData()
 
 	if (tcp.cancel_connect)
 		/* outbound is not yet connected */
-		return BufferedResult::BLOCKING;
+		return BufferedResult::OK;
 
 	if (!tcp.outbound.socket.IsValid()) {
 		tcp.OnTcpError("Send error", "Broken socket");
@@ -117,7 +117,7 @@ LbTcpConnection::Inbound::OnBufferedData()
 		return BufferedResult::CLOSED;
 
 	case WRITE_BLOCKING:
-		return BufferedResult::BLOCKING;
+		return BufferedResult::OK;
 
 	case WRITE_DESTROYED:
 		return BufferedResult::CLOSED;
@@ -232,7 +232,7 @@ LbTcpConnection::Outbound::OnBufferedData()
 		return BufferedResult::CLOSED;
 
 	case WRITE_BLOCKING:
-		return BufferedResult::BLOCKING;
+		return BufferedResult::OK;
 
 	case WRITE_DESTROYED:
 		return BufferedResult::CLOSED;
